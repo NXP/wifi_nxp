@@ -1,0 +1,37 @@
+/*!
+@page middleware_log Middleware Change Log
+ 
+@section wifi NXP WiFi
+
+------------------
+version 1.3.r10.p1
+------------------
+New Additions:
+==============
+1. Moved to using LwIP provided IPerf App
+2. Added SDIO Rx Aggregation support to improve throughput
+3. Added support for 11ac configuration API
+4. Updated License and Copyright information on all WiFi driver files and sample apps
+6. Moved MCUXpresso SDK base for RT1060 platform from 2.6.2 to 2.7.0 rc3
+
+Known Issues
+============
+N.A
+
+-----------------
+version 1.3.r9.p1
+-----------------
+New Additions:
+==============
+1. Achieved additional TP improvements by updating LwIP parameters
+
+Bugfixes:
+=========
+1. Fixed the issue of low throughput for both TCP and UDP (Tx/Rx) by updating LwIP parameters
+2. TCP Throughput was observed to be lower than UDP throughput by 70%-80%. Fixed this issue by updating TCP related LwIP configurations.
+
+Known Issues
+============
+N.A
+
+*/
