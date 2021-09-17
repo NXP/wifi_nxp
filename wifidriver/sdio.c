@@ -39,7 +39,6 @@
 #include <wm_utils.h>
 #include <mlan_fw.h>
 #include "wifi-sdio.h"
-#include "wifi-internal.h"
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
@@ -70,6 +69,20 @@ SDK_ALIGN(uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], BOAR
 #else
 SDK_ALIGN(uint8_t inbuf[2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 #endif /*CONFIG_SDIO_MULTI_PORT_RX_AGGR*/
+
+t_u32 ioport_g = 0;
+
+/**
+ * Function to set mlan ioport.
+ * A weak definition of this is added here for compilation of
+ * bt ble apps/non wifi apps
+ * This funciton is defined in wifi-sdio.c as of this writing
+ * for wifi files.
+ */
+__attribute__((weak)) void set_ioport_inmlan(t_u32 port)
+{
+    return;
+}
 
 uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len)
 {
@@ -147,9 +160,9 @@ static mlan_status wlan_sdio_init_ioport(void)
 
 #if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
     defined(IW61x)
-    mlan_adap->ioport = MEM_PORT;
+    ioport_g = MEM_PORT;
 
-    wifi_io_d("IOPORT : (0x%x)", mlan_adap->ioport);
+    wifi_io_d("IOPORT : (0x%x)", ioport_g);
 
     /* Enable sdio cmd53 new mode */
     sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
@@ -173,15 +186,15 @@ static mlan_status wlan_sdio_init_ioport(void)
 #elif defined(SD8801)
     /* Read the PORT regs for IOPORT address */
     sdio_drv_creg_read(IO_PORT_0_REG, 1, &resp);
-    mlan_adap->ioport = (resp & 0xff);
+    ioport_g = (resp & 0xff);
 
     sdio_drv_creg_read(IO_PORT_1_REG, 1, &resp);
-    mlan_adap->ioport |= ((resp & 0xff) << 8);
+    ioport_g |= ((resp & 0xff) << 8);
 
     sdio_drv_creg_read(IO_PORT_2_REG, 1, &resp);
-    mlan_adap->ioport |= ((resp & 0xff) << 16);
+    ioport_g |= ((resp & 0xff) << 16);
 
-    wifi_io_d("IOPORT : (0x%x)", mlan_adap->ioport);
+    wifi_io_d("IOPORT : (0x%x)", ioport_g);
 #endif
 
     /* Set Host interrupt reset to read to clear */
@@ -193,7 +206,7 @@ static mlan_status wlan_sdio_init_ioport(void)
     sdio_drv_creg_read(CARD_MISC_CFG_REG, 1, &resp);
     data = (resp & 0xff) | AUTO_RE_ENABLE_INT;
     sdio_drv_creg_write(CARD_MISC_CFG_REG, 1, data, &resp);
-
+    set_ioport_inmlan(ioport_g);
     return true;
 }
 

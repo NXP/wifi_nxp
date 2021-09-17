@@ -70,6 +70,13 @@ typedef enum _WLAN_802_11_NETWORK_TYPE
 #pragma pack(push, 1)
 #endif
 
+#ifdef CONFIG_11AX
+typedef enum _IEEEtypes_Ext_ElementId_e {
+    HE_CAPABILITY = 35,
+    HE_OPERATION = 36
+} IEEEtypes_Ext_ElementId_e;
+#endif
+
 /** IEEE Type definitions  */
 typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     SSID            = 0,
@@ -122,6 +129,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     RSN_IE  = 48,
     VS_IE   = VENDOR_SPECIFIC_221,
     WAPI_IE = 68,
+    EXTENSION = 255,
 } MLAN_PACK_END IEEEtypes_ElementId_e;
 
 /** IEEE IE header */
@@ -949,8 +957,8 @@ typedef MLAN_PACK_START struct _ExtCap_t
     t_u8 rsvdBit74 : 1;            /* bit 74 */
     t_u8 rsvdBit75 : 1;            /* bit 75 */
     t_u8 rsvdBit76 : 1;            /* bit 76 */
-    t_u8 rsvdBit77 : 1;            /* bit 77 */
-    t_u8 rsvdBit78 : 1;            /* bit 78 */
+    t_u8 TWTReq : 1;               /* bit 77 */
+    t_u8 TWTResp : 1;              /* bit 78 */
     t_u8 rsvdBit79 : 1;            /* bit 79 */
 
 } MLAN_PACK_END ExtCap_t, *pExtCap_t;
@@ -1477,6 +1485,33 @@ typedef MLAN_PACK_START struct
 /** Maximum number of channels that can be sent in bg scan config */
 #define WLAN_BG_SCAN_CHAN_MAX 32
 
+#ifdef CONFIG_11AX
+typedef MLAN_PACK_START struct _IEEEtypes_Extension_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** Element id extension */
+    t_u8 ext_id;
+    /** payload */
+    t_u8 data[];
+} MLAN_PACK_END IEEEtypes_Extension_t, *pIEEEtypes_Extension_t;
+
+typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** Element id extension */
+    t_u8 ext_id;
+    /** he mac capability info */
+    t_u8 he_mac_cap[6];
+    /** he phy capability info */
+    t_u8 he_phy_cap[11];
+    /** he txrx mcs support , size would be 4 or 8 or 12 */
+    t_u8 he_txrx_mcs_support[4];
+   /** PPE Thresholds (optional) */
+} MLAN_PACK_END IEEEtypes_HECap_t, *pIEEEtypes_HECap_t;
+#endif
+
 /**
  *  Input structure to configure bs scan cmd to firmware
  */
@@ -1699,7 +1734,17 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_VHTOprat_t vht_oprat_saved;
     IEEEtypes_VHTtxpower_t vht_txpower_saved;
     IEEEtypes_OperModeNtf_t poper_mode_saved;
-    IEEEtypes_ExtCap_t ext_cap_saved;
+    IEEEtypes_ExtCap_t ext_cap_saved;    
+#ifdef CONFIG_11AX
+    /** HE Capability IE */
+    IEEEtypes_HECap_t *phe_cap;
+    /** HE Capability IE offset */
+    t_u16 he_cap_offset;
+    /** HE operation IE */
+    IEEEtypes_Extension_t *phe_oprat;
+    /** HE operation IE offset */
+    t_u16 he_oprat_offset;
+#endif
     /*
       fixme: The legacy code used IEEEtypes_RSN_IE_t which is of 24
       bytes. There seems to be confusion about the exact structure to

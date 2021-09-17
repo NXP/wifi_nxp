@@ -3,7 +3,7 @@
  *  @brief This file contains related macros, enum, and struct
  *  of wmm functionalities
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to

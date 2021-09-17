@@ -3,7 +3,7 @@
  *  @brief This file acts as a glue between legacy wlan code and mlan based wlan
  *  code
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -2352,6 +2352,29 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
         }
         break;
 #endif
+#ifdef CONFIG_11AX
+        case HostCmd_CMD_11AX_CFG:
+        {
+            if (resp->result == HostCmd_RESULT_OK)
+            {
+                if (wm_wifi.cmd_resp_priv != NULL)
+                {
+                    mlan_ds_11ax_he_cfg *cfg = (mlan_ds_11ax_he_cfg *)wm_wifi.cmd_resp_priv;
+                    rv = wlan_ret_11ax_cfg(pmpriv, resp, cfg);
+                    if (rv != MLAN_STATUS_SUCCESS)
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    else
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
+                    }
+                }
+                else
+                {
+                    rv = MLAN_STATUS_FAILURE;
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
+#endif
         default:
             /* fixme: Currently handled by the legacy code. Change this
                handling later. Also check the default return value then*/
@@ -2376,7 +2399,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
  *
  *  @return	       ie's poiner or MNULL
  */
-static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len, IEEEtypes_ElementId_e id)
+static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len,
+                             IEEEtypes_ElementId_e id, t_u8 ext_id)
 {
     t_u32 bytes_left   = ie_len;
     t_u8 *pcurrent_ptr = ie_buf;
@@ -2384,7 +2408,7 @@ static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len,
     t_u8 *ie_ptr = MNULL;
     IEEEtypes_ElementId_e element_id;
     t_u8 element_len;
-
+    t_u8 element_eid;
     ENTER();
 
     DBG_HEXDUMP(MCMD_D, "ie", ie_buf, ie_len);
@@ -2392,6 +2416,7 @@ static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len,
     {
         element_id   = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
         element_len  = *((t_u8 *)pcurrent_ptr + 1);
+	element_eid = *((t_u8 *)pcurrent_ptr + 2);
         total_ie_len = element_len + sizeof(IEEEtypes_Header_t);
         if (bytes_left < total_ie_len)
         {
@@ -2400,9 +2425,11 @@ static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len,
                    "bytes left < IE length\n");
             break;
         }
-        if (element_id == id)
+	if ((!ext_id && element_id == id) ||
+            (id == EXTENSION && element_id == id &&
+             ext_id == element_eid))
         {
-            PRINTM(MCMND, "Find IE: id=%d\n", id);
+	    PRINTM(MCMND, "Find IE: id=%d ext_id=%d\n", id, ext_id);
             DBG_HEXDUMP(MCMND, "IE", pcurrent_ptr, total_ie_len);
             ie_ptr = pcurrent_ptr;
             break;
@@ -2434,6 +2461,12 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
     t_u8 *assoc_req_ie = MNULL;
     t_u8 ie_len = 0, assoc_ie_len = 0;
     IEEEtypes_HTCap_t *pht_cap = MNULL;
+#ifdef CONFIG_11AC
+    IEEEtypes_VHTCap_t *pvht_cap = MNULL;
+#endif
+#ifdef CONFIG_11AX
+    IEEEtypes_Extension_t *phe_cap = MNULL;
+#endif
     int tlv_buf_left           = pevent->length - INTF_HEADER_LEN - ASSOC_EVENT_FIX_SIZE;
     MrvlIEtypesHeader_t *tlv   = (MrvlIEtypesHeader_t *)((char *)pevent + INTF_HEADER_LEN + ASSOC_EVENT_FIX_SIZE);
     MrvlIETypes_MgmtFrameSet_t *mgmt_tlv = MNULL;
@@ -2466,7 +2499,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 
                 ie_len       = tlv_len - sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
-                pht_cap      = (IEEEtypes_HTCap_t *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY);
+		pht_cap      = (IEEEtypes_HTCap_t *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
+               
                 if (pht_cap != NULL)
                 {
                     PRINTM(MCMND, "STA supports 11n\n");
@@ -2482,6 +2516,39 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                            "STA doesn't "
                            "support 11n\n");
                 }
+#ifdef CONFIG_11AC
+                pvht_cap = (IEEEtypes_VHTCap_t *)
+                       wlan_get_specific_ie(priv, assoc_req_ie, ie_len, VHT_CAPABILITY, 0);
+                if (pvht_cap && (priv->is_11ac_enabled == MTRUE))
+                {
+                    PRINTM(MCMND, "STA supports 11ac\n");
+                    sta_ptr->is_11ac_enabled = MTRUE;
+                    if (GET_VHTCAP_MAXMPDULEN(wlan_le32_to_cpu(pvht_cap->vht_cap.vht_cap_info)) == 2)
+                        sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_12K;
+                    else if (GET_VHTCAP_MAXMPDULEN(wlan_le32_to_cpu(pvht_cap->vht_cap.vht_cap_info)) ==1)
+                        sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
+                    else
+                        sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_4K;
+                }
+                else
+                {
+                    PRINTM(MCMND, "STA doesn't support 11ac\n");
+                }
+#endif
+#ifdef CONFIG_11AX
+                phe_cap = (IEEEtypes_Extension_t *)
+                wlan_get_specific_ie(priv, assoc_req_ie, ie_len, EXTENSION, HE_CAPABILITY);
+                if (phe_cap && (priv->is_11ax_enabled == MTRUE))
+                {
+                    PRINTM(MCMND, "STA supports 11ax\n");
+                    sta_ptr->is_11ax_enabled = MTRUE;
+                    (void)memcpy((t_u8 *)&sta_ptr->he_cap, phe_cap, phe_cap->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                    sta_ptr->he_cap.ieee_hdr.len = MIN(phe_cap->ieee_hdr.len,
+                             sizeof(IEEEtypes_HECap_t) - sizeof(IEEEtypes_Header_t));
+                }
+                else
+                    PRINTM(MCMND, "STA doesn't support 11ax\n");
+#endif
                 break;
             }
         }
@@ -2510,10 +2577,18 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
     t_u16 tlv_type, tlv_len;
     int tlv_buf_left         = pevent->length - INTF_HEADER_LEN - BSS_START_EVENT_FIX_SIZE;
     MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)((char *)pevent + INTF_HEADER_LEN + BSS_START_EVENT_FIX_SIZE);
+#ifdef CONFIG_11AX
+    MrvlIEtypes_He_cap_t *pext_tlv = MNULL;
+#endif
     priv->wmm_enabled        = MFALSE;
     priv->pkt_fwd            = MFALSE;
     priv->is_11n_enabled     = MFALSE;
-
+#ifdef CONFIG_11AC
+    priv->is_11ac_enabled    = MFALSE;
+#endif
+#ifdef CONFIG_11AX
+    priv->is_11ax_enabled = MFALSE;
+#endif
     ENTER();
 
     while (tlv_buf_left >= (int)sizeof(MrvlIEtypesHeader_t))
@@ -2530,6 +2605,24 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             DBG_HEXDUMP(MCMD_D, "HT_CAP tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
             priv->is_11n_enabled = MTRUE;
         }
+#ifdef CONFIG_11AC
+        if (tlv_type == VHT_CAPABILITY)
+        {
+            DBG_HEXDUMP(MCMD_D, "VHT_CAP tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
+            priv->is_11ac_enabled = MTRUE;
+        }
+#endif
+#ifdef CONFIG_11AX
+        if (tlv_type == EXTENSION)
+        {
+            pext_tlv = (MrvlIEtypes_He_cap_t *)tlv;
+            if (pext_tlv->ext_id == HE_CAPABILITY)
+            {
+                DBG_HEXDUMP(MCMD_D, "HE_CAP tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
+                priv->is_11ax_enabled = MTRUE;
+            }
+        }
+#endif
         if (tlv_type == TLV_TYPE_UAP_PKT_FWD_CTL)
         {
             DBG_HEXDUMP(MCMD_D, "pkt_fwd tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));

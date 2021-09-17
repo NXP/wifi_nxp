@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN client mode channel, frequency and power related code
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -536,6 +536,41 @@ t_u8 SupportedRates_BG[BG_SUPPORTED_RATES] = {0x02, 0x04, 0x0b, 0x0c, 0x12, 0x16
  */
 t_u8 SupportedRates_N[N_SUPPORTED_RATES] = {0x02, 0x04, 0};
 
+#ifdef CONFIG_11AX
+#define MCS_NUM_AX 12
+/**
+ * for MCS0/MCS1/MCS3/MCS4 have 4 additional DCM=1 value
+ * note: the value in the table is 2 multiplier of the actual rate
+ */
+static t_u16 ax_mcs_rate_nss1[12][MCS_NUM_AX + 4] =
+{
+    {0x90, 0x48, 0x120, 0x90, 0x1B0, 0x240, 0x120, 0x360, 0x1B0, 0x481,
+     0x511, 0x5A1, 0x6C1, 0x781, 0x871, 0x962}, /*SG 160M*/
+    {0x88, 0x44, 0x110, 0x88, 0x198, 0x220, 0x110, 0x330, 0x198, 0x440,
+     0x4C9, 0x551, 0x661, 0x716, 0x7F9, 0x8DC}, /*MG 160M*/
+    {0x7A, 0x3D, 0xF5, 0x7A, 0x16F, 0x1EA, 0xF5, 0x2DF, 0x16F, 0x3D4, 0x44E,
+     0x4C9, 0x5BE, 0x661, 0x72D, 0x7F9}, /*LG 160M*/
+    {0x48, 0x24, 0x90, 0x48, 0xD8, 0x120, 0x90, 0x1B0, 0xD8, 0x240, 0x288,
+     0x2D0, 0x360, 0x3C0, 0x438, 0x4B0}, /*SG 80M*/
+    {0x44, 0x22, 0x88, 0x44, 0xCC, 0x110, 0x88, 0x198, 0xCC, 0x220, 0x264,
+     0x2A8, 0x330, 0x38B, 0x3FC, 0x46E}, /*MG 80M*/
+    {0x3D, 0x1E, 0x7A, 0x3D, 0xB7, 0xF5, 0x7A, 0x16F, 0xB7, 0x1EA, 0x227,
+     0x264, 0x2DF, 0x330, 0x396, 0x3FC}, /*LG 80M*/
+    {0x22, 0x11, 0x44, 0x22, 0x67, 0x89, 0x44, 0xCE, 0x67, 0x113, 0x135,
+     0x158, 0x19D, 0x1CA, 0x204, 0x23D}, /*SG 40M*/
+    {0x20, 0x10, 0x41, 0x20, 0x61, 0x82, 0x41, 0xC3, 0x61, 0x104, 0x124,
+     0x145, 0x186, 0x1B1, 0x1E7, 0x21D}, /*MG 40M*/
+    {0x1D, 0xE, 0x3A, 0x1D, 0x57, 0x75, 0x3A, 0xAF, 0x57, 0xEA, 0x107,
+     0x124, 0x15F, 0x186, 0x1B6, 0x1E7}, /*LG 40M*/
+    {0x11, 0x8, 0x22, 0x11, 0x33, 0x44, 0x22, 0x67, 0x33, 0x89, 0x9A, 0xAC,
+     0xCE, 0xE5, 0x102, 0x11E}, /*SG 20M*/
+    {0x10, 0x8, 0x20, 0x10, 0x30, 0x41, 0x20, 0x61, 0x30, 0x82, 0x92, 0xA2,
+     0xC3, 0xD8, 0xF3, 0x10E}, /*MG 20M*/
+    {0xE, 0x7, 0x1D, 0xE, 0x2B, 0x3A, 0x1D, 0x57, 0x2B, 0x75, 0x83, 0x92,
+     0xAF, 0xC3, 0xDB, 0xF3} /*LG 20M*/
+};
+#endif
+
 #ifndef CONFIG_MLAN_WMSDK
 /********************************************************
     Local Functions
@@ -808,10 +843,10 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 ht_info)
  *  @param pmadapter        A pointer to mlan_adapter structure
  *  @param index            The index of data rate
  *  @param tx_rate_info     Tx rate info
- *
+ *  @param ext_rate_info    Extend tx rate info
  *  @return                 Data rate or 0
  */
-t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_info)
+t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_info, t_u8 ext_rate_info)
 {
 #ifdef CONFIG_11N
 #ifdef STREAM_2X2
@@ -864,8 +899,12 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
 #endif /* CONFIG_11AC */
 
     t_u32 rate     = 0;
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     t_u8 mcs_index = 0;
+#endif
+#ifdef CONFIG_11AX
+    t_u8 he_dcm = 0;
+    t_u8 stbc = 0;
 #endif
     t_u8 bw        = 0;
     t_u8 gi        = 0;
@@ -896,6 +935,53 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
             rate = ac_mcs_rate_nss1[2 * (3 - bw) + gi][mcs_index];
     }
     else
+#endif
+#ifdef CONFIG_11AX
+    if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
+    {
+        /* HE rate */
+        mcs_index = index & 0xF;
+        he_dcm = ext_rate_info & MBIT(0);
+        if (mcs_index > MCS_NUM_AX - 1)
+            mcs_index = MCS_NUM_AX - 1;
+        /* 20M: bw=0, 40M: bw=1, 80M: bw=2, 160M: bw=3 */
+        bw = (tx_rate_info & (MBIT(3) | MBIT(2))) >> 2;
+        /* BIT7:BIT4 0:0= 0.8us,0:1= 0.8us, 1:0=1.6us, 1:1=3.2us or 0.8us */
+        gi = (tx_rate_info & MBIT(4)) >> 4 | (tx_rate_info & MBIT(7)) >> 6;
+        /* STBC: BIT5 in tx rate info */
+        stbc = (tx_rate_info & MBIT(5)) >> 5;
+        if (gi > 3)
+        {
+            PRINTM(MERROR, "Invalid gi value");
+            return 0;
+        }
+        if ((gi == 3) && stbc && he_dcm)
+        {
+            gi = 0;
+            stbc = 0;
+            he_dcm = 0;
+        }
+        /* map to gi 0:0.8us,1:1.6us 2:3.2us*/
+        if (gi > 0)
+            gi = gi - 1;
+        switch (mcs_index)
+        {
+            case 0:
+            case 1:
+                rate = ax_mcs_rate_nss1[3 * (3 - bw) + gi][mcs_index * 2 + he_dcm];
+                break;
+            case 2:
+                rate = ax_mcs_rate_nss1[3 * (3 - bw) + gi][mcs_index * 2];
+                break;
+            case 3:
+            case 4:
+                rate = ax_mcs_rate_nss1[3 * (3 - bw) + gi][mcs_index * 2 - 1 + he_dcm];
+                break;
+            default:
+                rate = ax_mcs_rate_nss1[3 * (3 - bw) + gi][mcs_index + 4];
+                break;
+        }
+    }
 #endif
 #ifdef CONFIG_11N
         if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HT)
@@ -1323,7 +1409,7 @@ int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size)
  *
  *  @return                 The number of Rates
  */
-t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config_bands, WLAN_802_11_RATES rates)
+t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 config_bands, WLAN_802_11_RATES rates)
 {
     t_u32 k = 0;
 
@@ -1341,6 +1427,9 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config
             case BAND_G:
             case BAND_G | BAND_GN:
             case BAND_G | BAND_GN | BAND_GAC:
+#ifdef CONFIG_11AX
+            case BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                 PRINTM(MINFO, "Infra band=%d SupportedRates_G\n", config_bands);
                 k = wlan_copy_rates(rates, k, SupportedRates_G, sizeof(SupportedRates_G));
                 break;
@@ -1350,8 +1439,15 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config
             case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN:
             case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC:
             case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC:
-            case BAND_B | BAND_G | BAND_GN:
+#ifdef CONFIG_11AX
+            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_AAX:
+            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC | BAND_AAX | BAND_GAX:
+#endif
+	    case BAND_B | BAND_G | BAND_GN:
             case BAND_B | BAND_G | BAND_GN | BAND_GAC:
+#ifdef CONFIG_11AX
+            case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                 PRINTM(MINFO, "Infra band=%d SupportedRates_BG\n", config_bands);
 #ifdef WIFI_DIRECT_SUPPORT
                 if (pmpriv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -1372,11 +1468,18 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config
             case BAND_A | BAND_G | BAND_AN | BAND_GN:
             case BAND_A | BAND_AN | BAND_AAC:
             case BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC:
-                PRINTM(MINFO, "Infra band=%d SupportedRates_A\n", config_bands);
+#ifdef CONFIG_11AX
+            case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
+            case BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC | BAND_AAX:
+#endif
+       		PRINTM(MINFO, "Infra band=%d SupportedRates_A\n", config_bands);
                 k = wlan_copy_rates(rates, k, SupportedRates_A, sizeof(SupportedRates_A));
                 break;
             case BAND_GN:
             case BAND_GN | BAND_GAC:
+#ifdef CONFIG_11AX
+            case BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                 PRINTM(MINFO, "Infra band=%d SupportedRates_N\n", config_bands);
                 k = wlan_copy_rates(rates, k, SupportedRates_N, sizeof(SupportedRates_N));
                 break;
@@ -1394,12 +1497,18 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config
             case BAND_G:
             case BAND_G | BAND_GN:
             case BAND_G | BAND_GN | BAND_GAC:
+#ifdef CONFIG_11AX
+            case BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                 PRINTM(MINFO, "Band: Adhoc G only\n");
                 k = wlan_copy_rates(rates, k, AdhocRates_G, sizeof(AdhocRates_G));
                 break;
             case BAND_B | BAND_G:
             case BAND_B | BAND_G | BAND_GN:
             case BAND_B | BAND_G | BAND_GN | BAND_GAC:
+#ifdef CONFIG_11AX
+	    case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                 PRINTM(MINFO, "Band: Adhoc BG\n");
                 k = wlan_copy_rates(rates, k, AdhocRates_BG, sizeof(AdhocRates_BG));
                 break;
@@ -1407,6 +1516,9 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config
             case BAND_AN:
             case BAND_A | BAND_AN:
             case BAND_A | BAND_AN | BAND_AAC:
+#ifdef CONFIG_11AX
+            case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
+#endif
                 PRINTM(MINFO, "Band: Adhoc A\n");
                 k = wlan_copy_rates(rates, k, AdhocRates_A, sizeof(AdhocRates_A));
                 break;

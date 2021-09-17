@@ -796,11 +796,13 @@ typedef PACK_START struct
     /** Chnannel descriptor */
     wifi_channel_desc_t chan_desc;
     /** Channel Modulation groups */
-#ifndef CONFIG_11AC
-    wifi_txpwrlimit_entry_t txpwrlimit_entry[10];
-#else
+#ifdef CONFIG_11AX
+    wifi_txpwrlimit_entry_t txpwrlimit_entry[20];
+#elif defined(CONFIG_11AC)
     wifi_txpwrlimit_entry_t txpwrlimit_entry[16];
-#endif /* CONFIG_11AC */
+#else
+    wifi_txpwrlimit_entry_t txpwrlimit_entry[10];
+#endif /* CONFIG_11AX */
 } PACK_END wifi_txpwrlimit_config_t;
 
 /**

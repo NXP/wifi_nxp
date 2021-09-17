@@ -989,10 +989,10 @@ int wifi_set_pmfcfg(t_u8 mfpc, t_u8 mfpr);
 
 int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
+int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
+
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);
-
-int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 

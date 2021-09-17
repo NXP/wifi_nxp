@@ -775,7 +775,10 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     t_u32 rates_size;
     MrvlIETypes_HTCap_t *pht_cap;
     MrvlIETypes_VHTCap_t *pvht_cap;
-
+#ifdef CONFIG_11AX
+    MrvlIEtypes_Extension_t *phe_cap;
+    t_u16 len = 0;
+#endif
     ENTER();
 
     /* The tlv_buf_len is calculated for each scan command.  The TLVs added in
@@ -932,6 +935,15 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         pvht_cap->header.len = wlan_cpu_to_le16(pvht_cap->header.len);
     }
 
+#ifdef CONFIG_11AX
+    if (IS_FW_SUPPORT_11AX(pmadapter) && (pmpriv->config_bands & BAND_AAX))
+    {
+        phe_cap = (MrvlIEtypes_Extension_t *)ptlv_pos;
+        len = wlan_fill_he_cap_tlv(pmpriv, BAND_A, phe_cap, MFALSE);
+        HEXDUMP("SCAN: HE_CAPABILITIES IE", (t_u8 *)phe_cap, len);
+        ptlv_pos += len;
+    }
+#endif
     /* fixme: enable this later when req. */
 #ifndef CONFIG_MLAN_WMSDK
     if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
@@ -1184,6 +1196,9 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 owe_oui[4] = {0x50, 0x6f, 0x9a, 0x1c};
 #endif
     IEEEtypes_CountryInfoSet_t *pcountry_info;
+#ifdef CONFIG_11AX
+    IEEEtypes_Extension_t *pext_tlv;
+#endif
 
     ENTER();
 
@@ -1645,6 +1660,26 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 HEXDUMP("InterpretIE: Resp HTCAP_IE", (t_u8 *)pbss_entry->poverlap_bss_scan_param,
                         (*(pbss_entry->poverlap_bss_scan_param)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
 #endif /* CONFIG_MLAN_WMSDK */
+                break;
+#ifdef CONFIG_11AX
+            case EXTENSION:
+                pext_tlv = (IEEEtypes_Extension_t *)pcurrent_ptr;
+                switch (pext_tlv->ext_id)
+                {
+                    case HE_CAPABILITY:
+                        pbss_entry->phe_cap = (IEEEtypes_HECap_t *)pcurrent_ptr;
+                        pbss_entry->he_cap_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
+                        break;
+                    case HE_OPERATION:
+                        pbss_entry->phe_oprat = pext_tlv;
+                        pbss_entry->he_oprat_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+#endif
+            default:
                 break;
         }
 
@@ -2398,6 +2433,24 @@ t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN t_u
         LEAVE();
         return index;
     }
+
+#ifdef CONFIG_11AC
+    /* if the VHT CAP IE exists, the HT CAP IE should exist too */
+    if (pbss_desc->pvht_cap && !pbss_desc->pht_cap)
+    {
+        PRINTM(MINFO, "Disable 11n if HT CAP IE is not found from the 11AC AP\n");
+        pbss_desc->disable_11n = MTRUE;
+    }
+#endif
+#ifdef CONFIG_11AX
+    /* if the HE CAP IE exists, HT CAP IE should exist too */
+    /* 2.4G AX AP, don't have VHT CAP */
+    if (pbss_desc->phe_cap && !pbss_desc->pht_cap)
+    {
+        PRINTM(MINFO, "Disable 11n if VHT CAP/HT CAP IE is not found from the 11AX AP\n");
+        pbss_desc->disable_11n = MTRUE;
+    }
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
     if (pbss_desc->wlan_11h_bss_info.chan_switch_ann.element_id == CHANNEL_SWITCH_ANN)

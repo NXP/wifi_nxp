@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the generic data structures and APIs.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -194,6 +194,10 @@ typedef t_s32 t_sval;
 #define MLAN_RATE_INDEX_MCS7 19
 /** Rate index for MCS 9 */
 #define MLAN_RATE_INDEX_MCS9 21
+#ifdef CONFIG_11AX
+/** Rate index for MCS11 */
+#define MLAN_RATE_INDEX_MCS11 11
+#endif
 /** Rate index for MCS 32 */
 #define MLAN_RATE_INDEX_MCS32 44
 /** Rate index for MCS 127 */

@@ -2,7 +2,7 @@
  *
  *  @brief This file provides more APIs for mlan.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -503,6 +503,7 @@ int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset)
 
     return wm_wifi.cmd_resp_status;
 }
+#endif /* CONFIG_MLAN_WMSDK */
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
 {
@@ -695,6 +696,8 @@ done:
 
     return wm_wifi.cmd_resp_status;
 }
+
+#ifndef CONFIG_MLAN_WMSDK
 
 #define FLTR_BUF_IP_OFFSET 24
 

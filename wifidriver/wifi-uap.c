@@ -2,7 +2,7 @@
  *
  *  @brief This file provides UAP related APIs.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -43,6 +43,195 @@
 
 #ifdef CONFIG_5GHz_SUPPORT
 uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
+#endif
+
+#ifdef CONFIG_11AC
+/**
+ * @brief initialize AP bss config
+ * @param pmpriv            A pointer to mlan_private structure
+ * @param band            BAND_5G/BAND_2GHZ
+ * @return                0 -- success, otherwise fail
+ */
+t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    t_u8 enable_11ac        = MFALSE;
+
+    ENTER();
+    if ((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAC))
+    {
+        PRINTM(MCMND, "FW don't support 5G AC\n");
+        LEAVE();
+        return enable_11ac;
+    }
+    if ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAC))
+    {
+        PRINTM(MCMND, "FW don't support 2G AC");
+        LEAVE();
+        return enable_11ac;
+    }
+    enable_11ac = MTRUE;
+
+    LEAVE();
+    return enable_11ac;
+}
+
+#define VHT_CAP_11AC_MASK 0x007fffff
+
+/**
+ *  @brief enable/disable 11AC
+ *
+ *  @param pmpriv   A pointer to mlan_private structure
+ *  @param action   MLAN_ACT_DISABLE or MLAN_ACT_ENABLE
+ *  @param band     band config
+ *
+ *  @return         0--success, otherwise failure
+ */
+int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+    mlan_ds_11ac_vht_cfg vht_cfg;
+
+    memset(&vht_cfg, 0, sizeof(vht_cfg));
+    vht_cfg.band         = BAND_SELECT_A;
+    vht_cfg.txrx         = MLAN_RADIO_TXRX;
+    vht_cfg.vht_cap_info = pmadapter->usr_dot_11ac_dev_cap_a;
+    if (action == MLAN_ACT_DISABLE)
+    {
+        vht_cfg.bwcfg = MFALSE;
+        vht_cfg.vht_cap_info &= ~VHT_CAP_11AC_MASK;
+        vht_cfg.vht_rx_mcs = vht_cfg.vht_tx_mcs = 0xffff;
+        vht_cfg.skip_usr_11ac_mcs_cfg           = MTRUE;
+    }
+    else
+    {
+        vht_cfg.bwcfg = MTRUE;
+        vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+        vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
+        vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
+        vht_cfg.skip_usr_11ac_mcs_cfg = MTRUE;
+    }
+    PRINTM(MCMND, "Uap:11ac=%d vht_cap_info=0x%x, vht_tx_mcs=0x%x, vht_rx_mcs=0x%x\n", action, vht_cfg.vht_cap_info,
+           vht_cfg.vht_tx_mcs, vht_cfg.vht_rx_mcs);
+    ret = wlan_11ac_ioctl_vhtcfg(pmpriv, MLAN_ACT_SET, &vht_cfg);
+    return ret;
+}
+#endif
+
+#ifdef CONFIG_11AX
+#if 0
+/**
+ * @brief initialize AP bss config
+ * @param pmpriv            A pointer to mlan_private structure
+ * @param band            BAND_5G/BAND_2GHZ
+ * @return                0 -- success, otherwise fail
+ */
+static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    t_u8 enable_11ax = MFALSE;
+    mlan_ds_11ax_he_cfg he_cfg;
+    t_u8 he_txrx_mcs_support[4] = {0xff, 0xff, 0xff, 0xff};
+
+    ENTER();
+    if((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
+    {
+        PRINTM(MCMND, "FW don't support 5G AX\n");
+        LEAVE();
+        return enable_11ax;
+    }
+    if((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+        && !(pmadapter->fw_bands & BAND_GAX))
+    {
+        PRINTM(MCMND, "FW don't support 2G AX\n");
+        LEAVE();
+        return enable_11ax;
+    }
+    memset(&he_cfg, 0, sizeof(he_cfg));
+    if (band == BAND_CONFIG_5GHZ)
+        he_cfg.band = MBIT(1);
+    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+        he_cfg.band = MBIT(0);
+    if (0 == wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
+    {
+        if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
+        {
+            if (memcmp(he_cfg.he_cap.he_txrx_mcs_support, he_txrx_mcs_support,
+                        sizeof(he_txrx_mcs_support)))
+                enable_11ax = MTRUE;
+        }
+    }
+    PRINTM(MCMND, "enable_11ax=%d\n", enable_11ax);
+    LEAVE();
+    return enable_11ax;
+}
+#endif
+
+/**
+ *  @brief enable/disable 11AX
+ *
+ *  @param pmpriv   A pointer to mlan_private structure
+ *  @param action   MLAN_ACT_DISABLE or MLAN_ACT_ENABLE
+ *  @param band     band config
+ *
+ *  @return         0--success, otherwise failure
+ */
+int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+    mlan_ds_11ax_he_cfg he_cfg;
+
+    ENTER();
+    if ((band == BAND_CONFIG_5GHZ && !(pmadapter->fw_bands & BAND_AAX)) ||
+        ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX)))
+    {
+        PRINTM(MERROR, "fw doesn't support 11ax\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+    memset(&he_cfg, 0, sizeof(he_cfg));
+    if (band == BAND_CONFIG_5GHZ)
+    {
+        he_cfg.band = MBIT(1);
+        (void)memcpy(&he_cfg.he_cap, pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
+    }
+    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+    {
+        he_cfg.band = MBIT(0);
+        (void)memcpy(&he_cfg.he_cap, pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
+    }
+    else
+    {
+        PRINTM(MERROR, "Invalid band!\n");
+        ret = -WM_E_INVAL;
+        goto done;
+    }
+#if 0
+    if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
+    {
+        PRINTM(MERROR, "Fail to get 11ax cfg!\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+#endif
+    if (action == MLAN_ACT_DISABLE)
+    {
+        if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
+            memset(he_cfg.he_cap.he_txrx_mcs_support, 0xff, sizeof(he_cfg.he_cap.he_txrx_mcs_support));
+        else
+        {
+            PRINTM(MCMND, "11ax already disabled\n");
+            goto done;
+        }
+    }
+    DBG_HEXDUMP(MCMD_D, "HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+    ret = wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_SET, &he_cfg);
+done:
+    LEAVE();
+    return ret;
+}
 #endif
 
 int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,

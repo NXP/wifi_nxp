@@ -5281,6 +5281,38 @@ int wlan_set_auto_ping()
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef ENABLE_OFFLOAD
+int wlan_set_ipv6_ns_offload()
+{
+    wlan_flt_cfg_t flt_cfg;
+
+    (void)memset(&flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+
+    flt_cfg.criteria = (MBIT(1) | MBIT(3));
+    flt_cfg.nentries = 1;
+
+    flt_cfg.mef_entry.mode   = MBIT(0);
+    flt_cfg.mef_entry.action = 0x40;
+
+    flt_cfg.mef_entry.filter_num = 2;
+
+    flt_cfg.mef_entry.filter_item[0].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry.filter_item[0].repeat       = 1;
+    flt_cfg.mef_entry.filter_item[0].offset       = 20;
+    flt_cfg.mef_entry.filter_item[0].num_byte_seq = 2;
+    (void)memcpy(flt_cfg.mef_entry.filter_item[0].byte_seq, "\x86\xdd", 2);
+    flt_cfg.mef_entry.rpn[1] = RPN_TYPE_AND;
+
+    flt_cfg.mef_entry.filter_item[1].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry.filter_item[1].repeat       = 1;
+    flt_cfg.mef_entry.filter_item[1].offset       = 62;
+    flt_cfg.mef_entry.filter_item[1].num_byte_seq = 1;
+    (void)memcpy(flt_cfg.mef_entry.filter_item[1].byte_seq, "\x87", 1);
+
+    return wifi_set_packet_filters(&flt_cfg);
+}
+#endif
+
 int wlan_get_current_bssid(uint8_t *bssid)
 {
     struct wlan_network network;

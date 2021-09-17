@@ -460,7 +460,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
         wm_netif_ipv6_status_callback(&if_handle->netif);
     }
 #endif
-    if (if_handle == &g_mlan || if_handle == &g_uap)
+    if (if_handle == &g_mlan)
         netifapi_netif_set_default(&if_handle->netif);
     switch (addr->ipv4.addr_type)
     {

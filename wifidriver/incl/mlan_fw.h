@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -386,6 +386,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type : WPA3 SAE Password */
 #define TLV_TYPE_WPA3_SAE_PASSWORD (PROPRIETARY_TLV_BASE_ID + 0x141) // 0x0241
 
+/** TLV type: fw cap info */
+#define TLV_TYPE_FW_CAP_INFO (PROPRIETARY_TLV_BASE_ID + 318)
+
 /** TLV type : Encryption Protocol TLV */
 #define TLV_TYPE_ENCRYPTION_PROTO (PROPRIETARY_TLV_BASE_ID + 0x40) // 0x0140
 /** TLV type : Cipher TLV */
@@ -467,6 +470,10 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define MLAN_TX_DATA_BUF_SIZE_4K 4096
 /** 8K buf size */
 #define MLAN_TX_DATA_BUF_SIZE_8K 8192
+#ifdef CONFIG_11AC
+/** 12K buf size */
+#define MLAN_TX_DATA_BUF_SIZE_12K 12288
+#endif
 /** Max Rx AMPDU Size */
 #define MAX_RX_AMPDU_SIZE_64K 0x03
 /** Non green field station */
@@ -818,6 +825,69 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define GET_DEVNSSRXMCS(DevMCSMap, nss)        ((DevMCSMap >> (2 * (nss - 1))) & 0x3)
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) (DevMCSMap |= (value & 0x3) << (2 * (nss - 1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           (DevMCSMap &= 0xFFFF0000)
+
+#ifdef CONFIG_11AX
+/** FW cap info bit 7 11AX */
+#define FW_CAPINFO_EXT_802_11AX MBIT(7)
+
+/* HE MAC Capabilities Information field BIT 1 for TWT Req */
+#define HE_MAC_CAP_TWT_REQ_SUPPORT MBIT(1)
+/* HE MAC Capabilities Information field BIT 2 for TWT Resp*/
+#define HE_MAC_CAP_TWT_RESP_SUPPORT MBIT(2)
+/** Check if 11AX is supported by firmware */
+#define IS_FW_SUPPORT_11AX(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_802_11AX)
+/** ExtCap : Support for TWT RESP */
+#define ISSUPP_EXTCAP_EXT_TWT_RESP(ext_cap) (ext_cap.TWTResp)
+/** ExtCap : Set support Ext TWT_REQ */
+#define SET_EXTCAP_TWT_REQ(ext_cap) (ext_cap.TWTReq = 1)
+/** ExtCap : ReSet support Ext TWT REQ */
+#define RESET_EXTCAP_TWT_REQ(ext_cap) (ext_cap.TWTReq = 0)
+
+typedef MLAN_PACK_START struct _MrvlIEtypes_He_cap_t {
+    /** Header type */
+    t_u16 type;
+    /** Header length */
+    t_u16 len;
+    /** Element id extension */
+    t_u8 ext_id;
+    /** he mac capability info */
+    t_u8 he_mac_cap[6];
+    /** he phy capability info */
+    t_u8 he_phy_cap[11];
+    /** he txrx mcs support , size would be 4 or 8 or 12 */
+    t_u8 he_txrx_mcs_support[4];
+    /** 160Mhz tx rx mcs support*/
+    t_u8 he160_txrx_mcs_support[4];
+    /** 80+80 Mhz tx rx mcs suport */
+    t_u8 he8080_txrx_mcs_support[4];
+    /** PPE Thresholds (optional) */
+    t_u8 val[20];
+} MLAN_PACK_END MrvlIEtypes_He_cap_t, *pMrvlIEtypes_he_cap_t;
+#endif
+
+typedef MLAN_PACK_START struct _MrvlIEtypes_Extension_t {
+    /** Header type */
+    t_u16 type;
+    /** Header length */
+    t_u16 len;
+    /** Element id extension */
+    t_u8 ext_id;
+    /** payload */
+    t_u8 data[];
+} MLAN_PACK_END MrvlIEtypes_Extension_t, *pMrvlIEtypes_Extension_t;
+
+/** FW cap info TLV */
+typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
+{
+    /** Header type */
+    t_u16 type;
+    /** Header length */
+    t_u16 len;
+    /** Fw cap info bitmap */
+    t_u32 fw_cap_info;
+    /** Extended fw cap info bitmap */
+    t_u32 fw_cap_ext;
+} MLAN_PACK_END MrvlIEtypes_fw_cap_info_t, *pMrvlIEtypes_fw_cap_info_t;
 
 /** TLV type : Rate scope */
 #define TLV_TYPE_RATE_DROP_PATTERN (PROPRIETARY_TLV_BASE_ID + 0x51) // 0x0151
@@ -1215,6 +1285,14 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_BSS_MODE_IBSS 0x0002
 /** Scan type : Any */
 #define HostCmd_BSS_MODE_ANY 0x0003
+
+#ifdef CONFIG_11AX
+/** Host Command ID: 11AX config */
+#define HostCmd_CMD_11AX_CFG 0x0266
+
+/** Host Command ID: TWT cfg command */
+#define HostCmd_CMD_TWT_CFG 0x0270
+#endif
 
 /* Radio type definitions for the channel TLV */
 /** Radio type BG */
@@ -3060,6 +3138,20 @@ typedef MLAN_PACK_START struct _HostCmd_TX_RATE_QUERY
      * [Bit 4]   HT/VHT Guard Interval: LGI = 0, SGI = 1 */
     t_u8 tx_rate_info;
 #endif
+#ifdef CONFIG_11AX
+    /**
+     * BIT0: DCM
+     * BIT3-BIT1: tone mode
+     **  000: 26  tone
+     **  001: 52  tone
+     **  010: 106 tone
+     **  011: 242 tone
+     **  100: 484 tone
+     **  101: 996 tone
+     * BIT7-BIT4: resvd
+     **/
+    t_u8 ext_tx_rate_info;
+#endif   
 } MLAN_PACK_END HostCmd_TX_RATE_QUERY;
 
 typedef MLAN_PACK_START struct _hs_config_param
@@ -3248,6 +3340,10 @@ typedef MLAN_PACK_START struct _MrvlRateScope_t
     t_u16 ht_mcs_rate_bitmap[8];
     /** VHT MCS rate bitmap */
     t_u16 vht_mcs_rate_bitmap[8];
+#ifdef CONFIG_11AX
+    /** HE MCS rate bitmap */
+    t_u16 he_mcs_rate_bitmap[8];
+#endif
 } MLAN_PACK_END MrvlRateScope_t;
 
 /** MrvlRateDropControl_t */
@@ -3727,6 +3823,88 @@ typedef MLAN_PACK_START struct _HostCmd_DS_11AC_CFG
     /** VHT Support MCS Set */
     t_u8 vht_supp_mcs_set[VHT_MCS_SET_LEN];
 } MLAN_PACK_END HostCmd_DS_11AC_CFG;
+
+#ifdef CONFIG_11AX
+/** HostCmd_DS_11AX_CFG */
+typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** BandConfig */
+    t_u8 band_config;
+    /** TLV for HE capability or HE operation */
+    t_u8 val[];
+} MLAN_PACK_END HostCmd_DS_11AX_CFG;
+
+
+/** Type definition of hostcmd_twt_setup */
+typedef MLAN_PACK_START struct _hostcmd_twt_setup
+{
+    /** Implicit, 0: TWT session is explicit, 1: Session is implicit */
+    t_u8 implicit;
+    /** Announced, 0: Unannounced, 1: Announced TWT */
+    t_u8 announced;
+    /** Trigger Enabled, 0: Non-Trigger enabled, 1: Trigger enabled TWT */
+    t_u8 trigger_enabled;
+    /** TWT Information Disabled, 0: TWT info enabled, 1: TWT info disabled */
+    t_u8 twt_info_disabled;
+    /** Negotiation Type, 0: Future Individual TWT SP start time, 1: Next
+     * Wake TBTT time */
+    t_u8 negotiation_type;
+    /** TWT Wakeup Duration, time after which the TWT requesting STA can
+     * transition to doze state */
+    t_u8 twt_wakeup_duration;
+    /** Flow Identifier. Range: [0-7]*/
+    t_u8 flow_identifier;
+    /** Hard Constraint, 0: FW can tweak the TWT setup parameters if it is
+     *rejected by AP.
+     ** 1: Firmware should not tweak any parameters. */
+    t_u8 hard_constraint;
+    /** TWT Exponent, Range: [0-63] */
+    t_u8 twt_exponent;
+    /** TWT Mantissa Range: [0-sizeof(UINT16)] */
+    t_u16 twt_mantissa;
+    /** TWT Request Type, 0: REQUEST_TWT, 1: SUGGEST_TWT*/
+    t_u8 twt_request;
+    /** TWT Setup State. Set to 0 by driver, filled by FW in response*/
+    t_u8 twt_setup_state;
+    /** Reserved, set to 0. */
+    t_u8 reserved[2];
+} MLAN_PACK_END hostcmd_twt_setup, *phostcmd_twt_setup;
+
+/** Type definition of hostcmd_twt_teardown */
+typedef MLAN_PACK_START struct _hostcmd_twt_teardown
+{
+    /** TWT Flow Identifier. Range: [0-7] */
+    t_u8 flow_identifier;
+    /** Negotiation Type. 0: Future Individual TWT SP start time, 1: Next
+     * Wake TBTT time */
+    t_u8 negotiation_type;
+    /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
+    t_u8 teardown_all_twt;
+    /** TWT Teardown State. Set to 0 by driver, filled by FW in response */
+    t_u8 twt_teardown_state;
+    /** Reserved, set to 0. */
+    t_u8 reserved[3];
+} MLAN_PACK_END hostcmd_twt_teardown, *phostcmd_twt_teardown;
+
+/** HostCmd_DS_TWT_CFG */
+typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** CMD_SUBID */
+    t_u16 sub_id;
+    /** TWT Setup/Teardown configuration parameters */
+    union
+    {
+        /** TWT Setup config for Sub ID: MLAN_11AX_TWT_SETUP_SUBID */
+        hostcmd_twt_setup twt_setup;
+        /** TWT Teardown config for Sub ID: MLAN_11AX_TWT_TEARDOWN_SUBID */
+        hostcmd_twt_teardown twt_teardown;
+    } param;
+} MLAN_PACK_END HostCmd_DS_TWT_CFG;
+#endif
 
 /** HostCmd_DS_TXBUF_CFG*/
 typedef MLAN_PACK_START struct _HostCmd_DS_TXBUF_CFG
@@ -4611,6 +4789,11 @@ typedef MLAN_PACK_START struct _MrvlIETypes_ExtBLECoex_Config_t
 #define TLV_TYPE_GWK_CIPHER (PROPRIETARY_TLV_BASE_ID + 0x92) // 0x0192
 /** TLV type : BSS Status */
 #define TLV_TYPE_BSS_STATUS (PROPRIETARY_TLV_BASE_ID + 0x93) // 0x0193
+
+#ifdef CONFIG_11AX
+/** TLV type: Extension ID for 11AX Capability */
+#define TLV_TYPE_EXTENSION_ID 0x00ff
+#endif
 
 /** TLV type : WPA3 SAE Passowrd */
 #define TLV_TYPE_UAP_WPA3_SAE_PASSWORD (PROPRIETARY_TLV_BASE_ID + 0x141) // 0x0241
@@ -5758,7 +5941,13 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_11N_CFG htcfg;
         /** HostCmd_DS_11AC_CFG */
         HostCmd_DS_11AC_CFG vhtcfg;
-        /** WMM status get */
+#ifdef CONFIG_11AX
+  	 /** HostCmd_DS_11AX_CFG */
+        HostCmd_DS_11AX_CFG axcfg;
+        /** HostCmd_DS_TWT_CFG */
+        HostCmd_DS_TWT_CFG twtcfg;
+#endif
+  	/** WMM status get */
         HostCmd_DS_WMM_GET_STATUS get_wmm_status;
         /** WMM ADDTS */
         HostCmd_DS_WMM_ADDTS_REQ add_ts;

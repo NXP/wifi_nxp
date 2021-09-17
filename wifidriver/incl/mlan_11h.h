@@ -3,7 +3,7 @@
  *  @brief This header file contains data structures and
  *  function declarations of 802.11h
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to

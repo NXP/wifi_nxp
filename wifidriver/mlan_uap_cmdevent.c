@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of AP mode command and event
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -2676,6 +2676,9 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             cmd_ptr->size    = wlan_cpu_to_le16(sizeof(HostCmd_TX_RATE_QUERY) + S_DS_GEN);
             pmpriv->tx_rate  = 0;
             ret              = MLAN_STATUS_SUCCESS;
+            break;
+        case HostCmd_CMD_11AC_CFG:
+            ret = wlan_cmd_11ac_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef WIFI_DIRECT_SUPPORT

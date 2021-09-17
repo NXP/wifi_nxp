@@ -1085,14 +1085,32 @@ struct _mlan_private
     t_u8 rxpd_htinfo;
 #else
     t_u8 tx_rate_info;
+    /*HE tx tone mode and DCM info*/
+    t_u8 ext_tx_rate_info;
     /** rxpd_htinfo */
     t_u8 rxpd_rate_info;
 #endif
+
+#ifdef CONFIG_11AX
+     /** UAP 11ax flag */
+    t_u8 is_11ax_enabled;
+    /** length of hw he capability */
+    t_u8 user_hecap_len;
+    /** user configured 802.11ax HE capability */
+    t_u8 user_he_cap[54];
+    /** length of hw he capability */
+    t_u8 user_2g_hecap_len;
+    /** user configured 802.11ax HE capability */
+    t_u8 user_2g_he_cap[54];
+#endif
+
     /** max amsdu size */
     t_u16 max_amsdu;
 #ifdef UAP_SUPPORT
     /** UAP 11n flag */
     t_u8 is_11n_enabled;
+     /** UAP 11ac flag */
+    t_u8 is_11ac_enabled;
 #endif /* UAP_SUPPORT */
 #ifdef UAP_SUPPORT
 #endif /* UAP_SUPPORT */
@@ -1144,7 +1162,7 @@ struct _mlan_private
     current_bss_params_t curr_bss_params;
 
     /** User selected bands */
-    t_u8 config_bands;
+    t_u16 config_bands;
 
     /** Beacon period */
     t_u16 beacon_period;
@@ -1285,6 +1303,7 @@ struct _mlan_private
     /** IP address */
     t_u8 ip_addr[IPADDR_LEN];
     t_u32 hotspot_cfg;
+    ExtCap_t ext_cap;
 };
 
 /** BA stream status */
@@ -1426,6 +1445,12 @@ struct _sta_node
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
     /** 11n flag */
     t_u8 is_11n_enabled;
+     /** 11ac flag */
+    t_u8 is_11ac_enabled;
+#ifdef CONFIG_11AX
+    t_u8 is_11ax_enabled;
+    IEEEtypes_HECap_t he_cap;
+#endif
     /** AMPDU STA */
     t_u8 ampdu_sta[MAX_NUM_TID];
     /** last rx_seq */
@@ -1724,6 +1749,8 @@ struct _mlan_adapter
 
     /** Firmware capability information */
     t_u32 fw_cap_info;
+    /** Extended firmware capability information */
+    t_u32 fw_cap_ext;
     /** pint_lock for interrupt handling */
     t_void *pint_lock;
     /** Interrupt status */
@@ -1892,11 +1919,11 @@ struct _mlan_adapter
     t_u8 *pbcn_buf_end;
 #endif /* CONFIG_MLAN_WMSDK */
     /** F/W supported bands */
-    t_u8 fw_bands;
+    t_u16 fw_bands;
     /** User selected band to start adhoc network */
-    t_u8 adhoc_start_band;
+    t_u16 adhoc_start_band;
     /** User selected bands */
-    t_u8 config_bands;
+    t_u16 config_bands;
     /** Pointer to channel list last sent to the firmware for scanning */
     ChanScanParamSet_t *pscan_channels;
 #ifndef CONFIG_MLAN_WMSDK
@@ -2011,6 +2038,18 @@ struct _mlan_adapter
     /** user dot 11ac_opermode_nss */
     t_u8 usr_dot_11ac_opermode_nss;
 
+#ifdef CONFIG_11AX
+    /** enable 11ax flag */
+    t_u8 enable_11ax;
+    /** length of hw he capability */
+    t_u8 hw_hecap_len;
+    /** 802.11ax HE capability */
+    t_u8 hw_he_cap[54];
+    /** length of hw 2.4G he capability */
+    t_u8 hw_2g_hecap_len;
+    /** 802.11ax 2.4G HE capability */
+    t_u8 hw_2g_he_cap[54];
+#endif
     /** max mgmt IE index in device */
     t_u16 max_mgmt_ie_index;
 #ifndef CONFIG_MLAN_WMSDK
@@ -2423,11 +2462,15 @@ t_void wlan_free_curr_bcn(IN mlan_private *pmpriv);
 
 /* Rate related functions */
 /** Convert index into data rate */
+#ifdef SD8801
 t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 ht_info);
+#else
+t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_info, t_u8 ext_rate_info);
+#endif
 /** Get active data rates */
 t_u32 wlan_get_active_data_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config_bands, WLAN_802_11_RATES rates);
 /** Get supported data rates */
-t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config_bands, WLAN_802_11_RATES rates);
+t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 config_bands, WLAN_802_11_RATES rates);
 /** Convert data rate to index */
 t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate);
 /** Check if rate is auto */
@@ -2614,7 +2657,8 @@ mlan_status wlan_set_drvdbg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioct
 #endif
 
 mlan_status wlan_misc_hotspot_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, OUT t_u8 **pptlv_out);
+
+void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **pptlv_out);
 
 mlan_status wlan_misc_otp_user_data(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 

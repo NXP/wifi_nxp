@@ -2,7 +2,7 @@
  *
  *  @brief This file provides the handling of command. It prepares command and sends it to firmware when it is ready
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to

@@ -2,7 +2,7 @@
  *
  *  @brief MLAN Interface
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -47,6 +47,9 @@
 #include "mlan_11n.h"
 #include "mlan_11h.h"
 #include "mlan_11ac.h"
+#ifdef CONFIG_11AX
+#include "mlan_11ax.h"
+#endif
 #include "mlan_decl.h"
 #include "mlan_11n_aggr.h"
 #include "mlan_sdio.h"

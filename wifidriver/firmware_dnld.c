@@ -39,13 +39,14 @@
 #include <wm_utils.h>
 #include <mlan_fw.h>
 #include "wifi-sdio.h"
-#include "wifi-internal.h"
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
 #include "sdmmc_config.h"
 #include "sdio.h"
 #include "firmware_dnld.h"
+
+extern t_u32 ioport_g;
 
 const uint8_t *wlanfw;
 
@@ -375,7 +376,7 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
             "XZ Compressed image found, start decompression,"
             " len: %d",
             firmwarelen);
-        ret = wlan_download_decomp_fw(st, wlanfw, firmwarelen, mlan_adap->ioport);
+        ret = wlan_download_decomp_fw(st, wlanfw, firmwarelen, ioport_g);
     }
     else
 #endif /* CONFIG_XZ_DECOMPRESSION */
@@ -384,7 +385,7 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
             "Un-compressed image found, start download,"
             " len: %d",
             firmwarelen);
-        ret = wlan_download_normal_fw(st, wlanfw, firmwarelen, mlan_adap->ioport);
+        ret = wlan_download_normal_fw(st, wlanfw, firmwarelen, ioport_g);
     }
 #if 0
 	if (st == WLAN_FW_IN_FLASH)

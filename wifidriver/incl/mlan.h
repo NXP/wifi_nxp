@@ -3,7 +3,7 @@
  *  @brief This file declares all APIs that will be called from MOAL module.
  *  It also defines the data structures used for APIs between MLAN and MOAL.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to

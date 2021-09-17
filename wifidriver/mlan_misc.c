@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Miscellaneous functions for MLAN module
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1418,10 +1418,10 @@ mlan_status wlan_misc_hotspot_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
  *
  *  @param pmpriv             A pointer to mlan_private structure
  *  @param pptlv_out          A pointer to TLV to fill in
- *
+ *  @param BSSDescriptor      A poiter to bss descriptor
  *  @return                   N/A
  */
-void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, OUT t_u8 **pptlv_out)
+void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **pptlv_out)
 {
     MrvlIETypes_ExtCap_t *pext_cap = MNULL;
 
@@ -1435,6 +1435,10 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, OUT t_u8 **pptlv_out)
         pext_cap->ext_cap.Interworking = 1;
     if (((t_u8)(pmpriv->hotspot_cfg >> 8)) & HOTSPOT_ENABLE_TDLS_IND)
         pext_cap->ext_cap.TDLSSupport = 1;
+#ifdef CONFIG_11AX
+    if (wlan_check_11ax_twt_supported(pmpriv, pbss_desc))
+        SET_EXTCAP_TWT_REQ(pmpriv->ext_cap);
+#endif
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);
 
     LEAVE();
@@ -1858,7 +1862,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 {
     t_s32 rate_index;
     t_u32 rate_format;
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     t_u32 nss;
 #endif
     t_u32 i;
@@ -1877,7 +1881,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
     ds_rate = (mlan_ds_rate *)pioctl_req->pbuf;
 
     rate_format = ds_rate->param.rate_cfg.rate_format;
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     nss = ds_rate->param.rate_cfg.nss;
 #endif
     rate_index = ds_rate->param.rate_cfg.rate;
@@ -1901,6 +1905,14 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             bitmap_rates[i] = 0x03FF; /* 10 Bits valid */
         /* Set to 0 as default value for all other NSSs */
         for (i = 12; i < NELEMENTS(bitmap_rates); i++)
+            bitmap_rates[i] = 0x0;
+#endif
+#ifdef CONFIG_11AX
+        /* [18..25] HE */
+        /* Support all HE-MCSs rate for NSS1 and 2 */
+        for (i = 18; i < 20; i++)
+            bitmap_rates[i] = 0x0FFF;
+        for (i = 20; i < NELEMENTS(bitmap_rates); i++)
             bitmap_rates[i] = 0x0;
 #endif
     }
@@ -1957,6 +1969,25 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             {
                 bitmap_rates[10 + nss - MLAN_RATE_NSS1] = (1 << rate_index);
                 ret                                     = MLAN_STATUS_SUCCESS;
+            }
+        }
+#endif
+#ifdef CONFIG_11AX
+        if (rate_format == MLAN_RATE_FORMAT_HE)
+        {
+            if (IS_FW_SUPPORT_11AX(pmadapter))
+            {
+                if ((rate_index <= MLAN_RATE_INDEX_MCS11) && (MLAN_RATE_NSS1 <= nss) && (nss <= MLAN_RATE_NSS2))
+                {
+                    bitmap_rates[18 + nss - MLAN_RATE_NSS1] = (1 << rate_index);
+                    ret = MLAN_STATUS_SUCCESS;
+                }
+            }
+            else
+            {
+                PRINTM(MERROR, "Error! Fw doesn't support 11AX\n");
+                LEAVE();
+                return MLAN_STATUS_FAILURE;
             }
         }
 #endif

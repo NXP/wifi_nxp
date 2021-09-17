@@ -2142,8 +2142,9 @@ mlan_status sd_wifi_init(enum wlan_type type,
                          const uint8_t *fw_ram_start_addr,
                          const size_t size)
 {
-    uint32_t ret = 0;
-    ret          = sd_wifi_preinit(st);
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+
+    ret = sd_wifi_preinit(st);
     if (ret == 0)
     {
         ret = sdio_init();
@@ -2193,3 +2194,12 @@ HostCmd_DS_COMMAND *wifi_get_command_buffer()
     /* First 4 bytes reserved for SDIO pkt header */
     return (HostCmd_DS_COMMAND *)(cmd_buf + INTF_HEADER_LEN);
 }
+
+/**
+ * Function to set mlan ioport.
+ */
+void set_ioport_inmlan(t_u32 port)
+{
+    mlan_adap->ioport = port;
+}
+

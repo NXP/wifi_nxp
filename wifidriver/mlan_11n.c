@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for 11n handling.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1362,8 +1362,8 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
     }
     else if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
     {
-        wlan_add_ext_capa_info_ie(pmpriv, ppbuffer);
-        ret_len += sizeof(MrvlIETypes_ExtCap_t);
+        wlan_add_ext_capa_info_ie(pmpriv, pbss_desc, ppbuffer);
+	ret_len += sizeof(MrvlIETypes_ExtCap_t);
     }
     if (orig_usr_dot_11n_dev_cap)
         pmadapter->usr_dot_11n_dev_cap_bg = orig_usr_dot_11n_dev_cap;

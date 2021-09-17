@@ -7,7 +7,7 @@
  *  implemented in mlan_join.c.  Process all start/join requests for
  *  both adhoc and infrastructure networks
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to

@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the IOCTL data structures and APIs.
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2021 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -541,6 +541,11 @@ typedef struct _mlan_ssid_bssid
     t_u32 idx;
 } mlan_ssid_bssid;
 
+#ifdef CONFIG_11AX
+#define MLAN_11AX_TWT_SETUP_SUBID 0x114
+#define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
+#endif
+
 #ifdef UAP_SUPPORT
 /** Maximum packet forward control value */
 #define MAX_PKT_FWD_CTRL 15
@@ -1030,6 +1035,10 @@ enum _mlan_band_def
     BAND_AN  = 16,
     BAND_GAC = 32,
     BAND_AAC = 64,
+#ifdef CONFIG_11AX
+    BAND_GAX = 256,
+    BAND_AAX = 512,
+#endif
 };
 
 /** NO secondary channel */
@@ -1849,10 +1858,18 @@ enum _mlan_rate_format
 #ifdef CONFIG_11AC
     MLAN_RATE_FORMAT_VHT,
 #endif
+#ifdef CONFIG_11AX
+    MLAN_RATE_FORMAT_HE,
+#endif
     MLAN_RATE_FORMAT_AUTO = 0xFF,
 };
+
+#ifdef CONFIG_11AX
+#define MAX_BITMAP_RATES_SIZE 26
+#else
 /** Max bitmap rates size */
 #define MAX_BITMAP_RATES_SIZE 18
+#endif
 
 /** Type definition of mlan_rate_cfg_t for MLAN_OID_RATE_CFG */
 typedef struct _mlan_rate_cfg_t
@@ -1865,7 +1882,7 @@ typedef struct _mlan_rate_cfg_t
     t_u32 rate;
     /** Rate Bitmap */
     t_u16 bitmap_rates[MAX_BITMAP_RATES_SIZE];
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     /** NSS */
     t_u32 nss;
 #endif
@@ -2541,6 +2558,13 @@ typedef struct _mlan_ds_11n_tx_cfg
     t_u32 misc_cfg;
 } mlan_ds_11n_tx_cfg, *pmlan_ds_11n_tx_cfg;
 
+/** Tx */
+#define MLAN_RADIO_TX MBIT(0)
+/** Rx */
+#define MLAN_RADIO_RX MBIT(1)
+/** Tx & Rx */
+#define MLAN_RADIO_TXRX (MLAN_RADIO_TX | MLAN_RADIO_RX)
+
 /** Type definition of mlan_ds_11ac_tx_cfg for MLAN_OID_11AC_CFG */
 typedef struct _mlan_ds_11ac_vht_cfg
 {
@@ -2563,6 +2587,96 @@ typedef struct _mlan_ds_11ac_vht_cfg
     /** Skip usr 11ac mcs cfg */
     t_bool skip_usr_11ac_mcs_cfg;
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
+
+#ifdef CONFIG_11AX
+/** Type definition of mlan_ds_11ax_he_capa for MLAN_OID_11AX_HE_CFG */
+typedef MLAN_PACK_START struct _mlan_ds_11ax_he_capa
+{
+    /** tlv id of he capability */
+    t_u16 id;
+    /** length of the payload */
+    t_u16 len;
+    /** extension id */
+    t_u8 ext_id;
+    /** he mac capability info */
+    t_u8 he_mac_cap[6];
+    /** he phy capability info */
+    t_u8 he_phy_cap[11];
+    /** he txrx mcs support for 80MHz */
+    t_u8 he_txrx_mcs_support[4];
+    /** val for txrx mcs 160Mhz or 80+80, and PPE thresholds */
+    t_u8 val[28];
+} MLAN_PACK_END mlan_ds_11ax_he_capa, *pmlan_ds_11ax_he_capa;
+
+/** Type definition of mlan_ds_11ax_he_cfg for MLAN_OID_11AX_HE_CFG */
+typedef struct _mlan_ds_11ax_he_cfg
+{
+    /** band, BIT0:2.4G, BIT1:5G*/
+    t_u8 band;
+    /** mlan_ds_11ax_he_capa */
+    mlan_ds_11ax_he_capa he_cap;
+} mlan_ds_11ax_he_cfg, *pmlan_ds_11ax_he_cfg;
+
+/** Type definition of mlan_ds_twt_setup for MLAN_OID_11AX_TWT_CFG */
+typedef MLAN_PACK_START struct _mlan_ds_twt_setup
+{
+    /** Implicit, 0: TWT session is explicit, 1: Session is implicit */
+    t_u8 implicit;
+    /** Announced, 0: Unannounced, 1: Announced TWT */
+    t_u8 announced;
+    /** Trigger Enabled, 0: Non-Trigger enabled, 1: Trigger enabled TWT */
+    t_u8 trigger_enabled;
+    /** TWT Information Disabled, 0: TWT info enabled, 1: TWT info disabled */
+    t_u8 twt_info_disabled;
+    /** Negotiation Type, 0: Future Individual TWT SP start time, 1: Next
+     * Wake TBTT time */
+    t_u8 negotiation_type;
+    /** TWT Wakeup Duration, time after which the TWT requesting STA can
+     * transition to doze state */
+    t_u8 twt_wakeup_duration;
+    /** Flow Identifier. Range: [0-7]*/
+    t_u8 flow_identifier;
+    /** Hard Constraint, 0: FW can tweak the TWT setup parameters if it is
+     *rejected by AP.
+     ** 1: Firmware should not tweak any parameters. */
+    t_u8 hard_constraint;
+    /** TWT Exponent, Range: [0-63] */
+    t_u8 twt_exponent;
+    /** TWT Mantissa Range: [0-sizeof(UINT16)] */
+    t_u16 twt_mantissa;
+    /** TWT Request Type, 0: REQUEST_TWT, 1: SUGGEST_TWT*/
+    t_u8 twt_request;
+} MLAN_PACK_END mlan_ds_twt_setup, *pmlan_ds_twt_setup;
+
+/** Type definition of mlan_ds_twt_teardown for MLAN_OID_11AX_TWT_CFG */
+typedef MLAN_PACK_START struct _mlan_ds_twt_teardown
+{
+    /** TWT Flow Identifier. Range: [0-7] */
+    t_u8 flow_identifier;
+    /** Negotiation Type. 0: Future Individual TWT SP start time, 1: Next
+     * Wake TBTT time */
+       t_u8 negotiation_type;
+       /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
+       t_u8 teardown_all_twt;
+} MLAN_PACK_END mlan_ds_twt_teardown, *pmlan_ds_twt_teardown;
+
+/** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */
+typedef MLAN_PACK_START struct _mlan_ds_twtcfg
+{
+    /** Sub-command */
+    t_u32 sub_command;
+    /** Sub-id */
+    t_u32 sub_id;
+    /** TWT Setup/Teardown configuration parameter */
+    union
+    {
+        /** TWT Setup config for Sub ID: MLAN_11AX_TWT_SETUP_SUBID */
+        mlan_ds_twt_setup twt_setup;
+        /** TWT Teardown config for Sub ID: MLAN_11AX_TWT_TEARDOWN_SUBID */
+        mlan_ds_twt_teardown twt_teardown;
+    } param;
+} MLAN_PACK_END mlan_ds_twtcfg, *pmlan_ds_twtcfg;
+#endif
 
 /** Type definition of mlan_ds_11n_amsdu_aggr_ctrl for
  * MLAN_OID_11N_AMSDU_AGGR_CTRL*/
