@@ -79,7 +79,7 @@ static int wlan_11n_form_amsdu_pkt(pmlan_adapter pmadapter, t_u8 *amsdu_buf, t_u
 
     ENTER();
 
-    (void)memcpy(pmadapter, amsdu_buf, data, (MLAN_MAC_ADDR_LENGTH)*2);
+    (void)__memcpy(pmadapter, amsdu_buf, data, (MLAN_MAC_ADDR_LENGTH)*2);
     dt_offset = amsdu_buf_offset = (MLAN_MAC_ADDR_LENGTH)*2;
 
     snap.snap_type = *(t_u16 *)(data + dt_offset);
@@ -87,10 +87,10 @@ static int wlan_11n_form_amsdu_pkt(pmlan_adapter pmadapter, t_u8 *amsdu_buf, t_u
     *(t_u16 *)(amsdu_buf + amsdu_buf_offset) =
         mlan_htons(pkt_len + LLC_SNAP_LEN - ((2 * MLAN_MAC_ADDR_LENGTH) + sizeof(t_u16)));
     amsdu_buf_offset += sizeof(t_u16);
-    (void)memcpy(pmadapter, amsdu_buf + amsdu_buf_offset, &snap, LLC_SNAP_LEN);
+    (void)__memcpy(pmadapter, amsdu_buf + amsdu_buf_offset, &snap, LLC_SNAP_LEN);
     amsdu_buf_offset += LLC_SNAP_LEN;
 
-    (void)memcpy(pmadapter, amsdu_buf + amsdu_buf_offset, data + dt_offset, pkt_len - dt_offset);
+    (void)__memcpy(pmadapter, amsdu_buf + amsdu_buf_offset, data + dt_offset, pkt_len - dt_offset);
     *pad = (((pkt_len + LLC_SNAP_LEN) & 3)) ? (4 - (((pkt_len + LLC_SNAP_LEN)) & 3)) : 0;
 
     LEAVE();
@@ -113,7 +113,7 @@ static void wlan_11n_form_amsdu_txpd(mlan_private *priv, mlan_buffer *mbuf)
     ENTER();
 
     ptx_pd = (TxPD *)mbuf->pbuf;
-    (void)memset(pmadapter, ptx_pd, 0, sizeof(TxPD));
+    (void)__memset(pmadapter, ptx_pd, 0, sizeof(TxPD));
 
     /*
      * Original priority has been overwritten
@@ -274,7 +274,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
         daggr_mbuf->in_ts_usec = pmbuf->in_ts_usec;
         daggr_mbuf->pparent    = pmbuf;
         daggr_mbuf->priority   = pmbuf->priority;
-        (void)memcpy(pmadapter, daggr_mbuf->pbuf + daggr_mbuf->data_offset, data, pkt_len);
+        (void)__memcpy(pmadapter, daggr_mbuf->pbuf + daggr_mbuf->data_offset, data, pkt_len);
 #else
         /* This part is customized for WMSDK. We do not need and will not
            allocate the mlan buffer. */

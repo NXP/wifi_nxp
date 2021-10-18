@@ -1731,8 +1731,8 @@ static void handle_sdio_cmd_read(mlan_adapter *pmadapter, t_u32 rx_len, t_u32 rx
 {
     t_u32 datalen = 0;
 
-    t_u32 pkt_type;
-    t_u8 *packet = NULL;
+    t_u32 pkt_type = 0;
+    t_u8 *packet   = NULL;
 
     _handle_sdio_cmd_read(pmadapter, &packet, &datalen, &pkt_type, rx_len, rx_blocks);
     if (pkt_type == MLAN_TYPE_CMD || pkt_type == MLAN_TYPE_EVENT)
@@ -2202,4 +2202,3 @@ void set_ioport_inmlan(t_u32 port)
 {
     mlan_adap->ioport = port;
 }
-

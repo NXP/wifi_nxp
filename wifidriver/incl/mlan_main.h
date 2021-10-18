@@ -566,7 +566,8 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MAX_PORT 16
 /** Multi port aggregation packet limit */
 #define SDIO_MP_AGGR_DEF_PKT_LIMIT (4)
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
 /** Maximum numbfer of registers to read for multiple port */
 #define MAX_MP_REGS                196
 /** Maximum port */
@@ -1092,7 +1093,7 @@ struct _mlan_private
 #endif
 
 #ifdef CONFIG_11AX
-     /** UAP 11ax flag */
+    /** UAP 11ax flag */
     t_u8 is_11ax_enabled;
     /** length of hw he capability */
     t_u8 user_hecap_len;
@@ -1109,7 +1110,7 @@ struct _mlan_private
 #ifdef UAP_SUPPORT
     /** UAP 11n flag */
     t_u8 is_11n_enabled;
-     /** UAP 11ac flag */
+    /** UAP 11ac flag */
     t_u8 is_11ac_enabled;
 #endif /* UAP_SUPPORT */
 #ifdef UAP_SUPPORT
@@ -1445,7 +1446,7 @@ struct _sta_node
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
     /** 11n flag */
     t_u8 is_11n_enabled;
-     /** 11ac flag */
+    /** 11ac flag */
     t_u8 is_11ac_enabled;
 #ifdef CONFIG_11AX
     t_u8 is_11ax_enabled;

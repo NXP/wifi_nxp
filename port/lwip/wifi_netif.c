@@ -497,7 +497,6 @@ int netif_get_bss_type()
 }
 #endif
 
-#if LWIP_IGMP
 /* Below struct is used for creating IGMP IPv4 multicast list */
 typedef struct group_ip4_addr
 {
@@ -607,9 +606,8 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
 done:
     return result;
 }
-#endif /* #if LWIP_IGMP */
 
-#if LWIP_IPV6 && LWIP_IPV6_MLD
+#ifdef CONFIG_IPV6
 /* Below struct is used for creating IGMP IPv6 multicast list */
 typedef struct group_ip6_addr
 {
@@ -719,7 +717,7 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
 done:
     return result;
 }
-#endif /* #if LWIP_IPV6 && LWIP_IPV6_MLD */
+#endif /* #ifdef CONFIG_IPV6 */
 
 /**
  * Should be called at the beginning of the program to set up the
@@ -766,11 +764,9 @@ err_t lwip_netif_init(struct netif *netif)
 #ifdef CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
-#if LWIP_IGMP
     netif_set_igmp_mac_filter(netif, igmp_mac_filter);
     netif->flags |= NETIF_FLAG_IGMP;
-#endif
-#if LWIP_IPV6 && LWIP_IPV6_MLD
+#ifdef CONFIG_IPV6
     netif_set_mld_mac_filter(netif, mld_mac_filter);
     netif->flags |= NETIF_FLAG_MLD6;
 #endif

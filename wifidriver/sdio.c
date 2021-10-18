@@ -281,7 +281,7 @@ mlan_status sdio_init()
 
 mlan_status sdio_ioport_init()
 {
-    int sdiostatus = MLAN_STATUS_SUCCESS; 
+    int sdiostatus = MLAN_STATUS_SUCCESS;
     /* this sets intmask on card and makes interrupts repeatable */
     sdiostatus = wlan_sdio_init_ioport();
 
@@ -302,5 +302,5 @@ mlan_status sdio_ioport_init()
  */
 __attribute__((weak)) void handle_cdint(int error)
 {
-	return;
+    return;
 }

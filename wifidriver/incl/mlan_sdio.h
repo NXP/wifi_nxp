@@ -53,7 +53,8 @@ Change log:
 #define HOST_INT_RSR_MASK 0x3F
 /** Host Control Registers : Host interrupt mask */
 #define HOST_INT_MASK_REG 0x02
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
 /** Host Control Registers : Host interrupt RSR */
 #define HOST_INT_RSR_REG  0x04
 #define HOST_INT_RSR_MASK 0xFF
@@ -68,7 +69,8 @@ Change log:
 /** Host Control Registers : Download host interrupt mask */
 #define DN_LD_HOST_INT_MASK (0x2U)
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Host Control Registers : Cmd port upload interrupt mask */
 #define CMD_PORT_UPLD_INT_MASK (0x1U << 6)
 /** Host Control Registers : Cmd port download interrupt mask */
@@ -83,7 +85,8 @@ Change log:
 /** Disable Host interrupt mask */
 #define HIM_DISABLE 0xff
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Host Control Registers : Host interrupt status */
 #define HOST_INT_STATUS_REG 0x0C
 /** Host Control Registers : Upload command port host interrupt status */
@@ -103,7 +106,8 @@ Change log:
 /** Port for registers */
 #define REG_PORT 0
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Port for memory */
 #define MEM_PORT 0x10000
 /** LSB of read bitmap */
@@ -141,7 +145,8 @@ Change log:
 #define RD_LEN_P0_U 0x09
 #endif
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /* Card Control Registers : Command port read length 0 */
 #define CMD_RD_LEN_0 0xC0
 /* Card Control Registers : Command port read length 1 */
@@ -186,7 +191,8 @@ Change log:
 #if defined(SD8801)
 /** Host Control Registers : Host transfer status */
 #define HOST_RESTART_REG 0x28
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
 /** Host Control Registers : Host transfer status */
 #define HOST_RESTART_REG 0x58
 #endif
@@ -199,7 +205,8 @@ Change log:
 #define DN_LD_RESTART (0x1U << 0)
 
 /* Card Control Registers */
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Card Control Registers : Card to host event */
 #define CARD_TO_HOST_EVENT_REG 0x5C
 /** Card Control Registers : Command port upload ready */
@@ -225,7 +232,8 @@ Change log:
 #if defined(SD8801)
 /** Card Control Registers : Host interrupt mask register */
 #define HOST_INTERRUPT_MASK_REG 0x34
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
 /** Card Control Registers : Host interrupt mask register */
 #define HOST_INTERRUPT_MASK_REG 0x60
 #endif
@@ -242,7 +250,8 @@ Change log:
 #if defined(SD8801)
 /** Card Control Registers : Card interrupt status register */
 #define CARD_INTERRUPT_STATUS_REG 0x38
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
 /** Card Control Registers : Card interrupt status register */
 #define CARD_INTERRUPT_STATUS_REG 0x64
 #endif
@@ -255,7 +264,8 @@ Change log:
 #if defined(SD8801)
 /** Card Control Registers : Card interrupt RSR register */
 #define CARD_INTERRUPT_RSR_REG 0x3c
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
 /** Card Control Registers : Card interrupt RSR register */
 #define CARD_INTERRUPT_RSR_REG 0x68
 #endif
@@ -265,7 +275,8 @@ Change log:
 /** Card Control Registers : Power down RSR */
 #define POWER_DOWN_RSR (0x1U << 3)
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Card Control Registers : SQ Read base address 0 register */
 #define READ_BASE_0_REG 0xf8
 /** Card Control Registers : SQ Read base address 1 register */
@@ -281,7 +292,8 @@ Change log:
 #define READ_BASE_1_REG 0x41
 #endif
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Card Control Registers : Card revision register */
 #define CARD_REVISION_REG 0xC8
 
@@ -370,7 +382,8 @@ Change log:
 #define CARD_MISC_CFG_REG   0x6C
 #endif
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 /** Card Control Registers : Debug 0 register */
 #define DEBUG_0_REG 0xDC
 /** Card Control Registers : SD test BUS 0 */

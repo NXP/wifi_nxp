@@ -317,7 +317,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv_mac              = (MrvlIEtypes_MacAddr_t *)tlv;
         tlv_mac->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_MAC_ADDRESS);
         tlv_mac->header.len  = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
-        (void)memcpy(pmpriv->adapter, tlv_mac->mac, &bss->param.bss_config.mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmpriv->adapter, tlv_mac->mac, &bss->param.bss_config.mac_addr, MLAN_MAC_ADDR_LENGTH);
         cmd_size += sizeof(MrvlIEtypes_MacAddr_t);
         tlv += sizeof(MrvlIEtypes_MacAddr_t);
     }
@@ -327,8 +327,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv_ssid              = (MrvlIEtypes_SsIdParamSet_t *)tlv;
         tlv_ssid->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
         tlv_ssid->header.len  = wlan_cpu_to_le16((t_u16)bss->param.bss_config.ssid.ssid_len);
-        (void)memcpy(pmpriv->adapter, tlv_ssid->ssid, bss->param.bss_config.ssid.ssid,
-                     bss->param.bss_config.ssid.ssid_len);
+        (void)__memcpy(pmpriv->adapter, tlv_ssid->ssid, bss->param.bss_config.ssid.ssid,
+                       bss->param.bss_config.ssid.ssid_len);
         cmd_size += sizeof(MrvlIEtypesHeader_t) + bss->param.bss_config.ssid.ssid_len;
         tlv += sizeof(MrvlIEtypesHeader_t) + bss->param.bss_config.ssid.ssid_len;
     }
@@ -570,8 +570,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             wlan_cpu_to_le16(2 + MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count);
         tlv_mac_filter->count       = (t_u8)bss->param.bss_config.filter.mac_count;
         tlv_mac_filter->filter_mode = (t_u8)bss->param.bss_config.filter.filter_mode;
-        (void)memcpy(pmpriv->adapter, tlv_mac_filter->mac_address, (t_u8 *)bss->param.bss_config.filter.mac_list,
-                     MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count);
+        (void)__memcpy(pmpriv->adapter, tlv_mac_filter->mac_address, (t_u8 *)bss->param.bss_config.filter.mac_list,
+                       MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count);
         cmd_size += sizeof(MrvlIEtypesHeader_t) + 2 + MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count;
         tlv += sizeof(MrvlIEtypesHeader_t) + 2 + MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count;
     }
@@ -699,8 +699,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_passphrase              = (MrvlIEtypes_passphrase_t *)tlv;
             tlv_passphrase->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_WPA_PASSPHRASE);
             tlv_passphrase->header.len  = (t_u16)wlan_cpu_to_le16(bss->param.bss_config.wpa_cfg.length);
-            (void)memcpy(pmpriv->adapter, tlv_passphrase->passphrase, bss->param.bss_config.wpa_cfg.passphrase,
-                         bss->param.bss_config.wpa_cfg.length);
+            (void)__memcpy(pmpriv->adapter, tlv_passphrase->passphrase, bss->param.bss_config.wpa_cfg.passphrase,
+                           bss->param.bss_config.wpa_cfg.length);
             cmd_size += sizeof(MrvlIEtypesHeader_t) + bss->param.bss_config.wpa_cfg.length;
             tlv += sizeof(MrvlIEtypesHeader_t) + bss->param.bss_config.wpa_cfg.length;
         }
@@ -710,8 +710,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_password              = (MrvlIEtypes_password_t *)tlv;
             tlv_password->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_WPA3_SAE_PASSWORD);
             tlv_password->header.len  = (t_u16)wlan_cpu_to_le16(bss->param.bss_config.wpa_cfg.password_length);
-            (void)memcpy(pmpriv->adapter, tlv_password->password, bss->param.bss_config.wpa_cfg.password,
-                         bss->param.bss_config.wpa_cfg.password_length);
+            (void)__memcpy(pmpriv->adapter, tlv_password->password, bss->param.bss_config.wpa_cfg.password,
+                           bss->param.bss_config.wpa_cfg.password_length);
             cmd_size += sizeof(MrvlIEtypesHeader_t) + bss->param.bss_config.wpa_cfg.password_length;
             tlv += sizeof(MrvlIEtypesHeader_t) + bss->param.bss_config.wpa_cfg.password_length;
         }
@@ -740,8 +740,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_wep_key->header.len  = wlan_cpu_to_le16(2 + bss->param.bss_config.wep_cfg.key0.length);
             tlv_wep_key->key_index   = bss->param.bss_config.wep_cfg.key0.key_index;
             tlv_wep_key->is_default  = bss->param.bss_config.wep_cfg.key0.is_default;
-            (void)memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key0.key,
-                         bss->param.bss_config.wep_cfg.key0.length);
+            (void)__memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key0.key,
+                           bss->param.bss_config.wep_cfg.key0.length);
             cmd_size += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key0.length;
             tlv += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key0.length;
         }
@@ -755,8 +755,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_wep_key->header.len  = wlan_cpu_to_le16(2 + bss->param.bss_config.wep_cfg.key1.length);
             tlv_wep_key->key_index   = bss->param.bss_config.wep_cfg.key1.key_index;
             tlv_wep_key->is_default  = bss->param.bss_config.wep_cfg.key1.is_default;
-            (void)memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key1.key,
-                         bss->param.bss_config.wep_cfg.key1.length);
+            (void)__memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key1.key,
+                           bss->param.bss_config.wep_cfg.key1.length);
             cmd_size += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key1.length;
             tlv += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key1.length;
         }
@@ -770,8 +770,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_wep_key->header.len  = wlan_cpu_to_le16(2 + bss->param.bss_config.wep_cfg.key2.length);
             tlv_wep_key->key_index   = bss->param.bss_config.wep_cfg.key2.key_index;
             tlv_wep_key->is_default  = bss->param.bss_config.wep_cfg.key2.is_default;
-            (void)memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key2.key,
-                         bss->param.bss_config.wep_cfg.key2.length);
+            (void)__memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key2.key,
+                           bss->param.bss_config.wep_cfg.key2.length);
             cmd_size += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key2.length;
             tlv += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key2.length;
         }
@@ -785,8 +785,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_wep_key->header.len  = wlan_cpu_to_le16(2 + bss->param.bss_config.wep_cfg.key3.length);
             tlv_wep_key->key_index   = bss->param.bss_config.wep_cfg.key3.key_index;
             tlv_wep_key->is_default  = bss->param.bss_config.wep_cfg.key3.is_default;
-            (void)memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key3.key,
-                         bss->param.bss_config.wep_cfg.key3.length);
+            (void)__memcpy(pmpriv->adapter, tlv_wep_key->key, bss->param.bss_config.wep_cfg.key3.key,
+                           bss->param.bss_config.wep_cfg.key3.length);
             cmd_size += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key3.length;
             tlv += sizeof(MrvlIEtypesHeader_t) + 2 + bss->param.bss_config.wep_cfg.key3.length;
         }
@@ -802,7 +802,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv_htcap->header.len         = wlan_cpu_to_le16(sizeof(HTCap_t));
         tlv_htcap->ht_cap.ht_cap_info = wlan_cpu_to_le16(bss->param.bss_config.ht_cap_info);
         tlv_htcap->ht_cap.ampdu_param = bss->param.bss_config.ampdu_param;
-        (void)memcpy(pmpriv->adapter, tlv_htcap->ht_cap.supported_mcs_set, bss->param.bss_config.supported_mcs_set, 16);
+        (void)__memcpy(pmpriv->adapter, tlv_htcap->ht_cap.supported_mcs_set, bss->param.bss_config.supported_mcs_set,
+                       16);
         tlv_htcap->ht_cap.ht_ext_cap = wlan_cpu_to_le16(bss->param.bss_config.ht_ext_cap);
         tlv_htcap->ht_cap.tx_bf_cap  = wlan_cpu_to_le32(bss->param.bss_config.tx_bf_cap);
         tlv_htcap->ht_cap.asel       = bss->param.bss_config.asel;
@@ -837,8 +838,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv_wmm_parameter              = (MrvlIEtypes_wmm_parameter_t *)tlv;
         tlv_wmm_parameter->header.type = wlan_cpu_to_le16(TLV_TYPE_VENDOR_SPECIFIC_IE);
         tlv_wmm_parameter->header.len  = wlan_cpu_to_le16(sizeof(bss->param.bss_config.wmm_para));
-        (void)memcpy(pmpriv->adapter, tlv_wmm_parameter->wmm_para.ouitype, bss->param.bss_config.wmm_para.ouitype,
-                     sizeof(tlv_wmm_parameter->wmm_para.ouitype));
+        (void)__memcpy(pmpriv->adapter, tlv_wmm_parameter->wmm_para.ouitype, bss->param.bss_config.wmm_para.ouitype,
+                       sizeof(tlv_wmm_parameter->wmm_para.ouitype));
         tlv_wmm_parameter->wmm_para.ouisubtype = bss->param.bss_config.wmm_para.ouisubtype;
         tlv_wmm_parameter->wmm_para.version    = bss->param.bss_config.wmm_para.version;
         tlv_wmm_parameter->wmm_para.qos_info   = bss->param.bss_config.wmm_para.qos_info;
@@ -997,7 +998,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
                             cptr->mgmt_subtype_mask = wlan_cpu_to_le16(cptr->mgmt_subtype_mask);
                             cptr->ie_length         = wlan_cpu_to_le16(cptr->ie_length);
                         }
-                        (void)memcpy(pmpriv->adapter, ie, cust_ie->ie_data_list, cust_ie->len);
+                        (void)__memcpy(pmpriv->adapter, ie, cust_ie->ie_data_list, cust_ie->len);
                     }
                     break;
 #endif /* CONFIG_MLAN_WMSDK */
@@ -1031,7 +1032,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
             mac_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_MAC_ADDRESS);
             mac_tlv->header.len  = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
             if (cmd_action == HostCmd_ACT_GEN_SET)
-                (void)memcpy(pmpriv->adapter, mac_tlv->mac, &bss->param.mac_addr, MLAN_MAC_ADDR_LENGTH);
+                (void)__memcpy(pmpriv->adapter, mac_tlv->mac, &bss->param.mac_addr, MLAN_MAC_ADDR_LENGTH);
 #endif /* CONFIG_MLAN_WMSDK */
         }
         else if ((bss->sub_command == MLAN_OID_UAP_BSS_CONFIG) && (cmd_action == HostCmd_ACT_GEN_SET))
@@ -1054,7 +1055,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
             ie_header->type = wlan_cpu_to_le16(TLV_TYPE_WAPI_IE);
             ie_header->len  = wlan_cpu_to_le16(misc->param.gen_ie.len);
             if (cmd_action == HostCmd_ACT_GEN_SET)
-                (void)memcpy(pmpriv->adapter, ie, misc->param.gen_ie.ie_data, misc->param.gen_ie.len);
+                (void)__memcpy(pmpriv->adapter, ie, misc->param.gen_ie.ie_data, misc->param.gen_ie.len);
         }
         if ((misc->sub_command == MLAN_OID_MISC_CUSTOM_IE) && (misc->param.cust_ie.type == TLV_TYPE_MGMT_IE))
         {
@@ -1081,7 +1082,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
                     cptr->ie_length         = wlan_cpu_to_le16(cptr->ie_length);
                 }
                 if (misc->param.cust_ie.len)
-                    (void)memcpy(pmpriv->adapter, ie, misc->param.cust_ie.ie_data_list, misc->param.cust_ie.len);
+                    (void)__memcpy(pmpriv->adapter, ie, misc->param.cust_ie.ie_data_list, misc->param.cust_ie.len);
             }
         }
 #endif /* CONFIG_MLAN_WMSDK */
@@ -1184,13 +1185,13 @@ static mlan_status wlan_uap_ret_cmd_ap_config(IN pmlan_private pmpriv,
         {
             case TLV_TYPE_UAP_MAC_ADDRESS:
                 tlv_mac = (MrvlIEtypes_MacAddr_t *)tlv;
-                (void)memcpy(pmpriv->adapter, &bss->param.bss_config.mac_addr, tlv_mac->mac, MLAN_MAC_ADDR_LENGTH);
+                (void)__memcpy(pmpriv->adapter, &bss->param.bss_config.mac_addr, tlv_mac->mac, MLAN_MAC_ADDR_LENGTH);
                 break;
             case TLV_TYPE_SSID:
                 tlv_ssid                            = (MrvlIEtypes_SsIdParamSet_t *)tlv;
                 bss->param.bss_config.ssid.ssid_len = MIN(MLAN_MAX_SSID_LENGTH, tlv_len);
-                (void)memcpy(pmpriv->adapter, bss->param.bss_config.ssid.ssid, tlv_ssid->ssid,
-                             MIN(MLAN_MAX_SSID_LENGTH, tlv_len));
+                (void)__memcpy(pmpriv->adapter, bss->param.bss_config.ssid.ssid, tlv_ssid->ssid,
+                               MIN(MLAN_MAX_SSID_LENGTH, tlv_len));
                 break;
             case TLV_TYPE_UAP_BEACON_PERIOD:
                 tlv_beacon_period                       = (MrvlIEtypes_beacon_period_t *)tlv;
@@ -1204,8 +1205,8 @@ static mlan_status wlan_uap_ret_cmd_ap_config(IN pmlan_private pmpriv,
                 break;
             case TLV_TYPE_RATES:
                 tlv_rates = (MrvlIEtypes_RatesParamSet_t *)tlv;
-                (void)memcpy(pmpriv->adapter, bss->param.bss_config.rates, tlv_rates->rates,
-                             MIN(MAX_DATA_RATES, tlv_len));
+                (void)__memcpy(pmpriv->adapter, bss->param.bss_config.rates, tlv_rates->rates,
+                               MIN(MAX_DATA_RATES, tlv_len));
                 break;
             case TLV_TYPE_UAP_TX_DATA_RATE:
                 tlv_txrate                         = (MrvlIEtypes_tx_rate_t *)tlv;
@@ -1288,9 +1289,9 @@ static mlan_status wlan_uap_ret_cmd_ap_config(IN pmlan_private pmpriv,
                 tlv_mac_filter                           = (MrvlIEtypes_mac_filter_t *)tlv;
                 bss->param.bss_config.filter.mac_count   = MIN(MAX_MAC_FILTER_NUM, tlv_mac_filter->count);
                 bss->param.bss_config.filter.filter_mode = tlv_mac_filter->filter_mode;
-                (void)memcpy(pmpriv->adapter, (t_u8 *)bss->param.bss_config.filter.mac_list,
-                             tlv_mac_filter->mac_address,
-                             MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count);
+                (void)__memcpy(pmpriv->adapter, (t_u8 *)bss->param.bss_config.filter.mac_list,
+                               tlv_mac_filter->mac_address,
+                               MLAN_MAC_ADDR_LENGTH * bss->param.bss_config.filter.mac_count);
                 break;
             case TLV_TYPE_UAP_CHAN_BAND_CONFIG:
                 tlv_chan_band                         = (MrvlIEtypes_channel_band_t *)tlv;
@@ -1342,14 +1343,14 @@ static mlan_status wlan_uap_ret_cmd_ap_config(IN pmlan_private pmpriv,
             case TLV_TYPE_UAP_WPA_PASSPHRASE:
                 tlv_passphrase                       = (MrvlIEtypes_passphrase_t *)tlv;
                 bss->param.bss_config.wpa_cfg.length = MIN(MLAN_PMK_HEXSTR_LENGTH, tlv_len);
-                (void)memcpy(pmpriv->adapter, bss->param.bss_config.wpa_cfg.passphrase, tlv_passphrase->passphrase,
-                             bss->param.bss_config.wpa_cfg.length);
+                (void)__memcpy(pmpriv->adapter, bss->param.bss_config.wpa_cfg.passphrase, tlv_passphrase->passphrase,
+                               bss->param.bss_config.wpa_cfg.length);
                 break;
 #ifdef WIFI_DIRECT_SUPPORT
             case TLV_TYPE_UAP_PSK:
                 tlv_psk = (MrvlIEtypes_psk_t *)tlv;
-                (void)memcpy(pmpriv->adapter, bss->param.bss_config.psk, tlv_psk->psk,
-                             MIN(MLAN_MAX_KEY_LENGTH, tlv_len));
+                (void)__memcpy(pmpriv->adapter, bss->param.bss_config.psk, tlv_psk->psk,
+                               MIN(MLAN_MAX_KEY_LENGTH, tlv_len));
                 break;
 #endif /* WIFI_DIRECT_SUPPORT */
             case TLV_TYPE_UAP_GRP_REKEY_TIME:
@@ -1372,7 +1373,7 @@ static mlan_status wlan_uap_ret_cmd_ap_config(IN pmlan_private pmpriv,
                     pkey->key_index  = tlv_wep_key->key_index;
                     pkey->is_default = tlv_wep_key->is_default;
                     pkey->length     = MIN(MAX_WEP_KEY_SIZE, (tlv_len - 2));
-                    (void)memcpy(pmpriv->adapter, pkey->key, tlv_wep_key->key, pkey->length);
+                    (void)__memcpy(pmpriv->adapter, pkey->key, tlv_wep_key->key, pkey->length);
                 }
                 break;
             case TLV_TYPE_UAP_PREAMBLE_CTL:
@@ -1388,8 +1389,8 @@ static mlan_status wlan_uap_ret_cmd_ap_config(IN pmlan_private pmpriv,
                 tlv_htcap                         = (MrvlIETypes_HTCap_t *)tlv;
                 bss->param.bss_config.ht_cap_info = wlan_le16_to_cpu(tlv_htcap->ht_cap.ht_cap_info);
                 bss->param.bss_config.ampdu_param = tlv_htcap->ht_cap.ampdu_param;
-                (void)memcpy(pmpriv->adapter, bss->param.bss_config.supported_mcs_set,
-                             tlv_htcap->ht_cap.supported_mcs_set, 16);
+                (void)__memcpy(pmpriv->adapter, bss->param.bss_config.supported_mcs_set,
+                               tlv_htcap->ht_cap.supported_mcs_set, 16);
                 bss->param.bss_config.ht_ext_cap = wlan_le16_to_cpu(tlv_htcap->ht_cap.ht_ext_cap);
                 bss->param.bss_config.tx_bf_cap  = wlan_le32_to_cpu(tlv_htcap->ht_cap.tx_bf_cap);
                 bss->param.bss_config.asel       = tlv_htcap->ht_cap.asel;
@@ -1485,7 +1486,7 @@ static mlan_status wlan_uap_ret_sys_config(IN pmlan_private pmpriv,
             {
                 if (TLV_TYPE_UAP_MAC_ADDRESS == wlan_le16_to_cpu(tlv->header.type))
                 {
-                    (void)memcpy(pmpriv->adapter, &bss->param.mac_addr, tlv->mac, MLAN_MAC_ADDR_LENGTH);
+                    (void)__memcpy(pmpriv->adapter, &bss->param.mac_addr, tlv->mac, MLAN_MAC_ADDR_LENGTH);
                 }
             }
             else if ((bss->sub_command == MLAN_OID_UAP_BSS_CONFIG) && (pioctl_buf->action == MLAN_ACT_GET))
@@ -1516,9 +1517,9 @@ static mlan_status wlan_uap_ret_sys_config(IN pmlan_private pmpriv,
                     travel_len += cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
                     resp_len -= cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
                 }
-                (void)memcpy(pmpriv->adapter, &misc->param.cust_ie, cust_ie,
-                             MIN(sizeof(mlan_ds_misc_custom_ie) - sizeof(tlvbuf_max_mgmt_ie),
-                                 (cust_ie->len + sizeof(MrvlIEtypesHeader_t))));
+                (void)__memcpy(pmpriv->adapter, &misc->param.cust_ie, cust_ie,
+                               MIN(sizeof(mlan_ds_misc_custom_ie) - sizeof(tlvbuf_max_mgmt_ie),
+                                   (cust_ie->len + sizeof(MrvlIEtypesHeader_t))));
                 if (max_mgmt_ie)
                 {
                     max_mgmt_ie->type = wlan_le16_to_cpu(max_mgmt_ie->type);
@@ -1532,10 +1533,10 @@ static mlan_status wlan_uap_ret_sys_config(IN pmlan_private pmpriv,
                             max_mgmt_ie->info[i].buf_count = wlan_le16_to_cpu(max_mgmt_ie->info[i].buf_count);
                         }
                         /* Append max_mgmt_ie TLV after custom_ie */
-                        (void)memcpy(pmpriv->adapter,
-                                     (t_u8 *)&misc->param.cust_ie + (cust_ie->len + sizeof(MrvlIEtypesHeader_t)),
-                                     max_mgmt_ie,
-                                     MIN(sizeof(tlvbuf_max_mgmt_ie), max_mgmt_ie->len + sizeof(MrvlIEtypesHeader_t)));
+                        (void)__memcpy(pmpriv->adapter,
+                                       (t_u8 *)&misc->param.cust_ie + (cust_ie->len + sizeof(MrvlIEtypesHeader_t)),
+                                       max_mgmt_ie,
+                                       MIN(sizeof(tlvbuf_max_mgmt_ie), max_mgmt_ie->len + sizeof(MrvlIEtypesHeader_t)));
                     }
                 }
             }
@@ -1546,7 +1547,7 @@ static mlan_status wlan_uap_ret_sys_config(IN pmlan_private pmpriv,
         switch (wlan_le16_to_cpu(tlv->header.type))
         {
             case TLV_TYPE_UAP_MAC_ADDRESS:
-                (void)memcpy(pmpriv->adapter, pmpriv->curr_addr, tlv->mac, MLAN_MAC_ADDR_LENGTH);
+                (void)__memcpy(pmpriv->adapter, pmpriv->curr_addr, tlv->mac, MLAN_MAC_ADDR_LENGTH);
                 break;
             case TLV_TYPE_UAP_CHAN_BAND_CONFIG:
                 tlv_cb                                = (MrvlIEtypes_channel_band_t *)tlv;
@@ -1733,7 +1734,7 @@ static mlan_status wlan_uap_ret_snmp_mib(IN pmlan_private pmpriv,
         {
             tlv_type = wlan_le16_to_cpu(*(t_u16 *)psnmp_oid);
             psnmp_oid += sizeof(t_u16) + sizeof(t_u16);
-            (void)memcpy(pmadapter, &data, psnmp_oid, sizeof(t_u32));
+            (void)__memcpy(pmadapter, &data, psnmp_oid, sizeof(t_u32));
             switch (tlv_type)
             {
                 case tkip_mic_failures:
@@ -1842,7 +1843,7 @@ static mlan_status wlan_uap_cmd_sta_deauth(pmlan_private pmpriv, IN HostCmd_DS_C
     ENTER();
     cmd->command = wlan_cpu_to_le16(HOST_CMD_APCMD_STA_DEAUTH);
     cmd->size    = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_STA_DEAUTH));
-    (void)memcpy(pmpriv->adapter, pcmd_sta_deauth->mac, deauth->mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmpriv->adapter, pcmd_sta_deauth->mac, deauth->mac_addr, MLAN_MAC_ADDR_LENGTH);
     pcmd_sta_deauth->reason = wlan_cpu_to_le16(deauth->reason_code);
     LEAVE();
     return MLAN_STATUS_SUCCESS;
@@ -1865,7 +1866,7 @@ static mlan_status wlan_uap_cmd_report_mic(pmlan_private pmpriv, IN HostCmd_DS_C
     ENTER();
     cmd->command = wlan_cpu_to_le16(HOST_CMD_APCMD_REPORT_MIC);
     cmd->size    = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_REPORT_MIC));
-    (void)memcpy(pmpriv->adapter, pcmd_report_mic->mac, pdata_buf, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmpriv->adapter, pcmd_report_mic->mac, pdata_buf, MLAN_MAC_ADDR_LENGTH);
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
@@ -1907,7 +1908,7 @@ static mlan_status wlan_uap_cmd_key_material(
         cmd->size = wlan_cpu_to_le16(sizeof(pkey_material->action) + S_DS_GEN);
         goto done;
     }
-    (void)memset(pmpriv->adapter, &pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSetV2_t));
+    (void)__memset(pmpriv->adapter, &pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSetV2_t));
     if (pkey->key_flags & KEY_FLAG_REMOVE_KEY)
     {
         pkey_material->action                 = wlan_cpu_to_le16(HostCmd_ACT_GEN_REMOVE);
@@ -1915,7 +1916,7 @@ static mlan_status wlan_uap_cmd_key_material(
         pkey_material->key_param_set.length   = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN);
         pkey_material->key_param_set.key_idx  = pkey->key_index & KEY_INDEX_MASK;
         pkey_material->key_param_set.key_info = KEY_INFO_MCAST_KEY | KEY_INFO_UCAST_KEY;
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.mac_addr, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.mac_addr, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(pkey_material->action));
         PRINTM(MCMND, "Remove Key\n");
@@ -1925,7 +1926,7 @@ static mlan_status wlan_uap_cmd_key_material(
     pkey_material->key_param_set.key_idx  = pkey->key_index & KEY_INDEX_MASK;
     pkey_material->key_param_set.type     = wlan_cpu_to_le16(TLV_TYPE_KEY_PARAM_V2);
     pkey_material->key_param_set.key_info = KEY_INFO_ENABLE_KEY;
-    (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.mac_addr, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.mac_addr, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
 #ifndef CONFIG_MLAN_WMSDK
     if (pkey->key_len <= MAX_WEP_KEY_SIZE)
     {
@@ -1936,8 +1937,8 @@ static mlan_status wlan_uap_cmd_key_material(
             pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
         pkey_material->key_param_set.key_info               = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
         pkey_material->key_param_set.key_params.wep.key_len = wlan_cpu_to_le16(pkey->key_len);
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.wep.key, pkey->key_material,
-                     pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.wep.key, pkey->key_material,
+                       pkey->key_len);
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(wep_param_t) + sizeof(pkey_material->action));
         PRINTM(MCMND, "Set WEP Key\n");
@@ -1961,10 +1962,10 @@ static mlan_status wlan_uap_cmd_key_material(
     if (pkey->is_wapi_key)
     {
         pkey_material->key_param_set.key_type = wlan_cpu_to_le16(KEY_TYPE_ID_WAPI);
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.wapi.pn, pkey->pn, PN_SIZE);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.wapi.pn, pkey->pn, PN_SIZE);
         pkey_material->key_param_set.key_params.wapi.key_len = MIN(WAPI_KEY_SIZE, wlan_cpu_to_le16(pkey->key_len));
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.wapi.key, pkey->key_material,
-                     MIN(WAPI_KEY_SIZE, pkey->key_len));
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.wapi.key, pkey->key_material,
+                       MIN(WAPI_KEY_SIZE, pkey->key_len));
         if (!pmpriv->sec_info.wapi_key_on)
             pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
         if (pkey->key_flags & KEY_FLAG_GROUP_KEY)
@@ -2003,11 +2004,11 @@ static mlan_status wlan_uap_cmd_key_material(
     {
 #endif
         if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
-            (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.pn, pkey->pn, SEQ_MAX_SIZE);
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.pn, pkey->pn, SEQ_MAX_SIZE);
         pkey_material->key_param_set.key_type               = wlan_cpu_to_le16(KEY_TYPE_ID_AES);
         pkey_material->key_param_set.key_params.aes.key_len = wlan_cpu_to_le16(pkey->key_len);
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.key, pkey->key_material,
-                     pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.key, pkey->key_material,
+                       pkey->key_len);
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(aes_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN + sizeof(aes_param) +
                                      sizeof(pkey_material->action));
@@ -2018,13 +2019,14 @@ static mlan_status wlan_uap_cmd_key_material(
     if (pkey->key_len == WPA_IGTK_KEY_LEN && (pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
     {
         if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
-            (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.ipn, pkey->pn, SEQ_MAX_SIZE);
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.ipn, pkey->pn,
+                           SEQ_MAX_SIZE);
         pkey_material->key_param_set.key_info &= ~KEY_INFO_MCAST_KEY;
         pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_MCAST_IGTK);
         pkey_material->key_param_set.key_type                    = KEY_TYPE_ID_AES_CMAC;
         pkey_material->key_param_set.key_params.cmac_aes.key_len = wlan_cpu_to_le16(pkey->key_len);
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.key, pkey->key_material,
-                     pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.key, pkey->key_material,
+                       pkey->key_len);
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(cmac_aes_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(cmac_aes_param) + sizeof(pkey_material->action));
@@ -2036,11 +2038,11 @@ static mlan_status wlan_uap_cmd_key_material(
     if (pkey->key_len == WPA_TKIP_KEY_LEN)
     {
         if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
-            (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.tkip.pn, pkey->pn, SEQ_MAX_SIZE);
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.tkip.pn, pkey->pn, SEQ_MAX_SIZE);
         pkey_material->key_param_set.key_type                = wlan_cpu_to_le16(KEY_TYPE_ID_TKIP);
         pkey_material->key_param_set.key_params.tkip.key_len = wlan_cpu_to_le16(pkey->key_len);
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.tkip.key, pkey->key_material,
-                     pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.tkip.key, pkey->key_material,
+                       pkey->key_len);
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(tkip_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(tkip_param) + sizeof(pkey_material->action));
@@ -2088,7 +2090,7 @@ static mlan_status wlan_uap_cmd_key_material(
         goto done;
     }
 
-    (void)memset(pmpriv->adapter, &pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSet_t));
+    (void)__memset(pmpriv->adapter, &pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSet_t));
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef WAPI
     if (pkey->is_wapi_key)
@@ -2124,14 +2126,14 @@ static mlan_status wlan_uap_cmd_key_material(
         }
         pkey_material->key_param_set.type    = wlan_cpu_to_le16(TLV_TYPE_KEY_MATERIAL);
         pkey_material->key_param_set.key_len = wlan_cpu_to_le16(WAPI_KEY_LEN);
-        (void)memcpy(pmpriv->adapter, &pkey_material->key_param_set.key[2], pkey->key_material, pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, &pkey_material->key_param_set.key[2], pkey->key_material, pkey->key_len);
         pkey_material->key_param_set.length = wlan_cpu_to_le16(WAPI_KEY_LEN + KEYPARAMSET_FIXED_LEN);
 
         key_param_len    = (WAPI_KEY_LEN + KEYPARAMSET_FIXED_LEN) + sizeof(MrvlIEtypesHeader_t);
         tlv              = (MrvlIEtypes_MacAddr_t *)((t_u8 *)&pkey_material->key_param_set + key_param_len);
         tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_STA_MAC_ADDRESS);
         tlv->header.len  = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
-        (void)memcpy(pmpriv->adapter, tlv->mac, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmpriv->adapter, tlv->mac, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
         cmd->size =
             wlan_cpu_to_le16(key_param_len + sizeof(pkey_material->action) + S_DS_GEN + sizeof(MrvlIEtypes_MacAddr_t));
         goto done;
@@ -2187,7 +2189,7 @@ static mlan_status wlan_uap_cmd_key_material(
     {
         pkey_material->key_param_set.type    = wlan_cpu_to_le16(TLV_TYPE_KEY_MATERIAL);
         pkey_material->key_param_set.key_len = wlan_cpu_to_le16(pkey->key_len);
-        (void)memcpy(pmpriv->adapter, pkey_material->key_param_set.key, pkey->key_material, pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key, pkey->key_material, pkey->key_len);
         pkey_material->key_param_set.length = wlan_cpu_to_le16((t_u16)pkey->key_len + KEYPARAMSET_FIXED_LEN);
         key_param_len                       = (pkey->key_len + KEYPARAMSET_FIXED_LEN) + sizeof(MrvlIEtypesHeader_t);
 #ifdef ENABLE_802_11W
@@ -2196,8 +2198,8 @@ static mlan_status wlan_uap_cmd_key_material(
         {
             cmac_param *param;
             param = (cmac_param *)pkey_material->key_param_set.key;
-            (void)memcpy(pmpriv->adapter, param->ipn, pkey->pn, SEQ_MAX_SIZE);
-            (void)memcpy(pmpriv->adapter, param->key, pkey->key_material, pkey->key_len);
+            (void)__memcpy(pmpriv->adapter, param->ipn, pkey->pn, SEQ_MAX_SIZE);
+            (void)__memcpy(pmpriv->adapter, param->key, pkey->key_material, pkey->key_len);
             pkey_material->key_param_set.key_len = wlan_cpu_to_le16((t_u16)sizeof(cmac_param));
             pkey_material->key_param_set.length  = wlan_cpu_to_le16((t_u16)sizeof(cmac_param) + KEYPARAMSET_FIXED_LEN);
             key_param_len = (t_u16)(sizeof(cmac_param) + KEYPARAMSET_FIXED_LEN) + sizeof(MrvlIEtypesHeader_t);
@@ -2207,7 +2209,7 @@ static mlan_status wlan_uap_cmd_key_material(
         tlv              = (MrvlIEtypes_MacAddr_t *)((t_u8 *)&pkey_material->key_param_set + key_param_len);
         tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_STA_MAC_ADDRESS);
         tlv->header.len  = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
-        (void)memcpy(pmpriv->adapter, tlv->mac, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmpriv->adapter, tlv->mac, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
         cmd->size =
             wlan_cpu_to_le16(key_param_len + sizeof(pkey_material->action) + S_DS_GEN + sizeof(MrvlIEtypes_MacAddr_t));
     }
@@ -2246,8 +2248,8 @@ static mlan_status wlan_uap_ret_sta_list(IN pmlan_private pmpriv,
         info->param.sta_list.sta_count = MIN(info->param.sta_list.sta_count, MAX_NUM_CLIENTS);
         for (i = 0; i < info->param.sta_list.sta_count; i++)
         {
-            (void)memcpy(pmpriv->adapter, info->param.sta_list.info[i].mac_address, tlv->mac_address,
-                         MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmpriv->adapter, info->param.sta_list.info[i].mac_address, tlv->mac_address,
+                           MLAN_MAC_ADDR_LENGTH);
             info->param.sta_list.info[i].power_mfg_status = tlv->power_mfg_status;
             info->param.sta_list.info[i].rssi             = tlv->rssi;
             tlv++;
@@ -2292,7 +2294,7 @@ static void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, s
         if (tlv_type == TLV_TYPE_UAP_MGMT_FRAME)
         {
             mgmt_tlv = (MrvlIETypes_MgmtFrameSet_t *)tlv;
-            (void)memcpy(priv->adapter, &frame_control, (t_u8 *)&(mgmt_tlv->frame_control), sizeof(frame_control));
+            (void)__memcpy(priv->adapter, &frame_control, (t_u8 *)&(mgmt_tlv->frame_control), sizeof(frame_control));
             frame_sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(frame_control);
             if ((mgmt_tlv->frame_control.type == 0) &&
                 ((frame_sub_type == SUBTYPE_ASSOC_REQUEST) || (frame_sub_type == SUBTYPE_REASSOC_REQUEST)))
@@ -2438,10 +2440,10 @@ static t_u32 wlan_update_wapi_info_tlv(pmlan_private priv, pmlan_buffer pevent)
         {
             wapi_tlv = (MrvlIEtypes_wapi_info_t *)tlv;
             DBG_HEXDUMP(MCMD_D, "Fw:multicast_PN", wapi_tlv->multicast_PN, PN_SIZE);
-            (void)memcpy(priv->adapter, (t_u8 *)tx_pn, wapi_tlv->multicast_PN, PN_SIZE);
+            (void)__memcpy(priv->adapter, (t_u8 *)tx_pn, wapi_tlv->multicast_PN, PN_SIZE);
             for (i = 0; i < 4; i++)
                 tx_pn[i] = mlan_ntohl(tx_pn[i]);
-            (void)memcpy(priv->adapter, wapi_tlv->multicast_PN, (t_u8 *)tx_pn, PN_SIZE);
+            (void)__memcpy(priv->adapter, wapi_tlv->multicast_PN, (t_u8 *)tx_pn, PN_SIZE);
             DBG_HEXDUMP(MCMD_D, "Host:multicast_PN", wapi_tlv->multicast_PN, PN_SIZE);
             break;
         }
@@ -2478,7 +2480,7 @@ static t_u32 wlan_process_sta_assoc_event(pmlan_private priv, mlan_event *pevent
     pevent->event_id  = MLAN_EVENT_ID_UAP_FW_STA_CONNECT;
     pevent->bss_index = priv->bss_index;
     pevent->event_len = MLAN_MAC_ADDR_LENGTH;
-    (void)memcpy(priv->adapter, pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset + 6, pevent->event_len);
+    (void)__memcpy(priv->adapter, pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset + 6, pevent->event_len);
     while (tlv_buf_left >= (int)sizeof(MrvlIEtypesHeader_t))
     {
         tlv_type = wlan_le16_to_cpu(tlv->type);
@@ -2491,7 +2493,7 @@ static t_u32 wlan_process_sta_assoc_event(pmlan_private priv, mlan_event *pevent
         if (tlv_type == TLV_TYPE_UAP_MGMT_FRAME)
         {
             mgmt_tlv = (MrvlIETypes_MgmtFrameSet_t *)tlv;
-            (void)memcpy(priv->adapter, &frame_control, (t_u8 *)&(mgmt_tlv->frame_control), sizeof(frame_control));
+            (void)__memcpy(priv->adapter, &frame_control, (t_u8 *)&(mgmt_tlv->frame_control), sizeof(frame_control));
             frame_sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(frame_control);
             if ((mgmt_tlv->frame_control.type == 0) &&
                 ((frame_sub_type == SUBTYPE_ASSOC_REQUEST) || (frame_sub_type == SUBTYPE_REASSOC_REQUEST)))
@@ -2503,7 +2505,7 @@ static t_u32 wlan_process_sta_assoc_event(pmlan_private priv, mlan_event *pevent
 
                 ie_len       = tlv_len - sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
-                (void)memcpy(priv->adapter, pevent->event_buf + pevent->event_len, assoc_req_ie, ie_len);
+                (void)__memcpy(priv->adapter, pevent->event_buf + pevent->event_len, assoc_req_ie, ie_len);
                 pevent->event_len += ie_len;
                 break;
             }
@@ -2888,7 +2890,7 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
         goto done;
     }
     pevent = (pmlan_event)event_buf;
-    (void)memset(pmadapter, &pevent->event_id, 0, sizeof(pevent->event_id));
+    (void)__memset(pmadapter, &pevent->event_id, 0, sizeof(pevent->event_id));
 
     if (eventcause != EVENT_PS_SLEEP && eventcause != EVENT_PS_AWAKE && pmbuf->data_len > sizeof(eventcause))
         DBG_HEXDUMP(MEVT_D, "EVENT", pmbuf->pbuf + pmbuf->data_offset, pmbuf->data_len);
@@ -2898,7 +2900,7 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
         case EVENT_MICRO_AP_BSS_START:
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_START\n");
             pmpriv->uap_bss_started = MTRUE;
-            (void)memcpy(pmadapter, pmpriv->curr_addr, pmadapter->event_body + 2, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmadapter, pmpriv->curr_addr, pmadapter->event_body + 2, MLAN_MAC_ADDR_LENGTH);
             pevent->event_id = MLAN_EVENT_ID_UAP_FW_BSS_START;
             wlan_check_uap_capability(pmpriv, pmbuf);
             break;
@@ -2936,7 +2938,7 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
         case EVENT_MICRO_AP_STA_ASSOC:
             PRINTM(MEVENT, "EVENT: MICRO_AP_STA_ASSOC\n");
             wlan_process_sta_assoc_event(pmpriv, pevent, pmbuf);
-            (void)memcpy(pmadapter, sta_addr, pmadapter->event_body + 2, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmadapter, sta_addr, pmadapter->event_body + 2, MLAN_MAC_ADDR_LENGTH);
             sta_ptr = wlan_add_station_entry(pmpriv, sta_addr);
             if (pmpriv->is_11n_enabled)
             {
@@ -2948,7 +2950,7 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
                     else
                         sta_ptr->ampdu_sta[i] = BA_STREAM_NOT_ALLOWED;
                 }
-                (void)memset(pmadapter, sta_ptr->rx_seq, 0xff, sizeof(sta_ptr->rx_seq));
+                (void)__memset(pmadapter, sta_ptr->rx_seq, 0xff, sizeof(sta_ptr->rx_seq));
             }
             if (pmpriv->sec_info.wapi_enabled)
                 wlan_update_wapi_info_tlv(pmpriv, pmbuf);
@@ -2960,9 +2962,10 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
             pevent->bss_index = pmpriv->bss_index;
             pevent->event_len = pmbuf->data_len - 4;
             /* skip event length field */
-            (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset + 4, pevent->event_len);
+            (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset + 4,
+                           pevent->event_len);
             wlan_recv_event(pmpriv, pevent->event_id, pevent);
-            (void)memcpy(pmadapter, sta_addr, pmadapter->event_body + 2, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmadapter, sta_addr, pmadapter->event_body + 2, MLAN_MAC_ADDR_LENGTH);
             if (pmpriv->is_11n_enabled)
             {
                 wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
@@ -3008,11 +3011,11 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
             PRINTM(MEVENT, "EVENT: Radar Detected\n");
 
             /* Send as passthru first, this event can cause other events */
-            (void)memset(pmadapter, event_buf, 0x00, MAX_EVENT_SIZE);
+            (void)__memset(pmadapter, event_buf, 0x00, MAX_EVENT_SIZE);
             pevent->bss_index = pmpriv->bss_index;
             pevent->event_id  = MLAN_EVENT_ID_DRV_PASSTHRU;
             pevent->event_len = pmbuf->data_len;
-            (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
+            (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
             wlan_recv_event(pmpriv, pevent->event_id, pevent);
             pevent->event_id = 0; // clear to avoid resending at end of fcn
 
@@ -3030,14 +3033,14 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
             break;
         case EVENT_CHANNEL_REPORT_RDY:
             PRINTM(MEVENT, "EVENT: Channel Report Ready\n");
-            (void)memset(pmadapter, event_buf, 0x00, MAX_EVENT_SIZE);
+            (void)__memset(pmadapter, event_buf, 0x00, MAX_EVENT_SIZE);
             /* Setup event buffer */
             pevent->bss_index = pmpriv->bss_index;
             pevent->event_id  = MLAN_EVENT_ID_FW_CHANNEL_REPORT_RDY;
             pevent->event_len = pmbuf->data_len - sizeof(eventcause);
             /* Copy event data */
-            (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset + sizeof(eventcause),
-                         pevent->event_len);
+            (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset + sizeof(eventcause),
+                           pevent->event_len);
             /* Handle / pass event data, and free buffer */
             ret = wlan_11h_handle_event_chanrpt_ready(pmpriv, pevent);
 
@@ -3060,7 +3063,7 @@ mlan_status wlan_ops_uap_process_event(IN t_void *priv)
     {
         pevent->bss_index = pmpriv->bss_index;
         pevent->event_len = pmbuf->data_len;
-        (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
+        (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
         wlan_recv_event(pmpriv, pevent->event_id, pevent);
     }
 done:

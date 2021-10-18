@@ -35,7 +35,8 @@ Change log:
 #define _MLAN_FW_H_
 
 /** Interface header length */
-#define INTF_HEADER_LEN 4
+#define INTF_HEADER_LEN                4
+#define WIFI_HOST_CMD_FIXED_HEADER_LEN 8
 
 /** Ethernet header */
 typedef struct
@@ -385,6 +386,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 /** TLV type : WPA3 SAE Password */
 #define TLV_TYPE_WPA3_SAE_PASSWORD (PROPRIETARY_TLV_BASE_ID + 0x141) // 0x0241
+
+/** TLV type : SAE PWE Derivation Mode */
+#define TLV_TYPE_WPA3_SAE_PWE_DERIVATION_MODE (PROPRIETARY_TLV_BASE_ID + 339) /* 0x0100 + 0x153 */
 
 /** TLV type: fw cap info */
 #define TLV_TYPE_FW_CAP_INFO (PROPRIETARY_TLV_BASE_ID + 318)
@@ -843,7 +847,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** ExtCap : ReSet support Ext TWT REQ */
 #define RESET_EXTCAP_TWT_REQ(ext_cap) (ext_cap.TWTReq = 0)
 
-typedef MLAN_PACK_START struct _MrvlIEtypes_He_cap_t {
+typedef MLAN_PACK_START struct _MrvlIEtypes_He_cap_t
+{
     /** Header type */
     t_u16 type;
     /** Header length */
@@ -865,7 +870,8 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_He_cap_t {
 } MLAN_PACK_END MrvlIEtypes_He_cap_t, *pMrvlIEtypes_he_cap_t;
 #endif
 
-typedef MLAN_PACK_START struct _MrvlIEtypes_Extension_t {
+typedef MLAN_PACK_START struct _MrvlIEtypes_Extension_t
+{
     /** Header type */
     t_u16 type;
     /** Header length */
@@ -1453,7 +1459,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_BW_CHANGE 0x00000048
 
 /* fixme: enable this macro check after it is enabled systemically */
-/* #ifdef WIFI_DIRECT_SUPPORT */
+/*  #ifdef WIFI_DIRECT_SUPPORT */
 /** WIFIDIRECT generic event */
 #define EVENT_WIFIDIRECT_GENERIC_EVENT 0x00000049
 /** WIFIDIRECT service discovery event */
@@ -3151,7 +3157,7 @@ typedef MLAN_PACK_START struct _HostCmd_TX_RATE_QUERY
      * BIT7-BIT4: resvd
      **/
     t_u8 ext_tx_rate_info;
-#endif   
+#endif
 } MLAN_PACK_END HostCmd_TX_RATE_QUERY;
 
 typedef MLAN_PACK_START struct _hs_config_param
@@ -3836,7 +3842,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CFG
     t_u8 val[];
 } MLAN_PACK_END HostCmd_DS_11AX_CFG;
 
-
 /** Type definition of hostcmd_twt_setup */
 typedef MLAN_PACK_START struct _hostcmd_twt_setup
 {
@@ -4353,6 +4358,18 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Password_t
     /** Passphrase */
     char password[1];
 } MLAN_PACK_END MrvlIEtypes_Password_t;
+
+/** MrvlIEtypes_SAE_PWE_Mode_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_SAE_PWE_Mode_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** WPA3 SAE mechanism for PWE derivation */
+    char pwe[1];
+} MLAN_PACK_END MrvlIEtypes_SAE_PWE_Mode_t;
+
+/** SAE H2E capability bit in RSNX */
+#define SAE_H2E_BIT 5
 
 /* unicastCipher -
  *      Bit 0   : RFU
@@ -5833,6 +5850,7 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END MrvlIEtypes_LinkQualityThreshold_t;
 
 /** HostCmd_DS_COMMAND */
+/* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 {
     /** Command Header : Command */
@@ -5942,12 +5960,12 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** HostCmd_DS_11AC_CFG */
         HostCmd_DS_11AC_CFG vhtcfg;
 #ifdef CONFIG_11AX
-  	 /** HostCmd_DS_11AX_CFG */
+        /** HostCmd_DS_11AX_CFG */
         HostCmd_DS_11AX_CFG axcfg;
         /** HostCmd_DS_TWT_CFG */
         HostCmd_DS_TWT_CFG twtcfg;
 #endif
-  	/** WMM status get */
+        /** WMM status get */
         HostCmd_DS_WMM_GET_STATUS get_wmm_status;
         /** WMM ADDTS */
         HostCmd_DS_WMM_ADDTS_REQ add_ts;

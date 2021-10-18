@@ -168,13 +168,13 @@ static t_u32 wlan_11h_convert_ieee_to_mrvl_ie(mlan_adapter *pmadapter, t_u8 *pou
     }
 
     /* Copy the header to the buffer pointer */
-    (void)memcpy(pmadapter, ptmp_buf, &mrvl_ie_hdr, sizeof(mrvl_ie_hdr));
+    (void)__memcpy(pmadapter, ptmp_buf, &mrvl_ie_hdr, sizeof(mrvl_ie_hdr));
 
     /* Increment the temp buffer pointer by the size appended */
     ptmp_buf += sizeof(mrvl_ie_hdr);
 
     /* Append the data section of the IE; length given by the IEEE IE length */
-    (void)memcpy(pmadapter, ptmp_buf, pin_ie + 2, pin_ie[1]);
+    (void)__memcpy(pmadapter, ptmp_buf, pin_ie + 2, pin_ie[1]);
 
     LEAVE();
     /* Return the number of bytes appended to pout_buf */
@@ -210,18 +210,18 @@ static t_u32 wlan_11h_set_ibss_dfs_ie(mlan_private *priv, IEEEtypes_IBSS_DFS_t *
 
     ENTER();
 
-    (void)memset(adapter, pdfs, 0x00, sizeof(IEEEtypes_IBSS_DFS_t));
+    (void)__memset(adapter, pdfs, 0x00, sizeof(IEEEtypes_IBSS_DFS_t));
 
     /*
      * A basic measurement report is included with each channel in the
      *   map field.  Initial value for the map for each supported channel
      *   is with only the unmeasured bit set.
      */
-    (void)memset(adapter, &initial_map, 0x00, sizeof(initial_map));
+    (void)__memset(adapter, &initial_map, 0x00, sizeof(initial_map));
     initial_map.unmeasured = 1;
 
     /* Set the DFS Owner and recovery interval fields */
-    (void)memcpy(adapter, pdfs->dfs_owner, priv->curr_addr, sizeof(pdfs->dfs_owner));
+    (void)__memcpy(adapter, pdfs->dfs_owner, priv->curr_addr, sizeof(pdfs->dfs_owner));
     pdfs->dfs_recovery_interval = WLAN_11H_DEFAULT_DFS_RECOVERY_INTERVAL;
 
     for (; (num_chans < adapter->parsed_region_chan.no_of_chan) && (num_chans < WLAN_11H_MAX_IBSS_DFS_CHANNELS);
@@ -252,7 +252,7 @@ static t_u32 wlan_11h_set_ibss_dfs_ie(mlan_private *priv, IEEEtypes_IBSS_DFS_t *
     }
 
     /* Ensure the element is zeroed out for an invalid return */
-    (void)memset(adapter, pdfs, 0x00, sizeof(IEEEtypes_IBSS_DFS_t));
+    (void)__memset(adapter, pdfs, 0x00, sizeof(IEEEtypes_IBSS_DFS_t));
 
     LEAVE();
     return 0;
@@ -283,7 +283,7 @@ static t_u16 wlan_11h_set_supp_channels_ie(mlan_private *priv, t_u8 band, IEEEty
     t_u8 cfp_bg, cfp_a;
 
     ENTER();
-    (void)memset(priv->adapter, psup_chan, 0x00, sizeof(IEEEtypes_SupportedChannels_t));
+    (void)__memset(priv->adapter, psup_chan, 0x00, sizeof(IEEEtypes_SupportedChannels_t));
 
     cfp_bg = cfp_a = priv->adapter->region_code;
     if (!priv->adapter->region_code)
@@ -406,7 +406,7 @@ static mlan_status wlan_11h_cmd_tpc_request(mlan_private *priv, HostCmd_DS_COMMA
 {
     ENTER();
 
-    (void)memcpy(priv->adapter, &pcmd_ptr->params.tpc_req, pinfo_buf, sizeof(HostCmd_DS_802_11_TPC_ADAPT_REQ));
+    (void)__memcpy(priv->adapter, &pcmd_ptr->params.tpc_req, pinfo_buf, sizeof(HostCmd_DS_802_11_TPC_ADAPT_REQ));
 
     pcmd_ptr->params.tpc_req.req.timeout = wlan_cpu_to_le16(pcmd_ptr->params.tpc_req.req.timeout);
 
@@ -478,7 +478,7 @@ static mlan_status wlan_11h_cmd_chan_sw_ann(mlan_private *priv, HostCmd_DS_COMMA
     /* Converted to little endian in wlan_11h_cmd_process */
     pcmd_ptr->size = sizeof(HostCmd_DS_802_11_CHAN_SW_ANN) + S_DS_GEN;
 
-    (void)memcpy(priv->adapter, &pcmd_ptr->params.chan_sw_ann, pch_sw_ann, sizeof(HostCmd_DS_802_11_CHAN_SW_ANN));
+    (void)__memcpy(priv->adapter, &pcmd_ptr->params.chan_sw_ann, pch_sw_ann, sizeof(HostCmd_DS_802_11_CHAN_SW_ANN));
 
     PRINTM(MINFO, "11h: ChSwAnn: %#x-%u, Seq=%u, Ret=%u\n", pcmd_ptr->command, pcmd_ptr->size, pcmd_ptr->seq_num,
            pcmd_ptr->result);
@@ -520,7 +520,7 @@ static mlan_status wlan_11h_cmd_chan_rpt_req(mlan_private *priv, HostCmd_DS_COMM
     /* Converted to little endian in wlan_11h_cmd_process */
     pcmd_ptr->size = sizeof(HostCmd_DS_CHAN_RPT_REQ) + S_DS_GEN;
 
-    (void)memcpy(priv->adapter, &pcmd_ptr->params.chan_rpt_req, pchan_rpt_req, sizeof(HostCmd_DS_CHAN_RPT_REQ));
+    (void)__memcpy(priv->adapter, &pcmd_ptr->params.chan_rpt_req, pchan_rpt_req, sizeof(HostCmd_DS_CHAN_RPT_REQ));
 
     /* if DFS channel, add BASIC report TLV, and set radar bit */
     if (wlan_11h_radar_detect_required(priv, pchan_rpt_req->chan_desc.chanNum))
@@ -528,7 +528,7 @@ static mlan_status wlan_11h_cmd_chan_rpt_req(mlan_private *priv, HostCmd_DS_COMM
         ptlv_basic              = (MrvlIEtypes_ChanRpt11hBasic_t *)(((t_u8 *)(pcmd_ptr)) + pcmd_ptr->size);
         ptlv_basic->Header.type = wlan_cpu_to_le16(TLV_TYPE_CHANRPT_11H_BASIC);
         ptlv_basic->Header.len  = wlan_cpu_to_le16(sizeof(MeasRptBasicMap_t));
-        (void)memset(priv->adapter, &ptlv_basic->map, 0, sizeof(MeasRptBasicMap_t));
+        (void)__memset(priv->adapter, &ptlv_basic->map, 0, sizeof(MeasRptBasicMap_t));
         ptlv_basic->map.radar = 1;
         pcmd_ptr->size += sizeof(MrvlIEtypes_ChanRpt11hBasic_t);
     }
@@ -639,14 +639,14 @@ static t_u32 wlan_11h_process_infra_join(
         /* Wrap the supported channels IE with a passthrough TLV type */
         ie_header.type = wlan_cpu_to_le16(TLV_TYPE_PASSTHROUGH);
         ie_header.len  = sup_chan_len;
-        (void)memcpy(priv->adapter, *ppbuffer, &ie_header, sizeof(ie_header));
+        (void)__memcpy(priv->adapter, *ppbuffer, &ie_header, sizeof(ie_header));
 
         /* Increment the return size and the return buffer pointer param */
         *ppbuffer += sizeof(ie_header);
         ret_len += sizeof(ie_header);
 
         /* Copy the supported channels IE to the output buf, advance pointer */
-        (void)memcpy(priv->adapter, *ppbuffer, &sup_chan_ie, sup_chan_len);
+        (void)__memcpy(priv->adapter, *ppbuffer, &sup_chan_ie, sup_chan_len);
         *ppbuffer += sup_chan_len;
         ret_len += sup_chan_len;
     }
@@ -698,7 +698,7 @@ static t_u32 wlan_11h_process_adhoc(mlan_private *priv,
         /*
          * Copy the DFS Owner/Recovery Interval from the BSS we are joining
          */
-        (void)memcpy(adapter, dfs_elem.dfs_owner, p11h_bss_info->ibss_dfs.dfs_owner, sizeof(dfs_elem.dfs_owner));
+        (void)__memcpy(adapter, dfs_elem.dfs_owner, p11h_bss_info->ibss_dfs.dfs_owner, sizeof(dfs_elem.dfs_owner));
         dfs_elem.dfs_recovery_interval = p11h_bss_info->ibss_dfs.dfs_recovery_interval;
     }
 
@@ -1055,14 +1055,14 @@ static mlan_status wlan_11h_prepare_custom_ie_chansw(IN mlan_adapter *pmadapter,
     pds_misc_cfg = (mlan_ds_misc_cfg *)((t_u8 *)pioctl_req + sizeof(mlan_ioctl_req));
 
     /* prepare mlan_ioctl_req */
-    (void)memset(pmadapter, pioctl_req, 0x00, sizeof(mlan_ioctl_req));
+    (void)__memset(pmadapter, pioctl_req, 0x00, sizeof(mlan_ioctl_req));
     pioctl_req->req_id  = MLAN_IOCTL_MISC_CFG;
     pioctl_req->action  = MLAN_ACT_SET;
     pioctl_req->pbuf    = (t_u8 *)pds_misc_cfg;
     pioctl_req->buf_len = sizeof(mlan_ds_misc_cfg);
 
     /* prepare mlan_ds_misc_cfg */
-    (void)memset(pmadapter, pds_misc_cfg, 0x00, sizeof(mlan_ds_misc_cfg));
+    (void)__memset(pmadapter, pds_misc_cfg, 0x00, sizeof(mlan_ds_misc_cfg));
     pds_misc_cfg->sub_command        = MLAN_OID_MISC_CUSTOM_IE;
     pds_misc_cfg->param.cust_ie.type = TLV_TYPE_MGMT_IE;
     pds_misc_cfg->param.cust_ie.len  = (sizeof(custom_ie) - MAX_IE_SIZE);
@@ -1265,7 +1265,7 @@ static mlan_status wlan_11h_add_dfs_timestamp(mlan_adapter *pmadapter, t_u8 repr
             return MLAN_STATUS_FAILURE;
         }
 
-        (void)memset(pmadapter, (t_u8 *)pdfs_ts, 0, sizeof(wlan_dfs_timestamp_t));
+        (void)__memset(pmadapter, (t_u8 *)pdfs_ts, 0, sizeof(wlan_dfs_timestamp_t));
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &pmadapter->state_dfs.dfs_ts_head, (pmlan_linked_list)pdfs_ts,
                                MNULL, MNULL);
@@ -1525,7 +1525,7 @@ t_void wlan_11h_init(mlan_adapter *adapter)
     pstate_11h->is_slave_radar_det_active       = MFALSE;
 
     /* Initialize quiet_ie */
-    (void)memset(adapter, pquiet, 0, sizeof(IEEEtypes_Quiet_t));
+    (void)__memset(adapter, pquiet, 0, sizeof(IEEEtypes_Quiet_t));
     pquiet->element_id = QUIET;
     pquiet->len        = (sizeof(pquiet->quiet_count) + sizeof(pquiet->quiet_period) + sizeof(pquiet->quiet_duration) +
                    sizeof(pquiet->quiet_offset));
@@ -1545,7 +1545,7 @@ t_void wlan_11h_init(mlan_adapter *adapter)
     pstate_rdh->new_channel     = 0;
     pstate_rdh->uap_band_cfg    = 0;
     pstate_rdh->max_bcn_dtim_ms = 0;
-    (void)memset(adapter, pstate_rdh->priv_list, 0, sizeof(pstate_rdh->priv_list));
+    (void)__memset(adapter, pstate_rdh->priv_list, 0, sizeof(pstate_rdh->priv_list));
 
 #ifdef DFS_TESTING_SUPPORT
     /* Initialize DFS testing struct */
@@ -1776,7 +1776,7 @@ t_s32 wlan_11h_issue_radar_detect(mlan_private *priv, pmlan_ioctl_req pioctl_req
     if (ret)
     {
         /* Prepare and issue CMD_CHAN_RPT_REQ. */
-        (void)memset(priv->adapter, &chan_rpt_req, 0x00, sizeof(chan_rpt_req));
+        (void)__memset(priv->adapter, &chan_rpt_req, 0x00, sizeof(chan_rpt_req));
 
         chan_rpt_req.chan_desc.startFreq = START_FREQ_11A_BAND;
         chan_rpt_req.chan_desc.chanWidth = 0; // 1 for 40Mhz
@@ -2128,8 +2128,8 @@ mlan_status wlan_11h_cmdresp_process(mlan_private *priv, const HostCmd_DS_COMMAN
     {
         case HostCmd_CMD_802_11_TPC_ADAPT_REQ:
             HEXDUMP("11h: TPC REQUEST Rsp:", (t_u8 *)resp, (t_u32)resp->size);
-            (void)memcpy(priv->adapter, priv->adapter->curr_cmd->pdata_buf, &resp->params.tpc_req,
-                         sizeof(HostCmd_DS_802_11_TPC_ADAPT_REQ));
+            (void)__memcpy(priv->adapter, priv->adapter->curr_cmd->pdata_buf, &resp->params.tpc_req,
+                           sizeof(HostCmd_DS_802_11_TPC_ADAPT_REQ));
             break;
 
         case HostCmd_CMD_802_11_TPC_INFO:
@@ -2177,8 +2177,8 @@ mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter, wlan_11h_bss_info
         case POWER_CONSTRAINT:
             PRINTM(MINFO, "11h: Power Constraint IE Found\n");
             p11h_bss_info->sensed_11h = MTRUE;
-            (void)memcpy(pmadapter, &p11h_bss_info->power_constraint, pelement,
-                         MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_PowerConstraint_t)));
+            (void)__memcpy(pmadapter, &p11h_bss_info->power_constraint, pelement,
+                           MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_PowerConstraint_t)));
             p11h_bss_info->power_constraint.len =
                 MIN(element_len, (sizeof(IEEEtypes_PowerConstraint_t) - sizeof(IEEEtypes_Header_t)));
             break;
@@ -2186,8 +2186,8 @@ mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter, wlan_11h_bss_info
         case POWER_CAPABILITY:
             PRINTM(MINFO, "11h: Power Capability IE Found\n");
             p11h_bss_info->sensed_11h = MTRUE;
-            (void)memcpy(pmadapter, &p11h_bss_info->power_capability, pelement,
-                         MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_PowerCapability_t)));
+            (void)__memcpy(pmadapter, &p11h_bss_info->power_capability, pelement,
+                           MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_PowerCapability_t)));
             p11h_bss_info->power_capability.len =
                 MIN(element_len, (sizeof(IEEEtypes_PowerCapability_t) - sizeof(IEEEtypes_Header_t)));
             break;
@@ -2195,8 +2195,8 @@ mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter, wlan_11h_bss_info
         case TPC_REPORT:
             PRINTM(MINFO, "11h: Tpc Report IE Found\n");
             p11h_bss_info->sensed_11h = MTRUE;
-            (void)memcpy(pmadapter, &p11h_bss_info->tpc_report, pelement,
-                         MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_TPCReport_t)));
+            (void)__memcpy(pmadapter, &p11h_bss_info->tpc_report, pelement,
+                           MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_TPCReport_t)));
             p11h_bss_info->tpc_report.len =
                 MIN(element_len, (sizeof(IEEEtypes_TPCReport_t) - sizeof(IEEEtypes_Header_t)));
             break;
@@ -2204,8 +2204,8 @@ mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter, wlan_11h_bss_info
         case CHANNEL_SWITCH_ANN:
             PRINTM(MINFO, "11h: Channel Switch Ann IE Found\n");
             p11h_bss_info->sensed_11h = MTRUE;
-            (void)memcpy(pmadapter, &p11h_bss_info->chan_switch_ann, pelement,
-                         MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_ChanSwitchAnn_t)));
+            (void)__memcpy(pmadapter, &p11h_bss_info->chan_switch_ann, pelement,
+                           MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_ChanSwitchAnn_t)));
             p11h_bss_info->chan_switch_ann.len =
                 MIN(element_len, (sizeof(IEEEtypes_ChanSwitchAnn_t) - sizeof(IEEEtypes_Header_t)));
             break;
@@ -2213,16 +2213,16 @@ mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter, wlan_11h_bss_info
         case QUIET:
             PRINTM(MINFO, "11h: Quiet IE Found\n");
             p11h_bss_info->sensed_11h = MTRUE;
-            (void)memcpy(pmadapter, &p11h_bss_info->quiet, pelement,
-                         MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_Quiet_t)));
+            (void)__memcpy(pmadapter, &p11h_bss_info->quiet, pelement,
+                           MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_Quiet_t)));
             p11h_bss_info->quiet.len = MIN(element_len, (sizeof(IEEEtypes_Quiet_t) - sizeof(IEEEtypes_Header_t)));
             break;
 
         case IBSS_DFS:
             PRINTM(MINFO, "11h: Ibss Dfs IE Found\n");
             p11h_bss_info->sensed_11h = MTRUE;
-            (void)memcpy(pmadapter, &p11h_bss_info->ibss_dfs, pelement,
-                         MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_IBSS_DFS_t)));
+            (void)__memcpy(pmadapter, &p11h_bss_info->ibss_dfs, pelement,
+                           MIN((element_len + sizeof(IEEEtypes_Header_t)), sizeof(IEEEtypes_IBSS_DFS_t)));
             p11h_bss_info->ibss_dfs.len = MIN(element_len, (sizeof(IEEEtypes_IBSS_DFS_t) - sizeof(IEEEtypes_Header_t)));
             break;
 
@@ -2504,7 +2504,7 @@ mlan_status wlan_11h_radar_detected_handling(mlan_adapter *pmadapter)
             PRINTM(MCMD_D, "%s(): stage(%d)=%s\n", __FUNCTION__, pstate_rdh->stage, RDH_stage_str[pstate_rdh->stage]);
 
             /* get active interfaces */
-            (void)memset(pmadapter, pstate_rdh->priv_list, 0x00, sizeof(pstate_rdh->priv_list));
+            (void)__memset(pmadapter, pstate_rdh->priv_list, 0x00, sizeof(pstate_rdh->priv_list));
             pstate_rdh->priv_list_count = wlan_get_privs_by_cond(pmadapter, wlan_is_intf_active, pstate_rdh->priv_list);
             PRINTM(MCMD_D, "%s():  priv_list_count = %d\n", __FUNCTION__, pstate_rdh->priv_list_count);
             for (i = 0; i < pstate_rdh->priv_list_count; i++)
@@ -2998,8 +2998,8 @@ mlan_status wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter)
                 new_event_cause |= ((GET_BSS_NUM(pmpriv) & 0xff) << 16) | ((pmpriv->bss_type & 0xff) << 24);
                 PRINTM(MINFO, "%s: priv - bss_num=%d, bss_type=%d\n", __FUNCTION__, GET_BSS_NUM(pmpriv),
                        pmpriv->bss_type);
-                (void)memcpy(pmadapter, pmevbuf->pbuf + pmevbuf->data_offset, &new_event_cause,
-                             sizeof(new_event_cause));
+                (void)__memcpy(pmadapter, pmevbuf->pbuf + pmevbuf->data_offset, &new_event_cause,
+                               sizeof(new_event_cause));
                 ret = MLAN_STATUS_SUCCESS;
             }
             break;

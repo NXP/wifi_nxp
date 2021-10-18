@@ -110,7 +110,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
     priv->sec_info.wapi_key_on  = MFALSE;
 
     priv->wps.session_enable = MFALSE;
-    (void)memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
+    (void)__memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
 
     priv->sec_info.encryption_mode = MLAN_ENCRYPTION_MODE_NONE;
 #endif /* CONFIG_MLAN_WMSDK */
@@ -132,7 +132,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
         wlan_clean_txrx(priv);
 
         /* Need to erase the current SSID and BSSID info */
-        (void)memset(priv->adapter, &priv->curr_bss_params, 0x00, sizeof(priv->curr_bss_params));
+        (void)__memset(priv->adapter, &priv->curr_bss_params, 0x00, sizeof(priv->curr_bss_params));
     }
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -309,7 +309,7 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
         case EVENT_BG_SCAN_REPORT:
             PRINTM(MEVENT, "EVENT: BGS_REPORT\n");
             /* Clear the previous scan result */
-            (void)memset(pmadapter, pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
+            (void)__memset(pmadapter, pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
             pmadapter->num_in_scan_table = 0;
             pmadapter->pbcn_buf_end      = pmadapter->bcn_buf;
             ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_BG_SCAN_QUERY, HostCmd_ACT_GEN_GET, 0, MNULL, MNULL);
@@ -349,11 +349,11 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
             PRINTM(MEVENT, "EVENT: Radar Detected\n");
 
             /* Send as passthru first, this event can cause other events */
-            (void)memset(pmadapter, pevent, 0x00, sizeof(event_buf));
+            (void)__memset(pmadapter, pevent, 0x00, sizeof(event_buf));
             pevent->bss_index = pmpriv->bss_index;
             pevent->event_id  = MLAN_EVENT_ID_DRV_PASSTHRU;
             pevent->event_len = pmbuf->data_len;
-            (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
+            (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
             wlan_recv_event(pmpriv, pevent->event_id, pevent);
 
             if (pmadapter->state_rdh.stage == RDH_OFF)
@@ -376,22 +376,23 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
             ret = pcb->moal_malloc(pmadapter->pmoal_handle, MAX_EVENT_SIZE, MLAN_MEM_DEF, &evt_buf);
             if ((ret == MLAN_STATUS_SUCCESS) && evt_buf)
             {
-                (void)memset(pmadapter, evt_buf, 0x00, MAX_EVENT_SIZE);
+                (void)__memset(pmadapter, evt_buf, 0x00, MAX_EVENT_SIZE);
                 /* Setup event buffer */
                 pevent            = (pmlan_event)evt_buf;
                 pevent->bss_index = pmpriv->bss_index;
                 pevent->event_id  = MLAN_EVENT_ID_FW_CHANNEL_REPORT_RDY;
                 pevent->event_len = pmbuf->data_len - sizeof(eventcause);
                 /* Copy event data */
-                (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf,
-                             pmbuf->pbuf + pmbuf->data_offset + sizeof(eventcause), pevent->event_len);
+                (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf,
+                               pmbuf->pbuf + pmbuf->data_offset + sizeof(eventcause), pevent->event_len);
                 /* Handle / pass event data */
                 ret = wlan_11h_handle_event_chanrpt_ready(pmpriv, pevent);
 
                 /* Also send this event as passthru */
                 pevent->event_id  = MLAN_EVENT_ID_DRV_PASSTHRU;
                 pevent->event_len = pmbuf->data_len;
-                (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
+                (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset,
+                               pevent->event_len);
                 wlan_recv_event(pmpriv, pevent->event_id, pevent);
                 /* Now done with buffer */
                 pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
@@ -502,7 +503,7 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
             pevent->bss_index = pmpriv->bss_index;
             pevent->event_id  = MLAN_EVENT_ID_FW_WEP_ICV_ERR;
             pevent->event_len = sizeof(Event_WEP_ICV_ERR);
-            (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmadapter->event_body, pevent->event_len);
+            (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmadapter->event_body, pevent->event_len);
             wlan_recv_event(pmpriv, MLAN_EVENT_ID_FW_WEP_ICV_ERR, pevent);
             break;
 
@@ -512,7 +513,7 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
             pevent->event_id  = MLAN_EVENT_ID_FW_BW_CHANGED;
             pevent->event_len = sizeof(t_u8);
             /* Copy event body from the event buffer */
-            (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmadapter->event_body, pevent->event_len);
+            (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmadapter->event_body, pevent->event_len);
             wlan_recv_event(pmpriv, MLAN_EVENT_ID_FW_BW_CHANGED, pevent);
             break;
 
@@ -528,7 +529,8 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
                 pevent->bss_index = pmpriv->bss_index;
                 pevent->event_id  = MLAN_EVENT_ID_DRV_PASSTHRU;
                 pevent->event_len = pmbuf->data_len;
-                (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset, pevent->event_len);
+                (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, pmbuf->pbuf + pmbuf->data_offset,
+                               pevent->event_len);
                 wlan_recv_event(pmpriv, pevent->event_id, pevent);
                 pcb->moal_mfree(pmadapter->pmoal_handle, evt_buf);
             }

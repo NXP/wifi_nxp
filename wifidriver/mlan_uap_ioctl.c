@@ -217,7 +217,7 @@ static mlan_status wlan_uap_bss_ioctl_reset(IN pmlan_adapter pmadapter, IN pmlan
      */
     for (i = 0; i < pmadapter->max_mgmt_ie_index; i++)
     {
-        (void)memset(pmadapter, &pmpriv->mgmt_ie[i], 0, sizeof(custom_ie));
+        (void)__memset(pmadapter, &pmpriv->mgmt_ie[i], 0, sizeof(custom_ie));
     }
     pmpriv->add_ba_param.timeout     = MLAN_DEFAULT_BLOCK_ACK_TIMEOUT;
     pmpriv->add_ba_param.tx_win_size = MLAN_UAP_AMPDU_DEF_TXWINSIZE;
@@ -262,7 +262,7 @@ static mlan_status wlan_uap_bss_ioctl_mac_address(IN pmlan_adapter pmadapter, IN
     bss = (mlan_ds_bss *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_SET)
     {
-        (void)memcpy(pmadapter, pmpriv->curr_addr, &bss->param.mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmadapter, pmpriv->curr_addr, &bss->param.mac_addr, MLAN_MAC_ADDR_LENGTH);
         cmd_action = HostCmd_ACT_GEN_SET;
     }
     else
@@ -515,7 +515,7 @@ static mlan_status wlan_uap_set_wapi_ie(mlan_private *priv, pmlan_ioctl_req pioc
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }
-        (void)memcpy(priv->adapter, priv->wapi_ie, misc->param.gen_ie.ie_data, misc->param.gen_ie.len);
+        (void)__memcpy(priv->adapter, priv->wapi_ie, misc->param.gen_ie.ie_data, misc->param.gen_ie.len);
         priv->wapi_ie_len = misc->param.gen_ie.len;
         PRINTM(MIOCTL, "Set wapi_ie_len=%d IE=%#x\n", priv->wapi_ie_len, priv->wapi_ie[0]);
         DBG_HEXDUMP(MCMD_D, "wapi_ie", priv->wapi_ie, priv->wapi_ie_len);
@@ -524,7 +524,7 @@ static mlan_status wlan_uap_set_wapi_ie(mlan_private *priv, pmlan_ioctl_req pioc
     }
     else
     {
-        (void)memset(priv->adapter, priv->wapi_ie, 0, sizeof(priv->wapi_ie));
+        (void)__memset(priv->adapter, priv->wapi_ie, 0, sizeof(priv->wapi_ie));
         priv->wapi_ie_len = misc->param.gen_ie.len;
         PRINTM(MINFO, "Reset wapi_ie_len=%d IE=%#x\n", priv->wapi_ie_len, priv->wapi_ie[0]);
         priv->sec_info.wapi_enabled = MFALSE;
@@ -606,7 +606,7 @@ static mlan_status wlan_uap_sec_ioctl_wapi_enable(IN pmlan_adapter pmadapter, IN
     {
         if (sec->param.wapi_enabled == MFALSE)
         {
-            (void)memset(pmpriv->adapter, pmpriv->wapi_ie, 0, sizeof(pmpriv->wapi_ie));
+            (void)__memset(pmpriv->adapter, pmpriv->wapi_ie, 0, sizeof(pmpriv->wapi_ie));
             pmpriv->wapi_ie_len = 0;
             PRINTM(MINFO, "Reset wapi_ie_len=%d IE=%#x\n", pmpriv->wapi_ie_len, pmpriv->wapi_ie[0]);
             pmpriv->sec_info.wapi_enabled = MFALSE;
@@ -715,7 +715,7 @@ static mlan_status wlan_uap_get_bss_info(IN pmlan_adapter pmadapter, IN pmlan_io
     info->param.bss_info.radio_on = pmadapter->radio_on;
 
     /* BSSID */
-    (void)memcpy(pmadapter, &info->param.bss_info.bssid, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmadapter, &info->param.bss_info.bssid, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
     info->param.bss_info.is_hs_configured = pmadapter->is_hs_configured;
     pioctl_req->data_read_written         = sizeof(mlan_bss_info) + MLAN_SUB_COMMAND_SIZE;
 
@@ -1130,7 +1130,7 @@ mlan_status wlan_uap_get_channel(IN pmlan_private pmpriv)
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
     ENTER();
-    (void)memset(pmpriv->adapter, &tlv_chan_band, 0, sizeof(tlv_chan_band));
+    (void)__memset(pmpriv->adapter, &tlv_chan_band, 0, sizeof(tlv_chan_band));
     tlv_chan_band.header.type = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
     tlv_chan_band.header.len  = sizeof(MrvlIEtypes_channel_band_t) - sizeof(MrvlIEtypesHeader_t);
 
@@ -1154,7 +1154,7 @@ mlan_status wlan_uap_set_channel(IN pmlan_private pmpriv, IN t_u8 uap_band_cfg, 
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
     ENTER();
-    (void)memset(pmpriv->adapter, &tlv_chan_band, 0, sizeof(tlv_chan_band));
+    (void)__memset(pmpriv->adapter, &tlv_chan_band, 0, sizeof(tlv_chan_band));
     tlv_chan_band.header.type = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
     tlv_chan_band.header.len  = sizeof(MrvlIEtypes_channel_band_t) - sizeof(MrvlIEtypesHeader_t);
     tlv_chan_band.band_config = uap_band_cfg;
@@ -1181,7 +1181,7 @@ mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv)
 
     ENTER();
 
-    (void)memset(pmpriv->adapter, &tlv_buffer, 0, sizeof(tlv_buffer));
+    (void)__memset(pmpriv->adapter, &tlv_buffer, 0, sizeof(tlv_buffer));
     ptlv_beacon_pd              = (MrvlIEtypes_beacon_period_t *)tlv_buffer;
     ptlv_beacon_pd->header.type = TLV_TYPE_UAP_BEACON_PERIOD;
     ptlv_beacon_pd->header.len  = sizeof(MrvlIEtypes_beacon_period_t) - sizeof(MrvlIEtypesHeader_t);
@@ -1307,7 +1307,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             else if (pget_info->sub_command == MLAN_OID_GET_FW_INFO)
             {
                 pioctl_req->data_read_written = sizeof(mlan_fw_info) + MLAN_SUB_COMMAND_SIZE;
-                (void)memcpy(pmadapter, &pget_info->param.fw_info.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+                (void)__memcpy(pmadapter, &pget_info->param.fw_info.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
                 pget_info->param.fw_info.fw_ver             = pmadapter->fw_release_number;
                 pget_info->param.fw_info.fw_bands           = pmadapter->fw_bands;
                 pget_info->param.fw_info.hw_dev_mcs_support = pmadapter->hw_dev_mcs_support;

@@ -179,7 +179,7 @@ static raListTbl *wlan_wmm_allocate_ralist_node(pmlan_adapter pmadapter, t_u8 *r
     util_init_list_head((t_void *)pmadapter->pmoal_handle, &ra_list->buf_head, MFALSE,
                         pmadapter->callbacks.moal_init_lock);
 
-    (void)memcpy(pmadapter, ra_list->ra, ra, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmadapter, ra_list->ra, ra, MLAN_MAC_ADDR_LENGTH);
 
     ra_list->total_pkts = 0;
     ra_list->tx_pause   = 0;
@@ -501,10 +501,10 @@ static void wlan_send_wmmac_host_event(pmlan_private priv, char *typeStr, t_u8 *
     pevent  = (mlan_event *)event_buf;
     pOutBuf = pevent->event_buf;
 
-    (void)memcpy(priv->adapter, pOutBuf, (t_u8 *)"TSPEC:", 6);
+    (void)__memcpy(priv->adapter, pOutBuf, (t_u8 *)"TSPEC:", 6);
     pOutBuf += 6;
 
-    (void)memcpy(priv->adapter, pOutBuf, (t_u8 *)typeStr, wlan_strlen(typeStr));
+    (void)__memcpy(priv->adapter, pOutBuf, (t_u8 *)typeStr, wlan_strlen(typeStr));
     pOutBuf += wlan_strlen(typeStr);
 
     *pOutBuf++ = ':';
@@ -524,11 +524,11 @@ static void wlan_send_wmmac_host_event(pmlan_private priv, char *typeStr, t_u8 *
 
     *pOutBuf++ = status + '0';
 
-    (void)memcpy(priv->adapter, pOutBuf, (t_u8 *)"]:TID", 5);
+    (void)__memcpy(priv->adapter, pOutBuf, (t_u8 *)"]:TID", 5);
     pOutBuf += 5;
     *pOutBuf++ = tid + '0';
 
-    (void)memcpy(priv->adapter, pOutBuf, (t_u8 *)":UP", 3);
+    (void)__memcpy(priv->adapter, pOutBuf, (t_u8 *)":UP", 3);
     pOutBuf += 3;
     *pOutBuf++ = up + '0';
 
@@ -1070,7 +1070,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #ifndef CONFIG_MLAN_WMSDK
     wlan_wmm_delete_all_ralist(priv);
 #endif /* CONFIG_MLAN_WMSDK */
-    (void)memcpy(pmadapter, tos_to_tid, ac_to_tid, sizeof(tos_to_tid));
+    (void)__memcpy(pmadapter, tos_to_tid, ac_to_tid, sizeof(tos_to_tid));
     for (i = 0; i < MAX_NUM_TID; i++)
     {
         tos_to_tid_inv[tos_to_tid[i]] = (t_u8)i;
@@ -1327,7 +1327,7 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
 #endif
             priv->add_ba_param.tx_amsdu = MTRUE;
             priv->add_ba_param.rx_amsdu = MTRUE;
-            (void)memset(priv->adapter, priv->rx_seq, 0xff, sizeof(priv->rx_seq));
+            (void)__memset(priv->adapter, priv->rx_seq, 0xff, sizeof(priv->rx_seq));
             wlan_wmm_default_queue_priorities(priv);
         }
     }
@@ -1509,7 +1509,7 @@ int wlan_ralist_update(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
                    ra_list, ra_list->is_11n_enabled, ra_list->ra[0], ra_list->ra[1], ra_list->ra[2], ra_list->ra[3],
                    ra_list->ra[4], ra_list->ra[5], new_ra[0], new_ra[1], new_ra[2], new_ra[3], new_ra[4], new_ra[5]);
 
-            (void)memcpy(priv->adapter, ra_list->ra, new_ra, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(priv->adapter, ra_list->ra, new_ra, MLAN_MAC_ADDR_LENGTH);
         }
     }
 
@@ -1557,10 +1557,10 @@ t_void wlan_wmm_add_buf_txqueue(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
     else
     {
         /* Note: We do not have data @ some offset of pbuf. pbuf only has RxPD */
-        (void)memcpy(pmadapter, ra, pmbuf->pdesc, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmadapter, ra, pmbuf->pdesc, MLAN_MAC_ADDR_LENGTH);
         /** put multicast/broadcast packet in the same ralist */
         if (ra[0] & 0x01)
-            (void)memset(pmadapter, ra, 0xff, sizeof(ra));
+            (void)__memset(pmadapter, ra, 0xff, sizeof(ra));
         ra_list = wlan_wmm_get_queue_raptr(priv, tid_down, ra);
     }
 
@@ -1680,8 +1680,8 @@ mlan_status wlan_ret_wmm_get_status(pmlan_private priv, t_u8 *ptlv, int resp_len
                 PRINTM(MINFO, "CMD_RESP: WMM_GET_STATUS: WMM Parameter Set: %d\n",
                        pWmmParamIe->qos_info.para_set_count);
 
-                (void)memcpy(priv->adapter, (t_u8 *)&priv->curr_bss_params.bss_descriptor.wmm_ie, pWmmParamIe,
-                             MIN(sizeof(IEEEtypes_WmmParameter_t), (pWmmParamIe->vend_hdr.len + 2)));
+                (void)__memcpy(priv->adapter, (t_u8 *)&priv->curr_bss_params.bss_descriptor.wmm_ie, pWmmParamIe,
+                               MIN(sizeof(IEEEtypes_WmmParameter_t), (pWmmParamIe->vend_hdr.len + 2)));
                 sendWmmEvent = MTRUE;
                 break;
 
@@ -1788,10 +1788,10 @@ t_u32 wlan_wmm_process_association_req(pmlan_private priv,
         pwmm_tlv->header.type = (t_u16)wmm_info_ie[0];
         pwmm_tlv->header.type = wlan_cpu_to_le16(pwmm_tlv->header.type);
         pwmm_tlv->header.len  = (t_u16)wmm_info_ie[1];
-        (void)memcpy(priv->adapter, pwmm_tlv->wmm_ie, &wmm_info_ie[2], pwmm_tlv->header.len);
+        (void)__memcpy(priv->adapter, pwmm_tlv->wmm_ie, &wmm_info_ie[2], pwmm_tlv->header.len);
         if (pWmmIE->qos_info.qos_uapsd)
-            (void)memcpy(priv->adapter, (t_u8 *)(pwmm_tlv->wmm_ie + pwmm_tlv->header.len - sizeof(priv->wmm_qosinfo)),
-                         &priv->wmm_qosinfo, sizeof(priv->wmm_qosinfo));
+            (void)__memcpy(priv->adapter, (t_u8 *)(pwmm_tlv->wmm_ie + pwmm_tlv->header.len - sizeof(priv->wmm_qosinfo)),
+                           &priv->wmm_qosinfo, sizeof(priv->wmm_qosinfo));
 
         ret_len              = sizeof(pwmm_tlv->header) + pwmm_tlv->header.len;
         pwmm_tlv->header.len = wlan_cpu_to_le16(pwmm_tlv->header.len);
@@ -2038,7 +2038,7 @@ mlan_status wlan_cmd_wmm_addts_req(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMA
 
     pcmd_addts->timeout_ms   = wlan_cpu_to_le32(paddts->timeout);
     pcmd_addts->dialog_token = paddts->dialog_tok;
-    (void)memcpy(pmpriv->adapter, pcmd_addts->tspec_data, paddts->ie_data, MIN(WMM_TSPEC_SIZE, paddts->ie_data_len));
+    (void)__memcpy(pmpriv->adapter, pcmd_addts->tspec_data, paddts->ie_data, MIN(WMM_TSPEC_SIZE, paddts->ie_data_len));
 
     LEAVE();
 
@@ -2082,7 +2082,7 @@ mlan_status wlan_ret_wmm_addts_req(IN pmlan_private pmpriv,
                        sizeof(presp_addts->dialog_token) - sizeof(presp_addts->ieee_status_code) - S_DS_GEN);
 
             /* Copy the TSPEC data include any extra IEs after the TSPEC */
-            (void)memcpy(pmpriv->adapter, paddts->ie_data, presp_addts->tspec_data, paddts->ie_data_len);
+            (void)__memcpy(pmpriv->adapter, paddts->ie_data, presp_addts->tspec_data, paddts->ie_data_len);
         }
         else
         {
@@ -2117,7 +2117,7 @@ mlan_status wlan_cmd_wmm_delts_req(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMA
                                  sizeof(pcmd_delts->ieee_reason_code) + pdelts->ie_data_len + S_DS_GEN);
     cmd->result  = 0;
     pcmd_delts->ieee_reason_code = (t_u8)pdelts->status_code;
-    (void)memcpy(pmpriv->adapter, pcmd_delts->tspec_data, pdelts->ie_data, MIN(WMM_TSPEC_SIZE, pdelts->ie_data_len));
+    (void)__memcpy(pmpriv->adapter, pcmd_delts->tspec_data, pdelts->ie_data, MIN(WMM_TSPEC_SIZE, pdelts->ie_data_len));
 
     LEAVE();
 
@@ -2320,7 +2320,7 @@ mlan_status wlan_cmd_wmm_ts_status(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMA
     cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_WMM_TS_STATUS) + S_DS_GEN);
     cmd->result  = 0;
 
-    (void)memcpy(pmpriv->adapter, (t_void *)pcmd_ts_status, (t_void *)pts_status, sizeof(HostCmd_DS_WMM_TS_STATUS));
+    (void)__memcpy(pmpriv->adapter, (t_void *)pcmd_ts_status, (t_void *)pts_status, sizeof(HostCmd_DS_WMM_TS_STATUS));
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;
@@ -2346,8 +2346,8 @@ mlan_status wlan_ret_wmm_ts_status(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAN
     {
         pwmm                         = (mlan_ds_wmm_cfg *)pioctl_buf->pbuf;
         presp_ts_status->medium_time = wlan_le16_to_cpu(presp_ts_status->medium_time);
-        (void)memcpy(pmpriv->adapter, (t_void *)&pwmm->param.ts_status, (t_void *)presp_ts_status,
-                     sizeof(mlan_ds_wmm_ts_status));
+        (void)__memcpy(pmpriv->adapter, (t_void *)&pwmm->param.ts_status, (t_void *)presp_ts_status,
+                       sizeof(mlan_ds_wmm_ts_status));
     }
 
     LEAVE();

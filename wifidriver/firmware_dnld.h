@@ -26,8 +26,6 @@
 #ifndef _FIMRWARE_DNLD_H_
 #define _FIMRWARE_DNLD_H_
 
-mlan_status firmware_download(enum wlan_fw_storage_type st,
-                         const uint8_t *fw_ram_start_addr,
-                         const size_t size);
+mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_start_addr, const size_t size);
 
 #endif //_FIMRWARE_DNLD_H_

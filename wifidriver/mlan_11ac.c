@@ -229,16 +229,15 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap, t_u8 ban
  *  @return     MLAN_STATUS_PENDING --success, otherwise fail
  */
 
-mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv,
-                        IN t_u8 action, IN mlan_ds_11ac_vht_cfg *vht_cfg)
+mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN mlan_ds_11ac_vht_cfg *vht_cfg)
 {
-    mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = pmpriv->adapter;
-    t_u16 cmd_action = 0;
-    t_u32 usr_vht_cap_info = 0;
-    t_u32 cfg_value = 0;
-    t_u32 hw_value = 0;
-    t_u8  nss = 0;
+    t_u16 cmd_action        = 0;
+    t_u32 usr_vht_cap_info  = 0;
+    t_u32 cfg_value         = 0;
+    t_u32 hw_value          = 0;
+    t_u8 nss                = 0;
 
     ENTER();
 
@@ -246,72 +245,72 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv,
     (MBIT(4) | MBIT(5) | MBIT(6) | MBIT(7) | MBIT(11) | MBIT(12) | MBIT(19) | MBIT(20) | MBIT(21) | MBIT(22) | \
      MBIT(28) | MBIT(29))
 
-
     if (action == MLAN_ACT_SET)
-     {
-       	 /** SET operation */
-       	 /** validate the user input and correct it if necessary */
-	if (pmpriv->bss_role == MLAN_BSS_ROLE_STA)
-       	{
+    {
+        /** SET operation */
+        /** validate the user input and correct it if necessary */
+        if (pmpriv->bss_role == MLAN_BSS_ROLE_STA)
+        {
             if (vht_cfg->txrx == 3)
             {
                 PRINTM(MERROR, "Configuration of VHT capabilities for TX/RX 3 is not supported in STA mode!\n");
                 return MLAN_STATUS_FAILURE;
             }
-       	}
-	if (pmpriv->bss_role == MLAN_BSS_ROLE_UAP)
+        }
+        if (pmpriv->bss_role == MLAN_BSS_ROLE_UAP)
         {
             if (vht_cfg->txrx != 3)
             {
-                PRINTM(MERROR, "Configuration of VHT capabilities for TX/RX %d is not supported in UAP mode!\n",vht_cfg->txrx);
+                PRINTM(MERROR, "Configuration of VHT capabilities for TX/RX %d is not supported in UAP mode!\n",
+                       vht_cfg->txrx);
 
                 return MLAN_STATUS_FAILURE;
             }
         }
         /** set bit fileds */
-        usr_vht_cap_info = VHT_CAP_INFO_BIT_FIELDS & vht_cfg->vht_cap_info &
-                           pmadapter->hw_dot_11ac_dev_cap;
+        usr_vht_cap_info = VHT_CAP_INFO_BIT_FIELDS & vht_cfg->vht_cap_info & pmadapter->hw_dot_11ac_dev_cap;
         /** set MAX MPDU LEN field (bit 0 - bit 1) */
         cfg_value = GET_VHTCAP_MAXMPDULEN(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_MAXMPDULEN(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_MAXMPDULEN(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_MAXMPDULEN(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** set CHAN Width Set field (bit 2 - bit 3) */
         cfg_value = GET_VHTCAP_CHWDSET(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_CHWDSET(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_CHWDSET(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_CHWDSET(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** set Rx STBC field (bit 8 - bit 10) */
         cfg_value = GET_VHTCAP_RXSTBC(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_RXSTBC(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_RXSTBC(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_RXSTBC(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** set Steering Number of BFer Ant (bit 13 - bit 15) */
         cfg_value = GET_VHTCAP_SNBFERANT(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_SNBFERANT(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_SNBFERANT(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_SNBFERANT(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** set Number of Sounding Dimension (bit 16 - bit 18) */
         cfg_value = GET_VHTCAP_NUMSNDDM(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_NUMSNDDM(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_NUMSNDDM(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_NUMSNDDM(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** set Number of Max AMPDU Length Exponent (bit 23 - bit 25) */
         cfg_value = GET_VHTCAP_MAXAMPDULENEXP(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_MAXAMPDULENEXP(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_MAXAMPDULENEXP(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_MAXAMPDULENEXP(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** set VHT Link Adaptation Capable (bit 26 - bit 27) */
         cfg_value = GET_VHTCAP_LINKADPCAP(vht_cfg->vht_cap_info);
-        hw_value =  GET_VHTCAP_LINKADPCAP(pmadapter->hw_dot_11ac_dev_cap);
+        hw_value  = GET_VHTCAP_LINKADPCAP(pmadapter->hw_dot_11ac_dev_cap);
         SET_VHTCAP_LINKADPCAP(usr_vht_cap_info, MIN(cfg_value, hw_value));
         /** update the user setting if it is beyond the hw capabiliteis */
         vht_cfg->vht_cap_info = usr_vht_cap_info;
         PRINTM(MINFO, "Set: vht cap info  0x%x\n", usr_vht_cap_info);
 
         /** update the RX MCS map */
-        if (vht_cfg->txrx & MLAN_RADIO_RX) {
+        if (vht_cfg->txrx & MLAN_RADIO_RX)
+        {
             /* use the previous user value */
             if (vht_cfg->vht_rx_mcs == 0xffffffff)
                 vht_cfg->vht_rx_mcs = GET_VHTMCS(pmadapter->usr_dot_11ac_mcs_support);
             for (nss = 1; nss <= 8; nss++)
             {
                 cfg_value = GET_VHTNSSMCS(vht_cfg->vht_rx_mcs, nss);
-                hw_value = GET_DEVNSSRXMCS(pmadapter->hw_dot_11ac_mcs_support, nss);
+                hw_value  = GET_DEVNSSRXMCS(pmadapter->hw_dot_11ac_mcs_support, nss);
                 if ((hw_value == NO_NSS_SUPPORT) || (cfg_value == NO_NSS_SUPPORT))
                     SET_VHTNSSMCS(vht_cfg->vht_rx_mcs, nss, NO_NSS_SUPPORT);
                 else
@@ -324,7 +323,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv,
             for (nss = 1; nss <= 8; nss++)
             {
                 cfg_value = GET_VHTNSSMCS(vht_cfg->vht_tx_mcs, nss);
-                hw_value = GET_DEVNSSTXMCS(pmadapter->hw_dot_11ac_mcs_support, nss);
+                hw_value  = GET_DEVNSSTXMCS(pmadapter->hw_dot_11ac_mcs_support, nss);
                 if ((hw_value == NO_NSS_SUPPORT) || (cfg_value == NO_NSS_SUPPORT))
                     SET_VHTNSSMCS(vht_cfg->vht_tx_mcs, nss, NO_NSS_SUPPORT);
                 else
@@ -338,11 +337,13 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv,
                 pmadapter->usr_dot_11ac_mcs_support |= GET_VHTMCS(vht_cfg->vht_rx_mcs);
                 RESET_DEVTXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
                 pmadapter->usr_dot_11ac_mcs_support |= (GET_VHTMCS(vht_cfg->vht_tx_mcs) << 16);
-                PRINTM(MINFO, "Set: vht mcs set 0x%08x\n", pmadapter->usr_dot_11ac_mcs_support); 
-	    } else {
+                PRINTM(MINFO, "Set: vht mcs set 0x%08x\n", pmadapter->usr_dot_11ac_mcs_support);
+            }
+            else
+            {
                 PRINTM(MINFO, "Skipped user 11ac mcs configuration\n");
-            	vht_cfg->skip_usr_11ac_mcs_cfg = MFALSE;
-	    }
+                vht_cfg->skip_usr_11ac_mcs_cfg = MFALSE;
+            }
         }
     }
 
@@ -351,65 +352,62 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv,
         if (vht_cfg->txrx & MLAN_RADIO_RX)
         {
             /* maximum VHT configuration used in association */
-	
-           if(action == MLAN_ACT_SET)
+
+            if (action == MLAN_ACT_SET)
             {
                 if (vht_cfg->band == BAND_SELECT_BG)
                     pmadapter->usr_dot_11ac_dev_cap_bg = usr_vht_cap_info;
-#ifdef CONFIG_5GHz_SUPPORT	
-		    else if (vht_cfg->band == BAND_SELECT_A)
-                    pmadapter->usr_dot_11ac_dev_cap_a = usr_vht_cap_info;
-#endif	
-		    else
-                    {
-                     pmadapter->usr_dot_11ac_dev_cap_bg = usr_vht_cap_info;
 #ifdef CONFIG_5GHz_SUPPORT
-		     pmadapter->usr_dot_11ac_dev_cap_a = usr_vht_cap_info;
+                else if (vht_cfg->band == BAND_SELECT_A)
+                    pmadapter->usr_dot_11ac_dev_cap_a = usr_vht_cap_info;
 #endif
-               	    }
-            pmadapter->usr_dot_11ac_bw = vht_cfg->bwcfg;
-	     }
-             else
-             {
+                else
+                {
+                    pmadapter->usr_dot_11ac_dev_cap_bg = usr_vht_cap_info;
+#ifdef CONFIG_5GHz_SUPPORT
+                    pmadapter->usr_dot_11ac_dev_cap_a = usr_vht_cap_info;
+#endif
+                }
+                pmadapter->usr_dot_11ac_bw = vht_cfg->bwcfg;
+            }
+            else
+            {
                 /** GET operation */
                 if (vht_cfg->band == BAND_SELECT_BG)
                 {
                     vht_cfg->vht_cap_info = pmadapter->usr_dot_11ac_dev_cap_bg;
-                    PRINTM(MINFO, "Get: vht cap info for 2.4GHz 0x%x\n",
-                    pmadapter->usr_dot_11ac_dev_cap_bg);
-                }	   
+                    PRINTM(MINFO, "Get: vht cap info for 2.4GHz 0x%x\n", pmadapter->usr_dot_11ac_dev_cap_bg);
+                }
 #ifdef CONFIG_5GHz_SUPPORT
                 else if (vht_cfg->band == BAND_SELECT_A)
                 {
                     vht_cfg->vht_cap_info = pmadapter->usr_dot_11ac_dev_cap_a;
-	   	    PRINTM(MINFO, "Get: vht cap info for 5GHz 0x%x\n",
-                    pmadapter->usr_dot_11ac_dev_cap_a);
-		}
+                    PRINTM(MINFO, "Get: vht cap info for 5GHz 0x%x\n", pmadapter->usr_dot_11ac_dev_cap_a);
+                }
 #endif
-                else 
-		{
+                else
+                {
                     PRINTM(MINFO, "Get: invalid band selection for vht cap info\n");
                     ret = MLAN_STATUS_FAILURE;
                 }
-                vht_cfg->bwcfg = pmadapter->usr_dot_11ac_bw;
-                vht_cfg->vht_rx_mcs = GET_DEVRXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
-                vht_cfg->vht_tx_mcs = GET_DEVTXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
+                vht_cfg->bwcfg           = pmadapter->usr_dot_11ac_bw;
+                vht_cfg->vht_rx_mcs      = GET_DEVRXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
+                vht_cfg->vht_tx_mcs      = GET_DEVTXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
                 vht_cfg->vht_rx_max_rate = wlan_convert_mcsmap_to_maxrate(pmpriv, vht_cfg->band, vht_cfg->vht_rx_mcs);
                 vht_cfg->vht_tx_max_rate = wlan_convert_mcsmap_to_maxrate(pmpriv, vht_cfg->band, vht_cfg->vht_tx_mcs);
-       		}
+            }
             LEAVE();
             return ret;
         }
     }
 
-    if(action == MLAN_ACT_SET)
+    if (action == MLAN_ACT_SET)
         cmd_action = HostCmd_ACT_GEN_SET;
     else
         cmd_action = HostCmd_ACT_GEN_GET;
 
     /* Send request to firmware */
-    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_11AC_CFG, cmd_action, 0,
-                            NULL, (t_void *)vht_cfg);
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_11AC_CFG, cmd_action, 0, NULL, (t_void *)vht_cfg);
     if (ret == MLAN_STATUS_SUCCESS)
         ret = MLAN_STATUS_PENDING;
 
@@ -484,9 +482,9 @@ static mlan_status wlan_11ac_ioctl_supported_mcs_set(
     }
     rx_mcs_supp = GET_11ACRXMCSSUPP(pmadapter->usr_dot_11ac_mcs_support);
     /* Set MCS */
-    (void)memset(pmadapter, (t_u8 *) mcs_set, 0xff, rx_mcs_supp);
+    (void)__memset(pmadapter, (t_u8 *) mcs_set, 0xff, rx_mcs_supp);
     /* Clear all the other values */
-    (void)memset(pmadapter, (t_u8 *) &mcs_set[rx_mcs_supp], 0,
+    (void)__memset(pmadapter, (t_u8 *) &mcs_set[rx_mcs_supp], 0,
                  NUM_MCS_FIELD - rx_mcs_supp);
     /* Set MCS32 with 40MHz support */
     if (ISSUPP_CHANWIDTH80(pmadapter->usr_dot_11ac_dev_cap_bg)
@@ -497,7 +495,7 @@ static mlan_status wlan_11ac_ioctl_supported_mcs_set(
         SETHT_MCS32(mcs_set);
 
     cfg = (mlan_ds_11ac_cfg *)pioctl_req->pbuf;
-    (void)memcpy(pmadapter, cfg->param.supported_mcs_set, mcs_set, NUM_MCS_SUPP);
+    (void)__memcpy(pmadapter, cfg->param.supported_mcs_set, mcs_set, NUM_MCS_SUPP);
 
 #endif
     LEAVE();
@@ -1017,11 +1015,11 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
     if (pbss_desc->pvht_cap && wlan_get_nss_vht_mcs(pbss_desc->pvht_cap->vht_cap.mcs_sets.rx_mcs_map))
     {
         pvht_cap = (MrvlIETypes_VHTCap_t *)*ppbuffer;
-        (void)memset(pmadapter, pvht_cap, 0, sizeof(MrvlIETypes_VHTCap_t));
+        (void)__memset(pmadapter, pvht_cap, 0, sizeof(MrvlIETypes_VHTCap_t));
         pvht_cap->header.type = wlan_cpu_to_le16(VHT_CAPABILITY);
         pvht_cap->header.len  = sizeof(VHT_capa_t);
-        (void)memcpy(pmadapter, (t_u8 *)pvht_cap + sizeof(MrvlIEtypesHeader_t),
-                     (t_u8 *)pbss_desc->pvht_cap + sizeof(IEEEtypes_Header_t), pvht_cap->header.len);
+        (void)__memcpy(pmadapter, (t_u8 *)pvht_cap + sizeof(MrvlIEtypesHeader_t),
+                       (t_u8 *)pbss_desc->pvht_cap + sizeof(IEEEtypes_Header_t), pvht_cap->header.len);
 
         wlan_fill_vht_cap_tlv(pmpriv, pvht_cap, pbss_desc->bss_band, MTRUE);
 
@@ -1038,7 +1036,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
 
     /* Operating Mode Notification IE */
     pmrvl_oper_mode = (MrvlIETypes_OperModeNtf_t *)*ppbuffer;
-    (void)memset(pmadapter, pmrvl_oper_mode, 0, sizeof(MrvlIETypes_OperModeNtf_t));
+    (void)__memset(pmadapter, pmrvl_oper_mode, 0, sizeof(MrvlIETypes_OperModeNtf_t));
     pmrvl_oper_mode->header.type = wlan_cpu_to_le16(OPER_MODE_NTF);
     pmrvl_oper_mode->header.len  = sizeof(t_u8);
 
@@ -1151,9 +1149,9 @@ mlan_status wlan_cmd_11ac_cfg(IN pmlan_private pmpriv,
     mlan_ds_11ac_vht_cfg *vht_cfg = (mlan_ds_11ac_vht_cfg *)pdata_buf;
 
     ENTER();
-    cmd->command        = wlan_cpu_to_le16(HostCmd_CMD_11AC_CFG);
-    cmd->size           = wlan_cpu_to_le16(sizeof(HostCmd_DS_11AC_CFG) + S_DS_GEN);
-    if(pmpriv->bss_type == MLAN_BSS_TYPE_UAP)
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AC_CFG);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_11AC_CFG) + S_DS_GEN);
+    if (pmpriv->bss_type == MLAN_BSS_TYPE_UAP)
         cmd->seq_num = (0x01) << 12;
     vhtcfg->action      = wlan_cpu_to_le16(cmd_action);
     vhtcfg->band_config = vht_cfg->band & 0xFF;
@@ -1163,9 +1161,9 @@ mlan_status wlan_cmd_11ac_cfg(IN pmlan_private pmpriv,
 
     vhtcfg->vht_cap_info = wlan_cpu_to_le32(vht_cfg->vht_cap_info);
     vht_cfg->vht_rx_mcs  = wlan_cpu_to_le32(vht_cfg->vht_rx_mcs);
-     (void)memcpy(pmpriv->adapter, &vhtcfg->vht_supp_mcs_set[0], &vht_cfg->vht_rx_mcs, sizeof(t_u32));
+    (void)__memcpy(pmpriv->adapter, &vhtcfg->vht_supp_mcs_set[0], &vht_cfg->vht_rx_mcs, sizeof(t_u32));
     vht_cfg->vht_tx_mcs = wlan_cpu_to_le32(vht_cfg->vht_tx_mcs);
-     (void)memcpy(pmpriv->adapter, &vhtcfg->vht_supp_mcs_set[4], &vht_cfg->vht_tx_mcs, sizeof(t_u32));
+    (void)__memcpy(pmpriv->adapter, &vhtcfg->vht_supp_mcs_set[4], &vht_cfg->vht_tx_mcs, sizeof(t_u32));
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
@@ -1200,11 +1198,11 @@ mlan_status wlan_ret_11ac_cfg(
             cfg->param.vht_cfg.bwcfg = 0;
 
         cfg->param.vht_cfg.vht_cap_info = wlan_le32_to_cpu(vhtcfg->vht_cap_info);
-        (void)memcpy(pmadapter, &cfg->param.vht_cfg.vht_rx_mcs,
+        (void)__memcpy(pmadapter, &cfg->param.vht_cfg.vht_rx_mcs,
                           &vhtcfg->vht_supp_mcs_set[0], sizeof(t_u32));
         cfg->param.vht_cfg.vht_rx_mcs =
             wlan_le32_to_cpu(cfg->param.vht_cfg.vht_rx_mcs);
-        (void)memcpy(pmadapter, &cfg->param.vht_cfg.vht_tx_mcs,
+        (void)__memcpy(pmadapter, &cfg->param.vht_cfg.vht_tx_mcs,
                           &vhtcfg->vht_supp_mcs_set[4], sizeof(t_u32));
         cfg->param.vht_cfg.vht_tx_mcs =
             wlan_le32_to_cpu(cfg->param.vht_cfg.vht_tx_mcs);

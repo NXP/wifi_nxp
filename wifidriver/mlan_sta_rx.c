@@ -241,8 +241,8 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
                                    sizeof(prx_pkt->rfc1042_hdr) - sizeof(prx_pkt->eth803_hdr.dest_addr) -
                                    sizeof(prx_pkt->eth803_hdr.src_addr) - sizeof(prx_pkt->rfc1042_hdr.snap_type));
 
-        (void)memcpy(pmadapter, peth_hdr->src_addr, prx_pkt->eth803_hdr.src_addr, sizeof(peth_hdr->src_addr));
-        (void)memcpy(pmadapter, peth_hdr->dest_addr, prx_pkt->eth803_hdr.dest_addr, sizeof(peth_hdr->dest_addr));
+        (void)__memcpy(pmadapter, peth_hdr->src_addr, prx_pkt->eth803_hdr.src_addr, sizeof(peth_hdr->src_addr));
+        (void)__memcpy(pmadapter, peth_hdr->dest_addr, prx_pkt->eth803_hdr.dest_addr, sizeof(peth_hdr->dest_addr));
 
         /* Chop off the RxPD + the excess memory from the 802.2/llc/snap header
            that was removed. */
@@ -399,13 +399,13 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
 
     if (queuing_ra_based(priv))
     {
-        (void)memcpy(pmadapter, ta, prx_pkt->eth803_hdr.src_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmadapter, ta, prx_pkt->eth803_hdr.src_addr, MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
         if ((rx_pkt_type != PKT_TYPE_BAR) && (prx_pd->priority < MAX_NUM_TID))
             priv->rx_seq[prx_pd->priority] = prx_pd->seq_num;
-        (void)memcpy(pmadapter, ta, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmadapter, ta, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
     }
 
     /* Reorder and send to OS */

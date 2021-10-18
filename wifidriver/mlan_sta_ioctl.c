@@ -69,10 +69,10 @@ static void wlan_enable_aes_key(pmlan_private pmpriv)
         return;
     }
 
-    (void)memset(pmpriv->adapter, &encrypt_key, 0, sizeof(mlan_ds_encrypt_key));
+    (void)__memset(pmpriv->adapter, &encrypt_key, 0, sizeof(mlan_ds_encrypt_key));
     encrypt_key.key_len   = WPA_AES_KEY_LEN;
     encrypt_key.key_index = MLAN_KEY_INDEX_UNICAST;
-    (void)memcpy(pmpriv->adapter, encrypt_key.key_material, pmpriv->aes_key.key_param_set.key, encrypt_key.key_len);
+    (void)__memcpy(pmpriv->adapter, encrypt_key.key_material, pmpriv->aes_key.key_param_set.key, encrypt_key.key_len);
     wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_KEY_MATERIAL, HostCmd_ACT_GEN_SET, KEY_INFO_ENABLED, MNULL,
                      &encrypt_key);
     encrypt_key.key_index &= ~MLAN_KEY_INDEX_UNICAST;
@@ -214,10 +214,10 @@ static mlan_status wlan_get_info_bss_info(IN pmlan_adapter pmadapter, IN pmlan_i
     info->param.bss_info.bss_mode = pmpriv->bss_mode;
 
     /* SSID */
-    (void)memcpy(pmadapter, &info->param.bss_info.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
+    (void)__memcpy(pmadapter, &info->param.bss_info.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
 
     /* BSSID */
-    (void)memcpy(pmadapter, &info->param.bss_info.bssid, &pbss_desc->mac_address, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmadapter, &info->param.bss_info.bssid, &pbss_desc->mac_address, MLAN_MAC_ADDR_LENGTH);
 
     /* Channel */
     info->param.bss_info.bss_chan = pbss_desc->channel;
@@ -267,8 +267,8 @@ static mlan_status wlan_get_info_bss_info(IN pmlan_adapter pmadapter, IN pmlan_i
 
     /* Capability Info */
     info->param.bss_info.capability_info = 0;
-    (void)memcpy(pmadapter, &info->param.bss_info.capability_info, &pbss_desc->cap_info,
-                 sizeof(info->param.bss_info.capability_info));
+    (void)__memcpy(pmadapter, &info->param.bss_info.capability_info, &pbss_desc->cap_info,
+                   sizeof(info->param.bss_info.capability_info));
 
     /* Listen Interval */
     info->param.bss_info.listen_interval = pmpriv->listen_interval;
@@ -280,9 +280,9 @@ static mlan_status wlan_get_info_bss_info(IN pmlan_adapter pmadapter, IN pmlan_i
         info->param.bss_info.assoc_id = 0;
 
     /* AP/Peer supported rates */
-    (void)memset(pmadapter, info->param.bss_info.peer_supp_rates, 0, sizeof(info->param.bss_info.peer_supp_rates));
-    (void)memcpy(pmadapter, info->param.bss_info.peer_supp_rates, pbss_desc->supported_rates,
-                 MIN(sizeof(info->param.bss_info.peer_supp_rates), sizeof(pbss_desc->supported_rates)));
+    (void)__memset(pmadapter, info->param.bss_info.peer_supp_rates, 0, sizeof(info->param.bss_info.peer_supp_rates));
+    (void)__memcpy(pmadapter, info->param.bss_info.peer_supp_rates, pbss_desc->supported_rates,
+                   MIN(sizeof(info->param.bss_info.peer_supp_rates), sizeof(pbss_desc->supported_rates)));
 
     pioctl_req->data_read_written = sizeof(mlan_bss_info) + MLAN_SUB_COMMAND_SIZE;
 
@@ -319,7 +319,7 @@ static mlan_status wlan_get_info_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         case MLAN_OID_GET_FW_INFO:
             pioctl_req->data_read_written   = sizeof(mlan_fw_info) + MLAN_SUB_COMMAND_SIZE;
             pget_info->param.fw_info.fw_ver = pmadapter->fw_release_number;
-            (void)memcpy(pmadapter, &pget_info->param.fw_info.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmadapter, &pget_info->param.fw_info.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
             pget_info->param.fw_info.fw_bands           = pmadapter->fw_bands;
             pget_info->param.fw_info.hw_dev_mcs_support = pmadapter->hw_dev_mcs_support;
             break;
@@ -611,12 +611,12 @@ static mlan_status wlan_bss_ioctl_mac_address(IN pmlan_adapter pmadapter, IN pml
     if (pioctl_req->action == MLAN_ACT_GET)
     {
         pioctl_req->data_read_written = MLAN_MAC_ADDR_LENGTH + MLAN_SUB_COMMAND_SIZE;
-        (void)memcpy(pmadapter, &bss->param.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmadapter, &bss->param.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
         ret = MLAN_STATUS_SUCCESS;
         goto exit;
     }
 
-    (void)memcpy(pmadapter, pmpriv->curr_addr, &bss->param.mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmadapter, pmpriv->curr_addr, &bss->param.mac_addr, MLAN_MAC_ADDR_LENGTH);
 
     /* Send request to firmware */
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_MAC_ADDRESS, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req, MNULL);
@@ -743,7 +743,7 @@ static mlan_status wlan_bss_ioctl_get_channel_list(IN pmlan_adapter pmadapter, I
 
         BSSDescriptor_t *pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
 
-        (void)memset(pmadapter, &region_chan, 0, sizeof(parsed_region_chan_11d_t));
+        (void)__memset(pmadapter, &region_chan, 0, sizeof(parsed_region_chan_11d_t));
 
         /* If country IE is present in the associated AP then return the
            channel list from country IE else return it from the learning table */
@@ -1077,7 +1077,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
         else
         {
             /* fixme: This is IMPORTANT. Enable this later. */
-            /* #ifndef CONFIG_MLAN_WMSDK */
+            /*  #ifndef CONFIG_MLAN_WMSDK */
             /* use bsslist index number to assoicate */
             i = wlan_is_network_compatible(pmpriv, bss->param.ssid_bssid.idx - 1, pmpriv->bss_mode);
             /* #endif /\* CONFIG_MLAN_WMSDK *\/ */
@@ -1263,7 +1263,7 @@ static mlan_status wlan_query_passphrase(mlan_private *priv, pmlan_ioctl_req pio
     bss        = (mlan_ds_bss *)pioctl_req->pbuf;
     ssid_bssid = &bss->param.ssid_bssid;
 
-    (void)memset(pmadapter, &sec_pp, 0, sizeof(mlan_ds_passphrase));
+    (void)__memset(pmadapter, &sec_pp, 0, sizeof(mlan_ds_passphrase));
     sec_pp.psk_type = MLAN_PSK_QUERY;
     if (ssid_bssid->ssid.ssid_len == 0)
     {
@@ -1271,14 +1271,14 @@ static mlan_status wlan_query_passphrase(mlan_private *priv, pmlan_ioctl_req pio
         if (i >= 0)
         {
             pbss_desc = &pmadapter->pscan_table[i];
-            (void)memcpy(pmadapter, &sec_pp.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
+            (void)__memcpy(pmadapter, &sec_pp.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
         }
         else
-            (void)memcpy(pmadapter, &sec_pp.bssid, &ssid_bssid->bssid, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmadapter, &sec_pp.bssid, &ssid_bssid->bssid, MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
-        (void)memcpy(pmadapter, &sec_pp.ssid, &ssid_bssid->ssid, sizeof(mlan_802_11_ssid));
+        (void)__memcpy(pmadapter, &sec_pp.ssid, &ssid_bssid->ssid, sizeof(mlan_802_11_ssid));
     }
 
     /* Send request to firmware */
@@ -1594,7 +1594,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
         ret                     = MLAN_STATUS_FAILURE;
         goto exit;
     }
-    (void)memset(pmadapter, buf, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
+    (void)__memset(pmadapter, buf, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
     txp_cfg         = (HostCmd_DS_TXPWR_CFG *)buf;
     txp_cfg->action = HostCmd_ACT_GEN_SET;
     if (!power->param.power_cfg.is_power_auto)
@@ -1721,10 +1721,10 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
         ret                     = MLAN_STATUS_FAILURE;
         goto exit;
     }
-    (void)memset(pmadapter, buf, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
+    (void)__memset(pmadapter, buf, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
     txp_cfg         = (HostCmd_DS_TXPWR_CFG *)buf;
     txp_cfg->action = HostCmd_ACT_GEN_SET;
-    (void)memcpy(pmadapter, (t_u8 *)&data, (t_u8 *)power->param.power_ext.power_data, sizeof(data));
+    (void)__memcpy(pmadapter, (t_u8 *)&data, (t_u8 *)power->param.power_ext.power_data, sizeof(data));
     switch (power->param.power_ext.len)
     {
         case 1:
@@ -2525,7 +2525,7 @@ static mlan_status wlan_set_wpa_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }
-        (void)memcpy(priv->adapter, priv->wpa_ie, ie_data_ptr, ie_len);
+        (void)__memcpy(priv->adapter, priv->wpa_ie, ie_data_ptr, ie_len);
         priv->wpa_ie_len = (t_u8)ie_len;
         PRINTM(MIOCTL, "Set Wpa_ie_len=%d IE=%#x\n", priv->wpa_ie_len, priv->wpa_ie[0]);
         DBG_HEXDUMP(MCMD_D, "Wpa_ie", priv->wpa_ie, priv->wpa_ie_len);
@@ -2545,7 +2545,7 @@ static mlan_status wlan_set_wpa_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
     }
     else
     {
-        (void)memset(priv->adapter, priv->wpa_ie, 0, sizeof(priv->wpa_ie));
+        (void)__memset(priv->adapter, priv->wpa_ie, 0, sizeof(priv->wpa_ie));
         priv->wpa_ie_len = 0;
         PRINTM(MINFO, "Reset Wpa_ie_len=%d IE=%#x\n", priv->wpa_ie_len, priv->wpa_ie[0]);
         priv->sec_info.wpa_enabled  = MFALSE;
@@ -2576,7 +2576,7 @@ static mlan_status wlan_set_wapi_ie(mlan_private *priv, t_u8 *ie_data_ptr, t_u16
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }
-        (void)memcpy(priv->adapter, priv->wapi_ie, ie_data_ptr, ie_len);
+        (void)__memcpy(priv->adapter, priv->wapi_ie, ie_data_ptr, ie_len);
         priv->wapi_ie_len = (t_u8)ie_len;
         PRINTM(MIOCTL, "Set wapi_ie_len=%d IE=%#x\n", priv->wapi_ie_len, priv->wapi_ie[0]);
         DBG_HEXDUMP(MCMD_D, "wapi_ie", priv->wapi_ie, priv->wapi_ie_len);
@@ -2585,7 +2585,7 @@ static mlan_status wlan_set_wapi_ie(mlan_private *priv, t_u8 *ie_data_ptr, t_u16
     }
     else
     {
-        (void)memset(priv->adapter, priv->wapi_ie, 0, sizeof(priv->wapi_ie));
+        (void)__memset(priv->adapter, priv->wapi_ie, 0, sizeof(priv->wapi_ie));
         priv->wapi_ie_len = (t_u8)ie_len;
         PRINTM(MINFO, "Reset wapi_ie_len=%d IE=%#x\n", priv->wapi_ie_len, priv->wapi_ie[0]);
         priv->sec_info.wapi_enabled = MFALSE;
@@ -2837,8 +2837,8 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
     mlan_private *pmpriv     = pmadapter->priv[pioctl_req->bss_index];
     mlan_ds_sec_cfg *sec     = MNULL;
     mrvl_wep_key_t *pwep_key = MNULL;
-    int index;
-    int i = 0;
+    unsigned int index;
+    unsigned int i = 0;
 
     ENTER();
 
@@ -2881,7 +2881,7 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
         /* remove key */
         if (sec->param.encrypt_key.key_remove == MTRUE)
         {
-            (void)memset(pmadapter, &pmpriv->wep_key[index], 0, sizeof(mrvl_wep_key_t));
+            (void)__memset(pmadapter, &pmpriv->wep_key[index], 0, sizeof(mrvl_wep_key_t));
 #ifdef KEY_PARAM_SET_V2
             /* call firmware remove key */
             ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_KEY_MATERIAL, HostCmd_ACT_GEN_SET, 0, MNULL,
@@ -2909,11 +2909,11 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
             }
             pwep_key = &pmpriv->wep_key[index];
             /* Cleanup */
-            (void)memset(pmadapter, pwep_key, 0, sizeof(mrvl_wep_key_t));
+            (void)__memset(pmadapter, pwep_key, 0, sizeof(mrvl_wep_key_t));
             /* Copy the key in the driver */
 
-            (void)memcpy(pmadapter, pwep_key->key_material, sec->param.encrypt_key.key_material,
-                         sec->param.encrypt_key.key_len);
+            (void)__memcpy(pmadapter, pwep_key->key_material, sec->param.encrypt_key.key_material,
+                           sec->param.encrypt_key.key_len);
             pwep_key->key_index  = index;
             pwep_key->key_length = sec->param.encrypt_key.key_len;
             if (pmpriv->sec_info.wep_status != Wlan802_11WEPEnabled)
@@ -2982,8 +2982,8 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
         {
             sec->param.encrypt_key.key_index = pwep_key->key_index;
             sec->param.encrypt_key.key_len   = pwep_key->key_length;
-            (void)memcpy(pmadapter, sec->param.encrypt_key.key_material, pwep_key->key_material,
-                         sec->param.encrypt_key.key_len);
+            (void)__memcpy(pmadapter, sec->param.encrypt_key.key_material, pwep_key->key_material,
+                           sec->param.encrypt_key.key_len);
         }
         ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_KEY_MATERIAL, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
                                &sec->param.encrypt_key);
@@ -3005,8 +3005,8 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
             {
                 sec->param.encrypt_key.key_index = pwep_key->key_index;
                 sec->param.encrypt_key.key_len   = pwep_key->key_length;
-                (void)memcpy(pmadapter, sec->param.encrypt_key.key_material, pwep_key->key_material,
-                             sec->param.encrypt_key.key_len);
+                (void)__memcpy(pmadapter, sec->param.encrypt_key.key_material, pwep_key->key_material,
+                               sec->param.encrypt_key.key_len);
             }
             ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_KEY_MATERIAL, HostCmd_ACT_GEN_SET, 0, MNULL,
                                    &sec->param.encrypt_key);
@@ -3086,14 +3086,15 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
     {
         /** back up adhoc AES key */
 #ifdef KEY_PARAM_SET_V2
-        (void)memset(pmpriv->adapter, &pmpriv->aes_key, 0, sizeof(pmpriv->aes_key));
-        (void)memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->aes_key, (t_u8 *)&sec->param.encrypt_key,
-                     sizeof(pmpriv->aes_key));
+        (void)__memset(pmpriv->adapter, &pmpriv->aes_key, 0, sizeof(pmpriv->aes_key));
+        (void)__memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->aes_key, (t_u8 *)&sec->param.encrypt_key,
+                       sizeof(pmpriv->aes_key));
 #else
-        (void)memset(pmpriv->adapter, pmpriv->aes_key.key_param_set.key, 0, sizeof(pmpriv->aes_key.key_param_set.key));
+        (void)__memset(pmpriv->adapter, pmpriv->aes_key.key_param_set.key, 0,
+                       sizeof(pmpriv->aes_key.key_param_set.key));
         pmpriv->aes_key.key_param_set.key_len = sec->param.encrypt_key.key_len;
-        (void)memcpy(pmpriv->adapter, pmpriv->aes_key.key_param_set.key, sec->param.encrypt_key.key_material,
-                     pmpriv->aes_key.key_param_set.key_len);
+        (void)__memcpy(pmpriv->adapter, pmpriv->aes_key.key_param_set.key, sec->param.encrypt_key.key_material,
+                       pmpriv->aes_key.key_param_set.key_len);
 #endif /* KEY_PARAM_SET_V2 */
     }
 #endif /* ADHOCAES || ENABLE_IBSS_WPA2 */
@@ -3104,7 +3105,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
         sec->param.encrypt_key.key_index & MLAN_KEY_INDEX_UNICAST)
     {
         t_u8 zero_key_material[WPA_AES_KEY_LEN];
-        (void)memset(pmadapter, zero_key_material, 0, sizeof(zero_key_material));
+        (void)__memset(pmadapter, zero_key_material, 0, sizeof(zero_key_material));
         if (memcmp(pmadapter, sec->param.encrypt_key.key_material, zero_key_material, WPA_AES_KEY_LEN))
         {
             PRINTM(MINFO, "Adhoc AES Enabled.\n");
@@ -3143,7 +3144,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
             /* for IBSS RSN when GTK is to be downloaded for
              * broadcast mac
              * address,replace broadcast mac with self mac address*/
-            (void)memcpy(pmadapter, sec->param.encrypt_key.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+            (void)__memcpy(pmadapter, sec->param.encrypt_key.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
         }
         if (sec->param.encrypt_key.key_flags & KEY_FLAG_GROUP_KEY)
         {
@@ -3201,8 +3202,8 @@ static mlan_status wlan_sec_ioctl_get_key(IN pmlan_adapter pmadapter, IN pmlan_i
         if (pmpriv->adhoc_aes_enabled == MTRUE && (pmpriv->aes_key.key_param_set.key_len == WPA_AES_KEY_LEN))
         {
             HEXDUMP("Get ADHOCAES Key", pmpriv->aes_key.key_param_set.key, WPA_AES_KEY_LEN);
-            (void)memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->aes_key.key_param_set.key,
-                         WPA_AES_KEY_LEN);
+            (void)__memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->aes_key.key_param_set.key,
+                           WPA_AES_KEY_LEN);
             LEAVE();
             return ret;
         }
@@ -3235,8 +3236,8 @@ static mlan_status wlan_sec_ioctl_get_key(IN pmlan_adapter pmadapter, IN pmlan_i
         {
             index                            = pmpriv->wep_key_curr_index;
             sec->param.encrypt_key.key_index = pmpriv->wep_key[index].key_index;
-            (void)memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->wep_key[index].key_material,
-                         MIN(MLAN_MAX_KEY_LENGTH, pmpriv->wep_key[index].key_length));
+            (void)__memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->wep_key[index].key_material,
+                           MIN(MLAN_MAX_KEY_LENGTH, pmpriv->wep_key[index].key_length));
             sec->param.encrypt_key.key_len = MIN(MLAN_MAX_KEY_LENGTH, pmpriv->wep_key[index].key_length);
         }
         else if ((pmpriv->sec_info.wpa_enabled) || (pmpriv->sec_info.ewpa_enabled) || (pmpriv->sec_info.wpa2_enabled) ||
@@ -3244,8 +3245,8 @@ static mlan_status wlan_sec_ioctl_get_key(IN pmlan_adapter pmadapter, IN pmlan_i
         {
             /* Return WPA enabled */
             sec->param.encrypt_key.key_disable = MFALSE;
-            (void)memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->aes_key.key_param_set.key,
-                         MIN(MLAN_MAX_KEY_LENGTH, pmpriv->aes_key.key_param_set.key_len));
+            (void)__memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->aes_key.key_param_set.key,
+                           MIN(MLAN_MAX_KEY_LENGTH, pmpriv->aes_key.key_param_set.key_len));
             sec->param.encrypt_key.key_len = MIN(MLAN_MAX_KEY_LENGTH, pmpriv->aes_key.key_param_set.key_len);
         }
         else
@@ -3259,8 +3260,8 @@ static mlan_status wlan_sec_ioctl_get_key(IN pmlan_adapter pmadapter, IN pmlan_i
         if (pmpriv->wep_key[index].key_length)
         {
             sec->param.encrypt_key.key_index = pmpriv->wep_key[index].key_index;
-            (void)memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->wep_key[index].key_material,
-                         MIN(MLAN_MAX_KEY_LENGTH, pmpriv->wep_key[index].key_length));
+            (void)__memcpy(pmadapter, sec->param.encrypt_key.key_material, pmpriv->wep_key[index].key_material,
+                           MIN(MLAN_MAX_KEY_LENGTH, pmpriv->wep_key[index].key_length));
             sec->param.encrypt_key.key_len = MIN(MLAN_MAX_KEY_LENGTH, pmpriv->wep_key[index].key_length);
         }
         else if ((pmpriv->sec_info.wpa_enabled) || (pmpriv->sec_info.ewpa_enabled) || (pmpriv->sec_info.wpa2_enabled) ||
@@ -3390,14 +3391,14 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
                 if (i >= 0)
                 {
                     pbss_desc = &pmadapter->pscan_table[i];
-                    (void)memcpy(pmadapter, &sec->param.passphrase.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
-                    (void)memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
+                    (void)__memcpy(pmadapter, &sec->param.passphrase.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
+                    (void)__memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
                     PRINTM(MINFO, "PSK_QUERY: found ssid=%s\n", sec->param.passphrase.ssid.ssid);
                 }
 #endif /* CONFIG_MLAN_WMSDK */
             }
             else
-                (void)memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
+                (void)__memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
         }
         cmd_action = HostCmd_ACT_GEN_GET;
     }
@@ -3451,14 +3452,14 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
                 if (i >= 0)
                 {
                     pbss_desc = &pmadapter->pscan_table[i];
-                    (void)memcpy(pmadapter, &sec->param.passphrase.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
-                    (void)memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
+                    (void)__memcpy(pmadapter, &sec->param.passphrase.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
+                    (void)__memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
                     PRINTM(MINFO, "PSK_QUERY: found ssid=%s\n", sec->param.passphrase.ssid.ssid);
                 }
 #endif /* CONFIG_MLAN_WMSDK */
             }
             else
-                (void)memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
+                (void)__memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
         }
         cmd_action = HostCmd_ACT_GEN_GET;
     }
@@ -3721,13 +3722,13 @@ static int wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr, t_u16 i
              */
             if (pvendor_ie->len > 4)
             {
-                (void)memcpy(priv->adapter, (t_u8 *)&priv->wps.wps_ie, ie_data_ptr, ie_len);
+                (void)__memcpy(priv->adapter, (t_u8 *)&priv->wps.wps_ie, ie_data_ptr, ie_len);
                 HEXDUMP("wps_ie", (t_u8 *)&priv->wps.wps_ie, priv->wps.wps_ie.vend_hdr.len + 2);
             }
             else
             {
                 /* Only wps oui exist, reset driver wps buffer */
-                (void)memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
+                (void)__memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
                 PRINTM(MINFO, "wps_ie cleared\n");
             }
         }
@@ -3750,7 +3751,7 @@ static int wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr, t_u16 i
                 }
 
                 /* Append the passed data to the end of the genIeBuffer */
-                (void)memcpy(priv->adapter, priv->gen_ie_buf + priv->gen_ie_buf_len, ie_data_ptr, ie_len);
+                (void)__memcpy(priv->adapter, priv->gen_ie_buf + priv->gen_ie_buf_len, ie_data_ptr, ie_len);
                 /* Increment the stored buffer length by the size passed */
                 priv->gen_ie_buf_len += ie_len;
             }
@@ -4323,7 +4324,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
             if (pioctl_req->action == MLAN_ACT_GET)
             {
                 misc->param.gen_ie.len = pmpriv->wpa_ie_len;
-                (void)memcpy(pmadapter, misc->param.gen_ie.ie_data, pmpriv->wpa_ie, misc->param.gen_ie.len);
+                (void)__memcpy(pmadapter, misc->param.gen_ie.ie_data, pmpriv->wpa_ie, misc->param.gen_ie.len);
             }
             else
             {
@@ -4331,7 +4332,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
             }
             break;
         case MLAN_IE_TYPE_ARP_FILTER:
-            (void)memset(pmadapter, pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
+            (void)__memset(pmadapter, pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
             if (misc->param.gen_ie.len > ARP_FILTER_MAX_BUF_SIZE)
             {
                 pmadapter->arp_filter_size = 0;
@@ -4346,7 +4347,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
             }
             else
             {
-                (void)memcpy(pmadapter, pmadapter->arp_filter, misc->param.gen_ie.ie_data, misc->param.gen_ie.len);
+                (void)__memcpy(pmadapter, pmadapter->arp_filter, misc->param.gen_ie.ie_data, misc->param.gen_ie.len);
                 pmadapter->arp_filter_size = misc->param.gen_ie.len;
                 HEXDUMP("ArpFilter", pmadapter->arp_filter, pmadapter->arp_filter_size);
             }
@@ -4815,7 +4816,7 @@ mlan_status wlan_ipaddr_arp_filter(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
     /* Update the total length */
     len = sizeof(arpfilter_header) + wlan_le16_to_cpu(arpfilter->len);
 
-    (void)memset(pmadapter, pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
+    (void)__memset(pmadapter, pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
     if (len > ARP_FILTER_MAX_BUF_SIZE)
     {
         pmadapter->arp_filter_size = 0;
@@ -4830,7 +4831,7 @@ mlan_status wlan_ipaddr_arp_filter(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
     }
     else
     {
-        (void)memcpy(pmadapter, pmadapter->arp_filter, buf, len);
+        (void)__memcpy(pmadapter, pmadapter->arp_filter, buf, len);
         pmadapter->arp_filter_size = len;
         HEXDUMP("ArpFilter", pmadapter->arp_filter, pmadapter->arp_filter_size);
     }
@@ -4879,7 +4880,7 @@ mlan_status wlan_ipaddr_auto_arp_resp(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         return MLAN_STATUS_FAILURE;
     }
 
-    (void)memset(pmpriv->adapter, hostcmd, 0, sizeof(mlan_ds_misc_cmd));
+    (void)__memset(pmpriv->adapter, hostcmd, 0, sizeof(mlan_ds_misc_cmd));
     buf = hostcmd->cmd;
 
     /* Prepare hostcmd buffer */
@@ -4902,8 +4903,8 @@ mlan_status wlan_ipaddr_auto_arp_resp(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         mefcmd->nentries = wlan_cpu_to_le16(1);
         buf_len += sizeof(HostCmd_DS_MEF_CFG);
         filter = buf + buf_len;
-        (void)memcpy(pmpriv->adapter, filter, fltr_buf, sizeof(fltr_buf));
-        (void)memcpy(pmpriv->adapter, &filter[FLTR_BUF_IP_OFFSET], &ipv4_addr, sizeof(ipv4_addr));
+        (void)__memcpy(pmpriv->adapter, filter, fltr_buf, sizeof(fltr_buf));
+        (void)__memcpy(pmpriv->adapter, &filter[FLTR_BUF_IP_OFFSET], &ipv4_addr, sizeof(ipv4_addr));
         buf_len += sizeof(fltr_buf);
     }
     hostcmd_hdr->size = wlan_cpu_to_le16(buf_len);
@@ -4963,7 +4964,7 @@ mlan_status wlan_misc_ioctl_mef_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
         goto done;
     }
 
-    (void)memset(pmpriv->adapter, hostcmd, 0, sizeof(mlan_ds_misc_cmd));
+    (void)__memset(pmpriv->adapter, hostcmd, 0, sizeof(mlan_ds_misc_cmd));
     buf = hostcmd->cmd;
 
     /* Prepare hostcmd buffer */
@@ -4986,7 +4987,7 @@ mlan_status wlan_misc_ioctl_mef_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
             mefcmd->nentries = wlan_cpu_to_le16(1);
             buf_len += sizeof(HostCmd_DS_MEF_CFG);
             filter = buf + buf_len;
-            (void)memcpy(pmpriv->adapter, filter, fltr_buf, sizeof(fltr_buf));
+            (void)__memcpy(pmpriv->adapter, filter, fltr_buf, sizeof(fltr_buf));
             buf_len += sizeof(fltr_buf);
             break;
         case MEF_CFG_AUTO_ARP_RESP:
@@ -4996,7 +4997,7 @@ mlan_status wlan_misc_ioctl_mef_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
         case MEF_CFG_HOSTCMD:
             PRINTM(MINFO, "MEF hostcmd from MOAL\n");
             filter = buf + buf_len;
-            (void)memcpy(pmpriv->adapter, filter, mef_cfg->param.cmd_buf.cmd, mef_cfg->param.cmd_buf.len);
+            (void)__memcpy(pmpriv->adapter, filter, mef_cfg->param.cmd_buf.cmd, mef_cfg->param.cmd_buf.len);
             buf_len += mef_cfg->param.cmd_buf.len;
             break;
         default:
@@ -5042,12 +5043,12 @@ mlan_status wlan_misc_ioctl_ipaddr_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioct
     /* GET operation */
     if (pioctl_req->action == MLAN_ACT_GET)
     {
-        (void)memcpy(pmadapter, misc->param.ipaddr_cfg.ip_addr, pmpriv->ip_addr, IPADDR_LEN);
+        (void)__memcpy(pmadapter, misc->param.ipaddr_cfg.ip_addr, pmpriv->ip_addr, IPADDR_LEN);
         misc->param.ipaddr_cfg.op_code = pmpriv->op_code;
         goto done;
     }
     /* only one IP is supported in current firmware */
-    (void)memcpy(pmadapter, &ipv4_addr, misc->param.ipaddr_cfg.ip_addr[0], sizeof(t_u32));
+    (void)__memcpy(pmadapter, &ipv4_addr, misc->param.ipaddr_cfg.ip_addr[0], sizeof(t_u32));
 
     if (misc->param.ipaddr_cfg.op_code != MLAN_IPADDR_OP_IP_REMOVE && !ipv4_addr)
     {
@@ -5073,7 +5074,7 @@ mlan_status wlan_misc_ioctl_ipaddr_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioct
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         pmpriv->op_code = misc->param.ipaddr_cfg.op_code;
-        (void)memcpy(pmadapter, pmpriv->ip_addr, misc->param.ipaddr_cfg.ip_addr, IPADDR_LEN);
+        (void)__memcpy(pmadapter, pmpriv->ip_addr, misc->param.ipaddr_cfg.ip_addr, IPADDR_LEN);
     }
 
 done:
@@ -5228,12 +5229,12 @@ mlan_status wlan_misc_ioctl_country_code(IN pmlan_adapter pmadapter, IN mlan_ioc
             ret                     = MLAN_STATUS_FAILURE;
             goto done;
         }
-        (void)memcpy(pmadapter, pmadapter->country_code, country_code->country_code, COUNTRY_CODE_LEN);
+        (void)__memcpy(pmadapter, pmadapter->country_code, country_code->country_code, COUNTRY_CODE_LEN);
     }
     else
     {
         /* GET operation */
-        (void)memcpy(pmadapter, country_code->country_code, pmadapter->country_code, COUNTRY_CODE_LEN);
+        (void)__memcpy(pmadapter, country_code->country_code, pmadapter->country_code, COUNTRY_CODE_LEN);
     }
 
 done:
@@ -5573,7 +5574,7 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
             i = wlan_find_bssid_in_list(pmpriv, (t_u8 *)&bss->param.ssid_bssid.bssid, pmpriv->bss_mode);
         if (i < 0)
         {
-            (void)memcpy(pmadapter, mac, &bss->param.ssid_bssid.bssid, sizeof(mac));
+            (void)__memcpy(pmadapter, mac, &bss->param.ssid_bssid.bssid, sizeof(mac));
             PRINTM(MERROR, "Can not find bssid %02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4],
                    mac[5]);
             pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
@@ -5581,7 +5582,7 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
             return MLAN_STATUS_FAILURE;
         }
         pbss_desc = &pmadapter->pscan_table[i];
-        (void)memcpy(pmadapter, &bss->param.ssid_bssid.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
+        (void)__memcpy(pmadapter, &bss->param.ssid_bssid.ssid, &pbss_desc->ssid, sizeof(mlan_802_11_ssid));
         /* index in bss list,start from 1 */
         bss->param.ssid_bssid.idx = i + 1;
     }
@@ -5596,8 +5597,8 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
             return MLAN_STATUS_FAILURE;
         }
         pbss_desc = &pmadapter->pscan_table[i];
-        (void)memcpy(pmadapter, (t_u8 *)&bss->param.ssid_bssid.bssid, (t_u8 *)&pbss_desc->mac_address,
-                     MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmadapter, (t_u8 *)&bss->param.ssid_bssid.bssid, (t_u8 *)&pbss_desc->mac_address,
+                       MLAN_MAC_ADDR_LENGTH);
         /* index in bss list, start from 1 */
         bss->param.ssid_bssid.idx = i + 1;
     }

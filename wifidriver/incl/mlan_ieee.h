@@ -71,9 +71,10 @@ typedef enum _WLAN_802_11_NETWORK_TYPE
 #endif
 
 #ifdef CONFIG_11AX
-typedef enum _IEEEtypes_Ext_ElementId_e {
+typedef enum _IEEEtypes_Ext_ElementId_e
+{
     HE_CAPABILITY = 35,
-    HE_OPERATION = 36
+    HE_OPERATION  = 36
 } IEEEtypes_Ext_ElementId_e;
 #endif
 
@@ -125,10 +126,11 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 
     WPS_IE = VENDOR_SPECIFIC_221,
 
-    WPA_IE  = VENDOR_SPECIFIC_221,
-    RSN_IE  = 48,
-    VS_IE   = VENDOR_SPECIFIC_221,
-    WAPI_IE = 68,
+    WPA_IE    = VENDOR_SPECIFIC_221,
+    RSN_IE    = 48,
+    VS_IE     = VENDOR_SPECIFIC_221,
+    WAPI_IE   = 68,
+    RSNX_IE   = 244,
     EXTENSION = 255,
 } MLAN_PACK_END IEEEtypes_ElementId_e;
 
@@ -1508,7 +1510,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
     t_u8 he_phy_cap[11];
     /** he txrx mcs support , size would be 4 or 8 or 12 */
     t_u8 he_txrx_mcs_support[4];
-   /** PPE Thresholds (optional) */
+    /** PPE Thresholds (optional) */
 } MLAN_PACK_END IEEEtypes_HECap_t, *pIEEEtypes_HECap_t;
 #endif
 
@@ -1734,7 +1736,7 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_VHTOprat_t vht_oprat_saved;
     IEEEtypes_VHTtxpower_t vht_txpower_saved;
     IEEEtypes_OperModeNtf_t poper_mode_saved;
-    IEEEtypes_ExtCap_t ext_cap_saved;    
+    IEEEtypes_ExtCap_t ext_cap_saved;
 #ifdef CONFIG_11AX
     /** HE Capability IE */
     IEEEtypes_HECap_t *phe_cap;
@@ -1761,6 +1763,10 @@ typedef struct _BSSDescriptor_t
     t_u16 wps_session;
 
     bool wpa2_entp_IE_exist;
+    /** RSNX IE */
+    IEEEtypes_Generic_t *prsnx_ie;
+    /** RSNX IE offset in the beacon buffer */
+    t_u16 rsnx_offset;
 } BSSDescriptor_t, *pBSSDescriptor_t;
 
 #endif /* !_MLAN_IEEE_H_ */

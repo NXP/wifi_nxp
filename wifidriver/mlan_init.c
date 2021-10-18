@@ -47,7 +47,8 @@ Change log:
 __attribute__((section(".wlan_data"))) static BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST];
 
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 static t_u8 mp_regs_buffer[MAX_MP_REGS + DMA_ALIGNMENT];
 #elif defined(SD8801)
 SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
@@ -209,10 +210,11 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     }
     pmadapter->mp_regs = (t_u8 *)ALIGN_ADDR(pmadapter->mp_regs_buf, DMA_ALIGNMENT);
 #endif /* CONFIG_MLAN_WMSDK */
-    /* wmsdk: Use a statically allocated DMA aligned buffer */
+       /* wmsdk: Use a statically allocated DMA aligned buffer */
 #if defined(SD8801)
     pmadapter->mp_regs = mp_regs_buffer;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
     pmadapter->mp_regs = (t_u8 *)ALIGN_ADDR(mp_regs_buffer, DMA_ALIGNMENT);
 // mp_regs_buffer;
 #endif
@@ -252,7 +254,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
     ENTER();
 
     priv->media_connected = MFALSE;
-    (void)memset(pmadapter, priv->curr_addr, 0xff, MLAN_MAC_ADDR_LENGTH);
+    (void)__memset(pmadapter, priv->curr_addr, 0xff, MLAN_MAC_ADDR_LENGTH);
 
 #ifdef STA_SUPPORT
     priv->pkt_tx_ctrl = 0;
@@ -268,7 +270,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
     priv->sec_info.encryption_mode     = MLAN_ENCRYPTION_MODE_NONE;
     for (i = 0; i < sizeof(priv->wep_key) / sizeof(priv->wep_key[0]); i++)
-        (void)memset(pmadapter, &priv->wep_key[i], 0, sizeof(mrvl_wep_key_t));
+        (void)__memset(pmadapter, &priv->wep_key[i], 0, sizeof(mrvl_wep_key_t));
     priv->wep_key_curr_index = 0;
     priv->ewpa_query         = MFALSE;
     priv->adhoc_aes_enabled  = MFALSE;
@@ -278,10 +280,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->beacon_period       = MLAN_BEACON_INTERVAL;
     priv->pattempted_bss_desc = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
-    (void)memset(pmadapter, &priv->curr_bss_params, 0, sizeof(priv->curr_bss_params));
+    (void)__memset(pmadapter, &priv->curr_bss_params, 0, sizeof(priv->curr_bss_params));
     priv->listen_interval = MLAN_DEFAULT_LISTEN_INTERVAL;
 #ifndef CONFIG_MLAN_WMSDK
-    (void)memset(pmadapter, &priv->assoc_rsp_buf, 0, sizeof(priv->assoc_rsp_buf));
+    (void)__memset(pmadapter, &priv->assoc_rsp_buf, 0, sizeof(priv->assoc_rsp_buf));
     priv->assoc_rsp_size = 0;
 #endif /* CONFIG_MLAN_WMSDK */
     wlan_11d_priv_init(priv);
@@ -289,7 +291,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 
 #if defined(UAP_SUPPORT)
     priv->uap_bss_started = MFALSE;
-    (void)memset(pmadapter, &priv->uap_state_chan_cb, 0, sizeof(priv->uap_state_chan_cb));
+    (void)__memset(pmadapter, &priv->uap_state_chan_cb, 0, sizeof(priv->uap_state_chan_cb));
 #endif
 #if defined(UAP_SUPPORT)
     priv->num_drop_pkts = 0;
@@ -298,7 +300,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #ifndef CONFIG_MLAN_WMSDK
 #if defined(STA_SUPPORT)
     priv->adhoc_state_prev = ADHOC_IDLE;
-    (void)memset(pmadapter, &priv->adhoc_last_start_ssid, 0, sizeof(priv->adhoc_last_start_ssid));
+    (void)__memset(pmadapter, &priv->adhoc_last_start_ssid, 0, sizeof(priv->adhoc_last_start_ssid));
 #endif
     priv->adhoc_channel      = DEFAULT_AD_HOC_CHANNEL;
     priv->atim_window        = 0;
@@ -326,16 +328,16 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->sec_info.ewpa_enabled = MFALSE;
     priv->sec_info.wpa_enabled  = MFALSE;
     priv->sec_info.wpa2_enabled = MFALSE;
-    (void)memset(pmadapter, &priv->wpa_ie, 0, sizeof(priv->wpa_ie));
-    (void)memset(pmadapter, &priv->aes_key, 0, sizeof(priv->aes_key));
+    (void)__memset(pmadapter, &priv->wpa_ie, 0, sizeof(priv->wpa_ie));
+    (void)__memset(pmadapter, &priv->aes_key, 0, sizeof(priv->aes_key));
     priv->wpa_ie_len            = 0;
     priv->wpa_is_gtk_set        = MFALSE;
     priv->sec_info.wapi_enabled = MFALSE;
     priv->wapi_ie_len           = 0;
     priv->sec_info.wapi_key_on  = MFALSE;
 
-    (void)memset(pmadapter, &priv->wps, 0, sizeof(priv->wps));
-    (void)memset(pmadapter, &priv->gen_ie_buf, 0, sizeof(priv->gen_ie_buf));
+    (void)__memset(pmadapter, &priv->wps, 0, sizeof(priv->wps));
+    (void)__memset(pmadapter, &priv->gen_ie_buf, 0, sizeof(priv->gen_ie_buf));
     priv->gen_ie_buf_len = 0;
 #endif /* CONFIG_MLAN_WMSDK */
 #endif /* STA_SUPPORT */
@@ -424,7 +426,8 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 #if defined(SD8801)
     pmadapter->curr_rd_port = 1;
     pmadapter->curr_wr_port = 1;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
     pmadapter->curr_rd_port = 0;
     pmadapter->curr_wr_port = 0;
 #endif
@@ -515,7 +518,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
-    (void)memset(pmadapter, pmadapter->pscan_table, 0, (sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST));
+    (void)__memset(pmadapter, pmadapter->pscan_table, 0, (sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST));
 #endif /* CONFIG_MLAN_WMSDK */
 #ifdef EXT_SCAN_SUPPORT
     pmadapter->ext_scan = 1;
@@ -524,7 +527,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
-    (void)memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);
+    (void)__memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);
     pmadapter->pbcn_buf_end = pmadapter->bcn_buf;
 
     pmadapter->radio_on = RADIO_ON;
@@ -575,7 +578,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->hs_cfg.gpio       = HOST_SLEEP_DEF_GPIO;
     pmadapter->hs_cfg.gap        = HOST_SLEEP_DEF_GAP;
     pmadapter->hs_activated      = MFALSE;
-    (void)memset(pmadapter, pmadapter->event_body, 0, sizeof(pmadapter->event_body));
+    (void)__memset(pmadapter, pmadapter->event_body, 0, sizeof(pmadapter->event_body));
 #endif /* CONFIG_MLAN_WMSDK */
     pmadapter->hw_dot_11n_dev_cap     = 0;
     pmadapter->hw_dev_mcs_support     = 0;
@@ -604,15 +607,15 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     {
         pmadapter->psleep_cfm->buf_type = MLAN_BUF_TYPE_CMD;
         pmadapter->psleep_cfm->data_len = sizeof(OPT_Confirm_Sleep);
-        (void)memset(pmadapter, &sleep_cfm_buf->ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
+        (void)__memset(pmadapter, &sleep_cfm_buf->ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
         sleep_cfm_buf->ps_cfm_sleep.command             = wlan_cpu_to_le16(HostCmd_CMD_802_11_PS_MODE_ENH);
         sleep_cfm_buf->ps_cfm_sleep.size                = wlan_cpu_to_le16(sizeof(OPT_Confirm_Sleep));
         sleep_cfm_buf->ps_cfm_sleep.result              = 0;
         sleep_cfm_buf->ps_cfm_sleep.action              = wlan_cpu_to_le16(SLEEP_CONFIRM);
         sleep_cfm_buf->ps_cfm_sleep.sleep_cfm.resp_ctrl = wlan_cpu_to_le16(RESP_NEEDED);
     }
-    (void)memset(pmadapter, &pmadapter->sleep_params, 0, sizeof(pmadapter->sleep_params));
-    (void)memset(pmadapter, &pmadapter->sleep_period, 0, sizeof(pmadapter->sleep_period));
+    (void)__memset(pmadapter, &pmadapter->sleep_params, 0, sizeof(pmadapter->sleep_params));
+    (void)__memset(pmadapter, &pmadapter->sleep_period, 0, sizeof(pmadapter->sleep_period));
 
     pmadapter->tx_lock_flag = MFALSE;
 #endif /* CONFIG_MLAN_WMSDK */
@@ -624,19 +627,19 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->fw_release_number = 0;
     pmadapter->fw_cap_info       = 0;
 #ifndef CONFIG_MLAN_WMSDK
-    (void)memset(pmadapter, &pmadapter->upld_buf, 0, sizeof(pmadapter->upld_buf));
+    (void)__memset(pmadapter, &pmadapter->upld_buf, 0, sizeof(pmadapter->upld_buf));
     pmadapter->upld_len           = 0;
     pmadapter->event_cause        = 0;
     pmadapter->pmlan_buffer_event = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
-    (void)memset(pmadapter, &pmadapter->region_channel, 0, sizeof(pmadapter->region_channel));
+    (void)__memset(pmadapter, &pmadapter->region_channel, 0, sizeof(pmadapter->region_channel));
     pmadapter->region_code = MRVDRV_DEFAULT_REGION_CODE;
-    (void)memcpy(pmadapter, pmadapter->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
+    (void)__memcpy(pmadapter, pmadapter->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
     pmadapter->bcn_miss_time_out  = DEFAULT_BCN_MISS_TIMEOUT;
     pmadapter->adhoc_awake_period = 0;
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef STA_SUPPORT
-    (void)memset(pmadapter, &pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
+    (void)__memset(pmadapter, &pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
     pmadapter->arp_filter_size = 0;
 #endif /* STA_SUPPORT */
 

@@ -542,32 +542,24 @@ t_u8 SupportedRates_N[N_SUPPORTED_RATES] = {0x02, 0x04, 0};
  * for MCS0/MCS1/MCS3/MCS4 have 4 additional DCM=1 value
  * note: the value in the table is 2 multiplier of the actual rate
  */
-static t_u16 ax_mcs_rate_nss1[12][MCS_NUM_AX + 4] =
-{
-    {0x90, 0x48, 0x120, 0x90, 0x1B0, 0x240, 0x120, 0x360, 0x1B0, 0x481,
-     0x511, 0x5A1, 0x6C1, 0x781, 0x871, 0x962}, /*SG 160M*/
-    {0x88, 0x44, 0x110, 0x88, 0x198, 0x220, 0x110, 0x330, 0x198, 0x440,
-     0x4C9, 0x551, 0x661, 0x716, 0x7F9, 0x8DC}, /*MG 160M*/
-    {0x7A, 0x3D, 0xF5, 0x7A, 0x16F, 0x1EA, 0xF5, 0x2DF, 0x16F, 0x3D4, 0x44E,
-     0x4C9, 0x5BE, 0x661, 0x72D, 0x7F9}, /*LG 160M*/
-    {0x48, 0x24, 0x90, 0x48, 0xD8, 0x120, 0x90, 0x1B0, 0xD8, 0x240, 0x288,
-     0x2D0, 0x360, 0x3C0, 0x438, 0x4B0}, /*SG 80M*/
-    {0x44, 0x22, 0x88, 0x44, 0xCC, 0x110, 0x88, 0x198, 0xCC, 0x220, 0x264,
-     0x2A8, 0x330, 0x38B, 0x3FC, 0x46E}, /*MG 80M*/
-    {0x3D, 0x1E, 0x7A, 0x3D, 0xB7, 0xF5, 0x7A, 0x16F, 0xB7, 0x1EA, 0x227,
-     0x264, 0x2DF, 0x330, 0x396, 0x3FC}, /*LG 80M*/
-    {0x22, 0x11, 0x44, 0x22, 0x67, 0x89, 0x44, 0xCE, 0x67, 0x113, 0x135,
-     0x158, 0x19D, 0x1CA, 0x204, 0x23D}, /*SG 40M*/
-    {0x20, 0x10, 0x41, 0x20, 0x61, 0x82, 0x41, 0xC3, 0x61, 0x104, 0x124,
-     0x145, 0x186, 0x1B1, 0x1E7, 0x21D}, /*MG 40M*/
-    {0x1D, 0xE, 0x3A, 0x1D, 0x57, 0x75, 0x3A, 0xAF, 0x57, 0xEA, 0x107,
-     0x124, 0x15F, 0x186, 0x1B6, 0x1E7}, /*LG 40M*/
-    {0x11, 0x8, 0x22, 0x11, 0x33, 0x44, 0x22, 0x67, 0x33, 0x89, 0x9A, 0xAC,
-     0xCE, 0xE5, 0x102, 0x11E}, /*SG 20M*/
-    {0x10, 0x8, 0x20, 0x10, 0x30, 0x41, 0x20, 0x61, 0x30, 0x82, 0x92, 0xA2,
-     0xC3, 0xD8, 0xF3, 0x10E}, /*MG 20M*/
-    {0xE, 0x7, 0x1D, 0xE, 0x2B, 0x3A, 0x1D, 0x57, 0x2B, 0x75, 0x83, 0x92,
-     0xAF, 0xC3, 0xDB, 0xF3} /*LG 20M*/
+static t_u16 ax_mcs_rate_nss1[12][MCS_NUM_AX + 4] = {
+    {0x90, 0x48, 0x120, 0x90, 0x1B0, 0x240, 0x120, 0x360, 0x1B0, 0x481, 0x511, 0x5A1, 0x6C1, 0x781, 0x871,
+     0x962}, /*SG 160M*/
+    {0x88, 0x44, 0x110, 0x88, 0x198, 0x220, 0x110, 0x330, 0x198, 0x440, 0x4C9, 0x551, 0x661, 0x716, 0x7F9,
+     0x8DC}, /*MG 160M*/
+    {0x7A, 0x3D, 0xF5, 0x7A, 0x16F, 0x1EA, 0xF5, 0x2DF, 0x16F, 0x3D4, 0x44E, 0x4C9, 0x5BE, 0x661, 0x72D,
+     0x7F9}, /*LG 160M*/
+    {0x48, 0x24, 0x90, 0x48, 0xD8, 0x120, 0x90, 0x1B0, 0xD8, 0x240, 0x288, 0x2D0, 0x360, 0x3C0, 0x438,
+     0x4B0}, /*SG 80M*/
+    {0x44, 0x22, 0x88, 0x44, 0xCC, 0x110, 0x88, 0x198, 0xCC, 0x220, 0x264, 0x2A8, 0x330, 0x38B, 0x3FC,
+     0x46E},                                                                                                  /*MG 80M*/
+    {0x3D, 0x1E, 0x7A, 0x3D, 0xB7, 0xF5, 0x7A, 0x16F, 0xB7, 0x1EA, 0x227, 0x264, 0x2DF, 0x330, 0x396, 0x3FC}, /*LG 80M*/
+    {0x22, 0x11, 0x44, 0x22, 0x67, 0x89, 0x44, 0xCE, 0x67, 0x113, 0x135, 0x158, 0x19D, 0x1CA, 0x204, 0x23D},  /*SG 40M*/
+    {0x20, 0x10, 0x41, 0x20, 0x61, 0x82, 0x41, 0xC3, 0x61, 0x104, 0x124, 0x145, 0x186, 0x1B1, 0x1E7, 0x21D},  /*MG 40M*/
+    {0x1D, 0xE, 0x3A, 0x1D, 0x57, 0x75, 0x3A, 0xAF, 0x57, 0xEA, 0x107, 0x124, 0x15F, 0x186, 0x1B6, 0x1E7},    /*LG 40M*/
+    {0x11, 0x8, 0x22, 0x11, 0x33, 0x44, 0x22, 0x67, 0x33, 0x89, 0x9A, 0xAC, 0xCE, 0xE5, 0x102, 0x11E},        /*SG 20M*/
+    {0x10, 0x8, 0x20, 0x10, 0x30, 0x41, 0x20, 0x61, 0x30, 0x82, 0x92, 0xA2, 0xC3, 0xD8, 0xF3, 0x10E},         /*MG 20M*/
+    {0xE, 0x7, 0x1D, 0xE, 0x2B, 0x3A, 0x1D, 0x57, 0x2B, 0x75, 0x83, 0x92, 0xAF, 0xC3, 0xDB, 0xF3}             /*LG 20M*/
 };
 #endif
 
@@ -903,8 +895,8 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     t_u8 mcs_index = 0;
 #endif
 #ifdef CONFIG_11AX
-    t_u8 he_dcm = 0;
-    t_u8 stbc = 0;
+    t_u8 he_dcm    = 0;
+    t_u8 stbc      = 0;
 #endif
     t_u8 bw        = 0;
     t_u8 gi        = 0;
@@ -937,11 +929,11 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     else
 #endif
 #ifdef CONFIG_11AX
-    if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
+        if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
     {
         /* HE rate */
         mcs_index = index & 0xF;
-        he_dcm = ext_rate_info & MBIT(0);
+        he_dcm    = ext_rate_info & MBIT(0);
         if (mcs_index > MCS_NUM_AX - 1)
             mcs_index = MCS_NUM_AX - 1;
         /* 20M: bw=0, 40M: bw=1, 80M: bw=2, 160M: bw=3 */
@@ -957,8 +949,8 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
         }
         if ((gi == 3) && stbc && he_dcm)
         {
-            gi = 0;
-            stbc = 0;
+            gi     = 0;
+            stbc   = 0;
             he_dcm = 0;
         }
         /* map to gi 0:0.8us,1:1.6us 2:3.2us*/
@@ -984,7 +976,7 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     }
 #endif
 #ifdef CONFIG_11N
-        if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HT)
+    if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HT)
     {
         /* HT rate */
         /* 20M: bw=0, 40M: bw=1 */
@@ -1443,7 +1435,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 confi
             case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_AAX:
             case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC | BAND_AAX | BAND_GAX:
 #endif
-	    case BAND_B | BAND_G | BAND_GN:
+            case BAND_B | BAND_G | BAND_GN:
             case BAND_B | BAND_G | BAND_GN | BAND_GAC:
 #ifdef CONFIG_11AX
             case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
@@ -1472,7 +1464,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 confi
             case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
             case BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC | BAND_AAX:
 #endif
-       		PRINTM(MINFO, "Infra band=%d SupportedRates_A\n", config_bands);
+                PRINTM(MINFO, "Infra band=%d SupportedRates_A\n", config_bands);
                 k = wlan_copy_rates(rates, k, SupportedRates_A, sizeof(SupportedRates_A));
                 break;
             case BAND_GN:
@@ -1507,7 +1499,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 confi
             case BAND_B | BAND_G | BAND_GN:
             case BAND_B | BAND_G | BAND_GN | BAND_GAC:
 #ifdef CONFIG_11AX
-	    case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+            case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
 #endif
                 PRINTM(MINFO, "Band: Adhoc BG\n");
                 k = wlan_copy_rates(rates, k, AdhocRates_BG, sizeof(AdhocRates_BG));
@@ -1547,7 +1539,7 @@ mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, t_u8 band)
 
     ENTER();
 
-    (void)memset(pmadapter, pmadapter->region_channel, 0, sizeof(pmadapter->region_channel));
+    (void)__memset(pmadapter, pmadapter->region_channel, 0, sizeof(pmadapter->region_channel));
 
     if (band & (BAND_B | BAND_G | BAND_GN))
     {
@@ -2106,7 +2098,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 /* Save region info values from OTP in the otp_region
                  * structure
                  */
-                (void)memcpy(pmadapter, pmadapter->otp_region, data, sizeof(otp_region_info_t));
+                (void)__memcpy(pmadapter, pmadapter->otp_region, data, sizeof(otp_region_info_t));
 
                 data += sizeof(otp_region_info_t);
                 /* Get pre-defined cfp tables corresponding to the region code
@@ -2247,7 +2239,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                         break;
                     }
                 }
-                (void)memcpy(pmadapter, pmadapter->tx_power_table_bg, data, i);
+                (void)__memcpy(pmadapter, pmadapter->tx_power_table_bg, data, i);
                 pmadapter->tx_power_table_bg_size = i;
                 data += i;
 #ifdef CONFIG_5GHz_SUPPORT
@@ -2269,7 +2261,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                         break;
                     }
                 }
-                (void)memcpy(pmadapter, pmadapter->tx_power_table_a, data, i);
+                (void)__memcpy(pmadapter, pmadapter->tx_power_table_a, data, i);
                 pmadapter->tx_power_table_a_size = i;
 #endif
                 break;

@@ -220,7 +220,7 @@ int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_
 
 int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low)
 {
-    t_u64 tsf;
+    t_u64 tsf = 0x00;
 
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -3052,4 +3052,41 @@ int wifi_stop_smart_mode()
     wifi_wait_for_cmdresp(NULL);
 
     return WM_SUCCESS;
+}
+
+int wifi_send_hostcmd(
+    void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
+{
+    uint32_t ret = WM_SUCCESS;
+    /* Store IN & OUT params to be used by driver to update internaally*/
+    /* These variables are updated from reponse handlers */
+    wm_wifi.hostcmd_cfg.resp_buf      = resp_buf;
+    wm_wifi.hostcmd_cfg.resp_buf_len  = resp_buf_len;
+    wm_wifi.hostcmd_cfg.reqd_resp_len = reqd_resp_len;
+
+    /* Check if command is larger than the command size that can be handled by firmware */
+    if (cmd_buf_len > WIFI_FW_CMDBUF_SIZE)
+    {
+        *reqd_resp_len = 0;
+        return WM_E_INBIG;
+    }
+    else if (cmd_buf_len < WIFI_HOST_CMD_FIXED_HEADER_LEN)
+    /* Check if command is smaller than the minimum command size needed, which is WIFI_HOST_CMD_FIXED_HEADER_LEN */
+    {
+        *reqd_resp_len = 0;
+        return WM_E_INSMALL;
+    }
+    wifi_get_command_lock();
+    /* Copy command buffer to driver command buffer */
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    memcpy(cmd, cmd_buf, cmd_buf_len);
+
+    /* Set global variable to say that this command is from user invocation */
+    wm_wifi.hostcmd_cfg.is_hostcmd = true;
+    wifi_wait_for_cmdresp(&wm_wifi.hostcmd_cfg);
+
+    if (*reqd_resp_len > resp_buf_len)
+        ret = WM_E_OUTBIG;
+    /*Response fail check not checked here, as thats caller's responsibility */
+    return ret;
 }

@@ -37,11 +37,11 @@
  * in the include header list.
  */
 
-#ifdef memset
-#undef memset
+#ifdef __memset
+#undef __memset
 #endif
 /** Memset routine */
-#define memset(adapter, s, c, len) memset(s, c, len)
+#define __memset(adapter, s, c, len) memset(s, c, len)
 
 #ifdef memmove
 #undef memmove
@@ -49,11 +49,11 @@
 /** Memmove routine */
 #define memmove(adapter, dest, src, len) memmove(dest, src, len)
 
-#ifdef memcpy
-#undef memcpy
+#ifdef __memcpy
+#undef __memcpy
 #endif
 /** Memcpy routine */
-#define memcpy(adapter, to, from, len) memcpy(to, from, len)
+#define __memcpy(adapter, to, from, len) memcpy(to, from, len)
 
 #ifdef memcmp
 #undef memcmp

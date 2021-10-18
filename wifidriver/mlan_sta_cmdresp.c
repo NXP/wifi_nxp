@@ -199,7 +199,7 @@ static mlan_status wlan_ret_802_11_rssi_info(IN pmlan_private pmpriv,
     {
         pget_info = (mlan_ds_get_info *)pioctl_buf->pbuf;
 
-        (void)memset(pmpriv->adapter, &pget_info->param.signal, 0, sizeof(mlan_ds_get_signal));
+        (void)__memset(pmpriv->adapter, &pget_info->param.signal, 0, sizeof(mlan_ds_get_signal));
 
         pget_info->param.signal.selector = ALL_RSSI_INFO_MASK;
 
@@ -479,7 +479,7 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
 
     ENTER();
 
-    ppg_tlv = (MrvlTypes_Power_Group_t *)((t_u8 *)ptxp_cfg + sizeof(HostCmd_DS_TXPWR_CFG));
+    ppg_tlv = (MrvlTypes_Power_Group_t *)((t_u8 *)&resp->params + sizeof(HostCmd_DS_TXPWR_CFG));
     pg      = (Power_Group_t *)((t_u8 *)ppg_tlv + sizeof(MrvlTypes_Power_Group_t));
 
     switch (action)
@@ -547,9 +547,9 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
                     data[2] = pg->power_min;
                     data[3] = pg->power_max;
                     data[4] = pg->power_step;
-                    (void)memcpy(pmpriv->adapter,
-                                 (t_u8 *)(&power->param.power_ext.power_data[power->param.power_ext.len]), (t_u8 *)data,
-                                 sizeof(data));
+                    (void)__memcpy(pmpriv->adapter,
+                                   (t_u8 *)(&power->param.power_ext.power_data[power->param.power_ext.len]),
+                                   (t_u8 *)data, sizeof(data));
                     power->param.power_ext.len += 5;
                     pg++;
                     ppg_tlv->length -= sizeof(Power_Group_t);
@@ -712,14 +712,14 @@ static mlan_status wlan_ret_802_11_mac_address(IN pmlan_private pmpriv,
 
     ENTER();
 
-    (void)memcpy(pmpriv->adapter, pmpriv->curr_addr, pmac_addr->mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmpriv->adapter, pmpriv->curr_addr, pmac_addr->mac_addr, MLAN_MAC_ADDR_LENGTH);
 
     PRINTM(MINFO, "MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n", pmpriv->curr_addr[0], pmpriv->curr_addr[1],
            pmpriv->curr_addr[2], pmpriv->curr_addr[3], pmpriv->curr_addr[4], pmpriv->curr_addr[5]);
     if (pioctl_buf)
     {
         bss = (mlan_ds_bss *)pioctl_buf->pbuf;
-        (void)memcpy(pmpriv->adapter, &bss->param.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmpriv->adapter, &bss->param.mac_addr, pmpriv->curr_addr, MLAN_MAC_ADDR_LENGTH);
         pioctl_buf->data_read_written = MLAN_MAC_ADDR_LENGTH + MLAN_SUB_COMMAND_SIZE;
     }
     LEAVE();
@@ -854,27 +854,27 @@ static mlan_status wlan_ret_802_11_key_material(IN pmlan_private pmpriv,
                 case KEY_TYPE_ID_WEP:
                     sec->param.encrypt_key.key_index = pkey->key_param_set.key[0];
                     sec->param.encrypt_key.key_len   = wlan_le16_to_cpu(pkey->key_param_set.key_len);
-                    (void)memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, &pkey->key_param_set.key[2],
-                                 sec->param.encrypt_key.key_len);
+                    (void)__memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, &pkey->key_param_set.key[2],
+                                   sec->param.encrypt_key.key_len);
                     break;
                 case KEY_TYPE_ID_TKIP:
                     sec->param.encrypt_key.key_len = wlan_le16_to_cpu(pkey->key_param_set.key_len);
-                    (void)memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, pkey->key_param_set.key,
-                                 sec->param.encrypt_key.key_len);
+                    (void)__memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, pkey->key_param_set.key,
+                                   sec->param.encrypt_key.key_len);
                     break;
                 case KEY_TYPE_ID_AES:
                     sec->param.encrypt_key.key_len = wlan_le16_to_cpu(pkey->key_param_set.key_len);
-                    (void)memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, pkey->key_param_set.key,
-                                 sec->param.encrypt_key.key_len);
+                    (void)__memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, pkey->key_param_set.key,
+                                   sec->param.encrypt_key.key_len);
                     break;
                 case KEY_TYPE_ID_WAPI:
                     sec->param.encrypt_key.is_wapi_key = MTRUE;
                     sec->param.encrypt_key.key_index   = pkey->key_param_set.key[0];
                     sec->param.encrypt_key.key_len     = WAPI_KEY_SIZE;
-                    (void)memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, &pkey->key_param_set.key[2],
-                                 sec->param.encrypt_key.key_len);
-                    (void)memcpy(pmpriv->adapter, sec->param.encrypt_key.pn,
-                                 &pkey->key_param_set.key[2 + WAPI_KEY_SIZE], PN_SIZE);
+                    (void)__memcpy(pmpriv->adapter, sec->param.encrypt_key.key_material, &pkey->key_param_set.key[2],
+                                   sec->param.encrypt_key.key_len);
+                    (void)__memcpy(pmpriv->adapter, sec->param.encrypt_key.pn,
+                                   &pkey->key_param_set.key[2 + WAPI_KEY_SIZE], PN_SIZE);
                     break;
             }
         }
@@ -930,8 +930,8 @@ static mlan_status wlan_ret_802_11_supplicant_pmk(IN pmlan_private pmpriv,
                     case TLV_TYPE_SSID:
                         pssid_tlv             = (MrvlIEtypes_SsIdParamSet_t *)tlv_buf;
                         pssid_tlv->header.len = wlan_le16_to_cpu(pssid_tlv->header.len);
-                        (void)memcpy(pmpriv->adapter, sec->param.passphrase.ssid.ssid, pssid_tlv->ssid,
-                                     MIN(MLAN_MAX_SSID_LENGTH, pssid_tlv->header.len));
+                        (void)__memcpy(pmpriv->adapter, sec->param.passphrase.ssid.ssid, pssid_tlv->ssid,
+                                       MIN(MLAN_MAX_SSID_LENGTH, pssid_tlv->header.len));
                         sec->param.passphrase.ssid.ssid_len = MIN(MLAN_MAX_SSID_LENGTH, pssid_tlv->header.len);
                         tlv_buf += pssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t);
                         tlv_buf_len -= (pssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
@@ -939,8 +939,8 @@ static mlan_status wlan_ret_802_11_supplicant_pmk(IN pmlan_private pmpriv,
                     case TLV_TYPE_BSSID:
                         pbssid_tlv             = (MrvlIEtypes_Bssid_t *)tlv_buf;
                         pbssid_tlv->header.len = wlan_le16_to_cpu(pbssid_tlv->header.len);
-                        (void)memcpy(pmpriv->adapter, &sec->param.passphrase.bssid, pbssid_tlv->bssid,
-                                     MLAN_MAC_ADDR_LENGTH);
+                        (void)__memcpy(pmpriv->adapter, &sec->param.passphrase.bssid, pbssid_tlv->bssid,
+                                       MLAN_MAC_ADDR_LENGTH);
                         tlv_buf += pbssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t);
                         tlv_buf_len -= (pbssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
                         break;
@@ -949,9 +949,9 @@ static mlan_status wlan_ret_802_11_supplicant_pmk(IN pmlan_private pmpriv,
                         passphrase_tlv->header.len     = wlan_le16_to_cpu(passphrase_tlv->header.len);
                         sec->param.passphrase.psk_type = MLAN_PSK_PASSPHRASE;
                         sec->param.passphrase.psk.passphrase.passphrase_len = passphrase_tlv->header.len;
-                        (void)memcpy(pmpriv->adapter, sec->param.passphrase.psk.passphrase.passphrase,
-                                     passphrase_tlv->passphrase,
-                                     MIN(MLAN_MAX_PASSPHRASE_LENGTH, passphrase_tlv->header.len));
+                        (void)__memcpy(pmpriv->adapter, sec->param.passphrase.psk.passphrase.passphrase,
+                                       passphrase_tlv->passphrase,
+                                       MIN(MLAN_MAX_PASSPHRASE_LENGTH, passphrase_tlv->header.len));
                         tlv_buf += passphrase_tlv->header.len + sizeof(MrvlIEtypesHeader_t);
                         tlv_buf_len -= (passphrase_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
                         break;
@@ -959,8 +959,8 @@ static mlan_status wlan_ret_802_11_supplicant_pmk(IN pmlan_private pmpriv,
                         ppmk_tlv                       = (MrvlIEtypes_PMK_t *)tlv_buf;
                         ppmk_tlv->header.len           = wlan_le16_to_cpu(ppmk_tlv->header.len);
                         sec->param.passphrase.psk_type = MLAN_PSK_PMK;
-                        (void)memcpy(pmpriv->adapter, sec->param.passphrase.psk.pmk.pmk, ppmk_tlv->pmk,
-                                     MIN(MLAN_MAX_KEY_LENGTH, ppmk_tlv->header.len));
+                        (void)__memcpy(pmpriv->adapter, sec->param.passphrase.psk.pmk.pmk, ppmk_tlv->pmk,
+                                       MIN(MLAN_MAX_KEY_LENGTH, ppmk_tlv->header.len));
                         tlv_buf += ppmk_tlv->header.len + sizeof(MrvlIEtypesHeader_t);
                         tlv_buf_len -= (ppmk_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
                         break;
@@ -1114,8 +1114,8 @@ static mlan_status wlan_ret_ibss_coalescing_status(IN pmlan_private pmpriv, IN H
                MLAN_MAC_ADDR_LENGTH))
     {
         /* BSSID */
-        (void)memcpy(pmpriv->adapter, pmpriv->curr_bss_params.bss_descriptor.mac_address, pibss_coal_resp->bssid,
-                     MLAN_MAC_ADDR_LENGTH);
+        (void)__memcpy(pmpriv->adapter, pmpriv->curr_bss_params.bss_descriptor.mac_address, pibss_coal_resp->bssid,
+                       MLAN_MAC_ADDR_LENGTH);
 
         /* Beacon Interval and ATIM window */
         pmpriv->curr_bss_params.bss_descriptor.beacon_period = wlan_le16_to_cpu(pibss_coal_resp->beacon_interval);
@@ -1184,7 +1184,7 @@ static mlan_status wlan_ret_mgmt_ie_list(IN pmlan_private pmpriv,
             travel_len += cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
             resp_len -= cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
         }
-        (void)memcpy(pmpriv->adapter, &misc->param.cust_ie, cust_ie, (cust_ie->len + sizeof(MrvlIEtypesHeader_t)));
+        (void)__memcpy(pmpriv->adapter, &misc->param.cust_ie, cust_ie, (cust_ie->len + sizeof(MrvlIEtypesHeader_t)));
         if (max_mgmt_ie)
         {
             max_mgmt_ie->type = wlan_le16_to_cpu(max_mgmt_ie->type);
@@ -1198,9 +1198,9 @@ static mlan_status wlan_ret_mgmt_ie_list(IN pmlan_private pmpriv,
                     max_mgmt_ie->info[i].buf_count = wlan_le16_to_cpu(max_mgmt_ie->info[i].buf_count);
                 }
                 /* Append max_mgmt_ie TLV after custom_ie */
-                (void)memcpy(pmpriv->adapter,
-                             (t_u8 *)&misc->param.cust_ie + (cust_ie->len + sizeof(MrvlIEtypesHeader_t)), max_mgmt_ie,
-                             max_mgmt_ie->len + sizeof(MrvlIEtypesHeader_t));
+                (void)__memcpy(pmpriv->adapter,
+                               (t_u8 *)&misc->param.cust_ie + (cust_ie->len + sizeof(MrvlIEtypesHeader_t)), max_mgmt_ie,
+                               max_mgmt_ie->len + sizeof(MrvlIEtypesHeader_t));
             }
         }
     }
@@ -1318,8 +1318,8 @@ static mlan_status wlan_ret_reg_access(mlan_adapter *pmadapter,
                 eeprom->byte_count = cmd_eeprom->byte_count;
                 if (eeprom->byte_count > 0)
                 {
-                    (void)memcpy(pmadapter, &eeprom->value, &cmd_eeprom->value,
-                                 MIN(MAX_EEPROM_DATA, eeprom->byte_count));
+                    (void)__memcpy(pmadapter, &eeprom->value, &cmd_eeprom->value,
+                                   MIN(MAX_EEPROM_DATA, eeprom->byte_count));
                     HEXDUMP("EEPROM", (char *)&eeprom->value, MIN(MAX_EEPROM_DATA, eeprom->byte_count));
                 }
                 break;
@@ -1452,7 +1452,7 @@ static mlan_status wlan_ret_otp_user_data(IN pmlan_private pmpriv,
     {
         user_data                   = (mlan_ds_misc_otp_user_data *)pioctl_buf->pbuf;
         user_data->user_data_length = MIN(MAX_OTP_USER_DATA_LEN, wlan_le16_to_cpu(cmd_user_data->user_data_length));
-        (void)memcpy(pmpriv->adapter, user_data->user_data, cmd_user_data->user_data, user_data->user_data_length);
+        (void)__memcpy(pmpriv->adapter, user_data->user_data, cmd_user_data->user_data, user_data->user_data_length);
         pioctl_buf->data_read_written = sizeof(mlan_ds_misc_otp_user_data) + user_data->user_data_length;
     }
     LEAVE();

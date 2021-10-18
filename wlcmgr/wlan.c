@@ -40,8 +40,8 @@
 #include <wm_mbedtls_helper_api.h>
 #include <mbedtls/x509_crt.h>
 #endif /* CONFIG_HOST_PMK */
-#if defined(SD8978)
-#include <wifi_cal_data_ext.h>
+#ifdef OVERRIDE_CALIBRATION_DATA
+#include OVERRIDE_CALIBRATION_DATA
 #endif
 #include <fsl_common.h>
 
@@ -409,6 +409,7 @@ int get_scan_params(struct wifi_scan_params_t *wifi_scan_params)
     return WM_SUCCESS;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_condtions)
 {
     uint32_t conditions = 0;
@@ -432,6 +433,7 @@ static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_con
 
     return conditions;
 }
+#endif
 
 int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
@@ -468,6 +470,7 @@ static bool is_state(enum cm_sta_state state)
     return (wlan.sta_state == state);
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 static int wlan_send_host_sleep()
 {
     int ret;
@@ -491,6 +494,7 @@ static int wlan_send_host_sleep()
     return wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE,
                                 wlan_map_to_wifi_wakeup_condtions(wlan.wakeup_conditions));
 }
+#endif
 
 static void wlan_host_sleep_and_sleep_confirm()
 {
@@ -510,6 +514,9 @@ static void wlan_host_sleep_and_sleep_confirm()
         g_req_sl_confirm = 1;
         return;
     }
+    //"Expected fix from firmware side. When Host sleep command is sent to firmware, it is not generating events like HS confirm, wake up in case of IEEEPS etc."
+    // TODO: Need to fix host_sleep issue and enable host_sleep code.
+#ifndef CONFIG_MLAN_WMSDK
     ret = wlan_send_host_sleep();
     if ((ret != WM_SUCCESS) || (!(is_uap_started()) && !(is_state(CM_STA_CONNECTED))))
     {
@@ -517,6 +524,7 @@ static void wlan_host_sleep_and_sleep_confirm()
         os_rwlock_write_unlock(&ps_rwlock);
         return;
     }
+#endif
     /* tbdel */
     wlan.cm_ps_state = PS_STATE_SLEEP_CFM;
 
@@ -3500,8 +3508,8 @@ int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size)
     if (wlan.status != WLCMGR_INACTIVE)
         return WM_SUCCESS;
 
-#ifdef SD8978
-    wlan_set_cal_data(cal_data_qfn_1A, sizeof(cal_data_qfn_1A));
+#ifdef OVERRIDE_CALIBRATION_DATA
+    wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
 #endif
 
 #ifdef CONFIG_HOST_PMK
@@ -3620,7 +3628,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 {
     int ret;
 
-    if (wlan.status != WLCMGR_INIT_DONE)
+    if (!((wlan.status == WLCMGR_INIT_DONE) || (wlan.status == WLCMGR_INACTIVE)))
     {
         wlcm_e("cannot start wlcmgr. unexpected status: %d", wlan.status);
         return WLAN_ERROR_STATE;
@@ -5135,6 +5143,7 @@ static int pscan_cb(unsigned int count)
     if (count == 0)
     {
         (void)PRINTF("networks not found\r\n");
+        os_semaphore_put(&wlan_dtim_sem);
         return 0;
     }
 
@@ -5177,7 +5186,12 @@ uint8_t wlan_get_dtim_period()
     }
 
     /* Wait till scan for DTIM is complete */
-    os_semaphore_get(&wlan_dtim_sem, OS_WAIT_FOREVER);
+    /*TODO:This need to be handled in better way. */
+    if(os_semaphore_get(&wlan_dtim_sem, os_msec_to_ticks(500)))
+    {
+        wlcm_e("Do not call this API from wlan event handler\r\n");
+        dtim_period = 0;
+    }
     os_semaphore_delete(&wlan_dtim_sem);
 
     return dtim_period;
@@ -5564,3 +5578,18 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
     wifi_register_fw_dump_cb(wlan_usb_mount_cb, wlan_usb_file_open_cb, wlan_usb_file_write_cb, wlan_usb_file_close_cb);
 }
 #endif
+
+int wlan_send_hostcmd(
+    void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
+{
+    if ((cmd_buf == NULL) || (resp_buf == NULL) || (reqd_resp_len == NULL))
+    {
+        return WM_E_NOMEM;
+    }
+    if (!cmd_buf_len || !resp_buf_len)
+    {
+        return WM_E_INVAL;
+    }
+
+    return wifi_send_hostcmd(cmd_buf, cmd_buf_len, resp_buf, resp_buf_len, reqd_resp_len);
+}

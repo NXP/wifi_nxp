@@ -208,8 +208,8 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
     t_u8 *tmp_ie;
 
     ENTER();
-    (void)memset(pmpriv->adapter, del_ie, 0, MAX_IE_SIZE);
-    (void)memcpy(pmpriv->adapter, del_ie, ie_data->ie_buffer, MIN(MAX_IE_SIZE, ie_data->ie_length));
+    (void)__memset(pmpriv->adapter, del_ie, 0, MAX_IE_SIZE);
+    (void)__memcpy(pmpriv->adapter, del_ie, ie_data->ie_buffer, MIN(MAX_IE_SIZE, ie_data->ie_length));
     del_len = MIN(MAX_IE_SIZE, ie_data->ie_length);
 
     for (index = 0; index < pmadapter->max_mgmt_ie_index; index++)
@@ -223,14 +223,14 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
         {
             if (!memcmp(pmpriv->adapter, tmp_ie, del_ie, del_len))
             {
-                (void)memcpy(pmpriv->adapter, ie, pmpriv->mgmt_ie[index].ie_buffer, cnt);
+                (void)__memcpy(pmpriv->adapter, ie, pmpriv->mgmt_ie[index].ie_buffer, cnt);
                 if (pmpriv->mgmt_ie[index].ie_length > (cnt + del_len))
-                    (void)memcpy(pmpriv->adapter, &ie[cnt], &pmpriv->mgmt_ie[index].ie_buffer[cnt + del_len],
-                                 (pmpriv->mgmt_ie[index].ie_length - (cnt + del_len)));
-                (void)memset(pmpriv->adapter, &pmpriv->mgmt_ie[index].ie_buffer, 0,
-                             sizeof(pmpriv->mgmt_ie[index].ie_buffer));
-                (void)memcpy(pmpriv->adapter, &pmpriv->mgmt_ie[index].ie_buffer, ie,
-                             pmpriv->mgmt_ie[index].ie_length - del_len);
+                    (void)__memcpy(pmpriv->adapter, &ie[cnt], &pmpriv->mgmt_ie[index].ie_buffer[cnt + del_len],
+                                   (pmpriv->mgmt_ie[index].ie_length - (cnt + del_len)));
+                (void)__memset(pmpriv->adapter, &pmpriv->mgmt_ie[index].ie_buffer, 0,
+                               sizeof(pmpriv->mgmt_ie[index].ie_buffer));
+                (void)__memcpy(pmpriv->adapter, &pmpriv->mgmt_ie[index].ie_buffer, ie,
+                               pmpriv->mgmt_ie[index].ie_length - del_len);
                 pmpriv->mgmt_ie[index].ie_length -= del_len;
                 insert  = MTRUE;
                 tmp_ie  = pmpriv->mgmt_ie[index].ie_buffer;
@@ -386,16 +386,16 @@ mlan_status wlan_get_info_debug_info(IN pmlan_adapter pmadapter, IN pmlan_ioctl_
         pmadapter->dbg.num_cmd_timeout                 = info->param.debug_info.num_cmd_timeout;
         pmadapter->dbg.timeout_cmd_id                  = info->param.debug_info.timeout_cmd_id;
         pmadapter->dbg.timeout_cmd_act                 = info->param.debug_info.timeout_cmd_act;
-        (void)memcpy(pmadapter, pmadapter->dbg.last_cmd_id, info->param.debug_info.last_cmd_id,
-                     sizeof(pmadapter->dbg.last_cmd_id));
-        (void)memcpy(pmadapter, pmadapter->dbg.last_cmd_act, info->param.debug_info.last_cmd_act,
-                     sizeof(pmadapter->dbg.last_cmd_act));
+        (void)__memcpy(pmadapter, pmadapter->dbg.last_cmd_id, info->param.debug_info.last_cmd_id,
+                       sizeof(pmadapter->dbg.last_cmd_id));
+        (void)__memcpy(pmadapter, pmadapter->dbg.last_cmd_act, info->param.debug_info.last_cmd_act,
+                       sizeof(pmadapter->dbg.last_cmd_act));
         pmadapter->dbg.last_cmd_index = info->param.debug_info.last_cmd_index;
-        (void)memcpy(pmadapter, pmadapter->dbg.last_cmd_resp_id, info->param.debug_info.last_cmd_resp_id,
-                     sizeof(pmadapter->dbg.last_cmd_resp_id));
+        (void)__memcpy(pmadapter, pmadapter->dbg.last_cmd_resp_id, info->param.debug_info.last_cmd_resp_id,
+                       sizeof(pmadapter->dbg.last_cmd_resp_id));
         pmadapter->dbg.last_cmd_resp_index = info->param.debug_info.last_cmd_resp_index;
-        (void)memcpy(pmadapter, pmadapter->dbg.last_event, info->param.debug_info.last_event,
-                     sizeof(pmadapter->dbg.last_event));
+        (void)__memcpy(pmadapter, pmadapter->dbg.last_event, info->param.debug_info.last_event,
+                       sizeof(pmadapter->dbg.last_event));
         pmadapter->dbg.last_event_index = info->param.debug_info.last_event_index;
 
         pmadapter->data_sent         = info->param.debug_info.data_sent;
@@ -459,16 +459,16 @@ mlan_status wlan_get_info_debug_info(IN pmlan_adapter pmadapter, IN pmlan_ioctl_
         info->param.debug_info.num_cmd_timeout                 = pmadapter->dbg.num_cmd_timeout;
         info->param.debug_info.timeout_cmd_id                  = pmadapter->dbg.timeout_cmd_id;
         info->param.debug_info.timeout_cmd_act                 = pmadapter->dbg.timeout_cmd_act;
-        (void)memcpy(pmadapter, info->param.debug_info.last_cmd_id, pmadapter->dbg.last_cmd_id,
-                     sizeof(pmadapter->dbg.last_cmd_id));
-        (void)memcpy(pmadapter, info->param.debug_info.last_cmd_act, pmadapter->dbg.last_cmd_act,
-                     sizeof(pmadapter->dbg.last_cmd_act));
+        (void)__memcpy(pmadapter, info->param.debug_info.last_cmd_id, pmadapter->dbg.last_cmd_id,
+                       sizeof(pmadapter->dbg.last_cmd_id));
+        (void)__memcpy(pmadapter, info->param.debug_info.last_cmd_act, pmadapter->dbg.last_cmd_act,
+                       sizeof(pmadapter->dbg.last_cmd_act));
         info->param.debug_info.last_cmd_index = pmadapter->dbg.last_cmd_index;
-        (void)memcpy(pmadapter, info->param.debug_info.last_cmd_resp_id, pmadapter->dbg.last_cmd_resp_id,
-                     sizeof(pmadapter->dbg.last_cmd_resp_id));
+        (void)__memcpy(pmadapter, info->param.debug_info.last_cmd_resp_id, pmadapter->dbg.last_cmd_resp_id,
+                       sizeof(pmadapter->dbg.last_cmd_resp_id));
         info->param.debug_info.last_cmd_resp_index = pmadapter->dbg.last_cmd_resp_index;
-        (void)memcpy(pmadapter, info->param.debug_info.last_event, pmadapter->dbg.last_event,
-                     sizeof(pmadapter->dbg.last_event));
+        (void)__memcpy(pmadapter, info->param.debug_info.last_event, pmadapter->dbg.last_event,
+                       sizeof(pmadapter->dbg.last_event));
         info->param.debug_info.last_event_index = pmadapter->dbg.last_event_index;
 
         info->param.debug_info.mp_rd_bitmap      = pmadapter->mp_rd_bitmap;
@@ -647,7 +647,7 @@ pmlan_buffer wlan_alloc_mlan_buffer(mlan_adapter *pmadapter, t_u32 data_len, t_u
             pmbuf = MNULL;
             goto exit;
         }
-        (void)memset(pmadapter, pmbuf, 0, sizeof(mlan_buffer));
+        (void)__memset(pmadapter, pmbuf, 0, sizeof(mlan_buffer));
 
         pmbuf->pdesc = MNULL;
         /* Align address */
@@ -820,7 +820,7 @@ mlan_status wlan_bss_ioctl_bss_role(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
         {
             if (mlan_ops[j]->bss_role == GET_BSS_ROLE(pmpriv))
             {
-                (void)memcpy(pmadapter, &pmpriv->ops, mlan_ops[j], sizeof(mlan_operations));
+                (void)__memcpy(pmadapter, &pmpriv->ops, mlan_ops[j], sizeof(mlan_operations));
             }
         }
 
@@ -859,7 +859,7 @@ mlan_status wlan_bss_ioctl_bss_role(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
         pmpriv->ops.init_cmd(pmpriv, MFALSE);
 
         /* Issue dummy Get command to complete the ioctl */
-        (void)memset(pmadapter, &dummy, 0, sizeof(HostCmd_DS_VERSION_EXT));
+        (void)__memset(pmadapter, &dummy, 0, sizeof(HostCmd_DS_VERSION_EXT));
         wlan_prepare_cmd(pmpriv, HostCmd_CMD_VERSION_EXT, HostCmd_ACT_GEN_GET, 0, (t_void *)pioctl_req,
                          (t_void *)&dummy);
         ret = MLAN_STATUS_PENDING;
@@ -930,22 +930,22 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                     {
                         goto done;
                     }
-                    (void)memset(pmadapter, ie_data, 0, sizeof(custom_ie) * MAX_MGMT_IE_INDEX_TO_FW);
+                    (void)__memset(pmadapter, ie_data, 0, sizeof(custom_ie) * MAX_MGMT_IE_INDEX_TO_FW);
                     len = 0;
                     for (i = 0; i < pmadapter->max_mgmt_ie_index; i++)
                     {
-                        (void)memcpy(pmadapter, (t_u8 *)ie_data + len, &i, sizeof(ie_data->ie_index));
+                        (void)__memcpy(pmadapter, (t_u8 *)ie_data + len, &i, sizeof(ie_data->ie_index));
                         len += sizeof(ie_data->ie_index);
-                        (void)memcpy(pmadapter, (t_u8 *)ie_data + len, &pmpriv->mgmt_ie[i].mgmt_subtype_mask,
-                                     sizeof(ie_data->mgmt_subtype_mask));
+                        (void)__memcpy(pmadapter, (t_u8 *)ie_data + len, &pmpriv->mgmt_ie[i].mgmt_subtype_mask,
+                                       sizeof(ie_data->mgmt_subtype_mask));
                         len += sizeof(ie_data->mgmt_subtype_mask);
-                        (void)memcpy(pmadapter, (t_u8 *)ie_data + len, &pmpriv->mgmt_ie[i].ie_length,
-                                     sizeof(ie_data->ie_length));
+                        (void)__memcpy(pmadapter, (t_u8 *)ie_data + len, &pmpriv->mgmt_ie[i].ie_length,
+                                       sizeof(ie_data->ie_length));
                         len += sizeof(ie_data->ie_length);
                         if (pmpriv->mgmt_ie[i].ie_length)
                         {
-                            (void)memcpy(pmadapter, (t_u8 *)ie_data + len, &pmpriv->mgmt_ie[i].ie_buffer,
-                                         pmpriv->mgmt_ie[i].ie_length);
+                            (void)__memcpy(pmadapter, (t_u8 *)ie_data + len, &pmpriv->mgmt_ie[i].ie_buffer,
+                                           pmpriv->mgmt_ie[i].ie_length);
                             len += pmpriv->mgmt_ie[i].ie_length;
                         }
                     }
@@ -967,8 +967,8 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                         goto done;
                     }
                     tmp_ie = (t_u8 *)&pmpriv->mgmt_ie[index].ie_buffer;
-                    (void)memcpy(pmadapter, tmp_ie + pmpriv->mgmt_ie[index].ie_length, &ie_data->ie_buffer,
-                                 ie_data->ie_length);
+                    (void)__memcpy(pmadapter, tmp_ie + pmpriv->mgmt_ie[index].ie_length, &ie_data->ie_buffer,
+                                   ie_data->ie_length);
                     pmpriv->mgmt_ie[index].ie_length += ie_data->ie_length;
                     pmpriv->mgmt_ie[index].ie_index          = index;
                     pmpriv->mgmt_ie[index].mgmt_subtype_mask = mask;
@@ -977,8 +977,8 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                     cmd_action         = HostCmd_ACT_GEN_SET;
                     ie_data->ie_index  = index;
                     ie_data->ie_length = pmpriv->mgmt_ie[index].ie_length;
-                    (void)memcpy(pmadapter, &ie_data->ie_buffer, &pmpriv->mgmt_ie[index].ie_buffer,
-                                 pmpriv->mgmt_ie[index].ie_length);
+                    (void)__memcpy(pmadapter, &ie_data->ie_buffer, &pmpriv->mgmt_ie[index].ie_buffer,
+                                   pmpriv->mgmt_ie[index].ie_length);
                     misc->param.cust_ie.len += pmpriv->mgmt_ie[index].ie_length + MLAN_CUSTOM_IE_HDR_SIZE;
                 }
             }
@@ -1000,9 +1000,9 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                     {
                         goto done;
                     }
-                    (void)memset(pmadapter, ie_data, 0, sizeof(custom_ie) * MAX_MGMT_IE_INDEX_TO_FW);
-                    (void)memcpy(pmadapter, (t_u8 *)ie_data, &pmpriv->mgmt_ie[index],
-                                 pmpriv->mgmt_ie[index].ie_length + MLAN_CUSTOM_IE_HDR_SIZE);
+                    (void)__memset(pmadapter, ie_data, 0, sizeof(custom_ie) * MAX_MGMT_IE_INDEX_TO_FW);
+                    (void)__memcpy(pmadapter, (t_u8 *)ie_data, &pmpriv->mgmt_ie[index],
+                                   pmpriv->mgmt_ie[index].ie_length + MLAN_CUSTOM_IE_HDR_SIZE);
                 }
                 else
                 {
@@ -1031,8 +1031,8 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                             goto done;
                         }
                     }
-                    (void)memset(pmadapter, &pmpriv->mgmt_ie[index], 0, sizeof(custom_ie));
-                    (void)memcpy(pmadapter, &pmpriv->mgmt_ie[index], ie_data, sizeof(custom_ie));
+                    (void)__memset(pmadapter, &pmpriv->mgmt_ie[index], 0, sizeof(custom_ie));
+                    (void)__memcpy(pmadapter, &pmpriv->mgmt_ie[index], ie_data, sizeof(custom_ie));
                 }
 
                 misc->param.cust_ie.len += pmpriv->mgmt_ie[index].ie_length + MLAN_CUSTOM_IE_HDR_SIZE;
@@ -1150,8 +1150,8 @@ sta_node *wlan_add_station_entry(mlan_private *priv, t_u8 *mac)
         LEAVE();
         return MNULL;
     }
-    (void)memset(priv->adapter, sta_ptr, 0, sizeof(sta_node));
-    (void)memcpy(priv->adapter, sta_ptr->mac_addr, mac, MLAN_MAC_ADDR_LENGTH);
+    (void)__memset(priv->adapter, sta_ptr, 0, sizeof(sta_node));
+    (void)__memcpy(priv->adapter, sta_ptr->mac_addr, mac, MLAN_MAC_ADDR_LENGTH);
     util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->sta_list, (pmlan_linked_list)sta_ptr,
                            priv->adapter->callbacks.moal_spin_lock, priv->adapter->callbacks.moal_spin_unlock);
 done:
@@ -1369,13 +1369,13 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     pevent->event_len =
         payload_len - sizeof(wlan_802_11_header) + sizeof(pevent->event_len) + ZERO_BUF_LEN + MLAN_MAC_ADDR_LENGTH;
     pevent->event_len = wlan_cpu_to_le32(pevent->event_len);
-    (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf, (t_u8 *)&pevent->event_len, sizeof(pevent->event_len));
-    (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf + sizeof(pevent->event_len), (t_u8 *)zero_buf, ZERO_BUF_LEN);
-    (void)memcpy(pmadapter, (t_u8 *)pevent->event_buf + sizeof(pevent->event_len) + ZERO_BUF_LEN,
-                 (t_u8 *)pieee_pkt_hdr->addr2, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(pmadapter,
-                 (t_u8 *)(pevent->event_buf + sizeof(pevent->event_len) + ZERO_BUF_LEN + MLAN_MAC_ADDR_LENGTH),
-                 payload + sizeof(wlan_802_11_header), payload_len - sizeof(wlan_802_11_header));
+    (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf, (t_u8 *)&pevent->event_len, sizeof(pevent->event_len));
+    (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf + sizeof(pevent->event_len), (t_u8 *)zero_buf, ZERO_BUF_LEN);
+    (void)__memcpy(pmadapter, (t_u8 *)pevent->event_buf + sizeof(pevent->event_len) + ZERO_BUF_LEN,
+                   (t_u8 *)pieee_pkt_hdr->addr2, MLAN_MAC_ADDR_LENGTH);
+    (void)__memcpy(pmadapter,
+                   (t_u8 *)(pevent->event_buf + sizeof(pevent->event_len) + ZERO_BUF_LEN + MLAN_MAC_ADDR_LENGTH),
+                   payload + sizeof(wlan_802_11_header), payload_len - sizeof(wlan_802_11_header));
 
     wifi_wfd_event(false, true, (void *)pevent);
     /* wlan_recv_event(priv, MLAN_EVENT_ID_DRV_MGMT_FRAME, pevent);
@@ -1428,7 +1428,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
     ENTER();
 
     pext_cap = (MrvlIETypes_ExtCap_t *)*pptlv_out;
-    (void)memset(pmpriv->adapter, pext_cap, 0, sizeof(MrvlIETypes_ExtCap_t));
+    (void)__memset(pmpriv->adapter, pext_cap, 0, sizeof(MrvlIETypes_ExtCap_t));
     pext_cap->header.type = wlan_cpu_to_le16(EXT_CAPABILITY);
     pext_cap->header.len  = wlan_cpu_to_le16(sizeof(ExtCap_t));
     if (((t_u8)(pmpriv->hotspot_cfg >> 8)) & HOTSPOT_ENABLE_INTERWORKING_IND)
@@ -1763,7 +1763,7 @@ static mlan_status wlan_rate_ioctl_set_rate_value(IN pmlan_adapter pmadapter, IN
 
     if (ds_rate->param.rate_cfg.is_rate_auto)
     {
-        (void)memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
+        (void)__memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
         /* Support all HR/DSSS rates */
         bitmap_rates[0] = 0x000F;
         /* Support all OFDM rates */
@@ -1775,7 +1775,7 @@ static mlan_status wlan_rate_ioctl_set_rate_value(IN pmlan_adapter pmadapter, IN
     }
     else
     {
-        (void)memset(pmadapter, rates, 0, sizeof(rates));
+        (void)__memset(pmadapter, rates, 0, sizeof(rates));
         wlan_get_active_data_rates(
             pmpriv, pmpriv->bss_mode,
             (pmpriv->bss_mode == MLAN_BSS_MODE_INFRA) ? pmpriv->config_bands : pmadapter->adhoc_start_band, rates);
@@ -1796,7 +1796,7 @@ static mlan_status wlan_rate_ioctl_set_rate_value(IN pmlan_adapter pmadapter, IN
             ret                     = MLAN_STATUS_FAILURE;
             goto exit;
         }
-        (void)memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
+        (void)__memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
 
         rate_index = wlan_data_rate_to_index(pmadapter, ds_rate->param.rate_cfg.rate);
 
@@ -1888,7 +1888,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 
     if (ds_rate->param.rate_cfg.is_rate_auto)
     {
-        (void)memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
+        (void)__memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
         /* Rates talbe [0]: HR/DSSS;[1]: OFDM; [2..9] HT; */
         /* Support all HR/DSSS rates */
         bitmap_rates[0] = 0x000F;
@@ -1934,7 +1934,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #endif
 #endif
 
-        (void)memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
+        (void)__memset(pmadapter, bitmap_rates, 0, sizeof(bitmap_rates));
         if (rate_format == MLAN_RATE_FORMAT_LG)
         {
             /* Bitmap of HR/DSSS rates */
@@ -1980,7 +1980,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
                 if ((rate_index <= MLAN_RATE_INDEX_MCS11) && (MLAN_RATE_NSS1 <= nss) && (nss <= MLAN_RATE_NSS2))
                 {
                     bitmap_rates[18 + nss - MLAN_RATE_NSS1] = (1 << rate_index);
-                    ret = MLAN_STATUS_SUCCESS;
+                    ret                                     = MLAN_STATUS_SUCCESS;
                 }
             }
             else

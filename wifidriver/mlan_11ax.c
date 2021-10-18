@@ -136,12 +136,12 @@ t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u8 band, MrvlIEtypes_Extensio
         return 0;
     if (band & BAND_A)
     {
-        (void)memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
+        (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
         len = pmpriv->user_hecap_len;
     }
     else
     {
-        (void)memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
+        (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
         len = pmpriv->user_2g_hecap_len;
     }
     phe_cap->type = wlan_cpu_to_le16(phe_cap->type);
@@ -185,13 +185,13 @@ int wlan_cmd_append_11ax_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
     phecap = (MrvlIEtypes_He_cap_t *)*ppbuffer;
     if (pbss_desc->bss_band & BAND_A)
     {
-        (void)memcpy(pmpriv->adapter, *ppbuffer, pmpriv->user_he_cap, pmpriv->user_hecap_len);
+        (void)__memcpy(pmpriv->adapter, *ppbuffer, pmpriv->user_he_cap, pmpriv->user_hecap_len);
         *ppbuffer += pmpriv->user_hecap_len;
         len = pmpriv->user_hecap_len;
     }
     else
     {
-        (void)memcpy(pmpriv->adapter, *ppbuffer, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
+        (void)__memcpy(pmpriv->adapter, *ppbuffer, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
         *ppbuffer += pmpriv->user_2g_hecap_len;
         len = pmpriv->user_2g_hecap_len;
     }
@@ -230,8 +230,8 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter, MrvlIEtypes_Extension_t *hw_h
     if (phe_cap->he_phy_cap[0] & (AX_2G_20MHZ_SUPPORT | AX_2G_40MHZ_SUPPORT))
     {
         pmadapter->hw_2g_hecap_len = hw_he_cap->len + sizeof(MrvlIEtypesHeader_t);
-        (void)memcpy(pmadapter, pmadapter->hw_2g_he_cap, (t_u8 *)hw_he_cap,
-                     hw_he_cap->len + sizeof(MrvlIEtypesHeader_t));
+        (void)__memcpy(pmadapter, pmadapter->hw_2g_he_cap, (t_u8 *)hw_he_cap,
+                       hw_he_cap->len + sizeof(MrvlIEtypesHeader_t));
         pmadapter->fw_bands |= BAND_GAX;
         pmadapter->config_bands |= BAND_GAX;
         he_cap_2g = MTRUE;
@@ -242,7 +242,8 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter, MrvlIEtypes_Extension_t *hw_h
         pmadapter->fw_bands |= BAND_AAX;
         pmadapter->config_bands |= BAND_AAX;
         pmadapter->hw_hecap_len = hw_he_cap->len + sizeof(MrvlIEtypesHeader_t);
-        (void)memcpy(pmadapter, pmadapter->hw_he_cap, (t_u8 *)hw_he_cap, hw_he_cap->len + sizeof(MrvlIEtypesHeader_t));
+        (void)__memcpy(pmadapter, pmadapter->hw_he_cap, (t_u8 *)hw_he_cap,
+                       hw_he_cap->len + sizeof(MrvlIEtypesHeader_t));
         DBG_HEXDUMP(MCMD_D, "5G HE capability IE ", (t_u8 *)pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
     }
     for (i = 0; i < pmadapter->priv_num; i++)
@@ -253,13 +254,14 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter, MrvlIEtypes_Extension_t *hw_h
             if (he_cap_2g)
             {
                 pmadapter->priv[i]->user_2g_hecap_len = pmadapter->hw_2g_hecap_len;
-                (void)memcpy(pmadapter, pmadapter->priv[i]->user_2g_he_cap, pmadapter->hw_2g_he_cap,
-                             pmadapter->hw_2g_hecap_len);
+                (void)__memcpy(pmadapter, pmadapter->priv[i]->user_2g_he_cap, pmadapter->hw_2g_he_cap,
+                               pmadapter->hw_2g_hecap_len);
             }
             else
             {
                 pmadapter->priv[i]->user_hecap_len = pmadapter->hw_hecap_len;
-                (void)memcpy(pmadapter, pmadapter->priv[i]->user_he_cap, pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
+                (void)__memcpy(pmadapter, pmadapter->priv[i]->user_he_cap, pmadapter->hw_he_cap,
+                               pmadapter->hw_hecap_len);
             }
         }
     }
@@ -330,7 +332,7 @@ int wlan_cmd_11ax_cfg(mlan_private *pmpriv, t_u16 action, mlan_ds_11ax_he_cfg *h
         tlv       = (MrvlIEtypes_Extension_t *)pos;
         tlv->type = wlan_cpu_to_le16(he_cfg->he_cap.id);
         tlv->len  = wlan_cpu_to_le16(he_cfg->he_cap.len);
-        (void)memcpy(pmpriv->adapter, &tlv->ext_id, &he_cfg->he_cap.ext_id, he_cfg->he_cap.len);
+        (void)__memcpy(pmpriv->adapter, &tlv->ext_id, &he_cfg->he_cap.ext_id, he_cfg->he_cap.len);
         cmd->size += he_cfg->he_cap.len + sizeof(MrvlIEtypesHeader_t);
         pos += he_cfg->he_cap.len + sizeof(MrvlIEtypesHeader_t);
     }
@@ -381,11 +383,11 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                 case HE_CAPABILITY:
                     hecap->id  = tlv_type;
                     hecap->len = tlv_len;
-                    (void)memcpy(pmpriv->adapter, (t_u8 *)&hecap->ext_id, (t_u8 *)&tlv->ext_id, tlv_len);
+                    (void)__memcpy(pmpriv->adapter, (t_u8 *)&hecap->ext_id, (t_u8 *)&tlv->ext_id, tlv_len);
                     if (hecfg->band & MBIT(1))
                     {
-                        (void)memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->user_he_cap, (t_u8 *)tlv,
-                                     tlv_len + sizeof(MrvlIEtypesHeader_t));
+                        (void)__memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->user_he_cap, (t_u8 *)tlv,
+                                       tlv_len + sizeof(MrvlIEtypesHeader_t));
                         pmpriv->user_hecap_len =
                             MIN(tlv_len + sizeof(MrvlIEtypesHeader_t), sizeof(pmpriv->user_he_cap));
                         PRINTM(MCMND, "user_hecap_len=%d\n", pmpriv->user_hecap_len);
@@ -393,8 +395,8 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                     }
                     else
                     {
-                        (void)memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->user_2g_he_cap, (t_u8 *)tlv,
-                                     tlv_len + sizeof(MrvlIEtypesHeader_t));
+                        (void)__memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->user_2g_he_cap, (t_u8 *)tlv,
+                                       tlv_len + sizeof(MrvlIEtypesHeader_t));
                         pmpriv->user_2g_hecap_len =
                             MIN(tlv_len + sizeof(MrvlIEtypesHeader_t), sizeof(pmpriv->user_2g_he_cap));
                         PRINTM(MCMND, "user_2g_hecap_len=%d\n", pmpriv->user_2g_hecap_len);
@@ -443,7 +445,7 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
     {
         case MLAN_11AX_TWT_SETUP_SUBID:
             twt_setup_params = &hostcmd_twtcfg->param.twt_setup;
-            memset(pmpriv->adapter, twt_setup_params, 0x00, sizeof(hostcmd_twtcfg->param.twt_setup));
+            __memset(pmpriv->adapter, twt_setup_params, 0x00, sizeof(hostcmd_twtcfg->param.twt_setup));
             twt_setup_params->implicit            = ds_twtcfg->param.twt_setup.implicit;
             twt_setup_params->announced           = ds_twtcfg->param.twt_setup.announced;
             twt_setup_params->trigger_enabled     = ds_twtcfg->param.twt_setup.trigger_enabled;
@@ -459,7 +461,7 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
             break;
         case MLAN_11AX_TWT_TEARDOWN_SUBID:
             twt_teardown_params = &hostcmd_twtcfg->param.twt_teardown;
-            memset(pmpriv->adapter, twt_teardown_params, 0x00, sizeof(hostcmd_twtcfg->param.twt_teardown));
+            __memset(pmpriv->adapter, twt_teardown_params, 0x00, sizeof(hostcmd_twtcfg->param.twt_teardown));
             twt_teardown_params->flow_identifier  = ds_twtcfg->param.twt_teardown.flow_identifier;
             twt_teardown_params->negotiation_type = ds_twtcfg->param.twt_teardown.negotiation_type;
             twt_teardown_params->teardown_all_twt = ds_twtcfg->param.twt_teardown.teardown_all_twt;

@@ -542,7 +542,7 @@ typedef struct _mlan_ssid_bssid
 } mlan_ssid_bssid;
 
 #ifdef CONFIG_11AX
-#define MLAN_11AX_TWT_SETUP_SUBID 0x114
+#define MLAN_11AX_TWT_SETUP_SUBID    0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
 #endif
 
@@ -1627,13 +1627,15 @@ typedef enum
     AssocAgentAuth_Open,
     AssocAgentAuth_Shared,
 /* Updating the auth type with respect to latest changes in firmware.
- * Changes are available only for CA2 and Firecrest.
+ * Changes are available only for CA2, Firecrest and RB3P.
  * TODO: update when release is made from ToT fw for other SoCs.
  */
-#if defined(IW61x) || defined(SD8987)
+#if defined(IW61x) || defined(SD8987) || defined(SD8978)
     AssocAgentAuth_Wpa3Sae = 6,
-#else
+#elif defined(SD8977) || defined(SD8801)
     AssocAgentAuth_Wpa3Sae = 5,
+#else
+#error "WPA3 SAE auth type is not defined"
 #endif
     AssocAgentAuth_Owe,
     AssocAgentAuth_Auto,
@@ -2655,9 +2657,9 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_teardown
     t_u8 flow_identifier;
     /** Negotiation Type. 0: Future Individual TWT SP start time, 1: Next
      * Wake TBTT time */
-       t_u8 negotiation_type;
-       /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
-       t_u8 teardown_all_twt;
+    t_u8 negotiation_type;
+    /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
+    t_u8 teardown_all_twt;
 } MLAN_PACK_END mlan_ds_twt_teardown, *pmlan_ds_twt_teardown;
 
 /** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */

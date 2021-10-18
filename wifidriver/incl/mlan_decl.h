@@ -372,7 +372,7 @@ typedef enum _mlan_bss_type
     /* fixme: This macro will be enabled when
      * mlan is completely integrated with wlan
      */
-    /*#ifdef WIFI_DIRECT_SUPPORT*/
+    /* #ifdef WIFI_DIRECT_SUPPORT*/
     MLAN_BSS_TYPE_WIFIDIRECT = 2,
     /*#endif*/
     MLAN_BSS_TYPE_ANY = 0xff,
