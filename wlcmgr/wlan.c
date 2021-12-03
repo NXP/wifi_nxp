@@ -2274,9 +2274,6 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                  */
                 net_interface_dhcp_stop(if_handle);
                 net_interface_down(if_handle);
-#ifdef CONFIG_IPV6
-                net_interface_deregister_ipv6_callback(if_handle);
-#endif
             }
         }
 
@@ -2333,9 +2330,6 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
          */
         net_interface_dhcp_stop(if_handle);
         net_interface_down(if_handle);
-#ifdef CONFIG_IPV6
-        net_interface_deregister_ipv6_callback(if_handle);
-#endif
     }
 
     /* If we were connected and lost the link, we must report that now and
@@ -2629,7 +2623,7 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
         return;
 
     net_get_if_ipv6_addr(&network->ip, if_handle);
-    for (i = 0; i < MAX_IPV6_ADDRESSES; i++)
+    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
         if (network->ip.ipv6[i].addr_state == IP6_ADDR_PREFERRED && i != 0)
         {
@@ -2887,7 +2881,11 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                     if_handle = net_get_wfd_handle();
 #endif /* CONFIG_P2P */
 
+
                 net_get_if_addr(&network->ip, if_handle);
+#ifdef CONFIG_IPV6
+                net_get_if_ipv6_addr(&network->ip, if_handle);
+#endif
                 next = CM_UAP_IP_UP;
                 CONNECTION_EVENT(WLAN_REASON_UAP_SUCCESS, NULL);
             }
@@ -2990,9 +2988,6 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
      */
     net_interface_dhcp_stop(if_handle);
     net_interface_down(if_handle);
-#ifdef CONFIG_IPV6
-    net_interface_deregister_ipv6_callback(if_handle);
-#endif
 
     if (
 #ifdef CONFIG_WPS2

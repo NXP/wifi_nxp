@@ -51,6 +51,22 @@
 #include <wm_os.h>
 #include <wmtypes.h>
 
+#if CONFIG_IPV6 && !LWIP_IPV6
+#error "CONFIG_IPV6 is enabled, but LWIP_IPV6 is not, enable it from lwipopts.h"
+#elif LWIP_IPV6 && !CONFIG_IPV6
+#error "LWIP_IPV6 is enabled, but CONFIG_IPV6 is not, enable it from wifi_config.h"
+#endif
+
+#if CONFIG_IPV6 && LWIP_IPV6
+#ifndef CONFIG_MAX_IPV6_ADDRESSES
+#error "Define CONFIG_MAX_IPV6_ADDRESSES same as LWIP_IPV6_NUM_ADDRESSES in wifi_config.h"
+#else
+#if CONFIG_MAX_IPV6_ADDRESSES != LWIP_IPV6_NUM_ADDRESSES
+#error "CONFIG_MAX_IPV6_ADDRESSES must be equal to LWIP_IPV6_NUM_ADDRESSES"
+#endif
+#endif
+#endif
+
 /*
  * fixme: This dependancy of wm_net on wlc manager header should be
  * removed. This is the lowest level file used to access lwip
@@ -338,18 +354,6 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state);
  * \return IPv6 address type description
  */
 char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf);
-
-/** Deregister ipv6 callback for given interface handle.
- *
- * Deregisters ipv6 callback on given interface state.
- * Use net_get_sta_handle(), net_get_uap_handle()
- * to get interface handle.
- *
- * \param[in] intrfc_handle interface handle
- *
- *\return void
- */
-void net_interface_deregister_ipv6_callback(void *intrfc_handle);
 #endif /* CONFIG_IPV6 */
 
 /** Get interface IP Address

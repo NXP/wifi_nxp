@@ -148,35 +148,9 @@ void net_ipv4stack_init()
 #ifdef CONFIG_IPV6
 void net_ipv6stack_init(struct netif *netif)
 {
-    uint8_t mac[6];
-
-    netif->flags |= NETIF_IPV6_FLAG_UP;
-
-    /* Set Multicast filter for IPV6 link local address
-     * It contains first three bytes: 0x33 0x33 0xff (fixed)
-     * and last three bytes as last three bytes of device mac */
-    mac[0] = 0x33;
-    mac[1] = 0x33;
-    mac[2] = 0xff;
-    mac[3] = netif->hwaddr[3];
-    mac[4] = netif->hwaddr[4];
-    mac[5] = netif->hwaddr[5];
-    wifi_add_mcast_filter(mac);
-
     netif_create_ip6_linklocal_address(netif, 1);
-    netif->ip6_autoconfig_enabled = 1;
 
-    /* IPv6 routers use multicast IPv6 ff02::1 and MAC address
-       33:33:00:00:00:01 for router advertisements */
-    mac[0] = 0x33;
-    mac[1] = 0x33;
-    mac[2] = 0x00;
-    mac[3] = 0x00;
-    mac[4] = 0x00;
-    mac[5] = 0x01;
-    wifi_add_mcast_filter(mac);
-
-    net_d("Initialized TCP/IP v6 stack");
+    net_d("Initialized TCP/IP v6 stack for interface : %c%c%d", netif->name[0], netif->name[1], netif->num);
 }
 
 static void wm_netif_ipv6_status_callback(struct netif *n)
@@ -219,6 +193,10 @@ int net_wlan_init(void)
             net_e("UAP interface add failed");
             return -WM_FAIL;
         }
+#ifdef CONFIG_IPV6
+        net_ipv6stack_init(&g_uap.netif);
+#endif /* CONFIG_IPV6 */
+
 #ifdef CONFIG_P2P
         g_wfd.ipaddr.addr = INADDR_ANY;
         ret               = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
@@ -411,15 +389,6 @@ void net_interface_down(void *intrfc_handle)
     netifapi_netif_set_down(&if_handle->netif);
 }
 
-#ifdef CONFIG_IPV6
-void net_interface_deregister_ipv6_callback(void *intrfc_handle)
-{
-    interface_t *if_handle = (interface_t *)intrfc_handle;
-    if (intrfc_handle == &g_mlan)
-        netif_set_ipv6_status_callback(&if_handle->netif, NULL);
-}
-#endif
-
 void net_interface_dhcp_stop(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
@@ -453,7 +422,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 #ifdef CONFIG_IPV6
     if (if_handle == &g_mlan)
     {
-        netif_set_ipv6_status_callback(&if_handle->netif, wm_netif_ipv6_status_callback);
         /* Explicitly call this function so that the linklocal address
          * gets updated even if the interface does not get any IPv6
          * address in its lifetime */
@@ -546,7 +514,7 @@ int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     interface_t *if_handle = (interface_t *)intrfc_handle;
     int i;
 
-    for (i = 0; i < MAX_IPV6_ADDRESSES; i++)
+    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
         (void)memcpy(addr->ipv6[i].address, ip_2_ip6(&(if_handle->netif.ip6_addr[i]))->addr, 16);
         addr->ipv6[i].addr_state = if_handle->netif.ip6_addr_state[i];
@@ -560,7 +528,7 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     int i, ret = 0;
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
-    for (i = 0; i < MAX_IPV6_ADDRESSES; i++)
+    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
         if (if_handle->netif.ip6_addr_state[i] == IP6_ADDR_PREFERRED)
         {

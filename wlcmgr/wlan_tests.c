@@ -68,11 +68,11 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     (void)PRINTF("\r\n");
 out:
 #ifdef CONFIG_IPV6
-    if (role == WLAN_BSS_ROLE_STA)
+    if (role == WLAN_BSS_ROLE_STA || role == WLAN_BSS_ROLE_UAP)
     {
         int i;
         (void)PRINTF("\r\n\tIPv6 Addresses\r\n");
-        for (i = 0; i < MAX_IPV6_ADDRESSES; i++)
+        for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
             if (addr->ipv6[i].addr_state != IP6_ADDR_INVALID)
             {

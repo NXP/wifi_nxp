@@ -54,9 +54,12 @@ struct iperf_test_context
 
 static struct iperf_test_context ctx;
 TimerHandle_t timer;
-ip4_addr_t server_address;
-ip4_addr_t bind_address;
+ip_addr_t server_address;
+ip_addr_t bind_address;
 bool multicast;
+#ifdef CONFIG_IPV6
+bool ipv6;
+#endif
 int amount = IPERF_CLIENT_AMOUNT;
 #ifdef CONFIG_WMM
 uint8_t qos = 0;
@@ -100,11 +103,21 @@ static void lwiperf_report(void *arg,
         (void)PRINTF(" %s \r\n", report_type_str[report_type]);
         if (local_addr && remote_addr)
         {
-            (void)PRINTF(" Local address : %u.%u.%u.%u ", ((u8_t *)local_addr)[0], ((u8_t *)local_addr)[1],
-                         ((u8_t *)local_addr)[2], ((u8_t *)local_addr)[3]);
+#ifdef CONFIG_IPV6
+            if (ipv6)
+                (void)PRINTF(" Local address : %s ", inet6_ntoa(local_addr->u_addr.ip6));
+            else
+#endif
+                (void)PRINTF(" Local address : %u.%u.%u.%u ", ((u8_t *)local_addr)[0], ((u8_t *)local_addr)[1],
+                             ((u8_t *)local_addr)[2], ((u8_t *)local_addr)[3]);
             (void)PRINTF(" Port %d \r\n", local_port);
-            (void)PRINTF(" Remote address : %u.%u.%u.%u ", ((u8_t *)remote_addr)[0], ((u8_t *)remote_addr)[1],
-                         ((u8_t *)remote_addr)[2], ((u8_t *)remote_addr)[3]);
+#ifdef CONFIG_IPV6
+            if (ipv6)
+                (void)PRINTF(" Remote address : %s ", inet6_ntoa(remote_addr->u_addr.ip6));
+            else
+#endif
+                (void)PRINTF(" Remote address : %u.%u.%u.%u ", ((u8_t *)remote_addr)[0], ((u8_t *)remote_addr)[1],
+                             ((u8_t *)remote_addr)[2], ((u8_t *)remote_addr)[3]);
             (void)PRINTF(" Port %d \r\n", remote_port);
             (void)PRINTF(" Bytes Transferred %llu \r\n", bytes_transferred);
             (void)PRINTF(" Duration (ms) %d \r\n", ms_duration);
@@ -444,13 +457,23 @@ static void iperf_test_start(void *arg)
     {
         if (ctx->tcp)
         {
-            ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+#ifdef CONFIG_IPV6
+            if (ipv6)
+                ctx->iperf_session = lwiperf_start_tcp_server(netif_ip_addr6(netif_default, 0),
+                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+            else
+#endif
+                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
         }
         else
         {
             if (multicast)
             {
+#ifdef CONFIG_IPV6
+                wifi_get_ipv4_multicast_mac(ntohl(bind_address.u_addr.ip4.addr), mcast_mac);
+#else
                 wifi_get_ipv4_multicast_mac(ntohl(bind_address.addr), mcast_mac);
+#endif
                 if (wifi_add_mcast_filter(mcast_mac) != WM_SUCCESS)
                 {
                     (void)PRINTF("IPERF session init failed\r\n");
@@ -460,41 +483,69 @@ static void iperf_test_start(void *arg)
                 }
                 mcast_mac_valid = true;
             }
-            ctx->iperf_session = lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+#ifdef CONFIG_IPV6
+            if (ipv6)
+                ctx->iperf_session = lwiperf_start_udp_server(netif_ip_addr6(netif_default, 0),
+                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+            else
+#endif
+                ctx->iperf_session =
+                    lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
         }
     }
     else
     {
-        if (IP_IS_V4(&server_address) != 0)
+        if (ctx->tcp)
         {
-            if (ctx->tcp)
+#ifdef CONFIG_IPV6
+            if (ipv6)
+                ip6_addr_assign_zone(ip_2_ip6(&server_address), IP6_UNICAST, netif_default);
+#endif
+            ctx->iperf_session = lwiperf_start_tcp_client(&server_address, LWIPERF_TCP_PORT_DEFAULT, ctx->client_type,
+                                                          amount, lwiperf_report, 0);
+        }
+        else
+        {
+            if (IP_IS_V4(&server_address) && ip_addr_ismulticast(&server_address))
             {
-                ctx->iperf_session = lwiperf_start_tcp_client(&server_address, LWIPERF_TCP_PORT_DEFAULT,
-                                                              ctx->client_type, amount, lwiperf_report, 0);
+#ifdef CONFIG_IPV6
+                wifi_get_ipv4_multicast_mac(ntohl(server_address.u_addr.ip4.addr), mcast_mac);
+#else
+                wifi_get_ipv4_multicast_mac(ntohl(server_address.addr), mcast_mac);
+#endif
+                wifi_add_mcast_filter(mcast_mac);
+                mcast_mac_valid = true;
+            }
+#ifdef CONFIG_IPV6
+            if (ipv6)
+            {
+                ctx->iperf_session = lwiperf_start_udp_client(
+                    netif_ip_addr6(netif_default, 0), LWIPERF_TCP_PORT_DEFAULT, &server_address,
+                    LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE,
+#ifdef CONFIG_WMM
+                    qos,
+#else
+                    0,
+#endif
+
+                    lwiperf_report, NULL);
             }
             else
             {
-                if (ip4_addr_ismulticast(&server_address))
-                {
-                    wifi_get_ipv4_multicast_mac(ntohl(server_address.addr), mcast_mac);
-                    wifi_add_mcast_filter(mcast_mac);
-                    mcast_mac_valid = true;
-                }
+#endif
                 ctx->iperf_session =
                     lwiperf_start_udp_client(&bind_address, LWIPERF_TCP_PORT_DEFAULT, &server_address,
                                              LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE,
 #ifdef CONFIG_WMM
                                              qos,
 #else
-                                             0,
+                                         0,
 #endif
 
                                              lwiperf_report, NULL);
+#ifdef CONFIG_IPV6
             }
-        }
-        else
-        {
-            (void)PRINTF("IPERF_SERVER_ADDRESS is not a valid IPv4 address!\r\n");
+#endif
         }
     }
 
@@ -630,7 +681,7 @@ static void display_iperf_usage()
     (void)PRINTF("\r\n");
     (void)PRINTF("\tClient/Server:\r\n");
     (void)PRINTF("\t   -u             use UDP rather than TCP\r\n");
-    (void)PRINTF("\t   -B    <host>   bind to ip addr (including multicast address)\r\n");
+    (void)PRINTF("\t   -B    <host>   bind to <host> (including multicast address)\r\n");
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode\r\n");
@@ -642,11 +693,15 @@ static void display_iperf_usage()
 #ifdef CONFIG_WMM
     (void)PRINTF("\t   -S    #        QoS for udp traffic (default 0(Best Effort))\r\n");
 #endif
+#ifdef CONFIG_IPV6
+    (void)PRINTF("\t   -V             Set the domain to IPv6 (send packets over IPv6)\r\n");
+#endif
 }
 
 void cmd_iperf(int argc, char **argv)
 {
     int arg = 1;
+    char ip_addr[128];
 
     struct
     {
@@ -664,6 +719,9 @@ void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_WMM
         unsigned tos : 1;
 #endif
+#ifdef CONFIG_IPV6
+        unsigned ipv6 : 1;
+#endif
     } info;
 
     amount = IPERF_CLIENT_AMOUNT;
@@ -671,6 +729,9 @@ void cmd_iperf(int argc, char **argv)
     qos = 0;
 #endif
     multicast = false;
+#ifdef CONFIG_IPV6
+    ipv6 = false;
+#endif
 
     if (mcast_mac_valid)
     {
@@ -716,12 +777,10 @@ void cmd_iperf(int argc, char **argv)
 
             if (!info.chost && argv[arg] != NULL)
             {
-                inet_aton(argv[arg], &server_address);
-
-                if (IP_IS_V4(&server_address) != 0)
-                    info.chost = 1;
+                strncpy(ip_addr, argv[arg], strlen(argv[arg]));
 
                 arg += 1;
+                info.chost = 1;
             }
         }
         else if (!info.bind && string_equal("-B", argv[arg]))
@@ -736,7 +795,7 @@ void cmd_iperf(int argc, char **argv)
                 if (IP_IS_V4(&bind_address))
                     info.bhost = 1;
 
-                if (ip4_addr_ismulticast(&bind_address))
+                if (ip_addr_ismulticast(&bind_address))
                     multicast = true;
 
                 arg += 1;
@@ -764,6 +823,14 @@ void cmd_iperf(int argc, char **argv)
             arg += 1;
         }
 #endif
+#ifdef CONFIG_IPV6
+        else if (!info.ipv6 && string_equal("-V", argv[arg]))
+        {
+            arg += 1;
+            info.ipv6 = 1;
+            ipv6      = true;
+        }
+#endif
         else if (!info.dual && string_equal("-d", argv[arg]))
         {
             arg += 1;
@@ -783,12 +850,46 @@ void cmd_iperf(int argc, char **argv)
         }
     } while (arg < argc);
 
+#ifdef CONFIG_IPV6
+    if (ipv6)
+    {
+        inet6_aton(ip_addr, ip_2_ip6(&server_address));
+        server_address.type = IPADDR_TYPE_V6;
+    }
+    else
+    {
+#endif
+        inet_aton(ip_addr, ip_2_ip4(&server_address));
+#ifdef CONFIG_IPV6
+        server_address.type = IPADDR_TYPE_V4;
+    }
+#endif
+
     if ((!info.abort && !info.server && !info.client) || (info.client && !info.chost) || (info.server && info.client) ||
-        (info.udp && (!info.bind || !info.bhost)) || ((info.dual || info.tradeoff) && !info.client) ||
-        (info.dual && info.tradeoff))
+        (info.udp
+#ifdef CONFIG_IPV6
+         && !info.ipv6
+#endif
+         && (!info.bind || !info.bhost)) ||
+        ((info.dual || info.tradeoff) && !info.client) || (info.dual && info.tradeoff)
+#ifdef CONFIG_IPV6
+        || (info.ipv6 && info.bind)
+#endif
+    )
     {
         (void)PRINTF("Incorrect usage\r\n");
-        if (info.udp && (!info.bind || !info.bhost))
+#ifdef CONFIG_IPV6
+        if (info.ipv6 && info.bind)
+            (void)PRINTF("IPv6: bind to host not allowed\r\n");
+        else if (info.ipv6 && (IP_IS_V4(&server_address)))
+            (void)PRINTF("IPv6: Address family for host not supported\r\n");
+        else
+#endif
+            if (info.udp
+#ifdef CONFIG_IPV6
+                && !info.ipv6
+#endif
+                && (!info.bind || !info.bhost))
             (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
         display_iperf_usage();
         return;

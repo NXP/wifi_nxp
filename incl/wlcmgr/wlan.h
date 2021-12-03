@@ -223,11 +223,6 @@ typedef enum
 /** Length of a pairwise master key (PMK).  It's always 256 bits (32 Bytes) */
 #define WLAN_PMK_LENGTH 32
 
-#ifdef CONFIG_IPV6
-/** The maximum number of IPV6 addresses that will be stored */
-#define MAX_IPV6_ADDRESSES 3
-#endif
-
 /* Error Codes */
 
 /** The operation was successful. */
@@ -836,7 +831,7 @@ struct wlan_ip_config
 #ifdef CONFIG_IPV6
     /** The network IPv6 address configuration that should be
      * associated with this interface. */
-    struct ipv6_config ipv6[MAX_IPV6_ADDRESSES];
+    struct ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
 #endif
     /** The network IPv4 address configuration that should be
      * associated with this interface. */

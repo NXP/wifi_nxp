@@ -47,6 +47,11 @@ uint16_t g_data_snr_last;
 static struct netif *netif_arr[MAX_INTERFACES_SUPPORTED];
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 /*------------------------------------------------------*/
+static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum netif_mac_filter_action action);
+#ifdef CONFIG_IPV6
+static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum netif_mac_filter_action action);
+#endif
+
 static void register_interface(struct netif *iface, mlan_bss_type iface_type)
 {
     netif_arr[iface_type] = iface;
@@ -278,16 +283,33 @@ void low_level_init(struct netif *netif)
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
     /* set MAC hardware address */
-#ifndef STANDALONE
     wlan_get_mac_address(netif->hwaddr);
-#endif
 
     /* maximum transfer unit */
     netif->mtu = 1500;
 
     /* device capabilities */
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
-    netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP | NETIF_FLAG_IGMP;
+    netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
+
+    netif_set_igmp_mac_filter(netif, igmp_mac_filter);
+    netif->flags |= NETIF_FLAG_IGMP;
+#ifdef CONFIG_IPV6
+    netif_set_mld_mac_filter(netif, mld_mac_filter);
+    netif->flags |= NETIF_FLAG_MLD6;
+
+    /*
+     * For hardware/netifs that implement MAC filtering.
+     * All-nodes link-local is handled by default, so we must let the hardware know
+     * to allow multicast packets in.
+     * Should set mld_mac_filter previously. */
+    if (netif->mld_mac_filter != NULL)
+    {
+        ip6_addr_t ip6_allnodes_ll;
+        ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
+        netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
+    }
+#endif
 }
 extern int retry_attempts;
 /**
@@ -764,17 +786,12 @@ err_t lwip_netif_init(struct netif *netif)
 #ifdef CONFIG_IPV6
     netif->output_ip6 = ethip6_output;
 #endif
-    netif_set_igmp_mac_filter(netif, igmp_mac_filter);
-    netif->flags |= NETIF_FLAG_IGMP;
-#ifdef CONFIG_IPV6
-    netif_set_mld_mac_filter(netif, mld_mac_filter);
-    netif->flags |= NETIF_FLAG_MLD6;
-#endif
 
     ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
 
     /* initialize the hardware */
     low_level_init(netif);
+
     register_interface(netif, MLAN_BSS_TYPE_STA);
     return ERR_OK;
 }
@@ -802,11 +819,15 @@ err_t lwip_netif_uap_init(struct netif *netif)
      * is available...) */
     netif->output     = etharp_output;
     netif->linkoutput = low_level_output;
+#ifdef CONFIG_IPV6
+    netif->output_ip6 = ethip6_output;
+#endif
 
     ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
 
     /* initialize the hardware */
     low_level_init(netif);
+
     register_interface(netif, MLAN_BSS_TYPE_UAP);
 
     return ERR_OK;
