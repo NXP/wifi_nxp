@@ -1715,7 +1715,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
                 break;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
             case HostCmd_CMD_802_11_SCAN_EXT:
                 if (resp->result != 0)
                 {
@@ -2401,6 +2401,23 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+            case HostCmd_CMD_11AX_CMD:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, wm_wifi.cmd_resp_ioctl);
+                    if (rv != MLAN_STATUS_SUCCESS)
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    else
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    rv                      = MLAN_STATUS_FAILURE;
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
 #endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
@@ -2674,7 +2691,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_status rv = MLAN_STATUS_SUCCESS;
 #endif
 
@@ -2688,7 +2705,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     sta_node *sta_node_ptr;
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_event_scan_result *pext_scan_result;
 #endif
     if (evt == NULL)
@@ -2904,7 +2921,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_event_completion(WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED, WIFI_EVENT_REASON_SUCCESS, pinfo);
             break;
 #endif
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         case EVENT_EXT_SCAN_REPORT:
             pext_scan_result = (mlan_event_scan_result *)((t_u8 *)msg->data + 4);
 
@@ -2935,6 +2952,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
         break;
 #endif
+        case EVENT_MEF_HOST_WAKEUP:
+            wifi_d("Host recevied host wake-up event from firmware");
+            break;
+
         default:
             wifi_d(
                 "Event %x not implemented."
@@ -3544,5 +3565,36 @@ void _wifi_set_mac_addr(uint8_t *mac)
 void wifi_enable_low_pwr_mode()
 {
     low_power_mode = true;
+}
+#endif
+
+#ifdef CONFIG_11AX
+int wifi_set_11ax_tx_omi(const t_u16 tx_omi)
+{
+    mlan_ioctl_req req;
+
+    mlan_ds_11ax_cmd_cfg cfg;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&cfg, 0x00, sizeof(mlan_ds_11ax_cmd_cfg));
+
+    req.action  = MLAN_ACT_SET;
+    req.pbuf    = (t_u8 *)&cfg;
+    req.buf_len = sizeof(mlan_ds_11ax_cmd_cfg);
+
+    cfg.sub_id              = MLAN_11AXCMD_TXOMI_SUBID;
+    cfg.param.txomi_cfg.omi = tx_omi;
+
+    mlan_status rv;
+
+    rv = wlan_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_11AX_CMD, HostCmd_ACT_GEN_SET, 0,
+                          (t_void *)&req, (t_void *)&cfg);
+
+    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
 }
 #endif

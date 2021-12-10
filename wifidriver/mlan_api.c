@@ -66,7 +66,7 @@ static const char driver_version_format[] = "SD878x-%s-%s-WM";
 static const char driver_version[]        = "702.1.0";
 
 static unsigned int mgmt_ie_index_bitmap = 0x00;
-static int wifi_11d_country              = 0x00;
+int wifi_11d_country                     = 0x00;
 
 /* This were static functions in mlan file */
 mlan_status wlan_cmd_802_11_deauthenticate(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
@@ -697,7 +697,7 @@ done:
     return wm_wifi.cmd_resp_status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef ENABLE_OFFLOAD
 
 #define FLTR_BUF_IP_OFFSET 24
 
@@ -827,7 +827,9 @@ int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
 
     return wm_wifi.cmd_resp_status;
 }
+#endif /*ENABLE_OFFLOAD */
 
+#ifndef CONFIG_MLAN_WMSDK
 int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip, t_u16 src_port)
 {
     t_u16 d_port, s_port;
@@ -2398,7 +2400,7 @@ char *wifi_get_country_str(int country)
     }
 }
 
-static wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, int nr_sb)
+wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, int nr_sb)
 {
     wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1)));
 
@@ -2419,21 +2421,18 @@ int wifi_set_country(int country)
 {
     int ret, nr_sb;
 
+    if (wlan_enable_11d() != WM_SUCCESS)
+    {
+        wifi_e("unable to enabled 11d feature\r\n");
+        return WM_FAIL;
+    }
+
     wifi_11d_country = country;
 
     wifi_sub_band_set_t *sub_band = get_sub_band_from_country(country, &nr_sb);
 
     wifi_domain_param_t *dp = get_11d_domain_params(country, sub_band, nr_sb);
 
-#if 0
-	ret = wifi_uap_set_domain_params(dp);
-
-	if (ret != WM_SUCCESS) {
-		wifi_11d_country = 0x00;
-		os_mem_free(dp);
-		return ret;
-	}
-#endif
     ret = wifi_set_domain_params(dp);
 
     if (ret != WM_SUCCESS)

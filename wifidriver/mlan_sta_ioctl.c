@@ -5385,7 +5385,7 @@ static mlan_status wlan_set_get_scan_cfg(IN pmlan_adapter pmadapter, IN pmlan_io
         scan->param.scan_cfg.scan_time.specific_scan_time = (t_u32)pmadapter->specific_scan_time;
         scan->param.scan_cfg.scan_time.active_scan_time   = (t_u32)pmadapter->active_scan_time;
         scan->param.scan_cfg.scan_time.passive_scan_time  = (t_u32)pmadapter->passive_scan_time;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         scan->param.scan_cfg.ext_scan = pmadapter->ext_scan;
 #endif
     }
@@ -5403,7 +5403,7 @@ static mlan_status wlan_set_get_scan_cfg(IN pmlan_adapter pmadapter, IN pmlan_io
             pmadapter->active_scan_time = (t_u16)scan->param.scan_cfg.scan_time.active_scan_time;
         if (scan->param.scan_cfg.scan_time.passive_scan_time)
             pmadapter->passive_scan_time = (t_u16)scan->param.scan_cfg.scan_time.passive_scan_time;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         pmadapter->ext_scan = scan->param.scan_cfg.ext_scan;
 #endif
     }

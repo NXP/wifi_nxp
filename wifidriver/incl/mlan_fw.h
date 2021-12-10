@@ -680,10 +680,13 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 /* fw_cap_info bit18 for ecsa support*/
 #define FW_CAPINFO_ECSA MBIT(18)
+
+#ifdef CONFIG_OWE
 /** fw_cap_info bit30 for Embedded OWE Support*/
 #define FW_CAPINFO_EMBEDDED_OWE_SUPPORT MBIT(30)
 /** Check if Embedded OWE is supported by firmware */
 #define IS_FW_SUPPORT_EMBEDDED_OWE(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EMBEDDED_OWE_SUPPORT)
+#endif
 
 /** LLC/SNAP header len   */
 #define LLC_SNAP_LEN 8
@@ -916,7 +919,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** HT bandwidth 40 MHz */
 #define HT_BW_40 1
 
-#if defined(EXT_SCAN_SUPPORT)
+#if defined(CONFIG_EXT_SCAN_SUPPORT)
 /** TLV type : Scan Response */
 #define TLV_TYPE_BSS_SCAN_RSP (PROPRIETARY_TLV_BASE_ID + 0x56) // 0x0156
 /** TLV type : Scan Response Stats */
@@ -1126,7 +1129,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : mgmt IE list */
 #define HostCmd_CMD_MGMT_IE_LIST 0x00f2
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /** Host Command ID : Extended scan support */
 #define HostCmd_CMD_802_11_SCAN_EXT 0x0107
 #endif
@@ -1295,6 +1298,9 @@ typedef enum _ENH_PS_MODES
 #ifdef CONFIG_11AX
 /** Host Command ID: 11AX config */
 #define HostCmd_CMD_11AX_CFG 0x0266
+
+/** Host Command ID: 11AX command */
+#define HostCmd_CMD_11AX_CMD 0x026d
 
 /** Host Command ID: TWT cfg command */
 #define HostCmd_CMD_TWT_CFG 0x0270
@@ -1477,7 +1483,9 @@ typedef enum _ENH_PS_MODES
 /** Event definition:  Radar Detected by card */
 #define EVENT_CHANNEL_REPORT_RDY 0x00000054
 
-#ifdef EXT_SCAN_SUPPORT
+/** Event definition:  wake-up indication to host by card */
+#define EVENT_MEF_HOST_WAKEUP 0x0000004f
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /** Event definition:  Scan results through event */
 #define EVENT_EXT_SCAN_REPORT 0x00000058
 #endif
@@ -2076,7 +2084,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_RatesParamSet_t
     t_u8 rates[MAX_DATA_RATES];
 } MLAN_PACK_END MrvlIEtypes_RatesParamSet_t;
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /** _MrvlIEtypes_Bssid_List_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_Bssid_List_t
 {
@@ -3577,7 +3585,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_SCAN
      */
 } MLAN_PACK_END HostCmd_DS_802_11_SCAN;
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /*
  * This scan handle Country Information IE(802.11d compliant)
  * Define data structure for HostCmd_CMD_802_11_SCAN_EXT
@@ -3627,7 +3635,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Bss_Scan_Info_t
     /** TSF data */
     t_u64 tsf;
 } MLAN_PACK_END MrvlIEtypes_Bss_Scan_Info_t;
-#endif /* EXT_SCAN_SUPPORT */
+#endif /* CONFIG_EXT_SCAN_SUPPORT */
 
 /** HostCmd_DS_RX_MGMT_IND */
 typedef MLAN_PACK_START struct _HostCmd_DS_RX_MGMT_IND
@@ -3841,6 +3849,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CFG
     /** TLV for HE capability or HE operation */
     t_u8 val[];
 } MLAN_PACK_END HostCmd_DS_11AX_CFG;
+
+/** HostCmd_DS_11AX_CMD_CFG */
+typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CMD_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** CMD_SUBID */
+    t_u16 sub_id;
+    /** TLV or value for cmd */
+    t_u8 val[];
+} MLAN_PACK_END HostCmd_DS_11AX_CMD_CFG;
 
 /** Type definition of hostcmd_twt_setup */
 typedef MLAN_PACK_START struct _hostcmd_twt_setup
@@ -5905,7 +5924,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_HS_CFG_ENH opt_hs_cfg;
         /** Scan */
         HostCmd_DS_802_11_SCAN scan;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         /** Extended Scan */
         HostCmd_DS_802_11_SCAN_EXT ext_scan;
 #endif
@@ -6050,6 +6069,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;
+#endif
+#ifdef CONFIG_11AX
+        HostCmd_DS_11AX_CMD_CFG axcmd;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

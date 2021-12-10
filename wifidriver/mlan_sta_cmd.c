@@ -2266,7 +2266,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_802_11_sleep_params(pmpriv, cmd_ptr, cmd_action, (t_u16 *)pdata_buf);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifndef EXT_SCAN_SUPPORT
+#ifndef CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN:
             ret = wlan_cmd_802_11_scan(pmpriv, cmd_ptr, pdata_buf);
             break;
@@ -2432,7 +2432,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_MGMT_IE_LIST:
             ret = wlan_cmd_mgmt_ie_list(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN_EXT:
             ret = wlan_cmd_802_11_scan_ext(pmpriv, cmd_ptr, pdata_buf);
             break;
@@ -2505,6 +2505,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
 #ifdef CONFIG_RF_TEST_MODE
         case HostCmd_CMD_MFG_COMMAND:
             ret = wlan_cmd_mfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
+#ifdef CONFIG_11AX
+        case HostCmd_CMD_11AX_CMD:
+            ret = wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
         default:

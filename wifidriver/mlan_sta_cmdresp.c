@@ -136,7 +136,7 @@ static void wlan_process_cmdresp_error(mlan_private *pmpriv, HostCmd_DS_COMMAND 
                 pmadapter->ps_mode = Wlan802_11PowerModeCAM;
         }
         break;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN_EXT:
 #endif
         case HostCmd_CMD_802_11_SCAN:
@@ -1520,7 +1520,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_TX_RATE_CFG:
             ret = wlan_ret_tx_rate_cfg(pmpriv, resp, pioctl);
             break;
-#ifndef EXT_SCAN_SUPPORT
+#ifndef CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN:
             ret        = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);
             pioctl_buf = MNULL;
@@ -1531,7 +1531,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret        = wlan_ret_802_11_scan_ext(pmpriv, resp, pioctl_buf);
             pioctl_buf = MNULL;
             break;
-#endif /* EXT_SCAN_SUPPORT */
+#endif /* CONFIG_EXT_SCAN_SUPPORT */
 #ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
             ret = wlan_ret_bgscan_config(pmpriv, resp, pioctl_buf);
@@ -1734,6 +1734,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
 #ifdef OTP_CHANINFO
         case HostCmd_CMD_CHAN_REGION_CFG:
             ret = wlan_ret_chan_region_cfg(pmpriv, resp, pioctl_buf);
+            break;
+#endif
+#ifdef CONFIG_11AX
+        case HostCmd_CMD_11AX_CMD:
+            ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
             break;
 #endif
         default:

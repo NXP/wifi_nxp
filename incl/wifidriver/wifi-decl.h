@@ -44,10 +44,12 @@
 
 #define MOD_GROUPS 7
 
+#ifdef CONFIG_OWE
 /** The open AP in OWE transmition Mode */
 #define OWE_TRANS_MODE_OPEN 1
 /** The security AP in OWE trsnsition Mode */
 #define OWE_TRANS_MODE_OWE 2
+#endif
 
 #if 0
 /** channel_field.flags */
@@ -487,6 +489,7 @@ typedef struct
     t_u32 avg_tbtt_offset;
 } wifi_tbtt_offset_t;
 
+#define BIT(n)                           (1 << n)
 #define WOWLAN_MAX_PATTERN_LEN           20
 #define WOWLAN_MAX_OFFSET_LEN            50
 #define MAX_NUM_FILTERS                  10
@@ -589,6 +592,30 @@ typedef struct _wifi_flt_cfg
     /** MEF entry*/
     wifi_mef_entry_t mef_entry;
 } wifi_flt_cfg_t;
+
+/* User defined pattern struct */
+typedef struct
+{
+    /** pattern offset of received pattern */
+    t_u8 pkt_offset;
+    /** pattern length */
+    t_u8 pattern_len;
+    /** wowlan pattern */
+    t_u8 pattern[WOWLAN_MAX_PATTERN_LEN];
+    /** mask */
+    t_u8 mask[6];
+} wifi_wowlan_pattern_t;
+
+/* Wowlan Pattern config struct */
+typedef struct
+{
+    /** Enable user defined pattern*/
+    t_u8 enable;
+    /** number of patterns******/
+    t_u8 n_patterns;
+    /** user define pattern*/
+    wifi_wowlan_pattern_t patterns[MAX_NUM_FILTERS];
+} wifi_wowlan_ptn_cfg_t;
 
 /** TCP keep alive information */
 typedef struct

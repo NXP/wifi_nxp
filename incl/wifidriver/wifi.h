@@ -692,6 +692,7 @@ int wifi_enable_11d_support();
 int wifi_enable_11d_support_APIs();
 int wifi_set_domain_params(wifi_domain_param_t *dp);
 int wifi_set_country(int country);
+int wifi_uap_set_country(int country);
 int wifi_get_country();
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables();
@@ -993,17 +994,23 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);
+#endif
 
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 
 int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip);
 
+#ifndef CONFIG_MLAN_WMSDK
 int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip, t_u16 src_port);
 #endif
 
 int wifi_raw_packet_send(const t_u8 *packet, t_u32 length);
 
 int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type);
+
+#ifdef CONFIG_11AX
+int wifi_set_11ax_tx_omi(const t_u16 tx_omi);
+#endif
 
 #ifdef CONFIG_RF_TEST_MODE
 
@@ -1083,4 +1090,5 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
 
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 #endif
+wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, int nr_sb);
 #endif

@@ -143,7 +143,7 @@
 #include <wifi.h>
 #include <wlan_11d.h>
 
-#define WLAN_DRV_VERSION "v1.3.r37.p2"
+#define WLAN_DRV_VERSION "v1.3.r38.p1"
 
 /* Configuration */
 
@@ -240,6 +240,31 @@ typedef enum
 /** The requested feature is not supported*/
 #define WLAN_ERROR_NOT_SUPPORTED 6
 
+/*
+ * HOST_WAKEUP_GPIO_PIN / CARD_WAKEUP_GPIO_PIN
+ *
+ *   this GPIO PIN number defines the default config. This is chip
+ *   specific, and a compile time setting depending on the system
+ *   board level build!
+ */
+#if defined(SD8997) || defined(SD8977) || defined(SD9098) || defined(SD9064) || defined(RW610)
+#define HOST_WAKEUP_GPIO_PIN 12
+#define CARD_WAKEUP_GPIO_PIN 13
+#elif defined(IW61x)
+#define HOST_WAKEUP_GPIO_PIN 17
+#define CARD_WAKEUP_GPIO_PIN 16
+#elif defined(SD9097)
+#if defined(SD9097_V0)
+#define CARD_WAKEUP_GPIO_PIN 7
+#elif defined(SD9097_V1)
+#define HOST_WAKEUP_GPIO_PIN 12
+#define CARD_WAKEUP_GPIO_PIN 3
+#endif
+#else
+#define HOST_WAKEUP_GPIO_PIN 4
+#define CARD_WAKEUP_GPIO_PIN 16 //?
+#endif
+
 /** Enum for wlan errors*/
 enum wm_wlan_errno
 {
@@ -318,6 +343,7 @@ enum wlan_event_reason
     WLAN_REASON_UAP_STOP_FAILED,
     /** The WLAN Connection Manager has stopped uAP */
     WLAN_REASON_UAP_STOPPED,
+
 };
 
 /** Wakeup events for which wakeup will occur */
@@ -730,11 +756,15 @@ typedef wifi_auto_reconnect_config_t wlan_auto_reconnect_config_t;
  */
 typedef wifi_flt_cfg_t wlan_flt_cfg_t;
 
-#ifndef CONFIG_MLAN_WMSDK
+/** Configuration for wowlan pattern parameters from
+ * \ref wifi_wowlan_ptn_cfg_t
+ */
+typedef wifi_wowlan_ptn_cfg_t wlan_wowlan_ptn_cfg_t;
 /** Configuration for TCP Keep alive parameters from
  * \ref wifi_tcp_keep_alive_t
  */
 typedef wifi_tcp_keep_alive_t wlan_tcp_keep_alive_t;
+#ifndef CONFIG_MLAN_WMSDK
 /** Configuration for NAT Keep alive parameters from
  * \ref wifi_nat_keep_alive_t
  */
@@ -1823,7 +1853,7 @@ int wlan_deepsleepps_on();
  */
 int wlan_deepsleepps_off();
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef ENABLE_OFFLOAD
 /**
  * Use this API to configure the TCP Keep alive parameters in Wi-Fi firmware.
  * \ref wlan_tcp_keep_alive_t provides the parameters which are available
@@ -1852,7 +1882,9 @@ int wlan_deepsleepps_off();
  * \return -WM_FAIL if command fails.
  */
 int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *keep_alive);
+#endif
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  * Use this API to configure the NAT Keep alive parameters in Wi-Fi firmware.
  * \ref wlan_nat_keep_alive_t provides the parameters which are available
@@ -1954,6 +1986,7 @@ int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
  * \return -WM_FAIL if command fails.
  */
 int wlan_get_tbtt_offset_stats(wlan_tbtt_offset_t *tbtt_offset);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  * Use this API to set packet filters in Wi-Fi firmware.
@@ -2054,6 +2087,7 @@ int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg);
  */
 int wlan_set_auto_arp();
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  * Use this API to enable Ping Offload in Wi-Fi firmware.
  *
@@ -2065,6 +2099,13 @@ int wlan_set_auto_ping();
 
 #ifdef ENABLE_OFFLOAD
 /**
+ * Use this API to enable WOWLAN on magic pkt rx in Wi-Fi firmware
+ *
+ *\return WM_SUCCESS if operation is successful.
+ *\return -WM_FAIL if command fails
+ */
+int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg);
+/**
  * Use this API to enable NS Offload in Wi-Fi firmware.
  *
  * \return WM_SUCCESS if operation is successful.
@@ -2072,6 +2113,14 @@ int wlan_set_auto_ping();
  */
 int wlan_set_ipv6_ns_offload();
 #endif
+/**
+ * Use this API to configure host sleep params in Wi-Fi firmware.
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+
+int wlan_send_host_sleep(uint32_t wakeup_condition);
 
 /**
  * Use this API to get the BSSID of associated BSS.
@@ -3057,5 +3106,17 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 
 int wlan_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
+
+#ifdef CONFIG_11AX
+/**
+ * Use this API to set the set 11AX Tx OMI.
+ *
+ * \param[in] 11AX tx_omi value to be sent to Firmware
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
+#endif
 
 #endif /* __WLAN_H__ */

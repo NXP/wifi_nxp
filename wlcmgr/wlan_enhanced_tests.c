@@ -1119,6 +1119,48 @@ static void test_wlan_get_chanlist(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_11AX
+static void dump_wlan_set_txomi_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-tx-omi <tx-omi>\r\n");
+    (void)PRINTF("where, tx-omi =\r\n");
+    (void)PRINTF("Bit 0-2: Rx NSS\r\n");
+    (void)PRINTF("Bit 3-4: Channel Width\r\n");
+    (void)PRINTF("Bit 6  : Tx NSTS (applies to client mode only)\r\n");
+}
+
+static void test_wlan_set_tx_omi(int argc, char **argv)
+{
+    int ret;
+
+    uint16_t tx_omi;
+
+    if (argc != 2)
+    {
+        dump_wlan_set_txomi_usage();
+        return;
+    }
+
+    errno  = 0;
+    tx_omi = (uint16_t)strtol(argv[1], NULL, 0);
+
+    if (errno != 0)
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+
+    ret = wlan_set_11ax_tx_omi(tx_omi);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("TX OMI: 0x%x set\r\n", tx_omi);
+    }
+    else
+    {
+        (void)PRINTF("Unable to set TX OMI: 0x%x\r\n", tx_omi);
+    }
+}
+#endif
+
 static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
@@ -1146,6 +1188,9 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-ed-mac-mode", "<ed_ctrl_2g> <ed_offset_2g>", wlan_ed_mac_mode_set},
 #endif
     {"wlan-get-ed-mac-mode", NULL, wlan_ed_mac_mode_get},
+#ifdef CONFIG_11AX
+    {"wlan-set-tx-omi", "<tx-omi>", test_wlan_set_tx_omi},
+#endif
 };
 
 int wlan_enhanced_cli_init(void)

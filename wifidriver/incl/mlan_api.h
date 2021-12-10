@@ -34,10 +34,6 @@
 
 #define MLAN_WMSDK_MAX_WPA_IE_LEN 256
 
-#ifdef CONFIG_EXT_SCAN
-#define EXT_SCAN_SUPPORT
-#endif
-
 #include "mlan.h"
 #include "mlan_join.h"
 #include "mlan_util.h"

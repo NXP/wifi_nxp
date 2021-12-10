@@ -422,7 +422,7 @@ typedef struct _mlan_scan_cfg
     t_u32 scan_probe;
     /** Scan time parameters */
     mlan_scan_time_params scan_time;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     /** Extended Scan */
     t_u32 ext_scan;
 #endif
@@ -542,6 +542,13 @@ typedef struct _mlan_ssid_bssid
 } mlan_ssid_bssid;
 
 #ifdef CONFIG_11AX
+#define MLAN_11AXCMD_SR_SUBID           0x102
+#define MLAN_11AXCMD_BEAM_SUBID         0x103
+#define MLAN_11AXCMD_HTC_SUBID          0x104
+#define MLAN_11AXCMD_TXOMI_SUBID        0x105
+#define MLAN_11AXCMD_OBSS_TOLTIME_SUBID 0x106
+#define MLAN_11AXCMD_TXOPRTS_SUBID      0x108
+
 #define MLAN_11AX_TWT_SETUP_SUBID    0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
 #endif
@@ -1613,10 +1620,12 @@ typedef struct _mlan_ds_get_info
 /** Enumeration for authentication mode */
 enum _mlan_auth_mode
 {
-    MLAN_AUTH_MODE_OPEN       = 0x00,
-    MLAN_AUTH_MODE_SHARED     = 0x01,
-    MLAN_AUTH_MODE_SAE        = 0x03,
-    MLAN_AUTH_MODE_OWE        = 0x04,
+    MLAN_AUTH_MODE_OPEN   = 0x00,
+    MLAN_AUTH_MODE_SHARED = 0x01,
+    MLAN_AUTH_MODE_SAE    = 0x03,
+#ifdef CONFIG_OWE
+    MLAN_AUTH_MODE_OWE = 0x04,
+#endif
     MLAN_AUTH_MODE_NETWORKEAP = 0x80,
     MLAN_AUTH_MODE_AUTO       = 0xFF,
 };
@@ -1626,18 +1635,10 @@ typedef enum
 {
     AssocAgentAuth_Open,
     AssocAgentAuth_Shared,
-/* Updating the auth type with respect to latest changes in firmware.
- * Changes are available only for CA2, Firecrest and RB3P.
- * TODO: update when release is made from ToT fw for other SoCs.
- */
-#if defined(IW61x) || defined(SD8987) || defined(SD8978)
     AssocAgentAuth_Wpa3Sae = 6,
-#elif defined(SD8977) || defined(SD8801)
-    AssocAgentAuth_Wpa3Sae = 5,
-#else
-#error "WPA3 SAE auth type is not defined"
+#if CONFIG_OWE
+    AssocAgentAuth_Owe = 7,
 #endif
-    AssocAgentAuth_Owe,
     AssocAgentAuth_Auto,
 } AssocAgentAuthType_e;
 
@@ -2034,6 +2035,8 @@ typedef struct _mlan_ds_power_cfg
 /*-----------------------------------------------------------------*/
 /** Host sleep config conditions : Cancel */
 #define HOST_SLEEP_CFG_CANCEL 0xffffffff
+/** Host sleep config conditions : NULL (used for offload features) */
+#define HOST_SLEEP_NO_COND 0
 
 /** Host sleep config condition: broadcast data */
 #define HOST_SLEEP_COND_BROADCAST_DATA MBIT(0)
@@ -2591,6 +2594,19 @@ typedef struct _mlan_ds_11ac_vht_cfg
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
 
 #ifdef CONFIG_11AX
+typedef struct MLAN_PACK_START _mlan_11axcmdcfg_obss_pd_offset
+{
+    /** <NON_SRG_OffSET, SRG_OFFSET> */
+    t_u8 offset[2];
+} MLAN_PACK_END mlan_11axcmdcfg_obss_pd_offset;
+
+/** Type definition of mlan_11axcmdcfg_sr_control for MLAN_OID_11AX_CMD_CFG */
+typedef struct MLAN_PACK_START _mlan_11axcmdcfg_sr_control
+{
+    /** 1 enable, 0 disable */
+    t_u8 control;
+} MLAN_PACK_END mlan_11axcmdcfg_sr_control;
+
 /** Type definition of mlan_ds_11ax_he_capa for MLAN_OID_11AX_HE_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_11ax_he_capa
 {
@@ -2618,6 +2634,83 @@ typedef struct _mlan_ds_11ax_he_cfg
     /** mlan_ds_11ax_he_capa */
     mlan_ds_11ax_he_capa he_cap;
 } mlan_ds_11ax_he_cfg, *pmlan_ds_11ax_he_cfg;
+
+/** Type definition of mlan_ds_11ax_sr_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct MLAN_PACK_START _mlan_ds_11ax_sr_cmd
+{
+    /** type*/
+    t_u16 type;
+    /** length of TLV */
+    t_u16 len;
+    /** value */
+    union
+    {
+        mlan_11axcmdcfg_obss_pd_offset obss_pd_offset;
+        mlan_11axcmdcfg_sr_control sr_control;
+    } param;
+} MLAN_PACK_END mlan_ds_11ax_sr_cmd, *pmlan_ds_11ax_sr_cmd;
+
+/** Type definition of mlan_ds_11ax_beam_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_beam_cmd
+{
+    /** command value: 1 is disable, 0 is enable*/
+    t_u8 value;
+} mlan_ds_11ax_beam_cmd, *pmlan_ds_11ax_beam_cmd;
+
+/** Type definition of mlan_ds_11ax_htc_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_htc_cmd
+{
+    /** command value: 1 is enable, 0 is disable*/
+    t_u8 value;
+} mlan_ds_11ax_htc_cmd, *pmlan_ds_11ax_htc_cmd;
+
+/** Type definition of mlan_ds_11ax_htc_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_txop_cmd
+{
+    /** Two byte rts threshold value of which only 10 bits, bit 0 to bit 9
+     * are valid */
+    t_u16 rts_thres;
+} mlan_ds_11ax_txop_cmd, *pmlan_ds_11ax_txop_cmd;
+
+/** Type definition of mlan_ds_11ax_htc_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_txomi_cmd
+{
+    /* 11ax spec 9.2.4.6a.2 OM Control 12 bits. Bit 0 to bit 11 */
+    t_u16 omi;
+} mlan_ds_11ax_txomi_cmd, *pmlan_ds_11ax_txomi_cmd;
+
+/** Type definition of mlan_ds_11ax_toltime_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_toltime_cmd
+{
+    /* OBSS Narrow Bandwidth RU Tolerance Time */
+    t_u32 tol_time;
+} mlan_ds_11ax_toltime_cmd, *pmlan_ds_11ax_toltime_cmd;
+
+/** Type definition of mlan_ds_11ax_cmd_cfg for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_cmd_cfg
+{
+    /** Sub-command */
+    t_u32 sub_command;
+    /** Sub-id */
+    t_u32 sub_id;
+    /** 802.11n configuration parameter */
+    union
+    {
+        /** SR configuration for MLAN_11AXCMD_SR_SUBID */
+        mlan_ds_11ax_sr_cmd sr_cfg;
+        /** Beam configuration for MLAN_11AXCMD_BEAM_SUBID */
+        mlan_ds_11ax_beam_cmd beam_cfg;
+        /** HTC configuration for MLAN_11AXCMD_HTC_SUBID */
+        mlan_ds_11ax_htc_cmd htc_cfg;
+        /** txop RTS configuration for MLAN_11AXCMD_TXOPRTS_SUBID */
+        mlan_ds_11ax_txop_cmd txop_cfg;
+        /** tx omi configuration for MLAN_11AXCMD_TXOMI_SUBID */
+        mlan_ds_11ax_txomi_cmd txomi_cfg;
+        /** OBSS tolerance time configuration for
+         * MLAN_11AXCMD_TOLTIME_SUBID */
+        mlan_ds_11ax_toltime_cmd toltime_cfg;
+    } param;
+} mlan_ds_11ax_cmd_cfg, *pmlan_ds_11ax_cmd_cfg;
 
 /** Type definition of mlan_ds_twt_setup for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twt_setup
@@ -2678,6 +2771,19 @@ typedef MLAN_PACK_START struct _mlan_ds_twtcfg
         mlan_ds_twt_teardown twt_teardown;
     } param;
 } MLAN_PACK_END mlan_ds_twtcfg, *pmlan_ds_twtcfg;
+
+/** Type definition of mlan_ds_11as_cfg for MLAN_IOCTL_11AX_CFG */
+typedef struct _mlan_ds_11ax_cfg
+{
+    /** Sub-command */
+    t_u32 sub_command;
+    /** 802.11n configuration parameter */
+    union
+    {
+        /** HE configuration for MLAN_OID_11AX_HE_CFG */
+        mlan_ds_11ax_he_cfg he_cfg;
+    } param;
+} mlan_ds_11ax_cfg, *pmlan_ds_11ax_cfg;
 #endif
 
 /** Type definition of mlan_ds_11n_amsdu_aggr_ctrl for

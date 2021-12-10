@@ -400,7 +400,7 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv)
             /* Send up this Event to unblock MOAL waitqueue */
             wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_MEAS_REPORT, MNULL);
             break;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         case EVENT_EXT_SCAN_REPORT:
             PRINTM(MEVENT, "EVENT: EXT_SCAN Report (%#x)\n", eventcause);
             ret = wlan_handle_event_ext_scan_report(priv, pmbuf);

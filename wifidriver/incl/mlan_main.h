@@ -496,7 +496,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Default beacon missing timeout */
 #define DEFAULT_BCN_MISS_TIMEOUT 5
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /** Maximum buffer space for beacons retrieved from scan responses */
 #define MAX_SCAN_BEACON_BUFFER 49152
 #else
@@ -1908,7 +1908,7 @@ struct _mlan_adapter
     t_u16 active_scan_time;
     /** Passive scan time */
     t_u16 passive_scan_time;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     /** Extended scan or legacy scan */
     t_u8 ext_scan;
 #endif
@@ -2365,7 +2365,7 @@ t_void wlan_queue_scan_cmd(IN mlan_private *pmpriv, IN cmd_ctrl_node *pcmd_node)
 /** Handler for scan command response */
 mlan_status wlan_ret_802_11_scan(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /** Extended scan command handler */
 mlan_status wlan_cmd_802_11_scan_ext(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 /** Handler for extended scan command response */

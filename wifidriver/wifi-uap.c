@@ -44,7 +44,9 @@
 #ifdef CONFIG_5GHz_SUPPORT
 uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 #endif
+uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x0c, 0x12, 0x96, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
 
+extern int wifi_11d_country;
 #ifdef CONFIG_11AC
 /**
  * @brief initialize AP bss config
@@ -261,6 +263,35 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
     return wm_wifi.cmd_resp_status;
 }
 
+int wifi_uap_set_country(int country)
+{
+    int ret, nr_sb;
+
+    if (wifi_uap_enable_11d() != WM_SUCCESS)
+    {
+        wifi_e("unable to enabled 11d feature\r\n");
+        return WM_FAIL;
+    }
+
+    wifi_11d_country = country;
+
+    wifi_sub_band_set_t *sub_band = get_sub_band_from_country(country, &nr_sb);
+
+    wifi_domain_param_t *dp = get_11d_domain_params(country, sub_band, nr_sb);
+
+    ret = wifi_uap_set_domain_params(dp);
+
+    if (ret != WM_SUCCESS)
+    {
+        wifi_11d_country = 0x00;
+        os_mem_free(dp);
+        return ret;
+    }
+
+    os_mem_free(dp);
+    return WM_SUCCESS;
+}
+
 /*
  * Note: wlan_uap_domain_info() and wlan_uap_callback_domain_info() are the
  * original function which handles this functionality. However, it does it
@@ -370,8 +401,12 @@ int wifi_cmd_uap_config(char *ssid,
             (void)memcpy(bss.param.bss_config.rates, rates_5ghz, sizeof(rates_5ghz));
         }
         else
+        {
+            (void)memcpy(bss.param.bss_config.rates, rates_2ghz, sizeof(rates_2ghz));
             bss.param.bss_config.band_cfg = BAND_CONFIG_MANUAL;
+        }
 #else
+        (void)memcpy(bss.param.bss_config.rates, rates_2ghz, sizeof(rates_2ghz));
         bss.param.bss_config.band_cfg = BAND_CONFIG_MANUAL;
 #endif
         bss.param.bss_config.channel = channel;

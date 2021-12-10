@@ -611,6 +611,7 @@ int __scan_cb(unsigned int count)
         else
             (void)PRINTF("\tWPS: %s \r\n", "NO");
 #endif
+#ifdef CONFIG_OWE
         if (res.trans_ssid_len != 0U)
         {
             (void)PRINTF("\tOWE BSSID: ");
@@ -619,6 +620,7 @@ int __scan_cb(unsigned int count)
             if (res.trans_ssid_len != 0U)
                 (void)PRINTF(" \"%s\"\r\n", res.trans_ssid);
         }
+#endif
     }
 #endif
 
@@ -1128,6 +1130,70 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
     }
 }
 
+static void test_wlan_host_sleep(int argc, char **argv)
+{
+    int choice = -1, wowlan = 0;
+    int ret = -WM_FAIL;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+        return;
+    }
+
+    choice = atoi(argv[1]);
+
+    if (choice == 0)
+    {
+        ret = wlan_send_host_sleep(HOST_SLEEP_CFG_CANCEL);
+        if (ret == WM_SUCCESS)
+            (void)PRINTF("Cancel Previous configured Host sleep configuration");
+        else
+            (void)PRINTF("Failed to Cancel Previous configured Host sleep configuration, error: %d", ret);
+    }
+    else if (choice == 1)
+    {
+        if (argc < 4)
+        {
+            (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+            return;
+        }
+
+        wowlan = atoi(argv[3]);
+
+        if (string_equal(argv[2], "wowlan_test"))
+        {
+            if (wowlan == 1)
+            {
+                ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
+                if (ret == WM_SUCCESS)
+                    (void)PRINTF("Host sleep configuration successs for wowlan test");
+                else
+                    (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+            }
+            else if (wowlan == 0)
+            {
+                ret = wlan_send_host_sleep(WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST |
+                                                                             WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT);
+                if (ret == WM_SUCCESS)
+                    (void)PRINTF("Host sleep configuration successs with regular condition");
+                else
+                    (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+            }
+        }
+        else
+        {
+            (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+            return;
+        }
+    }
+    else
+    {
+        (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+        return;
+    }
+}
+
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 u8_t resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 /* Command taken from Robust_btc.conf*/
@@ -1170,6 +1236,7 @@ static struct cli_command tests[] = {
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
+    {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 };
 

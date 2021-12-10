@@ -477,4 +477,142 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
     LEAVE();
     return ret;
 }
+
+/**
+ *  @brief This function prepares 11ax command
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd      A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   the action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *  @return         MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
+{
+    HostCmd_DS_11AX_CMD_CFG *axcmd    = &cmd->params.axcmd;
+    mlan_ds_11ax_cmd_cfg *ds_11ax_cmd = (mlan_ds_11ax_cmd_cfg *)pdata_buf;
+    mlan_ds_11ax_txomi_cmd *txomi_cmd = (mlan_ds_11ax_txomi_cmd *)&ds_11ax_cmd->param;
+
+#ifndef CONFIG_MLAN_WMSDK
+    mlan_ds_11ax_sr_cmd *sr_cmd           = (mlan_ds_11ax_sr_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_beam_cmd *beam_cmd       = (mlan_ds_11ax_beam_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_htc_cmd *htc_cmd         = (mlan_ds_11ax_htc_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_txop_cmd *txop_cmd       = (mlan_ds_11ax_txop_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_toltime_cmd *toltime_cmd = (mlan_ds_11ax_toltime_cmd *)&ds_11ax_cmd->param;
+    MrvlIEtypes_Data_t *tlv               = MNULL;
+#endif /* CONFIG_MLAN_WMSDK */
+
+    ENTER();
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AX_CMD);
+    cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN;
+
+    axcmd->action = wlan_cpu_to_le16(cmd_action);
+    axcmd->sub_id = wlan_cpu_to_le16(ds_11ax_cmd->sub_id);
+    switch (ds_11ax_cmd->sub_id)
+    {
+        case MLAN_11AXCMD_TXOMI_SUBID:
+            (void)__memcpy(pmpriv->adapter, axcmd->val, &txomi_cmd->omi, sizeof(t_u16));
+            cmd->size += sizeof(t_u16);
+            break;
+#ifndef CONFIG_MLAN_WMSDK
+        case MLAN_11AXCMD_SR_SUBID:
+            tlv              = (MrvlIEtypes_Data_t *)axcmd->val;
+            tlv->header.type = wlan_cpu_to_le16(sr_cmd->type);
+            tlv->header.len  = wlan_cpu_to_le16(sr_cmd->len);
+            (void)__memcpy(pmpriv->adapter, tlv->data, &sr_cmd->param.obss_pd_offset.offset, sr_cmd->len);
+            cmd->size += sizeof(MrvlIEtypesHeader_t) + sr_cmd->len;
+            break;
+        case MLAN_11AXCMD_BEAM_SUBID:
+            axcmd->val[0] = beam_cmd->value;
+            cmd->size += sizeof(t_u8);
+            break;
+        case MLAN_11AXCMD_HTC_SUBID:
+            axcmd->val[0] = htc_cmd->value;
+            cmd->size += sizeof(t_u8);
+            break;
+        case MLAN_11AXCMD_TXOPRTS_SUBID:
+            (void)__memcpy(pmpriv->adapter, axcmd->val, &txop_cmd->rts_thres, sizeof(t_u16));
+            cmd->size += sizeof(t_u16);
+            break;
+        case MLAN_11AXCMD_OBSS_TOLTIME_SUBID:
+            (void)__memcpy(pmpriv->adapter, axcmd->val, &toltime_cmd->tol_time, sizeof(t_u32));
+            cmd->size += sizeof(t_u32);
+            break;
+#endif /* CONFIG_MLAN_WMSDK */
+        default:
+            PRINTM(MERROR, "Unknown subcmd %x\n", ds_11ax_cmd->sub_id);
+            break;
+    }
+
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function handles the command response of 11axcmd
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *
+ *  @return        MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    mlan_ds_11ax_cmd_cfg *cfg      = MNULL;
+    HostCmd_DS_11AX_CMD_CFG *axcmd = &resp->params.axcmd;
+    MrvlIEtypes_Data_t *tlv        = MNULL;
+    t_s16 left_len                 = 0;
+    t_u16 tlv_len                  = 0;
+
+    ENTER();
+
+    if (pioctl_buf == MNULL)
+    {
+        goto done;
+    }
+
+    cfg         = (mlan_ds_11ax_cmd_cfg *)pioctl_buf->pbuf;
+    cfg->sub_id = wlan_le16_to_cpu(axcmd->sub_id);
+
+    switch (axcmd->sub_id)
+    {
+        case MLAN_11AXCMD_SR_SUBID:
+            /* TLV parse */
+            left_len = resp->size - sizeof(HostCmd_DS_11AX_CMD_CFG) - S_DS_GEN;
+            tlv      = (MrvlIEtypes_Data_t *)axcmd->val;
+            while (left_len > (t_s16)sizeof(MrvlIEtypesHeader_t))
+            {
+                tlv_len = wlan_le16_to_cpu(tlv->header.len);
+                (void)__memcpy(pmpriv->adapter, cfg->param.sr_cfg.param.obss_pd_offset.offset, tlv->data, tlv_len);
+                left_len -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+                tlv = (MrvlIEtypes_Data_t *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
+            }
+            break;
+        case MLAN_11AXCMD_BEAM_SUBID:
+            cfg->param.beam_cfg.value = *axcmd->val;
+            break;
+        case MLAN_11AXCMD_HTC_SUBID:
+            cfg->param.htc_cfg.value = *axcmd->val;
+            break;
+        case MLAN_11AXCMD_TXOPRTS_SUBID:
+            (void)__memcpy(pmpriv->adapter, &cfg->param.txop_cfg.rts_thres, axcmd->val, sizeof(t_u16));
+            break;
+        case MLAN_11AXCMD_TXOMI_SUBID:
+            (void)__memcpy(pmpriv->adapter, &cfg->param.txomi_cfg.omi, axcmd->val, sizeof(t_u16));
+            break;
+        case MLAN_11AXCMD_OBSS_TOLTIME_SUBID:
+            (void)__memcpy(pmpriv->adapter, &cfg->param.toltime_cfg.tol_time, axcmd->val, sizeof(t_u32));
+            break;
+        default:
+            PRINTM(MERROR, "Unknown subcmd %x\n", axcmd->sub_id);
+            break;
+    }
+
+done:
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
 #endif

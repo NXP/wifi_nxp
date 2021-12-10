@@ -672,7 +672,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         }
 
         /* Send the scan command to the firmware with the specified cfg */
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         if (pmadapter->ext_scan)
             cmd_no = HostCmd_CMD_802_11_SCAN_EXT;
         else
@@ -757,7 +757,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     MrvlIEtypes_NumProbes_t *pnum_probes_tlv;
     MrvlIEtypes_WildCardSsIdParamSet_t *pwildcard_ssid_tlv;
     MrvlIEtypes_RatesParamSet_t *prates_tlv;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     MrvlIEtypes_Bssid_List_t *pbssid_tlv;
 #endif
     const t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0, 0, 0, 0, 0, 0};
@@ -818,7 +818,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         (void)__memcpy(pmadapter, pscan_cfg_out->specific_bssid, puser_scan_in->specific_bssid,
                        sizeof(pscan_cfg_out->specific_bssid));
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         if (pmadapter->ext_scan && memcmp(pmadapter, pscan_cfg_out->specific_bssid, &zero_mac, sizeof(zero_mac)))
         {
             pbssid_tlv              = (MrvlIEtypes_Bssid_List_t *)ptlv_pos;
@@ -1066,7 +1066,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     return ret;
 }
 
-#ifndef EXT_SCAN_SUPPORT
+#ifndef CONFIG_EXT_SCAN_SUPPORT
 /**
  *  @brief Inspect the scan response buffer for pointers to expected TLVs
  *
@@ -1252,7 +1252,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
      * Next 4 fields are RSSI (for legacy scan only), time stamp,
      *   beacon interval, and capability information
      */
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     if (!pmadapter->ext_scan)
     {
 #endif
@@ -1261,7 +1261,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
         PRINTM(MINFO, "InterpretIE: RSSI=%02X\n", *pcurrent_ptr);
         pcurrent_ptr += 1;
         bytes_left_for_current_beacon -= 1;
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     }
 #endif
 
@@ -2829,7 +2829,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     return ret;
 }
 
-#ifndef EXT_SCAN_SUPPORT
+#ifndef CONFIG_EXT_SCAN_SUPPORT
 /**
  *  @brief Prepare a scan command to be sent to the firmware
  *
@@ -2903,7 +2903,7 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry)
         pbss_entry->prsn_ie = (IEEEtypes_Generic_t *)pbss_entry->rsn_ie_buff;
 }
 
-#ifndef EXT_SCAN_SUPPORT
+#ifndef CONFIG_EXT_SCAN_SUPPORT
 /**
  *  @brief This function handles the command response of scan
  *
@@ -3628,7 +3628,7 @@ mlan_status wlan_handle_event_ext_scan_report(IN mlan_private *pmpriv, IN t_u8 *
     LEAVE();
     return ret;
 }
-#endif /* EXT_SCAN_SUPPORT */
+#endif /* CONFIG_EXT_SCAN_SUPPORT */
 
 #ifndef CONFIG_MLAN_WMSDK
 /**

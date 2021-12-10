@@ -872,7 +872,7 @@ mlan_status wlan_prepare_cmd(IN mlan_private *pmpriv,
     /* Send command */
 #ifdef STA_SUPPORT
     if (cmd_no == HostCmd_CMD_802_11_SCAN
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
         || cmd_no == HostCmd_CMD_802_11_SCAN_EXT
 #endif
     )
@@ -2452,9 +2452,8 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
         }
         else
         {
-            rate_scope->length =
-                wlan_cpu_to_le16(sizeof(MrvlRateScope_t) - sizeof(rate_scope->he_mcs_rate_bitmap) -
-                    sizeof(MrvlIEtypesHeader_t));
+            rate_scope->length = wlan_cpu_to_le16(sizeof(MrvlRateScope_t) - sizeof(rate_scope->he_mcs_rate_bitmap) -
+                                                  sizeof(MrvlIEtypesHeader_t));
         }
 #endif
     }

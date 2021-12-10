@@ -520,7 +520,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 #ifndef CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->pscan_table, 0, (sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST));
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
     pmadapter->ext_scan = 1;
 #endif
     pmadapter->scan_probes = DEFAULT_PROBES;

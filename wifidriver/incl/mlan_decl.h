@@ -551,7 +551,7 @@ typedef struct _mlan_event_p2p
 } mlan_event_p2p, *pmlan_event_p2p;
 #endif
 
-#ifdef EXT_SCAN_SUPPORT
+#ifdef CONFIG_EXT_SCAN_SUPPORT
 /** mlan_event_scan_result data structure */
 typedef MLAN_PACK_START struct _mlan_event_scan_result
 {

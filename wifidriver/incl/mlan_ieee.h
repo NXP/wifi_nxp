@@ -1553,10 +1553,12 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END wlan_bgscan_cfg;
 #endif /* STA_SUPPORT */
 
+#ifdef CONFIG_OWE
 /** The open AP in OWE transmition Mode */
 #define OWE_TRANS_MODE_OPEN 1
 /** The security AP in OWE trsnsition Mode */
 #define OWE_TRANS_MODE_OWE 2
+#endif
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)
