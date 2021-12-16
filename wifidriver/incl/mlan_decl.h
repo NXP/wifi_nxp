@@ -985,9 +985,10 @@ MLAN_API mlan_status mlan_send_packet(IN t_void *pmlan_adapter, IN pmlan_buffer 
 /** Packet Reception complete callback */
 MLAN_API mlan_status mlan_recv_packet_complete(IN t_void *pmlan_adapter, IN pmlan_buffer pmbuf, IN mlan_status status);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** interrupt handler */
 MLAN_API t_void mlan_interrupt(IN t_void *pmlan_adapter);
-
+#endif /* CONFIG_MLAN_WMSDK */
 /** mlan ioctl */
 MLAN_API mlan_status mlan_ioctl(IN t_void *pmlan_adapter, IN pmlan_ioctl_req pioctl_req);
 /** mlan select wmm queue */

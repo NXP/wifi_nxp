@@ -39,13 +39,13 @@ Change log:
 #define TWOPOW11 (2 << 10)
 
 /** Tid Mask used for extracting TID from BlockAckParamSet */
-#define BLOCKACKPARAM_TID_MASK 0x3C
+#define BLOCKACKPARAM_TID_MASK 0x3CU
 /** Tid position in BlockAckParamSet */
 #define BLOCKACKPARAM_TID_POS 2
 /** WinSize Mask used for extracting WinSize from BlockAckParamSet */
-#define BLOCKACKPARAM_WINSIZE_MASK 0xffc0
+#define BLOCKACKPARAM_WINSIZE_MASK 0xffc0U
 /** WinSize Mask used for extracting WinSize from BlockAckParamSet */
-#define BLOCKACKPARAM_AMSDU_SUPP_MASK 0x1
+#define BLOCKACKPARAM_AMSDU_SUPP_MASK 0x1U
 /** WinSize position in BlockAckParamSet */
 #define BLOCKACKPARAM_WINSIZE_POS 6
 /** Position of TID in DelBA Param set */
@@ -59,11 +59,11 @@ Change log:
 /** Type: send delba command */
 #define TYPE_DELBA_SENT 1
 /** Type: recieve delba command */
-#define TYPE_DELBA_RECEIVE 2
+#define TYPE_DELBA_RECEIVE 2U
 /** Set Initiator Bit */
-#define DELBA_INITIATOR(paramset) (paramset = (paramset | (1 << 11)))
+#define DELBA_INITIATOR(paramset) ((paramset) = ((paramset) | (1 << 11)))
 /** Reset Initiator Bit for recipient */
-#define DELBA_RECIPIENT(paramset) (paramset = (paramset & ~(1 << 11)))
+#define DELBA_RECIPIENT(paramset) ((paramset) = ((paramset) & ~(1 << 11)))
 /** Immediate block ack */
 #define IMMEDIATE_BLOCK_ACK 0x2
 

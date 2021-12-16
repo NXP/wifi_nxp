@@ -36,10 +36,10 @@ Change log:
 /** FIX IES size in beacon buffer */
 #define WLAN_802_11_FIXED_IE_SIZE 12
 /** WLAN supported rates */
-#define WLAN_SUPPORTED_RATES 14
+#define WLAN_SUPPORTED_RATES 14U
 
 /** WLAN supported rates extension*/
-#define WLAN_SUPPORTED_RATES_EXT 60
+#define WLAN_SUPPORTED_RATES_EXT 60U
 
 /** Enumeration definition*/
 /** WLAN_802_11_NETWORK_TYPE */
@@ -58,7 +58,7 @@ typedef enum _WLAN_802_11_NETWORK_TYPE
 /** Frame control: Type Mgmt frame */
 #define IEEE80211_FC_MGMT_FRAME_TYPE_MASK 0x3000
 /** Frame control: SubType Mgmt frame */
-#define IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(fc) (((fc)&0xF000) >> 12)
+#define IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(fc) (((fc)&0xF000U) >> 12)
 #else
 /** Frame control: Type Mgmt frame */
 #define IEEE80211_FC_MGMT_FRAME_TYPE_MASK       0x000C
@@ -1376,13 +1376,13 @@ typedef struct
 #define MAX_SCAN_RSP_BUF (16 * 1024)
 
 /** Maximum number of channels that can be sent in user scan config */
-#define WLAN_USER_SCAN_CHAN_MAX 50
+#define WLAN_USER_SCAN_CHAN_MAX 50U
 
 /** Maximum length of SSID list */
 #define MRVDRV_MAX_SSID_LIST_LENGTH 2
 
 /** Scan all the channels in specified band */
-#define BAND_SPECIFIED 0x80
+#define BAND_SPECIFIED 0x80U
 
 /**
  *  IOCTL SSID List sub-structure sent in wlan_ioctl_user_scan_cfg

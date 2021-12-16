@@ -101,7 +101,7 @@ static void lwiperf_report(void *arg,
     if (report_type < (sizeof(report_type_str) / sizeof(report_type_str[0])))
     {
         (void)PRINTF(" %s \r\n", report_type_str[report_type]);
-        if (local_addr && remote_addr)
+        if (local_addr != NULL && remote_addr != NULL)
         {
 #ifdef CONFIG_IPV6
             if (ipv6)
@@ -177,7 +177,7 @@ static void wmm_iperf_test_start()
     }
     if (wmm_test_ctx.client1)
     {
-        if (IP_IS_V4(&server_address))
+        if (IP_IS_V4(&server_address) != 0)
         {
             PRINTF("Starting UDP client 1\r\n");
             wmm_test_ctx.iperf_session1 = lwiperf_start_udp_client(
@@ -187,7 +187,7 @@ static void wmm_iperf_test_start()
     }
     if (wmm_test_ctx.client2)
     {
-        if (IP_IS_V4(&server_address))
+        if (IP_IS_V4(&server_address) != 0)
         {
             PRINTF("Starting UDP client 2\r\n");
             wmm_test_ctx.iperf_session2 = lwiperf_start_udp_client(
@@ -301,7 +301,7 @@ void test_wmm(int argc, char **argv)
             {
                 inet_aton(argv[arg], &server_address);
 
-                if (IP_IS_V4(&server_address))
+                if (IP_IS_V4(&server_address) != 0)
                     wmm_test_ctx.chost = 1;
                 arg += 1;
             }
@@ -315,7 +315,7 @@ void test_wmm(int argc, char **argv)
             {
                 inet_aton(argv[arg], &server_address);
 
-                if (IP_IS_V4(&server_address))
+                if (IP_IS_V4(&server_address) != 0)
                     wmm_test_ctx.chost = 1;
                 arg += 1;
             }
@@ -460,10 +460,10 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
                 ctx->iperf_session = lwiperf_start_tcp_server(netif_ip_addr6(netif_default, 0),
-                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
-                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
         }
         else
         {
@@ -486,11 +486,11 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
                 ctx->iperf_session = lwiperf_start_udp_server(netif_ip_addr6(netif_default, 0),
-                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
                 ctx->iperf_session =
-                    lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
+                    lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
         }
     }
     else
@@ -502,7 +502,7 @@ static void iperf_test_start(void *arg)
                 ip6_addr_assign_zone(ip_2_ip6(&server_address), IP6_UNICAST, netif_default);
 #endif
             ctx->iperf_session = lwiperf_start_tcp_client(&server_address, LWIPERF_TCP_PORT_DEFAULT, ctx->client_type,
-                                                          amount, lwiperf_report, 0);
+                                                          amount, lwiperf_report, NULL);
         }
         else
         {
@@ -673,7 +673,7 @@ static void UDPClientTradeOff(void)
 }
 
 /* Display the usage of iperf */
-static void display_iperf_usage()
+static void display_iperf_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("\tiperf [-s|-c <host>|-a] [options]\r\n");
@@ -792,7 +792,7 @@ void cmd_iperf(int argc, char **argv)
             {
                 inet_aton(argv[arg], &bind_address);
 
-                if (IP_IS_V4(&bind_address))
+                if (IP_IS_V4(&bind_address) != 0)
                     info.bhost = 1;
 
                 if (ip_addr_ismulticast(&bind_address))
@@ -808,7 +808,9 @@ void cmd_iperf(int argc, char **argv)
             errno     = 0;
             amount    = -(100 * strtoul(argv[arg], NULL, 10));
             if (errno != 0)
+            {
                 (void)PRINTF("Error during strtoul errno:%d", errno);
+            }
             arg += 1;
         }
 #ifdef CONFIG_WMM
@@ -902,29 +904,45 @@ void cmd_iperf(int argc, char **argv)
     else if (info.server != 0U)
     {
         if (info.udp != 0U)
+        {
             UDPServer();
+        }
         else
+        {
             TCPServer();
+        }
     }
     else if (info.client != 0U)
     {
         if (info.udp != 0U)
         {
             if (info.dual != 0U)
+            {
                 UDPClientDual();
+            }
             else if (info.tradeoff != 0U)
+            {
                 UDPClientTradeOff();
+            }
             else
+            {
                 UDPClient();
+            }
         }
         else
         {
             if (info.dual != 0U)
+            {
                 TCPClientDual();
+            }
             else if (info.tradeoff != 0U)
+            {
                 TCPClientTradeOff();
+            }
             else
+            {
                 TCPClient();
+            }
         }
     }
     else
@@ -943,8 +961,12 @@ int iperf_cli_init(void)
 {
     int i;
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
+    {
         if (cli_register_command(&iperf[i]) != 0)
+        {
             return -WM_FAIL;
+        }
+    }
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
@@ -960,7 +982,9 @@ int iperf_cli_init(void)
     {
         (void)PRINTF("Timer could not be started!\r\n");
         while (true)
+        {
             ;
+        }
     }
 
     return WM_SUCCESS;
@@ -971,7 +995,11 @@ int iperf_cli_deinit(void)
     int i;
 
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
+    {
         if (cli_unregister_command(&iperf[i]) != 0)
+        {
             return -WM_FAIL;
+        }
+    }
     return WM_SUCCESS;
 }

@@ -230,7 +230,7 @@ enum _mlan_ioctl_req_id
 };
 
 /** Sub command size */
-#define MLAN_SUB_COMMAND_SIZE 4
+#define MLAN_SUB_COMMAND_SIZE 4U
 
 /** Enumeration for the action of IOCTL request */
 enum _mlan_act_ioctl
@@ -268,7 +268,7 @@ enum _mlan_scan_type
 #define MLAN_SUPPORTED_RATES 32
 
 /** RSSI scan */
-#define SCAN_RSSI(RSSI) (0x100 - ((t_u8)(RSSI)))
+#define SCAN_RSSI(RSSI) (0x100U - ((t_u8)(RSSI)))
 
 /** Max passive scan time for each channel in milliseconds */
 #define MRVDRV_MAX_PASSIVE_SCAN_CHAN_TIME 2000
@@ -277,7 +277,7 @@ enum _mlan_scan_type
 #define MRVDRV_MAX_ACTIVE_SCAN_CHAN_TIME 500
 
 /** Maximum number of probes to send on each channel */
-#define MAX_PROBES 4
+#define MAX_PROBES 4U
 
 /** Default number of probes to send on each channel */
 #define DEFAULT_PROBES 4
@@ -459,7 +459,7 @@ enum _mlan_bss_mode
 };
 
 /** Maximum key length */
-#define MLAN_MAX_KEY_LENGTH 32
+#define MLAN_MAX_KEY_LENGTH 32U
 
 /** max Wmm AC queues */
 #define MAX_AC_QUEUES 4
@@ -482,7 +482,7 @@ enum _mlan_bss_mode
 #define MLAN_ALL_MULTI_MODE 4
 
 /** Maximum size of multicast list */
-#define MLAN_MAX_MULTICAST_LIST_SIZE 32
+#define MLAN_MAX_MULTICAST_LIST_SIZE 32U
 
 /** mlan_multicast_list data structure for MLAN_OID_BSS_MULTICAST_LIST */
 typedef struct _mlan_multicast_list
@@ -504,9 +504,9 @@ typedef struct _mlan_multicast_list
 
 /** Max channel */
 #ifdef CONFIG_5GHz_SUPPORT
-#define MLAN_MAX_CHANNEL 165
+#define MLAN_MAX_CHANNEL 165U
 #else
-#define MLAN_MAX_CHANNEL 14
+#define MLAN_MAX_CHANNEL 14U
 #endif
 
 /** Maximum number of channels in table */
@@ -557,17 +557,17 @@ typedef struct _mlan_ssid_bssid
 /** Maximum packet forward control value */
 #define MAX_PKT_FWD_CTRL 15
 /** Maximum BEACON period */
-#define MAX_BEACON_PERIOD 4000
+#define MAX_BEACON_PERIOD 4000U
 /** Minimum BEACON period */
-#define MIN_BEACON_PERIOD 50
+#define MIN_BEACON_PERIOD 50U
 /** Maximum Channel Switch count */
-#define MAX_CHSW_COUNT 15
+#define MAX_CHSW_COUNT 15U
 /** Minimum Channel Switch count */
-#define MIN_CHSW_COUNT 5
+#define MIN_CHSW_COUNT 5U
 /** Maximum DTIM period */
-#define MAX_DTIM_PERIOD 100
+#define MAX_DTIM_PERIOD 100U
 /** Minimum DTIM period */
-#define MIN_DTIM_PERIOD 1
+#define MIN_DTIM_PERIOD 1U
 /** Maximum TX Power Limit */
 #define MAX_TX_POWER 20
 /** Minimum TX Power Limit */
@@ -604,15 +604,15 @@ typedef struct _mlan_ssid_bssid
 #define MAX_VALID_DWORD 0x7FFFFFFF /* (1 << 31) - 1 */
 
 /** Band config ACS mode */
-#define BAND_CONFIG_ACS_MODE 0x40
+#define BAND_CONFIG_ACS_MODE 0x40U
 /** Band config manual */
 #define BAND_CONFIG_MANUAL 0x00
 
 /** Maximum channel number in bg mode */
-#define MAX_CHANNELS_BG 14
+#define MAX_CHANNELS_BG 14U
 
 /** Maximum data rates */
-#define MAX_DATA_RATES 14
+#define MAX_DATA_RATES 14U
 
 /** auto data rate */
 #define DATA_RATE_AUTO 0
@@ -632,20 +632,20 @@ typedef struct _mlan_ssid_bssid
 /** Static WEP */
 #define PROTOCOL_STATIC_WEP 0x02
 /** WPA */
-#define PROTOCOL_WPA 0x08
+#define PROTOCOL_WPA 0x08U
 /** WPA2 */
-#define PROTOCOL_WPA2 0x20
+#define PROTOCOL_WPA2 0x20U
 /** WP2 Mixed */
-#define PROTOCOL_WPA2_MIXED 0x28
+#define PROTOCOL_WPA2_MIXED 0x28U
 /** EAP */
-#define PROTOCOL_EAP 0x40
+#define PROTOCOL_EAP 0x40U
 /** WAPI */
-#define PROTOCOL_WAPI 0x80
+#define PROTOCOL_WAPI 0x80U
 /** WPA3 SAE */
-#define PROTOCOL_WPA3_SAE 256
+#define PROTOCOL_WPA3_SAE 256U
 #ifdef CONFIG_OWE
 /** OWE */
-#define PROTOCOL_OWE 512
+#define PROTOCOL_OWE 512U
 #endif
 
 /** Key_mgmt_sae */
@@ -667,7 +667,7 @@ typedef struct _mlan_ssid_bssid
 #define CIPHER_AES_CCMP 0x08
 
 /** Valid cipher bitmap */
-#define VALID_CIPHER_BITMAP 0x0c
+#define VALID_CIPHER_BITMAP 0x0cU
 
 /** Channel List Entry */
 typedef struct _channel_list
@@ -1395,7 +1395,7 @@ typedef struct _mlan_bss_info
 } mlan_bss_info, *pmlan_bss_info;
 
 /** MAXIMUM number of TID */
-#define MAX_NUM_TID 8
+#define MAX_NUM_TID 8U
 
 /** Max RX Win size */
 #define MAX_RX_WINSIZE 64
@@ -1561,7 +1561,7 @@ typedef struct _mlan_debug_info
 
 #ifdef UAP_SUPPORT
 /** Maximum number of clients supported by AP */
-#define MAX_NUM_CLIENTS 16
+#define MAX_NUM_CLIENTS 16U
 
 /** station info */
 typedef struct _sta_info
@@ -1665,11 +1665,11 @@ enum _mlan_psk_type
 /** The bit to indicate the key is for unicast */
 #define MLAN_KEY_INDEX_UNICAST 0x40000000
 /** The key index to indicate default key */
-#define MLAN_KEY_INDEX_DEFAULT 0x000000ff
+#define MLAN_KEY_INDEX_DEFAULT 0x000000ffU
 /** Maximum key length */
 // #define MLAN_MAX_KEY_LENGTH        32
 /** Minimum passphrase length */
-#define MLAN_MIN_PASSPHRASE_LENGTH 8
+#define MLAN_MIN_PASSPHRASE_LENGTH 8U
 /** Maximum passphrase length */
 /** FIXME: This macro is used for both passphrase and PSK length
  * As per standards maximum passphrase length is 63 and
@@ -1678,16 +1678,16 @@ enum _mlan_psk_type
  * For now setting it to 64 to avoid 4 way Handshake timeout issue
  * if connection attempt is with PSK.
  */
-#define MLAN_MAX_PASSPHRASE_LENGTH 64
+#define MLAN_MAX_PASSPHRASE_LENGTH 64U
 /** PMK length */
 #define MLAN_PMK_HEXSTR_LENGTH 64
 /* A few details needed for WEP (Wireless Equivalent Privacy) */
 /** Minimum password length */
-#define MLAN_MIN_PASSWORD_LENGTH 1
+#define MLAN_MIN_PASSWORD_LENGTH 1U
 /** Maximum passphrase length */
-#define MLAN_MAX_PASSWORD_LENGTH 255
+#define MLAN_MAX_PASSWORD_LENGTH 255U
 /** 104 bits */
-#define MAX_WEP_KEY_SIZE 13
+#define MAX_WEP_KEY_SIZE 13U
 /** 40 bits RC4 - WEP */
 #define MIN_WEP_KEY_SIZE 5
 /** packet number size */
@@ -1700,11 +1700,11 @@ enum _mlan_psk_type
 /** key flag for rx_seq */
 #define KEY_FLAG_RX_SEQ_VALID 0x00000002
 /** key flag for group key */
-#define KEY_FLAG_GROUP_KEY 0x00000004
+#define KEY_FLAG_GROUP_KEY 0x00000004U
 /** key flag for tx and rx */
-#define KEY_FLAG_SET_TX_KEY 0x00000008
+#define KEY_FLAG_SET_TX_KEY 0x00000008U
 /** key flag for mcast IGTK */
-#define KEY_FLAG_AES_MCAST_IGTK 0x00000010
+#define KEY_FLAG_AES_MCAST_IGTK 0x00000010U
 /** key flag for remove key */
 #define KEY_FLAG_REMOVE_KEY 0x80000000
 
@@ -2216,11 +2216,11 @@ typedef struct _inact_sleep_param
 } inact_sleep_param;
 
 /** flag for ps mode */
-#define PS_FLAG_PS_MODE 1
+#define PS_FLAG_PS_MODE 1U
 /** flag for sleep param */
-#define PS_FLAG_SLEEP_PARAM 2
+#define PS_FLAG_SLEEP_PARAM 2U
 /** flag for inactivity sleep param */
-#define PS_FLAG_INACT_SLEEP_PARAM 4
+#define PS_FLAG_INACT_SLEEP_PARAM 4U
 
 /** Disable power mode */
 #define PS_MODE_DISABLE 0
@@ -3274,7 +3274,7 @@ typedef struct _mlan_ds_subscribe_evt
 } mlan_ds_subscribe_evt;
 
 /** Max OTP user data length */
-#define MAX_OTP_USER_DATA_LEN 252
+#define MAX_OTP_USER_DATA_LEN 252U
 
 /** Type definition of mlan_ds_misc_otp_user_data for MLAN_OID_MISC_OTP_USER_DATA */
 typedef struct _mlan_ds_misc_otp_user_data

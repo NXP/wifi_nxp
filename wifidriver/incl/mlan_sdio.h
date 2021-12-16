@@ -104,7 +104,7 @@ Change log:
 
 #define WLAN_VALUE1 0x80002080
 /** Port for registers */
-#define REG_PORT 0
+#define REG_PORT 0U
 
 #if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
     defined(IW61x)
@@ -168,7 +168,7 @@ Change log:
 #define CMD_CONFIG_3 0xC7
 
 /* Command port */
-#define CMD_PORT_SLCT 0x8000
+#define CMD_PORT_SLCT 0x8000U
 /** Data port mask */
 #define DATA_PORT_MASK 0xffffffff
 #endif /* SD8977 SD8987 SD8997 SD9097 SD9098 IW61x*/
@@ -440,7 +440,7 @@ Change log:
 #define MAX_BYTE_MODE_SIZE 512
 
 /** The base address for packet with multiple ports aggregation */
-#define SDIO_MPA_ADDR_BASE 0x1000
+#define SDIO_MPA_ADDR_BASE 0x1000U
 
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 
@@ -556,7 +556,9 @@ t_void wlan_interrupt(pmlan_adapter pmadapter);
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */
 /** Transfer data to card */
+#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_sdio_host_to_card(mlan_adapter *pmadapter, t_u8 type, mlan_buffer *mbuf, mlan_tx_param *tx_param);
+#endif /* CONFIG_MLAN_WMSDK */
 mlan_status wlan_set_sdio_gpio_int(IN pmlan_private priv);
 mlan_status wlan_cmd_sdio_gpio_int(pmlan_private pmpriv,
                                    IN HostCmd_DS_COMMAND *cmd,

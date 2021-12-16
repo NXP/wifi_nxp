@@ -43,7 +43,9 @@ static void display_ping_result(ip_addr_t *addr, int total, int recvd)
     (void)PRINTF("\r\n--- %s ping statistics ---\r\n", inet_ntoa(*addr));
     (void)PRINTF("%d packets transmitted, %d received,", total, recvd);
     if (dropped != 0)
+    {
         (void)PRINTF(" +%d errors,", dropped);
+    }
     (void)PRINTF(" %d%% packet loss\r\n", (dropped * 100) / total);
 }
 
@@ -51,13 +53,17 @@ static void display_ping_result(ip_addr_t *addr, int total, int recvd)
 static void display_ping_stats(int status, uint32_t size, ip_addr_t *ipaddr, int seqno, int ttl, uint32_t time)
 {
     if (status == WM_SUCCESS)
+    {
         (void)PRINTF("%u bytes from %s: icmp_req=%u ttl=%u time=%u ms\r\n", size, inet_ntoa(*ipaddr), seqno, ttl, time);
+    }
     else
+    {
         (void)PRINTF("From %s icmp_seq=%u Destination Host Unreachable\r\n", inet_ntoa(*ipaddr), seqno);
+    }
 }
 
 /* Display the usage of ping */
-static void display_ping_usage()
+static void display_ping_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
@@ -166,7 +172,7 @@ static int ping(unsigned int count, unsigned short size, unsigned int r_timeout,
     ping_size = sizeof(struct icmp_echo_hdr) + size;
 
     iecho = (struct icmp_echo_hdr *)os_mem_alloc(ping_size);
-    if (!iecho)
+    if (iecho == NULL)
     {
         ping_e("Failed to allocate memory for ping packet");
         ret = -WM_FAIL;
@@ -244,7 +250,9 @@ void cmd_ping(int argc, char **argv)
 
     /* If number of arguments is odd then print error */
     if ((argc & 0x01) != 0)
+    {
         goto end;
+    }
 
     cli_optind = 1;
     while ((c = cli_getopt(argc, argv, "c:s:W:")) != -1)
@@ -260,7 +268,9 @@ void cmd_ping(int argc, char **argv)
                 if (temp > PING_MAX_SIZE)
                 {
                     if (errno != 0)
+                    {
                         (void)PRINTF("Error during strtoul errno:%d", errno);
+                    }
                     (void)PRINTF(
                         "ping: packet size too large: %u."
                         " Maximum is %u\r\n",
@@ -276,10 +286,14 @@ void cmd_ping(int argc, char **argv)
                 goto end;
         }
         if (errno != 0)
+        {
             (void)PRINTF("Error during strtoul errno:%d", errno);
+        }
     }
     if (cli_optind == argc)
+    {
         goto end;
+    }
 
     /* Extract the destination IP address. This function returns non zero on
      * success, zero on failure */
@@ -301,8 +315,12 @@ int ping_cli_init(void)
 {
     int i;
     for (i = 0; i < sizeof(ping_cli) / sizeof(struct cli_command); i++)
+    {
         if (cli_register_command(&ping_cli[i]) != 0)
+        {
             return -WM_FAIL;
+        }
+    }
     return WM_SUCCESS;
 }
 
@@ -311,7 +329,11 @@ int ping_cli_deinit(void)
     int i;
 
     for (i = 0; i < sizeof(ping_cli) / sizeof(struct cli_command); i++)
+    {
         if (cli_unregister_command(&ping_cli[i]) != 0)
+        {
             return -WM_FAIL;
+        }
+    }
     return WM_SUCCESS;
 }

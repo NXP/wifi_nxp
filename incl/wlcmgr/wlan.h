@@ -166,7 +166,7 @@
 
 /** Maximum SSID length */
 #ifndef IEEEtypes_SSID_SIZE
-#define IEEEtypes_SSID_SIZE 32
+#define IEEEtypes_SSID_SIZE 32U
 #endif /* IEEEtypes_SSID_SIZE */
 
 /** MAC Address length */
@@ -198,10 +198,10 @@ typedef enum
  *  be between 1 and \ref WLAN_NETWORK_NAME_MAX_LENGTH */
 #define WLAN_NETWORK_NAME_MIN_LENGTH 1
 /** The space reserved for storing network names, \ref wlan_network */
-#define WLAN_NETWORK_NAME_MAX_LENGTH 32
+#define WLAN_NETWORK_NAME_MAX_LENGTH 32U
 /** The space reserved for storing PSK (password) phrases. */
 /* Min WPA2 passphrase can be upto 8 ASCII chars */
-#define WLAN_PSK_MIN_LENGTH 8
+#define WLAN_PSK_MIN_LENGTH 8U
 /* Max WPA2 passphrase can be upto 63 ASCII chars as per standards + 1 '\0' char */
 #define WLAN_PSK_MAX_LENGTH 64
 /* Min WPA3 password can be upto 1 ASCII chars */
@@ -639,7 +639,9 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_OWE_ONLY) ||
 #endif
         (security == WLAN_SECURITY_WPA3_SAE) || (security == WLAN_SECURITY_WILDCARD))
+    {
         return 0;
+    }
     return -1;
 }
 
@@ -802,7 +804,7 @@ int verify_split_scan_delay(int delay);
 int set_scan_params(struct wifi_scan_params_t *wifi_scan_params);
 int get_scan_params(struct wifi_scan_params_t *wifi_scan_params);
 int wlan_get_current_rssi(short *rssi);
-int wlan_get_current_nf();
+int wlan_get_current_nf(void);
 
 /** Address types to be used by the element wlan_ip_config.addr_type below
  */
@@ -1770,11 +1772,11 @@ int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time);
  * \return wifi firmware version extension string pointer stored in
  *         WLCMGR
  */
-char *wlan_get_firmware_version_ext();
+char *wlan_get_firmware_version_ext(void);
 
 /** Use this API to print wlan driver and firmware extended version.
  */
-void wlan_version_extended();
+void wlan_version_extended(void);
 
 /**
  * Use this API to get the TSF from Wi-Fi firmware.
@@ -1828,7 +1830,7 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions);
  * \return -WM_FAIL otherwise.
  *
  */
-int wlan_ieeeps_off();
+int wlan_ieeeps_off(void);
 
 /** Turn on Deep Sleep Power Save mode.
  *
@@ -1840,7 +1842,7 @@ int wlan_ieeeps_off();
  * \return WLAN_ERROR_STATE if the call was made in a state where such an
  *         operation is illegal.
  */
-int wlan_deepsleepps_on();
+int wlan_deepsleepps_on(void);
 
 /** Turn off Deep Sleep Power Save mode.
  *
@@ -1851,7 +1853,7 @@ int wlan_deepsleepps_on();
  * \return WLAN_ERROR_STATE if the call was made in a state where such an
  *         operation is illegal.
  */
-int wlan_deepsleepps_off();
+int wlan_deepsleepps_off(void);
 
 #ifdef ENABLE_OFFLOAD
 /**
@@ -1912,7 +1914,7 @@ int wlan_nat_keep_alive(wlan_nat_keep_alive_t *nat_keep_alive);
  * \return beacon_period if operation is successful.
  * \return 0 if command fails.
  */
-uint16_t wlan_get_beacon_period();
+uint16_t wlan_get_beacon_period(void);
 
 /**
  * Use this API to get the dtim period of associated BSS.
@@ -1922,7 +1924,7 @@ uint16_t wlan_get_beacon_period();
  * \note This API should not be called from WLAN event handler
  *        registered by application during \ref wlan_start.
  */
-uint8_t wlan_get_dtim_period();
+uint8_t wlan_get_dtim_period(void);
 
 /**
  * Use this API to get the current tx and rx rates along with
@@ -2138,7 +2140,7 @@ int wlan_get_current_bssid(uint8_t *bssid);
  * \return channel number if operation is successful.
  * \return 0 if command fails.
  */
-uint8_t wlan_get_current_channel();
+uint8_t wlan_get_current_channel(void);
 
 /**
  * Use this API to get the various statistics from Wi-Fi firmware like
@@ -2266,7 +2268,7 @@ int wlan_test_mode_cli_init(void);
  *
  * \note Get operation is allowed in any uAP state.
  */
-unsigned int wlan_get_uap_supported_max_clients();
+unsigned int wlan_get_uap_supported_max_clients(void);
 
 /**
  * Get current maximum number of stations that
@@ -2502,7 +2504,7 @@ int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index)
  * \return false if not enabled.
  *
  */
-bool wlan_get_11d_enable_status();
+bool wlan_get_11d_enable_status(void);
 
 /**
  * Get current RSSI and Signal to Noise ratio from WLAN firmware.
@@ -2846,7 +2848,7 @@ static inline void print_mac(const char *mac)
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_rf_test_mode();
+int wlan_set_rf_test_mode(void);
 
 /**
  * Set the RF Channel in Wi-Fi firmware.

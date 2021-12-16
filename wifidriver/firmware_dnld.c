@@ -125,7 +125,9 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
 
             // (void)PRINTF("len %d =>", len);
             if (len != 0U)
+            {
                 break;
+            }
         }
 
         if (!len)
@@ -158,7 +160,9 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
 		else
 #endif
         if (st == WLAN_FW_IN_RAM)
+        {
             (void)memcpy(outbuf, wlanfw + offset, txlen);
+        }
 
         sdio_drv_write(ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
         offset += txlen;
@@ -297,11 +301,15 @@ static mlan_status wlan_set_fw_dnld_size(void)
 
     int rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
     if (rv == false)
+    {
         return MLAN_STATUS_FAILURE;
+    }
 
     rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_1, 0, 1, &resp);
     if (rv == false)
+    {
         return MLAN_STATUS_FAILURE;
+    }
 
     return MLAN_STATUS_SUCCESS;
 }
@@ -319,7 +327,9 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
     /* set fw download block size */
     ret = wlan_set_fw_dnld_size();
     if (ret != MLAN_STATUS_SUCCESS)
+    {
         return ret;
+    }
 #if 0
 	if (st == WLAN_FW_IN_FLASH) {
 		fl_dev = flash_drv_open(fl->fl_dev);
@@ -334,7 +344,9 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
 	else
 #endif
     if (st == WLAN_FW_IN_RAM)
+    {
         wlanfw = fw_ram_start_addr;
+    }
 
     wifi_io_d("Start copying wlan firmware over sdio from 0x%x", (t_u32)wlanfw);
 
@@ -345,7 +357,9 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
 	else
 #endif
     if (st == WLAN_FW_IN_RAM)
+    {
         (void)memcpy(&wlanfwhdr, wlanfw, sizeof(wlanfwhdr));
+    }
 
     //	if (wlanfwhdr.magic_number != WLAN_MAGIC_NUM) {
     //		wifi_io_e("WLAN FW not detected in Flash.");
@@ -392,7 +406,9 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
 		flash_drv_close(fl_dev);
 #endif
     if (ret != MLAN_STATUS_SUCCESS)
+    {
         return ret;
+    }
 
     if (wlan_card_ready_wait(1000) != true)
     {

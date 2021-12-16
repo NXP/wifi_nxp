@@ -92,7 +92,7 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 
-extern void stats_udp_bcast_display();
+extern void stats_udp_bcast_display(void);
 
 #ifdef CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
@@ -132,12 +132,14 @@ int net_dhcp_hostname_set(char *hostname)
     return WM_SUCCESS;
 }
 
-void net_ipv4stack_init()
+void net_ipv4stack_init(void)
 {
     static bool tcpip_init_done;
 
     if (tcpip_init_done)
+    {
         return;
+    }
 
     tcpip_init(NULL, NULL);
     tcpip_init_done = true;
@@ -310,7 +312,9 @@ static void wm_netif_status_callback(struct netif *n)
             break;
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
+    {
         wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+    }
 }
 
 static int check_iface_mask(void *handle, uint32_t ipaddr)
@@ -319,8 +323,12 @@ static int check_iface_mask(void *handle, uint32_t ipaddr)
     net_get_if_ip_addr(&interface_ip, handle);
     net_get_if_ip_mask(&interface_mask, handle);
     if (interface_ip > 0)
+    {
         if ((interface_ip & interface_mask) == (ipaddr & interface_mask))
+        {
             return WM_SUCCESS;
+        }
+    }
     return -WM_FAIL;
 }
 
@@ -332,13 +340,17 @@ void *net_ip_to_interface(uint32_t ipaddr)
     handle = net_get_mlan_handle();
     ret    = check_iface_mask(handle, ipaddr);
     if (ret == WM_SUCCESS)
+    {
         return handle;
+    }
 
     /* Check uap handle */
     handle = net_get_uap_handle();
     ret    = check_iface_mask(handle, ipaddr);
     if (ret == WM_SUCCESS)
+    {
         return handle;
+    }
 
     /* If more interfaces are added then above check needs to done for
      * those newly added interfaces
@@ -355,7 +367,9 @@ void *net_sock_to_interface(int sock)
 
     ret = getpeername(sock, (struct sockaddr *)&peer, &peerlen);
     if (ret < 0)
+    {
         net_e("Failed to get peer name");
+    }
     req_iface = net_ip_to_interface(peer.sin_addr.s_addr);
     return req_iface;
 }
@@ -398,10 +412,14 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 {
-    if (!addr)
+    if (addr == NULL)
+    {
         return -WM_E_INVAL;
-    if (!intrfc_handle)
+    }
+    if (intrfc_handle == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
@@ -564,9 +582,13 @@ void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
         if (role != WLAN_BSS_ROLE_UAP)
         {
             if (ip->ipv4.dns1 == 0)
+            {
                 ip->ipv4.dns1 = ip->ipv4.gw;
+            }
             if (ip->ipv4.dns2 == 0)
+            {
                 ip->ipv4.dns2 = ip->ipv4.dns1;
+            }
         }
         tmp.addr = ip->ipv4.dns1;
         dns_setserver(0, (ip_addr_t *)&tmp);
@@ -578,7 +600,7 @@ void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
     /* DNS Cache size of about 4 is sufficient */
 }
 
-void net_stat()
+void net_stat(void)
 {
     stats_display();
 }

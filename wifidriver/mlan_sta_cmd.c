@@ -287,7 +287,7 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
     ENTER();
     PRINTM(MINFO, "SNMP_CMD: cmd_oid = 0x%x\n", cmd_oid);
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_SNMP_MIB);
-    cmd->size    = sizeof(HostCmd_DS_802_11_SNMP_MIB) - 1 + S_DS_GEN;
+    cmd->size    = sizeof(HostCmd_DS_802_11_SNMP_MIB) - 1U + S_DS_GEN;
 
     if (cmd_action == HostCmd_ACT_GEN_GET)
     {
@@ -979,7 +979,7 @@ static mlan_status wlan_cmd_802_11_key_material(
     mlan_status ret                               = MLAN_STATUS_SUCCESS;
 
     ENTER();
-    if (!pkey)
+    if (pkey == MNULL)
     {
         ret = MLAN_STATUS_FAILURE;
         goto done;
@@ -993,13 +993,19 @@ static mlan_status wlan_cmd_802_11_key_material(
         pkey_material->key_param_set.type    = wlan_cpu_to_le16(TLV_TYPE_KEY_PARAM_V2);
         pkey_material->key_param_set.length  = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN);
         (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.mac_addr, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
-        if (pkey->key_flags & KEY_FLAG_GROUP_KEY)
+        if ((pkey->key_flags & KEY_FLAG_GROUP_KEY) != 0U)
+        {
             pkey_material->key_param_set.key_info |= KEY_INFO_MCAST_KEY;
+        }
         else
+        {
             pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
+        }
 #ifdef ENABLE_802_11W
-        if (pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK)
+        if ((pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK) != 0U)
+        {
             pkey_material->key_param_set.key_info = KEY_INFO_CMAC_AES_KEY;
+        }
 #endif
         pkey_material->key_param_set.key_info = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
@@ -1007,7 +1013,7 @@ static mlan_status wlan_cmd_802_11_key_material(
         goto done;
     }
     (void)__memset(pmpriv->adapter, &pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSetV2_t));
-    if (pkey->key_flags & KEY_FLAG_REMOVE_KEY)
+    if ((pkey->key_flags & KEY_FLAG_REMOVE_KEY) != 0U)
     {
         pkey_material->action                 = wlan_cpu_to_le16(HostCmd_ACT_GEN_REMOVE);
         pkey_material->key_param_set.type     = wlan_cpu_to_le16(TLV_TYPE_KEY_PARAM_V2);
@@ -1029,20 +1035,28 @@ static mlan_status wlan_cmd_802_11_key_material(
     {
         pkey_material->key_param_set.length   = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(wep_param_t));
         pkey_material->key_param_set.key_type = KEY_TYPE_ID_WEP;
-        if (pkey->is_current_wep_key)
+        if (pkey->is_current_wep_key == MTRUE)
         {
             pkey_material->key_param_set.key_info |= KEY_INFO_MCAST_KEY | KEY_INFO_UCAST_KEY;
             if (pkey_material->key_param_set.key_idx == (pmpriv->wep_key_curr_index & KEY_INDEX_MASK))
+            {
                 pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
+            }
         }
         else
         {
-            if (pkey->key_flags & KEY_FLAG_GROUP_KEY)
+            if ((pkey->key_flags & KEY_FLAG_GROUP_KEY) != 0U)
+            {
                 pkey_material->key_param_set.key_info |= KEY_INFO_MCAST_KEY;
+            }
             else
+            {
                 pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
-            if (pkey->key_flags & KEY_FLAG_SET_TX_KEY)
+            }
+            if ((pkey->key_flags & KEY_FLAG_SET_TX_KEY) != 0U)
+            {
                 pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
+            }
         }
         pkey_material->key_param_set.key_info               = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
         pkey_material->key_param_set.key_params.wep.key_len = wlan_cpu_to_le16(pkey->key_len);
@@ -1053,14 +1067,22 @@ static mlan_status wlan_cmd_802_11_key_material(
         PRINTM(MCMND, "Set WEP Key\n");
         goto done;
     }
-    if (pkey->key_flags & KEY_FLAG_GROUP_KEY)
+    if ((pkey->key_flags & KEY_FLAG_GROUP_KEY) != 0U)
+    {
         pkey_material->key_param_set.key_info |= KEY_INFO_MCAST_KEY;
+    }
     else
+    {
         pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
-    if (pkey->key_flags & KEY_FLAG_SET_TX_KEY)
+    }
+    if ((pkey->key_flags & KEY_FLAG_SET_TX_KEY) != 0U)
+    {
         pkey_material->key_param_set.key_info |= KEY_INFO_TX_KEY | KEY_INFO_RX_KEY;
+    }
     else
+    {
         pkey_material->key_param_set.key_info |= KEY_INFO_RX_KEY;
+    }
 #if defined(WAPI)
     if (pkey->is_wapi_key)
     {
@@ -1085,14 +1107,18 @@ static mlan_status wlan_cmd_802_11_key_material(
     {
         /* Enable default key for WPA/WPA2 */
         if (!pmpriv->wpa_is_gtk_set)
+        {
             pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
+        }
     }
     else
     {
         pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
         /* Enable unicast bit for WPA-NONE/ADHOC_AES */
         if ((!pmpriv->sec_info.wpa2_enabled) && (pkey->key_flags & KEY_FLAG_SET_TX_KEY))
+        {
             pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
+        }
     }
     pkey_material->key_param_set.key_info = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
 #ifdef ENABLE_802_11W
@@ -1102,8 +1128,10 @@ static mlan_status wlan_cmd_802_11_key_material(
     if (pkey->key_len == WPA_AES_KEY_LEN)
     {
 #endif
-        if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
+        if ((pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID)) != 0U)
+        {
             (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.pn, pkey->pn, SEQ_MAX_SIZE);
+        }
         pkey_material->key_param_set.key_type               = KEY_TYPE_ID_AES;
         pkey_material->key_param_set.key_params.aes.key_len = wlan_cpu_to_le16(pkey->key_len);
         (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.key, pkey->key_material,
@@ -1117,9 +1145,11 @@ static mlan_status wlan_cmd_802_11_key_material(
 #ifdef ENABLE_802_11W
     if (pkey->key_len == WPA_IGTK_KEY_LEN && (pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
     {
-        if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
+        if ((pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID)) != 0U)
+        {
             (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.ipn, pkey->pn,
                            SEQ_MAX_SIZE);
+        }
         pkey_material->key_param_set.key_info &= ~KEY_INFO_MCAST_KEY;
         pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_MCAST_IGTK);
         pkey_material->key_param_set.key_type                    = KEY_TYPE_ID_AES_CMAC;
@@ -1135,8 +1165,10 @@ static mlan_status wlan_cmd_802_11_key_material(
 #endif
     if (pkey->key_len == WPA_TKIP_KEY_LEN)
     {
-        if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
+        if ((pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID)) != 0U)
+        {
             (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.tkip.pn, pkey->pn, SEQ_MAX_SIZE);
+        }
         pkey_material->key_param_set.key_type                = KEY_TYPE_ID_TKIP;
         pkey_material->key_param_set.key_params.tkip.key_len = wlan_cpu_to_le16(pkey->key_len);
         (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.tkip.key, pkey->key_material,
@@ -1399,8 +1431,8 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
      */
 
     /* -1 is for t_u8 TlvBuffer[1] as this should not be included */
-    cmd->size = sizeof(HostCmd_DS_802_11_SUPPLICANT_PMK) + S_DS_GEN - 1;
-    if (psk->ssid.ssid_len)
+    cmd->size = sizeof(HostCmd_DS_802_11_SUPPLICANT_PMK) + S_DS_GEN - 1U;
+    if (psk->ssid.ssid_len != 0U)
     {
         pssid_tlv              = (MrvlIEtypes_SsIdParamSet_t *)ptlv_buffer;
         pssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
@@ -1411,7 +1443,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
         cmd->size += (pssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
         pssid_tlv->header.len = wlan_cpu_to_le16(pssid_tlv->header.len);
     }
-    if (memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)))
+    if (memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)) != 0U)
     {
         pbssid_tlv              = (MrvlIEtypes_Bssid_t *)ptlv_buffer;
         pbssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_BSSID);
@@ -1454,7 +1486,8 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
         ppmk_tlv->header.len = wlan_cpu_to_le16(ppmk_tlv->header.len);
     }
     if ((cmd_action == HostCmd_ACT_GEN_SET) &&
-        ((pssid_tlv || pbssid_tlv) && (!ppmk_tlv && !ppassphrase_tlv && !ppassword_tlv)))
+        (((pssid_tlv != MNULL) || (pbssid_tlv != MNULL)) &&
+         ((ppmk_tlv == MNULL) && (ppassphrase_tlv == MNULL) && (ppassword_tlv == MNULL))))
     {
         PRINTM(MERROR, "Invalid case,ssid/bssid present without pmk or passphrase or password\n");
         LEAVE();
@@ -1556,7 +1589,9 @@ static mlan_status wlan_cmd_802_11_rf_channel(IN pmlan_private pmpriv,
     if (cmd_action == HostCmd_ACT_GEN_SET)
     {
         if ((pmpriv->adapter->adhoc_start_band & BAND_A) || (pmpriv->adapter->adhoc_start_band & BAND_AN))
+        {
             prf_chan->rf_type = HostCmd_SCAN_RADIO_TYPE_A;
+        }
         SET_SECONDARYCHAN(prf_chan->rf_type, pmpriv->adapter->chan_bandwidth);
         prf_chan->rf_type         = wlan_cpu_to_le16(prf_chan->rf_type);
         prf_chan->current_channel = wlan_cpu_to_le16(*((t_u16 *)pdata_buf));
@@ -1642,13 +1677,15 @@ static mlan_status wlan_cmd_mgmt_ie_list(IN pmlan_private pmpriv,
     pmgmt_ie_list->ds_mgmt_ie.type = wlan_cpu_to_le16(cust_ie->type);
     pmgmt_ie_list->ds_mgmt_ie.len  = wlan_cpu_to_le16(cust_ie->len);
 
-    if (pmgmt_ie_list && cust_ie)
+    if ((pmgmt_ie_list != MNULL) && (cust_ie != MNULL))
     {
         req_len    = cust_ie->len;
         travel_len = 0;
         /* conversion for index, mask, len */
         if (req_len == sizeof(t_u16))
+        {
             cust_ie->ie_data_list[0].ie_index = wlan_cpu_to_le16(cust_ie->ie_data_list[0].ie_index);
+        }
 
         while (req_len > sizeof(t_u16))
         {
@@ -1659,9 +1696,11 @@ static mlan_status wlan_cmd_mgmt_ie_list(IN pmlan_private pmpriv,
             cptr->mgmt_subtype_mask = wlan_cpu_to_le16(cptr->mgmt_subtype_mask);
             cptr->ie_length         = wlan_cpu_to_le16(cptr->ie_length);
         }
-        if (cust_ie->len)
+        if (cust_ie->len != 0U)
+        {
             (void)__memcpy(pmpriv->adapter, pmgmt_ie_list->ds_mgmt_ie.ie_data_list, cust_ie->ie_data_list,
                            cust_ie->len);
+        }
     }
 
     cmd->size -= (MAX_MGMT_IE_INDEX_TO_FW * sizeof(custom_ie)) + sizeof(tlvbuf_max_mgmt_ie);
@@ -2102,7 +2141,7 @@ static mlan_status wlan_cmd_otp_user_data(IN pmlan_private pmpriv,
     ENTER();
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_OTP_READ_USER_DATA);
-    cmd_size     = sizeof(HostCmd_DS_OTP_USER_DATA) + S_DS_GEN - 1;
+    cmd_size     = sizeof(HostCmd_DS_OTP_USER_DATA) + S_DS_GEN - 1U;
 
     cmd_user_data->action           = wlan_cpu_to_le16(cmd_action);
     cmd_user_data->reserved         = 0;
@@ -2112,7 +2151,9 @@ static mlan_status wlan_cmd_otp_user_data(IN pmlan_private pmpriv,
      * (SDIO cmd size remains same).
      */
     if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
         cmd_size += user_data->user_data_length;
+    }
     cmd->size = wlan_cpu_to_le16(cmd_size);
 
     LEAVE();
@@ -2380,8 +2421,10 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         case HostCmd_CMD_802_11D_DOMAIN_INFO:
-            if (pmpriv->support_11d_APIs)
+            if (pmpriv->support_11d_APIs != MNULL)
+            {
                 ret = pmpriv->support_11d_APIs->wlan_cmd_802_11d_domain_info_p(pmpriv, cmd_ptr, cmd_action);
+            }
             break;
 #ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_TPC_ADAPT_REQ:

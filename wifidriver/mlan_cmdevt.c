@@ -1898,7 +1898,9 @@ mlan_status wlan_cmd_enh_power_mode(
             cmd_size += sizeof(MrvlIEtypes_auto_ds_param_t);
             tlv += sizeof(MrvlIEtypes_auto_ds_param_t);
             if (pdata_buf != NULL)
+            {
                 idletime = ((mlan_ds_auto_ds *)pdata_buf)->idletime;
+            }
             auto_ds->deep_sleep_timeout = wlan_cpu_to_le16(idletime);
         }
         /* fixme :
@@ -1907,7 +1909,7 @@ mlan_status wlan_cmd_enh_power_mode(
          * for UAP this macro will be defined and
          * line below will be uncommented*/
         /* #if defined(UAP_SUPPORT)*/
-        if (pdata_buf && (ps_bitmap & (BITMAP_UAP_INACT_PS | BITMAP_UAP_DTIM_PS)))
+        if ((pdata_buf != MNULL) && (ps_bitmap & (BITMAP_UAP_INACT_PS | BITMAP_UAP_DTIM_PS)))
         {
             mlan_ds_ps_mgmt *ps_mgmt                   = (mlan_ds_ps_mgmt *)pdata_buf;
             MrvlIEtypes_sleep_param_t *sleep_tlv       = MNULL;
@@ -2246,10 +2248,13 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
 #endif
 #ifdef CONFIG_11N
                 if ((pmpriv->tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HT)
+            {
                 /* HT rate */
                 rate->param.rate_cfg.rate = pmpriv->tx_rate + MLAN_RATE_INDEX_MCS0;
+            }
             else
 #endif
+            {
                 /* LG rate */
                 /* For HostCmd_CMD_802_11_TX_RATE_QUERY,
                  * there is a hole (0x4) in rate table
@@ -2257,6 +2262,7 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                  * so minus 1 for OFDM rate index */
                 rate->param.rate_cfg.rate =
                     (pmpriv->tx_rate > MLAN_RATE_INDEX_OFDM0) ? pmpriv->tx_rate - 1 : pmpriv->tx_rate;
+            }
 #if 0
             }
             else {
@@ -2416,10 +2422,14 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
         rate_scope->hr_dsss_rate_bitmap = wlan_cpu_to_le16(pbitmap_rates[0]);
         rate_scope->ofdm_rate_bitmap    = wlan_cpu_to_le16(pbitmap_rates[1]);
         for (i = 0; i < NELEMENTS(rate_scope->ht_mcs_rate_bitmap); i++)
+        {
             rate_scope->ht_mcs_rate_bitmap[i] = wlan_cpu_to_le16(pbitmap_rates[2 + i]);
+        }
         for (i = 0; i < NELEMENTS(rate_scope->vht_mcs_rate_bitmap); i++)
+        {
             rate_scope->vht_mcs_rate_bitmap[i] =
                 wlan_cpu_to_le16(pbitmap_rates[2 + NELEMENTS(rate_scope->ht_mcs_rate_bitmap) + i]);
+        }
 #ifdef CONFIG_11AX
         if (IS_FW_SUPPORT_11AX(pmpriv->adapter))
         {
@@ -2439,10 +2449,14 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
         rate_scope->hr_dsss_rate_bitmap = wlan_cpu_to_le16(pmpriv->bitmap_rates[0]);
         rate_scope->ofdm_rate_bitmap    = wlan_cpu_to_le16(pmpriv->bitmap_rates[1]);
         for (i = 0; i < NELEMENTS(rate_scope->ht_mcs_rate_bitmap); i++)
+        {
             rate_scope->ht_mcs_rate_bitmap[i] = wlan_cpu_to_le16(pmpriv->bitmap_rates[2 + i]);
+        }
         for (i = 0; i < NELEMENTS(rate_scope->vht_mcs_rate_bitmap); i++)
+        {
             rate_scope->vht_mcs_rate_bitmap[i] =
                 wlan_cpu_to_le16(pmpriv->bitmap_rates[2 + NELEMENTS(rate_scope->ht_mcs_rate_bitmap) + i]);
+        }
 #ifdef CONFIG_11AX
         if (IS_FW_SUPPORT_11AX(pmpriv->adapter))
         {
@@ -2509,7 +2523,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
         tlv_buf_len = wlan_le16_to_cpu(tlv_buf_len);
     }
 
-    while (tlv_buf && tlv_buf_len > 0)
+    while (tlv_buf != MNULL && tlv_buf_len > 0U)
     {
         tlv = (*tlv_buf);
         tlv = tlv | (*(tlv_buf + 1) << 8);
@@ -2521,7 +2535,9 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 pmpriv->bitmap_rates[0] = wlan_le16_to_cpu(prate_scope->hr_dsss_rate_bitmap);
                 pmpriv->bitmap_rates[1] = wlan_le16_to_cpu(prate_scope->ofdm_rate_bitmap);
                 for (i = 0; i < sizeof(prate_scope->ht_mcs_rate_bitmap) / sizeof(t_u16); i++)
+                {
                     pmpriv->bitmap_rates[2 + i] = wlan_le16_to_cpu(prate_scope->ht_mcs_rate_bitmap[i]);
+                }
 #ifdef CONFIG_11AC
                 for (i = 0; i < NELEMENTS(prate_scope->vht_mcs_rate_bitmap); i++)
                     pmpriv->bitmap_rates[2 + sizeof(prate_scope->ht_mcs_rate_bitmap) / sizeof(t_u16) + i] =
@@ -2576,7 +2592,9 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
             if (index != -1)
             {
                 if ((index >= MLAN_RATE_BITMAP_OFDM0) && (index <= MLAN_RATE_BITMAP_OFDM7))
+                {
                     index -= (MLAN_RATE_BITMAP_OFDM0 - MLAN_RATE_INDEX_OFDM0);
+                }
 
 #ifndef SD8801
                 ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_LG;
@@ -2911,7 +2929,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 
     pmadapter->fw_cap_info = wlan_le32_to_cpu(hw_spec->fw_cap_info);
 #ifdef STA_SUPPORT
-    if (IS_SUPPORT_MULTI_BANDS(pmadapter))
+    if ((IS_SUPPORT_MULTI_BANDS(pmadapter)) != 0U)
     {
         pmadapter->fw_bands = (t_u8)GET_FW_DEFAULT_BANDS(pmadapter);
 #ifndef CONFIG_5GHz_SUPPORT
@@ -2927,56 +2945,68 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     pmadapter->config_bands = pmadapter->fw_bands;
     for (i = 0; i < pmadapter->priv_num; i++)
     {
-        if (pmadapter->priv[i])
+        if (pmadapter->priv[i] != MNULL)
+        {
             pmadapter->priv[i]->config_bands = pmadapter->fw_bands;
+        }
     }
 
-    if (pmadapter->fw_bands & BAND_A)
+    if ((pmadapter->fw_bands & BAND_A) != 0U)
     {
-        if (pmadapter->fw_bands & BAND_GN)
+        if ((pmadapter->fw_bands & BAND_GN) != 0U)
         {
             pmadapter->config_bands |= BAND_AN;
             for (i = 0; i < pmadapter->priv_num; i++)
             {
-                if (pmadapter->priv[i])
+                if (pmadapter->priv[i] != MNULL)
+                {
                     pmadapter->priv[i]->config_bands |= BAND_AN;
+                }
             }
 
             pmadapter->fw_bands |= BAND_AN;
         }
-        if (pmadapter->fw_bands & BAND_AAC)
+        if ((pmadapter->fw_bands & BAND_AAC) != 0U)
         {
             pmadapter->config_bands |= BAND_AAC;
             for (i = 0; i < pmadapter->priv_num; i++)
             {
-                if (pmadapter->priv[i])
+                if (pmadapter->priv[i] != MNULL)
+                {
                     pmadapter->priv[i]->config_bands |= BAND_AAC;
+                }
             }
         }
-        if ((pmadapter->fw_bands & BAND_AN))
+        if ((pmadapter->fw_bands & BAND_AN) != 0U)
         {
             pmadapter->adhoc_start_band  = BAND_A | BAND_AN;
             pmadapter->adhoc_11n_enabled = MTRUE;
         }
         else
+        {
             pmadapter->adhoc_start_band = BAND_A;
+        }
         pmpriv->adhoc_channel = DEFAULT_AD_HOC_CHANNEL_A;
     }
-    else if ((pmadapter->fw_bands & BAND_GN))
+    else if ((pmadapter->fw_bands & BAND_GN) != 0U)
     {
         pmadapter->adhoc_start_band  = BAND_G | BAND_B | BAND_GN;
         pmpriv->adhoc_channel        = DEFAULT_AD_HOC_CHANNEL;
         pmadapter->adhoc_11n_enabled = MTRUE;
     }
-    else if (pmadapter->fw_bands & BAND_G)
+    else if ((pmadapter->fw_bands & BAND_G) != 0U)
     {
         pmadapter->adhoc_start_band = BAND_G | BAND_B;
         pmpriv->adhoc_channel       = DEFAULT_AD_HOC_CHANNEL;
     }
-    else if (pmadapter->fw_bands & BAND_B)
+    else if ((pmadapter->fw_bands & BAND_B) != 0U)
     {
         pmadapter->adhoc_start_band = BAND_B;
         pmpriv->adhoc_channel       = DEFAULT_AD_HOC_CHANNEL;
+    }
+    else
+    {
+        /* Do nothing */
     }
 #endif /* STA_SUPPORT */
 
@@ -3042,7 +3072,9 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
         {
             /* Use the region code to search for the index */
             if (pmadapter->region_code == region_code_index[i])
+            {
                 break;
+            }
         }
         /* If it's unidentified region code, use the default */
         if (i >= MRVDRV_MAX_REGION_CODE)
@@ -3056,18 +3088,22 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 #ifdef OTP_CHANINFO
     }
 #endif
-    if (wlan_set_regiontable(pmpriv, (t_u8)pmadapter->region_code, pmadapter->fw_bands))
+    if (wlan_set_regiontable(pmpriv, (t_u8)pmadapter->region_code, pmadapter->fw_bands) != MLAN_STATUS_SUCCESS)
     {
-        if (pioctl_req)
+        if (pioctl_req != MNULL)
+        {
             pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
+        }
         ret = MLAN_STATUS_FAILURE;
         goto done;
     }
 #ifdef STA_SUPPORT
-    if (wlan_11d_set_universaltable(pmpriv, pmadapter->fw_bands))
+    if (wlan_11d_set_universaltable(pmpriv, pmadapter->fw_bands) != MLAN_STATUS_SUCCESS)
     {
-        if (pioctl_req)
+        if (pioctl_req != MNULL)
+        {
             pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
+        }
         ret = MLAN_STATUS_FAILURE;
         goto done;
     }
