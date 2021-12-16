@@ -80,7 +80,7 @@
 #define os_dprintf(...)
 #endif
 
-#define is_isr_context() (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) //(xPortIsInsideInterrupt())
+#define is_isr_context() ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) > 0U) //(xPortIsInsideInterrupt())
 
 /* System clock frequency. */
 extern uint32_t SystemCoreClock;
@@ -111,12 +111,16 @@ static inline uint32_t os_get_usec_counter()
  *
  * \return 32 bit value of ticks since boot-up
  */
-static inline unsigned os_ticks_get()
+static inline unsigned os_ticks_get(void)
 {
     if (is_isr_context())
+    {
         return xTaskGetTickCountFromISR();
+    }
     else
+    {
         return xTaskGetTickCount();
+    }
 }
 
 #if 0
@@ -162,7 +166,7 @@ typedef void *os_thread_arg_t;
 typedef struct os_thread_stack
 {
     /** Total stack size */
-    int size;
+    size_t size;
 } os_thread_stack_t;
 
 /**
@@ -174,13 +178,17 @@ typedef struct os_thread_stack
 
 typedef xTaskHandle os_thread_t;
 
-static inline const char *get_current_taskname()
+static inline const char *get_current_taskname(void)
 {
     os_thread_t *handle = (os_thread_t *)xTaskGetCurrentTaskHandle();
-    if (handle)
+    if (handle != NULL)
+    {
         return pcTaskGetTaskName(*handle);
+    }
     else
+    {
         return "Unknown";
+    }
 }
 
 /** Create new thread
@@ -233,7 +241,7 @@ static inline int os_thread_create(os_thread_t *thandle,
     return ret == pdPASS ? WM_SUCCESS : -WM_FAIL;
 }
 
-static inline os_thread_t os_get_current_task_handle()
+static inline os_thread_t os_get_current_task_handle(void)
 {
     return xTaskGetCurrentTaskHandle();
 }
@@ -285,7 +293,7 @@ static inline int os_thread_delete(os_thread_t *thandle)
  * to be originally scheduled to be woken up. So if sleep was for 10 ticks
  * and the task is woken up after 8 ticks then 2 will be returned.
  */
-static inline void os_thread_sleep(int ticks)
+static inline void os_thread_sleep(uint32_t ticks)
 {
     os_dprintf("OS: Thread Sleep: %d\r\n", ticks);
     vTaskDelay(ticks);
@@ -306,7 +314,7 @@ static inline void os_thread_sleep(int ticks)
  */
 /*! @brief Convert the milliseconds to ticks in FreeRTOS. */
 
-static inline unsigned long os_msec_to_ticks(unsigned long msecs)
+static inline uint32_t os_msec_to_ticks(uint32_t msecs)
 {
     return (msecs) / (portTICK_RATE_MS);
 }
@@ -354,8 +362,10 @@ static inline void os_thread_self_complete(os_thread_t *thandle)
     /*
      * We do not want this function to return ever.
      */
-    while (1)
+    while (true)
+    {
         os_thread_sleep(os_msec_to_ticks(60000));
+    }
 }
 
 #ifndef CONFIG_WIFI_MAX_PRIO
@@ -435,8 +445,10 @@ static inline int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned l
 {
     int ret;
     signed portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-    if (!qhandle || !(*qhandle))
+    if (qhandle == NULL || (*qhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     os_dprintf("OS: Queue Send: handle %p, msg %p, wait %d\r\n", *qhandle, msg, wait);
 
@@ -449,7 +461,9 @@ static inline int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned l
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         ret = xQueueSendToBack(*qhandle, msg, wait);
+    }
     os_dprintf("OS: Queue Send: done\r\n");
 
     return ret == pdTRUE ? WM_SUCCESS : -WM_FAIL;
@@ -481,8 +495,10 @@ static inline int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned l
 static inline int os_queue_recv(os_queue_t *qhandle, void *msg, unsigned long wait)
 {
     int ret;
-    if (!qhandle || !(*qhandle))
+    if (qhandle == NULL || (*qhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     os_dprintf("OS: Queue Receive: handle %p, msg %p, wait %d\r\n", *qhandle, msg, wait);
     ret = xQueueReceive(*qhandle, msg, wait);
@@ -520,15 +536,17 @@ static inline int os_queue_delete(os_queue_t *qhandle)
 static inline int os_queue_get_msgs_waiting(os_queue_t *qhandle)
 {
     int nmsg = 0;
-    if (!qhandle || !(*qhandle))
+    if (qhandle == NULL || (*qhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
     nmsg = uxQueueMessagesWaiting(*qhandle);
     os_dprintf("OS: Queue Msg Count: handle %p, count %d\r\n", *qhandle, nmsg);
     return nmsg;
 }
 
 /* Critical Sections */
-static inline unsigned long os_enter_critical_section()
+static inline unsigned long os_enter_critical_section(void)
 {
     taskENTER_CRITICAL();
     return WM_SUCCESS;
@@ -560,8 +578,12 @@ static inline int os_setup_idle_function(void (*func)(void))
     unsigned int i;
 
     for (i = 0; i < MAX_CUSTOM_HOOKS; i++)
-        if (g_os_idle_hooks[i] && g_os_idle_hooks[i] == func)
+    {
+        if (g_os_idle_hooks[i] != NULL && g_os_idle_hooks[i] == func)
+        {
             return WM_SUCCESS;
+        }
+    }
 
     for (i = 0; i < MAX_CUSTOM_HOOKS; i++)
     {
@@ -573,7 +595,9 @@ static inline int os_setup_idle_function(void (*func)(void))
     }
 
     if (i == MAX_CUSTOM_HOOKS)
+    {
         return -WM_FAIL;
+    }
 
     return WM_SUCCESS;
 }
@@ -593,8 +617,12 @@ static inline int os_setup_tick_function(void (*func)(void))
     unsigned int i;
 
     for (i = 0; i < MAX_CUSTOM_HOOKS; i++)
-        if (g_os_tick_hooks[i] && g_os_tick_hooks[i] == func)
+    {
+        if (g_os_tick_hooks[i] != NULL && g_os_tick_hooks[i] == func)
+        {
             return WM_SUCCESS;
+        }
+    }
 
     for (i = 0; i < MAX_CUSTOM_HOOKS; i++)
     {
@@ -606,7 +634,9 @@ static inline int os_setup_tick_function(void (*func)(void))
     }
 
     if (i == MAX_CUSTOM_HOOKS)
+    {
         return -WM_FAIL;
+    }
 
     return WM_SUCCESS;
 }
@@ -635,7 +665,9 @@ static inline int os_remove_idle_function(void (*func)(void))
     }
 
     if (i == MAX_CUSTOM_HOOKS)
+    {
         return -WM_FAIL;
+    }
 
     return WM_SUCCESS;
 }
@@ -663,7 +695,9 @@ static inline int os_remove_tick_function(void (*func)(void))
     }
 
     if (i == MAX_CUSTOM_HOOKS)
+    {
         return -WM_FAIL;
+    }
 
     return WM_SUCCESS;
 }
@@ -702,14 +736,16 @@ static inline int os_mutex_create(os_mutex_t *mhandle, const char *name, int fla
     os_dprintf("OS: Mutex Create: name = %s \r\n", name);
     *mhandle = xSemaphoreCreateMutex();
     os_dprintf("OS: Mutex Create: handle = %p\r\n", *mhandle);
-    if (*mhandle)
+    if (*mhandle != NULL)
     {
         // sem_debug_add((const xQueueHandle)*mhandle,
         //	      name, 1);
         return WM_SUCCESS;
     }
     else
+    {
         return -WM_FAIL;
+    }
 }
 
 /** Acquire mutex
@@ -732,8 +768,10 @@ static inline int os_mutex_create(os_mutex_t *mhandle, const char *name, int fla
 static inline int os_mutex_get(os_mutex_t *mhandle, unsigned long wait)
 {
     int ret;
-    if (!mhandle || !(*mhandle))
+    if (mhandle == NULL || (*mhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
     os_dprintf("OS: Mutex Get: handle %p\r\n", *mhandle);
     ret = xSemaphoreTake(*mhandle, wait);
     return ret == pdTRUE ? WM_SUCCESS : -WM_FAIL;
@@ -757,8 +795,10 @@ static inline int os_mutex_put(os_mutex_t *mhandle)
 {
     int ret;
 
-    if (!mhandle || !(*mhandle))
+    if (mhandle == NULL || (*mhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     os_dprintf("OS: Mutex Put: %p\r\n", *mhandle);
 
@@ -787,14 +827,18 @@ static inline int os_mutex_put(os_mutex_t *mhandle)
  */
 static inline int os_recursive_mutex_create(os_mutex_t *mhandle, const char *name)
 {
-    if (!mhandle)
+    if (mhandle == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     os_dprintf("OS: Recursive Mutex Create: name = %s \r\n", name);
     *mhandle = xSemaphoreCreateRecursiveMutex();
     os_dprintf("OS: Recursive Mutex Create: handle = %p\r\n", *mhandle);
-    if (!*mhandle)
+    if (*mhandle == NULL)
+    {
         return -WM_FAIL;
+    }
 
     // sem_debug_add(*mhandle, name, 1);
     return WM_SUCCESS;
@@ -900,8 +944,10 @@ static inline int os_event_notify_put(os_thread_t task)
     int ret                                       = pdTRUE;
     signed portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-    if (!task)
+    if (task == NULL)
+    {
         return -WM_E_INVAL;
+    }
     if (is_isr_context())
     {
         /* This call is from Cortex-M3/4 handler mode, i.e. exception
@@ -938,14 +984,16 @@ static inline int os_semaphore_create(os_semaphore_t *mhandle, const char *name)
 static inline int os_semaphore_create(os_semaphore_t *mhandle, const char *name)
 {
     vSemaphoreCreateBinary(*mhandle);
-    if (*mhandle)
+    if (*mhandle != NULL)
     {
         // sem_debug_add((const xSemaphoreHandle)*mhandle,
         //	      name, 1);
         return WM_SUCCESS;
     }
     else
+    {
         return -WM_FAIL;
+    }
 }
 
 /** Create counting semaphore
@@ -971,14 +1019,16 @@ static inline int os_semaphore_create_counting(os_semaphore_t *mhandle,
                                                unsigned long initcount)
 {
     *mhandle = xSemaphoreCreateCounting(maxcount, initcount);
-    if (*mhandle)
+    if (*mhandle != NULL)
     {
         ////sem_debug_add((const xQueueHandle)*mhandle,
         //	      name, 1);
         return WM_SUCCESS;
     }
     else
+    {
         return -WM_FAIL;
+    }
 }
 /** Acquire semaphore
  *
@@ -1002,8 +1052,10 @@ static inline int os_semaphore_get(os_semaphore_t *mhandle, unsigned long wait)
 {
     int ret;
     signed portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-    if (!mhandle || !(*mhandle))
+    if (mhandle == NULL || (*mhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
     os_dprintf("OS: Semaphore Get: handle %p\r\n", *mhandle);
     if (is_isr_context())
     {
@@ -1014,7 +1066,9 @@ static inline int os_semaphore_get(os_semaphore_t *mhandle, unsigned long wait)
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         ret = xSemaphoreTake(*mhandle, wait);
+    }
     return ret == pdTRUE ? WM_SUCCESS : -WM_FAIL;
 }
 
@@ -1035,8 +1089,10 @@ static inline int os_semaphore_put(os_semaphore_t *mhandle)
 {
     int ret;
     signed portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-    if (!mhandle || !(*mhandle))
+    if (mhandle == NULL || (*mhandle) == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     os_dprintf("OS: Semaphore Put: handle %p\r\n", *mhandle);
     if (is_isr_context())
@@ -1048,7 +1104,9 @@ static inline int os_semaphore_put(os_semaphore_t *mhandle)
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         ret = xSemaphoreGive(*mhandle);
+    }
     return ret == pdTRUE ? WM_SUCCESS : -WM_FAIL;
 }
 
@@ -1296,8 +1354,10 @@ static inline int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_t
     int ret;
     portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return -WM_E_INVAL;
+    }
     if (is_isr_context())
     {
         /* This call is from Cortex-M3 handler mode, i.e. exception
@@ -1307,8 +1367,10 @@ static inline int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_t
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         /* Fixme: What should be value of xBlockTime? */
         ret = xTimerChangePeriod(*timer_t, ntime, 100);
+    }
     return ret == pdPASS ? WM_SUCCESS : -WM_FAIL;
 }
 
@@ -1327,8 +1389,10 @@ static inline bool os_timer_is_running(os_timer_t *timer_t)
 {
     int ret;
 
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return false;
+    }
 
     ret = xTimerIsTimerActive(*timer_t);
     return ret == pdPASS ? true : false;
@@ -1348,8 +1412,10 @@ static inline bool os_timer_is_running(os_timer_t *timer_t)
  */
 static inline void *os_timer_get_context(os_timer_t *timer_t)
 {
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return (void *)-1;
+    }
 
     return pvTimerGetTimerID(*timer_t);
 }
@@ -1374,8 +1440,10 @@ static inline int os_timer_reset(os_timer_t *timer_t)
     int ret;
     portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return -WM_E_INVAL;
+    }
     /* Note:
      * XTimerStop, seconds argument is xBlockTime which means, the time,
      * in ticks, that the calling task should be held in the Blocked
@@ -1391,7 +1459,9 @@ static inline int os_timer_reset(os_timer_t *timer_t)
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         ret = xTimerReset(*timer_t, 0);
+    }
     return ret == pdPASS ? WM_SUCCESS : -WM_FAIL;
 }
 
@@ -1410,8 +1480,10 @@ static inline int os_timer_deactivate(os_timer_t *timer_t)
     int ret;
     portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return -WM_E_INVAL;
+    }
     /* Note:
      * XTimerStop, seconds argument is xBlockTime which means, the time,
      * in ticks, that the calling task should be held in the Blocked
@@ -1427,7 +1499,9 @@ static inline int os_timer_deactivate(os_timer_t *timer_t)
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         ret = xTimerStop(*timer_t, 0);
+    }
     return ret == pdPASS ? WM_SUCCESS : -WM_FAIL;
 }
 
@@ -1445,14 +1519,16 @@ static inline int os_timer_delete(os_timer_t *timer_t)
 {
     int ret;
 
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     /* Below timer handle invalidation needs to be protected as a context
      * switch may create issues if same handle is used before
      * invalidation.
      */
-    int sta = os_enter_critical_section();
+    unsigned long sta = os_enter_critical_section();
     /* Note: Block time is set as 0, thus signifying non-blocking
        API. Can be changed later if required. */
     ret      = xTimerDelete(*timer_t, 0);
@@ -1489,8 +1565,10 @@ static inline int os_timer_delete(os_timer_t *timer_t)
 static inline void *os_mem_calloc(size_t size)
 {
     void *ptr = pvPortMalloc(size);
-    if (ptr)
+    if (ptr != NULL)
+    {
         (void)memset(ptr, 0x00, size);
+    }
 
     return ptr;
 }
@@ -1606,7 +1684,7 @@ static inline void os_dump_mem_stats(void)
  */
 static inline size_t os_mem_get_free_size(void)
 {
-	unsigned sta = os_enter_critical_section();
+	unsigned long sta = os_enter_critical_section();
 
 	const heapAllocatorInfo_t *hI = getheapAllocInfo();
 
@@ -1694,7 +1772,7 @@ int os_event_flags_get(event_group_handle_t hnd,
 int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtrv_option_t option);
 
 /**** OS init call **********/
-WEAK int os_init();
+WEAK int os_init(void);
 
 void _os_delay(int cnt);
 
@@ -1709,17 +1787,17 @@ void _os_delay(int cnt);
 #define os_get_runtime_stats(__buff__) vTaskGetRunTimeStats(__buff__)
 
 /** Disables all interrupts at NVIC level */
-static inline void os_disable_all_interrupts()
+static inline void os_disable_all_interrupts(void)
 {
     taskDISABLE_INTERRUPTS();
 }
 
 /** Enable all interrupts at NVIC lebel */
-static inline void os_enable_all_interrupts()
+static inline void os_enable_all_interrupts(void)
 {
     taskENABLE_INTERRUPTS();
 }
 
-unsigned int os_get_timestamp();
+unsigned int os_get_timestamp(void);
 
 #endif /* ! _WM_OS_H_ */

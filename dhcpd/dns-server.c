@@ -86,7 +86,9 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst)
     do
     {
         if (*query > 0)
+        {
             query += *query + 1;
+        }
     } while (*query > 0);
     query++;
 
@@ -117,15 +119,21 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
             {
                 *found = !strncmp(dnss.list_qnames[i].qname, (char *)pos, (base + SERVER_BUFFER_SIZE - pos));
                 if (*found != 0)
+                {
                     break;
+                }
             }
         }
         do
         {
             if (*pos > 0)
+            {
                 pos += *pos + 1;
+            }
             if (pos >= base + SERVER_BUFFER_SIZE)
+            {
                 return NULL;
+            }
         } while (*pos > 0);
         pos += 1 + sizeof(struct dns_question);
     }
@@ -166,7 +174,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
     }
 
     outp = parse_questions(nq, (uint8_t *)msg, &found);
-    if (found && outp)
+    if (found && outp != NULL)
     {
         pos = msg + sizeof(struct dns_header);
         for (i = 0; i < nq; i++)
@@ -215,8 +223,10 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
 
 void dhcp_enable_dns_server(char **domain_names)
 {
-    if (dhcp_dns_server_handler || dnss.list_qnames)
+    if (dhcp_dns_server_handler != NULL || dnss.list_qnames != NULL)
+    {
         return;
+    }
 
     int i;
     /* To reduce footprint impact, dns server support is kept optional */
@@ -224,7 +234,9 @@ void dhcp_enable_dns_server(char **domain_names)
     if (domain_names != NULL)
     {
         while (domain_names[dnss.count_qnames] != NULL)
+        {
             dnss.count_qnames++;
+        }
         dnss.list_qnames = os_mem_alloc(dnss.count_qnames * sizeof(struct dns_qname));
 
         for (i = 0; i < dnss.count_qnames; i++)
@@ -238,22 +250,28 @@ void dhcp_enable_dns_server(char **domain_names)
 int dns_server_init(void *intrfc_handle)
 {
     if (dhcp_dns_server_handler == NULL)
+    {
         return WM_SUCCESS;
+    }
 
     dnss.dnsaddr.sin_family      = AF_INET;
     dnss.dnsaddr.sin_addr.s_addr = INADDR_ANY;
     dnss.dnsaddr.sin_port        = htons(NAMESERVER_PORT);
     dnss.dnssock                 = dhcp_create_and_bind_udp_socket(&dnss.dnsaddr, intrfc_handle);
     if (dnss.dnssock < 0)
+    {
         return -WM_E_DHCPD_SOCKET;
+    }
 
     return WM_SUCCESS;
 }
 
-void dns_process_packet()
+void dns_process_packet(void)
 {
-    if (!dhcp_dns_server_handler)
+    if (dhcp_dns_server_handler == NULL)
+    {
         return;
+    }
 
     struct sockaddr_in caddr;
     socklen_t flen = sizeof(caddr);
@@ -266,17 +284,21 @@ void dns_process_packet()
     }
 }
 
-uint32_t dns_get_nameserver()
+uint32_t dns_get_nameserver(void)
 {
     if (dhcp_dns_server_handler != NULL)
+    {
         return dhcps.my_ip;
+    }
     return 0;
 }
 
 int dns_get_maxsock(fd_set *rfds)
 {
-    if (!dhcp_dns_server_handler)
+    if (dhcp_dns_server_handler == NULL)
+    {
         return dhcps.sock;
+    }
 
     int max_sock;
     FD_SET(dnss.dnssock, rfds);
@@ -284,10 +306,12 @@ int dns_get_maxsock(fd_set *rfds)
     return max_sock;
 }
 
-void dns_free_allocations()
+void dns_free_allocations(void)
 {
-    if (!dhcp_dns_server_handler)
+    if (dhcp_dns_server_handler == NULL)
+    {
         return;
+    }
 
     if (dnss.list_qnames != NULL)
     {

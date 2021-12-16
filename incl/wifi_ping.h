@@ -53,7 +53,7 @@
  *          was called while the CLI commands were already registered)
  */
 
-int ping_cli_init();
+int ping_cli_init(void);
 
 /** Unregister Network Utility CLI commands.
  *
@@ -63,5 +63,5 @@ int ping_cli_init();
  *  \return -WM_FAIL otherwise
  */
 
-int ping_cli_deinit();
+int ping_cli_deinit(void);
 #endif /*_WIFI_PING_H_ */

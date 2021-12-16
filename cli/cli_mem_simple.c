@@ -60,7 +60,9 @@ void *cli_mem_malloc(int size)
 {
     /* Only supports fixed size = INBUF_SIZE */
     if (size != INBUF_SIZE)
+    {
         return NULL;
+    }
 
     if (alloc[0] == BUF_AVAILABLE)
     {
@@ -81,9 +83,13 @@ void *cli_mem_malloc(int size)
 int cli_mem_free(char **buffer)
 {
     if (*buffer == buff1)
+    {
         alloc[0] = BUF_AVAILABLE;
+    }
     else if (*buffer == buff2)
+    {
         alloc[1] = BUF_AVAILABLE;
+    }
     else
     { /* Do Nothing */
     }

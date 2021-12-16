@@ -115,16 +115,20 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
 
         /* do the conversion */
         if (ch >= '0' && ch <= '9')
+        {
             by = (by << 4) + ch - '0';
+        }
         else if (ch >= 'A' && ch <= 'F')
+        {
             by = (by << 4) + ch - 'A' + 10;
+        }
         else
         { /* error if not hexadecimal */
             return 0;
         }
 
         /* store a byte for each pair of hexadecimal digits */
-        if (i & 1)
+        if ((i & 1) == 1U)
         {
             j       = ((i + 1) / 2) - 1;
             obuf[j] = by & 0xff;
@@ -220,7 +224,7 @@ int random_unregister_seed_handler(random_hdlr_t func);
  * the seed, this API can be used. The seed will then not be re-initialized
  * in get_random_sequence().
  */
-void random_initialize_seed();
+void random_initialize_seed(void);
 
 /** Sample random seed generator
  *
@@ -234,7 +238,7 @@ void random_initialize_seed();
  *
  * \return Random seed
  */
-uint32_t sample_initialise_random_seed();
+uint32_t sample_initialise_random_seed(void);
 
 /** Generate random sequence of bytes
  *
@@ -266,7 +270,9 @@ static inline void dump_hex(const void *data, unsigned len)
     {
         (void)PRINTF("%02x ", data8[i++]);
         if (!(i % DUMP_WRAPAROUND))
+        {
             (void)PRINTF("\n\r");
+        }
     }
 
     (void)PRINTF("\n\r******** End Dump *******\n\r");
@@ -315,8 +321,10 @@ static inline int wm_frac_part_of(float x, short precision)
 {
     int scale = 1;
 
-    while (precision--)
+    while ((precision--) != (short)0U)
+    {
         scale *= 10;
+    }
 
     return (x < 0 ? (int)(((int)x - x) * scale) : (int)((x - (int)x) * scale));
 }

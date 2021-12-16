@@ -61,7 +61,7 @@ static struct
     char *inbuf;
 
     const struct cli_command *commands[MAX_COMMANDS];
-    unsigned int num_commands;
+    int num_commands;
     bool echo_disabled;
 
     os_queue_t input_queue;
@@ -299,12 +299,16 @@ static const struct cli_command *lookup_command(char *name, int len)
         if (len != 0)
         {
             if (!strncmp(cli.commands[i]->name, name, len))
+            {
                 return cli.commands[i];
+            }
         }
         else
         {
             if (!strcmp(cli.commands[i]->name, name))
+            {
                 return cli.commands[i];
+            }
         }
 
         i++;
@@ -356,7 +360,9 @@ static int handle_input(char *inbuf)
         if (inbuf[j] == 0x0D || inbuf[j] == 0x0A)
         {
             if (j < (INBUF_SIZE - 1))
+            {
                 (void)memmove((inbuf + j), inbuf + j + 1, (INBUF_SIZE - i));
+            }
             inbuf[INBUF_SIZE] = 0x00;
         }
     }
@@ -367,7 +373,9 @@ static int handle_input(char *inbuf)
         {
             case '\0':
                 if (stat.inQuote != 0U)
+                {
                     return 2;
+                }
                 stat.done = 1;
                 break;
 
@@ -379,9 +387,13 @@ static int handle_input(char *inbuf)
                     break;
                 }
                 if (!stat.inQuote && stat.inArg)
+                {
                     break;
+                }
                 if (stat.inQuote && !stat.inArg)
+                {
                     return 2;
+                }
 
                 if (!stat.inQuote && !stat.inArg)
                 {
@@ -427,13 +439,19 @@ static int handle_input(char *inbuf)
     } while (!stat.done && ++i < INBUF_SIZE);
 
     if (stat.inQuote != 0U)
+    {
         return 2;
+    }
 
     if (argc < 1)
+    {
         return 0;
+    }
 
     if (!cli.echo_disabled)
+    {
         (void)PRINTF("\r\n");
+    }
 
     /*
      * Some comamands can allow extensions like foo.a, foo.b and hence
@@ -442,7 +460,9 @@ static int handle_input(char *inbuf)
     i       = ((p = strchr(argv[0], '.')) == NULL) ? 0 : (p - argv[0]);
     command = lookup_command(argv[0], i);
     if (command == NULL)
+    {
         return 1;
+    }
 
     command->function(argc, argv);
 
@@ -464,22 +484,28 @@ static void tab_complete(char *inbuf, unsigned int *bp)
     {
         if (cli.commands[i]->name != NULL)
         {
-            if (!strncmp(inbuf, cli.commands[i]->name, *bp))
+            if (strncmp(inbuf, cli.commands[i]->name, *bp) == 0)
             {
                 m++;
                 if (m == 1)
+                {
                     fm = cli.commands[i]->name;
+                }
                 else if (m == 2)
+                {
                     (void)PRINTF("%s %s ", fm, cli.commands[i]->name);
+                }
                 else
+                {
                     (void)PRINTF("%s ", cli.commands[i]->name);
+                }
             }
             n++;
         }
     }
 
     /* there's only one match, so complete the line */
-    if (m == 1 && fm)
+    if (m == 1 && fm != NULL)
     {
         n = strlen(fm) - *bp;
         if (*bp + n < INBUF_SIZE)
@@ -535,7 +561,7 @@ static int get_input(char *inbuf, unsigned int *bp)
         {
             if (second_char == 0x4F)
             {
-                if (inbuf[*bp] == 0x4D)
+                if (inbuf[*bp] == (char)(0x4D))
                 {
                     /* Num. keypad ENTER */
                     inbuf[*bp] = '\0';
@@ -594,18 +620,18 @@ static int get_input(char *inbuf, unsigned int *bp)
         if (state == EXT_KEY_FIRST_SYMBOL)
         {
             second_char = inbuf[*bp];
-            if (inbuf[*bp] == 0x4F)
+            if (inbuf[*bp] == (char)(0x4F))
             {
                 state = EXT_KEY_SECOND_SYMBOL;
                 continue;
             }
-            if (inbuf[*bp] == 0x5B)
+            if (inbuf[*bp] == (char)(0x5B))
             {
                 state = EXT_KEY_SECOND_SYMBOL;
                 continue;
             }
         }
-        if (inbuf[*bp] == 0x1B)
+        if (inbuf[*bp] == (char)(0x1B))
         {
             /* We may be seeing a first character from a
                extended key */
@@ -621,14 +647,16 @@ static int get_input(char *inbuf, unsigned int *bp)
             return 1;
         }
 
-        if ((inbuf[*bp] == 0x08) || /* backspace */
-            (inbuf[*bp] == 0x7f))
+        if ((inbuf[*bp] == (char)(0x08)) || /* backspace */
+            (inbuf[*bp] == (char)(0x7f)))
         { /* DEL */
-            if (*bp > 0)
+            if (*bp > (unsigned int)(0))
             {
                 (*bp)--;
                 if (!cli.echo_disabled)
+                {
                     (void)PRINTF("%c %c", 0x08, 0x08);
+                }
             }
             continue;
         }
@@ -641,10 +669,12 @@ static int get_input(char *inbuf, unsigned int *bp)
         }
 
         if (!cli.echo_disabled)
+        {
             (void)PRINTF("%c", inbuf[*bp]);
+        }
 
         (*bp)++;
-        if (*bp >= INBUF_SIZE)
+        if (*bp >= (unsigned int)(INBUF_SIZE))
         {
             (void)PRINTF("Error: input buffer overflow\r\n");
             (void)PRINTF(PROMPT);
@@ -755,12 +785,18 @@ static void cli_main(os_thread_arg_t data)
         if (msg != NULL)
         {
             if (strcmp(msg, HALT_MSG) == 0)
+            {
                 break;
+            }
             ret = handle_input(msg);
             if (ret == 1)
+            {
                 print_bad_command(msg);
+            }
             else if (ret == 2)
+            {
                 (void)PRINTF("syntax error\r\n");
+            }
             else
             { /* Do Nothing */
             }
@@ -813,7 +849,9 @@ static int __cli_cleanup(void)
     }
 
     if (cli.inbuf != NULL)
+    {
         cli_mem_free(&cli.inbuf);
+    }
 
     ret = cli_mem_cleanup();
     if (ret != WM_SUCCESS)
@@ -839,7 +877,9 @@ int cli_start(void)
     int ret;
 
     if (cli.initialized == true)
+    {
         return WM_SUCCESS;
+    }
 
     ret = os_mutex_create(&cli_mutex, "cli", OS_MUTEX_INHERIT);
     if (ret != WM_SUCCESS)
@@ -847,7 +887,7 @@ int cli_start(void)
         return -WM_FAIL;
     }
 
-    ret = os_thread_create(&cli_main_thread, "cli", cli_main, 0, &cli_stack, OS_PRIO_3);
+    ret = os_thread_create(&cli_main_thread, "cli", cli_main, NULL, &cli_stack, OS_PRIO_3);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create cli thread: %d\r\n", ret);
@@ -857,7 +897,9 @@ int cli_start(void)
     ret = cli_mem_init();
 
     if (ret != WM_SUCCESS)
+    {
         return -WM_FAIL;
+    }
 
     ret = os_queue_create(&cli.input_queue, "cli_queue", sizeof(void *), &cli.in_queue_data);
     if (ret != WM_SUCCESS)
@@ -874,7 +916,9 @@ int cli_start(void)
 int cli_stop(void)
 {
     if (cli.initialized == false)
+    {
         return -WM_FAIL;
+    }
 
     return __cli_cleanup();
 }
@@ -930,7 +974,8 @@ void help_command(int argc, char **argv)
     {
         if (cli.commands[i]->name != NULL)
         {
-            (void)PRINTF("%s %s\r\n", cli.commands[i]->name, cli.commands[i]->help ? cli.commands[i]->help : "");
+            (void)PRINTF("%s %s\r\n", cli.commands[i]->name,
+                         cli.commands[i]->help != NULL ? cli.commands[i]->help : "");
             n++;
         }
     }
@@ -1016,8 +1061,10 @@ static struct cli_command built_ins[] = {
 int cli_register_command(const struct cli_command *command)
 {
     int i;
-    if (!command->name || !command->function)
+    if (command->name == NULL || command->function == NULL)
+    {
         return 1;
+    }
 
     if (cli.num_commands < MAX_COMMANDS)
     {
@@ -1027,7 +1074,9 @@ int cli_register_command(const struct cli_command *command)
         for (i = 0; i < cli.num_commands; i++)
         {
             if (cli.commands[i] == command)
+            {
                 return 0;
+            }
         }
         cli.commands[cli.num_commands++] = command;
         return 0;
@@ -1039,8 +1088,10 @@ int cli_register_command(const struct cli_command *command)
 int cli_unregister_command(const struct cli_command *command)
 {
     int i;
-    if (!command->name || !command->function)
+    if (command->name == NULL || command->function == NULL)
+    {
         return 1;
+    }
 
     for (i = 0; i < cli.num_commands; i++)
     {
@@ -1064,8 +1115,12 @@ int cli_register_commands(const struct cli_command *commands, int num_commands)
 {
     int i;
     for (i = 0; i < num_commands; i++)
+    {
         if (cli_register_command(commands++) != 0)
+        {
             return 1;
+        }
+    }
     return 0;
 }
 
@@ -1073,8 +1128,12 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
 {
     int i;
     for (i = 0; i < num_commands; i++)
+    {
         if (cli_unregister_command(commands++) != 0)
+        {
             return 1;
+        }
+    }
 
     return 0;
 }
@@ -1083,7 +1142,9 @@ int cli_init(void)
 {
     static bool cli_init_done;
     if (cli_init_done)
+    {
         return WM_SUCCESS;
+    }
 
     (void)memset((void *)&cli, 0, sizeof(cli));
     cli.input_enabled = 1;
@@ -1091,7 +1152,9 @@ int cli_init(void)
 
     /* add our built-in commands */
     if (cli_register_commands(&built_ins[0], sizeof(built_ins) / sizeof(struct cli_command)) != 0)
+    {
         return -WM_FAIL;
+    }
 
     if (cli_install_UART_Tick() != WM_SUCCESS)
     {
@@ -1103,6 +1166,8 @@ int cli_init(void)
 
     int ret = cli_start();
     if (ret == WM_SUCCESS)
+    {
         cli_init_done = true;
+    }
     return ret;
 }

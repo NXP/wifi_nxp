@@ -36,9 +36,9 @@
 /* Get module notifier code (2nd and 1st byte from LSB)*/
 #define get_code(code) (code & 0xFF)
 
-#define MOD_ERROR_START(x) (x << 12 | 0)
-#define MOD_WARN_START(x)  (x << 12 | 1)
-#define MOD_INFO_START(x)  (x << 12 | 2)
+#define MOD_ERROR_START(x) ((x) << 12 | 0)
+#define MOD_WARN_START(x)  ((x) << 12 | 1)
+#define MOD_INFO_START(x)  ((x) << 12 | 2)
 
 /* Create Module index */
 #define MOD_GENERIC 0

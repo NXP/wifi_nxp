@@ -54,7 +54,7 @@ static int send_gratuitous_arp(uint32_t ip);
 static bool ac_add(uint8_t *chaddr, uint32_t client_ip);
 static uint32_t ac_lookup_mac(uint8_t *chaddr);
 static uint8_t *ac_lookup_ip(uint32_t client_ip);
-static bool ac_not_full();
+static bool ac_not_full(void);
 
 static bool ac_add(uint8_t *chaddr, uint32_t client_ip)
 {
@@ -107,7 +107,7 @@ static uint8_t *ac_lookup_ip(uint32_t client_ip)
     return NULL;
 }
 
-static bool ac_not_full()
+static bool ac_not_full(void)
 {
     /* returns true if cache is not full */
     return (dhcps.count_clients < MAC_IP_CACHE_SIZE);
@@ -124,7 +124,9 @@ static bool ac_valid_ip(uint32_t requested_ip)
         return false;
     }
     if (ac_lookup_ip(htonl(requested_ip)) != NULL)
+    {
         return false;
+    }
     return true;
 }
 
@@ -154,7 +156,7 @@ int dhcp_server_lease_timeout(uint32_t val)
  *
  * DHCP clients will be assigned addresses in sequence in the subnet's address space.
  */
-static unsigned int next_yiaddr()
+static unsigned int next_yiaddr(void)
 {
 #ifdef CONFIG_DHCP_SERVER_DEBUG
     struct in_addr ip;
@@ -178,7 +180,9 @@ static unsigned int next_yiaddr()
         new_ip = htonl(dhcps.current_ip);
 
         if (ac_add(hdr->chaddr, new_ip) != WM_SUCCESS)
+        {
             dhcp_w("No space to store new mapping..");
+        }
     }
 
 #ifdef CONFIG_DHCP_SERVER_DEBUG
@@ -438,7 +442,7 @@ static int process_dhcp_message(char *msg, int len)
     return WM_SUCCESS;
 }
 
-static void dhcp_clean_sockets()
+static void dhcp_clean_sockets(void)
 {
     int ret;
 
@@ -799,7 +803,7 @@ static int get_netmask_from_interface(uint32_t *nm, void *interface_handle)
     return net_get_if_ip_mask(nm, interface_handle);
 }
 
-void dhcp_stat()
+void dhcp_stat(void)
 {
     int i = 0;
     (void)PRINTF("DHCP Server Lease Duration : %d seconds\r\n", (int)dhcp_address_timeout);
