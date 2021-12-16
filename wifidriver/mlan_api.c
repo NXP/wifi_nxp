@@ -2884,10 +2884,7 @@ int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
 #define IEEEtypes_SSID_SIZE 32
 #endif /* IEEEtypes_SSID_SIZE */
 #define MRVL_SSID_TLV_ID          0x0000
-#define PROPRIETARY_TLV_BASE_ID   0x0100
 #define MRVL_BEACON_PERIOD_TLV_ID (PROPRIETARY_TLV_BASE_ID + 0x2c)
-#define TLV_TYPE_CHANLIST         (PROPRIETARY_TLV_BASE_ID + 0x01)
-#define TLV_TYPE_PASSTHROUGH      (PROPRIETARY_TLV_BASE_ID + 0x0a)
 #define TLV_TYPE_SMCADDRRANGE     (PROPRIETARY_TLV_BASE_ID + 0xcc)
 #define TLV_TYPE_SMCFRAMEFILTER   (PROPRIETARY_TLV_BASE_ID + 0xd1)
 

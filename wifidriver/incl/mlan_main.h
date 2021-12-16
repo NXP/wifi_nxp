@@ -309,7 +309,9 @@ extern t_u32 drvdbg;
     }
 
 /** MLAN MNULL pointer */
-#define MNULL (0)
+#ifndef MNULL
+#define MNULL ((void *)0)
+#endif
 
 /** 16 bits byte swap */
 #define swap_byte_16(x) ((t_u16)((((t_u16)(x)&0x00ffU) << 8) | (((t_u16)(x)&0xff00U) >> 8)))
@@ -439,18 +441,18 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** 60 seconds */
 #define MRVDRV_TIMER_60S 60000
 /** 10 seconds */
-#define MRVDRV_TIMER_10S 10000
+#define MRVDRV_TIMER_10S 10000U
 /** 5 seconds */
 #define MRVDRV_TIMER_5S 5000
 /** 1 second */
-#define MRVDRV_TIMER_1S 1000
+#define MRVDRV_TIMER_1S 1000U
 
 /** Maximum size of multicast list */
 #define MRVDRV_MAX_MULTICAST_LIST_SIZE 32
 /** Maximum size of channel */
 #define MRVDRV_MAX_CHANNEL_SIZE 14
 /** Maximum length of SSID */
-#define MRVDRV_MAX_SSID_LENGTH 32
+#define MRVDRV_MAX_SSID_LENGTH 32U
 /** WEP list macros & data structures */
 /** Size of key buffer in bytes */
 #define MRVL_KEY_BUFFER_SIZE_IN_BYTE 16
@@ -462,7 +464,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MLAN_DEFAULT_LISTEN_INTERVAL 10
 
 /** Maximum number of region codes */
-#define MRVDRV_MAX_REGION_CODE 10
+#define MRVDRV_MAX_REGION_CODE 10U
 
 /** Maximum number of CFP codes for BG */
 #define MRVDRV_MAX_CFP_CODE_BG 0
@@ -481,7 +483,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define DEFAULT_DATA_AVG_FACTOR 8
 
 /** The first valid channel for use */
-#define FIRST_VALID_CHANNEL 0xff
+#define FIRST_VALID_CHANNEL 0xffU
 /** Default Ad-Hoc channel */
 #define DEFAULT_AD_HOC_CHANNEL 6
 /** Default Ad-Hoc channel A */
@@ -490,7 +492,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Number of WEP keys */
 /* fixme: This param has been set to 1 as it is seen in legacy code */
 /* that only one set is used. If needed could be increased upto 4 */
-#define MRVL_NUM_WEP_KEY (1) /* 4 */
+#define MRVL_NUM_WEP_KEY (1U) /* 4 */
 
 /** Default multiple DTIM */
 #define MRVDRV_DEFAULT_MULTIPLE_DTIM 1
@@ -536,7 +538,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
  * Max total scan time in milliseconds
  * The total scan time should be less than scan command timeout value (20s)
  */
-#define MRVDRV_MAX_TOTAL_SCAN_TIME (MRVDRV_TIMER_10S * 2 - MRVDRV_TIMER_1S)
+#define MRVDRV_MAX_TOTAL_SCAN_TIME (MRVDRV_TIMER_10S * 2U - MRVDRV_TIMER_1S)
 
 /** Offset for GTK as it has version to skip past for GTK */
 #define RSN_GTK_OUI_OFFSET 2
@@ -555,11 +557,11 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define IS_CARD_RX_RCVD(adapter) (adapter->cmd_resp_received || adapter->event_received || adapter->data_received)
 
 /** Type command */
-#define MLAN_TYPE_CMD 1
+#define MLAN_TYPE_CMD 1U
 /** Type data */
-#define MLAN_TYPE_DATA 0
+#define MLAN_TYPE_DATA 0U
 /** Type event */
-#define MLAN_TYPE_EVENT 3
+#define MLAN_TYPE_EVENT 3U
 
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 /** Multi port TX aggregation buffer size */
@@ -2106,14 +2108,18 @@ mlan_status wlan_dnld_fw(IN pmlan_adapter pmadapter, IN pmlan_fw_image pmfw);
 /** Initialize firmware */
 mlan_status wlan_init_fw(IN pmlan_adapter pmadapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Initialize firmware complete */
 mlan_status wlan_init_fw_complete(IN pmlan_adapter pmadapter);
+#endif
 
 /** Shutdown firmware complete */
 mlan_status wlan_shutdown_fw_complete(IN pmlan_adapter pmadapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Receive event */
 mlan_status wlan_recv_event(pmlan_private priv, mlan_event_id event_id, t_void *pmevent);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Initialize mlan_adapter structure */
 t_void wlan_init_adapter(IN pmlan_adapter pmadapter);
@@ -2121,8 +2127,10 @@ t_void wlan_init_adapter(IN pmlan_adapter pmadapter);
 /** Initialize mlan_private structure */
 mlan_status wlan_init_priv(IN pmlan_private priv);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Process event */
 mlan_status wlan_process_event(pmlan_adapter pmadapter);
+#endif
 
 /** Prepare command */
 mlan_status wlan_prepare_cmd(IN pmlan_private priv,
@@ -2169,9 +2177,11 @@ t_void wlan_flush_scan_queue(pmlan_adapter pmadapter);
 #endif
 /**Cancel pending command */
 t_void wlan_cancel_all_pending_cmd(pmlan_adapter pmadapter);
+
+#ifndef CONFIG_MLAN_WMSDK
 /**Cancel pending ioctl */
 t_void wlan_cancel_pending_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
-
+#endif /* CONFIG_MLAN_WMSDK */
 /** Insert command to free queue */
 t_void wlan_insert_cmd_to_free_q(IN mlan_adapter *pmadapter, IN cmd_ctrl_node *pcmd_node);
 
@@ -2221,8 +2231,10 @@ mlan_status wlan_ret_ver_ext(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mla
 /** command resp handler for rx mgmt forward registration */
 mlan_status wlan_ret_rx_mgmt_ind(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Check Power Save condition */
 t_void wlan_check_ps_cond(mlan_adapter *pmadapter);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** handle command for enhanced power save mode */
 mlan_status wlan_cmd_enh_power_mode(
@@ -2327,8 +2339,12 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv);
 /** fill txpd for station mode */
 t_void *wlan_ops_sta_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
 
+#ifndef CONFIG_MLAN_WMSDK
+
 /** send init cmd to firmware for station mode */
 mlan_status wlan_ops_sta_init_cmd(IN t_void *priv, IN t_u8 first_bss);
+
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Flush the scan table */
 mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
@@ -2415,8 +2431,12 @@ mlan_status wlan_cmd_802_11_ad_hoc_start(IN mlan_private *pmpriv, IN HostCmd_DS_
 /** Ad-Hoc command handler */
 mlan_status wlan_cmd_802_11_ad_hoc_join(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
 
+#ifndef CONFIG_MLAN_WMSDK
+
 /** Handler for Ad-Hoc commands */
 mlan_status wlan_ret_802_11_ad_hoc(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
+
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Handler for bgscan query commands */
 mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
@@ -2588,7 +2608,8 @@ INLINE
 static int wlan_is_tx_pause(mlan_private *priv, t_u8 *ra)
 {
     sta_node *sta_ptr = MNULL;
-    if ((sta_ptr = wlan_get_station_entry(priv, ra)))
+    sta_ptr           = wlan_get_station_entry(priv, ra);
+    if (sta_ptr != MNULL)
     {
         return sta_ptr->tx_pause;
     }
@@ -2683,7 +2704,9 @@ static t_u8 queuing_ra_based(pmlan_private priv)
      * true in the future
      */
     if ((priv->bss_mode == MLAN_BSS_MODE_INFRA) && (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA))
+    {
         return MFALSE;
+    }
 
     return MTRUE;
 }
@@ -2706,7 +2729,9 @@ static t_u32 wlan_copy_rates(t_u8 *dest, t_u32 pos, t_u8 *src, int len)
     for (i = 0; i < len && src[i]; i++, pos++)
     {
         if (pos >= sizeof(WLAN_802_11_RATES))
+        {
             break;
+        }
         dest[pos] = src[i];
     }
 
@@ -2798,10 +2823,12 @@ static mlan_private *wlan_get_priv_by_id(mlan_adapter *pmadapter, t_u32 bss_num,
 
     for (i = 0; i < MIN(pmadapter->priv_num, MLAN_MAX_BSS_NUM); i++)
     {
-        if (pmadapter->priv[i])
+        if (pmadapter->priv[i] != MNULL)
         {
             if ((pmadapter->priv[i]->bss_num == bss_num) && (pmadapter->priv[i]->bss_type == bss_type))
+            {
                 return (pmadapter->priv[i]);
+            }
         }
     }
     return MNULL;
@@ -2823,10 +2850,12 @@ static mlan_private *wlan_get_priv(mlan_adapter *pmadapter, mlan_bss_role bss_ro
 
     for (i = 0; i < MIN(pmadapter->priv_num, MLAN_MAX_BSS_NUM); i++)
     {
-        if (pmadapter->priv[i])
+        if (pmadapter->priv[i] != MNULL)
         {
             if (bss_role == MLAN_BSS_ROLE_ANY || GET_BSS_ROLE(pmadapter->priv[i]) == bss_role)
+            {
                 return (pmadapter->priv[i]);
+            }
         }
     }
     return MNULL;
@@ -2854,16 +2883,21 @@ static int wlan_count_priv_cond(mlan_adapter *pmadapter,
     int i;
 
     if (pmadapter == MNULL || count_cond == MNULL)
+    {
         return 0;
+    }
 
     for (i = 0; i < pmadapter->priv_num; i++)
     {
-        if ((pmpriv = pmadapter->priv[i]))
+        pmpriv = pmadapter->priv[i];
+        if (pmpriv != MNULL)
         {
-            if ((check_cond == MNULL) || (check_cond && check_cond(pmpriv)))
+            if ((check_cond == MNULL) || (check_cond != MNULL && check_cond(pmpriv)))
             {
                 if (count_cond(pmpriv))
+                {
                     count++;
+                }
             }
         }
     }
@@ -2892,13 +2926,16 @@ static int wlan_do_task_on_privs(mlan_adapter *pmadapter,
     int i;
 
     if (pmadapter == MNULL || operation == MNULL)
+    {
         return 0;
+    }
 
     for (i = 0; i < pmadapter->priv_num; i++)
     {
-        if ((pmpriv = pmadapter->priv[i]))
+        pmpriv = pmadapter->priv[i];
+        if (pmpriv != MNULL)
         {
-            if ((check_cond == MNULL) || (check_cond && check_cond(pmpriv)))
+            if ((check_cond == MNULL) || (check_cond != MNULL && check_cond(pmpriv)))
             {
                 operation(pmpriv);
                 count++;
@@ -2935,11 +2972,14 @@ static int wlan_get_privs_by_cond(mlan_adapter *pmadapter,
     int i;
 
     if (pmadapter == MNULL || check_cond == MNULL || ppriv_list == MNULL)
+    {
         return 0;
+    }
 
     for (i = 0; i < pmadapter->priv_num; i++)
     {
-        if ((pmpriv = pmadapter->priv[i]))
+        pmpriv = pmadapter->priv[i];
+        if (pmpriv != MNULL)
         {
             if (check_cond(pmpriv))
             {
@@ -2983,11 +3023,14 @@ static int wlan_get_privs_by_two_cond(mlan_adapter *pmadapter,
     int i;
 
     if (pmadapter == MNULL || check_cond == MNULL || check_cond_2 == MNULL || ppriv_list == MNULL)
+    {
         return 0;
+    }
 
     for (i = 0; i < pmadapter->priv_num; i++)
     {
-        if ((pmpriv = pmadapter->priv[i]))
+        pmpriv = pmadapter->priv[i];
+        if (pmpriv != MNULL)
         {
             if (and_conditions)
             {

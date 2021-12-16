@@ -39,7 +39,7 @@ Change log:
 #define MAX_BYTE_MODE_SIZE 512
 
 /** The base address for packet with multiple ports aggregation */
-#define SDIO_MPA_ADDR_BASE 0x1000
+#define SDIO_MPA_ADDR_BASE 0x1000U
 
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 
@@ -155,7 +155,9 @@ t_void wlan_interrupt(pmlan_adapter pmadapter);
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */
 /** Transfer data to card */
+#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_sdio_host_to_card(mlan_adapter *pmadapter, t_u8 type, mlan_buffer *mbuf, mlan_tx_param *tx_param);
+#endif /* CONFIG_MLAN_WMSDK */
 mlan_status wlan_set_sdio_gpio_int(IN pmlan_private priv);
 mlan_status wlan_cmd_sdio_gpio_int(pmlan_private pmpriv,
                                    IN HostCmd_DS_COMMAND *cmd,

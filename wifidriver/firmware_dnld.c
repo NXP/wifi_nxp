@@ -122,7 +122,9 @@ int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wlanfw
 
             // (void)PRINTF("len %d =>", len);
             if (len != 0U)
+            {
                 break;
+            }
         }
 
         if (!len)
@@ -155,7 +157,9 @@ int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wlanfw
 		else
 #endif
         if (st == WLAN_FW_IN_RAM)
+        {
             (void)memcpy(outbuf, wlanfw + offset, txlen);
+        }
 
         sdio_drv_write(ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
         offset += txlen;
@@ -336,7 +340,9 @@ int32_t firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_st
 	else
 #endif
     if (st == WLAN_FW_IN_RAM)
+    {
         wlanfw = fw_ram_start_addr;
+    }
 
     fwdnld_io_d("Start copying wlan firmware over sdio from 0x%x", (t_u32)wlanfw);
 
@@ -347,7 +353,9 @@ int32_t firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_st
 	else
 #endif
     if (st == WLAN_FW_IN_RAM)
+    {
         (void)memcpy(&wlanfwhdr, wlanfw, sizeof(wlanfwhdr));
+    }
 
     //	if (wlanfwhdr.magic_number != WLAN_MAGIC_NUM) {
     //		fwdnld_io_e("WLAN FW not detected in Flash.");

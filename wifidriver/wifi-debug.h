@@ -113,7 +113,9 @@
 void wifi_show_assoc_fail_reason(int status);
 
 void dump_mac_addr(const char *msg, unsigned char *addr);
+#ifdef DEBUG_11N_AGGR
 void dump_packet_header(const HostCmd_DS_COMMAND *cmd);
+#endif
 void dump_addba_req_rsp_packet(const HostCmd_DS_COMMAND *cmd);
 void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
 void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);

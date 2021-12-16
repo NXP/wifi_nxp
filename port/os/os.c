@@ -28,7 +28,7 @@
 #include <wm_os.h>
 #include <wmlog.h>
 
-WEAK int main();
+WEAK int main(void);
 
 #define mainTEST_TASK_PRIORITY (tskIDLE_PRIORITY)
 #define mainTEST_DELAY         (400 / portTICK_RATE_MS)
@@ -38,8 +38,10 @@ int os_timer_activate(os_timer_t *timer_t)
     int ret;
     portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-    if (!timer_t || !(*timer_t))
+    if (timer_t == NULL || (*timer_t) == NULL)
+    {
         return -WM_E_INVAL;
+    }
 
     /* Note:
      * XTimerStart, seconds argument is xBlockTime which means, the time,
@@ -56,14 +58,16 @@ int os_timer_activate(os_timer_t *timer_t)
         portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
     }
     else
+    {
         ret = xTimerStart(*timer_t, 0);
+    }
     return ret == pdPASS ? WM_SUCCESS : -WM_FAIL;
 }
 
 int os_timer_create(os_timer_t *timer_t,
                     const char *name,
                     os_timer_tick ticks,
-                    void (*call_back)(os_timer_arg_t),
+                    void (*call_back)(os_timer_arg_t xTimer),
                     void *cb_arg,
                     os_timer_reload_t reload,
                     os_timer_activate_t activate)
@@ -72,10 +76,14 @@ int os_timer_create(os_timer_t *timer_t,
 
     *timer_t = xTimerCreate(name, ticks, auto_reload, cb_arg, call_back);
     if (*timer_t == NULL)
+    {
         return -WM_FAIL;
+    }
 
     if (activate == OS_TIMER_AUTO_ACTIVATE)
+    {
         return os_timer_activate(timer_t);
+    }
 
     return WM_SUCCESS;
 }
@@ -88,7 +96,9 @@ int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue
     *qhandle = xQueueCreate(poolname->size / msgsize, msgsize);
     os_dprintf(" Queue Create: handle %p\r\n", *qhandle);
     if (*qhandle != NULL)
+    {
         return WM_SUCCESS;
+    }
     return -WM_FAIL;
 }
 
@@ -103,7 +113,9 @@ void vApplicationTickHook(void)
     for (i = 0; i < MAX_CUSTOM_HOOKS; i++)
     {
         if (g_os_tick_hooks[i] != NULL)
+        {
             g_os_tick_hooks[i]();
+        }
     }
 }
 
@@ -113,7 +125,9 @@ void vApplicationIdleHook(void)
     for (i = 0; i < MAX_CUSTOM_HOOKS; i++)
     {
         if (g_os_idle_hooks[i] != NULL)
+        {
             g_os_idle_hooks[i]();
+        }
     }
 }
 
@@ -148,12 +162,18 @@ typedef struct event_group_t
 static inline void os_event_flags_remove_node(event_wait_t *node, event_group_t *grp_ptr)
 {
     if (node->prev != NULL)
+    {
         node->prev->next = node->next;
+    }
     if (node->next != NULL)
+    {
         node->next->prev = node->prev;
+    }
     /* If only one node is present */
-    if (!node->next && !node->prev)
+    if (node->next == NULL && node->prev == NULL)
+    {
         grp_ptr->list = NULL;
+    }
     os_mem_free(node);
 }
 
@@ -161,7 +181,7 @@ int os_event_flags_create(event_group_handle_t *hnd)
 {
     int ret;
     event_group_t *eG = os_mem_alloc(sizeof(event_group_t));
-    if (!eG)
+    if (eG == NULL)
     {
         os_dprintf("ERROR:Mem allocation\r\n");
         return -WM_FAIL;
@@ -211,9 +231,13 @@ check_again:
     if ((option == EF_AND) || (option == EF_AND_CLEAR))
     {
         if ((eG->flags & requested_flags) == requested_flags)
+        {
             status = eG->flags;
+        }
         else
+        {
             status = 0;
+        }
     }
     else if ((option == EF_OR) || (option == EF_OR_CLEAR))
     {
@@ -232,7 +256,9 @@ check_again:
 
         /* Clear the requested flags from main flag */
         if ((option == EF_AND_CLEAR) || (option == EF_OR_CLEAR))
+        {
             eG->flags &= ~status;
+        }
 
         if (wait_done)
         {
@@ -253,7 +279,7 @@ check_again:
                 /* Add to link list */
                 /* Prepare a node to add in the link list */
                 node = os_mem_alloc(sizeof(event_wait_t));
-                if (!node)
+                if (node == NULL)
                 {
                     os_dprintf("ERROR:memory alloc\r\n");
                     os_mutex_put(&eG->mutex);
@@ -363,9 +389,13 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
 
     /* Set flags according to the set_option */
     if (option == EF_OR)
+    {
         eG->flags |= flags_to_set;
+    }
     else if (option == EF_AND)
+    {
         eG->flags &= flags_to_set;
+    }
     else
     {
         os_dprintf("ERROR:Invalid flag set option\r\n");
@@ -379,14 +409,18 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
         if (tmp->next == NULL)
         {
             if ((tmp->thread_mask & eG->flags) != 0U)
+            {
                 os_semaphore_put(&tmp->sem);
+            }
         }
         else
         {
             while (tmp != NULL)
             {
                 if ((tmp->thread_mask & eG->flags) != 0U)
+                {
                     os_semaphore_put(&tmp->sem);
+                }
                 tmp = tmp->next;
             }
         }
@@ -416,7 +450,9 @@ int os_event_flags_delete(event_group_handle_t *hnd)
     {
         tmp = eG->list;
         if (tmp->next == NULL)
+        {
             os_semaphore_put(&tmp->sem);
+        }
         else
         {
             while (tmp != NULL)
@@ -451,7 +487,9 @@ int os_event_flags_delete(event_group_handle_t *hnd)
         return -WM_FAIL;
     }
     else
+    {
         os_mutex_put(&eG->mutex);
+    }
 
     /* Delete the event group */
     os_mem_free(eG);
@@ -560,7 +598,7 @@ void os_rwlock_delete(os_rw_lock_t *lock)
 }
 
 /* returns time in micro-secs since time began */
-unsigned int os_get_timestamp()
+unsigned int os_get_timestamp(void)
 {
     uint32_t nticks;
     uint32_t counter;

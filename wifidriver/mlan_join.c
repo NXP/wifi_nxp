@@ -210,7 +210,7 @@ static mlan_status wlan_get_common_rates(
     ENTER();
 
     ret = pcb->moal_malloc(pmpriv->adapter->pmoal_handle, rate1_size, MLAN_MEM_DEF, &tmp);
-    if (ret != MLAN_STATUS_SUCCESS || !tmp)
+    if (ret != MLAN_STATUS_SUCCESS || (tmp == MNULL))
     {
         PRINTM(MERROR, "Failed to allocate buffer\n");
         ret = MLAN_STATUS_FAILURE;
@@ -225,7 +225,7 @@ static mlan_status wlan_get_common_rates(
         for (j = 0; tmp[j] && j < rate1_size; j++)
         {
             /* Check common rate, excluding the bit for basic rate */
-            if ((rate2[i] & 0x7F) == (tmp[j] & 0x7F))
+            if ((rate2[i] & 0x7FU) == (tmp[j] & 0x7FU))
             {
                 *rate1++ = tmp[j];
                 break;
@@ -240,9 +240,9 @@ static mlan_status wlan_get_common_rates(
 
     if (!pmpriv->is_data_rate_auto)
     {
-        while (*ptr)
+        while (*ptr != 0U)
         {
-            if ((*ptr & 0x7f) == pmpriv->data_rate)
+            if ((*ptr & 0x7fU) == pmpriv->data_rate)
             {
                 ret = MLAN_STATUS_SUCCESS;
                 goto done;
@@ -260,8 +260,10 @@ static mlan_status wlan_get_common_rates(
 
     ret = MLAN_STATUS_SUCCESS;
 done:
-    if (tmp)
+    if (tmp != MNULL)
+    {
         pcb->moal_mfree(pmpriv->adapter->pmoal_handle, tmp);
+    }
 
     LEAVE();
     return ret;
@@ -294,7 +296,8 @@ static mlan_status wlan_setup_rates_from_bssdesc(IN mlan_private *pmpriv,
     /* Get the STA supported rates */
     card_rates_size = wlan_get_active_data_rates(pmpriv, pmpriv->bss_mode, pmpriv->config_bands, card_rates);
     /* Get the common rates between AP and STA supported rates */
-    if (wlan_get_common_rates(pmpriv, pout_rates, WLAN_SUPPORTED_RATES, card_rates, card_rates_size))
+    if (wlan_get_common_rates(pmpriv, pout_rates, WLAN_SUPPORTED_RATES, card_rates, card_rates_size) !=
+        MLAN_STATUS_SUCCESS)
     {
         *pout_rates_size = 0;
         PRINTM(MERROR, "wlan_get_common_rates failed\n");
@@ -583,7 +586,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     pss_tlv->header.len = wlan_cpu_to_le16(pss_tlv->header.len);
 
     /* Get the common rates supported between the driver and the BSS Desc */
-    if (wlan_setup_rates_from_bssdesc(pmpriv, pbss_desc, rates, &rates_size))
+    if (wlan_setup_rates_from_bssdesc(pmpriv, pbss_desc, rates, &rates_size) != MLAN_STATUS_SUCCESS)
     {
         ret = MLAN_STATUS_FAILURE;
         goto done;
@@ -612,16 +615,24 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         pauth_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AUTH_TYPE);
         pauth_tlv->header.len  = sizeof(pauth_tlv->auth_type);
         if (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_SAE)
+        {
             pauth_tlv->auth_type = wlan_cpu_to_le16((t_u16)AssocAgentAuth_Wpa3Sae);
+        }
 #ifdef CONFIG_OWE
         else if ((pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OWE) ||
                  (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_OWE))
+        {
             pauth_tlv->auth_type = wlan_cpu_to_le16((t_u16)AssocAgentAuth_Owe);
+        }
 #endif
         else if (pmpriv->sec_info.wep_status == Wlan802_11WEPEnabled)
+        {
             pauth_tlv->auth_type = wlan_cpu_to_le16((t_u16)pmpriv->sec_info.authentication_mode);
+        }
         else
+        {
             pauth_tlv->auth_type = wlan_cpu_to_le16(MLAN_AUTH_MODE_OPEN);
+        }
         pos += sizeof(pauth_tlv->header) + pauth_tlv->header.len;
         pauth_tlv->header.len = wlan_cpu_to_le16(pauth_tlv->header.len);
     }
@@ -644,7 +655,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     if (IS_SUPPORT_MULTI_BANDS(pmadapter) && (pbss_desc->bss_band & pmpriv->config_bands) &&
         !(ISSUPP_11NENABLED(pmadapter->fw_cap_info) && (!pbss_desc->disable_11n) &&
-          (pmpriv->config_bands & BAND_GN || pmpriv->config_bands & BAND_AN) && (pbss_desc->pht_cap)))
+          (pmpriv->config_bands & BAND_GN || pmpriv->config_bands & BAND_AN) && (pbss_desc->pht_cap != MNULL)))
     {
         /* Append a channel TLV for the channel the attempted AP was found on */
         pchan_tlv              = (MrvlIEtypes_ChanListParamSet_t *)pos;
@@ -734,7 +745,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 pos += sizeof(prsn_ie_tlv->header) + prsn_ie_tlv->header.len;
                 prsn_ie_tlv->header.len = wlan_cpu_to_le16(prsn_ie_tlv->header.len);
             }
-            if (pbss_desc->prsn_ie)
+            if (pbss_desc->prsn_ie != MNULL)
             {
                 prsn_ie_tlv              = (MrvlIEtypes_RsnParamSet_t *)pos;
                 prsn_ie_tlv->header.type = (t_u16)(*(pbss_desc->prsn_ie)).ieee_hdr.element_id;
@@ -759,6 +770,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 prsn_ie_tlv->header.len = wlan_cpu_to_le16(prsn_ie_tlv->header.len);
             }
         }
+        else
+        {
+            /* Do nothing */
+        }
 #ifndef CONFIG_WPA2_ENTP
 #ifdef CONFIG_WPS2
     }
@@ -772,12 +787,20 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         wlan_cmd_append_11n_tlv(pmpriv, pbss_desc, &pos);
     }
     else if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
+    {
         wlan_add_ext_capa_info_ie(pmpriv, pbss_desc, &pos);
+    }
+    else
+    {
+        /* Do nothing */
+    }
 
 #ifdef CONFIG_11AC
     if (ISSUPP_11ACENABLED(pmadapter->fw_cap_info) && (!pbss_desc->disable_11n) &&
         wlan_11ac_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
+    {
         wlan_cmd_append_11ac_tlv(pmpriv, pbss_desc, &pos);
+    }
 #endif
 
 #ifdef CONFIG_11AX
@@ -937,11 +960,13 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     passoc_rsp              = (IEEEtypes_AssocRsp_t *)&resp->params;
     passoc_rsp->status_code = wlan_le16_to_cpu(passoc_rsp->status_code);
     if (pmpriv->media_connected == MTRUE)
+    {
         (void)__memcpy(pmpriv->adapter, cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address,
                        MLAN_MAC_ADDR_LENGTH);
+    }
 
-        /* fixme: Enable this when req. We may not need to save the
-           resp. buffer at all */
+    /* fixme: Enable this when req. We may not need to save the
+       resp. buffer at all */
 #ifndef CONFIG_MLAN_WMSDK
     HEXDUMP("ASSOC_RESP:", (t_u8 *)&resp->params, (resp->size - S_DS_GEN));
 
@@ -1006,35 +1031,52 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #endif /* CONFIG_MLAN_WMSDK */
 
     if (pbss_desc->wmm_ie.vend_hdr.element_id == WMM_IE)
+    {
         pmpriv->curr_bss_params.wmm_enabled = MTRUE;
+    }
     else
+    {
         pmpriv->curr_bss_params.wmm_enabled = MFALSE;
+    }
 
-    if ((pmpriv->wmm_required || (pbss_desc->pht_cap && (pbss_desc->pht_cap->ieee_hdr.element_id == HT_CAPABILITY))) &&
+    if ((pmpriv->wmm_required ||
+         ((pbss_desc->pht_cap != MNULL) && (pbss_desc->pht_cap->ieee_hdr.element_id == HT_CAPABILITY))) &&
         pmpriv->curr_bss_params.wmm_enabled)
+    {
         pmpriv->wmm_enabled = MTRUE;
+    }
     else
+    {
         pmpriv->wmm_enabled = MFALSE;
+    }
 
-        /* fixme: Enable if req */
+    /* fixme: Enable if req */
 #ifndef CONFIG_MLAN_WMSDK
     pmpriv->curr_bss_params.wmm_uapsd_enabled = MFALSE;
 
     if (pmpriv->wmm_enabled == MTRUE)
+    {
         pmpriv->curr_bss_params.wmm_uapsd_enabled = pbss_desc->wmm_ie.qos_info.qos_uapsd;
+    }
 
     PRINTM(MINFO, "ASSOC_RESP: curr_pkt_filter is 0x%x\n", pmpriv->curr_pkt_filter);
 #endif /* CONFIG_MLAN_WMSDK */
     if (pmpriv->sec_info.wpa_enabled || pmpriv->sec_info.wpa2_enabled)
+    {
         pmpriv->wpa_is_gtk_set = MFALSE;
+    }
 
 #ifndef CONFIG_MLAN_WMSDK
     if (pmpriv->wmm_enabled)
+    {
         /* Don't re-enable carrier until we get the WMM_GET_STATUS event */
         enable_data = MFALSE;
+    }
     else
+    {
         /* Since WMM is not enabled, setup the queues with the defaults */
         wlan_wmm_setup_queues(pmpriv);
+    }
 
     if (enable_data)
     {
@@ -1057,12 +1099,16 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #else
     pmpriv->rxpd_rate_info = 0;
 #endif
-    if (pbss_desc->pht_cap)
+    if (pbss_desc->pht_cap != MNULL)
     {
-        if (GETHT_MAXAMSDU(pbss_desc->pht_cap->ht_cap.ht_cap_info))
+        if ((GETHT_MAXAMSDU(pbss_desc->pht_cap->ht_cap.ht_cap_info)) != 0U)
+        {
             pmpriv->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
+        }
         else
+        {
             pmpriv->max_amsdu = MLAN_TX_DATA_BUF_SIZE_4K;
+        }
     }
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -1079,7 +1125,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                    (t_u8 *)pmpriv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
 #endif /* CONFIG_MLAN_WMSDK */
     /* Add the ra_list here for infra mode as there will be only 1 ra always */
-    if (media_connected)
+    if (media_connected == MTRUE)
     {
 #ifndef CONFIG_MLAN_WMSDK
         /** replace ralist's mac address with new mac address */
@@ -1115,7 +1161,9 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     if (pmpriv->sec_info.wpa_enabled || pmpriv->sec_info.wpa2_enabled || pmpriv->sec_info.ewpa_enabled ||
         pmpriv->sec_info.wapi_enabled)
+    {
         pmpriv->scan_block = MTRUE;
+    }
 
     /* done: */
     /* Need to indicate IOCTL complete */
@@ -1123,10 +1171,14 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     {
         if (ret != MLAN_STATUS_SUCCESS)
         {
-            if (passoc_rsp->status_code)
+            if (passoc_rsp->status_code != 0U)
+            {
                 pioctl_req->status_code = wlan_le16_to_cpu(passoc_rsp->status_code);
+            }
             else
+            {
                 pioctl_req->status_code = MLAN_ERROR_CMD_ASSOC_FAIL;
+            }
         }
         else
         {
@@ -1801,8 +1853,10 @@ mlan_status wlan_associate(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN BS
     /* Return error if the pmadapter or table entry is not marked as infra */
     if ((pmpriv->bss_mode != MLAN_BSS_MODE_INFRA) || (pbss_desc->bss_mode != MLAN_BSS_MODE_INFRA))
     {
-        if (pioctl_req)
+        if (pioctl_req != MNULL)
+        {
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+        }
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }

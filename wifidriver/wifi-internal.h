@@ -35,9 +35,9 @@
 
 typedef struct
 {
-    int (*wifi_uap_set_params_p)();
+    int (*wifi_uap_set_params_p)(void);
     int (*wifi_uap_downld_domain_params_p)(MrvlIEtypes_DomainParamSet_t *dp);
-    int (*wifi_uap_enable_11d_p)();
+    int (*wifi_uap_enable_11d_p)(void);
 } wifi_uap_11d_apis_t;
 
 typedef struct mcast_filter
@@ -250,7 +250,9 @@ int bus_register_special_queue(xQueueHandle *special_queue);
 /**
  * Deregister special queue
  */
+#ifdef CONFIG_P2P
 void bus_deregister_special_queue(void);
+#endif
 
 /**
  * Register DATA input function with SDIO driver.
@@ -304,13 +306,13 @@ void *wifi_mem_malloc_cmdrespbuf(int size);
 void *wifi_malloc_eventbuf(int size);
 void wifi_free_eventbuf(void *buffer);
 
-int wifi_mem_cleanup();
+int wifi_mem_cleanup(void);
 void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);
 mlan_status wrapper_moal_mfree(t_void *pmoal_handle, t_u8 *pbuf);
 
-int wifi_sdio_lock();
-void wifi_sdio_unlock();
+int wifi_sdio_lock(void);
+void wifi_sdio_unlock(void);
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, unsigned int action);
 #endif /* __WIFI_INTERNAL_H__ */

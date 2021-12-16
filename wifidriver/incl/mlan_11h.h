@@ -92,12 +92,14 @@ extern t_s32 wlan_11h_issue_radar_detect(mlan_private *priv, pmlan_ioctl_req pio
 /** Check previously issued radar report for a channel */
 extern mlan_status wlan_11h_check_chan_report(mlan_private *priv, t_u8 chan);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Add any 11h TLVs necessary to complete an adhoc start command */
 extern t_s32 wlan_11h_process_start(mlan_private *priv,
                                     t_u8 **ppbuffer,
                                     IEEEtypes_CapInfo_t *pcap_info,
                                     t_u32 channel,
                                     wlan_11h_bss_info_t *p11h_bss_info);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Add any 11h TLVs necessary to complete a join command (adhoc or infra) */
 extern t_s32 wlan_11h_process_join(mlan_private *priv,

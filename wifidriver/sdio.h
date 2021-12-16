@@ -51,8 +51,8 @@ extern uint8_t outbuf[DATA_BUFFER_SIZE];
 
 extern uint8_t inbuf[];
 
-mlan_status sdio_init();
-mlan_status sdio_ioport_init();
+mlan_status sdio_init(void);
+mlan_status sdio_ioport_init(void);
 void calculate_sdio_write_params(t_u32 txlen, t_u32 *tx_blocks, t_u32 *buflen);
 int wlan_card_status(t_u8 bits);
 t_u16 wlan_card_read_f1_base_regs(void);

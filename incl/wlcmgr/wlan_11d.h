@@ -81,7 +81,7 @@
  * \return -WM_FAIL if operation was failed.
  * \return WM_SUCCESS if operation was successful.
  */
-static inline int wlan_enable_11d()
+static inline int wlan_enable_11d(void)
 {
     return wifi_enable_11d_support();
 }
@@ -95,7 +95,7 @@ static inline int wlan_enable_11d()
  * \return Country code. Refer to \ref country_code_t.
  *
  */
-static inline int wlan_get_country()
+static inline int wlan_get_country(void)
 {
     return wifi_get_country();
 }

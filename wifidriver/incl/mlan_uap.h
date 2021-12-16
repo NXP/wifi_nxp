@@ -68,7 +68,7 @@ Change log:
 #define UAP_BAND_CONFIG_5GHZ 0x01
 
 /** Packet forwarding to be done by FW or host */
-#define PKT_FWD_FW_BIT 0x01
+#define PKT_FWD_FW_BIT 0x01U
 /** Intra-BSS broadcast packet forwarding allow bit */
 #define PKT_FWD_INTRA_BCAST 0x02
 /** Intra-BSS unicast packet forwarding allow bit */
@@ -80,12 +80,15 @@ Change log:
 /** Inter-BSS unicast packet */
 #define PKT_INTER_UCAST 0x02
 /** Enable Host PKT forwarding */
-#define PKT_FWD_ENABLE_BIT 0x01
+#define PKT_FWD_ENABLE_BIT 0x01U
 
 mlan_status wlan_uap_get_channel(IN pmlan_private pmpriv);
 
+#ifndef CONFIG_MLAN_WMSDK
+
 mlan_status wlan_uap_set_channel(IN pmlan_private pmpriv, IN t_u8 uap_band_cfg, IN t_u8 channel);
 
+#endif
 mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv);
 
 mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req);

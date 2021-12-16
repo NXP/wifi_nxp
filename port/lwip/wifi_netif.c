@@ -73,7 +73,9 @@ void deliver_packet_above(struct pbuf *p, int recv_interface)
             if (recv_interface >= MAX_INTERFACES_SUPPORTED)
             {
                 while (true)
+                {
                     ;
+                }
             }
 
             /* full packet send to tcpip_thread to process */
@@ -112,8 +114,10 @@ static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 {
     /* We allocate a pbuf chain of pbufs from the pool. */
     struct pbuf *p = pbuf_alloc(PBUF_RAW, datalen, PBUF_POOL);
-    if (!p)
+    if (p == NULL)
+    {
         return NULL;
+    }
 
     if (pbuf_take(p, payload, datalen) != 0)
     {
@@ -219,7 +223,9 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
                 }
             }
             else
+            {
                 deliver_packet_above(p, recv_interface);
+            }
 #else  /* ! CONFIG_11N */
             deliver_packet_above(p, recv_interface);
 #endif /* CONFIG_11N */
@@ -242,13 +248,15 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen)
 {
     if (netif_arr[interface] != NULL)
+    {
         process_data_packet(rcvdata, datalen);
+    }
 }
 
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
 {
     struct pbuf *p = gen_pbuf_from_data(rcvdata, datalen);
-    if (!p)
+    if (p == NULL)
     {
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
         return;
@@ -358,8 +366,10 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #else
     uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
 #endif
-    if (!outbuf)
+    if (outbuf == NULL)
+    {
         return ERR_MEM;
+    }
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
