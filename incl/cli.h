@@ -145,7 +145,7 @@ int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb);
  * \return true if echo is enabled
  * \return false if echo is disabled
  */
-bool cli_get_echo_mode();
+bool cli_get_echo_mode(void);
 
 /** Set the 'echo' mode for CLI
  *

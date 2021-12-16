@@ -87,8 +87,8 @@ struct dns_server_data
 };
 
 int dns_server_init(void *intrfc_handle);
-void dns_process_packet();
-uint32_t dns_get_nameserver();
-int dns_get_maxsock();
-void dns_free_allocations();
+void dns_process_packet(void);
+uint32_t dns_get_nameserver(void);
+int dns_get_maxsock(fd_set *rfds);
+void dns_free_allocations(void);
 #endif /* __DNS_H__ */

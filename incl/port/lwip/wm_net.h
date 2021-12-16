@@ -171,7 +171,9 @@ static inline int net_gethostbyname(const char *cp, struct hostent **hentry)
 {
     struct hostent *he;
     if ((he = gethostbyname(cp)) == NULL)
+    {
         return -WM_FAIL;
+    }
 
     *hentry = he;
     return WM_SUCCESS;
@@ -203,7 +205,9 @@ static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
 {
     if (((struct eth_hdr *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
         ((struct eth_hdr *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
+    {
         return true;
+    }
     return false;
 }
 

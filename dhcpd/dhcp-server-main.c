@@ -47,9 +47,11 @@ int dhcp_server_start(void *intrfc_handle)
 
     dhcp_d("DHCP server start request");
     if (dhcpd_running || dhcp_server_init(intrfc_handle))
+    {
         return -WM_E_DHCPD_SERVER_RUNNING;
+    }
 
-    ret = os_thread_create(&dhcpd_thread, "dhcp-server", dhcp_server, 0, &dhcp_stack, OS_PRIO_3);
+    ret = os_thread_create(&dhcpd_thread, "dhcp-server", dhcp_server, NULL, &dhcp_stack, OS_PRIO_3);
     if (ret != 0)
     {
         dhcp_free_allocations();
@@ -74,7 +76,9 @@ void dhcp_server_stop(void)
         os_thread_sleep(os_msec_to_ticks(50));
 
         if (os_thread_delete(&dhcpd_thread) != WM_SUCCESS)
+        {
             dhcp_w("failed to delete thread");
+        }
         dhcpd_running = 0;
     }
     else

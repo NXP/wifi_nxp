@@ -39,7 +39,9 @@ int string_equal(const char *s1, const char *s2)
     size_t len = strlen(s1);
 
     if (len == strlen(s2) && !strncmp(s1, s2, len))
+    {
         return 1;
+    }
     return 0;
 }
 
@@ -52,11 +54,17 @@ int string_equal(const char *s1, const char *s2)
 uint8_t hexc2bin(char chr)
 {
     if (chr >= '0' && chr <= '9')
+    {
         chr -= '0';
+    }
     else if (chr >= 'A' && chr <= 'F')
+    {
         chr -= ('A' - 10);
+    }
     else if (chr >= 'a' && chr <= 'f')
+    {
         chr -= ('a' - 10);
+    }
     else
     { /* Do Nothing */
     }
@@ -96,8 +104,12 @@ int ISDIGIT(char *x)
 {
     unsigned int i;
     for (i = 0; i < strlen(x); i++)
+    {
         if (isdigit((unsigned char)x[i]) == 0)
+        {
             return 0;
+        }
+    }
     return 1;
 }
 
@@ -110,11 +122,17 @@ int ISDIGIT(char *x)
 static int hex2num(char c)
 {
     if (c >= '0' && c <= '9')
+    {
         return c - '0';
+    }
     if (c >= 'a' && c <= 'f')
+    {
         return c - 'a' + 10;
+    }
     if (c >= 'A' && c <= 'F')
+    {
         return c - 'A' + 10;
+    }
 
     return -1;
 }
@@ -139,7 +157,9 @@ int ishexstring(void *hex)
     {
         a = hex2num(*p);
         if (a < 0)
+        {
             return 0;
+        }
         p++;
     }
     return 1;
@@ -159,7 +179,7 @@ uint32_t a2hex_or_atoi(char *value)
     }
     else if (isdigit((unsigned char)*value) != 0)
     {
-        return atoi(value);
+        return strtol(value, NULL, 10);
     }
     else
     {
@@ -175,7 +195,9 @@ int get_uint(const char *arg, unsigned int *dest, unsigned int len)
     for (i = 0; i < len; i++)
     {
         if (arg[i] < '0' || arg[i] > '9')
+        {
             return 1;
+        }
         val *= 10;
         val += arg[i] - '0';
     }
@@ -193,7 +215,9 @@ int get_mac(const char *arg, char *dest, char sep)
     int i, j, k;
 
     if (strlen(arg) < 17)
+    {
         return 1;
+    }
 
     (void)memset(dest, 0, 6);
 
@@ -202,19 +226,29 @@ int get_mac(const char *arg, char *dest, char sep)
         for (j = 0; j < 2; j++)
         {
             if (arg[i + j] >= '0' && arg[i + j] <= '9')
+            {
                 n = arg[i + j] - '0';
+            }
             else if (arg[i + j] >= 'A' && arg[i + j] <= 'F')
+            {
                 n = arg[i + j] - 'A' + 10;
+            }
             else if (arg[i + j] >= 'a' && arg[i + j] <= 'f')
+            {
                 n = arg[i + j] - 'a' + 10;
+            }
             else
+            {
                 return 1;
+            }
 
             n <<= 4 * (1 - j);
             dest[k] += n;
         }
         if (i < 15 && arg[i + 2] != sep)
+        {
             return 1;
+        }
     }
 
     return 0;
@@ -233,21 +267,31 @@ int cli_getopt(int argc, char **argv, const char *fmt)
     char *opt, *c;
 
     if (cli_optind == argc)
+    {
         return -1;
+    }
     cli_optarg = NULL;
     opt        = argv[cli_optind];
     if (opt[0] != '-')
+    {
         return -1;
+    }
     if (opt[0] == 0 || opt[1] == 0)
+    {
         return '?';
+    }
     cli_optind++;
     c = strchr(fmt, opt[1]);
     if (c == NULL)
+    {
         return opt[1];
+    }
     if (c[1] == ':')
     {
         if (cli_optind < argc)
+        {
             cli_optarg = argv[cli_optind++];
+        }
     }
     return c[0];
 }
