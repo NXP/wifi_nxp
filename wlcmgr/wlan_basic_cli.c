@@ -29,7 +29,7 @@
 
 void test_wfa_wlan_version(int argc, char **argv)
 {
-    int i;
+    unsigned char i;
     char version_str[MLAN_MAX_VER_STR_LEN];
     char *ext_ver_str = wlan_get_firmware_version_ext();
     strcpy(version_str, ext_ver_str);
@@ -63,9 +63,13 @@ static void test_wlan_get_mac_address(int argc, char **argv)
 
     (void)PRINTF("MAC address\r\n");
     if (wlan_get_mac_address(mac) != 0)
+    {
         (void)PRINTF("Error: unable to retrieve MAC address\r\n");
+    }
     else
+    {
         (void)PRINTF("%02X:%02X:%02X:%02X:%02X:%02X\r\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
 #ifdef CONFIG_P2P
     (void)PRINTF("P2P MAC address\r\n");
     if (wlan_get_wfd_mac_address(mac))
@@ -89,11 +93,15 @@ static bool wlan_wfa_basic_cli_init_done = false;
 
 int wlan_wfa_basic_cli_init(void)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(wlan_wfa_basic_commands) / sizeof(struct cli_command); i++)
+    {
         if (cli_register_command(&wlan_wfa_basic_commands[i]) != 0)
+        {
             return WLAN_ERROR_ACTION;
+        }
+    }
 
     wlan_wfa_basic_cli_init_done = true;
 
@@ -102,14 +110,20 @@ int wlan_wfa_basic_cli_init(void)
 
 int wlan_basic_cli_init(void)
 {
-    int i;
+    unsigned int i;
 
     if (wlan_wfa_basic_cli_init_done)
+    {
         return WLAN_ERROR_NONE;
+    }
 
     for (i = 0; i < sizeof(wlan_basic_commands) / sizeof(struct cli_command); i++)
+    {
         if (cli_register_command(&wlan_basic_commands[i]) != 0)
+        {
             return WLAN_ERROR_ACTION;
+        }
+    }
 
     return WLAN_ERROR_NONE;
 }

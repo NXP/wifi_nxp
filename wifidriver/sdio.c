@@ -103,7 +103,9 @@ int wlan_card_status(t_u8 bits)
     for (tries = 0; tries < MAX_POLL_TRIES; tries++)
     {
         if (!(sdio_drv_creg_read(CARD_TO_HOST_EVENT_REG, 1, &resp)))
+        {
             return false;
+        }
         if ((resp & bits) == bits)
         {
             return true;
@@ -118,7 +120,7 @@ void calculate_sdio_write_params(t_u32 txlen, t_u32 *tx_blocks, t_u32 *buflen)
     *tx_blocks = 1;
     *buflen    = MLAN_SDIO_BLOCK_SIZE;
 
-    if (txlen > 512)
+    if (txlen > 512U)
     {
         *tx_blocks = (txlen + MLAN_SDIO_BLOCK_SIZE_FW_DNLD - 1) / MLAN_SDIO_BLOCK_SIZE_FW_DNLD;
         /* this is really blksize */
@@ -139,13 +141,13 @@ static uint32_t wlan_card_read_scratch_reg(void)
     uint32_t rd_len = 0;
 
     sdio_drv_creg_read(0x64, 1, &val);
-    rd_len = (val & 0xff);
+    rd_len = (val & 0xffU);
     sdio_drv_creg_read(0x65, 1, &val);
-    rd_len |= ((val & 0xff) << 8);
+    rd_len |= ((val & 0xffU) << 8);
     sdio_drv_creg_read(0x66, 1, &val);
-    rd_len |= ((val & 0xff) << 16);
+    rd_len |= ((val & 0xffU) << 16);
     sdio_drv_creg_read(0x67, 1, &val);
-    rd_len |= ((val & 0xff) << 24);
+    rd_len |= ((val & 0xffU) << 24);
 
     return rd_len;
 }
@@ -213,14 +215,14 @@ t_u16 wlan_card_read_f1_base_regs(void)
     uint32_t resp = 0;
 
     sdio_drv_creg_read(READ_BASE_0_REG, 1, &resp);
-    reg = resp & 0xff;
+    reg = resp & 0xffU;
     sdio_drv_creg_read(READ_BASE_1_REG, 1, &resp);
-    reg |= (resp & 0xff) << 8;
+    reg |= (resp & 0xffU) << 8;
 
     return reg;
 }
 
-mlan_status sdio_init()
+mlan_status sdio_init(void)
 {
     uint32_t resp;
     /* Initialize SDIO driver */
@@ -240,14 +242,14 @@ mlan_status sdio_init()
 #endif
     int ret;
     ret = sdio_drv_creg_read(CARD_TO_HOST_EVENT_REG, 1, &resp);
-    if (ret && (resp & (DN_LD_CARD_RDY)) == 0)
+    if (ret && (resp & (DN_LD_CARD_RDY)) == 0U)
     {
         ret = wlan_card_status(UP_LD_CARD_RDY);
         if (ret != 0)
         {
             uint32_t rd_len;
             rd_len = wlan_card_read_scratch_reg();
-            if (rd_len > 0)
+            if (rd_len > 0U)
             {
                 sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0x8, &resp);
                 sdio_drv_creg_write(FN1_BLOCK_SIZE_1, 0, 0x0, &resp);
@@ -276,7 +278,7 @@ mlan_status sdio_init()
     return MLAN_STATUS_SUCCESS;
 }
 
-mlan_status sdio_ioport_init()
+mlan_status sdio_ioport_init(void)
 {
     int sdiostatus = MLAN_STATUS_SUCCESS;
     /* this sets intmask on card and makes interrupts repeatable */

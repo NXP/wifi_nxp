@@ -935,7 +935,9 @@ static int wlan_dequeue_tx_packet(pmlan_adapter pmadapter)
             {
                 PRINTM(MDAT_D, "tid_del=%d tid=%d\n", tid_del, tid);
                 wlan_11n_create_txbastream_tbl(priv, ptr->ra, tid, BA_STREAM_SETUP_INPROGRESS);
+#ifndef CONFIG_MLAN_WMSDK
                 wlan_send_delba(priv, tid_del, ra, 1);
+#endif
             }
         }
         if (wlan_is_amsdu_allowed(priv, ptr, tid) &&
@@ -1280,14 +1282,15 @@ void wlan_ralist_add(mlan_private *priv, t_u8 *ra)
  */
 t_void wlan_wmm_init(pmlan_adapter pmadapter)
 {
-    int i, j;
+    t_u8 i, j;
     pmlan_private priv;
 
     ENTER();
 
     for (j = 0; j < pmadapter->priv_num; ++j)
     {
-        if ((priv = pmadapter->priv[j]))
+        priv = pmadapter->priv[j];
+        if (priv != MNULL)
         {
             for (i = 0; i < MAX_NUM_TID; ++i)
             {
@@ -1761,18 +1764,18 @@ t_u32 wlan_wmm_process_association_req(pmlan_private priv,
     ENTER();
 
     /* Null checks */
-    if (!ppAssocBuf)
+    if (ppAssocBuf == MNULL)
     {
         LEAVE();
         return 0;
     }
-    if (!(*ppAssocBuf))
+    if ((*ppAssocBuf) == MNULL)
     {
         LEAVE();
         return 0;
     }
 
-    if (!pWmmIE)
+    if (pWmmIE == MNULL)
     {
         LEAVE();
         return 0;
@@ -1780,7 +1783,7 @@ t_u32 wlan_wmm_process_association_req(pmlan_private priv,
 
     PRINTM(MINFO, "WMM: process assoc req: bss->wmmIe=0x%x\n", pWmmIE->vend_hdr.element_id);
 
-    if ((priv->wmm_required || (pHTCap && (pHTCap->ieee_hdr.element_id == HT_CAPABILITY) &&
+    if ((priv->wmm_required || ((pHTCap != MNULL) && (pHTCap->ieee_hdr.element_id == HT_CAPABILITY) &&
                                 (priv->config_bands & BAND_GN || priv->config_bands & BAND_AN))) &&
         pWmmIE->vend_hdr.element_id == WMM_IE)
     {
@@ -1789,9 +1792,11 @@ t_u32 wlan_wmm_process_association_req(pmlan_private priv,
         pwmm_tlv->header.type = wlan_cpu_to_le16(pwmm_tlv->header.type);
         pwmm_tlv->header.len  = (t_u16)wmm_info_ie[1];
         (void)__memcpy(priv->adapter, pwmm_tlv->wmm_ie, &wmm_info_ie[2], pwmm_tlv->header.len);
-        if (pWmmIE->qos_info.qos_uapsd)
+        if (pWmmIE->qos_info.qos_uapsd != 0U)
+        {
             (void)__memcpy(priv->adapter, (t_u8 *)(pwmm_tlv->wmm_ie + pwmm_tlv->header.len - sizeof(priv->wmm_qosinfo)),
                            &priv->wmm_qosinfo, sizeof(priv->wmm_qosinfo));
+        }
 
         ret_len              = sizeof(pwmm_tlv->header) + pwmm_tlv->header.len;
         pwmm_tlv->header.len = wlan_cpu_to_le16(pwmm_tlv->header.len);

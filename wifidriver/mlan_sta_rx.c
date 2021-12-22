@@ -363,9 +363,11 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
         pmgmt_pkt_hdr->frm_len = wlan_le16_to_cpu(pmgmt_pkt_hdr->frm_len);
 
         if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)
+        {
             ret = wlan_process_802dot11_mgmt_pkt(
                 pmadapter->priv[pmbuf->bss_index], (t_u8 *)&pmgmt_pkt_hdr->wlan_header,
                 pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len));
+        }
         wlan_free_mlan_buffer(pmadapter, pmbuf);
         /* Free RxPD */
         os_mem_free(pmbuf->pbuf);
@@ -375,7 +377,7 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
         /* fixme */
         PRINTM(MMSG, "Is a management packet expected here?\n\r");
         os_enter_critical_section();
-        while (1)
+        while (true)
         {
         }
 #endif /* CONFIG_P2P */
@@ -397,14 +399,16 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
         goto done;
     }
 
-    if (queuing_ra_based(priv))
+    if (queuing_ra_based(priv) == MTRUE)
     {
         (void)__memcpy(pmadapter, ta, prx_pkt->eth803_hdr.src_addr, MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
         if ((rx_pkt_type != PKT_TYPE_BAR) && (prx_pd->priority < MAX_NUM_TID))
+        {
             priv->rx_seq[prx_pd->priority] = prx_pd->seq_num;
+        }
         (void)__memcpy(pmadapter, ta, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
     }
 

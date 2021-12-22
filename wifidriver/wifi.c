@@ -109,18 +109,18 @@ static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * M
 #endif
 int wifi_set_mac_multicast_addr(const char *mlist, uint32_t num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
-KEY_TYPE_ID get_sec_info();
+KEY_TYPE_ID get_sec_info(void);
 mlan_status wlan_process_int_status(void *pmadapter);
 void handle_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 #ifdef CONFIG_WMM
 static void wifi_driver_tx(void *data);
 #endif
-unsigned wifi_get_last_cmd_sent_ms()
+unsigned wifi_get_last_cmd_sent_ms(void)
 {
     return wm_wifi.last_sent_cmd_msec;
 }
 
-uint32_t wifi_get_value1()
+uint32_t wifi_get_value1(void)
 {
     return wifi_get_device_value1();
 }
@@ -138,7 +138,7 @@ void wifi_wake_up_card(uint32_t *resp)
  * in pending state. This function returns value
  * of pending flag true/false.
  */
-bool wifi_get_xfer_pending()
+bool wifi_get_xfer_pending(void)
 {
     return xfer_pending;
 }
@@ -150,7 +150,7 @@ void wifi_set_xfer_pending(bool xfer_val)
     xfer_pending = xfer_val;
 }
 
-void wifi_update_last_cmd_sent_ms()
+void wifi_update_last_cmd_sent_ms(void)
 {
     wm_wifi.last_sent_cmd_msec = os_ticks_to_msec(os_ticks_get());
 }
@@ -167,7 +167,7 @@ static int wifi_put_command_resp_sem(void)
 
 #define WL_ID_WIFI_CMD "wifi_cmd"
 
-int wifi_get_command_lock()
+int wifi_get_command_lock(void)
 {
     int rv; // = wakelock_get(WL_ID_WIFI_CMD);
             //	if (rv == WM_SUCCESS)
@@ -186,7 +186,7 @@ int wifi_put_mcastf_lock(void)
     return os_mutex_put(&wm_wifi.mcastf_mutex);
 }
 
-int wifi_put_command_lock()
+int wifi_put_command_lock(void)
 {
     int rv = WM_SUCCESS;
     //	rv = wakelock_put(WL_ID_WIFI_CMD);
@@ -918,8 +918,10 @@ void wifi_wfd_event(bool peer_event, bool action_frame, void *data)
 void wifi_event_completion(int event, enum wifi_event_reason result, void *data)
 {
     struct wifi_message msg;
-    if (!wm_wifi.wlc_mgr_event_queue)
+    if (wm_wifi.wlc_mgr_event_queue == MNULL)
+    {
         return;
+    }
 
     msg.data   = data;
     msg.reason = result;
@@ -934,12 +936,18 @@ static int cmp_mac_addr(uint8_t *mac_addr1, uint8_t *mac_addr2)
 {
     int i = 0;
 
-    if (!mac_addr1 || !mac_addr2)
+    if ((mac_addr1 == MNULL) || (mac_addr2 == MNULL))
+    {
         return 1;
+    }
 
     for (i = 0; i < MLAN_MAC_ADDR_LENGTH; i++)
+    {
         if (mac_addr1[i] != mac_addr2[i])
+        {
             return 1;
+        }
+    }
     return 0;
 }
 
@@ -963,7 +971,9 @@ static int add_mcast_ip(uint8_t *mac_addr)
         return WM_SUCCESS;
     }
     while (node_t->next != NULL && cmp_mac_addr(node_t->mac_addr, mac_addr))
+    {
         node_t = node_t->next;
+    }
 
     if (!cmp_mac_addr(node_t->mac_addr, mac_addr))
     {
@@ -1038,8 +1048,10 @@ static int make_filter_list(char *mlist, int maxlen)
         node_t = (struct mcast_filter *)node_t->next;
         mlist  = mlist + MLAN_MAC_ADDR_LENGTH;
         maddr_cnt++;
-        if (maddr_cnt > (maxlen / 6))
+        if (maddr_cnt > (maxlen / 6U))
+        {
             break;
+        }
     }
     wifi_put_mcastf_lock();
     return maddr_cnt;
@@ -1049,7 +1061,7 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
 {
     int i = 0, j = 0;
     uint32_t mac_addr_r = 0x01005E;
-    ipaddr              = ipaddr & 0x7FFFFF;
+    ipaddr              = ipaddr & 0x7FFFFFU;
     /* Generate Multicast Mapped Mac Address for IPv4
      * To get Multicast Mapped MAC address,
      * To calculate 6 byte Multicast-Mapped MAC Address.
@@ -1059,10 +1071,14 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      * 9bits).
      */
     for (i = 2; i >= 0; i--, j++)
+    {
         mac_addr[j] = (char)(mac_addr_r >> 8 * i) & 0xFF;
+    }
 
     for (i = 2; i >= 0; i--, j++)
+    {
         mac_addr[j] = (char)(ipaddr >> 8 * i) & 0xFF;
+    }
 }
 
 #ifdef CONFIG_IPV6
@@ -1101,7 +1117,9 @@ int wifi_add_mcast_filter(uint8_t *mac_addr)
     (void)memset(&mlist, 0x00, MAX_MCAST_LEN);
     ret = add_mcast_ip(mac_addr);
     if (ret != WM_SUCCESS)
+    {
         return ret;
+    }
     len = make_filter_list(mlist, MAX_MCAST_LEN);
     return wifi_set_mac_multicast_addr(mlist, len);
 }
@@ -1123,7 +1141,9 @@ int wifi_remove_mcast_filter(uint8_t *mac_addr)
     (void)memset(&mlist, 0x00, MAX_MCAST_LEN);
     ret = remove_mcast_ip(mac_addr);
     if (ret != WM_SUCCESS)
+    {
         return ret;
+    }
     len = make_filter_list(mlist, MAX_MCAST_LEN);
     ret = wifi_set_mac_multicast_addr(mlist, len);
     return ret;
@@ -1193,11 +1213,15 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
 
 int wifi_register_event_queue(os_queue_t *event_queue)
 {
-    if (!event_queue)
+    if (event_queue == MNULL)
+    {
         return -WM_E_INVAL;
+    }
 
     if (wm_wifi.wlc_mgr_event_queue != NULL)
+    {
         return -WM_FAIL;
+    }
 
     wm_wifi.wlc_mgr_event_queue = event_queue;
     return WM_SUCCESS;
@@ -1205,8 +1229,10 @@ int wifi_register_event_queue(os_queue_t *event_queue)
 
 int wifi_unregister_event_queue(os_queue_t *event_queue)
 {
-    if (!wm_wifi.wlc_mgr_event_queue || wm_wifi.wlc_mgr_event_queue != event_queue)
+    if ((wm_wifi.wlc_mgr_event_queue == MNULL) || wm_wifi.wlc_mgr_event_queue != event_queue)
+    {
         return -WM_FAIL;
+    }
 
     wm_wifi.wlc_mgr_event_queue = NULL;
     return WM_SUCCESS;
@@ -1281,7 +1307,7 @@ static void wifi_driver_main_loop(void *argv)
  * This function should be called when a packet is ready to be read
  * from the interface.
  */
-static void wifi_core_input()
+static void wifi_core_input(void)
 {
     int sta;
 
@@ -1310,7 +1336,7 @@ static void wifi_core_input()
     } /* for ;; */
 }
 
-static void wifi_core_deinit();
+static void wifi_core_deinit(void);
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 
 static int wifi_core_init(void)
@@ -1318,7 +1344,9 @@ static int wifi_core_init(void)
     int ret;
 
     if (wifi_core_init_done != 0U)
+    {
         return WM_SUCCESS;
+    }
 
     ret = os_mutex_create(&wm_wifi.command_lock, "command lock", OS_MUTEX_INHERIT);
 
@@ -1422,7 +1450,7 @@ fail:
     return -WM_FAIL;
 }
 
-static void wifi_core_deinit()
+static void wifi_core_deinit(void)
 {
     wifi_core_init_done = 0;
 
@@ -1485,7 +1513,9 @@ static void wifi_core_deinit()
 int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
 {
     if (wifi_init_done != 0U)
+    {
         return WM_SUCCESS;
+    }
 
     int ret = sd_wifi_init(WLAN_TYPE_NORMAL, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
     if (ret != 0)
@@ -1522,7 +1552,9 @@ int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
     }
 
     if (ret == WM_SUCCESS)
+    {
         wifi_init_done = 1;
+    }
 
     return ret;
 }
@@ -1630,14 +1662,16 @@ int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t
                                                                    const uint16_t len))
 {
     if (wm_wifi.data_intput_callback != NULL)
+    {
         return -WM_FAIL;
+    }
 
     wm_wifi.data_intput_callback = data_intput_callback;
 
     return WM_SUCCESS;
 }
 
-void wifi_deregister_data_input_callback()
+void wifi_deregister_data_input_callback(void)
 {
     wm_wifi.data_intput_callback = NULL;
 }
@@ -1647,14 +1681,16 @@ int wifi_register_amsdu_data_input_callback(void (*amsdu_data_intput_callback)(u
                                                                                uint16_t len))
 {
     if (wm_wifi.amsdu_data_intput_callback != NULL)
+    {
         return -WM_FAIL;
+    }
 
     wm_wifi.amsdu_data_intput_callback = amsdu_data_intput_callback;
 
     return WM_SUCCESS;
 }
 
-void wifi_deregister_amsdu_data_input_callback()
+void wifi_deregister_amsdu_data_input_callback(void)
 {
     wm_wifi.amsdu_data_intput_callback = NULL;
 }
@@ -1663,14 +1699,16 @@ int wifi_register_deliver_packet_above_callback(void (*deliver_packet_above_call
                                                                                       void *lwip_pbuf))
 {
     if (wm_wifi.deliver_packet_above_callback != NULL)
+    {
         return -WM_FAIL;
+    }
 
     wm_wifi.deliver_packet_above_callback = deliver_packet_above_callback;
 
     return WM_SUCCESS;
 }
 
-void wifi_deregister_deliver_packet_above_callback()
+void wifi_deregister_deliver_packet_above_callback(void)
 {
     wm_wifi.deliver_packet_above_callback = NULL;
 }
@@ -1678,14 +1716,16 @@ void wifi_deregister_deliver_packet_above_callback()
 int wifi_register_wrapper_net_is_ip_or_ipv6_callback(bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer))
 {
     if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback != NULL)
+    {
         return -WM_FAIL;
+    }
 
     wm_wifi.wrapper_net_is_ip_or_ipv6_callback = wrapper_net_is_ip_or_ipv6_callback;
 
     return WM_SUCCESS;
 }
 
-void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback()
+void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void)
 {
     wm_wifi.wrapper_net_is_ip_or_ipv6_callback = NULL;
 }
@@ -1886,7 +1926,7 @@ int wifi_low_level_output(const uint8_t interface,
     struct bus_message msg;
 #else
     int retry = retry_attempts;
-    int i;
+    mlan_status i;
 #endif
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
@@ -1994,11 +2034,11 @@ retry_xmit:
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
-            wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-                tid
+            wrapper_wlan_sta_ampdu_enable(tid);
+#else
+            wrapper_wlan_sta_ampdu_enable();
 #endif
-            );
         }
     }
 #endif
@@ -2007,7 +2047,9 @@ retry_xmit:
     if (interface == BSS_TYPE_UAP)
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
+        {
             wrapper_wlan_upa_ampdu_enable((uint8_t *)buffer);
+        }
     }
 #endif
 

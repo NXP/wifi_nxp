@@ -196,7 +196,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
     /* Allocate memory for adapter structure */
     if ((pmdevice->callbacks.moal_malloc(/* pmdevice->pmoal_handle */ NULL, sizeof(mlan_adapter), MLAN_MEM_DEF,
                                          (t_u8 **)&pmadapter) != MLAN_STATUS_SUCCESS) ||
-        !pmadapter)
+        (pmadapter == MNULL))
     {
         ret = MLAN_STATUS_FAILURE;
         goto exit_register;
@@ -289,7 +289,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
             /* For valid bss_attr, allocate memory for private structure */
             if ((pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(mlan_private), MLAN_MEM_DEF,
                                   (t_u8 **)&pmadapter->priv[i]) != MLAN_STATUS_SUCCESS) ||
-                !pmadapter->priv[i])
+                (pmadapter->priv[i] == MNULL))
             {
                 ret = MLAN_STATUS_FAILURE;
                 goto error;
@@ -317,7 +317,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
             pmadapter->priv[i]->bss_num   = (t_u8)pmdevice->bss_attr[i].bss_num;
 
             /* init function table */
-            for (j = 0; mlan_ops[j]; j++)
+            for (j = 0; mlan_ops[j] != MNULL; j++)
             {
                 if (mlan_ops[j]->bss_role == GET_BSS_ROLE(pmadapter->priv[i]))
                 {
@@ -335,7 +335,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
     }
 
     /* Allocate memory for member of adapter structure */
-    if (wlan_allocate_adapter(pmadapter))
+    if (wlan_allocate_adapter(pmadapter) != MLAN_STATUS_SUCCESS)
     {
         ret = MLAN_STATUS_FAILURE;
         goto error;

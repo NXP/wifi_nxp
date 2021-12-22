@@ -991,13 +991,17 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
         if (!bss->param.ssid_bssid.idx || bss->param.ssid_bssid.idx > pmadapter->num_in_scan_table)
         {
             /* Search for the requested SSID in the scan table */
-            if (bss->param.ssid_bssid.ssid.ssid_len)
+            if (bss->param.ssid_bssid.ssid.ssid_len != 0U)
             {
-                if (memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)))
+                if (memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)) != 0U)
+                {
                     i = wlan_find_ssid_in_list(pmpriv, &bss->param.ssid_bssid.ssid,
                                                (t_u8 *)&bss->param.ssid_bssid.bssid, MLAN_BSS_MODE_INFRA);
+                }
                 else
+                {
                     i = wlan_find_ssid_in_list(pmpriv, &bss->param.ssid_bssid.ssid, MNULL, MLAN_BSS_MODE_INFRA);
+                }
             }
             else
             {
@@ -1025,8 +1029,10 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
             /* fixme: enable if needed later */
             /* pmpriv->assoc_rsp_size = 0; */
             ret = wlan_associate(pmpriv, pioctl_req, &pmadapter->pscan_table[i]);
-            if (ret)
+            if (ret != MLAN_STATUS_SUCCESS)
+            {
                 goto start_ssid_done;
+            }
         }
         else
         {   /* i >= 0 */
@@ -1540,7 +1546,9 @@ static mlan_status wlan_power_ioctl_get_power(IN pmlan_adapter pmadapter,
     ret = wlan_prepare_cmd(pmpriv, cmd_no, HostCmd_ACT_GEN_GET, 0, (t_void *)pioctl_req, MNULL);
 
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
     LEAVE();
     return ret;
@@ -1587,7 +1595,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
     }
 
     ret = pcb->moal_malloc(pmadapter->pmoal_handle, MRVDRV_SIZE_OF_CMD_BUFFER, MLAN_MEM_DEF, &buf);
-    if (ret != MLAN_STATUS_SUCCESS || buf == MNULL)
+    if (ret != MLAN_STATUS_SUCCESS || (buf == MNULL))
     {
         PRINTM(MERROR, "ALLOC_CMD_BUF: Failed to allocate command buffer\n");
         pioctl_req->status_code = MLAN_ERROR_NO_MEM;
@@ -1643,10 +1651,14 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TXPWR_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req, buf);
 
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
-    if (buf)
+    if (buf != MNULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, buf);
+    }
 
 exit:
     LEAVE();
@@ -1714,7 +1726,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
 
     power = (mlan_ds_power_cfg *)pioctl_req->pbuf;
     ret   = pcb->moal_malloc(pmadapter->pmoal_handle, MRVDRV_SIZE_OF_CMD_BUFFER, MLAN_MEM_DEF, &buf);
-    if (ret != MLAN_STATUS_SUCCESS || buf == MNULL)
+    if (ret != MLAN_STATUS_SUCCESS || (buf == MNULL))
     {
         PRINTM(MERROR, "ALLOC_CMD_BUF: Failed to allocate command buffer\n");
         pioctl_req->status_code = MLAN_ERROR_NO_MEM;
@@ -1729,7 +1741,9 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     {
         case 1:
             if (data[0] == 0xFF)
+            {
                 txp_cfg->mode = 0;
+            }
             else
             {
                 pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
@@ -1771,6 +1785,10 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
                 pg->last_rate_code  = (t_u8)(data[0] - MLAN_RATE_INDEX_MCS0);
                 pg->ht_bandwidth    = ht_bw;
             }
+            else
+            {
+                /* Do Nothing */
+            }
             pg->power_min = (t_s8)data[1];
             pg->power_max = (t_s8)data[1];
             if (power->param.power_ext.len == 4)
@@ -1786,17 +1804,23 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     }
     if (ret == MLAN_STATUS_FAILURE)
     {
-        if (buf)
+        if (buf != MNULL)
+        {
             pcb->moal_mfree(pmadapter->pmoal_handle, buf);
+        }
         goto exit;
     }
 
     /* Send request to firmware */
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TXPWR_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req, buf);
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
-    if (buf)
+    }
+    if (buf != MNULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, buf);
+    }
 
 exit:
     LEAVE();
@@ -1832,15 +1856,23 @@ static mlan_status wlan_power_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
     {
         case MLAN_OID_POWER_CFG:
             if (pioctl_req->action == MLAN_ACT_GET)
+            {
                 status = wlan_power_ioctl_get_power(pmadapter, HostCmd_CMD_TXPWR_CFG, pioctl_req);
+            }
             else
+            {
                 status = wlan_power_ioctl_set_power(pmadapter, pioctl_req);
+            }
             break;
         case MLAN_OID_POWER_CFG_EXT:
             if (pioctl_req->action == MLAN_ACT_GET)
+            {
                 status = wlan_power_ioctl_get_power(pmadapter, HostCmd_CMD_TXPWR_CFG, pioctl_req);
+            }
             else
+            {
                 status = wlan_power_ioctl_set_power_ext(pmadapter, pioctl_req);
+            }
             break;
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
@@ -2843,7 +2875,9 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
     ENTER();
 
     if (pmpriv->wep_key_curr_index >= MRVL_NUM_WEP_KEY)
+    {
         pmpriv->wep_key_curr_index = 0;
+    }
     pwep_key = &pmpriv->wep_key[pmpriv->wep_key_curr_index];
     sec      = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
     if (sec->param.encrypt_key.key_index == MLAN_KEY_INDEX_DEFAULT)
@@ -2886,14 +2920,16 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
             /* call firmware remove key */
             ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_KEY_MATERIAL, HostCmd_ACT_GEN_SET, 0, MNULL,
                                    &sec->param.encrypt_key);
-            if (ret)
+            if (ret != MLAN_STATUS_SUCCESS)
+            {
                 goto exit;
+            }
 #endif
         }
     }
     else
     {
-        if (sec->param.encrypt_key.key_len)
+        if (sec->param.encrypt_key.key_len != 0U)
         {
             if ((sec->param.encrypt_key.key_len != WEP_104_BIT_LEN) &&
                 (sec->param.encrypt_key.key_len != WEP_40_BIT_LEN))
@@ -2901,11 +2937,17 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
                 PRINTM(MERROR, "Invalid wep key len=%d\n", sec->param.encrypt_key.key_len);
                 /* We will use random key to clear the key buffer in FW */
                 if (sec->param.encrypt_key.key_len < WEP_40_BIT_LEN)
+                {
                     sec->param.encrypt_key.key_len = WEP_40_BIT_LEN;
+                }
                 else
+                {
                     sec->param.encrypt_key.key_len = WEP_104_BIT_LEN;
+                }
                 for (i = 0; i < sec->param.encrypt_key.key_len; i++)
+                {
                     sec->param.encrypt_key.key_material[i] = wlan_get_random_charactor(pmadapter);
+                }
             }
             pwep_key = &pmpriv->wep_key[index];
             /* Cleanup */
@@ -2965,17 +3007,23 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
         }
     }
     if (pmpriv->sec_info.wep_status == Wlan802_11WEPEnabled)
+    {
         pmpriv->curr_pkt_filter |= HostCmd_ACT_MAC_WEP_ENABLE;
+    }
     else
+    {
         pmpriv->curr_pkt_filter &= ~HostCmd_ACT_MAC_WEP_ENABLE;
+    }
 
     /* Send request to firmware */
     if (pmpriv->sec_info.wep_status == Wlan802_11WEPEnabled && pwep_key->key_length)
     {
         ret =
             wlan_prepare_cmd(pmpriv, HostCmd_CMD_MAC_CONTROL, HostCmd_ACT_GEN_SET, 0, MNULL, &pmpriv->curr_pkt_filter);
-        if (ret)
+        if (ret != MLAN_STATUS_SUCCESS)
+        {
             goto exit;
+        }
 #ifdef KEY_MATERIAL_WEP
 #ifdef KEY_PARAM_SET_V2
         if (!sec->param.encrypt_key.key_len)
@@ -2997,7 +3045,7 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
     }
     else
     {
-        if (pwep_key->key_length)
+        if (pwep_key->key_length != 0U)
         {
 #ifdef KEY_MATERIAL_WEP
 #ifdef KEY_PARAM_SET_V2
@@ -3016,14 +3064,18 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
 #else
             ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SET_WEP, HostCmd_ACT_ADD, 0, MNULL, MNULL);
 #endif /* KEY_MATERIAL_WEP */
-            if (ret)
+            if (ret != MLAN_STATUS_SUCCESS)
+            {
                 goto exit;
+            }
         }
         ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_MAC_CONTROL, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
                                &pmpriv->curr_pkt_filter);
     }
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
 exit:
     LEAVE();
@@ -3134,7 +3186,9 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
                            &sec->param.encrypt_key);
 #else
     if (memcmp(pmadapter, sec->param.encrypt_key.mac_addr, broadcast_mac_addr, MLAN_MAC_ADDR_LENGTH))
+    {
         sec->param.encrypt_key.key_index |= MLAN_KEY_INDEX_UNICAST;
+    }
 
 #ifdef ENABLE_IBSS_WPA2
     if ((pmpriv->bss_mode == MLAN_BSS_MODE_IBSS) && (sec->param.encrypt_key.key_len == WPA_AES_KEY_LEN))
@@ -3299,14 +3353,20 @@ static mlan_status wlan_sec_ioctl_encrypt_key(IN pmlan_adapter pmadapter, IN pml
     {
 #ifdef WAPI
         if (sec->param.encrypt_key.is_wapi_key)
+        {
             status = wlan_sec_ioctl_set_wapi_key(pmadapter, pioctl_req);
+        }
         else
 #endif
 #ifdef WPA
             if (sec->param.encrypt_key.key_len > MAX_WEP_KEY_SIZE)
+        {
             status = wlan_sec_ioctl_set_wpa_key(pmadapter, pioctl_req);
+        }
         else
+        {
             status = wlan_sec_ioctl_set_wep_key(pmadapter, pioctl_req);
+        }
 #endif /* WPA */
     }
     else
@@ -3375,9 +3435,13 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         if (sec->param.passphrase.psk_type == MLAN_PSK_CLEAR)
+        {
             cmd_action = HostCmd_ACT_GEN_REMOVE;
+        }
         else
+        {
             cmd_action = HostCmd_ACT_GEN_SET;
+        }
     }
     else
     {
@@ -3398,7 +3462,9 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
 #endif /* CONFIG_MLAN_WMSDK */
             }
             else
+            {
                 (void)__memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
+            }
         }
         cmd_action = HostCmd_ACT_GEN_GET;
     }
@@ -3407,7 +3473,9 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_SUPPLICANT_PMK, cmd_action, 0, (t_void *)pioctl_req,
                            &sec->param.passphrase);
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
     LEAVE();
     return ret;
@@ -3436,9 +3504,13 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         if (sec->param.passphrase.psk_type == MLAN_PSK_CLEAR)
+        {
             cmd_action = HostCmd_ACT_GEN_REMOVE;
+        }
         else
+        {
             cmd_action = HostCmd_ACT_GEN_SET;
+        }
     }
     else
     {
@@ -3459,7 +3531,9 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
 #endif /* CONFIG_MLAN_WMSDK */
             }
             else
+            {
                 (void)__memset(pmadapter, &sec->param.passphrase.bssid, 0, MLAN_MAC_ADDR_LENGTH);
+            }
         }
         cmd_action = HostCmd_ACT_GEN_GET;
     }
@@ -3468,7 +3542,9 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_SUPPLICANT_PMK, cmd_action, 0, (t_void *)pioctl_req,
                            &sec->param.passphrase);
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
     LEAVE();
     return ret;
@@ -3936,7 +4012,9 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
 #endif
         case MLAN_OID_11D_DOMAIN_INFO:
             if (pmpriv->support_11d_APIs != NULL)
+            {
                 status = pmpriv->support_11d_APIs->wlan_11d_cfg_domain_info_p(pmadapter, pioctl_req);
+            }
             break;
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
@@ -4049,7 +4127,9 @@ static mlan_status wlan_reg_mem_ioctl_reg_rw(IN pmlan_adapter pmadapter, IN pmla
     ret = wlan_prepare_cmd(pmpriv, cmd_no, cmd_action, 0, (t_void *)pioctl_req, (t_void *)&reg_mem->param.reg_rw);
 
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
 exit:
     LEAVE();
@@ -5352,7 +5432,9 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
 #endif // WLAN_LOW_POWER_ENABLE
         default:
             if (pioctl_req != NULL)
+            {
                 pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+            }
             status = MLAN_STATUS_FAILURE;
             break;
     }
@@ -5684,7 +5766,9 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             break;
         case MLAN_IOCTL_11D_CFG:
             if (pmpriv->support_11d_APIs != NULL)
+            {
                 status = pmpriv->support_11d_APIs->wlan_11d_cfg_ioctl_p(pmpriv, pioctl_req);
+            }
             break;
 #ifndef CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_REG_MEM:

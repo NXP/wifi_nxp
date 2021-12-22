@@ -337,7 +337,9 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
             pmpriv->state_11d.enable_11d = (state_11d_t)ul_temp;
             /* Set user enable flag if called from ioctl */
             if (pioctl_buf != NULL)
+            {
                 pmpriv->state_11d.user_enable_11d = (state_11d_t)ul_temp;
+            }
         }
         /* Update state for 11h */
         if (oid == Dot11H_i)
@@ -442,7 +444,7 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
             }
             length -= sizeof(Power_Group_t);
         }
-        if (ppg_tlv->length > 0)
+        if (ppg_tlv->length > 0U)
         {
             pmpriv->min_tx_power_level = (t_u8)min_power;
             pmpriv->max_tx_power_level = (t_u8)max_power;
@@ -487,16 +489,20 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
         case HostCmd_ACT_GEN_GET:
             ppg_tlv->length = wlan_le16_to_cpu(ppg_tlv->length);
             if (pmpriv->adapter->hw_status == WlanHardwareStatusInitializing)
+            {
                 wlan_get_power_level(pmpriv, ptxp_cfg);
+            }
             pmpriv->tx_power_level = (t_u16)pg->power_min;
             PRINTM(MMSG, "The Sta tx power level: %d\r\n", pmpriv->tx_power_level);
             break;
 
         case HostCmd_ACT_GEN_SET:
-            if (wlan_le32_to_cpu(ptxp_cfg->mode))
+            if (wlan_le32_to_cpu(ptxp_cfg->mode) != 0U)
             {
                 if (pg->power_max == pg->power_min)
+                {
                     pmpriv->tx_power_level = (t_u16)pg->power_min;
+                }
             }
             break;
         default:
@@ -508,7 +514,7 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
     PRINTM(MINFO, "Current TxPower Level = %d,Max Power=%d, Min Power=%d\n", pmpriv->tx_power_level,
            pmpriv->max_tx_power_level, pmpriv->min_tx_power_level);
 
-    if (pioctl_buf)
+    if (pioctl_buf != MNULL)
     {
         power = (mlan_ds_power_cfg *)pioctl_buf->pbuf;
         if (action == HostCmd_ACT_GEN_GET)
@@ -517,15 +523,19 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
             {
                 pioctl_buf->data_read_written      = sizeof(mlan_power_cfg_t) + MLAN_SUB_COMMAND_SIZE;
                 power->param.power_cfg.power_level = pmpriv->tx_power_level;
-                if (wlan_le32_to_cpu(ptxp_cfg->mode))
+                if (wlan_le32_to_cpu(ptxp_cfg->mode) != 0U)
+                {
                     power->param.power_cfg.is_power_auto = 0;
+                }
                 else
+                {
                     power->param.power_cfg.is_power_auto = 1;
+                }
             }
             else
             {
                 power->param.power_ext.len = 0;
-                while (ppg_tlv->length)
+                while (ppg_tlv->length != 0U)
                 {
                     data[0] = pg->first_rate_code;
                     data[1] = pg->last_rate_code;
@@ -544,13 +554,17 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
                             data[1] |= TX_RATE_HT_BW40_BIT;
                         }
                     }
+                    else
+                    {
+                        /* Do Nothing */
+                    }
                     data[2] = pg->power_min;
                     data[3] = pg->power_max;
                     data[4] = pg->power_step;
                     (void)__memcpy(pmpriv->adapter,
                                    (t_u8 *)(&power->param.power_ext.power_data[power->param.power_ext.len]),
                                    (t_u8 *)data, sizeof(data));
-                    power->param.power_ext.len += 5;
+                    power->param.power_ext.len += 5U;
                     pg++;
                     ppg_tlv->length -= sizeof(Power_Group_t);
                 }

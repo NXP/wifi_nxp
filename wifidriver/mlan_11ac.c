@@ -167,7 +167,9 @@ static t_u8 wlan_get_nss_vht_mcs(t_u16 mcs_map_set)
     for (nss = 1; nss <= 8; nss++)
     {
         if (GET_VHTNSSMCS(mcs_map_set, nss) != NO_NSS_SUPPORT)
+        {
             nss_map |= 1 << (nss - 1);
+        }
     }
     PRINTM(MCMND, "Supported nss bit map:0x%02x\n", nss_map);
     return nss_map;
@@ -186,7 +188,9 @@ static t_u8 wlan_get_nss_num_vht_mcs(t_u16 mcs_map_set)
     for (nss = 1; nss <= 8; nss++)
     {
         if (GET_VHTNSSMCS(mcs_map_set, nss) != NO_NSS_SUPPORT)
+        {
             nss_num++;
+        }
     }
     PRINTM(MCMND, "Supported nss:%d\n", nss_num);
     return nss_num;
@@ -210,10 +214,14 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap, t_u8 ban
 
 #ifdef CONFIG_5GHz_SUPPORT
     if ((bands & BAND_A) != 0U)
+    {
         usr_dot_11ac_dev_cap = pmadapter->usr_dot_11ac_dev_cap_a;
+    }
     else
 #endif
+    {
         usr_dot_11ac_dev_cap = pmadapter->usr_dot_11ac_dev_cap_bg;
+    }
 
     vht_cap->vht_cap_info = usr_dot_11ac_dev_cap;
 
@@ -671,21 +679,27 @@ t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_m
     {
         max_mcs = (mcs_map >> (2 * i)) & 0x3;
         if (max_mcs < 3)
+        {
             nss = i;
+        }
     }
 
     max_mcs = (mcs_map >> (2 * nss)) & 0x3;
     /* if max_mcs is 3, nss must be 0 (SS = 1). Thus, max mcs is MCS 9*/
     if (max_mcs >= 3)
+    {
         max_mcs = 2;
+    }
 
     if (GET_VHTCAP_CHWDSET(usr_vht_cap_info) != 0)
     {
         /* support 160 MHz */
         max_rate = max_rate_lgi_160MHZ[nss][max_mcs];
         if (max_mcs >= 1 && max_rate == 0)
+        {
             /* MCS9 is not supported in NSS6 */
             max_rate = max_rate_lgi_160MHZ[nss][max_mcs - 1];
+        }
     }
     else
     {
@@ -693,8 +707,10 @@ t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_m
         {
             max_rate = max_rate_lgi_80MHZ[nss][max_mcs];
             if (max_mcs >= 1 && max_rate == 0)
+            {
                 /* MCS9 is not supported in NSS3 */
                 max_rate = max_rate_lgi_80MHZ[nss][max_mcs - 1];
+            }
         }
         else
         {
@@ -707,7 +723,9 @@ t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_m
                 max_rate = max_rate_lgi_20MHZ[nss][max_mcs];
                 /* MCS9 is not supported in NSS1/2/4/5/7/8 */
                 if (max_mcs >= 1 && max_rate == 0)
+                {
                     max_rate = max_rate_lgi_20MHZ[nss][max_mcs - 1];
+                }
             }
         }
     }
@@ -745,16 +763,22 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     /* rx MCS Set, find the minimum of the user rx mcs and ap rx mcs*/
     mcs_map_resp = mcs_map_user = GET_DEVRXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
     if (flag != 0U)
+    {
         mcs_map_resp = wlan_le16_to_cpu(pvht_cap->vht_cap.mcs_sets.rx_mcs_map);
+    }
     mcs_map_result = 0;
     for (nss = 1; nss <= 8; nss++)
     {
         mcs_user = GET_VHTNSSMCS(mcs_map_user, nss);
         mcs_resp = GET_VHTNSSMCS(mcs_map_resp, nss);
         if ((mcs_user == NO_NSS_SUPPORT) || (mcs_resp == NO_NSS_SUPPORT))
+        {
             SET_VHTNSSMCS(mcs_map_result, nss, NO_NSS_SUPPORT);
+        }
         else
+        {
             SET_VHTNSSMCS(mcs_map_result, nss, MIN(mcs_user, mcs_resp));
+        }
     }
     /* rx MCS map */
     pvht_cap->vht_cap.mcs_sets.rx_mcs_map = wlan_cpu_to_le16(mcs_map_result);
@@ -766,16 +790,22 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     /* tx MCS Set find the minimum of the user tx mcs and ap tx mcs */
     mcs_map_resp = mcs_map_user = GET_DEVTXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
     if (flag != 0U)
+    {
         mcs_map_resp = wlan_le16_to_cpu(pvht_cap->vht_cap.mcs_sets.tx_mcs_map);
+    }
     mcs_map_result = 0;
     for (nss = 1; nss <= 8; nss++)
     {
         mcs_user = GET_VHTNSSMCS(mcs_map_user, nss);
         mcs_resp = GET_VHTNSSMCS(mcs_map_resp, nss);
         if ((mcs_user == NO_NSS_SUPPORT) || (mcs_resp == NO_NSS_SUPPORT))
+        {
             SET_VHTNSSMCS(mcs_map_result, nss, NO_NSS_SUPPORT);
+        }
         else
+        {
             SET_VHTNSSMCS(mcs_map_result, nss, MIN(mcs_user, mcs_resp));
+        }
     }
 
     /* tx MCS map */
@@ -1012,7 +1042,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
         return 0;
     }
     /* VHT Capabilities IE */
-    if (pbss_desc->pvht_cap && wlan_get_nss_vht_mcs(pbss_desc->pvht_cap->vht_cap.mcs_sets.rx_mcs_map))
+    if (pbss_desc->pvht_cap != MNULL && wlan_get_nss_vht_mcs(pbss_desc->pvht_cap->vht_cap.mcs_sets.rx_mcs_map))
     {
         pvht_cap = (MrvlIETypes_VHTCap_t *)*ppbuffer;
         (void)__memset(pmadapter, pvht_cap, 0, sizeof(MrvlIETypes_VHTCap_t));
@@ -1044,14 +1074,18 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
     {
         pmrvl_oper_mode->oper_mode |= (pmadapter->usr_dot_11ac_opermode_nss - 1) << 4;
         pmrvl_oper_mode->oper_mode |= pmadapter->usr_dot_11ac_opermode_bw - 1;
-        if (pbss_desc->bss_band & BAND_G)
+        if ((pbss_desc->bss_band & BAND_G) != 0U)
         {
             if (!(IS_OPER_MODE_20M(pmrvl_oper_mode->oper_mode)))
             {
-                if (pbss_desc->pht_cap->ht_cap.ht_cap_info & MBIT(1))
+                if ((pbss_desc->pht_cap->ht_cap.ht_cap_info & MBIT(1)) != 0U)
+                {
                     SET_OPER_MODE_40M(pmrvl_oper_mode->oper_mode);
+                }
                 else
+                {
                     SET_OPER_MODE_20M(pmrvl_oper_mode->oper_mode);
+                }
             }
         }
     }
@@ -1157,7 +1191,9 @@ mlan_status wlan_cmd_11ac_cfg(IN pmlan_private pmpriv,
     vhtcfg->band_config = vht_cfg->band & 0xFF;
     vhtcfg->misc_config = vht_cfg->txrx & 0x3;
     if (vhtcfg->misc_config != 2)
+    {
         vhtcfg->misc_config |= (vht_cfg->bwcfg << 2);
+    }
 
     vhtcfg->vht_cap_info = wlan_cpu_to_le32(vht_cfg->vht_cap_info);
     vht_cfg->vht_rx_mcs  = wlan_cpu_to_le32(vht_cfg->vht_rx_mcs);
@@ -1244,10 +1280,14 @@ t_u8 wlan_11ac_bandconfig_allowed(mlan_private *pmpriv, t_u8 bss_band)
     if (pmpriv->bss_mode == MLAN_BSS_MODE_IBSS)
     {
         if ((bss_band & BAND_G) != 0)
+        {
             return (pmpriv->adapter->adhoc_start_band & BAND_GAC);
+        }
 #ifdef CONFIG_5GHz_SUPPORT
         else if ((bss_band & BAND_A) != 0)
+        {
             return (pmpriv->adapter->adhoc_start_band & BAND_AAC);
+        }
         else
         { /* Do Nothing */
         }
@@ -1256,10 +1296,14 @@ t_u8 wlan_11ac_bandconfig_allowed(mlan_private *pmpriv, t_u8 bss_band)
     else
     {
         if ((bss_band & BAND_G) != 0)
+        {
             return (pmpriv->config_bands & BAND_GAC);
+        }
 #ifdef CONFIG_5GHz_SUPPORT
         else if ((bss_band & BAND_A) != 0)
+        {
             return (pmpriv->config_bands & BAND_AAC);
+        }
         else
         { /* Do Nothing */
         }
