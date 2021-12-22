@@ -1725,10 +1725,12 @@ t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel)
                "is %srequired for channel %d\n",
                priv->adapter->cfp_code_bg, priv->adapter->cfp_code_a, (required ? "" : "not "), channel);
     else
+    {
         PRINTM(MINFO,
                "11h: Radar detection in region %#02x "
                "is %srequired for channel %d\n",
                priv->adapter->region_code, (required ? "" : "not "), channel);
+    }
 
     if (required == MTRUE && priv->media_connected == MTRUE && priv->curr_bss_params.bss_descriptor.channel == channel)
     {

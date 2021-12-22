@@ -173,16 +173,17 @@ static INLINE void wlan_11n_update_pktlen_amsdu_txpd(mlan_private *priv, pmlan_b
  *
  *  @return			Number of packets
  */
-static int wlan_11n_get_num_aggrpkts(t_u8 *data, int total_pkt_len)
+static int wlan_11n_get_num_aggrpkts(t_u8 *data, t_u32 total_pkt_len)
 {
-    int pkt_count = 0, pkt_len, pad;
+    int pkt_count = 0;
+    t_u32 pkt_len, pad;
 
     ENTER();
     while (total_pkt_len > 0)
     {
         /* Length will be in network format, change it to host */
         pkt_len = mlan_ntohs((*(t_u16 *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
-        pad     = (((pkt_len + sizeof(Eth803Hdr_t)) & 3)) ? (4 - ((pkt_len + sizeof(Eth803Hdr_t)) & 3)) : 0;
+        pad     = (((pkt_len + sizeof(Eth803Hdr_t)) & 3U)) ? (4U - ((pkt_len + sizeof(Eth803Hdr_t)) & 3U)) : 0U;
         data += pkt_len + pad + sizeof(Eth803Hdr_t);
         total_pkt_len -= pkt_len + pad + sizeof(Eth803Hdr_t);
         ++pkt_count;
@@ -206,7 +207,7 @@ static int wlan_11n_get_num_aggrpkts(t_u8 *data, int total_pkt_len)
 mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 {
     t_u16 pkt_len;
-    int total_pkt_len;
+    t_u32 total_pkt_len;
     t_u8 *data;
     int pad;
     mlan_status ret = MLAN_STATUS_FAILURE;

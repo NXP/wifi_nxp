@@ -69,7 +69,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 
     PRINTM(MINFO, "Handles disconnect event.\n");
 
-    if (drv_disconnect)
+    if (drv_disconnect == MTRUE)
     {
         priv->media_connected = MFALSE;
     }
@@ -126,7 +126,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
         priv->intf_state_11h.adhoc_auto_sel_chan = MTRUE;
     }
 
-    if (drv_disconnect)
+    if (drv_disconnect == MTRUE)
     {
         /* Free Tx and Rx packets, report disconnect to upper layer */
         wlan_clean_txrx(priv);

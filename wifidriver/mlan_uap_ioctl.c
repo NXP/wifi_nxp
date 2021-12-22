@@ -1228,7 +1228,9 @@ mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN pmlan_i
                            &mib->param.deauthctrl);
 
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
     LEAVE();
     return ret;
@@ -1407,7 +1409,9 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_RATE:
             rate = (mlan_ds_rate *)pioctl_req->pbuf;
             if (rate->sub_command == MLAN_OID_RATE_CFG)
+            {
                 status = wlan_rate_ioctl_cfg(pmadapter, pioctl_req);
+            }
             break;
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;

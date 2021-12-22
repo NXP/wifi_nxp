@@ -270,7 +270,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
     priv->sec_info.encryption_mode     = MLAN_ENCRYPTION_MODE_NONE;
     for (i = 0; i < sizeof(priv->wep_key) / sizeof(priv->wep_key[0]); i++)
+    {
         (void)__memset(pmadapter, &priv->wep_key[i], 0, sizeof(mrvl_wep_key_t));
+    }
     priv->wep_key_curr_index = 0;
     priv->ewpa_query         = MFALSE;
     priv->adhoc_aes_enabled  = MFALSE;
@@ -372,7 +374,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->port_open = MFALSE;
 #ifndef CONFIG_MLAN_WMSDK
     if (!ret)
+    {
         ret = wlan_add_bsspriotbl(priv);
+    }
 #endif /* CONFIG_MLAN_WMSDK */
     LEAVE();
     return ret;
@@ -567,9 +571,13 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->pm_wakeup_fw_try = MFALSE;
 
     if (!pmadapter->init_para.max_tx_buf)
+    {
         pmadapter->max_tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
+    }
     else
+    {
         pmadapter->max_tx_buf_size = (t_u16)pmadapter->init_para.max_tx_buf;
+    }
     pmadapter->tx_buf_size      = MLAN_TX_DATA_BUF_SIZE_2K;
     pmadapter->curr_tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
 
@@ -663,8 +671,8 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
     mlan_status ret    = MLAN_STATUS_SUCCESS;
     pmlan_private priv = MNULL;
     /* pmlan_callbacks pcb = &pmadapter->callbacks; */
-    t_s32 i = 0;
-    t_u32 j = 0;
+    t_u8 i = 0;
+    t_u8 j = 0;
 
     ENTER();
 #ifndef CONFIG_MLAN_WMSDK

@@ -40,14 +40,14 @@
 
 static bool rf_test_mode = false;
 
-static void dump_wlan_set_rf_test_mode_usage()
+static void dump_wlan_set_rf_test_mode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-test-mode \r\n");
     (void)PRINTF("\r\n");
 }
 
-static void dump_wlan_set_rf_test_mode()
+static void dump_wlan_set_rf_test_mode(void)
 {
     (void)PRINTF("RF Test Mode is not set\r\n");
     dump_wlan_set_rf_test_mode_usage();
@@ -76,7 +76,7 @@ static void wlan_rf_test_mode_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_channel_usage()
+static void dump_wlan_set_channel_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-channel <channel> \r\n");
@@ -100,7 +100,7 @@ static void wlan_rf_channel_set(int argc, char *argv[])
         return;
     }
 
-    channel = atoi(argv[1]);
+    channel = strtol(argv[1], NULL, 10);
 
     ret = wlan_set_rf_channel(channel);
     if (ret == WM_SUCCESS)
@@ -114,7 +114,7 @@ static void wlan_rf_channel_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_get_channel_usage()
+static void dump_wlan_get_channel_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-get-rf-channel \r\n");
@@ -149,7 +149,7 @@ static void wlan_rf_channel_get(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_rf_band_usage()
+static void dump_wlan_set_rf_band_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-band <band> \r\n");
@@ -178,7 +178,7 @@ static void wlan_rf_band_set(int argc, char *argv[])
         return;
     }
 
-    band = atoi(argv[1]);
+    band = strtol(argv[1], NULL, 10);
 
     if (band != 0
 #ifdef CONFIG_5GHz_SUPPORT
@@ -202,7 +202,7 @@ static void wlan_rf_band_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_get_rf_band_usage()
+static void dump_wlan_get_rf_band_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-get-rf-band \r\n");
@@ -237,7 +237,7 @@ static void wlan_rf_band_get(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_bandwidth_usage()
+static void dump_wlan_set_bandwidth_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-bandwidth <bandwidth> \r\n");
@@ -270,7 +270,7 @@ static void wlan_rf_bandwidth_set(int argc, char *argv[])
         return;
     }
 
-    bandwidth = atoi(argv[1]);
+    bandwidth = strtol(argv[1], NULL, 10);
 
     ret = wlan_set_rf_bandwidth(bandwidth);
     if (ret == WM_SUCCESS)
@@ -284,7 +284,7 @@ static void wlan_rf_bandwidth_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_get_bandwidth_usage()
+static void dump_wlan_get_bandwidth_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-get-rf-bandwidth \r\n");
@@ -319,7 +319,7 @@ static void wlan_rf_bandwidth_get(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_get_and_reset_per_usage()
+static void dump_wlan_get_and_reset_per_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-get-rf-per \r\n");
@@ -357,7 +357,7 @@ static void wlan_rf_per_get(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_tx_cont_mode_usage()
+static void dump_wlan_set_tx_cont_mode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
@@ -385,7 +385,7 @@ static void wlan_rf_tx_cont_mode_set(int argc, char *argv[])
         return;
     }
 
-    if (argc == 2 && atoi(argv[1]) == 0)
+    if (argc == 2 && strtol(argv[1], NULL, 10) == 0)
     {
         enable_tx       = 0;
         cw_mode         = 0;
@@ -400,16 +400,21 @@ static void wlan_rf_tx_cont_mode_set(int argc, char *argv[])
         dump_wlan_set_tx_cont_mode_usage();
         return;
     }
+    else
+    { /*Do nothing*/
+    }
 
-    enable_tx       = atoi(argv[1]);
-    cw_mode         = atoi(argv[2]);
+    enable_tx       = strtol(argv[1], NULL, 10);
+    cw_mode         = strtol(argv[2], NULL, 10);
     errno           = 0;
     payload_pattern = strtol(argv[3], NULL, 16);
     if (errno != 0)
+    {
         (void)PRINTF("Error during strtoul errno:%d", errno);
-    cs_mode    = atoi(argv[4]);
-    act_sub_ch = atoi(argv[5]);
-    tx_rate    = atoi(argv[6]);
+    }
+    cs_mode    = strtol(argv[4], NULL, 10);
+    act_sub_ch = strtol(argv[5], NULL, 10);
+    tx_rate    = strtol(argv[6], NULL, 10);
 
 disable:
     ret = wlan_set_rf_tx_cont_mode(enable_tx, cw_mode, payload_pattern, cs_mode, act_sub_ch, tx_rate);
@@ -430,7 +435,7 @@ disable:
     }
 }
 
-static void dump_wlan_set_tx_antenna_usage()
+static void dump_wlan_set_tx_antenna_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-tx-antenna <antenna> \r\n");
@@ -455,7 +460,7 @@ static void wlan_rf_tx_antenna_set(int argc, char *argv[])
         return;
     }
 
-    ant = atoi(argv[1]);
+    ant = strtol(argv[1], NULL, 10);
 
     if (ant != 1 && ant != 2)
     {
@@ -475,7 +480,7 @@ static void wlan_rf_tx_antenna_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_get_tx_antenna_usage()
+static void dump_wlan_get_tx_antenna_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-get-rf-tx-antenna \r\n");
@@ -510,7 +515,7 @@ static void wlan_rf_tx_antenna_get(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_rx_antenna_usage()
+static void dump_wlan_set_rx_antenna_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-rx-antenna <antenna> \r\n");
@@ -535,7 +540,7 @@ static void wlan_rf_rx_antenna_set(int argc, char *argv[])
         return;
     }
 
-    ant = atoi(argv[1]);
+    ant = strtol(argv[1], NULL, 10);
 
     if (ant != 1 && ant != 2)
     {
@@ -555,7 +560,7 @@ static void wlan_rf_rx_antenna_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_get_rx_antenna_usage()
+static void dump_wlan_get_rx_antenna_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-get-rf-rx-antenna \r\n");
@@ -590,7 +595,7 @@ static void wlan_rf_rx_antenna_get(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_tx_power_usage()
+static void dump_wlan_set_tx_power_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-tx-power <tx_power> <modulation> <path_id> \r\n");
@@ -619,9 +624,9 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
         return;
     }
 
-    power   = atoi(argv[1]);
-    mod     = atoi(argv[2]);
-    path_id = atoi(argv[3]);
+    power   = strtol(argv[1], NULL, 10);
+    mod     = strtol(argv[2], NULL, 10);
+    path_id = strtol(argv[3], NULL, 10);
 
     if (power > 24)
     {
@@ -656,7 +661,7 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     }
 }
 
-static void dump_wlan_set_tx_frame_usage()
+static void dump_wlan_set_tx_frame_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
@@ -706,7 +711,7 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
         return;
     }
 
-    if (argc == 2 && atoi(argv[1]) == 0)
+    if (argc == 2 && strtol(argv[1], NULL, 10) == 0)
     {
         enable            = 0;
         data_rate         = 0;
@@ -730,27 +735,31 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
         return;
     }
 
-    enable        = atoi(argv[1]);
-    data_rate     = atoi(argv[2]);
+    enable        = strtol(argv[1], NULL, 10);
+    data_rate     = strtol(argv[2], NULL, 10);
     errno         = 0;
     frame_pattern = strtol(argv[3], NULL, 16);
     if (errno != 0)
+    {
         (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
     errno        = 0;
     frame_length = strtol(argv[4], NULL, 16);
     if (errno != 0)
+    {
         (void)PRINTF("Error during strtoul errno:%d", errno);
-    adjust_burst_sifs = atoi(argv[5]);
-    burst_sifs_in_us  = atoi(argv[6]);
-    short_preamble    = atoi(argv[7]);
-    act_sub_ch        = atoi(argv[8]);
-    short_gi          = atoi(argv[9]);
-    adv_coding        = atoi(argv[10]);
-    tx_bf             = atoi(argv[11]);
-    gf_mode           = atoi(argv[12]);
-    stbc              = atoi(argv[13]);
+    }
+    adjust_burst_sifs = strtol(argv[5], NULL, 10);
+    burst_sifs_in_us  = strtol(argv[6], NULL, 10);
+    short_preamble    = strtol(argv[7], NULL, 10);
+    act_sub_ch        = strtol(argv[8], NULL, 10);
+    short_gi          = strtol(argv[9], NULL, 10);
+    adv_coding        = strtol(argv[10], NULL, 10);
+    tx_bf             = strtol(argv[11], NULL, 10);
+    gf_mode           = strtol(argv[12], NULL, 10);
+    stbc              = strtol(argv[13], NULL, 10);
     ret               = get_mac((const char *)argv[14], (char *)bssid, ':');
-    if (ret)
+    if (ret != 0U)
     {
         dump_wlan_set_tx_frame_usage();
         return;
@@ -818,8 +827,11 @@ static struct cli_command wlan_test_mode_commands[] = {
 
 int wlan_test_mode_cli_init(void)
 {
-    if (cli_register_commands(wlan_test_mode_commands, sizeof(wlan_test_mode_commands) / sizeof(struct cli_command)))
+    if (cli_register_commands(wlan_test_mode_commands, sizeof(wlan_test_mode_commands) / sizeof(struct cli_command)) !=
+        0U)
+    {
         return -WM_FAIL;
+    }
 
     return WM_SUCCESS;
 }

@@ -98,7 +98,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, interface);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
     if (action == HS_CONFIGURE)
     {
         hs_cfg_obj.conditions = conditions;
@@ -111,7 +111,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
      * The code below sets the correct bit which
      * firmware will use to give host wakeup
      */
-    if ((conditions & WIFI_WAKE_ON_ARP_BROADCAST) != 0)
+    if ((conditions & WIFI_WAKE_ON_ARP_BROADCAST) != 0U)
     {
         hs_cfg_obj.conditions |= WIFI_WAKE_ON_ALL_BROADCAST;
         hs_cfg_obj.conditions &= ~WIFI_WAKE_ON_ARP_BROADCAST;
@@ -131,7 +131,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
         entry++;
 
         entry->addr_type = ADDR_TYPE_BROADCAST;
-        if ((conditions & WIFI_WAKE_ON_ALL_BROADCAST) != 0)
+        if ((conditions & WIFI_WAKE_ON_ALL_BROADCAST) != 0U)
         {
             entry->eth_type  = ETHER_TYPE_ANY;
             entry->ipv4_addr = IPV4_ADDR_ANY;
@@ -146,7 +146,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
         entry->addr_type = ADDR_TYPE_UNICAST;
         entry->eth_type  = ETHER_TYPE_ANY;
         entry->ipv4_addr = IPV4_ADDR_ANY;
-        arpfilter->len   = 3 * sizeof(filter_entry);
+        arpfilter->len   = 3U * sizeof(filter_entry);
     }
     else
     {
@@ -167,7 +167,7 @@ int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interf
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, interface);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
     if (ps_bitmap == BITMAP_AUTO_DS)
     {
         ds_param.idletime = (*(t_u16 *)pdata_buf);
@@ -242,7 +242,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 
     (void)memset(ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
     ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
-    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, interface);
+    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
 
     ps_cfm_sleep->size                = sizeof(OPT_Confirm_Sleep);
     ps_cfm_sleep->result              = 0;
@@ -263,7 +263,9 @@ void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer)
         wlan_update_rxreorder_tbl(pmadapter, MTRUE);
     }
     else
+    {
         pwr_d("Host sleep configuration done");
+    }
 }
 
 enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 *ps_event, t_u16 *action)
@@ -279,7 +281,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     *action   = (ps_mode->action);
     if (ps_mode->action == EN_AUTO_PS)
     {
-        if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_AUTO_DS) != 0)
+        if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_AUTO_DS) != 0U)
         {
             pwr_d("Enabled deep sleep mode");
             mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
@@ -291,7 +293,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             pwr_d("Enabled Deep Sleep mode");
             deepsleepps_enabled = true;
         }
-        if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_STA_PS) != 0)
+        if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_STA_PS) != 0U)
         {
             pwr_d(
                 "Enabled IEEE power "
@@ -364,11 +366,17 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     else if (ps_mode->action == SLEEP_CONFIRM)
     {
         if (ieeeps_enabled)
+        {
             *ps_event = WIFI_EVENT_IEEE_PS;
+        }
         else if (deepsleepps_enabled)
+        {
             *ps_event = WIFI_EVENT_DEEP_SLEEP;
+        }
         else
+        {
             return WIFI_EVENT_REASON_FAILURE;
+        }
 
         result = WIFI_EVENT_REASON_SUCCESS;
     }

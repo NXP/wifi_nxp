@@ -100,13 +100,15 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
         return 0;
     }
 
-    if (bcnt > 1)
+    if (bcnt > 1U)
     {
         flags |= SDIO_EXTEND_CMD_BLOCK_MODE_MASK;
         param = bcnt;
     }
     else
+    {
         param = bsize;
+    }
 
     if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
@@ -132,13 +134,15 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
         return 0;
     }
 
-    if (bcnt > 1)
+    if (bcnt > 1U)
     {
         flags |= SDIO_EXTEND_CMD_BLOCK_MODE_MASK;
         param = bcnt;
     }
     else
+    {
         param = bsize;
+    }
 
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
@@ -210,6 +214,10 @@ static int sdio_card_init(void)
     {
         SDMMCHOST_SwitchToVoltage(wm_g_sd.host, kSDMMC_OperationVoltage180V);
     }
+    else
+    {
+        /* Do Nothing */
+    }
     wm_g_sd.operationVoltage = kSDMMC_OperationVoltage180V;
 #endif
 
@@ -220,7 +228,9 @@ static int sdio_card_init(void)
 
     ret = SDIO_CardInit(&wm_g_sd);
     if (ret != WM_SUCCESS)
+    {
         return ret;
+    }
 
     sdio_drv_creg_read(0x0, 0, &resp);
 
@@ -257,7 +267,9 @@ int sdio_drv_init(void (*cd_int)(int))
         return -WM_FAIL;
     }
     else
+    {
         sdio_d("Card initialization successful");
+    }
 
     return WM_SUCCESS;
 }
