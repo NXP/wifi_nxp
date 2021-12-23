@@ -457,7 +457,7 @@ static raListTbl *wlan_wmm_get_queue_raptr(pmlan_private priv, t_u8 tid, t_u8 *r
     }
 #if defined(UAP_SUPPORT)
     if ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) &&
-        (0 != memcmp(priv->adapter, ra_addr, bcast_addr, sizeof(bcast_addr))))
+        (0 != __memcmp(priv->adapter, ra_addr, bcast_addr, sizeof(bcast_addr))))
     {
         if (MNULL == wlan_get_station_entry(priv, ra_addr))
         {
@@ -1430,7 +1430,7 @@ raListTbl *wlan_wmm_get_ralist_node(pmlan_private priv, t_u8 tid, t_u8 *ra_addr)
         (raListTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[tid].ra_list, MNULL, MNULL);
     while (ra_list && (ra_list != (raListTbl *)&priv->wmm.tid_tbl_ptr[tid].ra_list))
     {
-        if (!memcmp(priv->adapter, ra_list->ra, ra_addr, MLAN_MAC_ADDR_LENGTH))
+        if (!__memcmp(priv->adapter, ra_list->ra, ra_addr, MLAN_MAC_ADDR_LENGTH))
         {
             LEAVE();
             return ra_list;

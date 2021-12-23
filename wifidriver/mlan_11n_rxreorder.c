@@ -513,7 +513,7 @@ RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta)
 
     while (rx_reor_tbl_ptr != (RxReorderTbl *)&priv->rx_reorder_tbl_ptr)
     {
-        if ((!memcmp(priv->adapter, rx_reor_tbl_ptr->ta, ta, MLAN_MAC_ADDR_LENGTH)) && (rx_reor_tbl_ptr->tid == tid))
+        if ((!__memcmp(priv->adapter, rx_reor_tbl_ptr->ta, ta, MLAN_MAC_ADDR_LENGTH)) && (rx_reor_tbl_ptr->tid == tid))
         {
             LEAVE();
             return rx_reor_tbl_ptr;

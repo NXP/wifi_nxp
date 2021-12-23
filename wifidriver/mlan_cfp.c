@@ -733,7 +733,7 @@ mlan_status wlan_misc_country_2_cfp_table_code(pmlan_adapter pmadapter, t_u8 *co
     /* Look for code in mapping table */
     for (i = 0; i < NELEMENTS(country_code_mapping); i++)
     {
-        if (!memcmp(pmadapter, country_code_mapping[i].country_code, country_code, COUNTRY_CODE_LEN - 1))
+        if (!__memcmp(pmadapter, country_code_mapping[i].country_code, country_code, COUNTRY_CODE_LEN - 1))
         {
             *cfp_bg = country_code_mapping[i].cfp_code_bg;
             *cfp_a  = country_code_mapping[i].cfp_code_a;

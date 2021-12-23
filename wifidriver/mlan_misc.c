@@ -127,8 +127,8 @@ static mlan_status wlan_custom_ioctl_get_autoidx(
                 /* Duplicate IE should be avoided */
                 if (pmpriv->mgmt_ie[index].ie_length)
                 {
-                    if (!memcmp(pmpriv->adapter, pmpriv->mgmt_ie[index].ie_buffer, ie_data->ie_buffer,
-                                pmpriv->mgmt_ie[index].ie_length))
+                    if (!__memcmp(pmpriv->adapter, pmpriv->mgmt_ie[index].ie_buffer, ie_data->ie_buffer,
+                                  pmpriv->mgmt_ie[index].ie_length))
                     {
                         PRINTM(MERROR, "IE with the same mask exists at index %d\n", index);
                         *idx = MLAN_CUSTOM_IE_AUTO_IDX_MASK;
@@ -221,7 +221,7 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
         cnt     = 0;
         while (tmp_len)
         {
-            if (!memcmp(pmpriv->adapter, tmp_ie, del_ie, del_len))
+            if (!__memcmp(pmpriv->adapter, tmp_ie, del_ie, del_len))
             {
                 (void)__memcpy(pmpriv->adapter, ie, pmpriv->mgmt_ie[index].ie_buffer, cnt);
                 if (pmpriv->mgmt_ie[index].ie_length > (cnt + del_len))
@@ -1024,8 +1024,8 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                     else
                     {
                         if ((pmpriv->mgmt_ie[index].ie_length == ie_data->ie_length) &&
-                            !memcmp(pmpriv->adapter, pmpriv->mgmt_ie[index].ie_buffer, ie_data->ie_buffer,
-                                    pmpriv->mgmt_ie[index].ie_length))
+                            !__memcmp(pmpriv->adapter, pmpriv->mgmt_ie[index].ie_buffer, ie_data->ie_buffer,
+                                      pmpriv->mgmt_ie[index].ie_length))
                         {
                             PRINTM(MIOCTL, "same customer ie already configured!\n");
                             goto done;
@@ -1112,7 +1112,7 @@ sta_node *wlan_get_station_entry(mlan_private *priv, t_u8 *mac)
     }
     while (sta_ptr != (sta_node *)&priv->sta_list)
     {
-        if (!memcmp(priv->adapter, sta_ptr->mac_addr, mac, MLAN_MAC_ADDR_LENGTH))
+        if (!__memcmp(priv->adapter, sta_ptr->mac_addr, mac, MLAN_MAC_ADDR_LENGTH))
         {
             LEAVE();
             return sta_ptr;
@@ -1348,7 +1348,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     }
     if (unicast == MTRUE)
     {
-        if (memcmp(pmadapter, pieee_pkt_hdr->addr1, priv->curr_p2p_addr, MLAN_MAC_ADDR_LENGTH))
+        if (__memcmp(pmadapter, pieee_pkt_hdr->addr1, priv->curr_p2p_addr, MLAN_MAC_ADDR_LENGTH))
         {
             PRINTM(MINFO, "Dropping mgmt frame for others: type=%d %02x:%02x:%02x:%02x:%02x:%02x\n", sub_type,
                    pieee_pkt_hdr->addr1[0], pieee_pkt_hdr->addr1[1], pieee_pkt_hdr->addr1[2], pieee_pkt_hdr->addr1[3],

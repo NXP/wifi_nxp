@@ -447,7 +447,7 @@ mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *
     {
         while (temp_akm_suite_count)
         {
-            if (!memcmp(pmadapter, temp, sha_256_oui, AKM_SUITE_LEN))
+            if (!__memcmp(pmadapter, temp, sha_256_oui, AKM_SUITE_LEN))
             {
                 found = 1;
                 break;
@@ -983,7 +983,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         {
             if (pmpriv->port_ctrl_mode == MTRUE)
                 pmpriv->port_open = pmpriv->prior_port_status;
-            if (!memcmp(pmpriv->adapter, cur_mac, pmpriv->pattempted_bss_desc->mac_address, MLAN_MAC_ADDR_LENGTH))
+            if (!__memcmp(pmpriv->adapter, cur_mac, pmpriv->pattempted_bss_desc->mac_address, MLAN_MAC_ADDR_LENGTH))
                 wlan_reset_connect_state(pmpriv, MTRUE);
             else
                 wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_ASSOC_FAILURE_REPORT, MNULL);
@@ -1995,7 +1995,7 @@ mlan_status wlan_disconnect(IN mlan_private *pmpriv, IN mlan_ioctl_req *pioctl_r
         {
             if (mac)
             {
-                if (!memcmp(pmpriv->adapter, mac, zero_mac, sizeof(zero_mac)))
+                if (!__memcmp(pmpriv->adapter, mac, zero_mac, sizeof(zero_mac)))
                     (void)__memcpy(pmpriv->adapter, (t_u8 *)&mac_address,
                                    (t_u8 *)&pmpriv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
                 else
