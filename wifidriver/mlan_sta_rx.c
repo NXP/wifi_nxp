@@ -134,12 +134,12 @@ static t_u8 discard_gratuitous_ARP_msg(RxPacketHdr_t *prx_pkt, pmlan_adapter pma
     t_u8 ret = MFALSE;
 
     /* IPV4 pkt check */
-    if (memcmp(pmadapter, proto_ARP_type, &prx_pkt->eth803_hdr.h803_len, sizeof(proto_ARP_type)) == 0)
+    if (__memcmp(pmadapter, proto_ARP_type, &prx_pkt->eth803_hdr.h803_len, sizeof(proto_ARP_type)) == 0)
     {
         parp_hdr = (IPv4_ARP_t *)(&prx_pkt->rfc1042_hdr);
         if ((parp_hdr->op_code == 0x0100) || (parp_hdr->op_code == 0x0200))
         {
-            if (memcmp(pmadapter, parp_hdr->src_ip, parp_hdr->dst_ip, 4) == 0)
+            if (__memcmp(pmadapter, parp_hdr->src_ip, parp_hdr->dst_ip, 4) == 0)
             {
                 ret = MTRUE;
             }
@@ -147,13 +147,13 @@ static t_u8 discard_gratuitous_ARP_msg(RxPacketHdr_t *prx_pkt, pmlan_adapter pma
     }
 
     /* IPV6 pkt check */
-    if (memcmp(pmadapter, proto_ARP_type_v6, &prx_pkt->eth803_hdr.h803_len, sizeof(proto_ARP_type_v6)) == 0)
+    if (__memcmp(pmadapter, proto_ARP_type_v6, &prx_pkt->eth803_hdr.h803_len, sizeof(proto_ARP_type_v6)) == 0)
     {
         pNadv_hdr = (IPv6_Nadv_t *)(&prx_pkt->rfc1042_hdr);
         /* Check Nadv type */
         if (pNadv_hdr->icmp_type == 0x88)
         {
-            if (memcmp(pmadapter, pNadv_hdr->src_addr, pNadv_hdr->taget_addr, 16) == 0)
+            if (__memcmp(pmadapter, pNadv_hdr->src_addr, pNadv_hdr->taget_addr, 16) == 0)
             {
                 ret = MTRUE;
             }
@@ -224,10 +224,10 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
     HEXDUMP("RX Data: Dest", prx_pkt->eth803_hdr.dest_addr, sizeof(prx_pkt->eth803_hdr.dest_addr));
     HEXDUMP("RX Data: Src", prx_pkt->eth803_hdr.src_addr, sizeof(prx_pkt->eth803_hdr.src_addr));
 
-    if ((memcmp(pmadapter, &prx_pkt->rfc1042_hdr, snap_oui_802_h, sizeof(snap_oui_802_h)) == 0) ||
-        ((memcmp(pmadapter, &prx_pkt->rfc1042_hdr, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)) == 0) &&
-         memcmp(pmadapter, &prx_pkt->rfc1042_hdr.snap_type, appletalk_aarp_type, sizeof(appletalk_aarp_type)) &&
-         memcmp(pmadapter, &prx_pkt->rfc1042_hdr.snap_type, ipx_snap_type, sizeof(ipx_snap_type))))
+    if ((__memcmp(pmadapter, &prx_pkt->rfc1042_hdr, snap_oui_802_h, sizeof(snap_oui_802_h)) == 0) ||
+        ((__memcmp(pmadapter, &prx_pkt->rfc1042_hdr, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)) == 0) &&
+         __memcmp(pmadapter, &prx_pkt->rfc1042_hdr.snap_type, appletalk_aarp_type, sizeof(appletalk_aarp_type)) &&
+         __memcmp(pmadapter, &prx_pkt->rfc1042_hdr.snap_type, ipx_snap_type, sizeof(ipx_snap_type))))
     {
         /*
          *  Replace the 803 header and rfc1042 header (llc/snap) with an
@@ -393,7 +393,7 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
      * directly to os. Don't pass thru rx reordering
      */
     if (!IS_11N_ENABLED(priv) ||
-        memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))
+        __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))
     {
         wlan_process_rx_packet(pmadapter, pmbuf);
         goto done;

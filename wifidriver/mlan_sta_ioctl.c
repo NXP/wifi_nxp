@@ -993,7 +993,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
             /* Search for the requested SSID in the scan table */
             if (bss->param.ssid_bssid.ssid.ssid_len != 0U)
             {
-                if (memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)) != 0U)
+                if (__memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)) != 0U)
                 {
                     i = wlan_find_ssid_in_list(pmpriv, &bss->param.ssid_bssid.ssid,
                                                (t_u8 *)&bss->param.ssid_bssid.bssid, MLAN_BSS_MODE_INFRA);
@@ -3158,7 +3158,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
     {
         t_u8 zero_key_material[WPA_AES_KEY_LEN];
         (void)__memset(pmadapter, zero_key_material, 0, sizeof(zero_key_material));
-        if (memcmp(pmadapter, sec->param.encrypt_key.key_material, zero_key_material, WPA_AES_KEY_LEN))
+        if (__memcmp(pmadapter, sec->param.encrypt_key.key_material, zero_key_material, WPA_AES_KEY_LEN))
         {
             PRINTM(MINFO, "Adhoc AES Enabled.\n");
             pmpriv->adhoc_aes_enabled = MTRUE;
@@ -3185,7 +3185,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_KEY_MATERIAL, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
                            &sec->param.encrypt_key);
 #else
-    if (memcmp(pmadapter, sec->param.encrypt_key.mac_addr, broadcast_mac_addr, MLAN_MAC_ADDR_LENGTH))
+    if (__memcmp(pmadapter, sec->param.encrypt_key.mac_addr, broadcast_mac_addr, MLAN_MAC_ADDR_LENGTH))
     {
         sec->param.encrypt_key.key_index |= MLAN_KEY_INDEX_UNICAST;
     }
@@ -3193,7 +3193,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
 #ifdef ENABLE_IBSS_WPA2
     if ((pmpriv->bss_mode == MLAN_BSS_MODE_IBSS) && (sec->param.encrypt_key.key_len == WPA_AES_KEY_LEN))
     {
-        if (memcmp(pmadapter, sec->param.encrypt_key.mac_addr, broadcast_mac_addr, MLAN_MAC_ADDR_LENGTH) == 0)
+        if (__memcmp(pmadapter, sec->param.encrypt_key.mac_addr, broadcast_mac_addr, MLAN_MAC_ADDR_LENGTH) == 0)
         {
             /* for IBSS RSN when GTK is to be downloaded for
              * broadcast mac
@@ -3777,7 +3777,7 @@ static int wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr, t_u16 i
         pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
         /* Test to see if it is a WPA IE, if not, then it is a gen IE */
         if (((pvendor_ie->element_id == WPA_IE) &&
-             (!memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(wpa_oui)))) ||
+             (!__memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(wpa_oui)))) ||
             (pvendor_ie->element_id == RSN_IE))
         {
             /* IE is a WPA/WPA2 IE so call set_wpa function */
@@ -3790,7 +3790,7 @@ static int wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr, t_u16 i
             ret = wlan_set_wapi_ie(priv, ie_data_ptr, ie_len);
         }
         else if ((pvendor_ie->element_id == WPS_IE) && (priv->wps.session_enable == MFALSE) &&
-                 (!memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
+                 (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
         {
             /*
              * Discard first two byte (Element ID and Length)
@@ -3820,7 +3820,7 @@ static int wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr, t_u16 i
                    flag */
                 pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
                 if ((pvendor_ie->element_id == WPS_IE) &&
-                    (!memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
+                    (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
                 {
                     priv->wps.session_enable = MTRUE;
                     PRINTM(MINFO, "WPS Session Enabled.\n");
@@ -5647,7 +5647,7 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
 
     bss = (mlan_ds_bss *)pioctl_req->pbuf;
 
-    if (memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)))
+    if (__memcmp(pmadapter, &bss->param.ssid_bssid.bssid, zero_mac, sizeof(zero_mac)))
     {
         if (bss->param.ssid_bssid.ssid.ssid_len) /* ssid & bssid */
             i = wlan_find_ssid_in_list(pmpriv, &bss->param.ssid_bssid.ssid, (t_u8 *)&bss->param.ssid_bssid.bssid,

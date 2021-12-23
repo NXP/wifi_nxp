@@ -55,8 +55,8 @@
 /** Memcpy routine */
 #define __memcpy(adapter, to, from, len) memcpy(to, from, len)
 
-#ifdef memcmp
-#undef memcmp
+#ifdef __memcmp
+#undef __memcmp
 #endif
 /** Memcmp routine */
-#define memcmp(adapter, s1, s2, len) memcmp(s1, s2, len)
+#define __memcmp(adapter, s1, s2, len) memcmp((const void *)(s1), (const void *)(s2), (size_t)(len))

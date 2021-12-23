@@ -127,7 +127,7 @@ static mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region,
     /* Look for code in mapping table */
     for (i = 0; i < size; i++)
     {
-        if (!memcmp(pmadapter, region_code_mapping[i].region, region, COUNTRY_CODE_LEN))
+        if (!__memcmp(pmadapter, region_code_mapping[i].region, region, COUNTRY_CODE_LEN))
         {
             *code = region_code_mapping[i].code;
             LEAVE();

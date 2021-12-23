@@ -784,8 +784,8 @@ mlan_status wlan_ret_802_11_deauthenticate(IN pmlan_private pmpriv,
 #ifndef CONFIG_MLAN_WMSDK
     pmadapter->dbg.num_cmd_deauth++;
 
-    if (!memcmp(pmadapter, resp->params.deauth.mac_addr, &pmpriv->curr_bss_params.bss_descriptor.mac_address,
-                sizeof(resp->params.deauth.mac_addr)))
+    if (!__memcmp(pmadapter, resp->params.deauth.mac_addr, &pmpriv->curr_bss_params.bss_descriptor.mac_address,
+                  sizeof(resp->params.deauth.mac_addr)))
 #endif /* CONFIG_MLAN_WMSDK */
         wlan_reset_connect_state(pmpriv, MTRUE);
 
@@ -1116,7 +1116,7 @@ static mlan_status wlan_ret_ibss_coalescing_status(IN pmlan_private pmpriv, IN H
            pibss_coal_resp->bssid[2], pibss_coal_resp->bssid[3], pibss_coal_resp->bssid[4], pibss_coal_resp->bssid[5]);
 
     /* If rsp has MNULL BSSID, Just return..... No Action */
-    if (!memcmp(pmpriv->adapter, pibss_coal_resp->bssid, zero_mac, MLAN_MAC_ADDR_LENGTH))
+    if (!__memcmp(pmpriv->adapter, pibss_coal_resp->bssid, zero_mac, MLAN_MAC_ADDR_LENGTH))
     {
         PRINTM(MMSG, "New BSSID is MNULL\n");
         LEAVE();
@@ -1124,8 +1124,8 @@ static mlan_status wlan_ret_ibss_coalescing_status(IN pmlan_private pmpriv, IN H
     }
 
     /* If BSSID is diff, modify current BSS parameters */
-    if (memcmp(pmpriv->adapter, pmpriv->curr_bss_params.bss_descriptor.mac_address, pibss_coal_resp->bssid,
-               MLAN_MAC_ADDR_LENGTH))
+    if (__memcmp(pmpriv->adapter, pmpriv->curr_bss_params.bss_descriptor.mac_address, pibss_coal_resp->bssid,
+                 MLAN_MAC_ADDR_LENGTH))
     {
         /* BSSID */
         (void)__memcpy(pmpriv->adapter, pmpriv->curr_bss_params.bss_descriptor.mac_address, pibss_coal_resp->bssid,

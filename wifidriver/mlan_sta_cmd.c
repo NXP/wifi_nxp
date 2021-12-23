@@ -1265,7 +1265,7 @@ static mlan_status wlan_cmd_802_11_key_material(
         /* set 0 when re-key */
 
         /* WAPI pairwise key: unicast */
-        if (0 != memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac)))
+        if (0 != __memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac)))
             pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_WAPI_UNICAST);
         else
         { /* WAPI group key: multicast */
@@ -1443,7 +1443,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
         cmd->size += (pssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
         pssid_tlv->header.len = wlan_cpu_to_le16(pssid_tlv->header.len);
     }
-    if (memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)) != 0U)
+    if (__memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)) != 0U)
     {
         pbssid_tlv              = (MrvlIEtypes_Bssid_t *)ptlv_buffer;
         pbssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_BSSID);

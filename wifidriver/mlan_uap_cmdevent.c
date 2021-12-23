@@ -312,7 +312,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
     cmd_size           = sizeof(HostCmd_DS_SYS_CONFIG) - 1U + S_DS_GEN;
 
     tlv = (t_u8 *)sys_config->tlv_buffer;
-    if (memcmp(pmpriv->adapter, zero_mac, &bss->param.bss_config.mac_addr, MLAN_MAC_ADDR_LENGTH))
+    if (__memcmp(pmpriv->adapter, zero_mac, &bss->param.bss_config.mac_addr, MLAN_MAC_ADDR_LENGTH))
     {
         tlv_mac              = (MrvlIEtypes_MacAddr_t *)tlv;
         tlv_mac->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_MAC_ADDRESS);
@@ -2107,7 +2107,7 @@ static mlan_status wlan_uap_cmd_key_material(
         else
             pkey_material->key_param_set.key[1] = 0;
 
-        if (0 != memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac)))
+        if (0 != __memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac)))
         {
             / pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_WAPI_UNICAST);
 #ifdef UAP_STA_LIST
@@ -2155,7 +2155,7 @@ static mlan_status wlan_uap_cmd_key_material(
         else
             pkey_material->key_param_set.key_info = !(wlan_cpu_to_le16(KEY_INFO_AES_ENABLED));
 
-        if (memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac))) /* AES pairwise key: unicast */
+        if (__memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac))) /* AES pairwise key: unicast */
             pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_UNICAST);
         else /* AES group key: multicast */
             pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_MCAST);
@@ -2179,7 +2179,7 @@ static mlan_status wlan_uap_cmd_key_material(
         pkey_material->key_param_set.key_type_id = wlan_cpu_to_le16(KEY_TYPE_ID_TKIP);
         pkey_material->key_param_set.key_info    = wlan_cpu_to_le16(KEY_INFO_TKIP_ENABLED);
 
-        if (memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac))) /* TKIP pairwise key: unicast */
+        if (__memcmp(pmpriv->adapter, pkey->mac_addr, bc_mac, sizeof(bc_mac))) /* TKIP pairwise key: unicast */
             pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_TKIP_UNICAST);
         else /* TKIP group key: multicast */
             pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_TKIP_MCAST);
@@ -2372,7 +2372,7 @@ static void wlan_check_uap_capability(pmlan_private priv, pmlan_buffer pevent)
         }
         if (tlv_type == VENDOR_SPECIFIC_221)
         {
-            if (!memcmp(priv->adapter, (t_u8 *)tlv + sizeof(MrvlIEtypesHeader_t), wmm_oui, sizeof(wmm_oui)))
+            if (!__memcmp(priv->adapter, (t_u8 *)tlv + sizeof(MrvlIEtypesHeader_t), wmm_oui, sizeof(wmm_oui)))
             {
                 DBG_HEXDUMP(MCMD_D, "wmm ie tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
                 priv->wmm_enabled = MFALSE;

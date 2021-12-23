@@ -152,7 +152,7 @@ static t_u8 search_oui_in_ie(mlan_adapter *pmadapter, IEBody *ie_body, t_u8 *oui
        all the OUIs for AES. 3) If one of them is AES then pass success. */
     while (count != 0U)
     {
-        if (!memcmp(pmadapter, ie_body->PtkBody, oui, sizeof(ie_body->PtkBody)))
+        if (!__memcmp(pmadapter, ie_body->PtkBody, oui, sizeof(ie_body->PtkBody)))
         {
             LEAVE();
             return MLAN_OUI_PRESENT;
@@ -843,7 +843,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                        sizeof(pscan_cfg_out->specific_bssid));
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-        if (pmadapter->ext_scan && memcmp(pmadapter, pscan_cfg_out->specific_bssid, &zero_mac, sizeof(zero_mac)))
+        if (pmadapter->ext_scan && __memcmp(pmadapter, pscan_cfg_out->specific_bssid, &zero_mac, sizeof(zero_mac)))
         {
             pbssid_tlv              = (MrvlIEtypes_Bssid_List_t *)ptlv_pos;
             pbssid_tlv->header.type = TLV_TYPE_BSSID;
@@ -889,7 +889,8 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
          *    scan results.  That is not an issue with an SSID or BSSID
          *    filter applied to the scan results in the firmware.
          */
-        if ((ssid_idx && ssid_filter) || memcmp(pmadapter, pscan_cfg_out->specific_bssid, &zero_mac, sizeof(zero_mac)))
+        if ((ssid_idx && ssid_filter) ||
+            __memcmp(pmadapter, pscan_cfg_out->specific_bssid, &zero_mac, sizeof(zero_mac)))
         {
             *pfiltered_scan = MTRUE;
         }
@@ -1536,7 +1537,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
             case VENDOR_SPECIFIC_221:
                 pvendor_ie = (IEEEtypes_VendorSpecific_t *)pcurrent_ptr;
 
-                if (!memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(wpa_oui)))
+                if (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(wpa_oui)))
                 {
                     /* Save it here since we do not have beacon buffer */
                     /* fixme : Verify if this is the right approach. This had to be
@@ -1566,7 +1567,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     HEXDUMP("InterpretIE: Resp WPA_IE", (t_u8 *)pbss_entry->pwpa_ie,
                             ((*(pbss_entry->pwpa_ie)).vend_hdr.len + sizeof(IEEEtypes_Header_t)));
                 }
-                else if (!memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(wmm_oui)))
+                else if (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(wmm_oui)))
                 {
                     if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t) || total_ie_len == sizeof(IEEEtypes_WmmInfo_t))
                     {
@@ -1581,7 +1582,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 }
 #ifdef CONFIG_OWE
                 else if (IS_FW_SUPPORT_EMBEDDED_OWE(pmadapter) &&
-                         !memcmp(pmadapter, pvendor_ie->vend_hdr.oui, owe_oui, sizeof(owe_oui)))
+                         !__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, owe_oui, sizeof(owe_oui)))
                 {
                     /* Current Format of OWE IE is element_id:element_len:oui:MAC Address:SSID length:SSID */
                     t_u8 trans_ssid_len =
@@ -3141,8 +3142,8 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
              */
             for (bss_idx = 0; bss_idx < num_in_table; bss_idx++)
             {
-                if (!memcmp(pmadapter, bss_new_entry->mac_address, pmadapter->pscan_table[bss_idx].mac_address,
-                            sizeof(bss_new_entry->mac_address)))
+                if (!__memcmp(pmadapter, bss_new_entry->mac_address, pmadapter->pscan_table[bss_idx].mac_address,
+                              sizeof(bss_new_entry->mac_address)))
                 {
                     /*
                      * If the SSID matches as well, it is a duplicate of
@@ -3150,8 +3151,8 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                      *   entry so we replace the old contents in the table
                      */
                     if ((bss_new_entry->ssid.ssid_len == pmadapter->pscan_table[bss_idx].ssid.ssid_len) &&
-                        (!memcmp(pmadapter, bss_new_entry->ssid.ssid, pmadapter->pscan_table[bss_idx].ssid.ssid,
-                                 bss_new_entry->ssid.ssid_len)))
+                        (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmadapter->pscan_table[bss_idx].ssid.ssid,
+                                   bss_new_entry->ssid.ssid_len)))
                     {
                         PRINTM(MINFO, "SCAN_RESP: Duplicate of index: %d\n", bss_idx);
                         break;
@@ -3527,8 +3528,8 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
              */
             for (bss_idx = 0; bss_idx < num_in_table; bss_idx++)
             {
-                if (!memcmp(pmadapter, bss_new_entry->mac_address, pmadapter->pscan_table[bss_idx].mac_address,
-                            sizeof(bss_new_entry->mac_address)))
+                if (!__memcmp(pmadapter, bss_new_entry->mac_address, pmadapter->pscan_table[bss_idx].mac_address,
+                              sizeof(bss_new_entry->mac_address)))
                 {
                     /*
                      * If the SSID matches as well, it is a duplicate of
@@ -3536,8 +3537,8 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                      *   entry so we replace the old contents in the table
                      */
                     if ((bss_new_entry->ssid.ssid_len == pmadapter->pscan_table[bss_idx].ssid.ssid_len) &&
-                        (!memcmp(pmadapter, bss_new_entry->ssid.ssid, pmadapter->pscan_table[bss_idx].ssid.ssid,
-                                 bss_new_entry->ssid.ssid_len)))
+                        (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmadapter->pscan_table[bss_idx].ssid.ssid,
+                                   bss_new_entry->ssid.ssid_len)))
                     {
                         PRINTM(MINFO, "EXT_SCAN: Duplicate of index: %d\n", bss_idx);
                         break;
@@ -4147,7 +4148,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
     {
         if (!wlan_ssid_cmp(pmadapter, &pmadapter->pscan_table[i].ssid, ssid) &&
             ((bssid == MNULL) ||
-             !memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH)))
+             !__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH)))
         {
             if (((mode == MLAN_BSS_MODE_INFRA) &&
                  !wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band)) ||
@@ -4234,7 +4235,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN t_u32 
      */
     for (i = 0; net < 0 && i < pmadapter->num_in_scan_table; i++)
     {
-        if (!memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH))
+        if (!__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH))
         {
             if (((mode == MLAN_BSS_MODE_INFRA) &&
                  !wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band)) ||
@@ -4287,7 +4288,7 @@ t_s32 wlan_ssid_cmp(IN pmlan_adapter pmadapter, IN mlan_802_11_ssid *ssid1, IN m
     }
 
     LEAVE();
-    return memcmp(pmadapter, ssid1->ssid, ssid2->ssid, ssid1->ssid_len);
+    return __memcmp(pmadapter, ssid1->ssid, ssid2->ssid, ssid1->ssid_len);
 }
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -4439,7 +4440,7 @@ t_void wlan_save_curr_bcn(IN mlan_private *pmpriv)
     ENTER();
     /* save the beacon buffer if it is not saved or updated */
     if ((pmpriv->pcurr_bcn_buf == MNULL) || (pmpriv->curr_bcn_size != pcurr_bss->beacon_buf_size) ||
-        (memcmp(pmpriv->adapter, pmpriv->pcurr_bcn_buf, pcurr_bss->pbeacon_buf, pcurr_bss->beacon_buf_size)))
+        (__memcmp(pmpriv->adapter, pmpriv->pcurr_bcn_buf, pcurr_bss->pbeacon_buf, pcurr_bss->beacon_buf_size)))
     {
         if (pmpriv->pcurr_bcn_buf)
         {
