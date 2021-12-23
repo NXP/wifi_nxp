@@ -450,8 +450,8 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
             if (ptxp->mode)
             {
                 ppg_tlv = (MrvlTypes_Power_Group_t *)((t_u8 *)pdata_buf + sizeof(HostCmd_DS_TXPWR_CFG));
-                (void)memmove(pmpriv->adapter, ptxp_cfg, pdata_buf,
-                              sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
+                (void)__memmove(pmpriv->adapter, ptxp_cfg, pdata_buf,
+                                sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
 
                 ppg_tlv = (MrvlTypes_Power_Group_t *)((t_u8 *)&cmd->params + sizeof(HostCmd_DS_TXPWR_CFG));
                 cmd->size += wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
@@ -460,7 +460,7 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
             }
             else
             {
-                (void)memmove(pmpriv->adapter, ptxp_cfg, pdata_buf, sizeof(HostCmd_DS_TXPWR_CFG));
+                (void)__memmove(pmpriv->adapter, ptxp_cfg, pdata_buf, sizeof(HostCmd_DS_TXPWR_CFG));
             }
             ptxp_cfg->action    = wlan_cpu_to_le16(cmd_action);
             ptxp_cfg->cfg_index = wlan_cpu_to_le16(ptxp_cfg->cfg_index);
@@ -821,8 +821,8 @@ static mlan_status wlan_set_keyparamset_wep(mlan_private *priv,
                 key_param_set->key[1] = 1;
             else
                 key_param_set->key[1] = 0;
-            (void)memmove(priv->adapter, &key_param_set->key[2], priv->wep_key[i].key_material,
-                          priv->wep_key[i].key_length);
+            (void)__memmove(priv->adapter, &key_param_set->key[2], priv->wep_key[i].key_material,
+                            priv->wep_key[i].key_length);
 
             cur_key_param_len = priv->wep_key[i].key_length + KEYPARAMSET_WEP_FIXED_LEN + sizeof(MrvlIEtypesHeader_t);
             *key_param_len += (t_u16)cur_key_param_len;
@@ -875,11 +875,11 @@ static mlan_status wlan_cmd_802_11_set_wep(mlan_private *priv, HostCmd_DS_COMMAN
         {
             case WEP_40_BIT_LEN:
                 wep->wep_type_for_key1 = HostCmd_TYPE_WEP_40_BIT;
-                (void)memmove(priv->adapter, wep->wep1, priv->wep_key[0].key_material, priv->wep_key[0].key_length);
+                (void)__memmove(priv->adapter, wep->wep1, priv->wep_key[0].key_material, priv->wep_key[0].key_length);
                 break;
             case WEP_104_BIT_LEN:
                 wep->wep_type_for_key1 = HostCmd_TYPE_WEP_104_BIT;
-                (void)memmove(priv->adapter, wep->wep1, priv->wep_key[0].key_material, priv->wep_key[0].key_length);
+                (void)__memmove(priv->adapter, wep->wep1, priv->wep_key[0].key_material, priv->wep_key[0].key_length);
                 break;
             case 0:
                 break;
@@ -893,11 +893,11 @@ static mlan_status wlan_cmd_802_11_set_wep(mlan_private *priv, HostCmd_DS_COMMAN
         {
             case WEP_40_BIT_LEN:
                 wep->wep_type_for_key2 = HostCmd_TYPE_WEP_40_BIT;
-                (void)memmove(priv->adapter, wep->wep2, priv->wep_key[1].key_material, priv->wep_key[1].key_length);
+                (void)__memmove(priv->adapter, wep->wep2, priv->wep_key[1].key_material, priv->wep_key[1].key_length);
                 break;
             case WEP_104_BIT_LEN:
                 wep->wep_type_for_key2 = HostCmd_TYPE_WEP_104_BIT;
-                (void)memmove(priv->adapter, wep->wep2, priv->wep_key[1].key_material, priv->wep_key[1].key_length);
+                (void)__memmove(priv->adapter, wep->wep2, priv->wep_key[1].key_material, priv->wep_key[1].key_length);
                 break;
             case 0:
                 break;
@@ -910,11 +910,11 @@ static mlan_status wlan_cmd_802_11_set_wep(mlan_private *priv, HostCmd_DS_COMMAN
         {
             case WEP_40_BIT_LEN:
                 wep->wep_type_for_key3 = HostCmd_TYPE_WEP_40_BIT;
-                (void)memmove(priv->adapter, wep->wep3, priv->wep_key[2].key_material, priv->wep_key[2].key_length);
+                (void)__memmove(priv->adapter, wep->wep3, priv->wep_key[2].key_material, priv->wep_key[2].key_length);
                 break;
             case WEP_104_BIT_LEN:
                 wep->wep_type_for_key3 = HostCmd_TYPE_WEP_104_BIT;
-                (void)memmove(priv->adapter, wep->wep3, priv->wep_key[2].key_material, priv->wep_key[2].key_length);
+                (void)__memmove(priv->adapter, wep->wep3, priv->wep_key[2].key_material, priv->wep_key[2].key_length);
                 break;
             case 0:
                 break;
@@ -928,11 +928,11 @@ static mlan_status wlan_cmd_802_11_set_wep(mlan_private *priv, HostCmd_DS_COMMAN
         {
             case WEP_40_BIT_LEN:
                 wep->wep_type_for_key4 = HostCmd_TYPE_WEP_40_BIT;
-                (void)memmove(priv->adapter, wep->wep4, priv->wep_key[3].key_material, priv->wep_key[3].key_length);
+                (void)__memmove(priv->adapter, wep->wep4, priv->wep_key[3].key_material, priv->wep_key[3].key_length);
                 break;
             case WEP_104_BIT_LEN:
                 wep->wep_type_for_key4 = HostCmd_TYPE_WEP_104_BIT;
-                (void)memmove(priv->adapter, wep->wep4, priv->wep_key[3].key_material, priv->wep_key[3].key_length);
+                (void)__memmove(priv->adapter, wep->wep4, priv->wep_key[3].key_material, priv->wep_key[3].key_length);
                 break;
             case 0:
                 break;

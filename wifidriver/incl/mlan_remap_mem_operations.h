@@ -43,11 +43,11 @@
 /** Memset routine */
 #define __memset(adapter, s, c, len) memset(s, c, len)
 
-#ifdef memmove
-#undef memmove
+#ifdef __memmove
+#undef __memmove
 #endif
 /** Memmove routine */
-#define memmove(adapter, dest, src, len) memmove(dest, src, len)
+#define __memmove(adapter, dest, src, len) memmove((void *)(dest), (const void *)(src), (size_t)(len))
 
 #ifdef __memcpy
 #undef __memcpy
