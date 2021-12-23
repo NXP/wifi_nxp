@@ -3022,9 +3022,9 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 
     if (pmpriv->curr_addr[0] == 0xff)
     {
-        (void)memmove(pmadapter, pmpriv->curr_addr, hw_spec->permanent_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memmove(pmadapter, pmpriv->curr_addr, hw_spec->permanent_addr, MLAN_MAC_ADDR_LENGTH);
 #ifdef CONFIG_P2P
-        (void)memmove(pmadapter, pmpriv->curr_p2p_addr, hw_spec->permanent_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)__memmove(pmadapter, pmpriv->curr_p2p_addr, hw_spec->permanent_addr, MLAN_MAC_ADDR_LENGTH);
         pmpriv->curr_p2p_addr[0] |= (0x01 << 1);
 #endif
     }

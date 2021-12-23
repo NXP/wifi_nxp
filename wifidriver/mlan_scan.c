@@ -1937,9 +1937,9 @@ static t_void wlan_ret_802_11_scan_store_beacon(IN mlan_private *pmpriv,
                  *  the current beacon.  This cleans up any unused
                  *  space the old larger beacon was using in the buffer
                  */
-                (void)memmove(pmadapter, (void *)((t_ptr)pbcn_store + (t_ptr)old_bcn_size),
-                              (void *)((t_ptr)pbcn_store + (t_ptr)bcn_space),
-                              (t_u32)((t_ptr)pmadapter->pbcn_buf_end - ((t_ptr)pbcn_store + (t_ptr)bcn_space)));
+                (void)__memmove(pmadapter, (void *)((t_ptr)pbcn_store + (t_ptr)old_bcn_size),
+                                (void *)((t_ptr)pbcn_store + (t_ptr)bcn_space),
+                                (t_u32)((t_ptr)pmadapter->pbcn_buf_end - ((t_ptr)pbcn_store + (t_ptr)bcn_space)));
 
                 /*
                  * Decrement the end pointer by the difference between
@@ -1984,9 +1984,9 @@ static t_void wlan_ret_802_11_scan_store_beacon(IN mlan_private *pmpriv,
              *  make space for the new larger beacon we are
              *  about to copy in.
              */
-            (void)memmove(pmadapter, (void *)((t_ptr)pbcn_store + (t_ptr)new_bcn_size),
-                          (void *)((t_ptr)pbcn_store + (t_ptr)bcn_space),
-                          (t_u32)((t_ptr)pmadapter->pbcn_buf_end - ((t_ptr)pbcn_store + (t_ptr)bcn_space)));
+            (void)__memmove(pmadapter, (void *)((t_ptr)pbcn_store + (t_ptr)new_bcn_size),
+                            (void *)((t_ptr)pbcn_store + (t_ptr)bcn_space),
+                            (t_u32)((t_ptr)pmadapter->pbcn_buf_end - ((t_ptr)pbcn_store + (t_ptr)bcn_space)));
 
             /* Copy the new beacon buffer entry over the old one */
             (void)__memcpy(pmadapter, pbcn_store, pnew_beacon->pbeacon_buf, new_bcn_size);
@@ -2351,8 +2351,8 @@ static t_void wlan_scan_delete_table_entry(IN mlan_private *pmpriv, IN t_s32 tab
          *
          * Use memmove since the dest/src memory regions overlap.
          */
-        (void)memmove(pmadapter, pbeacon_buf, (void *)((t_ptr)pbeacon_buf + (t_ptr)beacon_buf_adj),
-                      (t_u32)((t_ptr)pmadapter->pbcn_buf_end - (t_ptr)pbeacon_buf));
+        (void)__memmove(pmadapter, pbeacon_buf, (void *)((t_ptr)pbeacon_buf + (t_ptr)beacon_buf_adj),
+                        (t_u32)((t_ptr)pmadapter->pbcn_buf_end - (t_ptr)pbeacon_buf));
     }
 
     PRINTM(MINFO, "Scan: Delete Entry %d, num_in_scan_table = %d\n", table_idx, pmadapter->num_in_scan_table);

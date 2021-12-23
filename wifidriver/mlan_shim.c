@@ -207,7 +207,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
     pcb = &pmadapter->callbacks;
 
     /* Save callback functions */
-    (void)memmove(pmadapter->pmoal_handle, pcb, &pmdevice->callbacks, sizeof(mlan_callbacks));
+    (void)__memmove(pmadapter->pmoal_handle, pcb, &pmdevice->callbacks, sizeof(mlan_callbacks));
 
 #ifndef CONFIG_MLAN_WMSDK
     /* Assertion for all callback functions */

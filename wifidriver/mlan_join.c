@@ -463,16 +463,16 @@ mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *
                                                   pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16)),
                            sha_256_oui, AKM_SUITE_LEN);
             /* Shift remaining bytes of RSN IE after this */
-            (void)memmove(pmadapter,
-                          ptlv_rsn_ie->rsn_ie +
-                              (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
-                               pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) + AKM_SUITE_LEN),
-                          ptlv_rsn_ie->rsn_ie + (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
-                                                 pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) +
-                                                 akm_suite_count * AKM_SUITE_LEN),
-                          ptlv_rsn_ie->header.len - (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
-                                                     pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) +
-                                                     akm_suite_count * AKM_SUITE_LEN));
+            (void)__memmove(pmadapter,
+                            ptlv_rsn_ie->rsn_ie +
+                                (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+                                 pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) + AKM_SUITE_LEN),
+                            ptlv_rsn_ie->rsn_ie + (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+                                                   pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) +
+                                                   akm_suite_count * AKM_SUITE_LEN),
+                            ptlv_rsn_ie->header.len - (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+                                                       pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN +
+                                                       sizeof(t_u16) + akm_suite_count * AKM_SUITE_LEN));
             ptlv_rsn_ie->header.len = ptlv_rsn_ie->header.len - (akm_suite_count - 1) * AKM_SUITE_LEN;
             /* Update akm suite count */
             akm_suite_count      = 1;
