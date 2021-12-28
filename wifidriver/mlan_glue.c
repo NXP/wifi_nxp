@@ -121,7 +121,7 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
         return NULL;
     }
 
-    return memcpy(dot11n_eventbuf, evt, evt->length);
+    return memcpy((void *)dot11n_eventbuf, (const void *)evt, evt->length);
 }
 #endif /* CONFIG_11N */
 
@@ -307,7 +307,7 @@ static mlan_callbacks woal_callbacks = {
 
 int mlan_subsys_init(void)
 {
-    (void)memcpy(&mlan_dev.callbacks, &woal_callbacks, sizeof(mlan_callbacks));
+    (void)memcpy((void *)&mlan_dev.callbacks, (const void *)&woal_callbacks, sizeof(mlan_callbacks));
 
     /* The mlinux driver has an array of these which is dynamically allocated
      * in function woal_update_drv_tbl (moal_main.c). We have only one.
@@ -514,7 +514,7 @@ void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
             (void)memset(temp_addr, 0, MLAN_MAC_ADDR_LENGTH);
             if (!wlan_find_ampud_info(temp_addr, &ampdu_info))
             {
-                (void)memcpy(ampdu_info->mac_addr, addr, MLAN_MAC_ADDR_LENGTH);
+                (void)memcpy((void *)ampdu_info->mac_addr, (const void *)addr, MLAN_MAC_ADDR_LENGTH);
                 ampdu_info->ampudu_stat      = MFALSE;
                 ampdu_info->ampudu_supported = MTRUE;
             }
@@ -682,7 +682,8 @@ int wrapper_wlan_sta_ampdu_enable(
 #endif
         if (pmpriv->media_connected == MTRUE)
         {
-            (void)memcpy(cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
+            (void)memcpy((void *)cur_mac, (const void *)pmpriv->curr_bss_params.bss_descriptor.mac_address,
+                         MLAN_MAC_ADDR_LENGTH);
         }
         else
         {
@@ -779,7 +780,7 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
 
     (void)memset(&ds_mgmt_ie_list_cfg, 0x00, sizeof(HostCmd_DS_MGMT_IE_LIST_CFG));
 
-    (void)memcpy(&ds_mgmt_ie_list_cfg, buffer, len);
+    (void)memcpy((void *)&ds_mgmt_ie_list_cfg, (const void *)buffer, len);
 
     pdata_buf = &ds_mgmt_ie_list_cfg;
 
@@ -832,7 +833,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
         wifi_w("No memory available. Have to drop packet.");
         return -WM_FAIL;
     }
-    (void)memcpy(pmbuf->pbuf, rxpd, sizeof(RxPD));
+    (void)memcpy((void *)pmbuf->pbuf, (const void *)rxpd, sizeof(RxPD));
 
     /** Offset to data */
     /* This should ideally be INTF_HEADER_LEN. But we not be storing
@@ -1105,7 +1106,7 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie)
     mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
 
     /* Reset all state variables */
-    (void)memcpy(wpa_ie, &priv->wpa_ie, sizeof(priv->wpa_ie));
+    (void)memcpy((void *)wpa_ie, (const void *)&priv->wpa_ie, sizeof(priv->wpa_ie));
 
     return priv->wpa_ie_len;
 }
@@ -1199,7 +1200,7 @@ int wifi_set_tx_power_ext(uint32_t len, uint32_t *power_data)
 
     ds_power_cfg.sub_command         = MLAN_OID_POWER_CFG_EXT;
     ds_power_cfg.param.power_ext.len = len;
-    (void)memcpy(ds_power_cfg.param.power_ext.power_data, power_data, len);
+    (void)memcpy((void *)ds_power_cfg.param.power_ext.power_data, (const void *)power_data, len);
 
     return wifi_send_tx_power_cfg_ioctl(MLAN_ACT_SET, &ds_power_cfg);
 }
@@ -1359,7 +1360,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
         {
-            (void)memcpy(priv->wpa_ie, d->rsn_ie_buff, d->rsn_ie_buff_len);
+            (void)memcpy((void *)priv->wpa_ie, (const void *)d->rsn_ie_buff, d->rsn_ie_buff_len);
             priv->wpa_ie_len = d->rsn_ie_buff_len;
         }
         else
@@ -1376,7 +1377,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
         {
-            (void)memcpy(priv->wpa_ie, d->rsn_ie_buff, d->rsn_ie_buff_len);
+            (void)memcpy((void *)priv->wpa_ie, (const void *)d->rsn_ie_buff, d->rsn_ie_buff_len);
             priv->wpa_ie_len = d->rsn_ie_buff_len;
         }
         else
@@ -1392,7 +1393,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
         priv->sec_info.wpa_enabled = true;
         if (d->wpa_ie_buff_len <= sizeof(priv->wpa_ie))
         {
-            (void)memcpy(priv->wpa_ie, d->wpa_ie_buff, d->wpa_ie_buff_len);
+            (void)memcpy((void *)priv->wpa_ie, (const void *)d->wpa_ie_buff, d->wpa_ie_buff_len);
             priv->wpa_ie_len = d->wpa_ie_buff_len;
         }
         else
@@ -1420,7 +1421,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
         {
-            (void)memcpy(priv->wpa_ie, d->rsn_ie_buff, d->rsn_ie_buff_len);
+            (void)memcpy((void *)priv->wpa_ie, (const void *)d->rsn_ie_buff, d->rsn_ie_buff_len);
             priv->wpa_ie_len = d->rsn_ie_buff_len;
         }
         else
@@ -1510,7 +1511,7 @@ static void wifi_set_hostcmd_resp(const HostCmd_DS_COMMAND *resp)
     /* Copy if response buffer is suffcient to hold response data */
     if (hcmd_cfg->resp_buf_len >= resp->size)
     {
-        memcpy(hcmd_cfg->resp_buf, resp, resp->size);
+        memcpy((void *)hcmd_cfg->resp_buf, (const void *)resp, resp->size);
     }
     /* Initialize user pointer to NULL*/
     wm_wifi.cmd_resp_priv = NULL;
@@ -1556,7 +1557,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
             sta[i].rssi = si[i].rssi;
         }
 
-        (void)memcpy(sta[i].mac, si[i].mac_address, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)sta[i].mac, (const void *)si[i].mac_address, MLAN_MAC_ADDR_LENGTH);
         sta[i].power_mgmt_status = si[i].power_mfg_status;
 
         wifi_d("RSSI: 0x%x %d dbm", sta[i].rssi, sta[i].rssi);
@@ -1579,7 +1580,7 @@ static void load_ver_ext(HostCmd_DS_COMMAND *resp)
     HostCmd_DS_VERSION_EXT *ver_ext     = &resp->params.verext;
     wifi_fw_version_ext_t *user_ver_ext = (wifi_fw_version_ext_t *)wm_wifi.cmd_resp_priv;
 
-    (void)memcpy(user_ver_ext->version_str, ver_ext->version_str, resp->size - 10U);
+    (void)memcpy((void *)user_ver_ext->version_str, (const void *)ver_ext->version_str, resp->size - 10U);
 
     wm_wifi.cmd_resp_status = WM_SUCCESS;
     wm_wifi.cmd_resp_priv   = NULL;
@@ -1905,7 +1906,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     break;
                 }
 
-                (void)memcpy(sta_addr, (uint8_t *)&pmac_addr->mac_addr, MLAN_MAC_ADDR_LENGTH);
+                (void)memcpy((void *)sta_addr, (const void *)((uint8_t *)&pmac_addr->mac_addr), MLAN_MAC_ADDR_LENGTH);
 
                 wifi_event_completion(WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
             }
@@ -1972,7 +1973,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (wm_wifi.cmd_resp_priv != NULL)
                 {
                     uint8_t *buf = (uint8_t *)wm_wifi.cmd_resp_priv;
-                    (void)memcpy(buf, &eeprom->value, eeprom->byte_count);
+                    (void)memcpy((void *)buf, (const void *)&eeprom->value, eeprom->byte_count);
                 }
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
             }
@@ -1999,7 +2000,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (wm_wifi.cmd_resp_priv != NULL)
                 {
                     uint8_t *buf = (uint8_t *)wm_wifi.cmd_resp_priv;
-                    (void)memcpy(buf, (void *)&ie_list_cfg->ds_mgmt_ie.ie_data_list[0], ie_list_cfg->ds_mgmt_ie.len);
+                    (void)memcpy((void *)buf, (const void *)(&ie_list_cfg->ds_mgmt_ie.ie_data_list[0]),
+                                 ie_list_cfg->ds_mgmt_ie.len);
                 }
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
             }
@@ -2128,7 +2130,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         if (wm_wifi.cmd_resp_priv != NULL)
                         {
                             uint8_t *buf = (uint8_t *)wm_wifi.cmd_resp_priv;
-                            (void)memcpy(buf, user_data->user_data, user_data->user_data_length);
+                            (void)memcpy((void *)buf, (const void *)user_data->user_data, user_data->user_data_length);
                         }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
@@ -2159,7 +2161,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             }
                             cal_data->data_len = cfg_data->data_len;
 
-                            (void)memcpy(cal_data->data, cfg_data->data, cfg_data->data_len);
+                            (void)memcpy((void *)cal_data->data, (const void *)cfg_data->data, cfg_data->data_len);
                         }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
@@ -2295,7 +2297,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     if (wm_wifi.cmd_resp_priv != NULL)
                     {
                         uint8_t *buf = (uint8_t *)wm_wifi.cmd_resp_priv;
-                        (void)memcpy(buf, get_log, sizeof(HostCmd_DS_802_11_GET_LOG));
+                        (void)memcpy((void *)buf, (const void *)get_log, sizeof(HostCmd_DS_802_11_GET_LOG));
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
@@ -2331,27 +2333,31 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             ssid = (MrvlIEtypes_SsIdParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t));
 
                             bridgecfg->ex_ap_ssid_len = wlan_cpu_to_le16(ssid->header.len);
-                            (void)memcpy(bridgecfg->ex_ap_ssid, ssid->ssid, bridgecfg->ex_ap_ssid_len);
+                            (void)memcpy((void *)bridgecfg->ex_ap_ssid, (const void *)ssid->ssid,
+                                         bridgecfg->ex_ap_ssid_len);
 
                             tlv = (t_u8 *)ssid;
 
                             pass = (MrvlIEtypes_Passphrase_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + ssid->header.len);
 
                             bridgecfg->ex_ap_pass_len = wlan_cpu_to_le16(pass->header.len);
-                            (void)memcpy(bridgecfg->ex_ap_pass, pass->passphrase, bridgecfg->ex_ap_pass_len);
+                            (void)memcpy((void *)bridgecfg->ex_ap_pass, (const void *)pass->passphrase,
+                                         bridgecfg->ex_ap_pass_len);
 
                             tlv = (t_u8 *)pass;
 
                             ssid = (MrvlIEtypes_SsIdParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + pass->header.len);
 
                             bridgecfg->bridge_ssid_len = wlan_cpu_to_le16(ssid->header.len);
-                            (void)memcpy(bridgecfg->bridge_ssid, ssid->ssid, bridgecfg->bridge_ssid_len);
+                            (void)memcpy((void *)bridgecfg->bridge_ssid, (const void *)ssid->ssid,
+                                         bridgecfg->bridge_ssid_len);
 
                             tlv = (t_u8 *)ssid;
 
                             pass = (MrvlIEtypes_Passphrase_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + ssid->header.len);
                             bridgecfg->bridge_pass_len = wlan_cpu_to_le16(pass->header.len);
-                            (void)memcpy(bridgecfg->bridge_pass, pass->passphrase, bridgecfg->bridge_pass_len);
+                            (void)memcpy((void *)bridgecfg->bridge_pass, (const void *)pass->passphrase,
+                                         bridgecfg->bridge_pass_len);
 
                             tlv = (t_u8 *)pass;
 
@@ -2359,7 +2365,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                                                           pass->header.len);
                             if (hostcmd->size > ((char *)autolink - (char *)resp))
                             {
-                                (void)memcpy(&bridgecfg->autolink, ((char *)autolink) + sizeof(MrvlIEtypesHeader_t),
+                                (void)memcpy((void *)&bridgecfg->autolink,
+                                             (const void *)(((char *)autolink) + sizeof(MrvlIEtypesHeader_t)),
                                              autolink->header.len);
                             }
                         }
@@ -2652,7 +2659,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
         if (tlv_type == TLV_TYPE_UAP_MGMT_FRAME)
         {
             mgmt_tlv = (MrvlIETypes_MgmtFrameSet_t *)tlv;
-            (void)memcpy(&frame_control, (t_u8 *)&(mgmt_tlv->frame_control), sizeof(frame_control));
+            (void)memcpy((void *)&frame_control, (const void *)((t_u8 *)&(mgmt_tlv->frame_control)),
+                         sizeof(frame_control));
             frame_sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(frame_control);
             if ((mgmt_tlv->frame_control.type == 0U) &&
                 ((frame_sub_type == SUBTYPE_ASSOC_REQUEST) || (frame_sub_type == SUBTYPE_REASSOC_REQUEST)))
@@ -2717,7 +2725,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                 {
                     PRINTM(MCMND, "STA supports 11ax\n");
                     sta_ptr->is_11ax_enabled = MTRUE;
-                    (void)memcpy((t_u8 *)&sta_ptr->he_cap, phe_cap, phe_cap->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                    (void)memcpy((void *)((t_u8 *)&sta_ptr->he_cap), (const void *)phe_cap,
+                                 phe_cap->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
                     sta_ptr->he_cap.ieee_hdr.len =
                         MIN(phe_cap->ieee_hdr.len, sizeof(IEEEtypes_HECap_t) - sizeof(IEEEtypes_Header_t));
                 }
@@ -2990,7 +2999,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
-            (void)memcpy(sta_addr, event_sta_addr, MLAN_MAC_ADDR_LENGTH);
+            (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             wlan_update_uap_ampdu_info(sta_addr, 1);
@@ -3032,7 +3041,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                     break;
                 }
                 event_sta_addr = (t_u8 *)&evt->src_mac_addr;
-                (void)memcpy(sta_addr, event_sta_addr, MLAN_MAC_ADDR_LENGTH);
+                (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
                 wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr);
             }
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
@@ -3067,7 +3076,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wifi_w("No mem. Cannot process auto link switch network info");
                 break;
             }
-            (void)memcpy(pinfo, pnewNode, pnewNode->length);
+            (void)memcpy((void *)pinfo, (const void *)pnewNode, pnewNode->length);
             wifi_event_completion(WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED, WIFI_EVENT_REASON_SUCCESS, pinfo);
             break;
 #endif
@@ -3097,7 +3106,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 break;
             }
 
-            (void)memcpy(debug, (uint8_t *)&evt->reason_code, evt->length - 8);
+            (void)memcpy((void *)debug, (const void *)((uint8_t *)&evt->reason_code), evt->length - 8);
             wifi_event_completion(WIFI_EVENT_FW_DEBUG_INFO, WIFI_EVENT_REASON_SUCCESS, debug);
         }
         break;
@@ -3150,8 +3159,9 @@ static unsigned char process_rsn_ie(
         if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), wpa2_oui04,
                     sizeof(wpa_suite)))
         {
-            (void)memcpy((uint8_t *)&prsn_ie->pairwise_cipher.list,
-                         (((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), sizeof(wpa_suite));
+            (void)memcpy((void *)((uint8_t *)&prsn_ie->pairwise_cipher.list),
+                         (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
+                         sizeof(wpa_suite));
         }
         (void)memmove((((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
                       (uint8_t *)&prsn_ie->auth_key_mgmt, sizeof(wpa_suite_auth_key_mgmt_t));
@@ -3159,19 +3169,20 @@ static unsigned char process_rsn_ie(
 
     if (prsn_ie->pairwise_cipher.count == 1U)
     {
-        (void)memcpy(&akmp_count, (((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), sizeof(uint16_t));
+        (void)memcpy((void *)&akmp_count,
+                     (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), sizeof(uint16_t));
 
         for (i = 0; i < akmp_count; i++)
         {
             if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
                                        sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        wpa3_oui08, sizeof(wpa_suite)))
+                        (const void *)wpa3_oui08, sizeof(wpa_suite)))
             {
                 WPA_WPA2_WEP->wpa3_sae = 1;
             }
             if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
                                        sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        wpa3_oui12, sizeof(wpa_suite)))
+                        (const void *)wpa3_oui12, sizeof(wpa_suite)))
             {
                 WPA_WPA2_WEP->owe = 1;
             }
@@ -3181,34 +3192,38 @@ static unsigned char process_rsn_ie(
     {
         prsn_ie->len = 20;
         akmp_count   = 1;
-        (void)memcpy((((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), &akmp_count, sizeof(uint16_t));
+        (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
+                     (const void *)&akmp_count, sizeof(uint16_t));
 
         if (WPA_WPA2_WEP->wpa3_sae != 0U)
         {
-            (void)memcpy(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t), wpa3_oui08,
-                         sizeof(wpa_suite));
+            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
+                         (const void *)wpa3_oui08, sizeof(wpa_suite));
         }
-        (void)memcpy((((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
-                     (((uint8_t *)&prsn_ie->pairwise_cipher.list) + 3U * sizeof(wpa_suite) + sizeof(uint16_t)),
-                     sizeof(uint16_t));
+        (void)memcpy(
+            (void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
+            (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 3U * sizeof(wpa_suite) + sizeof(uint16_t)),
+            sizeof(uint16_t));
     }
 
     if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                wpa2_oui06, sizeof(wpa_suite)))
+                (const void *)wpa2_oui06, sizeof(wpa_suite)))
     {
-        (void)memcpy(&akmp, (((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
-                     sizeof(uint8_t));
+        (void)memcpy(
+            (void *)&akmp,
+            (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
+            sizeof(uint8_t));
         if ((akmp & 0xC0U) != 0)
         {
             *is_pmf_required = true;
         }
     }
 
-    if (!memcmp((const void *)&prsn_ie->pairwise_cipher.list, wpa2_oui04, sizeof(wpa_suite)))
+    if (!memcmp((const void *)&prsn_ie->pairwise_cipher.list, (const void *)wpa2_oui04, sizeof(wpa_suite)))
     {
         ucstCipher->ccmp = true;
     }
-    else if (!memcmp((const void *)&prsn_ie->pairwise_cipher.list, wpa2_oui02, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&prsn_ie->pairwise_cipher.list, (const void *)wpa2_oui02, sizeof(wpa_suite)))
     {
         ucstCipher->tkip = true;
     }
@@ -3216,19 +3231,19 @@ static unsigned char process_rsn_ie(
     { /* Do Nothing */
     }
 
-    if (!memcmp((const void *)&prsn_ie->group_cipher, wpa2_oui04, sizeof(wpa_suite)))
+    if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui04, sizeof(wpa_suite)))
     {
         mcstCipher->ccmp = true;
     }
-    else if (!memcmp((const void *)&prsn_ie->group_cipher, wpa2_oui02, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui02, sizeof(wpa_suite)))
     {
         mcstCipher->tkip = true;
     }
-    else if (!memcmp((const void *)&prsn_ie->group_cipher, wpa2_oui05, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui05, sizeof(wpa_suite)))
     {
         mcstCipher->wep104 = true;
     }
-    else if (!memcmp((const void *)&prsn_ie->group_cipher, wpa2_oui01, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui01, sizeof(wpa_suite)))
     {
         mcstCipher->wep40 = true;
     }
@@ -3248,22 +3263,23 @@ static unsigned char process_wpa_ie(uint8_t *wpa_ie, _Cipher_t *mcstCipher, _Cip
         pwpa_ie->len                   = 22;
         pwpa_ie->pairwise_cipher.count = 1;
 
-        if (!memcmp((const void *)(((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)), wpa_oui04,
-                    sizeof(wpa_suite)))
+        if (!memcmp((const void *)(((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
+                    (const void *)wpa_oui04, sizeof(wpa_suite)))
         {
-            (void)memcpy((uint8_t *)&pwpa_ie->pairwise_cipher.list,
-                         (((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)), sizeof(wpa_suite));
+            (void)memcpy((void *)((uint8_t *)&pwpa_ie->pairwise_cipher.list),
+                         (const void *)(((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
+                         sizeof(wpa_suite));
         }
 
         (void)memmove((((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
                       (uint8_t *)&pwpa_ie->auth_key_mgmt, sizeof(wpa_suite_auth_key_mgmt_t));
     }
 
-    if (!memcmp((const void *)&pwpa_ie->pairwise_cipher.list, wpa_oui04, sizeof(wpa_suite)))
+    if (!memcmp((const void *)&pwpa_ie->pairwise_cipher.list, (const void *)wpa_oui04, sizeof(wpa_suite)))
     {
         ucstCipher->ccmp = true;
     }
-    else if (!memcmp((const void *)&pwpa_ie->pairwise_cipher.list, wpa_oui02, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&pwpa_ie->pairwise_cipher.list, (const void *)wpa_oui02, sizeof(wpa_suite)))
     {
         ucstCipher->tkip = true;
     }
@@ -3271,19 +3287,19 @@ static unsigned char process_wpa_ie(uint8_t *wpa_ie, _Cipher_t *mcstCipher, _Cip
     { /* Do Nothing */
     }
 
-    if (!memcmp((const void *)&pwpa_ie->group_cipher, wpa_oui04, sizeof(wpa_suite)))
+    if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui04, sizeof(wpa_suite)))
     {
         mcstCipher->ccmp = true;
     }
-    else if (!memcmp((const void *)&pwpa_ie->group_cipher, wpa_oui02, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui02, sizeof(wpa_suite)))
     {
         mcstCipher->tkip = true;
     }
-    else if (!memcmp((const void *)&pwpa_ie->group_cipher, wpa_oui05, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui05, sizeof(wpa_suite)))
     {
         mcstCipher->wep104 = true;
     }
-    else if (!memcmp((const void *)&pwpa_ie->group_cipher, wpa_oui01, sizeof(wpa_suite)))
+    else if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui01, sizeof(wpa_suite)))
     {
         mcstCipher->wep40 = true;
     }
@@ -3320,7 +3336,7 @@ int wrapper_bssdesc_first_set(int bss_index,
      * Removed : const BSSDescriptor_t *d = &mlan_adap->pscan_table[bss_index]; */
     BSSDescriptor_t *d = &mlan_adap->pscan_table[bss_index];
 
-    (void)memcpy(BssId, d->mac_address, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)BssId, (const void *)d->mac_address, MLAN_MAC_ADDR_LENGTH);
 
     if (d->cap_info.ibss != 0U)
     {
@@ -3334,7 +3350,7 @@ int wrapper_bssdesc_first_set(int bss_index,
     if (d->ssid.ssid_len <= MLAN_MAX_SSID_LENGTH)
     {
         *ssid_len = (int)d->ssid.ssid_len;
-        (void)memcpy(ssid, d->ssid.ssid, d->ssid.ssid_len);
+        (void)memcpy((void *)ssid, (const void *)d->ssid.ssid, d->ssid.ssid_len);
     }
 
     *Channel = d->channel; /*!< Channel associated to the BSSID */
@@ -3444,12 +3460,12 @@ int wrapper_bssdesc_second_set(int bss_index,
 #ifdef CONFIG_OWE
     *trans_mode = d->owe_transition_mode;
 #endif
-    (void)memcpy(trans_bssid, d->trans_mac_address, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)trans_bssid, (const void *)d->trans_mac_address, MLAN_MAC_ADDR_LENGTH);
 
     if (d->trans_ssid.ssid_len <= MLAN_MAX_SSID_LENGTH)
     {
         *trans_ssid_len = (int)d->trans_ssid.ssid_len;
-        (void)memcpy(trans_ssid, d->trans_ssid.ssid, d->trans_ssid.ssid_len);
+        (void)memcpy((void *)trans_ssid, (const void *)d->trans_ssid.ssid, d->trans_ssid.ssid_len);
     }
 
     return WM_SUCCESS;
@@ -3510,14 +3526,14 @@ bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, 
     uint8_t wpa2_ent_IE[4];
     uint16_t len;
 
-    (void)memcpy(&len, element_data, sizeof(len));
+    (void)memcpy((void *)&len, (const void *)element_data, sizeof(len));
 
     if (len * 4U >= element_len)
     {
         return false;
     }
 
-    (void)memcpy(&wpa2_ent_IE, (char *)element_data + len * 4U + 2U * sizeof(len), 4U);
+    (void)memcpy((void *)&wpa2_ent_IE, (const void *)((char *)element_data + len * 4U + 2U * sizeof(len)), 4U);
 
     if (!memcmp(wpa2_ent_IE, wpa2_akmp_oui, sizeof(wpa2_akmp_oui)))
     {
@@ -3565,7 +3581,7 @@ void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_
  */
 void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr)
 {
-    (void)memcpy(mac_addr, &resp->params.mac_addr.mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)mac_addr, (const void *)&resp->params.mac_addr.mac_addr, MLAN_MAC_ADDR_LENGTH);
 }
 
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext)
@@ -3578,28 +3594,31 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
          * This change is temporary and can be removed once firmware changes are in place */
         if (strstr((const char *)&resp->params.verext.version_str, "w8978o") != NULL)
         {
-            (void)memcpy(fw_ver_ext, "IW416", 6);
-            (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &resp->params.verext.version_str[6],
+            (void)memcpy((void *)fw_ver_ext, (const void *)"IW416", 6);
+            (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
+                         (const void *)&resp->params.verext.version_str[6],
                          strlen((const char *)(&resp->params.verext.version_str)) - strlen((const char *)fw_ver_ext));
         }
         else
         {
-            (void)memcpy(fw_ver_ext, &resp->params.verext.version_str,
+            (void)memcpy((void *)fw_ver_ext, (const void *)&resp->params.verext.version_str,
                          strlen((const char *)(&resp->params.verext.version_str)));
         }
     }
     else if (resp->params.verext.version_str_sel == 3U && strlen((const char *)(&resp->params.verext.version_str)))
     {
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &comma, 1);
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &space, 1);
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &resp->params.verext.version_str,
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&comma, 1);
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&space, 1);
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
+                     (const void *)&resp->params.verext.version_str,
                      strlen((const char *)(&resp->params.verext.version_str)));
     }
     else if (resp->params.verext.version_str_sel == 4U && strlen((const char *)(&resp->params.verext.version_str)))
     {
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &comma, 1);
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &space, 1);
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &resp->params.verext.version_str,
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&comma, 1);
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&space, 1);
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
+                     (const void *)&resp->params.verext.version_str,
                      strlen((const char *)(&resp->params.verext.version_str)));
     }
     else
@@ -3616,7 +3635,7 @@ void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->params.cfg_data.action   = HostCmd_ACT_GEN_SET;
     cmd->params.cfg_data.type     = 0x02;
     cmd->params.cfg_data.data_len = cal_data_len;
-    (void)memcpy(cmd->params.cfg_data.data, cal_data, cal_data_len);
+    (void)memcpy((void *)cmd->params.cfg_data.data, (const void *)cal_data, cal_data_len);
 }
 
 #ifdef OTP_CHANINFO
@@ -3689,7 +3708,7 @@ void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->seq_num                = seq_number;
     cmd->result                 = 0;
     cmd->params.mac_addr.action = HostCmd_ACT_GEN_SET;
-    (void)memcpy(cmd->params.mac_addr.mac_addr, mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)cmd->params.mac_addr.mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
 }
 
 #ifdef CONFIG_EXTERNAL_BLE_COEX

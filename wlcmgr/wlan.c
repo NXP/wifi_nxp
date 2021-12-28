@@ -1474,7 +1474,8 @@ static int do_start(struct wlan_network *network)
                     if (active_num_chans != 0U)
                     {
                         scan_chan_list.num_of_chan = active_num_chans;
-                        (void)memcpy(scan_chan_list.chan_number, active_chan_list, active_num_chans);
+                        (void)memcpy((void *)scan_chan_list.chan_number, (const void *)active_chan_list,
+                                     active_num_chans);
                         wlan_uap_set_scan_chan_list(scan_chan_list);
                     }
                 }
@@ -1643,11 +1644,11 @@ static void update_network_params(struct wlan_network *network, const struct wif
     }
     if (!network->bssid_specific)
     {
-        (void)memcpy((void *)network->bssid, res->bssid, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)network->bssid, (const void *)res->bssid, MLAN_MAC_ADDR_LENGTH);
     }
     if (!network->ssid_specific)
     {
-        (void)memcpy(network->ssid, res->ssid, res->ssid_len);
+        (void)memcpy((void *)network->ssid, (const void *)res->ssid, res->ssid_len);
     }
 
     network->beacon_period = res->beacon_period;
@@ -1658,7 +1659,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
     if (res->trans_mode == OWE_TRANS_MODE_OPEN)
     {
         (void)memset(&network->trans_ssid, 0x00, sizeof(network->trans_ssid));
-        (void)memcpy(network->trans_ssid, res->trans_ssid, res->trans_ssid_len);
+        (void)memcpy((void *)network->trans_ssid, (const void *)res->trans_ssid, res->trans_ssid_len);
         network->trans_ssid_len = res->trans_ssid_len;
     }
 #endif
@@ -1733,7 +1734,7 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
          * successful association and authentication */
         wlan.auth_cache_valid      = false;
         wlan.fast_path_cache_valid = false;
-        (void)memcpy(wlan.fast_path_bss, res->bssid, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)wlan.fast_path_bss, (const void *)res->bssid, MLAN_MAC_ADDR_LENGTH);
         wlan.fp_network = wlan.cur_network_idx;
     }
 #endif /* CONFIG_WLAN_FAST_PATH */
@@ -1792,7 +1793,7 @@ static void handle_scan_results(void)
             if (!matching_ap_found)
             {
                 /* First matching AP found */
-                (void)memcpy(best_ap, res, sizeof(struct wifi_scan_result));
+                (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
                 matching_ap_found = true;
                 /*
                  * Continue the search. There may be an AP
@@ -1809,7 +1810,7 @@ static void handle_scan_results(void)
                  */
                 wlcm_d("Found better AP %s on channel %d", res->ssid, res->Channel);
                 /* Assign the new found as curr_best */
-                (void)memcpy(best_ap, res, sizeof(struct wifi_scan_result));
+                (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
             }
 
             /* Continue the search */
@@ -2327,7 +2328,7 @@ static void wlcm_process_pmk_event(struct wifi_message *msg, enum cm_sta_state *
     if (msg->data != NULL)
     {
         network->security.pmk_valid = true;
-        (void)memcpy(network->security.pmk, msg->data, WLAN_PMK_LENGTH);
+        (void)memcpy((void *)network->security.pmk, (const void *)msg->data, WLAN_PMK_LENGTH);
         if (network->role == WLAN_BSS_ROLE_STA)
         {
             wifi_send_add_wpa_pmk(network->role, network->ssid, network->bssid, network->security.pmk, WLAN_PMK_LENGTH);
@@ -2382,7 +2383,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
         {
 #endif /* CONFIG_WLAN_FAST_PATH */
             if (network->type == WLAN_BSS_TYPE_STA)
-	        {
+            {
                 if_handle = net_get_mlan_handle();
             }
 #ifdef CONFIG_P2P
@@ -2601,7 +2602,7 @@ static void wlcm_process_network_switch_event(struct wifi_message *msg,
     print_mac((char *)pnewNode->peer_mac_addr);
     if (p)
     {
-        (void)memcpy(p, pnewNode->ssid, pnewNode->len_ssid);
+        (void)memcpy((void *)p, (const void *)pnewNode->ssid, pnewNode->len_ssid);
         (void)PRINTF("\r\nSsid=%s\r\n", p);
         os_mem_free(p);
     }
@@ -2811,7 +2812,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         }
         else
         {
-         /*Do nothing*/
+            /*Do nothing*/
         }
 #endif /* CONFIG_P2P */
         net_get_if_addr(&network->ip, if_handle);
@@ -3028,13 +3029,13 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
             {
                 if (network->type == WLAN_BSS_TYPE_UAP)
                 {
-                    (void)memcpy(&network->bssid[0], &wlan.mac[0], 6);
+                    (void)memcpy((void *)&network->bssid[0], (const void *)&wlan.mac[0], 6);
                     if_handle = net_get_uap_handle();
                 }
 #ifdef CONFIG_P2P
                 else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
                 {
-                    (void)memcpy(&network->bssid[0], &wlan.wfd_mac[0], 6);
+                    (void)memcpy((void *)&network->bssid[0], (const void *)&wlan.wfd_mac[0], 6);
                     if_handle = net_get_wfd_handle();
                 }
 #endif /* CONFIG_P2P */
@@ -3573,7 +3574,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_MAC_ADDR_CONFIG:
             if (msg->data != NULL)
             {
-                (void)memcpy(&wlan.mac[0], msg->data, MLAN_MAC_ADDR_LENGTH);
+                (void)memcpy((void *)&wlan.mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
                 os_mem_free(msg->data);
             }
             break;
@@ -3703,7 +3704,7 @@ static int send_user_request(enum user_request_type request, int data)
 
 static void copy_network(struct wlan_network *dst, struct wlan_network *src)
 {
-    (void)memcpy(dst, src, sizeof(struct wlan_network));
+    (void)memcpy((void *)dst, (const void *)src, sizeof(struct wlan_network));
     /* Omit any information that was dynamically
      * learned from the network so that users can
      * see which parameters were actually
@@ -3780,12 +3781,12 @@ int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size)
         return ret;
     }
 
-    (void)memcpy(&wlan.mac[0], mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)&wlan.mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
     (void)PRINTF("MAC Address: ");
     print_mac((const char *)&wlan.mac);
     (void)PRINTF("\r\n");
 #ifdef CONFIG_P2P
-    (void)memcpy(&wlan.wfd_mac[0], mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
     wlan.wfd_mac[0] |= (0x01 << 1);
 #endif
 
@@ -4221,7 +4222,7 @@ int wlan_add_network(struct wlan_network *network)
     }
 
     /* save and set private fields */
-    (void)memcpy(&wlan.networks[pos], network, sizeof(struct wlan_network));
+    (void)memcpy((void *)&wlan.networks[pos], (const void *)network, sizeof(struct wlan_network));
     wlan.networks[pos].ssid_specific    = (network->ssid[0] != '\0');
     wlan.networks[pos].bssid_specific   = !is_bssid_any(network->bssid);
     wlan.networks[pos].channel_specific = (network->channel != 0);
@@ -4237,7 +4238,7 @@ int wlan_add_network(struct wlan_network *network)
         if (ret != WM_SUCCESS)
         {
             return WLAN_ERROR_ACTION;
-}
+        }
 #ifdef CONFIG_WLAN_BRIDGE
         if (network->bridge_ssid)
         {
@@ -4356,7 +4357,7 @@ int wlan_get_current_network(struct wlan_network *network)
 
     if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
     {
-        (void)memcpy(network, &wlan.networks[wlan.cur_network_idx], sizeof(struct wlan_network));
+        (void)memcpy((void *)network, (const void *)&wlan.networks[wlan.cur_network_idx], sizeof(struct wlan_network));
         return WM_SUCCESS;
     }
 
@@ -4372,7 +4373,8 @@ int wlan_get_current_uap_network(struct wlan_network *network)
 
     if (wlan.running && (is_uap_state(CM_UAP_IP_UP) || is_uap_state(CM_UAP_STARTED)))
     {
-        (void)memcpy(network, &wlan.networks[wlan.cur_uap_network_idx], sizeof(struct wlan_network));
+        (void)memcpy((void *)network, (const void *)&wlan.networks[wlan.cur_uap_network_idx],
+                     sizeof(struct wlan_network));
         return WM_SUCCESS;
     }
     return WLAN_ERROR_STATE;
@@ -4658,8 +4660,8 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 
     (void)memset(res, 0, sizeof(struct wlan_scan_result));
 
-    (void)memcpy(&res->bssid[0], &desc->bssid[0], sizeof(res->bssid));
-    (void)memcpy(&res->ssid[0], (char *)&desc->ssid[0], desc->ssid_len);
+    (void)memcpy((void *)&res->bssid[0], (const void *)&desc->bssid[0], sizeof(res->bssid));
+    (void)memcpy((void *)&res->ssid[0], (const void *)((char *)&desc->ssid[0]), desc->ssid_len);
     res->ssid[desc->ssid_len] = 0;
     res->ssid_len             = desc->ssid_len;
     res->channel              = desc->Channel;
@@ -4708,8 +4710,8 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 
     res->rssi = desc->RSSI;
 
-    (void)memcpy(&res->trans_bssid[0], &desc->trans_bssid[0], sizeof(res->trans_bssid));
-    (void)memcpy(&res->trans_ssid[0], (char *)&desc->trans_ssid[0], desc->trans_ssid_len);
+    (void)memcpy((void *)&res->trans_bssid[0], (const void *)&desc->trans_bssid[0], sizeof(res->trans_bssid));
+    (void)memcpy((void *)&res->trans_ssid[0], (const void *)((char *)&desc->trans_ssid[0]), desc->trans_ssid_len);
     res->trans_ssid[desc->trans_ssid_len] = 0;
     res->trans_ssid_len                   = desc->trans_ssid_len;
 
@@ -4765,9 +4767,9 @@ static int wlan_pscan(int (*cb)(unsigned int count))
 
     wlan_scan_param.cb = cb;
 
-    (void)memcpy(wlan_scan_param.bssid, network.bssid, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)wlan_scan_param.bssid, (const void *)network.bssid, MLAN_MAC_ADDR_LENGTH);
 
-    (void)memcpy(wlan_scan_param.ssid, network.ssid, strlen(network.ssid));
+    (void)memcpy((void *)wlan_scan_param.ssid, (const void *)network.ssid, strlen(network.ssid));
 
     wlan_scan_param.num_channels = 1;
 
@@ -4803,7 +4805,7 @@ int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
         return -WM_E_NOMEM;
     }
 
-    (void)memcpy(wlan_scan_param, &t_wlan_scan_param, sizeof(wlan_scan_params_v2_t));
+    (void)memcpy((void *)wlan_scan_param, (const void *)&t_wlan_scan_param, sizeof(wlan_scan_params_v2_t));
 
     wlcm_d("taking the scan lock (user scan)");
     dbg_lock_info();
@@ -5018,8 +5020,8 @@ int wlan_get_mac_address(unsigned char *dest)
     {
         return -WM_E_INVAL;
     }
-    (void)memset(dest, 0, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(dest, &wlan.mac[0], MLAN_MAC_ADDR_LENGTH);
+    (void)memset((void *)dest, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)dest, (const void *)&wlan.mac[0], MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 
@@ -5028,8 +5030,8 @@ int wlan_get_wfd_mac_address(unsigned char *dest)
 {
     if (dest == NULL)
         return -WM_E_INVAL;
-    (void)memset(dest, 0, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(dest, &wlan.wfd_mac[0], MLAN_MAC_ADDR_LENGTH);
+    (void)memset((void *)dest, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)dest, (const void *)&wlan.wfd_mac[0], MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 #endif
@@ -5232,7 +5234,7 @@ int load_wep_key(const uint8_t *input, uint8_t *output, uint8_t *output_len, con
             return -WM_FAIL;
         }
 
-        (void)memcpy(output, input, len);
+        (void)memcpy((void *)output, (const void *)input, len);
     }
     else
     {
@@ -5631,7 +5633,7 @@ uint8_t wlan_get_dtim_period(void)
 
     /* Wait till scan for DTIM is complete */
     /*TODO:This need to be handled in better way. */
-    if(os_semaphore_get(&wlan_dtim_sem, os_msec_to_ticks(500)) != WM_SUCCESS)
+    if (os_semaphore_get(&wlan_dtim_sem, os_msec_to_ticks(500)) != WM_SUCCESS)
     {
         wlcm_e("Do not call this API from wlan event handler\r\n");
         dtim_period = 0;
@@ -5708,14 +5710,14 @@ int wlan_set_auto_arp()
     flt_cfg.mef_entry.filter_item[1].repeat       = 1;
     flt_cfg.mef_entry.filter_item[1].offset       = 20;
     flt_cfg.mef_entry.filter_item[1].num_byte_seq = 2;
-    (void)memcpy(flt_cfg.mef_entry.filter_item[1].byte_seq, "\x08\x06", 2);
+    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[1].byte_seq, (const void *)"\x08\x06", 2);
     flt_cfg.mef_entry.rpn[2] = RPN_TYPE_AND;
 
     flt_cfg.mef_entry.filter_item[2].type         = TYPE_BYTE_EQ;
     flt_cfg.mef_entry.filter_item[2].repeat       = 1;
     flt_cfg.mef_entry.filter_item[2].offset       = 46;
     flt_cfg.mef_entry.filter_item[2].num_byte_seq = 4;
-    (void)memcpy(flt_cfg.mef_entry.filter_item[2].byte_seq, &ipv4_addr, 4);
+    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[2].byte_seq, (const void *)&ipv4_addr, 4);
 
     return wifi_set_packet_filters(&flt_cfg);
 }
@@ -5747,7 +5749,7 @@ static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, u8_t *byte
         {
             if (pat->mask[j] & 1 << k)
             {
-                (void)memcpy(byte_seq + valid_byte_cnt, &pat->pattern[j * 8 + k], 1);
+                (void)memcpy((void *)(byte_seq + valid_byte_cnt), (const void *)&pat->pattern[j * 8 + k], 1);
                 valid_byte_cnt++;
                 if (dont_care_byte)
                     return MFALSE;
@@ -5818,7 +5820,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         //         FILLING_OFFSET);
         mef_entry->filter_item[filt_num].repeat = 1;
         mef_entry->filter_item[filt_num].offset = ptn_cfg->patterns[i].pkt_offset;
-        (void)memcpy(mef_entry->filter_item[filt_num].byte_seq, byte_seq, MAX_NUM_BYTE_SEQ);
+        (void)memcpy((void *)mef_entry->filter_item[filt_num].byte_seq, (const void *)byte_seq, MAX_NUM_BYTE_SEQ);
         mef_entry->filter_item[filt_num].num_byte_seq = byte_seq[MAX_NUM_BYTE_SEQ];
         mef_entry->filter_item[filt_num].type         = TYPE_BYTE_EQ;
         if (first_pat)
@@ -5844,7 +5846,8 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         flt_cfg.mef_entry.filter_item[filt_num].repeat       = 16;
         flt_cfg.mef_entry.filter_item[filt_num].offset       = 56;
         flt_cfg.mef_entry.filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy(flt_cfg.mef_entry.filter_item[filt_num].byte_seq, wlan.mac, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.mac,
+                     MLAN_MAC_ADDR_LENGTH);
         if (filt_num)
             flt_cfg.mef_entry.rpn[filt_num] = RPN_TYPE_OR;
         filt_num++;
@@ -5854,7 +5857,8 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         flt_cfg.mef_entry.filter_item[filt_num].repeat       = 16;
         flt_cfg.mef_entry.filter_item[filt_num].offset       = 28;
         flt_cfg.mef_entry.filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy(flt_cfg.mef_entry.filter_item[filt_num].byte_seq, wlan.mac, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.mac,
+                     MLAN_MAC_ADDR_LENGTH);
         if (filt_num)
             flt_cfg.mef_entry.rpn[filt_num] = RPN_TYPE_OR;
         filt_num++;
@@ -5883,7 +5887,7 @@ int wlan_set_auto_ping()
     flt_cfg.mef_entry.filter_item[0].repeat       = 1;
     flt_cfg.mef_entry.filter_item[0].offset       = IPV4_PKT_OFFSET;
     flt_cfg.mef_entry.filter_item[0].num_byte_seq = 2;
-    (void)memcpy(flt_cfg.mef_entry.filter_item[0].byte_seq, "\x08\x00", 2);
+    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[0].byte_seq, (const void *)"\x08\x00", 2);
     flt_cfg.mef_entry.rpn[1] = RPN_TYPE_AND;
 
     flt_cfg.mef_entry.filter_item[1].type      = TYPE_DNUM_EQ;
@@ -5914,14 +5918,14 @@ int wlan_set_ipv6_ns_offload()
     flt_cfg.mef_entry.filter_item[0].repeat       = 1;
     flt_cfg.mef_entry.filter_item[0].offset       = 20;
     flt_cfg.mef_entry.filter_item[0].num_byte_seq = 2;
-    (void)memcpy(flt_cfg.mef_entry.filter_item[0].byte_seq, "\x86\xdd", 2);
+    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[0].byte_seq, (const void *)"\x86\xdd", 2);
     flt_cfg.mef_entry.rpn[1] = RPN_TYPE_AND;
 
     flt_cfg.mef_entry.filter_item[1].type         = TYPE_BYTE_EQ;
     flt_cfg.mef_entry.filter_item[1].repeat       = 1;
     flt_cfg.mef_entry.filter_item[1].offset       = 62;
     flt_cfg.mef_entry.filter_item[1].num_byte_seq = 1;
-    (void)memcpy(flt_cfg.mef_entry.filter_item[1].byte_seq, "\x87", 1);
+    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[1].byte_seq, (const void *)"\x87", 1);
 
     return wifi_set_packet_filters(&flt_cfg);
 }
@@ -5940,7 +5944,7 @@ int wlan_get_current_bssid(uint8_t *bssid)
     }
     if (bssid != NULL)
     {
-        (void)memcpy(bssid, network.bssid, IEEEtypes_ADDRESS_SIZE);
+        (void)memcpy((void *)bssid, (const void *)network.bssid, IEEEtypes_ADDRESS_SIZE);
         return WM_SUCCESS;
     }
 
@@ -5995,7 +5999,7 @@ void wlan_sta_ampdu_rx_disable(void)
 void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)
 {
     wlan_uap_scan_chan_list_set = true;
-    (void)memcpy(&wlan.scan_chan_list, &scan_chan_list, sizeof(wifi_scan_chan_list_t));
+    (void)memcpy((void *)&wlan.scan_chan_list, (const void *)&scan_chan_list, sizeof(wifi_scan_chan_list_t));
 }
 
 void wlan_uap_set_beacon_period(const uint16_t beacon_period)
