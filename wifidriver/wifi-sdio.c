@@ -116,13 +116,13 @@ uint32_t wifi_get_device_value1(void)
 
 int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr)
 {
-    (void)memcpy(mac_addr->mac, dev_mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)mac_addr->mac, (const void *)dev_mac_addr, MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 
 int wifi_get_device_firmware_version_ext(wifi_fw_version_ext_t *fw_ver_ext)
 {
-    (void)memcpy(fw_ver_ext->version_str, dev_fw_ver_ext, MLAN_MAX_VER_STR_LEN);
+    (void)memcpy((void *)fw_ver_ext->version_str, (const void *)dev_fw_ver_ext, MLAN_MAX_VER_STR_LEN);
     return WM_SUCCESS;
 }
 
@@ -394,7 +394,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         msg.event = upld_type;
         cmdBuf    = pmbuf;
         cmdBuf    = cmdBuf + INTF_HEADER_LEN;
-        (void)memcpy(msg.data, cmdBuf, sdiopkt->size);
+        (void)memcpy((void *)msg.data, (const void *)cmdBuf, sdiopkt->size);
 
         ret = os_queue_send(bus.special_queue, &msg, 0);
 
@@ -420,7 +420,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         }
 
         msg.event = upld_type;
-        (void)memcpy(msg.data, pmbuf, sdiopkt->size);
+        (void)memcpy((void *)msg.data, (const void *)pmbuf, sdiopkt->size);
 
         ret = os_queue_send(bus.event_queue, &msg, os_msec_to_ticks(WIFI_RESP_WAIT_TIME));
 
@@ -1164,7 +1164,7 @@ mlan_status wlan_send_gen_sdio_cmd(t_u8 *buf, t_u32 buflen)
     (void)memset(outbuf, 0, 512);
 
     wifi_sdio_lock();
-    (void)memcpy(outbuf, buf, buflen);
+    (void)memcpy((void *)outbuf, (const void *)buf, buflen);
     sdio->pkttype         = MLAN_TYPE_CMD;
     sdio->hostcmd.seq_num = (0x01) << 13;
     sdio->size            = sdio->hostcmd.size + INTF_HEADER_LEN;
@@ -1185,7 +1185,7 @@ int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 
     wifi_sdio_lock();
 
-    (void)memcpy(outbuf, buf, tx_blocks * buflen);
+    (void)memcpy((void *)outbuf, (const void *)buf, tx_blocks * buflen);
     sdio->pkttype = MLAN_TYPE_CMD;
     sdio->size    = sdio->hostcmd.size + INTF_HEADER_LEN;
 
@@ -2113,7 +2113,7 @@ int wifi_raw_packet_send(const t_u8 *packet, t_u32 length)
     t_u32 tx_blocks = 0, buflen = 0;
     calculate_sdio_write_params(length, &tx_blocks, &buflen);
 
-    (void)memcpy(outbuf, packet, length);
+    (void)memcpy((void *)outbuf, (const void *)packet, length);
 #ifdef CONFIG_WIFI_IO_DUMP
     dump_hex(outbuf, length);
 #endif

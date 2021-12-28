@@ -41,7 +41,7 @@
 #undef __memset
 #endif
 /** Memset routine */
-#define __memset(adapter, s, c, len) memset(s, c, len)
+#define __memset(adapter, s, c, len) memset((void *)(s), (int)(c), (size_t)(len))
 
 #ifdef __memmove
 #undef __memmove
@@ -53,7 +53,7 @@
 #undef __memcpy
 #endif
 /** Memcpy routine */
-#define __memcpy(adapter, to, from, len) memcpy(to, from, len)
+#define __memcpy(adapter, to, from, len) memcpy((void *)(to), (const void *)(from), (size_t)(len))
 
 #ifdef __memcmp
 #undef __memcmp

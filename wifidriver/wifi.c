@@ -964,7 +964,7 @@ static int add_mcast_ip(uint8_t *mac_addr)
             wifi_put_mcastf_lock();
             return -WM_FAIL;
         }
-        (void)memcpy(new_node->mac_addr, mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)new_node->mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
         new_node->next     = NULL;
         wm_wifi.start_list = new_node;
         wifi_put_mcastf_lock();
@@ -986,7 +986,7 @@ static int add_mcast_ip(uint8_t *mac_addr)
         wifi_put_mcastf_lock();
         return -WM_FAIL;
     }
-    (void)memcpy(new_node->mac_addr, mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)new_node->mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
     new_node->next = NULL;
     node_t->next   = new_node;
     wifi_put_mcastf_lock();
@@ -1044,7 +1044,7 @@ static int make_filter_list(char *mlist, int maxlen)
     node_t = wm_wifi.start_list;
     while (node_t != NULL)
     {
-        (void)memcpy(mlist, node_t->mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)mlist, (const void *)node_t->mac_addr, MLAN_MAC_ADDR_LENGTH);
         node_t = (struct mcast_filter *)node_t->next;
         mlist  = mlist + MLAN_MAC_ADDR_LENGTH;
         maddr_cnt++;

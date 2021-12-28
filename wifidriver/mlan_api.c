@@ -284,27 +284,27 @@ static int wifi_bridge_mode(uint16_t action, uint8_t *enable, wifi_bridge_cfg_t 
     ssid              = (MrvlIEtypes_SsIdParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t));
     ssid->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
     ssid->header.len  = bridgecfg->ex_ap_ssid_len;
-    (void)memcpy(ssid->ssid, bridgecfg->ex_ap_ssid, bridgecfg->ex_ap_ssid_len);
+    (void)memcpy((void *)ssid->ssid, (const void *)bridgecfg->ex_ap_ssid, bridgecfg->ex_ap_ssid_len);
     tlv = (t_u8 *)ssid;
 
     pass              = (MrvlIEtypes_Passphrase_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + ssid->header.len);
     pass->header.type = wlan_cpu_to_le16(TLV_TYPE_PASSPHRASE);
     pass->header.len  = bridgecfg->ex_ap_pass_len;
-    (void)memcpy(pass->passphrase, bridgecfg->ex_ap_pass, bridgecfg->ex_ap_pass_len);
+    (void)memcpy((void *)pass->passphrase, (const void *)bridgecfg->ex_ap_pass, bridgecfg->ex_ap_pass_len);
 
     tlv = (t_u8 *)pass;
 
     ssid              = (MrvlIEtypes_SsIdParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + pass->header.len);
     ssid->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
     ssid->header.len  = bridgecfg->bridge_ssid_len;
-    (void)memcpy(ssid->ssid, bridgecfg->bridge_ssid, bridgecfg->bridge_ssid_len);
+    (void)memcpy((void *)ssid->ssid, (const void *)bridgecfg->bridge_ssid, bridgecfg->bridge_ssid_len);
 
     tlv = (t_u8 *)ssid;
 
     pass              = (MrvlIEtypes_Passphrase_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + ssid->header.len);
     pass->header.type = wlan_cpu_to_le16(TLV_TYPE_PASSPHRASE);
     pass->header.len  = bridgecfg->bridge_pass_len;
-    (void)memcpy(pass->passphrase, bridgecfg->bridge_pass, bridgecfg->bridge_pass_len);
+    (void)memcpy((void *)pass->passphrase, (const void *)bridgecfg->bridge_pass, bridgecfg->bridge_pass_len);
 
     cmd->size += bridge_params->header.len + sizeof(MrvlIEtypesHeader_t);
 
@@ -565,8 +565,8 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             /* push pattern */
             op.operand_type = OPERAND_DNUM;
             dnum            = flt_cfg->mef_entry.filter_item[i].pattern;
-            (void)memcpy(filter_buf, &dnum, sizeof(dnum));
-            (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
+            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
             buf_len += sizeof(dnum) + 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -574,8 +574,8 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             /* push offset */
             op.operand_type = OPERAND_DNUM;
             dnum            = flt_cfg->mef_entry.filter_item[i].offset;
-            (void)memcpy(filter_buf, &dnum, sizeof(dnum));
-            (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
+            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
             buf_len += sizeof(dnum) + 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -583,15 +583,15 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             /* push num of bytes */
             op.operand_type = OPERAND_DNUM;
             dnum            = flt_cfg->mef_entry.filter_item[i].num_bytes;
-            (void)memcpy(filter_buf, &dnum, sizeof(dnum));
-            (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
+            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
             buf_len += sizeof(dnum) + 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
 
             /* push type */
             op.operand_type = TYPE_DNUM_EQ;
-            (void)memcpy(filter_buf, &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
             buf_len += 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -608,19 +608,20 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             /* push repeat */
             op.operand_type = OPERAND_DNUM;
             dnum            = flt_cfg->mef_entry.filter_item[i].repeat;
-            (void)memcpy(filter_buf, &dnum, sizeof(dnum));
-            (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
+            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
             buf_len += sizeof(dnum) + 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
 
             /* push bytes seq */
             op.operand_type = OPERAND_BYTE_SEQ;
-            (void)memcpy(filter_buf, flt_cfg->mef_entry.filter_item[i].byte_seq,
+            (void)memcpy((void *)filter_buf, (const void *)flt_cfg->mef_entry.filter_item[i].byte_seq,
                          flt_cfg->mef_entry.filter_item[i].num_byte_seq);
-            (void)memcpy(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq,
-                         &(flt_cfg->mef_entry.filter_item[i].num_byte_seq), 1);
-            (void)memcpy(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq + 1, &(op.operand_type), 1);
+            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq),
+                         (const void *)&(flt_cfg->mef_entry.filter_item[i].num_byte_seq), 1);
+            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq + 1),
+                         (const void *)&(op.operand_type), 1);
             buf_len += flt_cfg->mef_entry.filter_item[i].num_byte_seq + 2;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -628,15 +629,15 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             /* push offset */
             op.operand_type = OPERAND_DNUM;
             dnum            = flt_cfg->mef_entry.filter_item[i].offset;
-            (void)memcpy(filter_buf, &dnum, sizeof(dnum));
-            (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
+            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
             buf_len += sizeof(dnum) + 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
 
             /* push type */
             op.operand_type = TYPE_BYTE_EQ;
-            (void)memcpy(filter_buf, &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
             buf_len += 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -652,11 +653,12 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
 
             /* push bytes seq */
             op.operand_type = OPERAND_BYTE_SEQ;
-            (void)memcpy(filter_buf, flt_cfg->mef_entry.filter_item[i].byte_seq,
+            (void)memcpy((void *)filter_buf, (const void *)flt_cfg->mef_entry.filter_item[i].byte_seq,
                          flt_cfg->mef_entry.filter_item[i].num_byte_seq);
-            (void)memcpy(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq,
-                         &(flt_cfg->mef_entry.filter_item[i].num_byte_seq), 1);
-            (void)memcpy(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq + 1, &(op.operand_type), 1);
+            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq),
+                         (const void *)&(flt_cfg->mef_entry.filter_item[i].num_byte_seq), 1);
+            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq + 1),
+                         (const void *)&(op.operand_type), 1);
             buf_len += flt_cfg->mef_entry.filter_item[i].num_byte_seq + 2;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -664,26 +666,27 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             /* push offset */
             op.operand_type = OPERAND_DNUM;
             dnum            = flt_cfg->mef_entry.filter_item[i].offset;
-            (void)memcpy(filter_buf, &dnum, sizeof(dnum));
-            (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
+            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
             buf_len += sizeof(dnum) + 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
 
             /* push mask seq */
             op.operand_type = OPERAND_BYTE_SEQ;
-            (void)memcpy(filter_buf, flt_cfg->mef_entry.filter_item[i].mask_seq,
+            (void)memcpy((void *)filter_buf, (const void *)flt_cfg->mef_entry.filter_item[i].mask_seq,
                          flt_cfg->mef_entry.filter_item[i].num_mask_seq);
-            (void)memcpy(filter_buf + flt_cfg->mef_entry.filter_item[i].num_mask_seq,
-                         &(flt_cfg->mef_entry.filter_item[i].num_mask_seq), 1);
-            (void)memcpy(filter_buf + flt_cfg->mef_entry.filter_item[i].num_mask_seq + 1, &(op.operand_type), 1);
+            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_mask_seq),
+                         (const void *)&(flt_cfg->mef_entry.filter_item[i].num_mask_seq), 1);
+            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_mask_seq + 1),
+                         (const void *)&(op.operand_type), 1);
             buf_len += flt_cfg->mef_entry.filter_item[i].num_mask_seq + 2;
 
             filter_buf = (t_u8 *)(buf + buf_len);
 
             /* push type */
             op.operand_type = TYPE_BIT_EQ;
-            (void)memcpy(filter_buf, &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
             buf_len += 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -696,7 +699,7 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             filter_buf = (t_u8 *)(buf + buf_len);
 
             op.operand_type = flt_cfg->mef_entry.rpn[i];
-            (void)memcpy(filter_buf, &(op.operand_type), 1);
+            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
             buf_len += 1;
 
             filter_buf = (t_u8 *)(buf + buf_len);
@@ -741,8 +744,8 @@ int wifi_set_auto_arp(t_u32 *ipv4_addr)
     buf_len += sizeof(HostCmd_DS_MEF_CFG);
 
     filter = buf + buf_len;
-    (void)memcpy(filter, fltr_buf, sizeof(fltr_buf));
-    (void)memcpy(&filter[FLTR_BUF_IP_OFFSET], ipv4_addr, sizeof(t_u32));
+    (void)memcpy((void *)filter, (const void *)fltr_buf, sizeof(fltr_buf));
+    (void)memcpy((void *)&filter[FLTR_BUF_IP_OFFSET], (const void *)ipv4_addr, sizeof(t_u32));
     buf_len += sizeof(fltr_buf);
 
     cmd->size = wlan_cpu_to_le16(buf_len);
@@ -805,12 +808,13 @@ int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
             pos                  = pos + sizeof(MrvlIEtypes_Keep_Alive_Ctrl_t);
             pkt_tlv              = (MrvlIEtypes_Keep_Alive_Pkt_t *)pos;
             pkt_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_KEEP_ALIVE_PKT);
-            (void)memcpy(pkt_tlv->eth_header.dest_addr, keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
-            (void)memcpy(pkt_tlv->eth_header.src_addr, src_mac, MLAN_MAC_ADDR_LENGTH);
-            (void)memcpy((t_u8 *)&pkt_tlv->eth_header.h803_len, eth_ip, sizeof(t_u16));
-            (void)memcpy(ip_packet + 12, &src_ip, sizeof(t_u32));
-            (void)memcpy(ip_packet + 16, &keep_alive->dst_ip, sizeof(t_u32));
-            (void)memcpy(pkt_tlv->ip_packet, ip_packet, pkt_len);
+            (void)memcpy((void *)pkt_tlv->eth_header.dest_addr, (const void *)keep_alive->dst_mac,
+                         MLAN_MAC_ADDR_LENGTH);
+            (void)memcpy((void *)pkt_tlv->eth_header.src_addr, (const void *)src_mac, MLAN_MAC_ADDR_LENGTH);
+            (void)memcpy((void *)((t_u8 *)&pkt_tlv->eth_header.h803_len), (const void *)eth_ip, sizeof(t_u16));
+            (void)memcpy((void *)(ip_packet + 12), (const void *)&src_ip, sizeof(t_u32));
+            (void)memcpy((void *)(ip_packet + 16), (const void *)&keep_alive->dst_ip, sizeof(t_u32));
+            (void)memcpy((void *)pkt_tlv->ip_packet, (const void *)ip_packet, pkt_len);
             pkt_tlv->header.len = wlan_cpu_to_le16(sizeof(Eth803Hdr_t) + pkt_len);
             len                 = len + sizeof(MrvlIEtypesHeader_t) + sizeof(Eth803Hdr_t) + pkt_len;
         }
@@ -874,19 +878,19 @@ int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
     atmf->priority  = 0x07;
     atmf->frame_len = wlan_cpu_to_le16(0x34);
 
-    (void)memcpy(atmf->dest_mac_addr, keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(atmf->src_mac_addr, src_mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)atmf->dest_mac_addr, (const void *)keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)atmf->src_mac_addr, (const void *)src_mac, MLAN_MAC_ADDR_LENGTH);
 
-    (void)memcpy(atmf->payload, payload, payload_len);
+    (void)memcpy((void *)atmf->payload, (const void *)payload, payload_len);
 
-    (void)memcpy(atmf->payload + 22, &src_ip, sizeof(t_u32));
-    (void)memcpy(atmf->payload + 26, &keep_alive->dst_ip, sizeof(t_u32));
+    (void)memcpy((void *)(atmf->payload + 22), (const void *)&src_ip, sizeof(t_u32));
+    (void)memcpy((void *)(atmf->payload + 26), (const void *)&keep_alive->dst_ip, sizeof(t_u32));
 
     s_port = mlan_htons(src_port);
-    (void)memcpy(atmf->payload + 30, &s_port, sizeof(t_u16));
+    (void)memcpy((void *)(atmf->payload + 30), (const void *)&s_port, sizeof(t_u16));
 
     d_port = mlan_htons(keep_alive->dst_port);
-    (void)memcpy(atmf->payload + 32, &d_port, sizeof(t_u16));
+    (void)memcpy((void *)(atmf->payload + 32), (const void *)&d_port, sizeof(t_u16));
 
     cmd->size = 0x48;
     cmd->size = wlan_cpu_to_le16(cmd->size);
@@ -1329,7 +1333,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     wifi_mfg_cmd_tx_frame.data_rate     = data_rate;
     wifi_mfg_cmd_tx_frame.frame_pattern = frame_pattern;
     wifi_mfg_cmd_tx_frame.frame_length  = frame_length;
-    (void)memcpy(wifi_mfg_cmd_tx_frame.bssid, bssid, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)wifi_mfg_cmd_tx_frame.bssid, (const void *)bssid, MLAN_MAC_ADDR_LENGTH);
     wifi_mfg_cmd_tx_frame.adjust_burst_sifs = adjust_burst_sifs;
     wifi_mfg_cmd_tx_frame.burst_sifs_in_us  = burst_sifs_in_us;
     wifi_mfg_cmd_tx_frame.short_preamble    = short_preamble;
@@ -1400,19 +1404,19 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 
     if (specific_bssid != NULL)
     {
-        (void)memcpy(user_scan_cfg->specific_bssid, specific_bssid, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)user_scan_cfg->specific_bssid, (const void *)specific_bssid, MLAN_MAC_ADDR_LENGTH);
     }
 
     if (ssid != NULL)
     {
-        (void)memcpy(user_scan_cfg->ssid_list[0].ssid, ssid, ssid_len);
+        (void)memcpy((void *)user_scan_cfg->ssid_list[0].ssid, (const void *)ssid, ssid_len);
         /* For Wildcard SSID do not set max len */
         /* user_scan_cfg->ssid_list[0].max_len = ssid_len; */
     }
 
     if (ssid2 != NULL)
     {
-        (void)memcpy(user_scan_cfg->ssid_list[1].ssid, ssid2, ssid2_len);
+        (void)memcpy((void *)user_scan_cfg->ssid_list[1].ssid, (const void *)ssid2, ssid2_len);
     }
 
     if (num_channels > 0U && num_channels <= WLAN_USER_SCAN_CHAN_MAX && chan_list != MNULL)
@@ -1513,7 +1517,7 @@ int wifi_set_key(int bss_index,
             sec.param.encrypt_key.key_flags |= KEY_FLAG_GROUP_KEY;
         }
         sec.param.encrypt_key.key_index = key_index;
-        (void)memcpy(sec.param.encrypt_key.mac_addr, mac_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)sec.param.encrypt_key.mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
@@ -1522,7 +1526,7 @@ int wifi_set_key(int bss_index,
     }
 
     sec.param.encrypt_key.key_len = key_len;
-    (void)memcpy(sec.param.encrypt_key.key_material, key, key_len);
+    (void)memcpy((void *)sec.param.encrypt_key.key_material, (const void *)key, key_len);
 
     return wifi_send_key_material_cmd(bss_index, &sec);
 }
@@ -1540,9 +1544,9 @@ int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index
     sec.param.encrypt_key.key_flags = KEY_FLAG_AES_MCAST_IGTK;
     sec.param.encrypt_key.key_index = key_index;
 
-    (void)memcpy(sec.param.encrypt_key.pn, pn, SEQ_MAX_SIZE);
+    (void)memcpy((void *)sec.param.encrypt_key.pn, (const void *)pn, SEQ_MAX_SIZE);
     sec.param.encrypt_key.key_len = key_len;
-    (void)memcpy(sec.param.encrypt_key.key_material, key, key_len);
+    (void)memcpy((void *)sec.param.encrypt_key.key_material, (const void *)key, key_len);
 
     return wifi_send_key_material_cmd(bss_index, &sec);
 }
@@ -1559,7 +1563,7 @@ int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, co
     sec.param.encrypt_key.key_remove = MTRUE;
 
     sec.param.encrypt_key.key_index = key_index;
-    (void)memcpy(sec.param.encrypt_key.mac_addr, mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)sec.param.encrypt_key.mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
 
     sec.param.encrypt_key.key_len = WPA_AES_KEY_LEN;
 
@@ -1807,17 +1811,17 @@ int wifi_send_add_wpa_pmk(int mode, char *ssid, char *bssid, char *pmk, unsigned
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
     pp->ssid.ssid_len      = ssid_len;
-    (void)memcpy(pp->ssid.ssid, ssid, ssid_len);
+    (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* MAC */
     if (bssid != NULL)
     {
-        (void)memcpy(pp->bssid, bssid, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)pp->bssid, (const void *)bssid, MLAN_MAC_ADDR_LENGTH);
     }
 
     /* PMK */
     pp->psk_type = MLAN_PSK_PMK;
-    (void)memcpy(pp->psk.pmk.pmk, pmk, len);
+    (void)memcpy((void *)pp->psk.pmk.pmk, (const void *)pmk, len);
 
     return wifi_send_cmd_802_11_supplicant_pmk(mode, &sec, MLAN_ACT_SET);
 }
@@ -1845,7 +1849,7 @@ int wifi_send_get_wpa_pmk(int mode, char *ssid)
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
     pp->ssid.ssid_len      = ssid_len;
-    (void)memcpy(pp->ssid.ssid, ssid, ssid_len);
+    (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* Zero MAC */
 
@@ -1880,14 +1884,14 @@ int wifi_send_add_wpa_psk(int mode, char *ssid, char *passphrase, unsigned int l
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
     pp->ssid.ssid_len      = ssid_len;
-    (void)memcpy(pp->ssid.ssid, ssid, ssid_len);
+    (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* Zero MAC */
 
     /* Passphrase */
     pp->psk_type                      = MLAN_PSK_PASSPHRASE;
     pp->psk.passphrase.passphrase_len = len;
-    (void)memcpy(pp->psk.passphrase.passphrase, passphrase, len);
+    (void)memcpy((void *)pp->psk.passphrase.passphrase, (const void *)passphrase, len);
 
     return wifi_send_cmd_802_11_supplicant_pmk(mode, &sec, MLAN_ACT_SET);
 }
@@ -1917,14 +1921,14 @@ int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned i
 
     mlan_ds_passphrase *pp = &sec.param.passphrase;
     pp->ssid.ssid_len      = ssid_len;
-    (void)memcpy(pp->ssid.ssid, ssid, ssid_len);
+    (void)memcpy((void *)pp->ssid.ssid, (const void *)ssid, ssid_len);
 
     /* Zero MAC */
 
     /* Passphrase */
     pp->psk_type              = MLAN_PSK_PASSWORD;
     pp->password.password_len = len;
-    (void)memcpy(pp->password.password, password, len);
+    (void)memcpy((void *)pp->password.password, (const void *)password, len);
 
     return wifi_send_cmd_802_11_supplicant_pmk(mode, &sec, MLAN_ACT_SET);
 }
@@ -2015,7 +2019,7 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
         return -WM_E_NOMEM;
     }
 
-    (void)memcpy(pmcast_list->mac_list, mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)pmcast_list->mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
     pmcast_list->num_multicast_addr = num_of_addr;
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -2246,7 +2250,7 @@ int wifi_set_domain_params(wifi_domain_param_t *dp)
 
     d_cfg.sub_command = MLAN_OID_11D_DOMAIN_INFO;
 
-    (void)memcpy(&d_cfg.param.domain_info.country_code, dp->country_code, COUNTRY_CODE_LEN);
+    (void)memcpy((void *)&d_cfg.param.domain_info.country_code, (const void *)dp->country_code, COUNTRY_CODE_LEN);
 
     d_cfg.param.domain_info.band = BAND_B | BAND_G;
 
@@ -2502,10 +2506,10 @@ wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub
 {
     wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
 
-    (void)memcpy(dp->country_code, wifi_get_country_str(country), COUNTRY_CODE_LEN);
+    (void)memcpy((void *)dp->country_code, (const void *)wifi_get_country_str(country), COUNTRY_CODE_LEN);
 
     dp->no_of_sub_band = nr_sb;
-    (void)memcpy(&dp->sub_band[0], sub_band, nr_sb * sizeof(wifi_sub_band_set_t));
+    (void)memcpy((void *)&dp->sub_band[0], (const void *)sub_band, nr_sb * sizeof(wifi_sub_band_set_t));
 
     return dp;
 }
@@ -2683,7 +2687,7 @@ int wifi_config_mgmt_ie(
 
             buf_len += tlv->length;
 
-            (void)memcpy(pos, buffer, *ie_len);
+            (void)memcpy((void *)pos, (const void *)buffer, *ie_len);
         }
     }
     else if (action == HostCmd_ACT_GEN_GET)
@@ -2712,7 +2716,7 @@ int wifi_config_mgmt_ie(
             return wm_wifi.cmd_resp_status;
         }
         ie_ptr = (custom_ie *)(buf);
-        (void)memcpy(buffer, ie_ptr->ie_buffer, ie_ptr->ie_length);
+        (void)memcpy((void *)buffer, (const void *)ie_ptr->ie_buffer, ie_ptr->ie_length);
         *ie_len = ie_ptr->ie_length;
     }
 
@@ -2890,7 +2894,7 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit)
         trpc_tlv->start_freq = txpwrlimit->txpwrlimit_config[i].chan_desc.start_freq;
         trpc_tlv->width      = txpwrlimit->txpwrlimit_config[i].chan_desc.chan_width;
         trpc_tlv->chan_num   = txpwrlimit->txpwrlimit_config[i].chan_desc.chan_num;
-        (void)memcpy(trpc_tlv->mod_group, txpwrlimit->txpwrlimit_config[i].txpwrlimit_entry,
+        (void)memcpy((void *)trpc_tlv->mod_group, (const void *)txpwrlimit->txpwrlimit_config[i].txpwrlimit_entry,
                      txpwrlimit->txpwrlimit_config->num_mod_grps * sizeof(MrvlChanTrpcEntry_t));
         pByte += trpc_tlv->header.len + sizeof(trpc_tlv->header);
     }
@@ -3056,7 +3060,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
     tlv_ssid              = (MrvlIEtypes_SsIdParamSet_t *)sys_config_cmd->tlv_buffer;
     tlv_ssid->header.type = MRVL_SSID_TLV_ID;
     tlv_ssid->header.len  = strlen(ssid);
-    (void)memcpy(tlv_ssid->ssid, ssid, strlen(ssid));
+    (void)memcpy((void *)tlv_ssid->ssid, (const void *)ssid, strlen(ssid));
     size += sizeof(tlv_ssid->header) + tlv_ssid->header.len;
     tlv += sizeof(tlv_ssid->header) + tlv_ssid->header.len;
     tlv_beacon_period                = (MrvlIEtypes_beacon_period_t *)tlv;
@@ -3086,7 +3090,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
         tlv_custom_ie              = (MrvlIEtypes_Data_t *)tlv;
         tlv_custom_ie->header.type = TLV_TYPE_PASSTHROUGH;
         tlv_custom_ie->header.len  = custom_ie_len;
-        (void)memcpy(tlv_custom_ie->data, custom_ie, custom_ie_len);
+        (void)memcpy((void *)tlv_custom_ie->data, (const void *)custom_ie, custom_ie_len);
 
         size += sizeof(tlv_custom_ie->header) + tlv_custom_ie->header.len;
         tlv += sizeof(tlv_custom_ie->header) + tlv_custom_ie->header.len;
@@ -3098,8 +3102,8 @@ int wifi_set_smart_mode_cfg(char *ssid,
         tlv_smc_addr_range->header.type = TLV_TYPE_SMCADDRRANGE;
         tlv_smc_addr_range->header.len  = 2U * MLAN_MAC_ADDR_LENGTH + sizeof(uint16_t);
 
-        (void)memcpy(tlv_smc_addr_range->smcstartAddr, smc_start_addr, MLAN_MAC_ADDR_LENGTH);
-        (void)memcpy(tlv_smc_addr_range->smcendAddr, smc_end_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)tlv_smc_addr_range->smcstartAddr, (const void *)smc_start_addr, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)tlv_smc_addr_range->smcendAddr, (const void *)smc_end_addr, MLAN_MAC_ADDR_LENGTH);
 
         tlv_smc_addr_range->filter_type = filter_type;
 
@@ -3110,7 +3114,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
     tlv_smc_frame_filter              = (MrvlIETypes_SmcFrameFilter_t *)tlv;
     tlv_smc_frame_filter->header.type = TLV_TYPE_SMCFRAMEFILTER;
     tlv_smc_frame_filter->header.len  = smc_frame_filter_len;
-    (void)memcpy(tlv_smc_frame_filter->frame_filter, smc_frame_filter, smc_frame_filter_len);
+    (void)memcpy((void *)tlv_smc_frame_filter->frame_filter, (const void *)smc_frame_filter, smc_frame_filter_len);
 
     size += sizeof(tlv_smc_frame_filter->header) + tlv_smc_frame_filter->header.len;
     tlv += sizeof(tlv_smc_frame_filter->header) + tlv_smc_frame_filter->header.len;
@@ -3211,7 +3215,7 @@ int wifi_send_hostcmd(
     wifi_get_command_lock();
     /* Copy command buffer to driver command buffer */
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    memcpy(cmd, cmd_buf, cmd_buf_len);
+    memcpy((void *)cmd, (const void *)cmd_buf, cmd_buf_len);
 
     /* Set global variable to say that this command is from user invocation */
     wm_wifi.hostcmd_cfg.is_hostcmd = true;

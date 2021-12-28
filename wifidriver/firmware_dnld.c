@@ -158,7 +158,7 @@ int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wlanfw
 #endif
         if (st == WLAN_FW_IN_RAM)
         {
-            (void)memcpy(outbuf, wlanfw + offset, txlen);
+            (void)memcpy((void *)outbuf, (const void *)(wlanfw + offset), txlen);
         }
 
         sdio_drv_write(ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
@@ -241,7 +241,7 @@ int32_t wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, t_u3
 				else
 #endif
                 if (st == WLAN_FW_IN_RAM)
-                    (void)memcpy(sbuf, wlanfw + offset, readlen);
+                    (void)memcpy((void *)sbuf, (const void *)(wlanfw + offset), readlen);
                 offset += readlen;
                 firmwarelen -= readlen;
             }
@@ -354,7 +354,7 @@ int32_t firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_st
 #endif
     if (st == WLAN_FW_IN_RAM)
     {
-        (void)memcpy(&wlanfwhdr, wlanfw, sizeof(wlanfwhdr));
+        (void)memcpy((void *)&wlanfwhdr, (const void *)wlanfw, sizeof(wlanfwhdr));
     }
 
     //	if (wlanfwhdr.magic_number != WLAN_MAGIC_NUM) {
@@ -377,7 +377,7 @@ int32_t firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_st
 						(t_u32) wlanfw);
 	else
 #endif
-    (void)memcpy(buffer, wlanfw, sizeof(buffer));
+    (void)memcpy((void *)buffer, (const void *)wlanfw, sizeof(buffer));
 
     /* See if image is XZ compressed or not */
     if (verify_xz_header(buffer) == WM_SUCCESS)
