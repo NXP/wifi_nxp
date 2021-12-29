@@ -48,8 +48,8 @@ t_u8 wlan_is_ap_in_11ac_mode(mlan_private *priv);
 int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t_u8 **ppbuffer);
 #if 0
 mlan_status wlan_11ac_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
-#endif
 void wlan_update_11ac_cap(mlan_private *pmpriv);
+#endif
 t_u8 wlan_11ac_bandconfig_allowed(mlan_private *pmpriv, t_u8 bss_band);
 
 mlan_status wlan_cmd_11ac_cfg(IN pmlan_private pmpriv,

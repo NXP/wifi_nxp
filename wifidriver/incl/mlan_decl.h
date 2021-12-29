@@ -961,8 +961,11 @@ typedef struct _mlan_device
 /** Registration */
 MLAN_API mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Un-registration */
 MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter);
+#endif /* CONFIG_MLAN_WMSDK */
+
 
 /** Firmware Downloading */
 MLAN_API mlan_status mlan_dnld_fw(IN t_void *pmlan_adapter, IN pmlan_fw_image pmfw);
@@ -973,24 +976,31 @@ MLAN_API mlan_status mlan_set_init_param(IN t_void *pmlan_adapter, IN pmlan_init
 /** Firmware Initialization */
 MLAN_API mlan_status mlan_init_fw(IN t_void *pmlan_adapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Firmware Shutdown */
 MLAN_API mlan_status mlan_shutdown_fw(IN t_void *pmlan_adapter);
-
 /** Main Process */
 MLAN_API mlan_status mlan_main_process(IN t_void *pmlan_adapter);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Packet Transmission */
 MLAN_API mlan_status mlan_send_packet(IN t_void *pmlan_adapter, IN pmlan_buffer pmbuf);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Packet Reception complete callback */
 MLAN_API mlan_status mlan_recv_packet_complete(IN t_void *pmlan_adapter, IN pmlan_buffer pmbuf, IN mlan_status status);
+#endif /* CONFIG_MLAN_WMSDK */
 
 #ifndef CONFIG_MLAN_WMSDK
 /** interrupt handler */
 MLAN_API t_void mlan_interrupt(IN t_void *pmlan_adapter);
 #endif /* CONFIG_MLAN_WMSDK */
+
+#ifndef CONFIG_MLAN_WMSDK
 /** mlan ioctl */
 MLAN_API mlan_status mlan_ioctl(IN t_void *pmlan_adapter, IN pmlan_ioctl_req pioctl_req);
 /** mlan select wmm queue */
 MLAN_API t_u8 mlan_select_wmm_queue(IN t_void *pmlan_adapter, IN t_u8 bss_num, IN t_u8 tid);
+#endif /* CONFIG_MLAN_WMSDK */
+
 #endif /* !_MLAN_DECL_H_ */
