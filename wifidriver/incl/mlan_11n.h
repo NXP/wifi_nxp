@@ -43,10 +43,14 @@ Change log:
 void wlan_show_dot11ndevcap(pmlan_adapter pmadapter, t_u32 cap);
 /** Print the 802.11n device MCS */
 void wlan_show_devmcssupport(pmlan_adapter pmadapter, t_u8 support);
+
+#ifndef CONFIG_MLAN_WMSDK
 /** Handle the command response of a delete block ack request */
 mlan_status wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp);
 /** Handle the command response of an add block ack request */
 mlan_status wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMMAND *resp);
+#endif /* CONFIG_MLAN_sdk */
+
 /** Handle the command response of 11ncfg command */
 mlan_status wlan_ret_11n_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 /** Prepare 11ncfg command */
@@ -54,11 +58,6 @@ mlan_status wlan_cmd_11n_cfg(IN pmlan_private pmpriv,
                              IN HostCmd_DS_COMMAND *cmd,
                              IN t_u16 cmd_action,
                              IN t_void *pdata_buf);
-/** Prepare TX BF configuration command */
-mlan_status wlan_cmd_tx_bf_cfg(IN pmlan_private pmpriv,
-                               IN HostCmd_DS_COMMAND *cmd,
-                               IN t_u16 cmd_action,
-                               IN t_void *pdata_buf);
 /** Handle the command response TX BF configuration */
 mlan_status wlan_ret_tx_bf_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 #ifdef STA_SUPPORT
@@ -75,8 +74,12 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx
 void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv);
 /** Get Tx BA stream table */
 TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra);
+
+#ifndef CONFIG_MLAN_WMSDK
 /** Create Tx BA stream table */
 void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status);
+#endif /* CONFIG_MLAN_WMSDK */
+
 /** Send ADD BA request */
 int wlan_send_addba(mlan_private *priv, int tid, t_u8 *peer_mac);
 /** Send DEL BA request */
@@ -85,8 +88,12 @@ int wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator);
 #endif
 /** This function handles the command response of delete a block ack request*/
 void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba);
+
+#ifndef CONFIG_MLAN_WMSDK
 /** get rx reorder table */
 int wlan_get_rxreorder_tbl(mlan_private *priv, rx_reorder_tbl *buf);
+#endif /* CONFIG_MLAN_WMSDK */
+
 /** get tx ba stream table */
 int wlan_get_txbastream_tbl(mlan_private *priv, tx_ba_stream_tbl *buf);
 /** Minimum number of AMSDU */
