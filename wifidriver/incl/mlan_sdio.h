@@ -542,8 +542,10 @@ Change log:
 
 #endif /* SDIO_MULTI_PORT_RX_AGGR */
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Enable host interrupt */
 mlan_status wlan_enable_host_int(pmlan_adapter pmadapter);
+#endif /* CONFIG_MLAN_WMSDK */
 /** Probe and initialization function */
 mlan_status wlan_sdio_probe(pmlan_adapter pmadapter);
 /** multi interface download check */
