@@ -79,31 +79,41 @@ static INLINE int wlan_wmm_list_len(pmlan_adapter pmadapter, pmlan_list_head hea
     return count;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Add buffer to WMM Tx queue */
 void wlan_wmm_add_buf_txqueue(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
+#endif /* CONFIG_MLAN_WMSDK */
 /** Add to RA list */
 void wlan_ralist_add(mlan_private *priv, t_u8 *ra);
 /** Update the RA list */
 int wlan_ralist_update(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra);
 
+#ifdef STA_SUPPORT
 /** WMM status change command handler */
 mlan_status wlan_cmd_wmm_status_change(pmlan_private priv);
+#endif /* STA_SUPPORT */
+#ifndef CONFIG_MLAN_WMSDK
 /** Check if WMM lists are empty */
 int wlan_wmm_lists_empty(pmlan_adapter pmadapter);
 /** Process WMM transmission */
 t_void wlan_wmm_process_tx(pmlan_adapter pmadapter);
 /** Test to see if the ralist ptr is valid */
 int wlan_is_ralist_valid(mlan_private *priv, raListTbl *ra_list, int tid);
+#endif /* CONFIG_MLAN_WMSDK */
 
 raListTbl *wlan_wmm_get_ralist_node(pmlan_private priv, t_u8 tid, t_u8 *ra_addr);
 t_u8 wlan_get_random_ba_threshold(pmlan_adapter pmadapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Compute driver packet delay */
 t_u8 wlan_wmm_compute_driver_packet_delay(pmlan_private priv, const pmlan_buffer pmbuf);
+#endif /* CONFIG_MLAN_WMSDK */
 /** Initialize WMM */
 t_void wlan_wmm_init(pmlan_adapter pmadapter);
+#ifndef CONFIG_MLAN_WMSDK
 /** Setup WMM queues */
 extern void wlan_wmm_setup_queues(pmlan_private priv);
+#endif /* CONFIG_MLAN_WMSDK */
 /* Setup default queues */
 void wlan_wmm_default_queue_priorities(pmlan_private priv);
 
@@ -115,6 +125,7 @@ extern t_u32 wlan_wmm_process_association_req(pmlan_private priv,
                                               IEEEtypes_HTCap_t *pHTCap);
 #endif /* STA_SUPPORT */
 
+#ifndef CONFIG_MLAN_WMSDK
 /** setup wmm queue priorities */
 void wlan_wmm_setup_queue_priorities(pmlan_private priv, IEEEtypes_WmmParameter_t *wmm_ie);
 
@@ -122,6 +133,7 @@ void wlan_wmm_setup_queue_priorities(pmlan_private priv, IEEEtypes_WmmParameter_
 void wlan_wmm_setup_ac_downgrade(pmlan_private priv);
 /** select WMM queue */
 t_u8 wlan_wmm_select_queue(mlan_private *pmpriv, t_u8 tid);
+#endif /* CONFIG_MLAN_WMSDK */
 #ifdef UAP_SUPPORT
 t_void wlan_wmm_delete_peer_ralist(pmlan_private priv, t_u8 *mac);
 #endif
