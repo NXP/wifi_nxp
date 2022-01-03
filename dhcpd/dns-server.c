@@ -80,16 +80,16 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst)
     struct dns_rr *rr = (struct dns_rr *)dst;
     char *query_start = query;
 
-    rr->name_ptr = htons(((uint16_t)(query - base) | 0xC000));
+    rr->name_ptr = htons(((uint16_t)(query - base) | 0xC000U));
 
     /* skip past the qname (label) field */
     do
     {
-        if (*query > 0)
+        if (*query > 0U)
         {
             query += *query + 1;
         }
-    } while (*query > 0);
+    } while (*query > 0U);
     query++;
 
     q = (struct dns_question *)query;
@@ -111,7 +111,7 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
 
     pos += sizeof(struct dns_header);
 
-    for (; num_questions > 0; num_questions--)
+    for (; num_questions > 0U; num_questions--)
     {
         if (!*found)
         {
@@ -126,16 +126,16 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
         }
         do
         {
-            if (*pos > 0)
+            if (*pos > 0U)
             {
-                pos += *pos + 1;
+                pos += *pos + 1U;
             }
             if (pos >= base + SERVER_BUFFER_SIZE)
             {
                 return NULL;
             }
-        } while (*pos > 0);
-        pos += 1 + sizeof(struct dns_question);
+        } while (*pos > 0U);
+        pos += 1U + sizeof(struct dns_question);
     }
     return (char *)pos;
 }

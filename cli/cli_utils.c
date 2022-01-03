@@ -189,7 +189,7 @@ uint32_t a2hex_or_atoi(char *value)
 
 int get_uint(const char *arg, unsigned int *dest, unsigned int len)
 {
-    int i;
+    unsigned int i;
     unsigned int val = 0;
 
     for (i = 0; i < len; i++)
@@ -198,7 +198,7 @@ int get_uint(const char *arg, unsigned int *dest, unsigned int len)
         {
             return 1;
         }
-        val *= 10;
+        val *= 10U;
         val += arg[i] - '0';
     }
 
@@ -214,7 +214,7 @@ int get_mac(const char *arg, char *dest, char sep)
     unsigned char n;
     int i, j, k;
 
-    if (strlen(arg) < 17)
+    if (strlen(arg) < 17U)
     {
         return 1;
     }
@@ -276,7 +276,7 @@ int cli_getopt(int argc, char **argv, const char *fmt)
     {
         return -1;
     }
-    if (opt[0] == 0 || opt[1] == 0)
+    if (opt[0] == '\0' || opt[1] == '\0')
     {
         return '?';
     }

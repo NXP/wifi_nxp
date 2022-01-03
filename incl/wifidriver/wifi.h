@@ -822,13 +822,11 @@ char *wifi_get_country_str(int country);
 
 int wrapper_wlan_ecsa_enable(void);
 
-int wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-    t_u8 tid
+int wrapper_wlan_sta_ampdu_enable(t_u8 tid);
 #else
-    void
+int wrapper_wlan_sta_ampdu_enable(void);
 #endif
-);
 
 int wrapper_wlan_upa_ampdu_enable(uint8_t *addr);
 
