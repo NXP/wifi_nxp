@@ -92,10 +92,11 @@ void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba);
 #ifndef CONFIG_MLAN_WMSDK
 /** get rx reorder table */
 int wlan_get_rxreorder_tbl(mlan_private *priv, rx_reorder_tbl *buf);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** get tx ba stream table */
 int wlan_get_txbastream_tbl(mlan_private *priv, tx_ba_stream_tbl *buf);
+#endif /* CONFIG_MLAN_WMSDK */
+
 /** Minimum number of AMSDU */
 #define MIN_NUM_AMSDU 2
 /** AMSDU Aggr control cmd resp */
