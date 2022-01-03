@@ -130,7 +130,7 @@ static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 
 static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
-    RxPD *rxpd         = (RxPD *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
+    RxPD *rxpd         = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     int recv_interface = rxpd->bss_type;
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
@@ -193,7 +193,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
     if (!memcmp((t_u8 *)p->payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
     {
-        struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)((t_u8 *)p->payload + SIZEOF_ETH_HDR);
+        struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)p->payload + SIZEOF_ETH_HDR);
         ethhdr->type                  = ethllchdr->type;
         p->len -= SIZEOF_ETH_LLC_HDR;
         (void)memcpy((t_u8 *)p->payload + SIZEOF_ETH_HDR, (t_u8 *)p->payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR,
@@ -797,7 +797,7 @@ err_t lwip_netif_init(struct netif *netif)
     netif->output_ip6 = ethip6_output;
 #endif
 
-    ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
+    ethernetif->ethaddr = (struct eth_addr *)(void *)&(netif->hwaddr[0]);
 
     /* initialize the hardware */
     low_level_init(netif);
@@ -833,7 +833,7 @@ err_t lwip_netif_uap_init(struct netif *netif)
     netif->output_ip6 = ethip6_output;
 #endif
 
-    ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
+    ethernetif->ethaddr = (struct eth_addr *)(void *)&(netif->hwaddr[0]);
 
     /* initialize the hardware */
     low_level_init(netif);
