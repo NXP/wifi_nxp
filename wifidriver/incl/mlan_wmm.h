@@ -82,10 +82,11 @@ static INLINE int wlan_wmm_list_len(pmlan_adapter pmadapter, pmlan_list_head hea
 #ifndef CONFIG_MLAN_WMSDK
 /** Add buffer to WMM Tx queue */
 void wlan_wmm_add_buf_txqueue(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Add to RA list */
 void wlan_ralist_add(mlan_private *priv, t_u8 *ra);
 /** Update the RA list */
+#endif /* CONFIG_MLAN_WMSDK */
+
 int wlan_ralist_update(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra);
 
 #ifdef STA_SUPPORT
