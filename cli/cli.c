@@ -42,7 +42,7 @@
 #define PROMPT        "\r\n# "
 #define HALT_MSG      "CLI_HALT"
 #define NUM_BUFFERS   1
-#define MAX_COMMANDS  50
+#define MAX_COMMANDS  50U
 #define IN_QUEUE_SIZE 4
 
 #define RX_WAIT   OS_WAIT_FOREVER
@@ -61,7 +61,7 @@ static struct
     char *inbuf;
 
     const struct cli_command *commands[MAX_COMMANDS];
-    int num_commands;
+    unsigned int num_commands;
     bool echo_disabled;
 
     os_queue_t input_queue;
@@ -285,8 +285,8 @@ static void cmd_hist_add(const char *cmd)
  */
 static const struct cli_command *lookup_command(char *name, int len)
 {
-    int i = 0;
-    int n = 0;
+    unsigned int i = 0;
+    unsigned int n = 0;
 
     while (i < MAX_COMMANDS && n < cli.num_commands)
     {
@@ -382,7 +382,7 @@ static int handle_input(char *inbuf)
             case '"':
                 if (i > 0 && inbuf[i - 1] == '\\' && stat.inArg)
                 {
-                    (void)memcpy(&inbuf[i - 1], &inbuf[i], strlen(&inbuf[i]) + 1);
+                    (void)memcpy(&inbuf[i - 1], &inbuf[i], strlen(&inbuf[i]) + 1U);
                     --i;
                     break;
                 }
@@ -416,7 +416,7 @@ static int handle_input(char *inbuf)
             case ' ':
                 if (i > 0 && inbuf[i - 1] == '\\' && stat.inArg)
                 {
-                    (void)memcpy(&inbuf[i - 1], &inbuf[i], strlen(&inbuf[i]) + 1);
+                    (void)memcpy(&inbuf[i - 1], &inbuf[i], strlen(&inbuf[i]) + 1U);
                     --i;
                     break;
                 }
@@ -474,7 +474,7 @@ static int handle_input(char *inbuf)
  * is assumed to be NULL-terminated. */
 static void tab_complete(char *inbuf, unsigned int *bp)
 {
-    int i, n, m;
+    unsigned int i, n, m;
     const char *fm = NULL;
 
     (void)PRINTF("\r\n");
@@ -967,7 +967,7 @@ int cli_submit_cmd_buffer(char **buff)
  * text string, if any. */
 void help_command(int argc, char **argv)
 {
-    int i, n;
+    unsigned int i, n;
 
     (void)PRINTF("\r\n");
     for (i = 0, n = 0; i < MAX_COMMANDS && n < cli.num_commands; i++)
@@ -1060,7 +1060,7 @@ static struct cli_command built_ins[] = {
 
 int cli_register_command(const struct cli_command *command)
 {
-    int i;
+    unsigned int i;
     if (command->name == NULL || command->function == NULL)
     {
         return 1;
@@ -1087,7 +1087,7 @@ int cli_register_command(const struct cli_command *command)
 
 int cli_unregister_command(const struct cli_command *command)
 {
-    int i;
+    unsigned int i;
     if (command->name == NULL || command->function == NULL)
     {
         return 1;
@@ -1098,7 +1098,7 @@ int cli_unregister_command(const struct cli_command *command)
         if (cli.commands[i] == command)
         {
             cli.num_commands--;
-            int remaining_cmds = cli.num_commands - i;
+            unsigned int remaining_cmds = cli.num_commands - i;
             if (remaining_cmds > 0)
             {
                 (void)memmove(&cli.commands[i], &cli.commands[i + 1], (remaining_cmds * sizeof(struct cli_command *)));

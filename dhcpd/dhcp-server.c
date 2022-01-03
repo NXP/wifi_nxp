@@ -38,7 +38,7 @@
 #include "dhcp-priv.h"
 
 #define DEFAULT_DHCP_ADDRESS_TIMEOUT (24U * 60U * 60U * 1U) /* 1 day */
-#define CLIENT_IP_NOT_FOUND          0x00000000
+#define CLIENT_IP_NOT_FOUND          0x00000000U
 
 uint32_t dhcp_address_timeout = DEFAULT_DHCP_ADDRESS_TIMEOUT;
 static os_mutex_t dhcpd_mutex;
@@ -51,12 +51,12 @@ static void get_broadcast_addr(struct sockaddr_in *addr);
 static int get_ip_addr_from_interface(uint32_t *ip, void *interface_handle);
 static int get_netmask_from_interface(uint32_t *nm, void *interface_handle);
 static int send_gratuitous_arp(uint32_t ip);
-static bool ac_add(uint8_t *chaddr, uint32_t client_ip);
+static int ac_add(uint8_t *chaddr, uint32_t client_ip);
 static uint32_t ac_lookup_mac(uint8_t *chaddr);
 static uint8_t *ac_lookup_ip(uint32_t client_ip);
 static bool ac_not_full(void);
 
-static bool ac_add(uint8_t *chaddr, uint32_t client_ip)
+static int ac_add(uint8_t *chaddr, uint32_t client_ip)
 {
     /* adds ip-mac mapping in cache */
     if (ac_not_full())
@@ -132,16 +132,16 @@ static bool ac_valid_ip(uint32_t requested_ip)
 
 static void write_u32(char *dest, uint32_t be_value)
 {
-    *dest++ = be_value & 0xFF;
-    *dest++ = (be_value >> 8) & 0xFF;
-    *dest++ = (be_value >> 16) & 0xFF;
+    *dest++ = be_value & 0xFFU;
+    *dest++ = (be_value >> 8) & 0xFFU;
+    *dest++ = (be_value >> 16) & 0xFFU;
     *dest   = be_value >> 24;
 }
 
 /* Configure the DHCP dynamic IP lease time*/
 int dhcp_server_lease_timeout(uint32_t val)
 {
-    if ((val == 0) || (val > (60U * 60U * 24U * 49700U)))
+    if ((val == 0U) || (val > (60U * 60U * 24U * 49700U)))
     {
         return -EINVAL;
     }
@@ -171,7 +171,7 @@ static unsigned int next_yiaddr(void)
     if (new_ip == (CLIENT_IP_NOT_FOUND))
     {
         /* next IP address in the subnet */
-        dhcps.current_ip = ntohl(dhcps.my_ip & dhcps.netmask) | ((dhcps.current_ip + 1) & ntohl(~dhcps.netmask));
+        dhcps.current_ip = ntohl(dhcps.my_ip & dhcps.netmask) | ((dhcps.current_ip + 1U) & ntohl(~dhcps.netmask));
         while (!ac_valid_ip(dhcps.current_ip))
         {
             dhcps.current_ip = ntohl(dhcps.my_ip & dhcps.netmask) | ((dhcps.current_ip + 1) & ntohl(~dhcps.netmask));
@@ -206,7 +206,7 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
     hdr->hlen   = 6;
     hdr->hops   = 0;
     hdr->ciaddr = 0;
-    hdr->yiaddr = (type == DHCP_MESSAGE_ACK) ? dhcps.client_ip : 0;
+    hdr->yiaddr = (type == DHCP_MESSAGE_ACK) ? dhcps.client_ip : 0U;
     hdr->yiaddr = (type == DHCP_MESSAGE_OFFER) ? next_yiaddr() : hdr->yiaddr;
     hdr->siaddr = 0;
     hdr->riaddr = 0;
@@ -332,7 +332,7 @@ static int process_dhcp_message(char *msg, int len)
     opt = (struct bootp_option *)(msg + sizeof(struct bootp_header));
     while (len > 0 && opt->type != BOOTP_END_OPTION)
     {
-        if (opt->type == BOOTP_OPTION_DHCP_MESSAGE && opt->length == 1)
+        if (opt->type == BOOTP_OPTION_DHCP_MESSAGE && opt->length == 1U)
         {
             dhcp_d("found DHCP message option");
             switch (*(uint8_t *)opt->value)
@@ -345,7 +345,7 @@ static int process_dhcp_message(char *msg, int len)
                 case DHCP_MESSAGE_REQUEST:
                     dhcp_d("DHCP request");
                     need_ip = 1;
-                    if (hdr->ciaddr != 0x0000000)
+                    if (hdr->ciaddr != 0x0000000U)
                     {
                         dhcps.client_ip = hdr->ciaddr;
                         got_client_ip   = 1;
@@ -357,7 +357,7 @@ static int process_dhcp_message(char *msg, int len)
                     break;
             }
         }
-        if (opt->type == BOOTP_OPTION_REQUESTED_IP && opt->length == 4)
+        if (opt->type == BOOTP_OPTION_REQUESTED_IP && opt->length == 4U)
         {
             dhcp_d("found REQUESTED IP option %hhu.%hhu.%hhu.%hhu", opt->value[0], opt->value[1], opt->value[2],
                    opt->value[3]);
@@ -697,7 +697,7 @@ static int send_ctrl_msg(const char *msg)
     to_addr.sin_port        = htons(CTRL_PORT);
     to_addr.sin_addr.s_addr = net_inet_aton("127.0.0.1");
 
-    ret = sendto(ctrl_tmp, msg, strlen(msg) + 1, 0, (struct sockaddr *)&to_addr, sizeof(to_addr));
+    ret = sendto(ctrl_tmp, msg, strlen(msg) + 1U, 0, (struct sockaddr *)&to_addr, sizeof(to_addr));
     if (ret == -1)
     {
         ret = net_get_sock_error(ctrl_tmp);

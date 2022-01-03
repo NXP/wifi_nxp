@@ -160,7 +160,7 @@
 #endif /* ! CONFIG_WLCMGR_DEBUG */
 
 /** Action GET */
-#define ACTION_GET (0)
+#define ACTION_GET (0U)
 /** Action SET */
 #define ACTION_SET (1)
 
@@ -186,17 +186,17 @@ typedef enum
 /** The number of times that the WLAN Connection Manager will look for a
  *  network before giving up. */
 #ifdef CONFIG_P2P
-#define WLAN_RESCAN_LIMIT 10
+#define WLAN_RESCAN_LIMIT 10U
 #else
-#define WLAN_RESCAN_LIMIT 5
+#define WLAN_RESCAN_LIMIT 5U
 #endif
-#define WLAN_11D_SCAN_LIMIT 3
+#define WLAN_11D_SCAN_LIMIT 3U
 /** The number of times that the WLAN Connection Manager will attempt a
  * reconnection with the network before giving up. */
-#define WLAN_RECONNECT_LIMIT 5
+#define WLAN_RECONNECT_LIMIT 5U
 /** The minimum length for network names, see \ref wlan_network.  This must
  *  be between 1 and \ref WLAN_NETWORK_NAME_MAX_LENGTH */
-#define WLAN_NETWORK_NAME_MIN_LENGTH 1
+#define WLAN_NETWORK_NAME_MIN_LENGTH 1U
 /** The space reserved for storing network names, \ref wlan_network */
 #define WLAN_NETWORK_NAME_MAX_LENGTH 32U
 /** The space reserved for storing PSK (password) phrases. */

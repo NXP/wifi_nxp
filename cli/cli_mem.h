@@ -29,7 +29,7 @@
 #ifdef CONFIG_APPLE_SW_AUTH_TEST
 #define INBUF_SIZE 1383
 #else
-#define INBUF_SIZE 256
+#define INBUF_SIZE 256U
 #endif
 
 #define BUF_ALLOCATED 1
