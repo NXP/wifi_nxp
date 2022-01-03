@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the support for network utility ping
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -85,15 +85,16 @@ static int ping_recv(int s, uint16_t seq_no, int *ttl)
     struct ip_hdr *iphdr;
     struct icmp_echo_hdr *iecho;
 
-    while ((len = lwip_recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&from, (socklen_t *)&fromlen)) > 0)
+    while ((len = lwip_recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)(void *)&from,
+                                (socklen_t *)(void *)&fromlen)) > 0)
     {
         /* Received length should be greater than size of IP header and
          * size of ICMP header */
         if (len >= (int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr)))
         {
-            iphdr = (struct ip_hdr *)buf;
+            iphdr = (struct ip_hdr *)(void *)buf;
             /* Calculate the offset of ICMP header */
-            iecho = (struct icmp_echo_hdr *)(buf + (IPH_HL(iphdr) * 4));
+            iecho = (struct icmp_echo_hdr *)(void *)(buf + (IPH_HL(iphdr) * 4));
 
             /* Verify that the echo response is for the echo request
              * we sent by checking PING_ID and sequence number */
@@ -192,7 +193,7 @@ static int ping(unsigned int count, unsigned short size, unsigned int r_timeout,
         inet_addr_from_ip4addr(&to.sin_addr, ip_2_ip4(addr));
 
         /* Send the ICMP echo request */
-        ret = lwip_sendto(s, iecho, ping_size, 0, (struct sockaddr *)&to, sizeof(to));
+        ret = lwip_sendto(s, iecho, ping_size, 0, (struct sockaddr *)(void *)&to, sizeof(to));
 
         /* Get the current ticks as the start time */
         ping_time = os_ticks_get();
@@ -218,7 +219,7 @@ static int ping(unsigned int count, unsigned short size, unsigned int r_timeout,
             {
                 /* To display unsuccessful ping stats, source
                  * IP address is required */
-                ip_addr = (ip_addr_t *)&src_ip;
+                ip_addr = (ip_addr_t *)(void *)&src_ip;
             }
 
             display_ping_stats(ret, ping_size, ip_addr, i, ttl, ping_time);
@@ -234,7 +235,7 @@ static int ping(unsigned int count, unsigned short size, unsigned int r_timeout,
         os_thread_sleep(os_msec_to_ticks(PING_INTERVAL));
     }
     os_mem_free(iecho);
-    display_ping_result((ip_addr_t *)&src_ip, count, recvd);
+    display_ping_result((ip_addr_t *)(void *)&src_ip, count, recvd);
 end:
     close(s);
     return ret;
