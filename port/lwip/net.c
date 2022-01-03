@@ -367,7 +367,7 @@ void *net_sock_to_interface(int sock)
     void *req_iface   = NULL;
     int ret;
 
-    ret = getpeername(sock, (struct sockaddr *)&peer, &peerlen);
+    ret = getpeername(sock, (struct sockaddr *)(void *)&peer, &peerlen);
     if (ret < 0)
     {
         net_e("Failed to get peer name");

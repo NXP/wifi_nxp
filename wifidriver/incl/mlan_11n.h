@@ -208,15 +208,15 @@ static t_u8 wlan_is_cur_bastream_high_prio(mlan_private *priv, int tid)
     TxBAStreamTbl *ptx_tbl;
 
     ENTER();
-    ptx_tbl = (TxBAStreamTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
-                                              priv->adapter->callbacks.moal_spin_lock,
-                                              priv->adapter->callbacks.moal_spin_unlock);
+    ptx_tbl = (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
+                                                      priv->adapter->callbacks.moal_spin_lock,
+                                                      priv->adapter->callbacks.moal_spin_unlock);
     if (ptx_tbl == MNULL)
     {
         return MFALSE;
     }
 
-    while (ptx_tbl != (TxBAStreamTbl *)&priv->tx_ba_stream_tbl_ptr)
+    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
         if (priv->aggr_prio_tbl[tid].ampdu_user > priv->aggr_prio_tbl[ptx_tbl->tid].ampdu_user)
         {
@@ -355,9 +355,9 @@ static t_u8 wlan_find_stream_to_delete(mlan_private *priv, raListTbl *ptr, int p
     TxBAStreamTbl *ptx_tbl;
 
     ENTER();
-    ptx_tbl = (TxBAStreamTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
-                                              priv->adapter->callbacks.moal_spin_lock,
-                                              priv->adapter->callbacks.moal_spin_unlock);
+    ptx_tbl = (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
+                                                      priv->adapter->callbacks.moal_spin_lock,
+                                                      priv->adapter->callbacks.moal_spin_unlock);
     if (ptx_tbl == MNULL)
     {
         LEAVE();
@@ -366,7 +366,7 @@ static t_u8 wlan_find_stream_to_delete(mlan_private *priv, raListTbl *ptr, int p
 
     tid = priv->aggr_prio_tbl[ptr_tid].ampdu_user;
 
-    while (ptx_tbl != (TxBAStreamTbl *)&priv->tx_ba_stream_tbl_ptr)
+    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
         if (tid > priv->aggr_prio_tbl[ptx_tbl->tid].ampdu_user)
         {

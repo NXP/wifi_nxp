@@ -77,7 +77,7 @@ static void format_qname(char *domain_name, char *dns_qname)
 static unsigned int make_answer_rr(char *base, char *query, char *dst)
 {
     struct dns_question *q;
-    struct dns_rr *rr = (struct dns_rr *)dst;
+    struct dns_rr *rr = (struct dns_rr *)(void *)dst;
     char *query_start = query;
 
     rr->name_ptr = htons(((uint16_t)(query - base) | 0xC000U));
@@ -92,7 +92,7 @@ static unsigned int make_answer_rr(char *base, char *query, char *dst)
     } while (*query > 0U);
     query++;
 
-    q = (struct dns_question *)query;
+    q = (struct dns_question *)(void *)query;
     query += sizeof(struct dns_question);
 
     rr->type     = q->type;
@@ -154,7 +154,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         return -WM_E_DHCPD_DNS_IGNORE;
     }
 
-    hdr = (struct dns_header *)msg;
+    hdr = (struct dns_header *)(void *)msg;
 
     dhcp_d("DNS transaction id: 0x%x", htons(hdr->id));
 
@@ -197,7 +197,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
          * - num_questions x query fields from the message we're parsing
          * - num_answers x answer fields that we've appended
          */
-        return SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)fromaddr, msg, outp - msg);
+        return SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
     }
 
     /* make the header represent a response */
@@ -216,7 +216,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
     hdr->answer_rrs     = 0; /* number of resource records in answer section */
     hdr->authority_rrs  = 0;
     hdr->additional_rrs = 0;
-    SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)fromaddr, msg, outp - msg);
+    SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
 
     return -WM_E_DHCPD_DNS_IGNORE;
 }
@@ -276,7 +276,7 @@ void dns_process_packet(void)
     struct sockaddr_in caddr;
     socklen_t flen = sizeof(caddr);
     int len;
-    len = recvfrom(dnss.dnssock, dhcps.msg, sizeof(dhcps.msg), 0, (struct sockaddr *)&caddr, &flen);
+    len = recvfrom(dnss.dnssock, dhcps.msg, sizeof(dhcps.msg), 0, (struct sockaddr *)(void *)&caddr, &flen);
     if (len > 0)
     {
         dhcp_d("recved msg on dns sock len: %d", len);
