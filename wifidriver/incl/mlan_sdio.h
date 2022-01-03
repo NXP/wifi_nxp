@@ -562,8 +562,10 @@ t_void wlan_interrupt(pmlan_adapter pmadapter);
 mlan_status wlan_sdio_host_to_card(mlan_adapter *pmadapter, t_u8 type, mlan_buffer *mbuf, mlan_tx_param *tx_param);
 #endif /* CONFIG_MLAN_WMSDK */
 mlan_status wlan_set_sdio_gpio_int(IN pmlan_private priv);
+#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_cmd_sdio_gpio_int(pmlan_private pmpriv,
                                    IN HostCmd_DS_COMMAND *cmd,
                                    IN t_u16 cmd_action,
                                    IN t_void *pdata_buf);
+#endif /* CONFIG_MLAN_WMSDK */
 #endif /* _MLAN_SDIO_H */
