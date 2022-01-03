@@ -93,7 +93,6 @@ extern mlan_status wlan_11h_radar_detected_handling(mlan_adapter *pmadapter);
 
 /** DFS switch to non-DFS channel */
 extern mlan_status wlan_11h_switch_non_dfs_chan(mlan_private *priv, t_u8 *chan);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Configure master radar detection.  Need call wlan_11h_check_update_radar_det_state() after. */
 extern mlan_status wlan_11h_config_master_radar_det(mlan_private *priv, t_bool enable);
@@ -103,6 +102,8 @@ extern mlan_status wlan_11h_config_slave_radar_det(mlan_private *priv, t_bool en
 
 /** Return 1 if 11h is active in the firmware, 0 if it is inactive */
 extern t_bool wlan_11h_is_active(mlan_private *priv);
+
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Initialize the 11h device structure */
 extern void wlan_11h_init(mlan_adapter *pmadapter);
@@ -116,8 +117,10 @@ extern t_u8 wlan_11h_get_adhoc_start_channel(mlan_private *priv);
 /** Check if radar detection is required on the specified channel */
 extern t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Perform a standard availibility check on the specified channel */
 extern t_s32 wlan_11h_issue_radar_detect(mlan_private *priv, pmlan_ioctl_req pioctl_req, t_u8 channel);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Add any 11h TLVs necessary to complete a join command (adhoc or infra) */
 extern t_s32 wlan_11h_process_join(mlan_private *priv,
@@ -126,11 +129,13 @@ extern t_s32 wlan_11h_process_join(mlan_private *priv,
                                    t_u8 band,
                                    t_u32 channel,
                                    wlan_11h_bss_info_t *p11h_bss_info);
+#ifndef CONFIG_MLAN_WMSDK
 
 /** Receive IEs from scan processing and record any needed info for 11h */
 extern mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter,
                                              wlan_11h_bss_info_t *p11h_bss_info,
                                              const t_u8 *pelement);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Handler for EVENT_CHANNEL_SWITCH_ANN */
 extern mlan_status wlan_11h_handle_event_chanswann(mlan_private *priv);
@@ -143,8 +148,10 @@ extern mlan_status wlan_11h_ioctl_dfs_testing(pmlan_adapter pmadapter, pmlan_ioc
 /** Check if channel is under a NOP duration (should not be used) */
 extern t_bool wlan_11h_is_channel_under_nop(mlan_adapter *pmadapter, t_u8 channel);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Check if RADAR_DETECTED handling is blocking data tx */
 extern t_bool wlan_11h_radar_detected_tx_blocked(mlan_adapter *pmadapter);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** DFS Event pre-processing */
 extern mlan_status wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter);
