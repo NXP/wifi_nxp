@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of CMD/EVENT in MLAN
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1872,7 +1872,7 @@ mlan_status wlan_cmd_enh_power_mode(
         if ((ps_bitmap & BITMAP_STA_PS) != 0)
         {
             pmlan_adapter pmadapter        = pmpriv->adapter;
-            MrvlIEtypes_ps_param_t *ps_tlv = (MrvlIEtypes_ps_param_t *)tlv;
+            MrvlIEtypes_ps_param_t *ps_tlv = (MrvlIEtypes_ps_param_t *)(void *)tlv;
             ps_param *ps_mode              = (ps_param *)&ps_tlv->param;
             ps_tlv->header.type            = wlan_cpu_to_le16(TLV_TYPE_PS_PARAM);
             ps_tlv->header.len = wlan_cpu_to_le16(sizeof(MrvlIEtypes_ps_param_t) - sizeof(MrvlIEtypesHeader_t));
@@ -1889,7 +1889,7 @@ mlan_status wlan_cmd_enh_power_mode(
 
         if ((ps_bitmap & BITMAP_AUTO_DS) != 0)
         {
-            MrvlIEtypes_auto_ds_param_t *auto_ps_tlv = (MrvlIEtypes_auto_ds_param_t *)tlv;
+            MrvlIEtypes_auto_ds_param_t *auto_ps_tlv = (MrvlIEtypes_auto_ds_param_t *)(void *)tlv;
             auto_ds_param *auto_ds                   = (auto_ds_param *)&auto_ps_tlv->param;
             t_u16 idletime                           = 0;
             auto_ps_tlv->header.type                 = wlan_cpu_to_le16(TLV_TYPE_AUTO_DS_PARAM);
@@ -1916,7 +1916,7 @@ mlan_status wlan_cmd_enh_power_mode(
             MrvlIEtypes_inact_sleep_param_t *inact_tlv = MNULL;
             if ((ps_mgmt->flags & PS_FLAG_SLEEP_PARAM) != 0U)
             {
-                sleep_tlv              = (MrvlIEtypes_sleep_param_t *)tlv;
+                sleep_tlv              = (MrvlIEtypes_sleep_param_t *)(void *)tlv;
                 sleep_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AP_SLEEP_PARAM);
                 sleep_tlv->header.len =
                     wlan_cpu_to_le16(sizeof(MrvlIEtypes_sleep_param_t) - sizeof(MrvlIEtypesHeader_t));
@@ -1928,7 +1928,7 @@ mlan_status wlan_cmd_enh_power_mode(
             }
             if ((ps_mgmt->flags & PS_FLAG_INACT_SLEEP_PARAM) != 0U)
             {
-                inact_tlv              = (MrvlIEtypes_inact_sleep_param_t *)tlv;
+                inact_tlv              = (MrvlIEtypes_inact_sleep_param_t *)(void *)tlv;
                 inact_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AP_INACT_SLEEP_PARAM);
                 inact_tlv->header.len =
                     wlan_cpu_to_le16(sizeof(MrvlIEtypes_inact_sleep_param_t) - sizeof(MrvlIEtypesHeader_t));
@@ -2414,7 +2414,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     rate_cfg->action    = wlan_cpu_to_le16(cmd_action);
     rate_cfg->cfg_index = 0;
 
-    rate_scope         = (MrvlRateScope_t *)((t_u8 *)rate_cfg + sizeof(HostCmd_DS_TX_RATE_CFG));
+    rate_scope         = (MrvlRateScope_t *)(void *)((t_u8 *)rate_cfg + sizeof(HostCmd_DS_TX_RATE_CFG));
     rate_scope->type   = wlan_cpu_to_le16(TLV_TYPE_RATE_SCOPE);
     rate_scope->length = wlan_cpu_to_le16(sizeof(MrvlRateScope_t) - sizeof(MrvlIEtypesHeader_t));
     if (pbitmap_rates != MNULL)
@@ -2472,7 +2472,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
 #endif
     }
 
-    rate_drop                 = (MrvlRateDropPattern_t *)((t_u8 *)rate_scope + sizeof(MrvlRateScope_t));
+    rate_drop                 = (MrvlRateDropPattern_t *)(void *)((t_u8 *)rate_scope + sizeof(MrvlRateScope_t));
     rate_drop->type           = wlan_cpu_to_le16(TLV_TYPE_RATE_DROP_PATTERN);
     rate_drop->length         = wlan_cpu_to_le16(sizeof(rate_drop->rate_drop_mode));
     rate_drop->rate_drop_mode = 0;
@@ -2519,7 +2519,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     tlv_buf = (t_u8 *)((t_u8 *)prate_cfg) + sizeof(HostCmd_DS_TX_RATE_CFG);
     if (tlv_buf != NULL)
     {
-        tlv_buf_len = *(t_u16 *)(tlv_buf + sizeof(t_u16));
+        tlv_buf_len = *(t_u16 *)(void *)(tlv_buf + sizeof(t_u16));
         tlv_buf_len = wlan_le16_to_cpu(tlv_buf_len);
     }
 
@@ -2531,7 +2531,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
         switch (tlv)
         {
             case TLV_TYPE_RATE_SCOPE:
-                prate_scope             = (MrvlRateScope_t *)tlv_buf;
+                prate_scope             = (MrvlRateScope_t *)(void *)tlv_buf;
                 pmpriv->bitmap_rates[0] = wlan_le16_to_cpu(prate_scope->hr_dsss_rate_bitmap);
                 pmpriv->bitmap_rates[1] = wlan_le16_to_cpu(prate_scope->ofdm_rate_bitmap);
                 for (i = 0; i < sizeof(prate_scope->ht_mcs_rate_bitmap) / sizeof(t_u16); i++)
@@ -2557,7 +2557,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 /* Add RATE_DROP tlv here */
         }
 
-        head      = (MrvlIEtypesHeader_t *)tlv_buf;
+        head      = (MrvlIEtypesHeader_t *)(void *)tlv_buf;
         head->len = wlan_le16_to_cpu(head->len);
         tlv_buf += head->len + sizeof(MrvlIEtypesHeader_t);
         tlv_buf_len -= head->len;
