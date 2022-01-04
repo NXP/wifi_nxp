@@ -2,7 +2,7 @@
  *
  *  @brief This file provides more APIs for mlan.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -2613,7 +2613,7 @@ int wifi_config_mgmt_ie(
 
     (void)memset(buf, 0, total_len);
 
-    tlv       = (tlvbuf_custom_ie *)buf;
+    tlv       = (tlvbuf_custom_ie *)(void *)buf;
     tlv->type = MRVL_MGMT_IE_LIST_TLV_ID;
 
     /* Locate headers */
@@ -2640,7 +2640,7 @@ int wifi_config_mgmt_ie(
             ie_ptr->ie_length         = 0;
             ie_ptr->ie_index          = index;
 
-            ie_ptr                    = (custom_ie *)(((uint8_t *)ie_ptr) + sizeof(custom_ie) - MAX_IE_SIZE);
+            ie_ptr                    = (custom_ie *)(void *)(((uint8_t *)ie_ptr) + sizeof(custom_ie) - MAX_IE_SIZE);
             ie_ptr->mgmt_subtype_mask = MGMT_MASK_CLEAR;
             ie_ptr->ie_length         = 0;
             ie_ptr->ie_index          = index + 1;
@@ -2663,7 +2663,7 @@ int wifi_config_mgmt_ie(
             }
 
             pos         = ie_ptr->ie_buffer;
-            ptlv_header = (IEEEtypes_Header_t *)pos;
+            ptlv_header = (IEEEtypes_Header_t *)(void *)pos;
             pos += sizeof(IEEEtypes_Header_t);
 
             ptlv_header->element_id = index;
@@ -2715,7 +2715,7 @@ int wifi_config_mgmt_ie(
             os_mem_free(buf);
             return wm_wifi.cmd_resp_status;
         }
-        ie_ptr = (custom_ie *)(buf);
+        ie_ptr = (custom_ie *)(void *)(buf);
         (void)memcpy((void *)buffer, (const void *)ie_ptr->ie_buffer, ie_ptr->ie_length);
         *ie_len = ie_ptr->ie_length;
     }
@@ -2878,7 +2878,7 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit)
                 txpwrlimit->num_chans * (sizeof(MrvlIEtypesHeader_t) + sizeof(MrvlChannelDesc_t)) +
                 (txpwrlimit->num_chans * txpwrlimit->txpwrlimit_config->num_mod_grps * sizeof(MrvlChanTrpcEntry_t));
 
-    HostCmd_DS_CHAN_TRPC_CONFIG *txpwrlimit_config = (HostCmd_DS_CHAN_TRPC_CONFIG *)((uint8_t *)cmd + S_DS_GEN);
+    HostCmd_DS_CHAN_TRPC_CONFIG *txpwrlimit_config = (HostCmd_DS_CHAN_TRPC_CONFIG *)(void *)((uint8_t *)cmd + S_DS_GEN);
 
     txpwrlimit_config->action   = HostCmd_ACT_GEN_SET;
     txpwrlimit_config->reserved = txpwrlimit->subband;
@@ -2887,7 +2887,7 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit)
 
     for (i = 0; i < txpwrlimit->num_chans; i++)
     {
-        trpc_tlv              = (MrvlIETypes_ChanTRPCConfig_t *)pByte;
+        trpc_tlv              = (MrvlIETypes_ChanTRPCConfig_t *)(void *)pByte;
         trpc_tlv->header.type = TLV_TYPE_CHANNEL_TRPC_CONFIG;
         trpc_tlv->header.len =
             sizeof(MrvlChannelDesc_t) + txpwrlimit->txpwrlimit_config->num_mod_grps * sizeof(MrvlChanTrpcEntry_t);
@@ -2915,7 +2915,7 @@ int wifi_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit)
     cmd->result  = 0x0;
     cmd->size    = S_DS_GEN + 2U * sizeof(t_u16);
 
-    HostCmd_DS_CHAN_TRPC_CONFIG *txpwrlimit_config = (HostCmd_DS_CHAN_TRPC_CONFIG *)((uint8_t *)cmd + S_DS_GEN);
+    HostCmd_DS_CHAN_TRPC_CONFIG *txpwrlimit_config = (HostCmd_DS_CHAN_TRPC_CONFIG *)(void *)((uint8_t *)cmd + S_DS_GEN);
 
     txpwrlimit_config->action   = HostCmd_ACT_GEN_GET;
     txpwrlimit_config->reserved = subband;
@@ -2973,7 +2973,7 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
     cmd->result  = 0x0;
     cmd->size    = S_DS_GEN + sizeof(HostCmd_CONFIG_ED_MAC_MODE);
 
-    HostCmd_CONFIG_ED_MAC_MODE *ed_mac_mode = (HostCmd_CONFIG_ED_MAC_MODE *)((uint8_t *)cmd + S_DS_GEN);
+    HostCmd_CONFIG_ED_MAC_MODE *ed_mac_mode = (HostCmd_CONFIG_ED_MAC_MODE *)(void *)((uint8_t *)cmd + S_DS_GEN);
 
     ed_mac_mode->ed_ctrl_2g   = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_ctrl_2g);
     ed_mac_mode->ed_offset_2g = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_offset_2g);
@@ -3057,13 +3057,13 @@ int wifi_set_smart_mode_cfg(char *ssid,
         return -WM_E_INVAL;
     };
 
-    tlv_ssid              = (MrvlIEtypes_SsIdParamSet_t *)sys_config_cmd->tlv_buffer;
+    tlv_ssid              = (MrvlIEtypes_SsIdParamSet_t *)(void *)sys_config_cmd->tlv_buffer;
     tlv_ssid->header.type = MRVL_SSID_TLV_ID;
     tlv_ssid->header.len  = strlen(ssid);
     (void)memcpy((void *)tlv_ssid->ssid, (const void *)ssid, strlen(ssid));
     size += sizeof(tlv_ssid->header) + tlv_ssid->header.len;
     tlv += sizeof(tlv_ssid->header) + tlv_ssid->header.len;
-    tlv_beacon_period                = (MrvlIEtypes_beacon_period_t *)tlv;
+    tlv_beacon_period                = (MrvlIEtypes_beacon_period_t *)(void *)tlv;
     tlv_beacon_period->header.type   = MRVL_BEACON_PERIOD_TLV_ID;
     tlv_beacon_period->header.len    = sizeof(uint16_t);
     tlv_beacon_period->beacon_period = beacon_period;
@@ -3071,7 +3071,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
     size += sizeof(tlv_beacon_period->header) + tlv_beacon_period->header.len;
     tlv += sizeof(tlv_beacon_period->header) + tlv_beacon_period->header.len;
 
-    tlv_chan_list              = (MrvlIEtypes_ChanListParamSet_t *)tlv;
+    tlv_chan_list              = (MrvlIEtypes_ChanListParamSet_t *)(void *)tlv;
     tlv_chan_list->header.type = TLV_TYPE_CHANLIST;
     tlv_chan_list->header.len  = chan_list->no_of_channels * sizeof(ChanScanParamSet_t);
 
@@ -3087,7 +3087,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
 
     if (custom_ie != MNULL && custom_ie_len > 0)
     {
-        tlv_custom_ie              = (MrvlIEtypes_Data_t *)tlv;
+        tlv_custom_ie              = (MrvlIEtypes_Data_t *)(void *)tlv;
         tlv_custom_ie->header.type = TLV_TYPE_PASSTHROUGH;
         tlv_custom_ie->header.len  = custom_ie_len;
         (void)memcpy((void *)tlv_custom_ie->data, (const void *)custom_ie, custom_ie_len);
@@ -3098,7 +3098,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
 
     if (smc_start_addr != MNULL && smc_end_addr != MNULL)
     {
-        tlv_smc_addr_range              = (MrvlIETypes_SmcAddrRange_t *)tlv;
+        tlv_smc_addr_range              = (MrvlIETypes_SmcAddrRange_t *)(void *)tlv;
         tlv_smc_addr_range->header.type = TLV_TYPE_SMCADDRRANGE;
         tlv_smc_addr_range->header.len  = 2U * MLAN_MAC_ADDR_LENGTH + sizeof(uint16_t);
 
@@ -3111,7 +3111,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
         tlv += sizeof(tlv_smc_addr_range->header) + tlv_smc_addr_range->header.len;
     }
 
-    tlv_smc_frame_filter              = (MrvlIETypes_SmcFrameFilter_t *)tlv;
+    tlv_smc_frame_filter              = (MrvlIETypes_SmcFrameFilter_t *)(void *)tlv;
     tlv_smc_frame_filter->header.type = TLV_TYPE_SMCFRAMEFILTER;
     tlv_smc_frame_filter->header.len  = smc_frame_filter_len;
     (void)memcpy((void *)tlv_smc_frame_filter->frame_filter, (const void *)smc_frame_filter, smc_frame_filter_len);

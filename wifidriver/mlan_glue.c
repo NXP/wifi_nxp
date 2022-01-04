@@ -3,7 +3,7 @@
  *  @brief This file acts as a glue between legacy wlan code and mlan based wlan
  *  code
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -127,14 +127,14 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
 
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len)
 {
-    RxPD *prx_pd = (RxPD *)amsdu_pmbuf->pbuf;
+    RxPD *prx_pd = (RxPD *)(void *)amsdu_pmbuf->pbuf;
     w_pkt_d("[amsdu] [push]: BSS Type: %d L: %d", prx_pd->bss_type, pkt_len);
     wm_wifi.amsdu_data_intput_callback(prx_pd->bss_type, data, pkt_len);
 }
 
 static mlan_status wrapper_moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_buffer pmbuf)
 {
-    RxPD *prx_pd = (RxPD *)(pmbuf->pbuf + pmbuf->data_offset);
+    RxPD *prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
     if (pmbuf->data_offset != 0U)
     {
         wifi_e("pmbuf->data_offset != 0 (%d)?", pmbuf->data_offset);
@@ -420,7 +420,7 @@ int wrapper_wlan_cmd_11n_ba_stream_timeout(void *saved_event_buff)
 {
     Event_Ext_t *evt = (Event_Ext_t *)saved_event_buff;
 
-    wlan_11n_ba_stream_timeout(mlan_adap->priv[evt->bss_type], (HostCmd_DS_11N_BATIMEOUT *)&evt->reason_code);
+    wlan_11n_ba_stream_timeout(mlan_adap->priv[evt->bss_type], (HostCmd_DS_11N_BATIMEOUT *)(void *)&evt->reason_code);
 
     os_mem_free(saved_event_buff);
 
@@ -895,7 +895,7 @@ int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen
 {
     w_pkt_d("[amsdu] [recv]       : L: %d", datalen);
 
-    RxPD *rxpd = (RxPD *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
+    RxPD *rxpd = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
 
     /* fixme: Check if mlan buffer can be allocated from standard mlan
        function */
@@ -1542,10 +1542,11 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
     }
 
     sl->count            = c;
-    wifi_sta_info_t *sta = (wifi_sta_info_t *)(((t_u8 *)&sl->count) + sizeof(int));
+    wifi_sta_info_t *sta = (wifi_sta_info_t *)(void *)(((t_u8 *)&sl->count) + sizeof(int));
 
     int i;
-    const MrvlIEtypes_sta_info_t *si = (MrvlIEtypes_sta_info_t *)(((t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
+    const MrvlIEtypes_sta_info_t *si =
+        (MrvlIEtypes_sta_info_t *)(void *)(((t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
     for (i = 0; i < c && i < MAX_NUM_CLIENTS; i++)
     {
         if ((si[i].rssi & 0x80) != 0)
@@ -1876,7 +1877,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     return -WM_FAIL;
                 }
 
-                IEEEtypes_AssocRsp_t *passoc_rsp = (IEEEtypes_AssocRsp_t *)&resp->params;
+                IEEEtypes_AssocRsp_t *passoc_rsp = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
 
                 if (!passoc_rsp->status_code)
                 {
@@ -2063,7 +2064,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCmd_CMD_RSSI_INFO:
             {
-                HostCmd_DS_802_11_RSSI_INFO_RSP *prssi_info_rsp = (HostCmd_DS_802_11_RSSI_INFO_RSP *)&resp->params;
+                HostCmd_DS_802_11_RSSI_INFO_RSP *prssi_info_rsp =
+                    (HostCmd_DS_802_11_RSSI_INFO_RSP *)(void *)&resp->params;
                 if (wm_wifi.cmd_resp_priv != NULL)
                 {
                     wifi_rssi_info_t *rssi_info = (wifi_rssi_info_t *)wm_wifi.cmd_resp_priv;
@@ -2232,13 +2234,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             left_len = resp->size - S_DS_GEN - 4U;
                             while (left_len >= sizeof(pTlvHdr->header))
                             {
-                                pTlvHdr             = (MrvlIEtypes_Data_t *)pByte;
+                                pTlvHdr             = (MrvlIEtypes_Data_t *)(void *)pByte;
                                 pTlvHdr->header.len = wlan_le16_to_cpu(pTlvHdr->header.len);
 
                                 switch (wlan_le16_to_cpu(pTlvHdr->header.type))
                                 {
                                     case TLV_TYPE_CHAN_TRPC_CONFIG:
-                                        trpc_tlv = (MrvlIETypes_ChanTRPCConfig_t *)pTlvHdr;
+                                        trpc_tlv = (MrvlIETypes_ChanTRPCConfig_t *)(void *)pTlvHdr;
 #ifndef CONFIG_11AC
                                         /*
                                          * For 2.4 GHz band, we do not support HT40 Modulation Groups.
@@ -2643,7 +2645,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
     IEEEtypes_Extension_t *phe_cap = MNULL;
 #endif
     int tlv_buf_left         = pevent->length - INTF_HEADER_LEN - ASSOC_EVENT_FIX_SIZE;
-    MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)((char *)pevent + INTF_HEADER_LEN + ASSOC_EVENT_FIX_SIZE);
+    MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)(void *)((char *)pevent + INTF_HEADER_LEN + ASSOC_EVENT_FIX_SIZE);
     MrvlIETypes_MgmtFrameSet_t *mgmt_tlv = MNULL;
 
     ENTER();
@@ -2658,7 +2660,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
         }
         if (tlv_type == TLV_TYPE_UAP_MGMT_FRAME)
         {
-            mgmt_tlv = (MrvlIETypes_MgmtFrameSet_t *)tlv;
+            mgmt_tlv = (MrvlIETypes_MgmtFrameSet_t *)(void *)tlv;
             (void)memcpy((void *)&frame_control, (const void *)((t_u8 *)&(mgmt_tlv->frame_control)),
                          sizeof(frame_control));
             frame_sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(frame_control);
@@ -2679,7 +2681,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 
                 ie_len       = tlv_len - sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
-                pht_cap      = (IEEEtypes_HTCap_t *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
+                pht_cap =
+                    (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
 
                 if (pht_cap != NULL)
                 {
@@ -2737,7 +2740,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
             }
         }
         tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
-        tlv = (MrvlIEtypesHeader_t *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
+        tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
 
@@ -2759,8 +2762,9 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *pevent)
 {
     t_u16 tlv_type, tlv_len;
-    int tlv_buf_left         = pevent->length - INTF_HEADER_LEN - BSS_START_EVENT_FIX_SIZE;
-    MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)((char *)pevent + INTF_HEADER_LEN + BSS_START_EVENT_FIX_SIZE);
+    int tlv_buf_left = pevent->length - INTF_HEADER_LEN - BSS_START_EVENT_FIX_SIZE;
+    MrvlIEtypesHeader_t *tlv =
+        (MrvlIEtypesHeader_t *)(void *)((char *)pevent + INTF_HEADER_LEN + BSS_START_EVENT_FIX_SIZE);
 #ifdef CONFIG_11AX
     MrvlIEtypes_He_cap_t *pext_tlv = MNULL;
 #endif
@@ -2823,7 +2827,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             PRINTM(MCMND, "pkt_fwd DRV: 0x%x\n", priv->pkt_fwd);
         }
         tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
-        tlv = (MrvlIEtypesHeader_t *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
+        tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
 }
@@ -2970,7 +2974,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
         case EVENT_CHANNEL_SWITCH:
         {
-            MrvlIEtypes_channel_band_t *tlv = (MrvlIEtypes_channel_band_t *)&evt->reason_code;
+            MrvlIEtypes_channel_band_t *tlv = (MrvlIEtypes_channel_band_t *)(void *)&evt->reason_code;
 
             new_channel = os_mem_alloc(sizeof(t_u8));
             if (new_channel == MNULL)
@@ -3147,7 +3151,7 @@ const uint8_t wpa3_oui12[4] = {0x00, 0x0f, 0xac, 0x12};
 static unsigned char process_rsn_ie(
     uint8_t *rsn_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher, bool *is_pmf_required, _SecurityMode_t *WPA_WPA2_WEP)
 {
-    IEEEtypes_Rsn_t *prsn_ie = (IEEEtypes_Rsn_t *)rsn_ie;
+    IEEEtypes_Rsn_t *prsn_ie = (IEEEtypes_Rsn_t *)(void *)rsn_ie;
     uint16_t akmp_count      = 0;
     uint8_t akmp, i;
 
@@ -3256,7 +3260,7 @@ static unsigned char process_rsn_ie(
 
 static unsigned char process_wpa_ie(uint8_t *wpa_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher)
 {
-    IEEEtypes_Wpa_t *pwpa_ie = (IEEEtypes_Wpa_t *)wpa_ie;
+    IEEEtypes_Wpa_t *pwpa_ie = (IEEEtypes_Wpa_t *)(void *)wpa_ie;
 
     if (pwpa_ie->pairwise_cipher.count == 2U)
     {
