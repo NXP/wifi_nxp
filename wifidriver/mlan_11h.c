@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for 802.11H
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1535,7 +1535,7 @@ t_void wlan_11h_init(mlan_adapter *adapter)
     pstate_dfs->dfs_radar_found     = MFALSE;
     pstate_dfs->dfs_check_channel   = 0;
     pstate_dfs->dfs_report_time_sec = 0;
-    util_init_list((pmlan_linked_list)&pstate_dfs->dfs_ts_head);
+    util_init_list((pmlan_linked_list)(void *)&pstate_dfs->dfs_ts_head);
 
     /* Initialize RDH struct */
     pstate_rdh->stage           = RDH_OFF;

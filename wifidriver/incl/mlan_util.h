@@ -3,7 +3,7 @@
  *  @brief This file contains wrappers for linked-list,
  *  spinlock and timer defines.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -85,7 +85,7 @@ static INLINE t_void util_init_list_head(t_void *pmoal_handle,
                                          mlan_status (*moal_init_lock)(t_void *handle, t_void **pplock))
 {
     /* Both next and prev point to self */
-    util_init_list((pmlan_linked_list)phead);
+    util_init_list((pmlan_linked_list)(void *)phead);
     if (lock_required != 0U)
     {
         moal_init_lock(pmoal_handle, &phead->plock);
@@ -135,7 +135,7 @@ static INLINE pmlan_linked_list util_peek_list(t_void *pmoal_handle,
     {
         moal_spin_lock(pmoal_handle, phead->plock);
     }
-    if (phead->pnext != (pmlan_linked_list)phead)
+    if (phead->pnext != (pmlan_linked_list)(void *)phead)
     {
         pnode = phead->pnext;
     }
@@ -170,7 +170,7 @@ static INLINE t_void util_enqueue_list_tail(t_void *pmoal_handle,
     }
     pold_last    = phead->pprev;
     pnode->pprev = pold_last;
-    pnode->pnext = (pmlan_linked_list)phead;
+    pnode->pnext = (pmlan_linked_list)(void *)phead;
 
     phead->pprev = pold_last->pnext = pnode;
     if (moal_spin_unlock != MNULL)
@@ -202,7 +202,7 @@ static INLINE t_void util_enqueue_list_head(t_void *pmoal_handle,
         moal_spin_lock(pmoal_handle, phead->plock);
     }
     pold_first   = phead->pnext;
-    pnode->pprev = (pmlan_linked_list)phead;
+    pnode->pprev = (pmlan_linked_list)(void *)phead;
     pnode->pnext = pold_first;
 
     phead->pnext = pold_first->pprev = pnode;
@@ -268,7 +268,7 @@ static INLINE pmlan_linked_list util_dequeue_list(t_void *pmoal_handle,
         moal_spin_lock(pmoal_handle, phead->plock);
     }
     pnode = phead->pnext;
-    if (pnode != MNULL && (pnode != (pmlan_linked_list)phead))
+    if (pnode != MNULL && (pnode != (pmlan_linked_list)(void *)phead))
     {
         util_unlink_list(pmoal_handle, phead, pnode, 0, 0);
     }

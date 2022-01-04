@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides handling of RxReordering in wlan
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -59,7 +59,7 @@ Change log:
 static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 {
     RxPD *prx_pd;
-    prx_pd = (RxPD *)(pmbuf->pbuf + pmbuf->data_offset);
+    prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
 
     ENTER();
     if (prx_pd->rx_pkt_type == PKT_TYPE_AMSDU)
@@ -310,7 +310,7 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
     }
 
     PRINTM(MDAT_D, "Delete rx_reor_tbl_ptr: %p\n", rx_reor_tbl_ptr);
-    util_unlink_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)rx_reor_tbl_ptr,
+    util_unlink_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)(void *)rx_reor_tbl_ptr,
                      pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
 
     pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
@@ -415,14 +415,14 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
                "%02x:%02x, win_size %d\n",
                __FUNCTION__, seq_num, tid, ta[0], ta[1], ta[2], ta[3], ta[4], ta[5], win_size);
         if ((pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(RxReorderTbl), MLAN_MEM_DEF,
-                                              (t_u8 **)&new_node)) != MLAN_STATUS_SUCCESS)
+                                              (t_u8 **)(void **)&new_node)) != MLAN_STATUS_SUCCESS)
         {
             PRINTM(MERROR, "Rx reorder memory allocation failed\n");
             LEAVE();
             return;
         }
 
-        util_init_list((pmlan_linked_list)new_node);
+        util_init_list((pmlan_linked_list)(void *)new_node);
         new_node->tid = tid;
         (void)__memcpy(pmadapter, new_node->ta, ta, MLAN_MAC_ADDR_LENGTH);
         new_node->start_win = seq_num;
@@ -473,7 +473,7 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
             new_node->rx_reorder_ptr[i] = MNULL;
         }
 
-        util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)new_node,
+        util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)(void *)new_node,
                                pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
     }
 
@@ -499,9 +499,9 @@ RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta)
     RxReorderTbl *rx_reor_tbl_ptr;
 
     ENTER();
-    rx_reor_tbl_ptr = (RxReorderTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
-                                                     priv->adapter->callbacks.moal_spin_lock,
-                                                     priv->adapter->callbacks.moal_spin_unlock);
+    rx_reor_tbl_ptr = (RxReorderTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
+                                                             priv->adapter->callbacks.moal_spin_lock,
+                                                             priv->adapter->callbacks.moal_spin_unlock);
     if (rx_reor_tbl_ptr == MNULL)
     {
 #ifdef DEBUG_11N_REORDERING
@@ -511,7 +511,7 @@ RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta)
         return MNULL;
     }
 
-    while (rx_reor_tbl_ptr != (RxReorderTbl *)&priv->rx_reorder_tbl_ptr)
+    while (rx_reor_tbl_ptr != (RxReorderTbl *)(void *)&priv->rx_reorder_tbl_ptr)
     {
         if ((!__memcmp(priv->adapter, rx_reor_tbl_ptr->ta, ta, MLAN_MAC_ADDR_LENGTH)) && (rx_reor_tbl_ptr->tid == tid))
         {
@@ -1094,14 +1094,14 @@ void wlan_11n_cleanup_reorder_tbl(mlan_private *priv)
 
     ENTER();
 
-    while ((del_tbl_ptr = (RxReorderTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
-                                                         priv->adapter->callbacks.moal_spin_lock,
-                                                         priv->adapter->callbacks.moal_spin_unlock)) != MNULL)
+    while ((del_tbl_ptr = (RxReorderTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
+                                                                 priv->adapter->callbacks.moal_spin_lock,
+                                                                 priv->adapter->callbacks.moal_spin_unlock)) != MNULL)
     {
         wlan_11n_delete_rxreorder_tbl_entry(priv, del_tbl_ptr);
     }
 
-    util_init_list((pmlan_linked_list)&priv->rx_reorder_tbl_ptr);
+    util_init_list((pmlan_linked_list)(void *)&priv->rx_reorder_tbl_ptr);
 
     (void)__memset(priv->adapter, priv->rx_seq, 0xff, sizeof(priv->rx_seq));
     LEAVE();
@@ -1241,16 +1241,16 @@ void wlan_set_rxreorder_tbl_no_drop_flag(mlan_private *priv, t_u8 flag)
     RxReorderTbl *rx_reor_tbl_ptr;
 
     ENTER();
-    rx_reor_tbl_ptr = (RxReorderTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
-                                                     priv->adapter->callbacks.moal_spin_lock,
-                                                     priv->adapter->callbacks.moal_spin_unlock);
+    rx_reor_tbl_ptr = (RxReorderTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
+                                                             priv->adapter->callbacks.moal_spin_lock,
+                                                             priv->adapter->callbacks.moal_spin_unlock);
     if (rx_reor_tbl_ptr == MNULL)
     {
         LEAVE();
         return;
     }
 
-    while (rx_reor_tbl_ptr != (RxReorderTbl *)&priv->rx_reorder_tbl_ptr)
+    while (rx_reor_tbl_ptr != (RxReorderTbl *)(void *)&priv->rx_reorder_tbl_ptr)
     {
         rx_reor_tbl_ptr->force_no_drop = flag;
         rx_reor_tbl_ptr                = rx_reor_tbl_ptr->pnext;

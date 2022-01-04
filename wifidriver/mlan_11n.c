@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for 11n handling.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -102,7 +102,7 @@ static mlan_status wlan_11n_ioctl_htusrcfg(IN pmlan_adapter pmadapter, IN pmlan_
 
     ENTER();
 
-    cfg = (mlan_ds_11n_cfg *)pioctl_req->pbuf;
+    cfg = (mlan_ds_11n_cfg *)(void *)pioctl_req->pbuf;
 
     if (pioctl_req->action == MLAN_ACT_SET)
     {
@@ -210,7 +210,7 @@ static mlan_status wlan_11n_ioctl_httxcfg(IN pmlan_adapter pmadapter, IN pmlan_i
 
     ENTER();
 
-    cfg = (mlan_ds_11n_cfg *)pioctl_req->pbuf;
+    cfg = (mlan_ds_11n_cfg *)(void *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         cmd_action = HostCmd_ACT_GEN_SET;
@@ -515,7 +515,8 @@ static int wlan_is_txbastreamptr_valid(mlan_private *priv, TxBAStreamTbl *ptxtbl
     TxBAStreamTbl *ptx_tbl;
 
     ENTER();
-    ptx_tbl = (TxBAStreamTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MNULL, MNULL);
+    ptx_tbl =
+        (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MNULL, MNULL);
 
     if (ptx_tbl == MNULL)
     {
@@ -523,7 +524,7 @@ static int wlan_is_txbastreamptr_valid(mlan_private *priv, TxBAStreamTbl *ptxtbl
         return MFALSE;
     }
 
-    while (ptx_tbl != (TxBAStreamTbl *)&priv->tx_ba_stream_tbl_ptr)
+    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
         if (ptx_tbl == ptxtblptr)
         {
@@ -1080,7 +1081,7 @@ mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
 
     if (pioctl_buf != NULL)
     {
-        cfg                                      = (mlan_ds_11n_cfg *)pioctl_buf->pbuf;
+        cfg                                      = (mlan_ds_11n_cfg *)(void *)pioctl_buf->pbuf;
         cfg->param.amsdu_aggr_ctrl.enable        = wlan_le16_to_cpu(amsdu_ctrl->enable);
         cfg->param.amsdu_aggr_ctrl.curr_buf_size = wlan_le16_to_cpu(amsdu_ctrl->curr_buf_size);
     }
@@ -1143,7 +1144,7 @@ mlan_status wlan_ret_11n_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *res
     ENTER();
     if (pioctl_buf != MNULL && (wlan_le16_to_cpu(htcfg->action) == HostCmd_ACT_GEN_GET))
     {
-        cfg                        = (mlan_ds_11n_cfg *)pioctl_buf->pbuf;
+        cfg                        = (mlan_ds_11n_cfg *)(void *)pioctl_buf->pbuf;
         cfg->param.tx_cfg.httxcap  = wlan_le16_to_cpu(htcfg->ht_tx_cap);
         cfg->param.tx_cfg.httxinfo = wlan_le16_to_cpu(htcfg->ht_tx_info);
         cfg->param.tx_cfg.misc_cfg = wlan_le16_to_cpu(htcfg->misc_config);
@@ -1301,7 +1302,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
 
     if (pbss_desc->pht_cap != MNULL)
     {
-        pht_cap = (MrvlIETypes_HTCap_t *)*ppbuffer;
+        pht_cap = (MrvlIETypes_HTCap_t *)(void *)*ppbuffer;
         (void)__memset(pmadapter, pht_cap, 0, sizeof(MrvlIETypes_HTCap_t));
         pht_cap->header.type = wlan_cpu_to_le16(HT_CAPABILITY);
         pht_cap->header.len  = sizeof(HTCap_t);
@@ -1325,7 +1326,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
     {
         if (pmpriv->bss_mode == MLAN_BSS_MODE_IBSS)
         {
-            pht_info = (MrvlIETypes_HTInfo_t *)*ppbuffer;
+            pht_info = (MrvlIETypes_HTInfo_t *)(void *)*ppbuffer;
             (void)__memset(pmadapter, pht_info, 0, sizeof(MrvlIETypes_HTInfo_t));
             pht_info->header.type = wlan_cpu_to_le16(HT_OPERATION);
             pht_info->header.len  = sizeof(HTInfo_t);
@@ -1346,7 +1347,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
 #endif /* DEBUG_11N_ASSOC */
         }
 
-        pchan_list = (MrvlIEtypes_ChanListParamSet_t *)*ppbuffer;
+        pchan_list = (MrvlIEtypes_ChanListParamSet_t *)(void *)*ppbuffer;
         (void)__memset(pmadapter, pchan_list, 0, sizeof(MrvlIEtypes_ChanListParamSet_t));
         pchan_list->header.type = wlan_cpu_to_le16(TLV_TYPE_CHANLIST);
         pchan_list->header.len  = sizeof(MrvlIEtypes_ChanListParamSet_t) - sizeof(MrvlIEtypesHeader_t);
@@ -1389,7 +1390,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
 #ifdef CONFIG_5GHz_SUPPORT
     if ((pbss_desc->bss_band & (BAND_A | BAND_AN)) && pbss_desc->pbss_co_2040 != MNULL)
     {
-        p2040_bss_co = (MrvlIETypes_2040BSSCo_t *)*ppbuffer;
+        p2040_bss_co = (MrvlIETypes_2040BSSCo_t *)(void *)*ppbuffer;
         (void)__memset(pmadapter, p2040_bss_co, 0, sizeof(MrvlIETypes_2040BSSCo_t));
         p2040_bss_co->header.type = wlan_cpu_to_le16(BSSCO_2040);
         p2040_bss_co->header.len  = sizeof(BSSCo2040_t);
@@ -1406,7 +1407,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
 
     if (pbss_desc->pext_cap != NULL)
     {
-        pext_cap = (MrvlIETypes_ExtCap_t *)*ppbuffer;
+        pext_cap = (MrvlIETypes_ExtCap_t *)(void *)*ppbuffer;
         (void)__memset(pmadapter, pext_cap, 0, sizeof(MrvlIETypes_ExtCap_t));
         pext_cap->header.type = wlan_cpu_to_le16(EXT_CAPABILITY);
         pext_cap->header.len  = sizeof(ExtCap_t);
@@ -1472,7 +1473,7 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
-    cfg = (mlan_ds_11n_cfg *)pioctl_req->pbuf;
+    cfg = (mlan_ds_11n_cfg *)(void *)pioctl_req->pbuf;
     switch (cfg->sub_command)
     {
         case MLAN_OID_11N_CFG_TX:
@@ -1536,7 +1537,8 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx
 
     PRINTM(MINFO, "Delete BA stream table entry: %p\n", ptx_tbl);
 
-    util_unlink_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)ptx_tbl, MNULL, MNULL);
+    util_unlink_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)(void *)ptx_tbl, MNULL,
+                     MNULL);
 
     pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
 
@@ -1559,14 +1561,14 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
 
     ENTER();
 
-    while ((del_tbl_ptr = (TxBAStreamTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
-                                                          priv->adapter->callbacks.moal_spin_lock,
-                                                          priv->adapter->callbacks.moal_spin_unlock)) != NULL)
+    while ((del_tbl_ptr = (TxBAStreamTbl *)(void *)util_peek_list(
+                priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, priv->adapter->callbacks.moal_spin_lock,
+                priv->adapter->callbacks.moal_spin_unlock)) != NULL)
     {
         wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr);
     }
 
-    util_init_list((pmlan_linked_list)&priv->tx_ba_stream_tbl_ptr);
+    util_init_list((pmlan_linked_list)(void *)&priv->tx_ba_stream_tbl_ptr);
 
     for (i = 0; i < MAX_NUM_TID; ++i)
     {
@@ -1593,16 +1595,16 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
-    ptx_tbl =
-        (TxBAStreamTbl *)util_peek_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
-                                        pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
+    ptx_tbl = (TxBAStreamTbl *)(void *)util_peek_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
+                                                      pmadapter->callbacks.moal_spin_lock,
+                                                      pmadapter->callbacks.moal_spin_unlock);
     if (ptx_tbl == MNULL)
     {
         LEAVE();
         return MNULL;
     }
 
-    while (ptx_tbl != (TxBAStreamTbl *)&priv->tx_ba_stream_tbl_ptr)
+    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", ptx_tbl->tid);
         DBG_HEXDUMP(MDAT_D, "RA", ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
@@ -1761,7 +1763,7 @@ int wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator)
  */
 void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba)
 {
-    HostCmd_DS_11N_DELBA *pdel_ba = (HostCmd_DS_11N_DELBA *)del_ba;
+    HostCmd_DS_11N_DELBA *pdel_ba = (HostCmd_DS_11N_DELBA *)(void *)del_ba;
     int tid;
 
     ENTER();
