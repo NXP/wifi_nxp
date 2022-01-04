@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1044,7 +1044,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
     /* VHT Capabilities IE */
     if (pbss_desc->pvht_cap != MNULL && wlan_get_nss_vht_mcs(pbss_desc->pvht_cap->vht_cap.mcs_sets.rx_mcs_map))
     {
-        pvht_cap = (MrvlIETypes_VHTCap_t *)*ppbuffer;
+        pvht_cap = (MrvlIETypes_VHTCap_t *)(void *)*ppbuffer;
         (void)__memset(pmadapter, pvht_cap, 0, sizeof(MrvlIETypes_VHTCap_t));
         pvht_cap->header.type = wlan_cpu_to_le16(VHT_CAPABILITY);
         pvht_cap->header.len  = sizeof(VHT_capa_t);
@@ -1065,7 +1065,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
     }
 
     /* Operating Mode Notification IE */
-    pmrvl_oper_mode = (MrvlIETypes_OperModeNtf_t *)*ppbuffer;
+    pmrvl_oper_mode = (MrvlIETypes_OperModeNtf_t *)(void *)*ppbuffer;
     (void)__memset(pmadapter, pmrvl_oper_mode, 0, sizeof(MrvlIETypes_OperModeNtf_t));
     pmrvl_oper_mode->header.type = wlan_cpu_to_le16(OPER_MODE_NTF);
     pmrvl_oper_mode->header.len  = sizeof(t_u8);

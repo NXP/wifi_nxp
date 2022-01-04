@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides contains functions for 11n Aggregation
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -182,7 +182,7 @@ static int wlan_11n_get_num_aggrpkts(t_u8 *data, t_u32 total_pkt_len)
     while (total_pkt_len > 0)
     {
         /* Length will be in network format, change it to host */
-        pkt_len = mlan_ntohs((*(t_u16 *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
+        pkt_len = mlan_ntohs((*(t_u16 *)(void *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
         pad     = (((pkt_len + sizeof(Eth803Hdr_t)) & 3U)) ? (4U - ((pkt_len + sizeof(Eth803Hdr_t)) & 3U)) : 0U;
         data += pkt_len + pad + sizeof(Eth803Hdr_t);
         total_pkt_len -= pkt_len + pad + sizeof(Eth803Hdr_t);
@@ -235,9 +235,9 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 
     while (total_pkt_len > 0)
     {
-        prx_pkt = (RxPacketHdr_t *)data;
+        prx_pkt = (RxPacketHdr_t *)(void *)data;
         /* Length will be in network format, change it to host */
-        pkt_len = mlan_ntohs((*(t_u16 *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
+        pkt_len = mlan_ntohs((*(t_u16 *)(void *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
         if (pkt_len > total_pkt_len)
         {
             PRINTM(MERROR, "Error in packet length: total_pkt_len = %d, pkt_len = %d\n", total_pkt_len, pkt_len);
@@ -256,7 +256,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
         }
         else
         {
-            *(t_u16 *)(data + (2 * MLAN_MAC_ADDR_LENGTH)) = (t_u16)0;
+            *(t_u16 *)(void *)(data + (2 * MLAN_MAC_ADDR_LENGTH)) = (t_u16)0;
             pkt_len += sizeof(Eth803Hdr_t);
         }
 

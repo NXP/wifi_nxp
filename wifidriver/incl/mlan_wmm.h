@@ -3,7 +3,7 @@
  *  @brief This file contains related macros, enum, and struct
  *  of wmm functionalities
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -46,7 +46,7 @@ static INLINE int wlan_get_tid(pmlan_adapter pmadapter, raListTbl *ptr)
     pmlan_buffer mbuf;
 
     ENTER();
-    mbuf = (pmlan_buffer)util_peek_list(pmadapter->pmoal_handle, &ptr->buf_head, MNULL, MNULL);
+    mbuf = (pmlan_buffer)(void *)util_peek_list(pmadapter->pmoal_handle, &ptr->buf_head, MNULL, MNULL);
     LEAVE();
 
     return mbuf->priority;
@@ -69,7 +69,7 @@ static INLINE int wlan_wmm_list_len(pmlan_adapter pmadapter, pmlan_list_head hea
 
     pos = head->pnext;
 
-    while (pos != (pmlan_linked_list)head)
+    while (pos != (pmlan_linked_list)(void *)head)
     {
         ++count;
         pos = pos->pnext;

@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for 802.11D
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1491,7 +1491,7 @@ mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_r
 
     ENTER();
 
-    cfg_11d     = (mlan_ds_11d_cfg *)pioctl_req->pbuf;
+    cfg_11d     = (mlan_ds_11d_cfg *)(void *)pioctl_req->pbuf;
     domain_info = &cfg_11d->param.domain_info;
 
 #ifdef OTP_CHANINFO
@@ -1515,7 +1515,7 @@ mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_r
     }
 
     wlan_11d_set_domain_info(pmpriv, domain_info->band, domain_info->country_code, domain_info->no_of_sub_band,
-                             (IEEEtypes_SubbandSet_t *)domain_info->sub_band);
+                             (IEEEtypes_SubbandSet_t *)(void *)domain_info->sub_band);
     ret = wlan_11d_send_domain_info(pmpriv, pioctl_req);
 
     if (ret == MLAN_STATUS_SUCCESS)
@@ -1551,7 +1551,7 @@ mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u8 band, t_u
 
     ENTER();
 
-    pdomain_tlv = (MrvlIEtypes_DomainParamSet_t *)domain_tlv;
+    pdomain_tlv = (MrvlIEtypes_DomainParamSet_t *)(void *)domain_tlv;
 
     // update region code & table based on country string
     if (wlan_11d_region_2_code(pmadapter, pdomain_tlv->country_code, &region_code) == MLAN_STATUS_SUCCESS)
