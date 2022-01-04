@@ -2176,10 +2176,8 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter);
 t_void wlan_free_priv(mlan_private *pmpriv);
 /** Allocate command buffer */
 mlan_status wlan_alloc_cmd_buffer(IN mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Free command buffer */
 mlan_status wlan_free_cmd_buffer(IN mlan_adapter *pmadapter);
-#ifndef CONFIG_MLAN_WMSDK
 /** Request command lock */
 t_void wlan_request_cmd_lock(mlan_adapter *pmadapter);
 /** Release command lock */
@@ -2238,8 +2236,8 @@ t_void wlan_add_buf_bypass_txqueue(mlan_adapter *pmadapter, pmlan_buffer pmbuf);
 #ifndef CONFIG_MLAN_WMSDK
 t_void wlan_process_bypass_tx(mlan_adapter *pmadapter);
 t_void wlan_cleanup_bypass_txq(mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 t_u8 wlan_bypass_tx_list_empty(mlan_adapter *pmadapter);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Check if this is the last packet */
 t_u8 wlan_check_last_packet_indication(pmlan_private priv);
@@ -2355,8 +2353,12 @@ mlan_status wlan_adhoc_start(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN 
 t_void wlan_free_curr_bcn(IN mlan_private *pmpriv);
 /*  Save a beacon buffer of the current bss descriptor */
 t_void wlan_save_curr_bcn(IN mlan_private *pmpriv);
-#endif /* CONFIG_MLAN_WMSDK */
+/** send init cmd to firmware for station mode */
+mlan_status wlan_ops_sta_init_cmd(IN t_void *priv, IN t_u8 first_bss);
+/** Handler for Ad-Hoc commands */
+mlan_status wlan_ret_802_11_ad_hoc(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
 
+#endif /* CONFIG_MLAN_WMSDK */
 #ifdef STA_SUPPORT
 /** Process received packet */
 mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
@@ -2383,13 +2385,6 @@ mlan_status wlan_ops_sta_process_event(IN t_void *priv);
 
 /** fill txpd for station mode */
 t_void *wlan_ops_sta_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
-
-#ifndef CONFIG_MLAN_WMSDK
-
-/** send init cmd to firmware for station mode */
-mlan_status wlan_ops_sta_init_cmd(IN t_void *priv, IN t_u8 first_bss);
-
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Flush the scan table */
 mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
@@ -2470,13 +2465,6 @@ mlan_status wlan_cmd_802_11_ad_hoc_start(IN mlan_private *pmpriv, IN HostCmd_DS_
 /** Ad-Hoc command handler */
 mlan_status wlan_cmd_802_11_ad_hoc_join(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
 
-#ifndef CONFIG_MLAN_WMSDK
-
-/** Handler for Ad-Hoc commands */
-mlan_status wlan_ret_802_11_ad_hoc(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
-
-#endif /* CONFIG_MLAN_WMSDK */
-
 /** Handler for bgscan query commands */
 mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 /** Handler for bgscan config command */
@@ -2508,8 +2496,10 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
 t_u32 wlan_get_active_data_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config_bands, WLAN_802_11_RATES rates);
 /** Get supported data rates */
 t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 config_bands, WLAN_802_11_RATES rates);
+#ifndef CONFIG_MLAN_WMSDK
 /** Convert data rate to index */
 t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate);
+#endif /* CONFIG_MLAN_WMSDK */
 /** Check if rate is auto */
 t_u8 wlan_is_rate_auto(mlan_private *pmpriv);
 /** Get rate index */

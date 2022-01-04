@@ -111,9 +111,9 @@ mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
 
 mlan_status wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf);
 
+#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_ops_uap_process_event(IN t_void *priv);
 
-#ifndef CONFIG_MLAN_WMSDK
 t_void *wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
 
 mlan_status wlan_ops_uap_init_cmd(IN t_void *priv, IN t_u8 first_bss);

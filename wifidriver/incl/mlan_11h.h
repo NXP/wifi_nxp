@@ -111,8 +111,10 @@ extern void wlan_11h_init(mlan_adapter *pmadapter);
 /** Initialize the 11h interface structure */
 extern void wlan_11h_priv_init(mlan_private *pmpriv);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Get an initial random channel to start an adhoc network on */
 extern t_u8 wlan_11h_get_adhoc_start_channel(mlan_private *priv);
+#endif /* CONFIG_MLAN_WMSDK */
 
 /** Check if radar detection is required on the specified channel */
 extern t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel);
@@ -120,7 +122,6 @@ extern t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel);
 #ifndef CONFIG_MLAN_WMSDK
 /** Perform a standard availibility check on the specified channel */
 extern t_s32 wlan_11h_issue_radar_detect(mlan_private *priv, pmlan_ioctl_req pioctl_req, t_u8 channel);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Add any 11h TLVs necessary to complete a join command (adhoc or infra) */
 extern t_s32 wlan_11h_process_join(mlan_private *priv,
@@ -129,16 +130,15 @@ extern t_s32 wlan_11h_process_join(mlan_private *priv,
                                    t_u8 band,
                                    t_u32 channel,
                                    wlan_11h_bss_info_t *p11h_bss_info);
-#ifndef CONFIG_MLAN_WMSDK
 
 /** Receive IEs from scan processing and record any needed info for 11h */
 extern mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter,
                                              wlan_11h_bss_info_t *p11h_bss_info,
                                              const t_u8 *pelement);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Handler for EVENT_CHANNEL_SWITCH_ANN */
 extern mlan_status wlan_11h_handle_event_chanswann(mlan_private *priv);
+#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef DFS_TESTING_SUPPORT
 /** Handler for DFS_TESTING IOCTL */
