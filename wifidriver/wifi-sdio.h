@@ -105,8 +105,6 @@ extern bool low_power_mode;
 #endif
 extern bool cal_data_valid;
 extern bool mac_addr_valid;
-extern bool txpwrlimit_data_valid;
-extern uint8_t trpc_country;
 
 mlan_status sd_wifi_init(enum wlan_type type,
                          enum wlan_fw_storage_type st,

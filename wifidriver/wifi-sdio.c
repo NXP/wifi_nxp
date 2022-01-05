@@ -595,7 +595,9 @@ static int _wlan_reconfigure_tx_buffers(void)
 }
 
 void wifi_prepare_get_mac_addr_cmd(void *cmd, int seq_number);
+#ifdef OTP_CHANINFO
 void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+#endif
 void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 
 #ifdef OTP_CHANINFO

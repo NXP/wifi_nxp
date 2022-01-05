@@ -436,10 +436,6 @@ void wifi_set_mac_addr(uint8_t *mac);
  */
 void _wifi_set_mac_addr(uint8_t *mac);
 
-int wifi_sniffer_start(const t_u16 filter_flags, const t_u8 radio_type, const t_u8 channel);
-int wifi_sniffer_status(void);
-int wifi_sniffer_stop(void);
-
 int wifi_set_key(int bss_index,
                  bool is_pairwise,
                  const uint8_t key_index,
@@ -734,8 +730,9 @@ int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
 void wifi_configure_listen_interval(int listen_interval);
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
 int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode);
-void wrapper_wlan_scan_process_results(void);
+#ifdef CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM
 void wifi_uap_enable_sticky_bit(const uint8_t *mac_addr);
+#endif /* CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM */
 bool wifi_get_xfer_pending(void);
 void wifi_set_xfer_pending(bool xfer_val);
 int wrapper_wlan_cmd_11n_ba_stream_timeout(void *saved_event_buff);
@@ -811,8 +808,6 @@ int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_
 #endif
 
 int wrapper_wlan_11d_enable(void);
-
-int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype_mask);
 
 int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff);
 
