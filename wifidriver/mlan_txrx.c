@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of TX/RX in MLAN
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -70,7 +70,7 @@ mlan_status wlan_handle_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
 
     ENTER();
 
-    prx_pd = (RxPD *)(pmbuf->pbuf + pmbuf->data_offset);
+    prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
     /* Get the BSS number from RxPD, get corresponding priv */
     priv = wlan_get_priv_by_id(pmadapter, prx_pd->bss_num & BSS_NUM_MASK, prx_pd->bss_type);
     if (priv == MNULL)

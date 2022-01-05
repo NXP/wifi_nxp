@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for station ioctl
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -970,7 +970,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
 {
     mlan_status ret      = MLAN_STATUS_SUCCESS;
     mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
-    mlan_ds_bss *bss     = (mlan_ds_bss *)pioctl_req->pbuf;
+    mlan_ds_bss *bss     = (mlan_ds_bss *)(void *)pioctl_req->pbuf;
     t_s32 i              = -1;
     t_u8 zero_mac[]      = {0, 0, 0, 0, 0, 0};
 
@@ -1350,7 +1350,7 @@ static mlan_status wlan_bss_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
         return MLAN_STATUS_RESOURCE;
     }
 
-    bss = (mlan_ds_bss *)pioctl_req->pbuf;
+    bss = (mlan_ds_bss *)(void *)pioctl_req->pbuf;
 
     switch (bss->sub_command)
     {
@@ -1501,7 +1501,7 @@ static mlan_status wlan_rate_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
-    rate = (mlan_ds_rate *)pioctl_req->pbuf;
+    rate = (mlan_ds_rate *)(void *)pioctl_req->pbuf;
     switch (rate->sub_command)
     {
         case MLAN_OID_RATE_CFG:
@@ -1577,7 +1577,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
 
     ENTER();
 
-    power = (mlan_ds_power_cfg *)pioctl_req->pbuf;
+    power = (mlan_ds_power_cfg *)(void *)pioctl_req->pbuf;
     if (!power->param.power_cfg.is_power_auto)
     {
         dbm = (t_u16)power->param.power_cfg.power_level;
@@ -1603,15 +1603,15 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
         goto exit;
     }
     (void)__memset(pmadapter, buf, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
-    txp_cfg         = (HostCmd_DS_TXPWR_CFG *)buf;
+    txp_cfg         = (HostCmd_DS_TXPWR_CFG *)(void *)buf;
     txp_cfg->action = HostCmd_ACT_GEN_SET;
     if (!power->param.power_cfg.is_power_auto)
     {
         txp_cfg->mode  = 1;
-        pg_tlv         = (MrvlTypes_Power_Group_t *)(buf + sizeof(HostCmd_DS_TXPWR_CFG));
+        pg_tlv         = (MrvlTypes_Power_Group_t *)(void *)(buf + sizeof(HostCmd_DS_TXPWR_CFG));
         pg_tlv->type   = TLV_TYPE_POWER_GROUP;
         pg_tlv->length = 4 * sizeof(Power_Group_t);
-        pg             = (Power_Group_t *)(buf + sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t));
+        pg = (Power_Group_t *)(void *)(buf + sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t));
         /* Power group for modulation class HR/DSSS */
         pg->first_rate_code  = 0x00;
         pg->last_rate_code   = 0x03;
@@ -1724,7 +1724,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
 
     ENTER();
 
-    power = (mlan_ds_power_cfg *)pioctl_req->pbuf;
+    power = (mlan_ds_power_cfg *)(void *)pioctl_req->pbuf;
     ret   = pcb->moal_malloc(pmadapter->pmoal_handle, MRVDRV_SIZE_OF_CMD_BUFFER, MLAN_MEM_DEF, &buf);
     if (ret != MLAN_STATUS_SUCCESS || (buf == MNULL))
     {
@@ -1734,7 +1734,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
         goto exit;
     }
     (void)__memset(pmadapter, buf, 0, MRVDRV_SIZE_OF_CMD_BUFFER);
-    txp_cfg         = (HostCmd_DS_TXPWR_CFG *)buf;
+    txp_cfg         = (HostCmd_DS_TXPWR_CFG *)(void *)buf;
     txp_cfg->action = HostCmd_ACT_GEN_SET;
     (void)__memcpy(pmadapter, (t_u8 *)&data, (t_u8 *)power->param.power_ext.power_data, sizeof(data));
     switch (power->param.power_ext.len)
@@ -1767,10 +1767,10 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
                 break;
             }
             txp_cfg->mode  = 1;
-            pg_tlv         = (MrvlTypes_Power_Group_t *)(buf + sizeof(HostCmd_DS_TXPWR_CFG));
+            pg_tlv         = (MrvlTypes_Power_Group_t *)(void *)(buf + sizeof(HostCmd_DS_TXPWR_CFG));
             pg_tlv->type   = TLV_TYPE_POWER_GROUP;
             pg_tlv->length = sizeof(Power_Group_t);
-            pg             = (Power_Group_t *)(buf + sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t));
+            pg = (Power_Group_t *)(void *)(buf + sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t));
             pg->modulation_class = (t_u8)mod_class;
             pg->first_rate_code  = (t_u8)data[0];
             pg->last_rate_code   = (t_u8)data[0];
@@ -1851,7 +1851,7 @@ static mlan_status wlan_power_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
-    power = (mlan_ds_power_cfg *)pioctl_req->pbuf;
+    power = (mlan_ds_power_cfg *)(void *)pioctl_req->pbuf;
     switch (power->sub_command)
     {
         case MLAN_OID_POWER_CFG:
@@ -2879,7 +2879,7 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
         pmpriv->wep_key_curr_index = 0;
     }
     pwep_key = &pmpriv->wep_key[pmpriv->wep_key_curr_index];
-    sec      = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
+    sec      = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     if (sec->param.encrypt_key.key_index == MLAN_KEY_INDEX_DEFAULT)
     {
         index = pmpriv->wep_key_curr_index;
@@ -3102,7 +3102,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
 
     ENTER();
 
-    sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
+    sec = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     /* Current driver only supports key length of up to 32 bytes */
     if (sec->param.encrypt_key.key_len > MLAN_MAX_KEY_LENGTH)
     {
@@ -3348,7 +3348,7 @@ static mlan_status wlan_sec_ioctl_encrypt_key(IN pmlan_adapter pmadapter, IN pml
     mlan_status status   = MLAN_STATUS_SUCCESS;
     mlan_ds_sec_cfg *sec = MNULL;
     ENTER();
-    sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
+    sec = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_SET)
     {
 #ifdef WAPI
@@ -3431,7 +3431,7 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
 
     ENTER();
 
-    sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
+    sec = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         if (sec->param.passphrase.psk_type == MLAN_PSK_CLEAR)
@@ -3500,7 +3500,7 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
 
     ENTER();
 
-    sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
+    sec = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         if (sec->param.passphrase.psk_type == MLAN_PSK_CLEAR)
@@ -3681,7 +3681,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
-    sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
+    sec = (mlan_ds_sec_cfg *)(void *)pioctl_req->pbuf;
     switch (sec->sub_command)
     {
 #ifndef CONFIG_MLAN_WMSDK
@@ -3999,7 +3999,7 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
         goto exit;
     }
 
-    pcfg_11d = (mlan_ds_11d_cfg *)pioctl_req->pbuf;
+    pcfg_11d = (mlan_ds_11d_cfg *)(void *)pioctl_req->pbuf;
     switch (pcfg_11d->sub_command)
     {
 #ifndef CONFIG_MLAN_WMSDK
@@ -4460,7 +4460,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
 
     ENTER();
 
-    misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    misc = (mlan_ds_misc_cfg *)(void *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_GET)
     {
         misc->param.region_code = pmadapter->region_code;
@@ -5353,7 +5353,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-    misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    misc = (mlan_ds_misc_cfg *)(void *)pioctl_req->pbuf;
     switch (misc->sub_command)
     {
 #ifndef CONFIG_MLAN_WMSDK

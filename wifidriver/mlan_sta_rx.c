@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides  handling of RX in MLA  module.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -188,7 +188,7 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
 #endif /* CONFIG_MLAN_WMSDK */
     ENTER();
 
-    prx_pd = (RxPD *)(pmbuf->pbuf + pmbuf->data_offset);
+    prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
     /* Note: Important. We do not have actual data @ prx_pd->rx_pkt_offset */
     /* prx_pkt = (RxPacketHdr_t *) ((t_u8 *) prx_pd + prx_pd->rx_pkt_offset); */
     /* prx_pkt = (RxPacketHdr_t *)pmbuf->pdesc; */
@@ -324,7 +324,7 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
 #endif /* CONFIG_P2P */
     ENTER();
 
-    prx_pd = (RxPD *)(pmbuf->pbuf + pmbuf->data_offset);
+    prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
     /* Endian conversion */
     endian_convert_RxPD(prx_pd);
     rx_pkt_type = prx_pd->rx_pkt_type;

@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for WMM
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1787,7 +1787,7 @@ t_u32 wlan_wmm_process_association_req(pmlan_private priv,
                                 (priv->config_bands & BAND_GN || priv->config_bands & BAND_AN))) &&
         pWmmIE->vend_hdr.element_id == WMM_IE)
     {
-        pwmm_tlv              = (MrvlIEtypes_WmmParamSet_t *)*ppAssocBuf;
+        pwmm_tlv              = (MrvlIEtypes_WmmParamSet_t *)(void *)*ppAssocBuf;
         pwmm_tlv->header.type = (t_u16)wmm_info_ie[0];
         pwmm_tlv->header.type = wlan_cpu_to_le16(pwmm_tlv->header.type);
         pwmm_tlv->header.len  = (t_u16)wmm_info_ie[1];
