@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides handling of AP mode ioctls
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1208,12 +1208,12 @@ mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN pmlan_i
 {
     mlan_private *pmpriv  = pmadapter->priv[pioctl_req->bss_index];
     mlan_status ret       = MLAN_STATUS_SUCCESS;
-    mlan_ds_snmp_mib *mib = (mlan_ds_snmp_mib *)pioctl_req->pbuf;
+    mlan_ds_snmp_mib *mib = (mlan_ds_snmp_mib *)(void *)pioctl_req->pbuf;
     t_u16 cmd_action      = 0;
 
     ENTER();
 
-    mib = (mlan_ds_snmp_mib *)pioctl_req->pbuf;
+    mib = (mlan_ds_snmp_mib *)(void *)pioctl_req->pbuf;
     if (pioctl_req->action == MLAN_ACT_SET)
     {
         cmd_action = HostCmd_ACT_GEN_SET;
@@ -1407,7 +1407,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         case MLAN_IOCTL_RATE:
-            rate = (mlan_ds_rate *)pioctl_req->pbuf;
+            rate = (mlan_ds_rate *)(void *)pioctl_req->pbuf;
             if (rate->sub_command == MLAN_OID_RATE_CFG)
             {
                 status = wlan_rate_ioctl_cfg(pmadapter, pioctl_req);
