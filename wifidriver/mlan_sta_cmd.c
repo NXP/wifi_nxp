@@ -2,7 +2,7 @@
  *
  *  @brief This file provides the handling of command. It prepares command and sends it to firmware when it is ready
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -349,10 +349,10 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)Dot11D_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
             {
-                psnmp_mib->query_type          = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
-                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
-                ul_temp                        = *(t_u32 *)pdata_buf;
-                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                psnmp_mib->query_type                  = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+                psnmp_mib->buf_size                    = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                                = *(t_u32 *)pdata_buf;
+                *((t_u16 *)(void *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
                 cmd->size += sizeof(t_u16);
             }
             break;
@@ -360,10 +360,10 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)Dot11H_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
             {
-                psnmp_mib->query_type          = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
-                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
-                ul_temp                        = *(t_u32 *)pdata_buf;
-                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                psnmp_mib->query_type                  = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+                psnmp_mib->buf_size                    = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                                = *(t_u32 *)pdata_buf;
+                *((t_u16 *)(void *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
                 cmd->size += sizeof(t_u16);
             }
             break;
@@ -449,11 +449,11 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
             ptxp = (HostCmd_DS_TXPWR_CFG *)pdata_buf;
             if (ptxp->mode)
             {
-                ppg_tlv = (MrvlTypes_Power_Group_t *)((t_u8 *)pdata_buf + sizeof(HostCmd_DS_TXPWR_CFG));
+                ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)pdata_buf + sizeof(HostCmd_DS_TXPWR_CFG));
                 (void)__memmove(pmpriv->adapter, ptxp_cfg, pdata_buf,
                                 sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
 
-                ppg_tlv = (MrvlTypes_Power_Group_t *)((t_u8 *)&cmd->params + sizeof(HostCmd_DS_TXPWR_CFG));
+                ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)&cmd->params + sizeof(HostCmd_DS_TXPWR_CFG));
                 cmd->size += wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
                 ppg_tlv->type   = wlan_cpu_to_le16(ppg_tlv->type);
                 ppg_tlv->length = wlan_cpu_to_le16(ppg_tlv->length);
@@ -1434,7 +1434,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
     cmd->size = sizeof(HostCmd_DS_802_11_SUPPLICANT_PMK) + S_DS_GEN - 1U;
     if (psk->ssid.ssid_len != 0U)
     {
-        pssid_tlv              = (MrvlIEtypes_SsIdParamSet_t *)ptlv_buffer;
+        pssid_tlv              = (MrvlIEtypes_SsIdParamSet_t *)(void *)ptlv_buffer;
         pssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
         pssid_tlv->header.len  = (t_u16)MIN(MLAN_MAX_SSID_LENGTH, psk->ssid.ssid_len);
         (void)__memcpy(pmpriv->adapter, (char *)pssid_tlv->ssid, psk->ssid.ssid,
@@ -1445,7 +1445,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
     }
     if (__memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)) != 0U)
     {
-        pbssid_tlv              = (MrvlIEtypes_Bssid_t *)ptlv_buffer;
+        pbssid_tlv              = (MrvlIEtypes_Bssid_t *)(void *)ptlv_buffer;
         pbssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_BSSID);
         pbssid_tlv->header.len  = MLAN_MAC_ADDR_LENGTH;
         (void)__memcpy(pmpriv->adapter, pbssid_tlv->bssid, (t_u8 *)&psk->bssid, MLAN_MAC_ADDR_LENGTH);
@@ -1455,7 +1455,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
     }
     if (psk->psk_type == MLAN_PSK_PASSPHRASE)
     {
-        ppassphrase_tlv              = (MrvlIEtypes_Passphrase_t *)ptlv_buffer;
+        ppassphrase_tlv              = (MrvlIEtypes_Passphrase_t *)(void *)ptlv_buffer;
         ppassphrase_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_PASSPHRASE);
         ppassphrase_tlv->header.len  = (t_u16)MIN(MLAN_MAX_PASSPHRASE_LENGTH, psk->psk.passphrase.passphrase_len);
         (void)__memcpy(pmpriv->adapter, ppassphrase_tlv->passphrase, psk->psk.passphrase.passphrase,
@@ -1466,7 +1466,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
     }
     if (psk->psk_type == MLAN_PSK_PASSWORD)
     {
-        ppassword_tlv              = (MrvlIEtypes_Password_t *)ptlv_buffer;
+        ppassword_tlv              = (MrvlIEtypes_Password_t *)(void *)ptlv_buffer;
         ppassword_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_WPA3_SAE_PASSWORD);
         ppassword_tlv->header.len  = (t_u16)MIN(MLAN_MAX_PASSWORD_LENGTH, psk->password.password_len);
         (void)__memcpy(pmpriv->adapter, ppassword_tlv->password, psk->password.password,
@@ -1477,7 +1477,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
     }
     if (psk->psk_type == MLAN_PSK_PMK)
     {
-        ppmk_tlv              = (MrvlIEtypes_PMK_t *)ptlv_buffer;
+        ppmk_tlv              = (MrvlIEtypes_PMK_t *)(void *)ptlv_buffer;
         ppmk_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_PMK);
         ppmk_tlv->header.len  = MLAN_MAX_KEY_LENGTH;
         (void)__memcpy(pmpriv->adapter, ppmk_tlv->pmk, psk->psk.pmk.pmk, MLAN_MAX_KEY_LENGTH);
@@ -1689,7 +1689,7 @@ static mlan_status wlan_cmd_mgmt_ie_list(IN pmlan_private pmpriv,
 
         while (req_len > sizeof(t_u16))
         {
-            cptr = (custom_ie *)(((t_u8 *)cust_ie->ie_data_list) + travel_len);
+            cptr = (custom_ie *)(void *)(((t_u8 *)cust_ie->ie_data_list) + travel_len);
             travel_len += cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
             req_len -= cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
             cptr->ie_index          = wlan_cpu_to_le16(cptr->ie_index);

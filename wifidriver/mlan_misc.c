@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Miscellaneous functions for MLAN module
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -641,7 +641,8 @@ pmlan_buffer wlan_alloc_mlan_buffer(mlan_adapter *pmadapter, t_u32 data_len, t_u
     if (malloc_flag == MTRUE)
     {
         buf_size = sizeof(mlan_buffer) + data_len + DMA_ALIGNMENT;
-        ret      = pcb->moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF | MLAN_MEM_DMA, (t_u8 **)&pmbuf);
+        ret =
+            pcb->moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF | MLAN_MEM_DMA, (t_u8 **)(void **)&pmbuf);
         if ((ret != MLAN_STATUS_SUCCESS) || (pmbuf == MNULL))
         {
             pmbuf = MNULL;
@@ -1427,7 +1428,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
 
     ENTER();
 
-    pext_cap = (MrvlIETypes_ExtCap_t *)*pptlv_out;
+    pext_cap = (MrvlIETypes_ExtCap_t *)(void *)*pptlv_out;
     (void)__memset(pmpriv->adapter, pext_cap, 0, sizeof(MrvlIETypes_ExtCap_t));
     pext_cap->header.type = wlan_cpu_to_le16(EXT_CAPABILITY);
     pext_cap->header.len  = wlan_cpu_to_le16(sizeof(ExtCap_t));
@@ -1888,7 +1889,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 
     ENTER();
 
-    ds_rate = (mlan_ds_rate *)pioctl_req->pbuf;
+    ds_rate = (mlan_ds_rate *)(void *)pioctl_req->pbuf;
 
     rate_format = ds_rate->param.rate_cfg.rate_format;
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
