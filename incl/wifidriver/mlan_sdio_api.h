@@ -135,33 +135,4 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
  */
 int sdio_drv_init(void (*cd_int)(int));
 
-/*
- * Re-initializes SDIO driver
- *
- * This function is called on exit from MCU low power modes
- * PM3 and PM4. Since SDIO controller register configuration is not retained
- * in on exit from PM3 and PM4 controller needs to be reconfigured.
- *  \return WM_SUCCESS or -WM_FAIL
- *  This function assumes that sdio_drv_init has been called earlier
- */
-int sdio_drv_reinit(void (*cd_int)(int));
-
-/** De-initialize the SDIO Driver
- *
- * SDIO will not be usable after this call.
- * All resources are released and driver is
- * deregistered.
- *
- */
-void sdio_drv_deinit(void);
-
-/** Register additional callback
- *
- * Additional callback for Card Interrupt (other than the one
- * set during sdio_drv_init() ) can be registered using this call.
- *
- *  \param cd_int Callback for Card Detect Interrupt
- */
-void sdio_drv_set_cb1(void (*cd_int)(int));
-
 #endif /* !_MDEV_SDIO_API_H_ */

@@ -964,12 +964,10 @@ MLAN_API mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan
 #ifndef CONFIG_MLAN_WMSDK
 /** Un-registration */
 MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Firmware Downloading */
 MLAN_API mlan_status mlan_dnld_fw(IN t_void *pmlan_adapter, IN pmlan_fw_image pmfw);
 
-#ifndef CONFIG_MLAN_WMSDK
 /** Custom data pass API */
 MLAN_API mlan_status mlan_set_init_param(IN t_void *pmlan_adapter, IN pmlan_init_param pparam);
 #endif /* CONFIG_MLAN_WMSDK */

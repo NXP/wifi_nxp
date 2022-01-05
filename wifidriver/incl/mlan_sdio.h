@@ -545,13 +545,14 @@ Change log:
 #ifndef CONFIG_MLAN_WMSDK
 /** Enable host interrupt */
 mlan_status wlan_enable_host_int(pmlan_adapter pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Probe and initialization function */
 mlan_status wlan_sdio_probe(pmlan_adapter pmadapter);
 /** multi interface download check */
 mlan_status wlan_check_winner_status(mlan_adapter *pmadapter, t_u32 *val);
 /** Firmware status check */
 mlan_status wlan_check_fw_status(mlan_adapter *pmadapter, t_u32 pollnum);
+#endif /* CONFIG_MLAN_WMSDK */
+
 /** Read interrupt status */
 t_void wlan_interrupt(pmlan_adapter pmadapter);
 /** Process Interrupt Status */
@@ -560,9 +561,7 @@ t_void wlan_interrupt(pmlan_adapter pmadapter);
 /** Transfer data to card */
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_sdio_host_to_card(mlan_adapter *pmadapter, t_u8 type, mlan_buffer *mbuf, mlan_tx_param *tx_param);
-#endif /* CONFIG_MLAN_WMSDK */
 mlan_status wlan_set_sdio_gpio_int(IN pmlan_private priv);
-#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_cmd_sdio_gpio_int(pmlan_private pmpriv,
                                    IN HostCmd_DS_COMMAND *cmd,
                                    IN t_u16 cmd_action,
