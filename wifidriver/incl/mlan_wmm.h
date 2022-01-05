@@ -85,10 +85,8 @@ void wlan_wmm_add_buf_txqueue(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
 /** Add to RA list */
 void wlan_ralist_add(mlan_private *priv, t_u8 *ra);
 /** Update the RA list */
-#endif /* CONFIG_MLAN_WMSDK */
-
 int wlan_ralist_update(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra);
-
+#endif /* CONFIG_MLAN_WMSDK */
 #ifdef STA_SUPPORT
 /** WMM status change command handler */
 mlan_status wlan_cmd_wmm_status_change(pmlan_private priv);
@@ -100,12 +98,9 @@ int wlan_wmm_lists_empty(pmlan_adapter pmadapter);
 t_void wlan_wmm_process_tx(pmlan_adapter pmadapter);
 /** Test to see if the ralist ptr is valid */
 int wlan_is_ralist_valid(mlan_private *priv, raListTbl *ra_list, int tid);
-#endif /* CONFIG_MLAN_WMSDK */
-
 raListTbl *wlan_wmm_get_ralist_node(pmlan_private priv, t_u8 tid, t_u8 *ra_addr);
 t_u8 wlan_get_random_ba_threshold(pmlan_adapter pmadapter);
 
-#ifndef CONFIG_MLAN_WMSDK
 /** Compute driver packet delay */
 t_u8 wlan_wmm_compute_driver_packet_delay(pmlan_private priv, const pmlan_buffer pmbuf);
 #endif /* CONFIG_MLAN_WMSDK */
