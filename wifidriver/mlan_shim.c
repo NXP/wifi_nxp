@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides  APIs to MOAL module
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -195,7 +195,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
 
     /* Allocate memory for adapter structure */
     if ((pmdevice->callbacks.moal_malloc(/* pmdevice->pmoal_handle */ NULL, sizeof(mlan_adapter), MLAN_MEM_DEF,
-                                         (t_u8 **)&pmadapter) != MLAN_STATUS_SUCCESS) ||
+                                         (t_u8 **)(void **)&pmadapter) != MLAN_STATUS_SUCCESS) ||
         (pmadapter == MNULL))
     {
         ret = MLAN_STATUS_FAILURE;
@@ -288,7 +288,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
         {
             /* For valid bss_attr, allocate memory for private structure */
             if ((pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(mlan_private), MLAN_MEM_DEF,
-                                  (t_u8 **)&pmadapter->priv[i]) != MLAN_STATUS_SUCCESS) ||
+                                  (t_u8 **)(void **)&pmadapter->priv[i]) != MLAN_STATUS_SUCCESS) ||
                 (pmadapter->priv[i] == MNULL))
             {
                 ret = MLAN_STATUS_FAILURE;
