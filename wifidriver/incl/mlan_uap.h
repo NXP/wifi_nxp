@@ -109,8 +109,6 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
 mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, IN t_void *pcmd_buf, IN t_void *pioctl);
 #endif /* CONFIG_MLAN_WMSDK */
 
-mlan_status wlan_ops_uap_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf);
-
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_ops_uap_process_event(IN t_void *priv);
 

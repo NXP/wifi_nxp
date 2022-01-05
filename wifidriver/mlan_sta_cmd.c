@@ -2459,9 +2459,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_WMM_DELTS_REQ:
             ret = wlan_cmd_wmm_delts_req(pmpriv, cmd_ptr, pdata_buf);
             break;
+#ifdef STA_SUPPORT
         case HostCmd_CMD_WMM_QUEUE_CONFIG:
             ret = wlan_cmd_wmm_queue_config(pmpriv, cmd_ptr, pdata_buf);
             break;
+#endif /* STA_SUPPORT */
         case HostCmd_CMD_WMM_QUEUE_STATS:
             ret = wlan_cmd_wmm_queue_stats(pmpriv, cmd_ptr, pdata_buf);
             break;

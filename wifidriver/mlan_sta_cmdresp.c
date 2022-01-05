@@ -1681,6 +1681,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_WMM_DELTS_REQ:
             ret = wlan_ret_wmm_delts_req(pmpriv, resp, pioctl_buf);
             break;
+#ifdef STA_SUPPORT
         case HostCmd_CMD_WMM_QUEUE_CONFIG:
             ret = wlan_ret_wmm_queue_config(pmpriv, resp, pioctl_buf);
             break;
@@ -1690,6 +1691,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_WMM_TS_STATUS:
             ret = wlan_ret_wmm_ts_status(pmpriv, resp, pioctl_buf);
             break;
+#endif /* STA_SUPPORT */
         case HostCmd_CMD_802_11_IBSS_COALESCING_STATUS:
             ret = wlan_ret_ibss_coalescing_status(pmpriv, resp);
             break;
