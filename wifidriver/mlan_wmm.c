@@ -118,9 +118,9 @@ t_u8 tos_to_tid_inv[] = {0x02, /* from tos_to_tid[2] = 0 */
  * case of disconnect.
  */
 const t_u8 ac_to_tid[4][2] = {{1, 2}, {0, 3}, {4, 5}, {6, 7}};
-
+#ifndef CONFIG_MLAN_WMSDK
 raListTbl *wlan_wmm_get_ralist_node(pmlan_private priv, t_u8 tid, t_u8 *ra_addr);
-
+#endif /* CONFIG_MLAN_WMSDK */
 /********************************************************
     Local Functions
 ********************************************************/

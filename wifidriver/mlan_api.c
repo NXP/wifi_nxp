@@ -77,10 +77,12 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
 #endif
 mlan_status wlan_cmd_recfg_tx_buf(mlan_private *priv, HostCmd_DS_COMMAND *cmd, int cmd_action, void *pdata_buf);
 mlan_status wlan_cmd_auto_reconnect(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
+#if 0
 mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
                                         IN HostCmd_DS_COMMAND *cmd,
                                         IN t_u16 cmd_action,
                                         IN t_void *pdata_buf);
+#endif
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 
 int wifi_deauthenticate(uint8_t *bssid)
