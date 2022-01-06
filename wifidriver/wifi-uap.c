@@ -2,7 +2,7 @@
  *
  *  @brief This file provides UAP related APIs.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -914,14 +914,14 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
     mlan_private *pmpriv              = (mlan_private *)mlan_adap->priv[0];
     HostCmd_DS_SYS_CONFIG *sys_config = (HostCmd_DS_SYS_CONFIG *)&resp->params.sys_config;
     uint8_t *tlv                      = sys_config->tlv_buffer;
-    MrvlIEtypesHeader_t *header       = (MrvlIEtypesHeader_t *)tlv;
+    MrvlIEtypesHeader_t *header       = (MrvlIEtypesHeader_t *)(void *)tlv;
     if (resp->result == 0U)
     {
         switch (header->type)
         {
             case TLV_TYPE_UAP_TX_POWER:
             {
-                MrvlIEtypes_tx_power_t *tlv_tx_power = (MrvlIEtypes_tx_power_t *)tlv;
+                MrvlIEtypes_tx_power_t *tlv_tx_power = (MrvlIEtypes_tx_power_t *)(void *)tlv;
                 if (sys_config->action == HostCmd_ACT_GEN_GET)
                 {
                     if (wm_wifi.cmd_resp_priv != NULL)
@@ -936,7 +936,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_UAP_STA_AGEOUT_TIMER:
             {
-                MrvlIEtypes_sta_ageout_t *tlv_sta_ageout_timer = (MrvlIEtypes_sta_ageout_t *)tlv;
+                MrvlIEtypes_sta_ageout_t *tlv_sta_ageout_timer = (MrvlIEtypes_sta_ageout_t *)(void *)tlv;
                 if (sys_config->action == HostCmd_ACT_GEN_GET)
                 {
                     if (wm_wifi.cmd_resp_priv != NULL)
@@ -951,7 +951,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_UAP_PS_STA_AGEOUT_TIMER:
             {
-                MrvlIEtypes_ps_sta_ageout_t *tlv_ps_sta_ageout_timer = (MrvlIEtypes_ps_sta_ageout_t *)tlv;
+                MrvlIEtypes_ps_sta_ageout_t *tlv_ps_sta_ageout_timer = (MrvlIEtypes_ps_sta_ageout_t *)(void *)tlv;
                 if (sys_config->action == HostCmd_ACT_GEN_GET)
                 {
                     if (wm_wifi.cmd_resp_priv != NULL)
@@ -966,7 +966,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_UAP_GRP_REKEY_TIME:
             {
-                MrvlIEtypes_group_rekey_time_t *tlv_group_rekey_timer = (MrvlIEtypes_group_rekey_time_t *)tlv;
+                MrvlIEtypes_group_rekey_time_t *tlv_group_rekey_timer = (MrvlIEtypes_group_rekey_time_t *)(void *)tlv;
                 if (sys_config->action == HostCmd_ACT_GEN_GET)
                 {
                     if (wm_wifi.cmd_resp_priv != NULL)
@@ -981,7 +981,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_UAP_MCBC_DATA_RATE:
             {
-                MrvlIEtypes_mcbc_rate_t *tlv_mcbc_rate = (MrvlIEtypes_mcbc_rate_t *)tlv;
+                MrvlIEtypes_mcbc_rate_t *tlv_mcbc_rate = (MrvlIEtypes_mcbc_rate_t *)(void *)tlv;
                 if (sys_config->action == HostCmd_ACT_GEN_GET)
                 {
                     if (wm_wifi.cmd_resp_priv != NULL)
@@ -996,7 +996,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_RATES:
             {
-                MrvlIEtypes_RatesParamSet_t *tlv_rates = (MrvlIEtypes_RatesParamSet_t *)tlv;
+                MrvlIEtypes_RatesParamSet_t *tlv_rates = (MrvlIEtypes_RatesParamSet_t *)(void *)tlv;
 
                 if (sys_config->action == HostCmd_ACT_GEN_GET)
                 {
@@ -1014,7 +1014,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_UAP_CHAN_BAND_CONFIG:
             {
-                MrvlIEtypes_channel_band_t *tlv_cb    = (MrvlIEtypes_channel_band_t *)tlv;
+                MrvlIEtypes_channel_band_t *tlv_cb    = (MrvlIEtypes_channel_band_t *)(void *)tlv;
                 pmpriv->uap_state_chan_cb.band_config = tlv_cb->band_config;
                 pmpriv->uap_state_chan_cb.channel     = tlv_cb->channel;
                 if (!(sys_config->action == HostCmd_ACT_GEN_GET))
@@ -1032,7 +1032,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             case TLV_TYPE_UAP_MAX_STA_CNT:
             {
-                MrvlIEtypes_max_sta_count_t *tlv_sta_cnt = (MrvlIEtypes_max_sta_count_t *)tlv;
+                MrvlIEtypes_max_sta_count_t *tlv_sta_cnt = (MrvlIEtypes_max_sta_count_t *)(void *)tlv;
                 pmpriv->uap_state_chan_cb.max_sta_count  = tlv_sta_cnt->max_sta_count;
                 if (!(sys_config->action == HostCmd_ACT_GEN_GET))
                 {
@@ -1069,7 +1069,7 @@ int wifi_uap_rates_getset(uint8_t action, char *rates, uint8_t num_rates)
     HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
-    MrvlIEtypes_RatesParamSet_t *tlv_rates = (MrvlIEtypes_RatesParamSet_t *)tlv;
+    MrvlIEtypes_RatesParamSet_t *tlv_rates = (MrvlIEtypes_RatesParamSet_t *)(void *)tlv;
 
     if (action == HostCmd_ACT_GEN_GET)
     {
@@ -1110,7 +1110,7 @@ int wifi_uap_mcbc_rate_getset(uint8_t action, uint16_t *mcbc_rate)
     HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
-    MrvlIEtypes_mcbc_rate_t *tlv_mcbc_rate = (MrvlIEtypes_mcbc_rate_t *)tlv;
+    MrvlIEtypes_mcbc_rate_t *tlv_mcbc_rate = (MrvlIEtypes_mcbc_rate_t *)(void *)tlv;
 
     if (action == HostCmd_ACT_GEN_GET)
     {
@@ -1148,7 +1148,7 @@ int wifi_uap_tx_power_getset(uint8_t action, uint8_t *tx_power_dbm)
     HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
-    MrvlIEtypes_tx_power_t *tlv_tx_power = (MrvlIEtypes_tx_power_t *)tlv;
+    MrvlIEtypes_tx_power_t *tlv_tx_power = (MrvlIEtypes_tx_power_t *)(void *)tlv;
 
     if (action == HostCmd_ACT_GEN_GET)
     {
@@ -1185,7 +1185,7 @@ int wifi_uap_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer)
     HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
-    MrvlIEtypes_sta_ageout_t *tlv_sta_ageout_timer = (MrvlIEtypes_sta_ageout_t *)tlv;
+    MrvlIEtypes_sta_ageout_t *tlv_sta_ageout_timer = (MrvlIEtypes_sta_ageout_t *)(void *)tlv;
 
     if (action == HostCmd_ACT_GEN_GET)
     {
@@ -1222,7 +1222,7 @@ int wifi_uap_ps_sta_ageout_timer_getset(uint8_t action, uint32_t *ps_sta_ageout_
     HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
-    MrvlIEtypes_ps_sta_ageout_t *tlv_ps_sta_ageout_timer = (MrvlIEtypes_ps_sta_ageout_t *)tlv;
+    MrvlIEtypes_ps_sta_ageout_t *tlv_ps_sta_ageout_timer = (MrvlIEtypes_ps_sta_ageout_t *)(void *)tlv;
 
     if (action == HostCmd_ACT_GEN_GET)
     {
@@ -1259,7 +1259,7 @@ int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_time
     HostCmd_DS_SYS_CONFIG *sys_config_cmd = (HostCmd_DS_SYS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
     uint8_t *tlv                          = sys_config_cmd->tlv_buffer;
 
-    MrvlIEtypes_group_rekey_time_t *tlv_group_rekey_timer = (MrvlIEtypes_group_rekey_time_t *)tlv;
+    MrvlIEtypes_group_rekey_time_t *tlv_group_rekey_timer = (MrvlIEtypes_group_rekey_time_t *)(void *)tlv;
 
     if (action == HostCmd_ACT_GEN_GET)
     {

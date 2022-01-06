@@ -2,7 +2,7 @@
  *
  *  @brief This file provides all power management code for WIFI.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -238,7 +238,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
     HostCmd_DS_COMMAND *command = wifi_get_command_buffer();
 
     wifi_get_command_lock();
-    ps_cfm_sleep = (OPT_Confirm_Sleep *)(command);
+    ps_cfm_sleep = (OPT_Confirm_Sleep *)(void *)(command);
 
     (void)memset(ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
     ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
@@ -256,7 +256,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer)
 {
     pmlan_adapter pmadapter              = ((mlan_private *)mlan_adap->priv[0])->adapter;
-    HostCmd_DS_802_11_HS_CFG_ENH *hs_cfg = (HostCmd_DS_802_11_HS_CFG_ENH *)(cmd_res_buffer + S_DS_GEN);
+    HostCmd_DS_802_11_HS_CFG_ENH *hs_cfg = (HostCmd_DS_802_11_HS_CFG_ENH *)(void *)(cmd_res_buffer + S_DS_GEN);
     if (hs_cfg->action == HS_ACTIVATE)
     {
         pwr_d("Host sleep activated");
@@ -275,7 +275,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 #ifdef CONFIG_PWR_DEBUG
     MrvlIEtypes_ps_param_t *ps_tlv = NULL;
 #endif /*  CONFIG_PWR_DEBUG*/
-    HostCmd_DS_802_11_PS_MODE_ENH *ps_mode = (HostCmd_DS_802_11_PS_MODE_ENH *)(cmd_res_buffer + S_DS_GEN);
+    HostCmd_DS_802_11_PS_MODE_ENH *ps_mode = (HostCmd_DS_802_11_PS_MODE_ENH *)(void *)(cmd_res_buffer + S_DS_GEN);
 
     *ps_event = WIFI_EVENT_PS_INVALID;
     *action   = (ps_mode->action);
@@ -284,10 +284,11 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_AUTO_DS) != 0U)
         {
             pwr_d("Enabled deep sleep mode");
-            mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
+            mrvl_tlv = (MrvlIEtypesHeader_t *)(void *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
             while (mrvl_tlv->type != TLV_TYPE_AUTO_DS_PARAM)
             {
-                mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
+                mrvl_tlv =
+                    (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
             *ps_event = WIFI_EVENT_DEEP_SLEEP;
             pwr_d("Enabled Deep Sleep mode");
@@ -298,10 +299,11 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             pwr_d(
                 "Enabled IEEE power "
                 "save mode");
-            mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
+            mrvl_tlv = (MrvlIEtypesHeader_t *)(void *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
             while (mrvl_tlv->type != TLV_TYPE_PS_PARAM)
             {
-                mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
+                mrvl_tlv =
+                    (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
 #ifdef CONFIG_PWR_DEBUG
             ps_tlv = (MrvlIEtypes_ps_param_t *)mrvl_tlv;
@@ -339,19 +341,21 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0)
         {
             pwr_d("Deep sleep mode is on");
-            mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
+            mrvl_tlv = (MrvlIEtypesHeader_t *)(void *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
             while (mrvl_tlv->type != TLV_TYPE_AUTO_DS_PARAM)
             {
-                mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
+                mrvl_tlv =
+                    (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
         }
         if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0)
         {
             pwr_d("IEEE power save mode is on");
-            mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
+            mrvl_tlv = (MrvlIEtypesHeader_t *)(void *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
             while (mrvl_tlv->type != TLV_TYPE_PS_PARAM)
             {
-                mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
+                mrvl_tlv =
+                    (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
 #ifdef CONFIG_PWR_DEBUG
             ps_tlv = (MrvlIEtypes_ps_param_t *)mrvl_tlv;

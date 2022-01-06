@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WiFi Core API
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -1288,7 +1288,7 @@ static void wifi_driver_main_loop(void *argv)
             }
             else if (msg.event == MLAN_TYPE_CMD)
             {
-                wifi_process_cmd_response((HostCmd_DS_COMMAND *)((uint8_t *)msg.data + INTF_HEADER_LEN));
+                wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
                 wifi_update_last_cmd_sent_ms();
                 wifi_put_command_resp_sem();
             }
