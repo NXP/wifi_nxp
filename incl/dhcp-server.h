@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -92,14 +92,6 @@ enum wm_dhcpd_errno
  * @return WM_SUCCESS if cli init operation success.
  */
 int dhcpd_cli_init(void);
-
-/** Print DHCP stats
- *
- * This function prints the dhcp-stat for the DHCP server.
- * dhcp-stat command displays ip to associated client mac mapping.
- *
- */
-void print_dhcp_stat(void);
 
 /** Start DHCP server
  *

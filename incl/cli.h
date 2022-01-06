@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -132,14 +132,16 @@ typedef int (*cli_name_val_get)(const char *name, char *value, int max_len);
 /*
  */
 typedef int (*cli_name_val_set)(const char *name, const char *value);
-
+#ifdef CONFIG_APP_FRM_CLI_HISTORY
 /*
  * @internal
  *
  * Hook registration function for cli history functionality
  */
 int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb);
+#endif /* CONFIG_APP_FRM_CLI_HISTORY */
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Get the 'echo' mode for CLI
  *
  * \return true if echo is enabled
@@ -152,6 +154,7 @@ bool cli_get_echo_mode(void);
  * \param[in] enabled Set 'true' to enable echo and 'false' to disable.
  */
 void cli_set_echo_mode(bool enabled);
+#endif /*CONFIG_MLAN_WMSDK*/
 
 /*
  * @internal

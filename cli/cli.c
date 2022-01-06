@@ -1000,20 +1000,22 @@ static void echo_cmd_handler(int argc, char **argv)
 		(void)PRINTF("Usage: echo on/off. Echo is currently %s\r\n",
 			 cli.echo_disabled ? "Disabled" : "Enabled");
 }
+#endif
 
+#ifndef CONFIG_MLAN_WMSDK
 bool cli_get_echo_mode()
 {
-	return !cli.echo_disabled;
+    return !cli.echo_disabled;
 }
 
 void cli_set_echo_mode(bool enabled)
 {
-	if (enabled)
-		cli.echo_disabled = false;
-	else
-		cli.echo_disabled = true;
+    if (enabled)
+        cli.echo_disabled = false;
+    else
+        cli.echo_disabled = true;
 }
-#endif
+#endif /*CONFIG_MLAN_WMSDK*/
 
 #ifdef CONFIG_CLI_TESTS
 static void test_getopt(int argc, char **argv)
