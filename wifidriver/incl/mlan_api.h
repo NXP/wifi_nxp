@@ -2,7 +2,7 @@
  *
  *  @brief MLAN Interface
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -134,11 +134,13 @@ extern os_rw_lock_t ps_rwlock;
 #ifdef CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
 #endif
-
+#ifdef DUMP_PACKET_MAC
 void dump_mac_addr(const char *msg, unsigned char *addr);
+#endif /* DUMP_PACKET_MAC */
+#ifdef DEBUG_11N_ASSOC
 void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
 void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);
-
+#endif /* DEBUG_11N_ASSOC */
 mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u16 cmd_no,
                                       IN t_u16 cmd_action,

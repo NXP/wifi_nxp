@@ -5,7 +5,7 @@
  *  Driver interface functions and type declarations for the 11n module
  *    implemented in mlan_11n.c.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -58,8 +58,6 @@ mlan_status wlan_cmd_11n_cfg(IN pmlan_private pmpriv,
                              IN HostCmd_DS_COMMAND *cmd,
                              IN t_u16 cmd_action,
                              IN t_void *pdata_buf);
-/** Handle the command response TX BF configuration */
-mlan_status wlan_ret_tx_bf_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 #ifdef STA_SUPPORT
 /** Append the 802_11N tlv */
 int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer);

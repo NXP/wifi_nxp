@@ -3,7 +3,7 @@
  *  @brief This header file contains data structures and
  *  function declarations of 802.11h
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -138,22 +138,20 @@ extern mlan_status wlan_11h_process_bss_elem(mlan_adapter *pmadapter,
 
 /** Handler for EVENT_CHANNEL_SWITCH_ANN */
 extern mlan_status wlan_11h_handle_event_chanswann(mlan_private *priv);
+
+/** Check if channel is under a NOP duration (should not be used) */
+extern t_bool wlan_11h_is_channel_under_nop(mlan_adapter *pmadapter, t_u8 channel);
+
+/** Check if RADAR_DETECTED handling is blocking data tx */
+extern t_bool wlan_11h_radar_detected_tx_blocked(mlan_adapter *pmadapter);
+
+/** DFS Event pre-processing */
+extern mlan_status wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter);
 #endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef DFS_TESTING_SUPPORT
 /** Handler for DFS_TESTING IOCTL */
 extern mlan_status wlan_11h_ioctl_dfs_testing(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
 #endif
-
-/** Check if channel is under a NOP duration (should not be used) */
-extern t_bool wlan_11h_is_channel_under_nop(mlan_adapter *pmadapter, t_u8 channel);
-
-#ifndef CONFIG_MLAN_WMSDK
-/** Check if RADAR_DETECTED handling is blocking data tx */
-extern t_bool wlan_11h_radar_detected_tx_blocked(mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
-
-/** DFS Event pre-processing */
-extern mlan_status wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter);
 
 #endif /*_MLAN_11H_ */
