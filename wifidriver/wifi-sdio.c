@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Card related API
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -144,7 +144,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     SDIOPkt *sdiohdr     = (SDIOPkt *)pbuf;
-    TxPD *ptxpd          = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
+    TxPD *ptxpd          = (TxPD *)(void *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 
     ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
@@ -171,7 +171,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     SDIOPkt *sdiohdr     = (SDIOPkt *)pbuf;
-    TxPD *ptxpd          = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
+    TxPD *ptxpd          = (TxPD *)(void *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 #ifdef CONFIG_WMM
     t_u8 *data_ptr = (t_u8 *)pbuf;
 #endif
@@ -263,7 +263,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
     HostCmd_DS_GEN *cmdresp;
     t_u32 cmdtype;
 
-    cmdresp = (HostCmd_DS_GEN *)(pmbuf + INTF_HEADER_LEN); /* size + pkttype=4 */
+    cmdresp = (HostCmd_DS_GEN *)(void *)(pmbuf + INTF_HEADER_LEN); /* size + pkttype=4 */
     cmdtype = cmdresp->command & HostCmd_CMD_ID_MASK;
 
     last_resp_rcvd = cmdtype;
@@ -310,11 +310,11 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             break;
 #ifdef OTP_CHANINFO
         case HostCmd_CMD_CHAN_REGION_CFG:
-            wlan_ret_chan_region_cfg((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)cmdresp, NULL);
+            wlan_ret_chan_region_cfg((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
             break;
 #endif
         case HostCmd_CMD_GET_HW_SPEC:
-            wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)cmdresp, NULL);
+            wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
             break;
         case HostCmd_CMD_VERSION_EXT:
             wifi_get_firmware_ver_ext_from_cmdresp(cmdresp, dev_fw_ver_ext);
@@ -377,7 +377,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
 #ifdef CONFIG_P2P
     t_u8 *cmdBuf;
 #endif /* CONFIG_P2P */
-    SDIOPkt *sdiopkt = (SDIOPkt *)pmbuf;
+    SDIOPkt *sdiopkt = (SDIOPkt *)(void *)pmbuf;
     int ret;
     struct bus_message msg;
 
@@ -520,7 +520,7 @@ retry_read:
     }
 #endif
 
-    SDIOPkt *insdiopkt = (SDIOPkt *)inbuf;
+    SDIOPkt *insdiopkt = (SDIOPkt *)(void *)inbuf;
     *type              = insdiopkt->pkttype;
 
 #ifdef CONFIG_WIFI_IO_DUMP
@@ -1182,7 +1182,7 @@ mlan_status wlan_send_gen_sdio_cmd(t_u8 *buf, t_u32 buflen)
 
 int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 {
-    SDIOPkt *sdio = (SDIOPkt *)outbuf;
+    SDIOPkt *sdio = (SDIOPkt *)(void *)outbuf;
     uint32_t resp;
 
     wifi_sdio_lock();
@@ -1839,7 +1839,7 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
         {
             while (total_size < datalen)
             {
-                SDIOPkt *insdiopkt = (SDIOPkt *)packet;
+                SDIOPkt *insdiopkt = (SDIOPkt *)(void *)packet;
                 size               = insdiopkt->size;
                 pkt_type           = insdiopkt->pkttype;
 
@@ -2260,7 +2260,7 @@ void sd_wifi_deinit(void)
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)
 {
     /* First 4 bytes reserved for SDIO pkt header */
-    return (HostCmd_DS_COMMAND *)(cmd_buf + INTF_HEADER_LEN);
+    return (HostCmd_DS_COMMAND *)(void *)(cmd_buf + INTF_HEADER_LEN);
 }
 
 /**
