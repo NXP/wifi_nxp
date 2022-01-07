@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Test API
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -39,7 +39,7 @@
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-    struct in_addr ip, gw, nm, dns1, dns2;
+    struct ip4_addr ip, gw, nm, dns1, dns2;
     char addr_type[10] = {0};
 
     /* If the current network role is STA and ipv4 is not connected then do
@@ -48,11 +48,11 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
-    ip.s_addr   = addr->ipv4.address;
-    gw.s_addr   = addr->ipv4.gw;
-    nm.s_addr   = addr->ipv4.netmask;
-    dns1.s_addr = addr->ipv4.dns1;
-    dns2.s_addr = addr->ipv4.dns2;
+    ip.addr   = addr->ipv4.address;
+    gw.addr   = addr->ipv4.gw;
+    nm.addr   = addr->ipv4.netmask;
+    dns1.addr = addr->ipv4.dns1;
+    dns2.addr = addr->ipv4.dns2;
     if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
         strncpy(addr_type, "STATIC", strlen("STATIC"));
@@ -758,8 +758,9 @@ void test_wlan_scan_opt(int argc, char **argv)
         }
         else if (!info.channel && string_equal("channel", argv[arg]))
         {
-            if (arg + 1 >= argc || get_uint(argv[arg + 1], (unsigned int *)&wlan_scan_param.chan_list[0].chan_number,
-                                            strlen(argv[arg + 1])))
+            if (arg + 1 >= argc ||
+                get_uint(argv[arg + 1], (unsigned int *)(void *)&wlan_scan_param.chan_list[0].chan_number,
+                         strlen(argv[arg + 1])))
             {
                 (void)PRINTF(
                     "Error: invalid channel"
@@ -775,7 +776,7 @@ void test_wlan_scan_opt(int argc, char **argv)
         else if (!info.probes && string_equal("probes", argv[arg]))
         {
             if (arg + 1 >= argc ||
-                get_uint(argv[arg + 1], (unsigned int *)&wlan_scan_param.num_probes, strlen(argv[arg + 1])))
+                get_uint(argv[arg + 1], (unsigned int *)(void *)&wlan_scan_param.num_probes, strlen(argv[arg + 1])))
             {
                 (void)PRINTF(
                     "Error: invalid probes"
@@ -1131,7 +1132,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
         return;
     }
 
-    wifi_sta_info_t *si = (wifi_sta_info_t *)(&sl->count + 1);
+    wifi_sta_info_t *si = (wifi_sta_info_t *)(void *)(&sl->count + 1);
 
     (void)PRINTF("Number of STA = %d \r\n\r\n", sl->count);
     for (i = 0; i < sl->count; i++)
@@ -1279,8 +1280,8 @@ static void test_wlan_host_sleep(int argc, char **argv)
             }
             else if (wowlan == 0)
             {
-                ret = wlan_send_host_sleep(WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST |
-                                                                             WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT);
+                ret = wlan_send_host_sleep(WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST |
+                                           WAKE_ON_MAC_EVENT);
                 if (ret == WM_SUCCESS)
                     (void)PRINTF("Host sleep configuration successs with regular condition");
                 else
