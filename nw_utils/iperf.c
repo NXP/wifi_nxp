@@ -463,7 +463,8 @@ static void iperf_test_start(void *arg)
                                                               LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
-                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session =
+                    lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
         }
         else
         {
@@ -740,6 +741,7 @@ void cmd_iperf(int argc, char **argv)
     }
 
     (void)memset(&info, 0, sizeof(info));
+    (void)memset(ip_addr, 0, sizeof(ip_addr));
 
     if (argc < 2)
     {
