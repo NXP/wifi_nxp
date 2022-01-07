@@ -44,7 +44,7 @@
 
 char buff1[INBUF_SIZE];
 char buff2[INBUF_SIZE];
-char alloc[2] = {BUF_AVAILABLE, BUF_AVAILABLE};
+uint8_t alloc[2] = {BUF_AVAILABLE, BUF_AVAILABLE};
 
 int cli_mem_cleanup(void)
 {
