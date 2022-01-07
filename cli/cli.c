@@ -2,7 +2,7 @@
  *
  *  @brief This file provides  CLI: command-line interface
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -55,7 +55,7 @@ static os_queue_pool_define(queue_data, IN_QUEUE_SIZE);
 static struct
 {
     int input_enabled;
-    int initialized;
+    bool initialized;
 
     unsigned int bp; /* buffer pointer */
     char *inbuf;
@@ -298,7 +298,7 @@ static const struct cli_command *lookup_command(char *name, int len)
         /* See if partial or full match is expected */
         if (len != 0)
         {
-            if (!strncmp(cli.commands[i]->name, name, len))
+            if (!strncmp(cli.commands[i]->name, name, (size_t)len))
             {
                 return cli.commands[i];
             }
@@ -363,7 +363,7 @@ static int handle_input(char *inbuf)
             {
                 (void)memmove((inbuf + j), inbuf + j + 1, (INBUF_SIZE - i));
             }
-            inbuf[INBUF_SIZE] = 0x00;
+            inbuf[INBUF_SIZE] = (char)(0x00);
         }
     }
 
@@ -457,7 +457,7 @@ static int handle_input(char *inbuf)
      * Some comamands can allow extensions like foo.a, foo.b and hence
      * compare commands before first dot.
      */
-    i       = ((p = strchr(argv[0], '.')) == NULL) ? 0 : (p - argv[0]);
+    i       = ((p = strchr(argv[0], (int)('.'))) == NULL) ? 0 : (p - argv[0]);
     command = lookup_command(argv[0], i);
     if (command == NULL)
     {
@@ -556,7 +556,7 @@ static int get_input(char *inbuf, unsigned int *bp)
 
     while (true)
     {
-        inbuf[*bp] = GETCHAR();
+        inbuf[*bp] = (char)GETCHAR();
         if (state == EXT_KEY_SECOND_SYMBOL)
         {
             if (second_char == 0x4F)
@@ -901,7 +901,7 @@ int cli_start(void)
         return -WM_FAIL;
     }
 
-    ret = os_queue_create(&cli.input_queue, "cli_queue", sizeof(void *), &cli.in_queue_data);
+    ret = os_queue_create(&cli.input_queue, "cli_queue", (int) sizeof(void *), &cli.in_queue_data);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create cli queue: %d\r\n", ret);
@@ -930,7 +930,7 @@ int cli_stop(void)
 /* Get a command buffer */
 int cli_get_cmd_buffer(char **buff)
 {
-    *buff = cli_mem_malloc(INBUF_SIZE);
+    *buff = cli_mem_malloc((int)INBUF_SIZE);
     if (*buff == NULL)
     {
         return -WM_FAIL;
@@ -951,7 +951,7 @@ int cli_submit_cmd_buffer(char **buff)
         return -WM_FAIL;
     }
 
-    if (cli.initialized != 0)
+    if (cli.initialized != false)
     {
         ret = os_queue_send(&cli.input_queue, (void *)buff, SEND_WAIT);
     }
@@ -1153,7 +1153,7 @@ int cli_init(void)
     cli.in_queue_data = queue_data;
 
     /* add our built-in commands */
-    if (cli_register_commands(&built_ins[0], sizeof(built_ins) / sizeof(struct cli_command)) != 0)
+    if (cli_register_commands(&built_ins[0], (int) (sizeof(built_ins) / sizeof(struct cli_command))) != 0)
     {
         return -WM_FAIL;
     }

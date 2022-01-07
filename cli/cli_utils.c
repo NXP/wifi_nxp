@@ -68,7 +68,7 @@ uint8_t hexc2bin(char chr)
     else
     { /* Do Nothing */
     }
-    return chr;
+    return (uint8_t)chr;
 }
 
 /**
@@ -147,7 +147,7 @@ int ishexstring(void *hex)
 {
     int i, a;
     char *p = hex;
-    int len = strlen(p);
+    int len = (int)strlen(p);
     if (!strncasecmp("0x", p, 2))
     {
         p += 2;
@@ -183,7 +183,7 @@ uint32_t a2hex_or_atoi(char *value)
     }
     else
     {
-        return *value;
+        return (uint32_t)(*value);
     }
 }
 
@@ -227,15 +227,15 @@ int get_mac(const char *arg, char *dest, char sep)
         {
             if (arg[i + j] >= '0' && arg[i + j] <= '9')
             {
-                n = arg[i + j] - '0';
+                n = (unsigned char)(arg[i + j] - '0');
             }
             else if (arg[i + j] >= 'A' && arg[i + j] <= 'F')
             {
-                n = arg[i + j] - 'A' + 10;
+                n = (unsigned char)(arg[i + j] - 'A' + 10);
             }
             else if (arg[i + j] >= 'a' && arg[i + j] <= 'f')
             {
-                n = arg[i + j] - 'a' + 10;
+                n = (unsigned char)(arg[i + j] - 'a' + 10);
             }
             else
             {
@@ -278,13 +278,13 @@ int cli_getopt(int argc, char **argv, const char *fmt)
     }
     if (opt[0] == '\0' || opt[1] == '\0')
     {
-        return '?';
+        return (int)'?';
     }
     cli_optind++;
-    c = strchr(fmt, opt[1]);
+    c = strchr(fmt, (int)opt[1]);
     if (c == NULL)
     {
-        return opt[1];
+        return (int)opt[1];
     }
     if (c[1] == ':')
     {
@@ -293,5 +293,5 @@ int cli_getopt(int argc, char **argv, const char *fmt)
             cli_optarg = argv[cli_optind++];
         }
     }
-    return c[0];
+    return (int)c[0];
 }

@@ -214,7 +214,7 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
 
     opt                    = (struct bootp_option *)(void *)offset;
     opt->type              = BOOTP_OPTION_DHCP_MESSAGE;
-    *(uint8_t *)opt->value = type;
+    *(uint8_t *)opt->value = (uint8_t)type;
     opt->length            = 1;
     offset += sizeof(struct bootp_option) + opt->length;
 
@@ -291,7 +291,7 @@ static int process_dhcp_message(char *msg, int len)
 {
     struct bootp_header *hdr;
     struct bootp_option *opt;
-    uint8_t response_type = DHCP_NO_RESPONSE;
+    uint8_t response_type = (uint8_t)DHCP_NO_RESPONSE;
     unsigned int consumed = 0;
     bool got_ip           = 0;
     bool need_ip          = 0;
@@ -339,7 +339,7 @@ static int process_dhcp_message(char *msg, int len)
             {
                 case DHCP_MESSAGE_DISCOVER:
                     dhcp_d("DHCP discover");
-                    response_type = DHCP_MESSAGE_OFFER;
+                    response_type = (uint8_t)DHCP_MESSAGE_OFFER;
                     break;
 
                 case DHCP_MESSAGE_REQUEST:
@@ -426,7 +426,7 @@ static int process_dhcp_message(char *msg, int len)
         len -= consumed;
         opt = (struct bootp_option *)(void *)((char *)opt + consumed);
         if (need_ip)
-            response_type = got_ip ? DHCP_MESSAGE_ACK : DHCP_MESSAGE_NAK;
+            response_type = (uint8_t)(got_ip ? DHCP_MESSAGE_ACK : DHCP_MESSAGE_NAK);
     }
 
     if (response_type != DHCP_NO_RESPONSE)
@@ -499,7 +499,7 @@ void dhcp_server(os_thread_arg_t data)
     ctrl_listen.sin_family      = PF_INET;
     ctrl_listen.sin_port        = htons(CTRL_PORT);
     ctrl_listen.sin_addr.s_addr = net_inet_aton("127.0.0.1");
-    addr_len                    = sizeof(struct sockaddr_in);
+    addr_len                    = (int)sizeof(struct sockaddr_in);
     ret                         = net_bind(ctrl, (struct sockaddr *)(void *)&ctrl_listen, addr_len);
     if (ret < 0)
     {
@@ -790,7 +790,7 @@ static void get_broadcast_addr(struct sockaddr_in *addr)
     addr->sin_family = AF_INET;
     /* limited broadcast addr (255.255.255.255) */
     addr->sin_addr.s_addr = 0xffffffff;
-    addr->sin_len         = sizeof(struct sockaddr_in);
+    addr->sin_len         = (uint8_t)sizeof(struct sockaddr_in);
 }
 
 static int get_ip_addr_from_interface(uint32_t *ip, void *interface_handle)

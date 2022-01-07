@@ -2,7 +2,7 @@
  *
  *  @brief This file provides the DNS Server
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -52,7 +52,7 @@ static void format_qname(char *domain_name, char *dns_qname)
     char *s = domain_name;
     char *d = dns_qname + 1;
 
-    len = strlen(s);
+    len = (int)strlen(s);
     s += len - 1;
     d += len - 1;
 
@@ -71,7 +71,7 @@ static void format_qname(char *domain_name, char *dns_qname)
         s--;
         d--;
     }
-    dns_qname[0] = i;
+    dns_qname[0] = (char)i;
 }
 
 static unsigned int make_answer_rr(char *base, char *query, char *dst)
@@ -117,7 +117,7 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
         {
             for (i = 0; i < dnss.count_qnames; i++)
             {
-                *found = !strncmp(dnss.list_qnames[i].qname, (char *)pos, (base + SERVER_BUFFER_SIZE - pos));
+                *found = (int)(!strncmp(dnss.list_qnames[i].qname, (char *)pos, (size_t)(base + SERVER_BUFFER_SIZE - pos)));
                 if (*found != 0)
                 {
                     break;
@@ -164,7 +164,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         return -WM_E_DHCPD_DNS_IGNORE;
     }
 
-    nq = ntohs(hdr->num_questions);
+    nq = (int)ntohs(hdr->num_questions);
     dhcp_d("we were asked %d questions", nq);
 
     if (nq <= 0)
@@ -173,7 +173,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         return -WM_E_DHCPD_DNS_IGNORE;
     }
 
-    outp = parse_questions(nq, (uint8_t *)msg, &found);
+    outp = parse_questions((unsigned int)nq, (uint8_t *)msg, &found);
     if (found && outp != NULL)
     {
         pos = msg + sizeof(struct dns_header);
@@ -191,7 +191,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         hdr->flags.fields.aa    = 1;
         hdr->flags.fields.rcode = 0;
         hdr->flags.num          = htons(hdr->flags.num);
-        hdr->answer_rrs         = htons(i);
+        hdr->answer_rrs         = htons((u16_t)i);
         /* the response consists of:
          * - 1 x DNS header
          * - num_questions x query fields from the message we're parsing
