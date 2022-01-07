@@ -806,6 +806,7 @@ static int get_netmask_from_interface(uint32_t *nm, void *interface_handle)
 void dhcp_stat(void)
 {
     int i = 0;
+    struct ip4_addr saddr;
     (void)PRINTF("DHCP Server Lease Duration : %d seconds\r\n", (int)dhcp_address_timeout);
     if (dhcps.count_clients == 0)
     {
@@ -816,7 +817,8 @@ void dhcp_stat(void)
         (void)PRINTF("Client IP\tClient MAC\r\n");
         for (i = 0; i < dhcps.count_clients && i < MAC_IP_CACHE_SIZE; i++)
         {
-            (void)PRINTF("%s\t%02X:%02X:%02X:%02X:%02X:%02X\r\n", inet_ntoa(dhcps.ip_mac_mapping[i].client_ip),
+            saddr.addr = dhcps.ip_mac_mapping[i].client_ip;
+            (void)PRINTF("%s\t%02X:%02X:%02X:%02X:%02X:%02X\r\n", inet_ntoa(saddr),
                          dhcps.ip_mac_mapping[i].client_mac[0], dhcps.ip_mac_mapping[i].client_mac[1],
                          dhcps.ip_mac_mapping[i].client_mac[2], dhcps.ip_mac_mapping[i].client_mac[3],
                          dhcps.ip_mac_mapping[i].client_mac[4], dhcps.ip_mac_mapping[i].client_mac[5]);

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -151,7 +151,7 @@ static inline int net_get_sock_error(int sock)
 static inline uint32_t net_inet_aton(const char *cp)
 {
     struct in_addr addr;
-    inet_aton(cp, &addr);
+    inet_aton(cp, ((void *)&addr));
     return addr.s_addr;
 }
 
@@ -188,8 +188,8 @@ static inline int net_gethostbyname(const char *cp, struct hostent **hentry)
  */
 static inline void net_inet_ntoa(unsigned long addr, char *cp)
 {
-    struct in_addr saddr;
-    saddr.s_addr = addr;
+    struct ip4_addr saddr;
+    saddr.addr = addr;
     /* No length, sigh! */
     strcpy(cp, inet_ntoa(saddr));
 }
@@ -203,8 +203,8 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
  */
 static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
 {
-    if (((struct eth_hdr *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
-        ((struct eth_hdr *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
+    if (((struct eth_hdr *)(void *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
+        ((struct eth_hdr *)(void *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
     {
         return true;
     }
