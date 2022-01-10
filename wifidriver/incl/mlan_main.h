@@ -2155,14 +2155,12 @@ mlan_status wlan_misc_ioctl_host_cmd(IN pmlan_adapter pmadapter, IN pmlan_ioctl_
 mlan_status wlan_misc_ioctl_init_shutdown(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 /** process debug info */
 mlan_status wlan_get_info_debug_info(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #if defined(STA_SUPPORT) && defined(UAP_SUPPORT)
 /** Set/Get BSS role */
 mlan_status wlan_bss_ioctl_bss_role(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_set_ewpa_mode(mlan_private *priv, mlan_ds_passphrase *psec_pp);
 mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req);
 #endif /* CONFIG_MLAN_WMSDK */
@@ -2366,7 +2364,16 @@ mlan_status wlan_cmd_802_11_ad_hoc_start(IN mlan_private *pmpriv, IN HostCmd_DS_
 mlan_status wlan_ops_sta_process_event(IN t_void *priv);
 /** Ad-Hoc command handler */
 mlan_status wlan_cmd_802_11_ad_hoc_join(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
-
+/** Handler for bgscan config command */
+mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
+/** Scan for specific SSID */
+mlan_status wlan_scan_specific_ssid(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN mlan_802_11_ssid *preq_ssid);
+/** Handler for bgscan query commands */
+mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
+/** Flush the scan table */
+mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
+/** Queue scan command handler */
+t_void wlan_queue_scan_cmd(IN mlan_private *pmpriv, IN cmd_ctrl_node *pcmd_node);
 #endif /* CONFIG_MLAN_WMSDK */
 #ifdef STA_SUPPORT
 /** Process received packet */
@@ -2389,22 +2396,13 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
 /** rx handler for station mode */
 mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf);
 
-/** Flush the scan table */
-mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
-
 /** Scan for networks */
 mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
                                IN t_void *pioctl_buf,
                                IN const wlan_user_scan_cfg *puser_scan_in);
 
-/** Scan for specific SSID */
-mlan_status wlan_scan_specific_ssid(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN mlan_802_11_ssid *preq_ssid);
-
 /** Scan command handler */
 mlan_status wlan_cmd_802_11_scan(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
-
-/** Queue scan command handler */
-t_void wlan_queue_scan_cmd(IN mlan_private *pmpriv, IN cmd_ctrl_node *pcmd_node);
 
 /** Handler for scan command response */
 mlan_status wlan_ret_802_11_scan(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
@@ -2457,10 +2455,6 @@ t_u8 wlan_band_to_radio_type(IN t_u8 band);
 /*                             IN mlan_ioctl_req * pioctl_req, */
 /*                             IN mlan_802_11_mac_addr * mac); */
 
-/** Handler for bgscan query commands */
-mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
-/** Handler for bgscan config command */
-mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 /** Get Channel-Frequency-Power by band and channel */
 chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                                                     t_u8 band,
@@ -2472,8 +2466,6 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_
 chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u8 band, t_u32 freq);
 /** Get Tx power of channel from Channel-Frequency-Power */
 t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel);
-/** find frequency from band and channel */
-t_u32 wlan_find_freq_from_band_chan(t_u8, t_u8);
 
 #endif /* STA_SUPPORT */
 
@@ -2584,14 +2576,15 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
 mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u8 band, t_u8 *domain_tlv, t_void *pioctl_buf);
 #endif
 
+#ifndef CONFIG_MLAN_WMSDK
 /** This function converts region string to CFP table code */
 mlan_status wlan_misc_country_2_cfp_table_code(IN pmlan_adapter pmadapter,
                                                IN t_u8 *country_code,
                                                OUT t_u8 *cfp_bg,
                                                OUT t_u8 *cfp_a);
-
 /** check if station list is empty */
 t_u8 wlan_is_station_list_empty(mlan_private *priv);
+#endif /* CONFIG_MLAN_WMSDK */
 /** get station node */
 sta_node *wlan_get_station_entry(mlan_private *priv, t_u8 *mac);
 /** delete station list */
@@ -2599,10 +2592,10 @@ t_void wlan_delete_station_list(pmlan_private priv);
 #ifndef CONFIG_MLAN_WMSDK
 /** delete station entry */
 t_void wlan_delete_station_entry(mlan_private *priv, t_u8 *mac);
-#endif /* CONFIG_MLAN_WMSDK */
 /** add station entry */
 sta_node *wlan_add_station_entry(mlan_private *priv, t_u8 *mac);
 /** process uap rx packet */
+#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef CONFIG_RF_TEST_MODE
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf);
@@ -2636,7 +2629,6 @@ static int wlan_is_tx_pause(mlan_private *priv, t_u8 *ra)
 
 #ifndef CONFIG_MLAN_WMSDK
 t_void wlan_updata_ralist_tx_pause(pmlan_private priv, t_u8 *mac, t_u8 tx_pause);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef UAP_SUPPORT
 mlan_status wlan_process_uap_rx_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf);
@@ -2648,7 +2640,6 @@ t_void wlan_drop_tx_pkts(pmlan_private priv);
 mlan_status wlan_uap_recv_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf);
 #endif /* UAP_SUPPORT */
 
-#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                                            IN pmlan_ioctl_req pioctl_req,
                                            IN t_bool send_ioctl);

@@ -2453,9 +2453,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             cmd_ptr->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_WMM_GET_STATUS) + S_DS_GEN);
             ret              = MLAN_STATUS_SUCCESS;
             break;
+#ifdef STA_SUPPORT
         case HostCmd_CMD_WMM_ADDTS_REQ:
             ret = wlan_cmd_wmm_addts_req(pmpriv, cmd_ptr, pdata_buf);
             break;
+#endif /* STA_SUPPORT */
         case HostCmd_CMD_WMM_DELTS_REQ:
             ret = wlan_cmd_wmm_delts_req(pmpriv, cmd_ptr, pdata_buf);
             break;
@@ -2463,10 +2465,10 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_WMM_QUEUE_CONFIG:
             ret = wlan_cmd_wmm_queue_config(pmpriv, cmd_ptr, pdata_buf);
             break;
-#endif /* STA_SUPPORT */
         case HostCmd_CMD_WMM_QUEUE_STATS:
             ret = wlan_cmd_wmm_queue_stats(pmpriv, cmd_ptr, pdata_buf);
             break;
+#endif /* STA_SUPPORT */
         case HostCmd_CMD_WMM_TS_STATUS:
             ret = wlan_cmd_wmm_ts_status(pmpriv, cmd_ptr, pdata_buf);
             break;
