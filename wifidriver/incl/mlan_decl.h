@@ -108,10 +108,10 @@ typedef t_s32 t_sval;
 #define MFALSE (0)
 
 /** Macros for Data Alignment : size */
-#define ALIGN_SZ(p, a) (((p) + ((a)-1)) & ~((a)-1))
+#define ALIGN_SZ(p, a) (((p) + ((a)-1U)) & ~((a)-1U))
 
 /** Macros for Data Alignment : address */
-#define ALIGN_ADDR(p, a) ((((t_ptr)(p)) + (((t_ptr)(a)) - 1)) & ~(((t_ptr)(a)) - 1))
+#define ALIGN_ADDR(p, a) ((((t_ptr)(p)) + (((t_ptr)(a)) - 1U)) & ~(((t_ptr)(a)) - 1U))
 
 /** Return the byte offset of a field in the given structure */
 #define MLAN_FIELD_OFFSET(type, field) ((t_u32)(t_ptr) & (((type *)0)->field))
@@ -120,13 +120,13 @@ typedef t_s32 t_sval;
 
 /** Maximum BSS numbers */
 /* fixme: We have reduced this from 16 to 2. Ensure that this is Ok */
-#define MLAN_MAX_BSS_NUM 2
+#define MLAN_MAX_BSS_NUM 2U
 
 /** NET IP alignment */
 #define MLAN_NET_IP_ALIGN 0
 
 /** DMA alignment */
-#define DMA_ALIGNMENT 64
+#define DMA_ALIGNMENT 64U
 /** max size of TxPD */
 #define MAX_TXPD_SIZE 32
 
@@ -137,7 +137,7 @@ typedef t_s32 t_sval;
 #define MLAN_RX_HEADER_LEN MLAN_MIN_DATA_HEADER_LEN
 
 /** This is current limit on Maximum Tx AMPDU allowed */
-#define MLAN_MAX_TX_BASTREAM_SUPPORTED 2
+#define MLAN_MAX_TX_BASTREAM_SUPPORTED 2U
 /** This is current limit on Maximum Rx AMPDU allowed */
 #define MLAN_MAX_RX_BASTREAM_SUPPORTED 16
 
@@ -185,11 +185,11 @@ typedef t_s32 t_sval;
 /** Rate index for HR/DSSS 3 */
 #define MLAN_RATE_INDEX_HRDSSS3 3
 /** Rate index for OFDM 0 */
-#define MLAN_RATE_INDEX_OFDM0 4
+#define MLAN_RATE_INDEX_OFDM0 4U
 /** Rate index for OFDM 7 */
 #define MLAN_RATE_INDEX_OFDM7 11
 /** Rate index for MCS 0 */
-#define MLAN_RATE_INDEX_MCS0 12
+#define MLAN_RATE_INDEX_MCS0 12U
 /** Rate index for MCS 7 */
 #define MLAN_RATE_INDEX_MCS7 19
 /** Rate index for MCS 9 */
@@ -211,7 +211,7 @@ typedef t_s32 t_sval;
 /** Rate bitmap for OFDM 7 */
 #define MLAN_RATE_BITMAP_OFDM7 23
 /** Rate bitmap for MCS 0 */
-#define MLAN_RATE_BITMAP_MCS0 32
+#define MLAN_RATE_BITMAP_MCS0 32U
 /** Rate bitmap for MCS 127 */
 #define MLAN_RATE_BITMAP_MCS127 159
 
@@ -229,12 +229,12 @@ typedef t_s32 t_sval;
 #define MLAN_RX_CMD_BUF_SIZE (2 * 1024)
 
 /** MLAN MAC Address Length */
-#define MLAN_MAC_ADDR_LENGTH (6)
+#define MLAN_MAC_ADDR_LENGTH (6U)
 /** MLAN 802.11 MAC Address */
 typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** MLAN Maximum SSID Length */
-#define MLAN_MAX_SSID_LENGTH (32)
+#define MLAN_MAX_SSID_LENGTH (32U)
 
 /** RTS/FRAG related defines */
 /** Minimum RTS value */
@@ -253,7 +253,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** define SDIO block size for data Tx/Rx */
 /* We support up to 480-byte block size due to FW buffer limitation. */
-#define MLAN_SDIO_BLOCK_SIZE 256
+#define MLAN_SDIO_BLOCK_SIZE 256U
 
 /** define SDIO block size for firmware download */
 #define MLAN_SDIO_BLOCK_SIZE_FW_DNLD MLAN_SDIO_BLOCK_SIZE
@@ -311,10 +311,10 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 #endif /* DEBUG_LEVEL1 */
 
 /** Memory allocation type: DMA */
-#define MLAN_MEM_DMA MBIT(0)
+#define MLAN_MEM_DMA MBIT(0U)
 
 /** Default memory allocation flag */
-#define MLAN_MEM_DEF 0
+#define MLAN_MEM_DEF 0U
 
 /** mlan_status */
 typedef enum _mlan_status
@@ -714,7 +714,7 @@ typedef MLAN_PACK_START struct
     mlan_ds_wmm_ts_status, *pmlan_ds_wmm_ts_status;
 
 /** Max Ie length */
-#define MAX_IE_SIZE 256
+#define MAX_IE_SIZE 256U
 
 /** custom IE */
 typedef MLAN_PACK_START struct _custom_ie
@@ -741,7 +741,7 @@ typedef MLAN_PACK_START struct _tlvbuf_custom_ie
 } MLAN_PACK_END tlvbuf_custom_ie;
 
 /** Max IE index to FW */
-#define MAX_MGMT_IE_INDEX_TO_FW 4
+#define MAX_MGMT_IE_INDEX_TO_FW 4U
 /** Max IE index per BSS */
 #define MAX_MGMT_IE_INDEX 16
 
@@ -906,7 +906,7 @@ typedef struct _mlan_callbacks
 /** Parameter enabled, override MLAN default setting */
 #define MLAN_INIT_PARA_ENABLED 1
 /** Parameter disabled, override MLAN default setting */
-#define MLAN_INIT_PARA_DISABLED 2
+#define MLAN_INIT_PARA_DISABLED 2U
 
 /** mlan_device data structure */
 typedef struct _mlan_device

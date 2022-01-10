@@ -348,7 +348,7 @@ static t_u8 wlan_is_bastream_avail(mlan_private *priv)
 INLINE
 static t_u8 wlan_find_stream_to_delete(mlan_private *priv, raListTbl *ptr, int ptr_tid, int *ptid, t_u8 *ra)
 {
-    int tid;
+    t_u8 tid;
     t_u8 ret = MFALSE;
     TxBAStreamTbl *ptx_tbl;
 
@@ -423,7 +423,7 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
 #ifdef UAP_SUPPORT
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
     {
-        if ((!(ra[0] & 0x01)) && (priv->is_11n_enabled))
+        if ((!(ra[0] & 0x01U)) && (priv->is_11n_enabled))
         {
             ret = is_station_11n_enabled(priv, ra);
         }

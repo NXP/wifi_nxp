@@ -2520,11 +2520,11 @@ typedef struct _mlan_ds_wps_cfg
 #define NUM_MCS_FIELD 16
 
 /* Both 2.4G and 5G band selected */
-#define BAND_SELECT_BOTH 0
+#define BAND_SELECT_BOTH 0U
 /* Band 2.4G selected */
-#define BAND_SELECT_BG 1
+#define BAND_SELECT_BG 1U
 /* Band 5G selected */
-#define BAND_SELECT_A 2
+#define BAND_SELECT_A 2U
 
 /** Type definition of mlan_ds_11n_htcap_cfg for MLAN_OID_11N_HTCAP_CFG */
 typedef struct _mlan_ds_11n_htcap_cfg
@@ -2835,14 +2835,14 @@ typedef struct _mlan_ds_11n_cfg
 } mlan_ds_11n_cfg, *pmlan_ds_11n_cfg;
 
 /** Country code length */
-#define COUNTRY_CODE_LEN 3
+#define COUNTRY_CODE_LEN 3U
 
 /*-----------------------------------------------------------------*/
 /** 802.11d Configuration Group */
 /*-----------------------------------------------------------------*/
 /** Maximum subbands for 11d */
 #ifdef CONFIG_5GHz_SUPPORT
-#define MRVDRV_MAX_SUBBAND_802_11D 83
+#define MRVDRV_MAX_SUBBAND_802_11D 83U
 #else
 #define MRVDRV_MAX_SUBBAND_802_11D 14
 #endif /* CONFIG_5GHz_SUPPORT */

@@ -629,7 +629,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** RESET HTExtCap : Clear RD Responder bit */
 #define RESETHT_EXTCAP_RDG(HTExtCap) ((HTExtCap) &= ~MBIT(11))
 /** SET MCS32 */
-#define SETHT_MCS32(x) (x[4] |= 1)
+#define SETHT_MCS32(x) (x[4] |= 1U)
 /** Set mcs set defined bit */
 #define SETHT_MCS_SET_DEFINED(x) (x[12] |= 1)
 /** Set the highest Rx data rate */
@@ -682,7 +682,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** bandwidth following HTCAP */
 #define BW_FOLLOW_HTCAP 0
 /** bandwidth following VHTCAP */
-#define BW_FOLLOW_VHTCAP 1
+#define BW_FOLLOW_VHTCAP 1U
 
 /** HW_SPEC FwCapInfo */
 #define HWSPEC_11ACSGI80_SUPP  MBIT(5)
@@ -782,7 +782,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** GET VHT CapInfo : MAX MPDU Length */
 #define GET_VHTCAP_MAXMPDULEN(VHTCapInfo) (VHTCapInfo & 0x3)
 /** GET VHT CapInfo:  Supported Channel Width SET (2 bits)*/
-#define GET_VHTCAP_CHWDSET(VHTCapInfo) (((VHTCapInfo) >> 2) & 0x3)
+#define GET_VHTCAP_CHWDSET(VHTCapInfo) (((VHTCapInfo) >> 2) & 0x3U)
 /** GET VHT CapInfo:  Rx STBC (3 bits) */
 #define GET_VHTCAP_RXSTBC(VHTCapInfo) ((VHTCapInfo >> 8) & 0x7)
 /** GET VHT CapInfo:  Compressed Steering Num of BFer Ant Supported (3 bits) */
@@ -798,8 +798,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /**SET OPERATING MODE:Channel Width:40M*/
 #define SET_OPER_MODE_40M(oper_mode) ((oper_mode) = ((oper_mode) & ~MBIT(1)) | MBIT(0))
 /**SET OPERATING MODE:Channel Width:20M*/
-#define SET_OPER_MODE_20M(oper_mode) ((oper_mode) &= ~(0x03))
-#define IS_OPER_MODE_20M(oper_mode)  (((oper_mode) & (MBIT(0) | MBIT(1))) == 0)
+#define SET_OPER_MODE_20M(oper_mode) (oper_mode &= ~(0x03U))
+#define IS_OPER_MODE_20M(oper_mode)  (((oper_mode) & (MBIT(0) | MBIT(1))) == 0U)
 /**SET OPERATING MODE:Rx NSS:2*/
 #define SET_OPER_MODE_2NSS(oper_mode) ((oper_mode) = ((oper_mode) & ~(MBIT(5) | MBIT(6))) | MBIT(4))
 /**SET OPERATING MODE:Rx NSS:1*/
@@ -816,7 +816,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define SET_DEVNSSTXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1) + 16))
 #define RESET_DEVTXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF)
 /** DevMCSSupported : Rx MCS supported */
-#define GET_DEVRXMCSMAP(DevMCSMap)             ((DevMCSMap)&0xFFFF)
+#define GET_DEVRXMCSMAP(DevMCSMap)             ((DevMCSMap)&0xFFFFU)
 #define GET_DEVNSSRXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2 * ((nss)-1))) & 0x3)
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000)
@@ -1939,7 +1939,7 @@ typedef MLAN_PACK_START struct _wlan_mgmt_pkt
 
 #ifdef STA_SUPPORT
 /** (Beaconsize(256)-5(IEId,len,contrystr(3))/3(FirstChan,NoOfChan,MaxPwr) */
-#define MAX_NO_OF_CHAN 40
+#define MAX_NO_OF_CHAN 40U
 
 /** Channel-power table entries */
 typedef MLAN_PACK_START struct _chan_power_11d
@@ -4786,7 +4786,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_ExtBLECoex_Config_t
 /**TLV type: AP RSN replay protection */
 #define TLV_TYPE_UAP_RSN_REPLAY_PROTECT (PROPRIETARY_TLV_BASE_ID + 0x64) // 0x0164
 /** TLV ID : Management Frame */
-#define TLV_TYPE_UAP_MGMT_FRAME (PROPRIETARY_TLV_BASE_ID + 0x68) // 0x0168
+#define TLV_TYPE_UAP_MGMT_FRAME (PROPRIETARY_TLV_BASE_ID + 0x68U) // 0x0168
 /** TLV: Management IE list */
 #define MRVL_MGMT_IE_LIST_TLV_ID (PROPRIETARY_TLV_BASE_ID + 0x69U)
 #ifdef UAP_SUPPORT
