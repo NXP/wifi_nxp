@@ -93,7 +93,6 @@ typedef MLAN_PACK_START struct
 SDIOPkt *sdiopkt = (SDIOPkt *)outbuf;
 
 void wrapper_wlan_cmd_11n_cfg(void *hostcmd);
-void wrapper_wifi_ret_mib(void *resp);
 
 uint32_t dev_value1 = -1;
 uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];

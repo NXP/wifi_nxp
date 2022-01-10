@@ -241,7 +241,7 @@ int bus_register_event_queue(xQueueHandle *event_queue);
  * De-register the event queue.
  */
 void bus_deregister_event_queue(void);
-
+#ifdef CONFIG_P2P
 /**
  * Register a special queue for WPS
  */
@@ -250,7 +250,6 @@ int bus_register_special_queue(xQueueHandle *special_queue);
 /**
  * Deregister special queue
  */
-#ifdef CONFIG_P2P
 void bus_deregister_special_queue(void);
 #endif
 
@@ -306,7 +305,6 @@ void *wifi_mem_malloc_cmdrespbuf(int size);
 void *wifi_malloc_eventbuf(int size);
 void wifi_free_eventbuf(void *buffer);
 
-int wifi_mem_cleanup(void);
 void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);

@@ -38,8 +38,6 @@ Change log:
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
-void dump_rf_channel_info(HostCmd_DS_802_11_RF_CHANNEL *prf_channel);
-
 /********************************************************
                 Local Variables
 ********************************************************/
