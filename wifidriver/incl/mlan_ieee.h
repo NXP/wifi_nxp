@@ -384,7 +384,7 @@ typedef MLAN_PACK_START struct
     /* count */
     t_u16 count;
     /** wpa_suite list */
-    wpa_suite list[2];
+    wpa_suite list[3];
 } MLAN_PACK_END wpa_suite_ucast_t, wpa_suite_auth_key_mgmt_t;
 
 /** IEEEtypes_Rsn_t */
