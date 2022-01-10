@@ -1017,7 +1017,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
             /* use bsslist index number to assoicate */
             i = wlan_is_network_compatible(pmpriv, bss->param.ssid_bssid.idx - 1, pmpriv->bss_mode);
 #else
-            i = bss->param.ssid_bssid.idx - 1;
+            i = bss->param.ssid_bssid.idx - 1U;
 #endif /* CONFIG_MLAN_WMSDK */
         }
         if (i >= 0)
@@ -1740,7 +1740,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     switch (power->param.power_ext.len)
     {
         case 1:
-            if (data[0] == 0xFF)
+            if (data[0] == 0xFFU)
             {
                 txp_cfg->mode = 0;
             }
@@ -1791,7 +1791,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
             }
             pg->power_min = (t_s8)data[1];
             pg->power_max = (t_s8)data[1];
-            if (power->param.power_ext.len == 4)
+            if (power->param.power_ext.len == 4U)
             {
                 pg->power_max  = (t_s8)data[2];
                 pg->power_step = (t_s8)data[3];
@@ -2804,9 +2804,9 @@ t_u8 wlan_get_random_charactor(pmlan_adapter pmadapter)
     sec  = 10; // wmtime_time_get_posix();
     usec = 0;
 
-    sec  = (sec & 0xFFFF) + (sec >> 16);
-    usec = (usec & 0xFFFF) + (usec >> 16);
-    ch   = (((sec << 16) + usec) % 26) + 'a';
+    sec  = (sec & 0xFFFFU) + (sec >> 16);
+    usec = (usec & 0xFFFFU) + (usec >> 16);
+    ch   = (((sec << 16) + usec) % 26U) + 'a';
     LEAVE();
     return ch;
 }
@@ -3447,7 +3447,7 @@ static mlan_status wlan_sec_ioctl_passphrase(IN pmlan_adapter pmadapter, IN pmla
     {
         if (sec->param.passphrase.psk_type == MLAN_PSK_QUERY)
         {
-            if (sec->param.passphrase.ssid.ssid_len == 0)
+            if (sec->param.passphrase.ssid.ssid_len == 0U)
             {
                 /* fixme: We do not need this functionality right now. */
 #ifndef CONFIG_MLAN_WMSDK
@@ -3516,7 +3516,7 @@ static mlan_status wlan_sec_ioctl_password(IN pmlan_adapter pmadapter, IN pmlan_
     {
         if (sec->param.passphrase.psk_type == MLAN_PSK_QUERY)
         {
-            if (sec->param.passphrase.ssid.ssid_len == 0)
+            if (sec->param.passphrase.ssid.ssid_len == 0U)
             {
                 /* fixme: We do not need this functionality right now. */
 #ifndef CONFIG_MLAN_WMSDK

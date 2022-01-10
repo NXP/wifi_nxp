@@ -481,7 +481,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
             { /* Do Nothing */
             }
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-            if ((ds_rate.param.rate_cfg.rate_format == 2) || (ds_rate.param.rate_cfg.rate_format == 3))
+            if ((ds_rate.param.rate_cfg.rate_format == 2U) || (ds_rate.param.rate_cfg.rate_format == 3U))
                 (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
 #endif
         }

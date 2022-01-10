@@ -558,7 +558,7 @@ static inline void os_exit_critical_section(unsigned long state)
 }
 
 /*** Tick function */
-#define MAX_CUSTOM_HOOKS 4
+#define MAX_CUSTOM_HOOKS 4U
 
 extern void (*g_os_tick_hooks[MAX_CUSTOM_HOOKS])(void);
 extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);

@@ -45,7 +45,7 @@
 #endif
 #include <fsl_common.h>
 
-#define DELAYED_SLP_CFM_DUR 10
+#define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
 
 #define WL_ID_CONNECT      "wifi_connect"
@@ -428,32 +428,32 @@ int get_scan_params(struct wifi_scan_params_t *wifi_scan_params)
 static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_condtions)
 {
     uint32_t conditions = 0;
-    if ((wlan_wakeup_condtions & WAKE_ON_UNICAST) != 0)
+    if ((wlan_wakeup_condtions & WAKE_ON_UNICAST) != 0U)
     {
         conditions |= WIFI_WAKE_ON_UNICAST;
     }
 
-    if ((wlan_wakeup_condtions & WAKE_ON_ALL_BROADCAST) != 0)
+    if ((wlan_wakeup_condtions & WAKE_ON_ALL_BROADCAST) != 0U)
     {
         conditions |= WIFI_WAKE_ON_ALL_BROADCAST;
     }
 
-    if ((wlan_wakeup_condtions & WAKE_ON_MULTICAST) != 0)
+    if ((wlan_wakeup_condtions & WAKE_ON_MULTICAST) != 0U)
     {
         conditions |= WIFI_WAKE_ON_MULTICAST;
     }
 
-    if ((wlan_wakeup_condtions & WAKE_ON_ARP_BROADCAST) != 0)
+    if ((wlan_wakeup_condtions & WAKE_ON_ARP_BROADCAST) != 0U)
     {
         conditions |= WIFI_WAKE_ON_ARP_BROADCAST;
     }
 
-    if ((wlan_wakeup_condtions & WAKE_ON_MAC_EVENT) != 0)
+    if ((wlan_wakeup_condtions & WAKE_ON_MAC_EVENT) != 0U)
     {
         conditions |= WIFI_WAKE_ON_MAC_EVENT;
     }
 
-    if ((wlan_wakeup_condtions & WAKE_ON_MGMT_FRAME) != 0)
+    if ((wlan_wakeup_condtions & WAKE_ON_MGMT_FRAME) != 0U)
     {
         conditions |= WIFI_WAKE_ON_MGMT_FRAME;
     }
@@ -1746,7 +1746,7 @@ static void handle_scan_results(void)
 {
     unsigned int count;
     int ret;
-    int i;
+    unsigned int i;
     struct wifi_scan_result *res;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
     bool matching_ap_found       = false;
@@ -2018,7 +2018,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 #define WL_ID_STA_DISCONN "sta_disconnected"
 
 /* fixme: duplicated from legacy. Needs to be removed later. */
-#define IEEEtypes_REASON_MIC_FAILURE          14
+#define IEEEtypes_REASON_MIC_FAILURE          14U
 #define IEEEtypes_REASON_4WAY_HANDSHK_TIMEOUT 15
 #define WPA2_ENTERPRISE_FAILED                0xFF
 
@@ -4119,7 +4119,7 @@ void wlan_initialize_uap_network(struct wlan_network *net)
 int wlan_add_network(struct wlan_network *network)
 {
     int pos = -1;
-    int i;
+    unsigned int i;
     unsigned int len;
     int ret;
 
@@ -4225,7 +4225,7 @@ int wlan_add_network(struct wlan_network *network)
     (void)memcpy((void *)&wlan.networks[pos], (const void *)network, sizeof(struct wlan_network));
     wlan.networks[pos].ssid_specific    = (network->ssid[0] != '\0');
     wlan.networks[pos].bssid_specific   = !is_bssid_any(network->bssid);
-    wlan.networks[pos].channel_specific = (network->channel != 0);
+    wlan.networks[pos].channel_specific = (network->channel != 0U);
     if (network->security.type != WLAN_SECURITY_WILDCARD)
     {
         wlan.networks[pos].security_specific = 1;
@@ -4403,7 +4403,8 @@ bool is_sta_ipv6_connected()
 
 int wlan_get_network(unsigned int index, struct wlan_network *network)
 {
-    int i, pos = -1;
+    unsigned int i;
+    int pos = -1;
 
     if (network == NULL || index > ARRAY_SIZE(wlan.networks))
     {
@@ -4450,13 +4451,13 @@ int wlan_get_average_signal_strength(short *rssi, int *snr)
 int wlan_get_current_rssi(short *rssi)
 {
     g_rssi = g_data_snr_last - g_data_nf_last;
-    *rssi  = g_rssi - 256;
+    *rssi  = g_rssi - 256U;
     return WM_SUCCESS;
 }
 
 int wlan_get_network_byname(char *name, struct wlan_network *network)
 {
-    int i;
+    unsigned int i;
 
     if (network == NULL || name == NULL)
     {
@@ -4497,7 +4498,7 @@ int wlan_disconnect(void)
 
 int wlan_connect(char *name)
 {
-    unsigned int len = name != NULL ? strlen(name) : 0;
+    unsigned int len = name != NULL ? strlen(name) : 0U;
     int i            = 0, ret;
 
     if (!wlan.running)
@@ -4505,7 +4506,7 @@ int wlan_connect(char *name)
         return WLAN_ERROR_STATE;
     }
 
-    if (wlan.num_networks == 0 || len == 0)
+    if (wlan.num_networks == 0U || len == 0U)
     {
         return -WM_E_INVAL;
     }
@@ -4545,7 +4546,7 @@ int wlan_start_network(const char *name)
     }
 
     len = strlen(name);
-    if (len == 0 || wlan.num_networks == 0)
+    if (len == 0 || wlan.num_networks == 0U)
     {
         return -WM_E_INVAL;
     }
@@ -4585,7 +4586,7 @@ int wlan_start_network(const char *name)
                     "Please use channel 0 (auto) for uAP");
                 return -WM_E_INVAL;
             }
-            if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0))
+            if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0U))
             {
                 wlcm_w(
                     "NOTE: uAP will automatically switch to"
@@ -4613,7 +4614,7 @@ int wlan_stop_network(const char *name)
     }
 
     len = strlen(name);
-    if (len == 0 || wlan.num_networks == 0)
+    if (len == 0U || wlan.num_networks == 0U)
     {
         return -WM_E_INVAL;
     }
@@ -5215,7 +5216,7 @@ int load_wep_key(const uint8_t *input, uint8_t *output, uint8_t *output_len, con
     unsigned len = *output_len;
 
     /* fixme: add macros here after mlan integration */
-    if (len == 10 || len == 26)
+    if (len == 10U || len == 26U)
     {
         /* Looks like this is an hexadecimal key */
         int ret = hex2bin(input, output, max_output_len);
@@ -5224,9 +5225,9 @@ int load_wep_key(const uint8_t *input, uint8_t *output, uint8_t *output_len, con
             return -WM_FAIL;
         }
 
-        len = len / 2;
+        len = len / 2U;
     }
-    else if (len == 5 || len == 13)
+    else if (len == 5U || len == 13U)
     {
         /* Looks like this is ASCII key  */
         if (len > max_output_len)
@@ -5581,12 +5582,12 @@ static uint8_t dtim_period;
 static int pscan_cb(unsigned int count)
 {
     struct wlan_scan_result res;
-    int i;
+    unsigned int i;
     int err;
 
     dtim_period = 0;
 
-    if (count == 0)
+    if (count == 0U)
     {
         (void)PRINTF("networks not found\r\n");
         os_semaphore_put(&wlan_dtim_sem);

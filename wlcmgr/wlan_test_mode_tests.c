@@ -180,9 +180,9 @@ static void wlan_rf_band_set(int argc, char *argv[])
 
     band = strtol(argv[1], NULL, 10);
 
-    if (band != 0
+    if (band != 0U
 #ifdef CONFIG_5GHz_SUPPORT
-        && band != 1
+        && band != 1U
 #endif
     )
     {
@@ -310,7 +310,7 @@ static void wlan_rf_bandwidth_get(int argc, char *argv[])
     ret = wlan_get_rf_bandwidth(&bandwidth);
     if (ret == WM_SUCCESS)
     {
-        (void)PRINTF("Configured bandwidth is: %s\r\n", bandwidth == 0 ? "20MHz" : bandwidth == 1 ? "40MHz" : "80MHz");
+        (void)PRINTF("Configured bandwidth is: %s\r\n", bandwidth == 0 ? "20MHz" : bandwidth == 1U ? "40MHz" : "80MHz");
     }
     else
     {
@@ -425,7 +425,8 @@ disable:
         (void)PRINTF("  Continuous Wave Mode  : %s\r\n", cw_mode ? "enable" : "disable");
         (void)PRINTF("  Payload Pattern       : 0x%08X\r\n", payload_pattern);
         (void)PRINTF("  CS Mode               : %s\r\n", cs_mode ? "enable" : "disable");
-        (void)PRINTF("  Active SubChannel     : %s\r\n", act_sub_ch == 0 ? "low" : act_sub_ch == 1 ? "upper" : "both");
+        (void)PRINTF("  Active SubChannel     : %s\r\n",
+                     act_sub_ch == 0U ? "low" : act_sub_ch == 1U ? "upper" : "both");
         (void)PRINTF("  Tx Data Rate          : %d\r\n", tx_rate);
     }
     else
@@ -462,7 +463,7 @@ static void wlan_rf_tx_antenna_set(int argc, char *argv[])
 
     ant = strtol(argv[1], NULL, 10);
 
-    if (ant != 1 && ant != 2)
+    if (ant != 1U && ant != 2U)
     {
         dump_wlan_set_tx_antenna_usage();
         return;
@@ -506,7 +507,7 @@ static void wlan_rf_tx_antenna_get(int argc, char *argv[])
     ret = wlan_get_rf_tx_antenna(&ant);
     if (ret == WM_SUCCESS)
     {
-        (void)PRINTF("Configured Tx Antenna is: %s\r\n", ant == 1 ? "Main" : "Aux");
+        (void)PRINTF("Configured Tx Antenna is: %s\r\n", ant == 1U ? "Main" : "Aux");
     }
     else
     {
@@ -542,7 +543,7 @@ static void wlan_rf_rx_antenna_set(int argc, char *argv[])
 
     ant = strtol(argv[1], NULL, 10);
 
-    if (ant != 1 && ant != 2)
+    if (ant != 1U && ant != 2U)
     {
         dump_wlan_set_rx_antenna_usage();
         return;
@@ -586,7 +587,7 @@ static void wlan_rf_rx_antenna_get(int argc, char *argv[])
     ret = wlan_get_rf_rx_antenna(&ant);
     if (ret == WM_SUCCESS)
     {
-        (void)PRINTF("Configured Rx Antenna is: %s\r\n", ant == 1 ? "Main" : "Aux");
+        (void)PRINTF("Configured Rx Antenna is: %s\r\n", ant == 1U ? "Main" : "Aux");
     }
     else
     {
@@ -628,19 +629,19 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     mod     = strtol(argv[2], NULL, 10);
     path_id = strtol(argv[3], NULL, 10);
 
-    if (power > 24)
+    if (power > 24U)
     {
         dump_wlan_set_rx_antenna_usage();
         return;
     }
 
-    if (mod != 0 && mod != 1 && mod != 2)
+    if (mod != 0U && mod != 1U && mod != 2U)
     {
         dump_wlan_set_rx_antenna_usage();
         return;
     }
 
-    if (path_id != 0 && path_id != 1 && path_id != 2)
+    if (path_id != 0U && path_id != 1U && path_id != 2U)
     {
         dump_wlan_set_rx_antenna_usage();
         return;
@@ -765,8 +766,9 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
         return;
     }
 
-    if (enable > 1 || frame_length < 1 || frame_length > 0x400 || burst_sifs_in_us > 255 || short_preamble > 1 ||
-        act_sub_ch == 2 || act_sub_ch > 3 || short_gi > 1 || adv_coding > 1 || tx_bf > 1 || gf_mode > 1 || stbc > 1)
+    if (enable > 1U || frame_length < 1 || frame_length > 0x400U || burst_sifs_in_us > 255U || short_preamble > 1U ||
+        act_sub_ch == 2 || act_sub_ch > 3 || short_gi > 1U || adv_coding > 1U || tx_bf > 1U || gf_mode > 1U ||
+        stbc > 1U)
     {
         dump_wlan_set_tx_frame_usage();
         return;
@@ -786,7 +788,7 @@ disable:
         (void)PRINTF("  Burst SIFS in us          : %d us\r\n", burst_sifs_in_us);
         (void)PRINTF("  Short Preamble            : %s\r\n", short_preamble ? "enable" : "disable");
         (void)PRINTF("  Active SubChannel         : %s\r\n",
-                     act_sub_ch == 0 ? "low" : act_sub_ch == 1 ? "upper" : "both");
+                     act_sub_ch == 0U ? "low" : act_sub_ch == 1U ? "upper" : "both");
         (void)PRINTF("  Short GI                  : %s\r\n", short_gi ? "enable" : "disable");
         (void)PRINTF("  Adv Coding                : %s\r\n", adv_coding ? "enable" : "disable");
         (void)PRINTF("  Beamforming               : %s\r\n", tx_bf ? "enable" : "disable");
