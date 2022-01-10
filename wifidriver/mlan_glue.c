@@ -3210,6 +3210,24 @@ static unsigned char process_rsn_ie(
             sizeof(uint16_t));
     }
 
+    if (akmp_count == 3 && WPA_WPA2_WEP->wpa3_sae)
+    {
+        prsn_ie->len = 20;
+        akmp_count   = 1;
+        (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
+                     (const void *)&akmp_count, sizeof(uint16_t));
+
+        if (WPA_WPA2_WEP->wpa3_sae != 0U)
+        {
+            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
+                         (const void *)wpa3_oui08, sizeof(wpa_suite));
+        }
+        (void)memcpy(
+            (void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
+            (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 4U * sizeof(wpa_suite) + sizeof(uint16_t)),
+            sizeof(uint16_t));
+    }
+
     if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
                 (const void *)wpa2_oui06, sizeof(wpa_suite)))
     {
