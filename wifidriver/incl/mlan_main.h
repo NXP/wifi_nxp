@@ -884,7 +884,7 @@ typedef struct _mrvl_wep_key_t
 } mrvl_wep_key_t;
 
 /** Maximum number of region channel */
-#define MAX_REGION_CHANNEL_NUM 2
+#define MAX_REGION_CHANNEL_NUM 2U
 
 /** Region-band mapping table */
 typedef struct _region_chan_t
@@ -2918,7 +2918,7 @@ static int wlan_count_priv_cond(mlan_adapter *pmadapter,
 {
     pmlan_private pmpriv;
     int count = 0;
-    int i;
+    t_u8 i;
 
     if (pmadapter == MNULL || count_cond == MNULL)
     {
@@ -2961,7 +2961,7 @@ static int wlan_do_task_on_privs(mlan_adapter *pmadapter,
 {
     pmlan_private pmpriv;
     int count = 0;
-    int i;
+    t_u8 i;
 
     if (pmadapter == MNULL || operation == MNULL)
     {
@@ -3007,7 +3007,7 @@ static int wlan_get_privs_by_cond(mlan_adapter *pmadapter,
 {
     pmlan_private pmpriv;
     int count = 0;
-    int i;
+    t_u8 i;
 
     if (pmadapter == MNULL || check_cond == MNULL || ppriv_list == MNULL)
     {
@@ -3058,7 +3058,7 @@ static int wlan_get_privs_by_two_cond(mlan_adapter *pmadapter,
 {
     pmlan_private pmpriv;
     int count = 0;
-    int i;
+    t_u8 i;
 
     if (pmadapter == MNULL || check_cond == MNULL || check_cond_2 == MNULL || ppriv_list == MNULL)
     {

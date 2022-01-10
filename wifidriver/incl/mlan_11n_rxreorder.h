@@ -41,13 +41,13 @@ Change log:
 /** Tid Mask used for extracting TID from BlockAckParamSet */
 #define BLOCKACKPARAM_TID_MASK 0x3CU
 /** Tid position in BlockAckParamSet */
-#define BLOCKACKPARAM_TID_POS 2
+#define BLOCKACKPARAM_TID_POS 2U
 /** WinSize Mask used for extracting WinSize from BlockAckParamSet */
 #define BLOCKACKPARAM_WINSIZE_MASK 0xffc0U
 /** WinSize Mask used for extracting WinSize from BlockAckParamSet */
 #define BLOCKACKPARAM_AMSDU_SUPP_MASK 0x1U
 /** WinSize position in BlockAckParamSet */
-#define BLOCKACKPARAM_WINSIZE_POS 6
+#define BLOCKACKPARAM_WINSIZE_POS 6U
 /** Position of TID in DelBA Param set */
 #define DELBA_TID_POS 12
 /** Position of INITIATOR in DelBA Param set */
@@ -61,18 +61,18 @@ Change log:
 /** Type: recieve delba command */
 #define TYPE_DELBA_RECEIVE 2U
 /** Set Initiator Bit */
-#define DELBA_INITIATOR(paramset) ((paramset) = ((paramset) | (1 << 11)))
+#define DELBA_INITIATOR(paramset) ((paramset) = ((paramset) | (1U << 11)))
 /** Reset Initiator Bit for recipient */
-#define DELBA_RECIPIENT(paramset) ((paramset) = ((paramset) & ~(1 << 11)))
+#define DELBA_RECIPIENT(paramset) ((paramset) = ((paramset) & ~(1U << 11)))
 /** Immediate block ack */
-#define IMMEDIATE_BLOCK_ACK 0x2
+#define IMMEDIATE_BLOCK_ACK 0x2U
 
 /** The request has been declined */
-#define ADDBA_RSP_STATUS_DECLINED 37
+#define ADDBA_RSP_STATUS_DECLINED 37U
 /** ADDBA response status : Reject */
-#define ADDBA_RSP_STATUS_REJECT 1
+#define ADDBA_RSP_STATUS_REJECT 1U
 /** ADDBA response status : Accept */
-#define ADDBA_RSP_STATUS_ACCEPT 0
+#define ADDBA_RSP_STATUS_ACCEPT 0U
 
 /** DEFAULT SEQ NUM */
 #define DEFAULT_SEQ_NUM 0xffff

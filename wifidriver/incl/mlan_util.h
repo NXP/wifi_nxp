@@ -516,7 +516,7 @@ static INLINE t_u8 util_scalar_conditional_write(t_void *pmoal_handle,
                                                  mlan_status (*moal_spin_lock)(t_void *handle, t_void *plock),
                                                  mlan_status (*moal_spin_unlock)(t_void *handle, t_void *plock))
 {
-    bool update;
+    t_u8 update;
     if (moal_spin_lock != MNULL)
     {
         moal_spin_lock(pmoal_handle, pscalar->plock);

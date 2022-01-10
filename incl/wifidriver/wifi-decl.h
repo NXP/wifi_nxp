@@ -35,7 +35,7 @@
 #include <mlan_ioctl.h>
 
 /* fixme: remove these after complete integration with mlan */
-#define MLAN_MAC_ADDR_LENGTH (6)
+#define MLAN_MAC_ADDR_LENGTH (6U)
 /** Version string buffer length */
 #define MLAN_MAX_VER_STR_LEN 128
 
@@ -46,9 +46,9 @@
 
 #ifdef CONFIG_OWE
 /** The open AP in OWE transmition Mode */
-#define OWE_TRANS_MODE_OPEN 1
+#define OWE_TRANS_MODE_OPEN 1U
 /** The security AP in OWE trsnsition Mode */
-#define OWE_TRANS_MODE_OWE 2
+#define OWE_TRANS_MODE_OWE 2U
 #endif
 
 #if 0
@@ -161,9 +161,9 @@ typedef struct
 } wifi_sta_list_t;
 
 /** BSS type : STA */
-#define BSS_TYPE_STA 0
+#define BSS_TYPE_STA 0U
 /** BSS type : UAP */
-#define BSS_TYPE_UAP 1
+#define BSS_TYPE_UAP 1U
 
 #define UAP_DEFAULT_CHANNEL 0
 
@@ -240,7 +240,7 @@ typedef struct
  * remove ifdefs, consolidate security info */
 
 /** MLAN Maximum SSID Length */
-#define MLAN_MAX_SSID_LENGTH (32)
+#define MLAN_MAX_SSID_LENGTH (32U)
 /** MLAN Maximum PASSPHRASE Length */
 #define MLAN_MAX_PASS_LENGTH (64)
 
@@ -699,8 +699,6 @@ typedef struct
     t_u8 max_tx_pwr;
 
 } wifi_sub_band_set_t;
-
-#define COUNTRY_CODE_LEN 3
 
 /**
  * Data structure for domain parameters

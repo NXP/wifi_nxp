@@ -63,7 +63,7 @@ typedef enum _WLAN_802_11_NETWORK_TYPE
 /** Frame control: Type Mgmt frame */
 #define IEEE80211_FC_MGMT_FRAME_TYPE_MASK       0x000C
 /** Frame control: SubType Mgmt frame */
-#define IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(fc) (((fc)&0x00F0) >> 4)
+#define IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(fc) (((fc)&0x00F0U) >> 4)
 #endif
 
 #ifdef PRAGMA_PACK
@@ -1115,7 +1115,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_VHTOprat_t
 } MLAN_PACK_END IEEEtypes_VHTOprat_t, *pIEEEtypes_VHTOprat_t;
 
 #define VHT_OPER_CHWD_20_40MHZ 0
-#define VHT_OPER_CHWD_80MHZ    1
+#define VHT_OPER_CHWD_80MHZ    1U
 #define VHT_OPER_CHWD_160MHZ   2
 #define VHT_OPER_CHWD_80_80MHZ 3
 
@@ -1552,13 +1552,6 @@ typedef MLAN_PACK_START struct
     wlan_user_scan_chan chan_list[WLAN_BG_SCAN_CHAN_MAX];
 } MLAN_PACK_END wlan_bgscan_cfg;
 #endif /* STA_SUPPORT */
-
-#ifdef CONFIG_OWE
-/** The open AP in OWE transmition Mode */
-#define OWE_TRANS_MODE_OPEN 1
-/** The security AP in OWE trsnsition Mode */
-#define OWE_TRANS_MODE_OWE 2
-#endif
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)
