@@ -1307,7 +1307,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
         pbss_entry->rssi = (t_s32)(*pcurrent_ptr);
         PRINTM(MINFO, "InterpretIE: RSSI=%02X\n", *pcurrent_ptr);
         pcurrent_ptr += 1;
-        bytes_left_for_current_beacon -= 1;
+        bytes_left_for_current_beacon -= 1U;
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     }
 #endif
@@ -1326,13 +1326,13 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     (void)__memcpy(pmadapter, pbss_entry->time_stamp, pcurrent_ptr, 8);
 #endif /* CONFIG_MLAN_WMSDK */
     pcurrent_ptr += 8;
-    bytes_left_for_current_beacon -= 8;
+    bytes_left_for_current_beacon -= 8U;
 
     /* Beacon interval is 2 bytes long */
     (void)__memcpy(pmadapter, &fixed_ie.beacon_interval, pcurrent_ptr, 2);
     pbss_entry->beacon_period = wlan_le16_to_cpu(fixed_ie.beacon_interval);
     pcurrent_ptr += 2;
-    bytes_left_for_current_beacon -= 2;
+    bytes_left_for_current_beacon -= 2U;
 
     /* Capability information is 2 bytes long */
     (void)__memcpy(pmadapter, &fixed_ie.capabilities, pcurrent_ptr, 2);
@@ -1341,7 +1341,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     pcap_info             = (IEEEtypes_CapInfo_t *)(void *)&fixed_ie.capabilities;
     (void)__memcpy(pmadapter, &pbss_entry->cap_info, pcap_info, sizeof(IEEEtypes_CapInfo_t));
     pcurrent_ptr += 2;
-    bytes_left_for_current_beacon -= 2;
+    bytes_left_for_current_beacon -= 2U;
 
     /* Rest of the current buffer are IE's */
     PRINTM(MINFO, "InterpretIE: IELength for this AP = %d\n", bytes_left_for_current_beacon);
@@ -1378,7 +1378,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
 #endif /* CONFIG_MLAN_WMSDK */
 
     /* Process variable IE */
-    while (bytes_left_for_current_beacon >= 2)
+    while (bytes_left_for_current_beacon >= 2U)
     {
         element_id   = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
         element_len  = *((t_u8 *)pcurrent_ptr + 1);
@@ -1754,7 +1754,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 break;
         }
 
-        pcurrent_ptr += element_len + 2;
+        pcurrent_ptr += element_len + 2U;
 
         /* Need to account for IE ID and IE Len */
         bytes_left_for_current_beacon -= (element_len + 2U);

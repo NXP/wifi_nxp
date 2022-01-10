@@ -33,12 +33,12 @@
 #define ping_e(...) wmlog_e("ping", ##__VA_ARGS__)
 #define ping_w(...) wmlog_w("ping", ##__VA_ARGS__)
 
-#define PING_ID                  0xAFAF
+#define PING_ID                  0xAFAFU
 #define PING_INTERVAL            1000
 #define PING_DEFAULT_TIMEOUT_SEC 2
 #define PING_DEFAULT_COUNT       10
 #define PING_DEFAULT_SIZE        56
-#define PING_MAX_SIZE            65507
+#define PING_MAX_SIZE            65507U
 
 /** Register Network Utility CLI commands.
  *

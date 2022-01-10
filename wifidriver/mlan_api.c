@@ -1029,9 +1029,9 @@ int wifi_set_rf_band(const uint8_t band)
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
-    if (band != 0
+    if (band != 0U
 #ifdef CONFIG_5GHz_SUPPORT
-        && band != 1
+        && band != 1U
 #endif
     )
         return -WM_FAIL;
@@ -1082,12 +1082,12 @@ int wifi_set_rf_bandwidth(const uint8_t bandwidth)
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
-    if ((bandwidth != 0)
+    if ((bandwidth != 0U)
 #ifdef CONFIG_5GHz_SUPPORT
-        && (bandwidth != 1)
+        && (bandwidth != 1U)
 #endif
 #ifdef CONFIG_11AC
-        && (bandwidth != 4)
+        && (bandwidth != 4U)
 #endif
     )
         return -WM_FAIL;
@@ -1164,7 +1164,7 @@ int wifi_set_rf_tx_cont_mode(const uint32_t enable_tx,
 {
     wifi_mfg_cmd_tx_cont_t wifi_mfg_cmd_tx_cont;
 
-    if ((enable_tx > 1) || (cw_mode > 1) || (cs_mode > 1) || (act_sub_ch == 2 || act_sub_ch > 3))
+    if ((enable_tx > 1U) || (cw_mode > 1U) || (cs_mode > 1U) || (act_sub_ch == 2U || act_sub_ch > 3U))
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_tx_cont, 0x00, sizeof(wifi_mfg_cmd_tx_cont_t));
@@ -1188,7 +1188,7 @@ int wifi_set_rf_tx_antenna(const uint8_t antenna)
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
-    if (antenna != 1 && antenna != 2)
+    if (antenna != 1U && antenna != 2U)
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -1237,7 +1237,7 @@ int wifi_set_rf_rx_antenna(const uint8_t antenna)
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
-    if (antenna != 1 && antenna != 2)
+    if (antenna != 1U && antenna != 2U)
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -1284,13 +1284,13 @@ int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t p
 {
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
-    if (power > 24)
+    if (power > 24U)
         return -WM_FAIL;
 
-    if (mod != 0 && mod != 1 && mod != 2)
+    if (mod != 0U && mod != 1U && mod != 2U)
         return -WM_FAIL;
 
-    if (path_id != 0 && path_id != 1 && path_id != 2)
+    if (path_id != 0U && path_id != 1U && path_id != 2U)
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -1322,8 +1322,9 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
 {
     wifi_mfg_cmd_tx_frame_t wifi_mfg_cmd_tx_frame;
 
-    if (enable > 1 || frame_length < 1 || frame_length > 0x400 || burst_sifs_in_us > 255 || short_preamble > 1 ||
-        act_sub_ch == 2 || act_sub_ch > 3 || short_gi > 1 || adv_coding > 1 || tx_bf > 1 || gf_mode > 1 || stbc > 1)
+    if (enable > 1U || frame_length < 1U || frame_length > 0x400U || burst_sifs_in_us > 255U || short_preamble > 1U ||
+        act_sub_ch == 2U || act_sub_ch > 3U || short_gi > 1U || adv_coding > 1U || tx_bf > 1U || gf_mode > 1U ||
+        stbc > 1U)
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_tx_frame, 0x00, sizeof(wifi_mfg_cmd_tx_frame_t));
@@ -1399,7 +1400,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     user_scan_cfg->bss_mode           = bss_mode;
     user_scan_cfg->keep_previous_scan = keep_previous_scan;
 
-    if (num_probes > 0 && num_probes <= MAX_PROBES)
+    if (num_probes > 0U && num_probes <= MAX_PROBES)
     {
         user_scan_cfg->num_probes = num_probes;
     }
@@ -2876,7 +2877,7 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit)
     cmd->command = HostCmd_CMD_CHANNEL_TRPC_CONFIG;
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
-    cmd->size    = S_DS_GEN + 2 * sizeof(t_u16) +
+    cmd->size    = S_DS_GEN + 2U * sizeof(t_u16) +
                 txpwrlimit->num_chans * (sizeof(MrvlIEtypesHeader_t) + sizeof(MrvlChannelDesc_t)) +
                 (txpwrlimit->num_chans * txpwrlimit->txpwrlimit_config->num_mod_grps * sizeof(MrvlChanTrpcEntry_t));
 

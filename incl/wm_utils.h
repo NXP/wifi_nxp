@@ -104,12 +104,12 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
     /* process the list of characters */
     for (i = 0; i < len; i++)
     {
-        if (i == (2 * max_olen))
+        if (i == (2U * max_olen))
         {
             (void)PRINTF("hexbin",
                          "Destination full. "
                          "Truncating to avoid overflow.\r\n");
-            return j + 1;
+            return j + 1U;
         }
         ch = toupper(*ibuf++); /* get next uppercase character */
 
@@ -120,7 +120,7 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
         }
         else if (ch >= 'A' && ch <= 'F')
         {
-            by = (by << 4) + ch - 'A' + 10;
+            by = (by << 4) + ch - 'A' + 10U;
         }
         else
         { /* error if not hexadecimal */
@@ -130,11 +130,11 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
         /* store a byte for each pair of hexadecimal digits */
         if ((i & 1) == 1U)
         {
-            j       = ((i + 1) / 2) - 1;
-            obuf[j] = by & 0xff;
+            j       = ((i + 1U) / 2U) - 1U;
+            obuf[j] = by & 0xffU;
         }
     }
-    return j + 1;
+    return j + 1U;
 }
 
 /**
@@ -251,7 +251,7 @@ uint32_t sample_initialise_random_seed(void);
 void get_random_sequence(void *buf, unsigned int size);
 
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-#define DUMP_WRAPAROUND 16
+#define DUMP_WRAPAROUND 16U
 
 /** Dump buffer in hex format on console
  *

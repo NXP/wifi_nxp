@@ -656,13 +656,11 @@ static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, int tid)
 }
 
 // Only Enable AMPDU for station interface
-int wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-    t_u8 tid
+int wrapper_wlan_sta_ampdu_enable(t_u8 tid)
 #else
-    void
+int wrapper_wlan_sta_ampdu_enable(void)
 #endif
-)
 {
     int ret;
 #ifdef CONFIG_WMM

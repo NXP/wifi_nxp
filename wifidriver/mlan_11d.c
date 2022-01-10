@@ -334,7 +334,7 @@ static mlan_status wlan_11d_generate_domain_info(pmlan_adapter pmadapter, parsed
             continue;
         }
 
-        if (parsed_region_chan->chan_pwr[i].chan == next_chan + 1 && parsed_region_chan->chan_pwr[i].pwr == max_pwr)
+        if (parsed_region_chan->chan_pwr[i].chan == next_chan + 1U && parsed_region_chan->chan_pwr[i].pwr == max_pwr)
         {
             next_chan++;
             no_of_parsed_chan++;
@@ -513,7 +513,7 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
         return MLAN_STATUS_FAILURE;
     }
 
-    if (parsed_region_chan->no_of_chan != 0)
+    if (parsed_region_chan->no_of_chan != 0U)
     {
         /*
          * Check if the channel number already exists in the
@@ -594,7 +594,7 @@ static t_void wlan_11d_copy_chan_power(chan_power_11d_t *chan_dst, chan_power_11
  */
 static t_void wlan_11d_sort_parsed_region_chan(parsed_region_chan_11d_t *parsed_region_chan)
 {
-    int i, j;
+    t_u8 i, j;
     chan_power_11d_t temp;
     chan_power_11d_t *pchan_power = parsed_region_chan->chan_pwr;
 
@@ -1440,7 +1440,7 @@ mlan_status wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv)
     ENTER();
 
     /* Only valid if 11D is enabled */
-    if (wlan_11d_is_enabled(pmpriv) && pmadapter->num_in_scan_table != 0)
+    if (wlan_11d_is_enabled(pmpriv) && pmadapter->num_in_scan_table != 0U)
     {
         for (idx = 0; idx < pmadapter->num_in_scan_table; idx++)
         {
@@ -1448,7 +1448,7 @@ mlan_status wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv)
 
             ret = wlan_11d_update_chan_pwr_table(pmpriv, &pmadapter->pscan_table[idx]);
 
-            if (*(pcountry_full->country_code) != 0 && (pcountry_full->len > COUNTRY_CODE_LEN))
+            if (*(pcountry_full->country_code) != 0U && (pcountry_full->len > COUNTRY_CODE_LEN))
             {
                 /* Country info found in the BSS Descriptor */
                 ret = wlan_11d_process_country_info(pmpriv, &pmadapter->pscan_table[idx]);
