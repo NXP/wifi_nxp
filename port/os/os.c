@@ -28,8 +28,6 @@
 #include <wm_os.h>
 #include <wmlog.h>
 
-WEAK int main(void);
-
 #define mainTEST_TASK_PRIORITY (tskIDLE_PRIORITY)
 #define mainTEST_DELAY         (400 / portTICK_RATE_MS)
 
