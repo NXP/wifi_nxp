@@ -2602,9 +2602,9 @@ t_u8 wlan_is_station_list_empty(mlan_private *priv);
 #endif /* CONFIG_MLAN_WMSDK */
 /** get station node */
 sta_node *wlan_get_station_entry(mlan_private *priv, t_u8 *mac);
+#ifndef CONFIG_MLAN_WMSDK
 /** delete station list */
 t_void wlan_delete_station_list(pmlan_private priv);
-#ifndef CONFIG_MLAN_WMSDK
 /** delete station entry */
 t_void wlan_delete_station_entry(mlan_private *priv, t_u8 *mac);
 /** add station entry */

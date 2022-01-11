@@ -158,6 +158,10 @@ extern mlan_status wlan_ret_wmm_ts_status(IN pmlan_private pmpriv,
 extern mlan_status wlan_ret_wmm_queue_config(IN pmlan_private pmpriv,
                                              const IN HostCmd_DS_COMMAND *resp,
                                              OUT mlan_ioctl_req *pioctl_buf);
+/** WMM QUEUE_STATS command response handler */
+extern mlan_status wlan_ret_wmm_queue_stats(IN pmlan_private pmpriv,
+                                            const IN HostCmd_DS_COMMAND *resp,
+                                            OUT mlan_ioctl_req *pioctl_buf);
 #endif /* STA_SUPPORT */
 
 #ifdef UAP_SUPPORT
@@ -168,10 +172,6 @@ t_void wlan_wmm_delete_peer_ralist(pmlan_private priv, t_u8 *mac);
 #ifdef STA_SUPPORT
 /** WMM DELTS request command handler */
 extern mlan_status wlan_cmd_wmm_delts_req(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
-/** WMM QUEUE_STATS command response handler */
-extern mlan_status wlan_ret_wmm_queue_stats(IN pmlan_private pmpriv,
-                                            const IN HostCmd_DS_COMMAND *resp,
-                                            OUT mlan_ioctl_req *pioctl_buf);
 #endif /* STA_SUPPORT */
 
 #endif /* !_MLAN_WMM_H_ */
