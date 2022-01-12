@@ -354,7 +354,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     ret = is_wifi_wmm_queue_full(pkt_prio);
     while (ret == true && !is_udp_frame && retry > 0)
     {
-        taskYIELD();
+	os_thread_sleep(os_msec_to_ticks(1));
         ret = is_wifi_wmm_queue_full(pkt_prio);
         retry--;
     }
