@@ -750,7 +750,7 @@ static void console_tick(void)
  */
 static void cli_main(os_thread_arg_t data)
 {
-    os_mutex_get(&cli_mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&cli_mutex, OS_WAIT_FOREVER);
     while (true)
     {
         int ret;
@@ -802,10 +802,10 @@ static void cli_main(os_thread_arg_t data)
             }
             (void)PRINTF(PROMPT);
             /* done with it, clean up the message (we own it) */
-            cli_mem_free(&msg);
+            (void)cli_mem_free(&msg);
         }
     }
-    os_mutex_put(&cli_mutex);
+    (void)os_mutex_put(&cli_mutex);
     os_thread_self_complete(NULL);
 }
 /* Automatically bind an input processor to the console */
@@ -840,7 +840,7 @@ static int __cli_cleanup(void)
             "Error: problem sending cli message"
             "\r\n");
     }
-    os_mutex_get(&cli_mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&cli_mutex, OS_WAIT_FOREVER);
     ret = os_queue_delete(&cli.input_queue);
     if (ret != WM_SUCCESS)
     {
@@ -850,7 +850,7 @@ static int __cli_cleanup(void)
 
     if (cli.inbuf != NULL)
     {
-        cli_mem_free(&cli.inbuf);
+        (void)cli_mem_free(&cli.inbuf);
     }
 
     ret = cli_mem_cleanup();
@@ -865,8 +865,8 @@ static int __cli_cleanup(void)
         (void)PRINTF("Warning: failed to delete thread.\r\n");
         final = -WM_FAIL;
     }
-    os_mutex_put(&cli_mutex);
-    os_mutex_delete(&cli_mutex);
+    (void)os_mutex_put(&cli_mutex);
+    (void)os_mutex_delete(&cli_mutex);
     cli.initialized = false;
     return final;
 }
@@ -901,7 +901,7 @@ int cli_start(void)
         return -WM_FAIL;
     }
 
-    ret = os_queue_create(&cli.input_queue, "cli_queue", (int) sizeof(void *), &cli.in_queue_data);
+    ret = os_queue_create(&cli.input_queue, "cli_queue", (int)sizeof(void *), &cli.in_queue_data);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create cli queue: %d\r\n", ret);
@@ -1153,7 +1153,7 @@ int cli_init(void)
     cli.in_queue_data = queue_data;
 
     /* add our built-in commands */
-    if (cli_register_commands(&built_ins[0], (int) (sizeof(built_ins) / sizeof(struct cli_command))) != 0)
+    if (cli_register_commands(&built_ins[0], (int)(sizeof(built_ins) / sizeof(struct cli_command))) != 0)
     {
         return -WM_FAIL;
     }

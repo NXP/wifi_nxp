@@ -151,7 +151,7 @@ static inline int net_get_sock_error(int sock)
 static inline uint32_t net_inet_aton(const char *cp)
 {
     struct in_addr addr;
-    inet_aton(cp, ((void *)&addr));
+    (void)inet_aton(cp, ((void *)&addr));
     return addr.s_addr;
 }
 
@@ -191,7 +191,7 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
     struct ip4_addr saddr;
     saddr.addr = addr;
     /* No length, sigh! */
-    strcpy(cp, inet_ntoa(saddr));
+    (void)strcpy(cp, inet_ntoa(saddr));
 }
 
 /** Check whether buffer is IPv4 or IPV6 packet type

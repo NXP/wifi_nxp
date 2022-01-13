@@ -167,7 +167,7 @@ static int ping(unsigned int count, unsigned short size, unsigned int r_timeout,
     }
 
     /* Get the source IP address */
-    wlan_get_ipv4_addr(&src_ip);
+    (void)wlan_get_ipv4_addr(&src_ip);
 
     /* Ping size is: size of ICMP header + size of payload */
     ping_size = sizeof(struct icmp_echo_hdr) + size;
@@ -237,7 +237,7 @@ static int ping(unsigned int count, unsigned short size, unsigned int r_timeout,
     os_mem_free(iecho);
     display_ping_result((ip_addr_t *)(void *)&src_ip, count, recvd);
 end:
-    close(s);
+    (void)close(s);
     return ret;
 }
 
@@ -300,7 +300,7 @@ void cmd_ping(int argc, char **argv)
      * success, zero on failure */
     if (inet_aton(argv[cli_optind], &addr) != 0)
     {
-        ping(count, size, timeout, &addr);
+        (void)ping(count, size, timeout, &addr);
         return;
     }
 end:

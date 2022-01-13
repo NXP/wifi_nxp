@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the support for network utility iperf
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -445,12 +445,12 @@ static void iperf_test_start(void *arg)
     if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
     {
         /* Reducing udp Tx timer interval for rx to be served */
-        xTimerChangePeriod(timer, os_msec_to_ticks(4), 100);
+        (void)xTimerChangePeriod(timer, os_msec_to_ticks(4), 100);
     }
     else
     {
         /* Returning original timer settings of 1 ms interval*/
-        xTimerChangePeriod(timer, 1 / portTICK_PERIOD_MS, 100);
+        (void)xTimerChangePeriod(timer, 1 / portTICK_PERIOD_MS, 100);
     }
 
     if (ctx->server_mode)
@@ -514,7 +514,7 @@ static void iperf_test_start(void *arg)
 #else
                 wifi_get_ipv4_multicast_mac(ntohl(server_address.addr), mcast_mac);
 #endif
-                wifi_add_mcast_filter(mcast_mac);
+                (void)wifi_add_mcast_filter(mcast_mac);
                 mcast_mac_valid = true;
             }
 #ifdef CONFIG_IPV6
@@ -593,7 +593,7 @@ static void timer_poll_udp_client(TimerHandle_t timer)
 {
     LWIP_UNUSED_ARG(timer);
 
-    tcpip_try_callback(poll_udp_client, NULL);
+    (void)tcpip_try_callback(poll_udp_client, NULL);
 }
 
 static void TESTAbort(void)
@@ -607,7 +607,7 @@ static void TCPServer(void)
     ctx.tcp         = true;
     ctx.client_type = LWIPERF_CLIENT;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void TCPClient(void)
@@ -616,7 +616,7 @@ static void TCPClient(void)
     ctx.tcp         = true;
     ctx.client_type = LWIPERF_CLIENT;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void TCPClientDual(void)
@@ -625,7 +625,7 @@ static void TCPClientDual(void)
     ctx.tcp         = true;
     ctx.client_type = LWIPERF_DUAL;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void TCPClientTradeOff(void)
@@ -634,7 +634,7 @@ static void TCPClientTradeOff(void)
     ctx.tcp         = true;
     ctx.client_type = LWIPERF_TRADEOFF;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void UDPServer(void)
@@ -643,7 +643,7 @@ static void UDPServer(void)
     ctx.tcp         = false;
     ctx.client_type = LWIPERF_CLIENT;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void UDPClient(void)
@@ -652,7 +652,7 @@ static void UDPClient(void)
     ctx.tcp         = false;
     ctx.client_type = LWIPERF_CLIENT;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void UDPClientDual(void)
@@ -661,7 +661,7 @@ static void UDPClientDual(void)
     ctx.tcp         = false;
     ctx.client_type = LWIPERF_DUAL;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void UDPClientTradeOff(void)
@@ -670,7 +670,7 @@ static void UDPClientTradeOff(void)
     ctx.tcp         = false;
     ctx.client_type = LWIPERF_TRADEOFF;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 /* Display the usage of iperf */
@@ -736,7 +736,7 @@ void cmd_iperf(int argc, char **argv)
 
     if (mcast_mac_valid)
     {
-        wifi_remove_mcast_filter(mcast_mac);
+        (void)wifi_remove_mcast_filter(mcast_mac);
         mcast_mac_valid = false;
     }
 
@@ -779,7 +779,7 @@ void cmd_iperf(int argc, char **argv)
 
             if (!info.chost && argv[arg] != NULL)
             {
-                strncpy(ip_addr, argv[arg], strlen(argv[arg]));
+                (void)strncpy(ip_addr, argv[arg], strlen(argv[arg]));
 
                 arg += 1;
                 info.chost = 1;
@@ -792,7 +792,7 @@ void cmd_iperf(int argc, char **argv)
 
             if (!info.bhost && argv[arg] != NULL)
             {
-                inet_aton(argv[arg], &bind_address);
+                (void)inet_aton(argv[arg], &bind_address);
 
                 if (IP_IS_V4(&bind_address) != 0)
                     info.bhost = 1;
@@ -863,7 +863,7 @@ void cmd_iperf(int argc, char **argv)
     else
     {
 #endif
-        inet_aton(ip_addr, ip_2_ip4(&server_address));
+        (void)inet_aton(ip_addr, ip_2_ip4(&server_address));
 #ifdef CONFIG_IPV6
         server_address.type = IPADDR_TYPE_V4;
     }

@@ -117,7 +117,8 @@ static char *parse_questions(unsigned int num_questions, uint8_t *pos, int *foun
         {
             for (i = 0; i < dnss.count_qnames; i++)
             {
-                *found = (int)(!strncmp(dnss.list_qnames[i].qname, (char *)pos, (size_t)(base + SERVER_BUFFER_SIZE - pos)));
+                *found =
+                    (int)(!strncmp(dnss.list_qnames[i].qname, (char *)pos, (size_t)(base + SERVER_BUFFER_SIZE - pos)));
                 if (*found != 0)
                 {
                     break;
@@ -216,7 +217,7 @@ int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
     hdr->answer_rrs     = 0; /* number of resource records in answer section */
     hdr->authority_rrs  = 0;
     hdr->additional_rrs = 0;
-    SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
+    (void)SEND_RESPONSE(dnss.dnssock, (struct sockaddr *)(void *)fromaddr, msg, outp - msg);
 
     return -WM_E_DHCPD_DNS_IGNORE;
 }
@@ -280,7 +281,7 @@ void dns_process_packet(void)
     if (len > 0)
     {
         dhcp_d("recved msg on dns sock len: %d", len);
-        dhcp_dns_server_handler(dhcps.msg, len, &caddr);
+        (void)dhcp_dns_server_handler(dhcps.msg, len, &caddr);
     }
 }
 

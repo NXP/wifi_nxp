@@ -405,7 +405,7 @@ static int process_dhcp_message(char *msg, int len)
                      */
                     if (ac_not_full())
                     {
-                        ac_add(hdr->chaddr, dhcps.client_ip);
+                        (void)ac_add(hdr->chaddr, dhcps.client_ip);
                     }
                     else
                     {
@@ -434,7 +434,7 @@ static int process_dhcp_message(char *msg, int len)
         ret = make_response(msg, (enum dhcp_message_type)response_type);
         ret = SEND_RESPONSE(dhcps.sock, (struct sockaddr *)(void *)&dhcps.baddr, msg, ret);
         if (response_type == DHCP_MESSAGE_ACK)
-            send_gratuitous_arp(dhcps.my_ip);
+            (void)send_gratuitous_arp(dhcps.my_ip);
         return WM_SUCCESS;
     }
 
@@ -493,7 +493,7 @@ void dhcp_server(os_thread_arg_t data)
     if (setsockopt(ctrl, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof(one)) == -1)
     {
         dhcp_e("failed to set SO_REUSEADDR");
-        net_close(ctrl);
+        (void)net_close(ctrl);
         goto done;
     }
     ctrl_listen.sin_family      = PF_INET;
@@ -509,7 +509,7 @@ void dhcp_server(os_thread_arg_t data)
         os_thread_self_complete(NULL);
     }
 
-    os_mutex_get(&dhcpd_mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&dhcpd_mutex, OS_WAIT_FOREVER);
 
     while (true)
     {
@@ -555,7 +555,7 @@ void dhcp_server(os_thread_arg_t data)
             if (len > 0)
             {
                 dhcp_d("recved msg on dhcp sock len: %d", len);
-                process_dhcp_message(dhcps.msg, len);
+                (void)process_dhcp_message(dhcps.msg, len);
             }
         }
 
@@ -565,7 +565,7 @@ void dhcp_server(os_thread_arg_t data)
 done:
     dhcp_clean_sockets();
     dns_free_allocations();
-    os_mutex_put(&dhcpd_mutex);
+    (void)os_mutex_put(&dhcpd_mutex);
     os_thread_self_complete(NULL);
 }
 
@@ -576,7 +576,7 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
     struct ifreq req;
 
     (void)memset(req.ifr_name, 0, sizeof(req.ifr_name));
-    strncpy(req.ifr_name, "ua2", 3);
+    (void)strncpy(req.ifr_name, "ua2", 3);
 
     int sock = net_socket(PF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
@@ -595,18 +595,18 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
     if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) == -1)
     {
         dhcp_e("failed to set SO_BROADCAST");
-        net_close(sock);
+        (void)net_close(sock);
         return -WM_FAIL;
     }
 
     if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, &req, sizeof(struct ifreq)) == -1)
     {
         dhcp_e("failed to set SO_BINDTODEVICE");
-        net_close(sock);
+        (void)net_close(sock);
         return -WM_FAIL;
     }
 
-    net_socket_blocking(sock, NET_BLOCKING_OFF);
+    (void)net_socket_blocking(sock, NET_BLOCKING_OFF);
 
     ret = net_bind(sock, (struct sockaddr *)(void *)address, sizeof(struct sockaddr));
 
@@ -614,7 +614,7 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
     {
         dhcp_e("failed to bind server socket");
         dhcp_e("socket err: %d", net_get_sock_error(sock));
-        net_close(sock);
+        (void)net_close(sock);
         return -WM_FAIL;
     }
     return sock;
@@ -668,7 +668,7 @@ int dhcp_server_init(void *intrfc_handle)
     return WM_SUCCESS;
 
 out:
-    os_mutex_delete(&dhcpd_mutex);
+    (void)os_mutex_delete(&dhcpd_mutex);
     return ret;
 }
 
@@ -707,7 +707,7 @@ static int send_ctrl_msg(const char *msg)
     else
         ret = WM_SUCCESS;
 
-    net_close(ctrl_tmp);
+    (void)net_close(ctrl_tmp);
     return ret;
 }
 
@@ -764,8 +764,8 @@ static int send_gratuitous_arp(uint32_t ip)
 
     (void)memset(pkt.targ_hw_addr, 0xff, ETH_HW_ADDR_LEN);
     (void)memset(pkt.rcpt_hw_addr, 0xff, ETH_HW_ADDR_LEN);
-    wlan_get_mac_address(pkt.sndr_hw_addr);
-    wlan_get_mac_address(pkt.src_hw_addr);
+    (void)wlan_get_mac_address(pkt.sndr_hw_addr);
+    (void)wlan_get_mac_address(pkt.src_hw_addr);
     sock = net_socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
     {
@@ -777,11 +777,11 @@ static int send_gratuitous_arp(uint32_t ip)
     if (sendto(sock, (char *)&pkt, sizeof(pkt), 0, (struct sockaddr *)(void *)&to_addr, sizeof(to_addr)) < 0)
     {
         dhcp_e("Failed to send Gratuitous ARP");
-        net_close(sock);
+        (void)net_close(sock);
         return -WM_E_DHCPD_ARP_SEND;
     }
     dhcp_d("Gratuitous ARP sent");
-    net_close(sock);
+    (void)net_close(sock);
     return WM_SUCCESS;
 }
 

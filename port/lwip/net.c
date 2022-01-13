@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides network porting code
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -171,10 +171,10 @@ int net_wlan_init(void)
     {
         net_ipv4stack_init();
 
-        wifi_register_data_input_callback(&handle_data_packet);
-        wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
-        wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
-        wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
+        (void)wifi_register_data_input_callback(&handle_data_packet);
+        (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
+        (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
+        (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
 
         ip_2_ip4(&g_mlan.ipaddr)->addr = INADDR_ANY;
         ret = netifapi_netif_add(&g_mlan.netif, ip_2_ip4(&g_mlan.ipaddr), ip_2_ip4(&g_mlan.ipaddr),
@@ -214,7 +214,7 @@ int net_wlan_init(void)
         net_l("Initialized TCP/IP networking stack");
     }
 
-    wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     return WM_SUCCESS;
 }
 
@@ -313,15 +313,15 @@ static void wm_netif_status_callback(struct netif *n)
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
     {
-        wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
     }
 }
 
 static int check_iface_mask(void *handle, uint32_t ipaddr)
 {
     uint32_t interface_ip, interface_mask;
-    net_get_if_ip_addr(&interface_ip, handle);
-    net_get_if_ip_mask(&interface_mask, handle);
+    (void)net_get_if_ip_addr(&interface_ip, handle);
+    (void)net_get_if_ip_mask(&interface_mask, handle);
     if (interface_ip > 0)
     {
         if ((interface_ip & interface_mask) == (ipaddr & interface_mask))
@@ -394,19 +394,19 @@ void *net_get_wfd_handle(void)
 void net_interface_up(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
-    netifapi_netif_set_up(&if_handle->netif);
+    (void)netifapi_netif_set_up(&if_handle->netif);
 }
 
 void net_interface_down(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
-    netifapi_netif_set_down(&if_handle->netif);
+    (void)netifapi_netif_set_down(&if_handle->netif);
 }
 
 void net_interface_dhcp_stop(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
-    netifapi_dhcp_release_and_stop(&if_handle->netif);
+    (void)netifapi_dhcp_release_and_stop(&if_handle->netif);
     netif_set_status_callback(&if_handle->netif, NULL);
 }
 
@@ -431,7 +431,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
                                    "uap",
 #endif
           (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
-    netifapi_netif_set_down(&if_handle->netif);
+    (void)netifapi_netif_set_down(&if_handle->netif);
 
     /* De-register previously registered DHCP Callback for correct
      * address configuration.
@@ -447,16 +447,16 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     }
 #endif
     if (if_handle == &g_mlan)
-        netifapi_netif_set_default(&if_handle->netif);
+        (void)netifapi_netif_set_default(&if_handle->netif);
     switch (addr->ipv4.addr_type)
     {
         case ADDR_TYPE_STATIC:
             ip_2_ip4(&(if_handle->ipaddr))->addr = addr->ipv4.address;
             ip_2_ip4(&(if_handle->nmask))->addr  = addr->ipv4.netmask;
             ip_2_ip4(&(if_handle->gw))->addr     = addr->ipv4.gw;
-            netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
-                                    ip_2_ip4(&if_handle->gw));
-            netifapi_netif_set_up(&if_handle->netif);
+            (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
+                                          ip_2_ip4(&if_handle->gw));
+            (void)netifapi_netif_set_up(&if_handle->netif);
             break;
 
         case ADDR_TYPE_DHCP:
@@ -465,11 +465,11 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             (void)memset(&if_handle->ipaddr, 0, sizeof(ip_addr_t));
             (void)memset(&if_handle->nmask, 0, sizeof(ip_addr_t));
             (void)memset(&if_handle->gw, 0, sizeof(ip_addr_t));
-            netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
-                                    ip_2_ip4(&if_handle->gw));
-            netifapi_netif_set_up(&if_handle->netif);
+            (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
+                                          ip_2_ip4(&if_handle->gw));
+            (void)netifapi_netif_set_up(&if_handle->netif);
             netif_set_status_callback(&if_handle->netif, wm_netif_status_callback);
-            netifapi_dhcp_start(&if_handle->netif);
+            (void)netifapi_dhcp_start(&if_handle->netif);
             break;
         case ADDR_TYPE_LLA:
             /* For dhcp, instead of netifapi_netif_set_up, a
@@ -486,7 +486,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 #endif
     )
     {
-        wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
         /* XXX For DHCP, the above event will only indicate that the
          * DHCP address obtaining process has started. Once the DHCP
@@ -500,7 +500,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 #endif
     )
     {
-        wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     }
     else
     { /* Do Nothing */
