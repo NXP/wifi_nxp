@@ -2,7 +2,7 @@
  *
  *  @brief This file provides CLI based APIs for the DHCP Server
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -54,7 +54,7 @@ int dhcp_server_start(void *intrfc_handle)
     ret = os_thread_create(&dhcpd_thread, "dhcp-server", dhcp_server, NULL, &dhcp_stack, OS_PRIO_3);
     if (ret != 0)
     {
-        dhcp_free_allocations();
+        (void)dhcp_free_allocations();
         return -WM_E_DHCPD_THREAD_CREATE;
     }
 
