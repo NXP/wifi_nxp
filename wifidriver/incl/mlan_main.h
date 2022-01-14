@@ -381,7 +381,7 @@ extern t_u32 drvdbg;
 /** Do nothing */
 #define wlan_le64_to_cpu(x) x
 /** Do nothing */
-#define wlan_cpu_to_le16(x) x
+#define wlan_cpu_to_le16(x) (t_u16)(x)
 /** Do nothing */
 #define wlan_cpu_to_le32(x) x
 /** Do nothing */
@@ -1068,7 +1068,7 @@ struct _mlan_private
     /** Current packet filter */
     t_u16 curr_pkt_filter;
     /** Infrastructure mode */
-    t_u32 bss_mode;
+    mlan_bss_mode bss_mode;
 
     /** Tx packet control */
     t_u32 pkt_tx_ctrl;
@@ -2432,13 +2432,13 @@ mlan_status wlan_handle_event_ext_scan_report(IN mlan_private *pmpriv, IN t_u8 *
 #endif
 
 /** check network compatibility */
-t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN t_u32 mode);
+t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN mlan_bss_mode mode);
 
 /** Find an SSID in a list */
-t_s32 wlan_find_ssid_in_list(IN pmlan_private pmpriv, IN mlan_802_11_ssid *ssid, IN t_u8 *bssid, IN t_u32 mode);
+t_s32 wlan_find_ssid_in_list(IN pmlan_private pmpriv, IN mlan_802_11_ssid *ssid, IN t_u8 *bssid, IN mlan_bss_mode mode);
 
 /** Find a BSSID in a list */
-t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN t_u32 mode);
+t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_bss_mode mode);
 
 /** Compare two SSIDs */
 t_s32 wlan_ssid_cmp(IN pmlan_adapter pmadapter, IN mlan_802_11_ssid *ssid1, IN mlan_802_11_ssid *ssid2);
@@ -2492,9 +2492,15 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 ht_info)
 t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_info, t_u8 ext_rate_info);
 #endif
 /** Get active data rates */
-t_u32 wlan_get_active_data_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config_bands, WLAN_802_11_RATES rates);
+t_u32 wlan_get_active_data_rates(mlan_private *pmpriv,
+                                 mlan_bss_mode bss_mode,
+                                 t_u8 config_bands,
+                                 WLAN_802_11_RATES rates);
 /** Get supported data rates */
-t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 config_bands, WLAN_802_11_RATES rates);
+t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
+                               mlan_bss_mode bss_mode,
+                               t_u16 config_bands,
+                               WLAN_802_11_RATES rates);
 #ifndef CONFIG_MLAN_WMSDK
 /** Convert data rate to index */
 t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate);
@@ -2786,7 +2792,7 @@ static t_u32 wlan_strlen(const t_s8 *str)
 {
     t_u32 i;
 
-    for (i = 0; str[i] != 0; i++)
+    for (i = 0; str[i] != '\0'; i++)
     {
     }
     return i;

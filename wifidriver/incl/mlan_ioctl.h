@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the IOCTL data structures and APIs.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -451,12 +451,12 @@ typedef struct _mlan_ds_scan
 /** BSS Configuration Group */
 /*-----------------------------------------------------------------*/
 /** Enumeration for BSS mode */
-enum _mlan_bss_mode
+typedef enum _mlan_bss_mode
 {
     MLAN_BSS_MODE_INFRA = 1,
     MLAN_BSS_MODE_IBSS,
     MLAN_BSS_MODE_AUTO
-};
+} mlan_bss_mode;
 
 /** Maximum key length */
 #define MLAN_MAX_KEY_LENGTH 32U
@@ -1349,7 +1349,7 @@ typedef struct _mlan_ver_ext
 typedef struct _mlan_bss_info
 {
     /** BSS mode */
-    t_u32 bss_mode;
+    mlan_bss_mode bss_mode;
     /** SSID */
     mlan_802_11_ssid ssid;
     /** Table index */
@@ -1931,7 +1931,7 @@ typedef struct _mlan_band_data_rate
     /** Band configuration */
     t_u8 config_bands;
     /** BSS mode (Infra or IBSS) */
-    t_u8 bss_mode;
+    mlan_bss_mode bss_mode;
 } mlan_band_data_rate;
 
 /** Type definition of mlan_data_rate for MLAN_OID_GET_DATA_RATE */

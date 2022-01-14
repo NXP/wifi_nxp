@@ -1607,7 +1607,7 @@ typedef struct _BSSDescriptor_t
     WLAN_802_11_NETWORK_TYPE network_type_use;
 
     /** Network infrastructure mode */
-    t_u32 bss_mode;
+    mlan_bss_mode bss_mode;
 
     /** Network supported rates */
     WLAN_802_11_RATES supported_rates;
