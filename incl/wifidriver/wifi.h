@@ -350,41 +350,6 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc);
  */
 int wifi_get_scan_result_count(unsigned *count);
 
-int wifi_deauthenticate(uint8_t *bssid);
-
-int wifi_uap_start(int type,
-                   char *ssid,
-                   uint8_t *mac_addr,
-                   int security,
-                   char *passphrase,
-                   char *password,
-                   int channel,
-                   wifi_scan_chan_list_t scan_chan_list,
-                   bool mfpc,
-                   bool mfpr);
-
-int wifi_uap_stop(int type);
-
-void wifi_uap_set_beacon_period(const t_u16 beacon_period);
-void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
-int wifi_uap_ctrl_deauth(bool enable);
-void wifi_uap_set_ecsa(void);
-void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
-
-int wifi_get_uap_max_clients(unsigned int *max_sta_num);
-int wifi_set_uap_max_clients(unsigned int *max_sta_num);
-
-int wifi_get_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len);
-int wifi_set_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int buf_len);
-int wifi_clear_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index);
-
-int wifi_send_enable_supplicant(int mode, const char *ssid);
-int wifi_send_clear_wpa_psk(int mode, const char *ssid);
-int wifi_send_add_wpa_psk(int mode, char *ssid, char *passphrase, unsigned int len);
-int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned int len);
-int wifi_send_get_wpa_pmk(int mode, char *ssid);
-int wifi_send_add_wpa_pmk(int mode, char *bssid, char *ssid, char *pmk, unsigned int len);
-
 /**
  * Returns the current STA list connected to our uAP
  *
@@ -570,12 +535,9 @@ int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time);
 void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer);
 enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 *ps_event, t_u16 *action);
 
-int wifi_uap_tx_power_getset(uint8_t action, uint8_t *tx_power_dbm);
 int wifi_uap_rates_getset(uint8_t action, char *rates, uint8_t num_rates);
-int wifi_uap_mcbc_rate_getset(uint8_t action, uint16_t *mcbc_rate);
 int wifi_uap_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer);
 int wifi_uap_ps_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer);
-int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_timer);
 typedef enum
 {
     REG_MAC = 1,
@@ -586,7 +548,6 @@ typedef enum
 int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint32_t *value);
 
 int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
-int wifi_get_eeprom_data(uint32_t offset, uint32_t byte_count, uint8_t *buf);
 /*
  * This function is supposed to be called after scan is complete from wlc
  * manager.
@@ -678,12 +639,6 @@ int wifi_get_uap_channel(int *channel);
  * @return WM_SUCCESS on success or error code.
  *
  */
-int wifi_uap_enable_11d(void);
-int wifi_uap_enable_11d_support(void);
-int wifi_uap_set_domain_params(wifi_domain_param_t *dp);
-int wifi_uap_set_params(void);
-bool wifi_11d_is_channel_allowed(int channel);
-wifi_sub_band_set_t *get_sub_band_from_country(int country, int *nr_sb);
 int wifi_enable_11d_support(void);
 int wifi_enable_11d_support_APIs(void);
 int wifi_set_domain_params(wifi_domain_param_t *dp);
@@ -699,16 +654,6 @@ int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 int wifi_get_tx_power(t_u32 *power_level);
 int wifi_set_tx_power(int power_level);
-int wifi_set_smart_mode_cfg(char *ssid,
-                            int beacon_period,
-                            wifi_chan_list_param_set_t *chan_list,
-                            uint8_t *smc_start_addr,
-                            uint8_t *smc_end_addr,
-                            uint16_t filter_type,
-                            int smc_frame_filter_len,
-                            uint8_t *smc_frame_filter,
-                            int custom_ie_len,
-                            uint8_t *custom_ie);
 int wifi_get_smart_mode_cfg(void);
 int wifi_start_smart_mode(void);
 int wifi_stop_smart_mode(void);
@@ -754,8 +699,6 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #ifdef CONFIG_WPA2_ENTP
 void wifi_scan_enable_wpa2_enterprise_ap_only();
 #endif
-
-int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channel_t *remain_on_channel);
 
 int wifi_set_chanlist(wifi_chanlist_t *chanlist);
 
