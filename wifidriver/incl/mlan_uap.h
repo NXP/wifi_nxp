@@ -117,4 +117,42 @@ t_void *wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
 mlan_status wlan_ops_uap_init_cmd(IN t_void *priv, IN t_u8 first_bss);
 #endif /* CONFIG_MLAN_WMSDK */
 
+int wifi_uap_enable_11d_support();
+
+int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_timer);
+
+int wifi_uap_mcbc_rate_getset(uint8_t action, uint16_t *mcbc_rate);
+
+int wifi_uap_tx_power_getset(uint8_t action, uint8_t *tx_power_dbm);
+
+int wifi_set_uap_max_clients(unsigned int *max_sta_num);
+
+int wifi_get_uap_max_clients(unsigned int *max_sta_num);
+
+void wifi_uap_set_ecsa(void);
+
+int wifi_uap_ctrl_deauth(bool enable);
+
+int wifi_uap_stop(int type);
+
+void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
+
+int wifi_uap_start(int type,
+                   char *ssid,
+                   uint8_t *mac_addr,
+                   int security,
+                   char *passphrase,
+                   char *password,
+                   int channel,
+                   wifi_scan_chan_list_t scan_chan_list,
+                   bool mfpc,
+                   bool mfpr);
+
+void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
+
+int wifi_uap_enable_11d();
+
+int wifi_uap_set_domain_params(wifi_domain_param_t *dp);
+
+int wifi_uap_set_params();
 #endif /* _MLAN_UAP_H_ */
