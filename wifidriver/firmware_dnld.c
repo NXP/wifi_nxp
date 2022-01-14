@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides firmware download related API
  *
- *  Copyright 2021 NXP
+ *  Copyright 2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -65,9 +65,9 @@ static int wlan_card_fw_status(t_u16 *dat)
 {
     uint32_t resp = 0;
 
-    sdio_drv_creg_read(CARD_FW_STATUS0_REG, 1, &resp);
+    (void)sdio_drv_creg_read(CARD_FW_STATUS0_REG, 1, &resp);
     *dat = resp & 0xff;
-    sdio_drv_creg_read(CARD_FW_STATUS1_REG, 1, &resp);
+    (void)sdio_drv_creg_read(CARD_FW_STATUS1_REG, 1, &resp);
     *dat |= (resp & 0xff) << 8;
 
     return true;
@@ -80,7 +80,7 @@ static bool wlan_card_ready_wait(t_u32 poll)
 
     for (i = 0; i < poll; i++)
     {
-        wlan_card_fw_status(&dat);
+        (void)wlan_card_fw_status(&dat);
         if (dat == FIRMWARE_READY)
         {
             wifi_io_d("Firmware Ready");
@@ -101,7 +101,7 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
     uint32_t outbuf_len;
 
     (void)memset(outbuf, 0, SDIO_OUTBUF_LEN);
-    wifi_get_sdio_outbuf(&outbuf_len);
+    (void)wifi_get_sdio_outbuf(&outbuf_len);
 
     do
     {
@@ -164,7 +164,7 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
             (void)memcpy((void *)outbuf, (const void *)(wlanfw + offset), txlen);
         }
 
-        sdio_drv_write(ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+        (void)sdio_drv_write(ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
         offset += txlen;
 
         // (void)PRINTF("  offset %d\r\n", offset);

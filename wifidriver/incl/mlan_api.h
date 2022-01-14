@@ -212,8 +212,8 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
 {
     if (element_id == RSN_IE)
     {
-        check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
-                               pbss_entry->rsn_ie_buff_len - 10);
+        (void)check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
+                                     pbss_entry->rsn_ie_buff_len - 10);
     }
     return MLAN_STATUS_SUCCESS;
 }
