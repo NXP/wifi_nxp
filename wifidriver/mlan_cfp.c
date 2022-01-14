@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN client mode channel, frequency and power related code
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -983,7 +983,7 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     }
 #endif
 #ifdef CONFIG_11N
-    if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HT)
+    if ((tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
     {
         /* HT rate */
         /* 20M: bw=0, 40M: bw=1 */
@@ -1072,7 +1072,10 @@ t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate)
  *
  *  @return                 The number of Rates
  */
-t_u32 wlan_get_active_data_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u8 config_bands, WLAN_802_11_RATES rates)
+t_u32 wlan_get_active_data_rates(mlan_private *pmpriv,
+                                 mlan_bss_mode bss_mode,
+                                 t_u8 config_bands,
+                                 WLAN_802_11_RATES rates)
 {
     t_u32 k;
 
@@ -1453,7 +1456,10 @@ int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size)
  *
  *  @return                 The number of Rates
  */
-t_u32 wlan_get_supported_rates(mlan_private *pmpriv, t_u32 bss_mode, t_u16 config_bands, WLAN_802_11_RATES rates)
+t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
+                               mlan_bss_mode bss_mode,
+                               t_u16 config_bands,
+                               WLAN_802_11_RATES rates)
 {
     t_u32 k = 0;
 

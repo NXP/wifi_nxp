@@ -644,8 +644,8 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
 
             /* Stop the loop if the *current* channel is in the 1,6,11 set and
                we are not filtering on a BSSID or SSID. */
-            if (!filtered_scan && (ptmp_chan_list->chan_number == 1 || ptmp_chan_list->chan_number == 6 ||
-                                   ptmp_chan_list->chan_number == 11))
+            if (!filtered_scan && (ptmp_chan_list->chan_number == 1U || ptmp_chan_list->chan_number == 6U ||
+                                   ptmp_chan_list->chan_number == 11U))
             {
                 done_early = MTRUE;
             }
@@ -656,8 +656,8 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
             /* Stop the loop if the *next* channel is in the 1,6,11 set.  This
                will cause it to be the only channel scanned on the next
                interation */
-            if (!filtered_scan && (ptmp_chan_list->chan_number == 1 || ptmp_chan_list->chan_number == 6 ||
-                                   ptmp_chan_list->chan_number == 11))
+            if (!filtered_scan && (ptmp_chan_list->chan_number == 1U || ptmp_chan_list->chan_number == 6U ||
+                                   ptmp_chan_list->chan_number == 11U))
             {
                 done_early = MTRUE;
             }
@@ -1094,7 +1094,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         }
 
         /* Check if we are only scanning the current channel */
-        if ((chan_idx == 1) &&
+        if ((chan_idx == 1U) &&
             (puser_scan_in->chan_list[0].chan_number == pmpriv->curr_bss_params.bss_descriptor.channel))
         {
             *pscan_current_only = MTRUE;
@@ -2491,7 +2491,7 @@ static mlan_status wlan_scan_delete_ssid_table_entry(IN mlan_private *pmpriv, IN
  *
  *  @return        Index in ScanTable, or negative value if error
  */
-t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN t_u32 mode)
+t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN mlan_bss_mode mode)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     BSSDescriptor_t *pbss_desc;
@@ -4131,7 +4131,7 @@ mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAN
  *
  *  @return             index in BSSID list or < 0 if error
  */
-t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid, IN t_u8 *bssid, IN t_u32 mode)
+t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid, IN t_u8 *bssid, IN mlan_bss_mode mode)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1, j;
@@ -4211,7 +4211,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
  *
  *  @return             index in BSSID list or < 0 if error
  */
-t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN t_u32 mode)
+t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_bss_mode mode)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1;

@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -516,7 +516,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** HW_SPEC Dot11nDevCap : Rx LDPC support */
 #define ISSUPP_RXLDPC(Dot11nDevCap) ((Dot11nDevCap)&MBIT(22))
 /** HW_SPEC Dot11nDevCap : Delayed ACK */
-#define GET_DELAYEDBACK(Dot11nDevCap) ((((Dot11nDevCap) >> 20) & 0x03))
+#define GET_DELAYEDBACK(Dot11nDevCap) ((((Dot11nDevCap) >> 20) & 0x03U))
 /** HW_SPEC Dot11nDevCap : Immediate ACK */
 #define GET_IMMEDIATEBACK(Dot11nDevCap) ((((Dot11nDevCap) >> 18) & 0x03))
 /** HW_SPEC Dot11nDevCap : Channel BW support @ 40Mhz  support */
@@ -557,7 +557,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** DevMCSSupported : Tx MCS supported */
 #define GET_TXMCSSUPP(DevMCSSupported) ((DevMCSSupported) >> 4)
 /** DevMCSSupported : Rx MCS supported */
-#define GET_RXMCSSUPP(DevMCSSupported) ((DevMCSSupported)&0x0f)
+#define GET_RXMCSSUPP(DevMCSSupported) ((DevMCSSupported)&0x0fU)
 
 /** GET HTCapInfo : Supported Channel BW */
 #define GETHT_SUPPCHANWIDTH(HTCapInfo) ((HTCapInfo)&MBIT(1))
@@ -806,9 +806,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define SET_OPER_MODE_1NSS(oper_mode) ((oper_mode) &= ~(MBIT(4) | MBIT(5) | MBIT(6)))
 
 #define GET_VHTMCS(MCSMapSet)                ((MCSMapSet)&0xFFFF)
-#define GET_VHTNSSMCS(MCSMapSet, nss)        (((MCSMapSet) >> (2 * ((nss)-1))) & 0x3)
-#define RET_VHTNSSMCS(MCSMapSet, nss)        (((MCSMapSet) >> (2 * ((nss)-1))) & 0x3)
-#define SET_VHTNSSMCS(MCSMapSet, nss, value) ((MCSMapSet) |= ((value)&0x3) << (2 * ((nss)-1)))
+#define GET_VHTNSSMCS(MCSMapSet, nss)        (((MCSMapSet) >> (2U * ((nss)-1U))) & 0x3U)
+#define RET_VHTNSSMCS(MCSMapSet, nss)        (((MCSMapSet) >> (2U * ((nss)-1))) & 0x3)
+#define SET_VHTNSSMCS(MCSMapSet, nss, value) ((MCSMapSet) |= ((value)&0x3U) << (2U * ((nss)-1U)))
 
 /** DevMCSSupported : Tx MCS supported */
 #define GET_DEVTXMCSMAP(DevMCSMap)             ((DevMCSMap) >> 16)
@@ -2966,7 +2966,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_AD_HOC_START
     /** AdHoc SSID */
     t_u8 ssid[MLAN_MAX_SSID_LENGTH];
     /** BSS mode */
-    t_u8 bss_mode;
+    mlan_bss_mode bss_mode;
     /** Beacon period */
     t_u16 beacon_period;
     /** DTIM period */
@@ -3011,7 +3011,7 @@ typedef MLAN_PACK_START struct _AdHoc_BssDesc_t
     /** SSID */
     t_u8 ssid[MLAN_MAX_SSID_LENGTH];
     /** BSS mode */
-    t_u8 bss_mode;
+    mlan_bss_mode bss_mode;
     /** Beacon period */
     t_u16 beacon_period;
     /** DTIM period */
