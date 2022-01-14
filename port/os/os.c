@@ -2,7 +2,7 @@
  *
  *  @brief OS interaction API
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -224,7 +224,7 @@ int os_event_flags_get(event_group_handle_t hnd,
     event_group_t *eG = (event_group_t *)hnd;
 
 check_again:
-    os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
 
     if ((option == EF_AND) || (option == EF_AND_CLEAR))
     {
@@ -244,7 +244,7 @@ check_again:
     else
     {
         os_dprintf("ERROR:Invalid event flag get option\r\n");
-        os_mutex_put(&eG->mutex);
+        (void)os_mutex_put(&eG->mutex);
         return -WM_FAIL;
     }
     /* Check flags */
@@ -261,11 +261,11 @@ check_again:
         if (wait_done)
         {
             /*Delete the created semaphore */
-            os_semaphore_delete(&tmp->sem);
+            (void)os_semaphore_delete(&tmp->sem);
             /* Remove ourselves from the list */
             os_event_flags_remove_node(tmp, eG);
         }
-        os_mutex_put(&eG->mutex);
+        (void)os_mutex_put(&eG->mutex);
         return WM_SUCCESS;
     }
     else
@@ -280,7 +280,7 @@ check_again:
                 if (node == NULL)
                 {
                     os_dprintf("ERROR:memory alloc\r\n");
-                    os_mutex_put(&eG->mutex);
+                    (void)os_mutex_put(&eG->mutex);
                     return -WM_FAIL;
                 }
                 (void)memset(node, 0x00, sizeof(event_wait_t));
@@ -292,7 +292,7 @@ check_again:
                 {
                     os_dprintf("ERROR:In creating semaphore\r\n");
                     os_mem_free(node);
-                    os_mutex_put(&eG->mutex);
+                    (void)os_mutex_put(&eG->mutex);
                     return -WM_FAIL;
                 }
                 /* If there is no node present */
@@ -319,27 +319,27 @@ check_again:
                 if (ret != WM_SUCCESS)
                 {
                     os_dprintf("ERROR:1st sem get error\r\n");
-                    os_mutex_put(&eG->mutex);
+                    (void)os_mutex_put(&eG->mutex);
                     /*Delete the created semaphore */
-                    os_semaphore_delete(&tmp->sem);
+                    (void)os_semaphore_delete(&tmp->sem);
                     /* Remove ourselves from the list */
                     os_event_flags_remove_node(tmp, eG);
                     return -WM_FAIL;
                 }
             }
-            os_mutex_put(&eG->mutex);
+            (void)os_mutex_put(&eG->mutex);
             /* Second time get is performed for work-around purpose
             as in current implementation of semaphore 1st request
             is always satisfied */
             ret = os_semaphore_get(&tmp->sem, os_msec_to_ticks(wait_option));
             if (ret != WM_SUCCESS)
             {
-                os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+                (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
                 /*Delete the created semaphore */
-                os_semaphore_delete(&tmp->sem);
+                (void)os_semaphore_delete(&tmp->sem);
                 /* Remove ourselves from the list */
                 os_event_flags_remove_node(tmp, eG);
-                os_mutex_put(&eG->mutex);
+                (void)os_mutex_put(&eG->mutex);
                 return EF_NO_EVENTS;
             }
 
@@ -347,12 +347,12 @@ check_again:
             /* If the event group deletion has been requested */
             if (eG->delete_group)
             {
-                os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+                (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
                 /*Delete the created semaphore */
-                os_semaphore_delete(&tmp->sem);
+                (void)os_semaphore_delete(&tmp->sem);
                 /* Remove ourselves from the list */
                 os_event_flags_remove_node(tmp, eG);
-                os_mutex_put(&eG->mutex);
+                (void)os_mutex_put(&eG->mutex);
                 return -WM_FAIL;
             }
             wait_done = 1;
@@ -360,7 +360,7 @@ check_again:
         }
         else
         {
-            os_mutex_put(&eG->mutex);
+            (void)os_mutex_put(&eG->mutex);
             return EF_NO_EVENTS;
         }
     }
@@ -383,7 +383,7 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
 
     event_group_t *eG = (event_group_t *)hnd;
 
-    os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
 
     /* Set flags according to the set_option */
     if (option == EF_OR)
@@ -397,7 +397,7 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
     else
     {
         os_dprintf("ERROR:Invalid flag set option\r\n");
-        os_mutex_put(&eG->mutex);
+        (void)os_mutex_put(&eG->mutex);
         return -WM_FAIL;
     }
 
@@ -408,7 +408,7 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
         {
             if ((tmp->thread_mask & eG->flags) != 0U)
             {
-                os_semaphore_put(&tmp->sem);
+                (void)os_semaphore_put(&tmp->sem);
             }
         }
         else
@@ -417,13 +417,13 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
             {
                 if ((tmp->thread_mask & eG->flags) != 0U)
                 {
-                    os_semaphore_put(&tmp->sem);
+                    (void)os_semaphore_put(&tmp->sem);
                 }
                 tmp = tmp->next;
             }
         }
     }
-    os_mutex_put(&eG->mutex);
+    (void)os_mutex_put(&eG->mutex);
     return WM_SUCCESS;
 }
 
@@ -439,7 +439,7 @@ int os_event_flags_delete(event_group_handle_t *hnd)
     }
     event_group_t *eG = (event_group_t *)*hnd;
 
-    os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
 
     /* Set the flag to delete the group */
     eG->delete_group = 1;
@@ -449,44 +449,44 @@ int os_event_flags_delete(event_group_handle_t *hnd)
         tmp = eG->list;
         if (tmp->next == NULL)
         {
-            os_semaphore_put(&tmp->sem);
+            (void)os_semaphore_put(&tmp->sem);
         }
         else
         {
             while (tmp != NULL)
             {
-                os_semaphore_put(&tmp->sem);
+                (void)os_semaphore_put(&tmp->sem);
                 tmp = tmp->next;
             }
         }
     }
-    os_mutex_put(&eG->mutex);
+    (void)os_mutex_put(&eG->mutex);
 
     /* If still list is not empty then wait for 3 seconds */
     for (i = 0; i < max_attempt; i++)
     {
-        os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+        (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
         if (eG->list != NULL)
         {
-            os_mutex_put(&eG->mutex);
+            (void)os_mutex_put(&eG->mutex);
             os_thread_sleep(os_msec_to_ticks(1000));
         }
         else
         {
-            os_mutex_put(&eG->mutex);
+            (void)os_mutex_put(&eG->mutex);
             break;
         }
     }
 
-    os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
     if (eG->list != NULL)
     {
-        os_mutex_put(&eG->mutex);
+        (void)os_mutex_put(&eG->mutex);
         return -WM_FAIL;
     }
     else
     {
-        os_mutex_put(&eG->mutex);
+        (void)os_mutex_put(&eG->mutex);
     }
 
     /* Delete the event group */
@@ -534,7 +534,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
             if (ret == -WM_FAIL)
             {
                 lock->reader_count--;
-                os_mutex_put(&(lock->reader_mutex));
+                (void)os_mutex_put(&(lock->reader_mutex));
                 return ret;
             }
         }
@@ -548,12 +548,12 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
             if (ret == -WM_FAIL)
             {
                 lock->reader_count--;
-                os_mutex_put(&(lock->reader_mutex));
+                (void)os_mutex_put(&(lock->reader_mutex));
                 return ret;
             }
         }
     }
-    os_mutex_put(&(lock->reader_mutex));
+    (void)os_mutex_put(&(lock->reader_mutex));
     return ret;
 }
 
@@ -570,9 +570,9 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock)
         /* This is last reader so
          * give a chance to writer now
          */
-        os_semaphore_put(&(lock->rw_lock));
+        (void)os_semaphore_put(&(lock->rw_lock));
     }
-    os_mutex_put(&(lock->reader_mutex));
+    (void)os_mutex_put(&(lock->reader_mutex));
     return ret;
 }
 
@@ -584,14 +584,14 @@ int os_rwlock_write_lock(os_rw_lock_t *lock, unsigned int wait_time)
 
 void os_rwlock_write_unlock(os_rw_lock_t *lock)
 {
-    os_semaphore_put(&(lock->rw_lock));
+    (void)os_semaphore_put(&(lock->rw_lock));
 }
 
 void os_rwlock_delete(os_rw_lock_t *lock)
 {
     lock->reader_cb = NULL;
-    os_semaphore_delete(&(lock->rw_lock));
-    os_mutex_delete(&(lock->reader_mutex));
+    (void)os_semaphore_delete(&(lock->rw_lock));
+    (void)os_mutex_delete(&(lock->reader_mutex));
     lock->reader_count = 0;
 }
 

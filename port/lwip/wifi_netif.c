@@ -84,7 +84,7 @@ void deliver_packet_above(struct pbuf *p, int recv_interface)
             {
                 LINK_STATS_INC(link.proterr);
                 LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-                pbuf_free(p);
+                (void)pbuf_free(p);
                 p = NULL;
             }
             break;
@@ -98,13 +98,13 @@ void deliver_packet_above(struct pbuf *p, int recv_interface)
             if (supplicant_rx_callback)
                 supplicant_rx_callback(recv_interface, p->payload, p->len);
 #endif /* CONFIG_HOST_SUPP */
-            pbuf_free(p);
+            (void)pbuf_free(p);
             p = NULL;
             break;
         default:
             /* drop the packet */
             LINK_STATS_INC(link.drop);
-            pbuf_free(p);
+            (void)pbuf_free(p);
             p = NULL;
             break;
     }
@@ -121,7 +121,7 @@ static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 
     if (pbuf_take(p, payload, datalen) != 0)
     {
-        pbuf_free(p);
+        (void)pbuf_free(p);
         p = NULL;
     }
 
@@ -136,7 +136,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
 #ifdef CONFIG_11N
-        wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
+        (void)wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
 #endif /* CONFIG_11N */
         return;
     }
@@ -219,7 +219,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
                     /* mlan was unsuccessful in delivering the
                        packet */
                     LINK_STATS_INC(link.drop);
-                    pbuf_free(p);
+                    (void)pbuf_free(p);
                 }
             }
             else
@@ -239,7 +239,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         default:
             /* fixme: avoid pbuf allocation in this case */
             LINK_STATS_INC(link.drop);
-            pbuf_free(p);
+            (void)pbuf_free(p);
             break;
     }
 }
@@ -291,7 +291,7 @@ void low_level_init(struct netif *netif)
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
     /* set MAC hardware address */
-    wlan_get_mac_address(netif->hwaddr);
+    (void)wlan_get_mac_address(netif->hwaddr);
 
     /* maximum transfer unit */
     netif->mtu = 1500;

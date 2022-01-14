@@ -1336,7 +1336,7 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u8 band)
         wlan_11d_generate_parsed_region_chan(pmadapter, region_chan, &parsed_region_chan);
 
         /* Generate domain info from parsed region channel info */
-        wlan_11d_generate_domain_info(pmadapter, &parsed_region_chan);
+        (void)wlan_11d_generate_domain_info(pmadapter, &parsed_region_chan);
 
         /* Set domain info */
         ret = wlan_11d_send_domain_info(pmpriv, MNULL);
@@ -1408,7 +1408,7 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
         }
 
         /* Generate domain info */
-        wlan_11d_generate_domain_info(pmadapter, &region_chan);
+        (void)wlan_11d_generate_domain_info(pmadapter, &region_chan);
 
         /* Set domain info */
         ret = wlan_11d_send_domain_info(pmpriv, MNULL);
@@ -1514,8 +1514,8 @@ mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_r
         }
     }
 
-    wlan_11d_set_domain_info(pmpriv, domain_info->band, domain_info->country_code, domain_info->no_of_sub_band,
-                             (IEEEtypes_SubbandSet_t *)(void *)domain_info->sub_band);
+    (void)wlan_11d_set_domain_info(pmpriv, domain_info->band, domain_info->country_code, domain_info->no_of_sub_band,
+                                   (IEEEtypes_SubbandSet_t *)(void *)domain_info->sub_band);
     ret = wlan_11d_send_domain_info(pmpriv, pioctl_req);
 
     if (ret == MLAN_STATUS_SUCCESS)
@@ -1565,7 +1565,7 @@ mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u8 band, t_u
     // TODO: don't just clobber pmadapter->domain_reg.
     // Add some checking or merging between STA & UAP domain_info
 
-    wlan_11d_set_domain_info(pmpriv, band, pdomain_tlv->country_code, num_sub_band, pdomain_tlv->sub_band);
+    (void)wlan_11d_set_domain_info(pmpriv, band, pdomain_tlv->country_code, num_sub_band, pdomain_tlv->sub_band);
 
     /* wmsdk: We do not yet have mechanism in wlan_prepare_cmd() to
        separate uao and sta commands. Hence we have to call uap cmd send

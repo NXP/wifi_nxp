@@ -66,7 +66,7 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
     {
         pmbuf->data_len = prx_pd->rx_pkt_length;
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
-        wlan_11n_deaggregate_pkt(priv, pmbuf);
+        (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
         LEAVE();
         return MLAN_STATUS_SUCCESS;
     }
@@ -136,11 +136,11 @@ static void mlan_11n_rxreorder_timer_restart(pmlan_adapter pmadapter, RxReorderT
     ENTER();
     if (rx_reor_tbl_ptr->timer_context.timer_is_set != 0U)
     {
-        pmadapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
+        (void)pmadapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
     }
 
-    pmadapter->callbacks.moal_start_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer, MFALSE,
-                                          (rx_reor_tbl_ptr->win_size * MIN_FLUSH_TIMER_MS));
+    (void)pmadapter->callbacks.moal_start_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer, MFALSE,
+                                                (rx_reor_tbl_ptr->win_size * MIN_FLUSH_TIMER_MS));
 
     rx_reor_tbl_ptr->timer_context.timer_is_set = MTRUE;
     LEAVE();
@@ -171,21 +171,21 @@ static mlan_status wlan_11n_dispatch_pkt_until_start_win(t_void *priv, RxReorder
 
     for (i = 0; i < no_pkt_to_send; ++i)
     {
-        pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+        (void)pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         rx_tmp_ptr = MNULL;
         if (rx_reor_tbl_ptr->rx_reorder_ptr[i] != NULL)
         {
             rx_tmp_ptr                         = rx_reor_tbl_ptr->rx_reorder_ptr[i];
             rx_reor_tbl_ptr->rx_reorder_ptr[i] = MNULL;
         }
-        pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+        (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_tmp_ptr != NULL)
         {
-            wlan_11n_dispatch_pkt(priv, rx_tmp_ptr);
+            (void)wlan_11n_dispatch_pkt(priv, rx_tmp_ptr);
         }
     }
 
-    pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+    (void)pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
     /*
      * We don't have a circular buffer, hence use rotation to simulate
      * circular buffer
@@ -198,7 +198,7 @@ static mlan_status wlan_11n_dispatch_pkt_until_start_win(t_void *priv, RxReorder
     }
 
     rx_reor_tbl_ptr->start_win = start_win;
-    pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+    (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
 
     LEAVE();
     return ret;
@@ -242,19 +242,19 @@ static mlan_status wlan_11n_scan_and_dispatch(t_void *priv, RxReorderTbl *rx_reo
 
     for (i = 0; i < rx_reor_tbl_ptr->win_size; ++i)
     {
-        pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+        (void)pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_reor_tbl_ptr->rx_reorder_ptr[i] == MNULL)
         {
-            pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+            (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
             break;
         }
         rx_tmp_ptr                         = rx_reor_tbl_ptr->rx_reorder_ptr[i];
         rx_reor_tbl_ptr->rx_reorder_ptr[i] = MNULL;
-        pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
-        wlan_11n_dispatch_pkt(priv, rx_tmp_ptr);
+        (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+        (void)wlan_11n_dispatch_pkt(priv, rx_tmp_ptr);
     }
 
-    pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+    (void)pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
     /*
      * We don't have a circular buffer, hence use rotation to simulate
      * circular buffer
@@ -271,7 +271,7 @@ static mlan_status wlan_11n_scan_and_dispatch(t_void *priv, RxReorderTbl *rx_reo
 
     rx_reor_tbl_ptr->start_win = (rx_reor_tbl_ptr->start_win + i) & (MAX_TID_VALUE - 1);
 
-    pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+    (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
     LEAVE();
     return ret;
 }
@@ -297,24 +297,25 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
         return;
     }
 
-    wlan_11n_dispatch_pkt_until_start_win(
+    (void)wlan_11n_dispatch_pkt_until_start_win(
         priv, rx_reor_tbl_ptr, (rx_reor_tbl_ptr->start_win + rx_reor_tbl_ptr->win_size) & (MAX_TID_VALUE - 1));
 
     if (rx_reor_tbl_ptr->timer_context.timer != NULL)
     {
         if (rx_reor_tbl_ptr->timer_context.timer_is_set != 0U)
         {
-            priv->adapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
+            (void)priv->adapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle,
+                                                           rx_reor_tbl_ptr->timer_context.timer);
         }
-        priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
+        (void)priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
     }
 
     PRINTM(MDAT_D, "Delete rx_reor_tbl_ptr: %p\n", rx_reor_tbl_ptr);
     util_unlink_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)(void *)rx_reor_tbl_ptr,
                      pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
 
-    pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
-    pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr);
+    (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
+    (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr);
 
     LEAVE();
 }
@@ -365,8 +366,9 @@ static t_void wlan_flush_data(t_void *tmr_handle)
     if ((startWin = wlan_11n_find_last_seqnum(reorder_cnxt->ptr)) >= 0)
     {
         PRINTM(MINFO, "Flush data %d\n", startWin);
-        wlan_11n_dispatch_pkt_until_start_win(reorder_cnxt->priv, reorder_cnxt->ptr,
-                                              ((reorder_cnxt->ptr->start_win + startWin + 1) & (MAX_TID_VALUE - 1)));
+        (void)wlan_11n_dispatch_pkt_until_start_win(
+            reorder_cnxt->priv, reorder_cnxt->ptr,
+            ((reorder_cnxt->ptr->start_win + startWin + 1) & (MAX_TID_VALUE - 1)));
     }
 
     wlan_11n_display_tbl_ptr(reorder_cnxt->priv->adapter, reorder_cnxt->ptr);
@@ -406,7 +408,7 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
     rx_reor_tbl_ptr = wlan_11n_get_rxreorder_tbl(priv, tid, ta);
     if (rx_reor_tbl_ptr != MNULL)
     {
-        wlan_11n_dispatch_pkt_until_start_win(priv, rx_reor_tbl_ptr, seq_num);
+        (void)wlan_11n_dispatch_pkt_until_start_win(priv, rx_reor_tbl_ptr, seq_num);
     }
     else
     {
@@ -454,7 +456,7 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
             PRINTM(MERROR,
                    "Rx reorder table memory allocation"
                    "failed\n");
-            pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)new_node);
+            (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)new_node);
             LEAVE();
             return;
         }
@@ -465,8 +467,8 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
         new_node->timer_context.timer_is_set = MFALSE;
         new_node->ba_status                  = BA_STREAM_SETUP_INPROGRESS;
 
-        pmadapter->callbacks.moal_init_timer(pmadapter->pmoal_handle, &new_node->timer_context.timer, wlan_flush_data,
-                                             &new_node->timer_context);
+        (void)pmadapter->callbacks.moal_init_timer(pmadapter->pmoal_handle, &new_node->timer_context.timer,
+                                                   wlan_flush_data, &new_node->timer_context);
 
         for (i = 0; i < win_size; ++i)
         {
@@ -736,7 +738,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
     {
         if (pkt_type != PKT_TYPE_BAR)
         {
-            wlan_11n_dispatch_pkt(priv, payload);
+            (void)wlan_11n_dispatch_pkt(priv, payload);
         }
 
         LEAVE();
@@ -746,7 +748,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
     {
         if ((pkt_type == PKT_TYPE_AMSDU) && !rx_reor_tbl_ptr->amsdu)
         {
-            wlan_11n_dispatch_pkt(priv, payload);
+            (void)wlan_11n_dispatch_pkt(priv, payload);
             LEAVE();
             return ret;
         }
@@ -781,7 +783,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
                         rx_reor_tbl_ptr->last_seq = seq_num;
                         if (pkt_type != PKT_TYPE_BAR)
                         {
-                            wlan_11n_dispatch_pkt(priv, payload);
+                            (void)wlan_11n_dispatch_pkt(priv, payload);
                         }
                     }
                     LEAVE();
@@ -1075,7 +1077,7 @@ void wlan_11n_ba_stream_timeout(mlan_private *priv, HostCmd_DS_11N_BATIMEOUT *ev
     delba.del_ba_param_set |= (t_u16)event->tid << DELBA_TID_POS;
     delba.del_ba_param_set |= (t_u16)event->origninator << DELBA_INITIATOR_POS;
     delba.reason_code = REASON_CODE_STA_TIMEOUT;
-    wlan_prepare_cmd(priv, HostCmd_CMD_11N_DELBA, 0, 0, MNULL, &delba);
+    (void)wlan_prepare_cmd(priv, HostCmd_CMD_11N_DELBA, 0, 0, MNULL, &delba);
 
     LEAVE();
     return;
