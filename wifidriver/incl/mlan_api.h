@@ -310,4 +310,19 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);
 char *wifi_get_country_str(int country);
+int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, const uint8_t *mac_addr);
+int wifi_enable_ecsa_support(void);
+int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
+int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
+int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
+int wifi_set_pmfcfg(t_u8 mfpc, t_u8 mfpr);
+int wifi_set_chanlist(wifi_chanlist_t *chanlist);
+int wifi_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit);
+int wifi_get_data_rate(wifi_ds_rate *ds_rate);
+void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans);
+bool wifi_is_ecsa_enabled(void);
+int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
+int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
+void wifi_set_curr_bss_channel(uint8_t channel);
+int wifi_get_chanlist(wifi_chanlist_t *chanlist);
 #endif /* __MLAN_API_H__ */
