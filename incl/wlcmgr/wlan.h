@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -2454,7 +2454,7 @@ int wlan_get_sta_tx_power(t_u32 *power_level);
  * \return -WM_FAIL if unsuccessful.
  *
  */
-int wlan_set_sta_tx_power(int power_level);
+int wlan_set_sta_tx_power(t_u32 power_level);
 
 /**
  * Get Management IE for given BSS type (interface) and index.

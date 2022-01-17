@@ -1177,7 +1177,7 @@ static int wifi_send_tx_power_cfg_ioctl(int action, mlan_ds_power_cfg *ds_power_
     return WM_SUCCESS;
 }
 
-int wifi_set_tx_power(int power_level)
+int wifi_set_tx_power(t_u32 power_level)
 {
     mlan_ds_power_cfg ds_power_cfg;
 

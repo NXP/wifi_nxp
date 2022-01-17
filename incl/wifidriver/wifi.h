@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -623,7 +623,7 @@ bool wifi_is_ecsa_enabled(void);
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 int wifi_get_tx_power(t_u32 *power_level);
-int wifi_set_tx_power(int power_level);
+int wifi_set_tx_power(t_u32 power_level);
 int wrapper_wlan_cmd_get_hw_spec(void);
 /* fixme: These need to be removed later after complete mlan integration */
 void set_event_chanswann(void);
