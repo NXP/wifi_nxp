@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Core WLAN definition
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -594,7 +594,7 @@ static void wlan_send_sleep_confirm(void)
     send_sleep_confirm_command((mlan_bss_type)type);
 }
 
-static void wlan_ieeeps_sm(uint32_t event)
+static void wlan_ieeeps_sm(enum wlan_ieeeps_event event)
 {
     enum wlan_ieeeps_state next_state;
     enum wlan_ieeeps_state prev_state;
@@ -760,7 +760,7 @@ begin:
     }
 }
 
-static void wlan_deepsleepps_sm(uint32_t event)
+static void wlan_deepsleepps_sm(enum wlan_deepsleepps_event event)
 {
     enum wlan_deepsleepps_state next_state;
 
@@ -5341,7 +5341,7 @@ int wlan_get_txratecfg(wlan_ds_rate *ds_rate)
     return WM_SUCCESS;
 }
 
-int wlan_set_sta_tx_power(int power_level)
+int wlan_set_sta_tx_power(t_u32 power_level)
 {
     return wifi_set_tx_power(power_level);
 }
