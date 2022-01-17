@@ -1295,9 +1295,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
         (pbss_desc->bss_band & (BAND_B | BAND_G | BAND_GN)))
     {
         orig_usr_dot_11n_dev_cap = usr_dot_11n_dev_cap;
-        RESETSUPP_CHANWIDTH40(usr_dot_11n_dev_cap);
         RESET_40MHZ_INTOLARENT(usr_dot_11n_dev_cap);
-        RESETSUPP_SHORTGI40(usr_dot_11n_dev_cap);
         pmadapter->usr_dot_11n_dev_cap_bg = usr_dot_11n_dev_cap;
         pbss_desc->curr_bandwidth         = BW_20MHZ;
     }
