@@ -252,24 +252,6 @@ void wifi_sta_ampdu_rx_disable(void);
 int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr);
 
 /**
- * Get the string representation of the wlan firmware version.
- *
- * @param[out] ver Version
- *
- * @return WM_SUCCESS on success or error code.
- */
-int wifi_get_firmware_version(wifi_fw_version_t *ver);
-
-/**
- * Get the string representation of the wlan firmware extended version.
- *
- * @param[out] version_ext Extended Version
- *
- * @return WM_SUCCESS on success or error code.
- */
-int wifi_get_firmware_version_ext(wifi_fw_version_ext_t *version_ext);
-
-/**
  * Get the cached string representation of the wlan firmware extended version.
  *
  * @param[in] fw_ver_ext Firmware Version Extended
@@ -288,8 +270,6 @@ unsigned wifi_get_last_cmd_sent_ms(void);
 uint32_t wifi_get_value1(void);
 
 uint8_t *wifi_get_outbuf(uint32_t *outbuf_len);
-
-int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
 
 /**
  * This will update the last command sent variable value to current
@@ -401,13 +381,6 @@ void wifi_set_mac_addr(uint8_t *mac);
  */
 void _wifi_set_mac_addr(uint8_t *mac);
 
-int wifi_set_key(int bss_index,
-                 bool is_pairwise,
-                 const uint8_t key_index,
-                 const uint8_t *key,
-                 unsigned key_len,
-                 const uint8_t *mac_addr);
-int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index, const uint8_t *key, unsigned key_len);
 int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, const uint8_t *mac_addr);
 #ifdef CONFIG_P2P
 int wifi_register_wfd_event_queue(os_queue_t *event_queue);
@@ -545,8 +518,6 @@ typedef enum
     REG_RF
 } wifi_reg_t;
 
-int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint32_t *value);
-
 int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
 /*
  * This function is supposed to be called after scan is complete from wlc
@@ -640,7 +611,6 @@ int wifi_get_uap_channel(int *channel);
  *
  */
 int wifi_enable_11d_support(void);
-int wifi_enable_11d_support_APIs(void);
 int wifi_set_domain_params(wifi_domain_param_t *dp);
 int wifi_set_country(int country);
 int wifi_uap_set_country(int country);
@@ -654,9 +624,6 @@ int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 int wifi_get_tx_power(t_u32 *power_level);
 int wifi_set_tx_power(int power_level);
-int wifi_get_smart_mode_cfg(void);
-int wifi_start_smart_mode(void);
-int wifi_stop_smart_mode(void);
 int wrapper_wlan_cmd_get_hw_spec(void);
 /* fixme: These need to be removed later after complete mlan integration */
 void set_event_chanswann(void);
@@ -686,16 +653,6 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate);
 int wifi_get_txratecfg(wifi_ds_rate *ds_rate);
 void wifi_wake_up_card(uint32_t *resp);
 
-int wifi_send_scan_cmd(t_u8 bss_mode,
-                       const t_u8 *specific_bssid,
-                       const char *ssid,
-                       const char *ssid2,
-                       const t_u8 num_channels,
-                       const wifi_scan_channel_list_t *chan_list,
-                       const t_u8 num_probes,
-                       const bool keep_previous_scan,
-                       const bool active_scan_triggered);
-
 #ifdef CONFIG_WPA2_ENTP
 void wifi_scan_enable_wpa2_enterprise_ap_only();
 #endif
@@ -716,32 +673,6 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
 
 int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
 
-/**
- * Get User Data from OTP Memory
- *
- * \param[in] buf Pointer to buffer where data will be stored
- * \param[in] len Number of bytes to read
- *
- * \return WM_SUCCESS if user data read operation is successful.
- * \return -WM_FAIL if user data field is not present or command fails.
- */
-int wifi_get_otp_user_data(uint8_t *buf, uint16_t len);
-
-/**
- * Get Calibration data from WLAN firmware
- *
- * \param[out] cal_data Pointer to calibration data structure where
- *	      calibration data and it's length will be stored.
- *
- * \return WM_SUCCESS if cal data read operation is successful.
- * \return -WM_FAIL if cal data field is not present or command fails.
- *
- * \note The user of this API should free the allocated buffer for
- *	 calibration data.
- *
- */
-int wifi_get_cal_data(wifi_cal_data_t *cal_data);
-
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
 
@@ -755,8 +686,6 @@ int wrapper_wlan_11d_enable(void);
 int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
-
-char *wifi_get_country_str(int country);
 
 int wrapper_wlan_ecsa_enable(void);
 
@@ -918,8 +847,6 @@ typedef PACK_START struct
     t_u32 ampdu_delimiter_crc_error_cnt;
 } PACK_END wifi_pkt_stats_t;
 
-int wifi_get_log(wifi_pkt_stats_t *stats);
-
 void handle_cdint(int error);
 
 int wifi_get_data_rate(wifi_ds_rate *ds_rate);
@@ -929,6 +856,8 @@ int wifi_set_pmfcfg(t_u8 mfpc, t_u8 mfpr);
 int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
+
+int wifi_uap_stop(int type);
 
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);
