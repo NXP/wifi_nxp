@@ -381,7 +381,6 @@ void wifi_set_mac_addr(uint8_t *mac);
  */
 void _wifi_set_mac_addr(uint8_t *mac);
 
-int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, const uint8_t *mac_addr);
 #ifdef CONFIG_P2P
 int wifi_register_wfd_event_queue(os_queue_t *event_queue);
 int wifi_unregister_wfd_event_queue(os_queue_t *event_queue);
@@ -618,8 +617,6 @@ int wifi_get_country(void);
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables();
 #endif
-int wifi_enable_ecsa_support(void);
-bool wifi_is_ecsa_enabled(void);
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 int wifi_get_tx_power(t_u32 *power_level);
@@ -638,7 +635,6 @@ int wifi_exit_ieee_power_save(void);
 int wifi_enter_deepsleep_power_save(void);
 int wifi_exit_deepsleep_power_save(void);
 void send_sleep_confirm_command(mlan_bss_type interface);
-int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
 void wifi_configure_listen_interval(int listen_interval);
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
 int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode);
@@ -657,22 +653,6 @@ void wifi_wake_up_card(uint32_t *resp);
 void wifi_scan_enable_wpa2_enterprise_ap_only();
 #endif
 
-int wifi_set_chanlist(wifi_chanlist_t *chanlist);
-
-int wifi_get_chanlist(wifi_chanlist_t *chanlist);
-
-void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans);
-
-int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
-
-int wifi_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit);
-
-void wifi_set_curr_bss_channel(uint8_t channel);
-
-int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
-
-int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
-
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
 
@@ -688,6 +668,17 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff);
 int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_ecsa_enable(void);
+
+int wifi_uap_start(int type,
+                   char *ssid,
+                   uint8_t *mac_addr,
+                   int security,
+                   char *passphrase,
+                   char *password,
+                   int channel,
+                   wifi_scan_chan_list_t scan_chan_list,
+                   bool mfpc,
+                   bool mfpr);
 
 #ifdef CONFIG_WMM
 int wrapper_wlan_sta_ampdu_enable(t_u8 tid);
@@ -848,12 +839,6 @@ typedef PACK_START struct
 } PACK_END wifi_pkt_stats_t;
 
 void handle_cdint(int error);
-
-int wifi_get_data_rate(wifi_ds_rate *ds_rate);
-
-int wifi_set_pmfcfg(t_u8 mfpc, t_u8 mfpr);
-
-int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 

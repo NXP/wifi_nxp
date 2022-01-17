@@ -135,17 +135,6 @@ int wifi_uap_ctrl_deauth(bool enable);
 
 void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
 
-int wifi_uap_start(int type,
-                   char *ssid,
-                   uint8_t *mac_addr,
-                   int security,
-                   char *passphrase,
-                   char *password,
-                   int channel,
-                   wifi_scan_chan_list_t scan_chan_list,
-                   bool mfpc,
-                   bool mfpr);
-
 void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
 
 int wifi_uap_enable_11d();
