@@ -133,8 +133,6 @@ void wifi_uap_set_ecsa(void);
 
 int wifi_uap_ctrl_deauth(bool enable);
 
-int wifi_uap_stop(int type);
-
 void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
 
 int wifi_uap_start(int type,
@@ -155,4 +153,6 @@ int wifi_uap_enable_11d();
 int wifi_uap_set_domain_params(wifi_domain_param_t *dp);
 
 int wifi_uap_set_params();
+
+void wifi_uap_set_beacon_period(const t_u16 beacon_period);
 #endif /* _MLAN_UAP_H_ */

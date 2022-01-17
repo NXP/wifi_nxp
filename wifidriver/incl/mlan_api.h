@@ -237,7 +237,6 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             uint8_t *smc_frame_filter,
                             int custom_ie_len,
                             uint8_t *custom_ie);
-void wifi_uap_set_beacon_period(const t_u16 beacon_period);
 wifi_sub_band_set_t *get_sub_band_from_country(int country, int *nr_sb);
 int wifi_set_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index);
@@ -247,4 +246,68 @@ int wifi_send_add_wpa_psk(int mode, char *ssid, char *passphrase, unsigned int l
 int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned int len);
 int wifi_send_add_wpa_pmk(int mode, char *bssid, char *ssid, char *pmk, unsigned int len);
 bool wifi_11d_is_channel_allowed(int channel);
+/**
+ * Get the string representation of the wlan firmware extended version.
+ *
+ * @param[out] version_ext Extended Version
+ *
+ * @return WM_SUCCESS on success or error code.
+ */
+int wifi_get_firmware_version_ext(wifi_fw_version_ext_t *version_ext);
+/**
+ * Get the string representation of the wlan firmware version.
+ *
+ * @param[out] ver Version
+ *
+ * @return WM_SUCCESS on success or error code.
+ */
+int wifi_get_firmware_version(wifi_fw_version_t *ver);
+int wifi_get_smart_mode_cfg(void);
+int wifi_start_smart_mode(void);
+/**
+ * Get Calibration data from WLAN firmware
+ *
+ * \param[out] cal_data Pointer to calibration data structure where
+ *	      calibration data and it's length will be stored.
+ *
+ * \return WM_SUCCESS if cal data read operation is successful.
+ * \return -WM_FAIL if cal data field is not present or command fails.
+ *
+ * \note The user of this API should free the allocated buffer for
+ *	 calibration data.
+ *
+ */
+int wifi_get_cal_data(wifi_cal_data_t *cal_data);
+int wifi_set_key(int bss_index,
+                 bool is_pairwise,
+                 const uint8_t key_index,
+                 const uint8_t *key,
+                 unsigned key_len,
+                 const uint8_t *mac_addr);
+/**
+ * Get User Data from OTP Memory
+ *
+ * \param[in] buf Pointer to buffer where data will be stored
+ * \param[in] len Number of bytes to read
+ *
+ * \return WM_SUCCESS if user data read operation is successful.
+ * \return -WM_FAIL if user data field is not present or command fails.
+ */
+int wifi_get_otp_user_data(uint8_t *buf, uint16_t len);
+int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint32_t *value);
+int wifi_enable_11d_support_APIs(void);
+int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
+int wifi_get_log(wifi_pkt_stats_t *stats);
+int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index, const uint8_t *key, unsigned key_len);
+int wifi_send_scan_cmd(t_u8 bss_mode,
+                       const t_u8 *specific_bssid,
+                       const char *ssid,
+                       const char *ssid2,
+                       const t_u8 num_channels,
+                       const wifi_scan_channel_list_t *chan_list,
+                       const t_u8 num_probes,
+                       const bool keep_previous_scan,
+                       const bool active_scan_triggered);
+int wifi_stop_smart_mode(void);
+char *wifi_get_country_str(int country);
 #endif /* __MLAN_API_H__ */
