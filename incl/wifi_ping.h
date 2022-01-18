@@ -39,6 +39,7 @@
 #define PING_DEFAULT_COUNT       10
 #define PING_DEFAULT_SIZE        56
 #define PING_MAX_SIZE            65507U
+#define PING_MAX_COUNT           65535U
 
 /** Register Network Utility CLI commands.
  *

@@ -2,7 +2,7 @@
  *
  *  @brief Command Line Interface meory module
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -27,7 +27,7 @@
 #ifndef _CLI_MEM_H_
 #define _CLI_MEM_H_
 #ifdef CONFIG_APPLE_SW_AUTH_TEST
-#define INBUF_SIZE 1383
+#define INBUF_SIZE 1383U
 #else
 #define INBUF_SIZE 256U
 #endif

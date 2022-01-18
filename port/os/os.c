@@ -201,17 +201,17 @@ int os_event_flags_get(event_group_handle_t hnd,
                        unsigned *actual_flags_ptr,
                        unsigned wait_option)
 {
-    bool wait_done = 0;
+    bool wait_done = false;
     unsigned status;
     int ret;
     *actual_flags_ptr = 0;
     event_wait_t *tmp = NULL, *node = NULL;
-    if (hnd == 0)
+    if (hnd == 0U)
     {
         os_dprintf("ERROR:Invalid event flag handle\r\n");
         return -WM_FAIL;
     }
-    if (requested_flags == 0)
+    if (requested_flags == 0U)
     {
         os_dprintf("ERROR:Requested flag is zero\r\n");
         return -WM_FAIL;
@@ -272,7 +272,7 @@ check_again:
     {
         if (wait_option != 0U)
         {
-            if (wait_done == 0)
+            if (wait_done == false)
             {
                 /* Add to link list */
                 /* Prepare a node to add in the link list */
@@ -355,7 +355,7 @@ check_again:
                 (void)os_mutex_put(&eG->mutex);
                 return -WM_FAIL;
             }
-            wait_done = 1;
+            wait_done = true;
             goto check_again;
         }
         else
@@ -370,12 +370,12 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
 {
     event_wait_t *tmp = NULL;
 
-    if (hnd == 0)
+    if (hnd == 0U)
     {
         os_dprintf("ERROR:Invalid event flag handle\r\n");
         return -WM_FAIL;
     }
-    if (flags_to_set == 0)
+    if (flags_to_set == 0U)
     {
         os_dprintf("ERROR:Flags to be set is zero\r\n");
         return -WM_FAIL;
@@ -432,7 +432,7 @@ int os_event_flags_delete(event_group_handle_t *hnd)
     int i, max_attempt = 3;
     event_wait_t *tmp = NULL;
 
-    if (*hnd == 0)
+    if (*hnd == 0U)
     {
         os_dprintf("ERROR:Invalid event flag handle\r\n");
         return -WM_FAIL;
@@ -526,7 +526,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
         return ret;
     }
     lock->reader_count++;
-    if (lock->reader_count == 1)
+    if (lock->reader_count == 1U)
     {
         if (lock->reader_cb != NULL)
         {
@@ -565,7 +565,7 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock)
         return ret;
     }
     lock->reader_count--;
-    if (lock->reader_count == 0)
+    if (lock->reader_count == 0U)
     {
         /* This is last reader so
          * give a chance to writer now
