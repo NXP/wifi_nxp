@@ -89,7 +89,7 @@ int wifi_deauthenticate(uint8_t *bssid)
 {
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     /* fixme: check if this static selection is ok */
 #ifdef CONFIG_P2P
@@ -99,8 +99,8 @@ int wifi_deauthenticate(uint8_t *bssid)
 #endif
     cmd->result = 0x0;
 
-    wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[0], cmd, bssid);
-    wifi_wait_for_cmdresp(NULL);
+    (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[0], cmd, bssid);
+    (void)wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
@@ -110,15 +110,15 @@ int wifi_get_eeprom_data(uint32_t offset, uint32_t byte_count, uint8_t *buf)
     eeprom_rd.offset     = offset;
     eeprom_rd.byte_count = byte_count;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command = HostCmd_CMD_802_11_EEPROM_ACCESS;
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
-    wlan_cmd_reg_access(cmd, HostCmd_ACT_GEN_GET, &eeprom_rd);
-    wifi_wait_for_cmdresp(buf);
+    (void)wlan_cmd_reg_access(cmd, HostCmd_ACT_GEN_GET, &eeprom_rd);
+    (void)wifi_wait_for_cmdresp(buf);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -145,15 +145,15 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
             break;
     }
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command = hostcmd;
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
-    wlan_cmd_reg_access(cmd, action, &reg_rw);
-    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? value : NULL);
+    (void)wlan_cmd_reg_access(cmd, action, &reg_rw);
+    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? value : NULL);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -163,16 +163,16 @@ int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
     mem_rw.addr  = addr;
     mem_rw.value = *value;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command = HostCmd_CMD_MEM_ACCESS;
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
-    wlan_cmd_mem_access(cmd, action, &mem_rw);
+    (void)wlan_cmd_mem_access(cmd, action, &mem_rw);
 
-    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? value : NULL);
+    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? value : NULL);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -224,7 +224,7 @@ int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low)
 {
     t_u64 tsf = 0x00;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     (void)memset(cmd, 0, sizeof(HostCmd_DS_COMMAND));
@@ -239,7 +239,7 @@ int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low)
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(&tsf);
+    (void)wifi_wait_for_cmdresp(&tsf);
 
     *tsf_high = tsf >> 32;
     *tsf_low  = (t_u32)tsf;
@@ -373,7 +373,7 @@ int wifi_config_bridge_tx_buf(uint16_t buf_size)
 
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num = 0x0;
@@ -386,13 +386,13 @@ int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info)
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(rssi_info);
+    (void)wifi_wait_for_cmdresp(rssi_info);
     return wm_wifi.cmd_resp_status;
 }
 
 int wifi_send_rf_channel_cmd(wifi_rf_channel_t *rf_channel)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num = 0x0;
@@ -409,13 +409,13 @@ int wifi_send_rf_channel_cmd(wifi_rf_channel_t *rf_channel)
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(rf_channel);
+    (void)wifi_wait_for_cmdresp(rf_channel);
     return wm_wifi.cmd_resp_status;
 }
 
 int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channel_t *remain_on_channel)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
@@ -428,14 +428,14 @@ int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channe
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
     return wm_wifi.cmd_resp_status;
 }
 
 /* power_level is not used when cmd_action is GET */
 int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num   = 0x0;
@@ -447,13 +447,13 @@ int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power)
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? tx_power : NULL);
+    (void)wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? tx_power : NULL);
     return wm_wifi.cmd_resp_status;
 }
 
 int wifi_get_data_rate(wifi_ds_rate *ds_rate)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num = 0x0;
@@ -477,7 +477,7 @@ int wifi_get_data_rate(wifi_ds_rate *ds_rate)
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(ds_rate);
+    (void)wifi_wait_for_cmdresp(ds_rate);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -523,7 +523,7 @@ int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset)
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     HostCmd_DS_MEF_CFG *mef_hdr;
     mef_entry_header *entry_hdr;
@@ -711,7 +711,7 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
     entry_hdr->len = buf_len - sizeof(HostCmd_DS_MEF_CFG) - S_DS_GEN - sizeof(mef_entry_header);
     cmd->size      = wlan_cpu_to_le16(buf_len);
 done:
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
 
     return wm_wifi.cmd_resp_status;
 }
@@ -1675,7 +1675,7 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, t_u32 *ant_mode, t_u16 *evalua
         return -WM_FAIL;
     }
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     (void)memset(cmd, 0x00, S_DS_GEN + sizeof(HostCmd_DS_802_11_RF_ANTENNA));
@@ -1687,11 +1687,11 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, t_u32 *ant_mode, t_u16 *evalua
         wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_RF_ANTENNA, action, 0, NULL, &ant_cfg_1x1, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
-        wifi_put_command_lock();
+        (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? &wifi_antcfg : NULL);
+    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? &wifi_antcfg : NULL);
 
     *ant_mode = wifi_antcfg.ant_mode;
     *evaluate_time = wifi_antcfg.evaluate_time;
@@ -1745,7 +1745,7 @@ static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->seq_num = 0x0;
@@ -1956,7 +1956,7 @@ int wifi_send_clear_wpa_psk(int mode, const char *ssid)
     }
 
     sec.param.passphrase.ssid.ssid_len = ssid_len;
-    strcpy((char *)sec.param.passphrase.ssid.ssid, ssid);
+    (void)strcpy((char *)sec.param.passphrase.ssid.ssid, ssid);
 
     /* Zero MAC */
 
@@ -1984,7 +1984,7 @@ int wifi_send_enable_supplicant(int mode, const char *ssid)
     }
 
     sec.param.passphrase.ssid.ssid_len = ssid_len;
-    strcpy((char *)sec.param.passphrase.ssid.ssid, ssid);
+    (void)strcpy((char *)sec.param.passphrase.ssid.ssid, ssid);
 
     /* Zero MAC */
 
@@ -2024,7 +2024,7 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
 
     (void)memcpy((void *)pmcast_list->mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
     pmcast_list->num_multicast_addr = num_of_addr;
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MAC_MULTICAST_ADR,
@@ -2035,14 +2035,14 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
         os_mem_free(pmcast_list);
         return -WM_FAIL;
     }
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
     os_mem_free(pmcast_list);
     return WM_SUCCESS;
 }
 
 int wifi_get_otp_user_data(uint8_t *buf, uint16_t len)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     mlan_ds_misc_otp_user_data pdata;
 
@@ -2062,7 +2062,7 @@ int wifi_get_otp_user_data(uint8_t *buf, uint16_t len)
         return -WM_FAIL;
     }
 
-    wifi_wait_for_cmdresp(buf);
+    (void)wifi_wait_for_cmdresp(buf);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -2070,7 +2070,7 @@ int wifi_get_cal_data(wifi_cal_data_t *cal_data)
 {
     uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_802_11_CFG_DATA) - 1U;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_CFG_DATA);
@@ -2085,7 +2085,7 @@ int wifi_get_cal_data(wifi_cal_data_t *cal_data)
     cmd->seq_num = 0x00;
     cmd->result  = 0x00;
 
-    wifi_wait_for_cmdresp(cal_data);
+    (void)wifi_wait_for_cmdresp(cal_data);
 
     return wm_wifi.cmd_resp_status;
 }
@@ -2118,7 +2118,7 @@ int wifi_get_firmware_version(wifi_fw_version_t *ver)
     char fw_ver[32];
 
     u_ver.l = mlan_adap->fw_release_number;
-    sprintf(fw_ver, "%u.%u.%u.p%u", u_ver.c[2], u_ver.c[1], u_ver.c[0], u_ver.c[3]);
+    (void)sprintf(fw_ver, "%u.%u.%u.p%u", u_ver.c[2], u_ver.c[1], u_ver.c[0], u_ver.c[3]);
 
     (void)snprintf(ver->version_str, MLAN_MAX_VER_STR_LEN, driver_version_format, fw_ver, driver_version);
 
@@ -2279,7 +2279,7 @@ int wifi_set_domain_params(wifi_domain_param_t *dp)
         s[i].max_tx_pwr = is[i].max_tx_pwr;
     }
 
-    wifi_enable_11d_support_APIs();
+    (void)wifi_enable_11d_support_APIs();
 
     return wifi_send_11d_cfg_ioctl(&d_cfg);
 }
@@ -2288,9 +2288,9 @@ int wifi_enable_11d_support(void)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    wrapper_wlan_11d_enable();
+    (void)wrapper_wlan_11d_enable();
 
-    wlan_11d_support_APIs(pmpriv);
+    (void)wlan_11d_support_APIs(pmpriv);
 
     return wlan_enable_11d_support(pmpriv);
 }
@@ -2872,7 +2872,7 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit)
     t_u8 *pByte                            = NULL;
     MrvlIETypes_ChanTRPCConfig_t *trpc_tlv = NULL;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     cmd->command = HostCmd_CMD_CHANNEL_TRPC_CONFIG;
     cmd->seq_num = 0x0;
@@ -2911,7 +2911,7 @@ int wifi_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit)
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     cmd->command = HostCmd_CMD_CHANNEL_TRPC_CONFIG;
     cmd->seq_num = 0x0;
@@ -2941,7 +2941,7 @@ int wifi_get_fw_region_and_cfp_tables()
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     cmd->command = HostCmd_CMD_CHAN_REGION_CFG;
     cmd->seq_num = 0x0;
@@ -2969,7 +2969,7 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
     mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     cmd->command = HostCmd_CMD_ED_MAC_MODE;
     cmd->seq_num = 0x0;
@@ -3046,7 +3046,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
     MrvlIETypes_SmcAddrRange_t *tlv_smc_addr_range     = NULL;
     MrvlIETypes_SmcFrameFilter_t *tlv_smc_frame_filter = NULL;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_SMART_MODE_CFG);
@@ -3126,7 +3126,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
     cmd->seq_num = 0x00;
     cmd->result  = 0x00;
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
 
     return WM_SUCCESS;
 }
@@ -3135,7 +3135,7 @@ int wifi_get_smart_mode_cfg(void)
 {
     uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_SYS_CONFIG) - 1U;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_SMART_MODE_CFG);
@@ -3146,7 +3146,7 @@ int wifi_get_smart_mode_cfg(void)
     cmd->seq_num = 0x00;
     cmd->result  = 0x00;
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
@@ -3154,7 +3154,7 @@ int wifi_start_smart_mode(void)
 {
     uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_SYS_CONFIG) - 1U;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_SMART_MODE_CFG);
@@ -3165,7 +3165,7 @@ int wifi_start_smart_mode(void)
     cmd->seq_num = 0x00;
     cmd->result  = 0x00;
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
@@ -3173,7 +3173,7 @@ int wifi_stop_smart_mode(void)
 {
     uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_SYS_CONFIG) - 1U;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command                          = wlan_cpu_to_le16(HOST_CMD_SMART_MODE_CFG);
@@ -3184,7 +3184,7 @@ int wifi_stop_smart_mode(void)
     cmd->seq_num = 0x00;
     cmd->result  = 0x00;
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
 
     return WM_SUCCESS;
 }
@@ -3215,14 +3215,14 @@ int wifi_send_hostcmd(
     {
         /* Do Nothing */
     }
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     /* Copy command buffer to driver command buffer */
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    memcpy((void *)cmd, (const void *)cmd_buf, cmd_buf_len);
+    (void)memcpy((void *)cmd, (const void *)cmd_buf, cmd_buf_len);
 
     /* Set global variable to say that this command is from user invocation */
     wm_wifi.hostcmd_cfg.is_hostcmd = true;
-    wifi_wait_for_cmdresp(&wm_wifi.hostcmd_cfg);
+    (void)wifi_wait_for_cmdresp(&wm_wifi.hostcmd_cfg);
 
     if (*reqd_resp_len > resp_buf_len)
     {

@@ -336,9 +336,9 @@ int mlan_subsys_init(void)
     mlan_dev.bss_attr[1].bss_num = 0;
 
     /* fixme: check return value above status */
-    mlan_register(&mlan_dev, (t_void **)&mlan_adap);
+    (void)mlan_register(&mlan_dev, (t_void **)&mlan_adap);
 
-    mlan_init_fw(mlan_adap);
+    (void)mlan_init_fw(mlan_adap);
     /* wlan_init_adapter(mlan_adap); */
 
     return WM_SUCCESS;
@@ -383,7 +383,7 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
 {
     Event_Ext_t *evt = (Event_Ext_t *)saved_event_buff;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
@@ -392,13 +392,13 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
     if (evt->bss_type == BSS_TYPE_STA)
     {
         cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, BSS_TYPE_STA);
-        wlan_cmd_11n_addba_rspgen((mlan_private *)mlan_adap->priv[evt->bss_type], cmd, &evt->reason_code);
+        (void)wlan_cmd_11n_addba_rspgen((mlan_private *)mlan_adap->priv[evt->bss_type], cmd, &evt->reason_code);
     }
     else if (evt->bss_type == BSS_TYPE_UAP)
     {
         cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, BSS_TYPE_UAP);
 
-        wlan_cmd_11n_uap_addba_rspgen((mlan_private *)mlan_adap->priv[evt->bss_type], cmd, &evt->reason_code);
+        (void)wlan_cmd_11n_uap_addba_rspgen((mlan_private *)mlan_adap->priv[evt->bss_type], cmd, &evt->reason_code);
     }
     else
     { /* Do Nothing */
@@ -411,7 +411,7 @@ int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff)
 #endif /* DEBUG_11N_AGGR */
 
     os_mem_free(saved_event_buff);
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
 
     return 0;
 }
@@ -711,15 +711,15 @@ int wrapper_wlan_11d_enable(void)
 {
     t_u32 enable_11d = ENABLE_11D;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
-                             Dot11D_i, NULL, &enable_11d, cmd);
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
+                                   Dot11D_i, NULL, &enable_11d, cmd);
 
     return wifi_wait_for_cmdresp(NULL);
 }
@@ -735,28 +735,28 @@ int wrapper_wlan_ecsa_enable(void)
 
     mlan_adap->ecsa_enable = MTRUE;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
-                             ECSAEnable_i, NULL, &ecsa_enable, cmd);
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
+                                   ECSAEnable_i, NULL, &ecsa_enable, cmd);
 
     return wifi_wait_for_cmdresp(NULL);
 }
 
 int wrapper_wlan_cmd_get_hw_spec(void)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
-    wlan_cmd_get_hw_spec((mlan_private *)mlan_adap->priv[0], cmd);
-    wifi_wait_for_cmdresp(NULL);
+    (void)wlan_cmd_get_hw_spec((mlan_private *)mlan_adap->priv[0], cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
     return 0;
 }
 
@@ -765,7 +765,7 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
     void *pdata_buf = NULL;
     HostCmd_DS_MGMT_IE_LIST_CFG ds_mgmt_ie_list_cfg;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
@@ -785,7 +785,7 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
     mlan_status status = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MGMT_IE_LIST, action,
                                                   0, NULL, pdata_buf, cmd);
 
-    wifi_wait_for_cmdresp(buffer);
+    (void)wifi_wait_for_cmdresp(buffer);
     return status;
 }
 
@@ -947,14 +947,14 @@ int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen
 
     if (rxpd->bss_type == MLAN_BSS_ROLE_STA)
     {
-        wlan_handle_rx_packet(mlan_adap, pmbuf);
+        (void)wlan_handle_rx_packet(mlan_adap, pmbuf);
     }
     else
     {
         pmlan_private priv = wlan_get_priv(mlan_adap, MLAN_BSS_ROLE_UAP);
         pmbuf->data_len    = rxpd->rx_pkt_length;
         pmbuf->data_offset += rxpd->rx_pkt_offset;
-        wlan_11n_deaggregate_pkt(priv, pmbuf);
+        (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
     }
     /* if (rv != MLAN_STATUS_SUCCESS) { */
     /*
@@ -978,7 +978,7 @@ void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd)
                                 /** Band selection */
                                 .misc_cfg = BAND_SELECT_BOTH};
 
-    wlan_cmd_11n_cfg((mlan_private *)mlan_adap->priv[0], cmd, HostCmd_ACT_GEN_SET, &txcfg);
+    (void)wlan_cmd_11n_cfg((mlan_private *)mlan_adap->priv[0], cmd, HostCmd_ACT_GEN_SET, &txcfg);
 }
 
 /*
@@ -997,7 +997,7 @@ void clear_event_chanswann(void)
 void wrapper_wlan_11d_clear_parsedtable(void)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-    wlan_11d_clear_parsedtable(pmpriv);
+    (void)wlan_11d_clear_parsedtable(pmpriv);
 }
 
 /*
@@ -1031,7 +1031,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
     pmlan_ioctl_req pioctl_req = (mlan_ioctl_req *)pioctl_buf;
     mlan_status rv             = MLAN_STATUS_SUCCESS;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     if (pioctl_req != NULL)
@@ -1062,11 +1062,11 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
     {
         wifi_d("Failed to prepare cmd.");
         wm_wifi.cmd_resp_priv = NULL;
-        wifi_put_command_lock();
+        (void)wifi_put_command_lock();
         return rv;
     }
 
-    wifi_wait_for_cmdresp(priv);
+    (void)wifi_wait_for_cmdresp(priv);
     return MLAN_STATUS_SUCCESS;
 }
 
@@ -1509,7 +1509,7 @@ static void wifi_set_hostcmd_resp(const HostCmd_DS_COMMAND *resp)
     /* Copy if response buffer is suffcient to hold response data */
     if (hcmd_cfg->resp_buf_len >= resp->size)
     {
-        memcpy((void *)hcmd_cfg->resp_buf, (const void *)resp, resp->size);
+        (void)memcpy((void *)hcmd_cfg->resp_buf, (const void *)resp, resp->size);
     }
     /* Initialize user pointer to NULL*/
     wm_wifi.cmd_resp_priv = NULL;
@@ -1810,7 +1810,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 break;
 #endif
             case HostCmd_CMD_802_11_DEAUTHENTICATE:
-                wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
+                (void)wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
                 wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
             case HostCmd_CMD_802_11_HS_CFG_ENH:
@@ -1853,13 +1853,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 rv = wlan_ret_11n_cfg(pmpriv, resp, NULL);
                 break;
             case HostCmd_CMD_11N_ADDBA_REQ:
-                do_wlan_ret_11n_addba_req(pmpriv, resp);
+                (void)do_wlan_ret_11n_addba_req(pmpriv, resp);
                 break;
             case HostCmd_CMD_11N_DELBA:
-                do_wlan_ret_11n_delba(pmpriv, resp);
+                (void)do_wlan_ret_11n_delba(pmpriv, resp);
                 break;
             case HostCmd_CMD_11N_ADDBA_RSP:
-                do_wlan_ret_11n_addba_resp(resp);
+                (void)do_wlan_ret_11n_addba_resp(resp);
                 break;
             case HostCmd_CMD_AMSDU_AGGR_CTRL:
                 rv = wlan_ret_amsdu_aggr_ctrl(pmpriv, resp, NULL);
@@ -3809,15 +3809,15 @@ void wifi_set_mac_addr(uint8_t *mac)
 
 void _wifi_set_mac_addr(uint8_t *mac)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_UAP);
 
     cmd->result = 0x0;
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_MAC_ADDRESS, HostCmd_ACT_GEN_SET, 0,
-                             NULL, mac, cmd);
-    wifi_wait_for_cmdresp(NULL);
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_MAC_ADDRESS,
+                                   HostCmd_ACT_GEN_SET, 0, NULL, mac, cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
 }
 
 #ifdef WLAN_LOW_POWER_ENABLE
