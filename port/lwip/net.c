@@ -320,7 +320,7 @@ static int check_iface_mask(void *handle, uint32_t ipaddr)
     uint32_t interface_ip, interface_mask;
     (void)net_get_if_ip_addr(&interface_ip, handle);
     (void)net_get_if_ip_mask(&interface_mask, handle);
-    if (interface_ip > 0)
+    if (interface_ip > 0U)
     {
         if ((interface_ip & interface_mask) == (ipaddr & interface_mask))
         {
@@ -579,11 +579,11 @@ void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
     {
         if (role != WLAN_BSS_ROLE_UAP)
         {
-            if (ip->ipv4.dns1 == 0)
+            if (ip->ipv4.dns1 == 0U)
             {
                 ip->ipv4.dns1 = ip->ipv4.gw;
             }
-            if (ip->ipv4.dns2 == 0)
+            if (ip->ipv4.dns2 == 0U)
             {
                 ip->ipv4.dns2 = ip->ipv4.dns1;
             }

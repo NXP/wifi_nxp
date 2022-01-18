@@ -961,7 +961,7 @@ static struct cli_command iperf[] = {
 
 int iperf_cli_init(void)
 {
-    int i;
+    u8_t i;
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
     {
         if (cli_register_command(&iperf[i]) != 0)
@@ -972,7 +972,7 @@ int iperf_cli_init(void)
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    timer = xTimerCreate("UDP Poll Timer", 1 / portTICK_PERIOD_MS, pdTRUE, (void *)0, timer_poll_udp_client);
+    timer = xTimerCreate("UDP Poll Timer", 1U / portTICK_PERIOD_MS, pdTRUE, (void *)0, timer_poll_udp_client);
     if (timer == NULL)
     {
         (void)PRINTF("Timer creation failed!\r\n");
@@ -994,7 +994,7 @@ int iperf_cli_init(void)
 
 int iperf_cli_deinit(void)
 {
-    int i;
+    u8_t i;
 
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
     {

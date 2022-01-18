@@ -33,7 +33,7 @@ Change log:
 #define _MLAN_IOCTL_H_
 
 /** Enumeration for IOCTL request ID */
-enum _mlan_ioctl_req_id
+typedef enum _mlan_ioctl_req_id
 {
     /* Scan Group */
     MLAN_IOCTL_SCAN = 0x00010000,
@@ -227,7 +227,7 @@ enum _mlan_ioctl_req_id
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
     MLAN_OID_MISC_GET_REGIONPWR_CFG
-};
+} mlan_ioctl_req_id;
 
 /** Sub command size */
 #define MLAN_SUB_COMMAND_SIZE 4U
@@ -961,7 +961,7 @@ typedef struct _mlan_deauth_param
 typedef struct _mlan_ds_bss
 {
     /** Sub-command */
-    t_u32 sub_command;
+    mlan_ioctl_req_id sub_command;
     /** BSS parameter */
     union
     {
@@ -1653,14 +1653,14 @@ enum _mlan_encryption_mode
 };
 
 /** Enumeration for PSK */
-enum _mlan_psk_type
+typedef enum _mlan_psk_type
 {
     MLAN_PSK_PASSPHRASE = 1,
     MLAN_PSK_PMK,
     MLAN_PSK_CLEAR,
     MLAN_PSK_QUERY,
     MLAN_PSK_PASSWORD,
-};
+} mlan_psk_type;
 
 /** The bit to indicate the key is for unicast */
 #define MLAN_KEY_INDEX_UNICAST 0x40000000
@@ -1784,7 +1784,7 @@ typedef struct _mlan_ds_passphrase
     /** BSSID may be used */
     mlan_802_11_mac_addr bssid;
     /** Flag for passphrase or pmk used */
-    t_u16 psk_type;
+    mlan_psk_type psk_type;
     /** Passphrase or PMK */
     union
     {
@@ -1972,7 +1972,7 @@ typedef struct _mlan_data_rate
 typedef struct _mlan_ds_rate
 {
     /** Sub-command */
-    t_u32 sub_command;
+    mlan_ioctl_req_id sub_command;
     /** Rate configuration parameter */
     union
     {
@@ -2019,7 +2019,7 @@ typedef struct _mlan_power_cfg_ext
 typedef struct _mlan_ds_power_cfg
 {
     /** Sub-command */
-    t_u32 sub_command;
+    mlan_ioctl_req_id sub_command;
     /** Power configuration parameter */
     union
     {

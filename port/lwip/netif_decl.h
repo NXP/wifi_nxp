@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -64,7 +64,7 @@ struct eth_llc_hdr
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 
-#define SIZEOF_ETH_LLC_HDR (8)
+#define SIZEOF_ETH_LLC_HDR (8U)
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'm'

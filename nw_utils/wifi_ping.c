@@ -50,7 +50,7 @@ static void display_ping_result(ip_addr_t *addr, int total, int recvd)
 }
 
 /* Display the statistics of the current iteration of ping */
-static void display_ping_stats(int status, uint32_t size, ip_addr_t *ipaddr, int seqno, int ttl, uint32_t time)
+static void display_ping_stats(int status, uint32_t size, ip_addr_t *ipaddr, u16_t seqno, int ttl, uint32_t time)
 {
     if (status == WM_SUCCESS)
     {
@@ -134,9 +134,10 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, uint16_
 
 /* Send an ICMP echo request, receive its response and print its statistics and
  * result */
-static int ping(unsigned int count, unsigned short size, unsigned int r_timeout, ip_addr_t *addr)
+static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_addr_t *addr)
 {
-    int i = 1, ret = WM_SUCCESS, s, recvd = 0;
+    int ret = WM_SUCCESS, s, recvd = 0;
+    u16_t i = 1;
     struct icmp_echo_hdr *iecho;
     struct sockaddr_in to;
     unsigned int src_ip, ping_time, ping_size;
@@ -245,8 +246,9 @@ void cmd_ping(int argc, char **argv)
 {
     ip_addr_t addr;
     int c;
-    uint16_t size    = PING_DEFAULT_SIZE;
-    uint32_t count   = PING_DEFAULT_COUNT, temp;
+    uint16_t size  = PING_DEFAULT_SIZE;
+    uint16_t count = PING_DEFAULT_COUNT;
+    uint32_t cnt, temp;
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
 
     /* If number of arguments is odd then print error */
@@ -262,7 +264,20 @@ void cmd_ping(int argc, char **argv)
         switch (c)
         {
             case 'c':
-                count = strtoul(cli_optarg, NULL, 10);
+                cnt = strtoul(cli_optarg, NULL, 10);
+                if (cnt > PING_MAX_COUNT)
+                {
+                    if (errno != 0)
+                    {
+                        (void)PRINTF("Error during strtoul errno:%d", errno);
+                    }
+                    (void)PRINTF(
+                        "ping: count size too large: %u."
+                        " Maximum is %u\r\n",
+                        cnt, PING_MAX_COUNT);
+                    return;
+                }
+                count = cnt;
                 break;
             case 's':
                 temp = strtoul(cli_optarg, NULL, 10);
@@ -314,7 +329,7 @@ static struct cli_command ping_cli[] = {
 
 int ping_cli_init(void)
 {
-    int i;
+    unsigned int i;
     for (i = 0; i < sizeof(ping_cli) / sizeof(struct cli_command); i++)
     {
         if (cli_register_command(&ping_cli[i]) != 0)
@@ -327,7 +342,7 @@ int ping_cli_init(void)
 
 int ping_cli_deinit(void)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < sizeof(ping_cli) / sizeof(struct cli_command); i++)
     {

@@ -383,7 +383,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
             {
                 LWIP_DEBUGF(NETIF_DEBUG, ("PANIC: Xmit packet"
                                           "is bigger than inbuf.\r\n"));
-                vTaskDelay((3000) / portTICK_RATE_MS);
+                vTaskDelay((3000U) / portTICK_RATE_MS);
             }
         }
         (void)memcpy((u8_t *)outbuf + pkt_len, (u8_t *)q->payload, q->len);
@@ -613,7 +613,7 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
             while (curr != NULL)
             {
                 /* If other IP is mapped to same MAC than skip Multicast MAC removal */
-                if ((ntohl(curr->group_ip) & 0x7FFFFF) == (ntohl(group->addr) & 0x7FFFFF))
+                if ((ntohl(curr->group_ip) & 0x7FFFFFU) == (ntohl(group->addr) & 0x7FFFFFU))
                 {
                     result = ERR_OK;
                     goto done;
