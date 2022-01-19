@@ -608,7 +608,10 @@ static void *wlan_memchr(pmlan_adapter pmadapter, void *s, int c, int n)
  *
  *  @return           A pointer to CFP
  */
-static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u8 region, t_u8 band, int *cfp_no)
+static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter,
+                                                    t_u8 region,
+                                                    mlan_band_def band,
+                                                    int *cfp_no)
 {
     t_u32 i;
     t_u8 cfp_bg;
@@ -631,7 +634,7 @@ static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u
 #endif /* CONFIG_5GHz_SUPPORT */
     }
 
-    if ((band & (BAND_B | BAND_G | BAND_GN | BAND_GAC)) != 0)
+    if ((band & (BAND_B | BAND_G | BAND_GN | BAND_GAC)) != 0U)
     {
 #ifdef OTP_CHANINFO
         /* Return the FW cfp table for requested region code, if available.
@@ -663,7 +666,7 @@ static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0)
+    if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0U)
     {
 #ifdef OTP_CHANINFO
         /* Return the FW cfp table for requested region code */
@@ -1074,7 +1077,7 @@ t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate)
  */
 t_u32 wlan_get_active_data_rates(mlan_private *pmpriv,
                                  mlan_bss_mode bss_mode,
-                                 t_u8 config_bands,
+                                 mlan_band_def config_bands,
                                  WLAN_802_11_RATES rates)
 {
     t_u32 k;
@@ -1275,7 +1278,7 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
  *
  *  @return             A pointer to chan_freq_power_t structure or MNULL if not found.
  */
-chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_u8 band, t_u16 channel)
+chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, mlan_band_def band, t_u16 channel)
 {
     chan_freq_power_t *cfp = MNULL;
 
@@ -1588,7 +1591,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
  *
  *  @return        MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, t_u8 band)
+mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, mlan_band_def band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int i                   = 0;

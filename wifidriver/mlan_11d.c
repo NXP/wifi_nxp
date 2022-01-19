@@ -197,7 +197,7 @@ static t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
  *  @return                     MTRUE or MFALSE
  */
 static t_u8 wlan_11d_channel_known(pmlan_adapter pmadapter,
-                                   t_u8 band,
+                                   mlan_band_def band,
                                    t_u8 chan,
                                    parsed_region_chan_11d_t *parsed_region_chan)
 {
@@ -219,7 +219,7 @@ static t_u8 wlan_11d_channel_known(pmlan_adapter pmadapter,
             PRINTM(MINFO, "11D: Found channel:%d (band:%d)\n", chan, band);
             ret = MTRUE;
 
-            if ((band & BAND_A) != 0)
+            if ((band & BAND_A) != 0U)
             {
                 /* If chan is a DFS channel, we need to see an AP on it */
                 pmpriv = wlan_get_priv(pmadapter, MLAN_BSS_ROLE_STA);
@@ -435,7 +435,7 @@ static mlan_status wlan_11d_update_chan_pwr_table(mlan_private *pmpriv, BSSDescr
  *
  *  @return           MTRUE or MFALSE
  */
-static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, t_u8 band, t_u8 first_chan, t_u8 no_of_chan, t_u8 *chan)
+static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, mlan_band_def band, t_u8 first_chan, t_u8 no_of_chan, t_u8 *chan)
 {
     chan_freq_power_t *cfp = MNULL;
     t_u8 i;
@@ -994,7 +994,7 @@ mlan_status wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
  */
 mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
                                        IEEEtypes_CountryInfoFullSet_t *country_info,
-                                       t_u8 band,
+                                       mlan_band_def band,
                                        parsed_region_chan_11d_t *parsed_region_chan)
 {
     t_u8 no_of_sub_band, no_of_chan;
@@ -1078,7 +1078,7 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
  *
  *  @return             Channel frequency
  */
-t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u8 band)
+t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def band)
 {
     chan_freq_power_t *cf;
     t_u16 cnt;
@@ -1124,7 +1124,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u8 band)
  *
  *  @return             MLAN_STATUS_SUCCESS
  */
-mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, t_u8 band)
+mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_u16 size              = sizeof(chan_freq_power_t);
@@ -1200,7 +1200,10 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, t_u8 band)
  *
  *  @return                     PASSIVE if chan is unknown; ACTIVE if chan is known
  */
-t_u8 wlan_11d_get_scan_type(mlan_private *pmpriv, t_u8 band, t_u8 chan, parsed_region_chan_11d_t *parsed_region_chan)
+t_u8 wlan_11d_get_scan_type(mlan_private *pmpriv,
+                            mlan_band_def band,
+                            t_u8 chan,
+                            parsed_region_chan_11d_t *parsed_region_chan)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
 

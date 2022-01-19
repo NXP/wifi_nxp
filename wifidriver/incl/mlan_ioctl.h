@@ -1033,7 +1033,7 @@ typedef struct _mlan_ds_custom_reg_domain
 /** Radio Control Group */
 /*-----------------------------------------------------------------*/
 /** Enumeration for band */
-enum _mlan_band_def
+typedef enum _mlan_band_def
 {
     BAND_B   = 1,
     BAND_G   = 2,
@@ -1046,7 +1046,7 @@ enum _mlan_band_def
     BAND_GAX = 256,
     BAND_AAX = 512,
 #endif
-};
+} mlan_band_def;
 
 /** NO secondary channel */
 #define NO_SEC_CHANNEL 0
@@ -1063,15 +1063,15 @@ enum _mlan_band_def
 typedef struct _mlan_ds_band_cfg
 {
     /** Infra band */
-    t_u32 config_bands;
+    mlan_band_def config_bands;
     /** Ad-hoc start band */
-    t_u32 adhoc_start_band;
+    mlan_band_def adhoc_start_band;
     /** Ad-hoc start channel */
     t_u32 adhoc_channel;
     /** Ad-hoc channel bandwidth */
     t_u32 sec_chan_offset;
     /** fw supported band */
-    t_u32 fw_bands;
+    mlan_band_def fw_bands;
 } mlan_ds_band_cfg;
 
 /** Type definition of mlan_ds_remain_chan for MLAN_OID_REMAIN_CHAN_CFG */
@@ -1330,7 +1330,7 @@ typedef struct _mlan_fw_info
     /** Device support for MIMO abstraction of MCSs */
     t_u8 hw_dev_mcs_support;
     /** fw supported band */
-    t_u8 fw_bands;
+    mlan_band_def fw_bands;
 } mlan_fw_info, *pmlan_fw_info;
 
 /** Version string buffer length */
@@ -1929,7 +1929,7 @@ typedef enum _mlan_vht_ldpc
 typedef struct _mlan_band_data_rate
 {
     /** Band configuration */
-    t_u8 config_bands;
+    mlan_band_def config_bands;
     /** BSS mode (Infra or IBSS) */
     mlan_bss_mode bss_mode;
 } mlan_band_data_rate;
@@ -2865,7 +2865,7 @@ typedef struct _mlan_ds_11d_domain_info
     /** Country Code */
     t_u8 country_code[COUNTRY_CODE_LEN];
     /** Band that channels in sub_band belong to */
-    t_u8 band;
+    mlan_band_def band;
     /** No. of subband in below */
     t_u8 no_of_sub_band;
     /** Subband data to send/last sent */
