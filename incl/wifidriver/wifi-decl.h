@@ -440,9 +440,9 @@ typedef PACK_START struct _wifi_ed_mac_ctrl_t
 typedef PACK_START struct _wifi_bandcfg_t
 {
     /** Infra band */
-    t_u32 config_bands;
+    mlan_band_def config_bands;
     /** fw supported band */
-    t_u32 fw_bands;
+    mlan_band_def fw_bands;
 } PACK_END wifi_bandcfg_t;
 
 /** Type definition of wifi_antcfg_t */

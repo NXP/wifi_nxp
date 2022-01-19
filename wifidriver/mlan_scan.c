@@ -239,9 +239,9 @@ static t_u8 is_wpa_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
  *  @return          Band type conversion of scanBand used in join/assoc cmds
  *
  */
-static t_u8 radio_type_to_band(t_u8 radio_type)
+static mlan_band_def radio_type_to_band(t_u8 radio_type)
 {
-    t_u8 ret_band;
+    mlan_band_def ret_band;
 
     switch (radio_type)
     {
@@ -267,9 +267,9 @@ static t_u8 radio_type_to_band(t_u8 radio_type)
  *  @return  matched: non-zero. unmatched: 0
  *
  */
-static t_u8 wlan_is_band_compatible(t_u8 cfg_band, t_u8 scan_band)
+static t_u8 wlan_is_band_compatible(mlan_band_def cfg_band, mlan_band_def scan_band)
 {
-    t_u8 band;
+    mlan_band_def band;
     switch (scan_band)
     {
         case BAND_A:
@@ -279,7 +279,7 @@ static t_u8 wlan_is_band_compatible(t_u8 cfg_band, t_u8 scan_band)
         default:
             band = BAND_B | BAND_G | BAND_GN | BAND_GAC;
     }
-    return cfg_band & band;
+    return (t_u8)(cfg_band & band);
 }
 
 #ifndef CONFIG_MLAN_WMSDK

@@ -594,7 +594,7 @@ static TxBAStreamTbl *wlan_11n_get_txbastream_status(mlan_private *priv, baStatu
  *
  *  @return             N/A
  */
-static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u8 bands)
+static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, mlan_band_def bands)
 {
     mlan_adapter *pmadapter = priv->adapter;
     t_u32 usr_dot_11n_dev_cap;
@@ -723,7 +723,7 @@ static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap,
  *
  *  @return             N/A
  */
-void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u8 bands)
+void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, mlan_band_def bands)
 {
     mlan_adapter *pmadapter = priv->adapter;
     int rx_mcs_supp;

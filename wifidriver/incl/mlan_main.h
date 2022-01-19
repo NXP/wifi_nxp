@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -879,7 +879,7 @@ typedef struct _region_chan_t
     /** Region code for US, Japan ... */
     t_u8 region;
     /** Band B/G/A, used for BAND_CONFIG cmd */
-    t_u8 band;
+    mlan_band_def band;
     /** Actual No. of elements in the array below */
     t_u8 num_cfp;
     /** chan-freq-txpower mapping table */
@@ -972,7 +972,7 @@ typedef struct
 {
 #ifdef STA_SUPPORT
     mlan_status (*wlan_11d_prepare_dnld_domain_info_cmd_p)(mlan_private *pmpriv);
-    mlan_status (*wlan_11d_create_dnld_countryinfo_p)(mlan_private *pmpriv, t_u8 band);
+    mlan_status (*wlan_11d_create_dnld_countryinfo_p)(mlan_private *pmpriv, mlan_band_def band);
     mlan_status (*wlan_11d_parse_dnld_countryinfo_p)(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc);
 #endif
 } wlan_11d_fn_t;
@@ -986,7 +986,7 @@ typedef struct
     mlan_status (*wlan_11d_cfg_domain_info_p)(IN pmlan_adapter pmadapter, IN mlan_ioctl_req *pioctl_req);
     mlan_status (*wlan_cmd_802_11d_domain_info_p)(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd, t_u16 cmd_action);
     mlan_status (*wlan_11d_handle_uap_domain_info_p)(mlan_private *pmpriv,
-                                                     t_u8 band,
+                                                     mlan_band_def band,
                                                      t_u8 *domain_tlv,
                                                      t_void *pioctl_buf);
 } wlan_11d_apis_t;
@@ -1150,7 +1150,7 @@ struct _mlan_private
     current_bss_params_t curr_bss_params;
 
     /** User selected bands */
-    t_u16 config_bands;
+    mlan_band_def config_bands;
 
     /** Beacon period */
     t_u16 beacon_period;
@@ -1907,11 +1907,11 @@ struct _mlan_adapter
     t_u8 *pbcn_buf_end;
 #endif /* CONFIG_MLAN_WMSDK */
     /** F/W supported bands */
-    t_u16 fw_bands;
+    mlan_band_def fw_bands;
     /** User selected band to start adhoc network */
-    t_u16 adhoc_start_band;
+    mlan_band_def adhoc_start_band;
     /** User selected bands */
-    t_u16 config_bands;
+    mlan_band_def config_bands;
     /** Pointer to channel list last sent to the firmware for scanning */
     ChanScanParamSet_t *pscan_channels;
 #ifndef CONFIG_MLAN_WMSDK
@@ -2461,9 +2461,9 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                                                     t_u16 channel,
                                                     region_chan_t *region_channel);
 /** Find Channel-Frequency-Power by band and channel */
-chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_u8 band, t_u16 channel);
+chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, mlan_band_def band, t_u16 channel);
 /** Find Channel-Frequency-Power by band and frequency */
-chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u8 band, t_u32 freq);
+chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_band_def band, t_u32 freq);
 /** Get Tx power of channel from Channel-Frequency-Power */
 t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel);
 
@@ -2479,7 +2479,7 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
 /** Get active data rates */
 t_u32 wlan_get_active_data_rates(mlan_private *pmpriv,
                                  mlan_bss_mode bss_mode,
-                                 t_u8 config_bands,
+                                 mlan_band_def config_bands,
                                  WLAN_802_11_RATES rates);
 /** Get supported data rates */
 t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
@@ -2507,7 +2507,7 @@ extern t_u16 cfp_code_index_bg[MRVDRV_MAX_CFP_CODE_BG];
 /** The table to keep CFP code for A */
 extern t_u16 cfp_code_index_a[MRVDRV_MAX_CFP_CODE_A];
 /** Set region table */
-mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, t_u8 band);
+mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, mlan_band_def band);
 /** Get radar detection requirements*/
 t_bool wlan_get_cfp_radar_detect(mlan_private *priv, t_u8 chnl);
 /** check if scan type is passive for b/g band*/
@@ -2554,15 +2554,18 @@ mlan_status wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
 #endif /* CONFIG_MLAN_WMSDK */
 #ifdef STA_SUPPORT
 /** Convert channel to frequency */
-t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u8 band);
+t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def band);
 /** Set 11D universal table */
-mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, t_u8 band);
+mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band);
 /** Clear 11D region table */
 mlan_status wlan_11d_clear_parsedtable(mlan_private *pmpriv);
 /** Create 11D country information for downloading */
-mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u8 band);
+mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, mlan_band_def band);
 /** Get scan type from 11D info */
-t_u8 wlan_11d_get_scan_type(mlan_private *pmpriv, t_u8 band, t_u8 chan, parsed_region_chan_11d_t *parsed_region_chan);
+t_u8 wlan_11d_get_scan_type(mlan_private *pmpriv,
+                            mlan_band_def band,
+                            t_u8 chan,
+                            parsed_region_chan_11d_t *parsed_region_chan);
 /** Parse 11D country info */
 mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_t *pBSSDesc);
 /** Prepare 11D domain information for download */
@@ -2570,7 +2573,7 @@ mlan_status wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv);
 /** Parse 11D country information into domain info */
 mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
                                        IEEEtypes_CountryInfoFullSet_t *country_info,
-                                       t_u8 band,
+                                       mlan_band_def band,
                                        parsed_region_chan_11d_t *parsed_region_chan);
 /** Configure 11D domain info command */
 mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_req *pioctl_req);
