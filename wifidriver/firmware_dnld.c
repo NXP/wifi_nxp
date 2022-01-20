@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides firmware download related API
  *
- *  Copyright 2022 NXP
+ *  Copyright 2021-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -24,8 +24,6 @@
  *
  */
 
-#include <mlan_api.h>
-
 #include <mlan_sdio_api.h>
 
 #if defined(CONFIG_XZ_DECOMPRESSION)
@@ -34,11 +32,8 @@
 #endif /* CONFIG_XZ_DECOMPRESSION */
 
 /* Additional WMSDK header files */
-#include <wmerrno.h>
-#include <wm_os.h>
-#include <wm_utils.h>
-#include <mlan_fw.h>
-#include "wifi-sdio.h"
+#include "mlan_sdio_defs.h"
+#include "type_decls.h"
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
@@ -53,12 +48,14 @@ const uint8_t *wlanfw;
 /* remove this after mlan integration complete */
 enum
 {
-    MLAN_CARD_NOT_DETECTED = 3,
-    MLAN_STATUS_FW_DNLD_FAILED,
-    MLAN_STATUS_FW_NOT_DETECTED = 5,
-    MLAN_STATUS_FW_NOT_READY,
-    MLAN_STATUS_FW_XZ_FAILED,
-    MLAN_CARD_CMD_TIMEOUT
+    FWDNLD_STATUS_FAILURE = 0xffffffff,
+    FWDNLD_STATUS_SUCCESS = 0,
+    FWDNLD_CARD_NOT_DETECTED = 3,
+    FWDNLD_STATUS_FW_DNLD_FAILED,
+    FWDNLD_STATUS_FW_NOT_DETECTED = 5,
+    FWDNLD_STATUS_FW_NOT_READY,
+    FWDNLD_STATUS_FW_XZ_FAILED,
+    FWDNLD_CARD_CMD_TIMEOUT
 };
 
 static int wlan_card_fw_status(t_u16 *dat)
@@ -83,7 +80,7 @@ static bool wlan_card_ready_wait(t_u32 poll)
         (void)wlan_card_fw_status(&dat);
         if (dat == FIRMWARE_READY)
         {
-            wifi_io_d("Firmware Ready");
+            fwdnld_io_d("Firmware Ready");
             return true;
         }
         os_thread_sleep(os_msec_to_ticks(5));
@@ -91,7 +88,7 @@ static bool wlan_card_ready_wait(t_u32 poll)
     return false;
 }
 
-mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wlanfw, t_u32 firmwarelen, t_u32 ioport)
+int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wlanfw, t_u32 firmwarelen, t_u32 ioport)
 {
     t_u32 tx_blocks = 0, txlen = 0, buflen = 0;
     t_u16 len    = 0;
@@ -119,7 +116,7 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
             }
             else
             {
-                wifi_io_e("Error in wlan_card_status()");
+                fwdnld_io_e("Error in wlan_card_status()");
                 break;
             }
 
@@ -132,13 +129,13 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
 
         if (!len)
         {
-            wifi_io_e("Card timeout %s:%d", __func__, __LINE__);
-            return MLAN_STATUS_FAILURE;
+            fwdnld_io_e("Card timeout %s:%d", __func__, __LINE__);
+            return FWDNLD_STATUS_FAILURE;
         }
         else if (len > outbuf_len)
         {
-            wifi_io_e("FW Download Failure. Invalid len");
-            return MLAN_STATUS_FAILURE;
+            fwdnld_io_e("FW Download Failure. Invalid len");
+            return FWDNLD_STATUS_FAILURE;
         }
         else
         { /* Do Nothing */
@@ -171,11 +168,11 @@ mlan_status wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wl
         len = 0;
     } while (true);
 
-    return MLAN_STATUS_SUCCESS;
+    return FWDNLD_STATUS_SUCCESS;
 }
 
 #if defined(CONFIG_XZ_DECOMPRESSION)
-mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, t_u32 firmwarelen, t_u32 ioport)
+int32_t wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, t_u32 firmwarelen, t_u32 ioport)
 {
     t_u32 tx_blocks = 0, txlen = 0, buflen = 0;
     t_u16 len    = 0;
@@ -192,8 +189,8 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
     t_u8 *sbuf = (t_u8 *)os_mem_alloc(SBUF_SIZE);
     if (sbuf == NULL)
     {
-        wifi_io_e("Allocation failed");
-        return MLAN_STATUS_FAILURE;
+        fwdnld_io_e("Allocation failed");
+        return FWDNLD_STATUS_FAILURE;
     }
 
     xz_uncompress_init(&stream, sbuf, outbuf);
@@ -209,7 +206,7 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
             }
             else
             {
-                wifi_io_e("Error in wlan_card_status()");
+                fwdnld_io_e("Error in wlan_card_status()");
                 break;
             }
 
@@ -219,15 +216,15 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
 
         if (!len)
         {
-            wifi_io_e("Card timeout %s:%d", __func__, __LINE__);
+            fwdnld_io_e("Card timeout %s:%d", __func__, __LINE__);
             break;
         }
         else if (len > WLAN_UPLD_SIZE)
         {
-            wifi_io_e("FW Download Failure. Invalid len");
+            fwdnld_io_e("FW Download Failure. Invalid len");
             xz_uncompress_end();
             os_mem_free(sbuf);
-            return MLAN_STATUS_FW_DNLD_FAILED;
+            return FWDNLD_STATUS_FW_DNLD_FAILED;
         }
 
         txlen = len;
@@ -257,7 +254,7 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
             }
             else if (ret != XZ_OK)
             {
-                wifi_io_e("Decompression failed:%d", ret);
+                fwdnld_io_e("Decompression failed:%d", ret);
                 break;
             }
         } while (retlen == 0);
@@ -268,12 +265,12 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
 
         if (ret == XZ_STREAM_END)
         {
-            wifi_io_d("Decompression successful");
+            fwdnld_io_d("Decompression successful");
             break;
         }
         else if (ret != XZ_OK)
         {
-            wifi_io_e("Exit:%d", ret);
+            fwdnld_io_e("Exit:%d", ret);
             break;
         }
         len = 0;
@@ -283,9 +280,9 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
     os_mem_free(sbuf);
 
     if (ret == XZ_OK || ret == XZ_STREAM_END)
-        return MLAN_STATUS_SUCCESS;
+        return FWDNLD_STATUS_SUCCESS;
     else
-        return MLAN_STATUS_FW_XZ_FAILED;
+        return FWDNLD_STATUS_FW_XZ_FAILED;
 }
 
 #endif /* CONFIG_XZ_DECOMPRESSION */
@@ -295,38 +292,38 @@ mlan_status wlan_download_decomp_fw(enum wlan_fw_storage_type st, t_u8 *wlanfw, 
  * Note this only applies to the blockmode we use 256 bytes
  * as block because MLAN_SDIO_BLOCK_SIZE = 256
  */
-static mlan_status wlan_set_fw_dnld_size(void)
+static int32_t wlan_set_fw_dnld_size(void)
 {
     uint32_t resp;
 
     int rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
     if (rv == false)
     {
-        return MLAN_STATUS_FAILURE;
+        return FWDNLD_STATUS_FAILURE;
     }
 
     rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_1, 0, 1, &resp);
     if (rv == false)
     {
-        return MLAN_STATUS_FAILURE;
+        return FWDNLD_STATUS_FAILURE;
     }
 
-    return MLAN_STATUS_SUCCESS;
+    return FWDNLD_STATUS_SUCCESS;
 }
 
 /*
  * Download firmware to the card through SDIO.
  * The firmware is stored in Flash.
  */
-mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_start_addr, const size_t size)
+int32_t firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_start_addr, const size_t size)
 {
     t_u32 firmwarelen;
     wlanfw_hdr_type wlanfwhdr;
-    mlan_status ret;
+    int32_t ret;
 
     /* set fw download block size */
     ret = wlan_set_fw_dnld_size();
-    if (ret != MLAN_STATUS_SUCCESS)
+    if (ret != FWDNLD_STATUS_SUCCESS)
     {
         return ret;
     }
@@ -334,8 +331,8 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
 	if (st == WLAN_FW_IN_FLASH) {
 		fl_dev = flash_drv_open(fl->fl_dev);
 		if (fl_dev == NULL) {
-			wifi_io_e("Flash drv init is required before open");
-			return MLAN_STATUS_FW_NOT_DETECTED;
+			fwdnld_io_e("Flash drv init is required before open");
+			return FWDNLD_STATUS_FW_NOT_DETECTED;
 		}
 	}
 
@@ -348,7 +345,7 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
         wlanfw = fw_ram_start_addr;
     }
 
-    wifi_io_d("Start copying wlan firmware over sdio from 0x%x", (t_u32)wlanfw);
+    fwdnld_io_d("Start copying wlan firmware over sdio from 0x%x", (t_u32)wlanfw);
 
 #if 0
 	if (st == WLAN_FW_IN_FLASH)
@@ -362,11 +359,11 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
     }
 
     //	if (wlanfwhdr.magic_number != WLAN_MAGIC_NUM) {
-    //		wifi_io_e("WLAN FW not detected in Flash.");
+    //		fwdnld_io_e("WLAN FW not detected in Flash.");
     //		return MLAN_STATUS_FW_NOT_DETECTED;
     //	}
 
-    //	wifi_io_d("Valid WLAN FW found in %s flash",
+    //	fwdnld_io_d("Valid WLAN FW found in %s flash",
     //			fl->fl_dev ? "external" : "internal");
 
     /* skip the wlanhdr and move wlanfw to beginning of the firmware */
@@ -386,7 +383,7 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
     /* See if image is XZ compressed or not */
     if (verify_xz_header(buffer) == WM_SUCCESS)
     {
-        wifi_io_d(
+        fwdnld_io_d(
             "XZ Compressed image found, start decompression,"
             " len: %d",
             firmwarelen);
@@ -395,7 +392,7 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
     else
 #endif /* CONFIG_XZ_DECOMPRESSION */
     {
-        wifi_io_d(
+        fwdnld_io_d(
             "Un-compressed image found, start download,"
             " len: %d",
             firmwarelen);
@@ -405,19 +402,19 @@ mlan_status firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ra
 	if (st == WLAN_FW_IN_FLASH)
 		flash_drv_close(fl_dev);
 #endif
-    if (ret != MLAN_STATUS_SUCCESS)
+    if (ret != FWDNLD_STATUS_SUCCESS)
     {
         return ret;
     }
 
     if (wlan_card_ready_wait(1000) != true)
     {
-        wifi_io_e("SDIO - FW Ready Registers not set");
-        return MLAN_STATUS_FAILURE;
+        fwdnld_io_e("SDIO - FW Ready Registers not set");
+        return FWDNLD_STATUS_FAILURE;
     }
     else
     {
-        wifi_io_d("WLAN FW download Successful");
-        return MLAN_STATUS_SUCCESS;
+        fwdnld_io_d("WLAN FW download Successful");
+        return FWDNLD_STATUS_SUCCESS;
     }
 }

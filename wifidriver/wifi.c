@@ -36,6 +36,7 @@
 #include "wifi-sdio.h"
 #include "mlan_sdio.h"
 #include "sdio.h"
+#include "firmware_dnld.h"
 
 #ifdef CONFIG_WMM
 #include "sdmmc_config.h"

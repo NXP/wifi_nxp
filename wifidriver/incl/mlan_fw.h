@@ -227,13 +227,6 @@ typedef enum _KEY_INFO_WAPI
 /** Length of SNAP header */
 #define MRVDRV_SNAP_HEADER_LEN 8
 
-/** The number of times to try when polling for status bits */
-#if defined(SD8997)
-#define MAX_POLL_TRIES 10000U
-#else
-#define MAX_POLL_TRIES 100U
-#endif
-
 /** The number of times to try when waiting for downloaded firmware to
      become active when multiple interface is present */
 #define MAX_MULTI_INTERFACE_POLL_TRIES 1000
@@ -256,8 +249,6 @@ typedef enum _KEY_INFO_WAPI
 #define MRVDRV_ETH_RX_PACKET_BUFFER_SIZE (MV_ETH_FRAME_LEN + sizeof(RxPD) + MRVDRV_SNAP_HEADER_LEN + EXTRA_LEN)
 
 /* Macros in interface module */
-/** Firmware ready */
-#define FIRMWARE_READY 0xfedcU
 
 /** Number of firmware blocks to transfer */
 #define FIRMWARE_TRANSFER_NBLOCK 2

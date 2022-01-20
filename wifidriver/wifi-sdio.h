@@ -2,7 +2,7 @@
  *
  *  @brief WLAN on SDIO
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -31,6 +31,7 @@
 //#define INCLUDE_FROM_MLAN
 
 #include <wifi.h>
+#include "firmware_dnld.h"
 
 #define wifi_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
 #define wifi_io_w(...) wmlog_w("wifi_io", ##__VA_ARGS__)
@@ -51,8 +52,6 @@
 #endif
 
 #define WLAN_MAGIC_NUM (('W' << 0) | ('L' << 8) | ('F' << 16) | ('W' << 24))
-
-#define SDIO_OUTBUF_LEN 2048U
 
 #ifndef CONFIG_11AC
 /* fixme: sizeof(HostCmd_DS_COMMAND) is 1132 bytes. So have kept this at
@@ -85,17 +84,6 @@
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
 #define DATA_BUFFER_SIZE (FSL_SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
-
-typedef struct wlanfw_hdr
-{
-    t_u32 magic_number;
-    t_u32 len;
-} wlanfw_hdr_type;
-
-/** Card Control Registers : Function 1 Block size 0 */
-#define FN1_BLOCK_SIZE_0 0x110
-/** Card Control Registers : Function 1 Block size 1 */
-#define FN1_BLOCK_SIZE_1 0x111
 
 /* Duplicated in wlan.c. keep in sync till we can be included directly */
 typedef struct __nvram_backup_struct

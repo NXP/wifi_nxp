@@ -2,7 +2,7 @@
  *
  *  @brief SDIO Generic API related header file
  *
- *  Copyright 2021 NXP
+ *  Copyright 2021-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -40,12 +40,7 @@
 
 extern uint8_t outbuf[DATA_BUFFER_SIZE];
 
-/*! @brief Data read from the card */
-#ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
-extern uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE];
-#else
-extern uint8_t inbuf[2 * DATA_BUFFER_SIZE];
-#endif /*CONFIG_SDIO_MULTI_PORT_RX_AGGR*/
+extern uint8_t inbuf[];
 
 mlan_status sdio_init(void);
 mlan_status sdio_ioport_init(void);

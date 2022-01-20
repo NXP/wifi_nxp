@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -312,12 +312,6 @@ enum wlan_type
     WLAN_TYPE_NORMAL = 0,
     WLAN_TYPE_WIFI_CALIB,
     WLAN_TYPE_FCC_CERTIFICATION,
-};
-
-enum wlan_fw_storage_type
-{
-    WLAN_FW_IN_FLASH = 0,
-    WLAN_FW_IN_RAM,
 };
 
 /** Tx power levels */
