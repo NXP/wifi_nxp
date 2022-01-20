@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides sdio related Generic API
  *
- *  Copyright 2021 NXP
+ *  Copyright 2021-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -37,13 +37,14 @@
 #include <wmerrno.h>
 #include <wm_os.h>
 #include <wm_utils.h>
-#include <mlan_fw.h>
+//#include <mlan_fw.h>
 #include "wifi-sdio.h"
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
 #include "sdmmc_config.h"
 #include "sdio.h"
+#include "firmware_dnld.h"
 
 /*
  * Used to authorize the SDIO interrupt handler to accept the incoming
