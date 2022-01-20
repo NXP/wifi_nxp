@@ -24,8 +24,6 @@
  *
  */
 
-#include <mlan_api.h>
-
 #include <mlan_sdio_api.h>
 
 #if defined(CONFIG_XZ_DECOMPRESSION)
@@ -34,11 +32,9 @@
 #endif /* CONFIG_XZ_DECOMPRESSION */
 
 /* Additional WMSDK header files */
-#include <wmerrno.h>
-#include <wm_os.h>
-#include <wm_utils.h>
-//#include <mlan_fw.h>
-#include "wifi-sdio.h"
+#include "mlan_main_defs.h"
+#include "mlan_sdio_defs.h"
+#include "type_decls.h"
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
@@ -165,7 +161,7 @@ static mlan_status wlan_sdio_init_ioport(void)
     defined(IW61x)
     ioport_g = MEM_PORT;
 
-    wifi_io_d("IOPORT : (0x%x)", ioport_g);
+    sdio_io_d("IOPORT : (0x%x)", ioport_g);
 
     /* Enable sdio cmd53 new mode */
     sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
@@ -197,7 +193,7 @@ static mlan_status wlan_sdio_init_ioport(void)
     sdio_drv_creg_read(IO_PORT_2_REG, 1, &resp);
     ioport_g |= ((resp & 0xff) << 16);
 
-    wifi_io_d("IOPORT : (0x%x)", ioport_g);
+    sdio_io_d("IOPORT : (0x%x)", ioport_g);
 #endif
 
     /* Set Host interrupt reset to read to clear */
@@ -233,14 +229,14 @@ mlan_status sdio_init(void)
     int rv = sdio_drv_init(NULL);
     if (rv != WM_SUCCESS)
     {
-        wifi_io_e("SDIO driver init failed.");
+        sdio_io_e("SDIO driver init failed.");
         return MLAN_STATUS_FAILURE;
     }
 
 #if 0
 	sdio_drv = sdio_drv_open("MDEV_SDIO");
 	if (!sdio_drv) {
-		wifi_io_e("SDIO driver open failed.");
+		sdio_io_e("SDIO driver open failed.");
 		return MLAN_STATUS_FAILURE;
 	}
 #endif
@@ -262,7 +258,7 @@ mlan_status sdio_init(void)
                 ret = sdio_drv_read(0x10000, 1, rd_len, 8, buf, &resp);
                 if (!ret)
                 {
-                    wifi_io_e(
+                    sdio_io_e(
                         "SDIO read failed, "
                         "resp:%x",
                         resp);
@@ -273,7 +269,7 @@ mlan_status sdio_init(void)
     }
     else if (!ret)
     {
-        wifi_io_e("failed to read EVENT_REG");
+        sdio_io_e("failed to read EVENT_REG");
         return MLAN_STATUS_FAILURE;
     }
     else
@@ -290,7 +286,7 @@ mlan_status sdio_ioport_init(void)
 
     if (sdiostatus != true)
     {
-        wifi_io_e("SDIO - Failed to read IOPORT");
+        sdio_io_e("SDIO - Failed to read IOPORT");
         return MLAN_STATUS_FAILURE;
     }
     return MLAN_STATUS_SUCCESS;

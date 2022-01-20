@@ -1,8 +1,8 @@
-/** @file sdio.h
+/** @file mlan_main_defs.h
  *
- *  @brief SDIO Generic API related header file
+ *  @brief This file contains common definitions for SDIO.
  *
- *  Copyright 2021-2022 NXP
+ *  Copyright 2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -23,39 +23,28 @@
  *  express and approved by NXP in writing.
  *
  */
-#ifndef _SDIO_H_
-#define _SDIO_H_
+/****************************************************
+Change log:
+****************************************************/
 
-#include "fsl_sdmmc_common.h"
-#include "fsl_sdmmc_host.h"
-#include "fsl_common.h"
-#include "sdmmc_config.h"
+#ifndef _MLAN_MAIN_DEFS_H_
+#define _MLAN_MAIN_DEFS_H_
 
-#include <wifi.h>
+#if defined(SD8801)
+/** Maximum numbfer of registers to read for multiple port */
+#define MAX_MP_REGS 64
+/** Maximum port */
+#define MAX_PORT 16
+/** Multi port aggregation packet limit */
+#define SDIO_MP_AGGR_DEF_PKT_LIMIT (4)
+#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+    defined(SD9098) || defined(IW61x)
+/** Maximum numbfer of registers to read for multiple port */
+#define MAX_MP_REGS                196
+/** Maximum port */
+#define MAX_PORT                   32U
+/** Multi port aggregation packet limit */
+#define SDIO_MP_AGGR_DEF_PKT_LIMIT (4U)
+#endif
 
-/*! @brief Data block count accessed in card */
-#define DATA_BLOCK_COUNT (4U)
-/*! @brief Data buffer size. */
-#define DATA_BUFFER_SIZE (FSL_SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
-
-#define sdio_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
-#define sdio_io_w(...) wmlog_w("wifi_io", ##__VA_ARGS__)
-
-#ifdef CONFIG_SDIO_IO_DEBUG
-#define sdio_io_d(...) wmlog("wifi_io", ##__VA_ARGS__)
-#else
-#define sdio_io_d(...)
-#endif /* ! CONFIG_SDIO_IO_DEBUG */
-
-extern uint8_t outbuf[DATA_BUFFER_SIZE];
-
-extern uint8_t inbuf[];
-
-mlan_status sdio_init(void);
-mlan_status sdio_ioport_init(void);
-void calculate_sdio_write_params(t_u32 txlen, t_u32 *tx_blocks, t_u32 *buflen);
-int wlan_card_status(t_u8 bits);
-t_u16 wlan_card_read_f1_base_regs(void);
-uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len);
-
-#endif //_SDIO_H_
+#endif //_MLAN_MAIN_DEFS_H_

@@ -34,6 +34,8 @@ Change log:
 #ifndef _MLAN_MAIN_H_
 #define _MLAN_MAIN_H_
 
+#include "mlan_main_defs.h"
+
 #ifdef DEBUG_LEVEL1
 extern t_void (*print_callback)(IN t_void *pmoal_handle, IN t_u32 level, IN t_s8 *pformat, IN...);
 
@@ -560,23 +562,6 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MLAN_TYPE_DATA 0U
 /** Type event */
 #define MLAN_TYPE_EVENT 3U
-
-#if defined(SD8801)
-/** Maximum numbfer of registers to read for multiple port */
-#define MAX_MP_REGS 64
-/** Maximum port */
-#define MAX_PORT 16
-/** Multi port aggregation packet limit */
-#define SDIO_MP_AGGR_DEF_PKT_LIMIT (4)
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
-/** Maximum numbfer of registers to read for multiple port */
-#define MAX_MP_REGS                196
-/** Maximum port */
-#define MAX_PORT                   32U
-/** Multi port aggregation packet limit */
-#define SDIO_MP_AGGR_DEF_PKT_LIMIT (4U)
-#endif
 
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 /** Multi port TX aggregation buffer size */
