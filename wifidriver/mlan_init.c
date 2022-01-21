@@ -44,7 +44,7 @@ Change log:
 ********************************************************/
 
 /* We are allocating BSS list globally as we need heap for other purposes */
-__attribute__((section(".wlan_data"))) static BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST];
+static BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST];
 
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
 #if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
