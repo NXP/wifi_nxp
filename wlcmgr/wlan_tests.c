@@ -1219,6 +1219,32 @@ static void test_wlan_send_hostcmd(int argc, char **argv)
     }
 }
 
+#ifdef SD8801
+u8_t ext_coex_8801_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+/* Command buffer to set External Coex Configuration parameters */
+u8_t ext_coex_8801_cmd_buf[] = {0xe0, 0, 0x1d, 0, 0x17, 0, 0, 0, 0x01, 0, 0, 0,
+                  0x2f, 0x02, 0x0d, 0x00, 0x01, 0, 0, 0x03, 0x01, 0x02, 0x01, 0x01, 0x00, 0x28, 0x00, 0x3c, 0x00};
+
+static void test_wlan_8801_enable_ext_coex(int argc, char **argv)
+{
+    int ret           = -WM_FAIL;
+    uint32_t reqd_len = 0;
+
+    ret = wlan_send_hostcmd(ext_coex_8801_cmd_buf, sizeof(ext_coex_8801_cmd_buf) / sizeof(u8_t), ext_coex_8801_resp_buf, HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("8801 External Coex Config success, response is");
+        for (ret = 0; ret < reqd_len; ret++)
+            (void)PRINTF("%x\t", ext_coex_8801_resp_buf[ret]);
+    }
+    else
+    {
+        (void)PRINTF("8801 External Coex Config error: %d", ret);
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -1238,6 +1264,9 @@ static struct cli_command tests[] = {
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
+#ifdef SD8801
+    {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
+#endif
 };
 
 /* Register our commands with the MTF. */
