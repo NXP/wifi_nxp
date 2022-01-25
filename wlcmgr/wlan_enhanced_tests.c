@@ -530,7 +530,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                             break;
                         case 3:
                             (void)PRINTF(
-                                "    GI:   4xHELTF + GI 0.8us DCM=1 and STBC=1 or\r\n"
+                                "    GI:   4xHELTF + GI 0.8us DCM=0 and STBC=0 or\r\n"
                                 "          4xHELTF + GI 3.2us Otherwise  \r\n");
                             break;
                     }
@@ -589,7 +589,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                             break;
                         case 3:
                             (void)PRINTF(
-                                "    GI:   4xHELTF + GI 0.8us DCM=1 and STBC=1 or\r\n"
+                                "    GI:   4xHELTF + GI 0.8us DCM=0 and STBC=0 or\r\n"
                                 "          4xHELTF + GI 3.2us Otherwise  \r\n");
                             break;
                     }
@@ -624,8 +624,6 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("wlan-set-txratecfg <sta/uap> <format> <index> ");
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     (void)PRINTF("<nss> ");
-#endif
-#ifdef CONFIG_11AX
     (void)PRINTF("<rate_setting>\r\n");
 #endif
     (void)PRINTF("\r\n");
