@@ -3013,6 +3013,78 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
 }
 #endif
 
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+int wifi_set_frag(int frag, mlan_bss_type bss_type)
+{
+    mlan_ioctl_req req;
+    mlan_ds_snmp_mib *mib = NULL;
+    mlan_status ret = MLAN_STATUS_FAILURE;
+    wifi_sta_list_t *sl = NULL;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    /* Allocate an IOCTL request buffer */
+    mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
+    if (mib == NULL) 
+        return -WM_FAIL;
+
+    /* Fill request buffer */
+    mib->sub_command = MLAN_OID_SNMP_MIB_FRAG_THRESHOLD;
+    req.pbuf 	 = (t_u8 *)mib;
+    req.buf_len	 = sizeof(mlan_ds_snmp_mib);
+    req.req_id = MLAN_IOCTL_SNMP_MIB;
+    req.action = MLAN_ACT_SET;
+    req.bss_index = bss_type;
+
+    if (req.action == MLAN_ACT_SET) 
+    {
+        if (frag < MLAN_FRAG_MIN_VALUE || frag > MLAN_FRAG_MAX_VALUE) 
+        {
+            os_mem_free(mib);
+            return -WM_FAIL;
+        }
+        mib->param.frag_threshold = frag;
+    }
+
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
+        if(!is_uap_started())
+        {
+            wifi_e("uap isn't up\n\r");
+            return -WM_FAIL;
+        }
+        wifi_uap_bss_sta_list(&sl);
+        if (!sl)
+        {
+            wifi_e("Failed to get sta list\n\r");
+            return -WM_FAIL;
+        }
+
+        if(sl->count >= 1)
+            ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        else
+            wifi_e("uap required sta to connect before setting fragment threshold\n\r");
+    }
+    else if(bss_type == MLAN_BSS_TYPE_STA)
+    {
+        if(is_sta_connected())
+            ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        else
+            wifi_e("sta connection required before setting fragment threshold\n\r");
+    }
+
+    if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+    {
+        os_mem_free(mib);
+        return -WM_FAIL;
+    }
+
+    os_mem_free(mib);
+
+    return WM_SUCCESS;
+}
+#endif
+
 void wifi_set_curr_bss_channel(uint8_t channel)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];

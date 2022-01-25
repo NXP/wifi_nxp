@@ -2856,6 +2856,25 @@ int wlan_set_rts(int rts);
 int wlan_set_uap_rts(int rts);
 #endif
 
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+/**
+ * Set the fragment threshold of sta in WLAN firmware.
+ *
+ * \param[in]  the value of fragment threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_frag(int frag);
+
+/**
+ * Set the fragment threshold of uap in WLAN firmware.
+ *
+ * \param[in]  the value of fragment threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_uap_frag(int frag);
+#endif
 
 static inline void print_mac(const char *mac)
 {

@@ -6055,8 +6055,21 @@ int wlan_set_uap_rts(int rts)
 {
     return wifi_set_rts(rts, MLAN_BSS_TYPE_UAP);
 }
+#endif
+
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+int wlan_set_frag(int frag)
+{
+    return wifi_set_frag(frag, MLAN_BSS_TYPE_STA);
+}
+
+int wlan_set_uap_frag(int frag)
+{
+    return wifi_set_frag(frag, MLAN_BSS_TYPE_UAP);
+}
 
 #endif
+
 
 
 #ifdef CONFIG_WPA2_ENTP
