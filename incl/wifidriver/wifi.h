@@ -848,6 +848,10 @@ int wifi_uap_stop(int type);
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);
 #endif
 
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
+int wifi_set_rts(int rts, mlan_bss_type bss_type);
+#endif
+
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 
 int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip);

@@ -2836,6 +2836,27 @@ void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list);
 void wlan_enable_wpa2_enterprise_ap_only();
 #endif
 
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
+/**
+ * Set the rts threshold of sta in WLAN firmware.
+ *
+ * \param[in]  the value of rts threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_rts(int rts);
+
+/**
+ * Set the rts threshold of uap in WLAN firmware.
+ *
+ * \param[in]  the value of rts threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_uap_rts(int rts);
+#endif
+
+
 static inline void print_mac(const char *mac)
 {
     (void)PRINTF("%02X:%02X:%02X:%02X:%02X:%02X ", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
