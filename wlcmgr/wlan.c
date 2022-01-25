@@ -6045,6 +6045,20 @@ uint32_t wlan_get_value1(void)
     }
 }
 
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
+int wlan_set_rts(int rts)
+{
+    return wifi_set_rts(rts, MLAN_BSS_TYPE_STA);
+}
+
+int wlan_set_uap_rts(int rts)
+{
+    return wifi_set_rts(rts, MLAN_BSS_TYPE_UAP);
+}
+
+#endif
+
+
 #ifdef CONFIG_WPA2_ENTP
 void wlan_enable_wpa2_enterprise_ap_only()
 {
