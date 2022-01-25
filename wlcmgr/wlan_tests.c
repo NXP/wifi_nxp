@@ -1292,6 +1292,43 @@ static void test_wlan_set_rts(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+static void test_wlan_set_frag(int argc, char **argv)
+{
+    int frag;
+    int ret;
+    int bss_type = 0;
+
+    if (argc != 3)
+    {
+        (void)PRINTF("Usage: %s <sta/uap> <fragment threshold>\r\n", argv[0]);
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if(string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Usage: %s <sta/uap> <fragment threshold>\r\n", argv[0]);
+        return;
+    }
+
+    frag = atoi(argv[2]);
+
+	if(bss_type == MLAN_BSS_TYPE_STA)
+        ret = wlan_set_frag(frag);
+	else
+		ret = wlan_set_uap_frag(frag);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set fragment threshold\r\n");
+    }
+}
+#endif
+
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -1430,6 +1467,9 @@ static struct cli_command tests[] = {
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
+#endif
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+    {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
