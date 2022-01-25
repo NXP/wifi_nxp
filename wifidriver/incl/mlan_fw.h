@@ -1597,8 +1597,8 @@ typedef enum _ENH_PS_MODES
 #define EVENT_RXBA_SYNC 0x00000059
 
 #ifdef IW61x
-#define EVENT_IMD3_CAL_START            0x000000A0
-#define EVENT_IMD3_CAL_END              0x000000A1
+#define EVENT_IMD3_CAL_START 0x000000A0
+#define EVENT_IMD3_CAL_END   0x000000A1
 #endif
 
 #ifdef CONFIG_WIFI_FW_DEBUG
@@ -3516,9 +3516,12 @@ typedef MLAN_PACK_START struct _HostCmd_TX_RATE_QUERY
     t_u8 ht_info;
 #else
     /** Tx Rate Info:
-     * [Bit 0-1] tx rate format: LG = 0, HT = 1, VHT = 2
+     * [Bit 0-1] tx rate format: LG = 0, HT = 1, VHT = 2, HE = 3
      * [Bit 2-3] HT/VHT Bandwidth: BW20 = 0, BW40 = 1, BW80 = 2, BW160 = 3
-     * [Bit 4]   HT/VHT Guard Interval: LGI = 0, SGI = 1 */
+     * [Bit 4]   HT/VHT Guard Interval: LGI = 0, SGI = 1
+     * [Bit 5]   STBC support
+     * [Bit 6]   LDPC support
+     * [Bit 7] [Bit 4] 11ax GI, 00, 01, 10, 11 */
     t_u8 tx_rate_info;
 #endif
 #ifdef CONFIG_11AX
@@ -3750,14 +3753,14 @@ typedef MLAN_PACK_START struct _MrvlRateDropPattern_t
     /* MrvlRateDropControl_t RateDropControl[0]; */
 } MLAN_PACK_END MrvlRateDropPattern_t;
 
-#ifdef CONFIG_11AX_DCM_ER
-typedef MLAN_PACK_START struct _MrvlIETypes_rate_setting_t {
-	/** Header */
-	MrvlIEtypesHeader_t header;
-	/** Rate Setting */
-	t_u16 rate_setting;
+/** MrvlIETypes_rate_setting_t */
+typedef MLAN_PACK_START struct _MrvlIETypes_rate_setting_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Rate Setting */
+    t_u16 rate_setting;
 } MLAN_PACK_END MrvlIETypes_rate_setting_t;
-#endif
 
 /** HostCmd_DS_TX_RATE_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TX_RATE_CFG

@@ -1131,9 +1131,10 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter,
                 break;
         }
     }
+    else
 #endif
 #ifdef CONFIG_11N
-    if ((tx_rate_info & 0x3U) == (t_u8)MLAN_RATE_FORMAT_HT)
+        if ((tx_rate_info & 0x3U) == (t_u8)MLAN_RATE_FORMAT_HT)
     {
         /* HT rate */
         /* 20M: bw=0, 40M: bw=1 */

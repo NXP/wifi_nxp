@@ -991,6 +991,13 @@ typedef wifi_csi_config_params_t wlan_csi_config_params_t;
 typedef wifi_net_monitor_t wlan_net_monitor_t;
 #endif
 
+#ifdef CONFIG_11AX
+/** Configuration for TX Rate Setting from
+ * \ref txrate_setting
+ */
+typedef txrate_setting wlan_txrate_setting;
+#endif
+
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
 int verify_split_scan_delay(int delay);

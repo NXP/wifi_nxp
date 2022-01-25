@@ -1771,14 +1771,17 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate)
         ds_rate_cfg.param.rate_cfg.rate_format  = ds_rate.param.rate_cfg.rate_format;
 #ifdef SD8801
         if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HT)
-            ds_rate_cfg.param.rate_cfg.rate += +MLAN_RATE_INDEX_MCS0;
+            ds_rate_cfg.param.rate_cfg.rate += MLAN_RATE_INDEX_MCS0;
 #endif
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-        ds_rate_cfg.param.rate_cfg.nss = ds_rate.param.rate_cfg.nss;
+        if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT ||
+            ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
+            ds_rate_cfg.param.rate_cfg.nss = ds_rate.param.rate_cfg.nss;
 #endif
-#ifdef CONFIG_11AX_DCM_ER
-        ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting;
-#endif
+        if (ds_rate.param.rate_cfg.rate_setting != 0xffff)
+            ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting & ~0x0C00;
+        else
+            ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting;
     }
     return wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_SET, &ds_rate_cfg);
 }

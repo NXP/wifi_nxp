@@ -219,7 +219,7 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
 #ifdef CONFIG_ECSA
-    MLAN_OID_MISC_OPER_CLASS = 0x00200038,
+    MLAN_OID_MISC_OPER_CLASS       = 0x00200038,
     MLAN_OID_MISC_OPER_CLASS_CHECK = 0x00200049,
 #endif
     MLAN_OID_MISC_GET_REGIONPWR_CFG,
@@ -1021,7 +1021,8 @@ typedef struct _mlan_deauth_param
 
 #ifdef CONFIG_ECSA
 /** mlan_chan_switch_param */
-typedef struct _mlan_action_chan_switch{
+typedef struct _mlan_action_chan_switch
+{
     /** mode*/
     t_u8 mode;
     /** switch mode*/
@@ -1035,14 +1036,16 @@ typedef struct _mlan_action_chan_switch{
 } mlan_action_chan_switch;
 
 /** mlan_ecsa_blocktx_control */
-typedef struct _mlan_ecsa_block_tx_control{
+typedef struct _mlan_ecsa_block_tx_control
+{
     /** block tx required*/
     bool required;
     /** block time of one detect period*/
     t_u8 block_time;
 } mlan_ecsa_block_tx_control;
 
-typedef struct _mlan_ds_bw_chan_oper {
+typedef struct _mlan_ds_bw_chan_oper
+{
     /* bandwidth 20:20M 40:40M 80:80M*/
     t_u8 bandwidth;
     /* channel number */
@@ -1085,7 +1088,7 @@ typedef struct _mlan_ds_bss
         mlan_uap_bss_param bss_config;
 #ifdef CONFIG_ECSA
         /** channel switch for MLAN_OID_UAP_CHAN_SWITCH */
-        mlan_action_chan_switch  chanswitch;
+        mlan_action_chan_switch chanswitch;
 #endif
 #if 0
         /** deauth param for MLAN_OID_UAP_DEAUTH_STA */
@@ -2019,10 +2022,8 @@ typedef struct _mlan_rate_cfg_t
 #endif
     /* LG rate: 0, HT rate: 1, VHT rate: 2 */
     mlan_rate_format rate_format;
-#ifdef CONFIG_11AX_DCM_ER
     /** Rate Setting */
     t_u16 rate_setting;
-#endif
 } mlan_rate_cfg_t;
 
 /** HT channel bandwidth */
@@ -2828,12 +2829,12 @@ typedef MLAN_PACK_START struct _mlan_ds_11ax_txomi_cmd
     /* tx option
      * 0: send OMI in QoS NULL; 1: send OMI in QoS data; 0xFF: set OMI in both
      */
-    t_u8     tx_option;
+    t_u8 tx_option;
     /* if OMI is sent in QoS data, specify the number of consecutive data packets
      * containing the OMI. Minimum number of data packets should be 1 and maximum
      * should be 16.
      */
-    t_u8     num_data_pkts;
+    t_u8 num_data_pkts;
 } MLAN_PACK_END mlan_ds_11ax_txomi_cmd, *pmlan_ds_11ax_txomi_cmd;
 
 /** Type definition of mlan_ds_11ax_toltime_cmd for MLAN_OID_11AX_CMD_CFG */

@@ -1583,7 +1583,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         case HostCmd_CMD_TX_RATE_CFG:
-            ret = wlan_ret_tx_rate_cfg(pmpriv, resp, pioctl);
+            ret = wlan_ret_tx_rate_cfg(pmpriv, resp, pioctl_buf);
             break;
 #ifndef CONFIG_EXT_SCAN_SUPPORT
         case HostCmd_CMD_802_11_SCAN:

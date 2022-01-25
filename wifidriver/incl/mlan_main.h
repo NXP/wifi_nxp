@@ -1548,8 +1548,10 @@ struct _sta_node
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
     /** 11n flag */
     bool is_11n_enabled;
+#ifdef CONFIG_11AC
     /** 11ac flag */
     bool is_11ac_enabled;
+#endif
 #ifdef CONFIG_11AX
     t_u8 is_11ax_enabled;
     IEEEtypes_HECap_t he_cap;

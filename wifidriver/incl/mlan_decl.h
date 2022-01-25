@@ -160,22 +160,27 @@ Change log:
 /** Rate index for OFDM 7 */
 #define MLAN_RATE_INDEX_OFDM7 11
 /** Rate index for MCS 0 */
-#define MLAN_RATE_INDEX_MCS0 12U
+#define MLAN_RATE_INDEX_MCS0 0U
+/** Rate index for MCS 2 */
+#define MLAN_RATE_INDEX_MCS2 2U
+/** Rate index for MCS 4 */
+#define MLAN_RATE_INDEX_MCS4 4U
 /** Rate index for MCS 7 */
-#define MLAN_RATE_INDEX_MCS7 19
+#define MLAN_RATE_INDEX_MCS7 7U
 /** Rate index for MCS 9 */
-#define MLAN_RATE_INDEX_MCS9 21
+#define MLAN_RATE_INDEX_MCS9 9U
 #ifdef CONFIG_11AX
 /** Rate index for MCS11 */
-#define MLAN_RATE_INDEX_MCS11 11
+#define MLAN_RATE_INDEX_MCS11 11U
 #endif
 /** Rate index for MCS 32 */
-#define MLAN_RATE_INDEX_MCS32 44
+#define MLAN_RATE_INDEX_MCS32 32U
 /** Rate index for MCS 127 */
-#define MLAN_RATE_INDEX_MCS127 139
-
+#define MLAN_RATE_INDEX_MCS127 127U
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
 #define MLAN_RATE_NSS1 1
 #define MLAN_RATE_NSS2 2
+#endif
 
 /** Rate bitmap for OFDM 0 */
 #define MLAN_RATE_BITMAP_OFDM0 16
@@ -185,11 +190,12 @@ Change log:
 #define MLAN_RATE_BITMAP_MCS0 32U
 /** Rate bitmap for MCS 127 */
 #define MLAN_RATE_BITMAP_MCS127 159
-
+#ifdef CONFIG_11AC
 #define MLAN_RATE_BITMAP_NSS1_MCS0 160
 #define MLAN_RATE_BITMAP_NSS1_MCS9 169
 #define MLAN_RATE_BITMAP_NSS2_MCS0 176
 #define MLAN_RATE_BITMAP_NSS2_MCS9 185
+#endif
 
 /** MU beamformer */
 #define DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK (MBIT(19))
@@ -864,12 +870,10 @@ typedef struct _mlan_callbacks
                                           OUT t_u32 * psec, OUT t_u32 * pusec);
 #endif /* 0 */
 
-      /** moal_memcpy_ext */
-      t_void *(*moal_memcpy_ext)(t_void *pmoal, t_void *pdest,
-                       const t_void *psrc, t_u32 num,
-                       t_u32 dest_size);
+    /** moal_memcpy_ext */
+    t_void *(*moal_memcpy_ext)(t_void *pmoal, t_void *pdest, const t_void *psrc, t_u32 num, t_u32 dest_size);
 
-       /** moal_init_timer*/
+    /** moal_init_timer*/
     mlan_status (*moal_init_timer)(IN t_void *pmoal_handle,
                                    OUT t_void **pptimer,
                                    IN t_void (*callback)(os_timer_arg_t arg),
