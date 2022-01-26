@@ -856,6 +856,10 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type);
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
 #endif
 
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
+#endif
+
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 
 int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip);
