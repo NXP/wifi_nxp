@@ -6070,7 +6070,13 @@ int wlan_set_uap_frag(int frag)
 
 #endif
 
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+int  wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+{
+    return wifi_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
 
+}
+#endif
 
 #ifdef CONFIG_WPA2_ENTP
 void wlan_enable_wpa2_enterprise_ap_only()

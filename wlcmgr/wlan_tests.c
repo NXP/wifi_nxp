@@ -1329,6 +1329,69 @@ static void test_wlan_set_frag(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+/**
+ *  @brief Show usage information for the sta_filter_table command
+ *
+ *  $return         N/A
+ */
+static void print_sta_filter_table_usage(void)
+{
+    (void)PRINTF("\r\nUsage : sta_filter_table <FILTERMODE> <MACADDRESS_LIST>\r\n");
+    (void)PRINTF("\r\nOptions: FILTERMODE : 0 - Disable filter table");
+    (void)PRINTF("\r\n                      1 - allow MAC addresses specified in the allowed list");
+    (void)PRINTF("\r\n                      2 - block MAC addresses specified in the banned list");
+    (void)PRINTF("\r\n         MACADDRESS_LIST is the list of MAC addresses to be acted upon. Each");
+    (void)PRINTF("\r\n                      MAC address must be separated with a space. Maximum of");
+    (void)PRINTF("\r\n                      16 MAC addresses are supported.\r\n");
+    return;
+}
+
+static void test_wlan_set_sta_filter(int argc, char **argv)
+{
+    int i = 0;
+    int ret = WM_SUCCESS;
+    int filter_mode = 0;
+    int mac_count = 0;
+    unsigned char mac_addr[WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH];
+
+    if (argc < 2 || argc > (WLAN_MAX_STA_FILTER_NUM + 2)){
+        (void)PRINTF("ERR:Too many or too few farguments.\r\n");
+        print_sta_filter_table_usage();
+        return;
+    }
+
+    argc --;
+    argv ++;
+
+    if (((atoi(argv[0]) < 0) || (atoi(argv[0]) > 2))) {
+        (void)PRINTF("ERR:Illegal FILTERMODE parameter %s. Must be either '0', '1', or '2'.\r\n", argv[1]);
+        print_sta_filter_table_usage();
+        return;
+    }
+
+    filter_mode = atoi(argv[0]);
+
+    mac_count = argc - 1;
+
+    if (mac_count) {
+        for (i = 0; i < mac_count; i++) {
+            ret = get_mac(argv[i + 1], (char *)&mac_addr[i * WLAN_MAC_ADDR_LENGTH], ':');
+            if (ret != 0){
+                (void)PRINTF("Error: invalid MAC argument\r\n");
+                return;
+            }
+        }
+    } else {
+        memset(mac_addr, 0,  16 * WLAN_MAC_ADDR_LENGTH);
+    }
+
+    wlan_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
+
+    return;
+}
+#endif
+
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -1471,6 +1534,10 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+		{"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
+#endif
+
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 #ifdef SD8801

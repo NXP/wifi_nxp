@@ -223,6 +223,14 @@ typedef enum
 /** Length of a pairwise master key (PMK).  It's always 256 bits (32 Bytes) */
 #define WLAN_PMK_LENGTH 32
 
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+/* Max number of sta filter list can be upto 16 */
+#define WLAN_MAX_STA_FILTER_NUM  16
+
+/* The length of wlan mac address */
+#define WLAN_MAC_ADDR_LENGTH  6
+#endif
+
 /* Error Codes */
 
 /** The operation was successful. */
@@ -2874,6 +2882,20 @@ int wlan_set_frag(int frag);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_uap_frag(int frag);
+#endif
+
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+/**
+ * Set the sta mac filter in Wi-Fi firmware.
+ *
+ * \param[in] channel filter mode (disable/white/black list)
+ * \param[in] the count of mac list
+ * \param[in] the pointer to mac address list
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int  wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
 static inline void print_mac(const char *mac)

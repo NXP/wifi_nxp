@@ -2835,6 +2835,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
 #define IEEEtypes_REASON_DEAUTH_LEAVING     3
+#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6
 
 int wifi_handle_fw_event(struct bus_message *msg)
 {
@@ -3049,6 +3050,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
+			if (evt->reason_code == AP_DEAUTH_REASON_MAC_ADDR_BLOCKED)
+                wevt_d("EVENT: Blacklist sta %02x:%02x:%02x:%02x:%02x:%02x: try to join the network \r\n", evt->src_mac_addr[0],evt->src_mac_addr[1],
+                        evt->src_mac_addr[2],evt->src_mac_addr[3],evt->src_mac_addr[4],evt->src_mac_addr[5]);
             break;
         case EVENT_MICRO_AP_BSS_START:
             wifi_d("uAP start event received");
