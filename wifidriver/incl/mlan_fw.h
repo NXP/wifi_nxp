@@ -3091,38 +3091,159 @@ typedef MLAN_PACK_START struct _HostCmd_DS_SDIO_PULL_CTRL
 typedef MLAN_PACK_START struct _HostCmd_DS_802_11_GET_LOG
 {
     /** Number of multicast transmitted frames */
-    t_u32 mcast_tx_frame;
-    /** Number of failures */
-    t_u32 failed;
-    /** Number of retries */
-    t_u32 retry;
-    /** Number of multiretries */
-    t_u32 multiretry;
-    /** Number of duplicate frames */
-    t_u32 frame_dup;
-    /** Number of RTS success */
-    t_u32 rts_success;
-    /** Number of RTS failure */
-    t_u32 rts_failure;
-    /** Number of acknowledgement failure */
-    t_u32 ack_failure;
-    /** Number of fragmented packets received */
-    t_u32 rx_frag;
-    /** Number of multicast frames received */
-    t_u32 mcast_rx_frame;
-    /** FCS error */
-    t_u32 fcs_error;
-    /** Number of transmitted frames */
-    t_u32 tx_frame;
-    /** Reserved field */
-    t_u32 reserved;
-    /** Number of WEP icv error for each key */
-    t_u32 wep_icv_err_cnt[4];
-    /** Beacon recieve count */
-    t_u32 bcn_rcv_cnt;
-    /** Beacon miss count */
-    t_u32 bcn_miss_cnt;
+	t_u32 mcast_tx_frame;
+	/** Number of failures */
+	t_u32 failed;
+	/** Number of retries */
+	t_u32 retry;
+	/** Number of multiretries */
+	t_u32 multiretry;
+	/** Number of duplicate frames */
+	t_u32 frame_dup;
+	/** Number of RTS success */
+	t_u32 rts_success;
+	/** Number of RTS failure */
+	t_u32 rts_failure;
+	/** Number of acknowledgement failure */
+	t_u32 ack_failure;
+	/** Number of fragmented packets received */
+	t_u32 rx_frag;
+	/** Number of multicast frames received */
+	t_u32 mcast_rx_frame;
+	/** FCS error */
+	t_u32 fcs_error;
+	/** Number of transmitted frames */
+	t_u32 tx_frame;
+	/** Reserved field */
+	t_u32 reserved;
+	/** Number of WEP icv error for each key */
+	t_u32 wep_icv_err_cnt[4];
+	/** Beacon received count */
+	t_u32 bcn_rcv_cnt;
+	/** Beacon missed count */
+	t_u32 bcn_miss_cnt;
+	/** Tx frag count */
+	t_u32 tx_frag_cnt;
+	/** Qos Tx frag count */
+	t_u32 qos_tx_frag_cnt[8];
+	/** Qos failed count */
+	t_u32 qos_failed_cnt[8];
+	/** Qos retry count */
+	t_u32 qos_retry_cnt[8];
+	/** Qos multi retry count */
+	t_u32 qos_multi_retry_cnt[8];
+	/** Qos frame dup count */
+	t_u32 qos_frm_dup_cnt[8];
+	/** Qos rts success count */
+	t_u32 qos_rts_suc_cnt[8];
+	/** Qos rts failure count */
+	t_u32 qos_rts_failure_cnt[8];
+	/** Qos ack failure count */
+	t_u32 qos_ack_failure_cnt[8];
+	/** Qos Rx frag count */
+	t_u32 qos_rx_frag_cnt[8];
+	/** Qos Tx frame count */
+	t_u32 qos_tx_frm_cnt[8];
+	/** Qos discarded frame count */
+	t_u32 qos_discarded_frm_cnt[8];
+	/** Qos mpdus Rx count */
+	t_u32 qos_mpdus_rx_cnt[8];
+	/** Qos retry rx count */
+	t_u32 qos_retries_rx_cnt[8];
+	/** CMAC ICV errors count */
+	t_u32 cmacicv_errors;
+	/** CMAC replays count */
+	t_u32 cmac_replays;
+	/** mgmt CCMP replays count */
+	t_u32 mgmt_ccmp_replays;
+	/** TKIP ICV errors count */
+	t_u32 tkipicv_errors;
+	/** TKIP replays count */
+	t_u32 tkip_replays;
+	/** CCMP decrypt errors count */
+	t_u32 ccmp_decrypt_errors;
+	/** CCMP replays count */
+	t_u32 ccmp_replays;
+	/** Tx amsdu count */
+	t_u32 tx_amsdu_cnt;
+	/** failed amsdu count */
+	t_u32 failed_amsdu_cnt;
+	/** retry amsdu count */
+	t_u32 retry_amsdu_cnt;
+	/** multi-retry amsdu count */
+	t_u32 multi_retry_amsdu_cnt;
+	/** Tx octets in amsdu count */
+	t_u64 tx_octets_in_amsdu_cnt;
+	/** amsdu ack failure count */
+	t_u32 amsdu_ack_failure_cnt;
+	/** Rx amsdu count */
+	t_u32 rx_amsdu_cnt;
+	/** Rx octets in amsdu count */
+	t_u64 rx_octets_in_amsdu_cnt;
+	/** Tx ampdu count */
+	t_u32 tx_ampdu_cnt;
+	/** tx mpdus in ampdu count */
+	t_u32 tx_mpdus_in_ampdu_cnt;
+	/** tx octets in ampdu count */
+	t_u64 tx_octets_in_ampdu_cnt;
+	/** ampdu Rx count */
+	t_u32 ampdu_rx_cnt;
+	/** mpdu in Rx ampdu count */
+	t_u32 mpdu_in_rx_ampdu_cnt;
+	/** Rx octets ampdu count */
+	t_u64 rx_octets_in_ampdu_cnt;
+	/** ampdu delimiter CRC error count */
+	t_u32 ampdu_delimiter_crc_error_cnt;
+    /** Rx Stuck Related Info*/
+    /** Rx Stuck Issue count */
+    t_u32  rx_stuck_issue_cnt[2];
+    /** Rx Stuck Recovery count */
+    t_u32  rx_stuck_recovery_cnt;
+    /** Rx Stuck TSF */
+    t_u64  rx_stuck_tsf[2];
+    /** Tx Watchdog Recovery Related Info */
+    /** Tx Watchdog Recovery count */
+    t_u32  tx_watchdog_recovery_cnt;
+    /** Tx Watchdog TSF */
+    t_u64  tx_watchdog_tsf[2];
+    /** Channel Switch Related Info */
+    /** Channel Switch Announcement Sent */
+    t_u32  channel_switch_ann_sent;
+    /** Channel Switch State */
+    t_u32  channel_switch_state;
+    /** Register Class */
+    t_u32  reg_class;
+    /** Channel Number */
+    t_u32  channel_number;
+    /** Channel Switch Mode */
+    t_u32  channel_switch_mode;
+    /** Reset Rx Mac Count */
+    t_u32 rx_reset_mac_recovery_cnt;
+    /** ISR2 Not Done Count*/
+    t_u32 rx_Isr2_NotDone_Cnt;
+    /** GDMA Abort Count */
+    t_u32 gdma_abort_cnt;
+    /** Rx Reset MAC Count */
+    t_u32 g_reset_rx_mac_cnt;
+    //Ownership error counters
+    /*Error Ownership error count*/
+    t_u32 dwCtlErrCnt;
+    /*Control Ownership error count*/
+    t_u32 dwBcnErrCnt;
+    /*Control Ownership error count*/
+    t_u32 dwMgtErrCnt;
+    /*Control Ownership error count*/
+    t_u32 dwDatErrCnt;
+    /*BIGTK MME good count*/
+    t_u32 bigtk_mmeGoodCnt;
+    /*BIGTK Replay error count*/
+    t_u32 bigtk_replayErrCnt;
+    /*BIGTK MIC error count*/
+    t_u32 bigtk_micErrCnt;
+    /*BIGTK MME not included count*/
+    t_u32 bigtk_mmeNotFoundCnt;
 } MLAN_PACK_END HostCmd_DS_802_11_GET_LOG;
+
 
 /**_HostCmd_TX_RATE_QUERY */
 typedef MLAN_PACK_START struct _HostCmd_TX_RATE_QUERY

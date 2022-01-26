@@ -730,9 +730,12 @@ struct wifi_scan_params_t
     int split_scan_delay;
 };
 
+#ifdef CONFIG_WIFI_GET_LOG
 /** Wi-Fi firmware stat from \ref wifi_pkt_stats_t
  */
 typedef wifi_pkt_stats_t wlan_pkt_stats_t;
+#endif
+
 /** Configuration for Wireless scan channel list from
  * \ref wifi_scan_channel_list_t
  */
@@ -2150,20 +2153,35 @@ int wlan_get_current_bssid(uint8_t *bssid);
  */
 uint8_t wlan_get_current_channel(void);
 
+#ifdef CONFIG_WIFI_GET_LOG
 /**
- * Use this API to get the various statistics from Wi-Fi firmware like
+ * Use this API to get the various statistics of sta from Wi-Fi firmware like
  * number of beacons received, missed and so on.
  *
  * \param[in] stats A pointer to structure where stats collected from Wi-Fi firmware
  *	      will be copied.
- *
  * \note Please explore the elements of the \ref wlan_pkt_stats_t strucutre for
  * 	 more information on stats.
  *
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_get_log(wlan_pkt_stats_t *stats);
+int wlan_get_log(wlan_pkt_stats_t *stats );
+
+/**
+ * Use this API to get the various statistics of uap from Wi-Fi firmware like
+ * number of beacons received, missed and so on.
+ *
+ * \param[in] stats A pointer to structure where stats collected from Wi-Fi firmware
+ *	      will be copied.
+ * \note Please explore the elements of the \ref wlan_pkt_stats_t strucutre for
+ * 	 more information on stats.
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_uap_get_log(wlan_pkt_stats_t *stats);
+#endif
 
 /** Get station interface power save mode.
  *
