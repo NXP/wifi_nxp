@@ -297,7 +297,6 @@ int wifi_get_otp_user_data(uint8_t *buf, uint16_t len);
 int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint32_t *value);
 int wifi_enable_11d_support_APIs(void);
 int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
-int wifi_get_log(wifi_pkt_stats_t *stats);
 int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index, const uint8_t *key, unsigned key_len);
 int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 *specific_bssid,

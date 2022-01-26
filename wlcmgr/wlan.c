@@ -5479,15 +5479,23 @@ int wlan_get_otp_user_data(uint8_t *buf, uint16_t len)
     return wifi_get_otp_user_data(buf, len);
 }
 
+#ifdef CONFIG_WIFI_GET_LOG
 int wlan_get_log(wlan_pkt_stats_t *stats)
 {
-    if (stats == NULL)
-    {
+    if (!stats)
         return -WM_E_INVAL;
-    }
 
-    return wifi_get_log(stats);
+    return wifi_get_log(stats, MLAN_BSS_TYPE_STA);
 }
+
+int wlan_uap_get_log(wlan_pkt_stats_t *stats)
+{
+    if (!stats)
+        return -WM_E_INVAL;
+
+    return wifi_get_log(stats, MLAN_BSS_TYPE_UAP);
+}
+#endif
 
 int wlan_get_cal_data(wlan_cal_data_t *cal_data)
 {
