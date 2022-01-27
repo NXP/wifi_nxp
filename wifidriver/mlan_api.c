@@ -26,7 +26,9 @@
 
 #include <stdio.h>
 #include <mlan_api.h>
-
+#ifdef CONFIG_COMBO_SCAN
+#include <string.h>
+#endif
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <wm_os.h>
@@ -1368,7 +1370,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     int ssid_len  = 0;
     int ssid2_len = 0;
     t_u8 i;
-
+#ifdef CONFIG_COMBO_SCAN
+    const char wildcard_ssid[]= "*";
+#endif
     mlan_adap->active_scan_triggered = MFALSE;
 
     if (ssid != NULL)
@@ -1421,6 +1425,17 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
         (void)memcpy((void *)user_scan_cfg->ssid_list[1].ssid, (const void *)ssid2, ssid2_len);
     }
+
+#ifdef CONFIG_COMBO_SCAN
+    for(i=0; (i < MRVDRV_MAX_SSID_LIST_LENGTH)&&(*user_scan_cfg->ssid_list[i].ssid); i++)
+    {
+       if (!strncmp(wildcard_ssid, (char *)(user_scan_cfg->ssid_list[i].ssid), strlen(wildcard_ssid)))
+        {
+            (void)memset(user_scan_cfg->ssid_list[i].ssid, 0x00, sizeof(wlan_user_scan_ssid));
+            user_scan_cfg->ssid_list[i].max_len = 40;
+        }
+    }
+#endif
 
     if (num_channels > 0U && num_channels <= WLAN_USER_SCAN_CHAN_MAX && chan_list != MNULL)
     {

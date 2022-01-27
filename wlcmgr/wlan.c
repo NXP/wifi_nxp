@@ -3151,8 +3151,13 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
 
-    int ret = wifi_send_scan_cmd(g_wifi_scan_params.bss_type, wlan_scan_param->bssid, wlan_scan_param->ssid, NULL,
-                                 wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
+    int ret = wifi_send_scan_cmd(g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
+#ifdef CONFIG_COMBO_SCAN
+                                wlan_scan_param->ssid[0], wlan_scan_param->ssid[1],
+#else
+                                wlan_scan_param->ssid, NULL,
+#endif
+                                wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
                                  false, false);
     if (ret != WM_SUCCESS)
     {

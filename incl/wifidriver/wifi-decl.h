@@ -1108,13 +1108,20 @@ typedef PACK_START struct _wifi_scan_channel_list_t
 
 /* Configuration for wireless scanning */
 #define MAX_CHANNEL_LIST 5
+#ifdef CONFIG_COMBO_SCAN
+#define MAX_NUM_SSID 2
+#endif
 /** V2 scan parameters */
 typedef PACK_START struct _wifi_scan_params_v2_t
 {
     /** BSSID to scan */
     t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
     /** SSID to scan */
+#ifdef CONFIG_COMBO_SCAN
+    char ssid[MAX_NUM_SSID][MLAN_MAX_SSID_LENGTH + 1];
+#else
     char ssid[MLAN_MAX_SSID_LENGTH + 1];
+#endif
     /** Number of channels */
     t_u8 num_channels;
     /** Channel list with channel information */
