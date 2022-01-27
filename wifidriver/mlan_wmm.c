@@ -1058,7 +1058,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #endif /* CONFIG_MLAN_WMSDK */
     wlan_11n_cleanup_reorder_tbl(priv);
 
-    pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
+    (void)pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
 #ifndef CONFIG_MLAN_WMSDK
     wlan_wmm_cleanup_queues(priv);
 #endif /* CONFIG_MLAN_WMSDK */
@@ -1080,7 +1080,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #if defined(UAP_SUPPORT)
     priv->num_drop_pkts = 0;
 #endif
-    pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
+    (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
 
     LEAVE();
 }

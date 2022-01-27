@@ -369,7 +369,7 @@ error:
             pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
     }
 #endif /* CONFIG_MLAN_WMSDK */
-    pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter);
+    (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter);
 
 exit_register:
     LEAVE();

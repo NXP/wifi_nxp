@@ -376,7 +376,7 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
 #else
         /* fixme */
         PRINTM(MMSG, "Is a management packet expected here?\n\r");
-        os_enter_critical_section();
+        (void)os_enter_critical_section();
         while (true)
         {
         }
@@ -395,7 +395,7 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
     if (!IS_11N_ENABLED(priv) ||
         __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))
     {
-        wlan_process_rx_packet(pmadapter, pmbuf);
+        (void)wlan_process_rx_packet(pmadapter, pmbuf);
         goto done;
     }
 

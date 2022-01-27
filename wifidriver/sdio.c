@@ -140,13 +140,13 @@ static uint32_t wlan_card_read_scratch_reg(void)
     uint32_t val    = 0;
     uint32_t rd_len = 0;
 
-    sdio_drv_creg_read(0x64, 1, &val);
+    (void)sdio_drv_creg_read(0x64, 1, &val);
     rd_len = (val & 0xffU);
-    sdio_drv_creg_read(0x65, 1, &val);
+    (void)sdio_drv_creg_read(0x65, 1, &val);
     rd_len |= ((val & 0xffU) << 8);
-    sdio_drv_creg_read(0x66, 1, &val);
+    (void)sdio_drv_creg_read(0x66, 1, &val);
     rd_len |= ((val & 0xffU) << 16);
-    sdio_drv_creg_read(0x67, 1, &val);
+    (void)sdio_drv_creg_read(0x67, 1, &val);
     rd_len |= ((val & 0xffU) << 24);
 
     return rd_len;
@@ -164,24 +164,24 @@ static mlan_status wlan_sdio_init_ioport(void)
     sdio_io_d("IOPORT : (0x%x)", ioport_g);
 
     /* Enable sdio cmd53 new mode */
-    sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
+    (void)sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
     data = (resp & 0xff) | CMD53_NEW_MODE;
-    sdio_drv_creg_write(CARD_CONFIG_2_1_REG, 1, data, &resp);
-    sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
+    (void)sdio_drv_creg_write(CARD_CONFIG_2_1_REG, 1, data, &resp);
+    (void)sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
 
     /* configure cmd port  */
     /* enable reading rx length from the register  */
-    sdio_drv_creg_read(CMD_CONFIG_0, 1, &resp);
+    (void)sdio_drv_creg_read(CMD_CONFIG_0, 1, &resp);
     data = (resp & 0xff) | CMD_PORT_RD_LEN_EN;
-    sdio_drv_creg_write(CMD_CONFIG_0, 1, data, &resp);
-    sdio_drv_creg_read(CMD_CONFIG_0, 1, &resp);
+    (void)sdio_drv_creg_write(CMD_CONFIG_0, 1, data, &resp);
+    (void)sdio_drv_creg_read(CMD_CONFIG_0, 1, &resp);
 
     /* enable Dnld/Upld ready auto reset for cmd port
      * after cmd53 is completed */
-    sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
+    (void)sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
     data = (resp & 0xff) | CMD_PORT_AUTO_EN;
-    sdio_drv_creg_write(CMD_CONFIG_1, 1, data, &resp);
-    sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
+    (void)sdio_drv_creg_write(CMD_CONFIG_1, 1, data, &resp);
+    (void)sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
 #elif defined(SD8801)
     /* Read the PORT regs for IOPORT address */
     sdio_drv_creg_read(IO_PORT_0_REG, 1, &resp);
@@ -197,14 +197,14 @@ static mlan_status wlan_sdio_init_ioport(void)
 #endif
 
     /* Set Host interrupt reset to read to clear */
-    sdio_drv_creg_read(HOST_INT_RSR_REG, 1, &resp);
+    (void)sdio_drv_creg_read(HOST_INT_RSR_REG, 1, &resp);
     data = (resp & 0xff) | HOST_INT_RSR_MASK;
-    sdio_drv_creg_write(HOST_INT_RSR_REG, 1, data, &resp);
+    (void)sdio_drv_creg_write(HOST_INT_RSR_REG, 1, data, &resp);
 
     /* Dnld/Upld ready set to auto reset */
-    sdio_drv_creg_read(CARD_MISC_CFG_REG, 1, &resp);
+    (void)sdio_drv_creg_read(CARD_MISC_CFG_REG, 1, &resp);
     data = (resp & 0xff) | AUTO_RE_ENABLE_INT;
-    sdio_drv_creg_write(CARD_MISC_CFG_REG, 1, data, &resp);
+    (void)sdio_drv_creg_write(CARD_MISC_CFG_REG, 1, data, &resp);
     set_ioport_inmlan(ioport_g);
     return true;
 }
@@ -214,9 +214,9 @@ t_u16 wlan_card_read_f1_base_regs(void)
     t_u16 reg;
     uint32_t resp = 0;
 
-    sdio_drv_creg_read(READ_BASE_0_REG, 1, &resp);
+    (void)sdio_drv_creg_read(READ_BASE_0_REG, 1, &resp);
     reg = resp & 0xffU;
-    sdio_drv_creg_read(READ_BASE_1_REG, 1, &resp);
+    (void)sdio_drv_creg_read(READ_BASE_1_REG, 1, &resp);
     reg |= (resp & 0xffU) << 8;
 
     return reg;
@@ -251,8 +251,8 @@ mlan_status sdio_init(void)
             rd_len = wlan_card_read_scratch_reg();
             if (rd_len > 0U)
             {
-                sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0x8, &resp);
-                sdio_drv_creg_write(FN1_BLOCK_SIZE_1, 0, 0x0, &resp);
+                (void)sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0x8, &resp);
+                (void)sdio_drv_creg_write(FN1_BLOCK_SIZE_1, 0, 0x0, &resp);
 
                 uint8_t buf[256];
                 ret = sdio_drv_read(0x10000, 1, rd_len, 8, buf, &resp);

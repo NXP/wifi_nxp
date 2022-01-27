@@ -1657,7 +1657,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
 
     if (buf != MNULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, buf);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
     }
 
 exit:
@@ -1806,7 +1806,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     {
         if (buf != MNULL)
         {
-            pcb->moal_mfree(pmadapter->pmoal_handle, buf);
+            (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
         }
         goto exit;
     }
@@ -1819,7 +1819,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     }
     if (buf != MNULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, buf);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
     }
 
 exit:
