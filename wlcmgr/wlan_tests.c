@@ -713,6 +713,9 @@ void test_wlan_scan_opt(int argc, char **argv)
     wlan_scan_params_v2_t wlan_scan_param;
     int ret = 0;
     int arg = 1;
+#ifdef CONFIG_COMBO_SCAN
+    int num_ssid = 0;
+#endif
     struct
     {
         unsigned ssid : 1;
@@ -734,12 +737,24 @@ void test_wlan_scan_opt(int argc, char **argv)
     {
         if (!info.ssid && string_equal("ssid", argv[arg]))
         {
+#ifdef CONFIG_COMBO_SCAN
+            if(num_ssid > MAX_NUM_SSID)
+            {
+                (void)PRINTF("Error: the number of SSID is more than 2\r\n");
+                return;
+            }
+#endif
             if (strlen(argv[arg + 1]) > IEEEtypes_SSID_SIZE)
             {
                 (void)PRINTF("Error: SSID is too long\r\n");
                 return;
             }
+#ifdef CONFIG_COMBO_SCAN
+            (void)memcpy(wlan_scan_param.ssid[num_ssid], argv[arg + 1], strlen(argv[arg + 1]));
+            num_ssid++;
+#else
             (void)memcpy(wlan_scan_param.ssid, argv[arg + 1], strlen(argv[arg + 1]));
+#endif
             arg += 2;
             info.ssid = 1;
         }
@@ -819,7 +834,11 @@ void test_wlan_scan_opt(int argc, char **argv)
         (void)PRINTF("Scan for ");
         if (info.ssid != 0U)
         {
+#ifdef CONFIG_COMBO_SCAN
+            (void)PRINTF("ssid \"%s\" ", wlan_scan_param.ssid[0]);
+#else
             (void)PRINTF("ssid \"%s\" ", wlan_scan_param.ssid);
+#endif
         }
         if (info.bssid != 0U)
         {
