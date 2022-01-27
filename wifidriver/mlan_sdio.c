@@ -54,11 +54,11 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 
     if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, addr, (uint8_t *)resp) != kStatus_Success)
     {
-        os_mutex_put(&sdio_mutex);
+        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
 
-    os_mutex_put(&sdio_mutex);
+    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
@@ -76,13 +76,13 @@ int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 
     if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, addr, &data, true) != kStatus_Success)
     {
-        os_mutex_put(&sdio_mutex);
+        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
 
     *resp = data;
 
-    os_mutex_put(&sdio_mutex);
+    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
@@ -112,11 +112,11 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
 
     if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
-        os_mutex_put(&sdio_mutex);
+        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
 
-    os_mutex_put(&sdio_mutex);
+    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
@@ -146,11 +146,11 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
 
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
-        os_mutex_put(&sdio_mutex);
+        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
 
-    os_mutex_put(&sdio_mutex);
+    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
@@ -232,18 +232,18 @@ static int sdio_card_init(void)
         return ret;
     }
 
-    sdio_drv_creg_read(0x0, 0, &resp);
+    (void)sdio_drv_creg_read(0x0, 0, &resp);
 
     sdio_d("Card Version - (0x%x)", resp & 0xff);
 
     /* Mask interrupts in card */
-    sdio_drv_creg_write(0x4, 0, 0x3, &resp);
+    (void)sdio_drv_creg_write(0x4, 0, 0x3, &resp);
     /* Enable IO in card */
-    sdio_drv_creg_write(0x2, 0, 0x2, &resp);
+    (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
-    SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)0, 256);
-    SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)1, 256);
-    SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)2, 256);
+    (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)0, 256);
+    (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)1, 256);
+    (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)2, 256);
 
     return ret;
 }

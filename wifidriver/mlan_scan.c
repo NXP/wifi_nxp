@@ -2287,7 +2287,7 @@ static t_void wlan_restore_curr_bcn(IN mlan_private *pmpriv)
     {
         if (pmpriv->support_11d != NULL)
         {
-            pmpriv->support_11d->wlan_11d_prepare_dnld_domain_info_cmd_p(pmpriv);
+            (void)pmpriv->support_11d->wlan_11d_prepare_dnld_domain_info_cmd_p(pmpriv);
         }
     }
 
@@ -2827,7 +2827,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         PRINTM(MERROR, "Failed to allocate scan_chan_list\n");
         if (pscan_cfg_out != MNULL)
         {
-            pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
+            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
         }
         if (pioctl_req != MNULL)
         {
@@ -2849,11 +2849,11 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         PRINTM(MERROR, "Failed to setup scan config\n");
         if (pscan_cfg_out != MNULL)
         {
-            pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
+            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
         }
         if (pscan_chan_list != MNULL)
         {
-            pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
+            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
         }
         if (pioctl_req != MNULL)
         {
@@ -2900,12 +2900,12 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     }
     if (pscan_cfg_out != MNULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
     }
 
     if (pscan_chan_list != MNULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
     }
 
     LEAVE();
@@ -3317,7 +3317,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 done:
     if (bss_new_entry != MNULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
     }
 
     LEAVE();

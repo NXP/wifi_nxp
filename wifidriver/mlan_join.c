@@ -262,7 +262,7 @@ static mlan_status wlan_get_common_rates(
 done:
     if (tmp != MNULL)
     {
-        pcb->moal_mfree(pmpriv->adapter->pmoal_handle, tmp);
+        (void)pcb->moal_mfree(pmpriv->adapter->pmoal_handle, tmp);
     }
 
     LEAVE();
@@ -784,7 +784,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         (pmpriv->config_bands & BAND_GN || pmpriv->config_bands & BAND_AN) && wmsdk_is_11N_enabled() &&
         (!pmpriv->sec_info.is_wpa_tkip))
     {
-        wlan_cmd_append_11n_tlv(pmpriv, pbss_desc, &pos);
+        (void)wlan_cmd_append_11n_tlv(pmpriv, pbss_desc, &pos);
     }
     else if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
     {
@@ -811,7 +811,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Enabled WMM IE in assoc request.
      * TODO: Check if this is required for all APs. TCP traffic was hampered with Linksys AP 1900AC if this is disabled.
      * */
-    wlan_wmm_process_association_req(pmpriv, &pos, &pbss_desc->wmm_ie, pbss_desc->pht_cap);
+    (void)wlan_wmm_process_association_req(pmpriv, &pos, &pbss_desc->wmm_ie, pbss_desc->pht_cap);
 
     /* fixme: Currently not required */
 #ifndef CONFIG_MLAN_WMSDK
