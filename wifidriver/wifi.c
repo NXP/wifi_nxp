@@ -127,7 +127,7 @@ uint32_t wifi_get_value1(void)
 /* Wake up Wi-Fi card */
 void wifi_wake_up_card(uint32_t *resp)
 {
-    sdio_drv_creg_write(0x0, 1, 0x02, resp);
+    (void)sdio_drv_creg_write(0x0, 1, 0x02, resp);
 }
 
 /* When Wi-Fi card is in IEEE PS and sleeping
@@ -868,7 +868,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
      */
     wm_wifi.cmd_resp_priv = cmd_resp_priv;
 
-    wifi_send_cmdbuffer(tx_blocks, buf_len);
+    (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
     /* Wait max 10 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
     if (ret != WM_SUCCESS)
@@ -895,7 +895,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     }
 
     wm_wifi.cmd_resp_priv = NULL;
-    wifi_put_command_lock();
+    (void)wifi_put_command_lock();
     return ret;
 }
 
@@ -953,20 +953,20 @@ static int cmp_mac_addr(uint8_t *mac_addr1, uint8_t *mac_addr2)
 static int add_mcast_ip(uint8_t *mac_addr)
 {
     mcast_filter *node_t, *new_node;
-    wifi_get_mcastf_lock();
+    (void)wifi_get_mcastf_lock();
     node_t = wm_wifi.start_list;
     if (wm_wifi.start_list == NULL)
     {
         new_node = os_mem_alloc(sizeof(mcast_filter));
         if (new_node == NULL)
         {
-            wifi_put_mcastf_lock();
+            (void)wifi_put_mcastf_lock();
             return -WM_FAIL;
         }
         (void)memcpy((void *)new_node->mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
         new_node->next     = NULL;
         wm_wifi.start_list = new_node;
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return WM_SUCCESS;
     }
     while (node_t->next != NULL && cmp_mac_addr(node_t->mac_addr, mac_addr))
@@ -976,38 +976,38 @@ static int add_mcast_ip(uint8_t *mac_addr)
 
     if (!cmp_mac_addr(node_t->mac_addr, mac_addr))
     {
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return -WM_E_EXIST;
     }
     new_node = os_mem_alloc(sizeof(mcast_filter));
     if (new_node == NULL)
     {
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return -WM_FAIL;
     }
     (void)memcpy((void *)new_node->mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
     new_node->next = NULL;
     node_t->next   = new_node;
-    wifi_put_mcastf_lock();
+    (void)wifi_put_mcastf_lock();
     return WM_SUCCESS;
 }
 
 static int remove_mcast_ip(uint8_t *mac_addr)
 {
     mcast_filter *curr_node, *prev_node;
-    wifi_get_mcastf_lock();
+    (void)wifi_get_mcastf_lock();
     curr_node = wm_wifi.start_list->next;
     prev_node = wm_wifi.start_list;
     if (wm_wifi.start_list == NULL)
     {
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return -WM_FAIL;
     }
     if (curr_node == NULL && cmp_mac_addr(prev_node->mac_addr, mac_addr))
     {
         os_mem_free(prev_node);
         wm_wifi.start_list = NULL;
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return WM_SUCCESS;
     }
     /* If search element is at first location */
@@ -1015,7 +1015,7 @@ static int remove_mcast_ip(uint8_t *mac_addr)
     {
         wm_wifi.start_list = prev_node->next;
         os_mem_free(prev_node);
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return WM_SUCCESS;
     }
     /* Find node in linked list */
@@ -1028,10 +1028,10 @@ static int remove_mcast_ip(uint8_t *mac_addr)
     {
         prev_node->next = curr_node->next;
         os_mem_free(curr_node);
-        wifi_put_mcastf_lock();
+        (void)wifi_put_mcastf_lock();
         return WM_SUCCESS;
     }
-    wifi_put_mcastf_lock();
+    (void)wifi_put_mcastf_lock();
     return -WM_FAIL;
 }
 
@@ -1039,7 +1039,7 @@ static int make_filter_list(char *mlist, int maxlen)
 {
     mcast_filter *node_t;
     uint8_t maddr_cnt = 0;
-    wifi_get_mcastf_lock();
+    (void)wifi_get_mcastf_lock();
     node_t = wm_wifi.start_list;
     while (node_t != NULL)
     {
@@ -1052,7 +1052,7 @@ static int make_filter_list(char *mlist, int maxlen)
             break;
         }
     }
-    wifi_put_mcastf_lock();
+    (void)wifi_put_mcastf_lock();
     return maddr_cnt;
 }
 
@@ -1279,7 +1279,7 @@ static void wifi_driver_main_loop(void *argv)
 
             if (msg.event == MLAN_TYPE_EVENT)
             {
-                wifi_handle_fw_event(&msg);
+                (void)wifi_handle_fw_event(&msg);
                 /*
                  * Free the buffer after the event is
                  * handled.
@@ -1288,9 +1288,9 @@ static void wifi_driver_main_loop(void *argv)
             }
             else if (msg.event == MLAN_TYPE_CMD)
             {
-                wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
+                (void)wifi_process_cmd_response((HostCmd_DS_COMMAND *)(void *)((uint8_t *)msg.data + INTF_HEADER_LEN));
                 wifi_update_last_cmd_sent_ms();
-                wifi_put_command_resp_sem();
+                (void)wifi_put_command_resp_sem();
             }
             else
             { /* Do Nothing */
@@ -1322,13 +1322,13 @@ static void wifi_core_input(void)
         os_exit_critical_section(sta);
 
         /* Wait till we receive a packet from SDIO */
-        os_event_notify_get(OS_WAIT_FOREVER);
+        (void)os_event_notify_get(OS_WAIT_FOREVER);
         // wakelock_get(WL_ID_WIFI_CORE_INPUT);
 
         /* Protect the SDIO from other parallel activities */
-        wifi_sdio_lock();
+        (void)wifi_sdio_lock();
 
-        wlan_process_int_status(mlan_adap);
+        (void)wlan_process_int_status(mlan_adap);
 
         wifi_sdio_unlock();
         // wakelock_put(WL_ID_WIFI_CORE_INPUT);
@@ -1374,7 +1374,7 @@ static int wifi_core_init(void)
      * Take the cmd resp lock immediately so that we can later block on
      * it.
      */
-    wifi_get_command_resp_sem(OS_WAIT_FOREVER);
+    (void)wifi_get_command_resp_sem(OS_WAIT_FOREVER);
     wm_wifi.io_events_queue_data = g_io_events_queue_data;
 
     ret = os_queue_create(&wm_wifi.io_events, "io-events", sizeof(struct bus_message), &wm_wifi.io_events_queue_data);
@@ -1458,7 +1458,7 @@ static void wifi_core_deinit(void)
 
     if (wm_wifi.io_events != NULL)
     {
-        os_queue_delete(&wm_wifi.io_events);
+        (void)os_queue_delete(&wm_wifi.io_events);
         wm_wifi.io_events = NULL;
     }
 #ifdef CONFIG_WMM
@@ -1469,12 +1469,12 @@ static void wifi_core_deinit(void)
 #endif
     if (wm_wifi.mcastf_mutex != NULL)
     {
-        os_mutex_delete(&wm_wifi.mcastf_mutex);
+        (void)os_mutex_delete(&wm_wifi.mcastf_mutex);
         wm_wifi.mcastf_mutex = NULL;
     }
     if (wm_wifi.command_resp_sem != NULL)
     {
-        os_semaphore_delete(&wm_wifi.command_resp_sem);
+        (void)os_semaphore_delete(&wm_wifi.command_resp_sem);
         wm_wifi.command_resp_sem = NULL;
     }
 #ifdef CONFIG_WMM
@@ -1486,17 +1486,17 @@ static void wifi_core_deinit(void)
 #endif
     if (wm_wifi.command_lock != NULL)
     {
-        os_mutex_delete(&wm_wifi.command_lock);
+        (void)os_mutex_delete(&wm_wifi.command_lock);
         wm_wifi.command_lock = NULL;
     }
     if (wm_wifi.wm_wifi_main_thread != NULL)
     {
-        os_thread_delete(&wm_wifi.wm_wifi_main_thread);
+        (void)os_thread_delete(&wm_wifi.wm_wifi_main_thread);
         wm_wifi.wm_wifi_main_thread = NULL;
     }
     if (wm_wifi.wm_wifi_core_thread != NULL)
     {
-        os_thread_delete(&wm_wifi.wm_wifi_core_thread);
+        (void)os_thread_delete(&wm_wifi.wm_wifi_core_thread);
         wm_wifi.wm_wifi_core_thread = NULL;
         wifi_core_thread            = NULL;
     }
@@ -1993,7 +1993,7 @@ int wifi_low_level_output(const uint8_t interface,
     msg.reason = interface;
     ret        = os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
 #else
-    wifi_sdio_lock();
+    (void)wifi_sdio_lock();
 
 retry_xmit:
     i = wlan_xmit_pkt(pkt_len + len, interface);
@@ -2019,7 +2019,7 @@ retry_xmit:
                  * update the write bitmap so that pkt
                  * can be sent to FW */
                 os_thread_sleep(1);
-                wifi_sdio_lock();
+                (void)wifi_sdio_lock();
                 goto retry_xmit;
             }
         }
@@ -2034,9 +2034,9 @@ retry_xmit:
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
 #ifdef CONFIG_WMM
-            wrapper_wlan_sta_ampdu_enable(tid);
+            (void)wrapper_wlan_sta_ampdu_enable(tid);
 #else
-            wrapper_wlan_sta_ampdu_enable();
+            (void)wrapper_wlan_sta_ampdu_enable();
 #endif
         }
     }
@@ -2047,14 +2047,14 @@ retry_xmit:
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
-            wrapper_wlan_upa_ampdu_enable((uint8_t *)buffer);
+            (void)wrapper_wlan_upa_ampdu_enable((uint8_t *)buffer);
         }
     }
 #endif
 
     ret = WM_SUCCESS;
 exit_fn:
-    os_rwlock_read_unlock(&ps_rwlock);
+    (void)os_rwlock_read_unlock(&ps_rwlock);
     wifi_set_xfer_pending(false);
     // wakelock_put(WL_ID_LL_OUTPUT);
 

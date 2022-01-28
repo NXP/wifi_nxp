@@ -92,7 +92,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     void *pdata_buf             = NULL;
     hs_config_param hs_cfg_obj;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
@@ -154,7 +154,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     }
     cmd->size = cmd->size + sizeof(arpfilter_header) + arpfilter->len;
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
     return status;
 }
 
@@ -163,7 +163,7 @@ int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interf
     mlan_status status;
     mlan_ds_auto_ds ds_param;
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
@@ -177,7 +177,7 @@ int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interf
     cmd->result = 0x0;
     status      = wlan_cmd_enh_power_mode((mlan_private *)mlan_adap->priv[0], cmd, action, ps_bitmap, pdata_buf);
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
     return status;
 }
 
@@ -237,7 +237,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 
     HostCmd_DS_COMMAND *command = wifi_get_command_buffer();
 
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     ps_cfm_sleep = (OPT_Confirm_Sleep *)(void *)(command);
 
     (void)memset(ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
@@ -249,7 +249,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
     ps_cfm_sleep->action              = SLEEP_CONFIRM;
     ps_cfm_sleep->sleep_cfm.resp_ctrl = RESP_NEEDED;
 
-    wifi_wait_for_cmdresp(NULL);
+    (void)wifi_wait_for_cmdresp(NULL);
 }
 
 /* fixme: accept HostCmd_DS_COMMAND directly */
