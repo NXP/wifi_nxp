@@ -101,25 +101,27 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
         return IPV6_ADDR_STATE_TENTATIVE;
     else if (ip6_addr_ispreferred(addr_state))
         return IPV6_ADDR_STATE_PREFERRED;
-    else if (ip6_addr_isinvalid(addr_state))
-        return IPV6_ADDR_STATE_INVALID;
-    else if (ip6_addr_isvalid(addr_state))
-        return IPV6_ADDR_STATE_VALID;
     else if (ip6_addr_isdeprecated(addr_state))
         return IPV6_ADDR_STATE_DEPRECATED;
+    else if (ip6_addr_isinvalid(addr_state))
+        return IPV6_ADDR_STATE_INVALID;
     else
         return IPV6_ADDR_UNKNOWN;
 }
 
 char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
 {
-    if (ip6_addr_islinklocal((ip6_addr_t *)ipv6_conf->address))
+    ip6_addr_t ip6_addr;
+
+    (void)memcpy((void *)ip6_addr.addr, (const void *)ipv6_conf->address, sizeof(ip6_addr.addr));
+
+    if (ip6_addr_islinklocal(&ip6_addr))
         return IPV6_ADDR_TYPE_LINKLOCAL;
-    else if (ip6_addr_isglobal((ip6_addr_t *)ipv6_conf->address))
+    else if (ip6_addr_isglobal(&ip6_addr))
         return IPV6_ADDR_TYPE_GLOBAL;
-    else if (ip6_addr_isuniquelocal((ip6_addr_t *)ipv6_conf->address))
+    else if (ip6_addr_isuniquelocal(&ip6_addr))
         return IPV6_ADDR_TYPE_UNIQUELOCAL;
-    else if (ip6_addr_issitelocal((ip6_addr_t *)ipv6_conf->address))
+    else if (ip6_addr_issitelocal(&ip6_addr))
         return IPV6_ADDR_TYPE_SITELOCAL;
     else
         return IPV6_ADDR_UNKNOWN;
