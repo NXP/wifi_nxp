@@ -809,7 +809,7 @@ typedef struct _wlan_802_11_security_t
     /** Authentication mode */
     t_u32 authentication_mode;
     /** Encryption mode */
-    t_u32 encryption_mode;
+    mlan_encryption_mode encryption_mode;
 } wlan_802_11_security_t;
 
 /** Current Basic Service Set State Structure */

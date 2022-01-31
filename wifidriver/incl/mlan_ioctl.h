@@ -1643,14 +1643,14 @@ typedef enum
 } AssocAgentAuthType_e;
 
 /** Enumeration for encryption mode */
-enum _mlan_encryption_mode
+typedef enum _mlan_encryption_mode
 {
     MLAN_ENCRYPTION_MODE_NONE   = 0,
     MLAN_ENCRYPTION_MODE_WEP40  = 1,
     MLAN_ENCRYPTION_MODE_TKIP   = 2,
     MLAN_ENCRYPTION_MODE_CCMP   = 3,
     MLAN_ENCRYPTION_MODE_WEP104 = 4,
-};
+} mlan_encryption_mode;
 
 /** Enumeration for PSK */
 typedef enum _mlan_psk_type
