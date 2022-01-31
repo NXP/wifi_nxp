@@ -1101,7 +1101,7 @@ typedef PACK_START struct _wifi_scan_channel_list_t
     /** Channel numder */
     t_u8 chan_number;
     /** Scan type Active = 1, Passive = 2 */
-    t_u8 scan_type;
+    mlan_scan_type scan_type;
     /** Scan time */
     t_u16 scan_time;
 } PACK_END wifi_scan_channel_list_t;

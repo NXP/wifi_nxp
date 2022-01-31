@@ -1411,7 +1411,7 @@ typedef MLAN_PACK_START struct _wlan_user_scan_chan
     /** Radio type: 'B/G' Band = 0, 'A' Band = 1 */
     t_u8 radio_type;
     /** Scan type: Active = 1, Passive = 2 */
-    t_u8 scan_type;
+    mlan_scan_type scan_type;
     /** Reserved */
     t_u8 reserved;
     /** Scan duration in milliseconds; if 0 default used */

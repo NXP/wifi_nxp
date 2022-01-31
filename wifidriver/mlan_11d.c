@@ -1200,14 +1200,14 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
  *
  *  @return                     PASSIVE if chan is unknown; ACTIVE if chan is known
  */
-t_u8 wlan_11d_get_scan_type(mlan_private *pmpriv,
-                            mlan_band_def band,
-                            t_u8 chan,
-                            parsed_region_chan_11d_t *parsed_region_chan)
+mlan_scan_type wlan_11d_get_scan_type(mlan_private *pmpriv,
+                                      mlan_band_def band,
+                                      t_u8 chan,
+                                      parsed_region_chan_11d_t *parsed_region_chan)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
 
-    t_u8 scan_type = MLAN_SCAN_TYPE_PASSIVE;
+    mlan_scan_type scan_type = MLAN_SCAN_TYPE_PASSIVE;
 
     ENTER();
 

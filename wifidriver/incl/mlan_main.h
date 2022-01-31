@@ -1886,7 +1886,7 @@ struct _mlan_adapter
     t_u16 scan_probes;
 
     /** Scan type */
-    t_u8 scan_type;
+    mlan_scan_type scan_type;
     /** Scan mode */
     t_u32 scan_mode;
     /** Specific scan time */
@@ -2562,10 +2562,10 @@ mlan_status wlan_11d_clear_parsedtable(mlan_private *pmpriv);
 /** Create 11D country information for downloading */
 mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, mlan_band_def band);
 /** Get scan type from 11D info */
-t_u8 wlan_11d_get_scan_type(mlan_private *pmpriv,
-                            mlan_band_def band,
-                            t_u8 chan,
-                            parsed_region_chan_11d_t *parsed_region_chan);
+mlan_scan_type wlan_11d_get_scan_type(mlan_private *pmpriv,
+                                      mlan_band_def band,
+                                      t_u8 chan,
+                                      parsed_region_chan_11d_t *parsed_region_chan);
 /** Parse 11D country info */
 mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_t *pBSSDesc);
 /** Prepare 11D domain information for download */
