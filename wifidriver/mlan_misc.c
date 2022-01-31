@@ -1872,7 +1872,7 @@ static mlan_status wlan_rate_ioctl_get_rate_index(IN pmlan_adapter pmadapter, IN
 static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
     t_s32 rate_index;
-    t_u32 rate_format;
+    mlan_rate_format rate_format;
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     t_u32 nss;
 #endif
