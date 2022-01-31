@@ -364,7 +364,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
     t_u32 region_idx;
     t_u32 chan_idx = 0;
     t_u32 next_chan;
-    t_u8 scan_type;
+    mlan_scan_type scan_type;
     t_u8 radio_type;
 
     ENTER();
@@ -789,7 +789,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     t_u32 num_probes;
     t_u32 ssid_len;
     t_u32 chan_idx;
-    t_u32 scan_type;
+    mlan_scan_type scan_type;
     t_u16 scan_dur;
     t_u8 channel;
     t_u8 radio_type;

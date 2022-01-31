@@ -257,12 +257,12 @@ enum _mlan_scan_mode
 };
 
 /** Enumeration for scan type */
-enum _mlan_scan_type
+typedef enum _mlan_scan_type
 {
     MLAN_SCAN_TYPE_UNCHANGED = 0,
     MLAN_SCAN_TYPE_ACTIVE,
     MLAN_SCAN_TYPE_PASSIVE
-};
+} mlan_scan_type;
 
 /** Max number of supported rates */
 #define MLAN_SUPPORTED_RATES 32
@@ -391,7 +391,7 @@ typedef struct _mlan_scan_req
     /** BSS mode for scanning */
     t_u32 scan_mode;
     /** Scan type */
-    t_u32 scan_type;
+    mlan_scan_type scan_type;
     /** SSID */
     mlan_802_11_ssid scan_ssid;
     /** Scan time parameters */
@@ -415,7 +415,7 @@ typedef struct _mlan_scan_resp
 typedef struct _mlan_scan_cfg
 {
     /** Scan type */
-    t_u32 scan_type;
+    mlan_scan_type scan_type;
     /** BSS mode for scanning */
     t_u32 scan_mode;
     /** Scan probe */
