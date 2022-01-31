@@ -354,7 +354,7 @@ typedef struct
 typedef PACK_START struct _wifi_rate_cfg_t
 {
     /** LG rate: 0, HT rate: 1, VHT rate: 2 */
-    t_u32 rate_format;
+    mlan_rate_format rate_format;
     /** Rate/MCS index (0xFF: auto) */
     t_u32 rate_index;
     /** Rate rate */
@@ -394,9 +394,9 @@ typedef PACK_START struct _wifi_data_rate_t
     t_u32 rx_nss;
 #endif
     /** LG rate: 0, HT rate: 1, VHT rate: 2 */
-    t_u32 tx_rate_format;
+    mlan_rate_format tx_rate_format;
     /** LG rate: 0, HT rate: 1, VHT rate: 2 */
-    t_u32 rx_rate_format;
+    mlan_rate_format rx_rate_format;
 #endif
 } PACK_END wifi_data_rate_t;
 

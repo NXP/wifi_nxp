@@ -1854,7 +1854,7 @@ enum _mlan_rate_type
 };
 
 /** Enumeration for rate format */
-enum _mlan_rate_format
+typedef enum _mlan_rate_format
 {
     MLAN_RATE_FORMAT_LG = 0,
     MLAN_RATE_FORMAT_HT,
@@ -1865,7 +1865,7 @@ enum _mlan_rate_format
     MLAN_RATE_FORMAT_HE,
 #endif
     MLAN_RATE_FORMAT_AUTO = 0xFF,
-};
+} mlan_rate_format;
 
 #ifdef CONFIG_11AX
 #define MAX_BITMAP_RATES_SIZE 26
@@ -1890,7 +1890,7 @@ typedef struct _mlan_rate_cfg_t
     t_u32 nss;
 #endif
     /* LG rate: 0, HT rate: 1, VHT rate: 2 */
-    t_u32 rate_format;
+    mlan_rate_format rate_format;
 } mlan_rate_cfg_t;
 
 /** HT channel bandwidth */
@@ -1963,8 +1963,8 @@ typedef struct _mlan_data_rate
 #endif
 
     /* LG rate: 0, HT rate: 1, VHT rate: 2 */
-    t_u32 tx_rate_format;
-    t_u32 rx_rate_format;
+    mlan_rate_format tx_rate_format;
+    mlan_rate_format rx_rate_format;
 #endif
 } mlan_data_rate;
 
