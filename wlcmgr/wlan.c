@@ -1924,7 +1924,7 @@ static void wlcm_process_awake_event(void)
 
 static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 {
-    uint16_t action = (uint16_t)((uint32_t)msg->data);
+    ENH_PS_MODES action = (ENH_PS_MODES)((uint32_t)msg->data);
     wlcm_d("got msg data :: %x", action);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)

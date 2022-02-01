@@ -94,7 +94,7 @@ static int ping_recv(int s, uint16_t seq_no, int *ttl)
         {
             iphdr = (struct ip_hdr *)(void *)buf;
             /* Calculate the offset of ICMP header */
-            iecho = (struct icmp_echo_hdr *)(void *)(buf + (IPH_HL(iphdr) * 4));
+            iecho = (struct icmp_echo_hdr *)(void *)(buf + (IPH_HL(iphdr) * 4U));
 
             /* Verify that the echo response is for the echo request
              * we sent by checking PING_ID and sequence number */

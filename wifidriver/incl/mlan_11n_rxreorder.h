@@ -34,7 +34,7 @@ Change log:
 #define _MLAN_11N_RXREORDER_H_
 
 /** Max value a TID can take = 2^12 = 4096 */
-#define MAX_TID_VALUE (2 << 11)
+#define MAX_TID_VALUE (2U << 11U)
 /** 2^11 = 2048 */
 #define TWOPOW11 (2 << 10)
 

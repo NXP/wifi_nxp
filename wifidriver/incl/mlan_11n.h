@@ -60,7 +60,7 @@ mlan_status wlan_cmd_11n_cfg(IN pmlan_private pmpriv,
                              IN t_void *pdata_buf);
 #ifdef STA_SUPPORT
 /** Append the 802_11N tlv */
-int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer);
+t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer);
 /** wlan fill HT cap tlv */
 void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, mlan_band_def band);
 #endif /* STA_SUPPORT */

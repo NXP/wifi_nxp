@@ -1618,7 +1618,7 @@ typedef struct _mlan_ds_get_info
 /** Security Configuration Group */
 /*-----------------------------------------------------------------*/
 /** Enumeration for authentication mode */
-enum _mlan_auth_mode
+typedef enum _mlan_auth_mode
 {
     MLAN_AUTH_MODE_OPEN   = 0x00,
     MLAN_AUTH_MODE_SHARED = 0x01,
@@ -1628,7 +1628,7 @@ enum _mlan_auth_mode
 #endif
     MLAN_AUTH_MODE_NETWORKEAP = 0x80,
     MLAN_AUTH_MODE_AUTO       = 0xFF,
-};
+} mlan_auth_mode;
 
 /**Enumeration for AssocAgent authentication mode, sync from FW.*/
 typedef enum

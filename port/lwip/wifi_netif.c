@@ -130,8 +130,8 @@ static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 
 static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
-    RxPD *rxpd         = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
-    int recv_interface = rxpd->bss_type;
+    RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
+    mlan_bss_type recv_interface = rxpd->bss_type;
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
@@ -354,7 +354,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     ret = is_wifi_wmm_queue_full(pkt_prio);
     while (ret == true && !is_udp_frame && retry > 0)
     {
-	os_thread_sleep(os_msec_to_ticks(1));
+        os_thread_sleep(os_msec_to_ticks(1));
         ret = is_wifi_wmm_queue_full(pkt_prio);
         retry--;
     }

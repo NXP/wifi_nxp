@@ -635,19 +635,19 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** Set the highest Rx data rate */
 #define SETHT_RX_HIGHEST_DT_SUPP(x, y) ((*(t_u16 *)(x + 10)) = y)
 /** AMPDU factor size */
-#define AMPDU_FACTOR_64K 0x03
+#define AMPDU_FACTOR_64K 0x03U
 /** Set AMPDU size in A-MPDU paramter field */
 #define SETAMPDU_SIZE(x, y) \
     do                      \
     {                       \
-        (x) = (x) & ~0x03;  \
-        (x) |= (y)&0x03;    \
+        (x) = (x) & ~0x03U; \
+        (x) |= (y)&0x03U;   \
     } while (false) /** Set AMPDU spacing in A-MPDU paramter field */
-#define SETAMPDU_SPACING(x, y)  \
-    do                          \
-    {                           \
-        (x) = (x) & ~0x1c;      \
-        (x) |= ((y)&0x07) << 2; \
+#define SETAMPDU_SPACING(x, y)    \
+    do                            \
+    {                             \
+        (x) = (x) & ~0x1cU;       \
+        (x) |= ((y)&0x07U) << 2U; \
     } while (false)
 
 /** RadioType : Support for Band A */
@@ -1249,7 +1249,7 @@ typedef enum _ENH_PS_MODES
 /** Command is pending */
 #define HostCmd_RESULT_PENDING 0x0003
 /** System is busy (command ignored) */
-#define HostCmd_RESULT_BUSY 0x0004
+#define HostCmd_RESULT_BUSY 0x0004U
 /** Data buffer is not big enough */
 #define HostCmd_RESULT_PARTIAL_DATA 0x0005
 
@@ -2737,7 +2737,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ps_param_t
 typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
 {
     /** Action */
-    t_u16 action;
+    ENH_PS_MODES action;
     /** Data speciifc to action */
     /* For IEEE power save data will be as UINT16 mode (0x01 - firmware to
        automatically choose PS_POLL or NULL mode, 0x02 - PS_POLL, 0x03 - NULL

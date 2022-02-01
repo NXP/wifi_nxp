@@ -225,7 +225,7 @@ int wifi_send_hostcmd(
 int wifi_send_get_wpa_pmk(int mode, char *ssid);
 int wifi_deauthenticate(uint8_t *bssid);
 int wifi_get_eeprom_data(uint32_t offset, uint32_t byte_count, uint8_t *buf);
-int wifi_get_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len);
+int wifi_get_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len);
 int wifi_send_remain_on_channel_cmd(unsigned int bss_type, wifi_remain_on_channel_t *remain_on_channel);
 int wifi_set_smart_mode_cfg(char *ssid,
                             int beacon_period,
@@ -238,8 +238,8 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             int custom_ie_len,
                             uint8_t *custom_ie);
 wifi_sub_band_set_t *get_sub_band_from_country(int country, int *nr_sb);
-int wifi_set_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int buf_len);
-int wifi_clear_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index);
+int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int buf_len);
+int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index);
 int wifi_send_enable_supplicant(int mode, const char *ssid);
 int wifi_send_clear_wpa_psk(int mode, const char *ssid);
 int wifi_send_add_wpa_psk(int mode, char *ssid, char *passphrase, unsigned int len);

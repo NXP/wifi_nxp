@@ -121,7 +121,7 @@ static void lwiperf_report(void *arg,
             (void)PRINTF(" Port %d \r\n", remote_port);
             (void)PRINTF(" Bytes Transferred %llu \r\n", bytes_transferred);
             (void)PRINTF(" Duration (ms) %d \r\n", ms_duration);
-            (void)PRINTF(" Bandwidth (Mbitpsec) %d \r\n", bandwidth_kbitpsec / 1000);
+            (void)PRINTF(" Bandwidth (Mbitpsec) %d \r\n", bandwidth_kbitpsec / 1000U);
         }
     }
     else
@@ -450,7 +450,7 @@ static void iperf_test_start(void *arg)
     else
     {
         /* Returning original timer settings of 1 ms interval*/
-        (void)xTimerChangePeriod(timer, 1 / portTICK_PERIOD_MS, 100);
+        (void)xTimerChangePeriod(timer, 1U / portTICK_PERIOD_MS, 100);
     }
 
     if (ctx->server_mode)
