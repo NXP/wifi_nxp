@@ -55,15 +55,15 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     dns2.addr = addr->ipv4.dns2;
     if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
-        strncpy(addr_type, "STATIC", strlen("STATIC"));
+        (void)strncpy(addr_type, "STATIC", strlen("STATIC"));
     }
     else if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
-        strncpy(addr_type, "AUTO IP", strlen("AUTO IP"));
+        (void)strncpy(addr_type, "AUTO IP", strlen("AUTO IP"));
     }
     else
     {
-        strncpy(addr_type, "DHCP", strlen("DHCP"));
+        (void)strncpy(addr_type, "DHCP", strlen("DHCP"));
     }
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
@@ -255,7 +255,7 @@ int get_security(int argc, char **argv, enum wlan_security_type type, struct wla
             }
             if (sec->psk_len < sizeof(sec->psk))
             {
-                strcpy(sec->psk, argv[0]);
+                (void)strcpy(sec->psk, argv[0]);
             }
             else
             {
@@ -473,7 +473,7 @@ void test_wlan_add(int argc, char **argv)
                 }
                 if (network.security.password_len < sizeof(network.security.password))
                 {
-                    strcpy(network.security.password, argv[arg + 2]);
+                    (void)strcpy(network.security.password, argv[arg + 2]);
                 }
                 else
                 {
@@ -927,7 +927,7 @@ void test_wlan_stop_network(int argc, char **argv)
     struct wlan_network network;
 
     (void)memset(&network, 0x00, sizeof(struct wlan_network));
-    wlan_get_current_uap_network(&network);
+    (void)wlan_get_current_uap_network(&network);
     ret = wlan_stop_network(network.name);
     if (ret != WM_SUCCESS)
     {
@@ -960,14 +960,14 @@ static void test_wlan_stat(int argc, char **argv)
     switch (ps_mode)
     {
         case WLAN_IEEE:
-            strcpy(ps_mode_str, "IEEE ps");
+            (void)strcpy(ps_mode_str, "IEEE ps");
             break;
         case WLAN_DEEP_SLEEP:
-            strcpy(ps_mode_str, "Deep sleep");
+            (void)strcpy(ps_mode_str, "Deep sleep");
             break;
         case WLAN_ACTIVE:
         default:
-            strcpy(ps_mode_str, "Active");
+            (void)strcpy(ps_mode_str, "Active");
             break;
     }
 
@@ -1017,7 +1017,7 @@ static void test_wlan_stat(int argc, char **argv)
         switch (state)
         {
             case WLAN_UAP_STARTED:
-                strcpy(ps_mode_str, "Active");
+                (void)strcpy(ps_mode_str, "Active");
                 (void)PRINTF("uAP started (%s)\r\n", ps_mode_str);
                 break;
             case WLAN_UAP_STOPPED:
@@ -1143,7 +1143,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
     int i;
     wifi_sta_list_t *sl = NULL;
 
-    wifi_uap_bss_sta_list(&sl);
+    (void)wifi_uap_bss_sta_list(&sl);
 
     if (sl == NULL)
     {
