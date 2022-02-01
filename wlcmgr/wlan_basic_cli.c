@@ -32,7 +32,7 @@ void test_wfa_wlan_version(int argc, char **argv)
     unsigned char i;
     char version_str[MLAN_MAX_VER_STR_LEN];
     char *ext_ver_str = wlan_get_firmware_version_ext();
-    strcpy(version_str, ext_ver_str);
+    (void)strcpy(version_str, ext_ver_str);
     for (i = 0; i < strlen(version_str); i++)
     {
         if (version_str[i] == '.' && version_str[i + 1] == 'p')
