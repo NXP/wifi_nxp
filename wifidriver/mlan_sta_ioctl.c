@@ -1610,7 +1610,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
         txp_cfg->mode  = 1;
         pg_tlv         = (MrvlTypes_Power_Group_t *)(void *)(buf + sizeof(HostCmd_DS_TXPWR_CFG));
         pg_tlv->type   = TLV_TYPE_POWER_GROUP;
-        pg_tlv->length = 4 * sizeof(Power_Group_t);
+        pg_tlv->length = 4U * sizeof(Power_Group_t);
         pg = (Power_Group_t *)(void *)(buf + sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t));
         /* Power group for modulation class HR/DSSS */
         pg->first_rate_code  = 0x00;

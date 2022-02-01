@@ -807,7 +807,7 @@ typedef struct _wlan_802_11_security_t
     /** WEP status */
     WLAN_802_11_WEP_STATUS wep_status;
     /** Authentication mode */
-    t_u32 authentication_mode;
+    mlan_auth_mode authentication_mode;
     /** Encryption mode */
     mlan_encryption_mode encryption_mode;
 } wlan_802_11_security_t;
@@ -1034,7 +1034,7 @@ struct _mlan_private
     /** BSS type */
     t_u8 bss_type;
     /** BSS role */
-    t_u8 bss_role;
+    mlan_bss_role bss_role;
     /** BSS Priority */
     t_u8 bss_priority;
     /** BSS number */

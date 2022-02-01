@@ -317,7 +317,7 @@ static int process_dhcp_message(char *msg, int len)
             return -WM_E_DHCPD_INVALID_OPCODE;
     }
 
-    if (hdr->htype != 1 || hdr->hlen != 6)
+    if (hdr->htype != 1U || hdr->hlen != 6U)
     {
         dhcp_e("invalid htype or hlen");
         return -WM_E_DHCPD_INCORRECT_HEADER;

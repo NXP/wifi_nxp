@@ -1238,7 +1238,7 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
  *
  *  @return bytes added to the buffer
  */
-int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer)
+t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer)
 {
     pmlan_adapter pmadapter = pmpriv->adapter;
     MrvlIETypes_HTCap_t *pht_cap;
@@ -1250,7 +1250,7 @@ int wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_de
     MrvlIETypes_ExtCap_t *pext_cap;
     t_u32 usr_dot_11n_dev_cap, orig_usr_dot_11n_dev_cap = 0;
     t_u8 usr_dot_11ac_bw;
-    int ret_len = 0;
+    t_u32 ret_len = 0;
 
     ENTER();
 

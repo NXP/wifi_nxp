@@ -2596,7 +2596,7 @@ static void clear_ie_index(int index)
 }
 
 int wifi_config_mgmt_ie(
-    unsigned int bss_type, int action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
+    mlan_bss_type bss_type, int action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
 {
     uint8_t *buf, *pos;
     IEEEtypes_Header_t *ptlv_header = NULL;
@@ -2739,19 +2739,19 @@ int wifi_config_mgmt_ie(
     }
 }
 
-int wifi_get_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
+int wifi_get_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
 {
     return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_GET, index, buf, buf_len);
 }
 
-int wifi_set_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
+int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
 {
     unsigned int data_len = buf_len;
 
     return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, id, buf, &data_len);
 }
 
-int wifi_clear_mgmt_ie(unsigned int bss_type, IEEEtypes_ElementId_t index)
+int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index)
 {
     unsigned int data_len = 0;
     return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, index, NULL, &data_len);
