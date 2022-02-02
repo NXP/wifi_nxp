@@ -1750,9 +1750,9 @@ typedef struct _BSSDescriptor_t
       reasonable amount.
     */
     unsigned char wpa_ie_buff[MLAN_WMSDK_MAX_WPA_IE_LEN];
-    int wpa_ie_buff_len;
+    t_u8 wpa_ie_buff_len;
     unsigned char rsn_ie_buff[MLAN_WMSDK_MAX_WPA_IE_LEN];
-    int rsn_ie_buff_len;
+    t_u8 rsn_ie_buff_len;
 
     bool wps_IE_exist;
     t_u16 wps_session;
