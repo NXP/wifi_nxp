@@ -705,7 +705,7 @@ typedef struct
     /** Country code */
     t_u8 country_code[COUNTRY_CODE_LEN];
     /** subbands count */
-    int no_of_sub_band;
+    t_u8 no_of_sub_band;
     /** Set of subbands of no_of_sub_band number of elements */
     wifi_sub_band_set_t sub_band[1];
 } wifi_domain_param_t;
@@ -1043,7 +1043,7 @@ typedef struct
 typedef struct
 {
     /** number of channels */
-    int no_of_channels;
+    t_u8 no_of_channels;
     /** channel scan array */
     wifi_chan_scan_param_set_t chan_scan_param[1];
 } wifi_chan_list_param_set_t;
