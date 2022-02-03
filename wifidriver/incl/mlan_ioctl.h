@@ -233,12 +233,12 @@ typedef enum _mlan_ioctl_req_id
 #define MLAN_SUB_COMMAND_SIZE 4U
 
 /** Enumeration for the action of IOCTL request */
-enum _mlan_act_ioctl
+typedef enum _mlan_act_ioctl
 {
     MLAN_ACT_SET = 1,
     MLAN_ACT_GET,
     MLAN_ACT_CANCEL
-};
+} mlan_act_ioctl;
 
 /** Enumeration for generic enable/disable */
 enum _mlan_act_generic
@@ -263,6 +263,30 @@ typedef enum _mlan_scan_type
     MLAN_SCAN_TYPE_ACTIVE,
     MLAN_SCAN_TYPE_PASSIVE
 } mlan_scan_type;
+
+/** mlan_ioctl_req data structure */
+typedef struct _mlan_ioctl_req
+{
+    /** Status code from firmware/driver */
+    t_u32 status_code;
+    /** BSS index number for multiple BSS support */
+    t_u32 bss_index;
+    /** Request id */
+    t_u32 req_id;
+    /** Action: set or get */
+    mlan_act_ioctl action;
+
+    /** Pointer to buffer */
+    t_u8 *pbuf;
+    /** Length of buffer */
+    t_u32 buf_len;
+    /** Length of the data read/written in buffer */
+    t_u32 data_read_written;
+    /** Length of buffer needed */
+    t_u32 buf_len_needed;
+    /** Reserved for MOAL module */
+    t_ptr reserved_1;
+} mlan_ioctl_req, *pmlan_ioctl_req;
 
 /** Max number of supported rates */
 #define MLAN_SUPPORTED_RATES 32
@@ -3478,5 +3502,8 @@ typedef struct _mlan_ds_misc_cfg
 #endif
     } param;
 } mlan_ds_misc_cfg, *pmlan_ds_misc_cfg;
+
+/** mlan ioctl */
+MLAN_API mlan_status mlan_ioctl(IN t_void *pmlan_adapter, IN pmlan_ioctl_req pioctl_req);
 
 #endif /* !_MLAN_IOCTL_H_ */

@@ -572,29 +572,6 @@ typedef MLAN_PACK_START struct _mlan_event_scan_result
 } MLAN_PACK_END mlan_event_scan_result, *pmlan_event_scan_result;
 #endif
 
-/** mlan_ioctl_req data structure */
-typedef struct _mlan_ioctl_req
-{
-    /** Status code from firmware/driver */
-    t_u32 status_code;
-    /** BSS index number for multiple BSS support */
-    t_u32 bss_index;
-    /** Request id */
-    t_u32 req_id;
-    /** Action: set or get */
-    t_u32 action;
-    /** Pointer to buffer */
-    t_u8 *pbuf;
-    /** Length of buffer */
-    t_u32 buf_len;
-    /** Length of the data read/written in buffer */
-    t_u32 data_read_written;
-    /** Length of buffer needed */
-    t_u32 buf_len_needed;
-    /** Reserved for MOAL module */
-    t_ptr reserved_1;
-} mlan_ioctl_req, *pmlan_ioctl_req;
-
 /** mlan_buffer data structure */
 typedef struct _mlan_buffer
 {
@@ -990,8 +967,6 @@ MLAN_API mlan_status mlan_recv_packet_complete(IN t_void *pmlan_adapter, IN pmla
 /** interrupt handler */
 MLAN_API t_void mlan_interrupt(IN t_void *pmlan_adapter);
 
-/** mlan ioctl */
-MLAN_API mlan_status mlan_ioctl(IN t_void *pmlan_adapter, IN pmlan_ioctl_req pioctl_req);
 /** mlan select wmm queue */
 
 MLAN_API t_u8 mlan_select_wmm_queue(IN t_void *pmlan_adapter, IN t_u8 bss_num, IN t_u8 tid);
