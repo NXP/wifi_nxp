@@ -1109,7 +1109,7 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie)
     return priv->wpa_ie_len;
 }
 
-static int wifi_send_htcapinfo_ioctl(int action, mlan_ds_11n_cfg *ds_11n_cfg)
+static int wifi_send_htcapinfo_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *ds_11n_cfg)
 {
     /* fixme: check if this needs to go on heap */
     mlan_ioctl_req req;
@@ -1156,7 +1156,7 @@ int wifi_set_httxcfg(unsigned short httxcfg)
     return wifi_send_htcapinfo_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
 
-static int wifi_send_tx_power_cfg_ioctl(int action, mlan_ds_power_cfg *ds_power_cfg)
+static int wifi_send_tx_power_cfg_ioctl(mlan_act_ioctl action, mlan_ds_power_cfg *ds_power_cfg)
 {
     /* fixme: check if this needs to go on heap */
     mlan_ioctl_req req;
@@ -1226,7 +1226,7 @@ int wifi_get_tx_power(t_u32 *power_level)
     return ret;
 }
 
-static int wifi_send_tx_rate_cfg_ioctl(int action, mlan_ds_rate *ds_rate_cfg)
+static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_rate_cfg)
 {
     /* fixme: check if this needs to go on heap */
     mlan_ioctl_req req;
