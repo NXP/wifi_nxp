@@ -3401,6 +3401,13 @@ static void wlcm_process_fw_debug_info(struct wifi_message *msg)
 }
 #endif
 
+static void wlcm_process_get_hw_spec_event(void)
+{
+    /* Set World Wide Safe Mode Tx Power Limits in Wi-Fi firmware */
+    (void)wlan_set_wwsm_txpwrlimit();
+    CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
+}
+
 /*
  * Event Handlers
  */
@@ -3513,7 +3520,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 
         case WIFI_EVENT_GET_HW_SPEC:
-            CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
+            wlcm_process_get_hw_spec_event();
             break;
 
         case WIFI_EVENT_NET_INTERFACE_CONFIG:
@@ -3774,9 +3781,6 @@ int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size)
         wlcm_e("wifi_init failed. status code %d", ret);
         return ret;
     }
-
-    /* Set World Wide Safe Mode Tx Power Limits in Wi-Fi firmware */
-    (void)wlan_set_wwsm_txpwrlimit();
 
     wlan.status = WLCMGR_INIT_DONE;
     wifi_mac_addr_t mac_addr;

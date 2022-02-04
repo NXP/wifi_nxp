@@ -39,13 +39,13 @@ int wlan_set_wwsm_txpwrlimit(void)
 {
     int rv = WM_SUCCESS;
 
-    rv = wlan_set_txpwrlimit(&tx_pwrlimit_2g_cfg);
+    rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_2g_cfg, &tx_pwrlimit_2g_cfg);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set 2G TX PWR Limit configuration\r\n");
     }
 #ifdef CONFIG_5GHz_SUPPORT
-    rv = wlan_set_txpwrlimit(&tx_pwrlimit_5g_cfg);
+    rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_5g_cfg, &tx_pwrlimit_5g_cfg);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set 5G TX PWR Limit configuration\r\n");
