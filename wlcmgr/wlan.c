@@ -5188,7 +5188,7 @@ int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time)
 
 #endif
 
-int wlan_wlcmgr_send_msg(enum wifi_event event, int reason, void *data)
+int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, void *data)
 {
     struct wifi_message msg;
 

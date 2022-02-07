@@ -259,7 +259,7 @@ static void wm_netif_status_callback(struct netif *n)
      * The flag value is zero, if we are still in process of connection
      * establishment or dhcp is off
      */
-    int wifi_event_reason;
+    enum wifi_event_reason wifi_event_reason;
     event_flag_dhcp_connection = DHCP_IGNORE;
 
     if (is_dhcp_off)

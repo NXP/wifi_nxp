@@ -33,6 +33,7 @@
 #include <wm_utils.h>
 #include <mlan_decl.h>
 #include <mlan_ioctl.h>
+#include <wifi_events.h>
 
 /* fixme: remove these after complete integration with mlan */
 #define MLAN_MAC_ADDR_LENGTH (6U)
@@ -185,7 +186,7 @@ enum wifi_bss_features
 struct wifi_message
 {
     uint16_t event;
-    uint16_t reason;
+    enum wifi_event_reason reason;
     void *data;
 };
 

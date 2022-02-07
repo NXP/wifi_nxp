@@ -2202,7 +2202,7 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode);
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if failed.
  */
-int wlan_wlcmgr_send_msg(enum wifi_event event, int reason, void *data);
+int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, void *data);
 
 /** Register WFA basic WLAN CLI commands
  *
