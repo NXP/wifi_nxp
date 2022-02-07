@@ -1718,7 +1718,7 @@ int wifi_get_tx_power(t_u32 *power_level)
     return ret;
 }
 
-static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_rate_cfg)
+static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_rate_cfg, mlan_bss_type bss_type)
 {
     /* fixme: check if this needs to go on heap */
     mlan_ioctl_req req;
@@ -1726,18 +1726,30 @@ static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_r
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
     req.pbuf      = (t_u8 *)ds_rate_cfg;
     req.buf_len   = sizeof(mlan_ds_rate);
-    req.bss_index = 0;
+    req.bss_index = bss_type;
     req.req_id    = MLAN_IOCTL_RATE;
     req.action    = action;
 
     mlan_status rv;
-    if (is_sta_connected())
+    if (bss_type == MLAN_BSS_TYPE_UAP)
     {
-        rv = wlan_ops_sta_ioctl(mlan_adap, &req);
-    }
-    else
-    {
+        if (!is_uap_started())
+        {
+            wifi_e("uap isn't up\n\r");
+            return -WM_FAIL;
+        }
         rv = wlan_ops_uap_ioctl(mlan_adap, &req);
+    }
+    else if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+        if (is_sta_connected())
+        {
+            rv = wlan_ops_sta_ioctl(mlan_adap, &req);
+        }
+        else
+        {
+            wifi_e("sta connection required before setting tx rate\n\r");
+        }
     }
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
     {
@@ -1747,7 +1759,7 @@ static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_r
     return WM_SUCCESS;
 }
 
-int wifi_set_txratecfg(wifi_ds_rate ds_rate)
+int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
 {
     mlan_ds_rate ds_rate_cfg;
 
@@ -1783,10 +1795,10 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate)
         else
             ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting;
     }
-    return wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_SET, &ds_rate_cfg);
+    return wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_SET, &ds_rate_cfg, bss_type);
 }
 
-int wifi_get_txratecfg(wifi_ds_rate *ds_rate)
+int wifi_get_txratecfg(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
     int ret;
 
@@ -1803,7 +1815,7 @@ int wifi_get_txratecfg(wifi_ds_rate *ds_rate)
 
     wm_wifi.cmd_resp_ioctl = ds_rate;
 
-    ret = wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_GET, &ds_rate_cfg);
+    ret = wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_GET, &ds_rate_cfg, bss_type);
 
     wm_wifi.cmd_resp_ioctl = NULL;
 

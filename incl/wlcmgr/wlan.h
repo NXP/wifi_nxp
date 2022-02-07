@@ -2495,7 +2495,7 @@ uint8_t wlan_get_dtim_period(void);
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_get_data_rate(wlan_ds_rate *ds_rate);
+int wlan_get_data_rate(wlan_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 /**
  * Use this API to set the set management frame protection parameters.
@@ -2989,7 +2989,7 @@ int wlan_set_httxcfg(unsigned short httxcfg);
  * \return -WM_FAIL if unsuccessful.
  *
  */
-int wlan_set_txratecfg(wlan_ds_rate ds_rate);
+int wlan_set_txratecfg(wlan_ds_rate ds_rate, mlan_bss_type bss_type);
 
 /**
  * This API can be used to get the transmit data rate.
@@ -3001,7 +3001,7 @@ int wlan_set_txratecfg(wlan_ds_rate ds_rate);
  * \return -WM_FAIL if unsuccessful.
  *
  */
-int wlan_get_txratecfg(wlan_ds_rate *ds_rate);
+int wlan_get_txratecfg(wlan_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 /**
  * Get Station interface transmit power

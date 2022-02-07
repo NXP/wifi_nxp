@@ -616,11 +616,15 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
 static void dump_wlan_set_txratecfg_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-set-txratecfg <format> <index>");
-#ifdef CONFIG_11AC
-    (void)PRINTF(" <nss>");
+    (void)PRINTF("wlan-set-txratecfg <sta/uap> <format> <index> ");
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+    (void)PRINTF("<nss> ");
+#endif
+#ifdef CONFIG_11AX
+    (void)PRINTF("<rate_setting>\r\n");
 #endif
     (void)PRINTF("\r\n");
+
     (void)PRINTF("\tWhere\r\n");
     (void)PRINTF("\t<format> - This parameter specifies the data rate format used in this command\r\n");
     (void)PRINTF("\t        0:    LG\r\n");
@@ -688,49 +692,68 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\tIf <format> is 2 (VHT) or 3 (HE),\r\n");
     (void)PRINTF("\t        1       NSS1\r\n");
     (void)PRINTF("\t        2       NSS2\r\n");
+    (void)PRINTF("\t<rate_setting> - This parameter can only specifies the GI types now. It is valid only for HE\r\n");
+    (void)PRINTF("\tIf <format> is 3 (HE),\r\n");
+    (void)PRINTF("\t        0x0000  1xHELTF + GI0.8us\r\n");
+    (void)PRINTF("\t        0x0020  2xHELTF + GI0.8us\r\n");
+    (void)PRINTF("\t        0x0040  2xHELTF + GI1.6us\r\n");
+    (void)PRINTF("\t        0x0060  4xHELTF + GI0.8us if DCM = 1 and STBC = 1\r\n");
+    (void)PRINTF("\t                4xHELTF + GI3.2us, otherwise\r\n");
 #endif
 }
 
 static void test_wlan_set_txratecfg(int argc, char **argv)
 {
+    mlan_bss_type bss_type = 0;
     wlan_ds_rate ds_rate;
 #ifdef CONFIG_11AX
     wlan_txrate_setting *rate_setting = NULL;
 #endif
     int rv = WM_SUCCESS;
 
-    if (argc < 2 ||
+    if (argc < 3 ||
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-        argc > 5)
+        argc > 6)
     {
 #else
-        argc > 3)
+        argc > 4)
     {
 #endif
         (void)PRINTF("Invalid arguments\r\n");
         goto done;
     }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Invalid bss type selection\r\n");
+        goto done;
+    }
+
     (void)memset(&ds_rate, 0, sizeof(wlan_ds_rate));
 
     ds_rate.sub_command = WIFI_DS_RATE_CFG;
 
     errno                              = 0;
-    ds_rate.param.rate_cfg.rate_format = (mlan_rate_format)(strtol(argv[1], NULL, 0));
+    ds_rate.param.rate_cfg.rate_format = (mlan_rate_format)(strtol(argv[2], NULL, 0));
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
     errno                             = 0;
-    ds_rate.param.rate_cfg.rate_index = (t_u32)strtol(argv[2], NULL, 0);
+    ds_rate.param.rate_cfg.rate_index = (t_u32)strtol(argv[3], NULL, 0);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-    if (argc >= 4)
+    if (argc >= 5)
     {
         errno                      = 0;
-        ds_rate.param.rate_cfg.nss = strtol(argv[3], NULL, 0);
+        ds_rate.param.rate_cfg.nss = strtol(argv[4], NULL, 0);
         if (errno != 0)
         {
             (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -741,10 +764,10 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         }
     }
 #endif
-    if (argc == 5)
+    if (argc == 6)
     {
         errno                               = 0;
-        ds_rate.param.rate_cfg.rate_setting = strtol(argv[4], NULL, 0);
+        ds_rate.param.rate_cfg.rate_setting = strtol(argv[5], NULL, 0);
         if (errno != 0)
             (void)PRINTF("Error during strtoul errno:%d", errno);
     }
@@ -806,7 +829,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         }
 #endif
 
-        if (argc == 5)
+        if (argc == 6)
         {
 #ifdef CONFIG_11AX
 /* HE Preamble type */
@@ -861,7 +884,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         }
     }
 
-    rv = wlan_set_txratecfg(ds_rate);
+    rv = wlan_set_txratecfg(ds_rate, bss_type);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set txratecfg\r\n");
@@ -877,13 +900,31 @@ done:
 
 static void test_wlan_get_txratecfg(int argc, char **argv)
 {
+    mlan_bss_type bss_type = 0;
     wlan_ds_rate ds_rate;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        (void)PRINTF("Usage: wlan-get-txratecfg <sta/uap>\r\n");
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Invalid bss type selection\r\n");
+        return;
+    }
 
     (void)memset(&ds_rate, 0, sizeof(wlan_ds_rate));
 
     ds_rate.sub_command = WIFI_DS_RATE_CFG;
 
-    int rv = wlan_get_txratecfg(&ds_rate);
+    int rv = wlan_get_txratecfg(&ds_rate, bss_type);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to get tx rate cfg\r\n");
@@ -895,13 +936,31 @@ static void test_wlan_get_txratecfg(int argc, char **argv)
 
 static void test_wlan_get_data_rate(int argc, char **argv)
 {
+    mlan_bss_type bss_type = 0;
     wlan_ds_rate ds_rate;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        (void)PRINTF("Usage: wlan-get-data-rate <sta/uap>\r\n");
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Invalid bss type selection\r\n");
+        return;
+    }
 
     (void)memset(&ds_rate, 0, sizeof(wlan_ds_rate));
 
     ds_rate.sub_command = WIFI_DS_GET_DATA_RATE;
 
-    int rv = wlan_get_data_rate(&ds_rate);
+    int rv = wlan_get_data_rate(&ds_rate, bss_type);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to get tx rate cfg\r\n");
@@ -1873,12 +1932,12 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-chanlist", NULL, test_wlan_set_chanlist},
     {"wlan-get-chanlist", NULL, test_wlan_get_chanlist},
 #ifdef CONFIG_11AC
-    {"wlan-set-txratecfg", "<format> <index> <nss>", test_wlan_set_txratecfg},
+    {"wlan-set-txratecfg", "<sta/uap> <format> <index> <nss> <rate_setting>", test_wlan_set_txratecfg},
 #else
-    {"wlan-set-txratecfg", "<format> <index>", test_wlan_set_txratecfg},
+    {"wlan-set-txratecfg", "<sta/uap> <format> <index>", test_wlan_set_txratecfg},
 #endif
-    {"wlan-get-txratecfg", NULL, test_wlan_get_txratecfg},
-    {"wlan-get-data-rate", NULL, test_wlan_get_data_rate},
+    {"wlan-get-txratecfg", "<sta/uap>", test_wlan_get_txratecfg},
+    {"wlan-get-data-rate", "<sta/uap>", test_wlan_get_data_rate},
     {"wlan-set-pmfcfg", "<mfpc> <mfpr>", wlan_pmfcfg_set},
     {"wlan-get-pmfcfg", NULL, wlan_pmfcfg_get},
 #ifdef CONFIG_5GHz_SUPPORT

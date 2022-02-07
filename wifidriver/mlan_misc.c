@@ -1860,15 +1860,8 @@ static mlan_status wlan_rate_ioctl_get_rate_index(IN pmlan_adapter pmadapter, IN
     ENTER();
 
     /* Send request to firmware */
-    if (is_sta_connected())
-    {
-        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_GET, 0, (t_void *)pioctl_req, MNULL);
-    }
-    else
-    {
-        ret = (mlan_status)wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_GET, 0,
-                                                         (t_void *)pioctl_req, NULL, MLAN_BSS_TYPE_UAP, NULL);
-    }
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_GET, 0, (t_void *)pioctl_req, MNULL);
+
     if (ret == MLAN_STATUS_SUCCESS)
     {
         ret = MLAN_STATUS_PENDING;
@@ -2053,17 +2046,9 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
            pmpriv->is_data_rate_auto, pmpriv->data_rate);
 
     /* Send request to firmware */
-    if (is_sta_connected())
-    {
-        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
-                               (t_void *)bitmap_rates);
-    }
-    else
-    {
-        ret = (mlan_status)wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0,
-                                                         (t_void *)pioctl_req, (t_void *)bitmap_rates,
-                                                         MLAN_BSS_TYPE_UAP, NULL);
-    }
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
+                           (t_void *)bitmap_rates);
+
     if (ret == MLAN_STATUS_SUCCESS)
     {
         ret = MLAN_STATUS_PENDING;
@@ -2200,10 +2185,11 @@ mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
         net_mon->monitor_channel.chan_band_param[0].radio_type  = (t_u8)monitor->radio_type;
         net_mon->monitor_channel.chan_band_param[0].chan_number = (t_u8)monitor->chan_number;
 
-        net_mon->monitor_filter.header.type                     = TLV_TYPE_UAP_STA_MAC_ADDR_FILTER;
-        net_mon->monitor_filter.header.len                      = MLAN_MAC_ADDR_LENGTH*monitor->filter_num + sizeof(t_u8);
-        net_mon->monitor_filter.filter_num                      = (t_u8)monitor->filter_num;
-        __memcpy(priv->adapter, (t_u8 *)net_mon->monitor_filter.mac_list, (t_u8 *)monitor->mac_addr, MAX_MONIT_MAC_FILTER_NUM*MLAN_MAC_ADDR_LENGTH);
+        net_mon->monitor_filter.header.type = TLV_TYPE_UAP_STA_MAC_ADDR_FILTER;
+        net_mon->monitor_filter.header.len  = MLAN_MAC_ADDR_LENGTH * monitor->filter_num + sizeof(t_u8);
+        net_mon->monitor_filter.filter_num  = (t_u8)monitor->filter_num;
+        __memcpy(priv->adapter, (t_u8 *)net_mon->monitor_filter.mac_list, (t_u8 *)monitor->mac_addr,
+                 MAX_MONIT_MAC_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
     }
     else
     {

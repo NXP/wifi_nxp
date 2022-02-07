@@ -846,8 +846,8 @@ bool wifi_get_xfer_pending(void);
 void wifi_set_xfer_pending(bool xfer_val);
 int wrapper_wlan_cmd_11n_ba_stream_timeout(void *saved_event_buff);
 
-int wifi_set_txratecfg(wifi_ds_rate ds_rate);
-int wifi_get_txratecfg(wifi_ds_rate *ds_rate);
+int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type);
+int wifi_get_txratecfg(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 void wifi_wake_up_card(uint32_t *resp);
 
 #ifdef CONFIG_WPA2_ENTP
@@ -1124,6 +1124,7 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
 void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
 #endif
+int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 int wifi_uap_stop(enum wlan_bss_type type);
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);

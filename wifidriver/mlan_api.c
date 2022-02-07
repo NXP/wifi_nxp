@@ -473,25 +473,32 @@ int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power)
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_data_rate(wifi_ds_rate *ds_rate)
+int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    cmd->seq_num = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
     cmd->result  = 0x0;
 
     mlan_status rv;
-    if (is_sta_connected())
+    if (bss_type == MLAN_BSS_TYPE_UAP)
     {
-        rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_RATE_QUERY, 0, 0, NULL,
-                                      NULL, cmd);
-    }
-    else
-    {
-        cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_UAP);
+        if (!is_uap_started())
+        {
+            wifi_e("uap isn't up\n\r");
+            return -WM_FAIL;
+        }
         rv = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_RATE_QUERY, 0, 0, NULL,
                                       NULL, cmd);
+    }
+    else if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+        if (is_sta_connected())
+            rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_RATE_QUERY, 0, 0,
+                                          NULL, NULL, cmd);
+        else
+            wifi_e("sta connection required before setting tx rate\n\r");
     }
 
     if (rv != MLAN_STATUS_SUCCESS)

@@ -7034,23 +7034,23 @@ int wlan_set_httxcfg(unsigned short httxcfg)
     return wifi_set_httxcfg(httxcfg);
 }
 
-int wlan_set_txratecfg(wlan_ds_rate ds_rate)
+int wlan_set_txratecfg(wlan_ds_rate ds_rate, mlan_bss_type bss_type)
 {
-    return wifi_set_txratecfg(ds_rate);
+    return wifi_set_txratecfg(ds_rate, bss_type);
 }
 
-int wlan_get_txratecfg(wlan_ds_rate *ds_rate)
+int wlan_get_txratecfg(wlan_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
     int ret;
 
-    ret = wifi_get_txratecfg(ds_rate);
+    ret = wifi_get_txratecfg(ds_rate, bss_type);
 
     if (ret != WM_SUCCESS)
     {
         return ret;
     }
 
-    ret = wifi_get_data_rate(ds_rate);
+    ret = wifi_get_data_rate(ds_rate, bss_type);
 
     if (ret != WM_SUCCESS)
     {
@@ -7382,9 +7382,9 @@ uint8_t wlan_get_dtim_period(void)
     return dtim_period;
 }
 
-int wlan_get_data_rate(wlan_ds_rate *ds_rate)
+int wlan_get_data_rate(wlan_ds_rate *ds_rate, mlan_bss_type bss_type)
 {
-    return wifi_get_data_rate(ds_rate);
+    return wifi_get_data_rate(ds_rate, bss_type);
 }
 
 int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr)
