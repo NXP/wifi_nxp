@@ -1625,7 +1625,7 @@ typedef MLAN_PACK_START struct _WLAN_802_11_FIXED_IEs
 typedef MLAN_PACK_START struct _WLAN_802_11_VARIABLE_IEs
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 length;
     /** IE data */
