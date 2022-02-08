@@ -138,7 +138,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 typedef MLAN_PACK_START struct _IEEEtypes_Header_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
 } MLAN_PACK_END IEEEtypes_Header_t, *pIEEEtypes_Header_t;
@@ -147,7 +147,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_Header_t
 typedef MLAN_PACK_START struct _IEEEtypes_VendorHeader_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
     /** OUI */
@@ -240,7 +240,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
 typedef MLAN_PACK_START struct _IEEEtypes_CfParamSet_t
 {
     /** CF peremeter : Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** CF peremeter : Length */
     t_u8 len;
     /** CF peremeter : Count */
@@ -257,7 +257,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_CfParamSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_IbssParamSet_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
     /** ATIM window value in milliseconds */
@@ -277,7 +277,7 @@ typedef MLAN_PACK_START union _IEEEtypes_SsParamSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_FhParamSet_t
 {
     /** FH parameter : Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** FH parameter : Length */
     t_u8 len;
     /** FH parameter : Dwell time in milliseconds */
@@ -294,7 +294,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_FhParamSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_DsParamSet_t
 {
     /** DS parameter : Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** DS parameter : Length */
     t_u8 len;
     /** DS parameter : Current channel */
@@ -305,7 +305,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_DsParamSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_DtimParamSet_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
     /** DTIM Count */
@@ -331,7 +331,7 @@ typedef MLAN_PACK_START union _IEEEtypes_PhyParamSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_ERPInfo_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
     /** ERP flags */
@@ -391,7 +391,7 @@ typedef MLAN_PACK_START struct
 typedef MLAN_PACK_START struct _IEEEtypes_Rsn_t
 {
     /** Rsn : Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Rsn : Length */
     t_u8 len;
     /** Rsn : version */
@@ -408,7 +408,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_Rsn_t
 typedef MLAN_PACK_START struct _IEEEtypes_Wpa_t
 {
     /** Wpa : Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Wpa : Length */
     t_u8 len;
     /** Wpa : oui */
@@ -769,7 +769,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_SubbandSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_CountryInfoSet_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
     /** Country code */
@@ -782,7 +782,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_CountryInfoSet_t
 typedef MLAN_PACK_START struct _IEEEtypes_CountryInfoFullSet_t
 {
     /** Element ID */
-    t_u8 element_id;
+    IEEEtypes_ElementId_e element_id;
     /** Length */
     t_u8 len;
     /** Country code */
@@ -1217,27 +1217,27 @@ typedef MLAN_PACK_START struct _IEEEtypes_OperModeNtf_t
 /**  IEEE Power Constraint element (7.3.2.15) */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id;       /**< IEEE Element ID = 32 */
-    t_u8 len;              /**< Element length after id and len */
-    t_u8 local_constraint; /**< Local power constraint applied to 11d chan info */
+    IEEEtypes_ElementId_e element_id; /**< IEEE Element ID = 32 */
+    t_u8 len;                         /**< Element length after id and len */
+    t_u8 local_constraint;            /**< Local power constraint applied to 11d chan info */
 } MLAN_PACK_END IEEEtypes_PowerConstraint_t;
 
 /**  IEEE Power Capability element (7.3.2.16) */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id;              /**< IEEE Element ID = 33 */
-    t_u8 len;                     /**< Element length after id and len */
-    t_s8 min_tx_power_capability; /**< Minimum Transmit power (dBm) */
-    t_s8 max_tx_power_capability; /**< Maximum Transmit power (dBm) */
+    IEEEtypes_ElementId_e element_id; /**< IEEE Element ID = 33 */
+    t_u8 len;                         /**< Element length after id and len */
+    t_s8 min_tx_power_capability;     /**< Minimum Transmit power (dBm) */
+    t_s8 max_tx_power_capability;     /**< Maximum Transmit power (dBm) */
 } MLAN_PACK_END IEEEtypes_PowerCapability_t;
 
 /**  IEEE TPC Report element (7.3.2.18) */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id;  /**< IEEE Element ID = 35 */
-    t_u8 len;         /**< Element length after id and len */
-    t_s8 tx_power;    /**< Max power used to transmit the TPC Report frame (dBm) */
-    t_s8 link_margin; /**< Link margin when TPC Request received (dB) */
+    IEEEtypes_ElementId_e element_id; /**< IEEE Element ID = 35 */
+    t_u8 len;                         /**< Element length after id and len */
+    t_s8 tx_power;                    /**< Max power used to transmit the TPC Report frame (dBm) */
+    t_s8 link_margin;                 /**< Link margin when TPC Request received (dB) */
 } MLAN_PACK_END IEEEtypes_TPCReport_t;
 
 /*  IEEE Supported Channel sub-band description (7.3.2.19) */
@@ -1258,8 +1258,8 @@ typedef MLAN_PACK_START struct
  */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id; /**< IEEE Element ID = 36 */
-    t_u8 len;        /**< Element length after id and len */
+    IEEEtypes_ElementId_e element_id; /**< IEEE Element ID = 36 */
+    t_u8 len;                         /**< Element length after id and len */
 
     /** Configured sub-bands information in the element */
     IEEEtypes_SupportChan_Subband_t subband[WLAN_11H_MAX_SUBBANDS];
@@ -1274,11 +1274,11 @@ typedef MLAN_PACK_START struct
  */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id;        /**< IEEE Element ID = 37 */
-    t_u8 len;               /**< Element length after id and len */
-    t_u8 chan_switch_mode;  /**< STA should not transmit any frames if 1 */
-    t_u8 new_channel_num;   /**< Channel # that AP/IBSS is moving to */
-    t_u8 chan_switch_count; /**< # of TBTTs before channel switch */
+    IEEEtypes_ElementId_e element_id; /**< IEEE Element ID = 37 */
+    t_u8 len;                         /**< Element length after id and len */
+    t_u8 chan_switch_mode;            /**< STA should not transmit any frames if 1 */
+    t_u8 new_channel_num;             /**< Channel # that AP/IBSS is moving to */
+    t_u8 chan_switch_count;           /**< # of TBTTs before channel switch */
 
 } MLAN_PACK_END IEEEtypes_ChanSwitchAnn_t;
 
@@ -1290,12 +1290,12 @@ typedef MLAN_PACK_START struct
  */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id;      /**< IEEE Element ID = 40 */
-    t_u8 len;             /**< Element length after id and len */
-    t_u8 quiet_count;     /**< Number of TBTTs until beacon with the quiet period */
-    t_u8 quiet_period;    /**< Regular quiet period, # of TBTTS between periods */
-    t_u16 quiet_duration; /**< Duration of the quiet period in TUs */
-    t_u16 quiet_offset;   /**< Offset in TUs from the TBTT for the quiet period */
+    IEEEtypes_ElementId_e element_id; /**< IEEE Element ID = 40 */
+    t_u8 len;                         /**< Element length after id and len */
+    t_u8 quiet_count;                 /**< Number of TBTTs until beacon with the quiet period */
+    t_u8 quiet_period;                /**< Regular quiet period, # of TBTTS between periods */
+    t_u16 quiet_duration;             /**< Duration of the quiet period in TUs */
+    t_u16 quiet_offset;               /**< Offset in TUs from the TBTT for the quiet period */
 
 } MLAN_PACK_END IEEEtypes_Quiet_t;
 
@@ -1343,7 +1343,7 @@ typedef MLAN_PACK_START struct
  */
 typedef MLAN_PACK_START struct
 {
-    t_u8 element_id;                      /**< IEEE Element ID = 41 */
+    IEEEtypes_ElementId_e element_id;     /**< IEEE Element ID = 41 */
     t_u8 len;                             /**< Element length after id and len */
     t_u8 dfs_owner[MLAN_MAC_ADDR_LENGTH]; /**< DFS Owner STA Address */
     t_u8 dfs_recovery_interval;           /**< DFS Recovery time in TBTTs */

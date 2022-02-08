@@ -177,7 +177,8 @@ bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, 
 #ifdef CONFIG_WPA2_ENTP
 bool wifi_get_scan_enable_wpa2_enterprise_ap_only();
 
-static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry, t_u8 element_id)
+static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry,
+                                                              IEEEtypes_ElementId_e element_id)
 {
     if (element_id == RSN_IE)
     {
