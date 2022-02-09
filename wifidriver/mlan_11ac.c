@@ -328,7 +328,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
                 else
                 {
                     SET_VHTNSSMCS(vht_cfg->vht_rx_mcs, nss, MIN(cfg_value, hw_value));
-            }
+                }
             }
             PRINTM(MINFO, "Set: vht rx mcs set 0x%08x\n", vht_cfg->vht_rx_mcs);
             /* use the previous user value */
@@ -347,7 +347,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
                 else
                 {
                     SET_VHTNSSMCS(vht_cfg->vht_tx_mcs, nss, MIN(cfg_value, hw_value));
-            }
+                }
             }
 
             PRINTM(MINFO, "Set: vht tx mcs set 0x%08x\n", vht_cfg->vht_tx_mcs);
@@ -414,11 +414,13 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
                     PRINTM(MINFO, "Get: invalid band selection for vht cap info\n");
                     ret = MLAN_STATUS_FAILURE;
                 }
-                vht_cfg->bwcfg           = pmadapter->usr_dot_11ac_bw;
-                vht_cfg->vht_rx_mcs      = GET_DEVRXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
-                vht_cfg->vht_tx_mcs      = GET_DEVTXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
-                vht_cfg->vht_rx_max_rate = wlan_convert_mcsmap_to_maxrate(pmpriv, vht_cfg->band, (t_u16)vht_cfg->vht_rx_mcs);
-                vht_cfg->vht_tx_max_rate = wlan_convert_mcsmap_to_maxrate(pmpriv, vht_cfg->band, (t_u16)vht_cfg->vht_tx_mcs);
+                vht_cfg->bwcfg      = pmadapter->usr_dot_11ac_bw;
+                vht_cfg->vht_rx_mcs = GET_DEVRXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
+                vht_cfg->vht_tx_mcs = GET_DEVTXMCSMAP(pmadapter->usr_dot_11ac_mcs_support);
+                vht_cfg->vht_rx_max_rate =
+                    wlan_convert_mcsmap_to_maxrate(pmpriv, vht_cfg->band, (t_u16)vht_cfg->vht_rx_mcs);
+                vht_cfg->vht_tx_max_rate =
+                    wlan_convert_mcsmap_to_maxrate(pmpriv, vht_cfg->band, (t_u16)vht_cfg->vht_tx_mcs);
             }
             LEAVE();
             return ret;
