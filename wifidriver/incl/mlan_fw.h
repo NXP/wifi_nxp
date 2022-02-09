@@ -794,11 +794,11 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** GET VHT CapInfo:  VHT Link Adaptation Capable (2 bits) */
 #define GET_VHTCAP_LINKADPCAP(VHTCapInfo) ((VHTCapInfo >> 26) & 0x3)
 /**SET OPERATING MODE:Channel Width:80M*/
-#define SET_OPER_MODE_80M(oper_mode) ((oper_mode) = ((oper_mode) & ~MBIT(0)) | MBIT(1))
+#define SET_OPER_MODE_80M(oper_mode) ((oper_mode) = (t_u8)((oper_mode) & ~MBIT(0)) | MBIT(1))
 /**SET OPERATING MODE:Channel Width:40M*/
-#define SET_OPER_MODE_40M(oper_mode) ((oper_mode) = ((oper_mode) & ~MBIT(1)) | MBIT(0))
+#define SET_OPER_MODE_40M(oper_mode) ((oper_mode) = (t_u8)((oper_mode) & ~MBIT(1)) | MBIT(0))
 /**SET OPERATING MODE:Channel Width:20M*/
-#define SET_OPER_MODE_20M(oper_mode) (oper_mode &= ~(0x03U))
+#define SET_OPER_MODE_20M(oper_mode) (oper_mode &= (t_u8)(~(0x03U)))
 #define IS_OPER_MODE_20M(oper_mode)  (((oper_mode) & (MBIT(0) | MBIT(1))) == 0U)
 /**SET OPERATING MODE:Rx NSS:2*/
 #define SET_OPER_MODE_2NSS(oper_mode) ((oper_mode) = ((oper_mode) & ~(MBIT(5) | MBIT(6))) | MBIT(4))

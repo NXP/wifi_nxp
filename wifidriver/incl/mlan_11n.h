@@ -273,7 +273,7 @@ static int wlan_is_amsdu_in_ampdu_allowed(mlan_private *priv, raListTbl *ptr, in
     if (ptx_tbl != MNULL)
     {
         LEAVE();
-        return ptx_tbl->amsdu;
+        return (int)(ptx_tbl->amsdu);
     }
     LEAVE();
     return MFALSE;
@@ -425,7 +425,7 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
     {
         if ((!(ra[0] & 0x01U)) && (priv->is_11n_enabled))
         {
-            ret = is_station_11n_enabled(priv, ra);
+            ret = (int)is_station_11n_enabled(priv, ra);
         }
     }
 #endif /* UAP_SUPPORT */
