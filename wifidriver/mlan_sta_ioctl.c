@@ -341,7 +341,8 @@ static mlan_status wlan_get_info_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
     LEAVE();
     return status;
 }
-
+#endif /*CONFIG_MLAN_WMSDK*/
+#if defined(CONFIG_WIFI_RTS_THRESHOLD) || defined(CONFIG_WIFI_FRAG_THRESHOLD)
 /**
  *  @brief Set/Get SNMP MIB handler
  *
@@ -407,7 +408,8 @@ exit:
     LEAVE();
     return ret;
 }
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get Infra/Ad-hoc band configuration
  *
@@ -5734,9 +5736,13 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_RADIO_CFG:
             status = wlan_radio_ioctl(pmadapter, pioctl_req);
             break;
+#endif /* CONFIG_MLAN_WMSDK */
+#if defined(CONFIG_WIFI_RTS_THRESHOLD) || defined(CONFIG_WIFI_FRAG_THRESHOLD)
         case MLAN_IOCTL_SNMP_MIB:
             status = wlan_snmp_mib_ioctl(pmadapter, pioctl_req);
             break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_GET_INFO:
             status = wlan_get_info_ioctl(pmadapter, pioctl_req);
             break;

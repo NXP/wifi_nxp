@@ -263,7 +263,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
     t_u16 query_type                  = wlan_le16_to_cpu(psmib->query_type);
     t_u32 ul_temp;
 
-#ifndef CONFIG_MLAN_WMSDK
+#if defined(CONFIG_WIFI_FRAG_THRESHOLD) || defined(CONFIG_WIFI_RTS_THRESHOLD)
     mlan_ds_snmp_mib *mib = MNULL;
 
     ENTER();
@@ -274,33 +274,37 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
     /* wmsdk */
     PRINTM(MINFO, "SNMP_RESP: value of the oid = 0x%x, query_type=0x%x\n", oid, query_type);
     PRINTM(MINFO, "SNMP_RESP: Buf size  = 0x%x\n", wlan_le16_to_cpu(psmib->buf_size));
-#endif /* CONFIG_MLAN_WMSDK */
+#endif 
     if (query_type == HostCmd_ACT_GEN_GET)
     {
         /* wmsdk: GET is not used. Disable */
-#ifndef CONFIG_MLAN_WMSDK
         switch (oid)
         {
+#ifndef CONFIG_MLAN_WMSDK
             case DtimPeriod_i:
                 ul_temp = psmib->value[0];
                 PRINTM(MINFO, "SNMP_RESP: DTIM Period =%u\n", ul_temp);
                 if (mib)
                     mib->param.dtim_period = ul_temp;
                 break;
+#endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
             case FragThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: FragThsd =%u\n", ul_temp);
                 if (mib)
                     mib->param.frag_threshold = ul_temp;
                 break;
-
+#endif
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
             case RtsThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: RTSThsd =%u\n", ul_temp);
                 if (mib)
                     mib->param.rts_threshold = ul_temp;
                 break;
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
             case ShortRetryLim_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: TxRetryCount=%u\n", ul_temp);
@@ -319,11 +323,10 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 if (pioctl_buf)
                     ((mlan_ds_misc_cfg *)pioctl_buf->pbuf)->param.thermal = ul_temp;
                 break;
-
+#endif /* CONFIG_MLAN_WMSDK */
             default:
                 break;
         }
-#endif /* CONFIG_MLAN_WMSDK */
     }
     else
     { /* (query_type == HostCmd_ACT_GEN_SET) */

@@ -1601,7 +1601,9 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
     HostCmd_DS_802_11_SNMP_MIB *psnmp_mib = &cmd->params.smib;
     mlan_status ret                       = MLAN_STATUS_SUCCESS;
     t_u8 *psnmp_oid                       = MNULL;
-    //    t_u32 ul_temp;
+#if defined(CONFIG_WIFI_FRAG_THRESHOLD) || defined(CONFIG_WIFI_RTS_THRESHOLD)
+	t_u32 ul_temp;
+#endif
     t_u8 i;
 
     t_u8 snmp_oids[] = {
@@ -1675,6 +1677,24 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
                 psnmp_mib->value[0] = *((t_u8 *)pdata_buf);
                 cmd->size += sizeof(t_u8);
                 break;
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+			case FragThresh_i:
+				psnmp_mib->oid		= wlan_cpu_to_le16((t_u16)FragThresh_i);
+				psnmp_mib->buf_size = wlan_cpu_to_le16(sizeof(t_u16));
+				ul_temp = *((t_u32 *)pdata_buf);
+				*((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+				cmd->size += sizeof(t_u16);
+				break;
+#endif
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
+			case RtsThresh_i:
+				psnmp_mib->oid		= wlan_cpu_to_le16((t_u16)RtsThresh_i);
+				psnmp_mib->buf_size = wlan_cpu_to_le16(sizeof(t_u16));
+				ul_temp = *((t_u32 *)pdata_buf);
+				*((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+				cmd->size += sizeof(t_u16);
+				break;
+#endif
             default:
                 PRINTM(MERROR, "Unsupported OID.\n");
                 ret = MLAN_STATUS_FAILURE;
