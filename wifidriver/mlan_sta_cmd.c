@@ -310,6 +310,8 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
                 cmd->size += sizeof(t_u8);
             }
             break;
+#endif
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
         case FragThresh_i:
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)FragThresh_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
@@ -321,6 +323,8 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
                 cmd->size += sizeof(t_u16);
             }
             break;
+#endif
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
         case RtsThresh_i:
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)RtsThresh_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
@@ -332,7 +336,8 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
                 cmd->size += sizeof(t_u16);
             }
             break;
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case ShortRetryLim_i:
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)ShortRetryLim_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)
