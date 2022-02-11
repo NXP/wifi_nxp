@@ -141,7 +141,7 @@ typedef int (*cli_name_val_set)(const char *name, const char *value);
 int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb);
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_CLI_ECHO_MODE
 /** Get the 'echo' mode for CLI
  *
  * \return true if echo is enabled
@@ -154,7 +154,7 @@ bool cli_get_echo_mode(void);
  * \param[in] enabled Set 'true' to enable echo and 'false' to disable.
  */
 void cli_set_echo_mode(bool enabled);
-#endif /*CONFIG_MLAN_WMSDK*/
+#endif /*CONFIG_CLI_ECHO_MODE*/
 
 /*
  * @internal

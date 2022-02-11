@@ -27,9 +27,6 @@
 #ifndef __WIFI_SDIO_H__
 #define __WIFI_SDIO_H__
 
-/* fixme: remove this as soon as there is no dependancy */
-//#define INCLUDE_FROM_MLAN
-
 #include <wifi.h>
 #include "firmware_dnld.h"
 

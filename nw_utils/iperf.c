@@ -131,7 +131,7 @@ static void lwiperf_report(void *arg,
     (void)PRINTF("\r\n");
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_IPERF_TEST
 struct wmm_test_data_t
 {
     uint16_t port1;
@@ -954,7 +954,7 @@ void cmd_iperf(int argc, char **argv)
 
 static struct cli_command iperf[] = {
     {"iperf", "[-s|-c <host>|-a|-h] [options]", cmd_iperf},
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_IPERF_TEST
     {"wmm_iperf", "wmm_test iperf instances commands...", test_wmm},
 #endif
 };

@@ -3154,11 +3154,11 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
     int ret = wifi_send_scan_cmd(g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
 #ifdef CONFIG_COMBO_SCAN
-                                wlan_scan_param->ssid[0], wlan_scan_param->ssid[1],
+                                 wlan_scan_param->ssid[0], wlan_scan_param->ssid[1],
 #else
-                                wlan_scan_param->ssid, NULL,
+                                 wlan_scan_param->ssid, NULL,
 #endif
-                                wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
+                                 wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
                                  false, false);
     if (ret != WM_SUCCESS)
     {
@@ -5527,7 +5527,7 @@ bool wlan_get_smart_mode_status(void)
     return wlan.smart_mode_active;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_RECONNECT
 int wlan_auto_reconnect_enable(wlan_auto_reconnect_config_t auto_reconnect_config)
 {
     return wifi_auto_reconnect_enable(auto_reconnect_config);
@@ -5561,7 +5561,7 @@ int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *tcp_keep_alive)
 }
 #endif /*ENABLE_OFFLOAD*/
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NAT_KEEP_ALIVE
 int wlan_nat_keep_alive(wlan_nat_keep_alive_t *nat_keep_alive)
 {
     int ret;
@@ -5682,7 +5682,7 @@ int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr)
     return wifi_get_pmfcfg(mfpc, mfpr);
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_TBTT_OFFSET
 int wlan_get_tbtt_offset(wlan_tbtt_offset_t *tbtt_offset)
 {
     return wifi_get_tbtt_offset(tbtt_offset);
@@ -5887,7 +5887,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
 }
 #endif /*ENABLE_OFFLOAD*/
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_PING
 int wlan_set_auto_ping()
 {
     wlan_flt_cfg_t flt_cfg;
@@ -5916,7 +5916,7 @@ int wlan_set_auto_ping()
 
     return wifi_set_packet_filters(&flt_cfg);
 }
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_AUTO_PING */
 
 #ifdef ENABLE_OFFLOAD
 int wlan_set_ipv6_ns_offload()
@@ -5985,7 +5985,7 @@ uint8_t wlan_get_current_channel(void)
     return network.channel;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_RECONNECT
 int wlan_get_auto_reconnect_config(wlan_auto_reconnect_config_t *auto_reconnect_config)
 {
     if (!auto_reconnect_config)
@@ -6084,10 +6084,9 @@ int wlan_set_uap_frag(int frag)
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-int  wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
     return wifi_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
-
 }
 #endif
 

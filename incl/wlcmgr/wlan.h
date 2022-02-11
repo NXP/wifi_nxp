@@ -225,10 +225,10 @@ typedef enum
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 /* Max number of sta filter list can be upto 16 */
-#define WLAN_MAX_STA_FILTER_NUM  16
+#define WLAN_MAX_STA_FILTER_NUM 16
 
 /* The length of wlan mac address */
-#define WLAN_MAC_ADDR_LENGTH  6
+#define WLAN_MAC_ADDR_LENGTH 6
 #endif
 
 /* Error Codes */
@@ -745,7 +745,7 @@ typedef wifi_scan_channel_list_t wlan_scan_channel_list_t;
  */
 typedef wifi_scan_params_v2_t wlan_scan_params_v2_t;
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_TBTT_OFFSET
 /** Configuration for Wireless TBTT Offset stats from
  * \ref wifi_tbtt_offset_t
  */
@@ -757,7 +757,7 @@ typedef wifi_tbtt_offset_t wlan_tbtt_offset_t;
  */
 typedef wifi_cal_data_t wlan_cal_data_t;
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_RECONNECT
 /** Configuration for Auto reconnect configuration from
  * \ref wifi_auto_reconnect_config_t
  */
@@ -777,7 +777,7 @@ typedef wifi_wowlan_ptn_cfg_t wlan_wowlan_ptn_cfg_t;
  * \ref wifi_tcp_keep_alive_t
  */
 typedef wifi_tcp_keep_alive_t wlan_tcp_keep_alive_t;
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NAT_KEEP_ALIVE
 /** Configuration for NAT Keep alive parameters from
  * \ref wifi_nat_keep_alive_t
  */
@@ -1897,7 +1897,7 @@ int wlan_deepsleepps_off(void);
 int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *keep_alive);
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NAT_KEEP_ALIVE
 /**
  * Use this API to configure the NAT Keep alive parameters in Wi-Fi firmware.
  * \ref wlan_nat_keep_alive_t provides the parameters which are available
@@ -1987,7 +1987,7 @@ int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
  */
 int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_TBTT_OFFSET
 /**
  * Use this API to get the min, max and avg TBTT offset values
  * from Wi-Fi firmware.
@@ -1999,7 +1999,7 @@ int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
  * \return -WM_FAIL if command fails.
  */
 int wlan_get_tbtt_offset_stats(wlan_tbtt_offset_t *tbtt_offset);
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_TBTT_OFFSET */
 
 /**
  * Use this API to set packet filters in Wi-Fi firmware.
@@ -2100,7 +2100,7 @@ int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg);
  */
 int wlan_set_auto_arp();
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_PING
 /**
  * Use this API to enable Ping Offload in Wi-Fi firmware.
  *
@@ -2108,7 +2108,7 @@ int wlan_set_auto_arp();
  * \return -WM_FAIL if command fails.
  */
 int wlan_set_auto_ping();
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /*  CONFIG_AUTO_PING */
 
 #ifdef ENABLE_OFFLOAD
 /**
@@ -2166,7 +2166,7 @@ uint8_t wlan_get_current_channel(void);
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_get_log(wlan_pkt_stats_t *stats );
+int wlan_get_log(wlan_pkt_stats_t *stats);
 
 /**
  * Use this API to get the various statistics of uap from Wi-Fi firmware like
@@ -2672,7 +2672,7 @@ int wlan_set_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit);
  */
 int wlan_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit);
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_RECONNECT
 /**
  * Enable Auto Reconnect feature in WLAN firmware.
  *
@@ -2913,7 +2913,7 @@ int wlan_set_uap_frag(int frag);
  * \return WM_SUCCESS if successful otherwise failure.
  *
  */
-int  wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
+int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
 static inline void print_mac(const char *mac)

@@ -122,6 +122,7 @@ rm -f $scriptDir/removeMacros.txt
 for x in `find . -type f -iname "*"`
 do
 	sed -i 's/[[:space:]]\+$//' $x
+	sed -i 's/#define CONFIG_WIFI_INTERNAL 1$//' $x
 done
 
 ########################################
