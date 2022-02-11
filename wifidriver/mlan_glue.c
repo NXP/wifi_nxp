@@ -1785,9 +1785,12 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
         if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HT)
             ds_rate_cfg.param.rate_cfg.rate += MLAN_RATE_INDEX_MCS0;
 #endif
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-        if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT ||
-            ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
+#ifdef CONFIG_11AC
+        if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT
+#ifdef CONFIG_11AX
+            || ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE
+#endif
+        )
             ds_rate_cfg.param.rate_cfg.nss = ds_rate.param.rate_cfg.nss;
 #endif
         if (ds_rate.param.rate_cfg.rate_setting != 0xffff)
