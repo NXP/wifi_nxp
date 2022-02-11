@@ -1002,7 +1002,7 @@ static void echo_cmd_handler(int argc, char **argv)
 }
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_CLI_ECHO_MODE
 bool cli_get_echo_mode()
 {
     return !cli.echo_disabled;
@@ -1015,7 +1015,7 @@ void cli_set_echo_mode(bool enabled)
     else
         cli.echo_disabled = true;
 }
-#endif /*CONFIG_MLAN_WMSDK*/
+#endif /*CONFIG_CLI_ECHO_MODE*/
 
 #ifdef CONFIG_CLI_TESTS
 static void test_getopt(int argc, char **argv)

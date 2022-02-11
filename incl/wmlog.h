@@ -43,21 +43,12 @@
 
 /* General debug function. User can map his own debug functions to this
 ne */
-#ifdef CONFIG_DEBUG_BUILD
 #define wmlog(_mod_name_, _fmt_, ...) (void)PRINTF("[%s] " _fmt_ "\n\r", _mod_name_, ##__VA_ARGS__)
-#else
-#define wmlog(...)
-#endif /* CONFIG_DEBUG_BUILD */
 
-#ifdef CONFIG_DEBUG_BUILD
 /* Function entry */
 #define wmlog_entry(_fmt_, ...) (void)PRINTF("> %s (" _fmt_ ")\n\r", __func__, ##__VA_ARGS__)
 
 /* function exit */
 #define wmlog_exit(_fmt_, ...) (void)PRINTF("< %s" _fmt_ "\n\r", __func__, ##__VA_ARGS__)
-#else
-#define wmlog_entry(...)
-#define wmlog_exit(...)
-#endif /* CONFIG_DEBUG_BUILD */
 
 #endif /* __WMLOG_H__ */

@@ -46,12 +46,10 @@
 #ifdef CONFIG_11AX
 #include "mlan_11ax.h"
 #endif
-#include "mlan_decl.h"
 #include "mlan_11n_aggr.h"
 #include "mlan_sdio.h"
 #include "mlan_11n_rxreorder.h"
 #include "mlan_meas.h"
-#include "mlan_ioctl.h"
 #include "mlan_uap.h"
 #include <wifi-debug.h>
 #include "wifi-internal.h"

@@ -59,8 +59,6 @@
 
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
 
-#define net_l(...) wmlog("net", ##__VA_ARGS__)
-
 #ifdef CONFIG_NET_DEBUG
 #define net_d(...) wmlog("net", ##__VA_ARGS__)
 #else
@@ -211,7 +209,7 @@ int net_wlan_init(void)
 #endif
         net_wlan_init_done = 1;
 
-        net_l("Initialized TCP/IP networking stack");
+        net_d("Initialized TCP/IP networking stack");
     }
 
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
