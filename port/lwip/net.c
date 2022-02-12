@@ -53,9 +53,10 @@
 #define IPV6_ADDR_UNKNOWN          "Unknown"
 #endif
 
-#define DNS_PORT   0x35
-#define DHCPD_PORT 0x43
-#define DHCPC_PORT 0x44
+#define DNS_PORT           0x35
+#define DHCPD_PORT         0x43
+#define DHCPC_PORT         0x44
+#define DHCP_TIMEOUT_2_MIN (120 * 1000)
 
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
 
@@ -79,6 +80,10 @@ static interface_t g_uap;
 #ifdef CONFIG_P2P
 static interface_t g_wfd;
 #endif
+
+static os_timer_t dhcp_timer;
+
+static void dhcp_timer_cb(os_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
@@ -207,6 +212,15 @@ int net_wlan_init(void)
             return -WM_FAIL;
         }
 #endif
+
+        ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT_2_MIN), &dhcp_timer_cb, NULL,
+                              OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
+        if (ret != WM_SUCCESS)
+        {
+            net_e("Unable to start dhcp timer");
+            return ret;
+        }
+
         net_wlan_init_done = 1;
 
         net_d("Initialized TCP/IP networking stack");
@@ -313,6 +327,19 @@ static void wm_netif_status_callback(struct netif *n)
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
     }
+}
+
+void net_stop_dhcp_timer(void)
+{
+    os_timer_deactivate((os_timer_t *)&dhcp_timer);
+}
+
+static void dhcp_timer_cb(os_timer_arg_t arg)
+{
+    interface_t *if_handle = (interface_t *)net_get_mlan_handle();
+
+    netifapi_netif_set_down(&if_handle->netif);
+    netifapi_dhcp_stop(&if_handle->netif);
 }
 
 static int check_iface_mask(void *handle, uint32_t ipaddr)
@@ -467,6 +494,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
                                           ip_2_ip4(&if_handle->gw));
             (void)netifapi_netif_set_up(&if_handle->netif);
             netif_set_status_callback(&if_handle->netif, wm_netif_status_callback);
+            os_timer_activate(&dhcp_timer);
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;
         case ADDR_TYPE_LLA:

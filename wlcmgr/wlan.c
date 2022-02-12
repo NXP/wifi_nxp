@@ -2722,6 +2722,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         g_wm_stats.wm_dhcp_succ++;
 #endif /* CONFIG_WMSTATS */
         wlcm_d("got event: DHCP success");
+        net_stop_dhcp_timer();
         net_configure_dns(&network->ip, network->role);
         if (network->type == WLAN_BSS_TYPE_STA)
         {

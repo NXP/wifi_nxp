@@ -108,6 +108,11 @@
  */
 int net_dhcp_hostname_set(char *hostname);
 
+/** Deactivate the dhcp timer
+ *
+ */
+void net_stop_dhcp_timer(void);
+
 /** Set socket blocking option as on or off
  *
  * \param[in] sock socket number to be set for blocking option.
