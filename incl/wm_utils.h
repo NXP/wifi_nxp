@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -111,7 +111,7 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
                          "Truncating to avoid overflow.\r\n");
             return j + 1U;
         }
-        ch = toupper(*ibuf++); /* get next uppercase character */
+        ch = (unsigned char)toupper(*ibuf++); /* get next uppercase character */
 
         /* do the conversion */
         if (ch >= '0' && ch <= '9')
@@ -131,7 +131,7 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
         if ((i & 1) == 1U)
         {
             j       = ((i + 1U) / 2U) - 1U;
-            obuf[j] = by & 0xffU;
+            obuf[j] = (uint8_t)(by & 0xffU);
         }
     }
     return j + 1U;

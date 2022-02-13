@@ -72,7 +72,7 @@ int os_timer_create(os_timer_t *timer_t,
 {
     int auto_reload = (reload == OS_TIMER_ONE_SHOT) ? pdFALSE : pdTRUE;
 
-    *timer_t = xTimerCreate(name, ticks, auto_reload, cb_arg, call_back);
+    *timer_t = xTimerCreate(name, ticks, (UBaseType_t)auto_reload, cb_arg, call_back);
     if (*timer_t == NULL)
     {
         return -WM_FAIL;
@@ -91,7 +91,7 @@ int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue
     /** The size of the pool divided by the max. message size gives the
      * max. number of items in the queue. */
     os_dprintf(" Queue Create: name = %s poolsize = %d msgsize = %d\r\n", name, poolname->size, msgsize);
-    *qhandle = xQueueCreate(poolname->size / msgsize, msgsize);
+    *qhandle = xQueueCreate((UBaseType_t)(poolname->size / msgsize), (UBaseType_t)msgsize);
     os_dprintf(" Queue Create: handle %p\r\n", *qhandle);
     if (*qhandle != NULL)
     {

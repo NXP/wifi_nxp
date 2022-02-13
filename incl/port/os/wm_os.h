@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -232,7 +232,7 @@ static inline int os_thread_create(os_thread_t *thandle,
 {
     int ret;
 
-    ret = xTaskCreate(main_func, name, stack->size, arg, prio, thandle);
+    ret = xTaskCreate(main_func, name,(uint16_t)stack->size, arg, (uint32_t)prio, thandle);
 
     os_dprintf(
         " Thread Create: ret %d thandle %p"
@@ -540,7 +540,7 @@ static inline int os_queue_get_msgs_waiting(os_queue_t *qhandle)
     {
         return -WM_E_INVAL;
     }
-    nmsg = uxQueueMessagesWaiting(*qhandle);
+    nmsg = (int)uxQueueMessagesWaiting(*qhandle);
     os_dprintf("OS: Queue Msg Count: handle %p, count %d\r\n", *qhandle, nmsg);
     return nmsg;
 }
@@ -923,7 +923,7 @@ static inline int os_mutex_delete(os_mutex_t *mhandle)
  */
 static inline int os_event_notify_get(unsigned long wait_time)
 {
-    int ret = ulTaskNotifyTake(pdTRUE, wait_time);
+    int ret = (int)ulTaskNotifyTake(pdTRUE, wait_time);
     return ret == pdTRUE ? WM_SUCCESS : -WM_FAIL;
 }
 
@@ -1121,7 +1121,7 @@ static inline int os_semaphore_put(os_semaphore_t *mhandle)
 static inline int os_semaphore_getcount(os_semaphore_t *mhandle)
 {
     os_dprintf("OS: Semaphore Get Count: handle %p\r\n", *mhandle);
-    return uxQueueMessagesWaiting(*mhandle);
+    return (int)uxQueueMessagesWaiting(*mhandle);
 }
 
 /** Delete a semaphore
