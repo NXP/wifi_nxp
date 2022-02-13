@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -116,7 +116,7 @@ static inline int wlan_get_country(void)
  */
 static inline int wlan_uap_set_country(country_code_t country)
 {
-    return wifi_uap_set_country(country);
+    return wifi_uap_set_country((int)country);
 }
 
 /** Set country code in WLAN Driver.
@@ -136,7 +136,7 @@ static inline int wlan_uap_set_country(country_code_t country)
  */
 static inline int wlan_set_country(country_code_t country)
 {
-    return wifi_set_country(country);
+    return wifi_set_country((int)country);
 }
 
 /**  wlan_11d_custom Custom Wi-Fi Region Configuration

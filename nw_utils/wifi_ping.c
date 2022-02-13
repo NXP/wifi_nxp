@@ -102,7 +102,7 @@ static int ping_recv(int s, uint16_t seq_no, int *ttl)
             {
                 /* Extract TTL and send back so that it can be
                  * displayed in ping statistics */
-                *ttl = iphdr->_ttl;
+                *ttl = (int)(iphdr->_ttl);
                 return WM_SUCCESS;
             }
         }
@@ -186,15 +186,15 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
         goto end;
     }
 
-    ping_prepare_echo(iecho, (uint16_t)ping_size, i);
+    ping_prepare_echo(iecho, (uint16_t)ping_size, (uint16_t)i);
 
     while (i <= count)
     {
-        iecho->seqno  = htons(i);
+        iecho->seqno  = (uint16_t)htons(i);
         iecho->chksum = 0;
         iecho->chksum = inet_chksum(iecho, (uint16_t)ping_size);
 
-        to.sin_len    = sizeof(to);
+        to.sin_len    = (u8_t)sizeof(to);
         to.sin_family = AF_INET;
         inet_addr_from_ip4addr(&to.sin_addr, ip_2_ip4(addr));
 
@@ -208,7 +208,7 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
         {
             int ttl = 0;
             /* Receive the ICMP echo response */
-            ret = ping_recv(s, i, &ttl);
+            ret = ping_recv(s, (uint16_t)i, &ttl);
 
             /* Calculate the round trip time */
             ping_time = os_ticks_get() - ping_time;
@@ -241,7 +241,7 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
         os_thread_sleep(os_msec_to_ticks(PING_INTERVAL));
     }
     os_mem_free(iecho);
-    display_ping_result((ip_addr_t *)(void *)&src_ip, count, recvd);
+    display_ping_result((ip_addr_t *)(void *)&src_ip, (int)count, recvd);
 end:
     (void)close(s);
     return ret;
@@ -300,7 +300,7 @@ void cmd_ping(int argc, char **argv)
                         temp, PING_MAX_SIZE);
                     return;
                 }
-                size = temp;
+                size = (uint16_t)temp;
                 break;
             case 'W':
                 timeout = strtoul(cli_optarg, NULL, 10);

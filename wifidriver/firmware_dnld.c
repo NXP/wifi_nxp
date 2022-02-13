@@ -58,16 +58,14 @@ enum
     FWDNLD_CARD_CMD_TIMEOUT
 };
 
-static int wlan_card_fw_status(t_u16 *dat)
+static void wlan_card_fw_status(t_u16 *dat)
 {
     uint32_t resp = 0;
 
     (void)sdio_drv_creg_read(CARD_FW_STATUS0_REG, 1, &resp);
-    *dat = resp & 0xff;
+    *dat = (t_u16)(resp & 0xff);
     (void)sdio_drv_creg_read(CARD_FW_STATUS1_REG, 1, &resp);
-    *dat |= (resp & 0xff) << 8;
-
-    return true;
+    *dat |= (t_u16)((resp & 0xff) << 8);
 }
 
 static bool wlan_card_ready_wait(t_u32 poll)

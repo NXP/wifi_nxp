@@ -813,7 +813,7 @@ void cmd_iperf(int argc, char **argv)
             arg += 1;
             info.time = 1;
             errno     = 0;
-            amount    = -(100 * strtoul(argv[arg], NULL, 10));
+            amount    = (int)(-(100 * strtoul(argv[arg], NULL, 10)));
             if (errno != 0)
             {
                 (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -988,7 +988,7 @@ int iperf_cli_init(void)
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    timer = xTimerCreate("UDP Poll Timer", 1U / portTICK_PERIOD_MS, pdTRUE, (void *)0, timer_poll_udp_client);
+    timer = xTimerCreate("UDP Poll Timer", 1U / portTICK_PERIOD_MS, (UBaseType_t)pdTRUE, (void *)0, timer_poll_udp_client);
     if (timer == NULL)
     {
         (void)PRINTF("Timer creation failed!\r\n");
