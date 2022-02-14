@@ -96,6 +96,22 @@ void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 
 #ifdef CONFIG_IPV6
+netif_nsc_reason_t g_reason;
+
+NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
+
+static void wm_netif_ipv6_status_callback(struct netif *n);
+
+static void netif_ext_status_callback(struct netif *netif,
+                                      netif_nsc_reason_t reason,
+                                      const netif_ext_callback_args_t *args)
+{
+    g_reason = reason;
+
+    if ((reason == LWIP_NSC_IPV6_ADDR_STATE_CHANGED) || (reason == LWIP_NSC_IPV6_SET))
+        wm_netif_ipv6_status_callback(netif);
+}
+
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
 {
     if (ip6_addr_istentative(addr_state))
@@ -221,6 +237,10 @@ int net_wlan_init(void)
             return ret;
         }
 
+#ifdef CONFIG_IPV6
+        netif_add_ext_callback(&netif_ext_callback, netif_ext_status_callback);
+#endif
+
         net_wlan_init_done = 1;
 
         net_d("Initialized TCP/IP networking stack");
@@ -325,7 +345,10 @@ static void wm_netif_status_callback(struct netif *n)
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
     {
-        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+#ifdef CONFIG_IPV6
+        if ((g_reason != LWIP_NSC_IPV6_ADDR_STATE_CHANGED) && (g_reason != LWIP_NSC_IPV6_SET))
+#endif
+            (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
     }
 }
 
@@ -437,6 +460,11 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 {
+#ifdef CONFIG_IPV6
+    t_u8 i;
+    ip_addr_t zero_addr = IPADDR6_INIT_HOST(0x0, 0x0, 0x0, 0x0);
+#endif
+
     if (addr == NULL)
     {
         return -WM_E_INVAL;
@@ -465,6 +493,12 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 #ifdef CONFIG_IPV6
     if (if_handle == &g_mlan)
     {
+        for (i = 1; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
+        {
+            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
+            netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
+        }
+
         /* Explicitly call this function so that the linklocal address
          * gets updated even if the interface does not get any IPv6
          * address in its lifetime */
@@ -564,7 +598,7 @@ int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
         addr->ipv6[i].addr_state = if_handle->netif.ip6_addr_state[i];
     }
     /* TODO carry out more processing based on IPv6 fields in netif */
-    return 0;
+    return WM_SUCCESS;
 }
 
 int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
