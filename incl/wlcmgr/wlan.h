@@ -297,6 +297,9 @@ enum wlan_event_reason
     /** The WLAN Connection Manager has successfully connected to a network and
      *  is now in the \ref WLAN_CONNECTED state. */
     WLAN_REASON_SUCCESS,
+    /** The WLAN Connection Manager has successfully authenticated to a network and
+     *  is now in the \ref WLAN_ASSOCIATED state. */
+    WLAN_REASON_AUTH_SUCCESS,
     /** The WLAN Connection Manager failed to connect before actual
      * connection attempt with AP due to incorrect wlan network profile. */
     WLAN_REASON_CONNECT_FAILED,
