@@ -2397,6 +2397,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                 /* Do nothing */
             }
 #endif /* CONFIG_P2P */
+            CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
             ret = net_configure_address(&network->ip, if_handle);
             if (ret != 0)
             {
@@ -2713,6 +2714,13 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 
                 *next = wlan.sta_state;
 #ifdef CONFIG_IPV6
+            }
+            else if (wlan.sta_ipv6_state == CM_STA_CONNECTED)
+            {
+                wlan.sta_state = CM_STA_CONNECTED;
+                *next          = CM_STA_CONNECTED;
+
+                CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
 #endif
             return;
