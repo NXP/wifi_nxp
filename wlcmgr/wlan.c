@@ -2835,22 +2835,22 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
     net_get_if_ipv6_addr(&network->ip, if_handle);
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
-        if (network->ip.ipv6[i].addr_state == IP6_ADDR_PREFERRED && i != 0)
+        if (ip6_addr_isvalid(network->ip.ipv6[i].addr_state))
         {
             found++;
             /* Not considering link-local address as of now */
             if (wlan.sta_ipv6_state != CM_STA_CONNECTED)
             {
                 wlan.sta_ipv6_state = CM_STA_CONNECTED;
-                wlan.sta_state      = CM_STA_CONNECTED;
-                *next               = CM_STA_CONNECTED;
+                //                wlan.sta_state      = CM_STA_CONNECTED;
+                //                *next               = CM_STA_CONNECTED;
 
                 if (wlan.reassoc_control && wlan.reassoc_request)
                 {
                     wlan.reassoc_count   = 0;
                     wlan.reassoc_request = false;
                 }
-                CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+                //                CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
         }
     }
@@ -4986,6 +4986,13 @@ int wlan_get_address(struct wlan_ip_config *addr)
     {
         return -WM_FAIL;
     }
+
+#ifdef CONFIG_IPV6
+    if (net_get_if_ipv6_addr(addr, if_handle) != 0)
+    {
+        return -WM_FAIL;
+    }
+#endif
 
     return WM_SUCCESS;
 }
