@@ -168,7 +168,7 @@ static chan_freq_power_t channel_freq_power_WW_BG[] = {
     {7, 2442, WLAN_TX_PWR_WW_DEFAULT, MFALSE},  {8, 2447, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {9, 2452, WLAN_TX_PWR_WW_DEFAULT, MFALSE},  {10, 2457, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {11, 2462, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {12, 2467, WLAN_TX_PWR_WW_DEFAULT, MTRUE},
-    {13, 2472, WLAN_TX_PWR_WW_DEFAULT, MTRUE},  {14, 2472, WLAN_TX_PWR_WW_DEFAULT, MTRUE}};
+    {13, 2472, WLAN_TX_PWR_WW_DEFAULT, MTRUE},  {14, 2484, WLAN_TX_PWR_WW_DEFAULT, MTRUE}};
 
 /** Band : 'B/G', Region: Custom - Place holder for Max 14 channels (As defined in WWSM)*/
 static chan_freq_power_t channel_freq_power_Custom_BG[] = {
@@ -1952,7 +1952,7 @@ mlan_status wlan_set_custom_cfp_table(wifi_chanlist_t *chanlist, t_u8 *cfp_no_bg
 
     for (i = 0; i < chanlist->num_chans; i++)
     {
-        if ((chanlist->chan_info[i].chan_num < MAX_CHANNELS_BG) &&
+        if ((chanlist->chan_info[i].chan_num <= MAX_CHANNELS_BG) &&
             (idx_bg < (sizeof(channel_freq_power_Custom_BG) / sizeof(chan_freq_power_t))))
         {
             channel_freq_power_Custom_BG[idx_bg].channel = chanlist->chan_info[i].chan_num;
