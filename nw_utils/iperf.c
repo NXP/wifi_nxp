@@ -37,12 +37,14 @@
 #include "lwip/tcpip.h"
 
 #ifndef IPERF_UDP_CLIENT_RATE
-#define IPERF_UDP_CLIENT_RATE (100 * 1024 * 1024) /* 100 Mbit/s */
+#define IPERF_UDP_CLIENT_RATE (1 * 1024 * 1024) /* 1 Mbit/s */
 #endif
 
 #ifndef IPERF_CLIENT_AMOUNT
 #define IPERF_CLIENT_AMOUNT (-1000) /* 10 seconds */
 #endif
+
+#define IPERF_UDP_DEFAULT_FACTOR 100
 
 struct iperf_test_context
 {
@@ -61,6 +63,7 @@ bool multicast;
 bool ipv6;
 #endif
 int amount = IPERF_CLIENT_AMOUNT;
+unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
 #ifdef CONFIG_WMM
 uint8_t qos = 0;
 #endif
@@ -522,7 +525,7 @@ static void iperf_test_start(void *arg)
             {
                 ctx->iperf_session = lwiperf_start_udp_client(
                     netif_ip_addr6(netif_default, 0), LWIPERF_TCP_PORT_DEFAULT, &server_address,
-                    LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE,
+                    LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
 #ifdef CONFIG_WMM
                     qos,
 #else
@@ -536,7 +539,7 @@ static void iperf_test_start(void *arg)
 #endif
                 ctx->iperf_session =
                     lwiperf_start_udp_client(&bind_address, LWIPERF_TCP_PORT_DEFAULT, &server_address,
-                                             LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE,
+                                             LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
 #ifdef CONFIG_WMM
                                              qos,
 #else
@@ -691,6 +694,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
     (void)PRINTF("\t   -r             Do a bidirectional test individually\r\n");
     (void)PRINTF("\t   -t    #        time in seconds to transmit for (default 10 secs)\r\n");
+    (void)PRINTF("\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
 #ifdef CONFIG_WMM
     (void)PRINTF("\t   -S    #        QoS for udp traffic (default 0(Best Effort))\r\n");
 #endif
@@ -844,6 +848,17 @@ void cmd_iperf(int argc, char **argv)
         {
             arg += 1;
             info.tradeoff = 1;
+        }
+        else if (string_equal("-b", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &udp_rate_factor, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF(
+                    "Error: invalid bandwidth"
+                    " argument\n");
+                return;
+            }
+            arg += 2;
         }
         else
         {
