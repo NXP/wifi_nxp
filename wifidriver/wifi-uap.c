@@ -340,6 +340,7 @@ int wifi_cmd_uap_config(char *ssid,
                         t_u8 channel,
                         wifi_scan_chan_list_t scan_chan_list,
                         t_u16 beacon_period,
+                        t_u8 bandwidth,
                         t_u8 dtim_period,
                         t_u8 chan_sw_count,
                         int bss_type)
@@ -522,26 +523,19 @@ int wifi_cmd_uap_config(char *ssid,
     }
 
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
-    if (channel != 0U)
+    bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0 ? 0x112c : wm_wifi.ht_cap_info;
+    if (bandwidth == BANDWIDTH_40MHZ)
     {
-#ifdef CONFIG_5GHz_SUPPORT
-        if (channel > MAX_CHANNELS_BG)
-            bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0U ? 0x116eU : wm_wifi.ht_cap_info;
-        else
-            bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0U ? 0x112cU : wm_wifi.ht_cap_info;
-#else
-        bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0U ? 0x112cU : wm_wifi.ht_cap_info;
+	if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap)) {
+            bss.param.bss_config.ht_cap_info |= MBIT(1);
+	    if (ISSUPP_SHORTGI40(mlan_adap->hw_dot_11n_dev_cap))
+	       bss.param.bss_config.ht_cap_info |= MBIT(6);
+	    }
+    }
 #endif
-    }
-    else
-    {
-        bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0U ? 0x112cU : wm_wifi.ht_cap_info;
-    }
-
     bss.param.bss_config.ampdu_param = 0x03;
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
                  sizeof(bss.param.bss_config.supported_mcs_set));
-#endif
     /*
      * Note that we are leaving htcap info set to zero by default. This
      *  will ensure that 11N is disabled.
@@ -685,6 +679,16 @@ void wifi_uap_set_beacon_period(const t_u16 beacon_period)
     wm_wifi.beacon_period = beacon_period;
 }
 
+int wifi_uap_set_bandwidth(const t_u8 bandwidth)
+{
+    if(bandwidth == BANDWIDTH_20MHZ || bandwidth == BANDWIDTH_40MHZ)
+    {
+        wm_wifi.bandwidth = bandwidth;
+	return WM_SUCCESS;
+    }
+    return (-WM_FAIL);
+}
+
 void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl)
 {
     wm_wifi.bcast_ssid_ctl = bcast_ssid_ctl;
@@ -719,7 +723,7 @@ int wifi_uap_start(int type,
     /* Configure SSID */
     int rv = wifi_cmd_uap_config(ssid, mac_addr, security, passphrase, password, channel, scan_chan_list,
                                  wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
-                                 UAP_DTIM_PERIOD, wm_wifi.chan_sw_count, type);
+                                 wm_wifi.bandwidth, UAP_DTIM_PERIOD, wm_wifi.chan_sw_count, type);
     if (rv != WM_SUCCESS)
     {
         wuap_e("config failed. Cannot start");
@@ -796,6 +800,7 @@ int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 int wifi_uap_stop(int type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    wm_wifi.bandwidth = BANDWIDTH_20MHZ;
 
     /* Start BSS */
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL, type,

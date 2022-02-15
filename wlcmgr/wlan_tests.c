@@ -1735,6 +1735,30 @@ static void test_wlan_8801_enable_ext_coex(int argc, char **argv)
 }
 #endif
 
+static void test_wlan_set_uap_bandwidth(int argc, char **argv)
+{
+    uint8_t bandwidth;
+    int ret = -WM_FAIL;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz\r\n");
+        return;
+    }
+
+    bandwidth = atoi(argv[1]);
+    ret = wlan_uap_set_bandwidth(bandwidth);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz\r\n");
+    }
+    else
+	(void) PRINTF("bandwidth set successfully\r\n");
+}
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -1766,6 +1790,7 @@ static struct cli_command tests[] = {
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
+    {"wlan-set-uap-bandwidth", "<1/2>\r\n     1:20 MHz\r\n    2:40MHz\r", test_wlan_set_uap_bandwidth},
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
 #endif
