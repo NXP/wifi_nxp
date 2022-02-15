@@ -2582,7 +2582,10 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
 #endif /* STA_SUPPORT */
 #ifdef UAP_SUPPORT
 /** Handle 11D domain information from UAP */
-mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u8 band, t_u8 *domain_tlv, t_void *pioctl_buf);
+mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv,
+                                            mlan_band_def band,
+                                            t_u8 *domain_tlv,
+                                            t_void *pioctl_buf);
 #endif
 
 #ifndef CONFIG_MLAN_WMSDK

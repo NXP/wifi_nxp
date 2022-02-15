@@ -1262,7 +1262,7 @@ mlan_status wlan_11d_clear_parsedtable(mlan_private *pmpriv)
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u8 band)
+mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, mlan_band_def band)
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = pmpriv->adapter;
@@ -1544,7 +1544,10 @@ done:
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u8 band, t_u8 *domain_tlv, t_void *pioctl_buf)
+mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv,
+                                            mlan_band_def band,
+                                            t_u8 *domain_tlv,
+                                            t_void *pioctl_buf)
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = pmpriv->adapter;
