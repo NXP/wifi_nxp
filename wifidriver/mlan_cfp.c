@@ -1307,7 +1307,7 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, ml
  *
  *  @return         Pointer to chan_freq_power_t structure; MNULL if not found
  */
-chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u8 band, t_u32 freq)
+chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_band_def band, t_u32 freq)
 {
     chan_freq_power_t *cfp = MNULL;
     region_chan_t *rc;
@@ -1356,7 +1356,7 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u8 
                     case BAND_B | BAND_G:
                     case BAND_B:
                     case BAND_G:
-                    case 0:
+                    case BAND_0:
                         break;
                     default:
                         continue;
