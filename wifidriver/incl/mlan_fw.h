@@ -515,10 +515,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define ISSUPP_SHORTGI20(Dot11nDevCap) ((Dot11nDevCap)&MBIT(23))
 /** HW_SPEC Dot11nDevCap : Rx LDPC support */
 #define ISSUPP_RXLDPC(Dot11nDevCap) ((Dot11nDevCap)&MBIT(22))
-/** HW_SPEC Dot11nDevCap : Delayed ACK */
-#define GET_DELAYEDBACK(Dot11nDevCap) ((((Dot11nDevCap) >> 20) & 0x03U))
-/** HW_SPEC Dot11nDevCap : Immediate ACK */
-#define GET_IMMEDIATEBACK(Dot11nDevCap) ((((Dot11nDevCap) >> 18) & 0x03))
+/** HW_SPEC Dot11nDevCap : Number of TX BA streams supported */
+#define ISSUPP_GETTXBASTREAM(Dot11nDevCap) ((Dot11nDevCap >> 18) & 0xF)
 /** HW_SPEC Dot11nDevCap : Channel BW support @ 40Mhz  support */
 #define ISSUPP_CHANWIDTH40(Dot11nDevCap) ((Dot11nDevCap)&MBIT(17))
 /** HW_SPEC Dot11nDevCap : Channel BW support @ 20Mhz  support */
