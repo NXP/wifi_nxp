@@ -1664,6 +1664,15 @@ static inline void os_dump_mem_stats(void)
     unsigned sta = os_enter_critical_section();
     //#ifdef FREERTOS_ENABLE_MALLOC_STATS
     HeapStats_t HS;
+
+    HS.xAvailableHeapSpaceInBytes      = 0;
+    HS.xSizeOfLargestFreeBlockInBytes  = 0;
+    HS.xSizeOfSmallestFreeBlockInBytes = 0;
+    HS.xNumberOfFreeBlocks             = 0;
+    HS.xNumberOfSuccessfulAllocations  = 0;
+    HS.xNumberOfSuccessfulFrees        = 0;
+    HS.xMinimumEverFreeBytesRemaining  = 0;
+
     vPortGetHeapStats(&HS);
 
     (void)PRINTF("\n\r");
