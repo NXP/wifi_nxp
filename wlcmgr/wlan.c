@@ -3632,6 +3632,8 @@ static void cm_main(os_thread_arg_t data)
     enum cm_sta_state next_sta_state;
     enum cm_uap_state next_uap_state;
 
+    (void)memset((void *)&msg, 0, sizeof(struct wifi_message));
+
     /* Wait for all the data structures to be created */
     while (!wlan.running)
     {

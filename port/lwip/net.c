@@ -435,6 +435,7 @@ void *net_sock_to_interface(int sock)
     void *req_iface   = NULL;
     int ret;
 
+    (void)memset(&peer, 0, sizeof(struct sockaddr_in));
     ret = getpeername(sock, (struct sockaddr *)(void *)&peer, &peerlen);
     if (ret < 0)
     {

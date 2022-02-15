@@ -1269,6 +1269,8 @@ static void wifi_driver_main_loop(void *argv)
     int ret;
     struct bus_message msg;
 
+    (void)memset((void *)&msg, 0, sizeof(struct bus_message));
+
     /* Main Loop */
     while (true)
     {

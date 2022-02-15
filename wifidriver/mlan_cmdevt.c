@@ -3109,7 +3109,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
 #endif /* STA_SUPPORT */
     left_len = resp->size - sizeof(HostCmd_DS_GET_HW_SPEC) - S_DS_GEN;
-    tlv      = (MrvlIEtypesHeader_t *)((t_u8 *)hw_spec + sizeof(HostCmd_DS_GET_HW_SPEC));
+    tlv      = (MrvlIEtypesHeader_t *)((t_u8 *)(&resp->params) + sizeof(HostCmd_DS_GET_HW_SPEC));
     while (left_len > sizeof(MrvlIEtypesHeader_t))
     {
         tlv_type = wlan_le16_to_cpu(tlv->type);
@@ -3270,7 +3270,7 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
 
     ENTER();
 
-    reg = (HostCmd_DS_CHAN_REGION_CFG *)&resp->params.reg_cfg;
+    reg = (HostCmd_DS_CHAN_REGION_CFG *)&resp->params;
     if (!reg)
     {
         ret = MLAN_STATUS_FAILURE;

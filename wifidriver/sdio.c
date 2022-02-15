@@ -97,7 +97,7 @@ uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len)
  */
 int wlan_card_status(t_u8 bits)
 {
-    uint32_t resp;
+    uint32_t resp = 0;
     t_u32 tries;
 
     for (tries = 0; tries < MAX_POLL_TRIES; tries++)
@@ -224,7 +224,7 @@ t_u16 wlan_card_read_f1_base_regs(void)
 
 mlan_status sdio_init(void)
 {
-    uint32_t resp;
+    uint32_t resp = 0;
     /* Initialize SDIO driver */
     int rv = sdio_drv_init(NULL);
     if (rv != WM_SUCCESS)
@@ -240,8 +240,8 @@ mlan_status sdio_init(void)
 		return MLAN_STATUS_FAILURE;
 	}
 #endif
-    int ret;
-    ret = sdio_drv_creg_read(CARD_TO_HOST_EVENT_REG, 1, &resp);
+    int ret = 0;
+    ret     = sdio_drv_creg_read(CARD_TO_HOST_EVENT_REG, 1, &resp);
     if (ret && (resp & (DN_LD_CARD_RDY)) == 0U)
     {
         ret = wlan_card_status(UP_LD_CARD_RDY);

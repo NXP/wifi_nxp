@@ -1237,8 +1237,10 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     /* IEEEtypes_ERPInfo_t *perp_info; */
 
     IEEEtypes_VendorSpecific_t *pvendor_ie;
-    const t_u8 wpa_oui[4] = {0x00, 0x50, 0xf2, 0x01};
-    const t_u8 wmm_oui[4] = {0x00, 0x50, 0xf2, 0x02};
+    const t_u8 wpa_oui[3]  = {0x00, 0x50, 0xf2};
+    const t_u8 wpa_type[1] = {0x01};
+    const t_u8 wmm_oui[4]  = {0x00, 0x50, 0xf2};
+    const t_u8 wmm_type[1] = {0x02};
 #ifdef CONFIG_OWE
     const t_u8 owe_oui[4] = {0x50, 0x6f, 0x9a, 0x1c};
 #endif
@@ -1537,7 +1539,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
             case VENDOR_SPECIFIC_221:
                 pvendor_ie = (IEEEtypes_VendorSpecific_t *)(void *)pcurrent_ptr;
 
-                if (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(wpa_oui)))
+                if (!((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, 3 * sizeof(t_u8))) &
+                      (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_type, sizeof(t_u8)))))
                 {
                     /* Save it here since we do not have beacon buffer */
                     /* fixme : Verify if this is the right approach. This had to be
@@ -1567,7 +1570,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     HEXDUMP("InterpretIE: Resp WPA_IE", (t_u8 *)pbss_entry->pwpa_ie,
                             ((*(pbss_entry->pwpa_ie)).vend_hdr.len + sizeof(IEEEtypes_Header_t)));
                 }
-                else if (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(wmm_oui)))
+                else if (!((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, 3 * sizeof(t_u8))) &
+                           (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_type, sizeof(t_u8)))))
                 {
                     if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t) || total_ie_len == sizeof(IEEEtypes_WmmInfo_t))
                     {
