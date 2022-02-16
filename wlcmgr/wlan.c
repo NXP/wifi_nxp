@@ -6027,6 +6027,11 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period)
     wifi_uap_set_beacon_period(beacon_period);
 }
 
+int wlan_uap_set_bandwidth(const uint8_t bandwidth)
+{
+    return wifi_uap_set_bandwidth(bandwidth);
+}
+
 void wlan_uap_set_hidden_ssid(const bool bcast_ssid_ctl)
 {
     wifi_uap_set_hidden_ssid(bcast_ssid_ctl);

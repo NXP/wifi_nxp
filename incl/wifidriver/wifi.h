@@ -32,6 +32,8 @@
 #ifndef CONFIG_WIFI_INTERNAL
 #define CONFIG_WIFI_INTERNAL 1
 #endif
+#define BANDWIDTH_20MHZ 1U
+#define BANDWIDTH_40MHZ 2U
 
 #ifdef CONFIG_WIFI_INTERNAL
 #define CONFIG_11N             1
@@ -921,6 +923,7 @@ void handle_cdint(int error);
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
 int wifi_uap_stop(int type);
+int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);

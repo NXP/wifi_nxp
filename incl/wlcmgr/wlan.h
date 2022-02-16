@@ -2738,6 +2738,20 @@ void wlan_set_reassoc_control(bool reassoc_control);
  *\note Please call this API before calling uAP start API.
  *
  */
+
+/** API to set the bandwidth of uAP
+ *
+ *\param[in] Wi-Fi AP Bandwidth (20MHz/40MHz)
+                        1: 20 MHz 2: 40 MHz
+ *
+ *\return WM_SUCCESS if successful otherwise failure.
+ *\return -WM_FAIL if command fails.
+ *
+ *\note Please call this API before calling uAP start API.
+ *
+ */
+int wlan_uap_set_bandwidth(const uint8_t bandwidth);
+
 void wlan_uap_set_beacon_period(const uint16_t beacon_period);
 
 /** API to control SSID broadcast capability of uAP

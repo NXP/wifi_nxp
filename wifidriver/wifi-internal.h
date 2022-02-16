@@ -130,6 +130,8 @@ typedef struct
     t_u8 bcast_ssid_ctl;
     /** beacon period */
     t_u16 beacon_period;
+    /** Wi-Fi Bandwidth */
+    t_u8 bandwidth;
     /** channel switch time to send ECSA */
     t_u8 chan_sw_count;
     /** Sniffer channel number */
