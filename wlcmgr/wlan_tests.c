@@ -738,7 +738,7 @@ void test_wlan_scan_opt(int argc, char **argv)
         if (!info.ssid && string_equal("ssid", argv[arg]))
         {
 #ifdef CONFIG_COMBO_SCAN
-            if(num_ssid > MAX_NUM_SSID)
+            if (num_ssid > MAX_NUM_SSID)
             {
                 (void)PRINTF("Error: the number of SSID is more than 2\r\n");
                 return;
@@ -1260,7 +1260,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
 static void test_wlan_set_rts(int argc, char **argv)
 {
     int rthr;
-	int ret;
+    int ret;
     int bss_type = 0;
 
     if (argc != 3)
@@ -1270,22 +1270,22 @@ static void test_wlan_set_rts(int argc, char **argv)
     }
     if (string_equal("sta", argv[1]))
         bss_type = MLAN_BSS_TYPE_STA;
-    else if(string_equal("uap", argv[1]))
+    else if (string_equal("uap", argv[1]))
         bss_type = MLAN_BSS_TYPE_UAP;
     else
     {
         (void)PRINTF("Usage: %s <sta/uap> <rts threshold>\r\n", argv[0]);
         return;
     }
-    
+
     rthr = atoi(argv[2]);
 
-	if(bss_type == MLAN_BSS_TYPE_STA)
-		ret = wlan_set_rts(rthr);	
-	else
-		ret = wlan_set_uap_rts(rthr);	
-    
-    if (ret != WM_SUCCESS  )
+    if (bss_type == MLAN_BSS_TYPE_STA)
+        ret = wlan_set_rts(rthr);
+    else
+        ret = wlan_set_uap_rts(rthr);
+
+    if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to set rts threshold\r\n");
     }
@@ -1307,7 +1307,7 @@ static void test_wlan_set_frag(int argc, char **argv)
 
     if (string_equal("sta", argv[1]))
         bss_type = MLAN_BSS_TYPE_STA;
-    else if(string_equal("uap", argv[1]))
+    else if (string_equal("uap", argv[1]))
         bss_type = MLAN_BSS_TYPE_UAP;
     else
     {
@@ -1317,10 +1317,10 @@ static void test_wlan_set_frag(int argc, char **argv)
 
     frag = atoi(argv[2]);
 
-	if(bss_type == MLAN_BSS_TYPE_STA)
+    if (bss_type == MLAN_BSS_TYPE_STA)
         ret = wlan_set_frag(frag);
-	else
-		ret = wlan_set_uap_frag(frag);
+    else
+        ret = wlan_set_uap_frag(frag);
 
     if (ret != WM_SUCCESS)
     {
@@ -1349,22 +1349,24 @@ static void print_sta_filter_table_usage(void)
 
 static void test_wlan_set_sta_filter(int argc, char **argv)
 {
-    int i = 0;
-    int ret = WM_SUCCESS;
+    int i           = 0;
+    int ret         = WM_SUCCESS;
     int filter_mode = 0;
-    int mac_count = 0;
+    int mac_count   = 0;
     unsigned char mac_addr[WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH];
 
-    if (argc < 2 || argc > (WLAN_MAX_STA_FILTER_NUM + 2)){
+    if (argc < 2 || argc > (WLAN_MAX_STA_FILTER_NUM + 2))
+    {
         (void)PRINTF("ERR:Too many or too few farguments.\r\n");
         print_sta_filter_table_usage();
         return;
     }
 
-    argc --;
-    argv ++;
+    argc--;
+    argv++;
 
-    if (((atoi(argv[0]) < 0) || (atoi(argv[0]) > 2))) {
+    if (((atoi(argv[0]) < 0) || (atoi(argv[0]) > 2)))
+    {
         (void)PRINTF("ERR:Illegal FILTERMODE parameter %s. Must be either '0', '1', or '2'.\r\n", argv[1]);
         print_sta_filter_table_usage();
         return;
@@ -1374,16 +1376,21 @@ static void test_wlan_set_sta_filter(int argc, char **argv)
 
     mac_count = argc - 1;
 
-    if (mac_count) {
-        for (i = 0; i < mac_count; i++) {
+    if (mac_count)
+    {
+        for (i = 0; i < mac_count; i++)
+        {
             ret = get_mac(argv[i + 1], (char *)&mac_addr[i * WLAN_MAC_ADDR_LENGTH], ':');
-            if (ret != 0){
+            if (ret != 0)
+            {
                 (void)PRINTF("Error: invalid MAC argument\r\n");
                 return;
             }
         }
-    } else {
-        memset(mac_addr, 0,  16 * WLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        memset(mac_addr, 0, 16 * WLAN_MAC_ADDR_LENGTH);
     }
 
     wlan_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
@@ -1396,7 +1403,7 @@ static void test_wlan_set_sta_filter(int argc, char **argv)
 static void test_wlan_get_log(int argc, char **argv)
 {
     wlan_pkt_stats_t stats;
-	int ret, i;
+    int ret, i;
     int bss_type = 0;
 
     if (argc < 2)
@@ -1407,7 +1414,7 @@ static void test_wlan_get_log(int argc, char **argv)
 
     if (string_equal("sta", argv[1]))
         ret = wlan_get_log(&stats);
-    else if(string_equal("uap", argv[1]))
+    else if (string_equal("uap", argv[1]))
         ret = wlan_uap_get_log(&stats);
     else
     {
@@ -1419,9 +1426,10 @@ static void test_wlan_get_log(int argc, char **argv)
     {
         (void)PRINTF("Failed to get log\r\n");
     }
-	else
-	{
-		(void)PRINTF("dot11GroupTransmittedFrameCount    %u\r\n"
+    else
+    {
+        (void)PRINTF(
+            "dot11GroupTransmittedFrameCount    %u\r\n"
             "dot11FailedCount                   %u\r\n"
             "dot11RetryCount                    %u\r\n"
             "dot11MultipleRetryCount            %u\r\n"
@@ -1439,180 +1447,144 @@ static void test_wlan_get_log(int argc, char **argv)
             "wepicverrcnt-4                     %u\r\n"
             "beaconReceivedCount                %u\r\n"
             "beaconMissedCount                  %u\r\n",
-            stats.mcast_tx_frame,
-            stats.failed,
-            stats.retry,
-            stats.multi_retry,
-            stats.frame_dup,
-            stats.rts_success,
-            stats.rts_failure,
-            stats.ack_failure,
-            stats.rx_frag,
-            stats.mcast_rx_frame,
-            stats.fcs_error,
-            stats.tx_frame,
-            stats.wep_icv_error[0],
-            stats.wep_icv_error[1],
-            stats.wep_icv_error[2],
-            stats.wep_icv_error[3],
-            stats.bcn_rcv_cnt,
-            stats.bcn_miss_cnt
-                );
+            stats.mcast_tx_frame, stats.failed, stats.retry, stats.multi_retry, stats.frame_dup, stats.rts_success,
+            stats.rts_failure, stats.ack_failure, stats.rx_frag, stats.mcast_rx_frame, stats.fcs_error, stats.tx_frame,
+            stats.wep_icv_error[0], stats.wep_icv_error[1], stats.wep_icv_error[2], stats.wep_icv_error[3],
+            stats.bcn_rcv_cnt, stats.bcn_miss_cnt);
 
-        if(argc == 3 && !(strcmp(argv[2],"ext")))
+        if (argc == 3 && !(strcmp(argv[2], "ext")))
         {
-            (void)PRINTF("rxStuckIssueCount-1                %u\r\n"
-                    "rxStuckIssueCount-2                %u\r\n"
-                    "rxStuckRecoveryCount               %u\r\n"
-                    "rxStuckTsf-1                       %llu\r\n"
-                    "rxStuckTsf-2                       %llu\r\n"
-                    "txWatchdogRecoveryCount            %u\r\n"
-                    "txWatchdogTsf-1                    %llu\r\n"
-                    "txWatchdogTsf-2                    %llu\r\n"
-                    "channelSwitchAnnouncementSent      %u\r\n"
-                    "channelSwitchState                 %u\r\n"
-                    "registerClass                      %u\r\n"
-                    "channelNumber                      %u\r\n"
-                    "channelSwitchMode                  %u\r\n"
-                    "RxResetRecoveryCount               %u\r\n"
-                    "RxIsr2NotDoneCnt                   %u\r\n"
-                    "gdmaAbortCnt                       %u\r\n"
-                    "gResetRxMacCnt                     %u\r\n"
-                    "gOwnrshpCtlErrCnt                  %u\r\n"
-                    "gOwnrshpBcnErrCnt                  %u\r\n"
-                    "gOwnrshpMgtErrCnt                  %u\r\n"
-                    "gOwnrshpDatErrCnt                  %u\r\n"
-                    "bigtk_mmeGoodCnt                   %u\r\n"
-                    "bigtk_replayErrCnt                 %u\r\n"
-                    "bigtk_micErrCnt                    %u\r\n"
-                    "bigtk_mmeNotFoundCnt               %u\r\n",
-                    stats.rx_stuck_issue_cnt[0],
-                    stats.rx_stuck_issue_cnt[1],
-                    stats.rx_stuck_recovery_cnt,
-                    stats.rx_stuck_tsf[0],
-                    stats.rx_stuck_tsf[1],
-                    stats.tx_watchdog_recovery_cnt,
-                    stats.tx_watchdog_tsf[0],
-                    stats.tx_watchdog_tsf[1],
-                    stats.channel_switch_ann_sent,
-                    stats.channel_switch_state,
-                    stats.reg_class,
-                    stats.channel_number,
-                    stats.channel_switch_mode,
-                    stats.rx_reset_mac_recovery_cnt,
-                    stats.rx_Isr2_NotDone_Cnt,
-                    stats.gdma_abort_cnt,
-                    stats.g_reset_rx_mac_cnt,
-                    stats.dwCtlErrCnt,
-                    stats.dwBcnErrCnt,
-                    stats.dwMgtErrCnt,
-                    stats.dwDatErrCnt,
-                    stats.bigtk_mmeGoodCnt,
-                    stats.bigtk_replayErrCnt,
-                    stats.bigtk_micErrCnt,
-                    stats.bigtk_mmeNotFoundCnt
-                        );
+            (void)PRINTF(
+                "rxStuckIssueCount-1                %u\r\n"
+                "rxStuckIssueCount-2                %u\r\n"
+                "rxStuckRecoveryCount               %u\r\n"
+                "rxStuckTsf-1                       %llu\r\n"
+                "rxStuckTsf-2                       %llu\r\n"
+                "txWatchdogRecoveryCount            %u\r\n"
+                "txWatchdogTsf-1                    %llu\r\n"
+                "txWatchdogTsf-2                    %llu\r\n"
+                "channelSwitchAnnouncementSent      %u\r\n"
+                "channelSwitchState                 %u\r\n"
+                "registerClass                      %u\r\n"
+                "channelNumber                      %u\r\n"
+                "channelSwitchMode                  %u\r\n"
+                "RxResetRecoveryCount               %u\r\n"
+                "RxIsr2NotDoneCnt                   %u\r\n"
+                "gdmaAbortCnt                       %u\r\n"
+                "gResetRxMacCnt                     %u\r\n"
+                "gOwnrshpCtlErrCnt                  %u\r\n"
+                "gOwnrshpBcnErrCnt                  %u\r\n"
+                "gOwnrshpMgtErrCnt                  %u\r\n"
+                "gOwnrshpDatErrCnt                  %u\r\n"
+                "bigtk_mmeGoodCnt                   %u\r\n"
+                "bigtk_replayErrCnt                 %u\r\n"
+                "bigtk_micErrCnt                    %u\r\n"
+                "bigtk_mmeNotFoundCnt               %u\r\n",
+                stats.rx_stuck_issue_cnt[0], stats.rx_stuck_issue_cnt[1], stats.rx_stuck_recovery_cnt,
+                stats.rx_stuck_tsf[0], stats.rx_stuck_tsf[1], stats.tx_watchdog_recovery_cnt, stats.tx_watchdog_tsf[0],
+                stats.tx_watchdog_tsf[1], stats.channel_switch_ann_sent, stats.channel_switch_state, stats.reg_class,
+                stats.channel_number, stats.channel_switch_mode, stats.rx_reset_mac_recovery_cnt,
+                stats.rx_Isr2_NotDone_Cnt, stats.gdma_abort_cnt, stats.g_reset_rx_mac_cnt, stats.dwCtlErrCnt,
+                stats.dwBcnErrCnt, stats.dwMgtErrCnt, stats.dwDatErrCnt, stats.bigtk_mmeGoodCnt,
+                stats.bigtk_replayErrCnt, stats.bigtk_micErrCnt, stats.bigtk_mmeNotFoundCnt);
         }
-		
-		(void)PRINTF("dot11TransmittedFragmentCount      %u\r\n",stats.tx_frag_cnt);
+
+        (void)PRINTF("dot11TransmittedFragmentCount      %u\r\n", stats.tx_frag_cnt);
         (void)PRINTF("dot11QosTransmittedFragmentCount   ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_tx_frag_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_tx_frag_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosFailedCount                ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_failed_cnt[i]);
-
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_failed_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosRetryCount                 ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_retry_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_retry_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosMultipleRetryCount         ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_multi_retry_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_multi_retry_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosFrameDuplicateCount        ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_frm_dup_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_frm_dup_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosRTSSuccessCount            ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_rts_suc_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_rts_suc_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosRTSFailureCount            ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_rts_failure_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_rts_failure_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosACKFailureCount            ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_ack_failure_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_ack_failure_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosReceivedFragmentCount      ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_rx_frag_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_rx_frag_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosTransmittedFrameCount      ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_tx_frm_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_tx_frm_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosDiscardedFrameCount        ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_discarded_frm_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_discarded_frm_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosMPDUsReceivedCount         ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_mpdus_rx_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_mpdus_rx_cnt[i]);
         }
         (void)PRINTF("\r\ndot11QosRetriesReceivedCount       ");
-        for(i=0; i<8; i++) {
-            (void)PRINTF("%u ",stats.qos_retries_rx_cnt[i]);
+        for (i = 0; i < 8; i++)
+        {
+            (void)PRINTF("%u ", stats.qos_retries_rx_cnt[i]);
         }
-        (void)PRINTF("\r\ndot11RSNAStatsCMACICVErrors          %u\r\n"
-                "dot11RSNAStatsCMACReplays            %u\r\n"
-                "dot11RSNAStatsRobustMgmtCCMPReplays  %u\r\n"
-                "dot11RSNAStatsTKIPICVErrors          %u\r\n"
-                "dot11RSNAStatsTKIPReplays            %u\r\n"
-                "dot11RSNAStatsCCMPDecryptErrors      %u\r\n"
-                "dot11RSNAstatsCCMPReplays            %u\r\n"
-                "dot11TransmittedAMSDUCount           %u\r\n"
-                "dot11FailedAMSDUCount                %u\r\n"
-                "dot11RetryAMSDUCount                 %u\r\n"
-                "dot11MultipleRetryAMSDUCount         %u\r\n"
-                "dot11TransmittedOctetsInAMSDUCount   %llu\r\n"
-                "dot11AMSDUAckFailureCount            %u\r\n"
-                "dot11ReceivedAMSDUCount              %u\r\n"
-                "dot11ReceivedOctetsInAMSDUCount      %llu\r\n"
-                "dot11TransmittedAMPDUCount           %u\r\n"
-                "dot11TransmittedMPDUsInAMPDUCount    %u\r\n"
-                "dot11TransmittedOctetsInAMPDUCount   %llu\r\n"
-                "dot11AMPDUReceivedCount              %u\r\n"
-                "dot11MPDUInReceivedAMPDUCount        %u\r\n"
-                "dot11ReceivedOctetsInAMPDUCount      %llu\r\n"
-                "dot11AMPDUDelimiterCRCErrorCount     %u\r\n",
-            stats.cmacicv_errors,
-            stats.cmac_replays,
-            stats.mgmt_ccmp_replays,
-            stats.tkipicv_errors,
-            stats.tkip_replays,
-            stats.ccmp_decrypt_errors,
-            stats.ccmp_replays,
-            stats.tx_amsdu_cnt,
-            stats.failed_amsdu_cnt,
-            stats.retry_amsdu_cnt,
-            stats.multi_retry_amsdu_cnt,
-            stats.tx_octets_in_amsdu_cnt,
-            stats.amsdu_ack_failure_cnt,
-            stats.rx_amsdu_cnt,
-            stats.rx_octets_in_amsdu_cnt,
-            stats.tx_ampdu_cnt,
-            stats.tx_mpdus_in_ampdu_cnt,
-            stats.tx_octets_in_ampdu_cnt,
-            stats.ampdu_rx_cnt,
-            stats.mpdu_in_rx_ampdu_cnt,
-            stats.rx_octets_in_ampdu_cnt,
-            stats.ampdu_delimiter_crc_error_cnt);
-    }		
+        (void)PRINTF(
+            "\r\ndot11RSNAStatsCMACICVErrors          %u\r\n"
+            "dot11RSNAStatsCMACReplays            %u\r\n"
+            "dot11RSNAStatsRobustMgmtCCMPReplays  %u\r\n"
+            "dot11RSNAStatsTKIPICVErrors          %u\r\n"
+            "dot11RSNAStatsTKIPReplays            %u\r\n"
+            "dot11RSNAStatsCCMPDecryptErrors      %u\r\n"
+            "dot11RSNAstatsCCMPReplays            %u\r\n"
+            "dot11TransmittedAMSDUCount           %u\r\n"
+            "dot11FailedAMSDUCount                %u\r\n"
+            "dot11RetryAMSDUCount                 %u\r\n"
+            "dot11MultipleRetryAMSDUCount         %u\r\n"
+            "dot11TransmittedOctetsInAMSDUCount   %llu\r\n"
+            "dot11AMSDUAckFailureCount            %u\r\n"
+            "dot11ReceivedAMSDUCount              %u\r\n"
+            "dot11ReceivedOctetsInAMSDUCount      %llu\r\n"
+            "dot11TransmittedAMPDUCount           %u\r\n"
+            "dot11TransmittedMPDUsInAMPDUCount    %u\r\n"
+            "dot11TransmittedOctetsInAMPDUCount   %llu\r\n"
+            "dot11AMPDUReceivedCount              %u\r\n"
+            "dot11MPDUInReceivedAMPDUCount        %u\r\n"
+            "dot11ReceivedOctetsInAMPDUCount      %llu\r\n"
+            "dot11AMPDUDelimiterCRCErrorCount     %u\r\n",
+            stats.cmacicv_errors, stats.cmac_replays, stats.mgmt_ccmp_replays, stats.tkipicv_errors, stats.tkip_replays,
+            stats.ccmp_decrypt_errors, stats.ccmp_replays, stats.tx_amsdu_cnt, stats.failed_amsdu_cnt,
+            stats.retry_amsdu_cnt, stats.multi_retry_amsdu_cnt, stats.tx_octets_in_amsdu_cnt,
+            stats.amsdu_ack_failure_cnt, stats.rx_amsdu_cnt, stats.rx_octets_in_amsdu_cnt, stats.tx_ampdu_cnt,
+            stats.tx_mpdus_in_ampdu_cnt, stats.tx_octets_in_ampdu_cnt, stats.ampdu_rx_cnt, stats.mpdu_in_rx_ampdu_cnt,
+            stats.rx_octets_in_ampdu_cnt, stats.ampdu_delimiter_crc_error_cnt);
+    }
 }
 #endif
 
@@ -1748,7 +1720,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
     }
 
     bandwidth = atoi(argv[1]);
-    ret = wlan_uap_set_bandwidth(bandwidth);
+    ret       = wlan_uap_set_bandwidth(bandwidth);
 
     if (ret != WM_SUCCESS)
     {
@@ -1756,7 +1728,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
         (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz\r\n");
     }
     else
-	(void) PRINTF("bandwidth set successfully\r\n");
+        (void)PRINTF("bandwidth set successfully\r\n");
 }
 
 static struct cli_command tests[] = {
@@ -1783,14 +1755,14 @@ static struct cli_command tests[] = {
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-		{"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
+    {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
 #endif
 #ifdef CONFIG_WIFI_GET_LOG
-		{"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
+    {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
-    {"wlan-set-uap-bandwidth", "<1/2>\r\n     1:20 MHz\r\n    2:40MHz\r", test_wlan_set_uap_bandwidth},
+    {"wlan-set-uap-bandwidth", "<1/2> 1:20 MHz 2:40MHz", test_wlan_set_uap_bandwidth},
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
 #endif
