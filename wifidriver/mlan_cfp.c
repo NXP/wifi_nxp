@@ -1185,7 +1185,7 @@ t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel)
  */
 
 chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
-                                                    t_u8 band,
+                                                    mlan_band_def band,
                                                     t_u16 channel,
                                                     region_chan_t *region_channel)
 {
@@ -1231,7 +1231,7 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                     case BAND_B | BAND_G:
                     case BAND_B: /* Matching BAND_B/G */
                     case BAND_G:
-                    case 0:
+                    case BAND_0:
                         break;
                     default:
                         continue;
@@ -1461,7 +1461,7 @@ int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size)
  */
 t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                                mlan_bss_mode bss_mode,
-                               t_u16 config_bands,
+                               mlan_band_def config_bands,
                                WLAN_802_11_RATES rates)
 {
     t_u32 k = 0;
@@ -1536,6 +1536,8 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                 PRINTM(MINFO, "Infra band=%d SupportedRates_N\n", config_bands);
                 k = wlan_copy_rates(rates, k, SupportedRates_N, sizeof(SupportedRates_N));
                 break;
+            default:
+                break;
         }
     }
     else
@@ -1574,6 +1576,8 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
 #endif
                 PRINTM(MINFO, "Band: Adhoc A\n");
                 k = wlan_copy_rates(rates, k, AdhocRates_A, sizeof(AdhocRates_A));
+                break;
+            default:
                 break;
         }
     }

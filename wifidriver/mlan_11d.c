@@ -658,7 +658,7 @@ static mlan_status wlan_11d_send_domain_info(mlan_private *pmpriv, t_void *pioct
  *  @return                 MLAN_STATUS_SUCCESS
  */
 static mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
-                                            t_u8 band,
+                                            mlan_band_def band,
                                             t_u8 country_code[COUNTRY_CODE_LEN],
                                             t_u8 num_sub_band,
                                             IEEEtypes_SubbandSet_t *sub_band_list)

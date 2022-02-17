@@ -822,7 +822,7 @@ int wlan_get_current_nf(void);
 
 /** Address types to be used by the element wlan_ip_config.addr_type below
  */
-enum
+enum address_types
 {
     /** static IP address */
     ADDR_TYPE_STATIC = 0,
@@ -841,7 +841,7 @@ struct ipv4_config
      *  using DHCP, the ip, gw, netmask and dns are overwritten by the
      *  values obtained from the DHCP server. They should be zeroed out if
      *  not used. */
-    unsigned addr_type : 2;
+    enum address_types addr_type;
     /** The system's IP address in network order. */
     unsigned address;
     /** The system's default gateway in network order. */
@@ -2745,7 +2745,7 @@ void wlan_set_reassoc_control(bool reassoc_control);
 /** API to set the bandwidth of uAP
  *
  *\param[in] Wi-Fi AP Bandwidth (20MHz/40MHz)
-			 1: 20 MHz 2: 40 MHz
+    1: 20 MHz 2: 40 MHz
  *
  *\return WM_SUCCESS if successful otherwise failure.
  *\return -WM_FAIL if command fails.

@@ -1371,7 +1371,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     int ssid2_len = 0;
     t_u8 i;
 #ifdef CONFIG_COMBO_SCAN
-    const char wildcard_ssid[]= "*";
+    const char wildcard_ssid[] = "*";
 #endif
     mlan_adap->active_scan_triggered = MFALSE;
 
@@ -1427,9 +1427,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     }
 
 #ifdef CONFIG_COMBO_SCAN
-    for(i=0; (i < MRVDRV_MAX_SSID_LIST_LENGTH)&&(*user_scan_cfg->ssid_list[i].ssid); i++)
+    for (i = 0; (i < MRVDRV_MAX_SSID_LIST_LENGTH) && (*user_scan_cfg->ssid_list[i].ssid); i++)
     {
-       if (!strncmp(wildcard_ssid, (char *)(user_scan_cfg->ssid_list[i].ssid), strlen(wildcard_ssid)))
+        if (!strncmp(wildcard_ssid, (char *)(user_scan_cfg->ssid_list[i].ssid), strlen(wildcard_ssid)))
         {
             (void)memset(user_scan_cfg->ssid_list[i].ssid, 0x00, sizeof(wlan_user_scan_ssid));
             user_scan_cfg->ssid_list[i].max_len = 40;
@@ -1757,7 +1757,7 @@ int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 #endif
 
 #ifdef CONFIG_WIFI_GET_LOG
-static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats,  mlan_bss_type bss_type)
+static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
@@ -2285,7 +2285,7 @@ int wifi_set_domain_params(wifi_domain_param_t *dp)
 
     wifi_sub_band_set_t *is  = dp->sub_band;
     mlan_ds_subband_set_t *s = d_cfg.param.domain_info.sub_band;
-    int i;
+    t_u8 i;
     for (i = 0; i < dp->no_of_sub_band; i++)
     {
         s[i].first_chan = is[i].first_chan;
@@ -2316,7 +2316,7 @@ int wifi_enable_11d_support_APIs(void)
     return wlan_11d_support_APIs(pmpriv);
 }
 
-wifi_sub_band_set_t *get_sub_band_from_country(int country, int *nr_sb)
+wifi_sub_band_set_t *get_sub_band_from_country(int country, t_u8 *nr_sb)
 {
     *nr_sb = 1;
 
@@ -2342,7 +2342,7 @@ wifi_sub_band_set_t *get_sub_band_from_country(int country, int *nr_sb)
     }
 }
 
-static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, int *nr_sb)
+static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
 {
     *nr_sb = 1;
 
@@ -2364,7 +2364,7 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, int *
 }
 
 #ifdef CONFIG_5GHz_SUPPORT
-static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, int *nr_sb)
+static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, t_u8 *nr_sb)
 {
     *nr_sb = 1;
 
@@ -2397,7 +2397,7 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, int *nr_
     }
 }
 
-static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, int *nr_sb)
+static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *nr_sb)
 {
     *nr_sb = 1;
 
@@ -2430,8 +2430,9 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
 
 bool wifi_11d_is_channel_allowed(int channel)
 {
-    int i, j, nr_sb = 0;
+    t_u8 i, j;
     t_u8 k;
+    t_u8 nr_sb = 0;
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
@@ -2519,7 +2520,7 @@ char *wifi_get_country_str(int country)
     }
 }
 
-wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, int nr_sb)
+wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb)
 {
     wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
 
@@ -2538,7 +2539,8 @@ int wifi_get_country(void)
 
 int wifi_set_country(int country)
 {
-    int ret, nr_sb;
+    int ret;
+    t_u8 nr_sb;
 
     if (wlan_enable_11d() != WM_SUCCESS)
     {
@@ -2661,7 +2663,7 @@ int wifi_config_mgmt_ie(
             ie_ptr->mgmt_subtype_mask = MGMT_MASK_CLEAR;
             ie_ptr->ie_length         = 0;
             ie_ptr->ie_index          = index + 1;
-            tlv->length               = 2 * (sizeof(custom_ie) - MAX_IE_SIZE);
+            tlv->length               = 2U * (sizeof(custom_ie) - MAX_IE_SIZE);
             buf_len += tlv->length;
             clear_ie_index(index);
         }
@@ -2946,27 +2948,27 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
 {
     mlan_ioctl_req req;
     mlan_ds_snmp_mib *mib = NULL;
-    mlan_status ret = MLAN_STATUS_FAILURE;
-    wifi_sta_list_t *sl = NULL;
+    mlan_status ret       = MLAN_STATUS_FAILURE;
+    wifi_sta_list_t *sl   = NULL;
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
     /* Allocate an IOCTL request buffer */
     mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
-    if (mib == NULL) 
+    if (mib == NULL)
         return -WM_FAIL;
 
     /* Fill request buffer */
     mib->sub_command = MLAN_OID_SNMP_MIB_RTS_THRESHOLD;
-    req.pbuf 	 = (t_u8 *)mib;
-    req.buf_len	 = sizeof(mlan_ds_snmp_mib);
-    req.req_id = MLAN_IOCTL_SNMP_MIB;
-    req.action = MLAN_ACT_SET;
-    req.bss_index = bss_type;
+    req.pbuf         = (t_u8 *)mib;
+    req.buf_len      = sizeof(mlan_ds_snmp_mib);
+    req.req_id       = MLAN_IOCTL_SNMP_MIB;
+    req.action       = MLAN_ACT_SET;
+    req.bss_index    = bss_type;
 
-    if (req.action == MLAN_ACT_SET) 
+    if (req.action == MLAN_ACT_SET)
     {
-        if (rts < MLAN_RTS_MIN_VALUE || rts > MLAN_RTS_MAX_VALUE) 
+        if (rts < MLAN_RTS_MIN_VALUE || rts > MLAN_RTS_MAX_VALUE)
         {
             os_mem_free(mib);
             return -WM_FAIL;
@@ -2974,9 +2976,9 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
         mib->param.rts_threshold = rts;
     }
 
-        if (bss_type == MLAN_BSS_TYPE_UAP)
+    if (bss_type == MLAN_BSS_TYPE_UAP)
     {
-        if(!is_uap_started())
+        if (!is_uap_started())
         {
             wifi_e("uap isn't up\n\r");
             return -WM_FAIL;
@@ -2987,14 +2989,14 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
             wifi_e("Failed to get sta list\n\r");
             return -WM_FAIL;
         }
-        if(sl->count >= 1)
+        if (sl->count >= 1)
             ret = wlan_ops_sta_ioctl(mlan_adap, &req);
         else
             wifi_e("uap required sta to connect before setting rts threshold\n\r");
     }
-    else if(bss_type == MLAN_BSS_TYPE_STA)
+    else if (bss_type == MLAN_BSS_TYPE_STA)
     {
-        if(is_sta_connected())
+        if (is_sta_connected())
             ret = wlan_ops_sta_ioctl(mlan_adap, &req);
         else
             wifi_e("sta connection required before setting rts threshold\n\r");
@@ -3017,27 +3019,27 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
 {
     mlan_ioctl_req req;
     mlan_ds_snmp_mib *mib = NULL;
-    mlan_status ret = MLAN_STATUS_FAILURE;
-    wifi_sta_list_t *sl = NULL;
+    mlan_status ret       = MLAN_STATUS_FAILURE;
+    wifi_sta_list_t *sl   = NULL;
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
     /* Allocate an IOCTL request buffer */
     mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
-    if (mib == NULL) 
+    if (mib == NULL)
         return -WM_FAIL;
 
     /* Fill request buffer */
     mib->sub_command = MLAN_OID_SNMP_MIB_FRAG_THRESHOLD;
-    req.pbuf 	 = (t_u8 *)mib;
-    req.buf_len	 = sizeof(mlan_ds_snmp_mib);
-    req.req_id = MLAN_IOCTL_SNMP_MIB;
-    req.action = MLAN_ACT_SET;
-    req.bss_index = bss_type;
+    req.pbuf         = (t_u8 *)mib;
+    req.buf_len      = sizeof(mlan_ds_snmp_mib);
+    req.req_id       = MLAN_IOCTL_SNMP_MIB;
+    req.action       = MLAN_ACT_SET;
+    req.bss_index    = bss_type;
 
-    if (req.action == MLAN_ACT_SET) 
+    if (req.action == MLAN_ACT_SET)
     {
-        if (frag < MLAN_FRAG_MIN_VALUE || frag > MLAN_FRAG_MAX_VALUE) 
+        if (frag < MLAN_FRAG_MIN_VALUE || frag > MLAN_FRAG_MAX_VALUE)
         {
             os_mem_free(mib);
             return -WM_FAIL;
@@ -3047,7 +3049,7 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
-        if(!is_uap_started())
+        if (!is_uap_started())
         {
             wifi_e("uap isn't up\n\r");
             return -WM_FAIL;
@@ -3059,14 +3061,14 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
             return -WM_FAIL;
         }
 
-        if(sl->count >= 1)
+        if (sl->count >= 1)
             ret = wlan_ops_sta_ioctl(mlan_adap, &req);
         else
             wifi_e("uap required sta to connect before setting fragment threshold\n\r");
     }
-    else if(bss_type == MLAN_BSS_TYPE_STA)
+    else if (bss_type == MLAN_BSS_TYPE_STA)
     {
-        if(is_sta_connected())
+        if (is_sta_connected())
             ret = wlan_ops_sta_ioctl(mlan_adap, &req);
         else
             wifi_e("sta connection required before setting fragment threshold\n\r");
