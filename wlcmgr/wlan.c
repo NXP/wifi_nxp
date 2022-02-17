@@ -2984,8 +2984,11 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #endif /* defined(SD8801) */
 #endif
 
-#ifdef CONFIG_5GHz_SUPPORT
-    uint16_t httxcfg = 0x62;
+    /*Enabling 20/40MHz enable(bit 1)
+     * enabling Short GI in 40 Mhz(bit 6)
+     * and 20MHz(bit 5),
+     * Reserved bits to be set to 1 (Bits 2,3)*/
+    uint16_t httxcfg = 0x6E; //TODO need to add defines for this setting
 
     int ret = wlan_set_httxcfg(httxcfg);
     if (ret != WM_SUCCESS)
@@ -2994,7 +2997,16 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
     wlcm_d("HT TX configuration selected: %x", httxcfg);
-#endif
+    /*Enabling 20/40MHz enable(bit 17)
+     * disabling 40MHz intolerance(bit 8)
+     * enabling Short GI in 40 Mhz(bit 24)
+     * and 20MHz(bit 23)*/
+    ret = wlan_set_htcapinfo(0x1820000);//TODO need to add defines
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to set HT Cap configuration");
+        return;
+    }
 
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
 }
