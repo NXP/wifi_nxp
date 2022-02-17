@@ -62,7 +62,7 @@ bool multicast;
 #ifdef CONFIG_IPV6
 bool ipv6;
 #endif
-int amount = IPERF_CLIENT_AMOUNT;
+int amount                   = IPERF_CLIENT_AMOUNT;
 unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
 #ifdef CONFIG_WMM
 uint8_t qos = 0;
@@ -537,16 +537,16 @@ static void iperf_test_start(void *arg)
             else
             {
 #endif
-                ctx->iperf_session =
-                    lwiperf_start_udp_client(&bind_address, LWIPERF_TCP_PORT_DEFAULT, &server_address,
-                                             LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
+                ctx->iperf_session = lwiperf_start_udp_client(&bind_address, LWIPERF_TCP_PORT_DEFAULT, &server_address,
+                                                              LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount,
+                                                              IPERF_UDP_CLIENT_RATE * udp_rate_factor,
 #ifdef CONFIG_WMM
-                                             qos,
+                                                              qos,
 #else
-                                         0,
+                                                          0,
 #endif
 
-                                             lwiperf_report, NULL);
+                                                              lwiperf_report, NULL);
 #ifdef CONFIG_IPV6
             }
 #endif
@@ -686,6 +686,9 @@ static void display_iperf_usage(void)
     (void)PRINTF("\tClient/Server:\r\n");
     (void)PRINTF("\t   -u             use UDP rather than TCP\r\n");
     (void)PRINTF("\t   -B    <host>   bind to <host> (including multicast address)\r\n");
+#ifdef CONFIG_IPV6
+    (void)PRINTF("\t   -V             Set the domain to IPv6 (send packets over IPv6)\r\n");
+#endif
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode\r\n");
@@ -694,12 +697,10 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
     (void)PRINTF("\t   -r             Do a bidirectional test individually\r\n");
     (void)PRINTF("\t   -t    #        time in seconds to transmit for (default 10 secs)\r\n");
-    (void)PRINTF("\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
+    (void)PRINTF(
+        "\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
 #ifdef CONFIG_WMM
     (void)PRINTF("\t   -S    #        QoS for udp traffic (default 0(Best Effort))\r\n");
-#endif
-#ifdef CONFIG_IPV6
-    (void)PRINTF("\t   -V             Set the domain to IPv6 (send packets over IPv6)\r\n");
 #endif
 }
 
