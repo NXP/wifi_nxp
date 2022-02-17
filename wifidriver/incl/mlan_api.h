@@ -236,7 +236,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             uint8_t *smc_frame_filter,
                             int custom_ie_len,
                             uint8_t *custom_ie);
-wifi_sub_band_set_t *get_sub_band_from_country(int country, int *nr_sb);
+wifi_sub_band_set_t *get_sub_band_from_country(int country, t_u8 *nr_sb);
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index);
 int wifi_send_enable_supplicant(int mode, const char *ssid);
