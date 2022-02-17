@@ -2719,7 +2719,12 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             {
                 wlan.sta_state = CM_STA_CONNECTED;
                 *next          = CM_STA_CONNECTED;
+                if (network->type == WLAN_BSS_TYPE_STA)
+                {
+                    if_handle = net_get_mlan_handle();
+                }
 
+                net_interface_up(if_handle);
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
 #endif
@@ -2988,7 +2993,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
      * enabling Short GI in 40 Mhz(bit 6)
      * and 20MHz(bit 5),
      * Reserved bits to be set to 1 (Bits 2,3)*/
-    uint16_t httxcfg = 0x6E; //TODO need to add defines for this setting
+    uint16_t httxcfg = 0x6E; // TODO need to add defines for this setting
 
     int ret = wlan_set_httxcfg(httxcfg);
     if (ret != WM_SUCCESS)
@@ -3001,7 +3006,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
      * disabling 40MHz intolerance(bit 8)
      * enabling Short GI in 40 Mhz(bit 24)
      * and 20MHz(bit 23)*/
-    ret = wlan_set_htcapinfo(0x1820000);//TODO need to add defines
+    ret = wlan_set_htcapinfo(0x1820000); // TODO need to add defines
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to set HT Cap configuration");
