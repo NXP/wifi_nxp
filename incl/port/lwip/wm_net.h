@@ -65,9 +65,10 @@
 #error "CONFIG_MAX_IPV6_ADDRESSES must be equal to LWIP_IPV6_NUM_ADDRESSES"
 #endif
 #endif
-#if (!defined(LWIP_NETIF_EXT_STATUS_CALLBACK) || (LWIP_NETIF_EXT_STATUS_CALLBACK == 0))
-#error "Define LWIP_NETIF_EXT_STATUS_CALLBACK in lwipopts.h"
 #endif
+
+#if (!defined(LWIP_NETIF_EXT_STATUS_CALLBACK) || (LWIP_NETIF_EXT_STATUS_CALLBACK == 0))
+#error "Define LWIP_NETIF_EXT_STATUS_CALLBACK as 1 in lwipopts.h"
 #endif
 
 /*
