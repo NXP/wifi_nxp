@@ -99,8 +99,6 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 
-static netif_nsc_reason_t s_reason;
-
 NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
 
 #ifdef CONFIG_IPV6
@@ -113,17 +111,20 @@ static void netif_ext_status_callback(struct netif *netif,
                                       netif_nsc_reason_t reason,
                                       const netif_ext_callback_args_t *args)
 {
-    s_reason = reason;
+    interface_t *if_handle = (interface_t *)net_get_mlan_handle();
 
-#ifdef CONFIG_IPV6
-    if ((reason == LWIP_NSC_IPV6_ADDR_STATE_CHANGED) || (reason == LWIP_NSC_IPV6_SET))
-        wm_netif_ipv6_status_callback(netif);
-    else
-#endif
-        if ((reason & (LWIP_NSC_IPV4_SETTINGS_CHANGED | LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_ADDR_VALID |
-                       LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED)) != LWIP_NSC_NONE)
+    if (&if_handle->netif == netif)
     {
-        wm_netif_status_callback(netif);
+#ifdef CONFIG_IPV6
+        if ((reason & (LWIP_NSC_IPV6_ADDR_STATE_CHANGED | LWIP_NSC_IPV6_SET)) != LWIP_NSC_NONE)
+            wm_netif_ipv6_status_callback(netif);
+        else
+#endif
+            if ((reason & (LWIP_NSC_IPV4_SETTINGS_CHANGED | LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_ADDR_VALID |
+                           LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED)) != LWIP_NSC_NONE)
+        {
+            wm_netif_status_callback(netif);
+        }
     }
 }
 
@@ -359,13 +360,8 @@ static void wm_netif_status_callback(struct netif *n)
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
     {
-#ifdef CONFIG_IPV6
-        if ((s_reason != LWIP_NSC_IPV6_ADDR_STATE_CHANGED) && (s_reason != LWIP_NSC_IPV6_SET))
-#endif
-            (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
     }
-
-    s_reason = LWIP_NSC_NONE;
 }
 
 void net_stop_dhcp_timer(void)
@@ -478,7 +474,6 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
     (void)netifapi_dhcp_release_and_stop(&if_handle->netif);
-    netif_set_status_callback(&if_handle->netif, NULL);
 }
 
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
@@ -509,10 +504,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
           (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
     (void)netifapi_netif_set_down(&if_handle->netif);
 
-    /* De-register previously registered DHCP Callback for correct
-     * address configuration.
-     */
-    netif_set_status_callback(&if_handle->netif, NULL);
 #ifdef CONFIG_IPV6
     if (if_handle == &g_mlan)
     {
