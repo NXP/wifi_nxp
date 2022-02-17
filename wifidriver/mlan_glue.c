@@ -1138,7 +1138,11 @@ int wifi_set_htcapinfo(unsigned int htcapinfo)
 
     ds_11n_cfg.sub_command              = MLAN_OID_11N_HTCAP_CFG;
     ds_11n_cfg.param.htcap_cfg.htcap    = htcapinfo;
-    ds_11n_cfg.param.htcap_cfg.misc_cfg = BAND_SELECT_A;
+#ifdef CONFIG_5GHz_SUPPORT
+    ds_11n_cfg.param.htcap_cfg.misc_cfg = BAND_SELECT_BOTH;
+#else
+    ds_11n_cfg.param.htcap_cfg.misc_cfg = BAND_SELECT_BG;
+#endif
 
     return wifi_send_htcapinfo_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
@@ -1151,7 +1155,11 @@ int wifi_set_httxcfg(unsigned short httxcfg)
 
     ds_11n_cfg.sub_command           = MLAN_OID_11N_CFG_TX;
     ds_11n_cfg.param.tx_cfg.httxcap  = httxcfg;
-    ds_11n_cfg.param.tx_cfg.misc_cfg = BAND_SELECT_A;
+#ifdef CONFIG_5GHz_SUPPORT
+    ds_11n_cfg.param.tx_cfg.misc_cfg = BAND_SELECT_BOTH;
+#else
+    ds_11n_cfg.param.tx_cfg.misc_cfg = BAND_SELECT_BG;
+#endif
 
     return wifi_send_htcapinfo_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
