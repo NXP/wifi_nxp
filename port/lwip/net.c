@@ -99,12 +99,15 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 
-#ifdef CONFIG_IPV6
 static netif_nsc_reason_t s_reason;
 
 NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
 
+#ifdef CONFIG_IPV6
 static void wm_netif_ipv6_status_callback(struct netif *n);
+#endif
+
+static void wm_netif_status_callback(struct netif *n);
 
 static void netif_ext_status_callback(struct netif *netif,
                                       netif_nsc_reason_t reason,
@@ -112,10 +115,19 @@ static void netif_ext_status_callback(struct netif *netif,
 {
     s_reason = reason;
 
+#ifdef CONFIG_IPV6
     if ((reason == LWIP_NSC_IPV6_ADDR_STATE_CHANGED) || (reason == LWIP_NSC_IPV6_SET))
         wm_netif_ipv6_status_callback(netif);
+    else
+#endif
+        if ((reason & (LWIP_NSC_IPV4_SETTINGS_CHANGED | LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_ADDR_VALID |
+                       LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED)) != LWIP_NSC_NONE)
+    {
+        wm_netif_status_callback(netif);
+    }
 }
 
+#ifdef CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
 {
     if (ip6_addr_istentative(addr_state))
@@ -241,9 +253,7 @@ int net_wlan_init(void)
             return ret;
         }
 
-#ifdef CONFIG_IPV6
         netif_add_ext_callback(&netif_ext_callback, netif_ext_status_callback);
-#endif
 
         net_wlan_init_done = 1;
 
@@ -354,6 +364,8 @@ static void wm_netif_status_callback(struct netif *n)
 #endif
             (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
     }
+
+    s_reason = LWIP_NSC_NONE;
 }
 
 void net_stop_dhcp_timer(void)
@@ -361,12 +373,18 @@ void net_stop_dhcp_timer(void)
     os_timer_deactivate((os_timer_t *)&dhcp_timer);
 }
 
-static void dhcp_timer_cb(os_timer_arg_t arg)
+static void stop_cb(void *ctx)
 {
     interface_t *if_handle = (interface_t *)net_get_mlan_handle();
 
-    netifapi_netif_set_down(&if_handle->netif);
-    netifapi_dhcp_stop(&if_handle->netif);
+    dhcp_release_and_stop(&if_handle->netif);
+    netif_set_down(&if_handle->netif);
+}
+
+static void dhcp_timer_cb(os_timer_arg_t arg)
+{
+    (void)tcpip_try_callback(stop_cb, NULL);
+    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, WIFI_EVENT_REASON_FAILURE, NULL);
 }
 
 static int check_iface_mask(void *handle, uint32_t ipaddr)
@@ -533,7 +551,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
                                           ip_2_ip4(&if_handle->gw));
             (void)netifapi_netif_set_up(&if_handle->netif);
-            netif_set_status_callback(&if_handle->netif, wm_netif_status_callback);
             os_timer_activate(&dhcp_timer);
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;
