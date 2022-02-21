@@ -2819,6 +2819,32 @@ void wlan_uap_set_ecsa(void);
 void wlan_uap_set_htcapinfo(const uint16_t ht_cap_info);
 
 /**
+ * This API can be used to configure various 11n specific configuration
+ *       for transmit (such as Short GI, Channel BW and Green field support)
+ *       for uAP interface.
+ *
+ * \param[in] httxcfg This is a bitmap and should be used as following\n
+ *               Bit 15-8: Reserved set to 0\n
+ *               Bit 7: STBC enable/disable\n
+ *               Bit 6: Short GI in 40 Mhz enable/disable\n
+ *               Bit 5: Short GI in 20 Mhz enable/disable\n
+ *               Bit 4: Green field enable/disable\n
+ *               Bit 3-2: Reserved set to 1\n
+ *               Bit 1: 20/40 Mhz enable disable.\n
+ *               Bit 0: LDPC enable/disable\n
+ *
+ *       When Bit 1 is set then firmware could transmit in 20Mhz or 40Mhz based\n
+ *       on rate adaptation. When this bit is reset then firmware will only\n
+ *       transmit in 20Mhz.\n
+ *
+ *
+ * \return WM_SUCCESS if successful.
+ * \return -WM_FAIL if unsuccessful.
+ *
+ */
+int wlan_uap_set_httxcfg(unsigned short httxcfg);
+
+/**
  * This API can be used to enable AMPDU support on the go
  * when station is a transmitter.
  *
