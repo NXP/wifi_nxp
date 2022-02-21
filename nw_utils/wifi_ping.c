@@ -251,7 +251,7 @@ void cmd_ping(int argc, char **argv)
     uint32_t cnt, temp;
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
 
-    memset(&addr,0,sizeof(addr));
+    memset(&addr, 0, sizeof(addr));
 
     /* If number of arguments is odd then print error */
     if ((argc & 0x01) != 0)
