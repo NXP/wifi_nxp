@@ -2882,6 +2882,7 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
 
 static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
+    int ret = 0;
     if (wlan.sta_state != CM_STA_INITIALIZING)
     {
         wlcm_d("ignoring TCP configure response");
@@ -2979,7 +2980,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     uint32_t ant                  = 1;
     uint16_t evaluate_time        = 0x1770;
 
-    int ret = wifi_set_antenna(ant, evaluate_time);
+    ret = wifi_set_antenna(ant, evaluate_time);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to set antenna configuration");
@@ -2995,7 +2996,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
      * Reserved bits to be set to 1 (Bits 2,3)*/
     uint16_t httxcfg = 0x6E; // TODO need to add defines for this setting
 
-    int ret = wlan_set_httxcfg(httxcfg);
+    ret = wlan_set_httxcfg(httxcfg);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to set HT TX configuration");
