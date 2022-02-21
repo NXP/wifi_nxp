@@ -1109,7 +1109,7 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie)
     return priv->wpa_ie_len;
 }
 
-static int wifi_send_htcapinfo_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *ds_11n_cfg)
+static int wifi_send_11n_cfg_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *ds_11n_cfg)
 {
     /* fixme: check if this needs to go on heap */
     mlan_ioctl_req req;
@@ -1130,21 +1130,42 @@ static int wifi_send_htcapinfo_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *ds_
     return WM_SUCCESS;
 }
 
+static int wifi_send_uap_11n_cfg_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *ds_11n_cfg)
+{
+    /* fixme: check if this needs to go on heap */
+    mlan_ioctl_req req;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    req.pbuf      = (t_u8 *)ds_11n_cfg;
+    req.buf_len   = sizeof(mlan_ds_11n_cfg);
+    req.bss_index = 1;
+    req.req_id    = MLAN_IOCTL_11N_CFG;
+    req.action    = action;
+
+    mlan_status rv = wlan_ops_sta_ioctl(mlan_adap, &req);
+    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+
 int wifi_set_htcapinfo(unsigned int htcapinfo)
 {
     mlan_ds_11n_cfg ds_11n_cfg;
 
     (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
 
-    ds_11n_cfg.sub_command              = MLAN_OID_11N_HTCAP_CFG;
-    ds_11n_cfg.param.htcap_cfg.htcap    = htcapinfo;
+    ds_11n_cfg.sub_command           = MLAN_OID_11N_HTCAP_CFG;
+    ds_11n_cfg.param.htcap_cfg.htcap = htcapinfo;
 #ifdef CONFIG_5GHz_SUPPORT
     ds_11n_cfg.param.htcap_cfg.misc_cfg = BAND_SELECT_BOTH;
 #else
     ds_11n_cfg.param.htcap_cfg.misc_cfg = BAND_SELECT_BG;
 #endif
 
-    return wifi_send_htcapinfo_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
+    return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
 
 int wifi_set_httxcfg(unsigned short httxcfg)
@@ -1153,15 +1174,32 @@ int wifi_set_httxcfg(unsigned short httxcfg)
 
     (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
 
-    ds_11n_cfg.sub_command           = MLAN_OID_11N_CFG_TX;
-    ds_11n_cfg.param.tx_cfg.httxcap  = httxcfg;
+    ds_11n_cfg.sub_command          = MLAN_OID_11N_CFG_TX;
+    ds_11n_cfg.param.tx_cfg.httxcap = httxcfg;
 #ifdef CONFIG_5GHz_SUPPORT
     ds_11n_cfg.param.tx_cfg.misc_cfg = BAND_SELECT_BOTH;
 #else
-    ds_11n_cfg.param.tx_cfg.misc_cfg = BAND_SELECT_BG;
+    ds_11n_cfg.param.tx_cfg.misc_cfg    = BAND_SELECT_BG;
 #endif
 
-    return wifi_send_htcapinfo_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
+    return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
+}
+
+int wifi_uap_set_httxcfg(unsigned short httxcfg)
+{
+    mlan_ds_11n_cfg ds_11n_cfg;
+
+    (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
+
+    ds_11n_cfg.sub_command          = MLAN_OID_11N_CFG_TX;
+    ds_11n_cfg.param.tx_cfg.httxcap = httxcfg;
+#ifdef CONFIG_5GHz_SUPPORT
+    ds_11n_cfg.param.tx_cfg.misc_cfg = BAND_SELECT_BOTH;
+#else
+    ds_11n_cfg.param.tx_cfg.misc_cfg    = BAND_SELECT_BG;
+#endif
+
+    return wifi_send_uap_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
 
 static int wifi_send_tx_power_cfg_ioctl(mlan_act_ioctl action, mlan_ds_power_cfg *ds_power_cfg)
@@ -3058,9 +3096,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
-			if (evt->reason_code == AP_DEAUTH_REASON_MAC_ADDR_BLOCKED)
-                wevt_d("EVENT: Blacklist sta %02x:%02x:%02x:%02x:%02x:%02x: try to join the network \r\n", evt->src_mac_addr[0],evt->src_mac_addr[1],
-                        evt->src_mac_addr[2],evt->src_mac_addr[3],evt->src_mac_addr[4],evt->src_mac_addr[5]);
+            if (evt->reason_code == AP_DEAUTH_REASON_MAC_ADDR_BLOCKED)
+                wevt_d("EVENT: Blacklist sta %02x:%02x:%02x:%02x:%02x:%02x: try to join the network \r\n",
+                       evt->src_mac_addr[0], evt->src_mac_addr[1], evt->src_mac_addr[2], evt->src_mac_addr[3],
+                       evt->src_mac_addr[4], evt->src_mac_addr[5]);
             break;
         case EVENT_MICRO_AP_BSS_START:
             wifi_d("uAP start event received");
