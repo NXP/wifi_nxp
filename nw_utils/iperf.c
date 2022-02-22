@@ -436,6 +436,7 @@ void test_wmm(int argc, char **argv)
  */
 static void iperf_test_start(void *arg)
 {
+    int rv                         = WM_SUCCESS;
     struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
 
     if (ctx->iperf_session != NULL)
@@ -448,7 +449,7 @@ static void iperf_test_start(void *arg)
     if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
     {
         /* Reducing udp Tx timer interval for rx to be served */
-        int rv = os_timer_change(ptimer, os_msec_to_ticks(4), 0);
+        rv = os_timer_change(ptimer, os_msec_to_ticks(4), 0);
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
@@ -458,7 +459,7 @@ static void iperf_test_start(void *arg)
     else
     {
         /* Returning original timer settings of 1 ms interval*/
-        int rv = os_timer_change(ptimer, 1U / portTICK_PERIOD_MS, 0);
+        rv = os_timer_change(ptimer, 1U / portTICK_PERIOD_MS, 0);
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to change period in iperf timer\r\n");
