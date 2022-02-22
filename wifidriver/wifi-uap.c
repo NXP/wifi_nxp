@@ -44,7 +44,8 @@
 #ifdef CONFIG_5GHz_SUPPORT
 uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 #endif
-uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x0c, 0x12, 0x96, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
+uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18,
+			 0x24, 0x30, 0x48, 0x60, 0x6c};
 
 extern int wifi_11d_country;
 #ifdef CONFIG_11AC
@@ -441,7 +442,11 @@ int wifi_cmd_uap_config(char *ssid,
                     bss.param.bss_config.chan_list[i].band_config_type = BAND_CONFIG_5GHZ;
                     (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_5ghz, sizeof(rates_5ghz));
                 }
+                else
 #endif
+                {
+                    (void)memcpy(bss.param.bss_config.rates, rates_2ghz, sizeof(rates_2ghz));
+                }
             }
         }
     }
