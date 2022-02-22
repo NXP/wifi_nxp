@@ -55,7 +55,7 @@ struct iperf_test_context
 };
 
 static struct iperf_test_context ctx;
-TimerHandle_t timer;
+os_timer_t *ptimer;
 ip_addr_t server_address;
 ip_addr_t bind_address;
 bool multicast;
@@ -448,12 +448,22 @@ static void iperf_test_start(void *arg)
     if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
     {
         /* Reducing udp Tx timer interval for rx to be served */
-        (void)xTimerChangePeriod(timer, os_msec_to_ticks(4), 100);
+        int rv = os_timer_change(ptimer, os_msec_to_ticks(4), 0);
+        if (rv != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
+            return;
+        }
     }
     else
     {
         /* Returning original timer settings of 1 ms interval*/
-        (void)xTimerChangePeriod(timer, 1U / portTICK_PERIOD_MS, 100);
+        int rv = os_timer_change(ptimer, 1U / portTICK_PERIOD_MS, 0);
+        if (rv != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to change period in iperf timer\r\n");
+            return;
+        }
     }
 
     if (ctx->server_mode)
@@ -978,6 +988,8 @@ static struct cli_command iperf[] = {
 int iperf_cli_init(void)
 {
     u8_t i;
+    int rv = WM_SUCCESS;
+
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
     {
         if (cli_register_command(&iperf[i]) != 0)
@@ -988,17 +1000,12 @@ int iperf_cli_init(void)
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    timer = xTimerCreate("UDP Poll Timer", 1U / portTICK_PERIOD_MS, (UBaseType_t)pdTRUE, (void *)0, timer_poll_udp_client);
-    if (timer == NULL)
-    {
-        (void)PRINTF("Timer creation failed!\r\n");
-        while (true)
-            ;
-    }
+    rv = os_timer_create(ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
+                         OS_TIMER_PERIODIC, OS_TIMER_AUTO_ACTIVATE);
 
-    if (xTimerStart(timer, 0) != pdPASS)
+    if (rv != WM_SUCCESS)
     {
-        (void)PRINTF("Timer could not be started!\r\n");
+        (void)PRINTF("Unable to create iperf timer\r\n");
         while (true)
         {
             ;
