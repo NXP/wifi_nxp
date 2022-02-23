@@ -692,14 +692,21 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\tIf <format> is 2 (VHT) or 3 (HE),\r\n");
     (void)PRINTF("\t        1       NSS1\r\n");
     (void)PRINTF("\t        2       NSS2\r\n");
-    (void)PRINTF("\t<rate_setting> - This parameter can only specifies the GI types now. It is valid only for HE\r\n");
+#endif
+    (void)PRINTF("\t<rate_setting> - This parameter can only specifies the GI types now.\r\n");
+    (void)PRINTF("\tIf <format> is 1 (HT),\r\n");
+    (void)PRINTF("\t        0x0000  Long GI\r\n");
+    (void)PRINTF("\t        0x0020  Short GI\r\n");
+    (void)PRINTF("\tIf <format> is 2 (VHT),\r\n");
+    (void)PRINTF("\t        0x0000  Long GI\r\n");
+    (void)PRINTF("\t        0x0020  Short GI\r\n");
+    (void)PRINTF("\t        0x0060  Short GI and Nsym mod 10=9\r\n");
     (void)PRINTF("\tIf <format> is 3 (HE),\r\n");
     (void)PRINTF("\t        0x0000  1xHELTF + GI0.8us\r\n");
     (void)PRINTF("\t        0x0020  2xHELTF + GI0.8us\r\n");
     (void)PRINTF("\t        0x0040  2xHELTF + GI1.6us\r\n");
     (void)PRINTF("\t        0x0060  4xHELTF + GI0.8us if DCM = 1 and STBC = 1\r\n");
     (void)PRINTF("\t                4xHELTF + GI3.2us, otherwise\r\n");
-#endif
 }
 
 static void test_wlan_set_txratecfg(int argc, char **argv)
