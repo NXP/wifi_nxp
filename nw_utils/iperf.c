@@ -55,7 +55,7 @@ struct iperf_test_context
 };
 
 static struct iperf_test_context ctx;
-os_timer_t *ptimer;
+os_timer_t ptimer;
 ip_addr_t server_address;
 ip_addr_t bind_address;
 bool multicast;
@@ -449,7 +449,7 @@ static void iperf_test_start(void *arg)
     if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
     {
         /* Reducing udp Tx timer interval for rx to be served */
-        rv = os_timer_change(ptimer, os_msec_to_ticks(4), 0);
+        rv = os_timer_change(&ptimer, os_msec_to_ticks(4), 0);
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
@@ -459,7 +459,7 @@ static void iperf_test_start(void *arg)
     else
     {
         /* Returning original timer settings of 1 ms interval*/
-        rv = os_timer_change(ptimer, 1U / portTICK_PERIOD_MS, 0);
+        rv = os_timer_change(&ptimer, 1U / portTICK_PERIOD_MS, 0);
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to change period in iperf timer\r\n");
@@ -1001,12 +1001,12 @@ int iperf_cli_init(void)
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    rv = os_timer_create(ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
+    rv = os_timer_create(&ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
                          OS_TIMER_PERIODIC, OS_TIMER_AUTO_ACTIVATE);
 
     if (rv != WM_SUCCESS)
     {
-        (void)PRINTF("Unable to create iperf timer\r\n");
+        (void)PRINTF("Unable to create iperf timer rv(%d)\r\n", rv);
         while (true)
         {
             ;
