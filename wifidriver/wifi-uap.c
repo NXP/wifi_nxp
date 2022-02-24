@@ -348,6 +348,7 @@ int wifi_cmd_uap_config(char *ssid,
     int ssid_len = strlen(ssid);
     uint8_t i;
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
+    int ret;
     t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
@@ -524,14 +525,32 @@ int wifi_cmd_uap_config(char *ssid,
 
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0 ? 0x112c : wm_wifi.ht_cap_info;
+    wm_wifi.ht_tx_cfg                = wm_wifi.ht_tx_cfg == 0 ? 0x002c : wm_wifi.ht_tx_cfg;
+
     if (bandwidth == BANDWIDTH_40MHZ)
     {
-       if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
-       {
+        if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
+        {
             bss.param.bss_config.ht_cap_info |= MBIT(1);
-           if (ISSUPP_SHORTGI40(mlan_adap->hw_dot_11n_dev_cap))
-              bss.param.bss_config.ht_cap_info |= MBIT(6);
-       }
+            wm_wifi.ht_tx_cfg |= MBIT(1);
+            if (ISSUPP_SHORTGI40(mlan_adap->hw_dot_11n_dev_cap))
+            {
+                bss.param.bss_config.ht_cap_info |= MBIT(6);
+                wm_wifi.ht_tx_cfg |= MBIT(6);
+            }
+        }
+    }
+    else if (bandwidth == BANDWIDTH_20MHZ)
+    {
+        wm_wifi.ht_tx_cfg &= ~MBIT(1);
+        wm_wifi.ht_tx_cfg &= ~MBIT(6);
+    }
+
+    ret = wifi_uap_set_httxcfg_int(wm_wifi.ht_tx_cfg);
+    if (ret != WM_SUCCESS)
+    {
+        wuap_e("Cannot set uAP HT TX Cfg:%x", wm_wifi.ht_tx_cfg);
+        return -WM_E_INVAL;
     }
 #endif
     bss.param.bss_config.ampdu_param = 0x03;
@@ -558,7 +577,7 @@ wifi_sub_band_set_t subband_UN_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 static wifi_domain_param_t *get_11d_uap_domain_params(void)
 {
-    int nr_sb = sizeof(subband_UN_2_4GHz) / sizeof(wifi_sub_band_set_t);
+    t_u8 nr_sb = sizeof(subband_UN_2_4GHz) / sizeof(wifi_sub_band_set_t);
 
     wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
 
@@ -614,7 +633,7 @@ int wifi_uap_set_domain_params(wifi_domain_param_t *dp)
 
     wifi_sub_band_set_t *is   = dp->sub_band;
     IEEEtypes_SubbandSet_t *s = n_dp->sub_band;
-    int i;
+    t_u8 i;
     for (i = 0; i < dp->no_of_sub_band; i++)
     {
         s[i].first_chan = is[i].first_chan;
@@ -679,12 +698,13 @@ void wifi_uap_set_beacon_period(const t_u16 beacon_period)
 {
     wm_wifi.beacon_period = beacon_period;
 }
+
 int wifi_uap_set_bandwidth(const t_u8 bandwidth)
 {
-    if(bandwidth == BANDWIDTH_20MHZ || bandwidth == BANDWIDTH_40MHZ)
+    if (bandwidth == BANDWIDTH_20MHZ || bandwidth == BANDWIDTH_40MHZ)
     {
         wm_wifi.bandwidth = bandwidth;
-       return WM_SUCCESS;
+        return WM_SUCCESS;
     }
     return (-WM_FAIL);
 }
@@ -706,6 +726,11 @@ void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info)
     wm_wifi.ht_cap_info = ht_cap_info;
 }
 
+void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
+{
+    wm_wifi.ht_tx_cfg = ht_tx_cfg;
+}
+
 static int wifi_uap_pmf_getset(uint8_t action, bool *mfpc, bool *mfpr);
 
 int wifi_uap_start(int type,
@@ -723,7 +748,8 @@ int wifi_uap_start(int type,
     /* Configure SSID */
     int rv = wifi_cmd_uap_config(ssid, mac_addr, security, passphrase, password, channel, scan_chan_list,
                                  wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
-                                 wm_wifi.bandwidth, UAP_DTIM_PERIOD, wm_wifi.chan_sw_count, type);
+                                 wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth, UAP_DTIM_PERIOD,
+                                 wm_wifi.chan_sw_count, type);
     if (rv != WM_SUCCESS)
     {
         wuap_e("config failed. Cannot start");
@@ -800,7 +826,6 @@ int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 int wifi_uap_stop(int type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-    wm_wifi.bandwidth = BANDWIDTH_20MHZ;
 
     /* Start BSS */
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL, type,
@@ -1144,7 +1169,7 @@ int wifi_uap_mcbc_rate_getset(uint8_t action, uint16_t *mcbc_rate)
 
 int wifi_uap_tx_power_getset(uint8_t action, uint8_t *tx_power_dbm)
 {
-    uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_SYS_CONFIG) - 1;
+    uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_SYS_CONFIG) - 1U;
 
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1407,28 +1432,30 @@ static int wifi_uap_pmf_getset(uint8_t action, bool *mfpc, bool *mfpr)
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
-    t_u8 *buffer = NULL;
+    t_u8 *buffer  = NULL;
     t_u16 cmd_len = 0;
     t_u16 buf_len = MRVDRV_SIZE_OF_CMD_BUFFER;
 
-	HostCmd_DS_GEN *cmd_buf = NULL;
-	MrvlIEtypes_mac_filter_t *tlv = NULL;
-	HostCmd_DS_SYS_CONFIG *sys_config = NULL;
+    HostCmd_DS_GEN *cmd_buf           = NULL;
+    MrvlIEtypes_mac_filter_t *tlv     = NULL;
+    HostCmd_DS_SYS_CONFIG *sys_config = NULL;
 
-     /* Initialize the command length */
-    if (filter_mode == 0) {
-        cmd_len = sizeof(HostCmd_DS_GEN) +
-                  (sizeof(HostCmd_DS_SYS_CONFIG)-1) +
-                  (sizeof(MrvlIEtypes_mac_filter_t)-1)+
-                  (WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
-    } else {
-        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG)-1) +
-                  (sizeof(MrvlIEtypes_mac_filter_t)-1) + mac_count * MLAN_MAC_ADDR_LENGTH;
+    /* Initialize the command length */
+    if (filter_mode == 0)
+    {
+        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
+                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + (WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
+                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + mac_count * MLAN_MAC_ADDR_LENGTH;
     }
 
     /* Initialize the command buffer */
-    buffer = (t_u8 *) os_mem_alloc(buf_len);
-    if (!buffer) {
+    buffer = (t_u8 *)os_mem_alloc(buf_len);
+    if (!buffer)
+    {
         wuap_e("ERR:Cannot allocate buffer for command!\r\n");
         return WM_FAIL;
     }
@@ -1436,30 +1463,34 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     memset(buffer, 0, buf_len);
 
     /* Locate headers */
-    cmd_buf = (HostCmd_DS_GEN *) buffer;
+    cmd_buf    = (HostCmd_DS_GEN *)buffer;
     sys_config = (HostCmd_DS_SYS_CONFIG *)(buffer + sizeof(HostCmd_DS_GEN));
-    tlv =(MrvlIEtypes_mac_filter_t *) (buffer + sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG)-1));
+    tlv        = (MrvlIEtypes_mac_filter_t *)(buffer + sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1));
 
     /* Fill the command buffer */
     cmd_buf->command = HOST_CMD_APCMD_SYS_CONFIGURE;
-    cmd_buf->size = cmd_len;
+    cmd_buf->size    = cmd_len;
     cmd_buf->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
-    cmd_buf->result = 0;
+    cmd_buf->result  = 0;
 
     sys_config->action = HostCmd_ACT_GEN_SET;
 
-    tlv->count = mac_count;
+    tlv->count       = mac_count;
     tlv->filter_mode = filter_mode;
     tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_STA_MAC_ADDR_FILTER);
 
-    if (tlv->count) {
+    if (tlv->count)
+    {
         tlv->header.len = tlv->count * MLAN_MAC_ADDR_LENGTH + 2;
         (void)memcpy(tlv->mac_address, mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
-    } else {
+    }
+    else
+    {
         tlv->header.len = WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH + 2;
     }
 
-    if(is_uap_started()){
+    if (is_uap_started())
+    {
         wuap_e("down the uap before setting sta filter\n\r");
         os_mem_free(buffer);
         return WM_FAIL;
@@ -1479,4 +1510,3 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
 }
 
 #endif
-

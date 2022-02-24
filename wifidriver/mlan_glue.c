@@ -1185,7 +1185,7 @@ int wifi_set_httxcfg(unsigned short httxcfg)
     return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
 
-int wifi_uap_set_httxcfg(unsigned short httxcfg)
+int wifi_uap_set_httxcfg_int(unsigned short httxcfg)
 {
     mlan_ds_11n_cfg ds_11n_cfg;
 

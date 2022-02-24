@@ -3002,12 +3002,8 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         wlcm_e("Failed to set HT TX configuration");
         return;
     }
-    ret = wlan_uap_set_httxcfg(httxcfg);
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_e("Failed to set uAP HT TX configuration");
-        return;
-    }
+
+    wlan_uap_set_httxcfg(httxcfg);
     wlcm_d("HT TX configuration selected: %x", httxcfg);
     /*Enabling 20/40MHz enable(bit 17)
      * disabling 40MHz intolerance(bit 8)
@@ -5365,11 +5361,6 @@ int wlan_set_httxcfg(unsigned short httxcfg)
     return wifi_set_httxcfg(httxcfg);
 }
 
-int wlan_uap_set_httxcfg(unsigned short httxcfg)
-{
-    return wifi_uap_set_httxcfg(httxcfg);
-}
-
 int wlan_set_txratecfg(wlan_ds_rate ds_rate)
 {
     return wifi_set_txratecfg(ds_rate);
@@ -6094,6 +6085,11 @@ void wlan_uap_set_ecsa(void)
 void wlan_uap_set_htcapinfo(const uint16_t ht_cap_info)
 {
     wifi_uap_set_htcapinfo(ht_cap_info);
+}
+
+void wlan_uap_set_httxcfg(unsigned short httxcfg)
+{
+    wifi_uap_set_httxcfg(httxcfg);
 }
 
 uint32_t wlan_get_value1(void)

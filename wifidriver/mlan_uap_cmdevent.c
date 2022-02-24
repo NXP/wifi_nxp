@@ -1602,7 +1602,7 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
     mlan_status ret                       = MLAN_STATUS_SUCCESS;
     t_u8 *psnmp_oid                       = MNULL;
 #if defined(CONFIG_WIFI_FRAG_THRESHOLD) || defined(CONFIG_WIFI_RTS_THRESHOLD)
-	t_u32 ul_temp;
+    t_u32 ul_temp;
 #endif
     t_u8 i;
 
@@ -1678,22 +1678,22 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
                 cmd->size += sizeof(t_u8);
                 break;
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
-			case FragThresh_i:
-				psnmp_mib->oid		= wlan_cpu_to_le16((t_u16)FragThresh_i);
-				psnmp_mib->buf_size = wlan_cpu_to_le16(sizeof(t_u16));
-				ul_temp = *((t_u32 *)pdata_buf);
-				*((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
-				cmd->size += sizeof(t_u16);
-				break;
+            case FragThresh_i:
+                psnmp_mib->oid                 = wlan_cpu_to_le16((t_u16)FragThresh_i);
+                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                        = *((t_u32 *)pdata_buf);
+                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                cmd->size += sizeof(t_u16);
+                break;
 #endif
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
-			case RtsThresh_i:
-				psnmp_mib->oid		= wlan_cpu_to_le16((t_u16)RtsThresh_i);
-				psnmp_mib->buf_size = wlan_cpu_to_le16(sizeof(t_u16));
-				ul_temp = *((t_u32 *)pdata_buf);
-				*((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
-				cmd->size += sizeof(t_u16);
-				break;
+            case RtsThresh_i:
+                psnmp_mib->oid                 = wlan_cpu_to_le16((t_u16)RtsThresh_i);
+                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                        = *((t_u32 *)pdata_buf);
+                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                cmd->size += sizeof(t_u16);
+                break;
 #endif
             default:
                 PRINTM(MERROR, "Unsupported OID.\n");
@@ -2650,6 +2650,9 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_amsdu_aggr_ctrl(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+        case HostCmd_CMD_11N_CFG:
+            ret = wlan_cmd_11n_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
         case HostCmd_CMD_11N_ADDBA_REQ:
             ret = wlan_cmd_11n_addba_req(pmpriv, cmd_ptr, pdata_buf);
             break;

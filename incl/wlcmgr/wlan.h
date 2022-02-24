@@ -2741,6 +2741,7 @@ void wlan_set_reassoc_control(bool reassoc_control);
  *\note Please call this API before calling uAP start API.
  *
  */
+void wlan_uap_set_beacon_period(const uint16_t beacon_period);
 
 /** API to set the bandwidth of uAP
  *
@@ -2751,11 +2752,10 @@ void wlan_set_reassoc_control(bool reassoc_control);
  *\return -WM_FAIL if command fails.
  *
  *\note Please call this API before calling uAP start API.
+ *\note Default bandwidth setting is 40 MHz.
  *
  */
 int wlan_uap_set_bandwidth(const uint8_t bandwidth);
-
-void wlan_uap_set_beacon_period(const uint16_t beacon_period);
 
 /** API to control SSID broadcast capability of uAP
  *
@@ -2837,12 +2837,10 @@ void wlan_uap_set_htcapinfo(const uint16_t ht_cap_info);
  *       on rate adaptation. When this bit is reset then firmware will only\n
  *       transmit in 20Mhz.\n
  *
- *
- * \return WM_SUCCESS if successful.
- * \return -WM_FAIL if unsuccessful.
+ *\note Please call this API before calling uAP start API.
  *
  */
-int wlan_uap_set_httxcfg(unsigned short httxcfg);
+void wlan_uap_set_httxcfg(unsigned short httxcfg);
 
 /**
  * This API can be used to enable AMPDU support on the go
