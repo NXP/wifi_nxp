@@ -641,7 +641,8 @@ int wifi_get_fw_region_and_cfp_tables();
 #endif
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
-int wifi_uap_set_httxcfg(unsigned short httxcfg);
+void wifi_uap_set_httxcfg(unsigned short httxcfg);
+int wifi_uap_set_httxcfg_int(unsigned short httxcfg);
 int wifi_get_tx_power(t_u32 *power_level);
 int wifi_set_tx_power(t_u32 power_level);
 int wrapper_wlan_cmd_get_hw_spec(void);

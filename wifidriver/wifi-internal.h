@@ -138,6 +138,8 @@ typedef struct
     t_u8 chan_num;
     /** HT Capability Info */
     t_u16 ht_cap_info;
+    /** HTTX Cfg */
+    t_u16 ht_tx_cfg;
 #ifdef CONFIG_WMM
     /** Outbuf index */
     t_u8 pkt_index[MAX_AC_QUEUES];
