@@ -1256,6 +1256,46 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
+static void test_wlan_set_max_clients_count(int argc, char **argv)
+{
+    int max_clients_count;
+	int ret;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s  max_clients_count\r\n", argv[0]);
+        return;
+    }
+    
+    max_clients_count = atoi(argv[1]);
+
+    ret = wlan_set_uap_max_clients(max_clients_count);
+
+    if (ret != WM_SUCCESS  )
+    {
+        (void)PRINTF("Failed to set max clients count\r\n");
+    }
+}
+#endif
+
+#ifdef CONFIG_WIFI_HIDDEN_SSID
+static void test_wlan_set_hidden_ssid(int argc, char **argv)
+{
+    int bcast_ssid_ctl;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s hidden ssid control\r\n", argv[0]);
+        return;
+    }
+    
+    bcast_ssid_ctl = atoi(argv[1]);
+
+    wlan_uap_set_hidden_ssid(bcast_ssid_ctl);
+}
+#endif
+
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
 static void test_wlan_set_rts(int argc, char **argv)
 {
@@ -1748,6 +1788,12 @@ static struct cli_command tests[] = {
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
+#ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
+			{"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
+#endif
+#ifdef CONFIG_WIFI_HIDDEN_SSID
+			{"wlan-set-hidden-ssid", "<0/1>", test_wlan_set_hidden_ssid}, 
+#endif
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
 #endif
