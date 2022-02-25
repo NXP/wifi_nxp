@@ -939,6 +939,11 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type);
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+int wifi_11k_cfg(int enable_11k);
+int wifi_11k_neighbor_req();
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif

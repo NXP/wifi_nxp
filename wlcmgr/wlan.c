@@ -6131,6 +6131,18 @@ int wlan_set_uap_frag(int frag)
 
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+int wlan_11k_cfg(int enable_11k)
+{
+    return wifi_11k_cfg(enable_11k);
+}
+
+int wlan_11k_neighbor_req()
+{
+    return wifi_11k_neighbor_req();
+}
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {

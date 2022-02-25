@@ -357,6 +357,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->pmfcfg.mfpc = 0;
     priv->pmfcfg.mfpr = 0;
 
+#ifdef CONFIG_ENABLE_802_11K
+    priv->enable_11k = MFALSE;
+#endif
+
     for (i = 0; i < MAX_NUM_TID; i++)
         priv->addba_reject[i] = ADDBA_RSP_STATUS_ACCEPT;
     priv->max_amsdu = 0;

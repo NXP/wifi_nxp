@@ -96,6 +96,15 @@ typedef MLAN_PACK_START struct
 /** CapInfo Short Slot Time Enabled */
 #define SHORT_SLOT_TIME_ENABLED(CapInfo) ((CapInfo) |= MBIT(10))
 
+#ifdef CONFIG_ENABLE_802_11K
+/** CapInfo Spectrum Mgmt Enabled */
+#define SPECTRUM_MGMT_ENABLED(CapInfo) (CapInfo |= MBIT(8))
+/** CapInfo Radio Measurement Disabled */
+#define RADIO_MEASUREMENT_DISABLED(CapInfo) (CapInfo &= ~MBIT(12))
+/** CapInfo Radio Measurement Enabled */
+#define RADIO_MEASUREMENT_ENABLED(CapInfo) (CapInfo |= MBIT(12))
+#endif
+
 /** Setup the number of rates passed in the driver/firmware API */
 #define HOSTCMD_SUPPORTED_RATES 14
 
@@ -819,6 +828,13 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000)
 
+#ifdef CONFIG_ENABLE_802_11K
+/** ExtCap : Set Support BSS_Transition */
+#define SET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 1)
+/** ExtCap : Reset support BSS_Transition */
+#define RESET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 0)
+#endif
+
 #ifdef CONFIG_11AX
 /** FW cap info bit 7 11AX */
 #define FW_CAPINFO_EXT_802_11AX MBIT(7)
@@ -1169,6 +1185,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 
 /** Host Command ID : OTP user data */
 #define HostCmd_CMD_OTP_READ_USER_DATA 0x0114
+
+#ifdef CONFIG_ENABLE_802_11K
+/** Host Command ID : 802.11 K Feature Control */
+#define HostCmd_CMD_OFFLOAD_FEATURE_CONTROL 0x00fd
+#endif
 
 #ifdef SD8801
 #define HostCmd_CMD_ED_MAC_MODE 0x0124
@@ -1925,6 +1946,39 @@ typedef MLAN_PACK_START struct _wlan_802_11_header
     /** Address4 */
     mlan_802_11_mac_addr addr4;
 } MLAN_PACK_END wlan_802_11_header;
+
+#ifdef CONFIG_ENABLE_802_11K
+/** host_OffloadFeatureStdControl_t */
+typedef MLAN_PACK_START struct
+{
+    t_u8 client_radar_detect : 1;
+    t_u8 wmm_ac_dynamic_ps : 1;
+    t_u8 wmm_ac_tpsec_modify : 1;
+    t_u8 dot11h_rm : 1;
+    t_u8 dot11k_rm : 1;
+    t_u8 dot11k_nbor_support : 1;
+    t_u8 dot11k_lm : 1;
+    t_u8 dot11k_tsm : 1;
+
+    t_u8 pmf_capable : 1;
+    t_u8 pmf_required : 1;
+    t_u8 vowifi_probe_tpc_rpt : 1;
+    t_u8 dot11v_bss_trans : 1;
+    t_u8 rbc : 1;
+    t_u8 reserved : 3;
+} MLAN_PACK_END host_OffloadFeatureStdControl_t;
+
+/** END HostCmd_OFFLOAD_FEATURE_CTRL */
+typedef MLAN_PACK_START struct _HostCmd_OFFLOAD_FEATURE_CTRL
+{
+    t_u8 featureSelect;
+    union
+    {
+        host_OffloadFeatureStdControl_t std;
+        t_u8 empty;
+    } control;
+} MLAN_PACK_END HostCmd_OFFLOAD_FEATURE_CTRL;
+#endif /* CONFIG_ENABLE_802_11K*/
 
 /** wlan_802_11_header packet from FW with length */
 typedef MLAN_PACK_START struct _wlan_mgmt_pkt
@@ -6177,6 +6231,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;
 #endif
+#ifdef CONFIG_ENABLE_802_11K
+        /** OFFLOAD FEATURE CTRL */
+        HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
+#endif /* CONFIG_ENABLE_802_11K */
 #ifdef CONFIG_11AX
         HostCmd_DS_11AX_CMD_CFG axcmd;
 #endif

@@ -195,6 +195,11 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_11H_DFS_TESTING,
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+    MLAN_IOCTL_11K_CFG      = 0x00130000,
+    MLAN_OID_11K_CFG_ENABLE = 0x00130001,
+#endif
+
     /* Miscellaneous Configuration Group */
     MLAN_IOCTL_MISC_CFG = 0x00200000,
     MLAN_OID_MISC_GEN_IE,
@@ -1368,6 +1373,19 @@ typedef struct _mlan_ds_get_signal
     /** NF of data packet average */
     t_s16 data_nf_avg;
 } mlan_ds_get_signal, *pmlan_ds_get_signal;
+
+#ifdef CONFIG_ENABLE_802_11K
+/** Type definition of mlan_ds_11k_cfg for 11k enable/disable */
+typedef struct _mlan_ds_11k_cfg
+{
+    /** Sub-command */
+    t_u32 sub_command;
+    union
+    {
+        t_u32 enable_11k;
+    } param;
+} mlan_ds_11k_cfg;
+#endif
 
 /** mlan_fw_info data structure for MLAN_OID_GET_FW_INFO */
 typedef struct _mlan_fw_info

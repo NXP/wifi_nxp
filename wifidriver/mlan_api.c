@@ -86,6 +86,9 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
                                         IN t_void *pdata_buf);
 #endif
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+#ifdef CONFIG_ENABLE_802_11K
+mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd);
+#endif
 
 int wifi_deauthenticate(uint8_t *bssid)
 {
@@ -3092,6 +3095,79 @@ void wifi_set_curr_bss_channel(uint8_t channel)
 
     pmpriv->curr_bss_params.bss_descriptor.channel = channel;
 }
+
+#ifdef CONFIG_ENABLE_802_11K
+int wifi_11k_cfg(int enable_11k)
+{
+    mlan_ioctl_req req;
+    mlan_ds_11k_cfg *pcfg_11k = NULL;
+    mlan_status ret           = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    /* Allocate an IOCTL request buffer */
+    pcfg_11k = os_mem_alloc(sizeof(mlan_ds_11k_cfg));
+    if (pcfg_11k == NULL)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        return ret;
+    }
+
+    /* Fill request buffer */
+    pcfg_11k->sub_command = MLAN_OID_11K_CFG_ENABLE;
+    req.pbuf              = (t_u8 *)pcfg_11k;
+    req.buf_len           = sizeof(mlan_ds_11k_cfg);
+    req.req_id            = MLAN_IOCTL_11K_CFG;
+    req.action            = MLAN_ACT_SET;
+
+    if (enable_11k != 0 && enable_11k != 1)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        os_mem_free(pcfg_11k);
+        return ret;
+    }
+
+    pcfg_11k->param.enable_11k = enable_11k;
+
+    if (!is_sta_connected())
+    {
+        ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+        {
+            os_mem_free(pcfg_11k);
+            return -WM_FAIL;
+        }
+    }
+    else
+        wifi_e("sta disconnection is required before enable/disable 11k\r\n");
+
+    os_mem_free(pcfg_11k);
+
+    return WM_SUCCESS;
+}
+
+int wifi_11k_neighbor_req()
+{
+    if (!is_sta_connected())
+    {
+        wifi_e("sta connection is required before sending neighbor report req\r\n");
+        return -WM_FAIL;
+    }
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    wifi_get_command_lock();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wlan_cmd_11k_neighbor_req((mlan_private *)mlan_adap->priv[0], cmd);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return WM_SUCCESS;
+}
+#endif
 
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables()

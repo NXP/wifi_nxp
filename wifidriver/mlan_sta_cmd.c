@@ -1916,6 +1916,60 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
 }
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+/**
+ *  @brief This function sends get nlist.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pcmd         Hostcmd ID
+ *  @param cmd_action   Command action
+ *  @param pdata_buf    A pointer to information buffer
+ *  @return             N/A
+ */
+static mlan_status wlan_cmd_offload_feature_ctrl(mlan_private *pmpriv,
+                                                 HostCmd_DS_COMMAND *pcmd,
+                                                 t_u16 cmd_action,
+                                                 void *pdata_buf)
+{
+    HostCmd_OFFLOAD_FEATURE_CTRL *pfctrl = &pcmd->params.fctrl;
+    mlan_status ret                      = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    pcmd->command = wlan_cpu_to_le16(HostCmd_CMD_OFFLOAD_FEATURE_CONTROL);
+    (void)__memcpy(pmpriv->adapter, pfctrl, pdata_buf, sizeof(HostCmd_OFFLOAD_FEATURE_CTRL));
+    pcmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_OFFLOAD_FEATURE_CTRL));
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief This function sends 11k neighbor report request.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pcmd         Hostcmd ID
+ *  @return             N/A
+ */
+mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd)
+{
+    HostCmd_OFFLOAD_FEATURE_CTRL *pfctrl = &pcmd->params.fctrl;
+    mlan_status ret                      = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+    /* FW 11k/11mc recommend use 0x00fd instead of 0x0231 command */
+    /* FW: FEATURE_TEST_ACTION_SELECT */
+    pfctrl->featureSelect = 3;
+    /* FW: host_OffloadFeatureTestAction_t.generate_neighbor_req */
+    pfctrl->control.empty = 2;
+    pcmd->command         = wlan_cpu_to_le16(HostCmd_CMD_OFFLOAD_FEATURE_CONTROL);
+    pcmd->size            = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_OFFLOAD_FEATURE_CTRL) - 1);
+
+    LEAVE();
+    return ret;
+}
+#endif
+
 #ifdef CONFIG_WLAN_BRIDGE
 /**
  *  @brief This function prepares command of bridge mode
@@ -2564,6 +2618,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+#ifdef CONFIG_ENABLE_802_11K
+        case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
+            ret = wlan_cmd_offload_feature_ctrl(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif /* CONFIG_ENABLE_802_11K */
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             ret = MLAN_STATUS_FAILURE;

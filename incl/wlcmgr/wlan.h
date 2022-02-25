@@ -2943,6 +2943,24 @@ int wlan_set_frag(int frag);
 int wlan_set_uap_frag(int frag);
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+/**
+ * enable/disable 11k feature in WLAN firmware.
+ *
+ * \param[in]  the value of 11k configuration.
+ *
+ */
+int wlan_11k_cfg(int enable_11k);
+
+/**
+ * send 11k neighbor request in WLAN firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_11k_neighbor_req();
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 /**
  * Set the sta mac filter in Wi-Fi firmware.

@@ -856,6 +856,20 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         SHORT_SLOT_TIME_DISABLED(tmp_cap);
     }
 
+#ifdef CONFIG_ENABLE_802_11K
+    /* set SpectrumMgmt(BIT8) and RadioMeasurement(BIT12) if 11K is enabled
+     */
+    if (pmpriv->enable_11k)
+    {
+        SPECTRUM_MGMT_ENABLED(tmp_cap);
+        RADIO_MEASUREMENT_ENABLED(tmp_cap);
+    }
+    else
+    {
+        RADIO_MEASUREMENT_DISABLED(tmp_cap);
+    }
+#endif
+
     tmp_cap &= CAPINFO_MASK;
     PRINTM(MINFO, "ASSOC_CMD: tmp_cap=%4X CAPINFO_MASK=%4lX\n", tmp_cap, CAPINFO_MASK);
     tmp_cap = wlan_cpu_to_le16(tmp_cap);

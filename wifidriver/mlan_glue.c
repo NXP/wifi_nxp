@@ -1809,6 +1809,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
+#ifdef CONFIG_ENABLE_802_11K
+            case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
+                rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                if (rv != MLAN_STATUS_SUCCESS)
+                    return -WM_FAIL;
+                break;
+#endif
             case HostCmd_CMD_802_11_SCAN:
                 if (resp->result != HostCmd_RESULT_OK)
                 {

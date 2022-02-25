@@ -1275,6 +1275,11 @@ struct _mlan_private
     /** function table */
     mlan_operations ops;
 
+#ifdef CONFIG_ENABLE_802_11K
+    /** 11k flag */
+    t_u8 enable_11k;
+#endif
+
     /** Port Control mode */
     t_u8 port_ctrl_mode;
 

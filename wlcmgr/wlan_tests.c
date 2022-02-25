@@ -1260,19 +1260,19 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
 static void test_wlan_set_max_clients_count(int argc, char **argv)
 {
     int max_clients_count;
-	int ret;
+    int ret;
 
     if (argc != 2)
     {
         (void)PRINTF("Usage: %s  max_clients_count\r\n", argv[0]);
         return;
     }
-    
+
     max_clients_count = atoi(argv[1]);
 
     ret = wlan_set_uap_max_clients(max_clients_count);
 
-    if (ret != WM_SUCCESS  )
+    if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to set max clients count\r\n");
     }
@@ -1289,7 +1289,7 @@ static void test_wlan_set_hidden_ssid(int argc, char **argv)
         (void)PRINTF("Usage: %s hidden ssid control\r\n", argv[0]);
         return;
     }
-    
+
     bcast_ssid_ctl = atoi(argv[1]);
 
     wlan_uap_set_hidden_ssid(bcast_ssid_ctl);
@@ -1367,6 +1367,42 @@ static void test_wlan_set_frag(int argc, char **argv)
         (void)PRINTF("Failed to set fragment threshold\r\n");
     }
 }
+#endif
+
+#ifdef CONFIG_ENABLE_802_11K
+static void test_wlan_11k_cfg(int argc, char **argv)
+{
+    int enable_11k;
+    int ret;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <0/1> < 0--disable 11k; 1---enable 11k>\r\n", argv[0]);
+        return;
+    }
+
+    enable_11k = atoi(argv[1]);
+
+    ret = wlan_11k_cfg(enable_11k);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to 11k config\r\n");
+    }
+}
+
+static void test_wlan_11k_neighbor_req(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_11k_neighbor_req();
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to send 11k neighbor req\r\n");
+    }
+}
+
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
@@ -1789,16 +1825,20 @@ static struct cli_command tests[] = {
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
 #ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
-			{"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
+    {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
 #endif
 #ifdef CONFIG_WIFI_HIDDEN_SSID
-			{"wlan-set-hidden-ssid", "<0/1>", test_wlan_set_hidden_ssid}, 
+    {"wlan-set-hidden-ssid", "<0/1>", test_wlan_set_hidden_ssid},
 #endif
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
 #endif
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
+#endif
+#ifdef CONFIG_ENABLE_802_11K
+    {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
+    {"wlan-11k-neigbor-req", NULL, test_wlan_11k_neighbor_req},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
