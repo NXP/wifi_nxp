@@ -401,6 +401,8 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         if (ret != WM_SUCCESS)
         {
             wifi_io_e("Failed to send response on Queue");
+            if (upld_type != MLAN_TYPE_CMD)
+                wifi_free_eventbuf(msg.data);
             return MLAN_STATUS_FAILURE;
         }
     }
