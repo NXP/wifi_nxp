@@ -3869,6 +3869,9 @@ void _wifi_set_mac_addr(uint8_t *mac)
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_MAC_ADDRESS,
                                    HostCmd_ACT_GEN_SET, 0, NULL, mac, cmd);
     (void)wifi_wait_for_cmdresp(NULL);
+    /* Also need to update priv->curr_addr, as rx reorder will check mac address using priv->curr_addr */
+    (void)memcpy(&mlan_adap->priv[0]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
 }
 
 #ifdef WLAN_LOW_POWER_ENABLE

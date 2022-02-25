@@ -205,10 +205,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #ifdef CONFIG_IPV6
         case ETHTYPE_IPV6:
 #endif
-            /* To avoid processing of unwanted udp broadcast packets, adding
-             * filter for dropping packets received on ports other than
-             * pre-defined ports.
-             */
+        /* Unicast ARP also need do rx reorder */
+        case ETHTYPE_ARP:
             LINK_STATS_INC(link.recv);
 #ifdef CONFIG_11N
             if (recv_interface == MLAN_BSS_TYPE_STA)
@@ -231,7 +229,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #endif /* CONFIG_11N */
             p = NULL;
             break;
-        case ETHTYPE_ARP:
         case ETHTYPE_EAPOL:
             LINK_STATS_INC(link.recv);
             deliver_packet_above(p, recv_interface);
