@@ -55,7 +55,7 @@ extern int wifi_11d_country;
  * @param band            BAND_5G/BAND_2GHZ
  * @return                0 -- success, otherwise fail
  */
-t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
+static t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_u8 enable_11ac        = MFALSE;
@@ -354,6 +354,9 @@ int wifi_cmd_uap_config(char *ssid,
     t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
+#ifdef CONFIG_11AC
+    t_u8 enable_11ac = MFALSE;
+#endif
 
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA3_SAE ||
           security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
@@ -368,7 +371,7 @@ int wifi_cmd_uap_config(char *ssid,
     int passphrase_len = (int)strlen(passphrase);
     int password_len   = (int)strlen(password);
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
     /* fixme: check if this needs to go on heap */
     mlan_ds_bss bss;
@@ -450,6 +453,10 @@ int wifi_cmd_uap_config(char *ssid,
             }
         }
     }
+
+#ifdef CONFIG_11AC
+    enable_11ac = wifi_check_11ac_capability(pmpriv, bss.param.bss_config.band_cfg);
+#endif
 
     if (security == WLAN_SECURITY_NONE)
     {
@@ -568,6 +575,17 @@ int wifi_cmd_uap_config(char *ssid,
         wuap_e("Cannot set uAP HT TX Cfg:%x", wm_wifi.ht_tx_cfg);
         return -WM_E_INVAL;
     }
+#ifdef CONFIG_11AC
+    if (enable_11ac)
+        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_ENABLE);
+    else
+        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE);
+#endif
+#ifdef CONFIG_11AX
+    if (pmpriv->adapter->enable_11ax)
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg);
+    else
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg);
 #endif
     bss.param.bss_config.ampdu_param = 0x03;
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
