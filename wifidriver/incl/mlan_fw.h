@@ -828,6 +828,13 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define RESET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 0)
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+/** ExtCap : Set Support BSS_Transition */
+#define SET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 1)
+/** ExtCap : Reset support BSS_Transition */
+#define RESET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 0)
+#endif
+
 #ifdef CONFIG_11AX
 /** FW cap info bit 7 11AX */
 #define FW_CAPINFO_EXT_802_11AX MBIT(7)
