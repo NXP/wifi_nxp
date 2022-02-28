@@ -2996,6 +2996,10 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #endif /* defined(SD8801) */
 #endif
 
+    wifi_set_packet_retry_count(MAX_RETRY_TICKS);
+
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
+defined(SD9098) || defined(IW61x)
     /*Enabling 20/40MHz enable(bit 1)
      * enabling Short GI in 40 Mhz(bit 6)
      * and 20MHz(bit 5),
@@ -3021,8 +3025,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         wlcm_e("Failed to set HT Cap configuration");
         return;
     }
-
-    wifi_set_packet_retry_count(MAX_RETRY_TICKS);
+#endif
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
