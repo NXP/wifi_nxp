@@ -105,6 +105,7 @@ NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
 static void wm_netif_ipv6_status_callback(struct netif *n);
 #endif
 
+static void (*wm_netif_status_callback_ptr)(struct netif *n);
 static void wm_netif_status_callback(struct netif *n);
 
 static void netif_ext_status_callback(struct netif *netif,
@@ -123,7 +124,10 @@ static void netif_ext_status_callback(struct netif *netif,
             if ((reason & (LWIP_NSC_IPV4_SETTINGS_CHANGED | LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_ADDR_VALID |
                            LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED)) != LWIP_NSC_NONE)
         {
-            wm_netif_status_callback(netif);
+            if (wm_netif_status_callback_ptr != NULL)
+            {
+                wm_netif_status_callback_ptr(netif);
+            }
         }
     }
 }
@@ -375,6 +379,7 @@ static void stop_cb(void *ctx)
 
     dhcp_release_and_stop(&if_handle->netif);
     netif_set_down(&if_handle->netif);
+    wm_netif_status_callback_ptr = NULL;
 }
 
 static void dhcp_timer_cb(os_timer_arg_t arg)
@@ -474,6 +479,7 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
     (void)netifapi_dhcp_release_and_stop(&if_handle->netif);
+    wm_netif_status_callback_ptr = NULL;
 }
 
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
@@ -503,6 +509,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 #endif
           (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
     (void)netifapi_netif_set_down(&if_handle->netif);
+    wm_netif_status_callback_ptr = NULL;
 
 #ifdef CONFIG_IPV6
     if (if_handle == &g_mlan)
@@ -544,6 +551,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
                                           ip_2_ip4(&if_handle->gw));
             (void)netifapi_netif_set_up(&if_handle->netif);
             os_timer_activate(&dhcp_timer);
+            wm_netif_status_callback_ptr = wm_netif_status_callback;
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;
         case ADDR_TYPE_LLA:
