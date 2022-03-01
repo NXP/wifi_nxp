@@ -333,6 +333,10 @@ static void dump_wlan_add_usage(void)
         "    [channel <channelnumber>]\r\n");
     (void)PRINTF("    [wpa2 <secret>] [wpa3 sae <secret>]\r\n");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+    (void)PRINTF("If seting dtim\r\n");
+    (void)PRINTF("The value of dtim is an integer. The default value is 10.\r\n");
+#endif
 }
 
 void test_wlan_add(int argc, char **argv)
@@ -351,6 +355,9 @@ void test_wlan_add(int argc, char **argv)
         unsigned role : 1;
         unsigned mfpc : 1;
         unsigned mfpr : 1;
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+        unsigned dtim : 1;
+#endif
     } info;
 
     (void)memset(&info, 0, sizeof(info));
@@ -536,6 +543,22 @@ void test_wlan_add(int argc, char **argv)
             info.address = ADDR_TYPE_LLA;
             arg++;
         }
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+        else if (!info.dtim && string_equal("dtim", argv[arg]))
+        {
+            unsigned int dtim_period;
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &dtim_period, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF(
+                    "Error: invalid dtim"
+                    " argument\n");
+                return;
+            }
+            network.dtim_period  = (uint8_t)(dtim_period & 0XFF);
+            arg += 2;
+            info.dtim = 1;
+        }
+#endif
         else
         {
             dump_wlan_add_usage();

@@ -1490,7 +1490,13 @@ static int do_start(struct wlan_network *network)
                              wlan.mac,
 #endif
                              network->security.type, &network->security.psk[0], &network->security.password[0],
-                             network->channel, wlan.scan_chan_list, network->security.mfpc, network->security.mfpr);
+                             network->channel, wlan.scan_chan_list, network->security.mfpc,
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                             network->security.mfpr,network->dtim_period
+#else
+                             network->security.mfpr
+#endif
+                             );
         if (ret != 0)
         {
             wlcm_e("uAP start failed, giving up");

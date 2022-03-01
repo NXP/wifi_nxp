@@ -748,13 +748,24 @@ int wifi_uap_start(int type,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
                    bool mfpc,
-                   bool mfpr)
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                   bool mfpr,
+                   uint8_t dtim
+#else
+                   bool mfpr
+#endif
+                   )
 {
     wuap_d("Configuring");
     /* Configure SSID */
     int rv = wifi_cmd_uap_config(ssid, mac_addr, security, passphrase, password, channel, scan_chan_list,
                                  wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
-                                 wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth, UAP_DTIM_PERIOD,
+                                 wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                                 dtim == 0? UAP_DTIM_PERIOD : dtim,
+#else
+                                 UAP_DTIM_PERIOD,
+#endif
                                  wm_wifi.chan_sw_count, type);
     if (rv != WM_SUCCESS)
     {

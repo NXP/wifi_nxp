@@ -702,7 +702,13 @@ int wifi_uap_start(int type,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
                    bool mfpc,
-                   bool mfpr);
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                   bool mfpr,
+                   uint8_t dtim
+#else
+                   bool mfpr
+#endif
+                   );
 
 #ifdef CONFIG_WMM
 int wrapper_wlan_sta_ampdu_enable(t_u8 tid);
