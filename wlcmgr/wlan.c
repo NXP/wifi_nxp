@@ -2992,8 +2992,8 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
     /*Enabling 20/40MHz enable(bit 1)
      * enabling Short GI in 40 Mhz(bit 6)
      * and 20MHz(bit 5),
@@ -3654,6 +3654,8 @@ static void cm_main(os_thread_arg_t data)
     struct wifi_message msg;
     enum cm_sta_state next_sta_state;
     enum cm_uap_state next_uap_state;
+
+    (void)memset((void *)&msg, 0, sizeof(struct wifi_message));
 
     /* Wait for all the data structures to be created */
     while (!wlan.running)
@@ -5341,17 +5343,17 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
 
 int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
 {
-    return wifi_get_mgmt_ie(bss_type, index, buf, buf_len);
+    return wifi_get_mgmt_ie((mlan_bss_type)bss_type, index, buf, buf_len);
 }
 
 int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
 {
-    return wifi_set_mgmt_ie(bss_type, id, buf, buf_len);
+    return wifi_set_mgmt_ie((mlan_bss_type)bss_type, id, buf, buf_len);
 }
 
 int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index)
 {
-    return wifi_clear_mgmt_ie(bss_type, index);
+    return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index);
 }
 
 int wlan_set_htcapinfo(unsigned int htcapinfo)
@@ -6129,7 +6131,6 @@ int wlan_set_uap_frag(int frag)
 {
     return wifi_set_frag(frag, MLAN_BSS_TYPE_UAP);
 }
-
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
