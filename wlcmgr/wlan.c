@@ -6179,6 +6179,18 @@ void wlan_version_extended()
 #endif
 }
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
+{
+    int ret = WM_SUCCESS;
+
+    ret = wifi_set_tx_pert((void *)tx_pert, bss_type);
+    if(ret != WM_SUCCESS)
+        (void)PRINTF("Failed to set tx per tracking.\r\n");
+    return;
+}
+#endif
+
 #ifdef CONFIG_RF_TEST_MODE
 
 int wlan_set_rf_test_mode(void)

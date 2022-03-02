@@ -1069,6 +1069,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : Get memory */
 #define HostCmd_CMD_GET_MEM 0x008c
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Host Command ID: TX_RX_PKT_STATS */
+#define HostCmd_CMD_TX_RX_PKT_STATS 0x008d
+#endif
+
 /** Host Command ID : Cal data dnld */
 #define HostCmd_CMD_CFG_DATA 0x008f
 
@@ -1263,6 +1268,17 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_ACT_GET_TX 0x0008
 /** Host command action : Get both Rx and Tx */
 #define HostCmd_ACT_GET_BOTH 0x000cU
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Host command action: Get Tx statics */
+#define HostCmd_ACT_GET_TX_STATICS 0x0001
+/** Host command action: Get Rx statics */
+#define HostCmd_ACT_GET_RX_STATICS 0x0002
+/** Host command action: Get both Tx and Rx statics */
+#define HostCmd_ACT_GET_BOTH_TX_AND_RX 0x0003
+/** Host command action: Set Tx PER tracking */
+#define HostCmd_ACT_SET_TX_PER_TRACKING 0x0004
+#endif
 
 /** General Result Code*/
 /** General result code OK */
@@ -3557,6 +3573,32 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TX_RATE_CFG
     t_u16 cfg_index;
     /* MrvlRateScope_t RateScope; MrvlRateDropPattern_t RateDrop; */
 } MLAN_PACK_END HostCmd_DS_TX_RATE_CFG;
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+#define TLV_TYPE_TX_PER_TRACK (PROPRIETARY_TLV_BASE_ID + 338)
+#define EVENT_PER_STATUS_REPORT        0x94
+typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_PKT_STATS
+{
+    /** Enable or disable */
+    t_u8 enable;
+    /** Action */
+    t_u16 action;
+} MLAN_PACK_END HostCmd_DS_TX_RX_PKT_STATS;
+
+typedef MLAN_PACK_START struct _MrvlTxPerTrackInfo_t
+{
+    /** Header Type */
+    t_u16 type;
+    /** Header Length */
+    t_u16 length;
+    /** Tx stat check period */
+    t_u8 tx_stat_check_period;
+    /** Tx stat check ratio */
+    t_u8 tx_stat_check_ratio;
+    /** Tx stat check packet number */
+    t_u16 tx_stat_check_num;
+} MLAN_PACK_END MrvlTxPerTrackInfo_t;
+#endif
 
 /** Power_Group_t */
 typedef MLAN_PACK_START struct _Power_Group_t
@@ -6233,6 +6275,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_MFG_CMD_GENERIC_CFG mfg_generic_cfg;
         HostCmd_DS_MFG_CMD_TX_FRAME2 mfg_tx_frame2;
         HostCmd_DS_MFG_CMD_TX_CONT mfg_tx_cont;
+#endif
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+        HostCmd_DS_TX_RX_PKT_STATS pkt_stats;
 #endif
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;

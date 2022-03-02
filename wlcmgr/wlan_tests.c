@@ -1279,6 +1279,52 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+static void dump_wlan_tx_pert_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "    wlan-tx-pert <0/1> <STA/AP> <p:tx_pert_check_period> "
+        "<r:tx_pert_check_ratio> <n:tx_pert_check_num>"
+        "\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-tx-pert 1 AP 5 3 5\r\n");
+}
+
+static void test_wlan_tx_pert(int argc, char **argv)
+{
+    struct wlan_tx_pert_info tx_pert;
+    int bss_type;
+
+    if (argc < 2)
+    {
+        dump_wlan_tx_pert_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)memset(&tx_pert, 0, sizeof(tx_pert));
+    tx_pert.tx_pert_check = atoi(argv[1]);
+    if(tx_pert.tx_pert_check == 1 && argc < 6)
+    {
+        (void)PRINTF("Error: invalid number of arguments.\r\n");
+        (void)PRINTF("Need specify bss_type tx_pert_chk_prd, tx_perf_chk_ratio and tx_pert_chk_num"
+             "\r\n");
+        return;
+    }
+    if (string_equal("STA", argv[2]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if(string_equal("UAP", argv[2]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    if(tx_pert.tx_pert_check == 1)
+    {
+        tx_pert.tx_pert_check_peroid = (t_u8)atoi(argv[3]);
+        tx_pert.tx_pert_check_ratio = (t_u8)atoi(argv[4]);
+        tx_pert.tx_pert_check_num = atoi(argv[5]);
+    }
+    wlan_set_tx_pert(&tx_pert, bss_type);
+}
+#endif
+
 #ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
 static void test_wlan_set_max_clients_count(int argc, char **argv)
 {
@@ -1868,6 +1914,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_WIFI_GET_LOG
     {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
+#endif
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+    {"wlan-tx-pert", "<0/1> <STA/AP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},

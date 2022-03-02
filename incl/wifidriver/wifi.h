@@ -293,6 +293,10 @@ uint32_t wifi_get_value1(void);
 
 uint8_t *wifi_get_outbuf(uint32_t *outbuf_len);
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type);
+#endif
+
 /**
  * This will update the last command sent variable value to current
  * time. This is used for power management.

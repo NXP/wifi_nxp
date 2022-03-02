@@ -1600,6 +1600,27 @@ typedef struct
 
 } wlan_meas_state_t;
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Tx Per Tracking Structure
+ * Driver sets tx per tracking statistic to fw.
+ * Fw will check tx packet error rate periodically and
+ * report PER to host if per is high.
+ */
+typedef struct
+{
+    /** Enable/Disable tx per tracking */
+    t_u8 tx_pert_check;
+    /** Check period(unit sec) */
+    t_u8 tx_pert_check_peroid;
+    /** (Fail TX packet)/(Total TX packet) ratio(unit 10%)
+     * default: 5
+     */
+    t_u8 tx_pert_check_ratio;
+    /** A watermark of check number(default 5) */
+    t_u16 tx_pert_check_num;
+} tx_pert_info;
+#endif
+
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 /** data structure for SDIO MPA TX */
 typedef struct _sdio_mpa_tx
@@ -2090,6 +2111,9 @@ struct _mlan_adapter
     t_u8 tx_power_table_a_cols;
 #endif
 #endif
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+    tx_pert_info tx_pert;
+#endif
 };
 
 /** Ethernet packet type for EAPOL */
@@ -2100,6 +2124,13 @@ struct _mlan_adapter
 #define MLAN_ETHER_PKT_TYPE_OFFSET (12)
 
 mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action);
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
+				     IN HostCmd_DS_COMMAND *cmd,
+				     IN t_u16 cmd_action,
+				     IN t_void *pdata_buf);
+#endif
 
 mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter);
 #ifndef CONFIG_MLAN_WMSDK

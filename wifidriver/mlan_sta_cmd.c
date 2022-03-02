@@ -2608,6 +2608,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_GET_TSF:
             ret = wlan_cmd_get_tsf(pmpriv, cmd_ptr, cmd_action);
             break;
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+        case HostCmd_CMD_TX_RX_PKT_STATS:
+            ret = wlan_cmd_txrx_pkt_stats(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
 #ifdef CONFIG_RF_TEST_MODE
         case HostCmd_CMD_MFG_COMMAND:
             ret = wlan_cmd_mfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);

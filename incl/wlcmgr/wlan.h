@@ -1034,6 +1034,27 @@ struct wlan_network
     uint8_t dtim_period;
 };
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Tx Per Tracking Structure
+ * Driver sets tx per tracking statistic to fw.
+ * Fw will check tx packet error rate periodically and
+ * report PER to host if per is high.
+ */
+struct wlan_tx_pert_info
+{
+    /** Enable/Disable tx per tracking */
+    t_u8 tx_pert_check;
+    /** Check period(unit sec) */
+    t_u8 tx_pert_check_peroid;
+    /** (Fail TX packet)/(Total TX packet) ratio(unit 10%)
+     * default: 5
+     */
+    t_u8 tx_pert_check_ratio;
+    /** A watermark of check number(default 5) */
+    t_u16 tx_pert_check_num;
+};
+#endif
+
 /* WLAN Connection Manager API */
 
 /** Initialize the SDIO driver and create the wifi driver thread.
@@ -1642,6 +1663,18 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
  *
  */
 void wlan_set_mac_addr(uint8_t *mac);
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Set Tx PER tracking config.
+ * This function may be called to set Tx PER tracking in firmware.
+ *
+ * \param[in] tx_pert User configured parameters of Tx PER tracking
+ *            period, ratio and number of tx packets.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type);
+#endif
 
 /** Configure Listen interval of IEEE power save mode.
  *

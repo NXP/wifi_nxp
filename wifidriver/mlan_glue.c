@@ -2603,6 +2603,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+            case HostCmd_CMD_TX_RX_PKT_STATS:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -2890,6 +2900,23 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
 #define IEEEtypes_REASON_DEAUTH_LEAVING     3
 #define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+#define OFFSET_SEQNUM 8
+static void wifi_tx_pert_report(void *pbuf)
+{
+    t_u8 *event_buf = (t_u8 *)pbuf;
+    t_u16 current_per = 0;
+
+    current_per = wlan_le16_to_cpu(*(t_u16 *)(event_buf + OFFSET_SEQNUM));
+    PRINTM(MEVENT, "current PER is %d%%\n", current_per);
+    PRINTM(MEVENT, "User configure:\n");
+    PRINTM(MEVENT, "tx_pert_check_period: %d sec\n", mlan_adap->tx_pert.tx_pert_check_peroid);
+    PRINTM(MEVENT, "tx_pert_check_ratio : %d%%\n", mlan_adap->tx_pert.tx_pert_check_ratio);
+    PRINTM(MEVENT, "tx_pert_check_num   : %d\n", mlan_adap->tx_pert.tx_pert_check_num);
+    return;
+}
+#endif
+
 int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
@@ -3127,6 +3154,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_IDLE\n");
             pmpriv_uap->media_connected = MFALSE;
             break;
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+        case EVENT_PER_STATUS_REPORT:
+            PRINTM(MEVENT, "EVENT: PER_STATUS_REPORT\n");
+            wifi_tx_pert_report((void *)evt);
+            break;
+#endif
 #ifdef CONFIG_WLAN_BRIDGE
         case EVENT_AUTO_LINK_SWITCH_NEW_NODE:
             pnewNode = (Event_AutoLink_SW_Node_t *)msg->data;
@@ -3880,6 +3913,25 @@ void _wifi_set_mac_addr(uint8_t *mac)
     (void)memcpy(&mlan_adap->priv[0]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
     (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
 }
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
+{
+    tx_pert_info *tx_pert = (tx_pert_info *)cfg;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    /* Store tx per tracking config in driver */
+    (void)memcpy((t_u8 *)&(mlan_adap->tx_pert), tx_pert, sizeof(tx_pert_info));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
+    cmd->result = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS, HostCmd_ACT_SET_TX_PER_TRACKING,
+                              0, NULL, tx_pert, cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+#endif
 
 #ifdef WLAN_LOW_POWER_ENABLE
 void wifi_enable_low_pwr_mode()
