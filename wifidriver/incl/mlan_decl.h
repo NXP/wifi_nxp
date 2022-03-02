@@ -174,7 +174,7 @@ typedef t_s32 t_sval;
 #endif
 #endif /* UAP_SUPPORT */
 /** Block ack timeout value */
-#define MLAN_DEFAULT_BLOCK_ACK_TIMEOUT 0xffff
+#define MLAN_DEFAULT_BLOCK_ACK_TIMEOUT 0U
 /** Maximum Tx Win size configured for ADDBA request [10 bits] */
 #define MLAN_AMPDU_MAX_TXWINSIZE 0x3ff
 /** Maximum Rx Win size configured for ADDBA request [10 bits] */
