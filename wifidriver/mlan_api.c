@@ -2688,7 +2688,7 @@ int wifi_config_mgmt_ie(
             ptlv_header = (IEEEtypes_Header_t *)(void *)pos;
             pos += sizeof(IEEEtypes_Header_t);
 
-            ptlv_header->element_id = index;
+            ptlv_header->element_id = (IEEEtypes_ElementId_e)index;
             ptlv_header->len        = *ie_len;
             if (bss_type == MLAN_BSS_TYPE_UAP)
             {

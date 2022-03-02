@@ -1492,11 +1492,11 @@ static int do_start(struct wlan_network *network)
                              network->security.type, &network->security.psk[0], &network->security.password[0],
                              network->channel, wlan.scan_chan_list, network->security.mfpc,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
-                             network->security.mfpr,network->dtim_period
+                             network->security.mfpr, network->dtim_period
 #else
                              network->security.mfpr
 #endif
-                             );
+        );
         if (ret != 0)
         {
             wlcm_e("uAP start failed, giving up");
@@ -2998,8 +2998,8 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
     /*Enabling 20/40MHz enable(bit 1)
      * enabling Short GI in 40 Mhz(bit 6)
      * and 20MHz(bit 5),
@@ -5349,17 +5349,17 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
 
 int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
 {
-    return wifi_get_mgmt_ie(bss_type, index, buf, buf_len);
+    return wifi_get_mgmt_ie((mlan_bss_type)bss_type, index, buf, buf_len);
 }
 
 int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
 {
-    return wifi_set_mgmt_ie(bss_type, id, buf, buf_len);
+    return wifi_set_mgmt_ie((mlan_bss_type)bss_type, id, buf, buf_len);
 }
 
 int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index)
 {
-    return wifi_clear_mgmt_ie(bss_type, index);
+    return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index);
 }
 
 int wlan_set_htcapinfo(unsigned int htcapinfo)
