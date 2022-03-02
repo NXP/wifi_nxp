@@ -6219,7 +6219,6 @@ int wlan_set_uap_frag(int frag)
 {
     return wifi_set_frag(frag, MLAN_BSS_TYPE_UAP);
 }
-
 #endif
 
 #ifdef CONFIG_ENABLE_802_11K
