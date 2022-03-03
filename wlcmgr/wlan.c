@@ -4166,6 +4166,68 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->ip.ipv4.addr_type = ADDR_TYPE_STATIC;
 }
 
+static bool isHexNumber(const char *str, const size_t len)
+{
+    for (int i = 0; i < len; ++i)
+    {
+        if (('0' > str[i] || '9' < str[i]) && ('A' > str[i] || 'F' < str[i]) && ('a' > str[i] || 'f' < str[i]))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool wlan_is_key_valid(struct wlan_network *network)
+{
+    enum wlan_security_type type = network->security.type;
+
+    switch (type)
+    {
+        case WLAN_SECURITY_WPA:
+        case WLAN_SECURITY_WPA2:
+        case WLAN_SECURITY_WPA_WPA2_MIXED:
+            /* check the length of PSK phrase */
+            if (network->security.psk_len < WLAN_PSK_MIN_LENGTH || network->security.psk_len >= WLAN_PSK_MAX_LENGTH)
+            {
+                wlcm_e(
+                    "Invalid passphrase length %d "
+                    "(expected ASCII characters: 8..63)",
+                    network->security.psk_len);
+                return false;
+            }
+            if ((network->security.psk_len == WLAN_PSK_MAX_LENGTH - 1) &&
+                (isHexNumber(network->security.psk, network->security.psk_len) == false))
+            {
+                wlcm_e(
+                    "Invalid hexadecimal digits psk"
+                    "(expected Hexadecimal digits: 64)");
+                return false;
+            }
+            break;
+        case WLAN_SECURITY_WPA3_SAE:
+            if (network->security.password_len < WLAN_PASSWORD_MIN_LENGTH ||
+                network->security.password_len > WLAN_PASSWORD_MAX_LENGTH)
+            {
+                wlcm_e("Invalid password length %d (expected 8..255)", network->security.password_len);
+                return false;
+            }
+            break;
+        case WLAN_SECURITY_NONE:
+        case WLAN_SECURITY_WILDCARD:
+        case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
+            return true;
+        case WLAN_SECURITY_WEP_OPEN:
+        case WLAN_SECURITY_WEP_SHARED:
+            return true;
+        default:
+            return false;
+    }
+
+    return true;
+}
+
 int wlan_add_network(struct wlan_network *network)
 {
     int pos = -1;
@@ -4228,6 +4290,9 @@ int wlan_add_network(struct wlan_network *network)
     {
         return -WM_E_INVAL;
     }
+
+    if (wlan_is_key_valid(network) == false)
+        return -WM_E_INVAL;
 
     /* Make sure network type is set correctly if not
      * set correct values as per role*/
@@ -6185,7 +6250,7 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
     int ret = WM_SUCCESS;
 
     ret = wifi_set_tx_pert((void *)tx_pert, bss_type);
-    if(ret != WM_SUCCESS)
+    if (ret != WM_SUCCESS)
         (void)PRINTF("Failed to set tx per tracking.\r\n");
     return;
 }

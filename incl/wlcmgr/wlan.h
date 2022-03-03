@@ -202,16 +202,16 @@ typedef enum
 /** The space reserved for storing PSK (password) phrases. */
 /* Min WPA2 passphrase can be upto 8 ASCII chars */
 #define WLAN_PSK_MIN_LENGTH 8U
-/* Max WPA2 passphrase can be upto 63 ASCII chars as per standards + 1 '\0' char */
-#define WLAN_PSK_MAX_LENGTH 64
-/* Min WPA3 password can be upto 1 ASCII chars */
-#define WLAN_PASSWORD_MIN_LENGTH 1
+/* Max WPA2 passphrase can be upto 63 ASCII chars or 64 hexadecimal digits*/
+#define WLAN_PSK_MAX_LENGTH 65U
+/* Min WPA3 password can be upto 8 ASCII chars */
+#define WLAN_PASSWORD_MIN_LENGTH 8U
 /* Max WPA3 password can be upto 255 ASCII chars */
-#define WLAN_PASSWORD_MAX_LENGTH 255
+#define WLAN_PASSWORD_MAX_LENGTH 255U
 /* Max WPA2 Enterprise identity can be upto 256 characters */
-#define IDENTITY_MAX_LENGTH 256
+#define IDENTITY_MAX_LENGTH 256U
 /* Max WPA2 Enterprise password can be upto 256 unicode characters */
-#define PASSWORD_MAX_LENGTH 256
+#define PASSWORD_MAX_LENGTH 256U
 
 #ifdef CONFIG_WLAN_KNOWN_NETWORKS
 /** The size of the list of known networks maintained by the WLAN
@@ -1148,7 +1148,14 @@ void wlan_initialize_uap_network(struct wlan_network *net);
  *          is not unique or the network name length is not valid
  *          or network security is \ref WLAN_SECURITY_WPA3_SAE but
  *          Management Frame Protection Capable is not enabled.
- *          in \ref wlan_network_security field.
+ *          in \ref wlan_network_security field. if network security type is
+ *          \ref WLAN_SECURITY_WPA or \ref WLAN_SECURITY_WPA2 or \ref
+ *          WLAN_SECURITY_WPA_WPA2_MIXED, but the passphrase length is less
+ *          than 8 or greater than 63, or the psk length equal to 64 but not
+ *          hexadecimal digits. if network security type is \ref WLAN_SECURITY_WPA3_SAE,
+ *          but the password length is less than 8 or greater than 255.
+ *          if network security type is \ref WLAN_SECURITY_WEP_OPEN or
+ *          \ref WLAN_SECURITY_WEP_SHARED.
  *  \return -WM_E_NOMEM if there was no room to add the network.
  *  \return WLAN_ERROR_STATE if the WLAN Connection Manager
  *          was running and not in the \ref WLAN_DISCONNECTED,
