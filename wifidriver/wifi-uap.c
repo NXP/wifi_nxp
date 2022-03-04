@@ -44,8 +44,8 @@
 #ifdef CONFIG_5GHz_SUPPORT
 uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 #endif
-uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18,
-			 0x24, 0x30, 0x48, 0x60, 0x6c};
+
+uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
 
 extern int wifi_11d_country;
 #ifdef CONFIG_11AC
@@ -320,7 +320,7 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     (void)wifi_get_uap_channel(NULL);
 
-    t_u8 band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
+    mlan_band_def band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
 
     if (pmpriv->support_11d_APIs != NULL)
     {
@@ -754,19 +754,21 @@ int wifi_uap_start(int type,
 #else
                    bool mfpr
 #endif
-                   )
+)
 {
     wuap_d("Configuring");
     /* Configure SSID */
-    int rv = wifi_cmd_uap_config(ssid, mac_addr, security, passphrase, password, channel, scan_chan_list,
-                                 wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
-                                 wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
+    int rv =
+        wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, channel,
+                            scan_chan_list, wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
+                            wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
-                                 dtim == 0? UAP_DTIM_PERIOD : dtim,
+                            dtim == 0 ? UAP_DTIM_PERIOD : dtim,
 #else
-                                 UAP_DTIM_PERIOD,
+                            UAP_DTIM_PERIOD,
 #endif
-                                 wm_wifi.chan_sw_count, type);
+                            wm_wifi.chan_sw_count, type);
+
     if (rv != WM_SUCCESS)
     {
         wuap_e("config failed. Cannot start");

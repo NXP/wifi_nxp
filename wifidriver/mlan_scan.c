@@ -273,11 +273,11 @@ static t_u8 wlan_is_band_compatible(mlan_band_def cfg_band, mlan_band_def scan_b
     switch (scan_band)
     {
         case BAND_A:
-            band = BAND_A | BAND_AN | BAND_AAC;
+            band = (mlan_band_def)(BAND_A | BAND_AN | BAND_AAC);
             break;
         case BAND_G:
         default:
-            band = BAND_B | BAND_G | BAND_GN | BAND_GAC;
+            band = (mlan_band_def)(BAND_B | BAND_G | BAND_GN | BAND_GAC);
     }
     return (t_u8)(cfg_band & band);
 }
@@ -3050,7 +3050,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     chan_freq_power_t *cfp;
     MrvlIEtypes_ChanBandListParamSet_t *pchan_band_tlv = MNULL;
     ChanBandParamSet_t *pchan_band;
-    t_u8 band;
+    mlan_band_def band;
     t_u8 is_bgscan_resp;
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
@@ -3221,8 +3221,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 
             /* Save the band designation for this entry for use in join */
             bss_new_entry->bss_band = band;
-            cfp                     = wlan_find_cfp_by_band_and_channel(pmadapter, (t_u8)bss_new_entry->bss_band,
-                                                    (t_u16)bss_new_entry->channel);
+            cfp = wlan_find_cfp_by_band_and_channel(pmadapter, bss_new_entry->bss_band, (t_u16)bss_new_entry->channel);
 
             if (cfp != MNULL)
             {
@@ -4157,7 +4156,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
         {
             if (((mode == MLAN_BSS_MODE_INFRA) &&
                  !wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band)) ||
-                (wlan_find_cfp_by_band_and_channel(pmadapter, (t_u8)pmadapter->pscan_table[i].bss_band,
+                (wlan_find_cfp_by_band_and_channel(pmadapter, pmadapter->pscan_table[i].bss_band,
                                                    (t_u16)pmadapter->pscan_table[i].channel) == MNULL))
             {
                 continue;
@@ -4244,7 +4243,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
         {
             if (((mode == MLAN_BSS_MODE_INFRA) &&
                  !wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band)) ||
-                (wlan_find_cfp_by_band_and_channel(pmadapter, (t_u8)pmadapter->pscan_table[i].bss_band,
+                (wlan_find_cfp_by_band_and_channel(pmadapter, pmadapter->pscan_table[i].bss_band,
                                                    (t_u16)pmadapter->pscan_table[i].channel) == MNULL))
             {
                 continue;

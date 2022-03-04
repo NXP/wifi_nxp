@@ -732,7 +732,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
     ds_rate.sub_command = WIFI_DS_RATE_CFG;
 
     errno                              = 0;
-    ds_rate.param.rate_cfg.rate_format = strtol(argv[1], NULL, 0);
+    ds_rate.param.rate_cfg.rate_format = (mlan_rate_format)(strtol(argv[1], NULL, 0));
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);

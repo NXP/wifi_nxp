@@ -1853,19 +1853,19 @@ mlan_status wlan_cmd_enh_power_mode(
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_PS_MODE_ENH);
     if (cmd_action == DIS_AUTO_PS)
     {
-        psmode_enh->action           = (ENH_PS_MODES)wlan_cpu_to_le16(DIS_AUTO_PS);
+        psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(DIS_AUTO_PS));
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
     else if (cmd_action == GET_PS)
     {
-        psmode_enh->action           = (ENH_PS_MODES)wlan_cpu_to_le16(GET_PS);
+        psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(GET_PS));
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
     else if (cmd_action == EN_AUTO_PS)
     {
-        psmode_enh->action                   = (ENH_PS_MODES)wlan_cpu_to_le16(EN_AUTO_PS);
+        psmode_enh->action                   = (ENH_PS_MODES)(wlan_cpu_to_le16(EN_AUTO_PS));
         psmode_enh->params.auto_ps.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd_size                             = S_DS_GEN + AUTO_PS_FIX_SIZE;
         tlv                                  = (t_u8 *)cmd + cmd_size;
@@ -2284,8 +2284,9 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
             )
             {
                 /* VHT/HE rate */
-                rate->param.data_rate.tx_rate_format = (mlan_rate_format)pmpriv->tx_rate_info & 0x3;
+                rate->param.data_rate.tx_rate_format = (mlan_rate_format)(pmpriv->tx_rate_info & 0x3);
                 rate->param.data_rate.tx_ht_bw       = (t_u32)((pmpriv->tx_rate_info & 0xC) >> 2);
+
 #ifdef CONFIG_11AX
                 if ((pmpriv->tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
                     rate->param.data_rate.tx_ht_gi =
@@ -2333,8 +2334,9 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
             )
             {
                 /* VHT/HE rate */
-                rate->param.data_rate.rx_rate_format = (mlan_rate_format)pmpriv->rxpd_rate_info & 0x3;
+                rate->param.data_rate.rx_rate_format = (mlan_rate_format)(pmpriv->rxpd_rate_info & 0x3);
                 rate->param.data_rate.rx_ht_bw       = (t_u32)((pmpriv->rxpd_rate_info & 0xC) >> 2);
+
 #ifdef CONFIG_11AX
                 if ((pmpriv->rxpd_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
                     rate->param.data_rate.rx_ht_gi =
@@ -2832,26 +2834,26 @@ mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, I
  *  @return             MLAN_STATUS_SUCCESS
  */
 mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
-				     IN HostCmd_DS_COMMAND *cmd,
-				     IN t_u16 cmd_action,
-				     IN t_void *pdata_buf)
+                                    IN HostCmd_DS_COMMAND *cmd,
+                                    IN t_u16 cmd_action,
+                                    IN t_void *pdata_buf)
 {
     HostCmd_DS_TX_RX_PKT_STATS *pkt_stats = &cmd->params.pkt_stats;
-    MrvlTxPerTrackInfo_t *tx_pert = NULL;
-    tx_pert_info *cfg = (tx_pert_info *)pdata_buf;
+    MrvlTxPerTrackInfo_t *tx_pert         = NULL;
+    tx_pert_info *cfg                     = (tx_pert_info *)pdata_buf;
 
     ENTER();
-    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_TX_RX_PKT_STATS);
+    cmd->command      = wlan_cpu_to_le16(HostCmd_CMD_TX_RX_PKT_STATS);
     pkt_stats->action = wlan_cpu_to_le16(cmd_action);
     pkt_stats->enable = cfg->tx_pert_check;
-    if(cmd_action == HostCmd_ACT_SET_TX_PER_TRACKING)
+    if (cmd_action == HostCmd_ACT_SET_TX_PER_TRACKING)
     {
-         tx_pert = (MrvlTxPerTrackInfo_t *)((t_u8 *)pkt_stats + sizeof(HostCmd_DS_TX_RX_PKT_STATS));
-         tx_pert->type   = wlan_cpu_to_le16(TLV_TYPE_TX_PER_TRACK);
-         tx_pert->length = wlan_cpu_to_le16(sizeof(MrvlTxPerTrackInfo_t) - sizeof(MrvlIEtypesHeader_t));
-         tx_pert->tx_stat_check_period = cfg->tx_pert_check_peroid;
-         tx_pert->tx_stat_check_ratio = cfg->tx_pert_check_ratio;
-         tx_pert->tx_stat_check_num = wlan_cpu_to_le16(cfg->tx_pert_check_num);
+        tx_pert         = (MrvlTxPerTrackInfo_t *)((t_u8 *)pkt_stats + sizeof(HostCmd_DS_TX_RX_PKT_STATS));
+        tx_pert->type   = wlan_cpu_to_le16(TLV_TYPE_TX_PER_TRACK);
+        tx_pert->length = wlan_cpu_to_le16(sizeof(MrvlTxPerTrackInfo_t) - sizeof(MrvlIEtypesHeader_t));
+        tx_pert->tx_stat_check_period = cfg->tx_pert_check_peroid;
+        tx_pert->tx_stat_check_ratio  = cfg->tx_pert_check_ratio;
+        tx_pert->tx_stat_check_num    = wlan_cpu_to_le16(cfg->tx_pert_check_num);
     }
     cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RX_PKT_STATS) + sizeof(MrvlTxPerTrackInfo_t));
 
@@ -3019,7 +3021,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
         }
         if ((pmadapter->fw_bands & BAND_AN) != 0U)
         {
-            pmadapter->adhoc_start_band  = BAND_A_AN;
+            pmadapter->adhoc_start_band  = (mlan_band_def)(BAND_A | BAND_AN);
             pmadapter->adhoc_11n_enabled = MTRUE;
         }
         else
@@ -3030,13 +3032,13 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
     else if ((pmadapter->fw_bands & BAND_GN) != 0U)
     {
-        pmadapter->adhoc_start_band  = BAND_G | BAND_B | BAND_GN;
+        pmadapter->adhoc_start_band  = (mlan_band_def)(BAND_G | BAND_B | BAND_GN);
         pmpriv->adhoc_channel        = DEFAULT_AD_HOC_CHANNEL;
         pmadapter->adhoc_11n_enabled = MTRUE;
     }
     else if ((pmadapter->fw_bands & BAND_G) != 0U)
     {
-        pmadapter->adhoc_start_band = BAND_G | BAND_B;
+        pmadapter->adhoc_start_band = (mlan_band_def)(BAND_G | BAND_B);
         pmpriv->adhoc_channel       = DEFAULT_AD_HOC_CHANNEL;
     }
     else if ((pmadapter->fw_bands & BAND_B) != 0U)

@@ -131,7 +131,7 @@ static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
-    mlan_bss_type recv_interface = rxpd->bss_type;
+    mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {

@@ -554,7 +554,7 @@ void test_wlan_add(int argc, char **argv)
                     " argument\n");
                 return;
             }
-            network.dtim_period  = (uint8_t)(dtim_period & 0XFF);
+            network.dtim_period = (uint8_t)(dtim_period & 0XFF);
             arg += 2;
             info.dtim = 1;
         }
@@ -582,7 +582,7 @@ void test_wlan_add(int argc, char **argv)
         }
     }
 
-    network.ip.ipv4.addr_type = info.address;
+    network.ip.ipv4.addr_type = (enum address_types)(info.address);
 
     ret = wlan_add_network(&network);
     switch (ret)
@@ -1304,22 +1304,23 @@ static void test_wlan_tx_pert(int argc, char **argv)
     }
     (void)memset(&tx_pert, 0, sizeof(tx_pert));
     tx_pert.tx_pert_check = atoi(argv[1]);
-    if(tx_pert.tx_pert_check == 1 && argc < 6)
+    if (tx_pert.tx_pert_check == 1 && argc < 6)
     {
         (void)PRINTF("Error: invalid number of arguments.\r\n");
-        (void)PRINTF("Need specify bss_type tx_pert_chk_prd, tx_perf_chk_ratio and tx_pert_chk_num"
-             "\r\n");
+        (void)PRINTF(
+            "Need specify bss_type tx_pert_chk_prd, tx_perf_chk_ratio and tx_pert_chk_num"
+            "\r\n");
         return;
     }
     if (string_equal("STA", argv[2]))
         bss_type = MLAN_BSS_TYPE_STA;
-    else if(string_equal("UAP", argv[2]))
+    else if (string_equal("UAP", argv[2]))
         bss_type = MLAN_BSS_TYPE_UAP;
-    if(tx_pert.tx_pert_check == 1)
+    if (tx_pert.tx_pert_check == 1)
     {
         tx_pert.tx_pert_check_peroid = (t_u8)atoi(argv[3]);
-        tx_pert.tx_pert_check_ratio = (t_u8)atoi(argv[4]);
-        tx_pert.tx_pert_check_num = atoi(argv[5]);
+        tx_pert.tx_pert_check_ratio  = (t_u8)atoi(argv[4]);
+        tx_pert.tx_pert_check_num    = atoi(argv[5]);
     }
     wlan_set_tx_pert(&tx_pert, bss_type);
 }

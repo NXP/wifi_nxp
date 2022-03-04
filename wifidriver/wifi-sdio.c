@@ -2224,7 +2224,7 @@ mlan_status sd_wifi_init(enum wlan_type type,
             ret = sdio_ioport_init();
             if (ret == MLAN_STATUS_SUCCESS)
             {
-                ret = firmware_download(st, fw_ram_start_addr, size);
+                ret = (mlan_status)firmware_download(st, fw_ram_start_addr, size);
                 if (ret == MLAN_STATUS_SUCCESS)
                 {
                     ret = sd_wifi_post_fwload(type);

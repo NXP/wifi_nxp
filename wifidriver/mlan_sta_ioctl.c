@@ -4499,7 +4499,8 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
         pmadapter->cfp_code_bg = misc->param.region_code;
         pmadapter->cfp_code_a  = misc->param.region_code;
         if (wlan_set_regiontable(pmpriv, (t_u8)pmadapter->region_code,
-                                 pmadapter->config_bands | pmadapter->adhoc_start_band) != MLAN_STATUS_SUCCESS)
+                                 (mlan_band_def)(pmadapter->config_bands | pmadapter->adhoc_start_band)) !=
+            MLAN_STATUS_SUCCESS)
         {
             pioctl_req->status_code = MLAN_ERROR_IOCTL_FAIL;
             ret                     = MLAN_STATUS_FAILURE;

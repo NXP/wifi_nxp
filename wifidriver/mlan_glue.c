@@ -1374,7 +1374,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
     /* BSSDescriptor_t *bssDesc = os_mem_alloc(sizeof(BSSDescriptor_t)); */
     /* if (!bssDesc) */
     /* 	return -WM_FAIL; */
-    int idx = wlan_find_bssid_in_list(priv, (unsigned char *)bssid, -1);
+    int idx = wlan_find_bssid_in_list(priv, (unsigned char *)bssid, MLAN_BSS_MODE_NEGATIVE);
     if (idx == -1)
     {
         wifi_w("Could not find BSSID in mlan scan list");
@@ -1499,7 +1499,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
     {
         if (priv->support_11d != NULL)
         {
-            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, (t_u8)d->bss_band) != MLAN_STATUS_SUCCESS)
+            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, d->bss_band) != MLAN_STATUS_SUCCESS)
             {
                 PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
                 return MLAN_STATUS_FAILURE;
@@ -2904,7 +2904,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
 #define OFFSET_SEQNUM 8
 static void wifi_tx_pert_report(void *pbuf)
 {
-    t_u8 *event_buf = (t_u8 *)pbuf;
+    t_u8 *event_buf   = (t_u8 *)pbuf;
     t_u16 current_per = 0;
 
     current_per = wlan_le16_to_cpu(*(t_u16 *)(event_buf + OFFSET_SEQNUM));
@@ -3593,7 +3593,7 @@ int wifi_get_scan_result_count(unsigned *count)
     return WM_SUCCESS;
 }
 
-int wrapper_wlan_set_regiontable(t_u8 region, t_u8 band)
+int wrapper_wlan_set_regiontable(t_u8 region, mlan_band_def band)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     mlan_status rv       = wlan_set_regiontable(pmpriv, region, band);
@@ -3925,9 +3925,9 @@ int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
     /* Store tx per tracking config in driver */
     (void)memcpy((t_u8 *)&(mlan_adap->tx_pert), tx_pert, sizeof(tx_pert_info));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
-    cmd->result = 0x0;
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS, HostCmd_ACT_SET_TX_PER_TRACKING,
-                              0, NULL, tx_pert, cmd);
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS,
+                             HostCmd_ACT_SET_TX_PER_TRACKING, 0, NULL, tx_pert, cmd);
     wifi_wait_for_cmdresp(NULL);
     return wm_wifi.cmd_resp_status;
 }

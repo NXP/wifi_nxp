@@ -482,7 +482,8 @@ typedef struct _mlan_ds_scan
 /** Enumeration for BSS mode */
 typedef enum _mlan_bss_mode
 {
-    MLAN_BSS_MODE_INFRA = 1,
+    MLAN_BSS_MODE_NEGATIVE = -1,
+    MLAN_BSS_MODE_INFRA    = 1,
     MLAN_BSS_MODE_IBSS,
     MLAN_BSS_MODE_AUTO
 } mlan_bss_mode;

@@ -1608,7 +1608,7 @@ mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, mlan_band_de
 
     if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
     {
-        cfp = wlan_get_region_cfp_table(pmadapter, region, BAND_G | BAND_B | BAND_GN, &cfp_no);
+        cfp = wlan_get_region_cfp_table(pmadapter, region, (mlan_band_def)(BAND_G | BAND_B | BAND_GN), &cfp_no);
         if (cfp != MNULL)
         {
             pmadapter->region_channel[i].num_cfp = (t_u8)cfp_no;

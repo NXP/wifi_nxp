@@ -2127,9 +2127,9 @@ mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, I
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
 mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
-				     IN HostCmd_DS_COMMAND *cmd,
-				     IN t_u16 cmd_action,
-				     IN t_void *pdata_buf);
+                                    IN HostCmd_DS_COMMAND *cmd,
+                                    IN t_u16 cmd_action,
+                                    IN t_void *pdata_buf);
 #endif
 
 mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter);
@@ -2493,7 +2493,7 @@ t_u8 wlan_band_to_radio_type(IN t_u8 band);
 
 /** Get Channel-Frequency-Power by band and channel */
 chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
-                                                    t_u8 band,
+                                                    mlan_band_def band,
                                                     t_u16 channel,
                                                     region_chan_t *region_channel);
 /** Find Channel-Frequency-Power by band and channel */

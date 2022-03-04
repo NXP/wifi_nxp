@@ -272,15 +272,20 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
 #ifdef CONFIG_IPV6
     s = socket(addr_af(addr), SOCK_RAW, (addr->type == IPADDR_TYPE_V4) ? IPPROTO_ICMP : IPPROTO_ICMPV6);
 #else
-    s = socket(addr_af(addr), SOCK_RAW, IPPROTO_ICMP);
+    s              = socket(addr_af(addr), SOCK_RAW, IPPROTO_ICMP);
 #endif
     if (s < 0)
     {
         ping_e("Failed to create raw socket for ping %d", s);
         return -WM_FAIL;
     }
-    /* Convert timeout to milliseconds */
-    timeout.tv_sec  = (time_t)r_timeout;
+/* Convert timeout to milliseconds */
+#if defined(__MCUXPRESSO)
+    timeout.tv_sec = (time_t)(r_timeout);
+#else
+    timeout.tv_sec = (long)(r_timeout);
+#endif
+
     timeout.tv_usec = 0;
 
     /* Set the socket timeout */
