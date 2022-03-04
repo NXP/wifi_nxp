@@ -559,7 +559,7 @@ void test_wlan_add(int argc, char **argv)
         }
     }
 
-    network.ip.ipv4.addr_type = info.address;
+    network.ip.ipv4.addr_type = (enum address_types)(info.address);
 
     ret = wlan_add_network(&network);
     switch (ret)

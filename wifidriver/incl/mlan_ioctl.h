@@ -477,7 +477,8 @@ typedef struct _mlan_ds_scan
 /** Enumeration for BSS mode */
 typedef enum _mlan_bss_mode
 {
-    MLAN_BSS_MODE_INFRA = 1,
+    MLAN_BSS_MODE_NEGATIVE = -1,
+    MLAN_BSS_MODE_INFRA    = 1,
     MLAN_BSS_MODE_IBSS,
     MLAN_BSS_MODE_AUTO
 } mlan_bss_mode;
@@ -1059,25 +1060,41 @@ typedef struct _mlan_ds_custom_reg_domain
 /** Enumeration for band */
 typedef enum _mlan_band_def
 {
-    BAND_0          = 0,
-    BAND_B          = 1,
-    BAND_G          = 2,
-    BAND_G_B        = BAND_G | BAND_B,
-    BAND_A          = 4,
-    BAND_GN         = 8,
-    BAND_G_GN       = BAND_G | BAND_GN,
-    BAND_B_G_GN     = BAND_B | BAND_G | BAND_GN,
-    BAND_AN         = 16,
-    BAND_A_AN       = BAND_A | BAND_AN,
-    BAND_GAC        = 32,
-    BAND_GN_GAC     = BAND_GN | BAND_GAC,
-    BAND_G_GN_GAC   = BAND_G | BAND_GN | BAND_GAC,
-    BAND_B_G_GN_GAC = BAND_B | BAND_G | BAND_GN | BAND_GAC,
-    BAND_AAC        = 64,
-    BAND_A_AN_AAC   = BAND_A | BAND_AN | BAND_AAC,
+    BAND_0                   = 0,
+    BAND_B                   = 1,
+    BAND_G                   = 2,
+    BAND_G_B                 = BAND_G | BAND_B,
+    BAND_A                   = 4,
+    BAND_A_B                 = BAND_A | BAND_B,
+    BAND_A_G                 = BAND_A | BAND_G,
+    BAND_A_B_G               = BAND_A | BAND_B | BAND_G,
+    BAND_GN                  = 8,
+    BAND_G_GN                = BAND_G | BAND_GN,
+    BAND_B_G_GN              = BAND_B | BAND_G | BAND_GN,
+    BAND_AN                  = 16,
+    BAND_A_AN                = BAND_A | BAND_AN,
+    BAND_A_G_AN_GN           = BAND_A | BAND_G | BAND_AN | BAND_GN,
+    BAND_A_B_G_GN_AN         = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN,
+    BAND_GAC                 = 32,
+    BAND_GN_GAC              = BAND_GN | BAND_GAC,
+    BAND_G_GN_GAC            = BAND_G | BAND_GN | BAND_GAC,
+    BAND_B_G_GN_GAC          = BAND_B | BAND_G | BAND_GN | BAND_GAC,
+    BAND_AAC                 = 64,
+    BAND_A_AN_AAC            = BAND_A | BAND_AN | BAND_AAC,
+    BAND_A_G_AN_GN_AAC       = BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC,
+    BAND_A_B_G_GN_AN_AAC     = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC,
+    BAND_A_B_G_GN_AN_AAC_GAC = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC,
 #ifdef CONFIG_11AX
-    BAND_GAX = 256,
-    BAND_AAX = 512,
+    BAND_GAX                 = 256,
+    BAND_GN_GAC_GAX          = BAND_GN | BAND_GAC | BAND_GAX,
+    BAND_G_GN_GAC_GAX        = BAND_G | BAND_GN | BAND_GAC | BAND_GAX,
+    BAND_B_G_GN_GAC_GAX      = BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX,
+    BAND_AAX                 = 512,
+    BAND_A_AN_AAC_AAX        = BAND_A | BAND_AN | BAND_AAC | BAND_AAX,
+    BAND_A_G_AN_GN_AAC_AAX   = BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC | BAND_AAX,
+    BAND_A_B_G_GN_AN_AAC_AAX = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_AAX,
+    BAND_A_B_G_GN_AN_AAC_GAC_AAX_GAX =
+        BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC | BAND_AAX | BAND_GAX
 #endif
 } mlan_band_def;
 

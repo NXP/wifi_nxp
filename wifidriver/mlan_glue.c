@@ -1374,7 +1374,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
     /* BSSDescriptor_t *bssDesc = os_mem_alloc(sizeof(BSSDescriptor_t)); */
     /* if (!bssDesc) */
     /* 	return -WM_FAIL; */
-    int idx = wlan_find_bssid_in_list(priv, (unsigned char *)bssid, -1);
+    int idx = wlan_find_bssid_in_list(priv, (unsigned char *)bssid, MLAN_BSS_MODE_NEGATIVE);
     if (idx == -1)
     {
         wifi_w("Could not find BSSID in mlan scan list");
@@ -1499,7 +1499,7 @@ int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wp
     {
         if (priv->support_11d != NULL)
         {
-            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, (t_u8)d->bss_band) != MLAN_STATUS_SUCCESS)
+            if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, d->bss_band) != MLAN_STATUS_SUCCESS)
             {
                 PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
                 return MLAN_STATUS_FAILURE;
@@ -3553,7 +3553,7 @@ int wifi_get_scan_result_count(unsigned *count)
     return WM_SUCCESS;
 }
 
-int wrapper_wlan_set_regiontable(t_u8 region, t_u8 band)
+int wrapper_wlan_set_regiontable(t_u8 region, mlan_band_def band)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     mlan_status rv       = wlan_set_regiontable(pmpriv, region, band);

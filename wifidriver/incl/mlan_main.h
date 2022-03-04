@@ -901,7 +901,7 @@ typedef struct _wlan_802_11d_domain_reg
     /** Country Code */
     t_u8 country_code[COUNTRY_CODE_LEN];
     /** band that channels in sub_band belong to */
-    t_u8 band;
+    mlan_band_def band;
     /** No. of subband in below */
     t_u8 no_of_sub_band;
     /** Subband data to send/last sent */
@@ -2457,7 +2457,7 @@ t_u8 wlan_band_to_radio_type(IN t_u8 band);
 
 /** Get Channel-Frequency-Power by band and channel */
 chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
-                                                    t_u8 band,
+                                                    mlan_band_def band,
                                                     t_u16 channel,
                                                     region_chan_t *region_channel);
 /** Find Channel-Frequency-Power by band and channel */
@@ -2484,7 +2484,7 @@ t_u32 wlan_get_active_data_rates(mlan_private *pmpriv,
 /** Get supported data rates */
 t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                                mlan_bss_mode bss_mode,
-                               t_u16 config_bands,
+                               mlan_band_def config_bands,
                                WLAN_802_11_RATES rates);
 #ifndef CONFIG_MLAN_WMSDK
 /** Convert data rate to index */

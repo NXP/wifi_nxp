@@ -154,8 +154,13 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
         ping_e("Failed to create raw socket for ping %d", s);
         return -WM_FAIL;
     }
-    /* Convert timeout to milliseconds */
-    timeout.tv_sec  = r_timeout;
+/* Convert timeout to milliseconds */
+#if defined(__MCUXPRESSO)
+    timeout.tv_sec = (time_t)(r_timeout);
+#else
+    timeout.tv_sec = (long)(r_timeout);
+#endif
+
     timeout.tv_usec = 0;
 
     /* Set the socket timeout */

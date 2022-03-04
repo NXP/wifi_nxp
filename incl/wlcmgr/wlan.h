@@ -682,7 +682,7 @@ struct wlan_network_security
     char password[WLAN_PASSWORD_MAX_LENGTH];
     /** Length of the WPA3 SAE Password, \ref WLAN_PASSWORD_MIN_LENGTH to \ref
      * WLAN_PASSWORD_MAX_LENGTH.  Ignored for networks with no security. */
-    char password_len;
+    size_t password_len;
     /** Pairwise Master Key.  When pmk_valid is set, this is the PMK calculated
      * from the PSK for WPA/PSK networks.  If pmk_valid is not set, this field
      * is not valid.  When adding networks with \ref wlan_add_network, users
@@ -822,7 +822,7 @@ int wlan_get_current_nf(void);
 
 /** Address types to be used by the element wlan_ip_config.addr_type below
  */
-enum
+enum address_types
 {
     /** static IP address */
     ADDR_TYPE_STATIC = 0,

@@ -506,7 +506,7 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
     (void)__memset(pmadapter, &region_chan, 0, sizeof(parsed_region_chan_11d_t));
 
     /* Parse 11D country info */
-    if (wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, (t_u8)pbss_desc->bss_band, &region_chan) !=
+    if (wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, pbss_desc->bss_band, &region_chan) !=
         MLAN_STATUS_SUCCESS)
     {
         LEAVE();
@@ -1383,7 +1383,7 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
         if (pbss_desc != MNULL)
         {
             /* Parse domain info if available */
-            ret = wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, (t_u8)pbss_desc->bss_band,
+            ret = wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, pbss_desc->bss_band,
                                              &bssdesc_region_chan);
 
             if (ret == MLAN_STATUS_SUCCESS)

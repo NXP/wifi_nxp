@@ -48,7 +48,7 @@
 /********************************************************
    Local Functions
 ********************************************************/
-t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, mlan_band_def bands, t_u16 mcs_map);
+t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_map);
 #if 0
 /**
  *  @brief determine the center frquency center index for bandwidth
@@ -627,7 +627,7 @@ void wlan_show_dot11acmcssupport(pmlan_adapter pmadapter, t_u32 support)
  *
  *  @return             the max data rate for long GI
  */
-t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, mlan_band_def bands, t_u16 mcs_map)
+t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_map)
 {
     mlan_adapter *pmadapter = priv->adapter;
     t_u8 i;
@@ -683,7 +683,7 @@ t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, mlan_band_def bands, t_
     };
 
 #ifdef CONFIG_5GHz_SUPPORT
-    if ((bands & BAND_AAC) != 0U)
+    if ((bands & (t_u8)(BAND_AAC)) != 0U)
     {
         usr_vht_cap_info    = pmadapter->usr_dot_11ac_dev_cap_a;
         usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_a;

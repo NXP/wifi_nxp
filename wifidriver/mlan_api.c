@@ -1786,7 +1786,7 @@ int wifi_get_log(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
 }
 #endif
 
-static int wifi_send_cmd_802_11_supplicant_pmk(int mode, mlan_ds_sec_cfg *sec, t_u32 action)
+static int wifi_send_cmd_802_11_supplicant_pmk(int mode, mlan_ds_sec_cfg *sec, mlan_act_ioctl action)
 {
     /* fixme: check if this needs to go on heap */
     mlan_ioctl_req req;
@@ -2244,7 +2244,7 @@ static int wifi_send_11d_cfg_ioctl(mlan_ds_11d_cfg *d_cfg)
     req.buf_len   = sizeof(mlan_ds_11d_cfg);
     req.bss_index = 0;
     req.req_id    = MLAN_IOCTL_11D_CFG;
-    req.action    = HostCmd_ACT_GEN_SET;
+    req.action    = (mlan_act_ioctl)HostCmd_ACT_GEN_SET;
 
     mlan_status rv = wlan_ops_sta_ioctl(mlan_adap, &req);
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
@@ -2269,7 +2269,7 @@ int wifi_set_domain_params(wifi_domain_param_t *dp)
 
     (void)memcpy((void *)&d_cfg.param.domain_info.country_code, (const void *)dp->country_code, COUNTRY_CODE_LEN);
 
-    d_cfg.param.domain_info.band = BAND_B | BAND_G;
+    d_cfg.param.domain_info.band = (mlan_band_def)(BAND_B | BAND_G);
 
 #ifdef CONFIG_11N
     d_cfg.param.domain_info.band |= BAND_GN;

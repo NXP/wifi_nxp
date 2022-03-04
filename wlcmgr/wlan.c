@@ -1002,7 +1002,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         if (!wlan.hidden_scan_on && (!memcmp(null_ssid, (char *)res->ssid, res->ssid_len)))
         {
             chan_list[*num_channels].chan_number = res->Channel;
-            chan_list[*num_channels].scan_type   = 1;
+            chan_list[*num_channels].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
             chan_list[*num_channels].scan_time   = 150;
             (*num_channels)++;
         }
@@ -1334,7 +1334,7 @@ static void do_scan(struct wlan_network *network)
         if (channel != 0)
         {
             chan_list[0].chan_number = channel;
-            chan_list[0].scan_type   = 1;
+            chan_list[0].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
             chan_list[0].scan_time   = 120;
 #ifdef CONFIG_WLAN_BRIDGE
             ret = wifi_send_scan_cmd(type, bssid, ssid, bridge_ssid, 1, chan_list, 0, false, false);
@@ -3401,7 +3401,7 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
 {
     struct wifi_message msg;
     msg.event  = 0;
-    msg.reason = 0;
+    msg.reason = WIFI_EVENT_REASON_SUCCESS;
     msg.data   = (void *)(wlan.cur_network_idx);
 
     wlcm_d("Reconnect in progress ...");
@@ -3738,7 +3738,7 @@ static int send_user_request(enum user_request_type request, int data)
     struct wifi_message msg;
 
     msg.event  = request;
-    msg.reason = 0;
+    msg.reason = WIFI_EVENT_REASON_SUCCESS;
     msg.data   = (void *)data;
 
     if (os_queue_send(&wlan.events, &msg, OS_NO_WAIT) == WM_SUCCESS)
@@ -4819,7 +4819,7 @@ static int wlan_pscan(int (*cb)(unsigned int count))
     wlan_scan_param.num_channels = 1;
 
     wlan_scan_param.chan_list[0].chan_number = network.channel;
-    wlan_scan_param.chan_list[0].scan_type   = 2;
+    wlan_scan_param.chan_list[0].scan_type   = MLAN_SCAN_TYPE_PASSIVE;
     wlan_scan_param.chan_list[0].scan_time   = 200;
 
     ret = wlan_scan_with_opt(wlan_scan_param);
