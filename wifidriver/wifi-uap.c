@@ -579,6 +579,7 @@ int wifi_cmd_uap_config(char *ssid,
     bss.param.bss_config.ampdu_param = 0x03;
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
                  sizeof(bss.param.bss_config.supported_mcs_set));
+#endif
     /*
      * Note that we are leaving htcap info set to zero by default. This
      *  will ensure that 11N is disabled.
