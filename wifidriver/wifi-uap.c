@@ -319,7 +319,7 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     (void)wifi_get_uap_channel(NULL);
 
-    t_u8 band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
+    mlan_band_def band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
 
     if (pmpriv->support_11d_APIs != NULL)
     {
@@ -335,7 +335,7 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
 
 int wifi_cmd_uap_config(char *ssid,
                         t_u8 *mac_addr,
-                        t_u8 security,
+                        enum wlan_security_type security,
                         char *passphrase,
                         char *password,
                         t_u8 channel,
