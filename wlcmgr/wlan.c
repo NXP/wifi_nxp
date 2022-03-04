@@ -4220,7 +4220,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
             return true;
         case WLAN_SECURITY_WEP_OPEN:
         case WLAN_SECURITY_WEP_SHARED:
-            return true;
+            return false;
         default:
             return false;
     }
