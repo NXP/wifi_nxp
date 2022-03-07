@@ -360,6 +360,10 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_AUTH_TYPE (PROPRIETARY_TLV_BASE_ID + 0x1fU) // 0x011f
 /** TLV type : BSSID */
 #define TLV_TYPE_BSSID (PROPRIETARY_TLV_BASE_ID + 0x23U) // 0x0123
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+/** TLV type : RSSI Threshold */
+#define TLV_TYPE_RSSI_THRESHOLD (PROPRIETARY_TLV_BASE_ID + 337)
+#endif
 
 /** TLV type : Link Quality */
 #define TLV_TYPE_LINK_QUALITY (PROPRIETARY_TLV_BASE_ID + 0x24) // 0x0124
@@ -2137,6 +2141,20 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ChanBandListParamSet_t
     /** Channel Band parameters */
     ChanBandParamSet_t chan_band_param[1];
 } MLAN_PACK_END MrvlIEtypes_ChanBandListParamSet_t;
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+typedef MLAN_PACK_START struct _MrvlIEtypes_RssiThresholdParamSet_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Enable or disable the TLV */
+    t_u8 enable;
+    /** Threshold of RSSI */
+    t_s16 rssi_threshold;
+    /** Reserved */
+    t_u8 reserved;
+} MLAN_PACK_END MrvlIEtypes_RssiThresholdParamSet_t;
+#endif
 
 /** MrvlIEtypes_RatesParamSet_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_RatesParamSet_t

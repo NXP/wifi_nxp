@@ -1327,7 +1327,11 @@ static void do_scan(struct wlan_network *network)
     if (wrapper_wlan_11d_support_is_enabled() && wlan.scan_count < WLAN_11D_SCAN_LIMIT)
     {
         ret = wifi_send_scan_cmd(g_wifi_scan_params.bss_type, g_wifi_scan_params.bssid, g_wifi_scan_params.ssid, NULL,
-                                 0, NULL, 0, false, false);
+                                 0, NULL, 0,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                                 0,
+#endif
+                                 false, false);
     }
     else
     {
@@ -1339,12 +1343,20 @@ static void do_scan(struct wlan_network *network)
 #ifdef CONFIG_WLAN_BRIDGE
             ret = wifi_send_scan_cmd(type, bssid, ssid, bridge_ssid, 1, chan_list, 0, false, false);
 #else
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+            ret = wifi_send_scan_cmd(type, bssid, ssid, NULL, 1, chan_list, 0, 0, false, false);
+#else
             ret = wifi_send_scan_cmd(type, bssid, ssid, NULL, 1, chan_list, 0, false, false);
+#endif
 #endif
         }
         else
         {
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+            ret = wifi_send_scan_cmd(type, bssid, ssid, NULL, 0, NULL, 0, 0, false, false);
+#else
             ret = wifi_send_scan_cmd(type, bssid, ssid, NULL, 0, NULL, 0, false, false);
+#endif
         }
     }
     if (ret != 0)
@@ -1386,7 +1398,11 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 
     wlan.sta_state = CM_STA_SCANNING;
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    ret = wifi_send_scan_cmd(type, bssid, ssid, NULL, num_channels, chan_list, 0, 0, false, true);
+#else
     ret = wifi_send_scan_cmd(type, bssid, ssid, NULL, num_channels, chan_list, 0, false, true);
+#endif
     if (ret != 0)
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
@@ -3197,6 +3213,9 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
                                  wlan_scan_param->ssid, NULL,
 #endif
                                  wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                                 wlan_scan_param->rssi_threshold,
+#endif                                 
                                  false, false);
     if (ret != WM_SUCCESS)
     {
@@ -4494,6 +4513,16 @@ int wlan_get_current_uap_network(struct wlan_network *network)
     }
     return WLAN_ERROR_STATE;
 }
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+int wlan_set_rssi_threshold(int rssithr)
+{
+    if (rssithr)
+        wlan.networks[wlan.cur_network_idx].rssi_threshold = (rssithr < 0 ? rssithr : 0);
+
+    return WM_SUCCESS;
+}
+#endif
 
 int is_uap_started(void)
 {

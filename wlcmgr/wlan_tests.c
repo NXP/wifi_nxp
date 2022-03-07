@@ -178,6 +178,9 @@ static void print_network(struct wlan_network *network)
     }
 
     print_address(&network->ip, network->role);
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
+#endif
 #endif
 }
 
@@ -727,7 +730,11 @@ static void dump_wlan_scan_opt_usage(void)
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
         "    wlan-scan-opt ssid <ssid> bssid <bssid> "
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        "channel <channel> probes <probes> rssi_threshold <rssi_threshold>"
+#else
         "channel <channel> probes <probes>"
+#endif
         "\r\n");
 }
 
@@ -745,6 +752,9 @@ void test_wlan_scan_opt(int argc, char **argv)
         unsigned bssid : 1;
         unsigned channel : 1;
         unsigned probes : 1;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        unsigned rssi_threshold : 1;
+#endif
     } info;
 
     (void)memset(&info, 0, sizeof(info));
@@ -831,6 +841,28 @@ void test_wlan_scan_opt(int argc, char **argv)
             arg += 2;
             info.probes = 1;
         }
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        else if (!info.rssi_threshold && string_equal("rssi_threshold", argv[arg]))
+        {
+            if (arg + 1 >= argc)
+            {
+                (void)PRINTF(
+                    "Error: invalid rssi threshold"
+                    " argument\n");
+                    return;
+            }
+            wlan_scan_param.rssi_threshold = atoi(argv[arg + 1]);
+            if (wlan_scan_param.rssi_threshold < -101)
+            {
+                (void)PRINTF(
+                    "Error: invalid value of rssi threshold"
+                    "\r\n");
+                    return;
+            }
+            arg += 2;
+            info.rssi_threshold = 1;
+        }
+#endif
         else
         {
             dump_wlan_scan_opt_usage();
@@ -871,6 +903,11 @@ void test_wlan_scan_opt(int argc, char **argv)
         if (info.probes != 0U)
         {
             (void)PRINTF("with %d probes ", wlan_scan_param.num_probes);
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        wlan_set_rssi_threshold(wlan_scan_param.rssi_threshold);
+        if (info.rssi_threshold != 0U)
+            (void)PRINTF("with %d rssi_threshold ", wlan_scan_param.rssi_threshold);
+#endif
         }
         (void)PRINTF("scheduled...\r\n");
     }

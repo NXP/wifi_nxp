@@ -533,6 +533,10 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 #endif
     pmadapter->scan_probes = DEFAULT_PROBES;
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    pmadapter->rssi_threshold = 0;
+#endif
+
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);

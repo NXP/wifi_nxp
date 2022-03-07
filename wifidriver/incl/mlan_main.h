@@ -1910,6 +1910,10 @@ struct _mlan_adapter
     t_u32 num_in_scan_table;
     /** Scan probes */
     t_u16 scan_probes;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /** Rssi threshold */
+    t_s16 rssi_threshold;
+#endif
 
     /** Scan type */
     mlan_scan_type scan_type;

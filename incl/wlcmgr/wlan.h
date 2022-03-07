@@ -942,6 +942,10 @@ struct wlan_network
      *  channel on which the network to connect should be present. Set this
      *  to 0 to allow the network to be found on any channel. */
     unsigned int channel;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /** Rssi threshold */
+    short rssi_threshold;
+#endif
     /** BSS type */
     enum wlan_bss_type type;
     /** The network wireless mode enum wlan_bss_role. Set this
@@ -1378,6 +1382,10 @@ int wlan_get_current_network(struct wlan_network *network);
  *           not running or not in the \ref WLAN_UAP_STARTED state.
  */
 int wlan_get_current_uap_network(struct wlan_network *network);
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+int wlan_set_rssi_threshold(int rssithr);
+#endif
 
 /** Retrieve the status information of the micro-AP interface.
  *

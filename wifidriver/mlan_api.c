@@ -1367,6 +1367,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered)
 {
@@ -1406,6 +1409,10 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 
     user_scan_cfg->bss_mode           = bss_mode;
     user_scan_cfg->keep_previous_scan = keep_previous_scan;
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    user_scan_cfg->rssi_threshold     = rssi_threshold;
+#endif
 
     if (num_probes > 0U && num_probes <= MAX_PROBES)
     {
