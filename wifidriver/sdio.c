@@ -95,7 +95,7 @@ uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len)
  *                      SDIO_POLLING_STATUS_TIMEOUT if bits
  *                      aren't set
  */
-int wlan_card_status(t_u8 bits)
+bool wlan_card_status(t_u8 bits)
 {
     uint32_t resp = 0;
     t_u32 tries;
@@ -241,11 +241,12 @@ mlan_status sdio_init(void)
 	}
 #endif
     int ret = 0;
-    ret     = sdio_drv_creg_read(CARD_TO_HOST_EVENT_REG, 1, &resp);
+    bool wlan_card_stat;
+    ret = sdio_drv_creg_read(CARD_TO_HOST_EVENT_REG, 1, &resp);
     if (ret && (resp & (DN_LD_CARD_RDY)) == 0U)
     {
-        ret = wlan_card_status(UP_LD_CARD_RDY);
-        if (ret != 0)
+        wlan_card_stat = wlan_card_status(UP_LD_CARD_RDY);
+        if (wlan_card_stat != false)
         {
             uint32_t rd_len;
             rd_len = wlan_card_read_scratch_reg();

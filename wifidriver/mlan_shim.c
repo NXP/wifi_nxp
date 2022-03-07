@@ -301,7 +301,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
             pmadapter->priv[i]->adapter = pmadapter;
 
             /* Save bss_type, frame_type & bss_priority */
-            pmadapter->priv[i]->bss_type     = (t_u8)pmdevice->bss_attr[i].bss_type;
+            pmadapter->priv[i]->bss_type     = pmdevice->bss_attr[i].bss_type;
             pmadapter->priv[i]->frame_type   = (t_u8)pmdevice->bss_attr[i].frame_type;
             pmadapter->priv[i]->bss_priority = (t_u8)pmdevice->bss_attr[i].bss_priority;
             if (pmdevice->bss_attr[i].bss_type == MLAN_BSS_TYPE_STA)

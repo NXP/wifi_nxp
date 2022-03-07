@@ -697,7 +697,7 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_ecsa_enable(void);
 
-int wifi_uap_start(int type,
+int wifi_uap_start(mlan_bss_type type,
                    char *ssid,
                    uint8_t *mac_addr,
                    int security,
@@ -712,7 +712,7 @@ int wifi_uap_start(int type,
 #else
                    bool mfpr
 #endif
-                   );
+);
 
 #ifdef CONFIG_WMM
 int wrapper_wlan_sta_ampdu_enable(t_u8 tid);

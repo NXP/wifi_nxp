@@ -1032,7 +1032,7 @@ struct _mlan_private
     /** BSS index */
     t_u8 bss_index;
     /** BSS type */
-    t_u8 bss_type;
+    mlan_bss_type bss_type;
     /** BSS role */
     mlan_bss_role bss_role;
     /** BSS Priority */

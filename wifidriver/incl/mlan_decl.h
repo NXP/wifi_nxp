@@ -588,7 +588,7 @@ typedef struct _mlan_buffer
 typedef struct _mlan_bss_attr
 {
     /** BSS type */
-    t_u32 bss_type;
+    mlan_bss_type bss_type;
     /** Data frame type: Ethernet II, 802.11, etc. */
     t_u32 frame_type;
     /** The BSS is active (non-0) or not (0). */

@@ -158,7 +158,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     return status;
 }
 
-int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interface, void *pdata_buf)
+int wifi_send_power_save_command(ENH_PS_MODES action, int ps_bitmap, mlan_bss_type interface, void *pdata_buf)
 {
     mlan_status status;
     mlan_ds_auto_ds ds_param;

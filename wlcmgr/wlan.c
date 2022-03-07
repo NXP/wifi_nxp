@@ -1483,7 +1483,7 @@ static int do_start(struct wlan_network *network)
         }
 
         wlcm_d("starting our own network");
-        ret = wifi_uap_start(network->type, network->ssid,
+        ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
 #ifdef CONFIG_P2P
                              wlan.wfd_mac,
 #else

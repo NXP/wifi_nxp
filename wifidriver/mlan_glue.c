@@ -627,7 +627,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
 static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp)
 {
     HostCmd_DS_11N_DELBA *pdel_ba = (HostCmd_DS_11N_DELBA *)&resp->params.del_ba;
-    int bss_type                  = HostCmd_GET_BSS_TYPE(resp->seq_num);
+    mlan_bss_type bss_type        = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
     if (pdel_ba->del_result == BA_RESULT_SUCCESS)
     {
         if (bss_type == MLAN_BSS_TYPE_STA)
@@ -1668,7 +1668,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     pmpriv->uap_bss_started = MFALSE;
-                    int bss_type            = HostCmd_GET_BSS_TYPE(resp->seq_num);
+                    mlan_bss_type bss_type  = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
 #ifdef CONFIG_P2P
                         || (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -1689,7 +1689,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+                    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
 #ifdef CONFIG_P2P
                         || (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)

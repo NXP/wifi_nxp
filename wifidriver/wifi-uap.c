@@ -345,7 +345,7 @@ int wifi_cmd_uap_config(char *ssid,
                         t_u8 bandwidth,
                         t_u8 dtim_period,
                         t_u8 chan_sw_count,
-                        int bss_type)
+                        mlan_bss_type bss_type)
 {
     int ssid_len = strlen(ssid);
     uint8_t i;
@@ -739,7 +739,7 @@ void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
 
 static int wifi_uap_pmf_getset(uint8_t action, bool *mfpc, bool *mfpr);
 
-int wifi_uap_start(int type,
+int wifi_uap_start(mlan_bss_type type,
                    char *ssid,
                    uint8_t *mac_addr,
                    int security,
