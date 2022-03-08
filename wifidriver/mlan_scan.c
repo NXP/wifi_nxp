@@ -1539,8 +1539,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
             case VENDOR_SPECIFIC_221:
                 pvendor_ie = (IEEEtypes_VendorSpecific_t *)(void *)pcurrent_ptr;
 
-                if (!((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, 3 * sizeof(t_u8))) &
-                      (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_type, sizeof(t_u8)))))
+                if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, 3 * sizeof(t_u8))) &
+                    !(__memcmp(pmadapter, &pvendor_ie->vend_hdr.oui_type, wpa_type, sizeof(t_u8))))
                 {
                     /* Save it here since we do not have beacon buffer */
                     /* fixme : Verify if this is the right approach. This had to be
@@ -1570,8 +1570,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     HEXDUMP("InterpretIE: Resp WPA_IE", (t_u8 *)pbss_entry->pwpa_ie,
                             ((*(pbss_entry->pwpa_ie)).vend_hdr.len + sizeof(IEEEtypes_Header_t)));
                 }
-                else if (!((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, 3 * sizeof(t_u8))) &
-                           (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_type, sizeof(t_u8)))))
+                else if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, 3 * sizeof(t_u8))) &
+                         !(__memcmp(pmadapter, &pvendor_ie->vend_hdr.oui_type, wmm_type, sizeof(t_u8))))
                 {
                     if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t) || total_ie_len == sizeof(IEEEtypes_WmmInfo_t))
                     {
