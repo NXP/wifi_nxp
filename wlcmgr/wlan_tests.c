@@ -203,19 +203,19 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
     {
         return -1;
     }
-    *gwaddr++ = 0;
+    *gwaddr++ = (char)0;
 
     netmask = strstr(gwaddr, ",");
     if (netmask == NULL)
     {
         return -1;
     }
-    *netmask++ = 0;
+    *netmask++ = (char)0;
 
     dns1 = strstr(netmask, ",");
     if (dns1 != NULL)
     {
-        *dns1++ = 0;
+        *dns1++ = (char)0;
         dns2    = strstr(dns1, ",");
     }
     ip->ipv4.address = net_inet_aton(ipaddr);
@@ -251,7 +251,7 @@ int get_security(int argc, char **argv, enum wlan_security_type type, struct wla
                 return 1;
             }
             /* copy the PSK phrase */
-            sec->psk_len = strlen(argv[0]);
+            sec->psk_len = (char)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
             {
                 return 1;
@@ -381,7 +381,7 @@ void test_wlan_add(int argc, char **argv)
 
     (void)memcpy(network.name, argv[arg], strlen(argv[arg]));
     arg++;
-    info.address = ADDR_TYPE_DHCP;
+    info.address = (u8_t)ADDR_TYPE_DHCP;
     do
     {
         if (!info.ssid && string_equal("ssid", argv[arg]))
@@ -431,7 +431,7 @@ void test_wlan_add(int argc, char **argv)
                 return;
             }
             arg++;
-            info.address = ADDR_TYPE_STATIC;
+            info.address = (u8_t)ADDR_TYPE_STATIC;
         }
         else if (!info.security && string_equal("wpa", argv[arg]))
         {
@@ -517,7 +517,7 @@ void test_wlan_add(int argc, char **argv)
         }
         else if (!info.mfpc && string_equal("mfpc", argv[arg]))
         {
-            network.security.mfpc = strtol(argv[arg + 1], NULL, 10);
+            network.security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
             if (arg + 1 >= argc || (network.security.mfpc != false && network.security.mfpc != true))
             {
                 (void)PRINTF(
@@ -530,7 +530,7 @@ void test_wlan_add(int argc, char **argv)
         }
         else if (!info.mfpr && string_equal("mfpr", argv[arg]))
         {
-            network.security.mfpr = atoi(argv[arg + 1]);
+            network.security.mfpr = (bool)atoi(argv[arg + 1]);
             if (arg + 1 >= argc || (network.security.mfpr != false && network.security.mfpr != true))
             {
                 (void)PRINTF(
@@ -543,7 +543,7 @@ void test_wlan_add(int argc, char **argv)
         }
         else if (!strncmp(argv[arg], "autoip", 6))
         {
-            info.address = ADDR_TYPE_LLA;
+            info.address = (u8_t)ADDR_TYPE_LLA;
             arg++;
         }
 #ifdef CONFIG_WIFI_DTIM_PERIOD
@@ -1903,7 +1903,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
         return;
     }
 
-    bandwidth = atoi(argv[1]);
+    bandwidth = (uint8_t)atoi(argv[1]);
     ret       = wlan_uap_set_bandwidth(bandwidth);
 
     if (ret != WM_SUCCESS)
@@ -1979,7 +1979,7 @@ int wlan_cli_init(void)
         return i;
     }
 
-    if (cli_register_commands(tests, sizeof(tests) / sizeof(struct cli_command)) != 0)
+    if (cli_register_commands(tests, (int)(sizeof(tests) / sizeof(struct cli_command))) != 0)
     {
         return -WM_FAIL;
     }

@@ -68,8 +68,8 @@ static void wlan_pmfcfg_set(int argc, char *argv[])
         return;
     }
 
-    mfpc = strtol(argv[1], NULL, 10);
-    mfpr = strtol(argv[2], NULL, 10);
+    mfpc = (uint8_t)strtol(argv[1], NULL, 10);
+    mfpr = (uint8_t)strtol(argv[2], NULL, 10);
 
     ret = wlan_set_pmfcfg(mfpc, mfpr);
     if (ret == WM_SUCCESS)
@@ -144,7 +144,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     }
 
     errno    = 0;
-    ant_mode = strtol(argv[1], NULL, 16);
+    ant_mode = (uint32_t)strtol(argv[1], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -159,7 +159,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     errno = 0;
     if (argc == 3)
     {
-        evaluate_time = strtol(argv[2], NULL, 16);
+        evaluate_time = (uint16_t)strtol(argv[2], NULL, 16);
     }
     if (errno != 0)
     {
@@ -254,26 +254,26 @@ static void wlan_ed_mac_mode_set(int argc, char *argv[])
     }
 
     errno                       = 0;
-    wlan_ed_mac_ctrl.ed_ctrl_2g = strtol(argv[1], NULL, 16);
+    wlan_ed_mac_ctrl.ed_ctrl_2g = (t_u16)strtol(argv[1], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
     errno                         = 0;
-    wlan_ed_mac_ctrl.ed_offset_2g = strtol(argv[2], NULL, 16);
+    wlan_ed_mac_ctrl.ed_offset_2g = (t_s16)strtol(argv[2], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
 #ifdef CONFIG_5GHz_SUPPORT
     errno                       = 0;
-    wlan_ed_mac_ctrl.ed_ctrl_5g = strtol(argv[3], NULL, 16);
+    wlan_ed_mac_ctrl.ed_ctrl_5g = (t_u16)strtol(argv[3], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
     errno                         = 0;
-    wlan_ed_mac_ctrl.ed_offset_5g = strtol(argv[4], NULL, 16);
+    wlan_ed_mac_ctrl.ed_offset_5g = (t_s16)strtol(argv[4], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -416,7 +416,7 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     }
 
     errno             = 0;
-    t_u32 region_code = strtol(argv[1], NULL, 0);
+    t_u32 region_code = (t_u32)strtol(argv[1], NULL, 0);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -739,14 +739,14 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
     errno                             = 0;
-    ds_rate.param.rate_cfg.rate_index = strtol(argv[2], NULL, 0);
+    ds_rate.param.rate_cfg.rate_index = (t_u32)strtol(argv[2], NULL, 0);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
 #ifdef CONFIG_11AC
     errno                      = 0;
-    ds_rate.param.rate_cfg.nss = strtol(argv[3], NULL, 0);
+    ds_rate.param.rate_cfg.nss = (t_u32)strtol(argv[3], NULL, 0);
     if (errno != 0)
         (void)PRINTF("Error during strtoul errno:%d", errno);
 #endif
@@ -1219,7 +1219,8 @@ static struct cli_command wlan_enhanced_commands[] = {
 
 int wlan_enhanced_cli_init(void)
 {
-    if (cli_register_commands(wlan_enhanced_commands, sizeof(wlan_enhanced_commands) / sizeof(struct cli_command)) != 0)
+    if (cli_register_commands(wlan_enhanced_commands,
+                              (int)(sizeof(wlan_enhanced_commands) / sizeof(struct cli_command))) != 0)
     {
         return -WM_FAIL;
     }

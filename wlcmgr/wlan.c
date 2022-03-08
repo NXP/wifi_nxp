@@ -539,7 +539,7 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
         type = WLAN_BSS_TYPE_UAP;
     }
 
-    return wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
+    return wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, (t_u16)HS_CONFIGURE, wlan.hs_wakeup_condition);
 }
 
 static void wlan_host_sleep_and_sleep_confirm(void)
@@ -865,7 +865,7 @@ begin:
 
 static int is_bssid_any(char *b)
 {
-    return (!b[0] && !b[1] && !b[2] && !b[3] && !b[4] && !b[5]);
+    return (int)(!b[0] && !b[1] && !b[2] && !b[3] && !b[4] && !b[5]);
 }
 
 /* Check to see if the security features of our network, 'config', match with
@@ -914,13 +914,13 @@ static int security_profile_matches(const struct wlan_network *network, const st
                 "in 11n devices");
             return 0;
         }
-        return res->WPA_WPA2_WEP.wepStatic;
+        return (int)res->WPA_WPA2_WEP.wepStatic;
     }
 
     /* WPA/WPA2 mode: if we are using WPA/WPA2, the AP must use WPA/WPA2 */
     if (config->type == WLAN_SECURITY_WPA_WPA2_MIXED)
     {
-        return res->WPA_WPA2_WEP.wpa | res->WPA_WPA2_WEP.wpa2;
+        return (int)(res->WPA_WPA2_WEP.wpa | res->WPA_WPA2_WEP.wpa2);
     }
 
     /* WPA2 mode: if we are using WPA2, the AP must use WPA2 */
@@ -946,9 +946,9 @@ static int security_profile_matches(const struct wlan_network *network, const st
                 "Please use WLAN_SECURITY_WPA_WPA2_MIXED "
                 "security type to connect to "
                 "WPA(TKIP) Only AP.");
-            return !res->wpa_ucstCipher.tkip;
+            return (int)!res->wpa_ucstCipher.tkip;
         }
-        return res->WPA_WPA2_WEP.wpa;
+        return (int)res->WPA_WPA2_WEP.wpa;
     }
 
 #ifdef CONFIG_WPA2_ENTP
@@ -1040,7 +1040,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         return WM_SUCCESS;
     }
 
-    if (!wifi_11d_is_channel_allowed(res->Channel))
+    if (!wifi_11d_is_channel_allowed((int)res->Channel))
     {
         wlcm_d("%d: Channel not allowed.", res->Channel);
         return WM_SUCCESS;
@@ -1167,13 +1167,14 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 /* Do not pass BSSID here as embedded supplicant fails
                  * to derive session keys
                  */
-                ret = wifi_send_add_wpa_pmk(network->role, network->ssid, NULL, network->security.pmk, WLAN_PMK_LENGTH);
+                ret = wifi_send_add_wpa_pmk((int)network->role, network->ssid, NULL, network->security.pmk,
+                                            WLAN_PMK_LENGTH);
             }
             else
             {
                 wlcm_d("adding SSID and PSK to supplicant cache");
-                ret = wifi_send_add_wpa_psk(network->role, network->ssid, network->security.psk,
-                                            network->security.psk_len);
+                ret = wifi_send_add_wpa_psk((int)network->role, network->ssid, network->security.psk,
+                                            (unsigned int)network->security.psk_len);
             }
 
             if (ret != WM_SUCCESS)
@@ -1204,14 +1205,14 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
             {
                 wlcm_d("configuring WPA3 SAE security");
                 wlcm_d("adding SSID and WPA3 SAE PASSWORD to supplicant cache");
-                ret = wifi_send_add_wpa3_password(network->role, network->ssid, network->security.password,
+                ret = wifi_send_add_wpa3_password((int)network->role, network->ssid, network->security.password,
                                                   network->security.password_len);
             }
             else if (res->WPA_WPA2_WEP.wpa2 != 0U)
             {
                 wlcm_d("configuring WPA2 security");
                 wlcm_d("adding SSID and PSK to supplicant cache");
-                ret = wifi_send_add_wpa_psk(network->role, network->ssid, network->security.password,
+                ret = wifi_send_add_wpa_psk((int)network->role, network->ssid, network->security.password,
                                             network->security.password_len);
             }
             else
@@ -1231,8 +1232,8 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 return -WM_E_INVAL;
             }
 
-            ret = wifi_set_key(BSS_TYPE_STA, true, 0, (const uint8_t *)network->security.psk, network->security.psk_len,
-                               (const uint8_t *)network->bssid);
+            ret = wifi_set_key(BSS_TYPE_STA, true, 0, (const uint8_t *)network->security.psk,
+                               (unsigned)network->security.psk_len, (const uint8_t *)network->bssid);
 
             if (ret != WM_SUCCESS)
             {
@@ -1252,12 +1253,12 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
     return WM_SUCCESS;
 }
 
-static int is_running(void)
+static bool is_running(void)
 {
     return (wlan.running && wlan.sta_state >= CM_STA_IDLE);
 }
 
-static int is_uap_state(enum cm_uap_state state)
+static bool is_uap_state(enum cm_uap_state state)
 {
     return (wlan.uap_state == state);
 }
@@ -1337,7 +1338,7 @@ static void do_scan(struct wlan_network *network)
     {
         if (channel != 0)
         {
-            chan_list[0].chan_number = channel;
+            chan_list[0].chan_number = (t_u8)channel;
             chan_list[0].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
             chan_list[0].scan_time   = 120;
 #ifdef CONFIG_WLAN_BRIDGE
@@ -1505,8 +1506,8 @@ static int do_start(struct wlan_network *network)
 #else
                              wlan.mac,
 #endif
-                             network->security.type, &network->security.psk[0], &network->security.password[0],
-                             network->channel, wlan.scan_chan_list, network->security.mfpc,
+                             (int)network->security.type, &network->security.psk[0], &network->security.password[0],
+                             (int)network->channel, wlan.scan_chan_list, network->security.mfpc,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
                              network->security.mfpr, network->dtim_period
 #else
@@ -1533,7 +1534,7 @@ static int do_stop(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
-        ret = wifi_uap_stop(network->type);
+        ret = wifi_uap_stop((int)network->type);
 
         if (ret != 0)
         {
@@ -1670,7 +1671,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
     }
     if (!network->ssid_specific)
     {
-        (void)memcpy((void *)network->ssid, (const void *)res->ssid, res->ssid_len);
+        (void)memcpy((void *)network->ssid, (const void *)res->ssid, (size_t)res->ssid_len);
     }
 
     network->beacon_period = res->beacon_period;
@@ -1734,9 +1735,10 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
         return -WM_FAIL;
     }
 #ifdef CONFIG_OWE
-    ret = wrapper_wifi_assoc(res->bssid, network->security.type, network->security.ucstCipher.tkip, res->trans_mode);
+    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip,
+                             res->trans_mode);
 #else
-    ret = wrapper_wifi_assoc(res->bssid, network->security.type, network->security.ucstCipher.tkip, 0);
+    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip, 0);
 #endif
     if (ret != 0)
     {
@@ -3206,7 +3208,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
 
-    int ret = wifi_send_scan_cmd(g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
+    int ret = wifi_send_scan_cmd((t_u8)g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
 #ifdef CONFIG_COMBO_SCAN
                                  wlan_scan_param->ssid[0], wlan_scan_param->ssid[1],
 #else
@@ -3762,7 +3764,7 @@ static int send_user_request(enum user_request_type request, int data)
 {
     struct wifi_message msg;
 
-    msg.event  = request;
+    msg.event  = (uint16_t)request;
     msg.reason = WIFI_EVENT_REASON_SUCCESS;
     msg.data   = (void *)data;
 
@@ -3990,7 +3992,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.cb                = cb;
     wlan.scan_cb           = NULL;
     wlan.events_queue_data = g_wlan_event_queue_data;
-    ret = os_queue_create(&wlan.events, "wlan-events", sizeof(struct wifi_message), &wlan.events_queue_data);
+    ret = os_queue_create(&wlan.events, "wlan-events", (int)sizeof(struct wifi_message), &wlan.events_queue_data);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("unable to create event queue: %d", ret);
@@ -4098,13 +4100,13 @@ int wlan_stop(void)
      * deauth request and then proceed to tearing the main thread down. */
 
     /* Set stop_request and wait for wlcmgr thread to acknowledge it */
-    wlan.stop_request = true;
+    wlan.stop_request = (uint8_t) true;
 
     wlcm_d("Sent wlcmgr shutdown request. Current State: %d\r\n", wlan.status);
 
     while (wlan.status != WLCMGR_THREAD_STOPPED && --num_iterations)
     {
-        os_thread_sleep(os_msec_to_ticks(check_interval));
+        os_thread_sleep(os_msec_to_ticks((uint32_t)check_interval));
     }
 
     if (wlan.status != WLCMGR_THREAD_STOPPED && !num_iterations)
@@ -4115,7 +4117,7 @@ int wlan_stop(void)
         wlan.status = WLCMGR_THREAD_STOPPED;
     }
 
-    wlan.stop_request = false;
+    wlan.stop_request = (uint8_t) false;
 
     ret = wifi_unregister_event_queue(&wlan.events);
 
@@ -4357,9 +4359,9 @@ int wlan_add_network(struct wlan_network *network)
 
     /* save and set private fields */
     (void)memcpy((void *)&wlan.networks[pos], (const void *)network, sizeof(struct wlan_network));
-    wlan.networks[pos].ssid_specific    = (network->ssid[0] != '\0');
-    wlan.networks[pos].bssid_specific   = !is_bssid_any(network->bssid);
-    wlan.networks[pos].channel_specific = (network->channel != 0U);
+    wlan.networks[pos].ssid_specific    = (uint8_t)(network->ssid[0] != '\0');
+    wlan.networks[pos].bssid_specific   = (uint8_t)!is_bssid_any(network->bssid);
+    wlan.networks[pos].channel_specific = (uint8_t)(network->channel != 0U);
     if (network->security.type != WLAN_SECURITY_WILDCARD)
     {
         wlan.networks[pos].security_specific = 1;
@@ -4368,7 +4370,7 @@ int wlan_add_network(struct wlan_network *network)
     if ((network->role == WLAN_BSS_ROLE_STA) &&
         (network->security.type != WLAN_SECURITY_NONE && network->security.type != WLAN_SECURITY_WEP_OPEN))
     {
-        ret = wifi_send_clear_wpa_psk(network->role, network->ssid);
+        ret = wifi_send_clear_wpa_psk((int)network->role, network->ssid);
         if (ret != WM_SUCCESS)
         {
             return WLAN_ERROR_ACTION;
@@ -4376,7 +4378,7 @@ int wlan_add_network(struct wlan_network *network)
 #ifdef CONFIG_WLAN_BRIDGE
         if (network->bridge_ssid)
         {
-            ret = wifi_send_clear_wpa_psk(network->role, network->bridge_ssid);
+            ret = wifi_send_clear_wpa_psk((int)network->role, network->bridge_ssid);
             if (ret != WM_SUCCESS)
                 return WLAN_ERROR_ACTION;
         }
@@ -4594,8 +4596,8 @@ int wlan_get_average_signal_strength(short *rssi, int *snr)
 
 int wlan_get_current_rssi(short *rssi)
 {
-    g_rssi = g_data_snr_last - g_data_nf_last;
-    *rssi  = g_rssi - 256U;
+    g_rssi = (uint8_t)(g_data_snr_last - g_data_nf_last);
+    *rssi  = (short)(g_rssi - 256U);
     return WM_SUCCESS;
 }
 
@@ -4806,9 +4808,9 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     (void)memset(res, 0, sizeof(struct wlan_scan_result));
 
     (void)memcpy((void *)&res->bssid[0], (const void *)&desc->bssid[0], sizeof(res->bssid));
-    (void)memcpy((void *)&res->ssid[0], (const void *)((char *)&desc->ssid[0]), desc->ssid_len);
-    res->ssid[desc->ssid_len] = 0;
-    res->ssid_len             = desc->ssid_len;
+    (void)memcpy((void *)&res->ssid[0], (const void *)((char *)&desc->ssid[0]), (size_t)desc->ssid_len);
+    res->ssid[desc->ssid_len] = (char)0;
+    res->ssid_len             = (size_t)desc->ssid_len;
     res->channel              = desc->Channel;
     res->beacon_period        = desc->beacon_period;
     res->dtim_period          = desc->dtim_period;
@@ -4818,7 +4820,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
         res->role = WLAN_BSS_ROLE_STA;
     }
 
-    res->wmm = desc->wmm_ie_present;
+    res->wmm = (unsigned)desc->wmm_ie_present;
 #ifdef CONFIG_WPS2
     if (desc->wps_IE_exist == true)
     {
@@ -4856,9 +4858,10 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     res->rssi = desc->RSSI;
 
     (void)memcpy((void *)&res->trans_bssid[0], (const void *)&desc->trans_bssid[0], sizeof(res->trans_bssid));
-    (void)memcpy((void *)&res->trans_ssid[0], (const void *)((char *)&desc->trans_ssid[0]), desc->trans_ssid_len);
-    res->trans_ssid[desc->trans_ssid_len] = 0;
-    res->trans_ssid_len                   = desc->trans_ssid_len;
+    (void)memcpy((void *)&res->trans_ssid[0], (const void *)((char *)&desc->trans_ssid[0]),
+                 (unsigned int)desc->trans_ssid_len);
+    res->trans_ssid[desc->trans_ssid_len] = (char)0;
+    res->trans_ssid_len                   = (unsigned int)desc->trans_ssid_len;
 
     return WM_SUCCESS;
 }
@@ -4918,7 +4921,7 @@ static int wlan_pscan(int (*cb)(unsigned int count))
 
     wlan_scan_param.num_channels = 1;
 
-    wlan_scan_param.chan_list[0].chan_number = network.channel;
+    wlan_scan_param.chan_list[0].chan_number = (t_u8)network.channel;
     wlan_scan_param.chan_list[0].scan_type   = MLAN_SCAN_TYPE_PASSIVE;
     wlan_scan_param.chan_list[0].scan_time   = 200;
 
@@ -5202,7 +5205,7 @@ void wlan_configure_listen_interval(int listen_interval)
 
 void wlan_configure_null_pkt_interval(int time_in_secs)
 {
-    wifi_configure_null_pkt_interval(time_in_secs);
+    wifi_configure_null_pkt_interval((unsigned int)time_in_secs);
 }
 int wlan_ieeeps_on(unsigned int wakeup_conditions)
 {
@@ -5227,14 +5230,14 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
 
     wlan.wakeup_conditions = wakeup_conditions;
 
-    return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
+    return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, (int)WLAN_IEEE);
 }
 
 int wlan_ieeeps_off(void)
 {
     if (wlan.cm_ieeeps_configured)
     {
-        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_IEEE);
+        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, (int)WLAN_IEEE);
     }
     else
     {
@@ -5269,14 +5272,14 @@ int wlan_deepsleepps_on(void)
         return WLAN_ERROR_STATE;
     }
 
-    return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_DEEP_SLEEP);
+    return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, (int)WLAN_DEEP_SLEEP);
 }
 
 int wlan_deepsleepps_off(void)
 {
     if (wlan.cm_deepsleepps_configured)
     {
-        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_DEEP_SLEEP);
+        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, (int)WLAN_DEEP_SLEEP);
     }
     else
     {
@@ -5337,7 +5340,7 @@ int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, v
 {
     struct wifi_message msg;
 
-    msg.event  = event;
+    msg.event  = (uint16_t)event;
     msg.reason = reason;
     msg.data   = (void *)data;
 
@@ -5606,7 +5609,7 @@ int wlan_remain_on_channel(const enum wlan_bss_type bss_type,
 
     (void)memset(&roc, 0x00, sizeof(wifi_remain_on_channel_t));
 
-    roc.remove = !status;
+    roc.remove = (uint16_t)!status;
 
     roc.channel = channel;
 
@@ -6174,7 +6177,7 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 
 void wlan_uap_set_hidden_ssid(const bool bcast_ssid_ctl)
 {
-    wifi_uap_set_hidden_ssid(bcast_ssid_ctl);
+    wifi_uap_set_hidden_ssid((const t_u8)bcast_ssid_ctl);
 }
 
 void wlan_uap_ctrl_deauth(const bool enable)
@@ -6205,7 +6208,7 @@ uint32_t wlan_get_value1(void)
     }
     else
     {
-        return -WM_FAIL;
+        return (uint32_t)-WM_FAIL;
     }
 }
 

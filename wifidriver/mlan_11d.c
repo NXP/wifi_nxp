@@ -280,7 +280,7 @@ static t_void wlan_11d_generate_parsed_region_chan(pmlan_adapter pmadapter,
     for (i = 0; i < region_chan->num_cfp; i++, cfp++)
     {
         parsed_region_chan->chan_pwr[i].chan = (t_u8)cfp->channel;
-        parsed_region_chan->chan_pwr[i].band = region_chan->band;
+        parsed_region_chan->chan_pwr[i].band = (t_u8)region_chan->band;
         parsed_region_chan->chan_pwr[i].pwr  = (t_u8)cfp->max_tx_power;
         PRINTM(MINFO, "11D: Chan[%d] Band[%d] Pwr[%d]\n", parsed_region_chan->chan_pwr[i].chan,
                parsed_region_chan->chan_pwr[i].band, parsed_region_chan->chan_pwr[i].pwr);
@@ -551,7 +551,7 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
                 num_chan_added++;
             }
         }
-        parsed_region_chan->no_of_chan += num_chan_added;
+        parsed_region_chan->no_of_chan += (t_u8)num_chan_added;
     }
     else
     {
@@ -752,7 +752,7 @@ t_u16 wlan_enable_11d_support(mlan_private *pmpriv)
 
     pmpriv->support_11d = wlan_11d_enable_support;
 
-    return MLAN_STATUS_SUCCESS;
+    return (t_u16)MLAN_STATUS_SUCCESS;
 }
 
 wlan_11d_apis_t wlan_11d_apis = {
@@ -778,7 +778,7 @@ t_u16 wlan_11d_support_APIs(mlan_private *pmpriv)
 
     pmpriv->support_11d_APIs = wlan_11d_support_apis;
 
-    return MLAN_STATUS_SUCCESS;
+    return (t_u16)MLAN_STATUS_SUCCESS;
 }
 
 /**
@@ -909,7 +909,7 @@ mlan_status wlan_cmd_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
     domain->header.type = wlan_cpu_to_le16(TLV_TYPE_DOMAIN);
     (void)__memcpy(pmadapter, domain->country_code, pmadapter->domain_reg.country_code, sizeof(domain->country_code));
 
-    domain->header.len = ((no_of_sub_band * sizeof(IEEEtypes_SubbandSet_t)) + sizeof(domain->country_code));
+    domain->header.len = (t_u16)(((no_of_sub_band * sizeof(IEEEtypes_SubbandSet_t)) + sizeof(domain->country_code)));
 
     if (no_of_sub_band != 0U)
     {
@@ -1023,7 +1023,7 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
         return MLAN_STATUS_FAILURE;
     }
 
-    no_of_sub_band = (country_info->len - COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t);
+    no_of_sub_band = (t_u8)((country_info->len - COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t));
 
     for (j = 0, last_chan = 0; j < no_of_sub_band; j++)
     {
@@ -1052,7 +1052,7 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
             /* Step 5: We don't need to check if cur_chan is supported by mrvl
                in region */
             parsed_region_chan->chan_pwr[idx].chan = cur_chan;
-            parsed_region_chan->chan_pwr[idx].band = band;
+            parsed_region_chan->chan_pwr[idx].band = (t_u8)band;
             parsed_region_chan->chan_pwr[idx].pwr  = country_info->sub_band[j].max_tx_pwr;
             idx++;
         }
@@ -1127,7 +1127,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def ban
 mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
-    t_u16 size              = sizeof(chan_freq_power_t);
+    t_u16 size              = (t_u16)sizeof(chan_freq_power_t);
     t_u16 i                 = 0;
 
     ENTER();
@@ -1170,7 +1170,7 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
         /* If band A */
 
         /* Set channel-frequency-power */
-        pmadapter->universal_channel[i].num_cfp = sizeof(channel_freq_power_UN_AJ) / size;
+        pmadapter->universal_channel[i].num_cfp = (t_u8)(sizeof(channel_freq_power_UN_AJ) / size);
         PRINTM(MINFO, "11D: AJ-band num_cfp=%d\n", pmadapter->universal_channel[i].num_cfp);
 
         pmadapter->universal_channel[i].pcfp = channel_freq_power_UN_AJ;
@@ -1566,7 +1566,7 @@ mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv,
         ret                    = wlan_set_regiontable(pmpriv, region_code, pmadapter->fw_bands);
     }
 
-    num_sub_band = ((pdomain_tlv->header.len - COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t));
+    num_sub_band = (t_u8)((pdomain_tlv->header.len - COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t));
 
     // TODO: don't just clobber pmadapter->domain_reg.
     // Add some checking or merging between STA & UAP domain_info
