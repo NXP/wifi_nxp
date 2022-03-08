@@ -1322,7 +1322,7 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
     (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
 #endif /* CONFIG_WIFI_IO_DEBUG */
     /* Check if the port is available */
-    if (!((1 << txportno) & mlan_adap->mp_wr_bitmap))
+    if (!((1U << txportno) & mlan_adap->mp_wr_bitmap))
     {
         /*
          * fixme: This condition is triggered in legacy as well as
@@ -1339,7 +1339,7 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
     else
     {
         /* Mark the port number we will use */
-        mlan_adap->mp_wr_bitmap &= ~(1 << txportno);
+        mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
     }
     process_pkt_hdrs((t_u8 *)outbuf, txlen, interface);
     /* send CMD53 */

@@ -145,7 +145,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u32 cmd_oid,
                                       IN t_void *pioctl_buf,
                                       IN t_void *pdata_buf,
-                                      int bss_type,
+                                      mlan_bss_type bss_type,
                                       void *priv);
 int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u16 cmd_no,

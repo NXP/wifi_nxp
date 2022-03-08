@@ -1985,7 +1985,7 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 
 static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
-    uint16_t action = (uint16_t)((uint32_t)msg->data);
+    ENH_PS_MODES action = (ENH_PS_MODES)((uint32_t)msg->data);
     wlcm_d("got msg data :: %x", action);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
@@ -3720,7 +3720,7 @@ static void cm_main(os_thread_arg_t data)
                 wlcm_d("SM uAP %s -> %s", dbg_uap_state_name(wlan.uap_state), dbg_uap_state_name(next_uap_state));
                 wlan.uap_state = next_uap_state;
             }
-            else if (msg.event == CM_WLAN_USER_REQUEST_DEINIT)
+            else if (msg.event == (uint16_t)CM_WLAN_USER_REQUEST_DEINIT)
             {
                 wlcm_deinit((int)msg.data);
             }

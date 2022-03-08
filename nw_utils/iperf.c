@@ -101,7 +101,7 @@ static void lwiperf_report(void *arg,
                            u32_t bandwidth_kbitpsec)
 {
     (void)PRINTF("-------------------------------------------------\r\n");
-    if (report_type < (sizeof(report_type_str) / sizeof(report_type_str[0])))
+    if (report_type < (enum lwiperf_report_type)(sizeof(report_type_str) / sizeof(report_type_str[0])))
     {
         (void)PRINTF(" %s \r\n", report_type_str[report_type]);
         if (local_addr != NULL && remote_addr != NULL)

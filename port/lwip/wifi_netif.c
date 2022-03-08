@@ -80,7 +80,7 @@ void deliver_packet_above(struct pbuf *p, int recv_interface)
 
             /* full packet send to tcpip_thread to process */
             lwiperr = netif_arr[recv_interface]->input(p, netif_arr[recv_interface]);
-            if (lwiperr != ERR_OK)
+            if (lwiperr != (s8_t)ERR_OK)
             {
                 LINK_STATS_INC(link.proterr);
                 LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));

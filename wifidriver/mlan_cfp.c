@@ -913,7 +913,7 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     ENTER();
 
 #ifdef CONFIG_11AC
-    if ((tx_rate_info & 0x3) == MLAN_RATE_FORMAT_VHT)
+    if ((mlan_rate_format)(tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_VHT)
     {
         /* VHT rate */
         mcs_index = index & 0xF;
@@ -922,9 +922,9 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
             mcs_index = 9;
 
         /* 20M: bw=0, 40M: bw=1, 80M: bw=2, 160M: bw=3 */
-        bw = (tx_rate_info & 0xC) >> 2;
+        bw = (tx_rate_info & 0xCU) >> 2U;
         /* LGI: gi =0, SGI: gi = 1 */
-        gi = (tx_rate_info & 0x10) >> 4;
+        gi = (tx_rate_info & 0x10U) >> 4U;
 #ifdef STREAM_2X2
         if ((index >> 4) == 1)
         {
@@ -939,7 +939,7 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     else
 #endif
 #ifdef CONFIG_11AX
-        if ((tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
+        if ((mlan_rate_format)(tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
     {
         /* HE rate */
         mcs_index = index & 0xF;
@@ -986,13 +986,13 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
     }
 #endif
 #ifdef CONFIG_11N
-    if ((tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
+    if ((mlan_rate_format)(tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
     {
         /* HT rate */
         /* 20M: bw=0, 40M: bw=1 */
-        bw = (tx_rate_info & 0xCU) >> 2;
+        bw = (tx_rate_info & 0xCU) >> 2U;
         /* LGI: gi =0, SGI: gi = 1 */
-        gi = (tx_rate_info & 0x10U) >> 4;
+        gi = (tx_rate_info & 0x10U) >> 4U;
         if (index == MLAN_RATE_BITMAP_MCS0)
         {
             if (gi == 1U)

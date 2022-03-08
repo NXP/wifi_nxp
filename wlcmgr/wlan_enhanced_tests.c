@@ -460,7 +460,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
     {
         (void)PRINTF("Tx Rate Configuration: \r\n");
         /* format */
-        if (ds_rate.param.rate_cfg.rate_format == 0xFFU)
+        if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_AUTO)
         {
             (void)PRINTF("    Type:       0xFF (Auto)\r\n");
         }
@@ -468,12 +468,12 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
         {
             (void)PRINTF("    Type:       %d (%s)\r\n", ds_rate.param.rate_cfg.rate_format,
                          rate_format[ds_rate.param.rate_cfg.rate_format]);
-            if (ds_rate.param.rate_cfg.rate_format == 0U)
+            if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_LG)
             {
                 (void)PRINTF("    Rate Index: %d (%s)\r\n", ds_rate.param.rate_cfg.rate_index,
                              lg_rate[ds_rate.param.rate_cfg.rate_index]);
             }
-            else if (ds_rate.param.rate_cfg.rate_format >= 1U)
+            else if (ds_rate.param.rate_cfg.rate_format >= MLAN_RATE_FORMAT_HT)
             {
                 (void)PRINTF("    MCS Index:  %d\r\n", (int)ds_rate.param.rate_cfg.rate_index);
             }
@@ -481,7 +481,8 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
             { /* Do Nothing */
             }
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-            if ((ds_rate.param.rate_cfg.rate_format == 2U) || (ds_rate.param.rate_cfg.rate_format == 3U))
+            if ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT) ||
+                (ds_rate.param.rate_cfg.rate_format == 3U))
                 (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
 #endif
         }
@@ -545,7 +546,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
         if (datarate->tx_rate_format <= 3U)
         {
             (void)PRINTF("    Type: %s\r\n", rate_format[datarate->tx_rate_format]);
-            if ((datarate->tx_rate_format == 0U) && datarate->tx_data_rate <= 11U)
+            if ((datarate->tx_rate_format == MLAN_RATE_FORMAT_LG) && datarate->tx_data_rate <= 11U)
             {
                 /* LG */
                 (void)PRINTF("    Rate: %s\r\n", lg_rate[datarate->tx_data_rate]);
@@ -587,7 +588,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
         if (datarate->rx_rate_format <= 3U)
         {
             (void)PRINTF("    Type: %s\r\n", rate_format[datarate->rx_rate_format]);
-            if ((datarate->rx_rate_format == 0U) && datarate->rx_data_rate <= 11U)
+            if ((datarate->rx_rate_format == MLAN_RATE_FORMAT_LG) && datarate->rx_data_rate <= 11U)
             {
                 /* LG */
                 (void)PRINTF("    Rate: %s\r\n", lg_rate[datarate->rx_data_rate]);

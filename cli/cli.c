@@ -1101,7 +1101,7 @@ int cli_unregister_command(const struct cli_command *command)
         {
             cli.num_commands--;
             unsigned int remaining_cmds = cli.num_commands - i;
-            if (remaining_cmds > 0)
+            if (remaining_cmds > 0U)
             {
                 (void)memmove(&cli.commands[i], &cli.commands[i + 1], (remaining_cmds * sizeof(struct cli_command *)));
             }

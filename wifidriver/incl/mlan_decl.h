@@ -241,7 +241,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 #define OUT
 
 /** BIT value */
-#define MBIT(x) (((t_u32)1) << (x))
+#define MBIT(x) (mlan_bss_role)(((t_u32)1) << (x))
 
 /** Buffer flag for requeued packet */
 #define MLAN_BUF_FLAG_REQUEUED_PKT MBIT(0)
@@ -356,7 +356,7 @@ typedef enum _mlan_bss_role
 #define BSS_ROLE_BIT_MASK MBIT(0)
 
 /** Get BSS role */
-#define GET_BSS_ROLE(priv) ((priv)->bss_role & BSS_ROLE_BIT_MASK)
+#define GET_BSS_ROLE(priv) (mlan_bss_role)((priv)->bss_role & (BSS_ROLE_BIT_MASK))
 
 /** mlan_data_frame_type */
 typedef enum _mlan_data_frame_type

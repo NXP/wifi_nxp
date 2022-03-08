@@ -2295,8 +2295,11 @@ t_void wlan_check_ps_cond(mlan_adapter *pmadapter);
 #endif /* CONFIG_MLAN_WMSDK */
 
 /** handle command for enhanced power save mode */
-mlan_status wlan_cmd_enh_power_mode(
-    pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_u16 ps_bitmap, IN t_void *pdata_buf);
+mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
+                                    IN HostCmd_DS_COMMAND *cmd,
+                                    IN ENH_PS_MODES cmd_action,
+                                    IN t_u16 ps_bitmap,
+                                    IN t_void *pdata_buf);
 #ifndef CONFIG_MLAN_WMSDK
 /** handle command resp for enhanced power save mode */
 mlan_status wlan_ret_enh_power_mode(IN pmlan_private pmpriv,

@@ -1025,7 +1025,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u32 cmd_oid,
                                       IN t_void *pioctl_buf,
                                       IN t_void *pdata_buf,
-                                      int bss_type,
+                                      mlan_bss_type bss_type,
                                       void *priv)
 {
     pmlan_ioctl_req pioctl_req = (mlan_ioctl_req *)pioctl_buf;
@@ -1036,7 +1036,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
 
     if (pioctl_req != NULL)
     {
-        if (pioctl_req->bss_index == 1)
+        if (pioctl_req->bss_index == 1U)
         {
             bss_type = MLAN_BSS_TYPE_UAP;
         }

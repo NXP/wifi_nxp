@@ -459,7 +459,7 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
                                 sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
 
                 ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)&cmd->params + sizeof(HostCmd_DS_TXPWR_CFG));
-                cmd->size += wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
+                cmd->size += (t_u16)(wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length));
                 ppg_tlv->type   = wlan_cpu_to_le16(ppg_tlv->type);
                 ppg_tlv->length = wlan_cpu_to_le16(ppg_tlv->length);
             }
@@ -1695,8 +1695,8 @@ static mlan_status wlan_cmd_mgmt_ie_list(IN pmlan_private pmpriv,
         while (req_len > sizeof(t_u16))
         {
             cptr = (custom_ie *)(void *)(((t_u8 *)cust_ie->ie_data_list) + travel_len);
-            travel_len += cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
-            req_len -= cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
+            travel_len += (t_u16)(cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE);
+            req_len -= (t_u16)(cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE);
             cptr->ie_index          = wlan_cpu_to_le16(cptr->ie_index);
             cptr->mgmt_subtype_mask = wlan_cpu_to_le16(cptr->mgmt_subtype_mask);
             cptr->ie_length         = wlan_cpu_to_le16(cptr->ie_length);
