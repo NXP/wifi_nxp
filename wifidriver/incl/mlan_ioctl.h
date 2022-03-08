@@ -2662,14 +2662,14 @@ typedef struct _mlan_ds_11ac_vht_cfg
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
 
 #ifdef CONFIG_11AX
-typedef struct MLAN_PACK_START _mlan_11axcmdcfg_obss_pd_offset
+typedef MLAN_PACK_START struct _mlan_11axcmdcfg_obss_pd_offset
 {
     /** <NON_SRG_OffSET, SRG_OFFSET> */
     t_u8 offset[2];
 } MLAN_PACK_END mlan_11axcmdcfg_obss_pd_offset;
 
 /** Type definition of mlan_11axcmdcfg_sr_control for MLAN_OID_11AX_CMD_CFG */
-typedef struct MLAN_PACK_START _mlan_11axcmdcfg_sr_control
+typedef MLAN_PACK_START struct _mlan_11axcmdcfg_sr_control
 {
     /** 1 enable, 0 disable */
     t_u8 control;
@@ -2704,7 +2704,7 @@ typedef struct _mlan_ds_11ax_he_cfg
 } mlan_ds_11ax_he_cfg, *pmlan_ds_11ax_he_cfg;
 
 /** Type definition of mlan_ds_11ax_sr_cmd for MLAN_OID_11AX_CMD_CFG */
-typedef struct MLAN_PACK_START _mlan_ds_11ax_sr_cmd
+typedef MLAN_PACK_START struct _mlan_ds_11ax_sr_cmd
 {
     /** type*/
     t_u16 type;
