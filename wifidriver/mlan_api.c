@@ -484,13 +484,11 @@ int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
     mlan_status rv;
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
-        if (!is_uap_started())
-        {
+        if (is_uap_started())
+            rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[1], HostCmd_CMD_802_11_TX_RATE_QUERY, 0, 0,
+                                          NULL, NULL, cmd);
+        else
             wifi_e("uap isn't up\n\r");
-            return -WM_FAIL;
-        }
-        rv = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_RATE_QUERY, 0, 0, NULL,
-                                      NULL, cmd);
     }
     else if (bss_type == MLAN_BSS_TYPE_STA)
     {
@@ -503,6 +501,7 @@ int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
 
     if (rv != MLAN_STATUS_SUCCESS)
     {
+        wifi_put_command_lock();
         return -WM_FAIL;
     }
 

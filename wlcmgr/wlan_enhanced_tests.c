@@ -527,7 +527,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                             break;
                         case 3:
                             (void)PRINTF(
-                                "    GI:   4xHELTF + GI 0.8us DCM=0 and STBC=0 or\r\n"
+                                "    GI:   4xHELTF + GI 0.8us DCM=1 and STBC=1 or\r\n"
                                 "          4xHELTF + GI 3.2us Otherwise  \r\n");
                             break;
                     }
@@ -585,7 +585,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                             break;
                         case 3:
                             (void)PRINTF(
-                                "    GI:   4xHELTF + GI 0.8us DCM=0 and STBC=0 or\r\n"
+                                "    GI:   4xHELTF + GI 0.8us DCM=1 and STBC=1 or\r\n"
                                 "          4xHELTF + GI 3.2us Otherwise  \r\n");
                             break;
                     }
