@@ -1189,7 +1189,7 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
 #endif
     num_cfp = pmadapter->region_channel[0].num_cfp;
 
-    if ((pbss_desc->bss_band & (BAND_B | BAND_G)) && pmadapter->region_channel[0].valid)
+    if ((pbss_desc->bss_band & (mlan_band_def)(BAND_B | BAND_G)) && pmadapter->region_channel[0].valid)
     {
         for (i = 0; i < num_cfp; i++)
         {
@@ -1206,7 +1206,7 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
             return MFALSE;
         }
 
-        if (chan_offset == SEC_CHAN_ABOVE)
+        if (chan_offset == (t_u8)SEC_CHAN_ABOVE)
         {
             if (pri_chan > num_cfp - 4U)
             {

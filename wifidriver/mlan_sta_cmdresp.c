@@ -430,7 +430,7 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
         {
             max_power = pg->power_max;
             min_power = pg->power_min;
-            length -= sizeof(Power_Group_t);
+            length -= (int)sizeof(Power_Group_t);
         }
         while (length > 0)
         {
@@ -443,7 +443,7 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
             {
                 min_power = pg->power_min;
             }
-            length -= sizeof(Power_Group_t);
+            length -= (int)sizeof(Power_Group_t);
         }
         if (ppg_tlv->length > 0U)
         {

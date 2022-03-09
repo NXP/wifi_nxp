@@ -559,7 +559,7 @@ static int get_input(char *inbuf, unsigned int *bp)
         inbuf[*bp] = (char)GETCHAR();
         if (state == EXT_KEY_SECOND_SYMBOL)
         {
-            if (second_char == 0x4F)
+            if (second_char == (char)(0x4F))
             {
                 if (inbuf[*bp] == (char)(0x4D))
                 {
@@ -760,7 +760,7 @@ static void cli_main(os_thread_arg_t data)
         ret = os_queue_recv(&cli.input_queue, &msg, RX_WAIT);
         if (ret != WM_SUCCESS)
         {
-            if (ret == WM_E_BADF)
+            if (ret == (int)WM_E_BADF)
             {
                 (void)PRINTF(
                     "Error: CLI fatal queue error."

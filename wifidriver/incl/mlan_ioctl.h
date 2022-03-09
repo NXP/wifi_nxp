@@ -1025,7 +1025,7 @@ typedef struct _mlan_ds_bss
 #endif
 #if defined(STA_SUPPORT) && defined(UAP_SUPPORT)
         /** BSS role */
-        t_u8 bss_role;
+        mlan_bss_role bss_role;
 #endif
 #ifdef WIFI_DIRECT_SUPPORT
         t_u16 wfd_mode;

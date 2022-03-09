@@ -1411,7 +1411,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     user_scan_cfg->keep_previous_scan = keep_previous_scan;
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
-    user_scan_cfg->rssi_threshold     = rssi_threshold;
+    user_scan_cfg->rssi_threshold = rssi_threshold;
 #endif
 
     if (num_probes > 0U && num_probes <= MAX_PROBES)
@@ -2672,7 +2672,7 @@ int wifi_config_mgmt_ie(
             ie_ptr                    = (custom_ie *)(void *)(((uint8_t *)ie_ptr) + sizeof(custom_ie) - MAX_IE_SIZE);
             ie_ptr->mgmt_subtype_mask = MGMT_MASK_CLEAR;
             ie_ptr->ie_length         = 0;
-            ie_ptr->ie_index          = index + 1;
+            ie_ptr->ie_index          = (t_u16)index + 1U;
             tlv->length               = 2U * (sizeof(custom_ie) - MAX_IE_SIZE);
             buf_len += tlv->length;
             clear_ie_index(index);

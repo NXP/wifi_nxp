@@ -3217,7 +3217,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
                                  wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
-#endif                                 
+#endif
                                  false, false);
     if (ret != WM_SUCCESS)
     {
@@ -3980,7 +3980,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlan.cm_deepsleepps_configured = false;
 
-    wlan.wakeup_conditions = WAKE_ON_UNICAST | WAKE_ON_MAC_EVENT | WAKE_ON_MULTICAST | WAKE_ON_ARP_BROADCAST;
+    wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
+                             (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
 
     wlan.cur_network_idx     = -1;
     wlan.cur_uap_network_idx = -1;
@@ -4559,7 +4560,7 @@ int wlan_get_network(unsigned int index, struct wlan_network *network)
 
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
     {
-        if (wlan.networks[i].name[0] != '\0' && ++pos == index)
+        if (wlan.networks[i].name[0] != '\0' && ++pos == (int)index)
         {
             copy_network(network, &wlan.networks[i]);
             return WM_SUCCESS;
@@ -4683,7 +4684,7 @@ int wlan_connect(char *name)
 
 int wlan_start_network(const char *name)
 {
-    int i;
+    unsigned int i;
     unsigned int len;
 
     if (name == NULL)
@@ -4740,7 +4741,7 @@ int wlan_start_network(const char *name)
             }
             if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
-                return send_user_request(CM_UAP_USER_REQUEST_START, i);
+                return send_user_request(CM_UAP_USER_REQUEST_START, (int)i);
             }
         }
     }
@@ -4751,7 +4752,7 @@ int wlan_start_network(const char *name)
 
 int wlan_stop_network(const char *name)
 {
-    int i;
+    unsigned int i;
     unsigned int len;
 
     if (name == NULL)
@@ -4779,7 +4780,7 @@ int wlan_stop_network(const char *name)
         if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP && wlan.networks[i].ssid_specific)
         {
             net_interface_down(net_get_uap_handle());
-            return send_user_request(CM_UAP_USER_REQUEST_STOP, i);
+            return send_user_request(CM_UAP_USER_REQUEST_STOP, (int)i);
         }
     } /* end of loop */
     /* specified network was not found */

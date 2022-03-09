@@ -442,13 +442,13 @@ static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, mlan_band_def band, t_u8 
     t_u8 cfp_no = 0;
 
     ENTER();
-    if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
+    if ((band & (mlan_band_def)(BAND_B | BAND_G | BAND_GN)) != 0U)
     {
         cfp    = (chan_freq_power_t *)channel_freq_power_UN_BG;
         cfp_no = sizeof(channel_freq_power_UN_BG) / sizeof(chan_freq_power_t);
     }
 #ifdef CONFIG_5GHz_SUPPORT
-    else if ((band & (BAND_A | BAND_AN)) != 0U)
+    else if ((band & (mlan_band_def)(BAND_A | BAND_AN)) != 0U)
     {
         cfp    = channel_freq_power_UN_AJ;
         cfp_no = sizeof(channel_freq_power_UN_AJ) / sizeof(chan_freq_power_t);
@@ -1089,7 +1089,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def ban
 
 #ifdef CONFIG_5GHz_SUPPORT
     /* Get channel-frequency-power trios */
-    if ((band & (BAND_A | BAND_AN)) != 0)
+    if ((band & (mlan_band_def)(BAND_A | BAND_AN)) != 0)
     {
         cf  = channel_freq_power_UN_AJ;
         cnt = sizeof(channel_freq_power_UN_AJ) / sizeof(chan_freq_power_t);
@@ -1134,7 +1134,7 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
 
     (void)__memset(pmadapter, pmadapter->universal_channel, 0, sizeof(pmadapter->universal_channel));
 
-    if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
+    if ((band & (mlan_band_def)(BAND_B | BAND_G | BAND_GN)) != 0U)
     /* If band B, G or N */
     {
         /* Set channel-frequency-power */
@@ -1161,10 +1161,10 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
 
 #ifdef CONFIG_5GHz_SUPPORT
 #ifdef CONFIG_11AC
-    if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0U)
+    if ((band & (mlan_band_def)(BAND_A | BAND_AN | BAND_AAC)) != 0U)
     {
 #else
-    if ((band & (BAND_A | BAND_AN)) != 0U)
+    if ((band & (mlan_band_def)(BAND_A | BAND_AN)) != 0U)
     {
 #endif
         /* If band A */

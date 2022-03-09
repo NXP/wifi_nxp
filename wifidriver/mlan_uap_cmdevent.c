@@ -1021,7 +1021,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
         }
     }
 
-    if (pioctl_buf->req_id == MLAN_IOCTL_BSS)
+    if (pioctl_buf->req_id == (t_u32)MLAN_IOCTL_BSS)
     {
         bss = (mlan_ds_bss *)(void *)pioctl_buf->pbuf;
         if (bss->sub_command == MLAN_OID_BSS_MAC_ADDR)
@@ -1044,7 +1044,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
         { /* Do Nothing */
         }
     }
-    else if (pioctl_buf->req_id == MLAN_IOCTL_MISC_CFG)
+    else if (pioctl_buf->req_id == (t_u32)MLAN_IOCTL_MISC_CFG)
     {
 #ifndef CONFIG_MLAN_WMSDK
         misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
@@ -1634,7 +1634,7 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
     {
         cmd->command          = wlan_cpu_to_le16(HostCmd_CMD_802_11_SNMP_MIB);
         psnmp_mib->query_type = wlan_cpu_to_le16(HostCmd_ACT_GEN_GET);
-        if (cmd_oid == StopDeauth_i)
+        if (cmd_oid == (t_u32)StopDeauth_i)
         {
             psnmp_mib->oid      = wlan_cpu_to_le16((t_u16)StopDeauth_i);
             psnmp_mib->buf_size = wlan_cpu_to_le16(sizeof(t_u8));

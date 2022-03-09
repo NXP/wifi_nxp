@@ -497,13 +497,12 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define CAPINFO_40MHZ_INTOLARENT MBIT(8)
 
 /** Default 11n capability mask for 2.4GHz */
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-defined(SD9098) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(IW61x)
 #define DEFAULT_11N_CAP_MASK_BG \
     (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP)
 #elif defined(SD8801)
-#define DEFAULT_11N_CAP_MASK_BG \
-    (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP)
+#define DEFAULT_11N_CAP_MASK_BG (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP)
 #endif
 /** Default 11n capability mask for 5GHz */
 #define DEFAULT_11N_CAP_MASK_A \
@@ -1394,7 +1393,7 @@ typedef enum _ENH_PS_MODES
 
 /** Set BSS information to Host Command */
 #define HostCmd_SET_SEQ_NO_BSS_INFO(seq, num, type) \
-    (((seq)&0x00ff) | (((num)&0x000f) << 8U)) | (((type)&0x000fU) << 12U)
+    (((seq)&0x00ffU) | (((num)&0x000fU) << 8U)) | (((type)&0x000fU) << 12U)
 
 /** Get Sequence Number from Host Command (bit 7:0) */
 #define HostCmd_GET_SEQ_NO(seq) ((seq)&HostCmd_SEQ_NUM_MASK)
@@ -3593,8 +3592,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TX_RATE_CFG
 } MLAN_PACK_END HostCmd_DS_TX_RATE_CFG;
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
-#define TLV_TYPE_TX_PER_TRACK (PROPRIETARY_TLV_BASE_ID + 338)
-#define EVENT_PER_STATUS_REPORT        0x94
+#define TLV_TYPE_TX_PER_TRACK   (PROPRIETARY_TLV_BASE_ID + 338)
+#define EVENT_PER_STATUS_REPORT 0x94
 typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_PKT_STATS
 {
     /** Enable or disable */
@@ -4984,7 +4983,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_ExtBLECoex_Config_t
 /** TLV type : AP DTIM period */
 #define TLV_TYPE_UAP_DTIM_PERIOD (PROPRIETARY_TLV_BASE_ID + 0x2d) // 0x012d
 /** TLV type : AP Tx power */
-#define TLV_TYPE_UAP_TX_POWER (PROPRIETARY_TLV_BASE_ID + 0x2f) // 0x012f
+#define TLV_TYPE_UAP_TX_POWER (PROPRIETARY_TLV_BASE_ID + 0x2fU) // 0x012f
 /** TLV type : AP SSID broadcast control */
 #define TLV_TYPE_UAP_BCAST_SSID_CTL (PROPRIETARY_TLV_BASE_ID + 0x30) // 0x0130
 /** TLV type : AP Preamble control */

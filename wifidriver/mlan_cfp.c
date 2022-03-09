@@ -634,7 +634,7 @@ static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter,
 #endif /* CONFIG_5GHz_SUPPORT */
     }
 
-    if ((band & (BAND_B | BAND_G | BAND_GN | BAND_GAC)) != 0U)
+    if ((band & (mlan_band_def)(BAND_B | BAND_G | BAND_GN | BAND_GAC)) != 0U)
     {
 #ifdef OTP_CHANINFO
         /* Return the FW cfp table for requested region code, if available.
@@ -666,7 +666,7 @@ static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter,
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0U)
+    if ((band & (mlan_band_def)(BAND_A | BAND_AN | BAND_AAC)) != 0U)
     {
 #ifdef OTP_CHANINFO
         /* Return the FW cfp table for requested region code */
@@ -1606,7 +1606,7 @@ mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, mlan_band_de
 
     (void)__memset(pmadapter, pmadapter->region_channel, 0, sizeof(pmadapter->region_channel));
 
-    if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
+    if ((band & (mlan_band_def)(BAND_B | BAND_G | BAND_GN)) != 0U)
     {
         cfp = wlan_get_region_cfp_table(pmadapter, region, (mlan_band_def)(BAND_G | BAND_B | BAND_GN), &cfp_no);
         if (cfp != MNULL)
@@ -1633,7 +1633,7 @@ mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, mlan_band_de
         i++;
     }
 #ifdef CONFIG_5GHz_SUPPORT
-    if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0U)
+    if ((band & (mlan_band_def)(BAND_A | BAND_AN | BAND_AAC)) != 0U)
     {
         cfp = wlan_get_region_cfp_table(pmadapter, region, BAND_A, &cfp_no);
         if (cfp != MNULL)
@@ -1729,7 +1729,7 @@ t_bool wlan_bg_scan_type_is_passive(mlan_private *priv, t_u8 chnl)
     /* get the cfp table first */
     for (i = 0; i < MAX_REGION_CHANNEL_NUM; i++)
     {
-        if ((priv->adapter->region_channel[i].band & (BAND_B | BAND_G)) != 0)
+        if ((priv->adapter->region_channel[i].band & (mlan_band_def)(BAND_B | BAND_G)) != 0)
         {
             pcfp = priv->adapter->region_channel[i].pcfp;
             break;

@@ -588,7 +588,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
 
     tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
 
-    int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
     if (padd_ba_rsp->status_code == BA_RESULT_SUCCESS)
     {
         if (bss_type == MLAN_BSS_TYPE_STA)
@@ -945,7 +945,7 @@ int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen
     /** Use count for this buffer */
     /* t_u32 use_count; */
 
-    if (rxpd->bss_type == MLAN_BSS_ROLE_STA)
+    if (rxpd->bss_type == (t_u8)MLAN_BSS_ROLE_STA)
     {
         (void)wlan_handle_rx_packet(mlan_adap, pmbuf);
     }
@@ -1045,7 +1045,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
 #ifdef CONFIG_P2P
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
 #else
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)bss_type);
 #endif /* CONFIG_P2P */
     cmd->result = 0x0;
 
@@ -1313,7 +1313,7 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate)
     (void)memset(&ds_rate_cfg, 0x00, sizeof(mlan_ds_rate));
 
     ds_rate_cfg.sub_command = MLAN_OID_RATE_CFG;
-    if (ds_rate.param.rate_cfg.rate_format == 0xffU)
+    if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_AUTO)
     {
         ds_rate_cfg.param.rate_cfg.is_rate_auto = MTRUE;
     }
@@ -2800,7 +2800,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                 break;
             }
         }
-        tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv_buf_left -= (int)(sizeof(MrvlIEtypesHeader_t) + tlv_len);
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
@@ -2849,7 +2849,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             PRINTM(MERROR, "wrong tlv: tlvLen=%d, tlvBufLeft=%d\n", tlv_len, tlv_buf_left);
             break;
         }
-        if (tlv_type == HT_CAPABILITY)
+        if (tlv_type == (t_u16)HT_CAPABILITY)
         {
             DBG_HEXDUMP(MCMD_D, "HT_CAP tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
             priv->is_11n_enabled = MTRUE;
@@ -2887,7 +2887,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             }
             PRINTM(MCMND, "pkt_fwd DRV: 0x%x\n", priv->pkt_fwd);
         }
-        tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv_buf_left -= (int)(sizeof(MrvlIEtypesHeader_t) + tlv_len);
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
@@ -3281,7 +3281,7 @@ static unsigned char process_rsn_ie(
             }
         }
     }
-    if (akmp_count == 2 && WPA_WPA2_WEP->wpa3_sae)
+    if (akmp_count == 2U && WPA_WPA2_WEP->wpa3_sae)
     {
         prsn_ie->len = 20;
         akmp_count   = 1;
@@ -3299,7 +3299,7 @@ static unsigned char process_rsn_ie(
             sizeof(uint16_t));
     }
 
-    if (akmp_count == 3 && WPA_WPA2_WEP->wpa3_sae)
+    if (akmp_count == 3U && WPA_WPA2_WEP->wpa3_sae)
     {
         prsn_ie->len = 20;
         akmp_count   = 1;

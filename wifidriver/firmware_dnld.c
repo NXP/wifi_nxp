@@ -48,8 +48,8 @@ const uint8_t *wlanfw;
 /* remove this after mlan integration complete */
 enum
 {
-    FWDNLD_STATUS_FAILURE = 0xffffffff,
-    FWDNLD_STATUS_SUCCESS = 0,
+    FWDNLD_STATUS_FAILURE    = 0xffffffff,
+    FWDNLD_STATUS_SUCCESS    = 0,
     FWDNLD_CARD_NOT_DETECTED = 3,
     FWDNLD_STATUS_FW_DNLD_FAILED,
     FWDNLD_STATUS_FW_NOT_DETECTED = 5,
@@ -294,7 +294,7 @@ static int32_t wlan_set_fw_dnld_size(void)
 {
     uint32_t resp;
 
-    int rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
+    bool rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
     if (rv == false)
     {
         return FWDNLD_STATUS_FAILURE;

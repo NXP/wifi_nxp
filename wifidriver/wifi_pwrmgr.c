@@ -98,8 +98,8 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
-    if (action == HS_CONFIGURE)
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
+    if (action == (t_u16)HS_CONFIGURE)
     {
         hs_cfg_obj.conditions = conditions;
         hs_cfg_obj.gap        = 0x2;
@@ -167,7 +167,7 @@ int wifi_send_power_save_command(ENH_PS_MODES action, int ps_bitmap, mlan_bss_ty
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
     if (ps_bitmap == BITMAP_AUTO_DS)
     {
         ds_param.idletime = (*(t_u16 *)pdata_buf);
@@ -242,7 +242,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 
     (void)memset(ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
     ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
-    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
+    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
 
     ps_cfm_sleep->size                = sizeof(OPT_Confirm_Sleep);
     ps_cfm_sleep->result              = 0;

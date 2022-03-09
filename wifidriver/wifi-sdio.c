@@ -1314,7 +1314,10 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
 {
     t_u32 tx_blocks = 0, buflen = 0;
     uint32_t resp;
-    int ret;
+    bool ret;
+#ifdef CONFIG_WIFI_FW_DEBUG
+    int ret_cb;
+#endif
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
     calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
@@ -1363,8 +1366,8 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
         wifi_sdio_reg_dbg(NULL);
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
-            ret = wm_wifi.wifi_usb_mount_cb();
-            if (ret == WM_SUCCESS)
+            ret_cb = wm_wifi.wifi_usb_mount_cb();
+            if (ret_cb == WM_SUCCESS)
                 wifi_dump_firmware_info(NULL);
             else
                 wifi_e("USB mounting failed");
