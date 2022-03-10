@@ -568,7 +568,11 @@ int wifi_cmd_uap_config(char *ssid,
         wm_wifi.ht_tx_cfg &= ~MBIT(1);
         wm_wifi.ht_tx_cfg &= ~MBIT(6);
     }
-
+    if (ISSUPP_RXLDPC(mlan_adap->hw_dot_11n_dev_cap) != 0U)
+    {
+        SETHT_LDPCCODINGCAP(bss.param.bss_config.ht_cap_info);
+        SETHT_LDPCCODINGCAP(wm_wifi.ht_tx_cfg);
+    }
     ret = wifi_uap_set_httxcfg_int(wm_wifi.ht_tx_cfg);
     if (ret != WM_SUCCESS)
     {
