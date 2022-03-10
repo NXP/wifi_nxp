@@ -70,7 +70,7 @@ void deliver_packet_above(struct pbuf *p, int recv_interface)
         case ETHTYPE_IPV6:
 #endif
         case ETHTYPE_ARP:
-            if (recv_interface >= MAX_INTERFACES_SUPPORTED)
+            if ((unsigned)recv_interface >= MAX_INTERFACES_SUPPORTED)
             {
                 while (true)
                 {
@@ -244,7 +244,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 /* Callback function called from the wifi module */
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen)
 {
-    if (netif_arr[interface] != NULL)
+    if (interface < MAX_INTERFACES_SUPPORTED && netif_arr[interface] != NULL)
     {
         process_data_packet(rcvdata, datalen);
     }

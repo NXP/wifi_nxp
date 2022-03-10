@@ -87,7 +87,7 @@ PACK_STRUCT_END
 #else
 #define MAX_WAIT_TIME 35
 #endif
-#define MAX_INTERFACES_SUPPORTED 3
+#define MAX_INTERFACES_SUPPORTED 3U
 
 /* The time to block waiting for input. */
 #define emacBLOCK_TIME_WAITING_FOR_INPUT ((portTickType)100)

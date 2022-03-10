@@ -421,6 +421,7 @@ mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *
     t_u16 pairwise_cipher_count = 0;
     t_u16 akm_suite_count       = 0;
     t_u16 temp_akm_suite_count  = 0;
+    t_u32 rsn_ie_shift_len      = 0;
     int found                   = 0;
     t_u8 sha_256_oui[4]         = {0x00, 0x0f, 0xac, 0x06};
 
@@ -463,20 +464,28 @@ mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *
                                                   pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16)),
                            sha_256_oui, AKM_SUITE_LEN);
             /* Shift remaining bytes of RSN IE after this */
-            (void)__memmove(pmadapter,
-                            ptlv_rsn_ie->rsn_ie +
-                                (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
-                                 pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) + AKM_SUITE_LEN),
-                            ptlv_rsn_ie->rsn_ie + (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
-                                                   pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) +
-                                                   akm_suite_count * AKM_SUITE_LEN),
-                            ptlv_rsn_ie->header.len - (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+            rsn_ie_shift_len = ptlv_rsn_ie->header.len - (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+                                                          pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN +
+                                                          sizeof(t_u16) + akm_suite_count * AKM_SUITE_LEN);
+            if (rsn_ie_shift_len <= MLAN_WMSDK_MAX_WPA_IE_LEN)
+            {
+                (void)__memmove(pmadapter,
+                                ptlv_rsn_ie->rsn_ie +
+                                    (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+                                     pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) + AKM_SUITE_LEN),
+                                ptlv_rsn_ie->rsn_ie + (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
                                                        pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN +
-                                                       sizeof(t_u16) + akm_suite_count * AKM_SUITE_LEN));
-            ptlv_rsn_ie->header.len = ptlv_rsn_ie->header.len - (akm_suite_count - 1) * AKM_SUITE_LEN;
-            /* Update akm suite count */
-            akm_suite_count      = 1;
-            *akm_suite_count_ptr = akm_suite_count;
+                                                       sizeof(t_u16) + akm_suite_count * AKM_SUITE_LEN),
+                                rsn_ie_shift_len);
+                ptlv_rsn_ie->header.len = ptlv_rsn_ie->header.len - (akm_suite_count - 1) * AKM_SUITE_LEN;
+                /* Update akm suite count */
+                akm_suite_count      = 1;
+                *akm_suite_count_ptr = akm_suite_count;
+            }
+            else
+            {
+                return MLAN_STATUS_FAILURE;
+            }
         }
     }
     ptr      = (t_u16 *)(void *)(ptlv_rsn_ie->rsn_ie + sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
