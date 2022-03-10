@@ -180,10 +180,10 @@ typedef xTaskHandle os_thread_t;
 
 static inline const char *get_current_taskname(void)
 {
-    os_thread_t *handle = (os_thread_t *)xTaskGetCurrentTaskHandle();
+    os_thread_t handle = xTaskGetCurrentTaskHandle();
     if (handle != NULL)
     {
-        return pcTaskGetTaskName(*handle);
+        return pcTaskGetTaskName(handle);
     }
     else
     {
