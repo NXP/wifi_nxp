@@ -473,8 +473,8 @@ static void iperf_test_start(void *arg)
         {
 #ifdef CONFIG_IPV6
             if (ipv6)
-                ctx->iperf_session = lwiperf_start_tcp_server(netif_ip_addr6(netif_default, 0),
-                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session =
+                    lwiperf_start_tcp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
                 ctx->iperf_session =
@@ -500,8 +500,8 @@ static void iperf_test_start(void *arg)
             }
 #ifdef CONFIG_IPV6
             if (ipv6)
-                ctx->iperf_session = lwiperf_start_udp_server(netif_ip_addr6(netif_default, 0),
-                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session =
+                    lwiperf_start_udp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
                 ctx->iperf_session =
