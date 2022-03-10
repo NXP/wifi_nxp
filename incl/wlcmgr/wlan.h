@@ -3265,6 +3265,10 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 
 #endif
 
+#ifdef CONFIG_WIFI_MEM_ACCESS
+int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
+#endif
+
 /**
  * This function sends the host command to f/w and copies back response to caller provided buffer in case of
  * success Response from firmware is not parsed by this function but just copied back to the caller buffer.

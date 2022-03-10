@@ -1916,6 +1916,72 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_WIFI_MEM_ACCESS
+static void dump_wlan_mem_access_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Get value of memory:\r\n");
+    (void)PRINTF("    wlan-mem-access <memeory_address>\r\n");
+    (void)PRINTF("Set value of memory:\r\n");
+    (void)PRINTF("    wlan-mem-access <memeory_address> <value>\r\n");
+    (void)PRINTF("The format of memory address and value:\r\n");
+    (void)PRINTF("    Hexadecimal value. For example:\r\n"
+                 "        0x00001200\r\n"
+                 "        0X00001200\r\n"
+                 "        0x1200\r\n"
+                 "        0X1200\r\n");
+}
+
+static void test_wlan_mem_access(int argc, char **argv)
+{
+    int ret;
+    t_u16 action  = 0;
+    t_u32 address = 0;
+    t_u32 value;
+    if (argc < 2 || argc > 3)
+    {
+        dump_wlan_mem_access_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    else if(argc == 2)
+        action = ACTION_GET;
+    else
+    {
+        action = ACTION_SET;
+        if (argv[2][0] == '0' && (argv[2][1] == 'x' || argv[2][1] == 'X'))
+            value = a2hex_or_atoi(argv[2]);
+        else
+        {
+            dump_wlan_mem_access_usage();
+            (void)PRINTF("Error: invalid value argument\r\n");
+            return;
+        }
+    }
+    if (argv[1][0] == '0' && (argv[1][1] == 'x' || argv[1][1] == 'X'))
+        address = a2hex_or_atoi(argv[1]);
+    else
+    {
+        dump_wlan_mem_access_usage();
+        (void)PRINTF("Error: invalid address argument\r\n");
+        return;
+    }
+
+    ret = wlan_mem_access(action, address, &value);
+
+    if (ret == WM_SUCCESS)
+    {
+        if (action == ACTION_GET)
+            (void)PRINTF("At Memory 0x%x: 0x%x\r\n", address, value);
+        else
+            (void)PRINTF("Set the Memory successfully\r\n");
+    }
+    else
+        wlcm_e("Read/write Mem failed");
+
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -1965,6 +2031,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
+#endif
+#ifdef CONFIG_WIFI_MEM_ACCESS
+    {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},
 #endif
 };
 

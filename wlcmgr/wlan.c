@@ -6289,6 +6289,13 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
 }
 #endif
 
+#ifdef CONFIG_WIFI_MEM_ACCESS
+int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
+{
+    return wifi_mem_access(action, addr, value);
+}
+#endif
+
 #ifdef CONFIG_RF_TEST_MODE
 
 int wlan_set_rf_test_mode(void)
