@@ -741,7 +741,8 @@ void cmd_iperf(int argc, char **argv)
 #endif
     } info;
 
-    amount = IPERF_CLIENT_AMOUNT;
+    amount          = IPERF_CLIENT_AMOUNT;
+    udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
 #ifdef CONFIG_WMM
     qos = 0;
 #endif
