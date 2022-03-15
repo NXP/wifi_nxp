@@ -1450,7 +1450,7 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
 /* returns port number from rd_bitmap. if ctrl port, then it clears
  * the bit and does nothing else
  * if data port then increments curr_port value also */
-mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32 *rxlen, t_u32 *rxblocks, bool *aggr)
+static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32 *rxlen, t_u32 *rxblocks, bool *aggr)
 {
 #if defined(SD8801)
     t_u16 rd_bitmap = pmadapter->mp_rd_bitmap;
@@ -1666,7 +1666,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
 /* returns port number from rd_bitmap. if ctrl port, then it clears
  * the bit and does nothing else
  * if data port then increments curr_port value also */
-mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
+static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
 {
 #if defined(SD8801)
     t_u16 rd_bitmap = pmadapter->mp_rd_bitmap;
@@ -2134,7 +2134,7 @@ int wifi_raw_packet_send(const t_u8 *packet, t_u32 length)
     return WM_SUCCESS;
 }
 
-mlan_status sd_wifi_preinit(enum wlan_fw_storage_type st)
+static mlan_status sd_wifi_preinit(enum wlan_fw_storage_type st)
 {
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
 
@@ -2167,13 +2167,7 @@ mlan_status sd_wifi_preinit(enum wlan_fw_storage_type st)
     return mlanstatus;
 }
 
-void sd_wifi_postsdioinit(void)
-{
-    /* Initialize the mlan subsystem before initializing 878x driver */
-    (void)mlan_subsys_init();
-}
-
-mlan_status sd_wifi_post_fwload(enum wlan_type type)
+static mlan_status sd_wifi_post_fwload(enum wlan_type type)
 {
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
     uint32_t resp;
@@ -2223,7 +2217,6 @@ mlan_status sd_wifi_init(enum wlan_type type,
         ret = sdio_init();
         if (ret == MLAN_STATUS_SUCCESS)
         {
-            sd_wifi_postsdioinit();
             ret = sdio_ioport_init();
             if (ret == MLAN_STATUS_SUCCESS)
             {
