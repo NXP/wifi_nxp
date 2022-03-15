@@ -532,7 +532,10 @@ int wifi_cmd_uap_config(char *ssid,
 /* Set default bandwidth to 20 MHz as 8977 firmware does not support 40 MHz bandwidth. */
 #if defined(SD8977)
     /* TODO: Remove the lines below once 40 MHz bandwidth support is available in the firmware */
-    bandwidth = BANDWIDTH_20MHZ;
+    if (channel <= MAX_CHANNELS_BG)
+    {
+        bandwidth = BANDWIDTH_20MHZ;
+    }
 #endif
 
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
