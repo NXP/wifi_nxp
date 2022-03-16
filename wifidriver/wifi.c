@@ -103,7 +103,7 @@ typedef enum __mlan_status
 
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE * sizeof(portSTACK_TYPE));
 static os_thread_stack_define(wifi_drv_stack, 1024);
-static os_queue_pool_define(g_io_events_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
+static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 #ifdef CONFIG_WMM
 static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
 #endif
@@ -924,7 +924,7 @@ void wifi_event_completion(int event, enum wifi_event_reason result, void *data)
 
     msg.data   = data;
     msg.reason = result;
-    msg.event  = event;
+    msg.event  = (uint16_t)event;
     if (os_queue_send(wm_wifi.wlc_mgr_event_queue, &msg, OS_NO_WAIT) != WM_SUCCESS)
     {
         wifi_e("Failed to send response on Queue");
@@ -1038,7 +1038,7 @@ static int remove_mcast_ip(uint8_t *mac_addr)
 static int make_filter_list(char *mlist, int maxlen)
 {
     mcast_filter *node_t;
-    uint8_t maddr_cnt = 0;
+    int maddr_cnt = 0;
     (void)wifi_get_mcastf_lock();
     node_t = wm_wifi.start_list;
     while (node_t != NULL)
@@ -1119,8 +1119,8 @@ int wifi_add_mcast_filter(uint8_t *mac_addr)
     {
         return ret;
     }
-    len = make_filter_list(mlist, MAX_MCAST_LEN);
-    return wifi_set_mac_multicast_addr(mlist, len);
+    len = make_filter_list(mlist, (int)MAX_MCAST_LEN);
+    return wifi_set_mac_multicast_addr(mlist, (t_u32)len);
 }
 
 int wifi_remove_mcast_filter(uint8_t *mac_addr)
@@ -1143,8 +1143,8 @@ int wifi_remove_mcast_filter(uint8_t *mac_addr)
     {
         return ret;
     }
-    len = make_filter_list(mlist, MAX_MCAST_LEN);
-    ret = wifi_set_mac_multicast_addr(mlist, len);
+    len = make_filter_list(mlist, (int)MAX_MCAST_LEN);
+    ret = wifi_set_mac_multicast_addr(mlist, (uint32_t)len);
     return ret;
 }
 
@@ -1183,7 +1183,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
 {
     (void)memset(&common_desc, 0x00, sizeof(struct wifi_scan_result));
     int rv = wrapper_bssdesc_first_set(
-        index, common_desc.bssid, &common_desc.is_ibss_bit_set, &common_desc.ssid_len, common_desc.ssid,
+        (int)index, common_desc.bssid, &common_desc.is_ibss_bit_set, &common_desc.ssid_len, common_desc.ssid,
         &common_desc.Channel, &common_desc.RSSI, &common_desc.beacon_period, &common_desc.dtim_period,
         &common_desc.WPA_WPA2_WEP, &common_desc.wpa_mcstCipher, &common_desc.wpa_ucstCipher,
         &common_desc.rsn_mcstCipher, &common_desc.rsn_ucstCipher, &common_desc.is_pmf_required);
@@ -1194,7 +1194,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
     }
 
     /* Country info not populated */
-    rv = wrapper_bssdesc_second_set(index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present,
+    rv = wrapper_bssdesc_second_set((int)index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present,
                                     &common_desc.wmm_ie_present, &common_desc.band, &common_desc.wps_IE_exist,
                                     &common_desc.wps_session, &common_desc.wpa2_entp_IE_exist, &common_desc.trans_mode,
                                     common_desc.trans_bssid, &common_desc.trans_ssid_len, common_desc.trans_ssid);
@@ -1314,7 +1314,7 @@ static void wifi_core_input(void)
 
     for (;;)
     {
-        sta = os_enter_critical_section();
+        sta = (int)os_enter_critical_section();
         /* Allow interrupt handler to deliver us a packet */
         g_txrx_flag = true;
         //		SDIOC_IntMask(SDIOC_INT_CDINT, UNMASK);
@@ -1566,7 +1566,7 @@ int wifi_init_fcc(const uint8_t *fw_ram_start_addr, const size_t size)
     if (wifi_init_done != 0U)
         return WM_SUCCESS;
 
-    int ret = sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
+    int ret = (int)sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
     if (ret != 0)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);

@@ -153,7 +153,7 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u32 cmd_oid,
                                   t_void *pioctl_buf,
                                   t_void *pdata_buf,
-                                  int bss_type,
+                                  mlan_bss_type bss_type,
                                   void *priv);
 
 bool wmsdk_is_11N_enabled(void);
