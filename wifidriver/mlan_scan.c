@@ -3466,7 +3466,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     MrvlIEtypes_Data_t *ptlv                    = MNULL;
     MrvlIEtypes_Bss_Scan_Rsp_t *pscan_rsp_tlv   = MNULL;
     MrvlIEtypes_Bss_Scan_Info_t *pscan_info_tlv = MNULL;
-    t_u8 band;
+    mlan_band_def band;
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
 
@@ -3657,7 +3657,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #endif /* CONFIG_MLAN_WMSDK */
             /* Save the band designation for this entry for use in join */
             bss_new_entry->bss_band = band;
-            cfp                     = wlan_find_cfp_by_band_and_channel(pmadapter, (t_u8)bss_new_entry->bss_band,
+            cfp                     = wlan_find_cfp_by_band_and_channel(pmadapter, bss_new_entry->bss_band,
                                                     (t_u16)bss_new_entry->channel);
 
             if (cfp)
