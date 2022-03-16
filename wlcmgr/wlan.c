@@ -3239,11 +3239,13 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
 static void wlcm_deinit(int action)
 {
+#if 0
     if ((wlan.status != WLCMGR_ACTIVATED) && (wlan.status != WLCMGR_INIT_DONE))
     {
         wlcm_e("cannot deinit wlcmgr. unexpected status: %d\n\r", wlan.status);
         return;
     }
+#endif
 
     wifi_deinit();
 
@@ -3888,6 +3890,8 @@ void wlan_deinit(int action)
     {
         wlcm_deinit(action);
     }
+
+    os_rwlock_delete(&ps_rwlock);
 }
 
 #ifdef CONFIG_WPA2_ENTP
@@ -4067,6 +4071,9 @@ int wlan_stop(void)
     }
     wlan.running = 0;
 
+#ifdef OTP_CHANINFO
+    wifi_free_fw_region_and_cfp_tables();
+#endif
     /* We need to wait for scan_lock as wifi scan might have been
      * scheduled, so it must be completed before deleting cm_main_thread
      * here. Otherwise deadlock situation might arrive as both of them
@@ -4153,6 +4160,8 @@ int wlan_stop(void)
         wlcm_w("failed to terminate thread: %d", ret);
         return WLAN_ERROR_STATE;
     }
+
+    (void)net_wlan_deinit();
 
 #ifdef CONFIG_WLAN_FW_HEARTBEAT
     // wlan_fw_heartbeat_unregister_healthmon();

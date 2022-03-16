@@ -344,6 +344,13 @@ int mlan_subsys_init(void)
     return WM_SUCCESS;
 }
 
+int mlan_subsys_deinit(void)
+{
+    (void)mlan_unregister(mlan_adap);
+
+    return WM_SUCCESS;
+}
+
 #ifdef DEBUG_11N_AGGR
 int wifi_get_amsdu_status()
 {

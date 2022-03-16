@@ -60,6 +60,7 @@ t_u32 seqnum;
 bool g_txrx_flag;
 
 int mlan_subsys_init(void);
+int mlan_subsys_deinit(void);
 
 t_u8 txportno;
 
@@ -136,6 +137,21 @@ static int wlan_init_struct(void)
             return status;
         }
     }
+    return WM_SUCCESS;
+}
+
+static int wlan_deinit_struct()
+{
+    if (txrx_mutex)
+    {
+        int status = os_mutex_delete(&txrx_mutex);
+        if (status != WM_SUCCESS)
+            return status;
+    }
+
+    memset(dev_mac_addr, 0, sizeof(dev_mac_addr));
+    memset(dev_fw_ver_ext, 0, sizeof(dev_fw_ver_ext));
+
     return WM_SUCCESS;
 }
 
@@ -2252,7 +2268,9 @@ void sd_wifi_deinit(void)
     //	pm_deregister_cb(pm_handle);
 
     (void)wlan_cmd_shutdown();
-    // sdio_drv_deinit();
+    sdio_drv_deinit();
+    mlan_subsys_deinit();
+    wlan_deinit_struct();
 }
 
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)

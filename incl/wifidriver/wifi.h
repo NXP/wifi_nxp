@@ -641,7 +641,8 @@ int wifi_set_country(int country);
 int wifi_uap_set_country(int country);
 int wifi_get_country(void);
 #ifdef OTP_CHANINFO
-int wifi_get_fw_region_and_cfp_tables();
+int wifi_get_fw_region_and_cfp_tables(void);
+void wifi_free_fw_region_and_cfp_tables(void);
 #endif
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);

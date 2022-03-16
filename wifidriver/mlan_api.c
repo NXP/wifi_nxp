@@ -2039,28 +2039,21 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
         return -WM_E_INVAL;
     }
 
-    mlan_multicast_list *pmcast_list;
-    pmcast_list = os_mem_alloc(sizeof(mlan_multicast_list));
-    if (pmcast_list == MNULL)
-    {
-        return -WM_E_NOMEM;
-    }
+    mlan_multicast_list mcast_list;
 
-    (void)memcpy((void *)pmcast_list->mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
-    pmcast_list->num_multicast_addr = num_of_addr;
+    (void)memcpy((void *)mcast_list.mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
+    mcast_list.num_multicast_addr = num_of_addr;
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MAC_MULTICAST_ADR,
-                                              HostCmd_ACT_GEN_SET, 0, NULL, pmcast_list, cmd);
+                                              HostCmd_ACT_GEN_SET, 0, NULL, &mcast_list, cmd);
 
     if (rv != MLAN_STATUS_SUCCESS)
     {
-        os_mem_free(pmcast_list);
         return -WM_FAIL;
     }
     (void)wifi_wait_for_cmdresp(NULL);
-    os_mem_free(pmcast_list);
     return WM_SUCCESS;
 }
 
@@ -3177,7 +3170,7 @@ int wifi_11k_neighbor_req()
 #endif
 
 #ifdef OTP_CHANINFO
-int wifi_get_fw_region_and_cfp_tables()
+int wifi_get_fw_region_and_cfp_tables(void)
 {
     int ret;
 
@@ -3196,6 +3189,12 @@ int wifi_get_fw_region_and_cfp_tables()
 
     ret = wifi_wait_for_cmdresp(NULL);
     return ret;
+}
+
+void wifi_free_fw_region_and_cfp_tables(void)
+{
+    mlan_adapter *pmadapter = mlan_adap->priv[0]->adapter;
+    wlan_free_fw_cfp_tables(pmadapter);
 }
 #endif
 

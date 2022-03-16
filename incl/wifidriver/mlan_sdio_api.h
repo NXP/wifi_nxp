@@ -135,4 +135,10 @@ bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, u
  */
 int sdio_drv_init(void (*cd_int)(int));
 
+/** Deinitialize the SDIO Driver
+ *
+ *  \return void
+ */
+void sdio_drv_deinit(void);
+
 #endif /* !_MDEV_SDIO_API_H_ */

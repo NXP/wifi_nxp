@@ -265,3 +265,10 @@ int sdio_drv_init(void (*cd_int)(int))
 
     return WM_SUCCESS;
 }
+
+void sdio_drv_deinit(void)
+{
+    SDIO_HostDeinit(&wm_g_sd);
+
+    (void)os_mutex_delete(&sdio_mutex);
+}

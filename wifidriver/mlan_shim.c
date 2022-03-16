@@ -376,7 +376,6 @@ exit_register:
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function unregisters MOAL from MLAN module.
  *
@@ -399,15 +398,6 @@ mlan_status mlan_unregister(IN t_void *pmlan_adapter)
 
     pcb = &pmadapter->callbacks;
 
-    /* Free adapter structure */
-    wlan_free_adapter(pmadapter);
-
-    /* Free timers */
-    wlan_free_timer(pmadapter);
-
-    /* Free lock variables */
-    wlan_free_lock_list(pmadapter);
-
     /* Free private structures */
     for (i = 0; i < pmadapter->priv_num; i++)
     {
@@ -424,6 +414,7 @@ mlan_status mlan_unregister(IN t_void *pmlan_adapter)
     return ret;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function downloads the firmware
  *
