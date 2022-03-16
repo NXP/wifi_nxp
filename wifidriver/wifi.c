@@ -1071,12 +1071,12 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      */
     for (i = 2; i >= 0; i--, j++)
     {
-        mac_addr[j] = (char)(mac_addr_r >> 8 * i) & 0xFF;
+        mac_addr[j] = (uint8_t)((char)(mac_addr_r >> 8 * i) & 0xFF);
     }
 
     for (i = 2; i >= 0; i--, j++)
     {
-        mac_addr[j] = (char)(ipaddr >> 8 * i) & 0xFF;
+        mac_addr[j] = (uint8_t)((char)(ipaddr >> 8 * i) & 0xFF);
     }
 }
 
@@ -1321,7 +1321,7 @@ static void wifi_core_input(void)
         //		SDIOC_IntSigMask(SDIOC_INT_CDINT, UNMASK);
         sdio_enable_interrupt();
 
-        os_exit_critical_section(sta);
+        os_exit_critical_section((unsigned long)sta);
 
         /* Wait till we receive a packet from SDIO */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
@@ -1379,7 +1379,8 @@ static int wifi_core_init(void)
     (void)wifi_get_command_resp_sem(OS_WAIT_FOREVER);
     wm_wifi.io_events_queue_data = g_io_events_queue_data;
 
-    ret = os_queue_create(&wm_wifi.io_events, "io-events", sizeof(struct bus_message), &wm_wifi.io_events_queue_data);
+    ret = os_queue_create(&wm_wifi.io_events, "io-events", (int)sizeof(struct bus_message),
+                          &wm_wifi.io_events_queue_data);
     if (ret != WM_SUCCESS)
     {
         wifi_e("Create io events queue failed");
@@ -1518,7 +1519,7 @@ int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
         return WM_SUCCESS;
     }
 
-    int ret = sd_wifi_init(WLAN_TYPE_NORMAL, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
+    int ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
     if (ret != 0)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);

@@ -483,14 +483,14 @@ int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
     return ret;
 }
 
-static int is_user_scanning(void)
+static bool is_user_scanning(void)
 {
     return (wlan.sta_state == CM_STA_SCANNING_USER);
 }
 
 static bool is_state(enum cm_sta_state state)
 {
-    if (is_user_scanning() != 0)
+    if (is_user_scanning() == true)
     {
         return (wlan.sta_return_to == state);
     }
@@ -1232,7 +1232,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 return -WM_E_INVAL;
             }
 
-            ret = wifi_set_key(BSS_TYPE_STA, true, 0, (const uint8_t *)network->security.psk,
+            ret = wifi_set_key(BSS_TYPE_STA, true, (const uint8_t)0, (const uint8_t *)network->security.psk,
                                (unsigned)network->security.psk_len, (const uint8_t *)network->bssid);
 
             if (ret != WM_SUCCESS)
@@ -1263,7 +1263,7 @@ static bool is_uap_state(enum cm_uap_state state)
     return (wlan.uap_state == state);
 }
 
-static int is_sta_connecting(void)
+static bool is_sta_connecting(void)
 {
     return ((wlan.sta_state > CM_STA_ASSOCIATING) && (wlan.sta_state <= CM_STA_CONNECTED));
 }
@@ -3664,7 +3664,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
     return next;
 }
 
-static int is_uap_msg(struct wifi_message *msg)
+static bool is_uap_msg(struct wifi_message *msg)
 {
     return (((msg->event >= CM_UAP_USER_REQUEST_START) && (msg->event < CM_WLAN_USER_REQUEST_DEINIT)) ||
             (msg->event <= WIFI_EVENT_UAP_LAST));
@@ -4527,7 +4527,7 @@ int wlan_set_rssi_threshold(int rssithr)
 }
 #endif
 
-int is_uap_started(void)
+bool is_uap_started(void)
 {
     return is_uap_state(CM_UAP_IP_UP);
 }

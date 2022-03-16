@@ -405,7 +405,7 @@ enum wlan_connection_state
 /* Data Structures */
 
 /** Station Power save mode */
-enum wlan_ps_mode
+typedef enum wlan_ps_mode
 {
     /** Active mode */
     WLAN_ACTIVE = 0,
@@ -413,7 +413,7 @@ enum wlan_ps_mode
     WLAN_IEEE,
     /** Deep sleep power save mode */
     WLAN_DEEP_SLEEP,
-};
+} wlan_ps_mode;
 
 enum wlan_ps_state
 {
@@ -1392,7 +1392,7 @@ int wlan_set_rssi_threshold(int rssithr);
  *  \return TRUE if micro-AP interface is in \ref WLAN_UAP_STARTED state.
  *  \return FALSE otherwise.
  */
-int is_uap_started(void);
+bool is_uap_started(void);
 
 /** Retrieve the status information of the station interface.
  *
