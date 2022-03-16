@@ -1055,7 +1055,7 @@ typedef struct _mlan_ds_custom_reg_domain
     t_u8 num_a_chan;
 #endif
     /** cfp table */
-    chan_freq_power_t cfp_tbl[0];
+    chan_freq_power_t cfp_tbl[1];
 } mlan_ds_custom_reg_domain;
 #endif
 

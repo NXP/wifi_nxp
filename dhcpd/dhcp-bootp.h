@@ -80,7 +80,7 @@ PACK_START struct bootp_option
 {
     uint8_t type;
     uint8_t length;
-    char value[0];
+    char value[1];
 } PACK_END;
 #define ETH_P_RARP 0x8035
 
