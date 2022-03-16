@@ -38,7 +38,7 @@
 #define HUGE_BUF_SIZE 2000
 static char buffhuge[HUGE_BUF_SIZE];
 
-void *wifi_mem_malloc_cmdrespbuf(int size)
+void *wifi_mem_malloc_cmdrespbuf(t_u16 size)
 {
     /* NOTE: There is no corresponding free call for cmdrespbuf */
     /* CMD are all serialised and they dont need any locking */
