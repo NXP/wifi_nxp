@@ -3239,13 +3239,11 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
 static void wlcm_deinit(int action)
 {
-#if 0
     if ((wlan.status != WLCMGR_ACTIVATED) && (wlan.status != WLCMGR_INIT_DONE))
     {
         wlcm_e("cannot deinit wlcmgr. unexpected status: %d\n\r", wlan.status);
         return;
     }
-#endif
 
     wifi_deinit();
 
@@ -4167,7 +4165,7 @@ int wlan_stop(void)
     // wlan_fw_heartbeat_unregister_healthmon();
 #endif
 
-    wlan.status = WLCMGR_INACTIVE;
+    wlan.status = WLCMGR_INIT_DONE;
     wlcm_d("WLCMGR thread deleted\n\r");
 
     return ret;
