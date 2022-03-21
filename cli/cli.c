@@ -436,7 +436,8 @@ static int handle_input(char *inbuf)
                 }
                 break;
         }
-    } while (!stat.done && ++i < INBUF_SIZE);
+        i++;
+    } while (!stat.done && i < INBUF_SIZE);
 
     if (stat.inQuote != 0U)
     {
@@ -725,18 +726,22 @@ static void console_tick(void)
         cli.bp = 0;
     }
 
-    if (cli.input_enabled && get_input(cli.inbuf, &cli.bp))
+    if (cli.input_enabled == 1)
     {
-        cli.input_enabled = 0;
-        ret               = cli_submit_cmd_buffer(&cli.inbuf);
-        cli.inbuf         = NULL;
-        if (ret != WM_SUCCESS)
+        ret = get_input(cli.inbuf, &cli.bp);
+        if (ret == 1)
         {
-            (void)PRINTF(
-                "Error: problem sending cli message"
-                "\r\n");
+            cli.input_enabled = 0;
+            ret               = cli_submit_cmd_buffer(&cli.inbuf);
+            cli.inbuf         = NULL;
+            if (ret != WM_SUCCESS)
+            {
+                (void)PRINTF(
+                    "Error: problem sending cli message"
+                    "\r\n");
+            }
+            cli.input_enabled = 1;
         }
-        cli.input_enabled = 1;
     }
 }
 

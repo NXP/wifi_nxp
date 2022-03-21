@@ -1812,32 +1812,36 @@ static void handle_scan_results(void)
     for (i = 0; i < count; i++)
     {
         ret = wifi_get_scan_result(i, &res);
-        if (ret == WM_SUCCESS && network_matches_scan_result(network, res, &num_channels, chan_list))
+        if (ret == WM_SUCCESS)
         {
-            if (!matching_ap_found)
+            ret = network_matches_scan_result(network, res, &num_channels, chan_list);
+            if (ret != WM_SUCCESS)
             {
-                /* First matching AP found */
-                (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
-                matching_ap_found = true;
-                /*
-                 * Continue the search. There may be an AP
-                 * with same name but better RSSI.
-                 */
-                continue;
-            }
+                if (!matching_ap_found)
+                {
+                    /* First matching AP found */
+                    (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
+                    matching_ap_found = true;
+                    /*
+                     * Continue the search. There may be an AP
+                     * with same name but better RSSI.
+                     */
+                    continue;
+                }
 
-            if (best_ap->RSSI > res->RSSI)
-            {
-                /*
-                 * We found a network better that current
-                 * best_ap
-                 */
-                wlcm_d("Found better AP %s on channel %d", res->ssid, res->Channel);
-                /* Assign the new found as curr_best */
-                (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
-            }
+                if (best_ap->RSSI > res->RSSI)
+                {
+                    /*
+                     * We found a network better that current
+                     * best_ap
+                     */
+                    wlcm_d("Found better AP %s on channel %d", res->ssid, res->Channel);
+                    /* Assign the new found as curr_best */
+                    (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
+                }
 
-            /* Continue the search */
+                /* Continue the search */
+            }
         }
     }
 
@@ -4110,8 +4114,10 @@ int wlan_stop(void)
 
     wlcm_d("Sent wlcmgr shutdown request. Current State: %d\r\n", wlan.status);
 
-    while (wlan.status != WLCMGR_THREAD_STOPPED && --num_iterations)
+    --num_iterations;
+    while (wlan.status != WLCMGR_THREAD_STOPPED && num_iterations)
     {
+        --num_iterations;
         os_thread_sleep(os_msec_to_ticks((uint32_t)check_interval));
     }
 
@@ -4567,7 +4573,8 @@ int wlan_get_network(unsigned int index, struct wlan_network *network)
 
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
     {
-        if (wlan.networks[i].name[0] != '\0' && ++pos == (int)index)
+        ++pos;
+        if (wlan.networks[i].name[0] != '\0' && pos == (int)index)
         {
             copy_network(network, &wlan.networks[i]);
             return WM_SUCCESS;
