@@ -2828,7 +2828,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ps_param_t
 typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
 {
     /** Action */
-    ENH_PS_MODES action;
+    uint16_t action;
     /** Data speciifc to action */
     /* For IEEE power save data will be as UINT16 mode (0x01 - firmware to
        automatically choose PS_POLL or NULL mode, 0x02 - PS_POLL, 0x03 - NULL
