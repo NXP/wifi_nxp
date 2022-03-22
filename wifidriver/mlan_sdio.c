@@ -247,7 +247,7 @@ int sdio_drv_init(void (*cd_int)(int))
     ret = os_mutex_create(&sdio_mutex, "sdio-mutex", OS_MUTEX_INHERIT);
     if (ret == -WM_FAIL)
     {
-        sdio_e("Failed to create mutex\r\n");
+        sdio_e("Failed to create mutex");
         return -WM_FAIL;
     }
 
@@ -268,7 +268,13 @@ int sdio_drv_init(void (*cd_int)(int))
 
 void sdio_drv_deinit(void)
 {
+    int ret;
+
     SDIO_Deinit(&wm_g_sd);
 
-    (void)os_mutex_delete(&sdio_mutex);
+    ret = os_mutex_delete(&sdio_mutex);
+    if (ret != WM_SUCCESS)
+    {
+        sdio_e("Failed to delete mutex");
+    }
 }

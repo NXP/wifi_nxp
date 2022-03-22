@@ -146,11 +146,18 @@ static int wlan_deinit_struct()
     {
         int status = os_mutex_delete(&txrx_mutex);
         if (status != WM_SUCCESS)
+        {
+            wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
             return status;
+        }
+    }
+    else
+    {
+        wifi_io_d("%s mutex does not exsit", __FUNCTION__);
     }
 
-    memset(dev_mac_addr, 0, sizeof(dev_mac_addr));
-    memset(dev_fw_ver_ext, 0, sizeof(dev_fw_ver_ext));
+    (void)memset(dev_mac_addr, 0, sizeof(dev_mac_addr));
+    (void)memset(dev_fw_ver_ext, 0, sizeof(dev_fw_ver_ext));
 
     return WM_SUCCESS;
 }

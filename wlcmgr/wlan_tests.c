@@ -24,14 +24,14 @@
  *
  */
 
+#include <string.h>
+#include <wm_os.h>
+#include <wm_net.h> /* for net_inet_aton */
 #include <wlan.h>
 #include <cli.h>
 #include <cli_utils.h>
-#include <string.h>
-#include <wm_net.h> /* for net_inet_aton */
 #include <wifi.h>
 #include <wlan_tests.h>
-
 /*
  * NXP Test Framework (MTF) functions
  */
@@ -849,7 +849,7 @@ void test_wlan_scan_opt(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid rssi threshold"
                     " argument\n");
-                    return;
+                return;
             }
             wlan_scan_param.rssi_threshold = atoi(argv[arg + 1]);
             if (wlan_scan_param.rssi_threshold < -101)
@@ -857,7 +857,7 @@ void test_wlan_scan_opt(int argc, char **argv)
                 (void)PRINTF(
                     "Error: invalid value of rssi threshold"
                     "\r\n");
-                    return;
+                return;
             }
             arg += 2;
             info.rssi_threshold = 1;
@@ -904,9 +904,9 @@ void test_wlan_scan_opt(int argc, char **argv)
         {
             (void)PRINTF("with %d probes ", wlan_scan_param.num_probes);
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
-        wlan_set_rssi_threshold(wlan_scan_param.rssi_threshold);
-        if (info.rssi_threshold != 0U)
-            (void)PRINTF("with %d rssi_threshold ", wlan_scan_param.rssi_threshold);
+            wlan_set_rssi_threshold(wlan_scan_param.rssi_threshold);
+            if (info.rssi_threshold != 0U)
+                (void)PRINTF("with %d rssi_threshold ", wlan_scan_param.rssi_threshold);
 #endif
         }
         (void)PRINTF("scheduled...\r\n");
@@ -1925,11 +1925,12 @@ static void dump_wlan_mem_access_usage()
     (void)PRINTF("Set value of memory:\r\n");
     (void)PRINTF("    wlan-mem-access <memeory_address> <value>\r\n");
     (void)PRINTF("The format of memory address and value:\r\n");
-    (void)PRINTF("    Hexadecimal value. For example:\r\n"
-                 "        0x00001200\r\n"
-                 "        0X00001200\r\n"
-                 "        0x1200\r\n"
-                 "        0X1200\r\n");
+    (void)PRINTF(
+        "    Hexadecimal value. For example:\r\n"
+        "        0x00001200\r\n"
+        "        0X00001200\r\n"
+        "        0x1200\r\n"
+        "        0X1200\r\n");
 }
 
 static void test_wlan_mem_access(int argc, char **argv)
@@ -1944,7 +1945,7 @@ static void test_wlan_mem_access(int argc, char **argv)
         (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
-    else if(argc == 2)
+    else if (argc == 2)
         action = ACTION_GET;
     else
     {
@@ -1978,7 +1979,13 @@ static void test_wlan_mem_access(int argc, char **argv)
     }
     else
         wlcm_e("Read/write Mem failed");
+}
+#endif
 
+#ifdef CONFIG_HEAP_STAT
+static void test_heap_stat(int argc, char **argv)
+{
+    os_dump_mem_stats();
 }
 #endif
 
@@ -2034,6 +2041,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},
+#endif
+#ifdef CONFIG_HEAP_STAT
+    {"heap-stat", NULL, test_heap_stat},
 #endif
 };
 
