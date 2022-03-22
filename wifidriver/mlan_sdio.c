@@ -268,7 +268,7 @@ int sdio_drv_init(void (*cd_int)(int))
 
 void sdio_drv_deinit(void)
 {
-    SDIO_HostDeinit(&wm_g_sd);
+    SDIO_Deinit(&wm_g_sd);
 
     (void)os_mutex_delete(&sdio_mutex);
 }
