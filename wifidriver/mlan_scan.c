@@ -842,7 +842,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 
         /* Set the number of probes to send, use Adapter setting if unset */
         num_probes = (puser_scan_in->num_probes ? puser_scan_in->num_probes : pmadapter->scan_probes);
-        
+
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
         /* Set the threshold value of rssi to send */
         rssi_threshold = puser_scan_in->rssi_threshold;
@@ -915,8 +915,8 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         pscan_cfg_out->bss_mode = (t_u8)pmadapter->scan_mode;
         num_probes              = pmadapter->scan_probes;
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
-        rssi_threshold          = 0;
-        rssi_threshold_enable   = 0;
+        rssi_threshold        = 0;
+        rssi_threshold_enable = 0;
 #endif
     }
 
@@ -1013,11 +1013,11 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
      */
     if (rssi_threshold)
     {
-        prssi_threshold_tlv                 = (MrvlIEtypes_RssiThresholdParamSet_t *)ptlv_pos;
-        prssi_threshold_tlv->header.type    = wlan_cpu_to_le16(TLV_TYPE_RSSI_THRESHOLD);
-        prssi_threshold_tlv->header.len     = (t_u16)(sizeof(prssi_threshold_tlv->enable)            \
-                                                     +sizeof(prssi_threshold_tlv->rssi_threshold)    \
-                                                     +sizeof(prssi_threshold_tlv->reserved));
+        prssi_threshold_tlv              = (MrvlIEtypes_RssiThresholdParamSet_t *)ptlv_pos;
+        prssi_threshold_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSSI_THRESHOLD);
+        prssi_threshold_tlv->header.len =
+            (t_u16)(sizeof(prssi_threshold_tlv->enable) + sizeof(prssi_threshold_tlv->rssi_threshold) +
+                    sizeof(prssi_threshold_tlv->reserved));
         prssi_threshold_tlv->enable         = rssi_threshold_enable;
         prssi_threshold_tlv->rssi_threshold = rssi_threshold;
 
@@ -1289,10 +1289,11 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     IEEEtypes_VendorSpecific_t *pvendor_ie;
     const t_u8 wpa_oui[3]  = {0x00, 0x50, 0xf2};
     const t_u8 wpa_type[1] = {0x01};
-    const t_u8 wmm_oui[4]  = {0x00, 0x50, 0xf2};
+    const t_u8 wmm_oui[3]  = {0x00, 0x50, 0xf2};
     const t_u8 wmm_type[1] = {0x02};
 #ifdef CONFIG_OWE
-    const t_u8 owe_oui[4] = {0x50, 0x6f, 0x9a, 0x1c};
+    const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
+    const t_u8 owe_type[1] = {0x01c};
 #endif
     IEEEtypes_CountryInfoSet_t *pcountry_info;
 #ifdef CONFIG_11AX
@@ -1589,8 +1590,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
             case VENDOR_SPECIFIC_221:
                 pvendor_ie = (IEEEtypes_VendorSpecific_t *)(void *)pcurrent_ptr;
 
-                if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, 3 * sizeof(t_u8))) &
-                    !(__memcmp(pmadapter, &pvendor_ie->vend_hdr.oui_type, wpa_type, sizeof(t_u8))))
+                if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(wpa_oui))) &&
+                    (pvendor_ie->vend_hdr.oui_type == wpa_type[0]))
                 {
                     /* Save it here since we do not have beacon buffer */
                     /* fixme : Verify if this is the right approach. This had to be
@@ -1620,8 +1621,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     HEXDUMP("InterpretIE: Resp WPA_IE", (t_u8 *)pbss_entry->pwpa_ie,
                             ((*(pbss_entry->pwpa_ie)).vend_hdr.len + sizeof(IEEEtypes_Header_t)));
                 }
-                else if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, 3 * sizeof(t_u8))) &
-                         !(__memcmp(pmadapter, &pvendor_ie->vend_hdr.oui_type, wmm_type, sizeof(t_u8))))
+                else if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(wmm_oui))) &&
+                         (pvendor_ie->vend_hdr.oui_type == wmm_type[0]))
                 {
                     if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t) || total_ie_len == sizeof(IEEEtypes_WmmInfo_t))
                     {
@@ -1636,7 +1637,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 }
 #ifdef CONFIG_OWE
                 else if (IS_FW_SUPPORT_EMBEDDED_OWE(pmadapter) &&
-                         !__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, owe_oui, sizeof(owe_oui)))
+                         (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, owe_oui, sizeof(owe_oui)) &&
+                          (pvendor_ie->vend_hdr.oui_type == owe_type[0])))
                 {
                     /* Current Format of OWE IE is element_id:element_len:oui:MAC Address:SSID length:SSID */
                     t_u8 trans_ssid_len =
