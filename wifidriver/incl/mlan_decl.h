@@ -241,7 +241,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 #define OUT
 
 /** BIT value */
-#define MBIT(x) (mlan_bss_role)(((t_u32)1) << (x))
+#define MBIT(x) (((t_u32)1) << (x))
 
 /** Buffer flag for requeued packet */
 #define MLAN_BUF_FLAG_REQUEUED_PKT MBIT(0)
