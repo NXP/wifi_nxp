@@ -152,7 +152,7 @@ static uint32_t wlan_card_read_scratch_reg(void)
     return rd_len;
 }
 
-static mlan_status wlan_sdio_init_ioport(void)
+static void wlan_sdio_init_ioport(void)
 {
     uint32_t resp = 0;
     t_u8 data;
@@ -165,21 +165,21 @@ static mlan_status wlan_sdio_init_ioport(void)
 
     /* Enable sdio cmd53 new mode */
     (void)sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
-    data = (resp & 0xff) | CMD53_NEW_MODE;
+    data = (t_u8)((resp & 0xff) | CMD53_NEW_MODE);
     (void)sdio_drv_creg_write(CARD_CONFIG_2_1_REG, 1, data, &resp);
     (void)sdio_drv_creg_read(CARD_CONFIG_2_1_REG, 1, &resp);
 
     /* configure cmd port  */
     /* enable reading rx length from the register  */
     (void)sdio_drv_creg_read(CMD_CONFIG_0, 1, &resp);
-    data = (resp & 0xff) | CMD_PORT_RD_LEN_EN;
+    data = (t_u8)((resp & 0xff) | CMD_PORT_RD_LEN_EN);
     (void)sdio_drv_creg_write(CMD_CONFIG_0, 1, data, &resp);
     (void)sdio_drv_creg_read(CMD_CONFIG_0, 1, &resp);
 
     /* enable Dnld/Upld ready auto reset for cmd port
      * after cmd53 is completed */
     (void)sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
-    data = (resp & 0xff) | CMD_PORT_AUTO_EN;
+    data = (t_u8)((resp & 0xff) | CMD_PORT_AUTO_EN);
     (void)sdio_drv_creg_write(CMD_CONFIG_1, 1, data, &resp);
     (void)sdio_drv_creg_read(CMD_CONFIG_1, 1, &resp);
 #elif defined(SD8801)
@@ -198,15 +198,14 @@ static mlan_status wlan_sdio_init_ioport(void)
 
     /* Set Host interrupt reset to read to clear */
     (void)sdio_drv_creg_read(HOST_INT_RSR_REG, 1, &resp);
-    data = (resp & 0xff) | HOST_INT_RSR_MASK;
+    data = (t_u8)((resp & 0xff) | HOST_INT_RSR_MASK);
     (void)sdio_drv_creg_write(HOST_INT_RSR_REG, 1, data, &resp);
 
     /* Dnld/Upld ready set to auto reset */
     (void)sdio_drv_creg_read(CARD_MISC_CFG_REG, 1, &resp);
-    data = (resp & 0xff) | AUTO_RE_ENABLE_INT;
+    data = (t_u8)((resp & 0xff) | AUTO_RE_ENABLE_INT);
     (void)sdio_drv_creg_write(CARD_MISC_CFG_REG, 1, data, &resp);
     set_ioport_inmlan(ioport_g);
-    return true;
 }
 
 t_u16 wlan_card_read_f1_base_regs(void)
@@ -215,9 +214,9 @@ t_u16 wlan_card_read_f1_base_regs(void)
     uint32_t resp = 0;
 
     (void)sdio_drv_creg_read(READ_BASE_0_REG, 1, &resp);
-    reg = resp & 0xffU;
+    reg = (t_u16)(resp & 0xffU);
     (void)sdio_drv_creg_read(READ_BASE_1_REG, 1, &resp);
-    reg |= (resp & 0xffU) << 8;
+    reg |= (t_u16)((resp & 0xffU) << 8);
 
     return reg;
 }
@@ -281,15 +280,9 @@ mlan_status sdio_init(void)
 
 mlan_status sdio_ioport_init(void)
 {
-    int sdiostatus = MLAN_STATUS_SUCCESS;
     /* this sets intmask on card and makes interrupts repeatable */
-    sdiostatus = wlan_sdio_init_ioport();
+    wlan_sdio_init_ioport();
 
-    if (sdiostatus != true)
-    {
-        sdio_io_e("SDIO - Failed to read IOPORT");
-        return MLAN_STATUS_FAILURE;
-    }
     return MLAN_STATUS_SUCCESS;
 }
 

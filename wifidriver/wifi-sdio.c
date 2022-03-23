@@ -171,16 +171,16 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x14; /* we'll just make this constant */
-    ptxpd->tx_pkt_length = payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN;
+    ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     ptxpd->tx_pkt_type   = 0xE5;
     ptxpd->tx_control    = 0;
     ptxpd->priority      = 0;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
-    sdiohdr->size = payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
+    sdiohdr->size = (t_u16)(payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN);
 
-    return ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
+    return (int)(ptxpd->tx_pkt_offset + INTF_HEADER_LEN);
 }
 
 /*
@@ -219,7 +219,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
-    sdiohdr->size = payloadlen;
+    sdiohdr->size = (t_u16)payloadlen;
 }
 
 int bus_register_event_queue(xQueueHandle *event_queue)
@@ -434,7 +434,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         if (bus.event_queue != NULL)
     {
         if (upld_type == MLAN_TYPE_CMD)
-            msg.data = wifi_mem_malloc_cmdrespbuf(sdiopkt->size);
+            msg.data = wifi_mem_malloc_cmdrespbuf();
         else
             msg.data = wifi_malloc_eventbuf((int)sdiopkt->size);
 
@@ -444,7 +444,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
             return MLAN_STATUS_FAILURE;
         }
 
-        msg.event = upld_type;
+        msg.event = (uint16_t)upld_type;
         (void)memcpy((void *)msg.data, (const void *)pmbuf, sdiopkt->size);
 
         ret = os_queue_send(bus.event_queue, &msg, os_msec_to_ticks(WIFI_RESP_WAIT_TIME));
@@ -566,7 +566,7 @@ static int wlan_get_next_seq_num(void)
 }
 
 void wifi_prepare_set_cal_data_cmd(void *cmd, int seq_number);
-static int _wlan_set_cal_data(void)
+static void _wlan_set_cal_data(void)
 {
     t_u32 tx_blocks = 4, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -588,13 +588,11 @@ static int _wlan_set_cal_data(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 
-static int _wlan_reconfigure_tx_buffers(void)
+static void _wlan_reconfigure_tx_buffers(void)
 {
     t_u32 tx_blocks = 4, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -615,8 +613,6 @@ static int _wlan_reconfigure_tx_buffers(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 void wifi_prepare_get_mac_addr_cmd(void *cmd, int seq_number);
@@ -626,7 +622,7 @@ void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_nu
 void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 
 #ifdef OTP_CHANINFO
-static int wlan_get_channel_region_cfg()
+static void wlan_get_channel_region_cfg()
 {
     uint32_t tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -644,8 +640,6 @@ static int wlan_get_channel_region_cfg()
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 #endif
 
@@ -689,7 +683,7 @@ static int wlan_reconfigure_tx_buf()
 }
 #endif
 
-static int wlan_get_mac_addr(void)
+static void wlan_get_mac_addr(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -711,8 +705,6 @@ static int wlan_get_mac_addr(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 void wifi_prepare_get_fw_ver_ext_cmd(void *cmd, int seq_number, int version_str_sel);
@@ -742,7 +734,7 @@ static void wlan_get_fw_ver_ext(int version_str_sel)
 
 void wifi_prepare_get_value1(void *cmd, int seq_number);
 
-static int wlan_get_value1(void)
+static void wlan_get_value1(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -763,12 +755,10 @@ static int wlan_get_value1(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 void wifi_prepare_set_mac_addr_cmd(void *cmd, int seq_number);
-static int _wlan_set_mac_addr(void)
+static void _wlan_set_mac_addr(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -790,12 +780,10 @@ static int _wlan_set_mac_addr(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 #ifdef CONFIG_11N
-static int wlan_set_11n_cfg(void)
+static void wlan_set_11n_cfg(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -803,7 +791,7 @@ static int wlan_set_11n_cfg(void)
     (void)memset(outbuf, 0, SDIO_OUTBUF_LEN);
     wrapper_wlan_cmd_11n_cfg(&sdiopkt->hostcmd);
     /* sdiopkt = outbuf */
-    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->pkttype         = MLAN_TYPE_CMD;
     last_cmd_sent            = HostCmd_CMD_11N_CFG;
 
@@ -813,13 +801,11 @@ static int wlan_set_11n_cfg(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
 void wifi_prepare_enable_amsdu_cmd(void *cmd, int seq_number);
-static int wlan_enable_amsdu(void)
+static void wlan_enable_amsdu(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -840,8 +826,6 @@ static int wlan_enable_amsdu(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 #endif /* CONFIG_ENABLE_AMSDU_RX */
 #endif /* CONFIG_11N */
@@ -855,8 +839,8 @@ static void wlan_cmd_shutdown(void)
 
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.command = HostCmd_CMD_FUNC_SHUTDOWN;
-    sdiopkt->hostcmd.size    = S_DS_GEN;
-    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    sdiopkt->hostcmd.size    = (t_u16)S_DS_GEN;
+    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->hostcmd.result  = 0;
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
@@ -892,7 +876,7 @@ static void wlan_set_mac_ctrl(void)
 #endif
 }
 
-static int wlan_cmd_init(void)
+static void wlan_cmd_init(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -901,8 +885,8 @@ static int wlan_cmd_init(void)
 
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.command = HostCmd_CMD_FUNC_INIT;
-    sdiopkt->hostcmd.size    = S_DS_GEN;
-    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    sdiopkt->hostcmd.size    = (t_u16)S_DS_GEN;
+    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->hostcmd.result  = 0;
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
@@ -916,8 +900,6 @@ static int wlan_cmd_init(void)
     defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
-
-    return true;
 }
 
 #ifdef WLAN_LOW_POWER_ENABLE
@@ -979,7 +961,7 @@ static void wlan_fw_init_cfg(void)
 {
     wifi_io_d("FWCMD : INIT (0xa9)");
 
-    (void)wlan_cmd_init();
+    wlan_cmd_init();
 
     while (last_resp_rcvd != HostCmd_CMD_FUNC_INIT)
     {
@@ -1017,7 +999,7 @@ static void wlan_fw_init_cfg(void)
         (void)PRINTF("Setting up new cal data\r\n");
         wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
 
-        (void)_wlan_set_cal_data();
+        _wlan_set_cal_data();
 
         while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
         {
@@ -1027,7 +1009,7 @@ static void wlan_fw_init_cfg(void)
         /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
          * So we need to send reconfigure command. This can be removed if fix is added in firmware.
          */
-        (void)_wlan_reconfigure_tx_buffers();
+        _wlan_reconfigure_tx_buffers();
 
         while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
         {
@@ -1040,7 +1022,7 @@ static void wlan_fw_init_cfg(void)
     {
         wifi_io_d("CMD : SET_MAC_ADDR (0x4d)");
 
-        (void)_wlan_set_mac_addr();
+        _wlan_set_mac_addr();
 
         while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
         {
@@ -1052,7 +1034,7 @@ static void wlan_fw_init_cfg(void)
 #ifdef OTP_CHANINFO
     wifi_io_d("CMD : Channel Region CFG (0x0242)");
 
-    (void)wlan_get_channel_region_cfg();
+    wlan_get_channel_region_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_CHAN_REGION_CFG)
     {
@@ -1083,7 +1065,7 @@ static void wlan_fw_init_cfg(void)
     }
 #endif
 
-    (void)wlan_get_value1();
+    wlan_get_value1();
 
     while (last_resp_rcvd != HostCmd_CMD_MAC_REG_ACCESS)
     {
@@ -1103,7 +1085,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
-    (void)wlan_get_mac_addr();
+    wlan_get_mac_addr();
 
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
@@ -1152,7 +1134,7 @@ static void wlan_fw_init_cfg(void)
 #endif
 
 #ifdef CONFIG_11N
-    (void)wlan_set_11n_cfg();
+    wlan_set_11n_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_11N_CFG)
     {
@@ -1161,7 +1143,7 @@ static void wlan_fw_init_cfg(void)
     }
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
-    (void)wlan_enable_amsdu();
+    wlan_enable_amsdu();
 
     while (last_resp_rcvd != HostCmd_CMD_AMSDU_AGGR_CTRL)
     {
@@ -2043,13 +2025,13 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type)
 
     wifi_core_thread = os_get_current_task_handle();
 
-    int sta = os_enter_critical_section();
+    int sta = (int)os_enter_critical_section();
     /* Allow interrupt handler to deliver us a packet */
     g_txrx_flag = true;
 
     sdio_enable_interrupt();
 
-    os_exit_critical_section(sta);
+    os_exit_critical_section((unsigned long)sta);
 
     /* Wait till we receive a packet from SDIO */
     (void)os_event_notify_get(OS_WAIT_FOREVER);

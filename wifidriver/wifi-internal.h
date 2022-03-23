@@ -299,7 +299,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp);
  *
  *
  */
-void *wifi_mem_malloc_cmdrespbuf(t_u16 size);
+void *wifi_mem_malloc_cmdrespbuf(void);
 
 /*
  * @internal
