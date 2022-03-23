@@ -2,6 +2,13 @@
 @page middleware_log Middleware Change Log
  
 @section wifi NXP WiFi
+Version 1.3.r39.p7
+ - Bug Fixes:
+  - Changes in HT capabilities information to set the bit for enabling LDPC capabilities.
+  - Removed(reverted) the logic that disabled 40MHz bandwidth feature for IW61x board.
+  - Enabled the option and command provided for setting bandwidth to 40M.
+  - Fixed errors and warnings for IAR, MDK, ARMGCC and MCUXpresso toolchains.
+
 Version 1.3.r39.p5 & p6
  - Updates:
   - Added support of 11ac and 11ax IEs for uAP mode,It was missing.
