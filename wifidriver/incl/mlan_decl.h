@@ -230,7 +230,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** SDIO IO Port mask */
 #define MLAN_SDIO_IO_PORT_MASK 0xfffff
 /** SDIO Block/Byte mode mask */
-#define MLAN_SDIO_BYTE_MODE_MASK 0x80000000
+#define MLAN_SDIO_BYTE_MODE_MASK 0x80000000U
 
 /** Max retry number of IO write */
 #define MAX_READ_IOMEM_RETRY 2

@@ -120,7 +120,7 @@ mlan_operations *mlan_ops[] = {
 t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond) = MNULL;
 #ifdef DEBUG_LEVEL1
 #ifdef DEBUG_LEVEL2
-#define DEFAULT_DEBUG_MASK (0xffffffff)
+#define DEFAULT_DEBUG_MASK (0xffffffffU)
 #else
 #define DEFAULT_DEBUG_MASK (MMSG | MFATAL | MERROR)
 #endif

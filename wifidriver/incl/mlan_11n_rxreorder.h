@@ -3,7 +3,7 @@
  *  @brief This file contains related macros, enum, and struct
  *  of 11n RxReordering functionalities
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -78,7 +78,7 @@ Change log:
 #define DEFAULT_SEQ_NUM 0xffff
 
 /** Indicate packet has been dropped in FW */
-#define RX_PKT_DROPPED_IN_FW 0xffffffff
+#define RX_PKT_DROPPED_IN_FW 0xffffffffU
 
 mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seqNum, t_u16 tid, t_u8 *ta, t_u8 pkttype, void *payload);
 void mlan_11n_delete_bastream_tbl(mlan_private *priv, int Tid, t_u8 *PeerMACAddr, t_u8 type, int initiator);

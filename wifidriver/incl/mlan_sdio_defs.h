@@ -102,7 +102,7 @@ Change log:
 /** Host Control Registers : Download host interrupt status */
 #define DN_LD_HOST_INT_STATUS (0x2U)
 
-#define WLAN_VALUE1 0x80002080
+#define WLAN_VALUE1 0x80002080U
 /** Port for registers */
 #define REG_PORT 0U
 
@@ -170,7 +170,7 @@ Change log:
 /* Command port */
 #define CMD_PORT_SLCT 0x8000U
 /** Data port mask */
-#define DATA_PORT_MASK 0xffffffff
+#define DATA_PORT_MASK 0xffffffffU
 #endif /* SD8977 SD8987 SD8997 SD9097 SD9098 IW61x*/
 
 #if defined(SD8801)

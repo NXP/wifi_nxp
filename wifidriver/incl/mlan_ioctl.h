@@ -1774,7 +1774,7 @@ typedef enum _mlan_psk_type
 /** key flag for mcast IGTK */
 #define KEY_FLAG_AES_MCAST_IGTK 0x00000010U
 /** key flag for remove key */
-#define KEY_FLAG_REMOVE_KEY 0x80000000
+#define KEY_FLAG_REMOVE_KEY 0x80000000U
 
 /** Type definition of mlan_ds_encrypt_key for MLAN_OID_SEC_CFG_ENCRYPT_KEY */
 typedef struct _mlan_ds_encrypt_key
@@ -2102,7 +2102,7 @@ typedef struct _mlan_ds_power_cfg
 /** Power Management Configuration Group */
 /*-----------------------------------------------------------------*/
 /** Host sleep config conditions : Cancel */
-#define HOST_SLEEP_CFG_CANCEL 0xffffffff
+#define HOST_SLEEP_CFG_CANCEL 0xffffffffU
 /** Host sleep config conditions : NULL (used for offload features) */
 #define HOST_SLEEP_NO_COND 0
 

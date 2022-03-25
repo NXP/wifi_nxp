@@ -835,7 +835,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define GET_DEVRXMCSMAP(DevMCSMap)             ((DevMCSMap)&0xFFFFU)
 #define GET_DEVNSSRXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2 * ((nss)-1))) & 0x3)
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
-#define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000)
+#define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000U)
 
 #ifdef CONFIG_ENABLE_802_11K
 /** ExtCap : Set Support BSS_Transition */
@@ -2658,7 +2658,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_ChanTRPCConfig_t
 #define ETHER_TYPE_ARP 0x0608
 
 /** IPv4 address any */
-#define IPV4_ADDR_ANY 0xffffffff
+#define IPV4_ADDR_ANY 0xffffffffU
 
 /** Header structure for ARP filter */
 typedef MLAN_PACK_START struct _arpfilter_header
