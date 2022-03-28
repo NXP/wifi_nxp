@@ -306,7 +306,7 @@ void *wifi_mem_malloc_cmdrespbuf(void);
  *
  *
  */
-void *wifi_malloc_eventbuf(int size);
+void *wifi_malloc_eventbuf(size_t size);
 void wifi_free_eventbuf(void *buffer);
 
 void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);

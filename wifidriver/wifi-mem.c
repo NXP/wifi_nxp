@@ -45,9 +45,9 @@ void *wifi_mem_malloc_cmdrespbuf(void)
     return buffhuge;
 }
 
-void *wifi_malloc_eventbuf(int size)
+void *wifi_malloc_eventbuf(size_t size)
 {
-    void *ptr = os_mem_alloc((size_t)size);
+    void *ptr = os_mem_alloc(size);
 
     if (ptr != NULL)
     {
