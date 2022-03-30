@@ -2308,7 +2308,10 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                         break;
                     }
                 }
-                (void)__memcpy(pmadapter, pmadapter->tx_power_table_bg, data, i);
+                if (i > 0U)
+                {
+                    (void)__memcpy(pmadapter, pmadapter->tx_power_table_bg, data, i);
+                }
                 pmadapter->tx_power_table_bg_size = i;
                 data += i;
 #ifdef CONFIG_5GHz_SUPPORT
@@ -2330,7 +2333,10 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                         break;
                     }
                 }
-                (void)__memcpy(pmadapter, pmadapter->tx_power_table_a, data, i);
+                if (i > 0U)
+                {
+                    (void)__memcpy(pmadapter, pmadapter->tx_power_table_a, data, i);
+                }
                 pmadapter->tx_power_table_a_size = i;
 #endif
                 break;
