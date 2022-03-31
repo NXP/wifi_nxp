@@ -2948,21 +2948,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     (void)wrapper_wlan_cmd_get_hw_spec();
 
-    wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl;
-
-#ifdef SD8801
-    wlan_ed_mac_ctrl.ed_ctrl_2g   = 0x1;
-    wlan_ed_mac_ctrl.ed_offset_2g = 0x1b;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
-    wlan_ed_mac_ctrl.ed_ctrl_2g   = 0x1;
-    wlan_ed_mac_ctrl.ed_offset_2g = 0x9;
-#ifdef CONFIG_5GHz_SUPPORT
-    wlan_ed_mac_ctrl.ed_ctrl_5g   = 0x1;
-    wlan_ed_mac_ctrl.ed_offset_5g = 0xC;
-#endif
-#endif
-
+    wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
 
     (void)wifi_enable_ecsa_support();
