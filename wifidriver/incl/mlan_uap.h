@@ -3,7 +3,7 @@
  *  @brief This file contains related macros, enum, and struct
  *  of uap functionalities
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -137,11 +137,11 @@ void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
 
 void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
 
-int wifi_uap_enable_11d();
+int wifi_uap_enable_11d(void);
 
 int wifi_uap_set_domain_params(wifi_domain_param_t *dp);
 
-int wifi_uap_set_params();
+int wifi_uap_set_params(void);
 
 void wifi_uap_set_beacon_period(const t_u16 beacon_period);
 #endif /* _MLAN_UAP_H_ */
