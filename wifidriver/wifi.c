@@ -1308,7 +1308,7 @@ static void wifi_driver_main_loop(void *argv)
  * This function should be called when a packet is ready to be read
  * from the interface.
  */
-static void wifi_core_input(void)
+static void wifi_core_input(void *argv)
 {
     int sta;
 
@@ -1409,8 +1409,8 @@ static int wifi_core_init(void)
         goto fail;
     }
 
-    ret = os_thread_create(&wm_wifi.wm_wifi_core_thread, "stack_dispatcher", (void (*)(os_thread_arg_t))wifi_core_input,
-                           NULL, &wifi_core_stack, OS_PRIO_1);
+    ret = os_thread_create(&wm_wifi.wm_wifi_core_thread, "stack_dispatcher", wifi_core_input, NULL, &wifi_core_stack,
+                           OS_PRIO_1);
 
     if (ret != WM_SUCCESS)
     {

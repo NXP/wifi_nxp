@@ -351,12 +351,12 @@ static int wlan_11n_find_last_seqnum(RxReorderTbl *rx_reorder_tbl_ptr)
  *
  *  @return 	   	    N/A
  */
-static t_void wlan_flush_data(t_void *tmr_handle)
+static t_void wlan_flush_data(os_timer_arg_t tmr_handle)
 {
     /* Note: Giving tmr_handle as a parameter in callback is a feature
        of FreeRTOS. Hence, we have to change the default mlan code here
        to get the actual context expected by it */
-    reorder_tmr_cnxt_t *reorder_cnxt = (reorder_tmr_cnxt_t *)os_timer_get_context((os_timer_t *)&tmr_handle);
+    reorder_tmr_cnxt_t *reorder_cnxt = (reorder_tmr_cnxt_t *)os_timer_get_context(&tmr_handle);
     int startWin;
 
     ENTER();

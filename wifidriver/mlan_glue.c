@@ -157,7 +157,7 @@ static mlan_status wrapper_moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_bu
 /** moal_init_timer*/
 static mlan_status wrapper_moal_init_timer(IN t_void *pmoal_handle,
                                            OUT t_void **pptimer,
-                                           IN t_void (*callback)(t_void *pcontext),
+                                           IN t_void (*callback)(os_timer_arg_t arg),
                                            IN t_void *pcontext)
 {
     w_tmr_d("Creating timer");
@@ -181,8 +181,8 @@ static mlan_status wrapper_moal_init_timer(IN t_void *pmoal_handle,
      */
 #define DUMMY_TIME_PARAM 10
 
-    int rv = os_timer_create((os_timer_t *)pptimer, NULL, DUMMY_TIME_PARAM, (TimerCallbackFunction_t)callback, pcontext,
-                             OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
+    int rv = os_timer_create((os_timer_t *)pptimer, NULL, DUMMY_TIME_PARAM, callback, pcontext, OS_TIMER_ONE_SHOT,
+                             OS_TIMER_NO_ACTIVATE);
     if (rv != WM_SUCCESS)
     {
         w_tmr_e("Unable to create timer");

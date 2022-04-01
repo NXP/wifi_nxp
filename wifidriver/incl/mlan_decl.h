@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the generic data structures and APIs.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2022 NXP
  *
  *  NXP CONFIDENTIAL
  *  The source code contained or described herein and all documents related to
@@ -33,6 +33,7 @@ Change log:
 #define _MLAN_DECL_H_
 
 #include "type_decls.h"
+#include <wm_os.h>
 
 /** MLAN release version */
 #define MLAN_RELEASE_VERSION "310"
@@ -813,7 +814,7 @@ typedef struct _mlan_callbacks
        /** moal_init_timer*/
     mlan_status (*moal_init_timer)(IN t_void *pmoal_handle,
                                    OUT t_void **pptimer,
-                                   IN t_void (*callback)(t_void *pcontext),
+                                   IN t_void (*callback)(os_timer_arg_t arg),
                                    IN t_void *pcontext);
     /** moal_free_timer */
     mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void **pptimer);
