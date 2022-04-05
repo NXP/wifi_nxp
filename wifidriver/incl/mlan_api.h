@@ -207,7 +207,8 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
     return MLAN_STATUS_SUCCESS;
 }
 #else
-static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry, t_u8 element_id)
+static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry,
+                                                              IEEEtypes_ElementId_e element_id)
 {
     if (element_id == RSN_IE)
     {

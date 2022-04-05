@@ -1224,7 +1224,7 @@ mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN pmlan_i
     }
 
     /* Send command to firmware */
-    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, cmd_action, StopDeauth_i, (t_void *)pioctl_req,
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, cmd_action, (t_u32)StopDeauth_i, (t_void *)pioctl_req,
                            &mib->param.deauthctrl);
 
     if (ret == MLAN_STATUS_SUCCESS)

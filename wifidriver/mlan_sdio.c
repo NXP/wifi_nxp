@@ -52,7 +52,7 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
         return 0;
     }
 
-    if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, addr, (uint8_t *)resp) != kStatus_Success)
+    if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, (uint8_t *)resp) != kStatus_Success)
     {
         (void)os_mutex_put(&sdio_mutex);
         return 0;
@@ -74,7 +74,7 @@ int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
         return 0;
     }
 
-    if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, addr, &data, true) != kStatus_Success)
+    if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != kStatus_Success)
     {
         (void)os_mutex_put(&sdio_mutex);
         return 0;
@@ -207,7 +207,7 @@ static int sdio_card_init(void)
     }
     else if ((wm_g_sd.usrParam.ioVoltage != NULL) && (wm_g_sd.usrParam.ioVoltage->type == kSD_IOVoltageCtrlByHost))
     {
-        SDMMCHOST_SwitchToVoltage(wm_g_sd.host, kSDMMC_OperationVoltage180V);
+        SDMMCHOST_SwitchToVoltage(wm_g_sd.host, (uint32_t)kSDMMC_OperationVoltage180V);
     }
     else
     {

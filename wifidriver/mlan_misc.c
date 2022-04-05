@@ -1895,7 +1895,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     nss = ds_rate->param.rate_cfg.nss;
 #endif
-    rate_index = ds_rate->param.rate_cfg.rate;
+    rate_index = (t_s32)ds_rate->param.rate_cfg.rate;
 
     if (ds_rate->param.rate_cfg.is_rate_auto == MTRUE)
     {
@@ -1955,13 +1955,13 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             /* Bitmap of HR/DSSS rates */
             if (rate_index <= MLAN_RATE_INDEX_HRDSSS3)
             {
-                bitmap_rates[0] = 1 << rate_index;
+                bitmap_rates[0] = (t_u16)(1 << rate_index);
                 ret             = MLAN_STATUS_SUCCESS;
                 /* Bitmap of OFDM rates */
             }
             else if ((rate_index >= MLAN_RATE_INDEX_OFDM0) && (rate_index <= MLAN_RATE_INDEX_OFDM7))
             {
-                bitmap_rates[1] = 1 << (rate_index - MLAN_RATE_INDEX_OFDM0);
+                bitmap_rates[1] = (t_u16)(1 << (rate_index - MLAN_RATE_INDEX_OFDM0));
                 ret             = MLAN_STATUS_SUCCESS;
             }
         }
@@ -1972,7 +1972,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #ifdef SD8801
                 rate_index -= MLAN_RATE_INDEX_MCS0;
 #endif
-                bitmap_rates[2 + (rate_index / 16)] = 1 << (rate_index % 16);
+                bitmap_rates[2 + (rate_index / 16)] = (t_u16)(1 << (rate_index % 16));
                 ret                                 = MLAN_STATUS_SUCCESS;
             }
         }
@@ -1982,7 +1982,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         {
             if ((rate_index <= MLAN_RATE_INDEX_MCS9) && (MLAN_RATE_NSS1 <= nss) && (nss <= MLAN_RATE_NSS2))
             {
-                bitmap_rates[10 + nss - MLAN_RATE_NSS1] = (1 << rate_index);
+                bitmap_rates[10 + nss - MLAN_RATE_NSS1] = (t_u16)(1 << rate_index);
                 ret                                     = MLAN_STATUS_SUCCESS;
             }
         }
@@ -2009,7 +2009,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         if (ret == MLAN_STATUS_FAILURE)
         {
             PRINTM(MERROR, "Invalid MCS index=%d. \n", rate_index);
-            pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
+            pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }

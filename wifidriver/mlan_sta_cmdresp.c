@@ -347,7 +347,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
         {
             ul_temp = wlan_le16_to_cpu(*((t_u16 *)(void *)(psmib->value)));
             /* Set 11h state to priv */
-            pmpriv->intf_state_11h.is_11h_active = (ul_temp & ENABLE_11H_MASK);
+            pmpriv->intf_state_11h.is_11h_active = (t_bool)(ul_temp & ENABLE_11H_MASK);
             /* Set radar_det state to adapter */
             pmpriv->adapter->state_11h.is_master_radar_det_active = (ul_temp & MASTER_RADAR_DET_MASK) ? MTRUE : MFALSE;
             pmpriv->adapter->state_11h.is_slave_radar_det_active  = (ul_temp & SLAVE_RADAR_DET_MASK) ? MTRUE : MFALSE;
@@ -425,11 +425,11 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
     {
         ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)pdata_buf + sizeof(HostCmd_DS_TXPWR_CFG));
         pg      = (Power_Group_t *)(void *)((t_u8 *)ppg_tlv + sizeof(MrvlTypes_Power_Group_t));
-        length  = ppg_tlv->length;
+        length  = (int)ppg_tlv->length;
         if (length > 0)
         {
-            max_power = pg->power_max;
-            min_power = pg->power_min;
+            max_power = (int)pg->power_max;
+            min_power = (int)pg->power_min;
             length -= (int)sizeof(Power_Group_t);
         }
         while (length > 0)
@@ -437,11 +437,11 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
             pg++;
             if (max_power < pg->power_max)
             {
-                max_power = pg->power_max;
+                max_power = (int)pg->power_max;
             }
             if (min_power > pg->power_min)
             {
-                min_power = pg->power_min;
+                min_power = (int)pg->power_min;
             }
             length -= (int)sizeof(Power_Group_t);
         }
@@ -559,15 +559,15 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
                     {
                         /* Do Nothing */
                     }
-                    data[2] = pg->power_min;
-                    data[3] = pg->power_max;
-                    data[4] = pg->power_step;
+                    data[2] = (t_u32)pg->power_min;
+                    data[3] = (t_u32)pg->power_max;
+                    data[4] = (t_u32)pg->power_step;
                     (void)__memcpy(pmpriv->adapter,
                                    (t_u8 *)(&power->param.power_ext.power_data[power->param.power_ext.len]),
                                    (t_u8 *)data, sizeof(data));
                     power->param.power_ext.len += 5U;
                     pg++;
-                    ppg_tlv->length -= sizeof(Power_Group_t);
+                    ppg_tlv->length -= (t_u16)sizeof(Power_Group_t);
                 }
                 pioctl_buf->data_read_written = sizeof(mlan_power_cfg_ext) + MLAN_SUB_COMMAND_SIZE;
             }
