@@ -583,6 +583,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         pscan_chan = tlv_chan_list->chan_scan_param;
         for (i = 0; i < bss->param.bss_config.num_of_chan; i++)
         {
+            memset(pscan_chan, 0x00, sizeof(ChanScanParamSet_t));
             pscan_chan->chan_number = bss->param.bss_config.chan_list[i].chan_number;
             pscan_chan->radio_type  = bss->param.bss_config.chan_list[i].band_config_type;
             pscan_chan++;
