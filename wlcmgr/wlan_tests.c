@@ -24,14 +24,14 @@
  *
  */
 
+#include <string.h>
+#include <wm_os.h>
+#include <wm_net.h> /* for net_inet_aton */
 #include <wlan.h>
 #include <cli.h>
 #include <cli_utils.h>
-#include <string.h>
-#include <wm_net.h> /* for net_inet_aton */
 #include <wifi.h>
 #include <wlan_tests.h>
-
 /*
  * NXP Test Framework (MTF) functions
  */
@@ -178,6 +178,9 @@ static void print_network(struct wlan_network *network)
     }
 
     print_address(&network->ip, network->role);
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
+#endif
 #endif
 }
 
@@ -200,19 +203,19 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
     {
         return -1;
     }
-    *gwaddr++ = 0;
+    *gwaddr++ = (char)0;
 
     netmask = strstr(gwaddr, ",");
     if (netmask == NULL)
     {
         return -1;
     }
-    *netmask++ = 0;
+    *netmask++ = (char)0;
 
     dns1 = strstr(netmask, ",");
     if (dns1 != NULL)
     {
-        *dns1++ = 0;
+        *dns1++ = (char)0;
         dns2    = strstr(dns1, ",");
     }
     ip->ipv4.address = net_inet_aton(ipaddr);
@@ -248,7 +251,7 @@ int get_security(int argc, char **argv, enum wlan_security_type type, struct wla
                 return 1;
             }
             /* copy the PSK phrase */
-            sec->psk_len = strlen(argv[0]);
+            sec->psk_len = (char)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
             {
                 return 1;
@@ -333,6 +336,10 @@ static void dump_wlan_add_usage(void)
         "    [channel <channelnumber>]\r\n");
     (void)PRINTF("    [wpa2 <secret>] [wpa3 sae <secret>]\r\n");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+    (void)PRINTF("If seting dtim\r\n");
+    (void)PRINTF("The value of dtim is an integer. The default value is 10.\r\n");
+#endif
 }
 
 void test_wlan_add(int argc, char **argv)
@@ -351,6 +358,9 @@ void test_wlan_add(int argc, char **argv)
         unsigned role : 1;
         unsigned mfpc : 1;
         unsigned mfpr : 1;
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+        unsigned dtim : 1;
+#endif
     } info;
 
     (void)memset(&info, 0, sizeof(info));
@@ -371,7 +381,7 @@ void test_wlan_add(int argc, char **argv)
 
     (void)memcpy(network.name, argv[arg], strlen(argv[arg]));
     arg++;
-    info.address = ADDR_TYPE_DHCP;
+    info.address = (u8_t)ADDR_TYPE_DHCP;
     do
     {
         if (!info.ssid && string_equal("ssid", argv[arg]))
@@ -421,7 +431,7 @@ void test_wlan_add(int argc, char **argv)
                 return;
             }
             arg++;
-            info.address = ADDR_TYPE_STATIC;
+            info.address = (u8_t)ADDR_TYPE_STATIC;
         }
         else if (!info.security && string_equal("wpa", argv[arg]))
         {
@@ -507,7 +517,7 @@ void test_wlan_add(int argc, char **argv)
         }
         else if (!info.mfpc && string_equal("mfpc", argv[arg]))
         {
-            network.security.mfpc = strtol(argv[arg + 1], NULL, 10);
+            network.security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
             if (arg + 1 >= argc || (network.security.mfpc != false && network.security.mfpc != true))
             {
                 (void)PRINTF(
@@ -520,7 +530,7 @@ void test_wlan_add(int argc, char **argv)
         }
         else if (!info.mfpr && string_equal("mfpr", argv[arg]))
         {
-            network.security.mfpr = atoi(argv[arg + 1]);
+            network.security.mfpr = (bool)atoi(argv[arg + 1]);
             if (arg + 1 >= argc || (network.security.mfpr != false && network.security.mfpr != true))
             {
                 (void)PRINTF(
@@ -533,9 +543,25 @@ void test_wlan_add(int argc, char **argv)
         }
         else if (!strncmp(argv[arg], "autoip", 6))
         {
-            info.address = ADDR_TYPE_LLA;
+            info.address = (u8_t)ADDR_TYPE_LLA;
             arg++;
         }
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+        else if (!info.dtim && string_equal("dtim", argv[arg]))
+        {
+            unsigned int dtim_period;
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &dtim_period, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF(
+                    "Error: invalid dtim"
+                    " argument\n");
+                return;
+            }
+            network.dtim_period = (uint8_t)(dtim_period & 0XFF);
+            arg += 2;
+            info.dtim = 1;
+        }
+#endif
         else
         {
             dump_wlan_add_usage();
@@ -704,7 +730,11 @@ static void dump_wlan_scan_opt_usage(void)
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
         "    wlan-scan-opt ssid <ssid> bssid <bssid> "
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        "channel <channel> probes <probes> rssi_threshold <rssi_threshold>"
+#else
         "channel <channel> probes <probes>"
+#endif
         "\r\n");
 }
 
@@ -722,6 +752,9 @@ void test_wlan_scan_opt(int argc, char **argv)
         unsigned bssid : 1;
         unsigned channel : 1;
         unsigned probes : 1;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        unsigned rssi_threshold : 1;
+#endif
     } info;
 
     (void)memset(&info, 0, sizeof(info));
@@ -808,6 +841,28 @@ void test_wlan_scan_opt(int argc, char **argv)
             arg += 2;
             info.probes = 1;
         }
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        else if (!info.rssi_threshold && string_equal("rssi_threshold", argv[arg]))
+        {
+            if (arg + 1 >= argc)
+            {
+                (void)PRINTF(
+                    "Error: invalid rssi threshold"
+                    " argument\n");
+                return;
+            }
+            wlan_scan_param.rssi_threshold = atoi(argv[arg + 1]);
+            if (wlan_scan_param.rssi_threshold < -101)
+            {
+                (void)PRINTF(
+                    "Error: invalid value of rssi threshold"
+                    "\r\n");
+                return;
+            }
+            arg += 2;
+            info.rssi_threshold = 1;
+        }
+#endif
         else
         {
             dump_wlan_scan_opt_usage();
@@ -848,6 +903,11 @@ void test_wlan_scan_opt(int argc, char **argv)
         if (info.probes != 0U)
         {
             (void)PRINTF("with %d probes ", wlan_scan_param.num_probes);
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+            wlan_set_rssi_threshold(wlan_scan_param.rssi_threshold);
+            if (info.rssi_threshold != 0U)
+                (void)PRINTF("with %d rssi_threshold ", wlan_scan_param.rssi_threshold);
+#endif
         }
         (void)PRINTF("scheduled...\r\n");
     }
@@ -1256,6 +1316,93 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+static void dump_wlan_tx_pert_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "    wlan-tx-pert <0/1> <STA/AP> <p:tx_pert_check_period> "
+        "<r:tx_pert_check_ratio> <n:tx_pert_check_num>"
+        "\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-tx-pert 1 AP 5 3 5\r\n");
+}
+
+static void test_wlan_tx_pert(int argc, char **argv)
+{
+    struct wlan_tx_pert_info tx_pert;
+    int bss_type;
+
+    if (argc < 2)
+    {
+        dump_wlan_tx_pert_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)memset(&tx_pert, 0, sizeof(tx_pert));
+    tx_pert.tx_pert_check = atoi(argv[1]);
+    if (tx_pert.tx_pert_check == 1 && argc < 6)
+    {
+        (void)PRINTF("Error: invalid number of arguments.\r\n");
+        (void)PRINTF(
+            "Need specify bss_type tx_pert_chk_prd, tx_perf_chk_ratio and tx_pert_chk_num"
+            "\r\n");
+        return;
+    }
+    if (string_equal("STA", argv[2]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("UAP", argv[2]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    if (tx_pert.tx_pert_check == 1)
+    {
+        tx_pert.tx_pert_check_peroid = (t_u8)atoi(argv[3]);
+        tx_pert.tx_pert_check_ratio  = (t_u8)atoi(argv[4]);
+        tx_pert.tx_pert_check_num    = atoi(argv[5]);
+    }
+    wlan_set_tx_pert(&tx_pert, bss_type);
+}
+#endif
+
+#ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
+static void test_wlan_set_max_clients_count(int argc, char **argv)
+{
+    int max_clients_count;
+    int ret;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s  max_clients_count\r\n", argv[0]);
+        return;
+    }
+
+    max_clients_count = atoi(argv[1]);
+
+    ret = wlan_set_uap_max_clients(max_clients_count);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set max clients count\r\n");
+    }
+}
+#endif
+
+#ifdef CONFIG_WIFI_HIDDEN_SSID
+static void test_wlan_set_hidden_ssid(int argc, char **argv)
+{
+    int bcast_ssid_ctl;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s hidden ssid control\r\n", argv[0]);
+        return;
+    }
+
+    bcast_ssid_ctl = atoi(argv[1]);
+
+    wlan_uap_set_hidden_ssid(bcast_ssid_ctl);
+}
+#endif
+
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
 static void test_wlan_set_rts(int argc, char **argv)
 {
@@ -1327,6 +1474,42 @@ static void test_wlan_set_frag(int argc, char **argv)
         (void)PRINTF("Failed to set fragment threshold\r\n");
     }
 }
+#endif
+
+#ifdef CONFIG_ENABLE_802_11K
+static void test_wlan_11k_cfg(int argc, char **argv)
+{
+    int enable_11k;
+    int ret;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <0/1> < 0--disable 11k; 1---enable 11k>\r\n", argv[0]);
+        return;
+    }
+
+    enable_11k = atoi(argv[1]);
+
+    ret = wlan_11k_cfg(enable_11k);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to 11k config\r\n");
+    }
+}
+
+static void test_wlan_11k_neighbor_req(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_11k_neighbor_req();
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to send 11k neighbor req\r\n");
+    }
+}
+
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
@@ -1720,7 +1903,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
         return;
     }
 
-    bandwidth = atoi(argv[1]);
+    bandwidth = (uint8_t)atoi(argv[1]);
     ret       = wlan_uap_set_bandwidth(bandwidth);
 
     if (ret != WM_SUCCESS)
@@ -1730,6 +1913,155 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
     }
     else
         (void)PRINTF("bandwidth set successfully\r\n");
+}
+#endif
+
+#ifdef CONFIG_WIFI_MEM_ACCESS
+static void dump_wlan_mem_access_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Get value of memory:\r\n");
+    (void)PRINTF("    wlan-mem-access <memeory_address>\r\n");
+    (void)PRINTF("Set value of memory:\r\n");
+    (void)PRINTF("    wlan-mem-access <memeory_address> <value>\r\n");
+    (void)PRINTF("The format of memory address and value:\r\n");
+    (void)PRINTF(
+        "    Hexadecimal value. For example:\r\n"
+        "        0x00001200\r\n"
+        "        0X00001200\r\n"
+        "        0x1200\r\n"
+        "        0X1200\r\n");
+}
+
+static void test_wlan_mem_access(int argc, char **argv)
+{
+    int ret;
+    t_u16 action  = 0;
+    t_u32 address = 0;
+    t_u32 value;
+    if (argc < 2 || argc > 3)
+    {
+        dump_wlan_mem_access_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    else if (argc == 2)
+        action = ACTION_GET;
+    else
+    {
+        action = ACTION_SET;
+        if (argv[2][0] == '0' && (argv[2][1] == 'x' || argv[2][1] == 'X'))
+            value = a2hex_or_atoi(argv[2]);
+        else
+        {
+            dump_wlan_mem_access_usage();
+            (void)PRINTF("Error: invalid value argument\r\n");
+            return;
+        }
+    }
+    if (argv[1][0] == '0' && (argv[1][1] == 'x' || argv[1][1] == 'X'))
+        address = a2hex_or_atoi(argv[1]);
+    else
+    {
+        dump_wlan_mem_access_usage();
+        (void)PRINTF("Error: invalid address argument\r\n");
+        return;
+    }
+
+    ret = wlan_mem_access(action, address, &value);
+
+    if (ret == WM_SUCCESS)
+    {
+        if (action == ACTION_GET)
+            (void)PRINTF("At Memory 0x%x: 0x%x\r\n", address, value);
+        else
+            (void)PRINTF("Set the Memory successfully\r\n");
+    }
+    else
+        wlcm_e("Read/write Mem failed");
+}
+#endif
+
+#ifdef CONFIG_HEAP_STAT
+static void test_heap_stat(int argc, char **argv)
+{
+    os_dump_mem_stats();
+}
+#endif
+
+#ifdef CONFIG_EU_VALIDATION
+static void dump_wlan_eu_validation()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-eu-validation <value>\r\n");
+    (void)PRINTF("Values to choose:\r\n");
+    (void)PRINTF("     0x05   GCMP_128_ENC\r\n");
+    (void)PRINTF("     0x06   GCMP_128_DEC\r\n");
+    (void)PRINTF("     0x07   GCMP_256_ENC\r\n");
+    (void)PRINTF("     0x08   GCMP_256_DEC\r\n");
+    (void)PRINTF("     0x09   DUMMY_PAYLOAD\r\n");
+    (void)PRINTF("     0x0a   CRYPTO\r\n");
+    (void)PRINTF("     0x0b   CRYPTO_LARGE_PAYLOAD\r\n");
+    (void)PRINTF("     0x0c   CRYPTO_CCMP_128_ENC\r\n");
+    (void)PRINTF("     0x0d   CRYPTO_CCMP_128_DEC\r\n");
+    (void)PRINTF("     0x0e   CRYPTO_CCMP_256_ENC\r\n");
+    (void)PRINTF("     0x0f   CRYPTO_CCMP_256_DEC\r\n");
+    (void)PRINTF("     0x10   CRYPTO_CCMP_128_MGMT_ENC\r\n");
+    (void)PRINTF("     0x11   CRYPTO_CCMP_128_MGMT_DEC\r\n");
+    (void)PRINTF("     0x12   GCMP_256_ENC_FIPS\r\n");
+    (void)PRINTF("     0x13   GCMP_256_DEC_FIPS\r\n");
+    (void)PRINTF("     0x14   GCMP_128_ENC_FIPS\r\n");
+    (void)PRINTF("     0x15   GCMP_128_DEC_FIPS\r\n");
+    (void)PRINTF("     0x16   TKIP_ENC_FIPS\r\n");
+    (void)PRINTF("     0x17   TKIP_DEC_FIPS\r\n");
+}
+
+static void test_wlan_eu_validation(int argc, char **argv)
+{
+    u8_t cmd_eu_buf[] = {0x02, 0x34, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, 0x05, 0};
+    int value;
+    int ret           = -WM_FAIL;
+    uint32_t reqd_len = 0;
+
+    if (argc != 2)
+    {
+        dump_wlan_eu_validation();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if (argv[1][0] == '0' && (argv[1][1] == 'x' || argv[1][1] == 'X'))
+        value = a2hex_or_atoi(argv[1]);
+    else
+    {
+        dump_wlan_eu_validation();
+        (void)PRINTF("Error: invalid value format\r\n");
+        return;
+    }
+
+    if (value <5 || value > 23)
+    {
+        dump_wlan_eu_validation();
+        (void)PRINTF("Error: invalid value\r\n");
+        return;
+    }
+
+    cmd_eu_buf[10] = value;
+
+    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(u8_t), resp_buf, HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Hostcmd success, response is");
+        for (ret = 0; ret < reqd_len; ret++)
+        {
+            (void)PRINTF("%x\t", resp_buf[ret]);
+            resp_buf[ret] = 0;
+        }
+    }
+    else
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+
 }
 #endif
 
@@ -1750,17 +2082,30 @@ static struct cli_command tests[] = {
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
+#ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
+    {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
+#endif
+#ifdef CONFIG_WIFI_HIDDEN_SSID
+    {"wlan-set-hidden-ssid", "<0/1>", test_wlan_set_hidden_ssid},
+#endif
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
 #endif
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
+#ifdef CONFIG_ENABLE_802_11K
+    {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
+    {"wlan-11k-neigbor-req", NULL, test_wlan_11k_neighbor_req},
+#endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
 #endif
 #ifdef CONFIG_WIFI_GET_LOG
     {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
+#endif
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+    {"wlan-tx-pert", "<0/1> <STA/AP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
@@ -1769,6 +2114,15 @@ static struct cli_command tests[] = {
 #endif
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
+#endif
+#ifdef CONFIG_WIFI_MEM_ACCESS
+    {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},
+#endif
+#ifdef CONFIG_HEAP_STAT
+    {"heap-stat", NULL, test_heap_stat},
+#endif
+#ifdef CONFIG_EU_VALIDATION
+    {"wlan-eu-validation","<value>", test_wlan_eu_validation},
 #endif
 };
 
@@ -1783,7 +2137,7 @@ int wlan_cli_init(void)
         return i;
     }
 
-    if (cli_register_commands(tests, sizeof(tests) / sizeof(struct cli_command)) != 0)
+    if (cli_register_commands(tests, (int)(sizeof(tests) / sizeof(struct cli_command))) != 0)
     {
         return -WM_FAIL;
     }

@@ -32,8 +32,8 @@
 #define INBUF_SIZE 256U
 #endif
 
-#define BUF_ALLOCATED 1
-#define BUF_AVAILABLE 0
+#define BUF_ALLOCATED '1'
+#define BUF_AVAILABLE '0'
 /** Malloc some memory from the CLI's byte pool
  */
 void *cli_mem_malloc(int size);

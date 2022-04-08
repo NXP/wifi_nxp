@@ -115,12 +115,14 @@ Change log:
 /** Default Win size attached during ADDBA request */
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 16
 #endif
+#ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
 #ifdef SD8801
 /** Default Win size attached during ADDBA response */
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 16
 #else
 /** Default Win size attached during ADDBA response */
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
+#endif
 #endif
 #endif /* STA_SUPPORT */
 #ifdef UAP_SUPPORT
@@ -140,7 +142,7 @@ Change log:
 #endif
 #endif /* UAP_SUPPORT */
 /** Block ack timeout value */
-#define MLAN_DEFAULT_BLOCK_ACK_TIMEOUT 0xffff
+#define MLAN_DEFAULT_BLOCK_ACK_TIMEOUT 0U
 /** Maximum Tx Win size configured for ADDBA request [10 bits] */
 #define MLAN_AMPDU_MAX_TXWINSIZE 0x3ff
 /** Maximum Rx Win size configured for ADDBA request [10 bits] */
@@ -230,7 +232,7 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** SDIO IO Port mask */
 #define MLAN_SDIO_IO_PORT_MASK 0xfffff
 /** SDIO Block/Byte mode mask */
-#define MLAN_SDIO_BYTE_MODE_MASK 0x80000000
+#define MLAN_SDIO_BYTE_MODE_MASK 0x80000000U
 
 /** Max retry number of IO write */
 #define MAX_READ_IOMEM_RETRY 2
@@ -356,7 +358,7 @@ typedef enum _mlan_bss_role
 #define BSS_ROLE_BIT_MASK MBIT(0)
 
 /** Get BSS role */
-#define GET_BSS_ROLE(priv) ((priv)->bss_role & BSS_ROLE_BIT_MASK)
+#define GET_BSS_ROLE(priv) (mlan_bss_role)((priv)->bss_role & (BSS_ROLE_BIT_MASK))
 
 /** mlan_data_frame_type */
 typedef enum _mlan_data_frame_type
@@ -588,7 +590,7 @@ typedef struct _mlan_buffer
 typedef struct _mlan_bss_attr
 {
     /** BSS type */
-    t_u32 bss_type;
+    mlan_bss_type bss_type;
     /** Data frame type: Ethernet II, 802.11, etc. */
     t_u32 frame_type;
     /** The BSS is active (non-0) or not (0). */
@@ -680,7 +682,7 @@ typedef MLAN_PACK_START struct _tlvbuf_custom_ie
     /** Length */
     t_u16 length;
     /** custom IE data */
-    custom_ie ie_data[0];
+    custom_ie ie_data[1];
 } MLAN_PACK_END tlvbuf_custom_ie;
 
 /** Max IE index to FW */

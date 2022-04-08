@@ -71,7 +71,7 @@ Change log:
 #define IPTOS_OFFSET 5
 
 /** WMM information IE */
-static const t_u8 wmm_info_ie[] = {WMM_IE, 0x07, 0x00, 0x50, 0xf2, 0x02, 0x00, 0x01, 0x00};
+static const t_u8 wmm_info_ie[] = {(t_u8)WMM_IE, 0x07, 0x00, 0x50, 0xf2, 0x02, 0x00, 0x01, 0x00};
 
 #ifndef CONFIG_MLAN_WMSDK
 /**
@@ -1097,10 +1097,10 @@ void wlan_wmm_default_queue_priorities(pmlan_private priv)
     ENTER();
 
     /* Default queue priorities: VO->VI->BE->BK */
-    priv->wmm.queue_priority[0] = WMM_AC_VO;
-    priv->wmm.queue_priority[1] = WMM_AC_VI;
-    priv->wmm.queue_priority[2] = WMM_AC_BE;
-    priv->wmm.queue_priority[3] = WMM_AC_BK;
+    priv->wmm.queue_priority[0] = (t_u8)WMM_AC_VO;
+    priv->wmm.queue_priority[1] = (t_u8)WMM_AC_VI;
+    priv->wmm.queue_priority[2] = (t_u8)WMM_AC_BE;
+    priv->wmm.queue_priority[3] = (t_u8)WMM_AC_BK;
 
     LEAVE();
 }

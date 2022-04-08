@@ -1129,6 +1129,10 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     wifi_scan_channel_list_t chan_list[MAX_CHANNEL_LIST];
     /** Number of probes */
     t_u8 num_probes;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /** Threshold of rssi */
+    t_s16 rssi_threshold;
+#endif
     /** Callback to be called when scan is completed */
     int (*cb)(unsigned int count);
 } PACK_END wifi_scan_params_v2_t;

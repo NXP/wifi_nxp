@@ -1839,8 +1839,11 @@ void wlan_process_sleep_confirm_resp(pmlan_adapter pmadapter, t_u8 *pbuf, t_u32 
  *  @param pdata_buf    A pointer to data buffer
  *  @return         MLAN_STATUS_SUCCESS
  */
-mlan_status wlan_cmd_enh_power_mode(
-    pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_u16 ps_bitmap, IN t_void *pdata_buf)
+mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
+                                    IN HostCmd_DS_COMMAND *cmd,
+                                    IN ENH_PS_MODES cmd_action,
+                                    IN t_u16 ps_bitmap,
+                                    IN t_void *pdata_buf)
 {
     HostCmd_DS_802_11_PS_MODE_ENH *psmode_enh = &cmd->params.psmode_enh;
     t_u8 *tlv                                 = MNULL;
@@ -2217,7 +2220,7 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
     pmpriv->tx_rate_info = resp->params.tx_rate.tx_rate_info;
 
 #ifdef CONFIG_11AX
-    if ((pmpriv->tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
+    if ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
         pmpriv->ext_tx_rate_info = resp->params.tx_rate.ext_tx_rate_info;
     else
 #endif
@@ -2237,9 +2240,9 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
             if(rate->param.rate_cfg.rate_type == MLAN_RATE_INDEX) {
 #endif
 #ifdef CONFIG_11AC
-            if ((pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_VHT
+            if ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_VHT
 #ifdef CONFIG_11AX
-                || ((pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
+                || ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
 #endif
             )
                 /* VHT rate */
@@ -2247,7 +2250,7 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
             else
 #endif
 #ifdef CONFIG_11N
-                if ((pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
+                if ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
             {
                 /* HT rate */
                 rate->param.rate_cfg.rate = pmpriv->tx_rate + MLAN_RATE_INDEX_MCS0;
@@ -2277,17 +2280,18 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
         {
             /* Tx rate info */
 #ifdef CONFIG_11AC
-            if ((pmpriv->tx_rate_info & 0x3) == MLAN_RATE_FORMAT_VHT
+            if ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_VHT
 #ifdef CONFIG_11AX
-                || (pmpriv->tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE
+                || (mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE
 #endif
             )
             {
                 /* VHT/HE rate */
-                rate->param.data_rate.tx_rate_format = (mlan_rate_format)(pmpriv->tx_rate_info & 0x3);
+                rate->param.data_rate.tx_rate_format = (mlan_rate_format)(pmpriv->tx_rate_info & 0x3U);
                 rate->param.data_rate.tx_ht_bw       = (t_u32)((pmpriv->tx_rate_info & 0xC) >> 2);
+
 #ifdef CONFIG_11AX
-                if ((pmpriv->tx_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
+                if ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
                     rate->param.data_rate.tx_ht_gi =
                         (pmpriv->tx_rate_info & 0x10) >> 4 | (pmpriv->tx_rate_info & 0x80) >> 6;
                 else
@@ -2301,12 +2305,12 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
             else
 #endif
 #ifdef CONFIG_11N
-                if ((pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
+                if ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HT)
             {
                 /* HT rate */
                 rate->param.data_rate.tx_rate_format = MLAN_RATE_FORMAT_HT;
-                rate->param.data_rate.tx_ht_bw       = (pmpriv->tx_rate_info & 0xCU) >> 2;
-                rate->param.data_rate.tx_ht_gi       = (pmpriv->tx_rate_info & 0x10U) >> 4;
+                rate->param.data_rate.tx_ht_bw       = (pmpriv->tx_rate_info & 0xCU) >> 2U;
+                rate->param.data_rate.tx_ht_gi       = (pmpriv->tx_rate_info & 0x10U) >> 4U;
                 rate->param.data_rate.tx_mcs_index   = pmpriv->tx_rate;
                 rate->param.data_rate.tx_data_rate =
                     wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info, pmpriv->ext_tx_rate_info);
@@ -2326,7 +2330,7 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
 
             /* Rx rate info */
 #ifdef CONFIG_11AC
-            if ((pmpriv->rxpd_rate_info & 0x3) == MLAN_RATE_FORMAT_VHT
+            if ((mlan_rate_format)(pmpriv->rxpd_rate_info & 0x3U) == MLAN_RATE_FORMAT_VHT
 #ifdef CONFIG_11AX
                 || (pmpriv->rxpd_rate_info & 0x3) == MLAN_RATE_FORMAT_HE
 #endif
@@ -2335,6 +2339,7 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                 /* VHT/HE rate */
                 rate->param.data_rate.rx_rate_format = (mlan_rate_format)(pmpriv->rxpd_rate_info & 0x3);
                 rate->param.data_rate.rx_ht_bw       = (t_u32)((pmpriv->rxpd_rate_info & 0xC) >> 2);
+
 #ifdef CONFIG_11AX
                 if ((pmpriv->rxpd_rate_info & 0x3) == MLAN_RATE_FORMAT_HE)
                     rate->param.data_rate.rx_ht_gi =
@@ -2354,8 +2359,8 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
             {
                 /* HT rate */
                 rate->param.data_rate.rx_rate_format = MLAN_RATE_FORMAT_HT;
-                rate->param.data_rate.rx_ht_bw       = (pmpriv->rxpd_rate_info & 0xCU) >> 2;
-                rate->param.data_rate.rx_ht_gi       = (pmpriv->rxpd_rate_info & 0x10U) >> 4;
+                rate->param.data_rate.rx_ht_bw       = (pmpriv->rxpd_rate_info & 0xCU) >> 2U;
+                rate->param.data_rate.rx_ht_gi       = (pmpriv->rxpd_rate_info & 0x10U) >> 4U;
                 rate->param.data_rate.rx_mcs_index   = pmpriv->rxpd_rate;
                 rate->param.data_rate.rx_data_rate   = wlan_index_to_data_rate(
                     pmadapter, pmpriv->rxpd_rate, pmpriv->rxpd_rate_info, pmpriv->ext_tx_rate_info);
@@ -2819,6 +2824,46 @@ mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, I
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/**
+ *  @brief This function prepares command of txrx_pkt_stats.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   The action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
+                                    IN HostCmd_DS_COMMAND *cmd,
+                                    IN t_u16 cmd_action,
+                                    IN t_void *pdata_buf)
+{
+    HostCmd_DS_TX_RX_PKT_STATS *pkt_stats = &cmd->params.pkt_stats;
+    MrvlTxPerTrackInfo_t *tx_pert         = NULL;
+    tx_pert_info *cfg                     = (tx_pert_info *)pdata_buf;
+
+    ENTER();
+    cmd->command      = wlan_cpu_to_le16(HostCmd_CMD_TX_RX_PKT_STATS);
+    pkt_stats->action = wlan_cpu_to_le16(cmd_action);
+    pkt_stats->enable = cfg->tx_pert_check;
+    if (cmd_action == HostCmd_ACT_SET_TX_PER_TRACKING)
+    {
+        tx_pert         = (MrvlTxPerTrackInfo_t *)((t_u8 *)pkt_stats + sizeof(HostCmd_DS_TX_RX_PKT_STATS));
+        tx_pert->type   = wlan_cpu_to_le16(TLV_TYPE_TX_PER_TRACK);
+        tx_pert->length = wlan_cpu_to_le16(sizeof(MrvlTxPerTrackInfo_t) - sizeof(MrvlIEtypesHeader_t));
+        tx_pert->tx_stat_check_period = cfg->tx_pert_check_peroid;
+        tx_pert->tx_stat_check_ratio  = cfg->tx_pert_check_ratio;
+        tx_pert->tx_stat_check_num    = wlan_cpu_to_le16(cfg->tx_pert_check_num);
+    }
+    cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RX_PKT_STATS) + sizeof(MrvlTxPerTrackInfo_t));
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 /**

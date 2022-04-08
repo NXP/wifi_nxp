@@ -48,8 +48,8 @@ const uint8_t *wlanfw;
 /* remove this after mlan integration complete */
 enum
 {
-    FWDNLD_STATUS_FAILURE = 0xffffffff,
-    FWDNLD_STATUS_SUCCESS = 0,
+    FWDNLD_STATUS_FAILURE    = 0xffffffff,
+    FWDNLD_STATUS_SUCCESS    = 0,
     FWDNLD_CARD_NOT_DETECTED = 3,
     FWDNLD_STATUS_FW_DNLD_FAILED,
     FWDNLD_STATUS_FW_NOT_DETECTED = 5,
@@ -294,7 +294,7 @@ static int32_t wlan_set_fw_dnld_size(void)
 {
     uint32_t resp;
 
-    int rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
+    bool rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
     if (rv == false)
     {
         return FWDNLD_STATUS_FAILURE;
@@ -305,6 +305,7 @@ static int32_t wlan_set_fw_dnld_size(void)
     {
         return FWDNLD_STATUS_FAILURE;
     }
+
     return FWDNLD_STATUS_SUCCESS;
 }
 
@@ -403,6 +404,7 @@ int32_t firmware_download(enum wlan_fw_storage_type st, const uint8_t *fw_ram_st
     {
         return ret;
     }
+
     if (wlan_card_ready_wait(1000) != true)
     {
         fwdnld_io_e("SDIO - FW Ready Registers not set");

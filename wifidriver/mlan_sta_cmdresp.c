@@ -274,7 +274,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
     /* wmsdk */
     PRINTM(MINFO, "SNMP_RESP: value of the oid = 0x%x, query_type=0x%x\n", oid, query_type);
     PRINTM(MINFO, "SNMP_RESP: Buf size  = 0x%x\n", wlan_le16_to_cpu(psmib->buf_size));
-#endif 
+#endif
     if (query_type == HostCmd_ACT_GEN_GET)
     {
         /* wmsdk: GET is not used. Disable */
@@ -430,7 +430,7 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
         {
             max_power = pg->power_max;
             min_power = pg->power_min;
-            length -= sizeof(Power_Group_t);
+            length -= (int)sizeof(Power_Group_t);
         }
         while (length > 0)
         {
@@ -443,7 +443,7 @@ static mlan_status wlan_get_power_level(pmlan_private pmpriv, void *pdata_buf)
             {
                 min_power = pg->power_min;
             }
-            length -= sizeof(Power_Group_t);
+            length -= (int)sizeof(Power_Group_t);
         }
         if (ppg_tlv->length > 0U)
         {
@@ -1090,6 +1090,44 @@ static mlan_status wlan_ret_802_11_rf_channel(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_ENABLE_802_11K
+/**
+ *  @brief This function handles the command response of offload feature
+ *
+ *  @param priv             A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_ret_offload_feature_ctrl(mlan_private *priv, HostCmd_DS_COMMAND *resp)
+{
+    mlan_status ret                     = MLAN_STATUS_SUCCESS;
+    HostCmd_OFFLOAD_FEATURE_CTRL *fctrl = &resp->params.fctrl;
+    ENTER();
+
+    PRINTM(MINFO, "offload feature ctrl set successful \n");
+    if (fctrl->featureSelect == 0)
+    {
+        PRINTM(MCMND, "11k:  Neighbor Report %s \n", fctrl->control.std.dot11k_nbor_support ? "enabled" : "disabled");
+        PRINTM(MCMND, "11k:  Traffic Stream Measurement %s \n", fctrl->control.std.dot11k_tsm ? "enabled" : "disabled");
+        PRINTM(MCMND, "11k:  Link Measurement %s \n", fctrl->control.std.dot11k_lm ? "enabled" : "disabled");
+        PRINTM(MCMND, "11k:  Beacon Report %s \n", fctrl->control.std.dot11k_rm ? "enabled" : "disabled");
+        PRINTM(MCMND, "11v:  BSS Transition %s \n", fctrl->control.std.dot11v_bss_trans ? "enabled" : "disabled");
+
+        priv->enable_11k = fctrl->control.std.dot11k_nbor_support | fctrl->control.std.dot11k_tsm |
+                           fctrl->control.std.dot11k_lm | fctrl->control.std.dot11k_rm;
+        if (priv->enable_11k)
+            SET_EXTCAP_BSS_TRANSITION(priv->ext_cap);
+        else
+            RESET_EXTCAP_BSS_TRANSITION(priv->ext_cap);
+        PRINTM(MMSG, "11K %s \n", priv->enable_11k ? "enable" : "disable");
+    }
+
+    LEAVE();
+    return ret;
+}
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 /**
@@ -1758,6 +1796,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
             break;
 #endif
+#ifdef CONFIG_ENABLE_802_11K
+        case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
+            ret = wlan_ret_offload_feature_ctrl(pmpriv, resp);
+            break;
+#endif /* CONFIG_ENABLE_802_11K*/
         default:
             PRINTM(MERROR, "CMD_RESP: Unknown command response %#x\n", resp->command);
             break;

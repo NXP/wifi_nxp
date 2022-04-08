@@ -202,16 +202,16 @@ typedef enum
 /** The space reserved for storing PSK (password) phrases. */
 /* Min WPA2 passphrase can be upto 8 ASCII chars */
 #define WLAN_PSK_MIN_LENGTH 8U
-/* Max WPA2 passphrase can be upto 63 ASCII chars as per standards + 1 '\0' char */
-#define WLAN_PSK_MAX_LENGTH 64
-/* Min WPA3 password can be upto 1 ASCII chars */
-#define WLAN_PASSWORD_MIN_LENGTH 1
+/* Max WPA2 passphrase can be upto 63 ASCII chars or 64 hexadecimal digits*/
+#define WLAN_PSK_MAX_LENGTH 65U
+/* Min WPA3 password can be upto 8 ASCII chars */
+#define WLAN_PASSWORD_MIN_LENGTH 8U
 /* Max WPA3 password can be upto 255 ASCII chars */
-#define WLAN_PASSWORD_MAX_LENGTH 255
+#define WLAN_PASSWORD_MAX_LENGTH 255U
 /* Max WPA2 Enterprise identity can be upto 256 characters */
-#define IDENTITY_MAX_LENGTH 256
+#define IDENTITY_MAX_LENGTH 256U
 /* Max WPA2 Enterprise password can be upto 256 unicode characters */
-#define PASSWORD_MAX_LENGTH 256
+#define PASSWORD_MAX_LENGTH 256U
 
 #ifdef CONFIG_WLAN_KNOWN_NETWORKS
 /** The size of the list of known networks maintained by the WLAN
@@ -405,7 +405,7 @@ enum wlan_connection_state
 /* Data Structures */
 
 /** Station Power save mode */
-enum wlan_ps_mode
+typedef enum wlan_ps_mode
 {
     /** Active mode */
     WLAN_ACTIVE = 0,
@@ -413,7 +413,7 @@ enum wlan_ps_mode
     WLAN_IEEE,
     /** Deep sleep power save mode */
     WLAN_DEEP_SLEEP,
-};
+} wlan_ps_mode;
 
 enum wlan_ps_state
 {
@@ -942,6 +942,10 @@ struct wlan_network
      *  channel on which the network to connect should be present. Set this
      *  to 0 to allow the network to be found on any channel. */
     unsigned int channel;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /** Rssi threshold */
+    short rssi_threshold;
+#endif
     /** BSS type */
     enum wlan_bss_type type;
     /** The network wireless mode enum wlan_bss_role. Set this
@@ -1033,6 +1037,27 @@ struct wlan_network
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
 };
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Tx Per Tracking Structure
+ * Driver sets tx per tracking statistic to fw.
+ * Fw will check tx packet error rate periodically and
+ * report PER to host if per is high.
+ */
+struct wlan_tx_pert_info
+{
+    /** Enable/Disable tx per tracking */
+    t_u8 tx_pert_check;
+    /** Check period(unit sec) */
+    t_u8 tx_pert_check_peroid;
+    /** (Fail TX packet)/(Total TX packet) ratio(unit 10%)
+     * default: 5
+     */
+    t_u8 tx_pert_check_ratio;
+    /** A watermark of check number(default 5) */
+    t_u16 tx_pert_check_num;
+};
+#endif
 
 /* WLAN Connection Manager API */
 
@@ -1127,7 +1152,14 @@ void wlan_initialize_uap_network(struct wlan_network *net);
  *          is not unique or the network name length is not valid
  *          or network security is \ref WLAN_SECURITY_WPA3_SAE but
  *          Management Frame Protection Capable is not enabled.
- *          in \ref wlan_network_security field.
+ *          in \ref wlan_network_security field. if network security type is
+ *          \ref WLAN_SECURITY_WPA or \ref WLAN_SECURITY_WPA2 or \ref
+ *          WLAN_SECURITY_WPA_WPA2_MIXED, but the passphrase length is less
+ *          than 8 or greater than 63, or the psk length equal to 64 but not
+ *          hexadecimal digits. if network security type is \ref WLAN_SECURITY_WPA3_SAE,
+ *          but the password length is less than 8 or greater than 255.
+ *          if network security type is \ref WLAN_SECURITY_WEP_OPEN or
+ *          \ref WLAN_SECURITY_WEP_SHARED.
  *  \return -WM_E_NOMEM if there was no room to add the network.
  *  \return WLAN_ERROR_STATE if the WLAN Connection Manager
  *          was running and not in the \ref WLAN_DISCONNECTED,
@@ -1351,12 +1383,16 @@ int wlan_get_current_network(struct wlan_network *network);
  */
 int wlan_get_current_uap_network(struct wlan_network *network);
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+int wlan_set_rssi_threshold(int rssithr);
+#endif
+
 /** Retrieve the status information of the micro-AP interface.
  *
  *  \return TRUE if micro-AP interface is in \ref WLAN_UAP_STARTED state.
  *  \return FALSE otherwise.
  */
-int is_uap_started(void);
+bool is_uap_started(void);
 
 /** Retrieve the status information of the station interface.
  *
@@ -1642,6 +1678,18 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
  *
  */
 void wlan_set_mac_addr(uint8_t *mac);
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/** Set Tx PER tracking config.
+ * This function may be called to set Tx PER tracking in firmware.
+ *
+ * \param[in] tx_pert User configured parameters of Tx PER tracking
+ *            period, ratio and number of tx packets.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type);
+#endif
 
 /** Configure Listen interval of IEEE power save mode.
  *
@@ -2943,6 +2991,24 @@ int wlan_set_frag(int frag);
 int wlan_set_uap_frag(int frag);
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+/**
+ * enable/disable 11k feature in WLAN firmware.
+ *
+ * \param[in]  the value of 11k configuration.
+ *
+ */
+int wlan_11k_cfg(int enable_11k);
+
+/**
+ * send 11k neighbor request in WLAN firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_11k_neighbor_req();
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 /**
  * Set the sta mac filter in Wi-Fi firmware.
@@ -3197,6 +3263,10 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
                               int (*wlan_usb_file_write_cb)(uint8_t *data, size_t data_len),
                               int (*wlan_usb_file_close_cb)());
 
+#endif
+
+#ifdef CONFIG_WIFI_MEM_ACCESS
+int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
 #endif
 
 /**

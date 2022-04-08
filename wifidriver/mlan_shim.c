@@ -120,7 +120,7 @@ mlan_operations *mlan_ops[] = {
 t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond) = MNULL;
 #ifdef DEBUG_LEVEL1
 #ifdef DEBUG_LEVEL2
-#define DEFAULT_DEBUG_MASK (0xffffffff)
+#define DEFAULT_DEBUG_MASK (0xffffffffU)
 #else
 #define DEFAULT_DEBUG_MASK (MMSG | MFATAL | MERROR)
 #endif
@@ -301,7 +301,7 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
             pmadapter->priv[i]->adapter = pmadapter;
 
             /* Save bss_type, frame_type & bss_priority */
-            pmadapter->priv[i]->bss_type     = (t_u8)pmdevice->bss_attr[i].bss_type;
+            pmadapter->priv[i]->bss_type     = pmdevice->bss_attr[i].bss_type;
             pmadapter->priv[i]->frame_type   = (t_u8)pmdevice->bss_attr[i].frame_type;
             pmadapter->priv[i]->bss_priority = (t_u8)pmdevice->bss_attr[i].bss_priority;
             if (pmdevice->bss_attr[i].bss_type == MLAN_BSS_TYPE_STA)
@@ -376,7 +376,6 @@ exit_register:
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function unregisters MOAL from MLAN module.
  *
@@ -399,15 +398,6 @@ mlan_status mlan_unregister(IN t_void *pmlan_adapter)
 
     pcb = &pmadapter->callbacks;
 
-    /* Free adapter structure */
-    wlan_free_adapter(pmadapter);
-
-    /* Free timers */
-    wlan_free_timer(pmadapter);
-
-    /* Free lock variables */
-    wlan_free_lock_list(pmadapter);
-
     /* Free private structures */
     for (i = 0; i < pmadapter->priv_num; i++)
     {
@@ -424,6 +414,7 @@ mlan_status mlan_unregister(IN t_void *pmlan_adapter)
     return ret;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function downloads the firmware
  *

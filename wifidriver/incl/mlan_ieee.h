@@ -1449,6 +1449,12 @@ typedef MLAN_PACK_START struct
      *  Configure the number of probe requests for active chan scans
      */
     t_u8 num_probes;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /**
+     *  Threshold of RSSI
+     */
+    t_s16 rssi_threshold;
+#endif
     /**
      *  @brief Reserved
      */

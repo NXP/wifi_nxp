@@ -195,6 +195,11 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_11H_DFS_TESTING,
 #endif
 
+#ifdef CONFIG_ENABLE_802_11K
+    MLAN_IOCTL_11K_CFG      = 0x00130000,
+    MLAN_OID_11K_CFG_ENABLE = 0x00130001,
+#endif
+
     /* Miscellaneous Configuration Group */
     MLAN_IOCTL_MISC_CFG = 0x00200000,
     MLAN_OID_MISC_GEN_IE,
@@ -1020,7 +1025,7 @@ typedef struct _mlan_ds_bss
 #endif
 #if defined(STA_SUPPORT) && defined(UAP_SUPPORT)
         /** BSS role */
-        t_u8 bss_role;
+        mlan_bss_role bss_role;
 #endif
 #ifdef WIFI_DIRECT_SUPPORT
         t_u16 wfd_mode;
@@ -1050,7 +1055,7 @@ typedef struct _mlan_ds_custom_reg_domain
     t_u8 num_a_chan;
 #endif
     /** cfp table */
-    chan_freq_power_t cfp_tbl[0];
+    chan_freq_power_t cfp_tbl[1];
 } mlan_ds_custom_reg_domain;
 #endif
 
@@ -1369,6 +1374,19 @@ typedef struct _mlan_ds_get_signal
     /** NF of data packet average */
     t_s16 data_nf_avg;
 } mlan_ds_get_signal, *pmlan_ds_get_signal;
+
+#ifdef CONFIG_ENABLE_802_11K
+/** Type definition of mlan_ds_11k_cfg for 11k enable/disable */
+typedef struct _mlan_ds_11k_cfg
+{
+    /** Sub-command */
+    t_u32 sub_command;
+    union
+    {
+        t_u32 enable_11k;
+    } param;
+} mlan_ds_11k_cfg;
+#endif
 
 /** mlan_fw_info data structure for MLAN_OID_GET_FW_INFO */
 typedef struct _mlan_fw_info
@@ -1756,7 +1774,7 @@ typedef enum _mlan_psk_type
 /** key flag for mcast IGTK */
 #define KEY_FLAG_AES_MCAST_IGTK 0x00000010U
 /** key flag for remove key */
-#define KEY_FLAG_REMOVE_KEY 0x80000000
+#define KEY_FLAG_REMOVE_KEY 0x80000000U
 
 /** Type definition of mlan_ds_encrypt_key for MLAN_OID_SEC_CFG_ENCRYPT_KEY */
 typedef struct _mlan_ds_encrypt_key
@@ -2084,7 +2102,7 @@ typedef struct _mlan_ds_power_cfg
 /** Power Management Configuration Group */
 /*-----------------------------------------------------------------*/
 /** Host sleep config conditions : Cancel */
-#define HOST_SLEEP_CFG_CANCEL 0xffffffff
+#define HOST_SLEEP_CFG_CANCEL 0xffffffffU
 /** Host sleep config conditions : NULL (used for offload features) */
 #define HOST_SLEEP_NO_COND 0
 
@@ -2644,14 +2662,14 @@ typedef struct _mlan_ds_11ac_vht_cfg
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
 
 #ifdef CONFIG_11AX
-typedef struct MLAN_PACK_START _mlan_11axcmdcfg_obss_pd_offset
+typedef MLAN_PACK_START struct _mlan_11axcmdcfg_obss_pd_offset
 {
     /** <NON_SRG_OffSET, SRG_OFFSET> */
     t_u8 offset[2];
 } MLAN_PACK_END mlan_11axcmdcfg_obss_pd_offset;
 
 /** Type definition of mlan_11axcmdcfg_sr_control for MLAN_OID_11AX_CMD_CFG */
-typedef struct MLAN_PACK_START _mlan_11axcmdcfg_sr_control
+typedef MLAN_PACK_START struct _mlan_11axcmdcfg_sr_control
 {
     /** 1 enable, 0 disable */
     t_u8 control;
@@ -2686,7 +2704,7 @@ typedef struct _mlan_ds_11ax_he_cfg
 } mlan_ds_11ax_he_cfg, *pmlan_ds_11ax_he_cfg;
 
 /** Type definition of mlan_ds_11ax_sr_cmd for MLAN_OID_11AX_CMD_CFG */
-typedef struct MLAN_PACK_START _mlan_ds_11ax_sr_cmd
+typedef MLAN_PACK_START struct _mlan_ds_11ax_sr_cmd
 {
     /** type*/
     t_u16 type;

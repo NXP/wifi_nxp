@@ -46,9 +46,15 @@ int dhcp_server_start(void *intrfc_handle)
     int ret;
 
     dhcp_d("DHCP server start request");
-    if (dhcpd_running || dhcp_server_init(intrfc_handle))
+    if (dhcpd_running)
     {
         return -WM_E_DHCPD_SERVER_RUNNING;
+    }
+    ret = dhcp_server_init(intrfc_handle);
+    if (ret != WM_SUCCESS)
+    {
+        dhcp_e("Failed to initialize dhcp server");
+        return ret;
     }
 
     ret = os_thread_create(&dhcpd_thread, "dhcp-server", dhcp_server, NULL, &dhcp_stack, OS_PRIO_3);

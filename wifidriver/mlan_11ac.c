@@ -313,7 +313,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
         if (vht_cfg->txrx & MLAN_RADIO_RX)
         {
             /* use the previous user value */
-            if (vht_cfg->vht_rx_mcs == 0xffffffff)
+            if (vht_cfg->vht_rx_mcs == 0xffffffffU)
             {
                 vht_cfg->vht_rx_mcs = GET_VHTMCS(pmadapter->usr_dot_11ac_mcs_support);
             }
@@ -332,7 +332,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
             }
             PRINTM(MINFO, "Set: vht rx mcs set 0x%08x\n", vht_cfg->vht_rx_mcs);
             /* use the previous user value */
-            if (vht_cfg->vht_tx_mcs == 0xffffffff)
+            if (vht_cfg->vht_tx_mcs == 0xffffffffU)
             {
                 vht_cfg->vht_tx_mcs = GET_VHTMCS(pmadapter->usr_dot_11ac_mcs_support >> 16);
             }

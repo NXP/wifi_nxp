@@ -71,18 +71,18 @@ void wifi_set_ps_cfg(t_u16 multiple_dtims,
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval)
 {
     pmlan_adapter pmadapter      = ((mlan_private *)mlan_adap->priv[0])->adapter;
-    pmadapter->null_pkt_interval = null_pkt_interval;
+    pmadapter->null_pkt_interval = (t_u16)null_pkt_interval;
 }
 
 void wifi_configure_listen_interval(int listen_interval)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    pmpriv->listen_interval = listen_interval;
+    pmpriv->listen_interval = (t_u16)listen_interval;
 
     pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
     wifi_set_ps_cfg(CLOSEST_DTIM_TO_LISTEN_INTERVAL, DEFAULT_BCN_MISS_TIMEOUT, 0, 0, PS_MODE_AUTO, DELAY_TO_PS_DEFAULT);
-    pmadapter->local_listen_interval = listen_interval;
+    pmadapter->local_listen_interval = (t_u16)listen_interval;
 }
 
 int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions)
@@ -98,8 +98,8 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
-    if (action == HS_CONFIGURE)
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
+    if (action == (t_u16)HS_CONFIGURE)
     {
         hs_cfg_obj.conditions = conditions;
         hs_cfg_obj.gap        = 0x2;
@@ -152,13 +152,13 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     {
         arpfilter->len = 0;
     }
-    cmd->size = cmd->size + sizeof(arpfilter_header) + arpfilter->len;
+    cmd->size = (t_u16)(cmd->size + sizeof(arpfilter_header) + arpfilter->len);
 
     (void)wifi_wait_for_cmdresp(NULL);
-    return status;
+    return (int)status;
 }
 
-int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interface, void *pdata_buf)
+int wifi_send_power_save_command(ENH_PS_MODES action, int ps_bitmap, mlan_bss_type interface, void *pdata_buf)
 {
     mlan_status status;
     mlan_ds_auto_ds ds_param;
@@ -167,7 +167,7 @@ int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interf
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
     if (ps_bitmap == BITMAP_AUTO_DS)
     {
         ds_param.idletime = (*(t_u16 *)pdata_buf);
@@ -175,31 +175,31 @@ int wifi_send_power_save_command(int action, int ps_bitmap, mlan_bss_type interf
     }
 
     cmd->result = 0x0;
-    status      = wlan_cmd_enh_power_mode((mlan_private *)mlan_adap->priv[0], cmd, action, ps_bitmap, pdata_buf);
+    status      = wlan_cmd_enh_power_mode((mlan_private *)mlan_adap->priv[0], cmd, action, (t_u16)ps_bitmap, pdata_buf);
 
     (void)wifi_wait_for_cmdresp(NULL);
-    return status;
+    return (int)status;
 }
 
 int wifi_enter_ieee_power_save(void)
 {
-    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+    return wifi_send_power_save_command(EN_AUTO_PS, (int)BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
 
 int wifi_exit_ieee_power_save(void)
 {
-    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
 
 int wifi_enter_deepsleep_power_save(void)
 {
     t_u16 idletime = 0;
-    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
+    return wifi_send_power_save_command(EN_AUTO_PS, (int)BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
 }
 
 int wifi_exit_deepsleep_power_save(void)
 {
-    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, NULL);
+    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, NULL);
 }
 
 int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
@@ -223,12 +223,12 @@ int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
     data_buff.ps_mode                   = PS_MODE_INACTIVITY;
     data_buff.flags                     = PS_FLAG_INACT_SLEEP_PARAM | PS_FLAG_SLEEP_PARAM;
 
-    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_UAP_INACT_PS, type, &data_buff);
+    return wifi_send_power_save_command(EN_AUTO_PS, (int)BITMAP_UAP_INACT_PS, type, &data_buff);
 }
 
 int wifi_uap_ps_inactivity_sleep_exit(mlan_bss_type type)
 {
-    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_UAP_INACT_PS, type, NULL);
+    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_UAP_INACT_PS, type, NULL);
 }
 
 void send_sleep_confirm_command(mlan_bss_type interface)
@@ -242,12 +242,12 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 
     (void)memset(ps_cfm_sleep, 0, sizeof(OPT_Confirm_Sleep));
     ps_cfm_sleep->command = HostCmd_CMD_802_11_PS_MODE_ENH;
-    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, interface);
+    ps_cfm_sleep->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
 
-    ps_cfm_sleep->size                = sizeof(OPT_Confirm_Sleep);
+    ps_cfm_sleep->size                = (t_u16)sizeof(OPT_Confirm_Sleep);
     ps_cfm_sleep->result              = 0;
-    ps_cfm_sleep->action              = SLEEP_CONFIRM;
-    ps_cfm_sleep->sleep_cfm.resp_ctrl = RESP_NEEDED;
+    ps_cfm_sleep->action              = (t_u16)SLEEP_CONFIRM;
+    ps_cfm_sleep->sleep_cfm.resp_ctrl = (t_u16)RESP_NEEDED;
 
     (void)wifi_wait_for_cmdresp(NULL);
 }
@@ -277,8 +277,8 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 #endif /*  CONFIG_PWR_DEBUG*/
     HostCmd_DS_802_11_PS_MODE_ENH *ps_mode = (HostCmd_DS_802_11_PS_MODE_ENH *)(void *)(cmd_res_buffer + S_DS_GEN);
 
-    *ps_event = WIFI_EVENT_PS_INVALID;
-    *action   = (ps_mode->action);
+    *ps_event = (t_u16)WIFI_EVENT_PS_INVALID;
+    *action   = (t_u16)(ps_mode->action);
     if (ps_mode->action == EN_AUTO_PS)
     {
         if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_AUTO_DS) != 0U)
@@ -290,7 +290,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 mrvl_tlv =
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
-            *ps_event = WIFI_EVENT_DEEP_SLEEP;
+            *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
             pwr_d("Enabled Deep Sleep mode");
             deepsleepps_enabled = true;
         }
@@ -313,7 +313,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 "%u %u",
                 ps_tlv->param.null_pkt_interval, ps_tlv->param.multiple_dtims, ps_tlv->param.local_listen_interval,
                 ps_tlv->param.bcn_miss_timeout, ps_tlv->param.delay_to_ps, ps_tlv->param.mode);
-            *ps_event      = WIFI_EVENT_IEEE_PS;
+            *ps_event      = (t_u16)WIFI_EVENT_IEEE_PS;
             ieeeps_enabled = true;
         }
         result = WIFI_EVENT_REASON_SUCCESS;
@@ -323,7 +323,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0)
         {
             pwr_d("Disabled DeepSleep mode");
-            *ps_event           = WIFI_EVENT_DEEP_SLEEP;
+            *ps_event           = (t_u16)WIFI_EVENT_DEEP_SLEEP;
             deepsleepps_enabled = false;
         }
         if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0)
@@ -331,7 +331,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             pwr_d(
                 "Disabled IEEE power "
                 "save mode");
-            *ps_event      = WIFI_EVENT_IEEE_PS;
+            *ps_event      = (t_u16)WIFI_EVENT_IEEE_PS;
             ieeeps_enabled = false;
         }
         result = WIFI_EVENT_REASON_SUCCESS;
@@ -371,11 +371,11 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     {
         if (ieeeps_enabled)
         {
-            *ps_event = WIFI_EVENT_IEEE_PS;
+            *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
         }
         else if (deepsleepps_enabled)
         {
-            *ps_event = WIFI_EVENT_DEEP_SLEEP;
+            *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
         }
         else
         {

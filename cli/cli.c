@@ -436,7 +436,8 @@ static int handle_input(char *inbuf)
                 }
                 break;
         }
-    } while (!stat.done && ++i < INBUF_SIZE);
+        i++;
+    } while (!stat.done && i < INBUF_SIZE);
 
     if (stat.inQuote != 0U)
     {
@@ -559,7 +560,7 @@ static int get_input(char *inbuf, unsigned int *bp)
         inbuf[*bp] = (char)GETCHAR();
         if (state == EXT_KEY_SECOND_SYMBOL)
         {
-            if (second_char == 0x4F)
+            if (second_char == (char)(0x4F))
             {
                 if (inbuf[*bp] == (char)(0x4D))
                 {
@@ -725,18 +726,22 @@ static void console_tick(void)
         cli.bp = 0;
     }
 
-    if (cli.input_enabled && get_input(cli.inbuf, &cli.bp))
+    if (cli.input_enabled == 1)
     {
-        cli.input_enabled = 0;
-        ret               = cli_submit_cmd_buffer(&cli.inbuf);
-        cli.inbuf         = NULL;
-        if (ret != WM_SUCCESS)
+        ret = get_input(cli.inbuf, &cli.bp);
+        if (ret == 1)
         {
-            (void)PRINTF(
-                "Error: problem sending cli message"
-                "\r\n");
+            cli.input_enabled = 0;
+            ret               = cli_submit_cmd_buffer(&cli.inbuf);
+            cli.inbuf         = NULL;
+            if (ret != WM_SUCCESS)
+            {
+                (void)PRINTF(
+                    "Error: problem sending cli message"
+                    "\r\n");
+            }
+            cli.input_enabled = 1;
         }
-        cli.input_enabled = 1;
     }
 }
 
@@ -760,7 +765,7 @@ static void cli_main(os_thread_arg_t data)
         ret = os_queue_recv(&cli.input_queue, &msg, RX_WAIT);
         if (ret != WM_SUCCESS)
         {
-            if (ret == WM_E_BADF)
+            if (ret == (int)WM_E_BADF)
             {
                 (void)PRINTF(
                     "Error: CLI fatal queue error."
@@ -1101,7 +1106,7 @@ int cli_unregister_command(const struct cli_command *command)
         {
             cli.num_commands--;
             unsigned int remaining_cmds = cli.num_commands - i;
-            if (remaining_cmds > 0)
+            if (remaining_cmds > 0U)
             {
                 (void)memmove(&cli.commands[i], &cli.commands[i + 1], (remaining_cmds * sizeof(struct cli_command *)));
             }

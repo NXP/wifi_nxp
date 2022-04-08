@@ -784,6 +784,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     MrvlIEtypes_Bssid_List_t *pbssid_tlv;
 #endif
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    MrvlIEtypes_RssiThresholdParamSet_t *prssi_threshold_tlv;
+#endif
     const t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0, 0, 0, 0, 0, 0};
     t_u8 *ptlv_pos;
     t_u32 num_probes;
@@ -797,6 +800,10 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     t_u8 ssid_filter;
     WLAN_802_11_RATES rates;
     t_u32 rates_size;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    t_u8 rssi_threshold_enable;
+    t_s16 rssi_threshold;
+#endif
     MrvlIETypes_HTCap_t *pht_cap;
     MrvlIETypes_VHTCap_t *pvht_cap;
 #ifdef CONFIG_11AX
@@ -835,6 +842,14 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 
         /* Set the number of probes to send, use Adapter setting if unset */
         num_probes = (puser_scan_in->num_probes ? puser_scan_in->num_probes : pmadapter->scan_probes);
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        /* Set the threshold value of rssi to send */
+        rssi_threshold = puser_scan_in->rssi_threshold;
+        /* Enable/Disable rssi threshold function */
+        rssi_threshold_enable = (rssi_threshold < 0 ? MTRUE : MFALSE);
+#endif
+
         /*
          * Set the BSSID filter to the incoming configuration,
          *   if non-zero.  If not set, it will remain disabled (all zeros).
@@ -899,6 +914,10 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     {
         pscan_cfg_out->bss_mode = (t_u8)pmadapter->scan_mode;
         num_probes              = pmadapter->scan_probes;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        rssi_threshold        = 0;
+        rssi_threshold_enable = 0;
+#endif
     }
 
     /*
@@ -981,6 +1000,37 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         ptlv_pos += len;
     }
 #endif
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /*
+     * Append rssi threshold tlv
+     *
+     * Note: According to the value of rssi_threshold, it is divided into three situations:
+     *     rssi_threshold  |  rssi_threshold_enable  |  Whether to carry TLV
+     *           <0        |          MTRUE          |          Yes
+     *            0        |          MFALSE         |          No
+     *           >0        |          MFALSE         |          Yes
+     */
+    if (rssi_threshold)
+    {
+        prssi_threshold_tlv              = (MrvlIEtypes_RssiThresholdParamSet_t *)ptlv_pos;
+        prssi_threshold_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSSI_THRESHOLD);
+        prssi_threshold_tlv->header.len =
+            (t_u16)(sizeof(prssi_threshold_tlv->enable) + sizeof(prssi_threshold_tlv->rssi_threshold) +
+                    sizeof(prssi_threshold_tlv->reserved));
+        prssi_threshold_tlv->enable         = rssi_threshold_enable;
+        prssi_threshold_tlv->rssi_threshold = rssi_threshold;
+
+        ptlv_pos += sizeof(prssi_threshold_tlv->header) + prssi_threshold_tlv->header.len;
+
+        prssi_threshold_tlv->header.len = wlan_cpu_to_le16(prssi_threshold_tlv->header.len);
+
+        pmadapter->rssi_threshold = (rssi_threshold < 0 ? rssi_threshold : 0);
+
+        PRINTM(MINFO, "SCAN_CMD: Rssi threshold = %d\n", rssi_threshold);
+    }
+#endif
+
     /* fixme: enable this later when req. */
 #ifndef CONFIG_MLAN_WMSDK
     if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
@@ -3416,7 +3466,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     MrvlIEtypes_Data_t *ptlv                    = MNULL;
     MrvlIEtypes_Bss_Scan_Rsp_t *pscan_rsp_tlv   = MNULL;
     MrvlIEtypes_Bss_Scan_Info_t *pscan_info_tlv = MNULL;
-    t_u8 band;
+    mlan_band_def band;
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
 
@@ -3607,7 +3657,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #endif /* CONFIG_MLAN_WMSDK */
             /* Save the band designation for this entry for use in join */
             bss_new_entry->bss_band = band;
-            cfp                     = wlan_find_cfp_by_band_and_channel(pmadapter, (t_u8)bss_new_entry->bss_band,
+            cfp                     = wlan_find_cfp_by_band_and_channel(pmadapter, bss_new_entry->bss_band,
                                                     (t_u16)bss_new_entry->channel);
 
             if (cfp)

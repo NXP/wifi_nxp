@@ -689,14 +689,7 @@ static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap,
     }
 
     /* No user config for Delayed BACK yet */
-    if (GET_DELAYEDBACK(pmadapter->hw_dot_11n_dev_cap) != 0U)
-    {
-        SETHT_DELAYEDBACK(pht_cap->ht_cap.ht_cap_info);
-    }
-    else
-    {
-        RESETHT_DELAYEDBACK(pht_cap->ht_cap.ht_cap_info);
-    }
+    RESETHT_DELAYEDBACK(pht_cap->ht_cap.ht_cap_info);
 
     /* Need change to support 8k AMSDU receive */
     RESETHT_MAXAMSDU(pht_cap->ht_cap.ht_cap_info);
@@ -796,8 +789,7 @@ void wlan_show_dot11ndevcap(pmlan_adapter pmadapter, t_u32 cap)
     PRINTM(MINFO, "GET_HW_SPEC: Short GI for 40 Mhz %s\n", (ISSUPP_SHORTGI40(cap) ? "supported" : "not supported"));
     PRINTM(MINFO, "GET_HW_SPEC: Short GI for 20 Mhz %s\n", (ISSUPP_SHORTGI20(cap) ? "supported" : "not supported"));
     PRINTM(MINFO, "GET_HW_SPEC: LDPC coded packet receive %s\n", (ISSUPP_RXLDPC(cap) ? "supported" : "not supported"));
-    PRINTM(MINFO, "GET_HW_SPEC: Number of Delayed Block Ack streams = %d\n", GET_DELAYEDBACK(cap));
-    PRINTM(MINFO, "GET_HW_SPEC: Number of Immediate Block Ack streams = %d\n", GET_IMMEDIATEBACK(cap));
+    PRINTM(MINFO, "GET_HW_SPEC: Number of TX BA streams supported %d\n", ISSUPP_GETTXBASTREAM(cap));
     PRINTM(MINFO, "GET_HW_SPEC: 40 Mhz channel width %s\n", (ISSUPP_CHANWIDTH40(cap) ? "supported" : "not supported"));
     PRINTM(MINFO, "GET_HW_SPEC: 20 Mhz channel width %s\n", (ISSUPP_CHANWIDTH20(cap) ? "supported" : "not supported"));
     PRINTM(MINFO, "GET_HW_SPEC: 10 Mhz channel width %s\n", (ISSUPP_CHANWIDTH10(cap) ? "supported" : "not supported"));
@@ -1197,7 +1189,7 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
 #endif
     num_cfp = pmadapter->region_channel[0].num_cfp;
 
-    if ((pbss_desc->bss_band & (BAND_B | BAND_G)) && pmadapter->region_channel[0].valid)
+    if ((pbss_desc->bss_band & (mlan_band_def)(BAND_B | BAND_G)) && pmadapter->region_channel[0].valid)
     {
         for (i = 0; i < num_cfp; i++)
         {
@@ -1214,7 +1206,7 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
             return MFALSE;
         }
 
-        if (chan_offset == SEC_CHAN_ABOVE)
+        if (chan_offset == (t_u8)SEC_CHAN_ABOVE)
         {
             if (pri_chan > num_cfp - 4U)
             {

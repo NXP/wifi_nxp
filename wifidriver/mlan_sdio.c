@@ -121,7 +121,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
     return 1;
 }
 
-int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
+bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
     int ret;
     uint32_t flags = 0;
@@ -131,7 +131,7 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     if (ret == -WM_FAIL)
     {
         sdio_e("failed to get mutex\r\n");
-        return 0;
+        return false;
     }
 
     if (bcnt > 1U)
@@ -147,12 +147,12 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
         (void)os_mutex_put(&sdio_mutex);
-        return 0;
+        return false;
     }
 
     (void)os_mutex_put(&sdio_mutex);
 
-    return 1;
+    return true;
 }
 
 static void SDIO_CardInterruptCallBack(void *userData)
@@ -247,7 +247,7 @@ int sdio_drv_init(void (*cd_int)(int))
     ret = os_mutex_create(&sdio_mutex, "sdio-mutex", OS_MUTEX_INHERIT);
     if (ret == -WM_FAIL)
     {
-        sdio_e("Failed to create mutex\r\n");
+        sdio_e("Failed to create mutex");
         return -WM_FAIL;
     }
 
@@ -264,4 +264,17 @@ int sdio_drv_init(void (*cd_int)(int))
     }
 
     return WM_SUCCESS;
+}
+
+void sdio_drv_deinit(void)
+{
+    int ret;
+
+    SDIO_Deinit(&wm_g_sd);
+
+    ret = os_mutex_delete(&sdio_mutex);
+    if (ret != WM_SUCCESS)
+    {
+        sdio_e("Failed to delete mutex");
+    }
 }
