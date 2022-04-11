@@ -4252,6 +4252,13 @@ int wlan_add_network(struct wlan_network *network)
             return WLAN_ERROR_STATE;
         }
     }
+///TODO: To be removed once ACS related fix is added in firmware.
+#if defined(IW61x)
+    if ((network->role == WLAN_BSS_ROLE_UAP) && (0 == network->channel))
+    {
+        return -WM_E_INVAL;
+    }
+#endif
 
     /* make sure that the network name length is acceptable */
     len = strlen(network->name);
