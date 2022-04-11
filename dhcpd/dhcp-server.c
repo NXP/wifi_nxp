@@ -789,7 +789,7 @@ static void get_broadcast_addr(struct sockaddr_in *addr)
 {
     addr->sin_family = AF_INET;
     /* limited broadcast addr (255.255.255.255) */
-    addr->sin_addr.s_addr = 0xffffffff;
+    addr->sin_addr.s_addr = 0xffffffffU;
     addr->sin_len         = (uint8_t)sizeof(struct sockaddr_in);
 }
 

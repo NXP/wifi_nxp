@@ -357,6 +357,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->pmfcfg.mfpc = 0;
     priv->pmfcfg.mfpr = 0;
 
+#ifdef CONFIG_ENABLE_802_11K
+    priv->enable_11k = MFALSE;
+#endif
+
     for (i = 0; i < MAX_NUM_TID; i++)
         priv->addba_reject[i] = ADDBA_RSP_STATUS_ACCEPT;
     priv->max_amsdu = 0;
@@ -528,6 +532,10 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->ext_scan = 1;
 #endif
     pmadapter->scan_probes = DEFAULT_PROBES;
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    pmadapter->rssi_threshold = 0;
+#endif
 
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK

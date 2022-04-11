@@ -85,6 +85,7 @@ static interface_t g_uap;
 static interface_t g_wfd;
 #endif
 
+static int net_wlan_init_done;
 static os_timer_t dhcp_timer;
 
 static void dhcp_timer_cb(os_timer_arg_t arg);
@@ -205,7 +206,6 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 
 int net_wlan_init(void)
 {
-    static int net_wlan_init_done;
     int ret;
     if (!net_wlan_init_done)
     {
@@ -219,7 +219,7 @@ int net_wlan_init(void)
         ip_2_ip4(&g_mlan.ipaddr)->addr = INADDR_ANY;
         ret = netifapi_netif_add(&g_mlan.netif, ip_2_ip4(&g_mlan.ipaddr), ip_2_ip4(&g_mlan.ipaddr),
                                  ip_2_ip4(&g_mlan.ipaddr), NULL, lwip_netif_init, tcpip_input);
-        if (ret != 0)
+        if (ret != WM_SUCCESS)
         {
             net_e("MLAN interface add failed");
             return -WM_FAIL;
@@ -230,7 +230,7 @@ int net_wlan_init(void)
 
         ret = netifapi_netif_add(&g_uap.netif, ip_2_ip4(&g_uap.ipaddr), ip_2_ip4(&g_uap.ipaddr),
                                  ip_2_ip4(&g_uap.ipaddr), NULL, lwip_netif_uap_init, tcpip_input);
-        if (ret != 0)
+        if (ret != WM_SUCCESS)
         {
             net_e("UAP interface add failed");
             return -WM_FAIL;
@@ -266,6 +266,73 @@ int net_wlan_init(void)
     }
 
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    return WM_SUCCESS;
+}
+
+static int net_netif_deinit(struct netif *netif)
+{
+    int ret;
+#ifdef CONFIG_IPV6
+    if (netif->mld_mac_filter != NULL)
+    {
+        ip6_addr_t ip6_allnodes_ll;
+        ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
+        netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_DEL_MAC_FILTER);
+    }
+#endif
+    ret = netifapi_netif_remove(netif);
+
+    if (ret != WM_SUCCESS)
+    {
+        net_e("Interface remove failed");
+        return -WM_FAIL;
+    }
+
+    if (netif->state != NULL)
+    {
+        mem_free(netif->state);
+        netif->state = NULL;
+    }
+
+    return WM_SUCCESS;
+}
+
+int net_wlan_deinit(void)
+{
+    int ret;
+
+    if (net_wlan_init_done != 1)
+    {
+        return -WM_FAIL;
+    }
+
+    ret = net_netif_deinit(&g_mlan.netif);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("MLAN interface deinit failed");
+        return -WM_FAIL;
+    }
+
+    ret = net_netif_deinit(&g_uap.netif);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("UAP interface deinit failed");
+        return -WM_FAIL;
+    }
+
+    ret = os_timer_delete(&dhcp_timer);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("DHCP timer deletion failed");
+        return -WM_FAIL;
+    }
+
+    netif_remove_ext_callback(&netif_ext_callback);
+    wm_netif_status_callback_ptr = NULL;
+    net_wlan_init_done           = 0;
+
+    net_d("DeInitialized TCP/IP networking stack");
+
     return WM_SUCCESS;
 }
 

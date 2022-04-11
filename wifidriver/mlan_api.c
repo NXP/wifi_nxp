@@ -86,6 +86,9 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
                                         IN t_void *pdata_buf);
 #endif
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+#ifdef CONFIG_ENABLE_802_11K
+mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd);
+#endif
 
 int wifi_deauthenticate(uint8_t *bssid)
 {
@@ -1364,6 +1367,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered)
 {
@@ -1403,6 +1409,10 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 
     user_scan_cfg->bss_mode           = bss_mode;
     user_scan_cfg->keep_previous_scan = keep_previous_scan;
+
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    user_scan_cfg->rssi_threshold = rssi_threshold;
+#endif
 
     if (num_probes > 0U && num_probes <= MAX_PROBES)
     {
@@ -2029,28 +2039,21 @@ int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr)
         return -WM_E_INVAL;
     }
 
-    mlan_multicast_list *pmcast_list;
-    pmcast_list = os_mem_alloc(sizeof(mlan_multicast_list));
-    if (pmcast_list == MNULL)
-    {
-        return -WM_E_NOMEM;
-    }
+    mlan_multicast_list mcast_list;
 
-    (void)memcpy((void *)pmcast_list->mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
-    pmcast_list->num_multicast_addr = num_of_addr;
+    (void)memcpy((void *)mcast_list.mac_list, (const void *)mlist, num_of_addr * MLAN_MAC_ADDR_LENGTH);
+    mcast_list.num_multicast_addr = num_of_addr;
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MAC_MULTICAST_ADR,
-                                              HostCmd_ACT_GEN_SET, 0, NULL, pmcast_list, cmd);
+                                              HostCmd_ACT_GEN_SET, 0, NULL, &mcast_list, cmd);
 
     if (rv != MLAN_STATUS_SUCCESS)
     {
-        os_mem_free(pmcast_list);
         return -WM_FAIL;
     }
     (void)wifi_wait_for_cmdresp(NULL);
-    os_mem_free(pmcast_list);
     return WM_SUCCESS;
 }
 
@@ -2662,7 +2665,7 @@ int wifi_config_mgmt_ie(
             ie_ptr                    = (custom_ie *)(void *)(((uint8_t *)ie_ptr) + sizeof(custom_ie) - MAX_IE_SIZE);
             ie_ptr->mgmt_subtype_mask = MGMT_MASK_CLEAR;
             ie_ptr->ie_length         = 0;
-            ie_ptr->ie_index          = index + 1;
+            ie_ptr->ie_index          = (t_u16)index + 1U;
             tlv->length               = 2U * (sizeof(custom_ie) - MAX_IE_SIZE);
             buf_len += tlv->length;
             clear_ie_index(index);
@@ -3093,8 +3096,81 @@ void wifi_set_curr_bss_channel(uint8_t channel)
     pmpriv->curr_bss_params.bss_descriptor.channel = channel;
 }
 
+#ifdef CONFIG_ENABLE_802_11K
+int wifi_11k_cfg(int enable_11k)
+{
+    mlan_ioctl_req req;
+    mlan_ds_11k_cfg *pcfg_11k = NULL;
+    mlan_status ret           = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    /* Allocate an IOCTL request buffer */
+    pcfg_11k = os_mem_alloc(sizeof(mlan_ds_11k_cfg));
+    if (pcfg_11k == NULL)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        return ret;
+    }
+
+    /* Fill request buffer */
+    pcfg_11k->sub_command = MLAN_OID_11K_CFG_ENABLE;
+    req.pbuf              = (t_u8 *)pcfg_11k;
+    req.buf_len           = sizeof(mlan_ds_11k_cfg);
+    req.req_id            = MLAN_IOCTL_11K_CFG;
+    req.action            = MLAN_ACT_SET;
+
+    if (enable_11k != 0 && enable_11k != 1)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        os_mem_free(pcfg_11k);
+        return ret;
+    }
+
+    pcfg_11k->param.enable_11k = enable_11k;
+
+    if (!is_sta_connected())
+    {
+        ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+        {
+            os_mem_free(pcfg_11k);
+            return -WM_FAIL;
+        }
+    }
+    else
+        wifi_e("sta disconnection is required before enable/disable 11k\r\n");
+
+    os_mem_free(pcfg_11k);
+
+    return WM_SUCCESS;
+}
+
+int wifi_11k_neighbor_req()
+{
+    if (!is_sta_connected())
+    {
+        wifi_e("sta connection is required before sending neighbor report req\r\n");
+        return -WM_FAIL;
+    }
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    wifi_get_command_lock();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wlan_cmd_11k_neighbor_req((mlan_private *)mlan_adap->priv[0], cmd);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return WM_SUCCESS;
+}
+#endif
+
 #ifdef OTP_CHANINFO
-int wifi_get_fw_region_and_cfp_tables()
+int wifi_get_fw_region_and_cfp_tables(void)
 {
     int ret;
 
@@ -3113,6 +3189,12 @@ int wifi_get_fw_region_and_cfp_tables()
 
     ret = wifi_wait_for_cmdresp(NULL);
     return ret;
+}
+
+void wifi_free_fw_region_and_cfp_tables(void)
+{
+    mlan_adapter *pmadapter = mlan_adap->priv[0]->adapter;
+    wlan_free_fw_cfp_tables(pmadapter);
 }
 #endif
 

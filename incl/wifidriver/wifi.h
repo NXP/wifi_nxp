@@ -32,8 +32,6 @@
 #ifndef CONFIG_WIFI_INTERNAL
 #define CONFIG_WIFI_INTERNAL 1
 #endif
-#define BANDWIDTH_20MHZ 1U
-#define BANDWIDTH_40MHZ 2U
 
 #ifdef CONFIG_WIFI_INTERNAL
 #define CONFIG_11N             1
@@ -56,6 +54,8 @@
 #include <wm_os.h>
 #include <wmerrno.h>
 
+#define BANDWIDTH_20MHZ 1U
+#define BANDWIDTH_40MHZ 2U
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;
 extern uint16_t g_data_nf_last;
@@ -292,6 +292,10 @@ unsigned wifi_get_last_cmd_sent_ms(void);
 uint32_t wifi_get_value1(void);
 
 uint8_t *wifi_get_outbuf(uint32_t *outbuf_len);
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type);
+#endif
 
 /**
  * This will update the last command sent variable value to current
@@ -637,7 +641,8 @@ int wifi_set_country(int country);
 int wifi_uap_set_country(int country);
 int wifi_get_country(void);
 #ifdef OTP_CHANINFO
-int wifi_get_fw_region_and_cfp_tables();
+int wifi_get_fw_region_and_cfp_tables(void);
+void wifi_free_fw_region_and_cfp_tables(void);
 #endif
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
@@ -693,7 +698,7 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_ecsa_enable(void);
 
-int wifi_uap_start(int type,
+int wifi_uap_start(mlan_bss_type type,
                    char *ssid,
                    uint8_t *mac_addr,
                    int security,
@@ -702,7 +707,13 @@ int wifi_uap_start(int type,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
                    bool mfpc,
-                   bool mfpr);
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                   bool mfpr,
+                   uint8_t dtim
+#else
+                   bool mfpr
+#endif
+);
 
 #ifdef CONFIG_WMM
 int wrapper_wlan_sta_ampdu_enable(t_u8 tid);
@@ -937,6 +948,11 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type);
 
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
+#endif
+
+#ifdef CONFIG_ENABLE_802_11K
+int wifi_11k_cfg(int enable_11k);
+int wifi_11k_neighbor_req();
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER

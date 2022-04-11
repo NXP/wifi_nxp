@@ -5697,6 +5697,144 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef CONFIG_ENABLE_802_11K
+/**
+ *  @brief 11k enable
+ *
+ *  @param pmpriv           A pointer to mlan_private structure
+ *  @param pioctl_buf 	A pointer to ioctl request buffer
+ *  @param enable_11k   11k enable flag.
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+static mlan_status wlan_11k_enable(mlan_private *pmpriv, t_void *pioctl_buf, t_u8 enable_11k)
+{
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+    HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
+
+    ENTER();
+
+    (void)__memset(pmpriv->adapter, &fctrl, 0, sizeof(fctrl));
+    fctrl.featureSelect = 0; /* Std feature */
+
+    /* enable or disable Neighbor AP list Report */
+    fctrl.control.std.dot11k_nbor_support = enable_11k;
+    /* enable or disable Traffic Stream Measurement*/
+    fctrl.control.std.dot11k_tsm = enable_11k;
+    /* enable or disable Link Measurement*/
+    fctrl.control.std.dot11k_lm = enable_11k;
+    /* enable or disable Radio Measurement (Beacon Report)*/
+    fctrl.control.std.dot11k_rm = enable_11k;
+
+    /* enable 11v BSS Transition with 11k*/
+    fctrl.control.std.dot11v_bss_trans = enable_11k;
+
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_OFFLOAD_FEATURE_CONTROL, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_buf,
+                           &fctrl);
+
+    if (ret)
+    {
+        PRINTM(MERROR, "11K: Failed to %s 11K\n", (enable_11k) ? "enable" : "disable");
+    }
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief 11k enable ioctl
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+static mlan_status wlan_11k_cfg_ioctl_enable(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_status ret           = MLAN_STATUS_SUCCESS;
+    mlan_private *pmpriv      = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_11k_cfg *pcfg_11k = MNULL;
+
+    ENTER();
+
+    pcfg_11k = (mlan_ds_11k_cfg *)pioctl_req->pbuf;
+
+    if (pioctl_req->action == MLAN_ACT_SET)
+    {
+        if (pmpriv->media_connected == MTRUE && pcfg_11k->param.enable_11k != pmpriv->enable_11k)
+        {
+            PRINTM(MERROR, "11K setting cannot be changed while connecting with AP.\n");
+            ret = MLAN_STATUS_FAILURE;
+            goto done;
+        }
+
+        PRINTM(MINFO, "11K: 11kcfg SET=%d\n", pcfg_11k->param.enable_11k);
+
+        /* Compare with current settings */
+        if (pmpriv->enable_11k != pcfg_11k->param.enable_11k)
+        {
+            ret = wlan_11k_enable(pmpriv, pioctl_req, pcfg_11k->param.enable_11k);
+            if (ret == MLAN_STATUS_SUCCESS)
+                ret = MLAN_STATUS_PENDING;
+        }
+        else
+        {
+            PRINTM(MINFO, "11K: same as current setting, do nothing\n");
+        }
+    }
+    else
+    {
+        pcfg_11k->param.enable_11k    = pmpriv->enable_11k;
+        pioctl_req->data_read_written = sizeof(t_u32) + MLAN_SUB_COMMAND_SIZE;
+        PRINTM(MINFO, "11K: 11kcfg GET=%d\n", pcfg_11k->param.enable_11k);
+    }
+done:
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief 11K cfg ioctl
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+static mlan_status wlan_11k_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_status status         = MLAN_STATUS_SUCCESS;
+    mlan_ds_11k_cfg *ds_11kcfg = MNULL;
+
+    ENTER();
+
+    if (pioctl_req->buf_len < sizeof(mlan_ds_11k_cfg))
+    {
+        PRINTM(MWARN, "MLAN 11K IOCTL length is too short.\n");
+        pioctl_req->data_read_written = 0;
+        pioctl_req->buf_len_needed    = sizeof(mlan_ds_11k_cfg);
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
+        LEAVE();
+        return MLAN_STATUS_RESOURCE;
+    }
+
+    ds_11kcfg = (mlan_ds_11k_cfg *)pioctl_req->pbuf;
+    switch (ds_11kcfg->sub_command)
+    {
+        case MLAN_OID_11K_CFG_ENABLE:
+            status = wlan_11k_cfg_ioctl_enable(pmadapter, pioctl_req);
+            break;
+        default:
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+            status                  = MLAN_STATUS_FAILURE;
+            break;
+    }
+
+    LEAVE();
+    return status;
+}
+#endif
+
 /**
  *  @brief MLAN station ioctl handler
  *
@@ -5790,6 +5928,11 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             status = wlan_11h_cfg_ioctl(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_ENABLE_802_11K
+        case MLAN_IOCTL_11K_CFG:
+            status = wlan_11k_cfg_ioctl(pmadapter, pioctl_req);
+            break;
+#endif
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;

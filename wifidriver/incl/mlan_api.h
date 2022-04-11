@@ -32,7 +32,7 @@
 
 #include "fsl_debug_console.h"
 
-#define MLAN_WMSDK_MAX_WPA_IE_LEN 256
+#define MLAN_WMSDK_MAX_WPA_IE_LEN 256U
 
 #include "mlan.h"
 #include "mlan_join.h"
@@ -145,7 +145,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u32 cmd_oid,
                                       IN t_void *pioctl_buf,
                                       IN t_void *pdata_buf,
-                                      int bss_type,
+                                      mlan_bss_type bss_type,
                                       void *priv);
 int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u16 cmd_no,
@@ -153,7 +153,7 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u32 cmd_oid,
                                   t_void *pioctl_buf,
                                   t_void *pdata_buf,
-                                  int bss_type,
+                                  mlan_bss_type bss_type,
                                   void *priv);
 
 bool wmsdk_is_11N_enabled(void);
@@ -304,6 +304,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);

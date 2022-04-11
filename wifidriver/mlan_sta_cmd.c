@@ -459,7 +459,7 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
                                 sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
 
                 ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)&cmd->params + sizeof(HostCmd_DS_TXPWR_CFG));
-                cmd->size += wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
+                cmd->size += (t_u16)(wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length));
                 ppg_tlv->type   = wlan_cpu_to_le16(ppg_tlv->type);
                 ppg_tlv->length = wlan_cpu_to_le16(ppg_tlv->length);
             }
@@ -1695,8 +1695,8 @@ static mlan_status wlan_cmd_mgmt_ie_list(IN pmlan_private pmpriv,
         while (req_len > sizeof(t_u16))
         {
             cptr = (custom_ie *)(void *)(((t_u8 *)cust_ie->ie_data_list) + travel_len);
-            travel_len += cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
-            req_len -= cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE;
+            travel_len += (t_u16)(cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE);
+            req_len -= (t_u16)(cptr->ie_length + sizeof(custom_ie) - MAX_IE_SIZE);
             cptr->ie_index          = wlan_cpu_to_le16(cptr->ie_index);
             cptr->mgmt_subtype_mask = wlan_cpu_to_le16(cptr->mgmt_subtype_mask);
             cptr->ie_length         = wlan_cpu_to_le16(cptr->ie_length);
@@ -1913,6 +1913,60 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_ENABLE_802_11K
+/**
+ *  @brief This function sends get nlist.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pcmd         Hostcmd ID
+ *  @param cmd_action   Command action
+ *  @param pdata_buf    A pointer to information buffer
+ *  @return             N/A
+ */
+static mlan_status wlan_cmd_offload_feature_ctrl(mlan_private *pmpriv,
+                                                 HostCmd_DS_COMMAND *pcmd,
+                                                 t_u16 cmd_action,
+                                                 void *pdata_buf)
+{
+    HostCmd_OFFLOAD_FEATURE_CTRL *pfctrl = &pcmd->params.fctrl;
+    mlan_status ret                      = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    pcmd->command = wlan_cpu_to_le16(HostCmd_CMD_OFFLOAD_FEATURE_CONTROL);
+    (void)__memcpy(pmpriv->adapter, pfctrl, pdata_buf, sizeof(HostCmd_OFFLOAD_FEATURE_CTRL));
+    pcmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_OFFLOAD_FEATURE_CTRL));
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief This function sends 11k neighbor report request.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pcmd         Hostcmd ID
+ *  @return             N/A
+ */
+mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd)
+{
+    HostCmd_OFFLOAD_FEATURE_CTRL *pfctrl = &pcmd->params.fctrl;
+    mlan_status ret                      = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+    /* FW 11k/11mc recommend use 0x00fd instead of 0x0231 command */
+    /* FW: FEATURE_TEST_ACTION_SELECT */
+    pfctrl->featureSelect = 3;
+    /* FW: host_OffloadFeatureTestAction_t.generate_neighbor_req */
+    pfctrl->control.empty = 2;
+    pcmd->command         = wlan_cpu_to_le16(HostCmd_CMD_OFFLOAD_FEATURE_CONTROL);
+    pcmd->size            = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_OFFLOAD_FEATURE_CTRL) - 1);
+
+    LEAVE();
+    return ret;
 }
 #endif
 
@@ -2554,6 +2608,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_GET_TSF:
             ret = wlan_cmd_get_tsf(pmpriv, cmd_ptr, cmd_action);
             break;
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+        case HostCmd_CMD_TX_RX_PKT_STATS:
+            ret = wlan_cmd_txrx_pkt_stats(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
 #ifdef CONFIG_RF_TEST_MODE
         case HostCmd_CMD_MFG_COMMAND:
             ret = wlan_cmd_mfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
@@ -2564,6 +2623,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+#ifdef CONFIG_ENABLE_802_11K
+        case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
+            ret = wlan_cmd_offload_feature_ctrl(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif /* CONFIG_ENABLE_802_11K */
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             ret = MLAN_STATUS_FAILURE;

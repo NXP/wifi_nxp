@@ -123,7 +123,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
  *  \param resp Response of CMD53
  *  \return true on success, false otherwise
  */
-int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp);
+bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp);
 
 /** Initialize the SDIO Driver
  *
@@ -134,5 +134,11 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
  *  \return WM_SUCCESS or -WM_FAIL
  */
 int sdio_drv_init(void (*cd_int)(int));
+
+/** Deinitialize the SDIO Driver
+ *
+ *  \return void
+ */
+void sdio_drv_deinit(void);
 
 #endif /* !_MDEV_SDIO_API_H_ */

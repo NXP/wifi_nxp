@@ -344,6 +344,13 @@ int mlan_subsys_init(void)
     return WM_SUCCESS;
 }
 
+int mlan_subsys_deinit(void)
+{
+    (void)mlan_unregister(mlan_adap);
+
+    return WM_SUCCESS;
+}
+
 #ifdef DEBUG_11N_AGGR
 int wifi_get_amsdu_status()
 {
@@ -588,7 +595,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
 
     tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
 
-    int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
     if (padd_ba_rsp->status_code == BA_RESULT_SUCCESS)
     {
         if (bss_type == MLAN_BSS_TYPE_STA)
@@ -627,7 +634,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
 static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp)
 {
     HostCmd_DS_11N_DELBA *pdel_ba = (HostCmd_DS_11N_DELBA *)&resp->params.del_ba;
-    int bss_type                  = HostCmd_GET_BSS_TYPE(resp->seq_num);
+    mlan_bss_type bss_type        = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
     if (pdel_ba->del_result == BA_RESULT_SUCCESS)
     {
         if (bss_type == MLAN_BSS_TYPE_STA)
@@ -945,7 +952,7 @@ int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen
     /** Use count for this buffer */
     /* t_u32 use_count; */
 
-    if (rxpd->bss_type == MLAN_BSS_ROLE_STA)
+    if (rxpd->bss_type == (t_u8)MLAN_BSS_ROLE_STA)
     {
         (void)wlan_handle_rx_packet(mlan_adap, pmbuf);
     }
@@ -1025,7 +1032,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u32 cmd_oid,
                                       IN t_void *pioctl_buf,
                                       IN t_void *pdata_buf,
-                                      int bss_type,
+                                      mlan_bss_type bss_type,
                                       void *priv)
 {
     pmlan_ioctl_req pioctl_req = (mlan_ioctl_req *)pioctl_buf;
@@ -1036,7 +1043,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
 
     if (pioctl_req != NULL)
     {
-        if (pioctl_req->bss_index == 1)
+        if (pioctl_req->bss_index == 1U)
         {
             bss_type = MLAN_BSS_TYPE_UAP;
         }
@@ -1045,7 +1052,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
 #ifdef CONFIG_P2P
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
 #else
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)bss_type);
 #endif /* CONFIG_P2P */
     cmd->result = 0x0;
 
@@ -1313,7 +1320,7 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate)
     (void)memset(&ds_rate_cfg, 0x00, sizeof(mlan_ds_rate));
 
     ds_rate_cfg.sub_command = MLAN_OID_RATE_CFG;
-    if (ds_rate.param.rate_cfg.rate_format == 0xffU)
+    if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_AUTO)
     {
         ds_rate_cfg.param.rate_cfg.is_rate_auto = MTRUE;
     }
@@ -1668,7 +1675,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     pmpriv->uap_bss_started = MFALSE;
-                    int bss_type            = HostCmd_GET_BSS_TYPE(resp->seq_num);
+                    mlan_bss_type bss_type  = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
 #ifdef CONFIG_P2P
                         || (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -1689,7 +1696,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+                    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
 #ifdef CONFIG_P2P
                         || (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -1809,6 +1816,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
+#ifdef CONFIG_ENABLE_802_11K
+            case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
+                rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                if (rv != MLAN_STATUS_SUCCESS)
+                    return -WM_FAIL;
+                break;
+#endif
             case HostCmd_CMD_802_11_SCAN:
                 if (resp->result != HostCmd_RESULT_OK)
                 {
@@ -2596,6 +2610,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+            case HostCmd_CMD_TX_RX_PKT_STATS:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -2783,7 +2807,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                 break;
             }
         }
-        tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv_buf_left -= (int)(sizeof(MrvlIEtypesHeader_t) + tlv_len);
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
@@ -2832,7 +2856,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             PRINTM(MERROR, "wrong tlv: tlvLen=%d, tlvBufLeft=%d\n", tlv_len, tlv_buf_left);
             break;
         }
-        if (tlv_type == HT_CAPABILITY)
+        if (tlv_type == (t_u16)HT_CAPABILITY)
         {
             DBG_HEXDUMP(MCMD_D, "HT_CAP tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
             priv->is_11n_enabled = MTRUE;
@@ -2870,7 +2894,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             }
             PRINTM(MCMND, "pkt_fwd DRV: 0x%x\n", priv->pkt_fwd);
         }
-        tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv_buf_left -= (int)(sizeof(MrvlIEtypesHeader_t) + tlv_len);
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();
@@ -2882,6 +2906,23 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
 #define IEEEtypes_REASON_DEAUTH_LEAVING     3
 #define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+#define OFFSET_SEQNUM 8
+static void wifi_tx_pert_report(void *pbuf)
+{
+    t_u8 *event_buf   = (t_u8 *)pbuf;
+    t_u16 current_per = 0;
+
+    current_per = wlan_le16_to_cpu(*(t_u16 *)(event_buf + OFFSET_SEQNUM));
+    PRINTM(MEVENT, "current PER is %d%%\n", current_per);
+    PRINTM(MEVENT, "User configure:\n");
+    PRINTM(MEVENT, "tx_pert_check_period: %d sec\n", mlan_adap->tx_pert.tx_pert_check_peroid);
+    PRINTM(MEVENT, "tx_pert_check_ratio : %d%%\n", mlan_adap->tx_pert.tx_pert_check_ratio);
+    PRINTM(MEVENT, "tx_pert_check_num   : %d\n", mlan_adap->tx_pert.tx_pert_check_num);
+    return;
+}
+#endif
 
 int wifi_handle_fw_event(struct bus_message *msg)
 {
@@ -3120,6 +3161,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_IDLE\n");
             pmpriv_uap->media_connected = MFALSE;
             break;
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+        case EVENT_PER_STATUS_REPORT:
+            PRINTM(MEVENT, "EVENT: PER_STATUS_REPORT\n");
+            wifi_tx_pert_report((void *)evt);
+            break;
+#endif
 #ifdef CONFIG_WLAN_BRIDGE
         case EVENT_AUTO_LINK_SWITCH_NEW_NODE:
             pnewNode = (Event_AutoLink_SW_Node_t *)msg->data;
@@ -3241,7 +3288,7 @@ static unsigned char process_rsn_ie(
             }
         }
     }
-    if (akmp_count == 2 && WPA_WPA2_WEP->wpa3_sae)
+    if (akmp_count == 2U && WPA_WPA2_WEP->wpa3_sae)
     {
         prsn_ie->len = 20;
         akmp_count   = 1;
@@ -3259,7 +3306,7 @@ static unsigned char process_rsn_ie(
             sizeof(uint16_t));
     }
 
-    if (akmp_count == 3 && WPA_WPA2_WEP->wpa3_sae)
+    if (akmp_count == 3U && WPA_WPA2_WEP->wpa3_sae)
     {
         prsn_ie->len = 20;
         akmp_count   = 1;
@@ -3869,7 +3916,29 @@ void _wifi_set_mac_addr(uint8_t *mac)
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_MAC_ADDRESS,
                                    HostCmd_ACT_GEN_SET, 0, NULL, mac, cmd);
     (void)wifi_wait_for_cmdresp(NULL);
+    /* Also need to update priv->curr_addr, as rx reorder will check mac address using priv->curr_addr */
+    (void)memcpy(&mlan_adap->priv[0]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
 }
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
+{
+    tx_pert_info *tx_pert = (tx_pert_info *)cfg;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    /* Store tx per tracking config in driver */
+    (void)memcpy((t_u8 *)&(mlan_adap->tx_pert), tx_pert, sizeof(tx_pert_info));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS,
+                             HostCmd_ACT_SET_TX_PER_TRACKING, 0, NULL, tx_pert, cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+#endif
 
 #ifdef WLAN_LOW_POWER_ENABLE
 void wifi_enable_low_pwr_mode()

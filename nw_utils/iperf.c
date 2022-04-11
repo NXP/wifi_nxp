@@ -101,7 +101,7 @@ static void lwiperf_report(void *arg,
                            u32_t bandwidth_kbitpsec)
 {
     (void)PRINTF("-------------------------------------------------\r\n");
-    if (report_type < (sizeof(report_type_str) / sizeof(report_type_str[0])))
+    if (report_type < (enum lwiperf_report_type)(sizeof(report_type_str) / sizeof(report_type_str[0])))
     {
         (void)PRINTF(" %s \r\n", report_type_str[report_type]);
         if (local_addr != NULL && remote_addr != NULL)
@@ -473,8 +473,8 @@ static void iperf_test_start(void *arg)
         {
 #ifdef CONFIG_IPV6
             if (ipv6)
-                ctx->iperf_session = lwiperf_start_tcp_server(netif_ip_addr6(netif_default, 0),
-                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session =
+                    lwiperf_start_tcp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
                 ctx->iperf_session =
@@ -500,8 +500,8 @@ static void iperf_test_start(void *arg)
             }
 #ifdef CONFIG_IPV6
             if (ipv6)
-                ctx->iperf_session = lwiperf_start_udp_server(netif_ip_addr6(netif_default, 0),
-                                                              LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session =
+                    lwiperf_start_udp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
             else
 #endif
                 ctx->iperf_session =
@@ -741,7 +741,8 @@ void cmd_iperf(int argc, char **argv)
 #endif
     } info;
 
-    amount = IPERF_CLIENT_AMOUNT;
+    amount          = IPERF_CLIENT_AMOUNT;
+    udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
 #ifdef CONFIG_WMM
     qos = 0;
 #endif

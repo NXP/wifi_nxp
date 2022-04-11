@@ -238,6 +238,13 @@ void *net_sock_to_interface(int sock);
  */
 int net_wlan_init(void);
 
+/** DiInitialize TCP/IP networking stack
+ *
+ * \return WM_SUCCESS on success
+ * \return -WM_FAIL otherwise
+ */
+int net_wlan_deinit(void);
+
 /** Get station interface handle
  *
  * Some APIs require the interface handle to be passed to them. The handle can
