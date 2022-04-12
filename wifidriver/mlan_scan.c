@@ -571,7 +571,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         PRINTM(MINFO, "Scan: Null detect: %p, %p, %p\n", pscan_cfg_out, pchan_tlv_out, pscan_chan_list);
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_SCAN_FAIL;
+            pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
         }
         LEAVE();
         return MLAN_STATUS_FAILURE;
@@ -581,7 +581,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         PRINTM(MERROR, "Scan: No channel configured\n");
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_SCAN_FAIL;
+            pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
         }
         LEAVE();
         return MLAN_STATUS_FAILURE;
@@ -670,7 +670,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
                     MRVDRV_MAX_TOTAL_SCAN_TIME);
             if (pioctl_req != MNULL)
             {
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_SCAN_FAIL;
+                pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
             }
             ret = MLAN_STATUS_FAILURE;
             break;
@@ -2870,7 +2870,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         PRINTM(MERROR, "Memory allocation for pscan_cfg_out failed!\n");
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_NO_MEM;
+            pioctl_req->status_code = MLAN_ERROR_NO_MEM;
         }
         LEAVE();
         return MLAN_STATUS_FAILURE;
@@ -2887,7 +2887,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         }
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_NO_MEM;
+            pioctl_req->status_code = MLAN_ERROR_NO_MEM;
         }
         LEAVE();
         return MLAN_STATUS_FAILURE;
@@ -2913,7 +2913,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         }
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+            pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
         }
         LEAVE();
         return MLAN_STATUS_FAILURE;
@@ -3177,7 +3177,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
         PRINTM(MERROR, "Memory allocation for bss_new_entry failed!\n");
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_NO_MEM;
+            pioctl_req->status_code = MLAN_ERROR_NO_MEM;
         }
         ret = MLAN_STATUS_FAILURE;
         goto done;

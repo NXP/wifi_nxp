@@ -1196,7 +1196,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         {
             if (passoc_rsp->status_code != 0U)
             {
-                pioctl_req->status_code = wlan_le16_to_cpu(passoc_rsp->status_code);
+                pioctl_req->status_code = (mlan_error_code)wlan_le16_to_cpu(passoc_rsp->status_code);
             }
             else
             {

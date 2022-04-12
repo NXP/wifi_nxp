@@ -2718,7 +2718,7 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             if (pioctl_req != NULL)
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_INVALID;
+                pioctl_req->status_code = MLAN_ERROR_CMD_INVALID;
             ret = MLAN_STATUS_FAILURE;
             break;
     }

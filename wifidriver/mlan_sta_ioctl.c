@@ -1347,7 +1347,7 @@ static mlan_status wlan_bss_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
         PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
         pioctl_req->data_read_written = 0;
         pioctl_req->buf_len_needed    = sizeof(mlan_ds_bss);
-        pioctl_req->status_code       = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
@@ -1499,7 +1499,7 @@ static mlan_status wlan_rate_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
         PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
         pioctl_req->data_read_written = 0;
         pioctl_req->buf_len_needed    = sizeof(mlan_ds_rate);
-        pioctl_req->status_code       = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
@@ -1518,7 +1518,7 @@ static mlan_status wlan_rate_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         default:
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_INVALID;
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
             break;
     }
@@ -1600,7 +1600,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
     if (ret != MLAN_STATUS_SUCCESS || (buf == MNULL))
     {
         PRINTM(MERROR, "ALLOC_CMD_BUF: Failed to allocate command buffer\n");
-        pioctl_req->status_code = (t_u32)MLAN_ERROR_NO_MEM;
+        pioctl_req->status_code = MLAN_ERROR_NO_MEM;
         ret                     = MLAN_STATUS_FAILURE;
         goto exit;
     }
@@ -1731,7 +1731,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     if (ret != MLAN_STATUS_SUCCESS || (buf == MNULL))
     {
         PRINTM(MERROR, "ALLOC_CMD_BUF: Failed to allocate command buffer\n");
-        pioctl_req->status_code = (t_u32)MLAN_ERROR_NO_MEM;
+        pioctl_req->status_code = MLAN_ERROR_NO_MEM;
         ret                     = MLAN_STATUS_FAILURE;
         goto exit;
     }
@@ -1748,7 +1748,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
             }
             else
             {
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+                pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
                 ret                     = MLAN_STATUS_FAILURE;
             }
             break;
@@ -1758,13 +1758,13 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
             data[0] &= ~TX_RATE_HT_BW40_BIT;
             if (!(mod_class = wlan_get_modulation_class(pmadapter, (int)data[0])))
             {
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_RESP_FAIL;
+                pioctl_req->status_code = MLAN_ERROR_CMD_RESP_FAIL;
                 ret                     = MLAN_STATUS_FAILURE;
                 break;
             }
             if (ht_bw && mod_class != MOD_CLASS_HT)
             {
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_RESP_FAIL;
+                pioctl_req->status_code = MLAN_ERROR_CMD_RESP_FAIL;
                 ret                     = MLAN_STATUS_FAILURE;
                 break;
             }
@@ -1800,7 +1800,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
             }
             break;
         default:
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+            pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
             ret                     = MLAN_STATUS_FAILURE;
             break;
     }
@@ -1849,7 +1849,7 @@ static mlan_status wlan_power_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
         PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
         pioctl_req->data_read_written = 0;
         pioctl_req->buf_len_needed    = sizeof(mlan_ds_power_cfg);
-        pioctl_req->status_code       = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
@@ -1877,7 +1877,7 @@ static mlan_status wlan_power_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
             }
             break;
         default:
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_INVALID;
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
             break;
     }
@@ -2995,7 +2995,7 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
                        "Key %d not set,so "
                        "cannot enable it\n",
                        index);
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_RESP_FAIL;
+                pioctl_req->status_code = MLAN_ERROR_CMD_RESP_FAIL;
                 ret                     = MLAN_STATUS_FAILURE;
                 goto exit;
             }
@@ -3109,7 +3109,7 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
     if (sec->param.encrypt_key.key_len > MLAN_MAX_KEY_LENGTH)
     {
         PRINTM(MERROR, "Key length is incorrect\n");
-        pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
         ret                     = MLAN_STATUS_FAILURE;
         goto exit;
     }
@@ -3679,7 +3679,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
         pioctl_req->data_read_written = 0;
         pioctl_req->buf_len_needed    = sizeof(mlan_ds_sec_cfg);
-        pioctl_req->status_code       = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
@@ -3726,7 +3726,7 @@ static mlan_status wlan_sec_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         default:
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_INVALID;
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
             break;
     }
@@ -3996,7 +3996,7 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
         PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
         pioctl_req->data_read_written = 0;
         pioctl_req->buf_len_needed    = sizeof(mlan_ds_11d_cfg);
-        pioctl_req->status_code       = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
         status                        = MLAN_STATUS_RESOURCE;
         goto exit;
     }
@@ -4019,7 +4019,7 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
             }
             break;
         default:
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_INVALID;
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
             break;
     }
@@ -4492,7 +4492,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
         if (i >= MRVDRV_MAX_REGION_CODE)
         {
             PRINTM(MERROR, "Region Code not identified\n");
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+            pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }
@@ -4502,7 +4502,7 @@ static mlan_status wlan_misc_ioctl_gen_ie(IN pmlan_adapter pmadapter, IN pmlan_i
                                  (mlan_band_def)(pmadapter->config_bands | pmadapter->adhoc_start_band)) !=
             MLAN_STATUS_SUCCESS)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_FAIL;
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_FAIL;
             ret                     = MLAN_STATUS_FAILURE;
         }
     }
@@ -5346,7 +5346,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
         pioctl_req->data_read_written = 0;
         pioctl_req->buf_len_needed    = sizeof(mlan_ds_misc_cfg);
-        pioctl_req->status_code       = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
         LEAVE();
         return MLAN_STATUS_RESOURCE;
     }
@@ -5436,7 +5436,7 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         default:
             if (pioctl_req != NULL)
             {
-                pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_INVALID;
+                pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             }
             status = MLAN_STATUS_FAILURE;
             break;
@@ -5934,7 +5934,7 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             break;
 #endif
         default:
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_IOCTL_INVALID;
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
             break;
     }

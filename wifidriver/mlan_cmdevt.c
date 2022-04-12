@@ -3137,7 +3137,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     {
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_SCAN_FAIL;
+            pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
         }
         ret = MLAN_STATUS_FAILURE;
         goto done;
@@ -3147,7 +3147,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     {
         if (pioctl_req != MNULL)
         {
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_CMD_SCAN_FAIL;
+            pioctl_req->status_code = MLAN_ERROR_CMD_SCAN_FAIL;
         }
         ret = MLAN_STATUS_FAILURE;
         goto done;

@@ -2009,7 +2009,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         if (ret == MLAN_STATUS_FAILURE)
         {
             PRINTM(MERROR, "Invalid MCS index=%d. \n", rate_index);
-            pioctl_req->status_code = (t_u32)MLAN_ERROR_INVALID_PARAMETER;
+            pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }

@@ -273,7 +273,7 @@ typedef enum _mlan_scan_type
 typedef struct _mlan_ioctl_req
 {
     /** Status code from firmware/driver */
-    t_u32 status_code;
+    mlan_error_code status_code;
     /** BSS index number for multiple BSS support */
     t_u32 bss_index;
     /** Request id */
