@@ -683,7 +683,7 @@ typedef MLAN_PACK_START struct _tlvbuf_custom_ie
     /** Length */
     t_u16 length;
     /** custom IE data */
-    custom_ie ie_data[1];
+    custom_ie ie_data[0];
 } MLAN_PACK_END tlvbuf_custom_ie;
 
 /** Max IE index to FW */

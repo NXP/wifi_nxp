@@ -2642,7 +2642,7 @@ typedef MLAN_PACK_START struct _MrvlIETypes_ChanTRPCConfig_t
     t_u8 width;
     /** channel number */
     t_u8 chan_num;
-    mod_group_setting mod_group[1];
+    mod_group_setting mod_group[0];
 } MLAN_PACK_END MrvlIETypes_ChanTRPCConfig_t;
 
 /** Address type: broadcast */
