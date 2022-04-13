@@ -183,7 +183,8 @@ int wifi_enter_deepsleep_power_save(void)
 
 int wifi_exit_deepsleep_power_save(void)
 {
-    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, NULL);
+    t_u16 idletime = 0;
+    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
 }
 
 int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
