@@ -661,6 +661,16 @@ static void UDPServer(void)
     (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
+static void UDPServerDual(void)
+{
+    ctx.server_mode = true;
+    ctx.tcp         = false;
+    ctx.client_type = LWIPERF_DUAL;
+
+    (void)PRINTF("Bidirectional UDP test simultaneously as server, please add -d with external iperf client\r\n");
+    tcpip_callback(iperf_test_start, (void *)&ctx);
+}
+
 static void UDPClient(void)
 {
     ctx.server_mode = false;
@@ -704,6 +714,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode\r\n");
+    (void)PRINTF("\t   -D             Do a bidirectional UDP test simultaneously and with -d from external iperf client\r\n");
     (void)PRINTF("\tClient specific:\r\n");
     (void)PRINTF("\t   -c    <host>   run in client mode, connecting to <host>\r\n");
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
@@ -740,6 +751,7 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
         unsigned ipv6 : 1;
 #endif
+        unsigned dserver : 1;
     } info;
 
     amount          = IPERF_CLIENT_AMOUNT;
@@ -874,6 +886,11 @@ static void cmd_iperf(int argc, char **argv)
             }
             arg += 2;
         }
+        else if (string_equal("-D", argv[arg]))
+        {
+            arg += 1;
+            info.dserver = 1;
+        }
         else
         {
             (void)PRINTF("Incorrect usage\r\n");
@@ -904,7 +921,7 @@ static void cmd_iperf(int argc, char **argv)
          && !info.ipv6
 #endif
          && (!info.bind || !info.bhost)) ||
-        ((info.dual || info.tradeoff) && !info.client) || (info.dual && info.tradeoff)
+        ((info.dual || info.tradeoff) && !info.client) || (info.dual && info.tradeoff) || (info.dserver && !info.server)
 #ifdef CONFIG_IPV6
         || (info.ipv6 && info.bind)
 #endif
@@ -936,7 +953,10 @@ static void cmd_iperf(int argc, char **argv)
     {
         if (info.udp != 0U)
         {
-            UDPServer();
+            if (info.dserver != 0U)
+                UDPServerDual();
+            else
+                UDPServer();
         }
         else
         {
