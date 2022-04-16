@@ -955,7 +955,6 @@ static int wlan_set_ext_ble_coex_mode()
 }
 #endif
 
-mlan_status wlan_process_int_status(mlan_adapter *pmadapter);
 /* Setup the firmware with commands */
 static void wlan_fw_init_cfg(void)
 {

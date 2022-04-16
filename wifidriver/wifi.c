@@ -109,8 +109,6 @@ static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * M
 #endif
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
-mlan_status wlan_process_int_status(mlan_adapter *pmadapter);
-void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 #ifdef CONFIG_WMM
 static void wifi_driver_tx(void *data);
 #endif

@@ -48,7 +48,6 @@
 /********************************************************
    Local Functions
 ********************************************************/
-t_u16 wlan_convert_mcsmap_to_maxrate(mlan_private *priv, t_u8 bands, t_u16 mcs_map);
 #if 0
 /**
  *  @brief determine the center frquency center index for bandwidth

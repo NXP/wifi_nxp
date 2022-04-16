@@ -1779,6 +1779,4 @@ static inline void os_enable_all_interrupts(void)
     taskENABLE_INTERRUPTS();
 }
 
-unsigned int os_get_timestamp(void);
-
 #endif /* ! _WM_OS_H_ */
