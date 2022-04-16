@@ -93,7 +93,7 @@ typedef MLAN_PACK_START struct
 
 SDIOPkt *sdiopkt = (SDIOPkt *)outbuf;
 
-void wrapper_wlan_cmd_11n_cfg(void *hostcmd);
+void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
 
 uint32_t dev_value1 = -1;
 uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
@@ -140,7 +140,7 @@ static int wlan_init_struct(void)
     return WM_SUCCESS;
 }
 
-static int wlan_deinit_struct()
+static int wlan_deinit_struct(void)
 {
     if (txrx_mutex)
     {
@@ -277,9 +277,9 @@ void bus_deregister_special_queue()
 }
 #endif
 
-void wifi_get_mac_address_from_cmdresp(void *resp, t_u8 *mac_addr);
-void wifi_get_firmware_ver_ext_from_cmdresp(void *resp, t_u8 *fw_ver_ext);
-void wifi_get_value1_from_cmdresp(void *resp, uint32_t *dev_value1);
+void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr);
+void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext);
+void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_value1);
 mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 {
     HostCmd_DS_GEN *cmdresp;
@@ -325,10 +325,10 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_CFG_DATA:
             break;
         case HostCmd_CMD_MAC_REG_ACCESS:
-            wifi_get_value1_from_cmdresp(cmdresp, &dev_value1);
+            wifi_get_value1_from_cmdresp((HostCmd_DS_COMMAND *)cmdresp, &dev_value1);
             break;
         case HostCmd_CMD_802_11_MAC_ADDRESS:
-            wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr);
+            wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)cmdresp, dev_mac_addr);
             break;
 #ifdef OTP_CHANINFO
         case HostCmd_CMD_CHAN_REGION_CFG:
@@ -340,7 +340,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             (void)wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
             break;
         case HostCmd_CMD_VERSION_EXT:
-            wifi_get_firmware_ver_ext_from_cmdresp(cmdresp, dev_fw_ver_ext);
+            wifi_get_firmware_ver_ext_from_cmdresp((HostCmd_DS_COMMAND *)cmdresp, dev_fw_ver_ext);
             break;
 #ifdef CONFIG_11N
         case HostCmd_CMD_11N_CFG:
@@ -565,7 +565,7 @@ static int wlan_get_next_seq_num(void)
     return seqnum;
 }
 
-void wifi_prepare_set_cal_data_cmd(void *cmd, int seq_number);
+void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 static void _wlan_set_cal_data(void)
 {
     t_u32 tx_blocks = 4, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -615,14 +615,14 @@ static void _wlan_reconfigure_tx_buffers(void)
 #endif
 }
 
-void wifi_prepare_get_mac_addr_cmd(void *cmd, int seq_number);
+void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 #ifdef OTP_CHANINFO
 void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 #endif
 void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 
 #ifdef OTP_CHANINFO
-static void wlan_get_channel_region_cfg()
+static void wlan_get_channel_region_cfg(void)
 {
     uint32_t tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -707,7 +707,7 @@ static void wlan_get_mac_addr(void)
 #endif
 }
 
-void wifi_prepare_get_fw_ver_ext_cmd(void *cmd, int seq_number, int version_str_sel);
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, int version_str_sel);
 static void wlan_get_fw_ver_ext(int version_str_sel)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -732,7 +732,7 @@ static void wlan_get_fw_ver_ext(int version_str_sel)
 #endif
 }
 
-void wifi_prepare_get_value1(void *cmd, int seq_number);
+void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, int seq_number);
 
 static void wlan_get_value1(void)
 {
@@ -757,7 +757,7 @@ static void wlan_get_value1(void)
 #endif
 }
 
-void wifi_prepare_set_mac_addr_cmd(void *cmd, int seq_number);
+void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 static void _wlan_set_mac_addr(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -804,7 +804,7 @@ static void wlan_set_11n_cfg(void)
 }
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
-void wifi_prepare_enable_amsdu_cmd(void *cmd, int seq_number);
+void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 static void wlan_enable_amsdu(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -851,7 +851,7 @@ static void wlan_cmd_shutdown(void)
     (void)sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 }
 
-void wlan_prepare_mac_control_cmd(void *cmd, int seq_number);
+void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 static void wlan_set_mac_ctrl(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;

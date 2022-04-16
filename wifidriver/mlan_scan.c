@@ -2273,7 +2273,7 @@ static t_void wlan_restore_curr_bcn(IN mlan_private *pmpriv)
  *
  *  @return             N/A
  */
-/* static */ t_void wlan_scan_process_results(IN mlan_private *pmpriv)
+/* static */ void wlan_scan_process_results(IN mlan_private *pmpriv)
 {
 #ifndef CONFIG_MLAN_WMSDK
     mlan_adapter *pmadapter = pmpriv->adapter;

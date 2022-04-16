@@ -1502,7 +1502,7 @@ mlan_status wlan_11h_activate(mlan_private *priv, t_void *pioctl_buf, t_bool fla
  *
  *  @return      N/A
  */
-t_void wlan_11h_init(mlan_adapter *adapter)
+void wlan_11h_init(mlan_adapter *adapter)
 {
     wlan_11h_device_state_t *pstate_11h      = &adapter->state_11h;
     IEEEtypes_Quiet_t *pquiet                = &adapter->state_11h.quiet_ie;
@@ -1593,7 +1593,7 @@ t_void wlan_11h_cleanup(mlan_adapter *adapter)
  *
  *  @return      N/A
  */
-t_void wlan_11h_priv_init(mlan_private *pmpriv)
+void wlan_11h_priv_init(mlan_private *pmpriv)
 {
     wlan_11h_interface_state_t *pistate_11h = &pmpriv->intf_state_11h;
 

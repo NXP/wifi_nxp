@@ -1182,7 +1182,7 @@ struct _rw_lock
     unsigned int reader_count;
 };
 
-int os_rwlock_create_with_cb(os_rw_lock_t *lock, const char *mutex_name, const char *lock_name, cb_fn r_fn);
+int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const char *lock_name, cb_fn r_fn);
 
 /** Create reader-writer lock
  *
@@ -1195,7 +1195,7 @@ int os_rwlock_create_with_cb(os_rw_lock_t *lock, const char *mutex_name, const c
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_rwlock_create(os_rw_lock_t *lock, const char *mutex_name, const char *lock_name);
+int os_rwlock_create(os_rw_lock_t *plock, const char *mutex_name, const char *lock_name);
 
 /** Delete a reader-write lock
  *

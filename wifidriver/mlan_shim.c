@@ -385,7 +385,7 @@ exit_register:
  *  @return                MLAN_STATUS_SUCCESS
  *                             The deregistration succeeded.
  */
-mlan_status mlan_unregister(IN t_void *pmlan_adapter)
+MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = (mlan_adapter *)pmlan_adapter;

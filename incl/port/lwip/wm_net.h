@@ -401,7 +401,7 @@ int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle);
  *
  * \return WM_SUCCESS on success or error code.
  */
-int net_get_if_ip_mask(uint32_t *mask, void *intrfc_handle);
+int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
 
 /** Initialize the network stack
  *

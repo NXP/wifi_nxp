@@ -214,7 +214,7 @@ int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_confi
     return wifi_auto_reconnect(HostCmd_ACT_GEN_SET, &auto_reconnect_config);
 }
 
-int wifi_auto_reconnect_disable()
+int wifi_auto_reconnect_disable(void)
 {
     return wifi_auto_reconnect(HostCmd_ACT_GEN_SET, NULL);
 }

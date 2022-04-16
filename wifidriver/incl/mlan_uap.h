@@ -117,7 +117,7 @@ t_void *wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
 mlan_status wlan_ops_uap_init_cmd(IN t_void *priv, IN t_u8 first_bss);
 #endif /* CONFIG_MLAN_WMSDK */
 
-int wifi_uap_enable_11d_support();
+int wifi_uap_enable_11d_support(void);
 
 int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_timer);
 

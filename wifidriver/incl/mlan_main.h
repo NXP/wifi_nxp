@@ -2179,7 +2179,7 @@ mlan_status wlan_process_event(pmlan_adapter pmadapter);
 #endif
 
 /** Prepare command */
-mlan_status wlan_prepare_cmd(IN pmlan_private priv,
+mlan_status wlan_prepare_cmd(IN mlan_private *pmpriv,
                              IN t_u16 cmd_no,
                              IN t_u16 cmd_action,
                              IN t_u32 cmd_oid,
@@ -2445,10 +2445,10 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
                                IN const wlan_user_scan_cfg *puser_scan_in);
 
 /** Scan command handler */
-mlan_status wlan_cmd_802_11_scan(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
+mlan_status wlan_cmd_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 
 /** Handler for scan command response */
-mlan_status wlan_ret_802_11_scan(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
+mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
 /** Extended scan command handler */
@@ -2472,7 +2472,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
 t_s32 wlan_ssid_cmp(IN pmlan_adapter pmadapter, IN mlan_802_11_ssid *ssid1, IN mlan_802_11_ssid *ssid2);
 
 /** Associate */
-mlan_status wlan_associate(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN BSSDescriptor_t *pBSSDesc);
+mlan_status wlan_associate(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN BSSDescriptor_t *pbss_desc);
 
 /** Associate command handler */
 mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
@@ -2536,7 +2536,7 @@ t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate);
 /** Check if rate is auto */
 t_u8 wlan_is_rate_auto(mlan_private *pmpriv);
 /** Get rate index */
-int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rateBitmap, int size);
+int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size);
 
 /* CFP related functions */
 /** Region code index table */
@@ -2610,7 +2610,7 @@ mlan_scan_type wlan_11d_get_scan_type(mlan_private *pmpriv,
                                       t_u8 chan,
                                       parsed_region_chan_11d_t *parsed_region_chan);
 /** Parse 11D country info */
-mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_t *pBSSDesc);
+mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc);
 /** Prepare 11D domain information for download */
 mlan_status wlan_11d_prepare_dnld_domain_info_cmd(mlan_private *pmpriv);
 /** Parse 11D country information into domain info */

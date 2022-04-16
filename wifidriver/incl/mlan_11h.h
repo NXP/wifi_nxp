@@ -106,7 +106,7 @@ extern t_bool wlan_11h_is_active(mlan_private *priv);
 #endif /* CONFIG_MLAN_WMSDK */
 
 /** Initialize the 11h device structure */
-extern void wlan_11h_init(mlan_adapter *pmadapter);
+extern void wlan_11h_init(mlan_adapter *adapter);
 
 /** Initialize the 11h interface structure */
 extern void wlan_11h_priv_init(mlan_private *pmpriv);

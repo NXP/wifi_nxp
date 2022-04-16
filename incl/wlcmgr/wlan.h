@@ -1311,7 +1311,7 @@ int wlan_stop_network(const char *name);
  *  \return WM_SUCCESS if the MAC address was copied.
  *  \return -WM_E_INVAL if \a dest is NULL.
  */
-int wlan_get_mac_address(uint8_t *dest);
+int wlan_get_mac_address(unsigned char *dest);
 
 /** Retrieve the IP address configuration of the station interface.
  *
@@ -1565,7 +1565,7 @@ int wlan_scan(int (*cb)(unsigned int count));
  *  \return -WM_FAIL if an internal error has occurred and
  *           the system is unable to scan.
  */
-int wlan_scan_with_opt(wlan_scan_params_v2_t wlan_scan_param);
+int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param);
 
 /** Retrieve a scan result.
  *
@@ -2149,7 +2149,7 @@ int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg);
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_set_auto_arp();
+int wlan_set_auto_arp(void);
 
 #ifdef CONFIG_AUTO_PING
 /**
@@ -2660,7 +2660,7 @@ int wlan_get_cal_data(wlan_cal_data_t *cal_data);
  * \return WM_SUCCESS on success, error otherwise.
  *
  */
-int wlan_set_chanlist_and_txpwrlimit(wlan_chanlist_t *chanlist, wlan_txpwrlimit_t *txpwrlimit);
+int wlan_set_chanlist_and_txpwrlimit(wifi_chanlist_t *chanlist, wifi_txpwrlimit_t *txpwrlimit);
 
 /**
  * Set the Channel List configuration.
@@ -2672,7 +2672,7 @@ int wlan_set_chanlist_and_txpwrlimit(wlan_chanlist_t *chanlist, wlan_txpwrlimit_
  * \note If Region Enforcement Flag is enabled in the OTP then this API will
  * not take effect.
  */
-int wlan_set_chanlist(wlan_chanlist_t *chanlist);
+int wlan_set_chanlist(wifi_chanlist_t *chanlist);
 
 /**
  * Get the Channel List configuration.
@@ -2685,7 +2685,7 @@ int wlan_set_chanlist(wlan_chanlist_t *chanlist);
  * channels.
  *
  */
-int wlan_get_chanlist(wlan_chanlist_t *chanlist);
+int wlan_get_chanlist(wifi_chanlist_t *chanlist);
 
 /**
  * Set the TRPC channel configuration.
@@ -2695,7 +2695,7 @@ int wlan_get_chanlist(wlan_chanlist_t *chanlist);
  * \return WM_SUCCESS on success, error otherwise.
  *
  */
-int wlan_set_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit);
+int wlan_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
 
 /**
  * Get the TRPC channel configuration.

@@ -153,7 +153,7 @@ mlan_status wlan_check_fw_status(mlan_adapter *pmadapter, t_u32 pollnum);
 #endif /* CONFIG_MLAN_WMSDK */
 
 /** Read interrupt status */
-t_void wlan_interrupt(pmlan_adapter pmadapter);
+t_void wlan_interrupt(mlan_adapter *pmadapter);
 /** Process Interrupt Status */
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */

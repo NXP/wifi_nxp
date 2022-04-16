@@ -57,7 +57,7 @@ static bool wlan_uap_scan_chan_list_set;
 
 int wlan_set_wwsm_txpwrlimit(void);
 static bool wlan_is_ieeeps_active(void);
-static int ps_wakeup_card_cb(os_rw_lock_t *lock, unsigned int wait_time);
+static int ps_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
 
 #ifdef CONFIG_WPA2_ENTP
 extern int wpa2_ent_connect(struct wlan_network *wpa2_network);
@@ -2991,8 +2991,8 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #endif
 #else
 #if defined(SD8801)
-    uint32_t ant                  = 1;
-    uint16_t evaluate_time        = 0x1770;
+    uint32_t ant           = 1;
+    uint16_t evaluate_time = 0x1770;
 
     ret = wifi_set_antenna(ant, evaluate_time);
     if (ret != WM_SUCCESS)
@@ -4541,7 +4541,7 @@ bool is_sta_ipv4_connected(void)
 }
 
 #ifdef CONFIG_IPV6
-bool is_sta_ipv6_connected()
+bool is_sta_ipv6_connected(void)
 {
     return (wlan.sta_ipv6_state == CM_STA_CONNECTED);
 }
@@ -5840,7 +5840,7 @@ int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg)
     return wifi_set_packet_filters(flt_cfg);
 }
 
-int wlan_set_auto_arp()
+int wlan_set_auto_arp(void)
 {
     int ret;
     unsigned int ipv4_addr;
@@ -6265,7 +6265,7 @@ void wlan_enable_wpa2_enterprise_ap_only()
 }
 #endif
 
-void wlan_version_extended()
+void wlan_version_extended(void)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     char *version_str;

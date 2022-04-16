@@ -535,7 +535,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 
 int wifi_uap_rates_getset(uint8_t action, char *rates, uint8_t num_rates);
 int wifi_uap_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer);
-int wifi_uap_ps_sta_ageout_timer_getset(uint8_t action, uint32_t *sta_ageout_timer);
+int wifi_uap_ps_sta_ageout_timer_getset(uint8_t action, uint32_t *ps_sta_ageout_timer);
 typedef enum
 {
     REG_MAC = 1,
@@ -646,7 +646,7 @@ void wifi_free_fw_region_and_cfp_tables(void);
 #endif
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
-void wifi_uap_set_httxcfg(unsigned short httxcfg);
+void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg);
 int wifi_uap_set_httxcfg_int(unsigned short httxcfg);
 int wifi_get_tx_power(t_u32 *power_level);
 int wifi_set_tx_power(t_u32 power_level);
@@ -685,7 +685,7 @@ void wifi_scan_enable_wpa2_enterprise_ap_only();
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
 
-int wifi_auto_reconnect_disable();
+int wifi_auto_reconnect_disable(void);
 
 int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
 #endif
