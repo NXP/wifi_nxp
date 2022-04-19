@@ -3,6 +3,11 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r41.p1
+  -Bug Fixes:
+   - Updated 8801 SoC firmware to toggle GRANT Pin with WLAN/BT time on HIGH Request with Low Priority.
+   - Added coverity fixes.
+
 Version 1.3.r40.p5
   -Bug Fixes:
    - Fixed issue of DUT not entering Powersave mode on all SoCs.
