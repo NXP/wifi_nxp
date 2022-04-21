@@ -2660,7 +2660,7 @@ int wlan_get_cal_data(wlan_cal_data_t *cal_data);
  * \return WM_SUCCESS on success, error otherwise.
  *
  */
-int wlan_set_chanlist_and_txpwrlimit(wifi_chanlist_t *chanlist, wifi_txpwrlimit_t *txpwrlimit);
+int wlan_set_chanlist_and_txpwrlimit(wlan_chanlist_t *chanlist, wlan_txpwrlimit_t *txpwrlimit);
 
 /**
  * Set the Channel List configuration.
@@ -2672,7 +2672,7 @@ int wlan_set_chanlist_and_txpwrlimit(wifi_chanlist_t *chanlist, wifi_txpwrlimit_
  * \note If Region Enforcement Flag is enabled in the OTP then this API will
  * not take effect.
  */
-int wlan_set_chanlist(wifi_chanlist_t *chanlist);
+int wlan_set_chanlist(wlan_chanlist_t *chanlist);
 
 /**
  * Get the Channel List configuration.
@@ -2685,7 +2685,7 @@ int wlan_set_chanlist(wifi_chanlist_t *chanlist);
  * channels.
  *
  */
-int wlan_get_chanlist(wifi_chanlist_t *chanlist);
+int wlan_get_chanlist(wlan_chanlist_t *chanlist);
 
 /**
  * Set the TRPC channel configuration.
@@ -2695,7 +2695,7 @@ int wlan_get_chanlist(wifi_chanlist_t *chanlist);
  * \return WM_SUCCESS on success, error otherwise.
  *
  */
-int wlan_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
+int wlan_set_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit);
 
 /**
  * Get the TRPC channel configuration.
