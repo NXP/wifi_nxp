@@ -197,7 +197,7 @@ int get_uint(const char *arg, unsigned int *dest, unsigned int len)
 int get_mac(const char *arg, char *dest, char sep)
 {
     unsigned char n;
-    int i, j, k;
+    int i, j, k = 0;
 
     if (strlen(arg) < 17U)
     {
@@ -206,7 +206,7 @@ int get_mac(const char *arg, char *dest, char sep)
 
     (void)memset(dest, 0, 6);
 
-    for (i = 0, k = 0; i < 17; i += 3, k++)
+    for (i = 0; i < 17; i += 3)
     {
         for (j = 0; j < 2; j++)
         {
@@ -234,6 +234,7 @@ int get_mac(const char *arg, char *dest, char sep)
         {
             return 1;
         }
+        k++;
     }
 
     return 0;

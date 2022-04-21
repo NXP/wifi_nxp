@@ -1195,12 +1195,14 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
 
     ENTER();
 
-    for (j = 0; cfp == MNULL && (j < MAX_REGION_CHANNEL_NUM); j++)
+    j = 0;
+    while (cfp == MNULL && (j < MAX_REGION_CHANNEL_NUM))
     {
         rc = &region_channel[j];
 
         if (!rc->valid || rc->pcfp == MNULL)
         {
+            j++;
             continue;
         }
         switch (rc->band)
@@ -1215,6 +1217,7 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                         break;
 
                     default:
+                        j++;
                         continue;
                 }
                 break;
@@ -1234,10 +1237,12 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                     case BAND_0:
                         break;
                     default:
+                        j++;
                         continue;
                 }
                 break;
             default:
+                j++;
                 continue;
         }
         if (channel == FIRST_VALID_CHANNEL)
@@ -1255,6 +1260,7 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                 }
             }
         }
+        j++;
     }
 
     if (cfp == MNULL && channel)
@@ -1315,7 +1321,8 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_
 
     ENTER();
 
-    for (j = 0; cfp == MNULL && (j < MAX_REGION_CHANNEL_NUM); j++)
+    j = 0;
+    while (cfp == MNULL && (j < MAX_REGION_CHANNEL_NUM))
     {
         rc = &pmadapter->region_channel[j];
 
@@ -1327,6 +1334,7 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_
 
         if (!rc->valid || rc->pcfp == MNULL)
         {
+            j++;
             continue;
         }
         switch (rc->band)
@@ -1340,6 +1348,7 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_
                     case BAND_A: /* Matching BAND_A */
                         break;
                     default:
+                        j++;
                         continue;
                 }
                 break;
@@ -1359,10 +1368,12 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_
                     case BAND_0:
                         break;
                     default:
+                        j++;
                         continue;
                 }
                 break;
             default:
+                j++;
                 continue;
         }
         for (i = 0; i < rc->num_cfp; i++)
@@ -1373,6 +1384,7 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_
                 break;
             }
         }
+        j++;
     }
 
     if (cfp == MNULL && freq)

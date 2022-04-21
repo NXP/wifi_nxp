@@ -459,13 +459,13 @@ static int handle_input(char *inbuf)
  * is assumed to be NULL-terminated. */
 static void tab_complete(char *inbuf, unsigned int *bp)
 {
-    unsigned int i, n, m;
+    unsigned int i = 0, n = 0, m = 0;
     const char *fm = NULL;
 
     (void)PRINTF("\r\n");
 
     /* show matching commands */
-    for (i = 0, n = 0, m = 0; i < MAX_COMMANDS && n < cli.num_commands; i++)
+    while (i < MAX_COMMANDS && n < cli.num_commands)
     {
         if (cli.commands[i]->name != NULL)
         {
@@ -487,6 +487,7 @@ static void tab_complete(char *inbuf, unsigned int *bp)
             }
             n++;
         }
+        i++;
     }
 
     /* there's only one match, so complete the line */
@@ -956,10 +957,10 @@ int cli_submit_cmd_buffer(char **buff)
  * text string, if any. */
 void help_command(int argc, char **argv)
 {
-    unsigned int i, n;
+    unsigned int i = 0, n = 0;
 
     (void)PRINTF("\r\n");
-    for (i = 0, n = 0; i < MAX_COMMANDS && n < cli.num_commands; i++)
+    while (i < MAX_COMMANDS && n < cli.num_commands)
     {
         if (cli.commands[i]->name != NULL)
         {
@@ -967,6 +968,7 @@ void help_command(int argc, char **argv)
                          cli.commands[i]->help != NULL ? cli.commands[i]->help : "");
             n++;
         }
+        i++;
     }
 }
 
@@ -1078,13 +1080,13 @@ int cli_register_command(const struct cli_command *command)
 
 int cli_unregister_command(const struct cli_command *command)
 {
-    unsigned int i;
+    unsigned int i = 0;
     if (command->name == NULL || command->function == NULL)
     {
         return 1;
     }
 
-    for (i = 0; i < cli.num_commands; i++)
+    while (i < cli.num_commands)
     {
         if (cli.commands[i] == command)
         {
@@ -1097,6 +1099,7 @@ int cli_unregister_command(const struct cli_command *command)
             cli.commands[cli.num_commands] = NULL;
             return 0;
         }
+        i++;
     }
 
     return 1;

@@ -2812,13 +2812,14 @@ static t_u32 wlan_copy_rates(t_u8 *dest, t_u32 pos, t_u8 *src, int len)
 {
     int i;
 
-    for (i = 0; i < len && src[i]; i++, pos++)
+    for (i = 0; i < len && src[i]; i++)
     {
         if (pos >= sizeof(WLAN_802_11_RATES))
         {
             break;
         }
         dest[pos] = src[i];
+        pos++;
     }
 
     return pos;

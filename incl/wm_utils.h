@@ -264,9 +264,9 @@ static inline void dump_hex(const void *data, unsigned len)
 {
     (void)PRINTF("**** Dump @ %p Len: %d ****\n\r", data, len);
 
-    unsigned int i;
+    unsigned int i    = 0;
     const char *data8 = (const char *)data;
-    for (i = 0; i < len;)
+    while (i < len)
     {
         (void)PRINTF("%02x ", data8[i++]);
         if (!(i % DUMP_WRAPAROUND))

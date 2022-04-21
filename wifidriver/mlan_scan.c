@@ -3167,7 +3167,8 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
         goto done;
     }
 
-    for (idx = 0; idx < pscan_rsp->number_of_sets && bytes_left; idx++)
+    idx = 0;
+    while (idx < pscan_rsp->number_of_sets && bytes_left)
     {
         /* Zero out the bss_new_entry we are about to store info in */
         (void)__memset(pmadapter, bss_new_entry, 0x00, sizeof(BSSDescriptor_t));
@@ -3290,6 +3291,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
             /* Error parsing/interpreting the scan response, skipped */
             PRINTM(MERROR, "SCAN_RESP: wlan_interpret_bss_desc_with_ie returned error\n");
         }
+        idx++;
     }
 
     PRINTM(MINFO, "SCAN_RESP: Scanned %2d APs, %d valid, %d total\n", pscan_rsp->number_of_sets,
@@ -4175,7 +4177,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1, j;
     t_u8 best_rssi          = 0;
-    t_s32 i;
+    t_s32 i                 = 0;
 
     ENTER();
     PRINTM(MINFO, "Num of entries in scan table = %d\n", pmadapter->num_in_scan_table);
@@ -4184,7 +4186,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
      * Loop through the table until the maximum is reached or until a match
      *   is found based on the bssid field comparison
      */
-    for (i = 0; i < pmadapter->num_in_scan_table && (bssid == MNULL || net < 0); i++)
+    while (i < pmadapter->num_in_scan_table && (bssid == MNULL || net < 0))
     {
         if (!wlan_ssid_cmp(pmadapter, &pmadapter->pscan_table[i].ssid, ssid) &&
             ((bssid == MNULL) ||
@@ -4195,6 +4197,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
                 (wlan_find_cfp_by_band_and_channel(pmadapter, pmadapter->pscan_table[i].bss_band,
                                                    (t_u16)pmadapter->pscan_table[i].channel) == MNULL))
             {
+                i++;
                 continue;
             }
 
@@ -4235,6 +4238,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
                     break;
             }
         }
+        i++;
     }
 
     LEAVE();
@@ -4254,7 +4258,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1;
-    t_s32 i;
+    t_s32 i                 = 0;
 
     ENTER();
 
@@ -4273,7 +4277,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
      *   past a matched bssid that is not compatible in case there is an
      *   AP with multiple SSIDs assigned to the same BSSID
      */
-    for (i = 0; net < 0 && i < pmadapter->num_in_scan_table; i++)
+    while (net < 0 && i < pmadapter->num_in_scan_table)
     {
         if (!__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH))
         {
@@ -4282,6 +4286,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
                 (wlan_find_cfp_by_band_and_channel(pmadapter, pmadapter->pscan_table[i].bss_band,
                                                    (t_u16)pmadapter->pscan_table[i].channel) == MNULL))
             {
+                i++;
                 continue;
             }
             switch (mode)
@@ -4296,6 +4301,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
                     break;
             }
         }
+        i++;
     }
 
     LEAVE();

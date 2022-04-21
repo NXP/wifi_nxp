@@ -277,13 +277,14 @@ static t_void wlan_11d_generate_parsed_region_chan(pmlan_adapter pmadapter,
     }
 
     /* Set channel, band and power */
-    for (i = 0; i < region_chan->num_cfp; i++, cfp++)
+    for (i = 0; i < region_chan->num_cfp; i++)
     {
         parsed_region_chan->chan_pwr[i].chan = (t_u8)cfp->channel;
         parsed_region_chan->chan_pwr[i].band = (t_u8)region_chan->band;
         parsed_region_chan->chan_pwr[i].pwr  = (t_u8)cfp->max_tx_power;
         PRINTM(MINFO, "11D: Chan[%d] Band[%d] Pwr[%d]\n", parsed_region_chan->chan_pwr[i].chan,
                parsed_region_chan->chan_pwr[i].band, parsed_region_chan->chan_pwr[i].pwr);
+        cfp++;
     }
     parsed_region_chan->no_of_chan = region_chan->num_cfp;
 
@@ -1025,7 +1026,8 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
 
     no_of_sub_band = (t_u8)((country_info->len - COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t));
 
-    for (j = 0, last_chan = 0; j < no_of_sub_band; j++)
+    last_chan = 0;
+    for (j = 0; j < no_of_sub_band; j++)
     {
         if (country_info->sub_band[j].first_chan <= last_chan)
         {
@@ -1037,7 +1039,8 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
         first_chan = country_info->sub_band[j].first_chan;
         no_of_chan = country_info->sub_band[j].no_of_chan;
 
-        for (i = 0; idx < MAX_NO_OF_CHAN && i < no_of_chan; i++)
+        i = 0;
+        while (idx < MAX_NO_OF_CHAN && i < no_of_chan)
         {
             /* Step 4 : Channel is supported? */
             if (wlan_11d_get_chan(pmadapter, band, first_chan, i, &cur_chan) == MFALSE)
@@ -1055,6 +1058,7 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
             parsed_region_chan->chan_pwr[idx].band = (t_u8)band;
             parsed_region_chan->chan_pwr[idx].pwr  = country_info->sub_band[j].max_tx_pwr;
             idx++;
+            i++;
         }
 
         /* Step 6: Add other checking if any */

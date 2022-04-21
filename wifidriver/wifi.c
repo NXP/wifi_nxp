@@ -1092,14 +1092,16 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      * 3) Fill lower 23-bits with from IP address (ignoring higher
      * 9bits).
      */
-    for (i = 2; i >= 0; i--, j++)
+    for (i = 2; i >= 0; i--)
     {
         mac_addr[j] = (uint8_t)((char)(mac_addr_r >> 8 * i) & 0xFF);
+        j++;
     }
 
-    for (i = 2; i >= 0; i--, j++)
+    for (i = 2; i >= 0; i--)
     {
         mac_addr[j] = (uint8_t)((char)(ipaddr >> 8 * i) & 0xFF);
+        j++;
     }
 }
 
