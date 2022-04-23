@@ -43,7 +43,7 @@
 
 extern t_u32 ioport_g;
 
-const uint8_t *wlanfw;
+static const uint8_t *wlanfw;
 
 /* remove this after mlan integration complete */
 enum
@@ -86,7 +86,10 @@ static bool wlan_card_ready_wait(t_u32 poll)
     return false;
 }
 
-int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st, const t_u8 *wlanfw, t_u32 firmwarelen, t_u32 ioport)
+static int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st,
+                                       const t_u8 *wlanfw,
+                                       t_u32 firmwarelen,
+                                       t_u32 ioport)
 {
     t_u32 tx_blocks = 0, txlen = 0, buflen = 0;
     t_u16 len    = 0;

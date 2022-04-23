@@ -726,7 +726,7 @@ t_bool wlan_11d_is_enabled(mlan_private *pmpriv)
     return (pmpriv->state_11d.enable_11d == ENABLE_11D) ? MTRUE : MFALSE;
 }
 
-wlan_11d_fn_t wlan_11d_fn = {
+static wlan_11d_fn_t wlan_11d_fn = {
 #ifdef STA_SUPPORT
     .wlan_11d_prepare_dnld_domain_info_cmd_p = wlan_11d_prepare_dnld_domain_info_cmd,
     .wlan_11d_create_dnld_countryinfo_p      = wlan_11d_create_dnld_countryinfo,
@@ -734,7 +734,7 @@ wlan_11d_fn_t wlan_11d_fn = {
 #endif
 };
 
-void *wlan_11d_enable_support = (wlan_11d_fn_t *)&wlan_11d_fn;
+static void *wlan_11d_enable_support = (wlan_11d_fn_t *)&wlan_11d_fn;
 
 /**
  *  @brief This function sets 11D support
@@ -755,14 +755,14 @@ t_u16 wlan_enable_11d_support(mlan_private *pmpriv)
     return (t_u16)MLAN_STATUS_SUCCESS;
 }
 
-wlan_11d_apis_t wlan_11d_apis = {
+static wlan_11d_apis_t wlan_11d_apis = {
     .wlan_11d_cfg_ioctl_p              = wlan_11d_cfg_ioctl,
     .wlan_11d_cfg_domain_info_p        = wlan_11d_cfg_domain_info,
     .wlan_cmd_802_11d_domain_info_p    = wlan_cmd_802_11d_domain_info,
     .wlan_11d_handle_uap_domain_info_p = wlan_11d_handle_uap_domain_info,
 };
 
-void *wlan_11d_support_apis = (wlan_11d_apis_t *)&wlan_11d_apis;
+static void *wlan_11d_support_apis = (wlan_11d_apis_t *)&wlan_11d_apis;
 
 /**
  *  @brief This function enables 11D driver APIs
