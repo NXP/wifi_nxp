@@ -89,6 +89,11 @@ mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_re
 mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd);
 #endif
 
+int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
+int wifi_send_disable_supplicant(int mode);
+int wifi_send_rf_channel_cmd(wifi_rf_channel_t *rf_channel);
+int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power);
+
 int wifi_deauthenticate(uint8_t *bssid)
 {
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -2613,7 +2618,7 @@ static void clear_ie_index(int index)
     mgmt_ie_index_bitmap &= ~(MBIT(index));
 }
 
-int wifi_config_mgmt_ie(
+static int wifi_config_mgmt_ie(
     mlan_bss_type bss_type, int action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
 {
     uint8_t *buf, *pos;

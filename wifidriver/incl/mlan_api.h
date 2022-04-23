@@ -122,6 +122,7 @@
 
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
+extern int wifi_11d_country;
 
 #ifdef CONFIG_WPS2
 extern int wps_session_attempt;
