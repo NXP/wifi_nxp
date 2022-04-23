@@ -52,12 +52,19 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
 static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum netif_mac_filter_action action);
 #endif
 
+err_t lwip_netif_uap_init(struct netif *netif);
+err_t lwip_netif_init(struct netif *netif);
+void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
+void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
+void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
+bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
+
 static void register_interface(struct netif *iface, mlan_bss_type iface_type)
 {
     netif_arr[iface_type] = iface;
 }
 
-void deliver_packet_above(struct pbuf *p, int recv_interface)
+static void deliver_packet_above(struct pbuf *p, int recv_interface)
 {
     err_t lwiperr = ERR_OK;
     /* points to packet payload, which starts with an Ethernet header */
@@ -282,7 +289,7 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer)
  * @param netif the already initialized lwip network interface structure
  *        for this ethernetif
  */
-void low_level_init(struct netif *netif)
+static void low_level_init(struct netif *netif)
 {
     /* set MAC hardware address length */
     netif->hwaddr_len = ETHARP_HWADDR_LEN;

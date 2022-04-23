@@ -470,7 +470,7 @@ static int check_iface_mask(void *handle, uint32_t ipaddr)
     return -WM_FAIL;
 }
 
-void *net_ip_to_interface(uint32_t ipaddr)
+static void *net_ip_to_interface(uint32_t ipaddr)
 {
     int ret;
     void *handle;
