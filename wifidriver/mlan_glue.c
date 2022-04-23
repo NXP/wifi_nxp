@@ -30,11 +30,11 @@ const uint8_t wpa2_akmp_oui[4] = {0x00, 0x0f, 0xac, 0x01};
 bool low_power_mode;
 #endif
 bool cal_data_valid;
-uint8_t *cal_data;
-uint32_t cal_data_len;
+static uint8_t *cal_data;
+static uint32_t cal_data_len;
 
 bool mac_addr_valid;
-uint8_t *mac_addr;
+static uint8_t *mac_addr;
 #ifdef CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -70,7 +70,7 @@ typedef MLAN_PACK_START struct _Event_Ext_t
 /* Following is allocated in mlan_register */
 mlan_adapter *mlan_adap;
 
-mlan_device mlan_dev;
+static mlan_device mlan_dev;
 
 uint8_t g_rssi;
 int16_t g_bcn_nf_last;
@@ -80,6 +80,65 @@ int16_t g_bcn_nf_last;
  *  returns incorrect bitmap. This will be  further investigated
  *  and if possile global variable will be removed.*/
 static t_u16 ps_event;
+
+int mlan_subsys_init(void);
+int mlan_subsys_deinit(void);
+
+void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr);
+void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_value1);
+void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext);
+int wifi_set_tx_power_ext(uint32_t len, uint32_t *power_data);
+int wifi_send_bss_ioctl(mlan_ds_bss *bss);
+
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, int version_str_sel);
+void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+
+#ifdef OTP_CHANINFO
+void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+#endif
+
+void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
+void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len);
+int wrapper_wlan_set_regiontable(t_u8 region, mlan_band_def band);
+int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
+int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
+
+int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
+int wrapper_bssdesc_second_set(int bss_index,
+                               bool *phtcap_ie_present,
+                               bool *phtinfo_ie_present,
+                               bool *wmm_ie_present,
+                               uint8_t *band,
+                               bool *wps_IE_exist,
+                               uint16_t *wps_session,
+                               bool *wpa2_entp_IE_exist,
+                               uint8_t *trans_mode,
+                               uint8_t *trans_bssid,
+                               int *trans_ssid_len,
+                               uint8_t *trans_ssid);
+
+int wrapper_bssdesc_first_set(int bss_index,
+                              uint8_t *BssId,
+                              bool *is_ibss_bit_set,
+                              int *ssid_len,
+                              uint8_t *ssid,
+                              uint8_t *Channel,
+                              uint8_t *RSSI,
+                              uint16_t *beacon_period,
+                              uint16_t *dtim_period,
+                              _SecurityMode_t *WPA_WPA2_WEP,
+                              _Cipher_t *wpa_mcstCipher,
+                              _Cipher_t *wpa_ucstCipher,
+                              _Cipher_t *rsn_mcstCipher,
+                              _Cipher_t *rsn_ucstCipher,
+                              bool *is_pmf_required);
 
 #ifdef CONFIG_11N
 // track whether ampdu is enabled
@@ -480,7 +539,7 @@ static void wlan_update_uap_ampdu_supported(uint8_t *addr, uint8_t supported)
     }
 }
 
-void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
+static void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
 {
     struct uap_ampdu_stat_t *ampdu_info;
     uint8_t temp_addr[MLAN_MAC_ADDR_LENGTH];
