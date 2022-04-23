@@ -52,7 +52,7 @@
 #define WL_ID_DEEPSLEEP_SM "wlcm_deepsleep_sm"
 #define WL_ID_WIFI_RSSI    "wifi_rssi"
 
-bool g_req_sl_confirm;
+static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
 int wlan_set_wwsm_txpwrlimit(void);

@@ -34,7 +34,7 @@
 #include <wlan.h>
 #include <wifi_ping.h>
 
-static struct netif *get_netif_up()
+static struct netif *get_netif_up(void)
 {
     struct netif *netif = netif_list;
     for (; netif != NULL; netif = netif->next)

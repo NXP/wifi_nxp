@@ -32,6 +32,7 @@
 #include <fsl_debug_console.h>
 
 #include <cli.h>
+#include <cli_utils.h>
 #include <ctype.h>
 
 int string_equal(const char *s1, const char *s2)
@@ -252,11 +253,6 @@ int get_mac(const char *arg, char *dest, char sep)
     }
 
     return 0;
-}
-
-void print_mac(const char *mac)
-{
-    (void)PRINTF("%02X:%02X:%02X:%02X:%02X:%02X ", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
 /* Non-reentrant getopt implementation */

@@ -50,7 +50,7 @@
 
 #define CONFIG_CLI_STACK_SIZE 4096
 
-os_mutex_t cli_mutex;
+static os_mutex_t cli_mutex;
 static os_queue_pool_define(queue_data, IN_QUEUE_SIZE);
 static struct
 {
@@ -58,7 +58,7 @@ static struct
     bool initialized;
 
     unsigned int bp; /* buffer pointer */
-    char *inbuf;
+    char *cli_inbuf;
 
     const struct cli_command *commands[MAX_COMMANDS];
     unsigned int num_commands;
@@ -716,9 +716,9 @@ static void console_tick(void)
 {
     int ret;
 
-    if (cli.inbuf == NULL)
+    if (cli.cli_inbuf == NULL)
     {
-        ret = cli_get_cmd_buffer(&cli.inbuf);
+        ret = cli_get_cmd_buffer(&cli.cli_inbuf);
         if (ret != WM_SUCCESS)
         {
             return;
@@ -728,12 +728,12 @@ static void console_tick(void)
 
     if (cli.input_enabled == 1)
     {
-        ret = get_input(cli.inbuf, &cli.bp);
+        ret = get_input(cli.cli_inbuf, &cli.bp);
         if (ret == 1)
         {
             cli.input_enabled = 0;
-            ret               = cli_submit_cmd_buffer(&cli.inbuf);
-            cli.inbuf         = NULL;
+            ret               = cli_submit_cmd_buffer(&cli.cli_inbuf);
+            cli.cli_inbuf     = NULL;
             if (ret != WM_SUCCESS)
             {
                 (void)PRINTF(
@@ -814,12 +814,12 @@ static void cli_main(os_thread_arg_t data)
     os_thread_self_complete(NULL);
 }
 /* Automatically bind an input processor to the console */
-int cli_install_UART_Tick(void)
+static int cli_install_UART_Tick(void)
 {
     return os_setup_idle_function(console_tick);
 }
 
-int cli_remove_UART_Tick(void)
+static int cli_remove_UART_Tick(void)
 {
     return os_remove_idle_function(console_tick);
 }
@@ -853,9 +853,9 @@ static int __cli_cleanup(void)
         final = -WM_FAIL;
     }
 
-    if (cli.inbuf != NULL)
+    if (cli.cli_inbuf != NULL)
     {
-        (void)cli_mem_free(&cli.inbuf);
+        (void)cli_mem_free(&cli.cli_inbuf);
     }
 
     ret = cli_mem_cleanup();
@@ -877,7 +877,7 @@ static int __cli_cleanup(void)
 }
 
 /* Initialize and start the main thread */
-int cli_start(void)
+static int cli_start(void)
 {
     int ret;
 

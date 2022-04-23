@@ -173,7 +173,7 @@ int wifi_get_command_lock(void)
     return rv;
 }
 
-int wifi_get_mcastf_lock(void)
+static int wifi_get_mcastf_lock(void)
 {
     return os_mutex_get(&wm_wifi.mcastf_mutex, OS_WAIT_FOREVER);
 }
