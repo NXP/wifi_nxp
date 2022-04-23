@@ -27,7 +27,7 @@
 #include <wlan.h>
 #include <cli.h>
 
-void test_wfa_wlan_version(int argc, char **argv)
+static void test_wfa_wlan_version(int argc, char **argv)
 {
     unsigned char i;
     char version_str[MLAN_MAX_VER_STR_LEN];
@@ -45,7 +45,7 @@ void test_wfa_wlan_version(int argc, char **argv)
     (void)PRINTF("WLAN Version : %s\r\n", version_str);
 }
 
-void test_wlan_version(int argc, char **argv)
+static void test_wlan_version(int argc, char **argv)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     char *version_str;

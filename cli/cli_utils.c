@@ -52,7 +52,7 @@ int string_equal(const char *s1, const char *s2)
  *@param chr          char
  *@return             hex integer
  **/
-uint8_t hexc2bin(char chr)
+unsigned char hexc2bin(char chr)
 {
     if (chr >= '0' && chr <= '9')
     {

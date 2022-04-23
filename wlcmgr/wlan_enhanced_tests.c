@@ -346,8 +346,8 @@ static void wlan_ed_mac_mode_get(int argc, char *argv[])
         dump_wlan_get_ed_mac_mode_usage();
     }
 }
-
-int wlan_memrdwr_getset(int argc, char *argv[])
+#if 0
+static int wlan_memrdwr_getset(int argc, char *argv[])
 {
     uint8_t action;
     uint32_t value;
@@ -389,7 +389,7 @@ int wlan_memrdwr_getset(int argc, char *argv[])
     }
     return WM_SUCCESS;
 }
-
+#endif
 static void dump_wlan_set_regioncode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -866,7 +866,7 @@ void print_txpwrlimit(wlan_txpwrlimit_t txpwrlimit)
     (void)PRINTF("\r\n");
 }
 
-void print_chanlist(wlan_chanlist_t chanlist)
+static void print_chanlist(wlan_chanlist_t chanlist)
 {
     unsigned char i;
 

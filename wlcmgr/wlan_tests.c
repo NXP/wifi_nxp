@@ -235,7 +235,7 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
     return 0;
 }
 
-int get_security(int argc, char **argv, enum wlan_security_type type, struct wlan_network_security *sec)
+static int get_security(int argc, char **argv, enum wlan_security_type type, struct wlan_network_security *sec)
 {
     if (argc < 1)
     {
@@ -342,7 +342,7 @@ static void dump_wlan_add_usage(void)
 #endif
 }
 
-void test_wlan_add(int argc, char **argv)
+static void test_wlan_add(int argc, char **argv)
 {
     struct wlan_network network;
     int ret = 0;
@@ -610,7 +610,7 @@ void test_wlan_add(int argc, char **argv)
     }
 }
 
-int __scan_cb(unsigned int count)
+static int __scan_cb(unsigned int count)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     struct wlan_scan_result res;
@@ -713,7 +713,7 @@ int __scan_cb(unsigned int count)
     return 0;
 }
 
-void test_wlan_scan(int argc, char **argv)
+static void test_wlan_scan(int argc, char **argv)
 {
     if (wlan_scan(__scan_cb) != 0)
     {
@@ -738,7 +738,7 @@ static void dump_wlan_scan_opt_usage(void)
         "\r\n");
 }
 
-void test_wlan_scan_opt(int argc, char **argv)
+static void test_wlan_scan_opt(int argc, char **argv)
 {
     wlan_scan_params_v2_t wlan_scan_param;
     int ret = 0;
@@ -981,7 +981,7 @@ static void test_wlan_start_network(int argc, char **argv)
     }
 }
 
-void test_wlan_stop_network(int argc, char **argv)
+static void test_wlan_stop_network(int argc, char **argv)
 {
     int ret;
     struct wlan_network network;
@@ -995,7 +995,7 @@ void test_wlan_stop_network(int argc, char **argv)
     }
 }
 
-void test_wlan_disconnect(int argc, char **argv)
+static void test_wlan_disconnect(int argc, char **argv)
 {
     if (wlan_disconnect() != WM_SUCCESS)
     {
@@ -2039,7 +2039,7 @@ static void test_wlan_eu_validation(int argc, char **argv)
         return;
     }
 
-    if (value <5 || value > 23)
+    if (value < 5 || value > 23)
     {
         dump_wlan_eu_validation();
         (void)PRINTF("Error: invalid value\r\n");
@@ -2061,7 +2061,6 @@ static void test_wlan_eu_validation(int argc, char **argv)
     }
     else
         (void)PRINTF("Hostcmd failed error: %d", ret);
-
 }
 #endif
 
@@ -2122,7 +2121,7 @@ static struct cli_command tests[] = {
     {"heap-stat", NULL, test_heap_stat},
 #endif
 #ifdef CONFIG_EU_VALIDATION
-    {"wlan-eu-validation","<value>", test_wlan_eu_validation},
+    {"wlan-eu-validation", "<value>", test_wlan_eu_validation},
 #endif
 };
 
