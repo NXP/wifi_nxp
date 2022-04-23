@@ -31,6 +31,10 @@
 #define mainTEST_TASK_PRIORITY (tskIDLE_PRIORITY)
 #define mainTEST_DELAY         (400 / portTICK_RATE_MS)
 
+void vApplicationIdleHook(void);
+void os_thread_stackmark(char *name);
+int os_event_flags_delete(event_group_handle_t *hnd);
+
 int os_timer_activate(os_timer_t *timer_t)
 {
     int ret;
