@@ -396,7 +396,7 @@ end:
     return ret;
 }
 
-void cmd_ping(int argc, char **argv)
+static void cmd_ping(int argc, char **argv)
 {
     ip_addr_t addr;
     int c;

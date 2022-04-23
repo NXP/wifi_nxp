@@ -33,6 +33,7 @@
 #include <cli_utils.h>
 #include <wlan.h>
 
+#include "iperf.h"
 #include "lwiperf.h"
 #include "lwip/tcpip.h"
 
@@ -55,25 +56,25 @@ struct iperf_test_context
 };
 
 static struct iperf_test_context ctx;
-os_timer_t ptimer;
-ip_addr_t server_address;
-ip_addr_t bind_address;
-bool multicast;
+static os_timer_t ptimer;
+static ip_addr_t server_address;
+static ip_addr_t bind_address;
+static bool multicast;
 #ifdef CONFIG_IPV6
-bool ipv6;
+static bool ipv6;
 #endif
-int amount                   = IPERF_CLIENT_AMOUNT;
-unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
+static int amount                   = IPERF_CLIENT_AMOUNT;
+static unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
 #ifdef CONFIG_WMM
 uint8_t qos = 0;
 #endif
-uint8_t mcast_mac[6];
-bool mcast_mac_valid;
+static uint8_t mcast_mac[6];
+static bool mcast_mac_valid;
 
 static void timer_poll_udp_client(TimerHandle_t timer);
 
 /* Report state => string */
-const char *report_type_str[] = {
+static const char *report_type_str[] = {
     "TCP_DONE_SERVER (RX)",        /* LWIPERF_TCP_DONE_SERVER,*/
     "TCP_DONE_CLIENT (TX)",        /* LWIPERF_TCP_DONE_CLIENT,*/
     "TCP_ABORTED_LOCAL",           /* LWIPERF_TCP_ABORTED_LOCAL, */
@@ -715,7 +716,7 @@ static void display_iperf_usage(void)
 #endif
 }
 
-void cmd_iperf(int argc, char **argv)
+static void cmd_iperf(int argc, char **argv)
 {
     int arg = 1;
     char ip_addr[128];
