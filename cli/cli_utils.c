@@ -77,7 +77,7 @@ uint8_t hexc2bin(char chr)
  *@param s            A pointer string buffer
  *@return             hex integer
  **/
-uint32_t a2hex(const char *s)
+unsigned int a2hex(const char *s)
 {
     uint32_t val = 0;
 
@@ -171,7 +171,7 @@ int ishexstring(void *hex)
  *@param value        A pointer to string
  *@return             integer
  **/
-uint32_t a2hex_or_atoi(char *value)
+unsigned int a2hex_or_atoi(char *value)
 {
     if (value[0] == '0' && (value[1] == 'X' || value[1] == 'x'))
     {

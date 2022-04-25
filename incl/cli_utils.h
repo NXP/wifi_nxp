@@ -41,8 +41,8 @@ int get_mac(const char *arg, char *dest, char sep);
 extern int cli_optind;
 extern char *cli_optarg;
 int cli_getopt(int argc, char **argv, const char *fmt);
-uint32_t a2hex_or_atoi(char *value);
-uint32_t a2hex(const char *s);
+unsigned int a2hex_or_atoi(char *value);
+unsigned int a2hex(const char *s);
 int ISDIGIT(char *x);
 int ishexstring(void *hex);
 
