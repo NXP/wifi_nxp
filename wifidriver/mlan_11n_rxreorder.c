@@ -1238,8 +1238,7 @@ void wlan_cleanup_reorder_tbl(mlan_private *priv, t_u8 *ta)
  *
  *  @return	 N/A
  */
-void wlan_set_rxreorder_tbl_no_drop_flag(mlan_private *priv, t_u8 flag);
-void wlan_set_rxreorder_tbl_no_drop_flag(mlan_private *priv, t_u8 flag)
+static void wlan_set_rxreorder_tbl_no_drop_flag(mlan_private *priv, t_u8 flag)
 {
     RxReorderTbl *rx_reor_tbl_ptr;
 
