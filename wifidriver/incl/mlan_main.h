@@ -592,6 +592,9 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** TDLS indication in extended capa IE */
 #define HOTSPOT_ENABLE_TDLS_IND MBIT(1)
 
+#define MLAN_SET_BIT(x, val) ((x) |= (1U << (val)))
+#define MLAN_CLEAR_BIT(x, val) ((x) &= ~(1U << (val)))
+
 /** Info for debug purpose */
 typedef struct _wlan_dbg
 {
@@ -1372,6 +1375,8 @@ struct _RxReorderTbl
     t_u8 check_start_win;
     /** pkt receive after BA setup */
     t_u8 pkt_count;
+    /** BA window bitmap */
+    t_u64 bitmap;
 };
 
 /** BSS priority node */

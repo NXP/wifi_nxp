@@ -198,6 +198,8 @@ static mlan_status wlan_11n_dispatch_pkt_until_start_win(t_void *priv, RxReorder
     }
 
     rx_reor_tbl_ptr->start_win = start_win;
+    /* clear the bits of reorder bitmap that has been dispatched */
+    rx_reor_tbl_ptr->bitmap = rx_reor_tbl_ptr->bitmap >> no_pkt_to_send;
     (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
 
     LEAVE();
@@ -268,6 +270,8 @@ static mlan_status wlan_11n_scan_and_dispatch(t_void *priv, RxReorderTbl *rx_reo
             rx_reor_tbl_ptr->rx_reorder_ptr[i + j] = MNULL;
         }
     }
+    /* clear the bits of reorder bitmap that has been dispatched */
+    rx_reor_tbl_ptr->bitmap = rx_reor_tbl_ptr->bitmap >> i;
 
     rx_reor_tbl_ptr->start_win = (rx_reor_tbl_ptr->start_win + i) & (MAX_TID_VALUE - 1);
 
@@ -449,6 +453,7 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
         new_node->win_size        = win_size;
         new_node->force_no_drop   = MFALSE;
         new_node->check_start_win = MTRUE;
+        new_node->bitmap = 0;
 
         if ((pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(t_void *) * win_size, MLAN_MEM_DEF,
                                               (t_u8 **)&new_node->rx_reorder_ptr)) != MLAN_STATUS_SUCCESS)
@@ -728,7 +733,7 @@ mlan_status wlan_cmd_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *cmd, void
 mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *ta, t_u8 pkt_type, void *payload)
 {
     RxReorderTbl *rx_reor_tbl_ptr;
-    int prev_start_win, start_win, end_win, win_size;
+    int start_win, end_win, win_size;
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     pmlan_adapter pmadapter = ((mlan_private *)priv)->adapter;
 
@@ -818,7 +823,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
             }
         }
 
-        prev_start_win = start_win = rx_reor_tbl_ptr->start_win;
+        start_win = rx_reor_tbl_ptr->start_win;
         win_size                   = rx_reor_tbl_ptr->win_size;
         end_win                    = ((start_win + win_size) - 1) & (MAX_TID_VALUE - 1);
 
@@ -898,6 +903,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
                     goto done;
                 }
                 rx_reor_tbl_ptr->rx_reorder_ptr[seq_num - start_win] = payload;
+                MLAN_SET_BIT(rx_reor_tbl_ptr->bitmap, seq_num - start_win);
             }
             else
             { /* Wrap condition */
@@ -908,6 +914,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
                     goto done;
                 }
                 rx_reor_tbl_ptr->rx_reorder_ptr[(seq_num + (MAX_TID_VALUE)) - start_win] = payload;
+                MLAN_SET_BIT(rx_reor_tbl_ptr->bitmap, (seq_num + (MAX_TID_VALUE)) - start_win);
             }
         }
 
@@ -923,7 +930,13 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
     }
 
 done:
-    if (!rx_reor_tbl_ptr->timer_context.timer_is_set || (prev_start_win != rx_reor_tbl_ptr->start_win))
+    if (rx_reor_tbl_ptr->timer_context.timer_is_set && rx_reor_tbl_ptr->bitmap == 0)
+    {
+        pmadapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
+        rx_reor_tbl_ptr->timer_context.timer_is_set = MFALSE;
+    }
+
+    if (!rx_reor_tbl_ptr->timer_context.timer_is_set && rx_reor_tbl_ptr->bitmap != 0)
     {
         mlan_11n_rxreorder_timer_restart(pmadapter, rx_reor_tbl_ptr);
     }
