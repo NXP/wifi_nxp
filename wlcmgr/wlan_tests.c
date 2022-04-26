@@ -1875,28 +1875,50 @@ static void test_wlan_send_hostcmd(int argc, char **argv)
 }
 
 #ifdef SD8801
-u8_t ext_coex_8801_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
-/* Command buffer to set External Coex Configuration parameters */
-u8_t ext_coex_8801_cmd_buf[] = {0xe0, 0,    0x1d, 0, 0x17, 0,    0,    0,    0x01, 0,    0,    0,    0x2f, 0x02, 0x0d,
-                                0x00, 0x01, 0,    0, 0x03, 0x01, 0x02, 0x01, 0x01, 0x00, 0x28, 0x00, 0x3c, 0x00};
-
 static void test_wlan_8801_enable_ext_coex(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
-    uint32_t reqd_len = 0;
+    wlan_ext_coex_config_t ext_coex_config;
 
-    ret = wlan_send_hostcmd(ext_coex_8801_cmd_buf, sizeof(ext_coex_8801_cmd_buf) / sizeof(u8_t), ext_coex_8801_resp_buf,
-                            HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
+    ext_coex_config.Enabled = 1;
+    ext_coex_config.IgnorePriority = 0;
+    ext_coex_config.DefaultPriority = 0;
+    ext_coex_config.EXT_RADIO_REQ_ip_gpio_num = 3;
+    ext_coex_config.EXT_RADIO_REQ_ip_gpio_polarity = 1;
+    ext_coex_config.EXT_RADIO_PRI_ip_gpio_num = 2;
+    ext_coex_config.EXT_RADIO_PRI_ip_gpio_polarity = 1;
+    ext_coex_config.WLAN_GRANT_op_gpio_num = 1;
+    ext_coex_config.WLAN_GRANT_op_gpio_polarity = 0;
+    ext_coex_config.reserved_1 = 0x28;
+    ext_coex_config.reserved_2 = 0x3c;
+
+    ret = wlan_set_ext_coex_config(ext_coex_config);
 
     if (ret == WM_SUCCESS)
     {
-        (void)PRINTF("8801 External Coex Config success, response is");
-        for (ret = 0; ret < reqd_len; ret++)
-            (void)PRINTF("%x\t", ext_coex_8801_resp_buf[ret]);
+        (void)PRINTF("8801 External Coex Config set successfully");
     }
     else
     {
         (void)PRINTF("8801 External Coex Config error: %d", ret);
+    }
+}
+
+static void test_wlan_8801_ext_coex_stats(int argc, char **argv)
+{
+    int ret           = -WM_FAIL;
+    wlan_ext_coex_stats_t ext_coex_stats;
+
+    ret = wlan_get_ext_coex_stats(&ext_coex_stats);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get external Coex statistics\r\n");
+    }
+    else
+    {
+        (void)PRINTF("BLE_EIP: %d, BLE_PRI: %d, WLAN_EIP: %d\r\n", ext_coex_stats.ext_radio_req_count,
+                        ext_coex_stats.ext_radio_pri_count, ext_coex_stats.wlan_grant_count);
     }
 }
 #endif
@@ -2129,6 +2151,7 @@ static struct cli_command tests[] = {
 #endif
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
+    {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
 #endif
 #ifdef CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},

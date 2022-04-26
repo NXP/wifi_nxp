@@ -810,6 +810,16 @@ typedef wifi_chanlist_t wlan_chanlist_t;
  * \ref wifi_txpwrlimit_t
  */
 typedef wifi_txpwrlimit_t wlan_txpwrlimit_t;
+#ifdef SD8801
+/** Statistic of External Coex from
+ * \ref wifi_ext_coex_config_t
+ */
+typedef wifi_ext_coex_stats_t wlan_ext_coex_stats_t;
+/** Configuration for External Coex from
+ * \ref wifi_ext_coex_config_t
+ */
+typedef wifi_ext_coex_config_t wlan_ext_coex_config_t;
+#endif
 
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
@@ -2566,6 +2576,30 @@ int wlan_get_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, v
  *
  */
 int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
+
+#ifdef SD8801
+/**
+ * Get External Radio Coex statistics.
+ *
+ * \param[out] ext_coex_stats A pointer to structure to get coex statistics.
+ *
+ * \return WM_SUCCESS if successful.
+ * \return -WM_FAIL if unsuccessful.
+ *
+ */
+int wlan_get_ext_coex_stats(wlan_ext_coex_stats_t *ext_coex_stats);
+
+/**
+ * Set External Radio Coex configuration.
+ *
+ * \param[in] ext_coex_config to apply coex configuration.
+ *
+ * \return IE index if successful.
+ * \return -WM_FAIL if unsuccessful.
+ *
+ */
+int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config);
+#endif
 
 /**
  * Clear Management IE for given BSS type (interface) and index.

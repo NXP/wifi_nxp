@@ -229,6 +229,10 @@ int wifi_set_smart_mode_cfg(char *ssid,
 wifi_sub_band_set_t *get_sub_band_from_country(int country, t_u8 *nr_sb);
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index);
+#ifdef SD8801
+int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats);
+int wifi_set_ext_coex_config(const wifi_ext_coex_config_t *ext_coex_config);
+#endif
 int wifi_send_enable_supplicant(int mode, const char *ssid);
 int wifi_send_clear_wpa_psk(int mode, const char *ssid);
 int wifi_send_add_wpa_psk(int mode, char *ssid, char *passphrase, unsigned int len);

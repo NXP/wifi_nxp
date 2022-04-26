@@ -2599,6 +2599,42 @@ static void clear_ie_index(int index)
     mgmt_ie_index_bitmap &= ~(MBIT(index));
 }
 
+#ifdef SD8801
+static int wifi_config_ext_coex(int action, const wifi_ext_coex_config_t *ext_coex_config, wifi_ext_coex_stats_t *ext_coex_stats)
+{
+    int ret;
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)wifi_get_command_lock();
+
+    cmd->command = HostCmd_CMD_ROBUST_COEX;
+    cmd->size = sizeof(HostCmd_DS_ExtBLECoex_Config_t) + S_DS_GEN;
+    cmd->seq_num = 0;
+    cmd->result = 0;
+    cmd->params.ext_ble_coex_cfg.action = action;
+    cmd->params.ext_ble_coex_cfg.reserved = 0;
+    cmd->params.ext_ble_coex_cfg.coex_cfg_data.header.type = TLV_TYPE_EXT_BLE_COEX_CFG;
+    cmd->params.ext_ble_coex_cfg.coex_cfg_data.header.len = sizeof(MrvlIETypes_ExtBLECoex_Config_t) - sizeof(MrvlIEtypesHeader_t);
+
+    if (action == HostCmd_ACT_GEN_SET)
+    {
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.Enabled = ext_coex_config->Enabled;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.IgnorePriority = ext_coex_config->IgnorePriority;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.DefaultPriority = ext_coex_config->DefaultPriority;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_REQ_ip_gpio_num = ext_coex_config->EXT_RADIO_REQ_ip_gpio_num;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_REQ_ip_gpio_polarity = ext_coex_config->EXT_RADIO_REQ_ip_gpio_polarity;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_PRI_ip_gpio_num = ext_coex_config->EXT_RADIO_PRI_ip_gpio_num;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_PRI_ip_gpio_polarity = ext_coex_config->EXT_RADIO_PRI_ip_gpio_polarity;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.WLAN_GRANT_op_gpio_num = ext_coex_config->WLAN_GRANT_op_gpio_num;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.WLAN_GRANT_op_gpio_polarity = ext_coex_config->WLAN_GRANT_op_gpio_polarity;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.reserved_1 = ext_coex_config->reserved_1;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.reserved_2 = ext_coex_config->reserved_2;
+    }
+    ret = wifi_wait_for_cmdresp(ext_coex_stats);
+    return ret;
+}
+#endif
+
 static int wifi_config_mgmt_ie(
     mlan_bss_type bss_type, int action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
 {
@@ -2751,6 +2787,30 @@ int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index)
     unsigned int data_len = 0;
     return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, index, NULL, &data_len);
 }
+
+#ifdef SD8801
+int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats)
+{
+    if (ext_coex_stats == NULL)
+    {
+        wifi_e("Invalid structure passed");
+        return -WM_FAIL;
+    }
+
+    return wifi_config_ext_coex(HostCmd_ACT_GEN_GET, NULL, ext_coex_stats);
+}
+
+int wifi_set_ext_coex_config(const wifi_ext_coex_config_t *ext_coex_config)
+{
+    if ( ext_coex_config == NULL)
+    {
+        wifi_e("Invalid structure passed");
+        return -WM_FAIL;
+    }
+
+    return wifi_config_ext_coex(HostCmd_ACT_GEN_SET, ext_coex_config, NULL);
+}
+#endif
 
 int wifi_set_chanlist(wifi_chanlist_t *chanlist)
 {

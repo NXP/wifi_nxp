@@ -5699,6 +5699,18 @@ int wlan_set_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t id, void
     return wifi_set_mgmt_ie((mlan_bss_type)bss_type, id, buf, buf_len);
 }
 
+#ifdef SD8801
+int wlan_get_ext_coex_stats(wlan_ext_coex_stats_t *ext_coex_stats)
+{
+    return wifi_get_ext_coex_stats(ext_coex_stats);
+}
+
+int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config)
+{
+    return wifi_set_ext_coex_config(&ext_coex_config);
+}
+#endif
+
 int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index)
 {
     return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index);

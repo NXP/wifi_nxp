@@ -4978,23 +4978,52 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_MacAddr_t
     t_u8 mac[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END MrvlIEtypes_MacAddr_t;
 
+#ifdef SD8801
 typedef MLAN_PACK_START struct _MrvlIETypes_ExtBLECoex_Config_t
 {
-    t_u16 action;
-    t_u16 reserved;
-    MrvlIEtypesHeader_t IEParam;
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Enable or disable external coexistence */
     t_u8 Enabled;
+    /** Ignore the priority of the external radio request */
     t_u8 IgnorePriority;
+    /** Default priority when the priority of the external radio
+request is ignored */
     t_u8 DefaultPriority;
-    t_u8 BLE_EIP_Input_GPIO_num;
-    t_u8 BLE_EIP_Input_GPIO_polarity;
-    t_u8 BLE_Pri_Input_GPIO_num;
-    t_u8 BLE_Pri_Input_GPIO_polarity;
-    t_u8 WLAN_EIP_Output_GPIO_num;
-    t_u8 WLAN_EIP_Output_GPIO_polarity;
-    t_u16 WLAN_Time;
-    t_u16 BT_Time;
+    /** Input request GPIO pin for EXT_RADIO_REQ signal */
+    t_u8 EXT_RADIO_REQ_ip_gpio_num;
+    /** Input request GPIO polarity for EXT_RADIO_REQ signal */
+    t_u8 EXT_RADIO_REQ_ip_gpio_polarity;
+    /** Input priority GPIO pin for EXT_RADIO_PRI signal */
+    t_u8 EXT_RADIO_PRI_ip_gpio_num;
+    /** Input priority GPIO polarity for EXT_RADIO_PRI signal */
+    t_u8 EXT_RADIO_PRI_ip_gpio_polarity;
+    /** Output grant GPIO pin for WLAN_GRANT signal */
+    t_u8 WLAN_GRANT_op_gpio_num;
+    /** Output grant GPIO polarity of WLAN_GRANT */
+    t_u8 WLAN_GRANT_op_gpio_polarity;
+    /** Reserved Bytes */
+    t_u16 reserved_1;
+    /** Reserved Bytes */
+    t_u16 reserved_2;
+    /** External Radio Request count */
+    t_u16 EXT_RADIO_REQ_count;
+    /** External Radio Priority count */
+    t_u16 EXT_RADIO_PRI_count;
+    /** WLAN GRANT count */
+    t_u16 WLAN_GRANT_count;
 } MLAN_PACK_END MrvlIETypes_ExtBLECoex_Config_t;
+
+typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
+{
+    /** Action */
+    t_u16 action;
+    /** Reserved field */
+    t_u16 reserved;
+    /** External Coex Configuration Data */
+    MrvlIETypes_ExtBLECoex_Config_t coex_cfg_data;
+} MLAN_PACK_END HostCmd_DS_ExtBLECoex_Config_t;
+#endif
 
 /** Assoc Request */
 #define SUBTYPE_ASSOC_REQUEST 0U
@@ -6343,6 +6372,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif /* CONFIG_ENABLE_802_11K */
 #ifdef CONFIG_11AX
         HostCmd_DS_11AX_CMD_CFG axcmd;
+#endif
+#ifdef SD8801
+        HostCmd_DS_ExtBLECoex_Config_t ext_ble_coex_cfg;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

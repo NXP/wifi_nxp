@@ -430,6 +430,47 @@ typedef PACK_START struct _wifi_bandcfg_t
     mlan_band_def fw_bands;
 } PACK_END wifi_bandcfg_t;
 
+#ifdef SD8801
+/** Type definition of wifi_ext_coex_config_t */
+typedef PACK_START struct _wifi_ext_coex_config_t
+{
+    /** Enable or disable external coexistence */
+    t_u8 Enabled;
+    /** Ignore the priority of the external radio request */
+    t_u8 IgnorePriority;
+    /** Default priority when the priority of the external radio
+request is ignored */
+    t_u8 DefaultPriority;
+    /** Input request GPIO pin for EXT_RADIO_REQ signal */
+    t_u8 EXT_RADIO_REQ_ip_gpio_num;
+    /** Input request GPIO polarity for EXT_RADIO_REQ signal */
+    t_u8 EXT_RADIO_REQ_ip_gpio_polarity;
+    /** Input priority GPIO pin for EXT_RADIO_PRI signal */
+    t_u8 EXT_RADIO_PRI_ip_gpio_num;
+    /** Input priority GPIO polarity for EXT_RADIO_PRI signal */
+    t_u8 EXT_RADIO_PRI_ip_gpio_polarity;
+    /** Output grant GPIO pin for WLAN_GRANT signal */
+    t_u8 WLAN_GRANT_op_gpio_num;
+    /** Output grant GPIO polarity of WLAN_GRANT */
+    t_u8 WLAN_GRANT_op_gpio_polarity;
+    /** Reserved Bytes */
+    t_u16 reserved_1;
+    /** Reserved Bytes */
+    t_u16 reserved_2;
+} PACK_END wifi_ext_coex_config_t;
+
+/** Type definition of wifi_ext_coex_stats_t */
+typedef PACK_START struct _wifi_ext_coex_stats_t
+{
+    /** External Radio Request count */
+    t_u16 ext_radio_req_count;
+    /** External Radio Priority count */
+    t_u16 ext_radio_pri_count;
+    /** WLAN GRANT count */
+    t_u16 wlan_grant_count;
+} PACK_END wifi_ext_coex_stats_t;
+#endif
+
 /** Type definition of wifi_antcfg_t */
 typedef PACK_START struct _wifi_antcfg_t
 {
