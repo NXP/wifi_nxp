@@ -1297,6 +1297,10 @@ struct _mlan_private
     t_u8 ip_addr[IPADDR_LEN];
     t_u32 hotspot_cfg;
     ExtCap_t ext_cap;
+#ifdef CONFIG_WNM_PS
+    /** WNM power save mode */
+    bool wnm_set;
+#endif
 };
 
 /** BA stream status */
@@ -1952,15 +1956,16 @@ struct _mlan_adapter
     sleep_params_t sleep_params;
     /** sleep_period_t (Enhanced Power Save) */
     sleep_period_t sleep_period;
-
     /** Power Save mode */
     /**
      * Wlan802_11PowerModeCAM = disable
      * Wlan802_11PowerModePSP = enable
      */
     t_u16 ps_mode;
+#endif
     /** Power Save state */
     t_u32 ps_state;
+#ifndef CONFIG_MLAN_WMSDK
     /** Need to wakeup flag */
     t_u8 need_to_wakeup;
 #endif /* CONFIG_MLAN_WMSDK */

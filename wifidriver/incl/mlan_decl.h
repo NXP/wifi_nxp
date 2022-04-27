@@ -424,6 +424,9 @@ typedef enum _mlan_event_id
     MLAN_EVENT_ID_DRV_ASSOC_FAILURE_REPORT,
     MLAN_EVENT_ID_DRV_REPORT_STRING,
     MLAN_EVENT_ID_DRV_DBG_DUMP,
+#ifdef CONFIG_WNM_PS
+    MLAN_EVENT_ID_WNM_PS,
+#endif
 } mlan_event_id;
 
 /** Data Structures */
@@ -907,10 +910,10 @@ typedef struct _mlan_device
 /** Registration */
 MLAN_API mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter);
 
-#ifndef CONFIG_MLAN_WMSDK
 /** Un-registration */
 MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Firmware Downloading */
 MLAN_API mlan_status mlan_dnld_fw(IN t_void *pmlan_adapter, IN pmlan_fw_image pmfw);
 

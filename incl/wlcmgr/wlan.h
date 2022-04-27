@@ -413,6 +413,9 @@ typedef enum wlan_ps_mode
     WLAN_IEEE,
     /** Deep sleep power save mode */
     WLAN_DEEP_SLEEP,
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    WLAN_IEEE_DEEP_SLEEP,
+#endif
 } wlan_ps_mode;
 
 enum wlan_ps_state
@@ -427,8 +430,12 @@ typedef enum _ENH_PS_MODES
 {
     GET_PS        = 0,
     SLEEP_CONFIRM = 5,
-    DIS_AUTO_PS   = 0xfe,
-    EN_AUTO_PS    = 0xff,
+#ifdef CONFIG_WNM_PS
+    DIS_WNM_PS = 0xfc,
+    EN_WNM_PS  = 0xfd,
+#endif
+    DIS_AUTO_PS = 0xfe,
+    EN_AUTO_PS  = 0xff,
 } ENH_PS_MODES;
 
 typedef enum _Host_Sleep_Action
@@ -436,6 +443,14 @@ typedef enum _Host_Sleep_Action
     HS_CONFIGURE = 0x0001,
     HS_ACTIVATE  = 0x0002,
 } Host_Sleep_Action;
+
+#ifdef CONFIG_WNM_PS
+typedef PACK_START struct
+{
+    uint8_t action;
+    uint8_t result;
+} PACK_END wnm_sleep_result_t;
+#endif
 
 /** Scan Result */
 struct wlan_scan_result
@@ -1869,6 +1884,8 @@ int wlan_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
  *            \ref WAKE_ON_MULTICAST,
  *            \ref WAKE_ON_ARP_BROADCAST,
  *            \ref WAKE_ON_MGMT_FRAME
+ *            wnm_set 1: wnm is set. 0: wnm is not set.
+ *            wnm_sleep_time: wnm sleep interval.(number of dtims)
  *
  * \return WM_SUCCESS if the call was successful.
  * \return WLAN_ERROR_STATE if the call was made in a state where such an
@@ -1879,7 +1896,11 @@ int wlan_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
  *           to a network.
  *
  */
+#ifdef CONFIG_WNM_PS
+int wlan_ieeeps_on(unsigned int wakeup_conditions, bool wnm_set, t_u16 wnm_sleep_time);
+#else
 int wlan_ieeeps_on(unsigned int wakeup_conditions);
+#endif
 
 /** Turn off IEEE Power Save mode.
  *

@@ -1417,6 +1417,16 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
                 pext_cap->ext_cap.TDLSSupport = 1;
             }
         }
+#ifdef CONFIG_WNM_PS
+        if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
+        {
+            pext_cap->ext_cap.WNM_Sleep = 1;
+        }
+        else
+        {
+            pext_cap->ext_cap.WNM_Sleep = 0;
+        }
+#endif
         HEXDUMP("Extended Capabilities IE", (t_u8 *)pext_cap, sizeof(MrvlIETypes_ExtCap_t));
         *ppbuffer += sizeof(MrvlIETypes_ExtCap_t);
         ret_len += sizeof(MrvlIETypes_ExtCap_t);

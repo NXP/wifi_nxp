@@ -34,19 +34,20 @@
 #endif
 
 #ifdef CONFIG_WIFI_INTERNAL
-#define CONFIG_11N             1
-#define STA_SUPPORT            1
-#define UAP_SUPPORT            1
-#define WPA                    1
-#define KEY_MATERIAL_WEP       1
-#define KEY_PARAM_SET_V2       1
-#define ENABLE_802_11W         1
-#define OTP_CHANINFO           1
-#define CONFIG_STA_AMPDU_RX    1
-#define CONFIG_STA_AMPDU_TX    1
-#define CONFIG_ENABLE_AMSDU_RX 1
-#define CONFIG_UAP_AMPDU_TX    1
-#define CONFIG_UAP_AMPDU_RX    1
+#define CONFIG_11N                1
+#define STA_SUPPORT               1
+#define UAP_SUPPORT               1
+#define WPA                       1
+#define KEY_MATERIAL_WEP          1
+#define KEY_PARAM_SET_V2          1
+#define ENABLE_802_11W            1
+#define OTP_CHANINFO              1
+#define CONFIG_STA_AMPDU_RX       1
+#define CONFIG_STA_AMPDU_TX       1
+#define CONFIG_ENABLE_AMSDU_RX    1
+#define CONFIG_UAP_AMPDU_TX       1
+#define CONFIG_UAP_AMPDU_RX       1
+#define CONFIG_WIFIDRIVER_PS_LOCK 1
 #endif
 
 #include <wifi-decl.h>
@@ -659,7 +660,11 @@ bool wrapper_wlan_11d_support_is_enabled(void);
 void wrapper_wlan_11d_clear_parsedtable(void);
 void wrapper_clear_media_connected_event(void);
 int wifi_uap_ps_inactivity_sleep_exit(mlan_bss_type type);
+#ifdef CONFIG_WNM_PS
+int wifi_enter_ieee_power_save(bool wnm_is_set, t_u16 wnm_sleep_time);
+#else
 int wifi_enter_ieee_power_save(void);
+#endif
 int wifi_exit_ieee_power_save(void);
 int wifi_enter_deepsleep_power_save(void);
 int wifi_exit_deepsleep_power_save(void);

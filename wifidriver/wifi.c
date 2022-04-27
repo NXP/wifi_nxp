@@ -858,6 +858,18 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         buf_len   = tx_blocks * MLAN_SDIO_BLOCK_SIZE;
         tx_blocks = 1;
     }
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Failed to wakeup card\r\n");
+        // wakelock_put(WL_ID_LL_OUTPUT);
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
 
     /*
      * This is the private pointer. Only the command response handler
@@ -867,6 +879,16 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     wm_wifi.cmd_resp_priv = cmd_resp_priv;
 
     (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* put the sleep_rwlock after send command but not wait for the command response,
+     * for sleep confirm command, sleep confirm response(in wifi_process_ps_enh_response())
+     * would try to get the sleep_rwlock until get it,
+     * so here put the sleep_rwlock as early as possible.
+     */
+    os_rwlock_read_unlock(&sleep_rwlock);
+#endif
+
     /* Wait max 10 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
     if (ret != WM_SUCCESS)
@@ -893,6 +915,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     }
 
     wm_wifi.cmd_resp_priv = NULL;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
     (void)wifi_put_command_lock();
     return ret;
 }
@@ -1734,6 +1759,16 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
 {
     if (wm_wifi.data_intput_callback != NULL)
     {
+        if (mlan_adap->ps_state == PS_STATE_SLEEP)
+        {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            os_rwlock_write_unlock(&sleep_rwlock);
+#endif
+            mlan_adap->ps_state = PS_STATE_AWAKE;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+            wifi_event_completion(WIFI_EVENT_AWAKE, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
+        }
         wm_wifi.data_intput_callback(interface, buffer, len);
         return WM_SUCCESS;
     }
@@ -1832,7 +1867,11 @@ static void wifi_driver_tx(void *data)
         {
             if (msg.event == MLAN_TYPE_DATA)
             {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+                ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+#else
                 ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
                 if (ret != WM_SUCCESS)
                 {
                     wifi_e("Error in getting readlock");
@@ -1903,7 +1942,11 @@ static void wifi_driver_tx(void *data)
                     /* Do nothing */
                 }
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+                os_rwlock_read_unlock(&sleep_rwlock);
+#else
                 os_rwlock_read_unlock(&ps_rwlock);
+#endif
                 wifi_set_xfer_pending(false);
             }
         }
@@ -1931,7 +1974,11 @@ int wifi_low_level_output(const uint8_t interface,
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
     // wakelock_get(WL_ID_LL_OUTPUT);
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+#else
     ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
     if (ret != WM_SUCCESS)
     {
         // wakelock_put(WL_ID_LL_OUTPUT);
@@ -2055,7 +2102,11 @@ retry_xmit:
 
     ret = WM_SUCCESS;
 exit_fn:
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
     (void)os_rwlock_read_unlock(&ps_rwlock);
+#endif
     wifi_set_xfer_pending(false);
     // wakelock_put(WL_ID_LL_OUTPUT);
 

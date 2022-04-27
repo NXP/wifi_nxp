@@ -1860,6 +1860,14 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
+#ifdef CONFIG_WNM_PS
+    else if (cmd_action == DIS_WNM_PS)
+    {
+        psmode_enh->action           = wlan_cpu_to_le16(DIS_WNM_PS);
+        psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
+        cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
+    }
+#endif
     else if (cmd_action == GET_PS)
     {
         psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(GET_PS));
@@ -1945,6 +1953,39 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         /*#endif*/
         cmd->size = wlan_cpu_to_le16(cmd_size);
     }
+#ifdef CONFIG_WNM_PS
+    else if (cmd_action == EN_WNM_PS)
+    {
+        psmode_enh->action                   = wlan_cpu_to_le16(EN_AUTO_PS);
+        psmode_enh->params.auto_ps.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
+        cmd_size                             = S_DS_GEN + AUTO_PS_FIX_SIZE;
+        tlv                                  = (t_u8 *)cmd + cmd_size;
+        if ((ps_bitmap & BITMAP_STA_PS) != 0)
+        {
+            if (pdata_buf != NULL)
+            {
+                pmlan_adapter pmadapter                = pmpriv->adapter;
+                MrvlIEtypes_wnm_ps_param_t *wnm_ps_tlv = (MrvlIEtypes_wnm_ps_param_t *)tlv;
+                wnm_ps_param *wnm_ps                   = (wnm_ps_param *)&wnm_ps_tlv->param;
+                t_u16 internal                         = 0;
+                wnm_ps_tlv->header.type                = wlan_cpu_to_le16(TLV_TYPE_WNM_PARAM);
+                wnm_ps_tlv->header.len =
+                    wlan_cpu_to_le16(sizeof(MrvlIEtypes_wnm_ps_param_t) - sizeof(MrvlIEtypesHeader_t));
+                cmd_size += sizeof(MrvlIEtypes_wnm_ps_param_t);
+                tlv += sizeof(MrvlIEtypes_wnm_ps_param_t);
+                internal                      = *(t_u32 *)pdata_buf;
+                wnm_ps->action                = 0;
+                wnm_ps->null_pkt_interval     = wlan_cpu_to_le16(pmadapter->null_pkt_interval);
+                wnm_ps->bcn_miss_timeout      = wlan_cpu_to_le16(pmadapter->bcn_miss_time_out);
+                wnm_ps->local_listen_interval = wlan_cpu_to_le16(pmadapter->local_listen_interval);
+                wnm_ps->ps_mode               = wlan_cpu_to_le16(pmadapter->enhanced_ps_mode);
+                wnm_ps->delay_to_ps           = wlan_cpu_to_le16(pmadapter->delay_to_ps);
+                wnm_ps->wnm_sleep_interval    = wlan_cpu_to_le16(internal);
+            }
+        }
+        cmd->size = wlan_cpu_to_le16(cmd_size);
+    }
+#endif
     else
     { /* Do Nothing */
     }

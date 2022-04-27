@@ -1650,6 +1650,21 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
     wcmdr_d("CMD-RESP: 0x%x Size: %d Seq: %d Result: %d", command, resp->size, resp->seq_num, resp->result);
 
+    int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+        pmpriv = (mlan_private *)mlan_adap->priv[1];
+    else
+        pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    if (mlan_adap->ps_state == PS_STATE_SLEEP)
+    {
+        os_rwlock_write_unlock(&sleep_rwlock);
+        mlan_adap->ps_state = PS_STATE_AWAKE;
+    }
+#endif
+
     /* Check if the command is a user issued host command */
     if (wm_wifi.hostcmd_cfg.is_hostcmd == true)
     {
@@ -1881,7 +1896,20 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 uint16_t ps_action = 0;
                 result             = wifi_process_ps_enh_response((t_u8 *)resp, &ps_event, &ps_action);
                 arg                = (void *)((t_u32)ps_action);
-                wifi_event_completion(ps_event, result, arg);
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+                if (ps_action == SLEEP_CONFIRM && (ps_event == WIFI_EVENT_IEEE_PS || ps_event == WIFI_EVENT_DEEP_SLEEP
+#ifdef CONFIG_WNM_PS
+                                                   || ps_event == WIFI_EVENT_WNM_PS
+#endif
+                                                   ))
+                {
+                    pmpriv->adapter->ps_state = PS_STATE_SLEEP;
+                }
+#endif
+#ifdef CONFIG_WIFIDRIVER_PS_LOCK
+                if (ps_event != WIFI_EVENT_PS_INVALID)
+#endif
+                    wifi_event_completion(ps_event, result, arg);
             }
             break;
 #if 0
@@ -2901,6 +2929,32 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
 }
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
+#ifdef CONFIG_WNM_PS
+void wlan_update_wnm_ps_status(wnm_ps_result *wnm_ps_result)
+{
+    if ((wnm_ps_result->action == 0) && (wnm_ps_result->result == 0))
+    {
+        /* Do nothing */
+    }
+    else if ((wnm_ps_result->action == 1) && (wnm_ps_result->result == 0))
+    {
+        ((mlan_private *)mlan_adap->priv[0])->wnm_set = false;
+    }
+    else if ((wnm_ps_result->action == 0) && (wnm_ps_result->result == 1))
+    {
+        ((mlan_private *)mlan_adap->priv[0])->wnm_set = false;
+    }
+    else if ((wnm_ps_result->action == 1) && (wnm_ps_result->result == 1))
+    {
+        /* Do nothing */
+    }
+    else
+    {
+        /* Do nothing */
+    }
+}
+#endif
+
 /* fixme: duplicated from legacy. needs to be cleaned up later */
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
@@ -2952,6 +3006,14 @@ int wifi_handle_fw_event(struct bus_message *msg)
     }
     wevt_d("EVENT - : 0x%x Len : %d Reason: %d", evt->event_id, evt->length, evt->reason_code);
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    if ((evt->event_id != EVENT_PS_AWAKE) && (mlan_adap->ps_state == PS_STATE_SLEEP))
+    {
+        os_rwlock_write_unlock(&sleep_rwlock);
+        pmpriv->adapter->ps_state = PS_STATE_AWAKE;
+    }
+#endif
+
     switch (evt->event_id)
     {
         case EVENT_LINK_LOST:
@@ -2989,11 +3051,47 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_PS_SLEEP:
+            wevt_d("_");
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
+            {
+                mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
+                wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+            }
+            else
+                /* Unexpected PS SLEEP event */
+                wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
+#else
             wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
             break;
         case EVENT_PS_AWAKE:
+            wevt_d("|");
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            if (mlan_adap->ps_state == PS_STATE_SLEEP)
+            {
+                os_rwlock_write_unlock(&sleep_rwlock);
+                mlan_adap->ps_state = PS_STATE_AWAKE;
+            }
+            else if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
+            {
+                /* If driver did not send out sleep confirm in the expected time,
+                   FW would take it as timeout, switch to awake and send out PS AWAKE event */
+                wevt_w("Receive PS AWAKE event when presleep: %d", mlan_adap->ps_state);
+                os_rwlock_write_unlock(&sleep_rwlock);
+                mlan_adap->ps_state = PS_STATE_AWAKE;
+            }
+#else
+            pmpriv->adapter->ps_state = PS_STATE_AWAKE;
             wifi_event_completion(WIFI_EVENT_AWAKE, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
             break;
+#ifdef CONFIG_WNM_PS
+        case EVENT_WNM_PS:
+            wlan_update_wnm_ps_status((wnm_ps_result *)&evt->reason_code);
+            wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS, (void *)&evt->reason_code);
+            break;
+#endif
         case EVENT_MIC_ERR_MULTICAST:
             wifi_event_completion(WIFI_EVENT_ERR_MULTICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;

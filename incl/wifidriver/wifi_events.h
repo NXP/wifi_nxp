@@ -81,6 +81,10 @@ enum wifi_event
     WIFI_EVENT_IEEE_PS,
     /** Deep Sleep */
     WIFI_EVENT_DEEP_SLEEP,
+#ifdef CONFIG_WNM_PS
+    /** WNM ps */
+    WIFI_EVENT_WNM_PS,
+#endif
     /** PS Invalid */
     WIFI_EVENT_PS_INVALID,
     /** HS configuration */

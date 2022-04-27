@@ -1422,6 +1422,10 @@ typedef enum _ENH_PS_MODES
 #define EVENT_PS_AWAKE 0x0000000a
 /** Card Event definition : Power save sleep */
 #define EVENT_PS_SLEEP 0x0000000b
+#ifdef CONFIG_WNM_PS
+/** Card Event definition : WNM power save */
+#define EVENT_WNM_PS 0x00000096
+#endif
 /** Card Event definition : MIC error multicast */
 #define EVENT_MIC_ERR_MULTICAST 0x0000000d
 /** Card Event definition : MIC error unicast */
@@ -2774,6 +2778,36 @@ typedef MLAN_PACK_START struct __auto_ds_param
     t_u16 deep_sleep_timeout;
 } MLAN_PACK_END auto_ds_param;
 
+#ifdef CONFIG_WNM_PS
+/** Structure definition for the wnm power save command */
+typedef MLAN_PACK_START struct __wnm_ps_param
+{
+    /** 0: enable WNM Sleep Mode, 1: disable WNM Sleep Mode */
+    t_u8 action;
+    /** Null packet interval */
+    t_u16 null_pkt_interval;
+    /** becaon miss interval */
+    t_u16 bcn_miss_timeout;
+    /** local listen interval */
+    t_u16 local_listen_interval;
+    /** mode - (0x01 - firmware to automatically choose PS_POLL or NULL mode, 0x02 - PS_POLL, 0x03 - NULL mode ) */
+    t_u16 ps_mode;
+    /** Delay to PS in milliseconds */
+    t_u16 delay_to_ps;
+    /** WNM sleep interval */
+    t_u16 wnm_sleep_interval;
+} MLAN_PACK_END wnm_ps_param;
+
+/** Structure definition for the wnm power save result */
+typedef MLAN_PACK_START struct __wnm_ps_result
+{
+    /** 0: enable WNM Sleep Mode, 1: disable WNM Sleep Mode */
+    t_u8 action;
+    /** 0: successful; 1: fail */
+    t_u8 result;
+} MLAN_PACK_END wnm_ps_result;
+#endif
+
 /** Structure definition for sleep confirmation in the new ps command */
 typedef struct __sleep_confirm_param
 {
@@ -2806,6 +2840,11 @@ typedef struct _auto_ps_param
 /** TLV type : ps param */
 #define TLV_TYPE_PS_PARAM (PROPRIETARY_TLV_BASE_ID + 0x72U) // 0x0172
 
+#ifdef CONFIG_WNM_PS
+/** TLV type : wnm param */
+#define TLV_TYPE_WNM_PARAM (PROPRIETARY_TLV_BASE_ID + 0x158) // 0x0258
+#endif
+
 /** MrvlIEtypes_auto_ds_param_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_auto_ds_param_t
 {
@@ -2823,6 +2862,17 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ps_param_t
     /** ps param */
     ps_param param;
 } MLAN_PACK_END MrvlIEtypes_ps_param_t;
+
+#ifdef CONFIG_WNM_PS
+/** MrvlIEtypes_wnm_ps_param_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_wnm_ps_param_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** wnm ps param */
+    wnm_ps_param param;
+} MLAN_PACK_END MrvlIEtypes_wnm_ps_param_t;
+#endif
 
 /** Structure definition for new power save command */
 typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
@@ -2853,6 +2903,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
         t_u16 ps_bitmap;
         /** auto ps param */
         auto_ps_param auto_ps;
+#ifdef CONFIG_WNM_PS
+        /** wnm ps param */
+        wnm_ps_param param;
+#endif
     } params;
 } MLAN_PACK_END HostCmd_DS_802_11_PS_MODE_ENH;
 

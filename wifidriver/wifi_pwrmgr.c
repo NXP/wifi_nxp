@@ -181,14 +181,36 @@ int wifi_send_power_save_command(ENH_PS_MODES action, int ps_bitmap, mlan_bss_ty
     return (int)status;
 }
 
+#ifdef CONFIG_WNM_PS
+int wifi_enter_ieee_power_save(bool wnm_is_set, t_u16 wnm_sleep_time)
+#else
 int wifi_enter_ieee_power_save(void)
+#endif
 {
-    return wifi_send_power_save_command(EN_AUTO_PS, (int)BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+#ifdef CONFIG_WNM_PS
+    if (wnm_is_set == true)
+    {
+        ((mlan_private *)mlan_adap->priv[0])->wnm_set = true;
+        t_u16 interval                                = wnm_sleep_time;
+        return wifi_send_power_save_command(EN_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, &interval);
+    }
+    else
+    {
+#endif
+        return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+#ifdef CONFIG_WNM_PS
+    }
+#endif
 }
 
 int wifi_exit_ieee_power_save(void)
 {
-    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+#ifdef CONFIG_WNM_PS
+    if (((mlan_private *)mlan_adap->priv[0])->wnm_set == true)
+        return wifi_send_power_save_command(DIS_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+    else
+#endif
+        return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
 
 int wifi_enter_deepsleep_power_save(void)
@@ -250,7 +272,19 @@ void send_sleep_confirm_command(mlan_bss_type interface)
     ps_cfm_sleep->action              = (t_u16)SLEEP_CONFIRM;
     ps_cfm_sleep->sleep_cfm.resp_ctrl = (t_u16)RESP_NEEDED;
 
-    (void)wifi_wait_for_cmdresp(NULL);
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* If driver did not send out sleep confirm in the expected time,
+       FW would switch to awake and send out PS AWAKE event.
+       After received AWAKE event when presleep, state would switch to AWAKE.
+       So here only send out sleep confirm when state is presleep,
+       and would not send out sleep confirm if state has switched to AWAKE */
+    if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
+#endif
+        (void)wifi_wait_for_cmdresp(NULL);
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    else
+        (void)wifi_put_command_lock();
+#endif
 }
 
 /* fixme: accept HostCmd_DS_COMMAND directly */
@@ -291,7 +325,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 mrvl_tlv =
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
             *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
+#endif
             pwr_d("Enabled Deep Sleep mode");
             deepsleepps_enabled = true;
         }
@@ -314,7 +350,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 "%u %u",
                 ps_tlv->param.null_pkt_interval, ps_tlv->param.multiple_dtims, ps_tlv->param.local_listen_interval,
                 ps_tlv->param.bcn_miss_timeout, ps_tlv->param.delay_to_ps, ps_tlv->param.mode);
-            *ps_event      = (t_u16)WIFI_EVENT_IEEE_PS;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+            *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
+#endif
             ieeeps_enabled = true;
         }
         result = WIFI_EVENT_REASON_SUCCESS;
@@ -337,6 +375,45 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         }
         result = WIFI_EVENT_REASON_SUCCESS;
     }
+#ifdef CONFIG_WNM_PS
+    else if (ps_mode->action == EN_WNM_PS)
+    {
+        if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_STA_PS) != 0)
+        {
+            mrvl_tlv = (MrvlIEtypesHeader_t *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
+            pwr_d("ps_enh_response: bitmap = 0x%x, type = 0x%x\n", ps_mode->params.auto_ps.ps_bitmap, mrvl_tlv->type);
+            if (((mlan_private *)mlan_adap->priv[0])->wnm_set == true)
+            {
+                pwr_d("Enable WNM PS mode, wait for the enable success event");
+            }
+            else
+            {
+                /* Do nothing */
+            }
+        }
+        result = WIFI_EVENT_REASON_SUCCESS;
+    }
+    else if (ps_mode->action == DIS_WNM_PS)
+    {
+        if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0)
+        {
+            if (((mlan_private *)mlan_adap->priv[0])->wnm_set == true)
+            {
+                pwr_d(
+                    "Disabled WNM power "
+                    "save mode");
+                *ps_event                                     = WIFI_EVENT_WNM_PS;
+                ((mlan_private *)mlan_adap->priv[0])->wnm_set = false;
+            }
+            else
+            {
+                /* Do nothing */
+            }
+        }
+
+        result = WIFI_EVENT_REASON_SUCCESS;
+    }
+#endif
     else if (ps_mode->action == GET_PS)
     {
         if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0)
@@ -370,6 +447,13 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     }
     else if (ps_mode->action == SLEEP_CONFIRM)
     {
+        wcmdr_d("#");
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        if (ieeeps_enabled || deepsleepps_enabled)
+        {
+            mlan_adap->ps_state = PS_STATE_SLEEP;
+        }
+#else
         if (ieeeps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
@@ -378,10 +462,40 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         {
             *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
         }
+#endif
+#ifdef CONFIG_WNM_PS
+        else if (((mlan_private *)mlan_adap->priv[0])->wnm_set)
+        {
+            *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
+        }
+#endif
         else
         {
             return WIFI_EVENT_REASON_FAILURE;
         }
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        if (ieeeps_enabled || deepsleepps_enabled
+#ifdef CONFIG_WNM_PS
+            || (((mlan_private *)mlan_adap->priv[0])->wnm_set)
+#endif
+        )
+        {
+            /* sleep confirm response needs to get the sleep_rwlock, for this lock
+             * is an indication that host needs to wakeup FW when reader (cmd/tx)
+             * could not get the sleep_rwlock */
+            int ret = os_rwlock_write_lock(&sleep_rwlock, OS_WAIT_FOREVER);
+            if (ret == WM_SUCCESS)
+            {
+                wcmdr_d("Get sleep rw lock successfully");
+            }
+            else
+            {
+                pwr_e("Failed to get sleep rw lock");
+                return WIFI_EVENT_REASON_FAILURE;
+            }
+        }
+#endif
 
         result = WIFI_EVENT_REASON_SUCCESS;
     }

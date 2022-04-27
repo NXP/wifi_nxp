@@ -56,9 +56,14 @@ static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
 int wlan_set_wwsm_txpwrlimit(void);
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
 static bool wlan_is_ieeeps_active(void);
+#endif
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
+#else
 static int ps_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
-
+#endif
 #ifdef CONFIG_WPA2_ENTP
 extern int wpa2_ent_connect(struct wlan_network *wpa2_network);
 extern void wpa2_shutdown();
@@ -67,7 +72,11 @@ extern void wpa2_shutdown();
 #ifdef CONFIG_WMSTATS
 struct wm_stats g_wm_stats;
 #endif /* CONFIG_WMSTATS */
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+os_rw_lock_t sleep_rwlock;
+#else
 os_rw_lock_t ps_rwlock;
+#endif
 
 #ifdef CONFIG_WPS2
 int wps_session_attempt;
@@ -112,7 +121,9 @@ enum cm_sta_state
     CM_STA_REQUESTING_ADDRESS,
     CM_STA_OBTAINING_ADDRESS,
     CM_STA_CONNECTED,
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     CM_STA_DEEP_SLEEP,
+#endif
 };
 
 enum cm_uap_state
@@ -266,6 +277,10 @@ static struct
     bool cm_deepsleepps_configured : 1;
     bool connect_wakelock_taken : 1;
     unsigned int wakeup_conditions;
+#ifdef CONFIG_WNM_PS
+    bool wnm_is_set;
+    t_u16 wnm_sleep_time;
+#endif
     wifi_fw_version_ext_t fw_ver_ext;
 
 #ifdef CONFIG_WLAN_FAST_PATH
@@ -319,8 +334,10 @@ static char *dbg_sta_state_name(enum cm_sta_state state)
             return "obtaining address";
         case CM_STA_CONNECTED:
             return "connected";
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
         case CM_STA_DEEP_SLEEP:
             return "deep sleep";
+#endif
         default:
             return "unknown";
     }
@@ -552,6 +569,8 @@ static void wlan_host_sleep_and_sleep_confirm(void)
         g_req_sl_confirm = 1;
         return;
     }
+
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     ret = os_rwlock_write_lock(&ps_rwlock, OS_NO_WAIT);
     if (ret != WM_SUCCESS)
     {
@@ -560,13 +579,17 @@ static void wlan_host_sleep_and_sleep_confirm(void)
         g_req_sl_confirm = 1;
         return;
     }
+#endif
+
     if (wlan.hs_configured)
     {
         ret = wlan_send_host_sleep(wlan.hs_wakeup_condition);
         if ((ret != WM_SUCCESS) || (!(is_uap_started()) && !(is_state(CM_STA_CONNECTED))))
         {
             g_req_sl_confirm = 1;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
             os_rwlock_write_unlock(&ps_rwlock);
+#endif
             return;
         }
     }
@@ -579,6 +602,16 @@ static void wlan_host_sleep_and_sleep_confirm(void)
     send_sleep_confirm_command((mlan_bss_type)type);
 
     g_req_sl_confirm = 0;
+
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+    if ((os_rwlock_write_lock(&ps_rwlock, OS_NO_WAIT)) != WM_SUCCESS)
+    {
+        /* Couldn't get the semaphore, someone has already taken
+         * it. */
+        g_req_sl_confirm = 1;
+        return;
+    }
+#endif
 }
 
 static void wlan_send_sleep_confirm(void)
@@ -608,7 +641,11 @@ begin:
         case IEEEPS_INIT:
             if (event == IEEEPS_EVENT_ENABLE)
             {
+#ifdef CONFIG_WNM_PS
+                (void)wifi_enter_ieee_power_save(wlan.wnm_is_set, wlan.wnm_sleep_time);
+#else
                 (void)wifi_enter_ieee_power_save();
+#endif
             }
 
             if (event == IEEEPS_EVENT_ENABLE_DONE)
@@ -620,7 +657,9 @@ begin:
         case IEEEPS_CONFIGURING:
             if (event == IEEEPS_EVENT_AWAKE)
             {
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
                 (void)os_rwlock_write_lock(&ps_rwlock, OS_WAIT_FOREVER);
+#endif
                 next_state = IEEEPS_AWAKE;
             }
             if (event == IEEEPS_EVENT_SLEEP)
@@ -638,7 +677,9 @@ begin:
             if (event == IEEEPS_EVENT_ENTER)
             {
                 // wakelock_get(WL_ID_WIFI_AWAKE_IEEEPS);
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
                 os_rwlock_write_unlock(&ps_rwlock);
+#endif
                 wlan.cm_ps_state = PS_STATE_AWAKE;
             }
 
@@ -674,9 +715,11 @@ begin:
             {
                 g_req_sl_confirm = 0;
                 next_state       = IEEEPS_DISABLING;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
                 os_rwlock_write_unlock(&ps_rwlock);
                 // wakelock_put(WL_ID_WIFI_AWAKE_IEEEPS);
                 wlan_wake_up_card();
+#endif
             }
             break;
         case IEEEPS_SLEEP:
@@ -695,8 +738,10 @@ begin:
             {
                 /* We already sent the sleep confirm but it appears that
                  * the firmware is still up */
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
                 // wakelock_get(WL_ID_WIFI_AWAKE_IEEEPS);
                 os_rwlock_write_unlock(&ps_rwlock);
+#endif
                 next_state = IEEEPS_PRE_SLEEP;
             }
 
@@ -710,10 +755,18 @@ begin:
                 {
                     next_state = IEEEPS_DISABLING;
                 }
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
                 os_rwlock_write_unlock(&ps_rwlock);
+#endif
             }
             break;
         case IEEEPS_PRE_DISABLE:
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            if (event == IEEEPS_EVENT_ENTER)
+            {
+                next_state = IEEEPS_DISABLING;
+            }
+#else
             if (event == IEEEPS_EVENT_ENTER)
             {
                 wlan_wake_up_card();
@@ -723,6 +776,7 @@ begin:
             {
                 next_state = IEEEPS_DISABLING;
             }
+#endif
 
             break;
         case IEEEPS_DISABLING:
@@ -791,6 +845,9 @@ begin:
         case DEEPSLEEPPS_AWAKE:
             if (event == DEEPSLEEPPS_EVENT_ENTER)
             {
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+                os_rwlock_write_unlock(&ps_rwlock);
+#endif
                 wlan.cm_ps_state = PS_STATE_AWAKE;
             }
 
@@ -807,6 +864,15 @@ begin:
 
             if (event == DEEPSLEEPPS_EVENT_SLP_CFM)
             {
+                g_req_sl_confirm = 0;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+                if (os_rwlock_write_lock(&ps_rwlock, OS_NO_WAIT) != WM_SUCCESS)
+                {
+                    /* Couldn't get the semaphore, someone has already taken
+                     * it. */
+                    g_req_sl_confirm = 1;
+                }
+#endif
                 // wakelock_put(WL_ID_DEEPSLEEP_SM);
                 next_state = DEEPSLEEPPS_SLEEP;
             }
@@ -820,10 +886,17 @@ begin:
             if (event == DEEPSLEEPPS_EVENT_DISABLE)
             {
                 next_state = DEEPSLEEPPS_PRE_DISABLE;
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+                os_rwlock_write_unlock(&ps_rwlock);
+#endif
             }
 
             break;
         case DEEPSLEEPPS_PRE_DISABLE:
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            if (event == DEEPSLEEPPS_EVENT_ENTER)
+                next_state = DEEPSLEEPPS_DISABLING;
+#else
             if (event == DEEPSLEEPPS_EVENT_ENTER)
             {
                 // wakelock_get(WL_ID_DEEPSLEEP_SM);
@@ -834,6 +907,7 @@ begin:
             {
                 next_state = DEEPSLEEPPS_DISABLING;
             }
+#endif
 
             break;
         case DEEPSLEEPPS_DISABLING:
@@ -1271,10 +1345,12 @@ static bool is_sta_connecting(void)
 /* Check whether we are allowed to start a user-requested scan right now. */
 static bool is_scanning_allowed(void)
 {
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured)
     {
         return false;
     }
+#endif
     return (is_state(CM_STA_IDLE) || is_state(CM_STA_CONNECTED));
 }
 
@@ -1907,11 +1983,19 @@ static void wlan_disable_power_save(int action)
     {
         case WLAN_DEEP_SLEEP:
             wlcm_d("stopping deep sleep ps mode");
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            wifi_exit_deepsleep_power_save();
+#else
             wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_DISABLE);
+#endif
             break;
         case WLAN_IEEE:
             wlcm_d("stopping IEEE ps mode");
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            wifi_exit_ieee_power_save();
+#else
             wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
+#endif
             break;
     }
 }
@@ -1921,23 +2005,37 @@ static void wlan_enable_power_save(int action)
     switch (action)
     {
         case WLAN_DEEP_SLEEP:
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
             if (!is_state(CM_STA_IDLE))
             {
                 wlcm_d("entering deep sleep mode");
                 break;
             }
+#endif
             wlcm_d("starting deep sleep ps mode");
             wlan.cm_deepsleepps_configured = true;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            (void)wifi_enter_deepsleep_power_save();
+#else
             /* Enter Deep Sleep power save mode */
-            wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_ENABLE);
+            (void)wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_ENABLE);
+#endif
             break;
         case WLAN_IEEE:
             wlcm_d("starting IEEE ps mode");
             wlan.cm_ieeeps_configured = true;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+#ifdef CONFIG_WNM_PS
+            (void)wifi_enter_ieee_power_save(wlan.wnm_is_set, wlan.wnm_sleep_time);
+#else
+            (void)wifi_enter_ieee_power_save();
+#endif
+#else
             /* Enter IEEE power save mode
              * via the state machine
              */
-            wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE);
+            (void)wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE);
+#endif
             break;
     }
 }
@@ -1957,6 +2055,12 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        if (action == DIS_AUTO_PS)
+        {
+            wlan.cm_ieeeps_configured = false;
+        }
+#else
         if (action == EN_AUTO_PS)
         {
             wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE_DONE);
@@ -1986,6 +2090,7 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
         else
         { /* Do Nothing */
         }
+#endif
     }
 }
 
@@ -1996,6 +2101,12 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        if (action == DIS_AUTO_PS)
+        {
+            wlan.cm_deepsleepps_configured = false;
+        }
+#else
         if (action == EN_AUTO_PS)
         {
             wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_ENABLE_DONE);
@@ -2040,8 +2151,48 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
         else
         { /* Do Nothing */
         }
+#endif
     }
 }
+
+#ifdef CONFIG_WNM_PS
+static void wlcm_process_wnmps_event(struct wifi_message *msg)
+{
+    uint16_t action = (uint16_t)((uint32_t)msg->data);
+    wlcm_d("got msg data :: %x", action);
+
+    if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
+    {
+        wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)(msg->data);
+        wlcm_d("WNM ps event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
+        if ((wnm_sleep_result->action == 0) && (wnm_sleep_result->result == 0))
+        {
+            wlcm_d("WNM enable success event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
+            wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE_DONE);
+        }
+        else if ((wnm_sleep_result->action == 0) && (wnm_sleep_result->result == 1))
+        {
+            wlcm_d("WNM enable fail event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
+            wlan.wnm_is_set = false;
+        }
+        else if (action == DIS_WNM_PS)
+        {
+            wlan.wnm_is_set           = false;
+            wlan.cm_ieeeps_configured = false;
+            wlan.cm_ps_state          = PS_STATE_AWAKE;
+            ps_sleep_cb_sent          = false;
+            CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
+            /* This sends event to state machine
+             * to finally set state to init*/
+            wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE_DONE);
+        }
+        else
+        {
+            /* Do nothing */
+        }
+    }
+}
+#endif
 
 #define WL_ID_STA_DISCONN "sta_disconnected"
 
@@ -2683,11 +2834,13 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #ifdef CONFIG_WPA2_ENTP
     wpa2_tls_cleanup(network, false);
 #endif
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     if (wlan.cm_ieeeps_configured)
     {
         /* disable ieeeps mode*/
         wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
     }
+#endif
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
 #endif
@@ -2721,12 +2874,14 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             if (wlan.sta_ipv6_state != CM_STA_CONNECTED)
             {
 #endif
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
                 if (wlan.cm_ieeeps_configured)
                 {
                     /* if dhcp address fails,
                      * disable ieeeps mode*/
                     wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
                 }
+#endif
 
                 // wlan_disconnect();
 #ifdef CONFIG_WLAN_FAST_PATH
@@ -3275,9 +3430,15 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifdef CONFIG_WPS2
         (!wps_session_attempt) &&
 #endif
-        (wlan.sta_state < CM_STA_IDLE || is_state(CM_STA_IDLE) || is_state(CM_STA_DEEP_SLEEP)))
+        (wlan.sta_state < CM_STA_IDLE || is_state(CM_STA_IDLE)
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
+         || is_state(CM_STA_DEEP_SLEEP)
+#endif
+             ))
     {
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
         (void)os_rwlock_read_unlock(&ps_rwlock);
+#endif
         wifi_set_xfer_pending(false);
         // wakelock_put(WL_ID_STA_DISCONN);
         return;
@@ -3348,7 +3509,9 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         // wakelock_put(WL_ID_CONNECT);
         wlan.connect_wakelock_taken = false;
     }
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     (void)os_rwlock_read_unlock(&ps_rwlock);
+#endif
     wifi_set_xfer_pending(false);
     // wakelock_put(WL_ID_STA_DISCONN);
 }
@@ -3368,6 +3531,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
 
     (void)wlan_set_pmfcfg((t_u8)new_network->security.mfpc, (t_u8)new_network->security.mfpr);
 
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     if (is_state(CM_STA_DEEP_SLEEP))
     {
         /* Release the connect scan lock as scanning is not allowed,
@@ -3381,6 +3545,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
         }
         return;
     }
+#endif
 
     if (wlan.sta_state >= CM_STA_ASSOCIATING)
     {
@@ -3595,8 +3760,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
         case WIFI_EVENT_SLEEP:
             wlcm_d("got event: sleep");
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
+#else
             wlan_ieeeps_sm(IEEEPS_EVENT_SLEEP);
             wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_SLEEP);
+#endif
             break;
         case WIFI_EVENT_AWAKE:
             wlcm_d("got event: awake");
@@ -3613,6 +3782,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             wlcm_process_deepsleep_event(msg, &next);
             break;
+#ifdef CONFIG_WNM_PS
+        case WIFI_EVENT_WNM_PS:
+            wlcm_d("got event: WNM ps result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+            wlcm_process_wnmps_event(msg);
+            break;
+#endif
         /* fixme : This will be removed later
          * We do not allow HS config without IEEEPS */
         case WIFI_EVENT_HS_CONFIG:
@@ -3796,7 +3971,11 @@ static void copy_network(struct wlan_network *dst, struct wlan_network *src)
     }
 }
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time)
+#else
 static int ps_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time)
+#endif
 {
     int ret = os_semaphore_get(&(plock->rw_lock), 0);
     if (ret == -WM_FAIL)
@@ -3825,7 +4004,17 @@ int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size)
     wm_mbedtls_lib_init();
 #endif /* CONFIG_HOST_PMK */
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    ret = os_rwlock_create_with_cb(&sleep_rwlock, "sleep_mutex", "sleep_rwlock", wifi_wakeup_card_cb);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Create sleep cmd lock failed");
+        return ret;
+    }
+#else
     ret = os_rwlock_create_with_cb(&ps_rwlock, "ps_mutex", "ps_lock", ps_wakeup_card_cb);
+#endif
+
     ret = wifi_init(fw_ram_start_addr, size);
     if (ret != 0)
     {
@@ -3879,7 +4068,11 @@ void wlan_deinit(int action)
         wlcm_deinit(action);
     }
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_delete(&sleep_rwlock);
+#else
     os_rwlock_delete(&ps_rwlock);
+#endif
 }
 
 #ifdef CONFIG_WPA2_ENTP
@@ -3971,6 +4164,11 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.cm_ieeeps_configured = false;
 
     wlan.cm_deepsleepps_configured = false;
+
+#ifdef CONFIG_WNM_PS
+    wlan.wnm_is_set     = false;
+    wlan.wnm_sleep_time = 0;
+#endif
 
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
@@ -4632,12 +4830,14 @@ int wlan_disconnect(void)
 
     // wakelock_get(WL_ID_STA_DISCONN);
 
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     int ret = os_rwlock_read_lock(&ps_rwlock, OS_WAIT_FOREVER);
     if (ret != WM_SUCCESS)
     {
         // wakelock_put(WL_ID_STA_DISCONN);
         return ret;
     }
+#endif
 
     (void)send_user_request(CM_STA_USER_REQUEST_DISCONNECT, 0);
     return WM_SUCCESS;
@@ -4698,6 +4898,7 @@ int wlan_start_network(const char *name)
         return -WM_E_INVAL;
     }
 
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     if (wlan_is_ieeeps_active())
     {
         wlcm_w("Station in IEEE Power Save, UAP cannot be started");
@@ -4709,6 +4910,7 @@ int wlan_start_network(const char *name)
         wlcm_w("Station in Deepsleep, UAP cannot be started");
         return WLAN_ERROR_STATE;
     }
+#endif
 
     if (is_uap_started() != 0)
     {
@@ -5027,6 +5229,7 @@ int wlan_get_connection_state(enum wlan_connection_state *state)
     return WM_SUCCESS;
 }
 
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
 static bool wlan_is_ieeeps_active(void)
 {
     if (wlan.ieeeps_state >= IEEEPS_CONFIGURING && wlan.ieeeps_state < IEEEPS_PRE_DISABLE)
@@ -5049,6 +5252,7 @@ static bool wlan_is_deepsleepps_active(void)
         return false;
     }
 }
+#endif
 
 int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
 {
@@ -5059,6 +5263,14 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
 
     *ps_mode = WLAN_ACTIVE;
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    if (wlan.cm_ieeeps_configured && wlan.cm_deepsleepps_configured)
+        *ps_mode = WLAN_IEEE_DEEP_SLEEP;
+    else if (wlan.cm_deepsleepps_configured)
+        *ps_mode = WLAN_DEEP_SLEEP;
+    else if (wlan.cm_ieeeps_configured)
+        *ps_mode = WLAN_IEEE;
+#else
     if (wlan_is_deepsleepps_active())
     {
         *ps_mode = WLAN_DEEP_SLEEP;
@@ -5067,6 +5279,7 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
     {
         *ps_mode = WLAN_IEEE;
     }
+#endif
     else
     { /* Do Nothing */
     }
@@ -5208,7 +5421,12 @@ void wlan_configure_null_pkt_interval(int time_in_secs)
 {
     wifi_configure_null_pkt_interval((unsigned int)time_in_secs);
 }
+
+#ifdef CONFIG_WNM_PS
+int wlan_ieeeps_on(unsigned int wakeup_conditions, bool wnm_set, t_u16 wnm_sleep_time)
+#else
 int wlan_ieeeps_on(unsigned int wakeup_conditions)
+#endif
 {
     if (!wlan.running)
     {
@@ -5224,12 +5442,32 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
     {
         return WLAN_ERROR_PS_ACTION;
     }
-    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured)
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    if (wlan.cm_ieeeps_configured
+#else
+    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured
+#endif
+#ifdef CONFIG_WNM_PS
+        || wlan.wnm_is_set
+#endif
+    )
     {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        wlcm_e("ieee ps already enabled: %d", wlan.cm_ieeeps_configured);
+#endif
         return WLAN_ERROR_STATE;
     }
 
     wlan.wakeup_conditions = wakeup_conditions;
+
+#ifdef CONFIG_WNM_PS
+    if (wnm_set == 1)
+    {
+        wlan.wnm_is_set     = true;
+        wlan.wnm_sleep_time = wnm_sleep_time;
+        return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
+    }
+#endif
 
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, (int)WLAN_IEEE);
 }
@@ -5240,8 +5478,15 @@ int wlan_ieeeps_off(void)
     {
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, (int)WLAN_IEEE);
     }
+#ifdef CONFIG_WNM_PS
+    else if (wlan.wnm_is_set)
+        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_IEEE);
+#endif
     else
     {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        wlcm_e("ieee ps not enabled yet: %d", wlan.cm_ieeeps_configured);
+#endif
         return WLAN_ERROR_STATE;
     }
 }
@@ -5262,16 +5507,28 @@ int wlan_deepsleepps_on(void)
     {
         return WLAN_ERROR_PS_ACTION;
     }
-
-    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured)
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    if (wlan.cm_deepsleepps_configured
+#else
+    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured
+#endif
+#ifdef CONFIG_WNM_PS
+        || wlan.wnm_is_set
+#endif
+    )
     {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        wlcm_e("deep sleep ps already enabled: %d", wlan.cm_deepsleepps_configured);
+#endif
         return WLAN_ERROR_STATE;
     }
 
+#ifndef CONFIG_WIFIDRIVER_PS_LOCK
     if (is_state(CM_STA_CONNECTED))
     {
         return WLAN_ERROR_STATE;
     }
+#endif
 
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, (int)WLAN_DEEP_SLEEP);
 }
@@ -5284,6 +5541,9 @@ int wlan_deepsleepps_off(void)
     }
     else
     {
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        wlcm_e("deep sleep ps not enabled yet: %d", wlan.cm_deepsleepps_configured);
+#endif
         return WLAN_ERROR_STATE;
     }
 }

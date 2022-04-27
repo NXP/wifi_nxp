@@ -653,6 +653,9 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     (void)__memcpy(pmadapter, pmadapter->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
     pmadapter->bcn_miss_time_out  = DEFAULT_BCN_MISS_TIMEOUT;
     pmadapter->adhoc_awake_period = 0;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    pmadapter->ps_state = PS_STATE_AWAKE;
+#endif
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef STA_SUPPORT
     (void)__memset(pmadapter, &pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));

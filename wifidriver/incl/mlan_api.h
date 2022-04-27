@@ -128,7 +128,11 @@ extern int wifi_11d_country;
 extern int wps_session_attempt;
 #endif
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+extern os_rw_lock_t sleep_rwlock;
+#else
 extern os_rw_lock_t ps_rwlock;
+#endif
 
 #ifdef CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
