@@ -389,7 +389,7 @@ static void wm_netif_status_callback(struct netif *n)
         /* If a valid non-default dhcp address is provided */
         event_flag_dhcp_connection = DHCP_SUCCESS;
     }
-    else if (is_dhcp_address && (is_default_dhcp_address))
+    else if (is_dhcp_address)
     {
         /* If the supplied dhcp address is the default address */
         event_flag_dhcp_connection = DHCP_FAILED;

@@ -2562,14 +2562,11 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
     prate_cfg = (HostCmd_DS_TX_RATE_CFG *)&(resp->params.tx_rate_cfg);
 
-    tlv_buf = (t_u8 *)((t_u8 *)prate_cfg) + sizeof(HostCmd_DS_TX_RATE_CFG);
-    if (tlv_buf != NULL)
-    {
-        tlv_buf_len = *(t_u16 *)(void *)(tlv_buf + sizeof(t_u16));
-        tlv_buf_len = wlan_le16_to_cpu(tlv_buf_len);
-    }
+    tlv_buf     = (t_u8 *)((t_u8 *)prate_cfg) + sizeof(HostCmd_DS_TX_RATE_CFG);
+    tlv_buf_len = *(t_u16 *)(void *)(tlv_buf + sizeof(t_u16));
+    tlv_buf_len = wlan_le16_to_cpu(tlv_buf_len);
 
-    while (tlv_buf != MNULL && tlv_buf_len > 0U)
+    while (tlv_buf_len > 0U)
     {
         tlv = (*tlv_buf);
         tlv = tlv | (*(tlv_buf + 1) << 8);

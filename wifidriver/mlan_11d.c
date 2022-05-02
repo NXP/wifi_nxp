@@ -463,7 +463,7 @@ static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, mlan_band_def band, t_u8 
     /* Locate the first_chan */
     for (i = 0; i < cfp_no; i++)
     {
-        if (cfp != MNULL && ((cfp + i)->channel == first_chan))
+        if ((cfp + i)->channel == first_chan)
         {
             PRINTM(MINFO, "11D: first_chan found\n");
             break;

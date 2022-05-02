@@ -1971,7 +1971,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
                 ret             = MLAN_STATUS_SUCCESS;
                 /* Bitmap of OFDM rates */
             }
-            else if ((rate_index >= MLAN_RATE_INDEX_OFDM0) && (rate_index <= MLAN_RATE_INDEX_OFDM7))
+            else if (rate_index <= MLAN_RATE_INDEX_OFDM7)
             {
                 bitmap_rates[1] = (t_u16)(1 << (rate_index - MLAN_RATE_INDEX_OFDM0));
                 ret             = MLAN_STATUS_SUCCESS;

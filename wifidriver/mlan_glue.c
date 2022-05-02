@@ -1598,7 +1598,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
     int i;
     const MrvlIEtypes_sta_info_t *si =
         (MrvlIEtypes_sta_info_t *)(void *)(((t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
-    for (i = 0; i < c && i < MAX_NUM_CLIENTS; i++)
+    for (i = 0; i < c; i++)
     {
         if ((si[i].rssi & 0x80) != 0)
         {

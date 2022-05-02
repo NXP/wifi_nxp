@@ -2980,7 +2980,7 @@ static int wlan_count_priv_cond(mlan_adapter *pmadapter,
         pmpriv = pmadapter->priv[i];
         if (pmpriv != MNULL)
         {
-            if ((check_cond == MNULL) || (check_cond != MNULL && check_cond(pmpriv)))
+            if ((check_cond == MNULL) || check_cond(pmpriv))
             {
                 if (count_cond(pmpriv))
                 {
@@ -3023,7 +3023,7 @@ static int wlan_do_task_on_privs(mlan_adapter *pmadapter,
         pmpriv = pmadapter->priv[i];
         if (pmpriv != MNULL)
         {
-            if ((check_cond == MNULL) || (check_cond != MNULL && check_cond(pmpriv)))
+            if ((check_cond == MNULL) || check_cond(pmpriv))
             {
                 operation(pmpriv);
                 count++;

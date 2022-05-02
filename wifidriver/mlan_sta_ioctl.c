@@ -1115,7 +1115,9 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
 #endif /* CONFIG_MLAN_WMSDK */
     }
 
+#ifndef CONFIG_MLAN_WMSDK
     if (ret == MLAN_STATUS_SUCCESS)
+#endif /* CONFIG_MLAN_WMSDK */
         ret = MLAN_STATUS_PENDING;
 
 start_ssid_done:
@@ -1657,10 +1659,7 @@ static mlan_status wlan_power_ioctl_set_power(IN pmlan_adapter pmadapter, IN pml
         ret = MLAN_STATUS_PENDING;
     }
 
-    if (buf != MNULL)
-    {
-        (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
-    }
+    (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
 
 exit:
     LEAVE();
@@ -1806,10 +1805,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     }
     if (ret == MLAN_STATUS_FAILURE)
     {
-        if (buf != MNULL)
-        {
-            (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
-        }
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
         goto exit;
     }
 
@@ -1819,10 +1815,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     {
         ret = MLAN_STATUS_PENDING;
     }
-    if (buf != MNULL)
-    {
-        (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
-    }
+    (void)pcb->moal_mfree(pmadapter->pmoal_handle, buf);
 
 exit:
     LEAVE();
@@ -5434,10 +5427,8 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             break;
 #endif // WLAN_LOW_POWER_ENABLE
         default:
-            if (pioctl_req != NULL)
-            {
-                pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
-            }
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+
             status = MLAN_STATUS_FAILURE;
             break;
     }

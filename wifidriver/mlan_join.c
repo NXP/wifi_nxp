@@ -1192,6 +1192,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Need to indicate IOCTL complete */
     if (pioctl_req != MNULL)
     {
+#ifndef CONFIG_MLAN_WMSDK
         if (ret != MLAN_STATUS_SUCCESS)
         {
             if (passoc_rsp->status_code != 0U)
@@ -1205,8 +1206,11 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         }
         else
         {
+#endif /* CONFIG_MLAN_WMSDK */
             pioctl_req->status_code = MLAN_ERROR_NO_ERROR;
+#ifndef CONFIG_MLAN_WMSDK
         }
+#endif /* CONFIG_MLAN_WMSDK */
     }
 
     LEAVE();

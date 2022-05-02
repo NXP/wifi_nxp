@@ -2654,10 +2654,7 @@ static int wifi_config_mgmt_ie(
             if (index != MGMT_RSN_IE || index != MGMT_VENDOR_SPECIFIC_221 || index != MGMT_WPA_IE ||
                 index != MGMT_WPS_IE)
             {
-                if (buf != NULL)
-                {
-                    os_mem_free(buf);
-                }
+                os_mem_free(buf);
                 return -WM_FAIL;
             }
 
@@ -2681,10 +2678,7 @@ static int wifi_config_mgmt_ie(
 
             if (mgmt_ie_index < 0)
             {
-                if (buf != NULL)
-                {
-                    os_mem_free(buf);
-                }
+                os_mem_free(buf);
                 return -WM_FAIL;
             }
 
@@ -2746,10 +2740,7 @@ static int wifi_config_mgmt_ie(
         *ie_len = ie_ptr->ie_length;
     }
 
-    if (buf != NULL)
-    {
-        os_mem_free(buf);
-    }
+    os_mem_free(buf);
 
     if ((action == HostCmd_ACT_GEN_SET) && *ie_len)
     {

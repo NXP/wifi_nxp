@@ -246,10 +246,6 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
     {
         case WLAN_SECURITY_WPA:
         case WLAN_SECURITY_WPA2:
-            if (argc < 1)
-            {
-                return 1;
-            }
             /* copy the PSK phrase */
             sec->psk_len = (char)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)

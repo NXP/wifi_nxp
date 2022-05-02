@@ -2881,10 +2881,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     if (ret != MLAN_STATUS_SUCCESS || (pscan_chan_list == MNULL))
     {
         PRINTM(MERROR, "Failed to allocate scan_chan_list\n");
-        if (pscan_cfg_out != MNULL)
-        {
-            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
-        }
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
         if (pioctl_req != MNULL)
         {
             pioctl_req->status_code = MLAN_ERROR_NO_MEM;
@@ -2903,14 +2900,8 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     if (ret != MLAN_STATUS_SUCCESS)
     {
         PRINTM(MERROR, "Failed to setup scan config\n");
-        if (pscan_cfg_out != MNULL)
-        {
-            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
-        }
-        if (pscan_chan_list != MNULL)
-        {
-            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
-        }
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
         if (pioctl_req != MNULL)
         {
             pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
@@ -2954,15 +2945,8 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         }
 #endif /* CONFIG_MLAN_WMSDK */
     }
-    if (pscan_cfg_out != MNULL)
-    {
-        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
-    }
-
-    if (pscan_chan_list != MNULL)
-    {
-        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
-    }
+    (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
+    (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
 
     LEAVE();
     return ret;
@@ -4200,7 +4184,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
      * Loop through the table until the maximum is reached or until a match
      *   is found based on the bssid field comparison
      */
-    for (i = 0; i < pmadapter->num_in_scan_table && ((bssid == MNULL) || ((bssid != MNULL) && net < 0)); i++)
+    for (i = 0; i < pmadapter->num_in_scan_table && (bssid == MNULL || net < 0); i++)
     {
         if (!wlan_ssid_cmp(pmadapter, &pmadapter->pscan_table[i].ssid, ssid) &&
             ((bssid == MNULL) ||

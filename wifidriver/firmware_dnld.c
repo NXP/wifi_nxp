@@ -145,7 +145,7 @@ static int32_t wlan_download_normal_fw(enum wlan_fw_storage_type st,
         txlen = len;
 
         /* Set blocksize to transfer - checking for last block */
-        if (firmwarelen && (firmwarelen - offset) < txlen)
+        if ((firmwarelen - offset) < txlen)
         {
             txlen = firmwarelen - offset;
         }

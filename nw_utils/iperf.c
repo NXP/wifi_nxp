@@ -824,8 +824,7 @@ static void cmd_iperf(int argc, char **argv)
             {
                 (void)inet_aton(argv[arg], &bind_address);
 
-                if (IP_IS_V4(&bind_address) != 0)
-                    info.bhost = 1;
+                info.bhost = 1;
 
                 if (ip_addr_ismulticast(&bind_address))
                     multicast = true;
