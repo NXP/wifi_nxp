@@ -317,12 +317,7 @@ static void dump_wlan_add_usage(void)
         "    ip:<ip_addr>,<gateway_ip>,<netmask>\r\n");
     (void)PRINTF(
         "    role uap [bssid <bssid>]\r\n"
-///TODO: To be removed once ACS related fix is added in firmware.
-#if defined(IW61x)
         "    channel <channelnumber>\r\n");
-#else
-        "    [channel <channelnumber>]\r\n");
-#endif
     (void)PRINTF("    [wpa2 <secret>] [wpa3 sae <secret>]\r\n");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #ifdef CONFIG_WIFI_DTIM_PERIOD
@@ -565,15 +560,6 @@ void test_wlan_add(int argc, char **argv)
         (void)PRINTF("Error: specify at least the SSID or BSSID\r\n");
         return;
     }
-///TODO: To be removed once ACS related fix is added in firmware.
-#if defined(IW61x)
-    if (info.role && (!info.channel || !network.channel))
-    {
-        dump_wlan_add_usage();
-        (void)PRINTF("Error: Please specify a non-zero channel id for uAP.\r\n");
-        return;
-    }
-#endif
 
     if ((network.security.type == WLAN_SECURITY_WPA2) || (network.security.type == WLAN_SECURITY_WPA3_SAE))
     {

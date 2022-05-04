@@ -97,24 +97,33 @@ int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
     mlan_ds_11ac_vht_cfg vht_cfg;
 
     memset(&vht_cfg, 0, sizeof(vht_cfg));
-    vht_cfg.band         = BAND_SELECT_A;
+#ifdef CONFIG_5GHz_SUPPORT
+    vht_cfg.band         = BAND_SELECT_A | BAND_SELECT_BG;
+#else
+    vht_cfg.band         = BAND_SELECT_BG;
+#endif
     vht_cfg.txrx         = MLAN_RADIO_TXRX;
+
     vht_cfg.vht_cap_info = pmadapter->usr_dot_11ac_dev_cap_a;
     if (action == MLAN_ACT_DISABLE)
     {
-        vht_cfg.bwcfg = MFALSE;
+        vht_cfg.bwcfg = BW_FOLLOW_HTCAP;
         vht_cfg.vht_cap_info &= ~VHT_CAP_11AC_MASK;
         vht_cfg.vht_rx_mcs = vht_cfg.vht_tx_mcs = 0xffff;
         vht_cfg.skip_usr_11ac_mcs_cfg           = MTRUE;
     }
     else
     {
-        vht_cfg.bwcfg = MTRUE;
+        /// TODO: BW_FOLLOW_HTCAP follows 11N BW setting. Later on check for BW_FOLLOW_VHTCAP
+        vht_cfg.bwcfg = BW_FOLLOW_HTCAP;
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
         vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
         vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
         vht_cfg.skip_usr_11ac_mcs_cfg = MTRUE;
     }
+    if(GET_VHTCAP_MAXMPDULEN(vht_cfg.vht_cap_info) != 0U)
+        RESET_11ACMAXMPDULEN(vht_cfg.vht_cap_info);
+
     PRINTM(MCMND, "Uap:11ac=%d vht_cap_info=0x%x, vht_tx_mcs=0x%x, vht_rx_mcs=0x%x\n", action, vht_cfg.vht_cap_info,
            vht_cfg.vht_tx_mcs, vht_cfg.vht_rx_mcs);
     ret = wlan_11ac_ioctl_vhtcfg(pmpriv, MLAN_ACT_SET, &vht_cfg);
@@ -447,6 +456,7 @@ int wifi_cmd_uap_config(char *ssid,
                 else
 #endif
                 {
+                    bss.param.bss_config.chan_list[i].band_config_type = 0x10;
                     (void)memcpy(bss.param.bss_config.rates, rates_2ghz, sizeof(rates_2ghz));
                 }
             }
