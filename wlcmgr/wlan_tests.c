@@ -317,7 +317,7 @@ static void dump_wlan_add_usage(void)
         "    ip:<ip_addr>,<gateway_ip>,<netmask>\r\n");
     (void)PRINTF(
         "    role uap [bssid <bssid>]\r\n"
-        "    channel <channelnumber>\r\n");
+        "    [channel <channelnumber>]\r\n");
     (void)PRINTF("    [wpa2 <secret>] [wpa3 sae <secret>]\r\n");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #ifdef CONFIG_WIFI_DTIM_PERIOD
