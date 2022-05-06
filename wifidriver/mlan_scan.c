@@ -1779,8 +1779,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 pbss_entry->overlap_bss_offset      = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
                 HEXDUMP("InterpretIE: Resp HTCAP_IE", (t_u8 *)pbss_entry->poverlap_bss_scan_param,
                         (*(pbss_entry->poverlap_bss_scan_param)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
-#endif /* CONFIG_MLAN_WMSDK */
                 break;
+#endif /* CONFIG_MLAN_WMSDK */
 #ifdef CONFIG_11AX
             case EXTENSION:
                 pext_tlv = (IEEEtypes_Extension_t *)pcurrent_ptr;

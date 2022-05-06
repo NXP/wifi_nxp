@@ -151,7 +151,6 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
         default:
             wifi_e("Incorrect register type");
             return -WM_FAIL;
-            break;
     }
 
     (void)wifi_get_command_lock();
