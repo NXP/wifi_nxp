@@ -1999,14 +1999,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
             case HostCmd_CMD_802_11_KEY_MATERIAL:
-                if (resp->result == 0U)
-                {
-                    result = WIFI_EVENT_REASON_SUCCESS;
-                }
-                else
-                {
-                    result = WIFI_EVENT_REASON_FAILURE;
-                }
                 break;
             case HostCmd_CMD_MAC_REG_ACCESS:
             {

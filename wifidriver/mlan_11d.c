@@ -1186,7 +1186,6 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
 
         /* Set band */
         pmadapter->universal_channel[i].band = BAND_A;
-        i++;
     }
 #endif /* CONFIG_5GHz_SUPPORT */
 

@@ -1570,8 +1570,6 @@ int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index
     (void)memset(&sec, 0x00, sizeof(mlan_ds_sec_cfg));
     sec.sub_command = MLAN_OID_SEC_CFG_ENCRYPT_KEY;
 
-    sec.param.encrypt_key.key_flags = KEY_FLAG_TX_SEQ_VALID | KEY_FLAG_RX_SEQ_VALID;
-
     sec.param.encrypt_key.key_flags = KEY_FLAG_AES_MCAST_IGTK;
     sec.param.encrypt_key.key_index = key_index;
 
