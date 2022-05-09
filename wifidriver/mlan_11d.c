@@ -181,7 +181,7 @@ static t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
  *  @return                     MTRUE or MFALSE
  */
 static t_u8 wlan_11d_channel_known(pmlan_adapter pmadapter,
-                                   mlan_band_def band,
+                                   t_u16 band,
                                    t_u8 chan,
                                    parsed_region_chan_11d_t *parsed_region_chan)
 {
@@ -420,20 +420,20 @@ static mlan_status wlan_11d_update_chan_pwr_table(mlan_private *pmpriv, BSSDescr
  *
  *  @return           MTRUE or MFALSE
  */
-static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, mlan_band_def band, t_u8 first_chan, t_u8 no_of_chan, t_u8 *chan)
+static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, t_u16 band, t_u8 first_chan, t_u8 no_of_chan, t_u8 *chan)
 {
     chan_freq_power_t *cfp = MNULL;
     t_u8 i;
     t_u8 cfp_no = 0;
 
     ENTER();
-    if ((band & (mlan_band_def)(BAND_B | BAND_G | BAND_GN)) != 0U)
+    if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
     {
         cfp    = (chan_freq_power_t *)channel_freq_power_UN_BG;
         cfp_no = sizeof(channel_freq_power_UN_BG) / sizeof(chan_freq_power_t);
     }
 #ifdef CONFIG_5GHz_SUPPORT
-    else if ((band & (mlan_band_def)(BAND_A | BAND_AN)) != 0U)
+    else if ((band & (BAND_A | BAND_AN)) != 0U)
     {
         cfp    = channel_freq_power_UN_AJ;
         cfp_no = sizeof(channel_freq_power_UN_AJ) / sizeof(chan_freq_power_t);
@@ -643,7 +643,7 @@ static mlan_status wlan_11d_send_domain_info(mlan_private *pmpriv, t_void *pioct
  *  @return                 MLAN_STATUS_SUCCESS
  */
 static mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
-                                            mlan_band_def band,
+                                            t_u16 band,
                                             t_u8 country_code[COUNTRY_CODE_LEN],
                                             t_u8 num_sub_band,
                                             IEEEtypes_SubbandSet_t *sub_band_list)
@@ -979,7 +979,7 @@ mlan_status wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
  */
 mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
                                        IEEEtypes_CountryInfoFullSet_t *country_info,
-                                       mlan_band_def band,
+                                       t_u16 band,
                                        parsed_region_chan_11d_t *parsed_region_chan)
 {
     t_u8 no_of_sub_band, no_of_chan;
@@ -1066,7 +1066,7 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
  *
  *  @return             Channel frequency
  */
-t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def band)
+t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u16 band)
 {
     chan_freq_power_t *cf;
     t_u16 cnt;
@@ -1077,7 +1077,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def ban
 
 #ifdef CONFIG_5GHz_SUPPORT
     /* Get channel-frequency-power trios */
-    if ((band & (mlan_band_def)(BAND_A | BAND_AN)) != 0)
+    if ((band & (BAND_A | BAND_AN)) != 0)
     {
         cf  = channel_freq_power_UN_AJ;
         cnt = sizeof(channel_freq_power_UN_AJ) / sizeof(chan_freq_power_t);
@@ -1112,7 +1112,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def ban
  *
  *  @return             MLAN_STATUS_SUCCESS
  */
-mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band)
+mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, t_u16 band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_u16 size              = (t_u16)sizeof(chan_freq_power_t);
@@ -1122,7 +1122,7 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
 
     (void)__memset(pmadapter, pmadapter->universal_channel, 0, sizeof(pmadapter->universal_channel));
 
-    if ((band & (mlan_band_def)(BAND_B | BAND_G | BAND_GN)) != 0U)
+    if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
     /* If band B, G or N */
     {
         /* Set channel-frequency-power */
@@ -1149,10 +1149,10 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
 
 #ifdef CONFIG_5GHz_SUPPORT
 #ifdef CONFIG_11AC
-    if ((band & (mlan_band_def)(BAND_A | BAND_AN | BAND_AAC)) != 0U)
+    if ((band & (BAND_A | BAND_AN | BAND_AAC)) != 0U)
     {
 #else
-    if ((band & (mlan_band_def)(BAND_A | BAND_AN)) != 0U)
+    if ((band & (BAND_A | BAND_AN)) != 0U)
     {
 #endif
         /* If band A */
@@ -1188,7 +1188,7 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, mlan_band_def band
  *  @return                     PASSIVE if chan is unknown; ACTIVE if chan is known
  */
 mlan_scan_type wlan_11d_get_scan_type(mlan_private *pmpriv,
-                                      mlan_band_def band,
+                                      t_u16 band,
                                       t_u8 chan,
                                       parsed_region_chan_11d_t *parsed_region_chan)
 {
@@ -1249,7 +1249,7 @@ mlan_status wlan_11d_clear_parsedtable(mlan_private *pmpriv)
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, mlan_band_def band)
+mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = pmpriv->adapter;
@@ -1531,10 +1531,7 @@ done:
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv,
-                                            mlan_band_def band,
-                                            t_u8 *domain_tlv,
-                                            t_void *pioctl_buf)
+mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u16 band, t_u8 *domain_tlv, t_void *pioctl_buf)
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     mlan_adapter *pmadapter = pmpriv->adapter;

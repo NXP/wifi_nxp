@@ -223,9 +223,9 @@ static t_u8 is_wpa_oui_present(mlan_adapter *pmadapter, BSSDescriptor_t *pbss_de
  *  @return          Band type conversion of scanBand used in join/assoc cmds
  *
  */
-static mlan_band_def radio_type_to_band(t_u8 radio_type)
+static t_u16 radio_type_to_band(t_u8 radio_type)
 {
-    mlan_band_def ret_band;
+    t_u16 ret_band;
 
     switch (radio_type)
     {
@@ -251,19 +251,19 @@ static mlan_band_def radio_type_to_band(t_u8 radio_type)
  *  @return  matched: non-zero. unmatched: 0
  *
  */
-static t_u8 wlan_is_band_compatible(mlan_band_def cfg_band, mlan_band_def scan_band)
+static t_u8 wlan_is_band_compatible(t_u16 cfg_band, t_u16 scan_band)
 {
-    mlan_band_def band;
+    t_u16 band;
     switch (scan_band)
     {
         case BAND_A:
-            band = (mlan_band_def)(BAND_A | BAND_AN | BAND_AAC);
+            band = (BAND_A | BAND_AN | BAND_AAC);
             break;
         case BAND_G:
         default:
-            band = (mlan_band_def)(BAND_B | BAND_G | BAND_GN | BAND_GAC);
+            band = (BAND_B | BAND_G | BAND_GN | BAND_GAC);
     }
-    return (t_u8)(cfg_band & band);
+    return (cfg_band & band);
 }
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -3070,7 +3070,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     chan_freq_power_t *cfp;
     MrvlIEtypes_ChanBandListParamSet_t *pchan_band_tlv = MNULL;
     ChanBandParamSet_t *pchan_band;
-    mlan_band_def band;
+    t_u16 band;
     bool is_bgscan_resp;
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
@@ -3437,7 +3437,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     MrvlIEtypes_Data_t *ptlv                    = MNULL;
     MrvlIEtypes_Bss_Scan_Rsp_t *pscan_rsp_tlv   = MNULL;
     MrvlIEtypes_Bss_Scan_Info_t *pscan_info_tlv = MNULL;
-    mlan_band_def band;
+    t_u16 band;
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
 

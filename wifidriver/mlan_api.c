@@ -2257,7 +2257,7 @@ int wifi_set_domain_params(wifi_domain_param_t *dp)
 
     (void)memcpy((void *)&d_cfg.param.domain_info.country_code, (const void *)dp->country_code, COUNTRY_CODE_LEN);
 
-    d_cfg.param.domain_info.band = (mlan_band_def)(BAND_B | BAND_G);
+    d_cfg.param.domain_info.band = (BAND_B | BAND_G);
 
 #ifdef CONFIG_11N
     d_cfg.param.domain_info.band |= BAND_GN;

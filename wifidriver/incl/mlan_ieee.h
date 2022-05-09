@@ -1618,7 +1618,7 @@ typedef struct _BSSDescriptor_t
      * BAND_G(0x02): 'g' band
      * BAND_A(0X04): 'a' band
      */
-    mlan_band_def bss_band;
+    t_u16 bss_band;
 
     /** TSF timestamp from the current firmware TSF */
     t_u64 network_tsf;

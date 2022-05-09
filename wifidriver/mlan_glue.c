@@ -106,7 +106,7 @@ void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_nu
 
 void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len);
-int wrapper_wlan_set_regiontable(t_u8 region, mlan_band_def band);
+int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band);
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
@@ -3751,7 +3751,7 @@ int wifi_get_scan_result_count(unsigned *count)
     return WM_SUCCESS;
 }
 
-int wrapper_wlan_set_regiontable(t_u8 region, mlan_band_def band)
+int wrapper_wlan_set_regiontable(t_u8 region, t_u16 band)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     mlan_status rv       = wlan_set_regiontable(pmpriv, region, band);

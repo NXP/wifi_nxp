@@ -425,9 +425,9 @@ typedef PACK_START struct _wifi_ed_mac_ctrl_t
 typedef PACK_START struct _wifi_bandcfg_t
 {
     /** Infra band */
-    mlan_band_def config_bands;
+    t_u16 config_bands;
     /** fw supported band */
-    mlan_band_def fw_bands;
+    t_u16 fw_bands;
 } PACK_END wifi_bandcfg_t;
 
 #ifdef SD8801

@@ -303,7 +303,7 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     (void)wifi_get_uap_channel(NULL);
 
-    mlan_band_def band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
+    t_u16 band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
 
     if (pmpriv->support_11d_APIs != NULL)
     {

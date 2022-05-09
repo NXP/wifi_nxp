@@ -1047,45 +1047,42 @@ typedef struct _mlan_ds_custom_reg_domain
 /** Radio Control Group */
 /*-----------------------------------------------------------------*/
 /** Enumeration for band */
-typedef enum _mlan_band_def
-{
-    BAND_0                   = 0,
-    BAND_B                   = 1,
-    BAND_G                   = 2,
-    BAND_G_B                 = BAND_G | BAND_B,
-    BAND_A                   = 4,
-    BAND_A_B                 = BAND_A | BAND_B,
-    BAND_A_G                 = BAND_A | BAND_G,
-    BAND_A_B_G               = BAND_A | BAND_B | BAND_G,
-    BAND_GN                  = 8,
-    BAND_G_GN                = BAND_G | BAND_GN,
-    BAND_B_G_GN              = BAND_B | BAND_G | BAND_GN,
-    BAND_AN                  = 16,
-    BAND_A_AN                = BAND_A | BAND_AN,
-    BAND_A_G_AN_GN           = BAND_A | BAND_G | BAND_AN | BAND_GN,
-    BAND_A_B_G_GN_AN         = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN,
-    BAND_GAC                 = 32,
-    BAND_GN_GAC              = BAND_GN | BAND_GAC,
-    BAND_G_GN_GAC            = BAND_G | BAND_GN | BAND_GAC,
-    BAND_B_G_GN_GAC          = BAND_B | BAND_G | BAND_GN | BAND_GAC,
-    BAND_AAC                 = 64,
-    BAND_A_AN_AAC            = BAND_A | BAND_AN | BAND_AAC,
-    BAND_A_G_AN_GN_AAC       = BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC,
-    BAND_A_B_G_GN_AN_AAC     = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC,
-    BAND_A_B_G_GN_AN_AAC_GAC = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC,
+#define BAND_0         0U
+#define BAND_B         1U
+#define BAND_G         2U
+#define BAND_G_B       (BAND_G | BAND_B)
+#define BAND_A         4U
+#define BAND_A_B       (BAND_A | BAND_B)
+#define BAND_A_G       (BAND_A | BAND_G)
+#define BAND_A_B_G     (BAND_A | BAND_B | BAND_G)
+#define BAND_GN        8U
+#define BAND_G_GN      (BAND_G | BAND_GN)
+#define BAND_B_G_GN    (BAND_B | BAND_G | BAND_GN)
+#define BAND_AN        16U
+#define BAND_A_AN      (BAND_A | BAND_AN)
+#define BAND_A_G_AN_GN (BAND_A | BAND_G | BAND_AN | BAND_GN)
+#define BAND_A_B_G_GN_AN          (BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN
+#define BAND_GAC                 32U
+#define BAND_GN_GAC              (BAND_GN | BAND_GAC)
+#define BAND_G_GN_GAC            (BAND_G | BAND_GN | BAND_GAC)
+#define BAND_B_G_GN_GAC          (BAND_B | BAND_G | BAND_GN | BAND_GAC)
+#define BAND_AAC                 64U
+#define BAND_A_AN_AAC            (BAND_A | BAND_AN | BAND_AAC)
+#define BAND_A_G_AN_GN_AAC       (BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC)
+#define BAND_A_B_G_GN_AN_AAC     (BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC)
+#define BAND_A_B_G_GN_AN_AAC_GAC (BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC)
 #ifdef CONFIG_11AX
-    BAND_GAX                 = 256,
-    BAND_GN_GAC_GAX          = BAND_GN | BAND_GAC | BAND_GAX,
-    BAND_G_GN_GAC_GAX        = BAND_G | BAND_GN | BAND_GAC | BAND_GAX,
-    BAND_B_G_GN_GAC_GAX      = BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX,
-    BAND_AAX                 = 512,
-    BAND_A_AN_AAC_AAX        = BAND_A | BAND_AN | BAND_AAC | BAND_AAX,
-    BAND_A_G_AN_GN_AAC_AAX   = BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC | BAND_AAX,
-    BAND_A_B_G_GN_AN_AAC_AAX = BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_AAX,
-    BAND_A_B_G_GN_AN_AAC_GAC_AAX_GAX =
-        BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC | BAND_AAX | BAND_GAX
+#define BAND_GAX                 256U
+#define BAND_GN_GAC_GAX          (BAND_GN | BAND_GAC | BAND_GAX)
+#define BAND_G_GN_GAC_GAX        (BAND_G | BAND_GN | BAND_GAC | BAND_GAX)
+#define BAND_B_G_GN_GAC_GAX      (BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX)
+#define BAND_AAX                 512U
+#define BAND_A_AN_AAC_AAX        (BAND_A | BAND_AN | BAND_AAC | BAND_AAX)
+#define BAND_A_G_AN_GN_AAC_AAX   (BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC | BAND_AAX)
+#define BAND_A_B_G_GN_AN_AAC_AAX (BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_AAX)
+#define BAND_A_B_G_GN_AN_AAC_GAC_AAX_GAX \
+    (BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC | BAND_AAX | BAND_GAX)
 #endif
-} mlan_band_def;
 
 /** NO secondary channel */
 #define NO_SEC_CHANNEL 0
@@ -1102,15 +1099,15 @@ typedef enum _mlan_band_def
 typedef struct _mlan_ds_band_cfg
 {
     /** Infra band */
-    mlan_band_def config_bands;
+    t_u16 config_bands;
     /** Ad-hoc start band */
-    mlan_band_def adhoc_start_band;
+    t_u16 adhoc_start_band;
     /** Ad-hoc start channel */
     t_u32 adhoc_channel;
     /** Ad-hoc channel bandwidth */
     t_u32 sec_chan_offset;
     /** fw supported band */
-    mlan_band_def fw_bands;
+    t_u16 fw_bands;
 } mlan_ds_band_cfg;
 
 /** Type definition of mlan_ds_remain_chan for MLAN_OID_REMAIN_CHAN_CFG */
@@ -1382,7 +1379,7 @@ typedef struct _mlan_fw_info
     /** Device support for MIMO abstraction of MCSs */
     t_u8 hw_dev_mcs_support;
     /** fw supported band */
-    mlan_band_def fw_bands;
+    t_u16 fw_bands;
 } mlan_fw_info, *pmlan_fw_info;
 
 /** Version string buffer length */
@@ -1981,7 +1978,7 @@ typedef enum _mlan_vht_ldpc
 typedef struct _mlan_band_data_rate
 {
     /** Band configuration */
-    mlan_band_def config_bands;
+    t_u16 config_bands;
     /** BSS mode (Infra or IBSS) */
     mlan_bss_mode bss_mode;
 } mlan_band_data_rate;
@@ -2917,7 +2914,7 @@ typedef struct _mlan_ds_11d_domain_info
     /** Country Code */
     t_u8 country_code[COUNTRY_CODE_LEN];
     /** Band that channels in sub_band belong to */
-    mlan_band_def band;
+    t_u16 band;
     /** No. of subband in below */
     t_u8 no_of_sub_band;
     /** Subband data to send/last sent */

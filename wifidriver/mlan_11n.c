@@ -578,7 +578,7 @@ static TxBAStreamTbl *wlan_11n_get_txbastream_status(mlan_private *priv, baStatu
  *
  *  @return             N/A
  */
-static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, mlan_band_def bands)
+static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u16 bands)
 {
     mlan_adapter *pmadapter = priv->adapter;
     t_u32 usr_dot_11n_dev_cap;
@@ -700,7 +700,7 @@ static void wlan_fill_cap_info(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap,
  *
  *  @return             N/A
  */
-void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, mlan_band_def bands)
+void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u16 bands)
 {
     mlan_adapter *pmadapter = priv->adapter;
     int rx_mcs_supp;
@@ -1173,7 +1173,7 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
 #endif
     num_cfp = pmadapter->region_channel[0].num_cfp;
 
-    if ((pbss_desc->bss_band & (mlan_band_def)(BAND_B | BAND_G)) && pmadapter->region_channel[0].valid)
+    if ((pbss_desc->bss_band & (BAND_B | BAND_G)) && pmadapter->region_channel[0].valid)
     {
         for (i = 0; i < num_cfp; i++)
         {

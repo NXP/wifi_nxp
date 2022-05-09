@@ -2998,7 +2998,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 #ifdef STA_SUPPORT
     if ((IS_SUPPORT_MULTI_BANDS(pmadapter)) != 0U)
     {
-        pmadapter->fw_bands = (mlan_band_def)GET_FW_DEFAULT_BANDS(pmadapter);
+        pmadapter->fw_bands = (t_u16)GET_FW_DEFAULT_BANDS(pmadapter);
 #ifndef CONFIG_5GHz_SUPPORT
         /* fixme: Re-check if this is the correct way to disable 5 GHz. */
         pmadapter->fw_bands &= ~(BAND_A | BAND_AN | BAND_AAC);
@@ -3046,7 +3046,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
         }
         if ((pmadapter->fw_bands & BAND_AN) != 0U)
         {
-            pmadapter->adhoc_start_band  = (mlan_band_def)(BAND_A | BAND_AN);
+            pmadapter->adhoc_start_band  = (BAND_A | BAND_AN);
             pmadapter->adhoc_11n_enabled = MTRUE;
         }
         else
@@ -3057,13 +3057,13 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
     else if ((pmadapter->fw_bands & BAND_GN) != 0U)
     {
-        pmadapter->adhoc_start_band  = (mlan_band_def)(BAND_G | BAND_B | BAND_GN);
+        pmadapter->adhoc_start_band  = (BAND_G | BAND_B | BAND_GN);
         pmpriv->adhoc_channel        = DEFAULT_AD_HOC_CHANNEL;
         pmadapter->adhoc_11n_enabled = MTRUE;
     }
     else if ((pmadapter->fw_bands & BAND_G) != 0U)
     {
-        pmadapter->adhoc_start_band = (mlan_band_def)(BAND_G | BAND_B);
+        pmadapter->adhoc_start_band = (BAND_G | BAND_B);
         pmpriv->adhoc_channel       = DEFAULT_AD_HOC_CHANNEL;
     }
     else if ((pmadapter->fw_bands & BAND_B) != 0U)
