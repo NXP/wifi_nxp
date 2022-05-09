@@ -366,18 +366,18 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     {
         return ERR_MEM;
     }
-    uint8_t *outbuf = wifi_wmm_get_outbuf(&outbuf_len, pkt_prio);
+    uint8_t *wmm_outbuf = wifi_wmm_get_outbuf(&outbuf_len, pkt_prio);
 #else
-    uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
+    uint8_t *wmm_outbuf = wifi_get_outbuf(&outbuf_len);
 #endif
-    if (outbuf == NULL)
+    if (wmm_outbuf == NULL)
     {
         return ERR_MEM;
     }
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
-    (void)memset(outbuf, 0x00, pkt_len);
+    (void)memset(wmm_outbuf, 0x00, pkt_len);
 
     for (q = p; q != NULL; q = q->next)
     {
@@ -390,11 +390,11 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
                 vTaskDelay((3000U) / portTICK_RATE_MS);
             }
         }
-        (void)memcpy((u8_t *)outbuf + pkt_len, (u8_t *)q->payload, q->len);
+        (void)memcpy((u8_t *)wmm_outbuf + pkt_len, (u8_t *)q->payload, q->len);
         pkt_len += q->len;
     }
 
-    ret = wifi_low_level_output(ethernetif->interface, outbuf + sizeof(TxPD) + INTF_HEADER_LEN,
+    ret = wifi_low_level_output(ethernetif->interface, wmm_outbuf + sizeof(TxPD) + INTF_HEADER_LEN,
                                 pkt_len - sizeof(TxPD) - INTF_HEADER_LEN
 #ifdef CONFIG_WMM
                                 ,

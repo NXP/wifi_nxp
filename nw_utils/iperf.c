@@ -720,7 +720,7 @@ static void cmd_iperf(int argc, char **argv)
     {
         unsigned help : 1;
         unsigned udp : 1;
-        unsigned bind : 1;
+        unsigned iperf_bind : 1;
         unsigned bhost : 1;
         unsigned abort : 1;
         unsigned server : 1;
@@ -799,10 +799,10 @@ static void cmd_iperf(int argc, char **argv)
                 info.chost = 1;
             }
         }
-        else if (!info.bind && string_equal("-B", argv[arg]))
+        else if (!info.iperf_bind && string_equal("-B", argv[arg]))
         {
             arg += 1;
-            info.bind = 1;
+            info.iperf_bind = 1;
 
             if (!info.bhost && argv[arg] != NULL)
             {
@@ -903,16 +903,16 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
          && !info.ipv6
 #endif
-         && (!info.bind || !info.bhost)) ||
+         && (!info.iperf_bind || !info.bhost)) ||
         ((info.dual || info.tradeoff) && !info.client) || (info.dual && info.tradeoff) || (info.dserver && !info.server)
 #ifdef CONFIG_IPV6
-        || (info.ipv6 && info.bind)
+        || (info.ipv6 && info.iperf_bind)
 #endif
     )
     {
         (void)PRINTF("Incorrect usage\r\n");
 #ifdef CONFIG_IPV6
-        if (info.ipv6 && info.bind)
+        if (info.ipv6 && info.iperf_bind)
             (void)PRINTF("IPv6: bind to host not allowed\r\n");
         else if (info.ipv6 && (IP_IS_V4(&server_address)))
             (void)PRINTF("IPv6: Address family for host not supported\r\n");
@@ -922,7 +922,7 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
                 && !info.ipv6
 #endif
-                && (!info.bind || !info.bhost))
+                && (!info.iperf_bind || !info.bhost))
             (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
         display_iperf_usage();
         return;
