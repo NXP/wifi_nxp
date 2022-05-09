@@ -1846,10 +1846,10 @@ static void test_wlan_host_sleep(int argc, char **argv)
 }
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
-u8_t resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 /* Command taken from Robust_btc.conf*/
-u8_t cmd_buf[] = {0xe0, 0,    0x18, 0, 0x29, 0, 0,    0, 0x01, 0,    0, 0,
-                  0x38, 0x02, 0x08, 0, 0x05, 0, 0x01, 0, 0x02, 0x01, 0, 0x01};
+u8_t host_cmd_buf[] = {0xe0, 0,    0x18, 0, 0x29, 0, 0,    0, 0x01, 0,    0, 0,
+                       0x38, 0x02, 0x08, 0, 0x05, 0, 0x01, 0, 0x02, 0x01, 0, 0x01};
 
 static void test_wlan_send_hostcmd(int argc, char **argv)
 {
@@ -1857,14 +1857,15 @@ static void test_wlan_send_hostcmd(int argc, char **argv)
     uint32_t reqd_len = 0;
     uint32_t len;
 
-    ret = wlan_send_hostcmd(cmd_buf, sizeof(cmd_buf) / sizeof(u8_t), resp_buf, HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
+    ret = wlan_send_hostcmd(host_cmd_buf, sizeof(host_cmd_buf) / sizeof(u8_t), host_cmd_resp_buf,
+                            HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
 
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Hostcmd success, response is");
         for (len = 0; len < reqd_len; len++)
         {
-            (void)PRINTF("%x\t", resp_buf[len]);
+            (void)PRINTF("%x\t", host_cmd_resp_buf[len]);
         }
     }
     else
@@ -2058,15 +2059,16 @@ static void test_wlan_eu_validation(int argc, char **argv)
 
     cmd_eu_buf[10] = value;
 
-    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(u8_t), resp_buf, HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
+    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(u8_t), host_cmd_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
+                            &reqd_len);
 
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Hostcmd success, response is");
         for (ret = 0; ret < reqd_len; ret++)
         {
-            (void)PRINTF("%x\t", resp_buf[ret]);
-            resp_buf[ret] = 0;
+            (void)PRINTF("%x\t", host_cmd_resp_buf[ret]);
+            host_cmd_resp_buf[ret] = 0;
         }
     }
     else

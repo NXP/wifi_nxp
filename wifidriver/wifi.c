@@ -69,7 +69,7 @@ bool sta_ampdu_tx_enable = true;
 bool sta_ampdu_rx_enable = true;
 #endif
 
-int retry_attempts;
+int retry_attempt_count;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
 
@@ -1625,7 +1625,7 @@ void wifi_deinit(void)
 
 void wifi_set_packet_retry_count(const int count)
 {
-    retry_attempts = count;
+    retry_attempt_count = count;
 }
 
 #ifdef CONFIG_STA_AMPDU_TX
@@ -1954,7 +1954,7 @@ int wifi_low_level_output(const uint8_t interface,
 #ifdef CONFIG_WMM
     struct bus_message msg;
 #else
-    int retry = retry_attempts;
+    int retry = retry_attempt_count;
     mlan_status i;
 #endif
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];

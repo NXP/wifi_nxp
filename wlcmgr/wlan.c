@@ -6667,9 +6667,9 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 #endif
 
 int wlan_send_hostcmd(
-    void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
+    void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
 {
-    if ((cmd_buf == NULL) || (resp_buf == NULL) || (reqd_resp_len == NULL))
+    if ((cmd_buf == NULL) || (host_resp_buf == NULL) || (reqd_resp_len == NULL))
     {
         return (int)WM_E_NOMEM;
     }
@@ -6678,7 +6678,7 @@ int wlan_send_hostcmd(
         return (int)WM_E_INVAL;
     }
 
-    return wifi_send_hostcmd(cmd_buf, cmd_buf_len, resp_buf, resp_buf_len, reqd_resp_len);
+    return wifi_send_hostcmd(cmd_buf, cmd_buf_len, host_resp_buf, resp_buf_len, reqd_resp_len);
 }
 
 #ifdef CONFIG_11AX

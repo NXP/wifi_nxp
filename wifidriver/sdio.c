@@ -51,19 +51,9 @@ SDK_ALIGN(uint8_t inbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], BOAR
 SDK_ALIGN(uint8_t inbuf[2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 #endif /*CONFIG_SDIO_MULTI_PORT_RX_AGGR*/
 
-t_u32 ioport_g = 0;
+extern void set_ioport_inmlan(t_u32 port);
 
-/**
- * Function to set mlan ioport.
- * A weak definition of this is added here for compilation of
- * bt ble apps/non wifi apps
- * This funciton is defined in wifi-sdio.c as of this writing
- * for wifi files.
- */
-__attribute__((weak)) void set_ioport_inmlan(t_u32 port)
-{
-    return;
-}
+t_u32 ioport_g = 0;
 
 uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len)
 {
@@ -268,16 +258,4 @@ mlan_status sdio_ioport_init(void)
     wlan_sdio_init_ioport();
 
     return MLAN_STATUS_SUCCESS;
-}
-
-/**
- * Interrupt callback handler registered with the SDIO driver.
- * A weak definition of this is added here for compilation of
- * bt ble apps/non wifi apps
- * This funciton is defined in wifi-sdio.c as of this writing
- * for wifi files.
- */
-__attribute__((weak)) void handle_cdint(int error)
-{
-    return;
 }

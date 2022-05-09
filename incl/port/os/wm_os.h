@@ -1272,7 +1272,7 @@ typedef enum os_timer_reload
 /**
  * OS Timer Activate Options
  */
-typedef enum os_timer_activate
+typedef enum os_timer_activation
 {
     /** Start the timer on creation. */
     OS_TIMER_AUTO_ACTIVATE,

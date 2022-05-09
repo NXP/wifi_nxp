@@ -3303,7 +3303,7 @@ int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
  */
 
 int wlan_send_hostcmd(
-    void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
+    void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
 
 #ifdef CONFIG_11AX
 /**

@@ -52,12 +52,12 @@ static void wlan_card_fw_status(t_u16 *dat)
     *dat |= (t_u16)((resp & 0xff) << 8);
 }
 
-static bool wlan_card_ready_wait(t_u32 poll)
+static bool wlan_card_ready_wait(t_u32 card_poll)
 {
     t_u16 dat;
     int i;
 
-    for (i = 0; i < poll; i++)
+    for (i = 0; i < card_poll; i++)
     {
         (void)wlan_card_fw_status(&dat);
         if (dat == FIRMWARE_READY)
