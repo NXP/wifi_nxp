@@ -698,7 +698,8 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode\r\n");
-    (void)PRINTF("\t   -D             Do a bidirectional UDP test simultaneously and with -d from external iperf client\r\n");
+    (void)PRINTF(
+        "\t   -D             Do a bidirectional UDP test simultaneously and with -d from external iperf client\r\n");
     (void)PRINTF("\tClient specific:\r\n");
     (void)PRINTF("\t   -c    <host>   run in client mode, connecting to <host>\r\n");
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
@@ -923,7 +924,9 @@ static void cmd_iperf(int argc, char **argv)
                 && !info.ipv6
 #endif
                 && (!info.iperf_bind || !info.bhost))
+        {
             (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
+        }
         display_iperf_usage();
         return;
     }

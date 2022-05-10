@@ -388,8 +388,8 @@ static int handle_input(char *handle_inbuf)
                 }
                 else if (stat.inQuote && stat.inArg)
                 {
-                    stat.inArg   = 0;
-                    stat.inQuote = 0;
+                    stat.inArg      = 0;
+                    stat.inQuote    = 0;
                     handle_inbuf[i] = '\0';
                 }
                 else
@@ -406,7 +406,7 @@ static int handle_input(char *handle_inbuf)
                 }
                 if (!stat.inQuote && stat.inArg)
                 {
-                    stat.inArg = 0;
+                    stat.inArg      = 0;
                     handle_inbuf[i] = '\0';
                 }
                 break;
@@ -487,6 +487,7 @@ static void tab_complete(char *tab_inbuf, unsigned int *bp)
             }
             n++;
         }
+        i++;
     }
 
     /* there's only one match, so complete the line */
@@ -550,8 +551,8 @@ static int get_input(char *get_inbuf, unsigned int *bp)
                 {
                     /* Num. keypad ENTER */
                     get_inbuf[*bp] = '\0';
-                    *bp        = 0;
-                    state      = BASIC_KEY;
+                    *bp            = 0;
+                    state          = BASIC_KEY;
                     return 1;
                 }
             }
@@ -628,7 +629,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
         if (get_inbuf[*bp] == END_CHAR)
         { /* end of input line */
             get_inbuf[*bp] = '\0';
-            *bp        = 0;
+            *bp            = 0;
             return 1;
         }
 

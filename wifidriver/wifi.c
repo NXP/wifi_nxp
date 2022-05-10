@@ -69,7 +69,7 @@ bool sta_ampdu_tx_enable = true;
 bool sta_ampdu_rx_enable = true;
 #endif
 
-int retry_attempt_count;
+static int retry_attempt_count;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
 
