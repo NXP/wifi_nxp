@@ -891,10 +891,10 @@ typedef struct _mlan_device
 /** Registration */
 MLAN_API mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter);
 
-#ifndef CONFIG_MLAN_WMSDK
 /** Un-registration */
 MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter);
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Firmware Downloading */
 MLAN_API mlan_status mlan_dnld_fw(IN t_void *pmlan_adapter, IN pmlan_fw_image pmfw);
 
