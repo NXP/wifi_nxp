@@ -45,6 +45,7 @@ bool g_txrx_flag;
 
 int mlan_subsys_init(void);
 int mlan_subsys_deinit(void);
+void set_ioport_inmlan(t_u32 port);
 
 static t_u8 txportno;
 

@@ -39,7 +39,6 @@
 static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
-int wlan_set_wwsm_txpwrlimit(void);
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
 static bool wlan_is_ieeeps_active(void);
 #endif
@@ -295,6 +294,12 @@ static struct
 } wlan;
 
 void wlan_wake_up_card(void);
+uint32_t wlan_get_value1(void);
+int get_split_scan_delay_ms(void);
+void wlan_set_smart_mode_inactive(void);
+void wlan_set_smart_mode_active(void);
+bool wlan_get_smart_mode_status(void);
+
 #ifdef CONFIG_WLCMGR_DEBUG
 static char *dbg_sta_state_name(enum cm_sta_state state)
 {
@@ -462,7 +467,7 @@ static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_con
     return conditions;
 }
 
-int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
+static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
     struct wlan_network network;
     int ret;

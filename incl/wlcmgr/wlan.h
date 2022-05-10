@@ -2549,6 +2549,15 @@ int wlan_get_sta_tx_power(t_u32 *power_level);
 int wlan_set_sta_tx_power(t_u32 power_level);
 
 /**
+ * Set World Wide Safe Mode Tx Power Limits
+ *
+ * \return WM_SUCCESS if successful.
+ * \return -WM_FAIL if unsuccessful.
+ *
+ */
+int wlan_set_wwsm_txpwrlimit(void);
+
+/**
  * Get Management IE for given BSS type (interface) and index.
  *
  * \param[in] bss_type  BSS Type of interface.

@@ -1188,7 +1188,7 @@ mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv)
  *
  *  @return		MLAN_STATUS_PENDING --success, otherwise fail
  */
-mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
+static mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
     mlan_private *pmpriv  = pmadapter->priv[pioctl_req->bss_index];
     mlan_status ret       = MLAN_STATUS_SUCCESS;

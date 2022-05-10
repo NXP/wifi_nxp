@@ -33,6 +33,9 @@ Change log:
                 Local Functions
 ********************************************************/
 
+mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+t_u8 wlan_get_random_charactor(pmlan_adapter pmadapter);
+
 #ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief enable adhoc aes key

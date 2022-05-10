@@ -31,6 +31,8 @@ uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 
 uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
 
+int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp);
+
 #ifdef CONFIG_11AC
 /**
  * @brief initialize AP bss config
@@ -73,7 +75,7 @@ static t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
  *
  *  @return         0--success, otherwise failure
  */
-int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
+static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int ret                 = 0;
@@ -317,18 +319,18 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
     return WM_SUCCESS;
 }
 
-int wifi_cmd_uap_config(char *ssid,
-                        t_u8 *mac_addr,
-                        enum wlan_security_type security,
-                        char *passphrase,
-                        char *password,
-                        t_u8 channel,
-                        wifi_scan_chan_list_t scan_chan_list,
-                        t_u16 beacon_period,
-                        t_u8 bandwidth,
-                        t_u8 dtim_period,
-                        t_u8 chan_sw_count,
-                        mlan_bss_type bss_type)
+static int wifi_cmd_uap_config(char *ssid,
+                               t_u8 *mac_addr,
+                               enum wlan_security_type security,
+                               char *passphrase,
+                               char *password,
+                               t_u8 channel,
+                               wifi_scan_chan_list_t scan_chan_list,
+                               t_u16 beacon_period,
+                               t_u8 bandwidth,
+                               t_u8 dtim_period,
+                               t_u8 chan_sw_count,
+                               mlan_bss_type bss_type)
 {
     t_u32 ssid_len = strlen(ssid);
     uint8_t i;
@@ -840,7 +842,8 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
     /* *list must have been filled now if everything went well */
 }
 
-int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
+#if 0
+static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     mlan_deauth_param deauth;
@@ -857,6 +860,7 @@ int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_DEAUTH, HostCmd_ACT_GEN_SET, 0, NULL, &deauth,
                                          MLAN_BSS_TYPE_UAP, NULL);
 }
+#endif
 
 int wifi_uap_stop(int type)
 {

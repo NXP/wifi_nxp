@@ -25,7 +25,9 @@ static sdio_card_t wm_g_sd;
 
 static os_mutex_t sdio_mutex;
 
-int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
+void sdio_enable_interrupt(void);
+
+    int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
     int ret;
 

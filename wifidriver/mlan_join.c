@@ -395,7 +395,7 @@ static int wlan_cmd_append_wapi_ie(mlan_private *priv, t_u8 **ppBuffer)
  *
  *  @param ptlv_rsn_ie       A pointer to rsn_ie TLV
  */
-mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *ptlv_rsn_ie)
+static mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *ptlv_rsn_ie)
 {
     t_u16 *prsn_cap;
     t_u16 *ptr;
