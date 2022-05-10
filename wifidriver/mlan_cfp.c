@@ -1215,7 +1215,6 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                     case BAND_B | BAND_G:
                     case BAND_B: /* Matching BAND_B/G */
                     case BAND_G:
-                    case BAND_0:
                         break;
                     default:
                         j++;
@@ -1346,7 +1345,6 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16
                     case BAND_B | BAND_G:
                     case BAND_B:
                     case BAND_G:
-                    case BAND_0:
                         break;
                     default:
                         j++;
@@ -1452,7 +1450,10 @@ int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size)
  *
  *  @return                 The number of Rates
  */
-t_u32 wlan_get_supported_rates(mlan_private *pmpriv, mlan_bss_mode bss_mode, t_u16 config_bands, WLAN_802_11_RATES rates)
+t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
+                               mlan_bss_mode bss_mode,
+                               t_u16 config_bands,
+                               WLAN_802_11_RATES rates)
 {
     t_u32 k = 0;
 

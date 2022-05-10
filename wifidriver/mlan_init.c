@@ -620,9 +620,9 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->tx_lock_flag = MFALSE;
 #endif /* CONFIG_MLAN_WMSDK */
     pmadapter->null_pkt_interval = 0;
-    pmadapter->fw_bands          = BAND_0;
-    pmadapter->config_bands      = BAND_0;
-    pmadapter->adhoc_start_band  = BAND_0;
+    pmadapter->fw_bands          = 0U;
+    pmadapter->config_bands      = 0U;
+    pmadapter->adhoc_start_band  = 0U;
     /* pmadapter->pscan_channels = MNULL; */
     pmadapter->fw_release_number = 0;
     pmadapter->fw_cap_info       = 0;
