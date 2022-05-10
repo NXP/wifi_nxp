@@ -33,7 +33,7 @@
 
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t fw_cmd_buf[WIFI_FW_CMDBUF_SIZE];
-int seqnum;
+static int seqnum;
 // static int pm_handle;
 
 /*
@@ -46,9 +46,9 @@ bool g_txrx_flag;
 int mlan_subsys_init(void);
 int mlan_subsys_deinit(void);
 
-t_u8 txportno;
+static t_u8 txportno;
 
-t_u32 last_resp_rcvd, last_cmd_sent;
+static t_u32 last_resp_rcvd, last_cmd_sent;
 
 static os_mutex_t txrx_mutex;
 os_thread_t wifi_core_thread;
@@ -75,12 +75,12 @@ typedef MLAN_PACK_START struct
     HostCmd_DS_COMMAND hostcmd;
 } MLAN_PACK_END SDIOPkt;
 
-SDIOPkt *sdiopkt = (SDIOPkt *)outbuf;
+static SDIOPkt *sdiopkt = (SDIOPkt *)outbuf;
 
 void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
 
-uint32_t dev_value1 = -1;
-uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
+static uint32_t dev_value1 = -1;
+static uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 static uint8_t dev_fw_ver_ext[MLAN_MAX_VER_STR_LEN];
 
 int wifi_sdio_lock(void)
@@ -264,7 +264,7 @@ void bus_deregister_special_queue()
 void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr);
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext);
 void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_value1);
-mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
+static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 {
     HostCmd_DS_GEN *cmdresp;
     t_u32 cmdtype;
@@ -448,10 +448,12 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     return MLAN_STATUS_SUCCESS;
 }
 
-t_u32 get_ioport(void)
+#if 0
+static t_u32 get_ioport(void)
 {
     return mlan_adap->ioport;
 }
+#endif
 
 static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u32 *type, bool aggr)
 {

@@ -644,6 +644,13 @@ bool wrapper_wlan_11d_support_is_enabled(void);
 void wrapper_wlan_11d_clear_parsedtable(void);
 void wrapper_clear_media_connected_event(void);
 int wifi_uap_ps_inactivity_sleep_exit(mlan_bss_type type);
+int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
+                                       unsigned int ctrl_bitmap,
+                                       unsigned int min_sleep,
+                                       unsigned int max_sleep,
+                                       unsigned int inactivity_to,
+                                       unsigned int min_awake,
+                                       unsigned int max_awake);
 #ifdef CONFIG_WNM_PS
 int wifi_enter_ieee_power_save(bool wnm_is_set, t_u16 wnm_sleep_time);
 #else

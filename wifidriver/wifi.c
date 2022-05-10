@@ -62,7 +62,7 @@ static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
 #ifdef CONFIG_STA_AMPDU_TX
-bool sta_ampdu_tx_enable = true;
+static bool sta_ampdu_tx_enable = true;
 #endif
 
 #ifdef CONFIG_STA_AMPDU_RX
@@ -162,7 +162,7 @@ static int wifi_get_mcastf_lock(void)
     return os_mutex_get(&wm_wifi.mcastf_mutex, OS_WAIT_FOREVER);
 }
 
-int wifi_put_mcastf_lock(void)
+static int wifi_put_mcastf_lock(void)
 {
     return os_mutex_put(&wm_wifi.mcastf_mutex);
 }
