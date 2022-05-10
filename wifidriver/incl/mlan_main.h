@@ -2214,13 +2214,12 @@ mlan_status wlan_free_cmd_buffer(IN mlan_adapter *pmadapter);
 t_void wlan_request_cmd_lock(mlan_adapter *pmadapter);
 /** Release command lock */
 t_void wlan_release_cmd_lock(mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef STA_SUPPORT
 /** Flush the scan pending queue */
 t_void wlan_flush_scan_queue(pmlan_adapter pmadapter);
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+
 /**Cancel pending command */
 t_void wlan_cancel_all_pending_cmd(pmlan_adapter pmadapter);
 
@@ -2749,7 +2748,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left);
 
 void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter);
 
-mlan_status wlan_misc_chan_reg_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+// mlan_status wlan_misc_chan_reg_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #endif
 
 #define BW_20MHZ 0
