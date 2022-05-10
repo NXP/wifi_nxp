@@ -263,9 +263,12 @@ void send_sleep_confirm_command(mlan_bss_type interface)
        So here only send out sleep confirm when state is presleep,
        and would not send out sleep confirm if state has switched to AWAKE */
     if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
+    {
 #endif
+        wcmdr_d("+");
         (void)wifi_wait_for_cmdresp(NULL);
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    }
     else
         (void)wifi_put_command_lock();
 #endif
