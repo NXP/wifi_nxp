@@ -26,10 +26,10 @@
 #define MAX_RATES         14U
 
 #ifdef CONFIG_5GHz_SUPPORT
-uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
+static uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 #endif
 
-uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
+static uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
 
 int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp);
 
@@ -597,7 +597,7 @@ static int wifi_cmd_uap_config(char *ssid,
 }
 
 /* Region: Constrained 2.4 Ghz */
-wifi_sub_band_set_t subband_UN_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
+static wifi_sub_band_set_t subband_UN_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 static wifi_domain_param_t *get_11d_uap_domain_params(void)
 {
@@ -613,14 +613,14 @@ static wifi_domain_param_t *get_11d_uap_domain_params(void)
     return dp;
 }
 
-wifi_uap_11d_apis_t wifi_uap_11d_apis = {
+static wifi_uap_11d_apis_t wifi_uap_11d_apis = {
     .wifi_uap_set_params_p           = wifi_uap_set_params,
     .wifi_uap_downld_domain_params_p = wifi_uap_downld_domain_params,
     .wifi_uap_enable_11d_p           = wifi_uap_enable_11d,
 
 };
 
-void *wifi_uap_11d_support_apis = (wifi_uap_11d_apis_t *)&wifi_uap_11d_apis;
+static void *wifi_uap_11d_support_apis = (wifi_uap_11d_apis_t *)&wifi_uap_11d_apis;
 
 /*
  * We only save the params to be used later when BSS is (re-)started.

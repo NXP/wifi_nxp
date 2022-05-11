@@ -1505,8 +1505,6 @@ static int wifi_send_key_material_cmd(int bss_index, mlan_ds_sec_cfg *sec)
     return WM_SUCCESS;
 }
 
-uint8_t broadcast_mac_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
 int wifi_set_key(int bss_index,
                  bool is_pairwise,
                  const uint8_t key_index,
@@ -2128,54 +2126,54 @@ int wifi_get_firmware_version(wifi_fw_version_t *ver)
 }
 
 /* Region: US(US) or Canada(CA) or Singapore(SG) 2.4 GHz */
-wifi_sub_band_set_t subband_US_CA_SG_2_4_GHz[] = {{1, 11, 20}};
+static wifi_sub_band_set_t subband_US_CA_SG_2_4_GHz[] = {{1, 11, 20}};
 
 /* Region: Europe(EU), Australia(AU), Republic of Korea(KR),
 China(CN) 2.4 GHz */
-wifi_sub_band_set_t subband_EU_AU_KR_CN_2_4GHz[] = {{1, 13, 20}};
+static wifi_sub_band_set_t subband_EU_AU_KR_CN_2_4GHz[] = {{1, 13, 20}};
 
 /* Region: Japan(JP) 2.4 GHz */
-wifi_sub_band_set_t subband_JP_2_4GHz[] = {
+static wifi_sub_band_set_t subband_JP_2_4GHz[] = {
     {1, 14, 20},
 };
 
 /* Region: World Wide Safe Mode(WWSM) 2.4 GHz */
-wifi_sub_band_set_t subband_WWSM_2_4GHz[] = {
+static wifi_sub_band_set_t subband_WWSM_2_4GHz[] = {
     {1, 14, 8},
 };
 
 /* Region: Constrained 2.4 Ghz */
-wifi_sub_band_set_t subband_CS_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
+static wifi_sub_band_set_t subband_CS_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 #ifdef CONFIG_5GHz_SUPPORT
 
 /* Region: US(US) or France(FR) or Singapore(SG) 5 GHz */
-wifi_sub_band_set_t subband_US_SG_FR_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 5, 20}};
+static wifi_sub_band_set_t subband_US_SG_FR_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 5, 20}};
 
 /* Region: Canada(CA) 5 GHz */
-wifi_sub_band_set_t subband_CA_5_GHz[] = {{36, 8, 20}, {100, 5, 20}, {132, 3, 20}, {149, 5, 20}};
+static wifi_sub_band_set_t subband_CA_5_GHz[] = {{36, 8, 20}, {100, 5, 20}, {132, 3, 20}, {149, 5, 20}};
 
 /* Region: Region: Europe(EU), Australia(AU), Republic of Korea(KR)
  * 5 GHz */
-wifi_sub_band_set_t subband_EU_AU_KR_5_GHz[] = {
+static wifi_sub_band_set_t subband_EU_AU_KR_5_GHz[] = {
     {36, 8, 20},
     {100, 11, 20},
 };
 
 /* Region: Japan(JP) 5 GHz */
-wifi_sub_band_set_t subband_JP_5_GHz[] = {
+static wifi_sub_band_set_t subband_JP_5_GHz[] = {
     {8, 3, 23},
     {36, 8, 23},
     {100, 11, 23},
 };
 
 /* Region: China(CN) 5 Ghz */
-wifi_sub_band_set_t subband_CN_5_GHz[] = {
+static wifi_sub_band_set_t subband_CN_5_GHz[] = {
     {149, 5, 33},
 };
 
 /* Region: World Wide Safe Mode(WWSM) 5 GHz */
-wifi_sub_band_set_t subband_WWSM_5_GHz[] = {{36, 8, 8}, {100, 12, 8}, {149, 6, 8}};
+static wifi_sub_band_set_t subband_WWSM_5_GHz[] = {{36, 8, 8}, {100, 12, 8}, {149, 6, 8}};
 
 #endif /* CONFIG_5GHz_SUPPORT */
 

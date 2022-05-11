@@ -77,7 +77,10 @@ int wps_session_attempt;
         (void)wlan.cb(r, data);   \
     }
 
-bool ps_sleep_cb_sent;
+#if !defined(CONFIG_WIFIDRIVER_PS_LOCK) || defined(CONFIG_WNM_PS)
+static bool ps_sleep_cb_sent;
+#endif /* CONFIG_WIFIDRIVER_PS_LOCK || CONFIG_WNM_PS*/
+
 enum user_request_type
 {
     /* we append our user-generated events to the wifi interface events and
@@ -6047,7 +6050,7 @@ uint16_t wlan_get_beacon_period(void)
     return network.beacon_period;
 }
 
-os_semaphore_t wlan_dtim_sem;
+static os_semaphore_t wlan_dtim_sem;
 static uint8_t dtim_period;
 
 static int pscan_cb(unsigned int count)

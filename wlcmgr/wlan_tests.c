@@ -1883,10 +1883,10 @@ static void test_wlan_host_sleep(int argc, char **argv)
 }
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
-u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+static u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 /* Command taken from Robust_btc.conf*/
-u8_t host_cmd_buf[] = {0xe0, 0,    0x18, 0, 0x29, 0, 0,    0, 0x01, 0,    0, 0,
-                       0x38, 0x02, 0x08, 0, 0x05, 0, 0x01, 0, 0x02, 0x01, 0, 0x01};
+static u8_t host_cmd_buf[] = {0xe0, 0,    0x18, 0, 0x29, 0, 0,    0, 0x01, 0,    0, 0,
+                              0x38, 0x02, 0x08, 0, 0x05, 0, 0x01, 0, 0x02, 0x01, 0, 0x01};
 
 static void test_wlan_send_hostcmd(int argc, char **argv)
 {

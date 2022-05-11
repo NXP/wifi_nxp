@@ -25,8 +25,6 @@
 #include "sdio.h"
 #include "firmware_dnld.h"
 
-extern t_u32 ioport_g;
-
 static const uint8_t *wlanfw;
 
 /* remove this after mlan integration complete */

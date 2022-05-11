@@ -37,7 +37,7 @@ Change log:
         Global Variables
 ********************************************************/
 #ifdef STA_SUPPORT
-mlan_operations mlan_sta_ops = {
+static mlan_operations mlan_sta_ops = {
 #ifndef CONFIG_MLAN_WMSDK
     /* init cmd handler */
     wlan_ops_sta_init_cmd,
@@ -63,7 +63,7 @@ mlan_operations mlan_sta_ops = {
 };
 #endif
 #ifdef UAP_SUPPORT
-mlan_operations mlan_uap_ops = {
+static mlan_operations mlan_uap_ops = {
 #ifndef CONFIG_MLAN_WMSDK
     /* init cmd handler */
     wlan_ops_uap_init_cmd,
@@ -90,7 +90,7 @@ mlan_operations mlan_uap_ops = {
 #endif
 
 /** mlan function table */
-mlan_operations *mlan_ops[] = {
+static mlan_operations *mlan_ops[] = {
 #ifdef STA_SUPPORT
     &mlan_sta_ops,
 #endif

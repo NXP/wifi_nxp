@@ -203,7 +203,9 @@ static unsigned int make_response(char *msg, enum dhcp_message_type type)
     offset += sizeof(struct bootp_option) + opt->length;
 
     if (type == DHCP_MESSAGE_NAK)
+    {
         return (unsigned int)(offset - msg);
+    }
 
     opt       = (struct bootp_option *)(void *)offset;
     opt->type = BOOTP_OPTION_SUBNET_MASK;

@@ -74,7 +74,7 @@ static const mlan_wmm_ac_e tos_to_ac[] = {WMM_AC_BE, WMM_AC_BK, WMM_AC_BK, WMM_A
  * This table will be used to store the tid values based on ACs.
  * It is initialized to default values per TID.
  */
-t_u8 tos_to_tid[] = {
+static t_u8 tos_to_tid[] = {
     /* TID DSCP_P2 DSCP_P1 DSCP_P0 WMM_AC */
     0x01, /* 0 1 0 AC_BK */
     0x02, /* 0 0 0 AC_BK */
@@ -91,17 +91,17 @@ t_u8 tos_to_tid[] = {
  * which is in sequential order, and can be compared.
  * Use this to compare the priority of two different TIDs.
  */
-t_u8 tos_to_tid_inv[] = {0x02, /* from tos_to_tid[2] = 0 */
-                         0x00, /* from tos_to_tid[0] = 1 */
-                         0x01, /* from tos_to_tid[1] = 2 */
-                         0x03, 0x04, 0x05, 0x06, 0x07};
+static t_u8 tos_to_tid_inv[] = {0x02, /* from tos_to_tid[2] = 0 */
+                                0x00, /* from tos_to_tid[0] = 1 */
+                                0x01, /* from tos_to_tid[1] = 2 */
+                                0x03, 0x04, 0x05, 0x06, 0x07};
 
 /**
  * This table will provide the tid value for given ac. This table does not
  * change and will be used to copy back the default values to tos_to_tid in
  * case of disconnect.
  */
-const t_u8 ac_to_tid[4][2] = {{1, 2}, {0, 3}, {4, 5}, {6, 7}};
+static const t_u8 ac_to_tid[4][2] = {{1, 2}, {0, 3}, {4, 5}, {6, 7}};
 #ifndef CONFIG_MLAN_WMSDK
 raListTbl *wlan_wmm_get_ralist_node(pmlan_private priv, t_u8 tid, t_u8 *ra_addr);
 #endif /* CONFIG_MLAN_WMSDK */
