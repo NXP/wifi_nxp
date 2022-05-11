@@ -1089,7 +1089,7 @@ static void test_wlan_list(int argc, char **argv)
     }
 
     (void)PRINTF("%d network%s%s\r\n", count, count == 1U ? "" : "s", count > 0U ? ":" : "");
-    for (i = 0; i < count; i++)
+    for (i = 0; i < WLAN_MAX_KNOWN_NETWORKS; i++)
     {
         if (wlan_get_network(i, &network) == WM_SUCCESS)
         {
