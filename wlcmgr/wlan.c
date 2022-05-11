@@ -294,11 +294,6 @@ static struct
 } wlan;
 
 void wlan_wake_up_card(void);
-uint32_t wlan_get_value1(void);
-int get_split_scan_delay_ms(void);
-void wlan_set_smart_mode_inactive(void);
-void wlan_set_smart_mode_active(void);
-bool wlan_get_smart_mode_status(void);
 
 #ifdef CONFIG_WLCMGR_DEBUG
 static char *dbg_sta_state_name(enum cm_sta_state state)
@@ -5917,7 +5912,7 @@ int wlan_get_cal_data(wlan_cal_data_t *cal_data)
 
     return wifi_get_cal_data(cal_data);
 }
-
+#ifndef CONFIG_MLAN_WMSDK
 void wlan_set_smart_mode_active(void)
 {
     wlan.smart_mode_active = true;
@@ -5932,6 +5927,7 @@ bool wlan_get_smart_mode_status(void)
 {
     return wlan.smart_mode_active;
 }
+#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef CONFIG_AUTO_RECONNECT
 int wlan_auto_reconnect_enable(wlan_auto_reconnect_config_t auto_reconnect_config)
@@ -6462,6 +6458,7 @@ void wlan_uap_set_httxcfg(unsigned short httxcfg)
     wifi_uap_set_httxcfg(httxcfg);
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 uint32_t wlan_get_value1(void)
 {
     if (wlan.status == WLCMGR_ACTIVATED)
@@ -6473,6 +6470,7 @@ uint32_t wlan_get_value1(void)
         return (uint32_t)-WM_FAIL;
     }
 }
+#endif
 
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
 int wlan_set_rts(int rts)

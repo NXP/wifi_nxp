@@ -27,7 +27,7 @@ static os_mutex_t sdio_mutex;
 
 void sdio_enable_interrupt(void);
 
-    int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
+int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
     int ret;
 

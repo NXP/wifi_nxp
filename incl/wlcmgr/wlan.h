@@ -3360,4 +3360,6 @@ int wlan_send_hostcmd(
 int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
 #endif
 
+extern int get_split_scan_delay_ms(void);
+
 #endif /* __WLAN_H__ */
