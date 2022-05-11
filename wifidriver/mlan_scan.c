@@ -24,6 +24,8 @@ Change log:
                 Local Constants
 ********************************************************/
 
+int get_split_scan_delay_ms(void);
+
 /** The maximum number of channels the firmware can scan per command */
 #define MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN 3
 
