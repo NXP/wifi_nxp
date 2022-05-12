@@ -360,6 +360,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
         priv->port_ctrl_mode = MFALSE;
     }
     priv->port_open = MFALSE;
+#ifdef CONFIG_ROAMING
+    priv->roaming_enabled = MFALSE;
+#endif
 #ifndef CONFIG_MLAN_WMSDK
     if (!ret)
     {

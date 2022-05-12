@@ -318,7 +318,7 @@ static t_s32 wlan_find_best_network_in_list(IN mlan_private *pmpriv)
     LEAVE();
     return best_net;
 }
-#endif /* CONFIG_MLAN_WMSDK */
+#endif
 
 /**
  *  @brief Create a channel list for the driver to scan based on region info
@@ -3072,19 +3072,22 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     MrvlIEtypes_ChanBandListParamSet_t *pchan_band_tlv = MNULL;
     ChanBandParamSet_t *pchan_band;
     t_u16 band;
-    bool is_bgscan_resp;
+#ifdef CONFIG_ROAMING
+    t_u8 is_bgscan_resp;
+#endif
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
 
     ENTER();
     pcb = (pmlan_callbacks)&pmadapter->callbacks;
-
-    is_bgscan_resp = (resp->command == HostCmd_CMD_802_11_BG_SCAN_QUERY);
-    if (is_bgscan_resp == true)
+#ifdef CONFIG_ROAMING
+    is_bgscan_resp = ((resp->command & HostCmd_CMD_ID_MASK) == HostCmd_CMD_802_11_BG_SCAN_QUERY);
+    if (is_bgscan_resp)
     {
         pscan_rsp = &resp->params.bg_scan_query_resp.scan_resp;
     }
     else
+#endif
     {
         pscan_rsp = &resp->params.scan_resp;
     }
@@ -3122,6 +3125,10 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     tlv_buf_size = scan_resp_size -
                    (bytes_left + sizeof(pscan_rsp->bss_descript_size) + sizeof(pscan_rsp->number_of_sets) + S_DS_GEN);
 
+#ifdef CONFIG_ROAMING
+    if (is_bgscan_resp)
+        tlv_buf_size -= sizeof(resp->params.bg_scan_query_resp.report_condition);
+#endif
     ptlv = (MrvlIEtypes_Data_t *)(void *)(pscan_rsp->bss_desc_and_tlv_buffer + bytes_left);
 
     /* Search the TLV buffer space in the scan response for any valid TLVs */
@@ -3762,7 +3769,7 @@ mlan_status wlan_handle_event_ext_scan_report(IN mlan_private *pmpriv, IN t_u8 *
 }
 #endif /* CONFIG_EXT_SCAN_SUPPORT */
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_ROAMING
 /**
  *  @brief This function prepares command of bg_scan_query.
  *
@@ -3773,7 +3780,7 @@ mlan_status wlan_handle_event_ext_scan_report(IN mlan_private *pmpriv, IN t_u8 *
  *
  *  @return           MLAN_STATUS_SUCCESS
  */
-mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf)
+mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_u16 cmd_action)
 {
     HostCmd_DS_802_11_BG_SCAN_QUERY *bg_query = &pcmd->params.bg_scan_query;
 
@@ -3914,7 +3921,6 @@ static t_u8 wlan_bgscan_create_channel_list(IN mlan_private *pmpriv,
     LEAVE();
     return chan_idx;
 }
-
 /**
  *  @brief This function prepares command of bg_scan_config
  *
@@ -3925,7 +3931,10 @@ static t_u8 wlan_bgscan_create_channel_list(IN mlan_private *pmpriv,
  *
  *  @return           MLAN_STATUS_SUCCESS
  */
-mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf)
+mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
+                                   IN HostCmd_DS_COMMAND *pcmd,
+                                   IN t_u16 cmd_action,
+                                   IN t_void *pdata_buf)
 {
     mlan_adapter *pmadapter                                = pmpriv->adapter;
     HostCmd_DS_802_11_BG_SCAN_CONFIG *bg_scan              = &pcmd->params.bg_scan_config;
@@ -4110,7 +4119,6 @@ done:
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-
 /**
  *  @brief This function handles the command response of extended scan
  *
@@ -4145,7 +4153,7 @@ mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAN
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif /* CONFIG_MLAN_WMSDK */
+#endif
 
 /**
  *  @brief This function finds ssid in ssid list.

@@ -1016,8 +1016,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : 802.11 get status */
 #define HostCmd_CMD_WMM_GET_STATUS 0x0071
 
+#ifdef CONFIG_ROAMING
 /** Host Command ID : 802.11 subscribe event */
 #define HostCmd_CMD_802_11_SUBSCRIBE_EVENT 0x0075
+#endif
 
 /** Host Command ID : 802.11 NET MONITOR*/
 #define HostCmd_CMD_802_11_NET_MONITOR 0x0102
@@ -1431,9 +1433,11 @@ typedef enum _ENH_PS_MODES
 /** Card Event definition : WMM status change */
 #define EVENT_WMM_STATUS_CHANGE 0x00000017
 
+#ifdef CONFIG_ROAMING
 /** Card Event definition : BG scan report */
 #define EVENT_BG_SCAN_REPORT 0x00000018
-
+/** Card Event definition : BG scan stopped */
+#define EVENT_BG_SCAN_STOPPED 0x00000065
 /** Card Event definition : Beacon RSSI low */
 #define EVENT_RSSI_LOW 0x00000019
 /** Card Event definition : Beacon SNR low */
@@ -1444,6 +1448,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_RSSI_HIGH 0x0000001c
 /** Card Event definition : Beacon SNR high */
 #define EVENT_SNR_HIGH 0x0000001d
+#endif
 
 /** Card Event definition : IBSS coalsced */
 #define EVENT_IBSS_COALESCED 0x0000001e
@@ -6160,6 +6165,19 @@ typedef MLAN_PACK_START struct
     /* Tx latency frequency */
     t_u16 link_tx_lantency_freq;
 } MLAN_PACK_END MrvlIEtypes_LinkQualityThreshold_t;
+
+#if defined(CONFIG_ROAMING)
+/** Supported operating classes element */
+typedef MLAN_PACK_START struct _MrvlIETypes_SuppOperClass_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Current operationg class **/
+    t_u8 current_oper_class;
+    /** Operating class list */
+    t_u8 oper_class[1];
+} MLAN_PACK_END MrvlIETypes_SuppOperClass_t;
+#endif
 
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */

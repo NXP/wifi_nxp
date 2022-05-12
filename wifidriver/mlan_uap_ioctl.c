@@ -1178,7 +1178,6 @@ mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv)
     LEAVE();
     return ret;
 }
-#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  *  @brief Set/Get deauth control.
@@ -1219,6 +1218,7 @@ static mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN 
     LEAVE();
     return ret;
 }
+#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  *  @brief MLAN uap ioctl handler

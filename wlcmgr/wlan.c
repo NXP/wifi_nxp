@@ -288,6 +288,10 @@ static struct
     bool allow_wpa2_enterprise_ap_only : 1;
 #endif
     bool hidden_scan_on : 1;
+#ifdef CONFIG_ROAMING
+    bool roaming_enabled : 1;
+    unsigned char rssi_low;
+#endif
 #ifdef CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
@@ -2208,6 +2212,15 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     }
     else
     { /* Do Nothing */
+#ifdef CONFIG_ROAMING
+        if (wlan.sta_state == CM_STA_CONNECTED)
+        {
+            wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
+            handle_scan_results();
+            *next = wlan.sta_state;
+            return;
+        }
+#endif
     }
     (void)os_semaphore_put(&wlan.scan_lock);
     wlan.is_scan_lock = 0;
@@ -2274,6 +2287,9 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
                     wlan.reassoc_count   = 0;
                     wlan.reassoc_request = false;
                 }
+#ifdef CONFIG_ROAMING
+            wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
+#endif
             CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
 #ifdef CONFIG_P2P
             wifi_wfd_event(false, false, (void *)1);
@@ -2892,6 +2908,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 }
 
                 net_interface_up(if_handle);
+#ifdef CONFIG_ROAMING
+                wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
+#endif
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
 #endif
@@ -2926,7 +2945,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             wlan.reassoc_count   = 0;
             wlan.reassoc_request = false;
         }
-
+#ifdef CONFIG_ROAMING
+        wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
+#endif
         CONNECTION_EVENT(WLAN_REASON_SUCCESS, &ip);
 #ifdef CONFIG_P2P
         wifi_wfd_event(false, false, (void *)1);
@@ -3022,15 +3043,12 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
             if (wlan.sta_ipv6_state != CM_STA_CONNECTED)
             {
                 wlan.sta_ipv6_state = CM_STA_CONNECTED;
-                //                wlan.sta_state      = CM_STA_CONNECTED;
-                //                *next               = CM_STA_CONNECTED;
 
                 if (wlan.reassoc_control && wlan.reassoc_request)
                 {
                     wlan.reassoc_count   = 0;
                     wlan.reassoc_request = false;
                 }
-                //                CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
         }
     }
@@ -3599,6 +3617,18 @@ static void wlcm_process_fw_debug_info(struct wifi_message *msg)
 }
 #endif
 
+#ifdef CONFIG_ROAMING
+static void wlcm_process_rssi_low_event(struct wlan_network *network)
+{
+    wifi_config_bgscan_and_rssi(network->ssid);
+}
+
+static void wlcm_process_bg_scan_report(void)
+{
+    wifi_send_scan_query();
+}
+#endif
+
 static void wlcm_process_get_hw_spec_event(void)
 {
     /* Set World Wide Safe Mode Tx Power Limits in Wi-Fi firmware */
@@ -3803,6 +3833,19 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_FW_DEBUG_INFO:
             wlcm_d("got event: fw debug info");
             wlcm_process_fw_debug_info(msg);
+            break;
+#endif
+#ifdef CONFIG_ROAMING
+        case WIFI_EVENT_RSSI_LOW:
+            wlcm_d("got event: RSSI low");
+            wlcm_process_rssi_low_event(network);
+            break;
+        case WIFI_EVENT_BG_SCAN_STOPPED:
+            wlcm_d("got event: BG scan stopped");
+            break;
+        case WIFI_EVENT_BG_SCAN_REPORT:
+            wlcm_d("got event: BG scan report");
+            wlcm_process_bg_scan_report();
             break;
 #endif
         default:
@@ -6545,6 +6588,16 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
     if (ret != WM_SUCCESS)
         (void)PRINTF("Failed to set tx per tracking.\r\n");
     return;
+}
+#endif
+
+#ifdef CONFIG_ROAMING
+int wlan_set_roaming(const int enable, const uint8_t rssi_low)
+{
+    wlan.roaming_enabled = enable;
+    wlan.rssi_low        = rssi_low;
+
+    return wifi_config_roaming(enable, rssi_low);
 }
 #endif
 

@@ -1288,6 +1288,12 @@ struct _mlan_private
     /** WNM power save mode */
     bool wnm_set;
 #endif
+#ifdef CONFIG_ROAMING
+    t_u8 rssi_low;
+    t_u8 roaming_enabled;
+    /** bg_scan config */
+    wlan_bgscan_cfg scan_cfg;
+#endif
 };
 
 /** BA stream status */
@@ -2112,6 +2118,9 @@ struct _mlan_adapter
 #ifdef CONFIG_WIFI_TX_PER_TRACK
     tx_pert_info tx_pert;
 #endif
+#ifdef CONFIG_ROAMING
+    t_u8 bgscan_reported;
+#endif
 };
 
 /** Ethernet packet type for EAPOL */
@@ -2196,9 +2205,9 @@ mlan_status wlan_bss_ioctl_bss_role(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
 #endif
 
 mlan_status wlan_set_ewpa_mode(mlan_private *priv, mlan_ds_passphrase *psec_pp);
+
 mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req);
 #endif /* CONFIG_MLAN_WMSDK */
-
 /** Allocate memory for adapter structure members */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter);
 #ifndef CONFIG_MLAN_WMSDK
@@ -2365,6 +2374,17 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 
 mlan_status wlan_rate_ioctl_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN void *pioctl);
+#if defined(CONFIG_ROAMING)
+/** Handler for bgscan query commands */
+mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action);
+/** Handler for bgscan config command */
+mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
+                                   IN HostCmd_DS_COMMAND *cmd,
+                                   IN t_u16 cmd_action,
+                                   IN t_void *pdata_buf);
+/** Hander for bgscan config command response */
+mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 t_void wlan_host_sleep_activated_event(pmlan_private priv, t_u8 activated);
@@ -2400,12 +2420,8 @@ mlan_status wlan_cmd_802_11_ad_hoc_start(IN mlan_private *pmpriv, IN HostCmd_DS_
 mlan_status wlan_ops_sta_process_event(IN t_void *priv);
 /** Ad-Hoc command handler */
 mlan_status wlan_cmd_802_11_ad_hoc_join(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
-/** Handler for bgscan config command */
-mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 /** Scan for specific SSID */
 mlan_status wlan_scan_specific_ssid(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN mlan_802_11_ssid *preq_ssid);
-/** Handler for bgscan query commands */
-mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 /** Flush the scan table */
 mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
 /** Queue scan command handler */

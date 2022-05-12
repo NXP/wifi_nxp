@@ -2600,33 +2600,41 @@ static void clear_ie_index(int index)
 }
 
 #ifdef SD8801
-static int wifi_config_ext_coex(int action, const wifi_ext_coex_config_t *ext_coex_config, wifi_ext_coex_stats_t *ext_coex_stats)
+static int wifi_config_ext_coex(int action,
+                                const wifi_ext_coex_config_t *ext_coex_config,
+                                wifi_ext_coex_stats_t *ext_coex_stats)
 {
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     (void)wifi_get_command_lock();
 
-    cmd->command = HostCmd_CMD_ROBUST_COEX;
-    cmd->size = sizeof(HostCmd_DS_ExtBLECoex_Config_t) + S_DS_GEN;
-    cmd->seq_num = 0;
-    cmd->result = 0;
-    cmd->params.ext_ble_coex_cfg.action = action;
-    cmd->params.ext_ble_coex_cfg.reserved = 0;
+    cmd->command                                           = HostCmd_CMD_ROBUST_COEX;
+    cmd->size                                              = sizeof(HostCmd_DS_ExtBLECoex_Config_t) + S_DS_GEN;
+    cmd->seq_num                                           = 0;
+    cmd->result                                            = 0;
+    cmd->params.ext_ble_coex_cfg.action                    = action;
+    cmd->params.ext_ble_coex_cfg.reserved                  = 0;
     cmd->params.ext_ble_coex_cfg.coex_cfg_data.header.type = TLV_TYPE_EXT_BLE_COEX_CFG;
-    cmd->params.ext_ble_coex_cfg.coex_cfg_data.header.len = sizeof(MrvlIETypes_ExtBLECoex_Config_t) - sizeof(MrvlIEtypesHeader_t);
+    cmd->params.ext_ble_coex_cfg.coex_cfg_data.header.len =
+        sizeof(MrvlIETypes_ExtBLECoex_Config_t) - sizeof(MrvlIEtypesHeader_t);
 
     if (action == HostCmd_ACT_GEN_SET)
     {
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.Enabled = ext_coex_config->Enabled;
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.IgnorePriority = ext_coex_config->IgnorePriority;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.Enabled         = ext_coex_config->Enabled;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.IgnorePriority  = ext_coex_config->IgnorePriority;
         cmd->params.ext_ble_coex_cfg.coex_cfg_data.DefaultPriority = ext_coex_config->DefaultPriority;
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_REQ_ip_gpio_num = ext_coex_config->EXT_RADIO_REQ_ip_gpio_num;
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_REQ_ip_gpio_polarity = ext_coex_config->EXT_RADIO_REQ_ip_gpio_polarity;
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_PRI_ip_gpio_num = ext_coex_config->EXT_RADIO_PRI_ip_gpio_num;
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_PRI_ip_gpio_polarity = ext_coex_config->EXT_RADIO_PRI_ip_gpio_polarity;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_REQ_ip_gpio_num =
+            ext_coex_config->EXT_RADIO_REQ_ip_gpio_num;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_REQ_ip_gpio_polarity =
+            ext_coex_config->EXT_RADIO_REQ_ip_gpio_polarity;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_PRI_ip_gpio_num =
+            ext_coex_config->EXT_RADIO_PRI_ip_gpio_num;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.EXT_RADIO_PRI_ip_gpio_polarity =
+            ext_coex_config->EXT_RADIO_PRI_ip_gpio_polarity;
         cmd->params.ext_ble_coex_cfg.coex_cfg_data.WLAN_GRANT_op_gpio_num = ext_coex_config->WLAN_GRANT_op_gpio_num;
-        cmd->params.ext_ble_coex_cfg.coex_cfg_data.WLAN_GRANT_op_gpio_polarity = ext_coex_config->WLAN_GRANT_op_gpio_polarity;
+        cmd->params.ext_ble_coex_cfg.coex_cfg_data.WLAN_GRANT_op_gpio_polarity =
+            ext_coex_config->WLAN_GRANT_op_gpio_polarity;
         cmd->params.ext_ble_coex_cfg.coex_cfg_data.reserved_1 = ext_coex_config->reserved_1;
         cmd->params.ext_ble_coex_cfg.coex_cfg_data.reserved_2 = ext_coex_config->reserved_2;
     }
@@ -2802,7 +2810,7 @@ int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats)
 
 int wifi_set_ext_coex_config(const wifi_ext_coex_config_t *ext_coex_config)
 {
-    if ( ext_coex_config == NULL)
+    if (ext_coex_config == NULL)
     {
         wifi_e("Invalid structure passed");
         return -WM_FAIL;
@@ -3465,6 +3473,56 @@ int wifi_stop_smart_mode(void)
 
     return WM_SUCCESS;
 }
+
+#ifdef CONFIG_ROAMING
+void wifi_get_band(mlan_private *pmpriv, int *band)
+{
+    int support_band = 0;
+
+    if (pmpriv->config_bands & (BAND_B | BAND_G | BAND_GN))
+        support_band |= WIFI_FREQUENCY_BAND_2GHZ;
+#ifdef CONFIG_5GHz_SUPPORT
+    if (pmpriv->config_bands & (BAND_A | BAND_AN))
+        support_band |= WIFI_FREQUENCY_BAND_5GHZ;
+#endif
+    *band = support_band;
+    if (support_band == WIFI_FREQUENCY_ALL_BAND)
+        *band = WIFI_FREQUENCY_BAND_AUTO;
+}
+
+int wifi_get_bgscan_results(mlan_private *pmpriv)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+
+    ENTER();
+    pmadapter->bgscan_reported = MFALSE;
+    memset(pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
+    pmadapter->num_in_scan_table = 0;
+    ret                          = wifi_request_bgscan_query(pmpriv);
+    LEAVE();
+    return ret;
+}
+
+int wifi_send_scan_query(void)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    int ret              = 0;
+
+    ENTER();
+    ret = wifi_get_bgscan_results(pmpriv);
+    if (ret)
+    {
+        PRINTM(MERROR, "Failed to get scan results\n");
+        goto done;
+    }
+done:
+    /* config rssi low threshold again */
+    pmpriv->rssi_low = DEFAULT_RSSI_LOW_THRESHOLD;
+    LEAVE();
+    return ret;
+}
+#endif
 
 int wifi_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)

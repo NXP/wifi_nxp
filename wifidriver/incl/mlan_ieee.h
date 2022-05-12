@@ -86,6 +86,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     QUIET              = 40,
     IBSS_DFS           = 41,
     HT_CAPABILITY      = 45,
+    REGULATORY_CLASS   = 59,
     HT_OPERATION       = 61,
     BSSCO_2040         = 72,
     /* OVERLAPBSSSCANPARAM = 74, */
@@ -1456,7 +1457,7 @@ typedef MLAN_PACK_START struct
      */
     wlan_user_scan_chan chan_list[WLAN_USER_SCAN_CHAN_MAX];
 } MLAN_PACK_END wlan_user_scan_cfg;
-
+#ifdef CONFIG_ROAMING
 /** Default scan interval in millisecond*/
 #define DEFAULT_BGSCAN_INTERVAL 30000
 
@@ -1474,8 +1475,24 @@ typedef MLAN_PACK_START struct
 #define BG_SCAN_SSID_MATCH 0x0001
 /** ssid match and RSSI exceeded */
 #define BG_SCAN_SSID_RSSI_MATCH 0x0004
+/**wait for all channel scan to complete to report scan result*/
+#define BG_SCAN_WAIT_ALL_CHAN_DONE 0x80000000
 /** Maximum number of channels that can be sent in bg scan config */
-#define WLAN_BG_SCAN_CHAN_MAX 32
+#define WLAN_BG_SCAN_CHAN_MAX 38
+/** Min BGSCAN interval 30 second */
+#define MIN_BGSCAN_INTERVAL 30000
+/** default repeat count */
+#define DEF_REPEAT_COUNT 6
+
+/** default rssi low threshold */
+#define DEFAULT_RSSI_LOW_THRESHOLD 70
+/** RSSI HYSTERSIS */
+#define RSSI_HYSTERESIS 6
+/** lowest rssi threshold */
+#define LOWEST_RSSI_THRESHOLD 82
+/** delta rssi */
+#define DELTA_RSSI 10
+#endif
 
 #ifdef CONFIG_11AX
 typedef MLAN_PACK_START struct _IEEEtypes_Extension_t
@@ -1504,6 +1521,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
 } MLAN_PACK_END IEEEtypes_HECap_t, *pIEEEtypes_HECap_t;
 #endif
 
+#ifdef CONFIG_ROAMING
 /**
  *  Input structure to configure bs scan cmd to firmware
  */
@@ -1541,6 +1559,7 @@ typedef MLAN_PACK_START struct
     /** Variable number (fixed maximum) of channels to scan up */
     wlan_user_scan_chan chan_list[WLAN_BG_SCAN_CHAN_MAX];
 } MLAN_PACK_END wlan_bgscan_cfg;
+#endif /* ROAMING */
 #endif /* STA_SUPPORT */
 
 #ifdef PRAGMA_PACK

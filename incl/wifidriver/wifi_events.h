@@ -102,6 +102,14 @@ enum wifi_event
     /* WiFi FW Debug Info */
     WIFI_EVENT_FW_DEBUG_INFO,
 #endif
+#ifdef CONFIG_ROAMING
+    /* WiFi RSSI Low Event */
+    WIFI_EVENT_RSSI_LOW,
+    /* Background Scan Report */
+    WIFI_EVENT_BG_SCAN_REPORT,
+    /* Background Scan Stop */
+    WIFI_EVENT_BG_SCAN_STOPPED,
+#endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must
