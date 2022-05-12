@@ -1346,6 +1346,42 @@ static void test_wlan_tx_pert(int argc, char **argv)
     wlan_set_tx_pert(&tx_pert, bss_type);
 }
 #endif
+#ifdef CONFIG_ROAMING
+#define DEFAULT_RSSI_THRESHOLD 70
+static void dump_wlan_roaming_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "    wlan-roaming <0/1> rssi_low <rssi_threshold>"
+        "\r\n");
+    (void)PRINTF("rssi_low is optional. Use default value 70 if not provided \r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-roaming 1 rssi_low 70\r\n");
+}
+
+static void test_wlan_roaming(int argc, char **argv)
+{
+    int enable   = 0;
+    int rssi_low = 0;
+
+    if (argc < 2)
+    {
+        dump_wlan_roaming_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    enable = atoi(argv[1]);
+    if (enable)
+    {
+        if (argc == 4 && string_equal("rssi_low", argv[2]))
+            rssi_low = atoi(argv[3]);
+        else
+            rssi_low = DEFAULT_RSSI_THRESHOLD;
+    }
+    wlan_set_roaming(enable, rssi_low);
+    return;
+}
+#endif
 
 #ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
 static void test_wlan_set_max_clients_count(int argc, char **argv)
@@ -2090,6 +2126,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
     {"wlan-tx-pert", "<0/1> <STA/AP> <p> <r> <n>", test_wlan_tx_pert},
+#endif
+#ifdef CONFIG_ROAMING
+    {"wlan-roaming", "<0/1> rssi_low <rssi_threshold>", test_wlan_roaming},
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},

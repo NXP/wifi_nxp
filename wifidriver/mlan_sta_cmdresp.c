@@ -1436,7 +1436,8 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-
+#endif
+#ifdef CONFIG_ROAMING
 /**
  *  @brief This function handles the command response of
  *  subscribe event
@@ -1466,7 +1467,8 @@ static mlan_status wlan_ret_subscribe_event(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of
  *  OTP user data
@@ -1572,11 +1574,6 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
 #ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
             ret = wlan_ret_bgscan_config(pmpriv, resp, pioctl_buf);
-            break;
-        case HostCmd_CMD_802_11_BG_SCAN_QUERY:
-            ret = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);
-            wlan_recv_event(pmpriv, MLAN_EVENT_ID_FW_BG_SCAN, MNULL);
-            PRINTM(MINFO, "CMD_RESP: BG_SCAN result is ready!\n");
             break;
         case HostCmd_CMD_802_11_RF_TX_POWER:
             ret = wlan_ret_802_11_rf_tx_power(pmpriv, resp, pioctl_buf);
@@ -1756,9 +1753,17 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_wifi_direct_mode(pmpriv, resp, pioctl_buf);
             break;
 #endif
+#endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_ROAMING
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_ret_subscribe_event(pmpriv, resp, pioctl_buf);
             break;
+        case HostCmd_CMD_802_11_BG_SCAN_QUERY:
+            ret = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);
+            PRINTM(MINFO, "CMD_RESP: BG_SCAN result is ready!\n");
+            break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_OTP_READ_USER_DATA:
             ret = wlan_ret_otp_user_data(pmpriv, resp, pioctl_buf);
             break;

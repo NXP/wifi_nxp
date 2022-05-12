@@ -8,7 +8,6 @@
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
  */
-
 #include <mlan_api.h>
 
 /* Additional WMSDK header files */
@@ -2604,6 +2603,49 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_ROAMING
+            case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
+            {
+                /* TODO: command response handler for GET command */
+                if (resp->result == HostCmd_RESULT_OK)
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+            case HostCmd_CMD_802_11_BG_SCAN_QUERY:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                    if (rv != MLAN_STATUS_SUCCESS)
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    else
+                    {
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
+                        wifi_d("BG scan query complete");
+                        wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+                    }
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+            case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                    if (rv != MLAN_STATUS_SUCCESS)
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    else
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -2907,6 +2949,109 @@ static void wifi_tx_pert_report(void *pbuf)
     return;
 }
 #endif
+#ifdef CONFIG_ROAMING
+static int wifi_request_bgscan(mlan_private *pmpriv)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = 0;
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_BG_SCAN_CONFIG, HostCmd_ACT_GEN_SET, 0, NULL, &pmpriv->scan_cfg,
+                             cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_set_rssi_low_threshold(mlan_private *pmpriv, const uint8_t low_rssi)
+{
+    mlan_ds_subscribe_evt subscribe_evt;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num                = 0;
+    cmd->result                 = 0x0;
+    subscribe_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    subscribe_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
+    subscribe_evt.low_rssi      = low_rssi;
+    subscribe_evt.low_rssi_freq = 0;
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt,
+                             cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_request_bgscan_query(mlan_private *pmpriv)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = 0;
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_BG_SCAN_QUERY, HostCmd_ACT_GEN_GET, 0, NULL, NULL, cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
+void wifi_config_bgscan_and_rssi(const char *ssid)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    int band             = 0;
+    int ret              = 0;
+
+    ENTER();
+    if (pmpriv->roaming_enabled == MFALSE)
+    {
+        PRINTM(MERROR, "Roaming is disabled\n");
+        goto done;
+    }
+    if (!pmpriv->rssi_low)
+        goto done;
+
+    memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
+    /* Fill scan config field for bg scan */
+    strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, strlen(ssid));
+    pmpriv->scan_cfg.ssid_list[0].max_len = 0;
+    pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
+    pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low - RSSI_HYSTERESIS;
+    pmpriv->scan_cfg.repeat_count         = 2;    // DEF_REPEAT_COUNT;
+    pmpriv->scan_cfg.scan_interval        = 2000; // MIN_BGSCAN_INTERVAL;
+    pmpriv->scan_cfg.chan_per_scan        = 14;
+    pmpriv->scan_cfg.num_probes           = 2;
+
+    wifi_get_band(pmpriv, &band);
+    PRINTF("SSID:%s rssi:%d band:%d\r\n", ssid, pmpriv->rssi_low, band);
+    switch (band)
+    {
+        case WIFI_FREQUENCY_BAND_2GHZ:
+            pmpriv->scan_cfg.chan_list[0].radio_type = 0 | BAND_SPECIFIED;
+            break;
+        case WIFI_FREQUENCY_BAND_5GHZ:
+            pmpriv->scan_cfg.chan_list[0].radio_type = 1 | BAND_SPECIFIED;
+            break;
+        default:
+            break;
+    }
+    pmpriv->scan_cfg.bss_type = MLAN_BSS_MODE_INFRA;
+    pmpriv->scan_cfg.action   = BG_SCAN_ACT_SET;
+    pmpriv->scan_cfg.enable   = MTRUE;
+    ret                       = wifi_request_bgscan(pmpriv);
+    if (ret)
+    {
+        PRINTM(MERROR, "Failed to request bgscan\n");
+        goto done;
+    }
+    if ((pmpriv->rssi_low + RSSI_HYSTERESIS) <= LOWEST_RSSI_THRESHOLD)
+    {
+        pmpriv->rssi_low += RSSI_HYSTERESIS;
+        ret = wifi_set_rssi_low_threshold(pmpriv, pmpriv->rssi_low);
+    }
+done:
+    LEAVE();
+    return;
+}
+#endif
 
 int wifi_handle_fw_event(struct bus_message *msg)
 {
@@ -2984,6 +3129,18 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_MIC_ERR_UNICAST:
             wifi_event_completion(WIFI_EVENT_ERR_UNICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
+#ifdef CONFIG_ROAMING
+        case EVENT_BG_SCAN_REPORT:
+            pmpriv->adapter->bgscan_reported = MTRUE;
+            wifi_event_completion(WIFI_EVENT_BG_SCAN_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_BG_SCAN_STOPPED:
+            wifi_event_completion(WIFI_EVENT_BG_SCAN_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_RSSI_LOW:
+            wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+#endif
 #ifdef CONFIG_P2P
         case EVENT_WIFIDIRECT_GENERIC_EVENT:
         case EVENT_WIFIDIRECT_SERVICE_DISCOVERY:
@@ -3928,6 +4085,30 @@ int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
 void wifi_enable_low_pwr_mode()
 {
     low_power_mode = true;
+}
+#endif
+
+#ifdef CONFIG_ROAMING
+int wifi_config_roaming(const int enable, const uint8_t rssi_low)
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    int ret              = WM_SUCCESS;
+
+    if (enable)
+    {
+        pmpriv->roaming_enabled = MTRUE;
+        pmpriv->rssi_low        = rssi_low;
+        ret                     = wifi_set_rssi_low_threshold(pmpriv, pmpriv->rssi_low);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_e("Failed to config rssi threshold for roaming");
+            return -WM_FAIL;
+        }
+    }
+    else
+        pmpriv->roaming_enabled = MFALSE;
+
+    return ret;
 }
 #endif
 

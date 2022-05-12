@@ -280,6 +280,10 @@ uint8_t *wifi_get_outbuf(uint32_t *outbuf_len);
 #ifdef CONFIG_WIFI_TX_PER_TRACK
 int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type);
 #endif
+#ifdef CONFIG_ROAMING
+int wifi_config_roaming(const int enable, const uint8_t rssi_low);
+void wifi_config_bgscan_and_rssi(const char *ssid);
+#endif
 
 /**
  * This will update the last command sent variable value to current

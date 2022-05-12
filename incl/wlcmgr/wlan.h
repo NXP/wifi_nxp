@@ -1674,6 +1674,18 @@ void wlan_set_mac_addr(uint8_t *mac);
  */
 void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type);
 #endif
+#ifdef CONFIG_ROAMING
+/** Set roaming config.
+ * This function may be called to enable/disable roaming.
+ *
+ * \param[in] enable Enable/disable roaming.
+ * \param[in] rssi_low RSSI threhold.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_set_roaming(const int enable, const uint8_t rssi_low);
+#endif
 
 /** Configure Listen interval of IEEE power save mode.
  *

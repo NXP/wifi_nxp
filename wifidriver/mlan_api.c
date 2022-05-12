@@ -2598,7 +2598,7 @@ static void clear_ie_index(int index)
     mgmt_ie_index_bitmap &= ~(MBIT(index));
 }
 
-int wifi_config_mgmt_ie(
+static int wifi_config_mgmt_ie(
     mlan_bss_type bss_type, int action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
 {
     uint8_t *buf, *pos;
@@ -3413,6 +3413,56 @@ int wifi_stop_smart_mode(void)
 
     return WM_SUCCESS;
 }
+
+#ifdef CONFIG_ROAMING
+void wifi_get_band(mlan_private *pmpriv, int *band)
+{
+    int support_band = 0;
+
+    if (pmpriv->config_bands & (BAND_B | BAND_G | BAND_GN))
+        support_band |= WIFI_FREQUENCY_BAND_2GHZ;
+#ifdef CONFIG_5GHz_SUPPORT
+    if (pmpriv->config_bands & (BAND_A | BAND_AN))
+        support_band |= WIFI_FREQUENCY_BAND_5GHZ;
+#endif
+    *band = support_band;
+    if (support_band == WIFI_FREQUENCY_ALL_BAND)
+        *band = WIFI_FREQUENCY_BAND_AUTO;
+}
+
+int wifi_get_bgscan_results(mlan_private *pmpriv)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+
+    ENTER();
+    pmadapter->bgscan_reported = MFALSE;
+    memset(pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
+    pmadapter->num_in_scan_table = 0;
+    ret                          = wifi_request_bgscan_query(pmpriv);
+    LEAVE();
+    return ret;
+}
+
+int wifi_send_scan_query(void)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    int ret              = 0;
+
+    ENTER();
+    ret = wifi_get_bgscan_results(pmpriv);
+    if (ret)
+    {
+        PRINTM(MERROR, "Failed to get scan results\n");
+        goto done;
+    }
+done:
+    /* config rssi low threshold again */
+    pmpriv->rssi_low = DEFAULT_RSSI_LOW_THRESHOLD;
+    LEAVE();
+    return ret;
+}
+#endif
 
 int wifi_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)

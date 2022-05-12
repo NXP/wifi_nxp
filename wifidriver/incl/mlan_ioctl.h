@@ -1087,12 +1087,25 @@ typedef enum _mlan_band_def
 #endif
 } mlan_band_def;
 
+#ifdef CONFIG_ROAMING
+/** band AUTO */
+#define WIFI_FREQUENCY_BAND_AUTO 0
+/** band 5G */
+#define WIFI_FREQUENCY_BAND_5GHZ 1
+/** band 2G */
+#define WIFI_FREQUENCY_BAND_2GHZ 2
+/** All band */
+#define WIFI_FREQUENCY_ALL_BAND 3
+#endif
+
 /** NO secondary channel */
 #define NO_SEC_CHANNEL 0
 /** secondary channel is above primary channel */
 #define SEC_CHANNEL_ABOVE 1
 /** secondary channel is below primary channel */
 #define SEC_CHANNEL_BELOW 3
+/** secondary channel is 80Mhz bandwidth for 11ac */
+#define CHANNEL_BW_80MHZ 4
 /** Channel bandwidth */
 #define CHANNEL_BW_20MHZ       0
 #define CHANNEL_BW_40MHZ_ABOVE 1
@@ -1759,6 +1772,8 @@ typedef enum _mlan_psk_type
 #define KEY_FLAG_AES_MCAST_IGTK 0x00000010U
 /** key flag for remove key */
 #define KEY_FLAG_REMOVE_KEY 0x80000000U
+/* Clear all key indexes */
+#define KEY_INDEX_CLEAR_ALL 0x0000000F
 
 /** Type definition of mlan_ds_encrypt_key for MLAN_OID_SEC_CFG_ENCRYPT_KEY */
 typedef struct _mlan_ds_encrypt_key
@@ -3237,6 +3252,11 @@ typedef struct _mlan_ds_misc_country_code
     t_u8 country_code[COUNTRY_CODE_LEN];
 } mlan_ds_misc_country_code;
 
+#ifdef CONFIG_ROAMING
+/** action for set */
+#define SUBSCRIBE_EVT_ACT_BITWISE_SET 0x0002
+/** action for clear */
+#define SUBSCRIBE_EVT_ACT_BITWISE_CLR 0x0003
 /** BITMAP for subscribe event rssi low */
 #define SUBSCRIBE_EVT_RSSI_LOW MBIT(0)
 /** BITMAP for subscribe event snr low */
@@ -3267,6 +3287,8 @@ typedef struct _mlan_ds_misc_country_code
 /** Type definition of mlan_ds_subscribe_evt for MLAN_OID_MISC_CFP_CODE */
 typedef struct _mlan_ds_subscribe_evt
 {
+    /** evt action */
+    t_u16 evt_action;
     /** bitmap for subscribe event */
     t_u16 evt_bitmap;
     /** Absolute value of RSSI threshold value (dBm) */
@@ -3324,7 +3346,7 @@ typedef struct _mlan_ds_subscribe_evt
     /* Number of pre missed beacons */
     t_u8 pre_beacon_miss;
 } mlan_ds_subscribe_evt;
-
+#endif
 /** Max OTP user data length */
 #define MAX_OTP_USER_DATA_LEN 252U
 
@@ -3506,8 +3528,10 @@ typedef struct _mlan_ds_misc_cfg
         t_u32 thermal;
         /** Mgmt subtype mask for MLAN_OID_MISC_RX_MGMT_IND */
         t_u32 mgmt_subtype_mask;
+#ifdef CONFIG_ROAMING
         /** subscribe event for MLAN_OID_MISC_SUBSCRIBE_EVENT */
         mlan_ds_subscribe_evt subscribe_event;
+#endif
 #ifdef DEBUG_LEVEL1
         /** Driver debug bit masks */
         t_u32 drvdbg;

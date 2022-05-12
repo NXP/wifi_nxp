@@ -1979,7 +1979,7 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
     return MLAN_STATUS_SUCCESS;
 }
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_ROAMING
 /**
  *  @brief This function prepares command of subscribe event.
  *
@@ -2161,7 +2161,7 @@ done:
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif /* CONFIG_MLAN_WMSDK */
+#endif
 
 /**
  *  @brief This function prepares command of OTP user data.
@@ -2355,14 +2355,14 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_802_11_scan(pmpriv, cmd_ptr, pdata_buf);
             break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_ROAMING
         case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
-            ret = wlan_cmd_bgscan_config(pmpriv, cmd_ptr, pdata_buf);
+            ret = wlan_cmd_bgscan_config(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
         case HostCmd_CMD_802_11_BG_SCAN_QUERY:
-            ret = wlan_cmd_802_11_bg_scan_query(pmpriv, cmd_ptr, pdata_buf);
+            ret = wlan_cmd_802_11_bg_scan_query(pmpriv, cmd_ptr, cmd_action);
             break;
-#endif /* CONFIG_MLAN_WMSDK */
+#endif
         case HostCmd_CMD_802_11_ASSOCIATE:
             ret = wlan_cmd_802_11_associate(pmpriv, cmd_ptr, pdata_buf);
             break;
@@ -2577,10 +2577,12 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_wifi_direct_mode(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+#endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_ROAMING
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_cmd_subscribe_event(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_ROAMING */
         case HostCmd_CMD_OTP_READ_USER_DATA:
             ret = wlan_cmd_otp_user_data(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;

@@ -4791,7 +4791,9 @@ mlan_status wlan_misc_ioctl_thermal(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
     LEAVE();
     return ret;
 }
+#endif
 
+#ifdef CONFIG_ROAMING
 /**
  *  @brief Get/Set subscribe event
  *
@@ -4829,7 +4831,9 @@ mlan_status wlan_misc_ioctl_subscribe_evt(IN pmlan_adapter pmadapter, IN pmlan_i
     LEAVE();
     return ret;
 }
+#endif
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Set ARP filter based on IP address
  *
@@ -5402,9 +5406,13 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         case MLAN_OID_MISC_THERMAL:
             status = wlan_misc_ioctl_thermal(pmadapter, pioctl_req);
             break;
+#endif
+#ifdef CONFIG_ROAMING
         case MLAN_OID_MISC_SUBSCRIBE_EVENT:
             status = wlan_misc_ioctl_subscribe_evt(pmadapter, pioctl_req);
             break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case MLAN_OID_MISC_HOTSPOT_CFG:
             status = wlan_misc_hotspot_cfg(pmadapter, pioctl_req);
             break;
