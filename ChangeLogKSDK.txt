@@ -2,6 +2,26 @@
 @page middleware_log Middleware Change Log
  
 @section wifi NXP WiFi
+Version 1.3.r39.p9
+ - Updates:
+  - Added support for soft roaming based on rssi threshold.
+  - Updated firmware version to p109.
+
+ - Bug Fixes:
+  - Added config parameters those were missing while setting up AC in 2.4G
+  - Removed older temporary fix of making channel number a mandatory parameter to setup uAP using wlan-add command.
+  - Fail to turn off deep sleep power save mode. In deep sleep exit function, pointer to timeout variable is passed instead of NULL.
+
+Version 1.3.r39.p8
+ - Updates:
+  - Added IPERF ABORT DONE as the operational log.
+  - Updated firmware version to p98.
+
+ - Bug Fixes:
+  - Updated default FC hardware board version to be A1 and renamed exsiting version to A0.
+  - Resetting all the scan channel params while sending channel list command to firmware.
+  - Making the channel number a mandatory parameter to setup uAP using wlan-add command.(only for FC SoC)
+
 Version 1.3.r39.p7
  - Bug Fixes:
   - Changes in HT capabilities information to set the bit for enabling LDPC capabilities.
