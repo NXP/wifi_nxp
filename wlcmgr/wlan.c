@@ -36,6 +36,11 @@
 #define WL_ID_DEEPSLEEP_SM "wlcm_deepsleep_sm"
 #define WL_ID_WIFI_RSSI    "wifi_rssi"
 
+/** Find maximum */
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
@@ -1068,13 +1073,16 @@ static int network_matches_scan_result(const struct wlan_network *network,
             chan_list[*num_channels].scan_time   = 150;
             (*num_channels)++;
         }
-        if ((!res->ssid_len) || (memcmp(network->ssid, (char *)res->ssid, (size_t)res->ssid_len))
+        if ((!res->ssid_len) ||
+            (memcmp(network->ssid, (char *)res->ssid, (size_t)MAX(strlen(network->ssid), res->ssid_len)))
 #ifdef CONFIG_OWE
             ||
-            ((res->trans_mode == OWE_TRANS_MODE_OWE) && (memcmp(network->trans_ssid, (char *)res->ssid, res->ssid_len)))
+            ((res->trans_mode == OWE_TRANS_MODE_OWE) &&
+             (memcmp(network->trans_ssid, (char *)res->ssid, (size_t)MAX(strlen(network->trans_ssid), res->ssid_len))))
 #endif
 #ifdef CONFIG_WLAN_BRIDGE
-            || (memcmp(network->bridge_ssid, (char *)res->ssid, res->ssid_len))
+            ||
+            (memcmp(network->bridge_ssid, (char *)res->ssid, (size_t)MAX(strlen(network->bridge_ssid), res->ssid_len)))
 #endif
         )
         {
