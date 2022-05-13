@@ -131,7 +131,7 @@
 
 /* Configuration */
 
-#define CONFIG_WLAN_KNOWN_NETWORKS 5
+#define CONFIG_WLAN_KNOWN_NETWORKS 5U
 
 #include <wmlog.h>
 #define wlcm_e(...) wmlog_e("wlcm", ##__VA_ARGS__)
