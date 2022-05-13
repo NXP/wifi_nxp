@@ -2055,7 +2055,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 (void)memcpy((void *)sta_addr, (const void *)((uint8_t *)&pmac_addr->mac_addr), MLAN_MAC_ADDR_LENGTH);
 
-                wifi_event_completion(WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
+                if (wifi_event_completion(WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
+                    WM_SUCCESS)
+                {
+                    /* If fail to send message on queue, free allocated memory ! */
+                    os_mem_free((void *)sta_addr);
+                }
             }
             break;
             case HostCmd_CMD_802_11_KEY_MATERIAL:
@@ -3325,9 +3330,13 @@ int wifi_handle_fw_event(struct bus_message *msg)
             void *saved_event_buff = wifi_11n_save_request(evt);
             if (saved_event_buff != NULL)
             {
-                wifi_event_completion(WIFI_EVENT_11N_ADDBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff);
+                if (wifi_event_completion(WIFI_EVENT_11N_ADDBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff) !=
+                    WM_SUCCESS)
+                {
+                    /* If fail to send message on queue, free allocated memory ! */
+                    os_mem_free((void *)saved_event_buff);
+                }
             }
-
             /* If allocation failed ignore this event quietly ! */
         }
         break;
@@ -3350,7 +3359,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
             void *saved_event_buff = wifi_11n_save_request(evt);
             if (saved_event_buff != NULL)
             {
-                wifi_event_completion(WIFI_EVENT_11N_BA_STREAM_TIMEOUT, WIFI_EVENT_REASON_SUCCESS, saved_event_buff);
+                if (wifi_event_completion(WIFI_EVENT_11N_BA_STREAM_TIMEOUT, WIFI_EVENT_REASON_SUCCESS,
+                                          saved_event_buff) != WM_SUCCESS)
+                {
+                    /* If fail to send message on queue, free allocated memory ! */
+                    os_mem_free((void *)saved_event_buff);
+                }
             }
             /* If allocation failed ignore this event quietly ! */
         }
@@ -3380,7 +3394,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
             *new_channel = tlv->channel;
 
-            wifi_event_completion(WIFI_EVENT_CHAN_SWITCH, WIFI_EVENT_REASON_SUCCESS, new_channel);
+            if (wifi_event_completion(WIFI_EVENT_CHAN_SWITCH, WIFI_EVENT_REASON_SUCCESS, new_channel) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+                os_mem_free((void *)new_channel);
+            }
         }
         break;
         case EVENT_MICRO_AP_STA_ASSOC:
@@ -3421,7 +3439,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
-            wifi_event_completion(WIFI_EVENT_UAP_CLIENT_ASSOC, WIFI_EVENT_REASON_SUCCESS, sta_addr);
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_ASSOC, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+                os_mem_free((void *)sta_addr);
+            }
         }
         break;
         case EVENT_MICRO_AP_STA_DEAUTH:
@@ -3441,7 +3463,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 }
                 event_sta_addr = (t_u8 *)&evt->src_mac_addr;
                 (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
-                wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr);
+                if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
+                    WM_SUCCESS)
+                {
+                    /* If fail to send message on queue, free allocated memory ! */
+                    os_mem_free((void *)sta_addr);
+                }
             }
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
@@ -3486,7 +3513,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 break;
             }
             (void)memcpy((void *)pinfo, (const void *)pnewNode, pnewNode->length);
-            wifi_event_completion(WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED, WIFI_EVENT_REASON_SUCCESS, pinfo);
+            if (wifi_event_completion(WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED, WIFI_EVENT_REASON_SUCCESS, pinfo) !=
+                WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+                os_mem_free((void *)pinfo);
+            }
             break;
 #endif
 #ifdef CONFIG_EXT_SCAN_SUPPORT
@@ -3516,7 +3548,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 
             (void)memcpy((void *)debug, (const void *)((uint8_t *)&evt->reason_code), evt->length - 8);
-            wifi_event_completion(WIFI_EVENT_FW_DEBUG_INFO, WIFI_EVENT_REASON_SUCCESS, debug);
+            if (wifi_event_completion(WIFI_EVENT_FW_DEBUG_INFO, WIFI_EVENT_REASON_SUCCESS, debug) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+                os_mem_free((void *)debug);
+            }
         }
         break;
 #endif

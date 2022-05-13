@@ -928,12 +928,13 @@ void wifi_wfd_event(bool peer_event, bool action_frame, void *data)
 }
 #endif
 
-void wifi_event_completion(int event, enum wifi_event_reason result, void *data)
+int wifi_event_completion(int event, enum wifi_event_reason result, void *data)
 {
     struct wifi_message msg;
     if (wm_wifi.wlc_mgr_event_queue == MNULL)
     {
-        return;
+        wifi_e("wlc_mgr_event_queue has not been created, event %d", event);
+        return -WM_FAIL;
     }
 
     msg.data   = data;
@@ -941,8 +942,10 @@ void wifi_event_completion(int event, enum wifi_event_reason result, void *data)
     msg.event  = (uint16_t)event;
     if (os_queue_send(wm_wifi.wlc_mgr_event_queue, &msg, OS_NO_WAIT) != WM_SUCCESS)
     {
-        wifi_e("Failed to send response on Queue");
+        wifi_e("Failed to send response on Queue, event %d", event);
+        return -WM_FAIL;
     }
+    return WM_SUCCESS;
 }
 
 static int cmp_mac_addr(uint8_t *mac_addr1, uint8_t *mac_addr2)
