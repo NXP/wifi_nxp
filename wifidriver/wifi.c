@@ -26,6 +26,13 @@
 #include "sdmmc_config.h"
 #endif
 
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+os_semaphore_t os_mem_stat_sem;
+
+t_u32 valid_item_cnt = 0;
+wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
+#endif
+
 #define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
 #define WIFI_CORE_STACK_SIZE          (350)
 /* We don't see events coming in quick succession,
@@ -1519,6 +1526,14 @@ static void wifi_core_deinit(void)
         wm_wifi.wm_wifi_driver_tx = NULL;
     }
 #endif
+
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+    if (os_mem_stat_sem != NULL)
+    {
+        os_semaphore_delete(&os_mem_stat_sem);
+        os_mem_stat_sem = NULL;
+    }
+#endif
 }
 
 int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
@@ -1672,12 +1687,25 @@ int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t
                                                                    const uint8_t *buffer,
                                                                    const uint16_t len))
 {
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+    int ret;
+#endif
     if (wm_wifi.data_intput_callback != NULL)
     {
         return -WM_FAIL;
     }
 
     wm_wifi.data_intput_callback = data_intput_callback;
+
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+    /* Semaphore to protect os mem stat */
+    ret = os_semaphore_create(&os_mem_stat_sem, "os mem stat sem");
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create os mem stat sem failed");
+        return -WM_FAIL;
+    }
+#endif
 
     return WM_SUCCESS;
 }
@@ -2133,5 +2161,102 @@ uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue)
     outbuf          = wifi_wmm_get_sdio_outbuf(outbuf_len, queue);
 
     return outbuf;
+}
+#endif
+
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+static bool get_os_mem_stat_index(char const *func, t_u32 *index)
+{
+    int i     = 0;
+    t_u32 len = strlen(func);
+
+    len = (len > MAX_FUNC_SYMBOL_LEN - 1) ? (MAX_FUNC_SYMBOL_LEN - 1) : len;
+
+    for (i = 0; i < valid_item_cnt; i++)
+    {
+        if (!strncmp(wifi_os_mem_stat[i].name, func, len))
+        {
+            // Find matched item
+            *index = i;
+            return true;
+        }
+    }
+
+    if (valid_item_cnt >= OS_MEM_STAT_TABLE_SIZE)
+    {
+        (void)PRINTF("os_mem_stat table full\r\n");
+        *index = OS_MEM_STAT_TABLE_SIZE - 1;
+    }
+    else
+    {
+        // Add a new item, increase valid_item_cnt
+        *index = valid_item_cnt;
+        valid_item_cnt++;
+    }
+
+    return false;
+}
+
+static int record_os_mem_item(t_u32 size, char const *func, t_u32 line_num, bool is_alloc)
+{
+    t_u32 index = 0;
+    t_u32 len   = strlen(func);
+
+    len = (len > MAX_FUNC_SYMBOL_LEN - 1) ? (MAX_FUNC_SYMBOL_LEN - 1) : len;
+
+    // If don't get matched item, record stat in new item; else just increase alloc_cnt or free_cnt.
+    if (false == get_os_mem_stat_index(func, &index))
+    {
+        wifi_os_mem_stat[index].line_num = line_num;
+
+        if (true == is_alloc)
+        {
+            wifi_os_mem_stat[index].size = size;
+        }
+
+        memcpy(wifi_os_mem_stat[index].name, func, len);
+    }
+
+    return index;
+}
+
+void record_os_mem_alloc(t_u32 size, char const *func, t_u32 line_num)
+{
+    int index     = 0;
+    bool is_alloc = true;
+
+    os_semaphore_get(&os_mem_stat_sem, OS_WAIT_FOREVER);
+    index = record_os_mem_item(size, func, line_num, is_alloc);
+    wifi_os_mem_stat[index].alloc_cnt++;
+    os_semaphore_put(&os_mem_stat_sem);
+}
+
+void record_os_mem_free(char const *func, t_u32 line_num)
+{
+    int index     = 0;
+    t_u32 size    = 0;
+    bool is_alloc = false;
+
+    os_semaphore_get(&os_mem_stat_sem, OS_WAIT_FOREVER);
+    index = record_os_mem_item(size, func, line_num, is_alloc);
+    wifi_os_mem_stat[index].free_cnt++;
+    os_semaphore_put(&os_mem_stat_sem);
+}
+
+void wifi_show_os_mem_stat()
+{
+    int index = 0;
+
+    (void)PRINTF("os_mem_alloc_stat: \r\n");
+    (void)PRINTF(
+        "Func name                                                         line_num    size        alloc_cnt    "
+        "free_cnt\r\n");
+
+    for (index = 0; index < valid_item_cnt; index++)
+    {
+        (void)PRINTF("%-64s  %-10d  %-10d  %-10d   %-10d \r\n", wifi_os_mem_stat[index].name,
+                     wifi_os_mem_stat[index].line_num, wifi_os_mem_stat[index].size, wifi_os_mem_stat[index].alloc_cnt,
+                     wifi_os_mem_stat[index].free_cnt);
+    }
 }
 #endif

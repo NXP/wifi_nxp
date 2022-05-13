@@ -1534,7 +1534,24 @@ static inline int os_timer_delete(os_timer_t *timer_t)
  * @return Pointer to the allocated memory
  * @return NULL if allocation fails
  */
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+extern int os_mem_alloc_cnt;
+extern void record_os_mem_alloc(unsigned int size, char const *func, unsigned int line_num);
+
+static inline void *os_mem_alloc_priv(unsigned int size, char const *func, unsigned int line_num)
+{
+    void *ptr = pvPortMalloc(size);
+
+    os_mem_alloc_cnt++;
+    record_os_mem_alloc(size, func, line_num);
+
+    return ptr;
+}
+
+#define os_mem_alloc(size) os_mem_alloc_priv((size), __func__, __LINE__)
+#else
 #define os_mem_alloc(size) pvPortMalloc(size)
+#endif
 
 /** Allocate memory and zero it
  *
@@ -1564,7 +1581,24 @@ static inline void *os_mem_calloc(size_t size)
  *
  * @param[in] ptr Pointer to the memory to be freed
  */
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+extern int os_mem_free_cnt;
+extern void record_os_mem_free(char const *func, unsigned int line_num);
+
+static inline void os_mem_free_priv(void *ptr, char const *func, unsigned int line_num)
+{
+    vPortFree(ptr);
+
+    os_mem_free_cnt++;
+    record_os_mem_free(func, line_num);
+}
+
+#define os_mem_free(ptr) os_mem_free_priv((ptr), __func__, __LINE__)
+
+#else
 #define os_mem_free(ptr) vPortFree(ptr)
+#endif
+
 #else  /* ! CONFIG_HEAP_DEBUG */
 static inline void *os_mem_alloc(size_t size) WARN_UNUSED_RET;
 static inline void *os_mem_calloc(size_t size) WARN_UNUSED_RET;

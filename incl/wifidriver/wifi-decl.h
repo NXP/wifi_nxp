@@ -1253,4 +1253,20 @@ typedef PACK_START struct _wifi_mfg_cmd_tx_cont
 } PACK_END wifi_mfg_cmd_tx_cont_t;
 #endif
 
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+#define MAX_FUNC_SYMBOL_LEN    64
+#define OS_MEM_STAT_TABLE_SIZE 128
+
+/** Structure of mem alloc and free info */
+typedef struct
+{
+    char name[MAX_FUNC_SYMBOL_LEN];
+    t_u32 size;
+    t_u32 line_num;
+
+    t_u32 alloc_cnt;
+    t_u32 free_cnt;
+} wifi_os_mem_info;
+#endif
+
 #endif /* __WIFI_DECL_H__ */

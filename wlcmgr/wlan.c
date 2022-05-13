@@ -6769,3 +6769,10 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi)
     }
 }
 #endif
+
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+void wlan_show_os_mem_stat()
+{
+    wifi_show_os_mem_stat();
+}
+#endif

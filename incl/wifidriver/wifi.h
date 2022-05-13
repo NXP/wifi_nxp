@@ -1055,4 +1055,12 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 #endif
 wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+/**
+ * Show os mem alloc and free info.
+ *
+ * \return void.
+ */
+void wifi_show_os_mem_stat();
+#endif
 #endif

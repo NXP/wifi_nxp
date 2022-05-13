@@ -2135,6 +2135,19 @@ static void test_wlan_eu_validation(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+int os_mem_alloc_cnt = 0;
+int os_mem_free_cnt  = 0;
+
+static void test_wlan_os_mem_stat(int argc, char **argv)
+{
+    (void)PRINTF("os_mem_alloc_cnt: %d \r\n", os_mem_alloc_cnt);
+    (void)PRINTF("os_mem_free_cnt : %d \r\n", os_mem_free_cnt);
+    (void)PRINTF("FreeHeapSize    : %d \r\n\r\n", xPortGetFreeHeapSize());
+    wlan_show_os_mem_stat();
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -2201,6 +2214,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_EU_VALIDATION
     {"wlan-eu-validation", "<value>", test_wlan_eu_validation},
+#endif
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+    {"wlan-os-mem-stat", NULL, test_wlan_os_mem_stat},
 #endif
 };
 

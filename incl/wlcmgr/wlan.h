@@ -3373,4 +3373,12 @@ int wlan_send_hostcmd(
 int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
 #endif
 
+#ifdef CONFIG_MEM_MONITOR_DEBUG
+/**
+ * Show os mem alloc and free info.
+ *
+ * \return void.
+ */
+void wlan_show_os_mem_stat();
+#endif
 #endif /* __WLAN_H__ */
