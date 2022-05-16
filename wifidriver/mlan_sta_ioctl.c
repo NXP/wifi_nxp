@@ -3205,7 +3205,9 @@ static mlan_status wlan_sec_ioctl_set_wpa_key(IN pmlan_adapter pmadapter, IN pml
 #endif /* KEY_PARAM_SET_V2 */
 
     if (ret == MLAN_STATUS_SUCCESS)
+    {
         ret = MLAN_STATUS_PENDING;
+    }
 
 exit:
     LEAVE();

@@ -1111,10 +1111,14 @@ void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      * 2) Fill lower 24-bits with from IP address
      */
     for (i = 1; i >= 0; i--, j++)
+    {
         mac_addr[j] = (char)(mac_addr_r >> 8 * i) & 0xFF;
+    }
 
     for (i = 3; i >= 0; i--, j++)
+    {
         mac_addr[j] = (char)(ipaddr >> 8 * i) & 0xFF;
+}
 }
 #endif /* CONFIG_IPV6 */
 
@@ -1591,7 +1595,9 @@ int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
 int wifi_init_fcc(const uint8_t *fw_ram_start_addr, const size_t size)
 {
     if (wifi_init_done != 0U)
+    {
         return WM_SUCCESS;
+    }
 
     int ret = (int)sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
     if (ret != 0)
@@ -1628,7 +1634,9 @@ int wifi_init_fcc(const uint8_t *fw_ram_start_addr, const size_t size)
     }
 
     if (ret == WM_SUCCESS)
+    {
         wifi_init_done = 1;
+    }
 
     return ret;
 }

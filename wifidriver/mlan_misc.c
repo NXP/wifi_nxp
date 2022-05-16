@@ -1903,7 +1903,9 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         bitmap_rates[1] = 0x00FF;
         /* Support all HT-MCSs rate */
         for (i = 2; i < 9U; i++)
+        {
             bitmap_rates[i] = 0xFFFF;
+        }
         bitmap_rates[9] = 0x3FFF;
 #ifdef CONFIG_11AC
         /* [10..17] VHT */
@@ -1960,6 +1962,10 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
                 bitmap_rates[1] = (t_u16)(1 << (rate_index - MLAN_RATE_INDEX_OFDM0));
                 ret             = MLAN_STATUS_SUCCESS;
             }
+            else
+            {
+                /*Do Nothing*/
+            }
         }
         else if (rate_format == MLAN_RATE_FORMAT_HT)
         {
@@ -1971,6 +1977,10 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
                 bitmap_rates[2 + (rate_index / 16)] = (t_u16)(1 << (rate_index % 16));
                 ret                                 = MLAN_STATUS_SUCCESS;
             }
+        }
+        else
+        {
+            /*DO Nothing*/
         }
 
 #ifdef CONFIG_11AC

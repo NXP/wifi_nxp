@@ -270,7 +270,9 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     }
     else
+    {
         (void)wifi_put_command_lock();
+    }
 #endif
 }
 

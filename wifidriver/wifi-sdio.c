@@ -419,9 +419,13 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         if (bus.event_queue != NULL)
     {
         if (upld_type == MLAN_TYPE_CMD)
+        {
             msg.data = wifi_mem_malloc_cmdrespbuf();
+        }
         else
+        {
             msg.data = wifi_malloc_eventbuf((size_t)sdiopkt->size);
+        }
 
         if (msg.data == MNULL)
         {

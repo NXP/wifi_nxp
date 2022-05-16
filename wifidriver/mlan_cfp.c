@@ -2114,7 +2114,9 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
         goto out;
     }
     if (pmadapter->otp_region)
+    {
         wlan_free_fw_cfp_tables(pmadapter);
+    }
 
     pmadapter->tx_power_table_bg_rows = FW_CFP_TABLE_MAX_ROWS_BG;
     pmadapter->tx_power_table_bg_cols = FW_CFP_TABLE_MAX_COLS_BG;
@@ -2132,7 +2134,9 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
         tlv_buf_len = wlan_le16_to_cpu(head->len);
 
         if (tlv_buf_left < (sizeof(*head) + tlv_buf_len))
+        {
             break;
+        }
         data = (t_u8 *)head + sizeof(*head);
 
         switch (tlv)
@@ -2142,9 +2146,13 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                  * if this TLV has no set data
                  */
                 if (*data == 0)
+                {
                     break;
+                }
                 if (pmadapter->otp_region)
+                {
                     break;
+                }
 
                 ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(otp_region_info_t), MLAN_MEM_DEF,
                                        (t_u8 **)&pmadapter->otp_region);
@@ -2200,7 +2208,9 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                  * if this TLV has no set data
                  */
                 if (*data == 0)
+                {
                     break;
+                }
                 if (pmadapter->cfp_otp_bg
 #ifdef CONFIG_5GHz_SUPPORT
                     || pmadapter->cfp_otp_a
@@ -2227,14 +2237,20 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 {
                     (pmadapter->cfp_otp_bg + i)->channel = *data;
                     if (*data == 14)
+                    {
                         (pmadapter->cfp_otp_bg + i)->freq = 2484;
+                    }
                     else
+                    {
                         (pmadapter->cfp_otp_bg + i)->freq = 2412 + 5 * (*data - 1);
+                    }
                     (pmadapter->cfp_otp_bg + i)->max_tx_power = max_tx_pwr_bg;
                     data++;
                     (pmadapter->cfp_otp_bg + i)->dynamic.flags = *data;
                     if (*data & NXP_CHANNEL_DFS)
+                    {
                         (pmadapter->cfp_otp_bg + i)->passive_scan_or_radar_detect = MTRUE;
+                    }
                     data++;
                 }
 #ifdef CONFIG_5GHz_SUPPORT
@@ -2255,16 +2271,22 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 {
                     (pmadapter->cfp_otp_a + i)->channel = *data;
                     if (*data < 183)
+                    {
                         /* 5GHz channels */
                         (pmadapter->cfp_otp_a + i)->freq = 5035 + 5 * (*data - 7);
+                    }
                     else
+                    {
                         /* 4GHz channels */
                         (pmadapter->cfp_otp_a + i)->freq = 4915 + 5 * (*data - 183);
+                    }
                     (pmadapter->cfp_otp_a + i)->max_tx_power = max_tx_pwr_a;
                     data++;
                     (pmadapter->cfp_otp_a + i)->dynamic.flags = *data;
                     if (*data & NXP_CHANNEL_DFS)
+                    {
                         (pmadapter->cfp_otp_a + i)->passive_scan_or_radar_detect = MTRUE;
+                    }
                     data++;
                 }
 #endif
@@ -2274,9 +2296,13 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                  * if they already exists but force reg rule is set in the otp
                  */
                 if (*data == 0)
+                {
                     break;
+                }
                 if (pmadapter->otp_region && pmadapter->otp_region->force_reg && pmadapter->tx_power_table_bg)
+                {
                     break;
+                }
 
                 /* Save the tlv data in power tables for band BG and A */
                 tmp = data;
@@ -2346,7 +2372,9 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
         tlv_buf_left -= (sizeof(*head) + tlv_buf_len);
     }
     if (!pmadapter->cfp_otp_bg || !pmadapter->tx_power_table_bg)
+    {
         goto out;
+    }
     /* Set remaining flags for BG */
     rows = pmadapter->tx_power_table_bg_rows;
     cols = pmadapter->tx_power_table_bg_cols;
@@ -2355,10 +2383,14 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
     {
         k = (i * cols) + 1;
         if ((pmadapter->cfp_otp_bg + i)->dynamic.flags & NXP_CHANNEL_DISABLED)
+        {
             continue;
+        }
 
         if (pmadapter->tx_power_table_bg[k + MOD_CCK] == 0)
+        {
             (pmadapter->cfp_otp_bg + i)->dynamic.flags |= NXP_CHANNEL_NO_CCK;
+        }
 
         if (pmadapter->tx_power_table_bg[k + MOD_OFDM_PSK] == 0 &&
             pmadapter->tx_power_table_bg[k + MOD_OFDM_QAM16] == 0 &&
@@ -2384,20 +2416,30 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
 
     pcb = &pmadapter->callbacks;
     if (pmadapter->otp_region != NULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->otp_region);
+    }
     if (pmadapter->cfp_otp_bg != NULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->cfp_otp_bg);
+    }
     if (pmadapter->tx_power_table_bg != NULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->tx_power_table_bg);
+    }
     pmadapter->otp_region             = MNULL;
     pmadapter->cfp_otp_bg             = MNULL;
     pmadapter->tx_power_table_bg      = MNULL;
     pmadapter->tx_power_table_bg_size = 0;
 #ifdef CONFIG_5GHz_SUPPORT
     if (pmadapter->cfp_otp_a != NULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->cfp_otp_a);
+    }
     if (pmadapter->tx_power_table_a != NULL)
+    {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->tx_power_table_a);
+    }
     pmadapter->cfp_otp_a             = MNULL;
     pmadapter->tx_power_table_a      = MNULL;
     pmadapter->tx_power_table_a_size = 0;

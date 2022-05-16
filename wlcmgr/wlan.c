@@ -530,6 +530,10 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
             /* already configured */
             return -WM_FAIL;
         }
+        else
+        {
+            /*Do Nothing*/
+        }
     }
     else
     {
@@ -891,7 +895,9 @@ begin:
         case DEEPSLEEPPS_PRE_DISABLE:
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
             if (event == DEEPSLEEPPS_EVENT_ENTER)
+            {
                 next_state = DEEPSLEEPPS_DISABLING;
+            }
 #else
             if (event == DEEPSLEEPPS_EVENT_ENTER)
             {
@@ -1389,7 +1395,9 @@ static void do_scan(struct wlan_network *network)
     }
 #endif
     if (network->channel_specific != 0U)
+    {
         channel = network->channel;
+    }
 
     switch (network->role)
     {
@@ -2904,7 +2912,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 do_connect_failed(WLAN_REASON_ADDRESS_FAILED);
 
                 if (wlan.reassoc_control)
+                {
                     wlcm_request_reconnect(next, network);
+                }
 
                 *next = wlan.sta_state;
 #ifdef CONFIG_IPV6
@@ -2923,6 +2933,10 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
 #endif
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+            }
+            else
+            {
+                /*Do Nothing*/
             }
 #endif
             return;
@@ -3001,7 +3015,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 do_connect_failed(WLAN_REASON_ADDRESS_FAILED);
 
                 if (wlan.reassoc_control)
+                {
                     wlcm_request_reconnect(next, network);
+                }
 
                 *next = wlan.sta_state;
 #ifdef CONFIG_IPV6
@@ -3042,7 +3058,9 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
     void *if_handle = net_get_mlan_handle();
     int i, found = 0;
     if (network->type != WLAN_BSS_TYPE_STA || !if_handle)
+    {
         return;
+    }
 
     net_get_if_ipv6_addr(&network->ip, if_handle);
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
@@ -3817,7 +3835,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
          * We do not allow HS config without IEEEPS */
         case WIFI_EVENT_HS_CONFIG:
             if (wlan.hs_configured)
+            {
                 wlcm_process_hs_config_event();
+            }
             break;
 #ifdef CONFIG_11N
         case WIFI_EVENT_11N_ADDBA:
@@ -4549,7 +4569,9 @@ int wlan_add_network(struct wlan_network *network)
     }
 
     if (wlan_is_key_valid(network) == false)
+    {
         return -WM_E_INVAL;
+    }
 
     /* Make sure network type is set correctly if not
      * set correct values as per role*/
@@ -5303,11 +5325,17 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     if (wlan.cm_ieeeps_configured && wlan.cm_deepsleepps_configured)
+    {
         *ps_mode = WLAN_IEEE_DEEP_SLEEP;
+    }
     else if (wlan.cm_deepsleepps_configured)
+    {
         *ps_mode = WLAN_DEEP_SLEEP;
+    }
     else if (wlan.cm_ieeeps_configured)
+    {
         *ps_mode = WLAN_IEEE;
+    }
 #else
     if (wlan_is_deepsleepps_active())
     {

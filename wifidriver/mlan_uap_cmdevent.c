@@ -648,9 +648,13 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
             tlv_pwk_cipher->header.type = wlan_cpu_to_le16(TLV_TYPE_PWK_CIPHER);
             tlv_pwk_cipher->header.len  = wlan_cpu_to_le16(sizeof(t_u16) + sizeof(t_u8) + sizeof(t_u8));
             if ((bss->param.bss_config.protocol & PROTOCOL_WPA3_SAE) != 0U)
+            {
                 tlv_pwk_cipher->protocol = wlan_cpu_to_le16(PROTOCOL_WPA3_SAE);
+            }
             else
+            {
                 tlv_pwk_cipher->protocol = wlan_cpu_to_le16(PROTOCOL_WPA2);
+            }
             tlv_pwk_cipher->pairwise_cipher = bss->param.bss_config.wpa_cfg.pairwise_cipher_wpa2;
             cmd_size += sizeof(MrvlIEtypes_pwk_cipher_t);
             tlv += sizeof(MrvlIEtypes_pwk_cipher_t);
@@ -2598,7 +2602,9 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             break;
         case HostCmd_CMD_802_11D_DOMAIN_INFO:
             if (pmpriv->support_11d_APIs != NULL)
+            {
                 ret = pmpriv->support_11d_APIs->wlan_cmd_802_11d_domain_info_p(pmpriv, cmd_ptr, cmd_action);
+            }
             break;
 #ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_CHAN_REPORT_REQUEST:
@@ -2702,7 +2708,9 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             if (pioctl_req != NULL)
+            {
                 pioctl_req->status_code = MLAN_ERROR_CMD_INVALID;
+            }
             ret = MLAN_STATUS_FAILURE;
             break;
     }

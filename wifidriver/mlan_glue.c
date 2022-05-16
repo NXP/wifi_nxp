@@ -1695,9 +1695,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
         pmpriv = (mlan_private *)mlan_adap->priv[1];
+    }
     else
+    {
         pmpriv = (mlan_private *)mlan_adap->priv[0];
+    }
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     if (mlan_adap->ps_state == PS_STATE_SLEEP)
@@ -1951,7 +1955,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #ifdef CONFIG_WIFIDRIVER_PS_LOCK
                 if (ps_event != WIFI_EVENT_PS_INVALID)
 #endif
+                {
                     wifi_event_completion(ps_event, result, arg);
+                }
             }
             break;
 #if 0
@@ -2527,9 +2533,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
             case HostCmd_CMD_RECONFIGURE_TX_BUFF:
                 if (resp->result == HostCmd_RESULT_OK)
+                {
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
                 else
+                {
                     wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
                 break;
             case HostCmd_CMD_PMF_PARAMS:
             {
@@ -2651,7 +2661,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     }
                 }
                 else
+                {
                     wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
             }
             break;
 #endif
@@ -3263,8 +3275,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
             else
+            {
                 /* Unexpected PS SLEEP event */
                 wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
+            }
 #else
             wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
@@ -3284,6 +3298,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wevt_w("Receive PS AWAKE event when presleep: %d", mlan_adap->ps_state);
                 os_rwlock_write_unlock(&sleep_rwlock);
                 mlan_adap->ps_state = PS_STATE_AWAKE;
+            }
+            else
+            {
+                /*Do Nothing*/
             }
 #else
             pmpriv->adapter->ps_state = PS_STATE_AWAKE;
@@ -3474,9 +3492,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
             if (evt->reason_code == AP_DEAUTH_REASON_MAC_ADDR_BLOCKED)
+            {
                 wevt_d("EVENT: Blacklist sta %02x:%02x:%02x:%02x:%02x:%02x: try to join the network \r\n",
                        evt->src_mac_addr[0], evt->src_mac_addr[1], evt->src_mac_addr[2], evt->src_mac_addr[3],
                        evt->src_mac_addr[4], evt->src_mac_addr[5]);
+            }
             break;
         case EVENT_MICRO_AP_BSS_START:
             wifi_d("uAP start event received");

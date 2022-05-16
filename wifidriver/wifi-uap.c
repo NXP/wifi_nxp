@@ -553,6 +553,11 @@ static int wifi_cmd_uap_config(char *ssid,
         wm_wifi.ht_tx_cfg &= ~MBIT(1);
         wm_wifi.ht_tx_cfg &= ~MBIT(6);
     }
+    else
+    {
+        /*Do Nothing*/
+    }
+
     if (ISSUPP_RXLDPC(mlan_adap->hw_dot_11n_dev_cap) != 0U)
     {
         SETHT_LDPCCODINGCAP(bss.param.bss_config.ht_cap_info);

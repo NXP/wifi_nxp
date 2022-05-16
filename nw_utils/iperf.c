@@ -93,19 +93,27 @@ static void lwiperf_report(void *arg,
         {
 #ifdef CONFIG_IPV6
             if (ipv6)
+            {
                 (void)PRINTF(" Local address : %s ", inet6_ntoa(local_addr->u_addr.ip6));
+            }
             else
 #endif
+            {
                 (void)PRINTF(" Local address : %u.%u.%u.%u ", ((u8_t *)local_addr)[0], ((u8_t *)local_addr)[1],
                              ((u8_t *)local_addr)[2], ((u8_t *)local_addr)[3]);
+            }
             (void)PRINTF(" Port %d \r\n", local_port);
 #ifdef CONFIG_IPV6
             if (ipv6)
+            {
                 (void)PRINTF(" Remote address : %s ", inet6_ntoa(remote_addr->u_addr.ip6));
+            }
             else
 #endif
+            {
                 (void)PRINTF(" Remote address : %u.%u.%u.%u ", ((u8_t *)remote_addr)[0], ((u8_t *)remote_addr)[1],
                              ((u8_t *)remote_addr)[2], ((u8_t *)remote_addr)[3]);
+            }
             (void)PRINTF(" Port %d \r\n", remote_port);
             (void)PRINTF(" Bytes Transferred %llu \r\n", bytes_transferred);
             (void)PRINTF(" Duration (ms) %d \r\n", ms_duration);
@@ -458,12 +466,16 @@ static void iperf_test_start(void *arg)
         {
 #ifdef CONFIG_IPV6
             if (ipv6)
+            {
                 ctx->iperf_session =
                     lwiperf_start_tcp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+            }
             else
 #endif
+            {
                 ctx->iperf_session =
                     lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+        }
         }
         else
         {
@@ -485,13 +497,17 @@ static void iperf_test_start(void *arg)
             }
 #ifdef CONFIG_IPV6
             if (ipv6)
+            {
                 ctx->iperf_session =
                     lwiperf_start_udp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+            }
             else
 #endif
+            {
                 ctx->iperf_session =
                     lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
         }
+    }
     }
     else
     {
@@ -499,7 +515,9 @@ static void iperf_test_start(void *arg)
         {
 #ifdef CONFIG_IPV6
             if (ipv6)
+            {
                 ip6_addr_assign_zone(ip_2_ip6(&server_address), IP6_UNICAST, netif_default);
+            }
 #endif
             ctx->iperf_session = lwiperf_start_tcp_client(&server_address, LWIPERF_TCP_PORT_DEFAULT, ctx->client_type,
                                                           amount, lwiperf_report, NULL);
@@ -812,7 +830,9 @@ static void cmd_iperf(int argc, char **argv)
                 info.bhost = 1;
 
                 if (ip_addr_ismulticast(&bind_address))
+                {
                     multicast = true;
+                }
 
                 arg += 1;
             }
@@ -914,11 +934,16 @@ static void cmd_iperf(int argc, char **argv)
         (void)PRINTF("Incorrect usage\r\n");
 #ifdef CONFIG_IPV6
         if (info.ipv6 && info.iperf_bind)
+        {
             (void)PRINTF("IPv6: bind to host not allowed\r\n");
+        }
         else if (info.ipv6 && (IP_IS_V4(&server_address)))
+        {
             (void)PRINTF("IPv6: Address family for host not supported\r\n");
+        }
         else
 #endif
+        {
             if (info.udp
 #ifdef CONFIG_IPV6
                 && !info.ipv6
@@ -926,6 +951,7 @@ static void cmd_iperf(int argc, char **argv)
                 && (!info.iperf_bind || !info.bhost))
         {
             (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
+        }
         }
         display_iperf_usage();
         return;
@@ -940,9 +966,13 @@ static void cmd_iperf(int argc, char **argv)
         if (info.udp != 0U)
         {
             if (info.dserver != 0U)
+            {
                 UDPServerDual();
+            }
             else
+            {
                 UDPServer();
+            }
         }
         else
         {

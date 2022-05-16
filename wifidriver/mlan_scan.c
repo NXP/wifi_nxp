@@ -1655,11 +1655,11 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                            pbss_entry->owe_transition_mode, MAC2STR(pbss_entry->trans_mac_address),
                            pbss_entry->trans_ssid.ssid);
                 }
+#endif
                 else
                 {
                     /* Do Nothing */
                 }
-#endif
 #ifdef CONFIG_WPS2
                 /* fixme: Added for WMSDK. Check if can be merged properly with
                    mlan. There should be a better way */

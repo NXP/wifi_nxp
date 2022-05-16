@@ -346,7 +346,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #endif
 
     for (i = 0; i < MAX_NUM_TID; i++)
+    {
         priv->addba_reject[i] = ADDBA_RSP_STATUS_ACCEPT;
+    }
     priv->max_amsdu = 0;
 
     priv->scan_block = MFALSE;

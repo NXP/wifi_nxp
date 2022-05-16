@@ -3358,7 +3358,9 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
     wlan_add_fw_cfp_tables(pmpriv, tlv_buf, tlv_buf_left);
 
     if (!pioctl_buf)
+    {
         goto done;
+    }
 
     if (!pioctl_buf->pbuf)
     {
@@ -3378,8 +3380,10 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
     {
         (void)__memset(pmpriv->adapter, &misc_cfg->param.custom_reg_domain, 0, sizeof(mlan_ds_custom_reg_domain));
         if (pmadapter->otp_region)
+        {
             (void)__memcpy(pmpriv->adapter, &misc_cfg->param.custom_reg_domain.region, pmadapter->otp_region,
                            sizeof(otp_region_info_t));
+        }
         if (pmadapter->cfp_otp_bg)
         {
             misc_cfg->param.custom_reg_domain.num_bg_chan = pmadapter->tx_power_table_bg_rows;

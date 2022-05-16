@@ -289,13 +289,23 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
             pmadapter->priv[i]->frame_type   = (t_u8)pmdevice->bss_attr[i].frame_type;
             pmadapter->priv[i]->bss_priority = (t_u8)pmdevice->bss_attr[i].bss_priority;
             if (pmdevice->bss_attr[i].bss_type == MLAN_BSS_TYPE_STA)
+            {
                 pmadapter->priv[i]->bss_role = MLAN_BSS_ROLE_STA;
+            }
             else if (pmdevice->bss_attr[i].bss_type == MLAN_BSS_TYPE_UAP)
+            {
                 pmadapter->priv[i]->bss_role = MLAN_BSS_ROLE_UAP;
+            }
 #ifdef WIFI_DIRECT_SUPPORT
             else if (pmdevice->bss_attr[i].bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+            {
                 pmadapter->priv[i]->bss_role = MLAN_BSS_ROLE_STA;
+            }
 #endif
+            else
+            {
+                /*Do Nothing*/
+            }
             /* Save bss_index and bss_num */
             pmadapter->priv[i]->bss_index = i;
             pmadapter->priv[i]->bss_num   = (t_u8)pmdevice->bss_attr[i].bss_num;

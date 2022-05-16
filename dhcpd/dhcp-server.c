@@ -420,7 +420,9 @@ static int process_dhcp_message(char *msg, int len)
         ret = make_response(msg, (enum dhcp_message_type)response_type);
         ret = SEND_RESPONSE(dhcps.sock, (struct sockaddr *)(void *)&dhcps.baddr, msg, ret);
         if (response_type == DHCP_MESSAGE_ACK)
+        {
             (void)send_gratuitous_arp(dhcps.my_ip);
+        }
         return WM_SUCCESS;
     }
 
@@ -674,7 +676,9 @@ static int send_ctrl_msg(const char *msg)
     {
         ret = net_get_sock_error(ctrl_tmp);
         if (ret != 0)
+        {
             dhcp_e("failed to create socket error:%d", ret);
+        }
         return ret;
     }
 

@@ -1704,10 +1704,12 @@ t_bool wlan_11h_radar_detect_required(mlan_private *priv, t_u8 channel)
     required = wlan_get_cfp_radar_detect(priv, channel);
 
     if (!priv->adapter->region_code)
+    {
         PRINTM(MINFO,
                "11h: Radar detection in CFP code[BG:%#x, A:%#x] "
                "is %srequired for channel %d\n",
                priv->adapter->cfp_code_bg, priv->adapter->cfp_code_a, (required ? "" : "not "), channel);
+    }
     else
     {
         PRINTM(MINFO,

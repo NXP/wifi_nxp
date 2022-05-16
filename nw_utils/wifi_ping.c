@@ -337,10 +337,14 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
 #ifdef CONFIG_IPV6
             if (addr->type == IPADDR_TYPE_V4)
 #endif
+            {
                 ret = ping_recv(s, (uint16_t)i, &ttl);
+            }
 #ifdef CONFIG_IPV6
             else
+            {
                 ret = ping6_recv(s, (uint16_t)i, &ttl);
+            }
 #endif
 
             /* Calculate the round trip time */
@@ -469,6 +473,10 @@ static void cmd_ping(int argc, char **argv)
         return;
     }
 #endif
+    else
+    {
+        /*Do Nothing*/
+    }
 
 end:
     (void)PRINTF("Incorrect usage\r\n");

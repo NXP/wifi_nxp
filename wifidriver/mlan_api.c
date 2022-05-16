@@ -686,7 +686,9 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
             filter_buf = (t_u8 *)(buf + buf_len);
         }
         else
+        {
             goto done;
+        }
 
         if (i != 0)
         {

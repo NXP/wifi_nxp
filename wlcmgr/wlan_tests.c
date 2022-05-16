@@ -1835,9 +1835,13 @@ static void test_wlan_host_sleep(int argc, char **argv)
     {
         ret = wlan_send_host_sleep(HOST_SLEEP_CFG_CANCEL);
         if (ret == WM_SUCCESS)
+        {
             (void)PRINTF("Cancel Previous configured Host sleep configuration");
+        }
         else
+        {
             (void)PRINTF("Failed to Cancel Previous configured Host sleep configuration, error: %d", ret);
+        }
     }
     else if (choice == 1)
     {
@@ -1855,18 +1859,30 @@ static void test_wlan_host_sleep(int argc, char **argv)
             {
                 ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
                 if (ret == WM_SUCCESS)
+                {
                     (void)PRINTF("Host sleep configuration successs for wowlan test");
+                }
                 else
+                {
                     (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+                }
             }
             else if (wowlan == 0)
             {
                 ret = wlan_send_host_sleep(WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST |
                                            WAKE_ON_MAC_EVENT);
                 if (ret == WM_SUCCESS)
+                {
                     (void)PRINTF("Host sleep configuration successs with regular condition");
+                }
                 else
+                {
                     (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+                }
+            }
+            else
+            {
+                /*Do Nothing*/
             }
         }
         else

@@ -103,9 +103,12 @@ static void netif_ext_status_callback(struct netif *netif,
     {
 #ifdef CONFIG_IPV6
         if ((reason & (LWIP_NSC_IPV6_ADDR_STATE_CHANGED | LWIP_NSC_IPV6_SET)) != LWIP_NSC_NONE)
+        {
             wm_netif_ipv6_status_callback(netif);
+        }
         else
 #endif
+        {
             if ((reason & (LWIP_NSC_IPV4_SETTINGS_CHANGED | LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_ADDR_VALID |
                            LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED)) != LWIP_NSC_NONE)
         {
@@ -116,20 +119,31 @@ static void netif_ext_status_callback(struct netif *netif,
         }
     }
 }
+}
 
 #ifdef CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
 {
     if (ip6_addr_istentative(addr_state))
+    {
         return IPV6_ADDR_STATE_TENTATIVE;
+    }
     else if (ip6_addr_ispreferred(addr_state))
+    {
         return IPV6_ADDR_STATE_PREFERRED;
+    }
     else if (ip6_addr_isdeprecated(addr_state))
+    {
         return IPV6_ADDR_STATE_DEPRECATED;
+    }
     else if (ip6_addr_isinvalid(addr_state))
+    {
         return IPV6_ADDR_STATE_INVALID;
+    }
     else
+    {
         return IPV6_ADDR_UNKNOWN;
+}
 }
 
 char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
@@ -139,15 +153,25 @@ char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
     (void)memcpy((void *)ip6_addr.addr, (const void *)ipv6_conf->address, sizeof(ip6_addr.addr));
 
     if (ip6_addr_islinklocal(&ip6_addr))
+    {
         return IPV6_ADDR_TYPE_LINKLOCAL;
+    }
     else if (ip6_addr_isglobal(&ip6_addr))
+    {
         return IPV6_ADDR_TYPE_GLOBAL;
+    }
     else if (ip6_addr_isuniquelocal(&ip6_addr))
+    {
         return IPV6_ADDR_TYPE_UNIQUELOCAL;
+    }
     else if (ip6_addr_issitelocal(&ip6_addr))
+    {
         return IPV6_ADDR_TYPE_SITELOCAL;
+    }
     else
+    {
         return IPV6_ADDR_UNKNOWN;
+}
 }
 #endif /* CONFIG_IPV6 */
 
@@ -580,7 +604,9 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     }
 #endif
     if (if_handle == &g_mlan)
+    {
         (void)netifapi_netif_set_default(&if_handle->netif);
+    }
     switch (addr->ipv4.addr_type)
     {
         case ADDR_TYPE_STATIC:
