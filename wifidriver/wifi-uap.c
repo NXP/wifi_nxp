@@ -252,7 +252,7 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u32 cmd_oid,
                                   t_void *pioctl_buf,
                                   t_void *pdata_buf,
-                                  int bss_type,
+                                  mlan_bss_type bss_type,
                                   void *priv)
 {
     (void)wifi_get_command_lock();
@@ -777,7 +777,7 @@ void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
 
 static int wifi_uap_pmf_getset(uint8_t action, bool *mfpc, bool *mfpr);
 
-int wifi_uap_start(int type,
+int wifi_uap_start(mlan_bss_type type,
                    char *ssid,
                    uint8_t *mac_addr,
                    int security,
