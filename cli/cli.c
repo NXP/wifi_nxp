@@ -105,7 +105,7 @@ static int store_cmd_to_hist(int cmd_no, const char *buf)
 
     if (cmd_hist_arr[cmd_no])
     {
-        if (!strcmp(cmd_hist_arr[cmd_no], buf))
+        if (strcmp(cmd_hist_arr[cmd_no], buf) == 0U)
             return WM_SUCCESS; /* avoid rewrite. */
         else
         {
@@ -205,7 +205,7 @@ static int cmd_hist_is_duplicate(const char *cmd)
         return false;
     }
 
-    if (!strcmp(tmpbuf, cmd))
+    if (strcmp(tmpbuf, cmd) == 0U)
     {
         return true; /* Duplicate */
     }
@@ -282,14 +282,14 @@ static const struct cli_command *lookup_command(char *name, int len)
         /* See if partial or full match is expected */
         if (len != 0)
         {
-            if (!strncmp(cli.commands[i]->name, name, (size_t)len))
+            if (strncmp(cli.commands[i]->name, name, (size_t)len) == 0U)
             {
                 return cli.commands[i];
             }
         }
         else
         {
-            if (!strcmp(cli.commands[i]->name, name))
+            if (strcmp(cli.commands[i]->name, name) == 0U)
             {
                 return cli.commands[i];
             }
@@ -370,23 +370,23 @@ static int handle_input(char *handle_inbuf)
                     --i;
                     break;
                 }
-                if (!stat.inQuote && stat.inArg)
+                if ((stat.inQuote == 0U) && stat.inArg)
                 {
                     break;
                 }
-                if (stat.inQuote && !stat.inArg)
+                if ((stat.inQuote != 0U) && !stat.inArg)
                 {
                     return 2;
                 }
 
-                if (!stat.inQuote && !stat.inArg)
+                if ((stat.inQuote == 0U) && !stat.inArg)
                 {
                     stat.inArg   = 1;
                     stat.inQuote = 1;
                     argc++;
                     argv[argc - 1] = &handle_inbuf[i + 1];
                 }
-                else if (stat.inQuote && stat.inArg)
+                else if ((stat.inQuote != 0U) && stat.inArg)
                 {
                     stat.inArg      = 0;
                     stat.inQuote    = 0;
@@ -404,7 +404,7 @@ static int handle_input(char *handle_inbuf)
                     --i;
                     break;
                 }
-                if (!stat.inQuote && stat.inArg)
+                if ((stat.inQuote == 0U) && stat.inArg)
                 {
                     stat.inArg      = 0;
                     handle_inbuf[i] = '\0';
