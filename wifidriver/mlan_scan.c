@@ -1145,7 +1145,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     return ret;
 }
 
-#ifndef CONFIG_EXT_SCAN_SUPPORT
+#if !defined(CONFIG_EXT_SCAN_SUPPORT) || defined(CONFIG_ROAMING)
 /**
  *  @brief Inspect the scan response buffer for pointers to expected TLVs
  *
@@ -3038,7 +3038,7 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry)
     }
 }
 
-#ifndef CONFIG_EXT_SCAN_SUPPORT
+#if !defined(CONFIG_EXT_SCAN_SUPPORT) || defined(CONFIG_ROAMING)
 /**
  *  @brief This function handles the command response of scan
  *
@@ -3369,7 +3369,9 @@ done:
     LEAVE();
     return ret;
 }
-#else
+#endif
+
+#if defined(CONFIG_EXT_SCAN_SUPPORT)
 /**
  *  @brief Prepare an extended scan command to be sent to the firmware
  *
