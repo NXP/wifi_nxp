@@ -275,7 +275,8 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
 
 int wifi_uap_set_country(int country)
 {
-    int ret, nr_sb;
+    int ret;
+    t_u8 nr_sb;
 
     if (wifi_uap_enable_11d() != WM_SUCCESS)
     {
