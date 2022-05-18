@@ -1118,7 +1118,7 @@ void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
     for (i = 3; i >= 0; i--, j++)
     {
         mac_addr[j] = (char)(ipaddr >> 8 * i) & 0xFF;
-}
+    }
 }
 #endif /* CONFIG_IPV6 */
 

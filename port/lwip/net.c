@@ -111,14 +111,14 @@ static void netif_ext_status_callback(struct netif *netif,
         {
             if ((reason & (LWIP_NSC_IPV4_SETTINGS_CHANGED | LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_ADDR_VALID |
                            LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED)) != LWIP_NSC_NONE)
-        {
-            if (wm_netif_status_callback_ptr != NULL)
             {
-                wm_netif_status_callback_ptr(netif);
+                if (wm_netif_status_callback_ptr != NULL)
+                {
+                    wm_netif_status_callback_ptr(netif);
+                }
             }
         }
     }
-}
 }
 
 #ifdef CONFIG_IPV6
@@ -143,7 +143,7 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
     else
     {
         return IPV6_ADDR_UNKNOWN;
-}
+    }
 }
 
 char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
@@ -171,7 +171,7 @@ char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
     else
     {
         return IPV6_ADDR_UNKNOWN;
-}
+    }
 }
 #endif /* CONFIG_IPV6 */
 

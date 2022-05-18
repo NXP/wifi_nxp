@@ -475,7 +475,7 @@ static void iperf_test_start(void *arg)
             {
                 ctx->iperf_session =
                     lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
-        }
+            }
         }
         else
         {
@@ -506,8 +506,8 @@ static void iperf_test_start(void *arg)
             {
                 ctx->iperf_session =
                     lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+            }
         }
-    }
     }
     else
     {
@@ -949,9 +949,9 @@ static void cmd_iperf(int argc, char **argv)
                 && !info.ipv6
 #endif
                 && (!info.iperf_bind || !info.bhost))
-        {
-            (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
-        }
+            {
+                (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
+            }
         }
         display_iperf_usage();
         return;
