@@ -19,15 +19,15 @@
 #include <cli_utils.h>
 #include <ctype.h>
 
-int string_equal(const char *s1, const char *s2)
+bool string_equal(const char *s1, const char *s2)
 {
     size_t len = strlen(s1);
 
     if (len == strlen(s2) && !strncmp(s1, s2, len))
     {
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
 /**

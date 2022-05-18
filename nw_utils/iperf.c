@@ -670,7 +670,7 @@ static void UDPServerDual(void)
     ctx.client_type = LWIPERF_DUAL;
 
     (void)PRINTF("Bidirectional UDP test simultaneously as server, please add -d with external iperf client\r\n");
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void UDPClient(void)
@@ -785,32 +785,32 @@ static void cmd_iperf(int argc, char **argv)
 
     do
     {
-        if (!info.help && string_equal("-h", argv[arg]))
+        if ((info.help == 0U) && string_equal("-h", argv[arg]))
         {
             display_iperf_usage();
             return;
         }
-        else if (!info.udp && string_equal("-u", argv[arg]))
+        else if ((info.udp == 0U) && string_equal("-u", argv[arg]))
         {
             arg += 1;
             info.udp = 1;
         }
-        else if (!info.abort && string_equal("-a", argv[arg]))
+        else if ((info.abort == 0U) && string_equal("-a", argv[arg]))
         {
             arg += 1;
             info.abort = 1;
         }
-        else if (!info.server && string_equal("-s", argv[arg]))
+        else if ((info.server == 0U) && string_equal("-s", argv[arg]))
         {
             arg += 1;
             info.server = 1;
         }
-        else if (!info.client && string_equal("-c", argv[arg]))
+        else if ((info.client == 0U) && string_equal("-c", argv[arg]))
         {
             arg += 1;
             info.client = 1;
 
-            if (!info.chost && argv[arg] != NULL)
+            if ((info.chost == 0U) && argv[arg] != NULL)
             {
                 (void)strncpy(ip_addr, argv[arg], strlen(argv[arg]));
 
@@ -818,12 +818,12 @@ static void cmd_iperf(int argc, char **argv)
                 info.chost = 1;
             }
         }
-        else if (!info.iperf_bind && string_equal("-B", argv[arg]))
+        else if ((info.iperf_bind == 0U) && string_equal("-B", argv[arg]))
         {
             arg += 1;
             info.iperf_bind = 1;
 
-            if (!info.bhost && argv[arg] != NULL)
+            if ((info.bhost == 0U) && argv[arg] != NULL)
             {
                 (void)inet_aton(argv[arg], &bind_address);
 
@@ -837,12 +837,18 @@ static void cmd_iperf(int argc, char **argv)
                 arg += 1;
             }
         }
-        else if (!info.time && string_equal("-t", argv[arg]))
+        else if ((info.time == 0U) && string_equal("-t", argv[arg]))
         {
+            unsigned long amt_1 = 0U;
+            unsigned long amt_2 = 0U;
             arg += 1;
             info.time = 1;
             errno     = 0;
-            amount    = (int)(-(100 * strtoul(argv[arg], NULL, 10)));
+
+            amt_1  = (100 * strtoul(argv[arg], NULL, 10));
+            amt_2  = 0U - amt_1;
+            amount = (int)(amt_2);
+
             if (errno != 0)
             {
                 (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -862,26 +868,26 @@ static void cmd_iperf(int argc, char **argv)
         }
 #endif
 #ifdef CONFIG_IPV6
-        else if (!info.ipv6 && string_equal("-V", argv[arg]))
+        else if ((info.ipv6 == 0U) && string_equal("-V", argv[arg]))
         {
             arg += 1;
             info.ipv6 = 1;
             ipv6      = true;
         }
 #endif
-        else if (!info.dual && string_equal("-d", argv[arg]))
+        else if ((info.dual == 0U) && string_equal("-d", argv[arg]))
         {
             arg += 1;
             info.dual = 1;
         }
-        else if (!info.tradeoff && string_equal("-r", argv[arg]))
+        else if ((info.tradeoff == 0U) && string_equal("-r", argv[arg]))
         {
             arg += 1;
             info.tradeoff = 1;
         }
         else if (string_equal("-b", argv[arg]))
         {
-            if (arg + 1 >= argc || get_uint(argv[arg + 1], &udp_rate_factor, strlen(argv[arg + 1])))
+            if (arg + 1 >= argc || (get_uint(argv[arg + 1], &udp_rate_factor, strlen(argv[arg + 1])) != 0))
             {
                 (void)PRINTF(
                     "Error: invalid bandwidth"
@@ -907,7 +913,7 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
     if (ipv6)
     {
-        inet6_aton(ip_addr, ip_2_ip6(&server_address));
+        (void)inet6_aton(ip_addr, ip_2_ip6(&server_address));
         server_address.type = IPADDR_TYPE_V6;
     }
     else
@@ -919,36 +925,38 @@ static void cmd_iperf(int argc, char **argv)
     }
 #endif
 
-    if ((!info.abort && !info.server && !info.client) || (info.client && !info.chost) || (info.server && info.client) ||
-        (info.udp
+    if (((info.abort == 0U) && (info.server == 0U) && (info.client == 0U)) ||
+        ((info.client != 0U) && (info.chost == 0U)) || ((info.server != 0U) && (info.client != 0U)) ||
+        ((info.udp != 0U)
 #ifdef CONFIG_IPV6
-         && !info.ipv6
+         && (info.ipv6 == 0U)
 #endif
-         && (!info.iperf_bind || !info.bhost)) ||
-        ((info.dual || info.tradeoff) && !info.client) || (info.dual && info.tradeoff) || (info.dserver && !info.server)
+         && ((info.iperf_bind == 0U) || (info.bhost == 0U))) ||
+        (((info.dual != 0U) || (info.tradeoff != 0U)) && (info.client == 0U)) ||
+        ((info.dual != 0U) && (info.tradeoff != 0U)) || ((info.dserver != 0U) && (info.server == 0U))
 #ifdef CONFIG_IPV6
-        || (info.ipv6 && info.iperf_bind)
+        || ((info.ipv6 != 0U) && (info.iperf_bind != 0U))
 #endif
     )
     {
         (void)PRINTF("Incorrect usage\r\n");
 #ifdef CONFIG_IPV6
-        if (info.ipv6 && info.iperf_bind)
+        if ((info.ipv6 != 0U) && (info.iperf_bind != 0U))
         {
             (void)PRINTF("IPv6: bind to host not allowed\r\n");
         }
-        else if (info.ipv6 && (IP_IS_V4(&server_address)))
+        else if ((info.ipv6 != 0U) && (IP_IS_V4(&server_address)))
         {
             (void)PRINTF("IPv6: Address family for host not supported\r\n");
         }
         else
 #endif
         {
-            if (info.udp
+            if ((info.udp != 0U)
 #ifdef CONFIG_IPV6
-                && !info.ipv6
+                && (info.ipv6 == 0U)
 #endif
-                && (!info.iperf_bind || !info.bhost))
+                && ((info.iperf_bind == 0U) || (info.bhost == 0U)))
             {
                 (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
             }
