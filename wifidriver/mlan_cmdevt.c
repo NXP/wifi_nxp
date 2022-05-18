@@ -880,7 +880,7 @@ done:
        implementation here.
     */
 
-    return wifi_prepare_and_send_cmd(pmpriv, cmd_no, cmd_action, cmd_oid, pioctl_buf, pdata_buf, (int)pmpriv->bss_type,
+    return wifi_prepare_and_send_cmd(pmpriv, cmd_no, cmd_action, cmd_oid, pioctl_buf, pdata_buf, pmpriv->bss_type,
                                      NULL);
 }
 

@@ -923,7 +923,7 @@ void handle_cdint(int error);
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
-int wifi_uap_stop(int type);
+int wifi_uap_stop(mlan_bss_type type);
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 
 #ifndef CONFIG_MLAN_WMSDK

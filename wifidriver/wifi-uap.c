@@ -354,7 +354,7 @@ int wifi_cmd_uap_config(char *ssid,
                         t_u8 bandwidth,
                         t_u8 dtim_period,
                         t_u8 chan_sw_count,
-                        int bss_type)
+                        mlan_bss_type bss_type)
 {
     int ssid_len = strlen(ssid);
     uint8_t i;
@@ -874,7 +874,7 @@ int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
                                          MLAN_BSS_TYPE_UAP, NULL);
 }
 
-int wifi_uap_stop(int type)
+int wifi_uap_stop(mlan_bss_type type)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
