@@ -839,15 +839,10 @@ static void cmd_iperf(int argc, char **argv)
         }
         else if ((info.time == 0U) && string_equal("-t", argv[arg]))
         {
-            unsigned long amt_1 = 0U;
-            unsigned long amt_2 = 0U;
             arg += 1;
             info.time = 1;
             errno     = 0;
-
-            amt_1  = (100 * strtoul(argv[arg], NULL, 10));
-            amt_2  = 0U - amt_1;
-            amount = (int)(amt_2);
+            amount    = -(100 * strtol(argv[arg], NULL, 10));
 
             if (errno != 0)
             {
