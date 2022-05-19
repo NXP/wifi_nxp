@@ -1430,6 +1430,7 @@ int wifi_set_uap_max_clients(unsigned int *max_sta_num)
  */
 int wifi_get_uap_channel(int *channel)
 {
+    *channel = 0U;
     return wifi_send_uap_get_channel_cmd(channel);
 }
 
