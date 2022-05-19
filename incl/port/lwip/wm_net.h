@@ -361,6 +361,19 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state);
 char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf);
 #endif /* CONFIG_IPV6 */
 
+/** Get interface Name string containing name and number
+ *
+ * This function will get the string containing name and number for given interface.
+ * Use net_get_sta_handle(), net_get_uap_handle() to get
+ * interface handle.
+ *
+ * \param[out] if_name interface name pointer
+ * \param[in] intrfc_handle interface handle
+ *
+ * \return WM_SUCCESS on success or error code.
+ */
+int net_get_if_name(char *if_name, void *intrfc_handle);
+
 /** Get interface IP Address
  *
  * This function will get the IP Address of a given interface. Use

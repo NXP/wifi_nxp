@@ -28,6 +28,7 @@
 #include OVERRIDE_CALIBRATION_DATA
 #endif
 #include <fsl_common.h>
+#include <dhcp-server.h>
 
 #define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
@@ -4397,6 +4398,7 @@ int wlan_stop(void)
     if (wlan.uap_state > CM_UAP_CONFIGURED)
     {
         (void)wifi_uap_stop((int)wlan.networks[wlan.cur_uap_network_idx].type);
+        (void)dhcp_server_stop();
     }
 
     ret = os_thread_delete(&wlan.cm_main_thread);

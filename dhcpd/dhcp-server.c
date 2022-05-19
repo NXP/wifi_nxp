@@ -564,7 +564,7 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
     struct ifreq req;
 
     (void)memset(req.ifr_name, 0, sizeof(req.ifr_name));
-    (void)strncpy(req.ifr_name, "ua2", 3);
+    (void)net_get_if_name(req.ifr_name, intrfc_handle);
 
     int sock = net_socket(PF_INET, SOCK_DGRAM, 0);
     if (sock == -1)

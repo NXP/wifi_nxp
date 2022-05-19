@@ -717,6 +717,18 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 }
 #endif /* CONFIG_IPV6 */
 
+int net_get_if_name(char *pif_name, void *intrfc_handle)
+{
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+    char if_name[NETIF_NAMESIZE];
+    char *ptr_if_name = NULL;
+
+    ptr_if_name = netif_index_to_name(if_handle->netif.num + 1, if_name);
+
+    strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
+    return WM_SUCCESS;
+}
+
 int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
