@@ -325,8 +325,9 @@ static void dump_wlan_add_usage(void)
 static void test_wlan_add(int argc, char **argv)
 {
     struct wlan_network network;
-    int ret = 0;
-    int arg = 1;
+    int ret    = 0;
+    int arg    = 1;
+    size_t len = 0U;
     struct
     {
         unsigned ssid : 1;
@@ -353,25 +354,27 @@ static void test_wlan_add(int argc, char **argv)
         return;
     }
 
-    if (strlen(argv[arg]) >= WLAN_NETWORK_NAME_MAX_LENGTH)
+    len = strlen(argv[arg]);
+    if (len >= WLAN_NETWORK_NAME_MAX_LENGTH)
     {
         (void)PRINTF("Error: network name too long\r\n");
         return;
     }
 
-    (void)memcpy(network.name, argv[arg], strlen(argv[arg]));
+    (void)memcpy(network.name, argv[arg], len);
     arg++;
     info.address = (u8_t)ADDR_TYPE_DHCP;
     do
     {
         if (!info.ssid && string_equal("ssid", argv[arg]))
         {
-            if (strlen(argv[arg + 1]) > IEEEtypes_SSID_SIZE)
+            len = strlen(argv[arg + 1]);
+            if (len > IEEEtypes_SSID_SIZE)
             {
                 (void)PRINTF("Error: SSID is too long\r\n");
                 return;
             }
-            (void)memcpy(network.ssid, argv[arg + 1], strlen(argv[arg + 1]));
+            (void)memcpy(network.ssid, argv[arg + 1], len);
             arg += 2;
             info.ssid = 1;
         }
