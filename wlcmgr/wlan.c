@@ -1083,16 +1083,17 @@ static int network_matches_scan_result(const struct wlan_network *network,
             chan_list[*num_channels].scan_time   = 150;
             (*num_channels)++;
         }
-        if ((!res->ssid_len) ||
-            (memcmp(network->ssid, (char *)res->ssid, (size_t)MAX(strlen(network->ssid), res->ssid_len)))
+        if ((res->ssid_len == 0) ||
+            (strncmp((const char *)network->ssid, (const char *)res->ssid,
+                     (size_t)MAX(strlen(network->ssid), (unsigned int)res->ssid_len)) != 0)
 #ifdef CONFIG_OWE
-            ||
-            ((res->trans_mode == OWE_TRANS_MODE_OWE) &&
-             (memcmp(network->trans_ssid, (char *)res->ssid, (size_t)MAX(strlen(network->trans_ssid), res->ssid_len))))
+            || ((res->trans_mode == OWE_TRANS_MODE_OWE) &&
+                (strncmp((const char *)network->trans_ssid, (const char *)res->ssid,
+                         (size_t)MAX(strlen(network->trans_ssid), (unsigned int)res->ssid_len))) != 0)
 #endif
 #ifdef CONFIG_WLAN_BRIDGE
-            ||
-            (memcmp(network->bridge_ssid, (char *)res->ssid, (size_t)MAX(strlen(network->bridge_ssid), res->ssid_len)))
+            || (strncmp((const char *)network->bridge_ssid, (const char *)res->ssid,
+                        (size_t)MAX(strlen(network->bridge_ssid), (unsigned int)res->ssid_len)) != 0)
 #endif
         )
         {
