@@ -90,7 +90,7 @@ static t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
  *
  *  @return         0--success, otherwise failure
  */
-int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
+int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 bandwidth, t_u8 channel)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int ret                 = 0;
@@ -98,7 +98,10 @@ int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
 
     memset(&vht_cfg, 0, sizeof(vht_cfg));
 #ifdef CONFIG_5GHz_SUPPORT
-    vht_cfg.band         = BAND_SELECT_A | BAND_SELECT_BG;
+    if (channel > MAX_CHANNELS_BG)
+        vht_cfg.band     = BAND_SELECT_A;
+    else
+        vht_cfg.band     = BAND_SELECT_BG;
 #else
     vht_cfg.band         = BAND_SELECT_BG;
 #endif
@@ -114,8 +117,10 @@ int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action)
     }
     else
     {
-        /// TODO: BW_FOLLOW_HTCAP follows 11N BW setting. Later on check for BW_FOLLOW_VHTCAP
-        vht_cfg.bwcfg = BW_FOLLOW_HTCAP;
+        if (BANDWIDTH_80MHZ == bandwidth)
+            vht_cfg.bwcfg = BW_FOLLOW_VHTCAP;
+        else
+            vht_cfg.bwcfg = BW_FOLLOW_HTCAP;
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
         vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
         vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
@@ -556,7 +561,11 @@ int wifi_cmd_uap_config(char *ssid,
     bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0 ? 0x112c : wm_wifi.ht_cap_info;
     wm_wifi.ht_tx_cfg                = wm_wifi.ht_tx_cfg == 0 ? 0x002c : wm_wifi.ht_tx_cfg;
 
-    if (bandwidth == BANDWIDTH_40MHZ)
+    if (bandwidth == BANDWIDTH_40MHZ
+#ifdef CONFIG_11AC
+        || bandwidth == BANDWIDTH_80MHZ
+#endif
+       )
     {
         if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
         {
@@ -587,9 +596,9 @@ int wifi_cmd_uap_config(char *ssid,
     }
 #ifdef CONFIG_11AC
     if (enable_11ac)
-        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_ENABLE);
+        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_ENABLE, bandwidth, channel);
     else
-        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE);
+        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE, bandwidth, channel);
 #endif
 #ifdef CONFIG_11AX
     if (pmpriv->adapter->enable_11ax)
@@ -746,7 +755,11 @@ void wifi_uap_set_beacon_period(const t_u16 beacon_period)
 
 int wifi_uap_set_bandwidth(const t_u8 bandwidth)
 {
-    if (bandwidth == BANDWIDTH_20MHZ || bandwidth == BANDWIDTH_40MHZ)
+    if (bandwidth == BANDWIDTH_20MHZ || bandwidth == BANDWIDTH_40MHZ
+#ifdef CONFIG_11AC
+        || bandwidth == BANDWIDTH_80MHZ
+#endif
+       )
     {
         wm_wifi.bandwidth = bandwidth;
         return WM_SUCCESS;
@@ -796,6 +809,14 @@ int wifi_uap_start(mlan_bss_type type,
                    )
 {
     wuap_d("Configuring");
+#ifdef CONFIG_11AC
+    if((BANDWIDTH_80MHZ == wm_wifi.bandwidth) && (channel <= MAX_CHANNELS_BG))
+    {
+        wuap_e("Cannot start uAP if bandwidth is configured to 80MHz, "
+               "while channel is selected automatically or set to less than %d.", MAX_CHANNELS_BG);
+        return -WM_FAIL;
+    }
+#endif
     /* Configure SSID */
     int rv = wifi_cmd_uap_config(
         ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, channel, scan_chan_list,

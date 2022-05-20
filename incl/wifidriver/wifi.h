@@ -40,6 +40,9 @@
 
 #define BANDWIDTH_20MHZ 1U
 #define BANDWIDTH_40MHZ 2U
+#ifdef CONFIG_11AC
+#define BANDWIDTH_80MHZ 3U
+#endif
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;
 extern uint16_t g_data_nf_last;
