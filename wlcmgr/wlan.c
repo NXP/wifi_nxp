@@ -5436,6 +5436,20 @@ int wlan_get_uap_address(struct wlan_ip_config *addr)
     return WM_SUCCESS;
 }
 
+int wlan_get_uap_channel(int *channel)
+{
+    if (channel != NULL)
+    {
+        *channel = 0;
+    }
+    else
+    {
+        return (int)(-WM_E_INVAL);
+    }
+
+    return wifi_get_uap_channel(channel);
+}
+
 #ifdef CONFIG_P2P
 int wlan_get_wfd_address(struct wlan_ip_config *addr)
 {

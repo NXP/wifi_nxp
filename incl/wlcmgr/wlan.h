@@ -1363,6 +1363,22 @@ int wlan_get_address(struct wlan_ip_config *addr);
  */
 int wlan_get_uap_address(struct wlan_ip_config *addr);
 
+/** Retrieve the channel of micro-AP interface.
+ *
+ *  This function retrieves the channel number of micro-AP
+ *  and copies it to the memory location pointed to by \a channel.
+ *
+ *  \note This function may only be called when the micro-AP interface is in the
+ *  \ref WLAN_UAP_STARTED state.
+ *
+ *  \param[out] channel A pointer to variable that stores channel number.
+ *
+ *  \return WM_SUCCESS if successful.
+ *  \return -WM_E_INVAL if \a channel is NULL.
+ *  \return -WM_FAIL if an internal error has occurred.
+ */
+int wlan_get_uap_channel(int *channel);
+
 /** Retrieve the current network configuration of station interface.
  *
  *  This function retrieves the current network configuration of station

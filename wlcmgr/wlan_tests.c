@@ -1174,7 +1174,7 @@ static void test_wlan_address(int argc, char **argv)
 static void test_wlan_get_uap_channel(int argc, char **argv)
 {
     int channel;
-    int rv = wifi_get_uap_channel(&channel);
+    int rv = wlan_get_uap_channel(&channel);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to get channel: %d\r\n", rv);
