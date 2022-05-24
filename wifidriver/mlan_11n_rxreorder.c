@@ -325,7 +325,7 @@ static t_s16 wlan_11n_find_last_seqnum(RxReorderTbl *rx_reorder_tbl_ptr)
         if (rx_reorder_tbl_ptr->rx_reorder_ptr[i] != NULL)
         {
             LEAVE();
-            return (t_s16)i;
+            return i;
         }
     }
     LEAVE();
