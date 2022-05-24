@@ -20,7 +20,7 @@ Change log:
 /** Max value a TID can take = 2^12 = 4096 */
 #define MAX_TID_VALUE (2U << 11U)
 /** 2^11 = 2048 */
-#define TWOPOW11 (2 << 10)
+#define TWOPOW11 (2U << 10U)
 
 /** Tid Mask used for extracting TID from BlockAckParamSet */
 #define BLOCKACKPARAM_TID_MASK 0x3CU
@@ -59,7 +59,7 @@ Change log:
 #define ADDBA_RSP_STATUS_ACCEPT 0U
 
 /** DEFAULT SEQ NUM */
-#define DEFAULT_SEQ_NUM 0xffff
+#define DEFAULT_SEQ_NUM 0xffffU
 
 /** Indicate packet has been dropped in FW */
 #define RX_PKT_DROPPED_IN_FW 0xffffffffU
@@ -81,7 +81,7 @@ void wlan_11n_rxba_sync_event(mlan_private *priv, t_u8 *event_buf, t_u16 len);
 t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv);
 #endif /* CONFIG_MLAN_WMSDK */
 
-void wlan_update_rxreorder_tbl(pmlan_adapter pmadapter, t_u8 flag);
+void wlan_update_rxreorder_tbl(pmlan_adapter pmadapter, bool flag);
 
 /** clean up reorder_tbl */
 void wlan_cleanup_reorder_tbl(mlan_private *priv, t_u8 *ta);

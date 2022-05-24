@@ -669,7 +669,7 @@ typedef enum _PS_STATE
 #endif
 
 /** Minimum flush timer for win size of 1 is 50 ms */
-#define MIN_FLUSH_TIMER_MS 50
+#define MIN_FLUSH_TIMER_MS 50U
 /** Tx BA stream table */
 typedef struct _TxBAStreamTbl TxBAStreamTbl;
 
@@ -1328,7 +1328,7 @@ typedef struct
     /** Timer for flushing */
     t_void *timer;
     /** Timer set flag */
-    t_u8 timer_is_set;
+    bool timer_is_set;
     /** RxReorderTbl ptr */
     RxReorderTbl *ptr;
     /** Priv pointer */
@@ -1347,11 +1347,11 @@ struct _RxReorderTbl
     /** TA */
     t_u8 ta[MLAN_MAC_ADDR_LENGTH];
     /** Start window */
-    int start_win;
+    t_u16 start_win;
     /** last_seq */
-    int last_seq;
+    t_u16 last_seq;
     /** Window size */
-    int win_size;
+    t_u16 win_size;
     /** Pointer to pointer to RxReorderTbl */
     t_void **rx_reorder_ptr;
     /** Timer context */
@@ -1360,9 +1360,9 @@ struct _RxReorderTbl
     baStatus_e ba_status;
     t_u8 amsdu;
     /** no packet drop flag for rx_reorder_tbl */
-    t_u8 force_no_drop;
+    bool force_no_drop;
     /** flag for check start win */
-    t_u8 check_start_win;
+    bool check_start_win;
     /** pkt receive after BA setup */
     t_u8 pkt_count;
     /** BA window bitmap */
