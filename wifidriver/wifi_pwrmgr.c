@@ -82,7 +82,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
 
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)(interface));
+    cmd->seq_num = (t_u16)(HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u32)(interface)));
     if (action == (t_u16)HS_CONFIGURE)
     {
         hs_cfg_obj.conditions = conditions;
@@ -95,10 +95,11 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
          * The code below sets the correct bit which
          * firmware will use to give host wakeup
          */
-        if ((conditions != (t_u32)(HOST_SLEEP_CFG_CANCEL)) && ((conditions & WIFI_WAKE_ON_ARP_BROADCAST) != 0U))
+        if ((conditions != (t_u32)(HOST_SLEEP_CFG_CANCEL)) &&
+            ((conditions & (t_u32)(WIFI_WAKE_ON_ARP_BROADCAST)) != 0U))
         {
-            hs_cfg_obj.conditions |= WIFI_WAKE_ON_ALL_BROADCAST;
-            hs_cfg_obj.conditions &= ~WIFI_WAKE_ON_ARP_BROADCAST;
+            hs_cfg_obj.conditions |= (t_u32)(WIFI_WAKE_ON_ALL_BROADCAST);
+            hs_cfg_obj.conditions &= ~((t_u32)(WIFI_WAKE_ON_ARP_BROADCAST));
         }
     }
 
@@ -117,7 +118,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
         entry++;
 
         entry->addr_type = ADDR_TYPE_BROADCAST;
-        if ((conditions & WIFI_WAKE_ON_ALL_BROADCAST) != 0U)
+        if ((conditions & (t_u32)(WIFI_WAKE_ON_ALL_BROADCAST)) != 0U)
         {
             entry->eth_type  = ETHER_TYPE_ANY;
             entry->ipv4_addr = IPV4_ADDR_ANY;
@@ -138,7 +139,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     else if (action == (t_u16)HS_ACTIVATE)
     {
         arpfilter->len = 0;
-        cmd->size -= sizeof(t_u32);
+        cmd->size -= (t_u16)sizeof(t_u32);
     }
     else
     {
