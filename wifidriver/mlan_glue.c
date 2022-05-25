@@ -491,7 +491,7 @@ struct uap_ampdu_stat_t
 {
     uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
     uint8_t ampudu_stat;
-    uint8_t ampudu_supported;
+    bool ampudu_supported;
 };
 
 static struct uap_ampdu_stat_t uap_ampdu_stat_array[32];
@@ -525,7 +525,7 @@ static void wlan_update_uap_ampdu_stat(uint8_t *addr, uint8_t status)
     }
 }
 
-static void wlan_update_uap_ampdu_supported(uint8_t *addr, uint8_t supported)
+static void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
 {
     struct uap_ampdu_stat_t *ampdu_info;
     if (!wlan_find_ampud_info(addr, &ampdu_info))
@@ -1688,7 +1688,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     void *arg;
     t_u8 *sta_addr;
 
-    int command = (resp->command & HostCmd_CMD_ID_MASK);
+    t_u16 command = (resp->command & HostCmd_CMD_ID_MASK);
 
     wcmdr_d("CMD-RESP: 0x%x Size: %d Seq: %d Result: %d", command, resp->size, resp->seq_num, resp->result);
 
@@ -1744,7 +1744,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
-                        wifi_event_completion(WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion(WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -1765,7 +1765,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
-                        wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -1875,7 +1875,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     return -WM_FAIL;
                 }
 
-                wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
 #ifdef CONFIG_ENABLE_802_11K
             case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
@@ -1900,7 +1900,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                      * scan failure.
                      */
                     wlan_abort_split_scan();
-                    wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
+                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
                     break;
                 }
 
@@ -1913,7 +1913,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (is_split_scan_complete())
                 {
                     wifi_d("Split scan complete");
-                    wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
                 break;
 #ifdef CONFIG_EXT_SCAN_SUPPORT
@@ -1926,13 +1926,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                      * scan failure.
                      */
                     wlan_abort_split_scan();
-                    wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
+                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
                 }
                 break;
 #endif
             case HostCmd_CMD_802_11_DEAUTHENTICATE:
                 (void)wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
-                wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
             case HostCmd_CMD_802_11_HS_CFG_ENH:
                 wifi_process_hs_cfg_resp((t_u8 *)resp);
@@ -1956,13 +1956,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (ps_event != WIFI_EVENT_PS_INVALID)
 #endif
                 {
-                    wifi_event_completion(ps_event, result, arg);
+                    (void)wifi_event_completion(ps_event, result, arg);
                 }
             }
             break;
 #if 0
             case HostCmd_CMD_SUPPLICANT_PMK:
-                wifi_event_completion(WIFI_EVENT_SUPPLICANT_PMK,
+                (void)wifi_event_completion(WIFI_EVENT_SUPPLICANT_PMK,
                         WIFI_EVENT_REASON_SUCCESS,
                         resp);
                 break;
@@ -2031,7 +2031,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 IEEEtypes_AssocRsp_t *passoc_rsp = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
 
-                if (!passoc_rsp->status_code)
+                if (passoc_rsp->status_code == 0U)
                 {
                     result = WIFI_EVENT_REASON_SUCCESS;
                 }
@@ -2045,7 +2045,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     pmpriv->media_connected = MFALSE;
                 }
 
-                wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
             case HostCmd_CMD_802_11_MAC_ADDRESS:
@@ -2738,7 +2738,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
                         wifi_d("BG scan query complete");
-                        wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -3071,7 +3071,7 @@ void wlan_update_wnm_ps_status(wnm_ps_result *wnm_ps_result)
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
 #define IEEEtypes_REASON_DEAUTH_LEAVING     3
-#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6
+#define AP_DEAUTH_REASON_MAC_ADDR_BLOCKED   6U
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
 #define OFFSET_SEQNUM 8
@@ -3233,22 +3233,23 @@ int wifi_handle_fw_event(struct bus_message *msg)
     switch (evt->event_id)
     {
         case EVENT_LINK_LOST:
-            wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
-                                  (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+            (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
+                                        (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
 #ifdef CONFIG_11N
             /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);
 #endif
             break;
         case EVENT_DEAUTHENTICATED:
-            if (!evt->reason_code)
+            if (evt->reason_code == 0U)
             {
-                wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
-                                      (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+                (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
+                                            (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
             }
             else
             {
-                wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_FAILURE, (void *)&evt->reason_code);
+                (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_FAILURE,
+                                            (void *)&evt->reason_code);
             }
 #ifdef CONFIG_11N
             /* fixme: Should this be outside CONFIG_11N ? */
@@ -3256,15 +3257,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             break;
         case EVENT_DISASSOCIATED:
-            wifi_event_completion(WIFI_EVENT_DISASSOCIATION, WIFI_EVENT_REASON_FAILURE,
-                                  (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+            (void)wifi_event_completion(WIFI_EVENT_DISASSOCIATION, WIFI_EVENT_REASON_FAILURE,
+                                        (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
 #ifdef CONFIG_11N
             /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);
 #endif
             break;
         case EVENT_PORT_RELEASE:
-            wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_PS_SLEEP:
             wevt_d("_");
@@ -3272,7 +3273,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
             {
                 mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
-                wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
             else
             {
@@ -3280,7 +3281,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
             }
 #else
-            wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
             break;
         case EVENT_PS_AWAKE:
@@ -3305,31 +3306,31 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 #else
             pmpriv->adapter->ps_state = PS_STATE_AWAKE;
-            wifi_event_completion(WIFI_EVENT_AWAKE, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_AWAKE, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
             break;
 #ifdef CONFIG_WNM_PS
         case EVENT_WNM_PS:
             wlan_update_wnm_ps_status((wnm_ps_result *)&evt->reason_code);
-            wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS, (void *)&evt->reason_code);
+            (void)wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS, (void *)&evt->reason_code);
             break;
 #endif
         case EVENT_MIC_ERR_MULTICAST:
-            wifi_event_completion(WIFI_EVENT_ERR_MULTICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_ERR_MULTICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_MIC_ERR_UNICAST:
-            wifi_event_completion(WIFI_EVENT_ERR_UNICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_ERR_UNICAST, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #ifdef CONFIG_ROAMING
         case EVENT_BG_SCAN_REPORT:
             pmpriv->adapter->bgscan_reported = MTRUE;
-            wifi_event_completion(WIFI_EVENT_BG_SCAN_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_BG_SCAN_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_BG_SCAN_STOPPED:
-            wifi_event_completion(WIFI_EVENT_BG_SCAN_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_BG_SCAN_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_RSSI_LOW:
-            wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif
 #ifdef CONFIG_P2P
@@ -3340,7 +3341,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
         case EVENT_HS_ACT_REQ:
-            wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #ifdef CONFIG_11N
         case EVENT_ADDBA:
@@ -3365,7 +3366,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 void *saved_event_buff = wifi_11n_save_request(evt);
                 if (saved_event_buff != NULL)
                 {
-                    wifi_event_completion(WIFI_EVENT_11N_DELBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff);
+                    (void)wifi_event_completion(WIFI_EVENT_11N_DELBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff);
                 }
 
                 /* If allocation failed ignore this event quietly ! */
@@ -3393,11 +3394,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
              * this when required.
              */
             /* wifi_11n_save_request(evt); */
-            wifi_event_completion(WIFI_EVENT_11N_AGGR_CTRL, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_11N_AGGR_CTRL, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif /* CONFIG_11N */
         case EVENT_CHANNEL_SWITCH_ANN:
-            wifi_event_completion(WIFI_EVENT_CHAN_SWITCH_ANN, WIFI_EVENT_REASON_SUCCESS, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_CHAN_SWITCH_ANN, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_CHANNEL_SWITCH:
         {
@@ -3449,7 +3450,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
             wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
 
-            if (!sta_node_ptr->is_11n_enabled)
+            if (sta_node_ptr->is_11n_enabled == 0U)
             {
                 wlan_update_uap_ampdu_supported(sta_addr, MFALSE);
             }
@@ -3553,7 +3554,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (is_split_scan_complete())
             {
                 wifi_d("Split scan complete");
-                wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
             break;
 #endif

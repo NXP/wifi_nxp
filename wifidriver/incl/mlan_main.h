@@ -1959,7 +1959,7 @@ struct _mlan_adapter
     t_u16 ps_mode;
 #endif
     /** Power Save state */
-    t_u32 ps_state;
+    enum wlan_ps_state ps_state;
 #ifndef CONFIG_MLAN_WMSDK
     /** Need to wakeup flag */
     t_u8 need_to_wakeup;
