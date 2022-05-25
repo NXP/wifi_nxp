@@ -89,24 +89,26 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
         hs_cfg_obj.gap        = 0x2;
         hs_cfg_obj.gpio       = HOST_WAKEUP_GPIO_PIN;
         pdata_buf             = &hs_cfg_obj;
+
+        /* wake conditions for broadcast is
+         * enabled when bit 0 is set.
+         * The code below sets the correct bit which
+         * firmware will use to give host wakeup
+         */
+        if ((conditions != (t_u32)(HOST_SLEEP_CFG_CANCEL)) && ((conditions & WIFI_WAKE_ON_ARP_BROADCAST) != 0U))
+        {
+            hs_cfg_obj.conditions |= WIFI_WAKE_ON_ALL_BROADCAST;
+            hs_cfg_obj.conditions &= ~WIFI_WAKE_ON_ARP_BROADCAST;
+        }
     }
-    /* wake conditions for broadcast is
-     * enabled when bit 0 is set.
-     * The code below sets the correct bit which
-     * firmware will use to give host wakeup
-     */
-    if ((conditions & WIFI_WAKE_ON_ARP_BROADCAST) != 0U)
-    {
-        hs_cfg_obj.conditions |= WIFI_WAKE_ON_ALL_BROADCAST;
-        hs_cfg_obj.conditions &= ~WIFI_WAKE_ON_ARP_BROADCAST;
-    }
+
     mlan_status status = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_HS_CFG_ENH,
                                                   HostCmd_ACT_GEN_SET, 0, NULL, pdata_buf, cmd);
     /* Construct the ARP filter TLV */
     arpfilter       = (arpfilter_header *)((uint32_t)cmd + cmd->size);
     arpfilter->type = TLV_TYPE_ARP_FILTER;
 
-    if (ipv4_addr != 0U)
+    if ((ipv4_addr != 0U) && (action == (t_u16)HS_CONFIGURE) && (conditions != (t_u32)(HOST_SLEEP_CFG_CANCEL)))
     {
         entry            = (filter_entry *)((uint32_t)arpfilter + sizeof(arpfilter_header));
         entry->addr_type = ADDR_TYPE_MULTICAST;
@@ -131,12 +133,17 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
         entry->eth_type  = ETHER_TYPE_ANY;
         entry->ipv4_addr = IPV4_ADDR_ANY;
         arpfilter->len   = 3U * sizeof(filter_entry);
+        cmd->size        = (t_u16)(cmd->size + sizeof(arpfilter_header) + arpfilter->len);
+    }
+    else if (action == (t_u16)HS_ACTIVATE)
+    {
+        arpfilter->len = 0;
+        cmd->size -= sizeof(t_u32);
     }
     else
     {
-        arpfilter->len = 0;
+        /** Do nothing */
     }
-    cmd->size = (t_u16)(cmd->size + sizeof(arpfilter_header) + arpfilter->len);
 
     (void)wifi_wait_for_cmdresp(NULL);
     return (int)status;
