@@ -1692,7 +1692,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
     wcmdr_d("CMD-RESP: 0x%x Size: %d Seq: %d Result: %d", command, resp->size, resp->seq_num, resp->result);
 
-    int bss_type = HostCmd_GET_BSS_TYPE(resp->seq_num);
+    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
@@ -1736,7 +1736,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     pmpriv->uap_bss_started = MFALSE;
-                    mlan_bss_type bss_type  = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
+                    bss_type                = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
 #ifdef CONFIG_P2P
                         || (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -1744,7 +1744,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
-                        (void)wifi_event_completion(WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion((int)WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -1757,7 +1757,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
+                    bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
                     if ((bss_type == MLAN_BSS_TYPE_UAP)
 #ifdef CONFIG_P2P
                         || (bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -1765,7 +1765,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
-                        (void)wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion((int)WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -1875,7 +1875,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     return -WM_FAIL;
                 }
 
-                (void)wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion((int)WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
 #ifdef CONFIG_ENABLE_802_11K
             case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
@@ -1900,7 +1900,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                      * scan failure.
                      */
                     wlan_abort_split_scan();
-                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
+                    (void)wifi_event_completion((int)WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
                     break;
                 }
 
@@ -1913,7 +1913,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (is_split_scan_complete())
                 {
                     wifi_d("Split scan complete");
-                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+                    (void)wifi_event_completion((int)WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
                 break;
 #ifdef CONFIG_EXT_SCAN_SUPPORT
@@ -1932,7 +1932,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
             case HostCmd_CMD_802_11_DEAUTHENTICATE:
                 (void)wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
-                (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion((int)WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
             case HostCmd_CMD_802_11_HS_CFG_ENH:
                 wifi_process_hs_cfg_resp((t_u8 *)resp);
@@ -1953,10 +1953,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
 #endif
 #ifdef CONFIG_WIFIDRIVER_PS_LOCK
-                if (ps_event != WIFI_EVENT_PS_INVALID)
+                if (ps_event != (t_u16)WIFI_EVENT_PS_INVALID)
 #endif
                 {
-                    (void)wifi_event_completion(ps_event, result, arg);
+                    (void)wifi_event_completion((int)ps_event, result, arg);
                 }
             }
             break;
@@ -2045,7 +2045,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     pmpriv->media_connected = MFALSE;
                 }
 
-                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
+                (void)wifi_event_completion((int)WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
             case HostCmd_CMD_802_11_MAC_ADDRESS:
@@ -2061,7 +2061,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 (void)memcpy((void *)sta_addr, (const void *)((uint8_t *)&pmac_addr->mac_addr), MLAN_MAC_ADDR_LENGTH);
 
-                if (wifi_event_completion(WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
+                if (wifi_event_completion((int)WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
                     WM_SUCCESS)
                 {
                     /* If fail to send message on queue, free allocated memory ! */
@@ -2369,9 +2369,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
                         if (wm_wifi.cmd_resp_priv != NULL)
                         {
-                            int i;
-                            int mod_num = 0;
-                            t_u8 *pByte = NULL;
+                            t_u8 i;
+                            t_u8 mod_num = 0;
+                            t_u8 *pByte  = NULL;
                             t_u16 left_len;
                             MrvlIETypes_ChanTRPCConfig_t *trpc_tlv = NULL;
                             MrvlIEtypes_Data_t *pTlvHdr;
@@ -2380,7 +2380,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             txpwrlimit->subband = (wifi_SubBand_t)chan_trpc_cfg->reserved;
 
                             pByte    = (t_u8 *)chan_trpc_cfg + 4;
-                            left_len = resp->size - S_DS_GEN - 4U;
+                            left_len = resp->size - (t_u16)S_DS_GEN - 4U;
                             while (left_len >= sizeof(pTlvHdr->header))
                             {
                                 pTlvHdr             = (MrvlIEtypes_Data_t *)(void *)pByte;
@@ -2402,7 +2402,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                         else
                                         {
 #endif /* CONFIG_11AC */
-                                            mod_num = (pTlvHdr->header.len - 4U) / sizeof(mod_group_setting);
+                                            mod_num =
+                                                ((t_u8)pTlvHdr->header.len - 4U) / ((t_u8)sizeof(mod_group_setting));
 #ifndef CONFIG_11AC
                                         }
 #endif /* CONFIG_11AC */
@@ -2427,8 +2428,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                     default:
                                         break;
                                 }
-                                left_len -= (pTlvHdr->header.len + sizeof(pTlvHdr->header));
-                                pByte += pTlvHdr->header.len + sizeof(pTlvHdr->header);
+                                left_len -= (pTlvHdr->header.len + (t_u16)sizeof(pTlvHdr->header));
+                                pByte += (t_u8)pTlvHdr->header.len + (t_u8)sizeof(pTlvHdr->header);
                             }
                         }
                     }

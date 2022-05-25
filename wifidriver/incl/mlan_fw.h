@@ -1143,7 +1143,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_SET_BSS_MODE 0x00f7
 
 /** TLV OF CHAN_TRPC_CONFIG */
-#define TLV_TYPE_CHAN_TRPC_CONFIG (PROPRIETARY_TLV_BASE_ID + 137)
+#define TLV_TYPE_CHAN_TRPC_CONFIG (PROPRIETARY_TLV_BASE_ID + 137U)
 
 /** Host Command ID: Channel TRPC Config */
 #define HostCmd_CMD_CHANNEL_TRPC_CONFIG 0x00fb
