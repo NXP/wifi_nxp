@@ -83,7 +83,7 @@ static t_u16 ps_event;
 int mlan_subsys_init(void);
 int mlan_subsys_deinit(void);
 
-void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr);
+void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *get_mac_addr);
 void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_value1);
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext);
 int wifi_set_tx_power_ext(uint32_t len, uint32_t *power_data);
@@ -2301,18 +2301,18 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
                         if (wm_wifi.cmd_resp_priv != NULL)
                         {
-                            wifi_cal_data_t *cal_data = (wifi_cal_data_t *)wm_wifi.cmd_resp_priv;
-                            cal_data->data            = (uint8_t *)os_mem_alloc(cfg_data->data_len);
-                            if (cal_data->data == MNULL)
+                            wifi_cal_data_t *cal_data_cfg = (wifi_cal_data_t *)wm_wifi.cmd_resp_priv;
+                            cal_data_cfg->data            = (uint8_t *)os_mem_alloc(cfg_data->data_len);
+                            if (cal_data_cfg->data == MNULL)
                             {
                                 wifi_w(
                                     "No mem. Cannot"
                                     "process CAL DATA command");
                                 break;
                             }
-                            cal_data->data_len = cfg_data->data_len;
+                            cal_data_cfg->data_len = cfg_data->data_len;
 
-                            (void)memcpy((void *)cal_data->data, (const void *)cfg_data->data, cfg_data->data_len);
+                            (void)memcpy((void *)cal_data_cfg->data, (const void *)cfg_data->data, cfg_data->data_len);
                         }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
@@ -4064,9 +4064,9 @@ void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_
 /*
  * fixme: This function will be present till mlan integration is complete
  */
-void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr)
+void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *get_mac_addr)
 {
-    (void)memcpy((void *)mac_addr, (const void *)&resp->params.mac_addr.mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)get_mac_addr, (const void *)&resp->params.mac_addr.mac_addr, MLAN_MAC_ADDR_LENGTH);
 }
 
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext)

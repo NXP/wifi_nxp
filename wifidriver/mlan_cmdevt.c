@@ -1704,7 +1704,7 @@ mlan_status wlan_ret_802_11_hs_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAN
 
     ENTER();
 
-    if (wlan_le16_to_cpu(phs_cfg->action) == HS_ACTIVATE)
+    if (wlan_le16_to_cpu(phs_cfg->action) == (t_u16)HS_ACTIVATE)
     {
         /* clean up curr_cmd to allow suspend */
         if (pioctl_buf)

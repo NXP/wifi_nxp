@@ -557,7 +557,7 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
         type = WLAN_BSS_TYPE_UAP;
     }
 
-    return wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, (t_u16)HS_CONFIGURE, wlan.hs_wakeup_condition);
+    return wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, (uint16_t)HS_CONFIGURE, wlan.hs_wakeup_condition);
 }
 
 static void wlan_host_sleep_and_sleep_confirm(void)

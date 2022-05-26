@@ -150,7 +150,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     return (int)status;
 }
 
-static int wifi_send_power_save_command(ENH_PS_MODES action, int ps_bitmap, mlan_bss_type interface, void *pdata_buf)
+static int wifi_send_power_save_command(ENH_PS_MODES action, t_u16 ps_bitmap, mlan_bss_type interface, void *pdata_buf)
 {
     mlan_status status;
     mlan_ds_auto_ds ds_param;
@@ -208,13 +208,13 @@ int wifi_exit_ieee_power_save(void)
 int wifi_enter_deepsleep_power_save(void)
 {
     t_u16 idletime = 0;
-    return wifi_send_power_save_command(EN_AUTO_PS, (int)BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
+    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
 }
 
 int wifi_exit_deepsleep_power_save(void)
 {
     t_u16 idletime = 0;
-    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
+    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
 }
 
 int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
@@ -238,12 +238,12 @@ int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
     data_buff.ps_mode                   = PS_MODE_INACTIVITY;
     data_buff.flags                     = PS_FLAG_INACT_SLEEP_PARAM | PS_FLAG_SLEEP_PARAM;
 
-    return wifi_send_power_save_command(EN_AUTO_PS, (int)BITMAP_UAP_INACT_PS, type, &data_buff);
+    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_UAP_INACT_PS, type, &data_buff);
 }
 
 int wifi_uap_ps_inactivity_sleep_exit(mlan_bss_type type)
 {
-    return wifi_send_power_save_command(DIS_AUTO_PS, (int)BITMAP_UAP_INACT_PS, type, NULL);
+    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_UAP_INACT_PS, type, NULL);
 }
 
 void send_sleep_confirm_command(mlan_bss_type interface)
@@ -289,7 +289,7 @@ void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer)
 {
     pmlan_adapter pmadapter              = ((mlan_private *)mlan_adap->priv[0])->adapter;
     HostCmd_DS_802_11_HS_CFG_ENH *hs_cfg = (HostCmd_DS_802_11_HS_CFG_ENH *)(void *)(cmd_res_buffer + S_DS_GEN);
-    if (hs_cfg->action == HS_ACTIVATE)
+    if (hs_cfg->action == (t_u16)HS_ACTIVATE)
     {
         pwr_d("Host sleep activated");
         wlan_update_rxreorder_tbl(pmadapter, MTRUE);
@@ -311,7 +311,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 
     *ps_event = (t_u16)WIFI_EVENT_PS_INVALID;
     *action   = (t_u16)(ps_mode->action);
-    if (ps_mode->action == EN_AUTO_PS)
+    if (ps_mode->action == (t_u16)EN_AUTO_PS)
     {
         if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_AUTO_DS) != 0U)
         {
@@ -354,15 +354,15 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         }
         result = WIFI_EVENT_REASON_SUCCESS;
     }
-    else if (ps_mode->action == DIS_AUTO_PS)
+    else if (ps_mode->action == (t_u16)DIS_AUTO_PS)
     {
-        if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0)
+        if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0U)
         {
             pwr_d("Disabled DeepSleep mode");
             *ps_event           = (t_u16)WIFI_EVENT_DEEP_SLEEP;
             deepsleepps_enabled = false;
         }
-        if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0)
+        if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0U)
         {
             pwr_d(
                 "Disabled IEEE power "
@@ -411,9 +411,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         result = WIFI_EVENT_REASON_SUCCESS;
     }
 #endif
-    else if (ps_mode->action == GET_PS)
+    else if (ps_mode->action == (t_u16)GET_PS)
     {
-        if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0)
+        if ((ps_mode->params.ps_bitmap & BITMAP_AUTO_DS) != 0U)
         {
             pwr_d("Deep sleep mode is on");
             mrvl_tlv = (MrvlIEtypesHeader_t *)(void *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
@@ -423,7 +423,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
         }
-        if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0)
+        if ((ps_mode->params.ps_bitmap & BITMAP_STA_PS) != 0U)
         {
             pwr_d("IEEE power save mode is on");
             mrvl_tlv = (MrvlIEtypesHeader_t *)(void *)((uint8_t *)ps_mode + AUTO_PS_FIX_SIZE);
@@ -442,7 +442,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 ps_tlv->param.bcn_miss_timeout, ps_tlv->param.delay_to_ps, ps_tlv->param.mode);
         }
     }
-    else if (ps_mode->action == SLEEP_CONFIRM)
+    else if (ps_mode->action == (t_u16)SLEEP_CONFIRM)
     {
         wcmdr_d("#");
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
