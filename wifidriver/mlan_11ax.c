@@ -182,9 +182,6 @@ int wlan_cmd_append_11ax_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
     phecap->type = wlan_cpu_to_le16(phecap->type);
     phecap->len  = wlan_cpu_to_le16(phecap->len);
     phecap->he_phy_cap[0] &= ~(MBIT(3) | MBIT(4));
-    PRINTF("******* HE Cap ******\n\r");
-    PRINTF("Type: %d\n\r", phecap->type);
-    PRINTF("Len: %d\n\r", phecap->len);
     LEAVE();
     return len;
 }
