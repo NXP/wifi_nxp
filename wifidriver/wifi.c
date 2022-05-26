@@ -928,7 +928,7 @@ void wifi_wfd_event(bool peer_event, bool action_frame, void *data)
 }
 #endif
 
-int wifi_event_completion(int event, enum wifi_event_reason result, void *data)
+int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, void *data)
 {
     struct wifi_message msg;
     if (wm_wifi.wlc_mgr_event_queue == MNULL)

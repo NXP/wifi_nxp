@@ -1744,7 +1744,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
-                        (void)wifi_event_completion((int)WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion(WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -1765,7 +1765,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
-                        (void)wifi_event_completion((int)WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                        (void)wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
                 else
@@ -1875,7 +1875,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     return -WM_FAIL;
                 }
 
-                (void)wifi_event_completion((int)WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
 #ifdef CONFIG_ENABLE_802_11K
             case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
@@ -1900,7 +1900,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                      * scan failure.
                      */
                     wlan_abort_split_scan();
-                    (void)wifi_event_completion((int)WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
+                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
                     break;
                 }
 
@@ -1913,7 +1913,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (is_split_scan_complete())
                 {
                     wifi_d("Split scan complete");
-                    (void)wifi_event_completion((int)WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+                    (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
                 break;
 #ifdef CONFIG_EXT_SCAN_SUPPORT
@@ -1932,7 +1932,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
             case HostCmd_CMD_802_11_DEAUTHENTICATE:
                 (void)wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
-                (void)wifi_event_completion((int)WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
             case HostCmd_CMD_802_11_HS_CFG_ENH:
                 wifi_process_hs_cfg_resp((t_u8 *)resp);
@@ -1956,7 +1956,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (ps_event != (t_u16)WIFI_EVENT_PS_INVALID)
 #endif
                 {
-                    (void)wifi_event_completion((int)ps_event, result, arg);
+                    (void)wifi_event_completion((enum wifi_event)ps_event, result, arg);
                 }
             }
             break;
@@ -2045,7 +2045,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     pmpriv->media_connected = MFALSE;
                 }
 
-                (void)wifi_event_completion((int)WIFI_EVENT_ASSOCIATION, result, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
             case HostCmd_CMD_802_11_MAC_ADDRESS:
@@ -2061,7 +2061,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 (void)memcpy((void *)sta_addr, (const void *)((uint8_t *)&pmac_addr->mac_addr), MLAN_MAC_ADDR_LENGTH);
 
-                if (wifi_event_completion((int)WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
+                if (wifi_event_completion(WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
                     WM_SUCCESS)
                 {
                     /* If fail to send message on queue, free allocated memory ! */
