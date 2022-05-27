@@ -2,6 +2,14 @@
 @page middleware_log Middleware Change Log
  
 @section wifi NXP WiFi
+Version 1.3.r39.p10
+ - Updates:
+  - Added addtional option 3 in wlan-set-uap-bandwidth to set bandwidth to 80MHz.
+  - Updated firmware version to p116.
+
+ - Bug Fixes:
+  - Corrected logic so that VHT BW follows VHT-caps/HT-caps correctly.
+
 Version 1.3.r39.p9
  - Updates:
   - Added support for soft roaming based on rssi threshold.
