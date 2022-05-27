@@ -1522,7 +1522,7 @@ static int do_stop(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
-        ret = wifi_uap_stop((int)network->type);
+        ret = wifi_uap_stop((mlan_bss_type)network->type);
 
         if (ret != 0)
         {
@@ -4167,7 +4167,7 @@ int wlan_stop(void)
     }
     if (wlan.uap_state > CM_UAP_CONFIGURED)
     {
-        (void)wifi_uap_stop((int)wlan.networks[wlan.cur_uap_network_idx].type);
+        (void)wifi_uap_stop((mlan_bss_type)wlan.networks[wlan.cur_uap_network_idx].type);
     }
 
     ret = os_thread_delete(&wlan.cm_main_thread);
