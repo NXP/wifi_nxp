@@ -445,8 +445,9 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
             if (ptxp->mode)
             {
                 ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)pdata_buf + sizeof(HostCmd_DS_TXPWR_CFG));
-                (void)__memmove(pmpriv->adapter, ptxp_cfg, pdata_buf,
-                                sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length);
+                (void)__memmove(
+                    pmpriv->adapter, ptxp_cfg, pdata_buf,
+                    sizeof(HostCmd_DS_TXPWR_CFG) + sizeof(MrvlTypes_Power_Group_t) + (t_u32)ppg_tlv->length);
 
                 ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)&cmd->params + sizeof(HostCmd_DS_TXPWR_CFG));
                 cmd->size += (t_u16)(wlan_cpu_to_le16(sizeof(MrvlTypes_Power_Group_t) + ppg_tlv->length));
@@ -1110,7 +1111,7 @@ static mlan_status wlan_cmd_802_11_key_material(
     {
         pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
         /* Enable unicast bit for WPA-NONE/ADHOC_AES */
-        if ((!pmpriv->sec_info.wpa2_enabled) && (pkey->key_flags & KEY_FLAG_SET_TX_KEY))
+        if ((pmpriv->sec_info.wpa2_enabled == 0U) && (pkey->key_flags & KEY_FLAG_SET_TX_KEY))
         {
             pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
         }
@@ -1145,7 +1146,7 @@ static mlan_status wlan_cmd_802_11_key_material(
             (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.ipn, pkey->pn,
                            SEQ_MAX_SIZE);
         }
-        pkey_material->key_param_set.key_info &= (t_u16)~KEY_INFO_MCAST_KEY;
+        pkey_material->key_param_set.key_info &= ~((t_u16)KEY_INFO_MCAST_KEY);
         pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_MCAST_IGTK);
         pkey_material->key_param_set.key_type                    = (t_u8)KEY_TYPE_ID_AES_CMAC;
         pkey_material->key_param_set.key_params.cmac_aes.key_len = wlan_cpu_to_le16(pkey->key_len);
@@ -1438,7 +1439,7 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
         cmd->size += (t_u16)(pssid_tlv->header.len + sizeof(MrvlIEtypesHeader_t));
         pssid_tlv->header.len = wlan_cpu_to_le16(pssid_tlv->header.len);
     }
-    if (__memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)) != 0U)
+    if (__memcmp(pmpriv->adapter, (t_u8 *)&psk->bssid, zero_mac, sizeof(zero_mac)) != 0)
     {
         pbssid_tlv              = (MrvlIEtypes_Bssid_t *)(void *)ptlv_buffer;
         pbssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_BSSID);

@@ -842,9 +842,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 
-    tx_blocks = (cmd->size + MLAN_SDIO_BLOCK_SIZE - 1) / MLAN_SDIO_BLOCK_SIZE;
+    tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
 
-    if (cmd->size < 512)
+    if (cmd->size < 512U)
     {
         buf_len   = tx_blocks * MLAN_SDIO_BLOCK_SIZE;
         tx_blocks = 1;
@@ -858,7 +858,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     {
         wifi_e("Failed to wakeup card\r\n");
         // wakelock_put(WL_ID_LL_OUTPUT);
-        wifi_put_command_lock();
+        (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
 
@@ -877,7 +877,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
      * would try to get the sleep_rwlock until get it,
      * so here put the sleep_rwlock as early as possible.
      */
-    os_rwlock_read_unlock(&sleep_rwlock);
+    (void)os_rwlock_read_unlock(&sleep_rwlock);
 #endif
 
     /* Wait max 10 sec for the command response */
@@ -2080,7 +2080,7 @@ retry_xmit:
         }
         else if (i == MLAN_STATUS_RESOURCE)
         {
-            if (!retry)
+            if (retry == 0)
             {
                 ret = -WM_E_BUSY;
                 goto exit_fn;

@@ -1757,7 +1757,7 @@ typedef struct _mlan_ds_encrypt_key
     /** Key index, used as current tx key index when is_current_wep_key is set to MTRUE */
     t_u32 key_index;
     /** Current Tx key flag */
-    t_u32 is_current_wep_key;
+    bool is_current_wep_key;
     /** Key length */
     t_u32 key_len;
     /** Key */

@@ -42,7 +42,7 @@
 #else
 /* In 802.11ac sizeof(HostCmd_CMD_CHANNEL_TRPC_CONFIG) is 1572 bytes.
  */
-#define WIFI_FW_CMDBUF_SIZE 1580
+#define WIFI_FW_CMDBUF_SIZE 1580U
 #endif /* CONFIG_11AC */
 
 #define WIFI_RESP_WAIT_TIME 10
