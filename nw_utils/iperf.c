@@ -442,7 +442,7 @@ static void iperf_test_start(void *arg)
     if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
     {
         /* Reducing udp Tx timer interval for rx to be served */
-        rv = os_timer_change(&ptimer, os_msec_to_ticks(4), 0);
+        rv = os_timer_change(&ptimer, os_msec_to_ticks(2), 0);
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
@@ -928,7 +928,7 @@ static void cmd_iperf(int argc, char **argv)
 #endif
          && ((info.iperf_bind == 0U) || (info.bhost == 0U))) ||
         (((info.dual != 0U) || (info.tradeoff != 0U)) && (info.client == 0U)) ||
-        ((info.dual != 0U) && (info.tradeoff != 0U)) || ((info.dserver != 0U) && (info.server == 0U))
+        ((info.dual != 0U) && (info.tradeoff != 0U)) || ((info.dserver != 0U) && (info.server == 0U || info.udp == 0U))
 #ifdef CONFIG_IPV6
         || ((info.ipv6 != 0U) && (info.iperf_bind != 0U))
 #endif
