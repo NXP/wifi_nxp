@@ -476,7 +476,7 @@ retry_read:
     {
         wifi_d("sdio mp cmd53 read failed: %d ioport=0x%x retry=%d\r\n", ret, port, i);
         i++;
-        if (!sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &resp))
+        if (sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &resp) == false)
         {
             wifi_d("Set Term cmd53 failed\r\n");
         }

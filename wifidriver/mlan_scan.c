@@ -98,7 +98,7 @@ static t_u8 rsn_oui[CIPHER_SUITE_MAX][4] = {
     {0x00, 0x0f, 0xac, 0x04}, /* AES */
 };
 
-static t_s32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t_u32 num_entries);
+static t_u32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t_u32 num_entries);
 
 bool is_split_scan_complete(void)
 {
@@ -3203,8 +3203,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 /* Range check the bss_idx, keep it limited to the last entry */
                 if (bss_idx == MRVDRV_MAX_BSSID_LIST)
                 {
-                    lowest_rssi_index =
-                        (t_u32)wlan_find_worst_network_in_list(pmadapter->pscan_table, MRVDRV_MAX_BSSID_LIST);
+                    lowest_rssi_index = wlan_find_worst_network_in_list(pmadapter->pscan_table, MRVDRV_MAX_BSSID_LIST);
                 }
                 else
                 {
@@ -4528,9 +4527,9 @@ t_void wlan_free_curr_bcn(IN mlan_private *pmpriv)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-static t_s32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t_u32 num_entries)
+static t_u32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t_u32 num_entries)
 {
-    int worst_net = 0;
+    t_u32 worst_net = 0U;
     /* To start with */
     t_s32 worst_rssi = pbss_desc[worst_net].rssi;
     t_u32 i          = 0U;

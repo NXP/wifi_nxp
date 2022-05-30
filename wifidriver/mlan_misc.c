@@ -1877,6 +1877,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
     mlan_status ret       = MLAN_STATUS_FAILURE;
     mlan_private *pmpriv  = pmadapter->priv[pioctl_req->bss_index];
     t_u16 bitmap_rates[MAX_BITMAP_RATES_SIZE];
+    t_u16 shift_index = 1U;
 #ifdef STREAM_2X2
 #if 0
     int tx_mcs_supp = GET_TXMCSSUPP(pmpriv->usr_dev_mcs_support);
@@ -1953,13 +1954,13 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
             /* Bitmap of HR/DSSS rates */
             if (rate_index <= MLAN_RATE_INDEX_HRDSSS3)
             {
-                bitmap_rates[0] = (1U << rate_index);
+                bitmap_rates[0] = (shift_index << rate_index);
                 ret             = MLAN_STATUS_SUCCESS;
                 /* Bitmap of OFDM rates */
             }
             else if (rate_index <= MLAN_RATE_INDEX_OFDM7)
             {
-                bitmap_rates[1] = (1U << (rate_index - MLAN_RATE_INDEX_OFDM0));
+                bitmap_rates[1] = (shift_index << (rate_index - MLAN_RATE_INDEX_OFDM0));
                 ret             = MLAN_STATUS_SUCCESS;
             }
             else
@@ -1974,7 +1975,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #ifdef SD8801
                 rate_index -= MLAN_RATE_INDEX_MCS0;
 #endif
-                bitmap_rates[2 + (rate_index / 16)] = (1U << (rate_index % 16));
+                bitmap_rates[2 + (rate_index / 16)] = (shift_index << (rate_index % 16));
                 ret                                 = MLAN_STATUS_SUCCESS;
             }
         }
@@ -1988,7 +1989,7 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         {
             if ((rate_index <= MLAN_RATE_INDEX_MCS9) && (MLAN_RATE_NSS1 <= nss) && (nss <= MLAN_RATE_NSS2))
             {
-                bitmap_rates[10 + nss - MLAN_RATE_NSS1] = (1U << rate_index);
+                bitmap_rates[10 + nss - MLAN_RATE_NSS1] = (shift_index << rate_index);
                 ret                                     = MLAN_STATUS_SUCCESS;
             }
         }

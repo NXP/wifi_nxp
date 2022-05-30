@@ -49,7 +49,7 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
     return 1;
 }
 
-int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
+bool sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
     int ret;
 
@@ -57,20 +57,20 @@ int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
     if (ret == -WM_FAIL)
     {
         sdio_e("failed to get mutex\r\n");
-        return 0;
+        return false;
     }
 
     if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != kStatus_Success)
     {
         (void)os_mutex_put(&sdio_mutex);
-        return 0;
+        return false;
     }
 
     *resp = data;
 
     (void)os_mutex_put(&sdio_mutex);
 
-    return 1;
+    return true;
 }
 
 int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
