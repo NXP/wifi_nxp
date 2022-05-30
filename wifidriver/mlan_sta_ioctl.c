@@ -1006,7 +1006,7 @@ static mlan_status wlan_bss_ioctl_start(IN pmlan_adapter pmadapter, IN pmlan_ioc
             /* use bsslist index number to assoicate */
             i = wlan_is_network_compatible(pmpriv, bss->param.ssid_bssid.idx - 1, pmpriv->bss_mode);
 #else
-            i = (t_s32)(bss->param.ssid_bssid.idx - 1U);
+            i = ((t_s32)bss->param.ssid_bssid.idx - 1);
 #endif /* CONFIG_MLAN_WMSDK */
         }
         if (i >= 0)
@@ -2779,16 +2779,19 @@ static mlan_status wlan_sec_ioctl_encrypt_mode(IN pmlan_adapter pmadapter, IN pm
 t_u8 wlan_get_random_charactor(pmlan_adapter pmadapter)
 {
     t_u32 sec, usec;
-    t_u8 ch = 0;
+    t_u32 ch_32 = 0;
+    t_u8 ch     = 0;
 
     ENTER();
 
     sec  = 10; // wmtime_time_get_posix();
     usec = 0;
 
-    sec  = (sec & 0xFFFFU) + (sec >> 16);
-    usec = (usec & 0xFFFFU) + (usec >> 16);
-    ch   = (t_u8)((((sec << 16) + usec) % 26U) + 'a');
+    sec   = (sec & 0xFFFFU) + (sec >> 16);
+    usec  = (usec & 0xFFFFU) + (usec >> 16);
+    ch_32 = (((sec << 16) + usec) % 26U);
+    ch    = (t_u8)ch_32 + (t_u8)'a';
+
     LEAVE();
     return ch;
 }
@@ -2990,11 +2993,11 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
     }
     if (pmpriv->sec_info.wep_status == Wlan802_11WEPEnabled)
     {
-        pmpriv->curr_pkt_filter |= HostCmd_ACT_MAC_WEP_ENABLE;
+        pmpriv->curr_pkt_filter |= (t_u16)HostCmd_ACT_MAC_WEP_ENABLE;
     }
     else
     {
-        pmpriv->curr_pkt_filter &= (t_u16)(~HostCmd_ACT_MAC_WEP_ENABLE);
+        pmpriv->curr_pkt_filter &= ~((t_u16)HostCmd_ACT_MAC_WEP_ENABLE);
     }
 
     /* Send request to firmware */

@@ -4172,7 +4172,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1, j;
     t_u8 best_rssi          = 0;
-    t_s32 i                 = 0;
+    t_u32 i                 = 0U;
 
     ENTER();
     PRINTM(MINFO, "Num of entries in scan table = %d\n", pmadapter->num_in_scan_table);
@@ -4253,7 +4253,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1;
-    t_s32 i                 = 0;
+    t_u32 i                 = 0U;
 
     ENTER();
 
@@ -4533,7 +4533,7 @@ static t_s32 wlan_find_worst_network_in_list(const BSSDescriptor_t *pbss_desc, t
     int worst_net = 0;
     /* To start with */
     t_s32 worst_rssi = pbss_desc[worst_net].rssi;
-    int i;
+    t_u32 i          = 0U;
 
     ENTER();
 

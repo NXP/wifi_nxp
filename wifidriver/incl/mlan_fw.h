@@ -1289,7 +1289,7 @@ typedef enum _ENH_PS_MODES
 /** MAC action : Tx on */
 #define HostCmd_ACT_MAC_TX_ON 0x0002
 /** MAC action : WEP enable */
-#define HostCmd_ACT_MAC_WEP_ENABLE 0x0008U
+#define HostCmd_ACT_MAC_WEP_ENABLE 0x0008
 /** MAC action : EthernetII enable */
 #define HostCmd_ACT_MAC_ETHERNETII_ENABLE 0x0010
 /** MAC action : Promiscous mode enable */
@@ -1350,7 +1350,7 @@ typedef enum _ENH_PS_MODES
 /** Number of command buffers */
 #define MRVDRV_NUM_OF_CMD_BUFFER 20
 /** Size of command buffer */
-#define MRVDRV_SIZE_OF_CMD_BUFFER (2 * 1024)
+#define MRVDRV_SIZE_OF_CMD_BUFFER 2048U
 
 /** Maximum number of BSS Descriptors */
 /* wmsdk: Count taken from kconfig */

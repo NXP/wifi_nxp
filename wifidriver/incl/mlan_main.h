@@ -1271,13 +1271,13 @@ struct _mlan_private
     t_u8 port_ctrl_mode;
 
     /** Port open flag */
-    t_u8 port_open;
+    bool port_open;
 
     /** Port open flag state at time of association attempt */
-    t_u8 prior_port_status;
+    bool prior_port_status;
 
     /** Scan block flag */
-    t_u8 scan_block;
+    bool scan_block;
     /** IP address operation */
     t_u32 op_code;
     /** IP address */

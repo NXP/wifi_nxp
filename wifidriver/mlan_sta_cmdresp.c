@@ -331,7 +331,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
         {
             ul_temp = wlan_le16_to_cpu(*((t_u16 *)(void *)(psmib->value)));
             /* Set 11h state to priv */
-            pmpriv->intf_state_11h.is_11h_active = (t_bool)(ul_temp & ENABLE_11H_MASK);
+            pmpriv->intf_state_11h.is_11h_active = (ul_temp & ENABLE_11H_MASK) ? MTRUE : MFALSE;
             /* Set radar_det state to adapter */
             pmpriv->adapter->state_11h.is_master_radar_det_active = (ul_temp & MASTER_RADAR_DET_MASK) ? MTRUE : MFALSE;
             pmpriv->adapter->state_11h.is_slave_radar_det_active  = (ul_temp & SLAVE_RADAR_DET_MASK) ? MTRUE : MFALSE;
