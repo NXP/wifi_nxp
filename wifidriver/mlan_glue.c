@@ -34,6 +34,8 @@ static uint32_t cal_data_len;
 
 bool mac_addr_valid;
 static uint8_t *mac_addr;
+extern bool split_scan_in_progress;
+
 #ifdef CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -3274,7 +3276,14 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
             {
                 mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
-                (void)wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+                if(!split_scan_in_progress)
+                {
+                    (void)wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+                }
+                else
+                {
+                    /** Do Nothing */
+                }
             }
             else
             {
@@ -3552,7 +3561,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (rv != MLAN_STATUS_SUCCESS)
                 return -WM_FAIL;
 
-            if (is_split_scan_complete())
+            if (is_split_scan_complete() && !pext_scan_result->more_event)
             {
                 wifi_d("Split scan complete");
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);

@@ -208,6 +208,11 @@ int wifi_exit_ieee_power_save(void)
 int wifi_enter_deepsleep_power_save(void)
 {
     t_u16 idletime = 0;
+    /* Set default idle time for deep sleep mode.
+     * If not set, fw will use 10ms as default value and this will
+     * cause small time gap between ps_wakeup and ps_sleep events
+     */
+    idletime = DEEP_SLEEP_IDLE_TIME;
     return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
 }
 
@@ -272,6 +277,7 @@ void send_sleep_confirm_command(mlan_bss_type interface)
        and would not send out sleep confirm if state has switched to AWAKE */
     if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
     {
+        mlan_adap->ps_state = PS_STATE_SLEEP_CFM;
 #endif
         wcmdr_d("+");
         (void)wifi_wait_for_cmdresp(NULL);

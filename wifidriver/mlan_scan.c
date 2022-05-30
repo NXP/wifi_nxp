@@ -60,7 +60,8 @@ int get_split_scan_delay_ms(void);
 ********************************************************/
 
 /* Global data required for split scan requests */
-static bool split_scan_in_progress, abort_split_scan;
+bool split_scan_in_progress;
+static bool abort_split_scan;
 
 /**
  * Interally used to send a configured scan cmd between driver routines
@@ -664,6 +665,13 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         pchan_tlv_out->header.len = wlan_cpu_to_le16(pchan_tlv_out->header.len);
 
         pmadapter->pscan_channels = pstart_chan;
+
+        /* Do sleep confirm handshake if received sleep event.
+         * Fw will delay all events if handshake is not done
+         * yet after ps sleep event.
+         */
+        if(mlan_adap->ps_state == PS_STATE_PRE_SLEEP && split_scan_in_progress)
+            send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
 
         if (!ptmp_chan_list->chan_number)
         {
