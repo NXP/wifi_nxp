@@ -4140,4 +4140,66 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi)
 
     return WM_SUCCESS;
 }
+int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg)
+{
+    t_u8 i;
+    int ret;
+    HostCmd_DS_COMMAND *cmd                = wifi_get_command_buffer();
+    t_u8 *pByte                            = NULL;
+    mlan_ds_11ax_chanlrupwrcft_cmd *chrupc_tlv = NULL;
+
+    (void)wifi_get_command_lock();
+
+    cmd->command = HostCmd_CMD_11AX_CMD;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+    cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN + 
+	        ru_pwr_cfg->num_chans * (sizeof(wifi_rupwrlimit_config_t) + sizeof(MrvlIEtypesHeader_t)) ;
+
+    HostCmd_DS_11AX_CMD_CFG *axcmd    = &cmd->params.axcmd;
+
+    axcmd->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+    axcmd->sub_id = wlan_cpu_to_le16(MLAN_11AXCMD_RUPOWER_SUBID);
+
+    pByte = (t_u8 *)axcmd->val;
+    for (i = 0; i < ru_pwr_cfg->num_chans; i++)
+    {
+        chrupc_tlv              = (mlan_ds_11ax_chanlrupwrcft_cmd *)(void *)pByte;
+        chrupc_tlv->type = TLV_TYPE_CHANNEL_RU_PWR_CONFIG;
+        chrupc_tlv->len  = sizeof(wifi_rupwrlimit_config_t);
+        chrupc_tlv->rupwrlimit_config.start_freq = ru_pwr_cfg->rupwrlimit_config[i].start_freq;
+        chrupc_tlv->rupwrlimit_config.width      = ru_pwr_cfg->rupwrlimit_config[i].width;
+        chrupc_tlv->rupwrlimit_config.chan_num   = ru_pwr_cfg->rupwrlimit_config[i].chan_num;
+        (void)memcpy((void *)chrupc_tlv->rupwrlimit_config.ruPower, (const void *)ru_pwr_cfg->rupwrlimit_config[i].ruPower,
+                    MAX_RU_COUNT);
+        pByte += chrupc_tlv->len + sizeof(MrvlIEtypesHeader_t);
+    }
+    ret = wifi_wait_for_cmdresp(NULL);
+    return ret;
+}
+
+int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t* ru_pwr_cfg)
+{
+
+    int ret;
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)wifi_get_command_lock();
+
+    cmd->command = HostCmd_CMD_11AX_CMD;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+    cmd->size    = S_DS_GEN + 2U * sizeof(t_u16);
+
+    HostCmd_DS_11AX_CMD_CFG *rutxpwrlimit_config = (HostCmd_DS_11AX_CMD_CFG *)(void *)((uint8_t *)cmd + S_DS_GEN);
+
+    rutxpwrlimit_config->action  = HostCmd_ACT_GEN_GET;
+
+    rutxpwrlimit_config->sub_id  = MLAN_11AXCMD_RUPOWER_SUBID;
+
+    ret = wifi_wait_for_cmdresp(ru_pwr_cfg);
+
+    return ret;
+}
 #endif

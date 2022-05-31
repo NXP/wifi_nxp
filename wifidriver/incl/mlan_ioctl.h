@@ -562,6 +562,7 @@ typedef struct _mlan_ssid_bssid
 #define MLAN_11AXCMD_TXOMI_SUBID        0x105
 #define MLAN_11AXCMD_OBSS_TOLTIME_SUBID 0x106
 #define MLAN_11AXCMD_TXOPRTS_SUBID      0x108
+#define MLAN_11AXCMD_RUPOWER_SUBID      0x117
 
 #define MLAN_11AX_TWT_SETUP_SUBID    0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
@@ -2661,6 +2662,20 @@ typedef struct _mlan_ds_11ac_vht_cfg
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
 
 #ifdef CONFIG_11AX
+#define MAX_RU_COUNT 6
+#define MAX_RUTXPWR_NUM 140
+typedef MLAN_PACK_START struct _mlan_rupwrlimit_config_t
+{
+    /** start freq */
+    t_u16 start_freq;
+    /* channel width */
+    t_u8 width;
+    /** channel number */
+    t_u8 chan_num;
+    /** chan ru Power */
+    t_s8 ruPower[MAX_RU_COUNT];
+} MLAN_PACK_END mlan_rupwrlimit_config_t;
+
 typedef MLAN_PACK_START struct _mlan_11axcmdcfg_obss_pd_offset
 {
     /** <NON_SRG_OffSET, SRG_OFFSET> */
@@ -2753,6 +2768,17 @@ typedef struct _mlan_ds_11ax_toltime_cmd
     t_u32 tol_time;
 } mlan_ds_11ax_toltime_cmd, *pmlan_ds_11ax_toltime_cmd;
 
+/** Type definition of mlan_ds_11ax_chanlrupwrcft_cmd for MLAN_OID_11AX_CMD_CFG */
+typedef struct _mlan_ds_11ax_chanlrupwrcft_cmd
+{
+    /** type*/
+    t_u16 type;
+    /** length of TLV */
+    t_u16 len;
+    /* Channel RU TX power limit Config */
+    mlan_rupwrlimit_config_t rupwrlimit_config;
+} mlan_ds_11ax_chanlrupwrcft_cmd, *pmlan_ds_11ax_chanlrupwrcft_cmd;
+
 /** Type definition of mlan_ds_11ax_cmd_cfg for MLAN_OID_11AX_CMD_CFG */
 typedef struct _mlan_ds_11ax_cmd_cfg
 {
@@ -2776,6 +2802,9 @@ typedef struct _mlan_ds_11ax_cmd_cfg
         /** OBSS tolerance time configuration for
          * MLAN_11AXCMD_TOLTIME_SUBID */
         mlan_ds_11ax_toltime_cmd toltime_cfg;
+        /** Channel RU TX power limit Config for 
+         * MLAN_11AXCMD_RUPOWER_SUBID */
+        mlan_ds_11ax_chanlrupwrcft_cmd rupwr_cfg;
     } param;
 } mlan_ds_11ax_cmd_cfg, *pmlan_ds_11ax_cmd_cfg;
 

@@ -795,7 +795,12 @@ typedef wifi_chanlist_t wlan_chanlist_t;
  * \ref wifi_txpwrlimit_t
  */
 typedef wifi_txpwrlimit_t wlan_txpwrlimit_t;
-
+#ifdef CONFIG_11AX
+/** Configuration for RU TX Pwr Limit from
+ * \ref wifi_rutxpwrlimit_t
+ */
+typedef wifi_rutxpwrlimit_t wlan_rutxpwrlimit_t;
+#endif
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
 int verify_split_scan_delay(int delay);
@@ -3306,6 +3311,24 @@ int wlan_send_hostcmd(
  * \return -WM_FAIL if command fails.
  */
 int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
+/**
+ * Use this API to set the RU tx power limit.
+ *
+ * \param[in] ru_pwr_cfg   11AX rutxpwr of channels to be sent to Firmware
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t* ru_pwr_cfg);
+/**
+ * Use this API to get the RU tx power limit.
+ *
+ * \param[in] ru_pwr_cfg   11AX rutxpwr of channels to be get from Firmware
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t* ru_pwr_cfg);
 #endif
 
 #endif /* __WLAN_H__ */

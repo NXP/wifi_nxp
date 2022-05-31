@@ -824,6 +824,33 @@ typedef PACK_START struct
     wifi_txpwrlimit_config_t txpwrlimit_config[40];
 } PACK_END wifi_txpwrlimit_t;
 
+#ifdef CONFIG_11AX
+typedef PACK_START struct _wifi_rupwrlimit_config_t
+{
+    /** start freq */
+    t_u16 start_freq;
+    /* channel width */
+    t_u8 width;
+    /** channel number */
+    t_u8 chan_num;
+    /** chan ru Power */
+    t_s8 ruPower[MAX_RU_COUNT];
+} PACK_END wifi_rupwrlimit_config_t;
+
+/**
+ * Data structure for Channel RU PWR config
+ *
+ * For RU PWR support
+ */
+typedef PACK_START struct
+{
+    /** Number of Channels */
+    t_u8 num_chans;
+    /** RU PWR config */
+    wifi_rupwrlimit_config_t rupwrlimit_config[MAX_RUTXPWR_NUM];
+} PACK_END wifi_rutxpwrlimit_t;
+#endif
+
 #ifdef CONFIG_WLAN_BRIDGE
 /**
  * Data structure for Bridge Autolink Configuration

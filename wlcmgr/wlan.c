@@ -6483,4 +6483,25 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi)
         return -WM_FAIL;
     }
 }
+
+int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t* ru_pwr_cfg)
+{
+    if (ru_pwr_cfg != NULL)
+    {
+       return wifi_set_11ax_rutxpowerlimit(ru_pwr_cfg);
+    }
+
+    return -WM_FAIL;
+}
+
+int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t* ru_pwr_cfg)
+{
+    if (ru_pwr_cfg != NULL)
+    {
+        (void)memset(ru_pwr_cfg, 0x00, sizeof(wlan_rutxpwrlimit_t));
+        return wifi_get_11ax_rutxpowerlimit(ru_pwr_cfg);
+    }
+
+    return -WM_FAIL;
+}
 #endif

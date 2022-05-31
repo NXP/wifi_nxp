@@ -1138,6 +1138,63 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("Bit 6  : Tx NSTS (applies to client mode only)\r\n");
 }
 
+void print_rutxpwrlimit(wlan_rutxpwrlimit_t* txpwrlimit)
+{
+    unsigned char i, j;
+
+    (void)PRINTF("--------------------------------------------------------------------------------\r\n");
+    for (i = 0; i < txpwrlimit->num_chans; i++)
+    {
+        (void)PRINTF("StartFreq: %d\r\n", txpwrlimit->rupwrlimit_config[i].start_freq);
+        (void)PRINTF("ChanWidth: %d\r\n", txpwrlimit->rupwrlimit_config[i].width);
+        (void)PRINTF("ChanNum:   %d\r\n", txpwrlimit->rupwrlimit_config[i].chan_num);
+        (void)PRINTF("RU Pwr:");
+        for (j = 0; j < 6; j++)
+        {
+            (void)PRINTF("%d,", txpwrlimit->rupwrlimit_config[i].ruPower[j]);
+        }
+        (void)PRINTF("\r\n");
+    }
+    (void)PRINTF("\r\n");
+}
+
+static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
+{
+    int rv;
+
+    rv = wlan_set_11ax_rutxpowerlimit(&rutxpowerlimit_2g_cfg_set);
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
+    }
+#ifdef CONFIG_5GHz_SUPPORT
+    else
+    {
+        rv = wlan_set_11ax_rutxpowerlimit(&rutxpowerlimit_5g_cfg_set);
+        if (rv != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to set 5G RU TX PWR Limit configuration\r\n");
+        }
+    }
+#endif
+}
+
+static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
+{
+    wlan_rutxpwrlimit_t chrupwr;
+
+    int rv = wlan_get_11ax_rutxpowerlimit(&chrupwr);
+
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get TX PWR Limit configuration\r\n");
+    }
+    else
+    {
+        print_rutxpwrlimit(&chrupwr);
+    }
+}
+
 static void test_wlan_set_tx_omi(int argc, char **argv)
 {
     int ret;
@@ -1198,6 +1255,8 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-ed-mac-mode", NULL, wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
     {"wlan-set-tx-omi", "<tx-omi>", test_wlan_set_tx_omi},
+    {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
+    {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
 #endif
 };
 
