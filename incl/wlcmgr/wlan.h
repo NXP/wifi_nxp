@@ -1072,14 +1072,14 @@ struct wlan_tx_pert_info
 
 /** Initialize the SDIO driver and create the wifi driver thread.
  *
- * \param[in]  fw_ram_start_addr Start address of the WLAN firmware in RAM.
- * \param[in]  size Size of the WLAN firmware in RAM.
+ * \param[in]  fw_start_addr Start address of the WLAN firmware.
+ * \param[in]  size Size of the WLAN firmware.
  *
  * \return WM_SUCCESS if the WLAN Connection Manager service has
  *         initialized successfully.
  * \return Negative value if initialization failed.
  */
-int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size);
+int wlan_init(const uint8_t *fw_start_addr, const size_t size);
 
 /** Start the WLAN Connection Manager service.
  *

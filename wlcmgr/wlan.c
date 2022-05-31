@@ -4047,7 +4047,7 @@ static int ps_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time)
     return ret;
 }
 
-int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size)
+int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 {
     int ret;
 
@@ -4075,7 +4075,7 @@ int wlan_init(const uint8_t *fw_ram_start_addr, const size_t size)
     ret = os_rwlock_create_with_cb(&ps_rwlock, "ps_mutex", "ps_lock", ps_wakeup_card_cb);
 #endif
 
-    ret = wifi_init(fw_ram_start_addr, size);
+    ret = wifi_init(fw_start_addr, size);
     if (ret != 0)
     {
         wlcm_e("wifi_init failed. status code %d", ret);

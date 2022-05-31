@@ -104,13 +104,13 @@ typedef PACK_START enum {
  *
  * Also creates mutex, and semaphores used in command and data synchronizations.
  *
- * \param[in] fw_ram_start_addr address of stored Wi-Fi Firmware.
+ * \param[in] fw_start_addr address of stored Wi-Fi Firmware.
  * \param[in] size Size of Wi-Fi Firmware.
  *
  * \return WM_SUCCESS on success or -WM_FAIL on error.
  *
  */
-int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size);
+int wifi_init(const uint8_t *fw_start_addr, const size_t size);
 
 /**
  * Initialize Wi-Fi driver module for FCC Certification.
@@ -120,13 +120,13 @@ int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size);
  *
  * Also creates mutex, and semaphores used in command and data synchronizations.
  *
- * \param[in] fw_ram_start_addr address of stored Manufacturing Wi-Fi Firmware.
+ * \param[in] fw_start_addr address of stored Manufacturing Wi-Fi Firmware.
  * \param[in] size Size of Manufacturing Wi-Fi Firmware.
  *
  * \return WM_SUCCESS on success or -WM_FAIL on error.
  *
  */
-int wifi_init_fcc(const uint8_t *fw_ram_start_addr, const size_t size);
+int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size);
 
 /**
  * Deinitialize Wi-Fi driver module.

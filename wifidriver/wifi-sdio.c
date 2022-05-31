@@ -2121,15 +2121,9 @@ int wifi_raw_packet_send(const t_u8 *packet, t_u32 length)
     return WM_SUCCESS;
 }
 
-static mlan_status sd_wifi_preinit(enum wlan_fw_storage_type st)
+static mlan_status sd_wifi_preinit(void)
 {
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
-
-#if 0
-	/* Initialise internal/external flash memory */
-	if (st == WLAN_FW_IN_FLASH)
-		flash_drv_init();
-#endif
 
     /* initializes the driver struct */
     int sdiostatus = wlan_init_struct();
@@ -2191,14 +2185,11 @@ static mlan_status sd_wifi_post_fwload(enum wlan_type type)
     return mlanstatus;
 }
 
-mlan_status sd_wifi_init(enum wlan_type type,
-                         enum wlan_fw_storage_type st,
-                         const uint8_t *fw_ram_start_addr,
-                         const size_t size)
+mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
-    ret = sd_wifi_preinit(st);
+    ret = sd_wifi_preinit();
     if (ret == MLAN_STATUS_SUCCESS)
     {
         ret = sdio_init();
@@ -2207,7 +2198,7 @@ mlan_status sd_wifi_init(enum wlan_type type,
             ret = sdio_ioport_init();
             if (ret == MLAN_STATUS_SUCCESS)
             {
-                ret = (mlan_status)firmware_download(st, fw_ram_start_addr, size);
+                ret = (mlan_status)firmware_download(fw_start_addr, size);
                 if (ret == MLAN_STATUS_SUCCESS)
                 {
                     ret = sd_wifi_post_fwload(type);

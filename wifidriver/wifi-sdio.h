@@ -87,10 +87,7 @@ extern bool low_power_mode;
 extern bool cal_data_valid;
 extern bool mac_addr_valid;
 
-mlan_status sd_wifi_init(enum wlan_type type,
-                         enum wlan_fw_storage_type st,
-                         const uint8_t *fw_ram_start_addr,
-                         const size_t size);
+mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size);
 
 void sd_wifi_deinit(void);
 

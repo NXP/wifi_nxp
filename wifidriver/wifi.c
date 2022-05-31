@@ -1543,14 +1543,14 @@ static void wifi_core_deinit(void)
 #endif
 }
 
-int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
+int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 {
     if (wifi_init_done != 0U)
     {
         return WM_SUCCESS;
     }
 
-    int ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
+    int ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
     if (ret != 0)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);
@@ -1592,14 +1592,14 @@ int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
     return ret;
 }
 
-int wifi_init_fcc(const uint8_t *fw_ram_start_addr, const size_t size)
+int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 {
     if (wifi_init_done != 0U)
     {
         return WM_SUCCESS;
     }
 
-    int ret = (int)sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, WLAN_FW_IN_RAM, fw_ram_start_addr, size);
+    int ret = (int)sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, fw_start_addr, size);
     if (ret != 0)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);
