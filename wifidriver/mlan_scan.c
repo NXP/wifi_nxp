@@ -670,7 +670,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
          * Fw will delay all events if handshake is not done
          * yet after ps sleep event.
          */
-        if(mlan_adap->ps_state == PS_STATE_PRE_SLEEP && split_scan_in_progress)
+        if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP && split_scan_in_progress)
             send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
 
         if (!ptmp_chan_list->chan_number)
@@ -4190,12 +4190,12 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
      */
     while (i < pmadapter->num_in_scan_table && (bssid == MNULL || net < 0))
     {
-        if (!wlan_ssid_cmp(pmadapter, &pmadapter->pscan_table[i].ssid, ssid) &&
+        if ((wlan_ssid_cmp(pmadapter, &pmadapter->pscan_table[i].ssid, ssid) == 0) &&
             ((bssid == MNULL) ||
-             !__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH)))
+             (__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH) == 0)))
         {
             if (((mode == MLAN_BSS_MODE_INFRA) &&
-                 !wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band)) ||
+                 (wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band) == 0U)) ||
                 (wlan_find_cfp_by_band_and_channel(pmadapter, pmadapter->pscan_table[i].bss_band,
                                                    (t_u16)pmadapter->pscan_table[i].channel) == MNULL))
             {
@@ -4214,7 +4214,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
                         if (SCAN_RSSI(pmadapter->pscan_table[i].rssi) > best_rssi)
                         {
                             best_rssi = (t_u8)(SCAN_RSSI(pmadapter->pscan_table[i].rssi));
-                            net       = i;
+                            net       = (t_s32)i;
                         }
                     }
                     else
@@ -4235,7 +4235,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
                     if (SCAN_RSSI(pmadapter->pscan_table[i].rssi) > best_rssi)
                     {
                         best_rssi = (t_u8)(SCAN_RSSI(pmadapter->pscan_table[i].rssi));
-                        net       = i;
+                        net       = (t_s32)i;
                     }
                     break;
             }
@@ -4281,10 +4281,10 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
      */
     while (net < 0 && i < pmadapter->num_in_scan_table)
     {
-        if (!__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH))
+        if ((__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH) == 0))
         {
             if (((mode == MLAN_BSS_MODE_INFRA) &&
-                 !wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band)) ||
+                 (wlan_is_band_compatible(pmpriv->config_bands, pmadapter->pscan_table[i].bss_band) == 0U)) ||
                 (wlan_find_cfp_by_band_and_channel(pmadapter, pmadapter->pscan_table[i].bss_band,
                                                    (t_u16)pmadapter->pscan_table[i].channel) == MNULL))
             {
@@ -4299,7 +4299,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_b
                     /* net = wlan_is_network_compatible(pmpriv, i, mode); */
                     break;
                 default:
-                    net = i;
+                    net = (t_s32)i;
                     break;
             }
         }

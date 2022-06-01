@@ -1786,7 +1786,7 @@ struct _mlan_adapter
     t_u8 *mp_regs_buf;
 
     /** ECSA support */
-    t_u8 ecsa_enable;
+    bool ecsa_enable;
 
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef SDIO_MULTI_PORT_TX_AGGR
@@ -2030,7 +2030,7 @@ struct _mlan_adapter
     t_u8 usr_dev_mcs_support;
 #ifdef STA_SUPPORT
     /** Enable 11n support for adhoc start */
-    t_u8 adhoc_11n_enabled;
+    bool adhoc_11n_enabled;
     /** Adhoc Secondary Channel Bandwidth */
     t_u8 chan_bandwidth;
 #endif /* STA_SUPPORT */

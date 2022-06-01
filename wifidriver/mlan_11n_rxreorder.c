@@ -257,7 +257,7 @@ static mlan_status wlan_11n_scan_and_dispatch(t_void *priv, RxReorderTbl *rx_reo
     /* clear the bits of reorder bitmap that has been dispatched */
     rx_reor_tbl_ptr->bitmap = rx_reor_tbl_ptr->bitmap >> i;
 
-    rx_reor_tbl_ptr->start_win = (rx_reor_tbl_ptr->start_win + i) & (MAX_TID_VALUE - 1);
+    rx_reor_tbl_ptr->start_win = (rx_reor_tbl_ptr->start_win + i) & (MAX_TID_VALUE - 1U);
 
     (void)pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
     LEAVE();

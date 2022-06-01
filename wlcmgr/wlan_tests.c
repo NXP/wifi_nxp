@@ -90,6 +90,8 @@ static const char *print_role(enum wlan_bss_role role)
             return "uAP";
         case WLAN_BSS_ROLE_ANY:
             return "any";
+        default:
+            break;
     }
 
     return "unknown";
@@ -221,9 +223,10 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
 
 static int get_security(int argc, char **argv, enum wlan_security_type type, struct wlan_network_security *sec)
 {
+    int ret = WM_SUCCESS;
     if (argc < 1)
     {
-        return 1;
+        return WM_FAIL;
     }
 
     switch (type)
@@ -234,7 +237,7 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
             sec->psk_len = (char)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
             {
-                return 1;
+                return WM_FAIL;
             }
             if (sec->psk_len < sizeof(sec->psk))
             {
@@ -242,15 +245,16 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
             }
             else
             {
-                return 1;
+                return WM_FAIL;
             }
             sec->type = type;
             break;
         default:
-            return 1;
+            ret = WM_FAIL;
+            break;
     }
 
-    return 0;
+    return ret;
 }
 
 static int get_role(char *arg, enum wlan_bss_role *role)
@@ -1010,7 +1014,7 @@ static void test_wlan_stat(int argc, char **argv)
             break;
 #ifdef CONFIG_WIFIDRIVER_PS_LOCK
         case WLAN_IEEE_DEEP_SLEEP:
-            strcpy(ps_mode_str, "IEEE ps and Deep sleep");
+            (void)strcpy(ps_mode_str, "IEEE ps and Deep sleep");
             break;
 #endif
         case WLAN_ACTIVE:
@@ -1052,6 +1056,7 @@ static void test_wlan_stat(int argc, char **argv)
                     "Error: invalid STA state"
                     " %d\r\n",
                     state);
+                break;
         }
     }
     if (wlan_get_uap_connection_state(&state) != 0)
@@ -1076,6 +1081,7 @@ static void test_wlan_stat(int argc, char **argv)
                     "Error: invalid uAP state"
                     " %d\r\n",
                     state);
+                break;
         }
     }
 }
@@ -2001,7 +2007,9 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
         (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz\r\n");
     }
     else
+    {
         (void)PRINTF("bandwidth set successfully\r\n");
+    }
 }
 #endif
 

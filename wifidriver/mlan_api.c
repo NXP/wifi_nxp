@@ -121,6 +121,7 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
     reg_rw.offset = offset;
     reg_rw.value  = *value;
     uint16_t hostcmd;
+    int ret = WM_SUCCESS;
     switch (reg_type)
     {
         case REG_MAC:
@@ -134,7 +135,13 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
             break;
         default:
             wifi_e("Incorrect register type");
-            return -WM_FAIL;
+            ret = -WM_FAIL;
+            break;
+    }
+
+    if (ret != WM_SUCCESS)
+    {
+        return ret;
     }
 
     (void)wifi_get_command_lock();
