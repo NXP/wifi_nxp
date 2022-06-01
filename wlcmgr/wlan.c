@@ -2059,8 +2059,9 @@ static void wlcm_process_awake_event(void)
 
 static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 {
-    ENH_PS_MODES action = (ENH_PS_MODES)((uint32_t)msg->data);
+    ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
     wlcm_d("got msg data :: %x", action);
+    os_mem_free(msg->data);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
@@ -2105,8 +2106,9 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 
 static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
-    ENH_PS_MODES action = (ENH_PS_MODES)((uint32_t)msg->data);
+    ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
     wlcm_d("got msg data :: %x", action);
+    os_mem_free(msg->data);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
@@ -2167,7 +2169,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 #ifdef CONFIG_WNM_PS
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action = (uint16_t)((uint32_t)msg->data);
+    uint16_t action = (uint16_t) * (msg->data);
     wlcm_d("got msg data :: %x", action);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
@@ -2200,6 +2202,7 @@ static void wlcm_process_wnmps_event(struct wifi_message *msg)
             /* Do nothing */
         }
     }
+    os_mem_free(msg->data);
 }
 #endif
 
@@ -3826,6 +3829,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: deep sleep result: %s",
                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             wlcm_process_deepsleep_event(msg, &next);
+
             break;
 #ifdef CONFIG_WNM_PS
         case WIFI_EVENT_WNM_PS:

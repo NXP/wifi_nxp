@@ -405,7 +405,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 pwr_d(
                     "Disabled WNM power "
                     "save mode");
-                *ps_event                                     = WIFI_EVENT_WNM_PS;
+                *ps_event                                     = (t_u16)WIFI_EVENT_WNM_PS;
                 ((mlan_private *)mlan_adap->priv[0])->wnm_set = false;
             }
             else
