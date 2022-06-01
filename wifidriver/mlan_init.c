@@ -19,7 +19,9 @@ Change log:
 #include <wmerrno.h>
 #include <wm_os.h>
 #include "fsl_common.h"
+#ifndef RW610
 #include "sdmmc_config.h"
+#endif
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -221,6 +223,11 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     return MLAN_STATUS_SUCCESS;
 }
 
+void wlan_clear_scan_bss(void)
+{
+    (void)__memset(MNULL, &BSS_List, 0x00, sizeof(BSS_List));
+}
+
 /**
  *  @brief This function initializes the private structure
  *  		and sets default values to the members of mlan_private.
@@ -420,6 +427,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
      * priority.
      */
     pmadapter->mp_wr_bitmap = 0;
+#ifndef RW610
 #if defined(SD8801)
     pmadapter->curr_rd_port = 1;
     pmadapter->curr_wr_port = 1;
@@ -429,6 +437,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->curr_wr_port = 0;
 #endif
     pmadapter->mp_data_port_mask = DATA_PORT_MASK;
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef SDIO_MULTI_PORT_TX_AGGR

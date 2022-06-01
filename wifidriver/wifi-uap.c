@@ -15,7 +15,11 @@
 #include <wm_os.h>
 
 #include <wifi.h>
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 #include "wifi-internal.h"
 
 /* fixme: Some of the following options could be added to kconfig. While
@@ -116,6 +120,9 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         }
 
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+#ifdef RW610
+        vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
+#endif
         vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
         vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
         vht_cfg.skip_usr_11ac_mcs_cfg = MTRUE;
@@ -226,6 +233,9 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
         ret = -WM_E_INVAL;
         goto done;
     }
+#ifdef RW610
+    he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
 #if 0
     if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
     {

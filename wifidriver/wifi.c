@@ -9,7 +9,6 @@
  */
 
 #include <mlan_api.h>
-#include <mlan_sdio_api.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +16,10 @@
 #include <wm_os.h>
 
 #include "wifi-internal.h"
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
+#include <mlan_sdio_api.h>
 #include "wifi-sdio.h"
 #include "mlan_sdio.h"
 #include "sdio.h"
@@ -24,6 +27,7 @@
 
 #ifdef CONFIG_WMM
 #include "sdmmc_config.h"
+#endif
 #endif
 
 #ifdef CONFIG_MEM_MONITOR_DEBUG
@@ -50,6 +54,12 @@ wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
 #endif
 
 #ifdef CONFIG_WMM
+#ifdef RW610
+    #define BOARD_DATA_BUFFER_ALIGN_SIZE 32
+#else
+    #define BOARD_DATA_BUFFER_ALIGN_SIZE BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE
+#endif
+
 /* @brief decription about the read/write buffer
  * The size of the read/write buffer should be a multiple of 512, since SDHC/SDXC card uses 512-byte fixed
  * block length and this driver example is enabled with a SDHC/SDXC card.If you are using a SDSC card, you
@@ -59,10 +69,10 @@ wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
  * At the same time buffer address/size should be aligned to the cache line size if cache is supported.
  */
 /*! @brief Data written to the card */
-SDK_ALIGN(uint8_t outbuf_bk[BK_MAX_BUF][DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
-SDK_ALIGN(uint8_t outbuf_vi[VI_MAX_BUF][DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
-SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
-SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
+SDK_ALIGN(uint8_t outbuf_bk[BK_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
+SDK_ALIGN(uint8_t outbuf_vi[VI_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
+SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
+SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
 
 static t_u8 wifi_init_done;
@@ -76,7 +86,7 @@ static bool sta_ampdu_tx_enable = true;
 bool sta_ampdu_rx_enable = true;
 #endif
 
-static int retry_attempt_count;
+int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
 
@@ -116,7 +126,11 @@ uint32_t wifi_get_value1(void)
 /* Wake up Wi-Fi card */
 void wifi_wake_up_card(uint32_t *resp)
 {
+#ifndef RW610
     (void)sdio_drv_creg_write(0x0, 1, 0x02, resp);
+#else
+    imu_wakeup_card();
+#endif
 }
 
 /* When Wi-Fi card is in IEEE PS and sleeping
@@ -813,6 +827,19 @@ void wifi_sdio_reg_dbg()
         wifi_d("%s", buf);
     }
 }
+
+#elif defined(RW610)
+
+/**
+ *  @brief This function dump firmware memory to file
+ *
+ *  @return         N/A
+ */
+void wifi_dump_firmware_info()
+{
+    /*Dummy for RW610 */
+}
+
 #endif
 #endif
 
@@ -820,8 +847,10 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 {
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+#ifndef RW610
     t_u32 buf_len           = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
+#endif
 
 #if defined(CONFIG_ENABLE_WARNING_LOGS) || defined(CONFIG_WIFI_CMD_RESP_DEBUG)
 
@@ -840,9 +869,11 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
          * this error will help to localize the problem.
          */
         wifi_e("cmd size greater than WIFI_FW_CMDBUF_SIZE\r\n");
+        (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
 
+#ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
 
     if (cmd->size < 512U)
@@ -850,6 +881,8 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         buf_len   = tx_blocks * MLAN_SDIO_BLOCK_SIZE;
         tx_blocks = 1;
     }
+#endif
+
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
 #else
@@ -870,7 +903,11 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
      */
     wm_wifi.cmd_resp_priv = cmd_resp_priv;
 
+#if defined(RW610)
+    (void)wifi_send_cmdbuffer();
+#else
     (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
+#endif
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     /* put the sleep_rwlock after send command but not wait for the command response,
@@ -889,6 +926,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_w("Command response timed out. command = 0x%x", cmd->command);
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #ifdef CONFIG_WIFI_FW_DEBUG
+#ifndef RW610
         wifi_sdio_reg_dbg();
 
         if (wm_wifi.wifi_usb_mount_cb != NULL)
@@ -903,6 +941,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         }
         else
             wifi_e("USB mount callback is not registered");
+#else
+        wifi_dump_firmware_info();
+#endif
 #endif
     }
 
@@ -910,6 +951,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
     os_rwlock_read_unlock(&ps_rwlock);
 #endif
+    wifi_set_xfer_pending(false);
     (void)wifi_put_command_lock();
     return ret;
 }
@@ -1343,7 +1385,9 @@ static void wifi_core_input(void *argv)
         g_txrx_flag = true;
         //		SDIOC_IntMask(SDIOC_INT_CDINT, UNMASK);
         //		SDIOC_IntSigMask(SDIOC_INT_CDINT, UNMASK);
+#ifndef RW610
         sdio_enable_interrupt();
+#endif
 
         os_exit_critical_section((unsigned long)sta);
 
@@ -1351,12 +1395,20 @@ static void wifi_core_input(void *argv)
         (void)os_event_notify_get(OS_WAIT_FOREVER);
         // wakelock_get(WL_ID_WIFI_CORE_INPUT);
 
+#if defined(RW610)
+        (void)wifi_imu_lock();
+#else
         /* Protect the SDIO from other parallel activities */
         (void)wifi_sdio_lock();
 
         (void)wlan_process_int_status(mlan_adap);
+#endif
 
+#if defined(RW610)
+        wifi_imu_unlock();
+#else
         wifi_sdio_unlock();
+#endif
         // wakelock_put(WL_ID_WIFI_CORE_INPUT);
     } /* for ;; */
 }
@@ -1551,7 +1603,11 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
         return WM_SUCCESS;
     }
 
+#if defined(RW610)
+    int ret = (int)imu_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
+#else
     int ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
+#endif
     if (ret != 0)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);
@@ -1596,6 +1652,7 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
     return ret;
 }
 
+#ifndef RW610
 int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 {
     if (wifi_init_done != 0U)
@@ -1647,18 +1704,23 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 
     return ret;
 }
+#endif
 
 void wifi_deinit(void)
 {
     wifi_init_done = 0;
 
+#if defined(RW610)
+    imu_wifi_deinit();
+#else
     sd_wifi_deinit();
+#endif
     wifi_core_deinit();
 }
 
 void wifi_set_packet_retry_count(const int count)
 {
-    retry_attempt_count = count;
+    retry_attempts = count;
 }
 
 #ifdef CONFIG_STA_AMPDU_TX
@@ -2000,7 +2062,7 @@ int wifi_low_level_output(const uint8_t interface,
 #ifdef CONFIG_WMM
     struct bus_message msg;
 #else
-    int retry = retry_attempt_count;
+    int retry = retry_attempts;
     mlan_status i;
 #endif
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
@@ -2073,11 +2135,19 @@ int wifi_low_level_output(const uint8_t interface,
     msg.reason = interface;
     ret        = os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
 #else
+#if defined(RW610)
+    wifi_imu_lock();
+#else
     (void)wifi_sdio_lock();
+#endif
 
 retry_xmit:
     i = wlan_xmit_pkt(pkt_len + len, interface);
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
     wifi_sdio_unlock();
+#endif
     if (i != MLAN_STATUS_SUCCESS)
     {
         if (i == MLAN_STATUS_FAILURE)
@@ -2099,7 +2169,11 @@ retry_xmit:
                  * update the write bitmap so that pkt
                  * can be sent to FW */
                 os_thread_sleep(1);
+#if defined(RW610)
+                wifi_imu_lock();
+#else
                 (void)wifi_sdio_lock();
+#endif
                 goto retry_xmit;
             }
         }
@@ -2147,7 +2221,11 @@ exit_fn:
 
 uint8_t *wifi_get_outbuf(uint32_t *outbuf_len)
 {
+#if defined(RW610)
+    return wifi_get_imu_outbuf(outbuf_len);
+#else
     return wifi_get_sdio_outbuf(outbuf_len);
+#endif
 }
 #ifdef CONFIG_WMM
 uint8_t *wifi_wmm_get_sdio_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue)

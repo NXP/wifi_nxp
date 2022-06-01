@@ -1271,6 +1271,10 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         (pbss_desc->bss_band & (BAND_B | BAND_G | BAND_GN)))
     {
         orig_usr_dot_11n_dev_cap = usr_dot_11n_dev_cap;
+#ifdef RW610
+        RESETSUPP_CHANWIDTH40(usr_dot_11n_dev_cap);
+        RESETSUPP_SHORTGI40(usr_dot_11n_dev_cap);
+#endif
         RESET_40MHZ_INTOLARENT(usr_dot_11n_dev_cap);
         pmadapter->usr_dot_11n_dev_cap_bg = usr_dot_11n_dev_cap;
         pbss_desc->curr_bandwidth         = BW_20MHZ;
@@ -1284,6 +1288,11 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         pht_cap->header.len  = sizeof(HTCap_t);
         (void)__memcpy(pmadapter, (t_u8 *)pht_cap + sizeof(MrvlIEtypesHeader_t),
                        (t_u8 *)pbss_desc->pht_cap + sizeof(IEEEtypes_Header_t), pht_cap->header.len);
+
+        if (!ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap))
+        {
+            pht_cap->ht_cap.ht_cap_info &= ~(MBIT(1) | MBIT(6));
+        }
 
         pht_cap->ht_cap.ht_cap_info = wlan_le16_to_cpu(pht_cap->ht_cap.ht_cap_info);
         pht_cap->ht_cap.ht_ext_cap  = wlan_le16_to_cpu(pht_cap->ht_cap.ht_ext_cap);
@@ -1331,6 +1340,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         pchan_list->chan_scan_param[0].radio_type  = wlan_band_to_radio_type((t_u8)pbss_desc->bss_band);
         /* support the VHT if the network to be join has the VHT operation */
         if (ISSUPP_11ACENABLED(pmadapter->fw_cap_info) && (usr_dot_11ac_bw == BW_FOLLOW_VHTCAP) &&
+            ISSUPP_CHANWIDTH40(pmadapter->hw_dot_11n_dev_cap) &&
             wlan_11ac_bandconfig_allowed(pmpriv, pbss_desc->bss_band) && pbss_desc->pvht_oprat != MNULL &&
             pbss_desc->pvht_oprat->chan_width == VHT_OPER_CHWD_80MHZ)
         {

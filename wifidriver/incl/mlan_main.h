@@ -2209,6 +2209,7 @@ mlan_status wlan_set_ewpa_mode(mlan_private *priv, mlan_ds_passphrase *psec_pp);
 
 mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req);
 #endif /* CONFIG_MLAN_WMSDK */
+void wlan_clear_scan_bss(void);
 /** Allocate memory for adapter structure members */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter);
 #ifndef CONFIG_MLAN_WMSDK

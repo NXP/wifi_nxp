@@ -298,7 +298,13 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);
 mlan_status wrapper_moal_mfree(t_void *pmoal_handle, t_u8 *pbuf);
 
+#if defined(RW610)
+int wifi_imu_lock(void);
+void wifi_imu_unlock(void);
+#else
 int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
+#endif
+
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, unsigned int action);
 #endif /* __WIFI_INTERNAL_H__ */

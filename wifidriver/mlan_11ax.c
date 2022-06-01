@@ -20,7 +20,11 @@
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 /********************************************************
  *    Local Variables
  *    ********************************************************/

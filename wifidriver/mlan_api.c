@@ -19,7 +19,11 @@
 
 #include <wifi.h>
 
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 #include "wifi-internal.h"
 
 /*

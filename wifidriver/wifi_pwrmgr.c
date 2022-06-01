@@ -16,7 +16,11 @@
 #include <wifi_events.h>
 
 #include <wmlog.h>
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 #include "wifi-internal.h"
 
 #define pwr_e(...) wmlog_e("pwr", ##__VA_ARGS__)
@@ -87,7 +91,11 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     {
         hs_cfg_obj.conditions = conditions;
         hs_cfg_obj.gap        = 0x2;
+#ifdef RW610
+        hs_cfg_obj.gpio = 0xff;
+#else
         hs_cfg_obj.gpio       = HOST_WAKEUP_GPIO_PIN;
+#endif
         pdata_buf             = &hs_cfg_obj;
 
         /* wake conditions for broadcast is

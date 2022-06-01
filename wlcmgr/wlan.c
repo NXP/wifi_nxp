@@ -19,7 +19,9 @@
 #include <wmstats.h>
 #endif /* CONFIG_WMSTATS */
 #include <stdint.h>
+#ifndef RW610
 #include <mlan_sdio_api.h>
+#endif
 #ifdef CONFIG_HOST_PMK
 #include <wm_mbedtls_helper_api.h>
 #include <mbedtls/x509_crt.h>
@@ -3159,8 +3161,10 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     (void)wrapper_wlan_cmd_get_hw_spec();
 
+#ifndef RW610
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
+#endif
 
     (void)wifi_enable_ecsa_support();
 

@@ -23,6 +23,7 @@
 #include "mlan_util.h"
 #include "mlan_fw.h"
 #include "mlan_main.h"
+#include "mlan_main_defs.h"
 #include "mlan_wmm.h"
 #include "mlan_11n.h"
 #include "mlan_11h.h"
@@ -31,7 +32,9 @@
 #include "mlan_11ax.h"
 #endif
 #include "mlan_11n_aggr.h"
+#ifndef RW610
 #include "mlan_sdio.h"
+#endif
 #include "mlan_11n_rxreorder.h"
 #include "mlan_meas.h"
 #include "mlan_uap.h"

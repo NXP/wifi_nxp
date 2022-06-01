@@ -393,11 +393,12 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
     pcb = &pmadapter->callbacks;
 
     /* Free private structures */
-    for (i = 0; i < pmadapter->priv_num; i++)
+    for (i = 0; i < MIN(pmadapter->priv_num, MLAN_MAX_BSS_NUM); i++)
     {
         if (pmadapter->priv[i])
         {
             pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
+            pmadapter->priv[i] = MNULL;
         }
     }
 

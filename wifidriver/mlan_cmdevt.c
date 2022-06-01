@@ -3119,10 +3119,12 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 
     pmadapter->mp_end_port = wlan_le16_to_cpu(hw_spec->mp_end_port);
 
+#ifndef RW610
     for (i = 1; i <= (unsigned)(MAX_PORT - pmadapter->mp_end_port); i++)
     {
         pmadapter->mp_data_port_mask &= ~(1U << (MAX_PORT - i));
     }
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
     pmadapter->max_mgmt_ie_index = wlan_le16_to_cpu(hw_spec->mgmt_buf_count);

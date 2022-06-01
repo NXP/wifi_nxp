@@ -24,6 +24,9 @@
 #include "pvt_sd9098_wlan.h"
 #elif defined(IW61x)
 #include "sduart_nw61x.h"
+#elif defined(RW610)
+const unsigned char *wlan_fw_bin = (void *)0;
+unsigned int wlan_fw_bin_len = 0;
 #endif
 
 #endif /* __WLAN_BT_FW_H__ */

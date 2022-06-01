@@ -207,6 +207,10 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap, t_u16 ba
     }
 
     vht_cap->vht_cap_info = usr_dot_11ac_dev_cap;
+#ifdef RW610
+    if(GET_VHTCAP_MAXMPDULEN(vht_cap->vht_cap_info) != 0U)
+        RESET_11ACMAXMPDULEN(vht_cap->vht_cap_info);
+#endif
 
     LEAVE();
 }

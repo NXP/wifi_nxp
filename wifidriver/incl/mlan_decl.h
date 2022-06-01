@@ -175,6 +175,12 @@ Change log:
 
 /** MU beamformer */
 #define DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK (MBIT(19))
+#ifdef RW610
+/** Short GI for 80MHz/TVHT_MODE_4C */
+#define DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK (MBIT(5))
+/** HE Phy Cap Info(40MHz in 2.4GHz band) */
+#define DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK (MBIT(1))
+#endif
 
 /** Size of rx data buffer */
 #define MLAN_RX_DATA_BUF_SIZE (4 * 1024)

@@ -485,7 +485,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
     defined(IW61x)
 #define DEFAULT_11N_CAP_MASK_BG \
     (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP)
-#elif defined(SD8801)
+#elif defined(SD8801) || defined(RW610)
 #define DEFAULT_11N_CAP_MASK_BG (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP)
 #endif
 /** Default 11n capability mask for 5GHz */

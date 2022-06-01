@@ -18,7 +18,11 @@
 
 #include <wifi.h>
 #include "wifi-internal.h"
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 
 #ifdef CONFIG_WIFI_FW_DEBUG
 #define FW_DEBUG_INFO_SIZE 400
@@ -391,6 +395,9 @@ int mlan_subsys_init(void)
 int mlan_subsys_deinit(void)
 {
     (void)mlan_unregister(mlan_adap);
+    mlan_adap = MNULL;
+
+    wlan_clear_scan_bss();
 
     return WM_SUCCESS;
 }
