@@ -323,7 +323,7 @@ static int handle_input(char *handle_inbuf)
     static char *argv[32];
     int argc                          = 0;
     int i                             = 0;
-    int j                             = 0;
+    unsigned int j                    = 0;
     const struct cli_command *command = NULL;
     const char *p;
 
@@ -341,11 +341,11 @@ static int handle_input(char *handle_inbuf)
      */
     for (j = 0; j < INBUF_SIZE; j++)
     {
-        if (handle_inbuf[j] == 0x0D || handle_inbuf[j] == 0x0A)
+        if (handle_inbuf[j] == (char)0x0D || handle_inbuf[j] == (char)0x0A)
         {
-            if (j < (INBUF_SIZE - 1))
+            if (j < (INBUF_SIZE - 1U))
             {
-                (void)memmove((handle_inbuf + j), handle_inbuf + j + 1, (INBUF_SIZE - i));
+                (void)memmove((handle_inbuf + j), handle_inbuf + j + 1, (INBUF_SIZE - (unsigned int)i));
             }
             handle_inbuf[INBUF_SIZE] = (char)(0x00);
         }
@@ -364,29 +364,29 @@ static int handle_input(char *handle_inbuf)
                 break;
 
             case '"':
-                if (i > 0 && handle_inbuf[i - 1] == '\\' && stat.inArg)
+                if (i > 0 && handle_inbuf[i - 1] == '\\' && (stat.inArg != 0U))
                 {
                     (void)memcpy(&handle_inbuf[i - 1], &handle_inbuf[i], strlen(&handle_inbuf[i]) + 1U);
                     --i;
                     break;
                 }
-                if ((stat.inQuote == 0U) && stat.inArg)
+                if ((stat.inQuote == 0U) && (stat.inArg != 0U))
                 {
                     break;
                 }
-                if ((stat.inQuote != 0U) && !stat.inArg)
+                if ((stat.inQuote != 0U) && (stat.inArg == 0U))
                 {
                     return 2;
                 }
 
-                if ((stat.inQuote == 0U) && !stat.inArg)
+                if ((stat.inQuote == 0U) && (stat.inArg == 0U))
                 {
                     stat.inArg   = 1;
                     stat.inQuote = 1;
                     argc++;
                     argv[argc - 1] = &handle_inbuf[i + 1];
                 }
-                else if ((stat.inQuote != 0U) && stat.inArg)
+                else if ((stat.inQuote != 0U) && (stat.inArg != 0U))
                 {
                     stat.inArg      = 0;
                     stat.inQuote    = 0;
@@ -398,13 +398,13 @@ static int handle_input(char *handle_inbuf)
                 break;
 
             case ' ':
-                if (i > 0 && handle_inbuf[i - 1] == '\\' && stat.inArg)
+                if (i > 0 && handle_inbuf[i - 1] == '\\' && (stat.inArg != 0U))
                 {
                     (void)memcpy(&handle_inbuf[i - 1], &handle_inbuf[i], strlen(&handle_inbuf[i]) + 1U);
                     --i;
                     break;
                 }
-                if ((stat.inQuote == 0U) && stat.inArg)
+                if ((stat.inQuote == 0U) && (stat.inArg != 0U))
                 {
                     stat.inArg      = 0;
                     handle_inbuf[i] = '\0';
@@ -412,7 +412,7 @@ static int handle_input(char *handle_inbuf)
                 break;
 
             default:
-                if (!stat.inArg)
+                if (stat.inArg == 0U)
                 {
                     stat.inArg = 1;
                     argc++;
@@ -421,7 +421,7 @@ static int handle_input(char *handle_inbuf)
                 break;
         }
         i++;
-    } while (!stat.done && i < INBUF_SIZE);
+    } while ((stat.done == 0U) && (unsigned int)i < INBUF_SIZE);
 
     if (stat.inQuote != 0U)
     {
