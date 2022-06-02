@@ -590,6 +590,7 @@ static void iperf_test_abort(void *arg)
         test_ctx->iperf_session = NULL;
     }
 
+    (void)PRINTF("IPERF ABORT DONE\r\n");
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 }
 

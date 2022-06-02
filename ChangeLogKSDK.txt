@@ -3,6 +3,26 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r41.p2
+  -New Additions:
+   - Updated license header as a github friendly license.
+   - Added 8801 SoC firmware p177 with get Coex Statistics support.
+   - Added 8987 SoC firmware p32.2 with Bluetooth related fixes. Added fix for automatic ble disconnect issue.
+
+  -Bug Fixes:
+   - Fixed Unable to start/stop 11n rx reorder timer(50%).
+   - Fixed Getting Improper Channel Number in "wlan-get-uap-channel" command.
+   - Fixed DUT fails to start DHCP intermittently.
+   - Fixed wrong wlan-list output.
+   - Fixed station connect issue after host sleep is enabled and disabled.
+   - Fixed Misra and coverity issues.
+   - Fixed automatic ble disconnect issue after 30 seconds of connection establishment.
+
+Version 1.3.r41.p1
+  -Bug Fixes:
+   - Updated 8801 SoC firmware to toggle GRANT Pin with WLAN/BT time on HIGH Request with Low Priority.
+   - Added coverity fixes.
+
 Version 1.3.r40.p5
   -Bug Fixes:
    - Fixed issue of DUT not entering Powersave mode on all SoCs.

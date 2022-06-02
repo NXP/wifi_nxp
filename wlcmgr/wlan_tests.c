@@ -324,6 +324,11 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("If seting dtim\r\n");
     (void)PRINTF("The value of dtim is an integer. The default value is 10.\r\n");
 #endif
+#ifdef CONFIG_11AC
+    (void)PRINTF(
+        "Note: Setting the channel value greater than or equal to 36 is mandatory,\r\n"
+        "      if UAP bandwidth is set to 80MHz.\r\n");
+#endif
 }
 
 static void test_wlan_add(int argc, char **argv)
@@ -1993,8 +1998,13 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 
     if (argc < 2)
     {
-        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+#ifdef CONFIG_11AC
+        (void)PRINTF("Usage: %s <1/2/3>\r\n", argv[0]);
+        (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz or 3 for 80MHz\r\n");
+#else
+        (void)PRINTF("Usage: %s <1/2>\r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz\r\n");
+#endif
         return;
     }
 
@@ -2003,8 +2013,13 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 
     if (ret != WM_SUCCESS)
     {
-        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+#ifdef CONFIG_11AC
+        (void)PRINTF("Usage: %s <1/2/3>\r\n", argv[0]);
+        (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz or 3 for 80MHz\r\n");
+#else
+        (void)PRINTF("Usage: %s <1/2>\r\n", argv[0]);
         (void)PRINTF("Error: Specify 1 to set bandwidth 20MHz or 2 for 40MHz\r\n");
+#endif
     }
     else
     {
@@ -2227,7 +2242,11 @@ static struct cli_command tests[] = {
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 #if !defined(SD8977) && !defined(SD8801)
+#ifdef CONFIG_11AC
+    {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
+#else
     {"wlan-set-uap-bandwidth", "<1/2> 1:20 MHz 2:40MHz", test_wlan_set_uap_bandwidth},
+#endif
 #endif
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},

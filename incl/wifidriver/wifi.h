@@ -41,6 +41,9 @@
 
 #define BANDWIDTH_20MHZ 1U
 #define BANDWIDTH_40MHZ 2U
+#ifdef CONFIG_11AC
+#define BANDWIDTH_80MHZ 3U
+#endif
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;
 extern uint16_t g_data_nf_last;
@@ -936,7 +939,7 @@ void handle_cdint(int error);
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
-int wifi_uap_stop(int type);
+int wifi_uap_stop(enum wlan_bss_type type);
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 
 #ifndef CONFIG_MLAN_WMSDK
