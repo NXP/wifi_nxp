@@ -20,7 +20,7 @@ Change log:
 /** Max value a TID can take = 2^12 = 4096 */
 #define MAX_TID_VALUE 4096U
 /** 2^11 = 2048 */
-#define TWOPOW11 (2U << 10U)
+#define TWOPOW11 2048U
 
 /** Tid Mask used for extracting TID from BlockAckParamSet */
 #define BLOCKACKPARAM_TID_MASK 0x3CU

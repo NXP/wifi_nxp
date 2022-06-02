@@ -1993,7 +1993,7 @@ static void wlan_disable_power_save(int action)
         case WLAN_DEEP_SLEEP:
             wlcm_d("stopping deep sleep ps mode");
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-            wifi_exit_deepsleep_power_save();
+            (void)wifi_exit_deepsleep_power_save();
 #else
             wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_DISABLE);
 #endif
@@ -2001,7 +2001,7 @@ static void wlan_disable_power_save(int action)
         case WLAN_IEEE:
             wlcm_d("stopping IEEE ps mode");
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-            wifi_exit_ieee_power_save();
+            (void)wifi_exit_ieee_power_save();
 #else
             wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
 #endif

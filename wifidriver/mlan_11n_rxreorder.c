@@ -892,7 +892,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
                     goto done;
                 }
                 rx_reor_tbl_ptr->rx_reorder_ptr[seq_num - start_win] = payload;
-                MLAN_SET_BIT(rx_reor_tbl_ptr->bitmap, seq_num - start_win);
+                MLAN_SET_BIT_64(rx_reor_tbl_ptr->bitmap, seq_num - start_win);
             }
             else
             { /* Wrap condition */
@@ -903,7 +903,7 @@ mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *t
                     goto done;
                 }
                 rx_reor_tbl_ptr->rx_reorder_ptr[(seq_num + (MAX_TID_VALUE)) - start_win] = payload;
-                MLAN_SET_BIT(rx_reor_tbl_ptr->bitmap, (seq_num + (MAX_TID_VALUE)) - start_win);
+                MLAN_SET_BIT_64(rx_reor_tbl_ptr->bitmap, (seq_num + (MAX_TID_VALUE)) - start_win);
             }
         }
 
