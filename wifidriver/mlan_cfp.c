@@ -1533,6 +1533,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                 k = wlan_copy_rates(rates, k, SupportedRates_N, sizeof(SupportedRates_N));
                 break;
             default:
+                PRINTM(MINFO, "Unexpected Infra Band \n");
                 break;
         }
     }
@@ -1574,6 +1575,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                 k = wlan_copy_rates(rates, k, AdhocRates_A, sizeof(AdhocRates_A));
                 break;
             default:
+                PRINTM(MINFO, "Unexpected Adhoc Band \n");
                 break;
         }
     }
@@ -2371,6 +2373,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
 #endif
                 break;
             default:
+                PRINTM(MINFO, "Unexpected TLV \n");
                 break;
         }
         tlv_buf += (sizeof(*head) + tlv_buf_len);

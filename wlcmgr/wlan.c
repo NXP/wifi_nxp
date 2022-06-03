@@ -799,6 +799,9 @@ begin:
             }
 
             break;
+        default:
+            wlcm_d("Unexpected ieee ps state");
+            break;
 
     } /* end of switch  */
 
@@ -925,6 +928,9 @@ begin:
                 next_state = DEEPSLEEPPS_INIT;
             }
 
+            break;
+        default:
+            wlcm_d("Unexpected deepsleep state");
             break;
 
     } /* end of switch  */
@@ -1328,6 +1334,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 wps_session_attempt = 1;
 #endif
         default:
+            wlcm_d("Unexpected wlan security");
             break;
     }
 
@@ -1403,8 +1410,10 @@ static void do_scan(struct wlan_network *network)
 
     switch (network->role)
     {
-        default:
         case WLAN_BSS_ROLE_STA:
+            type = BSS_INFRASTRUCTURE;
+            break;
+        default:
             type = BSS_INFRASTRUCTURE;
             break;
     }
@@ -1476,8 +1485,10 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 
     switch (network->role)
     {
-        default:
         case WLAN_BSS_ROLE_STA:
+            type = BSS_INFRASTRUCTURE;
+            break;
+        default:
             type = BSS_INFRASTRUCTURE;
             break;
     }
@@ -1653,6 +1664,7 @@ static void do_connect_failed(enum wlan_event_reason reason)
             g_wm_stats.wm_nwnt_found++;
             break;
         default:
+            wlcm_d("Unexpected connect fail reason");
             break;
     }
 #endif /* CONFIG_WMSTATS */
@@ -1802,6 +1814,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
             }
             break;
         default:
+            wlcm_d("Unexpected security nw param");
             break;
     }
 }
@@ -2006,6 +2019,9 @@ static void wlan_disable_power_save(int action)
             wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
 #endif
             break;
+        default:
+            wlcm_d("Unexpected disable ps action");
+            break;
     }
 }
 
@@ -2045,6 +2061,9 @@ static void wlan_enable_power_save(int action)
              */
             (void)wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE);
 #endif
+            break;
+        default:
+            wlcm_d("Unexpected ps mode");
             break;
     }
 }
@@ -2328,6 +2347,7 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
             wlan.sta_ipv4_state = CM_STA_OBTAINING_ADDRESS;
             break;
         default:
+            wlcm_d("Unexpected addr type");
             break;
     } /* end of switch */
 #ifdef CONFIG_IPV6
@@ -5272,7 +5292,6 @@ int wlan_get_connection_state(enum wlan_connection_state *state)
 
     switch (cur)
     {
-        default:
         case CM_STA_IDLE:
             *state = WLAN_DISCONNECTED;
             break;
@@ -5291,6 +5310,9 @@ int wlan_get_connection_state(enum wlan_connection_state *state)
             break;
         case CM_STA_CONNECTED:
             *state = WLAN_CONNECTED;
+            break;
+        default:
+            *state = WLAN_DISCONNECTED;
             break;
     }
     return WM_SUCCESS;
@@ -5378,7 +5400,6 @@ int wlan_get_uap_connection_state(enum wlan_connection_state *state)
 
     switch (cur)
     {
-        default:
         case CM_UAP_INITIALIZING:
         case CM_UAP_CONFIGURED:
             *state = WLAN_UAP_STOPPED;
@@ -5386,6 +5407,9 @@ int wlan_get_uap_connection_state(enum wlan_connection_state *state)
         case CM_UAP_STARTED:
         case CM_UAP_IP_UP:
             *state = WLAN_UAP_STARTED;
+            break;
+        default:
+            *state = WLAN_UAP_STOPPED;
             break;
     }
     return WM_SUCCESS;

@@ -2439,6 +2439,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                         txpwrlimit->num_chans++;
                                         break;
                                     default:
+                                        PRINTM(MINFO, "Unexpected host cmd response \n");
                                         break;
                                 }
                                 left_len -= (pTlvHdr->header.len + (t_u16)sizeof(pTlvHdr->header));
@@ -3186,6 +3187,7 @@ void wifi_config_bgscan_and_rssi(const char *ssid)
             pmpriv->scan_cfg.chan_list[0].radio_type = 1 | BAND_SPECIFIED;
             break;
         default:
+            PRINTM(MINFO, "Unexpected freq band \n");
             break;
     }
     pmpriv->scan_cfg.bss_type = MLAN_BSS_MODE_INFRA;

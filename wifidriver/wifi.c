@@ -408,6 +408,7 @@ void wifi_dump_firmware_info()
                 }
                 break;
             default:
+                wifi_d("Unexpected wifi debug \n");
                 break;
         }
     } while (ctrl_data != DEBUG_SQRAM_DONE);
@@ -1574,6 +1575,9 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
             case MLAN_STATUS_FW_NOT_READY:
                 ret = -WIFI_ERROR_FW_NOT_READY;
                 break;
+            default:
+                PRINTM(MINFO, "Unexpected MLAN FW Status \n");
+                break;
         }
         return ret;
     }
@@ -1622,6 +1626,9 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 #endif /* CONFIG_XZ_DECOMPRESSION */
             case MLAN_STATUS_FW_NOT_READY:
                 ret = -WIFI_ERROR_FW_NOT_READY;
+                break;
+            default:
+                wifi_d("sd_wifi_init enexpected MLAN Status \n", ret);
                 break;
         }
         return ret;

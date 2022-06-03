@@ -131,6 +131,7 @@ static void wlan_process_cmdresp_error(mlan_private *pmpriv, HostCmd_DS_COMMAND 
             break;
 
         default:
+            PRINTM(MINFO, "Unexpected Host Cmd cmdresp_error\n");
             break;
     }
     /*
@@ -309,6 +310,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 break;
 #endif /* CONFIG_MLAN_WMSDK */
             default:
+                PRINTM(MINFO, "Unexpected snmp_mib oid\n");
                 break;
         }
     }

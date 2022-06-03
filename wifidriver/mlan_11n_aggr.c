@@ -293,6 +293,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 #endif /* CONFIG_MLAN_WMSDK */
                 break;
             default:
+                PRINTM(MINFO, "Unexpected MLAN STATUS deaggregate pkt\n");
                 break;
         }
 
@@ -458,6 +459,7 @@ int wlan_11n_aggregate_pkt(mlan_private *priv, raListTbl *pra_list, int headroom
             wlan_write_data_complete(pmadapter, pmbuf_aggr, ret);
             break;
         default:
+            PRINTM(MINFO, "Unexpected MLAN Status on pkt aggregate\n");
             break;
     }
     if (ret != MLAN_STATUS_RESOURCE)

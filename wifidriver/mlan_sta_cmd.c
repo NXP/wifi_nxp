@@ -389,6 +389,7 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         default:
+            PRINTM(MINFO, "Unexpected SNMP MIB INDEX \n");
             break;
     }
     cmd->size = wlan_cpu_to_le16(cmd->size);
@@ -465,6 +466,9 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
         case HostCmd_ACT_GEN_GET:
             ptxp_cfg->action = wlan_cpu_to_le16(cmd_action);
             break;
+        default:
+            PRINTM(MINFO, "Unexpected Host Cmd tx_power_cfg\n");
+            break;
     }
 
     LEAVE();
@@ -505,6 +509,9 @@ static mlan_status wlan_cmd_802_11_rf_tx_power(IN pmlan_private pmpriv,
         case HostCmd_ACT_GEN_SET:
             prtp->action        = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
             prtp->current_level = wlan_cpu_to_le16(*((t_u16 *)pdata_buf));
+            break;
+        default:
+            PRINTM(MINFO, "Unexpected Host Cmd rf_tx_power \n");
             break;
     }
     LEAVE();
@@ -1634,6 +1641,7 @@ static mlan_status wlan_cmd_ibss_coalescing_status(IN pmlan_private pmpriv,
             /* In other case.. Nothing to do */
         case HostCmd_ACT_GEN_GET:
         default:
+            PRINTM(MINFO, "Unexpected Host Cmd ACT \n");
             break;
     }
 

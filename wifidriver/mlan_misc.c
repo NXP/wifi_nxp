@@ -1329,6 +1329,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
             unicast = MTRUE;
             break;
         default:
+            PRINTM(MINFO, "Unexpected pkt subtype \n");
             break;
     }
     if (unicast == MTRUE)

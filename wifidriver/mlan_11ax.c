@@ -384,6 +384,7 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                     }
                     break;
                 default:
+                    PRINTM(MINFO, "Unexpected extentsion \n");
                     break;
             }
         }

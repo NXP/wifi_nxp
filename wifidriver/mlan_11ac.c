@@ -1115,6 +1115,7 @@ int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
                 break;
             case BW_80MHZ:
             default:
+                PRINTM(MINFO, "Unexpected bandwidth.\n");
                 break;
         }
     }

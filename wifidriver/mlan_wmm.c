@@ -814,6 +814,7 @@ static void INLINE wlan_send_processed_packet(pmlan_private priv, raListTbl *ptr
             case MLAN_STATUS_PENDING:
                 pmadapter->data_sent = MFALSE;
             default:
+                PRINTM(MINFO, "Unexpected MLAN Status wlan send processed packet \n");
                 break;
         }
         if (ret != MLAN_STATUS_RESOURCE)
@@ -1696,12 +1697,14 @@ mlan_status wlan_ret_wmm_get_status(pmlan_private priv, t_u8 *ptlv, int resp_len
 
                         case TSPEC_ACTION_CODE_ADDTS_REQ:
                         default:
+                            PRINTM(MINFO, "Unexpected TSPEC ACTION CODE \n");
                             break;
                     }
                 }
                 break;
 
             default:
+                PRINTM(MINFO, "Unexpected WMM TLV \n");
                 break;
         }
 

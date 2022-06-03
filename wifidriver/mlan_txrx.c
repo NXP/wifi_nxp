@@ -139,6 +139,7 @@ done:
             wlan_write_data_complete(pmadapter, pmbuf, ret);
             break;
         default:
+            PRINTM(MINFO, "Unexpected MLAN Status wlan process tx \n");
             break;
     }
 

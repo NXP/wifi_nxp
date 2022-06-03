@@ -1788,6 +1788,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         pbss_entry->he_oprat_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
                         break;
                     default:
+                        PRINTM(MINFO, "Unexpected extension id\n");
                         break;
                 }
                 break;
@@ -1800,6 +1801,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 break;
 
             default:
+                PRINTM(MINFO, "Unexpected IE \n");
                 break;
         }
 
@@ -3542,6 +3544,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                     }
                     break;
                 default:
+                    PRINTM(MINFO, "Unexpected tlv in scan result\n");
                     break;
             }
             ptlv = (MrvlIEtypes_Data_t *)(ptlv->data + tlv_len);

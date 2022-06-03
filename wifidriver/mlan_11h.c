@@ -2399,6 +2399,7 @@ mlan_status wlan_11h_handle_event_chanrpt_ready(mlan_private *priv, mlan_event *
                     break;
 
                 default:
+                    PRINTM(MINFO, "Unexpected TLV Type \n");
                     break;
             }
 

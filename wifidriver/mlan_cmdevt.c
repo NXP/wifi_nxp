@@ -2582,6 +2582,9 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 #endif
                 break;
                 /* Add RATE_DROP tlv here */
+            default:
+                PRINTM(MINFO, "Unexpected TLV for rate cfg \n");
+                break;
         }
 
         head      = (MrvlIEtypesHeader_t *)(void *)tlv_buf;
@@ -3202,6 +3205,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 PRINTM(MCMND, "fw_cap_info=0x%x fw_cap_ext=0x%x\n", pmadapter->fw_cap_info, pmadapter->fw_cap_ext);
                 break;
             default:
+                PRINTM(MINFO, "Unexpected TLV hw spec \n");
                 break;
         }
         left_len -= (t_u16)(sizeof(MrvlIEtypesHeader_t) + tlv_len);

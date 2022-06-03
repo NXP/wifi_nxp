@@ -91,6 +91,7 @@ static const char *print_role(enum wlan_bss_role role)
         case WLAN_BSS_ROLE_ANY:
             return "any";
         default:
+            (void)PRINTF("\r\nUnexpected BSS Role\r\n");
             break;
     }
 
@@ -160,6 +161,7 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("%s: WPA2/WPA3 SAE Mixed\r\n", sec_tag);
             break;
         default:
+            (void)PRINTF("\r\nUnexpected WLAN SECURITY\r\n");
             break;
     }
 

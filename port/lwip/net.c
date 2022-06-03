@@ -435,6 +435,7 @@ static void wm_netif_status_callback(struct netif *n)
             wifi_event_reason = WIFI_EVENT_REASON_FAILURE;
             break;
         default:
+            net_d("Unexpected DHCP event");
             break;
     }
     if (event_flag_dhcp_connection != DHCP_IGNORE)
@@ -637,6 +638,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             net_e("Not supported as of now...");
             break;
         default:
+            net_d("Unexpected addr type");
             break;
     }
     /* Finally this should send the following event. */
