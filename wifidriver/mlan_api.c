@@ -2317,113 +2317,145 @@ int wifi_enable_11d_support_APIs(void)
 
 wifi_sub_band_set_t *get_sub_band_from_country(int country, t_u8 *nr_sb)
 {
-    *nr_sb = 1;
+    *nr_sb                        = 1;
+    wifi_sub_band_set_t *ret_band = NULL;
 
     switch (country)
     {
         case 1:
-            return subband_WWSM_2_4GHz;
+            ret_band = subband_WWSM_2_4GHz;
+            break;
         case 2:
         case 3:
         case 4:
-            return subband_US_CA_SG_2_4_GHz;
+            ret_band = subband_US_CA_SG_2_4_GHz;
+            break;
         case 5:
         case 6:
         case 7:
         case 8:
         case 10:
-            return subband_EU_AU_KR_CN_2_4GHz;
+            ret_band = subband_EU_AU_KR_CN_2_4GHz;
+            break;
         case 9:
-            return subband_JP_2_4GHz;
+            ret_band = subband_JP_2_4GHz;
+            break;
         default:
-            *nr_sb = 2;
-            return subband_CS_2_4GHz;
+            *nr_sb   = 2;
+            ret_band = subband_CS_2_4GHz;
+            break;
     }
+    return ret_band;
 }
 
 static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
 {
-    *nr_sb = 1;
+    *nr_sb                        = 1;
+    wifi_sub_band_set_t *ret_band = NULL;
 
     switch (region_code)
     {
         case 0x10:
-            return subband_US_CA_SG_2_4_GHz;
+            ret_band = subband_US_CA_SG_2_4_GHz;
+            break;
         case 0x30:
         case 0x32:
-            return subband_EU_AU_KR_CN_2_4GHz;
+            ret_band = subband_EU_AU_KR_CN_2_4GHz;
+            break;
         case 0xFF:
             return subband_JP_2_4GHz;
+            break;
         case 0xAA:
-            return subband_WWSM_2_4GHz;
+            ret_band = subband_WWSM_2_4GHz;
+            break;
         default:
-            *nr_sb = 2;
-            return subband_CS_2_4GHz;
+            *nr_sb   = 2;
+            ret_band = subband_CS_2_4GHz;
+            break;
     }
+    return ret_band;
 }
 
 #ifdef CONFIG_5GHz_SUPPORT
 static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, t_u8 *nr_sb)
 {
-    *nr_sb = 1;
+    *nr_sb                        = 1;
+    wifi_sub_band_set_t *ret_band = NULL;
 
     switch (country)
     {
         case 1:
-            *nr_sb = 3;
-            return subband_WWSM_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_WWSM_5_GHz;
+            break;
         case 2:
         case 4:
         case 8:
-            *nr_sb = 3;
-            return subband_US_SG_FR_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_US_SG_FR_5_GHz;
+            break;
         case 3:
-            *nr_sb = 4;
-            return subband_CA_5_GHz;
+            *nr_sb   = 4;
+            ret_band = subband_CA_5_GHz;
+            break;
         case 5:
         case 6:
         case 7:
-            *nr_sb = 2;
-            return subband_EU_AU_KR_5_GHz;
+            *nr_sb   = 2;
+            ret_band = subband_EU_AU_KR_5_GHz;
+            break;
         case 9:
-            *nr_sb = 3;
-            return subband_JP_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_JP_5_GHz;
+            break;
         case 10:
-            return subband_CN_5_GHz;
+            ret_band = subband_CN_5_GHz;
+            break;
         default:
-            *nr_sb = 3;
-            return subband_US_SG_FR_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_US_SG_FR_5_GHz;
+            break;
     }
+    return ret_band;
 }
 
 static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *nr_sb)
 {
-    *nr_sb = 1;
+    *nr_sb                        = 1;
+    wifi_sub_band_set_t *ret_band = NULL;
 
     switch (region_code)
     {
         case 0x10:
         case 0x32:
-            *nr_sb = 3;
-            return subband_US_SG_FR_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_US_SG_FR_5_GHz;
+            break;
         case 0x20:
-            *nr_sb = 4;
-            return subband_CA_5_GHz;
+            *nr_sb   = 4;
+            ret_band = subband_CA_5_GHz;
+            break;
         case 0x30:
-            *nr_sb = 2;
-            return subband_EU_AU_KR_5_GHz;
+            *nr_sb   = 2;
+            ret_band = subband_EU_AU_KR_5_GHz;
+            break;
         case 0x40:
-            *nr_sb = 3;
-            return subband_JP_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_JP_5_GHz;
+            break;
         case 0x50:
-            return subband_CN_5_GHz;
+            ret_band = subband_CN_5_GHz;
+            break;
         case 0xAA:
-            *nr_sb = 3;
-            return subband_WWSM_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_WWSM_5_GHz;
+            break;
         default:
-            *nr_sb = 3;
-            return subband_US_SG_FR_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_US_SG_FR_5_GHz;
+            break;
     }
+    return ret_band;
 }
 #endif /* CONFIG_5GHz_SUPPORT */
 
@@ -2490,32 +2522,51 @@ bool wifi_11d_is_channel_allowed(int channel)
     return false;
 }
 
-char *wifi_get_country_str(int country)
+const char *wifi_get_country_str(int country)
 {
-    switch (country)
+    if (country == COUNTRY_WW)
     {
-        case COUNTRY_WW:
-            return "WW ";
-        case COUNTRY_US:
-            return "US ";
-        case COUNTRY_CA:
-            return "CA ";
-        case COUNTRY_SG:
-            return "SG ";
-        case COUNTRY_EU:
-            return "EU ";
-        case COUNTRY_AU:
-            return "AU ";
-        case COUNTRY_KR:
-            return "KR ";
-        case COUNTRY_FR:
-            return "FR ";
-        case COUNTRY_JP:
-            return "JP ";
-        case COUNTRY_CN:
-            return "CN ";
-        default:
-            return "WW ";
+        return "WW ";
+    }
+    else if (country == COUNTRY_US)
+    {
+        return "US ";
+    }
+    else if (country == COUNTRY_CA)
+    {
+        return "CA ";
+    }
+    else if (country == COUNTRY_SG)
+    {
+        return "SG ";
+    }
+    else if (country == COUNTRY_EU)
+    {
+        return "EU ";
+    }
+    else if (country == COUNTRY_AU)
+    {
+        return "AU ";
+    }
+    else if (country == COUNTRY_KR)
+    {
+        return "KR ";
+    }
+    else if (country == COUNTRY_FR)
+    {
+        return "FR ";
+    }
+    else if (country == COUNTRY_JP)
+    {
+        return "JP ";
+    }
+    else if (country == COUNTRY_CN)
+    {
+        return "CN ";
+    }
+    else
+    {
+        return "WW ";
     }
 }
 

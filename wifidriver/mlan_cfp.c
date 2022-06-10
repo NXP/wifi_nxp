@@ -1184,7 +1184,8 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
     j = 0;
     while (cfp == MNULL && (j < MAX_REGION_CHANNEL_NUM))
     {
-        rc = &region_channel[j];
+        bool continue_loop = MFALSE;
+        rc                 = &region_channel[j];
 
         if (!rc->valid || rc->pcfp == MNULL)
         {
@@ -1204,7 +1205,8 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
 
                     default:
                         j++;
-                        continue;
+                        continue_loop = MTRUE;
+                        break;
                 }
                 break;
             case BAND_B:
@@ -1223,12 +1225,18 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
                         break;
                     default:
                         j++;
-                        continue;
+                        continue_loop = MTRUE;
+                        break;
                 }
                 break;
             default:
                 j++;
-                continue;
+                continue_loop = MTRUE;
+                break;
+        }
+        if (continue_loop == MTRUE)
+        {
+            continue;
         }
         if (channel == FIRST_VALID_CHANNEL)
         {
@@ -1309,7 +1317,8 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16
     j = 0;
     while (cfp == MNULL && (j < MAX_REGION_CHANNEL_NUM))
     {
-        rc = &pmadapter->region_channel[j];
+        bool continue_loop = MFALSE;
+        rc                 = &pmadapter->region_channel[j];
 
         /* Any station(s) with 11D enabled */
         if (wlan_count_priv_cond(pmadapter, wlan_11d_is_enabled, wlan_is_station) > 0)
@@ -1334,7 +1343,8 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16
                         break;
                     default:
                         j++;
-                        continue;
+                        continue_loop = MTRUE;
+                        break;
                 }
                 break;
             case BAND_B:
@@ -1353,12 +1363,18 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16
                         break;
                     default:
                         j++;
-                        continue;
+                        continue_loop = MTRUE;
+                        break;
                 }
                 break;
             default:
                 j++;
-                continue;
+                continue_loop = MTRUE;
+                break;
+        }
+        if (continue_loop == MTRUE)
+        {
+            continue;
         }
         for (i = 0; i < rc->num_cfp; i++)
         {

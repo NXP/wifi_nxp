@@ -1762,6 +1762,7 @@ static mlan_status wlan_cmd_sysclock_cfg(IN pmlan_private pmpriv,
 /* static */ mlan_status wlan_cmd_reg_access(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf)
 {
     mlan_ds_reg_rw *reg_rw;
+    bool invalid_hostcmd = MFALSE;
 
     ENTER();
 
@@ -1820,8 +1821,13 @@ static mlan_status wlan_cmd_sysclock_cfg(IN pmlan_private pmpriv,
             break;
         }
         default:
-            LEAVE();
-            return MLAN_STATUS_FAILURE;
+            invalid_hostcmd = MTRUE;
+            break;
+    }
+    if (invalid_hostcmd == MTRUE)
+    {
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
     }
     cmd->command = wlan_cpu_to_le16(cmd->command);
 

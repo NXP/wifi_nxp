@@ -465,6 +465,7 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
     t_u16 action                     = wlan_le16_to_cpu(ptxp_cfg->action);
     mlan_ds_power_cfg *power         = MNULL;
     t_u32 data[5];
+    bool invalid_hostcmd = MFALSE;
 
     ENTER();
 
@@ -494,8 +495,13 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
             break;
         default:
             PRINTM(MERROR, "CMD_RESP: unknown command action %d\n", action);
-            LEAVE();
-            return MLAN_STATUS_SUCCESS;
+            invalid_hostcmd = MTRUE;
+            break;
+    }
+    if (invalid_hostcmd == MTRUE)
+    {
+        LEAVE();
+        return MLAN_STATUS_SUCCESS;
     }
 
     PRINTM(MINFO, "Current TxPower Level = %d,Max Power=%d, Min Power=%d\n", pmpriv->tx_power_level,

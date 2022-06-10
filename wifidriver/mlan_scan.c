@@ -264,6 +264,7 @@ static t_u8 wlan_is_band_compatible(t_u16 cfg_band, t_u16 scan_band)
         case BAND_G:
         default:
             band = (BAND_B | BAND_G | BAND_GN | BAND_GAC);
+            break;
     }
     return (cfg_band & band);
 }
@@ -431,6 +432,8 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                     {
                         scan_type = MLAN_SCAN_TYPE_PASSIVE;
                     }
+                    pscan_chan_list[chan_idx].radio_type = HostCmd_SCAN_RADIO_TYPE_BG;
+                    break;
                 default:
                     pscan_chan_list[chan_idx].radio_type = HostCmd_SCAN_RADIO_TYPE_BG;
                     break;
@@ -1180,6 +1183,7 @@ static t_void wlan_ret_802_11_scan_get_tlv_ptrs(IN pmlan_adapter pmadapter,
     t_u32 tlv_buf_left;
     t_u32 tlv_type;
     t_u32 tlv_len;
+    bool invalid_tlv = MFALSE;
 
     ENTER();
 
@@ -1215,8 +1219,13 @@ static t_void wlan_ret_802_11_scan_get_tlv_ptrs(IN pmlan_adapter pmadapter,
                 default:
                     PRINTM(MERROR, "SCAN_RESP: Unhandled TLV = %d\n", tlv_type);
                     /* Give up, this seems corrupted */
-                    LEAVE();
-                    return;
+                    invalid_tlv = MTRUE;
+                    break;
+            }
+            if (invalid_tlv == MTRUE)
+            {
+                LEAVE();
+                return;
             }
         }
 

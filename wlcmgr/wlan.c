@@ -4490,6 +4490,7 @@ static bool isHexNumber(const char *str, const size_t len)
 static bool wlan_is_key_valid(struct wlan_network *network)
 {
     enum wlan_security_type type = network->security.type;
+    bool valid                   = MTRUE;
 
     switch (type)
     {
@@ -4525,15 +4526,25 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_NONE:
         case WLAN_SECURITY_WILDCARD:
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
-            return true;
+            valid = MTRUE;
+            break;
         case WLAN_SECURITY_WEP_OPEN:
         case WLAN_SECURITY_WEP_SHARED:
-            return false;
+            valid = MFALSE;
+            break;
         default:
-            return false;
+            valid = MFALSE;
+            break;
     }
 
-    return true;
+    if (valid == MFALSE)
+    {
+        return MFALSE;
+    }
+    else
+    {
+        return MTRUE;
+    }
 }
 
 int wlan_add_network(struct wlan_network *network)
@@ -4577,7 +4588,9 @@ int wlan_add_network(struct wlan_network *network)
         ((network->security.type != WLAN_SECURITY_EAP_TLS) ||
          (network->security.type != WLAN_SECURITY_PEAP_MSCHAPV2)) &&
         wlan.allow_wpa2_enterprise_ap_only)
+    {
         return -WM_E_INVAL;
+    }
 #endif
 
     if ((network->role == WLAN_BSS_ROLE_STA) && (network->security.type == WLAN_SECURITY_WPA3_SAE) &&

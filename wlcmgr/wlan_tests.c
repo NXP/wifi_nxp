@@ -82,20 +82,22 @@ out:
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
 static const char *print_role(enum wlan_bss_role role)
 {
-    switch (role)
+    if (role == WLAN_BSS_ROLE_STA)
     {
-        case WLAN_BSS_ROLE_STA:
-            return "Infra";
-        case WLAN_BSS_ROLE_UAP:
-            return "uAP";
-        case WLAN_BSS_ROLE_ANY:
-            return "any";
-        default:
-            (void)PRINTF("\r\nUnexpected BSS Role\r\n");
-            break;
+        return "Infra";
     }
-
-    return "unknown";
+    else if (role == WLAN_BSS_ROLE_UAP)
+    {
+        return "uAP";
+    }
+    else if (role == WLAN_BSS_ROLE_ANY)
+    {
+        return "any";
+    }
+    else
+    {
+        return "unknown";
+    }
 }
 #endif
 

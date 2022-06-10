@@ -1194,6 +1194,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             break;
             default:
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
+                break;
         }
     }
     else

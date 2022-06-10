@@ -1269,7 +1269,8 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
         /* Find region channel */
         for (j = 0; j < MAX_REGION_CHANNEL_NUM; j++)
         {
-            region_chan = &pmadapter->region_channel[j];
+            bool continue_loop = MFALSE;
+            region_chan        = &pmadapter->region_channel[j];
 
             PRINTM(MINFO, "11D: [%d] region_chan->Band[%d]\n", j, region_chan->band);
 
@@ -1288,7 +1289,8 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_A | BAND_AN:
                             break;
                         default:
-                            continue;
+                            continue_loop = MTRUE;
+                            break;
                     }
                     break;
 #endif /* CONFIG_5GHz_SUPPORT */
@@ -1304,13 +1306,23 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_B | BAND_G | BAND_GN:
                             break;
                         default:
-                            continue;
+                            continue_loop = MTRUE;
+                            break;
                     }
                     break;
                 default:
-                    continue;
+                    continue_loop = MTRUE;
+                    break;
             }
-            break;
+
+            if (continue_loop == MTRUE)
+            {
+                continue;
+            }
+            else
+            {
+                break;
+            }
         }
 
         /* Check if region channel found */

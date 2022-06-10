@@ -2152,6 +2152,7 @@ static mlan_status sd_wifi_post_fwload(enum wlan_type type)
 {
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
     uint32_t resp;
+    bool invalid_wlantype = MFALSE;
 #if defined(SD8801)
     sdio_drv_creg_write(HOST_INT_MASK_REG, 1, 0x3, &resp);
 #elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
@@ -2175,7 +2176,13 @@ static mlan_status sd_wifi_post_fwload(enum wlan_type type)
             break;
         default:
             wifi_io_e("Enter a valid input to sd_wifi_init");
-            return MLAN_STATUS_FAILURE;
+            invalid_wlantype = MTRUE;
+            break;
+    }
+
+    if (invalid_wlantype == MTRUE)
+    {
+        return MLAN_STATUS_FAILURE;
     }
 
 #if defined(SD8801)

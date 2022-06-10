@@ -45,6 +45,7 @@ static const ip_addr_t *get_src_addr(const ip_addr_t *dst)
     static ip_addr_t ret;
     const ip_addr_t *addr = NULL;
     struct netif *netif   = get_netif_up();
+    bool is_ip_type_valid = MTRUE;
 
     if (netif == NULL)
     {
@@ -63,7 +64,13 @@ static const ip_addr_t *get_src_addr(const ip_addr_t *dst)
             memcpy(&ret.u_addr.ip6, &addr->u_addr.ip6, sizeof(ret.u_addr.ip6));
             break;
         default:
-            return NULL;
+            is_ip_type_valid = MFALSE;
+            break;
+    }
+
+    if (is_ip_type_valid == MFALSE)
+    {
+        return NULL;
     }
 
     ret.type = dst->type;
@@ -392,6 +399,7 @@ static void cmd_ping(int argc, char **argv)
     uint16_t count = PING_DEFAULT_COUNT;
     uint32_t cnt, temp;
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
+    bool goto_end    = MFALSE;
 
     memset(&addr, 0, sizeof(addr));
 
@@ -443,7 +451,12 @@ static void cmd_ping(int argc, char **argv)
                 timeout = strtoul(cli_optarg, NULL, 10);
                 break;
             default:
-                goto end;
+                goto_end = MTRUE;
+                break;
+        }
+        if (goto_end == MTRUE)
+        {
+            goto end;
         }
         if (errno != 0)
         {

@@ -121,17 +121,23 @@ static inline int net_socket_blocking(int sock, int state)
  */
 static inline int net_get_sock_error(int sock)
 {
+    int ret = 0;
     switch (errno)
     {
         case EWOULDBLOCK:
-            return -WM_E_AGAIN;
+            ret = -WM_E_AGAIN;
+            break;
         case EBADF:
-            return -WM_E_BADF;
+            ret = -WM_E_BADF;
+            break;
         case ENOBUFS:
-            return -WM_E_NOMEM;
+            ret = -WM_E_NOMEM;
+            break;
         default:
-            return errno;
+            ret = errno;
+            break;
     }
+    return ret;
 }
 
 /** Converts Internet host address from the IPv4 dotted-decimal notation into
