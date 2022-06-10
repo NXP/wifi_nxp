@@ -248,7 +248,6 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
     t_u16 query_type                  = wlan_le16_to_cpu(psmib->query_type);
     t_u32 ul_temp;
 
-#if defined(CONFIG_WIFI_FRAG_THRESHOLD) || defined(CONFIG_WIFI_RTS_THRESHOLD)
     mlan_ds_snmp_mib *mib = MNULL;
 
     ENTER();
@@ -259,20 +258,18 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
     /* wmsdk */
     PRINTM(MINFO, "SNMP_RESP: value of the oid = 0x%x, query_type=0x%x\n", oid, query_type);
     PRINTM(MINFO, "SNMP_RESP: Buf size  = 0x%x\n", wlan_le16_to_cpu(psmib->buf_size));
-#endif
+
     if (query_type == HostCmd_ACT_GEN_GET)
     {
         /* wmsdk: GET is not used. Disable */
         switch (oid)
         {
-#ifndef CONFIG_MLAN_WMSDK
             case DtimPeriod_i:
                 ul_temp = psmib->value[0];
                 PRINTM(MINFO, "SNMP_RESP: DTIM Period =%u\n", ul_temp);
                 if (mib)
                     mib->param.dtim_period = ul_temp;
                 break;
-#endif /* CONFIG_MLAN_WMSDK */
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
             case FragThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));

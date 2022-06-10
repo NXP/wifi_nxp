@@ -5347,12 +5347,12 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
     misc = (mlan_ds_misc_cfg *)(void *)pioctl_req->pbuf;
     switch (misc->sub_command)
     {
+        case MLAN_OID_MISC_REGION:
+            status = wlan_misc_ioctl_region(pmadapter, pioctl_req);
+            break;
 #ifndef CONFIG_MLAN_WMSDK
         case MLAN_OID_MISC_GEN_IE:
             status = wlan_misc_ioctl_gen_ie(pmadapter, pioctl_req);
-            break;
-        case MLAN_OID_MISC_REGION:
-            status = wlan_misc_ioctl_region(pmadapter, pioctl_req);
             break;
         case MLAN_OID_MISC_WARM_RESET:
             status = wlan_misc_ioctl_warm_reset(pmadapter, pioctl_req);
