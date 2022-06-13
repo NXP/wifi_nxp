@@ -60,7 +60,6 @@ int get_split_scan_delay_ms(void);
 ********************************************************/
 
 /* Global data required for split scan requests */
-bool split_scan_in_progress;
 static bool abort_split_scan;
 
 /**
@@ -77,6 +76,7 @@ typedef union
 /********************************************************
                 Global Variables
 ********************************************************/
+bool split_scan_in_progress;
 
 /********************************************************
                 Local Functions
@@ -674,7 +674,9 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
          * yet after ps sleep event.
          */
         if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP && split_scan_in_progress)
+        {
             send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
+        }
 
         if (!ptmp_chan_list->chan_number)
         {

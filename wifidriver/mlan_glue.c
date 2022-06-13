@@ -38,7 +38,6 @@ static uint32_t cal_data_len;
 
 bool mac_addr_valid;
 static uint8_t *mac_addr;
-extern bool split_scan_in_progress;
 
 #ifdef CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
