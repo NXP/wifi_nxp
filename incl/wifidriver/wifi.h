@@ -77,6 +77,7 @@ typedef enum
 
 /** 802.11d country codes */
 typedef PACK_START enum {
+    COUNTRY_NONE = 0,
     /** World Wide Safe Mode */
     COUNTRY_WW = 1,
     /** US FCC */
@@ -630,9 +631,9 @@ int wifi_get_uap_channel(int *channel);
  */
 int wifi_enable_11d_support(void);
 int wifi_set_domain_params(wifi_domain_param_t *dp);
-int wifi_set_country(int country);
-int wifi_uap_set_country(int country);
-int wifi_get_country(void);
+int wifi_set_country(country_code_t country);
+int wifi_uap_set_country(country_code_t country);
+country_code_t wifi_get_country(void);
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables(void);
 void wifi_free_fw_region_and_cfp_tables(void);
@@ -1057,7 +1058,7 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
 
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 #endif
-wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
+wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
 #ifdef CONFIG_MEM_MONITOR_DEBUG
 /**
  * Show os mem alloc and free info.

@@ -56,7 +56,7 @@ static const char driver_version_format[] = "SD878x-%s-%s-WM";
 static const char driver_version[]        = "702.1.0";
 
 static unsigned int mgmt_ie_index_bitmap = 0x00;
-int wifi_11d_country                     = 0x00;
+country_code_t wifi_11d_country          = COUNTRY_NONE;
 
 /* This were static functions in mlan file */
 mlan_status wlan_cmd_802_11_deauthenticate(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
@@ -2315,29 +2315,29 @@ int wifi_enable_11d_support_APIs(void)
     return wlan_11d_support_APIs(pmpriv);
 }
 
-wifi_sub_band_set_t *get_sub_band_from_country(int country, t_u8 *nr_sb)
+wifi_sub_band_set_t *get_sub_band_from_country(country_code_t country, t_u8 *nr_sb)
 {
     *nr_sb                        = 1;
     wifi_sub_band_set_t *ret_band = NULL;
 
     switch (country)
     {
-        case 1:
+        case COUNTRY_WW:
             ret_band = subband_WWSM_2_4GHz;
             break;
-        case 2:
-        case 3:
-        case 4:
+        case COUNTRY_US:
+        case COUNTRY_CA:
+        case COUNTRY_SG:
             ret_band = subband_US_CA_SG_2_4_GHz;
             break;
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 10:
+        case COUNTRY_EU:
+        case COUNTRY_AU:
+        case COUNTRY_KR:
+        case COUNTRY_FR:
+        case COUNTRY_CN:
             ret_band = subband_EU_AU_KR_CN_2_4GHz;
             break;
-        case 9:
+        case COUNTRY_JP:
             ret_band = subband_JP_2_4GHz;
             break;
         default:
@@ -2377,38 +2377,38 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 
 }
 
 #ifdef CONFIG_5GHz_SUPPORT
-static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, t_u8 *nr_sb)
+static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t country, t_u8 *nr_sb)
 {
     *nr_sb                        = 1;
     wifi_sub_band_set_t *ret_band = NULL;
 
     switch (country)
     {
-        case 1:
+        case COUNTRY_WW:
             *nr_sb   = 3;
             ret_band = subband_WWSM_5_GHz;
             break;
-        case 2:
-        case 4:
-        case 8:
+        case COUNTRY_US:
+        case COUNTRY_SG:
+        case COUNTRY_FR:
             *nr_sb   = 3;
             ret_band = subband_US_SG_FR_5_GHz;
             break;
-        case 3:
+        case COUNTRY_CA:
             *nr_sb   = 4;
             ret_band = subband_CA_5_GHz;
             break;
-        case 5:
-        case 6:
-        case 7:
+        case COUNTRY_EU:
+        case COUNTRY_AU:
+        case COUNTRY_KR:
             *nr_sb   = 2;
             ret_band = subband_EU_AU_KR_5_GHz;
             break;
-        case 9:
+        case COUNTRY_JP:
             *nr_sb   = 3;
             ret_band = subband_JP_5_GHz;
             break;
-        case 10:
+        case COUNTRY_CN:
             ret_band = subband_CN_5_GHz;
             break;
         default:
@@ -2472,7 +2472,7 @@ bool wifi_11d_is_channel_allowed(int channel)
     if (channel > 14)
     {
 #ifdef CONFIG_5GHz_SUPPORT
-        if (wifi_11d_country == 0x00)
+        if (wifi_11d_country == COUNTRY_NONE)
         {
             sub_band = get_sub_band_from_region_code_5ghz(pmpriv->adapter->region_code, &nr_sb);
         }
@@ -2487,7 +2487,7 @@ bool wifi_11d_is_channel_allowed(int channel)
     }
     else
     {
-        if (wifi_11d_country == 0x00)
+        if (wifi_11d_country == COUNTRY_NONE)
         {
             sub_band = get_sub_band_from_region_code(pmpriv->adapter->region_code, &nr_sb);
         }
@@ -2522,7 +2522,7 @@ bool wifi_11d_is_channel_allowed(int channel)
     return false;
 }
 
-const char *wifi_get_country_str(int country)
+const char *wifi_get_country_str(country_code_t country)
 {
     if (country == COUNTRY_WW)
     {
@@ -2570,7 +2570,7 @@ const char *wifi_get_country_str(int country)
     }
 }
 
-wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb)
+wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb)
 {
     wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
 
@@ -2582,12 +2582,12 @@ wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub
     return dp;
 }
 
-int wifi_get_country(void)
+country_code_t wifi_get_country(void)
 {
     return wifi_11d_country;
 }
 
-int wifi_set_country(int country)
+int wifi_set_country(country_code_t country)
 {
     int ret;
     t_u8 nr_sb;
@@ -2608,7 +2608,7 @@ int wifi_set_country(int country)
 
     if (ret != WM_SUCCESS)
     {
-        wifi_11d_country = 0x00;
+        wifi_11d_country = COUNTRY_NONE;
         os_mem_free(dp);
         return ret;
     }

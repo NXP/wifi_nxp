@@ -289,7 +289,7 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_uap_set_country(int country)
+int wifi_uap_set_country(country_code_t country)
 {
     int ret;
     t_u8 nr_sb;
@@ -310,7 +310,7 @@ int wifi_uap_set_country(int country)
 
     if (ret != WM_SUCCESS)
     {
-        wifi_11d_country = 0x00;
+        wifi_11d_country = COUNTRY_NONE;
         os_mem_free(dp);
         return ret;
     }

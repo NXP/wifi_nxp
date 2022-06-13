@@ -780,7 +780,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** Default 11ac capability mask for 5GHz */
 #define DEFAULT_11AC_CAP_MASK_A (HWSPEC_11ACSGI80_SUPP | HWSPEC_11ACRXSTBC_SUPP)
 /** GET VHT CapInfo : MAX MPDU Length */
-#define GET_VHTCAP_MAXMPDULEN(VHTCapInfo) (VHTCapInfo & 0x3)
+#define GET_VHTCAP_MAXMPDULEN(VHTCapInfo) ((VHTCapInfo)&0x3)
 /** GET VHT CapInfo:  Supported Channel Width SET (2 bits)*/
 #define GET_VHTCAP_CHWDSET(VHTCapInfo) (((VHTCapInfo) >> 2) & 0x3U)
 /** GET VHT CapInfo:  Rx STBC (3 bits) */

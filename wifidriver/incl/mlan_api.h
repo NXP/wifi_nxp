@@ -109,7 +109,7 @@
 
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
-extern int wifi_11d_country;
+extern country_code_t wifi_11d_country;
 
 #ifdef CONFIG_WPS2
 extern int wps_session_attempt;
@@ -235,7 +235,7 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             uint8_t *smc_frame_filter,
                             int custom_ie_len,
                             uint8_t *custom_ie);
-wifi_sub_band_set_t *get_sub_band_from_country(int country, t_u8 *nr_sb);
+wifi_sub_band_set_t *get_sub_band_from_country(country_code_t country, t_u8 *nr_sb);
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index);
 #ifdef SD8801
@@ -313,7 +313,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);
-char *wifi_get_country_str(int country);
+const char *wifi_get_country_str(country_code_t country);
 int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, const uint8_t *mac_addr);
 int wifi_enable_ecsa_support(void);
 int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl);
