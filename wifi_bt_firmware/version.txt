@@ -19,20 +19,6 @@ Here are the details of the SD8801 manufacturing firmware:
 
 1. Firmware Name:      MFG-W8801-MF-WIFI-BRG-FC13-WIN-X86-2.0.0.92-14.1.36.p140
 
-SD8977 WIRELESS FIRMWARE
-========================
-
-Here are the details about the SD8977 firmware:
-
-1. Firmware Name:      SD-WLAN-UART-BT-8977-U16-MMC-W16.91.10.p186.2-16.91.10.p186.2-C4X16679_V2-GPL
-
-SD8977 MANUFACTURING FIRMWARE
-==============================
-
-Here are the details of the SD8977 manufacturing firmware:
-
-1. Firmware Name:      MFG-W8977-MF-WIFI-BT-BRG-FC-VS2013-1.1.0.156-A1-16.80.207.p1
-
 IW416 WIRELESS FIRMWARE
 ========================
 

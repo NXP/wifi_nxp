@@ -239,7 +239,7 @@ typedef enum
  *   specific, and a compile time setting depending on the system
  *   board level build!
  */
-#if defined(SD8997) || defined(SD8977) || defined(SD9098) || defined(SD9064) || defined(RW610)
+#if defined(SD8997) || defined(SD9098) || defined(SD9064) || defined(RW610)
 #define HOST_WAKEUP_GPIO_PIN 12
 #define CARD_WAKEUP_GPIO_PIN 13
 #elif defined(IW61x)

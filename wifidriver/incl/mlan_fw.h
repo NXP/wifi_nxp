@@ -481,8 +481,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define CAPINFO_40MHZ_INTOLARENT MBIT(8)
 
 /** Default 11n capability mask for 2.4GHz */
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 #define DEFAULT_11N_CAP_MASK_BG \
     (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP)
 #elif defined(SD8801) || defined(RW610)

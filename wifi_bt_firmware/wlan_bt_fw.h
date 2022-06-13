@@ -10,8 +10,6 @@
 
 #if defined(SD8801)
 #include "sd8801_wlan.h"
-#elif defined(SD8977)
-#include "sduart8977_wlan_bt.h"
 #elif defined(SD8978)
 #include "sduartIW416_wlan_bt.h"
 #elif defined(SD8987)
@@ -26,7 +24,7 @@
 #include "sduart_nw61x.h"
 #elif defined(RW610)
 const unsigned char *wlan_fw_bin = (void *)0;
-unsigned int wlan_fw_bin_len = 0;
+unsigned int wlan_fw_bin_len     = 0;
 #endif
 
 #endif /* __WLAN_BT_FW_H__ */

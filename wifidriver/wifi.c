@@ -55,9 +55,9 @@ wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
 
 #ifdef CONFIG_WMM
 #ifdef RW610
-    #define BOARD_DATA_BUFFER_ALIGN_SIZE 32
+#define BOARD_DATA_BUFFER_ALIGN_SIZE 32
 #else
-    #define BOARD_DATA_BUFFER_ALIGN_SIZE BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE
+#define BOARD_DATA_BUFFER_ALIGN_SIZE BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE
 #endif
 
 /* @brief decription about the read/write buffer
@@ -512,8 +512,7 @@ void wifi_sdio_reg_dbg()
     }
 }
 
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 
 #define DEBUG_HOST_READY     0xCC
 #define DEBUG_FW_DONE        0xFF
@@ -848,7 +847,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 #ifndef RW610
-    t_u32 buf_len           = MLAN_SDIO_BLOCK_SIZE;
+    t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
 #endif
 

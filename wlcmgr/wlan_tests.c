@@ -1994,7 +1994,7 @@ static void test_wlan_8801_ext_coex_stats(int argc, char **argv)
 }
 #endif
 
-#if !defined(SD8977) && !defined(SD8801)
+#if !defined(SD8801)
 static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 {
     uint8_t bandwidth;
@@ -2245,7 +2245,7 @@ static struct cli_command tests[] = {
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
-#if !defined(SD8977) && !defined(SD8801)
+#if !defined(SD8801)
 #ifdef CONFIG_11AC
     {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
 #else

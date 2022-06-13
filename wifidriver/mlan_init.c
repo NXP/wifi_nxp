@@ -33,8 +33,7 @@ Change log:
 static BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST];
 
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 static t_u8 mp_regs_buffer[MAX_MP_REGS + DMA_ALIGNMENT];
 #elif defined(SD8801)
 SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
@@ -199,8 +198,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
        /* wmsdk: Use a statically allocated DMA aligned buffer */
 #if defined(SD8801)
     pmadapter->mp_regs = mp_regs_buffer;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     pmadapter->mp_regs = (t_u8 *)ALIGN_ADDR(mp_regs_buffer, DMA_ALIGNMENT);
 // mp_regs_buffer;
 #endif
@@ -431,8 +429,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 #if defined(SD8801)
     pmadapter->curr_rd_port = 1;
     pmadapter->curr_wr_port = 1;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     pmadapter->curr_rd_port = 0;
     pmadapter->curr_wr_port = 0;
 #endif

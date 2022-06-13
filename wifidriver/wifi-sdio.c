@@ -575,8 +575,7 @@ static void _wlan_set_cal_data(void)
     /* send CMD53 to write the command to get mac address */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -600,8 +599,7 @@ static void _wlan_reconfigure_tx_buffers(void)
     /* send CMD53 to write the command to get mac address */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -627,8 +625,7 @@ static void wlan_get_channel_region_cfg(void)
     last_cmd_sent = HostCmd_CMD_CHAN_REGION_CFG;
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -648,8 +645,7 @@ static void wlan_get_hw_spec(void)
     last_cmd_sent = HostCmd_CMD_GET_HW_SPEC;
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -692,8 +688,7 @@ static void wlan_get_mac_addr(void)
     /* send CMD53 to write the command to get mac address */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -717,8 +712,7 @@ static void wlan_get_fw_ver_ext(int version_str_sel)
     /* send CMD53 to write the command to get mac address */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -742,8 +736,7 @@ static void wlan_get_value_1(void)
 
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -767,8 +760,7 @@ static void _wlan_set_mac_addr(void)
     /* send CMD53 to write the command to get mac address */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -788,8 +780,7 @@ static void wlan_set_11n_cfg(void)
 
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -813,8 +804,7 @@ static void wlan_enable_amsdu(void)
 
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -861,8 +851,7 @@ static void wlan_set_mac_ctrl(void)
     /* send CMD53 to write the command to set mac control */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -887,8 +876,7 @@ static void wlan_cmd_init(void)
 
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
@@ -1186,8 +1174,7 @@ int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 #endif /* CONFIG_WIFI_IO_DUMP */
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 
@@ -1267,8 +1254,7 @@ retry_xmit:
     {
 #if defined(SD8801)
         txportno = 1;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         txportno = 0;
 #endif
     }
@@ -1340,8 +1326,7 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
     {
 #if defined(SD8801)
         txportno = 1;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         txportno = 0;
 #endif
     }
@@ -1380,8 +1365,7 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
     /* Read the registers in DMA aligned buffer */
 #if defined(SD8801)
     ret = sdio_drv_read(0, 1, 1, MAX_MP_REGS, mp_regs, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     ret = sdio_drv_read(REG_PORT | MLAN_SDIO_BYTE_MODE_MASK, 1, 1, MAX_MP_REGS, mp_regs, &resp);
 #endif
 
@@ -1406,8 +1390,7 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
 #if defined(SD8801)
     rd_bitmap = ((t_u16)mp_regs[RD_BITMAP_U]) << 8;
     rd_bitmap |= (t_u16)mp_regs[RD_BITMAP_L];
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     rd_bitmap = (t_u32)mp_regs[RD_BITMAP_L];
     rd_bitmap |= ((t_u32)mp_regs[RD_BITMAP_U]) << 8;
     rd_bitmap |= ((t_u32)mp_regs[RD_BITMAP_1L]) << 16;
@@ -1419,8 +1402,7 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
 #if defined(SD8801)
     wr_bitmap = ((t_u16)mp_regs[WR_BITMAP_U]) << 8;
     wr_bitmap |= (t_u16)mp_regs[WR_BITMAP_L];
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     wr_bitmap = (t_u32)mp_regs[WR_BITMAP_L];
     wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_U]) << 8;
     wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1L]) << 16;
@@ -1441,8 +1423,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 {
 #if defined(SD8801)
     t_u16 rd_bitmap = pmadapter->mp_rd_bitmap;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     t_u32 rd_bitmap = pmadapter->mp_rd_bitmap;
 #endif
     t_u16 pkt_cnt = 0;
@@ -1452,8 +1433,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
     t_u16 ports      = 0;
     t_u32 start_port = -1;
     t_u32 cmd53_port = 0;
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     t_u32 port_count = 0;
 #endif
 
@@ -1468,8 +1448,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 
 #if defined(SD8801)
     if (!(rd_bitmap & (CTRL_PORT_MASK | DATA_PORT_MASK)))
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     if (!(rd_bitmap & DATA_PORT_MASK))
 #endif
     {
@@ -1506,8 +1485,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
                 (t_u16)(~(1 << pmadapter->curr_rd_port));
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             (t_u32)(~(1 << pmadapter->curr_rd_port));
 #endif
             *pport = pmadapter->curr_rd_port;
@@ -1515,8 +1493,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 #if defined(SD8801)
             if (!pkt_cnt)
                 start_port = *pport;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         if (start_port == -1)
         {
             start_port = *pport;
@@ -1549,15 +1526,13 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             {
 #if defined(SD8801)
                 pmadapter->curr_rd_port = 1;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             pmadapter->curr_rd_port = 0;
 #endif
             }
 
             pkt_cnt++;
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             ports++;
 #endif
             if (pkt_cnt == SDIO_MP_AGGR_DEF_PKT_LIMIT)
@@ -1571,8 +1546,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             {
                 break;
             }
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         if (((pmadapter->curr_rd_port < start_port) &&
              (((MAX_PORT - start_port) + pmadapter->curr_rd_port) >= (pmadapter->mp_end_port >> 1))) ||
             ((pmadapter->curr_rd_port - start_port) >= (pmadapter->mp_end_port >> 1)))
@@ -1590,15 +1564,13 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 
 #if defined(SD8801)
         if (pkt_cnt > 1)
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     if (ports > 1U)
 #endif
         {
 #if defined(SD8801)
             cmd53_port = (pmadapter->ioport | SDIO_MPA_ADDR_BASE | (ports << 4)) + start_port;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         port_count = ports - 1U;
         cmd53_port = (pmadapter->ioport | SDIO_MPA_ADDR_BASE | (port_count << 8)) + start_port;
 #endif
@@ -1657,8 +1629,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
 {
 #if defined(SD8801)
     t_u16 rd_bitmap = pmadapter->mp_rd_bitmap;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     t_u32 rd_bitmap = pmadapter->mp_rd_bitmap;
 #endif
 
@@ -1669,8 +1640,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
 
 #if defined(SD8801)
     if (!(rd_bitmap & (CTRL_PORT_MASK | DATA_PORT_MASK)))
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     if (!(rd_bitmap & DATA_PORT_MASK))
 #endif
         return MLAN_STATUS_FAILURE;
@@ -1692,8 +1662,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
                 (t_u16)(~(1 << pmadapter->curr_rd_port));
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             (t_u32)(~(1 << pmadapter->curr_rd_port));
 #endif
             *pport = pmadapter->curr_rd_port;
@@ -1701,8 +1670,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport)
             if (++pmadapter->curr_rd_port == MAX_PORT)
 #if defined(SD8801)
                 pmadapter->curr_rd_port = 1;
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             pmadapter->curr_rd_port = 0;
 #endif
         }
@@ -1754,8 +1722,7 @@ static mlan_status _handle_sdio_packet_read(mlan_adapter *pmadapter, t_u8 **pack
 }
 #endif
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 static mlan_status _handle_sdio_cmd_read(
     mlan_adapter *pmadapter, t_u8 **packet, t_u32 *datalen, t_u32 *pkt_type, t_u32 rx_len, t_u32 rx_blocks)
 {
@@ -1803,8 +1770,7 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
 #if defined(SD8801)
         ((t_u16)pmadapter->mp_regs[RD_BITMAP_U]) << 8;
     pmadapter->mp_rd_bitmap |= (t_u16)pmadapter->mp_regs[RD_BITMAP_L];
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         (t_u32)pmadapter->mp_regs[RD_BITMAP_L];
     pmadapter->mp_rd_bitmap |= ((t_u32)pmadapter->mp_regs[RD_BITMAP_U]) << 8;
     pmadapter->mp_rd_bitmap |= ((t_u32)pmadapter->mp_regs[RD_BITMAP_1L]) << 16;
@@ -1872,8 +1838,7 @@ static void handle_sdio_packet_read(mlan_adapter *pmadapter)
 mlan_status wlan_process_int_status(mlan_adapter *pmadapter)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     t_u8 cmd_rd_len_0 = CMD_RD_LEN_0;
     t_u8 cmd_rd_len_1 = CMD_RD_LEN_1;
     t_u32 rx_len;
@@ -1891,8 +1856,7 @@ mlan_status wlan_process_int_status(mlan_adapter *pmadapter)
         goto done;
     }
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
-    defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     /* check the command port */
     if ((sdio_ireg & DN_LD_CMD_PORT_HOST_INT_STATUS) != 0U)
     {
@@ -1934,8 +1898,7 @@ mlan_status wlan_process_int_status(mlan_adapter *pmadapter)
 #if defined(SD8801)
         ((t_u16)pmadapter->mp_regs[WR_BITMAP_U]) << 8;
     pmadapter->mp_wr_bitmap |= (t_u16)pmadapter->mp_regs[WR_BITMAP_L];
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         (t_u32)pmadapter->mp_regs[WR_BITMAP_L];
     pmadapter->mp_wr_bitmap |= ((t_u32)pmadapter->mp_regs[WR_BITMAP_U]) << 8;
     pmadapter->mp_wr_bitmap |= ((t_u32)pmadapter->mp_regs[WR_BITMAP_1L]) << 16;
@@ -1953,8 +1916,7 @@ mlan_status wlan_process_int_status(mlan_adapter *pmadapter)
 #if defined(SD8801)
             ((t_u16)pmadapter->mp_regs[WR_BITMAP_U]) << 8;
         pmadapter->mp_wr_bitmap |= (t_u16)pmadapter->mp_regs[WR_BITMAP_L];
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             (t_u32)pmadapter->mp_regs[WR_BITMAP_L];
         pmadapter->mp_wr_bitmap |= ((t_u32)pmadapter->mp_regs[WR_BITMAP_U]) << 8;
         pmadapter->mp_wr_bitmap |= ((t_u32)pmadapter->mp_regs[WR_BITMAP_1L]) << 16;
@@ -2034,8 +1996,7 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type)
 
 #if defined(SD8801)
     if (!(sdio_ireg & UP_LD_HOST_INT_STATUS))
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     if (!(sdio_ireg & UP_LD_CMD_PORT_HOST_INT_STATUS))
 #endif
     {
@@ -2048,8 +2009,7 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type)
 #if defined(SD8801)
         ((t_u16)mlan_adap->mp_regs[RD_BITMAP_U]) << 8;
     mlan_adap->mp_rd_bitmap |= (t_u16)mlan_adap->mp_regs[RD_BITMAP_L];
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
         (t_u32)mlan_adap->mp_regs[RD_BITMAP_L];
     mlan_adap->mp_rd_bitmap |= ((t_u32)mlan_adap->mp_regs[RD_BITMAP_U]) << 8;
     mlan_adap->mp_rd_bitmap |= ((t_u32)mlan_adap->mp_regs[RD_BITMAP_1L]) << 16;
@@ -2068,8 +2028,7 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type)
             break;
         }
     }
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 
     t_u8 cmd_rd_len_0 = CMD_RD_LEN_0;
     t_u8 cmd_rd_len_1 = CMD_RD_LEN_1;
@@ -2114,8 +2073,7 @@ int wifi_raw_packet_send(const t_u8 *packet, t_u32 length)
     uint32_t resp;
 #if defined(SD8801)
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
     return WM_SUCCESS;
@@ -2155,8 +2113,7 @@ static mlan_status sd_wifi_post_fwload(enum wlan_type type)
     bool invalid_wlantype = MFALSE;
 #if defined(SD8801)
     sdio_drv_creg_write(HOST_INT_MASK_REG, 1, 0x3, &resp);
-#elif defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || \
-    defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
     (void)sdio_drv_creg_write(HOST_INT_MASK_REG, 1, HIM_ENABLE, &resp);
 #endif
 
