@@ -18,12 +18,13 @@
 #include <cli.h>
 #include <cli_utils.h>
 #include <ctype.h>
+#include <wm_net.h> /* for errno */
 
 bool string_equal(const char *s1, const char *s2)
 {
     size_t len = strlen(s1);
 
-    if (len == strlen(s2) && !strncmp(s1, s2, len))
+    if (len == strlen(s2) && (strncmp(s1, s2, len) == 0))
     {
         return true;
     }
@@ -66,88 +67,16 @@ unsigned int a2hex(const char *s)
 {
     uint32_t val = 0;
 
-    if (!strncasecmp("0x", s, 2))
+    if (strncasecmp("0x", s, 2) == 0)
     {
         s += 2;
     }
 
-    while (*s && isxdigit((unsigned char)*s))
+    while ((*s != '\0') && (isxdigit((unsigned char)*s) != 0))
     {
         val = (val << 4) + hexc2bin(*s++);
     }
     return val;
-}
-
-/**
- *    @brief isdigit for String.
- *
- *    @param x            Char string
- *    @return             0 for non-digit.
- *                        1 for digit
- */
-int ISDIGIT(char *x)
-{
-    unsigned int i;
-    for (i = 0; i < strlen(x); i++)
-    {
-        if (isdigit((unsigned char)x[i]) == 0)
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-/**
- *  @brief      Hex to number
- *
- *  @param c    Hex value
- *  @return     Integer value or -1
- */
-static int hex2num(char c)
-{
-    if (c >= '0' && c <= '9')
-    {
-        return c - '0';
-    }
-    if (c >= 'a' && c <= 'f')
-    {
-        return c - 'a' + 10;
-    }
-    if (c >= 'A' && c <= 'F')
-    {
-        return c - 'A' + 10;
-    }
-
-    return -1;
-}
-
-/**
- *  @brief              Check hex string
- *
- *  @param hex          A pointer to hex string
- *  @return             1 or 0
- */
-int ishexstring(void *hex)
-{
-    int i, a;
-    char *p = hex;
-    int len = (int)strlen(p);
-    if (!strncasecmp("0x", p, 2))
-    {
-        p += 2;
-        len -= 2;
-    }
-    for (i = 0; i < len; i++)
-    {
-        a = hex2num(*p);
-        if (a < 0)
-        {
-            return 0;
-        }
-        p++;
-    }
-    return 1;
 }
 
 /*
@@ -158,18 +87,26 @@ int ishexstring(void *hex)
  **/
 unsigned int a2hex_or_atoi(char *value)
 {
+    unsigned int ret = 0;
+
     if (value[0] == '0' && (value[1] == 'X' || value[1] == 'x'))
     {
-        return a2hex(value + 2);
+        ret = a2hex(value + 2);
     }
     else if (isdigit((unsigned char)*value) != 0)
     {
-        return strtol(value, NULL, 10);
+        errno = 0;
+        ret   = (uint32_t)strtol(value, NULL, 10);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtoul errno:%d", errno);
+        }
     }
     else
     {
-        return (uint32_t)(*value);
+        ret = (uint32_t)(*value);
     }
+    return ret;
 }
 
 int get_uint(const char *arg, unsigned int *dest, unsigned int len)
@@ -184,7 +121,7 @@ int get_uint(const char *arg, unsigned int *dest, unsigned int len)
             return 1;
         }
         val *= 10U;
-        val += arg[i] - '0';
+        val += (unsigned int)arg[i] - (unsigned int)'0';
     }
 
     *dest = val;
@@ -198,6 +135,7 @@ int get_mac(const char *arg, char *dest, char sep)
 {
     unsigned char n;
     int i, j, k = 0;
+    int l = 0;
 
     if (strlen(arg) < 17U)
     {
@@ -212,22 +150,24 @@ int get_mac(const char *arg, char *dest, char sep)
         {
             if (arg[i + j] >= '0' && arg[i + j] <= '9')
             {
-                n = (unsigned char)(arg[i + j] - '0');
+                n = (unsigned char)(arg[i + j]) - (unsigned char)'0';
             }
             else if (arg[i + j] >= 'A' && arg[i + j] <= 'F')
             {
-                n = (unsigned char)(arg[i + j] - 'A' + 10);
+                n = (unsigned char)(arg[i + j]) - (unsigned char)'A' + (unsigned char)10;
             }
             else if (arg[i + j] >= 'a' && arg[i + j] <= 'f')
             {
-                n = (unsigned char)(arg[i + j] - 'a' + 10);
+                n = (unsigned char)(arg[i + j]) - (unsigned char)'a' + (unsigned char)10;
             }
             else
             {
                 return 1;
             }
 
-            n <<= 4 * (1 - j);
+            l = 1 - j;
+
+            n <<= (unsigned int)4 * (unsigned int)l;
             dest[k] += n;
         }
         if (i < 15 && arg[i + 2] != sep)

@@ -282,14 +282,14 @@ static const struct cli_command *lookup_command(char *name, int len)
         /* See if partial or full match is expected */
         if (len != 0)
         {
-            if (strncmp(cli.commands[i]->name, name, (size_t)len) == 0U)
+            if (strncmp(cli.commands[i]->name, name, (size_t)len) == 0)
             {
                 return cli.commands[i];
             }
         }
         else
         {
-            if (strcmp(cli.commands[i]->name, name) == 0U)
+            if (strcmp(cli.commands[i]->name, name) == 0)
             {
                 return cli.commands[i];
             }
@@ -472,11 +472,11 @@ static void tab_complete(char *tab_inbuf, unsigned int *bp)
             if (strncmp(tab_inbuf, cli.commands[i]->name, *bp) == 0)
             {
                 m++;
-                if (m == 1)
+                if (m == 1U)
                 {
                     fm = cli.commands[i]->name;
                 }
-                else if (m == 2)
+                else if (m == 2U)
                 {
                     (void)PRINTF("%s %s ", fm, cli.commands[i]->name);
                 }
@@ -491,7 +491,7 @@ static void tab_complete(char *tab_inbuf, unsigned int *bp)
     }
 
     /* there's only one match, so complete the line */
-    if (m == 1 && fm != NULL)
+    if (m == 1U && fm != NULL)
     {
         n = strlen(fm) - *bp;
         if (*bp + n < INBUF_SIZE)
@@ -680,7 +680,7 @@ static void print_bad_command(char *cmd_string)
     {
         unsigned char *c = (unsigned char *)cmd_string;
         (void)PRINTF("command '");
-        while (*c != '\0')
+        while (*c != (unsigned char)'\0')
         {
             if (isprint(*c) != 0)
             {
@@ -1094,7 +1094,7 @@ int cli_unregister_command(const struct cli_command *command)
             unsigned int remaining_cmds = cli.num_commands - i;
             if (remaining_cmds > 0U)
             {
-                (void)memmove(&cli.commands[i], &cli.commands[i + 1], (remaining_cmds * sizeof(struct cli_command *)));
+                (void)memmove(&cli.commands[i], &cli.commands[i + 1U], (remaining_cmds * sizeof(struct cli_command *)));
             }
             cli.commands[cli.num_commands] = NULL;
             return 0;
