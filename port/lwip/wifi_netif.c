@@ -387,7 +387,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
             {
                 LWIP_DEBUGF(NETIF_DEBUG, ("PANIC: Xmit packet"
                                           "is bigger than inbuf.\r\n"));
-                vTaskDelay((3000U) / portTICK_RATE_MS);
+                vTaskDelay((3000U) / portTICK_PERIOD_MS);
             }
         }
         (void)memcpy((u8_t *)wmm_outbuf + pkt_len, (u8_t *)q->payload, q->len);
@@ -436,7 +436,7 @@ int wps_low_level_output(const u8_t interface, const u8_t *buf, t_u32 len)
         {
             LWIP_DEBUGF(NETIF_DEBUG, ("PANIC: Xmit packet"
                                       "is bigger than inbuf.\r\n"));
-            vTaskDelay((3000) / portTICK_RATE_MS);
+            vTaskDelay((3000) / portTICK_PERIOD_MS);
         }
     }
 
@@ -486,7 +486,7 @@ int supp_low_level_output(const u8_t interface, const u8_t *buf, t_u32 len)
         {
             LWIP_DEBUGF(NETIF_DEBUG, ("PANIC: Xmit packet"
                                       "is bigger than inbuf.\r\n"));
-            vTaskDelay((3000) / portTICK_RATE_MS);
+            vTaskDelay((3000) / portTICK_PERIOD_MS);
         }
     }
 

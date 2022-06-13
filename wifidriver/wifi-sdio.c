@@ -59,11 +59,11 @@ static struct
     /* Where the cmdresp/event should be dispached depends on its value */
     /* int special; */
     /* Default queue where the cmdresp/events will be sent */
-    xQueueHandle *event_queue;
+    os_queue_t *event_queue;
 #ifdef CONFIG_P2P
     /* Special queue on which only cmdresp will be sent based on
      * value in special */
-    xQueueHandle *special_queue;
+    os_queue_t *special_queue;
 #endif /* CONFIG_P2P */
     int (*wifi_low_level_input)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 } bus;
@@ -207,7 +207,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     sdiohdr->size = (t_u16)payloadlen;
 }
 
-int bus_register_event_queue(xQueueHandle *event_queue)
+int bus_register_event_queue(os_queue_t *event_queue)
 {
     if (bus.event_queue != NULL)
     {
@@ -247,7 +247,7 @@ void bus_deregister_data_input_funtion(void)
 }
 
 #ifdef CONFIG_P2P
-int bus_register_special_queue(xQueueHandle *special_queue)
+int bus_register_special_queue(os_queue_t *special_queue)
 {
     if (bus.special_queue)
         return -WM_FAIL;

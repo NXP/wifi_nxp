@@ -224,7 +224,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv);
  * This queue is used to send events and command responses to the wifi
  * driver from the stack dispatcher thread.
  */
-int bus_register_event_queue(xQueueHandle *event_queue);
+int bus_register_event_queue(os_queue_t *event_queue);
 
 /**
  * De-register the event queue.
@@ -234,7 +234,7 @@ void bus_deregister_event_queue(void);
 /**
  * Register a special queue for WPS
  */
-int bus_register_special_queue(xQueueHandle *special_queue);
+int bus_register_special_queue(os_queue_t *special_queue);
 
 /**
  * Deregister special queue
