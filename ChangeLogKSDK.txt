@@ -2,6 +2,14 @@
 @page middleware_log Middleware Change Log
  
 @section wifi NXP WiFi
+Version 1.3.r39.p11
+ - Updates:
+  - Added new cli cmd for set and get RU tx power limit.
+  - Updated firmware version to p119.
+
+ - Bug Fixes:
+  - Corrected logic to process probe response properly for BG scan case.
+
 Version 1.3.r39.p10
  - Updates:
   - Added addtional option 3 in wlan-set-uap-bandwidth to set bandwidth to 80MHz.
