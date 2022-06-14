@@ -72,7 +72,7 @@ unsigned int a2hex(const char *s)
         s += 2;
     }
 
-    while ((*s != '\0') && (isxdigit((unsigned char)*s) != 0))
+    while ((*s != '\0') && (isxdigit((unsigned char)(*s)) != 0))
     {
         val = (val << 4) + hexc2bin(*s++);
     }

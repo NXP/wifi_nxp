@@ -28,7 +28,5 @@ int cli_getopt(int argc, char **argv, const char *fmt);
 unsigned int a2hex_or_atoi(char *value);
 unsigned int a2hex(const char *s);
 unsigned char hexc2bin(char chr);
-int ISDIGIT(char *x);
-int ishexstring(void *hex);
 
 #endif
