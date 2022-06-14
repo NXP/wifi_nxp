@@ -3558,10 +3558,10 @@ int wifi_get_bgscan_results(mlan_private *pmpriv)
     int ret                 = 0;
 
     ENTER();
-    pmadapter->bgscan_reported = MFALSE;
     memset(pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
     pmadapter->num_in_scan_table = 0;
     ret                          = wifi_request_bgscan_query(pmpriv);
+    pmadapter->bgscan_reported = MFALSE;
     LEAVE();
     return ret;
 }

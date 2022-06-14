@@ -1357,7 +1357,11 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
      *   beacon interval, and capability information
      */
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-    if (!pmadapter->ext_scan)
+    if (!pmadapter->ext_scan
+#ifdef CONFIG_ROAMING
+       || pmadapter->bgscan_reported
+#endif
+     )
     {
 #endif
         /* RSSI is 1 byte long */
