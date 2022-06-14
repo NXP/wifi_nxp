@@ -3628,3 +3628,62 @@ int wifi_send_hostcmd(
     /*Response fail check not checked here, as thats caller's responsibility */
     return ret;
 }
+
+#ifdef CONFIG_WIFI_EU_CRYPTO
+int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec)
+{
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    t_u16 cmd_size;
+    t_u16 *DataLength = Crypto_Data->DataLength;
+
+    wifi_get_command_lock();
+
+    (void)memset(cmd, 0x00, WIFI_FW_CMDBUF_SIZE);
+    cmd->command = HostCmd_CMD_EU_CRYPTO;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_ROLE_STA);
+
+    switch (Algorithm)
+    {
+        case CRYPTO_RC4:
+        case CRYPTO_AES_ECB:
+        case CRYPTO_AES_WRAP:
+        {
+            cmd_size                        = sizeof(HostCmd_DS_EU_CRYPTO) - 1 + 8 /*cmd header */;
+            cmd->params.eu_crypto.Algorithm = Algorithm;
+            cmd->params.eu_crypto.KeyLength = Crypto_Data->KeyLength;
+            memcpy(cmd->params.eu_crypto.Key, Crypto_Data->Key, Crypto_Data->KeyLength);
+            cmd->params.eu_crypto.KeyIVLength = Crypto_Data->KeyIVLength;
+            memcpy(cmd->params.eu_crypto.KeyIV, Crypto_Data->KeyIV, Crypto_Data->KeyIVLength);
+            cmd->params.eu_crypto.DataLength = *DataLength;
+            memcpy(cmd->params.eu_crypto.Data, Crypto_Data->Data, *DataLength);
+            cmd_size += cmd->params.eu_crypto.DataLength;
+            cmd->params.eu_crypto.EncDec   = EncDec;
+            cmd->params.eu_crypto.DataType = 0x0111;
+            break;
+        }
+        case CRYPTO_AES_CCMP:
+        case CRYPTO_AES_GCMP:
+        {
+            cmd_size                            = sizeof(HostCmd_DS_EU_AES_CRYPTO) - 1 + 8 /* cmd header */;
+            cmd->params.eu_aes_crypto.Algorithm = Algorithm;
+            cmd->params.eu_aes_crypto.KeyLength = Crypto_Data->KeyLength;
+            memcpy(cmd->params.eu_aes_crypto.Key, Crypto_Data->Key, Crypto_Data->KeyLength);
+            cmd->params.eu_aes_crypto.NonceLength = Crypto_Data->NonceLength;
+            memcpy(cmd->params.eu_aes_crypto.Nonce, Crypto_Data->Nonce, Crypto_Data->NonceLength);
+            cmd->params.eu_aes_crypto.AADLength = Crypto_Data->AADLength;
+            memcpy(cmd->params.eu_aes_crypto.AAD, Crypto_Data->AAD, Crypto_Data->AADLength);
+            cmd->params.eu_aes_crypto.DataLength = *DataLength;
+            memcpy(cmd->params.eu_aes_crypto.Data, Crypto_Data->Data, *DataLength);
+            cmd_size += cmd->params.eu_aes_crypto.DataLength;
+            cmd->params.eu_aes_crypto.EncDec   = EncDec;
+            cmd->params.eu_aes_crypto.DataType = 0x0111;
+            break;
+        }
+        default:
+            return -WM_FAIL;
+    }
+    cmd->size = cmd_size;
+
+    return wifi_wait_for_cmdresp(Crypto_Data);
+}
+#endif

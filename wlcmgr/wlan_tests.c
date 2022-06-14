@@ -2196,6 +2196,81 @@ static void test_wlan_eu_validation(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_WIFI_EU_CRYPTO
+static void dump_wlan_eu_crypto()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-WRAP encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto(int argc, char **argv)
+{
+    unsigned int EncDec;
+    t_u8 DATA[80] = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 KeyIVLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0 && EncDec != 1)
+    {
+        dump_wlan_eu_crypto();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: AES_WRAP*/
+    t_u8 Key[16]     = {0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22};
+    KeyLength        = 16;
+    t_u8 EncData[16] = {0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12};
+    Enc_DataLength   = 16;
+    t_u8 DecData[24] = {0xfa, 0xda, 0x96, 0x53, 0x30, 0x97, 0x4b, 0x61, 0x77, 0xc6, 0xd4, 0x3c,
+                        0xd2, 0x0e, 0x1f, 0x6d, 0x43, 0x8a, 0x0a, 0x1c, 0x4f, 0x6a, 0x1a, 0xd7};
+    Dec_DataLength   = 24;
+    t_u8 KeyIV[8]    = {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11};
+    KeyIVLength      = 8;
+
+    if (EncDec == 0)
+    {
+        memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_AES_WRAP_decrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    else
+    {
+        memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_AES_WRAP_encrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+}
+#endif
+
 #ifdef CONFIG_MEM_MONITOR_DEBUG
 int os_mem_alloc_cnt = 0;
 int os_mem_free_cnt  = 0;
@@ -2270,6 +2345,9 @@ static struct cli_command tests[] = {
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
     {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
+#endif
+#ifdef CONFIG_WIFI_EU_CRYPTO
+    {"wlan-eu-crypto", "<EncDec>", test_wlan_eu_crypto},
 #endif
 #ifdef CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},
