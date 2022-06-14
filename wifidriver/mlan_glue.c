@@ -3021,7 +3021,6 @@ void wifi_config_bgscan_and_rssi(const char *ssid)
     pmpriv->scan_cfg.num_probes           = 2;
 
     wifi_get_band(pmpriv, &band);
-    PRINTF("SSID:%s rssi:%d band:%d\r\n", ssid, pmpriv->rssi_low, band);
     switch (band)
     {
         case WIFI_FREQUENCY_BAND_2GHZ:
