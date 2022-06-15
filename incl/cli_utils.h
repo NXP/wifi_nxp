@@ -12,8 +12,8 @@
 #define __MTF_UTILS_H__
 
 bool string_equal(const char *s1, const char *s2);
-int get_uint(const char *arg, unsigned int *dest, unsigned int len);
-int get_mac(const char *arg, char *dest, char sep);
+bool get_uint(const char *arg, unsigned int *dest, unsigned int len);
+bool get_mac(const char *arg, char *dest, char sep);
 
 /* Simplified non-re-entrant cli_getopt function.  Call this in a while loop to
  * parse argv.  Here are some caveats:

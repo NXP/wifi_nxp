@@ -520,11 +520,11 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
     unsigned int ipv4_addr;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
 
-    if (wlan.hs_configured == MTRUE)
+    if (wlan.hs_configured == true)
     {
         if (wakeup_condition == HOST_SLEEP_CFG_CANCEL)
         {
-            wlan.hs_configured       = MFALSE;
+            wlan.hs_configured       = false;
             wlan.hs_wakeup_condition = wakeup_condition;
         }
         else if (wlan.hs_wakeup_condition != wlan_map_to_wifi_wakeup_condtions(wakeup_condition))
@@ -540,7 +540,7 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
     }
     else
     {
-        wlan.hs_configured       = MTRUE;
+        wlan.hs_configured       = true;
         wlan.hs_wakeup_condition = wlan_map_to_wifi_wakeup_condtions(wakeup_condition);
     }
     ret = wlan_get_ipv4_addr(&ipv4_addr);
@@ -4489,7 +4489,7 @@ static bool isHexNumber(const char *str, const size_t len)
 static bool wlan_is_key_valid(struct wlan_network *network)
 {
     enum wlan_security_type type = network->security.type;
-    bool valid                   = MTRUE;
+    bool valid                   = true;
 
     switch (type)
     {
@@ -4525,24 +4525,24 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_NONE:
         case WLAN_SECURITY_WILDCARD:
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
-            valid = MTRUE;
+            valid = true;
             break;
         case WLAN_SECURITY_WEP_OPEN:
         case WLAN_SECURITY_WEP_SHARED:
-            valid = MFALSE;
+            valid = false;
             break;
         default:
-            valid = MFALSE;
+            valid = false;
             break;
     }
 
-    if (valid == MFALSE)
+    if (valid == false)
     {
-        return MFALSE;
+        return false;
     }
     else
     {
-        return MTRUE;
+        return true;
     }
 }
 
@@ -6305,7 +6305,7 @@ static inline bool is_broadcast_ether_addr(const u8_t *addr)
 static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, u8_t *byte_seq)
 {
     int j, k, valid_byte_cnt = 0;
-    t_bool dont_care_byte = MFALSE;
+    t_bool dont_care_byte = false;
 
     for (j = 0; j < DIV_ROUND_UP(pat->pattern_len, 8); j++)
     {
@@ -6316,22 +6316,22 @@ static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, u8_t *byte
                 (void)memcpy((void *)(byte_seq + valid_byte_cnt), (const void *)&pat->pattern[j * 8 + k], 1);
                 valid_byte_cnt++;
                 if (dont_care_byte)
-                    return MFALSE;
+                    return false;
             }
             else
             {
                 if (valid_byte_cnt)
-                    dont_care_byte = MTRUE;
+                    dont_care_byte = true;
             }
 
             if (valid_byte_cnt > MAX_NUM_BYTE_SEQ)
-                return MFALSE;
+                return false;
         }
     }
 
     byte_seq[MAX_NUM_BYTE_SEQ] = valid_byte_cnt;
 
-    return MTRUE;
+    return true;
 }
 
 int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
@@ -6342,7 +6342,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
     const t_u8 ipv4_mc_mac[] = {0x33, 0x33};
     const t_u8 ipv6_mc_mac[] = {0x01, 0x00, 0x5e};
     int filt_num = 0, i = 0, ret = 0;
-    t_bool first_pat = MTRUE;
+    t_bool first_pat = true;
     memset(&flt_cfg, 0, sizeof(flt_cfg));
     //  mef_cfg.mef_act_type = MEF_ACT_WOWLAN;
     mef_entry = &flt_cfg.mef_entry;
@@ -6388,7 +6388,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         mef_entry->filter_item[filt_num].num_byte_seq = byte_seq[MAX_NUM_BYTE_SEQ];
         mef_entry->filter_item[filt_num].type         = TYPE_BYTE_EQ;
         if (first_pat)
-            first_pat = MFALSE;
+            first_pat = false;
         else
             mef_entry->rpn[filt_num] = RPN_TYPE_OR;
 

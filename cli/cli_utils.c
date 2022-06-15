@@ -109,7 +109,7 @@ unsigned int a2hex_or_atoi(char *value)
     return ret;
 }
 
-int get_uint(const char *arg, unsigned int *dest, unsigned int len)
+bool get_uint(const char *arg, unsigned int *dest, unsigned int len)
 {
     unsigned int i;
     unsigned int val = 0;
@@ -118,20 +118,20 @@ int get_uint(const char *arg, unsigned int *dest, unsigned int len)
     {
         if (arg[i] < '0' || arg[i] > '9')
         {
-            return 1;
+            return true;
         }
         val *= 10U;
         val += (unsigned int)arg[i] - (unsigned int)'0';
     }
 
     *dest = val;
-    return 0;
+    return false;
 }
 
 /* Parse string 'arg' formatted "AA:BB:CC:DD:EE:FF" (assuming 'sep' is ':')
  * into a 6-byte array 'dest' such that dest = {0xAA,0xBB,0xCC,0xDD,0xEE,0xFF}
  * set 'sep' accordingly. */
-int get_mac(const char *arg, char *dest, char sep)
+bool get_mac(const char *arg, char *dest, char sep)
 {
     unsigned char n;
     int i, j, k = 0;
@@ -139,7 +139,7 @@ int get_mac(const char *arg, char *dest, char sep)
 
     if (strlen(arg) < 17U)
     {
-        return 1;
+        return true;
     }
 
     (void)memset(dest, 0, 6);
@@ -162,7 +162,7 @@ int get_mac(const char *arg, char *dest, char sep)
             }
             else
             {
-                return 1;
+                return true;
             }
 
             l = 1 - j;
@@ -172,12 +172,12 @@ int get_mac(const char *arg, char *dest, char sep)
         }
         if (i < 15 && arg[i + 2] != sep)
         {
-            return 1;
+            return true;
         }
         k++;
     }
 
-    return 0;
+    return false;
 }
 
 /* Non-reentrant getopt implementation */

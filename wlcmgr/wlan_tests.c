@@ -238,7 +238,7 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
         case WLAN_SECURITY_WPA:
         case WLAN_SECURITY_WPA2:
             /* copy the PSK phrase */
-            sec->psk_len = (char)strlen(argv[0]);
+            sec->psk_len = (uint8_t)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
             {
                 return WM_FAIL;
@@ -261,26 +261,26 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
     return ret;
 }
 
-static int get_role(char *arg, enum wlan_bss_role *role)
+static bool get_role(char *arg, enum wlan_bss_role *role)
 {
     if (arg == NULL)
     {
-        return 1;
+        return true;
     }
 
-    if (string_equal(arg, "sta") != 0)
+    if (string_equal(arg, "sta") != false)
     {
         *role = WLAN_BSS_ROLE_STA;
-        return 0;
+        return false;
     }
-    else if (string_equal(arg, "uap") != 0)
+    else if (string_equal(arg, "uap") != false)
     {
         *role = WLAN_BSS_ROLE_UAP;
-        return 0;
+        return false;
     }
     else
     {
-        return 1;
+        return true;
     }
 }
 
@@ -379,7 +379,7 @@ static void test_wlan_add(int argc, char **argv)
     info.address = (u8_t)ADDR_TYPE_DHCP;
     do
     {
-        if (!info.ssid && string_equal("ssid", argv[arg]))
+        if ((info.ssid == 0U) && string_equal("ssid", argv[arg]))
         {
             len = strlen(argv[arg + 1]);
             if (len > IEEEtypes_SSID_SIZE)
@@ -391,10 +391,9 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.ssid = 1;
         }
-        else if (!info.bssid && string_equal("bssid", argv[arg]))
+        else if ((info.bssid == 0U) && string_equal("bssid", argv[arg]))
         {
-            ret = get_mac(argv[arg + 1], network.bssid, ':');
-            if (ret != 0)
+            if (get_mac(argv[arg + 1], network.bssid, ':') != false)
             {
                 (void)PRINTF(
                     "Error: invalid BSSID argument"
@@ -404,7 +403,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.bssid = 1;
         }
-        else if (!info.channel && string_equal("channel", argv[arg]))
+        else if ((info.channel == 0U) && string_equal("channel", argv[arg]))
         {
             if (arg + 1 >= argc || get_uint(argv[arg + 1], &network.channel, strlen(argv[arg + 1])))
             {
@@ -416,10 +415,9 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.channel = 1;
         }
-        else if (!strncmp(argv[arg], "ip:", 3))
+        else if (strncmp(argv[arg], "ip:", 3) == 0)
         {
-            ret = get_address(argv[arg], &network.ip);
-            if (ret != 0)
+            if (get_address(argv[arg], &network.ip) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid address"
@@ -429,10 +427,9 @@ static void test_wlan_add(int argc, char **argv)
             arg++;
             info.address = (u8_t)ADDR_TYPE_STATIC;
         }
-        else if (!info.security && string_equal("wpa", argv[arg]))
+        else if ((info.security == 0U) && string_equal("wpa", argv[arg]))
         {
-            ret = get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA, &network.security);
-            if (ret != 0)
+            if (get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA, &network.security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA security"
@@ -442,10 +439,9 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.security++;
         }
-        else if (!info.security && string_equal("wpa2", argv[arg]))
+        else if ((info.security == 0U) && string_equal("wpa2", argv[arg]))
         {
-            ret = get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA2, &network.security);
-            if (ret != 0)
+            if (get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA2, &network.security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA2 security"
@@ -463,14 +459,14 @@ static void test_wlan_add(int argc, char **argv)
             info.security++;
         }
 #endif
-        else if (!info.security2 && string_equal("wpa3", argv[arg]))
+        else if ((info.security2 == 0U) && string_equal("wpa3", argv[arg]))
         {
-            if (string_equal(argv[arg + 1], "sae") != 0)
+            if (string_equal(argv[arg + 1], "sae") != false)
             {
                 network.security.type = WLAN_SECURITY_WPA3_SAE;
                 /* copy the PSK phrase */
                 network.security.password_len = strlen(argv[arg + 2]);
-                if (!network.security.password_len)
+                if (network.security.password_len == 0U)
                 {
                     (void)PRINTF(
                         "Error: invalid WPA3 security"
@@ -499,7 +495,7 @@ static void test_wlan_add(int argc, char **argv)
             }
             info.security2++;
         }
-        else if (!info.role && string_equal("role", argv[arg]))
+        else if ((info.role == 0U) && string_equal("role", argv[arg]))
         {
             if (arg + 1 >= argc || get_role(argv[arg + 1], &network.role))
             {
@@ -511,9 +507,14 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.role++;
         }
-        else if (!info.mfpc && string_equal("mfpc", argv[arg]))
+        else if ((info.mfpc == 0U) && string_equal("mfpc", argv[arg]))
         {
+            errno                 = 0;
             network.security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error during strtoul:mfpc errno:%d", errno);
+            }
             if (arg + 1 >= argc || (network.security.mfpc != false && network.security.mfpc != true))
             {
                 (void)PRINTF(
@@ -524,9 +525,14 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.mfpc++;
         }
-        else if (!info.mfpr && string_equal("mfpr", argv[arg]))
+        else if ((info.mfpr == 0U) && string_equal("mfpr", argv[arg]))
         {
-            network.security.mfpr = (bool)atoi(argv[arg + 1]);
+            errno                 = 0;
+            network.security.mfpr = (bool)strtol(argv[arg + 1], NULL, 10);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error during strtoul:mfpr errno:%d", errno);
+            }
             if (arg + 1 >= argc || (network.security.mfpr != false && network.security.mfpr != true))
             {
                 (void)PRINTF(
@@ -537,7 +543,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.mfpr++;
         }
-        else if (!strncmp(argv[arg], "autoip", 6))
+        else if (strncmp(argv[arg], "autoip", 6) == 0)
         {
             info.address = (u8_t)ADDR_TYPE_LLA;
             arg++;
@@ -566,7 +572,7 @@ static void test_wlan_add(int argc, char **argv)
         }
     } while (arg < argc);
 
-    if (!info.ssid && !info.bssid)
+    if ((info.ssid == 0U) && (info.bssid == 0U))
     {
         dump_wlan_add_usage();
         (void)PRINTF("Error: specify at least the SSID or BSSID\r\n");
@@ -575,7 +581,7 @@ static void test_wlan_add(int argc, char **argv)
 
     if ((network.security.type == WLAN_SECURITY_WPA2) || (network.security.type == WLAN_SECURITY_WPA3_SAE))
     {
-        if (network.security.psk_len && network.security.password_len)
+        if ((network.security.psk_len != 0U) && (network.security.password_len != 0U))
         {
             network.security.type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
         }
@@ -648,7 +654,7 @@ static int __scan_cb(unsigned int count)
         {
             (void)PRINTF("WEP ");
         }
-        if (res.wpa && res.wpa2)
+        if ((res.wpa != 0U) && (res.wpa2 != 0U))
         {
             (void)PRINTF("WPA/WPA2 Mixed ");
         }
@@ -671,13 +677,13 @@ static int __scan_cb(unsigned int count)
                 (void)PRINTF("WPA2 Enterprise");
             }
         }
-        if (!(res.wep || res.wpa || res.wpa2 || res.wpa3_sae || res.wpa2_entp))
+        if (!((res.wep != 0U) || (res.wpa != 0U) || (res.wpa2 != 0U) || (res.wpa3_sae != 0U) || (res.wpa2_entp != 0U)))
         {
             (void)PRINTF("OPEN ");
         }
         (void)PRINTF("\r\n");
 
-        (void)PRINTF("\tWMM: %s\r\n", res.wmm ? "YES" : "NO");
+        (void)PRINTF("\tWMM: %s\r\n", (res.wmm != 0U) ? "YES" : "NO");
 #ifdef CONFIG_WPS2
         if (res.wps)
         {
@@ -737,7 +743,6 @@ static void dump_wlan_scan_opt_usage(void)
 static void test_wlan_scan_opt(int argc, char **argv)
 {
     wlan_scan_params_v2_t wlan_scan_param;
-    int ret = 0;
     int arg = 1;
 #ifdef CONFIG_COMBO_SCAN
     int num_ssid = 0;
@@ -764,7 +769,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
     }
     do
     {
-        if (!info.ssid && string_equal("ssid", argv[arg]))
+        if ((info.ssid == 0U) && string_equal("ssid", argv[arg]))
         {
 #ifdef CONFIG_COMBO_SCAN
             if (num_ssid > MAX_NUM_SSID)
@@ -787,10 +792,9 @@ static void test_wlan_scan_opt(int argc, char **argv)
             arg += 2;
             info.ssid = 1;
         }
-        else if (!info.bssid && string_equal("bssid", argv[arg]))
+        else if ((info.bssid == 0U) && string_equal("bssid", argv[arg]))
         {
-            ret = get_mac(argv[arg + 1], (char *)wlan_scan_param.bssid, ':');
-            if (ret != 0)
+            if (get_mac(argv[arg + 1], (char *)wlan_scan_param.bssid, ':') != false)
             {
                 (void)PRINTF(
                     "Error: invalid BSSID argument"
@@ -800,7 +804,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
             arg += 2;
             info.bssid = 1;
         }
-        else if (!info.channel && string_equal("channel", argv[arg]))
+        else if ((info.channel == 0U) && string_equal("channel", argv[arg]))
         {
             if (arg + 1 >= argc ||
                 get_uint(argv[arg + 1], (unsigned int *)(void *)&wlan_scan_param.chan_list[0].chan_number,
@@ -817,7 +821,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
             arg += 2;
             info.channel = 1;
         }
-        else if (!info.probes && string_equal("probes", argv[arg]))
+        else if ((info.probes == 0U) && string_equal("probes", argv[arg]))
         {
             if (arg + 1 >= argc ||
                 get_uint(argv[arg + 1], (unsigned int *)(void *)&wlan_scan_param.num_probes, strlen(argv[arg + 1])))
@@ -867,7 +871,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
         }
     } while (arg < argc);
 
-    if (!info.ssid && !info.bssid)
+    if ((info.ssid == 0U) && (info.bssid == 0U))
     {
         dump_wlan_scan_opt_usage();
         (void)PRINTF("Error: specify at least the SSID or BSSID\r\n");
@@ -1135,7 +1139,7 @@ static void test_wlan_info(int argc, char **argv)
         switch (state)
         {
             case WLAN_CONNECTED:
-                if (!wlan_get_current_network(&sta_network))
+                if (wlan_get_current_network(&sta_network) == WM_SUCCESS)
                 {
                     (void)PRINTF("Station connected to:\r\n");
                     print_network(&sta_network);
@@ -1251,7 +1255,12 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         return;
     }
 
+    errno  = 0;
     choice = strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul:mfpc errno:%d", errno);
+    }
 
     if (choice == 0)
     {
@@ -2012,8 +2021,14 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
         return;
     }
 
-    bandwidth = (uint8_t)atoi(argv[1]);
-    ret       = wlan_uap_set_bandwidth(bandwidth);
+    errno     = 0;
+    bandwidth = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul:uap_bandwidth errno:%d", errno);
+    }
+
+    ret = wlan_uap_set_bandwidth(bandwidth);
 
     if (ret != WM_SUCCESS)
     {

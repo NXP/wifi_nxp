@@ -674,7 +674,7 @@ struct wlan_network_security
     char psk[WLAN_PSK_MAX_LENGTH];
     /** Length of the WEP key or WPA/WPA2 pass phrase, \ref WLAN_PSK_MIN_LENGTH to \ref
      * WLAN_PSK_MAX_LENGTH.  Ignored for networks with no security. */
-    char psk_len;
+    uint8_t psk_len;
     /** WPA3 SAE password, for WPA3 SAE networks this is an ASCII
      * password of length password_len.  This field is ignored for networks with no
      * security. */
