@@ -7335,7 +7335,7 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 }
 #endif
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
 void wlan_show_os_mem_stat()
 {
     wifi_show_os_mem_stat();

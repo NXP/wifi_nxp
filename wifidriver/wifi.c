@@ -30,7 +30,7 @@
 #endif
 #endif
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
 os_semaphore_t os_mem_stat_sem;
 
 t_u32 valid_item_cnt = 0;
@@ -1588,7 +1588,7 @@ static void wifi_core_deinit(void)
     }
 #endif
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
     if (os_mem_stat_sem != NULL)
     {
         os_semaphore_delete(&os_mem_stat_sem);
@@ -1768,7 +1768,7 @@ int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t
                                                                    const uint8_t *buffer,
                                                                    const uint16_t len))
 {
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
     int ret;
 #endif
     if (wm_wifi.data_intput_callback != NULL)
@@ -1778,7 +1778,7 @@ int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t
 
     wm_wifi.data_intput_callback = data_intput_callback;
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
     /* Semaphore to protect os mem stat */
     ret = os_semaphore_create(&os_mem_stat_sem, "os mem stat sem");
     if (ret != WM_SUCCESS)
@@ -2261,7 +2261,7 @@ uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue)
 }
 #endif
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
 static bool get_os_mem_stat_index(char const *func, t_u32 *index)
 {
     int i     = 0;

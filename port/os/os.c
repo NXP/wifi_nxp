@@ -1250,18 +1250,11 @@ unsigned int os_get_timestamp(void)
 
 /* OS Memory allocation API's */
 #ifndef CONFIG_HEAP_DEBUG
-
-#ifdef CONFIG_MEM_MONITOR_DEBUG
-void *os_mem_alloc_priv(unsigned int size, char const *func, unsigned int line_num)
+void *os_mem_alloc(size_t size)
 {
     void *ptr = pvPortMalloc(size);
-
-    os_mem_alloc_cnt++;
-    record_os_mem_alloc(size, func, line_num);
-
     return ptr;
 }
-#endif
 
 void *os_mem_calloc(size_t size)
 {
@@ -1270,37 +1263,9 @@ void *os_mem_calloc(size_t size)
     {
         (void)memset(ptr, 0x00, size);
     }
-
-    return ptr;
-}
-
-#ifdef CONFIG_MEM_MONITOR_DEBUG
-void os_mem_free_priv(void *ptr, char const *func, unsigned int line_num)
-{
-    vPortFree(ptr);
-
-    os_mem_free_cnt++;
-    record_os_mem_free(func, line_num);
-}
-#endif
-
-#else /* ! CONFIG_HEAP_DEBUG */
-
-void *os_mem_alloc(size_t size)
-{
-    void *ptr = pvPortMalloc(size);
-    if (ptr)
-        (void)PRINTF("MDC:A:%x:%d\r\n", ptr, size);
-    return ptr;
-}
-
-void *os_mem_calloc(size_t size)
-{
-    void *ptr = pvPortMalloc(size);
-    if (ptr)
+    else
     {
-        (void)PRINTF("MDC:A:%x:%d\r\n", ptr, size);
-        (void)memset(ptr, 0x00, size);
+        /* Do Nothing */
     }
 
     return ptr;
@@ -1309,9 +1274,68 @@ void *os_mem_calloc(size_t size)
 void os_mem_free(void *ptr)
 {
     vPortFree(ptr);
-    (void)PRINTF("MDC:F:%x\r\n", ptr);
+}
+#else  /* ! CONFIG_HEAP_DEBUG */
+extern int os_mem_alloc_cnt;
+extern void record_os_mem_alloc(unsigned int size, char const *func, unsigned int line_num);
+
+static void *os_mem_alloc_priv(unsigned int size, char const *func, unsigned int line_num)
+{
+    void *ptr = pvPortMalloc(size);
+
+    os_mem_alloc_cnt++;
+    record_os_mem_alloc(size, func, line_num);
+
+    return ptr;
 }
 
+void *os_mem_alloc(size_t size)
+{
+    void *ptr = os_mem_alloc_priv((size), __func__, __LINE__);
+    if (ptr != NULL)
+    {
+        (void)PRINTF("MDC:A:%x:%d\r\n", ptr, size);
+    }
+    else
+    {
+        /* Do Nothing */
+    }
+
+    return ptr;
+}
+
+void *os_mem_calloc(size_t size)
+{
+    void *ptr = pvPortMalloc(size);
+    if (ptr != NULL)
+    {
+        (void)memset(ptr, 0x00, size);
+        (void)PRINTF("MDC:A:%x:%d\r\n", ptr, size);
+    }
+    else
+    {
+        /* Do Nothing */
+    }
+
+    return ptr;
+}
+
+extern int os_mem_free_cnt;
+extern void record_os_mem_free(char const *func, unsigned int line_num);
+
+static void os_mem_free_priv(void *ptr, char const *func, unsigned int line_num)
+{
+    vPortFree(ptr);
+
+    os_mem_free_cnt++;
+    record_os_mem_free(func, line_num);
+}
+
+void os_mem_free(void *ptr)
+{
+    os_mem_free_priv((ptr), __func__, __LINE__);
+    (void)PRINTF("MDC:F:%x\r\n", ptr);
+}
 #endif /* CONFIG_HEAP_DEBUG */
 
 #ifdef CONFIG_HEAP_STAT

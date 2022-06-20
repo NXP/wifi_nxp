@@ -1265,7 +1265,7 @@ typedef PACK_START struct _wifi_mfg_cmd_tx_cont
 } PACK_END wifi_mfg_cmd_tx_cont_t;
 #endif
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
 #define MAX_FUNC_SYMBOL_LEN    64
 #define OS_MEM_STAT_TABLE_SIZE 128
 

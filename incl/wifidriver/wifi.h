@@ -1067,7 +1067,7 @@ wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band
 
 int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_freq);
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
 /**
  * Show os mem alloc and free info.
  *

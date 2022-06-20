@@ -979,7 +979,6 @@ int os_timer_deactivate(os_timer_t *timer_t);
 int os_timer_delete(os_timer_t *timer_t);
 
 /* OS Memory allocation API's */
-#ifndef CONFIG_HEAP_DEBUG
 
 /** Allocate memory
  *
@@ -990,16 +989,7 @@ int os_timer_delete(os_timer_t *timer_t);
  * @return Pointer to the allocated memory
  * @return NULL if allocation fails
  */
-#ifdef CONFIG_MEM_MONITOR_DEBUG
-extern int os_mem_alloc_cnt;
-extern void record_os_mem_alloc(unsigned int size, char const *func, unsigned int line_num);
-
-void *os_mem_alloc_priv(unsigned int size, char const *func, unsigned int line_num);
-
-#define os_mem_alloc(size) os_mem_alloc_priv((size), __func__, __LINE__)
-#else
-#define os_mem_alloc(size) pvPortMalloc(size)
-#endif
+void *os_mem_alloc(size_t size);
 
 /** Allocate memory and zero it
  *
@@ -1020,45 +1010,7 @@ void *os_mem_calloc(size_t size);
  *
  * @param[in] ptr Pointer to the memory to be freed
  */
-#ifdef CONFIG_MEM_MONITOR_DEBUG
-extern int os_mem_free_cnt;
-extern void record_os_mem_free(char const *func, unsigned int line_num);
-
-void os_mem_free_priv(void *ptr, char const *func, unsigned int line_num);
-
-#define os_mem_free(ptr) os_mem_free_priv((ptr), __func__, __LINE__)
-
-#else
-#define os_mem_free(ptr) vPortFree(ptr)
-#endif
-
-#else /* ! CONFIG_HEAP_DEBUG */
-void *os_mem_alloc(size_t size) WARN_UNUSED_RET;
-void *os_mem_calloc(size_t size) WARN_UNUSED_RET;
-
-/** This function allocates memory dynamically
- *  @param [in] size Size of memory to be allocated
- *
- *  @return Pointer to the allocated memory
- *  @return NULL if allocation fails
- */
-void *os_mem_alloc(size_t size);
-
-/** This function allocates memory dynamically and
- *  sets memory content to zero
- *  @param [in] size Size of memory to be allocated
- *
- *  @return Pointer to the allocated memory
- *  @return NULL if allocation fails
- */
-void *os_mem_calloc(size_t size);
-
-/** This function frees dynamically allocated memory
- *  @param [in] ptr Pointer to memory to be freed
- */
 void os_mem_free(void *ptr);
-
-#endif /* CONFIG_HEAP_DEBUG */
 
 #ifdef CONFIG_HEAP_STAT
 /** This function dumps complete statistics
@@ -1066,77 +1018,6 @@ void os_mem_free(void *ptr);
  */
 void os_dump_mem_stats(void);
 
-#endif
-
-#if 0
-/** This function returns the size of biggest free block
- *  available in heap.
- */
-static inline size_t os_mem_get_free_size(void)
-{
-	unsigned long sta = os_enter_critical_section();
-
-	const heapAllocatorInfo_t *hI = getheapAllocInfo();
-
-	os_exit_critical_section(sta);
-
-	return hI->biggestFreeBlockAvailable;
-}
-
-/*** OS thread system information ***/
-
-void os_dump_threadinfo(char *name);
-void os_thread_stackmark(char *name);
-
-/* Return -WM_FAIL is stats is not enabled */
-static inline int os_free_heap_percentage()
-{
-#ifdef FREERTOS_ENABLE_MALLOC_STATS
-	const heapAllocatorInfo_t *hI = getheapAllocInfo();
-	int temp = 0;
-	temp = (hI->heapSize - hI->freeSize);
-	temp = (temp * 100) / hI->heapSize;
-	return temp;
-#else
-	return -WM_FAIL;
-#endif /* FREERTOS_ENABLE_MALLOC_STATS */
-}
-
-/* Return -WM_FAIL if stats is not enabled */
-static inline int os_get_free_size()
-{
-#ifdef FREERTOS_ENABLE_MALLOC_STATS
-	const heapAllocatorInfo_t *hI = getheapAllocInfo();
-	return (int)hI->freeSize;
-#else
-	return -WM_FAIL;
-#endif /* FREERTOS_ENABLE_MALLOC_STATS */
-}
-
-/* Return -WM_FAIL is stats is not enabled */
-static inline int os_get_heap_size()
-{
-#ifdef FREERTOS_ENABLE_MALLOC_STATS
-	const heapAllocatorInfo_t *hI = getheapAllocInfo();
-	return (int)hI->heapSize;
-#else
-	return -WM_FAIL;
-#endif /* FREERTOS_ENABLE_MALLOC_STATS */
-}
-
-/* This function updates the global tick count
-  *  When  MC200 core enters a low power state
-  *  system tick counter stops generating interrupt.
-  *  Due to this global time count does not get updated.
-  *  This API is used to update the value by number
-  *  passed as a parameter.
-  *  @param [in] ticks : The amount by which global
-  *                     tick count needs to be updated
-  */
-static inline void os_update_tick_count(unsigned long ticks)
-{
-	xTaskUpdateTickCount(ticks);
-}
 #endif
 
 typedef unsigned int event_group_handle_t;

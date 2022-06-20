@@ -2330,7 +2330,7 @@ static void test_wlan_eu_crypto(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
 int os_mem_alloc_cnt = 0;
 int os_mem_free_cnt  = 0;
 
@@ -2417,7 +2417,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_EU_VALIDATION
     {"wlan-eu-validation", "<value>", test_wlan_eu_validation},
 #endif
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_HEAP_DEBUG
     {"wlan-os-mem-stat", NULL, test_wlan_os_mem_stat},
 #endif
 };
