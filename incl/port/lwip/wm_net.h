@@ -355,6 +355,17 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle);
  */
 char *ipv6_addr_state_to_desc(unsigned char addr_state);
 
+/** Get the description of IPv6 address
+ *
+ * This function will get the IPv6 address type description like -
+ * Linklocal, Global, Sitelocal, Uniquelocal
+ *
+ * \param[in] ipv6_conf Pointer to IPv6 configuration of type \ref ipv6_config
+ *
+ * \return IPv6 address description
+ */
+char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf);
+
 /** Get the description of IPv6 address type
  *
  * This function will get the IPv6 address type description like -

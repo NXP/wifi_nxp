@@ -146,6 +146,15 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
     }
 }
 
+char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
+{
+    ip6_addr_t ip6_addr;
+
+    (void)memcpy((void *)ip6_addr.addr, (const void *)ipv6_conf->address, sizeof(ip6_addr.addr));
+
+    return inet6_ntoa(ip6_addr);
+}
+
 char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
 {
     ip6_addr_t ip6_addr;

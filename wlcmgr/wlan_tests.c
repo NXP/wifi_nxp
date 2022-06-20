@@ -66,10 +66,10 @@ out:
         (void)PRINTF("\r\n\tIPv6 Addresses\r\n");
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
-            if (addr->ipv6[i].addr_state != IP6_ADDR_INVALID)
+            if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
             {
                 (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc(&addr->ipv6[i]),
-                             inet6_ntoa(addr->ipv6[i].address), ipv6_addr_state_to_desc(addr->ipv6[i].addr_state));
+                             ipv6_addr_addr_to_desc(&addr->ipv6[i]), ipv6_addr_state_to_desc(addr->ipv6[i].addr_state));
             }
         }
         (void)PRINTF("\r\n");
@@ -101,10 +101,23 @@ static const char *print_role(enum wlan_bss_role role)
 }
 #endif
 
+static inline const char *sec_tag(struct wlan_network *network)
+{
+    if (network->security_specific == 0U)
+    {
+        return "\tsecurity [Wildcard]";
+    }
+    else
+    {
+        return "\tsecurity";
+    }
+}
+
 static void print_network(struct wlan_network *network)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-    (void)PRINTF("\"%s\"\r\n\tSSID: %s\r\n\tBSSID: ", network->name, network->ssid[0] ? network->ssid : "(hidden)");
+    (void)PRINTF("\"%s\"\r\n\tSSID: %s\r\n\tBSSID: ", network->name,
+                 network->ssid[0] != '\0' ? network->ssid : "(hidden)");
     print_mac(network->bssid);
     if (network->channel != 0U)
     {
@@ -116,51 +129,46 @@ static void print_network(struct wlan_network *network)
     }
     (void)PRINTF("\r\n\trole: %s\r\n", print_role(network->role));
 
-    char *sec_tag = "\tsecurity";
-    if (!network->security_specific)
-    {
-        sec_tag = "\tsecurity [Wildcard]";
-    }
     switch (network->security.type)
     {
         case WLAN_SECURITY_NONE:
-            (void)PRINTF("%s: none\r\n", sec_tag);
+            (void)PRINTF("%s: none\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WEP_OPEN:
-            (void)PRINTF("%s: WEP (open)\r\n", sec_tag);
+            (void)PRINTF("%s: WEP (open)\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WEP_SHARED:
-            (void)PRINTF("%s: WEP (shared)\r\n", sec_tag);
+            (void)PRINTF("%s: WEP (shared)\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA:
-            (void)PRINTF("%s: WPA\r\n", sec_tag);
+            (void)PRINTF("%s: WPA\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA2:
-            (void)PRINTF("%s: WPA2\r\n", sec_tag);
+            (void)PRINTF("%s: WPA2\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA_WPA2_MIXED:
-            (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag);
+            (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag(network));
             break;
 #ifdef CONFIG_WPA2_ENTP
         case WLAN_SECURITY_EAP_TLS:
-            (void)PRINTF("%s: WPA2 Enterprise EAP-TLS\r\n", sec_tag);
+            (void)PRINTF("%s: WPA2 Enterprise EAP-TLS\r\n", sec_tag(network));
             break;
 #endif
 #ifdef CONFIG_PEAP_MSCHAPV2
         case WLAN_SECURITY_PEAP_MSCHAPV2:
-            (void)PRINTF("%s: WPA2 Enterprise PEAP-MSCHAPV2\r\n", sec_tag);
+            (void)PRINTF("%s: WPA2 Enterprise PEAP-MSCHAPV2\r\n", sec_tag(network));
             break;
 #endif
 #ifdef CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
-            (void)PRINTF("%s: OWE Only\r\n", sec_tag);
+            (void)PRINTF("%s: OWE Only\r\n", sec_tag(network));
             break;
 #endif
         case WLAN_SECURITY_WPA3_SAE:
-            (void)PRINTF("%s: WPA3 SAE\r\n", sec_tag);
+            (void)PRINTF("%s: WPA3 SAE\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
-            (void)PRINTF("%s: WPA2/WPA3 SAE Mixed\r\n", sec_tag);
+            (void)PRINTF("%s: WPA2/WPA3 SAE Mixed\r\n", sec_tag(network));
             break;
         default:
             (void)PRINTF("\r\nUnexpected WLAN SECURITY\r\n");
@@ -1288,7 +1296,8 @@ static void test_wlan_ieee_ps(int argc, char **argv)
             }
         }
 #endif
-        condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
+        condition = (uint32_t)WAKE_ON_ARP_BROADCAST | (uint32_t)WAKE_ON_UNICAST | (uint32_t)WAKE_ON_MULTICAST |
+                    (uint32_t)WAKE_ON_MAC_EVENT;
 #ifdef CONFIG_WNM_PS
         ret = wlan_ieeeps_on(condition, (bool)wnm_set, (t_u16)wnm_interval);
 #else
@@ -1321,7 +1330,12 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         return;
     }
 
+    errno  = 0;
     choice = strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul:deep_sleep_ps errno:%d", errno);
+    }
 
     if (choice == 0)
     {
@@ -1856,7 +1870,12 @@ static void test_wlan_host_sleep(int argc, char **argv)
         return;
     }
 
-    choice = atoi(argv[1]);
+    errno  = 0;
+    choice = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul:host_sleep errno:%d", errno);
+    }
 
     if (choice == 0)
     {
@@ -1878,7 +1897,12 @@ static void test_wlan_host_sleep(int argc, char **argv)
             return;
         }
 
-        wowlan = atoi(argv[3]);
+        errno  = 0;
+        wowlan = (int)strtol(argv[3], NULL, 10);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtoul:wowlan errno:%d", errno);
+        }
 
         if (string_equal(argv[2], "wowlan_test"))
         {
@@ -1896,8 +1920,8 @@ static void test_wlan_host_sleep(int argc, char **argv)
             }
             else if (wowlan == 0)
             {
-                ret = wlan_send_host_sleep(WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST |
-                                           WAKE_ON_MAC_EVENT);
+                ret = wlan_send_host_sleep((uint32_t)WAKE_ON_ARP_BROADCAST | (uint32_t)WAKE_ON_UNICAST |
+                                           (uint32_t)WAKE_ON_MULTICAST | (uint32_t)WAKE_ON_MAC_EVENT);
                 if (ret == WM_SUCCESS)
                 {
                     (void)PRINTF("Host sleep configuration successs with regular condition");
