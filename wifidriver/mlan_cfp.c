@@ -2136,7 +2136,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
         PRINTM(MERROR, "CFP table update failed!\n");
         goto out;
     }
-    if (pmadapter->otp_region)
+    if (pmadapter->otp_region != MNULL)
     {
         wlan_free_fw_cfp_tables(pmadapter);
     }
@@ -2172,7 +2172,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 {
                     break;
                 }
-                if (pmadapter->otp_region)
+                if (pmadapter->otp_region != MNULL)
                 {
                     break;
                 }
@@ -2270,7 +2270,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                     (pmadapter->cfp_otp_bg + i)->max_tx_power = max_tx_pwr_bg;
                     data++;
                     (pmadapter->cfp_otp_bg + i)->dynamic.flags = *data;
-                    if (*data & NXP_CHANNEL_DFS)
+                    if ((*data & NXP_CHANNEL_DFS) != 0U)
                     {
                         (pmadapter->cfp_otp_bg + i)->passive_scan_or_radar_detect = MTRUE;
                     }
@@ -2306,7 +2306,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                     (pmadapter->cfp_otp_a + i)->max_tx_power = max_tx_pwr_a;
                     data++;
                     (pmadapter->cfp_otp_a + i)->dynamic.flags = *data;
-                    if (*data & NXP_CHANNEL_DFS)
+                    if ((*data & NXP_CHANNEL_DFS) != 0U)
                     {
                         (pmadapter->cfp_otp_a + i)->passive_scan_or_radar_detect = MTRUE;
                     }
@@ -2406,7 +2406,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
     for (i = 0; i < rows; i++)
     {
         k = (i * cols) + 1;
-        if ((pmadapter->cfp_otp_bg + i)->dynamic.flags & NXP_CHANNEL_DISABLED)
+        if (((pmadapter->cfp_otp_bg + i)->dynamic.flags & NXP_CHANNEL_DISABLED) != 0U)
         {
             continue;
         }

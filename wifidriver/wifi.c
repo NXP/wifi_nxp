@@ -1152,14 +1152,16 @@ void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
      * 1) Fill higher 16-bits with IANA Multicast OUI (33-33)
      * 2) Fill lower 24-bits with from IP address
      */
-    for (i = 1; i >= 0; i--, j++)
+    for (i = 1; i >= 0; i--)
     {
         mac_addr[j] = (char)(mac_addr_r >> 8 * i) & 0xFF;
+        j++;
     }
 
-    for (i = 3; i >= 0; i--, j++)
+    for (i = 3; i >= 0; i--)
     {
         mac_addr[j] = (char)(ipaddr >> 8 * i) & 0xFF;
+        j++;
     }
 }
 #endif /* CONFIG_IPV6 */

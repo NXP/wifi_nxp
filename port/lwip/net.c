@@ -124,7 +124,7 @@ static void netif_ext_status_callback(struct netif *netif,
 #ifdef CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
 {
-    if (ip6_addr_istentative(addr_state))
+    if (ip6_addr_istentative((addr_state)) != 0U)
     {
         return IPV6_ADDR_STATE_TENTATIVE;
     }

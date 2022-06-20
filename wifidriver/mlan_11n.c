@@ -709,7 +709,7 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
     ENTER();
 
 #ifdef CONFIG_5GHz_SUPPORT
-    if (bands & BAND_A)
+    if ((bands & BAND_A) != 0U)
     {
         usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_a;
     }
@@ -734,7 +734,7 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
     (void)__memset(pmadapter, (t_u8 *)&pht_cap->ht_cap.supported_mcs_set[rx_mcs_supp], 0, NUM_MCS_FIELD - rx_mcs_supp);
     /* Set MCS32 with 40MHz support */
     /* if current channel only support 20MHz, we should not set 40Mz supprot*/
-    if (ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap))
+    if (ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap) != 0U)
     {
         SETHT_MCS32(pht_cap->ht_cap.supported_mcs_set);
     }

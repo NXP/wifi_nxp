@@ -198,24 +198,24 @@ extern t_u32 drvdbg;
 #define PRINTM_NETINTF(level, pmpriv) \
     do                                \
     {                                 \
-    } while (false)
+    } while ((bool)false)
 
 /** Debug hexdump for level-1 debugging */
 #define DBG_HEXDUMP(level, x, y, z) \
     do                              \
     {                               \
-    } while (false)
+    } while ((bool)false)
 
 /** Hexdump for debugging */
 #define HEXDUMP(x, y, z) \
     do                   \
     {                    \
-    } while (false)
+    } while ((bool)false)
 
 #define PRINTM_GET_SYS_TIME(level, psec, pusec) \
     do                                          \
     {                                           \
-    } while (false)
+    } while ((bool)false)
 
 #endif /* DEBUG_LEVEL1 */
 
@@ -224,14 +224,14 @@ extern t_u32 drvdbg;
     do                                               \
     {                                                \
         PRINTM(MENTRY, "Enter: %s\n", __FUNCTION__); \
-    } while (false)
+    } while ((bool)false)
 
 /** Log exit point for debugging */
 #define LEAVE()                                      \
     do                                               \
     {                                                \
         PRINTM(MENTRY, "Leave: %s\n", __FUNCTION__); \
-    } while (false)
+    } while ((bool)false)
 
 /** Find minimum */
 #ifndef MIN

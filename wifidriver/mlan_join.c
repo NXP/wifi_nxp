@@ -430,9 +430,9 @@ static mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParam
     /* ptr now points to the 1st AKM suite */
     if (temp_akm_suite_count > 1)
     {
-        while (temp_akm_suite_count)
+        while (temp_akm_suite_count != 0U)
         {
-            if (!__memcmp(pmadapter, temp, sha_256_oui, AKM_SUITE_LEN))
+            if (__memcmp(pmadapter, temp, sha_256_oui, AKM_SUITE_LEN) == 0)
             {
                 found = 1;
                 break;
@@ -440,7 +440,7 @@ static mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParam
             temp += AKM_SUITE_LEN;
             temp_akm_suite_count--;
         }
-        if (found)
+        if (found != 0)
         {
             /* Copy SHA256 as AKM suite */
             (void)__memcpy(pmadapter,

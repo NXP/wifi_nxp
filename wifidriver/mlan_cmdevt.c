@@ -3385,12 +3385,12 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
     else
     {
         (void)__memset(pmpriv->adapter, &misc_cfg->param.custom_reg_domain, 0, sizeof(mlan_ds_custom_reg_domain));
-        if (pmadapter->otp_region)
+        if (pmadapter->otp_region != MNULL)
         {
             (void)__memcpy(pmpriv->adapter, &misc_cfg->param.custom_reg_domain.region, pmadapter->otp_region,
                            sizeof(otp_region_info_t));
         }
-        if (pmadapter->cfp_otp_bg)
+        if (pmadapter->cfp_otp_bg != MNULL)
         {
             misc_cfg->param.custom_reg_domain.num_bg_chan = pmadapter->tx_power_table_bg_rows;
             (void)__memcpy(pmpriv->adapter, (t_u8 *)misc_cfg->param.custom_reg_domain.cfp_tbl,
@@ -3398,7 +3398,7 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
                            pmadapter->tx_power_table_bg_rows * sizeof(chan_freq_power_t));
         }
 #ifdef CONFIG_5GHz_SUPPORT
-        if (pmadapter->cfp_otp_a)
+        if (pmadapter->cfp_otp_a != 0U)
         {
             misc_cfg->param.custom_reg_domain.num_a_chan = pmadapter->tx_power_table_a_rows;
             (void)__memcpy(pmpriv->adapter,

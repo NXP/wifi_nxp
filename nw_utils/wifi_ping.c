@@ -23,7 +23,7 @@ static struct netif *get_netif_up(void)
     struct netif *netif = netif_list;
     for (; netif != NULL; netif = netif->next)
     {
-        if (netif_is_up(netif))
+        if (netif_is_up(netif) != 0U)
         {
             return netif;
         }
@@ -470,7 +470,7 @@ static void cmd_ping(int argc, char **argv)
 
     /* Extract the destination IP address. This function returns non zero on
      * success, zero on failure */
-    if (inet_pton(AF_INET, argv[cli_optind], &addr))
+    if (inet_pton(AF_INET, argv[cli_optind], &addr) != 0)
     {
 #ifdef CONFIG_IPV6
         addr.type = IPADDR_TYPE_V4;
@@ -479,7 +479,7 @@ static void cmd_ping(int argc, char **argv)
         return;
     }
 #ifdef CONFIG_IPV6
-    else if (inet_pton(AF_INET6, argv[cli_optind], &addr))
+    else if (inet_pton(AF_INET6, argv[cli_optind], &addr) != 0)
     {
         addr.type = IPADDR_TYPE_V6;
         (void)ping(count, size, timeout, &addr);

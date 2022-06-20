@@ -208,7 +208,7 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap, t_u16 ba
 
     vht_cap->vht_cap_info = usr_dot_11ac_dev_cap;
 #ifdef RW610
-    if(GET_VHTCAP_MAXMPDULEN(vht_cap->vht_cap_info) != 0U)
+    if (GET_VHTCAP_MAXMPDULEN(vht_cap->vht_cap_info) != 0U)
         RESET_11ACMAXMPDULEN(vht_cap->vht_cap_info);
 #endif
 
@@ -297,7 +297,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
         PRINTM(MINFO, "Set: vht cap info  0x%x\n", usr_vht_cap_info);
 
         /** update the RX MCS map */
-        if (vht_cfg->txrx & MLAN_RADIO_RX)
+        if ((vht_cfg->txrx & MLAN_RADIO_RX) != 0U)
         {
             /* use the previous user value */
             if (vht_cfg->vht_rx_mcs == 0xffffffffU)
@@ -356,7 +356,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
 
     if (pmpriv->bss_role == MLAN_BSS_ROLE_STA)
     {
-        if (vht_cfg->txrx & MLAN_RADIO_RX)
+        if ((vht_cfg->txrx & MLAN_RADIO_RX) != 0U)
         {
             /* maximum VHT configuration used in association */
 

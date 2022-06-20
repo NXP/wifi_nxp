@@ -2738,8 +2738,12 @@ static int wifi_config_mgmt_ie(
     {
         if (*ie_len == 0U)
         {
-            if (index != MGMT_RSN_IE || index != MGMT_VENDOR_SPECIFIC_221 || index != MGMT_WPA_IE ||
-                index != MGMT_WPS_IE)
+            /*
+               MGMT_WPA_IE = MGMT_VENDOR_SPECIFIC_221
+               MGMT_WPS_IE = MGMT_VENDOR_SPECIFIC_221
+               */
+
+            if (index != MGMT_RSN_IE && index != MGMT_VENDOR_SPECIFIC_221)
             {
                 os_mem_free(buf);
                 return -WM_FAIL;
@@ -3561,7 +3565,7 @@ int wifi_get_bgscan_results(mlan_private *pmpriv)
     memset(pmadapter->pscan_table, 0x00, sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST);
     pmadapter->num_in_scan_table = 0;
     ret                          = wifi_request_bgscan_query(pmpriv);
-    pmadapter->bgscan_reported = MFALSE;
+    pmadapter->bgscan_reported   = MFALSE;
     LEAVE();
     return ret;
 }
