@@ -1186,6 +1186,12 @@ struct _mlan_private
     t_u8 wpa_ie[MLAN_WMSDK_MAX_WPA_IE_LEN];
     /** WPA IE length */
     t_u8 wpa_ie_len;
+#ifdef CONFIG_11R
+    /** MD IE */
+    t_u8 md_ie[5];
+    /** MD IE length */
+    size_t md_ie_len;
+#endif
     /** GTK set flag */
     t_u8 wpa_is_gtk_set;
 #ifndef CONFIG_MLAN_WMSDK
@@ -1263,7 +1269,7 @@ struct _mlan_private
     /** function table */
     mlan_operations ops;
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
     /** 11k flag */
     t_u8 enable_11k;
 #endif
@@ -2662,6 +2668,10 @@ sta_node *wlan_add_station_entry(mlan_private *priv, t_u8 *mac);
 
 #ifdef CONFIG_RF_TEST_MODE
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf);
+#endif
+
+#ifdef CONFIG_11R
+t_u8 wlan_ft_akm_is_used(mlan_private *pmpriv, t_u8 *rsn_ie);
 #endif
 
 /** find specific ie */

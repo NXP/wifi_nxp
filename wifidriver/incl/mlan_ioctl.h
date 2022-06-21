@@ -179,7 +179,7 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_11H_DFS_TESTING,
 #endif
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
     MLAN_IOCTL_11K_CFG      = 0x00130000,
     MLAN_OID_11K_CFG_ENABLE = 0x00130001,
 #endif
@@ -1344,7 +1344,7 @@ typedef struct _mlan_ds_get_signal
     t_s16 data_nf_avg;
 } mlan_ds_get_signal, *pmlan_ds_get_signal;
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /** Type definition of mlan_ds_11k_cfg for 11k enable/disable */
 typedef struct _mlan_ds_11k_cfg
 {
@@ -1659,6 +1659,7 @@ typedef enum _mlan_auth_mode
 {
     MLAN_AUTH_MODE_OPEN   = 0x00,
     MLAN_AUTH_MODE_SHARED = 0x01,
+    MLAN_AUTH_MODE_FT     = 0x02,
     MLAN_AUTH_MODE_SAE    = 0x03,
 #ifdef CONFIG_OWE
     MLAN_AUTH_MODE_OWE = 0x04,
@@ -1672,6 +1673,8 @@ typedef enum
 {
     AssocAgentAuth_Open,
     AssocAgentAuth_Shared,
+    AssocAgentAuth_FastBss,
+    AssocAgentAuth_FastBss_Skip,
     AssocAgentAuth_Wpa3Sae = 6,
 #if CONFIG_OWE
     AssocAgentAuth_Owe = 7,
@@ -3224,7 +3227,7 @@ typedef struct _mlan_ds_misc_country_code
     t_u8 country_code[COUNTRY_CODE_LEN];
 } mlan_ds_misc_country_code;
 
-#ifdef CONFIG_ROAMING
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /** action for set */
 #define SUBSCRIBE_EVT_ACT_BITWISE_SET 0x0002
 /** action for clear */
@@ -3318,7 +3321,7 @@ typedef struct _mlan_ds_subscribe_evt
     /* Number of pre missed beacons */
     t_u8 pre_beacon_miss;
 } mlan_ds_subscribe_evt;
-#endif
+#endif /* CONFIG_ROAMING || CONFIG_11R */
 /** Max OTP user data length */
 #define MAX_OTP_USER_DATA_LEN 252U
 
@@ -3500,7 +3503,7 @@ typedef struct _mlan_ds_misc_cfg
         t_u32 thermal;
         /** Mgmt subtype mask for MLAN_OID_MISC_RX_MGMT_IND */
         t_u32 mgmt_subtype_mask;
-#ifdef CONFIG_ROAMING
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
         /** subscribe event for MLAN_OID_MISC_SUBSCRIBE_EVENT */
         mlan_ds_subscribe_evt subscribe_event;
 #endif

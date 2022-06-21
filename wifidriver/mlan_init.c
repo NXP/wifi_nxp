@@ -346,7 +346,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->pmfcfg.mfpc = 0;
     priv->pmfcfg.mfpr = 0;
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
     priv->enable_11k = MFALSE;
 #endif
 

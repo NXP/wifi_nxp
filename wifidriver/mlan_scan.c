@@ -1359,9 +1359,9 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     if (!pmadapter->ext_scan
 #ifdef CONFIG_ROAMING
-       || pmadapter->bgscan_reported
+        || pmadapter->bgscan_reported
 #endif
-     )
+    )
     {
 #endif
         /* RSSI is 1 byte long */
@@ -1718,6 +1718,22 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 HEXDUMP("InterpretIE: Resp RSN_IE", (t_u8 *)pbss_entry->prsn_ie,
                         (*(pbss_entry->prsn_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
                 break;
+#ifdef CONFIG_11R
+            case MOBILITY_DOMAIN:
+                if (element_len <= (sizeof(pbss_entry->md_ie_buff) - sizeof(IEEEtypes_Header_t)))
+                {
+                    (void)__memcpy(NULL, pbss_entry->md_ie_buff, pcurrent_ptr,
+                                   element_len + sizeof(IEEEtypes_Header_t));
+                    pbss_entry->md_ie_buff_len = element_len + sizeof(IEEEtypes_Header_t);
+                    pbss_entry->pmd_ie         = (IEEEtypes_MobilityDomain_t *)(void *)pbss_entry->md_ie_buff;
+                    /* dump_hex(pbss_entry->pmd_ie, pbss_entry->md_ie_buff_len); */
+                }
+                else
+                {
+                    wifi_e("Insufficient space to save MD_IE size: %d", element_len);
+                }
+                break;
+#endif
             case WAPI_IE:
 #ifndef CONFIG_MLAN_WMSDK
                 pbss_entry->pwapi_ie    = (IEEEtypes_Generic_t *)pcurrent_ptr;

@@ -80,7 +80,7 @@ typedef MLAN_PACK_START struct
 /** CapInfo Short Slot Time Enabled */
 #define SHORT_SLOT_TIME_ENABLED(CapInfo) ((CapInfo) |= MBIT(10))
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /** CapInfo Spectrum Mgmt Enabled */
 #define SPECTRUM_MGMT_ENABLED(CapInfo) (CapInfo |= MBIT(8))
 /** CapInfo Radio Measurement Disabled */
@@ -309,13 +309,13 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type : Number of probes */
 #define TLV_TYPE_NUMPROBES (PROPRIETARY_TLV_BASE_ID + 0x02) // 0x0102
 /** TLV type : Beacon RSSI low */
-#define TLV_TYPE_RSSI_LOW (PROPRIETARY_TLV_BASE_ID + 0x04) // 0x0104
+#define TLV_TYPE_RSSI_LOW (PROPRIETARY_TLV_BASE_ID + 0x04U) // 0x0104
 /** TLV type : Beacon SNR low */
-#define TLV_TYPE_SNR_LOW (PROPRIETARY_TLV_BASE_ID + 0x05) // 0x0105
+#define TLV_TYPE_SNR_LOW (PROPRIETARY_TLV_BASE_ID + 0x05U) // 0x0105
 /** TLV type : Fail count */
-#define TLV_TYPE_FAILCOUNT (PROPRIETARY_TLV_BASE_ID + 0x06) // 0x0106
+#define TLV_TYPE_FAILCOUNT (PROPRIETARY_TLV_BASE_ID + 0x06U) // 0x0106
 /** TLV type : BCN miss */
-#define TLV_TYPE_BCNMISS (PROPRIETARY_TLV_BASE_ID + 0x07) // 0x0107
+#define TLV_TYPE_BCNMISS (PROPRIETARY_TLV_BASE_ID + 0x07U) // 0x0107
 /** TLV type : LED behavior */
 #define TLV_TYPE_LEDBEHAVIOR (PROPRIETARY_TLV_BASE_ID + 0x09) // 0x0109
 /** TLV type : Passthrough */
@@ -333,9 +333,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type : ARP filter */
 #define TLV_TYPE_ARP_FILTER (PROPRIETARY_TLV_BASE_ID + 0x15U) // 0x0115
 /** TLV type : Beacon RSSI high */
-#define TLV_TYPE_RSSI_HIGH (PROPRIETARY_TLV_BASE_ID + 0x16) // 0x0116
+#define TLV_TYPE_RSSI_HIGH (PROPRIETARY_TLV_BASE_ID + 0x16U) // 0x0116
 /** TLV type : Beacon SNR high */
-#define TLV_TYPE_SNR_HIGH (PROPRIETARY_TLV_BASE_ID + 0x17) // 0x0117
+#define TLV_TYPE_SNR_HIGH (PROPRIETARY_TLV_BASE_ID + 0x17U) // 0x0117
 /** TLV type : Start BG scan later */
 #define TLV_TYPE_STARTBGSCANLATER (PROPRIETARY_TLV_BASE_ID + 0x1e) // 0x011e
 /** TLV type: BG scan repeat count */
@@ -350,16 +350,16 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #endif
 
 /** TLV type : Link Quality */
-#define TLV_TYPE_LINK_QUALITY (PROPRIETARY_TLV_BASE_ID + 0x24) // 0x0124
+#define TLV_TYPE_LINK_QUALITY (PROPRIETARY_TLV_BASE_ID + 0x24U) // 0x0124
 
 /** TLV type : Data RSSI low */
-#define TLV_TYPE_RSSI_LOW_DATA (PROPRIETARY_TLV_BASE_ID + 0x26) // 0x0126
+#define TLV_TYPE_RSSI_LOW_DATA (PROPRIETARY_TLV_BASE_ID + 0x26U) // 0x0126
 /** TLV type : Data SNR low */
-#define TLV_TYPE_SNR_LOW_DATA (PROPRIETARY_TLV_BASE_ID + 0x27) // 0x0127
+#define TLV_TYPE_SNR_LOW_DATA (PROPRIETARY_TLV_BASE_ID + 0x27U) // 0x0127
 /** TLV type : Data RSSI high */
-#define TLV_TYPE_RSSI_HIGH_DATA (PROPRIETARY_TLV_BASE_ID + 0x28) // 0x0128
+#define TLV_TYPE_RSSI_HIGH_DATA (PROPRIETARY_TLV_BASE_ID + 0x28U) // 0x0128
 /** TLV type : Data SNR high */
-#define TLV_TYPE_SNR_HIGH_DATA (PROPRIETARY_TLV_BASE_ID + 0x29) // 0x0129
+#define TLV_TYPE_SNR_HIGH_DATA (PROPRIETARY_TLV_BASE_ID + 0x29U) // 0x0129
 
 /** TLV type : Channel band list */
 #define TLV_TYPE_CHANNELBANDLIST (PROPRIETARY_TLV_BASE_ID + 0x2a) // 0x012a
@@ -384,7 +384,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_PMK (PROPRIETARY_TLV_BASE_ID + 0x44U) // 0x0144
 
 /** TLV type : BCN miss */
-#define TLV_TYPE_PRE_BCNMISS (PROPRIETARY_TLV_BASE_ID + 0x49) // 0x0149
+#define TLV_TYPE_PRE_BCNMISS (PROPRIETARY_TLV_BASE_ID + 0x49U) // 0x0149
 
 /** TLV type: WAPI IE */
 #define TLV_TYPE_WAPI_IE (PROPRIETARY_TLV_BASE_ID + 0x5e) // 0x015e
@@ -820,7 +820,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000U)
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /** ExtCap : Set Support BSS_Transition */
 #define SET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 1)
 /** ExtCap : Reset support BSS_Transition */
@@ -1015,7 +1015,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : 802.11 get status */
 #define HostCmd_CMD_WMM_GET_STATUS 0x0071
 
-#ifdef CONFIG_ROAMING
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /** Host Command ID : 802.11 subscribe event */
 #define HostCmd_CMD_802_11_SUBSCRIBE_EVENT 0x0075
 #endif
@@ -1190,7 +1190,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : OTP user data */
 #define HostCmd_CMD_OTP_READ_USER_DATA 0x0114
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /** Host Command ID : 802.11 K Feature Control */
 #define HostCmd_CMD_OFFLOAD_FEATURE_CONTROL 0x00fd
 #endif
@@ -1437,7 +1437,6 @@ typedef enum _ENH_PS_MODES
 /** Card Event definition : WMM status change */
 #define EVENT_WMM_STATUS_CHANGE 0x00000017
 
-#ifdef CONFIG_ROAMING
 /** Card Event definition : BG scan report */
 #define EVENT_BG_SCAN_REPORT 0x00000018
 /** Card Event definition : BG scan stopped */
@@ -1452,7 +1451,6 @@ typedef enum _ENH_PS_MODES
 #define EVENT_RSSI_HIGH 0x0000001c
 /** Card Event definition : Beacon SNR high */
 #define EVENT_SNR_HIGH 0x0000001d
-#endif
 
 /** Card Event definition : IBSS coalsced */
 #define EVENT_IBSS_COALESCED 0x0000001e
@@ -1526,6 +1524,11 @@ typedef enum _ENH_PS_MODES
 #ifdef CONFIG_WIFI_FW_DEBUG
 /** Event definition : FW debug information */
 #define EVENT_FW_DEBUG_INFO 0x00000063
+#endif
+
+#ifdef CONFIG_11K
+#define EVENT_NLIST_REPORT          0x00000079
+#define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
 #endif
 
 #ifdef CONFIG_WLAN_BRIDGE
@@ -1969,7 +1972,7 @@ typedef MLAN_PACK_START struct _wlan_802_11_header
     mlan_802_11_mac_addr addr4;
 } MLAN_PACK_END wlan_802_11_header;
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /** host_OffloadFeatureStdControl_t */
 typedef MLAN_PACK_START struct
 {
@@ -2000,7 +2003,7 @@ typedef MLAN_PACK_START struct _HostCmd_OFFLOAD_FEATURE_CTRL
         t_u8 empty;
     } control;
 } MLAN_PACK_END HostCmd_OFFLOAD_FEATURE_CTRL;
-#endif /* CONFIG_ENABLE_802_11K*/
+#endif /* CONFIG_11K*/
 
 /** wlan_802_11_header packet from FW with length */
 typedef MLAN_PACK_START struct _wlan_mgmt_pkt
@@ -6471,10 +6474,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;
 #endif
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
         /** OFFLOAD FEATURE CTRL */
         HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
-#endif /* CONFIG_ENABLE_802_11K */
+#endif /* CONFIG_11K */
 #ifdef CONFIG_WIFI_EU_CRYPTO
         HostCmd_DS_EU_AES_CRYPTO eu_aes_crypto;
         HostCmd_DS_EU_CRYPTO eu_crypto;

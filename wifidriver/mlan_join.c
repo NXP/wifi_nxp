@@ -499,6 +499,136 @@ static mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParam
     return ret;
 }
 
+#ifdef CONFIG_11R
+/**
+ *  @brief This function is to find FT AKM in RSN.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *
+ *  @param rsn_ie       A pointer to rsn_ie
+ *
+ *  @return             1 when FT AKM is in RSN, otherwise 0
+ */
+t_u8 wlan_ft_akm_is_used(mlan_private *pmpriv, t_u8 *rsn_ie)
+{
+    t_u8 *temp;
+    t_u16 count;
+    t_u16 pairwise_cipher_count = 0;
+    t_u16 akm_suite_count       = 0;
+    t_u8 found                  = 0;
+    t_u8 rsn_ft_1x_oui[4]       = {0x00, 0x0f, 0xac, 0x03};
+    t_u8 rsn_ft_psk_oui[4]      = {0x00, 0x0f, 0xac, 0x04};
+    t_u8 rsn_ft_sae_oui[4]      = {0x00, 0x0f, 0xac, 0x09};
+
+    ENTER();
+
+    if (rsn_ie == MNULL)
+    {
+        goto done;
+    }
+    else
+    {
+        /* Do nothing */
+    }
+
+    if (rsn_ie[0] != (t_u8)RSN_IE)
+    {
+        goto done;
+    }
+    else
+    {
+        /* Do nothing */
+    }
+
+    /*  2 bytes header + 2 bytes version + 4 bytes group_cipher_suite +
+     *  2 bytes pairwise_cipher_count + pairwise_cipher_count *
+     * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count +
+     * akm_suite_count * AKM_SUITE_LEN (4)
+     */
+    count                 = *(t_u16 *)(void *)(rsn_ie + 2 + 2 + 4 * (int)sizeof(t_u8));
+    pairwise_cipher_count = wlan_le16_to_cpu(count);
+    count                 = *(t_u16 *)(void *)(rsn_ie + 2 + 2 + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
+                               (int)pairwise_cipher_count * 4);
+    akm_suite_count       = (t_u16)wlan_le16_to_cpu(count);
+    temp                  = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
+                    (int)pairwise_cipher_count * 4 + sizeof(t_u16));
+
+    while (akm_suite_count > 0U)
+    {
+        if (__memcmp(pmpriv->adapter, temp, rsn_ft_1x_oui, sizeof(rsn_ft_1x_oui)) == 0 ||
+            __memcmp(pmpriv->adapter, temp, rsn_ft_psk_oui, sizeof(rsn_ft_psk_oui)) == 0 ||
+            __memcmp(pmpriv->adapter, temp, rsn_ft_sae_oui, sizeof(rsn_ft_sae_oui)) == 0)
+        {
+            found = 1;
+            break;
+        }
+        temp += 4;
+        akm_suite_count--;
+    }
+
+done:
+    LEAVE();
+    return found;
+}
+
+/**
+ *  @brief Append  IE as a pass through TLV to a TLV buffer.
+ *
+ *  This routine appends IE as a pass through TLV type to the request.
+ *
+ *  @param priv     A pointer to mlan_private structure
+ *  @param ie       A pointer to IE buffer
+ *  @param ppbuffer pointer to command buffer pointer
+ *
+ *  @return         bytes added to the buffer
+ */
+static int wlan_cmd_append_pass_through_ie(mlan_private *priv, IEEEtypes_Generic_t *ie, t_u8 **ppbuffer)
+{
+    int ret_len = 0;
+    MrvlIEtypesHeader_t ie_header;
+
+    ENTER();
+
+    /* Null Checks */
+    if (ppbuffer == MNULL)
+    {
+        LEAVE();
+        return 0;
+    }
+    if (*ppbuffer == MNULL)
+    {
+        LEAVE();
+        return 0;
+    }
+    if (ie->ieee_hdr.len)
+    {
+        PRINTM(MINFO, "append generic IE %d to %p\n", ie->ieee_hdr.len, *ppbuffer);
+
+        /* Wrap the generic IE buffer with a pass through TLV type */
+        ie_header.type = wlan_cpu_to_le16(TLV_TYPE_PASSTHROUGH);
+        ie_header.len  = wlan_cpu_to_le16(ie->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        __memcpy(priv->adapter, *ppbuffer, &ie_header, sizeof(ie_header));
+
+        /* Increment the return size and the return buffer pointer param
+         */
+        *ppbuffer += sizeof(ie_header);
+        ret_len += sizeof(ie_header);
+
+        /* Copy the generic IE buffer to the output buffer, advance
+         * pointer */
+        __memcpy(priv->adapter, *ppbuffer, ie, ie->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+
+        /* Increment the return size and the return buffer pointer param
+         */
+        *ppbuffer += ie->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+        ret_len += ie->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+    }
+    /* return the length appended to the buffer */
+    LEAVE();
+    return ret_len;
+}
+#endif
+
 /********************************************************
                 Global Functions
 ********************************************************/
@@ -529,6 +659,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     t_u32 rates_size;
     t_u16 tmp_cap;
     t_u8 *pos;
+#ifdef CONFIG_11R
+    t_u8 ft_akm = 0;
+#endif
 
     ENTER();
 
@@ -611,6 +744,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         {
             pauth_tlv->auth_type = wlan_cpu_to_le16((t_u16)AssocAgentAuth_Wpa3Sae);
         }
+#ifdef CONFIG_11R
+        else if (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_FT)
+            pauth_tlv->auth_type = wlan_cpu_to_le16(AssocAgentAuth_FastBss);
+#endif
 #ifdef CONFIG_OWE
         else if ((pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OWE) ||
                  (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_OWE))
@@ -711,6 +848,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             HEXDUMP("ASSOC_CMD: RSN IE", (t_u8 *)prsn_ie_tlv, sizeof(prsn_ie_tlv->header) + prsn_ie_tlv->header.len);
             pos += sizeof(prsn_ie_tlv->header) + prsn_ie_tlv->header.len;
             prsn_ie_tlv->header.len = wlan_cpu_to_le16(prsn_ie_tlv->header.len);
+#ifdef CONFIG_11R
+            /** parse rsn ie to find whether ft akm is used*/
+            ft_akm = wlan_ft_akm_is_used(pmpriv, pmpriv->wpa_ie);
+#endif
         }
         else if (pmpriv->sec_info.ewpa_enabled != 0U)
         {
@@ -806,6 +947,17 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
      * */
     (void)wlan_wmm_process_association_req(pmpriv, &pos, &pbss_desc->wmm_ie, pbss_desc->pht_cap);
 
+#ifdef CONFIG_11R
+    if ((ft_akm == 1U) && (pmpriv->md_ie != NULL))
+    {
+        wlan_cmd_append_pass_through_ie(pmpriv, (IEEEtypes_Generic_t *)(void *)pmpriv->md_ie, &pos);
+    }
+    else
+    {
+        /* Do nothing */
+    }
+#endif
+
     /* fixme: Currently not required */
 #ifndef CONFIG_MLAN_WMSDK
     if (pmpriv->sec_info.wapi_enabled && pmpriv->wapi_ie_len)
@@ -849,7 +1001,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         SHORT_SLOT_TIME_DISABLED(tmp_cap);
     }
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
     /* set SpectrumMgmt(BIT8) and RadioMeasurement(BIT12) if 11K is enabled
      */
     if (pmpriv->enable_11k)

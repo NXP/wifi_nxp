@@ -86,9 +86,18 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     QUIET              = 40,
     IBSS_DFS           = 41,
     HT_CAPABILITY      = 45,
-    REGULATORY_CLASS   = 59,
-    HT_OPERATION       = 61,
-    BSSCO_2040         = 72,
+
+#ifdef CONFIG_11R
+    /*IEEE802.11r*/
+    MOBILITY_DOMAIN     = 54,
+    FAST_BSS_TRANSITION = 55,
+    TIMEOUT_INTERVAL    = 56,
+    RIC                 = 57,
+#endif
+
+    REGULATORY_CLASS = 59,
+    HT_OPERATION     = 61,
+    BSSCO_2040       = 72,
     /* OVERLAPBSSSCANPARAM = 74, */
     EXT_CAPABILITY = 127,
 
@@ -1566,6 +1575,19 @@ typedef MLAN_PACK_START struct
 #pragma pack(pop)
 #endif
 
+#ifdef CONFIG_11R
+/** Mobility domain IE */
+typedef MLAN_PACK_START struct _IEEEtypes_MobilityDomain_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** Mobility Domain ID */
+    t_u16 mdid;
+    /** FT Capability policy */
+    t_u8 ft_cap;
+} MLAN_PACK_END IEEEtypes_MobilityDomain_t;
+#endif
+
 /** BSSDescriptor_t
  *    Structure used to store information for beacon/probe response
  */
@@ -1771,6 +1793,12 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_Generic_t *prsnx_ie;
     /** RSNX IE offset in the beacon buffer */
     t_u16 rsnx_offset;
+#ifdef CONFIG_11R
+    unsigned char md_ie_buff[MLAN_WMSDK_MAX_WPA_IE_LEN];
+    size_t md_ie_buff_len;
+    /* Mobility domain IE */
+    IEEEtypes_MobilityDomain_t *pmd_ie;
+#endif
 } BSSDescriptor_t, *pBSSDescriptor_t;
 
 #endif /* !_MLAN_IEEE_H_ */

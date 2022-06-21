@@ -217,8 +217,20 @@ typedef struct
     uint16_t owe : 1;
     /** WPA 3 SAE */
     uint16_t wpa3_sae : 1;
+#ifdef CONFIG_11R
+    /** FT 802.1x */
+    uint16_t ft_1x : 1;
+    /** FT PSK  */
+    uint16_t ft_psk : 1;
+    /** FT SAE */
+    uint16_t ft_sae : 1;
+    /** Reserved 7 bits */
+    uint16_t rsvd : 7;
+#else
     /** Reserved 10 bits */
     uint16_t rsvd : 10;
+#endif
+
 } _SecurityMode_t;
 
 /* TODO: clean up the parts brought over from the Host SME BSSDescriptor_t,

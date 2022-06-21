@@ -32,6 +32,7 @@
 #define CONFIG_UAP_AMPDU_TX       1
 #define CONFIG_UAP_AMPDU_RX       1
 #define CONFIG_WIFIDRIVER_PS_LOCK 1
+#define CONFIG_11K                1
 #endif
 
 #include <wifi-decl.h>
@@ -44,6 +45,11 @@
 #ifdef CONFIG_11AC
 #define BANDWIDTH_80MHZ 3U
 #endif
+
+#ifdef CONFIG_11R
+#define MAX_NUM_CHANS_IN_NBOR_RPT 6U
+#endif
+
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;
 extern uint16_t g_data_nf_last;
@@ -671,7 +677,8 @@ int wifi_exit_deepsleep_power_save(void);
 void send_sleep_confirm_command(mlan_bss_type interface);
 void wifi_configure_listen_interval(int listen_interval);
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
-int wrapper_wifi_assoc(const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode);
+int wrapper_wifi_assoc(
+    const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode, bool is_ft);
 #ifdef CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM
 void wifi_uap_enable_sticky_bit(const uint8_t *mac_addr);
 #endif /* CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM */
@@ -955,7 +962,7 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type);
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
 #endif
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 int wifi_11k_cfg(int enable_11k);
 int wifi_11k_neighbor_req();
 #endif
@@ -1059,6 +1066,9 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 #endif
 wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
+
+int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_freq);
+
 #ifdef CONFIG_MEM_MONITOR_DEBUG
 /**
  * Show os mem alloc and free info.

@@ -1094,7 +1094,7 @@ static mlan_status wlan_ret_802_11_rf_channel(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /**
  *  @brief This function handles the command response of offload feature
  *
@@ -1121,9 +1121,13 @@ static mlan_status wlan_ret_offload_feature_ctrl(mlan_private *priv, HostCmd_DS_
         priv->enable_11k = fctrl->control.std.dot11k_nbor_support | fctrl->control.std.dot11k_tsm |
                            fctrl->control.std.dot11k_lm | fctrl->control.std.dot11k_rm;
         if (priv->enable_11k)
-            SET_EXTCAP_BSS_TRANSITION(priv->ext_cap);
+        {
+            priv->ext_cap.BSS_Transition = 1U;
+        }
         else
-            RESET_EXTCAP_BSS_TRANSITION(priv->ext_cap);
+        {
+            priv->ext_cap.BSS_Transition = 0U;
+        }
         PRINTM(MMSG, "11K %s \n", priv->enable_11k ? "enable" : "disable");
     }
 
@@ -1455,8 +1459,9 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif
-#ifdef CONFIG_ROAMING
+#endif /* CONFIG_MLAN_WMSDK */
+
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /**
  *  @brief This function handles the command response of
  *  subscribe event
@@ -1487,6 +1492,7 @@ static mlan_status wlan_ret_subscribe_event(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+
 #ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of
@@ -1773,10 +1779,12 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_ROAMING
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_ret_subscribe_event(pmpriv, resp, pioctl_buf);
             break;
+#endif /* CONFIG_ROAMING || CONFIG_11R */
+#if defined(CONFIG_ROAMING)
         case HostCmd_CMD_802_11_BG_SCAN_QUERY:
             ret = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);
             PRINTM(MINFO, "CMD_RESP: BG_SCAN result is ready!\n");
@@ -1804,11 +1812,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
         case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
             ret = wlan_ret_offload_feature_ctrl(pmpriv, resp);
             break;
-#endif /* CONFIG_ENABLE_802_11K*/
+#endif /* CONFIG_11K*/
         default:
             PRINTM(MERROR, "CMD_RESP: Unknown command response %#x\n", resp->command);
             break;

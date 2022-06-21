@@ -1921,7 +1921,7 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
 }
 #endif
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /**
  *  @brief This function sends get nlist.
  *
@@ -2000,7 +2000,8 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
     return MLAN_STATUS_SUCCESS;
 }
 #endif
-#ifdef CONFIG_ROAMING
+
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /**
  *  @brief This function prepares command of subscribe event.
  *
@@ -2285,7 +2286,7 @@ static mlan_status wlan_cmd_low_pwr_mode(IN pmlan_private pmpriv, IN HostCmd_DS_
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif /* CONFIG_MLAN_WMSDK */
+#endif
 
 /********************************************************
                 Global Functions
@@ -2599,11 +2600,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_ROAMING
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_cmd_subscribe_event(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#endif /* CONFIG_ROAMING */
+#endif /* CONFIG_ROAMING or CONFIG_11R */
         case HostCmd_CMD_OTP_READ_USER_DATA:
             ret = wlan_cmd_otp_user_data(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
@@ -2630,11 +2631,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
         case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
             ret = wlan_cmd_offload_feature_ctrl(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#endif /* CONFIG_ENABLE_802_11K */
+#endif /* CONFIG_11K */
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             ret = MLAN_STATUS_FAILURE;

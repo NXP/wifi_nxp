@@ -45,6 +45,8 @@ enum wifi_event
     WIFI_EVENT_DEAUTHENTICATION,
     /** Link Loss */
     WIFI_EVENT_LINK_LOSS,
+    /* WiFi RSSI Low Event */
+    WIFI_EVENT_RSSI_LOW,
     /** Network station address configuration */
     WIFI_EVENT_NET_STA_ADDR_CONFIG,
     /** Network interface configuration */
@@ -77,6 +79,8 @@ enum wifi_event
     WIFI_EVENT_ERR_MULTICAST,
     /** error Unicast */
     WIFI_EVENT_ERR_UNICAST,
+    /** 802.11K neighbor report */
+    WIFI_EVENT_NLIST_REPORT,
     /* Add Block Ack */
     /** 802.11N add block ack */
     WIFI_EVENT_11N_ADDBA,
@@ -103,8 +107,6 @@ enum wifi_event
     WIFI_EVENT_FW_DEBUG_INFO,
 #endif
 #ifdef CONFIG_ROAMING
-    /* WiFi RSSI Low Event */
-    WIFI_EVENT_RSSI_LOW,
     /* Background Scan Report */
     WIFI_EVENT_BG_SCAN_REPORT,
     /* Background Scan Stop */
