@@ -2210,7 +2210,7 @@ retry_xmit:
     ret = WM_SUCCESS;
 exit_fn:
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    os_rwlock_read_unlock(&sleep_rwlock);
+    (void)os_rwlock_read_unlock(&sleep_rwlock);
 #else
     (void)os_rwlock_read_unlock(&ps_rwlock);
 #endif

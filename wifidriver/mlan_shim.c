@@ -395,15 +395,15 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
     /* Free private structures */
     for (i = 0; i < MIN(pmadapter->priv_num, MLAN_MAX_BSS_NUM); i++)
     {
-        if (pmadapter->priv[i])
+        if (pmadapter->priv[i] != MNULL)
         {
-            pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
+            (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->priv[i]);
             pmadapter->priv[i] = MNULL;
         }
     }
 
     /* Free mlan_adapter */
-    pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter);
+    (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter);
 
     LEAVE();
     return ret;

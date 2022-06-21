@@ -267,7 +267,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
             case DtimPeriod_i:
                 ul_temp = psmib->value[0];
                 PRINTM(MINFO, "SNMP_RESP: DTIM Period =%u\n", ul_temp);
-                if (mib)
+                if (mib != MNULL)
                     mib->param.dtim_period = ul_temp;
                 break;
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD

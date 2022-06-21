@@ -44,10 +44,10 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp);
  * @param band            BAND_5G/BAND_2GHZ
  * @return                0 -- success, otherwise fail
  */
-static t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
+static bool wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
-    t_u8 enable_11ac        = MFALSE;
+    bool enable_11ac        = MFALSE;
 
     ENTER();
     if ((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAC))
@@ -85,7 +85,7 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
     int ret                 = 0;
     mlan_ds_11ac_vht_cfg vht_cfg;
 
-    memset(&vht_cfg, 0, sizeof(vht_cfg));
+    (void)memset(&vht_cfg, 0, sizeof(vht_cfg));
 #ifdef CONFIG_5GHz_SUPPORT
     if (channel > MAX_CHANNELS_BG)
     {
@@ -380,7 +380,7 @@ static int wifi_cmd_uap_config(char *ssid,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
 #ifdef CONFIG_11AC
-    t_u8 enable_11ac = MFALSE;
+    bool enable_11ac = MFALSE;
 #endif
 
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA3_SAE ||
@@ -573,11 +573,11 @@ static int wifi_cmd_uap_config(char *ssid,
 #endif
     )
     {
-        if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
+        if (ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap) != 0U)
         {
             bss.param.bss_config.ht_cap_info |= MBIT(1);
             wm_wifi.ht_tx_cfg |= MBIT(1);
-            if (ISSUPP_SHORTGI40(mlan_adap->hw_dot_11n_dev_cap))
+            if (ISSUPP_SHORTGI40(mlan_adap->hw_dot_11n_dev_cap) != 0U)
             {
                 bss.param.bss_config.ht_cap_info |= MBIT(6);
                 wm_wifi.ht_tx_cfg |= MBIT(6);
@@ -608,11 +608,11 @@ static int wifi_cmd_uap_config(char *ssid,
 #ifdef CONFIG_11AC
     if (enable_11ac)
     {
-        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_ENABLE, bandwidth, channel);
+        (void)wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_ENABLE, bandwidth, channel);
     }
     else
     {
-        wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE, bandwidth, channel);
+        (void)wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE, bandwidth, channel);
     }
 #endif
 #ifdef CONFIG_11AX

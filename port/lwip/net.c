@@ -217,7 +217,7 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 {
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
-    wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+    (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 }
 #endif /* CONFIG_IPV6 */
 
@@ -294,7 +294,7 @@ static int net_netif_deinit(struct netif *netif)
     {
         ip6_addr_t ip6_allnodes_ll;
         ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
-        netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_DEL_MAC_FILTER);
+        (void)netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_DEL_MAC_FILTER);
     }
 #endif
     ret = netifapi_netif_remove(netif);
@@ -455,7 +455,7 @@ static void wm_netif_status_callback(struct netif *n)
 
 void net_stop_dhcp_timer(void)
 {
-    os_timer_deactivate((os_timer_t *)&dhcp_timer);
+    (void)os_timer_deactivate((os_timer_t *)&dhcp_timer);
 }
 
 static void stop_cb(void *ctx)
@@ -637,7 +637,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
                                           ip_2_ip4(&if_handle->gw));
             (void)netifapi_netif_set_up(&if_handle->netif);
-            os_timer_activate(&dhcp_timer);
+            (void)os_timer_activate(&dhcp_timer);
             wm_netif_status_callback_ptr = wm_netif_status_callback;
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;
@@ -736,7 +736,7 @@ int net_get_if_name(char *pif_name, void *intrfc_handle)
 
     ptr_if_name = netif_index_to_name(if_handle->netif.num + 1, if_name);
 
-    strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
+    (void)strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
     return WM_SUCCESS;
 }
 

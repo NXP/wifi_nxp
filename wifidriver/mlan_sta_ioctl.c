@@ -2960,13 +2960,13 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
             if (!pwep_key->key_length)
             {
 #ifdef WPA
-                if (pmpriv->sec_info.wpa_enabled)
+                if (pmpriv->sec_info.wpa_enabled != 0U)
                 {
                     ret = MLAN_STATUS_SUCCESS;
                     goto exit;
                 }
 #ifdef WPA2
-                if (&pmpriv->sec_info.wpa2_enabled)
+                if (&pmpriv->sec_info.wpa2_enabled != 0U)
                 {
                     ret = MLAN_STATUS_SUCCESS;
                     goto exit;
@@ -2975,7 +2975,7 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
 #endif /*WPA2*/
 
 #ifdef WAPI
-                if (&pmpriv->sec_info.wapi_enabled)
+                if (&pmpriv->sec_info.wapi_enabled != 0U)
                 {
                     ret = MLAN_STATUS_SUCCESS;
                     goto exit;

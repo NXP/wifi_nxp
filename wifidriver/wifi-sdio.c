@@ -127,7 +127,7 @@ static int wlan_init_struct(void)
 
 static int wlan_deinit_struct(void)
 {
-    if (txrx_mutex)
+    if (txrx_mutex != MNULL)
     {
         int status = os_mutex_delete(&txrx_mutex);
         if (status != WM_SUCCESS)
@@ -2195,8 +2195,8 @@ void sd_wifi_deinit(void)
 
     (void)wlan_cmd_shutdown();
     sdio_drv_deinit();
-    mlan_subsys_deinit();
-    wlan_deinit_struct();
+    (void)mlan_subsys_deinit();
+    (void)wlan_deinit_struct();
 }
 
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)

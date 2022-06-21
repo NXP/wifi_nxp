@@ -3092,7 +3092,7 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
     net_get_if_ipv6_addr(&network->ip, if_handle);
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
-        if (ip6_addr_isvalid(network->ip.ipv6[i].addr_state))
+        if (ip6_addr_isvalid((network->ip.ipv6[i].addr_state)) != 0U)
         {
             found++;
             /* Not considering link-local address as of now */

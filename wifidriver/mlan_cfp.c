@@ -2441,15 +2441,15 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
     pcb = &pmadapter->callbacks;
     if (pmadapter->otp_region != NULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->otp_region);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->otp_region);
     }
     if (pmadapter->cfp_otp_bg != NULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->cfp_otp_bg);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->cfp_otp_bg);
     }
     if (pmadapter->tx_power_table_bg != NULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->tx_power_table_bg);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->tx_power_table_bg);
     }
     pmadapter->otp_region             = MNULL;
     pmadapter->cfp_otp_bg             = MNULL;
@@ -2458,11 +2458,11 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
 #ifdef CONFIG_5GHz_SUPPORT
     if (pmadapter->cfp_otp_a != NULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->cfp_otp_a);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->cfp_otp_a);
     }
     if (pmadapter->tx_power_table_a != NULL)
     {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->tx_power_table_a);
+        (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->tx_power_table_a);
     }
     pmadapter->cfp_otp_a             = MNULL;
     pmadapter->tx_power_table_a      = MNULL;

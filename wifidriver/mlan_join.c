@@ -694,7 +694,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             if (prsn_ie_tlv->header.len <= (sizeof(pmpriv->wpa_ie) - 2))
             {
                 (void)__memcpy(pmadapter, prsn_ie_tlv->rsn_ie, &pmpriv->wpa_ie[2], prsn_ie_tlv->header.len);
-                if (pmpriv->sec_info.wpa2_enabled)
+                if (pmpriv->sec_info.wpa2_enabled != 0U)
                 {
                     ret = wlan_update_rsn_ie(pmpriv, prsn_ie_tlv);
                     if ((mlan_status)ret != MLAN_STATUS_SUCCESS)
@@ -712,10 +712,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             pos += sizeof(prsn_ie_tlv->header) + prsn_ie_tlv->header.len;
             prsn_ie_tlv->header.len = wlan_cpu_to_le16(prsn_ie_tlv->header.len);
         }
-        else if (pmpriv->sec_info.ewpa_enabled)
+        else if (pmpriv->sec_info.ewpa_enabled != 0U)
         {
             prsn_ie_tlv = (MrvlIEtypes_RsnParamSet_t *)(void *)pos;
-            if (pbss_desc->pwpa_ie)
+            if (pbss_desc->pwpa_ie != MNULL)
             {
                 prsn_ie_tlv->header.type = (t_u16)(*(pbss_desc->pwpa_ie)).vend_hdr.element_id;
                 prsn_ie_tlv->header.type = prsn_ie_tlv->header.type & 0x00FF;
@@ -792,7 +792,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     if (ISSUPP_11ACENABLED(pmadapter->fw_cap_info) && (!pbss_desc->disable_11n) &&
         wlan_11ac_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
     {
-        wlan_cmd_append_11ac_tlv(pmpriv, pbss_desc, &pos);
+        (void)wlan_cmd_append_11ac_tlv(pmpriv, pbss_desc, &pos);
     }
 #endif
 

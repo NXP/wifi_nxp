@@ -57,11 +57,11 @@ static const ip_addr_t *get_src_addr(const ip_addr_t *dst)
     {
         case IPADDR_TYPE_V4:
             addr = netif_ip_addr4(netif);
-            memcpy(&ret.u_addr.ip4, &addr->u_addr.ip4, sizeof(ret.u_addr.ip4));
+            (void)memcpy(&ret.u_addr.ip4, &addr->u_addr.ip4, sizeof(ret.u_addr.ip4));
             break;
         case IPADDR_TYPE_V6:
             addr = ip6_select_source_address(netif, &addr->u_addr.ip6);
-            memcpy(&ret.u_addr.ip6, &addr->u_addr.ip6, sizeof(ret.u_addr.ip6));
+            (void)memcpy(&ret.u_addr.ip6, &addr->u_addr.ip6, sizeof(ret.u_addr.ip6));
             break;
         default:
             is_ip_type_valid = MFALSE;
@@ -401,7 +401,7 @@ static void cmd_ping(int argc, char **argv)
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
     bool goto_end    = MFALSE;
 
-    memset(&addr, 0, sizeof(addr));
+    (void)memset(&addr, 0, sizeof(addr));
 
     /* If number of arguments is odd then print error */
     if ((argc & 0x01) != 0)

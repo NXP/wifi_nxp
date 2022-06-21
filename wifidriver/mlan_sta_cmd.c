@@ -443,7 +443,7 @@ static mlan_status wlan_cmd_tx_power_cfg(IN pmlan_private pmpriv,
     {
         case HostCmd_ACT_GEN_SET:
             ptxp = (HostCmd_DS_TXPWR_CFG *)pdata_buf;
-            if (ptxp->mode)
+            if (ptxp->mode != 0U)
             {
                 ppg_tlv = (MrvlTypes_Power_Group_t *)(void *)((t_u8 *)pdata_buf + sizeof(HostCmd_DS_TXPWR_CFG));
                 (void)__memmove(

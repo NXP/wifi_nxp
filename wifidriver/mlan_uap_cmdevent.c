@@ -296,7 +296,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
     cmd_size           = sizeof(HostCmd_DS_SYS_CONFIG) - 1U + S_DS_GEN;
 
     tlv = (t_u8 *)sys_config->tlv_buffer;
-    if (__memcmp(pmpriv->adapter, zero_mac, &bss->param.bss_config.mac_addr, MLAN_MAC_ADDR_LENGTH))
+    if (__memcmp(pmpriv->adapter, zero_mac, &bss->param.bss_config.mac_addr, MLAN_MAC_ADDR_LENGTH) != 0)
     {
         tlv_mac              = (MrvlIEtypes_MacAddr_t *)(void *)tlv;
         tlv_mac->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_MAC_ADDRESS);
@@ -583,7 +583,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         pscan_chan = tlv_chan_list->chan_scan_param;
         for (i = 0; i < bss->param.bss_config.num_of_chan; i++)
         {
-            memset(pscan_chan, 0x00, sizeof(ChanScanParamSet_t));
+            (void)memset(pscan_chan, 0x00, sizeof(ChanScanParamSet_t));
             pscan_chan->chan_number = bss->param.bss_config.chan_list[i].chan_number;
             pscan_chan->radio_type  = bss->param.bss_config.chan_list[i].band_config_type;
             pscan_chan++;
