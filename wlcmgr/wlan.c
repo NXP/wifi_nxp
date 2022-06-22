@@ -6457,6 +6457,32 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 }
 #endif
 
+#if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
+int wlan_set_11ax_cfg(int bss_type, uint8_t *data, int len)
+{
+    return wifi_set_11ax_cfg(bss_type, data, len);
+}
+
+int wlan_set_btwt_cfg(int bss_type, uint8_t *data, int len)
+{
+    return wifi_set_btwt_cfg(bss_type, data, len);
+}
+
+int wlan_set_twt_setup_cfg(int bss_type, uint8_t *data, int len)
+{
+    return wifi_set_twt_setup_cfg(bss_type, data, len);
+}
+
+int wlan_set_twt_teardown_cfg(int bss_type, uint8_t *data, int len)
+{
+    return wifi_set_twt_teardown_cfg(bss_type, data, len);
+}
+
+int wlan_get_twt_report(int bss_type, uint8_t *data, int len)
+{
+    return wifi_get_twt_report(bss_type, data, len);
+}
+#endif /* CONFIG_11AX && CONFIG_11AX_TWT */
 int wlan_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
 {

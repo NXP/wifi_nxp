@@ -568,9 +568,12 @@ typedef struct _mlan_ssid_bssid
 #define MLAN_11AXCMD_TXOPRTS_SUBID      0x108
 #define MLAN_11AXCMD_RUPOWER_SUBID      0x117
 
+#ifdef CONFIG_11AX_TWT
 #define MLAN_11AX_TWT_SETUP_SUBID    0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
-#endif
+#define MLAN_11AX_TWT_REPORT_SUBID 0x116
+#endif /* CONFIG_11AX_TWT */
+#endif /* CONFIG_11AX */
 
 #ifdef UAP_SUPPORT
 /** Maximum packet forward control value */
@@ -2812,6 +2815,7 @@ typedef struct _mlan_ds_11ax_cmd_cfg
     } param;
 } mlan_ds_11ax_cmd_cfg, *pmlan_ds_11ax_cmd_cfg;
 
+#ifdef CONFIG_11AX_TWT
 /** Type definition of mlan_ds_twt_setup for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twt_setup
 {
@@ -2855,6 +2859,17 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_teardown
     t_u8 teardown_all_twt;
 } MLAN_PACK_END mlan_ds_twt_teardown, *pmlan_ds_twt_teardown;
 
+/** Type definition of mlan_ds_twt_report for MLAN_OID_11AX_TWT_CFG */
+typedef MLAN_PACK_START struct _mlan_ds_twt_report
+{
+    /** TWT report type, 0: BTWT id */
+    t_u8 type;
+    /** TWT report length of value in data */
+    t_u8 length;
+    t_u8 reserve[2];
+    /** TWT report payload for FW response to fill */
+    t_u8 data[60];
+} MLAN_PACK_END mlan_ds_twt_report, *pmlan_ds_twt_report;
 /** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twtcfg
 {
@@ -2869,8 +2884,11 @@ typedef MLAN_PACK_START struct _mlan_ds_twtcfg
         mlan_ds_twt_setup twt_setup;
         /** TWT Teardown config for Sub ID: MLAN_11AX_TWT_TEARDOWN_SUBID */
         mlan_ds_twt_teardown twt_teardown;
+        /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
+        mlan_ds_twt_report twt_report;
     } param;
 } MLAN_PACK_END mlan_ds_twtcfg, *pmlan_ds_twtcfg;
+#endif /* CONFIG_11AX_TWT */
 
 /** Type definition of mlan_ds_11as_cfg for MLAN_IOCTL_11AX_CFG */
 typedef struct _mlan_ds_11ax_cfg

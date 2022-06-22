@@ -1047,4 +1047,55 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 #endif
 wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
+#if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
+/** Set 11ax config params
+ *
+ * \param[in] bss_type sta or uap mode.
+ * \param[in] data config params buffer.
+ * \param[in] len length of data buffer.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_11ax_cfg(int bss_type, uint8_t *data, int len);
+
+/** Set btwt config params
+ *
+ * \param[in] bss_type sta or uap mode.
+ * \param[in] data broadcast TWT config params buffer.
+ * \param[in] len length of data buffer.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_btwt_cfg(int bss_type, uint8_t *data, int len);
+
+/** Set twt setup config params
+ *
+ * \param[in] bss_type sta or uap mode.
+ * \param[in] data TWT setup config params buffer.
+ * \param[in] len length of data buffer.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_twt_setup_cfg(int bss_type, uint8_t *data, int len);
+
+/** Set twt teardown config params
+ *
+ * \param[in] bss_type sta or uap mode.
+ * \param[in] data TWT teardown config params buffer.
+ * \param[in] len length of data buffer.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_twt_teardown_cfg(int bss_type, uint8_t *data, int len);
+
+/** Get twt report
+ *
+ * \param[in] bss_type sta or uap mode.
+ * \param[out] data twt get report buffer.
+ * \param[in] len length of data buffer.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_get_twt_report(int bss_type, uint8_t *data, int len);
+#endif /* CONFIG_11AX && CONFIG_11AX_TWT */
 #endif

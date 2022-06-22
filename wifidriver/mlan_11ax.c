@@ -320,7 +320,7 @@ int wlan_cmd_11ax_cfg(mlan_private *pmpriv, t_u16 action, mlan_ds_11ax_he_cfg *h
     cmd->seq_num = (0x01) << 12;
     cmd->result  = 0x00;
 
-    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? he_cfg : NULL);
+    wifi_wait_for_cmdresp(he_cfg);
     LEAVE();
     return wm_wifi.cmd_resp_status;
 }
@@ -372,7 +372,6 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                         pmpriv->user_hecap_len =
                             MIN(tlv_len + sizeof(MrvlIEtypesHeader_t), sizeof(pmpriv->user_he_cap));
                         PRINTM(MCMND, "user_hecap_len=%d\n", pmpriv->user_hecap_len);
-                        PRINTF("user_hecap_len=%d\n", pmpriv->user_hecap_len);
                     }
                     else
                     {
@@ -396,6 +395,7 @@ done:
     return MLAN_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_11AX_TWT
 /**
  *  @brief              This function prepares TWT cfg command to configure setup/teardown
  *
@@ -412,6 +412,7 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
     mlan_ds_twtcfg *ds_twtcfg                 = (mlan_ds_twtcfg *)pdata_buf;
     hostcmd_twt_setup *twt_setup_params       = MNULL;
     hostcmd_twt_teardown *twt_teardown_params = MNULL;
+    hostcmd_twt_report *twt_report_params     = MNULL;
     mlan_status ret                           = MLAN_STATUS_SUCCESS;
 
     ENTER();
@@ -447,6 +448,13 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
             twt_teardown_params->teardown_all_twt = ds_twtcfg->param.twt_teardown.teardown_all_twt;
             cmd->size += sizeof(hostcmd_twtcfg->param.twt_teardown);
             break;
+        case MLAN_11AX_TWT_REPORT_SUBID:
+
+            twt_report_params = &hostcmd_twtcfg->param.twt_report;
+            __memset(pmpriv->adapter, twt_report_params, 0x00, sizeof(hostcmd_twtcfg->param.twt_report));
+            twt_report_params->type = ds_twtcfg->param.twt_report.type;
+            cmd->size += sizeof(hostcmd_twtcfg->param.twt_report);
+            break;
         default:
             PRINTM(MERROR, "Unknown subcmd %x\n", ds_twtcfg->sub_id);
             ret = MLAN_STATUS_FAILURE;
@@ -457,6 +465,7 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
     LEAVE();
     return ret;
 }
+#endif /* CONFIG_11AX_TWT */
 
 /**
  *  @brief This function prepares 11ax command
