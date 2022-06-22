@@ -157,7 +157,7 @@ static INLINE void wlan_11n_update_pktlen_amsdu_txpd(mlan_private *priv, pmlan_b
  *
  *  @return			Number of packets
  */
-static int wlan_11n_get_num_aggrpkts(t_u8 *data, t_u32 total_pkt_len)
+static int wlan_11n_get_num_aggrpkts(t_u8 *data, t_s32 total_pkt_len)
 {
     int pkt_count = 0;
     t_u32 pkt_len, pad;
@@ -169,7 +169,7 @@ static int wlan_11n_get_num_aggrpkts(t_u8 *data, t_u32 total_pkt_len)
         pkt_len = mlan_ntohs((*(t_u16 *)(void *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
         pad     = (((pkt_len + sizeof(Eth803Hdr_t)) & 3U)) ? (4U - ((pkt_len + sizeof(Eth803Hdr_t)) & 3U)) : 0U;
         data += pkt_len + pad + sizeof(Eth803Hdr_t);
-        total_pkt_len -= pkt_len + pad + sizeof(Eth803Hdr_t);
+        total_pkt_len -= (t_s32)pkt_len + (t_s32)pad + (t_s32)sizeof(Eth803Hdr_t);
         ++pkt_count;
     }
     LEAVE();
@@ -191,7 +191,7 @@ static int wlan_11n_get_num_aggrpkts(t_u8 *data, t_u32 total_pkt_len)
 mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 {
     t_u16 pkt_len;
-    t_u32 total_pkt_len;
+    t_s32 total_pkt_len;
     t_u8 *data;
     int pad;
     mlan_status ret = MLAN_STATUS_FAILURE;
@@ -203,7 +203,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
     ENTER();
 
     data          = (t_u8 *)(pmbuf->pbuf + pmbuf->data_offset);
-    total_pkt_len = pmbuf->data_len;
+    total_pkt_len = (t_s32)pmbuf->data_len;
 
     /* Sanity test */
     if (total_pkt_len > MLAN_RX_DATA_BUF_SIZE)
@@ -222,7 +222,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
         prx_pkt = (RxPacketHdr_t *)(void *)data;
         /* Length will be in network format, change it to host */
         pkt_len = mlan_ntohs((*(t_u16 *)(void *)(data + (2 * MLAN_MAC_ADDR_LENGTH))));
-        if (pkt_len > total_pkt_len)
+        if ((t_s32)pkt_len > total_pkt_len)
         {
             PRINTM(MERROR, "Error in packet length: total_pkt_len = %d, pkt_len = %d\n", total_pkt_len, pkt_len);
             break;
@@ -230,7 +230,7 @@ mlan_status wlan_11n_deaggregate_pkt(mlan_private *priv, pmlan_buffer pmbuf)
 
         pad = (((pkt_len + sizeof(Eth803Hdr_t)) & 3)) ? (4 - ((pkt_len + sizeof(Eth803Hdr_t)) & 3)) : 0;
 
-        total_pkt_len -= pkt_len + pad + sizeof(Eth803Hdr_t);
+        total_pkt_len -= (t_s32)pkt_len + pad + (t_s32)sizeof(Eth803Hdr_t);
 
         if (__memcmp(pmadapter, &prx_pkt->rfc1042_hdr, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)) == 0)
         {
