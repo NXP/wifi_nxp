@@ -698,6 +698,7 @@ int os_event_flags_get(event_group_handle_t hnd,
     int ret;
     *actual_flags_ptr = 0;
     event_wait_t *tmp = NULL, *node = NULL;
+
     if (hnd == 0U)
     {
         os_dprintf("ERROR:Invalid event flag handle\r\n");
@@ -715,7 +716,8 @@ int os_event_flags_get(event_group_handle_t hnd,
     }
     event_group_t *eG = (event_group_t *)hnd;
 
-check_again:
+    while (true)
+    {
     (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
 
     if ((option == EF_AND) || (option == EF_AND_CLEAR))
@@ -848,7 +850,7 @@ check_again:
                 return -WM_FAIL;
             }
             wait_done = true;
-            goto check_again;
+            continue;
         }
         else
         {
@@ -856,6 +858,7 @@ check_again:
             return EF_NO_EVENTS;
         }
     }
+    } /*while(true)*/
 }
 
 int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtrv_option_t option)

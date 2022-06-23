@@ -253,7 +253,9 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
     ENTER();
 
     if (pioctl_buf != MNULL)
+    {
         mib = (mlan_ds_snmp_mib *)pioctl_buf->pbuf;
+    }
 
     /* wmsdk */
     PRINTM(MINFO, "SNMP_RESP: value of the oid = 0x%x, query_type=0x%x\n", oid, query_type);
@@ -268,14 +270,18 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 ul_temp = psmib->value[0];
                 PRINTM(MINFO, "SNMP_RESP: DTIM Period =%u\n", ul_temp);
                 if (mib != MNULL)
+                {
                     mib->param.dtim_period = ul_temp;
+                }
                 break;
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
             case FragThresh_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: FragThsd =%u\n", ul_temp);
                 if (mib)
+                {
                     mib->param.frag_threshold = ul_temp;
+                }
                 break;
 #endif
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
@@ -283,7 +289,9 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: RTSThsd =%u\n", ul_temp);
                 if (mib)
+                {
                     mib->param.rts_threshold = ul_temp;
+                }
                 break;
 #endif
 #ifndef CONFIG_MLAN_WMSDK
@@ -291,19 +299,25 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: TxRetryCount=%u\n", ul_temp);
                 if (mib)
+                {
                     mib->param.retry_count = ul_temp;
+                }
                 break;
             case WwsMode_i:
                 ul_temp = wlan_le16_to_cpu(*((t_u16 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: WWSCfg =%u\n", ul_temp);
                 if (pioctl_buf)
+                {
                     ((mlan_ds_misc_cfg *)pioctl_buf->pbuf)->param.wws_cfg = ul_temp;
+                }
                 break;
             case Thermal_i:
                 ul_temp = wlan_le32_to_cpu(*((t_u32 *)(psmib->value)));
                 PRINTM(MINFO, "SNMP_RESP: Thermal =%u\n", ul_temp);
                 if (pioctl_buf)
+                {
                     ((mlan_ds_misc_cfg *)pioctl_buf->pbuf)->param.thermal = ul_temp;
+                }
                 break;
 #endif /* CONFIG_MLAN_WMSDK */
             default:

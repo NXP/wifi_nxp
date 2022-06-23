@@ -905,7 +905,9 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
         mcs_index = index & 0xF;
 
         if (mcs_index > 9)
+        {
             mcs_index = 9;
+        }
 
         /* 20M: bw=0, 40M: bw=1, 80M: bw=2, 160M: bw=3 */
         bw = (tx_rate_info & 0xCU) >> 2U;
@@ -919,8 +921,10 @@ t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_
         }
         else
 #endif
+        {
             /* NSS = 1 */
             rate = ac_mcs_rate_nss1[2 * (3 - bw) + gi][mcs_index];
+        }
     }
     else
 #endif

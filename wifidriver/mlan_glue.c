@@ -2973,11 +2973,17 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                     PRINTM(MCMND, "STA supports 11ac\n");
                     sta_ptr->is_11ac_enabled = MTRUE;
                     if (GET_VHTCAP_MAXMPDULEN(wlan_le32_to_cpu(pvht_cap->vht_cap.vht_cap_info)) == 2)
+                    {
                         sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_12K;
+                    }
                     else if (GET_VHTCAP_MAXMPDULEN(wlan_le32_to_cpu(pvht_cap->vht_cap.vht_cap_info)) == 1)
+                    {
                         sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
+                    }
                     else
+                    {
                         sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_4K;
+                    }
                 }
                 else
                 {

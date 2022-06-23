@@ -2270,8 +2270,10 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                 || ((mlan_rate_format)(pmpriv->tx_rate_info & 0x3U) == MLAN_RATE_FORMAT_HE)
 #endif
             )
+            {
                 /* VHT rate */
                 rate->param.rate_cfg.rate = (t_u32)((pmpriv->tx_rate) & 0xF);
+            }
             else
 #endif
 #ifdef CONFIG_11N
@@ -2567,17 +2569,21 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 }
 #ifdef CONFIG_11AC
                 for (i = 0; i < NELEMENTS(prate_scope->vht_mcs_rate_bitmap); i++)
+                {
                     pmpriv->bitmap_rates[2 + sizeof(prate_scope->ht_mcs_rate_bitmap) / sizeof(t_u16) + i] =
                         wlan_le16_to_cpu(prate_scope->vht_mcs_rate_bitmap[i]);
+                }
 
 #endif
 #ifdef CONFIG_11AX
                 if (IS_FW_SUPPORT_11AX(pmadapter))
                 {
                     for (i = 0; i < NELEMENTS(prate_scope->he_mcs_rate_bitmap); i++)
+                    {
                         pmpriv->bitmap_rates[2 + sizeof(prate_scope->ht_mcs_rate_bitmap) / sizeof(t_u16) +
                                              sizeof(prate_scope->vht_mcs_rate_bitmap) / sizeof(t_u16) + i] =
                             wlan_le16_to_cpu(prate_scope->he_mcs_rate_bitmap[i]);
+                    }
                 }
 #endif
                 break;
