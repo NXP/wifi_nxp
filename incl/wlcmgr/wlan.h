@@ -477,6 +477,14 @@ struct wlan_scan_result
     unsigned wpa2 : 1;
     /** The network uses WPA3 SAE security */
     unsigned wpa3_sae : 1;
+#ifdef CONFIG_11R
+    /** The network uses FT 802.1x security */
+    unsigned ft_1x : 1;
+    /** The network uses FT PSK security */
+    unsigned ft_psk : 1;
+    /** The network uses FT SAE security */
+    unsigned ft_sae : 1;
+#endif
 
     /** The signal strength of the beacon */
     unsigned char rssi;
@@ -1025,6 +1033,14 @@ struct wlan_network
     /** This indicates this network is used as an internal network for
      * WPS */
     unsigned wps_specific : 1;
+#endif
+#ifdef CONFIG_11R
+    /** The network uses FT 802.1x security */
+    unsigned ft_1x : 1;
+    /** The network uses FT PSK security */
+    unsigned ft_psk : 1;
+    /** The network uses FT SAE security */
+    unsigned ft_sae : 1;
 #endif
 #ifdef CONFIG_OWE
     /** OWE Transition mode */
@@ -3068,7 +3084,7 @@ int wlan_set_frag(int frag);
 int wlan_set_uap_frag(int frag);
 #endif
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 /**
  * enable/disable 11k feature in WLAN firmware.
  *

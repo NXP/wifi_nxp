@@ -303,6 +303,9 @@ static struct
     bool roaming_enabled : 1;
     unsigned char rssi_low;
 #endif
+#ifdef CONFIG_11R
+    bool ft_assoc : 1;
+#endif
 #ifdef CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
@@ -1261,9 +1264,14 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
             }
             else
             {
-                wlcm_d("adding SSID and PSK to supplicant cache");
-                ret = wifi_send_add_wpa_psk((int)network->role, network->ssid, network->security.psk,
-                                            (unsigned int)network->security.psk_len);
+#ifdef CONFIG_11R
+                if (!wlan.ft_assoc)
+#endif
+                {
+                    wlcm_d("adding SSID and PSK to supplicant cache");
+                    ret = wifi_send_add_wpa_psk((int)network->role, network->ssid, network->security.psk,
+                                                (unsigned int)network->security.psk_len);
+                }
             }
 
             if (ret != WM_SUCCESS)
@@ -1548,7 +1556,7 @@ static int do_connect(int netindex)
         /* Fast path: Jump directly to associating state */
         wlan.sta_state = CM_STA_ASSOCIATING;
         ret            = wrapper_wifi_assoc(wlan.fast_path_bss, wlan.networks[wlan.cur_network_idx].security.type,
-                                 wlan.networks[wlan.cur_network_idx].security.ucstCipher.tkip, 0);
+                                 wlan.networks[wlan.cur_network_idx].security.ucstCipher.tkip, 0, false);
         if (ret == WM_SUCCESS)
             return WM_SUCCESS;
 
@@ -1757,6 +1765,25 @@ static void update_network_params(struct wlan_network *network, const struct wif
         network->security.type = t;
     }
 
+#ifdef CONFIG_11R
+    if (res->WPA_WPA2_WEP.ft_1x != 0U)
+    {
+        network->ft_1x = 1;
+    }
+    else if (res->WPA_WPA2_WEP.ft_psk != 0U)
+    {
+        network->ft_psk = 1;
+    }
+    else if (res->WPA_WPA2_WEP.ft_sae != 0U)
+    {
+        network->ft_sae = 1;
+    }
+    else
+    {
+        /* Do nothing */
+    }
+#endif
+
     /* We have a match based on the criteria we checked, update the known
      * network with any additional information that we got from the scan but
      * did not know before */
@@ -1836,9 +1863,16 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
     }
 #ifdef CONFIG_OWE
     ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip,
-                             res->trans_mode);
+                             res->trans_mode, false);
 #else
-    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip, 0);
+#ifdef CONFIG_11R
+    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip, 0,
+                             wlan.ft_assoc);
+    wlan.ft_assoc = false;
+#else
+    ret =
+        wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip, 0, false);
+#endif
 #endif
     if (ret != 0)
     {
@@ -1929,6 +1963,7 @@ static void handle_scan_results(void)
                     continue;
                 }
 
+                wlcm_d("RSSI: Best AP=%d Result AP=%d", best_ap->RSSI, res->RSSI);
                 if (best_ap->RSSI > res->RSSI)
                 {
                     /*
@@ -1947,6 +1982,15 @@ static void handle_scan_results(void)
 
     if (matching_ap_found)
     {
+#ifdef CONFIG_11R
+        if (wlan.ft_assoc == true)
+        {
+            if (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
+            {
+                return;
+            }
+        }
+#endif
         update_network_params(network, best_ap);
 #ifdef CONFIG_OWE
         if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)
@@ -1975,7 +2019,8 @@ static void handle_scan_results(void)
         return;
     }
     else
-    { /* Do Nothing */
+    {
+        /* Do Nothing */
     }
 
     os_mem_free(best_ap);
@@ -2256,15 +2301,22 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
         wlcm_d("releasing scan lock (user scan)");
     }
     else
-    { /* Do Nothing */
-#ifdef CONFIG_ROAMING
-        if (wlan.sta_state == CM_STA_CONNECTED)
+    {
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
+#ifdef CONFIG_11R
+        if (wlan.ft_assoc == true)
         {
-            wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
-            handle_scan_results();
-            *next = wlan.sta_state;
-            return;
+#endif
+            if (wlan.sta_state == CM_STA_CONNECTED)
+            {
+                wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
+                handle_scan_results();
+                *next = wlan.sta_state;
+                return;
+            }
+#ifdef CONFIG_11R
         }
+#endif
 #endif
     }
     (void)os_semaphore_put(&wlan.scan_lock);
@@ -2585,6 +2637,17 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
+#ifdef CONFIG_11R
+        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+        {
+            wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
+        }
+        else
+        {
+            /* Do nothing */
+        }
+#endif
+
 #ifdef CONFIG_WMSTATS
         g_wm_stats.wm_conn_succ++;
 #endif /* CONFIG_WMSTATS */
@@ -2709,6 +2772,79 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #endif
     }
 }
+
+static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
+{
+    if (!is_state(CM_STA_CONNECTED))
+    {
+        wlcm_d("ignoring rssi low event in disconnected state");
+        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+        {
+            (void)wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
+        }
+        else
+        {
+            /* Do nothing */
+        }
+        return;
+    }
+#ifdef CONFIG_11K
+    if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+    {
+        int ret;
+        ret = wlan_11k_neighbor_req();
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_d("Failed to send 11K neighbor request");
+            return;
+        }
+    }
+#endif
+}
+
+#ifdef CONFIG_11K
+static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
+                                                    enum cm_sta_state *next,
+                                                    struct wlan_network *network)
+{
+    if (is_state(CM_STA_IDLE))
+    {
+        wlcm_d("ignoring neighbor list report event in idle state");
+        return;
+    }
+#ifdef CONFIG_11R
+    if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+    {
+        unsigned int i;
+        int ret;
+        t_u8 *channels = (t_u8 *)msg->data;
+        wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
+
+        for (i = 0; i < channels[0]; i++)
+        {
+            /* TODO: get the channel numbers from the neighbor list report event */
+            chan_list[i].chan_number = (t_u8)channels[i + 1U];
+            chan_list[i].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
+            chan_list[i].scan_time   = 120;
+        }
+
+        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[0], chan_list, 0, false,
+                                 false);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("error: neighbor list scan failed");
+        }
+
+        wlan.ft_assoc = true;
+
+        if (channels != NULL)
+        {
+            os_mem_free(channels);
+        }
+    }
+#endif
+}
+#endif
 
 static void wlcm_process_link_loss_event(struct wifi_message *msg,
                                          enum cm_sta_state *next,
@@ -3248,6 +3384,9 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
 #endif
+#ifdef CONFIG_11K
+    wlan_11k_cfg(1);
+#endif
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
@@ -3783,6 +3922,16 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: link loss, code=%d", (int)msg->data);
             wlcm_process_link_loss_event(msg, &next, network);
             break;
+        case WIFI_EVENT_RSSI_LOW:
+            wlcm_d("got event: rssi low");
+            wlcm_process_rssi_low_event(msg, &next, network);
+            break;
+#ifdef CONFIG_11K
+        case WIFI_EVENT_NLIST_REPORT:
+            wlcm_d("got event: neighbor list report");
+            wlcm_process_neighbor_list_report_event(msg, &next, network);
+            break;
+#endif
 #ifdef CONFIG_WLAN_BRIDGE
         case WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED:
             wlcm_d("got event: auto link switch network");
@@ -5160,7 +5309,20 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
             res->wep = 1;
         }
     }
-
+#ifdef CONFIG_11R
+    if (res->wpa2_entp != 0U)
+    {
+        res->ft_1x = (t_u8)desc->WPA_WPA2_WEP.ft_1x;
+    }
+    if (res->wpa2 != 0U)
+    {
+        res->ft_psk = (t_u8)desc->WPA_WPA2_WEP.ft_psk;
+    }
+    if (res->wpa3_sae != 0U)
+    {
+        res->ft_sae = (t_u8)desc->WPA_WPA2_WEP.ft_sae;
+    }
+#endif
     res->rssi = desc->RSSI;
 
     (void)memcpy((void *)&res->trans_bssid[0], (const void *)&desc->trans_bssid[0], sizeof(res->trans_bssid));
@@ -6640,7 +6802,7 @@ int wlan_set_uap_frag(int frag)
 
 #endif
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 int wlan_11k_cfg(int enable_11k)
 {
     return wifi_11k_cfg(enable_11k);

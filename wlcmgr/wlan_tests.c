@@ -144,14 +144,28 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("%s: WPA\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA2:
-            (void)PRINTF("%s: WPA2\r\n", sec_tag(network));
+            (void)PRINTF("%s: WPA2", sec_tag(network));
+#ifdef CONFIG_11R
+            if (network->ft_psk == 1U)
+            {
+                (void)PRINTF(" with FT_PSK");
+            }
+#endif
+            (void)PRINTF("\r\n");
             break;
         case WLAN_SECURITY_WPA_WPA2_MIXED:
             (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag(network));
             break;
 #ifdef CONFIG_WPA2_ENTP
         case WLAN_SECURITY_EAP_TLS:
-            (void)PRINTF("%s: WPA2 Enterprise EAP-TLS\r\n", sec_tag(network));
+            (void)PRINTF("%s: WPA2 Enterprise EAP-TLS", sec_tag(network));
+#ifdef CONFIG_11R
+            if (network->ft_1x == 1U)
+            {
+                (void)PRINTF(" with FT_1X");
+            }
+#endif
+            (void)PRINTF("\r\n");
             break;
 #endif
 #ifdef CONFIG_PEAP_MSCHAPV2
@@ -165,7 +179,14 @@ static void print_network(struct wlan_network *network)
             break;
 #endif
         case WLAN_SECURITY_WPA3_SAE:
-            (void)PRINTF("%s: WPA3 SAE\r\n", sec_tag(network));
+            (void)PRINTF("%s: WPA3 SAE", sec_tag(network));
+#ifdef CONFIG_11R
+            if (network->ft_sae == 1U)
+            {
+                (void)PRINTF(" with FT_SAE");
+            }
+#endif
+            (void)PRINTF("\r\n");
             break;
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
             (void)PRINTF("%s: WPA2/WPA3 SAE Mixed\r\n", sec_tag(network));
@@ -682,9 +703,23 @@ static int __scan_cb(unsigned int count)
             }
             if (res.wpa2_entp != 0U)
             {
-                (void)PRINTF("WPA2 Enterprise");
+                (void)PRINTF("WPA2 Enterprise ");
             }
         }
+#ifdef CONFIG_11R
+        if (res.ft_1x != 0U)
+        {
+            (void)PRINTF("with FT_802.1x");
+        }
+        if (res.ft_psk != 0U)
+        {
+            (void)PRINTF("with FT_PSK");
+        }
+        if (res.ft_sae != 0U)
+        {
+            (void)PRINTF("with FT_SAE");
+        }
+#endif
         if (!((res.wep != 0U) || (res.wpa != 0U) || (res.wpa2 != 0U) || (res.wpa3_sae != 0U) || (res.wpa2_entp != 0U)))
         {
             (void)PRINTF("OPEN ");
@@ -1564,7 +1599,7 @@ static void test_wlan_set_frag(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
 static void test_wlan_11k_cfg(int argc, char **argv)
 {
     int enable_11k;
@@ -2341,9 +2376,9 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
-#ifdef CONFIG_ENABLE_802_11K
+#ifdef CONFIG_11K
     {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
-    {"wlan-11k-neigbor-req", NULL, test_wlan_11k_neighbor_req},
+    {"wlan-11k-neighbor-req", NULL, test_wlan_11k_neighbor_req},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
