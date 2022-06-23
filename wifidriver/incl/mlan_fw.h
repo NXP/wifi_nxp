@@ -720,59 +720,59 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define ISSUPP_11ACBW160(Dot11acDevCap) (Dot11acDevCap & MBIT(2))
 
 /** Set VHT Cap Info: Max MPDU length */
-#define SET_VHTCAP_MAXMPDULEN(VHTCapInfo, value) (VHTCapInfo |= (value & 0x03))
+#define SET_VHTCAP_MAXMPDULEN(VHTCapInfo, value) ((VHTCapInfo) |= (value & 0x03))
 /** SET VHT CapInfo:  Supported Channel Width SET (2 bits)*/
-#define SET_VHTCAP_CHWDSET(VHTCapInfo, value) (VHTCapInfo |= ((value & 0x3) << 2))
+#define SET_VHTCAP_CHWDSET(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x3) << 2))
 /** SET VHT CapInfo:  Rx STBC (3 bits) */
-#define SET_VHTCAP_RXSTBC(VHTCapInfo, value) (VHTCapInfo |= ((value & 0x7) << 8))
+#define SET_VHTCAP_RXSTBC(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 8))
 /** SET VHT CapInfo:  Commpressed Steering Num of BFer Ant Supported (3 bits) */
-#define SET_VHTCAP_SNBFERANT(VHTCapInfo, value) (VHTCapInfo |= ((value & 0x7) << 13))
+#define SET_VHTCAP_SNBFERANT(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 13))
 /** SET VHT CapInfo:  Num of Sounding Dimensions (3 bits) */
-#define SET_VHTCAP_NUMSNDDM(VHTCapInfo, value) (VHTCapInfo |= ((value & 0x7) << 16))
+#define SET_VHTCAP_NUMSNDDM(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 16))
 /** SET VHT CapInfo:  Max AMPDU Length Exponent (3 bits) */
-#define SET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo, value) (VHTCapInfo |= ((value & 0x7) << 23))
+#define SET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 23))
 /** SET VHT CapInfo:  VHT Link Adaptation Capable (2 bits) */
-#define SET_VHTCAP_LINKADPCAP(VHTCapInfo, value) (VHTCapInfo |= ((value & 0x3) << 26))
+#define SET_VHTCAP_LINKADPCAP(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x3) << 26))
 
 /** HW_SPEC Dot11acDevCap : ReSet VHT Link Adapation Capable */
-#define RESET_11ACVHTLINKCAPA(Dot11acDevCap, value) (Dot11acDevCap &= ~(0x03))
+#define RESET_11ACVHTLINKCAPA(Dot11acDevCap, value) ((Dot11acDevCap) &= ~(0x03))
 /** HW_SPEC Dot11acDevCap : ReSet Maximum AMPDU Length Exponent */
-#define RESET_11ACAMPDULENEXP(Dot11acDevCap, value) (Dot11acDevCap &= ~(0x07))
+#define RESET_11ACAMPDULENEXP(Dot11acDevCap, value) ((Dot11acDevCap) &= ~(0x07))
 /** HW_SPEC Dot11acDevCap : ReSet support of HTC-VHT */
-#define RESET_11ACVHTHTCVHT(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(22))
+#define RESET_11ACVHTHTCVHT(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(22))
 /** HW_SPEC Dot11acDevCap : ReSet support of VHT TXOP PS */
-#define RESET_11ACVHTTXOPPS(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(21))
+#define RESET_11ACVHTTXOPPS(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(21))
 /** HW_SPEC Dot11acDevCap : ReSet support of MU RX beamformee */
-#define RESET_11ACMURXBEAMFORMEE(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(20))
+#define RESET_11ACMURXBEAMFORMEE(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(20))
 /** HW_SPEC Dot11acDevCap : ReSet support of MU TX beamformee */
-#define RESET_11ACMUTXBEAMFORMEE(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(19))
+#define RESET_11ACMUTXBEAMFORMEE(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(19))
 /** HW_SPEC Dot11acDevCap : ReSet Number of Sounding Dimensions */
-#define RESET_11ACSOUNDINGNUM(Dot11acDevCap) (Dot11acDevCap &= ~((0x07) << 16))
+#define RESET_11ACSOUNDINGNUM(Dot11acDevCap) ((Dot11acDevCap) &= ~((0x07) << 16))
 /** HW_SPEC Dot11acDevCap : ReSet Compressed Steering Number
  * of Beamformer Antenna */
-#define RESET_11ACBFANTNUM(Dot11acDevCap) (Dot11acDevCap &= ~((0x07) << 13))
+#define RESET_11ACBFANTNUM(Dot11acDevCap) ((Dot11acDevCap) &= ~((0x07) << 13))
 /** HW_SPEC Dot11acDevCap : ReSet support of SU Beamformee */
-#define RESET_11ACSUBEAMFORMEE(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(12))
+#define RESET_11ACSUBEAMFORMEE(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(12))
 /** HW_SPEC Dot11acDevCap : ReSet support of SU Beamformer */
-#define RESET_11ACSUBEAMFORMER(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(11))
+#define RESET_11ACSUBEAMFORMER(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(11))
 /** HW_SPEC Dot11acDevCap : ReSet support of Rx STBC */
-#define RESET_11ACRXSTBC(Dot11acDevCap) (Dot11acDevCap &= ~((0x07) << 8))
+#define RESET_11ACRXSTBC(Dot11acDevCap) ((Dot11acDevCap) &= ~((0x07) << 8))
 /** HW_SPEC Dot11acDevCap : ReSet support of Tx STBC */
-#define RESET_11ACTXSTBC(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(7))
+#define RESET_11ACTXSTBC(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(7))
 /** HW_SPEC Dot11acDevCap : ReSet support of Short GI support for 160MHz BW */
-#define RESET_11ACSGI160(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(6))
+#define RESET_11ACSGI160(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(6))
 /** HW_SPEC Dot11acDevCap : ReSet support of Short GI support for 80MHz BW */
-#define RESET_11ACSGI80(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(5))
+#define RESET_11ACSGI80(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(5))
 /** HW_SPEC Dot11acDevCap : ReSet support of LDPC coding */
-#define RESET_11ACLDPC(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(4))
+#define RESET_11ACLDPC(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(4))
 /** HW_SPEC Dot11acDevCap : ReSet support of
  * Channel BW 20/40/80/160/80+80 MHz */
-#define RESET_11ACBW8080(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(3))
+#define RESET_11ACBW8080(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(3))
 /** HW_SPEC Dot11acDevCap : ReSet support of
  * Channel BW 20/40/80/160 MHz */
-#define RESET_11ACBW160(Dot11acDevCap) (Dot11acDevCap &= ~MBIT(2))
+#define RESET_11ACBW160(Dot11acDevCap) ((Dot11acDevCap) &= ~MBIT(2))
 /** HW_SPEC Dot11acDevCap : ReSet Max MPDU length */
-#define RESET_11ACMAXMPDULEN(Dot11acDevCap) (Dot11acDevCap &= ~(0x03))
+#define RESET_11ACMAXMPDULEN(Dot11acDevCap) ((Dot11acDevCap) &= ~(0x03))
 
 /** Default 11ac capability mask for 2.4GHz */
 #define DEFAULT_11AC_CAP_MASK_BG (HWSPEC_11ACSGI80_SUPP | HWSPEC_11ACRXSTBC_SUPP)
@@ -783,21 +783,21 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** GET VHT CapInfo:  Supported Channel Width SET (2 bits)*/
 #define GET_VHTCAP_CHWDSET(VHTCapInfo) (((VHTCapInfo) >> 2) & 0x3U)
 /** GET VHT CapInfo:  Rx STBC (3 bits) */
-#define GET_VHTCAP_RXSTBC(VHTCapInfo) ((VHTCapInfo >> 8) & 0x7)
+#define GET_VHTCAP_RXSTBC(VHTCapInfo) (((VHTCapInfo) >> 8) & 0x7)
 /** GET VHT CapInfo:  Compressed Steering Num of BFer Ant Supported (3 bits) */
-#define GET_VHTCAP_SNBFERANT(VHTCapInfo) ((VHTCapInfo >> 13) & 0x7)
+#define GET_VHTCAP_SNBFERANT(VHTCapInfo) (((VHTCapInfo) >> 13) & 0x7)
 /** GET VHT CapInfo:  Num of Sounding Dimensions (3 bits) */
-#define GET_VHTCAP_NUMSNDDM(VHTCapInfo) ((VHTCapInfo >> 16) & 0x7)
+#define GET_VHTCAP_NUMSNDDM(VHTCapInfo) (((VHTCapInfo) >> 16) & 0x7)
 /** GET VHT CapInfo:  Max AMPDU Length Exponent (3 bits) */
-#define GET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo) ((VHTCapInfo >> 23) & 0x7)
+#define GET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo) (((VHTCapInfo) >> 23) & 0x7)
 /** GET VHT CapInfo:  VHT Link Adaptation Capable (2 bits) */
-#define GET_VHTCAP_LINKADPCAP(VHTCapInfo) ((VHTCapInfo >> 26) & 0x3)
+#define GET_VHTCAP_LINKADPCAP(VHTCapInfo) (((VHTCapInfo) >> 26) & 0x3)
 /**SET OPERATING MODE:Channel Width:80M*/
 #define SET_OPER_MODE_80M(oper_mode) ((oper_mode) = (t_u8)((oper_mode) & ~MBIT(0)) | MBIT(1))
 /**SET OPERATING MODE:Channel Width:40M*/
 #define SET_OPER_MODE_40M(oper_mode) ((oper_mode) = (t_u8)((oper_mode) & ~MBIT(1)) | MBIT(0))
 /**SET OPERATING MODE:Channel Width:20M*/
-#define SET_OPER_MODE_20M(oper_mode) (oper_mode &= (t_u8)(~(0x03U)))
+#define SET_OPER_MODE_20M(oper_mode) ((oper_mode) &= (t_u8)(~(0x03U)))
 #define IS_OPER_MODE_20M(oper_mode)  (((oper_mode) & (MBIT(0) | MBIT(1))) == 0U)
 /**SET OPERATING MODE:Rx NSS:2*/
 #define SET_OPER_MODE_2NSS(oper_mode) ((oper_mode) = ((oper_mode) & ~(MBIT(5) | MBIT(6))) | MBIT(4))

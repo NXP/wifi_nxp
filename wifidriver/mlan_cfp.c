@@ -683,12 +683,12 @@ static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u
 
     if (!region)
     {
-        PRINTM(MERROR, "Error Band[0x%x] or code[BG:%#x, A:%#x]\n", band, cfp_bg
 #ifdef CONFIG_5GHz_SUPPORT
-               ,
-               cfp_a
+        PRINTM(MERROR, "Error Band[0x%x] or code[BG:%#x, A:%#x]\n", band, cfp_bg, cfp_a);
+
+#else
+        PRINTM(MERROR, "Error Band[0x%x] or code[BG:%#x]\n", band, cfp_bg);
 #endif /* CONFIG_5GHz_SUPPORT */
-        );
     }
     else
     {

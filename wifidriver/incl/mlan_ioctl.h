@@ -1676,7 +1676,7 @@ typedef enum
     AssocAgentAuth_FastBss,
     AssocAgentAuth_FastBss_Skip,
     AssocAgentAuth_Wpa3Sae = 6,
-#if CONFIG_OWE
+#ifdef CONFIG_OWE
     AssocAgentAuth_Owe = 7,
 #endif
     AssocAgentAuth_Auto,

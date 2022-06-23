@@ -128,15 +128,15 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
     {
         return IPV6_ADDR_STATE_TENTATIVE;
     }
-    else if (ip6_addr_ispreferred(addr_state))
+    else if (ip6_addr_ispreferred((addr_state)))
     {
         return IPV6_ADDR_STATE_PREFERRED;
     }
-    else if (ip6_addr_isdeprecated(addr_state))
+    else if (ip6_addr_isdeprecated((addr_state)))
     {
         return IPV6_ADDR_STATE_DEPRECATED;
     }
-    else if (ip6_addr_isinvalid(addr_state))
+    else if (ip6_addr_isinvalid((addr_state)))
     {
         return IPV6_ADDR_STATE_INVALID;
     }
@@ -585,14 +585,14 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
-    net_d("configuring interface %s (with %s)",
-          (if_handle == &g_mlan) ? "mlan" :
 #ifdef CONFIG_P2P
-                                   (if_handle == &g_uap) ? "uap" : "wfd",
-#else
-                                   "uap",
-#endif
+    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
           (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+#else
+    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
+          (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+#endif
+
     (void)netifapi_netif_set_down(&if_handle->netif);
     wm_netif_status_callback_ptr = NULL;
 
