@@ -718,147 +718,147 @@ int os_event_flags_get(event_group_handle_t hnd,
 
     while (true)
     {
-    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+        (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
 
-    if ((option == EF_AND) || (option == EF_AND_CLEAR))
-    {
-        if ((eG->flags & requested_flags) == requested_flags)
+        if ((option == EF_AND) || (option == EF_AND_CLEAR))
         {
-            status = eG->flags;
+            if ((eG->flags & requested_flags) == requested_flags)
+            {
+                status = eG->flags;
+            }
+            else
+            {
+                status = 0;
+            }
+        }
+        else if ((option == EF_OR) || (option == EF_OR_CLEAR))
+        {
+            status = (requested_flags & eG->flags);
         }
         else
         {
-            status = 0;
+            os_dprintf("ERROR:Invalid event flag get option\r\n");
+            (void)os_mutex_put(&eG->mutex);
+            return -WM_FAIL;
         }
-    }
-    else if ((option == EF_OR) || (option == EF_OR_CLEAR))
-    {
-        status = (requested_flags & eG->flags);
-    }
-    else
-    {
-        os_dprintf("ERROR:Invalid event flag get option\r\n");
-        (void)os_mutex_put(&eG->mutex);
-        return -WM_FAIL;
-    }
-    /* Check flags */
-    if (status != 0U)
-    {
-        *actual_flags_ptr = status;
+        /* Check flags */
+        if (status != 0U)
+        {
+            *actual_flags_ptr = status;
 
-        /* Clear the requested flags from main flag */
-        if ((option == EF_AND_CLEAR) || (option == EF_OR_CLEAR))
-        {
-            eG->flags &= ~status;
-        }
-
-        if (wait_done)
-        {
-            /*Delete the created semaphore */
-            (void)os_semaphore_delete(&tmp->sem);
-            /* Remove ourselves from the list */
-            os_event_flags_remove_node(tmp, eG);
-        }
-        (void)os_mutex_put(&eG->mutex);
-        return WM_SUCCESS;
-    }
-    else
-    {
-        if (wait_option != 0U)
-        {
-            if (wait_done == false)
+            /* Clear the requested flags from main flag */
+            if ((option == EF_AND_CLEAR) || (option == EF_OR_CLEAR))
             {
-                /* Add to link list */
-                /* Prepare a node to add in the link list */
-                node = os_mem_alloc(sizeof(event_wait_t));
-                if (node == NULL)
+                eG->flags &= ~status;
+            }
+
+            if (wait_done)
+            {
+                /*Delete the created semaphore */
+                (void)os_semaphore_delete(&tmp->sem);
+                /* Remove ourselves from the list */
+                os_event_flags_remove_node(tmp, eG);
+            }
+            (void)os_mutex_put(&eG->mutex);
+            return WM_SUCCESS;
+        }
+        else
+        {
+            if (wait_option != 0U)
+            {
+                if (wait_done == false)
                 {
-                    os_dprintf("ERROR:memory alloc\r\n");
-                    (void)os_mutex_put(&eG->mutex);
-                    return -WM_FAIL;
-                }
-                (void)memset(node, 0x00, sizeof(event_wait_t));
-                /* Set the requested flag in the node */
-                node->thread_mask = requested_flags;
-                /* Create a semaophore */
-                ret = os_semaphore_create(&node->sem, "wait_thread");
-                if (ret != 0)
-                {
-                    os_dprintf("ERROR:In creating semaphore\r\n");
-                    os_mem_free(node);
-                    (void)os_mutex_put(&eG->mutex);
-                    return -WM_FAIL;
-                }
-                /* If there is no node present */
-                if (eG->list == NULL)
-                {
-                    eG->list = node;
-                    tmp      = eG->list;
-                }
-                else
-                {
-                    tmp = eG->list;
-                    /* Move to last node */
-                    while (tmp->next != NULL)
+                    /* Add to link list */
+                    /* Prepare a node to add in the link list */
+                    node = os_mem_alloc(sizeof(event_wait_t));
+                    if (node == NULL)
                     {
-                        os_dprintf("waiting \r\n");
-                        tmp = tmp->next;
+                        os_dprintf("ERROR:memory alloc\r\n");
+                        (void)os_mutex_put(&eG->mutex);
+                        return -WM_FAIL;
                     }
-                    tmp->next  = node;
-                    node->prev = tmp;
-                    tmp        = tmp->next;
+                    (void)memset(node, 0x00, sizeof(event_wait_t));
+                    /* Set the requested flag in the node */
+                    node->thread_mask = requested_flags;
+                    /* Create a semaophore */
+                    ret = os_semaphore_create(&node->sem, "wait_thread");
+                    if (ret != 0)
+                    {
+                        os_dprintf("ERROR:In creating semaphore\r\n");
+                        os_mem_free(node);
+                        (void)os_mutex_put(&eG->mutex);
+                        return -WM_FAIL;
+                    }
+                    /* If there is no node present */
+                    if (eG->list == NULL)
+                    {
+                        eG->list = node;
+                        tmp      = eG->list;
+                    }
+                    else
+                    {
+                        tmp = eG->list;
+                        /* Move to last node */
+                        while (tmp->next != NULL)
+                        {
+                            os_dprintf("waiting \r\n");
+                            tmp = tmp->next;
+                        }
+                        tmp->next  = node;
+                        node->prev = tmp;
+                        tmp        = tmp->next;
+                    }
+                    /* Take semaphore first time */
+                    ret = os_semaphore_get(&tmp->sem, OS_WAIT_FOREVER);
+                    if (ret != WM_SUCCESS)
+                    {
+                        os_dprintf("ERROR:1st sem get error\r\n");
+                        (void)os_mutex_put(&eG->mutex);
+                        /*Delete the created semaphore */
+                        (void)os_semaphore_delete(&tmp->sem);
+                        /* Remove ourselves from the list */
+                        os_event_flags_remove_node(tmp, eG);
+                        return -WM_FAIL;
+                    }
                 }
-                /* Take semaphore first time */
-                ret = os_semaphore_get(&tmp->sem, OS_WAIT_FOREVER);
+                (void)os_mutex_put(&eG->mutex);
+                /* Second time get is performed for work-around purpose
+                as in current implementation of semaphore 1st request
+                is always satisfied */
+                ret = os_semaphore_get(&tmp->sem, os_msec_to_ticks(wait_option));
                 if (ret != WM_SUCCESS)
                 {
-                    os_dprintf("ERROR:1st sem get error\r\n");
-                    (void)os_mutex_put(&eG->mutex);
+                    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
                     /*Delete the created semaphore */
                     (void)os_semaphore_delete(&tmp->sem);
                     /* Remove ourselves from the list */
                     os_event_flags_remove_node(tmp, eG);
+                    (void)os_mutex_put(&eG->mutex);
+                    return EF_NO_EVENTS;
+                }
+
+                /* We have woken up */
+                /* If the event group deletion has been requested */
+                if (eG->delete_group)
+                {
+                    (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
+                    /*Delete the created semaphore */
+                    (void)os_semaphore_delete(&tmp->sem);
+                    /* Remove ourselves from the list */
+                    os_event_flags_remove_node(tmp, eG);
+                    (void)os_mutex_put(&eG->mutex);
                     return -WM_FAIL;
                 }
+                wait_done = true;
+                continue;
             }
-            (void)os_mutex_put(&eG->mutex);
-            /* Second time get is performed for work-around purpose
-            as in current implementation of semaphore 1st request
-            is always satisfied */
-            ret = os_semaphore_get(&tmp->sem, os_msec_to_ticks(wait_option));
-            if (ret != WM_SUCCESS)
+            else
             {
-                (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
-                /*Delete the created semaphore */
-                (void)os_semaphore_delete(&tmp->sem);
-                /* Remove ourselves from the list */
-                os_event_flags_remove_node(tmp, eG);
                 (void)os_mutex_put(&eG->mutex);
                 return EF_NO_EVENTS;
             }
-
-            /* We have woken up */
-            /* If the event group deletion has been requested */
-            if (eG->delete_group)
-            {
-                (void)os_mutex_get(&eG->mutex, OS_WAIT_FOREVER);
-                /*Delete the created semaphore */
-                (void)os_semaphore_delete(&tmp->sem);
-                /* Remove ourselves from the list */
-                os_event_flags_remove_node(tmp, eG);
-                (void)os_mutex_put(&eG->mutex);
-                return -WM_FAIL;
-            }
-            wait_done = true;
-            continue;
         }
-        else
-        {
-            (void)os_mutex_put(&eG->mutex);
-            return EF_NO_EVENTS;
-        }
-    }
-    } /*while(true)*/
+    } /* while(true) */
 }
 
 int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtrv_option_t option)
