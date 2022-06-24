@@ -2094,20 +2094,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
                 break;
 #endif
-            case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
-            {
-                if (resp->result == HostCmd_RESULT_OK)
-                {
-                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
-                    if (rv != MLAN_STATUS_SUCCESS)
-                        wm_wifi.cmd_resp_status = -WM_FAIL;
-                    else
-                        wm_wifi.cmd_resp_status = WM_SUCCESS;
-                }
-                else
-                    wm_wifi.cmd_resp_status = -WM_FAIL;
-            }
-            break;
             case HostCmd_CMD_802_11_DEAUTHENTICATE:
                 (void)wlan_ret_802_11_deauthenticate(pmpriv, resp, NULL);
                 (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -2937,6 +2923,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
             }
             break;
+#endif
+#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
             case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -4672,6 +4660,7 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi)
 }
 #endif
 
+#ifdef CONFIG_11R
 static int wifi_set_subscribe_event(const t_u16 evt_bitmap, const t_u8 value, const t_u8 value_freq)
 {
     mlan_ioctl_req req;
@@ -4713,3 +4702,4 @@ int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_f
 {
     return wifi_set_subscribe_event(SUBSCRIBE_EVT_RSSI_LOW, low_rssi, low_rssi_freq);
 }
+#endif

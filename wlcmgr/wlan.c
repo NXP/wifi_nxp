@@ -2778,6 +2778,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
     if (!is_state(CM_STA_CONNECTED))
     {
         wlcm_d("ignoring rssi low event in disconnected state");
+#ifdef CONFIG_11R
         if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
         {
             (void)wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
@@ -2786,11 +2787,13 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
         {
             /* Do nothing */
         }
+#endif
         return;
     }
-#ifdef CONFIG_11K
+#ifdef CONFIG_11R
     if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
     {
+#ifdef CONFIG_11K
         int ret;
         ret = wlan_11k_neighbor_req();
         if (ret != WM_SUCCESS)
@@ -2798,6 +2801,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
             wlcm_d("Failed to send 11K neighbor request");
             return;
         }
+#endif
     }
 #endif
 }

@@ -46,9 +46,7 @@
 #define BANDWIDTH_80MHZ 3U
 #endif
 
-#ifdef CONFIG_11R
 #define MAX_NUM_CHANS_IN_NBOR_RPT 6U
-#endif
 
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;
