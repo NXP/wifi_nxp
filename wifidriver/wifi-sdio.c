@@ -468,7 +468,9 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
 #ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
     int i = 0;
 
-retry_read:
+
+	while(true)
+	{
     /* addr = 0 fn = 1 */
     ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
 
@@ -503,9 +505,11 @@ retry_read:
             }
 #endif
             return NULL;
-        }
-        goto retry_read;
-    }
+        }/* if (i > MAX_READ_IOMEM_RETRY) */
+        continue;
+    }/* if (aggr && !ret) */
+    break;
+    }/* while(true) */
 #else
     /* addr = 0 fn = 1 */
     ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);

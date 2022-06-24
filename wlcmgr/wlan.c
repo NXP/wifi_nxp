@@ -637,7 +637,9 @@ static void wlan_ieeeps_sm(enum wlan_ieeeps_event event)
 {
     enum wlan_ieeeps_state next_state;
     enum wlan_ieeeps_state prev_state;
-begin:
+
+	while(true)
+	{
     next_state = wlan.ieeeps_state;
     prev_state = wlan.ieeeps_prev_state;
     wlcm_d("IEEE PS Event : %d", event);
@@ -819,15 +821,24 @@ begin:
         wlan.ieeeps_prev_state = wlan.ieeeps_state;
         wlan.ieeeps_state      = next_state;
         event                  = IEEEPS_EVENT_ENTER;
-        goto begin;
+        continue;
     }
+	else
+	{
+		return;
+	}
+	
+	}/* while(true) */
+
+
 }
 
 static void wlan_deepsleepps_sm(enum wlan_deepsleepps_event event)
 {
     enum wlan_deepsleepps_state next_state;
 
-begin:
+    while(true)
+    {
     next_state = wlan.deepsleepps_state;
     wlcm_d("Deep Sleep Event : %d", event);
 
@@ -947,8 +958,14 @@ begin:
         wlcm_d("Deep Sleep: %d ---> %d", wlan.deepsleepps_state, next_state);
         wlan.deepsleepps_state = next_state;
         event                  = DEEPSLEEPPS_EVENT_ENTER;
-        goto begin;
+        continue;
     }
+    else
+    {
+    	return;
+    }
+
+    } /* while(true) */
 }
 
 static int is_bssid_any(char *b)

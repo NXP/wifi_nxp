@@ -2142,7 +2142,8 @@ int wifi_low_level_output(const uint8_t interface,
     (void)wifi_sdio_lock();
 #endif
 
-retry_xmit:
+	while(true)
+	{
     i = wlan_xmit_pkt(pkt_len + len, interface);
 #if defined(RW610)
     wifi_imu_unlock();
@@ -2175,13 +2176,16 @@ retry_xmit:
 #else
                 (void)wifi_sdio_lock();
 #endif
-                goto retry_xmit;
+				continue;
             }
         }
         else
         { /* Do Nothing */
         }
-    }
+		break;
+    }/* if (i != MLAN_STATUS_SUCCESS) */
+	break;
+	}/* while(true) */
 #endif
 #ifdef CONFIG_STA_AMPDU_TX
     if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable)
