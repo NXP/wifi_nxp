@@ -3,6 +3,19 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r42.p1
+  -New Additions:
+   - RTOS abstraction improvement
+   - Support for 802.11R
+   - Support for 802.11K
+   - Added uAP 11AC support
+   - Deprecated support for 88W8977 Wi-Fi SoC
+   - Added 8978 SoC firmware p56.
+   - Added 8987 SoC firmware p56.
+
+  -Bug Fixes:
+   - Fixed Misra issues.
+
 Version 1.3.r41.p2
   -New Additions:
    - Updated license header as a github friendly license.
