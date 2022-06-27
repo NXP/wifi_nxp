@@ -877,6 +877,13 @@ static int cli_start(void)
         return -WM_FAIL;
     }
 
+    ret = os_queue_create(&cli.input_queue, "cli_queue", (int)sizeof(void *), &cli.in_queue_data);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: Failed to create cli queue: %d\r\n", ret);
+        return -WM_FAIL;
+    }
+
     ret = os_thread_create(&cli_main_thread, "cli", cli_main, NULL, &cli_stack, OS_PRIO_3);
     if (ret != WM_SUCCESS)
     {
@@ -891,12 +898,6 @@ static int cli_start(void)
         return -WM_FAIL;
     }
 
-    ret = os_queue_create(&cli.input_queue, "cli_queue", (int)sizeof(void *), &cli.in_queue_data);
-    if (ret != WM_SUCCESS)
-    {
-        (void)PRINTF("Error: Failed to create cli queue: %d\r\n", ret);
-        return -WM_FAIL;
-    }
     cli.initialized = true;
 
     return WM_SUCCESS;
