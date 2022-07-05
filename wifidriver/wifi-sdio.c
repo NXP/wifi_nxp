@@ -468,48 +468,47 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
 #ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
     int i = 0;
 
-
-	while(true)
-	{
-    /* addr = 0 fn = 1 */
-    ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
-
-    if (aggr && !ret)
+    while (true)
     {
-        wifi_d("sdio mp cmd53 read failed: %d ioport=0x%x retry=%d\r\n", ret, port, i);
-        i++;
-        if (sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &resp) == false)
+        /* addr = 0 fn = 1 */
+        ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);
+
+        if (aggr && !ret)
         {
-            wifi_d("Set Term cmd53 failed\r\n");
-        }
-        if (i > MAX_READ_IOMEM_RETRY)
-        {
-            wifi_io_e("sdio_drv_read failed (%d)", ret);
-#ifdef CONFIG_WIFI_FW_DEBUG
-            wifi_sdio_reg_dbg(NULL);
-            if (wm_wifi.wifi_usb_mount_cb != NULL)
+            wifi_d("sdio mp cmd53 read failed: %d ioport=0x%x retry=%d\r\n", ret, port, i);
+            i++;
+            if (sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_TERM_CMD53, &resp) == false)
             {
-                ret = wm_wifi.wifi_usb_mount_cb();
-                if (ret == WM_SUCCESS)
+                wifi_d("Set Term cmd53 failed\r\n");
+            }
+            if (i > MAX_READ_IOMEM_RETRY)
+            {
+                wifi_io_e("sdio_drv_read failed (%d)", ret);
+#ifdef CONFIG_WIFI_FW_DEBUG
+                wifi_sdio_reg_dbg(NULL);
+                if (wm_wifi.wifi_usb_mount_cb != NULL)
                 {
-                    wifi_dump_firmware_info(NULL);
+                    ret = wm_wifi.wifi_usb_mount_cb();
+                    if (ret == WM_SUCCESS)
+                    {
+                        wifi_dump_firmware_info(NULL);
+                    }
+                    else
+                    {
+                        wifi_e("USB mounting failed");
+                    }
                 }
                 else
                 {
-                    wifi_e("USB mounting failed");
+                    wifi_e("USB mount callback is not registered");
                 }
-            }
-            else
-            {
-                wifi_e("USB mount callback is not registered");
-            }
 #endif
-            return NULL;
-        }/* if (i > MAX_READ_IOMEM_RETRY) */
-        continue;
-    }/* if (aggr && !ret) */
-    break;
-    }/* while(true) */
+                return NULL;
+            } /* if (i > MAX_READ_IOMEM_RETRY) */
+            continue;
+        } /* if (aggr && !ret) */
+        break;
+    } /* while(true) */
 #else
     /* addr = 0 fn = 1 */
     ret = sdio_drv_read(port, 1, rx_blocks, blksize, inbuf, &resp);

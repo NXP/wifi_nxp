@@ -2142,50 +2142,50 @@ int wifi_low_level_output(const uint8_t interface,
     (void)wifi_sdio_lock();
 #endif
 
-	while(true)
-	{
-    i = wlan_xmit_pkt(pkt_len + len, interface);
-#if defined(RW610)
-    wifi_imu_unlock();
-#else
-    wifi_sdio_unlock();
-#endif
-    if (i != MLAN_STATUS_SUCCESS)
+    while (true)
     {
-        if (i == MLAN_STATUS_FAILURE)
+        i = wlan_xmit_pkt(pkt_len + len, interface);
+#if defined(RW610)
+        wifi_imu_unlock();
+#else
+        wifi_sdio_unlock();
+#endif
+        if (i != MLAN_STATUS_SUCCESS)
         {
-            ret = -WM_E_NOMEM;
-            goto exit_fn;
-        }
-        else if (i == MLAN_STATUS_RESOURCE)
-        {
-            if (retry == 0)
+            if (i == MLAN_STATUS_FAILURE)
             {
-                ret = -WM_E_BUSY;
+                ret = -WM_E_NOMEM;
                 goto exit_fn;
             }
-            else
+            else if (i == MLAN_STATUS_RESOURCE)
             {
-                retry--;
-                /* Allow the other thread to run and hence
-                 * update the write bitmap so that pkt
-                 * can be sent to FW */
-                os_thread_sleep(1);
+                if (retry == 0)
+                {
+                    ret = -WM_E_BUSY;
+                    goto exit_fn;
+                }
+                else
+                {
+                    retry--;
+                    /* Allow the other thread to run and hence
+                     * update the write bitmap so that pkt
+                     * can be sent to FW */
+                    os_thread_sleep(1);
 #if defined(RW610)
-                wifi_imu_lock();
+                    wifi_imu_lock();
 #else
-                (void)wifi_sdio_lock();
+                    (void)wifi_sdio_lock();
 #endif
-				continue;
+                    continue;
+                }
             }
-        }
-        else
-        { /* Do Nothing */
-        }
-		break;
-    }/* if (i != MLAN_STATUS_SUCCESS) */
-	break;
-	}/* while(true) */
+            else
+            { /* Do Nothing */
+            }
+            break;
+        } /* if (i != MLAN_STATUS_SUCCESS) */
+        break;
+    } /* while(true) */
 #endif
 #ifdef CONFIG_STA_AMPDU_TX
     if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable)
