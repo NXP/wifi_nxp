@@ -97,6 +97,8 @@ void (*wps_rx_callback)(const t_u8 *buf, size_t len);
 void (*supplicant_rx_callback)(const t_u8 interface, const t_u8 *buf, size_t len);
 #endif /* CONFIG_HOST_SUPP */
 
+void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd);
+
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);

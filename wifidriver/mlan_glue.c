@@ -663,6 +663,14 @@ static void wlan_update_uap_ampdu_stat(uint8_t *addr, bool status)
     }
 }
 
+void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
+{
+    pmlan_private priv = mlan_adap->priv[1];
+
+    priv->rxpd_rate = rxpd->rx_rate;
+    priv->rxpd_rate_info = rxpd->rate_info;
+}
+
 static void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
 {
     struct uap_ampdu_stat_t *ampdu_info;

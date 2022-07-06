@@ -229,6 +229,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             }
             else
             {
+                wrapper_wlan_update_uap_rxrate_info(rxpd);
                 deliver_packet_above(p, recv_interface);
             }
 #else  /* ! CONFIG_11N */
@@ -350,15 +351,31 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     t_u8 tid;
     int retry         = retry_attempts;
     bool is_udp_frame = false;
+#ifdef RW610
+    struct bus_message msg;
+#endif
     int pkt_prio      = wifi_wmm_get_pkt_prio(p->payload, &tid, &is_udp_frame);
     if (pkt_prio == -WM_FAIL)
     {
         return ERR_MEM;
     }
     ret = is_wifi_wmm_queue_full(pkt_prio);
+
+#ifdef RW610
+    while (ret == true && retry > 0)
+#else
     while (ret == true && !is_udp_frame && retry > 0)
+#endif
     {
+#ifdef RW610
+        msg.event  = MLAN_TYPE_DATA;
+        msg.reason = ethernetif->interface;
+        os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+
+        taskYIELD();
+#else
         os_thread_sleep(os_msec_to_ticks(1));
+#endif
         ret = is_wifi_wmm_queue_full(pkt_prio);
         retry--;
     }

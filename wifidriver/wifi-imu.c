@@ -1064,7 +1064,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 
     wifi_imu_lock();
 
-    ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);;
+    ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_imu_unlock();
