@@ -1281,4 +1281,21 @@ typedef struct
 } wifi_os_mem_info;
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+typedef PACK_START struct
+{
+    /** Channel Index*/
+    t_u16 chan_idx;
+    /** Channel time (in TU) for chan_idx */
+    t_u8 chantime;
+    /** Channel switch time (in TU) for chan_idx */
+    t_u8 switchtime;
+    /** Undoze time (in TU) for chan_idx */
+    t_u8 undozetime;
+    /** Rx traffic control scheme when channel switch*/
+    /** only valid for GC/STA interface*/
+    t_u8 mode;
+} PACK_END wifi_drcs_cfg_t;
+#endif
+
 #endif /* __WIFI_DECL_H__ */

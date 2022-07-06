@@ -3461,6 +3461,35 @@ typedef PACK_START struct _mlan_ds_mfg_cmd_tx_cont
 } PACK_END mlan_ds_mfg_cmd_tx_cont;
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+typedef MLAN_PACK_START struct _mlan_ds_multi_chan_cfg
+{
+    /** Channel Time */
+    t_u32 channel_time;
+    /** Buffer Weight */
+    t_u8 buffer_weight;
+    /** tlv len */
+    t_u16 tlv_len;
+    /** TLV buffer */
+    t_u8 tlv_buf[];
+} MLAN_PACK_END mlan_ds_multi_chan_cfg;
+
+typedef MLAN_PACK_START struct _mlan_ds_drcs_cfg
+{
+    /** Channel Index*/
+    t_u16 chan_idx;
+    /** Channel time (in TU) for chan_idx */
+    t_u8 chantime;
+    /** Channel swith time (in TU) for chan_idx */
+    t_u8 switchtime;
+    /** Undoze time (in TU) for chan_idx */
+    t_u8 undozetime;
+    /** Rx traffic control scheme when channel switch*/
+    /** only valid for GC/STA interface*/
+    t_u8 mode;
+} MLAN_PACK_END mlan_ds_drcs_cfg;
+#endif
+
 /** Type definition of mlan_ds_misc_cfg for MLAN_IOCTL_MISC_CFG */
 typedef struct _mlan_ds_misc_cfg
 {
@@ -3526,6 +3555,15 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_mfg_cmd_generic_cfg mfg_generic_cfg;
         mlan_ds_mfg_cmd_tx_frame2 mfg_tx_frame2;
         mlan_ds_mfg_cmd_tx_cont mfg_tx_cont;
+#endif
+#ifdef CONFIG_MULTI_CHAN
+        /** Multi-channel config for MLAN_OID_MISC_MULTI_CHAN_CFG */
+        mlan_ds_multi_chan_cfg multi_chan_cfg;
+        /** Multi-channel policy for MLAN_OID_MISC_MULTI_CHAN_POLICY */
+        t_u16 multi_chan_policy;
+        /** channel drcs time slicing config for MLAN_OID_MISC_DRCS_CFG
+         */
+        mlan_ds_drcs_cfg drcs_cfg[2];
 #endif
     } param;
 } mlan_ds_misc_cfg, *pmlan_ds_misc_cfg;

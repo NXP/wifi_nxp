@@ -829,6 +829,13 @@ typedef wifi_ext_coex_stats_t wlan_ext_coex_stats_t;
 typedef wifi_ext_coex_config_t wlan_ext_coex_config_t;
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+/** Configuration for multi-channel switch
+ * \ref wifi_drcs_cfg_t
+ */
+typedef wifi_drcs_cfg_t wlan_drcs_cfg_t;
+#endif
+
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
 int verify_split_scan_delay(int delay);
@@ -3623,4 +3630,43 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
  */
 void wlan_show_os_mem_stat();
 #endif
+
+#ifdef CONFIG_MULTI_CHAN
+/**
+ * Set multi-channel status disable/enable.
+ * \param[in]      status       multi channel status
+ * 0-disable, 1-enable
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_multi_chan_status(const int status);
+
+/**
+ * Get multi-channel status disable/enable.
+ * \param[out]      status       multi channel status
+ * 0-disable, 1-enable
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_multi_chan_status(int *status);
+
+/**
+ * Set multi-channel config.
+ * \param[in]      num       array length of drcs_cfg[]
+ * \param[in] drcs_cfg  multi-channel config, maybe an array
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_drcs_cfg(const wlan_drcs_cfg_t *drcs_cfg, const int num);
+
+/**
+ * Get multi-channel config.
+ * \param[in]      num       array length of drcs_cfg[]
+ * \param[out] drcs_cfg  multi-channel config, maybe an array
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_drcs_cfg(wlan_drcs_cfg_t *drcs_cfg, int num);
+#endif
+
 #endif /* __WLAN_H__ */

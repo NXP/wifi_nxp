@@ -1065,7 +1065,9 @@ uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 #endif
 wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
 
+#ifdef CONFIG_11R
 int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_freq);
+#endif
 
 #ifdef CONFIG_HEAP_DEBUG
 /**
@@ -1075,4 +1077,54 @@ int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_f
  */
 void wifi_show_os_mem_stat();
 #endif
+
+#ifdef CONFIG_MULTI_CHAN
+/**
+ * Set multi-channel stayed time in us.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_mc_cfg(uint32_t channel_time);
+
+/**
+ * Get multi-channel stayed time in us.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_get_mc_cfg(uint32_t *channel_time);
+
+/**
+ * Set multi-channel status disable/enable.
+ * \param[in]      status       status disable/enable
+ * 0-disable, 1-enable
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_mc_policy(const int status);
+/**
+ * Get multi-channel status disable/enable.
+ *
+ * \return status 0-disable, 1-enable.
+ */
+int wifi_get_mc_policy(void);
+
+/**
+ * Set multi-channel config.
+ * \param[in]      num       array length of drcs_cfg[]
+ * \param[in] 	   drcs      multi-channel config, maybe an array
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_mc_cfg_ext(const wifi_drcs_cfg_t *drcs, const int num);
+
+/**
+ * Get multi-channel config.
+ * \param[in]      num       array length of drcs_cfg[]
+ * \param[out]     drcs      multi-channel config, maybe an array
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num);
+#endif
+
 #endif

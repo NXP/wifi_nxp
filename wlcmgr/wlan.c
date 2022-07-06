@@ -5198,19 +5198,23 @@ int wlan_start_network(const char *name)
             !strncmp(wlan.networks[i].name, name, len) && (wlan.networks[i].role == WLAN_BSS_ROLE_UAP) &&
             wlan.networks[i].ssid_specific)
         {
-            if (wlan.networks[i].channel_specific && is_sta_connecting())
+#ifdef CONFIG_MULTI_CHAN
+            /* when multi-channel is enabled, uap and sta can start on different channel */
+            if (wifi_get_mc_policy() == 0)
+#endif
             {
-                wlcm_e(
-                    "uAP can not be started on specific "
-                    "channel when station is connected."
-                    "Please use channel 0 (auto) for uAP");
-                return -WM_E_INVAL;
-            }
-            if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0U))
-            {
-                wlcm_w(
-                    "NOTE: uAP will automatically switch to"
-                    " the channel that station is on.");
+                if (wlan.networks[i].channel_specific && is_sta_connecting())
+                {
+                    wlcm_e(
+                        "uAP can not be started on specific "
+                        "channel when station is connected."
+                        "Please use channel 0 (auto) for uAP");
+                    return -WM_E_INVAL;
+                }
+                if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0))
+                    wlcm_w(
+                        "NOTE: uAP will automatically switch to"
+                        " the channel that station is on.");
             }
             if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
@@ -7354,5 +7358,28 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 void wlan_show_os_mem_stat()
 {
     wifi_show_os_mem_stat();
+}
+#endif
+
+#ifdef CONFIG_MULTI_CHAN
+int wlan_set_multi_chan_status(const int status)
+{
+    return wifi_set_mc_policy(status);
+}
+
+int wlan_get_multi_chan_status(int *status)
+{
+    (*status) = wifi_get_mc_policy();
+    return WM_SUCCESS;
+}
+
+int wlan_set_drcs_cfg(const wlan_drcs_cfg_t *drcs_cfg, const int num)
+{
+    return wifi_set_mc_cfg_ext((wifi_drcs_cfg_t *)drcs_cfg, num);
+}
+
+int wlan_get_drcs_cfg(wlan_drcs_cfg_t *drcs_cfg, int num)
+{
+    return wifi_get_mc_cfg_ext((wifi_drcs_cfg_t *)drcs_cfg, num);
 }
 #endif

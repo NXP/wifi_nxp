@@ -2128,6 +2128,9 @@ struct _mlan_adapter
 #ifdef CONFIG_ROAMING
     t_u8 bgscan_reported;
 #endif
+#ifdef CONFIG_MULTI_CHAN
+    t_bool mc_policy;
+#endif
 };
 
 /** Ethernet packet type for EAPOL */
@@ -2777,6 +2780,26 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left);
 void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter);
 
 // mlan_status wlan_misc_chan_reg_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+#endif
+
+#ifdef CONFIG_MULTI_CHAN
+mlan_status wlan_cmd_multi_chan_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
+
+mlan_status wlan_ret_multi_chan_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
+
+mlan_status wlan_cmd_multi_chan_policy(pmlan_private pmpriv,
+                                       HostCmd_DS_COMMAND *cmd,
+                                       t_u16 cmd_action,
+                                       t_void *pdata_buf);
+
+mlan_status wlan_ret_multi_chan_policy(pmlan_private pmpriv,
+                                       const HostCmd_DS_COMMAND *resp,
+                                       mlan_ioctl_req *pioctl_buf);
+
+mlan_status wlan_cmd_drcs_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
+
+mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
+
 #endif
 
 #define BW_20MHZ 0

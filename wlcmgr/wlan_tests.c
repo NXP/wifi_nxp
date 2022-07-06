@@ -1169,7 +1169,9 @@ static void test_wlan_info(int argc, char **argv)
     enum wlan_connection_state state;
     struct wlan_network sta_network;
     struct wlan_network uap_network;
+#ifndef CONFIG_MULTI_CHAN
     int sta_found = 0;
+#endif
 
     if (wlan_get_connection_state(&state) != 0)
     {
@@ -1186,7 +1188,9 @@ static void test_wlan_info(int argc, char **argv)
                 {
                     (void)PRINTF("Station connected to:\r\n");
                     print_network(&sta_network);
+#ifndef CONFIG_MULTI_CHAN
                     sta_found = 1;
+#endif
                 }
                 else
                 {
@@ -1205,13 +1209,14 @@ static void test_wlan_info(int argc, char **argv)
     }
     else
     {
+#ifndef CONFIG_MULTI_CHAN
         /* Since uAP automatically changes the channel to the one that
          * STA is on */
         if (sta_found == 1)
         {
             uap_network.channel = sta_network.channel;
         }
-
+#endif
         if (uap_network.role == WLAN_BSS_ROLE_UAP)
         {
             (void)PRINTF("uAP started as:\r\n");
@@ -2343,6 +2348,150 @@ static void test_wlan_os_mem_stat(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+static void test_wlan_set_multi_chan_status(int argc, char **argv)
+{
+    int ret;
+    int enable;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        return;
+    }
+
+    errno  = 0;
+    enable = strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:enable multi chan status errno:%d", errno);
+    }
+
+    ret = wlan_set_multi_chan_status(enable);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Set multi_chan_status fail, please set before uap start/sta connect\r\n");
+    }
+}
+
+static void test_wlan_get_multi_chan_status(int argc, char **argv)
+{
+    int ret;
+    int enable;
+
+    ret = wlan_get_multi_chan_status(&enable);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Get multi_chan_policy fail\r\n");
+        return;
+    }
+
+    (void)PRINTF("Get multi_chan_policy %d\r\n", enable);
+}
+
+static void dump_drcs_cfg(void)
+{
+    (void)PRINTF("wlan-set-drcs usage:\r\n");
+    (void)PRINTF("arguments group <channel_time> <switch_time> <undoze_time> <mode>\r\n");
+    (void)PRINTF("input one group, same settings for both channel 0 and channel 1\r\n");
+    (void)PRINTF("input two groups, different settings for channel 0 first and then channel 1\r\n");
+    (void)PRINTF("channel_time: Channel time stayed (in TU 1024us) for chan_idx\r\n");
+    (void)PRINTF(
+        "switch_time: Channel switch time (in TU 1024us) for chan_idx, including doze for old channel and undoze for "
+        "new channel\r\n");
+    (void)PRINTF("undoze_time: Undoze time during switch time (in TU 1024us) for chan_idx\r\n");
+    (void)PRINTF("mode: Channel switch scheme 0-PM1, 1-Null2Self\r\n");
+    (void)PRINTF("Example for same settings for channel 0 and 1:\r\n");
+    (void)PRINTF("wlan-set-drcs 15 10 5 0:\r\n");
+    (void)PRINTF("Example for different settings for channel 0 and 1:\r\n");
+    (void)PRINTF("wlan-set-drcs 15 10 5 0 16 8 4 1:\r\n");
+}
+
+static void get_drcs_cfg(char **data, wlan_drcs_cfg_t *drcs_cfg)
+{
+    errno              = 0;
+    drcs_cfg->chantime = (t_u8)strtol(data[0], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:drcs_cfg chantime errno:%d", errno);
+    }
+
+    errno                = 0;
+    drcs_cfg->switchtime = (t_u8)strtol(data[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:drcs_cfg switchtime errno:%d", errno);
+    }
+
+    errno                = 0;
+    drcs_cfg->undozetime = (t_u8)strtol(data[2], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:drcs_cfg undozetime errno:%d", errno);
+    }
+
+    errno          = 0;
+    drcs_cfg->mode = (t_u8)strtol(data[3], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:drcs_cfg mode errno:%d", errno);
+    }
+}
+
+static void test_wlan_set_drcs_cfg(int argc, char **argv)
+{
+    wlan_drcs_cfg_t drcs_cfg[2] = {0};
+
+    if (argc != 5 && argc != 9)
+    {
+        dump_drcs_cfg();
+        return;
+    }
+
+    if (argc == 5)
+    {
+        get_drcs_cfg(&argv[1], &drcs_cfg[0]);
+        drcs_cfg[0].chan_idx = 0x03;
+    }
+    else
+    {
+        get_drcs_cfg(&argv[1], &drcs_cfg[0]);
+        get_drcs_cfg(&argv[5], &drcs_cfg[1]);
+        drcs_cfg[0].chan_idx = 0x01;
+        drcs_cfg[1].chan_idx = 0x02;
+    }
+
+    (void)wlan_set_drcs_cfg(&drcs_cfg[0], 2);
+}
+
+static void test_wlan_get_drcs_cfg(int argc, char **argv)
+{
+    int ret;
+    wlan_drcs_cfg_t drcs_cfg[2] = {0};
+
+    ret = wlan_get_drcs_cfg(&drcs_cfg[0], 2);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("get drcs cfg fail\r\n");
+        return;
+    }
+
+    (void)PRINTF("chan_idx: 0x%02x\r\n", drcs_cfg[0].chan_idx);
+    (void)PRINTF("chan_time: %d\r\n", drcs_cfg[0].chantime);
+    (void)PRINTF("switch_time: %d\r\n", drcs_cfg[0].switchtime);
+    (void)PRINTF("undoze_time: %d\r\n", drcs_cfg[0].undozetime);
+    (void)PRINTF("mode: %d\r\n", drcs_cfg[0].mode);
+    if (drcs_cfg[0].chan_idx != (t_u16)0x03U)
+    {
+        (void)PRINTF("chan_idx: 0x%02x\r\n", drcs_cfg[1].chan_idx);
+        (void)PRINTF("chan_time: %d\r\n", drcs_cfg[1].chantime);
+        (void)PRINTF("switch_time: %d\r\n", drcs_cfg[1].switchtime);
+        (void)PRINTF("undoze_time: %d\r\n", drcs_cfg[1].undozetime);
+        (void)PRINTF("mode: %d\r\n", drcs_cfg[1].mode);
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -2419,6 +2568,14 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_HEAP_DEBUG
     {"wlan-os-mem-stat", NULL, test_wlan_os_mem_stat},
+#endif
+#ifdef CONFIG_MULTI_CHAN
+    {"wlan-set-mc-policy", "<0/1>(disable/enable)", test_wlan_set_multi_chan_status},
+    {"wlan-get-mc-policy", NULL, test_wlan_get_multi_chan_status},
+    {"wlan-set-drcs",
+     "<channel_time> <switch_time> <undoze_time> <mode> [<channel_time> <switch_time> <undoze_time> <mode>]",
+     test_wlan_set_drcs_cfg},
+    {"wlan-get-drcs", NULL, test_wlan_get_drcs_cfg},
 #endif
 };
 

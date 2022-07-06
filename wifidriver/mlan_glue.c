@@ -2974,6 +2974,22 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_MULTI_CHAN
+            case HostCmd_CMD_MULTI_CHAN_CONFIG:
+            case HostCmd_CMD_MULTI_CHAN_POLICY:
+            case HostCmd_CMD_DRCS_CONFIG:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wlan_ops_sta_process_cmdresp(pmpriv, command, resp, wm_wifi.cmd_resp_ioctl);
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    rv                      = MLAN_STATUS_FAILURE;
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+                break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -3825,7 +3841,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_MEF_HOST_WAKEUP:
             wifi_d("Host recevied host wake-up event from firmware");
             break;
-
+#ifdef CONFIG_MULTI_CHAN
+        case EVENT_MULTI_CHAN_INFO:
+            break;
+#endif
         default:
             wifi_d(
                 "Event %x not implemented."
@@ -4701,5 +4720,134 @@ static int wifi_set_subscribe_event(const t_u16 evt_bitmap, const t_u8 value, co
 int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_freq)
 {
     return wifi_set_subscribe_event(SUBSCRIBE_EVT_RSSI_LOW, low_rssi, low_rssi_freq);
+}
+#endif
+
+#ifdef CONFIG_MULTI_CHAN
+int wifi_set_mc_cfg(uint32_t channel_time)
+{
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd               = wifi_get_command_buffer();
+    mlan_ds_multi_chan_cfg multi_chan_cfg = {0};
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
+    cmd->result  = 0x0;
+
+    multi_chan_cfg.channel_time  = channel_time;
+    multi_chan_cfg.buffer_weight = 1;
+
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MULTI_CHAN_CONFIG,
+                                   HostCmd_ACT_GEN_SET, 0, NULL, &multi_chan_cfg, cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_get_mc_cfg(uint32_t *channel_time)
+{
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd    = wifi_get_command_buffer();
+    mlan_ioctl_req ioctl_req   = {0};
+    mlan_ds_misc_cfg ioctl_cfg = {0};
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
+    cmd->result  = 0x0;
+
+    wm_wifi.cmd_resp_ioctl = &ioctl_req;
+    ioctl_req.pbuf         = (t_u8 *)&ioctl_cfg;
+    ioctl_req.buf_len      = sizeof(ioctl_cfg);
+
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MULTI_CHAN_CONFIG,
+                                   HostCmd_ACT_GEN_GET, 0, NULL, &ioctl_cfg.param.multi_chan_cfg, cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
+    wm_wifi.cmd_resp_ioctl = NULL;
+    (*channel_time)        = ioctl_cfg.param.multi_chan_cfg.channel_time;
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_set_mc_policy(const int status)
+{
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd    = wifi_get_command_buffer();
+    t_u16 mc_policy            = (t_u16)status;
+    mlan_ioctl_req ioctl_req   = {0};
+    mlan_ds_misc_cfg ioctl_cfg = {0};
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
+    cmd->result  = 0x0;
+
+    wm_wifi.cmd_resp_ioctl            = &ioctl_req;
+    ioctl_req.action                  = (mlan_act_ioctl)HostCmd_ACT_GEN_SET;
+    ioctl_req.pbuf                    = (t_u8 *)&ioctl_cfg;
+    ioctl_req.buf_len                 = sizeof(ioctl_cfg);
+    ioctl_cfg.param.multi_chan_policy = mc_policy;
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MULTI_CHAN_POLICY,
+                                   HostCmd_ACT_GEN_SET, 0, NULL, &mc_policy, cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
+    wm_wifi.cmd_resp_ioctl = NULL;
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_get_mc_policy(void)
+{
+    return (int)mlan_adap->mc_policy;
+}
+
+int wifi_set_mc_cfg_ext(const wifi_drcs_cfg_t *drcs, const int num)
+{
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd      = wifi_get_command_buffer();
+    mlan_ds_drcs_cfg drcs_cfg[2] = {0};
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
+    cmd->result  = 0x0;
+
+    /* struct align is different */
+    (void)memcpy(&drcs_cfg[0], drcs, sizeof(mlan_ds_drcs_cfg));
+    if (num == 2)
+    {
+        (void)memcpy(&drcs_cfg[1], drcs + 1, sizeof(mlan_ds_drcs_cfg));
+    }
+
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_DRCS_CONFIG, HostCmd_ACT_GEN_SET, 0,
+                                   NULL, &drcs_cfg, cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
+{
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd    = wifi_get_command_buffer();
+    mlan_ioctl_req ioctl_req   = {0};
+    mlan_ds_misc_cfg ioctl_cfg = {0};
+
+    if (num != 2)
+    {
+        wifi_e("drcs should get 2 drcs config");
+        (void)wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, 0U /* bss_type */);
+    cmd->result  = 0x0;
+
+    wm_wifi.cmd_resp_ioctl = &ioctl_req;
+    ioctl_req.pbuf         = (t_u8 *)&ioctl_cfg;
+    ioctl_req.buf_len      = sizeof(ioctl_cfg);
+
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_DRCS_CONFIG, HostCmd_ACT_GEN_GET, 0,
+                                   NULL, &ioctl_cfg.param.drcs_cfg[0], cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
+    wm_wifi.cmd_resp_ioctl = NULL;
+
+    /* struct align is different */
+    (void)memcpy(drcs, &ioctl_cfg.param.drcs_cfg[0], sizeof(mlan_ds_drcs_cfg));
+    (void)memcpy(drcs + 1, &ioctl_cfg.param.drcs_cfg[1], sizeof(mlan_ds_drcs_cfg));
+    return wm_wifi.cmd_resp_status;
 }
 #endif

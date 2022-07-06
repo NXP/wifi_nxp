@@ -2636,6 +2636,17 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_offload_feature_ctrl(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif /* CONFIG_11K */
+#ifdef CONFIG_MULTI_CHAN
+        case HostCmd_CMD_MULTI_CHAN_CONFIG:
+            ret = wlan_cmd_multi_chan_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+        case HostCmd_CMD_MULTI_CHAN_POLICY:
+            ret = wlan_cmd_multi_chan_policy(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+        case HostCmd_CMD_DRCS_CONFIG:
+            ret = wlan_cmd_drcs_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             ret = MLAN_STATUS_FAILURE;

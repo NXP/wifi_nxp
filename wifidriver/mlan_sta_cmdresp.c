@@ -1817,6 +1817,17 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_offload_feature_ctrl(pmpriv, resp);
             break;
 #endif /* CONFIG_11K*/
+#ifdef CONFIG_MULTI_CHAN
+        case HostCmd_CMD_MULTI_CHAN_CONFIG:
+            ret = wlan_ret_multi_chan_cfg(pmpriv, resp, pioctl_buf);
+            break;
+        case HostCmd_CMD_MULTI_CHAN_POLICY:
+            ret = wlan_ret_multi_chan_policy(pmpriv, resp, pioctl_buf);
+            break;
+        case HostCmd_CMD_DRCS_CONFIG:
+            ret = wlan_ret_drcs_cfg(pmpriv, resp, pioctl_buf);
+            break;
+#endif
         default:
             PRINTM(MERROR, "CMD_RESP: Unknown command response %#x\n", resp->command);
             break;

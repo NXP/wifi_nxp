@@ -1328,6 +1328,22 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_CMD_TWT_CFG 0x0270
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+/** Host Command ID: Multi chan config */
+#define HostCmd_CMD_MULTI_CHAN_CONFIG 0x011e
+/** Host Command ID: Multi chan policy */
+#define HostCmd_CMD_MULTI_CHAN_POLICY 0x0121
+/** TLV ID for multi chan info */
+#define TLV_TYPE_MULTI_CHAN_INFO (PROPRIETARY_TLV_BASE_ID + 0xb7)
+/** TLV ID for multi chan group info */
+#define TLV_TYPE_MULTI_CHAN_GROUP_INFO_TLV_ID (PROPRIETARY_TLV_BASE_ID + 0xb8)
+/** TLV ID for DRCS TimeSlice */
+#define MRVL_DRCS_TIME_SLICE_TLV_ID (PROPRIETARY_TLV_BASE_ID + 263U)
+/** Host Command ID: DRCS config */
+#define HostCmd_CMD_DRCS_CONFIG 0x024a
+
+#endif
+
 /* Radio type definitions for the channel TLV */
 /** Radio type BG */
 #define HostCmd_SCAN_RADIO_TYPE_BG 0U
@@ -1552,6 +1568,11 @@ typedef enum _ENH_PS_MODES
 
 /** Event ID: TX data pause event */
 #define EVENT_TX_DATA_PAUSE 0x00000055
+
+#ifdef CONFIG_MULTI_CHAN
+/** Event ID: Multi Chan Info*/
+#define EVENT_MULTI_CHAN_INFO 0x0000006a
+#endif
 
 /** Event ID: EV_SMC_GENERIC */
 #define EVENT_EV_SMC_GENERIC 0x00000077
@@ -6269,6 +6290,67 @@ typedef MLAN_PACK_START struct _MrvlIETypes_SuppOperClass_t
 } MLAN_PACK_END MrvlIETypes_SuppOperClass_t;
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+typedef MLAN_PACK_START struct _MrvlTypes_DrcsTimeSlice_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Channel Index*/
+    t_u16 chan_idx;
+    /** Channel time (in TU) for chan_idx*/
+    t_u8 chantime;
+    /** Channel swith time (in TU) for chan_idx*/
+    t_u8 switchtime;
+    /** Undoze time (in TU) for chan_idx*/
+    t_u8 undozetime;
+    /** Rx traffic control scheme when channel switch*/
+    /** only valid for GC/STA interface*/
+    t_u8 mode;
+} MLAN_PACK_END MrvlTypes_DrcsTimeSlice_t;
+typedef MLAN_PACK_START struct _HostCmd_DS_MULTI_CHAN_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** Channel time */
+    t_u32 channel_time;
+    /** Buffer weight */
+    t_u8 buffer_weight;
+    /** TLV buffer */
+    t_u8 tlv_buf[];
+    /* t_u8 *tlv_buf; */
+} MLAN_PACK_END HostCmd_DS_MULTI_CHAN_CFG;
+
+typedef MLAN_PACK_START struct _HostCmd_DS_DRCS_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** TLV buffer */
+    MrvlTypes_DrcsTimeSlice_t time_slicing;
+    /** TLV buffer */
+    MrvlTypes_DrcsTimeSlice_t drcs_buf[];
+    /* t_u8 *tlv_buf; */
+} MLAN_PACK_END HostCmd_DS_DRCS_CFG;
+
+typedef MLAN_PACK_START struct _HostCmd_DS_MULTI_CHAN_POLICY
+{
+    /** Action */
+    t_u16 action;
+    /** Multi-channel Policy */
+    t_u16 policy;
+} MLAN_PACK_END HostCmd_DS_MULTI_CHAN_POLICY;
+
+/** MrvlIEtypes_multi_chan_info_t */
+typedef MLAN_PACK_START struct _MrvlIETypes_mutli_chan_info_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** multi channel operation status */
+    t_u16 status;
+    /** Tlv buffer */
+    t_u8 tlv_buffer[];
+} MLAN_PACK_END MrvlIEtypes_multi_chan_info_t;
+#endif
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -6487,6 +6569,11 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef SD8801
         HostCmd_DS_ExtBLECoex_Config_t ext_ble_coex_cfg;
+#endif
+#ifdef CONFIG_MULTI_CHAN
+        HostCmd_DS_MULTI_CHAN_CFG multi_chan_cfg;
+        HostCmd_DS_MULTI_CHAN_POLICY multi_chan_policy;
+        HostCmd_DS_DRCS_CFG drcs_cfg;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;
