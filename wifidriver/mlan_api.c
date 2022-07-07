@@ -2940,12 +2940,12 @@ int wifi_set_chanlist(wifi_chanlist_t *chanlist)
 
 int wifi_get_chanlist(wifi_chanlist_t *chanlist)
 {
-    mlan_adapter *pmadapter     = mlan_adap->priv[0]->adapter;
-    region_chan_t *pchan_region = MNULL;
-    chan_freq_power_t *cfp      = MNULL;
-    t_u32 region_idx            = 0;
-    t_u32 next_chan             = 0;
-    chanlist->num_chans         = 0;
+    mlan_adapter *pmadapter      = mlan_adap->priv[0]->adapter;
+    region_chan_t *pchan_region  = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
+    t_u32 region_idx             = 0;
+    t_u32 next_chan              = 0;
+    chanlist->num_chans          = 0;
 
     for (region_idx = 0; region_idx < NELEMENTS(pmadapter->region_channel); region_idx++)
     {

@@ -76,7 +76,7 @@ typedef struct _cfp_table
     /** Region or Code */
     t_u8 code;
     /** Frequency/Power */
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     /** No of CFP flag */
     int cfp_no;
 } cfp_table_t;
@@ -387,7 +387,7 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x30, /* EU */
-        (chan_freq_power_t *)channel_freq_power_EU_A,
+        (const chan_freq_power_t *)channel_freq_power_EU_A,
         sizeof(channel_freq_power_EU_A) / sizeof(chan_freq_power_t),
     },
     {
@@ -597,7 +597,7 @@ static void *wlan_memchr(pmlan_adapter pmadapter, void *s, int c, int n)
  *
  *  @return           A pointer to CFP
  */
-static chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u8 region, t_u16 band, int *cfp_no)
+static const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapter, t_u8 region, t_u16 band, int *cfp_no)
 {
     t_u32 i;
     t_u8 cfp_bg;
@@ -1104,9 +1104,9 @@ t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel)
     t_u8 j        = 0;
     t_u8 tx_power = 0;
     t_u32 cfp_no;
-    chan_freq_power_t *cfp = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
 #ifdef CONFIG_5GHz_SUPPORT
-    chan_freq_power_t *cfp_a = MNULL;
+    const chan_freq_power_t *cfp_a = MNULL;
     t_u32 cfp_no_a;
 #endif /* CONFIG_5GHz_SUPPORT */
 
@@ -1174,13 +1174,13 @@ t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel)
  *  @return                     A pointer to chan_freq_power_t structure or MNULL if not found.
  */
 
-chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
-                                                    t_u16 band,
-                                                    t_u16 channel,
-                                                    region_chan_t *region_channel)
+const chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
+                                                          t_u16 band,
+                                                          t_u16 channel,
+                                                          region_chan_t *region_channel)
 {
     region_chan_t *rc;
-    chan_freq_power_t *cfp = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
     t_u8 i, j;
 
     ENTER();
@@ -1281,9 +1281,9 @@ chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
  *
  *  @return             A pointer to chan_freq_power_t structure or MNULL if not found.
  */
-chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_u16 band, t_u16 channel)
+const chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_u16 band, t_u16 channel)
 {
-    chan_freq_power_t *cfp = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
 
     ENTER();
 
@@ -1310,9 +1310,9 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_
  *
  *  @return         Pointer to chan_freq_power_t structure; MNULL if not found
  */
-chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16 band, t_u32 freq)
+const chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16 band, t_u32 freq)
 {
-    chan_freq_power_t *cfp = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
     region_chan_t *rc;
     t_u8 i, j;
 
@@ -1617,7 +1617,7 @@ mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, t_u16 band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int i                   = 0;
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     int cfp_no;
 
     ENTER();
@@ -1688,8 +1688,8 @@ mlan_status wlan_set_regiontable(mlan_private *pmpriv, t_u8 region, t_u16 band)
 t_bool wlan_get_cfp_radar_detect(mlan_private *priv, t_u8 chnl)
 {
     t_u8 i, j;
-    t_bool required         = MFALSE;
-    chan_freq_power_t *pcfp = MNULL;
+    t_bool required               = MFALSE;
+    const chan_freq_power_t *pcfp = MNULL;
 
     ENTER();
 
@@ -1739,8 +1739,8 @@ done:
 t_bool wlan_bg_scan_type_is_passive(mlan_private *priv, t_u8 chnl)
 {
     t_u8 i, j;
-    t_bool passive          = MFALSE;
-    chan_freq_power_t *pcfp = MNULL;
+    t_bool passive                = MFALSE;
+    const chan_freq_power_t *pcfp = MNULL;
 
     ENTER();
 
@@ -2065,7 +2065,7 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
     mlan_adapter *pmadapter = pmpriv->adapter;
     int i                   = 0;
     int j                   = 0;
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     int cfp_no;
 
     ENTER();

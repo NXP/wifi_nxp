@@ -84,7 +84,7 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
     unsigned int j  = 0; /* current character */
     unsigned int by = 0; /* byte value for conversion */
     unsigned char ch;    /* current character */
-    unsigned int len = strlen((char *)ibuf);
+    unsigned int len = strlen((const char *)ibuf);
     /* process the list of characters */
     for (i = 0; i < len; i++)
     {

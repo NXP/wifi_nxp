@@ -285,7 +285,7 @@ static int process_dhcp_message(char *msg, int len)
     bool got_client_ip    = 0;
     uint32_t new_ip;
 
-    if (!msg || len < sizeof(struct bootp_header) + sizeof(struct bootp_option) + 1U)
+    if ((msg == NULL) || len < sizeof(struct bootp_header) + sizeof(struct bootp_option) + 1U)
     {
         return -WM_E_DHCPD_INVALID_INPUT;
     }

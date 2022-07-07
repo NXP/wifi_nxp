@@ -99,8 +99,9 @@ static void lwiperf_report(void *arg,
             else
 #endif
             {
-                (void)PRINTF(" Local address : %u.%u.%u.%u ", ((u8_t *)local_addr)[0], ((u8_t *)local_addr)[1],
-                             ((u8_t *)local_addr)[2], ((u8_t *)local_addr)[3]);
+                (void)PRINTF(" Local address : %u.%u.%u.%u ", ((const u8_t *)local_addr)[0],
+                             ((const u8_t *)local_addr)[1], ((const u8_t *)local_addr)[2],
+                             ((const u8_t *)local_addr)[3]);
             }
             (void)PRINTF(" Port %d \r\n", local_port);
 #ifdef CONFIG_IPV6
@@ -111,8 +112,9 @@ static void lwiperf_report(void *arg,
             else
 #endif
             {
-                (void)PRINTF(" Remote address : %u.%u.%u.%u ", ((u8_t *)remote_addr)[0], ((u8_t *)remote_addr)[1],
-                             ((u8_t *)remote_addr)[2], ((u8_t *)remote_addr)[3]);
+                (void)PRINTF(" Remote address : %u.%u.%u.%u ", ((const u8_t *)remote_addr)[0],
+                             ((const u8_t *)remote_addr)[1], ((const u8_t *)remote_addr)[2],
+                             ((const u8_t *)remote_addr)[3]);
             }
             (void)PRINTF(" Port %d \r\n", remote_port);
             (void)PRINTF(" Bytes Transferred %llu \r\n", bytes_transferred);

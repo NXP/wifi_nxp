@@ -347,7 +347,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     region_chan_t *pscan_region;
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     t_u32 region_idx;
     t_u32 chan_idx = 0;
     t_u32 next_chan;
@@ -3109,7 +3109,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     t_u32 idx;
     t_u32 tlv_buf_size;
     t_u64 tsf_val;
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     MrvlIEtypes_ChanBandListParamSet_t *pchan_band_tlv = MNULL;
     ChanBandParamSet_t *pchan_band;
     t_u16 band;

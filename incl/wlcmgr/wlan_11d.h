@@ -391,7 +391,7 @@ static inline int wlan_set_region_code(uint32_t region_code)
 
 \return Country string
  */
-uint8_t *wlan_11d_country_index_2_string(int country);
+const uint8_t *wlan_11d_country_index_2_string(int country);
 
 /** @} */
 

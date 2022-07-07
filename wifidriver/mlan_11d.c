@@ -130,13 +130,13 @@ static mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region,
  *
  *  @return             Country string
  */
-uint8_t *wlan_11d_country_index_2_string(int country)
+const uint8_t *wlan_11d_country_index_2_string(int country)
 {
     if (country < 1 || country > 9)
     {
-        return ((uint8_t *)region_code_mapping[0].region);
+        return ((const uint8_t *)region_code_mapping[0].region);
     }
-    return ((uint8_t *)region_code_mapping[country - 1].region);
+    return ((const uint8_t *)region_code_mapping[country - 1].region);
 }
 
 #ifdef STA_SUPPORT
@@ -238,7 +238,7 @@ static t_void wlan_11d_generate_parsed_region_chan(pmlan_adapter pmadapter,
                                                    region_chan_t *region_chan,
                                                    parsed_region_chan_11d_t *parsed_region_chan)
 {
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     t_u8 i;
 
     ENTER();

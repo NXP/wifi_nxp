@@ -203,8 +203,8 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
  */
 static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
 {
-    if (((struct eth_hdr *)(void *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
-        ((struct eth_hdr *)(void *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
+    if (((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
+        ((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
     {
         return true;
     }

@@ -871,7 +871,7 @@ typedef struct _region_chan_t
     /** Actual No. of elements in the array below */
     t_u8 num_cfp;
     /** chan-freq-txpower mapping table */
-    chan_freq_power_t *pcfp;
+    const chan_freq_power_t *pcfp;
 } region_chan_t;
 
 /** State of 11d */
@@ -2516,14 +2516,14 @@ t_u8 wlan_band_to_radio_type(IN t_u8 band);
 /*                             IN mlan_802_11_mac_addr * mac); */
 
 /** Get Channel-Frequency-Power by band and channel */
-chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
-                                                    t_u16 band,
-                                                    t_u16 channel,
-                                                    region_chan_t *region_channel);
+const chan_freq_power_t *wlan_get_cfp_by_band_and_channel(pmlan_adapter pmadapter,
+                                                          t_u16 band,
+                                                          t_u16 channel,
+                                                          region_chan_t *region_channel);
 /** Find Channel-Frequency-Power by band and channel */
-chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_u16 band, t_u16 channel);
+const chan_freq_power_t *wlan_find_cfp_by_band_and_channel(mlan_adapter *pmadapter, t_u16 band, t_u16 channel);
 /** Find Channel-Frequency-Power by band and frequency */
-chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16 band, t_u32 freq);
+const chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, t_u16 band, t_u32 freq);
 /** Get Tx power of channel from Channel-Frequency-Power */
 t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel);
 
