@@ -175,47 +175,47 @@ static cfp_table_t cfp_table_BG[] = {
     },
     {
         0x10, /* US FCC */
-        (chan_freq_power_t *)channel_freq_power_US_BG,
+        (const chan_freq_power_t *)channel_freq_power_US_BG,
         sizeof(channel_freq_power_US_BG) / sizeof(chan_freq_power_t),
     },
     {
         0x20, /* CANADA IC */
-        (chan_freq_power_t *)channel_freq_power_US_BG,
+        (const chan_freq_power_t *)channel_freq_power_US_BG,
         sizeof(channel_freq_power_US_BG) / sizeof(chan_freq_power_t),
     },
     {
         0x30, /* EU */
-        (chan_freq_power_t *)channel_freq_power_EU_BG,
+        (const chan_freq_power_t *)channel_freq_power_EU_BG,
         sizeof(channel_freq_power_EU_BG) / sizeof(chan_freq_power_t),
     },
     {
         0x32, /* FRANCE */
-        (chan_freq_power_t *)channel_freq_power_FR_BG,
+        (const chan_freq_power_t *)channel_freq_power_FR_BG,
         sizeof(channel_freq_power_FR_BG) / sizeof(chan_freq_power_t),
     },
     {
         0x40, /* JAPAN */
-        (chan_freq_power_t *)channel_freq_power_JPN40_BG,
+        (const chan_freq_power_t *)channel_freq_power_JPN40_BG,
         sizeof(channel_freq_power_JPN40_BG) / sizeof(chan_freq_power_t),
     },
     {
         0x41, /* JAPAN */
-        (chan_freq_power_t *)channel_freq_power_JPN41_BG,
+        (const chan_freq_power_t *)channel_freq_power_JPN41_BG,
         sizeof(channel_freq_power_JPN41_BG) / sizeof(chan_freq_power_t),
     },
     {
         0x50, /* China */
-        (chan_freq_power_t *)channel_freq_power_EU_BG,
+        (const chan_freq_power_t *)channel_freq_power_EU_BG,
         sizeof(channel_freq_power_EU_BG) / sizeof(chan_freq_power_t),
     },
     {
         0xfe, /* JAPAN */
-        (chan_freq_power_t *)channel_freq_power_JPNFE_BG,
+        (const chan_freq_power_t *)channel_freq_power_JPNFE_BG,
         sizeof(channel_freq_power_JPNFE_BG) / sizeof(chan_freq_power_t),
     },
     {
         0xff, /* Special */
-        (chan_freq_power_t *)channel_freq_power_SPECIAL_BG,
+        (const chan_freq_power_t *)channel_freq_power_SPECIAL_BG,
         sizeof(channel_freq_power_SPECIAL_BG) / sizeof(chan_freq_power_t),
     },
     /* Add new region here */
@@ -377,12 +377,12 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x10, /* US FCC */
-        (chan_freq_power_t *)channel_freq_power_A,
+        (const chan_freq_power_t *)channel_freq_power_A,
         sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t),
     },
     {
         0x20, /* CANADA IC */
-        (chan_freq_power_t *)channel_freq_power_CAN_A,
+        (const chan_freq_power_t *)channel_freq_power_CAN_A,
         sizeof(channel_freq_power_CAN_A) / sizeof(chan_freq_power_t),
     },
     {
@@ -392,22 +392,22 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x32, /* FRANCE */
-        (chan_freq_power_t *)channel_freq_power_A,
+        (const chan_freq_power_t *)channel_freq_power_A,
         sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t),
     },
     {
         0x40, /* JAPAN */
-        (chan_freq_power_t *)channel_freq_power_JPN_A,
+        (const chan_freq_power_t *)channel_freq_power_JPN_A,
         sizeof(channel_freq_power_JPN_A) / sizeof(chan_freq_power_t),
     },
     {
         0x41, /* JAPAN */
-        (chan_freq_power_t *)channel_freq_power_JPN_A,
+        (const chan_freq_power_t *)channel_freq_power_JPN_A,
         sizeof(channel_freq_power_JPN_A) / sizeof(chan_freq_power_t),
     },
     {
         0x50, /* China */
-        (chan_freq_power_t *)channel_freq_power_CN_A,
+        (const chan_freq_power_t *)channel_freq_power_CN_A,
         sizeof(channel_freq_power_CN_A) / sizeof(chan_freq_power_t),
     },
     {
@@ -417,23 +417,23 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0xff, /* Special */
-        (chan_freq_power_t *)channel_freq_power_JPN_A,
+        (const chan_freq_power_t *)channel_freq_power_JPN_A,
         sizeof(channel_freq_power_JPN_A) / sizeof(chan_freq_power_t),
     },
     {0x1, /* Low band (5150-5250 MHz) channels */
-     (chan_freq_power_t *)channel_freq_power_low_band, sizeof(channel_freq_power_low_band) / sizeof(chan_freq_power_t)},
+     (const chan_freq_power_t *)channel_freq_power_low_band,
+     sizeof(channel_freq_power_low_band) / sizeof(chan_freq_power_t)},
     {0x2, /* Lower middle band (5250-5350 MHz) channels */
-     (chan_freq_power_t *)channel_freq_power_lower_middle_band,
+     (const chan_freq_power_t *)channel_freq_power_lower_middle_band,
      sizeof(channel_freq_power_lower_middle_band) / sizeof(chan_freq_power_t)},
     {0x3, /* Upper middle band (5470-5725 MHz) channels */
-     (chan_freq_power_t *)channel_freq_power_upper_middle_band,
+     (const chan_freq_power_t *)channel_freq_power_upper_middle_band,
      sizeof(channel_freq_power_upper_middle_band) / sizeof(chan_freq_power_t)},
     {0x4, /* High band (5725-5850 MHz) channels */
-     (chan_freq_power_t *)channel_freq_power_high_band,
+     (const chan_freq_power_t *)channel_freq_power_high_band,
      sizeof(channel_freq_power_high_band) / sizeof(chan_freq_power_t)},
-    {0x5, /* Low band (5150-5250 MHz) and High band
-             (5725-5850 MHz) channels */
-     (chan_freq_power_t *)channel_freq_power_low_high_band,
+    {0x5, /* Low band (5150-5250 MHz) and High band (5725-5850 MHz) channels */
+     (const chan_freq_power_t *)channel_freq_power_low_high_band,
      sizeof(channel_freq_power_low_high_band) / sizeof(chan_freq_power_t)},
     /* Add new region here */
 };

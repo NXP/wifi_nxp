@@ -1102,7 +1102,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
 
     if (network->ssid_specific != 0U)
     {
-        if (!wlan.hidden_scan_on && (!memcmp(null_ssid, (char *)res->ssid, (size_t)res->ssid_len)))
+        if (!wlan.hidden_scan_on && (!memcmp(null_ssid, (const char *)res->ssid, (size_t)res->ssid_len)))
         {
             chan_list[*num_channels].chan_number = res->Channel;
             chan_list[*num_channels].scan_type   = MLAN_SCAN_TYPE_ACTIVE;

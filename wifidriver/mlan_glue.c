@@ -1565,7 +1565,7 @@ int wrapper_wifi_assoc(
     /* BSSDescriptor_t *bssDesc = os_mem_alloc(sizeof(BSSDescriptor_t)); */
     /* if (!bssDesc) */
     /* 	return -WM_FAIL; */
-    int idx = wlan_find_bssid_in_list(priv, (unsigned char *)bssid, MLAN_BSS_MODE_NEGATIVE);
+    int idx = wlan_find_bssid_in_list(priv, (const unsigned char *)bssid, MLAN_BSS_MODE_NEGATIVE);
     if (idx == -1)
     {
         wifi_w("Could not find BSSID in mlan scan list");
@@ -1800,7 +1800,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
 
     int i;
     const MrvlIEtypes_sta_info_t *si =
-        (MrvlIEtypes_sta_info_t *)(void *)(((t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
+        (MrvlIEtypes_sta_info_t *)(void *)(((const t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
     for (i = 0; i < c; i++)
     {
         if ((si[i].rssi & 0x80) != 0)

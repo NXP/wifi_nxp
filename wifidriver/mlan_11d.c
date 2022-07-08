@@ -148,7 +148,7 @@ const uint8_t *wlan_11d_country_index_2_string(int country)
  *
  *  @return             Region string
  */
-static t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
+static const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
 {
     t_u8 i;
     t_u8 size = sizeof(region_code_mapping) / sizeof(region_code_mapping_t);
@@ -161,13 +161,13 @@ static t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
         if (region_code_mapping[i].code == code)
         {
             LEAVE();
-            return ((t_u8 *)region_code_mapping[i].region);
+            return ((const t_u8 *)region_code_mapping[i].region);
         }
     }
 
     LEAVE();
     /* Default is US */
-    return ((t_u8 *)region_code_mapping[0].region);
+    return ((const t_u8 *)region_code_mapping[0].region);
 }
 
 /**
@@ -1068,7 +1068,7 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
  */
 t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u16 band)
 {
-    chan_freq_power_t *cf;
+    const chan_freq_power_t *cf;
     t_u16 cnt;
     t_u16 i;
     t_u32 freq = 0;
@@ -1085,7 +1085,7 @@ t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, t_u16 band)
     else
     {
 #endif /* CONFIG_5GHz_SUPPORT */
-        cf  = (chan_freq_power_t *)channel_freq_power_UN_BG;
+        cf  = (const chan_freq_power_t *)channel_freq_power_UN_BG;
         cnt = sizeof(channel_freq_power_UN_BG) / sizeof(chan_freq_power_t);
 #ifdef CONFIG_5GHz_SUPPORT
     }

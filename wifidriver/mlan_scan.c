@@ -4290,7 +4290,7 @@ t_s32 wlan_find_ssid_in_list(IN mlan_private *pmpriv, IN mlan_802_11_ssid *ssid,
  *
  *  @return             index in BSSID list or < 0 if error
  */
-t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN t_u8 *bssid, IN mlan_bss_mode mode)
+t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN const t_u8 *bssid, IN mlan_bss_mode mode)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_s32 net               = -1;
