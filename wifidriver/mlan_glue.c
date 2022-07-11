@@ -634,7 +634,7 @@ struct uap_ampdu_stat_t
 
 static struct uap_ampdu_stat_t uap_ampdu_stat_array[32];
 
-static int wlan_find_ampud_info(uint8_t *addr, struct uap_ampdu_stat_t **ampdu_info)
+static int wlan_find_ampud_info(const uint8_t *addr, struct uap_ampdu_stat_t **ampdu_info)
 {
     int i;
 
@@ -719,7 +719,7 @@ static void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
     }
 }
 
-int wrapper_wlan_upa_ampdu_enable(uint8_t *addr)
+int wrapper_wlan_upa_ampdu_enable(const uint8_t *addr)
 {
     int ret;
     struct uap_ampdu_stat_t *ampdu_info;
@@ -1800,7 +1800,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
 
     int i;
     const MrvlIEtypes_sta_info_t *si =
-        (MrvlIEtypes_sta_info_t *)(void *)(((const t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
+        (const MrvlIEtypes_sta_info_t *)(const void *)(((const t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
     for (i = 0; i < c; i++)
     {
         if ((si[i].rssi & 0x80) != 0)
@@ -2538,7 +2538,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCmd_CMD_CHANNEL_TRPC_CONFIG:
             {
-                const HostCmd_DS_CHAN_TRPC_CONFIG *chan_trpc_cfg = &resp->params.chan_trpc_cfg;
+                HostCmd_DS_CHAN_TRPC_CONFIG *chan_trpc_cfg = &resp->params.chan_trpc_cfg;
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     if (chan_trpc_cfg->action == HostCmd_ACT_GEN_GET)
@@ -4328,7 +4328,7 @@ bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, 
         return false;
     }
 
-    (void)memcpy((void *)&wpa2_ent_IE, (const void *)((char *)element_data + len * 4U + 2U * sizeof(len)), 4U);
+    (void)memcpy((void *)&wpa2_ent_IE, (const void *)((const char *)element_data + len * 4U + 2U * sizeof(len)), 4U);
 
     if (!memcmp(wpa2_ent_IE, wpa2_akmp_oui, sizeof(wpa2_akmp_oui)))
     {

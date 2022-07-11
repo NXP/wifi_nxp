@@ -731,7 +731,7 @@ int wrapper_wlan_sta_ampdu_enable(t_u8 tid);
 int wrapper_wlan_sta_ampdu_enable(void);
 #endif
 
-int wrapper_wlan_upa_ampdu_enable(uint8_t *addr);
+int wrapper_wlan_upa_ampdu_enable(const uint8_t *addr);
 
 #ifdef CONFIG_WLAN_BRIDGE
 /** Enable Bridge mode in WLAN firmware.

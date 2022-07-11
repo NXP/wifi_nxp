@@ -2206,7 +2206,7 @@ int wifi_low_level_output(const uint8_t interface,
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
-            (void)wrapper_wlan_upa_ampdu_enable((uint8_t *)buffer);
+            (void)wrapper_wlan_upa_ampdu_enable((const uint8_t *)buffer);
         }
     }
 #endif

@@ -412,7 +412,7 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0xfe, /* JAPAN */
-        (chan_freq_power_t *)channel_freq_power_NULL_A,
+        (const chan_freq_power_t *)channel_freq_power_NULL_A,
         sizeof(channel_freq_power_NULL_A) / sizeof(chan_freq_power_t),
     },
     {

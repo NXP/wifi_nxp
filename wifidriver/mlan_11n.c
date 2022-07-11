@@ -1667,7 +1667,7 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
  *
  *  @return 	    MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-int wlan_send_addba(mlan_private *priv, int tid, t_u8 *peer_mac)
+int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
 {
     HostCmd_DS_11N_ADDBA_REQ add_ba_req;
     static t_u8 dialog_tok;

@@ -422,14 +422,14 @@ static mlan_status wlan_11d_update_chan_pwr_table(mlan_private *pmpriv, BSSDescr
  */
 static t_u8 wlan_11d_get_chan(pmlan_adapter pmadapter, t_u16 band, t_u8 first_chan, t_u8 no_of_chan, t_u8 *chan)
 {
-    chan_freq_power_t *cfp = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
     t_u8 i;
     t_u8 cfp_no = 0;
 
     ENTER();
     if ((band & (BAND_B | BAND_G | BAND_GN)) != 0U)
     {
-        cfp    = (chan_freq_power_t *)channel_freq_power_UN_BG;
+        cfp    = (const chan_freq_power_t *)channel_freq_power_UN_BG;
         cfp_no = sizeof(channel_freq_power_UN_BG) / sizeof(chan_freq_power_t);
     }
 #ifdef CONFIG_5GHz_SUPPORT
@@ -1129,7 +1129,7 @@ mlan_status wlan_11d_set_universaltable(mlan_private *pmpriv, t_u16 band)
         pmadapter->universal_channel[i].num_cfp = (t_u8)(sizeof(channel_freq_power_UN_BG) / size);
         PRINTM(MINFO, "11D: BG-band num_cfp=%d\n", pmadapter->universal_channel[i].num_cfp);
 
-        pmadapter->universal_channel[i].pcfp  = (chan_freq_power_t *)channel_freq_power_UN_BG;
+        pmadapter->universal_channel[i].pcfp  = (const chan_freq_power_t *)channel_freq_power_UN_BG;
         pmadapter->universal_channel[i].valid = MTRUE;
 
         /* Set region code */

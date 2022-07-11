@@ -870,7 +870,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                             (*puser_scan_in->ssid_list[ssid_idx].ssid || puser_scan_in->ssid_list[ssid_idx].max_len));
              ssid_idx++)
         {
-            ssid_len = wlan_strlen((char *)puser_scan_in->ssid_list[ssid_idx].ssid);
+            ssid_len = wlan_strlen((const char *)puser_scan_in->ssid_list[ssid_idx].ssid);
 
             pwildcard_ssid_tlv                  = (MrvlIEtypes_WildCardSsIdParamSet_t *)(void *)ptlv_pos;
             pwildcard_ssid_tlv->header.type     = wlan_cpu_to_le16(TLV_TYPE_WILDCARDSSID);
