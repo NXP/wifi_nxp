@@ -254,7 +254,7 @@ static mlan_status wlan_ret_802_11_snmp_mib(IN pmlan_private pmpriv,
 
     if (pioctl_buf != MNULL)
     {
-        mib = (mlan_ds_snmp_mib *)pioctl_buf->pbuf;
+        mib = (mlan_ds_snmp_mib *)(void *)pioctl_buf->pbuf;
     }
 
     /* wmsdk */

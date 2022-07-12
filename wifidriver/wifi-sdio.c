@@ -310,10 +310,10 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_CFG_DATA:
             break;
         case HostCmd_CMD_MAC_REG_ACCESS:
-            wifi_get_value1_from_cmdresp((HostCmd_DS_COMMAND *)cmdresp, &dev_value1);
+            wifi_get_value1_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, &dev_value1);
             break;
         case HostCmd_CMD_802_11_MAC_ADDRESS:
-            wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)cmdresp, dev_mac_addr);
+            wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_mac_addr);
             break;
 #ifdef OTP_CHANINFO
         case HostCmd_CMD_CHAN_REGION_CFG:
@@ -325,7 +325,7 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             (void)wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)(void *)cmdresp, NULL);
             break;
         case HostCmd_CMD_VERSION_EXT:
-            wifi_get_firmware_ver_ext_from_cmdresp((HostCmd_DS_COMMAND *)cmdresp, dev_fw_ver_ext);
+            wifi_get_firmware_ver_ext_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_fw_ver_ext);
             break;
 #ifdef CONFIG_11N
         case HostCmd_CMD_11N_CFG:

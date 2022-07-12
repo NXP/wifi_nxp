@@ -769,13 +769,13 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     if ((pauth_tlv != MNULL) && (pauth_tlv->auth_type == wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae)))
     {
-        if (pbss_desc->prsnx_ie && pbss_desc->prsnx_ie->ieee_hdr.len &&
+        if ((pbss_desc->prsnx_ie != MNULL) && pbss_desc->prsnx_ie->ieee_hdr.len &&
             (pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
         {
             MrvlIEtypes_SAE_PWE_Mode_t *psae_pwe_mode_tlv;
 
             /* Setup the sae mode TLV in the association command */
-            psae_pwe_mode_tlv              = (MrvlIEtypes_SAE_PWE_Mode_t *)pos;
+            psae_pwe_mode_tlv              = (MrvlIEtypes_SAE_PWE_Mode_t *)(void *)pos;
             psae_pwe_mode_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_WPA3_SAE_PWE_DERIVATION_MODE);
             psae_pwe_mode_tlv->header.len  = sizeof(psae_pwe_mode_tlv->pwe);
             psae_pwe_mode_tlv->pwe[0]      = pbss_desc->prsnx_ie->data[0];

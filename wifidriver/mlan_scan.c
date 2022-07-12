@@ -1825,7 +1825,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 break;
 #endif
             case RSNX_IE:
-                pbss_entry->prsnx_ie    = (IEEEtypes_Generic_t *)pcurrent_ptr;
+                pbss_entry->prsnx_ie    = (IEEEtypes_Generic_t *)(void *)pcurrent_ptr;
                 pbss_entry->rsnx_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
                 HEXDUMP("InterpretIE: Resp RSNX_IE", (t_u8 *)pbss_entry->prsnx_ie,
                         (*(pbss_entry->prsnx_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
@@ -2593,7 +2593,7 @@ t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN mla
 
 #ifdef CONFIG_11AC
     /* if the VHT CAP IE exists, the HT CAP IE should exist too */
-    if (pbss_desc->pvht_cap && !pbss_desc->pht_cap)
+    if ((pbss_desc->pvht_cap != MNULL) && (pbss_desc->pht_cap == MNULL))
     {
         PRINTM(MINFO, "Disable 11n if HT CAP IE is not found from the 11AC AP\n");
         pbss_desc->disable_11n = MTRUE;

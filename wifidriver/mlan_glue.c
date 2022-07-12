@@ -1612,7 +1612,7 @@ int wrapper_wifi_assoc(
     }
     else
 #endif
-        if (d->pwpa_ie && d->prsn_ie && (wlan_security == WLAN_SECURITY_WPA_WPA2_MIXED))
+        if ((d->pwpa_ie != MNULL) && (d->prsn_ie != MNULL) && (wlan_security == WLAN_SECURITY_WPA_WPA2_MIXED))
     {
         priv->sec_info.is_wpa_tkip  = is_wpa_tkip;
         priv->sec_info.wpa2_enabled = true;
@@ -3143,7 +3143,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                 }
 #ifdef CONFIG_11AC
                 pvht_cap = (IEEEtypes_VHTCap_t *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, VHT_CAPABILITY, 0);
-                if (pvht_cap && (priv->is_11ac_enabled == MTRUE))
+                if ((pvht_cap != MNULL) && (priv->is_11ac_enabled == MTRUE))
                 {
                     PRINTM(MCMND, "STA supports 11ac\n");
                     sta_ptr->is_11ac_enabled = MTRUE;

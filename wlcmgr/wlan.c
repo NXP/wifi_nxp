@@ -3239,7 +3239,7 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
 {
     void *if_handle = net_get_mlan_handle();
     int i, found = 0;
-    if (network->type != WLAN_BSS_TYPE_STA || !if_handle)
+    if (network->type != WLAN_BSS_TYPE_STA || (if_handle == NULL))
     {
         return;
     }
@@ -3463,7 +3463,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 if (ret != 0)
                 {
                     wlcm_e("TCP/IP stack setup failed");
-                    CONNECTION_EVENT(WLAN_REASON_ADDRESS_FAILED, (void *)ret);
+                    CONNECTION_EVENT(WLAN_REASON_ADDRESS_FAILED, NULL);
                 }
                 else
                 {

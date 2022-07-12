@@ -5754,7 +5754,7 @@ static mlan_status wlan_11k_cfg_ioctl_enable(pmlan_adapter pmadapter, pmlan_ioct
 
     ENTER();
 
-    pcfg_11k = (mlan_ds_11k_cfg *)pioctl_req->pbuf;
+    pcfg_11k = (mlan_ds_11k_cfg *)(void *)(pioctl_req->pbuf);
 
     if (pioctl_req->action == MLAN_ACT_SET)
     {
@@ -5815,7 +5815,7 @@ static mlan_status wlan_11k_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req p
         return MLAN_STATUS_RESOURCE;
     }
 
-    ds_11kcfg = (mlan_ds_11k_cfg *)pioctl_req->pbuf;
+    ds_11kcfg = (mlan_ds_11k_cfg *)(void *)pioctl_req->pbuf;
     switch (ds_11kcfg->sub_command)
     {
         case MLAN_OID_11K_CFG_ENABLE:

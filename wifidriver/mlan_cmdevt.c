@@ -3140,7 +3140,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 #endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef OTP_CHANINFO
-    if (!(pmadapter->otp_region && pmadapter->otp_region->force_reg))
+    if ((pmadapter->otp_region != MNULL) && (pmadapter->otp_region->force_reg != 0U))
     {
 #endif
 
@@ -3207,7 +3207,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 break;
 #endif
             case TLV_TYPE_FW_CAP_INFO:
-                fw_cap_tlv             = (MrvlIEtypes_fw_cap_info_t *)tlv;
+                fw_cap_tlv             = (MrvlIEtypes_fw_cap_info_t *)(void *)tlv;
                 pmadapter->fw_cap_info = wlan_le32_to_cpu(fw_cap_tlv->fw_cap_info);
                 pmadapter->fw_cap_ext  = wlan_le32_to_cpu(fw_cap_tlv->fw_cap_ext);
                 PRINTM(MCMND, "fw_cap_info=0x%x fw_cap_ext=0x%x\n", pmadapter->fw_cap_info, pmadapter->fw_cap_ext);
