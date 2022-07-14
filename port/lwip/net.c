@@ -774,9 +774,9 @@ void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
             }
         }
         tmp.addr = ip->ipv4.dns1;
-        dns_setserver(0, (ip_addr_t *)&tmp);
+        dns_setserver(0, (ip_addr_t *)(void *)&tmp);
         tmp.addr = ip->ipv4.dns2;
-        dns_setserver(1, (ip_addr_t *)&tmp);
+        dns_setserver(1, (ip_addr_t *)(void *)&tmp);
     }
 
     /* DNS MAX Retries should be configured in lwip/dns.c to 3/4 */

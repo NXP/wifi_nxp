@@ -349,6 +349,13 @@ static t_void wlan_flush_data(os_timer_arg_t tmr_handle)
     t_s16 startWin                   = 0;
 
     ENTER();
+    if (reorder_cnxt == MNULL)
+    {
+        PRINTM(MWARN, "Flush data failed\n");
+        LEAVE();
+        return;
+    }
+
     reorder_cnxt->timer_is_set = MFALSE;
     wlan_11n_display_tbl_ptr(reorder_cnxt->priv->adapter, reorder_cnxt->ptr);
 

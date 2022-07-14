@@ -627,7 +627,7 @@ static const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapte
          * If region is not forced and the requested region code is different,
          * simply return the corresponding pre-defined table.
          */
-        if (pmadapter->otp_region && pmadapter->cfp_otp_bg)
+        if ((pmadapter->otp_region != MNULL) && (pmadapter->cfp_otp_bg != MNULL))
         {
             if (pmadapter->otp_region->force_reg || (cfp_bg == (t_u8)pmadapter->otp_region->region_code))
             {
@@ -656,7 +656,7 @@ static const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapte
     {
 #ifdef OTP_CHANINFO
         /* Return the FW cfp table for requested region code */
-        if (pmadapter->otp_region && pmadapter->cfp_otp_a)
+        if ((pmadapter->otp_region != MNULL) && (pmadapter->cfp_otp_a != MNULL))
         {
             if (pmadapter->otp_region->force_reg || (cfp_a == (t_u8)pmadapter->otp_region->region_code))
             {
@@ -2135,7 +2135,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
 
     ENTER();
 
-    if (!buf)
+    if (buf == MNULL)
     {
         PRINTM(MERROR, "CFP table update failed!\n");
         goto out;
@@ -2156,7 +2156,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
 
     while (tlv_buf_left >= sizeof(*head))
     {
-        head        = (MrvlIEtypesHeader_t *)tlv_buf;
+        head        = (MrvlIEtypesHeader_t *)(void *)tlv_buf;
         tlv         = wlan_le16_to_cpu(head->type);
         tlv_buf_len = wlan_le16_to_cpu(head->len);
 
@@ -2183,7 +2183,8 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
 
                 ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(otp_region_info_t), MLAN_MEM_DEF,
                                        (t_u8 **)&pmadapter->otp_region);
-                if (ret != MLAN_STATUS_SUCCESS || !pmadapter->otp_region)
+
+                if (ret != MLAN_STATUS_SUCCESS || (pmadapter->otp_region == MNULL))
                 {
                     PRINTM(MERROR,
                            "Memory allocation for the otp region"
@@ -2238,11 +2239,12 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 {
                     break;
                 }
-                if (pmadapter->cfp_otp_bg
+
 #ifdef CONFIG_5GHz_SUPPORT
-                    || pmadapter->cfp_otp_a
+                if ((pmadapter->cfp_otp_bg != MNULL) || (pmadapter->cfp_otp_a != MNULL))
+#else
+                if (pmadapter->cfp_otp_bg != MNULL)
 #endif
-                )
                 {
                     break;
                 }
@@ -2250,7 +2252,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 ret = pcb->moal_malloc(pmadapter->pmoal_handle,
                                        pmadapter->tx_power_table_bg_rows * sizeof(chan_freq_power_t), MLAN_MEM_DEF,
                                        (t_u8 **)&pmadapter->cfp_otp_bg);
-                if (ret != MLAN_STATUS_SUCCESS || !pmadapter->cfp_otp_bg)
+                if ((ret != MLAN_STATUS_SUCCESS) || (pmadapter->cfp_otp_bg == MNULL))
                 {
                     PRINTM(MERROR,
                            "Memory allocation for storing otp bg"
@@ -2283,8 +2285,8 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
 #ifdef CONFIG_5GHz_SUPPORT
                 ret = pcb->moal_malloc(pmadapter->pmoal_handle,
                                        pmadapter->tx_power_table_a_rows * sizeof(chan_freq_power_t), MLAN_MEM_DEF,
-                                       (t_u8 **)&pmadapter->cfp_otp_a);
-                if (ret != MLAN_STATUS_SUCCESS || !pmadapter->cfp_otp_a)
+                                       (t_u8 **)(void *)&pmadapter->cfp_otp_a);
+                if ((ret != MLAN_STATUS_SUCCESS) || (pmadapter->cfp_otp_a == MNULL))
                 {
                     PRINTM(MERROR,
                            "Memory allocation for storing otp a"
@@ -2326,7 +2328,8 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 {
                     break;
                 }
-                if (pmadapter->otp_region && pmadapter->otp_region->force_reg && pmadapter->tx_power_table_bg)
+                if ((pmadapter->otp_region != MNULL) && (pmadapter->otp_region->force_reg != 0U) &&
+                    (pmadapter->tx_power_table_bg != MNULL))
                 {
                     break;
                 }
@@ -2340,11 +2343,11 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                     i++;
                     tmp++;
                 }
-                if (!pmadapter->tx_power_table_bg)
+                if (pmadapter->tx_power_table_bg == MNULL)
                 {
                     ret = pcb->moal_malloc(pmadapter->pmoal_handle, i, MLAN_MEM_DEF,
                                            (t_u8 **)&pmadapter->tx_power_table_bg);
-                    if (ret != MLAN_STATUS_SUCCESS || !pmadapter->tx_power_table_bg)
+                    if ((ret != MLAN_STATUS_SUCCESS) || (pmadapter->tx_power_table_bg == MNULL))
                     {
                         PRINTM(MERROR,
                                "Memory allocation for the BG-band"
@@ -2365,11 +2368,11 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
                 {
                     i++;
                 }
-                if (!pmadapter->tx_power_table_a)
+                if (pmadapter->tx_power_table_a == MNULL)
                 {
                     ret = pcb->moal_malloc(pmadapter->pmoal_handle, i, MLAN_MEM_DEF,
                                            (t_u8 **)&pmadapter->tx_power_table_a);
-                    if (ret != MLAN_STATUS_SUCCESS || !pmadapter->tx_power_table_a)
+                    if ((ret != MLAN_STATUS_SUCCESS) || (pmadapter->tx_power_table_a == MNULL))
                     {
                         PRINTM(MERROR,
                                "Memory allocation for the A-band"
@@ -2385,11 +2388,11 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
 #endif
                 break;
             case TLV_TYPE_POWER_TABLE_ATTR:
-                pmadapter->tx_power_table_bg_rows = ((power_table_attr_t *)data)->rows_2g;
-                pmadapter->tx_power_table_bg_cols = ((power_table_attr_t *)data)->cols_2g;
+                pmadapter->tx_power_table_bg_rows = ((power_table_attr_t *)(void *)data)->rows_2g;
+                pmadapter->tx_power_table_bg_cols = ((power_table_attr_t *)(void *)data)->cols_2g;
 #ifdef CONFIG_5GHz_SUPPORT
-                pmadapter->tx_power_table_a_rows = ((power_table_attr_t *)data)->rows_5g;
-                pmadapter->tx_power_table_a_cols = ((power_table_attr_t *)data)->cols_5g;
+                pmadapter->tx_power_table_a_rows = ((power_table_attr_t *)(void *)data)->rows_5g;
+                pmadapter->tx_power_table_a_cols = ((power_table_attr_t *)(void *)data)->cols_5g;
 #endif
                 break;
             default:
@@ -2399,7 +2402,7 @@ void wlan_add_fw_cfp_tables(pmlan_private pmpriv, t_u8 *buf, t_u16 buf_left)
         tlv_buf += (sizeof(*head) + tlv_buf_len);
         tlv_buf_left -= (sizeof(*head) + tlv_buf_len);
     }
-    if (!pmadapter->cfp_otp_bg || !pmadapter->tx_power_table_bg)
+    if ((pmadapter->cfp_otp_bg == MNULL) || (pmadapter->tx_power_table_bg == MNULL))
     {
         goto out;
     }

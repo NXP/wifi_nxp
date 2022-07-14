@@ -1497,7 +1497,7 @@ mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_r
     domain_info = &cfg_11d->param.domain_info;
 
 #ifdef OTP_CHANINFO
-    if (pmadapter->otp_region && pmadapter->otp_region->force_reg)
+    if ((pmadapter->otp_region != MNULL) && (pmadapter->otp_region->force_reg != 0U))
     {
         (void)PRINTF("ForceRegionRule is set in the on-chip OTP memory\r\n");
         ret = MLAN_STATUS_FAILURE;

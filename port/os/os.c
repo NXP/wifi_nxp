@@ -230,7 +230,8 @@ void *os_timer_get_context(os_timer_t *timer_t)
 {
     if (timer_t == NULL || (*timer_t) == NULL)
     {
-        return (void *)-1;
+        os_dprintf("OS: Failed to get timer context\r\n");
+        return NULL;
     }
 
     return pvTimerGetTimerID(*timer_t);

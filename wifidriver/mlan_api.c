@@ -545,13 +545,13 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
     buf_len      = S_DS_GEN;
 
     /** Fill HostCmd_DS_MEF_CFG*/
-    mef_hdr           = (HostCmd_DS_MEF_CFG *)(buf + buf_len);
+    mef_hdr           = (HostCmd_DS_MEF_CFG *)(void *)(buf + buf_len);
     mef_hdr->criteria = wlan_cpu_to_le32(flt_cfg->criteria);
     mef_hdr->nentries = wlan_cpu_to_le16(flt_cfg->nentries);
     buf_len += sizeof(HostCmd_DS_MEF_CFG);
 
     /** Fill entry header data*/
-    entry_hdr         = (mef_entry_header *)(buf + buf_len);
+    entry_hdr         = (mef_entry_header *)(void *)(buf + buf_len);
     entry_hdr->mode   = flt_cfg->mef_entry.mode;
     entry_hdr->action = flt_cfg->mef_entry.action;
     buf_len += sizeof(mef_entry_header);
@@ -2897,7 +2897,7 @@ int wifi_set_chanlist(wifi_chanlist_t *chanlist)
 
 #ifdef OTP_CHANINFO
     mlan_adapter *pmadapter = mlan_adap->priv[0]->adapter;
-    if (!(pmadapter->otp_region && pmadapter->otp_region->force_reg))
+    if ((pmadapter->otp_region == MNULL) && (pmadapter->otp_region->force_reg == 0U))
     {
 #endif
         /*
@@ -3293,7 +3293,7 @@ int wifi_get_fw_region_and_cfp_tables(void)
     cmd->result  = 0x0;
     cmd->size    = S_DS_GEN + sizeof(HostCmd_DS_CHAN_REGION_CFG);
 
-    HostCmd_DS_CHAN_REGION_CFG *chan_region_cfg = (HostCmd_DS_CHAN_REGION_CFG *)((uint8_t *)cmd + S_DS_GEN);
+    HostCmd_DS_CHAN_REGION_CFG *chan_region_cfg = (HostCmd_DS_CHAN_REGION_CFG *)(void *)((uint8_t *)cmd + S_DS_GEN);
 
     chan_region_cfg->action = HostCmd_ACT_GEN_GET;
 

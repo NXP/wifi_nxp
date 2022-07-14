@@ -828,7 +828,7 @@ static void cmd_iperf(int argc, char **argv)
 
             if ((info.bhost == 0U) && argv[arg] != NULL)
             {
-                (void)inet_aton(argv[arg], &bind_address);
+                (void)inet_aton(argv[arg], (void *)&bind_address);
 
                 info.bhost = 1;
 

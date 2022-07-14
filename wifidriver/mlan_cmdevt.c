@@ -3187,7 +3187,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
 #endif /* STA_SUPPORT */
     left_len = resp->size - (t_u16)sizeof(HostCmd_DS_GET_HW_SPEC) - (t_u16)S_DS_GEN;
-    tlv      = (MrvlIEtypesHeader_t *)((t_u8 *)(&resp->params) + sizeof(HostCmd_DS_GET_HW_SPEC));
+    tlv      = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)(&resp->params) + sizeof(HostCmd_DS_GET_HW_SPEC));
     while (left_len > sizeof(MrvlIEtypesHeader_t))
     {
         tlv_type = wlan_le16_to_cpu(tlv->type);
@@ -3217,7 +3217,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 break;
         }
         left_len -= (t_u16)(sizeof(MrvlIEtypesHeader_t) + tlv_len);
-        tlv = (MrvlIEtypesHeader_t *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
+        tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
 done:
     LEAVE();
@@ -3349,8 +3349,8 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
 
     ENTER();
 
-    reg = (HostCmd_DS_CHAN_REGION_CFG *)&resp->params;
-    if (!reg)
+    reg = (HostCmd_DS_CHAN_REGION_CFG *)(void *)&resp->params;
+    if (reg != MNULL)
     {
         ret = MLAN_STATUS_FAILURE;
         goto done;
@@ -3369,18 +3369,18 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
     /* Add FW cfp tables and region info */
     wlan_add_fw_cfp_tables(pmpriv, tlv_buf, tlv_buf_left);
 
-    if (!pioctl_buf)
+    if (pioctl_buf != MNULL)
     {
         goto done;
     }
 
-    if (!pioctl_buf->pbuf)
+    if (pioctl_buf->pbuf == MNULL)
     {
         ret = MLAN_STATUS_FAILURE;
         goto done;
     }
 
-    misc_cfg = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+    misc_cfg = (mlan_ds_misc_cfg *)(void *)pioctl_buf->pbuf;
 
     if (misc_cfg->sub_command == MLAN_OID_MISC_GET_REGIONPWR_CFG)
     {
@@ -3404,7 +3404,7 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
                            pmadapter->tx_power_table_bg_rows * sizeof(chan_freq_power_t));
         }
 #ifdef CONFIG_5GHz_SUPPORT
-        if (pmadapter->cfp_otp_a != 0U)
+        if (pmadapter->cfp_otp_a != MNULL)
         {
             misc_cfg->param.custom_reg_domain.num_a_chan = pmadapter->tx_power_table_a_rows;
             (void)__memcpy(pmpriv->adapter,
