@@ -163,7 +163,7 @@ int wrapper_bssdesc_first_set(int bss_index,
 
 #ifdef CONFIG_11N
 // track whether ampdu is enabled
-static t_u8 ampdu_status_flag = MFALSE;
+static bool ampdu_status_flag = MFALSE;
 #endif
 
 #ifdef CONFIG_11N
@@ -719,14 +719,14 @@ static void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
     }
 }
 
-int wrapper_wlan_upa_ampdu_enable(const uint8_t *addr)
+mlan_status wrapper_wlan_upa_ampdu_enable(const uint8_t *addr)
 {
     int ret;
     struct uap_ampdu_stat_t *ampdu_info;
 
-    if (!wlan_find_ampud_info(addr, &ampdu_info))
+    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
     {
-        if (!ampdu_info->ampudu_stat && ampdu_info->ampudu_supported)
+        if ((ampdu_info->ampudu_stat == 0U) && ampdu_info->ampudu_supported)
         {
             ret = wlan_send_addba(mlan_adap->priv[1], 0, addr);
             if (ret != 0)
@@ -837,16 +837,16 @@ static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND 
     return MLAN_STATUS_SUCCESS;
 }
 
-static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, int tid)
+static bool wlan_is_ampdu_allowed(mlan_private *priv, int tid)
 {
     return (priv->aggr_prio_tbl[tid].ampdu_ap != BA_STREAM_NOT_ALLOWED) ? MTRUE : MFALSE;
 }
 
 // Only Enable AMPDU for station interface
 #ifdef CONFIG_WMM
-int wrapper_wlan_sta_ampdu_enable(t_u8 tid)
+mlan_status wrapper_wlan_sta_ampdu_enable(t_u8 tid)
 #else
-int wrapper_wlan_sta_ampdu_enable(void)
+mlan_status wrapper_wlan_sta_ampdu_enable(void)
 #endif
 {
     int ret;
@@ -913,9 +913,9 @@ int wrapper_wlan_11d_enable(void)
 
 int wrapper_wlan_ecsa_enable(void)
 {
-    t_u32 ecsa_enable = MTRUE;
+    bool ecsa_enable = MTRUE;
 
-    if (!(mlan_adap->fw_cap_info & FW_CAPINFO_ECSA))
+    if ((mlan_adap->fw_cap_info & FW_CAPINFO_ECSA) == 0U)
     {
         return -WM_FAIL;
     }
@@ -930,7 +930,7 @@ int wrapper_wlan_ecsa_enable(void)
     cmd->result  = 0x0;
 
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
-                                   ECSAEnable_i, NULL, &ecsa_enable, cmd);
+                                   (t_u32)ECSAEnable_i, NULL, &ecsa_enable, cmd);
 
     return wifi_wait_for_cmdresp(NULL);
 }
@@ -947,7 +947,7 @@ int wrapper_wlan_cmd_get_hw_spec(void)
     return 0;
 }
 
-mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, unsigned int action)
+mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action)
 {
     void *pdata_buf = NULL;
     HostCmd_DS_MGMT_IE_LIST_CFG ds_mgmt_ie_list_cfg;
@@ -3117,7 +3117,7 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                 { /* Do Nothing */
                 }
 
-                ie_len       = tlv_len - sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
+                ie_len       = (t_u8)tlv_len - (t_u8)sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
                 pht_cap =
                     (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
@@ -3207,14 +3207,14 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *pevent)
 {
     t_u16 tlv_type, tlv_len;
-    int tlv_buf_left = pevent->length - INTF_HEADER_LEN - BSS_START_EVENT_FIX_SIZE;
+    int tlv_buf_left = (int)pevent->length - (int)INTF_HEADER_LEN - (int)BSS_START_EVENT_FIX_SIZE;
     MrvlIEtypesHeader_t *tlv =
         (MrvlIEtypesHeader_t *)(void *)((char *)pevent + INTF_HEADER_LEN + BSS_START_EVENT_FIX_SIZE);
 #ifdef CONFIG_11AX
     MrvlIEtypes_He_cap_t *pext_tlv = MNULL;
 #endif
     priv->wmm_enabled    = MFALSE;
-    priv->pkt_fwd        = MFALSE;
+    priv->pkt_fwd        = 0U;
     priv->is_11n_enabled = MFALSE;
 #ifdef CONFIG_11AC
     priv->is_11ac_enabled = MFALSE;
@@ -3239,7 +3239,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             priv->is_11n_enabled = MTRUE;
         }
 #ifdef CONFIG_11AC
-        if (tlv_type == VHT_CAPABILITY)
+        if (tlv_type == (t_u16)VHT_CAPABILITY)
         {
             DBG_HEXDUMP(MCMD_D, "VHT_CAP tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
             priv->is_11ac_enabled = MTRUE;
@@ -3256,12 +3256,12 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             }
         }
 #endif
-        if (tlv_type == TLV_TYPE_UAP_PKT_FWD_CTL)
+        if (tlv_type == (t_u16)TLV_TYPE_UAP_PKT_FWD_CTL)
         {
             DBG_HEXDUMP(MCMD_D, "pkt_fwd tlv", tlv, tlv_len + sizeof(MrvlIEtypesHeader_t));
             priv->pkt_fwd = *((t_u8 *)tlv + sizeof(MrvlIEtypesHeader_t));
             PRINTM(MCMND, "pkt_fwd FW: 0x%x\n", priv->pkt_fwd);
-            if ((priv->pkt_fwd & PKT_FWD_FW_BIT) != 0)
+            if ((priv->pkt_fwd & PKT_FWD_FW_BIT) != 0U)
             {
                 priv->pkt_fwd = MFALSE;
             }
@@ -3271,7 +3271,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
             }
             PRINTM(MCMND, "pkt_fwd DRV: 0x%x\n", priv->pkt_fwd);
         }
-        tlv_buf_left -= (int)(sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv_buf_left -= (int)sizeof(MrvlIEtypesHeader_t) + (int)tlv_len;
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
     LEAVE();

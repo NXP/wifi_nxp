@@ -2706,7 +2706,7 @@ static int wifi_config_ext_coex(int action,
 #endif
 
 static int wifi_config_mgmt_ie(
-    mlan_bss_type bss_type, int action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
+    mlan_bss_type bss_type, t_u16 action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
 {
     uint8_t *buf, *pos;
     IEEEtypes_Header_t *ptlv_header = NULL;

@@ -1084,9 +1084,9 @@ struct _mlan_private
     t_u16 max_amsdu;
 #ifdef UAP_SUPPORT
     /** UAP 11n flag */
-    t_u8 is_11n_enabled;
+    bool is_11n_enabled;
     /** UAP 11ac flag */
-    t_u8 is_11ac_enabled;
+    bool is_11ac_enabled;
 #endif /* UAP_SUPPORT */
 #ifdef UAP_SUPPORT
 #endif /* UAP_SUPPORT */
@@ -1217,7 +1217,7 @@ struct _mlan_private
     /** WMM required */
     t_u8 wmm_required;
     /** WMM enabled */
-    t_u8 wmm_enabled;
+    bool wmm_enabled;
     /** WMM qos info */
     t_u8 wmm_qosinfo;
     /** WMM related variable*/

@@ -307,5 +307,5 @@ int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
 #endif
 
-mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, unsigned int action);
+mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
 #endif /* __WIFI_INTERNAL_H__ */

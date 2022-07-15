@@ -726,12 +726,12 @@ int wifi_uap_start(mlan_bss_type type,
 );
 
 #ifdef CONFIG_WMM
-int wrapper_wlan_sta_ampdu_enable(t_u8 tid);
+mlan_status wrapper_wlan_sta_ampdu_enable(t_u8 tid);
 #else
-int wrapper_wlan_sta_ampdu_enable(void);
+mlan_status wrapper_wlan_sta_ampdu_enable(void);
 #endif
 
-int wrapper_wlan_upa_ampdu_enable(const uint8_t *addr);
+mlan_status wrapper_wlan_upa_ampdu_enable(const uint8_t *addr);
 
 #ifdef CONFIG_WLAN_BRIDGE
 /** Enable Bridge mode in WLAN firmware.
