@@ -783,7 +783,7 @@ typedef struct _wlan_802_11_security_t
     /** WPA enabled flag */
     t_u8 wpa_enabled;
     /** WPA TKIP flag */
-    t_u8 is_wpa_tkip;
+    bool is_wpa_tkip;
     /** E-Supplicant enabled flag */
     t_u8 ewpa_enabled;
     /** WPA2 enabled flag */
@@ -877,8 +877,8 @@ typedef struct _region_chan_t
 /** State of 11d */
 typedef enum _state_11d_t
 {
-    DISABLE_11D = 0,
-    ENABLE_11D  = 1,
+    DISABLE_11D = 0UL,
+    ENABLE_11D  = 1UL,
 } state_11d_t;
 
 #define DEFAULT_11D_STATE DISABLE_11D
@@ -1443,9 +1443,9 @@ struct _sta_node
     /** station mac address */
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
     /** 11n flag */
-    t_u8 is_11n_enabled;
+    bool is_11n_enabled;
     /** 11ac flag */
-    t_u8 is_11ac_enabled;
+    bool is_11ac_enabled;
 #ifdef CONFIG_11AX
     t_u8 is_11ax_enabled;
     IEEEtypes_HECap_t he_cap;

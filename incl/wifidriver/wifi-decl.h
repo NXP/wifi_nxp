@@ -270,7 +270,7 @@ struct wifi_scan_result
     bool phtinfo_ie_present; /*!< PHT INFO IE present info */
 
     bool wmm_ie_present; /*!< WMM IE present info */
-    uint8_t band;        /*!< Band info */
+    uint16_t band;       /*!< Band info */
 
     bool wps_IE_exist;                         /*!< WPS IE exist info */
     uint16_t wps_session;                      /*!< WPS session */

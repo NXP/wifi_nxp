@@ -1885,8 +1885,7 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
                              wlan.ft_assoc);
     wlan.ft_assoc = false;
 #else
-    ret =
-        wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip, 0, false);
+    ret = wrapper_wifi_assoc(res->bssid, network->security.type, (bool)network->security.ucstCipher.tkip, 0, false);
 #endif
 #endif
     if (ret != 0)

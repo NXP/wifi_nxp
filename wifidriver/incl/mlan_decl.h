@@ -812,7 +812,7 @@ typedef struct _mlan_callbacks
     /** moal_free_timer */
     mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void **pptimer);
     /** moal_start_timer*/
-    mlan_status (*moal_start_timer)(IN t_void *pmoal_handle, IN t_void *ptimer, IN t_u8 periodic, IN t_u32 msec);
+    mlan_status (*moal_start_timer)(IN t_void *pmoal_handle, IN t_void *ptimer, IN bool periodic, IN t_u32 msec);
     /** moal_stop_timer*/
     mlan_status (*moal_stop_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_init_lock */

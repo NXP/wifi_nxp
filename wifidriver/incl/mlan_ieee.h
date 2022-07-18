@@ -1617,7 +1617,7 @@ typedef struct _BSSDescriptor_t
     t_s32 rssi;
 
     /** Channel */
-    t_u32 channel;
+    t_u8 channel;
 
     /** Freq */
     t_u32 freq;
