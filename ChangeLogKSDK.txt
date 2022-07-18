@@ -5,7 +5,6 @@
 Version 1.3.r39.p12
  - Updates:
   - Updated firmware version to p131.
-  - Added RU tx power limit table in wlan_txpwrlimit_cfg_WW.h for 2.4G and 5G.
 
  - Bug Fixes:
   - Corrected uAP goes to bad state when RX traffic is started from Skyhawk as a EX-STA.
