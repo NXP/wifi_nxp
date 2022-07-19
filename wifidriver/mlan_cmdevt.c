@@ -3350,7 +3350,7 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
     ENTER();
 
     reg = (HostCmd_DS_CHAN_REGION_CFG *)(void *)&resp->params;
-    if (reg != MNULL)
+    if (reg == MNULL)
     {
         ret = MLAN_STATUS_FAILURE;
         goto done;
@@ -3369,7 +3369,7 @@ mlan_status wlan_ret_chan_region_cfg(IN pmlan_private pmpriv,
     /* Add FW cfp tables and region info */
     wlan_add_fw_cfp_tables(pmpriv, tlv_buf, tlv_buf_left);
 
-    if (pioctl_buf != MNULL)
+    if (pioctl_buf == MNULL)
     {
         goto done;
     }

@@ -2897,7 +2897,7 @@ int wifi_set_chanlist(wifi_chanlist_t *chanlist)
 
 #ifdef OTP_CHANINFO
     mlan_adapter *pmadapter = mlan_adap->priv[0]->adapter;
-    if ((pmadapter->otp_region == MNULL) && (pmadapter->otp_region->force_reg == 0U))
+    if ((pmadapter->otp_region == MNULL) || (pmadapter->otp_region->force_reg == 0U))
     {
 #endif
         /*
