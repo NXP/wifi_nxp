@@ -408,7 +408,7 @@ mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *
     t_u32 rsn_ie_shift_len      = 0;
     int found                   = 0;
     t_u8 sha_256_oui[4]         = {0x00, 0x0f, 0xac, 0x06};
-
+    t_s16 remaining_len         = ptlv_rsn_ie->header.len;
     int ap_mfpc = 0, ap_mfpr = 0;
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
@@ -472,6 +472,20 @@ mlan_status wlan_update_rsn_ie(mlan_private *pmpriv, MrvlIEtypes_RsnParamSet_t *
             }
         }
     }
+
+    remaining_len -= (sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
+                            pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) +
+                            akm_suite_count * AKM_SUITE_LEN);
+
+    /* If RSN capabilities field is present in RSN IE,
+     * then the remaining_len will be greater than zero,
+     * in that case process the pmf settings from it,
+     * otherwise return MLAN_STATUS_SUCCESS to allow association without RSN capabilities,
+     * as per WPA2_Security_Improvement test case 5.2.4.
+     */
+    if ( remaining_len <= 0)
+	    return ret;
+
     ptr      = (t_u16 *)(void *)(ptlv_rsn_ie->rsn_ie + sizeof(t_u16) + 4 * sizeof(t_u8) + sizeof(t_u16) +
                             pairwise_cipher_count * PAIRWISE_CIPHER_SUITE_LEN + sizeof(t_u16) +
                             akm_suite_count * AKM_SUITE_LEN);
