@@ -786,7 +786,7 @@ int wifi_uap_set_bandwidth(const t_u8 bandwidth)
     return (-WM_FAIL);
 }
 
-void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl)
+void wifi_uap_set_hidden_ssid(const bool bcast_ssid_ctl)
 {
     wm_wifi.bcast_ssid_ctl = bcast_ssid_ctl;
 }

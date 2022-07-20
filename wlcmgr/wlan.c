@@ -1344,7 +1344,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 return -WM_E_INVAL;
             }
 
-            ret = wifi_set_key(BSS_TYPE_STA, true, (const uint8_t)0, (const uint8_t *)network->security.psk,
+            ret = wifi_set_key(BSS_TYPE_STA, true, 0U, (const uint8_t *)network->security.psk,
                                (unsigned)network->security.psk_len, (const uint8_t *)network->bssid);
 
             if (ret != WM_SUCCESS)
@@ -4640,7 +4640,7 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->ip.ipv4.addr_type = ADDR_TYPE_STATIC;
 }
 
-static bool isHexNumber(const char *str, const size_t len)
+static bool isHexNumber(const char *str, const uint8_t len)
 {
     for (int i = 0; i < len; ++i)
     {
@@ -4673,7 +4673,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
                 return false;
             }
             if ((network->security.psk_len == WLAN_PSK_MAX_LENGTH - 1) &&
-                (isHexNumber(network->security.psk, (const size_t)network->security.psk_len) == false))
+                (isHexNumber(network->security.psk, network->security.psk_len) == false))
             {
                 wlcm_e(
                     "Invalid hexadecimal digits psk"
@@ -6762,7 +6762,7 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 
 void wlan_uap_set_hidden_ssid(const bool bcast_ssid_ctl)
 {
-    wifi_uap_set_hidden_ssid((const t_u8)bcast_ssid_ctl);
+    wifi_uap_set_hidden_ssid(bcast_ssid_ctl);
 }
 
 void wlan_uap_ctrl_deauth(const bool enable)
