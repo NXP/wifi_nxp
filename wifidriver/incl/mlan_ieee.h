@@ -173,17 +173,19 @@ typedef MLAN_PACK_START struct _IEEEtypes_Generic_t
 } MLAN_PACK_END IEEEtypes_Generic_t, *pIEEEtypes_Generic_t;
 
 /** Capability information mask */
-#define CAPINFO_MASK (~(MBIT(15) | MBIT(14) | MBIT(12) | MBIT(11) | MBIT(9)))
+#define CAPINFO_MASK (~(MBIT(15) | MBIT(14) | MBIT(11) | MBIT(9)))
 
 /** Capability Bit Map*/
 #ifdef BIG_ENDIAN_SUPPORT
 typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
 {
-    t_u8 rsrvd1 : 2;
+    t_u8 immediate_block_ack : 1;
+    t_u8 delayed_block_ack : 1;
     t_u8 dsss_ofdm : 1;
-    t_u8 rsvrd2 : 2;
+    t_u8 radio_measurement : 1;
+    t_u8 Apsd : 1;
     t_u8 short_slot_time : 1;
-    t_u8 rsrvd3 : 1;
+    t_u8 qos : 1;
     t_u8 spectrum_mgmt : 1;
     t_u8 chan_agility : 1;
     t_u8 pbcc : 1;
@@ -215,18 +217,20 @@ typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
     t_u8 chan_agility : 1;
     /** Capability Bit Map : Spectrum management */
     t_u8 spectrum_mgmt : 1;
-    /** Capability Bit Map : Reserved */
-    t_u8 rsrvd3 : 1;
+    /** Capability Bit Map : Qos */
+    t_u8 qos : 1;
     /** Capability Bit Map : Short slot time */
     t_u8 short_slot_time : 1;
     /** Capability Bit Map : APSD */
     t_u8 Apsd : 1;
-    /** Capability Bit Map : Reserved */
-    t_u8 rsvrd2 : 1;
+    /** Capability Bit Map : Radio Rsrc Measurement */
+    t_u8 radio_measurement : 1;
     /** Capability Bit Map : DSS OFDM */
     t_u8 dsss_ofdm : 1;
-    /** Capability Bit Map : Reserved */
-    t_u8 rsrvd1 : 2;
+    /** Capability Bit Map : Delayed Block Ack */
+    t_u8 delayed_block_ack : 1;
+    /** Capability Bit Map : Immediate Block Ack */
+    t_u8 immediate_block_ack : 1;
 } MLAN_PACK_END IEEEtypes_CapInfo_t, *pIEEEtypes_CapInfo_t;
 #endif /* BIG_ENDIAN_SUPPORT */
 
