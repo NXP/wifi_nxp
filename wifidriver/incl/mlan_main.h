@@ -1109,7 +1109,7 @@ struct _mlan_private
     /** Data rate index */
     t_u8 data_rate_index;
     /** Automatic data rate flag */
-    t_u8 is_data_rate_auto;
+    bool is_data_rate_auto;
     /** Factor for calculating beacon average */
     t_u16 bcn_avg_factor;
     /** Factor for calculating data average */
@@ -2554,7 +2554,7 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
 t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate);
 #endif /* CONFIG_MLAN_WMSDK */
 /** Check if rate is auto */
-t_u8 wlan_is_rate_auto(mlan_private *pmpriv);
+bool wlan_is_rate_auto(mlan_private *pmpriv);
 /** Get rate index */
 int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size);
 

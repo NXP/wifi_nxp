@@ -111,18 +111,18 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 int wifi_set_tx_power_ext(uint32_t len, uint32_t *power_data);
 int wifi_send_bss_ioctl(mlan_ds_bss *bss);
 
-void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, int version_str_sel);
-void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, int version_str_sel);
+void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
 
 #ifdef OTP_CHANINFO
-void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
+void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
 #endif
 
 void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
@@ -666,7 +666,7 @@ static void wlan_update_uap_ampdu_stat(uint8_t *addr, bool status)
 static void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
 {
     struct uap_ampdu_stat_t *ampdu_info;
-    if (!wlan_find_ampud_info(addr, &ampdu_info))
+    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
     {
         ampdu_info->ampudu_supported = supported;
     }
@@ -1417,7 +1417,7 @@ int wifi_set_tx_power(t_u32 power_level)
     (void)memset(&ds_power_cfg, 0x00, sizeof(mlan_ds_power_cfg));
 
     ds_power_cfg.sub_command                   = MLAN_OID_POWER_CFG;
-    ds_power_cfg.param.power_cfg.is_power_auto = false;
+    ds_power_cfg.param.power_cfg.is_power_auto = MFALSE;
     ds_power_cfg.param.power_cfg.power_level   = power_level;
 
     return wifi_send_tx_power_cfg_ioctl(MLAN_ACT_SET, &ds_power_cfg);
@@ -1445,7 +1445,7 @@ int wifi_get_tx_power(t_u32 *power_level)
     (void)memset(&ioctl_req_pwr_cfg, 0x00, sizeof(mlan_ioctl_req));
 
     ds_power_cfg.sub_command                   = MLAN_OID_POWER_CFG;
-    ds_power_cfg.param.power_cfg.is_power_auto = false;
+    ds_power_cfg.param.power_cfg.is_power_auto = MFALSE;
     wm_wifi.cmd_resp_ioctl                     = &ioctl_req_pwr_cfg;
     ioctl_req_pwr_cfg.pbuf                     = (t_u8 *)(&ds_power_cfg);
     ioctl_req_pwr_cfg.buf_len                  = sizeof(mlan_ds_power_cfg);
@@ -4424,12 +4424,12 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
     }
 }
 
-void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
-    cmd->command                  = HostCmd_CMD_CFG_DATA;
-    cmd->size                     = sizeof(HostCmd_DS_802_11_CFG_DATA) + S_DS_GEN + cal_data_len - 1U;
-    cmd->seq_num                  = seq_number;
-    cmd->result                   = 0;
+    cmd->command = HostCmd_CMD_CFG_DATA;
+    cmd->size    = (t_u16)sizeof(HostCmd_DS_802_11_CFG_DATA) + (t_u16)S_DS_GEN + (t_u16)cal_data_len - (t_u16)1;
+    cmd->seq_num = seq_number;
+    cmd->result  = 0;
     cmd->params.cfg_data.action   = HostCmd_ACT_GEN_SET;
     cmd->params.cfg_data.type     = 0x02;
     cmd->params.cfg_data.data_len = cal_data_len;
@@ -4437,7 +4437,7 @@ void wifi_prepare_set_cal_data_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
 }
 
 #ifdef OTP_CHANINFO
-void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command               = HostCmd_CMD_CHAN_REGION_CFG;
     cmd->size                  = sizeof(HostCmd_DS_CHAN_REGION_CFG) + S_DS_GEN;
@@ -4447,7 +4447,7 @@ void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, int seq_nu
 }
 #endif
 
-void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command = HostCmd_CMD_GET_HW_SPEC;
     cmd->size    = sizeof(HostCmd_DS_GET_HW_SPEC) + S_DS_GEN;
@@ -4455,7 +4455,7 @@ void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->result  = 0;
 }
 
-void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command = HostCmd_CMD_RECONFIGURE_TX_BUFF;
     /* TODO: Replace hardcoded size with logical implementation */
@@ -4469,7 +4469,7 @@ void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, int seq_number
 /*
  * fixme: This function will be present till mlan integration is complete
  */
-void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command                = HostCmd_CMD_802_11_MAC_ADDRESS;
     cmd->size                   = sizeof(HostCmd_DS_802_11_MAC_ADDRESS) + S_DS_GEN;
@@ -4478,7 +4478,7 @@ void wifi_prepare_get_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->params.mac_addr.action = HostCmd_ACT_GEN_GET;
 }
 
-void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, int version_str_sel)
+void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number, int version_str_sel)
 {
     cmd->command                       = HostCmd_CMD_VERSION_EXT;
     cmd->size                          = sizeof(HostCmd_DS_VERSION_EXT) + S_DS_GEN;
@@ -4487,7 +4487,7 @@ void wifi_prepare_get_fw_ver_ext_cmd(HostCmd_DS_COMMAND *cmd, int seq_number, in
     cmd->params.verext.version_str_sel = version_str_sel;
 }
 
-void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command               = HostCmd_CMD_MAC_REG_ACCESS;
     cmd->command               = wlan_cpu_to_le16(cmd->command);
@@ -4499,7 +4499,7 @@ void wifi_prepare_get_value1(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->params.mac_reg.value  = 0x0;
 }
 
-void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command                = HostCmd_CMD_802_11_MAC_ADDRESS;
     cmd->size                   = sizeof(HostCmd_DS_802_11_MAC_ADDRESS) + S_DS_GEN;
@@ -4510,7 +4510,7 @@ void wifi_prepare_set_mac_addr_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
 }
 
 #ifdef CONFIG_EXTERNAL_BLE_COEX
-void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command                                               = HostCmd_CMD_ROBUST_COEX;
     cmd->size                                                  = sizeof(MrvlIETypes_ExtBLECoex_Config_t) + S_DS_GEN;
@@ -4534,7 +4534,7 @@ void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
 }
 #endif
 
-void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command                              = HostCmd_CMD_AMSDU_AGGR_CTRL;
     cmd->size                                 = sizeof(HostCmd_DS_AMSDU_AGGR_CTRL) + S_DS_GEN;
@@ -4546,7 +4546,7 @@ void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
 }
 
 #ifdef WLAN_LOW_POWER_ENABLE
-void wifi_prepare_low_power_mode_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wifi_prepare_low_power_mode_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command = HostCmd_CMD_LOW_POWER_MODE;
     cmd->size    = sizeof(HostCmd_CONFIG_LOW_PWR_MODE) + S_DS_GEN;
@@ -4559,11 +4559,11 @@ void wifi_prepare_low_power_mode_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
 }
 #endif
 
-void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, int seq_number)
+void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command = HostCmd_CMD_MAC_CONTROL;
     cmd->size    = sizeof(HostCmd_DS_MAC_CONTROL) + S_DS_GEN;
-    cmd->seq_num = (t_u16)seq_number;
+    cmd->seq_num = seq_number;
     cmd->result  = 0;
 
     cmd->params.mac_ctrl.action =
