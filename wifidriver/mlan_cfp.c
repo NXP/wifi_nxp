@@ -226,8 +226,25 @@ static cfp_table_t cfp_table_BG[] = {
 
 #ifdef CONFIG_5GHz_SUPPORT
 /* Format { Channel, Frequency (MHz), MaxTxPower, DFS } */
-/** Band: 'A', Region: USA FCC, Spain, France */
-static const chan_freq_power_t channel_freq_power_A[] = {
+/** Band: 'A', Region: USA FCC */
+static const chan_freq_power_t channel_freq_power_US_A[] = {
+    {36, 5180, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {40, 5200, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {44, 5220, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {48, 5240, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {52, 5260, WLAN_TX_PWR_US_DEFAULT, MTRUE},   {56, 5280, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {60, 5300, WLAN_TX_PWR_US_DEFAULT, MTRUE},   {64, 5320, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {100, 5500, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {104, 5520, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {108, 5540, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {112, 5560, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {116, 5580, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {120, 5600, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {124, 5620, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {128, 5640, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {132, 5660, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {136, 5680, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {169, 5845, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {173, 5865, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {177, 5885, WLAN_TX_PWR_US_DEFAULT, MTRUE}};
+
+/** Band: 'A', Region: Spain, France */
+static const chan_freq_power_t channel_freq_power_FR_A[] = {
     {36, 5180, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {40, 5200, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {44, 5220, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {48, 5240, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {52, 5260, WLAN_TX_PWR_US_DEFAULT, MTRUE},   {56, 5280, WLAN_TX_PWR_US_DEFAULT, MTRUE},
@@ -377,8 +394,8 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x10, /* US FCC */
-        (chan_freq_power_t *)channel_freq_power_A,
-        sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t),
+        (chan_freq_power_t *)channel_freq_power_US_A,
+        sizeof(channel_freq_power_US_A) / sizeof(chan_freq_power_t),
     },
     {
         0x20, /* CANADA IC */
@@ -392,8 +409,8 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x32, /* FRANCE */
-        (chan_freq_power_t *)channel_freq_power_A,
-        sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t),
+        (chan_freq_power_t *)channel_freq_power_FR_A,
+        sizeof(channel_freq_power_FR_A) / sizeof(chan_freq_power_t),
     },
     {
         0x40, /* JAPAN */

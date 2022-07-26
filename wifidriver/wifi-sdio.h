@@ -41,12 +41,12 @@
 #elif defined(CONFIG_11AC)
 /* In 802.11ac sizeof(HostCmd_CMD_CHANNEL_TRPC_CONFIG) is 1572 bytes.
  */
-#define WIFI_FW_CMDBUF_SIZE 1580U
+#define WIFI_FW_CMDBUF_SIZE 1780U
 #else
 /* fixme: sizeof(HostCmd_DS_COMMAND) is 1132 bytes. So have kept this at
  * the current size.
  */  
-#define WIFI_FW_CMDBUF_SIZE 1400U
+#define WIFI_FW_CMDBUF_SIZE 1600U
 #endif /* CONFIG_11AC */
 
 #define WIFI_RESP_WAIT_TIME 10

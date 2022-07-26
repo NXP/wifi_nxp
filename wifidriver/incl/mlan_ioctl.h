@@ -518,7 +518,7 @@ typedef struct _mlan_multicast_list
 
 /** Max channel */
 #ifdef CONFIG_5GHz_SUPPORT
-#define MLAN_MAX_CHANNEL 165U
+#define MLAN_MAX_CHANNEL 177U
 #else
 #define MLAN_MAX_CHANNEL 14U
 #endif
