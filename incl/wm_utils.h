@@ -24,7 +24,6 @@
 
 #ifdef __GNUC__
 #define WARN_UNUSED_RET __attribute__((warn_unused_result))
-#define WEAK            __attribute__((weak))
 
 #ifndef PACK_START
 #define PACK_START
@@ -46,13 +45,21 @@
 #else /* __GNUC__ */
 
 #define WARN_UNUSED_RET
-#define WEAK __weak
 
 #define PACK_START __packed
 #define PACK_END
 #define NORETURN
 
 #endif /* __GNUC__ */
+
+/* Weak function. */
+#if defined(__GNUC__)
+#define WEAK __attribute__((weak))
+#elif defined(__ICCARM__)
+#define WEAK __weak
+#elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
+#define WEAK __attribute__((weak))
+#endif
 
 /* alignment value should be a power of 2 */
 #define __WM_ALIGN__(num, num_type, align) MASK(num, (num_type)align - 1)
