@@ -3669,4 +3669,17 @@ int wlan_set_drcs_cfg(const wlan_drcs_cfg_t *drcs_cfg, const int num);
 int wlan_get_drcs_cfg(wlan_drcs_cfg_t *drcs_cfg, int num);
 #endif
 
+#ifdef CONFIG_11R
+/**
+ * Start FT roaming : This API is used to initiate fast BSS transition based
+ * roaming.
+ *
+ * \param[in] bssid       BSSID of AP to roam
+ * \param[in] channel     Channel of AP to roam
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel);
+#endif
+
 #endif /* __WLAN_H__ */

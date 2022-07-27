@@ -2177,6 +2177,56 @@ static void test_wlan_mem_access(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_11R
+static void dump_wlan_ft_roam_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Roam to new AP using FT:\r\n");
+    (void)PRINTF("    wlan-ft-roam <bssid> <channel>\r\n");
+}
+
+static void test_wlan_ft_roam(int argc, char **argv)
+{
+    int ret;
+    t_u8 bssid[IEEEtypes_ADDRESS_SIZE] = {0};
+    t_u8 channel                       = 0;
+    if (argc != 3)
+    {
+        dump_wlan_ft_roam_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if (get_mac(argv[1], (char *)bssid, ':') != false)
+    {
+        (void)PRINTF(
+            "Error: invalid BSSID argument"
+            "\r\n");
+        dump_wlan_ft_roam_usage();
+        return;
+    }
+
+    errno   = 0;
+    channel = (t_u8)strtol(argv[2], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:channel errno:%d\r\n", errno);
+        dump_wlan_ft_roam_usage();
+        return;
+    }
+
+    ret = wlan_ft_roam(bssid, channel);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Started FT roaming\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Failed to start FT roaming\r\n");
+    }
+}
+#endif
+
 #ifdef CONFIG_HEAP_STAT
 static void test_heap_stat(int argc, char **argv)
 {
@@ -2576,6 +2626,9 @@ static struct cli_command tests[] = {
      "<channel_time> <switch_time> <undoze_time> <mode> [<channel_time> <switch_time> <undoze_time> <mode>]",
      test_wlan_set_drcs_cfg},
     {"wlan-get-drcs", NULL, test_wlan_get_drcs_cfg},
+#endif
+#ifdef CONFIG_11R
+    {"wlan-ft-roam", "<bssid> <channel>", test_wlan_ft_roam},
 #endif
 };
 

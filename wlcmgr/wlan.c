@@ -2001,6 +2001,8 @@ static void handle_scan_results(void)
         {
             if (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
             {
+                /* For same AP change state again to CONNECTED and return */
+                wlan.sta_state = CM_STA_CONNECTED;
                 return;
             }
         }
@@ -2038,6 +2040,20 @@ static void handle_scan_results(void)
     }
 
     os_mem_free(best_ap);
+
+#ifdef CONFIG_11R
+    if (wlan.ft_assoc == true)
+    {
+        wlan.ft_assoc  = false;
+        wlan.sta_state = CM_STA_CONNECTED;
+        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+        {
+            wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
+        }
+
+        return;
+    }
+#endif
 
     /* We didn't find our network in the scan results set: rescan if we
      * have rescan attempts remaining, otherwise give up.
@@ -2846,14 +2862,14 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
             chan_list[i].scan_time   = 120;
         }
 
+        wlan.ft_assoc = true;
         ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[0], chan_list, 0, false,
                                  false);
         if (ret != WM_SUCCESS)
         {
-            wlcm_e("error: neighbor list scan failed");
+            wlcm_e("neighbor list scan failed");
+            wlan.ft_assoc = false;
         }
-
-        wlan.ft_assoc = true;
 
         if (channels != NULL)
         {
@@ -2861,6 +2877,46 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         }
     }
 #endif
+}
+#endif
+
+#ifdef CONFIG_11R
+int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
+{
+    struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
+
+    if (is_state(CM_STA_IDLE))
+    {
+        (void)PRINTF("Station is not connected\r\n");
+        return -WM_FAIL;
+    }
+
+    if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+    {
+        int ret;
+        wlan_scan_channel_list_t chan_list;
+
+        chan_list.chan_number = channel;
+        chan_list.scan_type   = MLAN_SCAN_TYPE_ACTIVE;
+        chan_list.scan_time   = 120;
+
+        wlan.ft_assoc = true;
+        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0, false, false);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("wlan ft roam scan failed");
+            wlan.ft_assoc = false;
+            return -WM_FAIL;
+        }
+
+        return WM_SUCCESS;
+    }
+    else
+    {
+        (void)PRINTF("Current associated AP do not support FT BSS transition\r\n");
+    }
+
+    return -WM_FAIL;
 }
 #endif
 
