@@ -542,7 +542,7 @@ static void test_wlan_add(int argc, char **argv)
             network.security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
             if (errno != 0)
             {
-                (void)PRINTF("Error during strtoul:mfpc errno:%d", errno);
+                (void)PRINTF("Error during strtoul:mfpc errno:%d\r\n", errno);
             }
             if (arg + 1 >= argc || (network.security.mfpc != false && network.security.mfpc != true))
             {
@@ -560,7 +560,7 @@ static void test_wlan_add(int argc, char **argv)
             network.security.mfpr = (bool)strtol(argv[arg + 1], NULL, 10);
             if (errno != 0)
             {
-                (void)PRINTF("Error during strtoul:mfpr errno:%d", errno);
+                (void)PRINTF("Error during strtoul:mfpr errno:%d\r\n", errno);
             }
             if (arg + 1 >= argc || (network.security.mfpr != false && network.security.mfpr != true))
             {
@@ -585,7 +585,7 @@ static void test_wlan_add(int argc, char **argv)
             {
                 (void)PRINTF(
                     "Error: invalid dtim"
-                    " argument\n");
+                    " argument \r\n");
                 return;
             }
             network.dtim_period = (uint8_t)(dtim_period & 0XFF);
@@ -1307,7 +1307,7 @@ static void test_wlan_ieee_ps(int argc, char **argv)
     choice = strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:mfpc errno:%d", errno);
+        (void)PRINTF("Error during strtoul:mfpc errno:%d\r\n", errno);
     }
 
     if (choice == 0)
@@ -1374,7 +1374,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
     choice = strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:deep_sleep_ps errno:%d", errno);
+        (void)PRINTF("Error during strtoul:deep_sleep_ps errno:%d\r\n", errno);
     }
 
     if (choice == 0)
@@ -1914,7 +1914,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
     choice = (int)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:host_sleep errno:%d", errno);
+        (void)PRINTF("Error during strtoul:host_sleep errno:%d\r\n", errno);
     }
 
     if (choice == 0)
@@ -1941,7 +1941,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
         wowlan = (int)strtol(argv[3], NULL, 10);
         if (errno != 0)
         {
-            (void)PRINTF("Error during strtoul:wowlan errno:%d", errno);
+            (void)PRINTF("Error during strtoul:wowlan errno:%d\r\n", errno);
         }
 
         if (string_equal(argv[2], "wowlan_test"))
@@ -2089,7 +2089,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
     bandwidth = (uint8_t)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:uap_bandwidth errno:%d", errno);
+        (void)PRINTF("Error during strtoul:uap_bandwidth errno:%d\r\n", errno);
     }
 
     ret = wlan_uap_set_bandwidth(bandwidth);
@@ -2364,7 +2364,7 @@ static void test_wlan_set_multi_chan_status(int argc, char **argv)
     enable = strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtol:enable multi chan status errno:%d", errno);
+        (void)PRINTF("Error during strtol:enable multi chan status errno:%d\r\n", errno);
     }
 
     ret = wlan_set_multi_chan_status(enable);
@@ -2413,28 +2413,28 @@ static void get_drcs_cfg(char **data, wlan_drcs_cfg_t *drcs_cfg)
     drcs_cfg->chantime = (t_u8)strtol(data[0], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtol:drcs_cfg chantime errno:%d", errno);
+        (void)PRINTF("Error during strtol:drcs_cfg chantime errno:%d\r\n", errno);
     }
 
     errno                = 0;
     drcs_cfg->switchtime = (t_u8)strtol(data[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtol:drcs_cfg switchtime errno:%d", errno);
+        (void)PRINTF("Error during strtol:drcs_cfg switchtime errno:%d\r\n", errno);
     }
 
     errno                = 0;
     drcs_cfg->undozetime = (t_u8)strtol(data[2], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtol:drcs_cfg undozetime errno:%d", errno);
+        (void)PRINTF("Error during strtol:drcs_cfg undozetime errno:%d\r\n", errno);
     }
 
     errno          = 0;
     drcs_cfg->mode = (t_u8)strtol(data[3], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtol:drcs_cfg mode errno:%d", errno);
+        (void)PRINTF("Error during strtol:drcs_cfg mode errno:%d\r\n", errno);
     }
 }
 
