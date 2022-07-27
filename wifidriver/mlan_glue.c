@@ -243,6 +243,7 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
     tlv_buf_left = wlan_le16_to_cpu(tlv_buf_left);
     if (tlv_buf_left < (int)sizeof(MrvlIEtypesHeader_t))
     {
+        os_mem_free((void *)channels);
         return MNULL;
     }
     wifi_d("neighbor AP list tlv len: %d", tlv_buf_left);
@@ -297,6 +298,7 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
     }
     else
     {
+        os_mem_free((void *)channels);
         return MNULL;
     }
 }
@@ -667,7 +669,7 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 {
     pmlan_private priv = mlan_adap->priv[1];
 
-    priv->rxpd_rate = rxpd->rx_rate;
+    priv->rxpd_rate      = rxpd->rx_rate;
     priv->rxpd_rate_info = rxpd->rate_info;
 }
 
@@ -2143,6 +2145,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             /*do nothing*/
                         }
                     }
+#ifdef CONFIG_WIFIDRIVER_PS_LOCK
+                    else
+                    {
+                        os_mem_free((void *)ps_action_p);
+                    }
+#endif
                 }
             }
             break;

@@ -815,10 +815,13 @@ static void cmd_iperf(int argc, char **argv)
 
             if ((info.chost == 0U) && argv[arg] != NULL)
             {
-                (void)strncpy(ip_addr, argv[arg], strlen(argv[arg]));
+                if (strlen(argv[arg]) < sizeof(ip_addr))
+                {
+                    (void)strncpy(ip_addr, argv[arg], strlen(argv[arg]));
 
-                arg += 1;
-                info.chost = 1;
+                    arg += 1;
+                    info.chost = 1;
+                }
             }
         }
         else if ((info.iperf_bind == 0U) && string_equal("-B", argv[arg]))
