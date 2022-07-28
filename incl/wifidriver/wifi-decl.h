@@ -821,7 +821,11 @@ typedef PACK_START struct
     /** Number of Channels */
     t_u8 num_chans;
     /** TRPC config */
+#if defined(IW61x)
     wifi_txpwrlimit_config_t txpwrlimit_config[43];
+#else
+    wifi_txpwrlimit_config_t txpwrlimit_config[40];
+#endif
 } PACK_END wifi_txpwrlimit_t;
 
 #ifdef CONFIG_11AX

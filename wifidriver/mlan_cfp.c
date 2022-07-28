@@ -225,7 +225,10 @@ static cfp_table_t cfp_table_BG[] = {
 #define MLAN_CFP_TABLE_SIZE_BG (sizeof(cfp_table_BG) / sizeof(cfp_table_t))
 
 #ifdef CONFIG_5GHz_SUPPORT
+
 /* Format { Channel, Frequency (MHz), MaxTxPower, DFS } */
+
+#if defined(IW61x)
 /** Band: 'A', Region: USA FCC */
 static const chan_freq_power_t channel_freq_power_US_A[] = {
     {36, 5180, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {40, 5200, WLAN_TX_PWR_US_DEFAULT, MFALSE},
@@ -257,6 +260,22 @@ static const chan_freq_power_t channel_freq_power_FR_A[] = {
     {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE}};
+#else
+/** Band: 'A', Region: USA FCC, Spain, France */
+static const chan_freq_power_t channel_freq_power_A[] = {
+    {36, 5180, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {40, 5200, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {44, 5220, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {48, 5240, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {52, 5260, WLAN_TX_PWR_US_DEFAULT, MTRUE},   {56, 5280, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {60, 5300, WLAN_TX_PWR_US_DEFAULT, MTRUE},   {64, 5320, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {100, 5500, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {104, 5520, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {108, 5540, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {112, 5560, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {116, 5580, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {120, 5600, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {124, 5620, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {128, 5640, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {132, 5660, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {136, 5680, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE}};
+#endif
 
 /** Band: 'A', Region: Canada IC */
 static const chan_freq_power_t channel_freq_power_CAN_A[] = {
@@ -394,8 +413,13 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x10, /* US FCC */
+#if defined(IW61x)
         (chan_freq_power_t *)channel_freq_power_US_A,
         sizeof(channel_freq_power_US_A) / sizeof(chan_freq_power_t),
+#else
+        (chan_freq_power_t *)channel_freq_power_A,
+        sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t),
+#endif
     },
     {
         0x20, /* CANADA IC */
@@ -409,8 +433,13 @@ static cfp_table_t cfp_table_A[] = {
     },
     {
         0x32, /* FRANCE */
+#if defined(IW61x)
         (chan_freq_power_t *)channel_freq_power_FR_A,
         sizeof(channel_freq_power_FR_A) / sizeof(chan_freq_power_t),
+#else
+        (chan_freq_power_t *)channel_freq_power_A,
+        sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t),
+#endif
     },
     {
         0x40, /* JAPAN */

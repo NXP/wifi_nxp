@@ -2148,11 +2148,16 @@ wifi_sub_band_set_t subband_CS_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 #ifdef CONFIG_5GHz_SUPPORT
 
-/* Region: US(US) or France(FR) or Singapore(SG) 5 GHz */
+#if defined(IW61x)
+/* Region: US(US) 5 GHz */
 wifi_sub_band_set_t subband_US_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 8, 20}};
 
 /* Region: France(FR) or Singapore(SG) 5 GHz */
 wifi_sub_band_set_t subband_SG_FR_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 5, 20}};
+#else
+/* Region: US(US) or France(FR) or Singapore(SG) 5 GHz */
+wifi_sub_band_set_t subband_US_SG_FR_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 5, 20}};
+#endif
 
 /* Region: Canada(CA) 5 GHz */
 wifi_sub_band_set_t subband_CA_5_GHz[] = {{36, 8, 20}, {100, 5, 20}, {132, 3, 20}, {149, 5, 20}};
@@ -2364,12 +2369,18 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, t_u8 *nr
             *nr_sb = 3;
             return subband_WWSM_5_GHz;
         case 2:
+#if defined(IW61x)
             *nr_sb = 3;
             return subband_US_5_GHz;
+#endif
         case 4:
         case 8:
             *nr_sb = 3;
+#if defined(IW61x)
             return subband_SG_FR_5_GHz;
+#else
+            return subband_US_SG_FR_5_GHz;
+#endif
         case 3:
             *nr_sb = 4;
             return subband_CA_5_GHz;
@@ -2385,7 +2396,11 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(int country, t_u8 *nr
             return subband_CN_5_GHz;
         default:
             *nr_sb = 3;
+#if defined(IW61x)
             return subband_US_5_GHz;
+#else
+            return subband_US_SG_FR_5_GHz;
+#endif
     }
 }
 
@@ -2396,11 +2411,17 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
     switch (region_code)
     {
         case 0x10:
+#if defined(IW61x)
             *nr_sb = 3;
             return subband_US_5_GHz;
+#endif
         case 0x32:
             *nr_sb = 3;
+#if defined(IW61x)
             return subband_SG_FR_5_GHz;
+#else
+            return subband_US_SG_FR_5_GHz;
+#endif
         case 0x20:
             *nr_sb = 4;
             return subband_CA_5_GHz;
@@ -2417,7 +2438,11 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
             return subband_WWSM_5_GHz;
         default:
             *nr_sb = 3;
+#if defined(IW61x)
             return subband_US_5_GHz;
+#else
+            return subband_US_SG_FR_5_GHz;
+#endif
     }
 }
 #endif /* CONFIG_5GHz_SUPPORT */
