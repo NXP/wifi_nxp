@@ -12,8 +12,8 @@ Version 1.3.r42.p1
    - Added support for FIPS for CA2 and RB3+
    - Added uAP 11AC support
    - Deprecated support for 88W8977 Wi-Fi SoC
-   - Added 8978 SoC firmware p63.
-   - Added 8987 SoC firmware p63.
+   - Added 8978 SoC firmware p64.
+   - Added 8987 SoC firmware p64.
    - Added mlanutl equivalent utility on RT to create wifi fw compatible command arrays.
 
   -Bug Fixes:
