@@ -1408,7 +1408,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
 }
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
-static void dump_wlan_tx_pert_usage()
+static void dump_wlan_tx_pert_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
@@ -1456,7 +1456,7 @@ static void test_wlan_tx_pert(int argc, char **argv)
 
 #ifdef CONFIG_ROAMING
 #define DEFAULT_RSSI_THRESHOLD 70
-static void dump_wlan_roaming_usage()
+static void dump_wlan_roaming_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
@@ -2112,7 +2112,7 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_WIFI_MEM_ACCESS
-static void dump_wlan_mem_access_usage()
+static void dump_wlan_mem_access_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Get value of memory:\r\n");
@@ -2178,7 +2178,7 @@ static void test_wlan_mem_access(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_11R
-static void dump_wlan_ft_roam_usage()
+static void dump_wlan_ft_roam_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Roam to new AP using FT:\r\n");
@@ -2235,7 +2235,7 @@ static void test_heap_stat(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_EU_VALIDATION
-static void dump_wlan_eu_validation()
+static void dump_wlan_eu_validation(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-eu-validation <value>\r\n");
@@ -2311,7 +2311,7 @@ static void test_wlan_eu_validation(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_WIFI_EU_CRYPTO
-static void dump_wlan_eu_crypto()
+static void dump_wlan_eu_crypto(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-WRAP encryption and decryption verification\r\n");

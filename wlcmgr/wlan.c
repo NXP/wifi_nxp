@@ -2048,7 +2048,7 @@ static void handle_scan_results(void)
         wlan.sta_state = CM_STA_CONNECTED;
         if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
         {
-            wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
+            (void)wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
         }
 
         return;
@@ -2670,7 +2670,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #ifdef CONFIG_11R
         if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
         {
-            wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
+            (void)wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
         }
         else
         {
