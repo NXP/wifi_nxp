@@ -1,0 +1,16 @@
+Release Name: MCUXpresso Software Development Kit (SDK)
+Release Version: 2.9.4
+Package License: LA_OPT_NXP_Software_License.txt - Additional Distribution License, Section 2.3 applies
+
+wifi_nxp                   Name: NXP Wi-Fi driver                            
+                           Version: 1.3.r20.p1                               
+                           Outgoing License: LA_OPT_NXP_Software_License -   
+                           Additional distribution license granted - License 
+                           in Section 2.3 applies                            
+                           License File: LA_OPT_NXP_Software_License.txt     
+                           Format: source code, header files, firmware       
+                           binaries                                          
+                           Description: NXP Wi-Fi driver and networking      
+                           utilities                                         
+                           Location: middleware/wifi                         
+                           Origin: NXP    
