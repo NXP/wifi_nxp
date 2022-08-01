@@ -5,7 +5,7 @@
 Version 1.3.r39.p13
  - Updates:
   - Updated firmware version to p136.
-  - Added support for 4 UNII-4 band channels 165, 169, 173 and 177.
+  - Added support for UNII-4 band channels.
   - Throughput improvement changes added.
   - Added APIs to set RU tx power configuration.
 
