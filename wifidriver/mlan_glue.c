@@ -921,6 +921,23 @@ int wrapper_wlan_11d_enable(void)
     return wifi_wait_for_cmdresp(NULL);
 }
 
+int wifi_11h_enable(void)
+{
+    t_u32 enable_11h = (t_u32)ENABLE_11H;
+
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
+                                   (t_u32)Dot11H_i, NULL, &enable_11h, cmd);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
 int wrapper_wlan_ecsa_enable(void)
 {
     bool ecsa_enable = MTRUE;

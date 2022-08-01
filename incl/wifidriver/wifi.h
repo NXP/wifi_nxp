@@ -703,6 +703,8 @@ int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_
 
 int wrapper_wlan_11d_enable(void);
 
+int wifi_11h_enable(void);
+
 int wrapper_wlan_cmd_11n_addba_rspgen(void *saved_event_buff);
 
 int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff);

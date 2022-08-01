@@ -5726,6 +5726,9 @@ static mlan_status wlan_11k_enable(mlan_private *pmpriv, t_void *pioctl_buf, t_u
     /* enable 11v BSS Transition with 11k*/
     fctrl.control.std.dot11v_bss_trans = enable_11k;
 
+    /* enable or disable TPC report (Probe request) */
+    fctrl.control.std.vowifi_probe_tpc_rpt = enable_11k;
+
     ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_OFFLOAD_FEATURE_CONTROL, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_buf,
                            &fctrl);
 

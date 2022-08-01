@@ -3459,7 +3459,8 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     }
 #endif
 #ifdef CONFIG_11K
-    wlan_11k_cfg(1);
+    (void)wifi_11k_cfg(1);
+    (void)wifi_11h_enable();
 #endif
 }
 

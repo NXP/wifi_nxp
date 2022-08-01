@@ -881,6 +881,13 @@ typedef enum _state_11d_t
     ENABLE_11D  = 1UL,
 } state_11d_t;
 
+/** State of 11h */
+typedef enum _state_11h_t
+{
+    DISABLE_11H = 0UL,
+    ENABLE_11H  = 1UL,
+} state_11h_t;
+
 #define DEFAULT_11D_STATE DISABLE_11D
 
 /** Domain regulatory information */
