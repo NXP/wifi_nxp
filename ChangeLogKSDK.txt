@@ -2,6 +2,16 @@
 @page middleware_log Middleware Change Log
  
 @section wifi NXP WiFi
+Version 1.3.r39.p13
+ - Updates:
+  - Updated firmware version to p136.
+  - Added support for 4 UNII-4 band channels 165, 169, 173 and 177.
+  - Throughput improvement changes added.
+  - Added APIs to set RU tx power configuration.
+
+ - Bug Fixes:
+  - Cert test fix: STAUT is not associating in A scenario.
+
 Version 1.3.r39.p12
  - Updates:
   - Updated firmware version to p131.
