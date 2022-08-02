@@ -591,10 +591,14 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                     rupwr_tlv = (mlan_ds_11ax_chanlrupwrcft_cmd *)pByte;
                     if (rupwr_tlv->type == TLV_TYPE_CHANNEL_RU_PWR_CONFIG)
                     {
+                        t_u8 i;
                         ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].start_freq = rupwr_tlv->rupwrlimit_config.start_freq;
                         ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].width = rupwr_tlv->rupwrlimit_config.width;
                         ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].chan_num = rupwr_tlv->rupwrlimit_config.chan_num;
-                        (void)memcpy(ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].ruPower, rupwr_tlv->rupwrlimit_config.ruPower, MAX_RU_COUNT);
+                        for ( i = 0; i < MAX_RU_COUNT; i++ )
+                        {
+                          ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].ruPower[i] = (t_s8)rupwr_tlv->rupwrlimit_config.ruPower[i];
+                        }
                         ru_pwr_cfg->num_chans++;
                     }
                     left_len -= (rupwr_tlv->len + sizeof(MrvlIEtypesHeader_t));

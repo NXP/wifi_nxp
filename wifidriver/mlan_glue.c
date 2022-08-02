@@ -4164,14 +4164,17 @@ int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg)
     pByte = (t_u8 *)axcmd->val;
     for (i = 0; i < ru_pwr_cfg->num_chans; i++)
     {
+        t_u8 j;
         chrupc_tlv              = (mlan_ds_11ax_chanlrupwrcft_cmd *)(void *)pByte;
         chrupc_tlv->type = TLV_TYPE_CHANNEL_RU_PWR_CONFIG;
         chrupc_tlv->len  = sizeof(wifi_rupwrlimit_config_t);
         chrupc_tlv->rupwrlimit_config.start_freq = ru_pwr_cfg->rupwrlimit_config[i].start_freq;
         chrupc_tlv->rupwrlimit_config.width      = ru_pwr_cfg->rupwrlimit_config[i].width;
         chrupc_tlv->rupwrlimit_config.chan_num   = ru_pwr_cfg->rupwrlimit_config[i].chan_num;
-        (void)memcpy((void *)chrupc_tlv->rupwrlimit_config.ruPower, (const void *)ru_pwr_cfg->rupwrlimit_config[i].ruPower,
-                    MAX_RU_COUNT);
+        for ( j = 0; j < MAX_RU_COUNT; j++ )
+        {
+           chrupc_tlv->rupwrlimit_config.ruPower[j] = (t_s8)ru_pwr_cfg->rupwrlimit_config[i].ruPower[j];
+        }
         pByte += chrupc_tlv->len + sizeof(MrvlIEtypesHeader_t);
     }
     ret = wifi_wait_for_cmdresp(NULL);
