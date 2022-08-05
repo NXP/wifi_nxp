@@ -2580,8 +2580,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    if (wm_wifi.cmd_resp_priv != NULL &&
-                        resp->params.twtcfg.sub_id == MLAN_11AX_TWT_REPORT_SUBID)
+                    if (wm_wifi.cmd_resp_priv != NULL && resp->params.twtcfg.sub_id == MLAN_11AX_TWT_REPORT_SUBID)
                     {
                         mlan_ds_twt_report *cfg = (mlan_ds_twt_report *)wm_wifi.cmd_resp_priv;
                         (void)memcpy(cfg, &resp->params.twtcfg.param.twt_report, sizeof(mlan_ds_twt_report));
@@ -2590,7 +2589,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
                 else
                 {
-                    rv = MLAN_STATUS_FAILURE;
+                    rv                      = MLAN_STATUS_FAILURE;
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 }
             }
@@ -4161,12 +4160,12 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi)
 
     return WM_SUCCESS;
 }
-int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg)
+int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
 {
     t_u8 i;
     int ret;
-    HostCmd_DS_COMMAND *cmd                = wifi_get_command_buffer();
-    t_u8 *pByte                            = NULL;
+    HostCmd_DS_COMMAND *cmd                    = wifi_get_command_buffer();
+    t_u8 *pByte                                = NULL;
     mlan_ds_11ax_chanlrupwrcft_cmd *chrupc_tlv = NULL;
 
     (void)wifi_get_command_lock();
@@ -4174,10 +4173,10 @@ int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg)
     cmd->command = HostCmd_CMD_11AX_CMD;
     cmd->seq_num = 0x0;
     cmd->result  = 0x0;
-    cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN + 
-	        ru_pwr_cfg->num_chans * (sizeof(wifi_rupwrlimit_config_t) + sizeof(MrvlIEtypesHeader_t)) ;
+    cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN +
+                ru_pwr_cfg->num_chans * (sizeof(wifi_rupwrlimit_config_t) + sizeof(MrvlIEtypesHeader_t));
 
-    HostCmd_DS_11AX_CMD_CFG *axcmd    = &cmd->params.axcmd;
+    HostCmd_DS_11AX_CMD_CFG *axcmd = &cmd->params.axcmd;
 
     axcmd->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
     axcmd->sub_id = wlan_cpu_to_le16(MLAN_11AXCMD_RUPOWER_SUBID);
@@ -4186,15 +4185,15 @@ int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg)
     for (i = 0; i < ru_pwr_cfg->num_chans; i++)
     {
         t_u8 j;
-        chrupc_tlv              = (mlan_ds_11ax_chanlrupwrcft_cmd *)(void *)pByte;
-        chrupc_tlv->type = TLV_TYPE_CHANNEL_RU_PWR_CONFIG;
-        chrupc_tlv->len  = sizeof(wifi_rupwrlimit_config_t);
+        chrupc_tlv                               = (mlan_ds_11ax_chanlrupwrcft_cmd *)(void *)pByte;
+        chrupc_tlv->type                         = TLV_TYPE_CHANNEL_RU_PWR_CONFIG;
+        chrupc_tlv->len                          = sizeof(wifi_rupwrlimit_config_t);
         chrupc_tlv->rupwrlimit_config.start_freq = ru_pwr_cfg->rupwrlimit_config[i].start_freq;
         chrupc_tlv->rupwrlimit_config.width      = ru_pwr_cfg->rupwrlimit_config[i].width;
         chrupc_tlv->rupwrlimit_config.chan_num   = ru_pwr_cfg->rupwrlimit_config[i].chan_num;
-        for ( j = 0; j < MAX_RU_COUNT; j++ )
+        for (j = 0; j < MAX_RU_COUNT; j++)
         {
-           chrupc_tlv->rupwrlimit_config.ruPower[j] = (t_s8)ru_pwr_cfg->rupwrlimit_config[i].ruPower[j];
+            chrupc_tlv->rupwrlimit_config.ruPower[j] = (t_s8)ru_pwr_cfg->rupwrlimit_config[i].ruPower[j];
         }
         pByte += chrupc_tlv->len + sizeof(MrvlIEtypesHeader_t);
     }
@@ -4202,9 +4201,8 @@ int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg)
     return ret;
 }
 
-int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t* ru_pwr_cfg)
+int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg)
 {
-
     int ret;
 
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -4218,9 +4216,9 @@ int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t* ru_pwr_cfg)
 
     HostCmd_DS_11AX_CMD_CFG *rutxpwrlimit_config = (HostCmd_DS_11AX_CMD_CFG *)(void *)((uint8_t *)cmd + S_DS_GEN);
 
-    rutxpwrlimit_config->action  = HostCmd_ACT_GEN_GET;
+    rutxpwrlimit_config->action = HostCmd_ACT_GEN_GET;
 
-    rutxpwrlimit_config->sub_id  = MLAN_11AXCMD_RUPOWER_SUBID;
+    rutxpwrlimit_config->sub_id = MLAN_11AXCMD_RUPOWER_SUBID;
 
     ret = wifi_wait_for_cmdresp(ru_pwr_cfg);
 
@@ -4228,95 +4226,83 @@ int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t* ru_pwr_cfg)
 }
 
 #ifdef CONFIG_11AX_TWT
-int wifi_set_11ax_cfg(int bss_type, uint8_t *data, int len)
+int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config)
 {
     /* alloc cmd and wait for response in prepare cmd, no need to deal with cmd outside */
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_11AX_CFG, HostCmd_ACT_GEN_SET, 0,
-                             NULL, data, NULL);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_11AX_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
+                             ax_config, NULL);
     return WM_SUCCESS;
 }
 
-int wifi_set_btwt_cfg(int bss_type, uint8_t *data, int len)
+int wifi_set_btwt_cfg(wifi_btwt_config_t *btwt_config)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    if (len < 0 || len >= sizeof(cmd->params))
-    {
-        wifi_e("%s get invalid len %d\r\n", len);
-        return -WM_E_INVAL;
-    }
-
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
-    cmd->result = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
-    cmd->size = len + S_DS_GEN;
-    (void)memcpy(&cmd->params, data, len);
+    cmd->size    = sizeof(wifi_btwt_config_t) + S_DS_GEN;
+    (void)memcpy(&cmd->params, btwt_config, sizeof(wifi_btwt_config_t));
 
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
-int wifi_set_twt_setup_cfg(int bss_type, uint8_t *data, int len)
+int wifi_set_twt_setup_cfg(wifi_twt_setup_config_t *twt_setup)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg = {0};
+    mlan_ds_twtcfg twt_cfg  = {0};
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
-    cmd->result = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
 
     twt_cfg.sub_id = MLAN_11AX_TWT_SETUP_SUBID;
-    (void)memcpy(&twt_cfg.param.twt_setup, data, sizeof(twt_cfg.param.twt_setup));
+    (void)memcpy(&twt_cfg.param.twt_setup, twt_setup, sizeof(twt_cfg.param.twt_setup));
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0,
-                             NULL, &twt_cfg, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
+                             &twt_cfg, cmd);
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
-int wifi_set_twt_teardown_cfg(int bss_type, uint8_t *data, int len)
+int wifi_set_twt_teardown_cfg(wifi_twt_teardown_config_t *teardown_config)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg = {0};
+    mlan_ds_twtcfg twt_cfg  = {0};
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
-    cmd->result = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
 
     twt_cfg.sub_id = MLAN_11AX_TWT_TEARDOWN_SUBID;
-    (void)memcpy(&twt_cfg.param.twt_teardown, data, sizeof(twt_cfg.param.twt_teardown));
+    (void)memcpy(&twt_cfg.param.twt_teardown, teardown_config, sizeof(twt_cfg.param.twt_teardown));
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0,
-                             NULL, &twt_cfg, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
+                             &twt_cfg, cmd);
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
 
-int wifi_get_twt_report(int bss_type, uint8_t *data, int len)
+int wifi_get_twt_report(wifi_twt_report_t *twt_report)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    mlan_ds_twtcfg twt_cfg = {0};
-
-    if (len < sizeof(mlan_ds_twt_report))
-    {
-        wifi_e("%s invalid data length %d, should be %d", len, sizeof(mlan_ds_twt_report));
-        return WM_E_INVAL;
-    }
+    mlan_ds_twtcfg twt_cfg  = {0};
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
-    cmd->result = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
 
     twt_cfg.sub_id = MLAN_11AX_TWT_REPORT_SUBID;
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_GET, 0,
-                             NULL, &twt_cfg, cmd);
-    wifi_wait_for_cmdresp(data);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_GET, 0, NULL,
+                             &twt_cfg, cmd);
+    wifi_wait_for_cmdresp(twt_report);
     return WM_SUCCESS;
 }
 #endif /* CONFIG_11AX_TWT */

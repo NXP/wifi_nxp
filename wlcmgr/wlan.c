@@ -2993,8 +2993,8 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #endif
 #else
 #if defined(SD8801)
-    uint32_t ant                  = 1;
-    uint16_t evaluate_time        = 0x1770;
+    uint32_t ant           = 1;
+    uint16_t evaluate_time = 0x1770;
 
     ret = wifi_set_antenna(ant, evaluate_time);
     if (ret != WM_SUCCESS)
@@ -6458,29 +6458,29 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 #endif
 
 #if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
-int wlan_set_11ax_cfg(int bss_type, uint8_t *data, int len)
+int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
 {
-    return wifi_set_11ax_cfg(bss_type, data, len);
+    return wifi_set_11ax_cfg(ax_config);
 }
 
-int wlan_set_btwt_cfg(int bss_type, uint8_t *data, int len)
+int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_config)
 {
-    return wifi_set_btwt_cfg(bss_type, data, len);
+    return wifi_set_btwt_cfg(btwt_config);
 }
 
-int wlan_set_twt_setup_cfg(int bss_type, uint8_t *data, int len)
+int wlan_set_twt_setup_cfg(wlan_twt_setup_config_t *twt_setup)
 {
-    return wifi_set_twt_setup_cfg(bss_type, data, len);
+    return wifi_set_twt_setup_cfg(twt_setup);
 }
 
-int wlan_set_twt_teardown_cfg(int bss_type, uint8_t *data, int len)
+int wlan_set_twt_teardown_cfg(wlan_twt_teardown_config_t *teardown_config)
 {
-    return wifi_set_twt_teardown_cfg(bss_type, data, len);
+    return wifi_set_twt_teardown_cfg(teardown_config);
 }
 
-int wlan_get_twt_report(int bss_type, uint8_t *data, int len)
+int wlan_get_twt_report(wlan_twt_report_t *twt_report)
 {
-    return wifi_get_twt_report(bss_type, data, len);
+    return wifi_get_twt_report(twt_report);
 }
 #endif /* CONFIG_11AX && CONFIG_11AX_TWT */
 int wlan_send_hostcmd(
@@ -6510,17 +6510,17 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi)
     }
 }
 
-int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t* ru_pwr_cfg)
+int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg)
 {
     if (ru_pwr_cfg != NULL)
     {
-       return wifi_set_11ax_rutxpowerlimit(ru_pwr_cfg);
+        return wifi_set_11ax_rutxpowerlimit(ru_pwr_cfg);
     }
 
     return -WM_FAIL;
 }
 
-int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t* ru_pwr_cfg)
+int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg)
 {
     if (ru_pwr_cfg != NULL)
     {

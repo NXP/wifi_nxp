@@ -964,8 +964,8 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type);
 
 #ifdef CONFIG_11AX
 int wifi_set_11ax_tx_omi(const t_u16 tx_omi);
-int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t* ru_pwr_cfg);
-int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t* ru_pwr_cfg);
+int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t *ru_pwr_cfg);
+int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg);
 #endif
 
 #ifdef CONFIG_RF_TEST_MODE
@@ -1050,52 +1050,42 @@ wifi_domain_param_t *get_11d_domain_params(int country, wifi_sub_band_set_t *sub
 #if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
 /** Set 11ax config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] ax_config 11AX config parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_set_11ax_cfg(int bss_type, uint8_t *data, int len);
+int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config);
 
 /** Set btwt config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data broadcast TWT config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] btwt_config Broadcast TWT setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_set_btwt_cfg(int bss_type, uint8_t *data, int len);
+int wifi_set_btwt_cfg(wifi_btwt_config_t *btwt_config);
 
 /** Set twt setup config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data TWT setup config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] twt_setup TWT Setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_set_twt_setup_cfg(int bss_type, uint8_t *data, int len);
+int wifi_set_twt_setup_cfg(wifi_twt_setup_config_t *twt_setup);
 
 /** Set twt teardown config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data TWT teardown config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] teardown_config TWT Teardown parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_set_twt_teardown_cfg(int bss_type, uint8_t *data, int len);
+int wifi_set_twt_teardown_cfg(wifi_twt_teardown_config_t *teardown_config);
 
 /** Get twt report
  *
- * \param[in] bss_type sta or uap mode.
- * \param[out] data twt get report buffer.
- * \param[in] len length of data buffer.
+ * \param[in] twt_report TWT Report parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wifi_get_twt_report(int bss_type, uint8_t *data, int len);
+int wifi_get_twt_report(wifi_twt_report_t *twt_report);
 #endif /* CONFIG_11AX && CONFIG_11AX_TWT */
 #endif

@@ -13,7 +13,8 @@
 
 #if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
 /* index enum of cfgs */
-enum {
+enum
+{
     TEST_WLAN_11AX_CFG,
     TEST_WLAN_BCAST_TWT,
     TEST_WLAN_TWT_SETUP,
@@ -26,7 +27,8 @@ enum {
  *  test_cfg_param_t param module of cfg
  *  test_cfg_table_t cfg table for all the param modules of a cfg
  */
-typedef struct {
+typedef struct
+{
     /* name of param */
     const char *name;
     /* offset in cfg data */
@@ -35,7 +37,8 @@ typedef struct {
     const char *notes;
 } test_cfg_param_t;
 
-typedef struct {
+typedef struct
+{
     /* name of cfg */
     const char *name;
     /* point of stored data for sending cmd, stored in Little-Endian */
@@ -46,7 +49,6 @@ typedef struct {
     const test_cfg_param_t *param_list;
     /* total number of params */
     int param_num;
-    int (*pf_send_msg)(int bss_type, uint8_t *data, int len);
 } test_cfg_table_t;
 
 /*

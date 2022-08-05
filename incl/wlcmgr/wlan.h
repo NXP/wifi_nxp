@@ -800,6 +800,13 @@ typedef wifi_txpwrlimit_t wlan_txpwrlimit_t;
  * \ref wifi_rutxpwrlimit_t
  */
 typedef wifi_rutxpwrlimit_t wlan_rutxpwrlimit_t;
+#ifdef CONFIG_11AX_TWT
+typedef wifi_11ax_config_t wlan_11ax_config_t;
+typedef wifi_twt_setup_config_t wlan_twt_setup_config_t;
+typedef wifi_twt_teardown_config_t wlan_twt_teardown_config_t;
+typedef wifi_btwt_config_t wlan_btwt_config_t;
+typedef wifi_twt_report_t wlan_twt_report_t;
+#endif /* CONFIG_11AX_TWT */
 #endif
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
@@ -1048,20 +1055,6 @@ struct wlan_tx_pert_info
 };
 #endif
 
-#if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
-#define WLAN_BTWT_REPORT_LEN 15
-#define WLAN_BTWT_REPORT_MAX_NUM 4
-
-typedef struct {
-    /** TWT report type, 0: BTWT id */
-    t_u8 type;
-    /** TWT report length of value in data */
-    t_u8 length;
-    t_u8 reserve[2];
-    /** TWT report buffer */
-    t_u8 data[WLAN_BTWT_REPORT_LEN * WLAN_BTWT_REPORT_MAX_NUM];
-} wlan_twt_report_t;
-#endif /* CONFIG_11AX && CONFIG_11AX_TWT*/
 /* WLAN Connection Manager API */
 
 /** Initialize the SDIO driver and create the wifi driver thread.
@@ -3333,7 +3326,7 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t* ru_pwr_cfg);
+int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg);
 /**
  * Use this API to get the RU tx power limit.
  *
@@ -3342,58 +3335,48 @@ int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t* ru_pwr_cfg);
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t* ru_pwr_cfg);
+int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
 
 #ifdef CONFIG_11AX_TWT
 /** Set 11ax config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data 11ax config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] ax_config 11AX config parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_11ax_cfg(int bss_type, uint8_t *data, int len);
+int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
 
 /** Set btwt config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data broadcast TWT config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] btwt_config Broadcast TWT Setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_btwt_cfg(int bss_type, uint8_t *data, int len);
+int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_config);
 
 /** Set twt setup config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data TWT setup config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] twt_setup TWT Setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_twt_setup_cfg(int bss_type, uint8_t *data, int len);
+int wlan_set_twt_setup_cfg(wlan_twt_setup_config_t *twt_setup);
 
 /** Set twt teardown config params
  *
- * \param[in] bss_type sta or uap mode.
- * \param[in] data TWT teardown config params buffer.
- * \param[in] len length of data buffer.
+ * \param[in] teardown_config TWT Teardown parameters sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_twt_teardown_cfg(int bss_type, uint8_t *data, int len);
+int wlan_set_twt_teardown_cfg(wlan_twt_teardown_config_t *teardown_config);
 
 /** Get twt report
  *
- * \param[in] bss_type sta or uap mode.
- * \param[out] data twt get report buffer.
- * \param[in] len length of data buffer.
+ * \param[in] twt_report TWT Report parameter.
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_get_twt_report(int bss_type, uint8_t *data, int len);
+int wlan_get_twt_report(wlan_twt_report_t *twt_report);
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
 

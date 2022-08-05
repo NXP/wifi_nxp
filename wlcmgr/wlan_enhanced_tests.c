@@ -1138,7 +1138,7 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("Bit 6  : Tx NSTS (applies to client mode only)\r\n");
 }
 
-void print_rutxpwrlimit(wlan_rutxpwrlimit_t* txpwrlimit)
+static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 {
     unsigned char i, j;
 
@@ -1226,87 +1226,81 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
 }
 #ifdef CONFIG_11AX_TWT
 
+static wlan_11ax_config_t ax_conf;
+static wlan_twt_setup_config_t twt_setup_conf;
+static wlan_twt_teardown_config_t teardown_conf;
+static wlan_btwt_config_t btwt_config;
+
 /* cfg tables for 11axcfg and twt commands to FW */
 static uint8_t g_11ax_cfg[] = {
     /* band */
     0x02,
     /* HE cap */
-    0xff, 0x00, // ID
-    0x1a, 0x00, // Length
-    0x23, // he capability id
-    0x02, 0x08, 0x00, 0x82, 0x00, 0x08, // HE MAC capability info
+    0xff, 0x00,                                                       // ID
+    0x1a, 0x00,                                                       // Length
+    0x23,                                                             // he capability id
+    0x02, 0x08, 0x00, 0x82, 0x00, 0x08,                               // HE MAC capability info
     0x04, 0x70, 0x7e, 0xc9, 0xfd, 0x01, 0xa0, 0x0e, 0x03, 0x3d, 0x00, // HE PHY capability info
-    0xfe, 0xff, 0xfe, 0xff, // Tx Rx HE-MCS NSS support
-    0xe1, 0xff, 0xc7, 0x71, // PE: 16us
+    0xfe, 0xff, 0xfe, 0xff,                                           // Tx Rx HE-MCS NSS support
+    0xe1, 0xff, 0xc7, 0x71,                                           // PE: 16us
 };
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
     /* name                 offset  len     notes */
-    {"band",                0,      1,      NULL},
-    {"cap_id",              1,      2,      NULL},
-    {"cap_len",             3,      2,      NULL},
-    {"he_cap_id",           5,      1,      NULL},
-    {"he_mac_cap_info",     6,      6,      NULL},
-    {"he_phy_cap_info",     12,     11,     NULL},
-    {"he_mcs_nss_support",  23,     4,      NULL},
-    {"pe",                  27,     4,      NULL},
+    {"band", 0, 1, NULL},
+    {"cap_id", 1, 2, NULL},
+    {"cap_len", 3, 2, NULL},
+    {"he_cap_id", 5, 1, NULL},
+    {"he_mac_cap_info", 6, 6, NULL},
+    {"he_phy_cap_info", 12, 11, NULL},
+    {"he_mcs_nss_support", 23, 4, NULL},
+    {"pe", 27, 4, NULL},
 };
 
-static uint8_t g_btwt_cfg[] = {
-    /* action */
-    0x01, 0x00,
-    /* sub_id */
-    0x25, 0x01,
-    /* btwt_cfg */
-    0x40,
-    0x04,
-    0x63, 0x00,
-    0x70, 0x02,
-    0x0a,
-    0x05
-};
+static uint8_t g_btwt_cfg[] = {/* action */
+                               0x01, 0x00,
+                               /* sub_id */
+                               0x25, 0x01,
+                               /* btwt_cfg */
+                               0x40, 0x04, 0x63, 0x00, 0x70, 0x02, 0x0a, 0x05};
 
 const static test_cfg_param_t g_btwt_cfg_param[] = {
     /* name             offset  len   notes */
-    {"action",          0,      2,    "only support 1: Set"},
-    {"sub_id",          2,      2,    "Broadcast TWT AP config"},
-    {"nominal_wake",    4,      1,    "range 64-255"},
-    {"max_sta_support", 5,      1,    "Max STA Support"},
-    {"twt_mantissa",    6,      2,    NULL},
-    {"twt_offset",      8,      2,    NULL},
-    {"twt_exponent",    10,     1,    NULL},
-    {"sp_gap",          11,     1,    NULL},
+    {"action", 0, 2, "only support 1: Set"},
+    {"sub_id", 2, 2, "Broadcast TWT AP config"},
+    {"nominal_wake", 4, 1, "range 64-255"},
+    {"max_sta_support", 5, 1, "Max STA Support"},
+    {"twt_mantissa", 6, 2, NULL},
+    {"twt_offset", 8, 2, NULL},
+    {"twt_exponent", 10, 1, NULL},
+    {"sp_gap", 11, 1, NULL},
 };
 
-static uint8_t g_twt_setup_cfg[] = {
-    0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, 0x01,
-    0x0a, 0x00, 0x02, 0x00
-};
+static uint8_t g_twt_setup_cfg[] = {0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, 0x01, 0x0a, 0x00, 0x02, 0x00};
 
 static test_cfg_param_t g_twt_setup_cfg_param[] = {
     /* name                 offset  len  notes */
-    {"implicit",            0,      1,  "0: TWT session is explicit, 1: Session is implicit"},
-    {"announced",           1,      1,  "0: Unannounced, 1: Announced TWT"},
-    {"trigger_enabled",     2,      1,  "0: Non-Trigger enabled, 1: Trigger enabled TWT"},
-    {"twt_info_disabled",   3,      1,  "0: TWT info enabled, 1: TWT info disabled"},
-    {"negotiation_type",    4,      1,  "0: Future Individual TWT SP start time, 1: Next Wake TBTT time"},
-    {"twt_wakeup_duration", 5,      1,  "time after which the TWT requesting STA can transition to doze state"},
-    {"flow_identifier",     6,      1,  "Range: [0-7]"},
-    {"hard_constraint",     7,      1,  "0: FW can tweak the TWT setup parameters if it is rejected by AP, 1: FW should not tweak any parameters"},
-    {"twt_exponent",        8,      1,  "Range: [0-63]"},
-    {"twt_mantissa",        9,      2,  "Range: [0-sizeof(UINT16)]"},
-    {"twt_request",         11,     1,  "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
+    {"implicit", 0, 1, "0: TWT session is explicit, 1: Session is implicit"},
+    {"announced", 1, 1, "0: Unannounced, 1: Announced TWT"},
+    {"trigger_enabled", 2, 1, "0: Non-Trigger enabled, 1: Trigger enabled TWT"},
+    {"twt_info_disabled", 3, 1, "0: TWT info enabled, 1: TWT info disabled"},
+    {"negotiation_type", 4, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT time"},
+    {"twt_wakeup_duration", 5, 1, "time after which the TWT requesting STA can transition to doze state"},
+    {"flow_identifier", 6, 1, "Range: [0-7]"},
+    {"hard_constraint", 7, 1,
+     "0: FW can tweak the TWT setup parameters if it is rejected by AP, 1: FW should not tweak any parameters"},
+    {"twt_exponent", 8, 1, "Range: [0-63]"},
+    {"twt_mantissa", 9, 2, "Range: [0-sizeof(UINT16)]"},
+    {"twt_request", 11, 1, "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
 };
 
-static uint8_t g_twt_teardown_cfg[] = {
-    0x00, 0x00, 0x00
-};
+static uint8_t g_twt_teardown_cfg[] = {0x00, 0x00, 0x00};
 
 static test_cfg_param_t g_twt_teardown_cfg_param[] = {
     /* name             offset  len  notes */
-    {"FlowIdentifier",  0,      1,   "Range: [0-7]"},
-    {"NegotiationType", 1,      1,   "0: Future Individual TWT SP start time, 1: Next Wake TBTT tim"},
-    {"TearDownAllTWT",  2,      1,   "1: To teardown all TWT, 0 otherwise"},
+    {"FlowIdentifier", 0, 1, "Range: [0-7]"},
+    {"NegotiationType", 1, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT tim"},
+    {"TearDownAllTWT", 2, 1, "1: To teardown all TWT, 0 otherwise"},
 };
 
 static void test_wlan_11ax_cfg(int argc, char **argv)
@@ -1337,7 +1331,7 @@ static void test_wlan_twt_report(int argc, char **argv)
     wlan_twt_report_t info;
 
     memset(&info, 0x00, sizeof(info));
-    wlan_get_twt_report(0, (uint8_t *)&info, sizeof(info));
+    wlan_get_twt_report(&info);
 
     num = info.length / WLAN_BTWT_REPORT_LEN;
     num = num <= WLAN_BTWT_REPORT_MAX_NUM ? num : WLAN_BTWT_REPORT_MAX_NUM;
@@ -1361,16 +1355,13 @@ static void test_wlan_twt_report(int argc, char **argv)
  *  total_len:     len of cfg data
  *  param_list:    param list of cfg data
  *  param_num:     number of cfg param list
- *  send_msg_func: functions called for sending msg to wifi driver
  */
-static test_cfg_table_t g_test_cfg_table_list[] = {
-    /*  name         data           total_len    param_list            param_num  send_msg_func */
-    {"11axcfg",      g_11ax_cfg,        31,     g_11ax_cfg_param,         8,      wlan_set_11ax_cfg},
-    {"twt_bcast",    g_btwt_cfg,        12,     g_btwt_cfg_param,         8,      wlan_set_btwt_cfg},
-    {"twt_setup",    g_twt_setup_cfg,   12,     g_twt_setup_cfg_param,   11,      wlan_set_twt_setup_cfg},
-    {"twt_teardown", g_twt_teardown_cfg, 3,     g_twt_teardown_cfg_param, 3,      wlan_set_twt_teardown_cfg},
-    { NULL }
-};
+static test_cfg_table_t g_test_cfg_table_list[] = {/*  name         data           total_len    param_list param_num*/
+                                                   {"11axcfg", g_11ax_cfg, 31, g_11ax_cfg_param, 8},
+                                                   {"twt_bcast", g_btwt_cfg, 12, g_btwt_cfg_param, 8},
+                                                   {"twt_setup", g_twt_setup_cfg, 12, g_twt_setup_cfg_param, 11},
+                                                   {"twt_teardown", g_twt_teardown_cfg, 3, g_twt_teardown_cfg_param, 3},
+                                                   {NULL}};
 
 static void dump_cfg_data_param(int param_id, uint8_t *data, const test_cfg_param_t *param_cfg)
 {
@@ -1426,9 +1417,9 @@ static void dump_cfg_help(test_cfg_table_t *cfg)
  */
 static void set_cfg_data(test_cfg_table_t *cfg, int argc, char **argv)
 {
-    uint8_t *data = cfg->data;
+    uint8_t *data                     = cfg->data;
     const test_cfg_param_t *param_cfg = NULL;
-    int param_id = atoi(argv[2]);
+    int param_id                      = atoi(argv[2]);
     /* input data starts from argv[3] */
     int input_data_num = argc - 3;
 
@@ -1449,11 +1440,32 @@ static void set_cfg_data(test_cfg_table_t *cfg, int argc, char **argv)
     dump_cfg_data_param(param_id, data, param_cfg);
 }
 
-static void send_cfg_msg(test_cfg_table_t *cfg)
+static void send_cfg_msg(test_cfg_table_t *cfg, uint32_t index)
 {
     int ret;
 
-    ret = cfg->pf_send_msg(0, cfg->data, cfg->len);
+    switch (index)
+    {
+        case TEST_WLAN_11AX_CFG:
+            (void)memcpy((void *)&ax_conf, (void *)cfg->data, sizeof(ax_conf));
+            ret = wlan_set_11ax_cfg(&ax_conf);
+            break;
+        case TEST_WLAN_BCAST_TWT:
+            (void)memcpy((void *)&btwt_config, (void *)cfg->data, sizeof(btwt_config));
+            ret = wlan_set_btwt_cfg(&btwt_config);
+            break;
+        case TEST_WLAN_TWT_SETUP:
+            (void)memcpy((void *)&twt_setup_conf, (void *)cfg->data, sizeof(twt_setup_conf));
+            ret = wlan_set_twt_setup_cfg(&twt_setup_conf);
+            break;
+        case TEST_WLAN_TWT_TEARDOWN:
+            (void)memcpy((void *)&teardown_conf, (void *)cfg->data, sizeof(teardown_conf));
+            ret = wlan_set_twt_teardown_cfg(&teardown_conf);
+            break;
+        default:
+            ret = -1;
+            break;
+    }
 
     (void)PRINTF("send config [%s] ret %d\r\n", cfg->name, ret);
 }
@@ -1484,7 +1496,7 @@ void test_wlan_cfg_process(uint32_t index, int argc, char **argv)
     else if (string_equal("set", argv[1]))
         set_cfg_data(cfg, argc, argv);
     else if (string_equal("done", argv[1]))
-        send_cfg_msg(cfg);
+        send_cfg_msg(cfg, index);
     else
         (void)PRINTF("unknown argument\r\n");
 }
