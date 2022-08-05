@@ -43,6 +43,7 @@ typedef struct
 {
     os_thread_t wm_wifi_main_thread;
     os_thread_t wm_wifi_core_thread;
+    os_thread_t wm_wifi_scan_thread;
 #ifdef CONFIG_WMM
     /** Thread handle for sending data */
     os_thread_t wm_wifi_driver_tx;
@@ -174,6 +175,7 @@ typedef struct
      * response buffer provided by application layers
      * structure also stores lengths for usage and validation internally*/
     hostcmd_cfg_t hostcmd_cfg;
+    wlan_user_scan_cfg *g_user_scan_cfg;
 } wm_wifi_t;
 
 extern wm_wifi_t wm_wifi;

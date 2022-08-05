@@ -1474,17 +1474,15 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         mlan_adap->active_scan_triggered = MTRUE;
     }
 
-    mlan_status rv = wlan_scan_networks((mlan_private *)mlan_adap->priv[0], NULL, user_scan_cfg);
-    if (rv != MLAN_STATUS_SUCCESS)
+    if (wm_wifi.g_user_scan_cfg)
     {
-        wifi_e("Scan command failed");
-        os_mem_free(user_scan_cfg);
-        return -WM_FAIL;
+        os_mem_free((void *)wm_wifi.g_user_scan_cfg);
     }
 
-    /* fixme: Can we free this immediately after wlan_scan_networks
-       call returns */
-    os_mem_free(user_scan_cfg);
+    wm_wifi.g_user_scan_cfg = user_scan_cfg;
+
+    (void)os_event_notify_put(wifi_scan_thread);
+
     return WM_SUCCESS;
 }
 

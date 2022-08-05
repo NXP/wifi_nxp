@@ -75,6 +75,8 @@ SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALI
 SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
 
+os_thread_t wifi_scan_thread;
+
 static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
@@ -103,6 +105,7 @@ typedef enum __mlan_status
 } __mlan_status;
 
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE * sizeof(portSTACK_TYPE));
+static os_thread_stack_define(wifi_scan_stack, 1024);
 static os_thread_stack_define(wifi_drv_stack, 1024);
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 #ifdef CONFIG_WMM
@@ -1416,6 +1419,33 @@ static void wifi_core_input(void *argv)
     } /* for ;; */
 }
 
+/**
+ * This function should be called when scan command is ready
+ *
+ */
+static void wifi_scan_input(void *argv)
+{
+    mlan_status rv;
+
+    for (;;)
+    {
+        /* Wait till we receive scan command */
+        (void)os_event_notify_get(OS_WAIT_FOREVER);
+
+        if (wm_wifi.g_user_scan_cfg != NULL)
+        {
+            rv = wlan_scan_networks((mlan_private *)mlan_adap->priv[0], NULL, wm_wifi.g_user_scan_cfg);
+            if (rv != MLAN_STATUS_SUCCESS)
+            {
+                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
+            }
+            os_mem_free((void *)wm_wifi.g_user_scan_cfg);
+            wm_wifi.g_user_scan_cfg = NULL;
+        }
+
+    } /* for ;; */
+}
+
 static void wifi_core_deinit(void);
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 
@@ -1487,6 +1517,17 @@ static int wifi_core_init(void)
         wifi_e("Register wifi low level input failed");
         goto fail;
     }
+
+    ret =
+        os_thread_create(&wm_wifi.wm_wifi_scan_thread, "wifi_scan", wifi_scan_input, NULL, &wifi_scan_stack, OS_PRIO_3);
+
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Create wifi scan thread failed");
+        goto fail;
+    }
+
+    wifi_scan_thread = wm_wifi.wm_wifi_scan_thread;
 
     ret = os_thread_create(&wm_wifi.wm_wifi_core_thread, "stack_dispatcher", wifi_core_input, NULL, &wifi_core_stack,
                            OS_PRIO_1);
@@ -1581,6 +1622,12 @@ static void wifi_core_deinit(void)
         (void)os_thread_delete(&wm_wifi.wm_wifi_core_thread);
         wm_wifi.wm_wifi_core_thread = NULL;
         wifi_core_thread            = NULL;
+    }
+    if (wm_wifi.wm_wifi_scan_thread != NULL)
+    {
+        (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
+        wm_wifi.wm_wifi_scan_thread = NULL;
+        wifi_scan_thread            = NULL;
     }
 #ifdef CONFIG_WMM
     if (wm_wifi.wm_wifi_driver_tx)
@@ -1954,27 +2001,27 @@ bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue)
 #ifdef RW610
 static void wifi_dump_wmm_pkts_info(t_u8 *tx_buf, mlan_wmm_ac_e ac)
 {
-    wifi_d("Error in sending %s:", ac == WMM_AC_VO ?
-                        "Voice traffic" : ac == WMM_AC_VI ?
-                        "Video traffic": ac == WMM_AC_BK ?
-                        "Background traffic" : "Best Effort traffic");
-    wifi_d("IP.ID:%u, IP.HeaderChecksum:%u",
-           ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_id,
-            ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_chksum);
+    wifi_d("Error in sending %s:",
+           ac == WMM_AC_VO ?
+               "Voice traffic" :
+               ac == WMM_AC_VI ? "Video traffic" : ac == WMM_AC_BK ? "Background traffic" : "Best Effort traffic");
+    wifi_d("IP.ID:%u, IP.HeaderChecksum:%u", ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_id,
+           ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_chksum);
 }
 
 static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
 {
-    int err = WM_SUCCESS;
-    int tx_cnt = 0;
-    int max_buf[]={BK_MAX_BUF, BE_MAX_BUF, VI_MAX_BUF, VO_MAX_BUF};
+    int err       = WM_SUCCESS;
+    int tx_cnt    = 0;
+    int max_buf[] = {BK_MAX_BUF, BE_MAX_BUF, VI_MAX_BUF, VO_MAX_BUF};
 
     while (wm_wifi.pkt_cnt[ac])
     {
         switch (ac)
         {
             case WMM_AC_VO:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.vo_pkt_len[wm_wifi.send_index[ac]], outbuf_vo[wm_wifi.send_index[ac]]);
+                err = wlan_xmit_wmm_pkt(interface, wm_wifi.vo_pkt_len[wm_wifi.send_index[ac]],
+                                        outbuf_vo[wm_wifi.send_index[ac]]);
                 if (err != MLAN_STATUS_SUCCESS)
                 {
                     wifi_dump_wmm_pkts_info(outbuf_vo[wm_wifi.send_index[ac]], ac);
@@ -1982,7 +2029,8 @@ static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
                 }
                 break;
             case WMM_AC_VI:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.vi_pkt_len[wm_wifi.send_index[ac]], outbuf_vi[wm_wifi.send_index[ac]]);
+                err = wlan_xmit_wmm_pkt(interface, wm_wifi.vi_pkt_len[wm_wifi.send_index[ac]],
+                                        outbuf_vi[wm_wifi.send_index[ac]]);
                 if (err != MLAN_STATUS_SUCCESS)
                 {
                     wifi_dump_wmm_pkts_info(outbuf_vi[wm_wifi.send_index[ac]], ac);
@@ -1990,7 +2038,8 @@ static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
                 }
                 break;
             case WMM_AC_BE:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.be_pkt_len[wm_wifi.send_index[ac]], outbuf_be[wm_wifi.send_index[ac]]);
+                err = wlan_xmit_wmm_pkt(interface, wm_wifi.be_pkt_len[wm_wifi.send_index[ac]],
+                                        outbuf_be[wm_wifi.send_index[ac]]);
                 if (err != MLAN_STATUS_SUCCESS)
                 {
                     wifi_dump_wmm_pkts_info(outbuf_be[wm_wifi.send_index[ac]], ac);
@@ -1998,7 +2047,8 @@ static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
                 }
                 break;
             case WMM_AC_BK:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.bk_pkt_len[wm_wifi.send_index[ac]], outbuf_bk[wm_wifi.send_index[ac]]);
+                err = wlan_xmit_wmm_pkt(interface, wm_wifi.bk_pkt_len[wm_wifi.send_index[ac]],
+                                        outbuf_bk[wm_wifi.send_index[ac]]);
                 if (err != MLAN_STATUS_SUCCESS)
                 {
                     wifi_dump_wmm_pkts_info(outbuf_bk[wm_wifi.send_index[ac]], ac);

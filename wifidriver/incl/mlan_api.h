@@ -107,6 +107,8 @@
 
 #define SDIO_DMA_ALIGNMENT 4
 
+extern os_thread_t wifi_scan_thread;
+
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
 extern country_code_t wifi_11d_country;
