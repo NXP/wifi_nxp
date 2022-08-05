@@ -17,25 +17,6 @@ Change log:
 #ifndef _MLAN_UAP_H_
 #define _MLAN_UAP_H_
 
-#ifdef BIG_ENDIAN_SUPPORT
-/** Convert TxPD to little endian format from CPU format */
-#define uap_endian_convert_TxPD(x)                                 \
-    {                                                              \
-        (x)->tx_pkt_length = wlan_cpu_to_le16((x)->tx_pkt_length); \
-        (x)->tx_pkt_offset = wlan_cpu_to_le16((x)->tx_pkt_offset); \
-        (x)->tx_pkt_type   = wlan_cpu_to_le16((x)->tx_pkt_type);   \
-        (x)->tx_control    = wlan_cpu_to_le32((x)->tx_control);    \
-    }
-
-/** Convert RxPD from little endian format to CPU format */
-#define uap_endian_convert_RxPD(x)                                 \
-    {                                                              \
-        (x)->rx_pkt_length = wlan_le16_to_cpu((x)->rx_pkt_length); \
-        (x)->rx_pkt_offset = wlan_le16_to_cpu((x)->rx_pkt_offset); \
-        (x)->rx_pkt_type   = wlan_le16_to_cpu((x)->rx_pkt_type);   \
-        (x)->seq_num       = wlan_le16_to_cpu((x)->seq_num);       \
-    }
-#else
 /** Convert TxPD to little endian format from CPU format */
 #define uap_endian_convert_TxPD(x) \
     do                             \
@@ -46,7 +27,6 @@ Change log:
     do                             \
     {                              \
     } while (0)
-#endif /* BIG_ENDIAN_SUPPORT */
 
 /** Band config 5GHz */
 #define UAP_BAND_CONFIG_5GHZ 0x01
@@ -66,18 +46,7 @@ Change log:
 /** Enable Host PKT forwarding */
 #define PKT_FWD_ENABLE_BIT 0x01U
 
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_uap_get_channel(IN pmlan_private pmpriv);
-#endif /* CONFIG_MLAN_WMSDK */
 
-#ifndef CONFIG_MLAN_WMSDK
-
-mlan_status wlan_uap_set_channel(IN pmlan_private pmpriv, IN t_u8 uap_band_cfg, IN t_u8 channel);
-
-#endif
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_uap_get_beacon_dtim(IN pmlan_private pmpriv);
-#endif /* CONFIG_MLAN_WMSDK */
 
 mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req);
 
@@ -89,17 +58,7 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
                                      IN t_void *pdata_buf,
                                      IN t_void *pcmd_buf);
 
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, IN t_void *pcmd_buf, IN t_void *pioctl);
-#endif /* CONFIG_MLAN_WMSDK */
 
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_ops_uap_process_event(IN t_void *priv);
-
-t_void *wlan_ops_uap_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
-
-mlan_status wlan_ops_uap_init_cmd(IN t_void *priv, IN t_u8 first_bss);
-#endif /* CONFIG_MLAN_WMSDK */
 
 int wifi_uap_enable_11d_support();
 

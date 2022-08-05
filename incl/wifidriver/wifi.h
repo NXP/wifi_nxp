@@ -13,25 +13,8 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
-#ifndef CONFIG_WIFI_INTERNAL
-#define CONFIG_WIFI_INTERNAL 1
-#endif
 
-#ifdef CONFIG_WIFI_INTERNAL
-#define CONFIG_11N             1
-#define STA_SUPPORT            1
-#define UAP_SUPPORT            1
-#define WPA                    1
-#define KEY_MATERIAL_WEP       1
-#define KEY_PARAM_SET_V2       1
-#define ENABLE_802_11W         1
-#define OTP_CHANINFO           1
-#define CONFIG_STA_AMPDU_RX    1
-#define CONFIG_STA_AMPDU_TX    1
-#define CONFIG_ENABLE_AMSDU_RX 1
-#define CONFIG_UAP_AMPDU_TX    1
-#define CONFIG_UAP_AMPDU_RX    1
-#endif
+
 
 #include <wifi-decl.h>
 #include <wifi_events.h>
@@ -57,10 +40,6 @@ enum
     WIFI_ERROR_CARD_NOT_DETECTED,
     /** The WiFi Firmware not found. */
     WIFI_ERROR_FW_NOT_DETECTED,
-#ifdef CONFIG_XZ_DECOMPRESSION
-    /** The WiFi Firmware XZ decompression failed. */
-    WIFI_ERROR_FW_XZ_FAILED,
-#endif
 };
 
 typedef enum
@@ -277,9 +256,6 @@ uint32_t wifi_get_value1(void);
 
 uint8_t *wifi_get_outbuf(uint32_t *outbuf_len);
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
-int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type);
-#endif
 
 /**
  * This will update the last command sent variable value to current
@@ -391,44 +367,6 @@ void wifi_set_mac_addr(uint8_t *mac);
  */
 void _wifi_set_mac_addr(uint8_t *mac);
 
-#ifdef CONFIG_P2P
-int wifi_register_wfd_event_queue(os_queue_t *event_queue);
-int wifi_unregister_wfd_event_queue(os_queue_t *event_queue);
-void wifi_wfd_event(bool peer_event, bool action_frame, void *data);
-int wifi_wfd_start(char *ssid, int security, char *passphrase, int channel);
-int wifi_wfd_stop(void);
-
-/**
- * Returns the current STA list connected to our WFD
- *
- * This function gets its information after querying the firmware. It will
- * block till the response is received from firmware or a timeout.
- *
- * @param[in, out] list After this call returns this points to the
- * structure \ref sta_list_t allocated by the callee. This is variable
- * length structure and depends on count variable inside it. <b> The caller
- * needs to free this buffer after use.</b>. If this function is unable to
- * get the sta list, the value of list parameter will be NULL
- *
- * \note The caller needs to explicitly free the buffer returned by this
- * function.
- *
- * @return void
- */
-int wifi_wfd_bss_sta_list(sta_list_t **list);
-
-int wifi_get_wfd_mac_address(void);
-int wifi_wfd_ps_inactivity_sleep_enter(unsigned int ctrl_bitmap,
-                                       unsigned int inactivity_to,
-                                       unsigned int min_sleep,
-                                       unsigned int max_sleep,
-                                       unsigned int min_awake,
-                                       unsigned int max_awake);
-
-int wifi_wfd_ps_inactivity_sleep_exit();
-int wifidirectapcmd_sys_config();
-void wifidirectcmd_config();
-#endif
 
 int wifi_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
@@ -502,17 +440,9 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr);
 void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr);
 #endif /* CONFIG_IPV6 */
 
-#ifdef STREAM_2X2
-int wifi_set_11n_cfg(uint16_t httxcfg);
-int wifi_set_11ac_cfg(uint32_t vhtcap, uint16_t tx_mcs_map, uint16_t rx_mcs_map);
-#endif
 
-#ifdef STREAM_2X2
-int wifi_set_antenna(t_u8 tx_antenna, t_u8 rx_antenna);
-#else
 int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time);
 int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time);
-#endif
 
 void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer);
 enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 *ps_event, t_u16 *action);
@@ -662,17 +592,7 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate);
 int wifi_get_txratecfg(wifi_ds_rate *ds_rate);
 void wifi_wake_up_card(uint32_t *resp);
 
-#ifdef CONFIG_WPA2_ENTP
-void wifi_scan_enable_wpa2_enterprise_ap_only();
-#endif
 
-#ifndef CONFIG_MLAN_WMSDK
-int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
-
-int wifi_auto_reconnect_disable();
-
-int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
-#endif
 
 int wrapper_wlan_11d_enable(void);
 
@@ -691,12 +611,7 @@ int wifi_uap_start(mlan_bss_type type,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
                    bool mfpc,
-#ifdef CONFIG_WIFI_DTIM_PERIOD
-                   bool mfpr,
-                   uint8_t dtim
-#else
                    bool mfpr
-#endif
 );
 
 #ifdef CONFIG_WMM
@@ -707,213 +622,7 @@ int wrapper_wlan_sta_ampdu_enable(void);
 
 int wrapper_wlan_upa_ampdu_enable(uint8_t *addr);
 
-#ifdef CONFIG_WLAN_BRIDGE
-/** Enable Bridge mode in WLAN firmware.
- *
- * \param[in] auto_link, Whether enable auto link for in-sta of bridge mode.
- * \param[in] hidden_ssid, Whether enable hidden_ssid for in-AP of bridge mode.
- * \param[in] cfg, Bridge configuration structure holding enable, auto_link,
- *	      hidden_ssid, EX-AP SSID, Passphrase, Bridge SSID and Passphrase.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if operation is failed.
- */
-int wifi_enable_bridge_mode(wifi_bridge_cfg_t *cfg);
 
-/** Disable Bridge mode in WLAN firmware.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if operation is failed.
- */
-int wifi_disable_bridge_mode();
-
-/** Get Bridge configuration from WLAN firmware.
- *
- * \param[out] cfg Bridge configuration structure where EX-AP SSID,
- *             Passphrase, Bridge SSID and Passphrase will get copied.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if operation is failed.
- */
-int wifi_get_bridge_mode_config(wifi_bridge_cfg_t *cfg);
-
-/**
- * Reconfigure TX buffer size during bridge mode operation.
- *
- * \param[in] buf_size Buffer size to configure.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL is operation is failed.
- */
-int wifi_config_bridge_tx_buf(uint16_t buf_size);
-#endif
-
-#ifdef CONFIG_WIFI_GET_LOG
-/** WiFi Statistics counter */
-typedef PACK_START struct
-{
-    /** Multicast transmitted frame count */
-    t_u32 mcast_tx_frame;
-    /** Failure count */
-    t_u32 failed;
-    /** Retry count */
-    t_u32 retry;
-    /** Multi entry count */
-    t_u32 multi_retry;
-    /** Duplicate frame count */
-    t_u32 frame_dup;
-    /** RTS success count */
-    t_u32 rts_success;
-    /** RTS failure count */
-    t_u32 rts_failure;
-    /** Ack failure count */
-    t_u32 ack_failure;
-    /** Rx fragmentation count */
-    t_u32 rx_frag;
-    /** Multicast Tx frame count */
-    t_u32 mcast_rx_frame;
-    /** FCS error count */
-    t_u32 fcs_error;
-    /** Tx frame count */
-    t_u32 tx_frame;
-    /** WEP ICV error count */
-    t_u32 wep_icv_error[4];
-    /** beacon recv count */
-    t_u32 bcn_rcv_cnt;
-    /** beacon miss count */
-    t_u32 bcn_miss_cnt;
-    /** received amsdu count*/
-    t_u32 amsdu_rx_cnt;
-    /** received msdu count in amsdu*/
-    t_u32 msdu_in_rx_amsdu_cnt;
-    /** tx amsdu count*/
-    t_u32 amsdu_tx_cnt;
-    /** tx msdu count in amsdu*/
-    t_u32 msdu_in_tx_amsdu_cnt;
-    /** Tx frag count */
-    t_u32 tx_frag_cnt;
-    /** Qos Tx frag count */
-    t_u32 qos_tx_frag_cnt[8];
-    /** Qos failed count */
-    t_u32 qos_failed_cnt[8];
-    /** Qos retry count */
-    t_u32 qos_retry_cnt[8];
-    /** Qos multi retry count */
-    t_u32 qos_multi_retry_cnt[8];
-    /** Qos frame dup count */
-    t_u32 qos_frm_dup_cnt[8];
-    /** Qos rts success count */
-    t_u32 qos_rts_suc_cnt[8];
-    /** Qos rts failure count */
-    t_u32 qos_rts_failure_cnt[8];
-    /** Qos ack failure count */
-    t_u32 qos_ack_failure_cnt[8];
-    /** Qos Rx frag count */
-    t_u32 qos_rx_frag_cnt[8];
-    /** Qos Tx frame count */
-    t_u32 qos_tx_frm_cnt[8];
-    /** Qos discarded frame count */
-    t_u32 qos_discarded_frm_cnt[8];
-    /** Qos mpdus Rx count */
-    t_u32 qos_mpdus_rx_cnt[8];
-    /** Qos retry rx count */
-    t_u32 qos_retries_rx_cnt[8];
-    /** CMACICV errors count */
-    t_u32 cmacicv_errors;
-    /** CMAC replays count */
-    t_u32 cmac_replays;
-    /** mgmt CCMP replays count */
-    t_u32 mgmt_ccmp_replays;
-    /** TKIP ICV errors count */
-    t_u32 tkipicv_errors;
-    /** TKIP replays count */
-    t_u32 tkip_replays;
-    /** CCMP decrypt errors count */
-    t_u32 ccmp_decrypt_errors;
-    /** CCMP replays count */
-    t_u32 ccmp_replays;
-    /** Tx amsdu count */
-    t_u32 tx_amsdu_cnt;
-    /** failed amsdu count */
-    t_u32 failed_amsdu_cnt;
-    /** retry amsdu count */
-    t_u32 retry_amsdu_cnt;
-    /** multi-retry amsdu count */
-    t_u32 multi_retry_amsdu_cnt;
-    /** Tx octets in amsdu count */
-    t_u64 tx_octets_in_amsdu_cnt;
-    /** amsdu ack failure count */
-    t_u32 amsdu_ack_failure_cnt;
-    /** Rx amsdu count */
-    t_u32 rx_amsdu_cnt;
-    /** Rx octets in amsdu count */
-    t_u64 rx_octets_in_amsdu_cnt;
-    /** Tx ampdu count */
-    t_u32 tx_ampdu_cnt;
-    /** tx mpdus in ampdu count */
-    t_u32 tx_mpdus_in_ampdu_cnt;
-    /** tx octets in ampdu count */
-    t_u64 tx_octets_in_ampdu_cnt;
-    /** ampdu Rx count */
-    t_u32 ampdu_rx_cnt;
-    /** mpdu in Rx ampdu count */
-    t_u32 mpdu_in_rx_ampdu_cnt;
-    /** Rx octets ampdu count */
-    t_u64 rx_octets_in_ampdu_cnt;
-    /** ampdu delimiter CRC error count */
-    t_u32 ampdu_delimiter_crc_error_cnt;
-    /** Rx Stuck Related Info*/
-    /** Rx Stuck Issue count */
-    t_u32 rx_stuck_issue_cnt[2];
-    /** Rx Stuck Recovery count */
-    t_u32 rx_stuck_recovery_cnt;
-    /** Rx Stuck TSF */
-    t_u64 rx_stuck_tsf[2];
-    /** Tx Watchdog Recovery Related Info */
-    /** Tx Watchdog Recovery count */
-    t_u32 tx_watchdog_recovery_cnt;
-    /** Tx Watchdog TSF */
-    t_u64 tx_watchdog_tsf[2];
-    /** Channel Switch Related Info */
-    /** Channel Switch Announcement Sent */
-    t_u32 channel_switch_ann_sent;
-    /** Channel Switch State */
-    t_u32 channel_switch_state;
-    /** Register Class */
-    t_u32 reg_class;
-    /** Channel Number */
-    t_u32 channel_number;
-    /** Channel Switch Mode */
-    t_u32 channel_switch_mode;
-    /** Reset Rx Mac Recovery Count */
-    t_u32 rx_reset_mac_recovery_cnt;
-    /** ISR2 Not Done Count*/
-    t_u32 rx_Isr2_NotDone_Cnt;
-    /** GDMA Abort Count */
-    t_u32 gdma_abort_cnt;
-    /** Rx Reset MAC Count */
-    t_u32 g_reset_rx_mac_cnt;
-    // Ownership error counters
-    /*Error Ownership error count*/
-    t_u32 dwCtlErrCnt;
-    /*Control Ownership error count*/
-    t_u32 dwBcnErrCnt;
-    /*Control Ownership error count*/
-    t_u32 dwMgtErrCnt;
-    /*Control Ownership error count*/
-    t_u32 dwDatErrCnt;
-    /*BIGTK MME good count*/
-    t_u32 bigtk_mmeGoodCnt;
-    /*BIGTK Replay error count*/
-    t_u32 bigtk_replayErrCnt;
-    /*BIGTK MIC error count*/
-    t_u32 bigtk_micErrCnt;
-    /*BIGTK MME not included count*/
-    t_u32 bigtk_mmeNotFoundCnt;
-} PACK_END wifi_pkt_stats_t;
-
-int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
-#endif
 
 void handle_cdint(int error);
 
@@ -922,34 +631,15 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 int wifi_uap_stop(int type);
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 
-#ifndef CONFIG_MLAN_WMSDK
-int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);
-#endif
 
-#ifdef CONFIG_WIFI_RTS_THRESHOLD
-int wifi_set_rts(int rts, mlan_bss_type bss_type);
-#endif
 
-#ifdef CONFIG_WIFI_FRAG_THRESHOLD
-int wifi_set_frag(int frag, mlan_bss_type bss_type);
-#endif
 
-#ifdef CONFIG_ENABLE_802_11K
-int wifi_11k_cfg(int enable_11k);
-int wifi_11k_neighbor_req();
-#endif
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
-#endif
 
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 
 int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip);
 
-#ifndef CONFIG_MLAN_WMSDK
-int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip, t_u16 src_port);
-#endif
 
 int wifi_raw_packet_send(const t_u8 *packet, t_u32 length);
 

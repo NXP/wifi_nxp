@@ -75,11 +75,6 @@ mlan_status wlan_cmd_11n_addba_req(mlan_private *priv, HostCmd_DS_COMMAND *cmd, 
 void wlan_11n_cleanup_reorder_tbl(mlan_private *priv);
 RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta);
 
-#ifndef CONFIG_MLAN_WMSDK
-void wlan_11n_rxba_sync_event(mlan_private *priv, t_u8 *event_buf, t_u16 len);
-/** send delba for all entries in reorder_tbl */
-t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv);
-#endif /* CONFIG_MLAN_WMSDK */
 
 void wlan_update_rxreorder_tbl(pmlan_adapter pmadapter, t_u8 flag);
 

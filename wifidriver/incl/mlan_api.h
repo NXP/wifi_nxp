@@ -107,22 +107,13 @@
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
 
-#ifdef CONFIG_WPS2
-extern int wps_session_attempt;
-#endif
 
 extern os_rw_lock_t ps_rwlock;
 
-#ifdef CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
-#endif
 #ifdef DUMP_PACKET_MAC
 void dump_mac_addr(const char *msg, unsigned char *addr);
 #endif /* DUMP_PACKET_MAC */
-#ifdef DEBUG_11N_ASSOC
-void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
-void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);
-#endif /* DEBUG_11N_ASSOC */
 mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u16 cmd_no,
                                       IN t_u16 cmd_action,
@@ -156,41 +147,6 @@ void wlan_scan_process_results(IN mlan_private *pmpriv);
 
 bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, unsigned element_len);
 
-#ifdef CONFIG_WPA2_ENTP
-bool wifi_get_scan_enable_wpa2_enterprise_ap_only();
-
-static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry,
-                                                              IEEEtypes_ElementId_e element_id)
-{
-    if (element_id == RSN_IE)
-    {
-        if ((wifi_get_scan_enable_wpa2_enterprise_ap_only()) &&
-            (!check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
-                                     pbss_entry->rsn_ie_buff_len - 10)))
-        {
-            return MLAN_STATUS_RESOURCE;
-        }
-        else
-        {
-            check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
-                                   pbss_entry->rsn_ie_buff_len - 10);
-        }
-    }
-    else if (element_id == VENDOR_SPECIFIC_221)
-    {
-        if (wifi_get_scan_enable_wpa2_enterprise_ap_only())
-            return MLAN_STATUS_RESOURCE;
-    }
-    else if (!element_id)
-    {
-        if ((wifi_get_scan_enable_wpa2_enterprise_ap_only()) && (pbss_entry->privacy != Wlan802_11PrivFilter8021xWEP) &&
-            (!pbss_entry->pwpa_ie) && (!pbss_entry->prsn_ie))
-            return MLAN_STATUS_RESOURCE;
-    }
-
-    return MLAN_STATUS_SUCCESS;
-}
-#else
 static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry, t_u8 element_id)
 {
     if (element_id == RSN_IE)
@@ -200,7 +156,6 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
     }
     return MLAN_STATUS_SUCCESS;
 }
-#endif
 
 int wifi_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
@@ -292,9 +247,6 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
-                       const t_s16 rssi_threshold,
-#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);

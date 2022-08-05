@@ -65,9 +65,6 @@ typedef struct interface interface_t;
 
 static interface_t g_mlan;
 static interface_t g_uap;
-#ifdef CONFIG_P2P
-static interface_t g_wfd;
-#endif
 
 static int net_wlan_init_done;
 static os_timer_t dhcp_timer;
@@ -76,9 +73,6 @@ static void dhcp_timer_cb(os_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
-#ifdef CONFIG_P2P
-err_t lwip_netif_wfd_init(struct netif *netif);
-#endif
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
@@ -223,16 +217,6 @@ int net_wlan_init(void)
         net_ipv6stack_init(&g_uap.netif);
 #endif /* CONFIG_IPV6 */
 
-#ifdef CONFIG_P2P
-        g_wfd.ipaddr.addr = INADDR_ANY;
-        ret               = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
-                                 ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
-        if (ret)
-        {
-            net_e("P2P interface add failed\r\n");
-            return -WM_FAIL;
-        }
-#endif
 
         ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT), &dhcp_timer_cb, NULL,
                               OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
@@ -331,19 +315,6 @@ static void wm_netif_status_callback(struct netif *n)
     bool is_default_dhcp_address = (ip_2_ip4(&(n->ip_addr))->addr == INADDR_ANY);
     /* is_dhcp_off: true if dhcp is switched off*/
     bool is_dhcp_off = (netif_dhcp_data(n)->state == DHCP_STATE_OFF);
-#ifdef CONFIG_AUTOIP
-    /* Variable to hold whether autoip address has been supplied
-     * We store the status of autoip address in this variable
-     * once autoip reaches the bound state this variable is set
-     */
-    bool is_autoip_address = autoip_supplied_address(n);
-    /* not_dhcp_address: true when even though the flags are set
-     *                   the dhcp_supplied_address returns false
-     */
-    bool not_dhcp_address = ((n->flags & NETIF_FLAG_UP) && (!dhcp_supplied_address(n)));
-    /* Structure to hold autoip data corresponding to `n` */
-    struct autoip *autoip = netif_autoip_data(n);
-#endif
     /* State variables to be assigned to the event flag
      * a value of -1 represents failed state while the value of
      * 1 represents a successful connection event
@@ -377,18 +348,6 @@ static void wm_netif_status_callback(struct netif *n)
     {
         /* If the supplied dhcp address is the default address */
         event_flag_dhcp_connection = DHCP_FAILED;
-#ifdef CONFIG_AUTOIP
-    }
-    else if (not_dhcp_address && (is_autoip_address))
-    {
-        /* If an autoip address has been supplied */
-        event_flag_dhcp_connection = DHCP_SUCCESS;
-    }
-    else if (!(dhcp_supplied_address(n)) && (autoip->state == AUTOIP_STATE_OFF))
-    {
-        /* If no address is supplied and autoip is in off state */
-        event_flag_dhcp_connection = DHCP_FAILED;
-#endif /* CONFIG_AUTOIP */
     }
     else if (!dhcp_supplied_address(n))
     {
@@ -507,12 +466,6 @@ void *net_get_uap_handle(void)
     return &g_uap;
 }
 
-#ifdef CONFIG_P2P
-void *net_get_wfd_handle(void)
-{
-    return &g_wfd;
-}
-#endif
 
 void net_interface_up(void *intrfc_handle)
 {
@@ -553,11 +506,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 
     net_d("configuring interface %s (with %s)",
           (if_handle == &g_mlan) ? "mlan" :
-#ifdef CONFIG_P2P
-                                   (if_handle == &g_uap) ? "uap" : "wfd",
-#else
                                    "uap",
-#endif
           (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
     (void)netifapi_netif_set_down(&if_handle->netif);
     wm_netif_status_callback_ptr = NULL;
@@ -615,9 +564,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     }
     /* Finally this should send the following event. */
     if ((if_handle == &g_mlan)
-#ifdef CONFIG_P2P
-        || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
-#endif
     )
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -629,9 +575,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
          */
     }
     else if ((if_handle == &g_uap)
-#ifdef CONFIG_P2P
-             || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
-#endif
     )
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);

@@ -22,11 +22,7 @@
 #define pwr_e(...) wmlog_e("pwr", ##__VA_ARGS__)
 #define pwr_w(...) wmlog_w("pwr", ##__VA_ARGS__)
 
-#ifdef CONFIG_PWR_DEBUG
-#define pwr_d(...) wmlog("pwr", ##__VA_ARGS__)
-#else
 #define pwr_d(...)
-#endif /* ! CONFIG_PWR_DEBUG */
 
 #define MAX_LISTEN_INTERVAL_IN_BCON     49
 #define MIN_LISTEN_INTERVAL_IN_TU       50
@@ -264,9 +260,6 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 {
     enum wifi_event_reason result = WIFI_EVENT_REASON_FAILURE;
     MrvlIEtypesHeader_t *mrvl_tlv = NULL;
-#ifdef CONFIG_PWR_DEBUG
-    MrvlIEtypes_ps_param_t *ps_tlv = NULL;
-#endif /*  CONFIG_PWR_DEBUG*/
     HostCmd_DS_802_11_PS_MODE_ENH *ps_mode = (HostCmd_DS_802_11_PS_MODE_ENH *)(void *)(cmd_res_buffer + S_DS_GEN);
 
     *ps_event = (t_u16)WIFI_EVENT_PS_INVALID;
@@ -297,9 +290,6 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 mrvl_tlv =
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
-#ifdef CONFIG_PWR_DEBUG
-            ps_tlv = (MrvlIEtypes_ps_param_t *)mrvl_tlv;
-#endif /*  CONFIG_PWR_DEBUG*/
             pwr_d(
                 "pscfg: %u %u %u %u "
                 "%u %u",
@@ -349,9 +339,6 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 mrvl_tlv =
                     (MrvlIEtypesHeader_t *)(void *)((uint8_t *)mrvl_tlv + mrvl_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
-#ifdef CONFIG_PWR_DEBUG
-            ps_tlv = (MrvlIEtypes_ps_param_t *)mrvl_tlv;
-#endif /*  CONFIG_PWR_DEBUG*/
             pwr_d(
                 "pscfg: %u %u %u %u "
                 "%u %u\r\n",
@@ -383,28 +370,3 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     return result;
 }
 
-#ifdef CONFIG_P2P
-int wifi_wfd_ps_inactivity_sleep_enter(unsigned int ctrl_bitmap,
-                                       unsigned int inactivity_to,
-                                       unsigned int min_sleep,
-                                       unsigned int max_sleep,
-                                       unsigned int min_awake,
-                                       unsigned int max_awake)
-{
-    mlan_ds_ps_mgmt data_buff;
-    data_buff.sleep_param.ctrl_bitmap   = ctrl_bitmap;
-    data_buff.sleep_param.min_sleep     = min_sleep;
-    data_buff.sleep_param.max_sleep     = max_sleep;
-    data_buff.inact_param.min_awake     = min_awake;
-    data_buff.inact_param.max_awake     = max_awake;
-    data_buff.inact_param.inactivity_to = inactivity_to;
-    data_buff.flags                     = PS_FLAG_INACT_SLEEP_PARAM | PS_FLAG_SLEEP_PARAM;
-
-    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_UAP_INACT_PS, MLAN_BSS_TYPE_WIFIDIRECT, &data_buff);
-}
-
-int wifi_wfd_ps_inactivity_sleep_exit(void)
-{
-    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_UAP_INACT_PS, MLAN_BSS_TYPE_WIFIDIRECT, NULL);
-}
-#endif /*  CONFIG_P2P*/

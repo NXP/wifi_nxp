@@ -90,10 +90,6 @@ enum wifi_event
     /** IPv6 address state change */
     WIFI_EVENT_NET_IPV6_CONFIG,
 #endif
-#ifdef CONFIG_WLAN_BRIDGE
-    /** Auto link switch network */
-    WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED,
-#endif
 #ifdef CONFIG_WIFI_FW_DEBUG
     /* WiFi FW Debug Info */
     WIFI_EVENT_FW_DEBUG_INFO,
@@ -122,10 +118,6 @@ enum wlan_bss_type
     WLAN_BSS_TYPE_STA = 0,
     /** uAP */
     WLAN_BSS_TYPE_UAP = 1,
-#ifdef CONFIG_P2P
-    /** WiFi Direct */
-    WLAN_BSS_TYPE_WIFIDIRECT = 2,
-#endif
     /** Any */
     WLAN_BSS_TYPE_ANY = 0xff,
 };

@@ -54,9 +54,6 @@ typedef struct
     void (*deliver_packet_above_callback)(t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
 
-#ifdef CONFIG_P2P
-    os_queue_t *wfd_event_queue;
-#endif
     os_mutex_t command_lock;
     os_semaphore_t command_resp_sem;
     os_mutex_t mcastf_mutex;
@@ -229,17 +226,6 @@ int bus_register_event_queue(xQueueHandle *event_queue);
  * De-register the event queue.
  */
 void bus_deregister_event_queue(void);
-#ifdef CONFIG_P2P
-/**
- * Register a special queue for WPS
- */
-int bus_register_special_queue(xQueueHandle *special_queue);
-
-/**
- * Deregister special queue
- */
-void bus_deregister_special_queue(void);
-#endif
 
 /**
  * Register DATA input function with SDIO driver.

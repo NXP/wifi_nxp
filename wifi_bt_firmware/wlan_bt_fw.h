@@ -16,12 +16,6 @@
 #include "sduartIW416_wlan_bt.h"
 #elif defined(SD8987)
 #include "sduart8987_wlan_bt.h"
-#elif defined(SD8997)
-#include "sduart8997_wlan_bt.h"
-#elif defined(SD9097)
-#include "pvt_sd9097_wlan.h"
-#elif defined(SD9098)
-#include "pvt_sd9098_wlan.h"
 #elif defined(IW61x)
 #include "sduart_nw61x.h"
 #endif

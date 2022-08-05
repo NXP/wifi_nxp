@@ -12,10 +12,6 @@
 
 #include <mlan_sdio_api.h>
 
-#if defined(CONFIG_XZ_DECOMPRESSION)
-#include <xz.h>
-#include <decompress.h>
-#endif /* CONFIG_XZ_DECOMPRESSION */
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
@@ -59,11 +55,6 @@ static struct
     /* int special; */
     /* Default queue where the cmdresp/events will be sent */
     xQueueHandle *event_queue;
-#ifdef CONFIG_P2P
-    /* Special queue on which only cmdresp will be sent based on
-     * value in special */
-    xQueueHandle *special_queue;
-#endif /* CONFIG_P2P */
     int (*wifi_low_level_input)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 } bus;
 
@@ -245,21 +236,6 @@ void bus_deregister_data_input_funtion(void)
     bus.wifi_low_level_input = NULL;
 }
 
-#ifdef CONFIG_P2P
-int bus_register_special_queue(xQueueHandle *special_queue)
-{
-    if (bus.special_queue)
-        return -WM_FAIL;
-    bus.special_queue = special_queue;
-    return WM_SUCCESS;
-}
-
-void bus_deregister_special_queue()
-{
-    if (bus.special_queue)
-        bus.special_queue = NULL;
-}
-#endif
 
 void wifi_get_mac_address_from_cmdresp(void *resp, t_u8 *mac_addr);
 void wifi_get_firmware_ver_ext_from_cmdresp(void *resp, t_u8 *fw_ver_ext);
@@ -326,11 +302,9 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_VERSION_EXT:
             wifi_get_firmware_ver_ext_from_cmdresp(cmdresp, dev_fw_ver_ext);
             break;
-#ifdef CONFIG_11N
         case HostCmd_CMD_11N_CFG:
         case HostCmd_CMD_AMSDU_AGGR_CTRL:
             break;
-#endif
         case HostCmd_CMD_FUNC_SHUTDOWN:
             break;
 #ifdef WLAN_LOW_POWER_ENABLE
@@ -340,14 +314,6 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_ED_MAC_MODE:
         case HostCmd_CMD_CHANNEL_TRPC_CONFIG:
             break;
-#if (defined(SD9097) || defined(SD9098))
-        case HostCmd_CMD_RECONFIGURE_TX_BUFF:
-            break;
-#endif
-#ifdef CONFIG_EXTERNAL_BLE_COEX
-        case HostCmd_CMD_ROBUST_COEX:
-            break;
-#endif
         default:
             wifi_io_d("Unimplemented Resp : (0x%x)", cmdtype);
 #ifdef CONFIG_WIFI_IO_DUMP
@@ -381,40 +347,10 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         wifi_io_d(" --- Rx: EVENT Response ---");
     }
 
-#ifdef CONFIG_P2P
-    t_u8 *cmdBuf;
-#endif /* CONFIG_P2P */
     SDIOPkt *sdiopkt = (SDIOPkt *)(void *)pmbuf;
     int ret;
     struct bus_message msg;
 
-#ifdef CONFIG_P2P
-    if (bus.special_queue != NULL && upld_type == MLAN_TYPE_CMD)
-    {
-        msg.data = os_mem_alloc(sdiopkt->size);
-        if (!msg.data)
-        {
-            wifi_io_e("Buffer allocation failed");
-            return MLAN_STATUS_FAILURE;
-        }
-
-        msg.event = upld_type;
-        cmdBuf    = pmbuf;
-        cmdBuf    = cmdBuf + INTF_HEADER_LEN;
-        (void)memcpy((void *)msg.data, (const void *)cmdBuf, sdiopkt->size);
-
-        ret = os_queue_send(bus.special_queue, &msg, 0);
-
-        if (ret != WM_SUCCESS)
-        {
-            wifi_io_e("Failed to send response on Queue");
-            if (upld_type != MLAN_TYPE_CMD)
-                wifi_free_eventbuf(msg.data);
-            return MLAN_STATUS_FAILURE;
-        }
-    }
-    else
-#endif /* CONFIG_P2P */
         if (bus.event_queue != NULL)
     {
         if (upld_type == MLAN_TYPE_CMD)
@@ -647,25 +583,6 @@ static void wlan_get_hw_spec(void)
 #endif
 }
 
-#if (defined(SD9097) || defined(SD9098))
-static int wlan_reconfigure_tx_buf()
-{
-    uint32_t tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
-    uint32_t resp;
-    (void)memset(outbuf, 0, buflen);
-    /* sdiopkt = outbuf */
-    wifi_prepare_reconfigure_tx_buf_cmd(&sdiopkt->hostcmd, wlan_get_next_seq_num());
-
-    sdiopkt->pkttype = MLAN_TYPE_CMD;
-    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
-
-    last_cmd_sent = HostCmd_CMD_RECONFIGURE_TX_BUFF;
-
-    sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-
-    return true;
-}
-#endif
 
 static void wlan_get_mac_addr(void)
 {
@@ -766,7 +683,6 @@ static void _wlan_set_mac_addr(void)
 #endif
 }
 
-#ifdef CONFIG_11N
 static void wlan_set_11n_cfg(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -787,7 +703,6 @@ static void wlan_set_11n_cfg(void)
 #endif
 }
 
-#ifdef CONFIG_ENABLE_AMSDU_RX
 void wifi_prepare_enable_amsdu_cmd(void *cmd, int seq_number);
 static void wlan_enable_amsdu(void)
 {
@@ -811,8 +726,6 @@ static void wlan_enable_amsdu(void)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
-#endif /* CONFIG_ENABLE_AMSDU_RX */
-#endif /* CONFIG_11N */
 
 static void wlan_cmd_shutdown(void)
 {
@@ -905,36 +818,6 @@ static int wlan_set_low_power_mode()
     last_cmd_sent = HostCmd_CMD_LOW_POWER_MODE;
 
     sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-    return true;
-}
-#endif
-#ifdef CONFIG_EXTERNAL_BLE_COEX
-void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
-
-static int wlan_set_ext_ble_coex_mode()
-{
-    t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
-    uint32_t resp;
-
-    if (!board_coex_interface())
-    {
-        return false;
-    }
-    board_coex_pin_config(1);
-
-    (void)memset(outbuf, 0, buflen);
-
-    /* sdiopkt = outbuf */
-    wifi_prepare_set_coex_cmd(&sdiopkt->hostcmd, wlan_get_next_seq_num());
-
-    sdiopkt->pkttype = MLAN_TYPE_CMD;
-    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
-
-    last_cmd_sent = HostCmd_CMD_ROBUST_COEX;
-
-    /* send CMD53 to write the command to set mac control */
-    sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-
     return true;
 }
 #endif
@@ -1037,17 +920,6 @@ static void wlan_fw_init_cfg(void)
         (void)wlan_process_int_status(mlan_adap);
     }
 
-#if (defined(SD9097) || defined(SD9098))
-    wifi_io_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
-
-    wlan_reconfigure_tx_buf();
-
-    while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
-    {
-        os_thread_sleep(os_msec_to_ticks(10));
-        wlan_process_int_status(mlan_adap);
-    }
-#endif
 
     (void)wlan_get_value1();
 
@@ -1106,18 +978,7 @@ static void wlan_fw_init_cfg(void)
         os_thread_sleep(os_msec_to_ticks(10));
         (void)wlan_process_int_status(mlan_adap);
     }
-#ifdef CONFIG_EXTERNAL_BLE_COEX
-    if (wlan_set_ext_ble_coex_mode())
-    {
-        while (last_resp_rcvd != HostCmd_CMD_ROBUST_COEX)
-        {
-            os_thread_sleep(os_msec_to_ticks(10));
-            wlan_process_int_status(mlan_adap);
-        }
-    }
-#endif
 
-#ifdef CONFIG_11N
     (void)wlan_set_11n_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_11N_CFG)
@@ -1126,7 +987,6 @@ static void wlan_fw_init_cfg(void)
         (void)wlan_process_int_status(mlan_adap);
     }
 
-#ifdef CONFIG_ENABLE_AMSDU_RX
     (void)wlan_enable_amsdu();
 
     while (last_resp_rcvd != HostCmd_CMD_AMSDU_AGGR_CTRL)
@@ -1134,34 +994,10 @@ static void wlan_fw_init_cfg(void)
         os_thread_sleep(os_msec_to_ticks(1));
         (void)wlan_process_int_status(mlan_adap);
     }
-#endif /* CONFIG_ENABLE_AMSDU_RX */
-#endif /* CONFIG_11N */
 
     return;
 }
 
-#ifdef CONFIG_P2P
-mlan_status wlan_send_gen_sdio_cmd(t_u8 *buf, t_u32 buflen)
-{
-    SDIOPkt *sdio = (SDIOPkt *)outbuf;
-    uint32_t resp;
-
-    (void)memset(outbuf, 0, 512);
-
-    wifi_sdio_lock();
-    (void)memcpy((void *)outbuf, (const void *)buf, buflen);
-    sdio->pkttype         = MLAN_TYPE_CMD;
-    sdio->hostcmd.seq_num = (0x01) << 13;
-    sdio->size            = sdio->hostcmd.size + INTF_HEADER_LEN;
-
-    sdio_drv_write(mlan_adap->ioport, 1, 1, buflen, (t_u8 *)outbuf, &resp);
-
-    last_cmd_sent = sdio->hostcmd.command;
-    wifi_sdio_unlock();
-
-    return 0;
-}
-#endif
 
 int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 {
@@ -2212,16 +2048,6 @@ mlan_status sd_wifi_init(enum wlan_type type,
     return ret;
 }
 
-#ifdef CONFIG_BT_SUPPORT
-uint8_t read_sdio_function_recvd()
-{
-    uint32_t resp = 0;
-    uint8_t val;
-    sdio_drv_creg_read(0x5, 0x0, &resp);
-    val = resp & 0xf;
-    return val;
-}
-#endif
 
 void sd_wifi_deinit(void)
 {

@@ -10,11 +10,7 @@
 
 #ifndef _CLI_MEM_H_
 #define _CLI_MEM_H_
-#ifdef CONFIG_APPLE_SW_AUTH_TEST
-#define INBUF_SIZE 1383U
-#else
 #define INBUF_SIZE 256U
-#endif
 
 #define BUF_ALLOCATED '1'
 #define BUF_AVAILABLE '0'

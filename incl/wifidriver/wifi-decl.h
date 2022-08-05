@@ -29,12 +29,6 @@
 
 #define MOD_GROUPS 7
 
-#ifdef CONFIG_OWE
-/** The open AP in OWE transmition Mode */
-#define OWE_TRANS_MODE_OPEN 1U
-/** The security AP in OWE trsnsition Mode */
-#define OWE_TRANS_MODE_OWE 2U
-#endif
 
 #if 0
 /** channel_field.flags */
@@ -174,14 +168,6 @@ struct wifi_message
     void *data;
 };
 
-#ifdef CONFIG_P2P
-struct wifi_wfd_event
-{
-    bool peer_event;
-    bool action_frame;
-    void *data;
-};
-#endif
 
 /* Wlan Cipher structure */
 typedef struct
@@ -865,158 +851,7 @@ typedef PACK_START struct
     wifi_txpwrlimit_config_t txpwrlimit_config[40];
 } PACK_END wifi_txpwrlimit_t;
 
-#ifdef CONFIG_WLAN_BRIDGE
-/**
- * Data structure for Bridge Autolink Configuration
- */
-typedef struct
-{
-    /** Auto Link Periodical scan interval */
-    uint32_t scan_timer_interval;
-    /** The condition triggers Auto Link periodical scan
-     *  0: trigger scan when current link is not good
-     *  1: trigger scan by host setting(always periodical scan)
-     */
-    uint8_t scan_timer_condition;
-    /** Auto Link periodical scan channel list:
-     *  0: only scan with previous In-STA associated channel
-     *  1: 2.4G all channels
-     */
-    uint8_t scan_channel_list;
-} wifi_autolink_cfg_t;
 
-/**
- * Data structure for Bridge Configuration
- */
-#define ENABLE_AUTOLINK_BIT 1
-#define HIDDEN_SSID_BIT     2
-typedef struct
-{
-    /** Bit 0: Enable/Disable bridge mode,
-     *  Bit 1: Enable/Disable auto link,
-     *  Bit 2: Enable/Disable hidden ssid
-     */
-    uint8_t enable;
-    /** Auto Link */
-    bool auto_link;
-    /** Hideen Bridge SSID */
-    bool hidden_ssid;
-    /** EX-AP SSID Length */
-    uint8_t ex_ap_ssid_len;
-    /** EX-AP SSID */
-    char ex_ap_ssid[MLAN_MAX_SSID_LENGTH];
-    /** EX-AP Passphrase length */
-    uint8_t ex_ap_pass_len;
-    /** EX-AP Passphrase */
-    char ex_ap_pass[MLAN_MAX_PASS_LENGTH];
-    /** Bridge SSID Length */
-    uint8_t bridge_ssid_len;
-    /** Bridge SSID */
-    char bridge_ssid[MLAN_MAX_SSID_LENGTH];
-    /** Bridge Passphrase length */
-    uint8_t bridge_pass_len;
-    /** Bridge Passphrase */
-    char bridge_pass[MLAN_MAX_PASS_LENGTH];
-    /**auto link configuration*/
-    wifi_autolink_cfg_t autolink;
-} wifi_bridge_cfg_t;
-#endif
-
-#ifndef CONFIG_MLAN_WMSDK
-
-/** Network monitor structure */
-typedef struct
-{
-    /** Monitor activity */
-    uint16_t monitor_activity;
-    /** Filter flags */
-    uint16_t filter_flags;
-    uint8_t radio_type;
-    /** Channel number */
-    uint8_t chan_number;
-} wifi_net_monitor_t;
-
-/** Beacon information structure */
-typedef PACK_START struct
-{
-    /** Frame control flags */
-    uint8_t frame_ctrl_flags;
-    uint16_t duration;
-    /** Destination MAC address */
-    char dest[MLAN_MAC_ADDR_LENGTH];
-    /** Source MAC address */
-    char src[MLAN_MAC_ADDR_LENGTH];
-    /** BSSID */
-    char bssid[MLAN_MAC_ADDR_LENGTH];
-    uint16_t seq_frag_num;
-    /** Timestamp */
-    uint8_t timestamp[8];
-    uint16_t beacon_interval;
-    uint16_t cap_info;
-    uint8_t ssid_element_id;
-    /** SSID Length */
-    uint8_t ssid_len;
-    /* SSID */
-    char ssid[MLAN_MAX_SSID_LENGTH];
-} PACK_END wifi_beacon_info_t;
-
-/** Wifi data information */
-typedef PACK_START struct
-{
-    /** Frame control flags */
-    uint8_t frame_ctrl_flags;
-    uint16_t duration;
-    char bssid[MLAN_MAC_ADDR_LENGTH];
-    /** Source MAC address */
-    char src[MLAN_MAC_ADDR_LENGTH];
-    /** Destination MAC address */
-    char dest[MLAN_MAC_ADDR_LENGTH];
-    uint16_t seq_frag_num;
-    /** QOS control */
-    uint16_t qos_ctrl;
-} PACK_END wifi_data_info_t;
-
-/** Wifi frame types */
-typedef enum
-{
-    /** Assoc request frame */
-    ASSOC_REQ_FRAME = 0x00,
-    /** Assoc response frame */
-    ASSOC_RESP_FRAME = 0x10,
-    /** ReAssoc request frame */
-    REASSOC_REQ_FRAME = 0x20,
-    /** ReAssoc response frame */
-    REASSOC_RESP_FRAME = 0x30,
-    /** Probe request frame */
-    PROBE_REQ_FRAME = 0x40,
-    /** Probe response frame */
-    PROBE_RESP_FRAME = 0x50,
-    /** BEACON frame */
-    BEACON_FRAME = 0x80,
-    /** Dis assoc frame */
-    DISASSOC_FRAME = 0xA0,
-    /** Auth frame */
-    AUTH_FRAME = 0xB0,
-    /** Deauth frame */
-    DEAUTH_FRAME = 0xC0,
-    /** Action frame */
-    ACTION_FRAME = 0xD0,
-    /** Data frame */
-    DATA_FRAME = 0x08,
-    /** QOS frame */
-    QOS_DATA_FRAME = 0x88,
-} wifi_frame_type_t;
-
-typedef PACK_START struct
-{
-    wifi_frame_type_t frame_type;
-    union
-    {
-        wifi_beacon_info_t beacon_info;
-        wifi_data_info_t data_info;
-    } frame_data;
-} PACK_END wifi_frame_t;
-#endif
 
 typedef struct
 {
@@ -1024,35 +859,6 @@ typedef struct
     uint8_t mfpr;
 } wifi_pmf_params_t;
 
-#ifndef CONFIG_MLAN_WMSDK
-/** mix rate information structure */
-typedef PACK_START struct _mix_rate_info
-{
-    /**  bit0: LGI: gi=0, SGI: gi= 1 */
-    /**  bit1-2: 20M: bw=0, 40M: bw=1, 80M: bw=2, 160M: bw=3  */
-    /**  bit3-4: LG: format=0, HT: format=1, VHT: format=2 */
-    /**  bit5: LDPC: 0-not support,  1-support */
-    /**  bit6-7:reserved */
-    t_u8 rate_info;
-    /** MCS index */
-    t_u8 mcs_index;
-    /** bitrate, in 500Kbps */
-    t_u16 bitrate;
-} PACK_END mix_rate_info, *pmix_rate_info;
-
-/** rxpd extra information structure */
-typedef PACK_START struct _rxpd_extra_info
-{
-    /** flags */
-    t_u8 flags;
-    /** channel.flags */
-    t_u16 channel_flags;
-    /** mcs.known */
-    t_u8 mcs_known;
-    /** mcs.flags */
-    t_u8 mcs_flags;
-} PACK_END rxpd_extra_info, *prxpd_extra_info;
-#endif
 
 /** Channel scan parameters */
 typedef struct
@@ -1074,32 +880,6 @@ typedef struct
     wifi_chan_scan_param_set_t chan_scan_param[1];
 } wifi_chan_list_param_set_t;
 
-#ifndef CONFIG_MLAN_WMSDK
-/** 802_11_header packet */
-typedef PACK_START struct _wifi_mgmt_frame_t
-{
-    /** Packet Length */
-    t_u16 frm_len;
-    /** Frame Type */
-    wifi_frame_type_t frame_type;
-    /** Frame Control flags */
-    t_u8 frame_ctrl_flags;
-    /** Duration ID */
-    t_u16 duration_id;
-    /** Address 1 */
-    t_u8 addr1[MLAN_MAC_ADDR_LENGTH];
-    /** Address 2 */
-    t_u8 addr2[MLAN_MAC_ADDR_LENGTH];
-    /** Address 3 */
-    t_u8 addr3[MLAN_MAC_ADDR_LENGTH];
-    /** Sequence Control */
-    t_u16 seq_ctl;
-    /** Address 4 */
-    t_u8 addr4[MLAN_MAC_ADDR_LENGTH];
-    /** Frame payload */
-    t_u8 payload[0];
-} PACK_END wifi_mgmt_frame_t;
-#endif
 
 /** Calibration Data */
 typedef PACK_START struct _wifi_cal_data_t
@@ -1134,30 +914,19 @@ typedef PACK_START struct _wifi_scan_channel_list_t
 
 /* Configuration for wireless scanning */
 #define MAX_CHANNEL_LIST 5
-#ifdef CONFIG_COMBO_SCAN
-#define MAX_NUM_SSID 2
-#endif
 /** V2 scan parameters */
 typedef PACK_START struct _wifi_scan_params_v2_t
 {
     /** BSSID to scan */
     t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
     /** SSID to scan */
-#ifdef CONFIG_COMBO_SCAN
-    char ssid[MAX_NUM_SSID][MLAN_MAX_SSID_LENGTH + 1];
-#else
     char ssid[MLAN_MAX_SSID_LENGTH + 1];
-#endif
     /** Number of channels */
     t_u8 num_channels;
     /** Channel list with channel information */
     wifi_scan_channel_list_t chan_list[MAX_CHANNEL_LIST];
     /** Number of probes */
     t_u8 num_probes;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
-    /** Threshold of rssi */
-    t_s16 rssi_threshold;
-#endif
     /** Callback to be called when scan is completed */
     int (*cb)(unsigned int count);
 } PACK_END wifi_scan_params_v2_t;

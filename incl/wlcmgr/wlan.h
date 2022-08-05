@@ -169,11 +169,7 @@ typedef enum
 
 /** The number of times that the WLAN Connection Manager will look for a
  *  network before giving up. */
-#ifdef CONFIG_P2P
-#define WLAN_RESCAN_LIMIT 10U
-#else
 #define WLAN_RESCAN_LIMIT 5U
-#endif
 #define WLAN_11D_SCAN_LIMIT 3U
 /** The number of times that the WLAN Connection Manager will attempt a
  * reconnection with the network before giving up. */
@@ -207,13 +203,6 @@ typedef enum
 /** Length of a pairwise master key (PMK).  It's always 256 bits (32 Bytes) */
 #define WLAN_PMK_LENGTH 32
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-/* Max number of sta filter list can be upto 16 */
-#define WLAN_MAX_STA_FILTER_NUM 16
-
-/* The length of wlan mac address */
-#define WLAN_MAC_ADDR_LENGTH 6
-#endif
 
 /* Error Codes */
 
@@ -245,13 +234,6 @@ typedef enum
 #elif defined(IW61x)
 #define HOST_WAKEUP_GPIO_PIN 17
 #define CARD_WAKEUP_GPIO_PIN 16
-#elif defined(SD9097)
-#if defined(SD9097_V0)
-#define CARD_WAKEUP_GPIO_PIN 7
-#elif defined(SD9097_V1)
-#define HOST_WAKEUP_GPIO_PIN 12
-#define CARD_WAKEUP_GPIO_PIN 3
-#endif
 #else
 #define HOST_WAKEUP_GPIO_PIN 4
 #define CARD_WAKEUP_GPIO_PIN 16 //?
@@ -445,13 +427,6 @@ struct wlan_scan_result
     /** The network supports WMM.  This is set to 0 if the network does not
      *  support WMM or if the system does not have WMM support enabled. */
     unsigned wmm : 1;
-#ifdef CONFIG_WPS2
-    /** The network supports WPS.  This is set to 0 if the network does not
-     *  support WPS or if the system does not have WPS support enabled. */
-    unsigned wps : 1;
-    /** WPS Type PBC/PIN */
-    unsigned int wps_session;
-#endif
     /** WPA2 Enterprise security */
     unsigned wpa2_entp : 1;
     /** The network uses WEP security. */
@@ -529,39 +504,6 @@ typedef PACK_START struct
 
 } PACK_END ChanBandInfo_t;
 
-#ifdef CONFIG_WLAN_BRIDGE
-/*auto link switch network info*/
-typedef PACK_START struct _Event_AutoLink_SW_Node_t
-{
-    /** No of bytes in packet including this field */
-    uint16_t length;
-    /** Type: Event (3) */
-    uint16_t type;
-    /** Event ID */
-    uint16_t event_id;
-    /** BSS index number for multiple BSS support */
-    uint8_t bss_index;
-    /** BSS type */
-    uint8_t bss_type;
-    /*peer mac address*/
-    uint8_t peer_mac_addr[MLAN_MAC_ADDR_LENGTH];
-    /*associated channel band info*/
-    ChanBandInfo_t chanBand;
-    /*security type*/
-    uint8_t secutype;
-    /*multicast cipher*/
-    uint8_t mcstcipher;
-    /*unicast cipher*/
-    uint8_t ucstcipher;
-    /*peer ssid info*/
-    /* tlv type*/
-    uint16_t type_ssid;
-    /** Header length */
-    uint16_t len_ssid;
-    /*ssid info*/
-    uint8_t ssid[1];
-} PACK_END Event_AutoLink_SW_Node_t;
-#endif
 
 /** Network security types*/
 enum wlan_security_type
@@ -578,31 +520,16 @@ enum wlan_security_type
     WLAN_SECURITY_WPA2,
     /** The network uses WPA/WPA2 mixed security with PSK */
     WLAN_SECURITY_WPA_WPA2_MIXED,
-#ifdef CONFIG_WPA2_ENTP
-    /** The network uses WPA2 Enterprise EAP-TLS security
-     * The identity field in \ref wlan_network structure is used */
-    WLAN_SECURITY_EAP_TLS,
-#endif
     /** The network can use any security method. This is often used when
      * the user only knows the name and passphrase but not the security
      * type.  */
     WLAN_SECURITY_WILDCARD,
-#ifdef CONFIG_PEAP_MSCHAPV2
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
-     * The anonymous identity, identity and password fields in
-     * \ref wlan_network structure are used */
-    WLAN_SECURITY_PEAP_MSCHAPV2,
-#endif
     /** The network uses WPA3 security with SAE. Also set the PMF settings using
      * \ref wlan_set_pmfcfg API required for WPA3 SAE */
     WLAN_SECURITY_WPA3_SAE,
     /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
      * is specific to uAP or SoftAP only */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
-#ifdef CONFIG_OWE
-    /** The network uses OWE only security without Transition mode support. */
-    WLAN_SECURITY_OWE_ONLY,
-#endif
 };
 /** Wlan Cipher structure */
 struct wlan_cipher
@@ -624,15 +551,6 @@ static inline int is_valid_security(int security)
     /*Currently only these modes are supported */
     if ((security == WLAN_SECURITY_NONE) || (security == WLAN_SECURITY_WEP_OPEN) || (security == WLAN_SECURITY_WPA) ||
         (security == WLAN_SECURITY_WPA2) || (security == WLAN_SECURITY_WPA_WPA2_MIXED) ||
-#ifdef CONFIG_WPA2_ENTP
-        (security == WLAN_SECURITY_EAP_TLS) ||
-#endif
-#ifdef CONFIG_PEAP_MSCHAPV2
-        (security == WLAN_SECURITY_PEAP_MSCHAPV2) ||
-#endif
-#ifdef CONFIG_OWE
-        (security == WLAN_SECURITY_OWE_ONLY) ||
-#endif
         (security == WLAN_SECURITY_WPA3_SAE) || (security == WLAN_SECURITY_WILDCARD))
     {
         return 0;
@@ -684,25 +602,6 @@ struct wlan_network_security
     bool mfpc;
     /** Management Frame Protection Required (MFPR) */
     bool mfpr;
-#ifdef CONFIG_WLAN_BRIDGE
-    /** Pre-shared key (network password) for bridge uap.*/
-    char bridge_psk[WLAN_PSK_MAX_LENGTH];
-    /** Length of the WEP key or WPA/WPA2 pass phrase for bridge uap, \ref WLAN_PSK_MIN_LENGTH
-     *  to \ref WLAN_PSK_MAX_LENGTH.  Ignored for networks with no security. */
-    char bridge_psk_len;
-    /** Pairwise Master Key for bridge network */
-    char bridge_pmk[WLAN_PMK_LENGTH];
-    /** Flag reporting whether bridge pmk is valid or not. */
-    bool bridge_pmk_valid;
-#endif
-#ifdef CONFIG_WPA2_ENTP
-    /** TLS client cert configuration */
-    wm_mbedtls_cert_t tls_cert;
-    /** mbedtls_ssl_config handle */
-    mbedtls_ssl_config *wlan_ctx;
-    /** mbedtls_ssl_context handle */
-    mbedtls_ssl_context *wlan_ssl;
-#endif
 };
 
 /* Configuration for wireless scanning */
@@ -717,11 +616,6 @@ struct wifi_scan_params_t
     int split_scan_delay;
 };
 
-#ifdef CONFIG_WIFI_GET_LOG
-/** Wi-Fi firmware stat from \ref wifi_pkt_stats_t
- */
-typedef wifi_pkt_stats_t wlan_pkt_stats_t;
-#endif
 
 /** Configuration for Wireless scan channel list from
  * \ref wifi_scan_channel_list_t
@@ -732,24 +626,12 @@ typedef wifi_scan_channel_list_t wlan_scan_channel_list_t;
  */
 typedef wifi_scan_params_v2_t wlan_scan_params_v2_t;
 
-#ifdef CONFIG_TBTT_OFFSET
-/** Configuration for Wireless TBTT Offset stats from
- * \ref wifi_tbtt_offset_t
- */
-typedef wifi_tbtt_offset_t wlan_tbtt_offset_t;
-#endif
 
 /** Configuration for Wireless Calibration data from
  * \ref wifi_cal_data_t
  */
 typedef wifi_cal_data_t wlan_cal_data_t;
 
-#ifdef CONFIG_AUTO_RECONNECT
-/** Configuration for Auto reconnect configuration from
- * \ref wifi_auto_reconnect_config_t
- */
-typedef wifi_auto_reconnect_config_t wlan_auto_reconnect_config_t;
-#endif
 
 /** Configuration for Memory Efficient Filters in Wi-Fi firmware from
  * \ref wifi_flt_cfg_t
@@ -764,12 +646,6 @@ typedef wifi_wowlan_ptn_cfg_t wlan_wowlan_ptn_cfg_t;
  * \ref wifi_tcp_keep_alive_t
  */
 typedef wifi_tcp_keep_alive_t wlan_tcp_keep_alive_t;
-#ifdef CONFIG_NAT_KEEP_ALIVE
-/** Configuration for NAT Keep alive parameters from
- * \ref wifi_nat_keep_alive_t
- */
-typedef wifi_nat_keep_alive_t wlan_nat_keep_alive_t;
-#endif
 
 /** Configuration for TX Rate and Get data rate from
  * \ref wifi_ds_rate
@@ -914,10 +790,6 @@ struct wlan_network
      *  (a 0-length string) to use only the BSSID to find the network.
      */
     char ssid[IEEEtypes_SSID_SIZE + 1];
-#ifdef CONFIG_WLAN_BRIDGE
-    /*The network SSID for bridge uap*/
-    char bridge_ssid[IEEEtypes_SSID_SIZE + 1];
-#endif
     /** The network BSSID, represented as a 6-byte array.
      *  If this profile is used in the micro-AP mode, this field is
      *  ignored.
@@ -936,10 +808,6 @@ struct wlan_network
      *  channel on which the network to connect should be present. Set this
      *  to 0 to allow the network to be found on any channel. */
     unsigned int channel;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
-    /** Rssi threshold */
-    short rssi_threshold;
-#endif
     /** BSS type */
     enum wlan_bss_type type;
     /** The network wireless mode enum wlan_bss_role. Set this
@@ -954,13 +822,6 @@ struct wlan_network
     /** The network IP address configuration specified by struct
      * wlan_ip_config that should be associated with this interface. */
     struct wlan_ip_config ip;
-#ifdef CONFIG_WPA2_ENTP
-    char identity[IDENTITY_MAX_LENGTH];
-#ifdef CONFIG_PEAP_MSCHAPV2
-    char anonymous_identity[IDENTITY_MAX_LENGTH];
-    char password[PASSWORD_MAX_LENGTH];
-#endif
-#endif
 
     /* Private Fields */
 
@@ -976,13 +837,6 @@ struct wlan_network
      * specified (not an empty string), otherwise it is set to 0.
      */
     unsigned ssid_specific : 1;
-#ifdef CONFIG_OWE
-    /**
-     * If set to 1, the ssid field contains the transitional SSID for this
-     * network.
-     */
-    unsigned trans_ssid_specific : 1;
-#endif
     /** If set to 1, the bssid field contains the specific BSSID for this
      *  network.  The WLAN Connection Manager will not connect to any other
      *  network with the same SSID unless the BSSID matches.  If set to 0, the
@@ -1006,52 +860,12 @@ struct wlan_network
      * WLAN_SECURITY_WILDCARD.
      */
     unsigned security_specific : 1;
-#ifdef CONFIG_WPS2
-    /** This indicates this network is used as an internal network for
-     * WPS */
-    unsigned wps_specific : 1;
-#endif
-#ifdef CONFIG_OWE
-    /** OWE Transition mode */
-    unsigned int owe_trans_mode;
-    /** The network transitional SSID, represented as a C string of up to 32 characters
-     *  in length.
-     *
-     * This field is used internally.
-     */
-    char trans_ssid[IEEEtypes_SSID_SIZE + 1];
-    /** Transitional SSID length
-     *
-     * This field is used internally.
-     */
-    unsigned int trans_ssid_len;
-#endif
     /** Beacon period of associated BSS */
     uint16_t beacon_period;
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
 };
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
-/** Tx Per Tracking Structure
- * Driver sets tx per tracking statistic to fw.
- * Fw will check tx packet error rate periodically and
- * report PER to host if per is high.
- */
-struct wlan_tx_pert_info
-{
-    /** Enable/Disable tx per tracking */
-    t_u8 tx_pert_check;
-    /** Check period(unit sec) */
-    t_u8 tx_pert_check_peroid;
-    /** (Fail TX packet)/(Total TX packet) ratio(unit 10%)
-     * default: 5
-     */
-    t_u8 tx_pert_check_ratio;
-    /** A watermark of check number(default 5) */
-    t_u16 tx_pert_check_num;
-};
-#endif
 
 /* WLAN Connection Manager API */
 
@@ -1393,9 +1207,6 @@ int wlan_get_current_network(struct wlan_network *network);
  */
 int wlan_get_current_uap_network(struct wlan_network *network);
 
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
-int wlan_set_rssi_threshold(int rssithr);
-#endif
 
 /** Retrieve the status information of the micro-AP interface.
  *
@@ -1689,17 +1500,6 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
  */
 void wlan_set_mac_addr(uint8_t *mac);
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
-/** Set Tx PER tracking config.
- * This function may be called to set Tx PER tracking in firmware.
- *
- * \param[in] tx_pert User configured parameters of Tx PER tracking
- *            period, ratio and number of tx packets.
- * \return WM_SUCCESS if the call was successful.
- * \return -WM_FAIL if failed.
- */
-void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type);
-#endif
 
 /** Configure Listen interval of IEEE power save mode.
  *
@@ -1788,20 +1588,6 @@ void wlan_configure_listen_interval(int listen_interval);
  */
 void wlan_configure_null_pkt_interval(int time_in_secs);
 
-#ifdef STREAM_2X2
-/** This function sets current antenna.
- *
- * \param[in] ant Antenna
- *            Valid values are 1, 2 and 65535.
- *            1: Set Antenna 1,
- *            2: Set Antenna 2,
- *        65535: Set Antenna diversity.
- *
- * \return WM_SUCCESS if successful.
- * \return WLAN_ERROR_STATE if unsuccessful.
- */
-int wlan_set_current_ant(uint8_t tx_antenna, uint8_t rx_antenna);
-#else
 
 /** This API can be used to set the mode of Tx/Rx antenna.
  * If SAD is enabled, this API can also used to set SAD antenna
@@ -1833,7 +1619,6 @@ int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time);
  * \return WLAN_ERROR_STATE if unsuccessful.
  */
 int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time);
-#endif
 
 /** Get the wifi firmware version extension string.
  *
@@ -1958,27 +1743,6 @@ int wlan_deepsleepps_off(void);
 int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *keep_alive);
 #endif
 
-#ifdef CONFIG_NAT_KEEP_ALIVE
-/**
- * Use this API to configure the NAT Keep alive parameters in Wi-Fi firmware.
- * \ref wlan_nat_keep_alive_t provides the parameters which are available
- * for configuration.
- *
- * \note Please note that this API must be called after successful connection
- * and before putting Wi-Fi card in IEEE power save mode.
- *
- * \param[in] nat_keep_alive A pointer to \ref wlan_nat_keep_alive_t
- * 		   with following parameters.
- *                  interval nat keep alive interval
- *                  dst_mac Destination MAC address
- *   		    dst_ip Destination IP
- *   		    dst_port Destination port
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_nat_keep_alive(wlan_nat_keep_alive_t *nat_keep_alive);
-#endif
 
 /**
  * Use this API to get the beacon period of associated BSS.
@@ -2048,19 +1812,6 @@ int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
  */
 int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
 
-#ifdef CONFIG_TBTT_OFFSET
-/**
- * Use this API to get the min, max and avg TBTT offset values
- * from Wi-Fi firmware.
- *
- * \param[in] tbtt_offset A pointer to \ref wlan_tbtt_offset_t which will hold
- *	      min, max and avg TBTT offset values.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_get_tbtt_offset_stats(wlan_tbtt_offset_t *tbtt_offset);
-#endif /* CONFIG_TBTT_OFFSET */
 
 /**
  * Use this API to set packet filters in Wi-Fi firmware.
@@ -2161,15 +1912,6 @@ int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg);
  */
 int wlan_set_auto_arp();
 
-#ifdef CONFIG_AUTO_PING
-/**
- * Use this API to enable Ping Offload in Wi-Fi firmware.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_set_auto_ping();
-#endif /*  CONFIG_AUTO_PING */
 
 #ifdef ENABLE_OFFLOAD
 /**
@@ -2214,35 +1956,6 @@ int wlan_get_current_bssid(uint8_t *bssid);
  */
 uint8_t wlan_get_current_channel(void);
 
-#ifdef CONFIG_WIFI_GET_LOG
-/**
- * Use this API to get the various statistics of sta from Wi-Fi firmware like
- * number of beacons received, missed and so on.
- *
- * \param[in] stats A pointer to structure where stats collected from Wi-Fi firmware
- *	      will be copied.
- * \note Please explore the elements of the \ref wlan_pkt_stats_t strucutre for
- * 	 more information on stats.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_get_log(wlan_pkt_stats_t *stats);
-
-/**
- * Use this API to get the various statistics of uap from Wi-Fi firmware like
- * number of beacons received, missed and so on.
- *
- * \param[in] stats A pointer to structure where stats collected from Wi-Fi firmware
- *	      will be copied.
- * \note Please explore the elements of the \ref wlan_pkt_stats_t strucutre for
- * 	 more information on stats.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- */
-int wlan_uap_get_log(wlan_pkt_stats_t *stats);
-#endif
 
 /** Get station interface power save mode.
  *
@@ -2757,56 +2470,6 @@ int wlan_set_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit);
  */
 int wlan_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit);
 
-#ifdef CONFIG_AUTO_RECONNECT
-/**
- * Enable Auto Reconnect feature in WLAN firmware.
- *
- * \param[in] auto_reconnect_config Auto Reconnect configuration
- *	      structure holding following parameters:
- *	      1. reconnect counter(0x1-0xff) - The number of times the WLAN
- *		 firmware retries connection attempt with AP.
- *				The value 0xff means retry forever.
- *				(default 0xff).
- *	      2. reconnect interval(0x0-0xff) - Time gap in seconds between
- *				each connection attempt (default 10).
- *	      3. flags - Bit 0:
- *			 Set to 1: Firmware should report link-loss to host
- *				if AP rejects authentication/association
- *				while reconnecting.
- *			 Set to 0: Default behaviour: Firmware does not report
- *				link-loss to host on AP rejection and
- *				continues internally.
- *			 Bit 1-15: Reserved.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- *
- */
-int wlan_auto_reconnect_enable(wlan_auto_reconnect_config_t auto_reconnect_config);
-
-/**
- * Disable Auto Reconnect feature in WLAN firmware.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_FAIL if command fails.
- *
- */
-int wlan_auto_reconnect_disable();
-
-/**
- * Get Auto Reconnect configuration from WLAN firmware.
- *
- * \param[out] auto_reconnect_config Auto Reconnect configuration
- *	       structure where response from WLAN firmware will
- *	       get stored.
- *
- * \return WM_SUCCESS if operation is successful.
- * \return -WM_E_INVAL if auto_reconnect_config is not valid.
- * \return -WM_FAIL if command fails.
- *
- */
-int wlan_get_auto_reconnect_config(wlan_auto_reconnect_config_t *auto_reconnect_config);
-#endif
 /**
  * Set Reassociation Control in WLAN Connection Manager
  * \note Reassociation is enabled by default in the WLAN Connection Manager.
@@ -2971,91 +2634,10 @@ void wlan_sta_ampdu_rx_disable(void);
  */
 void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list);
 
-#ifdef CONFIG_WPA2_ENTP
 
-/**
- * Use this API if application want to allow station
- * connection to WPA2 Enterprise ap profiles only.
- *
- * If called the in scan result only the WPA2 Enterprise AP
- * will be listed and station network profile only with WPA2
- * Enterprise security will be allowed to add to network profile
- * list.
- */
-void wlan_enable_wpa2_enterprise_ap_only();
-#endif
 
-#ifdef CONFIG_WIFI_RTS_THRESHOLD
-/**
- * Set the rts threshold of sta in WLAN firmware.
- *
- * \param[in]  the value of rts threshold configuration.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_set_rts(int rts);
 
-/**
- * Set the rts threshold of uap in WLAN firmware.
- *
- * \param[in]  the value of rts threshold configuration.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_set_uap_rts(int rts);
-#endif
 
-#ifdef CONFIG_WIFI_FRAG_THRESHOLD
-/**
- * Set the fragment threshold of sta in WLAN firmware.
- *
- * \param[in]  the value of fragment threshold configuration.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_set_frag(int frag);
-
-/**
- * Set the fragment threshold of uap in WLAN firmware.
- *
- * \param[in]  the value of fragment threshold configuration.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_set_uap_frag(int frag);
-#endif
-
-#ifdef CONFIG_ENABLE_802_11K
-/**
- * enable/disable 11k feature in WLAN firmware.
- *
- * \param[in]  the value of 11k configuration.
- *
- */
-int wlan_11k_cfg(int enable_11k);
-
-/**
- * send 11k neighbor request in WLAN firmware.
- *
- * \return WM_SUCCESS if successful otherwise failure.
- *
- */
-int wlan_11k_neighbor_req();
-#endif
-
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-/**
- * Set the sta mac filter in Wi-Fi firmware.
- *
- * \param[in] channel filter mode (disable/white/black list)
- * \param[in] the count of mac list
- * \param[in] the pointer to mac address list
- *
- * \return WM_SUCCESS if successful otherwise failure.
- *
- */
-int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
-#endif
 
 static inline void print_mac(const char *mac)
 {
@@ -3299,9 +2881,6 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 
 #endif
 
-#ifdef CONFIG_WIFI_MEM_ACCESS
-int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
-#endif
 
 /**
  * This function sends the host command to f/w and copies back response to caller provided buffer in case of
