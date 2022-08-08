@@ -32,7 +32,6 @@
 #define CONFIG_UAP_AMPDU_TX       1
 #define CONFIG_UAP_AMPDU_RX       1
 #define CONFIG_WIFIDRIVER_PS_LOCK 1
-#define CONFIG_11K                1
 #define CONFIG_WIFI_EU_CRYPTO     1
 #endif
 
