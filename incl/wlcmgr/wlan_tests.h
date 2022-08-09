@@ -11,14 +11,16 @@
 #ifndef __WLAN_TESTS_H__
 #define __WLAN_TESTS_H__
 
-#if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
+#ifdef CONFIG_11AX
 /* index enum of cfgs */
 enum
 {
     TEST_WLAN_11AX_CFG,
+#ifdef CONFIG_11AX_TWT
     TEST_WLAN_BCAST_TWT,
     TEST_WLAN_TWT_SETUP,
     TEST_WLAN_TWT_TEARDOWN,
+#endif /* CONFIG_11AX_TWT */
 };
 
 /*
@@ -60,7 +62,7 @@ typedef struct
  *        "wlan-11axcfg done" send corresponding cmd to wifi driver
  */
 void test_wlan_cfg_process(uint32_t index, int argc, char **argv);
-#endif /* CONFIG_11AX && CONFIG_11AX_TWT */
+#endif /* CONFIG_11AX */
 /** Print the TX PWR Limit table received from Wi-Fi firmware
  *
  * \param[in] txpwrlimit A \ref wlan_txpwrlimit_t struct holding the

@@ -6457,32 +6457,6 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 }
 #endif
 
-#if defined(CONFIG_11AX) && defined(CONFIG_11AX_TWT)
-int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
-{
-    return wifi_set_11ax_cfg(ax_config);
-}
-
-int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_config)
-{
-    return wifi_set_btwt_cfg(btwt_config);
-}
-
-int wlan_set_twt_setup_cfg(wlan_twt_setup_config_t *twt_setup)
-{
-    return wifi_set_twt_setup_cfg(twt_setup);
-}
-
-int wlan_set_twt_teardown_cfg(wlan_twt_teardown_config_t *teardown_config)
-{
-    return wifi_set_twt_teardown_cfg(teardown_config);
-}
-
-int wlan_get_twt_report(wlan_twt_report_t *twt_report)
-{
-    return wifi_get_twt_report(twt_report);
-}
-#endif /* CONFIG_11AX && CONFIG_11AX_TWT */
 int wlan_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
 {
@@ -6530,4 +6504,30 @@ int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg)
 
     return -WM_FAIL;
 }
+int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
+{
+    return wifi_set_11ax_cfg(ax_config);
+}
+
+#ifdef CONFIG_11AX_TWT
+int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
+{
+    return wifi_set_btwt_cfg(btwt_config);
+}
+
+int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
+{
+    return wifi_set_twt_setup_cfg(twt_setup);
+}
+
+int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
+{
+    return wifi_set_twt_teardown_cfg(teardown_config);
+}
+
+int wlan_get_twt_report(wlan_twt_report_t *twt_report)
+{
+    return wifi_get_twt_report(twt_report);
+}
+#endif /* CONFIG_11AX_TWT */
 #endif

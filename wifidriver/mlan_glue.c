@@ -4225,7 +4225,6 @@ int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg)
     return ret;
 }
 
-#ifdef CONFIG_11AX_TWT
 int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config)
 {
     /* alloc cmd and wait for response in prepare cmd, no need to deal with cmd outside */
@@ -4234,7 +4233,8 @@ int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config)
     return WM_SUCCESS;
 }
 
-int wifi_set_btwt_cfg(wifi_btwt_config_t *btwt_config)
+#ifdef CONFIG_11AX_TWT
+int wifi_set_btwt_cfg(const wifi_btwt_config_t *btwt_config)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -4250,7 +4250,7 @@ int wifi_set_btwt_cfg(wifi_btwt_config_t *btwt_config)
     return WM_SUCCESS;
 }
 
-int wifi_set_twt_setup_cfg(wifi_twt_setup_config_t *twt_setup)
+int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -4269,7 +4269,7 @@ int wifi_set_twt_setup_cfg(wifi_twt_setup_config_t *twt_setup)
     return WM_SUCCESS;
 }
 
-int wifi_set_twt_teardown_cfg(wifi_twt_teardown_config_t *teardown_config)
+int wifi_set_twt_teardown_cfg(const wifi_twt_teardown_config_t *teardown_config)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();

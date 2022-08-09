@@ -800,11 +800,26 @@ typedef wifi_txpwrlimit_t wlan_txpwrlimit_t;
  * \ref wifi_rutxpwrlimit_t
  */
 typedef wifi_rutxpwrlimit_t wlan_rutxpwrlimit_t;
-#ifdef CONFIG_11AX_TWT
+/** Configuration for 11AX capabilities
+ * \ref wifi_11ax_config_t
+ */
 typedef wifi_11ax_config_t wlan_11ax_config_t;
+#ifdef CONFIG_11AX_TWT
+/** Configuration for TWT Setup
+ * \ref wifi_twt_setup_config_t
+ */
 typedef wifi_twt_setup_config_t wlan_twt_setup_config_t;
+/** Configuration for TWT Teardown
+ * \ref wifi_twt_setup_config_t
+ */
 typedef wifi_twt_teardown_config_t wlan_twt_teardown_config_t;
+/** Configuration for Broadcast TWT Setup
+ * \ref wifi_btwt_config_t
+ */
 typedef wifi_btwt_config_t wlan_btwt_config_t;
+/** Configuration for TWT Report
+ * \ref wifi_btwt_config_t
+ */
 typedef wifi_twt_report_t wlan_twt_report_t;
 #endif /* CONFIG_11AX_TWT */
 #endif
@@ -3337,22 +3352,22 @@ int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg);
  */
 int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
 
-#ifdef CONFIG_11AX_TWT
 /** Set 11ax config params
  *
- * \param[in] ax_config 11AX config parameters to be sent to Firmware
+ * \param[in, out] ax_config 11AX config parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
 
+#ifdef CONFIG_11AX_TWT
 /** Set btwt config params
  *
  * \param[in] btwt_config Broadcast TWT Setup parameters to be sent to Firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_config);
+int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config);
 
 /** Set twt setup config params
  *
@@ -3360,7 +3375,7 @@ int wlan_set_btwt_cfg(wlan_btwt_config_t *btwt_config);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_twt_setup_cfg(wlan_twt_setup_config_t *twt_setup);
+int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup);
 
 /** Set twt teardown config params
  *
@@ -3368,11 +3383,11 @@ int wlan_set_twt_setup_cfg(wlan_twt_setup_config_t *twt_setup);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_set_twt_teardown_cfg(wlan_twt_teardown_config_t *teardown_config);
+int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config);
 
 /** Get twt report
  *
- * \param[in] twt_report TWT Report parameter.
+ * \param[out] twt_report TWT Report parameter.
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */

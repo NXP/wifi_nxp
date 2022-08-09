@@ -854,7 +854,6 @@ typedef PACK_START struct
     wifi_rupwrlimit_config_t rupwrlimit_config[MAX_RUTXPWR_NUM];
 } PACK_END wifi_rutxpwrlimit_t;
 
-#ifdef CONFIG_11AX_TWT
 typedef PACK_START struct
 {
     /* band */
@@ -875,6 +874,7 @@ typedef PACK_START struct
     t_u8 val[4];
 } PACK_END wifi_11ax_config_t;
 
+#ifdef CONFIG_11AX_TWT
 typedef PACK_START struct
 {
     /** Implicit, 0: TWT session is explicit, 1: Session is implicit */

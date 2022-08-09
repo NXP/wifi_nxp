@@ -1224,12 +1224,13 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
         (void)PRINTF("Unable to set TX OMI: 0x%x\r\n", tx_omi);
     }
 }
-#ifdef CONFIG_11AX_TWT
 
 static wlan_11ax_config_t ax_conf;
+#ifdef CONFIG_11AX_TWT
 static wlan_twt_setup_config_t twt_setup_conf;
 static wlan_twt_teardown_config_t teardown_conf;
 static wlan_btwt_config_t btwt_config;
+#endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
 static uint8_t g_11ax_cfg[] = {
@@ -1257,6 +1258,7 @@ const static test_cfg_param_t g_11ax_cfg_param[] = {
     {"pe", 27, 4, NULL},
 };
 
+#ifdef CONFIG_11AX_TWT
 static uint8_t g_btwt_cfg[] = {/* action */
                                0x01, 0x00,
                                /* sub_id */
@@ -1302,12 +1304,14 @@ static test_cfg_param_t g_twt_teardown_cfg_param[] = {
     {"NegotiationType", 1, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT tim"},
     {"TearDownAllTWT", 2, 1, "1: To teardown all TWT, 0 otherwise"},
 };
+#endif /* CONFIG_11AX_TWT */
 
 static void test_wlan_11ax_cfg(int argc, char **argv)
 {
     test_wlan_cfg_process(TEST_WLAN_11AX_CFG, argc, argv);
 }
 
+#ifdef CONFIG_11AX_TWT
 static void test_wlan_bcast_twt(int argc, char **argv)
 {
     test_wlan_cfg_process(TEST_WLAN_BCAST_TWT, argc, argv);
@@ -1347,6 +1351,7 @@ static void test_wlan_twt_report(int argc, char **argv)
         (void)PRINTF("\r\n");
     }
 }
+#endif /* CONFIG_11AX_TWT */
 
 /*
  *  Cfg table for mutiple params commands in freeRTOS.
@@ -1358,9 +1363,11 @@ static void test_wlan_twt_report(int argc, char **argv)
  */
 static test_cfg_table_t g_test_cfg_table_list[] = {/*  name         data           total_len    param_list param_num*/
                                                    {"11axcfg", g_11ax_cfg, 31, g_11ax_cfg_param, 8},
+#ifdef CONFIG_11AX_TWT
                                                    {"twt_bcast", g_btwt_cfg, 12, g_btwt_cfg_param, 8},
                                                    {"twt_setup", g_twt_setup_cfg, 12, g_twt_setup_cfg_param, 11},
                                                    {"twt_teardown", g_twt_teardown_cfg, 3, g_twt_teardown_cfg_param, 3},
+#endif /* CONFIG_11AX_TWT */
                                                    {NULL}};
 
 static void dump_cfg_data_param(int param_id, uint8_t *data, const test_cfg_param_t *param_cfg)
@@ -1450,6 +1457,7 @@ static void send_cfg_msg(test_cfg_table_t *cfg, uint32_t index)
             (void)memcpy((void *)&ax_conf, (void *)cfg->data, sizeof(ax_conf));
             ret = wlan_set_11ax_cfg(&ax_conf);
             break;
+#ifdef CONFIG_11AX_TWT
         case TEST_WLAN_BCAST_TWT:
             (void)memcpy((void *)&btwt_config, (void *)cfg->data, sizeof(btwt_config));
             ret = wlan_set_btwt_cfg(&btwt_config);
@@ -1462,6 +1470,7 @@ static void send_cfg_msg(test_cfg_table_t *cfg, uint32_t index)
             (void)memcpy((void *)&teardown_conf, (void *)cfg->data, sizeof(teardown_conf));
             ret = wlan_set_twt_teardown_cfg(&teardown_conf);
             break;
+#endif /* CONFIG_11AX_TWT */
         default:
             ret = -1;
             break;
@@ -1500,7 +1509,7 @@ void test_wlan_cfg_process(uint32_t index, int argc, char **argv)
     else
         (void)PRINTF("unknown argument\r\n");
 }
-#endif
+
 #endif /* CONFIG_11AX */
 
 static struct cli_command wlan_enhanced_commands[] = {
@@ -1534,8 +1543,8 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-tx-omi", "<tx-omi>", test_wlan_set_tx_omi},
     {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
-#ifdef CONFIG_11AX_TWT
     {"wlan-11axcfg", "<11ax_cfg>", test_wlan_11ax_cfg},
+#ifdef CONFIG_11AX_TWT
     {"wlan-bcast-twt", "<bcast_twt_cfg>", test_wlan_bcast_twt},
     {"wlan-twt-setup", "<twt_cfg>", test_wlan_twt_setup},
     {"wlan-twt-teardown", "<twt_cfg>", test_wlan_twt_teardown},
