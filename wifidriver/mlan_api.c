@@ -1474,9 +1474,11 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         mlan_adap->active_scan_triggered = MTRUE;
     }
 
-    if (wm_wifi.g_user_scan_cfg)
+    if (wm_wifi.g_user_scan_cfg != NULL)
     {
-        os_mem_free((void *)wm_wifi.g_user_scan_cfg);
+        wifi_e("Scan command failed");
+        os_mem_free((void *)user_scan_cfg);
+        return -WM_FAIL;
     }
 
     wm_wifi.g_user_scan_cfg = user_scan_cfg;

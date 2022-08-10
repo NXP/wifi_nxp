@@ -1653,6 +1653,8 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
         return WM_SUCCESS;
     }
 
+    (void)memset(&wm_wifi, 0, sizeof(wm_wifi_t));
+
 #if defined(RW610)
     int ret = (int)imu_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
 #else
