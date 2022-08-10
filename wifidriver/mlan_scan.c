@@ -1736,6 +1736,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 HEXDUMP("InterpretIE: Resp 2040BSSCOEXISTANCE_IE", (t_u8 *)pbss_entry->pbss_co_2040,
                         (*(pbss_entry->pbss_co_2040)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
                 break;
+#ifdef CONFIG_11AC
             case VHT_CAPABILITY:
                 /* Save it here since we do not have beacon buffer */
                 (void)__memcpy(NULL, &pbss_entry->vht_cap_saved, pcurrent_ptr, sizeof(IEEEtypes_VHTCap_t));
@@ -1761,6 +1762,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 (void)__memcpy(NULL, &pbss_entry->ext_cap_saved, pcurrent_ptr, sizeof(IEEEtypes_ExtCap_t));
                 pbss_entry->pext_cap = &pbss_entry->ext_cap_saved;
                 break;
+#endif
 #ifndef CONFIG_MLAN_WMSDK
             case OVERLAPBSSSCANPARAM:
                 pbss_entry->poverlap_bss_scan_param = (IEEEtypes_OverlapBSSScanParam_t *)pcurrent_ptr;
@@ -3024,10 +3026,28 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry)
     {
         pbss_entry->pht_info = &pbss_entry->ht_info_saved;
     }
-    if (pbss_entry->pht_info != NULL)
+#ifdef CONFIG_11AC
+    if (pbss_entry->pvht_cap != NULL)
     {
-        pbss_entry->pht_info = &pbss_entry->ht_info_saved;
+        pbss_entry->pvht_cap = &pbss_entry->vht_cap_saved;
     }
+    if (pbss_entry->pvht_oprat != NULL)
+    {
+        pbss_entry->pvht_oprat = &pbss_entry->vht_oprat_saved;
+    }
+    if (pbss_entry->pvht_txpower != NULL)
+    {
+        pbss_entry->pvht_txpower = &pbss_entry->vht_txpower_saved;
+    }
+    if (pbss_entry->ppoper_mode != NULL)
+    {
+        pbss_entry->ppoper_mode = &pbss_entry->poper_mode_saved;
+    }
+    if (pbss_entry->pext_cap != NULL)
+    {
+        pbss_entry->pext_cap = &pbss_entry->ext_cap_saved;
+    }
+#endif
     if (pbss_entry->pbss_co_2040 != NULL)
     {
         pbss_entry->pbss_co_2040 = &pbss_entry->bss_co_2040_saved;
