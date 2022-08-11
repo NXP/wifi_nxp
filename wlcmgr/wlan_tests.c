@@ -2320,8 +2320,8 @@ static void dump_wlan_eu_crypto(void)
 }
 static void test_wlan_eu_crypto(int argc, char **argv)
 {
-    unsigned int EncDec;
-    t_u8 DATA[80] = {0};
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
     t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
@@ -2334,8 +2334,8 @@ static void test_wlan_eu_crypto(int argc, char **argv)
         (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
-    get_uint(argv[1], &EncDec, 1);
-    if (EncDec != 0 && EncDec != 1)
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
     {
         dump_wlan_eu_crypto();
         (void)PRINTF("Error: invalid EncDec\r\n");
@@ -2352,22 +2352,22 @@ static void test_wlan_eu_crypto(int argc, char **argv)
     t_u8 KeyIV[8]    = {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11};
     KeyIVLength      = 8;
 
-    if (EncDec == 0)
+    if (EncDec == 0U)
     {
-        memcpy(DATA, DecData, Dec_DataLength);
+        (void)memcpy(DATA, DecData, Dec_DataLength);
         Length = Dec_DataLength;
         ret    = wlan_set_crypto_AES_WRAP_decrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
     }
     else
     {
-        memcpy(DATA, EncData, Enc_DataLength);
+        (void)memcpy(DATA, EncData, Enc_DataLength);
         Length = Enc_DataLength;
         ret    = wlan_set_crypto_AES_WRAP_encrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
     }
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Raw Data:\r\n");
-        if (EncDec == 0)
+        if (EncDec == 0U)
         {
             dump_hex((t_u8 *)DecData, Dec_DataLength);
             (void)PRINTF("Decrypted Data:\r\n");
@@ -2381,7 +2381,9 @@ static void test_wlan_eu_crypto(int argc, char **argv)
         }
     }
     else
+    {
         (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
 }
 #endif
 
