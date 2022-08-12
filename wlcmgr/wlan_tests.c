@@ -96,6 +96,37 @@ static const char *print_role(enum wlan_bss_role role)
 }
 #endif
 
+#ifdef CONFIG_WIFI_CAPA
+static int get_capa(char *arg, uint8_t *wlan_capa)
+{
+    if (!arg)
+        return 1;
+    if (string_equal(arg, "11ax") != 0)
+    {
+        *wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC |\
+                      WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
+        return 0;
+    }
+    else if (string_equal(arg, "11ac") != 0)
+    {
+        *wlan_capa = (WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
+        return 0;
+    }
+    else if (string_equal(arg, "11n") != 0)
+    {
+        *wlan_capa = (WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
+        return 0;
+    }
+    else if (string_equal(arg, "legacy") != 0)
+    {
+        *wlan_capa = WIFI_SUPPORT_LEGACY;
+        return 0;
+    }
+    else
+        return 1;
+}
+#endif
+
 static void print_network(struct wlan_network *network)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
@@ -160,7 +191,54 @@ static void print_network(struct wlan_network *network)
         default:
             break;
     }
+#ifdef CONFIG_WIFI_CAPA
+    if(network->role == WLAN_BSS_ROLE_UAP)
+    {
+        uint16_t fw_bands = 0;
+        uint8_t enable_11ax = false;
+        uint8_t enable_11ac = false;
+        uint8_t enable_11n = false;
 
+        wlan_get_fw_info((mlan_bss_type)WLAN_BSS_TYPE_UAP, &fw_bands);
+        enable_11ac = wlan_check_11ac_capa(network->channel, fw_bands);
+        enable_11ax = wlan_check_11ax_capa(network->channel, fw_bands);
+        enable_11n = wlan_check_11n_capa(network->channel, fw_bands);
+        if(network->wlan_capa & WIFI_SUPPORT_11AX)
+        {
+            if(!enable_11ax)
+            {
+                if(enable_11ac)
+                    (void)PRINTF("\twifi capability: 11ac\r\n");
+                else
+                    (void)PRINTF("\twifi capability: 11n\r\n");
+            }
+            else
+                (void)PRINTF("\twifi capability: 11ax\r\n");
+            (void)PRINTF("\tuser configure: 11ax\r\n");
+        }
+        else if(network->wlan_capa & WIFI_SUPPORT_11AC)
+        {
+            if(!enable_11ac)
+                (void)PRINTF("\twifi capability: 11n\r\n");
+            else
+                (void)PRINTF("\twifi capability: 11ac\r\n");
+            (void)PRINTF("\tuser configure: 11ac\r\n");
+        }
+        else if(network->wlan_capa & WIFI_SUPPORT_11N)
+        {
+            if(!enable_11n)
+                (void)PRINTF("\twifi capability: legacy\r\n");
+            else
+                (void)PRINTF("\twifi capability: 11n\r\n");
+            (void)PRINTF("\tuser configure: 11n\r\n");
+        }
+        else
+        {
+            (void)PRINTF("\twifi capability: legacy\r\n");
+            (void)PRINTF("\tuser configure: legacy\r\n");
+        }
+    }
+#endif
     print_address(&network->ip, network->role);
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
@@ -297,6 +375,10 @@ static void dump_wlan_add_usage(void)
         "    wlan-add <profile_name> ssid <ssid> [owe_only]"
         "\r\n");
 #endif
+#ifdef CONFIG_WIFI_CAPA
+    (void)PRINTF("\r\n");
+    (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]\r\n");
+#endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3 sae <secret> mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -349,6 +431,9 @@ void test_wlan_add(int argc, char **argv)
         unsigned mfpr : 1;
 #ifdef CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
+#endif
+#ifdef CONFIG_WIFI_CAPA
+        unsigned wlan_capa: 1;
 #endif
     } info;
 
@@ -549,6 +634,21 @@ void test_wlan_add(int argc, char **argv)
             network.dtim_period = (uint8_t)(dtim_period & 0XFF);
             arg += 2;
             info.dtim = 1;
+        }
+#endif
+#ifdef CONFIG_WIFI_CAPA
+        else if (!info.wlan_capa && network.role == WLAN_BSS_ROLE_UAP &&
+                  string_equal("capa", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_capa(argv[arg + 1], &network.wlan_capa))
+            {
+                (void)PRINTF(
+                    "Error: invalid wireless"
+                    " capability\r\n");
+                return;
+            }
+            arg += 2;
+            info.wlan_capa++;
         }
 #endif
         else

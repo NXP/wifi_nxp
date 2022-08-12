@@ -61,6 +61,10 @@ static t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
     t_u8 enable_11ac        = MFALSE;
 
     ENTER();
+#ifdef CONFIG_WIFI_CAPA
+    if(!pmadapter->usr_dot_11ac_enable)
+        return enable_11ac;
+#endif
     if ((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAC))
     {
         PRINTM(MCMND, "FW don't support 5G AC\n");
@@ -152,6 +156,10 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
     t_u8 he_txrx_mcs_support[4] = {0xff, 0xff, 0xff, 0xff};
 
     ENTER();
+#ifdef CONFIG_WIFI_CAPA
+    if(!pmadapter->usr_11ax_enable)
+            return enable_11ax;
+#endif
     if((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
     {
         PRINTM(MCMND, "FW don't support 5G AX\n");
@@ -790,6 +798,47 @@ void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
 }
 
 static int wifi_uap_pmf_getset(uint8_t action, bool *mfpc, bool *mfpr);
+
+#ifdef CONFIG_WIFI_CAPA
+void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
+{
+    if(wlan_capa & WIFI_SUPPORT_LEGACY)
+    {
+        if(wlan_capa & WIFI_SUPPORT_11N)
+        {
+            mlan_adap->usr_dot_11n_enable = MTRUE;
+            if(wlan_capa & WIFI_SUPPORT_11AC)
+            {
+                mlan_adap->usr_dot_11ac_enable = MTRUE;
+#ifdef CONFIG_11AX
+                if(wlan_capa & WIFI_SUPPORT_11AX)
+                    mlan_adap->usr_11ax_enable = MTRUE;
+                else
+                    mlan_adap->usr_11ax_enable = MFALSE;
+#endif
+            }
+            else
+            {
+                mlan_adap->usr_dot_11ac_enable = MFALSE;
+#ifdef CONFIG_11AX
+                mlan_adap->usr_11ax_enable = MFALSE;
+#endif
+            }
+        }
+        else
+        {
+            mlan_adap->usr_dot_11n_enable = MFALSE;
+            mlan_adap->usr_dot_11ac_enable = MFALSE;
+#ifdef CONFIG_11AX
+            mlan_adap->usr_11ax_enable = MFALSE;
+#endif
+        }
+    }
+        else
+            wuap_e("Invalid wifi capaibility setting\n");
+        return;
+}
+#endif
 
 int wifi_uap_start(mlan_bss_type type,
                    char *ssid,

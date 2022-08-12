@@ -2091,6 +2091,20 @@ int wifi_get_cal_data(wifi_cal_data_t *cal_data)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_WIFI_CAPA
+void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands)
+{
+    mlan_fw_info fw_info;
+
+    (void)memset(&fw_info, 0x0, sizeof(mlan_fw_info));
+    fw_info.fw_ver = mlan_adap->fw_release_number;
+    (void)memcpy(fw_info.mac_addr, mlan_adap->priv[type]->curr_addr, MLAN_MAC_ADDR_LENGTH);
+    fw_info.fw_bands = mlan_adap->fw_bands;
+    fw_info.hw_dev_mcs_support = mlan_adap->hw_dev_mcs_support;
+    return;
+}
+#endif
+
 int wifi_get_firmware_version_ext(wifi_fw_version_ext_t *version_ext)
 {
     if (version_ext == MNULL)

@@ -1047,6 +1047,9 @@ struct wlan_network
     uint16_t beacon_period;
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
+#ifdef CONFIG_WIFI_CAPA
+    uint8_t wlan_capa;
+#endif
 };
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
@@ -3501,6 +3504,33 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 #ifdef CONFIG_WIFI_MEM_ACCESS
 int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
 #endif
+
+#ifdef CONFIG_WIFI_CAPA
+/** This function gets fw capability from driver.
+ *
+ * \return void
+ */
+void wlan_get_fw_info(mlan_bss_type type, uint16_t *fw_bands);
+
+/** Check if 11n(2G or 5G) is supported by hardware or not.
+ *
+ * \return true if 11n is supported or false if not.
+ */
+uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands);
+
+/** Check if 11ac(2G or 5G) is supported by hardware or not.
+ *
+ * \return true if 11ac is supported or false if not.
+ */
+uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands);
+
+/** Check if 11ax(2G or 5G) is supported by hardware or not.
+ *
+ * \return true if 11ax is supported or false if not.
+ */
+uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands);
+#endif
+
 
 /**
  * This function sends the host command to f/w and copies back response to caller provided buffer in case of

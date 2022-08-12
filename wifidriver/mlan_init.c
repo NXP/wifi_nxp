@@ -597,9 +597,15 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->hw_dot_11ac_mcs_support   = 0;
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
-#ifdef CONFIG_11AX
-    pmadapter->enable_11ax = MFALSE;
+#ifdef CONFIG_WIFI_CAPA
+    pmadapter->usr_dot_11ac_enable       = MFALSE;
 #endif
+#ifdef CONFIG_11AX
+#ifdef CONFIG_WIFI_CAPA
+    pmadapter->usr_11ax_enable = MFALSE;
+#endif
+#endif
+
     /* Initialize 802.11d */
     wlan_11d_init(pmadapter);
     wlan_11h_init(pmadapter);

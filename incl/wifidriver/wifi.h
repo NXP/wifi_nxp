@@ -289,6 +289,12 @@ int wifi_config_roaming(const int enable, const uint8_t rssi_low);
 void wifi_config_bgscan_and_rssi(const char *ssid);
 #endif
 
+#ifdef CONFIG_WIFI_CAPA
+void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
+void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
+#endif
+
+
 /**
  * This will update the last command sent variable value to current
  * time. This is used for power management.

@@ -1488,6 +1488,9 @@ static int do_start(struct wlan_network *network)
         }
 
         wlcm_d("starting our own network");
+#ifdef CONFIG_WIFI_CAPA
+        wifi_uap_config_wifi_capa(network->wlan_capa);
+#endif
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
 #ifdef CONFIG_P2P
                              wlan.wfd_mac,
@@ -4359,6 +4362,16 @@ int wlan_add_network(struct wlan_network *network)
         }
     }
 
+#ifdef CONFIG_WIFI_CAPA
+    if (network->role == WLAN_BSS_ROLE_UAP)
+    {
+        /* If no capability was configured, set capa up to 11ax by default */
+        if(!network->wlan_capa)
+            network->wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC | \
+                                  WIFI_SUPPORT_11N  | WIFI_SUPPORT_LEGACY);
+    }
+#endif
+
     /* Find a slot for the new network but check all existing networks in
      * case the new one has a duplicate name, which is not allowed. */
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
@@ -4447,6 +4460,52 @@ int wlan_add_network(struct wlan_network *network)
 
     return WM_SUCCESS;
 }
+
+#ifdef CONFIG_WIFI_CAPA
+void wlan_get_fw_info(mlan_bss_type type, uint16_t *fw_bands)
+{
+    wifi_get_fw_info(type, fw_bands);
+    return;
+}
+
+uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands)
+{
+    uint8_t enable_11n = false;
+
+    if(channel > 14 && (fw_bands | BAND_AN))
+        enable_11n = true;
+    else if(channel <= 14 && (fw_bands | BAND_GN))
+        enable_11n = true;
+
+    return enable_11n;
+}
+
+uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands)
+{
+    uint8_t enable_11ac = false;
+
+#ifdef CONFIG_11AC
+    if(channel > 14 && (fw_bands | BAND_AAC))
+        enable_11ac = true;
+    else if(channel <= 14 && (fw_bands | BAND_GAC))
+        enable_11ac = true;
+#endif
+    return enable_11ac;
+}
+
+uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands)
+{
+    uint8_t enable_11ax = false;
+
+#ifdef CONFIG_11AX
+    if(channel > 14 && (fw_bands | BAND_AAX))
+        enable_11ax = true;
+    else if(channel <= 14 && (fw_bands | BAND_GAX))
+        enable_11ax = true;
+#endif
+    return enable_11ax;
+}
+#endif
 
 int wlan_remove_network(const char *name)
 {
