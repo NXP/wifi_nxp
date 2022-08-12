@@ -112,6 +112,8 @@ enum wifi_event
     /* Background Scan Stop */
     WIFI_EVENT_BG_SCAN_STOPPED,
 #endif
+    /* Event to indicate RX Management Frame */
+    WIFI_EVENT_MGMT_FRAME,
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must

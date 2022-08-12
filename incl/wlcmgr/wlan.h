@@ -257,6 +257,9 @@ typedef enum
 #define CARD_WAKEUP_GPIO_PIN 16 //?
 #endif
 
+/** BITMAP for Action frame */
+#define WLAN_MGMT_ACTION MBIT(13)
+
 /** Enum for wlan errors*/
 enum wm_wlan_errno
 {
@@ -835,6 +838,8 @@ typedef wifi_ext_coex_config_t wlan_ext_coex_config_t;
  */
 typedef wifi_drcs_cfg_t wlan_drcs_cfg_t;
 #endif
+
+typedef wifi_mgmt_frame_t wlan_mgmt_frame_t;
 
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
@@ -3682,4 +3687,42 @@ int wlan_get_drcs_cfg(wlan_drcs_cfg_t *drcs_cfg, int num);
 int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel);
 #endif
 
+/**
+ * This API can be used to start/stop the management frame forwards
+ * to host through datapath.
+ *
+ * \param[in] bss_type The interface from which management frame needs to be
+ *            collected.
+ * \param[in] mgmt_subtype_mask     Management Subtype Mask
+ *            If Bit X is set in mask, it means that IEEE Management Frame
+ *            SubTyoe X is to be filtered and passed through to host.
+ *            Bit                   Description
+ *            [31:14]               Reserved
+ *            [13]                  Action frame
+ *            [12:9]                Reserved
+ *            [8]                   Beacon
+ *            [7:6]                 Reserved
+ *            [5]                   Probe response
+ *            [4]                   Probe request
+ *            [3]                   Reassociation response
+ *            [2]                   Reassociation request
+ *            [1]                   Association response
+ *            [0]                   Association request
+ *            Support multiple bits set.
+ *            0 = stop forward frame
+ *            1 = start forward frame
+ *\param[in] rx_mgmt_callback The receive callback where the received management
+ *           frames are passed.
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ *
+ * \note Pass Management Subtype Mask all zero to disable all the management
+ *       frame forward to host.
+ */
+int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
+                            const uint32_t mgmt_subtype_mask,
+                            int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type,
+                                                    const wlan_mgmt_frame_t *frame,
+                                                    const size_t len));
 #endif /* __WLAN_H__ */

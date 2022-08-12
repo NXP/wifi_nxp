@@ -40,7 +40,10 @@
 #include "mlan_uap.h"
 #include <wifi-debug.h>
 #include "wifi-internal.h"
-
+#include "mlan_action.h"
+#ifdef CONFIG_11V
+#include "mlan_11v.h"
+#endif
 /* #define CONFIG_WIFI_DEBUG */
 
 #ifdef CONFIG_WIFI_DEBUG
@@ -334,4 +337,14 @@ int wifi_get_chanlist(wifi_chanlist_t *chanlist);
 #ifdef CONFIG_WIFI_EU_CRYPTO
 int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec);
 #endif
+int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype_mask);
+mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
+                                        IN HostCmd_DS_COMMAND *cmd,
+                                        IN t_u16 cmd_action,
+                                        IN t_void *pdata_buf);
+wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
+                                      mlan_802_11_mac_addr *DestAddr,
+                                      mlan_802_11_mac_addr *SrcAddr,
+                                      mlan_802_11_mac_addr *Bssid,
+                                      t_u16 pkt_len);
 #endif /* __MLAN_API_H__ */

@@ -449,4 +449,9 @@ void net_stat(void);
 int netif_get_bss_type();
 #endif
 
+void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
+                                                    const wifi_mgmt_frame_t *frame,
+                                                    const size_t len));
+
+void rx_mgmt_deregister_callback(void);
 #endif /* _WM_NET_H_ */

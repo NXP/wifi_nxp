@@ -1888,7 +1888,6 @@ mlan_status wlan_cmd_auto_reconnect(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_act
     return MLAN_STATUS_SUCCESS;
 }
 
-#if 0
 /**
  *  @brief This function prepares command of rx management indication
  *
@@ -1919,7 +1918,6 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif
 
 #ifdef CONFIG_11K
 /**

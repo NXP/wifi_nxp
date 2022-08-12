@@ -1109,7 +1109,7 @@ typedef PACK_START struct _wifi_mgmt_frame_t
     /** Address 4 */
     t_u8 addr4[MLAN_MAC_ADDR_LENGTH];
     /** Frame payload */
-    t_u8 payload[0];
+    t_u8 payload[1];
 } PACK_END wifi_mgmt_frame_t;
 #endif
 

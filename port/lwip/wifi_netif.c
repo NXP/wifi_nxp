@@ -59,6 +59,19 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
 void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 
+static int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type, const wifi_mgmt_frame_t *frame, const size_t len);
+void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
+                                                    const wifi_mgmt_frame_t *frame,
+                                                    const size_t len))
+{
+    rx_mgmt_callback = rx_mgmt_cb_fn;
+}
+
+void rx_mgmt_deregister_callback()
+{
+    rx_mgmt_callback = NULL;
+}
+
 static void register_interface(struct netif *iface, mlan_bss_type iface_type)
 {
     netif_arr[iface_type] = iface;
@@ -139,6 +152,11 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+    wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
+    wlan_802_11_header *pieee_pkt_hdr = MNULL;
+    t_u16 sub_type                    = 0;
+#endif
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
@@ -165,9 +183,9 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         return;
     }
 
-#ifdef CONFIG_P2P
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
+#ifdef CONFIG_P2P
         if (recv_interface == MLAN_BSS_TYPE_WIFIDIRECT)
         {
             int rv = wrapper_wlan_handle_rx_packet(datalen, rxpd, p, p->payload);
@@ -181,9 +199,34 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             p = NULL;
             return;
         }
-    }
 #endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+        pmgmt_pkt_hdr = (wlan_mgmt_pkt *)p->payload;
+        pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
 
+        sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+        if (sub_type == SUBTYPE_ACTION)
+        {
+            if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
+            {
+                pbuf_free(p);
+                p = NULL;
+            }
+        }
+#endif
+        if (rx_mgmt_callback)
+        {
+            wifi_mgmt_frame_t *frame = (wifi_mgmt_frame_t *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
+
+            if (rx_mgmt_callback(rxpd->bss_type, frame, rxpd->rx_pkt_length) == WM_SUCCESS)
+            {
+                pbuf_free(p);
+                p = NULL;
+                return;
+            }
+        }
+        return;
+    }
     /* points to packet payload, which starts with an Ethernet header */
     struct eth_hdr *ethhdr = p->payload;
 
@@ -354,7 +397,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #ifdef RW610
     struct bus_message msg;
 #endif
-    int pkt_prio      = wifi_wmm_get_pkt_prio(p->payload, &tid, &is_udp_frame);
+    int pkt_prio = wifi_wmm_get_pkt_prio(p->payload, &tid, &is_udp_frame);
     if (pkt_prio == -WM_FAIL)
     {
         return ERR_MEM;

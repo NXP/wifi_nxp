@@ -1129,4 +1129,25 @@ int wifi_set_mc_cfg_ext(const wifi_drcs_cfg_t *drcs, const int num);
 int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num);
 #endif
 
+/**
+ *Frame Tx - Injecting Wireless frames from Host
+ *
+ * This function is used to Inject Wireless frames from application
+ * directly.
+ *
+ * \note All injected frames will be sent on station interface. Application
+ * needs minimum of 2 KBytes stack for successful operation.
+ * Also application have to take care of allocating buffer for 802.11 Wireless
+ * frame (Header + Data) and freeing allocated buffer. Also this
+ * API may not work when Power Save is enabled on station interface.
+ *
+ * \param[in] bss_type The interface on which management frame needs to be send.
+ * \param[in] buff Buffer holding 802.11 Wireless frame (Header + Data).
+ * \param[in] len Length of the 802.11 Wireless frame.
+ *
+ * \return WM_SUCCESS on success or error code.
+ *
+ **/
+
+int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
 #endif

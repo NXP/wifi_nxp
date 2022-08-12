@@ -116,7 +116,6 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 #ifdef CONFIG_WMM
 static void wifi_driver_tx(void *data);
 #endif
-extern void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
 
 unsigned wifi_get_last_cmd_sent_ms(void)
 {
@@ -2574,3 +2573,49 @@ void wifi_show_os_mem_stat()
     }
 }
 #endif
+
+/**
+ * Frame Tx - Injecting Wireless frames from Host
+ *
+ * This function is used to Inject Wireless frames from application
+ * directly.
+ *
+ * \param[in] interface Interface on which frame to be injected.
+ * \param[in] buf Buffer holding 802.11 Wireless frame (Header + Data).
+ * \param[in] len Length of the 802.11 Wireless frame.
+ *
+ * \return WM_SUCCESS on success or error code.
+ *
+ */
+static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
+{
+    mlan_status i;
+    t_u32 pkt_len       = 0;
+    uint32_t outbuf_len = 0;
+    uint8_t *outbuf     = wifi_get_outbuf(&outbuf_len);
+
+    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+
+    (void)wifi_sdio_lock();
+
+    /* XXX: TODO Get rid on the memset once we are convinced that
+     * process_pkt_hdrs sets correct values */
+    (void)memset(outbuf, 0, sizeof(&outbuf_len));
+
+    (void)raw_process_pkt_hdrs((t_u8 *)outbuf, 0, interface);
+    (void)memcpy((void *)((t_u8 *)outbuf + pkt_len - 2), (const void *)buf, (size_t)len);
+    i = wlan_xmit_pkt(pkt_len + len - 2U, interface);
+    if (i == MLAN_STATUS_FAILURE)
+    {
+        wifi_sdio_unlock();
+        return (int)-WM_FAIL;
+    }
+    wifi_sdio_unlock();
+
+    return WM_SUCCESS;
+}
+
+int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
+{
+    return raw_low_level_output((t_u8)bss_type, buff, len);
+}

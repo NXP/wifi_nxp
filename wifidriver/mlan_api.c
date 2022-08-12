@@ -66,12 +66,6 @@ mlan_status wlan_cmd_mem_access(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action,
 mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
 #endif
 mlan_status wlan_cmd_auto_reconnect(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
-#if 0
-mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
-                                        IN HostCmd_DS_COMMAND *cmd,
-                                        IN t_u16 cmd_action,
-                                        IN t_void *pdata_buf);
-#endif
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #ifdef CONFIG_11K
 mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd);
@@ -3690,3 +3684,59 @@ int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm,
     return wifi_wait_for_cmdresp(Crypto_Data);
 }
 #endif
+
+int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype_mask)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+    mlan_ds_rx_mgmt_indication rx_mgmt_indication;
+
+    memset(&rx_mgmt_indication, 0x00, sizeof(mlan_ds_rx_mgmt_indication));
+
+    rx_mgmt_indication.mgmt_subtype_mask = mgmt_subtype_mask;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command = HostCmd_CMD_RX_MGMT_IND;
+#ifdef CONFIG_P2P
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
+#else
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+#endif /* CONFIG_P2P */
+    cmd->result = 0x0;
+
+    wlan_cmd_rx_mgmt_indication(pmpriv, cmd, HostCmd_ACT_GEN_SET, &rx_mgmt_indication);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+
+wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
+                                      mlan_802_11_mac_addr *DestAddr,
+                                      mlan_802_11_mac_addr *SrcAddr,
+                                      mlan_802_11_mac_addr *Bssid,
+                                      t_u16 pkt_len)
+{
+    wlan_mgmt_pkt *pmgmt_pkt_hdr    = MNULL;
+    IEEEtypes_FrameCtl_t *mgmt_fc_p = MNULL;
+    t_u8 *pBuf                      = MNULL;
+
+    pBuf = os_mem_calloc(pkt_len);
+    if (pBuf == MNULL)
+    {
+        return MNULL;
+    }
+
+    pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)pBuf;
+    /* 802.11 header */
+    mgmt_fc_p           = (IEEEtypes_FrameCtl_t *)(void *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
+    mgmt_fc_p->sub_type = sub_type;
+    mgmt_fc_p->type     = (t_u8)IEEE_TYPE_MANAGEMENT;
+    (void)memcpy(pmgmt_pkt_hdr->wlan_header.addr1, DestAddr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(pmgmt_pkt_hdr->wlan_header.addr2, SrcAddr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(pmgmt_pkt_hdr->wlan_header.addr3, Bssid, MLAN_MAC_ADDR_LENGTH);
+
+    return pmgmt_pkt_hdr;
+}

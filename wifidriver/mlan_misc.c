@@ -1278,6 +1278,7 @@ mlan_status wlan_reg_rx_mgmt_ind(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req 
 #ifdef CONFIG_P2P
 extern void wifi_wfd_event(bool peer_event, bool action_frame, void *data);
 #define ZERO_BUF_LEN 8
+#endif
 
 /**
  *   @brief This function processes the 802.11 mgmt Frame
@@ -1290,28 +1291,31 @@ extern void wifi_wfd_event(bool peer_event, bool action_frame, void *data);
  */
 mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *payload, IN t_u32 payload_len)
 {
-    pmlan_adapter pmadapter           = priv->adapter;
-    pmlan_callbacks pcb               = &pmadapter->callbacks;
     mlan_status ret                   = MLAN_STATUS_SUCCESS;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
-    t_u8 *event_buf                   = MNULL;
-    mlan_event_p2p *pevent            = MNULL;
-    t_u8 unicast                      = 0;
-    t_u8 zero_buf[8]                  = {0, 0, 0, 0, 0, 0, 0, 0};
-
+#ifdef CONFIG_P2P
+    pmlan_adapter pmadapter = priv->adapter;
+    pmlan_callbacks pcb     = &pmadapter->callbacks;
+    t_u8 *event_buf         = MNULL;
+    mlan_event_p2p *pevent  = MNULL;
+    t_u8 unicast            = 0;
+    t_u8 zero_buf[8]        = {0, 0, 0, 0, 0, 0, 0, 0};
+#endif
     ENTER();
+#ifdef CONFIG_P2P
     if (payload_len > (MAX_EVENT_SIZE - sizeof(mlan_event_p2p)))
     {
         PRINTM(MERROR, "Dropping large mgmt frame,len =%d\n", payload_len);
         LEAVE();
         return ret;
     }
+#endif
     /* Check packet type-subtype and compare with mgmt_passthru_mask If event
        is needed to host, just eventify it */
     pieee_pkt_hdr = (wlan_802_11_header *)payload;
     sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-    if (((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0)
+    if ((((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
     {
         PRINTM(MINFO, "Dropping mgmt frame for subtype %d.\n", sub_type);
         LEAVE();
@@ -1319,19 +1323,28 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     }
     switch (sub_type)
     {
+        case SUBTYPE_ACTION:
+            ret = wlan_process_mgmt_action(payload, payload_len);
+            if (ret == MLAN_STATUS_SUCCESS)
+            {
+                return ret;
+            }
+            break;
         case SUBTYPE_ASSOC_REQUEST:
         case SUBTYPE_REASSOC_REQUEST:
         case SUBTYPE_DISASSOC:
         case SUBTYPE_DEAUTH:
-        case SUBTYPE_ACTION:
         case SUBTYPE_AUTH:
         case SUBTYPE_PROBE_RESP:
+#ifdef CONFIG_P2P
             unicast = MTRUE;
+#endif
             break;
         default:
             PRINTM(MINFO, "Unexpected pkt subtype \n");
             break;
     }
+#ifdef CONFIG_P2P
     if (unicast == MTRUE)
     {
         if (__memcmp(pmadapter, pieee_pkt_hdr->addr1, priv->curr_p2p_addr, MLAN_MAC_ADDR_LENGTH))
@@ -1367,10 +1380,10 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     /* wlan_recv_event(priv, MLAN_EVENT_ID_DRV_MGMT_FRAME, pevent);
     if (event_buf)
         pcb->moal_mfree(pmadapter->pmoal_handle, event_buf);*/
-    LEAVE();
-    return MLAN_STATUS_SUCCESS;
-}
 #endif /* CONFIG_P2P */
+    LEAVE();
+    return ret;
+}
 
 #ifndef CONFIG_MLAN_WMSDK
 /**

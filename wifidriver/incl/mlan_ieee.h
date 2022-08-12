@@ -54,6 +54,22 @@ typedef enum _WLAN_802_11_NETWORK_TYPE
 #pragma pack(push, 1)
 #endif
 
+/*
+*****************************************************************************
+**
+**
+**                         802.11 Message Types
+**
+**
+*****************************************************************************
+*/
+typedef enum
+{
+    IEEE_TYPE_MANAGEMENT = 0,
+    IEEE_TYPE_CONTROL,
+    IEEE_TYPE_DATA
+} IEEEtypes_MsgType_e;
+
 #ifdef CONFIG_11AX
 typedef enum _IEEEtypes_Ext_ElementId_e
 {
@@ -87,6 +103,9 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     IBSS_DFS           = 41,
     HT_CAPABILITY      = 45,
 
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+    NEIGHBOR_REPORT = 52,
+#endif
 #ifdef CONFIG_11R
     /*IEEE802.11r*/
     MOBILITY_DOMAIN     = 54,
@@ -679,6 +698,49 @@ typedef MLAN_PACK_START enum _IEEEtypes_ActionCategory_e {
 
     IEEE_MGMT_ACTION_CATEGORY_WMM_TSPEC = 17
 } MLAN_PACK_END IEEEtypes_ActionCategory_e;
+
+/** IEEE Std 802.11-2016 - Table 9-354 WNM Action field values */
+typedef MLAN_PACK_START enum _IEEEtypes_WNM_ActionFieldType_e {
+
+    IEEE_MGMT_WNM_EVENT_REQUEST                   = 0,
+    IEEE_MGMT_WNM_EVENT_REPORT                    = 1,
+    IEEE_MGMT_WNM_DIAGNOSTIC_REQUEST              = 2,
+    IEEE_MGMT_WNM_DIAGNOSTIC_REPORT               = 3,
+    IEEE_MGMT_WNM_LOCATION_CFG_REQUEST            = 4,
+    IEEE_MGMT_WNM_LOCATION_CFG_RESPONSE           = 5,
+    IEEE_MGMT_WNM_BTM_QUERY                       = 6,
+    IEEE_MGMT_WNM_BTM_REQUEST                     = 7,
+    IEEE_MGMT_WNM_BTM_RESPONSE                    = 8,
+    IEEE_MGMT_WNM_FMS_REQUEST                     = 9,
+    IEEE_MGMT_WNM_FMS_RESPONSE                    = 10,
+    IEEE_MGMT_WNM_COLLOCATED_INTERFERENCE_REQUEST = 11,
+    IEEE_MGMT_WNM_COLLOCATED_INTERFERENCE_REPORT  = 12,
+    IEEE_MGMT_WNM_TFS_REQUEST                     = 13,
+    IEEE_MGMT_WNM_TFS_RESPONSE                    = 14,
+    IEEE_MGMT_WNM_TFS_NOTIFY                      = 15,
+    IEEE_MGMT_WNM_SLEEP_MODE_REQUEST              = 16,
+    IEEE_MGMT_WNM_SLEEP_MODE_RESPONSE             = 17,
+    IEEE_MGMT_WNM_TIM_BROADCAST_REQUEST           = 18,
+    IEEE_MGMT_WNM_TIM_BROADCAST_RESPONSE          = 19,
+    IEEE_MGMT_WNM_QOS_TRAFFIC_CAPABILITY_UPDATE   = 20,
+    IEEE_MGMT_WNM_CHANNEL_USAGE_REQUEST           = 21,
+    IEEE_MGMT_WNM_CHANNEL_USAGE_RESPONSE          = 22,
+    IEEE_MGMT_WNM_DMS_REQUEST                     = 23,
+    IEEE_MGMT_WNM_DMS_RESPONSE                    = 24,
+    IEEE_MGMT_WNM_TIMING_MEASUREMENT_REQUEST      = 25,
+    IEEE_MGMT_WNM_NOTIFICATION_REQUEST            = 26,
+    IEEE_MGMT_WNM_NOTIFICATION_RESPONSE           = 27,
+    IEEE_MGMT_WNM_NOTIFY_RESPONSE                 = 28
+} MLAN_PACK_END IEEEtypes_WNM_ActionFieldType_e;
+
+#ifdef CONFIG_11V
+/* IEEE Std 802.11-2016 - Figure 9-702 Request Mode field */
+#define IEEE_WNM_BTM_REQUEST_PREFERENCE_CAND_LIST_INCLUDED MBIT(0)
+#define IEEE_WNM_BTM_REQUEST_ABRIDGED                      MBIT(1)
+#define IEEE_WNM_BTM_REQUEST_DISASSOC_IMMINENT             MBIT(2)
+#define IEEE_WNM_BTM_REQUEST_BSS_TERMINATION_INCLUDED      MBIT(3)
+#define IEEE_WNM_BTM_REQUEST_ESS_DISASSOC_IMMINENT         MBIT(4)
+#endif
 
 /** WMM TSPEC operations */
 typedef MLAN_PACK_START enum _IEEEtypes_WMM_Tspec_Action_e {

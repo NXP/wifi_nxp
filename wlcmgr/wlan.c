@@ -3329,6 +3329,20 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
 }
 #endif /* CONFIG_IPV6 */
 
+int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
+                            const uint32_t mgmt_subtype_mask,
+                            int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type,
+                                                    const wlan_mgmt_frame_t *frame,
+                                                    const size_t len))
+{
+    if (mgmt_subtype_mask)
+        rx_mgmt_register_callback(rx_mgmt_callback);
+    else
+        rx_mgmt_deregister_callback();
+
+    return wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask);
+}
+
 #define MAX_RETRY_TICKS 50
 
 static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
@@ -3462,6 +3476,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     (void)wifi_11k_cfg(1);
     (void)wifi_11h_enable();
 #endif
+    (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
@@ -3907,6 +3922,21 @@ static void wlcm_process_get_hw_spec_event(void)
     CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
 }
 
+static void wlcm_process_mgmt_frame(void *data)
+{
+    struct pbuf *p               = (struct pbuf *)data;
+    wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
+
+    pmgmt_pkt_hdr          = (wlan_mgmt_pkt *)(p->payload);
+    pmgmt_pkt_hdr->frm_len = wlan_le16_to_cpu(pmgmt_pkt_hdr->frm_len);
+    if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & (t_u16)IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == (t_u16)0U)
+    {
+        (void)wlan_process_802dot11_mgmt_pkt(
+            mlan_adap->priv[0], (t_u8 *)&pmgmt_pkt_hdr->wlan_header,
+            pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len));
+    }
+}
+
 /*
  * Event Handlers
  */
@@ -4132,6 +4162,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_bg_scan_report();
             break;
 #endif
+        case WIFI_EVENT_MGMT_FRAME:
+            wlcm_d("got event: management frame");
+            wlcm_process_mgmt_frame(msg->data);
+            pbuf_free(msg->data);
+            break;
         default:
             wlcm_w("got unknown message: %d", msg->event);
             break;
