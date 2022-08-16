@@ -2093,6 +2093,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                      * scan failure.
                      */
                     wlan_abort_split_scan();
+                    wifi_user_scan_config_cleanup();
                     (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
                     break;
                 }
@@ -2106,6 +2107,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (is_split_scan_complete())
                 {
                     wifi_d("Split scan complete");
+                    wifi_user_scan_config_cleanup();
                     (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
                 }
                 break;
@@ -2119,6 +2121,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                      * scan failure.
                      */
                     wlan_abort_split_scan();
+                    wifi_user_scan_config_cleanup();
                     (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, (void *)-1);
                 }
                 break;
@@ -3851,6 +3854,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (is_split_scan_complete() && !pext_scan_result->more_event)
             {
                 wifi_d("Split scan complete");
+                wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
             break;

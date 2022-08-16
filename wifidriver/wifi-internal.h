@@ -310,4 +310,11 @@ void wifi_sdio_unlock(void);
 #endif
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
+
+/**
+ * This function should be called when user scan is
+ * finished with success/failure.
+ *
+ */
+void wifi_user_scan_config_cleanup(void);
 #endif /* __WIFI_INTERNAL_H__ */

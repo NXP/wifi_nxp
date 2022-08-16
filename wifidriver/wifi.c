@@ -1419,6 +1419,15 @@ static void wifi_core_input(void *argv)
     } /* for ;; */
 }
 
+void wifi_user_scan_config_cleanup(void)
+{
+    if (wm_wifi.g_user_scan_cfg != NULL)
+    {
+        os_mem_free((void *)wm_wifi.g_user_scan_cfg);
+        wm_wifi.g_user_scan_cfg = NULL;
+    }
+}
+
 /**
  * This function should be called when scan command is ready
  *
@@ -1437,10 +1446,9 @@ static void wifi_scan_input(void *argv)
             rv = wlan_scan_networks((mlan_private *)mlan_adap->priv[0], NULL, wm_wifi.g_user_scan_cfg);
             if (rv != MLAN_STATUS_SUCCESS)
             {
+                wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
-            os_mem_free((void *)wm_wifi.g_user_scan_cfg);
-            wm_wifi.g_user_scan_cfg = NULL;
         }
 
     } /* for ;; */
