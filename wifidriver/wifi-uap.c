@@ -157,7 +157,7 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 #ifdef CONFIG_WIFI_CAPA
-    if(!pmadapter->usr_11ax_enable)
+    if(!pmadapter->usr_dot_11ax_enable)
             return enable_11ax;
 #endif
     if((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
@@ -812,16 +812,16 @@ void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
                 mlan_adap->usr_dot_11ac_enable = MTRUE;
 #ifdef CONFIG_11AX
                 if(wlan_capa & WIFI_SUPPORT_11AX)
-                    mlan_adap->usr_11ax_enable = MTRUE;
+                    mlan_adap->usr_dot_11ax_enable = MTRUE;
                 else
-                    mlan_adap->usr_11ax_enable = MFALSE;
+                    mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
             }
             else
             {
                 mlan_adap->usr_dot_11ac_enable = MFALSE;
 #ifdef CONFIG_11AX
-                mlan_adap->usr_11ax_enable = MFALSE;
+                mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
             }
         }
@@ -830,7 +830,7 @@ void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
             mlan_adap->usr_dot_11n_enable = MFALSE;
             mlan_adap->usr_dot_11ac_enable = MFALSE;
 #ifdef CONFIG_11AX
-            mlan_adap->usr_11ax_enable = MFALSE;
+            mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
         }
     }

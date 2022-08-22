@@ -4462,12 +4462,6 @@ int wlan_add_network(struct wlan_network *network)
 }
 
 #ifdef CONFIG_WIFI_CAPA
-void wlan_get_fw_info(mlan_bss_type type, uint16_t *fw_bands)
-{
-    wifi_get_fw_info(type, fw_bands);
-    return;
-}
-
 uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands)
 {
     uint8_t enable_11n = false;

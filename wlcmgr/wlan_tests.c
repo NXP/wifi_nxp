@@ -199,7 +199,6 @@ static void print_network(struct wlan_network *network)
         uint8_t enable_11ac = false;
         uint8_t enable_11n = false;
 
-        wlan_get_fw_info((mlan_bss_type)WLAN_BSS_TYPE_UAP, &fw_bands);
         enable_11ac = wlan_check_11ac_capa(network->channel, fw_bands);
         enable_11ax = wlan_check_11ax_capa(network->channel, fw_bands);
         enable_11n = wlan_check_11n_capa(network->channel, fw_bands);

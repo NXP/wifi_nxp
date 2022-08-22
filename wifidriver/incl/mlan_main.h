@@ -2073,7 +2073,7 @@ struct _mlan_adapter
     t_u8 hw_2g_he_cap[54];
 #ifdef CONFIG_WIFI_CAPA
     /** user configured 11ax enable/disable */
-    t_u8 usr_11ax_enable;
+    t_u8 usr_dot_11ax_enable;
 #endif
 #endif
     /** max mgmt IE index in device */

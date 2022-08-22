@@ -3506,12 +3506,6 @@ int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
 #endif
 
 #ifdef CONFIG_WIFI_CAPA
-/** This function gets fw capability from driver.
- *
- * \return void
- */
-void wlan_get_fw_info(mlan_bss_type type, uint16_t *fw_bands);
-
 /** Check if 11n(2G or 5G) is supported by hardware or not.
  *
  * \return true if 11n is supported or false if not.

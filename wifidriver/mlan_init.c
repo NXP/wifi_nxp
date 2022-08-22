@@ -598,11 +598,10 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
 #ifdef CONFIG_WIFI_CAPA
+	pmadapter->usr_dot_11n_enable = MFALSE;
     pmadapter->usr_dot_11ac_enable       = MFALSE;
-#endif
 #ifdef CONFIG_11AX
-#ifdef CONFIG_WIFI_CAPA
-    pmadapter->usr_11ax_enable = MFALSE;
+    pmadapter->usr_dot_11ax_enable = MFALSE;
 #endif
 #endif
 
