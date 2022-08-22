@@ -849,7 +849,7 @@ typedef PACK_START struct _wifi_rupwrlimit_config_t
     /** channel number */
     t_u8 chan_num;
     /** chan ru Power */
-    t_s16 ruPower[MAX_RU_COUNT];
+    t_s8 ruPower[MAX_RU_COUNT];
 } PACK_END wifi_rupwrlimit_config_t;
 
 /**

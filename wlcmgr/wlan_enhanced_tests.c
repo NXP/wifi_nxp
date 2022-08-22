@@ -1141,6 +1141,7 @@ static void dump_wlan_set_txomi_usage()
 static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 {
     unsigned char i, j;
+    char rupwr;
 
     (void)PRINTF("--------------------------------------------------------------------------------\r\n");
     for (i = 0; i < txpwrlimit->num_chans; i++)
@@ -1151,7 +1152,18 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
         (void)PRINTF("RU Pwr:");
         for (j = 0; j < 6; j++)
         {
-            (void)PRINTF("%d,", txpwrlimit->rupwrlimit_config[i].ruPower[j]);
+            rupwr = txpwrlimit->rupwrlimit_config[i].ruPower[j];
+            /*  UART is giving issue with printing of s8 values and s8 negative number is not printed properly (printed as positive number).
+             *  TODO : This still need to be debugged.
+             *  Next piece of code is written as a work-around for this issue of UART
+             */
+            if (rupwr & 0x80)
+            {
+               rupwr = -rupwr;
+               (void)PRINTF("-%d,", rupwr);
+            }
+            else
+               (void)PRINTF("%d,", rupwr);
         }
         (void)PRINTF("\r\n");
     }
