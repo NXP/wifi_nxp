@@ -670,7 +670,11 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
     pmlan_private priv = mlan_adap->priv[1];
 
     priv->rxpd_rate      = rxpd->rx_rate;
+#ifdef SD8801
+    priv->rxpd_htinfo = rxpd->ht_info;
+#else
     priv->rxpd_rate_info = rxpd->rate_info;
+#endif
 }
 
 static void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
