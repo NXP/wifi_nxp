@@ -2091,7 +2091,6 @@ int wifi_get_cal_data(wifi_cal_data_t *cal_data)
     return wm_wifi.cmd_resp_status;
 }
 
-
 int wifi_get_firmware_version_ext(wifi_fw_version_ext_t *version_ext)
 {
     if (version_ext == MNULL)

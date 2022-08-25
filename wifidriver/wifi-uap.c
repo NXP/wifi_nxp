@@ -63,7 +63,9 @@ static t_u8 wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
     ENTER();
 #ifdef CONFIG_WIFI_CAPA
     if(!pmadapter->usr_dot_11ac_enable)
+    {
         return enable_11ac;
+    }
 #endif
     if ((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAC))
     {
@@ -141,7 +143,6 @@ int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 bandwidth, 
 #endif
 
 #ifdef CONFIG_11AX
-#if 0
 /**
  * @brief initialize AP bss config
  * @param pmpriv            A pointer to mlan_private structure
@@ -152,13 +153,13 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     t_u8 enable_11ax = MFALSE;
-    mlan_ds_11ax_he_cfg he_cfg;
-    t_u8 he_txrx_mcs_support[4] = {0xff, 0xff, 0xff, 0xff};
 
     ENTER();
 #ifdef CONFIG_WIFI_CAPA
     if(!pmadapter->usr_dot_11ax_enable)
-            return enable_11ax;
+    {
+        return enable_11ax;
+    }
 #endif
     if((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
     {
@@ -173,25 +174,11 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
         LEAVE();
         return enable_11ax;
     }
-    memset(&he_cfg, 0, sizeof(he_cfg));
-    if (band == BAND_CONFIG_5GHZ)
-        he_cfg.band = MBIT(1);
-    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
-        he_cfg.band = MBIT(0);
-    if (0 == wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
-    {
-        if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
-        {
-            if (memcmp(he_cfg.he_cap.he_txrx_mcs_support, he_txrx_mcs_support,
-                        sizeof(he_txrx_mcs_support)))
-                enable_11ax = MTRUE;
-        }
-    }
+    enable_11ax = MTRUE;
     PRINTM(MCMND, "enable_11ax=%d\n", enable_11ax);
     LEAVE();
     return enable_11ax;
 }
-#endif
 
 /**
  *  @brief enable/disable 11AX
@@ -379,6 +366,9 @@ int wifi_cmd_uap_config(char *ssid,
 #ifdef CONFIG_11AC
     t_u8 enable_11ac = MFALSE;
 #endif
+#ifdef CONFIG_11AX
+    t_u8 enable_11ax = MFALSE;
+#endif
 
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA3_SAE ||
           security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
@@ -479,6 +469,9 @@ int wifi_cmd_uap_config(char *ssid,
 
 #ifdef CONFIG_11AC
     enable_11ac = wifi_check_11ac_capability(pmpriv, bss.param.bss_config.band_cfg);
+#endif
+#ifdef CONFIG_11AX
+    enable_11ax = wifi_check_11ax_capability(pmpriv, bss.param.bss_config.band_cfg);
 #endif
 
     if (security == WLAN_SECURITY_NONE)
@@ -609,7 +602,7 @@ int wifi_cmd_uap_config(char *ssid,
         wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE, bandwidth, channel);
 #endif
 #ifdef CONFIG_11AX
-    if (pmpriv->adapter->enable_11ax)
+    if (enable_11ax)
         wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg);
     else
         wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg);
@@ -807,19 +800,27 @@ void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
         if(wlan_capa & WIFI_SUPPORT_11N)
         {
             mlan_adap->usr_dot_11n_enable = MTRUE;
+#ifdef CONFIG_11AC
             if(wlan_capa & WIFI_SUPPORT_11AC)
             {
                 mlan_adap->usr_dot_11ac_enable = MTRUE;
 #ifdef CONFIG_11AX
                 if(wlan_capa & WIFI_SUPPORT_11AX)
+                {
                     mlan_adap->usr_dot_11ax_enable = MTRUE;
+                }
                 else
+                {
                     mlan_adap->usr_dot_11ax_enable = MFALSE;
+                }
 #endif
             }
             else
+#endif
             {
+#ifdef CONFIG_11AC
                 mlan_adap->usr_dot_11ac_enable = MFALSE;
+#endif
 #ifdef CONFIG_11AX
                 mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
@@ -828,15 +829,19 @@ void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
         else
         {
             mlan_adap->usr_dot_11n_enable = MFALSE;
+#ifdef CONFIG_11AC
             mlan_adap->usr_dot_11ac_enable = MFALSE;
+#endif
 #ifdef CONFIG_11AX
             mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
         }
     }
-        else
-            wuap_e("Invalid wifi capaibility setting\n");
-        return;
+    else
+    {
+        wuap_e("Invalid wifi capaibility setting\n");
+    }
+    return;
 }
 #endif
 

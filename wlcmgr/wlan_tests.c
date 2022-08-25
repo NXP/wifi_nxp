@@ -97,22 +97,77 @@ static const char *print_role(enum wlan_bss_role role)
 #endif
 
 #ifdef CONFIG_WIFI_CAPA
+static uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands)
+{
+    uint8_t enable_11n = false;
+
+    if(channel > 14 && (fw_bands | BAND_AN))
+	{
+        enable_11n = true;
+    }
+	else if(channel <= 14 && (fw_bands | BAND_GN))
+	{
+        enable_11n = true;
+	}
+    return enable_11n;
+}
+
+static uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands)
+{
+    uint8_t enable_11ac = false;
+
+#ifdef CONFIG_11AC
+    if(channel > 14 && (fw_bands | BAND_AAC))
+    {
+		enable_11ac = true;
+    }
+	else if(channel <= 14 && (fw_bands | BAND_GAC))
+    {
+		enable_11ac = true;
+	}
+#endif
+    return enable_11ac;
+}
+
+static uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands)
+{
+    uint8_t enable_11ax = false;
+
+#ifdef CONFIG_11AX
+    if(channel > 14 && (fw_bands | BAND_AAX))
+	{
+        enable_11ax = true;
+    }
+	else if(channel <= 14 && (fw_bands | BAND_GAX))
+	{
+        enable_11ax = true;
+	}
+#endif
+    return enable_11ax;
+}
+
 static int get_capa(char *arg, uint8_t *wlan_capa)
 {
     if (!arg)
         return 1;
+#ifdef CONFIG_11AX
     if (string_equal(arg, "11ax") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC |\
                       WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
         return 0;
     }
-    else if (string_equal(arg, "11ac") != 0)
+    else
+#endif
+#ifdef CONFIG_11AC
+    if (string_equal(arg, "11ac") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
         return 0;
     }
-    else if (string_equal(arg, "11n") != 0)
+    else
+#endif
+    if (string_equal(arg, "11n") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
         return 0;
@@ -194,7 +249,7 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_WIFI_CAPA
     if(network->role == WLAN_BSS_ROLE_UAP)
     {
-        uint16_t fw_bands = 0;
+        uint16_t fw_bands = 0U;
         uint8_t enable_11ax = false;
         uint8_t enable_11ac = false;
         uint8_t enable_11n = false;
@@ -202,34 +257,54 @@ static void print_network(struct wlan_network *network)
         enable_11ac = wlan_check_11ac_capa(network->channel, fw_bands);
         enable_11ax = wlan_check_11ax_capa(network->channel, fw_bands);
         enable_11n = wlan_check_11n_capa(network->channel, fw_bands);
+#ifdef CONFIG_11AX
         if(network->wlan_capa & WIFI_SUPPORT_11AX)
         {
             if(!enable_11ax)
             {
                 if(enable_11ac)
+                {
                     (void)PRINTF("\twifi capability: 11ac\r\n");
+                }
                 else
+                {
                     (void)PRINTF("\twifi capability: 11n\r\n");
+                }
             }
             else
+            {
                 (void)PRINTF("\twifi capability: 11ax\r\n");
-            (void)PRINTF("\tuser configure: 11ax\r\n");
+                (void)PRINTF("\tuser configure: 11ax\r\n");
+            }
         }
-        else if(network->wlan_capa & WIFI_SUPPORT_11AC)
+        else
+#endif
+#ifdef CONFIG_11AC
+        if(network->wlan_capa & WIFI_SUPPORT_11AC)
         {
             if(!enable_11ac)
+            {
                 (void)PRINTF("\twifi capability: 11n\r\n");
+            }
             else
+            {
                 (void)PRINTF("\twifi capability: 11ac\r\n");
-            (void)PRINTF("\tuser configure: 11ac\r\n");
+                (void)PRINTF("\tuser configure: 11ac\r\n");
+            }
         }
-        else if(network->wlan_capa & WIFI_SUPPORT_11N)
+        else
+#endif
+        if(network->wlan_capa & WIFI_SUPPORT_11N)
         {
             if(!enable_11n)
+            {
                 (void)PRINTF("\twifi capability: legacy\r\n");
+            }
             else
+            {
                 (void)PRINTF("\twifi capability: 11n\r\n");
-            (void)PRINTF("\tuser configure: 11n\r\n");
+                (void)PRINTF("\tuser configure: 11n\r\n");
+            }
         }
         else
         {
@@ -374,10 +449,6 @@ static void dump_wlan_add_usage(void)
         "    wlan-add <profile_name> ssid <ssid> [owe_only]"
         "\r\n");
 #endif
-#ifdef CONFIG_WIFI_CAPA
-    (void)PRINTF("\r\n");
-    (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]\r\n");
-#endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3 sae <secret> mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -409,6 +480,16 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF(
         "Note: Setting the channel value greater than or equal to 36 is mandatory,\r\n"
         "      if UAP bandwidth is set to 80MHz.\r\n");
+#endif
+#ifdef CONFIG_WIFI_CAPA
+    (void)PRINTF("\r\n");
+#if defined CONFIG_11AX
+    (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]\r\n");
+#elif defined CONFIG_11AC
+    (void)PRINTF("    [capa <11ac/11n/legacy>]\r\n");
+#else
+    (void)PRINTF("    [capa <11n/legacy>]\r\n");
+#endif
 #endif
 }
 

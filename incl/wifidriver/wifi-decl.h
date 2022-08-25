@@ -37,8 +37,12 @@
 #endif
 
 #ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_11AX
 #define WIFI_SUPPORT_11AX   (1 << 3)
+#endif
+#ifdef CONFIG_11AC
 #define WIFI_SUPPORT_11AC   (1 << 2)
+#endif
 #define WIFI_SUPPORT_11N    (1 << 1)
 #define WIFI_SUPPORT_LEGACY (1 << 0)
 #endif

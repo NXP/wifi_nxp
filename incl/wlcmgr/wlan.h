@@ -3505,27 +3505,6 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
 #endif
 
-#ifdef CONFIG_WIFI_CAPA
-/** Check if 11n(2G or 5G) is supported by hardware or not.
- *
- * \return true if 11n is supported or false if not.
- */
-uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands);
-
-/** Check if 11ac(2G or 5G) is supported by hardware or not.
- *
- * \return true if 11ac is supported or false if not.
- */
-uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands);
-
-/** Check if 11ax(2G or 5G) is supported by hardware or not.
- *
- * \return true if 11ax is supported or false if not.
- */
-uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands);
-#endif
-
-
 /**
  * This function sends the host command to f/w and copies back response to caller provided buffer in case of
  * success Response from firmware is not parsed by this function but just copied back to the caller buffer.

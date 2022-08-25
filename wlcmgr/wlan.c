@@ -4367,8 +4367,14 @@ int wlan_add_network(struct wlan_network *network)
     {
         /* If no capability was configured, set capa up to 11ax by default */
         if(!network->wlan_capa)
-            network->wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC | \
-                                  WIFI_SUPPORT_11N  | WIFI_SUPPORT_LEGACY);
+            network->wlan_capa =
+#ifdef CONFIG_11AX
+                                WIFI_SUPPORT_11AX |
+#endif
+#ifdef CONFIG_11AC
+                                WIFI_SUPPORT_11AC |
+#endif
+                                WIFI_SUPPORT_11N  | WIFI_SUPPORT_LEGACY;
     }
 #endif
 
@@ -4460,46 +4466,6 @@ int wlan_add_network(struct wlan_network *network)
 
     return WM_SUCCESS;
 }
-
-#ifdef CONFIG_WIFI_CAPA
-uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands)
-{
-    uint8_t enable_11n = false;
-
-    if(channel > 14 && (fw_bands | BAND_AN))
-        enable_11n = true;
-    else if(channel <= 14 && (fw_bands | BAND_GN))
-        enable_11n = true;
-
-    return enable_11n;
-}
-
-uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands)
-{
-    uint8_t enable_11ac = false;
-
-#ifdef CONFIG_11AC
-    if(channel > 14 && (fw_bands | BAND_AAC))
-        enable_11ac = true;
-    else if(channel <= 14 && (fw_bands | BAND_GAC))
-        enable_11ac = true;
-#endif
-    return enable_11ac;
-}
-
-uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands)
-{
-    uint8_t enable_11ax = false;
-
-#ifdef CONFIG_11AX
-    if(channel > 14 && (fw_bands | BAND_AAX))
-        enable_11ax = true;
-    else if(channel <= 14 && (fw_bands | BAND_GAX))
-        enable_11ax = true;
-#endif
-    return enable_11ax;
-}
-#endif
 
 int wlan_remove_network(const char *name)
 {
