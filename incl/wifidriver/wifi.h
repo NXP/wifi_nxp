@@ -31,6 +31,7 @@
 #define CONFIG_ENABLE_AMSDU_RX 1
 #define CONFIG_UAP_AMPDU_TX    1
 #define CONFIG_UAP_AMPDU_RX    1
+#define CONFIG_WIFI_EU_CRYPTO  1
 #endif
 
 #include <wifi-decl.h>
