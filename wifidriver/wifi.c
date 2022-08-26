@@ -29,6 +29,9 @@
 #include "sdmmc_config.h"
 #endif
 #endif
+#ifdef RW610
+#include "fsl_adapter_rfimu.h"
+#endif
 
 #ifdef CONFIG_HEAP_DEBUG
 os_semaphore_t os_mem_stat_sem;
@@ -60,6 +63,9 @@ wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
 #define BOARD_DATA_BUFFER_ALIGN_SIZE BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE
 #endif
 
+#ifdef CONFIG_WMM_ENH
+SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER_ALIGN_SIZE);
+#else
 /* @brief decription about the read/write buffer
  * The size of the read/write buffer should be a multiple of 512, since SDHC/SDXC card uses 512-byte fixed
  * block length and this driver example is enabled with a SDHC/SDXC card.If you are using a SDSC card, you
@@ -73,6 +79,7 @@ SDK_ALIGN(uint8_t outbuf_bk[BK_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALI
 SDK_ALIGN(uint8_t outbuf_vi[VI_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
 SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
 SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
+#endif
 #endif
 
 os_thread_t wifi_scan_thread;
@@ -116,6 +123,7 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 #ifdef CONFIG_WMM
 static void wifi_driver_tx(void *data);
 #endif
+extern void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
 
 unsigned wifi_get_last_cmd_sent_ms(void)
 {
@@ -1548,6 +1556,15 @@ static int wifi_core_init(void)
     wifi_core_thread    = wm_wifi.wm_wifi_core_thread;
     wifi_core_init_done = 1;
 #ifdef CONFIG_WMM
+#ifdef CONFIG_WMM_ENH
+		ret = wifi_wmm_buf_pool_init(&outbuf_arr[0][0]);
+		if (ret != WM_SUCCESS)
+		{
+			wifi_e("Unable to init wmm buffer pool");
+			goto fail;
+		}
+#endif
+
     wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
     ret = os_queue_create(&wm_wifi.tx_data, "tx_data", sizeof(struct bus_message), &wm_wifi.tx_data_queue_data);
     if (ret != WM_SUCCESS)
@@ -1581,6 +1598,19 @@ fail:
 
 static void wifi_core_deinit(void)
 {
+    int i = 0;
+
+    for (i = 0; i < MIN(MLAN_MAX_BSS_NUM, mlan_adap->priv_num); i++)
+    {
+        if (mlan_adap->priv[i])
+        {
+            wlan_clean_txrx(mlan_adap->priv[i]);
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+            wlan_ralist_deinit_enh(mlan_adap->priv[i]);
+#endif
+        }
+    }
+
     wifi_core_init_done = 0;
 
     bus_deregister_event_queue();
@@ -1596,6 +1626,9 @@ static void wifi_core_deinit(void)
     {
         os_queue_delete(&wm_wifi.tx_data);
     }
+#ifdef CONFIG_WMM_ENH
+    wifi_wmm_buf_pool_deinit();
+#endif
 #endif
     if (wm_wifi.mcastf_mutex != NULL)
     {
@@ -1979,6 +2012,160 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame)
         return WMM_AC_BK;
 }
 
+#ifdef CONFIG_WMM_ENH
+static inline t_u8 wifi_is_tx_queue_empty()
+{
+#ifdef RW610
+    return HAL_ImuIsTxBufQueueEmpty(kIMU_LinkCpu1Cpu3);
+#else
+    return MFALSE;
+#endif
+}
+
+static inline t_u8 wifi_is_max_tx_cnt(int pkt_cnt)
+{
+#ifdef RW610
+    return (pkt_cnt >= IMU_PAYLOAD_SIZE) ? MTRUE : MFALSE;
+#else
+    return MFALSE;
+#endif
+}
+
+/*
+ *  xmit all buffers under this ralist
+ *  should be called inside wmm tid_tbl_ptr ra_list lock,
+ *  return MLAN_STATUS_SUCESS to continue looping ralists,
+ *  return MLAN_STATUS_RESOURCE to break looping ralists
+ */
+static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac,
+    raListTbl *ralist, tid_tbl_t *tid_ptr, int *pkt_cnt)
+{
+    mlan_status ret;
+    outbuf_t *buf = MNULL;
+
+    if (ralist->tx_pause == MTRUE)
+        return MLAN_STATUS_SUCCESS;
+
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
+        &ralist->buf_head.plock);
+
+    while (ralist->total_pkts > 0)
+    {
+        if (wifi_is_tx_queue_empty() == MTRUE)
+        {
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
+                &ralist->buf_head.plock);
+            return MLAN_STATUS_RESOURCE;
+        }
+
+        buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle,
+            &ralist->buf_head, MNULL, MNULL);
+        if (buf == MNULL)
+            break;
+
+        /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
+        /* this will get card port lock and probably sleep */
+        ret = wlan_xmit_wmm_pkt(priv->bss_index,
+            buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
+            (t_u8 *)&buf->intf_header[0]);
+        if (ret != MLAN_STATUS_SUCCESS)
+        {
+#ifdef RW610
+            assert(0);
+#else
+            util_enqueue_list_head(mlan_adap->pmoal_handle,
+                &ralist->buf_head, &buf->entry, MNULL, MNULL);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
+                &ralist->buf_head.plock);
+            return MLAN_STATUS_RESOURCE;
+#endif
+        }
+
+        wifi_wmm_buf_put(buf);
+
+        ralist->total_pkts--;
+        priv->wmm.pkts_queued[ac]--;
+        (*pkt_cnt)++;
+        if (wifi_is_max_tx_cnt(*pkt_cnt) == MTRUE)
+        {
+#ifdef RW610
+            wlan_flush_wmm_pkt(*pkt_cnt);
+#endif
+            *pkt_cnt = 0;
+        }
+    }
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
+        &ralist->buf_head.plock);
+    return MLAN_STATUS_SUCCESS;
+}
+
+/*
+ *  dequeue and xmit all buffers under ac queue
+ *  loop each priv
+ *      loop each ac queue
+ *          loop each ralist
+ *              dequeue all buffers from buf_head list and xmit
+ */
+static int wifi_xmit_wmm_ac_pkts_enh()
+{
+    int i;
+    int ac;
+    mlan_status ret;
+    int pkt_cnt = 0;
+    mlan_private *priv = MNULL;
+    raListTbl *ralist = MNULL;
+    tid_tbl_t *tid_ptr = MNULL;
+
+    for (i = 0; i < MLAN_MAX_BSS_NUM; i++)
+    {
+        if (i == MLAN_BSS_TYPE_STA)
+            priv = mlan_adap->priv[0];
+        else
+            priv = mlan_adap->priv[1];
+
+        if (priv->tx_pause == MTRUE)
+            continue;
+
+        for (ac = WMM_AC_VO; ac >= WMM_AC_BK; ac--)
+        {
+            tid_ptr = &priv->wmm.tid_tbl_ptr[ac];
+
+            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
+                &tid_ptr->ra_list.plock);
+
+            if (priv->wmm.pkts_queued[ac] == 0)
+            {
+                mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
+                    &tid_ptr->ra_list.plock);
+                continue;
+            }
+
+            ralist = (raListTbl *)util_peek_list(mlan_adap->pmoal_handle,
+                (mlan_list_head *)&tid_ptr->ra_list, MNULL, MNULL);
+
+            while (ralist && ralist != (raListTbl *)&tid_ptr->ra_list)
+            {
+                ret = wifi_xmit_ralist_pkts(priv, ac, ralist, tid_ptr, &pkt_cnt);
+                if (ret != MLAN_STATUS_SUCCESS)
+                {
+                    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
+                        &tid_ptr->ra_list.plock);
+                    goto RET;
+                }
+                ralist = ralist->pnext;
+            }
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
+                &tid_ptr->ra_list.plock);
+        }
+    }
+
+RET:
+#ifdef RW610
+    wlan_flush_wmm_pkt(pkt_cnt);
+#endif
+    return WM_SUCCESS;
+}
+#else
 bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue)
 {
     bool ret = false;
@@ -2007,7 +2194,6 @@ bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue)
     return ret;
 }
 
-#ifdef RW610
 static void wifi_dump_wmm_pkts_info(t_u8 *tx_buf, mlan_wmm_ac_e ac)
 {
     wifi_d("Error in sending %s:",
@@ -2018,6 +2204,7 @@ static void wifi_dump_wmm_pkts_info(t_u8 *tx_buf, mlan_wmm_ac_e ac)
            ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_chksum);
 }
 
+#ifdef RW610
 static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
 {
     int err       = WM_SUCCESS;
@@ -2080,7 +2267,10 @@ ret:
     wlan_flush_wmm_pkt(tx_cnt);
     return tx_cnt;
 }
+#endif
+#endif /* CONFIG_WMM_ENH */
 
+#ifdef RW610
 static void wifi_driver_tx(void *data)
 {
     int ret;
@@ -2103,6 +2293,9 @@ static void wifi_driver_tx(void *data)
                     wifi_e("Error in getting readlock");
                     goto get_msg;
                 }
+#ifdef CONFIG_WMM_ENH
+                wifi_xmit_wmm_ac_pkts_enh();
+#else
                 if (wm_wifi.pkt_cnt[WMM_AC_VO] > 0)
                 {
                     wifi_xmit_wmm_ac_pkts(msg.reason, WMM_AC_VO);
@@ -2120,6 +2313,7 @@ static void wifi_driver_tx(void *data)
                     wifi_xmit_wmm_ac_pkts(msg.reason, WMM_AC_BK);
                 }
                 else
+#endif
                 {
                 }
 
@@ -2268,12 +2462,31 @@ int wifi_low_level_output(const uint8_t interface,
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
     if (!pmpriv->media_connected && !pmpriv_uap->media_connected)
     {
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+        wifi_wmm_buf_put((outbuf_t *)buffer);
+        wifi_wmm_drop_no_media(interface);
+#endif
         ret = -WM_E_BUSY;
         goto exit_fn;
     }
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 #ifdef CONFIG_WMM
+#ifdef CONFIG_WMM_ENH
+    /* process packet headers with interface header and TxPD */
+    process_pkt_hdrs((void *)(buffer + sizeof(mlan_linked_list)), len - sizeof(mlan_linked_list), interface);
+
+    /* add buffer to ra lists */
+    if (wlan_wmm_add_buf_txqueue_enh(interface, buffer, len, pkt_prio) != MLAN_STATUS_SUCCESS)
+    {
+        wifi_wmm_drop_no_media(interface);
+        ret = -WM_E_BUSY;
+        goto exit_fn;
+    }
+
+    /* keep the same buffer position and packet length with other cases */
+    buffer += sizeof(mlan_linked_list) + pkt_len;
+#else
     /* For rw610, move process_pkt_hdrs from wifi_driver_tx thread to tcpip_thread.
        wifi_driver_tx could be wakeup by tcpip_thread enqueue wmm pkts,
        or CPU1 attach TX buffer in Hal_Imumain task,
@@ -2344,6 +2557,8 @@ int wifi_low_level_output(const uint8_t interface,
     {
         /* Do nothing */
     }
+#endif
+
     msg.event  = MLAN_TYPE_DATA;
     msg.reason = interface;
     ret        = os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
@@ -2444,7 +2659,7 @@ uint8_t *wifi_get_outbuf(uint32_t *outbuf_len)
     return wifi_get_sdio_outbuf(outbuf_len);
 #endif
 }
-#ifdef CONFIG_WMM
+#if defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
 uint8_t *wifi_wmm_get_sdio_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue)
 {
     switch (queue)

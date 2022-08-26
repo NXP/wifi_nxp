@@ -2544,6 +2544,15 @@ static void test_wlan_get_drcs_cfg(int argc, char **argv)
 }
 #endif
 
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+static void test_wlan_wmm_tx_stats(int argc, char **argv)
+{
+    int bss_type = atoi(argv[1]);
+
+    wlan_wmm_tx_stats_dump(bss_type);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -2631,6 +2640,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_11R
     {"wlan-ft-roam", "<bssid> <channel>", test_wlan_ft_roam},
+#endif
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif
 };
 

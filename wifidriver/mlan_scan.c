@@ -3482,7 +3482,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     t_u32 bss_idx;
     t_u32 idx;
     t_u64 tsf_val;
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     t_u16 tlv_type, tlv_len;
     MrvlIEtypes_Data_t *ptlv                    = MNULL;
     MrvlIEtypes_Bss_Scan_Rsp_t *pscan_rsp_tlv   = MNULL;
@@ -3857,7 +3857,7 @@ static t_u8 wlan_bgscan_create_channel_list(IN mlan_private *pmpriv,
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     region_chan_t *pscan_region;
-    chan_freq_power_t *cfp;
+    const chan_freq_power_t *cfp;
     t_u32 region_idx;
     t_u32 chan_idx = 0;
     t_u32 next_chan;

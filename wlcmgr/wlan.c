@@ -7112,6 +7112,13 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 }
 #endif
 
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+void wlan_wmm_tx_stats_dump(int bss_type)
+{
+    wifi_wmm_tx_stats_dump(bss_type);
+}
+#endif
+
 int wlan_send_hostcmd(
     void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
 {

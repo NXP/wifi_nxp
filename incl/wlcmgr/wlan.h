@@ -3725,4 +3725,9 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
                             int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type,
                                                     const wlan_mgmt_frame_t *frame,
                                                     const size_t len));
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+void wlan_wmm_tx_stats_dump(int bss_type);
+#endif
+
 #endif /* __WLAN_H__ */

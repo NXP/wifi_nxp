@@ -1054,6 +1054,11 @@ void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
                               int (*wifi_usb_file_close_cb)());
 #endif
 #ifdef CONFIG_WMM
+int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
+#ifdef CONFIG_WMM_ENH
+/* handle EVENT_TX_DATA_PAUSE */
+void wifi_handle_event_data_pause(void *data);
+#else
 #define BK_MAX_BUF 4
 #define BE_MAX_BUF 4
 #define VI_MAX_BUF 4
@@ -1061,10 +1066,14 @@ void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
 
 bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue);
 
-int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
-
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
+#endif /* CONFIG_WMM_ENH */
+#endif /* CONFIG_WMM */
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+void wifi_wmm_tx_stats_dump(int bss_type);
 #endif
+
 wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
 
 #ifdef CONFIG_11R

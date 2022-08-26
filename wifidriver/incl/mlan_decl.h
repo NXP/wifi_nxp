@@ -823,6 +823,16 @@ typedef struct _mlan_callbacks
     mlan_status (*moal_spin_lock)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_spin_unlock */
     mlan_status (*moal_spin_unlock)(IN t_void *pmoal_handle, IN t_void *plock);
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    /** moal_init_semaphore */
+    mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void **pplock);
+    /** moal_free_semaphore */
+    mlan_status (*moal_free_semaphore)(IN t_void *pmoal_handle, IN t_void **pplock);
+    /** moal_semaphore_get */
+    mlan_status (*moal_semaphore_get)(IN t_void *pmoal_handle, IN t_void **pplock);
+    /** moal_semaphore_put */
+    mlan_status (*moal_semaphore_put)(IN t_void *pmoal_handle, IN t_void **pplock);
+#endif
 #if 0
     /** moal_print */
       t_void(*moal_print) (IN t_void * pmoal_handle,

@@ -24,6 +24,9 @@
 #include "wifi-sdio.h"
 #endif
 
+/* Always keep this include at the end of all include files */
+#include <mlan_remap_mem_operations.h>
+
 #ifdef CONFIG_WIFI_FW_DEBUG
 #define FW_DEBUG_INFO_SIZE 400
 #endif
@@ -469,6 +472,52 @@ static mlan_status wrapper_moal_spin_unlock(IN t_void *pmoal_handle, IN t_void *
     return MLAN_STATUS_SUCCESS;
 }
 
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+/* os_semaphore_t equals (t_void *)(*pplock) */
+static mlan_status wrapper_moal_init_semaphore(IN t_void *pmoal_handle,
+                                               IN const char *name,
+                                               OUT t_void **pplock)
+{
+    if (*((os_semaphore_t *)pplock) != MNULL)
+        return MLAN_STATUS_SUCCESS;
+
+    if (os_semaphore_create((os_semaphore_t *)pplock, name) != WM_SUCCESS)
+        return MLAN_STATUS_FAILURE;
+
+    return MLAN_STATUS_SUCCESS;
+}
+
+static mlan_status wrapper_moal_free_semaphore(IN t_void *pmoal_handle, IN t_void **pplock)
+{
+    if (*((os_semaphore_t *)pplock) == MNULL)
+        return MLAN_STATUS_SUCCESS;
+
+    if (os_semaphore_delete((os_semaphore_t *)pplock) != WM_SUCCESS)
+        return MLAN_STATUS_FAILURE;
+
+    return MLAN_STATUS_SUCCESS;
+}
+
+static mlan_status wrapper_moal_semaphore_get(IN t_void *pmoal_handle, IN t_void **pplock)
+{
+    if (os_semaphore_get((os_semaphore_t *)pplock, os_msec_to_ticks(60000)) != WM_SUCCESS)
+    {
+        assert(0);
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+
+static mlan_status wrapper_moal_semaphore_put(IN t_void *pmoal_handle, IN t_void **pplock)
+{
+    if (os_semaphore_put((os_semaphore_t *)pplock) != WM_SUCCESS)
+        return MLAN_STATUS_FAILURE;
+
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 /** woal_callbacks */
 static mlan_callbacks woal_callbacks = {
     .moal_malloc      = wrapper_moal_malloc,
@@ -482,6 +531,12 @@ static mlan_callbacks woal_callbacks = {
     .moal_free_lock   = wrapper_moal_free_lock,
     .moal_spin_lock   = wrapper_moal_spin_lock,
     .moal_spin_unlock = wrapper_moal_spin_unlock,
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    .moal_init_semaphore = wrapper_moal_init_semaphore,
+    .moal_free_semaphore = wrapper_moal_free_semaphore,
+    .moal_semaphore_get = wrapper_moal_semaphore_get,
+    .moal_semaphore_put = wrapper_moal_semaphore_put,
+#endif
 };
 
 int mlan_subsys_init(void)
@@ -3346,6 +3401,160 @@ void wlan_update_wnm_ps_status(wnm_ps_result *wnm_ps_result)
 }
 #endif
 
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+static inline void wifi_wmm_queue_lock(mlan_private *priv, t_u8 ac)
+{
+#ifdef RW610
+    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
+        &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
+#endif
+}
+
+static inline void wifi_wmm_queue_unlock(mlan_private *priv, t_u8 ac)
+{
+#ifdef RW610
+    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
+        &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
+#endif
+}
+
+static inline void wifi_wmm_trigger_tx(t_u8 tx_pause)
+{
+    struct bus_message msg;
+
+    if (tx_pause == MFALSE)
+    {
+        msg.event  = MLAN_TYPE_DATA;
+        msg.reason = 0;
+        os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+    }
+}
+
+/*
+ *  update sta tx pause status
+ *  trigger tx handler if this is an unpause event
+ */
+static void wifi_sta_handle_event_data_pause(mlan_private *priv, MrvlIEtypes_tx_pause_t *tx_pause_tlv)
+{
+    int i;
+    t_u8 *bssid = MNULL;
+    raListTbl *ra_list = MNULL;
+    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+
+    if (!priv->media_connected)
+        return;
+
+    bssid = priv->curr_bss_params.bss_descriptor.mac_address;
+    if (!__memcmp(mlan_adap, bssid, zero_mac, MLAN_MAC_ADDR_LENGTH))
+        return;
+
+    if (!__memcmp(mlan_adap, bssid, tx_pause_tlv->peermac, MLAN_MAC_ADDR_LENGTH))
+    {
+        priv->tx_pause = (tx_pause_tlv->tx_pause) ? MTRUE : MFALSE;
+
+        /* update ralists for finding alternative buffer when queue full */
+        for (i = 0; i < MAX_AC_QUEUES; i++)
+        {
+            wifi_wmm_queue_lock(priv, i);
+
+            ra_list = wlan_wmm_get_ralist_node(priv, i, tx_pause_tlv->peermac);
+            if (ra_list == MNULL)
+            {
+                wifi_wmm_queue_unlock(priv, i);
+                continue;
+            }
+
+            ra_list->tx_pause = priv->tx_pause;
+
+            wifi_wmm_queue_unlock(priv, i);
+        }
+    }
+
+    wifi_wmm_trigger_tx(tx_pause_tlv->tx_pause);
+}
+
+/*
+ *  update uap tx pause status
+ *  for self address, update the whole priv interface status
+ *  for other addresses, update corresponding ralist status
+ *  trigger tx handler if this is an unpause event
+ */
+static void wifi_uap_handle_event_data_pause(mlan_private *priv_uap, MrvlIEtypes_tx_pause_t *tx_pause_tlv)
+{
+    int i;
+    raListTbl *ra_list = MNULL;
+
+    if (!memcmp(priv_uap->curr_addr, tx_pause_tlv->peermac, MLAN_MAC_ADDR_LENGTH))
+    {
+        priv_uap->tx_pause = (tx_pause_tlv->tx_pause) ? MTRUE : MFALSE;
+    }
+    else
+    {
+        for (i = 0; i < MAX_AC_QUEUES; i++)
+        {
+            wifi_wmm_queue_lock(priv_uap, i);
+
+            ra_list = wlan_wmm_get_ralist_node(priv_uap, i, tx_pause_tlv->peermac);
+            if (ra_list == MNULL)
+            {
+                wifi_wmm_queue_unlock(priv_uap, i);
+                continue;
+            }
+
+            ra_list->tx_pause = (tx_pause_tlv->tx_pause) ? MTRUE : MFALSE;
+
+            wifi_wmm_queue_unlock(priv_uap, i);
+        }
+    }
+
+    wifi_wmm_trigger_tx(tx_pause_tlv->tx_pause);
+}
+
+void wifi_handle_event_data_pause(void *data)
+{
+    mlan_private *priv = mlan_adap->priv[0];
+    mlan_private *priv_uap = mlan_adap->priv[1];
+    /* Event_Ext_t shares the same header but from reason_code, payload differs with tx_pause cmd */
+    Event_Ext_t *evt = (Event_Ext_t *)data;
+    t_u16 tlv_type, tlv_len;
+    int tlv_buf_left = evt->length - MLAN_FIELD_OFFSET(Event_Ext_t, reason_code);
+    MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)&evt->reason_code;
+
+    /* set tx pause */
+    while (tlv_buf_left >= (int)sizeof(MrvlIEtypesHeader_t))
+    {
+        tlv_type = wlan_le16_to_cpu(tlv->type);
+        tlv_len = wlan_le16_to_cpu(tlv->len);
+
+        if ((sizeof(MrvlIEtypesHeader_t) + tlv_len) > (unsigned int)tlv_buf_left)
+        {
+            wifi_e("wrong tlv: tlvLen=%d, tlvBufLeft=%d", tlv_len, tlv_buf_left);
+            break;
+        }
+
+        if (tlv_type == TLV_TYPE_TX_PAUSE)
+        {
+            if (evt->bss_type == MLAN_BSS_TYPE_STA)
+            {
+                wifi_sta_handle_event_data_pause(priv, (MrvlIEtypes_tx_pause_t *)tlv);
+            }
+            else if (evt->bss_type == MLAN_BSS_TYPE_UAP)
+            {
+                wifi_uap_handle_event_data_pause(priv_uap, (MrvlIEtypes_tx_pause_t *)tlv);
+            }
+            else
+            {
+                wifi_w("%s not support bss_type %d", evt->bss_type);
+            }
+        }
+
+        /* iterate */
+        tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv = (MrvlIEtypesHeader_t *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
+    }
+}
+#endif
+
 /* fixme: duplicated from legacy. needs to be cleaned up later */
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
@@ -3767,6 +3976,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 /* If fail to send message on queue, free allocated memory ! */
                 os_mem_free((void *)sta_addr);
             }
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+            wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
+#endif
         }
         break;
         case EVENT_MICRO_AP_STA_DEAUTH:
@@ -3793,6 +4005,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
                     os_mem_free((void *)sta_addr);
                 }
             }
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+            wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);
+#endif
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
@@ -4764,6 +4979,75 @@ static int wifi_set_subscribe_event(const t_u16 evt_bitmap, const t_u8 value, co
 int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_freq)
 {
     return wifi_set_subscribe_event(SUBSCRIBE_EVT_RSSI_LOW, low_rssi, low_rssi_freq);
+}
+#endif
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+static void wifi_wmm_tx_stats_dump_ralist(mlan_list_head *ra_list_head)
+{
+    raListTbl *ra_list = MNULL;
+
+    ra_list = (raListTbl *)util_peek_list(mlan_adap->pmoal_handle, ra_list_head, MNULL, MNULL);
+    while (ra_list && ra_list != (raListTbl *)ra_list_head)
+    {
+        wifi_w("    [%02X:XX:XX:XX:%02X:%02X] drop_cnt[%d] total_pkts[%d]",
+            ra_list->ra[0], ra_list->ra[4], ra_list->ra[5],
+            ra_list->drop_count, ra_list->total_pkts);
+
+        ra_list = ra_list->pnext;
+    }
+}
+
+void wifi_wmm_tx_stats_dump(int bss_type)
+{
+    int i;
+    mlan_private *priv = MNULL;
+
+    if (bss_type == MLAN_BSS_TYPE_STA)
+        priv = mlan_adap->priv[0];
+    else if (bss_type == MLAN_BSS_TYPE_UAP)
+        priv = mlan_adap->priv[1];
+    else
+        return;
+
+    for (i = 0; i < MAX_AC_QUEUES; i++)
+    {
+        wifi_w("Dump priv[%d] ac_queue[%d]", bss_type, i);
+        wifi_wmm_tx_stats_dump_ralist(&priv->wmm.tid_tbl_ptr[i].ra_list);
+    }
+
+    wifi_w("Dump priv[%d] driver_error_cnt:", bss_type);
+    wifi_w("    tx_no_media[%hu]", priv->driver_error_cnt.tx_no_media);
+    wifi_w("    tx_err_mem[%hu]", priv->driver_error_cnt.tx_err_mem);
+    wifi_w("    tx_wmm_retried_drop[%hu]", priv->driver_error_cnt.tx_wmm_retried_drop);
+    wifi_w("    tx_wmm_pause_drop[%hu]", priv->driver_error_cnt.tx_wmm_pause_drop);
+    wifi_w("    tx_wmm_pause_replaced[%hu]", priv->driver_error_cnt.tx_wmm_pause_replaced);
+    wifi_w("    rx_reorder_drop[%hu]", priv->driver_error_cnt.rx_reorder_drop);
+
+    int free_cnt_real = 0;
+    int free_cnt_stat = 0;
+    mlan_linked_list *p = MNULL;
+
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
+    free_cnt_stat = mlan_adap->outbuf_pool.free_cnt;
+
+    p = util_peek_list(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list, MNULL, MNULL);
+    while (p && p != (mlan_linked_list *)&mlan_adap->outbuf_pool.free_list)
+    {
+        free_cnt_real++;
+        p = p->pnext;
+    }
+
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
+    wifi_w("TX buffer pool: free_cnt[%d] real_free_cnt[%d]", free_cnt_stat, free_cnt_real);
+
+#ifdef CONFIG_WMM_ENH_DEBUG
+    for (i = 0; i < MAX_AC_QUEUES; i++)
+    {
+        wifi_w("Dump priv[%d] ac_queue[%d] history ra", bss_type, i);
+        wifi_wmm_tx_stats_dump_ralist(&priv->wmm.hist_ra[i]);
+    }
+#endif
 }
 #endif
 

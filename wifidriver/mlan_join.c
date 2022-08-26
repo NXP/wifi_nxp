@@ -1302,7 +1302,10 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Add the ra_list here for infra mode as there will be only 1 ra always */
     if (media_connected == MTRUE)
     {
-#ifndef CONFIG_MLAN_WMSDK
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+        if (0 == wlan_ralist_update_enh(pmpriv, cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address))
+            wlan_ralist_add_enh(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
+#elif !defined(CONFIG_MLAN_WMSDK)
         /** replace ralist's mac address with new mac address */
         if (0 == wlan_ralist_update(pmpriv, cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address))
             wlan_ralist_add(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
@@ -1314,7 +1317,10 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, pmpriv->wmm.ra_list_spinlock);
 #endif /* CONFIG_MLAN_WMSDK */
     }
-#ifndef CONFIG_MLAN_WMSDK
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    else
+        wlan_ralist_add_enh(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
+#elif !defined(CONFIG_MLAN_WMSDK)
     else
         wlan_ralist_add(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
 

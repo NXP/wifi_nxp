@@ -757,6 +757,21 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                 util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[j].ra_list, MTRUE,
                                     priv->adapter->callbacks.moal_init_lock);
             }
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+            /* wmm enhanced reuses 4 ac xmit queues */
+            for (j = 0; j < MAX_AC_QUEUES; ++j)
+            {
+                if (priv->adapter->callbacks.moal_init_semaphore(pmadapter->pmoal_handle, "ra_list_sem",
+                    &priv->wmm.tid_tbl_ptr[j].ra_list.plock) != MLAN_STATUS_SUCCESS)
+                    return MLAN_STATUS_FAILURE;
+#ifdef CONFIG_WMM_ENH_DEBUG
+                util_init_list_head((t_void *)pmadapter->pmoal_handle,
+                    &priv->wmm.hist_ra[j], MFALSE, MNULL);
+#endif
+            }
+#endif
+
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, MTRUE,

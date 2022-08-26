@@ -125,7 +125,7 @@ typedef struct
     t_u16 ht_cap_info;
     /** HTTX Cfg */
     t_u16 ht_tx_cfg;
-#ifdef CONFIG_WMM
+#if defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
     /** Outbuf index */
     t_u8 pkt_index[MAX_AC_QUEUES];
     /** packet count */

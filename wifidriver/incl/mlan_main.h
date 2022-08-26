@@ -726,6 +726,10 @@ struct _raListTbl
     t_u16 max_amsdu;
     /** tx_pause flag */
     t_u8 tx_pause;
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    /** drop packet count  */
+    t_u16 drop_count;
+#endif
 };
 
 /** TID table */
@@ -775,6 +779,12 @@ typedef struct _wmm_desc
     mlan_scalar tx_pkts_queued;
     /** Tracks highest priority with a packet queued */
     mlan_scalar highest_queued_prio;
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH) && defined(CONFIG_WMM_ENH_DEBUG)
+    /** Restored historical ralists for debug */
+    mlan_list_head hist_ra[MAX_AC_QUEUES];
+    /** Restored historical ralists count */
+    t_u8 hist_ra_count[MAX_AC_QUEUES];
+#endif
 } wmm_desc_t;
 
 /** Security structure */
@@ -985,6 +995,22 @@ typedef struct
                                                      t_u8 *domain_tlv,
                                                      t_void *pioctl_buf);
 } wlan_11d_apis_t;
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+typedef struct {
+    mlan_list_head free_list;
+    int free_cnt;
+} outbuf_pool_t;
+
+typedef struct {
+    t_u16 tx_no_media;
+    t_u16 tx_err_mem;
+    t_u16 tx_wmm_retried_drop;
+    t_u16 tx_wmm_pause_drop;
+    t_u16 tx_wmm_pause_replaced;
+    t_u16 rx_reorder_drop;
+} wlan_pkt_stat_t;
+#endif
 
 /** mlan_operations data structure */
 typedef struct _mlan_operations
@@ -1307,6 +1333,11 @@ struct _mlan_private
     t_u8 roaming_enabled;
     /** bg_scan config */
     wlan_bgscan_cfg scan_cfg;
+#endif
+    /* interface pause status */
+    t_u8 tx_pause;
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    wlan_pkt_stat_t driver_error_cnt;
 #endif
 };
 
@@ -2137,6 +2168,10 @@ struct _mlan_adapter
 #endif
 #ifdef CONFIG_MULTI_CHAN
     t_bool mc_policy;
+#endif
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    /* wmm buffer pool */
+    outbuf_pool_t outbuf_pool;
 #endif
 };
 

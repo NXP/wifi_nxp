@@ -402,7 +402,30 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     {
         return ERR_MEM;
     }
+
+#ifdef CONFIG_WMM_ENH
+    uint8_t ra[MLAN_MAC_ADDR_LENGTH] = {0};
+    uint8_t *wmm_outbuf = NULL;
+    bool is_tx_pause = false;
+
+    if (ethernetif->interface > WLAN_BSS_TYPE_UAP)
+    {
+        wifi_wmm_drop_no_media(ethernetif->interface);
+        return ERR_MEM;
+    }
+
+    wifi_wmm_da_to_ra(p->payload, ra);
+
+    wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, ethernetif->interface, ra, &is_tx_pause);
+    ret = (wmm_outbuf == NULL) ? true : false;
+    if (ret == true && is_tx_pause == true)
+    {
+        wifi_wmm_drop_pause_drop(ethernetif->interface);
+        return ERR_MEM;
+    }
+#else
     ret = is_wifi_wmm_queue_full(pkt_prio);
+#endif
 
 #ifdef RW610
     while (ret == true && retry > 0)
@@ -419,14 +442,37 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #else
         os_thread_sleep(os_msec_to_ticks(1));
 #endif
+#ifdef CONFIG_WMM_ENH
+        wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, ethernetif->interface, ra, &is_tx_pause);
+        ret = (wmm_outbuf == NULL) ? true : false;
+        if (ret == true && is_tx_pause == true)
+        {
+            wifi_wmm_drop_pause_drop(ethernetif->interface);
+            return ERR_MEM;
+        }
+#else
         ret = is_wifi_wmm_queue_full(pkt_prio);
+#endif
         retry--;
     }
     if (ret == true)
     {
+#ifdef CONFIG_WMM_ENH
+        wifi_wmm_drop_retried_drop(ethernetif->interface);
+#endif
         return ERR_MEM;
     }
+#ifdef CONFIG_WMM_ENH
+    /*
+     *  wmm enhance buffer has more than a list_entry head to enqueue,
+     *  so push forward outbuf ptr for common process,
+     *  and pull back when about to wifi_low_level_output to enqueue
+     */
+    wmm_outbuf += sizeof(mlan_linked_list);
+    outbuf_len -= sizeof(mlan_linked_list);
+#else
     uint8_t *wmm_outbuf = wifi_wmm_get_outbuf(&outbuf_len, pkt_prio);
+#endif
 #else
     uint8_t *wmm_outbuf = wifi_get_outbuf(&outbuf_len);
 #endif
@@ -454,6 +500,16 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         pkt_len += q->len;
     }
 
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    /*
+     *  for enqueue operation, wmm enhance need to use the whole outbuf with
+     *  mlan_linked_list, INTF header, TxPD and data payload,
+     *  so in_param outbuf and len are different from others
+     */
+    wmm_outbuf -= sizeof(mlan_linked_list);
+    ret = wifi_low_level_output(ethernetif->interface, wmm_outbuf,
+                                pkt_len + sizeof(mlan_linked_list), pkt_prio, tid);
+#else
     ret = wifi_low_level_output(ethernetif->interface, wmm_outbuf + sizeof(TxPD) + INTF_HEADER_LEN,
                                 pkt_len - sizeof(TxPD) - INTF_HEADER_LEN
 #ifdef CONFIG_WMM
@@ -461,6 +517,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
                                 pkt_prio, tid
 #endif
     );
+#endif /* CONFIG_WMM && CONFIG_WMM_ENH */
 
     if (ret == -WM_E_NOMEM)
     {
