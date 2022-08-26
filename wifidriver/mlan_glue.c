@@ -2666,6 +2666,40 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_WIFI_EU_CRYPTO
+            case HostCmd_CMD_EU_CRYPTO:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        EU_Crypto *EU_Data = (EU_Crypto *)wm_wifi.cmd_resp_priv;
+                        HostCmd_DS_EU_AES_CRYPTO *cmd_aes_ccmp =
+                            (HostCmd_DS_EU_AES_CRYPTO *)&resp->params.eu_aes_crypto;
+                        HostCmd_DS_EU_CRYPTO *cmd_eu_crypto = (HostCmd_DS_EU_CRYPTO *)&resp->params.eu_crypto;
+                        if (cmd_eu_crypto->Algorithm == CRYPTO_RC4 || cmd_eu_crypto->Algorithm == CRYPTO_AES_ECB ||
+                            cmd_eu_crypto->Algorithm == CRYPTO_AES_WRAP)
+                        {
+                            memcpy(EU_Data->DataLength, &cmd_eu_crypto->DataLength, sizeof(t_u16) / sizeof(t_u8));
+                            memcpy(EU_Data->Data, cmd_eu_crypto->Data, cmd_eu_crypto->DataLength);
+                        }
+                        else if (cmd_aes_ccmp->Algorithm == CRYPTO_AES_CCMP ||
+                                 cmd_aes_ccmp->Algorithm == CRYPTO_AES_GCMP)
+                        {
+                            memcpy(EU_Data->DataLength, &cmd_aes_ccmp->DataLength, sizeof(t_u16) / sizeof(t_u8));
+                            memcpy(EU_Data->Data, cmd_aes_ccmp->Data, cmd_aes_ccmp->DataLength);
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    rv                      = MLAN_STATUS_FAILURE;
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/

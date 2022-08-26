@@ -6530,4 +6530,311 @@ int wlan_get_twt_report(wlan_twt_report_t *twt_report)
     return wifi_get_twt_report(twt_report);
 }
 #endif /* CONFIG_11AX_TWT */
-#endif
+#endif /* CONFIG_11AX */
+
+#ifdef CONFIG_WIFI_EU_CRYPTO
+int wlan_set_crypto_RC4_encrypt(
+    const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
+{
+    t_u16 rc4_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 rc4_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
+    t_u16 rc4_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > rc4_key_length)
+        return -WM_FAIL;
+    if (KeyIVLength > rc4_keyiv_length)
+        return -WM_FAIL;
+    if (*DataLength > rc4_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_RC4_Param;
+    Crypto_RC4_Param.KeyIVLength = KeyIVLength;
+    memcpy(Crypto_RC4_Param.KeyIV, KeyIV, KeyIVLength);
+    Crypto_RC4_Param.KeyLength = KeyLength;
+    memcpy(Crypto_RC4_Param.Key, Key, KeyLength);
+    Crypto_RC4_Param.DataLength = DataLength;
+    Crypto_RC4_Param.Data       = Data;
+
+    t_u16 EncDec = 1;
+
+    return wifi_set_eu_crypto(&Crypto_RC4_Param, CRYPTO_RC4, EncDec);
+}
+
+int wlan_set_crypto_RC4_decrypt(
+    const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
+{
+    t_u16 rc4_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 rc4_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
+    t_u16 rc4_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > rc4_key_length)
+        return -WM_FAIL;
+    if (KeyIVLength > rc4_keyiv_length)
+        return -WM_FAIL;
+    if (*DataLength > rc4_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_RC4_Param;
+    Crypto_RC4_Param.KeyIVLength = KeyIVLength;
+    memcpy(Crypto_RC4_Param.KeyIV, KeyIV, KeyIVLength);
+    Crypto_RC4_Param.KeyLength = KeyLength;
+    memcpy(Crypto_RC4_Param.Key, Key, KeyLength);
+    Crypto_RC4_Param.DataLength = DataLength;
+    Crypto_RC4_Param.Data       = Data;
+
+    t_u16 EncDec = 0;
+
+    return wifi_set_eu_crypto(&Crypto_RC4_Param, CRYPTO_RC4, EncDec);
+}
+
+int wlan_set_crypto_AES_ECB_encrypt(
+    const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
+{
+    t_u16 aes_ecb_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_ecb_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
+    t_u16 aes_ecb_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_ecb_key_length)
+        return -WM_FAIL;
+    if (KeyIVLength > aes_ecb_keyiv_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_ecb_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_ECB_Param;
+    Crypto_AES_ECB_Param.KeyIVLength = KeyIVLength;
+    memcpy(Crypto_AES_ECB_Param.KeyIV, KeyIV, KeyIVLength);
+    Crypto_AES_ECB_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_ECB_Param.Key, Key, KeyLength);
+    Crypto_AES_ECB_Param.DataLength = DataLength;
+    Crypto_AES_ECB_Param.Data       = Data;
+
+    t_u16 EncDec = 1;
+
+    return wifi_set_eu_crypto(&Crypto_AES_ECB_Param, CRYPTO_AES_ECB, EncDec);
+}
+
+int wlan_set_crypto_AES_ECB_decrypt(
+    const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
+{
+    t_u16 aes_ecb_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_ecb_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
+    t_u16 aes_ecb_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_ecb_key_length)
+        return -WM_FAIL;
+    if (KeyIVLength > aes_ecb_keyiv_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_ecb_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_ECB_Param;
+    Crypto_AES_ECB_Param.KeyIVLength = KeyIVLength;
+    memcpy(Crypto_AES_ECB_Param.KeyIV, KeyIV, KeyIVLength);
+    Crypto_AES_ECB_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_ECB_Param.Key, Key, KeyLength);
+    Crypto_AES_ECB_Param.DataLength = DataLength;
+    Crypto_AES_ECB_Param.Data       = Data;
+
+    t_u16 EncDec = 0;
+
+    return wifi_set_eu_crypto(&Crypto_AES_ECB_Param, CRYPTO_AES_ECB, EncDec);
+}
+
+int wlan_set_crypto_AES_WRAP_encrypt(
+    const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
+{
+    t_u16 aes_wrap_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_wrap_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
+    t_u16 aes_wrap_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_wrap_key_length)
+        return -WM_FAIL;
+    if (KeyIVLength > aes_wrap_keyiv_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_wrap_data_length)
+        return -WM_FAIL;
+
+    EU_Crypto Crypto_AES_WRAP_Param;
+    Crypto_AES_WRAP_Param.KeyIVLength = KeyIVLength;
+    memcpy(Crypto_AES_WRAP_Param.KeyIV, KeyIV, KeyIVLength);
+    Crypto_AES_WRAP_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_WRAP_Param.Key, Key, KeyLength);
+    Crypto_AES_WRAP_Param.DataLength = DataLength;
+    Crypto_AES_WRAP_Param.Data       = Data;
+
+    t_u16 EncDec = 1;
+
+    return wifi_set_eu_crypto(&Crypto_AES_WRAP_Param, CRYPTO_AES_WRAP, EncDec);
+}
+
+int wlan_set_crypto_AES_WRAP_decrypt(
+    const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
+{
+    t_u16 aes_wrap_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_wrap_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
+    t_u16 aes_wrap_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_wrap_key_length)
+        return -WM_FAIL;
+    if (KeyIVLength > aes_wrap_keyiv_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_wrap_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_WRAP_Param;
+    Crypto_AES_WRAP_Param.KeyIVLength = KeyIVLength;
+    memcpy(Crypto_AES_WRAP_Param.KeyIV, KeyIV, KeyIVLength);
+    Crypto_AES_WRAP_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_WRAP_Param.Key, Key, KeyLength);
+    Crypto_AES_WRAP_Param.DataLength = DataLength;
+    Crypto_AES_WRAP_Param.Data       = Data;
+
+    t_u16 EncDec = 0;
+
+    return wifi_set_eu_crypto(&Crypto_AES_WRAP_Param, CRYPTO_AES_WRAP, EncDec);
+}
+
+int wlan_set_crypto_AES_CCMP_encrypt(const t_u8 *Key,
+                                     const t_u16 KeyLength,
+                                     const t_u8 *AAD,
+                                     const t_u16 AADLength,
+                                     const t_u8 *Nonce,
+                                     const t_u16 NonceLength,
+                                     t_u8 *Data,
+                                     t_u16 *DataLength)
+{
+    t_u16 aes_ccmp_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_ccmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
+    t_u16 aes_ccmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
+    t_u16 aes_ccmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_ccmp_key_length)
+        return -WM_FAIL;
+    if (AADLength > aes_ccmp_AAD_length)
+        return -WM_FAIL;
+    if (NonceLength > aes_ccmp_Nonce_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_ccmp_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_CCMP_Param;
+    Crypto_AES_CCMP_Param.AADLength = AADLength;
+    memcpy(Crypto_AES_CCMP_Param.AAD, AAD, AADLength);
+    Crypto_AES_CCMP_Param.NonceLength = NonceLength;
+    memcpy(Crypto_AES_CCMP_Param.Nonce, Nonce, NonceLength);
+    Crypto_AES_CCMP_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_CCMP_Param.Key, Key, KeyLength);
+    Crypto_AES_CCMP_Param.DataLength = DataLength;
+    Crypto_AES_CCMP_Param.Data       = Data;
+
+    t_u16 EncDec = 1;
+
+    return wifi_set_eu_crypto(&Crypto_AES_CCMP_Param, CRYPTO_AES_CCMP, EncDec);
+}
+
+int wlan_set_crypto_AES_CCMP_decrypt(const t_u8 *Key,
+                                     const t_u16 KeyLength,
+                                     const t_u8 *AAD,
+                                     const t_u16 AADLength,
+                                     const t_u8 *Nonce,
+                                     const t_u16 NonceLength,
+                                     t_u8 *Data,
+                                     t_u16 *DataLength)
+{
+    t_u16 aes_ccmp_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_ccmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
+    t_u16 aes_ccmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
+    t_u16 aes_ccmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_ccmp_key_length)
+        return -WM_FAIL;
+    if (AADLength > aes_ccmp_AAD_length)
+        return -WM_FAIL;
+    if (NonceLength > aes_ccmp_Nonce_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_ccmp_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_CCMP_Param;
+    Crypto_AES_CCMP_Param.AADLength = AADLength;
+    memcpy(Crypto_AES_CCMP_Param.AAD, AAD, AADLength);
+    Crypto_AES_CCMP_Param.NonceLength = NonceLength;
+    memcpy(Crypto_AES_CCMP_Param.Nonce, Nonce, NonceLength);
+    Crypto_AES_CCMP_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_CCMP_Param.Key, Key, KeyLength);
+    Crypto_AES_CCMP_Param.DataLength = DataLength;
+    Crypto_AES_CCMP_Param.Data       = Data;
+
+    t_u16 EncDec = 0;
+
+    return wifi_set_eu_crypto(&Crypto_AES_CCMP_Param, CRYPTO_AES_CCMP, EncDec);
+}
+
+int wlan_set_crypto_AES_GCMP_encrypt(const t_u8 *Key,
+                                     const t_u16 KeyLength,
+                                     const t_u8 *AAD,
+                                     const t_u16 AADLength,
+                                     const t_u8 *Nonce,
+                                     const t_u16 NonceLength,
+                                     t_u8 *Data,
+                                     t_u16 *DataLength)
+{
+    t_u16 aes_gcmp_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_gcmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
+    t_u16 aes_gcmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
+    t_u16 aes_gcmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_gcmp_key_length)
+        return -WM_FAIL;
+    if (AADLength > aes_gcmp_AAD_length)
+        return -WM_FAIL;
+    if (NonceLength > aes_gcmp_Nonce_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_gcmp_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_GCMP_Param;
+    Crypto_AES_GCMP_Param.AADLength = AADLength;
+    memcpy(Crypto_AES_GCMP_Param.AAD, AAD, AADLength);
+    Crypto_AES_GCMP_Param.NonceLength = NonceLength;
+    memcpy(Crypto_AES_GCMP_Param.Nonce, Nonce, NonceLength);
+    Crypto_AES_GCMP_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_GCMP_Param.Key, Key, KeyLength);
+    Crypto_AES_GCMP_Param.DataLength = DataLength;
+    Crypto_AES_GCMP_Param.Data       = Data;
+
+    t_u16 EncDec = 1;
+
+    return wifi_set_eu_crypto(&Crypto_AES_GCMP_Param, CRYPTO_AES_GCMP, EncDec);
+}
+
+int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
+                                     const t_u16 KeyLength,
+                                     const t_u8 *AAD,
+                                     const t_u16 AADLength,
+                                     const t_u8 *Nonce,
+                                     const t_u16 NonceLength,
+                                     t_u8 *Data,
+                                     t_u16 *DataLength)
+{
+    t_u16 aes_gcmp_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
+    t_u16 aes_gcmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
+    t_u16 aes_gcmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
+    t_u16 aes_gcmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+    if (KeyLength > aes_gcmp_key_length)
+        return -WM_FAIL;
+    if (AADLength > aes_gcmp_AAD_length)
+        return -WM_FAIL;
+    if (NonceLength > aes_gcmp_Nonce_length)
+        return -WM_FAIL;
+    if (*DataLength > aes_gcmp_data_length)
+        return -WM_FAIL;
+    EU_Crypto Crypto_AES_GCMP_Param;
+    Crypto_AES_GCMP_Param.AADLength = AADLength;
+    memcpy(Crypto_AES_GCMP_Param.AAD, AAD, AADLength);
+    Crypto_AES_GCMP_Param.NonceLength = NonceLength;
+    memcpy(Crypto_AES_GCMP_Param.Nonce, Nonce, NonceLength);
+    Crypto_AES_GCMP_Param.KeyLength = KeyLength;
+    memcpy(Crypto_AES_GCMP_Param.Key, Key, KeyLength);
+    Crypto_AES_GCMP_Param.DataLength = DataLength;
+    Crypto_AES_GCMP_Param.Data       = Data;
+
+    t_u16 EncDec = 0;
+
+    return wifi_set_eu_crypto(&Crypto_AES_GCMP_Param, CRYPTO_AES_GCMP, EncDec);
+}
+#endif /* CONFIG_WIFI_EU_CRYPTO */

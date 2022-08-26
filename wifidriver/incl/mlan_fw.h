@@ -1030,6 +1030,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_802_11_SUBSCRIBE_EVENT 0x0075
 #endif
 
+#ifdef CONFIG_WIFI_EU_CRYPTO
+/** Host Command ID : EU Test */
+#define HostCmd_CMD_EU_CRYPTO 0x0078
+#endif
+
 /** Host Command ID : 802.11 NET MONITOR*/
 #define HostCmd_CMD_802_11_NET_MONITOR 0x0102
 
@@ -6076,6 +6081,89 @@ typedef MLAN_PACK_START struct
     t_u8 tlv_buffer[1]; /**< TLV Buffer */
 } MLAN_PACK_END HostCmd_DS_CHAN_RPT_RSP;
 
+#ifdef CONFIG_WIFI_EU_CRYPTO
+typedef MLAN_PACK_START struct
+{
+    /* EncDec: 0-Decrypt, 1-Encrypt */
+    t_u16 EncDec;
+    /* Algorithm: 1-RC4, 2-AES, 3-AES_KEY_WRAP,4-AES-CCM */
+    t_u16 Algorithm;
+    /* KeyLength: Length of Key (bytes) */
+    t_u16 KeyLength;
+    /* Key: Key */
+    t_u8 Key[32];
+    /* NonceLength: Length of Nonce (bytes) */
+    t_u16 NonceLength;
+    /* Nonce: Nonce */
+    t_u8 Nonce[14];
+    /* AADLength: Length of AAD (bytes) */
+    t_u16 AADLength;
+    /* AAD: AAD */
+    t_u8 AAD[32];
+    /* DataType: DataType */
+    t_u16 DataType;
+    /* DataLength: Data Length */
+    t_u16 DataLength;
+    /* Data: Data */
+    t_u8 Data[1];
+} MLAN_PACK_END HostCmd_DS_EU_AES_CRYPTO;
+
+typedef MLAN_PACK_START struct
+{
+    /* EncDec: 0-Decrypt, 1-Encrypt */
+    t_u16 EncDec;
+    /* Algorithm: 1-RC4, 2-AES, 3-AES_KEY_WRAP, 4-AES-CCMP, 6-AES-GCMP */
+    t_u16 Algorithm;
+    /* KeyLength: Length of KeyIV (bytes) */
+    t_u16 KeyIVLength;
+    /* KeyIV: KeyIV */
+    t_u8 KeyIV[32];
+    /* KeyLength: Length of Key (bytes) */
+    t_u16 KeyLength;
+    /* Key: Key */
+    t_u8 Key[32];
+    /* DataType: DataType */
+    t_u16 DataType;
+    /* DataLength: Data Length */
+    t_u16 DataLength;
+    /* Data: Data */
+    t_u8 Data[1];
+} MLAN_PACK_END HostCmd_DS_EU_CRYPTO;
+
+typedef enum _crypto_algorithm
+{
+    CRYPTO_RC4      = 1,
+    CRYPTO_AES_ECB  = 2,
+    CRYPTO_AES_WRAP = 3,
+    CRYPTO_AES_CCMP = 4,
+    CRYPTO_AES_GCMP = 6,
+} crypto_algorithm;
+
+typedef MLAN_PACK_START struct
+{
+    /* KeyLength: Length of KeyIV (bytes) */
+    t_u16 KeyIVLength;
+    /* KeyIV: KeyIV */
+    t_u8 KeyIV[32];
+    /* NonceLength: Length of Nonce (bytes) */
+    t_u16 NonceLength;
+    /* Nonce: Nonce */
+    t_u8 Nonce[14];
+    /* AADLength: Length of AAD (bytes) */
+    t_u16 AADLength;
+    /* AAD: AAD */
+    t_u8 AAD[32];
+    /* KeyLength: Length of Key (bytes) */
+    t_u16 KeyLength;
+    /* Key: Key */
+    t_u8 Key[32];
+    /* DataLength: Length of Data (bytes) */
+    t_u16 *DataLength;
+    /* Data: Data */
+    t_u8 *Data;
+} MLAN_PACK_END EU_Crypto;
+#endif
+
 /** statistics threshold */
 typedef MLAN_PACK_START struct
 {
@@ -6333,6 +6421,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** OFFLOAD FEATURE CTRL */
         HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
 #endif /* CONFIG_ENABLE_802_11K */
+#ifdef CONFIG_WIFI_EU_CRYPTO
+        HostCmd_DS_EU_AES_CRYPTO eu_aes_crypto;
+        HostCmd_DS_EU_CRYPTO eu_crypto;
+#endif
 #ifdef CONFIG_11AX
         HostCmd_DS_11AX_CMD_CFG axcmd;
 #endif
