@@ -2836,7 +2836,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
 #endif
 }
 
-#ifdef CONFIG_11K
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
                                                     enum cm_sta_state *next,
                                                     struct wlan_network *network)
@@ -3472,7 +3472,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
 #endif
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
     (void)wifi_11k_cfg(1);
     (void)wifi_11h_enable();
 #endif
@@ -4031,7 +4031,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: rssi low");
             wlcm_process_rssi_low_event(msg, &next, network);
             break;
-#ifdef CONFIG_11K
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
         case WIFI_EVENT_NLIST_REPORT:
             wlcm_d("got event: neighbor list report");
             wlcm_process_neighbor_list_report_event(msg, &next, network);
@@ -6919,12 +6919,14 @@ int wlan_set_uap_frag(int frag)
 #ifdef CONFIG_11K
 int wlan_11k_cfg(int enable_11k)
 {
-    return wifi_11k_cfg(enable_11k);
+    // return wifi_11k_cfg(enable_11k);
+    return WM_SUCCESS;
 }
 
 int wlan_11k_neighbor_req()
 {
-    return wifi_11k_neighbor_req();
+    // return wifi_11k_neighbor_req();
+    return WM_SUCCESS;
 }
 #endif
 

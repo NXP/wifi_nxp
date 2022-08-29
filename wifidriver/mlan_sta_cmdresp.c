@@ -1094,7 +1094,7 @@ static mlan_status wlan_ret_802_11_rf_channel(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 /**
  *  @brief This function handles the command response of offload feature
  *
@@ -1812,11 +1812,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
         case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
             ret = wlan_ret_offload_feature_ctrl(pmpriv, resp);
             break;
-#endif /* CONFIG_11K*/
+#endif /* CONFIG_FW_11K*/
 #ifdef CONFIG_MULTI_CHAN
         case HostCmd_CMD_MULTI_CHAN_CONFIG:
             ret = wlan_ret_multi_chan_cfg(pmpriv, resp, pioctl_buf);

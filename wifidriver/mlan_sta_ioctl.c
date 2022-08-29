@@ -5694,7 +5694,7 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 /**
  *  @brief 11k enable
  *
@@ -5928,7 +5928,7 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             status = wlan_11h_cfg_ioctl(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
         case MLAN_IOCTL_11K_CFG:
             status = wlan_11k_cfg_ioctl(pmadapter, pioctl_req);
             break;

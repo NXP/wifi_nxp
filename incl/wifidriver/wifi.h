@@ -962,7 +962,7 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type);
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
 #endif
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 int wifi_11k_cfg(int enable_11k);
 int wifi_11k_neighbor_req();
 #endif

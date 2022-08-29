@@ -1017,7 +1017,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         SHORT_SLOT_TIME_DISABLED(tmp_cap);
     }
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
     /* set SpectrumMgmt(BIT8) and RadioMeasurement(BIT12) if 11K is enabled
      */
     if (pmpriv->enable_11k)

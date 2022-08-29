@@ -179,7 +179,7 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_11H_DFS_TESTING,
 #endif
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
     MLAN_IOCTL_11K_CFG      = 0x00130000,
     MLAN_OID_11K_CFG_ENABLE = 0x00130001,
 #endif
@@ -1344,7 +1344,7 @@ typedef struct _mlan_ds_get_signal
     t_s16 data_nf_avg;
 } mlan_ds_get_signal, *pmlan_ds_get_signal;
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 /** Type definition of mlan_ds_11k_cfg for 11k enable/disable */
 typedef struct _mlan_ds_11k_cfg
 {

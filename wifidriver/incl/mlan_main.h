@@ -1276,7 +1276,7 @@ struct _mlan_private
     /** function table */
     mlan_operations ops;
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
     /** 11k flag */
     t_u8 enable_11k;
 #endif
