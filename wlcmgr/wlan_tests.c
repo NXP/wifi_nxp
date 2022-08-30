@@ -1604,7 +1604,7 @@ static void test_wlan_set_frag(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 static void test_wlan_11k_cfg(int argc, char **argv)
 {
     int enable_11k;
@@ -1616,7 +1616,12 @@ static void test_wlan_11k_cfg(int argc, char **argv)
         return;
     }
 
-    enable_11k = atoi(argv[1]);
+    errno      = 0;
+    enable_11k = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan_11k errno:%d\r\n", errno);
+    }
 
     ret = wlan_11k_cfg(enable_11k);
 
@@ -1638,6 +1643,42 @@ static void test_wlan_11k_neighbor_req(int argc, char **argv)
     }
 }
 
+#endif
+
+#ifdef CONFIG_11K
+static void test_wlan_host_11k_cfg(int argc, char **argv)
+{
+    int enable_11k;
+    int ret;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <0/1> < 0--disable host 11k; 1---enable host 11k>\r\n", argv[0]);
+        return;
+    }
+
+    errno      = 0;
+    enable_11k = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan_host_11k errno:%d\r\n", errno);
+    }
+
+    ret = wlan_host_11k_cfg(enable_11k);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please disable fw base 11k.(wlan-host-11k-enable 0)\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set 11k config\r\n");
+    }
+    else
+    {
+        /* Do nothing */
+    }
+}
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
@@ -2586,9 +2627,12 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
     {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
     {"wlan-11k-neighbor-req", NULL, test_wlan_11k_neighbor_req},
+#endif
+#ifdef CONFIG_11K
+    {"wlan-host-11k-enable", "<0/1>", test_wlan_host_11k_cfg},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},

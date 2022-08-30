@@ -49,6 +49,8 @@
 #define MGMT_MASK_PROBE_RESP 0x20
 /** Mask for beacon frame */
 #define MGMT_MASK_BEACON 0x100
+/** Mask for action frame */
+#define MGMT_MASK_ACTION 0x2000
 /** Mask to clear previous settings */
 #define MGMT_MASK_CLEAR 0x000
 
@@ -2622,26 +2624,16 @@ bool wifi_is_ecsa_enabled(void)
 
 static int get_free_mgmt_ie_index(void)
 {
-    if (!(mgmt_ie_index_bitmap & MBIT(0)))
+    int idx;
+
+    for (idx = 0; idx < 32; idx++)
     {
-        return 0;
+        if ((mgmt_ie_index_bitmap & MBIT((t_u32)idx)) == 0U)
+        {
+            return idx;
+        }
     }
-    else if (!(mgmt_ie_index_bitmap & MBIT(1)))
-    {
-        return 1;
-    }
-    else if (!(mgmt_ie_index_bitmap & MBIT(2)))
-    {
-        return 2;
-    }
-    else if (!(mgmt_ie_index_bitmap & MBIT(3)))
-    {
-        return 3;
-    }
-    else
-    {
-        return -1;
-    }
+    return -1;
 }
 
 static void set_ie_index(int index)
@@ -2698,8 +2690,17 @@ static int wifi_config_ext_coex(int action,
 }
 #endif
 
-static int wifi_config_mgmt_ie(
-    mlan_bss_type bss_type, t_u16 action, IEEEtypes_ElementId_t index, void *buffer, unsigned int *ie_len)
+static bool ie_index_is_set(int index)
+{
+    return (mgmt_ie_index_bitmap & (MBIT((t_u32)index))) == 1U ? MTRUE : MFALSE;
+}
+
+static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
+                               t_u16 action,
+                               IEEEtypes_ElementId_t index,
+                               void *buffer,
+                               unsigned int *ie_len,
+                               int mgmt_bitmap_index)
 {
     uint8_t *buf, *pos;
     IEEEtypes_Header_t *ptlv_header = NULL;
@@ -2736,28 +2737,22 @@ static int wifi_config_mgmt_ie(
                MGMT_WPS_IE = MGMT_VENDOR_SPECIFIC_221
                */
 
-            if (index != MGMT_RSN_IE && index != MGMT_VENDOR_SPECIFIC_221)
+            if (!ie_index_is_set(mgmt_bitmap_index))
             {
                 os_mem_free(buf);
                 return -WM_FAIL;
             }
 
-            /* Clear WPS IE */
             ie_ptr->mgmt_subtype_mask = MGMT_MASK_CLEAR;
             ie_ptr->ie_length         = 0;
-            ie_ptr->ie_index          = index;
+            ie_ptr->ie_index          = (t_u16)mgmt_bitmap_index;
 
-            ie_ptr                    = (custom_ie *)(void *)(((uint8_t *)ie_ptr) + sizeof(custom_ie) - MAX_IE_SIZE);
-            ie_ptr->mgmt_subtype_mask = MGMT_MASK_CLEAR;
-            ie_ptr->ie_length         = 0;
-            ie_ptr->ie_index          = (t_u16)index + 1U;
-            tlv->length               = 2U * (sizeof(custom_ie) - MAX_IE_SIZE);
+            tlv->length = sizeof(custom_ie) - MAX_IE_SIZE;
             buf_len += tlv->length;
-            clear_ie_index(index);
+            clear_ie_index(mgmt_bitmap_index);
         }
         else
         {
-            /* Set WPS IE */
             mgmt_ie_index = get_free_mgmt_ie_index();
 
             if (mgmt_ie_index < 0)
@@ -2839,20 +2834,20 @@ static int wifi_config_mgmt_ie(
 
 int wifi_get_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, void *buf, unsigned int *buf_len)
 {
-    return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_GET, index, buf, buf_len);
+    return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_GET, index, buf, buf_len, 0);
 }
 
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len)
 {
     unsigned int data_len = buf_len;
 
-    return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, id, buf, &data_len);
+    return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, id, buf, &data_len, 0);
 }
 
-int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index)
+int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index)
 {
     unsigned int data_len = 0;
-    return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, index, NULL, &data_len);
+    return wifi_config_mgmt_ie(bss_type, HostCmd_ACT_GEN_SET, index, NULL, &data_len, mgmt_bitmap_index);
 }
 
 #ifdef SD8801
@@ -3269,6 +3264,52 @@ int wifi_11k_neighbor_req()
     wifi_wait_for_cmdresp(NULL);
 
     return WM_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_11K
+int wifi_host_11k_cfg(int enable_11k)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    IEEEtypes_RrmElement_t rrmCap;
+    int ret = (int)MLAN_STATUS_SUCCESS;
+
+#ifdef CONFIG_FW_11K
+    /* Check if fw base 11k is enabled */
+    if (enable_11k == 1 && pmpriv->enable_11k == (t_u8)1U)
+    {
+        return -WM_E_PERM;
+    }
+#endif
+    if (enable_11k == (int)pmpriv->enable_host_11k)
+    {
+        return (int)MLAN_STATUS_SUCCESS;
+    }
+
+    if (enable_11k == 1)
+    {
+        rrmCap.element_id = (t_u8)MGMT_RRM_ENABLED_CAP;
+        rrmCap.len        = (t_u8)sizeof(IEEEtypes_RrmEnabledCapabilities_t);
+        wlan_dot11k_formatRrmCapabilities(&(rrmCap.RrmEnabledCapabilities), 100);
+        pmpriv->rrm_mgmt_bitmap_index = wifi_set_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_RRM_ENABLED_CAP,
+                                                         (void *)&(rrmCap.RrmEnabledCapabilities), rrmCap.len);
+    }
+    else
+    {
+        ret = wifi_clear_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_RRM_ENABLED_CAP, pmpriv->rrm_mgmt_bitmap_index);
+    }
+    pmpriv->enable_host_11k = (t_u8)enable_11k;
+
+    if (pmpriv->enable_host_11k == (t_u8)1U)
+    {
+        pmpriv->ext_cap.BSS_Transition = 1U;
+    }
+    else
+    {
+        pmpriv->ext_cap.BSS_Transition = 0U;
+    }
+
+    return ret;
 }
 #endif
 

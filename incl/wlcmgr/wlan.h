@@ -2672,12 +2672,13 @@ int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config);
  *
  * \param[in] bss_type  BSS Type of interface.
  * \param[in] index IE index.
+ * \param[in] mgmt_bitmap_index mgmt bitmap index.
  *
  * \return WM_SUCCESS if successful.
  * \return -WM_FAIL if unsuccessful.
  *
  */
-int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index);
+int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
 /**
  * Get current status of 11d support.
@@ -3096,7 +3097,7 @@ int wlan_set_frag(int frag);
 int wlan_set_uap_frag(int frag);
 #endif
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 /**
  * enable/disable 11k feature in WLAN firmware.
  *
@@ -3730,4 +3731,13 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 void wlan_wmm_tx_stats_dump(int bss_type);
 #endif
 
+#ifdef CONFIG_11K
+/**
+ * enable/disable host 11k feature
+ *
+ * \param[in]  the value of 11k configuration.
+ *
+ */
+int wlan_host_11k_cfg(int enable_11k);
+#endif
 #endif /* __WLAN_H__ */

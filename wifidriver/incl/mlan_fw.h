@@ -80,14 +80,12 @@ typedef MLAN_PACK_START struct
 /** CapInfo Short Slot Time Enabled */
 #define SHORT_SLOT_TIME_ENABLED(CapInfo) ((CapInfo) |= MBIT(10))
 
-#ifdef CONFIG_FW_11K
 /** CapInfo Spectrum Mgmt Enabled */
 #define SPECTRUM_MGMT_ENABLED(CapInfo) (CapInfo |= MBIT(8))
 /** CapInfo Radio Measurement Disabled */
 #define RADIO_MEASUREMENT_DISABLED(CapInfo) (CapInfo &= ~MBIT(12))
 /** CapInfo Radio Measurement Enabled */
 #define RADIO_MEASUREMENT_ENABLED(CapInfo) (CapInfo |= MBIT(12))
-#endif
 
 /** Setup the number of rates passed in the driver/firmware API */
 #define HOSTCMD_SUPPORTED_RATES 14

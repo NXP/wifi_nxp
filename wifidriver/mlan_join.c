@@ -1017,19 +1017,28 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         SHORT_SLOT_TIME_DISABLED(tmp_cap);
     }
 
-#ifdef CONFIG_FW_11K
     /* set SpectrumMgmt(BIT8) and RadioMeasurement(BIT12) if 11K is enabled
      */
-    if (pmpriv->enable_11k)
+
+#ifdef CONFIG_FW_11K
+    if (pmpriv->enable_11k == (t_u8)1U)
     {
         SPECTRUM_MGMT_ENABLED(tmp_cap);
         RADIO_MEASUREMENT_ENABLED(tmp_cap);
     }
     else
+#endif
+#ifdef CONFIG_11K
+        if (pmpriv->enable_host_11k == (t_u8)1U)
+    {
+        SPECTRUM_MGMT_ENABLED(tmp_cap);
+        RADIO_MEASUREMENT_ENABLED(tmp_cap);
+    }
+    else
+#endif
     {
         RADIO_MEASUREMENT_DISABLED(tmp_cap);
     }
-#endif
 
     tmp_cap &= CAPINFO_MASK;
     PRINTM(MINFO, "ASSOC_CMD: tmp_cap=%4X CAPINFO_MASK=%4lX\n", tmp_cap, CAPINFO_MASK);

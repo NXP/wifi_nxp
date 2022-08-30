@@ -346,6 +346,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->pmfcfg.mfpc = 0;
     priv->pmfcfg.mfpr = 0;
 
+#ifdef CONFIG_11K
+    priv->enable_host_11k = MFALSE;
+#endif
 #ifdef CONFIG_FW_11K
     priv->enable_11k = MFALSE;
 #endif
@@ -763,11 +766,11 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
             for (j = 0; j < MAX_AC_QUEUES; ++j)
             {
                 if (priv->adapter->callbacks.moal_init_semaphore(pmadapter->pmoal_handle, "ra_list_sem",
-                    &priv->wmm.tid_tbl_ptr[j].ra_list.plock) != MLAN_STATUS_SUCCESS)
+                                                                 &priv->wmm.tid_tbl_ptr[j].ra_list.plock) !=
+                    MLAN_STATUS_SUCCESS)
                     return MLAN_STATUS_FAILURE;
 #ifdef CONFIG_WMM_ENH_DEBUG
-                util_init_list_head((t_void *)pmadapter->pmoal_handle,
-                    &priv->wmm.hist_ra[j], MFALSE, MNULL);
+                util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->wmm.hist_ra[j], MFALSE, MNULL);
 #endif
             }
 #endif

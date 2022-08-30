@@ -2836,7 +2836,6 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
 #endif
 }
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
                                                     enum cm_sta_state *next,
                                                     struct wlan_network *network)
@@ -2878,7 +2877,6 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     }
 #endif
 }
-#endif
 
 #ifdef CONFIG_11R
 int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
@@ -3472,11 +3470,16 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
 #endif
+#ifdef CONFIG_11K
+    (void)wifi_host_11k_cfg(1);
+#endif
 #ifdef CONFIG_FW_11K
     (void)wifi_11k_cfg(1);
     (void)wifi_11h_enable();
 #endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
     (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
+#endif
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
@@ -4031,12 +4034,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: rssi low");
             wlcm_process_rssi_low_event(msg, &next, network);
             break;
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
         case WIFI_EVENT_NLIST_REPORT:
             wlcm_d("got event: neighbor list report");
             wlcm_process_neighbor_list_report_event(msg, &next, network);
             break;
-#endif
 #ifdef CONFIG_WLAN_BRIDGE
         case WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED:
             wlcm_d("got event: auto link switch network");
@@ -6130,9 +6131,9 @@ int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config)
 }
 #endif
 
-int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index)
+int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index)
 {
-    return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index);
+    return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index, mgmt_bitmap_index);
 }
 
 int wlan_set_htcapinfo(unsigned int htcapinfo)
@@ -6916,17 +6917,22 @@ int wlan_set_uap_frag(int frag)
 
 #endif
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_FW_11K
 int wlan_11k_cfg(int enable_11k)
 {
-    // return wifi_11k_cfg(enable_11k);
-    return WM_SUCCESS;
+    return wifi_11k_cfg(enable_11k);
 }
 
 int wlan_11k_neighbor_req()
 {
-    // return wifi_11k_neighbor_req();
-    return WM_SUCCESS;
+    return wifi_11k_neighbor_req();
+}
+#endif
+
+#ifdef CONFIG_11K
+int wlan_host_11k_cfg(int enable_11k)
+{
+    return wifi_host_11k_cfg(enable_11k);
 }
 #endif
 

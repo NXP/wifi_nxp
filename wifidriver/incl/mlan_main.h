@@ -997,12 +997,14 @@ typedef struct
 } wlan_11d_apis_t;
 
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
-typedef struct {
+typedef struct
+{
     mlan_list_head free_list;
     int free_cnt;
 } outbuf_pool_t;
 
-typedef struct {
+typedef struct
+{
     t_u16 tx_no_media;
     t_u16 tx_err_mem;
     t_u16 tx_wmm_retried_drop;
@@ -1305,6 +1307,10 @@ struct _mlan_private
 #ifdef CONFIG_FW_11K
     /** 11k flag */
     t_u8 enable_11k;
+#endif
+#ifdef CONFIG_11K
+    t_u8 enable_host_11k;
+    int rrm_mgmt_bitmap_index;
 #endif
 
     /** Port Control mode */

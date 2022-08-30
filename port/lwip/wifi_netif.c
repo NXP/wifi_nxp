@@ -205,7 +205,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
 
         sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-        if (sub_type == SUBTYPE_ACTION)
+        if (sub_type == (t_u16)SUBTYPE_ACTION)
         {
             if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
             {
@@ -405,8 +405,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
 #ifdef CONFIG_WMM_ENH
     uint8_t ra[MLAN_MAC_ADDR_LENGTH] = {0};
-    uint8_t *wmm_outbuf = NULL;
-    bool is_tx_pause = false;
+    uint8_t *wmm_outbuf              = NULL;
+    bool is_tx_pause                 = false;
 
     if (ethernetif->interface > WLAN_BSS_TYPE_UAP)
     {
@@ -417,7 +417,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     wifi_wmm_da_to_ra(p->payload, ra);
 
     wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, ethernetif->interface, ra, &is_tx_pause);
-    ret = (wmm_outbuf == NULL) ? true : false;
+    ret        = (wmm_outbuf == NULL) ? true : false;
     if (ret == true && is_tx_pause == true)
     {
         wifi_wmm_drop_pause_drop(ethernetif->interface);
@@ -443,7 +443,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         os_thread_sleep(os_msec_to_ticks(1));
 #endif
 #ifdef CONFIG_WMM_ENH
-        wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, ethernetif->interface, ra, &is_tx_pause);
+        wmm_outbuf =
+            wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, ethernetif->interface, ra, &is_tx_pause);
         ret = (wmm_outbuf == NULL) ? true : false;
         if (ret == true && is_tx_pause == true)
         {
@@ -507,8 +508,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
      *  so in_param outbuf and len are different from others
      */
     wmm_outbuf -= sizeof(mlan_linked_list);
-    ret = wifi_low_level_output(ethernetif->interface, wmm_outbuf,
-                                pkt_len + sizeof(mlan_linked_list), pkt_prio, tid);
+    ret = wifi_low_level_output(ethernetif->interface, wmm_outbuf, pkt_len + sizeof(mlan_linked_list), pkt_prio, tid);
 #else
     ret = wifi_low_level_output(ethernetif->interface, wmm_outbuf + sizeof(TxPD) + INTF_HEADER_LEN,
                                 pkt_len - sizeof(TxPD) - INTF_HEADER_LEN

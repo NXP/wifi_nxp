@@ -73,7 +73,10 @@ enum
 
 typedef enum
 {
-    MGMT_RSN_IE              = 48,
+    MGMT_RSN_IE = 48,
+#ifdef CONFIG_11K
+    MGMT_RRM_ENABLED_CAP = 70,
+#endif
     MGMT_VENDOR_SPECIFIC_221 = 221,
     MGMT_WPA_IE              = MGMT_VENDOR_SPECIFIC_221,
     MGMT_WPS_IE              = MGMT_VENDOR_SPECIFIC_221,
@@ -966,6 +969,12 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type);
 int wifi_11k_cfg(int enable_11k);
 int wifi_11k_neighbor_req();
 #endif
+
+#ifdef CONFIG_11K
+int wifi_host_11k_cfg(int enable_11k);
+#endif
+
+int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);

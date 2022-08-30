@@ -1557,12 +1557,12 @@ static int wifi_core_init(void)
     wifi_core_init_done = 1;
 #ifdef CONFIG_WMM
 #ifdef CONFIG_WMM_ENH
-		ret = wifi_wmm_buf_pool_init(&outbuf_arr[0][0]);
-		if (ret != WM_SUCCESS)
-		{
-			wifi_e("Unable to init wmm buffer pool");
-			goto fail;
-		}
+    ret = wifi_wmm_buf_pool_init(&outbuf_arr[0][0]);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Unable to init wmm buffer pool");
+        goto fail;
+    }
 #endif
 
     wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
@@ -2037,8 +2037,8 @@ static inline t_u8 wifi_is_max_tx_cnt(int pkt_cnt)
  *  return MLAN_STATUS_SUCESS to continue looping ralists,
  *  return MLAN_STATUS_RESOURCE to break looping ralists
  */
-static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac,
-    raListTbl *ralist, tid_tbl_t *tid_ptr, int *pkt_cnt)
+static mlan_status wifi_xmit_ralist_pkts(
+    mlan_private *priv, t_u8 ac, raListTbl *ralist, tid_tbl_t *tid_ptr, int *pkt_cnt)
 {
     mlan_status ret;
     outbuf_t *buf = MNULL;
@@ -2046,37 +2046,31 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac,
     if (ralist->tx_pause == MTRUE)
         return MLAN_STATUS_SUCCESS;
 
-    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-        &ralist->buf_head.plock);
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
 
     while (ralist->total_pkts > 0)
     {
         if (wifi_is_tx_queue_empty() == MTRUE)
         {
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &ralist->buf_head.plock);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
             return MLAN_STATUS_RESOURCE;
         }
 
-        buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle,
-            &ralist->buf_head, MNULL, MNULL);
+        buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ralist->buf_head, MNULL, MNULL);
         if (buf == MNULL)
             break;
 
         /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
         /* this will get card port lock and probably sleep */
-        ret = wlan_xmit_wmm_pkt(priv->bss_index,
-            buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
-            (t_u8 *)&buf->intf_header[0]);
+        ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
+                                (t_u8 *)&buf->intf_header[0]);
         if (ret != MLAN_STATUS_SUCCESS)
         {
 #ifdef RW610
             assert(0);
 #else
-            util_enqueue_list_head(mlan_adap->pmoal_handle,
-                &ralist->buf_head, &buf->entry, MNULL, MNULL);
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &ralist->buf_head.plock);
+            util_enqueue_list_head(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
             return MLAN_STATUS_RESOURCE;
 #endif
         }
@@ -2094,8 +2088,7 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac,
             *pkt_cnt = 0;
         }
     }
-    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-        &ralist->buf_head.plock);
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
     return MLAN_STATUS_SUCCESS;
 }
 
@@ -2111,9 +2104,9 @@ static int wifi_xmit_wmm_ac_pkts_enh()
     int i;
     int ac;
     mlan_status ret;
-    int pkt_cnt = 0;
+    int pkt_cnt        = 0;
     mlan_private *priv = MNULL;
-    raListTbl *ralist = MNULL;
+    raListTbl *ralist  = MNULL;
     tid_tbl_t *tid_ptr = MNULL;
 
     for (i = 0; i < MLAN_MAX_BSS_NUM; i++)
@@ -2130,32 +2123,28 @@ static int wifi_xmit_wmm_ac_pkts_enh()
         {
             tid_ptr = &priv->wmm.tid_tbl_ptr[ac];
 
-            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-                &tid_ptr->ra_list.plock);
+            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &tid_ptr->ra_list.plock);
 
             if (priv->wmm.pkts_queued[ac] == 0)
             {
-                mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                    &tid_ptr->ra_list.plock);
+                mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &tid_ptr->ra_list.plock);
                 continue;
             }
 
-            ralist = (raListTbl *)util_peek_list(mlan_adap->pmoal_handle,
-                (mlan_list_head *)&tid_ptr->ra_list, MNULL, MNULL);
+            ralist =
+                (raListTbl *)util_peek_list(mlan_adap->pmoal_handle, (mlan_list_head *)&tid_ptr->ra_list, MNULL, MNULL);
 
             while (ralist && ralist != (raListTbl *)&tid_ptr->ra_list)
             {
                 ret = wifi_xmit_ralist_pkts(priv, ac, ralist, tid_ptr, &pkt_cnt);
                 if (ret != MLAN_STATUS_SUCCESS)
                 {
-                    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                        &tid_ptr->ra_list.plock);
+                    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &tid_ptr->ra_list.plock);
                     goto RET;
                 }
                 ralist = ralist->pnext;
             }
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &tid_ptr->ra_list.plock);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &tid_ptr->ra_list.plock);
         }
     }
 
@@ -2807,7 +2796,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     mlan_status i;
     t_u32 pkt_len       = 0;
     uint32_t outbuf_len = 0;
-    uint8_t *outbuf     = wifi_get_outbuf(&outbuf_len);
+    uint8_t *poutbuf    = wifi_get_outbuf(&outbuf_len);
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
@@ -2815,10 +2804,10 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 
     /* XXX: TODO Get rid on the memset once we are convinced that
      * process_pkt_hdrs sets correct values */
-    (void)memset(outbuf, 0, sizeof(&outbuf_len));
+    (void)memset(poutbuf, 0, sizeof(&outbuf_len));
 
-    (void)raw_process_pkt_hdrs((t_u8 *)outbuf, 0, interface);
-    (void)memcpy((void *)((t_u8 *)outbuf + pkt_len - 2), (const void *)buf, (size_t)len);
+    (void)raw_process_pkt_hdrs((t_u8 *)poutbuf, 0, interface);
+    (void)memcpy((void *)((t_u8 *)poutbuf + pkt_len - 2), (const void *)buf, (size_t)len);
     i = wlan_xmit_pkt(pkt_len + len - 2U, interface);
     if (i == MLAN_STATUS_FAILURE)
     {

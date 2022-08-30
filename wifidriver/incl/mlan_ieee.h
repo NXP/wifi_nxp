@@ -116,7 +116,10 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 
     REGULATORY_CLASS = 59,
     HT_OPERATION     = 61,
-    BSSCO_2040       = 72,
+#ifdef CONFIG_11K
+    RRM_ENABLED_CAP = 70,
+#endif
+    BSSCO_2040 = 72,
     /* OVERLAPBSSSCANPARAM = 74, */
     EXT_CAPABILITY = 127,
 
@@ -1594,6 +1597,71 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
     t_u8 he_txrx_mcs_support[4];
     /** PPE Thresholds (optional) */
 } MLAN_PACK_END IEEEtypes_HECap_t, *pIEEEtypes_HECap_t;
+#endif
+
+/*
+*****************************************************************************
+**
+**
+**                     802.11k RRM definitions
+**
+**
+*****************************************************************************
+*/
+#ifdef CONFIG_11K
+typedef MLAN_PACK_START struct _IEEEtypes_RrmEnabledCapabilities_t
+{
+    /* First byte */
+    t_u8 LinkMeas : 1;
+    t_u8 NborRpt : 1;
+    t_u8 ParallelMeas : 1;
+    t_u8 RepeatMeas : 1;
+    t_u8 BcnPassiveMeas : 1;
+    t_u8 BcnActiveMeas : 1;
+    t_u8 BcnTableMeas : 1;
+    t_u8 BcnMeasRptCond : 1;
+
+    /* Second byte */
+    t_u8 FrameMeas : 1;
+    t_u8 ChanLoadMeas : 1;
+    t_u8 NoiseHistMeas : 1;
+    t_u8 StatsMeas : 1;
+    t_u8 LciMeas : 1;
+    t_u8 LciAzimuth : 1;
+    t_u8 TxStreamMeas : 1;
+    t_u8 TrigTxStreamMeas : 1;
+
+    /* Third byte */
+    t_u8 ApChanRpt : 1;
+    t_u8 RrmMib : 1;
+    t_u8 OpChanMaxMeas : 3;
+    t_u8 NonOpChanMaxMeas : 3;
+
+    /* Fourth byte */
+    t_u8 MeasPilot : 3;
+    t_u8 MeasPilotTxInfo : 1;
+    t_u8 NborRptTsfOffset : 1;
+    t_u8 RcpiMeas : 1;
+    t_u8 RsniMeas : 1;
+    t_u8 BssAvgAccessDelay : 1;
+
+    /* Fifth byte */
+    t_u8 BssAvailAdmCap : 1;
+    t_u8 AntennaInfo : 1;
+    t_u8 FtmRangeReport : 1;
+    t_u8 CivicLocation : 1;
+    t_u8 Reserved : 4;
+} MLAN_PACK_END IEEEtypes_RrmEnabledCapabilities_t, *pIEEEtypes_RrmEnabledCapabilities_t;
+
+typedef MLAN_PACK_START struct _IEEEtypes_RrmElement_t
+{
+    /** Element ID */
+    t_u8 element_id;
+    /** Length */
+    t_u8 len;
+
+    IEEEtypes_RrmEnabledCapabilities_t RrmEnabledCapabilities;
+} MLAN_PACK_END IEEEtypes_RrmElement_t, *pIEEEtypes_RrmElement_t;
 #endif
 
 #ifdef CONFIG_ROAMING
