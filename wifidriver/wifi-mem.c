@@ -55,9 +55,6 @@ mlan_status wrapper_moal_malloc(IN t_void *pmoal_handle, IN t_u32 size, IN t_u32
 {
     *ppbuf = os_mem_alloc(size);
 
-#ifdef DEBUG_11N_ALLOC
-
-#endif /* DEBUG_11N_ALLOC */
 
     if (*ppbuf != NULL)
     {

@@ -333,20 +333,15 @@ int wifi_cmd_uap_config(char *ssid,
 {
     t_u32 ssid_len = strlen(ssid);
     uint8_t i;
-#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     int ret;
     t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-#endif
 #ifdef CONFIG_11AC
     t_u8 enable_11ac = MFALSE;
 #endif
 
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA3_SAE ||
           security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
-#ifdef CONFIG_OWE
-          || security == WLAN_SECURITY_OWE_ONLY
-#endif
           ))
     {
         return -WM_E_INVAL;
@@ -449,9 +444,6 @@ int wifi_cmd_uap_config(char *ssid,
 
     if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA3_SAE ||
         security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
-#ifdef CONFIG_OWE
-        || security == WLAN_SECURITY_OWE_ONLY
-#endif
     )
     {
         if (security == WLAN_SECURITY_WPA2)
@@ -469,13 +461,6 @@ int wifi_cmd_uap_config(char *ssid,
             bss.param.bss_config.protocol = PROTOCOL_WPA2 | PROTOCOL_WPA3_SAE;
             bss.param.bss_config.key_mgmt = KEY_MGMT_SAE | KEY_MGMT_PSK;
         }
-#ifdef CONFIG_OWE
-        else if (security == WLAN_SECURITY_OWE_ONLY)
-        {
-            bss.param.bss_config.protocol = PROTOCOL_OWE;
-            bss.param.bss_config.key_mgmt = KEY_MGMT_OWE;
-        }
-#endif
         else
         { /* Do Nothing */
         }
@@ -490,20 +475,6 @@ int wifi_cmd_uap_config(char *ssid,
          ****************************************/
         bss.param.bss_config.key_mgmt_operation = 0x00;
 
-#ifdef CONFIG_HOST_PMK
-        if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) && passphrase_len < 64)
-        {
-            char pmk_bin[PMK_BIN_LEN]           = {0};
-            char pmk_hex[PMK_HEX_LEN + 2]       = {0};
-            bss.param.bss_config.wpa_cfg.length = PMK_HEX_LEN;
-            mrvl_generate_psk(ssid, strlen(ssid), passphrase, pmk_bin);
-            bin2hex((uint8_t *)pmk_bin, pmk_hex, PMK_BIN_LEN, PMK_HEX_LEN + 2);
-            wuap_d("psk %s, pmk_hex %s", passphrase, pmk_hex);
-            (void)memcpy((void *)bss.param.bss_config.wpa_cfg.passphrase, (const void *)pmk_hex, PMK_HEX_LEN);
-        }
-        else
-        {
-#endif
             if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
             {
                 /*app has converted pmk with psk*/
@@ -511,9 +482,6 @@ int wifi_cmd_uap_config(char *ssid,
                 (void)memcpy((void *)bss.param.bss_config.wpa_cfg.passphrase, (const void *)passphrase,
                              (size_t)passphrase_len);
             }
-#ifdef CONFIG_HOST_PMK
-        }
-#endif
         if (security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
         {
             bss.param.bss_config.wpa_cfg.password_length = (t_u32)password_len;
@@ -530,7 +498,6 @@ int wifi_cmd_uap_config(char *ssid,
     }
 #endif
 
-#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0 ? (t_u16)0x112c : wm_wifi.ht_cap_info;
     wm_wifi.ht_tx_cfg                = wm_wifi.ht_tx_cfg == 0 ? (t_u16)0x002c : wm_wifi.ht_tx_cfg;
 
@@ -578,7 +545,6 @@ int wifi_cmd_uap_config(char *ssid,
     bss.param.bss_config.ampdu_param = 0x03;
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
                  sizeof(bss.param.bss_config.supported_mcs_set));
-#endif
     /*
      * Note that we are leaving htcap info set to zero by default. This
      *  will ensure that 11N is disabled.
@@ -765,12 +731,7 @@ int wifi_uap_start(mlan_bss_type type,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
                    bool mfpc,
-#ifdef CONFIG_WIFI_DTIM_PERIOD
-                   bool mfpr,
-                   uint8_t dtim
-#else
                    bool mfpr
-#endif
 )
 {
     wuap_d("Configuring");
@@ -779,11 +740,7 @@ int wifi_uap_start(mlan_bss_type type,
         wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, (t_u8)channel,
                             scan_chan_list, wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
                             wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
-#ifdef CONFIG_WIFI_DTIM_PERIOD
-                            dtim == 0 ? UAP_DTIM_PERIOD : dtim,
-#else
                             UAP_DTIM_PERIOD,
-#endif
                             wm_wifi.chan_sw_count, type);
 
     if (rv != WM_SUCCESS)
@@ -794,9 +751,6 @@ int wifi_uap_start(mlan_bss_type type,
 
     if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA3_SAE ||
          security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
-#ifdef CONFIG_OWE
-         || security == WLAN_SECURITY_OWE_ONLY
-#endif
          ) &&
         mfpc)
     {
@@ -1465,84 +1419,3 @@ static int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
     return wm_wifi.cmd_resp_status;
 }
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
-{
-    t_u8 *buffer  = NULL;
-    t_u16 cmd_len = 0;
-    t_u16 buf_len = MRVDRV_SIZE_OF_CMD_BUFFER;
-
-    HostCmd_DS_GEN *cmd_buf           = NULL;
-    MrvlIEtypes_mac_filter_t *tlv     = NULL;
-    HostCmd_DS_SYS_CONFIG *sys_config = NULL;
-
-    /* Initialize the command length */
-    if (filter_mode == 0)
-    {
-        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
-                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + (WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
-    }
-    else
-    {
-        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
-                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + mac_count * MLAN_MAC_ADDR_LENGTH;
-    }
-
-    /* Initialize the command buffer */
-    buffer = (t_u8 *)os_mem_alloc(buf_len);
-    if (!buffer)
-    {
-        wuap_e("ERR:Cannot allocate buffer for command!\r\n");
-        return WM_FAIL;
-    }
-
-    memset(buffer, 0, buf_len);
-
-    /* Locate headers */
-    cmd_buf    = (HostCmd_DS_GEN *)buffer;
-    sys_config = (HostCmd_DS_SYS_CONFIG *)(buffer + sizeof(HostCmd_DS_GEN));
-    tlv        = (MrvlIEtypes_mac_filter_t *)(buffer + sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1));
-
-    /* Fill the command buffer */
-    cmd_buf->command = HOST_CMD_APCMD_SYS_CONFIGURE;
-    cmd_buf->size    = cmd_len;
-    cmd_buf->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
-    cmd_buf->result  = 0;
-
-    sys_config->action = HostCmd_ACT_GEN_SET;
-
-    tlv->count       = mac_count;
-    tlv->filter_mode = filter_mode;
-    tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_STA_MAC_ADDR_FILTER);
-
-    if (tlv->count)
-    {
-        tlv->header.len = tlv->count * MLAN_MAC_ADDR_LENGTH + 2;
-        (void)memcpy(tlv->mac_address, mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
-    }
-    else
-    {
-        tlv->header.len = WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH + 2;
-    }
-
-    if (is_uap_started())
-    {
-        wuap_e("down the uap before setting sta filter\n\r");
-        os_mem_free(buffer);
-        return WM_FAIL;
-    }
-
-    wifi_get_command_lock();
-
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-
-    (void)memcpy((t_u8 *)cmd, cmd_buf, cmd_len);
-
-    wifi_wait_for_cmdresp(NULL);
-
-    os_mem_free(buffer);
-
-    return WM_SUCCESS;
-}
-
-#endif

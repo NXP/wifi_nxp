@@ -142,9 +142,6 @@ int dhcp_server_lease_timeout(uint32_t val)
  */
 static unsigned int next_yiaddr(void)
 {
-#ifdef CONFIG_DHCP_SERVER_DEBUG
-    struct in_addr ip;
-#endif
     uint32_t new_ip;
     struct bootp_header *hdr = (struct bootp_header *)(void *)dhcps.msg;
 
@@ -169,11 +166,6 @@ static unsigned int next_yiaddr(void)
         }
     }
 
-#ifdef CONFIG_DHCP_SERVER_DEBUG
-    ip.s_addr = new_ip;
-    dhcp_d("New client IP will be %s", inet_ntoa(ip));
-    ip.s_addr = dhcps.my_ip & dhcps.netmask;
-#endif
 
     return new_ip;
 }

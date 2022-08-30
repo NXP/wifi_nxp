@@ -100,7 +100,6 @@ static void wlan_pmfcfg_get(int argc, char *argv[])
     }
 }
 
-#ifndef STREAM_2X2
 static void dump_wlan_set_antcfg_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -195,7 +194,6 @@ static void wlan_antcfg_get(int argc, char *argv[])
         dump_wlan_get_antcfg_usage();
     }
 }
-#endif
 
 static void dump_wlan_set_ed_mac_mode_usage(void)
 {
@@ -748,14 +746,8 @@ if (ds_rate.param.rate_cfg.rate_format > 1U)
     }
 
     if (((ds_rate.param.rate_cfg.rate_format == 0U) && (ds_rate.param.rate_cfg.rate_index > 11U))
-#ifdef CONFIG_11N
         || ((ds_rate.param.rate_cfg.rate_format == 1U) && (ds_rate.param.rate_cfg.rate_index != 32U) &&
-#ifdef STREAM_2X2
-            (ds_rate.param.rate_cfg.rate_index > 15U))
-#else
             (ds_rate.param.rate_cfg.rate_index > 7U))
-#endif
-#endif /* CONFIG_11N */
     )
     {
         (void)PRINTF("Invalid index selection\r\n");
@@ -1186,10 +1178,8 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-data-rate", NULL, test_wlan_get_data_rate},
     {"wlan-set-pmfcfg", "<mfpc> <mfpr>", wlan_pmfcfg_set},
     {"wlan-get-pmfcfg", NULL, wlan_pmfcfg_get},
-#ifndef STREAM_2X2
     {"wlan-set-antcfg", "<ant mode> [evaluate_time]", wlan_antcfg_set},
     {"wlan-get-antcfg", NULL, wlan_antcfg_get},
-#endif
 #ifdef CONFIG_5GHz_SUPPORT
     {"wlan-set-ed-mac-mode", "<ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>", wlan_ed_mac_mode_set},
 #else

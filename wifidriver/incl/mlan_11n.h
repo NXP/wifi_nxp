@@ -28,12 +28,6 @@ void wlan_show_dot11ndevcap(pmlan_adapter pmadapter, t_u32 cap);
 /** Print the 802.11n device MCS */
 void wlan_show_devmcssupport(pmlan_adapter pmadapter, t_u8 support);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** Handle the command response of a delete block ack request */
-mlan_status wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp);
-/** Handle the command response of an add block ack request */
-mlan_status wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMMAND *resp);
-#endif /* CONFIG_MLAN_sdk */
 
 /** Handle the command response of 11ncfg command */
 mlan_status wlan_ret_11n_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
@@ -42,12 +36,10 @@ mlan_status wlan_cmd_11n_cfg(IN pmlan_private pmpriv,
                              IN HostCmd_DS_COMMAND *cmd,
                              IN t_u16 cmd_action,
                              IN t_void *pdata_buf);
-#ifdef STA_SUPPORT
 /** Append the 802_11N tlv */
 t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer);
 /** wlan fill HT cap tlv */
 void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, mlan_band_def band);
-#endif /* STA_SUPPORT */
 /** Miscellaneous configuration handler */
 mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 /** Delete Tx BA stream table entry */
@@ -57,27 +49,13 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv);
 /** Get Tx BA stream table */
 TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** Create Tx BA stream table */
-void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Send ADD BA request */
 int wlan_send_addba(mlan_private *priv, int tid, t_u8 *peer_mac);
 /** Send DEL BA request */
-#ifndef CONFIG_MLAN_WMSDK
-int wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator);
-#endif
 /** This function handles the command response of delete a block ack request*/
 void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** get rx reorder table */
-int wlan_get_rxreorder_tbl(mlan_private *priv, rx_reorder_tbl *buf);
-
-/** get tx ba stream table */
-int wlan_get_txbastream_tbl(mlan_private *priv, tx_ba_stream_tbl *buf);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Minimum number of AMSDU */
 #define MIN_NUM_AMSDU 2
@@ -88,10 +66,6 @@ mlan_status wlan_cmd_recfg_tx_buf(mlan_private *priv, HostCmd_DS_COMMAND *cmd, i
 /** AMSDU aggr control cmd */
 mlan_status wlan_cmd_amsdu_aggr_ctrl(mlan_private *priv, HostCmd_DS_COMMAND *cmd, int cmd_action, void *pdata_buf);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** clean up txbastream_tbl */
-void wlan_11n_cleanup_txbastream_tbl(mlan_private *priv, t_u8 *ra);
-#endif
 /**
  *  @brief This function checks whether a station has 11N enabled or not
  *
@@ -227,10 +201,8 @@ INLINE
 static t_u8
 wlan_is_ampdu_allowed(mlan_private * priv, raListTbl * ptr, int tid)
 {
-#ifdef UAP_SUPPORT
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
         return is_station_ampdu_allowed(priv, ptr, tid);
-#endif /* UAP_SUPPORT */
     if (priv->sec_info.wapi_enabled && !priv->sec_info.wapi_key_on)
         return MFALSE;
 
@@ -277,7 +249,6 @@ INLINE
 static t_u8
 wlan_is_amsdu_allowed(mlan_private * priv, raListTbl * ptr, int tid)
 {
-#ifdef UAP_SUPPORT
     sta_node *sta_ptr = MNULL;
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) {
         if ((sta_ptr = wlan_get_station_entry(priv, ptr->ra))) {
@@ -285,7 +256,6 @@ wlan_is_amsdu_allowed(mlan_private * priv, raListTbl * ptr, int tid)
                 return MFALSE;
         }
     }
-#endif /* UAP_SUPPORT */
 #define TXRATE_BITMAP_INDEX_MCS0_7 2
     return (((priv->aggr_prio_tbl[tid].amsdu != BA_STREAM_NOT_ALLOWED)
              && ((priv->is_data_rate_auto)
@@ -404,7 +374,6 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
 {
     int ret = MFALSE;
     ENTER();
-#ifdef UAP_SUPPORT
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
     {
         if ((!(ra[0] & 0x01U)) && (priv->is_11n_enabled))
@@ -412,7 +381,6 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
             ret = (int)is_station_11n_enabled(priv, ra);
         }
     }
-#endif /* UAP_SUPPORT */
     LEAVE();
     return ret;
 }

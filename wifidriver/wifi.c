@@ -32,11 +32,7 @@
  * MAX_EVENTS = 10 is fairly big value */
 #define MAX_EVENTS    20
 #define MAX_MCAST_LEN (MLAN_MAX_MULTICAST_LIST_SIZE * MLAN_MAC_ADDR_LENGTH)
-#ifdef CONFIG_WiFi_878x
-#define MAX_WAIT_TIME 20
-#else
 #define MAX_WAIT_TIME 35
-#endif
 
 #ifndef USB_SUPPORT_ENABLE
 #define _T(x) x
@@ -61,13 +57,9 @@ SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFF
 static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
-#ifdef CONFIG_STA_AMPDU_TX
 bool sta_ampdu_tx_enable = true;
-#endif
 
-#ifdef CONFIG_STA_AMPDU_RX
 bool sta_ampdu_rx_enable = true;
-#endif
 
 int retry_attempts;
 wm_wifi_t wm_wifi;
@@ -79,9 +71,6 @@ typedef enum __mlan_status
     MLAN_STATUS_FW_DNLD_FAILED,
     MLAN_STATUS_FW_NOT_DETECTED,
     MLAN_STATUS_FW_NOT_READY,
-#ifdef CONFIG_XZ_DECOMPRESSION
-    MLAN_STATUS_FW_XZ_FAILED,
-#endif /* CONFIG_XZ_DECOMPRESSION */
     MLAN_CARD_CMD_TIMEOUT
 } __mlan_status;
 
@@ -883,20 +872,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     return ret;
 }
 
-#ifdef CONFIG_P2P
-void wifi_wfd_event(bool peer_event, bool action_frame, void *data)
-{
-    struct wifi_wfd_event event;
-
-    if (wm_wifi.wfd_event_queue)
-    {
-        event.peer_event   = peer_event;
-        event.action_frame = action_frame;
-        event.data         = data;
-        os_queue_send(wm_wifi.wfd_event_queue, &event, OS_NO_WAIT);
-    }
-}
-#endif
 
 void wifi_event_completion(int event, enum wifi_event_reason result, void *data)
 {
@@ -1221,25 +1196,6 @@ int wifi_unregister_event_queue(os_queue_t *event_queue)
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_P2P
-int wifi_register_wfd_event_queue(os_queue_t *event_queue)
-{
-    if (wm_wifi.wfd_event_queue)
-        return -WM_FAIL;
-
-    wm_wifi.wfd_event_queue = event_queue;
-    return WM_SUCCESS;
-}
-
-int wifi_unregister_wfd_event_queue(os_queue_t *event_queue)
-{
-    if (!wm_wifi.wfd_event_queue || wm_wifi.wfd_event_queue != event_queue)
-        return -WM_FAIL;
-
-    wm_wifi.wfd_event_queue = NULL;
-    return WM_SUCCESS;
-}
-#endif
 
 int wifi_get_wpa_ie_in_assoc(uint8_t *wpa_ie)
 {
@@ -1519,11 +1475,6 @@ int wifi_init(const uint8_t *fw_ram_start_addr, const size_t size)
             case MLAN_STATUS_FW_NOT_DETECTED:
                 ret = -WIFI_ERROR_FW_NOT_DETECTED;
                 break;
-#ifdef CONFIG_XZ_DECOMPRESSION
-            case MLAN_STATUS_FW_XZ_FAILED:
-                ret = -WIFI_ERROR_FW_XZ_FAILED;
-                break;
-#endif /* CONFIG_XZ_DECOMPRESSION */
             case MLAN_STATUS_FW_NOT_READY:
                 ret = -WIFI_ERROR_FW_NOT_READY;
                 break;
@@ -1566,11 +1517,6 @@ int wifi_init_fcc(const uint8_t *fw_ram_start_addr, const size_t size)
             case MLAN_STATUS_FW_NOT_DETECTED:
                 ret = -WIFI_ERROR_FW_NOT_DETECTED;
                 break;
-#ifdef CONFIG_XZ_DECOMPRESSION
-            case MLAN_STATUS_FW_XZ_FAILED:
-                ret = -WIFI_ERROR_FW_XZ_FAILED;
-                break;
-#endif /* CONFIG_XZ_DECOMPRESSION */
             case MLAN_STATUS_FW_NOT_READY:
                 ret = -WIFI_ERROR_FW_NOT_READY;
                 break;
@@ -1603,7 +1549,6 @@ void wifi_set_packet_retry_count(const int count)
     retry_attempts = count;
 }
 
-#ifdef CONFIG_STA_AMPDU_TX
 void wifi_sta_ampdu_tx_enable(void)
 {
     sta_ampdu_tx_enable = true;
@@ -1613,17 +1558,7 @@ void wifi_sta_ampdu_tx_disable(void)
 {
     sta_ampdu_tx_enable = false;
 }
-#else
-void wifi_sta_ampdu_tx_enable(void)
-{
-}
 
-void wifi_sta_ampdu_tx_disable(void)
-{
-}
-#endif /* CONFIG_STA_AMPDU_TX */
-
-#ifdef CONFIG_STA_AMPDU_RX
 void wifi_sta_ampdu_rx_enable(void)
 {
     sta_ampdu_rx_enable = true;
@@ -1633,15 +1568,6 @@ void wifi_sta_ampdu_rx_disable(void)
 {
     sta_ampdu_rx_enable = false;
 }
-#else
-void wifi_sta_ampdu_rx_enable(void)
-{
-}
-
-void wifi_sta_ampdu_rx_disable(void)
-{
-}
-#endif /* CONFIG_STA_AMPDU_RX */
 
 int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t interface,
                                                                    const uint8_t *buffer,
@@ -2015,7 +1941,6 @@ retry_xmit:
         }
     }
 #endif
-#ifdef CONFIG_STA_AMPDU_TX
     if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable)
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
@@ -2027,9 +1952,7 @@ retry_xmit:
 #endif
         }
     }
-#endif
 
-#ifdef CONFIG_UAP_AMPDU_TX
     if (interface == BSS_TYPE_UAP)
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
@@ -2037,7 +1960,6 @@ retry_xmit:
             (void)wrapper_wlan_upa_ampdu_enable((uint8_t *)buffer);
         }
     }
-#endif
 
     ret = WM_SUCCESS;
 exit_fn:

@@ -10,10 +10,6 @@
 
 #include <mlan_sdio_api.h>
 
-#if defined(CONFIG_XZ_DECOMPRESSION)
-#include <xz.h>
-#include <decompress.h>
-#endif /* CONFIG_XZ_DECOMPRESSION */
 
 /* Additional WMSDK header files */
 #include "mlan_main_defs.h"

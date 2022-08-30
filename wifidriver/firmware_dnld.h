@@ -18,11 +18,7 @@
 #define SDIO_OUTBUF_LEN 2048U
 
 /** The number of times to try when polling for status bits */
-#if defined(SD8997)
-#define MAX_POLL_TRIES 10000U
-#else
 #define MAX_POLL_TRIES 100U
-#endif
 
 /** Firmware ready */
 #define FIRMWARE_READY 0xfedcU

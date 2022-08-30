@@ -428,8 +428,5 @@ void net_ipv6stack_init(struct netif *netif);
  */
 void net_stat(void);
 
-#ifdef CONFIG_P2P
-int netif_get_bss_type();
-#endif
 
 #endif /* _WM_NET_H_ */

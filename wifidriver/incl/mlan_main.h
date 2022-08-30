@@ -312,46 +312,6 @@ extern t_u32 drvdbg;
              (t_u64)(((t_u64)(x)&0x000000ff00000000ULL) >> 8) | (t_u64)(((t_u64)(x)&0x0000ff0000000000ULL) >> 24) |  \
              (t_u64)(((t_u64)(x)&0x00ff000000000000ULL) >> 40) | (t_u64)(((t_u64)(x)&0xff00000000000000ULL) >> 56)))
 
-#ifdef BIG_ENDIAN_SUPPORT
-/** Convert ulong n/w to host */
-#define mlan_ntohl(x) x
-/** Convert host ulong to n/w */
-#define mlan_htonl(x) x
-/** Convert n/w to host */
-#define mlan_ntohs(x) x
-/** Convert host to n/w */
-#define mlan_htons(x) x
-/** Convert from 16 bit little endian format to CPU format */
-#define wlan_le16_to_cpu(x) swap_byte_16(x)
-/** Convert from 32 bit little endian format to CPU format */
-#define wlan_le32_to_cpu(x) swap_byte_32(x)
-/** Convert from 64 bit little endian format to CPU format */
-#define wlan_le64_to_cpu(x) swap_byte_64(x)
-/** Convert to 16 bit little endian format from CPU format */
-#define wlan_cpu_to_le16(x) swap_byte_16(x)
-/** Convert to 32 bit little endian format from CPU format */
-#define wlan_cpu_to_le32(x) swap_byte_32(x)
-/** Convert to 64 bit little endian format from CPU format */
-#define wlan_cpu_to_le64(x) swap_byte_64(x)
-
-/** Convert TxPD to little endian format from CPU format */
-#define endian_convert_TxPD(x)                                     \
-    {                                                              \
-        (x)->tx_pkt_length = wlan_cpu_to_le16((x)->tx_pkt_length); \
-        (x)->tx_pkt_offset = wlan_cpu_to_le16((x)->tx_pkt_offset); \
-        (x)->tx_pkt_type   = wlan_cpu_to_le16((x)->tx_pkt_type);   \
-        (x)->tx_control    = wlan_cpu_to_le32((x)->tx_control);    \
-    }
-
-/** Convert RxPD from little endian format to CPU format */
-#define endian_convert_RxPD(x)                                     \
-    {                                                              \
-        (x)->rx_pkt_length = wlan_le16_to_cpu((x)->rx_pkt_length); \
-        (x)->rx_pkt_offset = wlan_le16_to_cpu((x)->rx_pkt_offset); \
-        (x)->rx_pkt_type   = wlan_le16_to_cpu((x)->rx_pkt_type);   \
-        (x)->seq_num       = wlan_le16_to_cpu((x)->seq_num);       \
-    }
-#else
 /** Convert ulong n/w to host */
 #define mlan_ntohl(x)       swap_byte_32(x)
 /** Convert host ulong to n/w */
@@ -383,7 +343,6 @@ extern t_u32 drvdbg;
     do                         \
     {                          \
     } while (false)
-#endif /* BIG_ENDIAN_SUPPORT */
 
 /** Global moal_assert_callback */
 extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
@@ -417,10 +376,8 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Maximum event buffer size */
 #define MAX_P2P_EVENT_SIZE 512
 
-#ifdef STA_SUPPORT
 /** Maximum buffer size for ARP filter */
 #define ARP_FILTER_MAX_BUF_SIZE 68
-#endif /* STA_SUPPORT */
 
 /** 60 seconds */
 #define MRVDRV_TIMER_60S 60000
@@ -547,15 +504,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Type event */
 #define MLAN_TYPE_EVENT 3U
 
-#ifdef SDIO_MULTI_PORT_TX_AGGR
-/** Multi port TX aggregation buffer size */
-#define SDIO_MP_TX_AGGR_DEF_BUF_SIZE (16384) /* 16K */
-#endif                                       /* SDIO_MULTI_PORT_TX_AGGR */
 
-#ifdef SDIO_MULTI_PORT_RX_AGGR
-/** Multi port RX aggregation buffer size */
-#define SDIO_MP_RX_AGGR_DEF_BUF_SIZE (16384) /* 16K */
-#endif                                       /* SDIO_MULTI_PORT_RX_AGGR */
 
 /** High threshold at which to start drop packets */
 #define RX_HIGH_THRESHOLD 1024
@@ -919,7 +868,6 @@ typedef struct
     t_bool tx_disabled;
 } wlan_11h_interface_state_t;
 
-#if defined(UAP_SUPPORT)
 /** UAP get info callback state kept in the 'mlan_private' driver structure */
 typedef struct
 {
@@ -940,7 +888,6 @@ typedef struct
      */
     t_u16 max_sta_count;
 } wlan_uap_get_info_cb_t;
-#endif
 
 /** Data structure for WPS information */
 typedef struct
@@ -957,11 +904,9 @@ typedef struct _mlan_private *pmlan_private;
 /* 802.11D related structs */
 typedef struct
 {
-#ifdef STA_SUPPORT
     mlan_status (*wlan_11d_prepare_dnld_domain_info_cmd_p)(mlan_private *pmpriv);
     mlan_status (*wlan_11d_create_dnld_countryinfo_p)(mlan_private *pmpriv, mlan_band_def band);
     mlan_status (*wlan_11d_parse_dnld_countryinfo_p)(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc);
-#endif
 } wlan_11d_fn_t;
 
 typedef struct _mlan_adapter *pmlan_adapter;
@@ -981,12 +926,6 @@ typedef struct
 /** mlan_operations data structure */
 typedef struct _mlan_operations
 {
-#ifndef CONFIG_MLAN_WMSDK
-    /** cmd init handler */
-    mlan_status (*init_cmd)(IN t_void *priv, IN t_u8 first_bss);
-    /** ioctl handler */
-    mlan_status (*ioctl)(t_void *adapter, pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
     /** cmd handler */
     mlan_status (*prepare_cmd)(IN t_void *priv,
                                IN t_u16 cmd_no,
@@ -995,18 +934,8 @@ typedef struct _mlan_operations
                                IN t_void *pioctl_buf,
                                IN t_void *pdata_buf,
                                IN t_void *pcmd_buf);
-#ifndef CONFIG_MLAN_WMSDK
-    /** cmdresp handler */
-    mlan_status (*process_cmdresp)(IN t_void *priv, IN t_u16 cmdresp_no, IN t_void *pcmd_buf, IN t_void *pioctl);
-#endif /* CONFIG_MLAN_WMSDK */
     /** rx handler */
     mlan_status (*process_rx_packet)(IN t_void *adapter, IN pmlan_buffer pmbuf);
-#ifndef CONFIG_MLAN_WMSDK
-    /** event handler */
-    mlan_status (*process_event)(IN t_void *priv);
-    /** txpd handler */
-    t_void *(*process_txpd)(IN t_void *priv, IN pmlan_buffer pmbuf);
-#endif /* CONFIG_MLAN_WMSDK */
     /** BSS role */
     mlan_bss_role bss_role;
 } mlan_operations;
@@ -1030,10 +959,6 @@ struct _mlan_private
     t_u8 frame_type;
     /** MAC address information */
     t_u8 curr_addr[MLAN_MAC_ADDR_LENGTH];
-#ifdef CONFIG_P2P
-    /** P2P MAC address information */
-    t_u8 curr_p2p_addr[MLAN_MAC_ADDR_LENGTH];
-#endif
     /** Media connection status */
     t_bool media_connected;
 
@@ -1081,20 +1006,14 @@ struct _mlan_private
 
     /** max amsdu size */
     t_u16 max_amsdu;
-#ifdef UAP_SUPPORT
     /** UAP 11n flag */
     t_u8 is_11n_enabled;
     /** UAP 11ac flag */
     t_u8 is_11ac_enabled;
-#endif /* UAP_SUPPORT */
-#ifdef UAP_SUPPORT
-#endif /* UAP_SUPPORT */
-#ifdef UAP_SUPPORT
     /** packet forward control */
     t_u8 pkt_fwd;
     /**  dropped pkts */
     t_u32 num_drop_pkts;
-#endif
     /** TX beamforming capability */
     t_u32 tx_bf_cap;
     /** Rx PD rate */
@@ -1152,12 +1071,10 @@ struct _mlan_private
     t_u8 adhoc_is_link_sensed;
     /** AdHoc operating state */
     t_u8 adhoc_state;
-#if defined(STA_SUPPORT)
     /** AdHoc operating state backup */
     t_u8 adhoc_state_prev;
     /** AdHoc previous ssid used for Start */
     mlan_802_11_ssid adhoc_last_start_ssid;
-#endif
     /** FSM variable for 11d support */
     wlan_802_11d_state_t state_11d;
     /** 11d function pointer */
@@ -1166,12 +1083,10 @@ struct _mlan_private
     wlan_11d_apis_t *support_11d_APIs;
     /** FSM variable for 11h support */
     wlan_11h_interface_state_t intf_state_11h;
-#if defined(UAP_SUPPORT)
     /** Whether UAP interface has started */
     t_bool uap_bss_started;
     /** state variable for UAP Get Info callback */
     wlan_uap_get_info_cb_t uap_state_chan_cb;
-#endif
     /** Security related */
     /** Encryption parameter */
     wlan_802_11_security_t sec_info;
@@ -1187,22 +1102,6 @@ struct _mlan_private
     t_u8 wpa_ie_len;
     /** GTK set flag */
     t_u8 wpa_is_gtk_set;
-#ifndef CONFIG_MLAN_WMSDK
-#ifdef KEY_PARAM_SET_V2
-    mlan_ds_encrypt_key aes_key;
-#else
-    /** AES key material */
-    HostCmd_DS_802_11_KEY_MATERIAL aes_key;
-#endif /* KEY_PARAM_SET_V2 */
-    /** WAPI IE */
-    t_u8 wapi_ie[256];
-    /** WAPI IE length */
-    t_u8 wapi_ie_len;
-    /** Pointer to the station table */
-    mlan_list_head sta_list;
-    /** MGMT IE */
-    custom_ie mgmt_ie[MAX_MGMT_IE_INDEX];
-#endif /* CONFIG_MLAN_WMSDK */
     /** mgmt frame passthru mask */
     t_u32 mgmt_frame_passthru_mask;
     /** Advanced Encryption Standard */
@@ -1237,35 +1136,10 @@ struct _mlan_private
     /** Lock for Rx packets */
     t_void *rx_pkt_lock;
 
-#ifdef STA_SUPPORT
-#ifndef CONFIG_MLAN_WMSDK
-    /** Buffer to store the association response for application retrieval */
-    t_u8 assoc_rsp_buf[MRVDRV_ASSOC_RSP_BUF_SIZE];
-    /** Length of the data stored in assoc_rsp_buf */
-    t_u32 assoc_rsp_size;
-
-    /** Generic IEEE IEs passed from the application to be inserted into the
-     *    association request to firmware
-     */
-    t_u8 gen_ie_buf[MRVDRV_GENIE_BUF_SIZE];
-    /** Length of the data stored in gen_ie_buf */
-    t_u8 gen_ie_buf_len;
-
-    t_u8 *pcurr_bcn_buf;
-    t_u32 curr_bcn_size;
-    t_void *curr_bcn_buf_lock;
-    /** WPS */
-    wps_t wps;
-#endif /* CONFIG_MLAN_WMSDK */
-#endif /* STA_SUPPORT */
 
     /** function table */
     mlan_operations ops;
 
-#ifdef CONFIG_ENABLE_802_11K
-    /** 11k flag */
-    t_u8 enable_11k;
-#endif
 
     /** Port Control mode */
     t_u8 port_ctrl_mode;
@@ -1553,20 +1427,6 @@ typedef struct
     mlan_private *priv_list[MLAN_MAX_BSS_NUM];
 } wlan_radar_det_hndlg_state_t;
 
-#ifdef DFS_TESTING_SUPPORT
-/** DFS/RDH testing exception settings kept in 'mlan_adapter' */
-typedef struct
-{
-    /** user-configured CAC period (in msec) */
-    t_u16 user_cac_period_msec;
-    /** user-configured NOP period (in sec) */
-    t_u16 user_nop_period_sec;
-    /** user-configured skip channel change on radar */
-    t_bool no_channel_change_on_radar;
-    /** user-configured new channel to change to on radar */
-    t_u8 fixed_new_channel_on_radar;
-} wlan_dfs_testing_settings_t;
-#endif /* DFS_SUPPORT_TESTING */
 
 /**
  * @brief Driver measurement state held in 'mlan_adapter' structure
@@ -1589,102 +1449,16 @@ typedef struct
 
 } wlan_meas_state_t;
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
-/** Tx Per Tracking Structure
- * Driver sets tx per tracking statistic to fw.
- * Fw will check tx packet error rate periodically and
- * report PER to host if per is high.
- */
-typedef struct
-{
-    /** Enable/Disable tx per tracking */
-    t_u8 tx_pert_check;
-    /** Check period(unit sec) */
-    t_u8 tx_pert_check_peroid;
-    /** (Fail TX packet)/(Total TX packet) ratio(unit 10%)
-     * default: 5
-     */
-    t_u8 tx_pert_check_ratio;
-    /** A watermark of check number(default 5) */
-    t_u16 tx_pert_check_num;
-} tx_pert_info;
-#endif
 
-#ifdef SDIO_MULTI_PORT_TX_AGGR
-/** data structure for SDIO MPA TX */
-typedef struct _sdio_mpa_tx
-{
-    /** allocated buf for tx aggreation */
-    t_u8 *head_ptr;
-    /** multiport tx aggregation buffer pointer */
-    t_u8 *buf;
-    /** multiport tx aggregation buffer length */
-    t_u32 buf_len;
-    /** multiport tx aggregation packet count */
-    t_u32 pkt_cnt;
-    /** multiport tx aggregation ports */
-    t_u32 ports;
-    /** multiport tx aggregation starting port */
-    t_u16 start_port;
-    /** multiport tx aggregation enable/disable flag */
-    t_u8 enabled;
-    /** multiport tx aggregation buffer size */
-    t_u32 buf_size;
-    /** multiport tx aggregation pkt aggr limit */
-    t_u32 pkt_aggr_limit;
-} sdio_mpa_tx;
-#endif
 
-#ifdef SDIO_MULTI_PORT_RX_AGGR
-/** data structure for SDIO MPA RX */
-typedef struct _sdio_mpa_rx
-{
-    /** allocated buf for rx aggreation */
-    t_u8 *head_ptr;
-    /** multiport rx aggregation buffer pointer */
-    t_u8 *buf;
-    /** multiport rx aggregation buffer length */
-    t_u32 buf_len;
-    /** multiport rx aggregation packet count */
-    t_u32 pkt_cnt;
-    /** multiport rx aggregation ports */
-    t_u32 ports;
-    /** multiport rx aggregation starting port */
-    t_u16 start_port;
-
-    /** multiport rx aggregation mbuf array */
-    pmlan_buffer mbuf_arr[SDIO_MP_AGGR_DEF_PKT_LIMIT];
-    /** multiport rx aggregation pkt len array */
-    t_u32 len_arr[SDIO_MP_AGGR_DEF_PKT_LIMIT];
-
-    /** multiport rx aggregation enable/disable flag */
-    t_u8 enabled;
-    /** multiport rx aggregation buffer size */
-    t_u32 buf_size;
-    /** multiport rx aggregation pkt aggr limit */
-    t_u32 pkt_aggr_limit;
-} sdio_mpa_rx;
-#endif /* SDIO_MULTI_PORT_RX_AGGR */
 
 /** mlan_init_para structure */
 typedef struct _mlan_init_para
 {
-#ifdef WIFI_CALIB_CMD_SUPPORT
-    /** WiFi Calibration mode */
-    t_u32 wifi_calib_mode;
-#endif
     /** SDIO interrupt mode (0: INT_MODE_SDIO, 1: INT_MODE_GPIO) */
     t_u32 int_mode;
     /** GPIO interrupt pin number */
     t_u32 gpio_pin;
-#ifdef SDIO_MULTI_PORT_TX_AGGR
-    /** SDIO MPA Tx */
-    t_u32 mpa_tx_cfg;
-#endif
-#ifdef SDIO_MULTI_PORT_RX_AGGR
-    /** SDIO MPA Rx */
-    t_u32 mpa_rx_cfg;
-#endif
     /** Auto deep sleep */
     t_u32 auto_ds;
     /** IEEE PS mode */
@@ -1710,40 +1484,14 @@ struct _mlan_adapter
     pmlan_private priv[MLAN_MAX_BSS_NUM];
     /** Total number of Priv number */
     t_u8 priv_num;
-#ifndef CONFIG_MLAN_WMSDK
-    /** Priority table for bss */
-    mlan_bssprio_tbl bssprio_tbl[MLAN_MAX_BSS_NUM];
-    /** Callback table */
-#endif /* CONFIG_MLAN_WMSDK */
     mlan_callbacks callbacks;
     /** Init parameters */
     mlan_init_para init_para;
 
-#ifndef CONFIG_MLAN_WMSDK
-    /** mlan_lock for init/shutdown */
-    t_void *pmlan_lock;
-    /** main_proc_lock for main_process */
-    t_void *pmain_proc_lock;
-    /** mlan_processing */
-    t_u32 mlan_processing;
-    /** Max tx buf size */
-    t_u16 max_tx_buf_size;
-    /** Tx buf size */
-    t_u16 tx_buf_size;
-    /** current tx buf size in fw */
-    t_u16 curr_tx_buf_size;
-#endif /* CONFIG_MLAN_WMSDK */
     /** IO port */
     t_u32 ioport;
     /** STATUS variables */
     WLAN_HARDWARE_STATUS hw_status;
-#ifndef CONFIG_MLAN_WMSDK
-    /** PnP SUPPORT */
-    t_u8 surprise_removed;
-
-    /** Radio on flag */
-    t_u16 radio_on;
-#endif /* CONFIG_MLAN_WMSDK */
     /** Firmware release number */
     t_u32 fw_release_number;
 
@@ -1778,87 +1526,11 @@ struct _mlan_adapter
     /** ECSA support */
     t_u8 ecsa_enable;
 
-#ifndef CONFIG_MLAN_WMSDK
-#ifdef SDIO_MULTI_PORT_TX_AGGR
-    /** data structure for SDIO MPA TX */
-    sdio_mpa_tx mpa_tx;
-#endif /* SDIO_MULTI_PORT_TX_AGGR */
-
-#ifdef SDIO_MULTI_PORT_RX_AGGR
-    /** data structure for SDIO MPA RX */
-    sdio_mpa_rx mpa_rx;
-#endif /* SDIO_MULTI_PORT_RX_AGGR */
-
-    /** SDIO interrupt mode (0: INT_MODE_SDIO, 1: INT_MODE_GPIO) */
-    t_u32 int_mode;
-    /** GPIO interrupt pin number */
-    t_u32 gpio_pin;
-
-    /** Event cause */
-    t_u32 event_cause;
-    /** Event buffer */
-    pmlan_buffer pmlan_buffer_event;
-    /** Upload length */
-    t_u32 upld_len;
-    /** Upload buffer*/
-    t_u8 upld_buf[WLAN_UPLD_SIZE];
-    /** Data sent:
-     *       TRUE - Data is sent to fw, no Tx Done received
-     *       FALSE - Tx done received for previous Tx
-     */
-    t_u8 data_sent;
-#endif /* CONFIG_MLAN_WMSDK */
     /** CMD sent:
      *       TRUE - CMD is sent to fw, no CMD Done received
      *       FALSE - CMD done received for previous CMD
      */
     t_u8 cmd_sent;
-#ifndef CONFIG_MLAN_WMSDK
-    /** CMD Response received:
-     *       TRUE - CMD is response is received from fw, and yet to process
-     *       FALSE - No cmd response to process
-     */
-    t_u8 cmd_resp_received;
-    /** Event received:
-     *       TRUE - Event received from fw, and yet to process
-     *       FALSE - No events to process
-     */
-    t_u8 event_received;
-
-    /** Data received:
-     *       TRUE - Data received from fw
-     *       FALSE - No Data received
-     */
-    t_u8 data_received;
-
-    /** Command-related variables */
-    /** Command sequence number */
-    t_u16 seq_num;
-    /** Command controller nodes */
-    cmd_ctrl_node *cmd_pool;
-    /** Current Command */
-    cmd_ctrl_node *curr_cmd;
-    /** mlan_lock for command */
-    t_void *pmlan_cmd_lock;
-    /** Number of command timeouts */
-    t_u32 num_cmd_timeout;
-    /** Last init fw command id */
-    t_u16 last_init_cmd;
-    /** Command timer */
-    t_void *pmlan_cmd_timer;
-    /** Command timer set flag */
-    t_u8 cmd_timer_is_set;
-
-    /** Command Queues */
-    /** Free command buffers */
-    mlan_list_head cmd_free_q;
-    /** Pending command buffers */
-    mlan_list_head cmd_pending_q;
-    /** Command queue for scanning */
-    mlan_list_head scan_pending_q;
-    /** mlan_processing */
-    t_u32 scan_processing;
-#endif /* CONFIG_MLAN_WMSDK */
     /** Region code */
     t_u16 region_code;
     /** Region Channel data */
@@ -1867,12 +1539,10 @@ struct _mlan_adapter
     t_u8 cfp_code_bg;
     /** CFP table code for 5GHz */
     t_u8 cfp_code_a;
-#ifdef STA_SUPPORT
     /** Universal Channel data */
     region_chan_t universal_channel[MAX_REGION_CHANNEL_NUM];
     /** Parsed region channel */
     parsed_region_chan_11d_t parsed_region_chan;
-#endif /* STA_SUPPORT */
     /** 11D and Domain Regulatory Data */
     wlan_802_11d_domain_reg_t domain_reg;
     /** Country Code */
@@ -1883,10 +1553,6 @@ struct _mlan_adapter
     wlan_dfs_device_state_t state_dfs;
     /** FSM variable for RDH support */
     wlan_radar_det_hndlg_state_t state_rdh;
-#ifdef DFS_TESTING_SUPPORT
-    /** User configured settings for DFS testing */
-    wlan_dfs_testing_settings_t dfs_test_params;
-#endif
     /** FSM variable for MEAS support */
     wlan_meas_state_t state_meas;
     /** Scan table */
@@ -1899,10 +1565,6 @@ struct _mlan_adapter
     t_u32 num_in_scan_table;
     /** Scan probes */
     t_u16 scan_probes;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
-    /** Rssi threshold */
-    t_s16 rssi_threshold;
-#endif
 
     /** Scan type */
     mlan_scan_type scan_type;
@@ -1918,13 +1580,6 @@ struct _mlan_adapter
     /** Extended scan or legacy scan */
     t_u8 ext_scan;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
-    t_u16 bcn_buf_size;
-    /** Beacon buffer */
-    t_u8 *bcn_buf;
-    /** Pointer to valid beacon buffer end */
-    t_u8 *pbcn_buf_end;
-#endif /* CONFIG_MLAN_WMSDK */
     /** F/W supported bands */
     mlan_band_def fw_bands;
     /** User selected band to start adhoc network */
@@ -1933,26 +1588,6 @@ struct _mlan_adapter
     mlan_band_def config_bands;
     /** Pointer to channel list last sent to the firmware for scanning */
     ChanScanParamSet_t *pscan_channels;
-#ifndef CONFIG_MLAN_WMSDK
-    /** Tx lock flag */
-    t_u8 tx_lock_flag;
-
-    /** sleep_params_t */
-    sleep_params_t sleep_params;
-    /** sleep_period_t (Enhanced Power Save) */
-    sleep_period_t sleep_period;
-
-    /** Power Save mode */
-    /**
-     * Wlan802_11PowerModeCAM = disable
-     * Wlan802_11PowerModePSP = enable
-     */
-    t_u16 ps_mode;
-    /** Power Save state */
-    t_u32 ps_state;
-    /** Need to wakeup flag */
-    t_u8 need_to_wakeup;
-#endif /* CONFIG_MLAN_WMSDK */
     /** Multiple DTIM */
     t_u16 multiple_dtim;
     /** Local listen interval */
@@ -1960,53 +1595,16 @@ struct _mlan_adapter
     /** Null packet interval */
     t_u16 null_pkt_interval;
 
-#ifndef CONFIG_MLAN_WMSDK
-    /** Power save confirm sleep command buffer */
-    pmlan_buffer psleep_cfm;
-#endif /* CONFIG_MLAN_WMSDK */
     /** Beacon miss timeout */
     t_u16 bcn_miss_time_out;
 
     /** AdHoc awake period */
     t_u16 adhoc_awake_period;
 
-#ifndef CONFIG_MLAN_WMSDK
-    /** Deep Sleep flag */
-    t_u8 is_deep_sleep;
-    /** Idle time */
-    t_u16 idle_time;
-    /** Auto Deep Sleep enabled at init time */
-    t_u8 init_auto_ds;
-
-    /** delay null pkt flag */
-    t_u8 delay_null_pkt;
-#endif /* CONFIG_MLAN_WMSDK */
     /** Delay to PS in milliseconds */
     t_u16 delay_to_ps;
     /** Enhanced PS mode */
     t_u16 enhanced_ps_mode;
-#ifndef CONFIG_MLAN_WMSDK
-    /** Deep Sleep flag */
-    /** Device wakeup required flag */
-    t_u8 pm_wakeup_card_req;
-
-    /** Gen NULL pkg */
-    t_u16 gen_null_pkt;
-
-    /** PPS/UAPSD mode flag */
-    t_u16 pps_uapsd_mode;
-    /** Number of wakeup tries */
-    t_u32 pm_wakeup_fw_try;
-
-    /** Host Sleep configured flag */
-    t_u8 is_hs_configured;
-    /** Host Sleep configuration */
-    hs_config_param hs_cfg;
-    /** Host Sleep activated flag */
-    t_u8 hs_activated;
-    /** Event body */
-    t_u8 event_body[MAX_EVENT_SIZE];
-#endif /* CONFIG_MLAN_WMSDK */
     /** 802.11n device capabilities */
     t_u32 hw_dot_11n_dev_cap;
     /** Device support for MIMO abstraction of MCSs */
@@ -2017,12 +1615,10 @@ struct _mlan_adapter
     t_u32 usr_dot_11n_dev_cap_a;
     /** MIMO abstraction of MCSs supported by device */
     t_u8 usr_dev_mcs_support;
-#ifdef STA_SUPPORT
     /** Enable 11n support for adhoc start */
     t_u8 adhoc_11n_enabled;
     /** Adhoc Secondary Channel Bandwidth */
     t_u8 chan_bandwidth;
-#endif /* STA_SUPPORT */
 
     /** 802.11ac device capabilities */
     t_u32 hw_dot_11ac_dev_cap;
@@ -2059,36 +1655,6 @@ struct _mlan_adapter
 #endif
     /** max mgmt IE index in device */
     t_u16 max_mgmt_ie_index;
-#ifndef CONFIG_MLAN_WMSDK
-#ifdef WIFI_CALIB_CMD_SUPPORT
-    t_u32 wifi_calib_mode;
-#endif
-    /** Debug */
-    wlan_dbg dbg;
-
-    /** RX pending for forwarding packets */
-    t_u16 pending_bridge_pkts;
-
-#ifdef STA_SUPPORT
-    /** ARP filter buffer */
-    t_u8 arp_filter[ARP_FILTER_MAX_BUF_SIZE];
-    /** ARP filter buffer size */
-    t_u32 arp_filter_size;
-#endif /* STA_SUPPORT */
-
-    /** Bypass TX queue */
-    mlan_list_head bypass_txq;
-#if defined(STA_SUPPORT)
-    /** warm-reset IOCTL request buffer pointer */
-    pmlan_ioctl_req pwarm_reset_ioctl_req;
-#endif
-    /** Extended SCAN IOCTL request buffer pointer */
-    pmlan_ioctl_req pext_scan_ioctl_req;
-    /** Cal data pointer */
-    t_u8 *pcal_data;
-    /** Cal data length  */
-    t_u32 cal_data_len;
-#endif /* CONFIG_MLAN_WMSDK */
 #ifdef OTP_CHANINFO
     otp_region_info_t *otp_region;
     chan_freq_power_t *cfp_otp_bg;
@@ -2104,9 +1670,6 @@ struct _mlan_adapter
     t_u8 tx_power_table_a_cols;
 #endif
 #endif
-#ifdef CONFIG_WIFI_TX_PER_TRACK
-    tx_pert_info tx_pert;
-#endif
 };
 
 /** Ethernet packet type for EAPOL */
@@ -2118,43 +1681,14 @@ struct _mlan_adapter
 
 mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action);
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
-mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
-                                    IN HostCmd_DS_COMMAND *cmd,
-                                    IN t_u16 cmd_action,
-                                    IN t_void *pdata_buf);
-#endif
 
 mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter);
-#ifndef CONFIG_MLAN_WMSDK
-t_void wlan_free_lock_list(IN pmlan_adapter pmadapter);
-
-mlan_status wlan_init_timer(IN pmlan_adapter pmadapter);
-
-t_void wlan_free_timer(IN pmlan_adapter pmadapter);
-
-/* Function prototype */
-/** Download firmware */
-mlan_status wlan_dnld_fw(IN pmlan_adapter pmadapter, IN pmlan_fw_image pmfw);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Initialize firmware */
 mlan_status wlan_init_fw(IN pmlan_adapter pmadapter);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** Initialize firmware complete */
-mlan_status wlan_init_fw_complete(IN pmlan_adapter pmadapter);
-#endif
 
-#ifndef CONFIG_MLAN_WMSDK
-/** Shutdown firmware complete */
-mlan_status wlan_shutdown_fw_complete(IN pmlan_adapter pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 
-#ifndef CONFIG_MLAN_WMSDK
-/** Receive event */
-mlan_status wlan_recv_event(pmlan_private priv, mlan_event_id event_id, t_void *pmevent);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Initialize mlan_adapter structure */
 t_void wlan_init_adapter(IN pmlan_adapter pmadapter);
@@ -2162,10 +1696,6 @@ t_void wlan_init_adapter(IN pmlan_adapter pmadapter);
 /** Initialize mlan_private structure */
 mlan_status wlan_init_priv(IN pmlan_private priv);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** Process event */
-mlan_status wlan_process_event(pmlan_adapter pmadapter);
-#endif
 
 /** Prepare command */
 mlan_status wlan_prepare_cmd(IN pmlan_private priv,
@@ -2175,113 +1705,24 @@ mlan_status wlan_prepare_cmd(IN pmlan_private priv,
                              IN t_void *pioctl_buf,
                              IN t_void *pdata_buf);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** cmd timeout handler */
-t_void wlan_cmd_timeout_func(t_void *FunctionContext);
-/** process host cmd */
-mlan_status wlan_misc_ioctl_host_cmd(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-/** process init/shutdown cmd*/
-mlan_status wlan_misc_ioctl_init_shutdown(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-/** process debug info */
-mlan_status wlan_get_info_debug_info(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-
-#if defined(STA_SUPPORT) && defined(UAP_SUPPORT)
-/** Set/Get BSS role */
-mlan_status wlan_bss_ioctl_bss_role(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-#endif
-
-mlan_status wlan_set_ewpa_mode(mlan_private *priv, mlan_ds_passphrase *psec_pp);
-mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** Allocate memory for adapter structure members */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter);
-#ifndef CONFIG_MLAN_WMSDK
-/** Free adapter */
-t_void wlan_free_adapter(pmlan_adapter pmadapter);
-/** Free priv */
-t_void wlan_free_priv(mlan_private *pmpriv);
-/** Allocate command buffer */
-mlan_status wlan_alloc_cmd_buffer(IN mlan_adapter *pmadapter);
-/** Free command buffer */
-mlan_status wlan_free_cmd_buffer(IN mlan_adapter *pmadapter);
-/** Request command lock */
-t_void wlan_request_cmd_lock(mlan_adapter *pmadapter);
-/** Release command lock */
-t_void wlan_release_cmd_lock(mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef STA_SUPPORT
 /** Flush the scan pending queue */
 t_void wlan_flush_scan_queue(pmlan_adapter pmadapter);
-#endif
-#ifndef CONFIG_MLAN_WMSDK
-/**Cancel pending command */
-t_void wlan_cancel_all_pending_cmd(pmlan_adapter pmadapter);
-
-/**Cancel pending ioctl */
-t_void wlan_cancel_pending_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
-
-/** Insert command to free queue */
-t_void wlan_insert_cmd_to_free_q(IN mlan_adapter *pmadapter, IN cmd_ctrl_node *pcmd_node);
-
-/** Insert command to pending queue */
-t_void wlan_insert_cmd_to_pending_q(IN mlan_adapter *pmadapter, IN cmd_ctrl_node *pcmd_node, IN t_u32 addtail);
-
-/** Execute next command */
-mlan_status wlan_exec_next_cmd(mlan_adapter *pmadapter);
-
-/** Proecess command response */
-mlan_status wlan_process_cmdresp(mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Handle received packet, has extra handling for aggregate packets */
 mlan_status wlan_handle_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
-#ifndef CONFIG_MLAN_WMSDK
-/** Process transmission */
-mlan_status wlan_process_tx(pmlan_private priv, pmlan_buffer pmbuf, mlan_tx_param *tx_param);
-/** Transmit a null data packet */
-mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags);
-#endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(SDIO_MULTI_PORT_TX_AGGR) || defined(SDIO_MULTI_PORT_RX_AGGR)
-mlan_status wlan_alloc_sdio_mpa_buffers(IN mlan_adapter *pmadapter, t_u32 mpa_tx_buf_size, t_u32 mpa_rx_buf_size);
 
-mlan_status wlan_free_sdio_mpa_buffers(IN mlan_adapter *pmadapter);
-#endif
-
-#ifndef CONFIG_MLAN_WMSDK
-/** Process write data complete */
-mlan_status wlan_write_data_complete(pmlan_adapter pmlan_adapter, pmlan_buffer pmbuf, mlan_status status);
-
-/** Process receive packet complete */
-mlan_status wlan_recv_packet_complete(pmlan_adapter pmadapter, pmlan_buffer pmbuf, mlan_status status);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Clean Tx Rx queues */
 t_void wlan_clean_txrx(pmlan_private priv);
-#ifndef CONFIG_MLAN_WMSDK
-t_void wlan_add_buf_bypass_txqueue(mlan_adapter *pmadapter, pmlan_buffer pmbuf);
-t_void wlan_process_bypass_tx(mlan_adapter *pmadapter);
-t_void wlan_cleanup_bypass_txq(mlan_adapter *pmadapter);
-t_u8 wlan_bypass_tx_list_empty(mlan_adapter *pmadapter);
-/** Check if this is the last packet */
-t_u8 wlan_check_last_packet_indication(pmlan_private priv);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** function to allocate a mlan_buffer */
 pmlan_buffer wlan_alloc_mlan_buffer(mlan_adapter *pmadapter, t_u32 data_len, t_u32 head_room, t_u32 malloc_flag);
 /** function to free a mlan_buffer */
 t_void wlan_free_mlan_buffer(mlan_adapter *pmadapter, pmlan_buffer pmbuf);
 
-#ifndef CONFIG_MLAN_WMSDK
-/** command resp handler for version ext */
-mlan_status wlan_ret_ver_ext(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
-
-/** command resp handler for rx mgmt forward registration */
-mlan_status wlan_ret_rx_mgmt_ind(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
-
-/** Check Power Save condition */
-t_void wlan_check_ps_cond(mlan_adapter *pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** handle command for enhanced power save mode */
 mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
@@ -2289,69 +1730,14 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
                                     IN ENH_PS_MODES cmd_action,
                                     IN t_u16 ps_bitmap,
                                     IN t_void *pdata_buf);
-#ifndef CONFIG_MLAN_WMSDK
-/** handle command resp for enhanced power save mode */
-mlan_status wlan_ret_enh_power_mode(IN pmlan_private pmpriv,
-                                    IN HostCmd_DS_COMMAND *resp,
-                                    IN mlan_ioctl_req *pioctl_buf);
 
-/** handle commnand for cfg data */
-mlan_status wlan_cmd_cfg_data(IN pmlan_private pmpriv,
-                              IN HostCmd_DS_COMMAND *pcmd,
-                              IN t_u16 cmd_action,
-                              IN t_void *pdata_buf);
-
-/** handle command resp for cfg data */
-mlan_status wlan_ret_cfg_data(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
-
-/** Process sleep confirm command response */
-void wlan_process_sleep_confirm_resp(pmlan_adapter pmadapter, t_u8 *pbuf, t_u32 len);
-
-/** Perform hs related activities on receving the power up interrupt */
-void wlan_process_hs_config(pmlan_adapter pmadapter);
-
-mlan_status wlan_pm_reset_card(pmlan_adapter adapter);
-
-mlan_status wlan_pm_wakeup_card(pmlan_adapter pmadapter);
-#endif /* CONFIG_MLAN_WMSDK */
-#ifdef CONFIG_P2P
-mlan_status wlan_process_802dot11_mgmt_pkt(mlan_private *priv, t_u8 *payload, t_u32 payload_len);
-#endif /* CONFIG_P2P */
-
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_pm_ioctl_hscfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
 
 mlan_status wlan_cmd_remain_on_channel(IN pmlan_private pmpriv,
                                        IN HostCmd_DS_COMMAND *cmd,
                                        IN t_u16 cmd_action,
                                        IN t_void *pdata_buf);
 
-#ifdef WIFI_DIRECT_SUPPORT
-mlan_status wlan_bss_ioctl_wifi_direct_mode(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 
-mlan_status wlan_cmd_wifi_direct_mode(IN pmlan_private pmpriv,
-                                      IN HostCmd_DS_COMMAND *cmd,
-                                      IN t_u16 cmd_action,
-                                      IN t_void *pdata_buf);
-mlan_status wlan_ret_wifi_direct_mode(IN pmlan_private pmpriv,
-                                      IN HostCmd_DS_COMMAND *resp,
-                                      IN mlan_ioctl_req *pioctl_buf);
-
-mlan_status wlan_radio_ioctl_remain_chan_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-mlan_status wlan_ret_remain_on_channel(IN pmlan_private pmpriv,
-                                       IN HostCmd_DS_COMMAND *resp,
-                                       IN mlan_ioctl_req *pioctl_buf);
-#endif
-
-#ifndef CONFIG_MLAN_WMSDK
-/** get pm info */
-mlan_status wlan_get_pm_info(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-
-mlan_status wlan_radio_ioctl_radio_ctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-
-mlan_status wlan_radio_ioctl_ant_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
 
 mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
                                  IN HostCmd_DS_COMMAND *cmd,
@@ -2362,52 +1748,6 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 mlan_status wlan_rate_ioctl_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN void *pioctl);
 
-#ifndef CONFIG_MLAN_WMSDK
-t_void wlan_host_sleep_activated_event(pmlan_private priv, t_u8 activated);
-/** Handles the command response of hs_cfg */
-mlan_status wlan_ret_802_11_hs_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
-/** Sends HS_WAKEUP event to applications */
-t_void wlan_host_sleep_wakeup_event(pmlan_private priv);
-/** send adapter specific init cmd to firmware */
-mlan_status wlan_adapter_init_cmd(IN pmlan_adapter pmadapter);
-/** Hander for bgscan config command response */
-mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
-/** Ad-Hoc join */
-mlan_status wlan_adhoc_join(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN BSSDescriptor_t *pBSSDesc);
-/** Ad-Hoc start */
-mlan_status wlan_adhoc_start(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN mlan_802_11_ssid *padhoc_ssid);
-/*  Free a beacon buffer of the current bss descriptor */
-t_void wlan_free_curr_bcn(IN mlan_private *pmpriv);
-/*  Save a beacon buffer of the current bss descriptor */
-t_void wlan_save_curr_bcn(IN mlan_private *pmpriv);
-/** send init cmd to firmware for station mode */
-mlan_status wlan_ops_sta_init_cmd(IN t_void *priv, IN t_u8 first_bss);
-/** Handler for Ad-Hoc commands */
-mlan_status wlan_ret_802_11_ad_hoc(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
-/** Find best network */
-mlan_status wlan_find_best_network(IN mlan_private *pmpriv, OUT mlan_ssid_bssid *preq_ssid_bssid);
-/** fill txpd for station mode */
-t_void *wlan_ops_sta_process_txpd(IN t_void *priv, IN pmlan_buffer pmbuf);
-
-t_void wlan_2040_coex_event(pmlan_private pmpriv);
-/** Ad-Hoc start command handler */
-mlan_status wlan_cmd_802_11_ad_hoc_start(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
-/** event handler for station mode */
-mlan_status wlan_ops_sta_process_event(IN t_void *priv);
-/** Ad-Hoc command handler */
-mlan_status wlan_cmd_802_11_ad_hoc_join(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
-/** Handler for bgscan config command */
-mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
-/** Scan for specific SSID */
-mlan_status wlan_scan_specific_ssid(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN mlan_802_11_ssid *preq_ssid);
-/** Handler for bgscan query commands */
-mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
-/** Flush the scan table */
-mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
-/** Queue scan command handler */
-t_void wlan_queue_scan_cmd(IN mlan_private *pmpriv, IN cmd_ctrl_node *pcmd_node);
-#endif /* CONFIG_MLAN_WMSDK */
-#ifdef STA_SUPPORT
 /** Process received packet */
 mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
 /** ioctl handler for station mode */
@@ -2499,7 +1839,6 @@ chan_freq_power_t *wlan_find_cfp_by_band_and_freq(mlan_adapter *pmadapter, mlan_
 /** Get Tx power of channel from Channel-Frequency-Power */
 t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel);
 
-#endif /* STA_SUPPORT */
 
 /* Rate related functions */
 /** Convert index into data rate */
@@ -2518,10 +1857,6 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                                mlan_bss_mode bss_mode,
                                mlan_band_def config_bands,
                                WLAN_802_11_RATES rates);
-#ifndef CONFIG_MLAN_WMSDK
-/** Convert data rate to index */
-t_u8 wlan_data_rate_to_index(pmlan_adapter pmadapter, t_u32 rate);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Check if rate is auto */
 t_u8 wlan_is_rate_auto(mlan_private *pmpriv);
 /** Get rate index */
@@ -2531,10 +1866,6 @@ int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rateBitmap, int size);
 /** Region code index table */
 extern t_u16 region_code_index[MRVDRV_MAX_REGION_CODE];
 
-#ifndef CONFIG_MLAN_WMSDK
-/** The table to keep CFP code for BG */
-extern t_u16 cfp_code_index_bg[MRVDRV_MAX_CFP_CODE_BG];
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** The table to keep CFP code for A */
 extern t_u16 cfp_code_index_a[MRVDRV_MAX_CFP_CODE_A];
@@ -2565,10 +1896,6 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
 t_void wlan_11d_priv_init(mlan_private *pmpriv);
 /** Initialize 11D */
 t_void wlan_11d_init(mlan_adapter *pmadapter);
-#ifndef CONFIG_MLAN_WMSDK
-/** Enable 11D */
-mlan_status wlan_11d_enable(mlan_private *pmpriv, t_void *pioctl_buf, state_11d_t flag);
-#endif /* CONFIG_MLAN_WMSDK */
 /** Enable 11D support */
 t_u16 wlan_enable_11d_support(mlan_private *pmpriv);
 t_u16 wlan_11d_support_APIs(mlan_private *pmpriv);
@@ -2580,11 +1907,6 @@ t_bool wlan_11d_is_enabled(mlan_private *pmpriv);
 t_bool wlan_is_station(mlan_private *pmpriv);
 /** Command handler for 11D country info */
 mlan_status wlan_cmd_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd, t_u16 cmd_action);
-#ifndef CONFIG_MLAN_WMSDK
-/** Handler for 11D country info command response */
-mlan_status wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAND *resp);
-#endif /* CONFIG_MLAN_WMSDK */
-#ifdef STA_SUPPORT
 /** Convert channel to frequency */
 t_u32 wlan_11d_chan_2_freq(pmlan_adapter pmadapter, t_u8 chan, mlan_band_def band);
 /** Set 11D universal table */
@@ -2611,35 +1933,14 @@ mlan_status wlan_11d_parse_domain_info(pmlan_adapter pmadapter,
 mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_req *pioctl_req);
 
 mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioctl_req);
-#endif /* STA_SUPPORT */
-#ifdef UAP_SUPPORT
 /** Handle 11D domain information from UAP */
 mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv,
                                             mlan_band_def band,
                                             t_u8 *domain_tlv,
                                             t_void *pioctl_buf);
-#endif
 
-#ifndef CONFIG_MLAN_WMSDK
-/** This function converts region string to CFP table code */
-mlan_status wlan_misc_country_2_cfp_table_code(IN pmlan_adapter pmadapter,
-                                               IN t_u8 *country_code,
-                                               OUT t_u8 *cfp_bg,
-                                               OUT t_u8 *cfp_a);
-/** check if station list is empty */
-t_u8 wlan_is_station_list_empty(mlan_private *priv);
-#endif /* CONFIG_MLAN_WMSDK */
 /** get station node */
 sta_node *wlan_get_station_entry(mlan_private *priv, t_u8 *mac);
-#ifndef CONFIG_MLAN_WMSDK
-/** delete station list */
-t_void wlan_delete_station_list(pmlan_private priv);
-/** delete station entry */
-t_void wlan_delete_station_entry(mlan_private *priv, t_u8 *mac);
-/** add station entry */
-sta_node *wlan_add_station_entry(mlan_private *priv, t_u8 *mac);
-/** process uap rx packet */
-#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef CONFIG_RF_TEST_MODE
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf);
@@ -2671,58 +1972,15 @@ static int wlan_is_tx_pause(mlan_private *priv, t_u8 *ra)
     return MFALSE;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
-t_void wlan_updata_ralist_tx_pause(pmlan_private priv, t_u8 *mac, t_u8 tx_pause);
-
-#ifdef UAP_SUPPORT
-mlan_status wlan_process_uap_rx_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf);
-t_void wlan_drop_tx_pkts(pmlan_private priv);
-#endif /* UAP_SUPPORT */
-
-#ifdef UAP_SUPPORT
-/* process the recevied packet and bridge the packet */
-mlan_status wlan_uap_recv_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf);
-#endif /* UAP_SUPPORT */
-
-mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
-                                           IN pmlan_ioctl_req pioctl_req,
-                                           IN t_bool send_ioctl);
-#endif /* CONFIG_MLAN_WMSDK */
 
 mlan_status wlan_cmd_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *pcmd);
 mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf);
 
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_cmd_802_11_radio_control(IN pmlan_private pmpriv,
-                                          IN HostCmd_DS_COMMAND *cmd,
-                                          IN t_u16 cmd_action,
-                                          IN t_void *pdata_buf);
-
-mlan_status wlan_ret_802_11_radio_control(IN pmlan_private pmpriv,
-                                          IN HostCmd_DS_COMMAND *resp,
-                                          IN mlan_ioctl_req *pioctl_buf);
-#endif /* CONFIG_MLAN_WMSDK */
 
 mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
                                        IN HostCmd_DS_COMMAND *cmd,
                                        IN t_u16 cmd_action,
                                        IN t_void *pdata_buf);
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
-                                        IN HostCmd_DS_COMMAND *cmd,
-                                        IN t_u16 cmd_action,
-                                        IN t_void *pdata_buf);
-
-mlan_status wlan_ret_802_11_rf_antenna(IN pmlan_private pmpriv,
-                                       IN HostCmd_DS_COMMAND *resp,
-                                       IN mlan_ioctl_req *pioctl_buf);
-
-mlan_status wlan_get_info_ver_ext(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-
-mlan_status wlan_reg_rx_mgmt_ind(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-
-mlan_status wlan_misc_hotspot_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef DEBUG_LEVEL1
 mlan_status wlan_set_drvdbg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
@@ -2730,9 +1988,6 @@ mlan_status wlan_set_drvdbg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioct
 
 void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **pptlv_out);
 
-#ifndef CONFIG_MLAN_WMSDK
-mlan_status wlan_misc_otp_user_data(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef WLAN_LOW_POWER_ENABLE
 mlan_status wlan_misc_ioctl_low_pwr_mode(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
@@ -2855,10 +2110,6 @@ typedef enum _delay_unit
     SEC,
 } t_delay_unit;
 
-#ifndef CONFIG_MLAN_WMSDK
-/** delay function */
-t_void wlan_delay_func(mlan_adapter *pmadapter, t_u32 delay, t_delay_unit u);
-#endif /* CONFIG_MLAN_WMSDK */
 
 /** delay function wrapper */
 #define wlan_delay(p, n) wlan_delay_func(p, n, SEC)

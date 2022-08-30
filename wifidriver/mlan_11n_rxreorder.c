@@ -70,39 +70,20 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
 static mlan_status wlan_11n_dispatch_pkt(t_void *priv, t_void *payload)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
-#ifdef STA_SUPPORT
     pmlan_adapter pmadapter = ((pmlan_private)priv)->adapter;
-#endif
     ENTER();
     if (payload == (t_void *)RX_PKT_DROPPED_IN_FW)
     {
         LEAVE();
         return ret;
     }
-#ifndef CONFIG_MLAN_WMSDK
-#ifdef UAP_SUPPORT
-    if (GET_BSS_ROLE((mlan_private *)priv) == MLAN_BSS_ROLE_UAP)
-    {
-        if (MLAN_STATUS_SUCCESS == wlan_11n_dispatch_amsdu_pkt((mlan_private *)priv, (pmlan_buffer)payload))
-        {
-            LEAVE();
-            return ret;
-        }
-        ret = wlan_process_uap_rx_packet(priv, (pmlan_buffer)payload);
-        LEAVE();
-        return ret;
-    }
-#endif /* UAP_SUPPORT */
-#endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef STA_SUPPORT
     if (MLAN_STATUS_SUCCESS == wlan_11n_dispatch_amsdu_pkt((mlan_private *)priv, (pmlan_buffer)payload))
     {
         LEAVE();
         return ret;
     }
     ret = wlan_process_rx_packet(pmadapter, (pmlan_buffer)payload);
-#endif /* STA_SUPPORT */
     LEAVE();
     return ret;
 }
@@ -385,9 +366,6 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
 
     ENTER();
 
-#ifdef DEBUG_11N_REORDERING
-    wmprintf("### Creating reorder table for TID: %d\n\r", tid);
-#endif /* DEBUG_11N_REORDERING */
 
     /*
      * If we get a TID, ta pair which is already present dispatch all the
@@ -419,15 +397,6 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
         new_node->pkt_count = 0;
         if (queuing_ra_based(priv) == MTRUE)
         {
-#ifndef CONFIG_MLAN_WMSDK /* fixme: This part seems something related to UAP. Disable for now. */
-            // TODO for adhoc
-            if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
-            {
-                if ((sta_ptr = wlan_get_station_entry(priv, ta)))
-                    last_seq = sta_ptr->rx_seq[tid];
-            }
-            PRINTM(MINFO, "UAP/ADHOC:last_seq=%d start_win=%d\n", last_seq, new_node->start_win);
-#endif /* CONFIG_MLAN_WMSDK */
         }
         else
         {
@@ -495,9 +464,6 @@ RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta)
                                                              priv->adapter->callbacks.moal_spin_unlock);
     if (rx_reor_tbl_ptr == MNULL)
     {
-#ifdef DEBUG_11N_REORDERING
-        wmprintf("### Not found even one entry in  RX reorder table\n\r");
-#endif /* DEBUG_11N_REORDERING */
         LEAVE();
         return MNULL;
     }
@@ -513,9 +479,6 @@ RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta)
         rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;
     }
 
-#ifdef DEBUG_11N_REORDERING
-    wmprintf("### Failed to find RX reorder table for TID: %d R: %p\n\r", tid, __builtin_return_address(0));
-#endif /* DEBUG_11N_REORDERING */
     LEAVE();
     return MNULL;
 }
@@ -583,17 +546,7 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
     padd_ba_rsp->block_ack_param_set = pevt_addba_req->block_ack_param_set;
     tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
     if ((priv->addba_reject[tid] != ADDBA_RSP_STATUS_ACCEPT)
-#ifdef STA_SUPPORT
-#ifndef CONFIG_MLAN_WMSDK /* fixme: enable this if wps is merged into mlan */
-        || ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) && priv->wps.session_enable)
-#endif /* CONFIG_MLAN_WMSDK */
-#endif
     /* wmsdk: we are not using UAP with mlan right now */
-#ifndef CONFIG_MLAN_WMSDK
-#ifdef UAP_SUPPORT
-        || ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && (priv->adapter->pending_bridge_pkts > RX_LOW_THRESHOLD))
-#endif
-#endif /* CONFIG_MLAN_WMSDK */
     )
     {
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
@@ -618,16 +571,11 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
 
     padd_ba_rsp->block_ack_param_set = wlan_cpu_to_le16(padd_ba_rsp->block_ack_param_set);
 
-#ifdef CONFIG_STA_AMPDU_RX
     if (!sta_ampdu_rx_enable)
     {
         padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
         padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
     }
-#else
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
-    padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
-#endif
 
     if (padd_ba_rsp->status_code == wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT))
     {
@@ -663,10 +611,6 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
 
     padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
 
-#ifndef CONFIG_UAP_AMPDU_RX
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
-    padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
-#endif
 
     padd_ba_rsp->block_ack_param_set = wlan_cpu_to_le16(padd_ba_rsp->block_ack_param_set);
 
@@ -1106,104 +1050,6 @@ void wlan_11n_cleanup_reorder_tbl(mlan_private *priv)
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
-/**
- *  @brief This function handle the rxba_sync event
- *
- *  @param priv    	  A pointer to mlan_private
- *  @param event_buf  A pointer to event buf
- *  @param len        event_buf length
- *  @return 	   	N/A
- */
-void wlan_11n_rxba_sync_event(mlan_private *priv, t_u8 *event_buf, t_u16 len)
-{
-    MrvlIEtypes_RxBaSync_t *tlv_rxba = (MrvlIEtypes_RxBaSync_t *)event_buf;
-    t_u16 tlv_type, tlv_len;
-    RxReorderTbl *rx_reor_tbl_ptr = MNULL;
-    t_u8 i, j;
-    t_u16 seq_num    = 0;
-    int tlv_buf_left = len;
-    ENTER();
-    DBG_HEXDUMP(MEVT_D, "RXBA_SYNC_EVT", event_buf, len);
-    while (tlv_buf_left >= sizeof(MrvlIEtypes_RxBaSync_t))
-    {
-        tlv_type = wlan_le16_to_cpu(tlv_rxba->header.type);
-        tlv_len  = wlan_le16_to_cpu(tlv_rxba->header.len);
-        if (tlv_type != TLV_TYPE_RXBA_SYNC)
-        {
-            PRINTM(MERROR, "Wrong TLV id=0x%x\n", tlv_type);
-            goto done;
-        }
-        tlv_rxba->seq_num    = wlan_le16_to_cpu(tlv_rxba->seq_num);
-        tlv_rxba->bitmap_len = wlan_le16_to_cpu(tlv_rxba->bitmap_len);
-        PRINTM(MEVENT, "%02x:%02x:%02x:%02x:%02x:%02x tid=%d seq_num=%d bitmap_len=%d\n", tlv_rxba->mac[0],
-               tlv_rxba->mac[1], tlv_rxba->mac[2], tlv_rxba->mac[3], tlv_rxba->mac[4], tlv_rxba->mac[5], tlv_rxba->tid,
-               tlv_rxba->seq_num, tlv_rxba->bitmap_len);
-        rx_reor_tbl_ptr = wlan_11n_get_rxreorder_tbl(priv, tlv_rxba->tid, tlv_rxba->mac);
-        if (!rx_reor_tbl_ptr)
-        {
-            PRINTM(MEVENT, "Can not find rx_reorder_tbl\n");
-            goto done;
-        }
-        for (i = 0; i < tlv_rxba->bitmap_len; i++)
-        {
-            for (j = 0; j < 8; j++)
-            {
-                if (tlv_rxba->bitmap[i] & (1 << j))
-                {
-                    seq_num = (tlv_rxba->seq_num + i * 8 + j) & (MAX_TID_VALUE - 1);
-                    PRINTM(MEVENT, "Fw dropped packet, seq=%d start_win=%d, win_size=%d\n", seq_num,
-                           rx_reor_tbl_ptr->start_win, rx_reor_tbl_ptr->win_size);
-                    if (MLAN_STATUS_SUCCESS != mlan_11n_rxreorder_pkt(priv, seq_num, tlv_rxba->tid, tlv_rxba->mac, 0,
-                                                                      (t_void *)RX_PKT_DROPPED_IN_FW))
-                    {
-                        PRINTM(MERROR, "Fail to handle dropped packet, seq=%d\n", seq_num);
-                    }
-                }
-            }
-        }
-        tlv_buf_left -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
-        tlv_rxba = (MrvlIEtypes_RxBaSync_t *)((t_u8 *)tlv_rxba + tlv_len + sizeof(MrvlIEtypesHeader_t));
-    }
-done:
-    LEAVE();
-    return;
-}
-
-/**
- *  @brief This function will send a DELBA for each entry in the priv's
- *          rx reordering table
- *
- *  @param priv    A pointer to mlan_private
- */
-t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv)
-{
-    RxReorderTbl *rx_reor_tbl_ptr;
-
-    ENTER();
-
-    if (!(rx_reor_tbl_ptr = (RxReorderTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
-                                                           priv->adapter->callbacks.moal_spin_lock,
-                                                           priv->adapter->callbacks.moal_spin_unlock)))
-    {
-        LEAVE();
-        return;
-    }
-
-    while (rx_reor_tbl_ptr != (RxReorderTbl *)&priv->rx_reorder_tbl_ptr)
-    {
-        if (rx_reor_tbl_ptr->ba_status == BA_STREAM_SETUP_COMPLETE)
-        {
-            rx_reor_tbl_ptr->ba_status = BA_STREAM_SETUP_INPROGRESS;
-#ifdef CONFIG_MLAN_WMSDK
-            wlan_send_delba(priv, rx_reor_tbl_ptr->tid, rx_reor_tbl_ptr->ta, 0);
-#endif
-        }
-        rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;
-    }
-    LEAVE();
-}
-#endif /* CONFIG_MLAN_WMSDK */
 /**
  *  @brief This function cleans up reorder tbl for specific station
  *
