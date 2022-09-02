@@ -230,7 +230,7 @@ static cfp_table_t cfp_table_BG[] = {
 
 #if defined(IW61x)
 /** Band: 'A', Region: USA FCC */
-static const chan_freq_power_t channel_freq_power_US_A[] = {
+static chan_freq_power_t channel_freq_power_US_A[] = {
     {36, 5180, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {40, 5200, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {44, 5220, WLAN_TX_PWR_US_DEFAULT, MFALSE},  {48, 5240, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {52, 5260, WLAN_TX_PWR_US_DEFAULT, MTRUE},   {56, 5280, WLAN_TX_PWR_US_DEFAULT, MTRUE},
@@ -240,11 +240,11 @@ static const chan_freq_power_t channel_freq_power_US_A[] = {
     {116, 5580, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {120, 5600, WLAN_TX_PWR_US_DEFAULT, MTRUE},
     {124, 5620, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {128, 5640, WLAN_TX_PWR_US_DEFAULT, MTRUE},
     {132, 5660, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {136, 5680, WLAN_TX_PWR_US_DEFAULT, MTRUE},
-    {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE},
-    {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE},
-    {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE},
-    {169, 5845, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {173, 5865, WLAN_TX_PWR_US_DEFAULT, MTRUE},
-    {177, 5885, WLAN_TX_PWR_US_DEFAULT, MTRUE}};
+    {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {144, 5720, WLAN_TX_PWR_US_DEFAULT, MTRUE},
+    {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {169, 5845, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {173, 5865, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {177, 5885, WLAN_TX_PWR_US_DEFAULT, MFALSE}};
 
 /** Band: 'A', Region: Spain, France */
 static const chan_freq_power_t channel_freq_power_FR_A[] = {
@@ -1845,8 +1845,13 @@ t_bool wlan_is_channel_valid(t_u8 chan_num)
 #ifdef CONFIG_5GHz_SUPPORT
     if (!valid)
     {
+#if defined(IW61x)
+        cfp_wwsm = (chan_freq_power_t *)channel_freq_power_US_A;
+        cfp_no   = (sizeof(channel_freq_power_US_A) / sizeof(chan_freq_power_t));
+#else
         cfp_wwsm = (chan_freq_power_t *)channel_freq_power_WW_A;
         cfp_no   = (sizeof(channel_freq_power_WW_A) / sizeof(chan_freq_power_t));
+#endif
 
         for (i = 0; i < cfp_no; i++)
         {
@@ -1921,8 +1926,13 @@ t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq)
 #ifdef CONFIG_5GHz_SUPPORT
     if (!valid)
     {
+#if defined(IW61x)
+        cfp_wwsm = (chan_freq_power_t *)channel_freq_power_US_A;
+        cfp_no   = (sizeof(channel_freq_power_US_A) / sizeof(chan_freq_power_t));
+#else
         cfp_wwsm = (chan_freq_power_t *)channel_freq_power_WW_A;
         cfp_no   = (sizeof(channel_freq_power_WW_A) / sizeof(chan_freq_power_t));
+#endif
 
         for (i = 0; i < cfp_no; i++)
         {
@@ -1997,6 +2007,18 @@ mlan_status wlan_set_custom_cfp_table(wifi_chanlist_t *chanlist, t_u8 *cfp_no_bg
             *cfp_no_bg = idx_bg;
         }
 #ifdef CONFIG_5GHz_SUPPORT
+#if defined(IW61x)
+        else if ((chanlist->chan_info[i].chan_num > MAX_CHANNELS_BG) &&
+                 (idx_a < (sizeof(channel_freq_power_US_A) / sizeof(chan_freq_power_t))))
+        {
+            channel_freq_power_US_A[idx_a].channel = chanlist->chan_info[i].chan_num;
+            channel_freq_power_US_A[idx_a].freq    = chanlist->chan_info[i].chan_freq;
+            channel_freq_power_US_A[idx_a].passive_scan_or_radar_detect =
+                chanlist->chan_info[i].passive_scan_or_radar_detect;
+            idx_a++;
+            *cfp_no_a = idx_a;
+        }
+#else
         else if ((chanlist->chan_info[i].chan_num > MAX_CHANNELS_BG) &&
                  (idx_a < (sizeof(channel_freq_power_Custom_A) / sizeof(chan_freq_power_t))))
         {
@@ -2007,6 +2029,7 @@ mlan_status wlan_set_custom_cfp_table(wifi_chanlist_t *chanlist, t_u8 *cfp_no_bg
             idx_a++;
             *cfp_no_a = idx_a;
         }
+#endif
 #endif
         else
         {
@@ -2057,7 +2080,11 @@ void wlan_set_custom_regiontable(mlan_private *pmpriv, t_u8 cfp_no_bg)
     if (cfp_no_a != 0U)
     {
         pmadapter->region_channel[i].num_cfp = (t_u8)cfp_no_a;
+#if defined(IW61x)
+        pmadapter->region_channel[i].pcfp    = channel_freq_power_US_A;
+#else
         pmadapter->region_channel[i].pcfp    = channel_freq_power_Custom_A;
+#endif
     }
 #endif
 

@@ -1094,7 +1094,6 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             {
                 (pscan_chan_list + chan_idx)->chan_scan_mode.passive_scan       = MTRUE;
                 (pscan_chan_list + chan_idx)->chan_scan_mode.hidden_ssid_report = MTRUE;
-                ;
             }
             else
             {
