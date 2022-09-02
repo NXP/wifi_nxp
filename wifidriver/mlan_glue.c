@@ -474,9 +474,7 @@ static mlan_status wrapper_moal_spin_unlock(IN t_void *pmoal_handle, IN t_void *
 
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
 /* os_semaphore_t equals (t_void *)(*pplock) */
-static mlan_status wrapper_moal_init_semaphore(IN t_void *pmoal_handle,
-                                               IN const char *name,
-                                               OUT t_void **pplock)
+static mlan_status wrapper_moal_init_semaphore(IN t_void *pmoal_handle, IN const char *name, OUT t_void **pplock)
 {
     if (*((os_semaphore_t *)pplock) != MNULL)
         return MLAN_STATUS_SUCCESS;
@@ -534,8 +532,8 @@ static mlan_callbacks woal_callbacks = {
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
     .moal_init_semaphore = wrapper_moal_init_semaphore,
     .moal_free_semaphore = wrapper_moal_free_semaphore,
-    .moal_semaphore_get = wrapper_moal_semaphore_get,
-    .moal_semaphore_put = wrapper_moal_semaphore_put,
+    .moal_semaphore_get  = wrapper_moal_semaphore_get,
+    .moal_semaphore_put  = wrapper_moal_semaphore_put,
 #endif
 };
 
@@ -3405,16 +3403,14 @@ void wlan_update_wnm_ps_status(wnm_ps_result *wnm_ps_result)
 static inline void wifi_wmm_queue_lock(mlan_private *priv, t_u8 ac)
 {
 #ifdef RW610
-    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
-        &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
+    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
 #endif
 }
 
 static inline void wifi_wmm_queue_unlock(mlan_private *priv, t_u8 ac)
 {
 #ifdef RW610
-    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
-        &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
+    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
 #endif
 }
 
@@ -3437,8 +3433,8 @@ static inline void wifi_wmm_trigger_tx(t_u8 tx_pause)
 static void wifi_sta_handle_event_data_pause(mlan_private *priv, MrvlIEtypes_tx_pause_t *tx_pause_tlv)
 {
     int i;
-    t_u8 *bssid = MNULL;
-    raListTbl *ra_list = MNULL;
+    t_u8 *bssid                         = MNULL;
+    raListTbl *ra_list                  = MNULL;
     t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
 
     if (!priv->media_connected)
@@ -3512,19 +3508,19 @@ static void wifi_uap_handle_event_data_pause(mlan_private *priv_uap, MrvlIEtypes
 
 void wifi_handle_event_data_pause(void *data)
 {
-    mlan_private *priv = mlan_adap->priv[0];
+    mlan_private *priv     = mlan_adap->priv[0];
     mlan_private *priv_uap = mlan_adap->priv[1];
     /* Event_Ext_t shares the same header but from reason_code, payload differs with tx_pause cmd */
     Event_Ext_t *evt = (Event_Ext_t *)data;
     t_u16 tlv_type, tlv_len;
-    int tlv_buf_left = evt->length - MLAN_FIELD_OFFSET(Event_Ext_t, reason_code);
+    int tlv_buf_left         = evt->length - MLAN_FIELD_OFFSET(Event_Ext_t, reason_code);
     MrvlIEtypesHeader_t *tlv = (MrvlIEtypesHeader_t *)&evt->reason_code;
 
     /* set tx pause */
     while (tlv_buf_left >= (int)sizeof(MrvlIEtypesHeader_t))
     {
         tlv_type = wlan_le16_to_cpu(tlv->type);
-        tlv_len = wlan_le16_to_cpu(tlv->len);
+        tlv_len  = wlan_le16_to_cpu(tlv->len);
 
         if ((sizeof(MrvlIEtypesHeader_t) + tlv_len) > (unsigned int)tlv_buf_left)
         {
@@ -4181,6 +4177,18 @@ static unsigned char process_rsn_ie(
             {
                 WPA_WPA2_WEP->owe = 1;
             }
+            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
+                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
+                        (const void *)wpa2_oui02, sizeof(wpa_suite)))
+            {
+                WPA_WPA2_WEP->wpa2 = 1;
+            }
+            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
+                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
+                        (const void *)wpa2_oui06, sizeof(wpa_suite)))
+            {
+                WPA_WPA2_WEP->wpa2 = 1;
+            }
 #ifdef CONFIG_11R
             if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
                                        sizeof(uint16_t) + sizeof(wpa_suite) * i),
@@ -4414,17 +4422,9 @@ int wrapper_bssdesc_first_set(int bss_index,
     *beacon_period = d->beacon_period;
     *dtim_period   = d->dtim_period;
 
-    if (d->pwpa_ie != MNULL || d->prsn_ie != MNULL)
+    if (d->pwpa_ie != MNULL)
     {
-        /* Check if WPA or WPA2 */
-        if (d->pwpa_ie != NULL)
-        {
-            WPA_WPA2_WEP->wpa = 1;
-        }
-        if (d->prsn_ie != NULL)
-        {
-            WPA_WPA2_WEP->wpa2 = 1;
-        }
+        WPA_WPA2_WEP->wpa = 1;
     }
     else
     {
@@ -4990,9 +4990,8 @@ static void wifi_wmm_tx_stats_dump_ralist(mlan_list_head *ra_list_head)
     ra_list = (raListTbl *)util_peek_list(mlan_adap->pmoal_handle, ra_list_head, MNULL, MNULL);
     while (ra_list && ra_list != (raListTbl *)ra_list_head)
     {
-        wifi_w("    [%02X:XX:XX:XX:%02X:%02X] drop_cnt[%d] total_pkts[%d]",
-            ra_list->ra[0], ra_list->ra[4], ra_list->ra[5],
-            ra_list->drop_count, ra_list->total_pkts);
+        wifi_w("    [%02X:XX:XX:XX:%02X:%02X] drop_cnt[%d] total_pkts[%d]", ra_list->ra[0], ra_list->ra[4],
+               ra_list->ra[5], ra_list->drop_count, ra_list->total_pkts);
 
         ra_list = ra_list->pnext;
     }
@@ -5024,8 +5023,8 @@ void wifi_wmm_tx_stats_dump(int bss_type)
     wifi_w("    tx_wmm_pause_replaced[%hu]", priv->driver_error_cnt.tx_wmm_pause_replaced);
     wifi_w("    rx_reorder_drop[%hu]", priv->driver_error_cnt.rx_reorder_drop);
 
-    int free_cnt_real = 0;
-    int free_cnt_stat = 0;
+    int free_cnt_real   = 0;
+    int free_cnt_stat   = 0;
     mlan_linked_list *p = MNULL;
 
     mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
