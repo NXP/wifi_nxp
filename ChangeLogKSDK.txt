@@ -2,6 +2,16 @@
 @page middleware_log Middleware Change Log
  
 @section wifi NXP WiFi
+Version 1.3.r39.p15
+ - Updates:
+  - Updated firmware version to p148.
+  - Enabled FIPS Support for firecrest product.
+
+ - Bug Fixes:
+  - wifi_cert, wifi_features and uart_wifi_bridge exmaples added back.
+  - [internal] Fixed build errors and warnings after moving to new develop branch for FC.
+  - [Resolved] Unable to load RU tx power limit with RT.
+
 Version 1.3.r39.p14
  - Updates:
   - Updated firmware version to p144.
