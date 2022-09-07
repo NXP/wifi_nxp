@@ -237,9 +237,15 @@ static const chan_freq_power_t channel_freq_power_A[] = {
     {116, 5580, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {120, 5600, WLAN_TX_PWR_US_DEFAULT, MTRUE},
     {124, 5620, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {128, 5640, WLAN_TX_PWR_US_DEFAULT, MTRUE},
     {132, 5660, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {136, 5680, WLAN_TX_PWR_US_DEFAULT, MTRUE},
-    {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE},
-    {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE},
-    {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE}};
+    {140, 5700, WLAN_TX_PWR_US_DEFAULT, MTRUE},  {144, 5720, WLAN_TX_PWR_WW_DEFAULT, MTRUE},
+    {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+    {169, 5845, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {173, 5865, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+    {177, 5885, WLAN_TX_PWR_US_DEFAULT, MFALSE},
+#endif
+};
 
 /** Band: 'A', Region: Canada IC */
 static const chan_freq_power_t channel_freq_power_CAN_A[] = {
@@ -319,7 +325,12 @@ static chan_freq_power_t channel_freq_power_Custom_A[] = {
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
-    {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}};
+    {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+    {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
+    {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
+#endif
+};
 
 /** Band: 'A', NULL */
 static const chan_freq_power_t channel_freq_power_NULL_A[1] = {0};
@@ -441,7 +452,7 @@ static cfp_table_t cfp_table_A[] = {
 /** Number of the CFP tables for 5GHz */
 #define MLAN_CFP_TABLE_SIZE_A (sizeof(cfp_table_A) / sizeof(cfp_table_t))
 
-#endif
+#endif /* CONFIG_5GHz_SUPPORT */
 
 /********************************************************
     Global Variables
