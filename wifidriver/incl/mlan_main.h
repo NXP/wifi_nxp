@@ -1304,7 +1304,7 @@ struct _mlan_private
     /** function table */
     mlan_operations ops;
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
     /** 11k flag */
     t_u8 enable_11k;
 #endif

@@ -1020,7 +1020,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* set SpectrumMgmt(BIT8) and RadioMeasurement(BIT12) if 11K is enabled
      */
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
     if (pmpriv->enable_11k == (t_u8)1U)
     {
         SPECTRUM_MGMT_ENABLED(tmp_cap);

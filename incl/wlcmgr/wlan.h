@@ -3097,7 +3097,7 @@ int wlan_set_frag(int frag);
 int wlan_set_uap_frag(int frag);
 #endif
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 /**
  * enable/disable 11k feature in WLAN firmware.
  *

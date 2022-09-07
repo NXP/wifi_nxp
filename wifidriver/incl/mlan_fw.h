@@ -818,7 +818,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000U)
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 /** ExtCap : Set Support BSS_Transition */
 #define SET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 1)
 /** ExtCap : Reset support BSS_Transition */
@@ -1188,7 +1188,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : OTP user data */
 #define HostCmd_CMD_OTP_READ_USER_DATA 0x0114
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 /** Host Command ID : 802.11 K Feature Control */
 #define HostCmd_CMD_OFFLOAD_FEATURE_CONTROL 0x00fd
 #endif
@@ -1540,7 +1540,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_FW_DEBUG_INFO 0x00000063
 #endif
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 #define EVENT_NLIST_REPORT          0x00000079
 #define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
 #endif
@@ -1991,7 +1991,7 @@ typedef MLAN_PACK_START struct _wlan_802_11_header
     mlan_802_11_mac_addr addr4;
 } MLAN_PACK_END wlan_802_11_header;
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 /** host_OffloadFeatureStdControl_t */
 typedef MLAN_PACK_START struct
 {
@@ -2022,7 +2022,7 @@ typedef MLAN_PACK_START struct _HostCmd_OFFLOAD_FEATURE_CTRL
         t_u8 empty;
     } control;
 } MLAN_PACK_END HostCmd_OFFLOAD_FEATURE_CTRL;
-#endif /* CONFIG_FW_11K*/
+#endif /* CONFIG_11K_OFFLOAD*/
 
 /** wlan_802_11_header packet from FW with length */
 typedef MLAN_PACK_START struct _wlan_mgmt_pkt
@@ -6554,10 +6554,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;
 #endif
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
         /** OFFLOAD FEATURE CTRL */
         HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
-#endif /* CONFIG_FW_11K */
+#endif /* CONFIG_11K_OFFLOAD */
 #ifdef CONFIG_WIFI_EU_CRYPTO
         HostCmd_DS_EU_AES_CRYPTO eu_aes_crypto;
         HostCmd_DS_EU_CRYPTO eu_crypto;

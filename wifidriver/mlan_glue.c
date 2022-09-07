@@ -68,7 +68,7 @@ typedef MLAN_PACK_START struct _Event_Ext_t
     uint8_t src_mac_addr[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END Event_Ext_t;
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 typedef MLAN_PACK_START struct _Event_Gen_t
 {
     /** Event ID */
@@ -192,7 +192,7 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
 }
 #endif /* CONFIG_11N */
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 /** Event body : 11K NLIST */
 typedef PACK_START struct _nlist_entry_tlv
 {
@@ -305,7 +305,7 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
         return MNULL;
     }
 }
-#endif /* CONFIG_FW_11K */
+#endif /* CONFIG_11K_OFFLOAD */
 
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len)
 {
@@ -2123,7 +2123,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                 (void)wifi_event_completion(WIFI_EVENT_GET_HW_SPEC, WIFI_EVENT_REASON_SUCCESS, NULL);
                 break;
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
             case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
                 if (rv != MLAN_STATUS_SUCCESS)
@@ -3831,7 +3831,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_HS_ACT_REQ:
             (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
         case EVENT_NLIST_REPORT:
         {
             void *saved_event_buff = wifi_11k_save_request((Event_Gen_t *)(void *)((t_u8 *)evt + 4));

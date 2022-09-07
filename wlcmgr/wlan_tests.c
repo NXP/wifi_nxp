@@ -1604,7 +1604,7 @@ static void test_wlan_set_frag(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 static void test_wlan_11k_cfg(int argc, char **argv)
 {
     int enable_11k;
@@ -2627,7 +2627,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
     {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #endif
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
     {"wlan-11k-enable", "<0/1>", test_wlan_11k_cfg},
     {"wlan-11k-neighbor-req", NULL, test_wlan_11k_neighbor_req},
 #endif

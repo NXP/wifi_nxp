@@ -1919,7 +1919,7 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 /**
  *  @brief This function sends get nlist.
  *
@@ -2629,11 +2629,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
         case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
             ret = wlan_cmd_offload_feature_ctrl(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#endif /* CONFIG_FW_11K */
+#endif /* CONFIG_11K_OFFLOAD */
 #ifdef CONFIG_MULTI_CHAN
         case HostCmd_CMD_MULTI_CHAN_CONFIG:
             ret = wlan_cmd_multi_chan_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);

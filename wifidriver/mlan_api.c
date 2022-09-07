@@ -69,7 +69,7 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
 #endif
 mlan_status wlan_cmd_auto_reconnect(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd);
 #endif
 
@@ -3194,7 +3194,7 @@ void wifi_set_curr_bss_channel(uint8_t channel)
     pmpriv->curr_bss_params.bss_descriptor.channel = channel;
 }
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 int wifi_11k_cfg(int enable_11k)
 {
     mlan_ioctl_req req;
@@ -3274,7 +3274,7 @@ int wifi_host_11k_cfg(int enable_11k)
     IEEEtypes_RrmElement_t rrmCap;
     int ret = (int)MLAN_STATUS_SUCCESS;
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
     /* Check if fw base 11k is enabled */
     if (enable_11k == 1 && pmpriv->enable_11k == (t_u8)1U)
     {

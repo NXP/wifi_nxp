@@ -349,7 +349,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #ifdef CONFIG_11K
     priv->enable_host_11k = MFALSE;
 #endif
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
     priv->enable_11k = MFALSE;
 #endif
 

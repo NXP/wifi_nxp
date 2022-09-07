@@ -3473,7 +3473,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #ifdef CONFIG_11K
     (void)wifi_host_11k_cfg(1);
 #endif
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
     (void)wifi_11k_cfg(1);
     (void)wifi_11h_enable();
 #endif
@@ -6917,7 +6917,7 @@ int wlan_set_uap_frag(int frag)
 
 #endif
 
-#ifdef CONFIG_FW_11K
+#ifdef CONFIG_11K_OFFLOAD
 int wlan_11k_cfg(int enable_11k)
 {
     return wifi_11k_cfg(enable_11k);
