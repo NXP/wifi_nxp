@@ -225,6 +225,7 @@ static cfp_table_t cfp_table_BG[] = {
 #define MLAN_CFP_TABLE_SIZE_BG (sizeof(cfp_table_BG) / sizeof(cfp_table_t))
 
 
+#ifdef CONFIG_5GHz_SUPPORT
 /* Format { Channel, Frequency (MHz), MaxTxPower, DFS } */
 /** Band: 'A', Region: USA FCC, Spain, France */
 static const chan_freq_power_t channel_freq_power_A[] = {
@@ -241,7 +242,7 @@ static const chan_freq_power_t channel_freq_power_A[] = {
     {149, 5745, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {153, 5765, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {157, 5785, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {161, 5805, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {165, 5825, WLAN_TX_PWR_US_DEFAULT, MFALSE},
-#if defined(IW61x) && defined(CONFIG_UNII4_BAND_SUPPORT)
+#ifdef CONFIG_UNII4_BAND_SUPPORT
     {169, 5845, WLAN_TX_PWR_US_DEFAULT, MFALSE}, {173, 5865, WLAN_TX_PWR_US_DEFAULT, MFALSE},
     {177, 5885, WLAN_TX_PWR_US_DEFAULT, MFALSE},
 #endif
@@ -327,7 +328,7 @@ static chan_freq_power_t channel_freq_power_Custom_A[] = {
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
-#if defined(IW61x) && defined(CONFIG_UNII4_BAND_SUPPORT)
+#ifdef CONFIG_UNII4_BAND_SUPPORT
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, MFALSE},
 #endif
@@ -453,6 +454,7 @@ static cfp_table_t cfp_table_A[] = {
 /** Number of the CFP tables for 5GHz */
 #define MLAN_CFP_TABLE_SIZE_A (sizeof(cfp_table_A) / sizeof(cfp_table_t))
 
+#endif  /* CONFIG_5GHz_SUPPORT */
 
 
 /********************************************************
@@ -1887,18 +1889,8 @@ t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq)
 #ifdef CONFIG_5GHz_SUPPORT
     if (!valid)
     {
-#if defined(IW61x)
-    #if defined(CONFIG_UNII4_BAND_SUPPORT)
-        cfp_wwsm = (chan_freq_power_t *)channel_freq_power_A;
-        cfp_no   = (sizeof(channel_freq_power_A) / sizeof(chan_freq_power_t));
-    #else
         cfp_wwsm = (chan_freq_power_t *)channel_freq_power_WW_A;
         cfp_no   = (sizeof(channel_freq_power_WW_A) / sizeof(chan_freq_power_t));
-    #endif  /* CONFIG_UNII4_BAND_SUPPORT */
-#else
-        cfp_wwsm = (chan_freq_power_t *)channel_freq_power_WW_A;
-        cfp_no   = (sizeof(channel_freq_power_WW_A) / sizeof(chan_freq_power_t));
-#endif
 
         for (i = 0; i < cfp_no; i++)
         {
