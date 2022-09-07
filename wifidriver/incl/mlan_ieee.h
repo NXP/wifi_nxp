@@ -1599,6 +1599,12 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
 } MLAN_PACK_END IEEEtypes_HECap_t, *pIEEEtypes_HECap_t;
 #endif
 
+/** MBO IE header */
+#define MBO_IE_HEADER_LEN 6
+
+/** MBO attribute header */
+#define MBO_ATTR_HEADER_LEN 2
+
 /*
 *****************************************************************************
 **
@@ -1933,6 +1939,7 @@ typedef struct _BSSDescriptor_t
     /* Mobility domain IE */
     IEEEtypes_MobilityDomain_t *pmd_ie;
 #endif
+    bool mbo_assoc_disallowed;
 } BSSDescriptor_t, *pBSSDescriptor_t;
 
 #endif /* !_MLAN_IEEE_H_ */

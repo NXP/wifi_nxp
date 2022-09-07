@@ -1299,6 +1299,9 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 owe_type[1] = {0x01c};
 #endif
+    const t_u8 mbo_oui[3]  = {0x50, 0x6f, 0x9a};
+    const t_u8 mbo_type[1] = {0x016};
+
     IEEEtypes_CountryInfoSet_t *pcountry_info;
 #ifdef CONFIG_11AX
     IEEEtypes_Extension_t *pext_tlv;
@@ -1679,6 +1682,28 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                            pbss_entry->trans_ssid.ssid);
                 }
 #endif
+                else if (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, mbo_oui, sizeof(mbo_oui)) &&
+                         (pvendor_ie->vend_hdr.oui_type == mbo_type[0]))
+                {
+                    t_u8 *pcurrent_attr = pcurrent_ptr + MBO_IE_HEADER_LEN;
+                    t_u8 mbo_attr_id;
+                    t_u8 mbo_attr_len = 0;
+                    t_u8 mbo_cur_len  = MBO_IE_HEADER_LEN - sizeof(IEEEtypes_Header_t);
+
+                    pbss_entry->mbo_assoc_disallowed = false;
+
+                    while (mbo_cur_len < element_len)
+                    {
+                        mbo_attr_id  = *((t_u8 *)pcurrent_attr);
+                        mbo_attr_len = *((t_u8 *)pcurrent_attr + 1);
+
+                        if (mbo_attr_id == 0x4)
+                            pbss_entry->mbo_assoc_disallowed = true;
+
+                        mbo_cur_len += MBO_ATTR_HEADER_LEN + mbo_attr_len;
+                        pcurrent_attr = pcurrent_attr + MBO_ATTR_HEADER_LEN + mbo_attr_len;
+                    }
+                }
                 else
                 {
                     /* Do Nothing */
