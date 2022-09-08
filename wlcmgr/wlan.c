@@ -3681,6 +3681,7 @@ static void wlcm_deinit(int action)
         return;
     }
 
+    wifi_scan_stop();
     wifi_deinit();
 
     wlan.status = WLCMGR_INACTIVE;
@@ -4605,6 +4606,7 @@ int wlan_stop(void)
         return WLAN_ERROR_STATE;
     }
     wlan.running = 0;
+    wlan.scan_cb = NULL;
 
 #ifdef OTP_CHANINFO
     wifi_free_fw_region_and_cfp_tables();

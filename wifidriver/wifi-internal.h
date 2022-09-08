@@ -176,6 +176,8 @@ typedef struct
      * structure also stores lengths for usage and validation internally*/
     hostcmd_cfg_t hostcmd_cfg;
     wlan_user_scan_cfg *g_user_scan_cfg;
+
+    bool scan_stop;
 } wm_wifi_t;
 
 extern wm_wifi_t wm_wifi;
@@ -317,4 +319,10 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
  *
  */
 void wifi_user_scan_config_cleanup(void);
+
+/**
+ * This function should be called to wait for scan task done before resetting.
+ *
+ */
+void wifi_scan_stop(void);
 #endif /* __WIFI_INTERNAL_H__ */

@@ -98,6 +98,7 @@ bool sta_ampdu_rx_enable = true;
 int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
+bool scan_thread_in_process = false;
 
 typedef enum __mlan_status
 {
@@ -1435,6 +1436,16 @@ void wifi_user_scan_config_cleanup(void)
     }
 }
 
+void wifi_scan_stop(void)
+{
+    wm_wifi.scan_stop = true;
+    while (scan_thread_in_process)
+    {
+        /* wait for scan task done */
+        os_thread_sleep(os_msec_to_ticks(1000));
+    }
+}
+
 /**
  * This function should be called when scan command is ready
  *
@@ -1448,6 +1459,14 @@ static void wifi_scan_input(void *argv)
         /* Wait till we receive scan command */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
 
+        if (wm_wifi.scan_stop == true)
+        {
+            wm_wifi.scan_stop = false;
+            wifi_user_scan_config_cleanup();
+            break;
+        }
+
+        scan_thread_in_process = true;
         if (wm_wifi.g_user_scan_cfg != NULL)
         {
             rv = wlan_scan_networks((mlan_private *)mlan_adap->priv[0], NULL, wm_wifi.g_user_scan_cfg);
@@ -1457,8 +1476,9 @@ static void wifi_scan_input(void *argv)
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
         }
-
+        scan_thread_in_process = false;
     } /* for ;; */
+    os_thread_self_complete(NULL);
 }
 
 static void wifi_core_deinit(void);
