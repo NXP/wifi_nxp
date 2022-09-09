@@ -1289,7 +1289,7 @@ extern void wifi_wfd_event(bool peer_event, bool action_frame, void *data);
  *
  *   @return        MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *payload, IN t_u32 payload_len)
+mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *payload, IN t_u32 payload_len, RxPD *rxpd)
 {
     mlan_status ret                   = MLAN_STATUS_SUCCESS;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
@@ -1324,7 +1324,7 @@ mlan_status wlan_process_802dot11_mgmt_pkt(IN mlan_private *priv, IN t_u8 *paylo
     switch (sub_type)
     {
         case SUBTYPE_ACTION:
-            ret = wlan_process_mgmt_action(payload, payload_len);
+            ret = wlan_process_mgmt_action(payload, payload_len, rxpd);
             if (ret == MLAN_STATUS_SUCCESS)
             {
                 return ret;

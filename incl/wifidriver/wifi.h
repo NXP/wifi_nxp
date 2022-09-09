@@ -1168,4 +1168,38 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num);
  **/
 
 int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
+
+#ifdef CONFIG_1AS
+/**
+ * Get correlated time
+ * \param[out] host time and fw time in ns
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_get_fw_timestamp(wifi_correlated_time_t *time);
+
+/**
+ * request DOT1AS slave state machine
+ * \param[in] bss_type interface index
+ * \param[in] peer_mac destination mac address of timing measurement request frame
+ * \param[in] trigger 1-start, 0-stop timing measurement procedure
+ */
+void wifi_request_timing_measurement(int bss_type, t_u8 *peer_mac, t_u8 trigger);
+
+/**
+ * start DOT1AS master state machine
+ * \param[in] bss_type interface index
+ * \param[in] peer_mac destination mac address of timing measurement frame
+ * \param[in] num_of_tm number of timing measurement frames
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_tm);
+
+/**
+ * end DOT1AS master state machine report
+ * \param[out] bss_type interface index
+ */
+void wifi_end_timing_measurement(int bss_type);
+#endif
 #endif

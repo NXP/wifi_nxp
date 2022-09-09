@@ -1298,4 +1298,67 @@ typedef PACK_START struct
 } PACK_END wifi_drcs_cfg_t;
 #endif
 
+#ifdef CONFIG_1AS
+#define DOT1AS_TM_ROLE_TRANSMITTER 0
+#define DOT1AS_TM_ROLE_RECEIVER    1
+
+#define DOT1AS_TM_STATUS_COMPLETE   0
+#define DOT1AS_TM_STATUS_INPROGRESS 1
+
+typedef struct
+{
+    /* host time in nano secs */
+    t_u64 time;
+    /* fw time in nano secs */
+    t_u64 fw_time;
+} wifi_correlated_time_t;
+
+typedef struct _wifi_dot1as_info_t
+{
+    /* 0 - completed or unstarted, 1 - in progress */
+    t_u8 status;
+    /* 0 - master(transmitter, send TM), 1 - slave(receiver, receive TM) */
+    t_u8 role;
+    /* current number of TM frame, used in master mode */
+    t_u8 tm_num;
+    /* max number of TM frames, used in master mode */
+    t_u8 max_tm_num;
+    /* peer addr */
+    t_u8 peer_addr[MLAN_MAC_ADDR_LENGTH];
+    /* dialog_token */
+    t_u8 dialog_token;
+    /* prev_dialog_token */
+    t_u8 prev_dialog_token;
+    /* time of TX TM frame depart */
+    t_u32 t1;
+    /* time of TX TM frame acked */
+    t_u32 t4;
+    /* time of RX TM frame receive */
+    t_u32 t2;
+    /* time of RX TM frame ack */
+    t_u32 t3;
+    /* fw status error of t1 in 10ns */
+    t_u8 t1_err;
+    /* fw status error of t4 in 10ns */
+    t_u8 t4_err;
+    /* max error of t1 in 10ns */
+    t_u8 max_t1_err;
+    /* max error of t4 in 10ns */
+    t_u8 max_t4_err;
+    /* error of t2 in 10ns */
+    t_u8 t2_err;
+    /* error of t3 in 10ns */
+    t_u8 t3_err;
+    /* max error of t2 in 10ns */
+    t_u8 max_t2_err;
+    /* max error of t3 in 10ns */
+    t_u8 max_t3_err;
+    /* egress time of TX TM frame */
+    t_u64 egress_time;
+    /* ingress time of RX TM frame */
+    t_u64 ingress_time;
+} wifi_dot1as_info_t;
+
+#endif
+
 #endif /* __WIFI_DECL_H__ */

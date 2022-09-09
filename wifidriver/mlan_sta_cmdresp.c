@@ -1828,6 +1828,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_drcs_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
+#ifdef CONFIG_1AS
+        case HostCmd_CMD_HOST_CLOCK_CFG:
+            ret = wlan_ret_host_clock_cfg(pmpriv, resp, pioctl_buf);
+            break;
+#endif
         default:
             PRINTM(MERROR, "CMD_RESP: Unknown command response %#x\n", resp->command);
             break;

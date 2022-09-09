@@ -1345,6 +1345,9 @@ struct _mlan_private
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
     wlan_pkt_stat_t driver_error_cnt;
 #endif
+#ifdef CONFIG_1AS
+    wifi_dot1as_info_t dot1as_info;
+#endif
 };
 
 /** BA stream status */
@@ -2387,7 +2390,7 @@ mlan_status wlan_pm_reset_card(pmlan_adapter adapter);
 mlan_status wlan_pm_wakeup_card(pmlan_adapter pmadapter);
 #endif /* CONFIG_MLAN_WMSDK */
 
-mlan_status wlan_process_802dot11_mgmt_pkt(mlan_private *priv, t_u8 *payload, t_u32 payload_len);
+mlan_status wlan_process_802dot11_mgmt_pkt(mlan_private *priv, t_u8 *payload, t_u32 payload_len, RxPD *rxpd);
 
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_pm_ioctl_hscfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
@@ -2852,6 +2855,11 @@ mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *re
 #define BW_20MHZ 0
 #define BW_40MHZ 1
 #define BW_80MHZ 2
+
+#ifdef CONFIG_1AS
+mlan_status wlan_cmd_host_clock_cfg(HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
+mlan_status wlan_ret_host_clock_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
+#endif
 
 /**
  *  @brief RA based queueing

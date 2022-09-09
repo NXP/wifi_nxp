@@ -152,11 +152,14 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
 #endif
+    t_u8 *payload     = NULL;
+    t_u16 payload_len = (t_u16)0U;
+    struct pbuf *p    = NULL;
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
@@ -172,8 +175,24 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         g_data_snr_last = rxpd->snr;
     }
 
-    t_u8 *payload  = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
-    struct pbuf *p = gen_pbuf_from_data(payload, rxpd->rx_pkt_length);
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+    pmgmt_pkt_hdr = (wlan_mgmt_pkt *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
+    pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
+
+    sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+    if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
+    {
+        payload     = (t_u8 *)rxpd;
+        payload_len = datalen - INTF_HEADER_LEN;
+    }
+    else
+#endif
+    {
+        payload     = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
+        payload_len = rxpd->rx_pkt_length;
+    }
+
+    p = gen_pbuf_from_data(payload, payload_len);
     /* If there are no more buffers, we do nothing, so the data is
        lost. We have to go back and read the other ports */
     if (p == NULL)
@@ -200,12 +219,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             return;
         }
 #endif
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
-        pmgmt_pkt_hdr = (wlan_mgmt_pkt *)p->payload;
-        pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
-
-        sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-        if (sub_type == (t_u16)SUBTYPE_ACTION)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+        if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
         {
             if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
             {

@@ -3894,10 +3894,9 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
         wlan.reassoc_request = false;
         wlan.reassoc_count   = 0;
 
-        CONNECTION_EVENT(WLAN_REASON_CONNECT_FAILED, NULL);
-
         wlcm_d("Disconnecting ... ");
         (void)wlan_disconnect();
+        CONNECTION_EVENT(WLAN_REASON_CONNECT_FAILED, NULL);
     }
 }
 
@@ -3931,15 +3930,16 @@ static void wlcm_process_get_hw_spec_event(void)
 static void wlcm_process_mgmt_frame(void *data)
 {
     struct pbuf *p               = (struct pbuf *)data;
-    wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
+    RxPD *rxpd                   = (RxPD *)p->payload;
+    wlan_mgmt_pkt *pmgmt_pkt_hdr = NULL;
 
-    pmgmt_pkt_hdr          = (wlan_mgmt_pkt *)(p->payload);
+    pmgmt_pkt_hdr          = (wlan_mgmt_pkt *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
     pmgmt_pkt_hdr->frm_len = wlan_le16_to_cpu(pmgmt_pkt_hdr->frm_len);
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & (t_u16)IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == (t_u16)0U)
     {
         (void)wlan_process_802dot11_mgmt_pkt(
             mlan_adap->priv[0], (t_u8 *)&pmgmt_pkt_hdr->wlan_header,
-            pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len));
+            pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len), rxpd);
     }
 }
 
@@ -6927,7 +6927,7 @@ int wlan_11k_cfg(int enable_11k)
     return wifi_11k_cfg(enable_11k);
 }
 
-int wlan_11k_neighbor_req()
+int wlan_11k_neighbor_req(void)
 {
     return wifi_11k_neighbor_req();
 }
@@ -6937,6 +6937,11 @@ int wlan_11k_neighbor_req()
 int wlan_host_11k_cfg(int enable_11k)
 {
     return wifi_host_11k_cfg(enable_11k);
+}
+
+int wlan_11k_neighbor_req(void)
+{
+    return WM_SUCCESS;
 }
 #endif
 
@@ -7491,5 +7496,32 @@ int wlan_set_drcs_cfg(const wlan_drcs_cfg_t *drcs_cfg, const int num)
 int wlan_get_drcs_cfg(wlan_drcs_cfg_t *drcs_cfg, int num)
 {
     return wifi_get_mc_cfg_ext((wifi_drcs_cfg_t *)drcs_cfg, num);
+}
+#endif
+
+#ifdef CONFIG_1AS
+int wlan_get_fw_timestamp(wlan_correlated_time_t *time)
+{
+    return wifi_get_fw_timestamp((wifi_correlated_time_t *)time);
+}
+
+int wlan_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_tm)
+{
+    return wifi_start_timing_measurement(bss_type, peer_mac, num_of_tm);
+}
+
+void wlan_end_timing_measurement(wlan_dot1as_info_t *info)
+{
+    /* Do nothing for now */
+}
+
+void wlan_request_timing_measurement(int bss_type, t_u8 *peer_mac, t_u8 trigger)
+{
+    wifi_request_timing_measurement(bss_type, peer_mac, trigger);
+}
+
+void wlan_report_timing_measurement(wlan_dot1as_info_t *info)
+{
+    /* Do nothing for now */
 }
 #endif

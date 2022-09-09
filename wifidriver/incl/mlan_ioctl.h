@@ -322,6 +322,28 @@ typedef struct _mlan_802_11_ssid
     t_u8 ssid[MLAN_MAX_SSID_LENGTH];
 } mlan_802_11_ssid, *pmlan_802_11_ssid;
 
+typedef MLAN_PACK_START struct _tx_status_event
+{
+    /** packet type */
+    t_u8 packet_type;
+    /** tx_token_id */
+    t_u8 tx_token_id;
+    /** 0--success, 1--fail, 2--watchdogtimeout */
+    t_u8 status;
+#ifdef CONFIG_1AS
+    /** t1 time stamp */
+    t_u64 t1_tstamp;
+    /** t4 time stamp */
+    t_u64 t4_tstamp;
+    /** t1 error */
+    t_u64 t1_error;
+    /** t4 error */
+    t_u64 t4_error;
+    /** egress time */
+    t_u64 egress_time;
+#endif
+} MLAN_PACK_END tx_status_event;
+
 /**
  *  Sructure to retrieve the scan table
  */
@@ -3490,6 +3512,19 @@ typedef MLAN_PACK_START struct _mlan_ds_drcs_cfg
 } MLAN_PACK_END mlan_ds_drcs_cfg;
 #endif
 
+#ifdef CONFIG_1AS
+/** Type definition of mlan_ds_host_clock  */
+typedef struct _mlan_ds_host_clock
+{
+    /** host time in secs */
+    t_u64 time;
+    /** fw time */
+    t_u64 fw_time;
+    /** host-bbu clock delta */
+    t_u64 host_bbu_clk_delta;
+} mlan_ds_host_clock;
+#endif
+
 /** Type definition of mlan_ds_misc_cfg for MLAN_IOCTL_MISC_CFG */
 typedef struct _mlan_ds_misc_cfg
 {
@@ -3564,6 +3599,9 @@ typedef struct _mlan_ds_misc_cfg
         /** channel drcs time slicing config for MLAN_OID_MISC_DRCS_CFG
          */
         mlan_ds_drcs_cfg drcs_cfg[2];
+#endif
+#ifdef CONFIG_1AS
+        mlan_ds_host_clock host_clock;
 #endif
     } param;
 } mlan_ds_misc_cfg, *pmlan_ds_misc_cfg;

@@ -350,7 +350,7 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
         {
             ret = wlan_process_802dot11_mgmt_pkt(
                 pmadapter->priv[pmbuf->bss_index], (t_u8 *)&pmgmt_pkt_hdr->wlan_header,
-                pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len));
+                pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len), prx_pd);
         }
         wlan_free_mlan_buffer(pmadapter, pmbuf);
         /* Free RxPD */

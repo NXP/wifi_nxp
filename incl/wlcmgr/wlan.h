@@ -842,6 +842,18 @@ typedef wifi_drcs_cfg_t wlan_drcs_cfg_t;
 
 typedef wifi_mgmt_frame_t wlan_mgmt_frame_t;
 
+#ifdef CONFIG_1AS
+/** Dot1as correlated time
+ * \ref wifi_correlated_time_t
+ */
+typedef wifi_correlated_time_t wlan_correlated_time_t;
+
+/** Dot1as timing measurement info
+ * \ref wifi_dot1as_info_t
+ */
+typedef wifi_dot1as_info_t wlan_dot1as_info_t;
+#endif
+
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
 int verify_split_scan_delay(int delay);
@@ -3113,7 +3125,7 @@ int wlan_11k_cfg(int enable_11k);
  * \return WM_SUCCESS if successful otherwise failure.
  *
  */
-int wlan_11k_neighbor_req();
+int wlan_11k_neighbor_req(void);
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
@@ -3740,5 +3752,53 @@ void wlan_wmm_tx_stats_dump(int bss_type);
  *
  */
 int wlan_host_11k_cfg(int enable_11k);
+
+/**
+ * send 11k neighbor request in WLAN firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_11k_neighbor_req(void);
+#endif
+
+#ifdef CONFIG_1AS
+/**
+ * Get correlated time
+ * \param[out] host time and fw time in ns
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_fw_timestamp(wlan_correlated_time_t *time);
+
+/**
+ * start DOT1AS master state machine
+ * \param[in] bss_type interface index
+ * \param[in] peer_mac destination mac address of timing measurement frame
+ * \param[in] num_of_tm number of timing measurement frames
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_tm);
+
+/**
+ * end DOT1AS master state machine report
+ * \param[out] info dot1as related info
+ */
+void wlan_end_timing_measurement(wlan_dot1as_info_t *info);
+
+/**
+ * request DOT1AS slave state machine
+ * \param[in] bss_type interface index
+ * \param[in] peer_mac destination mac address of timing measurement request frame
+ * \param[in] trigger 1-start, 0-stop timing measurement procedure
+ */
+void wlan_request_timing_measurement(int bss_type, t_u8 *peer_mac, t_u8 trigger);
+
+/**
+ * report DOT1AS slave state machine info
+ * \param[out] info dot1as related info
+ */
+void wlan_report_timing_measurement(wlan_dot1as_info_t *info);
 #endif
 #endif /* __WLAN_H__ */

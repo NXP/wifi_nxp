@@ -64,6 +64,16 @@ Change log:
 /** Macros for Data Alignment : address */
 #define ALIGN_ADDR(p, a) ((((t_ptr)(p)) + (((t_ptr)(a)) - 1U)) & ~(((t_ptr)(a)) - 1U))
 
+#ifndef MACSTR
+/** MAC address security format */
+#define MACSTR "%02x:XX:XX:XX:%02x:%02x"
+#endif
+
+#ifndef MAC2STR
+/** MAC address security print arguments */
+#define MAC2STR(a) (a)[0], (a)[4], (a)[5]
+#endif
+
 /** Return the byte offset of a field in the given structure */
 #define MLAN_FIELD_OFFSET(type, field) ((t_u32)(t_ptr) & (((type *)0)->field))
 /** Return aligned offset */

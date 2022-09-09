@@ -1190,6 +1190,93 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_1AS
+static void test_wlan_get_fw_time(int argc, char **argv)
+{
+    int ret;
+    wlan_correlated_time_t time;
+
+    ret = wlan_get_fw_timestamp(&time);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("get fw timestamp fail\r\n");
+        return;
+    }
+
+    (void)PRINTF("host time in ns 0x%x%08x\r\n", (t_u32)(time.time >> 32), (t_u32)time.time);
+    (void)PRINTF("fw time in ns 0x%x%08x\r\n", (t_u32)(time.fw_time >> 32), (t_u32)time.fw_time);
+}
+
+static void test_wlan_send_tm_req(int argc, char **argv)
+{
+    int ret;
+    int bss_type;
+    uint8_t raw_mac[6];
+
+    if (string_equal("sta", argv[1]))
+    {
+        bss_type = WLAN_BSS_TYPE_STA;
+    }
+    else if (string_equal("uap", argv[1]))
+    {
+        bss_type = WLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid [sta/uap] argument\r\n");
+        return;
+    }
+
+    ret = get_mac(argv[2], (char *)raw_mac, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    wlan_request_timing_measurement(bss_type, &raw_mac[0], 1);
+}
+
+static void test_wlan_send_tm(int argc, char **argv)
+{
+    int ret;
+    int bss_type;
+    uint8_t raw_mac[6];
+    uint8_t number_of_tm = 2; /* 2 by default */
+
+    if (string_equal("sta", argv[1]))
+    {
+        bss_type = WLAN_BSS_TYPE_STA;
+    }
+    else if (string_equal("uap", argv[1]))
+    {
+        bss_type = WLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid [sta/uap] argument\r\n");
+        return;
+    }
+
+    ret = get_mac(argv[2], (char *)raw_mac, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    if (argv[3] != NULL)
+        number_of_tm = atoi(argv[3]);
+
+    ret = wlan_start_timing_measurement(bss_type, &raw_mac[0], number_of_tm);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: start timing measurement fail\r\n");
+        return;
+    }
+}
+#endif
+
 static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
@@ -1219,6 +1306,11 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-ed-mac-mode", NULL, wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
     {"wlan-set-tx-omi", "<tx-omi>", test_wlan_set_tx_omi},
+#endif
+#ifdef CONFIG_1AS
+    {"wlan-get-fw-time", NULL, test_wlan_get_fw_time},
+    {"wlan-tm-req", "<sta/uap> <mac_addr>", test_wlan_send_tm_req},
+    {"wlan-tm", "<sta/uap> <mac_addr> <num_of_tm_frame>", test_wlan_send_tm},
 #endif
 };
 

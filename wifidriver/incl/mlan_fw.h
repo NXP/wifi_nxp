@@ -1342,6 +1342,10 @@ typedef enum _ENH_PS_MODES
 
 #endif
 
+#ifdef CONFIG_1AS
+#define HostCmd_CMD_HOST_CLOCK_CFG 0x0246
+#endif
+
 /* Radio type definitions for the channel TLV */
 /** Radio type BG */
 #define HostCmd_SCAN_RADIO_TYPE_BG 0U
@@ -1571,6 +1575,8 @@ typedef enum _ENH_PS_MODES
 /** Event ID: Multi Chan Info*/
 #define EVENT_MULTI_CHAN_INFO 0x0000006a
 #endif
+
+#define EVENT_TX_STATUS_REPORT 0x00000074
 
 /** Event ID: EV_SMC_GENERIC */
 #define EVENT_EV_SMC_GENERIC 0x00000077
@@ -6349,6 +6355,19 @@ typedef MLAN_PACK_START struct _MrvlIETypes_mutli_chan_info_t
 } MLAN_PACK_END MrvlIEtypes_multi_chan_info_t;
 #endif
 
+#ifdef CONFIG_1AS
+/** HostCmd_DS_HOST_CLOCK_CFG */
+typedef MLAN_PACK_START struct _HostCmd_DS_HOST_CLOCK_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** host time nano secs value */
+    t_u64 time;
+    /** HW time in nano sec value */
+    t_u64 hw_time;
+} MLAN_PACK_END HostCmd_DS_HOST_CLOCK_CFG;
+#endif
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -6572,6 +6591,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_MULTI_CHAN_CFG multi_chan_cfg;
         HostCmd_DS_MULTI_CHAN_POLICY multi_chan_policy;
         HostCmd_DS_DRCS_CFG drcs_cfg;
+#endif
+#ifdef CONFIG_1AS
+        HostCmd_DS_HOST_CLOCK_CFG host_clock_cfg;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

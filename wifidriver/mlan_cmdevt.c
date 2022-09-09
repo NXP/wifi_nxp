@@ -3777,3 +3777,75 @@ mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *re
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef CONFIG_1AS
+/**
+ *  @brief This function prepares command of sending host_clock_cfg.
+ *
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   the action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_host_clock_cfg(HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
+{
+    mlan_ds_host_clock *hostclk           = (mlan_ds_host_clock *)pdata_buf;
+    HostCmd_DS_HOST_CLOCK_CFG *host_clock = (HostCmd_DS_HOST_CLOCK_CFG *)&cmd->params.host_clock_cfg;
+
+    ENTER();
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_HOST_CLOCK_CFG);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_HOST_CLOCK_CFG) + S_DS_GEN);
+
+    host_clock->action = wlan_cpu_to_le16(cmd_action);
+    host_clock->time   = wlan_cpu_to_le64(hostclk->time);
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function handles the command response of host_clock_cfg
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to command buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_host_clock_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    mlan_ds_misc_cfg *cfg                 = MNULL;
+    mlan_ds_host_clock *hostclk           = MNULL;
+    HostCmd_DS_HOST_CLOCK_CFG *host_clock = (HostCmd_DS_HOST_CLOCK_CFG *)&resp->params.host_clock_cfg;
+    // mlan_adapter *pmadapter = pmpriv->adapter;
+    // pmlan_callbacks pcb = &pmadapter->callbacks;
+    // t_u64 cmd_rtt;
+
+    ENTER();
+
+    if (pioctl_buf)
+    {
+        cfg     = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+        hostclk = &cfg->param.host_clock;
+
+        hostclk->time = wlan_le64_to_cpu(host_clock->time);
+        // cmd_rtt = pcb->moal_do_div(pmadapter->d2 - pmadapter->d1, 2);
+        // PRINTM(MINFO, "HW time: %ld, Host Time: %ld, RTT: %ld\n",
+        // host_clock->hw_time, hostclk->time, cmd_rtt);
+        hostclk->fw_time = wlan_le64_to_cpu(host_clock->hw_time) /*- cmd_rtt*/; // Not adjusting
+                                                                                // cmd_rtt gave
+                                                                                // better results
+                                                                                // with 802.1as
+        hostclk->host_bbu_clk_delta = hostclk->time - hostclk->fw_time;
+        // pmadapter->host_bbu_clk_delta = hostclk->host_bbu_clk_delta;
+
+        /* Indicate ioctl complete */
+        // pioctl_buf->data_read_written =
+        // sizeof(mlan_ds_misc_cfg) + MLAN_SUB_COMMAND_SIZE;
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
