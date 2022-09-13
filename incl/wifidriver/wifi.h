@@ -1084,6 +1084,11 @@ int wifi_get_twt_report(wifi_twt_report_t *twt_report);
 #endif /* CONFIG_11AX_TWT */
 #endif
 
+#ifdef CONFIG_WIFI_CLOCKSYNC
+int wifi_set_clocksync_cfg(const wifi_clock_sync_gpio_tsf_t *tsf_latch, mlan_bss_type bss_type);
+int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info);
+#endif /* CONFIG_WIFI_CLOCKSYNC */
+
 #ifdef CONFIG_RF_TEST_MODE
 
 int wifi_set_rf_test_mode(void);

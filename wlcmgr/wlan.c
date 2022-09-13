@@ -4911,15 +4911,15 @@ int wlan_add_network(struct wlan_network *network)
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
         /* If no capability was configured, set capa up to 11ax by default */
-        if(!network->wlan_capa)
+        if (!network->wlan_capa)
             network->wlan_capa =
 #ifdef CONFIG_11AX
-                                WIFI_SUPPORT_11AX |
+                WIFI_SUPPORT_11AX |
 #endif
 #ifdef CONFIG_11AC
-                                WIFI_SUPPORT_11AC |
+                WIFI_SUPPORT_11AC |
 #endif
-                                WIFI_SUPPORT_11N  | WIFI_SUPPORT_LEGACY;
+                WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY;
     }
 #endif
 
@@ -7387,6 +7387,17 @@ int wlan_get_twt_report(wlan_twt_report_t *twt_report)
 }
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+int wlan_get_tsf_info(wlan_tsf_info_t *tsf_info)
+{
+    return wifi_get_tsf_info(tsf_info);
+}
+int wlan_set_clocksync_cfg(const wlan_clock_sync_gpio_tsf_t *tsf_latch)
+{
+    return wifi_set_clocksync_cfg(tsf_latch, (mlan_bss_type)WLAN_BSS_TYPE_STA);
+}
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 
 #ifdef CONFIG_WIFI_EU_CRYPTO
 int wlan_set_crypto_RC4_encrypt(

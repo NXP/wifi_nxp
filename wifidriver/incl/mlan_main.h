@@ -2088,7 +2088,7 @@ struct _mlan_adapter
     /** MIMO abstraction of MCSs supported by device */
     t_u8 usr_dev_mcs_support;
 #ifdef CONFIG_WIFI_CAPA
-	/** user configured 11n enable/disable */
+    /** user configured 11n enable/disable */
     t_u8 usr_dot_11n_enable;
 #endif
 #ifdef STA_SUPPORT
@@ -2866,6 +2866,13 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter);
 // mlan_status wlan_misc_chan_reg_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #endif
 
+#ifdef CONFIG_WIFI_CLOCKSYNC
+mlan_status wlan_cmd_gpio_tsf_latch(
+    pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, mlan_ioctl_req *pioctl_buf, t_void *pdata_buf);
+mlan_status wlan_ret_gpio_tsf_latch(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
+mlan_status wlan_misc_gpio_tsf_latch_config(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
+mlan_status wlan_misc_get_tsf_info(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 #ifdef CONFIG_MULTI_CHAN
 mlan_status wlan_cmd_multi_chan_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 

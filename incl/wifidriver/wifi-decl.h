@@ -1011,6 +1011,33 @@ typedef PACK_START struct
 #endif /* CONFIG_11AX_TWT */
 #endif
 
+#ifdef CONFIG_WIFI_CLOCKSYNC
+typedef PACK_START struct
+{
+    /**clock sync Mode */
+    t_u8 clock_sync_mode;
+    /**clock sync Role */
+    t_u8 clock_sync_Role;
+    /**clock sync GPIO Pin Number */
+    t_u8 clock_sync_gpio_pin_number;
+    /**clock sync GPIO Level or Toggle */
+    t_u8 clock_sync_gpio_level_toggle;
+    /**clock sync GPIO Pulse Width */
+    t_u16 clock_sync_gpio_pulse_width;
+} PACK_END wifi_clock_sync_gpio_tsf_t;
+
+typedef PACK_START struct
+{
+    /**get tsf info format */
+    t_u16 tsf_format;
+    /**tsf info */
+    t_u16 tsf_info;
+    /**tsf */
+    t_u64 tsf;
+    /**Positive or negative offset in microsecond from Beacon TSF to GPIO toggle TSF  */
+    t_s32 tsf_offset;
+} PACK_END wifi_tsf_info_t;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 #ifdef CONFIG_WLAN_BRIDGE
 /**
  * Data structure for Bridge Autolink Configuration

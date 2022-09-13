@@ -2614,6 +2614,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_GET_TSF:
             ret = wlan_cmd_get_tsf(pmpriv, cmd_ptr, cmd_action);
             break;
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        case HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG:
+            ret = wlan_cmd_gpio_tsf_latch(pmpriv, cmd_ptr, cmd_action, pioctl_buf, pdata_buf);
+            break;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 #ifdef CONFIG_WIFI_TX_PER_TRACK
         case HostCmd_CMD_TX_RX_PKT_STATS:
             ret = wlan_cmd_txrx_pkt_stats(pmpriv, cmd_ptr, cmd_action, pdata_buf);

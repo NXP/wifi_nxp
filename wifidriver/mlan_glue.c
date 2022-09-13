@@ -2906,6 +2906,26 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+#ifdef CONFIG_WIFI_CLOCKSYNC
+            case HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, wm_wifi.cmd_resp_ioctl);
+                    if (rv != MLAN_STATUS_SUCCESS)
+                    {
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    }
+                    else
+                    {
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
+                    }
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+#endif
             case HostCmd_CMD_AUTO_TX:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -5181,6 +5201,69 @@ int wifi_get_twt_report(wifi_twt_report_t *twt_report)
 }
 #endif /* CONFIG_11AX_TWT */
 #endif
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+int wifi_set_clocksync_cfg(const wifi_clock_sync_gpio_tsf_t *tsf_latch, mlan_bss_type bss_type)
+{
+    int ret;
+    mlan_ds_misc_cfg misc;
+    mlan_ioctl_req req;
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    (void)memcpy((void *)&misc.param.gpio_tsf_latch_config, (const void *)tsf_latch,
+                 sizeof(misc.param.gpio_tsf_latch_config));
+
+    misc.sub_command       = (t_u32)MLAN_OID_MISC_GPIO_TSF_LATCH;
+    wm_wifi.cmd_resp_ioctl = &req;
+    req.pbuf               = (t_u8 *)&misc;
+    req.buf_len            = sizeof(mlan_ds_misc_cfg);
+    req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
+    req.action             = MLAN_ACT_SET;
+
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_UAP;
+        ret           = (int)wlan_ops_uap_ioctl(mlan_adap, &req);
+    }
+    else
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_STA;
+        ret           = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
+    }
+
+    wm_wifi.cmd_resp_ioctl = NULL;
+    return ret;
+}
+
+int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info)
+{
+    int ret;
+    mlan_ds_misc_cfg misc;
+    mlan_ioctl_req req;
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    (void)memcpy((void *)&misc.param.tsf_info, (void *)tsf_info, sizeof(misc.param.tsf_info));
+
+    misc.sub_command       = (t_u32)MLAN_OID_MISC_GET_TSF_INFO;
+    wm_wifi.cmd_resp_ioctl = &req;
+    req.pbuf               = (t_u8 *)&misc;
+    req.buf_len            = sizeof(mlan_ds_misc_cfg);
+    req.bss_index          = 0;
+    req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
+    req.action             = MLAN_ACT_GET;
+
+    ret                    = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
+    wm_wifi.cmd_resp_ioctl = NULL;
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)memcpy((void *)tsf_info, (void *)&misc.param.tsf_info, sizeof(mlan_ds_tsf_info));
+    }
+    return ret;
+}
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 
 #ifdef CONFIG_11R
 static int wifi_set_subscribe_event(const t_u16 evt_bitmap, const t_u8 value, const t_u8 value_freq)

@@ -1077,17 +1077,18 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
         for (j = 0; j < 6; j++)
         {
             rupwr = txpwrlimit->rupwrlimit_config[i].ruPower[j];
-            /*  UART is giving issue with printing of s8 values and s8 negative number is not printed properly (printed as positive number).
+            /*  UART is giving issue with printing of s8 values and s8 negative number is not printed properly (printed
+             * as positive number).
              *  TODO : This still need to be debugged.
              *  Next piece of code is written as a work-around for this issue of UART
              */
             if (rupwr & 0x80)
             {
-               rupwr = -rupwr;
-               (void)PRINTF("-%d,", rupwr);
+                rupwr = -rupwr;
+                (void)PRINTF("-%d,", rupwr);
             }
             else
-               (void)PRINTF("%d,", rupwr);
+                (void)PRINTF("%d,", rupwr);
         }
         (void)PRINTF("\r\n");
     }
@@ -1447,6 +1448,145 @@ void test_wlan_cfg_process(uint32_t index, int argc, char **argv)
 }
 
 #endif /* CONFIG_11AX */
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+static void dump_wlan_get_tsf_info_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-tsfinfo <tsf_format>\r\n");
+    (void)PRINTF("where, tsf_format =\r\n");
+    (void)PRINTF("0:    Report GPIO assert TSF\r\n");
+    (void)PRINTF("1:    Report Beacon TSF and Offset (valid if CONFIG Mode 2)\r\n");
+}
+
+static void test_get_tsf_info(int argc, char **argv)
+{
+    wlan_tsf_info_t tsf_info;
+    (void)memset(&tsf_info, 0, sizeof(wlan_tsf_info_t));
+    if (argc != 2)
+    {
+        dump_wlan_get_tsf_info_usage();
+        return;
+    }
+
+    errno               = 0;
+    tsf_info.tsf_format = (uint16_t)strtol(argv[1], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    int rv = wlan_get_tsf_info(&tsf_info);
+
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get TSF info\r\n");
+    }
+    else
+    {
+        (void)PRINTF("tsf format:              %d\n\r", tsf_info.tsf_format);
+        (void)PRINTF("tsf info:                %d\n\r", tsf_info.tsf_info);
+        (void)PRINTF("tsf:                     %llu\n\r", tsf_info.tsf);
+        (void)PRINTF("tsf offset:              %d\n\r", tsf_info.tsf_offset);
+    }
+}
+
+static void dump_wlan_set_clocksync_cfg_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-clocksync <mode> <role> <gpio_pin> <gpio_level> <pulse width>\r\n");
+    (void)PRINTF("Set WIFI TSF based clock sync setting. \r\nWhere, \r\n");
+    (void)PRINTF("<mode> is use to configure GPIO TSF latch mode\r\n");
+    (void)PRINTF("\t\t0:    GPIO level\r\n");
+    (void)PRINTF("\t\t1:    GPIO toggle\r\n");
+    (void)PRINTF("\t\t2:    GPIO toggle on Next Beacon\r\n");
+    (void)PRINTF("<role> \r\n");
+    (void)PRINTF("\t\t0: when mode set to 0 or 1\r\n");
+    (void)PRINTF("\t\t1:  AP\r\n");
+    (void)PRINTF("\t\t2: STA\r\n");
+    (void)PRINTF("<gpio pin number>\r\n");
+    (void)PRINTF("<GPIO Level/Toggle>\r\n");
+    (void)PRINTF("\t\tmode = 0\r\n");
+    (void)PRINTF("\t\t0: low    1: high\r\n");
+    (void)PRINTF("\t\tmode = 1 or 2\r\n");
+    (void)PRINTF("\t\t0: low to high\r\n");
+    (void)PRINTF("\t\t1: high to low\r\n");
+    (void)PRINTF("GPIO pulse width\r\n");
+    (void)PRINTF("\t\tmode = 0,  reserved, set to 0\r\n");
+    (void)PRINTF("\t\tmode 1 or 2\r\n");
+    (void)PRINTF("\t\t0: GPIO remain on toggle level (high or low)\r\n");
+    (void)PRINTF("\t\tNon-0: GPIO pulse width in microseconds (min 1 us)\r\n");
+}
+
+static void test_set_clocksync_cfg(int argc, char **argv)
+{
+    wlan_clock_sync_gpio_tsf_t tsf_latch;
+
+    if (argc != 6)
+    {
+        dump_wlan_set_clocksync_cfg_usage();
+        return;
+    }
+
+    errno                     = 0;
+    tsf_latch.clock_sync_mode = (uint8_t)strtol(argv[1], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    errno                     = 0;
+    tsf_latch.clock_sync_Role = (uint8_t)strtol(argv[2], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    errno                                = 0;
+    tsf_latch.clock_sync_gpio_pin_number = (uint8_t)strtol(argv[3], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    errno                                  = 0;
+    tsf_latch.clock_sync_gpio_level_toggle = (uint8_t)strtol(argv[4], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    errno                                 = 0;
+    tsf_latch.clock_sync_gpio_pulse_width = (uint16_t)strtol(argv[5], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    int rv = wlan_set_clocksync_cfg(&tsf_latch);
+
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set clocksync config\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Clock Sync config set as:\r\n");
+        (void)PRINTF("Mode                 :%d\n\r", tsf_latch.clock_sync_mode);
+        (void)PRINTF("Role                 :%d\n\r", tsf_latch.clock_sync_Role);
+        (void)PRINTF("GPIO Pin Number      :%d\n\r", tsf_latch.clock_sync_gpio_pin_number);
+        (void)PRINTF("GPIO Level or Toggle :%d\n\r", tsf_latch.clock_sync_gpio_level_toggle);
+        (void)PRINTF("GPIO Pulse Width     :%d\n\r", tsf_latch.clock_sync_gpio_pulse_width);
+    }
+}
+#endif /* CONFIG_WIFI_CLOCKSYNC */
+
 #ifdef CONFIG_1AS
 static void test_wlan_get_fw_time(int argc, char **argv)
 {
@@ -1577,6 +1717,10 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-twt-report", "<twt_report_get>", test_wlan_twt_report},
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
+#ifdef CONFIG_WIFI_CLOCKSYNC
+    {"wlan-get-tsfinfo", "<format-type>", test_get_tsf_info},
+    {"wlan-set-clocksync", "<mode> <role> <gpio_pin> <gpio_level> <pulse width>", test_set_clocksync_cfg},
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 #ifdef CONFIG_1AS
     {"wlan-get-fw-time", NULL, test_wlan_get_fw_time},
     {"wlan-tm-req", "<sta/uap> <mac_addr>", test_wlan_send_tm_req},

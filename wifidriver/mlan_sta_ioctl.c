@@ -5432,6 +5432,14 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             status = wlan_misc_ioctl_low_pwr_mode(pmadapter, pioctl_req);
             break;
 #endif // WLAN_LOW_POWER_ENABLE
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        case MLAN_OID_MISC_GPIO_TSF_LATCH:
+            status = wlan_misc_gpio_tsf_latch_config(pmadapter, pioctl_req);
+            break;
+        case MLAN_OID_MISC_GET_TSF_INFO:
+            status = wlan_misc_get_tsf_info(pmadapter, pioctl_req);
+            break;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
 

@@ -1812,6 +1812,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
             break;
 #endif
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        case HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG:
+            ret = wlan_ret_gpio_tsf_latch(pmpriv, resp, pioctl_buf);
+            break;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 #ifdef CONFIG_11K_OFFLOAD
         case HostCmd_CMD_OFFLOAD_FEATURE_CONTROL:
             ret = wlan_ret_offload_feature_ctrl(pmpriv, resp);

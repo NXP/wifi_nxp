@@ -215,7 +215,11 @@ typedef enum _mlan_ioctl_req_id
 #ifdef WLAN_LOW_POWER_ENABLE
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
-    MLAN_OID_MISC_GET_REGIONPWR_CFG
+    MLAN_OID_MISC_GET_REGIONPWR_CFG,
+#ifdef CONFIG_WIFI_CLOCKSYNC
+    MLAN_OID_MISC_GPIO_TSF_LATCH = 0x00200082,
+    MLAN_OID_MISC_GET_TSF_INFO   = 0x00200083
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 } mlan_ioctl_req_id;
 
 /** Sub command size */
@@ -593,7 +597,7 @@ typedef struct _mlan_ssid_bssid
 #ifdef CONFIG_11AX_TWT
 #define MLAN_11AX_TWT_SETUP_SUBID    0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
-#define MLAN_11AX_TWT_REPORT_SUBID 0x116
+#define MLAN_11AX_TWT_REPORT_SUBID   0x116
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
 
@@ -2667,7 +2671,7 @@ typedef struct _mlan_ds_11ac_vht_cfg
 } mlan_ds_11ac_vht_cfg, *pmlan_ds_11ac_vht_cfg;
 
 #ifdef CONFIG_11AX
-#define MAX_RU_COUNT 6
+#define MAX_RU_COUNT    6
 #define MAX_RUTXPWR_NUM 140
 typedef MLAN_PACK_START struct _mlan_rupwrlimit_config_t
 {
@@ -2807,7 +2811,7 @@ typedef struct _mlan_ds_11ax_cmd_cfg
         /** OBSS tolerance time configuration for
          * MLAN_11AXCMD_TOLTIME_SUBID */
         mlan_ds_11ax_toltime_cmd toltime_cfg;
-        /** Channel RU TX power limit Config for 
+        /** Channel RU TX power limit Config for
          * MLAN_11AXCMD_RUPOWER_SUBID */
         mlan_ds_11ax_chanlrupwrcft_cmd rupwr_cfg;
     } param;
@@ -2901,6 +2905,36 @@ typedef struct _mlan_ds_11ax_cfg
     } param;
 } mlan_ds_11ax_cfg, *pmlan_ds_11ax_cfg;
 #endif
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/** Type definition of mlan_ds_gpio_tsf_latch */
+typedef MLAN_PACK_START struct _mlan_ds_gpio_tsf_latch
+{
+    /**clock sync Mode */
+    t_u8 clock_sync_mode;
+    /**clock sync Role */
+    t_u8 clock_sync_Role;
+    /**clock sync GPIO Pin Number */
+    t_u8 clock_sync_gpio_pin_number;
+    /**clock sync GPIO Level or Toggle */
+    t_u8 clock_sync_gpio_level_toggle;
+    /**clock sync GPIO Pulse Width */
+    t_u16 clock_sync_gpio_pulse_width;
+} MLAN_PACK_END mlan_ds_gpio_tsf_latch, *pmlan_ds_gpio_tsf_latch;
+
+/** Type definition of mlan_ds_tsf_info */
+typedef MLAN_PACK_START struct _mlan_ds_tsf_info
+{
+    /**get tsf info format */
+    t_u16 tsf_format;
+    /**tsf info */
+    t_u16 tsf_info;
+    /**tsf */
+    t_u64 tsf;
+    /**Positive or negative offset in microsecond from Beacon TSF to GPIO toggle TSF  */
+    t_s32 tsf_offset;
+} MLAN_PACK_END mlan_ds_tsf_info, *pmlan_ds_tsf_info;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 
 /** Type definition of mlan_ds_11n_amsdu_aggr_ctrl for
  * MLAN_OID_11N_AMSDU_AGGR_CTRL*/
@@ -3597,6 +3631,10 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_misc_cmd hostcmd;
         /** System clock for MLAN_OID_MISC_SYS_CLOCK */
         mlan_ds_misc_sys_clock sys_clock;
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        mlan_ds_gpio_tsf_latch gpio_tsf_latch_config;
+        mlan_ds_tsf_info tsf_info;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
         /** WWS set/get for MLAN_OID_MISC_WWS */
         t_u32 wws_cfg;
         /** Function init/shutdown for MLAN_OID_MISC_INIT_SHUTDOWN */

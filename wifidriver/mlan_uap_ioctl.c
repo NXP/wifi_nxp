@@ -1319,6 +1319,12 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             if (misc->sub_command == MLAN_OID_MISC_DRVDBG)
                 status = wlan_set_drvdbg(pmadapter, pioctl_req);
 #endif
+#ifdef CONFIG_WIFI_CLOCKSYNC
+            if (misc->sub_command == MLAN_OID_MISC_GPIO_TSF_LATCH)
+                status = wlan_misc_gpio_tsf_latch_config(pmadapter, pioctl_req);
+            if (misc->sub_command == MLAN_OID_MISC_GET_TSF_INFO)
+                status = wlan_misc_get_tsf_info(pmadapter, pioctl_req);
+#endif /* CONFIG_WIFI_CLOCKSYNC */
             break;
         case MLAN_IOCTL_PM_CFG:
             pm = (mlan_ds_pm_cfg *)pioctl_req->pbuf;

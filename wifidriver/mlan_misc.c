@@ -2341,3 +2341,64 @@ mlan_status wlan_misc_ioctl_low_pwr_mode(IN pmlan_adapter pmadapter, IN pmlan_io
     return ret;
 }
 #endif // WLAN_LOW_POWER_ENABLE
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/**
+ *  @brief Set/Get GPIO TSF Latch config
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+mlan_status wlan_misc_gpio_tsf_latch_config(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_status ret            = MLAN_STATUS_SUCCESS;
+    mlan_ds_misc_cfg *misc_cfg = MNULL;
+    t_u16 cmd_action           = 0;
+    mlan_private *pmpriv       = pmadapter->priv[pioctl_req->bss_index];
+
+    ENTER();
+
+    misc_cfg = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    if (pioctl_req->action == MLAN_ACT_SET)
+        cmd_action = HostCmd_ACT_GEN_SET;
+    else
+        cmd_action = HostCmd_ACT_GEN_GET;
+
+    /* Send request to firmware */
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG, cmd_action, 0, (t_void *)pioctl_req,
+                           &misc_cfg->param.gpio_tsf_latch_config);
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief Get TSF info
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+mlan_status wlan_misc_get_tsf_info(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_status ret            = MLAN_STATUS_SUCCESS;
+    mlan_ds_misc_cfg *misc_cfg = MNULL;
+    t_u16 cmd_action           = 0;
+    mlan_private *pmpriv       = pmadapter->priv[pioctl_req->bss_index];
+
+    ENTER();
+
+    misc_cfg   = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    cmd_action = HostCmd_ACT_GEN_GET;
+
+    /* Send request to firmware */
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG, cmd_action, 0, (t_void *)pioctl_req,
+                           &misc_cfg->param.tsf_info);
+
+    LEAVE();
+    return ret;
+}
+#endif /* CONFIG_WIFI_CLOCKSYNC */

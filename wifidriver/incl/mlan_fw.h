@@ -422,6 +422,13 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_AUTOLINK_PARAM (PROPRIETARY_TLV_BASE_ID + 0xe8) /*0x01e8*/
 /** TLV type : Coex parameter config */
 #define TLV_TYPE_EXT_BLE_COEX_CFG (PROPRIETARY_TLV_BASE_ID + 0x12F)
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/** TLV type : GPIO TSF LATCH CONFIG */
+#define TLV_TYPE_GPIO_TSF_LATCH_CONFIG (PROPRIETARY_TLV_BASE_ID + 0x154U)
+/** TLV type : GPIO TSF LATCH REPORT*/
+#define TLV_TYPE_GPIO_TSF_LATCH_REPORT (PROPRIETARY_TLV_BASE_ID + 0x155U)
+#endif /* CONFIG_WIFI_CLOCKSYNC */
+
 /** ADDBA TID mask */
 #define ADDBA_TID_MASK (MBIT(2) | MBIT(3) | MBIT(4) | MBIT(5))
 /** DELBA TID mask */
@@ -1330,6 +1337,11 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_CMD_TWT_CFG 0x0270
 #endif /* CONFIG_11AX_TWT */
 #endif
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/** Host Command ID: GPIO TSF LATCH */
+#define HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG 0x0278
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 
 #ifdef CONFIG_MULTI_CHAN
 /** Host Command ID: Multi chan config */
@@ -4251,6 +4263,51 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
 #endif /* CONFIG_11AX_TWT */
 #endif
 
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/** MrvlIEtypes_GPIO_TSF_LATCH_CONFIG*/
+typedef MLAN_PACK_START struct _MrvlIEtypes_GPIO_TSF_LATCH_CONFIG
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /**clock sync Mode */
+    t_u8 clock_sync_mode;
+    /**clock sync Role */
+    t_u8 clock_sync_Role;
+    /**clock sync GPIO Pin Number */
+    t_u8 clock_sync_gpio_pin_number;
+    /**clock sync GPIO Level or Toggle */
+    t_u8 clock_sync_gpio_level_toggle;
+    /**clock sync GPIO Pulse Width */
+    t_u16 clock_sync_gpio_pulse_width;
+} MLAN_PACK_END MrvlIEtypes_GPIO_TSF_LATCH_CONFIG;
+
+/** MrvlIEtypes_GPIO_TSF_LATCH_REPORT */
+typedef MLAN_PACK_START struct _MrvlIEtypes_GPIO_TSF_LATCH_REPORT
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /**get tsf info format */
+    t_u16 tsf_format;
+    /**tsf info */
+    t_u16 tsf_info;
+    /**tsf */
+    t_u64 tsf;
+    /**Positive or negative offset in microsecond from Beacon TSF to GPIO toggle TSF  */
+    t_s32 tsf_offset;
+} MLAN_PACK_END MrvlIEtypes_GPIO_TSF_LATCH_REPORT;
+
+/** HostCmd_DS_GPIO_TSF_LATCH_PARAM_CONFIG */
+typedef MLAN_PACK_START struct _HostCmd_DS_GPIO_TSF_LATCH_PARAM_CONFIG
+{
+    /** Action 0-GET, 1-SET */
+    t_u16 action;
+    /** MrvlIEtypes_GPIO_TSF_LATCH_CONFIG
+     *  MrvlIEtypes_GPIO_TSF_LATCH_REPORT
+     */
+    t_u8 tlv_buf[];
+} MLAN_PACK_END HostCmd_DS_GPIO_TSF_LATCH_PARAM_CONFIG;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
+
 /** HostCmd_DS_TXBUF_CFG*/
 typedef MLAN_PACK_START struct _HostCmd_DS_TXBUF_CFG
 {
@@ -6581,6 +6638,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         MrvlIETypes_ExtBLECoex_Config_t ext_ble_coex_cfg;
 #endif
         HostCmd_DS_TSF tsf_cfg;
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        HostCmd_DS_GPIO_TSF_LATCH_PARAM_CONFIG gpio_tsf_latch;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
         HostCmd_DS_TBTT_OFFSET tbtt_offset;
 #ifdef CONFIG_RF_TEST_MODE
         HostCmd_DS_MFG_CMD_GENERIC_CFG mfg_generic_cfg;

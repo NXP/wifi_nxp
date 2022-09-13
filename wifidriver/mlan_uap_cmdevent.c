@@ -795,7 +795,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
                        16);
 #ifdef CONFIG_WIFI_CAPA
         /* Disable 802.11n */
-        if(!pmpriv->adapter->usr_dot_11n_enable)
+        if (!pmpriv->adapter->usr_dot_11n_enable)
         {
             tlv_htcap->ht_cap.supported_mcs_set[0] = 0;
             tlv_htcap->ht_cap.supported_mcs_set[4] = 0;
@@ -2707,6 +2707,11 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_11AC_CFG:
             ret = wlan_cmd_11ac_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        case HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG:
+            ret = wlan_cmd_gpio_tsf_latch(pmpriv, cmd_ptr, cmd_action, pioctl_buf, pdata_buf);
+            break;
+#endif
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef WIFI_DIRECT_SUPPORT
         case HostCmd_CMD_802_11_REMAIN_ON_CHANNEL:
@@ -2866,6 +2871,11 @@ mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_TX_RATE_QUERY:
             ret = wlan_ret_802_11_tx_rate_query(pmpriv, resp, pioctl_buf);
             break;
+#ifdef CONFIG_WIFI_CLOCKSYNC
+        case HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG:
+            ret = wlan_ret_gpio_tsf_latch(pmpriv, resp, pioctl_buf);
+            break;
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 #ifdef WIFI_DIRECT_SUPPORT
         case HostCmd_CMD_802_11_REMAIN_ON_CHANNEL:
             ret = wlan_ret_remain_on_channel(pmpriv, resp, pioctl_buf);

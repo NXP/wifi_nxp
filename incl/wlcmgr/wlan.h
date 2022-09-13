@@ -861,6 +861,17 @@ typedef wifi_btwt_config_t wlan_btwt_config_t;
 typedef wifi_twt_report_t wlan_twt_report_t;
 #endif /* CONFIG_11AX_TWT */
 #endif
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/** Configuration for Clock Sync GPIO TSF latch
+ * \ref wifi_clock_sync_gpio_tsf_t
+ */
+typedef wifi_clock_sync_gpio_tsf_t wlan_clock_sync_gpio_tsf_t;
+/** Configuration for TSF info
+ * \ref wifi_tsf_info_t
+ */
+typedef wifi_tsf_info_t wlan_tsf_info_t;
+#endif
+
 #ifdef CONFIG_MULTI_CHAN
 /** Configuration for multi-channel switch
  * \ref wifi_drcs_cfg_t
@@ -3731,6 +3742,23 @@ int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
 int wlan_get_twt_report(wlan_twt_report_t *twt_report);
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
+
+#ifdef CONFIG_WIFI_CLOCKSYNC
+/** Set Clock Sync GPIO based TSF
+ *
+ * \param[in] tsf_latch Clock Sync TSF latch parameters to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_clocksync_cfg(const wlan_clock_sync_gpio_tsf_t *tsf_latch);
+/** Get TSF info from firmware using GPIO latch
+ *
+ * \param[out] tsf_info TSF info parameter received from Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_tsf_info(wlan_tsf_info_t *tsf_info);
+#endif /* CONFIG_WIFI_CLOCKSYNC */
 
 #ifdef CONFIG_HEAP_DEBUG
 /**
