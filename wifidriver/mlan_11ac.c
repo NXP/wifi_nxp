@@ -32,7 +32,6 @@
 /********************************************************
    Local Functions
 ********************************************************/
-#if 0
 /**
  *  @brief determine the center frquency center index for bandwidth
  *         of 80 MHz and 160 MHz
@@ -45,97 +44,102 @@
  *  @return             channel center frequency center, if found; O, otherwise
  */
 
-t_u8 wlan_get_center_freq_idx(
-    IN  mlan_private     *pmpriv,
-    IN  t_u8              band,
-    IN  t_u32             pri_chan,
-    IN  t_u8              chan_bw)
+t_u8 wlan_get_center_freq_idx(IN mlan_private *pmpriv, IN t_u8 band, IN t_u32 pri_chan, IN t_u8 chan_bw)
 {
     t_u8 center_freq_idx = 0;
 
-    if (band & BAND_AAC) {
+    if (band & BAND_AAC)
+    {
         switch (pri_chan)
         {
-        case 36:
-        case 40:
-        case 44:
-        case 48:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
+            case 36:
+            case 40:
+            case 44:
+            case 48:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 42;
+                    break;
+                }
+            case 52:
+            case 56:
+            case 60:
+            case 64:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 58;
+                    break;
+                }
+                else if (chan_bw == CHANNEL_BW_160MHZ)
+                {
+                    center_freq_idx = 50;
+                    break;
+                }
+            case 100:
+            case 104:
+            case 108:
+            case 112:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 106;
+                    break;
+                }
+            case 116:
+            case 120:
+            case 124:
+            case 128:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 122;
+                    break;
+                }
+                else if (chan_bw == CHANNEL_BW_160MHZ)
+                {
+                    center_freq_idx = 114;
+                    break;
+                }
+            case 132:
+            case 136:
+            case 140:
+            case 144:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 138;
+                    break;
+                }
+            case 149:
+            case 153:
+            case 157:
+            case 161:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 155;
+                    break;
+                }
+            case 165:
+            case 169:
+            case 173:
+            case 177:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 171;
+                    break;
+                }
+            case 184:
+            case 188:
+            case 192:
+            case 196:
+                if (chan_bw == CHANNEL_BW_80MHZ)
+                {
+                    center_freq_idx = 190;
+                    break;
+                }
+            default: /* error. go to the default */
                 center_freq_idx = 42;
-                break;
-            }
-        case 52:
-        case 56:
-        case 60:
-        case 64:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 58;
-                break;
-            }
-            else if (chan_bw == CHANNEL_BW_160MHZ) {
-                center_freq_idx = 50;
-                break;
-            }
-        case 100:
-        case 104:
-        case 108:
-        case 112:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 106;
-                break;
-            }
-        case 116:
-        case 120:
-        case 124:
-        case 128:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 122;
-                break;
-            }
-            else if (chan_bw == CHANNEL_BW_160MHZ) {
-                center_freq_idx = 114;
-                break;
-            }
-        case 132:
-        case 136:
-        case 140:
-        case 144:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 138;
-                break;
-            }
-        case 149:
-        case 153:
-        case 157:
-        case 161:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 155;
-                break;
-            }
-        case 165:
-        case 169:
-        case 173:
-        case 177:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 171;
-                break;
-            }
-        case 184:
-        case 188:
-        case 192:
-        case 196:
-            if (chan_bw == CHANNEL_BW_80MHZ) {
-                center_freq_idx = 190;
-                break;
-            }
-
-        default: /* error. go to the default */
-            center_freq_idx = 42;
         }
     }
     return center_freq_idx;
 }
-#endif
 
 /**
  *  @brief This function gets the bitmap of nss which supports VHT mcs

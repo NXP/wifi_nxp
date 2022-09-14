@@ -99,9 +99,13 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     TPC_REPORT         = 35,
     SUPPORTED_CHANNELS = 36,
     CHANNEL_SWITCH_ANN = 37,
-    QUIET              = 40,
-    IBSS_DFS           = 41,
-    HT_CAPABILITY      = 45,
+#ifdef CONFIG_11K
+    MEASURE_REQUEST = 38,
+    MEASURE_REPORT  = 39,
+#endif
+    QUIET         = 40,
+    IBSS_DFS      = 41,
+    HT_CAPABILITY = 45,
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     NEIGHBOR_REPORT = 52,
@@ -1668,6 +1672,26 @@ typedef MLAN_PACK_START struct _IEEEtypes_RrmElement_t
 
     IEEEtypes_RrmEnabledCapabilities_t RrmEnabledCapabilities;
 } MLAN_PACK_END IEEEtypes_RrmElement_t, *pIEEEtypes_RrmElement_t;
+
+/** Mobility Domain element */
+typedef MLAN_PACK_START struct _MrvlIETypes_MobDomain_t
+{
+    /** Header */
+    IEEEtypes_Header_t header;
+    /** Mobility Domain Identifier */
+    t_u16 mob_domain_id;
+    /** FT Capability and Policy */
+    t_u8 ft_cap_policy;
+} MLAN_PACK_END MrvlIETypes_MobDomain_t;
+
+typedef MLAN_PACK_START enum _IEEEtypes_RRM_ActionFieldType_e {
+    IEEE_MGMT_RRM_RADIO_MEASUREMENT_REQUEST = 0,
+    IEEE_MGMT_RRM_RADIO_MEASUREMENT_REPORT  = 1,
+    IEEE_MGMT_RRM_LINK_MEASUREMENT_REQUEST  = 2,
+    IEEE_MGMT_RRM_LINK_MEASUREMENT_REPORT   = 3,
+    IEEE_MGMT_RRM_NEIGHBOR_REPORT_REQUEST   = 4,
+    IEEE_MGMT_RRM_NEIGHBOR_REPORT_RESPONSE  = 5
+} MLAN_PACK_END IEEEtypes_RRM_ActionFieldType_e;
 #endif
 
 #ifdef CONFIG_ROAMING
@@ -1933,11 +1957,18 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_Generic_t *prsnx_ie;
     /** RSNX IE offset in the beacon buffer */
     t_u16 rsnx_offset;
-#ifdef CONFIG_11R
-    unsigned char md_ie_buff[MLAN_WMSDK_MAX_WPA_IE_LEN];
+#if defined(CONFIG_11R) || defined(CONFIG_11K)
+    unsigned char md_ie_buff[MLAN_MAX_MDIE_LEN];
     size_t md_ie_buff_len;
     /* Mobility domain IE */
     IEEEtypes_MobilityDomain_t *pmd_ie;
+    bool mob_domain_exist;
+#endif
+#ifdef CONFIG_11K
+    bool rm_cap_exist;
+    IEEEtypes_RrmElement_t rm_cap_saved;
+    unsigned char vendor_ie_buff[MLAN_MAX_VENDOR_IE_LEN];
+    t_u8 vendor_ie_len;
 #endif
     bool mbo_assoc_disallowed;
 } BSSDescriptor_t, *pBSSDescriptor_t;

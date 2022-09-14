@@ -68,6 +68,129 @@ static const country_code_mapping_t country_code_mapping[] = {
 };
 #endif /* CONFIG_MLAN_WMSDK */
 
+#define COUNTRY_ID_US 0
+#define COUNTRY_ID_JP 1
+#define COUNTRY_ID_CN 2
+#define COUNTRY_ID_EU 3
+
+typedef struct _oper_bw_chan
+{
+    /*non-global operating class*/
+    t_u8 oper_class;
+    /*global operating class*/
+    t_u8 global_oper_class;
+    /*bandwidth 0-20M 1-40M 2-80M 3-160M*/
+    t_u8 bandwidth;
+    /*channel list*/
+    t_u8 channel_list[13];
+} oper_bw_chan;
+
+/** oper class table for US*/
+static oper_bw_chan oper_bw_chan_us[] = {
+    /** non-Global oper class, global oper class, bandwidth, channel list*/
+    {1, 115, 0, {36, 40, 44, 48}},
+    {2, 118, 0, {52, 56, 60, 64}},
+    {3, 124, 0, {149, 153, 157, 161}},
+    {4, 121, 0, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144}},
+    {5, 125, 0, {149, 153, 157, 161, 165}},
+    {12, 81, 0, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}},
+    {22, 116, 1, {36, 44}},
+    {23, 119, 1, {52, 60}},
+    {24, 122, 1, {100, 108, 116, 124, 132, 140}},
+    {25, 126, 1, {149, 157}},
+    {26, 126, 1, {149, 157}},
+    {27, 117, 1, {40, 48}},
+    {28, 120, 1, {56, 64}},
+    {29, 123, 1, {104, 112, 120, 128, 136, 144}},
+    {30, 127, 1, {153, 161}},
+    {31, 127, 1, {153, 161}},
+    {32, 83, 1, {1, 2, 3, 4, 5, 6, 7}},
+    {33, 84, 1, {5, 6, 7, 8, 9, 10, 11}},
+#ifdef CONFIG_11AC
+    {128, 128, 2, {42, 58, 106, 122, 138, 155}},
+    {129, 129, 3, {50, 114}},
+    {130, 130, 2, {42, 58, 106, 122, 138, 155}},
+#endif
+};
+
+/** oper class table for EU*/
+static oper_bw_chan oper_bw_chan_eu[] = {
+    /** non-global oper class,global oper class, bandwidth, channel list*/
+    {1, 115, 0, {36, 40, 44, 48}},
+    {2, 118, 0, {52, 56, 60, 64}},
+    {3, 121, 0, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
+    {4, 81, 0, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}},
+    {5, 116, 1, {36, 44}},
+    {6, 119, 1, {52, 60}},
+    {7, 122, 1, {100, 108, 116, 124, 132}},
+    {8, 117, 1, {40, 48}},
+    {9, 120, 1, {56, 64}},
+    {10, 123, 1, {104, 112, 120, 128, 136}},
+    {11, 83, 1, {1, 2, 3, 4, 5, 6, 7, 8, 9}},
+    {12, 84, 1, {5, 6, 7, 8, 9, 10, 11, 12, 13}},
+    {17, 125, 0, {149, 153, 157, 161, 165, 169}},
+#ifdef CONFIG_11AC
+    {128, 128, 2, {42, 58, 106, 122, 138, 155}},
+    {129, 129, 3, {50, 114}},
+    {130, 130, 2, {42, 58, 106, 122, 138, 155}},
+#endif
+};
+
+/** oper class table for Japan*/
+static oper_bw_chan oper_bw_chan_jp[] = {
+    /** non-Global oper class,global oper class, bandwidth, channel list*/
+    {1, 115, 0, {34, 38, 42, 46, 36, 40, 44, 48}},
+    {30, 81, 0, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}},
+    {31, 82, 0, {14}},
+    {32, 118, 0, {52, 56, 60, 64}},
+    {33, 118, 0, {52, 56, 60, 64}},
+    {34, 121, 0, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
+    {35, 121, 0, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
+    {36, 116, 1, {36, 44}},
+    {37, 119, 1, {52, 60}},
+    {38, 119, 1, {52, 60}},
+    {39, 122, 1, {100, 108, 116, 124, 132}},
+    {40, 122, 1, {100, 108, 116, 124, 132}},
+    {41, 117, 1, {40, 48}},
+    {42, 120, 1, {56, 64}},
+    {43, 120, 1, {56, 64}},
+    {44, 123, 1, {104, 112, 120, 128, 136}},
+    {45, 123, 1, {104, 112, 120, 128, 136}},
+    {56, 83, 1, {1, 2, 3, 4, 5, 6, 7, 8, 9}},
+    {57, 84, 1, {5, 6, 7, 8, 9, 10, 11, 12, 13}},
+    {58, 121, 0, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
+#ifdef CONFIG_11AC
+    {128, 128, 2, {42, 58, 106, 122, 138, 155}},
+    {129, 129, 3, {50, 114}},
+    {130, 130, 2, {42, 58, 106, 122, 138, 155}},
+#endif
+};
+
+/** oper class table for China*/
+static oper_bw_chan oper_bw_chan_cn[] = {
+    /** non-Global oper class,global oper class, bandwidth, channel list*/
+    {1, 115, 0, {36, 40, 44, 48}},
+    {2, 118, 0, {52, 56, 60, 64}},
+    {3, 125, 0, {149, 153, 157, 161, 165}},
+    {4, 116, 1, {36, 44}},
+    {5, 119, 1, {52, 60}},
+    {6, 126, 1, {149, 157}},
+    {7, 81, 0, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}},
+    {8, 83, 0, {1, 2, 3, 4, 5, 6, 7, 8, 9}},
+    {9, 84, 1, {5, 6, 7, 8, 9, 10, 11, 12, 13}},
+#ifdef CONFIG_11AC
+    {128, 128, 2, {42, 58, 106, 122, 138, 155}},
+    {129, 129, 3, {50, 114}},
+    {130, 130, 2, {42, 58, 106, 122, 138, 155}},
+#endif
+};
+
+/** Country code for ETSI */
+static t_u8 eu_country_code_table[][COUNTRY_CODE_LEN] = {
+    "AL", "AD", "AT", "AU", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "MK",
+    "DE", "GR", "HU", "IS", "IE", "IT", "KR", "LV", "LI", "LT", "LU", "MT", "MD", "MC", "ME", "NL",
+    "NO", "PL", "RO", "RU", "SM", "RS", "SI", "SK", "ES", "SE", "CH", "TR", "UA", "UK", "GB", "NZ"};
+
 /**
  * The structure for Channel-Frequency-Power table
  */
@@ -2489,3 +2612,253 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
     LEAVE();
 }
 #endif /* OTP_CHANINFO */
+
+t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code)
+{
+    t_u8 i;
+
+    ENTER();
+    /* Look for code in EU country code table */
+    for (i = 0; i < NELEMENTS(eu_country_code_table); i++)
+    {
+        if (!__memcmp(pmadapter, eu_country_code_table[i], country_code, COUNTRY_CODE_LEN - 1))
+        {
+            LEAVE();
+            return MTRUE;
+        }
+    }
+
+    LEAVE();
+    return MFALSE;
+}
+
+static oper_bw_chan *wlan_get_nonglobal_operclass_table(mlan_private *pmpriv, int *arraysize)
+{
+    t_u8 country_code[][COUNTRY_CODE_LEN] = {"US", "JP", "CN"};
+    int country_id                        = 0;
+    oper_bw_chan *poper_bw_chan           = MNULL;
+
+    ENTER();
+    for (country_id = 0; country_id < 3; country_id++)
+        if (!__memcmp(pmpriv->adapter, pmpriv->adapter->country_code, country_code[country_id], COUNTRY_CODE_LEN - 1))
+            break;
+    if (country_id >= 3)
+        country_id = COUNTRY_ID_US; /*Set default to US*/
+    if (wlan_is_etsi_country(pmpriv->adapter, pmpriv->adapter->country_code))
+        country_id = COUNTRY_ID_EU; /** Country in EU */
+
+    switch (country_id)
+    {
+        case COUNTRY_ID_US:
+            poper_bw_chan = oper_bw_chan_us;
+            *arraysize    = sizeof(oper_bw_chan_us);
+            break;
+        case COUNTRY_ID_JP:
+            poper_bw_chan = oper_bw_chan_jp;
+            *arraysize    = sizeof(oper_bw_chan_jp);
+            break;
+        case COUNTRY_ID_CN:
+            poper_bw_chan = oper_bw_chan_cn;
+            *arraysize    = sizeof(oper_bw_chan_cn);
+            break;
+        case COUNTRY_ID_EU:
+            poper_bw_chan = oper_bw_chan_eu;
+            *arraysize    = sizeof(oper_bw_chan_eu);
+            break;
+        default:
+            PRINTM(MERROR, "Country not support!\n");
+            break;
+    }
+
+    LEAVE();
+    return poper_bw_chan;
+}
+
+mlan_status wlan_get_curr_oper_class(mlan_private *pmpriv, t_u8 channel, t_u8 bw, t_u8 *oper_class)
+{
+    oper_bw_chan *poper_bw_chan = MNULL;
+#ifdef CONFIG_11AC
+    t_u8 center_freq_idx = 0;
+#endif
+    t_u8 center_freqs[] = {42, 50, 58, 106, 114, 122, 138, 155};
+    int i = 0, arraysize = 0, channum = 0;
+
+    ENTER();
+    poper_bw_chan = wlan_get_nonglobal_operclass_table(pmpriv, &arraysize);
+    if (!poper_bw_chan)
+    {
+        PRINTM(MCMND, "Operating class table do not find!\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+    for (i = 0; i < (int)sizeof(center_freqs); i++)
+    {
+        if (channel == center_freqs[i])
+        {
+            PRINTM(MERROR, "Invalid channel number %d!\n", channel);
+            LEAVE();
+            return MLAN_STATUS_FAILURE;
+        }
+    }
+#ifdef CONFIG_11AC
+    if (bw == BW_80MHZ)
+    {
+        center_freq_idx = wlan_get_center_freq_idx(pmpriv, BAND_AAC, channel, CHANNEL_BW_80MHZ);
+        channel         = center_freq_idx;
+    }
+#endif
+    for (i = 0; i < (int)(arraysize / sizeof(oper_bw_chan)); i++)
+    {
+        if (poper_bw_chan[i].bandwidth == bw)
+        {
+            for (channum = 0; channum < (int)(sizeof(poper_bw_chan[i].channel_list)); channum++)
+            {
+                if (poper_bw_chan[i].channel_list[channum] && poper_bw_chan[i].channel_list[channum] == channel)
+                {
+                    *oper_class = poper_bw_chan[i].oper_class;
+                    return MLAN_STATUS_SUCCESS;
+                }
+            }
+        }
+    }
+    PRINTM(MCMND, "Operating class not find!\n");
+    LEAVE();
+    return MLAN_STATUS_FAILURE;
+}
+
+int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u8 curr_oper_class)
+{
+    t_u8 oper_class_us[] = {1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            12,
+                            22,
+                            23,
+                            24,
+                            25,
+                            26,
+                            27,
+                            28,
+                            29,
+                            30,
+                            31,
+                            32,
+                            33
+#ifdef CONFIG_11AC
+                            ,
+                            128,
+                            129,
+                            130
+#endif
+    };
+    t_u8 oper_class_eu[] = {1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7,
+                            8,
+                            9,
+                            10,
+                            11,
+                            12,
+                            17
+#ifdef CONFIG_11AC
+                            ,
+                            128,
+                            129,
+                            130
+#endif
+    };
+    t_u8 oper_class_jp[] = {1,
+                            30,
+                            31,
+                            32,
+                            33,
+                            34,
+                            35,
+                            36,
+                            37,
+                            38,
+                            39,
+                            40,
+                            41,
+                            42,
+                            43,
+                            44,
+                            45,
+                            56,
+                            57,
+                            58
+#ifdef CONFIG_11AC
+                            ,
+                            128,
+                            129,
+                            130
+#endif
+    };
+    t_u8 oper_class_cn[] = {1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7,
+                            8,
+                            9
+#ifdef CONFIG_11AC
+                            ,
+                            128,
+                            129,
+                            130
+#endif
+    };
+    t_u8 country_code[][COUNTRY_CODE_LEN] = {"US", "JP", "CN"};
+    int country_id = 0, ret = 0;
+    MrvlIETypes_SuppOperClass_t *poper_class = MNULL;
+
+    ENTER();
+
+    for (country_id = 0; country_id < 3; country_id++)
+        if (!__memcmp(pmpriv->adapter, pmpriv->adapter->country_code, country_code[country_id], COUNTRY_CODE_LEN - 1))
+            break;
+    if (country_id >= 3)
+        country_id = COUNTRY_ID_US; /*Set default to US*/
+    if (wlan_is_etsi_country(pmpriv->adapter, pmpriv->adapter->country_code))
+        country_id = COUNTRY_ID_EU; /** Country in EU */
+    poper_class = (MrvlIETypes_SuppOperClass_t *)*pptlv_out;
+    __memset(pmpriv->adapter, poper_class, 0, sizeof(MrvlIETypes_SuppOperClass_t));
+    poper_class->header.type = wlan_cpu_to_le16(REGULATORY_CLASS);
+    if (country_id == COUNTRY_ID_US)
+    {
+        poper_class->header.len = sizeof(oper_class_us);
+        (void)__memcpy(pmpriv->adapter, &poper_class->oper_class, oper_class_us, sizeof(oper_class_us));
+    }
+    else if (country_id == COUNTRY_ID_JP)
+    {
+        poper_class->header.len = sizeof(oper_class_jp);
+        (void)__memcpy(pmpriv->adapter, &poper_class->oper_class, oper_class_jp, sizeof(oper_class_jp));
+    }
+    else if (country_id == COUNTRY_ID_CN)
+    {
+        poper_class->header.len = sizeof(oper_class_cn);
+        (void)__memcpy(pmpriv->adapter, &poper_class->oper_class, oper_class_cn, sizeof(oper_class_cn));
+    }
+    else if (country_id == COUNTRY_ID_EU)
+    {
+        poper_class->header.len = sizeof(oper_class_eu);
+        (void)__memcpy(pmpriv->adapter, &poper_class->oper_class, oper_class_eu, sizeof(oper_class_eu));
+    }
+    poper_class->current_oper_class = curr_oper_class;
+    poper_class->header.len += sizeof(poper_class->current_oper_class);
+    DBG_HEXDUMP(MCMD_D, "Operating class", (t_u8 *)poper_class, sizeof(MrvlIEtypesHeader_t) + poper_class->header.len);
+    ret = sizeof(MrvlIEtypesHeader_t) + poper_class->header.len;
+    *pptlv_out += ret;
+    poper_class->header.len = wlan_cpu_to_le16(poper_class->header.len);
+
+    LEAVE();
+    return ret;
+}

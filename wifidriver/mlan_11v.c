@@ -52,7 +52,7 @@ static void wlan_wnm_parse_neighbor_report(t_u8 *pos, t_u8 len, struct wnm_neigh
     t_u8 remain_len = 0;
     if (len < (t_u8)13U)
     {
-        PRINTM(MERROR, "WNM: This neighbor report is too short");
+        wifi_d("WNM: This neighbor report is too short");
     }
 
     (void)memcpy(rep->bssid, pos, MLAN_MAC_ADDR_LENGTH);
@@ -72,7 +72,7 @@ static void wlan_wnm_parse_neighbor_report(t_u8 *pos, t_u8 len, struct wnm_neigh
         remain_len -= (t_u8)2U;
         if (e_len > remain_len)
         {
-            PRINTM(MERROR, "WNM: neighbor report length not matched");
+            wifi_d("WNM: neighbor report length not matched");
             break;
         }
         switch (e_id)
@@ -114,7 +114,7 @@ static void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
         (mlan_802_11_mac_addr *)(void *)dst_addr, sizeof(wlan_mgmt_pkt) + (size_t)BTM_RESP_BUF_SIZE);
     if (pmgmt_pkt_hdr == MNULL)
     {
-        PRINTM(MERROR, "No memory available for BTM resp");
+        wifi_d("No memory available for BTM resp");
         return;
     }
 
@@ -200,7 +200,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             os_mem_calloc((size_t)WLAN_WNM_MAX_NEIGHBOR_REPORT * sizeof(struct wnm_neighbor_report));
         if (preport == NULL)
         {
-            PRINTM(MERROR, "No memory available for neighbor report.");
+            wifi_e("No memory available for neighbor report.");
             return;
         }
 
@@ -211,7 +211,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 
             if ((int)len > (end - pos))
             {
-                PRINTM(MERROR, "WNM: Truncated BTM request");
+                wifi_d("WNM: Truncated BTM request");
                 os_mem_free(preport);
                 return;
             }

@@ -17,6 +17,8 @@
 #include "fsl_debug_console.h"
 
 #define MLAN_WMSDK_MAX_WPA_IE_LEN 256U
+#define MLAN_MAX_MDIE_LEN         10U
+#define MLAN_MAX_VENDOR_IE_LEN    100U
 
 #include "mlan.h"
 #include "mlan_join.h"

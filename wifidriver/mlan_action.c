@@ -49,6 +49,52 @@ Change log:
                 Local Functions
 ********************************************************/
 /**
+ *  @brief This function process rx radio measurement action frame
+ *
+ *  @param payload      rx frame including 802.11 header
+ *  @param payload_len  length of action frame
+ *  @param src_addr     source address
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wlan_process_mgmt_radio_measurement_action(
+    t_u8 *payload, t_u32 payload_len, t_u8 *dest_addr, t_u8 *src_addr, RxPD *rxpd)
+{
+    t_u8 action_code = 0;
+    t_u8 *pos;
+    mlan_status ret = MLAN_STATUS_FAILURE;
+
+    pos         = payload + sizeof(wlan_802_11_header) + 1;
+    action_code = *pos++;
+    payload_len -= (sizeof(wlan_802_11_header) + 2);
+#ifdef CONFIG_11K
+    IEEEtypes_FrameCtl_t *mgmt_fc_p = (IEEEtypes_FrameCtl_t *)&(((wlan_802_11_header *)payload)->frm_ctl);
+#endif
+
+    switch (action_code)
+    {
+#ifdef CONFIG_11K
+        case IEEE_MGMT_RRM_RADIO_MEASUREMENT_REQUEST:
+        {
+            wlan_process_radio_measurement_request(pos, payload_len, dest_addr, src_addr, mgmt_fc_p->wep);
+            ret = MLAN_STATUS_SUCCESS;
+            break;
+        }
+        case IEEE_MGMT_RRM_LINK_MEASUREMENT_REQUEST:
+        {
+            wlan_process_link_measurement_request(pos, payload_len, dest_addr, src_addr, mgmt_fc_p->wep, rxpd);
+            ret = MLAN_STATUS_SUCCESS;
+            break;
+        }
+#endif
+        default:
+            wifi_d("RRM: Unknown request: %u", action_code);
+            break;
+    }
+    return ret;
+}
+
+/**
  *  @brief This function process rx action frame
  *
  *  @param payload      rx frame including 802.11 header
@@ -80,7 +126,7 @@ static mlan_status wlan_process_mgmt_wnm_action(t_u8 *payload, t_u32 payload_len
         }
 #endif
         default:
-            wlcm_d("WNM: Unknown request");
+            wifi_d("WNM: Unknown request: %u", action_code);
             break;
     }
     return ret;
@@ -104,7 +150,7 @@ static mlan_status wlan_process_mgmt_unprotect_wnm_action(t_u8 *payload, t_u32 p
             break;
 #endif
         default:
-            wlcm_d("WNM: Unknown request");
+            wifi_d("unprotect WNM: Unknown request: %u", action_code);
             break;
     }
     return ret;
@@ -285,6 +331,10 @@ mlan_status wlan_process_mgmt_action(t_u8 *payload, t_u32 payload_len, RxPD *rxp
 
     switch (category)
     {
+        case IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC:
+            ret = wlan_process_mgmt_radio_measurement_action(payload, payload_len, pieee_pkt_hdr->addr1,
+                                                             pieee_pkt_hdr->addr2, rxpd);
+            break;
         case IEEE_MGMT_ACTION_CATEGORY_WNM:
             ret = wlan_process_mgmt_wnm_action(payload, payload_len, pieee_pkt_hdr->addr1, pieee_pkt_hdr->addr2);
             break;
@@ -292,7 +342,7 @@ mlan_status wlan_process_mgmt_action(t_u8 *payload, t_u32 payload_len, RxPD *rxp
             ret = wlan_process_mgmt_unprotect_wnm_action(payload, payload_len, rxpd);
             break;
         default:
-            wlcm_d("WNM: Unknown request");
+            wifi_d("Action: Unknown request: %u", category);
             break;
     }
     return ret;

@@ -309,6 +309,9 @@ static struct
 #ifdef CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
+#ifdef CONFIG_11K
+    wlan_rrm_scan_cb_param rrm_scan_cb_param;
+#endif
 } wlan;
 
 void wlan_wake_up_card(void);
@@ -4169,6 +4172,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_MGMT_FRAME:
             wlcm_d("got event: management frame");
             wlcm_process_mgmt_frame(msg->data);
+            next = wlan.sta_state;
             pbuf_free(msg->data);
             break;
         default:
@@ -6918,7 +6922,130 @@ int wlan_set_uap_frag(int frag)
 {
     return wifi_set_frag(frag, MLAN_BSS_TYPE_UAP);
 }
+#endif
 
+#ifdef CONFIG_11K
+int _wlan_rrm_scan_cb(unsigned int count)
+{
+    t_u16 i;
+    t_u8 *rep_buf = NULL;
+    t_u8 *buf_pos = NULL;
+    /* The sufficient size is the length including reporting frame body */
+    t_u16 suffi_len           = 250;
+    t_u32 pos_last_indication = 0;
+    bool match_ap_found       = 0;
+
+    /* process scan result */
+    rep_buf = (t_u8 *)os_mem_alloc(BEACON_REPORT_BUF_SIZE);
+    if (rep_buf == NULL)
+    {
+        PRINTM(MERROR, "Cannot allocate memory for report buffer");
+        return -1;
+    }
+
+    (void)memset(rep_buf, 0, BEACON_REPORT_BUF_SIZE);
+    buf_pos = rep_buf;
+    for (i = 0; i < count; i++)
+    {
+        if (wlan_rrm_matched_ap_found(&wlan.rrm_scan_cb_param.rep_data, &mlan_adap->pscan_table[i]))
+        {
+            wlan_add_rm_beacon_report(&wlan.rrm_scan_cb_param.rep_data, &mlan_adap->pscan_table[i], &buf_pos,
+                                      BEACON_REPORT_BUF_SIZE - (buf_pos - rep_buf), &pos_last_indication);
+        }
+
+        /* If current rep_buf is not enough and still have AP not added, just send the report */
+        if ((buf_pos + suffi_len - rep_buf > BEACON_REPORT_BUF_SIZE) && (i < count - 1) &&
+            wlan_rrm_matched_ap_found(&wlan.rrm_scan_cb_param.rep_data, &mlan_adap->pscan_table[i + 1]))
+        {
+            match_ap_found = 1;
+            /* send beacon report, not the last one */
+            wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac,
+                                            wlan.rrm_scan_cb_param.dst_addr, rep_buf, buf_pos - rep_buf,
+                                            wlan.rrm_scan_cb_param.protect);
+            /* Prepare for the next beacon report */
+            (void)memset(rep_buf, 0, BEACON_REPORT_BUF_SIZE);
+            buf_pos = rep_buf;
+        }
+
+        /* Last AP in scan table, and matched AP found */
+        if ((i == count - 1) && (buf_pos > rep_buf))
+        {
+            match_ap_found = 1;
+            /* Update last indication, the last one */
+            if (wlan.rrm_scan_cb_param.rep_data.last_ind && pos_last_indication)
+                *(char *)pos_last_indication = 1;
+            /* send beacon report, the last one */
+            wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac,
+                                            wlan.rrm_scan_cb_param.dst_addr, rep_buf, buf_pos - rep_buf,
+                                            wlan.rrm_scan_cb_param.protect);
+        }
+    }
+
+    /* If no matched AP found, no beacon report detail */
+    if (!match_ap_found)
+    {
+        *buf_pos++ = MEASURE_REPORT;
+        /* Tag length */
+        *buf_pos++ = 3;
+        *buf_pos++ = wlan.rrm_scan_cb_param.rep_data.token;
+        *buf_pos++ = WLAN_RRM_REPORT_MODE_ACCEPT;
+        *buf_pos++ = WLAN_RRM_MEASURE_TYPE_BEACON;
+        /* send beacon report */
+        wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac, wlan.rrm_scan_cb_param.dst_addr,
+                                        rep_buf, buf_pos - rep_buf, wlan.rrm_scan_cb_param.protect);
+    }
+
+    os_mem_free(rep_buf);
+    return 0;
+}
+
+void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param)
+{
+    if (!wlan_scan_param || !scan_cb_param)
+    {
+        wlcm_e("ignoring scan request with NULL scan or cb params");
+        return;
+    }
+    if (!is_scanning_allowed())
+    {
+        wlcm_e("ignoring scan request in invalid state");
+        return;
+    }
+
+    memcpy(&wlan.rrm_scan_cb_param, scan_cb_param, sizeof(wlan_rrm_scan_cb_param));
+
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+    if (is_uap_started() || is_sta_connected())
+        wlan_scan_param->scan_chan_gap = scan_channel_gap;
+    else
+        wlan_scan_param->scan_chan_gap = 0;
+#endif
+
+    int ret = wifi_send_scan_cmd(BSS_ANY, wlan_scan_param->bssid,
+#ifdef CONFIG_COMBO_SCAN
+                                 wlan_scan_param->ssid[0], wlan_scan_param->ssid[1],
+#else
+                                 wlan_scan_param->ssid, NULL,
+#endif
+                                 wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                                 wlan_scan_param->rssi_threshold,
+#endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                 wlan_scan_param->scan_chan_gap,
+#endif
+                                 false, false);
+    if (ret == WM_SUCCESS)
+    {
+        wlan.scan_cb       = (int (*)(unsigned int count))(wlan_scan_param->cb);
+        wlan.sta_return_to = wlan.sta_state;
+        wlan.sta_state     = CM_STA_SCANNING_USER;
+    }
+    else
+    {
+        wlcm_e("wifi send scan cmd failed");
+    }
+}
 #endif
 
 #ifdef CONFIG_11K_OFFLOAD

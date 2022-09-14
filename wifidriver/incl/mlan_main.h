@@ -2447,6 +2447,9 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
 mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 #endif
 
+/** Handler to get current operating class */
+mlan_status wlan_get_curr_oper_class(mlan_private *pmpriv, t_u8 channel, t_u8 bw, t_u8 *oper_class);
+
 #ifndef CONFIG_MLAN_WMSDK
 t_void wlan_host_sleep_activated_event(pmlan_private priv, t_u8 activated);
 /** Handles the command response of hs_cfg */

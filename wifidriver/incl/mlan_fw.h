@@ -6281,7 +6281,6 @@ typedef MLAN_PACK_START struct
     t_u16 link_tx_lantency_freq;
 } MLAN_PACK_END MrvlIEtypes_LinkQualityThreshold_t;
 
-#if defined(CONFIG_ROAMING)
 /** Supported operating classes element */
 typedef MLAN_PACK_START struct _MrvlIETypes_SuppOperClass_t
 {
@@ -6292,7 +6291,6 @@ typedef MLAN_PACK_START struct _MrvlIETypes_SuppOperClass_t
     /** Operating class list */
     t_u8 oper_class[1];
 } MLAN_PACK_END MrvlIETypes_SuppOperClass_t;
-#endif
 
 #ifdef CONFIG_MULTI_CHAN
 typedef MLAN_PACK_START struct _MrvlTypes_DrcsTimeSlice_t

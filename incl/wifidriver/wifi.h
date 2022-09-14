@@ -971,6 +971,38 @@ int wifi_11k_neighbor_req();
 #endif
 
 #ifdef CONFIG_11K
+#define BEACON_REPORT_BUF_SIZE 1400
+
+/* Reporting Detail values */
+enum wlan_rrm_beacon_reporting_detail
+{
+    WLAN_RRM_REPORTING_DETAIL_NONE                    = 0,
+    WLAN_RRM_REPORTING_DETAIL_AS_REQUEST              = 1,
+    WLAN_RRM_REPORTING_DETAIL_ALL_FIELDS_AND_ELEMENTS = 2,
+};
+
+typedef struct _wlan_rrm_beacon_report_data
+{
+    t_u8 token;
+    t_u8 ssid[MLAN_MAX_SSID_LENGTH];
+    t_u8 ssid_length;
+    t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
+    t_u8 channel[MAX_CHANNEL_LIST];
+    t_u8 channel_num;
+    t_u8 last_ind;
+    t_u16 duration;
+    enum wlan_rrm_beacon_reporting_detail report_detail;
+    t_u8 bits_field[32];
+} wlan_rrm_beacon_report_data;
+
+typedef struct _wlan_rrm_scan_cb_param
+{
+    wlan_rrm_beacon_report_data rep_data;
+    t_u8 dialog_tok;
+    t_u8 dst_addr[MLAN_MAC_ADDR_LENGTH];
+    t_u8 protect;
+} wlan_rrm_scan_cb_param;
+
 int wifi_host_11k_cfg(int enable_11k);
 #endif
 

@@ -1704,10 +1704,26 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         pcurrent_attr = pcurrent_attr + MBO_ATTR_HEADER_LEN + mbo_attr_len;
                     }
                 }
+#ifdef CONFIG_11K
+                /* Voice Enterprise Test Plan V1.2, test case 5.4, store other vendor specific ie */
+                else
+                {
+                    if (pbss_entry->vendor_ie_len + element_len + sizeof(IEEEtypes_Header_t) <
+                        sizeof(pbss_entry->vendor_ie_buff))
+                    {
+                        (void)__memcpy(pmadapter, pbss_entry->vendor_ie_buff + pbss_entry->vendor_ie_len, pcurrent_ptr,
+                                       element_len + sizeof(IEEEtypes_Header_t));
+                        pbss_entry->vendor_ie_len += element_len + sizeof(IEEEtypes_Header_t);
+                    }
+                }
+#else
                 else
                 {
                     /* Do Nothing */
                 }
+
+#endif
+
 #ifdef CONFIG_WPS2
                 /* fixme: Added for WMSDK. Check if can be merged properly with
                    mlan. There should be a better way */
@@ -1743,20 +1759,28 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 HEXDUMP("InterpretIE: Resp RSN_IE", (t_u8 *)pbss_entry->prsn_ie,
                         (*(pbss_entry->prsn_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
                 break;
-#ifdef CONFIG_11R
+#if defined(CONFIG_11R) || defined(CONFIG_11K)
             case MOBILITY_DOMAIN:
                 if (element_len <= (sizeof(pbss_entry->md_ie_buff) - sizeof(IEEEtypes_Header_t)))
                 {
                     (void)__memcpy(NULL, pbss_entry->md_ie_buff, pcurrent_ptr,
                                    element_len + sizeof(IEEEtypes_Header_t));
-                    pbss_entry->md_ie_buff_len = element_len + sizeof(IEEEtypes_Header_t);
-                    pbss_entry->pmd_ie         = (IEEEtypes_MobilityDomain_t *)(void *)pbss_entry->md_ie_buff;
+                    pbss_entry->md_ie_buff_len   = element_len + sizeof(IEEEtypes_Header_t);
+                    pbss_entry->pmd_ie           = (IEEEtypes_MobilityDomain_t *)(void *)pbss_entry->md_ie_buff;
+                    pbss_entry->mob_domain_exist = 1;
                     /* dump_hex(pbss_entry->pmd_ie, pbss_entry->md_ie_buff_len); */
                 }
                 else
                 {
                     wifi_e("Insufficient space to save MD_IE size: %d", element_len);
                 }
+                break;
+#endif
+#ifdef CONFIG_11K
+            case RRM_ENABLED_CAP:
+                /* Save it here since we do not have beacon buffer */
+                (void)__memcpy(NULL, &pbss_entry->rm_cap_saved, pcurrent_ptr, sizeof(IEEEtypes_RrmElement_t));
+                pbss_entry->rm_cap_exist = 1;
                 break;
 #endif
             case WAPI_IE:

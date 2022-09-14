@@ -1099,7 +1099,8 @@ typedef struct _mlan_ds_custom_reg_domain
 /** secondary channel is below primary channel */
 #define SEC_CHANNEL_BELOW 3
 /** secondary channel is 80Mhz bandwidth for 11ac */
-#define CHANNEL_BW_80MHZ 4
+#define CHANNEL_BW_80MHZ  4
+#define CHANNEL_BW_160MHZ 5
 /** Channel bandwidth */
 #define CHANNEL_BW_20MHZ       0
 #define CHANNEL_BW_40MHZ_ABOVE 1
