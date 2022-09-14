@@ -1822,12 +1822,13 @@ void wifi_deinit(void)
 {
     wifi_init_done = 0;
 
+    wifi_core_deinit();
+
 #if defined(RW610)
     imu_wifi_deinit();
 #else
     sd_wifi_deinit();
 #endif
-    wifi_core_deinit();
 }
 
 void wifi_set_packet_retry_count(const int count)
