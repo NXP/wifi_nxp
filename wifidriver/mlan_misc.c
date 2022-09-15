@@ -1420,7 +1420,11 @@ mlan_status wlan_misc_hotspot_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
  *  @param BSSDescriptor      A poiter to bss descriptor
  *  @return                   N/A
  */
-void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **pptlv_out)
+void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv,
+#ifdef CONFIG_11AX
+                               IN BSSDescriptor_t *pbss_desc,
+#endif
+                               OUT t_u8 **pptlv_out)
 {
     MrvlIETypes_ExtCap_t *pext_cap = MNULL;
 
@@ -1440,7 +1444,8 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
     }
 
 #ifdef CONFIG_WNM_PS
-    if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
+    if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc != MNULL) &&
+        (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
     {
         pext_cap->ext_cap.WNM_Sleep = 1;
     }
@@ -1453,6 +1458,9 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
 #ifdef CONFIG_11AX
     if (wlan_check_11ax_twt_supported(pmpriv, pbss_desc))
         SET_EXTCAP_TWT_REQ(pmpriv->ext_cap);
+#endif
+#ifdef CONFIG_MBO
+    pext_cap->ext_cap.BSS_Transition = 1;
 #endif
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);
 

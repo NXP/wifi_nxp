@@ -2674,7 +2674,8 @@ static oper_bw_chan *wlan_get_nonglobal_operclass_table(mlan_private *pmpriv, in
     return poper_bw_chan;
 }
 
-mlan_status wlan_get_curr_oper_class(mlan_private *pmpriv, t_u8 channel, t_u8 bw, t_u8 *oper_class)
+mlan_status wlan_get_global_nonglobal_oper_class(
+    mlan_private *pmpriv, t_u8 channel, t_u8 bw, t_u8 *oper_class, t_u8 *global_op_class)
 {
     oper_bw_chan *poper_bw_chan = MNULL;
 #ifdef CONFIG_11AC
@@ -2715,7 +2716,10 @@ mlan_status wlan_get_curr_oper_class(mlan_private *pmpriv, t_u8 channel, t_u8 bw
             {
                 if (poper_bw_chan[i].channel_list[channum] && poper_bw_chan[i].channel_list[channum] == channel)
                 {
-                    *oper_class = poper_bw_chan[i].oper_class;
+                    if (oper_class != MNULL)
+                        *oper_class = poper_bw_chan[i].oper_class;
+                    if (global_op_class != MNULL)
+                        *global_op_class = poper_bw_chan[i].global_oper_class;
                     return MLAN_STATUS_SUCCESS;
                 }
             }

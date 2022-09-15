@@ -26,6 +26,10 @@
 #endif
 #include "wifi-internal.h"
 
+#ifdef CONFIG_MBO
+#include "mlan_mbo.h"
+#endif
+
 /*
  * Bit 0 : Assoc Req
  * Bit 1 : Assoc Resp
@@ -3322,6 +3326,102 @@ int wifi_host_11k_neighbor_req(t_u8 *ssid)
     {
         return wlan_send_mgmt_rm_neighbor_request(mlan_adap->priv[0], ssid, wlan_strlen((t_s8 *)ssid));
     }
+}
+#endif
+
+#ifdef CONFIG_MBO
+int wifi_host_mbo_cfg(int enable_mbo)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    IEEEtypes_VendorSpecific_t mboie;
+    int ret = MLAN_STATUS_SUCCESS;
+    t_u8 *pos;
+
+    if (enable_mbo == pmpriv->enable_mbo)
+    {
+        /* Do nothing */
+        return MLAN_STATUS_SUCCESS;
+    }
+
+    if (enable_mbo)
+    {
+        mboie.vend_hdr.element_id = MGMT_MBO_IE;
+        pos                       = mboie.vend_hdr.oui;
+        pos                       = wlan_add_mbo_oui(pos);
+        pos                       = wlan_add_mbo_cellular_cap(pos);
+        mboie.vend_hdr.len        = (t_u8)(pos - mboie.vend_hdr.oui);
+        pmpriv->mbo_mgmt_bitmap_index =
+            wifi_set_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_MBO_IE, (void *)&(mboie.vend_hdr.oui), mboie.vend_hdr.len);
+        pmpriv->ext_cap.BSS_Transition = 1U;
+    }
+    else
+    {
+        ret = wifi_clear_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_MBO_IE, pmpriv->mbo_mgmt_bitmap_index);
+        pmpriv->ext_cap.BSS_Transition = 0U;
+    }
+    pmpriv->enable_mbo = enable_mbo;
+
+    return ret;
+}
+
+int wifi_mbo_preferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    IEEEtypes_VendorSpecific_t mboie;
+    int ret = MLAN_STATUS_SUCCESS;
+    t_u8 *pos;
+
+    if (0 == pmpriv->enable_mbo)
+    {
+        wifi_e("Please enable MBO first!");
+        return (int)MLAN_STATUS_FAILURE;
+    }
+
+    if (pmpriv->enable_mbo)
+    {
+        /* remove MBO OCE IE in case there is already a MBO OCE IE. */
+        ret                       = wifi_clear_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_MBO_IE, pmpriv->mbo_mgmt_bitmap_index);
+        mboie.vend_hdr.element_id = MGMT_MBO_IE;
+        pos                       = mboie.vend_hdr.oui;
+        pos                       = wlan_add_mbo_oui(pos);
+        pos                       = wlan_add_mbo_cellular_cap(pos);
+        pos                       = wlan_add_mbo_prefer_ch(pos, ch0, pefer0, ch1, pefer1);
+        mboie.vend_hdr.len        = (t_u8)(pos - mboie.vend_hdr.oui);
+        pmpriv->mbo_mgmt_bitmap_index =
+            wifi_set_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_MBO_IE, (void *)&(mboie.vend_hdr.oui), mboie.vend_hdr.len);
+    }
+
+    return ret;
+}
+
+int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    IEEEtypes_VendorSpecific_t mboie;
+    int ret = MLAN_STATUS_SUCCESS;
+    t_u8 *pos;
+
+    if (0 == pmpriv->enable_mbo)
+    {
+        wifi_e("Please enable MBO first!\r\n");
+        return (int)MLAN_STATUS_FAILURE;
+    }
+
+    if (pmpriv->enable_mbo)
+    {
+        mboie.vend_hdr.element_id = MGMT_MBO_IE;
+        pos                       = mboie.vend_hdr.oui;
+        pos                       = wlan_add_mbo_oui(pos);
+        pos                       = wlan_add_mbo_cellular_cap(pos);
+        pos                       = wlan_add_mbo_prefer_ch(pos, ch0, pefer0, ch1, pefer1);
+        mboie.vend_hdr.len        = (t_u8)(pos - mboie.vend_hdr.oui);
+        /*Wi-Fi CERTIFIED Agile Multiband. Test Plan v1.4 section 2.5.1 Test bed AP requirements. For 2.4/5 GHz:�E MFPC
+         * (bit 7) set to 1�E MFPR (bit 6) set to 0*/
+        wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, (t_u8 *)&mboie, mboie.vend_hdr.len + 2,
+                                        false);
+    }
+
+    return ret;
 }
 #endif
 

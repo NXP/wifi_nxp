@@ -3483,6 +3483,9 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
     (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
 #endif
+#ifdef CONFIG_MBO
+    wifi_host_mbo_cfg(1);
+#endif
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
@@ -7075,6 +7078,27 @@ int wlan_host_11k_neighbor_req(t_u8 *ssid)
     }
 
     return wifi_host_11k_neighbor_req(ssid);
+}
+#endif
+
+#ifdef CONFIG_MBO
+int wlan_host_mbo_cfg(int enable_mbo)
+{
+    return wifi_host_mbo_cfg(enable_mbo);
+}
+
+int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
+{
+    uint8_t ap_addr[IEEEtypes_ADDRESS_SIZE];
+    if (is_sta_connected())
+    {
+        wlan_get_current_bssid(ap_addr);
+        return wifi_mbo_send_preferch_wnm(wlan.mac, (t_u8 *)ap_addr, ch0, pefer0, ch1, pefer1);
+    }
+    else
+    {
+        return wifi_mbo_preferch_cfg(ch0, pefer0, ch1, pefer1);
+    }
 }
 #endif
 

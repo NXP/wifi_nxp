@@ -1428,7 +1428,11 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
     }
     else if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
     {
-        wlan_add_ext_capa_info_ie(pmpriv, pbss_desc, ppbuffer);
+        wlan_add_ext_capa_info_ie(pmpriv,
+#ifdef CONFIG_11AX
+                                  pbss_desc,
+#endif
+                                  ppbuffer);
         ret_len += sizeof(MrvlIETypes_ExtCap_t);
     }
     else

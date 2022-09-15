@@ -80,6 +80,7 @@ typedef enum
     MGMT_VENDOR_SPECIFIC_221 = 221,
     MGMT_WPA_IE              = MGMT_VENDOR_SPECIFIC_221,
     MGMT_WPS_IE              = MGMT_VENDOR_SPECIFIC_221,
+    MGMT_MBO_IE              = MGMT_VENDOR_SPECIFIC_221,
 } IEEEtypes_ElementId_t;
 
 /** 802.11d country codes */
@@ -1239,5 +1240,10 @@ int wifi_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_t
  * \param[out] bss_type interface index
  */
 void wifi_end_timing_measurement(int bss_type);
+#endif
+#ifdef CONFIG_MBO
+int wifi_host_mbo_cfg(int enable_mbo);
+int wifi_mbo_preferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
+int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 #endif
 #endif

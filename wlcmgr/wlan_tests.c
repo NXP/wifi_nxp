@@ -1714,6 +1714,65 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_MBO
+static void test_wlan_mbo_cfg(int argc, char **argv)
+{
+    int enable_mbo;
+    int ret;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <0/1> < 0--disable MBO; 1---enable MBO>\r\n", argv[0]);
+        return;
+    }
+
+    enable_mbo = atoi(argv[1]);
+
+    ret = wlan_host_mbo_cfg(enable_mbo);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please disable MBO.(wlan-mbo-enable 0)\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to config MBO\r\n");
+    }
+}
+
+static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
+{
+    int ret;
+    uint8_t ch0, ch1, preference0, preference1;
+
+    if (argc != 5)
+    {
+        (void)PRINTF(
+            "Usage: %s <ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255> < 0--non-operable; 1--prefers not to "
+            "operate; 255--prefers to operate>\r\n",
+            argv[0]);
+        return;
+    }
+
+    ch0         = (uint8_t)atoi(argv[1]);
+    preference0 = (uint8_t)atoi(argv[2]);
+    ch1         = (uint8_t)atoi(argv[3]);
+    preference1 = (uint8_t)atoi(argv[4]);
+
+    ret = wlan_mbo_peferch_cfg(ch0, preference0, ch1, preference1);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please add pefer or non-pefer channels.\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to add pefer or non-pefer channels.\r\n");
+    }
+}
+
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 /**
  *  @brief Show usage information for the sta_filter_table command
@@ -2667,6 +2726,11 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_11K
     {"wlan-host-11k-enable", "<0/1>", test_wlan_host_11k_cfg},
     {"wlan-host-11k-neighbor-req", "[ssid <ssid>]", test_wlan_host_11k_neighbor_request},
+#endif
+#ifdef CONFIG_MBO
+    {"wlan-mbo-enable", "<0/1>", test_wlan_mbo_cfg},
+    {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
+     test_wlan_mbo_non_prefer_chs},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},

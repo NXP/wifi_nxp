@@ -3764,6 +3764,28 @@ int wlan_host_11k_cfg(int enable_11k);
 int wlan_host_11k_neighbor_req(t_u8 *ssid);
 #endif
 
+#ifdef CONFIG_MBO
+/**
+ * enable/disable MBO feature
+ *
+ * \param[in] enable_mbo the value of mbo configuration.
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_host_mbo_cfg(int enable_mbo);
+
+/**
+ * mbo channel operation preference configuration
+ *
+ * \param[in] ch0 channel number.
+ * \param[in] prefer0 operation preference for ch0.
+ * \param[in] ch1 channel number.
+ * \param[in] prefer1 operation preference for ch1.
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
+#endif
+
 #ifdef CONFIG_1AS
 /**
  * Get correlated time

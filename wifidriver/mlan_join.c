@@ -678,6 +678,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #ifdef CONFIG_11R
     t_u8 ft_akm = 0;
 #endif
+#ifdef CONFIG_MBO
+    t_u8 oper_class = 1;
+#endif
 
     ENTER();
 
@@ -945,7 +948,11 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
     else if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
     {
-        wlan_add_ext_capa_info_ie(pmpriv, pbss_desc, &pos);
+        wlan_add_ext_capa_info_ie(pmpriv,
+#ifdef CONFIG_11AX
+                                  pbss_desc,
+#endif
+                                  &pos);
     }
     else
     {
@@ -979,6 +986,11 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     {
         /* Do nothing */
     }
+#endif
+
+#ifdef CONFIG_MBO
+    wlan_get_curr_global_oper_class(pmpriv, pbss_desc->phy_param_set.ds_param_set.current_chan, BW_20MHZ, &oper_class);
+    wlan_add_supported_oper_class_ie(pmpriv, &pos, oper_class);
 #endif
 
     /* fixme: Currently not required */

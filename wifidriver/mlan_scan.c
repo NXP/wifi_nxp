@@ -1039,6 +1039,14 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     wlan_add_wps_probe_request_ie(pmpriv, &ptlv_pos);
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef CONFIG_MBO
+    wlan_add_ext_capa_info_ie(pmpriv,
+#ifdef CONFIG_11AX
+                              NULL,
+#endif
+                              &ptlv_pos);
+#endif
+
     /*
      * Set the output for the channel TLV to the address in the tlv buffer
      *   past any TLVs that were added in this function (SSID, num_probes).

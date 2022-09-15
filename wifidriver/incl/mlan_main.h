@@ -1349,6 +1349,10 @@ struct _mlan_private
 #ifdef CONFIG_1AS
     wifi_dot1as_info_t dot1as_info;
 #endif
+#ifdef CONFIG_MBO
+    t_u8 enable_mbo;
+    int mbo_mgmt_bitmap_index;
+#endif
 };
 
 /** BA stream status */
@@ -2449,7 +2453,17 @@ mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAN
 #endif
 
 /** Handler to get current operating class */
-mlan_status wlan_get_curr_oper_class(mlan_private *pmpriv, t_u8 channel, t_u8 bw, t_u8 *oper_class);
+/* For several features, such as DPP and MBO, we need the global operating class. */
+mlan_status wlan_get_global_nonglobal_oper_class(
+    mlan_private *pmpriv, t_u8 channel, t_u8 bw, t_u8 *oper_class, t_u8 *global_op_class);
+
+#define wlan_get_curr_oper_class(pmpriv, channel, bw, oper_class) \
+    wlan_get_global_nonglobal_oper_class(pmpriv, channel, bw, oper_class, MNULL)
+#define wlan_get_curr_global_oper_class(pmpriv, channel, bw, oper_class) \
+    wlan_get_global_nonglobal_oper_class(pmpriv, channel, bw, MNULL, oper_class)
+
+/** Handler to add supported operating class IE */
+int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u8 curr_oper_class);
 
 #ifndef CONFIG_MLAN_WMSDK
 t_void wlan_host_sleep_activated_event(pmlan_private priv, t_u8 activated);
@@ -2814,7 +2828,11 @@ mlan_status wlan_misc_hotspot_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
 mlan_status wlan_set_drvdbg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #endif
 
-void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **pptlv_out);
+void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv,
+#ifdef CONFIG_11AX
+                               IN BSSDescriptor_t *pbss_desc,
+#endif
+                               OUT t_u8 **pptlv_out);
 
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_misc_otp_user_data(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
