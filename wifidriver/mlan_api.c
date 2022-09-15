@@ -3311,6 +3311,18 @@ int wifi_host_11k_cfg(int enable_11k)
 
     return ret;
 }
+
+int wifi_host_11k_neighbor_req(t_u8 *ssid)
+{
+    if (wlan_strlen((t_s8 *)ssid) > IEEEtypes_SSID_SIZE)
+    {
+        return -WM_FAIL;
+    }
+    else
+    {
+        return wlan_send_mgmt_rm_neighbor_request(mlan_adap->priv[0], ssid, wlan_strlen((t_s8 *)ssid));
+    }
+}
 #endif
 
 #ifdef OTP_CHANINFO

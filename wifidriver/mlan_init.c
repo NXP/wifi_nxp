@@ -352,7 +352,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #ifdef CONFIG_11K_OFFLOAD
     priv->enable_11k = MFALSE;
 #endif
-
+#ifdef CONFIG_11K
+    priv->neighbor_rep_token = 1;
+#endif
     for (i = 0; i < MAX_NUM_TID; i++)
     {
         priv->addba_reject[i] = ADDBA_RSP_STATUS_ACCEPT;

@@ -201,6 +201,9 @@ bool wlan_rrm_matched_ap_found(wlan_rrm_beacon_report_data *rep_data, BSSDescrip
 
 /** Add RRM Capabilities */
 void wlan_dot11k_formatRrmCapabilities(IEEEtypes_RrmEnabledCapabilities_t *pRrmCapIe, t_u16 bcnInterval);
+
+/* send mgmt neighbor report request frame */
+int wlan_send_mgmt_rm_neighbor_request(mlan_private *pmpriv, t_u8 *ssid, t_u8 ssid_len);
 #endif /* CONFIG_11K */
 
 #endif /* !_MLAN_11K_H_ */

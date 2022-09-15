@@ -1679,6 +1679,39 @@ static void test_wlan_host_11k_cfg(int argc, char **argv)
         /* Do nothing */
     }
 }
+
+static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
+{
+    int ret;
+    t_u8 ssid[IEEEtypes_SSID_SIZE + 1] = {0};
+
+    if ((argc != 1 && argc != 3) || (argc == 3 && !string_equal("ssid", argv[1])))
+    {
+        (void)PRINTF("Usage: %s\r\n", argv[0]);
+        (void)PRINTF("or     %s ssid <ssid>\r\n", argv[0]);
+        return;
+    }
+
+    if (argc == 3)
+    {
+        if (strlen(argv[2]) > IEEEtypes_SSID_SIZE)
+        {
+            (void)PRINTF("Error: ssid too long\r\n");
+            return;
+        }
+        else
+        {
+            (void)memcpy(ssid, argv[2], strlen(argv[2]));
+        }
+    }
+
+    ret = wlan_host_11k_neighbor_req(ssid);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: send neighbor report request fail\r\n");
+        return;
+    }
+}
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
@@ -2633,6 +2666,7 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_11K
     {"wlan-host-11k-enable", "<0/1>", test_wlan_host_11k_cfg},
+    {"wlan-host-11k-neighbor-req", "[ssid <ssid>]", test_wlan_host_11k_neighbor_request},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},

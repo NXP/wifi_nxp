@@ -3748,18 +3748,20 @@ void wlan_wmm_tx_stats_dump(int bss_type);
 /**
  * enable/disable host 11k feature
  *
- * \param[in]  the value of 11k configuration.
+ * \param[in] enable_11k the value of 11k configuration.
+ * \return WM_SUCCESS if successful otherwise failure.
  *
  */
 int wlan_host_11k_cfg(int enable_11k);
 
 /**
- * send 11k neighbor request in WLAN firmware.
+ * host send neighbor report request
  *
+ * \param[in] ssid the SSID for neighbor report
+ * \note ssid parameter is optional
  * \return WM_SUCCESS if successful otherwise failure.
- *
  */
-int wlan_11k_neighbor_req(void);
+int wlan_host_11k_neighbor_req(t_u8 *ssid);
 #endif
 
 #ifdef CONFIG_1AS

@@ -102,7 +102,9 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
     /* Enable auto data rate */
     priv->is_data_rate_auto = MTRUE;
     priv->data_rate         = 0;
-
+#ifdef CONFIG_11K
+    priv->neighbor_rep_token = 1;
+#endif
     if (priv->bss_mode == MLAN_BSS_MODE_IBSS)
     {
         priv->adhoc_state                        = (t_u8)ADHOC_IDLE;

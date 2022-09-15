@@ -1004,6 +1004,12 @@ typedef struct _wlan_rrm_scan_cb_param
 } wlan_rrm_scan_cb_param;
 
 int wifi_host_11k_cfg(int enable_11k);
+
+/**
+ * host send neighbor report request
+ * \param[in] ssid ssid for neighbor report
+ */
+int wifi_host_11k_neighbor_req(t_u8 *ssid);
 #endif
 
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);

@@ -2828,7 +2828,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
     {
 #ifdef CONFIG_11K
         int ret;
-        ret = wlan_11k_neighbor_req();
+        ret = wlan_host_11k_neighbor_req((t_u8 *)network->ssid);
         if (ret != WM_SUCCESS)
         {
             wlcm_d("Failed to send 11K neighbor request");
@@ -3480,7 +3480,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     (void)wifi_11k_cfg(1);
     (void)wifi_11h_enable();
 #endif
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
     (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
 #endif
 }
@@ -7066,9 +7066,15 @@ int wlan_host_11k_cfg(int enable_11k)
     return wifi_host_11k_cfg(enable_11k);
 }
 
-int wlan_11k_neighbor_req(void)
+int wlan_host_11k_neighbor_req(t_u8 *ssid)
 {
-    return WM_SUCCESS;
+    if (!is_sta_connected())
+    {
+        wlcm_e("Error: sta connection is required before sending neighbor report req");
+        return -WM_FAIL;
+    }
+
+    return wifi_host_11k_neighbor_req(ssid);
 }
 #endif
 

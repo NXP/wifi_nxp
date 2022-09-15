@@ -1311,6 +1311,7 @@ struct _mlan_private
 #ifdef CONFIG_11K
     t_u8 enable_host_11k;
     int rrm_mgmt_bitmap_index;
+    t_u8 neighbor_rep_token;
 #endif
 
     /** Port Control mode */

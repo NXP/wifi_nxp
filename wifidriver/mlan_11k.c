@@ -34,8 +34,9 @@ Change log:
 
 extern int _wlan_rrm_scan_cb(unsigned int count);
 extern void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param);
-#define LINK_MSR_REPORT_BUF_SIZE 64
-#define rrm_bits_max             255
+#define LINK_MSR_REPORT_BUF_SIZE  64
+#define NEIGHBOR_REQUEST_BUF_SIZE 64
+#define rrm_bits_max              255
 
 /********************************************************
                 Local Variables
@@ -776,5 +777,52 @@ void wlan_dot11k_formatRrmCapabilities(IEEEtypes_RrmEnabledCapabilities_t *pRrmC
 
     pRrmCapIe->ParallelMeas = 0;
     pRrmCapIe->RepeatMeas   = 0;
+}
+
+int wlan_send_mgmt_rm_neighbor_request(mlan_private *pmpriv, t_u8 *ssid, t_u8 ssid_len)
+{
+    t_u16 pkt_len;
+    mlan_802_11_mac_addr *da     = MNULL;
+    mlan_802_11_mac_addr *sa     = MNULL;
+    wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
+    t_u8 *pos                    = MNULL;
+
+    if (pmpriv->bss_index != MLAN_BSS_ROLE_STA || pmpriv->media_connected != MTRUE)
+    {
+        wifi_d("invalid interface %d for sending neighbor report request", pmpriv->bss_index);
+        return MLAN_STATUS_FAILURE;
+    }
+
+    da = &pmpriv->curr_bss_params.bss_descriptor.mac_address;
+    sa = (mlan_802_11_mac_addr *)(&pmpriv->curr_addr[0]);
+    pmgmt_pkt_hdr =
+        wifi_PrepDefaultMgtMsg(SUBTYPE_ACTION, da, sa, da, sizeof(wlan_mgmt_pkt) + NEIGHBOR_REQUEST_BUF_SIZE);
+    if (pmgmt_pkt_hdr == MNULL)
+    {
+        wifi_e("No memory for neighbor report request");
+        return MLAN_STATUS_FAILURE;
+    }
+
+    /* 802.11 management body */
+    pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
+    pos[0] = IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
+    pos[1] = IEEE_MGMT_RRM_NEIGHBOR_REPORT_REQUEST;
+    pos[2] = pmpriv->neighbor_rep_token++;
+    pos += 3;
+
+    /* SSID Tag */
+    if (ssid_len)
+    {
+        pos[0] = SSID;
+        pos[1] = ssid_len;
+        (void)memcpy(&pos[2], ssid, ssid_len);
+        pos += ssid_len + 2;
+    }
+    pkt_len                = pos - (t_u8 *)pmgmt_pkt_hdr;
+    pmgmt_pkt_hdr->frm_len = pkt_len - sizeof(pmgmt_pkt_hdr->frm_len);
+
+    wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+    os_mem_free(pmgmt_pkt_hdr);
+    return MLAN_STATUS_SUCCESS;
 }
 #endif /* CONFIG_11K */
