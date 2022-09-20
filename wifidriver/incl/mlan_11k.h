@@ -44,7 +44,7 @@ typedef MLAN_PACK_START struct _mgmt_rrm_link_meas_request
     t_s8 tx_power;
     /* The upper limit on the transmit power */
     t_s8 max_tx_power;
-    t_u8 variable[0];
+    t_u8 variable[1];
 } MLAN_PACK_END mgmt_rrm_link_meas_request;
 
 /* Link Measurement Report frame */
@@ -61,7 +61,7 @@ typedef MLAN_PACK_START struct _mgmt_rrm_link_meas_report
     t_u8 rcpi;
     /* Received signal to noise indicator in a dBm scale */
     t_u8 rsni;
-    t_u8 variable[0];
+    t_u8 variable[1];
 } MLAN_PACK_END mgmt_rrm_link_meas_report;
 
 /* Measurement Request element */
@@ -78,7 +78,7 @@ typedef MLAN_PACK_START struct _mgmt_rrm_radio_meas_request
     /* Measurement Type */
     t_u8 type;
     /* Measurement Request */
-    t_u8 variable[0];
+    t_u8 variable[1];
 } MLAN_PACK_END mgmt_rrm_radio_meas_request;
 
 /* Beacon request */
@@ -97,7 +97,7 @@ typedef MLAN_PACK_START struct _mgmt_rrm_meas_beacon_request
     /* BSSID */
     t_u8 bssid[IEEEtypes_ADDRESS_SIZE];
     /* Optional Subelements */
-    t_u8 variable[0];
+    t_u8 variable[1];
 } MLAN_PACK_END mgmt_rrm_meas_beacon_request;
 
 /* Beacon report */
@@ -124,7 +124,7 @@ typedef MLAN_PACK_START struct _mgmt_rrm_meas_beacon_report
     /* Parent TSF */
     t_u32 parent_tsf;
     /* Optional Subelements */
-    t_u8 variable[0];
+    t_u8 variable[1];
 } MLAN_PACK_END mgmt_rrm_meas_beacon_report;
 
 /* Measurement requests type */

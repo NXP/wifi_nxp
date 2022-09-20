@@ -32,11 +32,9 @@ Change log:
 
 #include <mlan_api.h>
 
-extern int _wlan_rrm_scan_cb(unsigned int count);
-extern void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param);
-#define LINK_MSR_REPORT_BUF_SIZE  64
-#define NEIGHBOR_REQUEST_BUF_SIZE 64
-#define rrm_bits_max              255
+#define LINK_MSR_REPORT_BUF_SIZE  64U
+#define NEIGHBOR_REQUEST_BUF_SIZE 64U
+#define rrm_bits_max              255U
 
 /********************************************************
                 Local Variables
@@ -51,48 +49,65 @@ static uint8_t broadcast_mac_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 ********************************************************/
 static t_u8 wlan_rrm_rssi_to_rcpi(int rssi)
 {
-    if (!rssi)
-        return 255;
+    t_u8 ret_rcpi = 0;
+    int rcpi      = 0;
+
+    if (rssi == 0)
+    {
+        return (t_u8)255U;
+    }
     else if (rssi > 0)
-        return 220;
+    {
+        return (t_u8)220U;
+    }
     else if (rssi < -110)
-        return 0;
+    {
+        return (t_u8)0U;
+    }
     else
-        return (rssi + 110) * 2;
+    {
+        rcpi     = (rssi + 110) * 2;
+        ret_rcpi = (t_u8)rcpi;
+        return ret_rcpi;
+    }
 }
 
 static void wlan_rrm_put_le64(t_u8 *a, t_u64 val)
 {
-    a[7] = val >> 56;
-    a[6] = val >> 48;
-    a[5] = val >> 40;
-    a[4] = val >> 32;
-    a[3] = val >> 24;
-    a[2] = val >> 16;
-    a[1] = val >> 8;
-    a[0] = val & 0xff;
+    a[7] = (t_u8)(val >> 56);
+    a[6] = (t_u8)(val >> 48);
+    a[5] = (t_u8)(val >> 40);
+    a[4] = (t_u8)(val >> 32);
+    a[3] = (t_u8)(val >> 24);
+    a[2] = (t_u8)(val >> 16);
+    a[1] = (t_u8)(val >> 8);
+    a[0] = (t_u8)(val & 0xffULL);
 }
 
 static void wlan_rrm_put_le16(t_u8 *a, t_u16 val)
 {
-    a[1] = val >> 8;
-    a[0] = val & 0xff;
+    a[1] = (t_u8)(val >> 8);
+    a[0] = (t_u8)(val & (t_u16)0xff);
 }
 
 static void wlan_rrm_bit_field_set(t_u8 *bits_field, t_u8 bit)
 {
-    if (bit >= rrm_bits_max)
+    if (bit >= (t_u8)rrm_bits_max)
+    {
         return;
+    }
 
-    bits_field[bit / 8] |= BIT(bit % 8);
+    bits_field[bit / 8U] |= BIT(bit % 8U);
 }
 
-static int wlan_rrm_bit_field_is_set(t_u8 *bit_field, t_u8 bit)
+static bool wlan_rrm_bit_field_is_set(t_u8 *bit_field, t_u8 bit)
 {
-    if (bit >= rrm_bits_max)
+    if (bit >= (t_u8)rrm_bits_max)
+    {
         return 0;
+    }
 
-    return !!(bit_field[bit / 8] & BIT(bit % 8));
+    return ((bit_field[bit / (t_u8)8U] & (t_u8)(BIT((bit % 8U)))) != (t_u8)0U);
 }
 
 /* mod_group : ModulationGroup\n
@@ -101,7 +116,7 @@ static int wlan_rrm_bit_field_is_set(t_u8 *bit_field, t_u8 bit)
  */
 static t_u8 wlan_link_measurement_get_tx_power(wifi_txpwrlimit_t *txpwrlimit, t_u8 ModulationGroup, t_u32 channel)
 {
-    int i;
+    t_u8 i;
     t_u8 tx_power = 20;
 
     for (i = 0; i < txpwrlimit->num_chans; i++)
@@ -125,8 +140,10 @@ static int wlan_process_rm_beacon_req_subelement(wlan_rrm_beacon_report_data *re
     switch (sub_id)
     {
         case WLAN_RRM_BEACON_REQUEST_SUBELEMENT_SSID:
-            if (!sub_len)
+            if (sub_len == (t_u8)0U)
+            {
                 break;
+            }
 
             if (sub_len > MLAN_MAX_SSID_LENGTH)
             {
@@ -138,7 +155,7 @@ static int wlan_process_rm_beacon_req_subelement(wlan_rrm_beacon_report_data *re
             (void)memcpy(rep_data->ssid, sub_elem, rep_data->ssid_length);
             break;
         case WLAN_RRM_BEACON_REQUEST_SUBELEMENT_REPORTING_INFO:
-            if (sub_len != 2)
+            if (sub_len != 2U)
             {
                 wifi_d("Wrong reporting info sub_element len: %u", sub_len);
                 return -1;
@@ -146,7 +163,7 @@ static int wlan_process_rm_beacon_req_subelement(wlan_rrm_beacon_report_data *re
 
             break;
         case WLAN_RRM_BEACON_REQUEST_SUBELEMENT_REPORTING_DETAIL:
-            if (sub_len != 1)
+            if (sub_len != 1U)
             {
                 wifi_d("Wrong reporting datail sub_element len: %u", sub_len);
                 return -1;
@@ -167,26 +184,32 @@ static int wlan_process_rm_beacon_req_subelement(wlan_rrm_beacon_report_data *re
                 return -1;
             }
 
-            if (!sub_len)
+            if (sub_len == (t_u8)0U)
             {
                 wifi_d("wrong request sub_element len: %u", sub_len);
                 return -1;
             }
 
             for (i = 0; i < sub_len; i++)
+            {
                 wlan_rrm_bit_field_set(rep_data->bits_field, sub_elem[i]);
+            }
             break;
         case WLAN_RRM_BEACON_REQUEST_SUBELEMENT_AP_CHANNEL:
-            if (rep_data->channel_num + sub_len - 1 > MAX_CHANNEL_LIST)
+            if (rep_data->channel_num + sub_len - 1U > (t_u8)MAX_CHANNEL_LIST)
+            {
                 return 0;
+            }
 
-            for (i = 0; i < sub_len - 1; i++)
-                rep_data->channel[rep_data->channel_num + i] = sub_elem[i + 1];
+            for (i = 0; i < (t_u8)(sub_len - 1U); i++)
+            {
+                rep_data->channel[rep_data->channel_num + i] = sub_elem[i + 1U];
+            }
 
-            rep_data->channel_num += sub_len - 1;
+            rep_data->channel_num += sub_len - 1U;
             break;
         case WLAN_RRM_BEACON_REQUEST_SUBELEMENT_LAST_INDICATION:
-            if (sub_len != 1)
+            if (sub_len != 1U)
             {
                 wifi_d("wrong last indication sub_element len: %u", sub_len);
                 return -1;
@@ -195,6 +218,7 @@ static int wlan_process_rm_beacon_req_subelement(wlan_rrm_beacon_report_data *re
             rep_data->last_ind = sub_elem[0];
             break;
         default:
+            wifi_d("Sub element id: %u is not handled for beacon request", sub_id);
             break;
     }
 
@@ -210,7 +234,8 @@ static void wlan_process_rm_beacon_report_table(
     /* The sufficient size is the length including reporting frame body */
     t_u16 suffi_len           = 250;
     t_u32 pos_last_indication = 0;
-    bool match_ap_found       = 0;
+    bool match_ap_found       = false;
+    int meas_rep_len          = 0;
 
     rep_buf = (t_u8 *)os_mem_alloc(BEACON_REPORT_BUF_SIZE);
     if (rep_buf == NULL)
@@ -230,40 +255,46 @@ static void wlan_process_rm_beacon_report_table(
         }
 
         /* If current rep_buf is not enough and still have AP not added, just send the report */
-        if ((buf_pos + suffi_len - rep_buf > BEACON_REPORT_BUF_SIZE) && (i < mlan_adap->num_in_scan_table - 1) &&
-            wlan_rrm_matched_ap_found(rep_data, &mlan_adap->pscan_table[i + 1]))
+        if ((buf_pos + suffi_len - rep_buf > BEACON_REPORT_BUF_SIZE) &&
+            (i < (t_u16)(mlan_adap->num_in_scan_table - 1U)) &&
+            wlan_rrm_matched_ap_found(rep_data, &mlan_adap->pscan_table[i + 1U]))
         {
             match_ap_found = 1;
+            meas_rep_len   = buf_pos - rep_buf;
             /* send beacon report, not the last one */
-            wlan_send_mgmt_rm_beacon_report(dialog_tok, dest_addr, src_addr, rep_buf, buf_pos - rep_buf, protect);
+            wlan_send_mgmt_rm_beacon_report(dialog_tok, dest_addr, src_addr, rep_buf, (t_u32)(meas_rep_len), protect);
             /* Prepare for the next beacon report */
             (void)memset(rep_buf, 0, BEACON_REPORT_BUF_SIZE);
             buf_pos = rep_buf;
         }
 
         /* Last AP in scan table, and matched AP found */
-        if ((i == mlan_adap->num_in_scan_table - 1) && (buf_pos > rep_buf))
+        if ((i == mlan_adap->num_in_scan_table - 1U) && (buf_pos > rep_buf))
         {
             match_ap_found = 1;
             /* Update last indication, the last one */
-            if (rep_data->last_ind && pos_last_indication)
-                *(char *)pos_last_indication = 1;
+            if (rep_data->last_ind > (t_u8)0U && pos_last_indication > 0U)
+            {
+                *(char *)pos_last_indication = (char)1U;
+            }
+            meas_rep_len = buf_pos - rep_buf;
             /* send beacon report, the last one */
-            wlan_send_mgmt_rm_beacon_report(dialog_tok, dest_addr, src_addr, rep_buf, buf_pos - rep_buf, protect);
+            wlan_send_mgmt_rm_beacon_report(dialog_tok, dest_addr, src_addr, rep_buf, (t_u32)(meas_rep_len), protect);
         }
     }
 
     /* If no matched AP found, no beacon report detail */
     if (!match_ap_found)
     {
-        *buf_pos++ = MEASURE_REPORT;
+        *buf_pos++ = (t_u8)MEASURE_REPORT;
         /* Tag length */
-        *buf_pos++ = 3;
-        *buf_pos++ = rep_data->token;
-        *buf_pos++ = WLAN_RRM_REPORT_MODE_ACCEPT;
-        *buf_pos++ = WLAN_RRM_MEASURE_TYPE_BEACON;
+        *buf_pos++   = 3;
+        *buf_pos++   = rep_data->token;
+        *buf_pos++   = WLAN_RRM_REPORT_MODE_ACCEPT;
+        *buf_pos++   = WLAN_RRM_MEASURE_TYPE_BEACON;
+        meas_rep_len = buf_pos - rep_buf;
         /* send beacon report */
-        wlan_send_mgmt_rm_beacon_report(dialog_tok, dest_addr, src_addr, rep_buf, buf_pos - rep_buf, protect);
+        wlan_send_mgmt_rm_beacon_report(dialog_tok, dest_addr, src_addr, rep_buf, (t_u32)(meas_rep_len), protect);
     }
     os_mem_free(rep_buf);
 }
@@ -272,11 +303,15 @@ bool wlan_rrm_matched_ap_found(wlan_rrm_beacon_report_data *rep_data, BSSDescrip
 {
     if (memcmp(rep_data->bssid, broadcast_mac_addr, IEEEtypes_ADDRESS_SIZE) != 0 &&
         memcmp(rep_data->bssid, bss_entry->mac_address, IEEEtypes_ADDRESS_SIZE) != 0)
+    {
         return 0;
+    }
 
-    if (rep_data->ssid_length && (rep_data->ssid_length != bss_entry->ssid.ssid_len ||
-                                  memcmp(rep_data->ssid, bss_entry->ssid.ssid, bss_entry->ssid.ssid_len) != 0))
+    if (rep_data->ssid_length > 0U && (rep_data->ssid_length != bss_entry->ssid.ssid_len ||
+                                       memcmp(rep_data->ssid, bss_entry->ssid.ssid, bss_entry->ssid.ssid_len) != 0))
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -290,19 +325,22 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
                                        bool protect,
                                        bool duration_mandatory)
 {
-    mgmt_rrm_meas_beacon_request *beacon_req = (mgmt_rrm_meas_beacon_request *)req;
+    mgmt_rrm_meas_beacon_request *beacon_req = (mgmt_rrm_meas_beacon_request *)(void *)req;
     t_u8 *sub_element;
     t_u32 element_len;
     int ret = 0, i;
     wlan_scan_params_v2_t wlan_scan_param;
     wlan_rrm_scan_cb_param *param = NULL;
 
-    if (beacon_req->mode != WLAN_RRM_MEASUREMENT_MODE_PASSIVE && beacon_req->mode != WLAN_RRM_MEASUREMENT_MODE_ACTIVE &&
-        beacon_req->mode != WLAN_RRM_MEASUREMENT_MODE_TABLE)
+    if (beacon_req->mode != (t_u8)WLAN_RRM_MEASUREMENT_MODE_PASSIVE &&
+        beacon_req->mode != (t_u8)WLAN_RRM_MEASUREMENT_MODE_ACTIVE &&
+        beacon_req->mode != (t_u8)WLAN_RRM_MEASUREMENT_MODE_TABLE)
+    {
         return;
+    }
 
     sub_element = beacon_req->variable;
-    element_len = len - sizeof(mgmt_rrm_meas_beacon_request);
+    element_len = len - sizeof(mgmt_rrm_meas_beacon_request) - 1U;
 
     param = (wlan_rrm_scan_cb_param *)os_mem_alloc(sizeof(wlan_rrm_scan_cb_param));
     if (param == NULL)
@@ -316,18 +354,20 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
     param->rep_data.duration      = wlan_le16_to_cpu(beacon_req->duration);
     (void)memcpy(param->rep_data.bssid, beacon_req->bssid, IEEEtypes_ADDRESS_SIZE);
 
-    while (element_len >= 2)
+    while (element_len >= 2U)
     {
         ret = wlan_process_rm_beacon_req_subelement(&param->rep_data, sub_element[0], sub_element[1], &sub_element[2]);
         if (ret < 0)
+        {
             goto output;
+        }
 
-        element_len -= 2 + sub_element[1];
-        sub_element += 2 + sub_element[1];
+        element_len -= 2U + (t_u32)sub_element[1];
+        sub_element += 2U + sub_element[1];
     }
 
     /* Measurement mode: Beacon Table */
-    if (beacon_req->mode == WLAN_RRM_MEASUREMENT_MODE_TABLE)
+    if (beacon_req->mode == (t_u8)WLAN_RRM_MEASUREMENT_MODE_TABLE)
     {
         wlan_process_rm_beacon_report_table(&param->rep_data, dialog_tok, dest_addr, src_addr, protect);
         goto output;
@@ -335,42 +375,58 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
 
     /* Measurement mode: Passive or Active, need to scan first */
     (void)memset(&wlan_scan_param, 0, sizeof(wlan_scan_params_v2_t));
-    if (beacon_req->channel && beacon_req->channel != 255)
+    if (beacon_req->channel > 0U && beacon_req->channel != 255U)
     {
         wlan_scan_param.num_channels             = 1;
         wlan_scan_param.chan_list[0].chan_number = beacon_req->channel;
-        if (beacon_req->mode == WLAN_RRM_MEASUREMENT_MODE_ACTIVE)
+        if (beacon_req->mode == (t_u8)WLAN_RRM_MEASUREMENT_MODE_ACTIVE)
+        {
             wlan_scan_param.chan_list[0].scan_type = MLAN_SCAN_TYPE_ACTIVE;
+        }
         else
+        {
             wlan_scan_param.chan_list[0].scan_type = MLAN_SCAN_TYPE_PASSIVE;
+        }
 
         if (duration_mandatory)
-            wlan_scan_param.chan_list[0].scan_time = beacon_req->duration;
-    }
-    else if (beacon_req->channel == 255 && param->rep_data.channel_num)
-    {
-        wlan_scan_param.num_channels = param->rep_data.channel_num;
-        for (i = 0; i < param->rep_data.channel_num && i < MAX_CHANNEL_LIST; i++)
         {
-            wlan_scan_param.chan_list[i].chan_number = param->rep_data.channel[i];
-            if (beacon_req->mode == WLAN_RRM_MEASUREMENT_MODE_ACTIVE)
-                wlan_scan_param.chan_list[i].scan_type = MLAN_SCAN_TYPE_ACTIVE;
-            else
-                wlan_scan_param.chan_list[i].scan_type = MLAN_SCAN_TYPE_PASSIVE;
-
-            if (duration_mandatory)
-                wlan_scan_param.chan_list[i].scan_time = beacon_req->duration;
+            wlan_scan_param.chan_list[0].scan_time = beacon_req->duration;
         }
     }
+    else if (beacon_req->channel == 255U && param->rep_data.channel_num > (t_u8)0U)
+    {
+        wlan_scan_param.num_channels = param->rep_data.channel_num;
+        for (i = 0; i < (int)param->rep_data.channel_num && i < MAX_CHANNEL_LIST; i++)
+        {
+            wlan_scan_param.chan_list[i].chan_number = param->rep_data.channel[i];
+            if (beacon_req->mode == (t_u8)WLAN_RRM_MEASUREMENT_MODE_ACTIVE)
+            {
+                wlan_scan_param.chan_list[i].scan_type = MLAN_SCAN_TYPE_ACTIVE;
+            }
+            else
+            {
+                wlan_scan_param.chan_list[i].scan_type = MLAN_SCAN_TYPE_PASSIVE;
+            }
 
-    if (param->rep_data.ssid_length)
+            if (duration_mandatory)
+            {
+                wlan_scan_param.chan_list[i].scan_time = beacon_req->duration;
+            }
+        }
+    }
+    else
+    {
+        /* Do nothing */
+    }
+
+    if (param->rep_data.ssid_length > (t_u8)0U)
     {
         (void)memcpy((void *)&wlan_scan_param.ssid[0], (const void *)param->rep_data.ssid,
                      (size_t)param->rep_data.ssid_length);
     }
 
     param->dialog_tok = dialog_tok;
-    param->protect    = protect;
+    param->protect    = (t_u8)protect;
     (void)memcpy(param->dst_addr, src_addr, IEEEtypes_ADDRESS_SIZE);
     wlan_scan_param.cb = _wlan_rrm_scan_cb;
 
@@ -395,12 +451,15 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     t_u8 *pos_tag_len = NULL;
     t_u8 *pos_sub_len = NULL;
     t_u16 cap_info    = (t_u16)0U;
+    int meas_tag_len  = 0;
+    int meas_sub_len  = 0;
 
-    (void)memset(&report, 0, sizeof(mgmt_rrm_meas_beacon_report));
-    wlan_get_curr_oper_class(mlan_adap->priv[0], (t_u8)bss_entry->channel, bss_entry->curr_bandwidth, &report.op_class);
+    (void)memset(&report, 0, sizeof(mgmt_rrm_meas_beacon_report) - 1U);
+    (void)wlan_get_curr_oper_class(mlan_adap->priv[0], (t_u8)bss_entry->channel, bss_entry->curr_bandwidth,
+                                   &report.op_class);
 
     /* Measurement report */
-    *pos++ = MEASURE_REPORT;
+    *pos++ = (t_u8)MEASURE_REPORT;
     /* The length will be filled below */
     pos_tag_len = pos;
     pos++;
@@ -419,20 +478,32 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     report.ant_id = 0;
     /* Parent tsf is not verified in CERT, to be done */
     report.parent_tsf = 0;
-    if (bss_entry->pvht_cap)
-        report.report_info = WLAN_PHY_TYPE_VHT;
-    else if (bss_entry->pht_cap)
-        report.report_info = WLAN_PHY_TYPE_HT;
+    if (bss_entry->pvht_cap != MNULL)
+    {
+        report.report_info = (t_u8)WLAN_PHY_TYPE_VHT;
+    }
+    else if (bss_entry->pht_cap != MNULL)
+    {
+        report.report_info = (t_u8)WLAN_PHY_TYPE_HT;
+    }
+    else
+    {
+        /* Do nothing */
+    }
 
-    (void)memcpy(pos, &report, sizeof(mgmt_rrm_meas_beacon_report));
-    pos += sizeof(mgmt_rrm_meas_beacon_report);
+    (void)memcpy((void *)pos, (const void *)&report, sizeof(mgmt_rrm_meas_beacon_report) - 1U);
+    pos += sizeof(mgmt_rrm_meas_beacon_report) - 1U;
 
     /* Start adding reported frame body */
     if (rep_data->report_detail == WLAN_RRM_REPORTING_DETAIL_NONE)
+    {
         goto without_subelem;
+    }
     /* The min length of reported frame body is 14 */
     if (pos + 14 - *buf_pos > remained_len)
+    {
         goto without_subelem;
+    }
 
     *pos++ = WLAN_RRM_BEACON_REP_SUBELEM_FRAME_BODY;
     /* The length will be filled below */
@@ -448,14 +519,16 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     pos += 2;
     /* SSID tag */
     if (rep_data->report_detail == WLAN_RRM_REPORTING_DETAIL_ALL_FIELDS_AND_ELEMENTS ||
-        wlan_rrm_bit_field_is_set(rep_data->bits_field, SSID))
+        wlan_rrm_bit_field_is_set(rep_data->bits_field, (t_u8)SSID))
     {
         if (pos + sizeof(IEEEtypes_Header_t) + bss_entry->ssid.ssid_len - *buf_pos > remained_len)
+        {
             goto part_subelem;
+        }
 
-        *pos++ = SSID;
-        *pos++ = bss_entry->ssid.ssid_len;
-        if (bss_entry->ssid.ssid_len)
+        *pos++ = (t_u8)SSID;
+        *pos++ = (t_u8)bss_entry->ssid.ssid_len;
+        if (bss_entry->ssid.ssid_len > 0U)
         {
             (void)memcpy(pos, &(bss_entry->ssid.ssid), bss_entry->ssid.ssid_len);
             pos += bss_entry->ssid.ssid_len;
@@ -463,12 +536,14 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     }
     /* RSN tag */
     if (rep_data->report_detail == WLAN_RRM_REPORTING_DETAIL_ALL_FIELDS_AND_ELEMENTS ||
-        wlan_rrm_bit_field_is_set(rep_data->bits_field, RSN_IE))
+        wlan_rrm_bit_field_is_set(rep_data->bits_field, (t_u8)RSN_IE))
     {
-        if (bss_entry->rsn_ie_buff_len)
+        if (bss_entry->rsn_ie_buff_len > (size_t)0U)
         {
             if (pos + bss_entry->rsn_ie_buff_len - *buf_pos > remained_len)
+            {
                 goto part_subelem;
+            }
 
             (void)memcpy(pos, bss_entry->rsn_ie_buff, bss_entry->rsn_ie_buff_len);
             pos += bss_entry->rsn_ie_buff_len;
@@ -476,69 +551,81 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     }
     /* Mobility Domain tag */
     if (rep_data->report_detail == WLAN_RRM_REPORTING_DETAIL_ALL_FIELDS_AND_ELEMENTS ||
-        wlan_rrm_bit_field_is_set(rep_data->bits_field, MOBILITY_DOMAIN))
+        wlan_rrm_bit_field_is_set(rep_data->bits_field, (t_u8)MOBILITY_DOMAIN))
     {
         if (pos + sizeof(IEEEtypes_MobilityDomain_t) - *buf_pos > remained_len)
+        {
             goto part_subelem;
+        }
 
         if (bss_entry->mob_domain_exist)
         {
-            (void)memcpy(pos, bss_entry->pmd_ie, sizeof(IEEEtypes_MobilityDomain_t));
+            (void)memcpy((void *)pos, (const void *)bss_entry->pmd_ie, sizeof(IEEEtypes_MobilityDomain_t));
             pos += sizeof(IEEEtypes_MobilityDomain_t);
         }
     }
     /* RM Enable Capabilities tag */
     if (rep_data->report_detail == WLAN_RRM_REPORTING_DETAIL_ALL_FIELDS_AND_ELEMENTS ||
-        wlan_rrm_bit_field_is_set(rep_data->bits_field, RRM_ENABLED_CAP))
+        wlan_rrm_bit_field_is_set(rep_data->bits_field, (t_u8)RRM_ENABLED_CAP))
     {
         if (pos + sizeof(bss_entry->rm_cap_saved) - *buf_pos > remained_len)
+        {
             goto part_subelem;
+        }
 
         if (bss_entry->rm_cap_exist)
         {
-            (void)memcpy(pos, &bss_entry->rm_cap_saved, sizeof(bss_entry->rm_cap_saved));
+            (void)memcpy((void *)pos, (const void *)&bss_entry->rm_cap_saved, sizeof(bss_entry->rm_cap_saved));
             pos += sizeof(bss_entry->rm_cap_saved);
         }
     }
     /* Vendor Specific tag */
     if (rep_data->report_detail == WLAN_RRM_REPORTING_DETAIL_ALL_FIELDS_AND_ELEMENTS ||
-        wlan_rrm_bit_field_is_set(rep_data->bits_field, VENDOR_SPECIFIC_221))
+        wlan_rrm_bit_field_is_set(rep_data->bits_field, (t_u8)VENDOR_SPECIFIC_221))
     {
         /* wpa */
-        if (bss_entry->wpa_ie_buff_len)
+        if (bss_entry->wpa_ie_buff_len > 0U)
         {
             if (pos + bss_entry->wpa_ie_buff_len - *buf_pos > remained_len)
+            {
                 goto part_subelem;
+            }
 
             (void)memcpy(pos, bss_entry->wpa_ie_buff, bss_entry->wpa_ie_buff_len);
             pos += bss_entry->wpa_ie_buff_len;
         }
         /* wmm */
         if (pos + sizeof(bss_entry->wmm_ie) - *buf_pos > remained_len)
-            goto part_subelem;
-
-        if (wlan_strlen((char *)(&bss_entry->wmm_ie)))
         {
-            (void)memcpy(pos, &bss_entry->wmm_ie, sizeof(bss_entry->wmm_ie));
+            goto part_subelem;
+        }
+
+        if (wlan_strlen((char *)(&bss_entry->wmm_ie)) > 0U)
+        {
+            (void)memcpy((void *)pos, (const void *)&bss_entry->wmm_ie, sizeof(bss_entry->wmm_ie));
             pos += sizeof(bss_entry->wmm_ie);
         }
         /* Others */
-        if (bss_entry->vendor_ie_len)
+        if (bss_entry->vendor_ie_len > (t_u8)0U)
         {
             if (pos + bss_entry->vendor_ie_len - *buf_pos > remained_len)
+            {
                 goto part_subelem;
+            }
 
             (void)memcpy(pos, bss_entry->vendor_ie_buff, bss_entry->vendor_ie_len);
             pos += bss_entry->vendor_ie_len;
         }
     }
 
-    if (rep_data->last_ind)
+    if (rep_data->last_ind > 0U)
     {
         if (pos + WLAN_RRM_BEACON_REP_FRAME_BODY_FRAGMENT_SUB_LEN + WLAN_RRM_BEACON_REP_LAST_INDICATION_SUB_LEN -
                 *buf_pos >
             remained_len)
+        {
             goto part_subelem;
+        }
 
         /* Frame body fragment id subelement */
         pos[0] = WLAN_RRM_BEACON_REP_SUBELEM_FRAME_BODY_FRAGMENT_ID;
@@ -555,9 +642,11 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     }
     /* Fill the length */
 part_subelem:
-    *pos_sub_len = pos - pos_sub_len - 1;
+    meas_sub_len = pos - pos_sub_len - 1;
+    *pos_sub_len = (t_u8)meas_sub_len;
 without_subelem:
-    *pos_tag_len = pos - pos_tag_len - 1;
+    meas_tag_len = pos - pos_tag_len - 1;
+    *pos_tag_len = (t_u8)meas_tag_len;
     *buf_pos     = pos;
 }
 
@@ -568,37 +657,41 @@ void wlan_send_mgmt_rm_beacon_report(
     IEEEtypes_FrameCtl_t *mgmt_fc_p = MNULL;
     t_u8 *pos                       = MNULL;
     t_u16 pkt_len                   = 0;
+    int meas_pkt_len                = 0;
 
-    pmgmt_pkt_hdr =
-        wifi_PrepDefaultMgtMsg(SUBTYPE_ACTION, (mlan_802_11_mac_addr *)dst_addr, (mlan_802_11_mac_addr *)src_addr,
-                               (mlan_802_11_mac_addr *)dst_addr, sizeof(wlan_mgmt_pkt) + BEACON_REPORT_BUF_SIZE);
+    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(
+        SUBTYPE_ACTION, (mlan_802_11_mac_addr *)(void *)dst_addr, (mlan_802_11_mac_addr *)(void *)src_addr,
+        (mlan_802_11_mac_addr *)(void *)dst_addr, sizeof(wlan_mgmt_pkt) + (t_u32)BEACON_REPORT_BUF_SIZE);
     if (pmgmt_pkt_hdr == MNULL)
     {
         wifi_d("No memory available for beacon report");
         return;
     }
 
-    mgmt_fc_p = (IEEEtypes_FrameCtl_t *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
+    mgmt_fc_p = (IEEEtypes_FrameCtl_t *)(void *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
     if (protect)
+    {
         mgmt_fc_p->wep = 1;
+    }
 
     /* 802.11 management body */
     pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
-    pos[0] = IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
-    pos[1] = IEEE_MGMT_RRM_RADIO_MEASUREMENT_REPORT;
+    pos[0] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
+    pos[1] = (t_u8)IEEE_MGMT_RRM_RADIO_MEASUREMENT_REPORT;
     pos[2] = dialog_tok;
 
     pos += 3;
-    if (rep && rep_len)
+    if (rep != MNULL && rep_len > 0U)
     {
         (void)memcpy(pos, rep, rep_len);
         pos += rep_len;
     }
-    pkt_len                = pos - (t_u8 *)pmgmt_pkt_hdr;
-    pmgmt_pkt_hdr->frm_len = (t_u16)pkt_len - sizeof(t_u16);
+    meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
+    pkt_len                = (t_u16)(meas_pkt_len);
+    pmgmt_pkt_hdr->frm_len = (t_u16)pkt_len - (t_u16)sizeof(t_u16);
 
     /* Send packet */
-    wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+    (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
     os_mem_free(pmgmt_pkt_hdr);
 }
 
@@ -608,7 +701,7 @@ void wlan_process_radio_measurement_request(t_u8 *frame, t_u32 len, t_u8 *dest_a
     t_u8 dialog_tok;
     bool duration_mandatory;
 
-    if (len < 3)
+    if (len < 3U)
     {
         wifi_d("Ignoring too short radio measurement request");
         return;
@@ -617,36 +710,37 @@ void wlan_process_radio_measurement_request(t_u8 *frame, t_u32 len, t_u8 *dest_a
     dialog_tok = *pos;
     /* Bypass dialog token and repetitions */
     pos += 3;
-    len -= 3;
+    len -= 3U;
 
     /* Start process measurement quest */
-    mgmt_rrm_radio_meas_request *request = (mgmt_rrm_radio_meas_request *)pos;
-    if (request->ele_id != MEASURE_REQUEST)
+    mgmt_rrm_radio_meas_request *request = (mgmt_rrm_radio_meas_request *)(void *)pos;
+    if (request->ele_id != (t_u8)MEASURE_REQUEST)
     {
         wifi_d("eid %u is not radio measure request element", request->ele_id);
         return;
     }
-    if (request->length < 3)
+    if (request->length < 3U)
     {
         wifi_d("radio measure request element length too short");
         return;
     }
-    if (request->length > len - 2)
+    if (request->length > len - 2U)
     {
         wifi_d("radio measure request element length too long");
         return;
     }
 
-    duration_mandatory = !!(request->mode & WLAN_RRM_MEAS_REQUEST_MODE_DURATION_MANDATORY);
+    duration_mandatory = !!((request->mode & WLAN_RRM_MEAS_REQUEST_MODE_DURATION_MANDATORY) != 0U);
 
     switch (request->type)
     {
         /* Now only support beacon request */
         case WLAN_RRM_MEASURE_TYPE_BEACON:
-            wlan_process_rm_beacon_req(request->variable, request->length - 3, request->token, dialog_tok, dest_addr,
-                                       src_addr, protect, duration_mandatory);
+            wlan_process_rm_beacon_req(request->variable, (t_u32)request->length - (t_u32)3, request->token, dialog_tok,
+                                       dest_addr, src_addr, protect, duration_mandatory);
             break;
         default:
+            wifi_d("radio measure request type %u is not supported", request->type);
             break;
     }
 }
@@ -658,50 +752,55 @@ static void wlan_send_mgmt_link_measurement_report(
     IEEEtypes_FrameCtl_t *mgmt_fc_p = MNULL;
     t_u8 *pos                       = MNULL;
     t_u16 pkt_len                   = 0;
+    int meas_pkt_len                = 0;
 
-    pmgmt_pkt_hdr =
-        wifi_PrepDefaultMgtMsg(SUBTYPE_ACTION, (mlan_802_11_mac_addr *)dst_addr, (mlan_802_11_mac_addr *)src_addr,
-                               (mlan_802_11_mac_addr *)dst_addr, sizeof(wlan_mgmt_pkt) + LINK_MSR_REPORT_BUF_SIZE);
+    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(
+        SUBTYPE_ACTION, (mlan_802_11_mac_addr *)(void *)dst_addr, (mlan_802_11_mac_addr *)(void *)src_addr,
+        (mlan_802_11_mac_addr *)(void *)dst_addr, sizeof(wlan_mgmt_pkt) + LINK_MSR_REPORT_BUF_SIZE);
     if (pmgmt_pkt_hdr == MNULL)
     {
         wifi_d("No memory available for beacon report");
         return;
     }
 
-    mgmt_fc_p = (IEEEtypes_FrameCtl_t *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
+    mgmt_fc_p = (IEEEtypes_FrameCtl_t *)(void *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
     if (protect)
+    {
         mgmt_fc_p->wep = 1;
+    }
 
     /* 802.11 management body */
     pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
-    pos[0] = IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
-    pos[1] = IEEE_MGMT_RRM_LINK_MEASUREMENT_REPORT;
+    pos[0] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
+    pos[1] = (t_u8)IEEE_MGMT_RRM_LINK_MEASUREMENT_REPORT;
     pos += 2;
 
-    if (rep && rep_len)
+    if (rep != MNULL && rep_len > 0U)
     {
         (void)memcpy(pos, rep, rep_len);
         pos += rep_len;
     }
-    pkt_len                = pos - (t_u8 *)pmgmt_pkt_hdr;
-    pmgmt_pkt_hdr->frm_len = (t_u16)pkt_len - sizeof(t_u16);
+    meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
+    pkt_len                = (t_u16)meas_pkt_len;
+    pmgmt_pkt_hdr->frm_len = (t_u16)pkt_len - (t_u16)sizeof(t_u16);
 
     /* Send packet */
-    wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+    (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
     os_mem_free(pmgmt_pkt_hdr);
 }
 
 void wlan_process_link_measurement_request(
     t_u8 *frame, t_u32 len, t_u8 *dest_addr, t_u8 *src_addr, bool protect, RxPD *rxpd)
 {
-    mgmt_rrm_link_meas_request *request = (mgmt_rrm_link_meas_request *)frame;
+    mgmt_rrm_link_meas_request *request = (mgmt_rrm_link_meas_request *)(void *)frame;
     mgmt_rrm_link_meas_report report;
     t_u32 channel;
     wifi_SubBand_t subband;
     wlan_txpwrlimit_t *txpwrlimit = NULL;
     t_u8 ModulationGroup          = 1; /* Default use OFDM modulation */
+    int meas_link_margin          = 0;
 
-    if (len < sizeof(mgmt_rrm_link_meas_request))
+    if (len < sizeof(mgmt_rrm_link_meas_request) - 1U)
     {
         wifi_d("Link measurement request too short");
         return;
@@ -710,24 +809,32 @@ void wlan_process_link_measurement_request(
     (void)memset(&report, 0, sizeof(report));
     report.dialog_tok = request->dialog_tok;
     report.rsni       = -(rxpd->nf + rxpd->snr);
-    report.rcpi       = wlan_rrm_rssi_to_rcpi(report.rsni);
+    report.rcpi       = wlan_rrm_rssi_to_rcpi((int)report.rsni);
 
     /* TPC Report */
     channel = mlan_adap->priv[0]->curr_bss_params.bss_descriptor.channel;
-    if (channel <= 14)
+    if (channel <= 14U)
     {
         subband = SubBand_2_4_GHz;
         /* use CCK modulation */
         ModulationGroup = 0;
     }
-    else if (channel < 100)
+    else if (channel < 100U)
+    {
         subband = SubBand_5_GHz_0;
-    else if (channel < 149)
+    }
+    else if (channel < 149U)
+    {
         subband = SubBand_5_GHz_1;
-    else if (channel < 183)
+    }
+    else if (channel < 183U)
+    {
         subband = SubBand_5_GHz_2;
+    }
     else
+    {
         subband = SubBand_5_GHz_3;
+    }
 
     txpwrlimit = os_mem_alloc(sizeof(wlan_txpwrlimit_t));
     if (txpwrlimit == NULL)
@@ -738,19 +845,22 @@ void wlan_process_link_measurement_request(
 
     int rv = wlan_get_txpwrlimit(subband, txpwrlimit);
     if (rv != WM_SUCCESS)
+    {
         wifi_d("Unable to get TX PWR Limit configuration");
+    }
     else
     {
-        report.tpc_report.tx_power = wlan_link_measurement_get_tx_power(txpwrlimit, ModulationGroup, channel);
+        report.tpc_report.tx_power = (t_s8)wlan_link_measurement_get_tx_power(txpwrlimit, ModulationGroup, channel);
     }
     os_mem_free(txpwrlimit);
 
     /* Default use CCK5_5Mbps */
-    report.tpc_report.link_margin = 78 - report.rsni;
+    meas_link_margin              = 78 - (int)report.rsni;
+    report.tpc_report.link_margin = (t_s8)meas_link_margin;
     report.tpc_report.element_id  = TPC_REPORT;
     report.tpc_report.len         = 2;
 
-    wlan_send_mgmt_link_measurement_report(dest_addr, src_addr, (t_u8 *)&report, sizeof(mgmt_rrm_link_meas_report),
+    wlan_send_mgmt_link_measurement_report(dest_addr, src_addr, (t_u8 *)&report, sizeof(mgmt_rrm_link_meas_report) - 1U,
                                            protect);
 }
 
@@ -786,43 +896,46 @@ int wlan_send_mgmt_rm_neighbor_request(mlan_private *pmpriv, t_u8 *ssid, t_u8 ss
     mlan_802_11_mac_addr *sa     = MNULL;
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
     t_u8 *pos                    = MNULL;
+    int meas_pkt_len             = 0;
 
-    if (pmpriv->bss_index != MLAN_BSS_ROLE_STA || pmpriv->media_connected != MTRUE)
+    if (pmpriv->bss_index != (t_u8)MLAN_BSS_ROLE_STA || pmpriv->media_connected != MTRUE)
     {
         wifi_d("invalid interface %d for sending neighbor report request", pmpriv->bss_index);
-        return MLAN_STATUS_FAILURE;
+        return (int)MLAN_STATUS_FAILURE;
     }
 
     da = &pmpriv->curr_bss_params.bss_descriptor.mac_address;
-    sa = (mlan_802_11_mac_addr *)(&pmpriv->curr_addr[0]);
+    sa = (mlan_802_11_mac_addr *)(void *)(&pmpriv->curr_addr[0]);
     pmgmt_pkt_hdr =
         wifi_PrepDefaultMgtMsg(SUBTYPE_ACTION, da, sa, da, sizeof(wlan_mgmt_pkt) + NEIGHBOR_REQUEST_BUF_SIZE);
     if (pmgmt_pkt_hdr == MNULL)
     {
         wifi_e("No memory for neighbor report request");
-        return MLAN_STATUS_FAILURE;
+        return (int)MLAN_STATUS_FAILURE;
     }
 
     /* 802.11 management body */
     pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
-    pos[0] = IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
-    pos[1] = IEEE_MGMT_RRM_NEIGHBOR_REPORT_REQUEST;
+    pos[0] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
+    pos[1] = (t_u8)IEEE_MGMT_RRM_NEIGHBOR_REPORT_REQUEST;
     pos[2] = pmpriv->neighbor_rep_token++;
     pos += 3;
 
     /* SSID Tag */
-    if (ssid_len)
+    if (ssid_len > (t_u8)0U)
     {
-        pos[0] = SSID;
+        pos[0] = (t_u8)SSID;
         pos[1] = ssid_len;
         (void)memcpy(&pos[2], ssid, ssid_len);
-        pos += ssid_len + 2;
+        pos += ssid_len + 2U;
     }
-    pkt_len                = pos - (t_u8 *)pmgmt_pkt_hdr;
-    pmgmt_pkt_hdr->frm_len = pkt_len - sizeof(pmgmt_pkt_hdr->frm_len);
 
-    wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+    meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
+    pkt_len                = (t_u16)meas_pkt_len;
+    pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
+
+    (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
     os_mem_free(pmgmt_pkt_hdr);
-    return MLAN_STATUS_SUCCESS;
+    return (int)MLAN_STATUS_SUCCESS;
 }
 #endif /* CONFIG_11K */

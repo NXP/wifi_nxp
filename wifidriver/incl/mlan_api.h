@@ -351,4 +351,23 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
                                       mlan_802_11_mac_addr *SrcAddr,
                                       mlan_802_11_mac_addr *Bssid,
                                       t_u16 pkt_len);
+#ifdef CONFIG_11K
+/**
+ * rrm scan callback function to process scan results
+ *
+ * \param[in] count the count of available scan results
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int _wlan_rrm_scan_cb(unsigned int count);
+
+/**
+ * rrm scan request
+ *
+ * \param[in] wlan_scan_param the scan parameters
+ * \param[in] scan_cb_param the rm scan parameters
+ *
+ */
+void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param);
+#endif
 #endif /* __MLAN_API_H__ */

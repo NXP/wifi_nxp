@@ -521,7 +521,7 @@ typedef struct
     t_u32 avg_tbtt_offset;
 } wifi_tbtt_offset_t;
 
-#define BIT(n)                           (1 << n)
+#define BIT(n)                           (1U << (n))
 #define WOWLAN_MAX_PATTERN_LEN           20
 #define WOWLAN_MAX_OFFSET_LEN            50
 #define MAX_NUM_FILTERS                  10
