@@ -33,7 +33,7 @@ Change log:
 #include <mlan_api.h>
 #include "mlan_mbo.h"
 
-#define WNM_NOTIFICATION_SIZE 200
+#define WNM_NOTIFICATION_SIZE 200U
 /********************************************************
                 Local Variables
 ********************************************************/
@@ -51,7 +51,6 @@ static t_u8 mbo_dialog_token = 0;
 /********************************************************
                 Global functions
 ********************************************************/
-extern int net_wlan_get_mac_address(unsigned char *mac);
 
 /**
  * @brief This function add MBO OUI.
@@ -62,7 +61,7 @@ extern int net_wlan_get_mac_address(unsigned char *mac);
  */
 t_u8 *wlan_add_mbo_oui(t_u8 *oui)
 {
-    memcpy(oui, mbo_oui, sizeof(mbo_oui));
+    (void)memcpy(oui, mbo_oui, sizeof(mbo_oui));
     return (oui + sizeof(mbo_oui));
 }
 
@@ -75,7 +74,7 @@ t_u8 *wlan_add_mbo_oui(t_u8 *oui)
  */
 t_u8 *wlan_add_mbo_cellular_cap(t_u8 *attrib)
 {
-    attrib[0] = MBO_CELLULAR_DATA_CAP;
+    attrib[0] = (t_u8)MBO_CELLULAR_DATA_CAP;
     attrib[1] = 0x01;
     attrib[2] = 0x03;
     return (attrib + 3);
@@ -90,21 +89,21 @@ t_u8 *wlan_add_mbo_cellular_cap(t_u8 *attrib)
  */
 t_u8 *wlan_add_mbo_prefer_ch(t_u8 *attrib, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 {
-    t_u8 oper_class;
+    t_u8 oper_class      = 0;
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    attrib[0] = MBO_NON_PERFER_CH_REPORT;
+    attrib[0] = (t_u8)MBO_NON_PERFER_CH_REPORT;
     attrib[1] = 0x04;
-    wlan_get_curr_global_oper_class(pmpriv, ch0, BW_20MHZ, &oper_class);
+    (void)wlan_get_curr_global_oper_class(pmpriv, ch0, BW_20MHZ, &oper_class);
     attrib[2] = oper_class; /*Wi-Fi CERTIFIED Agile Multiband. Test Plan v1.4 section 5.2.8. Set Global operating class
                                to this field. */
     attrib[3] = ch0;
     attrib[4] = pefer0;
     attrib[5] = 0;
 
-    attrib[6] = MBO_NON_PERFER_CH_REPORT;
+    attrib[6] = (t_u8)MBO_NON_PERFER_CH_REPORT;
     attrib[7] = 0x04;
-    wlan_get_curr_global_oper_class(pmpriv, ch1, BW_20MHZ, &oper_class);
+    (void)wlan_get_curr_global_oper_class(pmpriv, ch1, BW_20MHZ, &oper_class);
     attrib[8]  = oper_class;
     attrib[9]  = ch1;
     attrib[10] = pefer1;
@@ -119,32 +118,37 @@ void wlan_send_mgmt_wnm_notification(
     IEEEtypes_FrameCtl_t *mgmt_fc_p = MNULL;
     t_u8 *pos                       = MNULL;
     t_u16 pkt_len                   = 0;
+    t_u32 meas_pkt_len              = 0;
 
-    pmgmt_pkt_hdr =
-        wifi_PrepDefaultMgtMsg(SUBTYPE_ACTION, (mlan_802_11_mac_addr *)dst_addr, (mlan_802_11_mac_addr *)src_addr,
-                               (mlan_802_11_mac_addr *)dst_addr, sizeof(wlan_mgmt_pkt) + WNM_NOTIFICATION_SIZE);
+    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(
+        SUBTYPE_ACTION, (mlan_802_11_mac_addr *)(void *)dst_addr, (mlan_802_11_mac_addr *)(void *)src_addr,
+        (mlan_802_11_mac_addr *)(void *)dst_addr, sizeof(wlan_mgmt_pkt) + WNM_NOTIFICATION_SIZE);
     if (pmgmt_pkt_hdr == MNULL)
     {
         PRINTM(MERROR, "No memory available for BTM resp");
         return;
     }
 
-    mgmt_fc_p = (IEEEtypes_FrameCtl_t *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
+    mgmt_fc_p = (IEEEtypes_FrameCtl_t *)(void *)&pmgmt_pkt_hdr->wlan_header.frm_ctl;
     if (protect)
+    {
         mgmt_fc_p->wep = 1;
+    }
 
     /* 802.11 management body */
     pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
-    pos[0] = IEEE_MGMT_ACTION_CATEGORY_WNM;
-    pos[1] = IEEE_MGMT_WNM_NOTIFICATION_REQUEST;
+    pos[0] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM;
+    pos[1] = (t_u8)IEEE_MGMT_WNM_NOTIFICATION_REQUEST;
     pos[2] = mbo_dialog_token++;
     pos[3] = 221; /* type */
     pos += 4;
     (void)memcpy(pos, tag_nr, tag_len);
     pos += tag_len;
-    pkt_len                = pos - (t_u8 *)pmgmt_pkt_hdr;
-    pmgmt_pkt_hdr->frm_len = (t_u16)pkt_len - sizeof(t_u16);
-    wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+
+    meas_pkt_len           = sizeof(wlan_mgmt_pkt) + 4U + (t_u32)tag_len;
+    pkt_len                = (t_u16)meas_pkt_len;
+    pmgmt_pkt_hdr->frm_len = (t_u16)pkt_len - (t_u16)sizeof(t_u16);
+    (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
     os_mem_free(pmgmt_pkt_hdr);
 }
 

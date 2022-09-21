@@ -66,23 +66,24 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
 
     pos         = payload + sizeof(wlan_802_11_header) + 1;
     action_code = *pos++;
-    payload_len -= (sizeof(wlan_802_11_header) + 2);
+    payload_len -= (sizeof(wlan_802_11_header) + 2U);
 #ifdef CONFIG_11K
-    IEEEtypes_FrameCtl_t *mgmt_fc_p = (IEEEtypes_FrameCtl_t *)&(((wlan_802_11_header *)payload)->frm_ctl);
+    IEEEtypes_FrameCtl_t *mgmt_fc_p =
+        (IEEEtypes_FrameCtl_t *)(void *)&(((wlan_802_11_header *)(void *)payload)->frm_ctl);
 #endif
 
     switch (action_code)
     {
 #ifdef CONFIG_11K
-        case IEEE_MGMT_RRM_RADIO_MEASUREMENT_REQUEST:
+        case (t_u8)IEEE_MGMT_RRM_RADIO_MEASUREMENT_REQUEST:
         {
-            wlan_process_radio_measurement_request(pos, payload_len, dest_addr, src_addr, mgmt_fc_p->wep);
+            wlan_process_radio_measurement_request(pos, payload_len, dest_addr, src_addr, (bool)mgmt_fc_p->wep);
             ret = MLAN_STATUS_SUCCESS;
             break;
         }
-        case IEEE_MGMT_RRM_LINK_MEASUREMENT_REQUEST:
+        case (t_u8)IEEE_MGMT_RRM_LINK_MEASUREMENT_REQUEST:
         {
-            wlan_process_link_measurement_request(pos, payload_len, dest_addr, src_addr, mgmt_fc_p->wep, rxpd);
+            wlan_process_link_measurement_request(pos, payload_len, dest_addr, src_addr, (bool)mgmt_fc_p->wep, rxpd);
             ret = MLAN_STATUS_SUCCESS;
             break;
         }
@@ -158,14 +159,14 @@ static mlan_status wlan_process_mgmt_unprotect_wnm_action(t_u8 *payload, t_u32 p
 
 #ifdef CONFIG_1AS
 /* imu_header + mgmt_txpd_len + sizeof(t_u16 frame_len) */
-#define WLAN_MGMT_PKT_START_OFFSET (INTF_HEADER_LEN + 0x14)
+#define WLAN_MGMT_PKT_START_OFFSET (INTF_HEADER_LEN + 0x14U)
 
 static inline void wlan_outbuf_lock(void)
 {
 #ifdef RW610
     wifi_imu_lock();
 #else
-    wifi_sdio_lock();
+    (void)wifi_sdio_lock();
 #endif
 }
 
@@ -180,48 +181,52 @@ static inline void wlan_outbuf_unlock(void)
 
 static void wlan_fill_mgmt_mac_header(mlan_private *pmpriv, wlan_mgmt_pkt *pkt_hdr, t_u16 subtype, t_u8 *da, t_u8 *sa)
 {
-    IEEEtypes_FrameCtl_t *frame_ctrl = (IEEEtypes_FrameCtl_t *)&pkt_hdr->wlan_header.frm_ctl;
+    IEEEtypes_FrameCtl_t *frame_ctrl = (IEEEtypes_FrameCtl_t *)(void *)&pkt_hdr->wlan_header.frm_ctl;
 
-    frame_ctrl->sub_type = subtype;
-    frame_ctrl->type     = IEEE_TYPE_MANAGEMENT;
-    memcpy(pkt_hdr->wlan_header.addr1, da, MLAN_MAC_ADDR_LENGTH);
-    memcpy(pkt_hdr->wlan_header.addr2, sa, MLAN_MAC_ADDR_LENGTH);
-    if (pmpriv->bss_index == 0)
-        memcpy(pkt_hdr->wlan_header.addr3, da, MLAN_MAC_ADDR_LENGTH);
+    frame_ctrl->sub_type = (t_u8)subtype;
+    frame_ctrl->type     = (t_u8)IEEE_TYPE_MANAGEMENT;
+    (void)memcpy(pkt_hdr->wlan_header.addr1, da, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(pkt_hdr->wlan_header.addr2, sa, MLAN_MAC_ADDR_LENGTH);
+    if (pmpriv->bss_index == 0U)
+    {
+        (void)memcpy(pkt_hdr->wlan_header.addr3, da, MLAN_MAC_ADDR_LENGTH);
+    }
     else
-        memcpy(pkt_hdr->wlan_header.addr3, sa, MLAN_MAC_ADDR_LENGTH);
+    {
+        (void)memcpy(pkt_hdr->wlan_header.addr3, sa, MLAN_MAC_ADDR_LENGTH);
+    }
     pkt_hdr->wlan_header.seq_ctl = 0;
-    memset(pkt_hdr->wlan_header.addr4, 0x00, MLAN_MAC_ADDR_LENGTH);
+    (void)memset(pkt_hdr->wlan_header.addr4, 0x00, MLAN_MAC_ADDR_LENGTH);
 }
 
 void wlan_process_timing_measurement_frame(t_u8 *payload, t_u32 payload_len, RxPD *rxpd)
 {
     mlan_private *pmpriv = mlan_adap->priv[rxpd->bss_type];
     t_u64 tsf;
-    wlan_802_11_header *hdr        = (wlan_802_11_header *)payload;
+    wlan_802_11_header *hdr        = (wlan_802_11_header *)(void *)payload;
     wifi_wnm_timing_msmt_t *tm_ind = MNULL;
     wifi_dot1as_info_t *info       = &pmpriv->dot1as_info;
 
-    if (payload_len < sizeof(wlan_802_11_header) + sizeof(wifi_wnm_timing_msmt_t) + 1)
+    if (payload_len < sizeof(wlan_802_11_header) + sizeof(wifi_wnm_timing_msmt_t) + 1U)
     {
         wifi_e("wlan_recv_tm_frame invalid packet length %d", payload_len);
         return;
     }
 
     info->role = 1;
-    memcpy(info->peer_addr, hdr->addr2, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(info->peer_addr, hdr->addr2, MLAN_MAC_ADDR_LENGTH);
 
     /* get t2,t3 timestamp in rxpd */
     tsf      = rxpd->reserved1;
     tsf      = wlan_le64_to_cpu(tsf);
-    info->t3 = tsf >> 32;
+    info->t3 = (t_u32)(tsf >> 32);
     info->t2 = (t_u32)tsf;
 
     /* t1 == tod, t4 == toa */
     /* skip category */
-    tm_ind = (wifi_wnm_timing_msmt_t *)(payload + sizeof(wlan_802_11_header) + 1);
+    tm_ind = (wifi_wnm_timing_msmt_t *)(void *)(payload + sizeof(wlan_802_11_header) + 1);
     /* 1 byte dialog_token + 1 byte prev_dialog_token + 4 bytes t1 + 4 bytes t4 */
-    memcpy(&info->dialog_token, &tm_ind->dialog_token, 10);
+    (void)memcpy(&info->dialog_token, &tm_ind->dialog_token, 10);
 
     /* TODO: Vendor Specific */
     wifi_d("Recv timing measurement frame peer " MACSTR ", t1[%u] t2[%u] t3[%u] t4[%u]\r\n", MAC2STR(info->peer_addr),
@@ -237,28 +242,30 @@ void wlan_send_timing_measurement_req_frame(mlan_private *pmpriv, t_u8 *ta, t_u8
     t_u8 *buf              = wifi_get_outbuf(&max_len);
     wlan_mgmt_pkt *pkt_hdr = MNULL;
     TxPD *txpd             = MNULL;
+    t_u32 meas_frm_len     = 0;
 
     assert(ta != MNULL);
     assert(buf != MNULL);
     wlan_outbuf_lock();
 
-    pkt_hdr = (wlan_mgmt_pkt *)(buf + offset);
+    pkt_hdr = (wlan_mgmt_pkt *)(void *)(buf + offset);
     wlan_fill_mgmt_mac_header(pmpriv, pkt_hdr, SUBTYPE_ACTION, ta, &pmpriv->curr_addr[0]);
     offset += sizeof(wlan_mgmt_pkt);
 
     /* WNM, Timimg Meaeurement Request action, Trigger */
-    buf[offset]     = IEEE_MGMT_ACTION_CATEGORY_WNM;
-    buf[offset + 1] = 25;
-    buf[offset + 2] = trigger;
-    len             = offset + 3;
+    buf[offset]      = (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM;
+    buf[offset + 1U] = 25;
+    buf[offset + 2U] = trigger;
+    len              = offset + 3U;
 
-    pkt_hdr->frm_len = len - WLAN_MGMT_PKT_START_OFFSET - sizeof(pkt_hdr->frm_len);
+    meas_frm_len     = len - WLAN_MGMT_PKT_START_OFFSET - sizeof(pkt_hdr->frm_len);
+    pkt_hdr->frm_len = (t_u16)meas_frm_len;
 
-    raw_process_pkt_hdrs(buf, len, pmpriv->bss_index);
+    (void)raw_process_pkt_hdrs(buf, len, pmpriv->bss_index);
     /* set tx_token_id to 1 to get tx_status_event from FW */
-    txpd              = (TxPD *)(buf + INTF_HEADER_LEN);
+    txpd              = (TxPD *)(void *)(buf + INTF_HEADER_LEN);
     txpd->tx_token_id = 1;
-    wlan_xmit_pkt(len, pmpriv->bss_index);
+    (void)wlan_xmit_pkt(len, pmpriv->bss_index);
     wlan_outbuf_unlock();
 }
 
@@ -272,36 +279,38 @@ mlan_status wlan_send_timing_measurement_frame(mlan_private *pmpriv)
     wlan_mgmt_pkt *pkt_hdr     = MNULL;
     wifi_wnm_timing_msmt_t *tm = MNULL;
     TxPD *txpd                 = MNULL;
+    t_u32 meas_frm_len         = 0;
 
     assert(buf != MNULL);
     wlan_outbuf_lock();
 
     /* fill mac80211 header */
-    pkt_hdr = (wlan_mgmt_pkt *)(buf + offset);
+    pkt_hdr = (wlan_mgmt_pkt *)(void *)(buf + offset);
     wlan_fill_mgmt_mac_header(pmpriv, pkt_hdr, SUBTYPE_ACTION, &pmpriv->dot1as_info.peer_addr[0],
                               &pmpriv->curr_addr[0]);
     offset += sizeof(wlan_mgmt_pkt);
 
     /* Unprotected WNM */
-    buf[offset] = IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM;
-    offset += 1;
+    buf[offset] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM;
+    offset += 1U;
 
     /* fill tm body */
-    tm = (wifi_wnm_timing_msmt_t *)&buf[offset];
+    tm = (wifi_wnm_timing_msmt_t *)(void *)&buf[offset];
     /* Timimg Measurement */
     tm->action = 1;
     /* 1 byte dialog_token + 1 byte prev_dialog_token + 4 bytes t1 + 4 bytes t4 */
-    memcpy(&tm->dialog_token, &pmpriv->dot1as_info.dialog_token, 10);
+    (void)memcpy(&tm->dialog_token, &pmpriv->dot1as_info.dialog_token, 10);
     tm->max_tod_err = 0;
     tm->max_toa_err = 0;
 
     len              = offset + sizeof(wifi_wnm_timing_msmt_t);
-    pkt_hdr->frm_len = len - WLAN_MGMT_PKT_START_OFFSET - sizeof(pkt_hdr->frm_len);
+    meas_frm_len     = len - WLAN_MGMT_PKT_START_OFFSET - sizeof(pkt_hdr->frm_len);
+    pkt_hdr->frm_len = (t_u16)meas_frm_len;
     /* TODO: Vendor Specific */
 
-    raw_process_pkt_hdrs(buf, len, pmpriv->bss_index);
+    (void)raw_process_pkt_hdrs(buf, len, pmpriv->bss_index);
     /* set tx_token_id to 1 to get tx_status_event from FW */
-    txpd              = (TxPD *)(buf + INTF_HEADER_LEN);
+    txpd              = (TxPD *)(void *)(buf + INTF_HEADER_LEN);
     txpd->tx_token_id = 1;
     ret               = wlan_xmit_pkt(len, pmpriv->bss_index);
     wlan_outbuf_unlock();
