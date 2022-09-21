@@ -2616,12 +2616,14 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
 t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code)
 {
     t_u8 i;
+    t_u32 meas_country_code_len = 0;
 
     ENTER();
     /* Look for code in EU country code table */
     for (i = 0; i < NELEMENTS(eu_country_code_table); i++)
     {
-        if (!__memcmp(pmadapter, eu_country_code_table[i], country_code, COUNTRY_CODE_LEN - 1))
+        meas_country_code_len = COUNTRY_CODE_LEN - 1U;
+        if (!__memcmp(pmadapter, eu_country_code_table[i], country_code, meas_country_code_len))
         {
             LEAVE();
             return MTRUE;
@@ -2637,11 +2639,15 @@ static oper_bw_chan *wlan_get_nonglobal_operclass_table(mlan_private *pmpriv, in
     t_u8 country_code[][COUNTRY_CODE_LEN] = {"US", "JP", "CN"};
     int country_id                        = 0;
     oper_bw_chan *poper_bw_chan           = MNULL;
+    t_u32 meas_country_code_len           = 0;
 
     ENTER();
     for (country_id = 0; country_id < 3; country_id++)
-        if (!__memcmp(pmpriv->adapter, pmpriv->adapter->country_code, country_code[country_id], COUNTRY_CODE_LEN - 1))
+    {
+        meas_country_code_len = COUNTRY_CODE_LEN - 1U;
+        if (!__memcmp(pmpriv->adapter, pmpriv->adapter->country_code, country_code[country_id], meas_country_code_len))
             break;
+    }
     if (country_id >= 3)
         country_id = COUNTRY_ID_US; /*Set default to US*/
     if (wlan_is_etsi_country(pmpriv->adapter, pmpriv->adapter->country_code))
@@ -2682,11 +2688,11 @@ mlan_status wlan_get_global_nonglobal_oper_class(
     t_u8 center_freq_idx = 0;
 #endif
     t_u8 center_freqs[] = {42, 50, 58, 106, 114, 122, 138, 155};
-    int i = 0, arraysize = 0, channum = 0;
+    int i = 0, arraysize = 0, channum = 0, table_size = 0;
 
     ENTER();
     poper_bw_chan = wlan_get_nonglobal_operclass_table(pmpriv, &arraysize);
-    if (!poper_bw_chan)
+    if (poper_bw_chan == MNULL)
     {
         PRINTM(MCMND, "Operating class table do not find!\n");
         LEAVE();
@@ -2702,24 +2708,30 @@ mlan_status wlan_get_global_nonglobal_oper_class(
         }
     }
 #ifdef CONFIG_11AC
-    if (bw == BW_80MHZ)
+    if (bw == (t_u8)BW_80MHZ)
     {
         center_freq_idx = wlan_get_center_freq_idx(pmpriv, BAND_AAC, channel, CHANNEL_BW_80MHZ);
         channel         = center_freq_idx;
     }
 #endif
-    for (i = 0; i < (int)(arraysize / sizeof(oper_bw_chan)); i++)
+    table_size = arraysize / (int)sizeof(oper_bw_chan);
+    for (i = 0; i < table_size; i++)
     {
         if (poper_bw_chan[i].bandwidth == bw)
         {
             for (channum = 0; channum < (int)(sizeof(poper_bw_chan[i].channel_list)); channum++)
             {
-                if (poper_bw_chan[i].channel_list[channum] && poper_bw_chan[i].channel_list[channum] == channel)
+                if (poper_bw_chan[i].channel_list[channum] != (t_u8)0U &&
+                    poper_bw_chan[i].channel_list[channum] == channel)
                 {
                     if (oper_class != MNULL)
+                    {
                         *oper_class = poper_bw_chan[i].oper_class;
+                    }
                     if (global_op_class != MNULL)
+                    {
                         *global_op_class = poper_bw_chan[i].global_oper_class;
+                    }
                     return MLAN_STATUS_SUCCESS;
                 }
             }
@@ -2823,12 +2835,16 @@ int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u
     t_u8 country_code[][COUNTRY_CODE_LEN] = {"US", "JP", "CN"};
     int country_id = 0, ret = 0;
     MrvlIETypes_SuppOperClass_t *poper_class = MNULL;
+    t_u32 meas_country_code_len              = 0;
 
     ENTER();
 
     for (country_id = 0; country_id < 3; country_id++)
-        if (!__memcmp(pmpriv->adapter, pmpriv->adapter->country_code, country_code[country_id], COUNTRY_CODE_LEN - 1))
+    {
+        meas_country_code_len = COUNTRY_CODE_LEN - 1U;
+        if (!__memcmp(pmpriv->adapter, pmpriv->adapter->country_code, country_code[country_id], meas_country_code_len))
             break;
+    }
     if (country_id >= 3)
         country_id = COUNTRY_ID_US; /*Set default to US*/
     if (wlan_is_etsi_country(pmpriv->adapter, pmpriv->adapter->country_code))

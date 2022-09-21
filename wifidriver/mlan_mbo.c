@@ -41,7 +41,8 @@ Change log:
 /********************************************************
                 Global Variables
 ********************************************************/
-const t_u8 mbo_oui[4] = {0x50, 0x6f, 0x9a, 0x16};
+const t_u8 mbo_oui[3]      = {0x50, 0x6f, 0x9a};
+const t_u8 mbo_oui_type[1] = {0x16};
 
 /********************************************************
                 Local Functions
@@ -57,12 +58,25 @@ static t_u8 mbo_dialog_token = 0;
  *
  * @param oui A pointer to MBO OCE element structure
  *
- * @return void
+ * @return pointer incremented to the end of the element
  */
 t_u8 *wlan_add_mbo_oui(t_u8 *oui)
 {
     (void)memcpy(oui, mbo_oui, sizeof(mbo_oui));
     return (oui + sizeof(mbo_oui));
+}
+
+/**
+ * @brief This function add MBO OUI TYPE.
+ *
+ * @param oui A pointer to MBO OCE element structure
+ *
+ * @return void
+ */
+t_u8 *wlan_add_mbo_oui_type(t_u8 *oui_type)
+{
+    (void)memcpy(oui_type, mbo_oui_type, sizeof(mbo_oui_type));
+    return (oui_type + sizeof(mbo_oui_type));
 }
 
 /**
