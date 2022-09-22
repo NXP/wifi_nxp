@@ -1705,10 +1705,12 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         mbo_attr_id  = *((t_u8 *)pcurrent_attr);
                         mbo_attr_len = *((t_u8 *)pcurrent_attr + 1);
 
-                        if (mbo_attr_id == 0x4)
+                        if (mbo_attr_id == 0x4U)
+                        {
                             pbss_entry->mbo_assoc_disallowed = true;
+                        }
 
-                        mbo_cur_len += MBO_ATTR_HEADER_LEN + mbo_attr_len;
+                        mbo_cur_len += (t_u8)MBO_ATTR_HEADER_LEN + mbo_attr_len;
                         pcurrent_attr = pcurrent_attr + MBO_ATTR_HEADER_LEN + mbo_attr_len;
                     }
                 }
@@ -1716,8 +1718,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 /* Voice Enterprise Test Plan V1.2, test case 5.4, store other vendor specific ie */
                 else
                 {
-                    if (pbss_entry->vendor_ie_len + element_len + sizeof(IEEEtypes_Header_t) <
-                        sizeof(pbss_entry->vendor_ie_buff))
+                    if (pbss_entry->vendor_ie_len + element_len + (t_u8)sizeof(IEEEtypes_Header_t) <
+                        (t_u8)sizeof(pbss_entry->vendor_ie_buff))
                     {
                         (void)__memcpy(pmadapter, pbss_entry->vendor_ie_buff + pbss_entry->vendor_ie_len, pcurrent_ptr,
                                        element_len + sizeof(IEEEtypes_Header_t));

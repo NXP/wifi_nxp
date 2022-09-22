@@ -1701,7 +1701,7 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
         }
         else
         {
-            (void)memcpy(ssid, argv[2], strlen(argv[2]));
+            (void)memcpy((void *)ssid, (const void *)argv[2], (size_t)strlen(argv[2]));
         }
     }
 
@@ -1726,7 +1726,12 @@ static void test_wlan_mbo_cfg(int argc, char **argv)
         return;
     }
 
-    enable_mbo = atoi(argv[1]);
+    errno      = 0;
+    enable_mbo = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo cfg:%d\r\n", errno);
+    }
 
     ret = wlan_host_mbo_cfg(enable_mbo);
 
@@ -1737,6 +1742,10 @@ static void test_wlan_mbo_cfg(int argc, char **argv)
     else if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to config MBO\r\n");
+    }
+    else
+    {
+        /* Do nothing */
     }
 }
 
@@ -1754,10 +1763,33 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
         return;
     }
 
-    ch0         = (uint8_t)atoi(argv[1]);
-    preference0 = (uint8_t)atoi(argv[2]);
-    ch1         = (uint8_t)atoi(argv[3]);
-    preference1 = (uint8_t)atoi(argv[4]);
+    errno = 0;
+    ch0   = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    errno       = 0;
+    preference0 = (uint8_t)strtol(argv[2], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    errno = 0;
+    ch1   = (uint8_t)strtol(argv[3], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    errno       = 0;
+    preference1 = (uint8_t)strtol(argv[4], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
 
     ret = wlan_mbo_peferch_cfg(ch0, preference0, ch1, preference1);
 
@@ -1768,6 +1800,10 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     else if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to add pefer or non-pefer channels.\r\n");
+    }
+    else
+    {
+        /* Do nothing */
     }
 }
 

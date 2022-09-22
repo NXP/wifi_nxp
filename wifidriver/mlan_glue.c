@@ -3574,13 +3574,17 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
     /* tx status event includes dot1as info */
     if (evt->length >= sizeof(tx_status_event) + MLAN_FIELD_OFFSET(Event_Ext_t, reason_code))
     {
-        if (evt->bss_type == MLAN_BSS_ROLE_STA)
+        if (evt->bss_type == (uint8_t)MLAN_BSS_ROLE_STA)
+        {
             pmpriv = mlan_adap->priv[0];
+        }
         else
+        {
             pmpriv = mlan_adap->priv[1];
+        }
 
-        tx_status = (tx_status_event *)&evt->reason_code;
-        if (tx_status->status == 0)
+        tx_status = (tx_status_event *)(void *)&evt->reason_code;
+        if (tx_status->status == 0U)
         {
             pmpriv->dot1as_info.tm_num++;
             pmpriv->dot1as_info.dialog_token++;
@@ -3593,18 +3597,22 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 
             if (pmpriv->dot1as_info.tm_num >= pmpriv->dot1as_info.max_tm_num)
             {
-                wifi_end_timing_measurement(pmpriv->bss_index);
+                wifi_end_timing_measurement((int)pmpriv->bss_index);
             }
             else if (wlan_send_timing_measurement_frame(pmpriv) != MLAN_STATUS_SUCCESS)
             {
                 wifi_e("wifi_handle_event_tx_status_report send next tm frame fail");
-                wifi_end_timing_measurement(pmpriv->bss_index);
+                wifi_end_timing_measurement((int)pmpriv->bss_index);
+            }
+            else
+            {
+                /* Do nothing */
             }
         }
         else
         {
             wifi_e("wifi_handle_event_tx_status_report send curr tm frame fail");
-            wifi_end_timing_measurement(pmpriv->bss_index);
+            wifi_end_timing_measurement((int)pmpriv->bss_index);
         }
     }
 }
@@ -5248,28 +5256,29 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num)
 #ifdef CONFIG_1AS
 int wifi_get_fw_timestamp(wifi_correlated_time_t *time)
 {
-    wifi_get_command_lock();
+    (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd        = wifi_get_command_buffer();
     mlan_ioctl_req ioctl_req       = {0};
     mlan_ds_misc_cfg ioctl_cfg     = {0};
     mlan_ds_host_clock *host_clock = &ioctl_cfg.param.host_clock;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, 0 /* bss_type */);
-    cmd->result  = 0x0;
+    cmd->seq_num =
+        HostCmd_SET_SEQ_NO_BSS_INFO((t_u16)0U /* seq_num */, (t_u16)0U /* bss_num */, (t_u16)0U /* bss_type */);
+    cmd->result = 0x0;
 
     wm_wifi.cmd_resp_ioctl = &ioctl_req;
     ioctl_req.pbuf         = (t_u8 *)&ioctl_cfg;
     ioctl_req.buf_len      = sizeof(ioctl_cfg);
     /* host time in nano secs */
-    host_clock->time = ((t_u64)os_get_timestamp() * 1000);
+    host_clock->time = ((t_u64)os_get_timestamp() * 1000U);
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_HOST_CLOCK_CFG, HostCmd_ACT_GEN_GET, 0,
-                             NULL, host_clock, cmd);
-    wifi_wait_for_cmdresp(NULL);
+    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_HOST_CLOCK_CFG, HostCmd_ACT_GEN_GET,
+                                   0, NULL, host_clock, cmd);
+    (void)wifi_wait_for_cmdresp(NULL);
     wm_wifi.cmd_resp_ioctl = NULL;
 
-    memcpy(time, host_clock, sizeof(wifi_correlated_time_t));
+    (void)memcpy((void *)time, (const void *)host_clock, sizeof(wifi_correlated_time_t));
     return wm_wifi.cmd_resp_status;
 }
 
@@ -5299,7 +5308,7 @@ int wifi_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_t
 
     assert(peer_mac != MNULL);
 
-    if (pmpriv->dot1as_info.status == DOT1AS_TM_STATUS_INPROGRESS)
+    if (pmpriv->dot1as_info.status == (t_u8)DOT1AS_TM_STATUS_INPROGRESS)
     {
         wifi_e("wlan_start_timing_measurement abort previous tm procedure, peer " MACSTR,
                MAC2STR(pmpriv->dot1as_info.peer_addr));
@@ -5307,8 +5316,8 @@ int wifi_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_t
         return -WM_FAIL;
     }
 
-    memset(&pmpriv->dot1as_info, 0x00, sizeof(wifi_dot1as_info_t));
-    memcpy(&pmpriv->dot1as_info.peer_addr[0], peer_mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memset(&pmpriv->dot1as_info, 0x00, sizeof(wifi_dot1as_info_t));
+    (void)memcpy(&pmpriv->dot1as_info.peer_addr[0], peer_mac, MLAN_MAC_ADDR_LENGTH);
     pmpriv->dot1as_info.role              = DOT1AS_TM_ROLE_TRANSMITTER;
     pmpriv->dot1as_info.max_tm_num        = num_of_tm;
     pmpriv->dot1as_info.dialog_token      = 1;

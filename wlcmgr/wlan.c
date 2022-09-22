@@ -3939,7 +3939,7 @@ static void wlcm_process_mgmt_frame(void *data)
     RxPD *rxpd                   = (RxPD *)p->payload;
     wlan_mgmt_pkt *pmgmt_pkt_hdr = NULL;
 
-    pmgmt_pkt_hdr          = (wlan_mgmt_pkt *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
+    pmgmt_pkt_hdr          = (wlan_mgmt_pkt *)(void *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
     pmgmt_pkt_hdr->frm_len = wlan_le16_to_cpu(pmgmt_pkt_hdr->frm_len);
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & (t_u16)IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == (t_u16)0U)
     {
@@ -6934,9 +6934,10 @@ int _wlan_rrm_scan_cb(unsigned int count)
     t_u8 *rep_buf = NULL;
     t_u8 *buf_pos = NULL;
     /* The sufficient size is the length including reporting frame body */
-    t_u16 suffi_len           = 250;
-    t_u32 pos_last_indication = 0;
-    bool match_ap_found       = 0;
+    t_u16 suffi_len           = 250U;
+    t_u32 pos_last_indication = 0U;
+    bool match_ap_found       = false;
+    int meas_report_len       = 0;
 
     /* process scan result */
     rep_buf = (t_u8 *)os_mem_alloc(BEACON_REPORT_BUF_SIZE);
@@ -6957,45 +6958,50 @@ int _wlan_rrm_scan_cb(unsigned int count)
         }
 
         /* If current rep_buf is not enough and still have AP not added, just send the report */
-        if ((buf_pos + suffi_len - rep_buf > BEACON_REPORT_BUF_SIZE) && (i < count - 1) &&
-            wlan_rrm_matched_ap_found(&wlan.rrm_scan_cb_param.rep_data, &mlan_adap->pscan_table[i + 1]))
+        if ((buf_pos + suffi_len - rep_buf > BEACON_REPORT_BUF_SIZE) && (i < count - 1U) &&
+            wlan_rrm_matched_ap_found(&wlan.rrm_scan_cb_param.rep_data, &mlan_adap->pscan_table[i + 1U]))
         {
-            match_ap_found = 1;
+            match_ap_found  = 1;
+            meas_report_len = buf_pos - rep_buf;
             /* send beacon report, not the last one */
             wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac,
-                                            wlan.rrm_scan_cb_param.dst_addr, rep_buf, buf_pos - rep_buf,
-                                            wlan.rrm_scan_cb_param.protect);
+                                            wlan.rrm_scan_cb_param.dst_addr, rep_buf, (t_u32)meas_report_len,
+                                            (bool)wlan.rrm_scan_cb_param.protect);
             /* Prepare for the next beacon report */
             (void)memset(rep_buf, 0, BEACON_REPORT_BUF_SIZE);
             buf_pos = rep_buf;
         }
 
         /* Last AP in scan table, and matched AP found */
-        if ((i == count - 1) && (buf_pos > rep_buf))
+        if ((i == count - 1U) && (buf_pos > rep_buf))
         {
             match_ap_found = 1;
             /* Update last indication, the last one */
-            if (wlan.rrm_scan_cb_param.rep_data.last_ind && pos_last_indication)
-                *(char *)pos_last_indication = 1;
+            if (wlan.rrm_scan_cb_param.rep_data.last_ind != 0U && pos_last_indication != 0U)
+            {
+                *(char *)pos_last_indication = (char)1U;
+            }
+            meas_report_len = buf_pos - rep_buf;
             /* send beacon report, the last one */
             wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac,
-                                            wlan.rrm_scan_cb_param.dst_addr, rep_buf, buf_pos - rep_buf,
-                                            wlan.rrm_scan_cb_param.protect);
+                                            wlan.rrm_scan_cb_param.dst_addr, rep_buf, (t_u32)meas_report_len,
+                                            (bool)wlan.rrm_scan_cb_param.protect);
         }
     }
 
     /* If no matched AP found, no beacon report detail */
     if (!match_ap_found)
     {
-        *buf_pos++ = MEASURE_REPORT;
+        *buf_pos++ = (t_u8)MEASURE_REPORT;
         /* Tag length */
-        *buf_pos++ = 3;
-        *buf_pos++ = wlan.rrm_scan_cb_param.rep_data.token;
-        *buf_pos++ = WLAN_RRM_REPORT_MODE_ACCEPT;
-        *buf_pos++ = WLAN_RRM_MEASURE_TYPE_BEACON;
+        *buf_pos++      = 3;
+        *buf_pos++      = wlan.rrm_scan_cb_param.rep_data.token;
+        *buf_pos++      = WLAN_RRM_REPORT_MODE_ACCEPT;
+        *buf_pos++      = WLAN_RRM_MEASURE_TYPE_BEACON;
+        meas_report_len = buf_pos - rep_buf;
         /* send beacon report */
         wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac, wlan.rrm_scan_cb_param.dst_addr,
-                                        rep_buf, buf_pos - rep_buf, wlan.rrm_scan_cb_param.protect);
+                                        rep_buf, (t_u32)meas_report_len, (bool)wlan.rrm_scan_cb_param.protect);
     }
 
     os_mem_free(rep_buf);
@@ -7004,7 +7010,7 @@ int _wlan_rrm_scan_cb(unsigned int count)
 
 void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan_cb_param *scan_cb_param)
 {
-    if (!wlan_scan_param || !scan_cb_param)
+    if (wlan_scan_param == NULL || scan_cb_param == NULL)
     {
         wlcm_e("ignoring scan request with NULL scan or cb params");
         return;
@@ -7015,7 +7021,7 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
         return;
     }
 
-    memcpy(&wlan.rrm_scan_cb_param, scan_cb_param, sizeof(wlan_rrm_scan_cb_param));
+    (void)memcpy(&wlan.rrm_scan_cb_param, scan_cb_param, sizeof(wlan_rrm_scan_cb_param));
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     if (is_uap_started() || is_sta_connected())
@@ -7024,7 +7030,7 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
         wlan_scan_param->scan_chan_gap = 0;
 #endif
 
-    int ret = wifi_send_scan_cmd(BSS_ANY, wlan_scan_param->bssid,
+    int ret = wifi_send_scan_cmd((t_u8)BSS_ANY, wlan_scan_param->bssid,
 #ifdef CONFIG_COMBO_SCAN
                                  wlan_scan_param->ssid[0], wlan_scan_param->ssid[1],
 #else
@@ -7092,7 +7098,7 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
     uint8_t ap_addr[IEEEtypes_ADDRESS_SIZE];
     if (is_sta_connected())
     {
-        wlan_get_current_bssid(ap_addr);
+        (void)wlan_get_current_bssid(ap_addr);
         return wifi_mbo_send_preferch_wnm(wlan.mac, (t_u8 *)ap_addr, ch0, pefer0, ch1, pefer1);
     }
     else

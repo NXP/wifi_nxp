@@ -98,7 +98,7 @@ bool sta_ampdu_rx_enable = true;
 int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
-bool scan_thread_in_process = false;
+static bool scan_thread_in_process = false;
 
 typedef enum __mlan_status
 {
@@ -1620,7 +1620,7 @@ static void wifi_core_deinit(void)
 {
     int i = 0;
 
-    for (i = 0; i < MIN(MLAN_MAX_BSS_NUM, mlan_adap->priv_num); i++)
+    for (i = 0; i < (int)(MIN(MLAN_MAX_BSS_NUM, mlan_adap->priv_num)); i++)
     {
         if (mlan_adap->priv[i])
         {

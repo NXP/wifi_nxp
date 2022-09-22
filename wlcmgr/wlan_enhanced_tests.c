@@ -578,7 +578,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                     (void)PRINTF("    MCS:  Auto\r\n");
                 }
 
-                (void)PRINTF("    Rate: %f Mbps\r\n", (float)datarate->tx_data_rate / 2.0f);
+                (void)PRINTF("    Rate: %u Mbps\r\n", datarate->tx_data_rate / 2U);
             }
         }
 
@@ -621,7 +621,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                 {
                     (void)PRINTF("    MCS:  Auto\n");
                 }
-                (void)PRINTF("    Rate: %f Mbps\r\n", (float)datarate->rx_data_rate / 2.0f);
+                (void)PRINTF("    Rate: %f Mbps\r\n", (float)datarate->rx_data_rate / (float)2);
             }
         }
 #endif
@@ -1215,11 +1215,11 @@ static void test_wlan_send_tm_req(int argc, char **argv)
 
     if (string_equal("sta", argv[1]))
     {
-        bss_type = WLAN_BSS_TYPE_STA;
+        bss_type = (int)WLAN_BSS_TYPE_STA;
     }
     else if (string_equal("uap", argv[1]))
     {
-        bss_type = WLAN_BSS_TYPE_UAP;
+        bss_type = (int)WLAN_BSS_TYPE_UAP;
     }
     else
     {
@@ -1227,7 +1227,7 @@ static void test_wlan_send_tm_req(int argc, char **argv)
         return;
     }
 
-    ret = get_mac(argv[2], (char *)raw_mac, ':');
+    ret = (int)get_mac(argv[2], (char *)raw_mac, ':');
     if (ret != 0)
     {
         (void)PRINTF("Error: invalid MAC argument\r\n");
@@ -1246,11 +1246,11 @@ static void test_wlan_send_tm(int argc, char **argv)
 
     if (string_equal("sta", argv[1]))
     {
-        bss_type = WLAN_BSS_TYPE_STA;
+        bss_type = (int)WLAN_BSS_TYPE_STA;
     }
     else if (string_equal("uap", argv[1]))
     {
-        bss_type = WLAN_BSS_TYPE_UAP;
+        bss_type = (int)WLAN_BSS_TYPE_UAP;
     }
     else
     {
@@ -1258,7 +1258,7 @@ static void test_wlan_send_tm(int argc, char **argv)
         return;
     }
 
-    ret = get_mac(argv[2], (char *)raw_mac, ':');
+    ret = (int)get_mac(argv[2], (char *)raw_mac, ':');
     if (ret != 0)
     {
         (void)PRINTF("Error: invalid MAC argument\r\n");
@@ -1266,7 +1266,14 @@ static void test_wlan_send_tm(int argc, char **argv)
     }
 
     if (argv[3] != NULL)
-        number_of_tm = atoi(argv[3]);
+    {
+        errno        = 0;
+        number_of_tm = (uint8_t)strtol(argv[3], NULL, 10);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during wlan_send_tm arg_3 strtoul errno:%d", errno);
+        }
+    }
 
     ret = wlan_start_timing_measurement(bss_type, &raw_mac[0], number_of_tm);
     if (ret != WM_SUCCESS)
