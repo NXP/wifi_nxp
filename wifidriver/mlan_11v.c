@@ -142,6 +142,10 @@ static void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
         (void)memcpy((void *)&pos[5], "\0\0\0\0\0\0", MLAN_MAC_ADDR_LENGTH);
         pos += 6;
     }
+    else
+    {
+        /* Do nothing */
+    }
 
     if (status == WNM_BTM_ACCEPT && tag_nr != NULL)
     {

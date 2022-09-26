@@ -799,6 +799,7 @@ void wlan_process_link_measurement_request(
     wlan_txpwrlimit_t *txpwrlimit = NULL;
     t_u8 ModulationGroup          = 1; /* Default use OFDM modulation */
     int meas_link_margin          = 0;
+    int meas_noise                = 0;
 
     if (len < sizeof(mgmt_rrm_link_meas_request) - 1U)
     {
@@ -808,7 +809,8 @@ void wlan_process_link_measurement_request(
 
     (void)memset(&report, 0, sizeof(report));
     report.dialog_tok = request->dialog_tok;
-    report.rsni       = -(rxpd->nf + rxpd->snr);
+    meas_noise        = -((int)rxpd->nf + (int)rxpd->snr);
+    report.rsni       = (t_u8)(meas_noise);
     report.rcpi       = wlan_rrm_rssi_to_rcpi((int)report.rsni);
 
     /* TPC Report */

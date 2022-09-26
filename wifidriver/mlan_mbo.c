@@ -41,8 +41,8 @@ Change log:
 /********************************************************
                 Global Variables
 ********************************************************/
-const t_u8 mbo_oui[3]      = {0x50, 0x6f, 0x9a};
-const t_u8 mbo_oui_type[1] = {0x16};
+const t_u8 mbo_oui[3]             = {0x50, 0x6f, 0x9a};
+static const t_u8 mbo_oui_type[1] = {0x16};
 
 /********************************************************
                 Local Functions
