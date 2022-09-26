@@ -4496,9 +4496,12 @@ int wrapper_bssdesc_first_set(int bss_index,
     *beacon_period = d->beacon_period;
     *dtim_period   = d->dtim_period;
 
-    if (d->pwpa_ie != MNULL)
+    if (d->pwpa_ie != MNULL || d->prsn_ie != MNULL)
     {
-        WPA_WPA2_WEP->wpa = 1;
+        if (d->pwpa_ie != MNULL)
+        {
+            WPA_WPA2_WEP->wpa = 1;
+        }
     }
     else
     {
