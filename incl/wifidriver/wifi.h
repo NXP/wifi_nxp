@@ -35,6 +35,12 @@
 #define CONFIG_WIFI_EU_CRYPTO     1
 #endif
 
+#ifdef CONFIG_11AX
+#define CONFIG_11K 1
+#define CONFIG_11V 1
+#define CONFIG_MBO 1
+#endif
+
 #include <wifi-decl.h>
 #include <wifi_events.h>
 #include <wm_os.h>
