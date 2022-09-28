@@ -73,6 +73,10 @@ WEAK void set_ioport_inmlan(t_u32 port)
     return;
 }
 
+unsigned int wifi_get_sdio_ioport()
+{
+    return ioport_g;
+}
 uint8_t *wifi_get_sdio_outbuf(uint32_t *outbuf_len)
 {
     *outbuf_len = sizeof(outbuf);

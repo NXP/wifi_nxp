@@ -44,6 +44,8 @@
 #define SDIO_INBUF_LEN 2048
 #endif /* CONFIG_ENABLE_AMSDU_RX */
 
+#define SDIO_OUTBUF_LEN 2048U
+
 #if (SDIO_INBUF_LEN % MLAN_SDIO_BLOCK_SIZE)
 #error "Please keep buffer length aligned to SDIO block size"
 #endif /* Sanity check */
