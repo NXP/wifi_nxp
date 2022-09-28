@@ -1608,7 +1608,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
             case VENDOR_SPECIFIC_221:
                 pvendor_ie = (IEEEtypes_VendorSpecific_t *)(void *)pcurrent_ptr;
 
-                if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(wpa_oui))) &&
+                if ((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(wpa_oui))) == 0 &&
                     (pvendor_ie->vend_hdr.oui_type == wpa_type[0]))
                 {
                     /* Save it here since we do not have beacon buffer */
@@ -1639,7 +1639,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     HEXDUMP("InterpretIE: Resp WPA_IE", (t_u8 *)pbss_entry->pwpa_ie,
                             ((*(pbss_entry->pwpa_ie)).vend_hdr.len + sizeof(IEEEtypes_Header_t)));
                 }
-                else if (!(__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(wmm_oui))) &&
+                else if ((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(wmm_oui))) == 0 &&
                          (pvendor_ie->vend_hdr.oui_type == wmm_type[0]))
                 {
                     if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t) || total_ie_len == sizeof(IEEEtypes_WmmInfo_t))
@@ -1689,7 +1689,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                            pbss_entry->trans_ssid.ssid);
                 }
 #endif
-                else if (!__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, scan_mbo_oui, sizeof(scan_mbo_oui)) &&
+                else if (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, scan_mbo_oui, sizeof(scan_mbo_oui)) == 0 &&
                          (pvendor_ie->vend_hdr.oui_type == scan_mbo_type[0]))
                 {
                     t_u8 *pcurrent_attr = pcurrent_ptr + MBO_IE_HEADER_LEN;
@@ -1722,7 +1722,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                     {
                         (void)__memcpy(pmadapter, pbss_entry->vendor_ie_buff + pbss_entry->vendor_ie_len, pcurrent_ptr,
                                        element_len + sizeof(IEEEtypes_Header_t));
-                        pbss_entry->vendor_ie_len += element_len + sizeof(IEEEtypes_Header_t);
+                        pbss_entry->vendor_ie_len += element_len + (t_u8)sizeof(IEEEtypes_Header_t);
                     }
                 }
 #else

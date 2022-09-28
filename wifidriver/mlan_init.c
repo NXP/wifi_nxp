@@ -347,10 +347,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->pmfcfg.mfpr = 0;
 
 #ifdef CONFIG_11K
-    priv->enable_host_11k = MFALSE;
+    priv->enable_host_11k = (t_u8)MFALSE;
 #endif
 #ifdef CONFIG_11K_OFFLOAD
-    priv->enable_11k = MFALSE;
+    priv->enable_11k = (t_u8)MFALSE;
 #endif
 #ifdef CONFIG_11K
     priv->neighbor_rep_token = 1;

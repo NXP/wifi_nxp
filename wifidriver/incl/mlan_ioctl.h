@@ -559,7 +559,7 @@ typedef struct _chan_freq
     t_u32 channel;
     /** Frequency of this Channel */
     t_u32 freq;
-} chan_freq;
+} chan_freq_t;
 
 /** mlan_chan_list data structure for MLAN_OID_BSS_CHANNEL_LIST */
 typedef struct _mlan_chan_list
@@ -567,7 +567,7 @@ typedef struct _mlan_chan_list
     /** Number of channel */
     t_u32 num_of_chan;
     /** Channel-Frequency table */
-    chan_freq cf[MLAN_MAX_CHANNEL_NUM];
+    chan_freq_t cf[MLAN_MAX_CHANNEL_NUM];
 } mlan_chan_list;
 
 /** mlan_ssid_bssid  data structure for MLAN_OID_BSS_START and MLAN_OID_BSS_FIND_BSS */

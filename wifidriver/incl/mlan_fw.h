@@ -81,11 +81,11 @@ typedef MLAN_PACK_START struct
 #define SHORT_SLOT_TIME_ENABLED(CapInfo) ((CapInfo) |= MBIT(10))
 
 /** CapInfo Spectrum Mgmt Enabled */
-#define SPECTRUM_MGMT_ENABLED(CapInfo) (CapInfo |= MBIT(8))
+#define SPECTRUM_MGMT_ENABLED(CapInfo) ((CapInfo) |= MBIT(8))
 /** CapInfo Radio Measurement Disabled */
-#define RADIO_MEASUREMENT_DISABLED(CapInfo) (CapInfo &= ~MBIT(12))
+#define RADIO_MEASUREMENT_DISABLED(CapInfo) ((CapInfo) &= ~MBIT(12))
 /** CapInfo Radio Measurement Enabled */
-#define RADIO_MEASUREMENT_ENABLED(CapInfo) (CapInfo |= MBIT(12))
+#define RADIO_MEASUREMENT_ENABLED(CapInfo) ((CapInfo) |= MBIT(12))
 
 /** Setup the number of rates passed in the driver/firmware API */
 #define HOSTCMD_SUPPORTED_RATES 14
@@ -720,19 +720,19 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define ISSUPP_11ACBW160(Dot11acDevCap) (Dot11acDevCap & MBIT(2))
 
 /** Set VHT Cap Info: Max MPDU length */
-#define SET_VHTCAP_MAXMPDULEN(VHTCapInfo, value) ((VHTCapInfo) |= (value & 0x03))
+#define SET_VHTCAP_MAXMPDULEN(VHTCapInfo, value) ((VHTCapInfo) |= (value & 0x03U))
 /** SET VHT CapInfo:  Supported Channel Width SET (2 bits)*/
-#define SET_VHTCAP_CHWDSET(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x3) << 2))
+#define SET_VHTCAP_CHWDSET(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x3U) << 2))
 /** SET VHT CapInfo:  Rx STBC (3 bits) */
-#define SET_VHTCAP_RXSTBC(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 8))
+#define SET_VHTCAP_RXSTBC(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7U) << 8))
 /** SET VHT CapInfo:  Commpressed Steering Num of BFer Ant Supported (3 bits) */
-#define SET_VHTCAP_SNBFERANT(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 13))
+#define SET_VHTCAP_SNBFERANT(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7U) << 13))
 /** SET VHT CapInfo:  Num of Sounding Dimensions (3 bits) */
-#define SET_VHTCAP_NUMSNDDM(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 16))
+#define SET_VHTCAP_NUMSNDDM(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7U) << 16))
 /** SET VHT CapInfo:  Max AMPDU Length Exponent (3 bits) */
-#define SET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7) << 23))
+#define SET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x7U) << 23))
 /** SET VHT CapInfo:  VHT Link Adaptation Capable (2 bits) */
-#define SET_VHTCAP_LINKADPCAP(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x3) << 26))
+#define SET_VHTCAP_LINKADPCAP(VHTCapInfo, value) ((VHTCapInfo) |= ((value & 0x3U) << 26))
 
 /** HW_SPEC Dot11acDevCap : ReSet VHT Link Adapation Capable */
 #define RESET_11ACVHTLINKCAPA(Dot11acDevCap, value) ((Dot11acDevCap) &= ~(0x03))
@@ -783,15 +783,15 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** GET VHT CapInfo:  Supported Channel Width SET (2 bits)*/
 #define GET_VHTCAP_CHWDSET(VHTCapInfo) (((VHTCapInfo) >> 2) & 0x3U)
 /** GET VHT CapInfo:  Rx STBC (3 bits) */
-#define GET_VHTCAP_RXSTBC(VHTCapInfo) (((VHTCapInfo) >> 8) & 0x7)
+#define GET_VHTCAP_RXSTBC(VHTCapInfo) (((VHTCapInfo) >> 8) & 0x7U)
 /** GET VHT CapInfo:  Compressed Steering Num of BFer Ant Supported (3 bits) */
-#define GET_VHTCAP_SNBFERANT(VHTCapInfo) (((VHTCapInfo) >> 13) & 0x7)
+#define GET_VHTCAP_SNBFERANT(VHTCapInfo) (((VHTCapInfo) >> 13) & 0x7U)
 /** GET VHT CapInfo:  Num of Sounding Dimensions (3 bits) */
-#define GET_VHTCAP_NUMSNDDM(VHTCapInfo) (((VHTCapInfo) >> 16) & 0x7)
+#define GET_VHTCAP_NUMSNDDM(VHTCapInfo) (((VHTCapInfo) >> 16) & 0x7U)
 /** GET VHT CapInfo:  Max AMPDU Length Exponent (3 bits) */
-#define GET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo) (((VHTCapInfo) >> 23) & 0x7)
+#define GET_VHTCAP_MAXAMPDULENEXP(VHTCapInfo) (((VHTCapInfo) >> 23) & 0x7U)
 /** GET VHT CapInfo:  VHT Link Adaptation Capable (2 bits) */
-#define GET_VHTCAP_LINKADPCAP(VHTCapInfo) (((VHTCapInfo) >> 26) & 0x3)
+#define GET_VHTCAP_LINKADPCAP(VHTCapInfo) (((VHTCapInfo) >> 26) & 0x3U)
 /**SET OPERATING MODE:Channel Width:80M*/
 #define SET_OPER_MODE_80M(oper_mode) ((oper_mode) = (t_u8)((oper_mode) & ~MBIT(0)) | MBIT(1))
 /**SET OPERATING MODE:Channel Width:40M*/
@@ -804,19 +804,20 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /**SET OPERATING MODE:Rx NSS:1*/
 #define SET_OPER_MODE_1NSS(oper_mode) ((oper_mode) &= ~(MBIT(4) | MBIT(5) | MBIT(6)))
 
-#define GET_VHTMCS(MCSMapSet)                ((MCSMapSet)&0xFFFF)
-#define GET_VHTNSSMCS(MCSMapSet, nss)        (((MCSMapSet) >> (2U * ((nss)-1U))) & 0x3U)
-#define RET_VHTNSSMCS(MCSMapSet, nss)        (((MCSMapSet) >> (2U * ((nss)-1))) & 0x3)
-#define SET_VHTNSSMCS(MCSMapSet, nss, value) ((MCSMapSet) |= ((value)&0x3U) << (2U * ((nss)-1U)))
+#define GET_VHTMCS(MCSMapSet)         ((MCSMapSet)&0xFFFFU)
+#define GET_VHTNSSMCS(MCSMapSet, nss) (((MCSMapSet) >> (2U * ((nss)-1U))) & 0x3U)
+#define RET_VHTNSSMCS(MCSMapSet, nss) (((MCSMapSet) >> (2U * ((nss)-1))) & 0x3)
+#define SET_VHTNSSMCS(MCSMapSet, nss, value) \
+    ((MCSMapSet) |= ((t_u32)(value) & (t_u32)0x0003U) << (t_u32)(2U * ((nss)-1U)))
 
 /** DevMCSSupported : Tx MCS supported */
 #define GET_DEVTXMCSMAP(DevMCSMap)             ((DevMCSMap) >> 16)
-#define GET_DEVNSSTXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2 * ((nss)-1) + 16)) & 0x3)
+#define GET_DEVNSSTXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2U * ((nss)-1U) + 16U)) & 0x3U)
 #define SET_DEVNSSTXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1) + 16))
-#define RESET_DEVTXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF)
+#define RESET_DEVTXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFFU)
 /** DevMCSSupported : Rx MCS supported */
 #define GET_DEVRXMCSMAP(DevMCSMap)             ((DevMCSMap)&0xFFFFU)
-#define GET_DEVNSSRXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2 * ((nss)-1))) & 0x3)
+#define GET_DEVNSSRXMCS(DevMCSMap, nss)        (((DevMCSMap) >> (2U * ((nss)-1U))) & 0x3U)
 #define SET_DEVNSSRXMCS(DevMCSMap, nss, value) ((DevMCSMap) |= ((value)&0x3) << (2 * ((nss)-1)))
 #define RESET_DEVRXMCSMAP(DevMCSMap)           ((DevMCSMap) &= 0xFFFF0000U)
 
@@ -5885,10 +5886,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_TX_CONT
 #endif
 
 #ifdef OTP_CHANINFO
-#define TLV_TYPE_CHAN_ATTR_CFG    (PROPRIETARY_TLV_BASE_ID + 237)
-#define TLV_TYPE_REGION_INFO      (PROPRIETARY_TLV_BASE_ID + 238)
-#define TLV_TYPE_POWER_TABLE      (PROPRIETARY_TLV_BASE_ID + 262)
-#define TLV_TYPE_POWER_TABLE_ATTR (PROPRIETARY_TLV_BASE_ID + 317)
+#define TLV_TYPE_CHAN_ATTR_CFG    (PROPRIETARY_TLV_BASE_ID + 237U)
+#define TLV_TYPE_REGION_INFO      (PROPRIETARY_TLV_BASE_ID + 238U)
+#define TLV_TYPE_POWER_TABLE      (PROPRIETARY_TLV_BASE_ID + 262U)
+#define TLV_TYPE_POWER_TABLE_ATTR (PROPRIETARY_TLV_BASE_ID + 317U)
 /** HostCmd_DS_CHAN_REGION_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_CHAN_REGION_CFG
 {

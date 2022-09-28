@@ -1604,7 +1604,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_HECap_t
 #endif
 
 /** MBO IE header */
-#define MBO_IE_HEADER_LEN 6
+#define MBO_IE_HEADER_LEN 6U
 
 /** MBO attribute header */
 #define MBO_ATTR_HEADER_LEN 2

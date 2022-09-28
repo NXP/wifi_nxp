@@ -176,7 +176,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
-    pmgmt_pkt_hdr = (wlan_mgmt_pkt *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
+    pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
     pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
 
     sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
@@ -231,7 +231,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #endif
         if (rx_mgmt_callback)
         {
-            wifi_mgmt_frame_t *frame = (wifi_mgmt_frame_t *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
+            wifi_mgmt_frame_t *frame = (wifi_mgmt_frame_t *)(void *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
 
             if (rx_mgmt_callback(rxpd->bss_type, frame, rxpd->rx_pkt_length) == WM_SUCCESS)
             {

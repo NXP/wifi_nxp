@@ -50,10 +50,10 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
 
     pos         = payload + sizeof(wlan_802_11_header) + 1;
     action_code = *pos++;
-    payload_len -= (sizeof(wlan_802_11_header) + 2U);
 #ifdef CONFIG_11K
     IEEEtypes_FrameCtl_t *mgmt_fc_p =
         (IEEEtypes_FrameCtl_t *)(void *)&(((wlan_802_11_header *)(void *)payload)->frm_ctl);
+    payload_len -= (sizeof(wlan_802_11_header) + 2U);
 #endif
 
     switch (action_code)
@@ -71,6 +71,9 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
             ret = MLAN_STATUS_SUCCESS;
             break;
         }
+#else
+        case 0:
+            break;
 #endif
         default:
             wifi_d("RRM: Unknown request: %u", action_code);
@@ -128,12 +131,12 @@ static mlan_status wlan_process_mgmt_unprotect_wnm_action(t_u8 *payload, t_u32 p
 
     switch (action_code)
     {
-#ifdef CONFIG_1AS
         case 1:
+#ifdef CONFIG_1AS
             wlan_process_timing_measurement_frame(payload, payload_len, rxpd);
             ret = MLAN_STATUS_SUCCESS;
-            break;
 #endif
+            break;
         default:
             wifi_d("unprotect WNM: Unknown request: %u", action_code);
             break;

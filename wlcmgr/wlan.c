@@ -5438,7 +5438,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
         {
             res->wpa = 1;
         }
-        if (desc->WPA_WPA2_WEP.wpa3_sae)
+        if (desc->WPA_WPA2_WEP.wpa3_sae != 0U)
         {
             res->wpa3_sae = 1;
         }
