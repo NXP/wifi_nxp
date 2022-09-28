@@ -2717,6 +2717,103 @@ static void test_wlan_get_drcs_cfg(int argc, char **argv)
 }
 #endif
 
+#ifndef STREAM_2X2
+static void dump_wlan_set_antcfg_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-antcfg <ant mode> [evaluate_time] \r\n");
+    (void)PRINTF("\r\n");
+    (void)PRINTF("\t<ant mode>: \r\n");
+    (void)PRINTF("\t           Bit 0   -- Tx/Rx antenna 1\r\n");
+    (void)PRINTF("\t           Bit 1   -- Tx/Rx antenna 2\r\n");
+    (void)PRINTF("\t           0xFFFF  -- Tx/Rx antenna diversity\r\n");
+    (void)PRINTF("\t[evaluate_time]: \r\n");
+    (void)PRINTF("\t           if ant mode = 0xFFFF, SAD evaluate time interval,\r\n");
+    (void)PRINTF("\t           default value is 6s(0x1770)\r\n");
+}
+
+static void wlan_antcfg_set(int argc, char *argv[])
+{
+    int ret;
+    uint32_t ant_mode;
+    uint16_t evaluate_time = 0;
+
+    if (!(argc >= 2 && argc <= 3))
+    {
+        dump_wlan_set_antcfg_usage();
+        return;
+    }
+
+    errno    = 0;
+    ant_mode = (uint32_t)strtol(argv[1], NULL, 16);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    if ((argc == 3) && (ant_mode != 0xFFFFU))
+    {
+        dump_wlan_set_antcfg_usage();
+        return;
+    }
+
+    errno = 0;
+    if (argc == 3)
+    {
+        evaluate_time = (uint16_t)strtol(argv[2], NULL, 16);
+    }
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    ret = wlan_set_antcfg(ant_mode, evaluate_time);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Antenna configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Antenna configuration failed\r\n");
+        dump_wlan_set_antcfg_usage();
+    }
+}
+
+static void dump_wlan_get_antcfg_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-antcfg \r\n");
+}
+
+static void wlan_antcfg_get(int argc, char *argv[])
+{
+    int ret;
+    uint32_t ant_mode;
+    uint16_t evaluate_time = 0;
+
+    if (argc != 1)
+    {
+        dump_wlan_get_antcfg_usage();
+        return;
+    }
+
+    ret = wlan_get_antcfg(&ant_mode, &evaluate_time);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Mode of Tx/Rx path is : %x\r\n", ant_mode);
+        if (ant_mode == 0XFFFFU)
+        {
+            (void)PRINTF("Evaluate time : %x\r\n", evaluate_time);
+        }
+    }
+    else
+    {
+        (void)PRINTF("antcfg configuration read failed\r\n");
+        dump_wlan_get_antcfg_usage();
+    }
+}
+#endif
+
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
 static void test_wlan_wmm_tx_stats(int argc, char **argv)
 {
@@ -2823,6 +2920,11 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_11R
     {"wlan-ft-roam", "<bssid> <channel>", test_wlan_ft_roam},
 #endif
+#ifndef STREAM_2X2
+    {"wlan-set-antcfg", "<ant mode> [evaluate_time]", wlan_antcfg_set},
+    {"wlan-get-antcfg", NULL, wlan_antcfg_get},
+#endif
+
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif

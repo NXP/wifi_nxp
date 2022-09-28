@@ -3430,7 +3430,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     }
 #endif
 #else
-#if defined(SD8801)
+#if defined(SD8801) || defined(SD8978) || defined(SD8987)
     uint32_t ant           = 1;
     uint16_t evaluate_time = 0x1770;
 
@@ -3441,7 +3441,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
     wlcm_d("Antenna selected: %d", ant);
-#endif /* defined(SD8801) */
+#endif /* defined(SD8801, 8978, 8987) */
 #endif
 
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
