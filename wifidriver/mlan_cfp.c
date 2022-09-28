@@ -347,6 +347,7 @@ static cfp_table_t cfp_table_BG[] = {
 /** Number of the CFP tables for 2.4GHz */
 #define MLAN_CFP_TABLE_SIZE_BG (sizeof(cfp_table_BG) / sizeof(cfp_table_t))
 
+
 #ifdef CONFIG_5GHz_SUPPORT
 /* Format { Channel, Frequency (MHz), MaxTxPower, DFS } */
 /** Band: 'A', Region: USA FCC, Spain, France */
@@ -369,6 +370,7 @@ static const chan_freq_power_t channel_freq_power_A[] = {
     {177, 5885, WLAN_TX_PWR_US_DEFAULT, MFALSE},
 #endif
 };
+
 
 /** Band: 'A', Region: Canada IC */
 static const chan_freq_power_t channel_freq_power_CAN_A[] = {
@@ -576,6 +578,7 @@ static cfp_table_t cfp_table_A[] = {
 #define MLAN_CFP_TABLE_SIZE_A (sizeof(cfp_table_A) / sizeof(cfp_table_t))
 
 #endif /* CONFIG_5GHz_SUPPORT */
+
 
 /********************************************************
     Global Variables

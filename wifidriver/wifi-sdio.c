@@ -942,7 +942,7 @@ static void wlan_fw_init_cfg(void)
 {
     wifi_io_d("FWCMD : INIT (0xa9)");
 
-    wlan_cmd_init();
+    (void)wlan_cmd_init();
 
     while (last_resp_rcvd != HostCmd_CMD_FUNC_INIT)
     {
@@ -980,7 +980,7 @@ static void wlan_fw_init_cfg(void)
         (void)PRINTF("Setting up new cal data\r\n");
         wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
 
-        _wlan_set_cal_data();
+        (void)_wlan_set_cal_data();
 
         while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
         {
@@ -990,7 +990,7 @@ static void wlan_fw_init_cfg(void)
         /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
          * So we need to send reconfigure command. This can be removed if fix is added in firmware.
          */
-        _wlan_reconfigure_tx_buffers();
+        (void)_wlan_reconfigure_tx_buffers();
 
         while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
         {
@@ -1003,7 +1003,7 @@ static void wlan_fw_init_cfg(void)
     {
         wifi_io_d("CMD : SET_MAC_ADDR (0x4d)");
 
-        _wlan_set_mac_addr();
+        (void)_wlan_set_mac_addr();
 
         while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
         {
@@ -1015,7 +1015,7 @@ static void wlan_fw_init_cfg(void)
 #ifdef OTP_CHANINFO
     wifi_io_d("CMD : Channel Region CFG (0x0242)");
 
-    wlan_get_channel_region_cfg();
+    (void)wlan_get_channel_region_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_CHAN_REGION_CFG)
     {
@@ -1026,7 +1026,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_HW_SPEC (0x03)");
 
-    wlan_get_hw_spec();
+    (void)wlan_get_hw_spec();
 
     while (last_resp_rcvd != HostCmd_CMD_GET_HW_SPEC)
     {
@@ -1056,7 +1056,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
-    wlan_get_fw_ver_ext(0);
+    (void)wlan_get_fw_ver_ext(0);
 
     while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
     {
@@ -1066,7 +1066,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
-    wlan_get_mac_addr();
+    (void)wlan_get_mac_addr();
 
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
@@ -1076,7 +1076,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
-    wlan_get_fw_ver_ext(3);
+    (void)wlan_get_fw_ver_ext(3);
 
     while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
     {
@@ -1086,7 +1086,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : MAC_CTRL (0x28)");
 
-    wlan_set_mac_ctrl();
+    (void)wlan_set_mac_ctrl();
 
     while (last_resp_rcvd != HostCmd_CMD_MAC_CONTROL)
     {
@@ -1096,7 +1096,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
-    wlan_get_fw_ver_ext(4);
+    (void)wlan_get_fw_ver_ext(4);
 
     while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
     {
@@ -1115,7 +1115,7 @@ static void wlan_fw_init_cfg(void)
 #endif
 
 #ifdef CONFIG_11N
-    wlan_set_11n_cfg();
+    (void)wlan_set_11n_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_11N_CFG)
     {
@@ -1124,7 +1124,7 @@ static void wlan_fw_init_cfg(void)
     }
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
-    wlan_enable_amsdu();
+    (void)wlan_enable_amsdu();
 
     while (last_resp_rcvd != HostCmd_CMD_AMSDU_AGGR_CTRL)
     {

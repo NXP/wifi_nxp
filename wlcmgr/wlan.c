@@ -1624,6 +1624,9 @@ static int do_start(struct wlan_network *network)
         }
 
         wlcm_d("starting our own network");
+#ifdef CONFIG_WIFI_CAPA
+        wifi_uap_config_wifi_capa(network->wlan_capa);
+#endif
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
 #ifdef CONFIG_P2P
                              wlan.wfd_mac,
@@ -2349,8 +2352,8 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
             }
 #ifdef CONFIG_11R
         }
-#endif
-#endif
+#endif /* CONFIG_11R */
+#endif /* (CONFIG_ROAMING) || defined(CONFIG_11R) */
     }
     (void)os_semaphore_put(&wlan.scan_lock);
     wlan.is_scan_lock = 0;
@@ -4904,6 +4907,22 @@ int wlan_add_network(struct wlan_network *network)
         }
     }
 
+#ifdef CONFIG_WIFI_CAPA
+    if (network->role == WLAN_BSS_ROLE_UAP)
+    {
+        /* If no capability was configured, set capa up to 11ax by default */
+        if(!network->wlan_capa)
+            network->wlan_capa =
+#ifdef CONFIG_11AX
+                                WIFI_SUPPORT_11AX |
+#endif
+#ifdef CONFIG_11AC
+                                WIFI_SUPPORT_11AC |
+#endif
+                                WIFI_SUPPORT_11N  | WIFI_SUPPORT_LEGACY;
+    }
+#endif
+
     /* Find a slot for the new network but check all existing networks in
      * case the new one has a duplicate name, which is not allowed. */
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
@@ -7320,7 +7339,54 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi)
         return -WM_FAIL;
     }
 }
-#endif
+
+int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg)
+{
+    if (ru_pwr_cfg != NULL)
+    {
+        return wifi_set_11ax_rutxpowerlimit(ru_pwr_cfg);
+    }
+
+    return -WM_FAIL;
+}
+
+int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg)
+{
+    if (ru_pwr_cfg != NULL)
+    {
+        (void)memset(ru_pwr_cfg, 0x00, sizeof(wlan_rutxpwrlimit_t));
+        return wifi_get_11ax_rutxpowerlimit(ru_pwr_cfg);
+    }
+
+    return -WM_FAIL;
+}
+int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
+{
+    return wifi_set_11ax_cfg(ax_config);
+}
+
+#ifdef CONFIG_11AX_TWT
+int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
+{
+    return wifi_set_btwt_cfg(btwt_config);
+}
+
+int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
+{
+    return wifi_set_twt_setup_cfg(twt_setup);
+}
+
+int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
+{
+    return wifi_set_twt_teardown_cfg(teardown_config);
+}
+
+int wlan_get_twt_report(wlan_twt_report_t *twt_report)
+{
+    return wifi_get_twt_report(twt_report);
+}
+#endif /* CONFIG_11AX_TWT */
+#endif /* CONFIG_11AX */
 
 #ifdef CONFIG_WIFI_EU_CRYPTO
 int wlan_set_crypto_RC4_encrypt(
@@ -7627,8 +7693,7 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 
     return wifi_set_eu_crypto(&Crypto_AES_GCMP_Param, CRYPTO_AES_GCMP, EncDec);
 }
-#endif
-
+#endif /* CONFIG_WIFI_EU_CRYPTO */
 #ifdef CONFIG_HEAP_DEBUG
 void wlan_show_os_mem_stat()
 {

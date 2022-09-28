@@ -408,6 +408,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define TLV_TYPE_HT_OPERATIONAL_MCS_SET (PROPRIETARY_TLV_BASE_ID + 0x50) // 0x0150
 /** TLV type : Channel TRPC Config */
 #define TLV_TYPE_CHANNEL_TRPC_CONFIG (PROPRIETARY_TLV_BASE_ID + 0x89U) // 0x0189
+/** TLV type : Channel RU PWR Config */
+#define TLV_TYPE_CHANNEL_RU_PWR_CONFIG (PROPRIETARY_TLV_BASE_ID + 0x144U) // 0x0244
 /** TLV type : RXBA_SYNC */
 #define TLV_TYPE_RXBA_SYNC (PROPRIETARY_TLV_BASE_ID + 0x99) // 0x0199
 #ifdef KEY_PARAM_SET_V2
@@ -1322,8 +1324,10 @@ typedef enum _ENH_PS_MODES
 /** Host Command ID: 11AX command */
 #define HostCmd_CMD_11AX_CMD 0x026d
 
+#ifdef CONFIG_11AX_TWT
 /** Host Command ID: TWT cfg command */
 #define HostCmd_CMD_TWT_CFG 0x0270
+#endif /* CONFIG_11AX_TWT */
 #endif
 
 #ifdef CONFIG_MULTI_CHAN
@@ -4162,6 +4166,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_11AX_CMD_CFG
     t_u8 val[];
 } MLAN_PACK_END HostCmd_DS_11AX_CMD_CFG;
 
+#ifdef CONFIG_11AX_TWT
 /** Type definition of hostcmd_twt_setup */
 typedef MLAN_PACK_START struct _hostcmd_twt_setup
 {
@@ -4213,6 +4218,17 @@ typedef MLAN_PACK_START struct _hostcmd_twt_teardown
     t_u8 reserved[3];
 } MLAN_PACK_END hostcmd_twt_teardown, *phostcmd_twt_teardown;
 
+/** Type definition of hostcmd_twt_report */
+typedef MLAN_PACK_START struct _hostcmd_twt_report
+{
+    /** TWT report type, 0: BTWT id */
+    t_u8 type;
+    /** TWT report length of value in data */
+    t_u8 length;
+    t_u8 reserve[2];
+    /** TWT report payload for FW response to fill */
+    t_u8 data[60];
+} MLAN_PACK_END hostcmd_twt_report, *phostcmd_twt_report;
 /** HostCmd_DS_TWT_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
 {
@@ -4227,8 +4243,11 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
         hostcmd_twt_setup twt_setup;
         /** TWT Teardown config for Sub ID: MLAN_11AX_TWT_TEARDOWN_SUBID */
         hostcmd_twt_teardown twt_teardown;
+        /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
+        hostcmd_twt_report twt_report;
     } param;
 } MLAN_PACK_END HostCmd_DS_TWT_CFG;
+#endif /* CONFIG_11AX_TWT */
 #endif
 
 /** HostCmd_DS_TXBUF_CFG*/
@@ -6479,9 +6498,11 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_11AX
         /** HostCmd_DS_11AX_CFG */
         HostCmd_DS_11AX_CFG axcfg;
+#ifdef CONFIG_11AX_TWT
         /** HostCmd_DS_TWT_CFG */
         HostCmd_DS_TWT_CFG twtcfg;
-#endif
+#endif /* CONFIG_11AX_TWT  */
+#endif /* CONFIG_11AX */
         /** WMM status get */
         HostCmd_DS_WMM_GET_STATUS get_wmm_status;
         /** WMM ADDTS */
@@ -6579,6 +6600,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_EU_AES_CRYPTO eu_aes_crypto;
         HostCmd_DS_EU_CRYPTO eu_crypto;
 #endif
+
 #ifdef CONFIG_11AX
         HostCmd_DS_11AX_CMD_CFG axcmd;
 #endif
