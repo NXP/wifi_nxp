@@ -1561,7 +1561,7 @@ typedef enum _ENH_PS_MODES
 #define EVENT_FW_DEBUG_INFO 0x00000063
 #endif
 
-#ifdef CONFIG_11K_OFFLOAD
+#ifdef CONFIG_11K
 #define EVENT_NLIST_REPORT          0x00000079
 #define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
 #endif

@@ -2009,6 +2009,7 @@ static void handle_scan_results(void)
             {
                 /* For same AP change state again to CONNECTED and return */
                 wlan.sta_state = CM_STA_CONNECTED;
+                wlan.ft_assoc  = false;
                 return;
             }
         }

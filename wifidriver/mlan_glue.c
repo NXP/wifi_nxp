@@ -68,7 +68,7 @@ typedef MLAN_PACK_START struct _Event_Ext_t
     uint8_t src_mac_addr[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END Event_Ext_t;
 
-#ifdef CONFIG_11K_OFFLOAD
+#ifdef CONFIG_11K
 typedef MLAN_PACK_START struct _Event_Gen_t
 {
     /** Event ID */
@@ -192,7 +192,7 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
 }
 #endif /* CONFIG_11N */
 
-#ifdef CONFIG_11K_OFFLOAD
+#ifdef CONFIG_11K
 /** Event body : 11K NLIST */
 typedef PACK_START struct _nlist_entry_tlv
 {
@@ -3938,7 +3938,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_HS_ACT_REQ:
             (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
-#ifdef CONFIG_11K_OFFLOAD
+#ifdef CONFIG_11K
         case EVENT_NLIST_REPORT:
         {
             void *saved_event_buff = wifi_11k_save_request((Event_Gen_t *)(void *)((t_u8 *)evt + 4));
