@@ -591,7 +591,6 @@ static void iperf_test_abort(void *arg)
         lwiperf_abort(test_ctx->iperf_session);
         test_ctx->iperf_session = NULL;
     }
-
     (void)PRINTF("IPERF ABORT DONE\r\n");
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 }
@@ -726,8 +725,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
     (void)PRINTF("\t   -r             Do a bidirectional test individually\r\n");
     (void)PRINTF("\t   -t    #        time in seconds to transmit for (default 10 secs)\r\n");
-    (void)PRINTF(
-        "\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
+    (void)PRINTF("\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
 #ifdef CONFIG_WMM
     (void)PRINTF("\t   -S    #        QoS for udp traffic (default 0(Best Effort))\r\n");
 #endif

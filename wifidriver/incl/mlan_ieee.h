@@ -1922,11 +1922,13 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_HTInfo_t ht_info_saved;
     IEEEtypes_2040BSSCo_t bss_co_2040_saved;
 
+#ifdef CONFIG_11AC
     IEEEtypes_VHTCap_t vht_cap_saved;
     IEEEtypes_VHTOprat_t vht_oprat_saved;
     IEEEtypes_VHTtxpower_t vht_txpower_saved;
     IEEEtypes_OperModeNtf_t poper_mode_saved;
     IEEEtypes_ExtCap_t ext_cap_saved;
+#endif
 #ifdef CONFIG_11AX
     /** HE Capability IE */
     IEEEtypes_HECap_t *phe_cap;

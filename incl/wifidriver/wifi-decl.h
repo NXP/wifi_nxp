@@ -36,6 +36,17 @@
 #define OWE_TRANS_MODE_OWE 2U
 #endif
 
+#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_11AX
+#define WIFI_SUPPORT_11AX   (1 << 3)
+#endif
+#ifdef CONFIG_11AC
+#define WIFI_SUPPORT_11AC   (1 << 2)
+#endif
+#define WIFI_SUPPORT_11N    (1 << 1)
+#define WIFI_SUPPORT_LEGACY (1 << 0)
+#endif
+
 #if 0
 /** channel_field.flags */
 #define CHANNEL_FLAGS_TURBO                   0x0010
@@ -874,8 +885,131 @@ typedef PACK_START struct
     /** Number of Channels */
     t_u8 num_chans;
     /** TRPC config */
+#if defined(IW61x)
+    wifi_txpwrlimit_config_t txpwrlimit_config[43];
+#else
     wifi_txpwrlimit_config_t txpwrlimit_config[40];
+#endif
 } PACK_END wifi_txpwrlimit_t;
+
+#ifdef CONFIG_11AX
+typedef PACK_START struct _wifi_rupwrlimit_config_t
+{
+    /** start freq */
+    t_u16 start_freq;
+    /* channel width */
+    t_u8 width;
+    /** channel number */
+    t_u8 chan_num;
+    /** chan ru Power */
+    t_s8 ruPower[MAX_RU_COUNT];
+} PACK_END wifi_rupwrlimit_config_t;
+
+/**
+ * Data structure for Channel RU PWR config
+ *
+ * For RU PWR support
+ */
+typedef PACK_START struct
+{
+    /** Number of Channels */
+    t_u8 num_chans;
+    /** RU PWR config */
+    wifi_rupwrlimit_config_t rupwrlimit_config[MAX_RUTXPWR_NUM];
+} PACK_END wifi_rutxpwrlimit_t;
+
+typedef PACK_START struct
+{
+    /* band */
+    t_u8 band;
+    /** tlv id of he capability */
+    t_u16 id;
+    /** length of the payload */
+    t_u16 len;
+    /** extension id */
+    t_u8 ext_id;
+    /** he mac capability info */
+    t_u8 he_mac_cap[6];
+    /** he phy capability info */
+    t_u8 he_phy_cap[11];
+    /** he txrx mcs support for 80MHz */
+    t_u8 he_txrx_mcs_support[4];
+    /** val for PE thresholds */
+    t_u8 val[4];
+} PACK_END wifi_11ax_config_t;
+
+#ifdef CONFIG_11AX_TWT
+typedef PACK_START struct
+{
+    /** Implicit, 0: TWT session is explicit, 1: Session is implicit */
+    t_u8 implicit;
+    /** Announced, 0: Unannounced, 1: Announced TWT */
+    t_u8 announced;
+    /** Trigger Enabled, 0: Non-Trigger enabled, 1: Trigger enabled TWT */
+    t_u8 trigger_enabled;
+    /** TWT Information Disabled, 0: TWT info enabled, 1: TWT info disabled */
+    t_u8 twt_info_disabled;
+    /** Negotiation Type, 0: Future Individual TWT SP start time, 1: Next
+     * Wake TBTT time */
+    t_u8 negotiation_type;
+    /** TWT Wakeup Duration, time after which the TWT requesting STA can
+     * transition to doze state */
+    t_u8 twt_wakeup_duration;
+    /** Flow Identifier. Range: [0-7]*/
+    t_u8 flow_identifier;
+    /** Hard Constraint, 0: FW can tweak the TWT setup parameters if it is
+     *rejected by AP.
+     ** 1: Firmware should not tweak any parameters. */
+    t_u8 hard_constraint;
+    /** TWT Exponent, Range: [0-63] */
+    t_u8 twt_exponent;
+    /** TWT Mantissa Range: [0-sizeof(UINT16)] */
+    t_u16 twt_mantissa;
+    /** TWT Request Type, 0: REQUEST_TWT, 1: SUGGEST_TWT*/
+    t_u8 twt_request;
+} PACK_END wifi_twt_setup_config_t;
+
+typedef PACK_START struct
+{
+    /** TWT Flow Identifier. Range: [0-7] */
+    t_u8 flow_identifier;
+    /** Negotiation Type. 0: Future Individual TWT SP start time, 1: Next
+     * Wake TBTT time */
+    t_u8 negotiation_type;
+    /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
+    t_u8 teardown_all_twt;
+} PACK_END wifi_twt_teardown_config_t;
+
+typedef PACK_START struct
+{
+    /** Only support 1: Set*/
+    t_u16 action;
+    /** Broadcast TWT AP config */
+    t_u16 sub_id;
+    /** Range 64-255 */
+    t_u8 nominal_wake;
+    /** Max STA Support */
+    t_u8 max_sta_support;
+    t_u16 twt_mantissa;
+    t_u16 twt_offset;
+    t_u8 twt_exponent;
+    t_u8 sp_gap;
+} PACK_END wifi_btwt_config_t;
+
+#define WLAN_BTWT_REPORT_LEN     15
+#define WLAN_BTWT_REPORT_MAX_NUM 4
+typedef PACK_START struct
+{
+    /** TWT report type, 0: BTWT id */
+    t_u8 type;
+    /** TWT report length of value in data */
+    t_u8 length;
+    t_u8 reserve[2];
+    /** TWT report buffer */
+    t_u8 data[WLAN_BTWT_REPORT_LEN * WLAN_BTWT_REPORT_MAX_NUM];
+} PACK_END wifi_twt_report_t;
+#endif /* CONFIG_11AX_TWT */
+#endif
 
 #ifdef CONFIG_WLAN_BRIDGE
 /**

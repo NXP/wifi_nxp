@@ -2159,8 +2159,16 @@ static wifi_sub_band_set_t subband_CS_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 #ifdef CONFIG_5GHz_SUPPORT
 
+#if defined(IW61x)
+/* Region: US(US) 5 GHz */
+wifi_sub_band_set_t subband_US_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 8, 20}};
+
+/* Region: France(FR) or Singapore(SG) 5 GHz */
+wifi_sub_band_set_t subband_SG_FR_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 5, 20}};
+#else
 /* Region: US(US) or France(FR) or Singapore(SG) 5 GHz */
 static wifi_sub_band_set_t subband_US_SG_FR_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 5, 20}};
+#endif
 
 /* Region: Canada(CA) 5 GHz */
 static wifi_sub_band_set_t subband_CA_5_GHz[] = {{36, 8, 20}, {100, 5, 20}, {132, 3, 20}, {149, 5, 20}};
@@ -2388,10 +2396,19 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t countr
             ret_band = subband_WWSM_5_GHz;
             break;
         case COUNTRY_US:
+#if defined(IW61x)
+            *nr_sb = 3;
+            ret_band =  subband_US_5_GHz;
+            break;
+#endif
         case COUNTRY_SG:
         case COUNTRY_FR:
             *nr_sb   = 3;
+#if defined(IW61x)
+            ret_band = subband_SG_FR_5_GHz;
+#else
             ret_band = subband_US_SG_FR_5_GHz;
+#endif
             break;
         case COUNTRY_CA:
             *nr_sb   = 4;
@@ -2412,8 +2429,12 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t countr
             break;
         default:
             *nr_sb   = 3;
+#if defined(IW61x)
+            ret_band = subband_US_5_GHz;
+#else
             ret_band = subband_US_SG_FR_5_GHz;
             break;
+#endif
     }
     return ret_band;
 }
@@ -2426,9 +2447,17 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
     switch (region_code)
     {
         case 0x10:
+#if defined(IW61x)
+            *nr_sb = 3;
+            return subband_US_5_GHz;
+#endif
         case 0x32:
             *nr_sb   = 3;
+#if defined(IW61x)
+            ret_band = subband_SG_FR_5_GHz;
+#else
             ret_band = subband_US_SG_FR_5_GHz;
+#endif
             break;
         case 0x20:
             *nr_sb   = 4;
@@ -2451,7 +2480,11 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
             break;
         default:
             *nr_sb   = 3;
+#if defined(IW61x)
+            ret_band = subband_US_5_GHz;
+#else
             ret_band = subband_US_SG_FR_5_GHz;
+#endif
             break;
     }
     return ret_band;
@@ -3424,8 +3457,8 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
         pos                       = wlan_add_mbo_prefer_ch(pos, ch0, pefer0, ch1, pefer1);
         meas_vend_hdr_len         = pos - mboie.vend_hdr.oui;
         mboie.vend_hdr.len        = (t_u8)meas_vend_hdr_len;
-        /*Wi-Fi CERTIFIED Agile Multiband. Test Plan v1.4 section 2.5.1 Test bed AP requirements. For 2.4/5 GHz:�E MFPC
-         * (bit 7) set to 1�E MFPR (bit 6) set to 0*/
+        /*Wi-Fi CERTIFIED Agile Multiband. Test Plan v1.4 section 2.5.1 Test bed AP requirements. For 2.4/5 GHz:?E MFPC
+         * (bit 7) set to 1?E MFPR (bit 6) set to 0*/
         wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, (t_u8 *)&mboie,
                                         mboie.vend_hdr.len + (t_u8)2U, false);
     }

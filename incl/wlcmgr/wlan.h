@@ -833,6 +833,34 @@ typedef wifi_ext_coex_stats_t wlan_ext_coex_stats_t;
 typedef wifi_ext_coex_config_t wlan_ext_coex_config_t;
 #endif
 
+#ifdef CONFIG_11AX
+/** Configuration for RU TX Pwr Limit from
+ * \ref wifi_rutxpwrlimit_t
+ */
+typedef wifi_rutxpwrlimit_t wlan_rutxpwrlimit_t;
+/** Configuration for 11AX capabilities
+ * \ref wifi_11ax_config_t
+ */
+typedef wifi_11ax_config_t wlan_11ax_config_t;
+#ifdef CONFIG_11AX_TWT
+/** Configuration for TWT Setup
+ * \ref wifi_twt_setup_config_t
+ */
+typedef wifi_twt_setup_config_t wlan_twt_setup_config_t;
+/** Configuration for TWT Teardown
+ * \ref wifi_twt_setup_config_t
+ */
+typedef wifi_twt_teardown_config_t wlan_twt_teardown_config_t;
+/** Configuration for Broadcast TWT Setup
+ * \ref wifi_btwt_config_t
+ */
+typedef wifi_btwt_config_t wlan_btwt_config_t;
+/** Configuration for TWT Report
+ * \ref wifi_btwt_config_t
+ */
+typedef wifi_twt_report_t wlan_twt_report_t;
+#endif /* CONFIG_11AX_TWT */
+#endif
 #ifdef CONFIG_MULTI_CHAN
 /** Configuration for multi-channel switch
  * \ref wifi_drcs_cfg_t
@@ -1086,6 +1114,10 @@ struct wlan_network
     uint16_t beacon_period;
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
+#ifdef CONFIG_WIFI_CAPA
+    /** Wireless capabilities of uAP network 802.11n, 802.11ac or/and 802.11ax*/
+    uint8_t wlan_capa;
+#endif
 };
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
@@ -1756,7 +1788,6 @@ void wlan_set_mac_addr(uint8_t *mac);
  */
 void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type);
 #endif
-
 #ifdef CONFIG_ROAMING
 /** Set roaming config.
  * This function may be called to enable/disable roaming.
@@ -3639,7 +3670,67 @@ int wlan_send_hostcmd(
  * \return -WM_FAIL if command fails.
  */
 int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
-#endif
+/**
+ * Use this API to set the RU tx power limit.
+ *
+ * \param[in] ru_pwr_cfg   11AX rutxpwr of channels to be sent to Firmware
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg);
+/**
+ * Use this API to get the RU tx power limit.
+ *
+ * \param[in] ru_pwr_cfg   11AX rutxpwr of channels to be get from Firmware
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
+
+/** Set 11ax config params
+ *
+ * \param[in, out] ax_config 11AX config parameters to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
+
+#ifdef CONFIG_11AX_TWT
+/** Set btwt config params
+ *
+ * \param[in] btwt_config Broadcast TWT Setup parameters to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config);
+
+/** Set twt setup config params
+ *
+ * \param[in] twt_setup TWT Setup parameters to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup);
+
+/** Set twt teardown config params
+ *
+ * \param[in] teardown_config TWT Teardown parameters sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config);
+
+/** Get twt report
+ *
+ * \param[out] twt_report TWT Report parameter.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_twt_report(wlan_twt_report_t *twt_report);
+#endif /* CONFIG_11AX_TWT */
+#endif /* CONFIG_11AX */
 
 #ifdef CONFIG_HEAP_DEBUG
 /**
