@@ -3863,6 +3863,15 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 void wlan_wmm_tx_stats_dump(int bss_type);
 #endif
 
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+/**
+ * Set scan channel gap.
+ * \param[in] scan_chan_gap      Time gap to be used between two consecutive channels scan.
+ *
+ */
+void wlan_set_scan_channel_gap(unsigned scan_chan_gap);
+#endif
+
 #ifdef CONFIG_11K
 /**
  * enable/disable host 11k feature

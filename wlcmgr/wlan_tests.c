@@ -2994,6 +2994,31 @@ static void wlan_antcfg_get(int argc, char *argv[])
 }
 #endif
 
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+static void test_wlan_set_scan_channel_gap(int argc, char **argv)
+{
+    unsigned scan_chan_gap;
+    if (argc != 2)
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("wlan-scan-channel-gap <scan_gap_value>\r\n");
+        (void)PRINTF("scan_gap_value: [2,500]\r\n");
+        return;
+    }
+    scan_chan_gap = a2hex_or_atoi(argv[1]);
+    if (scan_chan_gap < 2 || scan_chan_gap > 500)
+    {
+        (void)PRINTF("Invaild scan_gap value!\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("wlan-scan-channel-gap <scan_gap_value>\r\n");
+        (void)PRINTF("scan_gap_value: [2,500]\r\n");
+        return;
+    }
+    wlan_set_scan_channel_gap(scan_chan_gap);
+}
+#endif
+
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
 static void test_wlan_wmm_tx_stats(int argc, char **argv)
 {
@@ -3160,7 +3185,9 @@ static struct cli_command tests[] = {
     {"wlan-set-antcfg", "<ant mode> [evaluate_time]", wlan_antcfg_set},
     {"wlan-get-antcfg", NULL, wlan_antcfg_get},
 #endif
-
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+    {"wlan-scan-channel-gap", "<channel_gap_value>", test_wlan_set_scan_channel_gap},
+#endif
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif

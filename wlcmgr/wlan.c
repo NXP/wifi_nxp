@@ -84,6 +84,11 @@ int wps_session_attempt;
 static bool ps_sleep_cb_sent;
 #endif /* CONFIG_WIFIDRIVER_PS_LOCK || CONFIG_WNM_PS*/
 
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+#define SCAN_CHANNEL_GAP 50U
+static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP;
+#endif
+
 enum user_request_type
 {
     /* we append our user-generated events to the wifi interface events and
@@ -1454,6 +1459,9 @@ static void do_scan(struct wlan_network *network)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                  0,
 #endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                 scan_channel_gap,
+#endif
                                  false, false);
     }
     else
@@ -1464,21 +1472,41 @@ static void do_scan(struct wlan_network *network)
             chan_list[0].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
             chan_list[0].scan_time   = 120;
 #ifdef CONFIG_WLAN_BRIDGE
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, bridge_ssid, 1, chan_list, 0, false, false);
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, bridge_ssid, 1, chan_list, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                     scan_channel_gap,
+#endif
+                                     false, false);
 #else
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0, 0, false, false);
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                     scan_channel_gap,
+#endif
+                                     false, false);
 #else
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0, false, false);
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                     scan_channel_gap,
+#endif
+                                     false, false);
 #endif
 #endif
         }
         else
         {
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0, 0, false, false);
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                     scan_channel_gap,
+#endif
+                                     false, false);
 #else
-            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0, false, false);
+            ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                     scan_channel_gap,
+#endif
+                                     false, false);
 #endif
         }
     }
@@ -1524,9 +1552,17 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
     wlan.sta_state = CM_STA_SCANNING;
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
-    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0, 0, false, true);
+    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                             scan_channel_gap,
+#endif
+                             false, true);
 #else
-    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0, false, true);
+    ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                             scan_channel_gap,
+#endif
+                             false, true);
 #endif
     if (ret != 0)
     {
@@ -2869,8 +2905,11 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         }
 
         wlan.ft_assoc = true;
-        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[0], chan_list, 0, false,
-                                 false);
+        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[0], chan_list, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                 scan_channel_gap,
+#endif
+                                 false, false);
         if (ret != WM_SUCCESS)
         {
             wlcm_e("neighbor list scan failed");
@@ -2906,7 +2945,11 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
         chan_list.scan_time   = 120;
 
         wlan.ft_assoc = true;
-        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0, false, false);
+        ret           = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0,
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                 scan_channel_gap,
+#endif
+                                 false, false);
         if (ret != WM_SUCCESS)
         {
             wlcm_e("wlan ft roam scan failed");
@@ -3439,11 +3482,13 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     uint16_t evaluate_time = 0x1770;
 
     ret = wifi_set_antenna(ant, evaluate_time);
+#if 0
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to set antenna configuration");
         return;
     }
+#endif
     wlcm_d("Antenna selected: %d", ant);
 #endif /* defined(SD8801, 8978, 8987) */
 #endif
@@ -3663,6 +3708,9 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
                                  wlan_scan_param->num_channels, wlan_scan_param->chan_list, wlan_scan_param->num_probes,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
+#endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                                 wlan_scan_param->scan_chan_gap,
 #endif
                                  false, false);
     if (ret != WM_SUCCESS)
@@ -7044,7 +7092,7 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
     if (is_uap_started() || is_sta_connected())
         wlan_scan_param->scan_chan_gap = scan_channel_gap;
     else
-        wlan_scan_param->scan_chan_gap = 0;
+        wlan_scan_param->scan_chan_gap = (t_u16)0U;
 #endif
 
     int ret = wifi_send_scan_cmd((t_u8)BSS_ANY, wlan_scan_param->bssid,
@@ -7083,6 +7131,14 @@ int wlan_11k_cfg(int enable_11k)
 int wlan_11k_neighbor_req(void)
 {
     return wifi_11k_neighbor_req();
+}
+#endif
+
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+void wlan_set_scan_channel_gap(unsigned scan_chan_gap)
+{
+    scan_channel_gap = (t_u16)scan_chan_gap;
+    return;
 }
 #endif
 

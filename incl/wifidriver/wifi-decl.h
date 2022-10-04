@@ -38,10 +38,10 @@
 
 #ifdef CONFIG_WIFI_CAPA
 #ifdef CONFIG_11AX
-#define WIFI_SUPPORT_11AX   (1 << 3)
+#define WIFI_SUPPORT_11AX (1 << 3)
 #endif
 #ifdef CONFIG_11AC
-#define WIFI_SUPPORT_11AC   (1 << 2)
+#define WIFI_SUPPORT_11AC (1 << 2)
 #endif
 #define WIFI_SUPPORT_11N    (1 << 1)
 #define WIFI_SUPPORT_LEGACY (1 << 0)
@@ -1330,6 +1330,10 @@ typedef PACK_START struct _wifi_scan_params_v2_t
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     /** Threshold of rssi */
     t_s16 rssi_threshold;
+#endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+    /** scan channel gap */
+    t_u16 scan_chan_gap;
 #endif
     /** Callback to be called when scan is completed */
     int (*cb)(unsigned int count);

@@ -1370,6 +1370,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                       const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered)
 {
@@ -2397,13 +2400,13 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t countr
             break;
         case COUNTRY_US:
 #if defined(IW61x)
-            *nr_sb = 3;
-            ret_band =  subband_US_5_GHz;
+            *nr_sb   = 3;
+            ret_band = subband_US_5_GHz;
             break;
 #endif
         case COUNTRY_SG:
         case COUNTRY_FR:
-            *nr_sb   = 3;
+            *nr_sb = 3;
 #if defined(IW61x)
             ret_band = subband_SG_FR_5_GHz;
 #else
@@ -2428,7 +2431,7 @@ static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t countr
             ret_band = subband_CN_5_GHz;
             break;
         default:
-            *nr_sb   = 3;
+            *nr_sb = 3;
 #if defined(IW61x)
             ret_band = subband_US_5_GHz;
 #else
@@ -2452,7 +2455,7 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
             return subband_US_5_GHz;
 #endif
         case 0x32:
-            *nr_sb   = 3;
+            *nr_sb = 3;
 #if defined(IW61x)
             ret_band = subband_SG_FR_5_GHz;
 #else
@@ -2479,7 +2482,7 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, 
             ret_band = subband_WWSM_5_GHz;
             break;
         default:
-            *nr_sb   = 3;
+            *nr_sb = 3;
 #if defined(IW61x)
             ret_band = subband_US_5_GHz;
 #else

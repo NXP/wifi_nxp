@@ -319,6 +319,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+                       const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);

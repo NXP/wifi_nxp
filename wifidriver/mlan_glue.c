@@ -2450,7 +2450,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
                 else
                 {
-                    wm_wifi.cmd_resp_status = WM_FAIL;
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
                 }
 #endif
             }
