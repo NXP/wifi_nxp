@@ -2387,7 +2387,7 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 
 }
 
 #ifdef CONFIG_5GHz_SUPPORT
-static wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t country, t_u8 *nr_sb)
+wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t country, t_u8 *nr_sb)
 {
     *nr_sb                        = 1;
     wifi_sub_band_set_t *ret_band = NULL;

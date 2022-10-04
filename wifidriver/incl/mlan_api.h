@@ -246,6 +246,9 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             int custom_ie_len,
                             uint8_t *custom_ie);
 wifi_sub_band_set_t *get_sub_band_from_country(country_code_t country, t_u8 *nr_sb);
+#ifdef CONFIG_5GHz_SUPPORT
+wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t country, t_u8 *nr_sb);
+#endif
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
 #ifdef SD8801
 int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats);

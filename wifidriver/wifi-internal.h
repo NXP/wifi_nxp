@@ -19,7 +19,7 @@
 
 typedef struct
 {
-    int (*wifi_uap_set_params_p)(void);
+    int (*wifi_uap_set_params_p)(int channel);
     int (*wifi_uap_downld_domain_params_p)(MrvlIEtypes_DomainParamSet_t *dp);
     int (*wifi_uap_enable_11d_p)(void);
 } wifi_uap_11d_apis_t;
