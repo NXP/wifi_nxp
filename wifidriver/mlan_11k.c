@@ -311,7 +311,7 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
 {
     mgmt_rrm_meas_beacon_request *beacon_req = (mgmt_rrm_meas_beacon_request *)(void *)req;
     t_u8 *sub_element;
-    t_u32 element_len;
+    int element_len;
     int ret = 0, i;
     wlan_scan_params_v2_t wlan_scan_param;
     wlan_rrm_scan_cb_param *param = NULL;
@@ -324,7 +324,7 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
     }
 
     sub_element = beacon_req->variable;
-    element_len = len - sizeof(mgmt_rrm_meas_beacon_request) - 1U;
+    element_len = (int)len - ((int)sizeof(mgmt_rrm_meas_beacon_request) - 1);
 
     param = (wlan_rrm_scan_cb_param *)os_mem_alloc(sizeof(wlan_rrm_scan_cb_param));
     if (param == NULL)
@@ -338,7 +338,7 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
     param->rep_data.duration      = wlan_le16_to_cpu(beacon_req->duration);
     (void)memcpy(param->rep_data.bssid, beacon_req->bssid, IEEEtypes_ADDRESS_SIZE);
 
-    while (element_len >= 2U)
+    while (element_len >= 2)
     {
         ret = wlan_process_rm_beacon_req_subelement(&param->rep_data, sub_element[0], sub_element[1], &sub_element[2]);
         if (ret < 0)
@@ -346,7 +346,7 @@ static void wlan_process_rm_beacon_req(t_u8 *req,
             goto output;
         }
 
-        element_len -= 2U + (t_u32)sub_element[1];
+        element_len -= 2 + (int)sub_element[1];
         sub_element += 2U + sub_element[1];
     }
 
@@ -544,7 +544,7 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
 
         if (bss_entry->mob_domain_exist)
         {
-            (void)memcpy((void *)pos, (const void *)bss_entry->pmd_ie, sizeof(IEEEtypes_MobilityDomain_t));
+            (void)memcpy((void *)pos, (const void *)bss_entry->md_ie_buff, sizeof(IEEEtypes_MobilityDomain_t));
             pos += sizeof(IEEEtypes_MobilityDomain_t);
         }
     }
