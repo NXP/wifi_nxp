@@ -34,31 +34,7 @@
 
 #define WLAN_MAGIC_NUM (('W' << 0) | ('L' << 8) | ('F' << 16) | ('W' << 24))
 
-#if defined(CONFIG_11AX)
-/* In 802.11ax sizeof sub cmd MLAN_11AXCMD_RUPOWER_SUBID is 2019 bytes
- */
 #define WIFI_FW_CMDBUF_SIZE 2100U
-#elif defined(CONFIG_11AC)
-/* In 802.11ac sizeof(HostCmd_CMD_CHANNEL_TRPC_CONFIG) is 1572 bytes.
- */
-#if defined(IW61x)
-#define WIFI_FW_CMDBUF_SIZE 1780U
-#else
-#define WIFI_FW_CMDBUF_SIZE 1580U
-#endif
-#else
-/* fixme: sizeof(HostCmd_DS_COMMAND) is 1132 bytes. So have kept this at
- * the current size.
-*/
-#if defined(IW61x)
-#define WIFI_FW_CMDBUF_SIZE 1600U
-#else
-#define WIFI_FW_CMDBUF_SIZE 1400U
-#endif
-/* In 802.11ac sizeof(HostCmd_CMD_CHANNEL_TRPC_CONFIG) is 1572 bytes.
- */
-#define WIFI_FW_CMDBUF_SIZE 1580U
-#endif /* CONFIG_11AC */
 
 #define WIFI_RESP_WAIT_TIME 10
 

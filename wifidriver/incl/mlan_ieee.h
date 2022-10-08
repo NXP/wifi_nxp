@@ -110,7 +110,7 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     NEIGHBOR_REPORT = 52,
 #endif
-#ifdef CONFIG_11R
+#if defined(CONFIG_11R) || defined(CONFIG_11K)
     /*IEEE802.11r*/
     MOBILITY_DOMAIN     = 54,
     FAST_BSS_TRANSITION = 55,
@@ -1739,7 +1739,7 @@ typedef MLAN_PACK_START struct
 #pragma pack(pop)
 #endif
 
-#ifdef CONFIG_11R
+#if defined(CONFIG_11R) || defined(CONFIG_11K)
 /** Mobility domain IE */
 typedef MLAN_PACK_START struct _IEEEtypes_MobilityDomain_t
 {

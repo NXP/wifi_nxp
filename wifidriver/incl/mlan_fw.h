@@ -815,7 +815,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define GET_VHTNSSMCS(MCSMapSet, nss) (((MCSMapSet) >> (2U * ((nss)-1U))) & 0x3U)
 #define RET_VHTNSSMCS(MCSMapSet, nss) (((MCSMapSet) >> (2U * ((nss)-1))) & 0x3)
 #define SET_VHTNSSMCS(MCSMapSet, nss, value) \
-    ((MCSMapSet) |= ((t_u32)(value) & (t_u32)0x0003U) << (t_u32)(2U * ((nss)-1U)))
+    ((MCSMapSet) |= (t_u32)(((t_u32)(value)&0x0003U) << (t_u32)(2U * ((t_u32)(nss)-1U))))
 
 /** DevMCSSupported : Tx MCS supported */
 #define GET_DEVTXMCSMAP(DevMCSMap)             ((DevMCSMap) >> 16)

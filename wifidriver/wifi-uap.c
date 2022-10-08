@@ -51,7 +51,7 @@ static bool wifi_check_11ac_capability(mlan_private *pmpriv, t_u8 band)
 
     ENTER();
 #ifdef CONFIG_WIFI_CAPA
-    if(!pmadapter->usr_dot_11ac_enable)
+    if (!pmadapter->usr_dot_11ac_enable)
     {
         return enable_11ac;
     }
@@ -161,29 +161,28 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
 static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
-    t_u8 enable_11ax = MFALSE;
+    t_u8 enable_11ax        = MFALSE;
 
     ENTER();
 #ifdef CONFIG_WIFI_CAPA
-    if(!pmadapter->usr_dot_11ax_enable)
+    if (!pmadapter->usr_dot_11ax_enable)
     {
         return enable_11ax;
     }
 #endif
-    if((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
+    if ((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
     {
         PRINTM(MCMND, "FW don't support 5G AX\n");
         LEAVE();
         return enable_11ax;
     }
-    if((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
-        && !(pmadapter->fw_bands & BAND_GAX))
+    if ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX))
     {
         PRINTM(MCMND, "FW don't support 2G AX\n");
         LEAVE();
         return enable_11ax;
     }
-                enable_11ax = MTRUE;
+    enable_11ax = MTRUE;
     PRINTM(MCMND, "enable_11ax=%d\n", enable_11ax);
     LEAVE();
     return enable_11ax;
@@ -702,7 +701,7 @@ int wifi_uap_set_domain_params(wifi_domain_param_t *dp)
 
     n_dp->header.type = TLV_TYPE_DOMAIN;
     n_dp->header.len  = (t_u16)(sizeof(MrvlIEtypes_DomainParamSet_t) - sizeof(MrvlIEtypesHeader_t) +
-                                ((dp->no_of_sub_band - 1) * sizeof(IEEEtypes_SubbandSet_t)));
+                               ((dp->no_of_sub_band - 1) * sizeof(IEEEtypes_SubbandSet_t)));
 
     (void)memcpy((void *)n_dp->country_code, (const void *)dp->country_code, COUNTRY_CODE_LEN);
 
@@ -731,8 +730,8 @@ int wifi_uap_set_params(int channel)
 {
     int ret;
     wifi_sub_band_set_t *sub_band = NULL;
-    t_u8 nr_sb = 0;
-	if (channel > 14)
+    t_u8 nr_sb                    = 0;
+    if (channel > 14)
     {
 #ifdef CONFIG_5GHz_SUPPORT
         sub_band = get_sub_band_from_country_5ghz(wifi_11d_country, &nr_sb);
@@ -743,7 +742,7 @@ int wifi_uap_set_params(int channel)
         sub_band = get_sub_band_from_country(wifi_11d_country, &nr_sb);
     }
     wifi_domain_param_t *dp = get_11d_domain_params(wifi_11d_country, sub_band, nr_sb);
-    ret = wifi_uap_set_domain_params(dp);
+    ret                     = wifi_uap_set_domain_params(dp);
 
     if (dp != NULL)
     {
@@ -825,17 +824,17 @@ static int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr);
 #ifdef CONFIG_WIFI_CAPA
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
 {
-    if(wlan_capa & WIFI_SUPPORT_LEGACY)
+    if (wlan_capa & WIFI_SUPPORT_LEGACY)
     {
-        if(wlan_capa & WIFI_SUPPORT_11N)
+        if (wlan_capa & WIFI_SUPPORT_11N)
         {
             mlan_adap->usr_dot_11n_enable = MTRUE;
 #ifdef CONFIG_11AC
-            if(wlan_capa & WIFI_SUPPORT_11AC)
+            if (wlan_capa & WIFI_SUPPORT_11AC)
             {
                 mlan_adap->usr_dot_11ac_enable = MTRUE;
 #ifdef CONFIG_11AX
-                if(wlan_capa & WIFI_SUPPORT_11AX)
+                if (wlan_capa & WIFI_SUPPORT_11AX)
                 {
                     mlan_adap->usr_dot_11ax_enable = MTRUE;
                 }
@@ -938,7 +937,7 @@ int wifi_uap_start(mlan_bss_type type,
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    wifi_uap_enable_11d_support();
+    (void)wifi_uap_enable_11d_support();
 
     if (wm_wifi.enable_11d_support && (wm_wifi.uap_support_11d_apis != MNULL))
     {

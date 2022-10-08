@@ -3668,6 +3668,7 @@ mlan_status wlan_ret_gpio_tsf_latch(pmlan_private pmpriv, HostCmd_DS_COMMAND *re
                         }
                         break;
                     default:
+                        wifi_d("gpio tsf latch: Unknown tlv type");
                         break;
                 }
                 tlv_buf_left -= tlv_len + sizeof(MrvlIEtypesHeader_t);

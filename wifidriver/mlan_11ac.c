@@ -772,7 +772,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     mlan_adapter *pmadapter = priv->adapter;
     t_u16 mcs_map_user      = 0;
     t_u16 mcs_map_resp      = 0;
-    t_u16 mcs_map_result    = 0;
+    t_u32 mcs_map_result    = 0U;
     t_u16 mcs_user          = 0;
     t_u16 mcs_resp          = 0;
     t_u16 nss;
@@ -790,7 +790,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     {
         mcs_map_resp = wlan_le16_to_cpu(pvht_cap->vht_cap.mcs_sets.rx_mcs_map);
     }
-    mcs_map_result = 0;
+    mcs_map_result = 0U;
     for (nss = 1; nss <= 8U; nss++)
     {
         mcs_user = GET_VHTNSSMCS(mcs_map_user, nss);
@@ -808,7 +808,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     pvht_cap->vht_cap.mcs_sets.rx_mcs_map = wlan_cpu_to_le16(mcs_map_result);
 
     /* rx highest rate */
-    pvht_cap->vht_cap.mcs_sets.rx_max_rate = wlan_convert_mcsmap_to_maxrate(priv, (t_u8)bands, mcs_map_result);
+    pvht_cap->vht_cap.mcs_sets.rx_max_rate = wlan_convert_mcsmap_to_maxrate(priv, (t_u8)bands, (t_u16)mcs_map_result);
     pvht_cap->vht_cap.mcs_sets.rx_max_rate = wlan_cpu_to_le16(pvht_cap->vht_cap.mcs_sets.rx_max_rate);
 
     /* tx MCS Set find the minimum of the user tx mcs and ap tx mcs */
@@ -817,7 +817,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     {
         mcs_map_resp = wlan_le16_to_cpu(pvht_cap->vht_cap.mcs_sets.tx_mcs_map);
     }
-    mcs_map_result = 0;
+    mcs_map_result = 0U;
     for (nss = 1; nss <= 8U; nss++)
     {
         mcs_user = GET_VHTNSSMCS(mcs_map_user, nss);
@@ -835,7 +835,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     /* tx MCS map */
     pvht_cap->vht_cap.mcs_sets.tx_mcs_map = wlan_cpu_to_le16(mcs_map_result);
     /* tx highest rate */
-    pvht_cap->vht_cap.mcs_sets.tx_max_rate = wlan_convert_mcsmap_to_maxrate(priv, (t_u8)bands, mcs_map_result);
+    pvht_cap->vht_cap.mcs_sets.tx_max_rate = wlan_convert_mcsmap_to_maxrate(priv, (t_u8)bands, (t_u16)mcs_map_result);
     pvht_cap->vht_cap.mcs_sets.tx_max_rate = wlan_cpu_to_le16(pvht_cap->vht_cap.mcs_sets.tx_max_rate);
 
     LEAVE();
