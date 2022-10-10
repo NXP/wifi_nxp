@@ -246,6 +246,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
     t_u32 cfg_value         = 0;
     t_u32 hw_value          = 0;
     t_u8 nss                = 0;
+    t_u16 no_nss_support    = NO_NSS_SUPPORT;
 
     ENTER();
 
@@ -323,7 +324,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
                 hw_value  = GET_DEVNSSRXMCS(pmadapter->hw_dot_11ac_mcs_support, nss);
                 if ((hw_value == NO_NSS_SUPPORT) || (cfg_value == NO_NSS_SUPPORT))
                 {
-                    SET_VHTNSSMCS(vht_cfg->vht_rx_mcs, nss, NO_NSS_SUPPORT);
+                    SET_VHTNSSMCS(vht_cfg->vht_rx_mcs, nss, no_nss_support);
                 }
                 else
                 {
@@ -342,7 +343,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
                 hw_value  = GET_DEVNSSTXMCS(pmadapter->hw_dot_11ac_mcs_support, nss);
                 if ((hw_value == NO_NSS_SUPPORT) || (cfg_value == NO_NSS_SUPPORT))
                 {
-                    SET_VHTNSSMCS(vht_cfg->vht_tx_mcs, nss, NO_NSS_SUPPORT);
+                    SET_VHTNSSMCS(vht_cfg->vht_tx_mcs, nss, no_nss_support);
                 }
                 else
                 {
@@ -776,6 +777,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
     t_u16 mcs_user          = 0;
     t_u16 mcs_resp          = 0;
     t_u16 nss;
+    t_u16 no_nss_support = NO_NSS_SUPPORT;
 
     ENTER();
 
@@ -797,7 +799,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
         mcs_resp = GET_VHTNSSMCS(mcs_map_resp, nss);
         if ((mcs_user == NO_NSS_SUPPORT) || (mcs_resp == NO_NSS_SUPPORT))
         {
-            SET_VHTNSSMCS(mcs_map_result, nss, NO_NSS_SUPPORT);
+            SET_VHTNSSMCS(mcs_map_result, nss, no_nss_support);
         }
         else
         {
@@ -824,7 +826,7 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
         mcs_resp = GET_VHTNSSMCS(mcs_map_resp, nss);
         if ((mcs_user == NO_NSS_SUPPORT) || (mcs_resp == NO_NSS_SUPPORT))
         {
-            SET_VHTNSSMCS(mcs_map_result, nss, NO_NSS_SUPPORT);
+            SET_VHTNSSMCS(mcs_map_result, nss, no_nss_support);
         }
         else
         {
@@ -935,6 +937,7 @@ void wlan_fill_tdls_vht_oprat_ie(mlan_private *priv, IEEEtypes_VHTOprat_t *vht_o
     t_u16 mcs_user = 0;
     t_u16 mcs_resp = 0;
     t_u16 nss;
+    t_u16 no_nss_support = NO_NSS_SUPPORT;
     t_u8  chan_bw = 0;
     BSSDescriptor_t *pbss_desc;
     IEEEtypes_VHTCap_t *pvht_cap = &sta_ptr->vht_cap;
@@ -1004,7 +1007,7 @@ void wlan_fill_tdls_vht_oprat_ie(mlan_private *priv, IEEEtypes_VHTOprat_t *vht_o
         mcs_user = GET_VHTNSSMCS(mcs_map_user, nss);
         mcs_resp = GET_VHTNSSMCS(mcs_map_resp, nss);
         if ((mcs_user == NO_NSS_SUPPORT) || (mcs_resp == NO_NSS_SUPPORT))
-            SET_VHTNSSMCS(mcs_map_result, nss, NO_NSS_SUPPORT);
+            SET_VHTNSSMCS(mcs_map_result, nss, no_nss_support);
         else
             SET_VHTNSSMCS(mcs_map_result, nss, MIN(mcs_user, mcs_resp));
     }
