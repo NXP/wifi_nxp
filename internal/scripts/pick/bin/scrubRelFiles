@@ -34,7 +34,10 @@ printUsage() {
     echo ""
     echo "Insufficient Arguments"
     echo ""
-    echo "Usage : scrubRelFile <destinationDirectoryName>"
+    echo "Usage : scrubRelFile <destinationDirectoryName> [SoC_type]"
+    echo ""
+    echo "(Optional) SoC Types Available:"
+    echo "IW61x and RW610 [Default operation is for 8987, 8978 and 8801 SoC types]"
     echo ""
 }
 
@@ -49,6 +52,7 @@ fi
 dir=`pwd`
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 destinationDir=$1
+soc_type=$2
 
 ########################################
 # Change permissions of files in script directory
@@ -79,7 +83,13 @@ if [ -f "$scriptDir/removeMacros.txt" ]; then
     echo "removeMacros.txt exists. Deleting it and proceeding further."
     rm -f $scriptDir/removeMacros.txt
 fi
-$scriptDir/genMacroList.x64 -a $scriptDir/allMacros.txt -r $scriptDir/keepMacros.txt >> $scriptDir/removeMacros.txt
+if [ "$soc_type" = "RW610" ]; then
+    $scriptDir/genMacroList.x64 -a $scriptDir/allMacros_rw610.txt -r $scriptDir/keepMacros_rw610.txt >> $scriptDir/removeMacros.txt
+elif [ "$soc_type" = "IW61x" ]; then
+    $scriptDir/genMacroList.x64 -a $scriptDir/allMacros_iw61x.txt -r $scriptDir/keepMacros_iw61x.txt >> $scriptDir/removeMacros.txt
+else
+    $scriptDir/genMacroList.x64 -a $scriptDir/allMacros.txt -r $scriptDir/keepMacros.txt >> $scriptDir/removeMacros.txt
+fi
 
 ########################################
 # Call unifdef to remove all code that is not needed.
@@ -87,12 +97,28 @@ $scriptDir/genMacroList.x64 -a $scriptDir/allMacros.txt -r $scriptDir/keepMacros
 echo "Removing code that is not needed for this release..."
 
 #create argument for unifdef based on macros to be removed
-for x in `cat $scriptDir/keepMacros.txt`
-do
-unifdef_arg="$unifdef_arg -D$x"
-echo -n "- keep the code controlled by a defined macro "
-echo -D$x
-done
+if [ "$soc_type" = "RW610" ]; then
+    for x in `cat $scriptDir/keepMacros_rw610.txt`
+    do
+    unifdef_arg="$unifdef_arg -D$x"
+    echo -n "- keep the Redfinch code controlled by a defined macro "
+    echo -D$x
+    done
+elif [ "$soc_type" = "IW61x" ]; then
+    for x in `cat $scriptDir/keepMacros_iw61x.txt`
+    do
+    unifdef_arg="$unifdef_arg -D$x"
+    echo -n "- keep the Firecrest code controlled by a defined macro "
+    echo -D$x
+    done
+else
+    for x in `cat $scriptDir/keepMacros.txt`
+    do
+    unifdef_arg="$unifdef_arg -D$x"
+    echo -n "- keep the code controlled by a defined macro "
+    echo -D$x
+    done
+fi
 
 for x in `cat $scriptDir/removeMacros.txt`
 do
