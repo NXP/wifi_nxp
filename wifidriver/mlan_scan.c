@@ -1275,7 +1275,8 @@ void check_for_wps_ie(
 static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                                                    OUT BSSDescriptor_t *pbss_entry,
                                                    IN t_u8 **pbeacon_info,
-                                                   IN t_u32 *bytes_left)
+                                                   IN t_u32 *bytes_left,
+                                                   IN t_u8 ext_scan)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
     IEEEtypes_ElementId_e element_id;
@@ -1367,11 +1368,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
      *   beacon interval, and capability information
      */
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-    if (!pmadapter->ext_scan
-#ifdef CONFIG_ROAMING
-        || pmadapter->bgscan_reported
-#endif
-    )
+    if (ext_scan == (t_u8)0U)
     {
 #endif
         /* RSSI is 1 byte long */
@@ -3285,7 +3282,8 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
         (void)__memset(pmadapter, bss_new_entry, 0x00, sizeof(BSSDescriptor_t));
 
         /* Process the data fields and IEs returned for this BSS */
-        if (wlan_interpret_bss_desc_with_ie(pmadapter, bss_new_entry, &pbss_info, &bytes_left) == MLAN_STATUS_SUCCESS)
+        if (wlan_interpret_bss_desc_with_ie(pmadapter, bss_new_entry, &pbss_info, &bytes_left, MFALSE) ==
+            MLAN_STATUS_SUCCESS)
         {
             PRINTM(MINFO, "SCAN_RESP: BSSID = %02x:%02x:%02x:%02x:%02x:%02x\n", bss_new_entry->mac_address[0],
                    bss_new_entry->mac_address[1], bss_new_entry->mac_address[2], bss_new_entry->mac_address[3],
@@ -3674,7 +3672,8 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
         (void)__memset(pmadapter, bss_new_entry, 0x00, sizeof(BSSDescriptor_t));
 
         /* Process the data fields and IEs returned for this BSS */
-        if (wlan_interpret_bss_desc_with_ie(pmadapter, bss_new_entry, &pbss_info, &bytes_left) == MLAN_STATUS_SUCCESS)
+        if (wlan_interpret_bss_desc_with_ie(pmadapter, bss_new_entry, &pbss_info, &bytes_left, MTRUE) ==
+            MLAN_STATUS_SUCCESS)
         {
             PRINTM(MINFO, "EXT_SCAN: BSSID = %02x:%02x:%02x:%02x:%02x:%02x\n", bss_new_entry->mac_address[0],
                    bss_new_entry->mac_address[1], bss_new_entry->mac_address[2], bss_new_entry->mac_address[3],
