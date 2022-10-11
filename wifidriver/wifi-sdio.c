@@ -436,6 +436,14 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         msg.event = (uint16_t)upld_type;
         (void)memcpy((void *)msg.data, (const void *)pmbuf, sdiopkt->size);
 
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+        if (upld_type == MLAN_TYPE_EVENT && sdiopkt->hostcmd.command == EVENT_TX_DATA_PAUSE)
+        {
+            wifi_handle_event_data_pause(msg.data);
+            wifi_free_eventbuf(msg.data);
+            return MLAN_STATUS_SUCCESS;
+        }
+#endif
         ret = os_queue_send(bus.event_queue, &msg, os_msec_to_ticks(WIFI_RESP_WAIT_TIME));
 
         if (ret != WM_SUCCESS)

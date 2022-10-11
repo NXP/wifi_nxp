@@ -2340,7 +2340,9 @@ static void wifi_driver_tx(void *data)
 #else
 static void wifi_driver_tx(void *data)
 {
+#ifndef CONFIG_WMM_ENH
     int err = WM_SUCCESS;
+#endif
     int ret;
     struct bus_message msg;
     while (1)
@@ -2361,6 +2363,9 @@ static void wifi_driver_tx(void *data)
                     wifi_e("Error in getting readlock");
                     goto get_msg;
                 }
+#ifdef CONFIG_WMM_ENH
+                wifi_xmit_wmm_ac_pkts_enh();
+#else
                 if (wm_wifi.pkt_cnt[WMM_AC_VO] > 0)
                 {
                     err = wlan_xmit_wmm_pkt(msg.reason, wm_wifi.vo_pkt_len[wm_wifi.send_index[WMM_AC_VO]],
@@ -2425,6 +2430,7 @@ static void wifi_driver_tx(void *data)
                 {
                     /* Do nothing */
                 }
+#endif /* CONFIG_WMM_ENH */
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
                 os_rwlock_read_unlock(&sleep_rwlock);
