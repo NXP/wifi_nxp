@@ -7439,8 +7439,18 @@ int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
     return wifi_set_btwt_cfg(btwt_config);
 }
 
+/* Below macros are defined as in FW under dot11ax_twt.c */
+#define TWT_EARLY_WAKEUP_ADJUSTMENT 1000                                // us
+#define TWT_SLEEP_MIN               (756 + TWT_EARLY_WAKEUP_ADJUSTMENT) // us
 int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
 {
+    if (((twt_setup->twt_mantissa << twt_setup->twt_exponent) - (twt_setup->twt_wakeup_duration * 256)) < TWT_SLEEP_MIN)
+    {
+        wlcm_e("Service period (SP) value is : %u us", twt_setup->twt_mantissa << twt_setup->twt_exponent);
+        wlcm_e("Wakeup duration (WD) value is : %u us", twt_setup->twt_wakeup_duration * 256);
+        wlcm_e("Minimum sleep time (SP - WD) should be greater than: %u us", TWT_SLEEP_MIN);
+        return -WM_FAIL;
+    }
     return wifi_set_twt_setup_cfg(twt_setup);
 }
 
