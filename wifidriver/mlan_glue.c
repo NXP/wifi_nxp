@@ -224,11 +224,11 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
     size_t buf_used  = 0;
     MrvlIEtypesHeader_t *tlv;
     nlist_entry_tlv *nlist = MNULL;
-    t_u8 entry_num         = 1;
+    t_u8 entry_num         = 2;
     t_u16 tlv_type, tlv_len;
     /** The first byte in channels[] will be number of channels, followed by
      * the channel numbers */
-    t_u8 *channels = (t_u8 *)os_mem_alloc((size_t)((int)sizeof(t_u8) * ((int)MAX_NUM_CHANS_IN_NBOR_RPT + (int)1U)));
+    t_u8 *channels = (t_u8 *)os_mem_alloc((size_t)((int)sizeof(t_u8) * ((int)MAX_NUM_CHANS_IN_NBOR_RPT + (int)2U)));
     t_u8 *buffer   = (t_u8 *)evt + sizeof(Event_Gen_t) - 1;
 
     wifi_d("Neighbor report event");
@@ -241,7 +241,7 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
         return MNULL;
     }
 
-    (void)memset(channels, 0, sizeof(t_u8) * (MAX_NUM_CHANS_IN_NBOR_RPT + 1U));
+    (void)memset(channels, 0, sizeof(t_u8) * (MAX_NUM_CHANS_IN_NBOR_RPT + 2U));
     tlv_buf_left = (int)evt->length;
     tlv_buf_left = wlan_le16_to_cpu(tlv_buf_left);
     if (tlv_buf_left < (int)sizeof(MrvlIEtypesHeader_t))
@@ -294,9 +294,9 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
 
-    if (entry_num > (t_u8)1U)
+    if (entry_num > (t_u8)2U)
     {
-        channels[0] = entry_num - (t_u8)1U;
+        channels[1] = entry_num - (t_u8)2U;
         return channels;
     }
     else
@@ -305,7 +305,7 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
         return MNULL;
     }
 }
-#endif /* CONFIG_11K_OFFLOAD */
+#endif /* CONFIG_11K */
 
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len)
 {

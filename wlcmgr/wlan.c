@@ -2912,16 +2912,20 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         t_u8 *channels = (t_u8 *)msg->data;
         wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
 
-        for (i = 0; i < channels[0]; i++)
+#ifdef CONFIG_11V
+        network->btm_mode = channels[0];
+#endif
+
+        for (i = 0; i < channels[1]; i++)
         {
             /* TODO: get the channel numbers from the neighbor list report event */
-            chan_list[i].chan_number = (t_u8)channels[i + 1U];
+            chan_list[i].chan_number = (t_u8)channels[i + 2U];
             chan_list[i].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
             chan_list[i].scan_time   = 120;
         }
 
         wlan.ft_assoc = true;
-        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[0], chan_list, 0,
+        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[1], chan_list, 0,
 #ifdef CONFIG_EXT_SCAN_SUPPORT
                                  scan_channel_gap,
 #endif

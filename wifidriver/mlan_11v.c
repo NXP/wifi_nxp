@@ -235,8 +235,9 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 
         /* disconnect and re-assocate with AP2 */
         // ssid_bssid.specific_channel = preport[neighbor_index].channel;
-        channels[0] = 1;
-        channels[1] = preport[neighbor_index].channel;
+        channels[0] = btm_mode;
+        channels[1] = 1;
+        channels[2] = preport[neighbor_index].channel;
         if (wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)channels) != WM_SUCCESS)
         {
             /* If fail to send message on queue, free allocated memory ! */

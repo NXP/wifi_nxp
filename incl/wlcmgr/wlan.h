@@ -1129,6 +1129,10 @@ struct wlan_network
     /** Wireless capabilities of uAP network 802.11n, 802.11ac or/and 802.11ax*/
     uint8_t wlan_capa;
 #endif
+#ifdef CONFIG_11V
+    /** BTM mode */
+    uint8_t btm_mode;
+#endif
 };
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
