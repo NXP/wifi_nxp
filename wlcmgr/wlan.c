@@ -2376,10 +2376,17 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     else
     {
 #if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
+        if (
 #ifdef CONFIG_11R
-        if (wlan.ft_assoc == true)
-        {
+            (wlan.ft_assoc == true) ||
 #endif
+#ifdef CONFIG_ROAMING
+            (wlan.roaming_enabled == true)
+#else
+            (wlan.running == 0U)
+#endif
+        )
+        {
             if (wlan.sta_state == CM_STA_CONNECTED)
             {
                 wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
@@ -2387,9 +2394,7 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
                 *next = wlan.sta_state;
                 return;
             }
-#ifdef CONFIG_11R
         }
-#endif /* CONFIG_11R */
 #endif /* (CONFIG_ROAMING) || defined(CONFIG_11R) */
     }
     (void)os_semaphore_put(&wlan.scan_lock);
@@ -2876,7 +2881,18 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
         }
 #endif
     }
-#endif
+    else
+    {
+#endif /* CONFIG_11R */
+#ifdef CONFIG_ROAMING
+        if (wlan.roaming_enabled == true)
+        {
+            wifi_config_bgscan_and_rssi(network->ssid);
+        }
+#endif /* CONFIG_ROAMING */
+#ifdef CONFIG_11R
+    }
+#endif /* CONFIG_11R */
 }
 
 static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
@@ -3967,11 +3983,6 @@ static void wlcm_process_fw_debug_info(struct wifi_message *msg)
 #endif
 
 #ifdef CONFIG_ROAMING
-static void wlcm_process_rssi_low_event(struct wlan_network *network)
-{
-    wifi_config_bgscan_and_rssi(network->ssid);
-}
-
 static void wlcm_process_bg_scan_report(void)
 {
     wifi_send_scan_query();
@@ -4212,10 +4223,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
 #ifdef CONFIG_ROAMING
-        case WIFI_EVENT_RSSI_LOW:
-            wlcm_d("got event: RSSI low");
-            wlcm_process_rssi_low_event(network);
-            break;
         case WIFI_EVENT_BG_SCAN_STOPPED:
             wlcm_d("got event: BG scan stopped");
             break;
