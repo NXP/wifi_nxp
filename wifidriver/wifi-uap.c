@@ -646,23 +646,6 @@ static int wifi_cmd_uap_config(char *ssid,
                                          bss_type, NULL);
 }
 
-/* Region: Constrained 2.4 Ghz */
-static wifi_sub_band_set_t subband_UN_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
-
-static wifi_domain_param_t *get_11d_uap_domain_params(void)
-{
-    t_u8 nr_sb = sizeof(subband_UN_2_4GHz) / sizeof(wifi_sub_band_set_t);
-
-    wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
-
-    (void)memcpy((void *)dp->country_code, (const void *)"UN ", COUNTRY_CODE_LEN);
-
-    dp->no_of_sub_band = nr_sb;
-    (void)memcpy((void *)&dp->sub_band[0], (const void *)&subband_UN_2_4GHz[0], 2U * sizeof(wifi_sub_band_set_t));
-
-    return dp;
-}
-
 static wifi_uap_11d_apis_t wifi_uap_11d_apis = {
     .wifi_uap_set_params_p           = wifi_uap_set_params,
     .wifi_uap_downld_domain_params_p = wifi_uap_downld_domain_params,

@@ -156,6 +156,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
+    t_u8 category                     = 0;
 #endif
     t_u8 *payload     = NULL;
     t_u16 payload_len = (t_u16)0U;
@@ -180,8 +181,13 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
 
     sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+    category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
     if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
     {
+        if (category == IEEE_MGMT_ACTION_CATEGORY_BLOCK_ACK)
+        {
+            return;
+        }
         payload     = (t_u8 *)rxpd;
         payload_len = datalen - INTF_HEADER_LEN;
     }
