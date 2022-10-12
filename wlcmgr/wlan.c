@@ -1363,9 +1363,12 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
 
         case WLAN_SECURITY_NONE:
 #ifdef CONFIG_WPS2
-            if (network->wps_specific && res->wps_session != WPS_SESSION_INACTIVE)
+            if (network->wps_specific != 0U && res->wps_session != (t_u16)WPS_SESSION_INACTIVE)
+            {
                 wps_session_attempt = 1;
+            }
 #endif
+            break;
         default:
             wlcm_d("Unexpected wlan security");
             break;
@@ -1898,6 +1901,8 @@ static void update_network_params(struct wlan_network *network, const struct wif
                 network->security.mcstCipher.ccmp = res->wpa_mcstCipher.ccmp;
                 network->security.ucstCipher.ccmp = res->wpa_ucstCipher.ccmp;
             }
+            break;
+        case WLAN_SECURITY_NONE:
             break;
         default:
             wlcm_d("Unexpected security nw param");
@@ -2911,9 +2916,14 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         int ret;
         t_u8 *channels = (t_u8 *)msg->data;
         wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
+        t_u8 *bssid = NULL;
 
 #ifdef CONFIG_11V
         network->btm_mode = channels[0];
+        if (network->btm_mode != 0U)
+        {
+            bssid = &channels[3];
+        }
 #endif
 
         for (i = 0; i < channels[1]; i++)
@@ -2925,7 +2935,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         }
 
         wlan.ft_assoc = true;
-        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, NULL, network->ssid, NULL, channels[1], chan_list, 0,
+        ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, channels[1], chan_list, 0,
 #ifdef CONFIG_EXT_SCAN_SUPPORT
                                  scan_channel_gap,
 #endif

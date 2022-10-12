@@ -184,7 +184,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
     if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
     {
-        if (category == IEEE_MGMT_ACTION_CATEGORY_BLOCK_ACK)
+        if (category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC && category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
+            category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM)
         {
             return;
         }

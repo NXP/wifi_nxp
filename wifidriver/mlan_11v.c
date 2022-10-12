@@ -161,7 +161,10 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
     t_u8 prefer_old = 0, prefer_select = 0;
     t_u8 *ptagnr   = NULL;
     t_u8 tagnr_len = 0;
-    t_u8 *channels = (t_u8 *)os_mem_calloc((size_t)2U);
+#ifdef CONFIG_MBO
+    t_u8 is_first = 0;
+#endif /* CONFIG_MBO */
+    t_u8 *channels = (t_u8 *)os_mem_calloc((size_t)9U);
 
     if (channels == NULL)
     {
@@ -209,13 +212,21 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
                 struct wnm_neighbor_report *rep;
                 rep = &preport[wnm_num_neighbor_report];
                 wlan_wnm_parse_neighbor_report(pos, len, rep);
+#ifdef CONFIG_MBO
+                if ((is_first == 0U) &&
+                    (memcmp(dest_addr, preport[wnm_num_neighbor_report].bssid, MLAN_MAC_ADDR_LENGTH) != 0))
+#else
                 if (rep->prefer_select != (t_u8)0U && (rep->prefer > prefer_old))
+#endif
                 {
                     ptagnr         = pos - 2;
                     tagnr_len      = len + (t_u8)2U;
                     prefer_old     = (t_u8)rep->prefer;
                     prefer_select  = 1;
                     neighbor_index = wnm_num_neighbor_report;
+#ifdef CONFIG_MBO
+                    is_first = 1U;
+#endif
                 }
                 wnm_num_neighbor_report++;
             }
@@ -238,6 +249,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         channels[0] = btm_mode;
         channels[1] = 1;
         channels[2] = preport[neighbor_index].channel;
+        (void)memcpy((void *)&channels[3], (const void *)preport[neighbor_index].bssid, (size_t)MLAN_MAC_ADDR_LENGTH);
         if (wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)channels) != WM_SUCCESS)
         {
             /* If fail to send message on queue, free allocated memory ! */
