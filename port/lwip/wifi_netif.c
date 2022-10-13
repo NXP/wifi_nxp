@@ -177,18 +177,23 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
-    pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
-    pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
-
-    sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-    category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
-    if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
+    if ((rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME) && (recv_interface == MLAN_BSS_TYPE_STA))
     {
-        if (category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC && category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
-            category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM)
+        pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
+        pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
+
+        sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+        category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
+        if (sub_type == (t_u16)SUBTYPE_ACTION)
         {
-            return;
+            if (category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
+                category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
+                category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM)
+            {
+                return;
+            }
         }
+
         payload     = (t_u8 *)rxpd;
         payload_len = datalen - INTF_HEADER_LEN;
     }
