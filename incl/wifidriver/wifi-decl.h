@@ -1148,6 +1148,7 @@ typedef PACK_START struct
     /** QOS control */
     uint16_t qos_ctrl;
 } PACK_END wifi_data_info_t;
+#endif
 
 /** Wifi frame types */
 typedef enum
@@ -1180,6 +1181,7 @@ typedef enum
     QOS_DATA_FRAME = 0x88,
 } wifi_frame_type_t;
 
+#ifndef CONFIG_MLAN_WMSDK
 typedef PACK_START struct
 {
     wifi_frame_type_t frame_type;
@@ -1247,7 +1249,6 @@ typedef struct
     wifi_chan_scan_param_set_t chan_scan_param[1];
 } wifi_chan_list_param_set_t;
 
-#ifndef CONFIG_MLAN_WMSDK
 /** 802_11_header packet */
 typedef PACK_START struct _wifi_mgmt_frame_t
 {
@@ -1272,7 +1273,6 @@ typedef PACK_START struct _wifi_mgmt_frame_t
     /** Frame payload */
     t_u8 payload[1];
 } PACK_END wifi_mgmt_frame_t;
-#endif
 
 /** Calibration Data */
 typedef PACK_START struct _wifi_cal_data_t

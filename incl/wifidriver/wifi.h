@@ -18,6 +18,7 @@
 #endif
 
 #ifdef CONFIG_WIFI_INTERNAL
+#define CONFIG_MLAN_WMSDK         1
 #define CONFIG_11N                1
 #define STA_SUPPORT               1
 #define UAP_SUPPORT               1
