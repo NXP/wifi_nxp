@@ -3311,30 +3311,33 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             if (wlan.sta_ipv6_state != CM_STA_CONNECTED)
             {
 #endif
-                wlcm_d("Lease renewal failed, disconnecting");
-
-                if (wlan.cm_ieeeps_configured)
+                if (wlan.sta_ipv4_state == CM_STA_CONNECTED)
                 {
-                    /* if lease renewal fails,
-                     * disable ieeeps mode*/
-                    wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
-                }
+                    wlcm_d("Lease renewal failed, disconnecting");
 
-                // wlan_disconnect();
+                    if (wlan.cm_ieeeps_configured)
+                    {
+                        /* if lease renewal fails,
+                         * disable ieeeps mode*/
+                        wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
+                    }
+
+                    // wlan_disconnect();
 #ifdef CONFIG_WLAN_FAST_PATH
-                /* Mark the fast path cache invalid. */
-                wlan.auth_cache_valid      = false;
-                wlan.fast_path_cache_valid = false;
+                    /* Mark the fast path cache invalid. */
+                    wlan.auth_cache_valid      = false;
+                    wlan.fast_path_cache_valid = false;
 #endif /* CONFIG_WLAN_FAST_PATH */
 
-                do_connect_failed(WLAN_REASON_ADDRESS_FAILED);
+                    do_connect_failed(WLAN_REASON_ADDRESS_FAILED);
 
-                if (wlan.reassoc_control)
-                {
-                    wlcm_request_reconnect(next, network);
+                    if (wlan.reassoc_control)
+                    {
+                        wlcm_request_reconnect(next, network);
+                    }
+
+                    *next = wlan.sta_state;
                 }
-
-                *next = wlan.sta_state;
 #ifdef CONFIG_IPV6
             }
 #endif
