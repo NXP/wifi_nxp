@@ -1313,6 +1313,9 @@ struct _mlan_private
     int rrm_mgmt_bitmap_index;
     t_u8 neighbor_rep_token;
 #endif
+#ifdef CONFIG_11V
+    t_u8 bss_trans_query_token;
+#endif
 
     /** Port Control mode */
     bool port_ctrl_mode;

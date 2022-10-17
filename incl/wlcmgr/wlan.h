@@ -482,11 +482,11 @@ struct wlan_scan_result
     /** The network uses WPA3 SAE security */
     unsigned wpa3_sae : 1;
 #ifdef CONFIG_11R
-    /** The network uses FT 802.1x security */
+    /** The network uses FT 802.1x security (For internal use only)*/
     unsigned ft_1x : 1;
-    /** The network uses FT PSK security */
+    /** The network uses FT PSK security (For internal use only)*/
     unsigned ft_psk : 1;
-    /** The network uses FT SAE security */
+    /** The network uses FT SAE security (For internal use only)*/
     unsigned ft_sae : 1;
 #endif
 
@@ -507,6 +507,15 @@ struct wlan_scan_result
 
     /** DTIM Period */
     uint8_t dtim_period;
+
+#ifdef CONFIG_11K
+    /** Neigbort report support (For internal use only)*/
+    bool neighbor_report_supported;
+#endif
+#ifdef CONFIG_11V
+    /* bss transition support (For internal use only)*/
+    bool bss_transition_supported;
+#endif
 };
 
 typedef enum
@@ -1099,11 +1108,11 @@ struct wlan_network
     unsigned wps_specific : 1;
 #endif
 #ifdef CONFIG_11R
-    /** The network uses FT 802.1x security */
+    /** The network uses FT 802.1x security (For internal use only)*/
     unsigned ft_1x : 1;
-    /** The network uses FT PSK security */
+    /** The network uses FT PSK security (For internal use only)*/
     unsigned ft_psk : 1;
-    /** The network uses FT SAE security */
+    /** The network uses FT SAE security (For internal use only)*/
     unsigned ft_sae : 1;
 #endif
 #ifdef CONFIG_OWE
@@ -1132,6 +1141,12 @@ struct wlan_network
 #ifdef CONFIG_11V
     /** BTM mode */
     uint8_t btm_mode;
+    /* bss transition support (For internal use only)*/
+    bool bss_transition_supported;
+#endif
+#ifdef CONFIG_11K
+    /* Neighbor report support (For internal use only)*/
+    bool neighbor_report_supported;
 #endif
 };
 
@@ -3894,6 +3909,15 @@ int wlan_host_11k_cfg(int enable_11k);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_host_11k_neighbor_req(t_u8 *ssid);
+#endif
+
+#ifdef CONFIG_11V
+/**
+ * host send bss transition management query
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_host_11v_bss_trans_query(t_u8 query_reason);
 #endif
 
 #ifdef CONFIG_MBO

@@ -1253,6 +1253,12 @@ int wrapper_bssdesc_second_set(int bss_index,
                                bool *wps_IE_exist,
                                uint16_t *wps_session,
                                bool *wpa2_entp_IE_exist,
+#ifdef CONFIG_11K
+                               bool *neighbor_report_supported,
+#endif
+#ifdef CONFIG_11V
+                               bool *bss_transition_supported,
+#endif
                                uint8_t *trans_mode,
                                uint8_t *trans_bssid,
                                int *trans_ssid_len,
@@ -1274,10 +1280,16 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
     }
 
     /* Country info not populated */
-    rv = wrapper_bssdesc_second_set((int)index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present,
-                                    &common_desc.wmm_ie_present, &common_desc.band, &common_desc.wps_IE_exist,
-                                    &common_desc.wps_session, &common_desc.wpa2_entp_IE_exist, &common_desc.trans_mode,
-                                    common_desc.trans_bssid, &common_desc.trans_ssid_len, common_desc.trans_ssid);
+    rv = wrapper_bssdesc_second_set(
+        (int)index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present, &common_desc.wmm_ie_present,
+        &common_desc.band, &common_desc.wps_IE_exist, &common_desc.wps_session, &common_desc.wpa2_entp_IE_exist,
+#ifdef CONFIG_11K
+        &common_desc.neighbor_report_supported,
+#endif
+#ifdef CONFIG_11V
+        &common_desc.bss_transition_supported,
+#endif
+        &common_desc.trans_mode, common_desc.trans_bssid, &common_desc.trans_ssid_len, common_desc.trans_ssid);
 
     if (rv != WM_SUCCESS)
     {

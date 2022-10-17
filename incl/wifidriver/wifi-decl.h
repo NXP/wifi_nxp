@@ -290,6 +290,14 @@ struct wifi_scan_result
     uint8_t trans_bssid[MLAN_MAC_ADDR_LENGTH]; /*!< Trans bssid array */
     uint8_t trans_ssid[MLAN_MAX_SSID_LENGTH];  /*!< Trans ssid array */
     int trans_ssid_len;                        /*!< Trans bssid length */
+#ifdef CONFIG_11K
+    /** Neigbort report support */
+    bool neighbor_report_supported;
+#endif
+#ifdef CONFIG_11V
+    /** bss transition support */
+    bool bss_transition_supported;
+#endif
 };
 
 /** MAC address */

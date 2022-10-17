@@ -118,14 +118,14 @@ static uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands)
 {
     uint8_t enable_11n = false;
 
-    if(channel > 14 && (fw_bands | BAND_AN))
-	{
+    if (channel > 14 && (fw_bands | BAND_AN))
+    {
         enable_11n = true;
     }
-	else if(channel <= 14 && (fw_bands | BAND_GN))
-	{
+    else if (channel <= 14 && (fw_bands | BAND_GN))
+    {
         enable_11n = true;
-	}
+    }
     return enable_11n;
 }
 
@@ -134,14 +134,14 @@ static uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands)
     uint8_t enable_11ac = false;
 
 #ifdef CONFIG_11AC
-    if(channel > 14 && (fw_bands | BAND_AAC))
+    if (channel > 14 && (fw_bands | BAND_AAC))
     {
-		enable_11ac = true;
+        enable_11ac = true;
     }
-	else if(channel <= 14 && (fw_bands | BAND_GAC))
+    else if (channel <= 14 && (fw_bands | BAND_GAC))
     {
-		enable_11ac = true;
-	}
+        enable_11ac = true;
+    }
 #endif
     return enable_11ac;
 }
@@ -151,14 +151,14 @@ static uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands)
     uint8_t enable_11ax = false;
 
 #ifdef CONFIG_11AX
-    if(channel > 14 && (fw_bands | BAND_AAX))
-	{
+    if (channel > 14 && (fw_bands | BAND_AAX))
+    {
         enable_11ax = true;
     }
-	else if(channel <= 14 && (fw_bands | BAND_GAX))
-	{
+    else if (channel <= 14 && (fw_bands | BAND_GAX))
+    {
         enable_11ax = true;
-	}
+    }
 #endif
     return enable_11ax;
 }
@@ -170,21 +170,20 @@ static int get_capa(char *arg, uint8_t *wlan_capa)
 #ifdef CONFIG_11AX
     if (string_equal(arg, "11ax") != 0)
     {
-        *wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC |\
-                      WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
+        *wlan_capa = (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
         return 0;
     }
     else
 #endif
 #ifdef CONFIG_11AC
-    if (string_equal(arg, "11ac") != 0)
+        if (string_equal(arg, "11ac") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11AC | WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
         return 0;
     }
     else
 #endif
-    if (string_equal(arg, "11n") != 0)
+        if (string_equal(arg, "11n") != 0)
     {
         *wlan_capa = (WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY);
         return 0;
@@ -282,22 +281,22 @@ static void print_network(struct wlan_network *network)
             break;
     }
 #ifdef CONFIG_WIFI_CAPA
-    if(network->role == WLAN_BSS_ROLE_UAP)
+    if (network->role == WLAN_BSS_ROLE_UAP)
     {
-        uint16_t fw_bands = 0U;
+        uint16_t fw_bands   = 0U;
         uint8_t enable_11ax = false;
         uint8_t enable_11ac = false;
-        uint8_t enable_11n = false;
+        uint8_t enable_11n  = false;
 
         enable_11ac = wlan_check_11ac_capa(network->channel, fw_bands);
         enable_11ax = wlan_check_11ax_capa(network->channel, fw_bands);
-        enable_11n = wlan_check_11n_capa(network->channel, fw_bands);
+        enable_11n  = wlan_check_11n_capa(network->channel, fw_bands);
 #ifdef CONFIG_11AX
-        if(network->wlan_capa & WIFI_SUPPORT_11AX)
+        if (network->wlan_capa & WIFI_SUPPORT_11AX)
         {
-            if(!enable_11ax)
+            if (!enable_11ax)
             {
-                if(enable_11ac)
+                if (enable_11ac)
                 {
                     (void)PRINTF("\twifi capability: 11ac\r\n");
                 }
@@ -315,9 +314,9 @@ static void print_network(struct wlan_network *network)
         else
 #endif
 #ifdef CONFIG_11AC
-        if(network->wlan_capa & WIFI_SUPPORT_11AC)
+            if (network->wlan_capa & WIFI_SUPPORT_11AC)
         {
-            if(!enable_11ac)
+            if (!enable_11ac)
             {
                 (void)PRINTF("\twifi capability: 11n\r\n");
             }
@@ -329,9 +328,9 @@ static void print_network(struct wlan_network *network)
         }
         else
 #endif
-        if(network->wlan_capa & WIFI_SUPPORT_11N)
+            if (network->wlan_capa & WIFI_SUPPORT_11N)
         {
-            if(!enable_11n)
+            if (!enable_11n)
             {
                 (void)PRINTF("\twifi capability: legacy\r\n");
             }
@@ -547,7 +546,7 @@ static void test_wlan_add(int argc, char **argv)
         unsigned dtim : 1;
 #endif
 #ifdef CONFIG_WIFI_CAPA
-        unsigned wlan_capa: 1;
+        unsigned wlan_capa : 1;
 #endif
     } info;
 
@@ -759,8 +758,7 @@ static void test_wlan_add(int argc, char **argv)
         }
 #endif
 #ifdef CONFIG_WIFI_CAPA
-        else if (!info.wlan_capa && network.role == WLAN_BSS_ROLE_UAP &&
-                  string_equal("capa", argv[arg]))
+        else if (!info.wlan_capa && network.role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
         {
             if (arg + 1 >= argc || get_capa(argv[arg + 1], &network.wlan_capa))
             {
@@ -911,6 +909,19 @@ static int __scan_cb(unsigned int count)
         (void)PRINTF("\r\n");
 
         (void)PRINTF("\tWMM: %s\r\n", (res.wmm != 0U) ? "YES" : "NO");
+
+#ifdef CONFIG_11K
+        if (res.neighbor_report_supported == true)
+        {
+            (void)PRINTF("\t802.11K: YES\r\n");
+        }
+#endif
+#ifdef CONFIG_11V
+        if (res.bss_transition_supported == true)
+        {
+            (void)PRINTF("\t802.11V: YES\r\n");
+        }
+#endif
 #ifdef CONFIG_WPS2
         if (res.wps)
         {
@@ -1893,6 +1904,40 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: send neighbor report request fail\r\n");
+        return;
+    }
+}
+#endif
+
+#ifdef CONFIG_11V
+static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
+{
+    int ret;
+    int query_reason;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <query_reason[0..16]>\r\n", argv[0]);
+        return;
+    }
+
+    errno        = 0;
+    query_reason = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan_host_11v_bss_trans_query errno:%d\r\n", errno);
+    }
+
+    if (query_reason < 0 || query_reason > 16)
+    {
+        (void)PRINTF("Usage: %s <query_reason[0..16]>\r\n", argv[0]);
+        return;
+    }
+
+    ret = wlan_host_11v_bss_trans_query((t_u8)query_reason);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: send bss transition query failed\r\n");
         return;
     }
 }
@@ -3124,6 +3169,9 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_11K
     {"wlan-host-11k-enable", "<0/1>", test_wlan_host_11k_cfg},
     {"wlan-host-11k-neighbor-req", "[ssid <ssid>]", test_wlan_host_11k_neighbor_request},
+#endif
+#ifdef CONFIG_11V
+    {"wlan-host-11v-bss-trans-query", "<0..16>", test_wlan_host_11v_bss_trans_query},
 #endif
 #ifdef CONFIG_MBO
     {"wlan-mbo-enable", "<0/1>", test_wlan_mbo_cfg},

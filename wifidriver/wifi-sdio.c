@@ -189,7 +189,6 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     if (ptxpd->tx_pkt_type == 0xe5U)
     {
         ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
-        payloadlen -= ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
     }
     ptxpd->tx_control = 0;
 #ifdef CONFIG_WMM

@@ -3365,6 +3365,13 @@ int wifi_host_11k_neighbor_req(t_u8 *ssid)
 }
 #endif
 
+#ifdef CONFIG_11V
+int wifi_host_11v_bss_trans_query(t_u8 query_reason)
+{
+    return wlan_send_mgmt_bss_trans_query(mlan_adap->priv[0], query_reason);
+}
+#endif
+
 #ifdef CONFIG_MBO
 int wifi_host_mbo_cfg(int enable_mbo)
 {

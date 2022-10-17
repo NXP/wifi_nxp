@@ -1927,8 +1927,9 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_VHTOprat_t vht_oprat_saved;
     IEEEtypes_VHTtxpower_t vht_txpower_saved;
     IEEEtypes_OperModeNtf_t poper_mode_saved;
-    IEEEtypes_ExtCap_t ext_cap_saved;
 #endif
+    IEEEtypes_ExtCap_t ext_cap_saved;
+    bool ext_cap_exist;
 #ifdef CONFIG_11AX
     /** HE Capability IE */
     IEEEtypes_HECap_t *phe_cap;
@@ -1971,7 +1972,12 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_RrmElement_t rm_cap_saved;
     unsigned char vendor_ie_buff[MLAN_MAX_VENDOR_IE_LEN];
     t_u8 vendor_ie_len;
+    bool neighbor_report_supported;
 #endif
+#ifdef CONFIG_11V
+    bool bss_transition_supported;
+#endif
+
     bool mbo_assoc_disallowed;
 } BSSDescriptor_t, *pBSSDescriptor_t;
 

@@ -905,6 +905,12 @@ int wlan_send_mgmt_rm_neighbor_request(mlan_private *pmpriv, t_u8 *ssid, t_u8 ss
     pos[0] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC;
     pos[1] = (t_u8)IEEE_MGMT_RRM_NEIGHBOR_REPORT_REQUEST;
     pos[2] = pmpriv->neighbor_rep_token++;
+
+    if (pmpriv->neighbor_rep_token == (t_u8)255U)
+    {
+        pmpriv->neighbor_rep_token = (t_u8)1U;
+    }
+
     pos += 3;
 
     /* SSID Tag */

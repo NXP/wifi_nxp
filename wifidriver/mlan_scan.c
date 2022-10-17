@@ -1848,12 +1848,12 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 (void)__memcpy(NULL, &pbss_entry->poper_mode_saved, pcurrent_ptr, sizeof(IEEEtypes_OperModeNtf_t));
                 pbss_entry->ppoper_mode = &pbss_entry->poper_mode_saved;
                 break;
+#endif
             case EXT_CAPABILITY:
                 /* Save it here since we do not have beacon buffer */
                 (void)__memcpy(NULL, &pbss_entry->ext_cap_saved, pcurrent_ptr, sizeof(IEEEtypes_ExtCap_t));
                 pbss_entry->pext_cap = &pbss_entry->ext_cap_saved;
                 break;
-#endif
 #ifndef CONFIG_MLAN_WMSDK
             case OVERLAPBSSSCANPARAM:
                 pbss_entry->poverlap_bss_scan_param = (IEEEtypes_OverlapBSSScanParam_t *)pcurrent_ptr;

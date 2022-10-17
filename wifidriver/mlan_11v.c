@@ -17,8 +17,9 @@ Change log:
 #include "wifi-sdio.h"
 
 #ifdef CONFIG_11V
-#define BTM_RESP_BUF_SIZE 200
-#define WLAN_FC_TYPE_MGMT 0
+#define BTM_RESP_BUF_SIZE      200
+#define WNM_BTM_QUERY_BUF_SIZE 10U
+#define WLAN_FC_TYPE_MGMT      0
 
 /********************************************************
                 Local Variables
@@ -116,14 +117,15 @@ static void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
     pos[3] = (t_u8)status;
     pos[4] = 0; /* delay */
     pos += 5;
+
     if (target_bssid != NULL)
     {
-        (void)memcpy(&pos[5], target_bssid, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)pos, (const void *)target_bssid, (size_t)MLAN_MAC_ADDR_LENGTH);
         pos += 6;
     }
     else if (status == WNM_BTM_ACCEPT)
     {
-        (void)memcpy((void *)&pos[5], "\0\0\0\0\0\0", MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)pos, "\0\0\0\0\0\0", (size_t)MLAN_MAC_ADDR_LENGTH);
         pos += 6;
     }
     else
@@ -133,7 +135,7 @@ static void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
 
     if (status == WNM_BTM_ACCEPT && tag_nr != NULL)
     {
-        (void)memcpy(pos, tag_nr, tag_len);
+        (void)memcpy((void *)pos, (const void *)tag_nr, (size_t)tag_len);
         pos += tag_len;
     }
     pkt_len                = (t_u16)(pos - (t_u8 *)pmgmt_pkt_hdr);
@@ -271,5 +273,52 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 
         wlan_send_mgmt_wnm_btm_resp(dialog_token, status, dest_addr, src_addr, NULL, ptagnr, tagnr_len, protect);
     }
+}
+
+int wlan_send_mgmt_bss_trans_query(mlan_private *pmpriv, t_u8 query_reason)
+{
+    t_u16 pkt_len;
+    mlan_802_11_mac_addr *da     = MNULL;
+    mlan_802_11_mac_addr *sa     = MNULL;
+    wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
+    t_u8 *pos                    = MNULL;
+    int meas_pkt_len             = 0;
+
+    if (pmpriv->bss_index != (t_u8)MLAN_BSS_ROLE_STA || pmpriv->media_connected != MTRUE)
+    {
+        wifi_d("invalid interface %d for sending neighbor report request", pmpriv->bss_index);
+        return (int)MLAN_STATUS_FAILURE;
+    }
+
+    da            = &pmpriv->curr_bss_params.bss_descriptor.mac_address;
+    sa            = (mlan_802_11_mac_addr *)(void *)(&pmpriv->curr_addr[0]);
+    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(SUBTYPE_ACTION, da, sa, da, sizeof(wlan_mgmt_pkt) + WNM_BTM_QUERY_BUF_SIZE);
+    if (pmgmt_pkt_hdr == MNULL)
+    {
+        wifi_e("No memory for bss transition management query");
+        return (int)MLAN_STATUS_FAILURE;
+    }
+
+    /* 802.11 management body */
+    pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
+    pos[0] = (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM;
+    pos[1] = (t_u8)IEEE_MGMT_WNM_BTM_QUERY;
+    pos[2] = pmpriv->bss_trans_query_token++;
+
+    if (pmpriv->bss_trans_query_token == (t_u8)255U)
+    {
+        pmpriv->bss_trans_query_token = (t_u8)1U;
+    }
+
+    pos[3] = query_reason;
+    pos += 4;
+
+    meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
+    pkt_len                = (t_u16)meas_pkt_len;
+    pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
+
+    (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+    os_mem_free(pmgmt_pkt_hdr);
+    return (int)MLAN_STATUS_SUCCESS;
 }
 #endif /* CONFIG_11V */

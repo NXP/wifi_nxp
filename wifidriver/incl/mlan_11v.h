@@ -51,6 +51,9 @@ enum wnm_btm_status_code
 
 /** process rx action frame */
 void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *dest_addr, bool protect);
+
+/* send mgmt bss transition query frame */
+int wlan_send_mgmt_bss_trans_query(mlan_private *pmpriv, t_u8 query_reason);
 #endif /* CONFIG_11V */
 
 #endif /* !_MLAN_11V_H_ */

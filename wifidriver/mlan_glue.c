@@ -143,6 +143,12 @@ int wrapper_bssdesc_second_set(int bss_index,
                                bool *wps_IE_exist,
                                uint16_t *wps_session,
                                bool *wpa2_entp_IE_exist,
+#ifdef CONFIG_11K
+                               bool *neighbor_report_supported,
+#endif
+#ifdef CONFIG_11V
+                               bool *bss_transition_supported,
+#endif
                                uint8_t *trans_mode,
                                uint8_t *trans_bssid,
                                int *trans_ssid_len,
@@ -4575,6 +4581,12 @@ int wrapper_bssdesc_second_set(int bss_index,
                                bool *wps_IE_exist,
                                uint16_t *wps_session,
                                bool *wpa2_entp_IE_exist,
+#ifdef CONFIG_11K
+                               bool *neighbor_report_supported,
+#endif
+#ifdef CONFIG_11V
+                               bool *bss_transition_supported,
+#endif
                                uint8_t *trans_mode,
                                uint8_t *trans_bssid,
                                int *trans_ssid_len,
@@ -4629,6 +4641,20 @@ int wrapper_bssdesc_second_set(int bss_index,
     {
         *wpa2_entp_IE_exist = d->wpa2_entp_IE_exist;
     }
+
+#ifdef CONFIG_11K
+    if (neighbor_report_supported != NULL)
+    {
+        *neighbor_report_supported = (bool)d->rm_cap_saved.RrmEnabledCapabilities.NborRpt;
+    }
+#endif
+#ifdef CONFIG_11V
+    if (bss_transition_supported != NULL)
+    {
+        *bss_transition_supported = (bool)d->ext_cap_saved.ext_cap.BSS_Transition;
+    }
+#endif
+
 #ifdef CONFIG_OWE
     *trans_mode = d->owe_transition_mode;
 #endif

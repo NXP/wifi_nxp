@@ -353,7 +353,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->enable_11k = (t_u8)MFALSE;
 #endif
 #ifdef CONFIG_11K
-    priv->neighbor_rep_token = 1;
+    priv->neighbor_rep_token = (t_u8)1U;
+#endif
+#ifdef CONFIG_11V
+    priv->bss_trans_query_token = (t_u8)1U;
 #endif
     for (i = 0; i < MAX_NUM_TID; i++)
     {
@@ -611,7 +614,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->usr_dot_11ac_opermode_bw  = 0;
     pmadapter->usr_dot_11ac_opermode_nss = 0;
 #ifdef CONFIG_WIFI_CAPA
-	pmadapter->usr_dot_11n_enable = MFALSE;
+    pmadapter->usr_dot_11n_enable = MFALSE;
 #ifdef CONFIG_11AC
     pmadapter->usr_dot_11ac_enable = MFALSE;
 #endif

@@ -1020,6 +1020,13 @@ int wifi_host_11k_cfg(int enable_11k);
 int wifi_host_11k_neighbor_req(t_u8 *ssid);
 #endif
 
+#ifdef CONFIG_11V
+/**
+ * host send bss transition management query
+ */
+int wifi_host_11v_bss_trans_query(t_u8 query_reason);
+#endif
+
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
