@@ -1,0 +1,24 @@
+#Description: NXP WiFi CLI; user_visible: True
+include_guard(GLOBAL)
+message("middleware_wifi_cli component is included.")
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/cli/cli.c
+    ${CMAKE_CURRENT_LIST_DIR}/cli/cli_mem_simple.c
+    ${CMAKE_CURRENT_LIST_DIR}/cli/cli_utils.c
+    ${CMAKE_CURRENT_LIST_DIR}/nw_utils/ping.c
+    ${CMAKE_CURRENT_LIST_DIR}/nw_utils/iperf.c
+    ${CMAKE_CURRENT_LIST_DIR}/wlcmgr/wlan_basic_cli.c
+    ${CMAKE_CURRENT_LIST_DIR}/wlcmgr/wlan_tests.c
+    ${CMAKE_CURRENT_LIST_DIR}/wlcmgr/wlan_test_mode_tests.c
+    ${CMAKE_CURRENT_LIST_DIR}/dhcpd/dhcp-server-cli.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/cli
+    ${CMAKE_CURRENT_LIST_DIR}/incl
+    ${CMAKE_CURRENT_LIST_DIR}/incl/wlcmgr
+)
+
+
+include(middleware_wifi)
