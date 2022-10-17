@@ -1055,11 +1055,18 @@ static void test_wlan_get_chanlist(int argc, char **argv)
 static void dump_wlan_set_txomi_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-set-tx-omi <tx-omi>\r\n");
+    (void)PRINTF("wlan-set-tx-omi <tx-omi> <tx-option> <num_data_pkts>\r\n");
     (void)PRINTF("where, tx-omi =\r\n");
-    (void)PRINTF("Bit 0-2: Rx NSS\r\n");
-    (void)PRINTF("Bit 3-4: Channel Width\r\n");
-    (void)PRINTF("Bit 6  : Tx NSTS (applies to client mode only)\r\n");
+    (void)PRINTF("\t Bit 0-2: Rx NSS\r\n");
+    (void)PRINTF("\t Bit 3-4: Channel Width\r\n");
+    (void)PRINTF("\t Bit 6  : Tx NSTS (applies to client mode only)\r\n");
+    (void)PRINTF("where, tx-option =\r\n");
+    (void)PRINTF("\t 0: send OMI in QoS NULL\r\n");
+    (void)PRINTF("\t 1: send OMI in QoS Data\r\n");
+    (void)PRINTF("\t 0XFF: send OMI in both\r\n");
+    (void)PRINTF("where, num_data_pkts =\r\n");
+    (void)PRINTF("\t Minimum value is 1\r\n");
+    (void)PRINTF("\t Maximum value is 16\r\n");
 }
 
 static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
@@ -1137,28 +1144,42 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
     int ret;
 
     uint16_t tx_omi;
+    uint8_t tx_option;
+    uint8_t num_data_pkts;
 
-    if (argc != 2)
+    if (argc != 4)
     {
         dump_wlan_set_txomi_usage();
         return;
     }
 
     errno  = 0;
-    tx_omi = (uint16_t)strtol(argv[1], NULL, 0);
+    tx_omi        = (uint16_t)strtol(argv[1], NULL, 0);
+    tx_option     = (uint8_t)strtol(argv[2], NULL , 0);
+    num_data_pkts = (uint8_t)strtol(argv[3], NULL , 0);
+
+    if((num_data_pkts<1) || (num_data_pkts>16))
+    {
+        (void)PRINTF("Minimum value of num_data_pkts should be 1 and maximum should be 16");
+        return;
+    }
 
     if (errno != 0)
         (void)PRINTF("Error during strtoul errno:%d", errno);
 
-    ret = wlan_set_11ax_tx_omi(tx_omi);
+    ret = wlan_set_11ax_tx_omi(tx_omi, tx_option, num_data_pkts);
 
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("TX OMI: 0x%x set\r\n", tx_omi);
+        (void)PRINTF("TX OPTION: 0x%x set\r\n", tx_option);
+        (void)PRINTF("TX NUM_DATA_PKTS: 0x%x set\r\n", num_data_pkts);
     }
     else
     {
         (void)PRINTF("Unable to set TX OMI: 0x%x\r\n", tx_omi);
+        (void)PRINTF("Unable to set TX OPTION: 0x%x\r\n", tx_option);
+        (void)PRINTF("Unable to set TX NUM_DATA_PKTS: 0x%x\r\n", num_data_pkts);
     }
 }
 
@@ -1706,7 +1727,7 @@ static struct cli_command wlan_enhanced_commands[] = {
 #endif
     {"wlan-get-ed-mac-mode", NULL, wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
-    {"wlan-set-tx-omi", "<tx-omi>", test_wlan_set_tx_omi},
+    {"wlan-set-tx-omi", "<tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
     {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
     {"wlan-11axcfg", "<11ax_cfg>", test_wlan_11ax_cfg},

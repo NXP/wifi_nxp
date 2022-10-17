@@ -2764,11 +2764,20 @@ typedef struct _mlan_ds_11ax_txop_cmd
 } mlan_ds_11ax_txop_cmd, *pmlan_ds_11ax_txop_cmd;
 
 /** Type definition of mlan_ds_11ax_htc_cmd for MLAN_OID_11AX_CMD_CFG */
-typedef struct _mlan_ds_11ax_txomi_cmd
+typedef MLAN_PACK_START struct _mlan_ds_11ax_txomi_cmd
 {
     /* 11ax spec 9.2.4.6a.2 OM Control 12 bits. Bit 0 to bit 11 */
     t_u16 omi;
-} mlan_ds_11ax_txomi_cmd, *pmlan_ds_11ax_txomi_cmd;
+    /* tx option
+     * 0: send OMI in QoS NULL; 1: send OMI in QoS data; 0xFF: set OMI in both
+     */
+    t_u8     tx_option;
+    /* if OMI is sent in QoS data, specify the number of consecutive data packets
+     * containing the OMI. Minimum number of data packets should be 1 and maximum
+     * should be 16.
+     */
+    t_u8     num_data_pkts;
+} MLAN_PACK_END mlan_ds_11ax_txomi_cmd, *pmlan_ds_11ax_txomi_cmd;
 
 /** Type definition of mlan_ds_11ax_toltime_cmd for MLAN_OID_11AX_CMD_CFG */
 typedef struct _mlan_ds_11ax_toltime_cmd

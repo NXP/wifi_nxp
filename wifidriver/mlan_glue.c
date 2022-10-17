@@ -5053,7 +5053,7 @@ int wifi_config_roaming(const int enable, const uint8_t rssi_low)
 #endif
 
 #ifdef CONFIG_11AX
-int wifi_set_11ax_tx_omi(const t_u16 tx_omi)
+int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts)
 {
     mlan_ioctl_req req;
 
@@ -5066,8 +5066,16 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi)
     req.pbuf    = (t_u8 *)&cfg;
     req.buf_len = sizeof(mlan_ds_11ax_cmd_cfg);
 
-    cfg.sub_id              = MLAN_11AXCMD_TXOMI_SUBID;
-    cfg.param.txomi_cfg.omi = tx_omi;
+    cfg.sub_id                        = MLAN_11AXCMD_TXOMI_SUBID;
+    cfg.param.txomi_cfg.omi           = tx_omi;
+    cfg.param.txomi_cfg.tx_option     = tx_option;
+    cfg.param.txomi_cfg.num_data_pkts = num_data_pkts;
+
+    if((cfg.param.txomi_cfg.num_data_pkts<1) || (cfg.param.txomi_cfg.num_data_pkts>16))
+    {
+        wifi_e("Minimum value of num_data_pkts should be 1 and maximum should be 16");
+        return -WM_FAIL;
+    }
 
     mlan_status rv;
 

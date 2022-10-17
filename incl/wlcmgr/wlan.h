@@ -3696,12 +3696,18 @@ int wlan_send_hostcmd(
 /**
  * Use this API to set the set 11AX Tx OMI.
  *
- * \param[in] 11AX tx_omi value to be sent to Firmware
+ * \param[in] tx_omi value to be sent to Firmware
+ * \param[in] tx_option value to be sent to Firmware
+ *            0: send OMI in QoS NULL; 1: send OMI in QoS data; 0xFF: send OMI in both
+ * \param[in] num_data_pkts value to be sent to Firmware
+ *            num_data_packets is the number of consecutive QoS data frames
+ *            Minimum value is 1
+ *            Maximum value is 16
  *
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_set_11ax_tx_omi(const t_u16 tx_omi);
+int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts);
 /**
  * Use this API to set the RU tx power limit.
  *

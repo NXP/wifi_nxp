@@ -7444,10 +7444,10 @@ int wlan_send_hostcmd(
 }
 
 #ifdef CONFIG_11AX
-int wlan_set_11ax_tx_omi(const t_u16 tx_omi)
+int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts)
 {
     if (is_sta_connected())
-        return wifi_set_11ax_tx_omi(tx_omi);
+        return wifi_set_11ax_tx_omi(tx_omi, tx_option, num_data_pkts);
     else
     {
         wifi_d("STA not connected");

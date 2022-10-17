@@ -505,8 +505,8 @@ mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
     switch (ds_11ax_cmd->sub_id)
     {
         case MLAN_11AXCMD_TXOMI_SUBID:
-            (void)__memcpy(pmpriv->adapter, axcmd->val, &txomi_cmd->omi, sizeof(t_u16));
-            cmd->size += sizeof(t_u16);
+            (void)__memcpy(pmpriv->adapter, axcmd->val, txomi_cmd, sizeof(mlan_ds_11ax_txomi_cmd));
+            cmd->size += sizeof(mlan_ds_11ax_txomi_cmd);
             break;
 #ifndef CONFIG_MLAN_WMSDK
         case MLAN_11AXCMD_SR_SUBID:
@@ -591,7 +591,7 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
             (void)__memcpy(pmpriv->adapter, &cfg->param.txop_cfg.rts_thres, axcmd->val, sizeof(t_u16));
             break;
         case MLAN_11AXCMD_TXOMI_SUBID:
-            (void)__memcpy(pmpriv->adapter, &cfg->param.txomi_cfg.omi, axcmd->val, sizeof(t_u16));
+            (void)__memcpy(pmpriv->adapter, &cfg->param.txomi_cfg, axcmd->val, sizeof(mlan_ds_11ax_txomi_cmd));
             break;
         case MLAN_11AXCMD_RUPOWER_SUBID:
             {
