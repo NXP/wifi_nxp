@@ -1279,7 +1279,6 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
         {
             for (i = 0; i < MAX_NUM_TID; ++i)
             {
-                priv->aggr_prio_tbl[i].amsdu = BA_STREAM_NOT_ALLOWED;
 #ifdef WIFI_DIRECT_SUPPORT
                 if (priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
                     priv->aggr_prio_tbl[i].ampdu_ap = priv->aggr_prio_tbl[i].ampdu_user = BA_STREAM_NOT_ALLOWED;

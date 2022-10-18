@@ -698,6 +698,10 @@ typedef struct _txAggr_t
     t_u8 ampdu_ap;
     /** AMSDU */
     t_u8 amsdu;
+#ifdef AMSDU_IN_AMPDU
+    /** peer AMSDU */
+    t_u8 amsdu_peer;
+#endif
 } tx_aggr_t;
 
 /** RA list table */
@@ -1117,6 +1121,10 @@ struct _mlan_private
 
     /** max amsdu size */
     t_u16 max_amsdu;
+#ifdef AMSDU_IN_AMPDU
+    /** amsdu enabled */
+    t_bool is_amsdu_enabled;
+#endif
 #ifdef UAP_SUPPORT
     /** UAP 11n flag */
     bool is_11n_enabled;
@@ -1374,12 +1382,15 @@ struct _TxBAStreamTbl
     /** TxBAStreamTbl next node */
     TxBAStreamTbl *pnext;
     /** TID */
-    int tid;
+    int ampdu_stat[MAX_NUM_TID];
     /** RA */
     t_u8 ra[MLAN_MAC_ADDR_LENGTH];
     /** BA stream status */
     baStatus_e ba_status;
     t_u8 amsdu;
+    t_u32 txpkt_cnt;
+    t_u32 txba_thresh;
+    t_u8 ampdu_supported[MAX_NUM_TID];
 };
 
 /** RX reorder table */
@@ -2188,6 +2199,10 @@ struct _mlan_adapter
     t_u8 tx_power_table_a_rows;
     t_u8 tx_power_table_a_cols;
 #endif
+#endif
+#ifdef CONFIG_WIFI_TX_BUFF
+    /** Tx buffer size */
+    t_u16 tx_buffer_size;
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
     tx_pert_info tx_pert;

@@ -473,7 +473,10 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define MAX_RX_AMPDU_SIZE_64K 0x03
 /** Non green field station */
 #define NON_GREENFIELD_STAS 0x04
-
+#ifdef AMSDU_IN_AMPDU
+/** Supported A-MSDU size */
+#define MAX_SUPPORT_AMSDU_SIZE 4096
+#endif
 /** Greenfield support */
 #define HWSPEC_GREENFIELD_SUPP MBIT(29)
 /** RX STBC support */

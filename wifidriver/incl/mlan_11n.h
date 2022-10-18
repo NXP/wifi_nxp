@@ -51,16 +51,23 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
 /** Miscellaneous configuration handler */
 mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 /** Delete Tx BA stream table entry */
-void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx_tbl);
+void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra);
 /** Delete all Tx BA stream table entries */
 void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv);
 /** Get Tx BA stream table */
-TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra);
-
-#ifndef CONFIG_MLAN_WMSDK
+TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, t_u8 *ra);
+/** update Tx ampud_stat */
+void wlan_11n_update_txbastream_tbl_ampdu_stat(mlan_private *priv, t_u8 *ra, t_u8 status, t_u8 tid);
+/** update Tx ampdu_supported */
+void wlan_11n_update_txbastream_tbl_ampdu_supported(mlan_private *priv, t_u8 *ra, t_u8 supported);
+/** update Tx threshold */
+void wlan_11n_update_txbastream_tbl_tx_thresh(mlan_private *priv, t_u8 *ra, t_u8 tx_thresh);
+/** update Tx ampdu_tx cnt */
+void wlan_11n_update_txbastream_tbl_tx_cnt(mlan_private *priv, t_u8 *ra);
+/** get sta peer amsdu */
+int wlan_11n_get_sta_peer_amsdu(mlan_private *priv);
 /** Create Tx BA stream table */
-void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status);
-#endif /* CONFIG_MLAN_WMSDK */
+void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_status);
 
 /** Send ADD BA request */
 int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac);
@@ -78,11 +85,12 @@ int wlan_get_rxreorder_tbl(mlan_private *priv, rx_reorder_tbl *buf);
 /** get tx ba stream table */
 int wlan_get_txbastream_tbl(mlan_private *priv, tx_ba_stream_tbl *buf);
 #endif /* CONFIG_MLAN_WMSDK */
-
+#ifdef AMSDU_IN_AMPDU
 /** Minimum number of AMSDU */
 #define MIN_NUM_AMSDU 2
 /** AMSDU Aggr control cmd resp */
 mlan_status wlan_ret_amsdu_aggr_ctrl(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
+#endif
 /** reconfigure tx buf size */
 mlan_status wlan_cmd_recfg_tx_buf(mlan_private *priv, HostCmd_DS_COMMAND *cmd, int cmd_action, void *pdata_buf);
 /** AMSDU aggr control cmd */
@@ -200,7 +208,7 @@ static t_u8 wlan_is_cur_bastream_high_prio(mlan_private *priv, int tid)
 
     while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
-        if (priv->aggr_prio_tbl[tid].ampdu_user > priv->aggr_prio_tbl[ptx_tbl->tid].ampdu_user)
+        if (priv->aggr_prio_tbl[tid].ampdu_user > priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user)
         {
             LEAVE();
             return MTRUE;
@@ -253,7 +261,7 @@ static int wlan_is_amsdu_in_ampdu_allowed(mlan_private *priv, raListTbl *ptr, in
 {
     TxBAStreamTbl *ptx_tbl;
     ENTER();
-    ptx_tbl = wlan_11n_get_txbastream_tbl(priv, tid, ptr->ra);
+    ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ptr->ra);
     if (ptx_tbl != MNULL)
     {
         LEAVE();
@@ -350,10 +358,10 @@ static t_u8 wlan_find_stream_to_delete(mlan_private *priv, raListTbl *ptr, int p
 
     while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
-        if (tid > priv->aggr_prio_tbl[ptx_tbl->tid].ampdu_user)
+        if (tid > priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user)
         {
-            tid   = priv->aggr_prio_tbl[ptx_tbl->tid].ampdu_user;
-            *ptid = ptx_tbl->tid;
+            tid   = priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user;
+            *ptid = ptx_tbl->ampdu_stat[tid];
             (void)memcpy(ra, ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
             ret = MTRUE;
         }
@@ -380,7 +388,7 @@ static int wlan_is_bastream_setup(mlan_private *priv, raListTbl *ptr, int tid)
     TxBAStreamTbl *ptx_tbl;
 
     ENTER();
-    ptx_tbl = wlan_11n_get_txbastream_tbl(priv, tid, ptr->ra);
+    ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ptr->ra);
     if (ptx_tbl != MNULL)
     {
         LEAVE();
@@ -416,4 +424,29 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
     LEAVE();
     return ret;
 }
+
+/**
+ *  @brief This function checks whether amsdu is allowed
+ *
+ *  @param interface     interface to indicate uap or STA
+ *  @param pkt_cnt       current packets conuter in the queue
+ *
+ *  @return 	    MTRUE or MFALSE
+ */
+#ifdef AMSDU_IN_AMPDU
+INLINE
+static bool wlan_is_amsdu_allowed(mlan_private *priv, t_u8 interface, t_u8 pkt_cnt, t_u8 tid)
+{
+    // First stage, only consider tx amsdu on STA side
+    if (interface == MLAN_BSS_TYPE_STA && pkt_cnt >= MIN_NUM_AMSDU && priv->is_amsdu_enabled && priv->max_amsdu &&
+        wlan_11n_get_sta_peer_amsdu(priv))
+    {
+        return MTRUE;
+    }
+    else
+    {
+        return MFALSE;
+    }
+}
+#endif
 #endif /* !_MLAN_11N_H_ */

@@ -152,6 +152,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
+    u16_t header_type;
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
@@ -164,10 +165,26 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
+#ifdef AMSDU_IN_AMPDU
+        Eth803Hdr_t *eth803hdr = (Eth803Hdr_t *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
+        /* If the AMSDU packet is unicast and is not for us, drop it */
+        if (memcmp(mlan_adap->priv[recv_interface]->curr_addr, eth803hdr->dest_addr, MLAN_MAC_ADDR_LENGTH) &&
+            ((eth803hdr->dest_addr[0] & 0x01) == 0))
+        {
+            return;
+        }
+
 #ifdef CONFIG_11N
-        (void)wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
+        if (rxpd->bss_type == MLAN_BSS_ROLE_UAP)
+        {
+	        wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
+	        return;
+        }
 #endif /* CONFIG_11N */
+#else
+        /* Not support AMSDU, drop it */
         return;
+#endif
     }
 
     if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
@@ -268,15 +285,19 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 #endif
 
+    header_type = htons(ethhdr->type);
     if (!memcmp((t_u8 *)p->payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
     {
         struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)p->payload + SIZEOF_ETH_HDR);
-        ethhdr->type                  = ethllchdr->type;
-        p->len -= SIZEOF_ETH_LLC_HDR;
-        (void)memcpy((t_u8 *)p->payload + SIZEOF_ETH_HDR, (t_u8 *)p->payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR,
-                     p->len - SIZEOF_ETH_LLC_HDR);
+        header_type = htons(ethllchdr->type);
+        if (rxpd->rx_pkt_type != PKT_TYPE_AMSDU)
+        {
+            p->len -= SIZEOF_ETH_LLC_HDR;
+            (void)memcpy((t_u8 *)p->payload + SIZEOF_ETH_HDR, (t_u8 *)p->payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR,
+                         p->len - SIZEOF_ETH_LLC_HDR);
+        }
     }
-    switch (htons(ethhdr->type))
+    switch (header_type)
     {
         case ETHTYPE_IP:
 #ifdef CONFIG_IPV6
@@ -334,9 +355,11 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
     if (p == NULL)
     {
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
+        LINK_STATS_INC(link.memerr);
+        LINK_STATS_INC(link.drop);
         return;
     }
-
+    LINK_STATS_INC(link.recv);
     deliver_packet_above(p, interface);
 }
 

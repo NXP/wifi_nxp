@@ -28,7 +28,9 @@ Change log:
 /********************************************************
     Global Variables
 ********************************************************/
-
+#ifdef AMSDU_IN_AMPDU
+SDK_ALIGN(uint8_t amsdu_inbuf[4096], 32);
+#endif
 /********************************************************
     Local Functions
 ********************************************************/
@@ -51,7 +53,17 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
     {
         pmbuf->data_len = prx_pd->rx_pkt_length;
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
+#ifdef AMSDU_IN_AMPDU
+        (void)__memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
+        pbuf_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
+        os_mem_free(pmbuf->pbuf);
+        pbuf_free(pmbuf->lwip_pbuf);
+        pmbuf->pbuf = amsdu_inbuf;
+#endif
         (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
+#ifdef AMSDU_IN_AMPDU
+        os_mem_free(pmbuf);
+#endif
         LEAVE();
         return MLAN_STATUS_SUCCESS;
     }
@@ -615,7 +627,10 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
     }
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_WINSIZE_MASK;
-    if (!priv->add_ba_param.rx_amsdu || (priv->aggr_prio_tbl[tid].amsdu == BA_STREAM_NOT_ALLOWED))
+#ifdef AMSDU_IN_AMPDU
+    /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
+    if (!priv->add_ba_param.rx_amsdu)
+#endif
     {
         /* We do not support AMSDU inside AMPDU, hence reset the bit */
         padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_AMSDU_SUPP_MASK;
@@ -989,7 +1004,7 @@ void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
     }
     else
     {
-        ptxtbl = wlan_11n_get_txbastream_tbl(priv, tid, peer_mac);
+        ptxtbl = wlan_11n_get_txbastream_tbl(priv, peer_mac);
         if (ptxtbl == MNULL)
         {
             PRINTM(MWARN, "TID, RA not found in table!\n");
@@ -997,7 +1012,7 @@ void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
             return;
         }
 
-        wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl);
+        wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl->ra);
     }
 
     LEAVE();

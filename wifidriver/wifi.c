@@ -82,6 +82,9 @@ SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALI
 #endif
 #endif
 
+/* Global variable wm_rand_seed */
+uint32_t wm_rand_seed = -1;
+
 os_thread_t wifi_scan_thread;
 
 static t_u8 wifi_init_done;
@@ -2015,6 +2018,84 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame)
 }
 
 #ifdef CONFIG_WMM_ENH
+#ifdef AMSDU_IN_AMPDU
+/* aggregate one amsdu packet and xmit */
+static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist)
+{
+    outbuf_t *buf                = MNULL;
+    t_u32 max_amsdu_size         = MIN(priv->max_amsdu, priv->adapter->tx_buffer_size);
+    t_u32 amsdu_offset           = sizeof(TxPD) + INTF_HEADER_LEN;
+    t_u8 amsdu_cnt               = 0;
+    t_u32 amsdu_buf_used_size    = 0;
+    int amsdu_buf_available_size = max_amsdu_size - amsdu_buf_used_size;
+    t_u32 amsdu_pkt_len          = 0;
+    int pad_len                  = 0;
+    int last_pad_len             = 0;
+#ifdef CONFIG_WIFI_TP_STAT
+    t_u8 *buf_end = MNULL;
+#endif
+
+    while (ralist->total_pkts > 0)
+    {
+        mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+        buf = (outbuf_t *)util_peek_list(mlan_adap->pmoal_handle, &ralist->buf_head, MNULL, MNULL);
+        assert(buf != NULL);
+
+#ifdef CONFIG_WIFI_TP_STAT
+        buf_end = &buf->data[0] + buf->tx_pd.tx_pkt_length;
+        wifi_stat_tx_dequeue_start(buf_end, g_wifi_xmit_schedule_end);
+#endif
+
+        /* calculate amsdu buffer length */
+        amsdu_buf_used_size += buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN;
+        if (amsdu_cnt == 0)
+        {
+            /* First A-MSDU packet */
+            amsdu_buf_available_size = max_amsdu_size - amsdu_buf_used_size - LLC_SNAP_LEN;
+        }
+        else
+        {
+            /* The following A-MSDU packets */
+            amsdu_pkt_len            = amsdu_buf_used_size - sizeof(TxPD) - INTF_HEADER_LEN + LLC_SNAP_LEN;
+            pad_len                  = ((amsdu_pkt_len & 3)) ? (4 - ((amsdu_pkt_len)&3)) : 0;
+            amsdu_buf_available_size = max_amsdu_size - amsdu_pkt_len - pad_len;
+        }
+
+        /* dequeue and store this buffer in amsdu buffer */
+        if (amsdu_buf_available_size >= 0)
+        {
+            util_unlink_list(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
+            ralist->total_pkts--;
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+
+            amsdu_offset += wlan_11n_form_amsdu_pkt(wifi_get_amsdu_outbuf(amsdu_offset), &buf->data[0],
+                                                    buf->tx_pd.tx_pkt_length, &last_pad_len);
+            amsdu_cnt++;
+
+#ifdef CONFIG_WIFI_TP_STAT
+            wifi_stat_tx_dequeue_end(buf_end);
+#endif
+            wifi_wmm_buf_put(buf);
+            priv->wmm.pkts_queued[ac]--;
+        }
+        else
+        {
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+        }
+
+        /*
+         * amsdu buffer room not enough, or last packet in this ra_list in AC queue,
+         * add amsdu buffer to imu queue
+         */
+        if (amsdu_buf_available_size < 0 || ralist->total_pkts == 0)
+        {
+            return wlan_xmit_wmm_amsdu_pkt((mlan_wmm_ac_e)ac, priv->bss_index, amsdu_offset - last_pad_len,
+                                           wifi_get_amsdu_outbuf(0), amsdu_cnt);
+        }
+    }
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
 static inline t_u8 wifi_is_tx_queue_empty()
 {
 #ifdef RW610
@@ -2033,6 +2114,40 @@ static inline t_u8 wifi_is_max_tx_cnt(int pkt_cnt)
 #endif
 }
 
+static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist)
+{
+    mlan_status ret;
+    outbuf_t *buf = MNULL;
+
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+    buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ralist->buf_head, MNULL, MNULL);
+    ralist->total_pkts--;
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+    assert(buf != MNULL);
+
+    /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
+    /* this will get card port lock and probably sleep */
+    ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
+                            (t_u8 *)&buf->intf_header[0]);
+    if (ret != MLAN_STATUS_SUCCESS)
+    {
+#ifdef RW610
+        assert(0);
+#else
+        mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+        util_enqueue_list_head(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
+        ralist->total_pkts++;
+        mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+        return MLAN_STATUS_RESOURCE;
+#endif
+    }
+
+    wifi_wmm_buf_put(buf);
+    priv->wmm.pkts_queued[ac]--;
+
+    return MLAN_STATUS_SUCCESS;
+}
+
 /*
  *  xmit all buffers under this ralist
  *  should be called inside wmm tid_tbl_ptr ra_list lock,
@@ -2040,47 +2155,32 @@ static inline t_u8 wifi_is_max_tx_cnt(int pkt_cnt)
  *  return MLAN_STATUS_RESOURCE to break looping ralists
  */
 static mlan_status wifi_xmit_ralist_pkts(
-    mlan_private *priv, t_u8 ac, raListTbl *ralist, tid_tbl_t *tid_ptr, int *pkt_cnt)
+    mlan_private *priv, t_u8 ac, raListTbl *ralist, int *pkt_cnt)
 {
     mlan_status ret;
-    outbuf_t *buf = MNULL;
 
     if (ralist->tx_pause == MTRUE)
         return MLAN_STATUS_SUCCESS;
 
-    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
-
     while (ralist->total_pkts > 0)
     {
         if (wifi_is_tx_queue_empty() == MTRUE)
-        {
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
-            return MLAN_STATUS_RESOURCE;
-        }
-
-        buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ralist->buf_head, MNULL, MNULL);
-        if (buf == MNULL)
             break;
 
-        /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
-        /* this will get card port lock and probably sleep */
-        ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
-                                (t_u8 *)&buf->intf_header[0]);
-        if (ret != MLAN_STATUS_SUCCESS)
-        {
-#ifdef RW610
-            assert(0);
-#else
-            util_enqueue_list_head(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
-            return MLAN_STATUS_RESOURCE;
+#ifdef AMSDU_IN_AMPDU
+        if (wlan_is_amsdu_allowed(priv, priv->bss_index, ralist->total_pkts, ac))
+            ret = wifi_xmit_amsdu_pkts(priv, ac, ralist);
+        else
 #endif
-        }
+            ret = wifi_xmit_pkts(priv, ac, ralist);
 
-        wifi_wmm_buf_put(buf);
+        if (ret != MLAN_STATUS_SUCCESS)
+            return ret;
 
-        ralist->total_pkts--;
-        priv->wmm.pkts_queued[ac]--;
+        /*
+         * in amsdu case,
+         * multiple packets aggregated as one amsdu packet, are counted as one imu packet
+         */
         (*pkt_cnt)++;
         if (wifi_is_max_tx_cnt(*pkt_cnt) == MTRUE)
         {
@@ -2090,7 +2190,6 @@ static mlan_status wifi_xmit_ralist_pkts(
             *pkt_cnt = 0;
         }
     }
-    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
     return MLAN_STATUS_SUCCESS;
 }
 
@@ -2138,7 +2237,7 @@ static int wifi_xmit_wmm_ac_pkts_enh()
 
             while (ralist && ralist != (raListTbl *)&tid_ptr->ra_list)
             {
-                ret = wifi_xmit_ralist_pkts(priv, ac, ralist, tid_ptr, &pkt_cnt);
+                ret = wifi_xmit_ralist_pkts(priv, ac, ralist, &pkt_cnt);
                 if (ret != MLAN_STATUS_SUCCESS)
                 {
                     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &tid_ptr->ra_list.plock);
@@ -2195,63 +2294,205 @@ static void wifi_dump_wmm_pkts_info(t_u8 *tx_buf, mlan_wmm_ac_e ac)
            ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_chksum);
 }
 
+#ifdef AMSDU_IN_AMPDU
+static t_u32 wifi_get_wmm_pkt_length(mlan_wmm_ac_e ac, t_u8 offset)
+{
+    t_u32 pkt_len = 0;
+    switch (ac)
+    {
+        case WMM_AC_BK:
+            pkt_len = wm_wifi.bk_pkt_len[(wm_wifi.send_index[ac] + offset) % BK_MAX_BUF];
+            break;
+        case WMM_AC_BE:
+            pkt_len = wm_wifi.be_pkt_len[(wm_wifi.send_index[ac] + offset) % BE_MAX_BUF];
+            break;
+        case WMM_AC_VI:
+            pkt_len = wm_wifi.vi_pkt_len[(wm_wifi.send_index[ac] + offset) % VI_MAX_BUF];
+            break;
+        case WMM_AC_VO:
+            pkt_len = wm_wifi.vo_pkt_len[(wm_wifi.send_index[ac] + offset) % VO_MAX_BUF];
+            break;
+        default:
+            pkt_len = 0;
+            break;
+    }
+    return pkt_len;
+}
+
+uint8_t *wifi_get_wmm_send_outbuf(mlan_wmm_ac_e ac, t_u8 offset)
+{
+    uint8_t *send_outbuf;
+    switch (ac)
+    {
+        case WMM_AC_BK:
+            send_outbuf = outbuf_bk[(wm_wifi.send_index[ac] + offset) % BK_MAX_BUF];
+            break;
+        case WMM_AC_BE:
+            send_outbuf = outbuf_be[(wm_wifi.send_index[ac] + offset) % BE_MAX_BUF];
+            break;
+        case WMM_AC_VI:
+            send_outbuf = outbuf_vi[(wm_wifi.send_index[ac] + offset) % VI_MAX_BUF];
+            break;
+        case WMM_AC_VO:
+            send_outbuf = outbuf_vo[(wm_wifi.send_index[ac] + offset) % VO_MAX_BUF];
+            break;
+        default:
+            send_outbuf = outbuf_bk[(wm_wifi.send_index[ac] + offset) % BK_MAX_BUF];
+            break;
+    }
+    return send_outbuf;
+}
+#endif
+
 #ifdef RW610
 static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
 {
     int err       = WM_SUCCESS;
     int tx_cnt    = 0;
     int max_buf[] = {BK_MAX_BUF, BE_MAX_BUF, VI_MAX_BUF, VO_MAX_BUF};
+#ifdef AMSDU_IN_AMPDU
+    uint32_t max_amsdu_size =
+        MIN(mlan_adap->priv[interface]->max_amsdu, mlan_adap->priv[interface]->adapter->tx_buffer_size);
+    uint8_t i;
+    t_u8 tid              = 0;
+    bool is_udp_frame     = false;
+    bool amsdu_flag       = false;
+    uint32_t amsdu_offset = sizeof(TxPD) + INTF_HEADER_LEN;
+    uint8_t amsdu_cnt     = 0;
+#endif
 
     while (wm_wifi.pkt_cnt[ac])
     {
-        switch (ac)
+#ifdef AMSDU_IN_AMPDU
+        uint32_t amsdu_buf_used_size = 0;
+        int amsdu_buf_available_size = max_amsdu_size - amsdu_buf_used_size;
+        uint32_t amsdu_pkt_len       = 0;
+        int pad_len                  = 0;
+        amsdu_flag                   = false;
+        amsdu_offset                 = sizeof(TxPD) + INTF_HEADER_LEN;
+        amsdu_cnt                    = 0;
+
+        wifi_wmm_get_pkt_prio(wifi_get_wmm_send_outbuf(ac, 0) + sizeof(TxPD) + INTF_HEADER_LEN, &tid, &is_udp_frame);
+
+        if (wlan_is_amsdu_allowed(mlan_adap->priv[interface], interface, wm_wifi.pkt_cnt[ac], tid))
         {
-            case WMM_AC_VO:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.vo_pkt_len[wm_wifi.send_index[ac]],
-                                        outbuf_vo[wm_wifi.send_index[ac]]);
-                if (err != MLAN_STATUS_SUCCESS)
+            /* Try to calculate how many A-MSDU can be formed within max_amsdu_size during the tx opportunity */
+            while (amsdu_buf_available_size >= 0 && amsdu_cnt < wm_wifi.pkt_cnt[ac])
+            {
+                amsdu_buf_used_size += wifi_get_wmm_pkt_length(ac, amsdu_cnt);
+                if (amsdu_cnt == 0)
                 {
-                    wifi_dump_wmm_pkts_info(outbuf_vo[wm_wifi.send_index[ac]], ac);
-                    goto ret;
+                    /* First A-MSDU packet */
+                    amsdu_buf_available_size = max_amsdu_size - amsdu_buf_used_size - LLC_SNAP_LEN;
                 }
-                break;
-            case WMM_AC_VI:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.vi_pkt_len[wm_wifi.send_index[ac]],
-                                        outbuf_vi[wm_wifi.send_index[ac]]);
-                if (err != MLAN_STATUS_SUCCESS)
+                else
                 {
-                    wifi_dump_wmm_pkts_info(outbuf_vi[wm_wifi.send_index[ac]], ac);
-                    goto ret;
+                    /* The following A-MSDU packets */
+                    amsdu_pkt_len            = amsdu_buf_used_size - sizeof(TxPD) - INTF_HEADER_LEN + LLC_SNAP_LEN;
+                    pad_len                  = ((amsdu_pkt_len & 3)) ? (4 - ((amsdu_pkt_len)&3)) : 0;
+                    amsdu_buf_available_size = max_amsdu_size - amsdu_pkt_len - pad_len;
                 }
-                break;
-            case WMM_AC_BE:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.be_pkt_len[wm_wifi.send_index[ac]],
-                                        outbuf_be[wm_wifi.send_index[ac]]);
-                if (err != MLAN_STATUS_SUCCESS)
+
+                if (amsdu_buf_available_size >= 0)
                 {
-                    wifi_dump_wmm_pkts_info(outbuf_be[wm_wifi.send_index[ac]], ac);
-                    goto ret;
+                    amsdu_cnt++;
                 }
-                break;
-            case WMM_AC_BK:
-                err = wlan_xmit_wmm_pkt(interface, wm_wifi.bk_pkt_len[wm_wifi.send_index[ac]],
-                                        outbuf_bk[wm_wifi.send_index[ac]]);
-                if (err != MLAN_STATUS_SUCCESS)
+            }
+            if (amsdu_cnt >= MIN_NUM_AMSDU)
+            {
+                amsdu_flag = true;
+                pad_len    = 0;
+                for (i = 0; i < amsdu_cnt; i++)
                 {
-                    wifi_dump_wmm_pkts_info(outbuf_bk[wm_wifi.send_index[ac]], ac);
-                    goto ret;
+                    amsdu_offset += wlan_11n_form_amsdu_pkt(
+                        wifi_get_amsdu_outbuf(amsdu_offset),
+                        wifi_get_wmm_send_outbuf(ac, i) + sizeof(TxPD) + INTF_HEADER_LEN,
+                        wifi_get_wmm_pkt_length(ac, i) - sizeof(TxPD) - INTF_HEADER_LEN, &pad_len);
                 }
-                break;
-            default:
-                goto ret;
+                /* Last A-MSDU packet does not need the padding */
+                amsdu_offset -= pad_len;
+            }
         }
-        tx_cnt++;
-        os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
-        wm_wifi.pkt_cnt[ac]--;
-        os_semaphore_put(&wm_wifi.tx_data_sem);
-        wm_wifi.send_index[ac]++;
-        if (wm_wifi.send_index[ac] >= max_buf[ac])
-            wm_wifi.send_index[ac] = 0;
+
+        if (amsdu_flag)
+        {
+            err = wlan_xmit_wmm_amsdu_pkt(ac, interface, amsdu_offset, wifi_get_amsdu_outbuf(0), amsdu_cnt);
+            if (err != MLAN_STATUS_SUCCESS)
+            {
+                wifi_e("Error in sending AMSDU %s", ac == WMM_AC_VO ?
+                                                        "Voice traffic" :
+                                                        ac == WMM_AC_VI ?
+                                                        "Video traffic" :
+                                                        ac == WMM_AC_BK ? "Background traffic" : "Best Effort traffic");
+                goto ret;
+            }
+        }
+        else
+#endif
+        {
+            switch (ac)
+            {
+                case WMM_AC_VO:
+                    err = wlan_xmit_wmm_pkt(interface, wm_wifi.vo_pkt_len[wm_wifi.send_index[ac]],
+                                            outbuf_vo[wm_wifi.send_index[ac]]);
+                    if (err != MLAN_STATUS_SUCCESS)
+                    {
+                        wifi_dump_wmm_pkts_info(outbuf_vo[wm_wifi.send_index[ac]], ac);
+                        goto ret;
+                    }
+                    break;
+                case WMM_AC_VI:
+                    err = wlan_xmit_wmm_pkt(interface, wm_wifi.vi_pkt_len[wm_wifi.send_index[ac]],
+                                            outbuf_vi[wm_wifi.send_index[ac]]);
+                    if (err != MLAN_STATUS_SUCCESS)
+                    {
+                        wifi_dump_wmm_pkts_info(outbuf_vi[wm_wifi.send_index[ac]], ac);
+                        goto ret;
+                    }
+                    break;
+                case WMM_AC_BE:
+                    err = wlan_xmit_wmm_pkt(interface, wm_wifi.be_pkt_len[wm_wifi.send_index[ac]],
+                                            outbuf_be[wm_wifi.send_index[ac]]);
+                    if (err != MLAN_STATUS_SUCCESS)
+                    {
+                        wifi_dump_wmm_pkts_info(outbuf_be[wm_wifi.send_index[ac]], ac);
+                        goto ret;
+                    }
+                    break;
+                case WMM_AC_BK:
+                    err = wlan_xmit_wmm_pkt(interface, wm_wifi.bk_pkt_len[wm_wifi.send_index[ac]],
+                                            outbuf_bk[wm_wifi.send_index[ac]]);
+                    if (err != MLAN_STATUS_SUCCESS)
+                    {
+                        wifi_dump_wmm_pkts_info(outbuf_bk[wm_wifi.send_index[ac]], ac);
+                        goto ret;
+                    }
+                    break;
+                default:
+                    goto ret;
+            }
+        }
+#ifdef AMSDU_IN_AMPDU
+        if (amsdu_flag)
+        {
+            tx_cnt += amsdu_cnt;
+            os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
+            wm_wifi.pkt_cnt[ac] -= amsdu_cnt;
+            os_semaphore_put(&wm_wifi.tx_data_sem);
+            wm_wifi.send_index[ac] = (wm_wifi.send_index[ac] + amsdu_cnt) % max_buf[ac];
+        }
+        else
+#endif
+        {
+            tx_cnt++;
+            os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
+            wm_wifi.pkt_cnt[ac]--;
+            os_semaphore_put(&wm_wifi.tx_data_sem);
+            wm_wifi.send_index[ac]++;
+            if (wm_wifi.send_index[ac] >= max_buf[ac])
+                wm_wifi.send_index[ac] = 0;
+
+        }
     }
 
 ret:
@@ -2808,7 +3049,11 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
+#if defined(RW610)
+    wifi_imu_lock();
+#else
     (void)wifi_sdio_lock();
+#endif
 
     /* XXX: TODO Get rid on the memset once we are convinced that
      * process_pkt_hdrs sets correct values */
@@ -2819,10 +3064,20 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     i = wlan_xmit_pkt(pkt_len + len - 2U, interface);
     if (i == MLAN_STATUS_FAILURE)
     {
+#if defined(RW610)
+        wifi_imu_unlock();
+#else
         wifi_sdio_unlock();
+#endif
+
         return (int)-WM_FAIL;
     }
+
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
     wifi_sdio_unlock();
+#endif
 
     return WM_SUCCESS;
 }

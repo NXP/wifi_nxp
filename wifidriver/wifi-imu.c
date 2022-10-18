@@ -53,6 +53,10 @@ static uint8_t cmd_buf[WIFI_FW_CMDBUF_SIZE];
  */
 bool g_txrx_flag;
 
+#ifdef RW610
+bool cal_data_valid_rw610;
+#endif
+
 int mlan_subsys_init(void);
 int mlan_subsys_deinit();
 
@@ -277,14 +281,13 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 }
 
 #ifdef AMSDU_IN_AMPDU
-int process_amsdu_pkt_hdrs(void *pbuf, t_u32 payloadlen, mlan_wmm_ac_e ac)
+int process_amsdu_pkt_hdrs(void *pbuf, t_u32 payloadlen, mlan_wmm_ac_e ac, t_u8 interface)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     IMUPkt *imuhdr       = (IMUPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
-    TxPD *ptxpd_orig     = (TxPD *)((uint8_t *)wifi_get_wmm_send_outbuf(ac, 0) + INTF_HEADER_LEN);
 
-    ptxpd->bss_type      = ptxpd_orig->bss_type;
+    ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
     ptxpd->tx_pkt_length = payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN;
@@ -405,6 +408,11 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 #endif
         case HostCmd_CMD_GET_HW_SPEC:
             wlan_ret_get_hw_spec((mlan_private *)mlan_adap->priv[0], (HostCmd_DS_COMMAND *)cmdresp, NULL);
+#ifdef RW610
+            t_u32 fw_cap_ext_rw610;
+            fw_cap_ext_rw610     = mlan_adap->priv[0]->adapter->fw_cap_ext;
+            cal_data_valid_rw610 = (((fw_cap_ext_rw610 & 0x0800) == 0) ? 0 : 1);
+#endif
             break;
         case HostCmd_CMD_VERSION_EXT:
             wifi_get_firmware_ver_ext_from_cmdresp(cmdresp, dev_fw_ver_ext);
@@ -964,7 +972,6 @@ static void wlan_fw_init_cfg()
 #endif
 
 #ifdef RW610
-    bool cal_data_valid_rw610 = (((mlan_adap->priv[0]->adapter->fw_cap_ext) & 0x0800) == 0);
     if (!cal_data_valid_rw610)
     {
         wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
@@ -1108,7 +1115,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     wifi_imu_lock();
-    process_amsdu_pkt_hdrs((t_u8 *)tx_buf, txlen, ac);
+    process_amsdu_pkt_hdrs((t_u8 *)tx_buf, txlen, ac, interface);
 
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
     ;

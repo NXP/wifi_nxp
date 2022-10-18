@@ -485,43 +485,6 @@ static mlan_status wlan_11n_ioctl_supported_mcs_set(IN pmlan_adapter pmadapter, 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-/**
- *  @brief This function checks if the given pointer is valid entry of
- *         Tx BA Stream table
- *
- *  @param priv         Pointer to mlan_private
- *  @param ptxtblptr    Pointer to tx ba stream entry
- *
- *  @return             MTRUE or MFALSE
- */
-static int wlan_is_txbastreamptr_valid(mlan_private *priv, TxBAStreamTbl *ptxtblptr)
-{
-    TxBAStreamTbl *ptx_tbl;
-
-    ENTER();
-    ptx_tbl =
-        (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MNULL, MNULL);
-
-    if (ptx_tbl == MNULL)
-    {
-        LEAVE();
-        return MFALSE;
-    }
-
-    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
-    {
-        if (ptx_tbl == ptxtblptr)
-        {
-            LEAVE();
-            return MTRUE;
-        }
-
-        ptx_tbl = ptx_tbl->pnext;
-    }
-
-    LEAVE();
-    return MFALSE;
-}
 
 #ifndef CONFIG_MLAN_WMSDK
 /**
@@ -1038,6 +1001,7 @@ mlan_status wlan_cmd_amsdu_aggr_ctrl(mlan_private *priv, HostCmd_DS_COMMAND *cmd
  *
  *  @return        MLAN_STATUS_SUCCESS
  */
+#ifdef AMSDU_IN_AMPDU
 mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
                                      IN HostCmd_DS_COMMAND *resp,
                                      IN mlan_ioctl_req *pioctl_buf)
@@ -1061,9 +1025,13 @@ mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
         cfg->param.amsdu_aggr_ctrl.enable        = wlan_le16_to_cpu(amsdu_ctrl->enable);
         cfg->param.amsdu_aggr_ctrl.curr_buf_size = wlan_le16_to_cpu(amsdu_ctrl->curr_buf_size);
     }
+
+    pmpriv->is_amsdu_enabled = wlan_le16_to_cpu(amsdu_ctrl->enable);
+
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 
 /**
  *  @brief This function prepares 11n cfg command
@@ -1522,28 +1490,27 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
  *
  *  @return 	        N/A
  */
-void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx_tbl)
+void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra)
 {
+    TxBAStreamTbl *ptx_tbl  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
 
     (void)pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 
-    if (ptx_tbl == MNULL || !wlan_is_txbastreamptr_valid(priv, ptx_tbl))
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
     {
-        goto exit;
+        PRINTM(MINFO, "Delete BA stream table entry: %p\n", ptx_tbl);
+
+        util_unlink_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)ptx_tbl, MNULL,
+                         MNULL);
     }
 
-    PRINTM(MINFO, "Delete BA stream table entry: %p\n", ptx_tbl);
-
-    util_unlink_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)(void *)ptx_tbl, MNULL,
-                     MNULL);
+    (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
 
-exit:
-    (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
     LEAVE();
 }
 
@@ -1565,7 +1532,7 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
                 priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, priv->adapter->callbacks.moal_spin_lock,
                 priv->adapter->callbacks.moal_spin_unlock)) != NULL)
     {
-        wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr);
+        wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr->ra);
     }
 
     util_init_list((pmlan_linked_list)(void *)&priv->tx_ba_stream_tbl_ptr);
@@ -1589,7 +1556,7 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
  *  @return 	   A pointer to first entry matching RA/TID in BA stream
  *                 NULL if not found
  */
-TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra)
+TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, t_u8 *ra)
 {
     TxBAStreamTbl *ptx_tbl;
     pmlan_adapter pmadapter = priv->adapter;
@@ -1609,7 +1576,7 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", ptx_tbl->tid);
         DBG_HEXDUMP(MDAT_D, "RA", ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
 
-        if ((!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH)) && (ptx_tbl->tid == tid))
+        if (!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH))
         {
             LEAVE();
             return ptx_tbl;
@@ -1622,7 +1589,6 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
     return MNULL;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will create a entry in tx ba stream table for the
  *  		given RA/TID.
@@ -1634,14 +1600,14 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
  *
  *  @return 	    N/A
  */
-void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status)
+void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_status)
 {
     TxBAStreamTbl *newNode  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
 
-    if (!wlan_11n_get_txbastream_tbl(priv, tid, ra))
+    if (!wlan_11n_get_txbastream_tbl(priv, ra))
     {
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
@@ -1650,8 +1616,10 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
                                          (t_u8 **)&newNode);
         util_init_list((pmlan_linked_list)newNode);
 
-        newNode->tid       = tid;
+        (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
+
         newNode->ba_status = ba_status;
+        newNode->txba_thresh = os_rand_range(5, 5);
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
@@ -1660,7 +1628,144 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
 
     LEAVE();
 }
-#endif /* CONFIG_MLAN_WMSDK */
+
+/**
+ *  @brief This function will update ampdu status in tx ba stream table for the
+ *  		given RA/TID.
+ *
+ *  @param priv      A pointer to mlan_private
+ *  @param ra        RA to find in reordering table
+ *  @param tid	     TID to find in reordering table
+ *  @param status    ampdu status
+ *
+ *  @return 	    N/A
+ */
+
+void wlan_11n_update_txbastream_tbl_ampdu_stat(mlan_private *priv, t_u8 *ra, t_u8 status, t_u8 tid)
+{
+    TxBAStreamTbl *ptx_tbl;
+
+    ENTER();
+
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
+    {
+        ptx_tbl->ampdu_stat[tid] = status;
+    }
+    else
+        PRINTM(MERROR, "update txbastream_tbl ampdu status error\n");
+
+    LEAVE();
+    return;
+}
+
+/**
+ *  @brief This function will update ampdu supported in tx ba stream table for the
+ *  		given RA.
+ *
+ *  @param priv      A pointer to mlan_private
+ *  @param ra        RA to find in reordering table
+ *  @param supported ampdu support
+ *
+ *  @return 	    N/A
+ */
+void wlan_11n_update_txbastream_tbl_ampdu_supported(mlan_private *priv, t_u8 *ra, t_u8 supported)
+{
+    TxBAStreamTbl *ptx_tbl;
+    int i;
+
+    ENTER();
+
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
+    {
+        for (i = 0; i < MAX_NUM_TID; i++)
+            ptx_tbl->ampdu_supported[i] = supported;
+    }
+    else
+        PRINTM(MERROR, "update txbastream_tbl ampdu supported error\n");
+
+    LEAVE();
+    return;
+}
+
+/**
+ *  @brief This function will update ampdu tx threshold in tx ba stream table for the
+ *  		given RA.
+ *
+ *  @param priv      A pointer to mlan_private
+ *  @param ra        RA to find in reordering table
+ *  @param tx_thresh tx ba threshold
+ *
+ *  @return 	    N/A
+ */
+
+void wlan_11n_update_txbastream_tbl_tx_thresh(mlan_private *priv, t_u8 *ra, t_u8 tx_thresh)
+{
+    TxBAStreamTbl *ptx_tbl;
+
+    ENTER();
+
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
+    {
+        ptx_tbl->txba_thresh = tx_thresh;
+    }
+    else
+        PRINTM(MERROR, "update txbastream_tbl ampdu supported error\n");
+
+    LEAVE();
+    return;
+}
+
+/**
+ *  @brief This function will update ampdu supported in tx ba stream table for the
+ *  		given RA.
+ *
+ *  @param priv      A pointer to mlan_private
+ *  @param ra        RA to find in reordering table
+ *
+ *  @return 	    N/A
+ */
+
+void wlan_11n_update_txbastream_tbl_tx_cnt(mlan_private *priv, t_u8 *ra)
+{
+    TxBAStreamTbl *ptx_tbl;
+
+    ENTER();
+
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
+    {
+        ptx_tbl->txpkt_cnt++;
+    }
+    else
+        PRINTM(MERROR, "update txbastream_tbl tx cnt error\n");
+
+    LEAVE();
+    return;
+}
+
+/**
+ *  @brief This function will get sta peer amsdu
+ *
+ *  @param priv      A pointer to mlan_private
+ *
+ *  @return 	    amsdu value
+ */
+
+int wlan_11n_get_sta_peer_amsdu(mlan_private *priv)
+{
+    TxBAStreamTbl *ptx_tbl = MNULL;
+    int ret                = MFALSE;
+
+    ENTER();
+
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, priv->curr_bss_params.bss_descriptor.mac_address)))
+    {
+        ret = ptx_tbl->amsdu;
+    }
+
+    LEAVE();
+
+    return ret;
+}
 
 /**
  *  @brief This function will send a block ack to given tid/ra
@@ -1685,11 +1790,18 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     add_ba_req.block_ack_param_set =
         (t_u16)((tid << BLOCKACKPARAM_TID_POS) | (priv->add_ba_param.tx_win_size << BLOCKACKPARAM_WINSIZE_POS) |
                 IMMEDIATE_BLOCK_ACK);
+#ifdef AMSDU_IN_AMPDU
     /** enable AMSDU inside AMPDU */
+    /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
+#if 0
     if (priv->add_ba_param.tx_amsdu && (priv->aggr_prio_tbl[tid].amsdu != BA_STREAM_NOT_ALLOWED))
+#else
+    if (priv->add_ba_param.tx_amsdu && priv->bss_type == MLAN_BSS_TYPE_STA)
+#endif
     {
         add_ba_req.block_ack_param_set |= BLOCKACKPARAM_AMSDU_SUPP_MASK;
     }
+#endif
     add_ba_req.block_ack_tmo = (t_u16)priv->add_ba_param.timeout;
 
     ++dialog_tok;
@@ -1700,6 +1812,7 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     }
 
     add_ba_req.dialog_token = dialog_tok;
+    (void)__memset(priv->adapter, &add_ba_req.peer_mac_addr, 0x0, MLAN_MAC_ADDR_LENGTH);
     (void)__memcpy(priv->adapter, &add_ba_req.peer_mac_addr, peer_mac, MLAN_MAC_ADDR_LENGTH);
 #ifdef DUMP_PACKET_MAC
     wmprintf("wlan_send_addba bss_type:%d\r\n", priv->bss_type);
