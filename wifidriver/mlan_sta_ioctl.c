@@ -4800,7 +4800,6 @@ mlan_status wlan_misc_ioctl_thermal(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
 }
 #endif
 
-#ifdef CONFIG_ROAMING
 /**
  *  @brief Get/Set subscribe event
  *
@@ -4838,7 +4837,6 @@ mlan_status wlan_misc_ioctl_subscribe_evt(IN pmlan_adapter pmadapter, IN pmlan_i
     LEAVE();
     return ret;
 }
-#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 /**

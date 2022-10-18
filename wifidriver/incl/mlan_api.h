@@ -221,7 +221,7 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
 }
 #endif
 #ifdef CONFIG_ROAMING
-int wifi_set_rssi_low_threshold(mlan_private *pmpriv, const uint8_t rssi_low);
+int wifi_set_rssi_low_threshold(const uint8_t rssi_low);
 int wifi_request_bgscan_query(mlan_private *pmpriv);
 int wifi_send_scan_query(void);
 void wifi_get_band(mlan_private *pmpriv, int *band);

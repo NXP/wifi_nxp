@@ -89,6 +89,10 @@ static bool ps_sleep_cb_sent;
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP;
 #endif
 
+#ifndef CONFIG_WLAN_RSSI_THRESHOLD
+#define CONFIG_WLAN_RSSI_THRESHOLD 70
+#endif
+
 enum user_request_type
 {
     /* we append our user-generated events to the wifi interface events and
@@ -306,7 +310,6 @@ static struct
     bool hidden_scan_on : 1;
 #ifdef CONFIG_ROAMING
     bool roaming_enabled : 1;
-    unsigned char rssi_low;
 #endif
 #ifdef CONFIG_11R
     bool ft_bss : 1;
@@ -2064,23 +2067,9 @@ static void handle_scan_results(void)
         }
     }
 
-    if (matching_ap_found)
+    if ((matching_ap_found) &&
+        (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE)))
     {
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
-        if (wlan.roam_reassoc == true)
-        {
-            if (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
-            {
-                /* For same AP change state again to CONNECTED and return */
-                wlan.sta_state    = CM_STA_CONNECTED;
-                wlan.roam_reassoc = false;
-#ifdef CONFIG_11R
-                wlan.ft_bss = false;
-#endif
-                return;
-            }
-        }
-#endif
         update_network_params(network, best_ap);
 #ifdef CONFIG_OWE
         if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)
@@ -2115,21 +2104,19 @@ static void handle_scan_results(void)
 
     os_mem_free(best_ap);
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
     if (wlan.roam_reassoc == true)
     {
         wlan.sta_state    = CM_STA_CONNECTED;
         wlan.roam_reassoc = false;
 #ifdef CONFIG_11R
-        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
-        {
-            wlan.ft_bss = false;
-            (void)wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
-        }
+        wlan.ft_bss = false;
+#endif
+
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+        (void)wifi_set_rssi_low_threshold(CONFIG_WLAN_RSSI_THRESHOLD);
 #endif
         return;
     }
-#endif
 
     /* We didn't find our network in the scan results set: rescan if we
      * have rescan attempts remaining, otherwise give up.
@@ -2484,9 +2471,6 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
                     wlan.reassoc_count   = 0;
                     wlan.reassoc_request = false;
                 }
-#ifdef CONFIG_ROAMING
-            wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
-#endif
             CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
 #ifdef CONFIG_P2P
             wifi_wfd_event(false, false, (void *)1);
@@ -2737,13 +2721,8 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
-#ifdef CONFIG_11R
-        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
-        {
-            (void)wifi_set_subscribe_low_rssi_event(CONFIG_WLAN_RSSI_THRESHOLD, 0);
-        }
-#endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+        (void)wifi_set_rssi_low_threshold(CONFIG_WLAN_RSSI_THRESHOLD);
 #endif
 
 #ifdef CONFIG_WMSTATS
@@ -3269,9 +3248,6 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 }
 
                 net_interface_up(if_handle);
-#ifdef CONFIG_ROAMING
-                wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
-#endif
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
             else
@@ -3310,9 +3286,6 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             wlan.reassoc_count   = 0;
             wlan.reassoc_request = false;
         }
-#ifdef CONFIG_ROAMING
-        wifi_config_roaming(wlan.roaming_enabled, wlan.rssi_low);
-#endif
         CONNECTION_EVENT(WLAN_REASON_SUCCESS, &ip);
 #ifdef CONFIG_P2P
         wifi_wfd_event(false, false, (void *)1);
@@ -7307,12 +7280,11 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
 #endif
 
 #ifdef CONFIG_ROAMING
-int wlan_set_roaming(const int enable, const uint8_t rssi_low)
+int wlan_set_roaming(const int enable)
 {
     wlan.roaming_enabled = enable;
-    wlan.rssi_low        = rssi_low;
 
-    return wifi_config_roaming(enable, rssi_low);
+    return wifi_config_roaming(enable, (t_u8)CONFIG_WLAN_RSSI_THRESHOLD);
 }
 #endif
 

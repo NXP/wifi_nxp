@@ -1023,10 +1023,8 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : 802.11 get status */
 #define HostCmd_CMD_WMM_GET_STATUS 0x0071
 
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /** Host Command ID : 802.11 subscribe event */
 #define HostCmd_CMD_802_11_SUBSCRIBE_EVENT 0x0075
-#endif
 
 #ifdef CONFIG_WIFI_EU_CRYPTO
 /** Host Command ID : EU Test */

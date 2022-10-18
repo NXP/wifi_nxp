@@ -1655,17 +1655,15 @@ static void dump_wlan_roaming_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
-        "    wlan-roaming <0/1> rssi_low <rssi_threshold>"
+        "    wlan-roaming <0/1>"
         "\r\n");
-    (void)PRINTF("rssi_low is optional. Use default value 70 if not provided \r\n");
     (void)PRINTF("Example:\r\n");
-    (void)PRINTF("    wlan-roaming 1 rssi_low 70\r\n");
+    (void)PRINTF("    wlan-roaming 1\r\n");
 }
 
 static void test_wlan_roaming(int argc, char **argv)
 {
-    int enable   = 0;
-    int rssi_low = 0;
+    int enable = 0;
 
     if (argc < 2)
     {
@@ -1673,15 +1671,14 @@ static void test_wlan_roaming(int argc, char **argv)
         (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
-    enable = atoi(argv[1]);
-    if (enable)
+
+    errno  = 0;
+    enable = (int)strtol(argv[1], NULL, 10);
+    if (errno != 0)
     {
-        if (argc == 4 && string_equal("rssi_low", argv[2]))
-            rssi_low = atoi(argv[3]);
-        else
-            rssi_low = DEFAULT_RSSI_THRESHOLD;
+        (void)PRINTF("Error during strtol:wlan roaming errno:%d\r\n", errno);
     }
-    wlan_set_roaming(enable, rssi_low);
+    wlan_set_roaming(enable);
     return;
 }
 #endif

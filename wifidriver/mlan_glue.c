@@ -3065,7 +3065,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
             case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -3080,7 +3079,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
             }
             break;
-#endif
 #ifdef CONFIG_WIFI_EU_CRYPTO
             case HostCmd_CMD_EU_CRYPTO:
             {
@@ -3700,9 +3698,11 @@ static int wifi_request_bgscan(mlan_private *pmpriv)
     wifi_wait_for_cmdresp(NULL);
     return wm_wifi.cmd_resp_status;
 }
+#endif
 
-int wifi_set_rssi_low_threshold(mlan_private *pmpriv, const uint8_t low_rssi)
+int wifi_set_rssi_low_threshold(const uint8_t low_rssi)
 {
+    mlan_private *pmpriv = mlan_adap->priv[0];
     mlan_ds_subscribe_evt subscribe_evt;
 
     wifi_get_command_lock();
@@ -3720,6 +3720,7 @@ int wifi_set_rssi_low_threshold(mlan_private *pmpriv, const uint8_t low_rssi)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_ROAMING
 int wifi_request_bgscan_query(mlan_private *pmpriv)
 {
     wifi_get_command_lock();
@@ -3783,7 +3784,7 @@ void wifi_config_bgscan_and_rssi(const char *ssid)
     if ((pmpriv->rssi_low + RSSI_HYSTERESIS) <= LOWEST_RSSI_THRESHOLD)
     {
         pmpriv->rssi_low += RSSI_HYSTERESIS;
-        ret = wifi_set_rssi_low_threshold(pmpriv, pmpriv->rssi_low);
+        ret = wifi_set_rssi_low_threshold(pmpriv->rssi_low);
     }
 done:
     LEAVE();
@@ -5037,7 +5038,7 @@ int wifi_config_roaming(const int enable, const uint8_t rssi_low)
     {
         pmpriv->roaming_enabled = MTRUE;
         pmpriv->rssi_low        = rssi_low;
-        ret                     = wifi_set_rssi_low_threshold(pmpriv, pmpriv->rssi_low);
+        ret                     = wifi_set_rssi_low_threshold(pmpriv->rssi_low);
         if (ret != WM_SUCCESS)
         {
             wifi_e("Failed to config rssi threshold for roaming");
@@ -5291,7 +5292,7 @@ int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info)
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
 
-#ifdef CONFIG_11R
+#ifdef CONFIG_MLAN_WMSDK
 static int wifi_set_subscribe_event(const t_u16 evt_bitmap, const t_u8 value, const t_u8 value_freq)
 {
     mlan_ioctl_req req;

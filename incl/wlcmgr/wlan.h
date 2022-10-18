@@ -1822,13 +1822,15 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
 /** Set roaming config.
  * This function may be called to enable/disable roaming.
  *
+ * \note <b>RSSI Threshold setting for roaming</b>:
+ * Uses rssi threshold value defined by CONFIG_WLAN_RSSI_THRESHOLD or by default 70 is used.
+ *
  * \param[in] enable Enable/disable roaming.
- * \param[in] rssi_low RSSI threhold.
  *
  * \return WM_SUCCESS if the call was successful.
  * \return -WM_FAIL if failed.
  */
-int wlan_set_roaming(const int enable, const uint8_t rssi_low);
+int wlan_set_roaming(const int enable);
 #endif
 
 /** Configure Listen interval of IEEE power save mode.

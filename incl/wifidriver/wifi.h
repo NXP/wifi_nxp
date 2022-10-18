@@ -1186,9 +1186,7 @@ void wifi_wmm_tx_stats_dump(int bss_type);
 
 wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
 
-#ifdef CONFIG_11R
-int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_freq);
-#endif
+int wifi_set_rssi_low_threshold(const uint8_t low_rssi);
 
 #ifdef CONFIG_HEAP_DEBUG
 /**

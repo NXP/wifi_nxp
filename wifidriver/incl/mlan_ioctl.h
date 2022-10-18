@@ -3335,7 +3335,6 @@ typedef struct _mlan_ds_misc_country_code
     t_u8 country_code[COUNTRY_CODE_LEN];
 } mlan_ds_misc_country_code;
 
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /** action for set */
 #define SUBSCRIBE_EVT_ACT_BITWISE_SET 0x0002
 /** action for clear */
@@ -3429,7 +3428,6 @@ typedef struct _mlan_ds_subscribe_evt
     /* Number of pre missed beacons */
     t_u8 pre_beacon_miss;
 } mlan_ds_subscribe_evt;
-#endif /* CONFIG_ROAMING || CONFIG_11R */
 /** Max OTP user data length */
 #define MAX_OTP_USER_DATA_LEN 252U
 
@@ -3657,10 +3655,8 @@ typedef struct _mlan_ds_misc_cfg
         t_u32 thermal;
         /** Mgmt subtype mask for MLAN_OID_MISC_RX_MGMT_IND */
         t_u32 mgmt_subtype_mask;
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
         /** subscribe event for MLAN_OID_MISC_SUBSCRIBE_EVENT */
         mlan_ds_subscribe_evt subscribe_event;
-#endif
 #ifdef DEBUG_LEVEL1
         /** Driver debug bit masks */
         t_u32 drvdbg;

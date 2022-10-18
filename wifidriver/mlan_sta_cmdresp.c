@@ -1461,7 +1461,6 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /**
  *  @brief This function handles the command response of
  *  subscribe event
@@ -1491,7 +1490,6 @@ static mlan_status wlan_ret_subscribe_event(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 /**
@@ -1779,11 +1777,9 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_ret_subscribe_event(pmpriv, resp, pioctl_buf);
             break;
-#endif /* CONFIG_ROAMING || CONFIG_11R */
 #if defined(CONFIG_ROAMING)
         case HostCmd_CMD_802_11_BG_SCAN_QUERY:
             ret = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);

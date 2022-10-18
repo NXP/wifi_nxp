@@ -1999,7 +1999,6 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
 }
 #endif
 
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
 /**
  *  @brief This function prepares command of subscribe event.
  *
@@ -2181,7 +2180,6 @@ done:
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif
 
 /**
  *  @brief This function prepares command of OTP user data.
@@ -2598,11 +2596,9 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(CONFIG_ROAMING) || defined(CONFIG_11R)
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_cmd_subscribe_event(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#endif /* CONFIG_ROAMING or CONFIG_11R */
         case HostCmd_CMD_OTP_READ_USER_DATA:
             ret = wlan_cmd_otp_user_data(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
