@@ -80,14 +80,14 @@ static void wlan_wnm_parse_neighbor_report(t_u8 *pos, t_u8 len, struct wnm_neigh
     }
 }
 
-static void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
-                                        enum wnm_btm_status_code status,
-                                        t_u8 *dst_addr,
-                                        t_u8 *src_addr,
-                                        t_u8 *target_bssid,
-                                        t_u8 *tag_nr,
-                                        t_u8 tag_len,
-                                        bool protect)
+void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
+                                 enum wnm_btm_status_code status,
+                                 t_u8 *dst_addr,
+                                 t_u8 *src_addr,
+                                 t_u8 *target_bssid,
+                                 t_u8 *tag_nr,
+                                 t_u8 tag_len,
+                                 bool protect)
 {
     wlan_mgmt_pkt *pmgmt_pkt_hdr    = MNULL;
     IEEEtypes_FrameCtl_t *mgmt_fc_p = MNULL;
@@ -144,6 +144,18 @@ static void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
     os_mem_free(pmgmt_pkt_hdr);
 }
 
+static bool wlan_11v_find_in_channels(t_u8 *channels, t_u8 entry_num, t_u8 chan)
+{
+    t_u8 i;
+    for (i = 0; i < entry_num; i++)
+    {
+        if (channels[i] == chan)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 /********************************************************
                 Global functions
 ********************************************************/
@@ -166,17 +178,22 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 #ifdef CONFIG_MBO
     t_u8 is_first = 0;
 #endif /* CONFIG_MBO */
-    t_u8 *channels = (t_u8 *)os_mem_calloc((size_t)9U);
-
-    if (channels == NULL)
-    {
-        return;
-    }
+    wlan_nlist_report_param *pnlist_rep_param = MNULL;
+    t_u8 entry_num                            = 0;
 
     if (end - pos < 5)
     {
         return;
     }
+
+    pnlist_rep_param = (wlan_nlist_report_param *)os_mem_alloc(sizeof(wlan_nlist_report_param));
+    if (pnlist_rep_param == MNULL)
+    {
+        wifi_e("11v nlist report param buffer alloc failed %d", sizeof(wlan_nlist_report_param));
+        return;
+    }
+
+    (void)memset(pnlist_rep_param, 0, sizeof(wlan_nlist_report_param));
 
     dialog_token = pos[0];
     btm_mode     = pos[1];
@@ -205,7 +222,8 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             if ((int)len > (end - pos))
             {
                 wifi_d("WNM: Truncated BTM request");
-                os_mem_free(preport);
+                os_mem_free((void *)preport);
+                os_mem_free((void *)pnlist_rep_param);
                 return;
             }
 
@@ -214,6 +232,11 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
                 struct wnm_neighbor_report *rep;
                 rep = &preport[wnm_num_neighbor_report];
                 wlan_wnm_parse_neighbor_report(pos, len, rep);
+                if (!wlan_11v_find_in_channels(pnlist_rep_param->channels, entry_num, rep->channel))
+                {
+                    pnlist_rep_param->channels[entry_num] = rep->channel;
+                    entry_num++;
+                }
 #ifdef CONFIG_MBO
                 if ((is_first == 0U) &&
                     (memcmp(dest_addr, preport[wnm_num_neighbor_report].bssid, MLAN_MAC_ADDR_LENGTH) != 0))
@@ -235,27 +258,43 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
             pos += len;
         }
 
-        if (wnm_num_neighbor_report == (t_u8)0U || prefer_select == (t_u8)0U)
+        if (wnm_num_neighbor_report == (t_u8)0U)
         {
             wlan_send_mgmt_wnm_btm_resp(dialog_token, WNM_BTM_REJECT_NO_SUITABLE_CANDIDATES, dest_addr, src_addr, NULL,
                                         ptagnr, tagnr_len, protect);
-            os_mem_free(preport);
+            os_mem_free((void *)preport);
+            os_mem_free((void *)pnlist_rep_param);
             return;
         }
 
-        wlan_send_mgmt_wnm_btm_resp(dialog_token, WNM_BTM_ACCEPT, dest_addr, src_addr, preport[neighbor_index].bssid,
-                                    ptagnr, tagnr_len, protect);
+        if (prefer_select == (t_u8)1U)
+        {
+            wlan_send_mgmt_wnm_btm_resp(dialog_token, WNM_BTM_ACCEPT, dest_addr, src_addr,
+                                        preport[neighbor_index].bssid, ptagnr, tagnr_len, protect);
 
-        /* disconnect and re-assocate with AP2 */
-        // ssid_bssid.specific_channel = preport[neighbor_index].channel;
-        channels[0] = btm_mode;
-        channels[1] = 1;
-        channels[2] = preport[neighbor_index].channel;
-        (void)memcpy((void *)&channels[3], (const void *)preport[neighbor_index].bssid, (size_t)MLAN_MAC_ADDR_LENGTH);
-        if (wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)channels) != WM_SUCCESS)
+            /* disconnect and re-assocate with AP2 */
+            pnlist_rep_param->nlist_mode   = WLAN_NLIST_11V_PREFERRED;
+            pnlist_rep_param->num_channels = 1;
+            pnlist_rep_param->channels[0]  = preport[neighbor_index].channel;
+            pnlist_rep_param->btm_mode     = btm_mode;
+            (void)memcpy((void *)pnlist_rep_param->bssid, (const void *)preport[neighbor_index].bssid,
+                         (size_t)MLAN_MAC_ADDR_LENGTH);
+        }
+        else
+        {
+            pnlist_rep_param->nlist_mode   = WLAN_NLIST_11V;
+            pnlist_rep_param->num_channels = entry_num;
+            pnlist_rep_param->btm_mode     = btm_mode;
+            pnlist_rep_param->dialog_token = dialog_token;
+            pnlist_rep_param->protect      = protect;
+            (void)memcpy((void *)pnlist_rep_param->dst_addr, (const void *)dest_addr, (size_t)MLAN_MAC_ADDR_LENGTH);
+        }
+
+        if (wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, (void *)pnlist_rep_param) !=
+            WM_SUCCESS)
         {
             /* If fail to send message on queue, free allocated memory ! */
-            os_mem_free((void *)channels);
+            os_mem_free((void *)pnlist_rep_param);
         }
         os_mem_free(preport);
     }

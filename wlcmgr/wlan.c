@@ -321,6 +321,9 @@ static struct
 #ifdef CONFIG_11K
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
 #endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+    wlan_nlist_report_param nlist_rep_param;
+#endif
 } wlan;
 
 void wlan_wake_up_card(void);
@@ -1987,6 +1990,16 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
     return ret;
 }
 
+#ifdef CONFIG_11V
+static void wlan_send_btm_response(t_u8 *bssid)
+{
+    wlan_send_mgmt_wnm_btm_resp(wlan.nlist_rep_param.dialog_token, WNM_BTM_ACCEPT, wlan.nlist_rep_param.dst_addr,
+                                wlan.mac, bssid, NULL, 0, wlan.nlist_rep_param.protect);
+
+    memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
+}
+#endif
+
 static void handle_scan_results(void)
 {
     unsigned int count;
@@ -2084,6 +2097,12 @@ static void handle_scan_results(void)
 #endif
                 return;
             }
+#ifdef CONFIG_11V
+            if (wlan.nlist_rep_param.nlist_mode == WLAN_NLIST_11V)
+            {
+                wlan_send_btm_response(best_ap->bssid);
+            }
+#endif
         }
 
         update_network_params(network, best_ap);
@@ -2091,7 +2110,9 @@ static void handle_scan_results(void)
         if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)
         {
             wlcm_d("do scan for OWE Transition SSID: %s", network->trans_ssid);
+            os_mem_free((void *)best_ap);
             do_scan(network);
+            return;
         }
         else
         {
@@ -2099,7 +2120,7 @@ static void handle_scan_results(void)
             ret = start_association(network, best_ap);
             if (ret == WM_SUCCESS)
             {
-                os_mem_free(best_ap);
+                os_mem_free((void *)best_ap);
                 return;
             }
 #ifdef CONFIG_OWE
@@ -2108,7 +2129,7 @@ static void handle_scan_results(void)
     }
     else if (num_channels != 0U)
     {
-        os_mem_free(best_ap);
+        os_mem_free((void *)best_ap);
         wlan.hidden_scan_on = true;
         do_hidden_scan(network, num_channels, chan_list);
         return;
@@ -2118,7 +2139,7 @@ static void handle_scan_results(void)
         /* Do Nothing */
     }
 
-    os_mem_free(best_ap);
+    os_mem_free((void *)best_ap);
 
     if (wlan.roam_reassoc == true)
     {
@@ -2918,28 +2939,28 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
 {
     unsigned int i;
     int ret;
-    t_u8 *channels = (t_u8 *)msg->data;
     wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
-    t_u8 *bssid = NULL;
+    t_u8 *bssid                               = NULL;
+    wlan_nlist_report_param *pnlist_rep_param = (wlan_nlist_report_param *)msg->data;
 
-    if (is_state(CM_STA_IDLE) || (channels == NULL))
+    if (is_state(CM_STA_IDLE) || (pnlist_rep_param == NULL))
     {
         wlcm_d("ignoring neighbor list report event in idle state");
         return;
     }
 
+    memcpy(&wlan.nlist_rep_param, pnlist_rep_param, sizeof(wlan_nlist_report_param));
+
 #ifdef CONFIG_11V
-    network->btm_mode = channels[0];
-    if (network->btm_mode != 0U)
+    if (pnlist_rep_param->nlist_mode == WLAN_NLIST_11V_PREFERRED)
     {
-        bssid = &channels[3];
+        bssid = pnlist_rep_param->bssid;
     }
 #endif
 
-    for (i = 0; i < channels[1]; i++)
+    for (i = 0; i < pnlist_rep_param->num_channels; i++)
     {
-        /* TODO: get the channel numbers from the neighbor list report event */
-        chan_list[i].chan_number = (t_u8)channels[i + 2U];
+        chan_list[i].chan_number = (t_u8)pnlist_rep_param->channels[i];
         chan_list[i].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
         chan_list[i].scan_time   = 120;
     }
@@ -2951,7 +2972,8 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     }
 #endif
     wlan.roam_reassoc = true;
-    ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, channels[1], chan_list, 0,
+    ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, pnlist_rep_param->num_channels,
+                             chan_list, 0,
 #ifdef CONFIG_EXT_SCAN_SUPPORT
                              scan_channel_gap,
 #endif
@@ -2965,9 +2987,9 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         wlan.roam_reassoc = false;
     }
 
-    if (channels != NULL)
+    if (pnlist_rep_param != NULL)
     {
-        os_mem_free(channels);
+        os_mem_free((void *)pnlist_rep_param);
     }
 }
 #endif
@@ -4617,6 +4639,9 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #ifdef CONFIG_WNM_PS
     wlan.wnm_is_set     = false;
     wlan.wnm_sleep_time = 0;
+#endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+    memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
 #endif
 
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |

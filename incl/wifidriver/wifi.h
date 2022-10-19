@@ -1027,6 +1027,34 @@ int wifi_host_11k_neighbor_req(t_u8 *ssid);
 int wifi_host_11v_bss_trans_query(t_u8 query_reason);
 #endif
 
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+/* Neighbor List Mode values */
+enum wlan_nlist_mode
+{
+#if defined(CONFIG_11K)
+    WLAN_NLIST_11K = 1,
+#endif
+#if defined(CONFIG_11V)
+    WLAN_NLIST_11V           = 2,
+    WLAN_NLIST_11V_PREFERRED = 3,
+#endif
+};
+
+typedef struct _wlan_nlist_report_param
+{
+    enum wlan_nlist_mode nlist_mode;
+    t_u8 num_channels;
+    t_u8 channels[MAX_NUM_CHANS_IN_NBOR_RPT];
+#if defined(CONFIG_11V)
+    t_u8 btm_mode;
+    t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
+    t_u8 dialog_token;
+    t_u8 dst_addr[MLAN_MAC_ADDR_LENGTH];
+    t_u8 protect;
+#endif
+} wlan_nlist_report_param;
+#endif
+
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER

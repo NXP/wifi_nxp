@@ -214,7 +214,7 @@ typedef PACK_START struct _nlist_entry_tlv
 static bool wifi_find_in_channels(t_u8 *channels, t_u8 entry_num, t_u8 chan)
 {
     t_u8 i;
-    for (i = 1; i < entry_num; i++)
+    for (i = 0; i < entry_num; i++)
     {
         if (channels[i] == chan)
         {
@@ -230,29 +230,28 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
     size_t buf_used  = 0;
     MrvlIEtypesHeader_t *tlv;
     nlist_entry_tlv *nlist = MNULL;
-    t_u8 entry_num         = 2;
+    t_u8 entry_num         = 0;
     t_u16 tlv_type, tlv_len;
-    /** The first byte in channels[] will be number of channels, followed by
-     * the channel numbers */
-    t_u8 *channels = (t_u8 *)os_mem_alloc((size_t)((int)sizeof(t_u8) * ((int)MAX_NUM_CHANS_IN_NBOR_RPT + (int)2U)));
-    t_u8 *buffer   = (t_u8 *)evt + sizeof(Event_Gen_t) - 1;
+    t_u8 *buffer = (t_u8 *)evt + sizeof(Event_Gen_t) - 1;
+    wlan_nlist_report_param *pnlist_rep_param =
+        (wlan_nlist_report_param *)os_mem_alloc(sizeof(wlan_nlist_report_param));
 
     wifi_d("Neighbor report event");
 #ifdef CONFIG_WIFI_EXTRA_DEBUG
     dump_hex(evt, evt->length + sizeof(Event_Gen_t));
 #endif
-    if (channels == MNULL)
+    if (pnlist_rep_param == MNULL)
     {
-        wifi_e("11k eventbuf alloc failed %d", evt->length);
+        wifi_e("11k nlist report param buffer alloc failed %d", sizeof(wlan_nlist_report_param));
         return MNULL;
     }
 
-    (void)memset(channels, 0, sizeof(t_u8) * (MAX_NUM_CHANS_IN_NBOR_RPT + 2U));
+    (void)memset(pnlist_rep_param, 0, sizeof(wlan_nlist_report_param));
     tlv_buf_left = (int)evt->length;
     tlv_buf_left = wlan_le16_to_cpu(tlv_buf_left);
     if (tlv_buf_left < (int)sizeof(MrvlIEtypesHeader_t))
     {
-        os_mem_free((void *)channels);
+        os_mem_free((void *)pnlist_rep_param);
         return MNULL;
     }
     wifi_d("neighbor AP list tlv len: %d", tlv_buf_left);
@@ -285,9 +284,9 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
 #endif
                 }
                 wifi_d("channel = %d", nlist->chan);
-                if (!wifi_find_in_channels(channels, entry_num, nlist->chan))
+                if (!wifi_find_in_channels(pnlist_rep_param->channels, entry_num, nlist->chan))
                 {
-                    channels[entry_num] = nlist->chan;
+                    pnlist_rep_param->channels[entry_num] = nlist->chan;
                     entry_num++;
                 }
                 break;
@@ -300,14 +299,15 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
         tlv = (MrvlIEtypesHeader_t *)(void *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
     }
 
-    if (entry_num > (t_u8)2U)
+    if (entry_num > (t_u8)0U)
     {
-        channels[1] = entry_num - (t_u8)2U;
-        return channels;
+        pnlist_rep_param->nlist_mode   = WLAN_NLIST_11K;
+        pnlist_rep_param->num_channels = entry_num;
+        return pnlist_rep_param;
     }
     else
     {
-        os_mem_free((void *)channels);
+        os_mem_free((void *)pnlist_rep_param);
         return MNULL;
     }
 }
@@ -5071,7 +5071,7 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     cfg.param.txomi_cfg.tx_option     = tx_option;
     cfg.param.txomi_cfg.num_data_pkts = num_data_pkts;
 
-    if((cfg.param.txomi_cfg.num_data_pkts<1) || (cfg.param.txomi_cfg.num_data_pkts>16))
+    if ((cfg.param.txomi_cfg.num_data_pkts < 1) || (cfg.param.txomi_cfg.num_data_pkts > 16))
     {
         wifi_e("Minimum value of num_data_pkts should be 1 and maximum should be 16");
         return -WM_FAIL;

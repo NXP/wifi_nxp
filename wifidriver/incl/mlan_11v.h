@@ -54,6 +54,16 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
 
 /* send mgmt bss transition query frame */
 int wlan_send_mgmt_bss_trans_query(mlan_private *pmpriv, t_u8 query_reason);
+
+/* send mgmt bss transition mgmt response */
+void wlan_send_mgmt_wnm_btm_resp(t_u8 dialog_token,
+                                 enum wnm_btm_status_code status,
+                                 t_u8 *dst_addr,
+                                 t_u8 *src_addr,
+                                 t_u8 *target_bssid,
+                                 t_u8 *tag_nr,
+                                 t_u8 tag_len,
+                                 bool protect);
 #endif /* CONFIG_11V */
 
 #endif /* !_MLAN_11V_H_ */
