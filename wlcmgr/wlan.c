@@ -1104,12 +1104,12 @@ static int network_matches_scan_result(const struct wlan_network *network,
     if (network->channel_specific && network->channel != res->Channel)
     {
         wlcm_d("%s: Channel mismatch. Got: %d Expected: %d", network->ssid, res->Channel, network->channel);
-        return WM_SUCCESS;
+        return -WM_FAIL;
     }
     if (network->bssid_specific && memcmp(network->bssid, res->bssid, 6))
     {
         wlcm_d("%s: bssid mismatch.", network->ssid);
-        return WM_SUCCESS;
+        return -WM_FAIL;
     }
 
     if (network->ssid_specific != 0U)
@@ -1136,7 +1136,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         )
         {
             wlcm_d("ssid mismatch: Got: %s Expected: %s", (char *)res->ssid, network->ssid);
-            return WM_SUCCESS;
+            return -WM_FAIL;
         }
     }
 
@@ -1149,26 +1149,26 @@ static int network_matches_scan_result(const struct wlan_network *network,
         if (!security_profile_matches(network, res))
         {
             wlcm_d("%s: security profile mismatch", network->ssid);
-            return WM_SUCCESS;
+            return -WM_FAIL;
         }
     }
 
     if (!(res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa) && network->security.psk_len)
     {
         wlcm_d("%s: security profile mismatch", network->ssid);
-        return WM_SUCCESS;
+        return -WM_FAIL;
     }
 
     if (!wifi_11d_is_channel_allowed((int)res->Channel))
     {
         wlcm_d("%d: Channel not allowed.", res->Channel);
-        return WM_SUCCESS;
+        return -WM_FAIL;
     }
 
 #ifdef CONFIG_OWE
     wlcm_d("%s: Match successful", res->trans_mode == OWE_TRANS_MODE_OWE ? network->trans_ssid : network->ssid);
 #endif
-    return 1;
+    return WM_SUCCESS;
 }
 
 #ifdef CONFIG_WPA2_ENTP
@@ -1941,8 +1941,8 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
     int ret = WM_SUCCESS;
 
     wlcm_d("starting association to \"%s\"", network->name);
-
-    ret = configure_security(network, res);
+    wlan.roam_reassoc = false;
+    ret               = configure_security(network, res);
     if (ret != 0)
     {
         wlcm_d("setting security params failed");
@@ -2036,7 +2036,7 @@ static void handle_scan_results(void)
         if (ret == WM_SUCCESS)
         {
             ret = network_matches_scan_result(network, res, &num_channels, chan_list);
-            if (ret != WM_SUCCESS)
+            if (ret == WM_SUCCESS)
             {
                 if (!matching_ap_found)
                 {
@@ -2067,9 +2067,25 @@ static void handle_scan_results(void)
         }
     }
 
-    if ((matching_ap_found) &&
-        (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE)))
+    if (matching_ap_found)
     {
+        if (wlan.roam_reassoc == true)
+        {
+            if (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
+            {
+                wlan.sta_state    = CM_STA_CONNECTED;
+                wlan.roam_reassoc = false;
+#ifdef CONFIG_11R
+                wlan.ft_bss = false;
+#endif
+
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+                (void)wifi_set_rssi_low_threshold(CONFIG_WLAN_RSSI_THRESHOLD);
+#endif
+                return;
+            }
+        }
+
         update_network_params(network, best_ap);
 #ifdef CONFIG_OWE
         if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)

@@ -1665,7 +1665,7 @@ static void test_wlan_roaming(int argc, char **argv)
 {
     int enable = 0;
 
-    if (argc < 2)
+    if (argc != 2)
     {
         dump_wlan_roaming_usage();
         (void)PRINTF("Error: invalid number of arguments\r\n");
@@ -3185,7 +3185,7 @@ static struct cli_command tests[] = {
     {"wlan-tx-pert", "<0/1> <STA/AP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
 #ifdef CONFIG_ROAMING
-    {"wlan-roaming", "<0/1> rssi_low <rssi_threshold>", test_wlan_roaming},
+    {"wlan-roaming", "<0/1>", test_wlan_roaming},
 #endif
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
