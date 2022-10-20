@@ -8,8 +8,9 @@
  *
  */
 
+#include <wmerrno.h>
+#include <fsl_wifi_osa.h>
 #include <mlan_sdio_api.h>
-#include <wm_os.h>
 #include <board.h>
 #include <wifi_bt_config.h>
 #include <fsl_common.h>
@@ -17,22 +18,21 @@
 #include <fsl_sdio.h>
 #include <fsl_sdmmc_spec.h>
 #include <fsl_usdhc.h>
-#include <wifi.h>
 
 #define SDIO_CMD_TIMEOUT 2000
 
 static sdio_card_t wm_g_sd;
 
-static os_mutex_t sdio_mutex;
+static wifi_osa_mutex_t sdio_mutex;
 
 void sdio_enable_interrupt(void);
 
 int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
-    int ret;
+    status_t ret;
 
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
+    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != kStatus_Success)
     {
         sdio_e("failed to get mutex\r\n");
         return 0;
@@ -40,21 +40,21 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 
     if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, (uint8_t *)resp) != kStatus_Success)
     {
-        (void)os_mutex_put(&sdio_mutex);
+        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
         return 0;
     }
 
-    (void)os_mutex_put(&sdio_mutex);
+    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 bool sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
-    int ret;
+    status_t ret;
 
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
+    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != kStatus_Success)
     {
         sdio_e("failed to get mutex\r\n");
         return false;
@@ -62,25 +62,25 @@ bool sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 
     if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != kStatus_Success)
     {
-        (void)os_mutex_put(&sdio_mutex);
+        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
         return false;
     }
 
     *resp = data;
 
-    (void)os_mutex_put(&sdio_mutex);
+    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
 
     return true;
 }
 
 int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    int ret;
+    status_t ret;
     uint32_t flags = 0;
     uint32_t param;
 
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
+    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != kStatus_Success)
     {
         sdio_e("failed to get mutex\r\n");
         return 0;
@@ -98,23 +98,23 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
 
     if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
-        (void)os_mutex_put(&sdio_mutex);
+        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
         return 0;
     }
 
-    (void)os_mutex_put(&sdio_mutex);
+    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    int ret;
+    status_t ret;
     uint32_t flags = 0;
     uint32_t param;
 
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
+    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != kStatus_Success)
     {
         sdio_e("failed to get mutex\r\n");
         return false;
@@ -132,11 +132,11 @@ bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, u
 
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
     {
-        (void)os_mutex_put(&sdio_mutex);
+        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
         return false;
     }
 
-    (void)os_mutex_put(&sdio_mutex);
+    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
 
     return true;
 }
@@ -228,10 +228,10 @@ static int sdio_card_init(void)
 
 int sdio_drv_init(void (*cd_int)(int))
 {
-    int ret;
+    status_t ret;
 
-    ret = os_mutex_create(&sdio_mutex, "sdio-mutex", OS_MUTEX_INHERIT);
-    if (ret == -WM_FAIL)
+    ret = WIFI_OSAMutexCreate(&sdio_mutex);
+    if (ret != kStatus_Success)
     {
         sdio_e("Failed to create mutex");
         return -WM_FAIL;
@@ -254,12 +254,12 @@ int sdio_drv_init(void (*cd_int)(int))
 
 void sdio_drv_deinit(void)
 {
-    int ret;
+    status_t ret;
 
     SDIO_Deinit(&wm_g_sd);
 
-    ret = os_mutex_delete(&sdio_mutex);
-    if (ret != WM_SUCCESS)
+    ret = WIFI_OSAMutexDestroy(&sdio_mutex);
+    if (ret != kStatus_Success)
     {
         sdio_e("Failed to delete mutex");
     }

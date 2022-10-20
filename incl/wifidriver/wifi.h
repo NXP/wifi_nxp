@@ -954,8 +954,6 @@ typedef PACK_START struct
 int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
 #endif
 
-void handle_cdint(int error);
-
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
 int wifi_uap_stop(enum wlan_bss_type type);
