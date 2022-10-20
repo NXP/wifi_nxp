@@ -173,11 +173,8 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
     t_u8 wnm_num_neighbor_report = 0, neighbor_index = 0;
     t_u8 btm_mode;
     t_u8 prefer_old = 0, prefer_select = 0;
-    t_u8 *ptagnr   = NULL;
-    t_u8 tagnr_len = 0;
-#ifdef CONFIG_MBO
-    t_u8 is_first = 0;
-#endif /* CONFIG_MBO */
+    t_u8 *ptagnr                              = NULL;
+    t_u8 tagnr_len                            = 0;
     wlan_nlist_report_param *pnlist_rep_param = MNULL;
     t_u8 entry_num                            = 0;
 
@@ -237,21 +234,13 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
                     pnlist_rep_param->channels[entry_num] = rep->channel;
                     entry_num++;
                 }
-#ifdef CONFIG_MBO
-                if ((is_first == 0U) &&
-                    (memcmp(dest_addr, preport[wnm_num_neighbor_report].bssid, MLAN_MAC_ADDR_LENGTH) != 0))
-#else
                 if (rep->prefer_select != (t_u8)0U && (rep->prefer > prefer_old))
-#endif
                 {
                     ptagnr         = pos - 2;
                     tagnr_len      = len + (t_u8)2U;
                     prefer_old     = (t_u8)rep->prefer;
                     prefer_select  = 1;
                     neighbor_index = wnm_num_neighbor_report;
-#ifdef CONFIG_MBO
-                    is_first = 1U;
-#endif
                 }
                 wnm_num_neighbor_report++;
             }

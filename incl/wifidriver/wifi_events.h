@@ -79,10 +79,8 @@ enum wifi_event
     WIFI_EVENT_ERR_MULTICAST,
     /** error Unicast */
     WIFI_EVENT_ERR_UNICAST,
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
     /** 802.11K/11V neighbor report */
     WIFI_EVENT_NLIST_REPORT,
-#endif
     /* Add Block Ack */
     /** 802.11N add block ack */
     WIFI_EVENT_11N_ADDBA,

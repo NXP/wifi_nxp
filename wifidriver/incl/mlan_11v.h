@@ -21,7 +21,7 @@ Change log:
 
 #ifdef CONFIG_11V
 
-#define WLAN_WNM_MAX_NEIGHBOR_REPORT               5
+#define WLAN_WNM_MAX_NEIGHBOR_REPORT               6
 #define MGMT_WNM_NEIGHBOR_BSS_TRANSITION_CANDIDATE 3
 
 struct wnm_neighbor_report

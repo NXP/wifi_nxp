@@ -1103,6 +1103,16 @@ static int network_matches_scan_result(const struct wlan_network *network,
 {
     uint8_t null_ssid[IEEEtypes_SSID_SIZE] = {0};
 
+#ifdef CONFIG_11V
+    if ((wlan.roam_reassoc == true) && (wlan.nlist_rep_param.nlist_mode == WLAN_NLIST_11V) &&
+        ((wlan.nlist_rep_param.btm_mode & 0x1C) != 0U))
+    {
+        if (memcmp((const void *)network->bssid, (const void *)res->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
+        {
+            return -WM_FAIL;
+        }
+    }
+#endif
     /* Check basic network information that we know */
     if (network->channel_specific && network->channel != res->Channel)
     {
@@ -1991,10 +2001,10 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
 }
 
 #ifdef CONFIG_11V
-static void wlan_send_btm_response(t_u8 *bssid)
+static void wlan_send_btm_response(t_u8 *bssid, enum wnm_btm_status_code status)
 {
-    wlan_send_mgmt_wnm_btm_resp(wlan.nlist_rep_param.dialog_token, WNM_BTM_ACCEPT, wlan.nlist_rep_param.dst_addr,
-                                wlan.mac, bssid, NULL, 0, wlan.nlist_rep_param.protect);
+    wlan_send_mgmt_wnm_btm_resp(wlan.nlist_rep_param.dialog_token, status, wlan.nlist_rep_param.dst_addr, wlan.mac,
+                                bssid, NULL, 0, wlan.nlist_rep_param.protect);
 
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
 }
@@ -2086,6 +2096,12 @@ static void handle_scan_results(void)
         {
             if (memcmp((const void *)network->bssid, (const void *)best_ap->bssid, (size_t)IEEEtypes_ADDRESS_SIZE) == 0)
             {
+#ifdef CONFIG_11V
+                if (wlan.nlist_rep_param.nlist_mode == WLAN_NLIST_11V)
+                {
+                    wlan_send_btm_response(NULL, WNM_BTM_REJECT_NO_SUITABLE_CANDIDATES);
+                }
+#endif
                 wlan.sta_state    = CM_STA_CONNECTED;
                 wlan.roam_reassoc = false;
 #ifdef CONFIG_11R
@@ -2100,7 +2116,7 @@ static void handle_scan_results(void)
 #ifdef CONFIG_11V
             if (wlan.nlist_rep_param.nlist_mode == WLAN_NLIST_11V)
             {
-                wlan_send_btm_response(best_ap->bssid);
+                wlan_send_btm_response(best_ap->bssid, WNM_BTM_ACCEPT);
             }
 #endif
         }
@@ -2962,7 +2978,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     {
         chan_list[i].chan_number = (t_u8)pnlist_rep_param->channels[i];
         chan_list[i].scan_type   = MLAN_SCAN_TYPE_ACTIVE;
-        chan_list[i].scan_time   = 120;
+        chan_list[i].scan_time   = 60;
     }
 
 #ifdef CONFIG_11R
