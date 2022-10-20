@@ -93,6 +93,10 @@ static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP;
 #define CONFIG_WLAN_RSSI_THRESHOLD 70
 #endif
 
+#ifdef CONFIG_11K
+#define NEIGHBOR_REQ_TIMEOUT (1 * 1000)
+#endif
+
 enum user_request_type
 {
     /* we append our user-generated events to the wifi interface events and
@@ -320,6 +324,8 @@ static struct
 #endif
 #ifdef CONFIG_11K
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
+    os_timer_t neighbor_req_timer;
+    bool neighbor_req : 1;
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     wlan_nlist_report_param nlist_rep_param;
@@ -2965,6 +2971,14 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
         return;
     }
 
+#ifdef CONFIG_11K
+    if (pnlist_rep_param->nlist_mode == WLAN_NLIST_11K)
+    {
+        wlan.neighbor_req = false;
+        (void)os_timer_deactivate(&wlan.neighbor_req_timer);
+    }
+#endif
+
     memcpy(&wlan.nlist_rep_param, pnlist_rep_param, sizeof(wlan_nlist_report_param));
 
 #ifdef CONFIG_11V
@@ -4618,6 +4632,17 @@ static void assoc_timer_cb(os_timer_arg_t arg)
     }
 }
 
+#ifdef CONFIG_11K
+static void neighbor_req_timer_cb(os_timer_arg_t arg)
+{
+    if (wlan.neighbor_req == true)
+    {
+        wlan.neighbor_req = false;
+        (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+    }
+}
+#endif
+
 int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 {
     int ret;
@@ -4725,6 +4750,16 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return ret;
     }
 
+#ifdef CONFIG_11K
+    ret = os_timer_create(&wlan.neighbor_req_timer, "neighbor-req-timer", os_msec_to_ticks(NEIGHBOR_REQ_TIMEOUT),
+                          &neighbor_req_timer_cb, NULL, OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Unable to start neighbor request timer");
+        return ret;
+    }
+#endif
+
     return WM_SUCCESS;
 }
 
@@ -4775,9 +4810,18 @@ int wlan_stop(void)
     ret = os_timer_delete(&wlan.assoc_timer);
     if (ret != WM_SUCCESS)
     {
-        wlcm_w("failed to delete multicast bad mic timer: %d.", ret);
+        wlcm_w("failed to delete assoc timer: %d.", ret);
         return WLAN_ERROR_STATE;
     }
+
+#ifdef CONFIG_11K
+    ret = os_timer_delete(&wlan.neighbor_req_timer);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_w("failed to delete neighbor req timer: %d.", ret);
+        return WLAN_ERROR_STATE;
+    }
+#endif
 
     /* We need to tell the AP that we're going away, however we've already
      * stopped the main thread so we can't do this by means of the state
@@ -7253,13 +7297,20 @@ int wlan_host_11k_cfg(int enable_11k)
 
 int wlan_host_11k_neighbor_req(t_u8 *ssid)
 {
+    int ret = -WM_FAIL;
     if (!is_sta_connected())
     {
         wlcm_e("Error: sta connection is required before sending neighbor report req");
         return -WM_FAIL;
     }
 
-    return wifi_host_11k_neighbor_req(ssid);
+    ret = wifi_host_11k_neighbor_req(ssid);
+    if (ret == WM_SUCCESS)
+    {
+        wlan.neighbor_req = true;
+        (void)os_timer_activate(&wlan.neighbor_req_timer);
+    }
+    return ret;
 }
 #endif
 
