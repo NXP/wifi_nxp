@@ -8,7 +8,7 @@
  *
  */
 
-#include <fsl_wifi_osa.h>
+#include <fsl_os_abstraction.h>
 #include <mlan_sdio_api.h>
 
 #if defined(CONFIG_XZ_DECOMPRESSION)
@@ -64,7 +64,7 @@ static bool wlan_card_ready_wait(t_u32 card_poll)
             fwdnld_io_d("Firmware Ready");
             return true;
         }
-        WIFI_OSADelay(10U);
+        OSA_TimeDelay(5U);
     }
     return false;
 }

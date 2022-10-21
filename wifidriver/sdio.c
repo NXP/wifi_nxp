@@ -8,7 +8,7 @@
  *
  */
 
-#include <fsl_wifi_osa.h>
+#include <fsl_os_abstraction.h>
 #include <mlan_sdio_api.h>
 
 #if defined(CONFIG_XZ_DECOMPRESSION)
@@ -95,7 +95,7 @@ bool wlan_card_status(t_u8 bits)
         {
             return true;
         }
-        WIFI_OSADelay(10U);
+        OSA_TimeDelay(1U);
     }
     return false;
 }

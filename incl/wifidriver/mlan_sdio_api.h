@@ -125,5 +125,4 @@ int sdio_drv_init(void (*cd_int)(int));
  */
 void sdio_drv_deinit(void);
 
-void handle_cdint(int error);
 #endif /* !_MDEV_SDIO_API_H_ */

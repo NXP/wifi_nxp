@@ -9,7 +9,7 @@
  */
 
 #include <wmerrno.h>
-#include <fsl_wifi_osa.h>
+#include <fsl_os_abstraction.h>
 #include <mlan_sdio_api.h>
 #include <board.h>
 #include <wifi_bt_config.h>
@@ -21,66 +21,68 @@
 
 #define SDIO_CMD_TIMEOUT 2000
 
+extern void handle_cdint(int error);
+
 static sdio_card_t wm_g_sd;
 
-static wifi_osa_mutex_t sdio_mutex;
+static OSA_MUTEX_HANDLE_DEFINE(sdio_mutex);
 
 void sdio_enable_interrupt(void);
 
 int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
-    status_t ret;
+    osa_status_t ret;
 
-    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != kStatus_Success)
+    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != KOSA_StatusSuccess)
     {
         sdio_e("failed to get mutex\r\n");
         return 0;
     }
 
-    if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, (uint8_t *)resp) != kStatus_Success)
+    if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, (uint8_t *)resp) != KOSA_StatusSuccess)
     {
-        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+        (void)OSA_MutexUnlock(&sdio_mutex);
         return 0;
     }
 
-    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 bool sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
-    status_t ret;
+    osa_status_t ret;
 
-    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != kStatus_Success)
+    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != KOSA_StatusSuccess)
     {
         sdio_e("failed to get mutex\r\n");
         return false;
     }
 
-    if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != kStatus_Success)
+    if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != KOSA_StatusSuccess)
     {
-        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+        (void)OSA_MutexUnlock(&sdio_mutex);
         return false;
     }
 
     *resp = data;
 
-    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return true;
 }
 
 int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    status_t ret;
+    osa_status_t ret;
     uint32_t flags = 0;
     uint32_t param;
 
-    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != kStatus_Success)
+    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != KOSA_StatusSuccess)
     {
         sdio_e("failed to get mutex\r\n");
         return 0;
@@ -96,25 +98,25 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
         param = bsize;
     }
 
-    if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
+    if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
-        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+        (void)OSA_MutexUnlock(&sdio_mutex);
         return 0;
     }
 
-    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    status_t ret;
+    osa_status_t ret;
     uint32_t flags = 0;
     uint32_t param;
 
-    ret = WIFI_OSAMutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != kStatus_Success)
+    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
+    if (ret != KOSA_StatusSuccess)
     {
         sdio_e("failed to get mutex\r\n");
         return false;
@@ -130,13 +132,13 @@ bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, u
         param = bsize;
     }
 
-    if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != kStatus_Success)
+    if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
-        (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+        (void)OSA_MutexUnlock(&sdio_mutex);
         return false;
     }
 
-    (void)WIFI_OSAMutexUnlock(&sdio_mutex);
+    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return true;
 }
@@ -174,7 +176,7 @@ static int sdio_card_init(void)
     int ret = WM_SUCCESS;
     uint32_t resp;
 
-    if (SDIO_HostInit(&wm_g_sd) != kStatus_Success)
+    if (SDIO_HostInit(&wm_g_sd) != KOSA_StatusSuccess)
     {
         return kStatus_SDMMC_HostNotReady;
     }
@@ -228,10 +230,10 @@ static int sdio_card_init(void)
 
 int sdio_drv_init(void (*cd_int)(int))
 {
-    status_t ret;
+    osa_status_t ret;
 
-    ret = WIFI_OSAMutexCreate(&sdio_mutex);
-    if (ret != kStatus_Success)
+    ret = OSA_MutexCreate(&sdio_mutex);
+    if (ret != KOSA_StatusSuccess)
     {
         sdio_e("Failed to create mutex");
         return -WM_FAIL;
@@ -254,12 +256,12 @@ int sdio_drv_init(void (*cd_int)(int))
 
 void sdio_drv_deinit(void)
 {
-    status_t ret;
+    osa_status_t ret;
 
     SDIO_Deinit(&wm_g_sd);
 
-    ret = WIFI_OSAMutexDestroy(&sdio_mutex);
-    if (ret != kStatus_Success)
+    ret = OSA_MutexDestroy(&sdio_mutex);
+    if (ret != KOSA_StatusSuccess)
     {
         sdio_e("Failed to delete mutex");
     }
