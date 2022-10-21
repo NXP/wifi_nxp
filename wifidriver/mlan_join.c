@@ -688,13 +688,6 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     pbss_desc = (BSSDescriptor_t *)pdata_buf;
     pos       = (t_u8 *)&cmd->params;
 
-    if (pbss_desc->mbo_assoc_disallowed)
-    {
-        wifi_e("MBO: Association is not allowed.");
-        ret = MLAN_STATUS_FAILURE;
-        goto done;
-    }
-
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_ASSOCIATE);
 
     /* Save so we know which BSS Desc to use in the response handler */

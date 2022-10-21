@@ -1184,6 +1184,14 @@ static int network_matches_scan_result(const struct wlan_network *network,
         return -WM_FAIL;
     }
 
+#ifdef CONFIG_MBO
+    if (res->mbo_assoc_disallowed)
+    {
+        wlcm_d("%s: MBO Association disallowed.", network->ssid);
+        return -WM_FAIL;
+    }
+#endif
+
 #ifdef CONFIG_OWE
     wlcm_d("%s: Match successful", res->trans_mode == OWE_TRANS_MODE_OWE ? network->trans_ssid : network->ssid);
 #endif
@@ -2955,6 +2963,23 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
 }
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
+static void wlan_sort_nlist_channels(wlan_nlist_report_param *pnlist_rep_param)
+{
+    t_u8 i, j;
+
+    /* Bubble sort */
+    for (i = 0; i < pnlist_rep_param->num_channels; i++)
+    {
+        for (j = 1; j < pnlist_rep_param->num_channels - i; j++)
+        {
+            if ((t_u8)pnlist_rep_param->channels[j - 1] > (t_u8)pnlist_rep_param->channels[j])
+            {
+                SWAP_U8(pnlist_rep_param->channels[j - 1], pnlist_rep_param->channels[j]);
+            }
+        }
+    }
+}
+
 static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
                                                     enum cm_sta_state *next,
                                                     struct wlan_network *network)
@@ -2964,6 +2989,8 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     wlan_scan_channel_list_t chan_list[MAX_NUM_CHANS_IN_NBOR_RPT];
     t_u8 *bssid                               = NULL;
     wlan_nlist_report_param *pnlist_rep_param = (wlan_nlist_report_param *)msg->data;
+
+    wlan.roam_reassoc = false;
 
     if (is_state(CM_STA_IDLE) || (pnlist_rep_param == NULL))
     {
@@ -2979,6 +3006,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     }
 #endif
 
+    wlan_sort_nlist_channels(pnlist_rep_param);
     memcpy(&wlan.nlist_rep_param, pnlist_rep_param, sizeof(wlan_nlist_report_param));
 
 #ifdef CONFIG_11V
@@ -2996,6 +3024,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     }
 
 #ifdef CONFIG_11R
+    wlan.ft_bss = false;
     if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
     {
         wlan.ft_bss = true;

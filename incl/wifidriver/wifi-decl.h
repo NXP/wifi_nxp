@@ -263,7 +263,7 @@ struct wifi_scan_result
     uint8_t Channel;                    /*!< Channel associated to the BSSID */
     uint8_t RSSI;                       /*!< Received signal strength */
     uint16_t beacon_period;             /*!< Beacon period */
-    uint8_t dtim_period;                /*!< DTIM period */
+    uint16_t dtim_period;               /*!< DTIM period */
     _SecurityMode_t WPA_WPA2_WEP;       /*!< Security mode info */
     _Cipher_t wpa_mcstCipher;           /*!< WPA multicast cipher */
     _Cipher_t wpa_ucstCipher;           /*!< WPA unicast cipher */
@@ -290,6 +290,9 @@ struct wifi_scan_result
     uint8_t trans_bssid[MLAN_MAC_ADDR_LENGTH]; /*!< Trans bssid array */
     uint8_t trans_ssid[MLAN_MAX_SSID_LENGTH];  /*!< Trans ssid array */
     int trans_ssid_len;                        /*!< Trans bssid length */
+#ifdef CONFIG_MBO
+    bool mbo_assoc_disallowed; /*!< MBO disallowed */
+#endif
 #ifdef CONFIG_11K
     /** Neigbort report support */
     bool neighbor_report_supported;

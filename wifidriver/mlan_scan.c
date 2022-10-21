@@ -1307,8 +1307,10 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 owe_type[1] = {0x01c};
 #endif
+#ifdef CONFIG_MBO
     const t_u8 scan_mbo_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 scan_mbo_type[1] = {0x016};
+#endif
 
     IEEEtypes_CountryInfoSet_t *pcountry_info;
 #ifdef CONFIG_11AX
@@ -1686,6 +1688,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                            pbss_entry->trans_ssid.ssid);
                 }
 #endif
+#ifdef CONFIG_MBO
                 else if (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, scan_mbo_oui, sizeof(scan_mbo_oui)) == 0 &&
                          (pvendor_ie->vend_hdr.oui_type == scan_mbo_type[0]))
                 {
@@ -1710,6 +1713,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         pcurrent_attr = pcurrent_attr + MBO_ATTR_HEADER_LEN + mbo_attr_len;
                     }
                 }
+#endif
 #ifdef CONFIG_11K
                 /* Voice Enterprise Test Plan V1.2, test case 5.4, store other vendor specific ie */
                 else
@@ -1727,7 +1731,6 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 {
                     /* Do Nothing */
                 }
-
 #endif
 
 #ifdef CONFIG_WPS2

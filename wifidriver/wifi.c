@@ -1228,42 +1228,6 @@ int wifi_remove_mcast_filter(uint8_t *mac_addr)
     return ret;
 }
 
-/* Since we do not have the descriptor list we will using this adaptor function */
-int wrapper_bssdesc_first_set(int bss_index,
-                              uint8_t *BssId,
-                              bool *is_ibss_bit_set,
-                              int *ssid_len,
-                              uint8_t *ssid,
-                              uint8_t *Channel,
-                              uint8_t *RSSI,
-                              uint16_t *beacon_period,
-                              uint8_t *dtim_period,
-                              _SecurityMode_t *WPA_WPA2_WEP,
-                              _Cipher_t *wpa_mcstCipher,
-                              _Cipher_t *wpa_ucstCipher,
-                              _Cipher_t *rsn_mcstCipher,
-                              _Cipher_t *rsn_ucstCipher,
-                              bool *is_pmf_required);
-
-int wrapper_bssdesc_second_set(int bss_index,
-                               bool *phtcap_ie_present,
-                               bool *phtinfo_ie_present,
-                               bool *wmm_ie_present,
-                               uint16_t *band,
-                               bool *wps_IE_exist,
-                               uint16_t *wps_session,
-                               bool *wpa2_entp_IE_exist,
-#ifdef CONFIG_11K
-                               bool *neighbor_report_supported,
-#endif
-#ifdef CONFIG_11V
-                               bool *bss_transition_supported,
-#endif
-                               uint8_t *trans_mode,
-                               uint8_t *trans_bssid,
-                               int *trans_ssid_len,
-                               uint8_t *trans_ssid);
-
 static struct wifi_scan_result common_desc;
 int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
 {
@@ -1289,7 +1253,12 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
 #ifdef CONFIG_11V
         &common_desc.bss_transition_supported,
 #endif
-        &common_desc.trans_mode, common_desc.trans_bssid, &common_desc.trans_ssid_len, common_desc.trans_ssid);
+        &common_desc.trans_mode, common_desc.trans_bssid, &common_desc.trans_ssid_len, common_desc.trans_ssid
+#ifdef CONFIG_MBO
+        ,
+        &common_desc.mbo_assoc_disallowed
+#endif
+    );
 
     if (rv != WM_SUCCESS)
     {

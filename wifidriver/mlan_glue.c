@@ -135,40 +135,6 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
-int wrapper_bssdesc_second_set(int bss_index,
-                               bool *phtcap_ie_present,
-                               bool *phtinfo_ie_present,
-                               bool *wmm_ie_present,
-                               uint16_t *band,
-                               bool *wps_IE_exist,
-                               uint16_t *wps_session,
-                               bool *wpa2_entp_IE_exist,
-#ifdef CONFIG_11K
-                               bool *neighbor_report_supported,
-#endif
-#ifdef CONFIG_11V
-                               bool *bss_transition_supported,
-#endif
-                               uint8_t *trans_mode,
-                               uint8_t *trans_bssid,
-                               int *trans_ssid_len,
-                               uint8_t *trans_ssid);
-
-int wrapper_bssdesc_first_set(int bss_index,
-                              uint8_t *BssId,
-                              bool *is_ibss_bit_set,
-                              int *ssid_len,
-                              uint8_t *ssid,
-                              uint8_t *Channel,
-                              uint8_t *RSSI,
-                              uint16_t *beacon_period,
-                              uint16_t *dtim_period,
-                              _SecurityMode_t *WPA_WPA2_WEP,
-                              _Cipher_t *wpa_mcstCipher,
-                              _Cipher_t *wpa_ucstCipher,
-                              _Cipher_t *rsn_mcstCipher,
-                              _Cipher_t *rsn_ucstCipher,
-                              bool *is_pmf_required);
 
 #ifdef CONFIG_11N
 // track whether ampdu is enabled
@@ -4591,7 +4557,12 @@ int wrapper_bssdesc_second_set(int bss_index,
                                uint8_t *trans_mode,
                                uint8_t *trans_bssid,
                                int *trans_ssid_len,
-                               uint8_t *trans_ssid)
+                               uint8_t *trans_ssid
+#ifdef CONFIG_MBO
+                               ,
+                               bool *mbo_assoc_disallowed
+#endif
+)
 {
     if (bss_index >= mlan_adap->num_in_scan_table)
     {
@@ -4626,6 +4597,10 @@ int wrapper_bssdesc_second_set(int bss_index,
     {
         *wmm_ie_present = false;
     }
+
+#ifdef CONFIG_MBO
+    *mbo_assoc_disallowed = d->mbo_assoc_disallowed;
+#endif
 
     *band = d->bss_band;
 
