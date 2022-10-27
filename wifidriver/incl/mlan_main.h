@@ -344,13 +344,16 @@ extern t_u32 drvdbg;
     }
 
 /** Convert RxPD from little endian format to CPU format */
-#define endian_convert_RxPD(x)                                     \
-    {                                                              \
-        (x)->rx_pkt_length = wlan_le16_to_cpu((x)->rx_pkt_length); \
-        (x)->rx_pkt_offset = wlan_le16_to_cpu((x)->rx_pkt_offset); \
-        (x)->rx_pkt_type   = wlan_le16_to_cpu((x)->rx_pkt_type);   \
-        (x)->seq_num       = wlan_le16_to_cpu((x)->seq_num);       \
-    }
+#define endian_convert_RxPD(x)                                                                       \
+    {                                                                                                \
+        (x)->rx_pkt_length                                   = wlan_le16_to_cpu((x)->rx_pkt_length); \
+        (x)->rx_pkt_offset                                   = wlan_le16_to_cpu((x)->rx_pkt_offset); \
+        (x)->rx_pkt_type                                     = wlan_le16_to_cpu((x)->rx_pkt_type);   \
+        (x)->seq_num                                         = wlan_le16_to_cpu((x)->seq_num);       \
+#ifdef CONFIG_RSN_REPLAY_DETECTION(x)->hi_rx_count32 = wlan_le32_to_cpu((x)->hi_rx_count32); \
+        (x)->lo_rx_count16                                   = wlan_le16_to_cpu((x)->lo_rx_count16); \
+#endif
+}
 #else
 /** Convert ulong n/w to host */
 #define mlan_ntohl(x)       swap_byte_32(x)
@@ -1440,6 +1443,14 @@ struct _RxReorderTbl
     t_u8 pkt_count;
     /** BA window bitmap */
     t_u64 bitmap;
+#ifdef CONFIG_RSN_REPLAY_DETECTION
+    /** PN number high 32 bits*/
+    t_u32 hi_curr_rx_count32;
+    /** PN number low 16 bits*/
+    t_u16 lo_curr_rx_count16;
+    /** PN drop counter */
+    t_u32 pn_drop_count;
+#endif
 };
 
 /** BSS priority node */

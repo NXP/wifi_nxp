@@ -904,7 +904,7 @@ mlan_status wrapper_wlan_sta_ampdu_enable(void)
 #endif
         {
             ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
-            ret = wlan_send_addba(mlan_adap->priv[0],
+            ret                = wlan_send_addba(mlan_adap->priv[0],
 #ifdef CONFIG_WMM
                                   tid,
 #else
@@ -4184,6 +4184,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_MEF_HOST_WAKEUP:
             wifi_d("Host recevied host wake-up event from firmware");
             break;
+#ifdef CONFIG_RSN_REPLAY_DETECTION
+        case EVENT_RESET_PN_ON_REKEY:
+            PRINTM(MEVENT, "EVENT: RESET PN ON REKEY\n");
+            wlan_reset_pn_on_rekey(pmpriv, (t_u8 *)(msg->data) + 8);
+            break;
+#endif
 #ifdef CONFIG_MULTI_CHAN
         case EVENT_MULTI_CHAN_INFO:
             break;

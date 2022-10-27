@@ -263,6 +263,10 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 #define RXPD_FLAG_EXTRA_HEADER (1 << 1)
 
+#ifdef CONFIG_RSN_REPLAY_DETECTION
+#define RXPD_FLAG_PN_CHECK_SUPPORT (1 << 2)
+#endif
+
 /** SNR calculation */
 #define CAL_SNR(RSSI, NF) ((t_s16)((t_s16)(RSSI) - (t_s16)(NF)))
 
@@ -502,6 +506,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
     (HWSPEC_CHANBW40_SUPP | HWSPEC_SHORTGI20_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_RXSTBC_SUPP)
 /** Bits to ignore in hw_dev_cap as these bits are set in get_hw_spec */
 #define IGN_HW_DEV_CAP (CAPINFO_40MHZ_INTOLARENT)
+
+/** HW_SPEC FwCapInfo : If FW support RSN Replay Detection */
+#define ISSUPP_RSN_REPLAY_DETECTION(FwCapInfo) (FwCapInfo & MBIT(28))
 
 /** HW_SPEC FwCapInfo */
 #define ISSUPP_11NENABLED(FwCapInfo) ((FwCapInfo)&MBIT(11))
@@ -1599,6 +1606,11 @@ typedef enum _ENH_PS_MODES
 /** Event ID: EV_SMC_GENERIC */
 #define EVENT_EV_SMC_GENERIC 0x00000077
 
+/** Card Event definition : RESET PN */
+#ifdef CONFIG_RSN_REPLAY_DETECTION
+#define EVENT_RESET_PN_ON_REKEY 0x00000092
+#endif
+
 /** Event ID mask */
 #define EVENT_ID_MASK 0xffff
 
@@ -1852,6 +1864,17 @@ typedef MLAN_PACK_START struct _RxPD
     t_u8 band_config;
     /** chan number */
     t_u8 chan_num;
+#ifdef CONFIG_RSN_REPLAY_DETECTION
+    /** PN number high 32 bits*/
+    t_u32 hi_rx_count32;
+    /** PN number low 16 bits*/
+    t_u16 lo_rx_count16;
+    /** Reserved */
+    t_u8 reserved3[2];
+#else
+    /** Reserved */
+    t_u8 reserved3[8];
+#endif
 } MLAN_PACK_END RxPD, *PRxPD;
 
 #ifdef UAP_SUPPORT

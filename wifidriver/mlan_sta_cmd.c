@@ -1496,6 +1496,12 @@ static mlan_status wlan_cmd_802_11_supplicant_pmk(IN pmlan_private pmpriv,
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
+#ifdef CONFIG_RSN_REPLAY_DETECTION
+    if ((cmd_action == HostCmd_ACT_GEN_SET) || (cmd_action == HostCmd_ACT_GEN_REMOVE))
+    {
+        wlan_reset_pn_on_rekey(pmpriv, psk->bssid);
+    }
+#endif
     cmd->command                   = wlan_cpu_to_le16(HostCmd_CMD_SUPPLICANT_PMK);
     pesupplicant_psk->action       = wlan_cpu_to_le16(cmd_action);
     pesupplicant_psk->cache_result = 0;
