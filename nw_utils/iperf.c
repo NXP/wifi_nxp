@@ -49,6 +49,8 @@ static bool ipv6;
 #endif
 static int amount                   = IPERF_CLIENT_AMOUNT;
 static unsigned int udp_rate_factor = IPERF_UDP_DEFAULT_FACTOR;
+unsigned int buffer_len             = 0;
+unsigned int port                   = LWIPERF_TCP_PORT_DEFAULT;
 #ifdef CONFIG_WMM
 uint8_t qos = 0;
 #endif
@@ -168,29 +170,61 @@ static void wmm_iperf_test_start(void *arg)
 {
     if (wmm_test_ctx.server)
     {
-        PRINTF("Starting UDP server");
-        wmm_test_ctx.iperf_session =
-            lwiperf_start_udp_server(netif_ip_addr4(netif_default), LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
-        vTaskDelay(os_msec_to_ticks(50));
+        if (wmm_test_ctx.udp)
+        {
+            PRINTF("Starting UDP server");
+            wmm_test_ctx.iperf_session =
+                lwiperf_start_udp_server(netif_ip_addr4(netif_default), port, lwiperf_report, 0);
+            vTaskDelay(os_msec_to_ticks(50));
+        }
+        else
+        {
+            PRINTF("Starting TCP server");
+            wmm_test_ctx.iperf_session =
+                lwiperf_start_tcp_server(netif_ip_addr4(netif_default), port, lwiperf_report, 0);
+            vTaskDelay(os_msec_to_ticks(50));
+        }
     }
     if (wmm_test_ctx.client1)
     {
         if (IP_IS_V4(&server_address) != 0)
         {
-            PRINTF("Starting UDP client 1\r\n");
-            wmm_test_ctx.iperf_session1 = lwiperf_start_udp_client(
-                netif_ip_addr4(netif_default), wmm_test_data.port1, &server_address, wmm_test_data.port1,
-                LWIPERF_CLIENT, wmm_test_data.time1, wmm_test_data.rate1, wmm_test_data.traffic1, lwiperf_report, NULL);
+            if (wmm_test_ctx.udp)
+            {
+                PRINTF("Starting UDP client 1\r\n");
+                wmm_test_ctx.iperf_session1 =
+                    lwiperf_start_udp_client(netif_ip_addr4(netif_default), wmm_test_data.port1, &server_address,
+                                             wmm_test_data.port1, LWIPERF_CLIENT, wmm_test_data.time1, 0,
+                                             wmm_test_data.rate1, wmm_test_data.traffic1, lwiperf_report, NULL);
+            }
+            else
+            {
+                PRINTF("Starting TCP client 1\r\n");
+                wmm_test_ctx.iperf_session1 =
+                    lwiperf_start_tcp_client(&server_address, wmm_test_data.port1, LWIPERF_CLIENT, wmm_test_data.time1,
+                                             0, wmm_test_data.traffic1, lwiperf_report, NULL);
+            }
         }
     }
     if (wmm_test_ctx.client2)
     {
         if (IP_IS_V4(&server_address) != 0)
         {
-            PRINTF("Starting UDP client 2\r\n");
-            wmm_test_ctx.iperf_session2 = lwiperf_start_udp_client(
-                netif_ip_addr4(netif_default), wmm_test_data.port2, &server_address, wmm_test_data.port2,
-                LWIPERF_CLIENT, wmm_test_data.time2, wmm_test_data.rate2, wmm_test_data.traffic2, lwiperf_report, NULL);
+            if (wmm_test_ctx.udp)
+            {
+                PRINTF("Starting UDP client 2\r\n");
+                wmm_test_ctx.iperf_session2 =
+                    lwiperf_start_udp_client(netif_ip_addr4(netif_default), wmm_test_data.port2, &server_address,
+                                             wmm_test_data.port2, LWIPERF_CLIENT, wmm_test_data.time2, 0,
+                                             wmm_test_data.rate2, wmm_test_data.traffic2, lwiperf_report, NULL);
+            }
+            else
+            {
+                PRINTF("Starting TCP client 2\r\n");
+                wmm_test_ctx.iperf_session2 =
+                    lwiperf_start_tcp_client(&server_address, wmm_test_data.port2, LWIPERF_CLIENT, wmm_test_data.time2,
+                                             0, wmm_test_data.traffic2, lwiperf_report, NULL);
+            }
         }
     }
 }
@@ -244,7 +278,7 @@ static void display_wmm_iperf_usage()
     PRINTF("\t   -S1    #        Traffic type for 1st client(default 0, range 0-255)\r\n");
     PRINTF("\t   -S2    #        Traffic type for 2nd client(default 0, range 0-255)\r\n");
     PRINTF(
-        "\t   Note: Only UDP is supported, bandwith will be in # Mbps, \r\n\tmore than 2 instances are not "
+        "\t   Note: bandwidth will be in # Mbps, \r\n\tmore than 2 instances are not "
         "possible(any 2 combinations), \r\n\tonly 1 server is supported\r\n\tProvide host only for one client and it "
         "will be reflected for rest");
 }
@@ -275,11 +309,15 @@ void test_wmm(int argc, char **argv)
     }
     do
     {
-        wmm_test_ctx.udp = 1;
         if (!wmm_test_ctx.help && string_equal("-h", argv[arg]))
         {
             display_wmm_iperf_usage();
             return;
+        }
+        else if (!wmm_test_ctx.udp && string_equal("-u", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.udp = 1;
         }
         else if (!wmm_test_ctx.abort && string_equal("-a", argv[arg]))
         {
@@ -416,14 +454,8 @@ void test_wmm(int argc, char **argv)
         lwiperf_abort(wmm_test_ctx.iperf_session2);
         wmm_test_ctx.iperf_session2 = NULL;
     }
-    if (wmm_test_ctx.udp)
-        tcpip_callback(wmm_iperf_test_start, NULL);
-    else
-    {
-        PRINTF("Only UDP is supported\r\n");
-        display_wmm_iperf_usage();
-        return;
-    }
+
+    tcpip_callback(wmm_iperf_test_start, NULL);
 }
 #endif
 /*!
@@ -469,14 +501,12 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session =
-                    lwiperf_start_tcp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_tcp_server(IP6_ADDR_ANY, port, lwiperf_report, NULL);
             }
             else
 #endif
             {
-                ctx->iperf_session =
-                    lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, port, lwiperf_report, NULL);
             }
         }
         else
@@ -500,14 +530,12 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session =
-                    lwiperf_start_udp_server(IP6_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_udp_server(IP6_ADDR_ANY, port, lwiperf_report, NULL);
             }
             else
 #endif
             {
-                ctx->iperf_session =
-                    lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_udp_server(&bind_address, port, lwiperf_report, NULL);
             }
         }
     }
@@ -521,8 +549,13 @@ static void iperf_test_start(void *arg)
                 ip6_addr_assign_zone(ip_2_ip6(&server_address), IP6_UNICAST, netif_default);
             }
 #endif
-            ctx->iperf_session = lwiperf_start_tcp_client(&server_address, LWIPERF_TCP_PORT_DEFAULT, ctx->client_type,
-                                                          amount, lwiperf_report, NULL);
+            ctx->iperf_session = lwiperf_start_tcp_client(&server_address, port, ctx->client_type, amount, buffer_len,
+#ifdef CONFIG_WMM
+                                                          qos,
+#else
+                                                          0,
+#endif
+                                                          lwiperf_report, 0);
         }
         else
         {
@@ -539,30 +572,30 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session = lwiperf_start_udp_client(
-                    netif_ip_addr6(netif_default, 0), LWIPERF_TCP_PORT_DEFAULT, &server_address,
-                    LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
-#ifdef CONFIG_WMM
-                    qos,
-#else
-                    0,
-#endif
-
-                    lwiperf_report, NULL);
-            }
-            else
-            {
-#endif
-                ctx->iperf_session = lwiperf_start_udp_client(&bind_address, LWIPERF_TCP_PORT_DEFAULT, &server_address,
-                                                              LWIPERF_TCP_PORT_DEFAULT, ctx->client_type, amount,
+                ctx->iperf_session = lwiperf_start_udp_client(netif_ip_addr6(netif_default, 0), port, &server_address,
+                                                              port, ctx->client_type, amount, buffer_len,
                                                               IPERF_UDP_CLIENT_RATE * udp_rate_factor,
 #ifdef CONFIG_WMM
                                                               qos,
 #else
-                                                          0,
+                                                              0,
 #endif
 
                                                               lwiperf_report, NULL);
+            }
+            else
+            {
+#endif
+                ctx->iperf_session =
+                    lwiperf_start_udp_client(&bind_address, port, &server_address, port, ctx->client_type, amount,
+                                             buffer_len, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
+#ifdef CONFIG_WMM
+                                             qos,
+#else
+                                             0,
+#endif
+
+                                             lwiperf_report, NULL);
 #ifdef CONFIG_IPV6
             }
 #endif
@@ -716,6 +749,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -V             Set the domain to IPv6 (send packets over IPv6)\r\n");
 #endif
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
+    (void)PRINTF("\t   -p             server port to listen on/connect to\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode\r\n");
     (void)PRINTF(
@@ -729,6 +763,9 @@ static void display_iperf_usage(void)
 #ifdef CONFIG_WMM
     (void)PRINTF("\t   -S    #        QoS for udp traffic (default 0(Best Effort))\r\n");
 #endif
+    (void)PRINTF(
+        "\t   -l             length of buffer in bytes to write (Defaults: v4 TCP=1460, v6 TCP=1440, v4 UDP=1470, v6 UDP=1450)\r\n \
+         \t                  Note: Limit length is smaller than default size.\r\n");
 }
 
 static void cmd_iperf(int argc, char **argv)
@@ -756,6 +793,8 @@ static void cmd_iperf(int argc, char **argv)
         unsigned ipv6 : 1;
 #endif
         unsigned dserver : 1;
+        unsigned buflen : 1;
+        unsigned port : 1;
     } info;
 
     amount          = IPERF_CLIENT_AMOUNT;
@@ -767,6 +806,8 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
     ipv6 = false;
 #endif
+    buffer_len = 0;
+    port       = LWIPERF_TCP_PORT_DEFAULT;
 
     if (mcast_mac_valid)
     {
@@ -899,6 +940,38 @@ static void cmd_iperf(int argc, char **argv)
         {
             arg += 1;
             info.dserver = 1;
+        }
+        else if (string_equal("-l", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &buffer_len, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid length argument\r\n");
+                return;
+            }
+
+            if (buffer_len == 0)
+            {
+                (void)PRINTF("Error: invalid length argument\r\n");
+                return;
+            }
+            arg += 2;
+            info.buflen = 1;
+        }
+        else if (string_equal("-p", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &port, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid port argument\r\n");
+                return;
+            }
+
+            if (port == 0)
+            {
+                (void)PRINTF("Error: invalid port argument\r\n");
+                return;
+            }
+            arg += 2;
+            info.port = 1;
         }
         else
         {
