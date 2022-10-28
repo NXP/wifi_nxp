@@ -53,6 +53,9 @@ typedef enum _mlan_ioctl_req_id
 #ifdef WIFI_DIRECT_SUPPORT
     MLAN_OID_WIFI_DIRECT_MODE,
 #endif
+#ifdef CONFIG_ECSA
+    MLAN_OID_ACTION_CHAN_SWITCH = 0x0002001E,
+#endif
 
     /* Radio Configuration Group */
     MLAN_IOCTL_RADIO_CFG = 0x00030000,
@@ -215,6 +218,10 @@ typedef enum _mlan_ioctl_req_id
 #ifdef WLAN_LOW_POWER_ENABLE
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
+#ifdef CONFIG_ECSA
+    MLAN_OID_MISC_OPER_CLASS = 0x00200038,
+    MLAN_OID_MISC_OPER_CLASS_CHECK = 0x00200049,
+#endif
     MLAN_OID_MISC_GET_REGIONPWR_CFG,
 #ifdef CONFIG_WIFI_CLOCKSYNC
     MLAN_OID_MISC_GPIO_TSF_LATCH = 0x00200082,
@@ -1005,6 +1012,39 @@ typedef struct _mlan_deauth_param
 #define WIFI_DIRECT_MODE_STOP_FIND 5
 #endif
 
+#ifdef CONFIG_ECSA
+/** mlan_chan_switch_param */
+typedef struct _mlan_action_chan_switch{
+    /** mode*/
+    t_u8 mode;
+    /** switch mode*/
+    t_u8 chan_switch_mode;
+    /** oper class*/
+    t_u8 new_oper_class;
+    /** new channel */
+    t_u8 new_channel_num;
+    /** chan_switch_count */
+    t_u8 chan_switch_count;
+} mlan_action_chan_switch;
+
+/** mlan_ecsa_blocktx_control */
+typedef struct _mlan_ecsa_block_tx_control{
+    /** block tx required*/
+    bool required;
+    /** block time of one detect period*/
+    t_u8 block_time;
+} mlan_ecsa_block_tx_control;
+
+typedef struct _mlan_ds_bw_chan_oper {
+    /* bandwidth 20:20M 40:40M 80:80M*/
+    t_u8 bandwidth;
+    /* channel number */
+    t_u8 channel;
+    /* Non-global operating class */
+    t_u8 oper_class;
+} mlan_ds_bw_chan_oper;
+#endif
+
 /** Type definition of mlan_ds_bss for MLAN_IOCTL_BSS */
 typedef struct _mlan_ds_bss
 {
@@ -1036,6 +1076,10 @@ typedef struct _mlan_ds_bss
 #ifdef UAP_SUPPORT
         /** BSS param for AP mode */
         mlan_uap_bss_param bss_config;
+#ifdef CONFIG_ECSA
+        /** channel switch for MLAN_OID_UAP_CHAN_SWITCH */
+        mlan_action_chan_switch  chanswitch;
+#endif
 #if 0
         /** deauth param for MLAN_OID_UAP_DEAUTH_STA */
         mlan_deauth_param deauth_param;
@@ -3697,6 +3741,9 @@ typedef struct _mlan_ds_misc_cfg
 #endif
 #ifdef CONFIG_1AS
         mlan_ds_host_clock host_clock;
+#endif
+#ifdef CONFIG_ECSA
+        mlan_ds_bw_chan_oper bw_chan_oper;
 #endif
     } param;
 } mlan_ds_misc_cfg, *pmlan_ds_misc_cfg;

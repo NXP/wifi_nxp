@@ -1344,4 +1344,67 @@ int wifi_host_mbo_cfg(int enable_mbo);
 int wifi_mbo_preferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 #endif
+
+#ifdef CONFIG_ECSA
+
+/**
+ * Send the ecsa config parameter to FW by TLV.
+ *
+ *\param[in] block_tx 0 -- no need to block traffic,1 -- need block traffic.
+ *\param[in] oper_class Operating class according to IEEE std802.11 spec, when 0 is used, only CSA IE will be used.
+ *\param[in] channel The channel will switch to.
+ *\param[in] switch_count Channel switch time to send ECSA ie.
+ *\param[in] band_width Channel width switch to(optional),only for 5G channels.
+ *\param[in] ecsa True need to get operclass by band_width and channel, Otherwise, no need
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width, t_u8 ecsa);
+
+/**
+ * Send the ecsa config parameter to FW by action.
+ *
+ *\param[in] block_tx 0 -- no need to block traffic,1 -- need block traffic.
+ *\param[in] oper_class Operating class according to IEEE std802.11 spec, when 0 is used, only CSA IE will be used.
+ *\param[in] channel The channel will switch to.
+ *\param[in] switch_count Channel switch time to send ECSA ie.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count);
+
+
+/**
+ * Record the ECSA blcok tx time.
+ *
+ *\param[in] switch_count FW expire at switch_count*beacon_period,and then switch to new_channel.
+ *
+ * \return void.
+ */
+void set_ecsa_block_tx_time(t_u8 switch_count);
+
+/**
+ * Get the blcok tx time when need to block traffic.
+ *
+ * \return blcok tx time.
+ */
+t_u8 get_ecsa_block_tx_time();
+
+/**
+ * Record whether block tx is required.
+ *
+ *\param[in] flag Flag is true, if block tx is required,otherwise, flag is false.
+ *
+ * \return void.
+ */
+void set_ecsa_block_tx_flag(bool block_tx);
+
+/**
+ * Get the block tx status.
+ *
+ * \return true block tx is required, false not required.
+ */
+bool get_ecsa_block_tx_flag();
+#endif
+
 #endif

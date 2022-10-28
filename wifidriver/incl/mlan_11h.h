@@ -138,4 +138,7 @@ extern mlan_status wlan_11h_dfs_event_preprocessing(mlan_adapter *pmadapter);
 extern mlan_status wlan_11h_ioctl_dfs_testing(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
 #endif
 
+/** Get non-DFS channel */
+extern mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan);
+
 #endif /*_MLAN_11H_ */

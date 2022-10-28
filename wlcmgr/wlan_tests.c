@@ -3126,6 +3126,60 @@ static void test_wlan_get_regioncode(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_ECSA
+static void  test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
+{
+    int ret;
+    t_u8 block_tx     = 0;
+    t_u8 oper_class   = 0;
+    t_u8 new_channel  = 0;
+    t_u8 switch_count = 0;
+    t_u8 band_width   = 0;
+
+    if ((5 == argc)||(6 == argc))
+    {
+        block_tx     = (t_u8)atoi(argv[1]);
+        oper_class   = (t_u8)atoi(argv[2]);
+        new_channel  = (t_u8)atoi(argv[3]);
+        switch_count = (t_u8)atoi(argv[4]);
+
+        if(6 == argc)
+        {
+            band_width = (t_u8)atoi(argv[5]);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Error        : invalid number of arguments \r\n");
+        (void)PRINTF("Usage        : %s <block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>\r\n", argv[0]);
+        (void)PRINTF("block_tx     : 0 -- no need to block traffic, 1 -- need block traffic \r\n");
+        (void)PRINTF("oper_class   : Operating class according to IEEE std802.11 spec \r\n");
+        (void)PRINTF("new_channel  : The channel will switch to \r\n");
+        (void)PRINTF("switch count : Channel switch time to send ECSA ie \r\n");
+        (void)PRINTF("bandwidth    : Channel width switch to(optional),RW610 only support 20M channels \r\n");
+
+        (void)PRINTF("\r\nUsage example : wlan-set-ecsa-cfg 1 0 36 10 1 \r\n");
+
+        return;
+    }
+    
+    /* Disable action Temporary */
+    if(0 == switch_count)
+    {   
+        (void)PRINTF("Error : invalid arguments \r\n");
+        (void)PRINTF("argv[4] switch_count cannot be 0\r\n");
+        return;
+    }
+    
+    ret = wlan_uap_set_ecsa_cfg(block_tx, oper_class, new_channel, switch_count, band_width);
+
+    if (ret != WM_SUCCESS  )
+    {
+        (void)PRINTF("Failed to set ecsa cfg \r\n");
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -3238,6 +3292,9 @@ static struct cli_command tests[] = {
 #endif
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
+#ifdef CONFIG_ECSA
+    {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>", test_wlan_uap_set_ecsa_cfg},
+#endif
 };
 
 /* Register our commands with the MTF. */

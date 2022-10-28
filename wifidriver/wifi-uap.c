@@ -395,6 +395,7 @@ static int wifi_cmd_uap_config(char *ssid,
     int password_len   = (int)strlen(password);
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    wifi_uap_set_beacon_period(beacon_period);
 
     /* fixme: check if this needs to go on heap */
     mlan_ds_bss bss;

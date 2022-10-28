@@ -2402,3 +2402,89 @@ mlan_status wlan_misc_get_tsf_info(pmlan_adapter pmadapter, pmlan_ioctl_req pioc
     return ret;
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
+
+#ifdef CONFIG_ECSA
+/**
+ *  @brief Get non-global operating class
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param pioctl_req   Pointer to the IOCTL request buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_misc_ioctl_oper_class(pmlan_adapter pmadapter,
+				       mlan_ioctl_req * pioctl_req)
+{
+    pmlan_private pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_misc_cfg *misc = MNULL;
+    t_u8 channel, bandwidth, oper_class = 0;
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    channel = misc->param.bw_chan_oper.channel;
+    switch (misc->param.bw_chan_oper.bandwidth) {
+    case 20:
+    	bandwidth = BW_20MHZ;
+    	break;
+    case 40:
+    	bandwidth = BW_40MHZ;
+    	break;
+    case 80:
+    	bandwidth = BW_80MHZ;
+    	break;
+    default:
+    	bandwidth = BW_20MHZ;
+    	break;
+    }
+
+    if (pioctl_req->action == MLAN_ACT_GET) {
+        ret = wlan_get_curr_oper_class(pmpriv, channel, bandwidth,
+                    &oper_class);
+        misc->param.bw_chan_oper.oper_class = oper_class;
+    } else {
+        PRINTM(MERROR, "Unsupported cmd_action\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief Check operating class validation
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param pioctl_req   Pointer to the IOCTL request buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter,
+						 mlan_ioctl_req * pioctl_req)
+{
+    pmlan_private pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_misc_cfg *misc = MNULL;
+    t_u8 channel, oper_class;
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    channel = misc->param.bw_chan_oper.channel;
+    oper_class = misc->param.bw_chan_oper.oper_class;
+    if (pioctl_req->action == MLAN_ACT_GET) {
+        ret = wlan_check_operclass_validation(pmpriv, channel,
+                        oper_class);
+    } else {
+        PRINTM(MERROR, "Unsupported cmd_action\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    LEAVE();
+    return ret;
+}
+#endif
+

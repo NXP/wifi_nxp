@@ -3989,4 +3989,24 @@ void wlan_request_timing_measurement(int bss_type, t_u8 *peer_mac, t_u8 trigger)
  */
 void wlan_report_timing_measurement(wlan_dot1as_info_t *info);
 #endif
+
+#ifdef CONFIG_ECSA
+/**
+ * Send the ecsa config parameter to FW.
+ *
+ *\param[in] block_tx      0 -- no need to block traffic,1 -- need block traffic.
+ *\param[in] oper_class    Operating class according to IEEE std802.11 spec, refer to Annex E, 
+ *                         when 0 is used, automatically get operclass through band_width and channel.
+ *\param[in] channel       The channel will switch to.
+ *\param[in] switch_count  Channel switch time to send ECSA ie, unit is 110ms.
+ *\param[in] band_width    Channel width switch to(optional), only for 5G channels. 
+ *                         Depends on the hardware capabilities, when the hardware does not support, it will automatically downgrade.
+ *                         Redfinch support 20M.
+ *                         0 -- 20MHZ, 1 -- 40M above, 3 -- 40M below, 4 -- 80M, 5 -- 160M
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width);
+#endif
+
 #endif /* __WLAN_H__ */

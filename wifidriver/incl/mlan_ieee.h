@@ -119,6 +119,9 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 #endif
 
     REGULATORY_CLASS = 59,
+#ifdef CONFIG_ECSA
+    EXTEND_CHANNEL_SWITCH_ANN = 60,
+#endif
     HT_OPERATION     = 61,
 #ifdef CONFIG_11K
     RRM_ENABLED_CAP = 70,
@@ -133,11 +136,15 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 
     VHT_CAPABILITY = 191,
     VHT_OPERATION  = 192,
-    /*EXT_BSS_LOAD        = 193,
-    BW_CHANNEL_SWITCH   = 194,*/
+    /*EXT_BSS_LOAD        = 193,*/
+#ifdef CONFIG_ECSA
+    BW_CHANNEL_SWITCH   = 194,
+#endif
     VHT_TX_POWER_ENV = 195,
-    /*EXT_POWER_CONSTR    = 196,
-    AID_INFO            = 197,
+#ifdef CONFIG_ECSA
+    EXT_POWER_CONSTR    = 196,
+#endif
+    /*AID_INFO            = 197,
     QUIET_CHAN          = 198,*/
     OPER_MODE_NTF = 199,
 
@@ -1209,6 +1216,57 @@ typedef MLAN_PACK_START struct _IEEEtypes_ExtPwerCons_t
     /** local power constraint */
     t_u8 local_power_cons;
 } MLAN_PACK_END IEEEtypes_ExtPwerCons_t, *pIEEEtypes_ExtPwerCons_t;
+
+#if defined(CONFIG_11AC) || defined(CONFIG_ECSA)
+/*  IEEE Wide Bandwidth Channel Switch Element */
+/**
+ *  Provided in beacons and probe responses.  Used to advertise when
+ *    and to which channel it is changing to.  Only starting STAs in
+ *    an IBSS and APs are allowed to originate a wide bandwidth chan
+ *    switch element.
+ */
+typedef MLAN_PACK_START struct {
+	/** Generic IE header IEEE Element ID = 194*/
+	IEEEtypes_Header_t ieee_hdr;
+	t_u8 new_channel_width;
+	t_u8 new_channel_center_freq0;
+	t_u8 new_channel_center_freq1;
+} MLAN_PACK_END IEEEtypes_WideBWChanSwitch_t;
+
+/*  IEEE VHT Transmit Power Envelope Element */
+/**
+ *  Provided in beacons and probe responses.  Used to advertise the max
+ *    TX power in sepeate bandwidth and as a sub element of Channel Switch
+ *    Wrapper IE.
+ */
+typedef MLAN_PACK_START struct {
+	/** Generic IE header IEEE Element ID = 195*/
+	IEEEtypes_Header_t ieee_hdr;
+	t_u8 tpc_info; /**< Transmit Power Information>*/
+	t_u8 local_max_tp_20mhz; /**< Local Maximum Transmit Power for 20 MHZ>*/
+	t_u8 local_max_tp_40mhz; /**< Local Maximum Transmit Power for 40 MHZ>*/
+	t_u8 local_max_tp_80mhz; /**< Local Maximum Transmit Power for 80 MHZ>*/
+	t_u8 local_max_tp_160mhz_80_80mhz; /**< Local Maximum Transmit Power for 160/80+80 MHZ>*/
+} MLAN_PACK_END IEEEtypes_VhtTpcEnvelope_t;
+#endif 
+
+#ifdef CONFIG_ECSA
+/** data structure for extended channel switch */
+typedef MLAN_PACK_START struct {
+	/** IEEE element ID = 60 */
+	t_u8 element_id;
+	/** Element length after id and len, set to 4 */
+	t_u8 len;
+	/** STA should not transmit any frames if 1 */
+	t_u8 chan_switch_mode;
+	/** Operate class # that AP/IBSS is moving to */
+	t_u8 new_oper_class;
+	/** Channel # that AP/IBSS is moving to */
+	t_u8 new_channel_num;
+	/** of TBTTs before channel switch */
+	t_u8 chan_switch_count;
+} MLAN_PACK_END IEEEtypes_ExtChanSwitchAnn_t;
+#endif
 
 /** Extended BSS Load IE */
 typedef MLAN_PACK_START struct _IEEEtypes_ExtBSSload_t

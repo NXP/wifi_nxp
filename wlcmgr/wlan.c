@@ -44,6 +44,10 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+#ifdef CONFIG_ECSA
+#define DEF_SWITCH_COUNT    10
+#endif
+
 static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
@@ -2600,11 +2604,30 @@ static void wlcm_process_channel_switch(struct wifi_message *msg)
     {
         if (msg->data != NULL)
         {
-            (void)PRINTF("Switch to channel %d success!\r\n", *((uint8_t *)msg->data));
-            wlan.networks[wlan.cur_network_idx].channel = *((uint8_t *)msg->data);
-            wifi_set_curr_bss_channel((uint8_t)wlan.networks[wlan.cur_network_idx].channel);
+            if(is_uap_started())
+            {
+                (void)PRINTF("uap switch to channel %d success!\r\n", *((uint8_t *)msg->data));
+                wlan.networks[wlan.cur_uap_network_idx].channel = *((uint8_t *)msg->data);
+            }
+
+            if (is_sta_connected())
+            {
+                (void)PRINTF("sta switch to channel %d success!\r\n", *((uint8_t *)msg->data));
+                wlan.networks[wlan.cur_network_idx].channel = *((uint8_t *)msg->data);
+                wifi_set_curr_bss_channel(wlan.networks[wlan.cur_network_idx].channel);
+            }
             os_mem_free((void *)msg->data);
         }
+
+#ifdef CONFIG_ECSA
+        set_ecsa_block_tx_flag(false);
+#endif
+    }
+    else
+    {
+        wlcm_d("ECSA not support");
+        if (msg->data != NULL)
+            os_mem_free((void *)msg->data);
     }
 }
 
@@ -5417,6 +5440,112 @@ int wlan_get_network_byname(char *name, struct wlan_network *network)
     return -WM_E_INVAL;
 }
 
+#ifdef CONFIG_ECSA
+static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
+{
+    int ret = 0;
+    mlan_ioctl_req req;
+    mlan_ds_misc_cfg *misc = NULL;
+    mlan_status status = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+    if (misc == NULL) {
+        return -WM_FAIL;
+    }
+    
+    req.bss_index = MLAN_BSS_ROLE_UAP;
+    req.pbuf     = (t_u8 *)misc;
+    misc->sub_command = MLAN_OID_MISC_OPER_CLASS_CHECK;
+    req.req_id = MLAN_IOCTL_MISC_CFG;
+    req.action = MLAN_ACT_GET;
+    misc->param.bw_chan_oper.oper_class = oper_class;
+    misc->param.bw_chan_oper.channel = channel;
+
+    status = wlan_ops_uap_ioctl(mlan_adap, &req);
+    if (status != MLAN_STATUS_SUCCESS) 
+    {
+        PRINTM(MERROR, "Failed to get operclass\n");
+        os_mem_free(misc);
+        return -WM_FAIL;
+    }
+	    
+    os_mem_free(misc);
+
+    return ret;
+}
+
+static int wlan_set_uap_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width, t_u8 ecsa)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    bool block_tx_flag = (1 == block_tx) ? true : false;
+    
+    if(wlan_11h_radar_detect_required(pmpriv,channel))
+    {
+        (void)PRINTF("Please set non-dfs channel\n\r");
+        return -WM_FAIL;
+    }
+
+    if(is_uap_started() && (!is_sta_connected()))
+    {
+        if(oper_class)
+        {
+            if(wlan_check_valid_channel_operclass(channel, oper_class))
+            {
+                (void)PRINTF("Wrong channel switch parameters!\n\r");
+                return -EINVAL;
+            }
+        }
+        
+        set_ecsa_block_tx_flag(block_tx_flag);
+        
+        if(0 != switch_count)
+        {
+            set_ecsa_block_tx_time(switch_count);
+            return wifi_set_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
+        }
+        else
+        {
+            return wifi_set_action_ecsa_cfg(block_tx, oper_class, channel, switch_count);
+        }
+    }
+    else
+    {
+        (void)PRINTF("uap isn't up \n\r");
+        return -WM_FAIL;
+    }
+}
+
+static void wlan_switch_to_nondfs_channel(void)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    t_u8 uap_channel = 0;
+    t_u8 block_tx = 1;
+    t_u8 oper_class = 0;
+    t_u8 switch_count = DEF_SWITCH_COUNT;
+    t_u8 band_width = 0;
+    t_u8 ecsa = MTRUE;
+
+    if(is_uap_started())
+    {
+        uap_channel = (t_u8)wlan.networks[wlan.cur_uap_network_idx].channel;
+               
+        if(MTRUE == wlan_11h_radar_detect_required(pmpriv,uap_channel))
+        {
+            if(MLAN_STATUS_SUCCESS == wlan_get_non_dfs_chan(pmpriv, &uap_channel))
+            {
+                wlan_set_uap_ecsa_cfg(block_tx, oper_class, uap_channel, switch_count, band_width, ecsa);
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+}
+#endif
+
 int wlan_disconnect(void)
 {
     if (!wlan.running)
@@ -5436,6 +5565,15 @@ int wlan_disconnect(void)
 #endif
 
     (void)send_user_request(CM_STA_USER_REQUEST_DISCONNECT, 0);
+
+    
+#ifdef CONFIG_ECSA
+    /*Wait for sta to enter the disconnect state, and then send ECSA cmd*/
+    os_thread_sleep(1000);
+    wrapper_clear_media_connected_event();
+    wlan_switch_to_nondfs_channel();
+#endif
+
     return WM_SUCCESS;
 }
 
@@ -5470,6 +5608,20 @@ int wlan_connect(char *name)
             }
             wlcm_d("got the scan lock (connect scan)");
             wlan.is_scan_lock = 1;
+
+            
+#ifdef CONFIG_ECSA
+            /* If the channel of the Ext-ap to be connected is inconsistent with the uap channel, 
+             * FW will switch channel first ,then connect Ext-ap, so driver need to block traffic now.
+            */ 
+            if(is_uap_started())
+            {
+                if(wlan.networks[i].channel && (wlan.networks[i].channel != wlan.networks[wlan.cur_uap_network_idx].channel))
+                {
+                    set_ecsa_block_tx_flag(true);
+                }
+            }
+#endif
             return send_user_request(CM_STA_USER_REQUEST_CONNECT, i);
         }
     }
@@ -8023,3 +8175,18 @@ void wlan_report_timing_measurement(wlan_dot1as_info_t *info)
     /* Do nothing for now */
 }
 #endif
+
+#ifdef CONFIG_ECSA
+
+int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width)
+{
+    t_u8 ecsa         = MTRUE;
+    int ret = 0;
+    
+    ret = wlan_set_uap_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
+    
+    return ret;
+}
+
+#endif  
+

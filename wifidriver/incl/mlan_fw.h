@@ -5865,6 +5865,20 @@ typedef MLAN_PACK_START struct _HostCmd_CONFIG_ED_MAC_MODE
 #endif
 } MLAN_PACK_END HostCmd_CONFIG_ED_MAC_MODE;
 
+#ifdef CONFIG_ECSA
+#define MRVL_ACTION_CHAN_SWITCH_ANNOUNCE        (PROPRIETARY_TLV_BASE_ID + 0x341)
+
+/** MrvlIEtypes_uap_chan_switch */
+typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t {
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /* 0 send broadcast CSA action frame, 1 send unicast CSA action frame */
+    t_u32 mode ;
+    /**ie buf*/
+    t_u8 ie_buf[];
+} MLAN_PACK_END MrvlIEtypes_action_chan_switch_t;
+#endif
+
 #ifdef CONFIG_RF_TEST_MODE
 
 #define MFG_CMD_SET_TEST_MODE   1

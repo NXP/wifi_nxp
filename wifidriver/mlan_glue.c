@@ -997,6 +997,7 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
 {
     void *pdata_buf = NULL;
     HostCmd_DS_MGMT_IE_LIST_CFG ds_mgmt_ie_list_cfg;
+    mlan_status status = MLAN_STATUS_SUCCESS;
 
     (void)wifi_get_command_lock();
 
@@ -1015,10 +1016,15 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
 
     pdata_buf = &ds_mgmt_ie_list_cfg;
 
-    mlan_status status = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MGMT_IE_LIST, action,
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+        status = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[1], HOST_CMD_APCMD_SYS_CONFIGURE, action,
                                                   0, NULL, pdata_buf, cmd);
+    else
+        status = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MGMT_IE_LIST, action,
 
+                                                  0, NULL, pdata_buf, cmd);
     (void)wifi_wait_for_cmdresp(buffer);
+    
     return status;
 }
 

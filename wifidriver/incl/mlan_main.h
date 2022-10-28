@@ -2922,6 +2922,12 @@ mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *re
 
 #endif
 
+#ifdef CONFIG_ECSA
+mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter,mlan_ioctl_req *pioctl_req);
+mlan_status wlan_misc_ioctl_oper_class(pmlan_adapter pmadapter,mlan_ioctl_req *pioctl_req);
+mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel, t_u8 oper_class);
+#endif
+
 #define BW_20MHZ 0
 #define BW_40MHZ 1
 #define BW_80MHZ 2

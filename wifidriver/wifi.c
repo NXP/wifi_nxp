@@ -938,6 +938,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 
     /* Wait max 10 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
+
     if (ret != WM_SUCCESS)
     {
 #ifdef CONFIG_ENABLE_WARNING_LOGS
@@ -2513,6 +2514,12 @@ static void wifi_driver_tx(void *data)
     while (1)
     {
     get_msg:
+#ifdef CONFIG_ECSA
+        while(true == get_ecsa_block_tx_flag())
+        {
+            os_thread_sleep((get_ecsa_block_tx_time() + 2) * wm_wifi.beacon_period);
+        }
+#endif
         ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         if (ret == WM_SUCCESS)
         {
