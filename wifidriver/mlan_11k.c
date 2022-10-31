@@ -439,8 +439,8 @@ void wlan_add_rm_beacon_report(wlan_rrm_beacon_report_data *rep_data,
     int meas_sub_len  = 0;
 
     (void)memset(&report, 0, sizeof(mgmt_rrm_meas_beacon_report) - 1U);
-    (void)wlan_get_curr_oper_class(mlan_adap->priv[0], (t_u8)bss_entry->channel, bss_entry->curr_bandwidth,
-                                   &report.op_class);
+    (void)wlan_get_curr_global_oper_class(mlan_adap->priv[0], (t_u8)bss_entry->channel, bss_entry->curr_bandwidth,
+                                          &report.op_class);
 
     /* Measurement report */
     *pos++ = (t_u8)MEASURE_REPORT;
