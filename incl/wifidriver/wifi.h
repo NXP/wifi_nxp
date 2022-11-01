@@ -418,7 +418,7 @@ void wifi_set_mac_addr(uint8_t *mac);
  * @param[in] mac The new MAC Address
  *
  */
-void _wifi_set_mac_addr(uint8_t *mac);
+void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type);
 
 #ifdef CONFIG_WIFI_TX_BUFF
 /**

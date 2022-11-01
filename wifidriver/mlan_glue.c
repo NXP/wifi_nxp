@@ -2292,18 +2292,24 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_802_11_MAC_ADDRESS:
             {
                 HostCmd_DS_802_11_MAC_ADDRESS *pmac_addr = &resp->params.mac_addr;
-
-                sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
+                int ret                                  = -WM_FAIL;
+                sta_addr                                 = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
                 if (sta_addr == MNULL)
                 {
                     wifi_w("No mem. Cannot process MAC address command");
                     break;
                 }
-
                 (void)memcpy((void *)sta_addr, (const void *)((uint8_t *)&pmac_addr->mac_addr), MLAN_MAC_ADDR_LENGTH);
+                if (bss_type == MLAN_BSS_TYPE_STA)
+                {
+                    ret = wifi_event_completion(WIFI_EVENT_STA_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
+                }
+                else if (bss_type == MLAN_BSS_TYPE_UAP)
+                {
+                    ret = wifi_event_completion(WIFI_EVENT_UAP_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
+                }
 
-                if (wifi_event_completion(WIFI_EVENT_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
-                    WM_SUCCESS)
+                if (ret != WM_SUCCESS)
                 {
                     /* If fail to send message on queue, free allocated memory ! */
                     os_mem_free((void *)sta_addr);
@@ -5046,20 +5052,22 @@ void wifi_set_mac_addr(uint8_t *mac)
     mac_addr_valid = true;
 }
 
-void _wifi_set_mac_addr(uint8_t *mac)
+void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type)
 {
     (void)wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
 
     cmd->result = 0x0;
     (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_MAC_ADDRESS,
                                    HostCmd_ACT_GEN_SET, 0, NULL, mac, cmd);
     (void)wifi_wait_for_cmdresp(NULL);
     /* Also need to update priv->curr_addr, as rx reorder will check mac address using priv->curr_addr */
-    (void)memcpy(&mlan_adap->priv[0]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
+    if (bss_type == MLAN_BSS_TYPE_STA)
+        (void)memcpy(&mlan_adap->priv[0]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
+    else if (bss_type == MLAN_BSS_TYPE_UAP)
+        (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
 }
 
 #ifdef CONFIG_WIFI_TX_BUFF

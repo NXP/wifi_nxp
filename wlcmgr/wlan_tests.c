@@ -2332,7 +2332,6 @@ static void test_wlan_get_log(int argc, char **argv)
 {
     wlan_pkt_stats_t stats;
     int ret, i;
-    int bss_type = 0;
 
     if (argc < 2)
     {
@@ -3347,6 +3346,26 @@ static void test_wlan_get_regioncode(int argc, char **argv)
         (void)PRINTF("Region code: 0x%x\r\n", region_code);
     }
 }
+static void test_wlan_set_mac_address(int argc, char **argv)
+{
+    int ret;
+    uint8_t raw_mac[MLAN_MAC_ADDR_LENGTH];
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s MAC_Address\r\n", argv[0]);
+        return;
+    }
+
+    ret = get_mac(argv[1], (char *)raw_mac, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    wlan_set_mac_addr(raw_mac);
+}
 
 #ifdef CONFIG_ECSA
 static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
@@ -3656,6 +3675,7 @@ static void test_wlan_subscribe_event(int argc, char **argv)
 #endif
 
 static struct cli_command tests[] = {
+    {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
     {"wlan-add", "<profile_name> ssid <ssid> bssid...", test_wlan_add},

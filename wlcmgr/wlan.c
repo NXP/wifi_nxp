@@ -59,6 +59,7 @@ static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
 #else
 static int ps_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
 #endif
+
 #ifdef CONFIG_WPA2_ENTP
 extern int wpa2_ent_connect(struct wlan_network *wpa2_network);
 extern void wpa2_shutdown();
@@ -247,8 +248,10 @@ static struct
     enum cm_sta_state sta_return_to;
     enum cm_uap_state uap_state;
     enum cm_uap_state uap_return_to;
-
-    uint8_t mac[MLAN_MAC_ADDR_LENGTH];
+    /* store sta mac addr */
+    uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
+    /* store uap mac addr */ 
+    uint8_t uap_mac[MLAN_MAC_ADDR_LENGTH];
 #ifdef CONFIG_P2P
     uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
 #endif
@@ -1709,7 +1712,7 @@ static int do_start(struct wlan_network *network)
 #ifdef CONFIG_P2P
                              wlan.wfd_mac,
 #else
-                             wlan.mac,
+                             wlan.uap_mac,
 #endif
                              (int)network->security.type, &network->security.psk[0], &network->security.password[0],
                              (int)network->channel, wlan.scan_chan_list, network->security.mfpc,
@@ -2025,7 +2028,7 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
 #ifdef CONFIG_11V
 static void wlan_send_btm_response(t_u8 *bssid, enum wnm_btm_status_code status)
 {
-    wlan_send_mgmt_wnm_btm_resp(wlan.nlist_rep_param.dialog_token, status, wlan.nlist_rep_param.dst_addr, wlan.mac,
+    wlan_send_mgmt_wnm_btm_resp(wlan.nlist_rep_param.dialog_token, status, wlan.nlist_rep_param.dst_addr, wlan.sta_mac,
                                 bssid, NULL, 0, wlan.nlist_rep_param.protect);
 
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
@@ -3732,7 +3735,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
             {
                 if (network->type == WLAN_BSS_TYPE_UAP)
                 {
-                    (void)memcpy((void *)&network->bssid[0], (const void *)&wlan.mac[0], 6);
+                    (void)memcpy((void *)&network->bssid[0], (const void *)&wlan.uap_mac[0], 6);
                     if_handle = net_get_uap_handle();
                 }
 #ifdef CONFIG_P2P
@@ -4400,10 +4403,17 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("AGGR_CTRL ignored for now");
             break;
 #endif /* CONFIG_11N */
-        case WIFI_EVENT_MAC_ADDR_CONFIG:
+        case WIFI_EVENT_STA_MAC_ADDR_CONFIG:
             if (msg->data != NULL)
             {
-                (void)memcpy((void *)&wlan.mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
+                (void)memcpy((void *)&wlan.sta_mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
+                os_mem_free(msg->data);
+            }
+            break;
+        case WIFI_EVENT_UAP_MAC_ADDR_CONFIG:
+            if (msg->data != NULL)
+            {
+                (void)memcpy((void *)&wlan.uap_mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
                 os_mem_free(msg->data);
             }
             break;
@@ -4638,9 +4648,10 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
         return ret;
     }
 
-    (void)memcpy((void *)&wlan.mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)&wlan.uap_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)&wlan.sta_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
     (void)PRINTF("MAC Address: ");
-    print_mac((const char *)&wlan.mac);
+    print_mac((const char *)&wlan.uap_mac);
     (void)PRINTF("\r\n");
 #ifdef CONFIG_P2P
     (void)memcpy((void *)&wlan.wfd_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
@@ -5918,9 +5929,34 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size)
 
 void wlan_set_mac_addr(uint8_t *mac)
 {
+    uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
+
+    /* Only suppoprt unicast mac */
+    if (mac[0] & 0x01)
+    {
+        return;
+    }
+
+    if (!is_uap_state(CM_UAP_INITIALIZING)|| is_sta_connecting())
+    {
+        return;
+    }
+
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-        _wifi_set_mac_addr(mac);
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
+
+        (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        ap_mac[4] += 1;
+  
+        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
+
+        net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
+
+        /* save the sta mac */
+        (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
+        /* save the uap mac */
+        (void)memcpy(&wlan.uap_mac[0], &ap_mac[0], MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
@@ -6249,14 +6285,18 @@ int wlan_get_wfd_address(struct wlan_ip_config *addr)
 }
 #endif
 
-int wlan_get_mac_address(unsigned char *dest)
+int wlan_get_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
 {
-    if (dest == NULL)
+    if (sta_mac == NULL || uap_mac == NULL)
     {
         return -WM_E_INVAL;
     }
-    (void)memset((void *)dest, 0, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy((void *)dest, (const void *)&wlan.mac[0], MLAN_MAC_ADDR_LENGTH);
+    
+    (void)memset((void *)sta_mac, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)sta_mac, (const void *)&wlan.sta_mac[0], MLAN_MAC_ADDR_LENGTH);
+
+    (void)memset((void *)uap_mac, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)uap_mac, (const void *)&wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 
@@ -6859,7 +6899,7 @@ int wlan_nat_keep_alive(wlan_nat_keep_alive_t *nat_keep_alive)
         return -WM_FAIL;
     }
 
-    return wifi_nat_keep_alive(nat_keep_alive, wlan.mac, ipv4_addr, src_port);
+    return wifi_nat_keep_alive(nat_keep_alive, wlan.sta_mac, ipv4_addr, src_port);
 }
 #endif
 
@@ -7149,7 +7189,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         flt_cfg.mef_entry.filter_item[filt_num].repeat       = 16;
         flt_cfg.mef_entry.filter_item[filt_num].offset       = 56;
         flt_cfg.mef_entry.filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.mac,
+        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
                      MLAN_MAC_ADDR_LENGTH);
         if (filt_num)
             flt_cfg.mef_entry.rpn[filt_num] = RPN_TYPE_OR;
@@ -7160,7 +7200,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         flt_cfg.mef_entry.filter_item[filt_num].repeat       = 16;
         flt_cfg.mef_entry.filter_item[filt_num].offset       = 28;
         flt_cfg.mef_entry.filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.mac,
+        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
                      MLAN_MAC_ADDR_LENGTH);
         if (filt_num)
             flt_cfg.mef_entry.rpn[filt_num] = RPN_TYPE_OR;
@@ -7415,7 +7455,7 @@ int _wlan_rrm_scan_cb(unsigned int count)
             match_ap_found  = 1;
             meas_report_len = buf_pos - rep_buf;
             /* send beacon report, not the last one */
-            wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac,
+            wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.sta_mac,
                                             wlan.rrm_scan_cb_param.dst_addr, rep_buf, (t_u32)meas_report_len,
                                             (bool)wlan.rrm_scan_cb_param.protect);
             /* Prepare for the next beacon report */
@@ -7434,7 +7474,7 @@ int _wlan_rrm_scan_cb(unsigned int count)
             }
             meas_report_len = buf_pos - rep_buf;
             /* send beacon report, the last one */
-            wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac,
+            wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.sta_mac,
                                             wlan.rrm_scan_cb_param.dst_addr, rep_buf, (t_u32)meas_report_len,
                                             (bool)wlan.rrm_scan_cb_param.protect);
         }
@@ -7451,7 +7491,7 @@ int _wlan_rrm_scan_cb(unsigned int count)
         *buf_pos++      = WLAN_RRM_MEASURE_TYPE_BEACON;
         meas_report_len = buf_pos - rep_buf;
         /* send beacon report */
-        wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.mac, wlan.rrm_scan_cb_param.dst_addr,
+        wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.sta_mac, wlan.rrm_scan_cb_param.dst_addr,
                                         rep_buf, (t_u32)meas_report_len, (bool)wlan.rrm_scan_cb_param.protect);
     }
 
@@ -7578,7 +7618,7 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
     if (is_sta_connected())
     {
         (void)wlan_get_current_bssid(ap_addr);
-        return wifi_mbo_send_preferch_wnm(wlan.mac, (t_u8 *)ap_addr, ch0, pefer0, ch1, pefer1);
+        return wifi_mbo_send_preferch_wnm(wlan.sta_mac, (t_u8 *)ap_addr, ch0, pefer0, ch1, pefer1);
     }
     else
     {

@@ -1559,17 +1559,15 @@ int wlan_stop_network(const char *name);
 
 /** Retrieve the wireless MAC address of station/micro-AP interface.
  *
- *  This function copies the MAC address of the wireless interface to
- *  the 6-byte array pointed to by \a dest.  In the event of an error, nothing
- *  is copied to \a dest.
+ *  This function copies the MAC address of the station interface to sta mac address and uAP interface to uap mac address.
  *
- *  \param[out] dest A pointer to a 6-byte array where the MAC address will be
- *              copied.
+ *  \param[out] sta_mac A pointer to sta mac addr array.
+ *  \param[out] uap_mac A pointer to uap mac addr array.
  *
  *  \return WM_SUCCESS if the MAC address was copied.
- *  \return -WM_E_INVAL if \a dest is NULL.
+ *  \return -WM_E_INVAL if \a sta_mac or uap_mac is NULL.
  */
-int wlan_get_mac_address(unsigned char *dest);
+int wlan_get_mac_address(unsigned char *sta_mac, unsigned char *uap_mac);
 
 /** Retrieve the IP address configuration of the station interface.
  *
@@ -1946,6 +1944,8 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
  *
  * This function may be called to set wireless MAC Address in firmware.
  * This should be call before \ref wlan_init() function.
+ * When called after wlan init done, the incoming mac is treated as the sta mac address directly. And mac[4] plus 1 the
+ * modifed mac as the UAP mac address.
  *
  * \param[in] mac The MAC Address in 6 byte array format like
  *                uint8_t mac[] = { 0x00, 0x50, 0x43, 0x21, 0x19, 0x6E};

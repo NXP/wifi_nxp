@@ -388,9 +388,6 @@ static void low_level_init(struct netif *netif)
     /* set MAC hardware address length */
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
-    /* set MAC hardware address */
-    (void)wlan_get_mac_address(netif->hwaddr);
-
     /* maximum transfer unit */
     netif->mtu = 1500;
 
@@ -937,6 +934,7 @@ done:
 err_t lwip_netif_init(struct netif *netif)
 {
     struct ethernetif *ethernetif;
+    unsigned char ignore_mac[MLAN_MAC_ADDR_LENGTH];
 
     LWIP_ASSERT("netif != NULL", (netif != NULL));
 
@@ -972,6 +970,9 @@ err_t lwip_netif_init(struct netif *netif)
 
     /* initialize the hardware */
     low_level_init(netif);
+	
+    /* set sta MAC hardware address */
+    (void)wlan_get_mac_address(netif->hwaddr, ignore_mac);
 
     register_interface(netif, MLAN_BSS_TYPE_STA);
     return ERR_OK;
@@ -980,6 +981,7 @@ err_t lwip_netif_init(struct netif *netif)
 err_t lwip_netif_uap_init(struct netif *netif)
 {
     struct ethernetif *ethernetif;
+    unsigned char ignore_mac[MLAN_MAC_ADDR_LENGTH];
 
     LWIP_ASSERT("netif != NULL", (netif != NULL));
 
@@ -1008,6 +1010,9 @@ err_t lwip_netif_uap_init(struct netif *netif)
 
     /* initialize the hardware */
     low_level_init(netif);
+	
+    /* set uap MAC hardware address */
+    (void)wlan_get_mac_address(ignore_mac, netif->hwaddr);
 
     register_interface(netif, MLAN_BSS_TYPE_UAP);
 

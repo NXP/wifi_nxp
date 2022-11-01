@@ -75,8 +75,10 @@ enum wifi_event
     WIFI_EVENT_NET_INTERFACE_CONFIG,
     /** WEP configuration */
     WIFI_EVENT_WEP_CONFIG,
-    /** MAC address configuration */
-    WIFI_EVENT_MAC_ADDR_CONFIG,
+    /** STA MAC address configuration */
+    WIFI_EVENT_STA_MAC_ADDR_CONFIG,
+    /** UAP MAC address configuration */
+    WIFI_EVENT_UAP_MAC_ADDR_CONFIG,
     /** Network DHCP configuration */
     WIFI_EVENT_NET_DHCP_CONFIG,
     /** Supplicant PMK */

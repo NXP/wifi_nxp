@@ -155,6 +155,14 @@ static inline uint32_t net_inet_aton(const char *cp)
     return addr.s_addr;
 }
 
+/** set MAC hardware address to lwip network interface
+ *
+ * \param[in] stamac sta MAC address.
+ * \param[in] uapmac uap MAC address.
+ *
+ */
+void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
+
 /**
  * Get network host entry
  *

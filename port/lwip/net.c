@@ -221,6 +221,12 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 }
 #endif /* CONFIG_IPV6 */
 
+void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
+{
+    (void)memcpy(&g_mlan.netif.hwaddr[0], &stamac[0], MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(&g_uap.netif.hwaddr[0], &uapmac[0], MLAN_MAC_ADDR_LENGTH);
+}
+
 int net_wlan_init(void)
 {
     int ret;
