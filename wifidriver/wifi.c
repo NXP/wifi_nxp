@@ -452,6 +452,7 @@ done:
         ;
 }
 
+#ifndef RW610
 /**
  *  @brief This function reads and displays SDIO registers for debugging
  *
@@ -508,7 +509,9 @@ void wifi_sdio_reg_dbg()
             ptr += sprintf(ptr, "SDIO Func%d: ", func);
         for (reg = reg_start; reg <= reg_end;)
         {
+#ifndef RW610
             ret  = sdio_drv_creg_read(reg, func, &resp);
+#endif
             data = resp & 0xff;
             if (loop == 2)
                 ptr += sprintf(ptr, "(%#x) ", reg);
@@ -527,7 +530,7 @@ void wifi_sdio_reg_dbg()
         wifi_d("%s", buf);
     }
 }
-
+#endif
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 
 #define DEBUG_HOST_READY     0xCC
@@ -766,7 +769,7 @@ done:
     while (1)
         ;
 }
-
+#ifndef RW610
 /**
  *  @brief This function reads and displays SDIO registers for debugging
  *
@@ -842,7 +845,7 @@ void wifi_sdio_reg_dbg()
         wifi_d("%s", buf);
     }
 }
-
+#endif
 #elif defined(RW610)
 
 /**

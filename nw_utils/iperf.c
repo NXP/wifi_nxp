@@ -164,7 +164,7 @@ struct wmm_test_ctx_t
     void *iperf_session2;
 } wmm_test_ctx;
 
-static void wmm_iperf_test_start()
+static void wmm_iperf_test_start(void *arg)
 {
     if (wmm_test_ctx.server)
     {
