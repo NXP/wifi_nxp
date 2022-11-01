@@ -1052,14 +1052,18 @@ static int security_profile_matches(const struct wlan_network *network, const st
     }
 
     /* WPA2 mode: if we are using WPA2, the AP must use WPA2 */
-    if (config->type == WLAN_SECURITY_WPA2
-#ifdef CONFIG_OWE
-        || config->type == WLAN_SECURITY_OWE_ONLY
-#endif
-    )
+    if (config->type == WLAN_SECURITY_WPA2)
     {
         return (int)res->WPA_WPA2_WEP.wpa2;
     }
+
+    /* OWE mode: if we are using OWE, the AP must use OWE */
+#ifdef CONFIG_OWE
+    if (config->type == WLAN_SECURITY_OWE_ONLY)
+    {
+        return (int)res->WPA_WPA2_WEP.owe;
+    }
+#endif
 
     /* WPA mode: if we are using WPA, the AP must use WPA */
     if (config->type == WLAN_SECURITY_WPA)
@@ -5025,6 +5029,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_NONE:
         case WLAN_SECURITY_WILDCARD:
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
+        case WLAN_SECURITY_OWE_ONLY:
             valid = true;
             break;
         case WLAN_SECURITY_WEP_OPEN:

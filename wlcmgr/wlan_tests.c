@@ -648,7 +648,7 @@ static void test_wlan_add(int argc, char **argv)
         else if (!info.security && string_equal("owe_only", argv[arg]))
         {
             network.security.type = WLAN_SECURITY_OWE_ONLY;
-            arg += 2;
+            arg += 1;
             info.security++;
         }
 #endif
