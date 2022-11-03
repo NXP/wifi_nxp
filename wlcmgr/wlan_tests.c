@@ -410,7 +410,7 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
     int ret = WM_SUCCESS;
     if (argc < 1)
     {
-        return WM_FAIL;
+        return -WM_FAIL;
     }
 
     switch (type)
@@ -421,7 +421,7 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
             sec->psk_len = (uint8_t)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
             {
-                return WM_FAIL;
+                return -WM_FAIL;
             }
             if (sec->psk_len < sizeof(sec->psk))
             {
@@ -429,12 +429,12 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
             }
             else
             {
-                return WM_FAIL;
+                return -WM_FAIL;
             }
             sec->type = type;
             break;
         default:
-            ret = WM_FAIL;
+            ret = -WM_FAIL;
             break;
     }
 

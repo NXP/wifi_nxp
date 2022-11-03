@@ -2630,7 +2630,7 @@ int wifi_set_country(country_code_t country)
     if (wlan_enable_11d() != WM_SUCCESS)
     {
         wifi_e("unable to enabled 11d feature\r\n");
-        return WM_FAIL;
+        return -WM_FAIL;
     }
 
     wifi_11d_country = country;

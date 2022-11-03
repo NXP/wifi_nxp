@@ -1613,7 +1613,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     if (!buffer)
     {
         wuap_e("ERR:Cannot allocate buffer for command!\r\n");
-        return WM_FAIL;
+        return -WM_FAIL;
     }
 
     memset(buffer, 0, buf_len);
@@ -1649,7 +1649,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     {
         wuap_e("down the uap before setting sta filter\n\r");
         os_mem_free(buffer);
-        return WM_FAIL;
+        return -WM_FAIL;
     }
 
     wifi_get_command_lock();
