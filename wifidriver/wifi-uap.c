@@ -913,8 +913,7 @@ int wifi_uap_start(mlan_bss_type type,
 #ifdef CONFIG_OWE
          || security == WLAN_SECURITY_OWE_ONLY
 #endif
-         ) &&
-        mfpc)
+         ))
     {
         (void)wifi_uap_pmf_getset(HostCmd_ACT_GEN_SET, (uint8_t *)&mfpc, (uint8_t *)&mfpr);
     }
