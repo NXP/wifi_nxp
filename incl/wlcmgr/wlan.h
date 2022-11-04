@@ -127,7 +127,7 @@
 #include <wifi.h>
 #include <wlan_11d.h>
 
-#define WLAN_DRV_VERSION "v1.3.r42.p1"
+#define WLAN_DRV_VERSION "v1.3.r43.p1"
 
 /* Configuration */
 
@@ -3995,14 +3995,13 @@ void wlan_report_timing_measurement(wlan_dot1as_info_t *info);
  * Send the ecsa config parameter to FW.
  *
  *\param[in] block_tx      0 -- no need to block traffic,1 -- need block traffic.
- *\param[in] oper_class    Operating class according to IEEE std802.11 spec, refer to Annex E, 
+ *\param[in] oper_class    Operating class according to IEEE std802.11 spec, refer to Annex E,
  *                         when 0 is used, automatically get operclass through band_width and channel.
  *\param[in] channel       The channel will switch to.
  *\param[in] switch_count  Channel switch time to send ECSA ie, unit is 110ms.
- *\param[in] band_width    Channel width switch to(optional), only for 5G channels. 
- *                         Depends on the hardware capabilities, when the hardware does not support, it will automatically downgrade.
- *                         Redfinch support 20M.
- *                         0 -- 20MHZ, 1 -- 40M above, 3 -- 40M below, 4 -- 80M, 5 -- 160M
+ *\param[in] band_width    Channel width switch to(optional), only for 5G channels.
+ *                         Depends on the hardware capabilities, when the hardware does not support, it will
+ *automatically downgrade. Redfinch support 20M. 0 -- 20MHZ, 1 -- 40M above, 3 -- 40M below, 4 -- 80M, 5 -- 160M
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
