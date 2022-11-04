@@ -2621,9 +2621,14 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_gpio_tsf_latch(pmpriv, cmd_ptr, cmd_action, pioctl_buf, pdata_buf);
             break;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
         case HostCmd_CMD_TX_RX_PKT_STATS:
+#ifdef CONFIG_WIFI_TX_PER_TRACK
             ret = wlan_cmd_txrx_pkt_stats(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+#endif
+#ifdef CONFIG_TX_RX_HISTOGRAM
+            ret = wlan_cmd_txrx_histogram(pmpriv, cmd_ptr, pdata_buf);
+#endif
             break;
 #endif
 #ifdef CONFIG_RF_TEST_MODE

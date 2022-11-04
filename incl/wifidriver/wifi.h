@@ -301,6 +301,10 @@ uint8_t *wifi_get_outbuf(uint32_t *outbuf_len);
 int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type);
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+int wifi_set_txrx_histogram(void *cfg, t_u8 *data);
+#endif
+
 #ifdef CONFIG_ROAMING
 int wifi_config_roaming(const int enable, const uint8_t rssi_low);
 void wifi_config_bgscan_and_rssi(const char *ssid);
@@ -1372,7 +1376,6 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count);
-
 
 /**
  * Record the ECSA blcok tx time.

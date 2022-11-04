@@ -1704,6 +1704,16 @@ typedef struct
 } tx_pert_info;
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+typedef struct
+{
+    /**  Enable or disable  */
+    t_u8 enable;
+    /** Choose to get TX, RX or both */
+    t_u16 action;
+} txrx_histogram_info;
+#endif
+
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 /** data structure for SDIO MPA TX */
 typedef struct _sdio_mpa_tx
@@ -2244,6 +2254,10 @@ mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
                                     IN HostCmd_DS_COMMAND *cmd,
                                     IN t_u16 cmd_action,
                                     IN t_void *pdata_buf);
+#endif
+
+#ifdef CONFIG_TX_RX_HISTOGRAM
+mlan_status wlan_cmd_txrx_histogram(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
 #endif
 
 mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter);
@@ -2923,8 +2937,8 @@ mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *re
 #endif
 
 #ifdef CONFIG_ECSA
-mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter,mlan_ioctl_req *pioctl_req);
-mlan_status wlan_misc_ioctl_oper_class(pmlan_adapter pmadapter,mlan_ioctl_req *pioctl_req);
+mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req);
+mlan_status wlan_misc_ioctl_oper_class(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req);
 mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel, t_u8 oper_class);
 #endif
 

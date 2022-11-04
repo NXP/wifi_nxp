@@ -7576,6 +7576,18 @@ void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type)
 }
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_u8 *data)
+{
+    int ret = WM_SUCCESS;
+
+    wifi_set_txrx_histogram((void *)txrx_histogram, data);
+    if (ret != WM_SUCCESS)
+        (void)PRINTF("Failed to set txrx histogram config.\r\n");
+    return;
+}
+#endif
+
 #ifdef CONFIG_ROAMING
 int wlan_set_roaming(const int enable)
 {

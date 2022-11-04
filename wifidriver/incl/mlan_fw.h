@@ -1078,7 +1078,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : Get memory */
 #define HostCmd_CMD_GET_MEM 0x008c
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
 /** Host Command ID: TX_RX_PKT_STATS */
 #define HostCmd_CMD_TX_RX_PKT_STATS 0x008d
 #endif
@@ -3733,6 +3733,17 @@ typedef MLAN_PACK_START struct _MrvlTxPerTrackInfo_t
 } MLAN_PACK_END MrvlTxPerTrackInfo_t;
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+/** TX and RX histogram statistic parameters*/
+typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_HISTOGRAM
+{
+    /** Enable or disable get tx/rx histogram statistic */
+    t_u8 enable;
+    /** Choose to get TX, RX or both histogram statistic */
+    t_u16 action;
+} MLAN_PACK_END HostCmd_DS_TX_RX_HISTOGRAM;
+#endif
+
 /** Power_Group_t */
 typedef MLAN_PACK_START struct _Power_Group_t
 {
@@ -5866,14 +5877,15 @@ typedef MLAN_PACK_START struct _HostCmd_CONFIG_ED_MAC_MODE
 } MLAN_PACK_END HostCmd_CONFIG_ED_MAC_MODE;
 
 #ifdef CONFIG_ECSA
-#define MRVL_ACTION_CHAN_SWITCH_ANNOUNCE        (PROPRIETARY_TLV_BASE_ID + 0x341)
+#define MRVL_ACTION_CHAN_SWITCH_ANNOUNCE (PROPRIETARY_TLV_BASE_ID + 0x341)
 
 /** MrvlIEtypes_uap_chan_switch */
-typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t {
+typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t
+{
     /** Header */
     MrvlIEtypesHeader_t header;
     /* 0 send broadcast CSA action frame, 1 send unicast CSA action frame */
-    t_u32 mode ;
+    t_u32 mode;
     /**ie buf*/
     t_u8 ie_buf[];
 } MLAN_PACK_END MrvlIEtypes_action_chan_switch_t;
@@ -6687,6 +6699,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
         HostCmd_DS_TX_RX_PKT_STATS pkt_stats;
+#endif
+#ifdef CONFIG_TX_RX_HISTOGRAM
+        HostCmd_DS_TX_RX_HISTOGRAM histogram;
 #endif
 #ifdef OTP_CHANINFO
         HostCmd_DS_CHAN_REGION_CFG reg_cfg;

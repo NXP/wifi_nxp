@@ -1649,6 +1649,228 @@ static void test_wlan_tx_pert(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+static void dump_wlan_txrx_histogram_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan_txrx_histogram <action> <enable>\r\n");
+    (void)PRINTF("        <enable> : 0 - disable TX/RX statistics\r\n");
+    (void)PRINTF("                   1 - enable TX/RX statistics\r\n");
+    (void)PRINTF("                   2 - get TX/RX statistics\r\n");
+    (void)PRINTF("        <action> : 1 - enable/disable/get TX statistics\r\n");
+    (void)PRINTF("                   2 - enable/disable/get RX statistics\r\n");
+    (void)PRINTF("                   3 - enable/disable/get TX and RX statistics\r\n");
+    (void)PRINTF("Note:\r\n");
+    (void)PRINTF("    When enable is 0 or 1, the action parameter should not be entered\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan_txrx_histogram 2 3\r\n");
+}
+
+static void test_wlan_txrx_histogram(int argc, char **argv)
+{
+    struct wlan_txrx_histogram_info txrx_histogram;
+    t_u8 *buf = NULL;
+
+    tx_pkt_ht_rate_info *tx_ht_info;
+    tx_pkt_vht_rate_info *tx_vht_info;
+    tx_pkt_he_rate_info *tx_he_info;
+    tx_pkt_rate_info *tx_info;
+    rx_pkt_ht_rate_info *rx_ht_info;
+    rx_pkt_vht_rate_info *rx_vht_info;
+    rx_pkt_he_rate_info *rx_he_info;
+    rx_pkt_rate_info *rx_info;
+
+    t_u8 *pos             = NULL;
+    t_u16 resp_value_size = 0;
+    int i                 = 0;
+    t_u16 buf_size        = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_txrx_histogram_usage();
+        return;
+    }
+
+    (void)memset(&txrx_histogram, 0, sizeof(txrx_histogram));
+    txrx_histogram.enable = atoi(argv[1]);
+    if (argc == 2)
+    {
+        txrx_histogram.action = 0;
+    }
+    else
+    {
+        txrx_histogram.action = atoi(argv[2]);
+    }
+
+    if ((txrx_histogram.enable > 2) || (txrx_histogram.action > 3))
+    {
+        (void)PRINTF("Error: invalid arguments.\r\n");
+        dump_wlan_txrx_histogram_usage();
+        return;
+    }
+    if ((txrx_histogram.enable == 0 || txrx_histogram.enable == 1) && (txrx_histogram.action != 0))
+    {
+        (void)PRINTF("Error: invalid arguments.\r\n");
+        dump_wlan_txrx_histogram_usage();
+        return;
+    }
+
+    if (txrx_histogram.enable & GET_TX_RX_HISTOGRAM)
+    {
+        if (txrx_histogram.action == FLAG_TX_HISTOGRAM)
+        {
+            buf_size = sizeof(resp_value_size) + sizeof(tx_pkt_ht_rate_info) + sizeof(tx_pkt_vht_rate_info) +
+                       sizeof(tx_pkt_he_rate_info) + sizeof(tx_pkt_rate_info);
+        }
+        else if (txrx_histogram.action == FLAG_RX_HISTOGRAM)
+        {
+            buf_size = sizeof(resp_value_size) + sizeof(rx_pkt_ht_rate_info) + sizeof(rx_pkt_vht_rate_info) +
+                       sizeof(rx_pkt_he_rate_info) + sizeof(rx_pkt_rate_info);
+        }
+        else if ((txrx_histogram.action & FLAG_TX_HISTOGRAM) && (txrx_histogram.action & FLAG_RX_HISTOGRAM))
+        {
+            buf_size = sizeof(resp_value_size) + sizeof(tx_pkt_ht_rate_info) + sizeof(tx_pkt_vht_rate_info) +
+                       sizeof(tx_pkt_he_rate_info) + sizeof(tx_pkt_rate_info) + sizeof(rx_pkt_ht_rate_info) +
+                       sizeof(rx_pkt_vht_rate_info) + sizeof(rx_pkt_he_rate_info) + sizeof(rx_pkt_rate_info);
+        }
+    }
+    if (buf_size > 0)
+    {
+        buf = os_mem_alloc(buf_size);
+        if (!buf)
+        {
+            PRINTF("test_wlan_txrx_histogram buf allocate memory failed\r\n");
+            return;
+        }
+        (void)memset(buf, 0, sizeof(buf_size));
+        (void)memcpy(buf, &buf_size, sizeof(buf_size));
+    }
+
+    wlan_set_txrx_histogram(&txrx_histogram, buf);
+
+    /*Make the pos pointer points to the size*/
+    pos = (t_u8 *)buf;
+    memcpy(&resp_value_size, pos, sizeof(resp_value_size));
+    /*Make the pos pointer points to the data replied by fw*/
+    pos += sizeof(resp_value_size);
+
+    if (txrx_histogram.enable & GET_TX_RX_HISTOGRAM)
+    {
+        if (txrx_histogram.action & FLAG_TX_HISTOGRAM)
+        {
+            PRINTF("The TX histogram statistic:\n");
+            PRINTF("============================================\n");
+            tx_ht_info = (tx_pkt_ht_rate_info *)pos;
+            for (i = 0; i < 16; i++)
+            {
+                PRINTF("htmcs_txcnt[%d]       = %u\n", i, tx_ht_info->htmcs_txcnt[i]);
+                PRINTF("htsgi_txcnt[%d]       = %u\n", i, tx_ht_info->htsgi_txcnt[i]);
+                PRINTF("htstbcrate_txcnt[%d]  = %u\n", i, tx_ht_info->htstbcrate_txcnt[i]);
+            }
+            pos += sizeof(tx_pkt_ht_rate_info);
+            tx_vht_info = (tx_pkt_vht_rate_info *)pos;
+            for (i = 0; i < 10; i++)
+            {
+                PRINTF("vhtmcs_txcnt[%d]      = %u\n", i, tx_vht_info->vhtmcs_txcnt[i]);
+                PRINTF("vhtsgi_txcnt[%d]      = %u\n", i, tx_vht_info->vhtsgi_txcnt[i]);
+                PRINTF("vhtstbcrate_txcnt[%d] = %u\n", i, tx_vht_info->vhtstbcrate_txcnt[i]);
+            }
+            pos += sizeof(tx_pkt_vht_rate_info);
+            if (resp_value_size == (sizeof(tx_pkt_ht_rate_info) + sizeof(tx_pkt_vht_rate_info) +
+                                    sizeof(tx_pkt_he_rate_info) + sizeof(tx_pkt_rate_info)) ||
+                resp_value_size ==
+                    (sizeof(tx_pkt_ht_rate_info) + sizeof(tx_pkt_vht_rate_info) + sizeof(tx_pkt_he_rate_info) +
+                     sizeof(tx_pkt_rate_info) + sizeof(rx_pkt_ht_rate_info) + sizeof(rx_pkt_vht_rate_info) +
+                     sizeof(rx_pkt_he_rate_info) + sizeof(rx_pkt_rate_info)))
+            {
+                tx_he_info = (tx_pkt_he_rate_info *)pos;
+                for (i = 0; i < 12; i++)
+                {
+                    PRINTF("hemcs_txcnt[%d]      = %u\n", i, tx_he_info->hemcs_txcnt[i]);
+                    PRINTF("hestbcrate_txcnt[%d] = %u\n", i, tx_he_info->hestbcrate_txcnt[i]);
+                }
+                pos += sizeof(tx_pkt_he_rate_info);
+            }
+            tx_info = (tx_pkt_rate_info *)pos;
+            for (i = 0; i < 2; i++)
+                PRINTF("nss_txcnt[%d]         = %u\n", i, tx_info->nss_txcnt[i]);
+            for (i = 0; i < 3; i++)
+                PRINTF("bandwidth_txcnt[%d]   = %u\n", i, tx_info->bandwidth_txcnt[i]);
+            for (i = 0; i < 4; i++)
+                PRINTF("preamble_txcnt[%d]    = %u\n", i, tx_info->preamble_txcnt[i]);
+            PRINTF("ldpc_txcnt           = %u\n", tx_info->ldpc_txcnt);
+            PRINTF("rts_txcnt            = %u\n", tx_info->rts_txcnt);
+            PRINTF("ack_RSSI             = %d\n\n", tx_info->ack_RSSI);
+            pos += sizeof(tx_pkt_rate_info);
+        }
+        if (txrx_histogram.action & FLAG_RX_HISTOGRAM)
+        {
+            PRINTF("The RX histogram statistic:\n");
+            PRINTF("============================================\n");
+            rx_ht_info = (rx_pkt_ht_rate_info *)pos;
+            for (i = 0; i < 16; i++)
+            {
+                PRINTF("htmcs_rxcnt[%d]       = %u\n", i, rx_ht_info->htmcs_rxcnt[i]);
+                PRINTF("htsgi_rxcnt[%d]       = %u\n", i, rx_ht_info->htsgi_rxcnt[i]);
+                PRINTF("htstbcrate_rxcnt[%d]  = %u\n", i, rx_ht_info->htstbcrate_rxcnt[i]);
+            }
+            pos += sizeof(rx_pkt_ht_rate_info);
+            rx_vht_info = (rx_pkt_vht_rate_info *)pos;
+            for (i = 0; i < 10; i++)
+            {
+                PRINTF("vhtmcs_rxcnt[%d]      = %u\n", i, rx_vht_info->vhtmcs_rxcnt[i]);
+                PRINTF("vhtsgi_rxcnt[%d]      = %u\n", i, rx_vht_info->vhtsgi_rxcnt[i]);
+                PRINTF("vhtstbcrate_rxcnt[%d] = %u\n", i, rx_vht_info->vhtstbcrate_rxcnt[i]);
+            }
+            pos += sizeof(rx_pkt_vht_rate_info);
+            if (resp_value_size == (sizeof(rx_pkt_ht_rate_info) + sizeof(rx_pkt_vht_rate_info) +
+                                    sizeof(rx_pkt_he_rate_info) + sizeof(rx_pkt_rate_info)) ||
+                resp_value_size ==
+                    (sizeof(tx_pkt_ht_rate_info) + sizeof(tx_pkt_vht_rate_info) + sizeof(tx_pkt_he_rate_info) +
+                     sizeof(tx_pkt_rate_info) + sizeof(rx_pkt_ht_rate_info) + sizeof(rx_pkt_vht_rate_info) +
+                     sizeof(rx_pkt_he_rate_info) + sizeof(rx_pkt_rate_info)))
+            {
+                rx_he_info = (rx_pkt_he_rate_info *)pos;
+                for (i = 0; i < 12; i++)
+                {
+                    PRINTF("hemcs_rxcnt[%d]      = %u\n", i, rx_he_info->hemcs_rxcnt[i]);
+                    PRINTF("hestbcrate_rxcnt[%d] = %u\n", i, rx_he_info->hestbcrate_rxcnt[i]);
+                }
+                pos += sizeof(rx_pkt_he_rate_info);
+            }
+            rx_info = (rx_pkt_rate_info *)pos;
+            for (i = 0; i < 2; i++)
+                PRINTF("nss_rxcnt[%d]         = %u\n", i, rx_info->nss_rxcnt[i]);
+            PRINTF("nsts_rxcnt           = %u\n", rx_info->nsts_rxcnt);
+            for (i = 0; i < 3; i++)
+                PRINTF("bandwidth_rxcnt[%d]   = %u\n", i, rx_info->bandwidth_rxcnt[i]);
+            for (i = 0; i < 6; i++)
+                PRINTF("preamble_rxcnt[%d]    = %u\n", i, rx_info->preamble_rxcnt[i]);
+            for (i = 0; i < 2; i++)
+                PRINTF("ldpc_txbfcnt[%d]      = %u\n", i, rx_info->ldpc_txbfcnt[i]);
+            for (i = 0; i < 2; i++)
+                PRINTF("rssi_value[%d]        = %d\n", i, rx_info->rssi_value[i]);
+            for (i = 0; i < 4; i++)
+                PRINTF("rssi_chain0[%d]       = %d\n", i, rx_info->rssi_chain0[i]);
+            for (i = 0; i < 4; i++)
+                PRINTF("rssi_chain1[%d]       = %d\n", i, rx_info->rssi_chain1[i]);
+            PRINTF("\n");
+        }
+    }
+    else if (txrx_histogram.enable & ENABLE_TX_RX_HISTOGRAM)
+        PRINTF("Enable the TX and RX histogram statistic\n");
+    else
+    {
+        PRINTF("Disable the TX and RX histogram statistic\n");
+    }
+    if (buf)
+    {
+        os_mem_free(buf);
+    }
+}
+#endif
+
 #ifdef CONFIG_ROAMING
 #define DEFAULT_RSSI_THRESHOLD 70
 static void dump_wlan_roaming_usage(void)
@@ -3127,7 +3349,7 @@ static void test_wlan_get_regioncode(int argc, char **argv)
 }
 
 #ifdef CONFIG_ECSA
-static void  test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
+static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 {
     int ret;
     t_u8 block_tx     = 0;
@@ -3136,14 +3358,14 @@ static void  test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
     t_u8 switch_count = 0;
     t_u8 band_width   = 0;
 
-    if ((5 == argc)||(6 == argc))
+    if ((5 == argc) || (6 == argc))
     {
         block_tx     = (t_u8)atoi(argv[1]);
         oper_class   = (t_u8)atoi(argv[2]);
         new_channel  = (t_u8)atoi(argv[3]);
         switch_count = (t_u8)atoi(argv[4]);
 
-        if(6 == argc)
+        if (6 == argc)
         {
             band_width = (t_u8)atoi(argv[5]);
         }
@@ -3162,18 +3384,18 @@ static void  test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 
         return;
     }
-    
+
     /* Disable action Temporary */
-    if(0 == switch_count)
-    {   
+    if (0 == switch_count)
+    {
         (void)PRINTF("Error : invalid arguments \r\n");
         (void)PRINTF("argv[4] switch_count cannot be 0\r\n");
         return;
     }
-    
+
     ret = wlan_uap_set_ecsa_cfg(block_tx, oper_class, new_channel, switch_count, band_width);
 
-    if (ret != WM_SUCCESS  )
+    if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to set ecsa cfg \r\n");
     }
@@ -3293,7 +3515,11 @@ static struct cli_command tests[] = {
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
 #ifdef CONFIG_ECSA
-    {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>", test_wlan_uap_set_ecsa_cfg},
+    {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>",
+     test_wlan_uap_set_ecsa_cfg},
+#endif
+#ifdef CONFIG_TX_RX_HISTOGRAM
+    {"wlan-txrx-histogram", "<action> <enable>", test_wlan_txrx_histogram},
 #endif
 };
 

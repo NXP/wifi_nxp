@@ -1171,6 +1171,115 @@ struct wlan_tx_pert_info
 };
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+struct wlan_txrx_histogram_info
+{
+    /**  Enable or disable  */
+    t_u8 enable;
+    /** Choose to get TX, RX or both */
+    t_u16 action;
+};
+
+#define FLAG_TX_HISTOGRAM       0x01
+#define FLAG_RX_HISTOGRAM       0x02
+#define DISABLE_TX_RX_HISTOGRAM 0x00
+#define ENABLE_TX_RX_HISTOGRAM  0x01
+#define GET_TX_RX_HISTOGRAM     0x02
+
+/** TX histiogram ht statistic parameters */
+typedef struct _tx_pkt_ht_rate_info
+{
+    /** tx packet counter of MCS0~MCS15 */
+    t_u32 htmcs_txcnt[16];
+    /** tx packet's short GI counter of MCS0~MCS15 */
+    t_u32 htsgi_txcnt[16];
+    /** tx STBC packet counter of MCS0~MCS15 */
+    t_u32 htstbcrate_txcnt[16];
+} tx_pkt_ht_rate_info;
+/** TX histiogram vht statistic parameters */
+typedef struct _tx_pkt_vht_rate_info
+{
+    /** tx packet counter of MCS0~MCS9 */
+    t_u32 vhtmcs_txcnt[10];
+    /** tx packet's short GI counter of MCS0~MCS9 */
+    t_u32 vhtsgi_txcnt[10];
+    /** tx STBC packet counter of MCS0~MCS9 */
+    t_u32 vhtstbcrate_txcnt[10];
+} tx_pkt_vht_rate_info;
+/** TX histiogram he statistic parameters */
+typedef struct _tx_pkt_he_rate_info
+{
+    /** tx packet counter of MCS0~MCS11 */
+    t_u32 hemcs_txcnt[12];
+    /** tx STBC packet counter of MCS0~MCS11 */
+    t_u32 hestbcrate_txcnt[12];
+} tx_pkt_he_rate_info;
+/** TX histogram statistic parameters*/
+typedef struct _tx_pkt_rate_info
+{
+    /** tx packet counter of every NSS, NSS=1,2 */
+    t_u32 nss_txcnt[2];
+    /** tx packet counter of every bandwith */
+    t_u32 bandwidth_txcnt[3];
+    /** different preamble tx packet counter */
+    t_u32 preamble_txcnt[4];
+    /** tx packet counter of using LDPC coding */
+    t_u32 ldpc_txcnt;
+    /** transmitted RTS counter */
+    t_u32 rts_txcnt;
+    /** RSSI of ack */
+    t_s32 ack_RSSI;
+} tx_pkt_rate_info;
+/** RX histiogram ht statistic parameters */
+typedef struct _rx_pkt_ht_rate_info
+{
+    /** Rx packet counter of MCS0~MCS15 */
+    t_u32 htmcs_rxcnt[16];
+    /** Rx packet's short GI counter of MCS0~MCS15 */
+    t_u32 htsgi_rxcnt[16];
+    /** Rx STBC packet counter of MCS0~MCS15 */
+    t_u32 htstbcrate_rxcnt[16];
+} rx_pkt_ht_rate_info;
+/** RX histiogram vht statistic parameters */
+typedef struct _rx_pkt_vht_rate_info
+{
+    /** Rx packet counter of MCS0~MCS9 */
+    t_u32 vhtmcs_rxcnt[10];
+    /** Rx packet's short GI counter of MCS0~MCS9 */
+    t_u32 vhtsgi_rxcnt[10];
+    /** Rx STBC packet counter of MCS0~MCS9 */
+    t_u32 vhtstbcrate_rxcnt[10];
+} rx_pkt_vht_rate_info;
+/** RX histiogram he statistic parameters */
+typedef struct _rx_pkt_he_rate_info
+{
+    /** Rx packet counter of MCS0~MCS11 */
+    t_u32 hemcs_rxcnt[12];
+    /** Rx STBC packet counter of MCS0~MCS11 */
+    t_u32 hestbcrate_rxcnt[12];
+} rx_pkt_he_rate_info;
+/** RX histogram statistic parameters*/
+typedef struct _rx_pkt_rate_info
+{
+    /** Rx packet counter of every NSS, NSS=1,2 */
+    t_u32 nss_rxcnt[2];
+    /** Received packet counter which using STBC */
+    t_u32 nsts_rxcnt;
+    /** Rx packet counter of every bandwith */
+    t_u32 bandwidth_rxcnt[3];
+    /** Different preamble Rx packet counter */
+    t_u32 preamble_rxcnt[6];
+    /** VHT SIGA2 LDPC bit*/
+    t_u32 ldpc_txbfcnt[2];
+    /**  Average RSSI */
+    t_s32 rssi_value[2];
+    /** RSSI value of path A */
+    t_s32 rssi_chain0[4];
+    /** RSSI value of path B */
+    t_s32 rssi_chain1[4];
+} rx_pkt_rate_info;
+#endif
+
 /* WLAN Connection Manager API */
 
 /** Initialize the SDIO driver and create the wifi driver thread.
@@ -1818,6 +1927,18 @@ void wlan_set_mac_addr(uint8_t *mac);
  */
 void wlan_set_tx_pert(struct wlan_tx_pert_info *tx_pert, mlan_bss_type bss_type);
 #endif
+
+#ifdef CONFIG_TX_RX_HISTOGRAM
+/** Set Tx Rx histogram config.
+ * This function may be called to set Tx Rx histogram config.
+ *
+ * \param[in] txrx_histogram User configured parameters of Tx Rx histogram
+ *            including enable and action.
+ * \param[out] data Tx Rx histogram data from fw.
+ */
+void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_u8 *data);
+#endif
+
 #ifdef CONFIG_ROAMING
 /** Set roaming config.
  * This function may be called to enable/disable roaming.

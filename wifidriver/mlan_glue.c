@@ -1017,14 +1017,14 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
     pdata_buf = &ds_mgmt_ie_list_cfg;
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
-        status = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[1], HOST_CMD_APCMD_SYS_CONFIGURE, action,
-                                                  0, NULL, pdata_buf, cmd);
+        status = wlan_ops_uap_prepare_cmd((mlan_private *)mlan_adap->priv[1], HOST_CMD_APCMD_SYS_CONFIGURE, action, 0,
+                                          NULL, pdata_buf, cmd);
     else
         status = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MGMT_IE_LIST, action,
 
-                                                  0, NULL, pdata_buf, cmd);
+                                          0, NULL, pdata_buf, cmd);
     (void)wifi_wait_for_cmdresp(buffer);
-    
+
     return status;
 }
 
@@ -2990,13 +2990,39 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
             case HostCmd_CMD_TX_RX_PKT_STATS:
             {
                 if (resp->result == HostCmd_RESULT_OK)
+                {
+                    t_u16 cmdsize   = wlan_le16_to_cpu(resp->size);
+                    t_u16 length    = 0;
+                    t_u16 data_size = 0;
+                    t_u8 *pos       = NULL;
+
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        t_u8 *tx_rx_histogram_data = wm_wifi.cmd_resp_priv;
+                        (void)memcpy(&data_size, tx_rx_histogram_data, sizeof(data_size));
+                        length = cmdsize - S_DS_GEN - sizeof(HostCmd_DS_TX_RX_HISTOGRAM);
+
+                        if (length > 0 && (data_size >= length + sizeof(length)))
+                        {
+                            (void)memcpy(tx_rx_histogram_data, (t_u8 *)&length, sizeof(length));
+                            pos = (t_u8 *)resp + S_DS_GEN + sizeof(HostCmd_DS_TX_RX_HISTOGRAM);
+                            (void)memcpy(tx_rx_histogram_data + sizeof(length), pos, length);
+                        }
+                        else
+                        {
+                            wifi_w("TX RX histogram data error\n");
+                        }
+                    }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
                 else
+                {
                     wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
             }
             break;
 #endif
@@ -5037,6 +5063,35 @@ int wifi_set_tx_pert(void *cfg, mlan_bss_type bss_type)
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS,
                              HostCmd_ACT_SET_TX_PER_TRACKING, 0, NULL, tx_pert, cmd);
     wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+#endif
+
+#ifdef CONFIG_TX_RX_HISTOGRAM
+int wifi_set_txrx_histogram(void *cfg, t_u8 *data)
+{
+    txrx_histogram_info *txrx_histogram    = (txrx_histogram_info *)cfg;
+    txrx_histogram_info txrx_histogram_cmd = {0};
+
+    txrx_histogram_cmd.enable = txrx_histogram->enable;
+    txrx_histogram_cmd.action = txrx_histogram->action;
+
+    if (txrx_histogram_cmd.enable == GET_TX_RX_HISTOGRAM)
+    {
+        txrx_histogram_cmd.enable = ENABLE_TX_RX_HISTOGRAM;
+    }
+    else
+    {
+        txrx_histogram_cmd.action = 0;
+    }
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_RX_PKT_STATS, HostCmd_ACT_GEN_GET, 0,
+                             NULL, &txrx_histogram_cmd, cmd);
+    wifi_wait_for_cmdresp(data);
     return wm_wifi.cmd_resp_status;
 }
 #endif

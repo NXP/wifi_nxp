@@ -2896,6 +2896,23 @@ mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
 }
 #endif
 
+#ifdef CONFIG_TX_RX_HISTOGRAM
+mlan_status wlan_cmd_txrx_histogram(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf)
+{
+    HostCmd_DS_TX_RX_HISTOGRAM *histogram = &cmd->params.histogram;
+    txrx_histogram_info *cfg              = (txrx_histogram_info *)pdata_buf;
+
+    ENTER();
+    cmd->command      = wlan_cpu_to_le16(HostCmd_CMD_TX_RX_PKT_STATS);
+    histogram->action = cfg->action;
+    histogram->enable = cfg->enable;
+    cmd->size         = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RX_HISTOGRAM));
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 #ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function prepares command of set_cfg_data.
