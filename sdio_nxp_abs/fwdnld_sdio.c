@@ -108,11 +108,6 @@ static fwdnld_intf_ret_t sdio_interface_send(fwdnld_intf_t *intf,
 
     do
     {
-        if (offset >= transfer_len)
-        {
-            break;
-        }
-
         /* Read CARD_STATUS_REG (0X30) FN =1 */
         for (tries = 0; tries < MAX_POLL_TRIES; tries++)
         {

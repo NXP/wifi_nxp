@@ -2649,7 +2649,7 @@ int wifi_raw_packet_send(const t_u8 *packet, t_u32 length)
         return -WM_E_INVAL;
     }
 
-    if (length > sizeof(outbuf))
+    if (length > SDIO_OUTBUF_LEN)
     {
         wifi_io_e("Insufficient buffer");
         return -WM_FAIL;
@@ -2754,10 +2754,6 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
         if (intf != MNULL)
         {
             ret = (mlan_status)firmware_download(fw_start_addr, size, intf);
-            if (ret == MLAN_STATUS_SUCCESS)
-            {
-                ret = sd_wifi_post_fwload(type);
-            }
         }
     }
     return ret;
