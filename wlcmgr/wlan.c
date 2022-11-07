@@ -4243,8 +4243,58 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
         case WIFI_EVENT_RSSI_LOW:
             wlcm_d("got event: rssi low");
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
             wlcm_process_rssi_low_event(msg, &next, network);
+#else
+            CONNECTION_EVENT(WLAN_REASON_RSSI_LOW, NULL);
+#endif
             break;
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+        case WIFI_EVENT_RSSI_HIGH:
+            wlcm_d("got event: RSSI high");
+            CONNECTION_EVENT(WLAN_REASON_RSSI_HIGH, NULL);
+            break;
+        case WIFI_EVENT_SNR_LOW:
+            wlcm_d("got event: SNR low");
+            CONNECTION_EVENT(WLAN_REASON_SNR_LOW, NULL);
+            break;
+        case WIFI_EVENT_SNR_HIGH:
+            wlcm_d("got event: SNR high");
+            CONNECTION_EVENT(WLAN_REASON_SNR_HIGH, NULL);
+            break;
+        case WIFI_EVENT_MAX_FAIL:
+            wlcm_d("got event: MAX fail");
+            CONNECTION_EVENT(WLAN_REASON_MAX_FAIL, NULL);
+            break;
+        case WIFI_EVENT_BEACON_MISSED:
+            wlcm_d("got event: Beacon missed");
+            CONNECTION_EVENT(WLAN_REASON_BEACON_MISSED, NULL);
+            break;
+        case WIFI_EVENT_DATA_RSSI_LOW:
+            wlcm_d("got event: DATA_RSSI low");
+            CONNECTION_EVENT(WLAN_REASON_DATA_RSSI_LOW, NULL);
+            break;
+        case WIFI_EVENT_DATA_RSSI_HIGH:
+            wlcm_d("got event: DATA_RSSI high");
+            CONNECTION_EVENT(WLAN_REASON_DATA_RSSI_HIGH, NULL);
+            break;
+        case WIFI_EVENT_DATA_SNR_LOW:
+            wlcm_d("got event: DATA_SNR low");
+            CONNECTION_EVENT(WLAN_REASON_DATA_SNR_LOW, NULL);
+            break;
+        case WIFI_EVENT_DATA_SNR_HIGH:
+            wlcm_d("got event: DATA_SNR high");
+            CONNECTION_EVENT(WLAN_REASON_DATA_SNR_HIGH, NULL);
+            break;
+        case WIFI_EVENT_FW_LINK_QUALITY:
+            wlcm_d("got event: LINK_QUALITY");
+            CONNECTION_EVENT(WLAN_REASON_LINK_QUALITY, NULL);
+            break;
+        case WIFI_EVENT_FW_PRE_BCN_LOST:
+            wlcm_d("got event: PRE_BEACON_LOST");
+            CONNECTION_EVENT(WLAN_REASON_PRE_BEACON_LOST, NULL);
+            break;
+#endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
         case WIFI_EVENT_NLIST_REPORT:
             wlcm_d("got event: neighbor list report");
@@ -8208,4 +8258,133 @@ int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 swi
     return ret;
 }
 
+#endif
+
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/**
+ *  @brief This function subscribe event to firmware.
+ *
+ *  @param sbitmap    A pointer to specific event from user.
+ *  @param thresh_value     A pointer to value from user.
+ *  @param freq      A pointer to freq from user.
+ *
+ *  @return             MLAN_STATUS_SUCCESS, MLAN_STATUS_FAILURE or WM_E_INVAL
+ */
+int wlan_set_subscribe_event(unsigned int event_id, unsigned int thresh_value, unsigned int freq)
+{
+    int ret = WM_E_INVAL;
+    switch (event_id)
+    {
+        case EVENT_SUB_RSSI_LOW:
+            ret = wifi_set_threshold_rssi_low(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_RSSI_HIGH:
+            ret = wifi_set_threshold_rssi_high(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_SNR_LOW:
+            ret = wifi_set_threshold_snr_low(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_SNR_HIGH:
+            ret = wifi_set_threshold_snr_high(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_MAX_FAIL:
+            ret = wifi_set_threshold_max_fail(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_BEACON_MISSED:
+            ret = wifi_set_threshold_beacon_miss(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_DATA_RSSI_LOW:
+            ret = wifi_set_threshold_data_rssi_low(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_DATA_RSSI_HIGH:
+            ret = wifi_set_threshold_data_rssi_high(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_DATA_SNR_LOW:
+            ret = wifi_set_threshold_data_snr_low(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_DATA_SNR_HIGH:
+            ret = wifi_set_threshold_data_snr_high(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        case EVENT_SUB_PRE_BEACON_LOST:
+            ret = wifi_set_threshold_pre_beacon_lost(mlan_adap->priv[0], thresh_value, freq);
+            break;
+        default:
+            ret = WM_E_INVAL;
+            break;
+    }
+    return ret;
+}
+
+int wlan_get_subscribe_event(wlan_ds_subscribe_evt *sub_evt)
+{
+    int ret = WM_E_INVAL;
+    mlan_ds_subscribe_evt msub_evt;
+    memset(&msub_evt, 0, sizeof(msub_evt));
+    ret = wifi_get_subscribe_event(mlan_adap->priv[0], &msub_evt);
+    memcpy((t_u8 *)sub_evt, (t_u8 *)&msub_evt.evt_bitmap, sizeof(wlan_ds_subscribe_evt));
+    return ret;
+}
+
+int wlan_clear_subscribe_event(unsigned int event_id)
+{
+    /*bitmap parameter analyse*/
+    int evt_bitmap = 0;
+    switch (event_id)
+    {
+        case EVENT_SUB_RSSI_LOW:
+            evt_bitmap = SUBSCRIBE_EVT_RSSI_LOW;
+            break;
+        case EVENT_SUB_RSSI_HIGH:
+            evt_bitmap = SUBSCRIBE_EVT_RSSI_HIGH;
+            break;
+        case EVENT_SUB_SNR_LOW:
+            evt_bitmap = SUBSCRIBE_EVT_SNR_LOW;
+            break;
+        case EVENT_SUB_SNR_HIGH:
+            evt_bitmap = SUBSCRIBE_EVT_SNR_HIGH;
+            break;
+        case EVENT_SUB_MAX_FAIL:
+            evt_bitmap = SUBSCRIBE_EVT_MAX_FAIL;
+            break;
+        case EVENT_SUB_BEACON_MISSED:
+            evt_bitmap = SUBSCRIBE_EVT_BEACON_MISSED;
+            break;
+        case EVENT_SUB_DATA_RSSI_LOW:
+            evt_bitmap = SUBSCRIBE_EVT_DATA_RSSI_LOW;
+            break;
+        case EVENT_SUB_DATA_RSSI_HIGH:
+            evt_bitmap = SUBSCRIBE_EVT_DATA_RSSI_HIGH;
+            break;
+        case EVENT_SUB_DATA_SNR_LOW:
+            evt_bitmap = SUBSCRIBE_EVT_DATA_SNR_LOW;
+            break;
+        case EVENT_SUB_DATA_SNR_HIGH:
+            evt_bitmap = SUBSCRIBE_EVT_DATA_SNR_HIGH;
+            break;
+        case EVENT_SUB_LINK_QUALITY:
+            evt_bitmap = SUBSCRIBE_EVT_LINK_QUALITY;
+            break;
+        case EVENT_SUB_PRE_BEACON_LOST:
+            evt_bitmap = SUBSCRIBE_EVT_PRE_BEACON_LOST;
+            break;
+        default:
+            return WM_E_INVAL;
+            break;
+    }
+    return wifi_clear_subscribe_event(mlan_adap->priv[0], evt_bitmap);
+}
+
+int wlan_set_threshold_link_quality(unsigned int event_id,
+                                    unsigned int link_snr,
+                                    unsigned int link_snr_freq,
+                                    unsigned int link_rate,
+                                    unsigned int link_rate_freq,
+                                    unsigned int link_tx_latency,
+                                    unsigned int link_tx_lantency_freq)
+{
+    if (event_id == EVENT_SUB_LINK_QUALITY)
+        return wifi_set_threshold_link_quality(mlan_adap->priv[0], link_snr, link_snr_freq, link_rate, link_rate_freq,
+                                               link_tx_latency, link_tx_lantency_freq);
+    return WM_E_INVAL;
+}
 #endif

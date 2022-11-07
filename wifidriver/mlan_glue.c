@@ -3063,7 +3063,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                    rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, wm_wifi.cmd_resp_priv);
                     if (rv != MLAN_STATUS_SUCCESS)
                         wm_wifi.cmd_resp_status = -WM_FAIL;
                     else
@@ -3960,7 +3960,38 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_RSSI_LOW:
             (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
-
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+        case EVENT_RSSI_HIGH:
+            (void)wifi_event_completion(WIFI_EVENT_RSSI_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_SNR_LOW:
+            (void)wifi_event_completion(WIFI_EVENT_SNR_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_SNR_HIGH:
+            (void)wifi_event_completion(WIFI_EVENT_SNR_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_MAX_FAIL:
+            (void)wifi_event_completion(WIFI_EVENT_MAX_FAIL, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_DATA_RSSI_LOW:
+            (void)wifi_event_completion(WIFI_EVENT_DATA_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_DATA_RSSI_HIGH:
+            (void)wifi_event_completion(WIFI_EVENT_DATA_RSSI_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_DATA_SNR_LOW:
+            (void)wifi_event_completion(WIFI_EVENT_DATA_SNR_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_DATA_SNR_HIGH:
+            (void)wifi_event_completion(WIFI_EVENT_DATA_SNR_HIGH, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_LINK_QUALITY:
+            (void)wifi_event_completion(WIFI_EVENT_FW_LINK_QUALITY, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case EVENT_PRE_BEACON_LOST:
+            (void)wifi_event_completion(WIFI_EVENT_FW_PRE_BCN_LOST, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+#endif
 #ifdef CONFIG_11N
         case EVENT_ADDBA:
         {
@@ -5699,5 +5730,226 @@ int wifi_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_t
         return -WM_FAIL;
     }
     return WM_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/**
+ *  @brief This function submit the subscribe event command to firmware.
+ *
+ *  @param priv       A pointer to mlan_private structure.
+ *  @sub_evt          subscribe event to submit.
+ *
+ *  @return           MLAN_STATUS_SUCCESS, WM_E_INVAL or MLAN_STATUS_FAILURE
+ */
+int wifi_subscribe_event_submit(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->command = HostCmd_CMD_802_11_SUBSCRIBE_EVENT;
+    cmd->seq_num = 0;
+    cmd->result  = 0x0;
+
+    if (sub_evt->evt_action != HostCmd_ACT_GEN_GET)
+    {
+        wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, sub_evt,
+                                 cmd);
+        wifi_wait_for_cmdresp(NULL);
+    }
+    else if (sub_evt->evt_action == HostCmd_ACT_GEN_GET)
+    {
+        wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_GET, 0, NULL, NULL, cmd);
+        wifi_wait_for_cmdresp(sub_evt);
+    }
+    else
+        return WM_E_INVAL;
+
+    return wm_wifi.cmd_resp_status;
+}
+
+/**
+ *  @brief This function get all subscribe event from firmware.
+ *
+ *  @param priv       A pointer to mlan_private structure.
+ *  @sub_evt          subscribe event to submit.
+ *
+ *  @return           MLAN_STATUS_SUCCESS, WM_E_INVAL or MLAN_STATUS_FAILURE
+ */
+int wifi_get_subscribe_event(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt)
+{
+    if (!sub_evt)
+        return WM_E_INVAL;
+    if (!pmpriv)
+        pmpriv = mlan_adap->priv[0];
+    sub_evt->evt_action = HostCmd_ACT_GEN_GET;
+    return wifi_subscribe_event_submit(pmpriv, sub_evt);
+}
+
+/**
+ *  @brief This function disable the specific subscribe event.
+ *
+ *  @param priv       A pointer to mlan_private structure.
+ *  @sbitmap          the specific subscribe event will be disabled.
+ *
+ *  @return           MLAN_STATUS_SUCCESS, WM_E_INVAL or MLAN_STATUS_FAILURE
+ */
+int wifi_clear_subscribe_event(mlan_private *pmpriv, int evt_bitmap)
+{
+    mlan_ds_subscribe_evt sub_evt;
+    if (!pmpriv)
+        pmpriv = mlan_adap->priv[0];
+    memset((t_u8 *)&sub_evt, 0, sizeof(sub_evt));
+    sub_evt.evt_action = SUBSCRIBE_EVT_ACT_BITWISE_CLR;
+    sub_evt.evt_bitmap = evt_bitmap;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_rssi_low(mlan_private *pmpriv, unsigned int rssi_low, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
+    sub_evt.low_rssi      = rssi_low;
+    sub_evt.low_rssi_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+int wifi_set_threshold_rssi_high(mlan_private *pmpriv, unsigned int rssi_high, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action     = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap     = SUBSCRIBE_EVT_RSSI_HIGH;
+    sub_evt.high_rssi      = rssi_high;
+    sub_evt.high_rssi_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+int wifi_set_threshold_snr_low(mlan_private *pmpriv, unsigned int snr_low, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action   = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap   = SUBSCRIBE_EVT_SNR_LOW;
+    sub_evt.low_snr      = snr_low;
+    sub_evt.low_snr_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_snr_high(mlan_private *pmpriv, unsigned int snr_high, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap    = SUBSCRIBE_EVT_SNR_HIGH;
+    sub_evt.high_snr      = snr_high;
+    sub_evt.high_snr_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+int wifi_set_threshold_max_fail(mlan_private *pmpriv, unsigned int max_fail, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action         = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap         = SUBSCRIBE_EVT_MAX_FAIL;
+    sub_evt.failure_count      = max_fail;
+    sub_evt.failure_count_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_beacon_miss(mlan_private *pmpriv, unsigned int beacon_miss, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action       = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap       = SUBSCRIBE_EVT_BEACON_MISSED;
+    sub_evt.beacon_miss      = beacon_miss;
+    sub_evt.beacon_miss_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_data_rssi_low(mlan_private *pmpriv, unsigned int data_rssi_low, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action         = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap         = SUBSCRIBE_EVT_DATA_RSSI_LOW;
+    sub_evt.data_low_rssi      = data_rssi_low;
+    sub_evt.data_low_rssi_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_data_rssi_high(mlan_private *pmpriv, unsigned int data_rssi_high, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action          = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap          = SUBSCRIBE_EVT_DATA_RSSI_HIGH;
+    sub_evt.data_high_rssi      = data_rssi_high;
+    sub_evt.data_high_rssi_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_data_snr_low(mlan_private *pmpriv, unsigned int data_snr_low, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action        = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap        = SUBSCRIBE_EVT_DATA_SNR_LOW;
+    sub_evt.data_low_snr      = data_snr_low;
+    sub_evt.data_low_snr_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_data_snr_high(mlan_private *pmpriv, unsigned int data_snr_high, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action         = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap         = SUBSCRIBE_EVT_DATA_SNR_HIGH;
+    sub_evt.data_high_snr      = data_snr_high;
+    sub_evt.data_high_snr_freq = freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_link_quality(mlan_private *pmpriv,
+                                    unsigned int link_snr,
+                                    unsigned int link_snr_freq,
+                                    unsigned int link_rate,
+                                    unsigned int link_rate_freq,
+                                    unsigned int link_tx_latency,
+                                    unsigned int link_tx_lantency_freq)
+{
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action            = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap            = SUBSCRIBE_EVT_LINK_QUALITY;
+    sub_evt.link_snr              = link_snr;
+    sub_evt.link_snr_freq         = link_snr_freq;
+    sub_evt.link_rate             = link_rate;
+    sub_evt.link_rate_freq        = link_rate_freq;
+    sub_evt.link_tx_latency       = link_tx_latency;
+    sub_evt.link_tx_lantency_freq = link_tx_lantency_freq;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+
+int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_beacon_lost, unsigned int freq)
+{
+    if (!pmpriv)
+        return WM_E_INVAL;
+    mlan_ds_subscribe_evt sub_evt;
+    sub_evt.evt_action      = SUBSCRIBE_EVT_ACT_BITWISE_SET;
+    sub_evt.evt_bitmap      = SUBSCRIBE_EVT_PRE_BEACON_LOST;
+    sub_evt.pre_beacon_miss = pre_beacon_lost;
+    return wifi_subscribe_event_submit(pmpriv, &sub_evt);
 }
 #endif

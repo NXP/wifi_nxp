@@ -1537,4 +1537,67 @@ typedef struct _wifi_dot1as_info_t
 
 #endif
 
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/** Type definition of mlan_ds_subscribe_evt for subscribe events */
+typedef struct _wifi_ds_subscribe_evt
+{
+    /** bitmap for subscribe event */
+    t_u16 evt_bitmap;
+    /** Absolute value of RSSI threshold value (dBm) */
+    t_u8 low_rssi;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 low_rssi_freq;
+    /** SNR threshold value (dB) */
+    t_u8 low_snr;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 low_snr_freq;
+    /** Failure count threshold */
+    t_u8 failure_count;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 failure_count_freq;
+    /** num of missed beacons */
+    t_u8 beacon_miss;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 beacon_miss_freq;
+    /** Absolute value of RSSI threshold value (dBm) */
+    t_u8 high_rssi;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 high_rssi_freq;
+    /** SNR threshold value (dB) */
+    t_u8 high_snr;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 high_snr_freq;
+    /** Absolute value of data RSSI threshold value (dBm) */
+    t_u8 data_low_rssi;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 data_low_rssi_freq;
+    /** Absolute value of data SNR threshold value (dBm) */
+    t_u8 data_low_snr;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 data_low_snr_freq;
+    /** Absolute value of data RSSI threshold value (dBm) */
+    t_u8 data_high_rssi;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 data_high_rssi_freq;
+    /** Absolute value of data SNR threshold value (dBm) */
+    t_u8 data_high_snr;
+    /** 0--report once, 1--report everytime happend, N -- report only happend > N consecutive times */
+    t_u8 data_high_snr_freq;
+    /* Link SNR threshold (dB) */
+    t_u16 link_snr;
+    /* Link SNR frequency */
+    t_u16 link_snr_freq;
+    /* Second minimum rate value as per the rate table below */
+    t_u16 link_rate;
+    /* Second minimum rate frequency */
+    t_u16 link_rate_freq;
+    /* Tx latency value (us) */
+    t_u16 link_tx_latency;
+    /* Tx latency frequency */
+    t_u16 link_tx_lantency_freq;
+    /* Number of pre missed beacons */
+    t_u8 pre_beacon_miss;
+} wifi_ds_subscribe_evt;
+#endif
+
 #endif /* __WIFI_DECL_H__ */

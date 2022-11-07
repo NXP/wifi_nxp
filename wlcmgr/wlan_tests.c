@@ -3402,6 +3402,259 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/**
+ *  @brief This function print the get subscribe event from firmware for user test.
+ */
+static void print_get_sub_event(wlan_ds_subscribe_evt *sub_evt)
+{
+    t_u16 evt_bitmap = sub_evt->evt_bitmap;
+    PRINTF("evt_bitmap = %u\r\n", evt_bitmap);
+    if (evt_bitmap & SUBSCRIBE_EVT_RSSI_LOW)
+    {
+        PRINTF("rssi low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->low_rssi, sub_evt->low_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_RSSI_HIGH)
+    {
+        PRINTF("rssi high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->high_rssi, sub_evt->high_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_SNR_LOW)
+    {
+        PRINTF("snr low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->low_snr, sub_evt->low_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_SNR_HIGH)
+    {
+        PRINTF("snr high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->high_snr, sub_evt->high_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_MAX_FAIL)
+    {
+        PRINTF("max fail is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->failure_count, sub_evt->failure_count_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_BEACON_MISSED)
+    {
+        PRINTF("beacon miss is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->beacon_miss, sub_evt->beacon_miss_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_RSSI_LOW)
+    {
+        PRINTF("data rssi low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_low_rssi, sub_evt->data_low_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_RSSI_HIGH)
+    {
+        PRINTF("data rssi high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_high_rssi, sub_evt->data_high_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_SNR_LOW)
+    {
+        PRINTF("data snr low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_low_snr, sub_evt->data_low_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_SNR_HIGH)
+    {
+        PRINTF("data snr high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_high_snr, sub_evt->data_high_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_LINK_QUALITY)
+    {
+        PRINTF("link quality is enabled! ");
+        PRINTF("value = %u\r\n", sub_evt->pre_beacon_miss);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_PRE_BEACON_LOST)
+    {
+        PRINTF("pre beacon lost is enabled! ");
+        PRINTF(
+            "link_snr = %u, link_snr_freq = %u, "
+            "link_rate = %u, link_rate_freq = %u, "
+            "link_tx_latency = %u, link_tx_lantency_freq = %u\r\n",
+            sub_evt->link_snr, sub_evt->link_snr_freq, sub_evt->link_rate, sub_evt->link_rate_freq,
+            sub_evt->link_tx_latency, sub_evt->link_tx_lantency_freq);
+    }
+}
+
+/**
+ *  @brief This function dump the usage of wlan-subscribe-event cmd for user test.
+ */
+static void dump_wlan_subscribe_event_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Subscribe event to firmware:\r\n");
+    (void)PRINTF("    wlan-subscribe-event <action> <type> <value>\r\n");
+    (void)PRINTF("Options: \r\n");
+    (void)PRINTF("    <action>  : 1:set, 2:get, 3:clear\r\n");
+    (void)PRINTF(
+        "    <type>: 0:rssi_low, 1:rssi_high 2:snr_low, 3:snr_high, 4:max_fail, 5:beacon_missed, 6:data_rssi_low, "
+        "7:data_rssi_high, 8:data_snr_low, 9:data_snr_high, 10:link_quality, 11:pre_beacon_lost\r\n");
+    (void)PRINTF("    <value>  : when action is set, specific int type value\r\n");
+    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq\r\n");
+    (void)PRINTF("For example:\r\n");
+    (void)PRINTF(
+        "    wlan-subscribe-event set 0 50 0 : Subscribe the rssi low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 2 50 0 : Subscribe the snr low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 4 50 0 : Subscribe the max_fail event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 5 50 0 : Subscribe the beacon_missed event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 6 50 0 : Subscribe the data rssi low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 8 50 0 : Subscribe the data snr low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 11 50 0 : Subscribe the pre_beacon_lost event, threshold is 50, freq is 0\r\n");
+    (void)PRINTF(
+        "    wlan-subscribe-event set 10 5 0 5 0 5 0  : Subscribe the link quanlity event"
+        "    link_snr threshold is 5, link_snr freq is 0"
+        "    link_rate threshold is 5, link_rate freq is 0"
+        "    link_tx_latency threshold is 5, link_tx_latency freq is 0\r\n");
+    (void)PRINTF("    wlan-subscribe-event get      : Get the all subscribe event parameter\r\n");
+    (void)PRINTF(
+        "    wlan-subscribe-event clear 0  : Disable the rssi_low event\r\n"
+        "    wlan-subscribe-event clear 2  : Disable the snr_low event\r\n"
+        "    wlan-subscribe-event clear 4  : Disable the max_fail event\r\n"
+        "    wlan-subscribe-event clear 5  : Disable the beacon_missed event\r\n"
+        "    wlan-subscribe-event clear 6  : Disable the data_rssi_low event\r\n"
+        "    wlan-subscribe-event clear 8  : Disable the data_snr_low event\r\n"
+        "    wlan-subscribe-event clear 10 : Disable the link_quality event\r\n"
+        "    wlan-subscribe-event clear 11 : Disable the pre_beacon_lost event\r\n");
+}
+
+/**
+ *  @brief This function subscribe event to firmware for user test.
+ */
+static void test_wlan_subscribe_event(int argc, char **argv)
+{
+    int ret                   = 0;
+    unsigned int thresh_value = 0, freq = 0;
+
+    /*analyse action type*/
+    switch (argc)
+    {
+        case 2:
+        {
+            if (strncmp(argv[1], "get", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            wlan_ds_subscribe_evt sub_evt;
+            ret = wlan_get_subscribe_event(&sub_evt);
+            if (ret == WM_SUCCESS)
+                print_get_sub_event(&sub_evt);
+            break;
+        }
+        case 3:
+        {
+            if (strncmp(argv[1], "clear", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            unsigned int event_id = MAX_EVENT_ID;
+            if (get_uint(argv[2], &event_id, strlen(argv[2])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (event_id >= MAX_EVENT_ID)
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            ret = wlan_clear_subscribe_event(event_id);
+            break;
+        }
+        case 5:
+        {
+            if (strncmp(argv[1], "set", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[3], &thresh_value, strlen(argv[3])) || get_uint(argv[4], &freq, strlen(argv[4])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            unsigned int event_id = MAX_EVENT_ID;
+            if (get_uint(argv[2], &event_id, strlen(argv[2])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (event_id >= MAX_EVENT_ID)
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            ret = wlan_set_subscribe_event(event_id, thresh_value, freq);
+            break;
+        }
+        case 9:
+        {
+            unsigned int link_snr = 0, link_snr_freq = 0, link_rate = 0;
+            unsigned int link_rate_freq = 0, link_tx_latency = 0, link_tx_lantency_freq = 0;
+            if (strncmp(argv[1], "set", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[3], &link_snr, strlen(argv[3])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[4], &link_snr_freq, strlen(argv[4])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[5], &link_rate, strlen(argv[5])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[6], &link_rate_freq, strlen(argv[6])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[7], &link_tx_latency, strlen(argv[7])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[8], &link_tx_lantency_freq, strlen(argv[8])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            unsigned int event_id = MAX_EVENT_ID;
+            if (get_uint(argv[2], &event_id, strlen(argv[2])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (event_id >= MAX_EVENT_ID)
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            ret = wlan_set_threshold_link_quality(event_id, link_snr, link_snr_freq, link_rate, link_rate_freq,
+                                                  link_tx_latency, link_tx_lantency_freq);
+        }
+        break;
+        default:
+            dump_wlan_subscribe_event_usage();
+            return;
+    }
+    if (ret == WM_E_INVAL)
+        dump_wlan_subscribe_event_usage();
+    else if (ret != WM_SUCCESS)
+        (void)PRINTF("wlan-subscribe-event unkown fail\r\n");
+    return;
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-scan", NULL, test_wlan_scan},
     {"wlan-scan-opt", "ssid <ssid> bssid ...", test_wlan_scan_opt},
@@ -3520,6 +3773,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_TX_RX_HISTOGRAM
     {"wlan-txrx-histogram", "<action> <enable>", test_wlan_txrx_histogram},
+#endif
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+    {"wlan-subscribe-event", "<action> <type> <value> <freq>", test_wlan_subscribe_event},
 #endif
 };
 

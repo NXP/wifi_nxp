@@ -47,6 +47,28 @@ enum wifi_event
     WIFI_EVENT_LINK_LOSS,
     /* WiFi RSSI Low Event */
     WIFI_EVENT_RSSI_LOW,
+    /* WiFi RSSI High Event */
+    WIFI_EVENT_RSSI_HIGH,
+    /* WiFi SRN Low Event */
+    WIFI_EVENT_SNR_LOW,
+    /* WiFi SNR High Event */
+    WIFI_EVENT_SNR_HIGH,
+    /* WiFi Max Fail Event */
+    WIFI_EVENT_MAX_FAIL,
+    /* WiFi Beacon miised Event */
+    WIFI_EVENT_BEACON_MISSED,
+    /* WiFi Data RSSI Low Event */
+    WIFI_EVENT_DATA_RSSI_LOW,
+    /* WiFi Data RSSI High Event */
+    WIFI_EVENT_DATA_RSSI_HIGH,
+    /* WiFi Data SNR Low Event */
+    WIFI_EVENT_DATA_SNR_LOW,
+    /* WiFi Data SNR High Event */
+    WIFI_EVENT_DATA_SNR_HIGH,
+    /* WiFi Link Quality Event */
+    WIFI_EVENT_FW_LINK_QUALITY,
+    /* WiFi Pre Beacon Lost Event */
+    WIFI_EVENT_FW_PRE_BCN_LOST,
     /** Network station address configuration */
     WIFI_EVENT_NET_STA_ADDR_CONFIG,
     /** Network interface configuration */

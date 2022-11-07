@@ -2005,6 +2005,133 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
 }
 #endif
 
+#if defined(CONFIG_SUBSCRIBE_EVENT_SUPPORT) || defined(CONFIG_ROAMING)
+int wlan_parse_getdata(HostCmd_DS_COMMAND *resp, mlan_ds_subscribe_evt *sub_evt)
+{
+    if (!resp || !sub_evt)
+        return WM_E_INVAL;
+    HostCmd_DS_SUBSCRIBE_EVENT *evt                     = &resp->params.subscribe_event;
+    int tyhdsize                                        = sizeof(MrvlIEtypesHeader_t);
+    t_u8 *tlv0                                          = (t_u8 *)resp + sizeof(HostCmd_DS_SUBSCRIBE_EVENT) + S_DS_GEN;
+	t_u8 *tlv = tlv0;
+    MrvlIEtypes_BeaconLowRssiThreshold_t *rssi_low      = MNULL;
+    MrvlIEtypes_BeaconLowSnrThreshold_t *snr_low        = MNULL;
+    MrvlIEtypes_FailureCount_t *fail_count              = MNULL;
+    MrvlIEtypes_BeaconsMissed_t *beacon_missed          = MNULL;
+    MrvlIEtypes_BeaconHighRssiThreshold_t *rssi_high    = MNULL;
+    MrvlIEtypes_BeaconHighSnrThreshold_t *snr_high      = MNULL;
+    MrvlIEtypes_DataLowRssiThreshold_t *data_rssi_low   = MNULL;
+    MrvlIEtypes_DataLowSnrThreshold_t *data_snr_low     = MNULL;
+    MrvlIEtypes_DataHighRssiThreshold_t *data_rssi_high = MNULL;
+    MrvlIEtypes_DataHighSnrThreshold_t *data_snr_high   = MNULL;
+    MrvlIEtypes_LinkQualityThreshold_t *link_quality    = MNULL;
+    MrvlIETypes_PreBeaconMissed_t *pre_bcn_missed       = MNULL;
+
+    sub_evt->evt_action = wlan_le16_to_cpu(evt->action);
+    sub_evt->evt_bitmap = wlan_le16_to_cpu(evt->event_bitmap);
+    /*rssi_low*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    rssi_low               = (MrvlIEtypes_BeaconLowRssiThreshold_t *)tlv;
+    sub_evt->low_rssi      = rssi_low->value;
+    sub_evt->low_rssi_freq = rssi_low->frequency;
+    tlv += rssi_low->header.len + tyhdsize;
+
+    /*snr_low*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    snr_low               = (MrvlIEtypes_BeaconLowSnrThreshold_t *)tlv;
+    sub_evt->low_snr      = snr_low->value;
+    sub_evt->low_snr_freq = snr_low->frequency;
+    tlv += sizeof(MrvlIEtypes_BeaconLowSnrThreshold_t);
+
+    /*max fail*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    fail_count                  = (MrvlIEtypes_FailureCount_t *)tlv;
+    sub_evt->failure_count      = fail_count->value;
+    sub_evt->failure_count_freq = fail_count->frequency;
+    tlv += sizeof(MrvlIEtypes_FailureCount_t);
+
+    /*beacon miss*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    beacon_missed             = (MrvlIEtypes_BeaconsMissed_t *)tlv;
+    sub_evt->beacon_miss      = beacon_missed->value;
+    sub_evt->beacon_miss_freq = beacon_missed->frequency;
+    tlv += sizeof(MrvlIEtypes_BeaconsMissed_t);
+
+    /*rssi high*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    rssi_high               = (MrvlIEtypes_BeaconHighRssiThreshold_t *)tlv;
+    sub_evt->high_rssi      = rssi_high->value;
+    sub_evt->high_rssi_freq = rssi_high->frequency;
+    tlv += sizeof(MrvlIEtypes_BeaconHighRssiThreshold_t);
+
+    /*snr high*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    snr_high               = (MrvlIEtypes_BeaconHighSnrThreshold_t *)tlv;
+    sub_evt->high_snr      = snr_high->value;
+    sub_evt->high_snr_freq = snr_high->frequency;
+    tlv += sizeof(MrvlIEtypes_BeaconHighSnrThreshold_t);
+
+    /*data rssi low*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    data_rssi_low               = (MrvlIEtypes_DataLowRssiThreshold_t *)tlv;
+    sub_evt->data_low_rssi      = data_rssi_low->value;
+    sub_evt->data_low_rssi_freq = data_rssi_low->frequency;
+    tlv += sizeof(MrvlIEtypes_DataLowRssiThreshold_t);
+
+    /*data snr low*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    data_snr_low               = (MrvlIEtypes_DataLowSnrThreshold_t *)tlv;
+    sub_evt->data_low_snr      = data_snr_low->value;
+    sub_evt->data_low_snr_freq = data_snr_low->frequency;
+    tlv += sizeof(MrvlIEtypes_DataLowSnrThreshold_t);
+
+    /*data rssi high*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    data_rssi_high               = (MrvlIEtypes_DataHighRssiThreshold_t *)tlv;
+    sub_evt->data_high_rssi      = data_rssi_high->value;
+    sub_evt->data_high_rssi_freq = data_rssi_high->frequency;
+    tlv += sizeof(MrvlIEtypes_DataHighRssiThreshold_t);
+
+    /*data snr high*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    data_snr_high               = (MrvlIEtypes_DataHighSnrThreshold_t *)tlv;
+    sub_evt->data_high_snr      = data_snr_high->value;
+    sub_evt->data_high_snr_freq = data_snr_high->frequency;
+    tlv += sizeof(MrvlIEtypes_DataHighSnrThreshold_t);
+
+    /*link quality*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    link_quality                   = (MrvlIEtypes_LinkQualityThreshold_t *)tlv;
+    sub_evt->link_snr              = wlan_le16_to_cpu(link_quality->link_snr);
+    sub_evt->link_snr_freq         = wlan_le16_to_cpu(link_quality->link_snr_freq);
+    sub_evt->link_rate             = wlan_le16_to_cpu(link_quality->link_rate);
+    sub_evt->link_rate_freq        = wlan_le16_to_cpu(link_quality->link_rate_freq);
+    sub_evt->link_tx_latency       = wlan_le16_to_cpu(link_quality->link_tx_latency);
+    sub_evt->link_tx_lantency_freq = wlan_le16_to_cpu(link_quality->link_tx_lantency_freq);
+    tlv += link_quality->header.len + tyhdsize;
+
+    /*pre beacon lost*/
+    if ((tlv - tlv0) > resp->size)
+        return WM_E_IO;
+    pre_bcn_missed           = (MrvlIETypes_PreBeaconMissed_t *)tlv;
+    sub_evt->pre_beacon_miss = pre_bcn_missed->value;
+    tlv += tyhdsize + pre_bcn_missed->header.len;
+
+    return WM_SUCCESS;
+}
+#endif
+
 /**
  *  @brief This function prepares command of subscribe event.
  *
@@ -2014,10 +2141,10 @@ mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action
  *  @param pdata_buf    A pointer to data buffer
  *  @return             MLAN_STATUS_SUCCESS
  */
-static mlan_status wlan_cmd_subscribe_event(IN pmlan_private pmpriv,
-                                            IN HostCmd_DS_COMMAND *cmd,
-                                            IN t_u16 cmd_action,
-                                            IN t_void *pdata_buf)
+mlan_status wlan_cmd_subscribe_event(IN pmlan_private pmpriv,
+                                     IN HostCmd_DS_COMMAND *cmd,
+                                     IN t_u16 cmd_action,
+                                     IN t_void *pdata_buf)
 {
     mlan_ds_subscribe_evt *sub_evt                      = (mlan_ds_subscribe_evt *)pdata_buf;
     HostCmd_DS_SUBSCRIBE_EVENT *evt                     = (HostCmd_DS_SUBSCRIBE_EVENT *)&cmd->params.subscribe_event;
@@ -2043,6 +2170,13 @@ static mlan_status wlan_cmd_subscribe_event(IN pmlan_private pmpriv,
     cmd_size     = sizeof(HostCmd_DS_SUBSCRIBE_EVENT) + S_DS_GEN;
     if (cmd_action == HostCmd_ACT_GEN_GET)
         goto done;
+    if (sub_evt->evt_action == SUBSCRIBE_EVT_ACT_BITWISE_CLR)
+    {
+        evt->action       = wlan_cpu_to_le16(SUBSCRIBE_EVT_ACT_BITWISE_CLR);
+        evt->event_bitmap = wlan_cpu_to_le16(sub_evt->evt_bitmap);
+        goto done;
+    }
+
 #define HostCmd_ACT_BITWISE_SET 0x02
     evt->action       = wlan_cpu_to_le16(HostCmd_ACT_BITWISE_SET);
     evt->event_bitmap = wlan_cpu_to_le16(sub_evt->evt_bitmap);

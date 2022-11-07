@@ -307,6 +307,43 @@ enum wlan_event_reason
     WLAN_REASON_ADDRESS_FAILED,
     /** The WLAN Connection Manager has lost the link to the current network. */
     WLAN_REASON_LINK_LOST,
+    /** The WLAN Connection Manager has received subscribed RSSI low event on station interface as per configured
+       threshold and frequency. If CONFIG_11K, CONFIG_11V, CONFIG_11R or CONFIG_ROAMING enabled then RSSI low event is
+       processed internally.*/
+    WLAN_REASON_RSSI_LOW,
+    /** The WLAN Connection Manager has received subscribed RSSI high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_RSSI_HIGH,
+    /** The WLAN Connection Manager has received subscribed SNR low event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_SNR_LOW,
+    /** The WLAN Connection Manager has received subscribed SNR high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_SNR_HIGH,
+    /** The WLAN Connection Manager has received subscribed Max fail event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_MAX_FAIL,
+    /** The WLAN Connection Manager has received subscribed Beacon missed fail event on station interface as per
+       configured threshold and frequency. */
+    WLAN_REASON_BEACON_MISSED,
+    /** The WLAN Connection Manager has received subscribed Data RSSI low event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_RSSI_LOW,
+    /** The WLAN Connection Manager has received subscribed Data RSSI high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_RSSI_HIGH,
+    /** The WLAN Connection Manager has received subscribed Data SNR low event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_SNR_LOW,
+    /** The WLAN Connection Manager has received subscribed Data SNR high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_SNR_HIGH,
+    /** The WLAN Connection Manager has received subscribed LINK QUALITY event on station interface as per configured
+    link_snr threshold and frequency, link_rate threshold and frequency, link_tx_latency threshold and frequency*/
+    WLAN_REASON_LINK_QUALITY,
+    /** The WLAN Connection Manager has received subscribed Pre beacon lost event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_PRE_BEACON_LOST,
     /** The WLAN Connection Manager has received the channel switch
      * announcement from the current network. */
     WLAN_REASON_CHAN_SWITCH,
@@ -4127,6 +4164,80 @@ void wlan_report_timing_measurement(wlan_dot1as_info_t *info);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width);
+#endif
+
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+
+/*Type enum definition of subscribe event*/
+typedef enum
+{
+    /** Event Id for subscribe event rssi low */
+    EVENT_SUB_RSSI_LOW = 0,
+    /** Event Id for subscribe event rssi high */
+    EVENT_SUB_RSSI_HIGH,
+    /** Event Id for subscribe event snr low */
+    EVENT_SUB_SNR_LOW,
+    /** Event Id for subscribe event snr high */
+    EVENT_SUB_SNR_HIGH,
+    /** Event Id for subscribe event max fail */
+    EVENT_SUB_MAX_FAIL,
+    /** Event Id for subscribe event beacon missed */
+    EVENT_SUB_BEACON_MISSED,
+    /** Event Id for subscribe event data rssi low */
+    EVENT_SUB_DATA_RSSI_LOW,
+    /** Event Id for subscribe event data rssi high */
+    EVENT_SUB_DATA_RSSI_HIGH,
+    /** Event Id for subscribe event data snr low */
+    EVENT_SUB_DATA_SNR_LOW,
+    /** Event Id for subscribe event data snr high */
+    EVENT_SUB_DATA_SNR_HIGH,
+    /** Event Id for subscribe event link quality */
+    EVENT_SUB_LINK_QUALITY,
+    /** Event Id for subscribe event pre_beacon_lost */
+    EVENT_SUB_PRE_BEACON_LOST,
+    /** Fail event id */
+    MAX_EVENT_ID,
+} sub_event_id;
+
+/** Type definition of wlan_ds_subscribe_evt for subscribe events */
+typedef wifi_ds_subscribe_evt wlan_ds_subscribe_evt;
+
+/**
+ * Subscribe specified event from the Wi-Fi firmware. Wi-Fi firmware will report the registered event to driver upon
+ * configured report conditions are met. \param[in] event_id event to register as per \ref sub_event_id \param[in]
+ * thresh_value threshold value (dBm) \param[in] freq event frequency 0--report once, 1--report everytime happened, N --
+ * report only happened > N consecutive times.
+ */
+int wlan_set_subscribe_event(unsigned int event_id, unsigned int thresh_value, unsigned int freq);
+/**
+ * Get all subscribed events from Wi-Fi firmware along with threshold value and report frequency.
+ * \param[in] sub_evt A pointer to \ref wlan_ds_subscribe_evt to store the events data.
+ */
+int wlan_get_subscribe_event(wlan_ds_subscribe_evt *sub_evt);
+/**
+ * cancel the subscribe event to firmware
+ * \param[in] event_id event id to clear as per \ref sub_event_id
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_clear_subscribe_event(unsigned int event_id);
+/**
+ * subscibe link quality event
+ * \param[in] event_id event id to clear as per \ref sub_event_id
+ * \param[in] link_snr link quality snr value
+ * \param[in] link_snr_freq link quality snr freq
+ * \param[in] link_rate link quality rate
+ * \param[in] link_rate_freq link quality rate freq
+ * \param[in] link_tx_latency link quality write lantency
+ * \param[in] link_tx_lantency_freq link quality write lantency freq
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_threshold_link_quality(unsigned int evend_id,
+                                    unsigned int link_snr,
+                                    unsigned int link_snr_freq,
+                                    unsigned int link_rate,
+                                    unsigned int link_rate_freq,
+                                    unsigned int link_tx_latency,
+                                    unsigned int link_tx_lantency_freq);
 #endif
 
 #endif /* __WLAN_H__ */

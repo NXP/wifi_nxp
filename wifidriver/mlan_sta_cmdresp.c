@@ -1461,6 +1461,7 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#if defined(CONFIG_SUBSCRIBE_EVENT_SUPPORT) || defined(CONFIG_ROAMING)
 /**
  *  @brief This function handles the command response of
  *  subscribe event
@@ -1473,23 +1474,19 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
  */
 static mlan_status wlan_ret_subscribe_event(IN pmlan_private pmpriv,
                                             IN HostCmd_DS_COMMAND *resp,
-                                            IN mlan_ioctl_req *pioctl_buf)
+                                            IN mlan_ioctl_req *sub_evt)
 {
-    HostCmd_DS_SUBSCRIBE_EVENT *evt = (HostCmd_DS_SUBSCRIBE_EVENT *)&resp->params.subscribe_event;
-    mlan_ds_subscribe_evt *sub_evt  = MNULL;
-    mlan_ds_misc_cfg *misc          = MNULL;
-
     ENTER();
-    if (pioctl_buf && (pioctl_buf->action == MLAN_ACT_GET))
+    if (sub_evt && wlan_parse_getdata(resp, (mlan_ds_subscribe_evt *)sub_evt) != WM_SUCCESS)
     {
-        misc                          = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
-        sub_evt                       = &misc->param.subscribe_event;
-        sub_evt->evt_bitmap           = wlan_le16_to_cpu(evt->event_bitmap);
-        pioctl_buf->data_read_written = sizeof(mlan_ds_misc_cfg);
+        wevt_w("get subscribe event fail\n");
+        return MLAN_STATUS_FAILURE;
     }
     LEAVE();
+
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
 /**

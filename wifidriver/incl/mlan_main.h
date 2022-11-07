@@ -2514,6 +2514,15 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
 mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
 #endif
 
+#if defined(CONFIG_ROAMING) || defined(CONFIG_SUBSCRIBE_EVENT_SUPPORT)
+/** Handler for subscribe event command */
+mlan_status wlan_cmd_subscribe_event(IN mlan_private *pmpriv,
+                                     IN HostCmd_DS_COMMAND *cmd,
+                                     IN t_u16 cmd_action,
+                                     IN t_void *pioctl_buf);
+int wlan_parse_getdata(HostCmd_DS_COMMAND *resp, mlan_ds_subscribe_evt *sub_evt);
+#endif
+
 /** Handler to get current operating class */
 /* For several features, such as DPP and MBO, we need the global operating class. */
 mlan_status wlan_get_global_nonglobal_oper_class(
