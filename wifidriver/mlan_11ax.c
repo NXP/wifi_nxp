@@ -1,3 +1,4 @@
+#ifdef CONFIG_11AX
 /** @file mlan_11ax.c
  *
  *  @brief This file defines the private and adapter data
@@ -10,7 +11,6 @@
  *
  */
 
-#ifdef CONFIG_11AX
 #include <mlan_api.h>
 
 /* Additional WMSDK header files */
@@ -566,7 +566,7 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
     {
         goto done;
     }
-    cfg         = (mlan_ds_11ax_cmd_cfg *)pioctl_buf->pbuf;
+    cfg = (mlan_ds_11ax_cmd_cfg *)pioctl_buf->pbuf;
     switch (axcmd->sub_id)
     {
         case MLAN_11AXCMD_SR_SUBID:
@@ -594,32 +594,35 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
             (void)__memcpy(pmpriv->adapter, &cfg->param.txomi_cfg, axcmd->val, sizeof(mlan_ds_11ax_txomi_cmd));
             break;
         case MLAN_11AXCMD_RUPOWER_SUBID:
+        {
+            wifi_rutxpwrlimit_t *ru_pwr_cfg = (wifi_rutxpwrlimit_t *)wm_wifi.cmd_resp_priv;
+            mlan_ds_11ax_chanlrupwrcft_cmd *rupwr_tlv;
+            t_u8 *pByte;
+            pByte    = axcmd->val;
+            left_len = resp->size - sizeof(HostCmd_DS_11AX_CMD_CFG) - S_DS_GEN;
+            while (left_len >= sizeof(MrvlIEtypesHeader_t))
             {
-                wifi_rutxpwrlimit_t* ru_pwr_cfg = (wifi_rutxpwrlimit_t *)wm_wifi.cmd_resp_priv;
-                mlan_ds_11ax_chanlrupwrcft_cmd *rupwr_tlv;
-                t_u8 *pByte;
-                pByte       = axcmd->val;
-                left_len = resp->size - sizeof(HostCmd_DS_11AX_CMD_CFG) - S_DS_GEN;
-                while (left_len >= sizeof(MrvlIEtypesHeader_t))
+                rupwr_tlv = (mlan_ds_11ax_chanlrupwrcft_cmd *)pByte;
+                if (rupwr_tlv->type == TLV_TYPE_CHANNEL_RU_PWR_CONFIG)
                 {
-                    rupwr_tlv = (mlan_ds_11ax_chanlrupwrcft_cmd *)pByte;
-                    if (rupwr_tlv->type == TLV_TYPE_CHANNEL_RU_PWR_CONFIG)
+                    t_u8 i;
+                    ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].start_freq =
+                        rupwr_tlv->rupwrlimit_config.start_freq;
+                    ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].width = rupwr_tlv->rupwrlimit_config.width;
+                    ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].chan_num =
+                        rupwr_tlv->rupwrlimit_config.chan_num;
+                    for (i = 0; i < MAX_RU_COUNT; i++)
                     {
-                        t_u8 i;
-                        ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].start_freq = rupwr_tlv->rupwrlimit_config.start_freq;
-                        ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].width = rupwr_tlv->rupwrlimit_config.width;
-                        ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].chan_num = rupwr_tlv->rupwrlimit_config.chan_num;
-                        for ( i = 0; i < MAX_RU_COUNT; i++ )
-                        {
-                          ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].ruPower[i] = (t_s8)rupwr_tlv->rupwrlimit_config.ruPower[i];
-                        }
-                        ru_pwr_cfg->num_chans++;
+                        ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].ruPower[i] =
+                            (t_s8)rupwr_tlv->rupwrlimit_config.ruPower[i];
                     }
-                    left_len -= (rupwr_tlv->len + sizeof(MrvlIEtypesHeader_t));
-                    pByte += (rupwr_tlv->len + sizeof(MrvlIEtypesHeader_t));
+                    ru_pwr_cfg->num_chans++;
                 }
+                left_len -= (rupwr_tlv->len + sizeof(MrvlIEtypesHeader_t));
+                pByte += (rupwr_tlv->len + sizeof(MrvlIEtypesHeader_t));
             }
-            break;
+        }
+        break;
         case MLAN_11AXCMD_OBSS_TOLTIME_SUBID:
             (void)__memcpy(pmpriv->adapter, &cfg->param.toltime_cfg.tol_time, axcmd->val, sizeof(t_u32));
             break;
@@ -632,4 +635,4 @@ done:
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-#endif
+#endif /* CONFIG_11AX */

@@ -153,12 +153,14 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 
     WPS_IE = VENDOR_SPECIFIC_221,
 
-    WPA_IE    = VENDOR_SPECIFIC_221,
-    RSN_IE    = 48,
-    VS_IE     = VENDOR_SPECIFIC_221,
-    WAPI_IE   = 68,
-    RSNX_IE   = 244,
+    WPA_IE  = VENDOR_SPECIFIC_221,
+    RSN_IE  = 48,
+    VS_IE   = VENDOR_SPECIFIC_221,
+    WAPI_IE = 68,
+    RSNX_IE = 244,
+#ifdef CONFIG_11AX
     EXTENSION = 255,
+#endif
 } MLAN_PACK_END IEEEtypes_ElementId_e;
 
 /** IEEE IE header */
@@ -1033,8 +1035,13 @@ typedef MLAN_PACK_START struct _ExtCap_t
     t_u8 rsvdBit74 : 1;            /* bit 74 */
     t_u8 rsvdBit75 : 1;            /* bit 75 */
     t_u8 rsvdBit76 : 1;            /* bit 76 */
+#ifdef CONFIG_11AX
     t_u8 TWTReq : 1;               /* bit 77 */
     t_u8 TWTResp : 1;              /* bit 78 */
+#else
+    t_u8 rsvdBit77 : 1; /* bit 77 */
+    t_u8 rsvdBit78 : 1; /* bit 78 */
+#endif
     t_u8 rsvdBit79 : 1;            /* bit 79 */
 
 } MLAN_PACK_END ExtCap_t, *pExtCap_t;

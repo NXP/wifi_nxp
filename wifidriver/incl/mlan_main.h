@@ -1103,8 +1103,10 @@ struct _mlan_private
     t_u8 rxpd_htinfo;
 #else
     t_u8 tx_rate_info;
+#ifdef CONFIG_11AX
     /*HE tx tone mode and DCM info*/
     t_u8 ext_tx_rate_info;
+#endif
     /** rxpd_htinfo */
     t_u8 rxpd_rate_info;
 #endif
@@ -2676,7 +2678,14 @@ t_u8 wlan_get_txpwr_of_chan_from_cfp(mlan_private *pmpriv, t_u8 channel);
 #ifdef SD8801
 t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 ht_info);
 #else
-t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter, t_u8 index, t_u8 tx_rate_info, t_u8 ext_rate_info);
+t_u32 wlan_index_to_data_rate(pmlan_adapter pmadapter,
+                              t_u8 index,
+                              t_u8 tx_rate_info
+#ifdef CONFIG_11AX
+                              ,
+                              t_u8 ext_rate_info
+#endif
+);
 #endif
 /** Get active data rates */
 t_u32 wlan_get_active_data_rates(mlan_private *pmpriv,

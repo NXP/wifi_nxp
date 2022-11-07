@@ -3170,7 +3170,15 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
  *
  *  @return	       ie's poiner or MNULL
  */
-static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len, IEEEtypes_ElementId_e id, t_u8 ext_id)
+static t_u8 *wlan_get_specific_ie(pmlan_private priv,
+                                  t_u8 *ie_buf,
+                                  t_u8 ie_len,
+                                  IEEEtypes_ElementId_e id
+#ifdef CONFIG_11AX
+                                  ,
+                                  t_u8 ext_id
+#endif
+)
 {
     t_u8 bytes_left    = ie_len;
     t_u8 *pcurrent_ptr = ie_buf;
@@ -3178,15 +3186,19 @@ static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len,
     t_u8 *ie_ptr = MNULL;
     IEEEtypes_ElementId_e element_id;
     t_u8 element_len;
+#ifdef CONFIG_11AX
     t_u8 element_eid;
+#endif
     ENTER();
 
     DBG_HEXDUMP(MCMD_D, "ie", ie_buf, ie_len);
     while (bytes_left >= 2U)
     {
-        element_id   = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
-        element_len  = *((t_u8 *)pcurrent_ptr + 1);
-        element_eid  = *((t_u8 *)pcurrent_ptr + 2);
+        element_id  = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
+        element_len = *((t_u8 *)pcurrent_ptr + 1);
+#ifdef CONFIG_11AX
+        element_eid = *((t_u8 *)pcurrent_ptr + 2);
+#endif
         total_ie_len = element_len + (t_u8)sizeof(IEEEtypes_Header_t);
         if (bytes_left < total_ie_len)
         {
@@ -3195,9 +3207,21 @@ static t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len,
                    "bytes left < IE length\n");
             break;
         }
-        if (((ext_id == 0U) && element_id == id) || (id == EXTENSION && element_id == id && ext_id == element_eid))
+        if ((
+#ifdef CONFIG_11AX
+                (ext_id == 0U) &&
+#endif
+                element_id == id)
+#ifdef CONFIG_11AX
+            || (id == EXTENSION && element_id == id && ext_id == element_eid)
+#endif
+        )
         {
+#ifdef CONFIG_11AX
             PRINTM(MCMND, "Find IE: id=%d ext_id=%d\n", id, ext_id);
+#else
+            PRINTM(MCMND, "Find IE: id=%d\n", id);
+#endif
             DBG_HEXDUMP(MCMND, "IE", pcurrent_ptr, total_ie_len);
             ie_ptr = pcurrent_ptr;
             break;
@@ -3272,8 +3296,12 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 
                 ie_len       = (t_u8)tlv_len - (t_u8)sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
-                pht_cap =
-                    (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
+                pht_cap = (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY
+#ifdef CONFIG_11AX
+                                                                            ,
+                                                                            0
+#endif
+                );
 
                 if (pht_cap != NULL)
                 {
@@ -3295,8 +3323,12 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                            "support 11n\n");
                 }
 #ifdef CONFIG_11AC
-                pvht_cap =
-                    (IEEEtypes_VHTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, VHT_CAPABILITY, 0);
+                pvht_cap = (IEEEtypes_VHTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, VHT_CAPABILITY
+#ifdef CONFIG_11AX
+                                                                              ,
+                                                                              0
+#endif
+                );
                 if ((pvht_cap != MNULL) && (priv->is_11ac_enabled == MTRUE))
                 {
                     PRINTM(MCMND, "STA supports 11ac\n");

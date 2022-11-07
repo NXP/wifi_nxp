@@ -883,7 +883,6 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_He_cap_t
     /** PPE Thresholds (optional) */
     t_u8 val[20];
 } MLAN_PACK_END MrvlIEtypes_He_cap_t, *pMrvlIEtypes_he_cap_t;
-#endif
 
 typedef MLAN_PACK_START struct _MrvlIEtypes_Extension_t
 {
@@ -896,6 +895,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Extension_t
     /** payload */
     t_u8 data[];
 } MLAN_PACK_END MrvlIEtypes_Extension_t, *pMrvlIEtypes_Extension_t;
+#endif
 
 /** FW cap info TLV */
 typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t

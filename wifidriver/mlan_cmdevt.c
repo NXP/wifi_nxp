@@ -2252,8 +2252,12 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
 
         if (!pmpriv->is_data_rate_auto)
     {
-        pmpriv->data_rate =
-            wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info, pmpriv->ext_tx_rate_info);
+        pmpriv->data_rate = wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info
+#ifdef CONFIG_11AX
+                                                    ,
+                                                    pmpriv->ext_tx_rate_info
+#endif
+        );
     }
 
     if (pioctl != NULL)
@@ -2327,7 +2331,12 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                 rate->param.data_rate.tx_nss       = (pmpriv->tx_rate) >> 4;
                 rate->param.data_rate.tx_mcs_index = (t_u32)((pmpriv->tx_rate) & 0xF);
                 rate->param.data_rate.tx_data_rate =
-                    wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info, pmpriv->ext_tx_rate_info);
+                    wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info
+#ifdef CONFIG_11AX
+                                            ,
+                                            pmpriv->ext_tx_rate_info
+#endif
+                    );
             }
             else
 #endif
@@ -2340,7 +2349,12 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                 rate->param.data_rate.tx_ht_gi       = (pmpriv->tx_rate_info & 0x10U) >> 4U;
                 rate->param.data_rate.tx_mcs_index   = pmpriv->tx_rate;
                 rate->param.data_rate.tx_data_rate =
-                    wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info, pmpriv->ext_tx_rate_info);
+                    wlan_index_to_data_rate(pmadapter, pmpriv->tx_rate, pmpriv->tx_rate_info
+#ifdef CONFIG_11AX
+                                            ,
+                                            pmpriv->ext_tx_rate_info
+#endif
+                    );
             }
             else
 #endif
@@ -2376,8 +2390,13 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                     rate->param.data_rate.rx_ht_gi = (t_u32)((pmpriv->rxpd_rate_info & 0x10) >> 4);
                 rate->param.data_rate.rx_nss       = (pmpriv->rxpd_rate) >> 4;
                 rate->param.data_rate.rx_mcs_index = (t_u32)((pmpriv->rxpd_rate) & 0xF);
-                rate->param.data_rate.rx_data_rate = wlan_index_to_data_rate(
-                    pmadapter, pmpriv->rxpd_rate, pmpriv->rxpd_rate_info, pmpriv->ext_tx_rate_info);
+                rate->param.data_rate.rx_data_rate =
+                    wlan_index_to_data_rate(pmadapter, pmpriv->rxpd_rate, pmpriv->rxpd_rate_info
+#ifdef CONFIG_11AX
+                                            ,
+                                            pmpriv->ext_tx_rate_info
+#endif
+                    );
             }
             else
 #endif
@@ -2389,8 +2408,13 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
                 rate->param.data_rate.rx_ht_bw       = (pmpriv->rxpd_rate_info & 0xCU) >> 2U;
                 rate->param.data_rate.rx_ht_gi       = (pmpriv->rxpd_rate_info & 0x10U) >> 4U;
                 rate->param.data_rate.rx_mcs_index   = pmpriv->rxpd_rate;
-                rate->param.data_rate.rx_data_rate   = wlan_index_to_data_rate(
-                    pmadapter, pmpriv->rxpd_rate, pmpriv->rxpd_rate_info, pmpriv->ext_tx_rate_info);
+                rate->param.data_rate.rx_data_rate =
+                    wlan_index_to_data_rate(pmadapter, pmpriv->rxpd_rate, pmpriv->rxpd_rate_info
+#ifdef CONFIG_11AX
+                                            ,
+                                            pmpriv->ext_tx_rate_info
+#endif
+                    );
             }
             else
 #endif
