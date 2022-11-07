@@ -2249,8 +2249,15 @@ struct _mlan_adapter
 
 mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action);
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
 mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
+                                                 IN HostCmd_DS_COMMAND *cmd,
+                                                 IN t_u16 cmd_action,
+                                                 IN t_void *pdata_buf);
+#endif
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+mlan_status wlan_cmd_tx_pert(pmlan_private pmpriv,
                                     IN HostCmd_DS_COMMAND *cmd,
                                     IN t_u16 cmd_action,
                                     IN t_void *pdata_buf);

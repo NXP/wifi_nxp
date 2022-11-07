@@ -2856,9 +2856,9 @@ mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, I
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
 /**
- *  @brief This function prepares command of txrx_pkt_stats.
+ *  @brief This function prepares command of txrx_histogram and tx_pert, distinguish by cmd_action.
  *
  *  @param pmpriv       A pointer to mlan_private structure
  *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
@@ -2871,6 +2871,38 @@ mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
                                     IN HostCmd_DS_COMMAND *cmd,
                                     IN t_u16 cmd_action,
                                     IN t_void *pdata_buf)
+{
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+    if (cmd_action == HostCmd_ACT_SET_TX_PER_TRACKING)
+    {
+        wlan_cmd_tx_pert(pmpriv, cmd, cmd_action, pdata_buf);
+    }
+#endif
+#ifdef CONFIG_TX_RX_HISTOGRAM
+    if (cmd_action != HostCmd_ACT_SET_TX_PER_TRACKING)
+    {
+        wlan_cmd_txrx_histogram(pmpriv, cmd, pdata_buf);
+    }
+#endif
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_WIFI_TX_PER_TRACK
+/**
+ *  @brief This function prepares command of tx_pert.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   The action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_tx_pert(pmlan_private pmpriv,
+                             IN HostCmd_DS_COMMAND *cmd,
+                             IN t_u16 cmd_action,
+                             IN t_void *pdata_buf)
 {
     HostCmd_DS_TX_RX_PKT_STATS *pkt_stats = &cmd->params.pkt_stats;
     MrvlTxPerTrackInfo_t *tx_pert         = NULL;
@@ -2897,6 +2929,16 @@ mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
 #endif
 
 #ifdef CONFIG_TX_RX_HISTOGRAM
+/**
+ *  @brief This function prepares command of txrx_histogram.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   The action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
 mlan_status wlan_cmd_txrx_histogram(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf)
 {
     HostCmd_DS_TX_RX_HISTOGRAM *histogram = &cmd->params.histogram;

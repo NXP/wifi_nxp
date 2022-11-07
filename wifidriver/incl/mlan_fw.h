@@ -1278,7 +1278,7 @@ typedef enum _ENH_PS_MODES
 /** Host command action : Get both Rx and Tx */
 #define HostCmd_ACT_GET_BOTH 0x000cU
 
-#ifdef CONFIG_WIFI_TX_PER_TRACK
+#if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
 /** Host command action: Get Tx statics */
 #define HostCmd_ACT_GET_TX_STATICS 0x0001
 /** Host command action: Get Rx statics */

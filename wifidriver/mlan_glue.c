@@ -2995,26 +2995,30 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    t_u16 cmdsize   = wlan_le16_to_cpu(resp->size);
-                    t_u16 length    = 0;
-                    t_u16 data_size = 0;
-                    t_u8 *pos       = NULL;
+                    const HostCmd_DS_TX_RX_HISTOGRAM *txrx_histogram = &resp->params.histogram;
+                    if(txrx_histogram->action != HostCmd_ACT_SET_TX_PER_TRACKING)
+					{
+                        t_u16 cmdsize   = wlan_le16_to_cpu(resp->size);
+                        t_u16 length    = 0;
+                        t_u16 data_size = 0;
+                        t_u8 *pos       = NULL;
 
-                    if (wm_wifi.cmd_resp_priv != NULL)
-                    {
-                        t_u8 *tx_rx_histogram_data = wm_wifi.cmd_resp_priv;
-                        (void)memcpy(&data_size, tx_rx_histogram_data, sizeof(data_size));
-                        length = cmdsize - S_DS_GEN - sizeof(HostCmd_DS_TX_RX_HISTOGRAM);
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            t_u8 *tx_rx_histogram_data = wm_wifi.cmd_resp_priv;
+                            (void)memcpy(&data_size, tx_rx_histogram_data, sizeof(data_size));
+                            length = cmdsize - S_DS_GEN - sizeof(HostCmd_DS_TX_RX_HISTOGRAM);
 
-                        if (length > 0 && (data_size >= length + sizeof(length)))
-                        {
-                            (void)memcpy(tx_rx_histogram_data, (t_u8 *)&length, sizeof(length));
-                            pos = (t_u8 *)resp + S_DS_GEN + sizeof(HostCmd_DS_TX_RX_HISTOGRAM);
-                            (void)memcpy(tx_rx_histogram_data + sizeof(length), pos, length);
-                        }
-                        else
-                        {
-                            wifi_w("TX RX histogram data error\n");
+                            if (length > 0 && (data_size >= length + sizeof(length)))
+                            {
+                                (void)memcpy(tx_rx_histogram_data, (t_u8 *)&length, sizeof(length));
+                                pos = (t_u8 *)resp + S_DS_GEN + sizeof(HostCmd_DS_TX_RX_HISTOGRAM);
+                                (void)memcpy(tx_rx_histogram_data + sizeof(length), pos, length);
+                            }
+                            else
+                            {
+                                wifi_w("TX RX histogram data error\n");
+                            }
                         }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
