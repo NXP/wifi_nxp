@@ -8428,3 +8428,10 @@ int wlan_set_threshold_link_quality(unsigned int event_id,
     return WM_E_INVAL;
 }
 #endif
+
+#ifdef CONFIG_WIFI_REG_ACCESS
+int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t *value)
+{
+    return wifi_reg_access(type, action, offset, value);
+}
+#endif

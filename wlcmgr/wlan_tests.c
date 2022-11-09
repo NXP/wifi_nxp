@@ -3674,6 +3674,63 @@ static void test_wlan_subscribe_event(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_WIFI_REG_ACCESS
+static void dump_wlan_reg_access_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Read the register:\r\n");
+    (void)PRINTF("    wlan-reg-access <type> <offset>\r\n");
+    (void)PRINTF("Write the register:\r\n");
+    (void)PRINTF("    wlan-reg-access <type> <offset> <value>\r\n");
+    (void)PRINTF("Options: \r\n");
+    (void)PRINTF("    <type>  : 1:MAC, 2:BBP, 3:RF\r\n");
+    (void)PRINTF("    <offset>: offset of register\r\n");
+    (void)PRINTF("For example:\r\n");
+    (void)PRINTF("    wlan-reg-access 1 0x9b8             : Read the MAC register\r\n");
+    (void)PRINTF("    wlan-reg-access 1 0x9b8 0x80000000 : Write 0x80000000 to MAC register\r\n");
+}
+
+static void test_wlan_reg_access(int argc, char **argv)
+{
+    t_u32 type, offset, value;
+    t_u16 action  = ACTION_GET;
+    int ret;
+
+    if (argc < 3 || argc > 4)
+    {
+        dump_wlan_reg_access_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if ((a2hex_or_atoi(argv[1]) != 1 && a2hex_or_atoi(argv[1]) != 2 && a2hex_or_atoi(argv[1]) != 3))
+    {
+        dump_wlan_reg_access_usage();
+        (void)PRINTF("Error: Illegal register type %s. Must be either '1','2' or '3'.\r\n", argv[1]);
+        return;
+    }
+    type    = a2hex_or_atoi(argv[1]);
+    offset  = a2hex_or_atoi(argv[2]);
+    if (argc == 4)
+    {
+        action = ACTION_SET;
+        value = a2hex_or_atoi(argv[3]);
+    }
+
+    ret = wlan_reg_access(type, action, offset, (uint32_t *)&value);
+
+    if (ret == WM_SUCCESS)
+    {
+        if (action == ACTION_GET)
+            (void)PRINTF("Value = 0x%x\r\n", value);
+        else
+            (void)PRINTF("Set the register successfully\r\n");
+    }
+    else
+        (void)PRINTF("Read/write register failed");
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -3796,6 +3853,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
     {"wlan-subscribe-event", "<action> <type> <value> <freq>", test_wlan_subscribe_event},
+#endif
+#ifdef CONFIG_WIFI_REG_ACCESS
+    {"wlan-reg-access", "<type> <offset> [value]", test_wlan_reg_access},
 #endif
 };
 

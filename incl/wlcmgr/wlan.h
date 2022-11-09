@@ -4240,4 +4240,19 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
                                     unsigned int link_tx_lantency_freq);
 #endif
 
+#ifdef CONFIG_WIFI_REG_ACCESS
+/** This function reads/writes adapter registers value.
+ *
+ *\param[in]        type        Register type: 1 -- MAC, 2 -- BBP, 3 -- RF.
+ *\param[in]        action      0 -- read, 1 -- write
+ *\param[in]        offset      Specifies the offset location that is to be read/write.
+ *\param[in/out]    value       Value if specified, stand for write action, then that value will be written to that offset in the specified register.
+ *                              Value should be specified in hexadecimal.
+ *                              Otherwise, it stands for read action, the value is updated with read value.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t *value);
+#endif
+
 #endif /* __WLAN_H__ */
