@@ -416,13 +416,10 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 #ifdef CONFIG_5GHz_SUPPORT
                 case BAND_A:
                     pscan_chan_list[chan_idx].radio_type = HostCmd_SCAN_RADIO_TYPE_A;
-                    if (!wlan_11d_is_enabled(pmpriv))
+                    /* 11D not available... play it safe on DFS channels */
+                    if (wlan_11h_radar_detect_required(pmpriv, (t_u8)cfp->channel))
                     {
-                        /* 11D not available... play it safe on DFS channels */
-                        if (wlan_11h_radar_detect_required(pmpriv, (t_u8)cfp->channel))
-                        {
-                            scan_type = MLAN_SCAN_TYPE_PASSIVE;
-                        }
+                        scan_type = MLAN_SCAN_TYPE_PASSIVE;
                     }
                     break;
 #endif
