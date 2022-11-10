@@ -3,6 +3,10 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p2
+ - Bug Fixes:
+  - Added delay in uart_wifi_bridge application to correctly read calibration data for RB3P board.
+
 Version 1.3.r43.p1
  - Updates:
   - Updated firmware version to p162.
