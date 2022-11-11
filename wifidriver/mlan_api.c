@@ -2748,11 +2748,11 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
     uint16_t buf_len                = 0;
     tlvbuf_custom_ie *tlv           = NULL;
     custom_ie *ie_ptr               = NULL;
-    unsigned int mgmt_ie_index               = -1;
+    unsigned int mgmt_ie_index      = -1;
     int total_len =
         sizeof(tlvbuf_custom_ie) + 2U * (sizeof(custom_ie) - MAX_IE_SIZE) + sizeof(IEEEtypes_Header_t) + *ie_len;
     int ret = WM_SUCCESS;
-        
+
     buf = (uint8_t *)os_mem_alloc(total_len);
     if (buf == MNULL)
     {
@@ -3508,7 +3508,7 @@ void wifi_free_fw_region_and_cfp_tables(void)
 }
 #endif
 
-int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
+int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 {
     int ret;
 
@@ -3517,13 +3517,13 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
         return -WM_FAIL;
     }
 
-    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[bss_type];
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     (void)wifi_get_command_lock();
 
     cmd->command = HostCmd_CMD_ED_MAC_MODE;
-    cmd->seq_num = 0x0;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
     cmd->result  = 0x0;
     cmd->size    = S_DS_GEN + sizeof(HostCmd_CONFIG_ED_MAC_MODE);
 
@@ -3532,9 +3532,13 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
     ed_mac_mode->ed_ctrl_2g   = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_ctrl_2g);
     ed_mac_mode->ed_offset_2g = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_offset_2g);
 #ifdef CONFIG_5GHz_SUPPORT
-    ed_mac_mode->ed_ctrl_5g         = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_ctrl_5g);
-    ed_mac_mode->ed_offset_5g       = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_offset_5g);
+    ed_mac_mode->ed_ctrl_5g   = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_ctrl_5g);
+    ed_mac_mode->ed_offset_5g = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_offset_5g);
+#if defined(IW61x)
+    ed_mac_mode->ed_bitmap_txq_lock = 0x1e00ff;
+#else
     ed_mac_mode->ed_bitmap_txq_lock = 0xff;
+#endif
 #endif
 
     pmpriv->ed_mac_mode.ed_ctrl_2g   = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_ctrl_2g);
@@ -3548,9 +3552,9 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
     return ret;
 }
 
-int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl)
+int wifi_get_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[bss_type];
 
     if (wifi_ed_mac_ctrl == MNULL)
     {
@@ -3958,7 +3962,7 @@ void set_ecsa_block_tx_time(t_u8 switch_count)
 
 t_u8 get_ecsa_block_tx_time()
 {
-   return ecsa_block_tx_control.block_time;
+    return ecsa_block_tx_control.block_time;
 }
 
 void set_ecsa_block_tx_flag(bool block_tx)
@@ -3976,32 +3980,33 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
     int ret = 0;
     mlan_ioctl_req req;
     mlan_ds_misc_cfg *misc = NULL;
-    mlan_status status = MLAN_STATUS_SUCCESS;
+    mlan_status status     = MLAN_STATUS_SUCCESS;
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-    
+
     misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
-    if (misc == NULL) {
+    if (misc == NULL)
+    {
         return -WM_FAIL;
     }
-    
-    req.bss_index = MLAN_BSS_ROLE_UAP;
-    req.pbuf     = (t_u8 *)misc;
-    misc->sub_command = MLAN_OID_MISC_OPER_CLASS;
-    req.req_id = MLAN_IOCTL_MISC_CFG;
-    req.action = MLAN_ACT_GET;
+
+    req.bss_index                      = MLAN_BSS_ROLE_UAP;
+    req.pbuf                           = (t_u8 *)misc;
+    misc->sub_command                  = MLAN_OID_MISC_OPER_CLASS;
+    req.req_id                         = MLAN_IOCTL_MISC_CFG;
+    req.action                         = MLAN_ACT_GET;
     misc->param.bw_chan_oper.bandwidth = bandwidth;
-    misc->param.bw_chan_oper.channel = channel;
+    misc->param.bw_chan_oper.channel   = channel;
 
     status = wlan_ops_uap_ioctl(mlan_adap, &req);
-    if (status != MLAN_STATUS_SUCCESS) 
+    if (status != MLAN_STATUS_SUCCESS)
     {
         wifi_e("Failed to get operclass\n");
-            os_mem_free(misc);
+        os_mem_free(misc);
         return -WM_FAIL;
     }
     *oper_class = misc->param.bw_chan_oper.oper_class;
-    
+
     os_mem_free(misc);
 
     return ret;
@@ -4015,8 +4020,8 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     t_u32 usr_dot_11n_dev_cap                     = 0;
     mlan_private *pmpriv                          = (mlan_private *)mlan_adap->priv[1];
     BSSDescriptor_t *pbss_desc;
-    pbss_desc = &pmpriv->curr_bss_params.bss_descriptor;
-    t_u8 new_oper_class    = oper_class;
+    pbss_desc           = &pmpriv->curr_bss_params.bss_descriptor;
+    t_u8 new_oper_class = oper_class;
     t_u8 bw;
     int ret = MLAN_STATUS_SUCCESS;
 #if defined(CONFIG_11AC)
@@ -4025,14 +4030,15 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     IEEEtypes_WideBWChanSwitch_t *pbwchansw_ie = NULL;
     IEEEtypes_VhtTpcEnvelope_t *pvhttpcEnv_ie  = NULL;
 #endif
-    uint8_t *buf = NULL;
-    tlvbuf_custom_ie *tlv           = NULL;
-    unsigned int mgmt_ie_index               = -1;
-    int total_len = sizeof(tlvbuf_custom_ie) + (sizeof(custom_ie) - MAX_IE_SIZE) + sizeof(IEEEtypes_ChanSwitchAnn_t) + sizeof(IEEEtypes_ExtChanSwitchAnn_t);
+    uint8_t *buf               = NULL;
+    tlvbuf_custom_ie *tlv      = NULL;
+    unsigned int mgmt_ie_index = -1;
+    int total_len = sizeof(tlvbuf_custom_ie) + (sizeof(custom_ie) - MAX_IE_SIZE) + sizeof(IEEEtypes_ChanSwitchAnn_t) +
+                    sizeof(IEEEtypes_ExtChanSwitchAnn_t);
 #if defined(CONFIG_11AC)
     total_len += sizeof(IEEEtypes_WideBWChanSwitch_t) + sizeof(IEEEtypes_VhtTpcEnvelope_t) + sizeof(IEEEtypes_Header_t);
 #endif
-    uint16_t buf_len                = 0;
+    uint16_t buf_len = 0;
 
     buf = (uint8_t *)os_mem_alloc(total_len);
     if (!buf)
@@ -4053,7 +4059,7 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     }
 
     pcust_chansw_ie                    = (custom_ie *)(tlv->ie_data);
-    pcust_chansw_ie->ie_index          = mgmt_ie_index; 
+    pcust_chansw_ie->ie_index          = mgmt_ie_index;
     pcust_chansw_ie->ie_length         = sizeof(IEEEtypes_ChanSwitchAnn_t);
     pcust_chansw_ie->mgmt_subtype_mask = MGMT_MASK_BEACON | MGMT_MASK_PROBE_RESP; /*Add IE for
                                                                  BEACON/probe resp*/
@@ -4170,7 +4176,7 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
 
     buf_len = pcust_chansw_ie->ie_length + sizeof(tlvbuf_custom_ie) + sizeof(custom_ie) - MAX_IE_SIZE;
 
-    ret =wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
+    ret = wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
         wifi_e("Failed to set ECSA IE\n");
@@ -4188,16 +4194,16 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
 
     /*Clear ECSA ie*/
     (void)memset(buf, 0, total_len);
-    tlv       = (tlvbuf_custom_ie *)buf;
-    tlv->type = MRVL_MGMT_IE_LIST_TLV_ID;
+    tlv         = (tlvbuf_custom_ie *)buf;
+    tlv->type   = MRVL_MGMT_IE_LIST_TLV_ID;
     tlv->length = sizeof(custom_ie) - MAX_IE_SIZE;
-    
+
     pcust_chansw_ie->mgmt_subtype_mask = MGMT_MASK_CLEAR;
     pcust_chansw_ie->ie_length         = 0;
     pcust_chansw_ie->ie_index          = mgmt_ie_index;
-    buf_len = sizeof(tlvbuf_custom_ie) + tlv->length;
-    
-    ret =wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
+    buf_len                            = sizeof(tlvbuf_custom_ie) + tlv->length;
+
+    ret = wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
         wifi_e("Failed to clear ECSA IE\n");
@@ -4211,31 +4217,30 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     return WM_SUCCESS;
 }
 
-
-
 int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count)
 {
-    mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_status ret  = MLAN_STATUS_SUCCESS;
     mlan_ds_bss *bss = NULL;
     mlan_ioctl_req req;
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-    
+
     bss = os_mem_alloc(sizeof(mlan_ds_bss));
-    if (bss == NULL) {
-	    return  -WM_FAIL;
+    if (bss == NULL)
+    {
+        return -WM_FAIL;
     }
-    
-    req.bss_index = MLAN_BSS_ROLE_UAP;
-    req.pbuf 	 = (t_u8 *)bss;
-    bss->sub_command = MLAN_OID_ACTION_CHAN_SWITCH;
-    req.req_id = MLAN_IOCTL_BSS;
-    req.action = MLAN_ACT_SET;
-    bss->param.chanswitch.chan_switch_mode = block_tx;
-    bss->param.chanswitch.new_channel_num = channel;
+
+    req.bss_index                           = MLAN_BSS_ROLE_UAP;
+    req.pbuf                                = (t_u8 *)bss;
+    bss->sub_command                        = MLAN_OID_ACTION_CHAN_SWITCH;
+    req.req_id                              = MLAN_IOCTL_BSS;
+    req.action                              = MLAN_ACT_SET;
+    bss->param.chanswitch.chan_switch_mode  = block_tx;
+    bss->param.chanswitch.new_channel_num   = channel;
     bss->param.chanswitch.chan_switch_count = switch_count;
-    bss->param.chanswitch.new_oper_class = oper_class;
-    
+    bss->param.chanswitch.new_oper_class    = oper_class;
+
     ret = wlan_ops_uap_ioctl(mlan_adap, &req);
 
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
@@ -4250,4 +4255,3 @@ int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 
 }
 
 #endif
-

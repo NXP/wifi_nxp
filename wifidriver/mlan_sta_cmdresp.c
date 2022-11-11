@@ -1774,9 +1774,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_ret_subscribe_event(pmpriv, resp, pioctl_buf);
             break;
+#endif
 #if defined(CONFIG_ROAMING)
         case HostCmd_CMD_802_11_BG_SCAN_QUERY:
             ret = wlan_ret_802_11_scan(pmpriv, resp, pioctl_buf);

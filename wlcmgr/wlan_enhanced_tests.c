@@ -114,11 +114,14 @@ static void dump_wlan_set_ed_mac_mode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
 #ifdef CONFIG_5GHz_SUPPORT
-    (void)PRINTF("wlan-set-ed-mac-mode <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>\r\n");
+    (void)PRINTF("wlan-set-ed-mac-mode <interface> <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>\r\n");
 #else
-    (void)PRINTF("wlan-set-ed-mac-mode <ed_ctrl_2g> <ed_offset_2g>\r\n");
+    (void)PRINTF("wlan-set-ed-mac-mode <interface> <ed_ctrl_2g> <ed_offset_2g>\r\n");
 #endif
     (void)PRINTF("\r\n");
+    (void)PRINTF("\tinterface \r\n");
+    (void)PRINTF("\t    # 0       - for STA\r\n");
+    (void)PRINTF("\t    # 1       - for uAP\r\n");
     (void)PRINTF("\ted_ctrl_2g \r\n");
     (void)PRINTF("\t    # 0       - disable EU adaptivity for 2.4GHz band\r\n");
     (void)PRINTF("\t    # 1       - enable EU adaptivity for 2.4GHz band\r\n");
@@ -139,38 +142,45 @@ static void wlan_ed_mac_mode_set(int argc, char *argv[])
 {
     int ret;
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl;
+    t_u8 interface;
 
 #ifdef CONFIG_5GHz_SUPPORT
-    if (argc != 5)
+    if (argc != 6)
 #else
-    if (argc != 3)
+    if (argc != 4)
 #endif
     {
         dump_wlan_set_ed_mac_mode_usage();
         return;
     }
 
+    errno     = 0;
+    interface = (t_u8)strtol(argv[1], NULL, 16);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
     errno                       = 0;
-    wlan_ed_mac_ctrl.ed_ctrl_2g = (t_u16)strtol(argv[1], NULL, 16);
+    wlan_ed_mac_ctrl.ed_ctrl_2g = (t_u16)strtol(argv[2], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
     errno                         = 0;
-    wlan_ed_mac_ctrl.ed_offset_2g = (t_s16)strtol(argv[2], NULL, 16);
+    wlan_ed_mac_ctrl.ed_offset_2g = (t_s16)strtol(argv[3], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
 #ifdef CONFIG_5GHz_SUPPORT
     errno                       = 0;
-    wlan_ed_mac_ctrl.ed_ctrl_5g = (t_u16)strtol(argv[3], NULL, 16);
+    wlan_ed_mac_ctrl.ed_ctrl_5g = (t_u16)strtol(argv[4], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
     errno                         = 0;
-    wlan_ed_mac_ctrl.ed_offset_5g = (t_s16)strtol(argv[4], NULL, 16);
+    wlan_ed_mac_ctrl.ed_offset_5g = (t_s16)strtol(argv[5], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -190,7 +200,14 @@ static void wlan_ed_mac_mode_set(int argc, char *argv[])
     }
 #endif
 
-    ret = wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
+    if (interface == MLAN_BSS_TYPE_STA)
+    {
+        ret = wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
+    }
+    else
+    {
+        ret = wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl);
+    }
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("ED MAC MODE settings configuration successful\r\n");
@@ -205,21 +222,39 @@ static void wlan_ed_mac_mode_set(int argc, char *argv[])
 static void dump_wlan_get_ed_mac_mode_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-get-ed-mac-mode \r\n");
+    (void)PRINTF("wlan-get-ed-mac-mode <interface>\r\n");
+    (void)PRINTF("\r\n");
+    (void)PRINTF("\tinterface \r\n");
+    (void)PRINTF("\t    # 0       - for STA\r\n");
+    (void)PRINTF("\t    # 1       - for uAP\r\n");
 }
 
 static void wlan_ed_mac_mode_get(int argc, char *argv[])
 {
     int ret;
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl;
+    int interface;
 
-    if (argc != 1)
+    if (argc != 2)
     {
         dump_wlan_get_ed_mac_mode_usage();
         return;
     }
+    errno     = 0;
+    interface = (t_u8)strtol(argv[1], NULL, 16);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
 
-    ret = wlan_get_ed_mac_mode(&wlan_ed_mac_ctrl);
+    if (interface == MLAN_BSS_TYPE_STA)
+    {
+        ret = wlan_get_ed_mac_mode(&wlan_ed_mac_ctrl);
+    }
+    else
+    {
+        ret = wlan_get_uap_ed_mac_mode(&wlan_ed_mac_ctrl);
+    }
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("EU adaptivity for 2.4GHz band : %s\r\n",
@@ -1153,12 +1188,12 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
         return;
     }
 
-    errno  = 0;
+    errno         = 0;
     tx_omi        = (uint16_t)strtol(argv[1], NULL, 0);
-    tx_option     = (uint8_t)strtol(argv[2], NULL , 0);
-    num_data_pkts = (uint8_t)strtol(argv[3], NULL , 0);
+    tx_option     = (uint8_t)strtol(argv[2], NULL, 0);
+    num_data_pkts = (uint8_t)strtol(argv[3], NULL, 0);
 
-    if((num_data_pkts<1) || (num_data_pkts>16))
+    if ((num_data_pkts < 1) || (num_data_pkts > 16))
     {
         (void)PRINTF("Minimum value of num_data_pkts should be 1 and maximum should be 16");
         return;
@@ -1702,7 +1737,6 @@ static void test_wlan_send_tm(int argc, char **argv)
 }
 #endif
 
-
 static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
@@ -1721,11 +1755,12 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-pmfcfg", "<mfpc> <mfpr>", wlan_pmfcfg_set},
     {"wlan-get-pmfcfg", NULL, wlan_pmfcfg_get},
 #ifdef CONFIG_5GHz_SUPPORT
-    {"wlan-set-ed-mac-mode", "<ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>", wlan_ed_mac_mode_set},
+    {"wlan-set-ed-mac-mode", "<interface> <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>",
+     wlan_ed_mac_mode_set},
 #else
-    {"wlan-set-ed-mac-mode", "<ed_ctrl_2g> <ed_offset_2g>", wlan_ed_mac_mode_set},
+    {"wlan-set-ed-mac-mode", "<interface> <ed_ctrl_2g> <ed_offset_2g>", wlan_ed_mac_mode_set},
 #endif
-    {"wlan-get-ed-mac-mode", NULL, wlan_ed_mac_mode_get},
+    {"wlan-get-ed-mac-mode", "<interface>", wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
     {"wlan-set-tx-omi", "<tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
     {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},

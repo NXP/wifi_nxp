@@ -1559,7 +1559,8 @@ int wlan_stop_network(const char *name);
 
 /** Retrieve the wireless MAC address of station/micro-AP interface.
  *
- *  This function copies the MAC address of the station interface to sta mac address and uAP interface to uap mac address.
+ *  This function copies the MAC address of the station interface to sta mac address and uAP interface to uap mac
+ * address.
  *
  *  \param[out] sta_mac A pointer to sta mac addr array.
  *  \param[out] uap_mac A pointer to uap mac addr array.
@@ -1886,7 +1887,7 @@ int wlan_enable_low_pwr_mode();
 #endif
 
 /**
- * Configure ED MAC mode in Wireless Firmware.
+ * Configure ED MAC mode for Station in Wireless Firmware.
  *
  * \note When ed mac mode is enabled,
  * Wireless Firmware will behave following way:
@@ -1918,7 +1919,39 @@ int wlan_enable_low_pwr_mode();
 int wlan_set_ed_mac_mode(wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl);
 
 /**
- * This API can be used to get current ED MAC MODE configuration.
+ * Configure ED MAC mode for Micro AP in Wireless Firmware.
+ *
+ * \note When ed mac mode is enabled,
+ * Wireless Firmware will behave following way:
+ *
+ * when background noise had reached -70dB or above,
+ * WiFi chipset/module should hold data transmitting
+ * until condition is removed.
+ * It is applicable for both 5GHz and 2.4GHz bands.
+ *
+ * \param[in] wlan_ed_mac_ctrl  Struct with following parameters
+ *	 ed_ctrl_2g	     0  - disable EU adaptivity for 2.4GHz band
+ *                           1  - enable EU adaptivity for 2.4GHz band
+ *
+ *       ed_offset_2g        0  - Default Energy Detect threshold (Default: 0x9)
+ *                           offset value range: 0x80 to 0x7F
+ *
+ * \note If 5GH enabled then add following parameters
+ *
+ *       ed_ctrl_5g          0  - disable EU adaptivity for 5GHz band
+ *                           1  - enable EU adaptivity for 5GHz band
+ *
+ *       ed_offset_5g        0  - Default Energy Detect threshold(Default: 0xC)
+ *                           offset value range: 0x80 to 0x7F
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ *
+ */
+int wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl);
+
+/**
+ * This API can be used to get current ED MAC MODE configuration for Station.
  *
  * \param[out] wlan_ed_mac_ctrl A pointer to \ref wlan_ed_mac_ctrl_t
  * 			with parameters mentioned in above set API.
@@ -1928,6 +1961,18 @@ int wlan_set_ed_mac_mode(wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl);
  *
  */
 int wlan_get_ed_mac_mode(wlan_ed_mac_ctrl_t *wlan_ed_mac_ctrl);
+
+/**
+ * This API can be used to get current ED MAC MODE configuration for Micro AP.
+ *
+ * \param[out] wlan_ed_mac_ctrl A pointer to \ref wlan_ed_mac_ctrl_t
+ * 			with parameters mentioned in above set API.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ *
+ */
+int wlan_get_uap_ed_mac_mode(wlan_ed_mac_ctrl_t *wlan_ed_mac_ctrl);
 
 /** Set wireless calibration data in WLAN firmware.
  *
@@ -4246,9 +4291,9 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
  *\param[in]        type        Register type: 1 -- MAC, 2 -- BBP, 3 -- RF.
  *\param[in]        action      0 -- read, 1 -- write
  *\param[in]        offset      Specifies the offset location that is to be read/write.
- *\param[in/out]    value       Value if specified, stand for write action, then that value will be written to that offset in the specified register.
- *                              Value should be specified in hexadecimal.
- *                              Otherwise, it stands for read action, the value is updated with read value.
+ *\param[in/out]    value       Value if specified, stand for write action, then that value will be written to that
+ *offset in the specified register. Value should be specified in hexadecimal. Otherwise, it stands for read action, the
+ *value is updated with read value.
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */

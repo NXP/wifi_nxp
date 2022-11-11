@@ -250,7 +250,7 @@ static struct
     enum cm_uap_state uap_return_to;
     /* store sta mac addr */
     uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
-    /* store uap mac addr */ 
+    /* store uap mac addr */
     uint8_t uap_mac[MLAN_MAC_ADDR_LENGTH];
 #ifdef CONFIG_P2P
     uint8_t wfd_mac[MLAN_MAC_ADDR_LENGTH];
@@ -5937,7 +5937,7 @@ void wlan_set_mac_addr(uint8_t *mac)
         return;
     }
 
-    if (!is_uap_state(CM_UAP_INITIALIZING)|| is_sta_connecting())
+    if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
     {
         return;
     }
@@ -5948,7 +5948,7 @@ void wlan_set_mac_addr(uint8_t *mac)
 
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
         ap_mac[4] += 1;
-  
+
         _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
 
         net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
@@ -6291,7 +6291,7 @@ int wlan_get_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
     {
         return -WM_E_INVAL;
     }
-    
+
     (void)memset((void *)sta_mac, 0, MLAN_MAC_ADDR_LENGTH);
     (void)memcpy((void *)sta_mac, (const void *)&wlan.sta_mac[0], MLAN_MAC_ADDR_LENGTH);
 
@@ -6766,12 +6766,22 @@ void wlan_set_reassoc_control(bool reassoc_control)
 
 int wlan_set_ed_mac_mode(wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl)
 {
-    return wifi_set_ed_mac_mode(&wlan_ed_mac_ctrl);
+    return wifi_set_ed_mac_mode(&wlan_ed_mac_ctrl, MLAN_BSS_TYPE_STA);
 }
 
 int wlan_get_ed_mac_mode(wlan_ed_mac_ctrl_t *wlan_ed_mac_ctrl)
 {
-    return wifi_get_ed_mac_mode(wlan_ed_mac_ctrl);
+    return wifi_get_ed_mac_mode(wlan_ed_mac_ctrl, MLAN_BSS_TYPE_STA);
+}
+
+int wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl)
+{
+    return wifi_set_ed_mac_mode(&wlan_ed_mac_ctrl, MLAN_BSS_TYPE_UAP);
+}
+
+int wlan_get_uap_ed_mac_mode(wlan_ed_mac_ctrl_t *wlan_ed_mac_ctrl)
+{
+    return wifi_get_ed_mac_mode(wlan_ed_mac_ctrl, MLAN_BSS_TYPE_UAP);
 }
 
 bool wlan_get_11d_enable_status(void)
@@ -6881,7 +6891,7 @@ int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *tcp_keep_alive)
         return -WM_FAIL;
     }
 
-    return wifi_tcp_keep_alive(tcp_keep_alive, wlan.mac, ipv4_addr);
+    return wifi_tcp_keep_alive(tcp_keep_alive, wlan.sta_mac, ipv4_addr);
 }
 #endif /*ENABLE_OFFLOAD*/
 
@@ -7491,8 +7501,9 @@ int _wlan_rrm_scan_cb(unsigned int count)
         *buf_pos++      = WLAN_RRM_MEASURE_TYPE_BEACON;
         meas_report_len = buf_pos - rep_buf;
         /* send beacon report */
-        wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.sta_mac, wlan.rrm_scan_cb_param.dst_addr,
-                                        rep_buf, (t_u32)meas_report_len, (bool)wlan.rrm_scan_cb_param.protect);
+        wlan_send_mgmt_rm_beacon_report(wlan.rrm_scan_cb_param.dialog_tok, wlan.sta_mac,
+                                        wlan.rrm_scan_cb_param.dst_addr, rep_buf, (t_u32)meas_report_len,
+                                        (bool)wlan.rrm_scan_cb_param.protect);
     }
 
     os_mem_free(rep_buf);
