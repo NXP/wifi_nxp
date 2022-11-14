@@ -3008,6 +3008,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
+#ifdef CONFIG_TX_RX_HISTOGRAM
                     const HostCmd_DS_TX_RX_HISTOGRAM *txrx_histogram = &resp->params.histogram;
                     if (txrx_histogram->action != HostCmd_ACT_SET_TX_PER_TRACKING)
                     {
@@ -3034,6 +3035,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             }
                         }
                     }
+#endif
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
                 else
