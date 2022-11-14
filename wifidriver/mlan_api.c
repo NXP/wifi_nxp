@@ -2227,6 +2227,13 @@ int wifi_set_region_code(t_u32 region_code)
         .param.region_code = region_code,
     };
 
+    if((misc.param.region_code == 0x41) || (misc.param.region_code == 0xFE))
+    {
+        (void)PRINTF("Region code 0XFF is used for Japan to support channels of both 2.4GHz band and 5GHz band.\r\n");
+        (void)PRINTF("Region code 0X40 is used for Japan to support channels of 5GHz band.\r\n");
+        return -WM_FAIL;
+    }
+
     mlan_ioctl_req req = {
         .bss_index = 0,
         .pbuf      = (t_u8 *)&misc,

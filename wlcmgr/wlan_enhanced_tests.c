@@ -333,10 +333,12 @@ static void dump_wlan_set_regioncode_usage(void)
     (void)PRINTF("0x30 : ETSI, Australia, Republic of Korea\r\n");
     (void)PRINTF("0x32 : France\r\n");
     (void)PRINTF("0x40 : Japan\r\n");
-    (void)PRINTF("0x41 : Japan\r\n");
     (void)PRINTF("0x50 : China\r\n");
+    (void)PRINTF("0xFF : Japan Special\r\n");
+#ifndef CONFIG_MLAN_WMSDK
+    (void)PRINTF("0x41 : Japan\r\n");
     (void)PRINTF("0xFE : Japan\r\n");
-    (void)PRINTF("0xFF : Special\r\n");
+#endif
 }
 
 static void test_wlan_set_regioncode(int argc, char **argv)

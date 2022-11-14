@@ -43,11 +43,13 @@ static const region_code_mapping_t region_code_mapping[] = {
     {"AU ", 0x30}, /* Australia */
     {"KR ", 0x30}, /* Republic Of Korea */
     {"FR ", 0x32}, /* France */
-    {"JP ", 0xFF}, /* Japan */
-    {"CN ", 0x50}, /* China */
     {"JP ", 0x40}, /* Japan */
+    {"CN ", 0x50}, /* China */
+    {"JP ", 0xFF}, /* Japan Special */
+#ifndef CONFIG_MLAN_WMSDK
     {"JP ", 0x41}, /* Japan */
-    {"JP ", 0xFE}, /* Japan special */
+    {"JP ", 0xFE}, /* Japan */
+#endif
 };
 
 #ifdef STA_SUPPORT

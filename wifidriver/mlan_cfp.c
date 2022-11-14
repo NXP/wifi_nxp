@@ -234,6 +234,7 @@ static const chan_freq_power_t channel_freq_power_FR_BG[] = {
     {11, 2462, WLAN_TX_PWR_FR_10MW, (bool)MFALSE}, {12, 2467, WLAN_TX_PWR_FR_10MW, (bool)MFALSE},
     {13, 2472, WLAN_TX_PWR_FR_10MW, (bool)MFALSE}};
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Band: 'B/G', Region: Japan */
 static const chan_freq_power_t channel_freq_power_JPN41_BG[] = {
     {1, 2412, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},  {2, 2417, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},
@@ -243,10 +244,12 @@ static const chan_freq_power_t channel_freq_power_JPN41_BG[] = {
     {9, 2452, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},  {10, 2457, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},
     {11, 2462, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE}, {12, 2467, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},
     {13, 2472, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE}};
+#endif
 
 /** Band: 'B/G', Region: Japan */
 static const chan_freq_power_t channel_freq_power_JPN40_BG[] = {{14, 2484, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE}};
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Band: 'B/G', Region: Japan */
 static const chan_freq_power_t channel_freq_power_JPNFE_BG[] = {
     {1, 2412, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},  {2, 2417, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},
@@ -256,6 +259,7 @@ static const chan_freq_power_t channel_freq_power_JPNFE_BG[] = {
     {9, 2452, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},  {10, 2457, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE},
     {11, 2462, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MFALSE}, {12, 2467, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MTRUE},
     {13, 2472, WLAN_TX_PWR_JP_BG_DEFAULT, (bool)MTRUE}};
+#endif
 
 /** Band : 'B/G', Region: Special */
 static const chan_freq_power_t channel_freq_power_SPECIAL_BG[] = {
@@ -321,21 +325,25 @@ static cfp_table_t cfp_table_BG[] = {
         (const chan_freq_power_t *)channel_freq_power_JPN40_BG,
         (int)(sizeof(channel_freq_power_JPN40_BG) / sizeof(chan_freq_power_t)),
     },
+#ifndef CONFIG_MLAN_WMSDK
     {
         0x41, /* JAPAN */
         (const chan_freq_power_t *)channel_freq_power_JPN41_BG,
         (int)(sizeof(channel_freq_power_JPN41_BG) / sizeof(chan_freq_power_t)),
     },
+#endif
     {
         0x50, /* China */
         (const chan_freq_power_t *)channel_freq_power_EU_BG,
         (int)(sizeof(channel_freq_power_EU_BG) / sizeof(chan_freq_power_t)),
     },
+#ifndef CONFIG_MLAN_WMSDK
     {
         0xfe, /* JAPAN */
         (const chan_freq_power_t *)channel_freq_power_JPNFE_BG,
         (int)(sizeof(channel_freq_power_JPNFE_BG) / sizeof(chan_freq_power_t)),
     },
+#endif
     {
         0xff, /* Special */
         (const chan_freq_power_t *)channel_freq_power_SPECIAL_BG,
@@ -534,21 +542,25 @@ static cfp_table_t cfp_table_A[] = {
         (const chan_freq_power_t *)channel_freq_power_JPN_A,
         (int)((int)(sizeof(channel_freq_power_JPN_A) / sizeof(chan_freq_power_t))),
     },
+#ifndef CONFIG_MLAN_WMSDK
     {
         0x41, /* JAPAN */
         (const chan_freq_power_t *)channel_freq_power_JPN_A,
         (int)(sizeof(channel_freq_power_JPN_A) / sizeof(chan_freq_power_t)),
     },
+#endif
     {
         0x50, /* China */
         (const chan_freq_power_t *)channel_freq_power_CN_A,
         (int)(sizeof(channel_freq_power_CN_A) / sizeof(chan_freq_power_t)),
     },
+#ifndef CONFIG_MLAN_WMSDK
     {
         0xfe, /* JAPAN */
         (const chan_freq_power_t *)channel_freq_power_NULL_A,
         (int)(sizeof(channel_freq_power_NULL_A) / sizeof(chan_freq_power_t)),
     },
+#endif
     {
         0xff, /* Special */
         (const chan_freq_power_t *)channel_freq_power_JPN_A,
