@@ -278,7 +278,6 @@ typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
     t_u8 immediate_block_ack : 1;
 } MLAN_PACK_END IEEEtypes_CapInfo_t, *pIEEEtypes_CapInfo_t;
 #endif /* BIG_ENDIAN_SUPPORT */
-
 #ifdef MULTI_BSSID_SUPPORT
 /** IEEEtypes_Ssid_t */
 typedef MLAN_PACK_START struct _IEEEtypes_Ssid_t
@@ -291,7 +290,6 @@ typedef MLAN_PACK_START struct _IEEEtypes_Ssid_t
     t_u8 ssid[MLAN_MAX_SSID_LENGTH];
 } MLAN_PACK_END IEEEtypes_Ssid_t, *pIEEEtypes_Ssid_t;
 #endif
-
 /** IEEEtypes_CfParamSet_t */
 typedef MLAN_PACK_START struct _IEEEtypes_CfParamSet_t
 {
@@ -1692,9 +1690,9 @@ typedef MLAN_PACK_START struct
      */
     wlan_user_scan_chan chan_list[WLAN_USER_SCAN_CHAN_MAX];
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-	/** scan channel gap */
-	t_u16 scan_chan_gap;
-#endif	
+    /** scan channel gap */
+    t_u16 scan_chan_gap;
+#endif
 } MLAN_PACK_END wlan_user_scan_cfg;
 #ifdef CONFIG_ROAMING
 /** Default scan interval in millisecond*/

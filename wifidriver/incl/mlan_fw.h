@@ -697,14 +697,12 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** Check if Embedded OWE is supported by firmware */
 #define IS_FW_SUPPORT_EMBEDDED_OWE(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EMBEDDED_OWE_SUPPORT)
 #endif
-
 #ifdef MULTI_BSSID_SUPPORT
 /** FW cap info bit 9: Multi BSSID Support */
 #define FW_CAPINFO_EXT_MULTI_BSSID MBIT(9)
 /** Check if Multi BSSID supported by firmware */
 #define IS_FW_SUPPORT_MULTIBSSID(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_MULTI_BSSID)
 #endif
-
 /** LLC/SNAP header len   */
 #define LLC_SNAP_LEN 8
 
@@ -1634,7 +1632,7 @@ typedef enum _ENH_PS_MODES
 /** Event ID: BSS idle event */
 #define EVENT_MICRO_AP_BSS_IDLE 0x00000043
 /** Event ID: BSS active event */
-#define EVENT_MICRO_AP_BSS_ACTIVE  0x00000044
+#define EVENT_MICRO_AP_BSS_ACTIVE 0x00000044
 /** Event ID: uAP in connected state for non-Open Auth*/
 #define EVENT_MICRO_AP_RSN_CONNECT 0x00000051
 
@@ -6657,26 +6655,26 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
 {
     /** Action */
     t_u16 action;
-	/** enable/disabel tsp algothrim*/
-	t_u16 thermalPowerMgmtenable;
-	/** backoff*/
-	t_u32 powerMgmtBackoff;
-	/** high Threshold*/
-	t_u32 highPwrBOThrshld;
-	/** low Threshold*/
-	t_u32 lowPwrBOThrshld;
+    /** enable/disabel tsp algothrim*/
+    t_u16 thermalPowerMgmtenable;
+    /** backoff*/
+    t_u32 powerMgmtBackoff;
+    /** high Threshold*/
+    t_u32 highPwrBOThrshld;
+    /** low Threshold*/
+    t_u32 lowPwrBOThrshld;
 } MLAN_PACK_END HostCmd_DS_TSP_CFG;
 
 typedef MLAN_PACK_START struct _TSP_CFG
 {
-	/** enable/disabel tsp algothrim*/
-	t_u16 *thermalPowerMgmtenable;
-	/** backoff*/
-	t_u32 *powerMgmtBackoff;
-	/** high Threshold*/
-	t_u32 *highPwrBOThrshld;
-	/** low Threshold*/
-	t_u32 *lowPwrBOThrshld;
+    /** enable/disabel tsp algothrim*/
+    t_u16 *thermalPowerMgmtenable;
+    /** backoff*/
+    t_u32 *powerMgmtBackoff;
+    /** high Threshold*/
+    t_u32 *highPwrBOThrshld;
+    /** low Threshold*/
+    t_u32 *lowPwrBOThrshld;
 } MLAN_PACK_END TSP_CFG;
 #endif
 
@@ -6928,7 +6926,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_CSI_CFG csi_params;
 #endif
 #ifdef CONFIG_TSP
-		HostCmd_DS_TSP_CFG tsp_cfg;
+        HostCmd_DS_TSP_CFG tsp_cfg;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

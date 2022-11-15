@@ -186,9 +186,9 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
 {
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     pmlan_adapter pmadapter = pmpriv->adapter;
-    t_u16 index = 0, insert = MFALSE, del_len;
+    t_u16 index = 0, insert                   = MFALSE, del_len;
     t_u8 del_ie[MAX_IE_SIZE], ie[MAX_IE_SIZE] = {0x0};
-    t_s32 cnt, tmp_len = 0;
+    t_s32 cnt, tmp_len                        = 0;
     t_u8 *tmp_ie;
 
     ENTER();
@@ -1389,39 +1389,39 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
 {
     RxPD *rxpd                        = (RxPD *)data;
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = NULL;
-	t_u16 sub_type                    = 0;
-	wlan_802_11_header *pieee_pkt_hdr = MNULL;
-	t_u8 category                     = 0;
-	mlan_private *priv                = mlan_adap->priv[0];	
-	mlan_status ret 				  = MLAN_STATUS_SUCCESS;
+    t_u16 sub_type                    = 0;
+    wlan_802_11_header *pieee_pkt_hdr = MNULL;
+    t_u8 category                     = 0;
+    mlan_private *priv                = mlan_adap->priv[0];
+    mlan_status ret                   = MLAN_STATUS_SUCCESS;
 
     pmgmt_pkt_hdr = (wlan_mgmt_pkt *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
-    pieee_pkt_hdr = (wlan_802_11_header *)&pmgmt_pkt_hdr->wlan_header;	
-	sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-	category      = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
-	
+    pieee_pkt_hdr = (wlan_802_11_header *)&pmgmt_pkt_hdr->wlan_header;
+    sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+    category      = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
+
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)
     {
-		if ((((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
+        if ((((1 << sub_type) & priv->mgmt_frame_passthru_mask) == 0) && (sub_type != SUBTYPE_ACTION))
         {
             PRINTM(MINFO, "Dropping mgmt frame for subtype %d.\n", sub_type);
-			LEAVE();
+            LEAVE();
             return ret;
         }
 
         if (sub_type == SUBTYPE_ACTION)
         {
-            if(category == IEEE_MGMT_ACTION_CATEGORY_BLOCK_ACK)
+            if (category == IEEE_MGMT_ACTION_CATEGORY_BLOCK_ACK)
             {
                 PRINTM(MINFO, "Dropping mgmt frame for category %d.\n", category);
-				LEAVE();
+                LEAVE();
                 return ret;
-		    }           
+            }
         }
-	}
+    }
 
-	ret = MLAN_STATUS_FAILURE;
-	return ret;
+    ret = MLAN_STATUS_FAILURE;
+    return ret;
 }
 
 #ifndef CONFIG_MLAN_WMSDK

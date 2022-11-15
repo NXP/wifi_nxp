@@ -1442,6 +1442,10 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
 #ifdef RW610
         pext_cap->ext_cap.BSS_CoexistSupport = 0;
 #endif
+#ifdef MULTI_BSSID_SUPPORT
+        if (pbss_desc && pbss_desc->multi_bssid_ap)
+            SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
+#endif
         if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
         {
             if ((((t_u8)(pmpriv->hotspot_cfg >> 8)) & HOTSPOT_ENABLE_INTERWORKING_IND) != 0U)
