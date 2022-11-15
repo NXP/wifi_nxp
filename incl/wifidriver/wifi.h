@@ -1410,4 +1410,13 @@ void set_ecsa_block_tx_flag(bool block_tx);
 bool get_ecsa_block_tx_flag();
 #endif
 
+#if defined(CONFIG_WMM_UAPSD) || defined(CONFIG_WMM)
+int wifi_set_wmm_qos_cfg(t_u8 qos_cfg);
+void wifi_set_sleep_period(uint16_t sleep_period);
+#endif
+
+#ifdef CONFIG_WMM
+t_u8 wifi_wmm_get_packet_cnt(void);
+#endif
+
 #endif

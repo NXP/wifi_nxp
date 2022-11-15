@@ -2206,6 +2206,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         resp);
                 break;
 #endif
+#ifdef CONFIG_WMM_UAPSD
+            case HostCmd_CMD_802_11_SLEEP_PERIOD:
+                rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                if (rv != MLAN_STATUS_SUCCESS)
+                    return -WM_FAIL;
+                break;
+#endif
             case HostCmd_CMD_802_11_RF_CHANNEL:
             {
                 const HostCmd_DS_802_11_RF_CHANNEL *ch = &resp->params.rf_channel;
@@ -3002,8 +3009,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     const HostCmd_DS_TX_RX_HISTOGRAM *txrx_histogram = &resp->params.histogram;
-                    if(txrx_histogram->action != HostCmd_ACT_SET_TX_PER_TRACKING)
-					{
+                    if (txrx_histogram->action != HostCmd_ACT_SET_TX_PER_TRACKING)
+                    {
                         t_u16 cmdsize   = wlan_le16_to_cpu(resp->size);
                         t_u16 length    = 0;
                         t_u16 data_size = 0;
@@ -3923,6 +3930,30 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
         case EVENT_PS_AWAKE:
             wevt_d("|");
+#ifdef CONFIG_WMM_UAPSD
+            if (!pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->sleep_period.period)
+            {
+                pmpriv->adapter->pps_uapsd_mode = MTRUE;
+                PRINTM(MEVENT, "PPS/UAPSD mode activated\n");
+            }
+
+            if (pmpriv->adapter->pps_uapsd_mode)
+            {
+                os_semaphore_put(&uapsd_sem);
+                /* As the wifi_driver task has priority of 3, so sleep 1ms to yield to the CMD sending task */
+                os_thread_sleep(os_msec_to_ticks(1));
+            }
+            pmpriv->adapter->tx_lock_flag = MFALSE;
+            if (pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->gen_null_pkt &&
+                (wifi_wmm_get_packet_cnt() == 0))
+            {
+                struct bus_message msg_null_data;
+                msg_null_data.event  = MLAN_TYPE_NULL_DATA;
+                msg_null_data.reason = 0;
+                /* wifi_driver_tx task process the null packet sending */
+                os_queue_send(&wm_wifi.tx_data, &msg_null_data, OS_NO_WAIT);
+            }
+#endif
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
             if (mlan_adap->ps_state == PS_STATE_SLEEP)
             {

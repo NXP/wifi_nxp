@@ -260,6 +260,11 @@ typedef enum
 /** BITMAP for Action frame */
 #define WLAN_MGMT_ACTION MBIT(13)
 
+#ifdef CONFIG_WMM_UAPSD
+#define WMM_UAPSD_QOS_INFO     0x0F
+#define WMM_UAPSD_SLEEP_PERIOD 20
+#endif
+
 /** Enum for wlan errors*/
 enum wm_wlan_errno
 {
@@ -4298,6 +4303,21 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t *value);
+#endif
+
+#ifdef CONFIG_WMM_UAPSD
+/**
+ * Enable/disable UAPSD feature
+ * \param[in] uapsd_enable 0 to Disable, 1 to enable uapsd.
+ *
+ */
+void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
+/**
+ * Set uapsd sleep time
+ * \param[in] sleep_period uapsd sleep time, unit is ms.
+ *
+ */
+void wlan_set_sleep_period(uint16_t sleep_period);
 #endif
 
 #endif /* __WLAN_H__ */

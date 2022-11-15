@@ -610,7 +610,7 @@ static mlan_status wlan_cmd_802_11_mac_address(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_UAPSD
 /**
  * @brief This function prepares command of sleep_period.
  *
@@ -641,7 +641,8 @@ static mlan_status wlan_cmd_802_11_sleep_period(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
 /**
  * @brief This function prepares command of sleep_params.
  *
@@ -2013,7 +2014,7 @@ int wlan_parse_getdata(HostCmd_DS_COMMAND *resp, mlan_ds_subscribe_evt *sub_evt)
     HostCmd_DS_SUBSCRIBE_EVENT *evt                     = &resp->params.subscribe_event;
     int tyhdsize                                        = sizeof(MrvlIEtypesHeader_t);
     t_u8 *tlv0                                          = (t_u8 *)resp + sizeof(HostCmd_DS_SUBSCRIBE_EVENT) + S_DS_GEN;
-	t_u8 *tlv = tlv0;
+    t_u8 *tlv                                           = tlv0;
     MrvlIEtypes_BeaconLowRssiThreshold_t *rssi_low      = MNULL;
     MrvlIEtypes_BeaconLowSnrThreshold_t *snr_low        = MNULL;
     MrvlIEtypes_FailureCount_t *fail_count              = MNULL;
@@ -2500,10 +2501,12 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_802_11_HS_CFG_ENH:
             ret = wlan_cmd_802_11_hs_cfg(pmpriv, cmd_ptr, cmd_action, (hs_config_param *)pdata_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_UAPSD
         case HostCmd_CMD_802_11_SLEEP_PERIOD:
             ret = wlan_cmd_802_11_sleep_period(pmpriv, cmd_ptr, cmd_action, (t_u16 *)pdata_buf);
             break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_SLEEP_PARAMS:
             ret = wlan_cmd_802_11_sleep_params(pmpriv, cmd_ptr, cmd_action, (t_u16 *)pdata_buf);
             break;

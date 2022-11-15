@@ -4255,3 +4255,36 @@ int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 
 }
 
 #endif
+
+#ifdef CONFIG_WMM_UAPSD
+int wifi_set_wmm_qos_cfg(t_u8 qos_cfg)
+{
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_ioctl_req req;
+    mlan_ds_wmm_cfg cfg;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&cfg, 0x00, sizeof(mlan_ds_wmm_cfg));
+    cfg.sub_command   = MLAN_OID_WMM_CFG_QOS;
+    cfg.param.qos_cfg = qos_cfg;
+    req.pbuf          = (t_u8 *)&cfg;
+    req.buf_len       = sizeof(mlan_ds_wmm_cfg);
+    req.req_id        = MLAN_IOCTL_WMM_CFG;
+    req.action        = MLAN_ACT_SET;
+
+    ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+    return ret;
+}
+
+void wifi_set_sleep_period(uint16_t sleep_period)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_STA);
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SLEEP_PERIOD, HostCmd_ACT_GEN_SET,
+                             0, NULL, &sleep_period, cmd);
+    wifi_wait_for_cmdresp(NULL);
+}
+#endif

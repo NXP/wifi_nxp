@@ -115,6 +115,16 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
         priv->intf_state_11h.adhoc_auto_sel_chan = MTRUE;
     }
 
+#ifdef CONFIG_WMM_UAPSD
+    /* Need to put uapsd_sem before getting ra_list.plock in wlan_ralist_del_all_enh */
+    if (priv->adapter->pps_uapsd_mode)
+    {
+        os_semaphore_put(&uapsd_sem);
+    }
+    priv->adapter->tx_lock_flag   = MFALSE;
+    priv->adapter->pps_uapsd_mode = MFALSE;
+#endif
+
     if (drv_disconnect == MTRUE)
     {
         /* Free Tx and Rx packets, report disconnect to upper layer */
@@ -125,10 +135,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
     }
 
 #ifndef CONFIG_MLAN_WMSDK
-    pmadapter->tx_lock_flag   = MFALSE;
-    pmadapter->pps_uapsd_mode = MFALSE;
-    pmadapter->delay_null_pkt = MFALSE;
-
+    priv->adapter->delay_null_pkt = MFALSE;
     if ((wlan_11d_is_enabled(priv)) && (priv->state_11d.user_enable_11d == DISABLE_11D))
     {
         priv->state_11d.enable_11d = DISABLE_11D;

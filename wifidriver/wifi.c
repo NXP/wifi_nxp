@@ -510,7 +510,7 @@ void wifi_sdio_reg_dbg()
         for (reg = reg_start; reg <= reg_end;)
         {
 #ifndef RW610
-            ret  = sdio_drv_creg_read(reg, func, &resp);
+            ret = sdio_drv_creg_read(reg, func, &resp);
 #endif
             data = resp & 0xff;
             if (loop == 2)
@@ -913,6 +913,13 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
+#ifdef CONFIG_WMM_UAPSD
+    /*
+     * No PS handshake between driver and FW for the uapsd case,
+     * CMD should not wakeup FW, needs to wait to send till receiving PS_AWAKE Event from FW.
+     */
+    os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+#endif
 
     /*
      * This is the private pointer. Only the command response handler
@@ -967,6 +974,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     }
 
     wm_wifi.cmd_resp_priv = NULL;
+#ifdef CONFIG_WMM_UAPSD
+    os_semaphore_put(&uapsd_sem);
+#endif
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
     os_rwlock_read_unlock(&ps_rwlock);
 #endif
@@ -2158,8 +2168,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
  *  return MLAN_STATUS_SUCESS to continue looping ralists,
  *  return MLAN_STATUS_RESOURCE to break looping ralists
  */
-static mlan_status wifi_xmit_ralist_pkts(
-    mlan_private *priv, t_u8 ac, raListTbl *ralist, int *pkt_cnt)
+static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist, int *pkt_cnt)
 {
     mlan_status ret;
 
@@ -2495,7 +2504,6 @@ static int wifi_xmit_wmm_ac_pkts(t_u8 interface, mlan_wmm_ac_e ac)
             wm_wifi.send_index[ac]++;
             if (wm_wifi.send_index[ac] >= max_buf[ac])
                 wm_wifi.send_index[ac] = 0;
-
         }
     }
 
@@ -2515,7 +2523,7 @@ static void wifi_driver_tx(void *data)
     {
     get_msg:
 #ifdef CONFIG_ECSA
-        while(true == get_ecsa_block_tx_flag())
+        while (true == get_ecsa_block_tx_flag())
         {
             os_thread_sleep((get_ecsa_block_tx_time() + 2) * wm_wifi.beacon_period);
         }
@@ -2523,8 +2531,15 @@ static void wifi_driver_tx(void *data)
         ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         if (ret == WM_SUCCESS)
         {
-            if (msg.event == MLAN_TYPE_DATA)
+            if (msg.event == MLAN_TYPE_DATA || msg.event == MLAN_TYPE_NULL_DATA)
             {
+#ifdef CONFIG_WMM_UAPSD
+                while (mlan_adap->priv[msg.reason]->adapter->pps_uapsd_mode &&
+                       (mlan_adap->priv[msg.reason]->adapter->tx_lock_flag == MTRUE))
+                {
+                    os_thread_sleep(os_msec_to_ticks(1));
+                }
+#endif
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
                 ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
 #else
@@ -2537,6 +2552,12 @@ static void wifi_driver_tx(void *data)
                 }
 #ifdef CONFIG_WMM_ENH
                 wifi_xmit_wmm_ac_pkts_enh();
+                /* Only send packet when the outbuf pool is not empty */
+                if (wifi_wmm_get_packet_cnt() > 0)
+                {
+                    wifi_xmit_wmm_ac_pkts_enh();
+                }
+
 #else
                 if (wm_wifi.pkt_cnt[WMM_AC_VO] > 0)
                 {
@@ -2554,10 +2575,39 @@ static void wifi_driver_tx(void *data)
                 {
                     wifi_xmit_wmm_ac_pkts(msg.reason, WMM_AC_BK);
                 }
-                else
 #endif
+#ifdef CONFIG_WMM_UAPSD
+                else
                 {
+                    if (msg.event == MLAN_TYPE_NULL_DATA)
+                    {
+                        /* send null packet until the finish of CMD response processing */
+                        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+                        if (mlan_adap->priv[msg.reason]->adapter->pps_uapsd_mode &&
+                            mlan_adap->priv[msg.reason]->media_connected &&
+                            mlan_adap->priv[msg.reason]->adapter->gen_null_pkt)
+                        {
+                            if (wlan_send_null_packet(mlan_adap->priv[msg.reason],
+                                                      MRVDRV_TxPD_POWER_MGMT_NULL_PACKET |
+                                                          MRVDRV_TxPD_POWER_MGMT_LAST_PACKET) == MLAN_STATUS_SUCCESS)
+                            {
+                                mlan_adap->priv[msg.reason]->adapter->tx_lock_flag = MTRUE;
+                            }
+                        }
+                        else
+                        {
+                            wifi_d(
+                                "No need to send null packet, pps_uapsd_mode: %d, media_connected: %d, gen_null_pkt: "
+                                "%d",
+                                mlan_adap->priv[msg.reason]->adapter->pps_uapsd_mode,
+                                mlan_adap->priv[msg.reason]->media_connected,
+                                mlan_adap->priv[msg.reason]->adapter->gen_null_pkt);
+                            os_semaphore_put(&uapsd_sem);
+                            mlan_adap->priv[msg.reason]->adapter->tx_lock_flag = MFALSE;
+                        }
+                    }
                 }
+#endif
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
                 os_rwlock_read_unlock(&sleep_rwlock);

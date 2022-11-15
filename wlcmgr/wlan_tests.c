@@ -3693,7 +3693,7 @@ static void dump_wlan_reg_access_usage()
 static void test_wlan_reg_access(int argc, char **argv)
 {
     t_u32 type, offset, value;
-    t_u16 action  = ACTION_GET;
+    t_u16 action = ACTION_GET;
     int ret;
 
     if (argc < 3 || argc > 4)
@@ -3709,12 +3709,12 @@ static void test_wlan_reg_access(int argc, char **argv)
         (void)PRINTF("Error: Illegal register type %s. Must be either '1','2' or '3'.\r\n", argv[1]);
         return;
     }
-    type    = a2hex_or_atoi(argv[1]);
-    offset  = a2hex_or_atoi(argv[2]);
+    type   = a2hex_or_atoi(argv[1]);
+    offset = a2hex_or_atoi(argv[2]);
     if (argc == 4)
     {
         action = ACTION_SET;
-        value = a2hex_or_atoi(argv[3]);
+        value  = a2hex_or_atoi(argv[3]);
     }
 
     ret = wlan_reg_access(type, action, offset, (uint32_t *)&value);
@@ -3728,6 +3728,38 @@ static void test_wlan_reg_access(int argc, char **argv)
     }
     else
         (void)PRINTF("Read/write register failed");
+}
+#endif
+
+#ifdef CONFIG_WMM_UAPSD
+static void test_wlan_set_wmm_uapsd(int argc, char **argv)
+{
+    t_u8 enable;
+
+    enable = atoi(argv[1]);
+    if (argc != 2 || (enable != 0 && enable != 1))
+    {
+        (void)PRINTF("Usage: %s <enable>\r\n", argv[0]);
+        (void)PRINTF("0 to Disable UAPSD\r\n");
+        (void)PRINTF("1 to Enable UAPSD\r\n");
+        return;
+    }
+
+    wlan_set_wmm_uapsd(enable);
+}
+
+static void test_wlan_set_sleep_period(int argc, char **argv)
+{
+    uint16_t period;
+
+    period = (uint16_t)atoi(argv[1]);
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <period(ms)>\r\n", argv[0]);
+        return;
+    }
+
+    wlan_set_sleep_period(period);
 }
 #endif
 
@@ -3857,6 +3889,11 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_REG_ACCESS
     {"wlan-reg-access", "<type> <offset> [value]", test_wlan_reg_access},
 #endif
+#ifdef CONFIG_WMM_UAPSD
+    {"wlan-uapsd-enable", "<uapsd_enable>", test_wlan_set_wmm_uapsd},
+    {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_set_sleep_period},
+#endif
+
 };
 
 /* Register our commands with the MTF. */

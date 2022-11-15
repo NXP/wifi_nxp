@@ -623,7 +623,8 @@ static mlan_status wlan_ret_802_11_rf_tx_power(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-
+#endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WMM_UAPSD
 /**
  *  @brief This function handles the command response of sleep_period
  *
@@ -652,6 +653,7 @@ static mlan_status wlan_ret_802_11_sleep_period(IN pmlan_private pmpriv,
     pmpriv->adapter->sleep_period.period = sleep_pd;
 
     pmpriv->adapter->pps_uapsd_mode = MFALSE;
+    pmpriv->adapter->tx_lock_flag   = MFALSE;
     if ((pmpriv->adapter->sleep_period.period != 0) &&
         (pmpriv->adapter->sleep_period.period != SLEEP_PERIOD_RESERVED_FF))
     {
@@ -659,14 +661,18 @@ static mlan_status wlan_ret_802_11_sleep_period(IN pmlan_private pmpriv,
     }
     else
     {
+#ifndef CONFIG_MLAN_WMSDK
         pmpriv->adapter->delay_null_pkt = MFALSE;
         pmpriv->adapter->gen_null_pkt   = MFALSE;
+#endif
+        pmpriv->adapter->gen_null_pkt = MFALSE;
     }
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of sleep_params
  *
@@ -1605,9 +1611,13 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_HS_CFG_ENH:
             ret = wlan_ret_802_11_hs_cfg(pmpriv, resp, pioctl_buf);
             break;
+#endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WMM_UAPSD
         case HostCmd_CMD_802_11_SLEEP_PERIOD:
             ret = wlan_ret_802_11_sleep_period(pmpriv, resp, pioctl_buf);
             break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_802_11_SLEEP_PARAMS:
             ret = wlan_ret_802_11_sleep_params(pmpriv, resp, pioctl_buf);
             break;

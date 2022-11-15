@@ -2248,7 +2248,8 @@ static mlan_status wlan_wmm_ioctl_enable(IN pmlan_adapter pmadapter, IN pmlan_io
     LEAVE();
     return ret;
 }
-
+#endif
+#ifdef CONFIG_WMM_UAPSD
 /**
  *  @brief Set/Get WMM QoS configuration
  *
@@ -2279,7 +2280,8 @@ static mlan_status wlan_wmm_ioctl_qos(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     LEAVE();
     return ret;
 }
-
+#endif
+#ifdef CONFIG_WMM_UAPSD
 /**
  *  @brief Request for add a TSPEC
  *
@@ -2457,7 +2459,8 @@ static mlan_status wlan_wmm_ioctl_ts_status(IN pmlan_adapter pmadapter, IN pmlan
     LEAVE();
     return ret;
 }
-
+#endif
+#ifdef CONFIG_WMM_UAPSD
 /**
  *  @brief WMM configuration handler
  *
@@ -2485,12 +2488,15 @@ static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     wmm = (mlan_ds_wmm_cfg *)pioctl_req->pbuf;
     switch (wmm->sub_command)
     {
+#ifndef CONFIG_MLAN_WMSDK
         case MLAN_OID_WMM_CFG_ENABLE:
             status = wlan_wmm_ioctl_enable(pmadapter, pioctl_req);
             break;
+#endif
         case MLAN_OID_WMM_CFG_QOS:
             status = wlan_wmm_ioctl_qos(pmadapter, pioctl_req);
             break;
+#ifndef CONFIG_MLAN_WMSDK
         case MLAN_OID_WMM_CFG_ADDTS:
             status = wlan_wmm_ioctl_addts_req(pmadapter, pioctl_req);
             break;
@@ -2509,6 +2515,7 @@ static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
         case MLAN_OID_WMM_CFG_TS_STATUS:
             status = wlan_wmm_ioctl_ts_status(pmadapter, pioctl_req);
             break;
+#endif
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
@@ -2517,7 +2524,8 @@ static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     LEAVE();
     return status;
 }
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/Get WPA IE
  *
@@ -5905,9 +5913,13 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_PM_CFG:
             status = wlan_pm_ioctl(pmadapter, pioctl_req);
             break;
+#endif
+#ifdef CONFIG_WMM_UAPSD
         case MLAN_IOCTL_WMM_CFG:
             status = wlan_wmm_cfg_ioctl(pmadapter, pioctl_req);
             break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case MLAN_IOCTL_WPS_CFG:
             status = wlan_wps_cfg_ioctl(pmadapter, pioctl_req);
             break;

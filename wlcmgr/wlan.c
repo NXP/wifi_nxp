@@ -74,6 +74,10 @@ os_rw_lock_t sleep_rwlock;
 os_rw_lock_t ps_rwlock;
 #endif
 
+#ifdef CONFIG_WMM_UAPSD
+os_semaphore_t uapsd_sem;
+#endif
+
 #ifdef CONFIG_WPS2
 int wps_session_attempt;
 #endif
@@ -4632,6 +4636,15 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     ret = os_rwlock_create_with_cb(&ps_rwlock, "ps_mutex", "ps_lock", ps_wakeup_card_cb);
 #endif
 
+#ifdef CONFIG_WMM_UAPSD
+    ret = os_semaphore_create(&uapsd_sem, "uapsd sem");
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Create uapsd sem failed");
+        return ret;
+    }
+#endif
+
     ret = wifi_init(fw_start_addr, size);
     if (ret != 0)
     {
@@ -4690,6 +4703,14 @@ void wlan_deinit(int action)
     os_rwlock_delete(&sleep_rwlock);
 #else
     os_rwlock_delete(&ps_rwlock);
+#endif
+
+#ifdef CONFIG_WMM_UAPSD
+    if (uapsd_sem != NULL)
+    {
+        os_semaphore_delete(&uapsd_sem);
+        uapsd_sem = NULL;
+    }
 #endif
 }
 
@@ -8444,5 +8465,38 @@ int wlan_set_threshold_link_quality(unsigned int event_id,
 int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t *value)
 {
     return wifi_reg_access(type, action, offset, value);
+}
+#endif
+
+#ifdef CONFIG_WMM_UAPSD
+void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
+{
+    unsigned int condition = 0;
+
+    if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
+    {
+        (void)PRINTF("Failed to enable/disable UAPSD, because uAP is up/STA is connecting\n");
+        return;
+    }
+
+    if (uapsd_enable)
+    {
+        wifi_set_wmm_qos_cfg(WMM_UAPSD_QOS_INFO);
+        wifi_set_sleep_period(WMM_UAPSD_SLEEP_PERIOD);
+        condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
+#ifndef CONFIG_WNM_PS
+        wlan_ieeeps_on(condition);
+#endif
+    }
+    else
+    {
+        wifi_set_wmm_qos_cfg(0);
+        wifi_set_sleep_period(0);
+        wlan_ieeeps_off();
+    }
+}
+void wlan_set_sleep_period(uint16_t sleep_period)
+{
+    wifi_set_sleep_period(sleep_period);
 }
 #endif

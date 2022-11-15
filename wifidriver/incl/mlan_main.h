@@ -549,6 +549,8 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MLAN_TYPE_DATA 0U
 /** Type event */
 #define MLAN_TYPE_EVENT 3U
+/** Type null data */
+#define MLAN_TYPE_NULL_DATA 4
 
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 /** Multi port TX aggregation buffer size */
@@ -2039,7 +2041,7 @@ struct _mlan_adapter
     t_u16 config_bands;
     /** Pointer to channel list last sent to the firmware for scanning */
     ChanScanParamSet_t *pscan_channels;
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_UAPSD
     /** Tx lock flag */
     t_u8 tx_lock_flag;
 
@@ -2047,6 +2049,8 @@ struct _mlan_adapter
     sleep_params_t sleep_params;
     /** sleep_period_t (Enhanced Power Save) */
     sleep_period_t sleep_period;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
     /** Power Save mode */
     /**
      * Wlan802_11PowerModeCAM = disable
@@ -2096,12 +2100,15 @@ struct _mlan_adapter
     /** Deep Sleep flag */
     /** Device wakeup required flag */
     t_u8 pm_wakeup_card_req;
-
+#endif
+#ifdef CONFIG_WMM_UAPSD
     /** Gen NULL pkg */
     t_u16 gen_null_pkt;
 
     /** PPS/UAPSD mode flag */
     t_u16 pps_uapsd_mode;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
     /** Number of wakeup tries */
     t_u32 pm_wakeup_fw_try;
 
@@ -2253,16 +2260,16 @@ mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, I
 
 #if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
 mlan_status wlan_cmd_txrx_pkt_stats(pmlan_private pmpriv,
-                                                 IN HostCmd_DS_COMMAND *cmd,
-                                                 IN t_u16 cmd_action,
-                                                 IN t_void *pdata_buf);
+                                    IN HostCmd_DS_COMMAND *cmd,
+                                    IN t_u16 cmd_action,
+                                    IN t_void *pdata_buf);
 #endif
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
 mlan_status wlan_cmd_tx_pert(pmlan_private pmpriv,
-                                    IN HostCmd_DS_COMMAND *cmd,
-                                    IN t_u16 cmd_action,
-                                    IN t_void *pdata_buf);
+                             IN HostCmd_DS_COMMAND *cmd,
+                             IN t_u16 cmd_action,
+                             IN t_void *pdata_buf);
 #endif
 
 #ifdef CONFIG_TX_RX_HISTOGRAM

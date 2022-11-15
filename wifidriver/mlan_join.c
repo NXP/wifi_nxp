@@ -1199,9 +1199,11 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Send a Media Connected event, according to the Spec */
     pmpriv->media_connected = MTRUE;
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_UAPSD
     pmpriv->adapter->pps_uapsd_mode = MFALSE;
     pmpriv->adapter->tx_lock_flag   = MFALSE;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
     pmpriv->adapter->delay_null_pkt = MFALSE;
 #endif /* CONFIG_MLAN_WMSDK */
 
@@ -1247,14 +1249,15 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
 
     /* fixme: Enable if req */
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_UAPSD
     pmpriv->curr_bss_params.wmm_uapsd_enabled = MFALSE;
 
     if (pmpriv->wmm_enabled == MTRUE)
     {
         pmpriv->curr_bss_params.wmm_uapsd_enabled = pbss_desc->wmm_ie.qos_info.qos_uapsd;
     }
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
     PRINTM(MINFO, "ASSOC_RESP: curr_pkt_filter is 0x%x\n", pmpriv->curr_pkt_filter);
 #endif /* CONFIG_MLAN_WMSDK */
     if (pmpriv->sec_info.wpa_enabled || pmpriv->sec_info.wpa2_enabled)

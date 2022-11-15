@@ -1058,17 +1058,40 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
 mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 {
     int ret;
+#ifdef CONFIG_WMM_UAPSD
+    bool last_packet = 0;
+#endif
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     wifi_imu_lock();
+#ifdef CONFIG_WMM_UAPSD
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && (wifi_wmm_get_packet_cnt() == 1))
+    {
+        process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+        last_packet = 1;
+    }
+#endif
 
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
+#ifdef CONFIG_WMM_UAPSD
+        if (last_packet)
+            process_pkt_hdrs_flags((t_u8 *)tx_buf, 0);
+#endif
+
         wifi_imu_unlock();
         return MLAN_STATUS_FAILURE;
     }
+
+#ifdef CONFIG_WMM_UAPSD
+    if (last_packet)
+    {
+        mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
+        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+    }
+#endif
 
     wifi_imu_unlock();
     return MLAN_STATUS_SUCCESS;
@@ -1107,23 +1130,56 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
     }
     return MLAN_STATUS_SUCCESS;
 }
+
+INLINE t_u8 wifi_wmm_get_packet_cnt(void)
+{
+#ifdef CONFIG_WMM_ENH
+    return (MAX_WMM_BUF_NUM - mlan_adap->outbuf_pool.free_cnt);
+#else
+    return (wm_wifi.pkt_cnt[WMM_AC_BE] + wm_wifi.pkt_cnt[WMM_AC_BK] + wm_wifi.pkt_cnt[WMM_AC_VI] +
+            wm_wifi.pkt_cnt[WMM_AC_VO]);
+#endif
+}
+
 #ifdef AMSDU_IN_AMPDU
 mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txlen, t_u8 *tx_buf, t_u8 amsdu_cnt)
 {
     int ret;
+#ifdef CONFIG_WMM_UAPSD
+    bool last_packet = 0;
+#endif
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     wifi_imu_lock();
     process_amsdu_pkt_hdrs((t_u8 *)tx_buf, txlen, ac, interface);
+#ifdef CONFIG_WMM_UAPSD
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && (wifi_wmm_get_packet_cnt() == amsdu_cnt))
+    {
+        process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+        last_packet = 1;
+    }
+#endif
 
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
-    ;
+
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
+#ifdef CONFIG_WMM_UAPSD
+        if (last_packet)
+            process_pkt_hdrs_flags((t_u8 *)tx_buf, 0);
+#endif
         wifi_imu_unlock();
         return MLAN_STATUS_FAILURE;
     }
+
+#ifdef CONFIG_WMM_UAPSD
+    if (last_packet)
+    {
+        mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
+        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+    }
+#endif
 
     wifi_imu_unlock();
     return MLAN_STATUS_SUCCESS;

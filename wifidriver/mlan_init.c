@@ -573,9 +573,12 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->delay_to_ps      = DELAY_TO_PS_DEFAULT;
     pmadapter->enhanced_ps_mode = PS_MODE_AUTO;
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WMM_UAPSD
     pmadapter->gen_null_pkt   = MFALSE; /* Disable NULL Pkt generation-default */
     pmadapter->pps_uapsd_mode = MFALSE; /* Disable pps/uapsd mode -default */
+#endif
+#ifndef CONFIG_MLAN_WMSDK
+    pmadapter->delay_null_pkt = MFALSE;
 
     pmadapter->pm_wakeup_card_req = MFALSE;
 
@@ -640,11 +643,13 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
         sleep_cfm_buf->ps_cfm_sleep.action              = wlan_cpu_to_le16(SLEEP_CONFIRM);
         sleep_cfm_buf->ps_cfm_sleep.sleep_cfm.resp_ctrl = wlan_cpu_to_le16(RESP_NEEDED);
     }
+#endif
+#ifdef CONFIG_WMM_UAPSD
     (void)__memset(pmadapter, &pmadapter->sleep_params, 0, sizeof(pmadapter->sleep_params));
     (void)__memset(pmadapter, &pmadapter->sleep_period, 0, sizeof(pmadapter->sleep_period));
 
     pmadapter->tx_lock_flag = MFALSE;
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_WMM_UAPSD */
     pmadapter->null_pkt_interval = 0;
     pmadapter->fw_bands          = 0U;
     pmadapter->config_bands      = 0U;
