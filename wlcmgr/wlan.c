@@ -93,9 +93,9 @@ int wps_session_attempt;
         (void)wlan.cb(r, data);   \
     }
 
-#if !defined(CONFIG_WIFIDRIVER_PS_LOCK) || defined(CONFIG_WNM_PS)
+#if !defined(CONFIG_WIFIDRIVER_PS_LOCK)
 static bool ps_sleep_cb_sent;
-#endif /* CONFIG_WIFIDRIVER_PS_LOCK || CONFIG_WNM_PS*/
+#endif /* CONFIG_WIFIDRIVER_PS_LOCK */
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
 #define SCAN_CHANNEL_GAP 50U
@@ -299,8 +299,8 @@ static struct
     bool cm_deepsleepps_configured : 1;
     bool connect_wakelock_taken : 1;
     unsigned int wakeup_conditions;
-#ifdef CONFIG_WNM_PS
-    bool wnm_is_set;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+    bool cm_wnmps_configured;
     t_u16 wnm_sleep_time;
 #endif
     wifi_fw_version_ext_t fw_ver_ext;
@@ -689,11 +689,7 @@ static void wlan_ieeeps_sm(enum wlan_ieeeps_event event)
             case IEEEPS_INIT:
                 if (event == IEEEPS_EVENT_ENABLE)
                 {
-#ifdef CONFIG_WNM_PS
-                    (void)wifi_enter_ieee_power_save(wlan.wnm_is_set, wlan.wnm_sleep_time);
-#else
                     (void)wifi_enter_ieee_power_save();
-#endif
                 }
 
                 if (event == IEEEPS_EVENT_ENABLE_DONE)
@@ -2249,6 +2245,12 @@ static void wlan_disable_power_save(int action)
             wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE);
 #endif
             break;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+        case WLAN_WNM:
+            wlcm_d("stopping WNM ps mode");
+            wifi_exit_wnm_power_save();
+            break;
+#endif
         default:
             wlcm_d("Unexpected disable ps action");
             break;
@@ -2280,11 +2282,7 @@ static void wlan_enable_power_save(int action)
             wlcm_d("starting IEEE ps mode");
             wlan.cm_ieeeps_configured = true;
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-#ifdef CONFIG_WNM_PS
-            (void)wifi_enter_ieee_power_save(wlan.wnm_is_set, wlan.wnm_sleep_time);
-#else
             (void)wifi_enter_ieee_power_save();
-#endif
 #else
             /* Enter IEEE power save mode
              * via the state machine
@@ -2292,6 +2290,12 @@ static void wlan_enable_power_save(int action)
             (void)wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE);
 #endif
             break;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+        case WLAN_WNM:
+            wlcm_d("starting WNM ps mode");
+            (void)wifi_enter_wnm_power_save(wlan.wnm_sleep_time);
+            break;
+#endif
         default:
             wlcm_d("Unexpected ps mode");
             break;
@@ -2415,43 +2419,33 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
     }
 }
 
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action = (uint16_t) * (msg->data);
-    wlcm_d("got msg data :: %x", action);
+    uint16_t action                      = (uint16_t)((uint32_t)msg->data);
+    wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
-        wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)(msg->data);
-        wlcm_d("WNM ps event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
         if ((wnm_sleep_result->action == 0) && (wnm_sleep_result->result == 0))
         {
             wlcm_d("WNM enable success event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
-            wlan_ieeeps_sm(IEEEPS_EVENT_ENABLE_DONE);
         }
         else if ((wnm_sleep_result->action == 0) && (wnm_sleep_result->result == 1))
         {
             wlcm_d("WNM enable fail event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
-            wlan.wnm_is_set = false;
+            wlan.cm_wnmps_configured = false;
         }
         else if (action == DIS_WNM_PS)
         {
-            wlan.wnm_is_set           = false;
-            wlan.cm_ieeeps_configured = false;
-            wlan.cm_ps_state          = PS_STATE_AWAKE;
-            ps_sleep_cb_sent          = false;
-            CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
-            /* This sends event to state machine
-             * to finally set state to init*/
-            wlan_ieeeps_sm(IEEEPS_EVENT_DISABLE_DONE);
+            wlcm_d("WNM disable success event");
+            wlan.cm_wnmps_configured = false;
         }
         else
         {
             /* Do nothing */
         }
     }
-    os_mem_free(msg->data);
 }
 #endif
 
@@ -4387,7 +4381,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_deepsleep_event(msg, &next);
 
             break;
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
         case WIFI_EVENT_WNM_PS:
             wlcm_d("got event: WNM ps result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             wlcm_process_wnmps_event(msg);
@@ -4823,9 +4817,9 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlan.cm_deepsleepps_configured = false;
 
-#ifdef CONFIG_WNM_PS
-    wlan.wnm_is_set     = false;
-    wlan.wnm_sleep_time = 0;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+    wlan.cm_wnmps_configured = false;
+    wlan.wnm_sleep_time      = 0;
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
@@ -6177,6 +6171,16 @@ int wlan_get_ps_mode(enum wlan_ps_mode *ps_mode)
     {
         *ps_mode = WLAN_IEEE_DEEP_SLEEP;
     }
+#ifdef CONFIG_WNM_PS
+    else if (wlan.cm_wnmps_configured && wlan.cm_deepsleepps_configured)
+    {
+        *ps_mode = WLAN_WNM_DEEP_SLEEP;
+    }
+    else if (wlan.cm_wnmps_configured)
+    {
+        *ps_mode = WLAN_WNM;
+    }
+#endif
     else if (wlan.cm_deepsleepps_configured)
     {
         *ps_mode = WLAN_DEEP_SLEEP;
@@ -6357,17 +6361,14 @@ void wlan_configure_null_pkt_interval(int time_in_secs)
     wifi_configure_null_pkt_interval((unsigned int)time_in_secs);
 }
 
-#ifdef CONFIG_WNM_PS
-int wlan_ieeeps_on(unsigned int wakeup_conditions, bool wnm_set, t_u16 wnm_sleep_time)
-#else
 int wlan_ieeeps_on(unsigned int wakeup_conditions)
-#endif
 {
+    enum wlan_connection_state state;
+
     if (!wlan.running)
     {
         return WLAN_ERROR_STATE;
     }
-    enum wlan_connection_state state;
     if (wlan_get_uap_connection_state(&state) != 0)
     {
         wlcm_e("unable to get uAP connection state");
@@ -6379,30 +6380,26 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
     }
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     if (wlan.cm_ieeeps_configured
+#ifdef CONFIG_WNM_PS
+        || wlan.cm_wnmps_configured
+#endif
 #else
     if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured
-#endif
-#ifdef CONFIG_WNM_PS
-        || wlan.wnm_is_set
 #endif
     )
     {
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        wlcm_e("ieee ps already enabled: %d", wlan.cm_ieeeps_configured);
+#ifdef CONFIG_WNM_PS
+        if (wlan.cm_wnmps_configured == true)
+            wlcm_e("wnm ps already enabled: %d, ieee ps could not be enabled", wlan.cm_wnmps_configured);
+        else
+#endif
+            wlcm_e("ieee ps already enabled: %d", wlan.cm_ieeeps_configured);
 #endif
         return WLAN_ERROR_STATE;
     }
 
     wlan.wakeup_conditions = wakeup_conditions;
-
-#ifdef CONFIG_WNM_PS
-    if (wnm_set == 1)
-    {
-        wlan.wnm_is_set     = true;
-        wlan.wnm_sleep_time = wnm_sleep_time;
-        return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
-    }
-#endif
 
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, (int)WLAN_IEEE);
 }
@@ -6413,10 +6410,6 @@ int wlan_ieeeps_off(void)
     {
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, (int)WLAN_IEEE);
     }
-#ifdef CONFIG_WNM_PS
-    else if (wlan.wnm_is_set)
-        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_IEEE);
-#endif
     else
     {
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
@@ -6426,13 +6419,56 @@ int wlan_ieeeps_off(void)
     }
 }
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+int wlan_wnmps_on(unsigned int wakeup_conditions, t_u16 wnm_sleep_time)
+{
+    enum wlan_connection_state state;
+
+    if (!wlan.running)
+        return WLAN_ERROR_STATE;
+    if (wlan_get_uap_connection_state(&state) != 0)
+    {
+        wlcm_e("unable to get uAP connection state");
+        return WLAN_ERROR_STATE;
+    }
+    if (state == WLAN_UAP_STARTED)
+        return WLAN_ERROR_PS_ACTION;
+
+    if (wlan.cm_ieeeps_configured || wlan.cm_wnmps_configured)
+    {
+        if (wlan.cm_ieeeps_configured == true)
+            wlcm_e("ieee ps already enabled: %d, wnm ps could not be enabled", wlan.cm_ieeeps_configured);
+        else
+            wlcm_e("wnm ps already enabled: %d", wlan.cm_wnmps_configured);
+        return WLAN_ERROR_STATE;
+    }
+
+    wlan.wakeup_conditions   = wakeup_conditions;
+    wlan.cm_wnmps_configured = true;
+    wlan.wnm_sleep_time      = wnm_sleep_time;
+    return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_WNM);
+}
+
+int wlan_wnmps_off()
+{
+    if (wlan.cm_wnmps_configured)
+        return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_WNM);
+    else
+    {
+        wlcm_e("wnm ps not enabled yet: %d", wlan.cm_ieeeps_configured);
+        return WLAN_ERROR_STATE;
+    }
+}
+#endif
+
 int wlan_deepsleepps_on(void)
 {
+    enum wlan_connection_state state;
+
     if (!wlan.running)
     {
         return WLAN_ERROR_STATE;
     }
-    enum wlan_connection_state state;
     if (wlan_get_uap_connection_state(&state) != 0)
     {
         wlcm_e("unable to get uAP connection state");
@@ -6446,9 +6482,6 @@ int wlan_deepsleepps_on(void)
     if (wlan.cm_deepsleepps_configured
 #else
     if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured
-#endif
-#ifdef CONFIG_WNM_PS
-        || wlan.wnm_is_set
 #endif
     )
     {

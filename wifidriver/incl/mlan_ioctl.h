@@ -2268,6 +2268,8 @@ typedef struct _mlan_ds_inactivity_to
 #define DELAY_TO_PS_UNCHANGED (-1)
 /** Default delay to PS in milliseconds */
 #define DELAY_TO_PS_DEFAULT 0
+/** Delay for WNM retry request in milliseconds */
+#define DELAY_TO_PS_WNM 500
 
 /** PS mode: Unchanged */
 #define PS_MODE_UNCHANGED 0

@@ -485,7 +485,6 @@ static mlan_status wlan_11n_ioctl_supported_mcs_set(IN pmlan_adapter pmadapter, 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-
 #ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will return the pointer to a entry in BA Stream
@@ -1379,7 +1378,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
                 pext_cap->ext_cap.TDLSSupport = 1;
             }
         }
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
         if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
         {
             pext_cap->ext_cap.WNM_Sleep = 1;
@@ -1618,7 +1617,7 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
 
         (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
 
-        newNode->ba_status = ba_status;
+        newNode->ba_status   = ba_status;
         newNode->txba_thresh = os_rand_range(5, 5);
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
 

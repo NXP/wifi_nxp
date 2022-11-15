@@ -2179,18 +2179,29 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
 #ifdef CONFIG_WIFIDRIVER_PS_LOCK
                     if (ps_event != (t_u16)WIFI_EVENT_PS_INVALID)
-#endif
                     {
-                        if (wifi_event_completion((enum wifi_event)ps_event, result, (void *)ps_action_p) != WM_SUCCESS)
+#ifdef CONFIG_WNM_PS
+                        if (ps_event == WIFI_EVENT_WNM_PS)
                         {
+                            wifi_event_completion((enum wifi_event)ps_event, result, (void *)((t_u32)(*ps_action_p)));
                             os_mem_free((void *)ps_action_p);
                         }
                         else
+#endif
+#endif
                         {
-                            /*do nothing*/
+                            if (wifi_event_completion((enum wifi_event)ps_event, result, (void *)ps_action_p) !=
+                                WM_SUCCESS)
+                            {
+                                os_mem_free((void *)ps_action_p);
+                            }
+                            else
+                            {
+                                /*do nothing*/
+                            }
                         }
-                    }
 #ifdef CONFIG_WIFIDRIVER_PS_LOCK
+                    }
                     else
                     {
                         os_mem_free((void *)ps_action_p);
@@ -3491,7 +3502,7 @@ static void wrapper_wlan_check_uap_capability(pmlan_private priv, Event_Ext_t *p
 }
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 void wlan_update_wnm_ps_status(wnm_ps_result *wnm_ps_result)
 {
     if ((wnm_ps_result->action == 0) && (wnm_ps_result->result == 0))
@@ -3998,10 +4009,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)wifi_event_completion(WIFI_EVENT_AWAKE, WIFI_EVENT_REASON_SUCCESS, NULL);
 #endif
             break;
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
         case EVENT_WNM_PS:
             wlan_update_wnm_ps_status((wnm_ps_result *)&evt->reason_code);
-            (void)wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS, (void *)&evt->reason_code);
+            (void)wifi_event_completion(WIFI_EVENT_WNM_PS, WIFI_EVENT_REASON_SUCCESS,
+                                        (void *)((uint32_t)evt->reason_code));
             break;
 #endif
         case EVENT_MIC_ERR_MULTICAST:

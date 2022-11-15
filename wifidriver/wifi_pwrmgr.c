@@ -94,9 +94,9 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
 #ifdef RW610
         hs_cfg_obj.gpio = 0xff;
 #else
-        hs_cfg_obj.gpio       = HOST_WAKEUP_GPIO_PIN;
+        hs_cfg_obj.gpio = HOST_WAKEUP_GPIO_PIN;
 #endif
-        pdata_buf             = &hs_cfg_obj;
+        pdata_buf = &hs_cfg_obj;
 
         /* wake conditions for broadcast is
          * enabled when bit 0 is set.
@@ -181,37 +181,29 @@ static int wifi_send_power_save_command(ENH_PS_MODES action, t_u16 ps_bitmap, ml
     return (int)status;
 }
 
-#ifdef CONFIG_WNM_PS
-int wifi_enter_ieee_power_save(bool wnm_is_set, t_u16 wnm_sleep_time)
-#else
 int wifi_enter_ieee_power_save(void)
-#endif
 {
-#ifdef CONFIG_WNM_PS
-    if (wnm_is_set == true)
-    {
-        ((mlan_private *)mlan_adap->priv[0])->wnm_set = true;
-        t_u16 interval                                = wnm_sleep_time;
-        return wifi_send_power_save_command(EN_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, &interval);
-    }
-    else
-    {
-#endif
-        return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
-#ifdef CONFIG_WNM_PS
-    }
-#endif
+    return wifi_send_power_save_command(EN_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
 
 int wifi_exit_ieee_power_save(void)
 {
-#ifdef CONFIG_WNM_PS
-    if (((mlan_private *)mlan_adap->priv[0])->wnm_set == true)
-        return wifi_send_power_save_command(DIS_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
-    else
-#endif
-        return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+    return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
 }
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+int wifi_enter_wnm_power_save(t_u16 wnm_sleep_time)
+{
+    ((mlan_private *)mlan_adap->priv[0])->wnm_set = true;
+    t_u16 interval                                = wnm_sleep_time;
+    return wifi_send_power_save_command(EN_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, &interval);
+}
+
+int wifi_exit_wnm_power_save(void)
+{
+    return wifi_send_power_save_command(DIS_WNM_PS, BITMAP_STA_PS, MLAN_BSS_TYPE_STA, NULL);
+}
+#endif
 
 int wifi_enter_deepsleep_power_save(void)
 {
@@ -386,7 +378,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         }
         result = WIFI_EVENT_REASON_SUCCESS;
     }
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
     else if (ps_mode->action == EN_WNM_PS)
     {
         if ((ps_mode->params.auto_ps.ps_bitmap & BITMAP_STA_PS) != 0)
@@ -460,7 +452,11 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     {
         wcmdr_d("#");
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        if (ieeeps_enabled || deepsleepps_enabled)
+        if (ieeeps_enabled || deepsleepps_enabled
+#ifdef CONFIG_WNM_PS
+            || (((mlan_private *)mlan_adap->priv[0])->wnm_set)
+#endif
+        )
         {
             mlan_adap->ps_state = PS_STATE_SLEEP;
         }
@@ -472,12 +468,6 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         else if (deepsleepps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
-        }
-#endif
-#ifdef CONFIG_WNM_PS
-        else if (((mlan_private *)mlan_adap->priv[0])->wnm_set)
-        {
-            *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
         }
 #endif
         else

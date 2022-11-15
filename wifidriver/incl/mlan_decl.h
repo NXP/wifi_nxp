@@ -432,9 +432,6 @@ typedef enum _mlan_event_id
     MLAN_EVENT_ID_DRV_ASSOC_FAILURE_REPORT,
     MLAN_EVENT_ID_DRV_REPORT_STRING,
     MLAN_EVENT_ID_DRV_DBG_DUMP,
-#ifdef CONFIG_WNM_PS
-    MLAN_EVENT_ID_WNM_PS,
-#endif
 } mlan_event_id;
 
 /** Data Structures */

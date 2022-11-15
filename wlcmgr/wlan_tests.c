@@ -1267,6 +1267,14 @@ static void test_wlan_stat(int argc, char **argv)
         case WLAN_IEEE_DEEP_SLEEP:
             (void)strcpy(ps_mode_str, "IEEE ps and Deep sleep");
             break;
+#ifdef CONFIG_WNM_PS
+        case WLAN_WNM:
+            (void)strcpy(ps_mode_str, "WNM ps");
+            break;
+        case WLAN_WNM_DEEP_SLEEP:
+            (void)strcpy(ps_mode_str, "WNM ps and Deep sleep");
+            break;
+#endif
 #endif
         case WLAN_ACTIVE:
         default:
@@ -1483,18 +1491,11 @@ static void test_wlan_ieee_ps(int argc, char **argv)
     int choice             = -1;
     int ret                = -WM_FAIL;
     unsigned int condition = 0;
-#ifdef CONFIG_WNM_PS
-    unsigned int wnm_set      = 0;
-    unsigned int wnm_interval = 0;
-#endif
 
     if (argc < 2)
     {
         (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
         (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
-        (void)PRINTF("If <WNM> <sleep_interval> is specified, fw will enable WNM and use sleep_interval\r\n");
-        (void)PRINTF("Example:\r\n");
-        (void)PRINTF("	  wlan-ieee-ps 1 WNM 5\r\n");
         return;
     }
 
@@ -1519,25 +1520,9 @@ static void test_wlan_ieee_ps(int argc, char **argv)
     }
     else if (choice == 1)
     {
-#ifdef CONFIG_WNM_PS
-        if (argc == 4)
-        {
-            if ((string_equal("WNM", argv[2])) && (get_uint(argv[3], &wnm_interval, strlen(argv[3])) == 0))
-                wnm_set = 1;
-            else
-            {
-                (void)PRINTF("Error: Only WNM <sleep_interval> is allowed for input\r\n");
-                return;
-            }
-        }
-#endif
         condition = (uint32_t)WAKE_ON_ARP_BROADCAST | (uint32_t)WAKE_ON_UNICAST | (uint32_t)WAKE_ON_MULTICAST |
                     (uint32_t)WAKE_ON_MAC_EVENT;
-#ifdef CONFIG_WNM_PS
-        ret = wlan_ieeeps_on(condition, (bool)wnm_set, (t_u16)wnm_interval);
-#else
         ret = wlan_ieeeps_on(condition);
-#endif
         if (ret == WM_SUCCESS)
         {
             (void)PRINTF("Turned on IEEE Power Save mode");
@@ -1552,6 +1537,59 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
     }
 }
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+static void test_wlan_wnm_ps(int argc, char **argv)
+{
+    int choice                = -1;
+    int ret                   = -WM_FAIL;
+    unsigned int condition    = 0;
+    unsigned int wnm_interval = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
+        (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
+        (void)PRINTF("If enable, please specify sleep_interval\r\n");
+        (void)PRINTF("Example:\r\n");
+        (void)PRINTF("	  wlan-wnm-ps 1 5\r\n");
+        return;
+    }
+
+    choice = atoi(argv[1]);
+
+    if (choice == 0)
+    {
+        ret = wlan_wnmps_off();
+        if (ret == WM_SUCCESS)
+            (void)PRINTF("Turned off WNM Power Save mode");
+        else
+            (void)PRINTF("Failed to turn off WNM Power Save mode, error: %d", ret);
+    }
+    else if (choice == 1)
+    {
+        if (get_uint(argv[2], &wnm_interval, strlen(argv[2])) == 0)
+        {
+            condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
+            ret       = wlan_wnmps_on(condition, (t_u16)wnm_interval);
+        }
+        else
+        {
+            (void)PRINTF("Error: please specify sleep_interval\r\n");
+            return;
+        }
+
+        if (ret == WM_SUCCESS)
+            (void)PRINTF("Turned on WNM Power Save mode");
+        else
+            (void)PRINTF("Failed to turn on WNM Power Save mode, error: %d", ret);
+    }
+    else
+    {
+        (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
+    }
+}
+#endif
 
 static void test_wlan_deep_sleep_ps(int argc, char **argv)
 {
@@ -4073,12 +4111,11 @@ static struct cli_command tests[] = {
     {"wlan-address", NULL, test_wlan_address},
     {"wlan-get-uap-channel", NULL, test_wlan_get_uap_channel},
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
-#ifdef CONFIG_WNM_PS
-    {"wlan-ieee-ps", "<0/1> <WNM> <sleep_interval>", test_wlan_ieee_ps},
-#else
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
-#endif
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+    {"wlan-wnm-ps", "<0/1> <sleep_interval>", test_wlan_wnm_ps},
+#endif
 #ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
     {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
 #endif

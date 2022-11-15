@@ -33,6 +33,7 @@
 #define CONFIG_UAP_AMPDU_TX       1
 #define CONFIG_UAP_AMPDU_RX       1
 #define CONFIG_WIFIDRIVER_PS_LOCK 1
+#define CONFIG_WNM_PS             1
 #define CONFIG_WIFI_EU_CRYPTO     1
 #endif
 
@@ -772,12 +773,12 @@ int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
                                        unsigned int inactivity_to,
                                        unsigned int min_awake,
                                        unsigned int max_awake);
-#ifdef CONFIG_WNM_PS
-int wifi_enter_ieee_power_save(bool wnm_is_set, t_u16 wnm_sleep_time);
-#else
 int wifi_enter_ieee_power_save(void);
-#endif
 int wifi_exit_ieee_power_save(void);
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+int wifi_enter_wnm_power_save(t_u16 wnm_sleep_time);
+int wifi_exit_wnm_power_save(void);
+#endif
 int wifi_enter_deepsleep_power_save(void);
 int wifi_exit_deepsleep_power_save(void);
 void send_sleep_confirm_command(mlan_bss_type interface);

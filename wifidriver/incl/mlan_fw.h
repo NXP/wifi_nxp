@@ -1459,9 +1459,9 @@ typedef enum _ENH_PS_MODES
 #define EVENT_PS_AWAKE 0x0000000a
 /** Card Event definition : Power save sleep */
 #define EVENT_PS_SLEEP 0x0000000b
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 /** Card Event definition : WNM power save */
-#define EVENT_WNM_PS 0x00000096
+#define EVENT_WNM_PS 0x00000097
 #endif
 /** Card Event definition : MIC error multicast */
 #define EVENT_MIC_ERR_MULTICAST 0x0000000d
@@ -2844,7 +2844,7 @@ typedef MLAN_PACK_START struct __auto_ds_param
     t_u16 deep_sleep_timeout;
 } MLAN_PACK_END auto_ds_param;
 
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 /** Structure definition for the wnm power save command */
 typedef MLAN_PACK_START struct __wnm_ps_param
 {
@@ -2906,7 +2906,7 @@ typedef struct _auto_ps_param
 /** TLV type : ps param */
 #define TLV_TYPE_PS_PARAM (PROPRIETARY_TLV_BASE_ID + 0x72U) // 0x0172
 
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 /** TLV type : wnm param */
 #define TLV_TYPE_WNM_PARAM (PROPRIETARY_TLV_BASE_ID + 0x158) // 0x0258
 #endif
@@ -2929,7 +2929,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_ps_param_t
     ps_param param;
 } MLAN_PACK_END MrvlIEtypes_ps_param_t;
 
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 /** MrvlIEtypes_wnm_ps_param_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_wnm_ps_param_t
 {
@@ -2969,7 +2969,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
         t_u16 ps_bitmap;
         /** auto ps param */
         auto_ps_param auto_ps;
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
         /** wnm ps param */
         wnm_ps_param param;
 #endif

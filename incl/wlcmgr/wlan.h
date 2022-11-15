@@ -445,6 +445,10 @@ typedef enum wlan_ps_mode
     WLAN_DEEP_SLEEP,
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     WLAN_IEEE_DEEP_SLEEP,
+#ifdef CONFIG_WNM_PS
+    WLAN_WNM,
+    WLAN_WNM_DEEP_SLEEP,
+#endif
 #endif
 } wlan_ps_mode;
 
@@ -460,7 +464,7 @@ typedef enum _ENH_PS_MODES
 {
     GET_PS        = 0,
     SLEEP_CONFIRM = 5,
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
     DIS_WNM_PS = 0xfc,
     EN_WNM_PS  = 0xfd,
 #endif
@@ -474,7 +478,7 @@ typedef enum _Host_Sleep_Action
     HS_ACTIVATE  = 0x0002,
 } Host_Sleep_Action;
 
-#ifdef CONFIG_WNM_PS
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 typedef PACK_START struct
 {
     uint8_t action;
@@ -2233,23 +2237,14 @@ int wlan_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
  *            \ref WAKE_ON_MULTICAST,
  *            \ref WAKE_ON_ARP_BROADCAST,
  *            \ref WAKE_ON_MGMT_FRAME
- *            wnm_set 1: wnm is set. 0: wnm is not set.
- *            wnm_sleep_time: wnm sleep interval.(number of dtims)
  *
  * \return WM_SUCCESS if the call was successful.
  * \return WLAN_ERROR_STATE if the call was made in a state where such an
  *         operation is illegal.
  * \return -WM_FAIL otherwise.
  *
- * \note     This function should be used after station gets connected
- *           to a network.
- *
  */
-#ifdef CONFIG_WNM_PS
-int wlan_ieeeps_on(unsigned int wakeup_conditions, bool wnm_set, t_u16 wnm_sleep_time);
-#else
 int wlan_ieeeps_on(unsigned int wakeup_conditions);
-#endif
 
 /** Turn off IEEE Power Save mode.
  *
@@ -2263,6 +2258,48 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions);
  *
  */
 int wlan_ieeeps_off(void);
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+/** Enable WNM with Host Sleep Configuration
+ *
+ * When enabled, it opportunistically puts the wireless card into IEEEPS mode.
+ * Before putting the Wireless card in power
+ * save this also sets the hostsleep configuration on the card as
+ * specified. This makes the card generate a wakeup for the processor if
+ * any of the wakeup conditions are met.
+ *
+ * \param[in] wakeup_conditions conditions to wake the host. This should
+ *            be a logical OR of the conditions in \ref wlan_wakeup_event_t.
+ *            Typically devices would want to wake up on
+ *            \ref WAKE_ON_ALL_BROADCAST,
+ *            \ref WAKE_ON_UNICAST,
+ *            \ref WAKE_ON_MAC_EVENT.
+ *            \ref WAKE_ON_MULTICAST,
+ *            \ref WAKE_ON_ARP_BROADCAST,
+ *            \ref WAKE_ON_MGMT_FRAME
+ *            wnm_sleep_time: wnm sleep interval.(number of dtims)
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return WLAN_ERROR_STATE if the call was made in a state where such an
+ *         operation is illegal.
+ * \return -WM_FAIL otherwise.
+ *
+ */
+int wlan_wnmps_on(unsigned int wakeup_conditions, t_u16 wnm_sleep_time);
+
+/** Turn off WNM Power Save mode.
+ *
+ * \note This call is asynchronous. The system will exit the power-save mode
+ *       only when all requisite conditions are met.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return WLAN_ERROR_STATE if the call was made in a state where such an
+ *         operation is illegal.
+ * \return -WM_FAIL otherwise.
+ *
+ */
+int wlan_wnmps_off(void);
+#endif
 
 /** Turn on Deep Sleep Power Save mode.
  *
