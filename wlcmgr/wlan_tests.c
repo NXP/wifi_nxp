@@ -3763,6 +3763,124 @@ static void test_wlan_set_sleep_period(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_WIFI_AMPDU_CTRL
+static void dump_wlan_ampdu_enable_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-ampdu-enable <sta/uap> <xx: rx:tx bit map. Tx (bit 0), Rx (bit 1> <xx: TID bit map> \r\n");
+    (void)PRINTF("xx: TID bit map\r\n");
+    (void)PRINTF("  1 - TID 0 enable \r\n");
+    (void)PRINTF("  2 - TID 1 enable\r\n");
+    (void)PRINTF("  4 - TID 2 enable\r\n");
+    (void)PRINTF("  7 - TID0, 1, 2 enable\r\n");
+    (void)PRINTF("  ---------\r\n");
+    (void)PRINTF("  255 - TID 0-7 enable \r\n");
+    (void)PRINTF("  0 - Disable ampdu \r\n");
+    (void)PRINTF("Example: disable sta rx/tx ampdu\r\n");
+    (void)PRINTF("  wlan-ampdu-enable sta 3 0\r\n");
+}
+
+static void test_wlan_ampdu_enable(int argc, char **argv)
+{
+    t_u8 tid;
+    t_u8 direction;
+    int bss_type = 0;
+
+    if (argc != 4)
+    {
+        dump_wlan_ampdu_enable_usage();
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        dump_wlan_ampdu_enable_usage();
+        return;
+    }
+
+    direction = atoi(argv[2]);
+    tid       = atoi(argv[3]);
+
+    if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+        if (is_sta_connected())
+        {
+            (void)PRINTF("Error: configure ampdu control before sta connection!\r\n", argv[0]);
+            return;
+        }
+
+        if (tid)
+        {
+            if (direction & 0x01)
+            {
+                wlan_sta_ampdu_tx_enable();
+                wlan_sta_ampdu_tx_enable_per_tid(tid);
+            }
+
+            if (direction & 0x02)
+            {
+                wlan_sta_ampdu_rx_enable();
+                wlan_sta_ampdu_rx_enable_per_tid(tid);
+            }
+        }
+        else
+        {
+            if (direction & 0x01)
+            {
+                wlan_sta_ampdu_tx_disable();
+                wlan_sta_ampdu_tx_enable_per_tid(tid);
+            }
+
+            if (direction & 0x02)
+            {
+                wlan_sta_ampdu_rx_disable();
+                wlan_sta_ampdu_rx_enable_per_tid(tid);
+            }
+        }
+    }
+    else
+    {
+        if (is_uap_started())
+        {
+            (void)PRINTF("Error: configure ampdu control before uap start!\r\n", argv[0]);
+            return;
+        }
+        if (tid)
+        {
+            if (direction & 0x01)
+            {
+                wlan_uap_ampdu_tx_enable();
+                wlan_uap_ampdu_tx_enable_per_tid(tid);
+            }
+
+            if (direction & 0x02)
+            {
+                wlan_uap_ampdu_rx_enable();
+                wlan_uap_ampdu_rx_enable_per_tid(tid);
+            }
+        }
+        else
+        {
+            if (direction & 0x01)
+            {
+                wlan_uap_ampdu_tx_disable();
+                wlan_uap_ampdu_tx_enable_per_tid(tid);
+            }
+
+            if (direction & 0x02)
+            {
+                wlan_uap_ampdu_rx_disable();
+                wlan_uap_ampdu_rx_enable_per_tid(tid);
+            }
+        }
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -3893,7 +4011,9 @@ static struct cli_command tests[] = {
     {"wlan-uapsd-enable", "<uapsd_enable>", test_wlan_set_wmm_uapsd},
     {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_set_sleep_period},
 #endif
-
+#ifdef CONFIG_WIFI_AMPDU_CTRL
+    {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>", test_wlan_ampdu_enable},
+#endif
 };
 
 /* Register our commands with the MTF. */

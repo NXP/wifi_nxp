@@ -709,7 +709,7 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 #endif
 }
 
-mlan_status wrapper_wlan_upa_ampdu_enable(const uint8_t *addr)
+mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr)
 {
     int ret;
     struct uap_ampdu_stat_t *ampdu_info;

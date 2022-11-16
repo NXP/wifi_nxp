@@ -91,11 +91,23 @@ static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
 #ifdef CONFIG_STA_AMPDU_TX
-static bool sta_ampdu_tx_enable = true;
+static bool sta_ampdu_tx_enable  = true;
+t_u8 sta_ampdu_tx_enable_per_tid = 0xFF;
 #endif
 
 #ifdef CONFIG_STA_AMPDU_RX
-bool sta_ampdu_rx_enable = true;
+bool sta_ampdu_rx_enable         = true;
+t_u8 sta_ampdu_rx_enable_per_tid = 0xFF;
+#endif
+
+#ifdef CONFIG_UAP_AMPDU_TX
+bool uap_ampdu_tx_enable         = true;
+t_u8 uap_ampdu_tx_enable_per_tid = 0xFF;
+#endif
+
+#ifdef CONFIG_UAP_AMPDU_RX
+bool uap_ampdu_rx_enable         = true;
+t_u8 uap_ampdu_rx_enable_per_tid = 0xFF;
 #endif
 
 int retry_attempts;
@@ -1844,6 +1856,19 @@ void wifi_sta_ampdu_tx_disable(void)
 {
     sta_ampdu_tx_enable = false;
 }
+
+void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid)
+{
+    sta_ampdu_tx_enable_per_tid = tid;
+}
+
+t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    if ((sta_ampdu_tx_enable_per_tid >> tid) & 0x01)
+        return MTRUE;
+    else
+        return MFALSE;
+}
 #else
 void wifi_sta_ampdu_tx_enable(void)
 {
@@ -1851,6 +1876,14 @@ void wifi_sta_ampdu_tx_enable(void)
 
 void wifi_sta_ampdu_tx_disable(void)
 {
+}
+void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid)
+{
+}
+
+t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    return MTRUE;
 }
 #endif /* CONFIG_STA_AMPDU_TX */
 
@@ -1864,6 +1897,19 @@ void wifi_sta_ampdu_rx_disable(void)
 {
     sta_ampdu_rx_enable = false;
 }
+
+void wifi_sta_ampdu_rx_enable_per_tid(t_u8 tid)
+{
+    sta_ampdu_rx_enable_per_tid = tid;
+}
+
+t_u8 wifi_sta_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    if ((sta_ampdu_rx_enable_per_tid >> tid) & 0x01)
+        return MTRUE;
+    else
+        return MFALSE;
+}
 #else
 void wifi_sta_ampdu_rx_enable(void)
 {
@@ -1871,6 +1917,96 @@ void wifi_sta_ampdu_rx_enable(void)
 
 void wifi_sta_ampdu_rx_disable(void)
 {
+}
+void wifi_sta_ampdu_rx_enable_per_tid(t_u8 tid)
+{
+}
+
+t_u8 wifi_sta_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    return MTRUE;
+}
+#endif /* CONFIG_STA_AMPDU_RX */
+
+#ifdef CONFIG_UAP_AMPDU_TX
+void wifi_uap_ampdu_tx_enable(void)
+{
+    uap_ampdu_tx_enable = true;
+}
+
+void wifi_uap_ampdu_tx_disable(void)
+{
+    uap_ampdu_tx_enable = false;
+}
+
+void wifi_uap_ampdu_tx_enable_per_tid(t_u8 tid)
+{
+    uap_ampdu_tx_enable_per_tid = tid;
+}
+
+t_u8 wifi_uap_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    if ((uap_ampdu_tx_enable_per_tid >> tid) & 0x01)
+        return MTRUE;
+    else
+        return MFALSE;
+}
+#else
+void wifi_uap_ampdu_tx_enable(void)
+{
+}
+
+void wifi_uap_ampdu_tx_disable(void)
+{
+}
+void wifi_uap_ampdu_tx_enable_per_tid(t_u8 tid)
+{
+}
+
+t_u8 wifi_uap_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    return MTRUE;
+}
+#endif /* CONFIG_STA_AMPDU_TX */
+
+#ifdef CONFIG_UAP_AMPDU_RX
+void wifi_uap_ampdu_rx_enable(void)
+{
+    uap_ampdu_rx_enable = true;
+}
+
+void wifi_uap_ampdu_rx_disable(void)
+{
+    uap_ampdu_rx_enable = false;
+}
+
+void wifi_uap_ampdu_rx_enable_per_tid(t_u8 tid)
+{
+    uap_ampdu_rx_enable_per_tid = tid;
+}
+
+t_u8 wifi_uap_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    if ((uap_ampdu_rx_enable_per_tid >> tid) & 0x01)
+        return MTRUE;
+    else
+        return MFALSE;
+}
+#else
+void wifi_uap_ampdu_rx_enable(void)
+{
+}
+
+void wifi_uap_ampdu_rx_disable(void)
+{
+}
+void wifi_uap_ampdu_rx_enable_per_tid(t_u8 tid)
+{
+}
+
+t_u8 wifi_uap_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
+{
+    return MTRUE;
 }
 #endif /* CONFIG_STA_AMPDU_RX */
 
@@ -2913,7 +3049,11 @@ int wifi_low_level_output(const uint8_t interface,
     } /* while(true) */
 #endif
 #ifdef CONFIG_STA_AMPDU_TX
-    if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable)
+    if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable
+#ifdef CONFIG_WMM
+        && wifi_sta_ampdu_tx_enable_per_tid_is_allowed(tid)
+#endif
+    )
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
@@ -2927,11 +3067,16 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
 
 #ifdef CONFIG_UAP_AMPDU_TX
-    if (interface == BSS_TYPE_UAP)
+    if (interface == BSS_TYPE_UAP && uap_ampdu_tx_enable
+#ifdef CONFIG_WMM
+        && wifi_uap_ampdu_tx_enable_per_tid_is_allowed(tid)
+#endif
+    )
+
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
-            (void)wrapper_wlan_upa_ampdu_enable((const uint8_t *)buffer);
+            (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)buffer);
         }
     }
 #endif

@@ -257,10 +257,94 @@ void wifi_sta_ampdu_tx_enable(void);
 void wifi_sta_ampdu_tx_disable(void);
 
 /**
+ * This API can be used to set tid to enable AMPDU support on the go
+ * when station is a transmitter.
+ * @param[in] tid tid value
+ */
+void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to check if tid to enable AMPDU is allowed
+ * when station is a transmitter.
+ * @param[in] tid tid value
+ * @return MTRUE or MFALSE
+ */
+t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
+
+/**
  * This API can be used to enable AMPDU support on the go
  * when station is a receiver.
  */
 void wifi_sta_ampdu_rx_enable(void);
+
+/**
+ * This API can be used to set tid to enable AMPDU support on the go
+ * when station is a receiver.
+ * @param[in] tid tid value
+ */
+void wifi_sta_ampdu_rx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to check if tid to enable AMPDU is allowed
+ * when station is a receiver.
+ * @param[in] tid tid value
+ * @return MTRUE or MFALSE
+ */
+t_u8 wifi_sta_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid);
+
+/**
+ * This API can be used to enable AMPDU support on the go
+ * when uap is a receiver.
+ */
+void wifi_uap_ampdu_rx_enable(void);
+
+/**
+ * This API can be used to set tid to enable AMPDU support on the go
+ * when uap is a receiver.
+ * @param[in] tid tid value
+ */
+void wifi_uap_ampdu_rx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to check if tid to enable AMPDU is allowed
+ * when uap is a receiver.
+ * @param[in] tid tid value
+ * @return MTRUE or MFALSE
+ */
+t_u8 wifi_uap_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid);
+
+/**
+ * This API can be used to disable AMPDU support on the go
+ * when uap is a receiver.
+ */
+void wifi_uap_ampdu_rx_disable(void);
+
+/**
+ * This API can be used to enable AMPDU support on the go
+ * when uap is a transmitter.
+ */
+void wifi_uap_ampdu_tx_enable(void);
+
+/**
+ * This API can be used to set tid to enable AMPDU support on the go
+ * when uap is a transmitter.
+ * @param[in] tid tid value
+ */
+void wifi_uap_ampdu_tx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to check if tid to enable AMPDU is allowed
+ * when uap is a transmitter.
+ * @param[in] tid tid value
+ * @return MTRUE or MFALSE
+ */
+t_u8 wifi_uap_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
+
+/**
+ * This API can be used to disable AMPDU support on the go
+ * when uap is a transmitter.
+ */
+void wifi_uap_ampdu_tx_disable(void);
 
 /**
  * This API can be used to disable AMPDU support on the go
@@ -757,7 +841,7 @@ mlan_status wrapper_wlan_sta_ampdu_enable(t_u8 tid);
 mlan_status wrapper_wlan_sta_ampdu_enable(void);
 #endif
 
-mlan_status wrapper_wlan_upa_ampdu_enable(const uint8_t *addr);
+mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr);
 
 #ifdef CONFIG_WLAN_BRIDGE
 /** Enable Bridge mode in WLAN firmware.

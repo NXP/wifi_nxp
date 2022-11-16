@@ -3312,6 +3312,68 @@ void wlan_sta_ampdu_rx_enable(void);
 void wlan_sta_ampdu_rx_disable(void);
 
 /**
+ * This API can be used to enable AMPDU support on the go
+ * when uap is a transmitter.
+ *
+ * \note By default the uap AMPDU TX support is on if
+ * configuration option is enabled in defconfig.
+ */
+void wlan_uap_ampdu_tx_enable(void);
+
+/**
+ * This API can be used to disable AMPDU support on the go
+ * when uap is a transmitter.
+ *
+ *\note By default the uap AMPDU RX support is on if
+ * configuration option is enabled in defconfig.
+ *
+ */
+void wlan_uap_ampdu_tx_disable(void);
+
+/**
+ * This API can be used to enable AMPDU support on the go
+ * when uap is a receiver.
+ */
+void wlan_uap_ampdu_rx_enable(void);
+
+/**
+ * This API can be used to disable AMPDU support on the go
+ * when uap is a receiver.
+ */
+void wlan_uap_ampdu_rx_disable(void);
+
+#ifdef CONFIG_WIFI_AMPDU_CTRL
+/**
+ * This API can be used to set tid of AMPDU support on the go
+ * when sta is a transmitter.
+ *\param[in] tid tid value.
+ */
+void wlan_sta_ampdu_tx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to set tid of AMPDU support on the go
+ * when sta is a receiver.
+ *\param[in] tid tid value.
+ */
+void wlan_sta_ampdu_rx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to set tid of AMPDU support on the go
+ * when uap is a transmitter.
+ *\param[in] tid tid value.
+ */
+void wlan_uap_ampdu_tx_enable_per_tid(t_u8 tid);
+
+/**
+ * This API can be used to set tid of AMPDU support on the go
+ * when uap is a receiver.
+ *\param[in] tid tid value.
+ */
+void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid);
+#endif
+
+
+/**
  * Set number of channels and channel number used during automatic
  * channel selection of uAP.
  *
