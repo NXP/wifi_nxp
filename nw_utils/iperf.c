@@ -121,7 +121,7 @@ static void lwiperf_report(void *arg,
             (void)PRINTF(" Port %d \r\n", remote_port);
             (void)PRINTF(" Bytes Transferred %llu \r\n", bytes_transferred);
             (void)PRINTF(" Duration (ms) %d \r\n", ms_duration);
-            (void)PRINTF(" Bandwidth (Mbitpsec) %d \r\n", bandwidth_kbitpsec / 1000U);
+            (void)PRINTF(" Bandwidth (Mbitpsec) %.2f \r\n", (double)bandwidth_kbitpsec / 1000U);
         }
     }
     else
