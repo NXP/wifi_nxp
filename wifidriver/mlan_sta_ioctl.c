@@ -1707,7 +1707,7 @@ static mlan_status wlan_power_ioctl_set_power_ext(IN pmlan_adapter pmadapter, IN
     MrvlTypes_Power_Group_t *pg_tlv = MNULL;
     Power_Group_t *pg               = MNULL;
     int mod_class;
-    t_u32 data[4];
+    t_u32 data[4] = {0};
     t_u8 ht_bw;
 
     ENTER();
@@ -5649,12 +5649,12 @@ mlan_status wlan_set_ewpa_mode(mlan_private *priv, mlan_ds_passphrase *psec_pp)
  */
 mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req)
 {
-    mlan_adapter *pmadapter = pmpriv->adapter;
-    mlan_ds_bss *bss        = MNULL;
-    mlan_status ret         = MLAN_STATUS_SUCCESS;
-    t_u8 zero_mac[]         = {0, 0, 0, 0, 0, 0};
-    t_u8 mac[MLAN_MAC_ADDR_LENGTH];
-    int i = 0;
+    mlan_adapter *pmadapter        = pmpriv->adapter;
+    mlan_ds_bss *bss               = MNULL;
+    mlan_status ret                = MLAN_STATUS_SUCCESS;
+    t_u8 zero_mac[]                = {0, 0, 0, 0, 0, 0};
+    t_u8 mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    int i                          = 0;
     BSSDescriptor_t *pbss_desc;
 
     ENTER();

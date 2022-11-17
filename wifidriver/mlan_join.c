@@ -694,7 +694,6 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     pmpriv->pattempted_bss_desc = pbss_desc;
 
     (void)__memcpy(pmadapter, passo->peer_sta_addr, pbss_desc->mac_address, sizeof(passo->peer_sta_addr));
-    pos += sizeof(passo->peer_sta_addr);
 
     /* fixme: Look at this value carefully later. The listen interval is given to AP during
      * this assoc. The listen_interval set later during IEEE PS should not (?) exceed this
@@ -704,11 +703,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Set the beacon period */
     passo->beacon_period = wlan_cpu_to_le16(pbss_desc->beacon_period);
 
-    pos += sizeof(passo->cap_info);
-    pos += sizeof(passo->listen_interval);
-    pos += sizeof(passo->beacon_period);
-    pos += sizeof(passo->dtim_period);
-
+    pos                    = (t_u8 *)cmd + S_DS_GEN + sizeof(HostCmd_DS_802_11_ASSOCIATE);
     pssid_tlv              = (MrvlIEtypes_SsIdParamSet_t *)(void *)pos;
     pssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
     pssid_tlv->header.len  = (t_u16)pbss_desc->ssid.ssid_len;
@@ -1147,8 +1142,8 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* t_u8 enable_data = MTRUE; */
     /* t_u8 event_buf[100]; */
     /* mlan_event *pevent = (mlan_event *) event_buf; */
-    t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH];
-    t_u8 media_connected = pmpriv->media_connected;
+    t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH] = {0x0};
+    t_u8 media_connected               = pmpriv->media_connected;
     /* mlan_adapter *pmadapter = pmpriv->adapter; */
 
     ENTER();
@@ -1416,8 +1411,8 @@ mlan_status wlan_cmd_802_11_ad_hoc_start(IN mlan_private *pmpriv, IN HostCmd_DS_
     HostCmd_DS_802_11_AD_HOC_START *padhoc_start = &cmd->params.adhoc_start;
     BSSDescriptor_t *pbss_desc;
     t_u32 cmd_append_size = 0;
-    t_u32 i;
-    t_u16 tmp_cap;
+    t_u32 i               = 0;
+    t_u16 tmp_cap         = 0;
     MrvlIEtypes_ChanListParamSet_t *pchan_tlv;
 
     MrvlIEtypes_RsnParamSet_t *prsn_ie_tlv;
@@ -2053,9 +2048,9 @@ done:
  */
 mlan_status wlan_associate(IN mlan_private *pmpriv, IN t_void *pioctl_buf, IN BSSDescriptor_t *pbss_desc)
 {
-    mlan_status ret = MLAN_STATUS_SUCCESS;
-    t_u8 current_bssid[MLAN_MAC_ADDR_LENGTH];
-    pmlan_ioctl_req pioctl_req = (mlan_ioctl_req *)pioctl_buf;
+    mlan_status ret                          = MLAN_STATUS_SUCCESS;
+    t_u8 current_bssid[MLAN_MAC_ADDR_LENGTH] = {0x0};
+    pmlan_ioctl_req pioctl_req               = (mlan_ioctl_req *)pioctl_buf;
 
     ENTER();
 

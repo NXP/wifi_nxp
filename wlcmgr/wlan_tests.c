@@ -2749,7 +2749,7 @@ static void test_wlan_mem_access(int argc, char **argv)
     int ret;
     t_u16 action  = 0;
     t_u32 address = 0;
-    t_u32 value;
+    t_u32 value = 0;
     if (argc < 2 || argc > 3)
     {
         dump_wlan_mem_access_usage();
@@ -3717,7 +3717,7 @@ static void test_wlan_reg_access(int argc, char **argv)
         value  = a2hex_or_atoi(argv[3]);
     }
 
-    ret = wlan_reg_access(type, action, offset, (uint32_t *)&value);
+    ret = wlan_reg_access((wifi_reg_t)type, action, offset, (uint32_t *)&value);
 
     if (ret == WM_SUCCESS)
     {

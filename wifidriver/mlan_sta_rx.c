@@ -300,9 +300,9 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     RxPD *prx_pd;
     RxPacketHdr_t *prx_pkt;
-    pmlan_private priv = pmadapter->priv[pmbuf->bss_index];
-    t_u8 ta[MLAN_MAC_ADDR_LENGTH];
-    t_u16 rx_pkt_type = 0;
+    pmlan_private priv            = pmadapter->priv[pmbuf->bss_index];
+    t_u8 ta[MLAN_MAC_ADDR_LENGTH] = {0};
+    t_u16 rx_pkt_type             = 0;
 #ifdef CONFIG_P2P
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
 #endif /* CONFIG_P2P */

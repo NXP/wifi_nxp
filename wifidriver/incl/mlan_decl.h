@@ -108,7 +108,11 @@ Change log:
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 8
 #else
 /** Default Win size attached during ADDBA request */
+#ifdef RW610
+#define MLAN_STA_AMPDU_DEF_TXWINSIZE 64
+#else
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 16
+#endif
 #endif
 #ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
 #ifdef SD8801
@@ -125,8 +129,12 @@ Change log:
 /** Default Win size attached during ADDBA request */
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 8
 #else
+#ifdef RW610
+#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
+#else
 /** Default Win size attached during ADDBA request */
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 16
+#endif
 #endif
 #ifdef SD8801
 /** Default Win size attached during ADDBA response */
