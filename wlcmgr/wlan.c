@@ -8542,3 +8542,10 @@ void wlan_set_sleep_period(uint16_t sleep_period)
     wifi_set_sleep_period(sleep_period);
 }
 #endif
+
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
+{
+    return wifi_tx_ampdu_prot_mode(prot_mode, action);
+}
+#endif

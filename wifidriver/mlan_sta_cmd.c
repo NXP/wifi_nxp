@@ -2425,6 +2425,41 @@ static mlan_status wlan_cmd_low_pwr_mode(IN pmlan_private pmpriv, IN HostCmd_DS_
 }
 #endif
 
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+/**
+ *  @brief This function handles the command response of Tx ampdu prot mode
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   The action: GET or SET
+ *  @param pdata_buf    A pointer to command information buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_cmd_tx_ampdu_prot_mode(IN pmlan_private pmpriv,
+                                               IN HostCmd_DS_COMMAND *cmd,
+                                               IN t_u16 cmd_action,
+                                               IN t_void *pdata_buf)
+{
+    HostCmd_DS_CMD_TX_AMPDU_PROT_MODE *prot_mode = &cmd->params.tx_ampdu_prot_mode;
+    tx_ampdu_prot_mode_para *para                = (tx_ampdu_prot_mode_para *)pdata_buf;
+
+    ENTER();
+
+    cmd->command      = wlan_cpu_to_le16(HostCmd_CMD_TX_AMPDU_PROT_MODE);
+    cmd->size         = wlan_cpu_to_le16(sizeof(HostCmd_DS_CMD_TX_AMPDU_PROT_MODE) + S_DS_GEN);
+    prot_mode->action = wlan_cpu_to_le16(cmd_action);
+
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        prot_mode->mode = wlan_cpu_to_le16(para->mode);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 /********************************************************
                 Global Functions
 ********************************************************/
@@ -2800,6 +2835,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
 #ifdef CONFIG_1AS
         case HostCmd_CMD_HOST_CLOCK_CFG:
             ret = wlan_cmd_host_clock_cfg(cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+        case HostCmd_CMD_TX_AMPDU_PROT_MODE:
+            ret = wlan_cmd_tx_ampdu_prot_mode(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
         default:

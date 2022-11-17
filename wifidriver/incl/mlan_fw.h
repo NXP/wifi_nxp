@@ -1333,6 +1333,10 @@ typedef enum _ENH_PS_MODES
 /** Scan type : Any */
 #define HostCmd_BSS_MODE_ANY 0x0003
 
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#define HostCmd_CMD_TX_AMPDU_PROT_MODE 0x0263
+#endif
+
 #ifdef CONFIG_11AX
 /** Host Command ID: 11AX config */
 #define HostCmd_CMD_11AX_CFG 0x0266
@@ -5115,6 +5119,15 @@ typedef MLAN_PACK_START struct _HostCmd_DS_INACTIVITY_TIMEOUT_EXT
     t_u16 reserved;
 } MLAN_PACK_END HostCmd_DS_INACTIVITY_TIMEOUT_EXT;
 
+/** HostCmd_DS_CMD_TX_AMPDU_PROT_MODE */
+typedef MLAN_PACK_START struct _HostCmd_DS_CMD_TX_AMPDU_PROT_MODE
+{
+    /** Action */
+    t_u16 action;
+    /** Prot mode */
+    t_u16 mode;
+} MLAN_PACK_END HostCmd_DS_CMD_TX_AMPDU_PROT_MODE;
+
 /** TLV type : STA Mac address */
 #define TLV_TYPE_STA_MAC_ADDRESS (PROPRIETARY_TLV_BASE_ID + 0x20) // 0x0120
 
@@ -6728,6 +6741,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_1AS
         HostCmd_DS_HOST_CLOCK_CFG host_clock_cfg;
+#endif
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+        HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

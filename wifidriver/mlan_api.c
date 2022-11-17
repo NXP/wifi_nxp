@@ -4288,3 +4288,19 @@ void wifi_set_sleep_period(uint16_t sleep_period)
     wifi_wait_for_cmdresp(NULL);
 }
 #endif
+
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x00;
+    cmd->result  = 0x0;
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TX_AMPDU_PROT_MODE, action, 0, NULL,
+                             prot_mode, cmd);
+
+    return wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? prot_mode : NULL);
+}
+#endif

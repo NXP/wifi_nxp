@@ -3881,6 +3881,72 @@ static void test_wlan_ampdu_enable(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+static void dump_wlan_tx_ampdu_prot_mode_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-tx-ampdu-prot-mode <mode>\r\n");
+    (void)PRINTF("    <mode>: 0 - Set RTS/CTS mode \r\n");
+    (void)PRINTF("            1 - Set CTS2SELF mode \r\n");
+    (void)PRINTF("            2 - Disable Protection mode \r\n");
+    (void)PRINTF("            3 - Set Dynamic RTS/CTS mode \r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-tx-ampdu-prot-mode\r\n");
+    (void)PRINTF("    - Get currently set protection mode for TX AMPDU.\r\n");
+    (void)PRINTF("    wlan-tx-ampdu-prot-mode 1\r\n");
+    (void)PRINTF("    - Set protection mode for TX AMPDU to CTS2SELF.\r\n");
+}
+
+static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
+{
+    tx_ampdu_prot_mode_para data;
+
+    if (argc > 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_tx_ampdu_prot_mode_usage();
+        return;
+    }
+
+    /* GET */
+    if (argc == 1)
+    {
+        dump_wlan_tx_ampdu_prot_mode_usage();
+        wlan_tx_ampdu_prot_mode(&data, ACTION_GET);
+        (void)PRINTF("\r\nTx AMPDU protection mode: ");
+        switch (data.mode)
+        {
+            case TX_AMPDU_RTS_CTS:
+                (void)PRINTF("RTS/CTS\r\n");
+                break;
+            case TX_AMPDU_CTS_2_SELF:
+                (void)PRINTF("CTS-2-SELF\r\n");
+                break;
+            case TX_AMPDU_DISABLE_PROTECTION:
+                (void)PRINTF("Disabled\r\n");
+                break;
+            case TX_AMPDU_DYNAMIC_RTS_CTS:
+                (void)PRINTF("DYNAMIC RTS/CTS\r\n");
+                break;
+            default:
+                (void)PRINTF("Invalid protection mode\r\n");
+                break;
+        }
+    }
+    else /* SET */
+    {
+        data.mode = atoi(argv[1]);
+        if (data.mode < 0 || data.mode > 3)
+        {
+            (void)PRINTF("Error: invalid protection mode\r\n");
+            dump_wlan_tx_ampdu_prot_mode_usage();
+            return;
+        }
+        wlan_tx_ampdu_prot_mode(&data, ACTION_SET);
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4014,6 +4080,9 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_AMPDU_CTRL
     {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>", test_wlan_ampdu_enable},
 #endif
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+    {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
+#endif 
 };
 
 /* Register our commands with the MTF. */

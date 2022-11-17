@@ -3150,6 +3150,25 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
                 break;
 #endif
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+            case HostCmd_CMD_TX_AMPDU_PROT_MODE:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    const HostCmd_DS_CMD_TX_AMPDU_PROT_MODE *data = &resp->params.tx_ampdu_prot_mode;
+                    if (data->action == HostCmd_ACT_GEN_GET)
+                    {
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            tx_ampdu_prot_mode_para *prot_mode = (tx_ampdu_prot_mode_para *)wm_wifi.cmd_resp_priv;
+                            prot_mode->mode                    = data->mode;
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/

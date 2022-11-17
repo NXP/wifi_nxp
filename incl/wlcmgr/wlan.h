@@ -1322,6 +1322,20 @@ typedef struct _rx_pkt_rate_info
 } rx_pkt_rate_info;
 #endif
 
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+#define TX_AMPDU_RTS_CTS            0
+#define TX_AMPDU_CTS_2_SELF         1
+#define TX_AMPDU_DISABLE_PROTECTION 2
+#define TX_AMPDU_DYNAMIC_RTS_CTS    3
+
+/** tx_ampdu_prot_mode parameters */
+typedef struct _tx_ampdu_prot_mode_para
+{
+    /** set prot mode */
+    int mode;
+} tx_ampdu_prot_mode_para;
+#endif
+
 /* WLAN Connection Manager API */
 
 /** Initialize the SDIO driver and create the wifi driver thread.
@@ -4382,4 +4396,14 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
 void wlan_set_sleep_period(uint16_t sleep_period);
 #endif
 
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
+/**
+ * Set/Get Tx ampdu prot mode.
+ * \param[in/out] prot_mode    Tx ampdu prot mode
+ * \param[in]     action       Command action
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
+#endif
 #endif /* __WLAN_H__ */
