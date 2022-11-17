@@ -1600,4 +1600,44 @@ typedef struct _wifi_ds_subscribe_evt
 } wifi_ds_subscribe_evt;
 #endif
 
+#ifdef CONFIG_CSI
+#define CSI_FILTER_MAX 16
+/** Structure of CSI filters */
+typedef PACK_START struct _wifi_csi_filter_t
+{
+    /** Source address of the packet to receive */
+    t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Pakcet type of the interested CSI */
+    t_u8 pkt_type;
+    /* Packet subtype of the interested CSI */
+    t_u8 subtype;
+    /* Other filter flags */
+    t_u8 flags;
+} PACK_END wifi_csi_filter_t;
+/** Structure of CSI parameters */
+typedef PACK_START struct _wifi_csi_config_params_t
+{
+    /** CSI enable flag. 1: enable, 2: disable */
+    t_u16 csi_enable;
+    /** Header ID*/
+    t_u32 head_id;
+    /** Tail ID */
+    t_u32 tail_id;
+    /** Number of CSI filters */
+    t_u8 csi_filter_cnt;
+    /** Chip ID */
+    t_u8 chip_id;
+    /** band config */
+    t_u8 band_config;
+    /** Channel num */
+    t_u8 channel;
+    /** Enable getting CSI data on special channel */
+    t_u8 csi_monitor_enable;
+    /** CSI data received in cfg channel with mac addr filter, not only RA is us or other*/
+    t_u8 ra4us;
+    /** CSI filters */
+    wifi_csi_filter_t csi_filter[CSI_FILTER_MAX];
+} PACK_END wifi_csi_config_params_t;
+#endif /* CSI_SUPPORT */
+
 #endif /* __WIFI_DECL_H__ */

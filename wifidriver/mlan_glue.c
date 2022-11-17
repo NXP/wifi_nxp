@@ -4350,6 +4350,14 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
         break;
 #endif
+#ifdef CONFIG_CSI
+        case EVENT_CSI:
+        {
+            PRINTM(MEVENT, "EVENT: EVENT_CSI\n");
+            csi_deliver_data_to_user();
+        }
+        break;
+#endif
         case EVENT_MEF_HOST_WAKEUP:
             wifi_d("Host recevied host wake-up event from firmware");
             break;

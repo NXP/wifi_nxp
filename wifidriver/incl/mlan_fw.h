@@ -1337,6 +1337,12 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_CMD_TX_AMPDU_PROT_MODE 0x0263
 #endif
 
+#ifdef CONFIG_CSI
+#define HostCmd_CMD_CSI 0x025b
+#define CSI_CMD_ENABLE  0x0001
+#define CSI_CMD_DISABLE 0x0002
+#endif
+
 #ifdef CONFIG_11AX
 /** Host Command ID: 11AX config */
 #define HostCmd_CMD_11AX_CFG 0x0266
@@ -1609,6 +1615,10 @@ typedef enum _ENH_PS_MODES
 
 /** Event ID: EV_SMC_GENERIC */
 #define EVENT_EV_SMC_GENERIC 0x00000077
+
+#ifdef CONFIG_CSI
+#define EVENT_CSI 0x0000008D
+#endif
 
 /** Card Event definition : RESET PN */
 #ifdef CONFIG_RSN_REPLAY_DETECTION
@@ -6506,6 +6516,44 @@ typedef MLAN_PACK_START struct _HostCmd_DS_HOST_CLOCK_CFG
 } MLAN_PACK_END HostCmd_DS_HOST_CLOCK_CFG;
 #endif
 
+#ifdef CONFIG_CSI
+/** MrvlIEtypes_channel_bandcfg_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_channel_bandcfg_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Enable getting CSI data on special channel */
+    t_u8 csi_monitor_enable;
+    /** CSI data received in cfg channel with mac addr filter, not only RA is us or other*/
+    t_u8 ra4us;
+    /** bandconfig*/
+    t_u8 bandconfig;
+    /** channel num */
+    t_u8 channel;
+} MLAN_PACK_END MrvlIEtypes_channel_bandcfg_t;
+
+/**
+ * @brief Structure passed to firmware to config csi info
+ */
+typedef MLAN_PACK_START struct _HostCmd_DS_CSI_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** Header ID*/
+    t_u32 head_id;
+    /** Tail ID */
+    t_u32 tail_id;
+    /** Number of CSI filters */
+    t_u8 csi_filter_cnt;
+    /** Chip ID */
+    t_u8 chip_id;
+    /** CSI filters */
+    wifi_csi_filter_t csi_filter[CSI_FILTER_MAX];
+    /**channel and bandconfig*/
+    MrvlIEtypes_channel_bandcfg_t channel_bandconfig;
+} MLAN_PACK_END HostCmd_DS_CSI_CFG;
+#endif
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -6744,6 +6792,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
         HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;
+#endif
+#ifdef CONFIG_CSI
+        HostCmd_DS_CSI_CFG csi_params;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

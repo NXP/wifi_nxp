@@ -734,6 +734,50 @@ typedef MLAN_PACK_START struct _mlan_ds_misc_custom_ie
     tlvbuf_max_mgmt_ie max_mgmt_ie;
 } MLAN_PACK_END mlan_ds_misc_custom_ie;
 
+/** csi event data structure */
+#ifdef CONFIG_CSI
+typedef MLAN_PACK_START struct _csi_record_ds
+{
+    /** Length in DWORDS, including header */
+    t_u16 Len;
+    /** CSI signature. 0xABCD fixed */
+    t_u16 CSI_Sign;
+    /** User defined HeaderID  */
+    t_u32 CSI_HeaderID;
+    /** Packet info field */
+    t_u16 PKT_info;
+    /** Frame control field for the received packet*/
+    t_u16 FCF;
+    /** Timestamp when packet received */
+    t_u64 TSF;
+    /** Received Packet Destination MAC Address */
+    t_u8 Dst_MAC[6];
+    /** Received Packet Source MAC Address */
+    t_u8 Src_MAC[6];
+    /** RSSI for antenna A */
+    t_u8 Rx_RSSI_A;
+    /** RSSI for antenna B */
+    t_u8 Rx_RSSI_B;
+    /** Noise floor for antenna A */
+    t_u8 Rx_NF_A;
+    /** Noise floor for antenna A */
+    t_u8 Rx_NF_B;
+    /** Rx signal strength above noise floor */
+    t_u8 Rx_SINR;
+    /** Channel */
+    t_u8 channel;
+    /** user defined Chip ID */
+    t_u16 chip_id;
+    /** Reserved */
+    t_u32 rsvd;
+    /** CSI data length in DWORDs */
+    t_u32 CSI_Data_Length;
+    /** Start of CSI data */
+    t_u8 CSI_Data[0];
+    /** At the end of CSI raw data, user defined TailID of 4 bytes*/
+} MLAN_PACK_END csi_record_ds, *pcsi_record_ds;
+#endif
+
 #ifdef PRAGMA_PACK
 #pragma pack(pop)
 #endif

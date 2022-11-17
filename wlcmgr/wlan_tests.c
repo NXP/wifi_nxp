@@ -19,6 +19,23 @@
 /*
  * NXP Test Framework (MTF) functions
  */
+static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+
+#ifdef CONFIG_CSI
+wlan_csi_config_params_t g_csi_params = {
+    .csi_enable         = 1,
+    .head_id            = 0x00010203,
+    .tail_id            = 0x00010203,
+    .csi_filter_cnt     = 0,
+    .chip_id            = 0xaa,
+    .band_config        = 0,
+    .channel            = 0,
+    .csi_monitor_enable = 0,
+    .ra4us              = 0,
+    /*				  mac_addr						  pkt_type	subtype  flags*/
+    //.csi_filter[0] = {0x00,0x00,0x00,0x00,0x00,0x00 , 0x00,     0x00,	 0}
+};
+#endif
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
@@ -4095,6 +4112,269 @@ static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_CSI
+static void dump_wlan_csi_filter_usage()
+{
+    (void)PRINTF("Error: invalid number of arguments\r\n");
+    (void)PRINTF("Usage : wlan-set-csi-filter <opt> <macaddr> <pkt_type> <type> <flag>\r\n");
+    (void)PRINTF("opt   : add/delete/clear/dump \r\n");
+    (void)PRINTF("add   : All options need to be filled in \r\n");
+    (void)PRINTF("delete: Delete recent filter information \r\n");
+    (void)PRINTF("clear : Clear all filter information \r\n");
+    (void)PRINTF("dump  : Dump csi cfg information \r\n");
+
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-set-csi-filter add 00:18:E7:ED:2D:C1 255 255 0 \r\n");
+    (void)PRINTF("wlan-set-csi-filter delete \r\n");
+    (void)PRINTF("wlan-set-csi-filter clear \r\n");
+    (void)PRINTF("wlan-set-csi-filter dump \r\n");
+}
+
+void dump_csi_param_header()
+{
+    (void)PRINTF("\r\nThe current csi_param is: \r\n");
+    (void)PRINTF("csi_enable    : %d \r\n", g_csi_params.csi_enable);
+    (void)PRINTF("head_id       : %d \r\n", g_csi_params.head_id);
+    (void)PRINTF("tail_id       : %d \r\n", g_csi_params.tail_id);
+    (void)PRINTF("csi_filter_cnt: %d \r\n", g_csi_params.csi_filter_cnt);
+    (void)PRINTF("chip_id       : %d \r\n", g_csi_params.chip_id);
+    (void)PRINTF("band_config   : %d \r\n", g_csi_params.band_config);
+    (void)PRINTF("channel       : %d \r\n", g_csi_params.channel);
+    (void)PRINTF("csi_monitor_enable : %d \r\n", g_csi_params.csi_monitor_enable);
+    (void)PRINTF("ra4us         : %d \r\n", g_csi_params.ra4us);
+
+    (void)PRINTF("\r\n");
+}
+
+void set_csi_param_header(t_u16 csi_enable,
+                          t_u32 head_id,
+                          t_u32 tail_id,
+                          t_u8 chip_id,
+                          t_u8 band_config,
+                          t_u8 channel,
+                          t_u8 csi_monitor_enable,
+                          t_u8 ra4us)
+{
+    g_csi_params.csi_enable         = csi_enable;
+    g_csi_params.head_id            = head_id;
+    g_csi_params.tail_id            = tail_id;
+    g_csi_params.chip_id            = chip_id;
+    g_csi_params.band_config        = band_config;
+    g_csi_params.channel            = channel;
+    g_csi_params.csi_monitor_enable = csi_monitor_enable;
+    g_csi_params.ra4us              = ra4us;
+
+    dump_csi_param_header();
+}
+
+void set_csi_filter(t_u8 pkt_type, t_u8 subtype, t_u8 flags, int op_index, t_u8 *mac)
+{
+    t_u8 temp_filter_cnt = g_csi_params.csi_filter_cnt;
+    int i                = 0;
+
+    switch (op_index)
+    {
+        case CSI_FILTER_OPT_ADD:
+            if (temp_filter_cnt < CSI_FILTER_MAX)
+            {
+                (void)memcpy(&g_csi_params.csi_filter[temp_filter_cnt].mac_addr[0], mac, MLAN_MAC_ADDR_LENGTH);
+                g_csi_params.csi_filter[temp_filter_cnt].pkt_type = pkt_type;
+                g_csi_params.csi_filter[temp_filter_cnt].subtype  = subtype;
+                g_csi_params.csi_filter[temp_filter_cnt].flags    = flags;
+                g_csi_params.csi_filter_cnt++;
+            }
+            else
+            {
+                (void)PRINTF("max csi filter cnt is 16 \r\n");
+                return;
+            }
+            break;
+
+        case CSI_FILTER_OPT_DELETE:
+            if (temp_filter_cnt > 0)
+            {
+                memset(&g_csi_params.csi_filter[temp_filter_cnt], 0, sizeof(wifi_csi_filter_t));
+                g_csi_params.csi_filter_cnt--;
+            }
+            else
+            {
+                (void)PRINTF("csi filter cnt is 0 \r\n");
+                return;
+            }
+            break;
+
+        case CSI_FILTER_OPT_CLEAR:
+            for (i = 0; i < temp_filter_cnt; i++)
+            {
+                memset(&g_csi_params.csi_filter[i], 0, sizeof(wifi_csi_filter_t));
+            }
+            g_csi_params.csi_filter_cnt = 0;
+            break;
+
+        case CSI_FILTER_OPT_DUMP:
+            dump_csi_param_header();
+
+            for (i = 0; i < temp_filter_cnt; i++)
+            {
+                (void)PRINTF("mac_addr      : %02X:%02X:%02X:%02X:%02X:%02X \r\n",
+                             g_csi_params.csi_filter[i].mac_addr[0], g_csi_params.csi_filter[i].mac_addr[1],
+                             g_csi_params.csi_filter[i].mac_addr[2], g_csi_params.csi_filter[i].mac_addr[3],
+                             g_csi_params.csi_filter[i].mac_addr[4], g_csi_params.csi_filter[i].mac_addr[5]);
+
+                (void)PRINTF("pkt_type      : %d \r\n", g_csi_params.csi_filter[i].pkt_type);
+                (void)PRINTF("subtype       : %d \r\n", g_csi_params.csi_filter[i].subtype);
+                (void)PRINTF("flags         : %d \r\n", g_csi_params.csi_filter[i].flags);
+                (void)PRINTF("\r\n");
+            }
+            break;
+
+        default:
+            (void)PRINTF("unknown argument!\r\n");
+            break;
+    }
+}
+
+static void test_wlan_set_csi_param_header(int argc, char **argv)
+{
+    t_u16 csi_enable        = 0;
+    t_u32 head_id           = 0;
+    t_u32 tail_id           = 0;
+    t_u8 chip_id            = 0;
+    t_u8 band_config        = 0;
+    t_u8 channel            = 0;
+    t_u8 csi_monitor_enable = 0;
+    t_u8 ra4us              = 0;
+
+    if (argc != 9)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF(
+            "Usage: %s <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
+            "<ra4us>\r\n\r\n",
+            argv[0]);
+
+        (void)PRINTF("[csi_enable] :1/2 to Enable/DisEnable CSI\r\n");
+        (void)PRINTF("[head_id, head_id, chip_id] are used to seperate CSI event records received from FW\r\n");
+        (void)PRINTF(
+            "[Bandcfg] defined as below: \r\n"
+            "    Band Info - (00)=2.4GHz, (01)=5GHz \r\n"
+            "    t_u8  chanBand    : 2;\r\n"
+            "    Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz\r\n"
+            "    t_u8  chanWidth   : 2;\r\n"
+            "    Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below\r\n"
+            "    t_u8  chan2Offset : 2;\r\n"
+            "    Channel Selection Mode - (00)=manual, (01)=ACS, (02)=Adoption mode\r\n"
+            "    t_u8  scanMode    : 2;\r\n");
+        (void)PRINTF("[channel] : monitor channel number\r\n");
+        (void)PRINTF("[csi_monitor_enable] : 1-csi_monitor enable, 0-MAC filter enable\r\n");
+        (void)PRINTF(
+            "[ra4us] : 1/0 to Enable/DisEnable CSI data received in cfg channel with mac addr filter, not only RA is "
+            "us or other\r\n");
+
+        (void)PRINTF("\r\nUsage example : \r\n");
+        (void)PRINTF("wlan-set-csi-param-header 1 66051 66051 170 0 11 1 1\r\n");
+
+        dump_csi_param_header();
+
+        return;
+    }
+
+    /*
+     * csi param header headid, tailid, chipid are used to seperate CSI event records received from FW.
+     * FW adds user configured headid, chipid and tailid for each CSI event record.
+     * User could configure these fields and used these fields to parse CSI event buffer and do verification.
+     * All the CSI filters share the same CSI param header.
+     */
+    csi_enable         = (t_u16)atoi(argv[1]);
+    head_id            = (t_u32)atoi(argv[2]);
+    tail_id            = (t_u32)atoi(argv[3]);
+    chip_id            = (t_u8)atoi(argv[4]);
+    band_config        = (t_u8)atoi(argv[5]);
+    channel            = (t_u8)atoi(argv[6]);
+    csi_monitor_enable = (t_u8)atoi(argv[7]);
+    ra4us              = (t_u8)atoi(argv[8]);
+
+    set_csi_param_header(csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
+}
+
+static void test_wlan_set_csi_filter(int argc, char **argv)
+{
+    int ret = 0;
+    t_u8 raw_mac[MLAN_MAC_ADDR_LENGTH];
+    t_u8 pkt_type = 0;
+    t_u8 subtype  = 0;
+    t_u8 flags    = 0;
+    int op_index  = 0;
+
+    if (argc < 2)
+    {
+        dump_wlan_csi_filter_usage();
+        return;
+    }
+
+    if (string_equal("add", argv[1]))
+    {
+        if (6 == argc)
+        {
+            ret = get_mac(argv[2], (char *)raw_mac, ':');
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: invalid MAC argument\r\n");
+                return;
+            }
+            if ((memcmp(&raw_mac[0], broadcast_mac, MLAN_MAC_ADDR_LENGTH) == 0) || (raw_mac[0] & 0x01))
+            {
+                (void)PRINTF("Error: only support unicast mac\r\n");
+                return;
+            }
+
+            /*
+             * pkt_type and subtype are the 802.11 framecontrol pkttype and subtype
+             * flags:
+             * bit0 reserved, must be 0
+             * bit1 set to 1: wait for trigger
+             * bit2 set to 1: send csi error event when timeout
+             */
+            pkt_type = (t_u8)atoi(argv[3]);
+            subtype  = (t_u8)atoi(argv[4]);
+            flags    = (t_u8)atoi(argv[5]);
+
+            op_index = CSI_FILTER_OPT_ADD;
+        }
+        else
+        {
+            dump_wlan_csi_filter_usage();
+            return;
+        }
+    }
+    else if (string_equal("delete", argv[1]))
+        op_index = CSI_FILTER_OPT_DELETE;
+    else if (string_equal("clear", argv[1]))
+        op_index = CSI_FILTER_OPT_CLEAR;
+    else if (string_equal("dump", argv[1]))
+        op_index = CSI_FILTER_OPT_DUMP;
+    else
+    {
+        (void)PRINTF("Unknown argument!\r\n");
+        return;
+    }
+
+    set_csi_filter(pkt_type, subtype, flags, op_index, raw_mac);
+}
+
+static void test_wlan_csi_cfg(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_csi_cfg(&g_csi_params);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to send csi cfg\r\n");
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4216,6 +4496,13 @@ static struct cli_command tests[] = {
     {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>",
      test_wlan_uap_set_ecsa_cfg},
 #endif
+#ifdef CONFIG_CSI
+    {"wlan-csi-cfg", NULL, test_wlan_csi_cfg},
+    {"wlan-set-csi-param-header",
+     " <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
+     test_wlan_set_csi_param_header},
+    {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
+#endif
 #ifdef CONFIG_TX_RX_HISTOGRAM
     {"wlan-txrx-histogram", "<action> <enable>", test_wlan_txrx_histogram},
 #endif
@@ -4235,7 +4522,7 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
-#endif 
+#endif
 };
 
 /* Register our commands with the MTF. */

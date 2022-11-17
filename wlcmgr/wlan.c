@@ -8747,3 +8747,24 @@ void wlan_config_mef(int type, t_u8 mef_action)
     return;
 }
 #endif
+
+#ifdef CONFIG_CSI
+int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer))
+{
+    return register_csi_user_callback(csi_data_recv_callback);
+}
+
+int wlan_csi_cfg(wlan_csi_config_params_t *csi_params)
+{
+    int ret = WM_SUCCESS;
+
+    if (true == (1 == csi_params->csi_enable) ? true : false)
+    {
+        csi_local_buff_init();
+    }
+
+    ret = wifi_csi_cfg(csi_params);
+
+    return ret;
+}
+#endif

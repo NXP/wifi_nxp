@@ -1234,6 +1234,13 @@ hal_rpmsg_status_t rpmsg_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     assert(0 != length);
     assert(IMU_MSG_EVENT == pImuMsg->Hdr.type);
 
+#ifdef CONFIG_CSI
+    if (EVENT_CSI == *((t_u8 *)pImuMsg->PayloadPtr[0] + 4))
+    {
+        csi_save_data_to_local_buff((t_u8 *)pImuMsg->PayloadPtr[0] + 8);
+    }
+#endif
+
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_EVENT);
 
     return kStatus_HAL_RpmsgSuccess;

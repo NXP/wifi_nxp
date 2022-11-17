@@ -1504,4 +1504,30 @@ void wifi_set_sleep_period(uint16_t sleep_period);
 t_u8 wifi_wmm_get_packet_cnt(void);
 #endif
 
+#ifdef CONFIG_CSI
+/**
+ * Send the csi config parameter to FW.
+ *
+ *\param[in] csi_params Csi config parameter
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_csi_cfg(wifi_csi_config_params_t *csi_params);
+int register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
+void csi_local_buff_init();
+void csi_save_data_to_local_buff(void *data);
+void csi_deliver_data_to_user();
+
+typedef struct _csi_local_buff_statu
+{
+    t_u8 write_index;
+    t_u8 read_index;
+    t_u8 valid_data_cnt;
+    /** Semaphore to protect data parameters */
+    os_semaphore_t csi_data_sem;
+} csi_local_buff_statu;
+
+extern int csi_event_cnt;
+extern t_u64 csi_event_data_len;
+#endif
+
 #endif

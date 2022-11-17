@@ -136,6 +136,10 @@ enum wifi_event
 #endif
     /* Event to indicate RX Management Frame */
     WIFI_EVENT_MGMT_FRAME,
+#ifdef CONFIG_CSI
+    /* Recv csi data */
+    WIFI_EVENT_CSI,
+#endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must

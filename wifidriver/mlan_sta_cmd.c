@@ -2460,6 +2460,61 @@ static mlan_status wlan_cmd_tx_ampdu_prot_mode(IN pmlan_private pmpriv,
 }
 #endif
 
+#ifdef CONFIG_CSI
+/**
+ * @brief This function enable/disable CSI support.
+ *
+ * @param pmpriv       A pointer to mlan_private structure
+ * @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ * @param cmd_action   The action: GET or SET
+ * @param pdata_buf    A pointer to data buffer
+ *
+ * @return             MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_cmd_csi(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_u16 *pdata_buf)
+{
+    HostCmd_DS_CSI_CFG *csi_cfg_cmd      = &cmd->params.csi_params;
+    wifi_csi_config_params_t *csi_params = MNULL;
+
+    ENTER();
+
+    cmd->command        = wlan_cpu_to_le16(HostCmd_CMD_CSI);
+    cmd->size           = sizeof(HostCmd_DS_CSI_CFG) + S_DS_GEN;
+    csi_cfg_cmd->action = wlan_cpu_to_le16(cmd_action);
+    switch (cmd_action)
+    {
+        case CSI_CMD_ENABLE:
+            csi_params                  = (wifi_csi_config_params_t *)pdata_buf;
+            csi_cfg_cmd->head_id        = wlan_cpu_to_le32(csi_params->head_id);
+            csi_cfg_cmd->tail_id        = wlan_cpu_to_le32(csi_params->tail_id);
+            csi_cfg_cmd->chip_id        = csi_params->chip_id;
+            csi_cfg_cmd->csi_filter_cnt = csi_params->csi_filter_cnt;
+
+            csi_cfg_cmd->channel_bandconfig.header.type        = wlan_cpu_to_le16(TLV_TYPE_UAP_CHAN_BAND_CONFIG);
+            csi_cfg_cmd->channel_bandconfig.header.len         = 4;
+            csi_cfg_cmd->channel_bandconfig.bandconfig         = csi_params->band_config;
+            csi_cfg_cmd->channel_bandconfig.channel            = csi_params->channel;
+            csi_cfg_cmd->channel_bandconfig.csi_monitor_enable = csi_params->csi_monitor_enable;
+            csi_cfg_cmd->channel_bandconfig.ra4us              = csi_params->ra4us;
+
+            if (csi_cfg_cmd->csi_filter_cnt > CSI_FILTER_MAX)
+                csi_cfg_cmd->csi_filter_cnt = CSI_FILTER_MAX;
+            memcpy((t_u8 *)csi_cfg_cmd->csi_filter, (t_u8 *)csi_params->csi_filter,
+                   sizeof(wifi_csi_filter_t) * csi_cfg_cmd->csi_filter_cnt);
+
+            DBG_HEXDUMP(MCMD_D, "Enable CSI", csi_cfg_cmd, sizeof(HostCmd_DS_CSI_CFG));
+            break;
+        case CSI_CMD_DISABLE:
+            DBG_HEXDUMP(MCMD_D, "Disable CSI", csi_cfg_cmd, sizeof(HostCmd_DS_CSI_CFG));
+        default:
+            break;
+    }
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 /********************************************************
                 Global Functions
 ********************************************************/
@@ -2840,6 +2895,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
         case HostCmd_CMD_TX_AMPDU_PROT_MODE:
             ret = wlan_cmd_tx_ampdu_prot_mode(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
+#ifdef CONFIG_CSI
+        case HostCmd_CMD_CSI:
+            ret = wlan_cmd_csi(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
         default:

@@ -4291,3 +4291,30 @@ int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
     return wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? prot_mode : NULL);
 }
 #endif
+
+#ifdef CONFIG_CSI
+int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
+{
+    t_u16 action = CSI_CMD_DISABLE;
+
+    action = csi_params->csi_enable;
+    if (action != CSI_CMD_ENABLE && action != CSI_CMD_DISABLE)
+        return -WM_FAIL;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_CSI,
+                                              csi_params->csi_enable, 0, NULL, csi_params, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+    {
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif

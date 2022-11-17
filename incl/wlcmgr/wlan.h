@@ -486,6 +486,16 @@ typedef PACK_START struct
 } PACK_END wnm_sleep_result_t;
 #endif
 
+#ifdef CONFIG_CSI
+enum wlan_csi_opt
+{
+    CSI_FILTER_OPT_ADD = 0,
+    CSI_FILTER_OPT_DELETE,
+    CSI_FILTER_OPT_CLEAR,
+    CSI_FILTER_OPT_DUMP,
+};
+#endif
+
 /** Scan Result */
 struct wlan_scan_result
 {
@@ -946,6 +956,13 @@ typedef wifi_correlated_time_t wlan_correlated_time_t;
  * \ref wifi_dot1as_info_t
  */
 typedef wifi_dot1as_info_t wlan_dot1as_info_t;
+#endif
+
+#ifdef CONFIG_CSI
+/** Configuration for Csi Config Params from
+ * \ref wifi_csi_config_params_t
+ */
+typedef wifi_csi_config_params_t wlan_csi_config_params_t;
 #endif
 
 int verify_scan_duration_value(int scan_duration);
@@ -4463,6 +4480,47 @@ int wlan_mef_set_auto_arp(t_u8 mef_action);
  * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
  */
 void wlan_config_mef(int type, t_u8 mef_action);
+#endif
+
+#ifdef CONFIG_CSI
+/**
+ * Send the csi config parameter to FW.
+ *
+ *\param[in] csi_params Csi config parameter
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_csi_cfg(wlan_csi_config_params_t *csi_params);
+
+/** This function registers callback which are used to deliver CSI data to user.
+ *
+ * \param[in] csi_data_recv_callback Callback to deliver CSI data and max data length is 768 bytes.
+ * Pls save data as soon as possible in callback
+ * Type of callback return vale is int.
+ *
+ *          Memory layout of buffer:
+ *          size(byte)                         items
+ *          2                                  buffer len[bit 0:12]
+ *          2                                  CSI signature, 0xABCD fixed
+ *          4                                  User defined HeaderID
+ *          2                                  Packet info
+ *          2                                  Frame control field for the received packet
+ *          8                                  Timestamp when packet received
+ *          6                                  Received Packet Destination MAC Address
+ *          6                                  Received Packet Source MAC Address
+ *          1                                  RSSI for antenna A
+ *          1                                  RSSI for antenna B
+ *          1                                  Noise floor for antenna A
+ *          1                                  Noise floor for antenna B
+ *          1                                  Rx signal strength above noise floor
+ *          1                                  Channel
+ *          2                                  user defined Chip ID
+ *          4                                  Reserved
+ *          4                                  CSI data length in DWORDs
+ *                                             CSI data
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
 #endif
 
 #endif /* __WLAN_H__ */
