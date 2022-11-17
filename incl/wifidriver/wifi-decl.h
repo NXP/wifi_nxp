@@ -556,9 +556,9 @@ typedef struct
 #define MEF_AUTO_PING                    0x20
 #define MEF_NS_RESP                      0x40
 #define MEF_MAGIC_PKT                    0x80
-#define CRITERIA_BROADCAST               BIT(0)
-#define CRITERIA_UNICAST                 BIT(1)
-#define CRITERIA_MULTICAST               BIT(3)
+#define CRITERIA_BROADCAST               MBIT(0)
+#define CRITERIA_UNICAST                 MBIT(1)
+#define CRITERIA_MULTICAST               MBIT(3)
 
 #define MAX_NUM_ENTRIES  8
 #define MAX_NUM_BYTE_SEQ 6
@@ -644,7 +644,7 @@ typedef struct _wifi_flt_cfg
     /** Number of entries */
     t_u16 nentries;
     /** MEF entry*/
-    wifi_mef_entry_t mef_entry;
+    wifi_mef_entry_t mef_entry[MAX_NUM_ENTRIES];
 } wifi_flt_cfg_t;
 
 /* User defined pattern struct */

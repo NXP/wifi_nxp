@@ -3386,7 +3386,6 @@ void wlan_uap_ampdu_tx_enable_per_tid(t_u8 tid);
 void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid);
 #endif
 
-
 /**
  * Set number of channels and channel number used during automatic
  * channel selection of uAP.
@@ -4406,4 +4405,27 @@ void wlan_set_sleep_period(uint16_t sleep_period);
  */
 int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 #endif
+
+#ifdef CONFIG_MEF_CFG
+enum wlan_mef_type
+{
+    MEF_TYPE_DELETE = 0,
+    MEF_TYPE_PING,
+    MEF_TYPE_ARP,
+    MEF_TYPE_MULTICAST,
+    MEF_TYPE_END,
+};
+/** This function set auto ARP configuration.
+ *
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+int wlan_mef_set_auto_arp(t_u8 mef_action);
+/** This function set/delete mef entries configuration.
+ *
+ * \param[in] type        MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+void wlan_config_mef(int type, t_u8 mef_action);
+#endif
+
 #endif /* __WLAN_H__ */

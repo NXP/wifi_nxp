@@ -532,7 +532,7 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
     mef_entry_header *entry_hdr;
     t_u8 *buf = (t_u8 *)cmd, *filter_buf = NULL;
     t_u32 buf_len;
-    int i;
+    int i, j;
     mef_op op;
     t_u32 dnum;
 
@@ -544,177 +544,151 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_MEF_CFG);
     buf_len      = S_DS_GEN;
 
-    /** Fill HostCmd_DS_MEF_CFG*/
-    mef_hdr           = (HostCmd_DS_MEF_CFG *)(void *)(buf + buf_len);
-    mef_hdr->criteria = wlan_cpu_to_le32(flt_cfg->criteria);
-    mef_hdr->nentries = wlan_cpu_to_le16(flt_cfg->nentries);
-    buf_len += sizeof(HostCmd_DS_MEF_CFG);
-
-    /** Fill entry header data*/
-    entry_hdr         = (mef_entry_header *)(void *)(buf + buf_len);
-    entry_hdr->mode   = flt_cfg->mef_entry.mode;
-    entry_hdr->action = flt_cfg->mef_entry.action;
-    buf_len += sizeof(mef_entry_header);
-
-    for (i = 0; i < flt_cfg->mef_entry.filter_num; i++)
+    for (i = 0; i < flt_cfg->nentries; i++)
     {
-        if (flt_cfg->mef_entry.filter_item[i].type == TYPE_DNUM_EQ)
+        /** Fill entry header data */
+        entry_hdr         = (mef_entry_header *)(buf + buf_len);
+        entry_hdr->mode   = flt_cfg->mef_entry[i].mode;
+        entry_hdr->action = flt_cfg->mef_entry[i].action;
+        buf_len += sizeof(mef_entry_header);
+        for (j = 0; j < flt_cfg->mef_entry[i].filter_num; j++)
         {
-            /* Format of decimal num:
-             * |   5 bytes  |    5 bytes    |    5 bytes    |        1 byte         |
-             * |   pattern  |     offset    |  num of bytes |  type (TYPE_DNUM_EQ)  |
-             */
+            if (flt_cfg->mef_entry[i].filter_item[j].type == TYPE_DNUM_EQ)
+            {
+                /* Format of decimal num:
+                 * |   5 bytes  |    5 bytes    |    5 bytes    |        1 byte         |
+                 * |   pattern  |     offset    |  num of bytes |  type (TYPE_DNUM_EQ)  |
+                 */
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            filter_buf = (t_u8 *)(buf + buf_len);
+                /* push pattern */
+                op.operand_type = OPERAND_DNUM;
+                dnum            = flt_cfg->mef_entry[i].filter_item[j].pattern;
+                (void)memcpy(filter_buf, &dnum, sizeof(dnum));
+                (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+                buf_len += sizeof(dnum) + 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            /* push pattern */
-            op.operand_type = OPERAND_DNUM;
-            dnum            = flt_cfg->mef_entry.filter_item[i].pattern;
-            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
-            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
-            buf_len += sizeof(dnum) + 1;
+                /* push offset */
+                op.operand_type = OPERAND_DNUM;
+                dnum            = flt_cfg->mef_entry[i].filter_item[j].offset;
+                (void)memcpy(filter_buf, &dnum, sizeof(dnum));
+                (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+                buf_len += sizeof(dnum) + 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            filter_buf = (t_u8 *)(buf + buf_len);
+                /* push num of bytes */
+                op.operand_type = OPERAND_DNUM;
+                dnum            = flt_cfg->mef_entry[i].filter_item[j].num_bytes;
+                (void)memcpy(filter_buf, &dnum, sizeof(dnum));
+                (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+                buf_len += sizeof(dnum) + 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            /* push offset */
-            op.operand_type = OPERAND_DNUM;
-            dnum            = flt_cfg->mef_entry.filter_item[i].offset;
-            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
-            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
-            buf_len += sizeof(dnum) + 1;
+                /* push type */
+                op.operand_type = TYPE_DNUM_EQ;
+                (void)memcpy(filter_buf, &(op.operand_type), 1);
+                buf_len += 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
+            }
+            else if (flt_cfg->mef_entry[i].filter_item[j].type == TYPE_BYTE_EQ)
+            {
+                /* Format of byte seq:
+                 * |   5 bytes  |      val      |    5 bytes    |        1 byte         |
+                 * |   repeat   |   bytes seq   |    offset     |  type (TYPE_BYTE_EQ)  |
+                 */
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            filter_buf = (t_u8 *)(buf + buf_len);
+                /* push repeat */
+                op.operand_type = OPERAND_DNUM;
+                dnum            = flt_cfg->mef_entry[i].filter_item[j].repeat;
+                (void)memcpy(filter_buf, &dnum, sizeof(dnum));
+                (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+                buf_len += sizeof(dnum) + 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            /* push num of bytes */
-            op.operand_type = OPERAND_DNUM;
-            dnum            = flt_cfg->mef_entry.filter_item[i].num_bytes;
-            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
-            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
-            buf_len += sizeof(dnum) + 1;
+                /* push bytes seq */
+                op.operand_type = OPERAND_BYTE_SEQ;
+                (void)memcpy(filter_buf, flt_cfg->mef_entry[i].filter_item[j].byte_seq,
+                             flt_cfg->mef_entry[i].filter_item[j].num_byte_seq);
+                (void)memcpy(filter_buf + flt_cfg->mef_entry[i].filter_item[j].num_byte_seq,
+                             &(flt_cfg->mef_entry[i].filter_item[j].num_byte_seq), 1);
+                (void)memcpy(filter_buf + flt_cfg->mef_entry[i].filter_item[j].num_byte_seq + 1, &(op.operand_type), 1);
+                buf_len += flt_cfg->mef_entry[i].filter_item[j].num_byte_seq + 2;
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            filter_buf = (t_u8 *)(buf + buf_len);
+                /* push offset */
+                op.operand_type = OPERAND_DNUM;
+                dnum            = flt_cfg->mef_entry[i].filter_item[j].offset;
+                (void)memcpy(filter_buf, &dnum, sizeof(dnum));
+                (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+                buf_len += sizeof(dnum) + 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            /* push type */
-            op.operand_type = TYPE_DNUM_EQ;
-            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
-            buf_len += 1;
+                /* push type */
+                op.operand_type = TYPE_BYTE_EQ;
+                (void)memcpy(filter_buf, &(op.operand_type), 1);
+                buf_len += 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
+            }
+            else if (flt_cfg->mef_entry[i].filter_item[j].type == TYPE_BIT_EQ)
+            {
+                /* Format of bit seq:
+                 * |   val      |    5 bytes    |      val      |        1 byte         |
+                 * | bytes seq  |    offset     |    mask seq   |  type (TYPE_BIT_EQ)   |
+                 */
+                filter_buf = (t_u8 *)(buf + buf_len);
 
-            filter_buf = (t_u8 *)(buf + buf_len);
+                /* push bytes seq */
+                op.operand_type = OPERAND_BYTE_SEQ;
+                (void)memcpy(filter_buf, flt_cfg->mef_entry[i].filter_item[j].byte_seq,
+                             flt_cfg->mef_entry[i].filter_item[j].num_byte_seq);
+                (void)memcpy(filter_buf + flt_cfg->mef_entry[i].filter_item[j].num_byte_seq,
+                             &(flt_cfg->mef_entry[i].filter_item[j].num_byte_seq), 1);
+                (void)memcpy(filter_buf + flt_cfg->mef_entry[i].filter_item[j].num_byte_seq + 1, &(op.operand_type), 1);
+                buf_len += flt_cfg->mef_entry[i].filter_item[j].num_byte_seq + 2;
+                filter_buf = (t_u8 *)(buf + buf_len);
+
+                /* push offset */
+                op.operand_type = OPERAND_DNUM;
+                dnum            = flt_cfg->mef_entry[i].filter_item[j].offset;
+                (void)memcpy(filter_buf, &dnum, sizeof(dnum));
+                (void)memcpy(filter_buf + sizeof(dnum), &(op.operand_type), 1);
+                buf_len += sizeof(dnum) + 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
+
+                /* push mask seq */
+                op.operand_type = OPERAND_BYTE_SEQ;
+                (void)memcpy(filter_buf, flt_cfg->mef_entry[i].filter_item[j].mask_seq,
+                             flt_cfg->mef_entry[i].filter_item[j].num_mask_seq);
+                (void)memcpy(filter_buf + flt_cfg->mef_entry[i].filter_item[j].num_mask_seq,
+                             &(flt_cfg->mef_entry[i].filter_item[j].num_mask_seq), 1);
+                (void)memcpy(filter_buf + flt_cfg->mef_entry[i].filter_item[j].num_mask_seq + 1, &(op.operand_type), 1);
+                buf_len += flt_cfg->mef_entry[i].filter_item[j].num_mask_seq + 2;
+                filter_buf = (t_u8 *)(buf + buf_len);
+
+                /* push type */
+                op.operand_type = TYPE_BIT_EQ;
+                (void)memcpy(filter_buf, &(op.operand_type), 1);
+                buf_len += 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
+            }
+            else
+                goto done;
+            if (j != 0)
+            {
+                filter_buf      = (t_u8 *)(buf + buf_len);
+                op.operand_type = flt_cfg->mef_entry[i].rpn[j];
+                (void)memcpy(filter_buf, &(op.operand_type), 1);
+                buf_len += 1;
+                filter_buf = (t_u8 *)(buf + buf_len);
+            }
         }
-        else if (flt_cfg->mef_entry.filter_item[i].type == TYPE_BYTE_EQ)
-        {
-            /* Format of byte seq:
-             * |   5 bytes  |      val      |    5 bytes    |        1 byte         |
-             * |   repeat   |   bytes seq   |    offset     |  type (TYPE_BYTE_EQ)  |
-             */
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push repeat */
-            op.operand_type = OPERAND_DNUM;
-            dnum            = flt_cfg->mef_entry.filter_item[i].repeat;
-            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
-            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
-            buf_len += sizeof(dnum) + 1;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push bytes seq */
-            op.operand_type = OPERAND_BYTE_SEQ;
-            (void)memcpy((void *)filter_buf, (const void *)flt_cfg->mef_entry.filter_item[i].byte_seq,
-                         flt_cfg->mef_entry.filter_item[i].num_byte_seq);
-            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq),
-                         (const void *)&(flt_cfg->mef_entry.filter_item[i].num_byte_seq), 1);
-            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq + 1),
-                         (const void *)&(op.operand_type), 1);
-            buf_len += flt_cfg->mef_entry.filter_item[i].num_byte_seq + 2;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push offset */
-            op.operand_type = OPERAND_DNUM;
-            dnum            = flt_cfg->mef_entry.filter_item[i].offset;
-            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
-            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
-            buf_len += sizeof(dnum) + 1;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push type */
-            op.operand_type = TYPE_BYTE_EQ;
-            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
-            buf_len += 1;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-        }
-        else if (flt_cfg->mef_entry.filter_item[i].type == TYPE_BIT_EQ)
-        {
-            /* Format of bit seq:
-             * |   val      |    5 bytes    |      val      |        1 byte         |
-             * | bytes seq  |    offset     |    mask seq   |  type (TYPE_BIT_EQ)   |
-             */
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push bytes seq */
-            op.operand_type = OPERAND_BYTE_SEQ;
-            (void)memcpy((void *)filter_buf, (const void *)flt_cfg->mef_entry.filter_item[i].byte_seq,
-                         flt_cfg->mef_entry.filter_item[i].num_byte_seq);
-            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq),
-                         (const void *)&(flt_cfg->mef_entry.filter_item[i].num_byte_seq), 1);
-            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_byte_seq + 1),
-                         (const void *)&(op.operand_type), 1);
-            buf_len += flt_cfg->mef_entry.filter_item[i].num_byte_seq + 2;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push offset */
-            op.operand_type = OPERAND_DNUM;
-            dnum            = flt_cfg->mef_entry.filter_item[i].offset;
-            (void)memcpy((void *)filter_buf, (const void *)&dnum, sizeof(dnum));
-            (void)memcpy((void *)(filter_buf + sizeof(dnum)), (const void *)&(op.operand_type), 1);
-            buf_len += sizeof(dnum) + 1;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push mask seq */
-            op.operand_type = OPERAND_BYTE_SEQ;
-            (void)memcpy((void *)filter_buf, (const void *)flt_cfg->mef_entry.filter_item[i].mask_seq,
-                         flt_cfg->mef_entry.filter_item[i].num_mask_seq);
-            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_mask_seq),
-                         (const void *)&(flt_cfg->mef_entry.filter_item[i].num_mask_seq), 1);
-            (void)memcpy((void *)(filter_buf + flt_cfg->mef_entry.filter_item[i].num_mask_seq + 1),
-                         (const void *)&(op.operand_type), 1);
-            buf_len += flt_cfg->mef_entry.filter_item[i].num_mask_seq + 2;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            /* push type */
-            op.operand_type = TYPE_BIT_EQ;
-            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
-            buf_len += 1;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-        }
-        else
-        {
-            goto done;
-        }
-
-        if (i != 0)
-        {
-            filter_buf = (t_u8 *)(buf + buf_len);
-
-            op.operand_type = flt_cfg->mef_entry.rpn[i];
-            (void)memcpy((void *)filter_buf, (const void *)&(op.operand_type), 1);
-            buf_len += 1;
-
-            filter_buf = (t_u8 *)(buf + buf_len);
-        }
+        if (filter_buf != NULL)
+            entry_hdr->len = (t_u32)filter_buf - (t_u32)entry_hdr - sizeof(mef_entry_header);
     }
 
-    entry_hdr->len = buf_len - sizeof(HostCmd_DS_MEF_CFG) - S_DS_GEN - sizeof(mef_entry_header);
-    cmd->size      = wlan_cpu_to_le16(buf_len);
+    cmd->size = wlan_cpu_to_le16(buf_len);
 done:
     (void)wifi_wait_for_cmdresp(NULL);
 

@@ -2515,6 +2515,9 @@ static void test_wlan_get_log(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_MEF_CFG
+extern wlan_flt_cfg_t g_flt_cfg;
+#endif
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -2522,7 +2525,11 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
     if (argc < 2)
     {
+#ifdef CONFIG_MEF_CFG
+        (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
+#else
         (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+#endif
         return;
     }
 
@@ -2547,21 +2554,28 @@ static void test_wlan_host_sleep(int argc, char **argv)
     }
     else if (choice == 1)
     {
+#ifdef CONFIG_MEF_CFG
+        if (argc < 3)
+#else
         if (argc < 4)
+#endif
         {
+#ifdef CONFIG_MEF_CFG
+            (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
+#else
             (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+#endif
             return;
-        }
-
-        errno  = 0;
-        wowlan = (int)strtol(argv[3], NULL, 10);
-        if (errno != 0)
-        {
-            (void)PRINTF("Error during strtoul:wowlan errno:%d\r\n", errno);
         }
 
         if (string_equal(argv[2], "wowlan_test"))
         {
+            errno  = 0;
+            wowlan = (int)strtol(argv[3], NULL, 10);
+            if (errno != 0)
+            {
+                (void)PRINTF("Error during strtoul:wowlan errno:%d\r\n", errno);
+            }
             if (wowlan == 1)
             {
                 ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
@@ -2592,18 +2606,112 @@ static void test_wlan_host_sleep(int argc, char **argv)
                 /*Do Nothing*/
             }
         }
+#ifdef CONFIG_MEF_CFG
+        else if (string_equal(argv[2], "mef"))
+        {
+            if (g_flt_cfg.nentries == 0)
+            {
+                /* User doesn't configure MEF, use default MEF entry */
+                wlan_mef_set_auto_arp(MEF_ACTION_ALLOW_AND_WAKEUP_HOST);
+            }
+            wifi_set_packet_filters(&g_flt_cfg);
+            ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
+            if (ret == WM_SUCCESS)
+            {
+                (void)PRINTF("Host sleep configuration successs with MEF");
+            }
+            else
+            {
+                (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+            }
+        }
+#endif
         else
         {
+#ifdef CONFIG_MEF_CFG
+            (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
+#else
             (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+#endif
             return;
         }
     }
     else
     {
+#ifdef CONFIG_MEF_CFG
+        (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
+#else
         (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+#endif
         return;
     }
 }
+
+#ifdef CONFIG_MEF_CFG
+static void dump_multiple_mef_config_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-multi-mef <ping/arp/multicast/del> [<action>]\r\n");
+    (void)PRINTF("        ping/arp/multicast\r\n");
+    (void)PRINTF("                 -- MEF entry type, will add one mef entry at a time\r\n");
+    (void)PRINTF("        del      -- Delete all previous MEF entries\r\n");
+    (void)PRINTF("        action   -- 0--discard and not wake host\r\n");
+    (void)PRINTF("                    1--discard and wake host\r\n");
+    (void)PRINTF("                    3--allow and wake host\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-multi-mef ping 3\r\n");
+    (void)PRINTF("    wlan-multi-mef del\r\n");
+}
+
+static void test_wlan_set_multiple_mef_config(int argc, char **argv)
+{
+    int type        = MEF_TYPE_END;
+    t_u8 mef_action = 0;
+    if (argc < 2)
+    {
+        dump_multiple_mef_config_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    /* Delete previous MEF configure */
+    if (argc == 2)
+    {
+        if (string_equal("del", argv[1]))
+            type = MEF_TYPE_DELETE;
+        else
+        {
+            dump_multiple_mef_config_usage();
+            (void)PRINTF("Error: invalid mef type\r\n");
+            return;
+        }
+    }
+    /* Add MEF entry */
+    else if (argc >= 3)
+    {
+        if (string_equal("ping", argv[1]))
+        {
+            type       = MEF_TYPE_PING;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else if (string_equal("arp", argv[1]))
+        {
+            type       = MEF_TYPE_ARP;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else if (string_equal("multicast", argv[1]))
+        {
+            type       = MEF_TYPE_MULTICAST;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid mef type\r\n");
+            return;
+        }
+    }
+    wlan_config_mef(type, mef_action);
+}
+#endif
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 static u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
@@ -4011,7 +4119,12 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_ROAMING
     {"wlan-roaming", "<0/1>", test_wlan_roaming},
 #endif
+#ifdef CONFIG_MEF_CFG
+    {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
+    {"wlan-host-sleep", "<0/1> mef/[wowlan_test <0/1>]", test_wlan_host_sleep},
+#else
     {"wlan-host-sleep", "<0/1> wowlan_test <0/1>", test_wlan_host_sleep},
+#endif
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 #if !defined(SD8801)
 #ifdef CONFIG_11AC
@@ -4080,7 +4193,8 @@ static struct cli_command tests[] = {
     {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_set_sleep_period},
 #endif
 #ifdef CONFIG_WIFI_AMPDU_CTRL
-    {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>", test_wlan_ampdu_enable},
+    {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>",
+     test_wlan_ampdu_enable},
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},

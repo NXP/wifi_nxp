@@ -51,6 +51,10 @@
 static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
+#ifdef CONFIG_MEF_CFG
+wlan_flt_cfg_t g_flt_cfg;
+#endif
+
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
 static bool wlan_is_ieeeps_active(void);
 #endif
@@ -561,6 +565,10 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
         {
             wlan.hs_configured       = false;
             wlan.hs_wakeup_condition = wakeup_condition;
+#ifdef CONFIG_MEF_CFG
+            (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+            wifi_set_packet_filters(&g_flt_cfg);
+#endif
         }
         else if (wlan.hs_wakeup_condition != wlan_map_to_wifi_wakeup_condtions(wakeup_condition))
         {
@@ -7068,30 +7076,30 @@ int wlan_set_auto_arp(void)
     flt_cfg.criteria = CRITERIA_BROADCAST;
     flt_cfg.nentries = 1;
 
-    flt_cfg.mef_entry.mode   = MEF_MODE_HOST_SLEEP; // MBIT(0);
-    flt_cfg.mef_entry.action = MEF_AUTO_ARP;
+    flt_cfg.mef_entry[0].mode   = MEF_MODE_HOST_SLEEP; // MBIT(0);
+    flt_cfg.mef_entry[0].action = MEF_AUTO_ARP;
 
-    flt_cfg.mef_entry.filter_num = 3;
+    flt_cfg.mef_entry[0].filter_num = 3;
 
-    flt_cfg.mef_entry.filter_item[0].type         = TYPE_BYTE_EQ;
-    flt_cfg.mef_entry.filter_item[0].repeat       = 6;
-    flt_cfg.mef_entry.filter_item[0].offset       = 0;
-    flt_cfg.mef_entry.filter_item[0].num_byte_seq = 1;
-    flt_cfg.mef_entry.filter_item[0].byte_seq[0]  = 0xff;
-    flt_cfg.mef_entry.rpn[1]                      = RPN_TYPE_AND;
+    flt_cfg.mef_entry[0].filter_item[0].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[0].repeat       = 6;
+    flt_cfg.mef_entry[0].filter_item[0].offset       = 0;
+    flt_cfg.mef_entry[0].filter_item[0].num_byte_seq = 1;
+    flt_cfg.mef_entry[0].filter_item[0].byte_seq[0]  = 0xff;
+    flt_cfg.mef_entry[0].rpn[1]                      = RPN_TYPE_AND;
 
-    flt_cfg.mef_entry.filter_item[1].type         = TYPE_BYTE_EQ;
-    flt_cfg.mef_entry.filter_item[1].repeat       = 1;
-    flt_cfg.mef_entry.filter_item[1].offset       = 20;
-    flt_cfg.mef_entry.filter_item[1].num_byte_seq = 2;
-    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[1].byte_seq, (const void *)"\x08\x06", 2);
-    flt_cfg.mef_entry.rpn[2] = RPN_TYPE_AND;
+    flt_cfg.mef_entry[0].filter_item[1].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[1].repeat       = 1;
+    flt_cfg.mef_entry[0].filter_item[1].offset       = 20;
+    flt_cfg.mef_entry[0].filter_item[1].num_byte_seq = 2;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[1].byte_seq, (const void *)"\x08\x06", 2);
+    flt_cfg.mef_entry[0].rpn[2] = RPN_TYPE_AND;
 
-    flt_cfg.mef_entry.filter_item[2].type         = TYPE_BYTE_EQ;
-    flt_cfg.mef_entry.filter_item[2].repeat       = 1;
-    flt_cfg.mef_entry.filter_item[2].offset       = 46;
-    flt_cfg.mef_entry.filter_item[2].num_byte_seq = 4;
-    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[2].byte_seq, (const void *)&ipv4_addr, 4);
+    flt_cfg.mef_entry[0].filter_item[2].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[2].repeat       = 1;
+    flt_cfg.mef_entry[0].filter_item[2].offset       = 46;
+    flt_cfg.mef_entry[0].filter_item[2].num_byte_seq = 4;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[2].byte_seq, (const void *)&ipv4_addr, 4);
 
     return wifi_set_packet_filters(&flt_cfg);
 }
@@ -7155,7 +7163,7 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
     t_bool first_pat = true;
     memset(&flt_cfg, 0, sizeof(flt_cfg));
     //  mef_cfg.mef_act_type = MEF_ACT_WOWLAN;
-    mef_entry = &flt_cfg.mef_entry;
+    mef_entry = &flt_cfg.mef_entry[0];
 
     mef_entry->mode   = MEF_MODE_HOST_SLEEP;
     mef_entry->action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
@@ -7211,33 +7219,33 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
         flt_cfg.criteria = CRITERIA_UNICAST | CRITERIA_BROADCAST | CRITERIA_MULTICAST;
         flt_cfg.nentries = 1;
 
-        flt_cfg.mef_entry.mode   = MEF_MODE_HOST_SLEEP;
-        flt_cfg.mef_entry.action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
+        flt_cfg.mef_entry[0].mode   = MEF_MODE_HOST_SLEEP;
+        flt_cfg.mef_entry[0].action = MEF_ACTION_ALLOW_AND_WAKEUP_HOST;
 
-        flt_cfg.mef_entry.filter_num = 2;
+        flt_cfg.mef_entry[0].filter_num = 2;
 
-        flt_cfg.mef_entry.filter_item[filt_num].type         = TYPE_BYTE_EQ;
-        flt_cfg.mef_entry.filter_item[filt_num].repeat       = 16;
-        flt_cfg.mef_entry.filter_item[filt_num].offset       = 56;
-        flt_cfg.mef_entry.filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
+        flt_cfg.mef_entry[0].filter_item[filt_num].type         = TYPE_BYTE_EQ;
+        flt_cfg.mef_entry[0].filter_item[filt_num].repeat       = 16;
+        flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 56;
+        flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
+        (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
                      MLAN_MAC_ADDR_LENGTH);
         if (filt_num)
-            flt_cfg.mef_entry.rpn[filt_num] = RPN_TYPE_OR;
+            flt_cfg.mef_entry[0].rpn[filt_num] = RPN_TYPE_OR;
         filt_num++;
         // flt_cfg.mef_entry.filter_item[1].fill_flag	  = (FILLING_TYPE | FILLING_REPEAT | FILLING_BYTE_SEQ |
         // FILLING_OFFSET);
-        flt_cfg.mef_entry.filter_item[filt_num].type         = TYPE_BYTE_EQ;
-        flt_cfg.mef_entry.filter_item[filt_num].repeat       = 16;
-        flt_cfg.mef_entry.filter_item[filt_num].offset       = 28;
-        flt_cfg.mef_entry.filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
-        (void)memcpy((void *)flt_cfg.mef_entry.filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
+        flt_cfg.mef_entry[0].filter_item[filt_num].type         = TYPE_BYTE_EQ;
+        flt_cfg.mef_entry[0].filter_item[filt_num].repeat       = 16;
+        flt_cfg.mef_entry[0].filter_item[filt_num].offset       = 28;
+        flt_cfg.mef_entry[0].filter_item[filt_num].num_byte_seq = MLAN_MAC_ADDR_LENGTH;
+        (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[filt_num].byte_seq, (const void *)wlan.sta_mac,
                      MLAN_MAC_ADDR_LENGTH);
         if (filt_num)
-            flt_cfg.mef_entry.rpn[filt_num] = RPN_TYPE_OR;
+            flt_cfg.mef_entry[0].rpn[filt_num] = RPN_TYPE_OR;
         filt_num++;
     }
-    flt_cfg.mef_entry.filter_num = filt_num;
+    flt_cfg.mef_entry[0].filter_num = filt_num;
     return wifi_set_packet_filters(&flt_cfg);
 }
 #endif /*ENABLE_OFFLOAD*/
@@ -7252,22 +7260,22 @@ int wlan_set_auto_ping()
     flt_cfg.criteria = (MBIT(0) | MBIT(1));
     flt_cfg.nentries = 1;
 
-    flt_cfg.mef_entry.mode   = MBIT(0);
-    flt_cfg.mef_entry.action = 0x20;
+    flt_cfg.mef_entry[0].mode   = MBIT(0);
+    flt_cfg.mef_entry[0].action = 0x20;
 
-    flt_cfg.mef_entry.filter_num = 2;
+    flt_cfg.mef_entry[0].filter_num = 2;
 
-    flt_cfg.mef_entry.filter_item[0].type         = TYPE_BYTE_EQ;
-    flt_cfg.mef_entry.filter_item[0].repeat       = 1;
-    flt_cfg.mef_entry.filter_item[0].offset       = IPV4_PKT_OFFSET;
-    flt_cfg.mef_entry.filter_item[0].num_byte_seq = 2;
-    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[0].byte_seq, (const void *)"\x08\x00", 2);
-    flt_cfg.mef_entry.rpn[1] = RPN_TYPE_AND;
+    flt_cfg.mef_entry[0].filter_item[0].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[0].repeat       = 1;
+    flt_cfg.mef_entry[0].filter_item[0].offset       = IPV4_PKT_OFFSET;
+    flt_cfg.mef_entry[0].filter_item[0].num_byte_seq = 2;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[0].byte_seq, (const void *)"\x08\x00", 2);
+    flt_cfg.mef_entry[0].rpn[1] = RPN_TYPE_AND;
 
-    flt_cfg.mef_entry.filter_item[1].type      = TYPE_DNUM_EQ;
-    flt_cfg.mef_entry.filter_item[1].pattern   = ICMP_OF_IP_PROTOCOL;
-    flt_cfg.mef_entry.filter_item[1].offset    = IP_PROTOCOL_OFFSET;
-    flt_cfg.mef_entry.filter_item[1].num_bytes = 1;
+    flt_cfg.mef_entry[0].filter_item[1].type      = TYPE_DNUM_EQ;
+    flt_cfg.mef_entry[0].filter_item[1].pattern   = ICMP_OF_IP_PROTOCOL;
+    flt_cfg.mef_entry[0].filter_item[1].offset    = IP_PROTOCOL_OFFSET;
+    flt_cfg.mef_entry[0].filter_item[1].num_bytes = 1;
 
     return wifi_set_packet_filters(&flt_cfg);
 }
@@ -7283,23 +7291,23 @@ int wlan_set_ipv6_ns_offload()
     flt_cfg.criteria = (MBIT(1) | MBIT(3));
     flt_cfg.nentries = 1;
 
-    flt_cfg.mef_entry.mode   = MBIT(0);
-    flt_cfg.mef_entry.action = 0x40;
+    flt_cfg.mef_entry[0].mode   = MBIT(0);
+    flt_cfg.mef_entry[0].action = 0x40;
 
-    flt_cfg.mef_entry.filter_num = 2;
+    flt_cfg.mef_entry[0].filter_num = 2;
 
-    flt_cfg.mef_entry.filter_item[0].type         = TYPE_BYTE_EQ;
-    flt_cfg.mef_entry.filter_item[0].repeat       = 1;
-    flt_cfg.mef_entry.filter_item[0].offset       = 20;
-    flt_cfg.mef_entry.filter_item[0].num_byte_seq = 2;
-    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[0].byte_seq, (const void *)"\x86\xdd", 2);
-    flt_cfg.mef_entry.rpn[1] = RPN_TYPE_AND;
+    flt_cfg.mef_entry[0].filter_item[0].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[0].repeat       = 1;
+    flt_cfg.mef_entry[0].filter_item[0].offset       = 20;
+    flt_cfg.mef_entry[0].filter_item[0].num_byte_seq = 2;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[0].byte_seq, (const void *)"\x86\xdd", 2);
+    flt_cfg.mef_entry[0].rpn[1] = RPN_TYPE_AND;
 
-    flt_cfg.mef_entry.filter_item[1].type         = TYPE_BYTE_EQ;
-    flt_cfg.mef_entry.filter_item[1].repeat       = 1;
-    flt_cfg.mef_entry.filter_item[1].offset       = 62;
-    flt_cfg.mef_entry.filter_item[1].num_byte_seq = 1;
-    (void)memcpy((void *)flt_cfg.mef_entry.filter_item[1].byte_seq, (const void *)"\x87", 1);
+    flt_cfg.mef_entry[0].filter_item[1].type         = TYPE_BYTE_EQ;
+    flt_cfg.mef_entry[0].filter_item[1].repeat       = 1;
+    flt_cfg.mef_entry[0].filter_item[1].offset       = 62;
+    flt_cfg.mef_entry[0].filter_item[1].num_byte_seq = 1;
+    (void)memcpy((void *)flt_cfg.mef_entry[0].filter_item[1].byte_seq, (const void *)"\x87", 1);
 
     return wifi_set_packet_filters(&flt_cfg);
 }
@@ -8543,9 +8551,164 @@ void wlan_set_sleep_period(uint16_t sleep_period)
 }
 #endif
 
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
 int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
 {
     return wifi_tx_ampdu_prot_mode(prot_mode, action);
+}
+
+#ifdef CONFIG_MEF_CFG
+int wlan_mef_set_auto_arp(t_u8 mef_action)
+{
+    int ret, index;
+    unsigned int ipv4_addr;
+    ret = wlan_get_ipv4_addr(&ipv4_addr);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Cannot get IP");
+        return -WM_FAIL;
+    }
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
+    g_flt_cfg.nentries++;
+
+    g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action                      = (MEF_AUTO_ARP | (mef_action & 0xF));
+    g_flt_cfg.mef_entry[index].filter_num                  = 2;
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 2;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[0].byte_seq, "\x08\x06", 2);
+    g_flt_cfg.mef_entry[index].rpn[1] = RPN_TYPE_AND;
+
+    g_flt_cfg.mef_entry[index].filter_item[1].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset       = 46;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 4;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[1].byte_seq, &ipv4_addr, 4);
+
+    return WM_SUCCESS;
+}
+
+int wlan_mef_set_auto_ping(t_u8 mef_action)
+{
+    int ret, index;
+    unsigned int ipv4_addr;
+
+    ret = wlan_get_ipv4_addr(&ipv4_addr);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Cannot get IP");
+        return -WM_FAIL;
+    }
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
+    g_flt_cfg.nentries++;
+    g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action                      = (MEF_AUTO_PING | (mef_action & 0xF));
+    g_flt_cfg.mef_entry[index].filter_num                  = 3;
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 2;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[0].byte_seq, "\x08\x00", 2);
+    g_flt_cfg.mef_entry[index].rpn[1] = RPN_TYPE_AND;
+
+    g_flt_cfg.mef_entry[index].filter_item[1].type      = TYPE_DNUM_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].pattern   = ICMP_OF_IP_PROTOCOL;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset    = IP_PROTOCOL_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_bytes = 1;
+    g_flt_cfg.mef_entry[index].rpn[2]                   = RPN_TYPE_AND;
+
+    g_flt_cfg.mef_entry[index].filter_item[2].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[2].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[2].offset       = 38;
+    g_flt_cfg.mef_entry[index].filter_item[2].num_byte_seq = 4;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[2].byte_seq, &ipv4_addr, 4);
+
+    return WM_SUCCESS;
+}
+
+int wlan_mef_set_multicast(t_u8 mef_action)
+{
+    t_u32 index = 0;
+
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_MULTICAST | CRITERIA_UNICAST);
+    g_flt_cfg.nentries++;
+
+    g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action                      = mef_action;
+    g_flt_cfg.mef_entry[index].filter_num                  = 2;
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BIT_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = 0;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].byte_seq[0]  = 0x01;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_mask_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].mask_seq[0]  = 0x01;
+    g_flt_cfg.mef_entry[index].rpn[1]                      = RPN_TYPE_OR;
+
+    g_flt_cfg.mef_entry[index].filter_item[1].type         = TYPE_BIT_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset       = 38;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].byte_seq[0]  = 0xE0;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_mask_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].mask_seq[0]  = 0xF0;
+
+    return WM_SUCCESS;
+}
+
+void wlan_config_mef(int type, t_u8 mef_action)
+{
+    int ret;
+    switch (type)
+    {
+        case MEF_TYPE_DELETE:
+            (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+            wifi_set_packet_filters(&g_flt_cfg);
+            (void)PRINTF("delete all MEF entries Successful\n\r");
+            break;
+        case MEF_TYPE_PING:
+            ret = wlan_mef_set_auto_ping(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add ping MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add ping MEF entry Failed %d\n\r");
+            break;
+        case MEF_TYPE_ARP:
+            ret = wlan_mef_set_auto_arp(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add ARP MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add ARP MEF entry Failed %d\n\r");
+            break;
+        case MEF_TYPE_MULTICAST:
+            ret = wlan_mef_set_multicast(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add multicast MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add multicast MEF entry Failed %d\n\r");
+            break;
+        default:
+            (void)PRINTF("Error: unknown MEF type:%d", type);
+            break;
+    }
+
+    return;
 }
 #endif
