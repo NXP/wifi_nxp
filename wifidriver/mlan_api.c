@@ -544,6 +544,12 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_MEF_CFG);
     buf_len      = S_DS_GEN;
 
+    /** Fill HostCmd_DS_MEF_CFG */
+    mef_hdr           = (HostCmd_DS_MEF_CFG *)(void *)(buf + buf_len);
+    mef_hdr->criteria = wlan_cpu_to_le32(flt_cfg->criteria);
+    mef_hdr->nentries = wlan_cpu_to_le16(flt_cfg->nentries);
+    buf_len += sizeof(HostCmd_DS_MEF_CFG);
+
     for (i = 0; i < flt_cfg->nentries; i++)
     {
         /** Fill entry header data */
@@ -2201,7 +2207,7 @@ int wifi_set_region_code(t_u32 region_code)
         .param.region_code = region_code,
     };
 
-    if((misc.param.region_code == 0x41) || (misc.param.region_code == 0xFE))
+    if ((misc.param.region_code == 0x41) || (misc.param.region_code == 0xFE))
     {
         (void)PRINTF("Region code 0XFF is used for Japan to support channels of both 2.4GHz band and 5GHz band.\r\n");
         (void)PRINTF("Region code 0X40 is used for Japan to support channels of 5GHz band.\r\n");
