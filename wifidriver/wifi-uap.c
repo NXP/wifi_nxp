@@ -607,6 +607,14 @@ static int wifi_cmd_uap_config(char *ssid,
         wuap_e("Cannot set uAP HT TX Cfg:%x", wm_wifi.ht_tx_cfg);
         return -WM_E_INVAL;
     }
+
+    if (!ISSUPP_TXSTBC(mlan_adap->hw_dot_11n_dev_cap))
+        bss.param.bss_config.ht_cap_info &= (~MBIT(7));
+    if (!ISSUPP_RXSTBC(mlan_adap->hw_dot_11n_dev_cap))
+        bss.param.bss_config.ht_cap_info &= (~(MBIT(8) | MBIT(9)));
+    if (!ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
+        bss.param.bss_config.ht_cap_info &= (~MBIT(12));
+
 #ifdef CONFIG_11AC
     if (enable_11ac)
     {

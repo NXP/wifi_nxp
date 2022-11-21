@@ -1037,11 +1037,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 #endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef CONFIG_MBO
-    wlan_add_ext_capa_info_ie(pmpriv,
-#ifdef CONFIG_11AX
-                              NULL,
-#endif
-                              &ptlv_pos);
+    wlan_add_ext_capa_info_ie(pmpriv, NULL, &ptlv_pos);
 #endif
 
     /*

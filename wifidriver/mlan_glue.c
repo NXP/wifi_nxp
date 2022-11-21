@@ -2381,6 +2381,21 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 wm_wifi.cmd_resp_status = WM_SUCCESS;
             }
             break;
+            case HostCmd_CMD_CAU_REG_ACCESS:
+            {
+                HostCmd_DS_RF_REG_ACCESS *reg;
+                reg = (HostCmd_DS_RF_REG_ACCESS *)&resp->params.rf_reg;
+                if (reg->action == HostCmd_ACT_GEN_GET)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        uint32_t *cau_reg = (uint32_t *)wm_wifi.cmd_resp_priv;
+                        *cau_reg          = reg->value;
+                    }
+                }
+                wm_wifi.cmd_resp_status = WM_SUCCESS;
+            }
+            break;
             case HostCmd_CMD_802_11_EEPROM_ACCESS:
             {
                 HostCmd_DS_802_11_EEPROM_ACCESS *eeprom;

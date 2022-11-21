@@ -647,7 +647,8 @@ typedef enum
 {
     REG_MAC = 1,
     REG_BBP,
-    REG_RF
+    REG_RF,
+    REG_CAU
 } wifi_reg_t;
 
 int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value);

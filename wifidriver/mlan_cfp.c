@@ -463,8 +463,10 @@ static chan_freq_power_t channel_freq_power_Custom_A[] = {
 #endif
 };
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Band: 'A', NULL */
 static const chan_freq_power_t channel_freq_power_NULL_A[1] = {0};
+#endif
 
 /** Band: 'A', Code: 1, Low band (5150-5250 MHz) channels */
 static const chan_freq_power_t channel_freq_power_low_band[] = {
@@ -2932,8 +2934,7 @@ int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u
  *
  *  @return                   MLAN_STATUS_PENDING --success, otherwise fail
  */
-mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel,
-					    t_u8 oper_class)
+mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel, t_u8 oper_class)
 {
     int arraysize = 0, i = 0, channum = 0;
     oper_bw_chan *poper_bw_chan = MNULL;
@@ -2946,43 +2947,43 @@ mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel,
 
     for (i = 0; i < (int)sizeof(center_freqs); i++)
     {
-        if (channel == center_freqs[i]) 
+        if (channel == center_freqs[i])
         {
             PRINTM(MERROR, "Invalid channel number %d!\n", channel);
             LEAVE();
             return MLAN_STATUS_FAILURE;
         }
     }
-    if (oper_class <= 0 || oper_class > 130) 
+    if (oper_class <= 0 || oper_class > 130)
     {
         PRINTM(MERROR, "Invalid operating class!\n");
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
 #ifdef CONFIG_11AC
-    if (oper_class >= 128) {
-        center_freq_idx = wlan_get_center_freq_idx(
-            pmpriv, BAND_AAC, channel, CHANNEL_BW_80MHZ);
-        channel = center_freq_idx;
+    if (oper_class >= 128)
+    {
+        center_freq_idx = wlan_get_center_freq_idx(pmpriv, BAND_AAC, channel, CHANNEL_BW_80MHZ);
+        channel         = center_freq_idx;
     }
 #endif
     poper_bw_chan = wlan_get_nonglobal_operclass_table(pmpriv, &arraysize);
 
-    if (!poper_bw_chan) {
+    if (!poper_bw_chan)
+    {
         PRINTM(MCMND, "Operating class table do not find!\n");
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
 
-    for (i = 0; i < (int)(arraysize / sizeof(oper_bw_chan)); i++) {
-        if (poper_bw_chan[i].oper_class == oper_class ||
-            poper_bw_chan[i].global_oper_class == oper_class) {
-            for (channum = 0;
-                 channum < (int)sizeof(poper_bw_chan[i].channel_list);
-                 channum++) {
-            	if (poper_bw_chan[i].channel_list[channum] &&
-            	    poper_bw_chan[i].channel_list[channum] ==
-                        channel) {
+    for (i = 0; i < (int)(arraysize / sizeof(oper_bw_chan)); i++)
+    {
+        if (poper_bw_chan[i].oper_class == oper_class || poper_bw_chan[i].global_oper_class == oper_class)
+        {
+            for (channum = 0; channum < (int)sizeof(poper_bw_chan[i].channel_list); channum++)
+            {
+                if (poper_bw_chan[i].channel_list[channum] && poper_bw_chan[i].channel_list[channum] == channel)
+                {
                     LEAVE();
                     return MLAN_STATUS_SUCCESS;
                 }
@@ -2990,10 +2991,8 @@ mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel,
         }
     }
 
-    PRINTM(MCMND, "Operating class %d do not match channel %d!\n",
-            oper_class, channel);
+    PRINTM(MCMND, "Operating class %d do not match channel %d!\n", oper_class, channel);
     LEAVE();
     return MLAN_STATUS_FAILURE;
 }
 #endif
-

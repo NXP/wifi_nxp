@@ -137,6 +137,9 @@ int wifi_reg_access(wifi_reg_t reg_type, uint16_t action, uint32_t offset, uint3
         case REG_RF:
             hostcmd = HostCmd_CMD_RF_REG_ACCESS;
             break;
+        case REG_CAU:
+            hostcmd = HostCmd_CMD_CAU_REG_ACCESS;
+            break;
         default:
             wifi_e("Incorrect register type");
             ret = -WM_FAIL;

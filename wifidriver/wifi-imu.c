@@ -1431,6 +1431,11 @@ mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr,
     /* Initialize the mlan subsystem before initializing 878x driver */
     mlan_subsys_init();
 
+    /* Comment out this line if CPU1 image is downloaded through J-Link.
+     * This is for load service case only.
+     */
+    power_off_device(LOAD_WIFI_FIRMWARE);
+
     /* Download firmware */
     sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, 0);
 

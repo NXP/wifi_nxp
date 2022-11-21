@@ -2915,11 +2915,7 @@ mlan_status wlan_misc_hotspot_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req
 mlan_status wlan_set_drvdbg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #endif
 
-void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv,
-#ifdef CONFIG_11AX
-                               IN BSSDescriptor_t *pbss_desc,
-#endif
-                               OUT t_u8 **pptlv_out);
+void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **pptlv_out);
 
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_misc_otp_user_data(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);

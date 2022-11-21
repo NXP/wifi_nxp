@@ -936,11 +936,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
     else if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
     {
-        wlan_add_ext_capa_info_ie(pmpriv,
-#ifdef CONFIG_11AX
-                                  pbss_desc,
-#endif
-                                  &pos);
+        wlan_add_ext_capa_info_ie(pmpriv, pbss_desc, &pos);
     }
     else
     {
