@@ -2454,11 +2454,16 @@ mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS
 mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
                                  IN HostCmd_DS_COMMAND *cmd,
                                  IN t_u16 cmd_action,
-                                 IN t_void *pdata_buf)
+                                 IN t_void *pdata_buf,
+                                 IN mlan_ioctl_req *pioctl_buf)
 {
     HostCmd_DS_TX_RATE_CFG *rate_cfg = &cmd->params.tx_rate_cfg;
     MrvlRateScope_t *rate_scope;
     MrvlRateDropPattern_t *rate_drop;
+#ifdef CONFIG_11AX_DCM_ER
+	MrvlIETypes_rate_setting_t *rate_setting_tlv;
+	mlan_ds_rate *ds_rate = MNULL;
+#endif
     t_u16 *pbitmap_rates = (t_u16 *)pdata_buf;
 
     t_u32 i;
@@ -2536,6 +2541,21 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RATE_CFG) + sizeof(MrvlRateScope_t) +
                                  sizeof(MrvlRateDropPattern_t));
 
+#ifdef CONFIG_11AX_DCM_ER
+    if (pioctl_buf/* && pmpriv->adapter->pcard_info->v17_fw_api*/)
+    {
+        ds_rate = (mlan_ds_rate *)pioctl_buf->pbuf;
+        rate_setting_tlv = (MrvlIETypes_rate_setting_t*)((t_u8 *)rate_drop + sizeof(MrvlRateDropPattern_t));
+        rate_setting_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_TX_RATE_CFG);
+        rate_setting_tlv->header.len = wlan_cpu_to_le16(sizeof(rate_setting_tlv->rate_setting));
+        rate_setting_tlv->rate_setting = wlan_cpu_to_le16(ds_rate->param.rate_cfg.rate_setting);
+        PRINTM(MCMND, "he rate setting = %d\n", rate_setting_tlv->rate_setting);
+
+        cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_TX_RATE_CFG) + sizeof(MrvlRateScope_t) +
+        		                     sizeof(MrvlRateDropPattern_t) + sizeof(MrvlIETypes_rate_setting_t));
+    }
+#endif
+
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
@@ -2562,6 +2582,10 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     t_u32 i;
     t_s32 index;
     mlan_status ret = MLAN_STATUS_SUCCESS;
+#ifdef CONFIG_11AX_DCM_ER
+	MrvlIETypes_rate_setting_t *rate_setting_tlv = MNULL;
+	t_u16 rate_setting = 0xffff;
+#endif
 
     ENTER();
 
@@ -2611,6 +2635,12 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 }
 #endif
                 break;
+#ifdef CONFIG_11AX_DCM_ER
+            case TLV_TYPE_TX_RATE_CFG:
+                rate_setting_tlv = (MrvlIETypes_rate_setting_t *)tlv_buf;
+                rate_setting     = rate_setting_tlv->rate_setting;
+                break;
+#endif
                 /* Add RATE_DROP tlv here */
             default:
                 PRINTM(MINFO, "Unexpected TLV for rate cfg \n");
@@ -2714,6 +2744,10 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
             }
 #else
             ds_rate->param.rate_cfg.rate_index = ds_rate->param.rate_cfg.rate;
+#endif
+#ifdef CONFIG_11AX_DCM_ER
+            ds_rate->param.rate_cfg.rate_setting = rate_setting;
+            PRINTM(MINFO, "Rate index is %d\n", ds_rate->param.rate_cfg.rate);
 #endif
         }
     }

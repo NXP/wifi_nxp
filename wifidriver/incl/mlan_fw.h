@@ -945,6 +945,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** HT bandwidth 40 MHz */
 #define HT_BW_40 1U
 
+/** TLV type : TX RATE CFG, rename from TLV_TYPE_GI_LTF_SIZE to include CMD and
+ * HE ER SU settings to this tlv */
+#define TLV_TYPE_TX_RATE_CFG (PROPRIETARY_TLV_BASE_ID + 319) /* 0x023f */
+
 #if defined(CONFIG_EXT_SCAN_SUPPORT)
 /** TLV type : Scan Response */
 #define TLV_TYPE_BSS_SCAN_RSP (PROPRIETARY_TLV_BASE_ID + 0x56) // 0x0156
@@ -3728,6 +3732,15 @@ typedef MLAN_PACK_START struct _MrvlRateDropPattern_t
     t_u32 rate_drop_mode;
     /* MrvlRateDropControl_t RateDropControl[0]; */
 } MLAN_PACK_END MrvlRateDropPattern_t;
+
+#ifdef CONFIG_11AX_DCM_ER
+typedef MLAN_PACK_START struct _MrvlIETypes_rate_setting_t {
+	/** Header */
+	MrvlIEtypesHeader_t header;
+	/** Rate Setting */
+	t_u16 rate_setting;
+} MLAN_PACK_END MrvlIETypes_rate_setting_t;
+#endif
 
 /** HostCmd_DS_TX_RATE_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TX_RATE_CFG

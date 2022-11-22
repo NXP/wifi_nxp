@@ -2738,7 +2738,7 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             break;
 #endif /* CONFIG_MLAN_WMSDK */
         case HostCmd_CMD_TX_RATE_CFG:
-            ret = wlan_cmd_tx_rate_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            ret = wlan_cmd_tx_rate_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf, pioctl_buf);
             break;
         case HostCmd_CMD_802_11_TX_RATE_QUERY:
             cmd_ptr->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_TX_RATE_QUERY);

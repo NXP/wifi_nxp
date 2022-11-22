@@ -384,6 +384,10 @@ typedef PACK_START struct _wifi_rate_cfg_t
     /** NSS */
     t_u32 nss;
 #endif
+#ifdef CONFIG_11AX_DCM_ER
+    /** Rate Setting */
+    t_u16 rate_setting;
+#endif
 } PACK_END wifi_rate_cfg_t;
 
 /** Data structure for cmd get data rate */

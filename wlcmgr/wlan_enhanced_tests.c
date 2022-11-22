@@ -419,6 +419,9 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                 (ds_rate.param.rate_cfg.rate_format == 3U))
             {
                 (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
+#ifdef CONFIG_11AX_DCM_ER
+                (void)PRINTF("rate-setting:   0x%X\r\n", (int)ds_rate.param.rate_cfg.rate_setting);
+#endif
             }
 #endif
         }
@@ -575,12 +578,14 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
 static void dump_wlan_set_txratecfg_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-set-txratecfg <format> <index> ");
+    (void)PRINTF("wlan-set-txratecfg <format> <index>");
 #ifdef CONFIG_11AC
-    (void)PRINTF("<nss>\r\n");
-#else
-    (void)PRINTF("\r\n");
+    (void)PRINTF(" <nss>");
 #endif
+#ifdef CONFIG_11AX_DCM_ER
+    (void)PRINTF(" [rate_setting]");
+#endif
+    (void)PRINTF("\r\n");
     (void)PRINTF("\tWhere\r\n");
     (void)PRINTF("\t<format> - This parameter specifies the data rate format used in this command\r\n");
     (void)PRINTF("\t        0:    LG\r\n");
@@ -649,6 +654,20 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        1       NSS1\r\n");
     (void)PRINTF("\t        2       NSS2\r\n");
 #endif
+#ifdef CONFIG_11AX_DCM_ER
+    (void)PRINTF("\t[rate_setting] - This optional parameter specifies various rate setting values.\r\n");
+    (void)PRINTF("\t               - It is valid only for HE. Each bit's significance is as beloew:\r\n");
+    (void)PRINTF("\t    bits      -> Operation,\r\n");
+    (void)PRINTF("\t     0-1      -> Preamble type\r\n");
+    (void)PRINTF("\t     2-4      -> Bandwidth\r\n");
+    (void)PRINTF("\t     5-6      -> LTF + GI size\r\n");
+    (void)PRINTF("\t       7      -> STBC\r\n");
+    (void)PRINTF("\t       8      -> DCM\r\n");
+    (void)PRINTF("\t       9      -> Coding\r\n");
+    (void)PRINTF("\t   10-11      -> reserved\r\n");
+    (void)PRINTF("\t   12-13      -> MAX PE\r\n");
+    (void)PRINTF("\t   14-15      -> reserved\r\n");
+#endif
 }
 
 static void test_wlan_set_txratecfg(int argc, char **argv)
@@ -658,7 +677,11 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 
     if (argc < 2 ||
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#ifdef CONFIG_11AX_DCM_ER
+        argc > 5)
+#else
         argc > 4)
+#endif
     {
 #else
         argc > 3)
@@ -694,6 +717,12 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
     {
         /*Do Nothing*/
     }
+#endif
+#ifdef CONFIG_11AX_DCM_ER
+    errno                      = 0;
+	ds_rate.param.rate_cfg.rate_setting = (t_u16)strtol(argv[4], NULL, 0);
+	if (errno != 0)
+		(void)PRINTF("Error during strtoul errno:%d", errno);
 #endif
 
 #ifdef CONFIG_11AX
@@ -1748,7 +1777,11 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-chanlist", NULL, test_wlan_set_chanlist},
     {"wlan-get-chanlist", NULL, test_wlan_get_chanlist},
 #ifdef CONFIG_11AC
+#ifdef CONFIG_11AX_DCM_ER
+    {"wlan-set-txratecfg", "<format> <index> <nss> [rate_setting]", test_wlan_set_txratecfg},
+#else
     {"wlan-set-txratecfg", "<format> <index> <nss>", test_wlan_set_txratecfg},
+#endif
 #else
     {"wlan-set-txratecfg", "<format> <index>", test_wlan_set_txratecfg},
 #endif

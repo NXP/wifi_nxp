@@ -2014,6 +2014,10 @@ typedef struct _mlan_rate_cfg_t
 #endif
     /* LG rate: 0, HT rate: 1, VHT rate: 2 */
     mlan_rate_format rate_format;
+#ifdef CONFIG_11AX_DCM_ER
+    /** Rate Setting */
+    t_u16 rate_setting;
+#endif
 } mlan_rate_cfg_t;
 
 /** HT channel bandwidth */

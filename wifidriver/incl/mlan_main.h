@@ -2523,7 +2523,8 @@ mlan_status wlan_radio_ioctl_ant_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_
 mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
                                  IN HostCmd_DS_COMMAND *cmd,
                                  IN t_u16 cmd_action,
-                                 IN t_void *pdata_buf);
+                                 IN t_void *pdata_buf,
+                                 IN mlan_ioctl_req *pioctl_buf);
 mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN void *pioctl);
 
 mlan_status wlan_rate_ioctl_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);

@@ -1683,6 +1683,9 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate)
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
         ds_rate_cfg.param.rate_cfg.nss = ds_rate.param.rate_cfg.nss;
 #endif
+#ifdef CONFIG_11AX_DCM_ER
+        ds_rate_cfg.param.rate_cfg.rate_setting = ds_rate.param.rate_cfg.rate_setting;
+#endif
     }
     return wifi_send_tx_rate_cfg_ioctl(MLAN_ACT_SET, &ds_rate_cfg);
 }
