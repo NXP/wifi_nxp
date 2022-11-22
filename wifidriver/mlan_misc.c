@@ -1450,7 +1450,10 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.WNM_Sleep = 0;
     }
 #endif
-
+#ifdef MULTI_BSSID_SUPPORT
+    if (pbss_desc && pbss_desc->multi_bssid_ap)
+        SET_EXTCAP_MULTI_BSSID(pmpriv->ext_cap);
+#endif
 #ifdef CONFIG_11AX
     if (wlan_check_11ax_twt_supported(pmpriv, pbss_desc))
         SET_EXTCAP_TWT_REQ(pmpriv->ext_cap);

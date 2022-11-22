@@ -1793,6 +1793,15 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         (*(pbss_entry->pwapi_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
 #endif /* CONFIG_MLAN_WMSDK */
                 break;
+#ifdef MULTI_BSSID_SUPPORT
+            case MULTI_BSSID:
+                if (IS_FW_SUPPORT_MULTIBSSID(pmadapter))
+                {
+                    pbss_entry->multi_bssid_ap = MULTI_BSSID_AP;
+                    HEXDUMP("InterpretIE: Multi BSSID IE", (t_u8 *)pcurrent_ptr, total_ie_len);
+                }
+                break;
+#endif
             case HT_CAPABILITY:
                 /* Save it here since we do not have beacon buffer */
                 (void)__memcpy(NULL, &pbss_entry->ht_cap_saved, pcurrent_ptr, sizeof(IEEEtypes_HTCap_t));
@@ -3528,6 +3537,451 @@ mlan_status wlan_ret_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMM
     return MLAN_STATUS_SUCCESS;
 }
 
+#ifdef MULTI_BSSID_SUPPORT
+/** 8 bytes timestamp, 2 bytest interval, 2 bytes capability */
+#define BEACON_FIX_SIZE 12
+
+/**
+ *  @brief This function realloc the beacon buffer and update ssid for new entry
+ *
+ *  @param pmadpater        A pointer to mlan_adapter structure
+ *  @param pbss_entry       A pointer to the bss_entry which has multi-bssid IE
+ *  @param pnew_entry       A pinter to new entry
+ *  @param pssid            A pointer to ssid IE
+ *
+ *  @return                MLAN_STATUS_FAILURE/MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
+                                                  BSSDescriptor_t *pbss_entry,
+                                                  BSSDescriptor_t *pnew_entry,
+                                                  IEEEtypes_Ssid_t *pssid,
+                                                  IEEEtypes_ExtCap_t *pnew_extcap,
+                                                  IEEEtypes_Generic_t *pnew_rsnx)
+{
+#ifndef CONFIG_MLAN_WMSDK
+    mlan_callbacks *pcb   = (pmlan_callbacks)&pmadapter->callbacks;
+    t_u8 *pbeacon_buf     = MNULL;
+#endif
+    t_u32 beacon_buf_size = 0;
+    t_s8 offset           = pnew_entry->ssid.ssid_len - pbss_entry->ssid.ssid_len;
+    mlan_status ret   = MLAN_STATUS_FAILURE;
+
+    if (pnew_entry->ssid.ssid_len >= pbss_entry->ssid.ssid_len)
+        beacon_buf_size = pbss_entry->beacon_buf_size + (pnew_entry->ssid.ssid_len - pbss_entry->ssid.ssid_len);
+    else
+        beacon_buf_size = pbss_entry->beacon_buf_size - (pbss_entry->ssid.ssid_len - pnew_entry->ssid.ssid_len);
+
+    if (pnew_rsnx)
+        beacon_buf_size += pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+#ifndef CONFIG_MLAN_WMSDK
+    ret = pcb->moal_malloc(pmadapter->pmoal_handle, beacon_buf_size, MLAN_MEM_DEF, (t_u8 **)&pbeacon_buf);
+    if (ret != MLAN_STATUS_SUCCESS || !pbeacon_buf)
+    {
+        PRINTM(MERROR, "Memory allocation for beacon buf for bss_new_entry\n");
+        goto done;
+    }
+#endif
+    pnew_entry->beacon_buf_size = beacon_buf_size;
+    pnew_entry->pbeacon_buf     = pbss_entry->pbeacon_buf;
+    if (pnew_entry->pext_cap){
+        pnew_entry->ext_cap_offset += offset;
+        if(pnew_extcap){
+            (void)__memcpy(pmadapter, &pnew_entry->ext_cap_saved, pnew_extcap, sizeof(IEEEtypes_ExtCap_t));
+            pnew_entry->pext_cap = &pnew_entry->ext_cap_saved;
+        }
+    }
+	if(pnew_rsnx)
+    {
+        (void)__memcpy(pmadapter, &pnew_entry->rsnx_ie_saved, pnew_rsnx, pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        pnew_entry->prsnx_ie = &pnew_entry->rsnx_ie_saved;
+    }
+
+#ifndef CONFIG_MLAN_WMSDK
+    /** copy fixed IE */
+    (void)memcpy(pmadapter, pbeacon_buf, pbss_entry->pbeacon_buf, BEACON_FIX_SIZE);
+    /** copy new ssid ie */
+    (void)memcpy(pmadapter, pbeacon_buf + BEACON_FIX_SIZE, (t_u8 *)pssid, pssid->len + sizeof(IEEEtypes_Header_t));
+    /** copy left IE to new beacon buffer */
+    (void)memcpy(
+        pmadapter, pbeacon_buf + BEACON_FIX_SIZE + pssid->len + sizeof(IEEEtypes_Header_t),
+        pbss_entry->pbeacon_buf + BEACON_FIX_SIZE + pbss_entry->ssid.ssid_len + sizeof(IEEEtypes_Header_t),
+        pbss_entry->beacon_buf_size - BEACON_FIX_SIZE - (pbss_entry->ssid.ssid_len + sizeof(IEEEtypes_Header_t)));
+    /* adjust the ie pointer */
+    if (pnew_entry->pwpa_ie)
+        pnew_entry->wpa_offset += offset;
+    if (pnew_entry->prsn_ie)
+        pnew_entry->rsn_offset += offset;
+#ifdef WAPI
+    if (pnew_entry->pwapi_ie)
+        pnew_entry->wapi_offset += offset;
+#endif /* WAPI */
+
+#ifdef ENABLE_HOTSPOT
+    if (pnew_entry->posen_ie)
+        pnew_entry->osen_offset += offset;
+#endif /* ENABLE_HOTSPOT */
+#ifdef ENABLE_802_11R
+    if (pnew_entry->pmd_ie)
+        pnew_entry->md_offset += offset;
+#endif /* ENABLE_HOTSPOT */
+    if (pnew_entry->pht_cap)
+        pnew_entry->ht_cap_offset += offset;
+    if (pnew_entry->pht_info)
+        pnew_entry->ht_info_offset += offset;
+    if (pnew_entry->pbss_co_2040)
+        pnew_entry->bss_co_2040_offset += offset;
+    if (pnew_entry->poverlap_bss_scan_param)
+        pnew_entry->overlap_bss_offset += offset;
+#ifdef ENABLE_802_11AC
+    if (pnew_entry->pvht_cap)
+        pnew_entry->vht_cap_offset += offset;
+    if (pnew_entry->pvht_oprat)
+        pnew_entry->vht_oprat_offset += offset;
+    if (pnew_entry->pvht_txpower)
+        pnew_entry->vht_txpower_offset += offset;
+    if (pnew_entry->pext_pwer)
+        pnew_entry->ext_pwer_offset += offset;
+    if (pnew_entry->pext_bssload)
+        pnew_entry->ext_bssload_offset += offset;
+    if (pnew_entry->pquiet_chan)
+        pnew_entry->quiet_chan_offset += offset;
+    if (pnew_entry->poper_mode)
+        pnew_entry->oper_mode_offset += offset;
+#endif /* ENABLE_802_11AC */
+#ifdef ENABLE_802_11AX
+    if (pnew_entry->phe_cap)
+        pnew_entry->he_cap_offset += offset;
+    if (pnew_entry->phe_oprat)
+        pnew_entry->he_oprat_offset += offset;
+#endif /* ENABLE_802_11AX */
+#ifdef ENABLE_802_116E
+    if (pnew_entry->phe_6g_cap)
+        pnew_entry->he_6g_cap_offset += offset;
+#endif
+    DBG_HEXDUMP(MCMD_D, "MBSSID beacon buf", pbeacon_buf, beacon_buf_size);
+#endif
+    ret = MLAN_STATUS_SUCCESS;
+#ifndef CONFIG_MLAN_WMSDK
+done:
+#endif
+    return ret;
+}
+
+/**
+ *  @brief This function generate the bssid from bssid_idx
+ *
+ *  @param pmadpater        A pointer to mlan_adapter structure
+ *  @param pbss_entry       A pointer to the bss_entry which has multi-bssid IE
+ *  @param pnew_entry       A pinter to new entry
+ *  @param bssid_index      bssid_index from BSSID_IDX IE
+ *
+ *  @return                N/A
+ */
+static void wlan_gen_multi_bssid_by_bssid_index(pmlan_adapter pmadapter,
+                                                BSSDescriptor_t *pbss_entry,
+                                                BSSDescriptor_t *pnew_entry,
+                                                t_u8 bssid_index,
+                                                t_u8 max_bssid_indicator)
+{
+    t_u8 mask = 0xff;
+    t_u8 new_bssid[6];
+    t_u8 bssid_a;
+    t_u8 src_bssid[6];
+    (void)__memcpy(pmadapter, (t_u8 *)src_bssid, pbss_entry->mac_address,
+                 MIN(sizeof(mlan_802_11_mac_addr), sizeof(src_bssid)));
+    (void)__memcpy(pmadapter, (t_u8 *)new_bssid, (t_u8 *)&pbss_entry->mac_address,
+                 MIN(sizeof(mlan_802_11_mac_addr), sizeof(new_bssid)));
+
+    mask         = (mask >> (8 - max_bssid_indicator));
+    bssid_a      = src_bssid[5] & (~mask);
+    src_bssid[5] = (src_bssid[5] + bssid_index) & mask;
+    new_bssid[5] = bssid_a | src_bssid[5];
+
+    (void)__memcpy(pmadapter, (t_u8 *)&pnew_entry->mac_address, new_bssid,
+                 MIN(sizeof(new_bssid), sizeof(mlan_802_11_mac_addr)));
+    (void)__memcpy(pmadapter, (t_u8 *)&pnew_entry->multi_bssid_ap_addr, (t_u8 *)&pbss_entry->mac_address,
+                 MIN(sizeof(mlan_802_11_mac_addr), sizeof(mlan_802_11_mac_addr)));
+}
+
+/**
+ *  @brief This function parse the non_trans_bssid_profile
+ *
+ *  @param pmadapter        A pointer to mlan_adapter structure
+ *  @param pbss_entry       A pointer to BSSDescriptor_t which has multi-bssid
+ * IE
+ *  @param pbss_profile     A pointer to IEEEtypes_NonTransBSSIDprofile_t
+ *  @param num_in_table     A pointer to buffer to save num of entry in scan
+ * table.
+ *  @param  max_bssid_indicator max bssid indicator
+ *
+ *  @return                 N/A
+ */
+static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
+                                                 BSSDescriptor_t *pbss_entry,
+                                                 IEEEtypes_NonTransBSSIDProfile_t *pbss_profile,
+                                                 t_u32 *num_in_table,
+                                                 t_u8 max_bssid_indicator)
+{
+    mlan_adapter *pmadapter                   = pmpriv->adapter;
+    IEEEtypes_Header_t *pheader               = (IEEEtypes_Header_t *)pbss_profile->profile_data;
+    IEEEtypes_MultiBSSIDIndex_t *pbssid_index = MNULL;
+    IEEEtypes_Ssid_t *pssid                   = MNULL;
+    IEEEtypes_NotxBssCap_t *pcap              = (IEEEtypes_NotxBssCap_t *)pbss_profile->profile_data;
+    t_u8 *pos                                 = pbss_profile->profile_data;
+    t_s8 left_len                             = pbss_profile->ieee_hdr.len;
+    t_u8 ret                                  = MFALSE;
+    t_u32 bss_idx;
+    t_u32 lowest_rssi_index        = 0;
+    t_u32 num_in_tbl               = *num_in_table;
+    mlan_callbacks *pcb            = (pmlan_callbacks)&pmadapter->callbacks;
+    BSSDescriptor_t *bss_new_entry = MNULL;
+#ifndef CONFIG_MLAN_WMSDK
+    t_u8 *pbeacon_buf              = MNULL;
+#endif
+    IEEEtypes_ExtCap_t *pextcap    = MNULL;
+    IEEEtypes_Generic_t *prsnx     = MNULL;
+
+    ENTER();
+
+    /* The first element within the Nontransmitted
+     * BSSID Profile is not the Nontransmitted
+     * BSSID Capability element.
+     */
+    if (pcap->element_id != NONTX_BSSID_CAP || pcap->len != 2)
+    {
+        PRINTM(MERROR,
+               "The first element within the Nontransmitted BSSID Profile is not the NontransmittedBSSID Capability "
+               "element\n");
+        LEAVE();
+        return;
+    }
+
+    while (left_len >= 2)
+    {
+        pheader = (IEEEtypes_Header_t *)pos;
+        if ((t_s8)(pheader->len + sizeof(IEEEtypes_Header_t)) > left_len)
+        {
+            PRINTM(MMSG, "invalid IE length = %d left len %d\n", pheader->len, left_len);
+            break;
+        }
+        switch (pheader->element_id)
+        {
+            case MBSSID_INDEX:
+                pbssid_index = (IEEEtypes_MultiBSSIDIndex_t *)pos;
+                if (pbssid_index->bssid_index == 0 || pbssid_index->bssid_index > 46)
+                {
+                    PRINTM(MERROR, " No valid Multiple BSSID-Index element\n");
+                    goto done;
+                }
+                PRINTM(MCMND, "MBSSID: Find mbssid_index=%d\n", pbssid_index->bssid_index);
+                ret = MTRUE;
+                break;
+            case EXT_CAPABILITY:
+                pextcap = (IEEEtypes_ExtCap_t *)pos;
+                DBG_HEXDUMP(MCMD_D, "MBSSID extcap", pos, pextcap->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                break;
+            case RSNX_IE:
+                prsnx = (IEEEtypes_Generic_t *)pos;
+                DBG_HEXDUMP(MCMD_D, "MBSSID RSNX", pos, prsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                break;
+            case SSID:
+                pssid = (IEEEtypes_Ssid_t *)pos;
+                PRINTM(MCMND, "MBSSID: Find mbssid ssid=%s\n", pssid->ssid);
+                break;
+            default:
+                break;
+        }
+        left_len -= pheader->len + sizeof(IEEEtypes_Header_t);
+        pos += pheader->len + sizeof(IEEEtypes_Header_t);
+    }
+    if (ret == MTRUE)
+    {
+        ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(BSSDescriptor_t), MLAN_MEM_DEF, (t_u8 **)&bss_new_entry);
+        if (ret != MLAN_STATUS_SUCCESS || !bss_new_entry)
+        {
+            PRINTM(MERROR, "Memory allocation for bss_new_entry failed!\n");
+            goto done;
+        }
+        (void)__memcpy(pmadapter, bss_new_entry, pbss_entry, sizeof(BSSDescriptor_t));
+        wlan_gen_multi_bssid_by_bssid_index(pmadapter, pbss_entry, bss_new_entry, pbssid_index->bssid_index,
+                                            max_bssid_indicator);
+        if (pssid)
+        {
+            __memset(pmadapter, (t_u8 *)&bss_new_entry->ssid, 0, sizeof(mlan_802_11_ssid));
+            bss_new_entry->ssid.ssid_len = pssid->len;
+            (void)__memcpy(pmadapter, bss_new_entry->ssid.ssid, pssid->ssid, MIN(pssid->len, MLAN_MAX_SSID_LENGTH));
+            if (MLAN_STATUS_SUCCESS !=
+                wlan_update_ssid_in_beacon_buf(pmadapter, pbss_entry, bss_new_entry, pssid, pextcap, prsnx))
+            {
+                PRINTM(MERROR, "Fail to update MBSSID beacon buf\n");
+                pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
+                goto done;
+            }
+#ifndef CONFIG_MLAN_WMSDK
+            pbeacon_buf = bss_new_entry->pbeacon_buf;
+#endif
+        }
+        (void)__memcpy(pmadapter, &bss_new_entry->cap_info, &pcap->cap,
+                     MIN(sizeof(IEEEtypes_CapInfo_t), sizeof(IEEEtypes_CapInfo_t)));
+        bss_new_entry->multi_bssid_ap = MULTI_BSSID_SUB_AP;
+        /*add to scan table*/
+        /*
+         * Search the scan table for the same bssid
+         */
+        for (bss_idx = 0; bss_idx < num_in_tbl; bss_idx++)
+        {
+            if (!__memcmp(pmadapter, bss_new_entry->mac_address, pmadapter->pscan_table[bss_idx].mac_address,
+                        sizeof(bss_new_entry->mac_address)))
+            {
+                /*
+                 * If the SSID matches as well, it is a duplicate of
+                 *   this entry.  Keep the bss_idx set to this
+                 *   entry so we replace the old contents in the table
+                 */
+                if ((bss_new_entry->ssid.ssid_len == pmadapter->pscan_table[bss_idx].ssid.ssid_len) &&
+                    (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmadapter->pscan_table[bss_idx].ssid.ssid,
+                             bss_new_entry->ssid.ssid_len)))
+                {
+                    PRINTM(MINFO, "SCAN_RESP: Duplicate of index: %d\n", bss_idx);
+                    break;
+                }
+            }
+        }
+        if (bss_idx == num_in_tbl)
+        {
+            /* Range check the bss_idx, keep it limited to the last entry */
+            if (bss_idx == MRVDRV_MAX_BSSID_LIST)
+            {
+                lowest_rssi_index = wlan_find_worst_network_in_list(pmadapter->pscan_table, MRVDRV_MAX_BSSID_LIST);
+            }
+            else
+            {
+                num_in_tbl++;
+            }
+        }
+
+        if (bss_idx == MRVDRV_MAX_BSSID_LIST)
+        {
+            if (pmadapter->pscan_table[lowest_rssi_index].rssi > bss_new_entry->rssi)
+            {
+                (void)__memcpy(pmadapter, &pmadapter->pscan_table[lowest_rssi_index], bss_new_entry,
+                             sizeof(pmadapter->pscan_table[lowest_rssi_index]));
+                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index]);
+            }
+        }
+        else
+        {
+            /* Copy the locally created bss_new_entry to the scan table */
+            (void)__memcpy(pmadapter, &pmadapter->pscan_table[bss_idx], bss_new_entry,
+                         sizeof(pmadapter->pscan_table[bss_idx]));
+            adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx]);
+        }
+#ifndef CONFIG_MLAN_WMSDK
+        if (pssid && pbeacon_buf)
+            pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pbeacon_buf);
+#endif
+        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
+    }
+done:
+    *num_in_table = num_in_tbl;
+    LEAVE();
+    return;
+}
+
+/**
+ *  @brief This function parse the multi_bssid IE from pbss_entry
+ *
+ *  @param pmpriv        A pointer to mlan_private structure
+ *  @param pbss_entry       A pointer to BSSDescriptor_t which has multi-bssid
+ * IE
+ *  @param num_in_table     A pointer to buffer to save num of entry in scan
+ * table.
+ *
+ *  @return                 number entry in scan table
+ */
+static t_void wlan_parse_multi_bssid_ie(mlan_private *pmpriv,
+                                        BSSDescriptor_t *pbss_entry,
+                                        IEEEtypes_MultiBSSID_t *pmulti_bssid,
+                                        t_u32 *num_in_table)
+{
+    t_u32 bytes_left                                 = 0;
+    t_u8 *pcurrent_ptr                               = MNULL;
+    IEEEtypes_NonTransBSSIDProfile_t *pbssid_profile = MNULL;
+
+    if (!pmulti_bssid)
+        return;
+    bytes_left   = pmulti_bssid->ieee_hdr.len - 1;
+    pcurrent_ptr = pmulti_bssid->sub_elem_data;
+    while (bytes_left >= 2)
+    {
+        pbssid_profile = (IEEEtypes_NonTransBSSIDProfile_t *)pcurrent_ptr;
+        if (pbssid_profile->ieee_hdr.element_id != NONTRANS_BSSID_PROFILE_SUBELEM_ID)
+        {
+            PRINTM(MERROR, "Invalid multi-bssid IE\n");
+            break;
+        }
+        if (bytes_left < (t_u32)(pbssid_profile->ieee_hdr.len + 2))
+        {
+            PRINTM(MERROR, "Invalid multi-bssid IE\n");
+            break;
+        }
+        wlan_parse_non_trans_bssid_profile(pmpriv, pbss_entry, pbssid_profile, num_in_table,
+                                           pmulti_bssid->max_bssid_indicator);
+        pcurrent_ptr += pbssid_profile->ieee_hdr.len + 2;
+        bytes_left -= pbssid_profile->ieee_hdr.len + 2;
+    }
+    return;
+}
+
+/**
+ *  @brief This function search all the mbssid IE in the beacon buffer
+ *
+ *  @param pmpriv           A pointer to mlan_private structure
+ *  @param pbss_entry       A pointer to BSSDescriptor_t which has multi-bssid
+ * IE
+ *  @param num_in_table     A pointer to buffer to save num of entry in scan
+ * table.
+ *
+ *  @return                 N/A
+ */
+static void wlan_parse_multi_bssid_ap(mlan_private *pmpriv, BSSDescriptor_t *pbss_entry, t_u32 *num_in_table)
+{
+    IEEEtypes_ElementId_e element_id;
+    t_u8 element_len;
+    t_u16 total_ie_len;
+    t_u32 bytes_left        = pbss_entry->beacon_buf_size - BEACON_FIX_SIZE;
+    t_u8 *pcurrent_ptr      = pbss_entry->pbeacon_buf + BEACON_FIX_SIZE;
+    IEEEtypes_Ssid_t *pssid = (IEEEtypes_Ssid_t *)pcurrent_ptr;
+
+    if (pssid->element_id != SSID)
+    {
+        PRINTM(MERROR, "Invalid beacon ie, ssid should be in the first element\n");
+        return;
+    }
+    /* Process variable IE */
+    while (bytes_left >= 2)
+    {
+        element_id   = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
+        element_len  = *((t_u8 *)pcurrent_ptr + 1);
+        total_ie_len = element_len + sizeof(IEEEtypes_Header_t);
+
+        if (bytes_left < total_ie_len)
+        {
+            PRINTM(MERROR,
+                   "InterpretIE: Error in processing IE, "
+                   "bytes left < IE length\n");
+            bytes_left = 0;
+            continue;
+        }
+        if (element_id == MULTI_BSSID)
+            wlan_parse_multi_bssid_ie(pmpriv, pbss_entry, (IEEEtypes_MultiBSSID_t *)pcurrent_ptr, num_in_table);
+        pcurrent_ptr += total_ie_len;
+        bytes_left -= total_ie_len;
+    }
+    return;
+}
+#endif
+
 /**
  *  @brief This function parse and store the extended scan results
  *
@@ -3758,7 +4212,13 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 bss_new_entry->freq = cfp->freq;
             else
                 bss_new_entry->freq = 0;
-
+#ifdef MULTI_BSSID_SUPPORT
+            if (IS_FW_SUPPORT_MULTIBSSID(pmadapter))
+            {
+                if (bss_new_entry->multi_bssid_ap == MULTI_BSSID_AP)
+                    wlan_parse_multi_bssid_ap(pmpriv, bss_new_entry, &num_in_table);
+            }
+#endif
             if (bss_idx == MRVDRV_MAX_BSSID_LIST)
             {
                 if (pmadapter->pscan_table[lowest_rssi_index].rssi > bss_new_entry->rssi)

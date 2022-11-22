@@ -126,8 +126,18 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 #ifdef CONFIG_11K
     RRM_ENABLED_CAP = 70,
 #endif
+#ifdef MULTI_BSSID_SUPPORT
+    MULTI_BSSID = 71,
+#endif
     BSSCO_2040 = 72,
     /* OVERLAPBSSSCANPARAM = 74, */
+#ifdef MULTI_BSSID_SUPPORT
+    NONTX_BSSID_CAP = 83,
+#endif
+
+#ifdef MULTI_BSSID_SUPPORT
+    MBSSID_INDEX = 85,
+#endif
     EXT_CAPABILITY = 127,
 
     /* ERP_INFO = 42, */
@@ -268,6 +278,19 @@ typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
     t_u8 immediate_block_ack : 1;
 } MLAN_PACK_END IEEEtypes_CapInfo_t, *pIEEEtypes_CapInfo_t;
 #endif /* BIG_ENDIAN_SUPPORT */
+
+#ifdef MULTI_BSSID_SUPPORT
+/** IEEEtypes_Ssid_t */
+typedef MLAN_PACK_START struct _IEEEtypes_Ssid_t
+{
+    /** SSID: Element ID */
+    t_u8 element_id;
+    /** SSID : Length */
+    t_u8 len;
+    /** ssid */
+    t_u8 ssid[MLAN_MAX_SSID_LENGTH];
+} MLAN_PACK_END IEEEtypes_Ssid_t, *pIEEEtypes_Ssid_t;
+#endif
 
 /** IEEEtypes_CfParamSet_t */
 typedef MLAN_PACK_START struct _IEEEtypes_CfParamSet_t
@@ -1083,6 +1106,59 @@ typedef MLAN_PACK_START struct _IEEEtypes_HTInfo_t
     /** HTInfo struct */
     HTInfo_t ht_info;
 } MLAN_PACK_END IEEEtypes_HTInfo_t, *pIEEEtypes_HTInfo_t;
+
+#ifdef MULTI_BSSID_SUPPORT
+/** the AP which send the multi_bssid IE */
+#define MULTI_BSSID_AP 1
+/** the AP which don't send beacon */
+#define MULTI_BSSID_SUB_AP 2
+/** IEEEtypes_NotxBssCap_t */
+typedef MLAN_PACK_START struct _IEEEtypes_NotxBssCap_t
+{
+    /** Nontransmitted BSSID Capability: Element ID */
+    t_u8 element_id;
+    /** Nontransmitted BSSID Capability : Length */
+    t_u8 len;
+    /** capability */
+    t_u16 cap;
+} MLAN_PACK_END IEEEtypes_NotxBssCap_t, *pIEEEtypes_NotxBssCap_t;
+
+/** Multi BSSID IE */
+typedef MLAN_PACK_START struct _IEEEtypes_MultiBSSIDIndex_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** BSSID Index */
+    t_u8 bssid_index;
+    /** DTIM Period (Optional, not Present in ProbeRsp) */
+    t_u8 dtim_period;
+    /** DTIM Count (Optional, not Present in ProbeRsp) */
+    t_u8 dtim_count;
+} MLAN_PACK_END IEEEtypes_MultiBSSIDIndex_t, *pIEEEtypes_MultiBSSIDIndex_t;
+
+/** NonTransmitted BSSID Profile Subelement IE */
+/** SUBID for IEEEtypes_NonTransBSSIDCap_t */
+#define NONTRANS_BSSID_PROFILE_SUBELEM_ID 0
+
+/** NonTransmitted BSSID Capability IE */
+typedef MLAN_PACK_START struct _IEEEtypes_NonTransBSSIDProfile_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    t_u8 profile_data[];
+} MLAN_PACK_END IEEEtypes_NonTransBSSIDProfile_t, *pIEEEtypes_NonTransBSSIDProfile_t;
+
+/** Multi BSSID IE */
+typedef MLAN_PACK_START struct _IEEEtypes_MultiBSSID_t
+{
+    /** Generic IE header */
+    IEEEtypes_Header_t ieee_hdr;
+    /** Max BSSID Indicator */
+    t_u8 max_bssid_indicator;
+    /** Optional Subelement data*/
+    t_u8 sub_elem_data[];
+} MLAN_PACK_END IEEEtypes_MultiBSSID_t, *pIEEEtypes_MultiBSSID_t;
+#endif
 
 /** 20/40 BSS Coexistence IE */
 typedef MLAN_PACK_START struct _IEEEtypes_2040BSSCo_t
@@ -1926,6 +2002,12 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_HTInfo_t *pht_info;
     /** HT Information Offset */
     /* t_u16 ht_info_offset; */
+#ifdef MULTI_BSSID_SUPPORT
+    /** Flag to indicate this is multi_bssid_ap */
+    t_u8 multi_bssid_ap;
+    /** the mac address of multi-bssid AP */
+    mlan_802_11_mac_addr multi_bssid_ap_addr;
+#endif
     /** 20/40 BSS Coexistence IE */
     IEEEtypes_2040BSSCo_t *pbss_co_2040;
     /** VHT Capabilities IE */
@@ -1943,7 +2025,7 @@ typedef struct _BSSDescriptor_t
     /** Extended Capabilities IE */
     IEEEtypes_ExtCap_t *pext_cap;
     /** Extended Capabilities Offset */
-    /* t_u16 ext_cap_offset; */
+    t_u16 ext_cap_offset;
     /** Overlapping BSS Scan Parameters IE */
     IEEEtypes_OverlapBSSScanParam_t *poverlap_bss_scan_param;
     /** Overlapping BSS Scan Parameters Offset */
@@ -2023,6 +2105,7 @@ typedef struct _BSSDescriptor_t
     bool wpa2_entp_IE_exist;
     /** RSNX IE */
     IEEEtypes_Generic_t *prsnx_ie;
+    IEEEtypes_Generic_t rsnx_ie_saved;
     /** RSNX IE offset in the beacon buffer */
     t_u16 rsnx_offset;
 #if defined(CONFIG_11R) || defined(CONFIG_11K)
