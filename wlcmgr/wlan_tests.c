@@ -495,8 +495,9 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("      If using WPA2 security, set the PMF configuration if required.\r\n");
 #ifdef CONFIG_OWE
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [owe_only]"
+        "    wlan-add <profile_name> ssid <ssid> [owe_only] mfpc 1 mfpr 1"
         "\r\n");
+    (void)PRINTF("      If using OWE only security, always set the PMF configuration.\r\n");
 #endif
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3 sae <secret> mfpc <1> mfpr <0/1>]"
