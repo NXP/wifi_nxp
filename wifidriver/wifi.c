@@ -974,7 +974,12 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     if (ret != WM_SUCCESS)
     {
 #ifdef CONFIG_ENABLE_WARNING_LOGS
-        wifi_w("Command response timed out. command = 0x%x", cmd->command);
+        t_u32 outbuf_len = 0;
+        HostCmd_DS_COMMAND *tmo_cmd =
+            (HostCmd_DS_COMMAND *)((t_u8 *)wifi_get_outbuf(&outbuf_len) + INTF_HEADER_LEN);
+        wifi_w("Command response timed out. command 0x%x, len %d, seqno 0x%x",
+            tmo_cmd->command, tmo_cmd->size, tmo_cmd->seq_num);
+
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #ifdef CONFIG_WIFI_FW_DEBUG
 #ifndef RW610
@@ -1562,7 +1567,7 @@ static int wifi_core_init(void)
     }
 
     ret = os_thread_create(&wm_wifi.wm_wifi_main_thread, "wifi_driver", wifi_driver_main_loop, NULL, &wifi_drv_stack,
-                           OS_PRIO_3);
+                           OS_PRIO_1);
     if (ret != WM_SUCCESS)
     {
         wifi_e("Create wifi driver thread failed");
