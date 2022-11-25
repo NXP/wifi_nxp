@@ -427,6 +427,8 @@ int wrapper_bssdesc_second_set(int bss_index,
 #endif
 );
 
+int wifi_set_tol_time(const t_u32 tol_time);
+
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /*submit subscribe event cmd to firmware*/
 int wifi_subscribe_event_submit(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt);
@@ -459,11 +461,7 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
 #endif
 
 #ifdef CONFIG_TSP
-int wifi_tsp_cfg(const t_u16 action,
-				 t_u16 *enable,
-				 t_u32 *back_off,
-				 t_u32 *highThreshold,
-				 t_u32 *lowThreshold);
+int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
 #endif
 
 #ifdef CONFIG_TX_AMPDU_PROT_MODE

@@ -8839,6 +8839,17 @@ int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 swi
 
 #endif
 
+int wlan_set_tol_time(const t_u32 tol_time)
+{
+    if (is_sta_connecting())
+    {
+        wlcm_d("Pls set OBSS Tolerance Time value before connecting to AP.\r\n");
+        return -WM_FAIL;
+    }
+
+    return wifi_set_tol_time(tol_time);
+}
+
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
  *  @brief This function subscribe event to firmware.
@@ -8976,7 +8987,7 @@ int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t 
 #endif
 
 #ifdef CONFIG_WMM_UAPSD
-static t_u8 uapsd_qos_info = WMM_UAPSD_QOS_INFO;
+static t_u8 uapsd_qos_info             = WMM_UAPSD_QOS_INFO;
 static unsigned int uapsd_sleep_period = WMM_UAPSD_SLEEP_PERIOD;
 void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
 {
@@ -9005,7 +9016,7 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
     }
     else
     {
-        t_u8 qos_info = 0;
+        t_u8 qos_info       = 0;
         unsigned int period = 0;
         wifi_wmm_qos_cfg(&qos_info, 1);
         wifi_sleep_period(&period, 1);
@@ -9238,22 +9249,16 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
 #endif
 
 #ifdef CONFIG_TSP
-int wlan_get_tsp_cfg(t_u16 *enable,
-				 t_u32 *back_off,
-				 t_u32 *highThreshold,
-				 t_u32 *lowThreshold)
+int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold)
 {
     t_u16 action = 0;
-	
+
     return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold);
 }
-int wlan_set_tsp_cfg(t_u16 enable,
-				 t_u32 back_off,
-				 t_u32 highThreshold,
-				 t_u32 lowThreshold)
+int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lowThreshold)
 {
     t_u16 action = 1;
-	
+
     return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold);
 }
 #endif
@@ -9268,6 +9273,6 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal)
 #if defined(CONFIG_IPS)
 int wlan_set_ips(int option)
 {
-	return wifi_set_ips_config(MLAN_BSS_TYPE_STA, option);
+    return wifi_set_ips_config(MLAN_BSS_TYPE_STA, option);
 }
 #endif

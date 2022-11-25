@@ -680,7 +680,7 @@ typedef PACK_START struct _Event_AutoLink_SW_Node_t
 typedef PACK_START struct _Event_Radar_Detected_Info
 {
     t_u32 detect_count;
-    t_u8 reg_domain; /*1=fcc, 2=etsi, 3=mic*/
+    t_u8 reg_domain;    /*1=fcc, 2=etsi, 3=mic*/
     t_u8 main_det_type; /*0=none, 1=pw(chirp), 2=pri(radar)*/
     t_u16 pw_chirp_type;
     t_u8 pw_chirp_idx;
@@ -4486,6 +4486,22 @@ void wlan_report_timing_measurement(wlan_dot1as_info_t *info);
 int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width);
 #endif
 
+/**
+ * Set 802_11 AX OBSS Narrow Bandwidth RU Tolerance Time
+ * In uplink transmission, AP sends a trigger frame to all the stations that will be involved in the upcoming
+ *transmission, and then these stations transmit Trigger-based(TB) PPDU in response to the trigger frame. If STA
+ *connects to AP which channel is set to 100,STA doesn't support 26 tones RU. The API should be called when station is
+ *in disconnected state.
+ *
+ * \param[in] tol_time     Valid range [1...3600]
+ *          tolerance time is in unit of seconds.
+ *			STA periodically check AP's beacon for ext cap bit79 (OBSS Narrow bandwidth RU in ofdma tolerance support)
+ * 			and set 20 tone RU tolerance time if ext cap bit79 is not set
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_tol_time(const t_u32 tol_time);
+
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 
 /*Type enum definition of subscribe event*/
@@ -4776,7 +4792,7 @@ int wlan_set_ips(int option);
 int wlan_get_signal_info(wlan_rssi_info_t *signal);
 #endif
 
-#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL) 
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
 /**
  * set region power table
  * \param[in] region_code region code

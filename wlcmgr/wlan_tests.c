@@ -3563,13 +3563,13 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     {
         (void)PRINTF("Region code: 0x%x set\r\n", region_code);
     }
-#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL) 
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
     rv = wlan_set_rg_power_cfg(region_code);
     if (rv != WM_SUCCESS)
         (void)PRINTF("Set region 0x%x tx power table failed \r\n", region_code);
     else
-		(void)PRINTF("Set region 0x%x tx power table success \r\n", region_code); 
-#endif	
+        (void)PRINTF("Set region 0x%x tx power table success \r\n", region_code);
+#endif
 }
 
 static void test_wlan_get_regioncode(int argc, char **argv)
@@ -3676,6 +3676,52 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
         (void)PRINTF("Failed to set ecsa cfg \r\n");
     }
 }
+
+static void dump_wlan_set_tol_time_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("set OBSS Narrow Bandwidth RU Tolerance Time\r\n");
+    (void)PRINTF("Pls set toltime when sta is in disconnect state.\r\n");
+    (void)PRINTF("wlan-set-toltime value\r\n");
+    (void)PRINTF("value:\r\n");
+    (void)PRINTF("Valid range[1..3600]\r\n");
+}
+
+static void test_wlan_set_toltime(int argc, char **argv)
+{
+    unsigned int value;
+    int ret;
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+
+    if (get_uint(argv[1], &value, strlen(argv[1])))
+    {
+        (void)PRINTF("Error: invalid option argument\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+
+    if (value < 1 || value > 3600)
+    {
+        (void)PRINTF("Error: invalid tolerance time value\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+
+    ret = wlan_set_tol_time(value);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: Failed to set Tolerance Time.\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+}
+
 #endif
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
@@ -4773,27 +4819,26 @@ void test_wlan_cpu_task_info(int argc, char **argv)
 #ifdef CONFIG_TSP
 static void dump_wlan_tsp_cfg_usage()
 {
-	(void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Usage:\r\n");
     (void)PRINTF("    wlan-set-tsp-cfg enable <enable> backoff <backoff> high <highThreshold> low <lowThreshold>\r\n");
     (void)PRINTF("    <enable>: 0 -- disable   1 -- enable\r\n");
     (void)PRINTF("	  <backoff>: power backoff [0...20]\r\n");
-	(void)PRINTF("	  <highThreshold>: High power Threshold [0...300]\r\n");
-	(void)PRINTF("	  <lowThreshold>: Low power Threshold [0...300]\r\n");
-	(void)PRINTF("	   High Threshold must be greater than Low Threshold\r\n");
-	(void)PRINTF("	   If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
-	
+    (void)PRINTF("	  <highThreshold>: High power Threshold [0...300]\r\n");
+    (void)PRINTF("	  <lowThreshold>: Low power Threshold [0...300]\r\n");
+    (void)PRINTF("	   High Threshold must be greater than Low Threshold\r\n");
+    (void)PRINTF("	   If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
 }
 static void test_wlan_set_tsp_cfg(int argc, char **argv)
 {
     int arg = 0;
-	unsigned int value;
-	t_u16 enable = 0;
-	t_u32 back_off = 0;
-	t_u32 highThreshold = 0;
-	t_u32 lowThreshold = 0;
-	int ret = WM_SUCCESS;
+    unsigned int value;
+    t_u16 enable        = 0;
+    t_u32 back_off      = 0;
+    t_u32 highThreshold = 0;
+    t_u32 lowThreshold  = 0;
+    int ret             = WM_SUCCESS;
 
-	struct
+    struct
     {
         unsigned enable : 1;
         unsigned backoff : 1;
@@ -4802,117 +4847,117 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
     } info;
 
     (void)memset(&info, 0, sizeof(info));
-	
-	if(argc < 3 || argc > 9)
-	{
-		(void)PRINTF("Error: invalid number of arguments\r\n");
+
+    if (argc < 3 || argc > 9)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_tsp_cfg_usage();
         return;
-	}
-	
-	arg++;
-	do
+    }
+
+    arg++;
+    do
     {
         if (!info.enable && string_equal("enable", argv[arg]))
         {
-            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || (value != 0 && value != 1))
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || (value != 0 && value != 1))
             {
                 (void)PRINTF("Error: invalid enable argument\r\n");
-				dump_wlan_tsp_cfg_usage();
+                dump_wlan_tsp_cfg_usage();
                 return;
             }
             arg += 2;
             info.enable = 1;
-			enable = value & 0xFF;
+            enable      = value & 0xFF;
         }
-		else if(!info.backoff && string_equal("backoff", argv[arg]))
-		{
-			if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 20)
+        else if (!info.backoff && string_equal("backoff", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 20)
             {
                 (void)PRINTF("Error: invalid backoff argument\r\n");
-				dump_wlan_tsp_cfg_usage();
+                dump_wlan_tsp_cfg_usage();
                 return;
             }
-			arg += 2;
+            arg += 2;
             info.backoff = 1;
-			back_off = value;
-		}
-		else if(!info.high && string_equal("high", argv[arg]))
-		{
-			if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 300)
+            back_off     = value;
+        }
+        else if (!info.high && string_equal("high", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 300)
             {
                 (void)PRINTF("Error: invalid high threshold argument\r\n");
-				dump_wlan_tsp_cfg_usage();
+                dump_wlan_tsp_cfg_usage();
                 return;
             }
-			arg += 2;
-            info.high = 1;
-			highThreshold = value;
-		}
-		else if(!info.low && string_equal("low", argv[arg]))
-		{
-			if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 300)
+            arg += 2;
+            info.high     = 1;
+            highThreshold = value;
+        }
+        else if (!info.low && string_equal("low", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 300)
             {
                 (void)PRINTF("Error: invalid low threshold argument\r\n");
-				dump_wlan_tsp_cfg_usage();
+                dump_wlan_tsp_cfg_usage();
                 return;
             }
-			arg += 2;
-            info.low = 1;
-			lowThreshold = value;
-		}
-		else
-		{
-			(void)PRINTF("Error: invalid [%d] argument\r\n",arg + 1);
-			dump_wlan_tsp_cfg_usage();
-			return;
-		}
-		
-		}while(arg < argc);
-
-		if(highThreshold <= lowThreshold)
-		{
-		   (void)PRINTF("Error: High Threshold must be greater than Low Threshold\r\n");
-			dump_wlan_tsp_cfg_usage();
-			return;
-		}
-		ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold);
-
-		if (ret != WM_SUCCESS)
+            arg += 2;
+            info.low     = 1;
+            lowThreshold = value;
+        }
+        else
         {
-            (void)PRINTF("Unable to set TSP config\r\n");
+            (void)PRINTF("Error: invalid [%d] argument\r\n", arg + 1);
+            dump_wlan_tsp_cfg_usage();
             return;
         }
+
+    } while (arg < argc);
+
+    if (highThreshold <= lowThreshold)
+    {
+        (void)PRINTF("Error: High Threshold must be greater than Low Threshold\r\n");
+        dump_wlan_tsp_cfg_usage();
+        return;
+    }
+    ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set TSP config\r\n");
+        return;
+    }
 }
 
 static void test_wlan_get_tsp_cfg(int argc, char **argv)
 {
-	t_u16 enable = 0;
-	t_u32 back_off = 0;
-	t_u32 highThreshold = 0;
-	t_u32 lowThreshold = 0;
-	int ret = WM_SUCCESS;
-	
+    t_u16 enable        = 0;
+    t_u32 back_off      = 0;
+    t_u32 highThreshold = 0;
+    t_u32 lowThreshold  = 0;
+    int ret             = WM_SUCCESS;
+
     if (argc != 1)
     {
         dump_wlan_tsp_cfg_usage();
         return;
     }
 
-	ret = wlan_get_tsp_cfg(&enable, &back_off, &highThreshold, &lowThreshold);
+    ret = wlan_get_tsp_cfg(&enable, &back_off, &highThreshold, &lowThreshold);
 
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Unable to get TSP config\r\n");
         return;
     }
-	
-	(void)PRINTF("TSP Configuration:\r\n");
-	(void)PRINTF("	Enable TSP Algorithm: %d\r\n", enable);
-	(void)PRINTF("		0: disable 1: enable\r\n");
-	(void)PRINTF("	Power Management Backoff: %d dB\r\n", back_off);
-	(void)PRINTF("	Low Power BOT Threshold: %d °C\r\n", lowThreshold);
-	(void)PRINTF("	High Power BOT Threshold: %d °C\r\n", highThreshold);
+
+    (void)PRINTF("TSP Configuration:\r\n");
+    (void)PRINTF("	Enable TSP Algorithm: %d\r\n", enable);
+    (void)PRINTF("		0: disable 1: enable\r\n");
+    (void)PRINTF("	Power Management Backoff: %d dB\r\n", back_off);
+    (void)PRINTF("	Low Power BOT Threshold: %d °C\r\n", lowThreshold);
+    (void)PRINTF("	High Power BOT Threshold: %d °C\r\n", highThreshold);
 }
 #endif
 
@@ -5018,38 +5063,38 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
 #if defined(CONFIG_IPS)
 static void dump_wlan_set_ips_usage()
 {
-	(void)PRINTF("Usage:\r\n");
-	(void)PRINTF("wlan-set-ips option\r\n");
-	(void)PRINTF("option:\r\n");
-	(void)PRINTF("0: disable ips enhance\r\n");
-	(void)PRINTF("1: enable ips enhance\r\n");
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-ips option\r\n");
+    (void)PRINTF("option:\r\n");
+    (void)PRINTF("0: disable ips enhance\r\n");
+    (void)PRINTF("1: enable ips enhance\r\n");
 }
 static void test_wlan_set_ips(int argc, char **argv)
 {
-	unsigned int option;
+    unsigned int option;
 
-	if (argc != 2)
+    if (argc != 2)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_set_ips_usage();
         return;
     }
 
-	if (get_uint(argv[1], &option, strlen(argv[1])))
+    if (get_uint(argv[1], &option, strlen(argv[1])))
     {
         (void)PRINTF("Error: invalid option argument\r\n");
         dump_wlan_set_ips_usage();
         return;
     }
 
-	if(option != 0 && option != 1)
-	{
-		(void)PRINTF("Error: invalid option argument\r\n");
+    if (option != 0 && option != 1)
+    {
+        (void)PRINTF("Error: invalid option argument\r\n");
         dump_wlan_set_ips_usage();
         return;
-	}
+    }
 
-	wlan_set_ips(option);
+    wlan_set_ips(option);
 }
 #endif
 
@@ -5217,8 +5262,8 @@ static struct cli_command tests[] = {
      test_wlan_set_monitor_param},
 #endif
 #ifdef CONFIG_TSP
-	{"wlan-set-tsp-cfg", "<enable> <backoff> <highThreshold> <lowThreshold>", test_wlan_set_tsp_cfg},
-	{"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
+    {"wlan-set-tsp-cfg", "<enable> <backoff> <highThreshold> <lowThreshold>", test_wlan_set_tsp_cfg},
+    {"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
 #endif
 #ifdef CONFIG_CPU_TASK_STATUS
     {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},
@@ -5227,11 +5272,12 @@ static struct cli_command tests[] = {
     {"wlan-get-signal", NULL, test_wlan_get_signal},
 #endif
 #if defined(CONFIG_IPS)
-	{"wlan-set-ips", "<option>", test_wlan_set_ips},
+    {"wlan-set-ips", "<option>", test_wlan_set_ips},
 #endif
 #ifdef CONFIG_WIFI_FORCE_RTS
     {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
 #endif
+    {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
 };
 
 /* Register our commands with the MTF. */
