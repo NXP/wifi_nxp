@@ -3,6 +3,16 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p4
+ - Updates:
+  - None.
+
+ - Bug Fixes:
+  - Updated helper message for owe_only cli.
+  - WSW-23719 [RT1170][9177][MMH] Observed bi-directional data traffic on air while running uni-directional TCP-RX traffic
+  - WSW-23721 [RT1170] [9177] [MMH] UDP-TX traffic is going without using aggregation
+  - WSW-23711 [RT1170][9177][STA][MMH] Throughput value is not getting displayed on DUT client & server side while running iperf Tx and Rx traffic.
+
 Version 1.3.r43.p3
  - Updates:
   - Updated firmware version to p164.
