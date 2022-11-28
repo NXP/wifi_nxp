@@ -4508,7 +4508,7 @@ static unsigned char process_rsn_ie(
                              ))
     {
         remain_len   = prsn_ie->len - (4U * sizeof(wpa_suite) + 3U * sizeof(uint16_t));
-        prsn_ie->len = 20 + remain_len;
+        prsn_ie->len = prsn_ie->len + remain_len;
         akmp_count   = 1;
         (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
                      (const void *)&akmp_count, sizeof(uint16_t));
