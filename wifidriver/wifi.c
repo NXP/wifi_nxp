@@ -556,7 +556,7 @@ void wifi_sdio_reg_dbg()
     }
 }
 #endif
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x) || defined(RW610_SERIES)
 
 #define DEBUG_HOST_READY     0xCC
 #define DEBUG_FW_DONE        0xFF
@@ -566,6 +566,7 @@ void wifi_sdio_reg_dbg()
 #define DEBUG_DUMP_START_REG 0xF1
 #define DEBUG_DUMP_END_REG   0xF8
 #define SDIO_SCRATCH_REG     0xE8
+#define DEBUG_DUMP_SCRATCH_REG (void *)0x41382488
 
 char fw_dump_file_name[] = _T("1:/fw_dump.bin");
 
