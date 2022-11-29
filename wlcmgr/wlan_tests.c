@@ -1665,8 +1665,17 @@ static void dump_wlan_tx_pert_usage(void)
         "    wlan-tx-pert <0/1> <STA/AP> <p:tx_pert_check_period> "
         "<r:tx_pert_check_ratio> <n:tx_pert_check_num>"
         "\r\n");
+    (void)PRINTF("Options:\r\n");
+    (void)PRINTF("    <0/1>: Disable/enable Tx Pert tracking.\r\n");
+    (void)PRINTF("    <STA/UAP>: User needs to indicate which interface this tracking for.\r\n");
+    (void)PRINTF("    <p>: Tx Pert check period. Unit is second.\r\n");
+    (void)PRINTF("    <r>: Tx Pert ratio threshold (unit 10%). (Fail TX packet)/(Total TX packets). The default value is 5.\r\n");
+    (void)PRINTF("    <n>: A watermark of check number (default 5). Fw will start tracking Tx Pert after sending n packets.\r\n");
     (void)PRINTF("Example:\r\n");
     (void)PRINTF("    wlan-tx-pert 1 AP 5 3 5\r\n");
+    (void)PRINTF("Note:\r\n");
+    (void)PRINTF("    Please verify by iperf or ping\r\n");
+    (void)PRINTF("    When the traffic quality is good enough, it will not be triggered\r\n");
 }
 
 static void test_wlan_tx_pert(int argc, char **argv)
