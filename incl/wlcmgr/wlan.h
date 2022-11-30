@@ -312,43 +312,6 @@ enum wlan_event_reason
     WLAN_REASON_ADDRESS_FAILED,
     /** The WLAN Connection Manager has lost the link to the current network. */
     WLAN_REASON_LINK_LOST,
-    /** The WLAN Connection Manager has received subscribed RSSI low event on station interface as per configured
-       threshold and frequency. If CONFIG_11K, CONFIG_11V, CONFIG_11R or CONFIG_ROAMING enabled then RSSI low event is
-       processed internally.*/
-    WLAN_REASON_RSSI_LOW,
-    /** The WLAN Connection Manager has received subscribed RSSI high event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_RSSI_HIGH,
-    /** The WLAN Connection Manager has received subscribed SNR low event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_SNR_LOW,
-    /** The WLAN Connection Manager has received subscribed SNR high event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_SNR_HIGH,
-    /** The WLAN Connection Manager has received subscribed Max fail event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_MAX_FAIL,
-    /** The WLAN Connection Manager has received subscribed Beacon missed fail event on station interface as per
-       configured threshold and frequency. */
-    WLAN_REASON_BEACON_MISSED,
-    /** The WLAN Connection Manager has received subscribed Data RSSI low event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_DATA_RSSI_LOW,
-    /** The WLAN Connection Manager has received subscribed Data RSSI high event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_DATA_RSSI_HIGH,
-    /** The WLAN Connection Manager has received subscribed Data SNR low event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_DATA_SNR_LOW,
-    /** The WLAN Connection Manager has received subscribed Data SNR high event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_DATA_SNR_HIGH,
-    /** The WLAN Connection Manager has received subscribed LINK QUALITY event on station interface as per configured
-    link_snr threshold and frequency, link_rate threshold and frequency, link_tx_latency threshold and frequency*/
-    WLAN_REASON_LINK_QUALITY,
-    /** The WLAN Connection Manager has received subscribed Pre beacon lost event on station interface as per configured
-       threshold and frequency. */
-    WLAN_REASON_PRE_BEACON_LOST,
     /** The WLAN Connection Manager has received the channel switch
      * announcement from the current network. */
     WLAN_REASON_CHAN_SWITCH,
@@ -384,7 +347,45 @@ enum wlan_event_reason
     WLAN_REASON_UAP_STOP_FAILED,
     /** The WLAN Connection Manager has stopped uAP */
     WLAN_REASON_UAP_STOPPED,
-
+    /** The WLAN Connection Manager has received subscribed RSSI low event on station interface as per configured
+       threshold and frequency. If CONFIG_11K, CONFIG_11V, CONFIG_11R or CONFIG_ROAMING enabled then RSSI low event is
+       processed internally.*/
+    WLAN_REASON_RSSI_LOW,
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+    /** The WLAN Connection Manager has received subscribed RSSI high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_RSSI_HIGH,
+    /** The WLAN Connection Manager has received subscribed SNR low event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_SNR_LOW,
+    /** The WLAN Connection Manager has received subscribed SNR high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_SNR_HIGH,
+    /** The WLAN Connection Manager has received subscribed Max fail event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_MAX_FAIL,
+    /** The WLAN Connection Manager has received subscribed Beacon missed fail event on station interface as per
+       configured threshold and frequency. */
+    WLAN_REASON_BEACON_MISSED,
+    /** The WLAN Connection Manager has received subscribed Data RSSI low event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_RSSI_LOW,
+    /** The WLAN Connection Manager has received subscribed Data RSSI high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_RSSI_HIGH,
+    /** The WLAN Connection Manager has received subscribed Data SNR low event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_SNR_LOW,
+    /** The WLAN Connection Manager has received subscribed Data SNR high event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_DATA_SNR_HIGH,
+    /** The WLAN Connection Manager has received subscribed LINK QUALITY event on station interface as per configured
+    link_snr threshold and frequency, link_rate threshold and frequency, link_tx_latency threshold and frequency*/
+    WLAN_REASON_LINK_QUALITY,
+    /** The WLAN Connection Manager has received subscribed Pre beacon lost event on station interface as per configured
+       threshold and frequency. */
+    WLAN_REASON_PRE_BEACON_LOST,
+#endif
 };
 
 /** Wakeup events for which wakeup will occur */
