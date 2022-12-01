@@ -1746,7 +1746,7 @@ mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan)
     mlan_status ret = MLAN_STATUS_FAILURE;
     t_u32 i;
     t_u32 entry;
-    t_u8 def_chan;
+    t_u8 def_chan           = 0;
     region_chan_t *chn_tbl  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
@@ -1758,12 +1758,12 @@ mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan)
         if (pmadapter->region_channel[i].valid)
         {
             chn_tbl = &pmadapter->region_channel[i];
-            
+
             if (!chn_tbl || !chn_tbl->pcfp)
             {
                 goto done;
             }
-            
+
             for (entry = 0; entry < chn_tbl->num_cfp; entry++)
             {
                 if (chn_tbl->pcfp[entry].passive_scan_or_radar_detect == MFALSE)
@@ -1779,7 +1779,7 @@ mlan_status wlan_get_non_dfs_chan(mlan_private *priv, t_u8 *chan)
             }
         }
     }
-    
+
     *chan = def_chan;
     ret   = MLAN_STATUS_SUCCESS;
 done:

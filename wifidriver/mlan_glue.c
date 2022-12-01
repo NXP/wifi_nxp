@@ -652,7 +652,7 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff)
 {
     Event_Ext_t *evt = (Event_Ext_t *)saved_event_buff;
 
-    wlan_11n_delete_bastream((mlan_private *)mlan_adap->priv[0], (t_u8 *)&evt->reason_code);
+    wlan_11n_delete_bastream((mlan_private *)mlan_adap->priv[evt->bss_type], (t_u8 *)&evt->reason_code);
 
     os_mem_free(saved_event_buff);
 
@@ -4127,16 +4127,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         break;
         case EVENT_DELBA:
         {
-            if (evt->bss_type == BSS_TYPE_STA)
-            {
-                void *saved_event_buff = wifi_11n_save_request(evt);
-                if (saved_event_buff != NULL)
-                {
-                    (void)wifi_event_completion(WIFI_EVENT_11N_DELBA, WIFI_EVENT_REASON_SUCCESS, saved_event_buff);
-                }
-
-                /* If allocation failed ignore this event quietly ! */
-            }
+            wlan_11n_delete_bastream((mlan_private *)mlan_adap->priv[evt->bss_type], (t_u8 *)&evt->reason_code);
         }
         break;
         case EVENT_BA_STREAM_TIMEOUT:
@@ -4236,38 +4227,33 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
         break;
         case EVENT_MICRO_AP_STA_DEAUTH:
-            if ((evt->reason_code == IEEEtypes_REASON_PRIOR_AUTH_INVALID) ||
-                (evt->reason_code == IEEEtypes_REASON_UNSPEC))
+            /*
+             * Alloc memory to store the STA mac id. This will be
+             * passed to event receiver thread. Freeing this is
+             * responsibility of the receiving thread.
+             */
+            sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
+            if (sta_addr == MNULL)
             {
-                /*
-                 * Alloc memory to store the STA mac id. This will be
-                 * passed to event receiver thread. Freeing this is
-                 * responsibility of the receiving thread.
-                 */
-                sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
-                if (sta_addr == MNULL)
-                {
-                    wifi_w("No mem. Cannot process MAC address from assoc");
-                    break;
-                }
-                event_sta_addr = (t_u8 *)&evt->src_mac_addr;
-                (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
-                if (pmpriv->is_11n_enabled)
-                {
-                    wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
-                    wlan_11n_delete_txbastream_tbl_entry(pmpriv, sta_addr);
-                }
-                if (pmpriv_uap->is_11n_enabled)
-                {
-                    wlan_cleanup_reorder_tbl(pmpriv_uap, sta_addr);
-                    wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
-                }
-                if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr) !=
-                    WM_SUCCESS)
-                {
-                    /* If fail to send message on queue, free allocated memory ! */
-                    os_mem_free((void *)sta_addr);
-                }
+                wifi_w("No mem. Cannot process MAC address from assoc");
+                break;
+            }
+            event_sta_addr = (t_u8 *)&evt->src_mac_addr;
+            (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
+            if (pmpriv->is_11n_enabled)
+            {
+                wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
+                wlan_11n_delete_txbastream_tbl_entry(pmpriv, sta_addr);
+            }
+            if (pmpriv_uap->is_11n_enabled)
+            {
+                wlan_cleanup_reorder_tbl(pmpriv_uap, sta_addr);
+                wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
+            }
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+                os_mem_free((void *)sta_addr);
             }
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
             wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);

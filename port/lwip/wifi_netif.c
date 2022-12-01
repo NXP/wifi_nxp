@@ -177,8 +177,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #ifdef CONFIG_11N
         if (rxpd->bss_type == MLAN_BSS_ROLE_UAP)
         {
-	        wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
-	        return;
+            wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
+            return;
         }
 #endif /* CONFIG_11N */
 #else
@@ -289,7 +289,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     if (!memcmp((t_u8 *)p->payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
     {
         struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)p->payload + SIZEOF_ETH_HDR);
-        header_type = htons(ethllchdr->type);
+        header_type                   = htons(ethllchdr->type);
         if (rxpd->rx_pkt_type != PKT_TYPE_AMSDU)
         {
             p->len -= SIZEOF_ETH_LLC_HDR;
@@ -522,7 +522,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     uint8_t *wmm_outbuf = wifi_wmm_get_outbuf(&outbuf_len, pkt_prio);
 #endif
 #else
-    uint8_t *wmm_outbuf = wifi_get_outbuf(&outbuf_len);
+    uint8_t *wmm_outbuf = wifi_get_outbuf((uint32_t *)(&outbuf_len));
 #endif
     if (wmm_outbuf == NULL)
     {
@@ -970,7 +970,7 @@ err_t lwip_netif_init(struct netif *netif)
 
     /* initialize the hardware */
     low_level_init(netif);
-	
+
     /* set sta MAC hardware address */
     (void)wlan_get_mac_address(netif->hwaddr, ignore_mac);
 
@@ -1010,7 +1010,7 @@ err_t lwip_netif_uap_init(struct netif *netif)
 
     /* initialize the hardware */
     low_level_init(netif);
-	
+
     /* set uap MAC hardware address */
     (void)wlan_get_mac_address(ignore_mac, netif->hwaddr);
 

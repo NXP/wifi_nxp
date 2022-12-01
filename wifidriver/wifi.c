@@ -556,16 +556,17 @@ void wifi_sdio_reg_dbg()
     }
 }
 #endif
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x) || defined(RW610_SERIES)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x) || \
+    defined(RW610_SERIES)
 
 #define DEBUG_HOST_READY     0xCC
 #define DEBUG_FW_DONE        0xFF
 #define DEBUG_MEMDUMP_FINISH 0xFE
 
-#define DEBUG_DUMP_CTRL_REG  0xF9
-#define DEBUG_DUMP_START_REG 0xF1
-#define DEBUG_DUMP_END_REG   0xF8
-#define SDIO_SCRATCH_REG     0xE8
+#define DEBUG_DUMP_CTRL_REG    0xF9
+#define DEBUG_DUMP_START_REG   0xF1
+#define DEBUG_DUMP_END_REG     0xF8
+#define SDIO_SCRATCH_REG       0xE8
 #define DEBUG_DUMP_SCRATCH_REG (void *)0x41382488
 
 char fw_dump_file_name[] = _T("1:/fw_dump.bin");
@@ -977,9 +978,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #ifdef CONFIG_ENABLE_WARNING_LOGS
         t_u32 outbuf_len = 0;
         HostCmd_DS_COMMAND *tmo_cmd =
-            (HostCmd_DS_COMMAND *)((t_u8 *)wifi_get_outbuf(&outbuf_len) + INTF_HEADER_LEN);
-        wifi_w("Command response timed out. command 0x%x, len %d, seqno 0x%x",
-            tmo_cmd->command, tmo_cmd->size, tmo_cmd->seq_num);
+            (HostCmd_DS_COMMAND *)((t_u8 *)wifi_get_outbuf((uint32_t *)(&outbuf_len)) + INTF_HEADER_LEN);
+        wifi_w("Command response timed out. command 0x%x, len %d, seqno 0x%x", tmo_cmd->command, tmo_cmd->size,
+               tmo_cmd->seq_num);
 
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #ifdef CONFIG_WIFI_FW_DEBUG
