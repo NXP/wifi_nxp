@@ -1681,8 +1681,12 @@ static void dump_wlan_tx_pert_usage(void)
     (void)PRINTF("    <0/1>: Disable/enable Tx Pert tracking.\r\n");
     (void)PRINTF("    <STA/UAP>: User needs to indicate which interface this tracking for.\r\n");
     (void)PRINTF("    <p>: Tx Pert check period. Unit is second.\r\n");
-    (void)PRINTF("    <r>: Tx Pert ratio threshold (unit 10%). (Fail TX packet)/(Total TX packets). The default value is 5.\r\n");
-    (void)PRINTF("    <n>: A watermark of check number (default 5). Fw will start tracking Tx Pert after sending n packets.\r\n");
+    (void)PRINTF(
+        "    <r>: Tx Pert ratio threshold (unit 10%). (Fail TX packet)/(Total TX packets). The default value is "
+        "5.\r\n");
+    (void)PRINTF(
+        "    <n>: A watermark of check number (default 5). Fw will start tracking Tx Pert after sending n "
+        "packets.\r\n");
     (void)PRINTF("Example:\r\n");
     (void)PRINTF("    wlan-tx-pert 1 AP 5 3 5\r\n");
     (void)PRINTF("Note:\r\n");
@@ -3950,6 +3954,7 @@ static void test_wlan_set_sleep_period(int argc, char **argv)
 }
 #endif
 
+#if defined(RW610)
 #ifdef CONFIG_WIFI_AMPDU_CTRL
 static void dump_wlan_ampdu_enable_usage()
 {
@@ -4132,6 +4137,7 @@ static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
         wlan_tx_ampdu_prot_mode(&data, ACTION_SET);
     }
 }
+#endif
 #endif
 
 #ifdef CONFIG_CSI
@@ -4538,12 +4544,14 @@ static struct cli_command tests[] = {
     {"wlan-uapsd-enable", "<uapsd_enable>", test_wlan_set_wmm_uapsd},
     {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_set_sleep_period},
 #endif
+#if defined(RW610)
 #ifdef CONFIG_WIFI_AMPDU_CTRL
     {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>",
      test_wlan_ampdu_enable},
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
+#endif
 #endif
 };
 

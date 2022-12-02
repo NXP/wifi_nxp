@@ -7421,6 +7421,7 @@ void wlan_sta_ampdu_rx_disable(void)
     wifi_sta_ampdu_rx_disable();
 }
 
+#if defined(RW610)
 void wlan_uap_ampdu_tx_enable(void)
 {
     wifi_uap_ampdu_tx_enable();
@@ -7461,6 +7462,7 @@ void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid)
 {
     wifi_uap_ampdu_rx_enable_per_tid(tid);
 }
+#endif
 #endif
 
 void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)

@@ -3385,6 +3385,7 @@ void wlan_sta_ampdu_rx_enable(void);
  */
 void wlan_sta_ampdu_rx_disable(void);
 
+#if defined(RW610)
 /**
  * This API can be used to enable AMPDU support on the go
  * when uap is a transmitter.
@@ -3444,6 +3445,7 @@ void wlan_uap_ampdu_tx_enable_per_tid(t_u8 tid);
  *\param[in] tid tid value.
  */
 void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid);
+#endif
 #endif
 
 /**

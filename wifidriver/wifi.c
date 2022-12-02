@@ -104,15 +104,20 @@ static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
 #ifdef CONFIG_STA_AMPDU_TX
-static bool sta_ampdu_tx_enable  = true;
+static bool sta_ampdu_tx_enable = true;
+#if defined(RW610)
 t_u8 sta_ampdu_tx_enable_per_tid = 0xFF;
+#endif
 #endif
 
 #ifdef CONFIG_STA_AMPDU_RX
-bool sta_ampdu_rx_enable         = true;
+bool sta_ampdu_rx_enable = true;
+#if defined(RW610)
 t_u8 sta_ampdu_rx_enable_per_tid = 0xFF;
 #endif
+#endif
 
+#if defined(RW610)
 #ifdef CONFIG_UAP_AMPDU_TX
 bool uap_ampdu_tx_enable         = true;
 t_u8 uap_ampdu_tx_enable_per_tid = 0xFF;
@@ -121,6 +126,7 @@ t_u8 uap_ampdu_tx_enable_per_tid = 0xFF;
 #ifdef CONFIG_UAP_AMPDU_RX
 bool uap_ampdu_rx_enable         = true;
 t_u8 uap_ampdu_rx_enable_per_tid = 0xFF;
+#endif
 #endif
 
 int retry_attempts;
@@ -1895,6 +1901,7 @@ void wifi_sta_ampdu_tx_disable(void)
     sta_ampdu_tx_enable = false;
 }
 
+#if defined(RW610)
 void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid)
 {
     sta_ampdu_tx_enable_per_tid = tid;
@@ -1907,6 +1914,7 @@ t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid)
     else
         return MFALSE;
 }
+#endif
 #else
 void wifi_sta_ampdu_tx_enable(void)
 {
@@ -1915,6 +1923,7 @@ void wifi_sta_ampdu_tx_enable(void)
 void wifi_sta_ampdu_tx_disable(void)
 {
 }
+#if defined(RW610)
 void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid)
 {
 }
@@ -1923,6 +1932,7 @@ t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid)
 {
     return MTRUE;
 }
+#endif
 #endif /* CONFIG_STA_AMPDU_TX */
 
 #ifdef CONFIG_STA_AMPDU_RX
@@ -1936,6 +1946,7 @@ void wifi_sta_ampdu_rx_disable(void)
     sta_ampdu_rx_enable = false;
 }
 
+#if defined(RW610)
 void wifi_sta_ampdu_rx_enable_per_tid(t_u8 tid)
 {
     sta_ampdu_rx_enable_per_tid = tid;
@@ -1948,6 +1959,7 @@ t_u8 wifi_sta_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
     else
         return MFALSE;
 }
+#endif
 #else
 void wifi_sta_ampdu_rx_enable(void)
 {
@@ -1956,6 +1968,7 @@ void wifi_sta_ampdu_rx_enable(void)
 void wifi_sta_ampdu_rx_disable(void)
 {
 }
+#if defined(RW610)
 void wifi_sta_ampdu_rx_enable_per_tid(t_u8 tid)
 {
 }
@@ -1964,8 +1977,10 @@ t_u8 wifi_sta_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
 {
     return MTRUE;
 }
+#endif
 #endif /* CONFIG_STA_AMPDU_RX */
 
+#if defined(RW610)
 #ifdef CONFIG_UAP_AMPDU_TX
 void wifi_uap_ampdu_tx_enable(void)
 {
@@ -2047,6 +2062,7 @@ t_u8 wifi_uap_ampdu_rx_enable_per_tid_is_allowed(t_u8 tid)
     return MTRUE;
 }
 #endif /* CONFIG_STA_AMPDU_RX */
+#endif
 
 int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t interface,
                                                                    const uint8_t *buffer,
@@ -3088,8 +3104,10 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
 #ifdef CONFIG_STA_AMPDU_TX
     if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable
+#if defined(RW610)
 #ifdef CONFIG_WMM
         && wifi_sta_ampdu_tx_enable_per_tid_is_allowed(tid)
+#endif
 #endif
     )
     {
@@ -3105,9 +3123,12 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
 
 #ifdef CONFIG_UAP_AMPDU_TX
-    if (interface == BSS_TYPE_UAP && uap_ampdu_tx_enable
+    if (interface == BSS_TYPE_UAP
+#if defined(RW610)
+        && uap_ampdu_tx_enable
 #ifdef CONFIG_WMM
         && wifi_uap_ampdu_tx_enable_per_tid_is_allowed(tid)
+#endif
 #endif
     )
 

@@ -257,6 +257,7 @@ void wifi_sta_ampdu_tx_enable(void);
  */
 void wifi_sta_ampdu_tx_disable(void);
 
+#if defined(RW610)
 /**
  * This API can be used to set tid to enable AMPDU support on the go
  * when station is a transmitter.
@@ -271,6 +272,7 @@ void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid);
  * @return MTRUE or MFALSE
  */
 t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
+#endif
 
 /**
  * This API can be used to enable AMPDU support on the go
@@ -278,6 +280,7 @@ t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
  */
 void wifi_sta_ampdu_rx_enable(void);
 
+#if defined(RW610)
 /**
  * This API can be used to set tid to enable AMPDU support on the go
  * when station is a receiver.
@@ -346,6 +349,7 @@ t_u8 wifi_uap_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
  * when uap is a transmitter.
  */
 void wifi_uap_ampdu_tx_disable(void);
+#endif
 
 /**
  * This API can be used to disable AMPDU support on the go
