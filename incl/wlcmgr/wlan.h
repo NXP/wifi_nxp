@@ -565,6 +565,11 @@ struct wlan_scan_result
     /** DTIM Period */
     uint8_t dtim_period;
 
+    /** MFPC bit of AP*/
+    t_u8 ap_mfpc;
+    /** MFPR bit of AP*/
+    t_u8 ap_mfpr;
+
 #ifdef CONFIG_11K
     /** Neigbort report support (For internal use only)*/
     bool neighbor_report_supported;

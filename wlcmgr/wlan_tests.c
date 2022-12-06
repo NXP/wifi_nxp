@@ -939,6 +939,18 @@ static int __scan_cb(unsigned int count)
             (void)PRINTF("\t802.11V: YES\r\n");
         }
 #endif
+        if((res.ap_mfpc == true) && (res.ap_mfpr == true))
+        {
+            (void)PRINTF("\t802.11W: Capable, Required\r\n");
+        }
+        if((res.ap_mfpc == true) && (res.ap_mfpr == false))
+        {
+            (void)PRINTF("\t802.11W: Capable\r\n");
+        }
+        if((res.ap_mfpc == false) && (res.ap_mfpr == false))
+        {
+            (void)PRINTF("\t802.11W: NA\r\n");
+        }
 #ifdef CONFIG_WPS2
         if (res.wps)
         {

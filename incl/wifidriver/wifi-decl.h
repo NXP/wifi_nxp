@@ -270,6 +270,8 @@ struct wifi_scan_result
     _Cipher_t rsn_mcstCipher;           /*!< No security multicast cipher */
     _Cipher_t rsn_ucstCipher;           /*!< No security unicast cipher */
     bool is_pmf_required;               /*!< Is pmf required flag */
+    t_u8 ap_mfpc;                       /*!< MFPC bit of AP */
+    t_u8 ap_mfpr;                       /*!< MFPR bit of AP */
 
     /*!<
      **  WPA_WPA2 = 0 => Security not enabled

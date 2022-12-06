@@ -1633,7 +1633,7 @@ int wrapper_wifi_assoc(
     priv->sec_info.wapi_enabled        = false;
     priv->sec_info.ewpa_enabled        = false;
     priv->sec_info.wpa_enabled         = false;
-    priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
+    priv->sec_info.authentication_mode = MLAN_AUTH_MODE_OPEN;
 #ifdef CONFIG_11R
     if (is_ft)
     {
@@ -1741,12 +1741,6 @@ int wrapper_wifi_assoc(
          * but if the configured security is WPA2 PSK then AKM must be of PSK
          * hence update the AKM to WPA2 PSK and reset the PMF capabilities
          */
-        if ((wlan_security == WLAN_SECURITY_WPA2) && (priv->wpa_ie[19] == 0x8U))
-        {
-            priv->wpa_ie[19] = 0x02;
-            priv->wpa_ie[20] = 0x00;
-            priv->wpa_ie[21] = 0x00;
-        }
     }
     else
     { /* Do Nothing */
@@ -4383,275 +4377,290 @@ int wifi_handle_fw_event(struct bus_message *msg)
     return WM_SUCCESS;
 }
 
-// static const uint8_t wpa_oui_none[4] = {0x00, 0x50, 0xf2, 0x00};
-static const uint8_t wpa_oui01[4] = {0x00, 0x50, 0xf2, 0x01};
-static const uint8_t wpa_oui02[4] = {0x00, 0x50, 0xf2, 0x02};
-// static const uint8_t wpa_oui03[4]    = {0x00, 0x50, 0xf2, 0x03};
-static const uint8_t wpa_oui04[4] = {0x00, 0x50, 0xf2, 0x04};
-static const uint8_t wpa_oui05[4] = {0x00, 0x50, 0xf2, 0x05};
-// static const uint8_t wpa_oui06[4]    = {0x00, 0x50, 0xf2, 0x06};
-
-static const uint8_t wpa2_oui01[4] = {0x00, 0x0f, 0xac, 0x01};
-static const uint8_t wpa2_oui02[4] = {0x00, 0x0f, 0xac, 0x02};
-// static const uint8_t wpa2_oui03[4] = {0x00, 0x0f, 0xac, 0x03};
-static const uint8_t wpa2_oui04[4] = {0x00, 0x0f, 0xac, 0x04};
-static const uint8_t wpa2_oui05[4] = {0x00, 0x0f, 0xac, 0x05};
-static const uint8_t wpa2_oui06[4] = {0x00, 0x0f, 0xac, 0x06};
-
-static const uint8_t wpa3_oui08[4] = {0x00, 0x0f, 0xac, 0x08};
-static const uint8_t wpa3_oui12[4] = {0x00, 0x0f, 0xac, 0x12};
-
-#ifdef CONFIG_11R
-static const uint8_t rsn_ft_1x_oui[4]  = {0x00, 0x0f, 0xac, 0x03};
-static const uint8_t rsn_ft_psk_oui[4] = {0x00, 0x0f, 0xac, 0x04};
-static const uint8_t rsn_ft_sae_oui[4] = {0x00, 0x0f, 0xac, 0x09};
-#endif
-
-static unsigned char process_rsn_ie(
-    uint8_t *rsn_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher, bool *is_pmf_required, _SecurityMode_t *WPA_WPA2_WEP)
+static void process_rsn_ie(
+    t_u8 *rsn_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher, t_u8 *ap_mfpc, t_u8 *ap_mfpr, _SecurityMode_t *WPA_WPA2_WEP)
 {
-    IEEEtypes_Rsn_t *prsn_ie = (IEEEtypes_Rsn_t *)(void *)rsn_ie;
-    uint16_t akmp_count      = 0;
-    uint8_t rsn_cap, i, remain_len;
+    t_u8 *temp;
+    t_u16 count;
+    t_u16 group_cipher_count = 0;
+    t_u16 pairwise_cipher_count = 0;
+    t_u16 akm_suite_count       = 0;
+    t_u16 rsn_cap               = 0;
+    t_u8 found                  = 0;
+    t_u8 wpa2_oui01[4] = {0x00, 0x0f, 0xac, 0x01};
+    t_u8 wpa2_oui02[4] = {0x00, 0x0f, 0xac, 0x02};
+    t_u8 wpa2_oui04[4] = {0x00, 0x0f, 0xac, 0x04};
+    t_u8 wpa2_oui05[4] = {0x00, 0x0f, 0xac, 0x05};
+    t_u8 wpa2_oui06[4] = {0x00, 0x0f, 0xac, 0x06};
 
-    if (prsn_ie->pairwise_cipher.count == 2U)
-    {
-        prsn_ie->len -= sizeof(wpa_suite);
-        prsn_ie->pairwise_cipher.count = 1;
-
-        if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), wpa2_oui04,
-                    sizeof(wpa_suite)))
-        {
-            (void)memcpy((void *)((uint8_t *)&prsn_ie->pairwise_cipher.list),
-                         (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                         sizeof(wpa_suite));
-        }
-        (void)memmove((((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                      (uint8_t *)&prsn_ie->auth_key_mgmt,
-                      prsn_ie->len - (2U * sizeof(wpa_suite) + 2U * sizeof(uint16_t)));
-    }
-
-    if (prsn_ie->pairwise_cipher.count == 1U)
-    {
-        (void)memcpy((void *)&akmp_count,
-                     (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)), sizeof(uint16_t));
-
-        for (i = 0; i < akmp_count; i++)
-        {
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)wpa3_oui08, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->wpa3_sae = 1;
-            }
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)wpa3_oui12, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->owe = 1;
-            }
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)wpa2_oui02, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->wpa2 = 1;
-            }
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)wpa2_oui06, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->wpa2 = 1;
-            }
-#ifdef CONFIG_11R
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)rsn_ft_1x_oui, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->ft_1x = 1;
-                WPA_WPA2_WEP->wpa2  = 1;
-            }
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)rsn_ft_psk_oui, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->ft_psk = 1;
-                WPA_WPA2_WEP->wpa2   = 1;
-            }
-            if (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) +
-                                       sizeof(uint16_t) + sizeof(wpa_suite) * i),
-                        (const void *)rsn_ft_sae_oui, sizeof(wpa_suite)))
-            {
-                WPA_WPA2_WEP->ft_sae   = 1;
-                WPA_WPA2_WEP->wpa3_sae = 1;
-            }
+    t_u8 wpa3_oui08[4] = {0x00, 0x0f, 0xac, 0x08};
+#ifdef CONFIG_OWE
+    t_u8 wpa3_oui12[4] = {0x00, 0x0f, 0xac, 0x12};
 #endif
-        }
-    }
-    if (akmp_count == 2U && (WPA_WPA2_WEP->wpa3_sae == 1U
 #ifdef CONFIG_11R
-                             || WPA_WPA2_WEP->ft_1x == 1U || WPA_WPA2_WEP->ft_psk == 1U || WPA_WPA2_WEP->ft_sae == 1U
+    t_u8 rsn_ft_1x_oui[4]       = {0x00, 0x0f, 0xac, 0x03};
+    t_u8 rsn_ft_psk_oui[4]      = {0x00, 0x0f, 0xac, 0x04};
+    t_u8 rsn_ft_sae_oui[4]      = {0x00, 0x0f, 0xac, 0x09};
 #endif
-                             ))
-    {
-        remain_len   = prsn_ie->len - (4U * sizeof(wpa_suite) + 3U * sizeof(uint16_t));
-        prsn_ie->len = prsn_ie->len + remain_len;
-        akmp_count   = 1;
-        (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                     (const void *)&akmp_count, sizeof(uint16_t));
 
-        if (WPA_WPA2_WEP->wpa3_sae != 0U)
-        {
-            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                         (const void *)wpa3_oui08, sizeof(wpa_suite));
-        }
-#ifdef CONFIG_11R
-        if (WPA_WPA2_WEP->ft_1x != 0U)
-        {
-            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                         (const void *)rsn_ft_1x_oui, sizeof(wpa_suite));
-        }
-        if (WPA_WPA2_WEP->ft_psk != 0U)
-        {
-            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                         (const void *)rsn_ft_psk_oui, sizeof(wpa_suite));
-        }
-        if (WPA_WPA2_WEP->ft_sae != 0U)
-        {
-            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                         (const void *)rsn_ft_sae_oui, sizeof(wpa_suite));
-        }
-#endif
-        (void)memcpy(
-            (void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
-            (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 3U * sizeof(wpa_suite) + sizeof(uint16_t)),
-            remain_len);
-    }
+    ENTER();
 
-    if (akmp_count == 3U && WPA_WPA2_WEP->wpa3_sae)
+    if (rsn_ie == MNULL)
     {
-        remain_len   = prsn_ie->len - (5U * sizeof(wpa_suite) + 3U * sizeof(uint16_t));
-        prsn_ie->len = 20 + remain_len;
-        akmp_count   = 1;
-        (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                     (const void *)&akmp_count, sizeof(uint16_t));
-
-        if (WPA_WPA2_WEP->wpa3_sae != 0U)
-        {
-            (void)memcpy((void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                         (const void *)wpa3_oui08, sizeof(wpa_suite));
-        }
-        (void)memcpy(
-            (void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
-            (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 4U * sizeof(wpa_suite) + sizeof(uint16_t)),
-            remain_len);
-    }
-
-    if ((!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                 (const void *)wpa2_oui06, sizeof(wpa_suite))) ||
-        (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                 (const void *)wpa3_oui08, sizeof(wpa_suite))) ||
-        (!memcmp((const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + sizeof(wpa_suite) + sizeof(uint16_t)),
-                 (const void *)wpa3_oui12, sizeof(wpa_suite))))
-    {
-        (void)memcpy(
-            (void *)&rsn_cap,
-            (const void *)(((uint8_t *)&prsn_ie->pairwise_cipher.list) + 2U * sizeof(wpa_suite) + sizeof(uint16_t)),
-            sizeof(uint8_t));
-        if ((rsn_cap & 0xC0U) != 0)
-        {
-            *is_pmf_required = true;
-        }
-    }
-
-    if (!memcmp((const void *)&prsn_ie->pairwise_cipher.list, (const void *)wpa2_oui04, sizeof(wpa_suite)))
-    {
-        ucstCipher->ccmp = true;
-    }
-    else if (!memcmp((const void *)&prsn_ie->pairwise_cipher.list, (const void *)wpa2_oui02, sizeof(wpa_suite)))
-    {
-        ucstCipher->tkip = true;
+        goto done;
     }
     else
-    { /* Do Nothing */
+    {
+        /* Do nothing */
     }
 
-    if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui04, sizeof(wpa_suite)))
+    if (rsn_ie[0] != (t_u8)RSN_IE)
     {
-        mcstCipher->ccmp = true;
-    }
-    else if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui02, sizeof(wpa_suite)))
-    {
-        mcstCipher->tkip = true;
-    }
-    else if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui05, sizeof(wpa_suite)))
-    {
-        mcstCipher->wep104 = true;
-    }
-    else if (!memcmp((const void *)&prsn_ie->group_cipher, (const void *)wpa2_oui01, sizeof(wpa_suite)))
-    {
-        mcstCipher->wep40 = true;
+        goto done;
     }
     else
-    { /* Do nothing */
+    {
+        /* Do nothing */
+    }
+    /*  2 bytes header + 2 bytes version + 4 bytes group_cipher_suite +
+     *  2 bytes pairwise_cipher_count + pairwise_cipher_count *
+     * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count + 
+     * akm_suite_count * AKM_SUITE_LEN (4)
+     */
+    count = *(t_u16 *)(void *)(rsn_ie + 2);
+    count = wlan_le16_to_cpu(count);
+    group_cipher_count = count;
+    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16));
+
+    while (count > 0U)
+    {
+        if (!memcmp(temp, (const void *)wpa2_oui04, sizeof(wpa2_oui04)))
+        {
+            mcstCipher->ccmp = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa2_oui02, sizeof(wpa2_oui02)))
+        {
+            mcstCipher->tkip = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa2_oui05, sizeof(wpa2_oui05)))
+        {
+            mcstCipher->wep104 = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa2_oui01, sizeof(wpa2_oui01)))
+        {
+            mcstCipher->wep40 = true;
+        }
+        else
+        { /* Do nothing */
+        }
+        count--;
+        temp += 4;
     }
 
-    return prsn_ie->len + 2U;
+    count = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4);
+    count = wlan_le16_to_cpu(count);
+    pairwise_cipher_count = count;
+
+    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16));
+
+    while (count > 0U)
+    {
+        if (!memcmp(temp, (const void *)wpa2_oui04, sizeof(wpa2_oui04)))
+        {
+            ucstCipher->ccmp = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa2_oui02, sizeof(wpa2_oui02)))
+        {
+            ucstCipher->tkip = true;
+        }
+        else
+        { /* Do Nothing */
+        }
+        count--;
+        temp += 4;
+    }
+
+    count = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16) +
+                    (int)pairwise_cipher_count * 4);
+    count = wlan_le16_to_cpu(count);
+    akm_suite_count = count;
+
+    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16) +
+                    (int)pairwise_cipher_count * 4 + (int)sizeof(t_u16));
+
+    while (count > 0U)
+    {
+
+        if (memcmp(temp, wpa3_oui08, sizeof(wpa3_oui08)) == 0)
+        {
+            WPA_WPA2_WEP->wpa3_sae = 1;
+        }
+
+#ifdef CONFIG_OWE
+        else if (memcmp(temp, wpa3_oui12, sizeof(wpa3_oui12)) == 0)
+        {
+            WPA_WPA2_WEP->owe = 1;
+        }
+#endif
+
+        else if (memcmp(temp, wpa2_oui02, sizeof(wpa2_oui02)) == 0)
+        {
+            WPA_WPA2_WEP->wpa2 = 1;
+        }
+        else if (memcmp(temp, wpa2_oui06, sizeof(wpa2_oui06)) == 0)
+        {
+            WPA_WPA2_WEP->wpa2 = 1;
+        }
+
+#ifdef CONFIG_11R
+        else if (memcmp(temp, rsn_ft_1x_oui, sizeof(rsn_ft_1x_oui)) == 0)
+        {
+            WPA_WPA2_WEP->ft_1x = 1;
+            WPA_WPA2_WEP->wpa2  = 1;
+        }
+        else if (memcmp(temp, rsn_ft_psk_oui, sizeof(rsn_ft_psk_oui)) == 0)
+        {
+            WPA_WPA2_WEP->ft_psk = 1;
+            WPA_WPA2_WEP->wpa2   = 1;
+        }
+        else if (memcmp(temp, rsn_ft_sae_oui, sizeof(rsn_ft_sae_oui)) == 0)
+        {
+            WPA_WPA2_WEP->ft_sae   = 1;
+            WPA_WPA2_WEP->wpa3_sae = 1;
+        }
+#endif
+        else
+        { /* Do Nothing */
+        }
+        temp += 4;
+        count--;
+    }
+
+    rsn_cap = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
+              (int)pairwise_cipher_count * 4 + (int)sizeof(t_u16) + (int)akm_suite_count * 4);
+    rsn_cap = (t_u16)wlan_le16_to_cpu(rsn_cap);
+
+    *ap_mfpc = ((rsn_cap & (0x1 << MFPC_BIT)) == (0x1 << MFPC_BIT));
+    *ap_mfpr = ((rsn_cap & (0x1 << MFPR_BIT)) == (0x1 << MFPR_BIT));
+done:
+    LEAVE();
 }
 
-static unsigned char process_wpa_ie(uint8_t *wpa_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher)
+static void process_wpa_ie(
+    t_u8 *wpa_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher, t_u8 *ap_mfpc, t_u8 *ap_mfpr, _SecurityMode_t *WPA_WPA2_WEP)
 {
-    IEEEtypes_Wpa_t *pwpa_ie = (IEEEtypes_Wpa_t *)(void *)wpa_ie;
+    t_u16 wpa_ie_len;
+    t_u8 *temp;
+    t_u8  *ptr;
+    t_u8  *wpa_ie_len_ptr;
+	  t_u8  *pairwise_cipher_count_ptr;
+    t_u16 count;
+    t_u16 group_cipher_count = 0;
+    t_u16 pairwise_cipher_count = 0;
+    t_u8 wpa_oui01[4] = {0x00, 0x50, 0xf2, 0x01};
+    t_u8 wpa_oui02[4] = {0x00, 0x50, 0xf2, 0x02};
+    t_u8 wpa_oui04[4] = {0x00, 0x50, 0xf2, 0x04};
+    t_u8 wpa_oui05[4] = {0x00, 0x50, 0xf2, 0x05};
 
-    if (pwpa_ie->pairwise_cipher.count == 2U)
+    ENTER();
+
+    if (wpa_ie == MNULL)
     {
-        pwpa_ie->len                   = 22;
-        pwpa_ie->pairwise_cipher.count = 1;
+        goto done;
+    }
+    else
+    {
+        /* Do nothing */
+    }
 
-        if (!memcmp((const void *)(((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                    (const void *)wpa_oui04, sizeof(wpa_suite)))
+    if (wpa_ie[0] != (t_u8)WPA_IE)
+    {
+        goto done;
+    }
+    else
+    {
+        /* Do nothing */
+    }
+    /*  2 bytes header + 4 bytes oui + 2 bytes version + 4 bytes group_cipher_suite +
+     *  2 bytes pairwise_cipher_count + pairwise_cipher_count *
+     * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count +
+     * akm_suite_count * AKM_SUITE_LEN (4)
+     */
+    ptr = (t_u8 *)(wpa_ie + 1);
+    wpa_ie_len_ptr = ptr;
+
+    wpa_ie_len = wlan_le16_to_cpu(*(t_u16 *)ptr);
+
+    count = *(t_u16 *)(void *)(wpa_ie + 2 + 4);
+    count = wlan_le16_to_cpu(count);
+    group_cipher_count = count;
+    temp = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16));
+
+    while (count > 0U)
+    {
+        if (!memcmp(temp, (const void *)wpa_oui04, sizeof(wpa_oui04)))
         {
-            (void)memcpy((void *)((uint8_t *)&pwpa_ie->pairwise_cipher.list),
-                         (const void *)(((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                         sizeof(wpa_suite));
+            mcstCipher->ccmp = true;
         }
-
-        (void)memmove((((uint8_t *)&pwpa_ie->pairwise_cipher.list) + sizeof(wpa_suite)),
-                      (uint8_t *)&pwpa_ie->auth_key_mgmt, sizeof(wpa_suite_auth_key_mgmt_t));
+        else if (!memcmp(temp, (const void *)wpa_oui02, sizeof(wpa_oui02)))
+        {
+            mcstCipher->tkip = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa_oui05, sizeof(wpa_oui05)))
+        {
+            mcstCipher->wep104 = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa_oui01, sizeof(wpa_oui01)))
+        {
+            mcstCipher->wep40 = true;
+        }
+        else
+        { /* Do nothing */
+        }
+        count--;
+        temp += 4;
     }
 
-    if (!memcmp((const void *)&pwpa_ie->pairwise_cipher.list, (const void *)wpa_oui04, sizeof(wpa_suite)))
+    ptr =  (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int) group_cipher_count * 4);
+    pairwise_cipher_count_ptr = ptr;
+
+    count = *(t_u16 *)(void *)ptr;
+    count = wlan_le16_to_cpu(count);
+    pairwise_cipher_count = count;
+    temp = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16));
+
+    while (count > 0U)
     {
-        ucstCipher->ccmp = true;
-    }
-    else if (!memcmp((const void *)&pwpa_ie->pairwise_cipher.list, (const void *)wpa_oui02, sizeof(wpa_suite)))
-    {
-        ucstCipher->tkip = true;
-    }
-    else
-    { /* Do Nothing */
+        if (!memcmp(temp, (const void *)wpa_oui04, sizeof(wpa_oui04)))
+        {
+            ucstCipher->ccmp = true;
+        }
+        else if (!memcmp(temp, (const void *)wpa_oui02, sizeof(wpa_oui02)))
+        {
+            ucstCipher->tkip = true;
+        }
+        else
+        { /* Do Nothing */
+        }
+        count--;
+        temp += 4;
     }
 
-    if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui04, sizeof(wpa_suite)))
+    if (pairwise_cipher_count == 2)
     {
-        mcstCipher->ccmp = true;
-    }
-    else if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui02, sizeof(wpa_suite)))
-    {
-        mcstCipher->tkip = true;
-    }
-    else if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui05, sizeof(wpa_suite)))
-    {
-        mcstCipher->wep104 = true;
-    }
-    else if (!memcmp((const void *)&pwpa_ie->group_cipher, (const void *)wpa_oui01, sizeof(wpa_suite)))
-    {
-        mcstCipher->wep40 = true;
-    }
-    else
-    { /* Do Nothing */
-    }
+        ptr = wpa_ie_len_ptr;
+        *(t_u16 *)ptr = wlan_cpu_to_le16(wpa_ie_len - 4);
+        ptr = pairwise_cipher_count_ptr;
+        *(t_u16 *)ptr = wlan_cpu_to_le16(1);
+        temp = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16));
 
-    return pwpa_ie->len + 2U;
+        if (!memcmp((temp + 4), (const void *)wpa_oui04, sizeof(wpa_oui04)))
+        {
+            memmove(temp, (temp + 4), (4 + sizeof(t_u16) + 4));
+        }
+    }
+done:
+  LEAVE();
 }
 
 int wrapper_bssdesc_first_set(int bss_index,
@@ -4668,7 +4677,7 @@ int wrapper_bssdesc_first_set(int bss_index,
                               _Cipher_t *wpa_ucstCipher,
                               _Cipher_t *rsn_mcstCipher,
                               _Cipher_t *rsn_ucstCipher,
-                              bool *is_pmf_required)
+                              t_u8 *ap_mfpc,t_u8 *ap_mfpr)
 {
     if (bss_index >= (int)mlan_adap->num_in_scan_table)
     {
@@ -4709,6 +4718,13 @@ int wrapper_bssdesc_first_set(int bss_index,
         if (d->pwpa_ie != MNULL)
         {
             WPA_WPA2_WEP->wpa = 1;
+
+            process_wpa_ie(d->wpa_ie_buff, wpa_mcstCipher, wpa_ucstCipher, ap_mfpc , ap_mfpr, WPA_WPA2_WEP);
+        }
+
+        if (d->prsn_ie != MNULL)
+        {
+           process_rsn_ie(d->rsn_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
         }
     }
     else
@@ -4718,17 +4734,6 @@ int wrapper_bssdesc_first_set(int bss_index,
         {
             WPA_WPA2_WEP->wepStatic = 1;
         }
-    }
-
-    if (d->pwpa_ie != NULL)
-    {
-        d->wpa_ie_buff_len = process_wpa_ie(d->wpa_ie_buff, wpa_mcstCipher, wpa_ucstCipher);
-    }
-
-    if (d->prsn_ie != NULL)
-    {
-        d->rsn_ie_buff_len =
-            process_rsn_ie(d->rsn_ie_buff, rsn_mcstCipher, rsn_ucstCipher, is_pmf_required, WPA_WPA2_WEP);
     }
 
     return WM_SUCCESS;

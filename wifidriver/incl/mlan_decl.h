@@ -863,6 +863,12 @@ typedef struct _mlan_callbacks
       mlan_status(*moal_get_system_time) (IN t_void * pmoal_handle,
                                           OUT t_u32 * psec, OUT t_u32 * pusec);
 #endif /* 0 */
+
+      /** moal_memcpy_ext */
+      t_void *(*moal_memcpy_ext)(t_void *pmoal, t_void *pdest,
+                       const t_void *psrc, t_u32 num,
+                       t_u32 dest_size);
+
        /** moal_init_timer*/
     mlan_status (*moal_init_timer)(IN t_void *pmoal_handle,
                                    OUT t_void **pptimer,

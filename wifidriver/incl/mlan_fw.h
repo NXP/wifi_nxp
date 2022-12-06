@@ -1403,6 +1403,10 @@ typedef enum _ENH_PS_MODES
 #define PAIRWISE_CIPHER_SUITE_LEN 4
 /** AKM Suite length */
 #define AKM_SUITE_LEN 4
+/** PMKID length */
+#define PMKID_LEN 16
+/** Group mgmt Cipher Suite length */
+#define GROUP_MGMT_CIPHER_SUITE_LEN 4
 /** MFPC bit in RSN capability */
 #define MFPC_BIT 7
 /** MFPR bit in RSN capability */

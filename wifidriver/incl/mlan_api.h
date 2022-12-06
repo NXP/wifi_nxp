@@ -394,7 +394,7 @@ int wrapper_bssdesc_first_set(int bss_index,
                               _Cipher_t *wpa_ucstCipher,
                               _Cipher_t *rsn_mcstCipher,
                               _Cipher_t *rsn_ucstCipher,
-                              bool *is_pmf_required);
+                              t_u8 *ap_mfpc, t_u8 *ap_mfpr);
 
 int wrapper_bssdesc_second_set(int bss_index,
                                bool *phtcap_ie_present,

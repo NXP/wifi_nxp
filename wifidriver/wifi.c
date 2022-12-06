@@ -1285,7 +1285,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
         (int)index, common_desc.bssid, &common_desc.is_ibss_bit_set, &common_desc.ssid_len, common_desc.ssid,
         &common_desc.Channel, &common_desc.RSSI, &common_desc.beacon_period, &common_desc.dtim_period,
         &common_desc.WPA_WPA2_WEP, &common_desc.wpa_mcstCipher, &common_desc.wpa_ucstCipher,
-        &common_desc.rsn_mcstCipher, &common_desc.rsn_ucstCipher, &common_desc.is_pmf_required);
+        &common_desc.rsn_mcstCipher, &common_desc.rsn_ucstCipher, &common_desc.ap_mfpc, &common_desc.ap_mfpr);
     if (rv != WM_SUCCESS)
     {
         wifi_e("wifi_get_scan_result failed");

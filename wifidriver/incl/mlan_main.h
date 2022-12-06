@@ -269,6 +269,11 @@ extern t_u32 drvdbg;
 #define memcmp(adapter, s1, s2, len) adapter->callbacks.moal_memcmp(adapter->pmoal_handle, s1, s2, len)
 #endif /* 0 */
 
+/* memcpy_ext rountine */
+#define memcpy_ext(adapter, to, from, len, size)                               \
+	(adapter->callbacks.moal_memcpy_ext(adapter->pmoal_handle, to, from,   \
+					    len, size))
+
 /** Find number of elements */
 #ifndef NELEMENTS
 #define NELEMENTS(x) (sizeof(x) / sizeof(x[0]))

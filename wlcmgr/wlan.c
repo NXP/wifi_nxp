@@ -5942,6 +5942,9 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     }
 #endif
 
+    res->ap_mfpc = desc->ap_mfpc;
+    res->ap_mfpr = desc->ap_mfpr;
+
     return WM_SUCCESS;
 }
 
