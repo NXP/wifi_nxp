@@ -26,6 +26,9 @@
 #include <wm_mbedtls_helper_api.h>
 #include <mbedtls/x509_crt.h>
 #endif /* CONFIG_HOST_PMK */
+#ifdef RW610
+#include <wifi_cal_data_ext.h>
+#endif
 #ifdef OVERRIDE_CALIBRATION_DATA
 #include OVERRIDE_CALIBRATION_DATA
 #endif
@@ -4621,6 +4624,10 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 
 #ifdef OVERRIDE_CALIBRATION_DATA
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
+#endif
+    //TODO: Cal data will be read from EEPROM.
+#ifdef RW610
+    wlan_set_cal_data(cal_data_rw610, sizeof(cal_data_rw610));
 #endif
 
 #ifdef CONFIG_HOST_PMK
