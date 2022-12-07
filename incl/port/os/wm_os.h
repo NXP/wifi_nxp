@@ -1063,6 +1063,7 @@ void os_disable_all_interrupts(void);
 /** Enable all interrupts at NVIC lebel */
 void os_enable_all_interrupts(void);
 
+#if defined(RW610)
 /* Init value for rand generator seed */
 extern uint32_t wm_rand_seed;
 
@@ -1103,4 +1104,5 @@ static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
     }
     return (low + os_rand() % (high - low));
 }
+#endif
 #endif /* ! _WM_OS_H_ */

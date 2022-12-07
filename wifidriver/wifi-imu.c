@@ -281,13 +281,22 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 }
 
 #ifdef AMSDU_IN_AMPDU
+#if defined(RW610)
 int process_amsdu_pkt_hdrs(void *pbuf, t_u32 payloadlen, mlan_wmm_ac_e ac, t_u8 interface)
+#else
+int process_amsdu_pkt_hdrs(void *pbuf, t_u32 payloadlen, mlan_wmm_ac_e ac)
+#endif
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     IMUPkt *imuhdr       = (IMUPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 
-    ptxpd->bss_type      = interface;
+#if defined(RW610)
+    ptxpd->bss_type = interface;
+#else
+    TxPD *ptxpd_orig = (TxPD *)((uint8_t *)wifi_get_wmm_send_outbuf(ac, 0) + INTF_HEADER_LEN);
+    ptxpd->bss_type  = ptxpd_orig->bss_type;
+#endif
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
     ptxpd->tx_pkt_length = payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN;
@@ -1166,6 +1175,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     wifi_imu_lock();
+#if defined(RW610)
     process_amsdu_pkt_hdrs((t_u8 *)tx_buf, txlen, ac, interface);
 #ifdef CONFIG_WMM_UAPSD
     if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && (wifi_wmm_get_packet_cnt() == amsdu_cnt))
@@ -1173,6 +1183,9 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
         process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
         last_packet = 1;
     }
+#endif
+#else
+    process_amsdu_pkt_hdrs((t_u8 *)tx_buf, txlen, ac);
 #endif
 
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);

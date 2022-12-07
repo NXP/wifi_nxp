@@ -509,6 +509,7 @@ void wifi_set_mac_addr(uint8_t *mac);
  */
 void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type);
 
+#if defined(RW610)
 #ifdef CONFIG_WIFI_TX_BUFF
 /**
  * Check whether the tx buffer size setting is reasonable.
@@ -517,6 +518,7 @@ void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type);
  *
  */
 bool wifi_calibrate_tx_buf_size(uint16_t buf_size);
+#endif
 #endif
 #ifdef CONFIG_P2P
 int wifi_register_wfd_event_queue(os_queue_t *event_queue);
@@ -1306,8 +1308,10 @@ void wifi_handle_event_data_pause(void *data);
 bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue);
 
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
 uint8_t *wifi_get_wmm_send_outbuf(mlan_wmm_ac_e ac, t_u8 offset);
+#endif
 #endif
 #endif /* CONFIG_WMM_ENH */
 #endif /* CONFIG_WMM */

@@ -1279,6 +1279,9 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
         {
             for (i = 0; i < MAX_NUM_TID; ++i)
             {
+#if !defined(RW610)
+                priv->aggr_prio_tbl[i].amsdu = BA_STREAM_NOT_ALLOWED;
+#endif
 #ifdef WIFI_DIRECT_SUPPORT
                 if (priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
                     priv->aggr_prio_tbl[i].ampdu_ap = priv->aggr_prio_tbl[i].ampdu_user = BA_STREAM_NOT_ALLOWED;
@@ -2355,8 +2358,7 @@ mlan_status wlan_ret_wmm_ts_status(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAN
 
 static raListTbl *wlan_ralist_get_history(mlan_private *priv, t_u8 *ra, t_u8 ac)
 {
-    raListTbl *ra_list = (raListTbl *)util_peek_list(priv->adapter->pmoal_handle,
-        &priv->wmm.hist_ra[ac], MNULL, MNULL);
+    raListTbl *ra_list = (raListTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac], MNULL, MNULL);
 
     if (ra_list == MNULL)
         return MNULL;
@@ -2380,33 +2382,31 @@ static void wlan_ralist_restore_history(mlan_private *priv, raListTbl *ra_list, 
     tmp = wlan_ralist_get_history(priv, ra_list->ra, ac);
     if (tmp != MNULL)
     {
-        util_unlink_list(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac],
-                             (mlan_linked_list *)tmp, MNULL, MNULL);
+        util_unlink_list(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac], (mlan_linked_list *)tmp, MNULL, MNULL);
         ra_list->drop_count += tmp->drop_count;
-        util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac],
-                               (mlan_linked_list *)ra_list, MNULL, MNULL);
+        util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac], (mlan_linked_list *)ra_list, MNULL,
+                               MNULL);
         goto FREE_TMP;
     }
 
     /* history ralist count reaches max, dequeue the earliest ralist */
     if (priv->wmm.hist_ra_count[ac] >= MAX_HISTORY_RA_LIST_NUM)
     {
-        tmp = (raListTbl *)util_dequeue_list(priv->adapter->pmoal_handle,
-            &priv->wmm.hist_ra[ac], MNULL, MNULL);
+        tmp = (raListTbl *)util_dequeue_list(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac], MNULL, MNULL);
         if (tmp == MNULL)
         {
             wifi_e("%s error history ralist count %hhu", priv->wmm.hist_ra_count[ac]);
             goto FREE_IN;
         }
 
-        util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac],
-                               (mlan_linked_list *)ra_list, MNULL, MNULL);
+        util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac], (mlan_linked_list *)ra_list, MNULL,
+                               MNULL);
         goto FREE_TMP;
     }
     else
     {
-        util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac],
-                               (mlan_linked_list *)ra_list, MNULL, MNULL);
+        util_enqueue_list_tail(priv->adapter->pmoal_handle, &priv->wmm.hist_ra[ac], (mlan_linked_list *)ra_list, MNULL,
+                               MNULL);
         priv->wmm.hist_ra_count[ac]++;
     }
 
@@ -2444,7 +2444,7 @@ void wifi_wmm_da_to_ra(uint8_t *da, uint8_t *ra)
  */
 static uint8_t wifi_wmm_is_tx_pause(const uint8_t interface, mlan_wmm_ac_e queue, uint8_t *ra)
 {
-    t_u8 is_tx_pause = MFALSE;
+    t_u8 is_tx_pause   = MFALSE;
     raListTbl *ra_list = MNULL;
 
     if (interface == MLAN_BSS_TYPE_STA)
@@ -2460,14 +2460,14 @@ static uint8_t wifi_wmm_is_tx_pause(const uint8_t interface, mlan_wmm_ac_e queue
         else
         {
             mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-                &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
+                                                    &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
 
             ra_list = wlan_wmm_get_ralist_node(mlan_adap->priv[interface], queue, ra);
             if (ra_list != MNULL)
                 is_tx_pause = ra_list->tx_pause;
 
             mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
+                                                    &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
         }
     }
 
@@ -2480,40 +2480,33 @@ static uint8_t wifi_wmm_is_tx_pause(const uint8_t interface, mlan_wmm_ac_e queue
  *  tx_pause 1: replace the same ra node's oldest packet
  *  tx_pause 0: replace any other tx_paused ra node's oldest packet
  */
-static outbuf_t *wifi_wmm_get_alter_buf_from_txqueue(const uint8_t interface,
-                                                     t_u8 *ra,
-                                                     t_u8 queue,
-                                                     t_u8 tx_pause)
+static outbuf_t *wifi_wmm_get_alter_buf_from_txqueue(const uint8_t interface, t_u8 *ra, t_u8 queue, t_u8 tx_pause)
 {
     raListTbl *ra_list_head = MNULL;
-    raListTbl *ra_list = MNULL;
-    outbuf_t *buf = MNULL;
+    raListTbl *ra_list      = MNULL;
+    outbuf_t *buf           = MNULL;
 
     mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-        &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
+                                            &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
 
     if (mlan_adap->priv[interface]->wmm.pkts_queued[queue] == 0)
         goto FAIL;
 
     ra_list_head = (raListTbl *)&mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list;
-    ra_list = (raListTbl *)util_peek_list(mlan_adap->pmoal_handle,
-        (mlan_list_head *)ra_list_head, MNULL, MNULL);
+    ra_list      = (raListTbl *)util_peek_list(mlan_adap->pmoal_handle, (mlan_list_head *)ra_list_head, MNULL, MNULL);
 
     if (mlan_adap->priv[interface]->tx_pause == MTRUE)
     {
         while (ra_list && ra_list != ra_list_head)
         {
-            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-                &ra_list->buf_head.plock);
+            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
             if (ra_list->total_pkts != 0)
             {
-                buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle,
-                    &ra_list->buf_head, MNULL, MNULL);
+                buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ra_list->buf_head, MNULL, MNULL);
                 if (buf != MNULL)
                     goto SUCC;
             }
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &ra_list->buf_head.plock);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
             ra_list = ra_list->pnext;
         }
     }
@@ -2521,18 +2514,14 @@ static outbuf_t *wifi_wmm_get_alter_buf_from_txqueue(const uint8_t interface,
     {
         while (ra_list && ra_list != ra_list_head)
         {
-            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-                &ra_list->buf_head.plock);
-            if (!__memcmp(mlan_adap, ra, ra_list->ra, MLAN_MAC_ADDR_LENGTH) &&
-                ra_list->total_pkts != 0)
+            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
+            if (!__memcmp(mlan_adap, ra, ra_list->ra, MLAN_MAC_ADDR_LENGTH) && ra_list->total_pkts != 0)
             {
-                buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle,
-                    &ra_list->buf_head, MNULL, MNULL);
+                buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ra_list->buf_head, MNULL, MNULL);
                 if (buf != MNULL)
                     goto SUCC;
             }
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &ra_list->buf_head.plock);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
             ra_list = ra_list->pnext;
         }
     }
@@ -2540,48 +2529,40 @@ static outbuf_t *wifi_wmm_get_alter_buf_from_txqueue(const uint8_t interface,
     {
         while (ra_list && ra_list != ra_list_head)
         {
-            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-                &ra_list->buf_head.plock);
-            if (__memcmp(mlan_adap, ra, ra_list->ra, MLAN_MAC_ADDR_LENGTH) &&
-                ra_list->tx_pause == MTRUE &&
+            mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
+            if (__memcmp(mlan_adap, ra, ra_list->ra, MLAN_MAC_ADDR_LENGTH) && ra_list->tx_pause == MTRUE &&
                 ra_list->total_pkts != 0)
             {
-                buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle,
-                    &ra_list->buf_head, MNULL, MNULL);
+                buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ra_list->buf_head, MNULL, MNULL);
                 if (buf != MNULL)
                     goto SUCC;
             }
-            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-                &ra_list->buf_head.plock);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
             ra_list = ra_list->pnext;
         }
     }
 
 FAIL:
     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-        &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
+                                            &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
     return MNULL;
 SUCC:
     mlan_adap->priv[interface]->wmm.pkts_queued[queue]--;
     ra_list->total_pkts--;
     ra_list->drop_count++;
 
-    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-        &ra_list->buf_head.plock);
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
 
     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-        &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
+                                            &mlan_adap->priv[interface]->wmm.tid_tbl_ptr[queue].ra_list.plock);
 
     wifi_wmm_drop_pause_replaced(interface);
     return buf;
 }
 
 /* wmm enhance get free buffer */
-uint8_t *wifi_wmm_get_outbuf_enh(uint32_t *outbuf_len,
-                                 mlan_wmm_ac_e queue,
-                                 const uint8_t interface,
-                                 uint8_t *ra,
-                                 bool *is_tx_pause)
+uint8_t *wifi_wmm_get_outbuf_enh(
+    uint32_t *outbuf_len, mlan_wmm_ac_e queue, const uint8_t interface, uint8_t *ra, bool *is_tx_pause)
 {
     t_u8 i;
     outbuf_t *buf = MNULL;
@@ -2592,7 +2573,7 @@ uint8_t *wifi_wmm_get_outbuf_enh(uint32_t *outbuf_len,
         goto SUCC;
 
     /* check tx_pause */
-    tx_pause = wifi_wmm_is_tx_pause(interface, queue, ra);
+    tx_pause     = wifi_wmm_is_tx_pause(interface, queue, ra);
     *is_tx_pause = (tx_pause == MTRUE) ? true : false;
 
     /* loop tid_tbl to find buf to replace in wmm ralists */
@@ -2618,38 +2599,32 @@ SUCC:
 static raListTbl *wlan_wmm_get_queue_raptr_enh(pmlan_private priv, t_u8 ac, t_u8 *ra_addr)
 {
     raListTbl *ra_list = MNULL;
-    t_u8 bcast_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    t_u8 bcast_addr[]  = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
     ra_list = wlan_wmm_get_ralist_node(priv, ac, ra_addr);
     if (ra_list != MNULL)
         return ra_list;
 
-    if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP &&
-        __memcmp(priv->adapter, ra_addr, bcast_addr, MLAN_MAC_ADDR_LENGTH))
+    if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP && __memcmp(priv->adapter, ra_addr, bcast_addr, MLAN_MAC_ADDR_LENGTH))
         return MNULL;
 
     /* wlan_ralist_add_enh will hold wmm lock, so need to unlock first */
-    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
-        &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
+    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
 
     wlan_ralist_add_enh(priv, ra_addr);
 
-    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
-        &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
+    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
 
     ra_list = wlan_wmm_get_ralist_node(priv, ac, ra_addr);
     return ra_list;
 }
 
 /* wmm enhance enqueue tx buffer */
-int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface,
-                          const uint8_t *buffer,
-                          const uint16_t len,
-                          uint8_t pkt_prio)
+int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface, const uint8_t *buffer, const uint16_t len, uint8_t pkt_prio)
 {
-    mlan_private *priv = MNULL;
+    mlan_private *priv            = MNULL;
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0x0};
-    raListTbl *ralist = MNULL;
+    raListTbl *ralist             = MNULL;
 
     if (interface == MLAN_BSS_TYPE_STA)
         priv = mlan_adap->priv[0];
@@ -2659,8 +2634,7 @@ int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface,
     /* refer to low_level_output payload memcpy */
     wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->data[0], ra);
 
-    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-        &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
 
     ralist = wlan_wmm_get_queue_raptr_enh(priv, pkt_prio, ra);
     if (ralist == MNULL)
@@ -2668,22 +2642,19 @@ int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface,
         /* drop for unknown ra when enqueue */
         wifi_wmm_buf_put((outbuf_t *)buffer);
         mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
+                                                &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
         return MLAN_STATUS_FAILURE;
     }
 
-    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle,
-        &ralist->buf_head.plock);
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
 
     util_enqueue_list_tail(mlan_adap->pmoal_handle, &ralist->buf_head, (mlan_linked_list *)buffer, MNULL, MNULL);
     ralist->total_pkts++;
     priv->wmm.pkts_queued[pkt_prio]++;
 
-    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-        &ralist->buf_head.plock);
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
 
-    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
 
     return MLAN_STATUS_SUCCESS;
 }
@@ -2734,8 +2705,8 @@ int wifi_wmm_buf_pool_init(uint8_t *pool)
 
     util_init_list_head(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list, MFALSE, MNULL);
 
-    if (mlan_adap->callbacks.moal_init_semaphore(mlan_adap->pmoal_handle,
-        "wmm_buf_pool_sem", &mlan_adap->outbuf_pool.free_list.plock) != MLAN_STATUS_SUCCESS)
+    if (mlan_adap->callbacks.moal_init_semaphore(mlan_adap->pmoal_handle, "wmm_buf_pool_sem",
+                                                 &mlan_adap->outbuf_pool.free_list.plock) != MLAN_STATUS_SUCCESS)
         return WM_E_NOMEM;
 
     for (i = 0; i < MAX_WMM_BUF_NUM; i++)
@@ -2744,8 +2715,7 @@ int wifi_wmm_buf_pool_init(uint8_t *pool)
         // buf = (outbuf_t *)&outbuf_arr[i][0];
         buf = (outbuf_t *)(pool + (i * OUTBUF_WMM_LEN));
         util_init_list(&buf->entry);
-        util_enqueue_list_tail(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list,
-                               &buf->entry, MNULL, MNULL);
+        util_enqueue_list_tail(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list, &buf->entry, MNULL, MNULL);
     }
     mlan_adap->outbuf_pool.free_cnt = MAX_WMM_BUF_NUM;
 
@@ -2757,8 +2727,7 @@ void wifi_wmm_buf_pool_deinit(void)
 {
     mlan_adap->outbuf_pool.free_cnt = 0;
 
-    mlan_adap->callbacks.moal_free_semaphore(mlan_adap->pmoal_handle,
-        &mlan_adap->outbuf_pool.free_list.plock);
+    mlan_adap->callbacks.moal_free_semaphore(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
 
     util_free_list_head(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list, MNULL);
 
@@ -2771,14 +2740,11 @@ void wlan_ralist_pkts_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
 {
     outbuf_t *buff = MNULL;
 
-    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
-        &ra_list->buf_head.plock);
+    priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
 
-    while ((buff = (outbuf_t *)util_peek_list(priv->adapter->pmoal_handle,
-            &ra_list->buf_head, MNULL, MNULL)))
+    while ((buff = (outbuf_t *)util_peek_list(priv->adapter->pmoal_handle, &ra_list->buf_head, MNULL, MNULL)))
     {
-        util_unlink_list(priv->adapter->pmoal_handle, &ra_list->buf_head,
-                         &buff->entry, MNULL, MNULL);
+        util_unlink_list(priv->adapter->pmoal_handle, &ra_list->buf_head, &buff->entry, MNULL, MNULL);
         wifi_wmm_buf_put(buff);
 
         priv->wmm.pkts_queued[ac]--;
@@ -2787,18 +2753,17 @@ void wlan_ralist_pkts_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
     }
     ra_list->total_pkts = 0;
 
-    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
-        &ra_list->buf_head.plock);
+    priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
 }
 
 /* should be called inside wmm tid_tbl_ptr ra_list lock */
 static void wlan_ralist_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
 {
 #ifdef CONFIG_WMM_ENH_DEBUG
-        wlan_ralist_restore_history(priv, ra_list, ac);
+    wlan_ralist_restore_history(priv, ra_list, ac);
 #else
-        priv->adapter->callbacks.moal_free_semaphore(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
-        priv->adapter->callbacks.moal_mfree(priv->adapter->pmoal_handle, (t_u8 *)ra_list);
+    priv->adapter->callbacks.moal_free_semaphore(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
+    priv->adapter->callbacks.moal_mfree(priv->adapter->pmoal_handle, (t_u8 *)ra_list);
 #endif
 }
 
@@ -2807,16 +2772,14 @@ static raListTbl *wlan_ralist_alloc_enh(pmlan_adapter pmadapter, t_u8 *ra)
     mlan_status ret;
     raListTbl *ra_list = MNULL;
 
-    ret = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle,
-        sizeof(raListTbl), MLAN_MEM_DEF, (t_u8 **)&ra_list);
+    ret = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(raListTbl), MLAN_MEM_DEF, (t_u8 **)&ra_list);
     if (ret != MLAN_STATUS_SUCCESS || ra_list == MNULL)
         return MNULL;
 
     util_init_list((pmlan_linked_list)ra_list);
     util_init_list_head((t_void *)pmadapter->pmoal_handle, &ra_list->buf_head, MFALSE, MNULL);
 
-    ret = pmadapter->callbacks.moal_init_semaphore(pmadapter->pmoal_handle,
-        "buf_head_sem", &ra_list->buf_head.plock);
+    ret = pmadapter->callbacks.moal_init_semaphore(pmadapter->pmoal_handle, "buf_head_sem", &ra_list->buf_head.plock);
     if (ret != MLAN_STATUS_SUCCESS)
     {
         pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ra_list);
@@ -2837,7 +2800,7 @@ static raListTbl *wlan_ralist_alloc_enh(pmlan_adapter pmadapter, t_u8 *ra)
 void wlan_ralist_add_enh(mlan_private *priv, t_u8 *ra)
 {
     int i;
-    raListTbl *ra_list = MNULL;
+    raListTbl *ra_list      = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     for (i = 0; i < MAX_AC_QUEUES; i++)
@@ -2853,24 +2816,22 @@ void wlan_ralist_add_enh(mlan_private *priv, t_u8 *ra)
             break;
         }
 
-        pmadapter->callbacks.moal_semaphore_get(pmadapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+        pmadapter->callbacks.moal_semaphore_get(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
 
-        util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list,
-                               (pmlan_linked_list)ra_list, MNULL, MNULL);
+        util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list, (pmlan_linked_list)ra_list,
+                               MNULL, MNULL);
 
         if (priv->wmm.tid_tbl_ptr[i].ra_list_curr == MNULL)
             priv->wmm.tid_tbl_ptr[i].ra_list_curr = ra_list;
 
-        pmadapter->callbacks.moal_semaphore_put(pmadapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+        pmadapter->callbacks.moal_semaphore_put(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
     }
 }
 
 int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
 {
     int i;
-    int update_count = 0;
+    int update_count   = 0;
     raListTbl *ra_list = MNULL;
 #ifdef CONFIG_WMM_ENH_DEBUG
     raListTbl *hist_ra_list = MNULL;
@@ -2879,13 +2840,13 @@ int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
     for (i = 0; i < MAX_AC_QUEUES; i++)
     {
         priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+                                                    &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
 
         ra_list = wlan_wmm_get_ralist_node(priv, i, old_ra);
         if (ra_list == MNULL)
         {
             priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
-                &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+                                                        &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
             continue;
         }
 
@@ -2906,7 +2867,7 @@ int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
 #endif
 
         priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+                                                    &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
     }
 
     return update_count;
@@ -2916,52 +2877,49 @@ void wlan_ralist_del_enh(mlan_private *priv, t_u8 *ra)
 {
     int i;
     pmlan_adapter pmadapter = priv->adapter;
-    raListTbl *ra_list = MNULL;
+    raListTbl *ra_list      = MNULL;
 
     for (i = 0; i < MAX_AC_QUEUES; i++)
     {
-        pmadapter->callbacks.moal_semaphore_get(pmadapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+        pmadapter->callbacks.moal_semaphore_get(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
 
         ra_list = wlan_wmm_get_ralist_node(priv, i, ra);
         if (ra_list == MNULL)
         {
-            pmadapter->callbacks.moal_semaphore_put(pmadapter->pmoal_handle,
-                &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+            pmadapter->callbacks.moal_semaphore_put(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
             continue;
         }
 
         wlan_ralist_pkts_free_enh(priv, ra_list, i);
 
-        util_unlink_list(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list,
-                         (pmlan_linked_list)ra_list, MNULL, MNULL);
+        util_unlink_list(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list, (pmlan_linked_list)ra_list, MNULL,
+                         MNULL);
 
         if (priv->wmm.tid_tbl_ptr[i].ra_list_curr == ra_list)
             priv->wmm.tid_tbl_ptr[i].ra_list_curr = (raListTbl *)&priv->wmm.tid_tbl_ptr[i].ra_list;
 
         wlan_ralist_free_enh(priv, ra_list, i);
 
-        pmadapter->callbacks.moal_semaphore_put(pmadapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+        pmadapter->callbacks.moal_semaphore_put(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
     }
 }
 
 void wlan_ralist_del_all_enh(mlan_private *priv)
 {
-	int i;
-	raListTbl *ra_list = MNULL;
-	pmlan_adapter pmadapter = priv->adapter;
+    int i;
+    raListTbl *ra_list      = MNULL;
+    pmlan_adapter pmadapter = priv->adapter;
 
     for (i = 0; i < MAX_AC_QUEUES; i++)
     {
         priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+                                                    &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
 
-        while ((ra_list = (raListTbl *)util_peek_list(pmadapter->pmoal_handle,
-                &priv->wmm.tid_tbl_ptr[i].ra_list, MNULL, MNULL)))
+        while ((ra_list = (raListTbl *)util_peek_list(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list, MNULL,
+                                                      MNULL)))
         {
-            util_unlink_list(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list,
-                             (pmlan_linked_list)ra_list, MNULL, MNULL);
+            util_unlink_list(pmadapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list, (pmlan_linked_list)ra_list,
+                             MNULL, MNULL);
 
             wlan_ralist_pkts_free_enh(priv, ra_list, i);
 
@@ -2971,10 +2929,10 @@ void wlan_ralist_del_all_enh(mlan_private *priv)
         /* do not reinit list lock, so use util_init_list instead of util_init_list_head */
         util_init_list((pmlan_linked_list)&priv->wmm.tid_tbl_ptr[i].ra_list);
         priv->wmm.tid_tbl_ptr[i].ra_list_curr = MNULL;
-        priv->wmm.pkts_queued[i] = 0;
+        priv->wmm.pkts_queued[i]              = 0;
 
         priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+                                                    &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
     }
 }
 
@@ -2989,7 +2947,7 @@ void wlan_ralist_deinit_enh(mlan_private *priv)
     {
         /* free ralist lock */
         priv->adapter->callbacks.moal_free_semaphore(priv->adapter->pmoal_handle,
-            &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
+                                                     &priv->wmm.tid_tbl_ptr[i].ra_list.plock);
 
         /* deinit ralists table */
         util_free_list_head(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[i].ra_list, MNULL);

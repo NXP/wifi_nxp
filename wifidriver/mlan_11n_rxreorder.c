@@ -28,8 +28,10 @@ Change log:
 /********************************************************
     Global Variables
 ********************************************************/
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
 SDK_ALIGN(uint8_t amsdu_inbuf[4096], 32);
+#endif
 #endif
 /********************************************************
     Local Functions
@@ -53,6 +55,7 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
     {
         pmbuf->data_len = prx_pd->rx_pkt_length;
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
         (void)__memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
         pbuf_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
@@ -63,6 +66,9 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
         (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
 #ifdef AMSDU_IN_AMPDU
         os_mem_free(pmbuf);
+#endif
+#else
+        (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
 #endif
         LEAVE();
         return MLAN_STATUS_SUCCESS;
@@ -642,9 +648,13 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
     }
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_WINSIZE_MASK;
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
     /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
     if (!priv->add_ba_param.rx_amsdu)
+#endif
+#else
+    if (!priv->add_ba_param.rx_amsdu || (priv->aggr_prio_tbl[tid].amsdu == BA_STREAM_NOT_ALLOWED))
 #endif
     {
         /* We do not support AMSDU inside AMPDU, hence reset the bit */
@@ -671,7 +681,7 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
         padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
     }
 #else
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
+    padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
     padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
 #endif
 
@@ -739,10 +749,10 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
 #endif
 #else
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
+    padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
 
 #ifndef CONFIG_UAP_AMPDU_RX
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
+    padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
     padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
 #endif
 #endif
@@ -1183,7 +1193,11 @@ void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
     }
     else
     {
+#if defined(RW610)
         ptxtbl = wlan_11n_get_txbastream_tbl(priv, peer_mac);
+#else
+        ptxtbl = wlan_11n_get_txbastream_tbl(priv, tid, peer_mac);
+#endif
         if (ptxtbl == MNULL)
         {
             PRINTM(MWARN, "TID, RA not found in table!\n");
@@ -1191,7 +1205,11 @@ void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
             return;
         }
 
+#if defined(RW610)
         wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl->ra);
+#else
+        wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl);
+#endif
     }
 
     LEAVE();

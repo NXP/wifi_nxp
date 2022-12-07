@@ -41,11 +41,13 @@ static uint32_t cal_data_len;
 
 bool mac_addr_valid;
 static uint8_t *mac_addr;
+#if defined(RW610)
 #ifdef CONFIG_WIFI_TX_BUFF
 #ifdef AMSDU_IN_AMPDU
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_4K;
 #else
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
+#endif
 #endif
 #endif
 
@@ -705,9 +707,67 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 #ifdef SD8801
     priv->rxpd_htinfo = rxpd->ht_info;
 #else
-    priv->rxpd_rate_info = rxpd->rate_info;
+    priv->rxpd_rate_info   = rxpd->rate_info;
 #endif
 }
+
+#if !defined(RW610)
+static void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
+{
+    struct uap_ampdu_stat_t *ampdu_info;
+    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
+    {
+        ampdu_info->ampudu_supported = supported;
+    }
+    else
+    {
+        wifi_d("failed to udpate uap ampdu supported");
+    }
+}
+
+static void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
+{
+    struct uap_ampdu_stat_t *ampdu_info;
+    uint8_t temp_addr[MLAN_MAC_ADDR_LENGTH];
+#ifdef DUMP_PACKET_MAC
+    dump_mac_addr("wlan_update_uap_ampdu_info", addr);
+#endif
+    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
+    {
+        if (action != 0U)
+        {
+            wifi_d("already exist for adding uap ampdu info");
+        }
+        else
+        {
+            (void)memset(ampdu_info->mac_addr, 0, MLAN_MAC_ADDR_LENGTH);
+        }
+    }
+    else
+    {
+        if (action != 0U)
+        {
+            (void)memset(temp_addr, 0, MLAN_MAC_ADDR_LENGTH);
+            if (wlan_find_ampud_info(temp_addr, &ampdu_info) == 0)
+            {
+                (void)memcpy((void *)ampdu_info->mac_addr, (const void *)addr, MLAN_MAC_ADDR_LENGTH);
+                ampdu_info->ampudu_stat      = MFALSE;
+                ampdu_info->ampudu_supported = MTRUE;
+            }
+            else
+            {
+                wifi_d(
+                    "not available for adding "
+                    "uap ampdu info");
+            }
+        }
+        else
+        {
+            wifi_d("uap ampdu info has already removed");
+        }
+    }
+}
+#endif
 
 mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr)
 {
@@ -762,6 +822,7 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
     t_u8 tid;
     HostCmd_DS_11N_ADDBA_RSP *padd_ba_rsp = (HostCmd_DS_11N_ADDBA_RSP *)&resp->params.add_ba_rsp;
     padd_ba_rsp->status_code              = wlan_le16_to_cpu(padd_ba_rsp->status_code);
+#if defined(RW610)
     TxBAStreamTbl *ptx_ba_tbl;
 
     padd_ba_rsp->block_ack_param_set = wlan_le16_to_cpu(padd_ba_rsp->block_ack_param_set);
@@ -770,9 +831,13 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
     padd_ba_rsp->status_code         = wlan_le16_to_cpu(padd_ba_rsp->status_code);
 
     tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
-
+#else
+    tid                    = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
+    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
+#endif
     if (padd_ba_rsp->status_code == BA_RESULT_SUCCESS)
     {
+#if defined(RW610)
         if ((ptx_ba_tbl = wlan_11n_get_txbastream_tbl(priv, padd_ba_rsp->peer_mac_addr)))
         {
             wlan_11n_update_txbastream_tbl_ampdu_stat(priv, padd_ba_rsp->peer_mac_addr, MTRUE, tid);
@@ -795,9 +860,23 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
         {
             PRINTM(MERROR, "BA stream not created\n");
         }
+#else
+        if (bss_type == MLAN_BSS_TYPE_STA)
+        {
+            ampdu_status_flag = MTRUE;
+        }
+        else if (bss_type == MLAN_BSS_TYPE_UAP)
+        {
+            wlan_update_uap_ampdu_stat(padd_ba_rsp->peer_mac_addr, MTRUE);
+        }
+        else
+        { /* Do Nothing */
+        }
+#endif
     }
     else
     {
+#if defined(RW610)
         if (padd_ba_rsp->add_rsp_result != BA_RESULT_TIMEOUT)
         {
             if ((ptx_ba_tbl = wlan_11n_get_txbastream_tbl(priv, padd_ba_rsp->peer_mac_addr)))
@@ -807,6 +886,23 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
             }
         }
         wifi_d("Failed: ADDBA req: %d", padd_ba_rsp->add_rsp_result);
+#else
+        if (padd_ba_rsp->add_rsp_result != BA_RESULT_TIMEOUT)
+        {
+            wifi_d("Failed: ADDBA req: %d", padd_ba_rsp->add_rsp_result);
+            if (bss_type == MLAN_BSS_TYPE_STA)
+            {
+                priv->aggr_prio_tbl[tid].ampdu_ap = BA_STREAM_NOT_ALLOWED;
+            }
+            else if (bss_type == MLAN_BSS_TYPE_UAP)
+            {
+                wlan_update_uap_ampdu_supported(padd_ba_rsp->peer_mac_addr, MFALSE);
+            }
+            else
+            { /* Do Nothing */
+            }
+        }
+#endif
     }
 
     return MLAN_STATUS_SUCCESS;
@@ -856,7 +952,9 @@ mlan_status wrapper_wlan_sta_ampdu_enable(void)
 #endif
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH];
+#if defined(RW610)
     TxBAStreamTbl *ptx_tbl = NULL;
+#endif
 
 #ifdef CONFIG_WMM
     if (!ampdu_status_flag || (!ampdu_set_tid[tid] && wlan_is_ampdu_allowed(mlan_adap->priv[0], tid)))
@@ -871,6 +969,7 @@ mlan_status wrapper_wlan_sta_ampdu_enable(void)
         {
             (void)memcpy((void *)cur_mac, (const void *)pmpriv->curr_bss_params.bss_descriptor.mac_address,
                          MLAN_MAC_ADDR_LENGTH);
+#if defined(RW610)
             if (!(wlan_11n_get_txbastream_tbl(pmpriv, cur_mac)))
             {
                 wlan_11n_create_txbastream_tbl(pmpriv, cur_mac, BA_STREAM_NOT_SETUP);
@@ -887,6 +986,7 @@ mlan_status wrapper_wlan_sta_ampdu_enable(void)
                     return MLAN_STATUS_SUCCESS;
                 }
             }
+#endif
         }
         else
         {
@@ -894,6 +994,7 @@ mlan_status wrapper_wlan_sta_ampdu_enable(void)
             return MLAN_STATUS_FAILURE;
         }
 
+#if defined(RW610)
         ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
         wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv, cur_mac);
 
@@ -916,6 +1017,19 @@ mlan_status wrapper_wlan_sta_ampdu_enable(void)
                 wifi_d("sta: failed to send addba req");
                 return MLAN_STATUS_FAILURE;
             }
+#else
+        ret = wlan_send_addba(mlan_adap->priv[0],
+#ifdef CONFIG_WMM
+                              tid,
+#else
+                              0,
+#endif
+                              (t_u8 *)cur_mac);
+        if (ret != 0)
+        {
+            wifi_d("sta: failed to send addba req");
+            return MLAN_STATUS_FAILURE;
+#endif
         }
     }
 
@@ -2266,7 +2380,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_11N_ADDBA_RSP:
                 (void)do_wlan_ret_11n_addba_resp(resp);
                 break;
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
+            case HostCmd_CMD_AMSDU_AGGR_CTRL:
+                rv = wlan_ret_amsdu_aggr_ctrl(pmpriv, resp, NULL);
+                break;
+#endif
+#else
             case HostCmd_CMD_AMSDU_AGGR_CTRL:
                 rv = wlan_ret_amsdu_aggr_ctrl(pmpriv, resp, NULL);
                 break;
@@ -4189,9 +4309,13 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
+#if defined(RW610)
             /* txbastream table also is used as connected STAs data base */
             wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
             wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
+#else
+            wlan_update_uap_ampdu_info(sta_addr, 1);
+#endif
             sta_node_ptr = os_mem_alloc(sizeof(sta_node));
             if (sta_node_ptr == MNULL)
             {
@@ -4202,11 +4326,17 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
             wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
 
+#if defined(RW610)
             if (sta_node_ptr->is_11n_enabled)
             {
                 wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
             }
-
+#else
+            if (sta_node_ptr->is_11n_enabled == MFALSE)
+            {
+                wlan_update_uap_ampdu_supported(sta_addr, MFALSE);
+            }
+#endif
             os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
@@ -4234,6 +4364,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
+#if defined(RW610)
             if (pmpriv->is_11n_enabled)
             {
                 wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
@@ -4244,6 +4375,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wlan_cleanup_reorder_tbl(pmpriv_uap, sta_addr);
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
             }
+#endif
             if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
@@ -4251,6 +4383,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
             wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);
+#endif
+#if !defined(RW610)
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
+            wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 #endif
             if (evt->reason_code == AP_DEAUTH_REASON_MAC_ADDR_BLOCKED)
             {
@@ -5109,6 +5246,7 @@ void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 }
 #endif
 
+#if defined(RW610)
 #ifdef CONFIG_WIFI_TX_BUFF
 void wifi_prepare_set_tx_buf_size(HostCmd_DS_COMMAND *cmd, int seq_number)
 {
@@ -5119,6 +5257,7 @@ void wifi_prepare_set_tx_buf_size(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->params.tx_buf.action    = HostCmd_ACT_GEN_SET;
     cmd->params.tx_buf.buff_size = tx_buf_size;
 }
+#endif
 #endif
 
 void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
@@ -5190,6 +5329,7 @@ void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type)
         (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
 }
 
+#if defined(RW610)
 #ifdef CONFIG_WIFI_TX_BUFF
 bool wifi_calibrate_tx_buf_size(uint16_t buf_size)
 {
@@ -5209,6 +5349,7 @@ bool wifi_calibrate_tx_buf_size(uint16_t buf_size)
 
     return (tx_buf_size != pre_tx_buf_size) ? true : false;
 }
+#endif
 #endif
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK

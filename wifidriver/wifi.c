@@ -94,9 +94,10 @@ SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALI
 SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
 #endif
-
+#if defined(RW610)
 /* Global variable wm_rand_seed */
 uint32_t wm_rand_seed = -1;
+#endif
 
 os_thread_t wifi_scan_thread;
 
@@ -2222,6 +2223,7 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame)
 }
 
 #ifdef CONFIG_WMM_ENH
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
 /* aggregate one amsdu packet and xmit */
 static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist)
@@ -2300,6 +2302,7 @@ static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+#endif
 static inline t_u8 wifi_is_tx_queue_empty()
 {
 #ifdef RW610
@@ -2318,6 +2321,7 @@ static inline t_u8 wifi_is_max_tx_cnt(int pkt_cnt)
 #endif
 }
 
+#if defined(RW610)
 static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist)
 {
     mlan_status ret;
@@ -2351,6 +2355,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 
 /*
  *  xmit all buffers under this ralist
@@ -2358,6 +2363,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
  *  return MLAN_STATUS_SUCESS to continue looping ralists,
  *  return MLAN_STATUS_RESOURCE to break looping ralists
  */
+#if defined(RW610)
 static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist, int *pkt_cnt)
 {
     mlan_status ret;
@@ -2395,6 +2401,59 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl 
     }
     return MLAN_STATUS_SUCCESS;
 }
+#else
+static mlan_status wifi_xmit_ralist_pkts(
+    mlan_private *priv, t_u8 ac, raListTbl *ralist, tid_tbl_t *tid_ptr, int *pkt_cnt)
+{
+    mlan_status ret;
+    outbuf_t *buf = MNULL;
+
+    if (ralist->tx_pause == MTRUE)
+        return MLAN_STATUS_SUCCESS;
+
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+
+    while (ralist->total_pkts > 0)
+    {
+        if (wifi_is_tx_queue_empty() == MTRUE)
+        {
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+            return MLAN_STATUS_RESOURCE;
+        }
+
+        buf = (outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &ralist->buf_head, MNULL, MNULL);
+        if (buf == MNULL)
+            break;
+
+        /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
+        /* this will get card port lock and probably sleep */
+        ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
+                                (t_u8 *)&buf->intf_header[0]);
+        if (ret != MLAN_STATUS_SUCCESS)
+        {
+#ifdef RW610
+            assert(0);
+#else
+            util_enqueue_list_head(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
+            mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+            return MLAN_STATUS_RESOURCE;
+#endif
+        }
+
+        wifi_wmm_buf_put(buf);
+
+        ralist->total_pkts--;
+        priv->wmm.pkts_queued[ac]--;
+        (*pkt_cnt)++;
+        if (wifi_is_max_tx_cnt(*pkt_cnt) == MTRUE)
+        {
+            *pkt_cnt = 0;
+        }
+    }
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
 
 /*
  *  dequeue and xmit all buffers under ac queue
@@ -2440,7 +2499,11 @@ static int wifi_xmit_wmm_ac_pkts_enh()
 
             while (ralist && ralist != (raListTbl *)&tid_ptr->ra_list)
             {
+#if defined(RW610)
                 ret = wifi_xmit_ralist_pkts(priv, ac, ralist, &pkt_cnt);
+#else
+                ret = wifi_xmit_ralist_pkts(priv, ac, ralist, tid_ptr, &pkt_cnt);
+#endif
                 if (ret != MLAN_STATUS_SUCCESS)
                 {
                     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &tid_ptr->ra_list.plock);
@@ -2497,6 +2560,7 @@ static void wifi_dump_wmm_pkts_info(t_u8 *tx_buf, mlan_wmm_ac_e ac)
            ((struct ip_hdr *)(tx_buf + sizeof(TxPD) + INTF_HEADER_LEN + 14))->_chksum);
 }
 
+#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
 static t_u32 wifi_get_wmm_pkt_length(mlan_wmm_ac_e ac, t_u8 offset)
 {
@@ -2545,6 +2609,7 @@ uint8_t *wifi_get_wmm_send_outbuf(mlan_wmm_ac_e ac, t_u8 offset)
     }
     return send_outbuf;
 }
+#endif
 #endif
 
 #ifdef RW610
