@@ -4514,30 +4514,33 @@ int wifi_handle_fw_event(struct bus_message *msg)
     return WM_SUCCESS;
 }
 
-static void process_rsn_ie(
-    t_u8 *rsn_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher, t_u8 *ap_mfpc, t_u8 *ap_mfpr, _SecurityMode_t *WPA_WPA2_WEP)
+static void process_rsn_ie(t_u8 *rsn_ie,
+                           _Cipher_t *mcstCipher,
+                           _Cipher_t *ucstCipher,
+                           t_u8 *ap_mfpc,
+                           t_u8 *ap_mfpr,
+                           _SecurityMode_t *WPA_WPA2_WEP)
 {
     t_u8 *temp;
     t_u16 count;
-    t_u16 group_cipher_count = 0;
+    t_u16 group_cipher_count    = 0;
     t_u16 pairwise_cipher_count = 0;
     t_u16 akm_suite_count       = 0;
     t_u16 rsn_cap               = 0;
-    t_u8 found                  = 0;
-    t_u8 wpa2_oui01[4] = {0x00, 0x0f, 0xac, 0x01};
-    t_u8 wpa2_oui02[4] = {0x00, 0x0f, 0xac, 0x02};
-    t_u8 wpa2_oui04[4] = {0x00, 0x0f, 0xac, 0x04};
-    t_u8 wpa2_oui05[4] = {0x00, 0x0f, 0xac, 0x05};
-    t_u8 wpa2_oui06[4] = {0x00, 0x0f, 0xac, 0x06};
+    t_u8 wpa2_oui01[4]          = {0x00, 0x0f, 0xac, 0x01};
+    t_u8 wpa2_oui02[4]          = {0x00, 0x0f, 0xac, 0x02};
+    t_u8 wpa2_oui04[4]          = {0x00, 0x0f, 0xac, 0x04};
+    t_u8 wpa2_oui05[4]          = {0x00, 0x0f, 0xac, 0x05};
+    t_u8 wpa2_oui06[4]          = {0x00, 0x0f, 0xac, 0x06};
 
     t_u8 wpa3_oui08[4] = {0x00, 0x0f, 0xac, 0x08};
 #ifdef CONFIG_OWE
     t_u8 wpa3_oui12[4] = {0x00, 0x0f, 0xac, 0x12};
 #endif
 #ifdef CONFIG_11R
-    t_u8 rsn_ft_1x_oui[4]       = {0x00, 0x0f, 0xac, 0x03};
-    t_u8 rsn_ft_psk_oui[4]      = {0x00, 0x0f, 0xac, 0x04};
-    t_u8 rsn_ft_sae_oui[4]      = {0x00, 0x0f, 0xac, 0x09};
+    t_u8 rsn_ft_1x_oui[4]  = {0x00, 0x0f, 0xac, 0x03};
+    t_u8 rsn_ft_psk_oui[4] = {0x00, 0x0f, 0xac, 0x04};
+    t_u8 rsn_ft_sae_oui[4] = {0x00, 0x0f, 0xac, 0x09};
 #endif
 
     ENTER();
@@ -4561,13 +4564,13 @@ static void process_rsn_ie(
     }
     /*  2 bytes header + 2 bytes version + 4 bytes group_cipher_suite +
      *  2 bytes pairwise_cipher_count + pairwise_cipher_count *
-     * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count + 
+     * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count +
      * akm_suite_count * AKM_SUITE_LEN (4)
      */
-    count = *(t_u16 *)(void *)(rsn_ie + 2);
-    count = wlan_le16_to_cpu(count);
+    count              = *(t_u16 *)(void *)(rsn_ie + 2);
+    count              = wlan_le16_to_cpu(count);
     group_cipher_count = count;
-    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16));
+    temp               = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16));
 
     while (count > 0U)
     {
@@ -4594,11 +4597,11 @@ static void process_rsn_ie(
         temp += 4;
     }
 
-    count = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4);
-    count = wlan_le16_to_cpu(count);
+    count                 = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + (int)group_cipher_count * 4);
+    count                 = wlan_le16_to_cpu(count);
     pairwise_cipher_count = count;
 
-    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16));
+    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + (int)group_cipher_count * 4 + (int)sizeof(t_u16));
 
     while (count > 0U)
     {
@@ -4617,17 +4620,16 @@ static void process_rsn_ie(
         temp += 4;
     }
 
-    count = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16) +
-                    (int)pairwise_cipher_count * 4);
-    count = wlan_le16_to_cpu(count);
+    count           = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + (int)group_cipher_count * 4 + (int)sizeof(t_u16) +
+                               (int)pairwise_cipher_count * 4);
+    count           = wlan_le16_to_cpu(count);
     akm_suite_count = count;
 
-    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16) +
+    temp = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + (int)group_cipher_count * 4 + (int)sizeof(t_u16) +
                     (int)pairwise_cipher_count * 4 + (int)sizeof(t_u16));
 
     while (count > 0U)
     {
-
         if (memcmp(temp, wpa3_oui08, sizeof(wpa3_oui08)) == 0)
         {
             WPA_WPA2_WEP->wpa3_sae = 1;
@@ -4674,7 +4676,7 @@ static void process_rsn_ie(
     }
 
     rsn_cap = *(t_u16 *)(void *)(rsn_ie + 2 + sizeof(t_u16) + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
-              (int)pairwise_cipher_count * 4 + (int)sizeof(t_u16) + (int)akm_suite_count * 4);
+                                 (int)pairwise_cipher_count * 4 + (int)sizeof(t_u16) + (int)akm_suite_count * 4);
     rsn_cap = (t_u16)wlan_le16_to_cpu(rsn_cap);
 
     *ap_mfpc = ((rsn_cap & (0x1 << MFPC_BIT)) == (0x1 << MFPC_BIT));
@@ -4683,21 +4685,25 @@ done:
     LEAVE();
 }
 
-static void process_wpa_ie(
-    t_u8 *wpa_ie, _Cipher_t *mcstCipher, _Cipher_t *ucstCipher, t_u8 *ap_mfpc, t_u8 *ap_mfpr, _SecurityMode_t *WPA_WPA2_WEP)
+static void process_wpa_ie(t_u8 *wpa_ie,
+                           _Cipher_t *mcstCipher,
+                           _Cipher_t *ucstCipher,
+                           t_u8 *ap_mfpc,
+                           t_u8 *ap_mfpr,
+                           _SecurityMode_t *WPA_WPA2_WEP)
 {
     t_u16 wpa_ie_len;
     t_u8 *temp;
-    t_u8  *ptr;
-    t_u8  *wpa_ie_len_ptr;
-	  t_u8  *pairwise_cipher_count_ptr;
+    t_u8 *ptr;
+    t_u8 *wpa_ie_len_ptr;
+    t_u8 *pairwise_cipher_count_ptr;
     t_u16 count;
-    t_u16 group_cipher_count = 0;
+    t_u16 group_cipher_count    = 0;
     t_u16 pairwise_cipher_count = 0;
-    t_u8 wpa_oui01[4] = {0x00, 0x50, 0xf2, 0x01};
-    t_u8 wpa_oui02[4] = {0x00, 0x50, 0xf2, 0x02};
-    t_u8 wpa_oui04[4] = {0x00, 0x50, 0xf2, 0x04};
-    t_u8 wpa_oui05[4] = {0x00, 0x50, 0xf2, 0x05};
+    t_u8 wpa_oui01[4]           = {0x00, 0x50, 0xf2, 0x01};
+    t_u8 wpa_oui02[4]           = {0x00, 0x50, 0xf2, 0x02};
+    t_u8 wpa_oui04[4]           = {0x00, 0x50, 0xf2, 0x04};
+    t_u8 wpa_oui05[4]           = {0x00, 0x50, 0xf2, 0x05};
 
     ENTER();
 
@@ -4723,15 +4729,15 @@ static void process_wpa_ie(
      * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count +
      * akm_suite_count * AKM_SUITE_LEN (4)
      */
-    ptr = (t_u8 *)(wpa_ie + 1);
+    ptr            = (t_u8 *)(wpa_ie + 1);
     wpa_ie_len_ptr = ptr;
 
     wpa_ie_len = wlan_le16_to_cpu(*(t_u16 *)ptr);
 
-    count = *(t_u16 *)(void *)(wpa_ie + 2 + 4);
-    count = wlan_le16_to_cpu(count);
+    count              = *(t_u16 *)(void *)(wpa_ie + 2 + 4);
+    count              = wlan_le16_to_cpu(count);
     group_cipher_count = count;
-    temp = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16));
+    temp               = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16));
 
     while (count > 0U)
     {
@@ -4758,13 +4764,13 @@ static void process_wpa_ie(
         temp += 4;
     }
 
-    ptr =  (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int) group_cipher_count * 4);
+    ptr                       = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int)group_cipher_count * 4);
     pairwise_cipher_count_ptr = ptr;
 
-    count = *(t_u16 *)(void *)ptr;
-    count = wlan_le16_to_cpu(count);
+    count                 = *(t_u16 *)(void *)ptr;
+    count                 = wlan_le16_to_cpu(count);
     pairwise_cipher_count = count;
-    temp = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16));
+    temp                  = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int)group_cipher_count * 4 + (int)sizeof(t_u16));
 
     while (count > 0U)
     {
@@ -4785,11 +4791,11 @@ static void process_wpa_ie(
 
     if (pairwise_cipher_count == 2)
     {
-        ptr = wpa_ie_len_ptr;
+        ptr           = wpa_ie_len_ptr;
         *(t_u16 *)ptr = wlan_cpu_to_le16(wpa_ie_len - 4);
-        ptr = pairwise_cipher_count_ptr;
+        ptr           = pairwise_cipher_count_ptr;
         *(t_u16 *)ptr = wlan_cpu_to_le16(1);
-        temp = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int) group_cipher_count * 4 + (int)sizeof(t_u16));
+        temp          = (t_u8 *)(wpa_ie + 2 + 4 + sizeof(t_u16) + (int)group_cipher_count * 4 + (int)sizeof(t_u16));
 
         if (!memcmp((temp + 4), (const void *)wpa_oui04, sizeof(wpa_oui04)))
         {
@@ -4797,7 +4803,7 @@ static void process_wpa_ie(
         }
     }
 done:
-  LEAVE();
+    LEAVE();
 }
 
 int wrapper_bssdesc_first_set(int bss_index,
@@ -4814,7 +4820,8 @@ int wrapper_bssdesc_first_set(int bss_index,
                               _Cipher_t *wpa_ucstCipher,
                               _Cipher_t *rsn_mcstCipher,
                               _Cipher_t *rsn_ucstCipher,
-                              t_u8 *ap_mfpc,t_u8 *ap_mfpr)
+                              t_u8 *ap_mfpc,
+                              t_u8 *ap_mfpr)
 {
     if (bss_index >= (int)mlan_adap->num_in_scan_table)
     {
@@ -4856,12 +4863,12 @@ int wrapper_bssdesc_first_set(int bss_index,
         {
             WPA_WPA2_WEP->wpa = 1;
 
-            process_wpa_ie(d->wpa_ie_buff, wpa_mcstCipher, wpa_ucstCipher, ap_mfpc , ap_mfpr, WPA_WPA2_WEP);
+            process_wpa_ie(d->wpa_ie_buff, wpa_mcstCipher, wpa_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
         }
 
         if (d->prsn_ie != MNULL)
         {
-           process_rsn_ie(d->rsn_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
+            process_rsn_ie(d->rsn_ie_buff, rsn_mcstCipher, rsn_ucstCipher, ap_mfpc, ap_mfpr, WPA_WPA2_WEP);
         }
     }
     else
