@@ -988,8 +988,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 (void)__memcpy(pmadapter, prsn_ie_tlv->rsn_ie, &pmpriv->wpa_ie[2], prsn_ie_tlv->header.len);
                 if (pmpriv->sec_info.wpa2_enabled)
                 {
-                    akm_type = pauth_tlv ? wlan_le16_to_cpu(pauth_tlv->auth_type) : AssocAgentAuth_Auto;
-                    ret      = wlan_update_rsn_ie(pmpriv, prsn_ie_tlv, (t_u16 *)&prsn_ie_tlv->header.len, &akm_type);
+                    akm_type                = pauth_tlv ? wlan_le16_to_cpu(pauth_tlv->auth_type) : AssocAgentAuth_Auto;
+                    t_u16 rsn_ie_tlv_len    = prsn_ie_tlv->header.len;
+                    ret                     = wlan_update_rsn_ie(pmpriv, prsn_ie_tlv, &rsn_ie_tlv_len, &akm_type);
+                    prsn_ie_tlv->header.len = rsn_ie_tlv_len;
 #ifdef CONFIG_11R
                     /** parse rsn ie to find whether ft akm is used*/
                     ft_akm = wlan_ft_akm_is_used(pmpriv, (t_u8 *)prsn_ie_tlv);
