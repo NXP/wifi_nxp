@@ -703,6 +703,8 @@ typedef struct _mlan_ssid_bssid
 #define PROTOCOL_OWE 512U
 #endif
 
+/** Key_mgmt_psk_sha256 */
+#define KEY_MGMT_PSK_SHA256 0x100
 /** Key_mgmt_sae */
 #define KEY_MGMT_SAE 0x400
 #ifdef CONFIG_OWE
