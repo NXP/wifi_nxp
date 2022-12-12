@@ -940,15 +940,15 @@ static int __scan_cb(unsigned int count)
             (void)PRINTF("\t802.11V: YES\r\n");
         }
 #endif
-        if((res.ap_mfpc == true) && (res.ap_mfpr == true))
+        if ((res.ap_mfpc == true) && (res.ap_mfpr == true))
         {
             (void)PRINTF("\t802.11W: Capable, Required\r\n");
         }
-        if((res.ap_mfpc == true) && (res.ap_mfpr == false))
+        if ((res.ap_mfpc == true) && (res.ap_mfpr == false))
         {
             (void)PRINTF("\t802.11W: Capable\r\n");
         }
-        if((res.ap_mfpc == false) && (res.ap_mfpr == false))
+        if ((res.ap_mfpc == false) && (res.ap_mfpr == false))
         {
             (void)PRINTF("\t802.11W: NA\r\n");
         }
@@ -4404,6 +4404,32 @@ static void test_wlan_csi_cfg(int argc, char **argv)
 }
 #endif
 
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+static void test_wlan_rssi_low_threshold(int argc, char **argv)
+{
+    uint8_t rssi_threshold;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Usage: %s <rssi threshold value>\r\n", argv[0]);
+        (void)PRINTF("Error: Default value is 70. Specify the value you want to set as threshold.\r\n");
+        return;
+    }
+
+    errno          = 0;
+    rssi_threshold = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul:rssi_threshold errno:%d\r\n", errno);
+        return;
+    }
+
+    wlan_set_rssi_low_threshold(rssi_threshold);
+
+    (void)PRINTF("rssi threshold set successfully.\r\n");
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4553,6 +4579,9 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
 #endif
+#endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+    {"wlan-rssi-low-threshold", "<threshold_value>", test_wlan_rssi_low_threshold},
 #endif
 };
 

@@ -105,10 +105,6 @@ static bool ps_sleep_cb_sent;
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP;
 #endif
 
-#ifndef CONFIG_WLAN_RSSI_THRESHOLD
-#define CONFIG_WLAN_RSSI_THRESHOLD 70
-#endif
-
 #ifdef CONFIG_11K
 #define NEIGHBOR_REQ_TIMEOUT (1 * 1000)
 #endif
@@ -347,6 +343,9 @@ static struct
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     wlan_nlist_report_param nlist_rep_param;
+#endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+    uint8_t rssi_low_threshold;
 #endif
 } wlan;
 
@@ -2145,7 +2144,7 @@ static void handle_scan_results(void)
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
-                (void)wifi_set_rssi_low_threshold(CONFIG_WLAN_RSSI_THRESHOLD);
+                (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 #endif
                 return;
             }
@@ -2202,7 +2201,7 @@ static void handle_scan_results(void)
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
-        (void)wifi_set_rssi_low_threshold(CONFIG_WLAN_RSSI_THRESHOLD);
+        (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 #endif
         return;
     }
@@ -2828,7 +2827,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
-        (void)wifi_set_rssi_low_threshold(CONFIG_WLAN_RSSI_THRESHOLD);
+        (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 #endif
 
 #ifdef CONFIG_WMSTATS
@@ -4625,7 +4624,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 #ifdef OVERRIDE_CALIBRATION_DATA
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
 #endif
-    //TODO: Cal data will be read from EEPROM.
+    // TODO: Cal data will be read from EEPROM.
 #ifdef RW610
     wlan_set_cal_data(cal_data_rw610, sizeof(cal_data_rw610));
 #endif
@@ -4832,6 +4831,9 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
 #endif
 
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+    wlan.rssi_low_threshold = 70;
+#endif
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
 
@@ -7810,7 +7812,7 @@ int wlan_set_roaming(const int enable)
 {
     wlan.roaming_enabled = enable;
 
-    return wifi_config_roaming(enable, (t_u8)CONFIG_WLAN_RSSI_THRESHOLD);
+    return wifi_config_roaming(enable, (t_u8)wlan.rssi_low_threshold);
 }
 #endif
 
@@ -8778,5 +8780,12 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params)
     ret = wifi_csi_cfg(csi_params);
 
     return ret;
+}
+#endif
+
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+void wlan_set_rssi_low_threshold(uint8_t threshold)
+{
+    wlan.rssi_low_threshold = threshold;
 }
 #endif

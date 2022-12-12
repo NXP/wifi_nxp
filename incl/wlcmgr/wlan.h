@@ -2072,7 +2072,8 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
  * This function may be called to enable/disable roaming.
  *
  * \note <b>RSSI Threshold setting for roaming</b>:
- * Uses rssi threshold value defined by CONFIG_WLAN_RSSI_THRESHOLD or by default 70 is used.
+ * Use wlan_set_rssi_low_threshold() API to set RSSI threshold for low RSSI event subscription. If not called from
+ * application then by default -70dbm will be used.
  *
  * \param[in] enable Enable/disable roaming.
  *
@@ -4531,4 +4532,17 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params);
 int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
 #endif
 
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+/**
+ * Use this API to set the RSSI threshold value for low RSSI event subscription.
+ * When RSSI falls below this threshold firmware will generate the low RSSI event to driver.
+ * This low RSSI event is used when either of CONFIG_11R, CONFIG_11K, CONFIG_11V or CONFIG_ROAMING is enabled.
+ * NOTE: By default rssi low threshold is set at -70 dbm
+ *
+ * \param[in]     threshold      Threshold rssi value to be set
+ *
+ * \return        void
+ */
+void wlan_set_rssi_low_threshold(uint8_t threshold);
+#endif
 #endif /* __WLAN_H__ */
