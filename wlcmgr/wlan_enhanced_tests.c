@@ -719,10 +719,10 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
     }
 #endif
 #ifdef CONFIG_11AX_DCM_ER
-    errno                      = 0;
-	ds_rate.param.rate_cfg.rate_setting = (t_u16)strtol(argv[4], NULL, 0);
-	if (errno != 0)
-		(void)PRINTF("Error during strtoul errno:%d", errno);
+    errno                               = 0;
+    ds_rate.param.rate_cfg.rate_setting = (t_u16)strtol(argv[4], NULL, 0);
+    if (errno != 0)
+        (void)PRINTF("Error during strtoul errno:%d", errno);
 #endif
 
 #ifdef CONFIG_11AX
@@ -1138,7 +1138,7 @@ static void dump_wlan_set_txomi_usage()
 static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 {
     unsigned char i, j;
-    char rupwr;
+    t_s16 rupwr;
 
     (void)PRINTF("--------------------------------------------------------------------------------\r\n");
     for (i = 0; i < txpwrlimit->num_chans; i++)
@@ -1158,10 +1158,10 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
             if (rupwr & 0x80)
             {
                 rupwr = -rupwr;
-                (void)PRINTF("-%d,", rupwr);
+                (void)PRINTF("-%d,", (t_s8)rupwr);
             }
             else
-                (void)PRINTF("%d,", rupwr);
+                (void)PRINTF("%d,", (t_s8)rupwr);
         }
         (void)PRINTF("\r\n");
     }

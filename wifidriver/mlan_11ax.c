@@ -614,7 +614,7 @@ mlan_status wlan_ret_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                     for (i = 0; i < MAX_RU_COUNT; i++)
                     {
                         ru_pwr_cfg->rupwrlimit_config[ru_pwr_cfg->num_chans].ruPower[i] =
-                            (t_s8)rupwr_tlv->rupwrlimit_config.ruPower[i];
+                            rupwr_tlv->rupwrlimit_config.ruPower[i];
                     }
                     ru_pwr_cfg->num_chans++;
                 }

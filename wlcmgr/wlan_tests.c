@@ -19,10 +19,10 @@
 /*
  * NXP Test Framework (MTF) functions
  */
-static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 #ifdef CONFIG_CSI
-wlan_csi_config_params_t g_csi_params = {
+static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+wlan_csi_config_params_t g_csi_params              = {
     .csi_enable         = 1,
     .head_id            = 0x00010203,
     .tail_id            = 0x00010203,

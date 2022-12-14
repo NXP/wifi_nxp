@@ -93,7 +93,7 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
  */
 static mlan_status wlan_process_mgmt_wnm_action(t_u8 *payload, t_u32 payload_len, t_u8 *src_addr, t_u8 *dest_addr)
 {
-    IEEEtypes_WNM_ActionFieldType_e action_code = 0;
+    IEEEtypes_WNM_ActionFieldType_e action_code = (IEEEtypes_WNM_ActionFieldType_e)0;
     t_u8 *pos;
     mlan_status ret = MLAN_STATUS_FAILURE;
 
@@ -319,7 +319,7 @@ mlan_status wlan_send_timing_measurement_frame(mlan_private *pmpriv)
 mlan_status wlan_process_mgmt_action(t_u8 *payload, t_u32 payload_len, RxPD *rxpd)
 {
     wlan_802_11_header *pieee_pkt_hdr   = MNULL;
-    IEEEtypes_ActionCategory_e category = 0;
+    IEEEtypes_ActionCategory_e category = (IEEEtypes_ActionCategory_e)0;
     mlan_status ret                     = MLAN_STATUS_FAILURE;
 
     pieee_pkt_hdr = (wlan_802_11_header *)(void *)payload;
