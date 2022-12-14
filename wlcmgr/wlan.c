@@ -4446,6 +4446,14 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             next = wlan.sta_state;
             pbuf_free(msg->data);
             break;
+#ifdef IW61x
+        case WIFI_EVENT_IMD3_CAL_START:
+            wlcm_d("got event: IMD3 cal started");
+            break;
+        case WIFI_EVENT_IMD3_CAL_END:
+            wlcm_d("got event: IMD3 cal stopped");
+            break;
+#endif
         default:
             wlcm_w("got unknown message: %d", msg->event);
             break;

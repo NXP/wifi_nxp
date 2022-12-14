@@ -1596,6 +1596,11 @@ typedef enum _ENH_PS_MODES
 /** Event definition: RXBA_SYNC */
 #define EVENT_RXBA_SYNC 0x00000059
 
+#ifdef IW61x
+#define EVENT_IMD3_CAL_START            0x000000A0
+#define EVENT_IMD3_CAL_END              0x000000A1
+#endif
+
 #ifdef CONFIG_WIFI_FW_DEBUG
 /** Event definition : FW debug information */
 #define EVENT_FW_DEBUG_INFO 0x00000063

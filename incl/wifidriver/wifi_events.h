@@ -142,6 +142,11 @@ enum wifi_event
     /* Recv csi data */
     WIFI_EVENT_CSI,
 #endif
+#ifdef IW61x
+    /*IMD3 Calibration events for IW61X */
+    WIFI_EVENT_IMD3_CAL_START,
+    WIFI_EVENT_IMD3_CAL_END,
+#endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must
