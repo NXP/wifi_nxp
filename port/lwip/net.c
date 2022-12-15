@@ -603,7 +603,11 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     wm_netif_status_callback_ptr = NULL;
 
 #ifdef CONFIG_IPV6
+#ifdef RW610
     if (if_handle == &g_mlan || if_handle == &g_uap)
+#else
+    if (if_handle == &g_mlan)
+#endif
     {
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
