@@ -321,7 +321,7 @@ int wlan_cmd_11ax_cfg(mlan_private *pmpriv, t_u16 action, mlan_ds_11ax_he_cfg *h
         cmd->size += he_cfg->he_cap.len + sizeof(MrvlIEtypesHeader_t);
         pos += he_cfg->he_cap.len + sizeof(MrvlIEtypesHeader_t);
     }
-    cmd->seq_num = (0x01) << 12;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, pmpriv->bss_index);
     cmd->result  = 0x00;
 
     wifi_wait_for_cmdresp(he_cfg);
