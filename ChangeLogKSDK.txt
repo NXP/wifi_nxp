@@ -3,6 +3,18 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p5
+ - Updates:
+  - Updated firmware version to p168(however signed firmware is not updated in this release and has version p164).
+
+ - Bug Fixes:
+  - Fixed: DUT not able to connect to AP configured in WPA2/WPA3 mixed mode security.
+  - Fixed: Association Request does not include Group Management Cipher Suite IE in RSNIE when PMF mandatory is set on STA in WPA2-PSK/WPA3/OWE security.
+  - Fixed: uAP Beacons does not include SHA256 in RSNIE when PMF mandatory is set on AP in WPA2-PSK security.
+  - Fixed: Device getting hanged while setting txpwrlimit by CMD 'wlan-set-txpwrlimit'.
+  - Fixed: Not able to load RU tx power limit with RT.
+  - Fixed: Not able to change HE parameters in HE MAC Capabilities or HE PHY Capabilities using 11axcfg command.
+
 Version 1.3.r43.p4
  - Updates:
   - None.
