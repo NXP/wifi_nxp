@@ -4196,7 +4196,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)wifi_event_completion(WIFI_EVENT_IMD3_CAL_START, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_IMD3_CAL_END:
-            (void)wifi_event_completion(WIFI_EVENT_IMD3_CAL_END, WIFI_EVENT_IMD3_CAL_END, NULL);
+            (void)wifi_event_completion(WIFI_EVENT_IMD3_CAL_END, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif
         case EVENT_RSSI_LOW:
