@@ -34,6 +34,9 @@
 #endif
 #include <fsl_common.h>
 #include <dhcp-server.h>
+#ifdef RW610
+#include "fsl_loader.h"
+#endif
 
 #define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
@@ -56,6 +59,11 @@ static bool wlan_uap_scan_chan_list_set;
 
 #ifdef CONFIG_MEF_CFG
 wlan_flt_cfg_t g_flt_cfg;
+#endif
+#ifdef RW610
+extern const unsigned char wlan_fw_bin[];
+extern unsigned int wlan_fw_bin_len;
+extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
 #endif
 
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
@@ -99,7 +107,13 @@ int wps_session_attempt;
 #if !defined(CONFIG_WIFIDRIVER_PS_LOCK)
 static bool ps_sleep_cb_sent;
 #endif /* CONFIG_WIFIDRIVER_PS_LOCK */
-
+#ifdef RW610
+static os_mutex_t reset_lock;
+/* Mon thread */
+static os_thread_t mon_thread;
+static os_thread_stack_t mon_stack;
+static bool mon_thread_init = 0;
+#endif
 #ifdef CONFIG_EXT_SCAN_SUPPORT
 #define SCAN_CHANNEL_GAP 50U
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP;
@@ -217,7 +231,10 @@ static os_thread_stack_define(g_cm_stack, 4096);
 #else
 static os_thread_stack_define(g_cm_stack, 4096);
 #endif
-
+#ifdef RW610
+static void wlan_mon_thread(os_thread_arg_t data);
+static os_thread_stack_define(g_mon_stack, 1152);
+#endif
 typedef enum
 {
     WLCMGR_INACTIVE,
@@ -4719,19 +4736,12 @@ void wlan_deinit(int action)
     {
         wlcm_deinit(action);
     }
-
+#ifndef RW610
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     os_rwlock_delete(&sleep_rwlock);
 #else
     os_rwlock_delete(&ps_rwlock);
 #endif
-
-#ifdef CONFIG_WMM_UAPSD
-    if (uapsd_sem != NULL)
-    {
-        os_semaphore_delete(&uapsd_sem);
-        uapsd_sem = NULL;
-    }
 #endif
 }
 
@@ -4799,6 +4809,13 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
         wlan.neighbor_req = false;
         (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
     }
+}
+#endif
+
+#ifdef RW610
+bool wlan_is_started()
+{
+    return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
 }
 #endif
 
@@ -4893,6 +4910,47 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         (void)os_thread_delete(&wlan.cm_main_thread);
         return -WM_FAIL;
     }
+
+#ifdef RW610
+    if (reset_lock == NULL)
+    {
+        ret = os_mutex_create(&reset_lock, "reset_lock", OS_MUTEX_INHERIT);
+        if (ret != 0)
+        {
+            wlan.cb = NULL;
+            wifi_unregister_event_queue(&wlan.events);
+            os_queue_delete(&wlan.events);
+            os_thread_delete(&wlan.cm_main_thread);
+            os_semaphore_delete(&wlan.scan_lock);
+            return -WM_FAIL;
+        }
+    }
+
+    if (!mon_thread_init)
+    {
+        mon_stack = g_mon_stack;
+        /* Host sleep hanshake will be done in IDLE task and infinite
+         * while loop is added to wait for hankshake complete to
+         * prevent IDLE task from entering suspend state.
+         * If mon_thread using same priority of IDLE task, then the
+         * mon_thread task could not be scheduled as we did not
+         * enabled time slice.
+         */
+        ret = os_thread_create(&mon_thread, "mon_thread", wlan_mon_thread, 0, &mon_stack, OS_PRIO_3);
+        if (ret != 0)
+        {
+            wlan.cb = NULL;
+            wifi_unregister_event_queue(&wlan.events);
+            os_queue_delete(&wlan.events);
+            os_thread_delete(&wlan.cm_main_thread);
+            os_semaphore_delete(&wlan.scan_lock);
+            os_mutex_delete(&reset_lock);
+            return -WM_FAIL;
+        }
+        mon_thread_init = 1;
+    }
+#endif
+
     wlan.running = 1;
 
     wlan.status = WLCMGR_ACTIVATED;
@@ -4927,11 +4985,12 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 int wlan_stop(void)
 {
-    int ret             = WM_SUCCESS;
+    int ret = WM_SUCCESS;
+#ifndef RW610
     int total_wait_time = 1000; /* millisecs */
     int check_interval  = 200;  /* millisecs */
     int num_iterations  = total_wait_time / check_interval;
-
+#endif
     if (wlan.status != WLCMGR_ACTIVATED)
     {
         wlcm_e("cannot stop wlcmgr. unexpected status: %d", wlan.status);
@@ -4940,10 +4999,11 @@ int wlan_stop(void)
 
     if (!wlan.running)
     {
+        wlcm_e("cannot stop wlcmgr. unexpected wlan.running: %d", wlan.running);
         return WLAN_ERROR_STATE;
     }
+#ifndef RW610
     wlan.running = 0;
-    wlan.scan_cb = NULL;
 
 #ifdef OTP_CHANINFO
     wifi_free_fw_region_and_cfp_tables();
@@ -4959,32 +5019,44 @@ int wlan_stop(void)
         wlcm_w("failed to get scan lock: %d.", ret);
         return WLAN_ERROR_STATE;
     }
-
-    ret = os_semaphore_delete(&wlan.scan_lock);
-    if (ret != WM_SUCCESS)
+#else
+    if (wlan.uap_state == CM_UAP_IP_UP)
+        dhcp_server_stop();
+#endif
+    if (wlan.scan_lock)
     {
-        wlcm_w("failed to delete scan lock: %d.", ret);
-        return WLAN_ERROR_STATE;
+        ret = os_semaphore_delete(&wlan.scan_lock);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_w("failed to delete scan lock: %d.", ret);
+            return WLAN_ERROR_STATE;
+        }
+        wlan.is_scan_lock = 0;
     }
+    wlan.scan_cb = NULL;
 
-    wlan.is_scan_lock = 0;
-
-    ret = os_timer_delete(&wlan.assoc_timer);
-    if (ret != WM_SUCCESS)
+    if (wlan.assoc_timer)
     {
-        wlcm_w("failed to delete assoc timer: %d.", ret);
-        return WLAN_ERROR_STATE;
+        ret = os_timer_delete(&wlan.assoc_timer);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_w("failed to delete assoc timer: %d.", ret);
+            return WLAN_ERROR_STATE;
+        }
     }
-
 #ifdef CONFIG_11K
-    ret = os_timer_delete(&wlan.neighbor_req_timer);
-    if (ret != WM_SUCCESS)
+    if (wlan.neighbor_req_timer)
     {
-        wlcm_w("failed to delete neighbor req timer: %d.", ret);
-        return WLAN_ERROR_STATE;
+        ret = os_timer_delete(&wlan.neighbor_req_timer);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_w("failed to delete neighbor req timer: %d.", ret);
+            return WLAN_ERROR_STATE;
+        }
     }
 #endif
 
+#ifndef RW610
     /* We need to tell the AP that we're going away, however we've already
      * stopped the main thread so we can't do this by means of the state
      * machine.  Unregister from the wifi interface and explicitly send a
@@ -5011,23 +5083,29 @@ int wlan_stop(void)
     }
 
     wlan.stop_request = (uint8_t) false;
-
-    ret = wifi_unregister_event_queue(&wlan.events);
-
-    if (ret != WM_SUCCESS)
+#endif
+    if (wm_wifi.wlc_mgr_event_queue)
     {
-        wlcm_w("failed to unregister wifi event queue: %d", ret);
-        return WLAN_ERROR_STATE;
+        ret = wifi_unregister_event_queue(&wlan.events);
+
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_w("failed to unregister wifi event queue: %d", ret);
+            return WLAN_ERROR_STATE;
+        }
     }
 
-    ret = os_queue_delete(&wlan.events);
-
-    if (ret != WM_SUCCESS)
+    if (wlan.events)
     {
-        wlcm_w("failed to delete event queue: %d", ret);
-        return WLAN_ERROR_STATE;
-    }
+        ret = os_queue_delete(&wlan.events);
 
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_w("failed to delete event queue: %d", ret);
+            return WLAN_ERROR_STATE;
+        }
+    }
+#ifndef RW610
     if (wlan.sta_state > CM_STA_ASSOCIATING)
     {
         (void)wifi_deauthenticate((uint8_t *)wlan.networks[wlan.cur_network_idx].bssid);
@@ -5055,7 +5133,26 @@ int wlan_stop(void)
 
     wlan.status = WLCMGR_INIT_DONE;
     wlcm_d("WLCMGR thread deleted\n\r");
+#else
+    wlan.running = 0;
+    wlan.status  = WLCMGR_INACTIVE;
+    memset(&wlan, 0x00, sizeof(wlan));
 
+    wifi_deinit();
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_delete(&sleep_rwlock);
+#else
+    os_rwlock_delete(&ps_rwlock);
+#endif
+#endif
+#ifdef CONFIG_WMM_UAPSD
+    if (uapsd_sem != NULL)
+    {
+        os_semaphore_delete(&uapsd_sem);
+        uapsd_sem = NULL;
+    }
+#endif
     return ret;
 }
 
@@ -5854,6 +5951,138 @@ int wlan_stop_network(const char *name)
     /* specified network was not found */
     return -WM_E_INVAL;
 }
+
+#if defined(RW610)
+int wlan_remove_all_networks(void)
+{
+    void *intrfc_handle = NULL;
+    /* No need to remove net interfaces here, as they are added only once.
+     * Moreover, removing and adding net interface will increase netif_num cumulatively,
+     * which will mismatch with "ua2" during creating dhcpd.
+     */
+    intrfc_handle = net_get_sta_handle();
+    net_interface_down(intrfc_handle);
+
+    intrfc_handle = net_get_uap_handle();
+    net_interface_down(intrfc_handle);
+
+    return WM_SUCCESS;
+}
+
+void wlan_destroy_all_tasks(void)
+{
+    vTaskSuspendAll();
+
+    /* Destroy cm_main thread */
+    if (wlan.cm_main_thread)
+    {
+        os_thread_delete(&wlan.cm_main_thread);
+        wlan.cm_main_thread = NULL;
+    }
+
+    /* Destroy wifidriver thread */
+    wifi_destroy_wifidriver_tasks();
+
+    xTaskResumeAll();
+}
+
+int wlan_imu_get_task_lock(void)
+{
+    return wifi_imu_get_task_lock();
+}
+
+int wlan_imu_put_task_lock(void)
+{
+    return wifi_imu_put_task_lock();
+}
+
+void wlan_reset(cli_reset_option ResetOption)
+{
+    if (os_mutex_get(&reset_lock, 0) != WM_SUCCESS)
+    {
+        PRINTF("already in process...\r\n");
+        return;
+    }
+
+    if (ResetOption == CLI_DISABLE_WIFI || ResetOption == CLI_RESET_WIFI)
+    {
+        PRINTF("--- Disable WiFi ---\r\n");
+        if (wlan_is_started())
+        {
+            /* Block TX data */
+            wifi_set_tx_status(WIFI_DATA_BLOCK);
+            /* Block RX data */
+            wifi_set_rx_status(WIFI_DATA_BLOCK);
+
+            /* Stop and Remove all network interfaces */
+            wlan_remove_all_networks();
+
+            if (!wifi_fw_is_hang())
+                wifi_send_shutdown_cmd();
+
+            wifi_scan_stop();
+
+            /* wait for imu task done */
+            wlan_imu_get_task_lock();
+            /* Destroy all tasks before touch the global vars */
+            wlan_destroy_all_tasks();
+
+            wlan_imu_put_task_lock();
+            /* Clear wlcmgr */
+            wlan_stop();
+        }
+
+        power_off_device(LOAD_WIFI_FIRMWARE);
+    }
+
+    if (ResetOption == CLI_ENABLE_WIFI || ResetOption == CLI_RESET_WIFI)
+    {
+        PRINTF("--- Enable WiFi ---\r\n");
+        if (!wlan_is_started())
+        {
+            PRINTF("Initialize WLAN Driver\r\n");
+            /* Initialize WIFI Driver */
+            if (WM_SUCCESS != (wlan_init(wlan_fw_bin, wlan_fw_bin_len)))
+            {
+                wlcm_e("wlan init failed\r\n");
+                os_mutex_put(&reset_lock);
+                return;
+            }
+
+            if (WM_SUCCESS != (wlan_start(wlan_event_callback)))
+            {
+                wlcm_e("wlan start failed\r\n");
+                os_mutex_put(&reset_lock);
+                return;
+            }
+
+            /* update the netif hwaddr after reset */
+            net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
+        }
+    }
+
+    os_mutex_put(&reset_lock);
+    PRINTF("--- Done ---\r\n");
+}
+
+static void wlan_mon_thread(os_thread_arg_t data)
+{
+    unsigned long delay_ms = 1000;
+
+#ifdef CONFIG_PALLADIUM_SUPPORT
+    delay_ms = 10;
+#endif
+
+    while (1)
+    {
+        if (wifi_fw_is_hang())
+        {
+            wlan_reset(CLI_RESET_WIFI);
+        }
+        os_thread_sleep(os_msec_to_ticks(delay_ms));
+    }
+}
+#endif
 
 int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 {

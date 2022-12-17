@@ -83,6 +83,7 @@ static void deliver_packet_above(struct pbuf *p, int recv_interface)
     /* points to packet payload, which starts with an Ethernet header */
     struct eth_hdr *ethhdr = p->payload;
 
+    w_pkt_d("Data RX: Driver=>Kernel, if %d, len %d %d", recv_interface, p->tot_len, p->len);
     switch (htons(ethhdr->type))
     {
         case ETHTYPE_IP:
@@ -461,12 +462,13 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     struct ethernetif *ethernetif = netif->state;
     u32_t pkt_len, outbuf_len;
 #ifdef CONFIG_WMM
-    t_u8 tid;
+    t_u8 tid          = 0;
     int retry         = retry_attempts;
     bool is_udp_frame = false;
 #ifdef RW610
     struct bus_message msg;
 #endif
+
     int pkt_prio = wifi_wmm_get_pkt_prio(p->payload, &tid, &is_udp_frame);
     if (pkt_prio == -WM_FAIL)
     {

@@ -76,6 +76,7 @@ extern uint16_t tx_buf_size;
 #endif
 extern bool txpwrlimit_data_valid;
 extern uint8_t trpc_country;
+extern bus_operations imu_ops;
 
 mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr, const size_t size);
 void imu_wifi_deinit(void);
@@ -126,4 +127,9 @@ void imu_wakeup_card();
 int _wlan_return_all_tx_buf(imu_link_t link);
 #endif
 void mlan_disable_hs_wakeup_irq();
+
+int imu_create_task_lock(void);
+void imu_delete_task_lock(void);
+int imu_get_task_lock(void);
+int imu_put_task_lock(void);
 #endif /* __WIFI_SDIO_H__ */

@@ -79,6 +79,15 @@ enum
 #endif
 };
 
+/** WiFi driver TX/RX data status */
+enum
+{
+    /** Data in running status */
+    WIFI_DATA_RUNNING = 0,
+    /** Data in block status */
+    WIFI_DATA_BLOCK = 1,
+};
+
 typedef enum
 {
     MGMT_RSN_IE = 48,
@@ -164,6 +173,37 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size);
  *
  */
 void wifi_deinit(void);
+#ifdef RW610
+/**
+ * This API can be used to destroy all wifi driver tasks.
+ */
+void wifi_destroy_wifidriver_tasks(void);
+/**
+ * This API can be used to get IMU task lock.
+ */
+int wifi_imu_get_task_lock(void);
+/**
+ * This API can be used to put IMU task lock.
+ */
+int wifi_imu_put_task_lock(void);
+/**
+ * This API can be used to judge if wifi firmware is hang.
+ */
+bool wifi_fw_is_hang(void);
+/**
+ * This API can be used to send shutdown command to FW.
+ */
+int wifi_send_shutdown_cmd(void);
+#endif
+/**
+ * This API can be used to set wifi driver tx status.
+ */
+void wifi_set_tx_status(t_u8 status);
+
+/**
+ * This API can be used to set wifi driver rx status.
+ */
+void wifi_set_rx_status(t_u8 status);
 
 /**
  * Register Data callback function with Wi-Fi Driver to receive

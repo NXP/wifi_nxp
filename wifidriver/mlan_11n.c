@@ -1697,7 +1697,6 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
 
 #if !defined(RW610)
 #ifndef CONFIG_MLAN_WMSDK
-#endif
 /**
  *  @brief This function will create a entry in tx ba stream table for the
  *  		given RA/TID.
@@ -1709,22 +1708,14 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
  *
  *  @return 	    N/A
  */
-#if defined(RW610)
-void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_status)
-#else
 void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status)
-#endif
 {
     TxBAStreamTbl *newNode  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
 
-#if defined(RW610)
-    if (!wlan_11n_get_txbastream_tbl(priv, ra))
-#else
     if (!wlan_11n_get_txbastream_tbl(priv, tid, ra))
-#endif
     {
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
@@ -1733,15 +1724,8 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
                                          (t_u8 **)&newNode);
         util_init_list((pmlan_linked_list)newNode);
 
-#if defined(RW610)
-        (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
-
-        newNode->ba_status   = ba_status;
-        newNode->txba_thresh = os_rand_range(5, 5);
-#else
         newNode->tid       = tid;
         newNode->ba_status = ba_status;
-#endif
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
@@ -1750,6 +1734,37 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
 
     LEAVE();
 }
+#endif /* CONFIG_MLAN_WMSDK */
+#else
+void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_status)
+{
+    TxBAStreamTbl *newNode  = MNULL;
+    pmlan_adapter pmadapter = priv->adapter;
+
+    ENTER();
+
+    if (!wlan_11n_get_txbastream_tbl(priv, ra))
+    {
+        PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
+        DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
+
+        pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(TxBAStreamTbl), MLAN_MEM_DEF,
+                                         (t_u8 **)&newNode);
+        util_init_list((pmlan_linked_list)newNode);
+
+        (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
+
+        newNode->ba_status   = ba_status;
+        newNode->txba_thresh = os_rand_range(5, 5);
+        (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
+
+        util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
+                               pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
+    }
+
+    LEAVE();
+}
+#endif
 
 #if defined(RW610)
 /**
@@ -1889,8 +1904,6 @@ int wlan_11n_get_sta_peer_amsdu(mlan_private *priv)
 
     return ret;
 }
-#else
-#endif /* CONFIG_MLAN_WMSDK */
 #endif
 
 /**

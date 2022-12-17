@@ -559,7 +559,26 @@ int mlan_subsys_init(void)
 
 int mlan_subsys_deinit(void)
 {
+#ifdef RW610
+    int i               = 0;
+    pmlan_callbacks pcb = &(mlan_adap->callbacks);
+
+    for (i = 0; i < MIN(mlan_adap->priv_num, MLAN_MAX_BSS_NUM); i++)
+    {
+        if (mlan_adap->priv[i])
+        {
+            pcb->moal_mfree(MNULL, (t_u8 *)(mlan_adap->priv[i]));
+            mlan_adap->priv[i] = MNULL;
+        }
+    }
+    /* free pointers under mlan_adap */
+#ifdef OTP_CHANINFO
+    wlan_free_fw_cfp_tables(mlan_adap);
+#endif
+    pcb->moal_mfree(MNULL, (t_u8 *)mlan_adap);
+#else
     (void)mlan_unregister(mlan_adap);
+#endif
     mlan_adap = MNULL;
 
     wlan_clear_scan_bss();
@@ -2015,7 +2034,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
     t_u16 command = (resp->command & HostCmd_CMD_ID_MASK);
 
-    wcmdr_d("CMD-RESP: 0x%x Size: %d Seq: %d Result: %d", command, resp->size, resp->seq_num, resp->result);
+    wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
 
     mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
 
@@ -2237,6 +2256,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
                 if (rv != MLAN_STATUS_SUCCESS)
                 {
+                    wifi_user_scan_config_cleanup();
                     return -WM_FAIL;
                 }
 
@@ -4467,7 +4487,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
             rv = wlan_handle_event_ext_scan_report(pmpriv, (t_u8 *)pext_scan_result);
 
             if (rv != MLAN_STATUS_SUCCESS)
+            {
+                wifi_user_scan_config_cleanup();
                 return -WM_FAIL;
+            }
 
             if (is_split_scan_complete() && !pext_scan_result->more_event)
             {

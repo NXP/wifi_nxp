@@ -220,6 +220,43 @@ static mlan_status wlan_11n_dispatch_pkt_until_start_win(t_void *priv, RxReorder
 }
 
 /**
+ *  @brief This function free all the packets in one rxreorder node.
+ *
+ *  @param priv    	        A pointer to mlan_private
+ *
+ *  @return 	   	        MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_11n_free_rxreorder_pkt(t_void *priv, RxReorderTbl *rx_reor_tbl_ptr)
+{
+    mlan_private *pmpriv = (mlan_private *)priv;
+    void *rx_tmp_ptr     = MNULL;
+    int i                = 0;
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    for (i = 0; i < rx_reor_tbl_ptr->win_size; i++)
+    {
+        pmpriv->adapter->callbacks.moal_spin_lock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+        rx_tmp_ptr = MNULL;
+        if (rx_reor_tbl_ptr->rx_reorder_ptr[i] != NULL)
+        {
+            rx_tmp_ptr                         = rx_reor_tbl_ptr->rx_reorder_ptr[i];
+            rx_reor_tbl_ptr->rx_reorder_ptr[i] = MNULL;
+        }
+        pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
+        if (rx_tmp_ptr != NULL)
+        {
+            pbuf_free((struct pbuf *)(((pmlan_buffer)rx_tmp_ptr)->pbuf));
+            os_mem_free(rx_tmp_ptr);
+        }
+    }
+
+    LEAVE();
+    return ret;
+}
+
+/**
  *  @brief This function will display the rxReorder table
  *
  *  @param pmadapter          A pointer to mlan_adapter structure
@@ -314,8 +351,11 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
         return;
     }
 
-    (void)wlan_11n_dispatch_pkt_until_start_win(
-        priv, rx_reor_tbl_ptr, (rx_reor_tbl_ptr->start_win + rx_reor_tbl_ptr->win_size) & (MAX_TID_VALUE - 1));
+    if (mlan_adap->in_reset)
+        (void)wlan_11n_free_rxreorder_pkt(priv, rx_reor_tbl_ptr);
+    else
+        (void)wlan_11n_dispatch_pkt_until_start_win(
+            priv, rx_reor_tbl_ptr, (rx_reor_tbl_ptr->start_win + rx_reor_tbl_ptr->win_size) & (MAX_TID_VALUE - 1));
 
     if (rx_reor_tbl_ptr->timer_context.timer != NULL)
     {

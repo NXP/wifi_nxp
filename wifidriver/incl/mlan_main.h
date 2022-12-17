@@ -270,9 +270,8 @@ extern t_u32 drvdbg;
 #endif /* 0 */
 
 /* memcpy_ext rountine */
-#define memcpy_ext(adapter, to, from, len, size)                               \
-	(adapter->callbacks.moal_memcpy_ext(adapter->pmoal_handle, to, from,   \
-					    len, size))
+#define memcpy_ext(adapter, to, from, len, size) \
+    (adapter->callbacks.moal_memcpy_ext(adapter->pmoal_handle, to, from, len, size))
 
 /** Find number of elements */
 #ifndef NELEMENTS
@@ -1062,7 +1061,16 @@ typedef struct _mlan_operations
     /** BSS role */
     mlan_bss_role bss_role;
 } mlan_operations;
-
+#ifdef RW610
+/**Adapter_operations data structure*/
+typedef struct _bus_operations
+{
+    /** interface to check if fw is hang */
+    bool (*fw_is_hang)(void);
+    /**Interface header length*/
+    t_u32 intf_header_len;
+} bus_operations;
+#endif
 /** Private structure for MLAN */
 struct _mlan_private
 {
@@ -1841,7 +1849,12 @@ struct _mlan_adapter
     mlan_callbacks callbacks;
     /** Init parameters */
     mlan_init_para init_para;
-
+#ifdef RW610
+    /** bus operations*/
+    bus_operations bus_ops;
+#endif
+    /** In reset status now */
+    t_u8 in_reset;
 #ifndef CONFIG_MLAN_WMSDK
     /** mlan_lock for init/shutdown */
     t_void *pmlan_lock;
@@ -2407,9 +2420,9 @@ mlan_status wlan_handle_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
 #ifndef CONFIG_MLAN_WMSDK
 /** Process transmission */
 mlan_status wlan_process_tx(pmlan_private priv, pmlan_buffer pmbuf, mlan_tx_param *tx_param);
+#endif /* CONFIG_MLAN_WMSDK */
 /** Transmit a null data packet */
 mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #if defined(SDIO_MULTI_PORT_TX_AGGR) || defined(SDIO_MULTI_PORT_RX_AGGR)
 mlan_status wlan_alloc_sdio_mpa_buffers(IN mlan_adapter *pmadapter, t_u32 mpa_tx_buf_size, t_u32 mpa_rx_buf_size);

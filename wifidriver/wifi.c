@@ -174,6 +174,7 @@ uint32_t wifi_get_value1(void)
 /* Wake up Wi-Fi card */
 void wifi_wake_up_card(uint32_t *resp)
 {
+    wcmdr_d("Wakeup device...");
 #ifndef RW610
     (void)sdio_drv_creg_write(0x0, 1, 0x02, resp);
 #else
@@ -904,11 +905,12 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     t_u32 tx_blocks;
 #endif
 
+#ifndef RW610
 #if defined(CONFIG_ENABLE_WARNING_LOGS) || defined(CONFIG_WIFI_CMD_RESP_DEBUG)
 
     wcmdr_d("CMD --- : 0x%x Size: %d Seq: %d", cmd->command, cmd->size, cmd->seq_num);
 #endif /* CONFIG_ENABLE_WARNING_LOGS || CONFIG_WIFI_CMD_RESP_DEBUG*/
-
+#endif
     if (cmd->size > WIFI_FW_CMDBUF_SIZE)
     {
         /*
@@ -1284,6 +1286,27 @@ int wifi_remove_mcast_filter(uint8_t *mac_addr)
     return ret;
 }
 
+void wifi_remove_all_mcast_filter(uint8_t need_lock)
+{
+    mcast_filter *node = NULL;
+
+    if (wm_wifi.start_list == NULL)
+        return;
+
+    if (need_lock)
+        wifi_get_mcastf_lock();
+
+    while (wm_wifi.start_list)
+    {
+        node               = wm_wifi.start_list;
+        wm_wifi.start_list = node->next;
+        os_mem_free(node);
+    }
+
+    if (need_lock)
+        wifi_put_mcastf_lock();
+}
+
 static struct wifi_scan_result common_desc;
 int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
 {
@@ -1481,6 +1504,7 @@ void wifi_scan_stop(void)
         /* wait for scan task done */
         os_thread_sleep(os_msec_to_ticks(1000));
     }
+    wm_wifi.scan_stop = false;
 }
 
 /**
@@ -1644,7 +1668,10 @@ static int wifi_core_init(void)
         goto fail;
     }
 #endif
-
+    wm_wifi.tx_status    = WIFI_DATA_RUNNING;
+    wm_wifi.tx_block_cnt = 0;
+    wm_wifi.rx_status    = WIFI_DATA_RUNNING;
+    wm_wifi.rx_block_cnt = 0;
 #ifdef CONFIG_CSI
     /* Semaphore to protect wmm data parameters */
     ret = os_semaphore_create(&csi_buff_stat.csi_data_sem, "usb data sem");
@@ -1668,6 +1695,7 @@ static void wifi_core_deinit(void)
 {
     int i = 0;
 
+    mlan_adap->in_reset = true;
     for (i = 0; i < (int)(MIN(MLAN_MAX_BSS_NUM, mlan_adap->priv_num)); i++)
     {
         if (mlan_adap->priv[i])
@@ -1696,8 +1724,17 @@ static void wifi_core_deinit(void)
     }
 #ifdef CONFIG_WMM_ENH
     wifi_wmm_buf_pool_deinit();
+#else
+    memset(wm_wifi.pkt_index, 0x00, sizeof(wm_wifi.pkt_index));
+    memset(wm_wifi.pkt_cnt, 0x00, sizeof(wm_wifi.pkt_cnt));
+    memset(wm_wifi.send_index, 0x00, sizeof(wm_wifi.send_index));
+    memset(wm_wifi.bk_pkt_len, 0x00, sizeof(wm_wifi.bk_pkt_len));
+    memset(wm_wifi.be_pkt_len, 0x00, sizeof(wm_wifi.be_pkt_len));
+    memset(wm_wifi.vi_pkt_len, 0x00, sizeof(wm_wifi.vi_pkt_len));
+    memset(wm_wifi.vo_pkt_len, 0x00, sizeof(wm_wifi.vo_pkt_len));
 #endif
 #endif
+    wifi_remove_all_mcast_filter(0);
     if (wm_wifi.mcastf_mutex != NULL)
     {
         (void)os_mutex_delete(&wm_wifi.mcastf_mutex);
@@ -1720,6 +1757,7 @@ static void wifi_core_deinit(void)
         (void)os_mutex_delete(&wm_wifi.command_lock);
         wm_wifi.command_lock = NULL;
     }
+#ifndef RW610
     if (wm_wifi.wm_wifi_main_thread != NULL)
     {
         (void)os_thread_delete(&wm_wifi.wm_wifi_main_thread);
@@ -1744,7 +1782,12 @@ static void wifi_core_deinit(void)
         wm_wifi.wm_wifi_driver_tx = NULL;
     }
 #endif
-
+#else
+    wm_wifi.cmd_resp_priv   = NULL;
+    wm_wifi.cmd_resp_ioctl  = NULL;
+    wm_wifi.cmd_resp_status = 0;
+    memset(&wm_wifi, 0x00, sizeof(wm_wifi));
+#endif
 #ifdef CONFIG_HEAP_DEBUG
     if (os_mem_stat_sem != NULL)
     {
@@ -1884,6 +1927,57 @@ void wifi_deinit(void)
 #else
     sd_wifi_deinit();
 #endif
+}
+
+#ifdef RW610
+bool wifi_fw_is_hang(void)
+{
+    if (mlan_adap && mlan_adap->bus_ops.fw_is_hang)
+        return mlan_adap->bus_ops.fw_is_hang();
+    return false;
+}
+
+void wifi_destroy_wifidriver_tasks(void)
+{
+#ifdef CONFIG_WMM
+    if (wm_wifi.wm_wifi_driver_tx)
+    {
+        os_thread_delete(&wm_wifi.wm_wifi_driver_tx);
+        wm_wifi.wm_wifi_driver_tx = NULL;
+    }
+#endif
+
+    if (wm_wifi.wm_wifi_main_thread != NULL)
+    {
+        os_thread_delete(&wm_wifi.wm_wifi_main_thread);
+        wm_wifi.wm_wifi_main_thread = NULL;
+    }
+
+    if (wm_wifi.wm_wifi_core_thread != NULL)
+    {
+        os_thread_delete(&wm_wifi.wm_wifi_core_thread);
+        wm_wifi.wm_wifi_core_thread = NULL;
+        wifi_core_thread            = NULL;
+    }
+
+    if (wm_wifi.wm_wifi_scan_thread != NULL)
+    {
+        (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
+        wm_wifi.wm_wifi_scan_thread = NULL;
+        wifi_scan_thread            = NULL;
+    }
+
+    imu_uninstall_callback();
+}
+#endif
+void wifi_set_tx_status(t_u8 status)
+{
+    wm_wifi.tx_status = status;
+}
+
+void wifi_set_rx_status(t_u8 status)
+{
+    wm_wifi.rx_status = status;
 }
 
 void wifi_set_packet_retry_count(const int count)
@@ -2153,6 +2247,12 @@ void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void)
 
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
+    if (wm_wifi.rx_status == WIFI_DATA_BLOCK)
+    {
+        wm_wifi.rx_block_cnt++;
+        return WM_SUCCESS;
+    }
+
     if (wm_wifi.data_intput_callback != NULL)
     {
         if (mlan_adap->ps_state == PS_STATE_SLEEP)
@@ -2181,10 +2281,18 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
 #define ETHER_TYPE_IPV4_02       0xd
 #define ETHER_TYPE_IPV4_VALUE_01 0x8
 #define ETHER_TYPE_IPV4_VALUE_02 0x0
-#define WMM_PACKET_TOS           0xf
+#define WMM_PACKET_TOS_IV4       0xf
 #define PRIORITY_COMPENSATOR     0x20
 #define UDP_IDENTIFIER_POS       0x11
 #define UDP_IDENTIFIER_VAL       0xda
+
+#define ETHER_TYPE_IPV6_01       0xc
+#define ETHER_TYPE_IPV6_02       0xd
+#define ETHER_TYPE_IPV6_VALUE_01 0x86
+#define ETHER_TYPE_IPV6_VALUE_02 0xdd
+#define WMM_PACKET_TOS_IPV6_01   0xe
+#define WMM_PACKET_TOS_IPV6_02   0xf
+#define TOS_MASK_IPV6            0x0ff0 /* 0000111111110000 */
 
 /* Packet priority is 16th byte of payload.
  * Provided that the packet is IPV4 type
@@ -2194,11 +2302,21 @@ int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame)
 {
     if (buf == NULL)
         return -WM_FAIL;
-    if (buf[ETHER_TYPE_IPV4_01] == ETHER_TYPE_IPV4_VALUE_01 && buf[ETHER_TYPE_IPV4_02] == ETHER_TYPE_IPV4_VALUE_02)
+    if ((buf[ETHER_TYPE_IPV4_01] == ETHER_TYPE_IPV4_VALUE_01 && buf[ETHER_TYPE_IPV4_02] == ETHER_TYPE_IPV4_VALUE_02) ||
+        (buf[ETHER_TYPE_IPV6_01] == ETHER_TYPE_IPV6_VALUE_01 && buf[ETHER_TYPE_IPV6_02] == ETHER_TYPE_IPV6_VALUE_02))
     {
-        if (buf[UDP_IDENTIFIER_POS] == UDP_IDENTIFIER_VAL)
-            *is_udp_frame = true;
-        *tid = (buf[WMM_PACKET_TOS] / PRIORITY_COMPENSATOR);
+        if (buf[ETHER_TYPE_IPV4_01] == ETHER_TYPE_IPV4_VALUE_01 && buf[ETHER_TYPE_IPV4_02] == ETHER_TYPE_IPV4_VALUE_02)
+        {
+            if (buf[UDP_IDENTIFIER_POS] == UDP_IDENTIFIER_VAL)
+                *is_udp_frame = true;
+
+            *tid = (buf[WMM_PACKET_TOS_IV4] / PRIORITY_COMPENSATOR);
+        }
+        else
+        {
+            t_u16 ipv6_tos = (buf[WMM_PACKET_TOS_IPV6_01] << 8) | (buf[WMM_PACKET_TOS_IPV6_02]);
+            *tid           = (t_u8)(((ipv6_tos & TOS_MASK_IPV6) >> 4) / PRIORITY_COMPENSATOR);
+        }
         switch (*tid)
         {
             case 0:
@@ -3001,6 +3119,15 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
+
+    w_pkt_d("Data TX: Kernel=>Driver, if %d, len %d", interface, len);
+
+    if (wm_wifi.tx_status == WIFI_DATA_BLOCK)
+    {
+        wm_wifi.tx_block_cnt++;
+        return WM_SUCCESS;
+    }
+
     // wakelock_get(WL_ID_LL_OUTPUT);
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
@@ -3415,6 +3542,18 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 {
     return raw_low_level_output((t_u8)bss_type, buff, len);
 }
+
+#ifdef RW610
+int wifi_imu_get_task_lock(void)
+{
+    return imu_get_task_lock();
+}
+
+int wifi_imu_put_task_lock(void)
+{
+    return imu_put_task_lock();
+}
+#endif
 
 #ifdef CONFIG_CSI
 

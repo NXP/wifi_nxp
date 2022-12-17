@@ -138,6 +138,14 @@ typedef struct
     t_u32 vi_pkt_len[VI_MAX_BUF];
     t_u32 vo_pkt_len[VO_MAX_BUF];
 #endif
+    /** tx status: 0-RUNNING, 1-BLOCK */
+    t_u8 tx_status;
+    /** tx data count blocked */
+    t_u8 tx_block_cnt;
+    /** rx status: 0-RUNNING, 1-BLOCK */
+    t_u8 rx_status;
+    /** rx data count blocked */
+    t_u8 rx_block_cnt;
 #ifdef CONFIG_WIFI_FW_DEBUG
     /** This function mount USB device.
      *

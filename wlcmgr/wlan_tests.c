@@ -3557,6 +3557,24 @@ static void test_wlan_set_mac_address(int argc, char **argv)
 
     wlan_set_mac_addr(raw_mac);
 }
+#if defined(RW610) && defined(CONFIG_WIFI_RESET)
+static void test_wlan_reset(int argc, char **argv)
+{
+    int option;
+
+    option = atoi(argv[1]);
+    if (argc != 2 || (option != 0 && option != 1 && option != 2))
+    {
+        (void)PRINTF("Usage: %s <options>\r\n", argv[0]);
+        (void)PRINTF("0 to Disable WiFi\r\n");
+        (void)PRINTF("1 to Enable WiFi\r\n");
+        (void)PRINTF("2 to Reset WiFi\r\n");
+        return;
+    }
+
+    wlan_reset((cli_reset_option)option);
+}
+#endif
 
 #ifdef CONFIG_ECSA
 static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
@@ -4544,6 +4562,9 @@ static struct cli_command tests[] = {
 #endif
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
+#endif
+#if defined(RW610) && defined(CONFIG_WIFI_RESET)
+    {"wlan-reset", NULL, test_wlan_reset},
 #endif
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},

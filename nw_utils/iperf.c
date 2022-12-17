@@ -40,7 +40,7 @@ struct iperf_test_context
 };
 
 static struct iperf_test_context ctx;
-static os_timer_t ptimer;
+static os_timer_t ptimer = NULL;
 static ip_addr_t server_address;
 static ip_addr_t bind_address;
 static bool multicast;
@@ -1122,10 +1122,16 @@ int iperf_cli_init(void)
         }
     }
 
+    if (ctx.iperf_session != NULL)
+    {
+        lwiperf_abort(ctx.iperf_session);
+    }
+
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    rv = os_timer_create(&ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
-                         OS_TIMER_PERIODIC, OS_TIMER_AUTO_ACTIVATE);
+    if (ptimer == NULL)
+        rv = os_timer_create(&ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
+                             OS_TIMER_PERIODIC, OS_TIMER_AUTO_ACTIVATE);
 
     if (rv != WM_SUCCESS)
     {

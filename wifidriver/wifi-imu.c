@@ -210,12 +210,39 @@ int wifi_get_device_firmware_version_ext(wifi_fw_version_ext_t *fw_ver_ext)
 /* Initializes the driver struct */
 static int wlan_init_struct()
 {
+    int status = WM_SUCCESS;
     if (txrx_mutex == NULL)
     {
-        int status = os_mutex_create(&txrx_mutex, "txrx", OS_MUTEX_INHERIT);
+        status = os_mutex_create(&txrx_mutex, "txrx", OS_MUTEX_INHERIT);
         if (status != WM_SUCCESS)
             return status;
     }
+
+    status = imu_create_task_lock();
+    return status;
+}
+
+static int wlan_deinit_struct()
+{
+    if (txrx_mutex)
+    {
+        int status = os_mutex_delete(&txrx_mutex);
+        if (status != WM_SUCCESS)
+        {
+            wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
+            return status;
+        }
+    }
+    else
+    {
+        wifi_io_d("%s mutex does not exsit", __FUNCTION__);
+    }
+
+    imu_delete_task_lock();
+
+    (void)memset(dev_mac_addr, 0, sizeof(dev_mac_addr));
+    (void)memset(dev_fw_ver_ext, 0, sizeof(dev_fw_ver_ext));
+
     return WM_SUCCESS;
 }
 
@@ -266,11 +293,10 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     }
     ptxpd->tx_control = 0;
 #ifdef CONFIG_WMM
-    t_u8 type_ip_offset = ptxpd->tx_pkt_offset + INTF_HEADER_LEN + MLAN_MAC_ADDR_LENGTH + MLAN_MAC_ADDR_LENGTH;
-    if (data_ptr[type_ip_offset] == 0x8 && data_ptr[type_ip_offset + 1] == 0x0)
-        ptxpd->priority = (data_ptr[type_ip_offset + 3] / 32);
-    else
-        ptxpd->priority = 0;
+    t_u8 tid          = 0;
+    bool is_udp_frame = false;
+    wifi_wmm_get_pkt_prio(((t_u8 *)(data_ptr + ptxpd->tx_pkt_offset + INTF_HEADER_LEN)), &tid, &is_udp_frame);
+    ptxpd->priority = tid;
 #else
     ptxpd->priority = 0;
 #endif
@@ -983,7 +1009,7 @@ static void wlan_fw_init_cfg()
 #ifdef RW610
     if (!cal_data_valid_rw610)
     {
-        wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
+        wcmdr_d("CMD : SET_CAL_DATA (0x8f)");
 
         _wlan_set_cal_data();
 
@@ -994,7 +1020,7 @@ static void wlan_fw_init_cfg()
     }
 #ifdef RW610
     bool cal_data_valid_rw610 = ((mlan_adap->priv[0]->adapter->fw_cap_ext) & 0x0800 == 0);
-    if(!cal_data_valid_rw610)
+    if (!cal_data_valid_rw610)
     {
         wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
 
@@ -1508,11 +1534,11 @@ void imu_wifi_deinit(void)
 #endif
     cal_data_valid = false;
     mac_addr_valid = false;
-    memset(dev_fw_ver_ext, 0x00, sizeof(dev_fw_ver_ext));
 #if 0
     wlan_cmd_shutdown();
     // sdio_drv_deinit();
 #endif
+    wlan_deinit_struct();
 
     flag = MBIT(1) | imu_fw_is_hang();
     mlan_deinit_wakeup_irq();
@@ -1535,6 +1561,11 @@ HostCmd_DS_COMMAND *wifi_get_command_buffer()
     /* First 4 bytes reserved for SDIO pkt header */
     return (HostCmd_DS_COMMAND *)(cmd_buf + INTF_HEADER_LEN);
 }
+
+bus_operations imu_ops = {
+    .fw_is_hang      = imu_fw_is_hang,
+    .intf_header_len = INTF_HEADER_LEN,
+};
 
 #ifdef CONFIG_EVENT_MEM_ACCESS
 #define WIFI_REG8(x)  (*(volatile unsigned char *)(x))
@@ -1656,3 +1687,49 @@ static void wifi_handle_event_access_by_host(t_u8 *evt_buff)
     os_mem_free(local);
 }
 #endif
+int imu_create_task_lock(void)
+{
+    int ret = 0;
+
+    ret = HAL_ImuCreateTaskLock();
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Create imu task lock failed.");
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+
+void imu_delete_task_lock(void)
+{
+    HAL_ImuDeleteTaskLock();
+}
+
+int imu_get_task_lock(void)
+{
+    int ret = 0;
+
+    ret = HAL_ImuGetTaskLock();
+    if (ret != WM_SUCCESS)
+    {
+        wifi_d("Get imu task lock failed.");
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+
+int imu_put_task_lock(void)
+{
+    int ret = 0;
+
+    ret = HAL_ImuPutTaskLock();
+    if (ret != WM_SUCCESS)
+    {
+        wifi_d("Put imu task lock failed.");
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}

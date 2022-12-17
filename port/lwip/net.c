@@ -230,15 +230,22 @@ void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
 int net_wlan_init(void)
 {
     int ret;
+
+#ifdef RW610
+    (void)wifi_register_data_input_callback(&handle_data_packet);
+    (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
+    (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
+    (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
+#endif
     if (!net_wlan_init_done)
     {
         net_ipv4stack_init();
-
+#ifndef RW610
         (void)wifi_register_data_input_callback(&handle_data_packet);
         (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
         (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
         (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
-
+#endif
         ip_2_ip4(&g_mlan.ipaddr)->addr = INADDR_ANY;
         ret = netifapi_netif_add(&g_mlan.netif, ip_2_ip4(&g_mlan.ipaddr), ip_2_ip4(&g_mlan.ipaddr),
                                  ip_2_ip4(&g_mlan.ipaddr), NULL, lwip_netif_init, tcpip_input);

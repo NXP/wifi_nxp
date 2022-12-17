@@ -1239,7 +1239,14 @@ struct wlan_tx_pert_info
     t_u16 tx_pert_check_num;
 };
 #endif
-
+#if defined(RW610)
+typedef enum
+{
+    CLI_DISABLE_WIFI,
+    CLI_ENABLE_WIFI,
+    CLI_RESET_WIFI,
+} cli_reset_option;
+#endif
 #ifdef CONFIG_TX_RX_HISTOGRAM
 struct wlan_txrx_histogram_info
 {
@@ -1422,6 +1429,28 @@ int wlan_stop(void);
  */
 void wlan_deinit(int action);
 
+#if defined(RW610)
+/** Reset driver.
+ *  \param ResetOption option including enable, disable or reset wifi driver
+ *  can be chosen.
+ */
+void wlan_reset(cli_reset_option ResetOption);
+/** Stop and Remove all wireless network (Access Point).
+ *
+ *  \return WM_SUCCESS if successful.
+ */
+int wlan_remove_all_networks(void);
+/**
+ * This API destroy all tasks.
+ */
+void wlan_destroy_all_tasks(void);
+/** Retrieve the status information of if wlan started.
+ *
+ *  \return TRUE if started.
+ *  \return FALSE if not started.
+ */
+bool wlan_is_started();
+#endif
 /** WLAN initialize micro-AP network information
  *
  * This API intializes a default micro-AP network. The network ssid, passphrase

@@ -366,7 +366,8 @@ static int wifi_cmd_uap_config(char *ssid,
                                t_u8 dtim_period,
                                t_u8 chan_sw_count,
                                mlan_bss_type bss_type,
-                               bool mfpc, bool mfpr)
+                               bool mfpc,
+                               bool mfpr)
 {
     t_u32 ssid_len = strlen(ssid);
     uint8_t i;
@@ -961,6 +962,13 @@ int wifi_uap_start(mlan_bss_type type,
         (void)wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(wm_wifi.dp);
         wuap_d("Enabling 11d");
         (void)wm_wifi.uap_support_11d_apis->wifi_uap_enable_11d_p();
+    }
+
+    /* Free dp after the 11d configuration is done */
+    if (wm_wifi.dp != MNULL)
+    {
+        os_mem_free(wm_wifi.dp);
+        wm_wifi.dp = MNULL;
     }
 
     wuap_d("Starting BSS");
