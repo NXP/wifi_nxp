@@ -5578,6 +5578,12 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_mac_filter_t
 /** setting for band_config - band=5GHZ */
 #define BAND_CONFIG_5GHZ 0x01U
 
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+/** TODO: Temporary work around until firmware fix is available */
+/** setting for band_config - channel 173 */
+#define BAND_CONFIG_CH_173 0x11U
+#endif
+
 /** MrvlIEtypes_retry_limit_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_channel_band_t
 {

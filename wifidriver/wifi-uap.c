@@ -436,8 +436,17 @@ static int wifi_cmd_uap_config(char *ssid,
                 wuap_e("Cannot start uAP on DFS channel %d", channel);
                 return -WM_E_INVAL;
             }
-
-            bss.param.bss_config.band_cfg = BAND_CONFIG_5GHZ;
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+            /* TODO: Temporary work around until firmware fix is available */
+            if(channel == 173)
+            {
+                bss.param.bss_config.band_cfg = BAND_CONFIG_CH_173;
+            }
+            else
+#endif
+            {
+                bss.param.bss_config.band_cfg = BAND_CONFIG_5GHZ;
+            }
             (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_5ghz, sizeof(rates_5ghz));
         }
         else
