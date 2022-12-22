@@ -271,7 +271,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         {
             wifi_mgmt_frame_t *frame = (wifi_mgmt_frame_t *)(void *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
 
-            if (rx_mgmt_callback(rxpd->bss_type, frame, rxpd->rx_pkt_length) == WM_SUCCESS)
+            if (rx_mgmt_callback((enum wlan_bss_type)rxpd->bss_type, frame, rxpd->rx_pkt_length) == WM_SUCCESS)
             {
                 pbuf_free(p);
                 p = NULL;
