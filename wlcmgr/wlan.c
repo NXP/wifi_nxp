@@ -2955,6 +2955,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     }
 }
 
+#if defined (CONFIG_11K) || defined (CONFIG_11V) || defined (CONFIG_ROAMING)
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
 #ifdef CONFIG_11K
@@ -2999,6 +3000,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
     }
 #endif /* CONFIG_11K */
 }
+#endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlan_sort_nlist_channels(wlan_nlist_report_param *pnlist_rep_param)
