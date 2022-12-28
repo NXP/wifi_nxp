@@ -2955,7 +2955,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     }
 }
 
-#if defined (CONFIG_11K) || defined (CONFIG_11V) || defined (CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
 #ifdef CONFIG_11K
@@ -3563,10 +3563,9 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 
 static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) \
-	|| defined(SD9098) || defined(IW61x) || defined(SD8801) \
-	|| defined(CONFIG_11AC) || defined(STREAM_2X2)	
-    int ret = 0;
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x) || \
+    defined(SD8801) || defined(CONFIG_11AC) || defined(STREAM_2X2)
+    int ret;
 #endif
     if (wlan.sta_state != CM_STA_INITIALIZING)
     {
