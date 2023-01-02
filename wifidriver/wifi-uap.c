@@ -608,6 +608,7 @@ static int wifi_cmd_uap_config(char *ssid,
     {
         wm_wifi.ht_tx_cfg &= ~MBIT(1);
         wm_wifi.ht_tx_cfg &= ~MBIT(6);
+        bss.param.bss_config.ht_cap_info &= ~MBIT(12);
     }
     else
     {
