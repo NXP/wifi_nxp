@@ -116,6 +116,12 @@ typedef PACK_START enum {
     COUNTRY_CN,
 } PACK_END country_code_t;
 
+typedef struct wifi_uap_client_disassoc
+{
+    int reason_code;
+    t_u8 sta_addr[MLAN_MAC_ADDR_LENGTH];
+} wifi_uap_client_disassoc_t;
+
 /**
  * Initialize Wi-Fi driver module.
  *

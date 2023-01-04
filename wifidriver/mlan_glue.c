@@ -4005,6 +4005,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
     Event_Ext_t *evt = ((Event_Ext_t *)msg->data);
     t_u8 *sta_addr = NULL, *event_sta_addr = NULL, *new_channel = NULL;
+    wifi_uap_client_disassoc_t *disassoc_resp;
 #ifdef CONFIG_WLAN_BRIDGE
     Event_AutoLink_SW_Node_t *pnewNode = NULL;
     char *pinfo                        = NULL;
@@ -4367,12 +4368,14 @@ int wifi_handle_fw_event(struct bus_message *msg)
              * passed to event receiver thread. Freeing this is
              * responsibility of the receiving thread.
              */
-            sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
-            if (sta_addr == MNULL)
+            disassoc_resp = os_mem_alloc(sizeof(wifi_uap_client_disassoc_t));
+            if (disassoc_resp == MNULL)
             {
-                wifi_w("No mem. Cannot process MAC address from assoc");
+                wifi_w("No mem. Cannot add mac and reason code for deauth event to app");
                 break;
             }
+            sta_addr = disassoc_resp->sta_addr;
+            disassoc_resp->reason_code = (int)evt->reason_code;
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 #if defined(RW610)
@@ -4387,10 +4390,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
             }
 #endif
-            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) != WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
-                os_mem_free((void *)sta_addr);
+                os_mem_free((void *)disassoc_resp);
             }
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
             wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);

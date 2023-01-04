@@ -1363,6 +1363,8 @@ typedef struct _tx_ampdu_prot_mode_para
 } tx_ampdu_prot_mode_para;
 #endif
 
+typedef wifi_uap_client_disassoc_t wlan_uap_client_disassoc_t;
+
 /* WLAN Connection Manager API */
 
 /** Initialize the SDIO driver and create the wifi driver thread.
