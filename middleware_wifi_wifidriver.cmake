@@ -1,4 +1,4 @@
-#Description: NXP Wi-Fi driver; user_visible: True
+#Description: NXP Wi-Fi driver; user_visible: False
 include_guard(GLOBAL)
 message("middleware_wifi_wifidriver component is included.")
 
@@ -45,7 +45,37 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/incl
 )
 
+#OR Logic component
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1166_cm7")
+    include(middleware_wifi_fwdnld_MIMXRT1166_cm7)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1052")
+    include(middleware_wifi_fwdnld_MIMXRT1052)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1064")
+    include(middleware_wifi_fwdnld_MIMXRT1064)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1021")
+    include(middleware_wifi_fwdnld_MIMXRT1021)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1062")
+    include(middleware_wifi_fwdnld_MIMXRT1062)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1042")
+    include(middleware_wifi_fwdnld_MIMXRT1042)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1176_cm7")
+    include(middleware_wifi_fwdnld_MIMXRT1176_cm7)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT685S_cm33")
+    include(middleware_wifi_fwdnld_MIMXRT685S_cm33)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT595S_cm33")
+    include(middleware_wifi_fwdnld_MIMXRT595S_cm33)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1166_cm4")
+    include(middleware_wifi_fwdnld_MIMXRT1166_cm4)
+endif()
 
-include(middleware_wifi_fwdnld)
-include(utility_debug_console)
 include(middleware_wifi_sdio)
+include(utility_debug_console)

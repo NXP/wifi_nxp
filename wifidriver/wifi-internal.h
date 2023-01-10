@@ -19,7 +19,7 @@
 
 typedef struct
 {
-    int (*wifi_uap_set_params_p)(void);
+    int (*wifi_uap_set_params_p)(int channel);
     int (*wifi_uap_downld_domain_params_p)(MrvlIEtypes_DomainParamSet_t *dp);
     int (*wifi_uap_enable_11d_p)(void);
 } wifi_uap_11d_apis_t;
@@ -43,6 +43,7 @@ typedef struct
 {
     os_thread_t wm_wifi_main_thread;
     os_thread_t wm_wifi_core_thread;
+    os_thread_t wm_wifi_scan_thread;
 #ifdef CONFIG_WMM
     /** Thread handle for sending data */
     os_thread_t wm_wifi_driver_tx;
@@ -108,7 +109,7 @@ typedef struct
      */
     MrvlIEtypes_DomainParamSet_t *dp;
     /** Broadcast ssid control */
-    t_u8 bcast_ssid_ctl;
+    bool bcast_ssid_ctl;
     /** beacon period */
     t_u16 beacon_period;
     /** Wi-Fi Bandwidth */
@@ -171,9 +172,13 @@ typedef struct
      * response buffer provided by application layers
      * structure also stores lengths for usage and validation internally*/
     hostcmd_cfg_t hostcmd_cfg;
+    wlan_user_scan_cfg *g_user_scan_cfg;
+
+    bool scan_stop;
 } wm_wifi_t;
 
 extern wm_wifi_t wm_wifi;
+extern bool split_scan_in_progress;
 
 struct bus_message
 {
@@ -202,7 +207,7 @@ int wifi_handle_fw_event(struct bus_message *msg);
  * This function is used to send events to the upper layer through the
  * message queue registered by the upper layer.
  */
-void wifi_event_completion(int type, enum wifi_event_reason result, void *data);
+int wifi_event_completion(enum wifi_event event, enum wifi_event_reason result, void *data);
 
 /**
  * Use this function to know whether a split scan is in progress.
@@ -220,7 +225,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv);
  * This queue is used to send events and command responses to the wifi
  * driver from the stack dispatcher thread.
  */
-int bus_register_event_queue(xQueueHandle *event_queue);
+int bus_register_event_queue(os_queue_t *event_queue);
 
 /**
  * De-register the event queue.
@@ -284,7 +289,26 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);
 mlan_status wrapper_moal_mfree(t_void *pmoal_handle, t_u8 *pbuf);
 
+#if defined(RW610)
+int wifi_imu_lock(void);
+void wifi_imu_unlock(void);
+#else
 int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
-mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, unsigned int action);
+#endif
+
+mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
+
+/**
+ * This function should be called when user scan is
+ * finished with success/failure.
+ *
+ */
+void wifi_user_scan_config_cleanup(void);
+
+/**
+ * This function should be called to wait for scan task done before resetting.
+ *
+ */
+void wifi_scan_stop(void);
 #endif /* __WIFI_INTERNAL_H__ */
