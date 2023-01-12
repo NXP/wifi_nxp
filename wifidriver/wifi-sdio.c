@@ -32,7 +32,7 @@
 #include "firmware_dnld.h"
 
 /* Buffer pointers to point to command and, command response buffer */
-static uint8_t fw_cmd_buf[WIFI_FW_CMDBUF_SIZE];
+static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
 static int seqnum;
 // static int pm_handle;
 
@@ -1196,7 +1196,7 @@ int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 
 int wifi_send_cmdbuffer(t_u32 tx_blocks, t_u32 len)
 {
-    return wlan_send_sdio_cmd(fw_cmd_buf, tx_blocks, len);
+    return wlan_send_sdio_cmd(ctrl_cmd_buf, tx_blocks, len);
 }
 #ifdef CONFIG_WMM
 extern int retry_attempts;
@@ -2212,7 +2212,7 @@ void sd_wifi_deinit(void)
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)
 {
     /* First 4 bytes reserved for SDIO pkt header */
-    return (HostCmd_DS_COMMAND *)(void *)(fw_cmd_buf + INTF_HEADER_LEN);
+    return (HostCmd_DS_COMMAND *)(void *)(ctrl_cmd_buf + INTF_HEADER_LEN);
 }
 
 /**
