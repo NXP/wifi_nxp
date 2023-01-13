@@ -380,7 +380,7 @@ typedef PACK_START struct _wifi_rate_cfg_t
     t_u32 rate_index;
     /** Rate rate */
     t_u32 rate;
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     /** NSS */
     t_u32 nss;
 #endif
