@@ -205,6 +205,7 @@ typedef struct
     uint16_t wpa3_sae : 1;
     /** Reserved 10 bits */
     uint16_t rsvd : 10;
+
 } _SecurityMode_t;
 
 /* TODO: clean up the parts brought over from the Host SME BSSDescriptor_t,
@@ -244,7 +245,7 @@ struct wifi_scan_result
     bool phtinfo_ie_present; /*!< PHT INFO IE present info */
 
     bool wmm_ie_present; /*!< WMM IE present info */
-    uint8_t band;        /*!< Band info */
+    uint16_t band;       /*!< Band info */
 
     bool wps_IE_exist;                         /*!< WPS IE exist info */
     uint16_t wps_session;                      /*!< WPS session */
@@ -411,9 +412,9 @@ typedef PACK_START struct _wifi_ed_mac_ctrl_t
 typedef PACK_START struct _wifi_bandcfg_t
 {
     /** Infra band */
-    mlan_band_def config_bands;
+    t_u16 config_bands;
     /** fw supported band */
-    mlan_band_def fw_bands;
+    t_u16 fw_bands;
 } PACK_END wifi_bandcfg_t;
 
 #ifdef SD8801
@@ -853,6 +854,38 @@ typedef PACK_START struct
 
 
 
+/** Wifi frame types */
+typedef enum
+{
+    /** Assoc request frame */
+    ASSOC_REQ_FRAME = 0x00,
+    /** Assoc response frame */
+    ASSOC_RESP_FRAME = 0x10,
+    /** ReAssoc request frame */
+    REASSOC_REQ_FRAME = 0x20,
+    /** ReAssoc response frame */
+    REASSOC_RESP_FRAME = 0x30,
+    /** Probe request frame */
+    PROBE_REQ_FRAME = 0x40,
+    /** Probe response frame */
+    PROBE_RESP_FRAME = 0x50,
+    /** BEACON frame */
+    BEACON_FRAME = 0x80,
+    /** Dis assoc frame */
+    DISASSOC_FRAME = 0xA0,
+    /** Auth frame */
+    AUTH_FRAME = 0xB0,
+    /** Deauth frame */
+    DEAUTH_FRAME = 0xC0,
+    /** Action frame */
+    ACTION_FRAME = 0xD0,
+    /** Data frame */
+    DATA_FRAME = 0x08,
+    /** QOS frame */
+    QOS_DATA_FRAME = 0x88,
+} wifi_frame_type_t;
+
+
 typedef struct
 {
     uint8_t mfpc;
@@ -880,6 +913,30 @@ typedef struct
     wifi_chan_scan_param_set_t chan_scan_param[1];
 } wifi_chan_list_param_set_t;
 
+/** 802_11_header packet */
+typedef PACK_START struct _wifi_mgmt_frame_t
+{
+    /** Packet Length */
+    t_u16 frm_len;
+    /** Frame Type */
+    wifi_frame_type_t frame_type;
+    /** Frame Control flags */
+    t_u8 frame_ctrl_flags;
+    /** Duration ID */
+    t_u16 duration_id;
+    /** Address 1 */
+    t_u8 addr1[MLAN_MAC_ADDR_LENGTH];
+    /** Address 2 */
+    t_u8 addr2[MLAN_MAC_ADDR_LENGTH];
+    /** Address 3 */
+    t_u8 addr3[MLAN_MAC_ADDR_LENGTH];
+    /** Sequence Control */
+    t_u16 seq_ctl;
+    /** Address 4 */
+    t_u8 addr4[MLAN_MAC_ADDR_LENGTH];
+    /** Frame payload */
+    t_u8 payload[0];
+} PACK_END wifi_mgmt_frame_t;
 
 /** Calibration Data */
 typedef PACK_START struct _wifi_cal_data_t
@@ -1021,5 +1078,22 @@ typedef PACK_START struct _wifi_mfg_cmd_tx_cont
     t_u32 rsvd;
 } PACK_END wifi_mfg_cmd_tx_cont_t;
 #endif
+
+#ifdef CONFIG_HEAP_DEBUG
+#define MAX_FUNC_SYMBOL_LEN    64
+#define OS_MEM_STAT_TABLE_SIZE 128
+
+/** Structure of mem alloc and free info */
+typedef struct
+{
+    char name[MAX_FUNC_SYMBOL_LEN];
+    t_u32 size;
+    t_u32 line_num;
+
+    t_u32 alloc_cnt;
+    t_u32 free_cnt;
+} wifi_os_mem_info;
+#endif
+
 
 #endif /* __WIFI_DECL_H__ */

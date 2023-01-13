@@ -1,4 +1,4 @@
-#Description: NXP Wi-Fi CLI; user_visible: True
+#Description: NXP Wi-Fi CLI; user_visible: False
 include_guard(GLOBAL)
 message("middleware_wifi_cli component is included.")
 

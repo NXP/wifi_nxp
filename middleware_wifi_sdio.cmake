@@ -1,4 +1,4 @@
-#Description: NXP Wi-Fi SDIO; user_visible: True
+#Description: NXP Wi-Fi SDIO; user_visible: False
 include_guard(GLOBAL)
 message("middleware_wifi_sdio component is included.")
 
