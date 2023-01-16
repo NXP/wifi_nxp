@@ -5202,6 +5202,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
     {
         case WLAN_SECURITY_WPA:
         case WLAN_SECURITY_WPA2:
+        case WLAN_SECURITY_WPA2_SHA256:
         case WLAN_SECURITY_WPA_WPA2_MIXED:
             /* check the length of PSK phrase */
             if (network->security.psk_len < WLAN_PSK_MIN_LENGTH || network->security.psk_len >= WLAN_PSK_MAX_LENGTH)
@@ -5309,7 +5310,10 @@ int wlan_add_network(struct wlan_network *network)
     }
 
     if ((network->role == WLAN_BSS_ROLE_UAP) &&
-        ((network->security.type == WLAN_SECURITY_WPA3_SAE) ||
+        ((network->security.type == WLAN_SECURITY_WPA3_SAE) || (network->security.type == WLAN_SECURITY_WPA2_SHA256) ||
+#ifdef CONFIG_OWE
+         (network->security.type == WLAN_SECURITY_OWE_ONLY) ||
+#endif
          (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
         (!network->security.mfpc))
     {

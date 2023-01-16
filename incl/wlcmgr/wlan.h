@@ -674,6 +674,9 @@ enum wlan_security_type
     WLAN_SECURITY_WPA,
     /** The network uses WPA2 security with PSK. */
     WLAN_SECURITY_WPA2,
+    /** The network uses WPA2 security with PSK(SHA-1 and SHA-256).This security mode
+     * is specific to uAP or SoftAP only */
+    WLAN_SECURITY_WPA2_SHA256,
     /** The network uses WPA/WPA2 mixed security with PSK */
     WLAN_SECURITY_WPA_WPA2_MIXED,
 #ifdef CONFIG_WPA2_ENTP

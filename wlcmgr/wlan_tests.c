@@ -434,6 +434,7 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
     {
         case WLAN_SECURITY_WPA:
         case WLAN_SECURITY_WPA2:
+        case WLAN_SECURITY_WPA2_SHA256:
             /* copy the PSK phrase */
             sec->psk_len = (uint8_t)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
@@ -520,7 +521,7 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF(
         "    role uap [bssid <bssid>]\r\n"
         "    [channel <channelnumber>]\r\n");
-    (void)PRINTF("    [wpa2 <secret>] [wpa3 sae <secret>]\r\n");
+    (void)PRINTF("    [wpa2/wpa2-sha256 <secret>] [wpa3 sae <secret>]\r\n");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #ifdef CONFIG_WIFI_DTIM_PERIOD
     (void)PRINTF("If seting dtim\r\n");
@@ -650,9 +651,17 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.security++;
         }
-        else if ((info.security == 0U) && string_equal("wpa2", argv[arg]))
+        else if ((info.security == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])))
         {
-            if (get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA2, &network.security) != 0)
+            if (string_equal("wpa2", argv[arg]))
+            {
+                network.security.type = WLAN_SECURITY_WPA2;
+            }
+            else if (string_equal("wpa2-sha256", argv[arg]))
+            {
+                network.security.type = WLAN_SECURITY_WPA2_SHA256;
+            }
+            if (get_security(argc - arg - 1, argv + arg + 1, network.security.type, &network.security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA2 security"
