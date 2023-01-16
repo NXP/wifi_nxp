@@ -2379,7 +2379,7 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 
             ret_band = subband_EU_AU_KR_CN_2_4GHz;
             break;
         case 0xFF:
-            return subband_JP_2_4GHz;
+            ret_band = subband_JP_2_4GHz;
             break;
         case 0xAA:
             ret_band = subband_WWSM_2_4GHz;
