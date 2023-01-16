@@ -3,6 +3,18 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p6
+ - Updates:
+  - Updated firmware version to p174 and added latest signed FW bins as well.
+
+ - Bug Fixes:
+  - Fixed: Command timeout issues observed for various offload commands.
+  - Fixed: TWT requester bit not set in Extended Capabilities IE (127) in Association Request and Probe Request of STAUT.
+  - Fixed: Not able to scan and connect Firecrest-STA to Firecrest-uAP configured in UNII-4 band channels 173 and 177.
+  - Fixed: Multiple error messages are seen on DUT while running the stress "RX ping on STA, Start-stop uAP" in loop.
+  - Added 11AX macro so that nss settings can be available for 11AC as well as 11AX based configurations.
+  - Fixed various warning for IAR, MDK, armgcc and mcuXpresso compilers.
+
 Version 1.3.r43.p5
  - Updates:
   - Updated firmware version to p168(however signed firmware is not updated in this release and has version p164).

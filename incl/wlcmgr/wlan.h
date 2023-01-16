@@ -127,7 +127,7 @@
 #include <wifi.h>
 #include <wlan_11d.h>
 
-#define WLAN_DRV_VERSION "v1.3.r43.p5"
+#define WLAN_DRV_VERSION "v1.3.r43.p6"
 
 /* Configuration */
 
