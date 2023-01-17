@@ -1107,6 +1107,10 @@ int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
+#ifdef CONFIG_WIFI_CAPA
+void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
+#endif
+
 int wifi_uap_stop(enum wlan_bss_type type);
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 

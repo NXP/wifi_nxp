@@ -3090,6 +3090,9 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     wlan.roam_reassoc = true;
     ret = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, pnlist_rep_param->num_channels,
                              chan_list, 0,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                             0,
+#endif
 #ifdef CONFIG_EXT_SCAN_SUPPORT
                              scan_channel_gap,
 #endif
