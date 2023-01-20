@@ -267,7 +267,11 @@ static void cmd_hist_add(const char *cmd)
  * If len is 0 then full match will be performed else upto len bytes.
  * Returns: a pointer to the corresponding cli_command struct or NULL.
  */
+#ifdef COEX_APP_SUPPORT
+const struct cli_command *lookup_command(char *name, int len)
+#else
 static const struct cli_command *lookup_command(char *name, int len)
+#endif
 {
     unsigned int i = 0;
     unsigned int n = 0;
