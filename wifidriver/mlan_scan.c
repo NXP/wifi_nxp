@@ -1887,10 +1887,10 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 break;
 #endif
             case RSNX_IE:
-                pbss_entry->prsnx_ie    = (IEEEtypes_Generic_t *)(void *)pcurrent_ptr;
-                pbss_entry->rsnx_offset = (t_u16)(pcurrent_ptr - pbss_entry->pbeacon_buf);
-                HEXDUMP("InterpretIE: Resp RSNX_IE", (t_u8 *)pbss_entry->prsnx_ie,
-                        (*(pbss_entry->prsnx_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                (void)__memcpy(NULL, &pbss_entry->rsnx_ie_saved, pcurrent_ptr, sizeof(pbss_entry->rsnx_ie_saved));
+                pbss_entry->prsnx_ie = &pbss_entry->rsnx_ie_saved;
+                wscan_d("RSNX_IE: tag len %d data 0x%02x", pbss_entry->prsnx_ie->ieee_hdr.len,
+                        pbss_entry->prsnx_ie->data[0]);
                 break;
 
             default:
@@ -3142,6 +3142,10 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry)
     {
         pbss_entry->prsn_ie = (IEEEtypes_Generic_t *)(void *)pbss_entry->rsn_ie_buff;
     }
+    if (pbss_entry->prsnx_ie != NULL)
+    {
+        pbss_entry->prsnx_ie = &pbss_entry->rsnx_ie_saved;
+    }
 }
 
 #if !defined(CONFIG_EXT_SCAN_SUPPORT) || defined(CONFIG_ROAMING)
@@ -3559,12 +3563,12 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
                                                   IEEEtypes_Generic_t *pnew_rsnx)
 {
 #ifndef CONFIG_MLAN_WMSDK
-    mlan_callbacks *pcb   = (pmlan_callbacks)&pmadapter->callbacks;
-    t_u8 *pbeacon_buf     = MNULL;
+    mlan_callbacks *pcb = (pmlan_callbacks)&pmadapter->callbacks;
+    t_u8 *pbeacon_buf   = MNULL;
 #endif
     t_u32 beacon_buf_size = 0;
     t_s8 offset           = pnew_entry->ssid.ssid_len - pbss_entry->ssid.ssid_len;
-    mlan_status ret   = MLAN_STATUS_FAILURE;
+    mlan_status ret       = MLAN_STATUS_FAILURE;
 
     if (pnew_entry->ssid.ssid_len >= pbss_entry->ssid.ssid_len)
         beacon_buf_size = pbss_entry->beacon_buf_size + (pnew_entry->ssid.ssid_len - pbss_entry->ssid.ssid_len);
@@ -3583,16 +3587,19 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
 #endif
     pnew_entry->beacon_buf_size = beacon_buf_size;
     pnew_entry->pbeacon_buf     = pbss_entry->pbeacon_buf;
-    if (pnew_entry->pext_cap){
+    if (pnew_entry->pext_cap)
+    {
         pnew_entry->ext_cap_offset += offset;
-        if(pnew_extcap){
+        if (pnew_extcap)
+        {
             (void)__memcpy(pmadapter, &pnew_entry->ext_cap_saved, pnew_extcap, sizeof(IEEEtypes_ExtCap_t));
             pnew_entry->pext_cap = &pnew_entry->ext_cap_saved;
         }
     }
-	if(pnew_rsnx)
+    if (pnew_rsnx)
     {
-        (void)__memcpy(pmadapter, &pnew_entry->rsnx_ie_saved, pnew_rsnx, pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        (void)__memcpy(pmadapter, &pnew_entry->rsnx_ie_saved, pnew_rsnx,
+                       pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
         pnew_entry->prsnx_ie = &pnew_entry->rsnx_ie_saved;
     }
 
@@ -3688,9 +3695,9 @@ static void wlan_gen_multi_bssid_by_bssid_index(pmlan_adapter pmadapter,
     t_u8 bssid_a;
     t_u8 src_bssid[6];
     (void)__memcpy(pmadapter, (t_u8 *)src_bssid, pbss_entry->mac_address,
-                 MIN(sizeof(mlan_802_11_mac_addr), sizeof(src_bssid)));
+                   MIN(sizeof(mlan_802_11_mac_addr), sizeof(src_bssid)));
     (void)__memcpy(pmadapter, (t_u8 *)new_bssid, (t_u8 *)&pbss_entry->mac_address,
-                 MIN(sizeof(mlan_802_11_mac_addr), sizeof(new_bssid)));
+                   MIN(sizeof(mlan_802_11_mac_addr), sizeof(new_bssid)));
 
     mask         = (mask >> (8 - max_bssid_indicator));
     bssid_a      = src_bssid[5] & (~mask);
@@ -3698,9 +3705,9 @@ static void wlan_gen_multi_bssid_by_bssid_index(pmlan_adapter pmadapter,
     new_bssid[5] = bssid_a | src_bssid[5];
 
     (void)__memcpy(pmadapter, (t_u8 *)&pnew_entry->mac_address, new_bssid,
-                 MIN(sizeof(new_bssid), sizeof(mlan_802_11_mac_addr)));
+                   MIN(sizeof(new_bssid), sizeof(mlan_802_11_mac_addr)));
     (void)__memcpy(pmadapter, (t_u8 *)&pnew_entry->multi_bssid_ap_addr, (t_u8 *)&pbss_entry->mac_address,
-                 MIN(sizeof(mlan_802_11_mac_addr), sizeof(mlan_802_11_mac_addr)));
+                   MIN(sizeof(mlan_802_11_mac_addr), sizeof(mlan_802_11_mac_addr)));
 }
 
 /**
@@ -3736,10 +3743,10 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     mlan_callbacks *pcb            = (pmlan_callbacks)&pmadapter->callbacks;
     BSSDescriptor_t *bss_new_entry = MNULL;
 #ifndef CONFIG_MLAN_WMSDK
-    t_u8 *pbeacon_buf              = MNULL;
+    t_u8 *pbeacon_buf = MNULL;
 #endif
-    IEEEtypes_ExtCap_t *pextcap    = MNULL;
-    IEEEtypes_Generic_t *prsnx     = MNULL;
+    IEEEtypes_ExtCap_t *pextcap = MNULL;
+    IEEEtypes_Generic_t *prsnx  = MNULL;
 
     ENTER();
 
@@ -3822,7 +3829,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
 #endif
         }
         (void)__memcpy(pmadapter, &bss_new_entry->cap_info, &pcap->cap,
-                     MIN(sizeof(IEEEtypes_CapInfo_t), sizeof(IEEEtypes_CapInfo_t)));
+                       MIN(sizeof(IEEEtypes_CapInfo_t), sizeof(IEEEtypes_CapInfo_t)));
         bss_new_entry->multi_bssid_ap = MULTI_BSSID_SUB_AP;
         /*add to scan table*/
         /*
@@ -3831,7 +3838,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
         for (bss_idx = 0; bss_idx < num_in_tbl; bss_idx++)
         {
             if (!__memcmp(pmadapter, bss_new_entry->mac_address, pmadapter->pscan_table[bss_idx].mac_address,
-                        sizeof(bss_new_entry->mac_address)))
+                          sizeof(bss_new_entry->mac_address)))
             {
                 /*
                  * If the SSID matches as well, it is a duplicate of
@@ -3840,7 +3847,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
                  */
                 if ((bss_new_entry->ssid.ssid_len == pmadapter->pscan_table[bss_idx].ssid.ssid_len) &&
                     (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmadapter->pscan_table[bss_idx].ssid.ssid,
-                             bss_new_entry->ssid.ssid_len)))
+                               bss_new_entry->ssid.ssid_len)))
                 {
                     PRINTM(MINFO, "SCAN_RESP: Duplicate of index: %d\n", bss_idx);
                     break;
@@ -3865,7 +3872,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             if (pmadapter->pscan_table[lowest_rssi_index].rssi > bss_new_entry->rssi)
             {
                 (void)__memcpy(pmadapter, &pmadapter->pscan_table[lowest_rssi_index], bss_new_entry,
-                             sizeof(pmadapter->pscan_table[lowest_rssi_index]));
+                               sizeof(pmadapter->pscan_table[lowest_rssi_index]));
                 adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index]);
             }
         }
@@ -3873,7 +3880,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
         {
             /* Copy the locally created bss_new_entry to the scan table */
             (void)__memcpy(pmadapter, &pmadapter->pscan_table[bss_idx], bss_new_entry,
-                         sizeof(pmadapter->pscan_table[bss_idx]));
+                           sizeof(pmadapter->pscan_table[bss_idx]));
             adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx]);
         }
 #ifndef CONFIG_MLAN_WMSDK
