@@ -3027,7 +3027,9 @@ static void wifi_driver_tx(void *data)
                                             outbuf_vo[wm_wifi.send_index[WMM_AC_VO]]);
                     if (err != MLAN_STATUS_SUCCESS)
                     {
+#ifdef CONFIG_WIFI_IO_DEBUG
                         wifi_e("Error in sending Voice traffic");
+#endif
                     }
                     os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
                     wm_wifi.pkt_cnt[WMM_AC_VO]--;
@@ -3042,7 +3044,9 @@ static void wifi_driver_tx(void *data)
                                             outbuf_vi[wm_wifi.send_index[WMM_AC_VI]]);
                     if (err != MLAN_STATUS_SUCCESS)
                     {
+#ifdef CONFIG_WIFI_IO_DEBUG
                         wifi_e("Error in sending Video traffic");
+#endif
                     }
                     os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
                     wm_wifi.pkt_cnt[WMM_AC_VI]--;
@@ -3057,7 +3061,9 @@ static void wifi_driver_tx(void *data)
                                             outbuf_be[wm_wifi.send_index[WMM_AC_BE]]);
                     if (err != MLAN_STATUS_SUCCESS)
                     {
+#ifdef CONFIG_WIFI_IO_DEBUG
                         wifi_e("Error in sending Best Effort traffic");
+#endif
                     }
                     os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
                     wm_wifi.pkt_cnt[WMM_AC_BE]--;
@@ -3072,7 +3078,9 @@ static void wifi_driver_tx(void *data)
                                             outbuf_bk[wm_wifi.send_index[WMM_AC_BK]]);
                     if (err != MLAN_STATUS_SUCCESS)
                     {
+#ifdef CONFIG_WIFI_IO_DEBUG
                         wifi_e("Error in sending Background traffic");
+#endif
                     }
                     os_semaphore_get(&wm_wifi.tx_data_sem, OS_WAIT_FOREVER);
                     wm_wifi.pkt_cnt[WMM_AC_BK]--;
