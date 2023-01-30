@@ -29,6 +29,7 @@
  *    Local Variables
  *    ********************************************************/
 
+static t_u8 user_he_cap_band;
 /********************************************************
  *    Global Variables
  *    ********************************************************/
@@ -122,15 +123,31 @@ t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u8 band, MrvlIEtypes_Extensio
 
     if (!phe_cap)
         return 0;
-    if (band & BAND_A)
+    if (user_he_cap_band)
     {
-        (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
-        len = pmpriv->user_hecap_len;
+        if (user_he_cap_band & MBIT(1))
+        {
+            (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
+            len = pmpriv->user_hecap_len;
+        }
+        else
+        {
+            (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
+            len = pmpriv->user_2g_hecap_len;
+        }
     }
     else
     {
-        (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
-        len = pmpriv->user_2g_hecap_len;
+        if (band & BAND_AAX)
+        {
+            (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
+            len = pmpriv->user_hecap_len;
+        }
+        else
+        {
+            (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_2g_he_cap, pmpriv->user_2g_hecap_len);
+            len = pmpriv->user_2g_hecap_len;
+        }
     }
     phe_cap->type = wlan_cpu_to_le16(phe_cap->type);
     phe_cap->len  = wlan_cpu_to_le16(phe_cap->len);
@@ -369,6 +386,7 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                     hecap->id  = tlv_type;
                     hecap->len = tlv_len;
                     (void)__memcpy(pmpriv->adapter, (t_u8 *)&hecap->ext_id, (t_u8 *)&tlv->ext_id, tlv_len);
+                    user_he_cap_band = hecfg->band;
                     if (hecfg->band & MBIT(1))
                     {
                         (void)__memcpy(pmpriv->adapter, (t_u8 *)&pmpriv->user_he_cap, (t_u8 *)tlv,
