@@ -3673,14 +3673,14 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     uint16_t evaluate_time = 0x1770;
 
     ret = wifi_set_antenna(ant, evaluate_time);
-#if 0
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to set antenna configuration");
-        return;
     }
-#endif
-    wlcm_d("Antenna selected: %d", ant);
+    else
+    {
+        wlcm_d("Antenna selected: %d", ant);
+    }
 #endif /* defined(SD8801, 8978, 8987) */
 #endif
 
