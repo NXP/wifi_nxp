@@ -2615,12 +2615,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
     if (argc < 2)
     {
-#ifdef CONFIG_MEF_CFG
-        (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
-#else
-        (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
-#endif
-        return;
+        goto done;
     }
 
     errno  = 0;
@@ -2650,15 +2645,10 @@ static void test_wlan_host_sleep(int argc, char **argv)
         if (argc < 4)
 #endif
         {
-#ifdef CONFIG_MEF_CFG
-            (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
-#else
-            (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
-#endif
-            return;
+            goto done;
         }
 
-        if (string_equal(argv[2], "wowlan_test"))
+        if (string_equal(argv[2], "wowlan"))
         {
             errno  = 0;
             wowlan = (int)strtol(argv[3], NULL, 10);
@@ -2666,22 +2656,9 @@ static void test_wlan_host_sleep(int argc, char **argv)
             {
                 (void)PRINTF("Error during strtoul:wowlan errno:%d\r\n", errno);
             }
-            if (wowlan == 1)
+            if (wowlan == 0)
             {
-                ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
-                if (ret == WM_SUCCESS)
-                {
-                    (void)PRINTF("Host sleep configuration successs for wowlan test");
-                }
-                else
-                {
-                    (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
-                }
-            }
-            else if (wowlan == 0)
-            {
-                ret = wlan_send_host_sleep((uint32_t)WAKE_ON_ARP_BROADCAST | (uint32_t)WAKE_ON_UNICAST |
-                                           (uint32_t)WAKE_ON_MULTICAST | (uint32_t)WAKE_ON_MAC_EVENT);
+                ret = wlan_send_host_sleep(HOST_SLEEP_DEF_COND);
                 if (ret == WM_SUCCESS)
                 {
                     (void)PRINTF("Host sleep configuration successs with regular condition");
@@ -2693,7 +2670,15 @@ static void test_wlan_host_sleep(int argc, char **argv)
             }
             else
             {
-                /*Do Nothing*/
+                ret = wlan_send_host_sleep(wowlan);
+                if (ret == WM_SUCCESS)
+                {
+                    (void)PRINTF("Host sleep configuration successs with regular condition");
+                }
+                else
+                {
+                    (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+                }
             }
         }
 #ifdef CONFIG_MEF_CFG
@@ -2716,24 +2701,30 @@ static void test_wlan_host_sleep(int argc, char **argv)
             }
         }
 #endif
-        else
-        {
-#ifdef CONFIG_MEF_CFG
-            (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
-#else
-            (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
-#endif
-            return;
-        }
     }
     else
     {
+done:
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("    wlan-host-sleep <1/0> [wowlan <val>/mef]\r\n");
+        (void)PRINTF("    [val] -- value for host wakeup conditions only\r\n");
+        (void)PRINTF("	       bit 0: WAKE_ON_ALL_BROADCAST\r\n");
+        (void)PRINTF("	       bit 1: WAKE_ON_UNICAST\r\n");
+        (void)PRINTF("	       bit 2: WAKE_ON_MAC_EVENT\r\n");
+        (void)PRINTF("	       bit 3: WAKE_ON_MULTICAST\r\n");
+        (void)PRINTF("	       bit 4: WAKE_ON_ARP_BROADCAST\r\n");
+        (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
+        (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
 #ifdef CONFIG_MEF_CFG
-        (void)PRINTF("Usage: %s <0/1> mef/[wowlan_test <0/1>]\r\n", argv[0]);
-#else
-        (void)PRINTF("Usage: %s <0/1> wowlan_test <0/1>\r\n", argv[0]);
+        (void)PRINTF("    mef     -- MEF host wakeup\r\n");
+        (void)PRINTF("Example:\r\n");
+        (void)PRINTF("    wlan-host-sleep mef\r\n");
+
 #endif
+        (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
         return;
+
     }
 }
 
