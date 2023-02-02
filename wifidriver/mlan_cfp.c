@@ -2215,9 +2215,10 @@ void wlan_set_custom_regiontable(mlan_private *pmpriv, t_u8 cfp_no_bg)
  *  @param pmpriv 	A pointer to mlan_private structure
  *  @param chan_list	A pointer to the channel list
  *  @param num_chans	A pointer to the number of active channels
- *
+ *  @param acs_band  ACS band info     0: get 2.4G channel list
+ *                                     1: get 5G channel list
  */
-void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *num_chans)
+void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *num_chans, t_u16 acs_band)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int i                   = 0;
@@ -2227,23 +2228,25 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
 
     ENTER();
 
-    cfp    = pmadapter->region_channel[i].pcfp;
-    cfp_no = (int)pmadapter->region_channel[i].num_cfp;
-
     *num_chans = 0;
 
-    for (j = 0; j < cfp_no; j++)
+    if (acs_band == 0)
     {
-        if (!cfp[j].passive_scan_or_radar_detect)
+        cfp    = pmadapter->region_channel[i].pcfp;
+        cfp_no = pmadapter->region_channel[i].num_cfp;
+        for (j = 0; j < cfp_no; j++)
         {
-            *(chan_list++) = (t_u8)cfp[j].channel;
-            *num_chans     = *num_chans + 1U;
+            if (!cfp[j].passive_scan_or_radar_detect)
+            {
+                *(chan_list++) = cfp[j].channel;
+                *num_chans     = *num_chans + 1;
+            }
         }
     }
-#if CONFIG_5GHz_SUPPORT
-    if (*num_chans == 0U)
+    if (acs_band == 1)
     {
-        i++;
+#if CONFIG_5GHz_SUPPORT
+        i = 1;
         cfp    = pmadapter->region_channel[i].pcfp;
         cfp_no = (int)pmadapter->region_channel[i].num_cfp;
 
@@ -2255,8 +2258,9 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
                 *num_chans     = *num_chans + 1U;
             }
         }
-    }
+    
 #endif
+    }
 }
 
 #ifdef OTP_CHANINFO

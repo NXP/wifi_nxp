@@ -2775,7 +2775,7 @@ mlan_status wlan_set_custom_cfp_table(wifi_chanlist_t *chanlist, t_u8 *cfp_no_bg
 void wlan_set_custom_regiontable(mlan_private *pmpriv, t_u8 cfp_no_bg);
 #endif
 /** Get the list of active channels */
-void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *num_chans);
+void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *num_chans, t_u16 acs_band);
 
 /* 802.11D related functions */
 /** Initialize 11D */

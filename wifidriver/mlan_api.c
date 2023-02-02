@@ -3021,11 +3021,11 @@ int wifi_get_chanlist(wifi_chanlist_t *chanlist)
     return WM_SUCCESS;
 }
 
-void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans)
+void wifi_get_active_channel_list(t_u8 *chan_list, t_u8 *num_chans, t_u16 acs_band)
 {
     if (chan_list != MNULL && num_chans != MNULL)
     {
-        wlan_get_active_channel_list((mlan_private *)mlan_adap->priv[0], chan_list, num_chans);
+        wlan_get_active_channel_list((mlan_private *)mlan_adap->priv[0], chan_list, num_chans, acs_band);
     }
 }
 

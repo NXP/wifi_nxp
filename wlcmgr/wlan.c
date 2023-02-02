@@ -635,17 +635,6 @@ static void wlan_host_sleep_and_sleep_confirm(void)
         return;
     }
 
-#ifndef CONFIG_WIFIDRIVER_PS_LOCK
-    ret = os_rwlock_write_lock(&ps_rwlock, OS_NO_WAIT);
-    if (ret != WM_SUCCESS)
-    {
-        /* Couldn't get the semaphore, someone has already taken
-         * it. */
-        g_req_sl_confirm = 1;
-        return;
-    }
-#endif
-
     if (wlan.hs_configured)
     {
         ret = wlan_send_host_sleep(wlan.hs_wakeup_condition);
@@ -1718,7 +1707,7 @@ static int do_start(struct wlan_network *network)
             {
                 if (!wlan_uap_scan_chan_list_set)
                 {
-                    wifi_get_active_channel_list(active_chan_list, &active_num_chans);
+                    wifi_get_active_channel_list(active_chan_list, &active_num_chans, wlan.networks[wlan.cur_uap_network_idx].acs_band);
 
                     if (active_num_chans != 0U)
                     {
@@ -5401,6 +5390,8 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_NOMEM;
     }
 
+    wlan.networks[pos].dtim_period = network->dtim_period;
+    wlan.networks[pos].acs_band = network->acs_band;
     /* save and set private fields */
     (void)memcpy((void *)&wlan.networks[pos], (const void *)network, sizeof(struct wlan_network));
     wlan.networks[pos].ssid_specific    = (uint8_t)(network->ssid[0] != '\0');
@@ -5948,6 +5939,7 @@ int wlan_stop_network(const char *name)
         return -WM_E_INVAL;
     }
 
+    wlan_uap_scan_chan_list_set = false;
     /* Search for matching SSID
      * If found send stop request
      */

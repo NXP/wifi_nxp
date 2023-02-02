@@ -542,6 +542,8 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("    [capa <11n/legacy>]\r\n");
 #endif
 #endif
+    (void)PRINTF("If Set channel to 0, set acs_band to 0 1.\r\n");
+	(void)PRINTF("0: 2.4GHz channel   1: 5GHz channel  Not support to select dual band automatically.\r\n");
 }
 
 static void test_wlan_add(int argc, char **argv)
@@ -567,6 +569,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WIFI_CAPA
         unsigned wlan_capa : 1;
 #endif
+        unsigned acs_band : 1;
     } info;
 
     (void)memset(&info, 0, sizeof(info));
@@ -798,6 +801,26 @@ static void test_wlan_add(int argc, char **argv)
             info.wlan_capa++;
         }
 #endif
+        else if (!info.acs_band && string_equal("acs_band", argv[arg]))
+        {
+            unsigned int ACS_band = 0;
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &ACS_band, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid acs_band\r\n");
+                return;
+            }
+            if (ACS_band != 0 && ACS_band != 1)
+            {
+                (void)PRINTF("Pls Set acs_band to 0 or 1.\r\n");
+                (void)PRINTF(
+                    "0: 2.4GHz channel   1: 5GHz channel\r\n"
+                    "Not support to select dual band automatically.\r\n");
+                return;
+            }
+            network.acs_band = (uint16_t)ACS_band;
+            arg += 2;
+            info.acs_band = 1;
+        }
         else
         {
             dump_wlan_add_usage();
