@@ -1005,34 +1005,6 @@ static void wlan_fw_init_cfg()
         os_thread_sleep(os_msec_to_ticks(1));
     }
 #endif
-
-#ifdef RW610
-    if (!cal_data_valid_rw610)
-    {
-        wcmdr_d("CMD : SET_CAL_DATA (0x8f)");
-
-        _wlan_set_cal_data();
-
-        while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
-        {
-            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
-        }
-    }
-#ifdef RW610
-    bool cal_data_valid_rw610 = ((mlan_adap->priv[0]->adapter->fw_cap_ext) & 0x0800 == 0);
-    if (!cal_data_valid_rw610)
-    {
-        wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
-
-        _wlan_set_cal_data();
-
-        while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
-        {
-            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
-        }
-    }
-#endif
-#endif
     return;
 }
 
