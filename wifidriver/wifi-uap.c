@@ -25,7 +25,11 @@
 /* fixme: Some of the following options could be added to kconfig. While
    adding the ranges in kconfig use the ones given as macros in
    mlan_uap_cmdevent.c */
+#ifdef RW610
+#define UAP_BEACON_PERIOD 100U
+#else
 #define UAP_BEACON_PERIOD 200U
+#endif
 #define UAP_DTIM_PERIOD   10
 #define MAX_RATES         14U
 
