@@ -2160,7 +2160,7 @@ static void handle_scan_results(void)
                 wlan.ft_bss = false;
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
                 (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 #endif
                 return;
@@ -2217,7 +2217,7 @@ static void handle_scan_results(void)
         wlan.ft_bss = false;
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
         (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 #endif
         return;
@@ -2575,6 +2575,9 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
                     wlan.reassoc_request = false;
                 }
             CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+            (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
+#endif
 #ifdef CONFIG_P2P
             wifi_wfd_event(false, false, (void *)1);
 #endif
@@ -2843,7 +2846,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
         (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
 #endif
 
@@ -2975,47 +2978,46 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
 static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
+    bool set_rssi_threshold = false;
+
 #ifdef CONFIG_11K
     if (network->neighbor_report_supported == true)
     {
         int ret;
         ret = wlan_host_11k_neighbor_req((t_u8 *)network->ssid);
-        if (ret != WM_SUCCESS)
+        if (ret == WM_SUCCESS)
         {
-            wlcm_d("Failed to send 11K neighbor request");
+            wlcm_d("Sent 11K neighbor request");
             return;
         }
+        set_rssi_threshold = true;
     }
-    else
-    {
 #endif /* CONFIG_11K */
 #ifdef CONFIG_11V
-        if (network->bss_transition_supported == true)
+    if (network->bss_transition_supported == true)
+    {
+        int ret;
+        ret = wlan_host_11v_bss_trans_query(0x10);
+        if (ret == WM_SUCCESS)
         {
-            int ret;
-            ret = wlan_host_11v_bss_trans_query(0x10);
-            if (ret != WM_SUCCESS)
-            {
-                wlcm_d("Failed to send 11V bss transition query");
-                return;
-            }
+            wlcm_d("Sent 11V bss transition query");
+            return;
         }
-        else
-        {
+        set_rssi_threshold = true;
+    }
 #endif /* CONFIG_11V */
 #ifdef CONFIG_ROAMING
-            if (wlan.roaming_enabled == true)
-            {
-                wlan.roam_reassoc = true;
-                wifi_config_bgscan_and_rssi(network->ssid);
-            }
-#endif /* CONFIG_ROAMING */
-#ifdef CONFIG_11V
-        }
-#endif /* CONFIG_11V */
-#ifdef CONFIG_11K
+    if (wlan.roaming_enabled == true)
+    {
+        wlan.roam_reassoc = true;
+        wifi_config_bgscan_and_rssi(network->ssid);
+        return;
     }
-#endif /* CONFIG_11K */
+#endif /* CONFIG_ROAMING */
+    if (set_rssi_threshold == true)
+    {
+        (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
+    }
 }
 #endif
 
@@ -3406,6 +3408,9 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 
                 net_interface_up(if_handle);
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+                (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
+#endif
             }
             else
             {
@@ -3444,6 +3449,11 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             wlan.reassoc_request = false;
         }
         CONNECTION_EVENT(WLAN_REASON_SUCCESS, &ip);
+
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+        (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
+#endif
+
 #ifdef CONFIG_P2P
         wifi_wfd_event(false, false, (void *)1);
 #endif
@@ -4279,7 +4289,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
         case WIFI_EVENT_RSSI_LOW:
             wlcm_d("got event: rssi low");
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
             wlcm_process_rssi_low_event(msg, &next, network);
 #else
             CONNECTION_EVENT(WLAN_REASON_RSSI_LOW, NULL);

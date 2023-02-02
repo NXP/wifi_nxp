@@ -3925,6 +3925,7 @@ static int wifi_request_bgscan(mlan_private *pmpriv)
 
 int wifi_set_rssi_low_threshold(const uint8_t low_rssi)
 {
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
     mlan_private *pmpriv = mlan_adap->priv[0];
     mlan_ds_subscribe_evt subscribe_evt;
 
@@ -3941,6 +3942,9 @@ int wifi_set_rssi_low_threshold(const uint8_t low_rssi)
                              cmd);
     wifi_wait_for_cmdresp(NULL);
     return wm_wifi.cmd_resp_status;
+#else
+    return 0;
+#endif
 }
 
 #ifdef CONFIG_ROAMING
@@ -4394,9 +4398,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wifi_w("No mem. Cannot add mac and reason code for deauth event to app");
                 break;
             }
-            sta_addr = disassoc_resp->sta_addr;
+            sta_addr                   = disassoc_resp->sta_addr;
             disassoc_resp->reason_code = (int)evt->reason_code;
-            event_sta_addr = (t_u8 *)&evt->src_mac_addr;
+            event_sta_addr             = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 #if defined(RW610)
             if (pmpriv->is_11n_enabled)
@@ -4410,7 +4414,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
             }
 #endif
-            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) != WM_SUCCESS)
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) !=
+                WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
                 os_mem_free((void *)disassoc_resp);

@@ -696,17 +696,17 @@ t_u8 wlan_ft_akm_is_used(mlan_private *pmpriv, t_u8 *rsn_ie)
         /* Do nothing */
     }
 
-    /*  2 bytes header + 2 bytes version + 4 bytes group_cipher_suite +
+    /*  4 bytes header + 2 bytes version + 4 bytes group_cipher_suite +
      *  2 bytes pairwise_cipher_count + pairwise_cipher_count *
      * PAIRWISE_CIPHER_SUITE_LEN (4) + 2 bytes akm_suite_count +
      * akm_suite_count * AKM_SUITE_LEN (4)
      */
-    count                 = *(t_u16 *)(void *)(rsn_ie + 2 + 2 + 4 * (int)sizeof(t_u8));
+    count                 = *(t_u16 *)(void *)(rsn_ie + 4 + 2 + 4 * (int)sizeof(t_u8));
     pairwise_cipher_count = wlan_le16_to_cpu(count);
-    count                 = *(t_u16 *)(void *)(rsn_ie + 2 + 2 + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
+    count                 = *(t_u16 *)(void *)(rsn_ie + 4 + 2 + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
                                (int)pairwise_cipher_count * 4);
     akm_suite_count       = (t_u16)wlan_le16_to_cpu(count);
-    temp                  = (t_u8 *)(rsn_ie + 2 + sizeof(t_u16) + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
+    temp                  = (t_u8 *)(rsn_ie + 4 + sizeof(t_u16) + 4 * (int)sizeof(t_u8) + (int)sizeof(t_u16) +
                     (int)pairwise_cipher_count * 4 + sizeof(t_u16));
 
     while (akm_suite_count > 0U)

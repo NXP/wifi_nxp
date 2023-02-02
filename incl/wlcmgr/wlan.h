@@ -4566,7 +4566,7 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params);
 int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
 /**
  * Use this API to set the RSSI threshold value for low RSSI event subscription.
  * When RSSI falls below this threshold firmware will generate the low RSSI event to driver.
