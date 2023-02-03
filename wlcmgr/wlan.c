@@ -120,7 +120,7 @@ static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP;
 #endif
 
 #ifdef CONFIG_11K
-#define NEIGHBOR_REQ_TIMEOUT (1 * 1000)
+#define NEIGHBOR_REQ_TIMEOUT (60 * 1000)
 #endif
 
 enum user_request_type
@@ -130,6 +130,9 @@ enum user_request_type
     CM_STA_USER_REQUEST_CONNECT = WIFI_EVENT_LAST + 1,
     CM_STA_USER_REQUEST_DISCONNECT,
     CM_STA_USER_REQUEST_SCAN,
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+    CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD,
+#endif
     CM_STA_USER_REQUEST_PS_ENTER,
     CM_STA_USER_REQUEST_PS_EXIT,
     CM_STA_USER_REQUEST_LAST,
@@ -355,6 +358,8 @@ static struct
 #endif
 #ifdef CONFIG_11K
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
+#endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
     os_timer_t neighbor_req_timer;
     bool neighbor_req : 1;
 #endif
@@ -3055,6 +3060,14 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     }
 #endif
 
+#ifdef CONFIG_11V
+    if ((pnlist_rep_param->nlist_mode == WLAN_NLIST_11V) || (pnlist_rep_param->nlist_mode == WLAN_NLIST_11V_PREFERRED))
+    {
+        wlan.neighbor_req = false;
+        (void)os_timer_deactivate(&wlan.neighbor_req_timer);
+    }
+#endif
+
     wlan_sort_nlist_channels(pnlist_rep_param);
     memcpy(&wlan.nlist_rep_param, pnlist_rep_param, sizeof(wlan_nlist_report_param));
 
@@ -4187,6 +4200,15 @@ static void wlcm_process_mgmt_frame(void *data)
     }
 }
 
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
+{
+    (void)next;
+    (void)curr_nw;
+
+    (void)wifi_set_rssi_low_threshold(wlan.rssi_low_threshold);
+}
+#endif
 /*
  * Event Handlers
  */
@@ -4219,7 +4241,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case CM_STA_USER_REQUEST_SCAN:
             wlcm_request_scan(msg, &next);
             break;
-
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+        case CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD:
+            wlcm_set_rssi_low_threshold(&next, network);
+            break;
+#endif
         case CM_STA_USER_REQUEST_PS_ENTER:
             if (wlan.sta_state >= CM_STA_SCANNING && wlan.sta_state <= CM_STA_OBTAINING_ADDRESS)
             {
@@ -4804,13 +4830,13 @@ static void assoc_timer_cb(os_timer_arg_t arg)
     }
 }
 
-#ifdef CONFIG_11K
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void neighbor_req_timer_cb(os_timer_arg_t arg)
 {
     if (wlan.neighbor_req == true)
     {
         wlan.neighbor_req = false;
-        (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+        (void)send_user_request(CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD, 0);
     }
 }
 #endif
@@ -4973,7 +4999,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return ret;
     }
 
-#ifdef CONFIG_11K
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
     ret = os_timer_create(&wlan.neighbor_req_timer, "neighbor-req-timer", os_msec_to_ticks(NEIGHBOR_REQ_TIMEOUT),
                           &neighbor_req_timer_cb, NULL, OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
     if (ret != WM_SUCCESS)
@@ -5047,7 +5073,7 @@ int wlan_stop(void)
             return WLAN_ERROR_STATE;
         }
     }
-#ifdef CONFIG_11K
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
     if (wlan.neighbor_req_timer)
     {
         ret = os_timer_delete(&wlan.neighbor_req_timer);
@@ -8018,6 +8044,7 @@ int wlan_host_11k_cfg(int enable_11k)
 int wlan_host_11k_neighbor_req(t_u8 *ssid)
 {
     int ret = -WM_FAIL;
+
     if (!is_sta_connected())
     {
         wlcm_d("Error: sta connection is required before sending neighbor report req");
@@ -8037,13 +8064,21 @@ int wlan_host_11k_neighbor_req(t_u8 *ssid)
 #ifdef CONFIG_11V
 int wlan_host_11v_bss_trans_query(t_u8 query_reason)
 {
+    int ret = -WM_FAIL;
+
     if (!is_sta_connected())
     {
         wlcm_d("Error: sta connection is required before sending bss transition query");
         return -WM_FAIL;
     }
 
-    return wifi_host_11v_bss_trans_query(query_reason);
+    ret = wifi_host_11v_bss_trans_query(query_reason);
+    if (ret == WM_SUCCESS)
+    {
+        wlan.neighbor_req = true;
+        (void)os_timer_activate(&wlan.neighbor_req_timer);
+    }
+    return ret;
 }
 #endif
 

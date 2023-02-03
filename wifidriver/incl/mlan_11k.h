@@ -172,6 +172,7 @@ enum wlan_rrm_beacon_report_mode
 #define WLAN_RRM_MEAS_REQUEST_MODE_DURATION_MANDATORY BIT(4)
 
 void wlan_process_radio_measurement_request(t_u8 *frame, t_u32 len, t_u8 *dest_addr, t_u8 *src_addr, bool protect);
+void wlan_process_neighbor_report_response(t_u8 *frame, t_u32 len, t_u8 *dest_addr, t_u8 *src_addr, bool protect);
 void wlan_process_link_measurement_request(
     t_u8 *frame, t_u32 len, t_u8 *dest_addr, t_u8 *src_addr, bool protect, RxPD *rxpd);
 void wlan_send_mgmt_rm_beacon_report(

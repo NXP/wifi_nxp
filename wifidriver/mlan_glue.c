@@ -182,7 +182,7 @@ static void *wifi_11n_save_request(Event_Ext_t *evt)
 }
 #endif /* CONFIG_11N */
 
-#ifdef CONFIG_11K
+#ifdef CONFIG_11K_OFFLOAD
 /** Event body : 11K NLIST */
 typedef PACK_START struct _nlist_entry_tlv
 {
@@ -295,7 +295,7 @@ static void *wifi_11k_save_request(Event_Gen_t *evt)
         return MNULL;
     }
 }
-#endif /* CONFIG_11K */
+#endif /* CONFIG_11K_OFFLOAD */
 
 void wrapper_deliver_amsdu_subframe(pmlan_buffer amsdu_pmbuf, t_u8 *data, t_u16 pkt_len)
 {
@@ -1861,8 +1861,10 @@ int wrapper_wifi_assoc(
     priv->sec_info.wapi_enabled        = false;
     priv->sec_info.ewpa_enabled        = false;
     priv->sec_info.wpa_enabled         = false;
-    priv->sec_info.authentication_mode = MLAN_AUTH_MODE_OPEN;
+    priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
+
 #ifdef CONFIG_11R
+    priv->sec_info.is_ft = is_ft;
     if (is_ft)
     {
         priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
@@ -1935,14 +1937,6 @@ int wrapper_wifi_assoc(
 #endif
               wlan_security == WLAN_SECURITY_WPA3_SAE))
     {
-        if (wlan_security == WLAN_SECURITY_WPA3_SAE)
-        {
-            priv->sec_info.authentication_mode = MLAN_AUTH_MODE_SAE;
-        }
-#ifdef CONFIG_OWE
-        else if (owe_trans_mode == OWE_TRANS_MODE_OWE || wlan_security == WLAN_SECURITY_OWE_ONLY)
-            priv->sec_info.authentication_mode = MLAN_AUTH_MODE_OWE;
-#endif
         priv->sec_info.is_wpa_tkip  = is_wpa_tkip;
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
@@ -4032,7 +4026,7 @@ int wifi_set_rssi_low_threshold(const uint8_t low_rssi)
     subscribe_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     subscribe_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
     subscribe_evt.low_rssi      = low_rssi;
-    subscribe_evt.low_rssi_freq = 0;
+    subscribe_evt.low_rssi_freq = 10;
     wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt,
                              cmd);
     wifi_wait_for_cmdresp(NULL);
@@ -4293,7 +4287,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_HS_ACT_REQ:
             (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
-#ifdef CONFIG_11K
+#ifdef CONFIG_11K_OFFLOAD
         case EVENT_NLIST_REPORT:
         {
             void *saved_event_buff = wifi_11k_save_request((Event_Gen_t *)(void *)((t_u8 *)evt + 4));

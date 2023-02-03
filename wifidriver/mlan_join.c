@@ -442,7 +442,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
-    t_u8 akm_preference[19] = {0, 0, 1, 0, 3, 0, 2, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4};
+    t_u8 akm_preference[19] = {0, 0, 1, 0, 3, 0, 2, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 4};
 
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
 
@@ -524,17 +524,35 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
         if (akm_type_selected)
         {
             if (akm_type_id == 6)
+            {
                 *akm_type = AssocAgentAuth_Open;
+            }
             else if (akm_type_id == 2)
+            {
                 *akm_type = AssocAgentAuth_Open;
+            }
+#ifdef CONFIG_11R
             else if (akm_type_id == 4)
+            {
                 *akm_type = AssocAgentAuth_FastBss;
+            }
+#endif
 #ifdef CONFIG_OWE
             else if (akm_type_id == 18)
+            {
                 *akm_type = AssocAgentAuth_Owe;
+            }
 #endif
             else if (akm_type_id == 8)
+            {
                 *akm_type = AssocAgentAuth_Wpa3Sae;
+            }
+#ifdef CONFIG_11R
+            else if (akm_type_id == 9)
+            {
+                *akm_type = AssocAgentAuth_FastBss_SAE;
+            }
+#endif
         }
     }
     else
@@ -808,8 +826,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     MrvlIEtypes_PhyParamSet_t *pphy_tlv;
     MrvlIEtypes_SsParamSet_t *pss_tlv;
     MrvlIEtypes_RatesParamSet_t *prates_tlv;
-    MrvlIEtypes_AuthType_t *pauth_tlv      = NULL;
-    MrvlIEtypes_RsnParamSet_t *prsn_ie_tlv = NULL;
+    MrvlIEtypes_AuthType_t *pauth_tlv        = MNULL;
+    MrvlIEtypes_RsnParamSet_t *prsn_ie_tlv   = MNULL;
+    MrvlIEtypes_SAE_PWE_Mode_t *prsnx_ie_tlv = MNULL;
     MrvlIEtypes_ChanListParamSet_t *pchan_tlv;
     WLAN_802_11_RATES rates;
     t_u32 rates_size;
@@ -1006,6 +1025,27 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             HEXDUMP("ASSOC_CMD: RSN IE", (t_u8 *)prsn_ie_tlv, sizeof(prsn_ie_tlv->header) + prsn_ie_tlv->header.len);
             pos += sizeof(prsn_ie_tlv->header) + prsn_ie_tlv->header.len;
             prsn_ie_tlv->header.len = wlan_cpu_to_le16(prsn_ie_tlv->header.len);
+
+#ifdef CONFIG_11R
+            if ((akm_type == AssocAgentAuth_FastBss) && (pmpriv->sec_info.is_ft == false))
+            {
+                akm_type = AssocAgentAuth_Open;
+            }
+            if ((akm_type == AssocAgentAuth_FastBss_SAE) && (pmpriv->sec_info.is_ft == false))
+            {
+                akm_type = AssocAgentAuth_Wpa3Sae;
+            }
+#endif
+            if ((pauth_tlv == MNULL) && (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_AUTO))
+            {
+                pauth_tlv              = (MrvlIEtypes_AuthType_t *)pos;
+                pauth_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AUTH_TYPE);
+                pauth_tlv->header.len  = sizeof(pauth_tlv->auth_type);
+                pauth_tlv->auth_type   = wlan_cpu_to_le16(akm_type);
+
+                pos += sizeof(pauth_tlv->header) + pauth_tlv->header.len;
+                pauth_tlv->header.len = wlan_cpu_to_le16(pauth_tlv->header.len);
+            }
         }
         else if (pmpriv->sec_info.ewpa_enabled != 0U)
         {
@@ -1067,6 +1107,27 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
 #endif /* CONFIG_WPS2 */
 #endif
+
+    if ((pbss_desc->prsnx_ie != MNULL) && (akm_type == AssocAgentAuth_Wpa3Sae))
+    {
+        if (pbss_desc->prsnx_ie->ieee_hdr.len && (pbss_desc->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
+        {
+            prsnx_ie_tlv              = (MrvlIEtypes_SAE_PWE_Mode_t *)pos;
+            prsnx_ie_tlv->header.type = (t_u16)(*(pbss_desc->prsnx_ie)).ieee_hdr.element_id;
+            prsnx_ie_tlv->header.type = prsnx_ie_tlv->header.type & 0x00FF;
+            prsnx_ie_tlv->header.type = wlan_cpu_to_le16(prsnx_ie_tlv->header.type);
+            prsnx_ie_tlv->header.len  = (t_u16)(*(pbss_desc->prsnx_ie)).ieee_hdr.len;
+            prsnx_ie_tlv->header.len  = prsnx_ie_tlv->header.len & 0x00FF;
+
+            (void)__memcpy(pmadapter, prsnx_ie_tlv->pwe, &((*(pbss_desc->prsnx_ie)).data[0]), prsnx_ie_tlv->header.len);
+
+            HEXDUMP("ASSOC_CMD: RSNX IE", (t_u8 *)prsnx_ie_tlv,
+                    sizeof(prsnx_ie_tlv->header) + prsnx_ie_tlv->header.len);
+
+            pos += sizeof(prsnx_ie_tlv->header) + prsnx_ie_tlv->header.len;
+            prsnx_ie_tlv->header.len = wlan_cpu_to_le16(prsnx_ie_tlv->header.len);
+        }
+    }
 
     if (ISSUPP_11NENABLED(pmadapter->fw_cap_info) && (!pbss_desc->disable_11n) &&
         (pmpriv->config_bands & BAND_GN || pmpriv->config_bands & BAND_AN) && wmsdk_is_11N_enabled() &&

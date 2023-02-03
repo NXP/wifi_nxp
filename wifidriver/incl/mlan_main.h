@@ -809,6 +809,10 @@ typedef struct _wlan_802_11_security_t
     t_u8 wpa_enabled;
     /** WPA TKIP flag */
     bool is_wpa_tkip;
+#ifdef CONFIG_11R
+    /** FT attempt flag */
+    bool is_ft;
+#endif
     /** E-Supplicant enabled flag */
     t_u8 ewpa_enabled;
     /** WPA2 enabled flag */

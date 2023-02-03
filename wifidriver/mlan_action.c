@@ -71,6 +71,12 @@ static mlan_status wlan_process_mgmt_radio_measurement_action(
             ret = MLAN_STATUS_SUCCESS;
             break;
         }
+        case (t_u8)IEEE_MGMT_RRM_NEIGHBOR_REPORT_RESPONSE:
+        {
+            wlan_process_neighbor_report_response(pos, payload_len, dest_addr, src_addr, (bool)mgmt_fc_p->wep);
+            ret = MLAN_STATUS_SUCCESS;
+            break;
+        }
 #else
         case 0:
             break;

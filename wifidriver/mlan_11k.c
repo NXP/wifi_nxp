@@ -850,6 +850,101 @@ void wlan_process_link_measurement_request(
                                            protect);
 }
 
+static bool wifi_find_in_channels(t_u8 *channels, t_u8 entry_num, t_u8 chan)
+{
+    t_u8 i;
+    for (i = 0; i < entry_num; i++)
+    {
+        if (channels[i] == chan)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void wlan_process_neighbor_report_response(t_u8 *frame, t_u32 len, t_u8 *dest_addr, t_u8 *src_addr, bool protect)
+{
+    t_u8 *pos      = frame;
+    t_u8 entry_num = 0, chan;
+    wlan_nlist_report_param *pnlist_rep_param =
+        (wlan_nlist_report_param *)os_mem_calloc(sizeof(wlan_nlist_report_param));
+
+    wifi_d("Neighbor report event");
+#ifdef CONFIG_WIFI_EXTRA_DEBUG
+    dump_hex(frame, len);
+#endif
+    if (pnlist_rep_param == MNULL)
+    {
+        wifi_e("11k nlist report param buffer alloc failed %d", sizeof(wlan_nlist_report_param));
+        return;
+    }
+
+    if (len < 3U)
+    {
+        wifi_d("Ignoring too short radio measurement request");
+        os_mem_free((void *)pnlist_rep_param);
+        return;
+    }
+
+    /* Bypass dialog token */
+    pos += 1;
+    len -= 1U;
+
+    /* Start process neighbor report response */
+
+#define NR_IE_MIN_LEN            (IEEEtypes_ADDRESS_SIZE + 4 + 1 + 1 + 1)
+#define WLAN_EID_NEIGHBOR_REPORT 52
+
+    while (len >= 2 + NR_IE_MIN_LEN)
+    {
+        t_u8 nr_len = pos[1];
+
+        if (pos[0] != WLAN_EID_NEIGHBOR_REPORT || nr_len < NR_IE_MIN_LEN)
+        {
+            wifi_d("Invalid Neighbor Report element: id=%u len=%u", pos[0], nr_len);
+            goto out;
+        }
+
+        if (2U + nr_len > len)
+        {
+            wifi_d("Invalid Neighbor Report element: id=%u len=%zu nr_len=%u", pos[0], len, nr_len);
+            goto out;
+        }
+        pos += 2;
+
+        chan = pos[IEEEtypes_ADDRESS_SIZE + 5];
+
+        wifi_d("channel = %d", chan);
+        if (!wifi_find_in_channels(pnlist_rep_param->channels, entry_num, chan))
+        {
+            pnlist_rep_param->channels[entry_num] = chan;
+            entry_num++;
+        }
+
+        pos += nr_len;
+        len -= 2 + nr_len;
+    }
+
+    if (entry_num == 0U)
+    {
+        goto out;
+    }
+
+    pnlist_rep_param->nlist_mode   = WLAN_NLIST_11K;
+    pnlist_rep_param->num_channels = entry_num;
+
+    if (wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, pnlist_rep_param) != WM_SUCCESS)
+    {
+        /* If fail to send message on queue, free allocated memory ! */
+        os_mem_free((void *)pnlist_rep_param);
+    }
+    return;
+
+out:
+    os_mem_free((void *)pnlist_rep_param);
+}
+
 /**
  * @brief This function sets up the RRM Enabled Capabilites IE.
  *
