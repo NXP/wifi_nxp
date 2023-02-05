@@ -4503,6 +4503,29 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
         }
         break;
+        case EVENT_MICRO_AP_RSN_CONNECT:
+        {
+            /*
+             * Alloc memory to store the STA mac id. This will be
+             * passed to event receiver thread. Freeing this is
+             * responsibility of the receiving thread.
+             */
+            sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
+            if (sta_addr == MNULL)
+            {
+                wifi_w("No mem. Cannot process MAC address from conn");
+                break;
+            }
+
+            event_sta_addr = (t_u8 *)&evt->src_mac_addr;
+            (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_CONN, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
+            {
+                /* If fail to send message on queue, free allocated memory ! */
+                os_mem_free((void *)sta_addr);
+            }
+        }
+        break;
         case EVENT_MICRO_AP_STA_DEAUTH:
             /*
              * Alloc memory to store the STA mac id. This will be

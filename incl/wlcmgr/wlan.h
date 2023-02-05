@@ -128,7 +128,6 @@
 #include <wlan_11d.h>
 
 #define WLAN_DRV_VERSION "v1.3.r43.p8"
-
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
@@ -339,6 +338,8 @@ enum wlan_event_reason
     WLAN_REASON_UAP_SUCCESS,
     /** A wireless client has joined uAP's BSS network */
     WLAN_REASON_UAP_CLIENT_ASSOC,
+    /** A wireless client has auhtenticated and connected to uAP's BSS network */
+    WLAN_REASON_UAP_CLIENT_CONN,
     /** A wireless client has left uAP's BSS network */
     WLAN_REASON_UAP_CLIENT_DISSOC,
     /** The WLAN Connection Manager has failed to start uAP */

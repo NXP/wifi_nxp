@@ -19,6 +19,8 @@ enum wifi_event
     WIFI_EVENT_UAP_STARTED = 0,
     /** uAP Client Assoc */
     WIFI_EVENT_UAP_CLIENT_ASSOC,
+    /** uAP Client connected */
+    WIFI_EVENT_UAP_CLIENT_CONN,
     /** uAP Client De-authentication */
     WIFI_EVENT_UAP_CLIENT_DEAUTH,
     /** uAP Network Address Configuration */

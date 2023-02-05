@@ -1634,7 +1634,9 @@ typedef enum _ENH_PS_MODES
 /** Event ID: BSS idle event */
 #define EVENT_MICRO_AP_BSS_IDLE 0x00000043
 /** Event ID: BSS active event */
-#define EVENT_MICRO_AP_BSS_ACTIVE 0x00000044
+#define EVENT_MICRO_AP_BSS_ACTIVE  0x00000044
+/** Event ID: uAP in connected state for non-Open Auth*/
+#define EVENT_MICRO_AP_RSN_CONNECT 0x00000051
 
 #endif /* UAP_SUPPORT */
 

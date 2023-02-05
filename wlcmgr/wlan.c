@@ -3853,6 +3853,11 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
             /* This was allocated by the sender */
             os_mem_free(msg->data);
             break;
+        case WIFI_EVENT_UAP_CLIENT_CONN:
+            CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_CONN, msg->data);
+            /* This was allocated by the sender */
+            os_mem_free(msg->data);
+            break;
         case WIFI_EVENT_UAP_CLIENT_DEAUTH:
             CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, msg->data);
             /* This was allocated by the sender */
