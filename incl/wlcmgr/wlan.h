@@ -4109,12 +4109,13 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
 /**
  * Use this API to set the RU tx power limit.
  *
- * \param[in] ru_pwr_cfg   11AX rutxpwr of channels to be sent to Firmware
+ * \param[in] rutx_pwr_cfg       11AX rutxpwr of sub-bands to be sent to Firmware.
+ * \param[in] rutx_pwr_cfg_len   Size of rutx_pwr_cfg buffer.
  *
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg);
+int wlan_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len);
 /**
  * Use this API to get the RU tx power limit.
  *
@@ -4123,6 +4124,8 @@ int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg);
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
+
+#ifndef CONFIG_MLAN_WMSDK
 int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
 
 /** Set 11ax config params
@@ -4131,6 +4134,8 @@ int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
+#endif
+
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
 
 #ifdef CONFIG_11AX_TWT

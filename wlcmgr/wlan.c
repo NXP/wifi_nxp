@@ -1707,7 +1707,8 @@ static int do_start(struct wlan_network *network)
             {
                 if (!wlan_uap_scan_chan_list_set)
                 {
-                    wifi_get_active_channel_list(active_chan_list, &active_num_chans, wlan.networks[wlan.cur_uap_network_idx].acs_band);
+                    wifi_get_active_channel_list(active_chan_list, &active_num_chans,
+                                                 wlan.networks[wlan.cur_uap_network_idx].acs_band);
 
                     if (active_num_chans != 0U)
                     {
@@ -5391,7 +5392,7 @@ int wlan_add_network(struct wlan_network *network)
     }
 
     wlan.networks[pos].dtim_period = network->dtim_period;
-    wlan.networks[pos].acs_band = network->acs_band;
+    wlan.networks[pos].acs_band    = network->acs_band;
     /* save and set private fields */
     (void)memcpy((void *)&wlan.networks[pos], (const void *)network, sizeof(struct wlan_network));
     wlan.networks[pos].ssid_specific    = (uint8_t)(network->ssid[0] != '\0');
@@ -8234,16 +8235,17 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     }
 }
 
-int wlan_set_11ax_rutxpowerlimit(const wlan_rutxpwrlimit_t *ru_pwr_cfg)
+int wlan_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
 {
-    if (ru_pwr_cfg != NULL)
+    if (rutx_pwr_cfg != NULL)
     {
-        return wifi_set_11ax_rutxpowerlimit(ru_pwr_cfg);
+        return wifi_set_11ax_rutxpowerlimit(rutx_pwr_cfg, rutx_pwr_cfg_len);
     }
 
     return -WM_FAIL;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg)
 {
     if (ru_pwr_cfg != NULL)
@@ -8254,6 +8256,8 @@ int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg)
 
     return -WM_FAIL;
 }
+#endif
+
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
 {
     return wifi_set_11ax_cfg(ax_config);

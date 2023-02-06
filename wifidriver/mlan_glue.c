@@ -30,6 +30,7 @@
 #ifdef CONFIG_WIFI_FW_DEBUG
 #define FW_DEBUG_INFO_SIZE 400
 #endif
+#define RUTXCMD_RESP_BUFF_SIZE 1024
 
 static const uint8_t wpa2_akmp_oui[4] = {0x00, 0x0f, 0xac, 0x01};
 #ifdef WLAN_LOW_POWER_ENABLE
@@ -5590,6 +5591,45 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
 
     return WM_SUCCESS;
 }
+
+int wifi_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
+{
+    int ret;
+    uint32_t reqd_len = 0;
+    uint32_t len;
+
+    void *rutxcmd_resp_buff = os_mem_alloc(RUTXCMD_RESP_BUFF_SIZE);
+
+    if (rutxcmd_resp_buff == NULL)
+    {
+        return -WM_FAIL;
+    }
+
+    ret = wlan_send_hostcmd(rutx_pwr_cfg, rutx_pwr_cfg_len / sizeof(uint8_t), rutxcmd_resp_buff, RUTXCMD_RESP_BUFF_SIZE,
+                            &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("RUTXcmd success, response is \r\n");
+        for (len = 0; len < reqd_len; len++)
+        {
+            (void)PRINTF("%x\t", *((uint8_t *)rutxcmd_resp_buff + len));
+        }
+    }
+    else
+    {
+        (void)PRINTF("RUTXcmd failed error: %d", ret);
+    }
+
+    if (rutxcmd_resp_buff != NULL)
+    {
+        os_mem_free(rutxcmd_resp_buff);
+    }
+
+    return ret;
+}
+
+#ifndef CONFIG_MLAN_WMSDK
 int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
 {
     t_u8 i;
@@ -5654,6 +5694,7 @@ int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg)
 
     return ret;
 }
+#endif
 
 int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config)
 {

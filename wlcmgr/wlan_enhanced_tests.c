@@ -1172,23 +1172,15 @@ static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {
     int rv;
 
-    rv = wlan_set_11ax_rutxpowerlimit(&rutxpowerlimit_2g_cfg_set);
+    rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
+
     if (rv != WM_SUCCESS)
     {
-        (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
+        (void)PRINTF("Unable to set RU TX PWR Limit configuration\r\n");
     }
-#ifdef CONFIG_5GHz_SUPPORT
-    else
-    {
-        rv = wlan_set_11ax_rutxpowerlimit(&rutxpowerlimit_5g_cfg_set);
-        if (rv != WM_SUCCESS)
-        {
-            (void)PRINTF("Unable to set 5G RU TX PWR Limit configuration\r\n");
-        }
-    }
-#endif
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
 {
     wlan_rutxpwrlimit_t chrupwr;
@@ -1204,6 +1196,7 @@ static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
         print_rutxpwrlimit(&chrupwr);
     }
 }
+#endif
 
 static void test_wlan_set_tx_omi(int argc, char **argv)
 {
@@ -1798,7 +1791,9 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-ed-mac-mode", "<interface>", wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
     {"wlan-set-tx-omi", "<tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
+#ifndef CONFIG_MLAN_WMSDK
     {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
+#endif
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
     {"wlan-11axcfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #ifdef CONFIG_11AX_TWT
