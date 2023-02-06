@@ -833,7 +833,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     WLAN_802_11_RATES rates;
     t_u32 rates_size;
     t_u16 tmp_cap;
-    t_u8 *pos;
+    t_u8 *pos, *auth_pos = NULL;
     t_u8 akm_type = 0;
 #ifdef CONFIG_11R
     t_u8 ft_akm = 0;
@@ -993,6 +993,12 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #endif
         )
         {
+            if ((pauth_tlv == MNULL) && (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_AUTO))
+            {
+                auth_pos = pos;
+                pos += sizeof(MrvlIEtypes_AuthType_t);
+            }
+
             prsn_ie_tlv              = (MrvlIEtypes_RsnParamSet_t *)(void *)pos;
             prsn_ie_tlv->header.type = (t_u16)pmpriv->wpa_ie[0]; /* WPA_IE
                                                                     or
@@ -1038,12 +1044,11 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #endif
             if ((pauth_tlv == MNULL) && (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_AUTO))
             {
-                pauth_tlv              = (MrvlIEtypes_AuthType_t *)pos;
+                pauth_tlv              = (MrvlIEtypes_AuthType_t *)auth_pos;
                 pauth_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AUTH_TYPE);
                 pauth_tlv->header.len  = sizeof(pauth_tlv->auth_type);
                 pauth_tlv->auth_type   = wlan_cpu_to_le16(akm_type);
 
-                pos += sizeof(pauth_tlv->header) + pauth_tlv->header.len;
                 pauth_tlv->header.len = wlan_cpu_to_le16(pauth_tlv->header.len);
             }
         }
