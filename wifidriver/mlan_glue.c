@@ -1983,21 +1983,21 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
     wifi_sta_info_t *sta = (wifi_sta_info_t *)(void *)(((t_u8 *)&sl->count) + sizeof(int));
 
     int i;
-    const MrvlIEtypes_sta_info_t *si =
-        (const MrvlIEtypes_sta_info_t *)(const void *)(((const t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
-    for (i = 0; i < c; i++)
+    MrvlIEtypes_sta_info_t *si = (MrvlIEtypes_sta_info_t *)(((t_u8 *)&sta_list->sta_count) + sizeof(t_u16));
+    for (i = 0; i < c && i < MAX_NUM_CLIENTS; i++)
     {
-        if ((si[i].rssi & 0x80) != 0)
+        if ((si->rssi & 0x80) != 0)
         {
-            sta[i].rssi = -(256 - si[i].rssi);
+            sta[i].rssi = -(256 - si->rssi);
         }
         else
         {
-            sta[i].rssi = si[i].rssi;
+            sta[i].rssi = si->rssi;
         }
 
-        (void)memcpy((void *)sta[i].mac, (const void *)si[i].mac_address, MLAN_MAC_ADDR_LENGTH);
-        sta[i].power_mgmt_status = si[i].power_mfg_status;
+        (void)memcpy(sta[i].mac, si->mac_address, MLAN_MAC_ADDR_LENGTH);
+        sta[i].power_mgmt_status = si->power_mfg_status;
+        si = (MrvlIEtypes_sta_info_t *)((t_u8* )si + (si->header.len + sizeof(MrvlIEtypesHeader_t)));
 
         wifi_d("RSSI: 0x%x %d dbm", sta[i].rssi, sta[i].rssi);
     }

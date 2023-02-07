@@ -627,7 +627,11 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
         /* Explicitly call this function so that the linklocal address
          * gets updated even if the interface does not get any IPv6
          * address in its lifetime */
-        wm_netif_ipv6_status_callback(&if_handle->netif);
+        if (if_handle == &g_mlan)
+        {
+            wm_netif_ipv6_status_callback(&if_handle->netif);
+        }
+        
     }
 #endif
     if (if_handle == &g_mlan)
