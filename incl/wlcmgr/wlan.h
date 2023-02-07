@@ -497,6 +497,15 @@ enum wlan_csi_opt
 };
 #endif
 
+#ifdef CONFIG_MLAN_WMSDK
+enum wlan_monitor_opt{
+    MONITOR_FILTER_OPT_ADD_MAC = 0,
+    MONITOR_FILTER_OPT_DELETE_MAC,
+    MONITOR_FILTER_OPT_CLEAR_MAC,
+    MONITOR_FILTER_OPT_DUMP,
+};
+#endif
+
 /** Scan Result */
 struct wlan_scan_result
 {
@@ -972,6 +981,13 @@ typedef wifi_dot1as_info_t wlan_dot1as_info_t;
  * \ref wifi_csi_config_params_t
  */
 typedef wifi_csi_config_params_t wlan_csi_config_params_t;
+#endif
+
+#ifdef CONFIG_NET_MONITOR
+/** Configuration for Net monitor from
+ * \ref wifi_net_monitor_t
+ */
+typedef wifi_net_monitor_t wlan_net_monitor_t;
 #endif
 
 int verify_scan_duration_value(int scan_duration);
@@ -4580,5 +4596,35 @@ int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer))
  * \return        void
  */
 void wlan_set_rssi_low_threshold(uint8_t threshold);
+#endif
+
+#ifdef CONFIG_NET_MONITOR
+/**
+ * Send the net monitor config parameter to FW.
+ *
+ *\param[in] monitor Monitor config parameter
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor);
+
+/** This function registers callback which are used to deliver monitor data to user.
+ *
+ * \param[in] monitor_data_recv_callback Callback to deliver monitor data and data length to user.
+ *          Memory layout of buffer:
+ *          offset(byte)                        items
+ *          0                                   rssi
+ *          1                                   802.11 mac header
+ *          1 + 'size of 802.11 mac header'     frame body
+ *
+ * \return void
+ */
+void wlan_register_monitor_user_callback(int (*monitor_data_recv_callback)(void *buffer, t_u16 data_len));
+
+/** This function deregisters monitor callback.
+ *
+ * \return void
+ */
+void wlan_deregister_net_monitor_user_callback();
 #endif
 #endif /* __WLAN_H__ */

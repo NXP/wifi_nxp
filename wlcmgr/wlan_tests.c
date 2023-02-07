@@ -37,6 +37,16 @@ wlan_csi_config_params_t g_csi_params              = {
 };
 #endif
 
+#ifdef CONFIG_NET_MONITOR
+wlan_net_monitor_t g_net_monitor_param = {
+    .action           = 0x01,
+    .monitor_activity = 0x01,
+    .filter_flags     = 0x07,
+    .radio_type       = 0x0 ,
+    .chan_number      = 0x01, 
+};
+#endif
+
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
@@ -4471,6 +4481,213 @@ static void test_wlan_rssi_low_threshold(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_NET_MONITOR
+static void dump_wlan_set_monitor_filter_usage()
+{
+    (void)PRINTF("Error : invalid arguments\r\n");
+    (void)PRINTF("Usage : wlan-set-monitor-filter <opt> <macaddr>\r\n");
+    (void)PRINTF("opt   : add/delete/clear/dump \r\n");
+    (void)PRINTF("add   : All options need to be filled in \r\n");
+    (void)PRINTF("delete: Delete recent mac addr \r\n");
+    (void)PRINTF("clear : Clear all mac addr \r\n");
+    (void)PRINTF("dump  : Dump monitor cfg information \r\n");
+
+    (void)PRINTF("\r\nUsage example ：\r\n");
+    (void)PRINTF("wlan-set-monitor-filter add 64:64:4A:D6:FA:7B \r\n");
+    (void)PRINTF("wlan-set-monitor-filter delete \r\n");
+    (void)PRINTF("wlan-set-monitor-filter clear  \r\n");
+    (void)PRINTF("wlan-set-monitor-filter dump   \r\n");
+}
+
+static void dump_monitor_param()
+{
+    int i  = 0;
+    
+    (void)PRINTF("\r\n");
+    (void)PRINTF("current parameters: \r\n");
+    (void)PRINTF("action            : %d \r\n",g_net_monitor_param.action);
+    (void)PRINTF("monitor_activity  : %d \r\n",g_net_monitor_param.monitor_activity);
+    (void)PRINTF("filter_flags      : %d \r\n",g_net_monitor_param.filter_flags);
+    (void)PRINTF("radio_type        : %d \r\n",g_net_monitor_param.radio_type);
+    (void)PRINTF("chan_number       : %d \r\n",g_net_monitor_param.chan_number);
+    (void)PRINTF("filter_num        : %d \r\n",g_net_monitor_param.filter_num);
+    (void)PRINTF("\r\n");
+                
+    for(i = 0; i < g_net_monitor_param.filter_num; i++)
+    {
+        (void)PRINTF("mac_addr      : %02X:%02X:%02X:%02X:%02X:%02X \r\n",
+                   g_net_monitor_param.mac_addr[i][0],
+                   g_net_monitor_param.mac_addr[i][1], 
+                   g_net_monitor_param.mac_addr[i][2], 
+                   g_net_monitor_param.mac_addr[i][3], 
+                   g_net_monitor_param.mac_addr[i][4], 
+                   g_net_monitor_param.mac_addr[i][5]);
+    }
+}
+
+static void test_wlan_set_monitor_param(int argc, char **argv)
+{
+    if (argc != 6)
+    {
+        (void)PRINTF("Error             : invalid number of arguments\r\n");
+        (void)PRINTF("Usage             : %s <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>\r\n", argv[0]);
+        (void)PRINTF("action            : 0/1 to Action Get/Set \r\n");
+        (void)PRINTF("monitor_activity  : 1 to enable and other parameters to disable monitor activity \r\n");
+        (void)PRINTF("filter_flags      : network monitor fitler flag \r\n");
+        (void)PRINTF("chan_number       : channel to monitor \r\n");
+        
+        (void)PRINTF("\r\nUsage example ：\r\n");
+        (void)PRINTF("wlan-set-monitor-param 1 1 7 0 1 \r\n");
+        
+        dump_monitor_param();
+        return;
+    }
+
+    g_net_monitor_param.action           = (t_u16)atoi(argv[1]);
+    g_net_monitor_param.monitor_activity = (t_u16)atoi(argv[2]);
+    
+    /*
+     * filter_flags:
+     * bit 0: (1/0) enable/disable management frame
+     * bit 1: (1/0) enable/disable control frame
+     * bit 2: (1/0) enable/disable data frame
+     */
+    g_net_monitor_param.filter_flags     = (t_u16)atoi(argv[3]);
+
+    /*
+     * radio_type:
+     * Band Info - (00)=2.4GHz, (01)=5GHz
+     * t_u8  chanBand    : 2;
+     * Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz 
+     * t_u8  chanWidth   : 2;
+     * Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below 
+     * t_u8  chan2Offset : 2;
+     * Channel Selection Mode - (00)=manual, (01)=ACS, (02)=Adoption mode
+     * t_u8  scanMode    : 2;
+     */
+    g_net_monitor_param.radio_type       = (t_u8)atoi(argv[4]);
+    g_net_monitor_param.chan_number      = (t_u8)atoi(argv[5]);
+
+    dump_monitor_param();
+}
+
+
+void set_monitor_filter(int op_index, t_u8 *mac)
+{
+    t_u8 temp_filter_num = g_net_monitor_param.filter_num;
+
+    switch (op_index)
+    {
+        case MONITOR_FILTER_OPT_ADD_MAC:
+            if(temp_filter_num < MAX_MONIT_MAC_FILTER_NUM)
+            {
+                (void)memcpy(&g_net_monitor_param.mac_addr[temp_filter_num], mac, MLAN_MAC_ADDR_LENGTH);
+                g_net_monitor_param.filter_num++;
+            }
+            else
+            {
+                (void)PRINTF("Max filter num is 3 \r\n");
+                return;
+            }
+            break;
+
+        case MONITOR_FILTER_OPT_DELETE_MAC:
+            if(temp_filter_num > 0)
+            {
+                memset(&g_net_monitor_param.mac_addr[temp_filter_num], 0, MLAN_MAC_ADDR_LENGTH);
+                g_net_monitor_param.filter_num--;
+            }
+            else
+            {
+                (void)PRINTF("Monitor filter num is 0 \r\n");
+                return;
+            }
+            break;
+
+        case MONITOR_FILTER_OPT_CLEAR_MAC:
+            memset(&g_net_monitor_param.mac_addr[0], 0, MAX_MONIT_MAC_FILTER_NUM*MLAN_MAC_ADDR_LENGTH);
+            g_net_monitor_param.filter_num = 0;
+            break;
+
+        case MONITOR_FILTER_OPT_DUMP:
+            dump_monitor_param();
+            break;
+            
+        default:
+            (void)PRINTF("unknown argument!\r\n");	
+            break;
+    }
+}
+
+static void test_wlan_set_monitor_filter(int argc, char **argv)
+{
+    int ret = 0;
+    t_u8 raw_mac[MLAN_MAC_ADDR_LENGTH];
+    int op_index = 0;
+
+    if(3 == argc)
+    {
+        if (string_equal("add", argv[1]))
+        {
+            ret = get_mac(argv[2], (char *)raw_mac, ':');
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: invalid MAC argument\r\n");
+                return;
+            }
+            if ((memcmp(&raw_mac[0], broadcast_mac, MLAN_MAC_ADDR_LENGTH) == 0) || (raw_mac[0] & 0x01))
+            {
+                (void)PRINTF("Error: only support unicast mac\r\n");
+                return;
+            }
+            op_index = MONITOR_FILTER_OPT_ADD_MAC;
+        }
+        else
+        {
+            dump_wlan_set_monitor_filter_usage();
+            return;
+        }
+    }
+    else if(2 == argc)
+    {   
+        if (string_equal("delete", argv[1]))
+            op_index = MONITOR_FILTER_OPT_DELETE_MAC;
+        else if (string_equal("clear", argv[1]))
+            op_index = MONITOR_FILTER_OPT_CLEAR_MAC;
+        else if (string_equal("dump", argv[1]))
+            op_index = MONITOR_FILTER_OPT_DUMP;
+        else
+        {
+            (void)PRINTF("Unknown argument!\r\n\r\n");
+            dump_wlan_set_monitor_filter_usage();
+            return;
+        }
+    }
+    else
+    {
+        dump_wlan_set_monitor_filter_usage();
+        return;
+    }
+    
+    set_monitor_filter(op_index,raw_mac);
+}
+
+/* Due to hardware issues, 9177 needs to scan the specified channel 
+ * that will be monitored before run wlan-net-monitor-cfg
+ */
+static void  test_wlan_net_monitor_cfg(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_net_monitor_cfg(&g_net_monitor_param);
+    
+    if (ret != WM_SUCCESS  )
+    {
+        (void)PRINTF("Failed to send monitor cfg\r\n");
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4626,6 +4843,11 @@ static struct cli_command tests[] = {
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
     {"wlan-rssi-low-threshold", "<threshold_value>", test_wlan_rssi_low_threshold},
+#endif
+#ifdef CONFIG_NET_MONITOR
+    {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
+    {"wlan-set-monitor-filter", "<opt> <macaddr>", test_wlan_set_monitor_filter},
+    {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>", test_wlan_set_monitor_param},
 #endif
 };
 

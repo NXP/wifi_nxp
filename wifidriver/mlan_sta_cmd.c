@@ -2572,7 +2572,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_802_11_RF_ANTENNA:
             ret = wlan_cmd_802_11_rf_antenna(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NET_MONITOR
         case HostCmd_CMD_802_11_NET_MONITOR:
             ret = wlan_cmd_802_11_net_monitor(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;

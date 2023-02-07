@@ -1112,19 +1112,27 @@ typedef struct
 } wifi_bridge_cfg_t;
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NET_MONITOR
+typedef t_u8 wifi_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Network monitor structure */
-typedef struct
+typedef PACK_START struct
 {
+    /** Action */
+    t_u16 action;
     /** Monitor activity */
-    uint16_t monitor_activity;
+    t_u16 monitor_activity;
     /** Filter flags */
-    uint16_t filter_flags;
-    uint8_t radio_type;
+    t_u16 filter_flags;
+    /** Channel scan parameter : Radio type */
+    t_u8 radio_type;
     /** Channel number */
-    uint8_t chan_number;
-} wifi_net_monitor_t;
+    t_u8 chan_number;
+    /** mac num of filter*/
+    t_u8 filter_num;
+    /** Source address of the packet to receive */
+    wifi_802_11_mac_addr mac_addr[MAX_MONIT_MAC_FILTER_NUM];
+} PACK_END wifi_net_monitor_t;
 
 /** Beacon information structure */
 typedef PACK_START struct
@@ -1165,7 +1173,6 @@ typedef PACK_START struct
     /** QOS control */
     uint16_t qos_ctrl;
 } PACK_END wifi_data_info_t;
-#endif
 
 /** Wifi frame types */
 typedef enum
@@ -1197,8 +1204,6 @@ typedef enum
     /** QOS frame */
     QOS_DATA_FRAME = 0x88,
 } wifi_frame_type_t;
-
-#ifndef CONFIG_MLAN_WMSDK
 typedef PACK_START struct
 {
     wifi_frame_type_t frame_type;

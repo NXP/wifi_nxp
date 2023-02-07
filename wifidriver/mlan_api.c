@@ -4337,3 +4337,28 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
     return wifi_wait_for_cmdresp(NULL);
 }
 #endif
+
+#ifdef CONFIG_NET_MONITOR
+int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
+{
+    t_u16 action = HostCmd_ACT_GEN_SET;
+    
+    action = monitor->action;
+
+    if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
+        return -WM_FAIL;
+    
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num           = 0x0;
+    cmd->result            = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_NET_MONITOR,
+                                              monitor->action, 0, NULL, monitor, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif

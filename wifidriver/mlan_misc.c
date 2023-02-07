@@ -2175,7 +2175,7 @@ mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NET_MONITOR
 mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
                                         IN HostCmd_DS_COMMAND *cmd,
                                         IN t_u16 cmd_action,
@@ -2184,6 +2184,9 @@ mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
     HostCmd_DS_802_11_NET_MONITOR *net_mon = &cmd->params.net_mon;
     wifi_net_monitor_t *monitor            = (wifi_net_monitor_t *)pdata_buf;
     ENTER();
+
+    (void)__memset(pmpriv->adapter, net_mon, 0x00, sizeof(HostCmd_DS_802_11_NET_MONITOR));
+
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_NET_MONITOR);
     cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_802_11_NET_MONITOR) + S_DS_GEN);
 
@@ -2192,10 +2195,15 @@ mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
         net_mon->action                                         = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
         net_mon->monitor_activity                               = wlan_cpu_to_le16(monitor->monitor_activity);
         net_mon->filter_flags                                   = wlan_cpu_to_le16(monitor->filter_flags);
-        net_mon->monitor_channel.chan_band_param[0].radio_type  = (t_u8)monitor->radio_type;
-        net_mon->monitor_channel.chan_band_param[0].chan_number = (t_u8)monitor->chan_number;
         net_mon->monitor_channel.header.type                    = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
         net_mon->monitor_channel.header.len                     = 2;
+        net_mon->monitor_channel.chan_band_param[0].radio_type  = (t_u8)monitor->radio_type;
+        net_mon->monitor_channel.chan_band_param[0].chan_number = (t_u8)monitor->chan_number;
+
+        net_mon->monitor_filter.header.type                     = TLV_TYPE_UAP_STA_MAC_ADDR_FILTER;
+        net_mon->monitor_filter.header.len                      = MLAN_MAC_ADDR_LENGTH*monitor->filter_num + sizeof(t_u8);
+        net_mon->monitor_filter.filter_num                      = (t_u8)monitor->filter_num;
+        __memcpy(priv->adapter, (t_u8 *)net_mon->monitor_filter.mac_list, (t_u8 *)monitor->mac_addr, MAX_MONIT_MAC_FILTER_NUM*MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
@@ -2204,7 +2212,9 @@ mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function handles the command response of rf_antenna
  *

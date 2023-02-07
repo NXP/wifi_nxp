@@ -726,6 +726,11 @@ typedef struct _mlan_ssid_bssid
 /** Valid cipher bitmap */
 #define VALID_CIPHER_BITMAP 0x0cU
 
+#ifdef CONFIG_NET_MONITOR
+/** Maximum monior mac filter num */
+#define MAX_MONIT_MAC_FILTER_NUM 3
+#endif
+
 /** Channel List Entry */
 typedef struct _channel_list
 {

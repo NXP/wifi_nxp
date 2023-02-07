@@ -103,6 +103,10 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
 
+#ifdef CONFIG_NET_MONITOR
+void user_recv_monitor_data(const t_u8 *rcvdata);
+#endif
+
 /**
  * Helper struct to hold private data used to operate your ethernet interface.
  * Keeping the ethernet address of the MAC in this struct is not necessary

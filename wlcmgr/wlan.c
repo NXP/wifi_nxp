@@ -9040,3 +9040,30 @@ void wlan_set_rssi_low_threshold(uint8_t threshold)
     wlan.rssi_low_threshold = threshold;
 }
 #endif
+
+#ifdef CONFIG_NET_MONITOR
+void wlan_register_monitor_user_callback(int (*monitor_data_recv_callback)(void *buffer, t_u16 data_len))
+{
+   register_monitor_user_callback(monitor_data_recv_callback);
+}
+
+void wlan_deregister_net_monitor_user_callback()
+{
+   deregister_monitor_user_callback();
+}
+
+int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
+{
+    bool flag = false;
+    
+    if(is_sta_connected() || is_uap_started())
+    {
+        (void)PRINTF("down the uap and disconnet sta first\n\r");
+        return WM_FAIL;
+    }
+    
+    flag = (1 == monitor->monitor_activity) ? true : false; 
+    set_monitor_flag(flag);
+    return wifi_net_monitor_cfg(monitor);
+}
+#endif

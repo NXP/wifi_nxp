@@ -1588,5 +1588,47 @@ typedef struct _csi_local_buff_statu
 extern int csi_event_cnt;
 extern t_u64 csi_event_data_len;
 #endif
+#ifdef CONFIG_NET_MONITOR
+/**
+ * Send the net monitor config parameter to FW.
+ *
+ *\param[in] monitor Monitor config parameter.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor);
 
+/**
+ * Register user callback to receive monitor data.
+ *
+ *\param[in] monitor_cb User callback function.
+ *
+ * \return void.
+ */
+void register_monitor_user_callback(int (*monitor_cb)(void *frame, t_u16 len));
+
+/**
+ * Deregister user callback for monitor feature.
+ *
+ * \return void.
+ */
+void deregister_monitor_user_callback();
+
+/**
+ * Record the status when start monitor.
+ *
+ *\param[in] flag Flag is true, when in monitor mode,otherwise, flag is false.
+ *
+ * \return void.
+ */
+void set_monitor_flag(bool flag);
+
+/**
+ * Get the monitor status to determine if it is in monitor mode.
+ *
+ * \return true in monitor mode, false in other modes.
+ */
+bool get_monitor_flag();
+
+#endif
 #endif

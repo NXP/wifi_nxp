@@ -3295,6 +3295,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_AD_HOC_JOIN
     t_u16 reserved2;
 } MLAN_PACK_END HostCmd_DS_802_11_AD_HOC_JOIN;
 
+#ifdef CONFIG_NET_MONITOR
+/** MrvlIEtypes_Monitor_filter_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_Monitor_filter_t {
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** mac num of filter*/
+    t_u8 filter_num;
+    /** mac address */
+    mlan_802_11_mac_addr mac_list[MAX_MONIT_MAC_FILTER_NUM];
+} MLAN_PACK_END MrvlIEtypes_Monitor_filter_t;
+
 /**  HostCmd_CMD_802_11_NET_MONITOR */
 typedef MLAN_PACK_START struct _HostCmd_DS_802_11_NET_MONITOR
 {
@@ -3302,8 +3313,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_NET_MONITOR
     t_u16 monitor_activity;
     t_u16 filter_flags;
     MrvlIEtypes_ChanBandListParamSet_t monitor_channel;
-
+    MrvlIEtypes_Monitor_filter_t monitor_filter;
 } MLAN_PACK_END HostCmd_DS_802_11_NET_MONITOR;
+#endif
 
 /** Interrupt Raising Edge */
 #define INT_RASING_EDGE 0
@@ -6645,8 +6657,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_CW_MODE_CTRL cwmode;
         /** RF antenna */
         HostCmd_DS_802_11_RF_ANTENNA antenna;
+#ifdef  CONFIG_NET_MONITOR
         /** Net Monitor Mode command */
         HostCmd_DS_802_11_NET_MONITOR net_mon;
+#endif
         /** Enhanced power save command */
         HostCmd_DS_802_11_PS_MODE_ENH psmode_enh;
         HostCmd_DS_802_11_HS_CFG_ENH opt_hs_cfg;

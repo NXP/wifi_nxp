@@ -228,6 +228,7 @@ static void wlan_fill_cap_info(mlan_private *priv, VHT_capa_t *vht_cap, t_u16 ba
     LEAVE();
 }
 
+#ifdef CONFIG_11AC
 /**
  *  @brief Set/get 11ac configuration
  *
@@ -447,6 +448,7 @@ mlan_status wlan_11ac_ioctl_vhtcfg(IN mlan_private *pmpriv, IN t_u8 action, IN m
     LEAVE();
     return ret;
 }
+#endif
 
 #if 0
 /**

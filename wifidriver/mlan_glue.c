@@ -114,6 +114,14 @@ int16_t g_bcn_nf_last;
  *  and if possile global variable will be removed.*/
 static t_u16 ps_event;
 
+#ifdef CONFIG_NET_MONITOR
+/* record status */
+bool g_monitor_status = false;
+
+/* monitor recv data user callback */
+int (*net_monitor_callback)(void *buffer, t_u16 data_len) = NULL;
+#endif
+
 int mlan_subsys_init(void);
 int mlan_subsys_deinit(void);
 
@@ -1339,6 +1347,71 @@ int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen
 
     return WM_SUCCESS;
 }
+
+#ifdef CONFIG_NET_MONITOR
+void register_monitor_user_callback(int (*monitor_cb)(void *frame, t_u16 len))
+{
+    net_monitor_callback = monitor_cb;
+}
+
+void deregister_monitor_user_callback()
+{
+    net_monitor_callback = NULL;
+}
+
+void set_monitor_flag(bool flag)
+{
+    g_monitor_status = flag;
+}
+
+bool get_monitor_flag()
+{
+    return g_monitor_status;
+}
+
+void user_recv_monitor_data(const t_u8 *rcvdata)
+{
+    t_s8 rssi              = 0;
+    t_u16 datalen          = 0;
+    t_u8 *net_monitor_data = NULL;
+    RxPD *rxpd             = (RxPD *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
+    t_u16 inimupkt_len     = *(t_u16 *)rcvdata;
+
+    datalen = rxpd->rx_pkt_length + sizeof(t_s8);
+    rssi    = rxpd->snr + rxpd->nf;
+
+    if ((rxpd->rx_pkt_length + rxpd->rx_pkt_offset + INTF_HEADER_LEN) != inimupkt_len)
+    {
+        wifi_w("rx_pkt_length + rx_pkt_offset + INTF_HEADER_LEN is not equal to inimupkt_len \n\r");
+        wifi_w("Invalid data, discard \n\r");
+        wifi_w("rx_pkt_length :%d \n\r", rxpd->rx_pkt_length);
+        wifi_w("rx_pkt_offset :%d \n\r", rxpd->rx_pkt_offset);
+        wifi_w("inimupkt_len  :%d \n\r", inimupkt_len);
+        return;
+    }
+
+    if (net_monitor_callback != NULL)
+    {
+        net_monitor_data = os_mem_alloc(datalen);
+
+        if (!net_monitor_data)
+        {
+            wifi_w("No mem. Cannot process net monitor data");
+            return;
+        }
+
+        memcpy(net_monitor_data, &rssi, sizeof(t_s8));
+        memcpy(net_monitor_data + sizeof(t_s8), ((t_u8 *)rcvdata + INTF_HEADER_LEN + rxpd->rx_pkt_offset),
+               rxpd->rx_pkt_length);
+
+        net_monitor_callback((void *)net_monitor_data, datalen);
+
+        os_mem_free(net_monitor_data);
+    }
+
+    return;
+}
+#endif
 
 void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd)
 {
