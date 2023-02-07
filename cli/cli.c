@@ -21,7 +21,11 @@
 #include <fsl_debug_console.h>
 
 #include "cli_mem.h"
-
+#ifdef CONFIG_UART_INTERRUPT
+#include "fsl_usart_freertos.h"
+#include "fsl_usart.h"
+#include "board.h"
+#endif
 #define END_CHAR      '\r'
 #define PROMPT        "\r\n# "
 #define HALT_MSG      "CLI_HALT"
@@ -55,7 +59,24 @@ static struct
 
 static os_thread_t cli_main_thread;
 static os_thread_stack_define(cli_stack, CONFIG_CLI_STACK_SIZE);
+#ifdef CONFIG_UART_INTERRUPT
+static os_thread_t uart_thread;
+static os_thread_stack_define(uart_stack, 1024);
+#define USART_INPUT_SIZE 1
+#define USART_NVIC_PRIO  5
+uint8_t background_buffer[32];
+uint8_t recv_buffer[USART_INPUT_SIZE];
+static usart_rtos_handle_t ur_handle;
+struct _usart_handle t_u_handle;
 
+struct rtos_usart_config usart_config = {
+    .baudrate    = BOARD_DEBUG_UART_BAUDRATE,
+    .parity      = kUSART_ParityDisabled,
+    .stopbits    = kUSART_OneStopBit,
+    .buffer      = background_buffer,
+    .buffer_size = sizeof(background_buffer),
+};
+#endif
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
 #define MAX_CMDS_IN_HISTORY 10
 static char *cmd_hist_arr[MAX_CMDS_IN_HISTORY];
@@ -536,7 +557,10 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
     int rv = -WM_FAIL;
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
-
+#ifdef CONFIG_UART_INTERRUPT
+    int ret;
+    size_t n;
+#endif
     if (get_inbuf == NULL)
     {
         return 0;
@@ -546,7 +570,21 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 
     while (true)
     {
+#ifdef CONFIG_UART_INTERRUPT
+        ret = USART_RTOS_Receive(&ur_handle, recv_buffer, sizeof(recv_buffer), &n);
+        if (ret == kStatus_USART_RxRingBufferOverrun)
+        {
+            /* Notify about hardware buffer overrun and un-received buffer content */
+            background_buffer[31] = 0;
+            PRINTF("\r\nRing buffer overrun: %s\r\n", background_buffer);
+            PRINTF("\r\nPlease do not input during throughput tests\r\n");
+            vTaskSuspend(NULL);
+        }
+        get_inbuf[*bp] = recv_buffer[0];
+#else
         get_inbuf[*bp] = (char)GETCHAR();
+#endif
+
         if (state == EXT_KEY_SECOND_SYMBOL)
         {
             if (second_char == (char)(0x4F))
@@ -1137,6 +1175,27 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
     return 0;
 }
 
+#ifdef CONFIG_UART_INTERRUPT
+static void uart_task(void *pvParameters)
+{
+    usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
+    usart_config.base   = BOARD_DEBUG_UART;
+
+    NVIC_SetPriority(BOARD_UART_IRQ, USART_NVIC_PRIO);
+
+    if (USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config) != WM_SUCCESS)
+    {
+        vTaskSuspend(NULL);
+    }
+
+    /* Receive user input and send it back to terminal. */
+    while (1)
+    {
+        console_tick();
+    }
+}
+#endif
+
 int cli_init(void)
 {
     static bool cli_init_done;
@@ -1154,7 +1213,7 @@ int cli_init(void)
     {
         return -WM_FAIL;
     }
-
+#ifndef CONFIG_UART_INTERRUPT
     if (cli_install_UART_Tick() != WM_SUCCESS)
     {
         (void)PRINTF(
@@ -1162,11 +1221,20 @@ int cli_init(void)
             "\r\n");
         return -WM_FAIL;
     }
-
+#endif
     int ret = cli_start();
     if (ret == WM_SUCCESS)
     {
         cli_init_done = true;
     }
+    
+#ifdef CONFIG_UART_INTERRUPT
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: Failed to create uart thread: %d\r\n", ret);
+        return -WM_FAIL;
+    }
+#endif
     return ret;
 }
