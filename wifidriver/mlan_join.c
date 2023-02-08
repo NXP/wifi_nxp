@@ -604,7 +604,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
 
     // PMKID
     ptr += sizeof(t_u16);
-    if (end_ptr > ptr)
+    if (end_ptr >= (ptr + 2))
     {
         pmkid_count = wlan_le16_to_cpu(*(t_u16 *)ptr);
         ptr += sizeof(t_u16);
@@ -612,7 +612,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
         ptr += pmkid_count * PMKID_LEN;
     }
     // Group Mgmt Cipher Suite
-    if ((end_ptr > ptr) && (pmf_mask & PMF_MASK))
+    if ((end_ptr >= (ptr + 4)) && (pmf_mask & PMF_MASK))
     {
         group_mgmt_cipher_suite_ptr = ptr;
     }
