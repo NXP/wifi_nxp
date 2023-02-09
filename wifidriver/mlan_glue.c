@@ -4539,7 +4539,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             wrapper_wlan_check_uap_capability((mlan_private *)mlan_adap->priv[1], msg->data);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
-            pmpriv->uap_bss_started = MTRUE;
+            pmpriv_uap->uap_bss_started = MTRUE;
             /* set uap mac addr */
             (void)memcpy((void *)pmpriv->curr_addr, (const void *)evt->src_mac_addr, (size_t)MLAN_MAC_ADDR_LENGTH);
             break;
