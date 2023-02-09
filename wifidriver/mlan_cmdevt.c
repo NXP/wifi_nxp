@@ -3318,7 +3318,6 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     ext_tlv->type          = tlv_type;
                     ext_tlv->len           = tlv_len;
-                    pmadapter->enable_11ax = MTRUE;
                     wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
                 }
                 break;

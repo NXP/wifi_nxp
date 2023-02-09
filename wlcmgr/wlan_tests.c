@@ -139,57 +139,7 @@ static inline const char *sec_tag(struct wlan_network *network)
         return "\tsecurity";
     }
 }
-
 #ifdef CONFIG_WIFI_CAPA
-static uint8_t wlan_check_11n_capa(unsigned int channel, uint16_t fw_bands)
-{
-    uint8_t enable_11n = false;
-
-    if (channel > 14 && (fw_bands | BAND_AN))
-    {
-        enable_11n = true;
-    }
-    else if (channel <= 14 && (fw_bands | BAND_GN))
-    {
-        enable_11n = true;
-    }
-    return enable_11n;
-}
-
-static uint8_t wlan_check_11ac_capa(unsigned int channel, uint16_t fw_bands)
-{
-    uint8_t enable_11ac = false;
-
-#ifdef CONFIG_11AC
-    if (channel > 14 && (fw_bands | BAND_AAC))
-    {
-        enable_11ac = true;
-    }
-    else if (channel <= 14 && (fw_bands | BAND_GAC))
-    {
-        enable_11ac = true;
-    }
-#endif
-    return enable_11ac;
-}
-
-static uint8_t wlan_check_11ax_capa(unsigned int channel, uint16_t fw_bands)
-{
-    uint8_t enable_11ax = false;
-
-#ifdef CONFIG_11AX
-    if (channel > 14 && (fw_bands | BAND_AAX))
-    {
-        enable_11ax = true;
-    }
-    else if (channel <= 14 && (fw_bands | BAND_GAX))
-    {
-        enable_11ax = true;
-    }
-#endif
-    return enable_11ax;
-}
-
 static int get_capa(char *arg, uint8_t *wlan_capa)
 {
     if (!arg)
@@ -310,14 +260,13 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_WIFI_CAPA
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
-        uint16_t fw_bands   = 0U;
         uint8_t enable_11ax = false;
         uint8_t enable_11ac = false;
         uint8_t enable_11n  = false;
 
-        enable_11ac = wlan_check_11ac_capa(network->channel, fw_bands);
-        enable_11ax = wlan_check_11ax_capa(network->channel, fw_bands);
-        enable_11n  = wlan_check_11n_capa(network->channel, fw_bands);
+        enable_11ac = wlan_check_11ac_capa(network->channel);
+        enable_11ax = wlan_check_11ax_capa(network->channel);
+        enable_11n  = wlan_check_11n_capa(network->channel);
 #ifdef CONFIG_11AX
         if (network->wlan_capa & WIFI_SUPPORT_11AX)
         {

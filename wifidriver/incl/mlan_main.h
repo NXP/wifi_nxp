@@ -2196,8 +2196,6 @@ struct _mlan_adapter
     t_u8 usr_dot_11ac_opermode_nss;
 
 #ifdef CONFIG_11AX
-    /** enable 11ax flag */
-    t_u8 enable_11ax;
     /** length of hw he capability */
     t_u8 hw_hecap_len;
     /** 802.11ax HE capability */

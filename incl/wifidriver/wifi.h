@@ -1108,7 +1108,21 @@ int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
 #ifdef CONFIG_WIFI_CAPA
+/**
+ * Set uAP capability
+ *
+ * User can set uAP capability of 11ax/11ac/11n/legacy. Default is 11ax.
+ *
+ * @param[in] wlan_capa uAP capability bitmap.
+ *                      1111 - 11AX
+ *                      0111 - 11AC
+ *                      0011 - 11N
+ *                      0001 - legacy
+ *
+ * @return void
+ */
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
+void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
 #endif
 
 int wifi_uap_stop(enum wlan_bss_type type);

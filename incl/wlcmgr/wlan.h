@@ -4632,4 +4632,24 @@ void wlan_register_monitor_user_callback(int (*monitor_data_recv_callback)(void 
  */
 void wlan_deregister_net_monitor_user_callback();
 #endif
+
+#ifdef CONFIG_WIFI_CAPA
+/** Check if 11n(2G or 5G) is supported by hardware or not.
+ *
+ * \return true if 11n is supported or false if not.
+ */
+uint8_t wlan_check_11n_capa(unsigned int channel);
+
+/** Check if 11ac(2G or 5G) is supported by hardware or not.
+ *
+ * \return true if 11ac is supported or false if not.
+ */
+uint8_t wlan_check_11ac_capa(unsigned int channel);
+
+/** Check if 11ax(2G or 5G) is supported by hardware or not.
+ *
+ * \return true if 11ax is supported or false if not.
+ */
+uint8_t wlan_check_11ax_capa(unsigned int channel);
+#endif
 #endif /* __WLAN_H__ */

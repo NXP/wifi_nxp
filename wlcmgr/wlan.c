@@ -5457,6 +5457,66 @@ int wlan_add_network(struct wlan_network *network)
     return WM_SUCCESS;
 }
 
+#ifdef CONFIG_WIFI_CAPA
+uint8_t wlan_check_11n_capa(unsigned int channel)
+{
+    uint8_t enable_11n = false;
+    uint16_t fw_bands   = 0U;
+
+    wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
+
+    if (channel > 14 && (fw_bands | BAND_AN))
+    {
+        enable_11n = true;
+    }
+    else if (channel <= 14 && (fw_bands | BAND_GN))
+    {
+        enable_11n = true;
+    }
+    return enable_11n;
+}
+
+uint8_t wlan_check_11ac_capa(unsigned int channel)
+{
+    uint8_t enable_11ac = false;
+    uint16_t fw_bands   = 0U;
+
+    wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
+
+#ifdef CONFIG_11AC
+    if (channel > 14 && (fw_bands | BAND_AAC))
+    {
+        enable_11ac = true;
+    }
+    else if (channel <= 14 && (fw_bands | BAND_GAC))
+    {
+        enable_11ac = true;
+    }
+#endif
+    return enable_11ac;
+}
+
+uint8_t wlan_check_11ax_capa(unsigned int channel)
+{
+    uint8_t enable_11ax = false;
+    uint16_t fw_bands   = 0U;
+
+    wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
+
+#ifdef CONFIG_11AX
+    if (channel > 14 && (fw_bands | BAND_AAX))
+    {
+        enable_11ax = true;
+    }
+    else if (channel <= 14 && (fw_bands | BAND_GAX))
+    {
+        enable_11ax = true;
+    }
+#endif
+    return enable_11ax;
+}
+#endif
+
 int wlan_remove_network(const char *name)
 {
     unsigned int len, i;
