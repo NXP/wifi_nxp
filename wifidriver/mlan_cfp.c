@@ -2246,7 +2246,7 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
     if (acs_band == 1)
     {
 #if CONFIG_5GHz_SUPPORT
-        i = 1;
+        i      = 1;
         cfp    = pmadapter->region_channel[i].pcfp;
         cfp_no = (int)pmadapter->region_channel[i].num_cfp;
 
@@ -2258,7 +2258,7 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
                 *num_chans     = *num_chans + 1U;
             }
         }
-    
+
 #endif
     }
 }
@@ -2778,24 +2778,24 @@ mlan_status wlan_get_global_nonglobal_oper_class(
 
 int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u8 curr_oper_class)
 {
-    t_u8 oper_class_us[] = {1,
-                            2,
-                            3,
-                            4,
-                            5,
-                            12,
-                            22,
-                            23,
-                            24,
-                            25,
-                            26,
-                            27,
-                            28,
-                            29,
-                            30,
-                            31,
-                            32,
-                            33
+    t_u8 oper_class_us[] = {115,
+                            118,
+                            124,
+                            121,
+                            125,
+                            81,
+                            116,
+                            119,
+                            122,
+                            126,
+                            126,
+                            117,
+                            120,
+                            123,
+                            127,
+                            127,
+                            83,
+                            84
 #ifdef CONFIG_11AC
                             ,
                             128,
@@ -2803,19 +2803,19 @@ int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u
                             130
 #endif
     };
-    t_u8 oper_class_eu[] = {1,
-                            2,
-                            3,
-                            4,
-                            5,
-                            6,
-                            7,
-                            8,
-                            9,
-                            10,
-                            11,
-                            12,
-                            17
+    t_u8 oper_class_eu[] = {115,
+                            118,
+                            121,
+                            81,
+                            116,
+                            119,
+                            122,
+                            117,
+                            120,
+                            123,
+                            83,
+                            84,
+                            125
 #ifdef CONFIG_11AC
                             ,
                             128,
@@ -2823,26 +2823,26 @@ int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u
                             130
 #endif
     };
-    t_u8 oper_class_jp[] = {1,
-                            30,
-                            31,
-                            32,
-                            33,
-                            34,
-                            35,
-                            36,
-                            37,
-                            38,
-                            39,
-                            40,
-                            41,
-                            42,
-                            43,
-                            44,
-                            45,
-                            56,
-                            57,
-                            58
+    t_u8 oper_class_jp[] = {115,
+                            81,
+                            82,
+                            118,
+                            118,
+                            121,
+                            121,
+                            116,
+                            119,
+                            119,
+                            122,
+                            122,
+                            117,
+                            120,
+                            120,
+                            123,
+                            123,
+                            83,
+                            84,
+                            121
 #ifdef CONFIG_11AC
                             ,
                             128,
@@ -2850,15 +2850,15 @@ int wlan_add_supported_oper_class_ie(mlan_private *pmpriv, t_u8 **pptlv_out, t_u
                             130
 #endif
     };
-    t_u8 oper_class_cn[] = {1,
-                            2,
-                            3,
-                            4,
-                            5,
-                            6,
-                            7,
-                            8,
-                            9
+    t_u8 oper_class_cn[] = {115,
+                            118,
+                            125,
+                            116,
+                            119,
+                            126,
+                            81,
+                            83,
+                            84
 #ifdef CONFIG_11AC
                             ,
                             128,
