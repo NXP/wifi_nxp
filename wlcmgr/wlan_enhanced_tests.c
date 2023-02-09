@@ -421,6 +421,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                 (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
             }
 #endif
+#ifdef CONFIG_11AX
             if (ds_rate.param.rate_cfg.rate_setting == 0xffff)
                 (void)PRINTF("    Rate setting: Preamble type/BW/GI/STBC/.. : auto \r\n");
             else
@@ -434,6 +435,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                 (void)PRINTF("        Coding:        %x\r\n", (ds_rate.param.rate_cfg.rate_setting & 0x0200) >> 9);
                 (void)PRINTF("        maxPE:         %x\r\n", (ds_rate.param.rate_cfg.rate_setting & 0x3000) >> 12);
             }
+#endif
         }
         else
         {
@@ -512,6 +514,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                     else
                         (void)PRINTF("    GI:   Short\r\n");
                 }
+#ifdef CONFIG_11AX
                 else if (datarate->tx_rate_format == 3)
                 {
                     switch (datarate->tx_gi)
@@ -532,6 +535,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                             break;
                     }
                 }
+#endif
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
                 if (datarate->tx_rate_format >= 2)
                     (void)PRINTF("    NSS:  %d\r\n", datarate->tx_nss + 1);
@@ -544,7 +548,6 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                 {
                     (void)PRINTF("    MCS:  Auto\r\n");
                 }
-
                 (void)PRINTF("    Rate: %.2f Mbps\r\n", (float)datarate->tx_data_rate / 2);
             }
         }
@@ -570,6 +573,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                     else
                         (void)PRINTF("    GI:   Short\r\n");
                 }
+#ifdef CONFIG_11AX
                 else if (datarate->rx_rate_format == 3)
                 {
                     switch (datarate->rx_gi)
@@ -590,6 +594,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                             break;
                     }
                 }
+#endif
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
                 if (datarate->rx_rate_format >= 2)
                     (void)PRINTF("    NSS:  %d\r\n", datarate->rx_nss + 1);
@@ -697,16 +702,20 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\tIf <format> is 1 (HT),\r\n");
     (void)PRINTF("\t        0x0000  Long GI\r\n");
     (void)PRINTF("\t        0x0020  Short GI\r\n");
+#ifdef CONFIG_11AC
     (void)PRINTF("\tIf <format> is 2 (VHT),\r\n");
     (void)PRINTF("\t        0x0000  Long GI\r\n");
     (void)PRINTF("\t        0x0020  Short GI\r\n");
     (void)PRINTF("\t        0x0060  Short GI and Nsym mod 10=9\r\n");
+#endif
+#ifdef CONFIG_11AX
     (void)PRINTF("\tIf <format> is 3 (HE),\r\n");
     (void)PRINTF("\t        0x0000  1xHELTF + GI0.8us\r\n");
     (void)PRINTF("\t        0x0020  2xHELTF + GI0.8us\r\n");
     (void)PRINTF("\t        0x0040  2xHELTF + GI1.6us\r\n");
     (void)PRINTF("\t        0x0060  4xHELTF + GI0.8us if DCM = 1 and STBC = 1\r\n");
     (void)PRINTF("\t                4xHELTF + GI3.2us, otherwise\r\n");
+#endif
 }
 
 static void test_wlan_set_txratecfg(int argc, char **argv)

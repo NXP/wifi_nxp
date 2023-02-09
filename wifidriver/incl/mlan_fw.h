@@ -945,9 +945,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** HT bandwidth 40 MHz */
 #define HT_BW_40 1U
 
+#ifdef CONFIG_11AX
 /** TLV type : TX RATE CFG, rename from TLV_TYPE_GI_LTF_SIZE to include CMD and
  * HE ER SU settings to this tlv */
 #define TLV_TYPE_TX_RATE_CFG (PROPRIETARY_TLV_BASE_ID + 319) /* 0x023f */
+#endif
 
 #if defined(CONFIG_EXT_SCAN_SUPPORT)
 /** TLV type : Scan Response */
@@ -3297,7 +3299,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_AD_HOC_JOIN
 
 #ifdef CONFIG_NET_MONITOR
 /** MrvlIEtypes_Monitor_filter_t */
-typedef MLAN_PACK_START struct _MrvlIEtypes_Monitor_filter_t {
+typedef MLAN_PACK_START struct _MrvlIEtypes_Monitor_filter_t
+{
     /** Header */
     MrvlIEtypesHeader_t header;
     /** mac num of filter*/
@@ -6660,7 +6663,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_CW_MODE_CTRL cwmode;
         /** RF antenna */
         HostCmd_DS_802_11_RF_ANTENNA antenna;
-#ifdef  CONFIG_NET_MONITOR
+#ifdef CONFIG_NET_MONITOR
         /** Net Monitor Mode command */
         HostCmd_DS_802_11_NET_MONITOR net_mon;
 #endif

@@ -797,14 +797,6 @@ static void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
 }
 #endif
 
-void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
-{
-    pmlan_private priv = mlan_adap->priv[1];
-
-    priv->rxpd_rate      = rxpd->rx_rate;
-    priv->rxpd_rate_info = rxpd->rate_info;
-}
-
 mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr)
 {
     int ret;

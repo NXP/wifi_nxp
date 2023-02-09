@@ -2328,11 +2328,7 @@ int wlan_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
  * \return -WM_FAIL otherwise.
  *
  */
-#ifdef CONFIG_WNM_PS
-int wlan_ieeeps_on(unsigned int wakeup_conditions, bool wnm_set, t_u16 wnm_sleep_time);
-#else
 int wlan_ieeeps_on(unsigned int wakeup_conditions);
-#endif
 
 /** Turn off IEEE Power Save mode.
  *
