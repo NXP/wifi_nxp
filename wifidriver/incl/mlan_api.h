@@ -231,7 +231,7 @@ void wifi_get_band(mlan_private *pmpriv, int *band);
 #endif
 
 int wifi_send_hostcmd(
-    void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
+    const void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
 
 int wifi_send_get_wpa_pmk(int mode, char *ssid);
 int wifi_deauthenticate(uint8_t *bssid);
@@ -394,7 +394,8 @@ int wrapper_bssdesc_first_set(int bss_index,
                               _Cipher_t *wpa_ucstCipher,
                               _Cipher_t *rsn_mcstCipher,
                               _Cipher_t *rsn_ucstCipher,
-                              t_u8 *ap_mfpc, t_u8 *ap_mfpr);
+                              t_u8 *ap_mfpc,
+                              t_u8 *ap_mfpr);
 
 int wrapper_bssdesc_second_set(int bss_index,
                                bool *phtcap_ie_present,

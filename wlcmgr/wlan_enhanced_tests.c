@@ -1135,6 +1135,7 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("\t Maximum value is 16\r\n");
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 {
     unsigned char i, j;
@@ -1167,6 +1168,7 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
     }
     (void)PRINTF("\r\n");
 }
+#endif
 
 static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {

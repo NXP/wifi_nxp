@@ -2112,7 +2112,7 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands)
     (void)memset(&fw_info, 0x0, sizeof(mlan_fw_info));
     fw_info.fw_ver = mlan_adap->fw_release_number;
     (void)memcpy(fw_info.mac_addr, mlan_adap->priv[type]->curr_addr, MLAN_MAC_ADDR_LENGTH);
-    fw_info.fw_bands = mlan_adap->fw_bands;
+    fw_info.fw_bands           = mlan_adap->fw_bands;
     fw_info.hw_dev_mcs_support = mlan_adap->hw_dev_mcs_support;
     return;
 }
@@ -3815,7 +3815,7 @@ done:
 #endif
 
 int wifi_send_hostcmd(
-    void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
+    const void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
 {
     uint32_t ret = WM_SUCCESS;
     /* Store IN & OUT params to be used by driver to update internaally*/
@@ -4356,17 +4356,17 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
 {
     t_u16 action = HostCmd_ACT_GEN_SET;
-    
+
     action = monitor->action;
 
     if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
         return -WM_FAIL;
-    
+
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    cmd->seq_num           = 0x0;
-    cmd->result            = 0x0;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_NET_MONITOR,
                                               monitor->action, 0, NULL, monitor, cmd);

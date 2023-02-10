@@ -498,7 +498,8 @@ enum wlan_csi_opt
 #endif
 
 #ifdef CONFIG_MLAN_WMSDK
-enum wlan_monitor_opt{
+enum wlan_monitor_opt
+{
     MONITOR_FILTER_OPT_ADD_MAC = 0,
     MONITOR_FILTER_OPT_DELETE_MAC,
     MONITOR_FILTER_OPT_CLEAR_MAC,
@@ -4088,7 +4089,7 @@ int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
  */
 
 int wlan_send_hostcmd(
-    void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
+    const void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
 
 #ifdef CONFIG_11AX
 /**
@@ -4115,7 +4116,7 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len);
+int wlan_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len);
 /**
  * Use this API to get the RU tx power limit.
  *

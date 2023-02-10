@@ -1242,7 +1242,7 @@ int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type);
 
 #ifdef CONFIG_11AX
 int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts);
-int wifi_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len);
+int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len);
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg);
 #endif

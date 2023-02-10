@@ -2071,7 +2071,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
 
         (void)memcpy(sta[i].mac, si->mac_address, MLAN_MAC_ADDR_LENGTH);
         sta[i].power_mgmt_status = si->power_mfg_status;
-        si = (MrvlIEtypes_sta_info_t *)((t_u8* )si + (si->header.len + sizeof(MrvlIEtypesHeader_t)));
+        si = (MrvlIEtypes_sta_info_t *)((t_u8 *)si + (si->header.len + sizeof(MrvlIEtypesHeader_t)));
 
         wifi_d("RSSI: 0x%x %d dbm", sta[i].rssi, sta[i].rssi);
     }
@@ -5592,7 +5592,7 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     return WM_SUCCESS;
 }
 
-int wifi_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
+int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
 {
     int ret;
     uint32_t reqd_len = 0;

@@ -5461,7 +5461,7 @@ int wlan_add_network(struct wlan_network *network)
 uint8_t wlan_check_11n_capa(unsigned int channel)
 {
     uint8_t enable_11n = false;
-    uint16_t fw_bands   = 0U;
+    uint16_t fw_bands  = 0U;
 
     wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
 
@@ -8269,7 +8269,7 @@ void wlan_wmm_tx_stats_dump(int bss_type)
 #endif
 
 int wlan_send_hostcmd(
-    void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
+    const void *cmd_buf, uint32_t cmd_buf_len, void *host_resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
 {
     if ((cmd_buf == NULL) || (host_resp_buf == NULL) || (reqd_resp_len == NULL))
     {
@@ -8295,7 +8295,7 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     }
 }
 
-int wlan_set_11ax_rutxpowerlimit(void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
+int wlan_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
 {
     if (rutx_pwr_cfg != NULL)
     {
@@ -9108,25 +9108,25 @@ void wlan_set_rssi_low_threshold(uint8_t threshold)
 #ifdef CONFIG_NET_MONITOR
 void wlan_register_monitor_user_callback(int (*monitor_data_recv_callback)(void *buffer, t_u16 data_len))
 {
-   register_monitor_user_callback(monitor_data_recv_callback);
+    register_monitor_user_callback(monitor_data_recv_callback);
 }
 
 void wlan_deregister_net_monitor_user_callback()
 {
-   deregister_monitor_user_callback();
+    deregister_monitor_user_callback();
 }
 
 int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
 {
     bool flag = false;
-    
-    if(is_sta_connected() || is_uap_started())
+
+    if (is_sta_connected() || is_uap_started())
     {
         (void)PRINTF("down the uap and disconnet sta first\n\r");
         return WM_FAIL;
     }
-    
-    flag = (1 == monitor->monitor_activity) ? true : false; 
+
+    flag = (1 == monitor->monitor_activity) ? true : false;
     set_monitor_flag(flag);
     return wifi_net_monitor_cfg(monitor);
 }
