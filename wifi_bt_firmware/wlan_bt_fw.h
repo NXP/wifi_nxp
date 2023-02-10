@@ -21,7 +21,11 @@
 #elif defined(SD9098)
 #include "pvt_sd9098_wlan.h"
 #elif defined(IW61x)
+#if defined(CONFIG_RF_TEST_MODE)
+#include "sduart_nw61x_fp255.h"
+#else
 #include "sduart_nw61x.h"
+#endif
 #elif defined(RW610)
 const unsigned char *wlan_fw_bin   = (void *)0;
 const unsigned int wlan_fw_bin_len = 0;
