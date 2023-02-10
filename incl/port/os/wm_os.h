@@ -1057,6 +1057,17 @@ void _os_delay(int cnt);
  */
 #define os_get_runtime_stats(__buff__) vTaskGetRunTimeStats(__buff__)
 
+/**
+ * \def os_get_task_list(__buff__)
+ *
+ * Get ASCII formatted task list
+ *
+ * Please ensure that your buffer is big enough for the formatted data to
+ * fit. Failing to do this may cause memory data corruption.
+ */
+
+#define os_get_task_list(__buff__) vTaskList(__buff__)
+
 /** Disables all interrupts at NVIC level */
 void os_disable_all_interrupts(void);
 

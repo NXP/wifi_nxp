@@ -4636,6 +4636,51 @@ static void  test_wlan_net_monitor_cfg(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_CPU_TASK_STATUS
+void test_wlan_cpu_task_info(int argc, char **argv)
+{
+	/* Take a snapshot of the number of tasks while this
+		 * function is executing. */
+	uint32_t task_nums		 = uxTaskGetNumberOfTasks();
+	uint32_t task_status_len = task_nums * sizeof(TaskStatus_t);
+	
+	char *CPU_RunInfo = (char *)os_mem_alloc(task_status_len);
+
+    if (!CPU_RunInfo)
+    {
+        (void)PRINTF("os mem alloc failed for CPU run info \r\n");
+        return;
+    }
+
+    memset(CPU_RunInfo, 0, task_status_len);
+    //Get tasks status
+    os_get_task_list(CPU_RunInfo); 
+    
+    /*Relationship between task status and show info
+     * 
+     * task status   show info
+     * tskRUNNING       X
+     * tskBLOCKED       B
+     * tskREADY         R
+     * tskDELETED       D
+     * tskSUSPENDED     S
+     */
+    (void)PRINTF("---------------------------------------------\r\n");
+    (void)PRINTF("taskName           Status   priority  freeStack pid\r\n");
+    (void)PRINTF("%s", CPU_RunInfo);
+    (void)PRINTF("---------------------------------------------\r\n");
+
+    memset(CPU_RunInfo, 0, task_status_len);
+    //Get tasks percentage
+    os_get_runtime_stats(CPU_RunInfo);
+    (void)PRINTF("taskName                runTime         Percentage\r\n");
+    (void)PRINTF("%s", CPU_RunInfo);
+    (void)PRINTF("---------------------------------------------\r\n\n");
+
+    os_mem_free(CPU_RunInfo);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4796,6 +4841,9 @@ static struct cli_command tests[] = {
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
     {"wlan-set-monitor-filter", "<opt> <macaddr>", test_wlan_set_monitor_filter},
     {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>", test_wlan_set_monitor_param},
+#endif
+#ifdef CONFIG_CPU_TASK_STATUS
+    {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},
 #endif
 };
 
