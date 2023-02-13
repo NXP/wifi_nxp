@@ -2059,6 +2059,8 @@ struct _mlan_adapter
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     /** Extended scan or legacy scan */
     t_u8 ext_scan;
+    /** scan channel gap time */
+	t_u16 scan_chan_gap;
 #endif
 #ifndef CONFIG_MLAN_WMSDK
     t_u16 bcn_buf_size;

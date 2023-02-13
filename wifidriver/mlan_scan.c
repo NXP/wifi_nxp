@@ -805,6 +805,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     MrvlIEtypes_Extension_t *phe_cap;
     t_u16 len = 0;
 #endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+	MrvlIEtypes_ScanChanGap_t *pscan_gap_tlv;
+#endif
     ENTER();
 
     /* The tlv_buf_len is calculated for each scan command.  The TLVs added in
@@ -927,6 +930,30 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     {
         *pmax_chan_per_scan = MRVDRV_CHANNELS_PER_SCAN_CMD;
     }
+
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+    if (puser_scan_in) {
+		if (puser_scan_in->scan_chan_gap) {
+			*pmax_chan_per_scan = MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN;
+			PRINTM(MCMND, "Scan: channel gap = 0x%x\n", puser_scan_in->scan_chan_gap);
+			pscan_gap_tlv = (MrvlIEtypes_ScanChanGap_t *)ptlv_pos;
+			pscan_gap_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SCAN_CHANNEL_GAP);
+			pscan_gap_tlv->header.len = sizeof(pscan_gap_tlv->gap);
+			pscan_gap_tlv->gap = wlan_cpu_to_le16((t_u16)puser_scan_in->scan_chan_gap);
+			ptlv_pos += sizeof(pscan_gap_tlv->header) + pscan_gap_tlv->header.len;
+			pscan_gap_tlv->header.len = wlan_cpu_to_le16(pscan_gap_tlv->header.len);
+		}
+	} else if (pmadapter->scan_chan_gap) {
+		*pmax_chan_per_scan = MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN;
+		PRINTM(MCMND, "Scan: channel gap = 0x%x\n",pmadapter->scan_chan_gap);
+		pscan_gap_tlv = (MrvlIEtypes_ScanChanGap_t *)ptlv_pos;
+		pscan_gap_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SCAN_CHANNEL_GAP);
+		pscan_gap_tlv->header.len = sizeof(pscan_gap_tlv->gap);
+		pscan_gap_tlv->gap = wlan_cpu_to_le16((t_u16)pmadapter->scan_chan_gap);
+		ptlv_pos += sizeof(pscan_gap_tlv->header) + pscan_gap_tlv->header.len;
+		pscan_gap_tlv->header.len = wlan_cpu_to_le16(pscan_gap_tlv->header.len);
+	}
+#endif
 
     /* If the input config or adapter has the number of Probes set, add tlv */
     if (num_probes != 0U)

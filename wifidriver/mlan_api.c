@@ -1481,7 +1481,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
         mlan_adap->active_scan_triggered = MTRUE;
     }
-
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+	user_scan_cfg->scan_chan_gap = scan_chan_gap;
+#endif
     if (wm_wifi.g_user_scan_cfg != NULL)
     {
         os_mem_free((void *)user_scan_cfg);
@@ -2120,6 +2122,8 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands)
     (void)memcpy(fw_info.mac_addr, mlan_adap->priv[type]->curr_addr, MLAN_MAC_ADDR_LENGTH);
     fw_info.fw_bands           = mlan_adap->fw_bands;
     fw_info.hw_dev_mcs_support = mlan_adap->hw_dev_mcs_support;
+
+	*fw_bands = fw_info.fw_bands;
     return;
 }
 #endif

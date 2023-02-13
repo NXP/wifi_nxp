@@ -420,6 +420,10 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type: key param v2 */
 #define TLV_TYPE_KEY_PARAM_V2 (PROPRIETARY_TLV_BASE_ID + 0x9CU) /* 0x019C */
 #endif
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+/** TLV type : SCAN channel gap */
+#define TLV_TYPE_SCAN_CHANNEL_GAP (PROPRIETARY_TLV_BASE_ID + 0xc5) /* 0x01c5 */
+#endif
 /** TLV type : BridgeParamSet */
 #define TLV_TYPE_BRIDGE_PARAM (PROPRIETARY_TLV_BASE_ID + 0xe0)
 /** TLV type : AutoLinkParamSet */
@@ -2283,6 +2287,15 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Bssid_List_t
     t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END MrvlIEtypes_Bssid_List_t;
 #endif
+
+/** MrvlIEtypes_ScanChanGap_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t {
+	/** Header */
+	MrvlIEtypesHeader_t header;
+	/** Time gap in units to TUs to be used between
+	 * two consecutive channels scan */
+	t_u16 gap;
+} MLAN_PACK_END MrvlIEtypes_ScanChanGap_t;
 
 /** MrvlIEtypes_SsIdParamSet_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_SsIdParamSet_t

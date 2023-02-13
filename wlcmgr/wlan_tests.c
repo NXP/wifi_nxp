@@ -284,8 +284,9 @@ static void print_network(struct wlan_network *network)
             else
             {
                 (void)PRINTF("\twifi capability: 11ax\r\n");
-                (void)PRINTF("\tuser configure: 11ax\r\n");
             }
+            
+            (void)PRINTF("\tuser configure: 11ax\r\n");
         }
         else
 #endif
@@ -299,8 +300,9 @@ static void print_network(struct wlan_network *network)
             else
             {
                 (void)PRINTF("\twifi capability: 11ac\r\n");
-                (void)PRINTF("\tuser configure: 11ac\r\n");
             }
+            
+            (void)PRINTF("\tuser configure: 11ac\r\n");
         }
         else
 #endif
@@ -313,8 +315,9 @@ static void print_network(struct wlan_network *network)
             else
             {
                 (void)PRINTF("\twifi capability: 11n\r\n");
-                (void)PRINTF("\tuser configure: 11n\r\n");
             }
+            
+            (void)PRINTF("\tuser configure: 11n\r\n");
         }
         else
         {

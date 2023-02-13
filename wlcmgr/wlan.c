@@ -3901,6 +3901,13 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         return;
     }
 
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+		if(is_uap_started() || is_sta_connected())
+			wlan_scan_param->scan_chan_gap = scan_channel_gap;
+		else
+			wlan_scan_param->scan_chan_gap = 0;
+#endif
+
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
 
     int ret = wifi_send_scan_cmd((t_u8)g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
@@ -5491,11 +5498,11 @@ uint8_t wlan_check_11n_capa(unsigned int channel)
 
     wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
 
-    if (channel > 14 && (fw_bands | BAND_AN))
+    if (channel > 14 && (fw_bands & BAND_AN))
     {
         enable_11n = true;
     }
-    else if (channel <= 14 && (fw_bands | BAND_GN))
+    else if (channel <= 14 && (fw_bands & BAND_GN))
     {
         enable_11n = true;
     }
@@ -5510,11 +5517,11 @@ uint8_t wlan_check_11ac_capa(unsigned int channel)
     wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
 
 #ifdef CONFIG_11AC
-    if (channel > 14 && (fw_bands | BAND_AAC))
+    if (channel > 14 && (fw_bands & BAND_AAC))
     {
         enable_11ac = true;
     }
-    else if (channel <= 14 && (fw_bands | BAND_GAC))
+    else if (channel <= 14 && (fw_bands & BAND_GAC))
     {
         enable_11ac = true;
     }
@@ -5530,11 +5537,11 @@ uint8_t wlan_check_11ax_capa(unsigned int channel)
     wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
 
 #ifdef CONFIG_11AX
-    if (channel > 14 && (fw_bands | BAND_AAX))
+    if (channel > 14 && (fw_bands & BAND_AAX))
     {
         enable_11ax = true;
     }
-    else if (channel <= 14 && (fw_bands | BAND_GAX))
+    else if (channel <= 14 && (fw_bands & BAND_GAX))
     {
         enable_11ax = true;
     }

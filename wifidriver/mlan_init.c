@@ -540,6 +540,10 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->rssi_threshold = 0;
 #endif
 
+#ifdef CONFIG_EXT_SCAN_SUPPORT
+	pmadapter->scan_chan_gap = 0;
+#endif
+
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);

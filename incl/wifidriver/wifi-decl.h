@@ -1285,7 +1285,6 @@ typedef enum
     QOS_DATA_FRAME = 0x88,
 } wifi_frame_type_t;
 
-#ifndef CONFIG_MLAN_WMSDK
 typedef PACK_START struct
 {
     wifi_frame_type_t frame_type;
@@ -1295,7 +1294,6 @@ typedef PACK_START struct
         wifi_data_info_t data_info;
     } frame_data;
 } PACK_END wifi_frame_t;
-#endif
 
 typedef struct
 {
