@@ -4684,6 +4684,36 @@ void test_wlan_cpu_task_info(int argc, char **argv)
 }
 #endif
 
+#ifdef STA_SUPPORT
+static void test_wlan_get_signal(int argc, char **argv)
+{
+    wlan_rssi_info_t signal;
+    int ret = WM_SUCCESS;
+
+    if (!is_sta_connected())
+    {
+        (void)PRINTF("Can not get RSSI information in disconnected state\r\n");
+        return;
+    }
+
+    (void)memset(&signal, 0, sizeof(wlan_rssi_info_t));
+
+    ret = wlan_get_signal_info(&signal);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get RSSI information\r\n");
+        return;
+    }
+    (void)PRINTF("\tBeaconLast\tBeacon Average\tData Last\tData Average\r\n");
+    (void)PRINTF("RSSI\t%-10d \t%-10d \t%-10d \t%-10d\r\n", (int)signal.bcn_rssi_last, (int)signal.bcn_rssi_avg,
+                 (int)signal.data_rssi_last, (int)signal.data_rssi_avg);
+    (void)PRINTF("SNR \t%-10d \t%-10d \t%-10d \t%-10d\r\n", (int)signal.bcn_snr_last, (int)signal.bcn_snr_avg,
+                 (int)signal.data_snr_last, (int)signal.data_snr_avg);
+    (void)PRINTF("NF  \t%-10d \t%-10d \t%-10d \t%-10d\r\n", (int)signal.bcn_nf_last, (int)signal.bcn_nf_avg,
+                 (int)signal.data_nf_last, (int)signal.data_nf_avg);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4847,6 +4877,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_CPU_TASK_STATUS
     {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},
+#endif
+#ifdef STA_SUPPORT
+    {"wlan-get-signal", NULL, test_wlan_get_signal},
 #endif
 };
 

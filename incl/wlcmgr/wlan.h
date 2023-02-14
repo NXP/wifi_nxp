@@ -998,6 +998,13 @@ typedef wifi_net_monitor_t wlan_net_monitor_t;
 typedef txrate_setting wlan_txrate_setting;
 #endif
 
+#ifdef STA_SUPPORT
+/** Configuration for RSSI information
+ * \ref wifi_rssi_info_t
+ */
+typedef wifi_rssi_info_t wlan_rssi_info_t;
+#endif
+
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
 int verify_split_scan_delay(int delay);
@@ -4659,5 +4666,14 @@ uint8_t wlan_check_11ac_capa(unsigned int channel);
  * \return true if 11ax is supported or false if not.
  */
 uint8_t wlan_check_11ax_capa(unsigned int channel);
+#endif
+#ifdef STA_SUPPORT
+/**
+ * Get rssi information.
+ * \param[out] signal    rssi infomation get report buffer
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_signal_info(wlan_rssi_info_t *signal);
 #endif
 #endif /* __WLAN_H__ */

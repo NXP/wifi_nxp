@@ -1288,11 +1288,13 @@ typedef enum
 typedef PACK_START struct
 {
     wifi_frame_type_t frame_type;
+#ifdef CONFIG_NET_MONITOR
     union
     {
         wifi_beacon_info_t beacon_info;
         wifi_data_info_t data_info;
     } frame_data;
+#endif
 } PACK_END wifi_frame_t;
 
 typedef struct

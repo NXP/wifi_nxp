@@ -9173,3 +9173,9 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
     return wifi_net_monitor_cfg(monitor);
 }
 #endif
+#ifdef STA_SUPPORT
+int wlan_get_signal_info(wlan_rssi_info_t *signal)
+{
+    return wifi_send_rssi_info_cmd(signal);
+}
+#endif
