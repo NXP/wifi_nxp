@@ -42,8 +42,8 @@ wlan_net_monitor_t g_net_monitor_param = {
     .action           = 0x01,
     .monitor_activity = 0x01,
     .filter_flags     = 0x07,
-    .radio_type       = 0x0 ,
-    .chan_number      = 0x01, 
+    .radio_type       = 0x0,
+    .chan_number      = 0x01,
 };
 #endif
 
@@ -483,7 +483,9 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF(
         "    role uap [bssid <bssid>]\r\n"
         "    [channel <channelnumber>]\r\n");
-    (void)PRINTF("    [wpa2/wpa2-sha256 <secret>] [wpa3 sae <secret>]\r\n");
+    (void)PRINTF(
+        "    [wpa2 <secret>]/[wpa <secret> wpa2 <secret>]/[wpa3 sae <secret>]/[wpa2 <secret> wpa3 sae "
+        "<secret>]");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #ifdef CONFIG_WIFI_DTIM_PERIOD
     (void)PRINTF("If seting dtim\r\n");
@@ -505,7 +507,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #endif
     (void)PRINTF("If Set channel to 0, set acs_band to 0 1.\r\n");
-	(void)PRINTF("0: 2.4GHz channel   1: 5GHz channel  Not support to select dual band automatically.\r\n");
+    (void)PRINTF("0: 2.4GHz channel   1: 5GHz channel  Not support to select dual band automatically.\r\n");
 }
 
 static void test_wlan_add(int argc, char **argv)
@@ -522,6 +524,7 @@ static void test_wlan_add(int argc, char **argv)
         unsigned address : 2;
         unsigned security : 1;
         unsigned security2 : 1;
+        unsigned security3 : 1;
         unsigned role : 1;
         unsigned mfpc : 1;
         unsigned mfpr : 1;
@@ -616,7 +619,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.security++;
         }
-        else if ((info.security == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])))
+        else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])))
         {
             if (string_equal("wpa2", argv[arg]))
             {
@@ -634,7 +637,7 @@ static void test_wlan_add(int argc, char **argv)
                 return;
             }
             arg += 2;
-            info.security++;
+            info.security2++;
         }
 #ifdef CONFIG_OWE
         else if (!info.security && string_equal("owe_only", argv[arg]))
@@ -644,7 +647,7 @@ static void test_wlan_add(int argc, char **argv)
             info.security++;
         }
 #endif
-        else if ((info.security2 == 0U) && string_equal("wpa3", argv[arg]))
+        else if ((info.security3 == 0U) && string_equal("wpa3", argv[arg]))
         {
             if (string_equal(argv[arg + 1], "sae") != false)
             {
@@ -678,7 +681,7 @@ static void test_wlan_add(int argc, char **argv)
                     " argument\r\n");
                 return;
             }
-            info.security2++;
+            info.security3++;
         }
         else if ((info.role == 0U) && string_equal("role", argv[arg]))
         {
@@ -796,6 +799,20 @@ static void test_wlan_add(int argc, char **argv)
         dump_wlan_add_usage();
         (void)PRINTF("Error: specify at least the SSID or BSSID\r\n");
         return;
+    }
+
+    if ((info.security && info.security2 && info.security3) ||
+        ((network.security.type == WLAN_SECURITY_WPA) && info.security && !info.security2))
+    {
+        dump_wlan_add_usage();
+        (void)PRINTF("Error: not support WPA or WPA/WPA2/WPA3 Mixed\r\n");
+        return;
+    }
+
+    if ((network.security.type == WLAN_SECURITY_WPA) || (network.security.type == WLAN_SECURITY_WPA2))
+    {
+        if (network.security.psk_len && info.security && info.security2)
+            network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
     }
 
     if ((network.security.type == WLAN_SECURITY_WPA2) || (network.security.type == WLAN_SECURITY_WPA3_SAE))
@@ -2689,7 +2706,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
     }
     else
     {
-done:
+    done:
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF("Usage:\r\n");
         (void)PRINTF("    wlan-host-sleep <1/0> [wowlan <val>/mef]\r\n");
@@ -2709,7 +2726,6 @@ done:
 #endif
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
         return;
-
     }
 }
 
@@ -4452,27 +4468,24 @@ static void dump_wlan_set_monitor_filter_usage()
 
 static void dump_monitor_param()
 {
-    int i  = 0;
-    
+    int i = 0;
+
     (void)PRINTF("\r\n");
     (void)PRINTF("current parameters: \r\n");
-    (void)PRINTF("action            : %d \r\n",g_net_monitor_param.action);
-    (void)PRINTF("monitor_activity  : %d \r\n",g_net_monitor_param.monitor_activity);
-    (void)PRINTF("filter_flags      : %d \r\n",g_net_monitor_param.filter_flags);
-    (void)PRINTF("radio_type        : %d \r\n",g_net_monitor_param.radio_type);
-    (void)PRINTF("chan_number       : %d \r\n",g_net_monitor_param.chan_number);
-    (void)PRINTF("filter_num        : %d \r\n",g_net_monitor_param.filter_num);
+    (void)PRINTF("action            : %d \r\n", g_net_monitor_param.action);
+    (void)PRINTF("monitor_activity  : %d \r\n", g_net_monitor_param.monitor_activity);
+    (void)PRINTF("filter_flags      : %d \r\n", g_net_monitor_param.filter_flags);
+    (void)PRINTF("radio_type        : %d \r\n", g_net_monitor_param.radio_type);
+    (void)PRINTF("chan_number       : %d \r\n", g_net_monitor_param.chan_number);
+    (void)PRINTF("filter_num        : %d \r\n", g_net_monitor_param.filter_num);
     (void)PRINTF("\r\n");
-                
-    for(i = 0; i < g_net_monitor_param.filter_num; i++)
+
+    for (i = 0; i < g_net_monitor_param.filter_num; i++)
     {
-        (void)PRINTF("mac_addr      : %02X:%02X:%02X:%02X:%02X:%02X \r\n",
-                   g_net_monitor_param.mac_addr[i][0],
-                   g_net_monitor_param.mac_addr[i][1], 
-                   g_net_monitor_param.mac_addr[i][2], 
-                   g_net_monitor_param.mac_addr[i][3], 
-                   g_net_monitor_param.mac_addr[i][4], 
-                   g_net_monitor_param.mac_addr[i][5]);
+        (void)PRINTF("mac_addr      : %02X:%02X:%02X:%02X:%02X:%02X \r\n", g_net_monitor_param.mac_addr[i][0],
+                     g_net_monitor_param.mac_addr[i][1], g_net_monitor_param.mac_addr[i][2],
+                     g_net_monitor_param.mac_addr[i][3], g_net_monitor_param.mac_addr[i][4],
+                     g_net_monitor_param.mac_addr[i][5]);
     }
 }
 
@@ -4481,47 +4494,47 @@ static void test_wlan_set_monitor_param(int argc, char **argv)
     if (argc != 6)
     {
         (void)PRINTF("Error             : invalid number of arguments\r\n");
-        (void)PRINTF("Usage             : %s <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>\r\n", argv[0]);
+        (void)PRINTF("Usage             : %s <action> <monitor_activity> <filter_flags> <radio_type> <chan_number>\r\n",
+                     argv[0]);
         (void)PRINTF("action            : 0/1 to Action Get/Set \r\n");
         (void)PRINTF("monitor_activity  : 1 to enable and other parameters to disable monitor activity \r\n");
         (void)PRINTF("filter_flags      : network monitor fitler flag \r\n");
         (void)PRINTF("chan_number       : channel to monitor \r\n");
-        
+
         (void)PRINTF("\r\nUsage example ：\r\n");
         (void)PRINTF("wlan-set-monitor-param 1 1 7 0 1 \r\n");
-        
+
         dump_monitor_param();
         return;
     }
 
     g_net_monitor_param.action           = (t_u16)atoi(argv[1]);
     g_net_monitor_param.monitor_activity = (t_u16)atoi(argv[2]);
-    
+
     /*
      * filter_flags:
      * bit 0: (1/0) enable/disable management frame
      * bit 1: (1/0) enable/disable control frame
      * bit 2: (1/0) enable/disable data frame
      */
-    g_net_monitor_param.filter_flags     = (t_u16)atoi(argv[3]);
+    g_net_monitor_param.filter_flags = (t_u16)atoi(argv[3]);
 
     /*
      * radio_type:
      * Band Info - (00)=2.4GHz, (01)=5GHz
      * t_u8  chanBand    : 2;
-     * Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz 
+     * Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz
      * t_u8  chanWidth   : 2;
-     * Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below 
+     * Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below
      * t_u8  chan2Offset : 2;
      * Channel Selection Mode - (00)=manual, (01)=ACS, (02)=Adoption mode
      * t_u8  scanMode    : 2;
      */
-    g_net_monitor_param.radio_type       = (t_u8)atoi(argv[4]);
-    g_net_monitor_param.chan_number      = (t_u8)atoi(argv[5]);
+    g_net_monitor_param.radio_type  = (t_u8)atoi(argv[4]);
+    g_net_monitor_param.chan_number = (t_u8)atoi(argv[5]);
 
     dump_monitor_param();
 }
-
 
 void set_monitor_filter(int op_index, t_u8 *mac)
 {
@@ -4530,7 +4543,7 @@ void set_monitor_filter(int op_index, t_u8 *mac)
     switch (op_index)
     {
         case MONITOR_FILTER_OPT_ADD_MAC:
-            if(temp_filter_num < MAX_MONIT_MAC_FILTER_NUM)
+            if (temp_filter_num < MAX_MONIT_MAC_FILTER_NUM)
             {
                 (void)memcpy(&g_net_monitor_param.mac_addr[temp_filter_num], mac, MLAN_MAC_ADDR_LENGTH);
                 g_net_monitor_param.filter_num++;
@@ -4543,7 +4556,7 @@ void set_monitor_filter(int op_index, t_u8 *mac)
             break;
 
         case MONITOR_FILTER_OPT_DELETE_MAC:
-            if(temp_filter_num > 0)
+            if (temp_filter_num > 0)
             {
                 memset(&g_net_monitor_param.mac_addr[temp_filter_num], 0, MLAN_MAC_ADDR_LENGTH);
                 g_net_monitor_param.filter_num--;
@@ -4556,16 +4569,16 @@ void set_monitor_filter(int op_index, t_u8 *mac)
             break;
 
         case MONITOR_FILTER_OPT_CLEAR_MAC:
-            memset(&g_net_monitor_param.mac_addr[0], 0, MAX_MONIT_MAC_FILTER_NUM*MLAN_MAC_ADDR_LENGTH);
+            memset(&g_net_monitor_param.mac_addr[0], 0, MAX_MONIT_MAC_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
             g_net_monitor_param.filter_num = 0;
             break;
 
         case MONITOR_FILTER_OPT_DUMP:
             dump_monitor_param();
             break;
-            
+
         default:
-            (void)PRINTF("unknown argument!\r\n");	
+            (void)PRINTF("unknown argument!\r\n");
             break;
     }
 }
@@ -4576,7 +4589,7 @@ static void test_wlan_set_monitor_filter(int argc, char **argv)
     t_u8 raw_mac[MLAN_MAC_ADDR_LENGTH];
     int op_index = 0;
 
-    if(3 == argc)
+    if (3 == argc)
     {
         if (string_equal("add", argv[1]))
         {
@@ -4599,8 +4612,8 @@ static void test_wlan_set_monitor_filter(int argc, char **argv)
             return;
         }
     }
-    else if(2 == argc)
-    {   
+    else if (2 == argc)
+    {
         if (string_equal("delete", argv[1]))
             op_index = MONITOR_FILTER_OPT_DELETE_MAC;
         else if (string_equal("clear", argv[1]))
@@ -4619,20 +4632,20 @@ static void test_wlan_set_monitor_filter(int argc, char **argv)
         dump_wlan_set_monitor_filter_usage();
         return;
     }
-    
-    set_monitor_filter(op_index,raw_mac);
+
+    set_monitor_filter(op_index, raw_mac);
 }
 
-/* Due to hardware issues, 9177 needs to scan the specified channel 
+/* Due to hardware issues, 9177 needs to scan the specified channel
  * that will be monitored before run wlan-net-monitor-cfg
  */
-static void  test_wlan_net_monitor_cfg(int argc, char **argv)
+static void test_wlan_net_monitor_cfg(int argc, char **argv)
 {
     int ret;
 
     ret = wlan_net_monitor_cfg(&g_net_monitor_param);
-    
-    if (ret != WM_SUCCESS  )
+
+    if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to send monitor cfg\r\n");
     }
@@ -4642,12 +4655,12 @@ static void  test_wlan_net_monitor_cfg(int argc, char **argv)
 #ifdef CONFIG_CPU_TASK_STATUS
 void test_wlan_cpu_task_info(int argc, char **argv)
 {
-	/* Take a snapshot of the number of tasks while this
-		 * function is executing. */
-	uint32_t task_nums		 = uxTaskGetNumberOfTasks();
-	uint32_t task_status_len = task_nums * sizeof(TaskStatus_t);
-	
-	char *CPU_RunInfo = (char *)os_mem_alloc(task_status_len);
+    /* Take a snapshot of the number of tasks while this
+     * function is executing. */
+    uint32_t task_nums       = uxTaskGetNumberOfTasks();
+    uint32_t task_status_len = task_nums * sizeof(TaskStatus_t);
+
+    char *CPU_RunInfo = (char *)os_mem_alloc(task_status_len);
 
     if (!CPU_RunInfo)
     {
@@ -4656,11 +4669,11 @@ void test_wlan_cpu_task_info(int argc, char **argv)
     }
 
     memset(CPU_RunInfo, 0, task_status_len);
-    //Get tasks status
-    os_get_task_list(CPU_RunInfo); 
-    
+    // Get tasks status
+    os_get_task_list(CPU_RunInfo);
+
     /*Relationship between task status and show info
-     * 
+     *
      * task status   show info
      * tskRUNNING       X
      * tskBLOCKED       B
@@ -4674,7 +4687,7 @@ void test_wlan_cpu_task_info(int argc, char **argv)
     (void)PRINTF("---------------------------------------------\r\n");
 
     memset(CPU_RunInfo, 0, task_status_len);
-    //Get tasks percentage
+    // Get tasks percentage
     os_get_runtime_stats(CPU_RunInfo);
     (void)PRINTF("taskName                runTime         Percentage\r\n");
     (void)PRINTF("%s", CPU_RunInfo);
@@ -4873,7 +4886,8 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},
     {"wlan-set-monitor-filter", "<opt> <macaddr>", test_wlan_set_monitor_filter},
-    {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>", test_wlan_set_monitor_param},
+    {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>",
+     test_wlan_set_monitor_param},
 #endif
 #ifdef CONFIG_CPU_TASK_STATUS
     {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},
