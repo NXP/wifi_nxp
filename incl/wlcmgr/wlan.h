@@ -1213,6 +1213,8 @@ struct wlan_network
     unsigned wps_specific : 1;
 #endif
 #ifdef CONFIG_11R
+    /* Mobility Domain ID */
+    uint16_t mdid;
     /** The network uses FT 802.1x security (For internal use only)*/
     unsigned ft_1x : 1;
     /** The network uses FT PSK security (For internal use only)*/

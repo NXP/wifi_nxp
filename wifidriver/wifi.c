@@ -1326,6 +1326,9 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
     rv = wrapper_bssdesc_second_set(
         (int)index, &common_desc.phtcap_ie_present, &common_desc.phtinfo_ie_present, &common_desc.wmm_ie_present,
         &common_desc.band, &common_desc.wps_IE_exist, &common_desc.wps_session, &common_desc.wpa2_entp_IE_exist,
+#ifdef CONFIG_11R
+        &common_desc.mdid,
+#endif
 #ifdef CONFIG_11K
         &common_desc.neighbor_report_supported,
 #endif

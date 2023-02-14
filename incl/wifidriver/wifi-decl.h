@@ -295,6 +295,9 @@ struct wifi_scan_result
 #ifdef CONFIG_MBO
     bool mbo_assoc_disallowed; /*!< MBO disallowed */
 #endif
+#ifdef CONFIG_11R
+    uint16_t mdid;
+#endif
 #ifdef CONFIG_11K
     /** Neigbort report support */
     bool neighbor_report_supported;

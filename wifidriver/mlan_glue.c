@@ -5018,6 +5018,9 @@ int wrapper_bssdesc_second_set(int bss_index,
                                bool *wps_IE_exist,
                                uint16_t *wps_session,
                                bool *wpa2_entp_IE_exist,
+#ifdef CONFIG_11R
+                               uint16_t *mdid,
+#endif
 #ifdef CONFIG_11K
                                bool *neighbor_report_supported,
 #endif
@@ -5040,6 +5043,9 @@ int wrapper_bssdesc_second_set(int bss_index,
         return -WM_FAIL;
     }
     const BSSDescriptor_t *d = &mlan_adap->pscan_table[bss_index];
+#ifdef CONFIG_11R
+    IEEEtypes_MobilityDomain_t *pmd_ie;
+#endif
 
     if (d->pht_cap != NULL)
     {
@@ -5088,6 +5094,13 @@ int wrapper_bssdesc_second_set(int bss_index,
         *wpa2_entp_IE_exist = d->wpa2_entp_IE_exist;
     }
 
+#ifdef CONFIG_11R
+    if (mdid != NULL)
+    {
+        pmd_ie = (IEEEtypes_MobilityDomain_t *)d->md_ie_buff;
+        *mdid  = pmd_ie->mdid;
+    }
+#endif
 #ifdef CONFIG_11K
     if (neighbor_report_supported != NULL)
     {

@@ -405,6 +405,9 @@ int wrapper_bssdesc_second_set(int bss_index,
                                bool *wps_IE_exist,
                                uint16_t *wps_session,
                                bool *wpa2_entp_IE_exist,
+#ifdef CONFIG_11R
+                               uint16_t *mdid,
+#endif
 #ifdef CONFIG_11K
                                bool *neighbor_report_supported,
 #endif

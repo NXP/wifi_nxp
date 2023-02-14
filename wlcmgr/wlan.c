@@ -351,6 +351,7 @@ static struct
 #endif
 #ifdef CONFIG_11R
     bool ft_bss : 1;
+    bool same_ess : 1;
 #endif
     bool roam_reassoc : 1;
 #ifdef CONFIG_WIFI_FW_DEBUG
@@ -1890,6 +1891,9 @@ static void update_network_params(struct wlan_network *network, const struct wif
     }
 
 #ifdef CONFIG_11R
+
+    network->mdid = res->mdid;
+
     if (res->WPA_WPA2_WEP.ft_1x != 0U)
     {
         network->ft_1x = 1;
@@ -1998,7 +2002,9 @@ static void update_network_params(struct wlan_network *network, const struct wif
 
 static int start_association(struct wlan_network *network, struct wifi_scan_result *res)
 {
-    int ret = WM_SUCCESS;
+    int ret                     = WM_SUCCESS;
+    unsigned int owe_trans_mode = 0;
+    bool is_ft                  = false;
 
     wlcm_d("starting association to \"%s\"", network->name);
     wlan.roam_reassoc = false;
@@ -2010,17 +2016,15 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
         return -WM_FAIL;
     }
 #ifdef CONFIG_OWE
-    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip,
-                             res->trans_mode, false);
-#else
+    owe_trans_mode = res->trans_mode;
+#endif
 #ifdef CONFIG_11R
-    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip, 0,
-                             wlan.ft_bss);
+    is_ft       = wlan.ft_bss;
     wlan.ft_bss = false;
-#else
-    ret = wrapper_wifi_assoc(res->bssid, network->security.type, (bool)network->security.ucstCipher.tkip, 0, false);
 #endif
-#endif
+
+    ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip,
+                             owe_trans_mode, is_ft);
     if (ret != 0)
     {
         wlcm_d("association failed");
@@ -2167,6 +2171,16 @@ static void handle_scan_results(void)
             }
 #endif
         }
+#ifdef CONFIG_11R
+        if (wlan.ft_bss == true)
+        {
+            wlan.same_ess = false;
+            if (network->mdid == best_ap->mdid)
+            {
+                wlan.same_ess = true;
+            }
+        }
+#endif
 
         update_network_params(network, best_ap);
 #ifdef CONFIG_OWE
@@ -2883,6 +2897,25 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             }
 #endif /* CONFIG_P2P */
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
+#ifdef CONFIG_11R
+            if (wlan.same_ess == true)
+            {
+                wlan.ft_bss = false;
+                (void)net_get_if_addr(&network->ip, if_handle);
+                wlan.sta_state      = CM_STA_CONNECTED;
+                *next               = CM_STA_CONNECTED;
+                wlan.sta_ipv4_state = CM_STA_CONNECTED;
+
+                if (wlan.reassoc_control && wlan.reassoc_request)
+                {
+                    wlan.reassoc_count   = 0;
+                    wlan.reassoc_request = false;
+                }
+                CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+                return;
+            }
+#endif
+
             ret = net_configure_address(&network->ip, if_handle);
             if (ret != 0)
             {
