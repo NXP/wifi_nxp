@@ -1239,7 +1239,7 @@ void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr)
 
 int wifi_add_mcast_filter(uint8_t *mac_addr)
 {
-    char mlist[MAX_MCAST_LEN];
+    char mlist[MAX_MCAST_LEN] = {0};
     int len, ret;
     /* If MAC address is 00:11:22:33:44:55,
      * then pass mac_addr array in following format:

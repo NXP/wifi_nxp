@@ -3984,15 +3984,11 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 #define OFFSET_SEQNUM 8
 static void wifi_tx_pert_report(void *pbuf)
 {
-    t_u8 *event_buf   = (t_u8 *)pbuf;
-    t_u16 current_per = 0;
-
-    current_per = wlan_le16_to_cpu(*(t_u16 *)(event_buf + OFFSET_SEQNUM));
-    PRINTM(MEVENT, "current PER is %d%%\n", current_per);
-    PRINTM(MEVENT, "User configure:\n");
-    PRINTM(MEVENT, "tx_pert_check_period: %d sec\n", mlan_adap->tx_pert.tx_pert_check_peroid);
-    PRINTM(MEVENT, "tx_pert_check_ratio : %d%%\n", mlan_adap->tx_pert.tx_pert_check_ratio);
-    PRINTM(MEVENT, "tx_pert_check_num   : %d\n", mlan_adap->tx_pert.tx_pert_check_num);
+    (void)PRINTF("current PER is %d%%\r\n", wlan_le16_to_cpu(*(t_u16 *)((t_u8 *)pbuf + 8)));
+    (void)PRINTF("User configure:\r\n");
+    (void)PRINTF("       tx_pert_check_period : %d sec\r\n", mlan_adap->tx_pert.tx_pert_check_peroid);
+    (void)PRINTF("       tx_pert_check_ratio  : %d%%\r\n", mlan_adap->tx_pert.tx_pert_check_ratio);
+    (void)PRINTF("       tx_pert_check_num    : %d\r\n", mlan_adap->tx_pert.tx_pert_check_num);
     return;
 }
 #endif

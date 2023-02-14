@@ -270,7 +270,7 @@ static mlan_status wlan_setup_rates_from_bssdesc(IN mlan_private *pmpriv,
                                                  OUT t_u8 *pout_rates,
                                                  OUT t_u32 *pout_rates_size)
 {
-    t_u8 card_rates[WLAN_SUPPORTED_RATES];
+    t_u8 card_rates[WLAN_SUPPORTED_RATES] = {0x0};
     t_u32 card_rates_size = 0;
     ENTER();
 
@@ -830,7 +830,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     MrvlIEtypes_RsnParamSet_t *prsn_ie_tlv   = MNULL;
     MrvlIEtypes_SAE_PWE_Mode_t *prsnx_ie_tlv = MNULL;
     MrvlIEtypes_ChanListParamSet_t *pchan_tlv;
-    WLAN_802_11_RATES rates;
+    WLAN_802_11_RATES rates = {0x00};
     t_u32 rates_size;
     t_u16 tmp_cap;
     t_u8 *pos, *auth_pos = NULL;

@@ -187,7 +187,7 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     pmlan_adapter pmadapter = pmpriv->adapter;
     t_u16 index = 0, insert = MFALSE, del_len;
-    t_u8 del_ie[MAX_IE_SIZE], ie[MAX_IE_SIZE];
+    t_u8 del_ie[MAX_IE_SIZE], ie[MAX_IE_SIZE] = {0x0};
     t_s32 cnt, tmp_len = 0;
     t_u8 *tmp_ie;
 

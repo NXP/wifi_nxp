@@ -548,7 +548,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
                 {
                     (void)PRINTF("    MCS:  Auto\r\n");
                 }
-                (void)PRINTF("    Rate: %.2f Mbps\r\n", (float)datarate->tx_data_rate / 2);
+                (void)PRINTF("    Rate: %.2f Mbps\r\n", (double)datarate->tx_data_rate / 2);
             }
         }
 

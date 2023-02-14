@@ -776,7 +776,7 @@ static void display_iperf_usage(void)
 static void cmd_iperf(int argc, char **argv)
 {
     int arg = 1;
-    char ip_addr[128];
+    char ip_addr[128] = {0};
 
     struct
     {
