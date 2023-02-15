@@ -1303,10 +1303,12 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("where, tx-option =\r\n");
     (void)PRINTF("\t 0: send OMI in QoS NULL\r\n");
     (void)PRINTF("\t 1: send OMI in QoS Data\r\n");
-    (void)PRINTF("\t 0XFF: send OMI in both\r\n");
+    (void)PRINTF("\t 0XFF: OMI is transmitted in both QoS NULL and QoS data frame\r\n");
     (void)PRINTF("where, num_data_pkts =\r\n");
     (void)PRINTF("\t Minimum value is 1\r\n");
     (void)PRINTF("\t Maximum value is 16\r\n");
+    (void)PRINTF("\t num_data_pkts is applied only if OMI is sent in QoS data frame\r\n");
+    (void)PRINTF("\t It specifies the number of consecutive data frames containing the OMI\r\n");
 }
 
 #ifndef CONFIG_MLAN_WMSDK

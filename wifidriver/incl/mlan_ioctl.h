@@ -2828,12 +2828,13 @@ typedef MLAN_PACK_START struct _mlan_ds_11ax_txomi_cmd
     /* 11ax spec 9.2.4.6a.2 OM Control 12 bits. Bit 0 to bit 11 */
     t_u16 omi;
     /* tx option
-     * 0: send OMI in QoS NULL; 1: send OMI in QoS data; 0xFF: set OMI in both
+     * 0: send OMI in QoS NULL; 1: send OMI in QoS data;
+     * 0xFF: OMI is transmitted in both QoS NULL and QoS data frame.
      */
     t_u8 tx_option;
-    /* if OMI is sent in QoS data, specify the number of consecutive data packets
-     * containing the OMI. Minimum number of data packets should be 1 and maximum
-     * should be 16.
+    /* num_data_pkts is applied only if OMI is sent in QoS data frame.
+     * It specifies the number of consecutive data frames containing the OMI.
+     * Minimum number of data packets should be 1 and maximum should be 16.
      */
     t_u8 num_data_pkts;
 } MLAN_PACK_END mlan_ds_11ax_txomi_cmd, *pmlan_ds_11ax_txomi_cmd;

@@ -4111,9 +4111,11 @@ int wlan_send_hostcmd(
  *
  * \param[in] tx_omi value to be sent to Firmware
  * \param[in] tx_option value to be sent to Firmware
- *            0: send OMI in QoS NULL; 1: send OMI in QoS data; 0xFF: send OMI in both
+ *            0: send OMI in QoS NULL; 1: send OMI in QoS data;
+ *            0xFF: OMI is transmitted in both QoS NULL and QoS data frame.
  * \param[in] num_data_pkts value to be sent to Firmware
- *            num_data_packets is the number of consecutive QoS data frames
+ *            num_data_pkts is applied only if OMI is sent in QoS data frame.
+ *            It specifies the number of consecutive data frames containing the OMI.
  *            Minimum value is 1
  *            Maximum value is 16
  *
