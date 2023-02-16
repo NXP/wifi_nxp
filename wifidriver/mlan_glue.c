@@ -3,7 +3,7 @@
  *  @brief This file acts as a glue between legacy wlan code and mlan based wlan
  *  code
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -1730,7 +1730,7 @@ static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_r
     req.req_id    = MLAN_IOCTL_RATE;
     req.action    = action;
 
-    mlan_status rv;
+    mlan_status rv = MLAN_STATUS_SUCCESS;
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         if (!is_uap_started())

@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides functions for station ioctl
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -1674,7 +1674,7 @@ static int wlan_get_modulation_class(pmlan_adapter pmadapter, int rate_index)
         LEAVE();
         return (int)MOD_CLASS_OFDM;
     }
-    else if (rate_index >= MLAN_RATE_INDEX_MCS0 && rate_index <= MLAN_RATE_INDEX_MCS127)
+    else if (rate_index <= MLAN_RATE_INDEX_MCS127)
     {
         LEAVE();
         return (int)MOD_CLASS_HT;

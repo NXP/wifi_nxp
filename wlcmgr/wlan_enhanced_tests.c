@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN ENHANCED Test API
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2020, 2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -718,7 +718,7 @@ static void dump_wlan_set_txratecfg_usage(void)
 
 static void test_wlan_set_txratecfg(int argc, char **argv)
 {
-    mlan_bss_type bss_type = 0;
+    mlan_bss_type bss_type = (mlan_bss_type)0;
     wlan_ds_rate ds_rate;
 #ifdef CONFIG_11AX
     wlan_txrate_setting *rate_setting = NULL;
@@ -914,7 +914,7 @@ done:
 
 static void test_wlan_get_txratecfg(int argc, char **argv)
 {
-    mlan_bss_type bss_type = 0;
+    mlan_bss_type bss_type = (mlan_bss_type)0;
     wlan_ds_rate ds_rate;
 
     if (argc != 2)
@@ -950,7 +950,7 @@ static void test_wlan_get_txratecfg(int argc, char **argv)
 
 static void test_wlan_get_data_rate(int argc, char **argv)
 {
-    mlan_bss_type bss_type = 0;
+    mlan_bss_type bss_type = (mlan_bss_type)0;
     wlan_ds_rate ds_rate;
 
     if (argc != 2)

@@ -2,7 +2,7 @@
  *
  *  @brief This file provides more APIs for mlan.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -481,7 +481,7 @@ int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type)
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
     cmd->result  = 0x0;
 
-    mlan_status rv;
+    mlan_status rv = MLAN_STATUS_SUCCESS;
     if (bss_type == MLAN_BSS_TYPE_UAP)
     {
         if (is_uap_started())
@@ -1482,7 +1482,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         mlan_adap->active_scan_triggered = MTRUE;
     }
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-	user_scan_cfg->scan_chan_gap = scan_chan_gap;
+    user_scan_cfg->scan_chan_gap = scan_chan_gap;
 #endif
     if (wm_wifi.g_user_scan_cfg != NULL)
     {
@@ -2123,7 +2123,7 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands)
     fw_info.fw_bands           = mlan_adap->fw_bands;
     fw_info.hw_dev_mcs_support = mlan_adap->hw_dev_mcs_support;
 
-	*fw_bands = fw_info.fw_bands;
+    *fw_bands = fw_info.fw_bands;
     return;
 }
 #endif

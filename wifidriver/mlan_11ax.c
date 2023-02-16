@@ -5,7 +5,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2021 NXP
+ *  Copyright 2021-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -138,7 +138,7 @@ t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u8 band, MrvlIEtypes_Extensio
     }
     else
     {
-        if (band & BAND_AAX)
+        if (band & (t_u8)BAND_AAX)
         {
             (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
             len = pmpriv->user_hecap_len;
