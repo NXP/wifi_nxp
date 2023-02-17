@@ -24,7 +24,7 @@
 #if defined(CONFIG_RF_TEST_MODE)
 #include "sduart_nw61x_fp255.h"
 #else
-#include "sduart_nw61x.h"
+#include "sduart_nw61x_se.h"
 #endif
 #elif defined(RW610)
 const unsigned char *wlan_fw_bin   = (void *)0;

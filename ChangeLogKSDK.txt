@@ -3,6 +3,32 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p7
+ - Updates:
+  - Updated firmware version to p182.
+  - Added TP signed secure FW.
+  - Added support for 2EL M2 module for Firecrest.
+  - Added wifi capability configuration support.
+  - Added FIPS validation feature.
+  - Added wifi rf test mode example.
+  - Unified all wifi examples in wifi_cli.
+  - 11R is not surrpoted for FC.
+
+ - Bug Fixes:
+  - Modified the method to load RU tx power limit with RT.
+  - Modified txrate config design for 11AC and 11AX features.
+  - Added support for roaming and neighbor request processing.
+  - Fixed: "Error in sending Background traffic" messages seen on DUT while running Background TX-Traffic.
+  - Fixed: STAUT is not associating in WPA3 Hash-to-Element only mode.
+  - Fixed: Not able to change HE MAC Capabilities or HE PHY Capabilities in Association Request using 11axcfg command.
+  - Fixed: DUT not waking up from suspend state when we start multicast traffic after 30sec-1 minute.
+  - Fixed: STAUT hangs after scanning AP in scenario K of SI-5.2.2 test case.
+  - Fixed: STAUT is not including operating class 81 and 115 under Alternate Operating Classes in assoc request.
+  - Fixed: STAUT fails to roam from WPA3 cionfigured AP1 to WPA2-PSK configured AP2.
+  - Fixed: DUT goes for DHCP DORA Process after roaming to AP2 from AP1.
+  - Fixed build errors and warnings.
+  - Corrected description related to num_dat_pkts parameter of tx-omi command.
+
 Version 1.3.r43.p6
  - Updates:
   - Updated firmware version to p174 and added latest signed FW bins as well.
