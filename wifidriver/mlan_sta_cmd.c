@@ -2860,7 +2860,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
 #endif
 #ifdef CONFIG_11AX
         case HostCmd_CMD_11AX_CMD:
-            ret = wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            ret = (mlan_status)wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
         case HostCmd_CMD_11AX_CFG:
             ret = (mlan_status)wlan_cmd_11ax_cfg(pmpriv, cmd_action, pdata_buf);

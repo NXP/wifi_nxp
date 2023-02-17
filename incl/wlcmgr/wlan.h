@@ -4126,6 +4126,21 @@ int wlan_send_hostcmd(
  */
 int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts);
 /**
+ * Set 802_11 AX OBSS Narrow Bandwidth RU Tolerance Time
+ * In uplink transmission, AP sends a trigger frame to all the stations that will be involved in the upcoming
+ *transmission, and then these stations transmit Trigger-based(TB) PPDU in response to the trigger frame. If STA
+ *connects to AP which channel is set to 100,STA doesn't support 26 tones RU. The API should be called when station is
+ *in disconnected state.
+ *
+ * \param[in] tol_time     Valid range [1...3600]
+ *          tolerance time is in unit of seconds.
+ *			STA periodically check AP's beacon for ext cap bit79 (OBSS Narrow bandwidth RU in ofdma tolerance support)
+ * 			and set 20 tone RU tolerance time if ext cap bit79 is not set
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_11ax_tol_time(const t_u32 tol_time);
+/**
  * Use this API to set the RU tx power limit.
  *
  * \param[in] rutx_pwr_cfg       11AX rutxpwr of sub-bands to be sent to Firmware.

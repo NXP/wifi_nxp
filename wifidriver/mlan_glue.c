@@ -5588,10 +5588,12 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
     (void)memset(&cfg, 0x00, sizeof(mlan_ds_11ax_cmd_cfg));
 
+    req.req_id  = MLAN_IOCTL_11AX_CFG;
     req.action  = MLAN_ACT_SET;
     req.pbuf    = (t_u8 *)&cfg;
     req.buf_len = sizeof(mlan_ds_11ax_cmd_cfg);
 
+    cfg.sub_command                   = MLAN_OID_11AX_CMD_CFG;
     cfg.sub_id                        = MLAN_11AXCMD_TXOMI_SUBID;
     cfg.param.txomi_cfg.omi           = tx_omi;
     cfg.param.txomi_cfg.tx_option     = tx_option;
@@ -5605,8 +5607,7 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
 
     mlan_status rv;
 
-    rv = wlan_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_11AX_CMD, HostCmd_ACT_GEN_SET, 0,
-                          (t_void *)&req, (t_void *)&cfg);
+    rv = wlan_ops_sta_ioctl(mlan_adap, &req);
 
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
     {
@@ -5614,6 +5615,32 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     }
 
     return WM_SUCCESS;
+}
+
+int wifi_set_11ax_tol_time(const t_u32 tol_time)
+{
+    mlan_ioctl_req req;
+
+    mlan_ds_11ax_cmd_cfg cfg;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&cfg, 0x00, sizeof(mlan_ds_11ax_cmd_cfg));
+
+    req.req_id  = MLAN_IOCTL_11AX_CFG;
+    req.action  = MLAN_ACT_SET;
+    req.pbuf    = (t_u8 *)&cfg;
+    req.buf_len = sizeof(mlan_ds_11ax_cmd_cfg);
+
+    cfg.sub_command                   = MLAN_OID_11AX_CMD_CFG;
+    cfg.sub_id                        = MLAN_11AXCMD_OBSS_TOLTIME_SUBID;
+    cfg.param.toltime_cfg.tol_time    = tol_time;
+
+    mlan_status rv = wlan_ops_sta_ioctl(mlan_adap, &req);
+    
+    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
+        return MLAN_STATUS_FAILURE;
+
+    return MLAN_STATUS_SUCCESS;
 }
 
 int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)

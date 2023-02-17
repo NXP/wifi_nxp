@@ -187,6 +187,13 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_11K_CFG_ENABLE = 0x00130001,
 #endif
 
+#ifdef CONFIG_11AX
+	/* 802.11ax Configuration Group  */
+	MLAN_IOCTL_11AX_CFG = 0x00170000,
+	MLAN_OID_11AX_HE_CFG = 0x00170001,
+	MLAN_OID_11AX_CMD_CFG = 0x00170002,
+#endif /* ENABLE_802_11AX */
+
     /* Miscellaneous Configuration Group */
     MLAN_IOCTL_MISC_CFG = 0x00200000,
     MLAN_OID_MISC_GEN_IE,

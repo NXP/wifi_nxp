@@ -8370,6 +8370,23 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     }
 }
 
+int wlan_set_11ax_tol_time(const t_u32 tol_time)
+{    
+    if (tol_time < 1 || tol_time > 3600)
+    {
+        wlcm_d("Error: invalid tolerance time value, range[[1..3600]].");
+        return -WM_FAIL;;
+    }
+
+	if(is_sta_connecting())
+	{
+		wlcm_d("Pls set OBSS Tolerance Time value before connecting to AP.");
+		return -WM_FAIL;
+	}
+
+	return wifi_set_11ax_tol_time(tol_time);
+}
+
 int wlan_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)
 {
     if (rutx_pwr_cfg != NULL)

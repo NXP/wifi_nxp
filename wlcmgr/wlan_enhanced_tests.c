@@ -1420,6 +1420,44 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
     }
 }
 
+static void dump_wlan_set_tol_time_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("set OBSS Narrow Bandwidth RU Tolerance Time\r\n");
+    (void)PRINTF("Pls set toltime when sta is in disconnect state.\r\n");
+    (void)PRINTF("wlan-set-toltime value\r\n");
+    (void)PRINTF("value:\r\n");
+    (void)PRINTF("Valid range[1..3600]\r\n");
+}
+
+static void test_wlan_set_toltime(int argc, char **argv)
+{
+    unsigned int value;
+    int ret;
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+
+    if (get_uint(argv[1], &value, strlen(argv[1])))
+    {
+        (void)PRINTF("Error: invalid option argument\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+
+    ret = wlan_set_11ax_tol_time(value);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: Failed to set Tolerance Time.\r\n");
+        dump_wlan_set_tol_time_usage();
+        return;
+    }
+}
+
 static wlan_11ax_config_t ax_conf;
 #ifdef CONFIG_11AX_TWT
 static wlan_twt_setup_config_t twt_setup_conf;
@@ -1965,6 +2003,7 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-ed-mac-mode", "<interface>", wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
     {"wlan-set-tx-omi", "<tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
+    {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
 #ifndef CONFIG_MLAN_WMSDK
     {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
 #endif
