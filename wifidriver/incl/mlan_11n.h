@@ -84,7 +84,7 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
 int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac);
 /** Send DEL BA request */
 #ifndef CONFIG_MLAN_WMSDK
-int wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator);
+mlan_status wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator);
 #endif
 /** This function handles the command response of delete a block ack request*/
 void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba);

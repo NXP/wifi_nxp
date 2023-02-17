@@ -919,7 +919,7 @@ static int wlan_dequeue_tx_packet(pmlan_adapter pmadapter)
                 PRINTM(MDAT_D, "tid_del=%d tid=%d\n", tid_del, tid);
                 wlan_11n_create_txbastream_tbl(priv, ptr->ra, tid, BA_STREAM_SETUP_INPROGRESS);
 #ifndef CONFIG_MLAN_WMSDK
-                wlan_send_delba(priv, tid_del, ra, 1);
+                (void)wlan_send_delba(priv, tid_del, ra, 1);
 #endif
             }
         }

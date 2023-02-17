@@ -1461,7 +1461,7 @@ t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv)
         {
             rx_reor_tbl_ptr->ba_status = BA_STREAM_SETUP_INPROGRESS;
 #ifdef CONFIG_MLAN_WMSDK
-            wlan_send_delba(priv, rx_reor_tbl_ptr->tid, rx_reor_tbl_ptr->ta, 0);
+            (void)wlan_send_delba(priv, rx_reor_tbl_ptr->tid, rx_reor_tbl_ptr->ta, 0);
 #endif
         }
         rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;

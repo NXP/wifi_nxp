@@ -1984,7 +1984,7 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
  *
  *  @return 	        MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-int wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator)
+mlan_status wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator)
 {
     HostCmd_DS_11N_DELBA delba;
     mlan_status ret;
