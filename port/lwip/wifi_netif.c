@@ -511,7 +511,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         return ERR_MEM;
     }
 #else
-    ret = is_wifi_wmm_queue_full(pkt_prio);
+    ret = is_wifi_wmm_queue_full((mlan_wmm_ac_e)pkt_prio);
 #endif
 
 #ifdef RW610
@@ -539,7 +539,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
             return ERR_MEM;
         }
 #else
-        ret = is_wifi_wmm_queue_full(pkt_prio);
+        ret = is_wifi_wmm_queue_full((mlan_wmm_ac_e)pkt_prio);
 #endif
         retry--;
     }
@@ -559,7 +559,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     wmm_outbuf += sizeof(mlan_linked_list);
     outbuf_len -= sizeof(mlan_linked_list);
 #else
-    uint8_t *wmm_outbuf = wifi_wmm_get_outbuf(&outbuf_len, pkt_prio);
+    uint8_t *wmm_outbuf = wifi_wmm_get_outbuf(&outbuf_len, (mlan_wmm_ac_e)pkt_prio);
 #endif
 #else
     uint8_t *wmm_outbuf = wifi_get_outbuf((uint32_t *)(&outbuf_len));

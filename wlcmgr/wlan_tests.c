@@ -1692,7 +1692,7 @@ static void dump_wlan_tx_pert_usage(void)
 static void test_wlan_tx_pert(int argc, char **argv)
 {
     struct wlan_tx_pert_info tx_pert;
-    int bss_type;
+    mlan_bss_type bss_type = MLAN_BSS_TYPE_STA;
 
     if (argc < 2)
     {
@@ -2025,7 +2025,7 @@ static void test_wlan_set_rts(int argc, char **argv)
 {
     int rthr;
     int ret;
-    int bss_type = 0;
+    mlan_bss_type bss_type = MLAN_BSS_TYPE_STA;
 
     if (argc != 3)
     {
@@ -2061,7 +2061,7 @@ static void test_wlan_set_frag(int argc, char **argv)
 {
     int frag;
     int ret;
-    int bss_type = 0;
+    mlan_bss_type bss_type = MLAN_BSS_TYPE_STA;
 
     if (argc != 3)
     {
