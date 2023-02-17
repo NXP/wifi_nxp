@@ -44,7 +44,7 @@ static void dump_wlan_set_pmfcfg_usage(void)
 static void wlan_pmfcfg_set(int argc, char *argv[])
 {
     int ret;
-    uint8_t mfpc, mfpr;
+    uint8_t mfpc = 0, mfpr = 0;
 
     if (argc != 3)
     {

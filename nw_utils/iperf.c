@@ -867,6 +867,11 @@ static void cmd_iperf(int argc, char **argv)
                     info.chost = 1;
                 }
             }
+            else
+            {
+                PRINTF("Invalid ip addr, length exceeded max ip_addr bytes\r\n");
+                return;
+            }
         }
         else if ((info.iperf_bind == 0U) && string_equal("-B", argv[arg]))
         {
@@ -896,7 +901,8 @@ static void cmd_iperf(int argc, char **argv)
 
             if (errno != 0)
             {
-                (void)PRINTF("Error during strtoul errno:%d", errno);
+                (void)PRINTF("Invalid time, error during strtoul errno:%d", errno);
+                return;
             }
             arg += 1;
         }
@@ -908,7 +914,10 @@ static void cmd_iperf(int argc, char **argv)
             errno    = 0;
             qos      = strtoul(argv[arg], NULL, 10);
             if (errno != 0)
-                (void)PRINTF("Error during strtoul errno:%d", errno);
+            {
+                (void)PRINTF("Invalid Qos, error during strtoul errno:%d", errno);
+                return;
+            }
             arg += 1;
         }
 #endif

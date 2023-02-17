@@ -4584,8 +4584,11 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
         bg_scan->scan_interval = wlan_cpu_to_le32(DEFAULT_BGSCAN_INTERVAL);
     bg_scan->report_condition = wlan_cpu_to_le32(bg_scan_in->report_condition);
 
-    if ((bg_scan_in->action == BG_SCAN_ACT_GET) || (bg_scan_in->action == BG_SCAN_ACT_GET_PPS_UAPSD) ||
-        (!bg_scan->enable))
+    if ((bg_scan_in->action == BG_SCAN_ACT_GET)
+#ifdef CONFIG_WMM_UAPSD
+        || (bg_scan_in->action == BG_SCAN_ACT_GET_PPS_UAPSD)
+#endif
+        || (!bg_scan->enable))
         goto done;
 
     tlv        = (t_u8 *)bg_scan + sizeof(HostCmd_DS_802_11_BG_SCAN_CONFIG);
@@ -4750,6 +4753,7 @@ mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAN
         pscan               = (mlan_ds_scan *)pioctl_buf->pbuf;
         bg_scan_out         = (wlan_bgscan_cfg *)pscan->param.user_scan.scan_cfg_buf;
         bg_scan_out->action = wlan_le16_to_cpu(bg_scan->action);
+#ifdef CONFIG_WMM_UAPSD
         if ((bg_scan_out->action == BG_SCAN_ACT_GET) && (bg_scan_out->action == BG_SCAN_ACT_GET_PPS_UAPSD))
         {
             bg_scan_out->enable           = bg_scan->enable;
@@ -4759,6 +4763,7 @@ mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAN
             bg_scan_out->report_condition = wlan_le32_to_cpu(bg_scan->report_condition);
             pioctl_buf->data_read_written = sizeof(mlan_ds_scan) + MLAN_SUB_COMMAND_SIZE;
         }
+#endif
     }
     LEAVE();
     return MLAN_STATUS_SUCCESS;

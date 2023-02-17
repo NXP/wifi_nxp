@@ -6921,7 +6921,6 @@ int wlan_set_current_ant(uint8_t tx_antenna, uint8_t rx_antenna)
 #else
 int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time)
 {
-#if defined(SD8801)
     int rv = wifi_set_antenna(ant, evaluate_time);
     if (rv != WM_SUCCESS)
     {
@@ -6930,15 +6929,10 @@ int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time)
     }
 
     return WM_SUCCESS;
-#else
-    wlcm_e("Antenna config not supported");
-    return WLAN_ERROR_STATE;
-#endif
 }
 
 int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time)
 {
-#if defined(SD8801)
     int rv = wifi_get_antenna((unsigned int *)ant, evaluate_time);
     if (rv != WM_SUCCESS)
     {
@@ -6947,10 +6941,6 @@ int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time)
     }
 
     return WM_SUCCESS;
-#else
-    wlcm_e("Antenna config not supported");
-    return WLAN_ERROR_STATE;
-#endif
 }
 
 #endif

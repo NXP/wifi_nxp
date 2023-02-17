@@ -782,7 +782,6 @@ static void console_tick(void)
  */
 static void cli_main(os_thread_arg_t data)
 {
-    (void)os_mutex_get(&cli_mutex, OS_WAIT_FOREVER);
     while (true)
     {
         int ret;
@@ -837,7 +836,6 @@ static void cli_main(os_thread_arg_t data)
             (void)cli_mem_free(&msg);
         }
     }
-    (void)os_mutex_put(&cli_mutex);
     os_thread_self_complete(NULL);
 }
 /* Automatically bind an input processor to the console */
