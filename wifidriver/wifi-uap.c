@@ -655,6 +655,11 @@ static int wifi_cmd_uap_config(char *ssid,
     if (!ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
         bss.param.bss_config.ht_cap_info &= (~MBIT(12));
 
+#ifdef RW610
+    /* Set Tx Beam Forming Cap */
+    bss.param.bss_config.tx_bf_cap = mlan_adap->priv[1]->tx_bf_cap;
+#endif
+
 #ifdef CONFIG_11AC
     if (enable_11ac)
     {

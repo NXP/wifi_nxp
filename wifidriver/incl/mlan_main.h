@@ -500,6 +500,10 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Default buffer space for beacons retrieved from scan responses */
 #define DEFAULT_SCAN_BEACON_BUFFER 4096
 
+#ifdef RW610
+#define DEFAULT_11N_TX_BF_CAP 0x19870408
+#endif
+
 /**
  * @brief Buffer pad space for newly allocated beacons/probe responses
  *
