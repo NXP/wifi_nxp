@@ -8970,6 +8970,14 @@ int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t 
 #endif
 
 #ifdef CONFIG_WMM_UAPSD
+static t_u8 uapsd_qos_info = WMM_UAPSD_QOS_INFO;
+static unsigned int uapsd_sleep_period = WMM_UAPSD_SLEEP_PERIOD;
+void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
+{
+    wifi_wmm_qos_cfg(qos_info, action);
+    uapsd_qos_info = *qos_info;
+}
+
 void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
 {
     unsigned int condition = 0;
@@ -8982,8 +8990,8 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
 
     if (uapsd_enable)
     {
-        wifi_set_wmm_qos_cfg(WMM_UAPSD_QOS_INFO);
-        wifi_set_sleep_period(WMM_UAPSD_SLEEP_PERIOD);
+        wifi_wmm_qos_cfg(&uapsd_qos_info, 1);
+        wifi_sleep_period(&uapsd_sleep_period, 1);
         condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
 #ifndef CONFIG_WNM_PS
         wlan_ieeeps_on(condition);
@@ -8991,14 +8999,16 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
     }
     else
     {
-        wifi_set_wmm_qos_cfg(0);
-        wifi_set_sleep_period(0);
+        t_u8 qos_info = 0;
+        unsigned int period = 0;
+        wifi_wmm_qos_cfg(&qos_info, 1);
+        wifi_sleep_period(&period, 1);
         wlan_ieeeps_off();
     }
 }
-void wlan_set_sleep_period(uint16_t sleep_period)
+void wlan_sleep_period(unsigned int *sleep_period, t_u8 action)
 {
-    wifi_set_sleep_period(sleep_period);
+    wifi_sleep_period(sleep_period, action);
 }
 #endif
 

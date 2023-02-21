@@ -3386,4 +3386,11 @@ static int wlan_get_privs_by_two_cond(mlan_adapter *pmadapter,
     return count;
 }
 
+#ifdef CONFIG_WMM_UAPSD
+/** Check if there is no packet */
+t_u8 wifi_check_no_packet_indication(mlan_private *priv);
+/** Check if this is the last packet */
+t_u8 wifi_check_last_packet_indication(mlan_private *priv);
+#endif
+
 #endif /* !_MLAN_MAIN_H_ */

@@ -247,7 +247,7 @@ void wlan_send_timing_measurement_req_frame(mlan_private *pmpriv, t_u8 *ta, t_u8
 
     /* WNM, Timimg Meaeurement Request action, Trigger */
     buf[offset]      = (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM;
-    buf[offset + 1U] = 25;
+    buf[offset + 1U] = IEEE_MGMT_WNM_TIMING_MEASUREMENT_REQUEST;
     buf[offset + 2U] = trigger;
     len              = offset + 3U;
 

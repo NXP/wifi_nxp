@@ -3983,6 +3983,29 @@ static void test_wlan_reg_access(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_WMM_UAPSD
+static void test_wlan_wmm_uapsd_qosinfo(int argc, char **argv)
+{
+    unsigned int qos_info = 0xf;
+    if (argc == 1)
+    {
+        wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 0);
+        (void)PRINTF("qos_info = %d\r\n", qos_info);
+    }
+    else if (argc == 2 && !get_uint(argv[1], &qos_info, strlen(argv[1])))
+    {
+        if (qos_info == 0)
+            (void)PRINTF("qos_info can't be zero\r\n", argv[0]);
+        else
+            wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 1);
+    }
+    else
+    {
+        (void)PRINTF("Usage: %s <null|qos_info>\r\n", argv[0]);
+        (void)PRINTF("set qos_info value to UAPSD QOS_INFO\r\n");
+        (void)PRINTF("bit0:VO; bit1:VI; bit2:BK; bit3:BE\r\n");
+        return;
+    }
+}
 static void test_wlan_set_wmm_uapsd(int argc, char **argv)
 {
     t_u8 enable;
@@ -3999,18 +4022,20 @@ static void test_wlan_set_wmm_uapsd(int argc, char **argv)
     wlan_set_wmm_uapsd(enable);
 }
 
-static void test_wlan_set_sleep_period(int argc, char **argv)
+static void test_wlan_sleep_period(int argc, char **argv)
 {
-    uint16_t period;
-
-    period = (uint16_t)atoi(argv[1]);
-    if (argc != 2)
+    unsigned int period = 0;
+    if (argc == 1)
+    {
+        wlan_sleep_period(&period, 0);
+        (void)PRINTF("period = %d\r\n", period);
+    }
+    else if (argc == 2 && !get_uint(argv[1], &period, strlen(argv[1])))
+        wlan_sleep_period(&period, 1);
+    else
     {
         (void)PRINTF("Usage: %s <period(ms)>\r\n", argv[0]);
-        return;
     }
-
-    wlan_set_sleep_period(period);
 }
 #endif
 
@@ -5125,7 +5150,8 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_WMM_UAPSD
     {"wlan-uapsd-enable", "<uapsd_enable>", test_wlan_set_wmm_uapsd},
-    {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_set_sleep_period},
+    {"wlan-uapsd-qosinfo", "<qos_info>", test_wlan_wmm_uapsd_qosinfo},
+    {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_sleep_period},
 #endif
 #if defined(RW610)
 #ifdef CONFIG_WIFI_AMPDU_CTRL

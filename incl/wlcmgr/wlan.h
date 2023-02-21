@@ -4136,6 +4136,7 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
  *connects to AP which channel is set to 100,STA doesn't support 26 tones RU. The API should be called when station is
  *in disconnected state.
  *
+ *
  * \param[in] tol_time     Valid range [1...3600]
  *          tolerance time is in unit of seconds.
  *			STA periodically check AP's beacon for ext cap bit79 (OBSS Narrow bandwidth RU in ofdma tolerance support)
@@ -4571,6 +4572,7 @@ int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t 
 #endif
 
 #ifdef CONFIG_WMM_UAPSD
+void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
 /**
  * Enable/disable UAPSD feature
  * \param[in] uapsd_enable 0 to Disable, 1 to enable uapsd.
@@ -4582,7 +4584,7 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
  * \param[in] sleep_period uapsd sleep time, unit is ms.
  *
  */
-void wlan_set_sleep_period(uint16_t sleep_period);
+void wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
 #endif
 
 #ifdef CONFIG_TX_AMPDU_PROT_MODE

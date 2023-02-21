@@ -1575,8 +1575,8 @@ bool get_ecsa_block_tx_flag();
 #endif
 
 #if defined(CONFIG_WMM_UAPSD) || defined(CONFIG_WMM)
-int wifi_set_wmm_qos_cfg(t_u8 qos_cfg);
-void wifi_set_sleep_period(uint16_t sleep_period);
+int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action);
+void wifi_sleep_period(unsigned int *sleep_period, int action);
 #endif
 
 #ifdef CONFIG_WMM

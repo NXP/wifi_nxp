@@ -2439,7 +2439,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
 #ifdef CONFIG_WMM_UAPSD
             case HostCmd_CMD_802_11_SLEEP_PERIOD:
-                rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+                rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, wm_wifi.cmd_resp_priv);
                 if (rv != MLAN_STATUS_SUCCESS)
                     return -WM_FAIL;
                 break;
@@ -4238,7 +4238,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
             pmpriv->adapter->tx_lock_flag = MFALSE;
             if (pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->gen_null_pkt &&
-                (wifi_wmm_get_packet_cnt() == 0))
+                wifi_check_no_packet_indication(pmpriv))
             {
                 struct bus_message msg_null_data;
                 msg_null_data.event  = MLAN_TYPE_NULL_DATA;
@@ -5494,6 +5494,89 @@ void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type)
     else if (bss_type == MLAN_BSS_TYPE_UAP)
         (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
 }
+
+#ifdef CONFIG_WMM_UAPSD
+/**
+ *  @brief This function checks if there is no packet indication.
+ *
+ *  @param priv    A pointer to mlan_private structure
+ *
+ *  @return        true or false
+ */
+t_u8 wifi_check_no_packet_indication(mlan_private *priv)
+{
+    if ((wifi_wmm_get_packet_cnt() == 0) && priv->wmm_qosinfo && priv->curr_bss_params.wmm_uapsd_enabled)
+        return true;
+    else
+        return false;
+}
+
+/**
+ *  @brief This function checks if we need to send last packet indication.
+ *
+ *  @param priv    A pointer to mlan_private structure
+ *
+ *  @return        true or false
+ */
+t_u8 wifi_check_last_packet_indication(mlan_private *priv)
+{
+    if ((wifi_wmm_get_packet_cnt() == 1) && priv->wmm_qosinfo && priv->curr_bss_params.wmm_uapsd_enabled)
+        return true;
+    else
+        return false;
+}
+
+int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action)
+{
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_ioctl_req req;
+    mlan_ds_wmm_cfg cfg;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&cfg, 0x00, sizeof(mlan_ds_wmm_cfg));
+    cfg.sub_command = MLAN_OID_WMM_CFG_QOS;
+    if (action == HostCmd_ACT_GEN_SET)
+        cfg.param.qos_cfg = *qos_cfg;
+    req.pbuf    = (t_u8 *)&cfg;
+    req.buf_len = sizeof(mlan_ds_wmm_cfg);
+    req.req_id  = MLAN_IOCTL_WMM_CFG;
+
+    if (action == HostCmd_ACT_GEN_SET)
+        req.action = MLAN_ACT_SET;
+    else if (action == HostCmd_ACT_GEN_GET)
+        req.action = MLAN_ACT_GET;
+    ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+
+    if (action == HostCmd_ACT_GEN_GET)
+        *qos_cfg = cfg.param.qos_cfg;
+    return ret;
+}
+
+void wifi_sleep_period(unsigned int *sleep_period, int action)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_STA);
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SLEEP_PERIOD, action, 0, NULL,
+                             sleep_period, cmd);
+    if (action == HostCmd_ACT_GEN_SET)
+        wifi_wait_for_cmdresp(NULL);
+    else if (action == HostCmd_ACT_GEN_GET)
+    {
+        mlan_ds_pm_cfg pm_cfg;
+        mlan_ioctl_req pioctl_buf;
+        pioctl_buf.pbuf = (t_u8 *)&pm_cfg;
+        memset((t_u8 *)&pioctl_buf, 0, sizeof(pioctl_buf));
+        memset((t_u8 *)&pm_cfg, 0, sizeof(pm_cfg));
+        wifi_wait_for_cmdresp(&pioctl_buf);
+        pm_cfg        = *(mlan_ds_pm_cfg *)pioctl_buf.pbuf;
+        *sleep_period = pm_cfg.param.sleep_period;
+    }
+}
+
+#endif
 
 #if defined(RW610)
 #ifdef CONFIG_WIFI_TX_BUFF

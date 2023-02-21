@@ -1087,7 +1087,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 
     wifi_imu_lock();
 #ifdef CONFIG_WMM_UAPSD
-    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && (wifi_wmm_get_packet_cnt() == 1))
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && wifi_check_last_packet_indication(mlan_adap->priv[interface]))
     {
         process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
         last_packet = 1;
@@ -1163,6 +1163,21 @@ INLINE t_u8 wifi_wmm_get_packet_cnt(void)
 }
 
 #ifdef AMSDU_IN_AMPDU
+/**
+ *  @brief This function checks if we need to send last amsdu indication.
+ *
+ *  @param priv    A pointer to mlan_private structure
+ *
+ *  @return        MTRUE or MFALSE
+ */
+static t_u8 wifi_check_last_amsdu_packet_indication(mlan_private priv, t_u8 amsdu_cnt)
+{
+    if ((wifi_wmm_get_packet_cnt() == amsdu_cnt) && priv->wmm_qosinfo && priv->curr_bss_params.wmm_uapsd_enabled)
+        return TRUE;
+    else
+        return FALSE;
+}
+
 mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txlen, t_u8 *tx_buf, t_u8 amsdu_cnt)
 {
     int ret;
@@ -1176,7 +1191,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 #if defined(RW610)
     process_amsdu_pkt_hdrs((t_u8 *)tx_buf, txlen, ac, interface);
 #ifdef CONFIG_WMM_UAPSD
-    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && (wifi_wmm_get_packet_cnt() == amsdu_cnt))
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode && wifi_check_last_amsdu_packet_indication(mlan_adap->priv[interface], amsdu_cnt))
     {
         process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
         last_packet = 1;
