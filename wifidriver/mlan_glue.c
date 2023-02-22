@@ -3423,6 +3423,25 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
+#ifdef CONFIG_TSP
+			case HostCmd_CMD_TSP_CFG:
+				if (resp->result == HostCmd_RESULT_OK)
+                {
+                	TSP_CFG *tsp_get_cfg = (TSP_CFG *)wm_wifi.cmd_resp_priv;
+                    HostCmd_DS_TSP_CFG *data = &resp->params.tsp_cfg;
+                    if (data->action == HostCmd_ACT_GEN_GET)
+                    {
+						(void *)memcpy(tsp_get_cfg->thermalPowerMgmtenable, &data->thermalPowerMgmtenable, sizeof(t_u16));
+						(void *)memcpy(tsp_get_cfg->powerMgmtBackoff, &data->powerMgmtBackoff, sizeof(t_u32));
+						(void *)memcpy(tsp_get_cfg->lowPwrBOThrshld, &data->lowPwrBOThrshld, sizeof(t_u32));
+						(void *)memcpy(tsp_get_cfg->highPwrBOThrshld, &data->highPwrBOThrshld, sizeof(t_u32));
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/

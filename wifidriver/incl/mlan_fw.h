@@ -1670,6 +1670,10 @@ typedef enum _ENH_PS_MODES
 /** Get BSS type from event cause (bit 31:24) */
 #define EVENT_GET_BSS_TYPE(event_cause) (((event_cause) >> 24) & 0x00ff)
 
+#ifdef CONFIG_TSP
+#define HostCmd_CMD_TSP_CFG 0x0280
+#endif
+
 #ifdef OTP_CHANINFO
 #define HostCmd_CMD_CHAN_REGION_CFG 0x0242
 /* mod_grp */
@@ -6632,6 +6636,34 @@ typedef MLAN_PACK_START struct _HostCmd_DS_CSI_CFG
 } MLAN_PACK_END HostCmd_DS_CSI_CFG;
 #endif
 
+#ifdef CONFIG_TSP
+typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
+{
+    /** Action */
+    t_u16 action;
+	/** enable/disabel tsp algothrim*/
+	t_u16 thermalPowerMgmtenable;
+	/** backoff*/
+	t_u32 powerMgmtBackoff;
+	/** high Threshold*/
+	t_u32 highPwrBOThrshld;
+	/** low Threshold*/
+	t_u32 lowPwrBOThrshld;
+} MLAN_PACK_END HostCmd_DS_TSP_CFG;
+
+typedef MLAN_PACK_START struct _TSP_CFG
+{
+	/** enable/disabel tsp algothrim*/
+	t_u16 *thermalPowerMgmtenable;
+	/** backoff*/
+	t_u32 *powerMgmtBackoff;
+	/** high Threshold*/
+	t_u32 *highPwrBOThrshld;
+	/** low Threshold*/
+	t_u32 *lowPwrBOThrshld;
+} MLAN_PACK_END TSP_CFG;
+#endif
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -6875,6 +6907,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_CSI
         HostCmd_DS_CSI_CFG csi_params;
+#endif
+#ifdef CONFIG_TSP
+		HostCmd_DS_TSP_CFG tsp_cfg;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

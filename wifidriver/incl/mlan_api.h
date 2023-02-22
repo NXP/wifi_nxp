@@ -455,6 +455,14 @@ int wifi_set_threshold_link_quality(mlan_private *pmpriv,
 int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_beacon_lost, unsigned int freq);
 #endif
 
+#ifdef CONFIG_TSP
+int wifi_tsp_cfg(const t_u16 action,
+				 t_u16 *enable,
+				 t_u32 *back_off,
+				 t_u32 *highThreshold,
+				 t_u32 *lowThreshold);
+#endif
+
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 #endif

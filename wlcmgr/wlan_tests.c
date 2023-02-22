@@ -4738,6 +4738,152 @@ void test_wlan_cpu_task_info(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_TSP
+static void dump_wlan_tsp_cfg_usage()
+{
+	(void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-tsp-cfg enable <enable> backoff <backoff> high <highThreshold> low <lowThreshold>\r\n");
+    (void)PRINTF("    <enable>: 0 -- disable   1 -- enable\r\n");
+    (void)PRINTF("	  <backoff>: power backoff [0...20]\r\n");
+	(void)PRINTF("	  <highThreshold>: High power Threshold [0...300]\r\n");
+	(void)PRINTF("	  <lowThreshold>: Low power Threshold [0...300]\r\n");
+	(void)PRINTF("	   High Threshold must be greater than Low Threshold\r\n");
+	(void)PRINTF("	   If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
+	
+}
+static void test_wlan_set_tsp_cfg(int argc, char **argv)
+{
+    int arg = 0;
+	unsigned int value;
+	t_u16 enable = 0;
+	t_u32 back_off = 0;
+	t_u32 highThreshold = 0;
+	t_u32 lowThreshold = 0;
+	int ret = WM_SUCCESS;
+
+	struct
+    {
+        unsigned enable : 1;
+        unsigned backoff : 1;
+        unsigned high : 1;
+        unsigned low : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+	
+	if(argc < 3 || argc > 9)
+	{
+		(void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_tsp_cfg_usage();
+        return;
+	}
+	
+	arg++;
+	do
+    {
+        if (!info.enable && string_equal("enable", argv[arg]))
+        {
+            if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || (value != 0 && value != 1))
+            {
+                (void)PRINTF("Error: invalid enable argument\r\n");
+				dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.enable = 1;
+			enable = value & 0xFF;
+        }
+		else if(!info.backoff && string_equal("backoff", argv[arg]))
+		{
+			if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 20)
+            {
+                (void)PRINTF("Error: invalid backoff argument\r\n");
+				dump_wlan_tsp_cfg_usage();
+                return;
+            }
+			arg += 2;
+            info.backoff = 1;
+			back_off = value;
+		}
+		else if(!info.high && string_equal("high", argv[arg]))
+		{
+			if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 300)
+            {
+                (void)PRINTF("Error: invalid high threshold argument\r\n");
+				dump_wlan_tsp_cfg_usage();
+                return;
+            }
+			arg += 2;
+            info.high = 1;
+			highThreshold = value;
+		}
+		else if(!info.low && string_equal("low", argv[arg]))
+		{
+			if(get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 300)
+            {
+                (void)PRINTF("Error: invalid low threshold argument\r\n");
+				dump_wlan_tsp_cfg_usage();
+                return;
+            }
+			arg += 2;
+            info.low = 1;
+			lowThreshold = value;
+		}
+		else
+		{
+			(void)PRINTF("Error: invalid [%d] argument\r\n",arg + 1);
+			dump_wlan_tsp_cfg_usage();
+			return;
+		}
+		
+		}while(arg < argc);
+
+		if(highThreshold <= lowThreshold)
+		{
+		   (void)PRINTF("Error: High Threshold must be greater than Low Threshold\r\n");
+			dump_wlan_tsp_cfg_usage();
+			return;
+		}
+		ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold);
+
+		if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to set TSP config\r\n");
+            return;
+        }
+}
+
+static void test_wlan_get_tsp_cfg(int argc, char **argv)
+{
+	t_u16 enable = 0;
+	t_u32 back_off = 0;
+	t_u32 highThreshold = 0;
+	t_u32 lowThreshold = 0;
+	int ret = WM_SUCCESS;
+	
+    if (argc != 1)
+    {
+        dump_wlan_tsp_cfg_usage();
+        return;
+    }
+
+	ret = wlan_get_tsp_cfg(&enable, &back_off, &highThreshold, &lowThreshold);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get TSP config\r\n");
+        return;
+    }
+	
+	(void)PRINTF("TSP Configuration:\r\n");
+	(void)PRINTF("	Enable TSP Algorithm: %d\r\n", enable);
+	(void)PRINTF("		0: disable 1: enable\r\n");
+	(void)PRINTF("	Power Management Backoff: %d dB\r\n", back_off);
+	(void)PRINTF("	Low Power BOT Threshold: %d °C\r\n", lowThreshold);
+	(void)PRINTF("	High Power BOT Threshold: %d °C\r\n", highThreshold);
+}
+#endif
+
 #ifdef STA_SUPPORT
 static void test_wlan_get_signal(int argc, char **argv)
 {
@@ -4998,6 +5144,10 @@ static struct cli_command tests[] = {
     {"wlan-set-monitor-filter", "<opt> <macaddr>", test_wlan_set_monitor_filter},
     {"wlan-set-monitor-param", "<action> <monitor_activity> <filter_flags> <radio_type> <chan_number>",
      test_wlan_set_monitor_param},
+#endif
+#ifdef CONFIG_TSP
+	{"wlan-set-tsp-cfg", "<enable> <backoff> <highThreshold> <lowThreshold>", test_wlan_set_tsp_cfg},
+	{"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
 #endif
 #ifdef CONFIG_CPU_TASK_STATUS
     {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},

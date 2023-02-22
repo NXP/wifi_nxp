@@ -9220,6 +9220,28 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
     return wifi_net_monitor_cfg(monitor);
 }
 #endif
+
+#ifdef CONFIG_TSP
+int wlan_get_tsp_cfg(t_u16 *enable,
+				 t_u32 *back_off,
+				 t_u32 *highThreshold,
+				 t_u32 *lowThreshold)
+{
+    t_u16 action = 0;
+	
+    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold);
+}
+int wlan_set_tsp_cfg(t_u16 enable,
+				 t_u32 back_off,
+				 t_u32 highThreshold,
+				 t_u32 lowThreshold)
+{
+    t_u16 action = 1;
+	
+    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold);
+}
+#endif
+
 #ifdef STA_SUPPORT
 int wlan_get_signal_info(wlan_rssi_info_t *signal)
 {

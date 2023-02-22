@@ -4523,6 +4523,38 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
                                     unsigned int link_tx_lantency_freq);
 #endif
 
+#ifdef CONFIG_TSP
+/**
+ * get TSP(Thermal Safeguard Protection) configuration.
+ * TSP algorithm moniters PA Tj and primarily backs off data throughput.
+ * \param[out] enable    enable/disable tsp algothrim
+ * \param[out] back_off     power back off   [0...20]dB
+ * \param[out] highThreshold     high threshold  [0...300]°C
+ * \param[out] lowThreshold     low threshold   [0...300]°C
+ *          High Threshold must be greater than Low Threshold.
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_tsp_cfg(t_u16 *enable,
+				 t_u32 *back_off,
+				 t_u32 *highThreshold,
+				 t_u32 *lowThreshold);
+/**
+ * set TSP(Thermal Safeguard Protection) configuration.
+ * TSP algorithm moniters PA Tj and primarily backs off data throughput.
+ * \param[in] enable    enable/disable tsp algothrim
+ * \param[in] back_off     power back off   [0...20]dB
+ * \param[in] highThreshold     high threshold  [0...300]°C
+ * \param[in] lowThreshold     low threshold   [0...300]°C
+ *          High Threshold must be greater than Low Threshold.
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+
+int wlan_set_tsp_cfg(t_u16 enable,
+				 t_u32 back_off,
+				 t_u32 highThreshold,
+				 t_u32 lowThreshold);
+#endif
+
 #ifdef CONFIG_WIFI_REG_ACCESS
 /** This function reads/writes adapter registers value.
  *

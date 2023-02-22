@@ -4386,3 +4386,43 @@ int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
     return wifi_wait_for_cmdresp(NULL);
 }
 #endif
+
+#ifdef CONFIG_TSP
+int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off,
+				 t_u32 *highThreshold, t_u32 *lowThreshold)
+{
+	wifi_get_command_lock();
+	HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+	(void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+	HostCmd_DS_TSP_CFG *tsp_cfg = &cmd->params.tsp_cfg;
+
+	cmd->command = wlan_cpu_to_le16(HostCmd_CMD_TSP_CFG);
+	cmd->size = sizeof(HostCmd_DS_TSP_CFG) + S_DS_GEN;
+
+	(void)memcpy(&tsp_cfg->thermalPowerMgmtenable, enable, sizeof(t_u16));
+	(void)memcpy(&tsp_cfg->powerMgmtBackoff, back_off, sizeof(t_u32));
+	(void)memcpy(&tsp_cfg->highPwrBOThrshld, highThreshold, sizeof(t_u32));
+	(void)memcpy(&tsp_cfg->lowPwrBOThrshld, lowThreshold, sizeof(t_u32));
+
+	tsp_cfg->action = wlan_cpu_to_le16(action);
+	tsp_cfg->thermalPowerMgmtenable = wlan_cpu_to_le16(tsp_cfg->thermalPowerMgmtenable);
+	tsp_cfg->powerMgmtBackoff = wlan_cpu_to_le16(tsp_cfg->powerMgmtBackoff);
+	tsp_cfg->highPwrBOThrshld = wlan_cpu_to_le16(tsp_cfg->highPwrBOThrshld);
+	tsp_cfg->lowPwrBOThrshld = wlan_cpu_to_le16(tsp_cfg->lowPwrBOThrshld);
+
+	cmd->size = wlan_cpu_to_le16(cmd->size);
+
+	if(action == MLAN_ACT_SET)
+		return wifi_wait_for_cmdresp(NULL);
+	else
+	{
+		TSP_CFG tsp_get_cfg;
+		tsp_get_cfg.thermalPowerMgmtenable = enable;
+		tsp_get_cfg.powerMgmtBackoff = back_off;
+		tsp_get_cfg.highPwrBOThrshld = highThreshold;
+		tsp_get_cfg.lowPwrBOThrshld = lowThreshold;
+
+		return wifi_wait_for_cmdresp(&tsp_get_cfg);
+	}
+}
+#endif
