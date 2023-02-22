@@ -291,6 +291,16 @@ static chan_freq_power_t channel_freq_power_Custom_BG[] = {
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}};
 
+static uint8_t rf_radio_modes_group[] = {
+    0,  /* set the radio in power down mode */
+    /*1,   sets the radio in 5GHz band, 2X2 mode(path A+B) */
+    3,  /* sets the radio in 5GHz band, 1X1 mode(path A) */
+   /* 4,   sets the radio in 5GHz band, 1X1 mode(path B) */
+   /* 9,   sets the radio in 2.4GHz band, 2X2 mode(path A+B) */
+    11, /* sets the radio in 2.4GHz band, 1X1 mode(path A) */
+   /* 14, sets the radio in 2.4GHz band, 1X1 mode(path B)*/
+};
+
 /**
  * The 2.4GHz CFP tables
  */
@@ -1985,6 +1995,39 @@ t_bool wlan_is_channel_valid(t_u8 chan_num)
     }
 #endif
 
+    LEAVE();
+    return valid;
+}
+
+/**
+ * @brief Validate if radio mode is in range of World Wide Safe Mode
+ *
+ * @param mode	radio mode
+ *
+ * @return		Valid or Invalid
+ */
+t_bool wlan_is_radio_mode_valid(t_u8 mode)
+{
+    t_bool valid = MFALSE;
+    int i        = 0;
+    int mode_num;
+
+    ENTER();
+    mode_num = (sizeof(rf_radio_modes_group) / sizeof(rf_radio_modes_group[0]));
+
+    for (i = 0; i < mode_num; i++)
+    {
+        if (mode == rf_radio_modes_group[i])
+        {
+            valid = MTRUE;
+            break;
+        }
+    }
+
+    if (valid == MFALSE)
+    {
+        PRINTF("Invalid radio mode. Radio mode can't be %d\r\n", mode);
+    }
     LEAVE();
     return valid;
 }

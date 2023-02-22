@@ -65,6 +65,7 @@ mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *p
         case MFG_CMD_CLR_RX_ERR:
         case MFG_CMD_RF_BAND_AG:
         case MFG_CMD_RF_CHANNELBW:
+        case MFG_CMD_SET_RADIO_MODE:
             break;
         default:
             ret = MLAN_STATUS_FAILURE;

@@ -1128,6 +1128,34 @@ int wifi_set_rf_channel(const uint8_t channel)
     return ret;
 }
 
+int wifi_set_radio_mode(const uint8_t mode)
+{
+    int ret;
+
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+
+    /* Check if radio mode is valid */
+    if (!wlan_is_radio_mode_valid(mode))
+    {
+        return -WM_FAIL;
+    }
+
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+
+    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_SET_RADIO_MODE;
+    wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
+    wifi_mfg_cmd_generic_cfg.data1   = mode;
+
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
+
+    wifi_e("wifi set radio mode fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+}
+
 int wifi_get_rf_channel(uint8_t *channel)
 {
     int ret;

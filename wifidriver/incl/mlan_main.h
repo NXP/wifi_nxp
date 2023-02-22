@@ -2784,6 +2784,8 @@ t_bool wlan_bg_scan_type_is_passive(mlan_private *priv, t_u8 chnl);
 t_u8 wlan_convert_v14_rate_ht_info(t_u8 ht_info);
 /** Check if channel number is valid */
 t_bool wlan_is_channel_valid(t_u8 chan_num);
+/** Check if radio mode number is valid */
+t_bool wlan_is_radio_mode_valid(t_u8 mode);
 /** Check if channel number and its frequency is valid */
 t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq);
 /** Set Custom CFP Table */

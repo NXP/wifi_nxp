@@ -3694,6 +3694,18 @@ int wlan_set_rf_test_mode(void);
 int wlan_set_rf_channel(const uint8_t channel);
 
 /**
+ * Set the RF radio mode in Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[in] mode The radio mode number to be set in Wi-Fi firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_set_rf_radio_mode(const uint8_t mode);
+
+/**
  * Get the RF Channel from Wi-Fi firmware.
  *
  * \note Please call \ref wlan_set_rf_test_mode API before using this API.

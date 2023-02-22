@@ -67,6 +67,16 @@ static void dump_wlan_set_channel_usage(void)
     (void)PRINTF("\r\n");
 }
 
+static void dump_wlan_set_radio_mode_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-rf-radio-mode <radio_mode> \r\n");
+    (void)PRINTF("0: set the radio in power down mode\r\n");
+    (void)PRINTF("3: sets the radio in 5GHz band, 1X1 mode(path A)\r\n");
+    (void)PRINTF("11: sets the radio in 2.4GHz band, 1X1 mode(path A)\r\n");
+    (void)PRINTF("\r\n");
+}
+
 static void wlan_rf_channel_set(int argc, char *argv[])
 {
     int ret;
@@ -788,6 +798,35 @@ disable:
         dump_wlan_set_tx_frame_usage();
     }
 }
+static void wlan_rf_radio_mode_set(int argc, char *argv[])
+{
+    int ret;
+    uint8_t radio_mode;
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 2)
+    {
+        dump_wlan_set_radio_mode_usage();
+        return;
+    }
+
+    radio_mode = atoi(argv[1]);
+    ret        = wlan_set_rf_radio_mode(radio_mode);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Set radio mode successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Set radio mode failed!\r\n");
+        dump_wlan_set_radio_mode_usage();
+    }
+}
 
 static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-set-rf-test-mode", NULL, wlan_rf_test_mode_set},
@@ -801,6 +840,7 @@ static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-get-rf-bandwidth", NULL, wlan_rf_bandwidth_get},
     {"wlan-set-rf-channel", "<channel>", wlan_rf_channel_set},
     {"wlan-get-rf-channel", NULL, wlan_rf_channel_get},
+    {"wlan-set-rf-radio-mode", "<radio_mode>", wlan_rf_radio_mode_set},
     {"wlan-set-rf-tx-power", "<tx_power> <modulation> <path_id>", wlan_rf_tx_power_set},
     {"wlan-set-rf-tx-cont-mode", "<enable_tx> <cw_mode> <payload_pattern> <cs_mode> <act_sub_ch> <tx_rate>",
      wlan_rf_tx_cont_mode_set},
