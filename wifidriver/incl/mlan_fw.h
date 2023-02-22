@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -2289,12 +2289,13 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Bssid_List_t
 #endif
 
 /** MrvlIEtypes_ScanChanGap_t */
-typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t {
-	/** Header */
-	MrvlIEtypesHeader_t header;
-	/** Time gap in units to TUs to be used between
-	 * two consecutive channels scan */
-	t_u16 gap;
+typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Time gap in units to TUs to be used between
+     * two consecutive channels scan */
+    t_u16 gap;
 } MLAN_PACK_END MrvlIEtypes_ScanChanGap_t;
 
 /** MrvlIEtypes_SsIdParamSet_t */
@@ -5638,6 +5639,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_auth_type_t
     MrvlIEtypesHeader_t header;
     /** Authentication type */
     t_u8 auth_type;
+    /** PWE derivation */
+    t_u8 PWE_derivation;
+    /** transition disable */
+    t_u8 transition_disable;
 } MLAN_PACK_END MrvlIEtypes_auth_type_t;
 
 /** MrvlIEtypes_encrypt_protocol_t */

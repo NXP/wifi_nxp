@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -778,6 +778,10 @@ struct wlan_network_security
     /** Length of the WPA3 SAE Password, \ref WLAN_PASSWORD_MIN_LENGTH to \ref
      * WLAN_PASSWORD_MAX_LENGTH.  Ignored for networks with no security. */
     size_t password_len;
+    /** PWE derivation */
+    uint8_t pwe_derivation;
+    /** transition disable */
+    uint8_t transition_disable;
     /** Pairwise Master Key.  When pmk_valid is set, this is the PMK calculated
      * from the PSK for WPA/PSK networks.  If pmk_valid is not set, this field
      * is not valid.  When adding networks with \ref wlan_add_network, users

@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of AP mode command and event
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -255,8 +255,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
     MrvlIEtypes_mgmt_ie_passthru_t *tlv_mgmt_ie_passthru       = MNULL;
     MrvlIEtypes_2040_coex_enable_t *tlv_2040_coex_enable       = MNULL;
     MrvlIEtypes_mac_filter_t *tlv_mac_filter                   = MNULL;
-    MrvlIEtypes_auth_type_t *tlv_auth_type                     = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
+    MrvlIEtypes_auth_type_t *tlv_auth_type               = MNULL;
     MrvlIEtypes_channel_band_t *tlv_chan_band            = MNULL;
     MrvlIEtypes_ChanListParamSet_t *tlv_chan_list        = MNULL;
     ChanScanParamSet_t *pscan_chan                       = MNULL;
@@ -592,18 +592,18 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv += sizeof(tlv_chan_list->header) + (sizeof(ChanScanParamSet_t) * bss->param.bss_config.num_of_chan);
     }
 
-#ifndef CONFIG_MLAN_WMSDK
     if ((bss->param.bss_config.auth_mode <= MLAN_AUTH_MODE_SHARED) ||
         (bss->param.bss_config.auth_mode == MLAN_AUTH_MODE_AUTO))
     {
-        tlv_auth_type              = (MrvlIEtypes_auth_type_t *)tlv;
-        tlv_auth_type->header.type = wlan_cpu_to_le16(TLV_TYPE_AUTH_TYPE);
-        tlv_auth_type->header.len  = wlan_cpu_to_le16(sizeof(t_u8));
-        tlv_auth_type->auth_type   = (t_u8)bss->param.bss_config.auth_mode;
+        tlv_auth_type                 = (MrvlIEtypes_auth_type_t *)tlv;
+        tlv_auth_type->header.type    = wlan_cpu_to_le16(TLV_TYPE_AUTH_TYPE);
+        tlv_auth_type->header.len     = wlan_cpu_to_le16(sizeof(MrvlIEtypes_auth_type_t) - sizeof(MrvlIEtypesHeader_t));
+        tlv_auth_type->auth_type      = (t_u8)bss->param.bss_config.auth_mode;
+        tlv_auth_type->PWE_derivation = (t_u8)bss->param.bss_config.pwe_derivation;
+        tlv_auth_type->transition_disable = (t_u8)bss->param.bss_config.transition_disable;
         cmd_size += sizeof(MrvlIEtypes_auth_type_t);
         tlv += sizeof(MrvlIEtypes_auth_type_t);
     }
-#endif /* CONFIG_MLAN_WMSDK */
 
     if (bss->param.bss_config.protocol != 0U)
     {

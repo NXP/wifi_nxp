@@ -2,7 +2,7 @@
  *
  *  @brief This file provides UAP related APIs.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -365,6 +365,8 @@ static int wifi_cmd_uap_config(char *ssid,
                                char *password,
                                t_u8 channel,
                                wifi_scan_chan_list_t scan_chan_list,
+                               t_u8 pwe_derivation,
+                               t_u8 transition_disable,
                                t_u16 beacon_period,
                                t_u8 bandwidth,
                                t_u8 dtim_period,
@@ -599,6 +601,9 @@ static int wifi_cmd_uap_config(char *ssid,
 #endif
         if (security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
         {
+            bss.param.bss_config.auth_mode               = MLAN_AUTH_MODE_AUTO;
+            bss.param.bss_config.pwe_derivation          = pwe_derivation;
+            bss.param.bss_config.transition_disable      = transition_disable;
             bss.param.bss_config.wpa_cfg.password_length = (t_u32)password_len;
             (void)memcpy((void *)bss.param.bss_config.wpa_cfg.password, (const void *)password, (size_t)password_len);
         }
@@ -919,6 +924,8 @@ int wifi_uap_start(mlan_bss_type type,
                    char *password,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
+                   uint8_t pwe_derivation,
+                   uint8_t transition_disable,
                    bool mfpc,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
                    bool mfpr,
@@ -944,16 +951,16 @@ int wifi_uap_start(mlan_bss_type type,
     }
 #endif
     /* Configure SSID */
-    int rv =
-        wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, (t_u8)channel,
-                            scan_chan_list, wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
-                            wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
+    int rv = wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, (t_u8)channel,
+                                 scan_chan_list, pwe_derivation, transition_disable,
+                                 wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
+                                 wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
-                            dtim == 0 ? UAP_DTIM_PERIOD : dtim,
+                                 dtim == 0 ? UAP_DTIM_PERIOD : dtim,
 #else
-                            UAP_DTIM_PERIOD,
+                                 UAP_DTIM_PERIOD,
 #endif
-                            wm_wifi.chan_sw_count, type, mfpc, mfpr);
+                                 wm_wifi.chan_sw_count, type, mfpc, mfpr);
 
     if (rv != WM_SUCCESS)
     {

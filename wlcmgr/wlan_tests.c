@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Test API
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -285,7 +285,7 @@ static void print_network(struct wlan_network *network)
             {
                 (void)PRINTF("\twifi capability: 11ax\r\n");
             }
-            
+
             (void)PRINTF("\tuser configure: 11ax\r\n");
         }
         else
@@ -301,7 +301,7 @@ static void print_network(struct wlan_network *network)
             {
                 (void)PRINTF("\twifi capability: 11ac\r\n");
             }
-            
+
             (void)PRINTF("\tuser configure: 11ac\r\n");
         }
         else
@@ -316,7 +316,7 @@ static void print_network(struct wlan_network *network)
             {
                 (void)PRINTF("\twifi capability: 11n\r\n");
             }
-            
+
             (void)PRINTF("\tuser configure: 11n\r\n");
         }
         else
@@ -484,8 +484,9 @@ static void dump_wlan_add_usage(void)
         "    role uap [bssid <bssid>]\r\n"
         "    [channel <channelnumber>]\r\n");
     (void)PRINTF(
-        "    [wpa2 <secret>]/[wpa <secret> wpa2 <secret>]/[wpa3 sae <secret>]/[wpa2 <secret> wpa3 sae "
-        "<secret>]");
+        "    [wpa2 <secret>]/[wpa <secret> wpa2 <secret>]/[wpa3 sae <secret> [pwe <0/1/2> tr <0/1>]]/[wpa2 <secret> "
+        "wpa3 sae "
+        "<secret> [pwe <0/1/2> tr <0/1>]]");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #ifdef CONFIG_WIFI_DTIM_PERIOD
     (void)PRINTF("If seting dtim\r\n");
@@ -672,7 +673,46 @@ static void test_wlan_add(int argc, char **argv)
                         " argument\r\n");
                     return;
                 }
-                arg += 3;
+                arg += 2;
+
+                if (string_equal(argv[arg + 1], "pwe") != false)
+                {
+                    errno                           = 0;
+                    network.security.pwe_derivation = (bool)strtol(argv[arg + 2], NULL, 10);
+                    if (errno != 0)
+                    {
+                        (void)PRINTF("Error during strtoul:pwe errno:%d\r\n", errno);
+                    }
+                    if (arg + 2 >= argc ||
+                        (network.security.pwe_derivation != 0U && network.security.pwe_derivation != 1U &&
+                         network.security.pwe_derivation != 2U))
+                    {
+                        (void)PRINTF(
+                            "Error: invalid wireless"
+                            " network pwe derivation\r\n");
+                        return;
+                    }
+                    arg += 2;
+
+                    if (string_equal(argv[arg + 1], "tr") != false)
+                    {
+                        errno                               = 0;
+                        network.security.transition_disable = (bool)strtol(argv[arg + 2], NULL, 10);
+                        if (errno != 0)
+                        {
+                            (void)PRINTF("Error during strtoul:pwe errno:%d\r\n", errno);
+                        }
+                        if (arg + 2 >= argc ||
+                            (network.security.transition_disable != 0U && network.security.transition_disable != 1U))
+                        {
+                            (void)PRINTF(
+                                "Error: invalid wireless"
+                                " network transition state\r\n");
+                            return;
+                        }
+                        arg += 2;
+                    }
+                }
             }
             else
             {
@@ -681,6 +721,7 @@ static void test_wlan_add(int argc, char **argv)
                     " argument\r\n");
                 return;
             }
+            arg += 1;
             info.security3++;
         }
         else if ((info.role == 0U) && string_equal("role", argv[arg]))

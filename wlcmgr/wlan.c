@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Core WLAN definition
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -1738,7 +1738,8 @@ static int do_start(struct wlan_network *network)
                              wlan.uap_mac,
 #endif
                              (int)network->security.type, &network->security.psk[0], &network->security.password[0],
-                             (int)network->channel, wlan.scan_chan_list, network->security.mfpc,
+                             (int)network->channel, wlan.scan_chan_list, network->security.pwe_derivation,
+                             network->security.transition_disable, network->security.mfpc,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
                              network->security.mfpr, network->dtim_period
 #else
@@ -3935,10 +3936,10 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
     }
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-		if(is_uap_started() || is_sta_connected())
-			wlan_scan_param->scan_chan_gap = scan_channel_gap;
-		else
-			wlan_scan_param->scan_chan_gap = 0;
+    if (is_uap_started() || is_sta_connected())
+        wlan_scan_param->scan_chan_gap = scan_channel_gap;
+    else
+        wlan_scan_param->scan_chan_gap = 0;
 #endif
 
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
@@ -8366,20 +8367,21 @@ int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
 }
 
 int wlan_set_11ax_tol_time(const t_u32 tol_time)
-{    
+{
     if (tol_time < 1 || tol_time > 3600)
     {
         wlcm_d("Error: invalid tolerance time value, range[[1..3600]].");
-        return -WM_FAIL;;
+        return -WM_FAIL;
+        ;
     }
 
-	if(is_sta_connecting())
-	{
-		wlcm_d("Pls set OBSS Tolerance Time value before connecting to AP.");
-		return -WM_FAIL;
-	}
+    if (is_sta_connecting())
+    {
+        wlcm_d("Pls set OBSS Tolerance Time value before connecting to AP.");
+        return -WM_FAIL;
+    }
 
-	return wifi_set_11ax_tol_time(tol_time);
+    return wifi_set_11ax_tol_time(tol_time);
 }
 
 int wlan_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len)

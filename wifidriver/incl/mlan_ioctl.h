@@ -2,7 +2,7 @@
  *
  *  @brief This file declares the IOCTL data structures and APIs.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -188,10 +188,10 @@ typedef enum _mlan_ioctl_req_id
 #endif
 
 #ifdef CONFIG_11AX
-	/* 802.11ax Configuration Group  */
-	MLAN_IOCTL_11AX_CFG = 0x00170000,
-	MLAN_OID_11AX_HE_CFG = 0x00170001,
-	MLAN_OID_11AX_CMD_CFG = 0x00170002,
+    /* 802.11ax Configuration Group  */
+    MLAN_IOCTL_11AX_CFG   = 0x00170000,
+    MLAN_OID_11AX_HE_CFG  = 0x00170001,
+    MLAN_OID_11AX_CMD_CFG = 0x00170002,
 #endif /* ENABLE_802_11AX */
 
     /* Miscellaneous Configuration Group */
@@ -958,6 +958,10 @@ typedef struct _mlan_uap_bss_param
     t_u8 channel;
     /** auth mode */
     t_u16 auth_mode;
+    /** PWE derivation */
+    t_u8 pwe_derivation;
+    /** transition disable */
+    t_u8 transition_disable;
     /** encryption protocol */
     t_u16 protocol;
     /** key managment type */

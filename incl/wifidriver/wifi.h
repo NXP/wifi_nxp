@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -880,6 +880,8 @@ int wifi_uap_start(mlan_bss_type type,
                    char *password,
                    int channel,
                    wifi_scan_chan_list_t scan_chan_list,
+                   uint8_t pwe_derivation,
+                   uint8_t transition_disable,
                    bool mfpc,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
                    bool mfpr,
