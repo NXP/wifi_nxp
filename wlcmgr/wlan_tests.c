@@ -4768,6 +4768,75 @@ static void test_wlan_get_signal(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_WIFI_FORCE_RTS
+#define HOSTCMD_RESP_BUFF_SIZE 1024
+u8_t debug_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+
+static void dump_wlan_set_forceRTS_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-forceRTS <0/1>\r\n");
+    (void)PRINTF("    <start/stop>: 1 -- start forceRTS\r\n");
+    (void)PRINTF("                  0 -- stop forceRTS\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-set-forceRTS\r\n");
+    (void)PRINTF("    - Get current forceRTS state.\r\n");
+    (void)PRINTF("    wlan-set-forceRTS 1\r\n");
+    (void)PRINTF("    - Set start forceRTS\r\n");
+}
+
+/* Bypass wmmTurboMode TxopLimit setting if for certificate is true, for BE traffic only. (Case: HE 5.71.1) */
+static void test_wlan_set_forceRTS(int argc, char **argv)
+{
+    int ret           = -WM_FAIL;
+    uint32_t reqd_len = 0;
+    uint8_t state;
+    /**
+     * Command taken from debug.conf
+     * start_forceRTS={
+     *      CmdCode=0x008b
+     *      Action:2=1
+     *      SUBID:2=0x104
+     *      Value:1=1           # 1 -- start forceRTS;
+     *                          # 0 -- stop forceRTS;
+     */
+    uint8_t debug_cmd_buf[] = {0x8b, 0, 0x0d, 0, 0, 0, 0, 0, 0x01, 0, 0x04, 0x01, 0x01};
+
+    if (argc > 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_forceRTS_usage();
+        return;
+    }
+
+    /* SET */
+    if (argc == 2)
+    {
+        state             = atoi(argv[1]);
+        debug_cmd_buf[12] = state;
+    }
+    else /* GET */
+    {
+        dump_wlan_set_forceRTS_usage();
+        debug_cmd_buf[8] = 0;
+    }
+
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
+                            &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Hostcmd success, response is\r\n");
+        for (ret = 0; ret < reqd_len; ret++)
+            (void)PRINTF("%x\t", debug_resp_buf[ret]);
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -4935,6 +5004,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef STA_SUPPORT
     {"wlan-get-signal", NULL, test_wlan_get_signal},
+#endif
+#ifdef CONFIG_WIFI_FORCE_RTS
+    {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
 #endif
 };
 
