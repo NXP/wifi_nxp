@@ -29,6 +29,8 @@
 #ifdef CONFIG_MBO
 #include "mlan_mbo.h"
 #endif
+/* Always keep this include at the end of all include files */
+#include <mlan_remap_mem_operations.h>
 
 /*
  * Bit 0 : Assoc Req
@@ -3363,12 +3365,18 @@ int wifi_host_11k_cfg(int enable_11k)
         rrmCap.element_id = (t_u8)MGMT_RRM_ENABLED_CAP;
         rrmCap.len        = (t_u8)sizeof(IEEEtypes_RrmEnabledCapabilities_t);
         wlan_dot11k_formatRrmCapabilities(&(rrmCap.RrmEnabledCapabilities), 100);
-        pmpriv->rrm_mgmt_bitmap_index = wifi_set_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_RRM_ENABLED_CAP,
-                                                         (void *)&(rrmCap.RrmEnabledCapabilities), rrmCap.len);
+
+        /* Append the passed data to the end of
+         * the genIeBuffer */
+        __memcpy(pmpriv->adapter, pmpriv->assoc_req_buf, &rrmCap, sizeof(IEEEtypes_RrmElement_t));
+
+        /* Increment the stored buffer length by
+         * the size passed */
+        pmpriv->assoc_req_size = sizeof(IEEEtypes_RrmElement_t);
     }
     else
     {
-        ret = wifi_clear_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_RRM_ENABLED_CAP, pmpriv->rrm_mgmt_bitmap_index);
+        pmpriv->assoc_req_size = 0;
     }
     pmpriv->enable_host_11k = (t_u8)enable_11k;
 

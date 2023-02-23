@@ -1863,6 +1863,19 @@ int wrapper_wifi_assoc(
     priv->sec_info.wpa_enabled         = false;
     priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
 
+#ifdef CONFIG_11K
+    if (priv->assoc_req_size != 0U)
+    {
+        /* Append the passed data to the end of
+         * the genIeBuffer */
+        __memcpy(priv->adapter, priv->gen_ie_buf, priv->assoc_req_buf, priv->assoc_req_size);
+
+        /* Increment the stored buffer length by
+         * the size passed */
+        priv->gen_ie_buf_len = priv->assoc_req_size;
+    }
+#endif
+
 #ifdef CONFIG_11R
     priv->sec_info.is_ft = is_ft;
     if (is_ft)
@@ -5733,12 +5746,12 @@ int wifi_set_11ax_tol_time(const t_u32 tol_time)
     req.pbuf    = (t_u8 *)&cfg;
     req.buf_len = sizeof(mlan_ds_11ax_cmd_cfg);
 
-    cfg.sub_command                   = MLAN_OID_11AX_CMD_CFG;
-    cfg.sub_id                        = MLAN_11AXCMD_OBSS_TOLTIME_SUBID;
-    cfg.param.toltime_cfg.tol_time    = tol_time;
+    cfg.sub_command                = MLAN_OID_11AX_CMD_CFG;
+    cfg.sub_id                     = MLAN_11AXCMD_OBSS_TOLTIME_SUBID;
+    cfg.param.toltime_cfg.tol_time = tol_time;
 
     mlan_status rv = wlan_ops_sta_ioctl(mlan_adap, &req);
-    
+
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
         return MLAN_STATUS_FAILURE;
 

@@ -4,7 +4,7 @@
  *  structures and declares global function prototypes used
  *  in MLAN module.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -1319,12 +1319,17 @@ struct _mlan_private
     /** Lock for Rx packets */
     t_void *rx_pkt_lock;
 
+    t_u8 assoc_req_buf[MRVDRV_GENIE_BUF_SIZE];
+    /** Length of the data stored in assoc_rsp_buf */
+    t_u32 assoc_req_size;
+
 #ifdef STA_SUPPORT
 #ifndef CONFIG_MLAN_WMSDK
     /** Buffer to store the association response for application retrieval */
     t_u8 assoc_rsp_buf[MRVDRV_ASSOC_RSP_BUF_SIZE];
     /** Length of the data stored in assoc_rsp_buf */
     t_u32 assoc_rsp_size;
+#endif /* CONFIG_MLAN_WMSDK */
 
     /** Generic IEEE IEs passed from the application to be inserted into the
      *    association request to firmware
@@ -1333,6 +1338,7 @@ struct _mlan_private
     /** Length of the data stored in gen_ie_buf */
     t_u8 gen_ie_buf_len;
 
+#ifndef CONFIG_MLAN_WMSDK
     t_u8 *pcurr_bcn_buf;
     t_u32 curr_bcn_size;
     t_void *curr_bcn_buf_lock;
@@ -2064,7 +2070,7 @@ struct _mlan_adapter
     /** Extended scan or legacy scan */
     t_u8 ext_scan;
     /** scan channel gap time */
-	t_u16 scan_chan_gap;
+    t_u16 scan_chan_gap;
 #endif
 #ifndef CONFIG_MLAN_WMSDK
     t_u16 bcn_buf_size;

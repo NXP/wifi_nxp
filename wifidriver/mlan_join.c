@@ -5,7 +5,7 @@
  *  and response routines for sending adhoc start, adhoc join, and
  *  association commands to the firmware.
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
  *
@@ -38,7 +38,6 @@ Change log:
 /********************************************************
                 Local Functions
 ********************************************************/
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Append a generic IE as a pass through TLV to a TLV buffer.
  *
@@ -103,6 +102,7 @@ static int wlan_cmd_append_generic_ie(mlan_private *priv, t_u8 **ppbuffer)
     return ret_len;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Append TSF tracking info from the scan table for the target AP
  *
@@ -271,7 +271,7 @@ static mlan_status wlan_setup_rates_from_bssdesc(IN mlan_private *pmpriv,
                                                  OUT t_u32 *pout_rates_size)
 {
     t_u8 card_rates[WLAN_SUPPORTED_RATES] = {0x0};
-    t_u32 card_rates_size = 0;
+    t_u32 card_rates_size                 = 0;
     ENTER();
 
     (void)__memset(pmadapter, card_rates, 0x00, WLAN_SUPPORTED_RATES);
@@ -1189,9 +1189,11 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     {
         wlan_cmd_append_wapi_ie(pmpriv, &pos);
     }
+#endif /* CONFIG_MLAN_WMSDK */
 
     wlan_cmd_append_generic_ie(pmpriv, &pos);
 
+#ifndef CONFIG_MLAN_WMSDK
     wlan_cmd_append_tsf_tlv(pmpriv, &pos, pbss_desc);
 
     /* wmsdk: The below two steps have been performed before. So we can skip
