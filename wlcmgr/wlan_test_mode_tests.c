@@ -108,6 +108,41 @@ static void wlan_rf_channel_set(int argc, char *argv[])
     }
 }
 
+static void dump_wlan_get_radio_mode_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-rf-radio-mode \r\n");
+}
+
+static void wlan_rf_radio_mode_get(int argc, char *argv[])
+{
+    int ret;
+    uint8_t radio_mode;
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 1)
+    {
+        dump_wlan_get_radio_mode_usage();
+        return;
+    }
+
+    ret = wlan_get_rf_radio_mode(&radio_mode);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Configured radio mode is: %d\r\n", radio_mode);
+    }
+    else
+    {
+        (void)PRINTF("Radio mode configuration read failed\r\n");
+        dump_wlan_get_radio_mode_usage();
+    }
+}
+
 static void dump_wlan_get_channel_usage(void)
 {
     (void)PRINTF("Usage:\r\n");

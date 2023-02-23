@@ -1037,7 +1037,6 @@ int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u
 #endif
 
 #ifdef CONFIG_RF_TEST_MODE
-static uint8_t channel_set    = 0;
 static uint8_t band_set       = 0;
 static uint8_t bandwidth_set  = 0;
 static uint8_t tx_antenna_set = 0;
@@ -1122,10 +1121,13 @@ int wifi_set_rf_channel(const uint8_t channel)
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
 
-    if (ret == WM_SUCCESS)
-        channel_set = 1;
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("wifi set rf channel fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_set_radio_mode(const uint8_t mode)
@@ -1142,7 +1144,7 @@ int wifi_set_radio_mode(const uint8_t mode)
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
-    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_SET_RADIO_MODE;
+    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RADIO_MODE_CFG;
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
     wifi_mfg_cmd_generic_cfg.data1   = mode;
 
@@ -1162,12 +1164,6 @@ int wifi_get_rf_channel(uint8_t *channel)
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
-    if (!channel_set)
-    {
-        wifi_e("RF Channel not set");
-        return -WM_FAIL;
-    }
-
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RF_CHAN;
@@ -1175,10 +1171,37 @@ int wifi_get_rf_channel(uint8_t *channel)
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
 
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         *channel = wifi_mfg_cmd_generic_cfg.data1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("wifi get rf channel fail, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+}
+
+int wifi_get_rf_radio_mode(uint8_t *mode)
+{
+    int ret;
+
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+
+    wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RADIO_MODE_CFG;
+    wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
+
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
+
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        *mode = wifi_mfg_cmd_generic_cfg.data1;
+        return WM_SUCCESS;
+    }
+
+    wifi_e("wifi get rf radio fail, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_set_rf_band(const uint8_t band)

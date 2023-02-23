@@ -3718,6 +3718,18 @@ int wlan_set_rf_radio_mode(const uint8_t mode);
 int wlan_get_rf_channel(uint8_t *channel);
 
 /**
+ * Get the RF Radio mode from Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[out] mode A Pointer to a variable where radio mode number to get.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_get_rf_radio_mode(uint8_t *mode);
+
+/**
  * Set the RF Band in Wi-Fi firmware.
  *
  * \note Please call \ref wlan_set_rf_test_mode API before using this API.

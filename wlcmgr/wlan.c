@@ -8388,6 +8388,14 @@ int wlan_get_rf_channel(uint8_t *channel)
     return -WM_FAIL;
 }
 
+int wlan_get_rf_radio_mode(uint8_t *mode)
+{
+    if (mode)
+        return wifi_get_rf_radio_mode(mode);
+
+    return -WM_FAIL;
+}
+
 int wlan_set_rf_bandwidth(const uint8_t bandwidth)
 {
     return wifi_set_rf_bandwidth(bandwidth);

@@ -6016,7 +6016,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t
 #define MFG_CMD_RFPWR           0x1033
 #define MFG_CMD_RF_BAND_AG      0x1034
 #define MFG_CMD_RF_CHANNELBW    0x1044
-#define MFG_CMD_SET_RADIO_MODE  0x1211
+#define MFG_CMD_RADIO_MODE_CFG  0x1211
 
 typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_GENERIC_CFG
 {

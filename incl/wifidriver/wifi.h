@@ -1315,6 +1315,8 @@ int wifi_set_radio_mode(const uint8_t mode);
 
 int wifi_get_rf_channel(uint8_t *channel);
 
+int wifi_get_rf_radio_mode(uint8_t *mode);
+
 int wifi_set_rf_band(const uint8_t band);
 
 int wifi_get_rf_band(uint8_t *band);
