@@ -876,6 +876,7 @@ static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-set-rf-channel", "<channel>", wlan_rf_channel_set},
     {"wlan-get-rf-channel", NULL, wlan_rf_channel_get},
     {"wlan-set-rf-radio-mode", "<radio_mode>", wlan_rf_radio_mode_set},
+    {"wlan-get-rf-radio-mode", NULL, wlan_rf_radio_mode_get},
     {"wlan-set-rf-tx-power", "<tx_power> <modulation> <path_id>", wlan_rf_tx_power_set},
     {"wlan-set-rf-tx-cont-mode", "<enable_tx> <cw_mode> <payload_pattern> <cs_mode> <act_sub_ch> <tx_rate>",
      wlan_rf_tx_cont_mode_set},
