@@ -1261,6 +1261,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : GET TBTT Offset stats */
 #define HostCmd_CMD_TBTT_OFFSET 0x0268
 
+#if defined(CONFIG_IPS)
+/** Host Command ID : IPS Config */
+#define HostCmd_CMD_IPS_CONFIG 0x0279
+#endif
+
 #if 0
 /** Enhanced PS modes */
 typedef enum _ENH_PS_MODES
@@ -6480,6 +6485,13 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END EU_Crypto;
 #endif
 
+#if defined(CONFIG_IPS)
+typedef MLAN_PACK_START struct
+{
+    t_u32 enable;
+} MLAN_PACK_END HostCmd_DS_IPS_CONFIG;
+#endif
+
 /** statistics threshold */
 typedef MLAN_PACK_START struct
 {
@@ -6904,6 +6916,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
         HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;
+#endif
+#if defined(CONFIG_IPS)
+        HostCmd_DS_IPS_CONFIG ips_config;
 #endif
 #ifdef CONFIG_CSI
         HostCmd_DS_CSI_CFG csi_params;

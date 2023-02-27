@@ -5008,6 +5008,44 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
 }
 #endif
 
+#if defined(CONFIG_IPS)
+static void dump_wlan_set_ips_usage()
+{
+	(void)PRINTF("Usage:\r\n");
+	(void)PRINTF("wlan-set-ips option\r\n");
+	(void)PRINTF("option:\r\n");
+	(void)PRINTF("0: disable ips enhance\r\n");
+	(void)PRINTF("1: enable ips enhance\r\n");
+}
+static void test_wlan_set_ips(int argc, char **argv)
+{
+	unsigned int option;
+
+	if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_ips_usage();
+        return;
+    }
+
+	if (get_uint(argv[1], &option, strlen(argv[1])))
+    {
+        (void)PRINTF("Error: invalid option argument\r\n");
+        dump_wlan_set_ips_usage();
+        return;
+    }
+
+	if(option != 0 && option != 1)
+	{
+		(void)PRINTF("Error: invalid option argument\r\n");
+        dump_wlan_set_ips_usage();
+        return;
+	}
+
+	wlan_set_ips(option);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -5180,6 +5218,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef STA_SUPPORT
     {"wlan-get-signal", NULL, test_wlan_get_signal},
+#endif
+#if defined(CONFIG_IPS)
+	{"wlan-set-ips", "<option>", test_wlan_set_ips},
 #endif
 #ifdef CONFIG_WIFI_FORCE_RTS
     {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},

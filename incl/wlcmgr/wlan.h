@@ -4724,6 +4724,18 @@ uint8_t wlan_check_11ac_capa(unsigned int channel);
  */
 uint8_t wlan_check_11ax_capa(unsigned int channel);
 #endif
+
+#if defined(CONFIG_IPS)
+/**
+ * Config IEEE power save mode(IPS).If the option is 1, the ips hardware listens to beacon frames after WLAN CPU enters power save mode. When there is work
+ * needed to done by WLAN CPU, WLAN CPU will be woken up by ips hardware.
+ * \param[in] option    0/1  disable/enable ips
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_ips(int option);
+#endif
+
 #ifdef STA_SUPPORT
 /**
  * Get rssi information.

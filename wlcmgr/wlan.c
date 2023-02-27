@@ -9258,3 +9258,10 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal)
     return wifi_send_rssi_info_cmd(signal);
 }
 #endif
+
+#if defined(CONFIG_IPS)
+int wlan_set_ips(int option)
+{
+	return wifi_set_ips_config(MLAN_BSS_TYPE_STA, option);
+}
+#endif

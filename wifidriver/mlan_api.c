@@ -4370,6 +4370,29 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
 }
 #endif
 
+#if defined(CONFIG_IPS)
+/* enable/disable config for IPS */
+int wifi_set_ips_config(mlan_bss_type interface, int option)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    t_u16 cmd_size;
+
+    if ((option != 0) && (option != 1))
+        return  -WM_FAIL;
+
+    cmd_size = sizeof(HostCmd_DS_IPS_CONFIG) + S_DS_GEN /* cmd header */;
+    (void)memset(cmd, 0x00, cmd_size);
+    cmd->command = HostCmd_CMD_IPS_CONFIG;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, interface);
+    cmd->size    = cmd_size;
+
+    cmd->params.ips_config.enable = option;
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif
+
 #ifdef CONFIG_NET_MONITOR
 int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
 {
