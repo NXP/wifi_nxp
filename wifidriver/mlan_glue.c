@@ -4158,6 +4158,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_event_scan_result *pext_scan_result;
 #endif
+#ifdef CONFIG_5GHz_SUPPORT
+    Event_Radar_Detected_Info *pRadarDetInfo = NULL;
+#endif
     if (evt == NULL)
     {
         wevt_d("No mem allocated for msg.data");
@@ -4633,11 +4636,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 
             (void)memcpy((void *)debug, (const void *)((uint8_t *)&evt->reason_code), evt->length - 8);
-            if (wifi_event_completion(WIFI_EVENT_FW_DEBUG_INFO, WIFI_EVENT_REASON_SUCCESS, debug) != WM_SUCCESS)
-            {
-                /* If fail to send message on queue, free allocated memory ! */
-                os_mem_free((void *)debug);
-            }
+			(void)PRINTF("EVENT: FW Debug Info %s\r\n", debug);
+			os_mem_free((void *)debug);
         }
         break;
 #endif
@@ -4660,6 +4660,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 #ifdef CONFIG_MULTI_CHAN
         case EVENT_MULTI_CHAN_INFO:
+            break;
+#endif
+#ifdef CONFIG_5GHz_SUPPORT
+        case EVENT_RADAR_DETECTED:
+			pRadarDetInfo = (Event_Radar_Detected_Info *)msg->data;
+		    wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",wlan_le32_to_cpu(pRadarDetInfo->detect_count),
+				pRadarDetInfo->reg_domain, pRadarDetInfo->main_det_type,
+				(pRadarDetInfo->main_det_type == 2) ? "PRI" : (pRadarDetInfo->main_det_type == 1) ? "PW" : "");
+            
             break;
 #endif
         default:

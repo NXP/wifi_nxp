@@ -671,6 +671,28 @@ typedef PACK_START struct _Event_AutoLink_SW_Node_t
 } PACK_END Event_AutoLink_SW_Node_t;
 #endif
 
+#ifdef CONFIG_5GHz_SUPPORT
+#define DFS_REC_HDR_LEN (8)
+#define DFS_REC_HDR_NUM (10)
+#define BIN_COUNTER_LEN (7)
+
+typedef PACK_START struct _Event_Radar_Detected_Info
+{
+    t_u32 detect_count;
+    t_u8 reg_domain; /*1=fcc, 2=etsi, 3=mic*/
+    t_u8 main_det_type; /*0=none, 1=pw(chirp), 2=pri(radar)*/
+    t_u16 pw_chirp_type;
+    t_u8 pw_chirp_idx;
+    t_u8 pw_value;
+    t_u8 pri_radar_type;
+    t_u8 pri_binCnt;
+    t_u8 binCounter[BIN_COUNTER_LEN];
+    t_u8 numDfsRecords;
+    t_u8 dfsRecordHdrs[DFS_REC_HDR_NUM][DFS_REC_HDR_LEN];
+    t_u32 reallyPassed;
+} PACK_END Event_Radar_Detected_Info;
+#endif
+
 /** Network security types*/
 enum wlan_security_type
 {

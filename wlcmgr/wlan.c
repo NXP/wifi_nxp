@@ -4517,12 +4517,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 os_mem_free(msg->data);
             }
             break;
-#ifdef CONFIG_WIFI_FW_DEBUG
-        case WIFI_EVENT_FW_DEBUG_INFO:
-            wlcm_d("got event: fw debug info");
-            wlcm_process_fw_debug_info(msg);
-            break;
-#endif
 #ifdef CONFIG_ROAMING
         case WIFI_EVENT_BG_SCAN_STOPPED:
             wlcm_d("got event: BG scan stopped");

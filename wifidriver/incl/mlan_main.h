@@ -2514,6 +2514,8 @@ mlan_status wlan_pm_wakeup_card(pmlan_adapter pmadapter);
 
 mlan_status wlan_process_802dot11_mgmt_pkt(mlan_private *priv, t_u8 *payload, t_u32 payload_len, RxPD *rxpd);
 
+mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data);
+
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_pm_ioctl_hscfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
 #endif /* CONFIG_MLAN_WMSDK */
