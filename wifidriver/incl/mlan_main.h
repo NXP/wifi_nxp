@@ -2986,6 +2986,12 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter);
 // mlan_status wlan_misc_chan_reg_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 #endif
 
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+mlan_status wlan_cmd_region_power_cfg(pmlan_private pmpriv,
+                            HostCmd_DS_COMMAND *cmd,
+                            t_u16 cmd_action, t_void *pdata_buf);
+#endif
+
 #ifdef CONFIG_WIFI_CLOCKSYNC
 mlan_status wlan_cmd_gpio_tsf_latch(
     pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, mlan_ioctl_req *pioctl_buf, t_void *pdata_buf);

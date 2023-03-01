@@ -3563,6 +3563,13 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     {
         (void)PRINTF("Region code: 0x%x set\r\n", region_code);
     }
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL) 
+    rv = wlan_set_rg_power_cfg(region_code);
+    if (rv != WM_SUCCESS)
+        (void)PRINTF("Set region 0x%x tx power table failed \r\n", region_code);
+    else
+		(void)PRINTF("Set region 0x%x tx power table success \r\n", region_code); 
+#endif	
 }
 
 static void test_wlan_get_regioncode(int argc, char **argv)

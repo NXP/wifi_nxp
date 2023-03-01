@@ -7131,6 +7131,13 @@ int wlan_get_sta_tx_power(t_u32 *power_level)
     return wifi_get_tx_power(power_level);
 }
 
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+int wlan_set_region_power_cfg(const t_u8 *data, t_u16 len)
+{
+    return wifi_set_region_power_cfg(data, len);
+}
+#endif
+
 int wlan_set_chanlist_and_txpwrlimit(wlan_chanlist_t *chanlist, wlan_txpwrlimit_t *txpwrlimit)
 {
     int ret = WM_SUCCESS;

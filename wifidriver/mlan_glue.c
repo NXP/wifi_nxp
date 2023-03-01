@@ -5376,6 +5376,24 @@ void wifi_prepare_get_channel_region_cfg_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_
 }
 #endif
 
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, 0 /* bss_type */);
+    cmd->result = 0x0;
+    cmd->size = len + S_DS_GEN;
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_REGION_POWER_CFG,
+                    HostCmd_ACT_GEN_SET, 0, NULL, (void *)data, cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return WM_SUCCESS;
+}
+#endif
+
 void wifi_prepare_get_hw_spec_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 {
     cmd->command = HostCmd_CMD_GET_HW_SPEC;

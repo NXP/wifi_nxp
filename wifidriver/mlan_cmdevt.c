@@ -3530,6 +3530,27 @@ done:
 }
 #endif
 
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+mlan_status wlan_cmd_region_power_cfg(pmlan_private pmpriv,
+                            HostCmd_DS_COMMAND *cmd,
+                            t_u16 cmd_action, t_void *pdata_buf)
+{
+    t_u16 buf_len;
+
+    ENTER();
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_REGION_POWER_CFG);
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        buf_len = cmd->size - S_DS_GEN;
+        __memcpy(pmpriv->adapter, (t_u8 *)cmd + S_DS_GEN, pdata_buf, buf_len);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef WIFI_DIRECT_SUPPORT
 /**

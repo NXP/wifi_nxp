@@ -2887,6 +2887,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_drcs_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+        case HostCmd_CMD_REGION_POWER_CFG:
+            ret = wlan_cmd_region_power_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
 #ifdef CONFIG_1AS
         case HostCmd_CMD_HOST_CLOCK_CFG:
             ret = wlan_cmd_host_clock_cfg(cmd_ptr, cmd_action, pdata_buf);

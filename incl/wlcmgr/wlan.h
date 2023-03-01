@@ -3212,6 +3212,19 @@ int wlan_get_otp_user_data(uint8_t *buf, uint16_t len);
  */
 int wlan_get_cal_data(wlan_cal_data_t *cal_data);
 
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+/**
+ * Set the compressed Tx PWR Limit configuration.
+ *
+ * \param[in] data A pointer to TX PWR Limit configuration.
+ * \param[in] len Length of TX PWR Limit configuration.
+ *
+ * \return WM_SUCCESS on success, error otherwise.
+ *
+ */
+int wlan_set_region_power_cfg(const t_u8 *data, t_u16 len);
+#endif
+
 /**
  * Set the Channel List and TRPC channel configuration.
  *
@@ -4761,5 +4774,14 @@ int wlan_set_ips(int option);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_get_signal_info(wlan_rssi_info_t *signal);
+#endif
+
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL) 
+/**
+ * set region power table
+ * \param[in] region_code region code
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_rg_power_cfg(t_u16 region_code);
 #endif
 #endif /* __WLAN_H__ */

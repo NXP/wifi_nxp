@@ -1749,6 +1749,11 @@ typedef MLAN_PACK_START struct _power_table_attr
 #endif /* CONFIG_5GHz_SUPPORT */
 #endif /* OTP_CHANINFO */
 
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+/** used in hostcmd to download region power cfg setting to firmware */
+#define HostCmd_CMD_REGION_POWER_CFG 0x0249
+#endif
+
 /** Event_WEP_ICV_ERR structure */
 typedef MLAN_PACK_START struct _Event_WEP_ICV_ERR
 {

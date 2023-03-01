@@ -804,6 +804,9 @@ country_code_t wifi_get_country(void);
 int wifi_get_fw_region_and_cfp_tables(void);
 void wifi_free_fw_region_and_cfp_tables(void);
 #endif
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len);
+#endif
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg);
