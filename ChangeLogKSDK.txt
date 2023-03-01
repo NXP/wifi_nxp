@@ -3,6 +3,13 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p8
+ - Updates:
+  - Updated firmware version to p182.1 and added TP signed secure FW too.
+
+ - Bug Fixes:
+  - Fixed: (pre-cert)APUT beacons does not have RSNXE when configured in H2E mode.
+
 Version 1.3.r43.p7
  - Updates:
   - Updated firmware version to p182.

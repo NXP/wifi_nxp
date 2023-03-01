@@ -127,7 +127,7 @@
 #include <wifi.h>
 #include <wlan_11d.h>
 
-#define WLAN_DRV_VERSION "v1.3.r43.p7"
+#define WLAN_DRV_VERSION "v1.3.r43.p8"
 
 /* Configuration */
 
@@ -4557,10 +4557,7 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
  *          High Threshold must be greater than Low Threshold.
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_get_tsp_cfg(t_u16 *enable,
-				 t_u32 *back_off,
-				 t_u32 *highThreshold,
-				 t_u32 *lowThreshold);
+int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
 /**
  * set TSP(Thermal Safeguard Protection) configuration.
  * TSP algorithm moniters PA Tj and primarily backs off data throughput.
@@ -4572,10 +4569,7 @@ int wlan_get_tsp_cfg(t_u16 *enable,
  * \return WM_SUCCESS if successful otherwise failure.
  */
 
-int wlan_set_tsp_cfg(t_u16 enable,
-				 t_u32 back_off,
-				 t_u32 highThreshold,
-				 t_u32 lowThreshold);
+int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lowThreshold);
 #endif
 
 #ifdef CONFIG_WIFI_REG_ACCESS
@@ -4749,9 +4743,9 @@ uint8_t wlan_check_11ax_capa(unsigned int channel);
 
 #if defined(CONFIG_IPS)
 /**
- * Config IEEE power save mode(IPS).If the option is 1, the ips hardware listens to beacon frames after WLAN CPU enters power save mode. When there is work
- * needed to done by WLAN CPU, WLAN CPU will be woken up by ips hardware.
- * \param[in] option    0/1  disable/enable ips
+ * Config IEEE power save mode(IPS).If the option is 1, the ips hardware listens to beacon frames after WLAN CPU enters
+ * power save mode. When there is work needed to done by WLAN CPU, WLAN CPU will be woken up by ips hardware. \param[in]
+ * option    0/1  disable/enable ips
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
