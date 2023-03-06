@@ -948,12 +948,9 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HT_BW_20 0
 /** HT bandwidth 40 MHz */
 #define HT_BW_40 1U
-
-#ifdef CONFIG_11AX
 /** TLV type : TX RATE CFG, rename from TLV_TYPE_GI_LTF_SIZE to include CMD and
  * HE ER SU settings to this tlv */
 #define TLV_TYPE_TX_RATE_CFG (PROPRIETARY_TLV_BASE_ID + 319) /* 0x023f */
-#endif
 
 #if defined(CONFIG_EXT_SCAN_SUPPORT)
 /** TLV type : Scan Response */
