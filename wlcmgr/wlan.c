@@ -5534,7 +5534,7 @@ uint8_t wlan_check_11n_capa(unsigned int channel)
     uint8_t enable_11n = false;
     uint16_t fw_bands  = 0U;
 
-    wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
+    wifi_get_fw_info(MLAN_BSS_TYPE_UAP, &fw_bands);
 
     if (channel > 14 && (fw_bands & BAND_AN))
     {
@@ -5552,7 +5552,7 @@ uint8_t wlan_check_11ac_capa(unsigned int channel)
     uint8_t enable_11ac = false;
     uint16_t fw_bands   = 0U;
 
-    wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
+    wifi_get_fw_info(MLAN_BSS_TYPE_UAP, &fw_bands);
 
 #ifdef CONFIG_11AC
     if (channel > 14 && (fw_bands & BAND_AAC))
@@ -5572,7 +5572,7 @@ uint8_t wlan_check_11ax_capa(unsigned int channel)
     uint8_t enable_11ax = false;
     uint16_t fw_bands   = 0U;
 
-    wifi_get_fw_info(WLAN_BSS_TYPE_UAP, &fw_bands);
+    wifi_get_fw_info(MLAN_BSS_TYPE_UAP, &fw_bands);
 
 #ifdef CONFIG_11AX
     if (channel > 14 && (fw_bands & BAND_AAX))

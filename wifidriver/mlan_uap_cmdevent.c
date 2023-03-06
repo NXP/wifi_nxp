@@ -990,7 +990,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
                     ie_header->type = wlan_cpu_to_le16(TLV_TYPE_MGMT_IE);
                     ie_header->len  = wlan_cpu_to_le16(cust_ie->len);
 
-                    if (ie && &cust_ie->ie_data_list[0])
+                    if (ie)
                     {
                         req_len    = cust_ie->len;
                         travel_len = 0;
@@ -1109,7 +1109,7 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
             ie_header->type = wlan_cpu_to_le16(TLV_TYPE_MGMT_IE);
             ie_header->len  = wlan_cpu_to_le16(misc->param.cust_ie.len);
 
-            if (ie && misc->param.cust_ie.ie_data_list)
+            if (ie)
             {
                 req_len    = misc->param.cust_ie.len;
                 travel_len = 0;
