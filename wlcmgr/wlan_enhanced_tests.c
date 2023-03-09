@@ -1298,8 +1298,12 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("wlan-set-tx-omi <tx-omi> <tx-option> <num_data_pkts>\r\n");
     (void)PRINTF("where, tx-omi =\r\n");
     (void)PRINTF("\t Bit 0-2: Rx NSS\r\n");
-    (void)PRINTF("\t Bit 3-4: Channel Width\r\n");
-    (void)PRINTF("\t Bit 6  : Tx NSTS (applies to client mode only)\r\n");
+    (void)PRINTF("\t Bit 3-4: Channel Width. 0: 20MHz  1: 40MHz  2: 80MHz\r\n");
+    (void)PRINTF("\t Bit 5  : UL MU Disable\r\n");
+    (void)PRINTF("\t Bit 6-8: Tx NSTS\r\n");
+    (void)PRINTF("\t Bit 9  : ER SU Disable\r\n");
+    (void)PRINTF("\t Bit 10 : DL MU-MIMO Resound Recommendation\r\n");
+    (void)PRINTF("\t Bit 11 : UL MU Data Disbale\r\n");
     (void)PRINTF("where, tx-option =\r\n");
     (void)PRINTF("\t 0: send OMI in QoS NULL\r\n");
     (void)PRINTF("\t 1: send OMI in QoS Data\r\n");
