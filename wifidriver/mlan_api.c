@@ -4443,7 +4443,9 @@ void wifi_set_sleep_period(uint16_t sleep_period)
                              0, NULL, &sleep_period, cmd);
     wifi_wait_for_cmdresp(NULL);
 }
+#endif
 
+#ifdef CONFIG_11AX
 int wifi_set_tol_time(const t_u32 tol_time)
 {
     wifi_get_command_lock();
