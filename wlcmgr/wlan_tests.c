@@ -3676,7 +3676,9 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
         (void)PRINTF("Failed to set ecsa cfg \r\n");
     }
 }
+#endif /* CONFIG_ECSA */
 
+#ifdef CONFIG_11AX
 static void dump_wlan_set_tol_time_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -3722,7 +3724,7 @@ static void test_wlan_set_toltime(int argc, char **argv)
     }
 }
 
-#endif
+#endif /* CONFIG_11AX */
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
