@@ -918,6 +918,124 @@ int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u8 *enable)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    t_u16 cmd_action;
+    HostCmd_DS_AUTO_TX *auto_tx_cmd                = (HostCmd_DS_AUTO_TX *)((t_u8 *)cmd + S_DS_GEN);
+    t_u8 *pos                                      = (t_u8 *)auto_tx_cmd + sizeof(auto_tx_cmd->action);
+    t_u16 len                                      = 0;
+    MrvlIEtypes_Cloud_Keep_Alive_t *keep_alive_tlv = MNULL;
+
+    if (keep_alive == NULL)
+        return -WM_E_INVAL;
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_AUTO_TX);
+    cmd->size    = S_DS_GEN + sizeof(HostCmd_DS_AUTO_TX);
+
+    if ((action == MLAN_ACT_GET) && (enable != NULL))
+    {
+        cmd_action = HostCmd_ACT_GEN_GET;
+    }
+    else if ((action == MLAN_ACT_SET) && !keep_alive->reset)
+    {
+        cmd_action = HostCmd_ACT_GEN_SET;
+    }
+    else if ((action == MLAN_ACT_SET) && keep_alive->reset)
+    {
+        cmd_action = HostCmd_ACT_GEN_RESET;
+    }
+    else
+    {
+        return -WM_E_INVAL;
+    }
+    auto_tx_cmd->action = wlan_cpu_to_le16(cmd_action);
+
+    keep_alive_tlv = (MrvlIEtypes_Cloud_Keep_Alive_t *)pos;
+
+    keep_alive_tlv->header.type   = wlan_cpu_to_le16(TLV_TYPE_CLOUD_KEEP_ALIVE);
+    keep_alive_tlv->keep_alive_id = keep_alive->mkeep_alive_id;
+    if (cmd_action == HostCmd_ACT_GEN_GET)
+    {
+        keep_alive_tlv->enable     = MFALSE;
+        len                        = len + sizeof(keep_alive_tlv->keep_alive_id) + sizeof(keep_alive_tlv->enable);
+        keep_alive_tlv->header.len = wlan_cpu_to_le16(len);
+
+        cmd->size = cmd->size + len + sizeof(MrvlIEtypesHeader_t);
+        cmd->size = wlan_cpu_to_le16(cmd->size);
+    }
+    else if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        if (keep_alive->enable)
+        {
+            MrvlIEtypes_Keep_Alive_Ctrl_t *ctrl_tlv = MNULL;
+            MrvlIEtypes_Keep_Alive_Pkt_t *pkt_tlv   = MNULL;
+            t_u8 eth_ip[]                           = {0x08, 0x00};
+
+            keep_alive_tlv->enable = keep_alive->enable;
+            len                    = len + sizeof(keep_alive_tlv->keep_alive_id) + sizeof(keep_alive_tlv->enable);
+            pos                    = pos + len + sizeof(MrvlIEtypesHeader_t);
+            ctrl_tlv               = (MrvlIEtypes_Keep_Alive_Ctrl_t *)pos;
+            ctrl_tlv->header.type  = wlan_cpu_to_le16(TLV_TYPE_KEEP_ALIVE_CTRL);
+            ctrl_tlv->header.len =
+                wlan_cpu_to_le16(sizeof(MrvlIEtypes_Keep_Alive_Ctrl_t) - sizeof(MrvlIEtypesHeader_t));
+            ctrl_tlv->snd_interval   = wlan_cpu_to_le32(keep_alive->send_interval);
+            ctrl_tlv->retry_interval = wlan_cpu_to_le16(keep_alive->retry_interval);
+            ctrl_tlv->retry_count    = wlan_cpu_to_le16(keep_alive->retry_count);
+            len                      = len + sizeof(MrvlIEtypes_Keep_Alive_Ctrl_t);
+
+            pos                  = pos + sizeof(MrvlIEtypes_Keep_Alive_Ctrl_t);
+            pkt_tlv              = (MrvlIEtypes_Keep_Alive_Pkt_t *)pos;
+            pkt_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_KEEP_ALIVE_PKT);
+            (void)memcpy(pkt_tlv->eth_header.dest_addr, keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
+            (void)memcpy(pkt_tlv->eth_header.src_addr, keep_alive->src_mac, MLAN_MAC_ADDR_LENGTH);
+            (void)memcpy((t_u8 *)&pkt_tlv->eth_header.h803_len, eth_ip, sizeof(t_u16));
+            (void)memcpy(pkt_tlv->ip_packet, keep_alive->packet, keep_alive->pkt_len);
+            pkt_tlv->header.len        = wlan_cpu_to_le16(sizeof(Eth803Hdr_t) + keep_alive->pkt_len);
+            len                        = len + sizeof(MrvlIEtypesHeader_t) + sizeof(Eth803Hdr_t) + keep_alive->pkt_len;
+            keep_alive_tlv->header.len = wlan_cpu_to_le16(len);
+
+            cmd->size = cmd->size + len + sizeof(MrvlIEtypesHeader_t);
+            cmd->size = wlan_cpu_to_le16(cmd->size);
+        }
+        else
+        {
+            keep_alive_tlv->enable     = MFALSE;
+            len                        = len + sizeof(keep_alive_tlv->keep_alive_id) + sizeof(keep_alive_tlv->enable);
+            keep_alive_tlv->header.len = wlan_cpu_to_le16(len);
+
+            cmd->size = cmd->size + len + sizeof(MrvlIEtypesHeader_t);
+            cmd->size = wlan_cpu_to_le16(cmd->size);
+        }
+    }
+    else if (cmd_action == HostCmd_ACT_GEN_RESET)
+    {
+        keep_alive_tlv->enable     = MFALSE;
+        len                        = len + sizeof(keep_alive_tlv->keep_alive_id) + sizeof(keep_alive_tlv->enable);
+        keep_alive_tlv->header.len = wlan_cpu_to_le16(len);
+
+        cmd->size = cmd->size + len + sizeof(MrvlIEtypesHeader_t);
+        cmd->size = wlan_cpu_to_le16(cmd->size);
+    }
+
+    cmd->result = 0x00;
+    if (cmd_action == HostCmd_ACT_GEN_GET)
+    {
+        wifi_wait_for_cmdresp((void *)enable);
+    }
+    else
+    {
+        wifi_wait_for_cmdresp(NULL);
+    }
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif
+
 #ifdef CONFIG_RF_TEST_MODE
 static uint8_t channel_set    = 0;
 static uint8_t band_set       = 0;

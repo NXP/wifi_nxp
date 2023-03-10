@@ -372,6 +372,12 @@ static struct
 #endif
 } wlan;
 
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#define MIN_KEEP_ALIVE_ID 1
+#define MAX_KEEP_ALIVE_ID 4
+wlan_cloud_keep_alive_t cloud_keep_alive_param[MAX_KEEP_ALIVE_ID];
+#endif
+
 void wlan_wake_up_card(void);
 
 #ifdef CONFIG_WLCMGR_DEBUG
@@ -583,6 +589,10 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
     int ret;
     unsigned int ipv4_addr;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
+
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+    wlan_start_cloud_keep_alive();
+#endif
 
     if (wlan.hs_configured == true)
     {
@@ -7364,6 +7374,126 @@ int wlan_nat_keep_alive(wlan_nat_keep_alive_t *nat_keep_alive)
     }
 
     return wifi_nat_keep_alive(nat_keep_alive, wlan.sta_mac, ipv4_addr, src_port);
+}
+#endif
+
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+static wlan_cloud_keep_alive_t keep_alive;
+static t_u16 dst_port_input;
+/* Here the length of ip_packet for test is 40 */
+static t_u16 pkt_len_default = 40;
+/* ip packet content */
+static t_u8 packet_default[40] = {0x45, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0xff, 0x06, 0x00, 0x00, 0xc0, 0xa8,
+                                  0x00, 0x7c, 0xc0, 0xa8, 0x00, 0x8a, 0xc0, 0x03, 0x22, 0xb7, 0xb0, 0xb6, 0x60, 0x9f,
+                                  0x42, 0xdd, 0x9e, 0x1e, 0x50, 0x18, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive, t_u16 src_port, t_u16 dst_port,
+                                      t_u32 seq_number, t_u32 ack_number, t_u8 enable)
+{
+    t_u8 keep_alive_enabled = MTRUE;
+
+    if (enable)
+    {
+        if (cloud_keep_alive == NULL)
+        {
+            return -WM_E_INVAL;
+        }
+        /* Get source mac address */
+        uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH], uap_mac[MLAN_MAC_ADDR_LENGTH];
+        if (wlan_get_mac_address(sta_mac, uap_mac))
+        {
+            wlcm_e("Unable to retrieve MAC address\r\n");
+        }
+        (void)memcpy(keep_alive.src_mac, sta_mac, MLAN_MAC_ADDR_LENGTH);
+
+        /* Get source ip */
+        int ret 		 = -WM_FAIL;
+        ret = wlan_get_ipv4_addr(&keep_alive.src_ip);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("Cannot get IP");
+        }
+        (void)memcpy(packet_default + 12, &keep_alive.src_ip, sizeof(keep_alive.src_ip));
+
+        keep_alive.mkeep_alive_id = cloud_keep_alive->mkeep_alive_id;
+        keep_alive.enable = cloud_keep_alive->enable;
+        keep_alive.send_interval = cloud_keep_alive->send_interval;
+        keep_alive.retry_interval = cloud_keep_alive->retry_interval;
+        keep_alive.retry_count = cloud_keep_alive->retry_count;
+        (void)memcpy(keep_alive.dst_mac, cloud_keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
+        keep_alive.dst_ip = cloud_keep_alive->dst_ip;
+        (void)memcpy(packet_default + 16, &keep_alive.dst_ip, sizeof(keep_alive.dst_ip));
+        t_u16 destination_port = htons(dst_port);
+        (void)memcpy(packet_default + 22, &destination_port, sizeof(destination_port));
+        dst_port_input = dst_port;
+    }
+    else
+    {
+        if((keep_alive.enable == MTRUE) && (ntohs(dst_port) == dst_port_input))
+        {
+            wifi_cloud_keep_alive(&keep_alive, MLAN_ACT_GET, &keep_alive_enabled);
+
+            if(keep_alive_enabled == MTRUE)
+            {
+                wlcm_e("Cloud keep alive is already enabled");
+                return -WM_FAIL;
+            }
+
+            /* Could support the maximum of 4 IDs */
+            if((keep_alive.mkeep_alive_id >= MIN_KEEP_ALIVE_ID) && (keep_alive.mkeep_alive_id <= MAX_KEEP_ALIVE_ID))
+            {
+                /* Copy source port, destination port, sequece number, ack number, window size for keep alive.
+                   IP header checksum and TCP pesudo header checksum are calculated by WLAN FW */
+                (void)memcpy(packet_default + 20, &src_port, sizeof(src_port));
+                (void)memcpy(packet_default + 22, &dst_port, sizeof(dst_port));
+                (void)memcpy(packet_default + 24, &seq_number, sizeof(seq_number));
+                (void)memcpy(packet_default + 28, &ack_number, sizeof(ack_number));
+
+                keep_alive.pkt_len = pkt_len_default;
+                (void)memcpy(keep_alive.packet, packet_default, keep_alive.pkt_len);
+
+                keep_alive.cached = MTRUE;
+                cloud_keep_alive_param[keep_alive.mkeep_alive_id-1] = keep_alive;
+            }
+        }
+    }
+
+    return WM_SUCCESS;
+}
+
+int wlan_start_cloud_keep_alive(void)
+{
+    int i;
+    wifi_cloud_keep_alive_t *cloud_keep_alive = NULL;
+
+    for (i = 0; i < MAX_KEEP_ALIVE_ID; i++)
+    {
+        cloud_keep_alive = &cloud_keep_alive_param[i];
+        if (cloud_keep_alive && cloud_keep_alive->cached && cloud_keep_alive->enable)
+        {
+            cloud_keep_alive->cached = MFALSE;
+            wifi_cloud_keep_alive(cloud_keep_alive, MLAN_ACT_SET, NULL);
+        }
+    }
+
+    return -WM_SUCCESS;
+}
+
+int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive)
+{
+    t_u8 enable = MTRUE;
+
+    if (cloud_keep_alive == NULL)
+        return -WM_E_INVAL;
+
+    wifi_cloud_keep_alive(cloud_keep_alive, MLAN_ACT_GET, &enable);
+
+    if(enable == MFALSE)
+    {
+        wlcm_e("Cloud keep alive is already stoped");
+        return 0;
+    }
+    return wifi_cloud_keep_alive(cloud_keep_alive, MLAN_ACT_SET, NULL);
 }
 #endif
 

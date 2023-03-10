@@ -6928,6 +6928,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_TSP
         HostCmd_DS_TSP_CFG tsp_cfg;
 #endif
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+        HostCmd_DS_AUTO_TX auto_tx;
+#endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;
 

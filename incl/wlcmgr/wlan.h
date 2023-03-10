@@ -909,6 +909,13 @@ typedef wifi_tcp_keep_alive_t wlan_tcp_keep_alive_t;
 typedef wifi_nat_keep_alive_t wlan_nat_keep_alive_t;
 #endif
 
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+/** Configuration for Cloud Keep alive parameters from
+ * \ref wifi_cloud_keep_alive_t
+ */
+typedef wifi_cloud_keep_alive_t wlan_cloud_keep_alive_t;
+#endif
+
 /** Configuration for TX Rate and Get data rate from
  * \ref wifi_ds_rate
  */
@@ -4800,4 +4807,27 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal);
  */
 int wlan_set_rg_power_cfg(t_u16 region_code);
 #endif
+
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+/**
+ * Save start cloud keep alive parameters
+ * \param[in] cloud_keep_alive    cloud keep alive information
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive, t_u16 src_port, t_u16 dst_port,
+                                      t_u32 seq_number, t_u32 ack_number, t_u8 enable);
+/**
+ * Start cloud keep alive
+ * \param[in]    void
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_start_cloud_keep_alive(void);
+/**
+ * Stop cloud keep alive
+ * \param[in] cloud_keep_alive    cloud keep alive information
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive);
+#endif
+
 #endif /* __WLAN_H__ */

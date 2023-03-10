@@ -4963,6 +4963,131 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+static void dump_wlan_cloud_keep_alive_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-cloud-keep-alive start dst_mac <dst_mac> dst_ip <dst_ip> dst_port <dst_port>\r\n");
+    (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
+    (void)PRINTF("        <dst_ip> Destination IP\r\n");
+    (void)PRINTF("        <dst_port> Destination port\r\n");
+    (void)PRINTF("        Please specify dst_mac, dst_ip and dst_port\r\n");
+    (void)PRINTF("    wlan-cloud-keep-alive stop\r\n");
+    (void)PRINTF("    wlan-cloud-keep-alive reset\r\n");
+}
+
+static void test_wlan_cloud_keep_alive(int argc, char **argv)
+{
+    int ret          = -WM_FAIL;
+    int arg          = 1;
+    int dst_mac_set  = 0;
+    int dst_ip_set   = 0;
+    int dst_port_set = 0;
+    wlan_cloud_keep_alive_t cloud_keep_alive;
+    t_u16 dst_port_input = 0;
+    /* Set the keep alive id to 1 for test */
+    t_u8 mkeep_alive_id_default = 1;
+    /* Period to send keep alive packet, set the default value to 55s(The unit is milliseconds) */
+    t_u32 send_interval_default = 55000;
+    /* Period to send retry packet, set the default value to 20s(The unit is milliseconds) */
+    t_u16 retry_interval_default = 20000;
+    /* Count to send retry packet, set the default value to 3 */
+    t_u16 retry_count_default = 3;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_cloud_keep_alive_usage();
+        return;
+    }
+
+    if (!is_sta_connected())
+    {
+        (void)PRINTF("Can not start cloud keep alive in disconnected state\r\n");
+        return;
+    }
+
+    /* Could support the maximum of 4 IDs, here set the keep alive id to 1 for test */
+    cloud_keep_alive.mkeep_alive_id = mkeep_alive_id_default;
+    if (string_equal("start", argv[1]))
+    {
+        /* Period to send keep alive packet, set the default value to 55s(The unit is milliseconds) */
+        cloud_keep_alive.send_interval = send_interval_default;
+        /* Period to send retry packet, set the default value to 20s(The unit is milliseconds) */
+        cloud_keep_alive.retry_interval = retry_interval_default;
+        /* Count to send retry packet, set the default value to 3 */
+        cloud_keep_alive.retry_count = retry_count_default;
+
+        arg += 1;
+        do
+        {
+            if (string_equal("dst_mac", argv[arg]))
+            {
+                ret = get_mac(argv[arg + 1], (char *)&cloud_keep_alive.dst_mac, ':');
+                if (ret != 0)
+                {
+                    (void)PRINTF("Error: invalid dst_mac argument\r\n");
+                    return;
+                }
+                dst_mac_set = 1;
+                arg += 2;
+            }
+            if (string_equal("dst_ip", argv[arg]))
+            {
+                cloud_keep_alive.dst_ip = net_inet_aton(argv[arg + 1]);
+                dst_ip_set              = 1;
+                arg += 2;
+            }
+            if (string_equal("dst_port", argv[arg]))
+            {
+                unsigned int dst_port;
+
+                if (arg + 1 >= argc || get_uint(argv[arg + 1], (unsigned int *)&dst_port, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid dst_port argument\r\n");
+                    return;
+                }
+                dst_port_input = (uint16_t)(dst_port & 0XFFFF);
+                dst_port_set = 1;
+                arg += 2;
+            }
+        } while (arg < argc);
+        if (!dst_mac_set || !dst_ip_set || !dst_port_set)
+        {
+            dump_wlan_cloud_keep_alive_usage();
+            (void)PRINTF("Error: please specify dst_mac, dst_ip and dst_port\r\n");
+            return;
+        }
+
+        cloud_keep_alive.enable = MTRUE;
+    }
+    else if (string_equal("stop", argv[1]))
+    {
+        cloud_keep_alive.enable = MFALSE;
+        cloud_keep_alive.reset  = MFALSE;
+    }
+    else if (string_equal("reset", argv[1]))
+    {
+        cloud_keep_alive.enable = MFALSE;
+        cloud_keep_alive.reset  = MTRUE;
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid [%d] argument\r\n", arg + 1);
+        dump_wlan_cloud_keep_alive_usage();
+        return;
+    }
+    if (cloud_keep_alive.enable == MTRUE)
+    {
+        ret = wlan_save_cloud_keep_alive_params(&cloud_keep_alive, 0, dst_port_input, 0, 0, MTRUE);
+    }
+    else
+    {
+        ret = wlan_stop_cloud_keep_alive(&cloud_keep_alive);
+    }
+}
+#endif
+
 #ifdef STA_SUPPORT
 static void test_wlan_get_signal(int argc, char **argv)
 {
@@ -5280,6 +5405,9 @@ static struct cli_command tests[] = {
     {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
 #endif
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+    {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
+#endif
 };
 
 /* Register our commands with the MTF. */

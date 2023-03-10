@@ -1242,6 +1242,10 @@ int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
 int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip, t_u16 src_port);
 #endif
 
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u8 *enable);
+#endif
+
 int wifi_raw_packet_send(const t_u8 *packet, t_u32 length);
 
 int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type);

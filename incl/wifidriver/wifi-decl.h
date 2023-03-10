@@ -798,6 +798,39 @@ typedef struct
     t_u16 dst_port;
 } wifi_nat_keep_alive_t;
 
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#define MKEEP_ALIVE_IP_PKT_MAX 256
+/** Cloud keep alive information */
+typedef struct
+{
+    /** Keep alive id */
+    t_u8 mkeep_alive_id;
+    /** Enable keep alive */
+    t_u8 enable;
+    /** Enable/Disable tcp reset */
+    t_u8 reset;
+    /** Saved in driver */
+    t_u8 cached;
+    /** Period to send keep alive packet(The unit is milliseconds) */
+    t_u32 send_interval;
+    /** Period to send retry packet(The unit is milliseconds) */
+    t_u16 retry_interval;
+    /** Count to send retry packet */
+    t_u16 retry_count;
+    t_u8 src_mac[MLAN_MAC_ADDR_LENGTH];
+    /** Destination MAC address */
+    t_u8 dst_mac[MLAN_MAC_ADDR_LENGTH];
+    /** Source IP */
+    t_u32 src_ip;
+    /** Destination IP */
+    t_u32 dst_ip;
+    /** Packet length */
+    t_u16 pkt_len;
+    /** Packet buffer */
+    t_u8 packet[MKEEP_ALIVE_IP_PKT_MAX];
+} wifi_cloud_keep_alive_t;
+#endif
+
 /** RSSI information */
 typedef struct
 {

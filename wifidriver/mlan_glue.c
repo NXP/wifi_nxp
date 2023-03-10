@@ -3178,6 +3178,21 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+                    const HostCmd_DS_AUTO_TX *auto_tx              = (HostCmd_DS_AUTO_TX *)&resp->params.auto_tx;
+                    t_u8 *pos                                      = (t_u8 *)auto_tx + sizeof(auto_tx->action);
+                    MrvlIEtypes_Cloud_Keep_Alive_t *keep_alive_tlv = MNULL;
+                    t_u8 *enable;
+
+                    keep_alive_tlv = (MrvlIEtypes_Cloud_Keep_Alive_t *)pos;
+
+                    if ((auto_tx->action == HostCmd_ACT_GEN_GET) && (wm_wifi.cmd_resp_priv != NULL))
+                    {
+                        enable                = (t_u8 *)wm_wifi.cmd_resp_priv;
+                        *enable               = keep_alive_tlv->enable;
+                        wm_wifi.cmd_resp_priv = NULL;
+                    }
+#endif
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
                 else
@@ -4699,6 +4714,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             os_mem_free(pRadarDetInfo);
         }
         break;
+#endif
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+        case EVENT_CLOUD_KEEP_ALIVE_RETRY_FAIL:
+            wevt_d("EVENT: EVENT_CLOUD_KEEP_ALIVE_RETRY_FAIL received\n\r");
+            break;
 #endif
         default:
             wifi_d(

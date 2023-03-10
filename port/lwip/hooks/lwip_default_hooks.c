@@ -8,6 +8,10 @@
  *
  */
 #include "lwip/tcpip.h"
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+#include "lwip_default_hooks.h"
+#include "wlan.h"
+#endif
 
 struct netif* lwip_hook_ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest)
 {
@@ -34,3 +38,26 @@ struct netif* lwip_hook_ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *d
 
 	return NULL;
 }
+
+#ifdef CONFIG_CLOUD_KEEP_ALIVE
+u32_t *lwip_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, u32_t *opts)
+{
+    t_u16 source_port;
+    t_u16 destination_port;
+    t_u32 seq_number;
+    t_u32 ack_number;
+
+    source_port      = hdr->src;
+    destination_port = hdr->dest;
+    t_u32 hdr_len    = TCPH_HDRLEN_BYTES(hdr);
+    seq_number       = ntohl(hdr->seqno) + p->tot_len - hdr_len;
+    /* sequence number of the keep alive packet = the expected sequence number of next packet -1 */
+    seq_number  = seq_number - 1;
+    seq_number  = ntohl(seq_number);
+    ack_number  = hdr->ackno;
+
+    wlan_save_cloud_keep_alive_params(NULL, source_port, destination_port, seq_number, ack_number, 0);
+
+    return opts;
+}
+#endif
