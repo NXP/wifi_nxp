@@ -958,6 +958,7 @@ void wlan_dot11k_formatRrmCapabilities(IEEEtypes_RrmEnabledCapabilities_t *pRrmC
     (void)memset((void *)pRrmCapIe, 0x00, sizeof(IEEEtypes_RrmEnabledCapabilities_t));
 
     pRrmCapIe->LinkMeas       = 1;
+    pRrmCapIe->NborRpt        = 1;
     pRrmCapIe->BcnPassiveMeas = 1;
     pRrmCapIe->BcnActiveMeas  = 1;
     pRrmCapIe->BcnTableMeas   = 1;

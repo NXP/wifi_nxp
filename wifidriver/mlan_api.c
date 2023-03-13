@@ -3498,15 +3498,6 @@ int wifi_host_11k_cfg(int enable_11k)
     }
     pmpriv->enable_host_11k = (t_u8)enable_11k;
 
-    if (pmpriv->enable_host_11k == (t_u8)1U)
-    {
-        pmpriv->ext_cap.BSS_Transition = 1U;
-    }
-    else
-    {
-        pmpriv->ext_cap.BSS_Transition = 0U;
-    }
-
     return ret;
 }
 
@@ -3556,12 +3547,10 @@ int wifi_host_mbo_cfg(int enable_mbo)
         mboie.vend_hdr.len        = (t_u8)meas_vend_hdr_len;
         pmpriv->mbo_mgmt_bitmap_index =
             wifi_set_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_MBO_IE, (void *)&(mboie.vend_hdr.oui), mboie.vend_hdr.len);
-        pmpriv->ext_cap.BSS_Transition = 1U;
     }
     else
     {
         ret = wifi_clear_mgmt_ie(MLAN_BSS_TYPE_STA, MGMT_MBO_IE, pmpriv->mbo_mgmt_bitmap_index);
-        pmpriv->ext_cap.BSS_Transition = 0U;
     }
     pmpriv->enable_mbo = (t_u8)enable_mbo;
 

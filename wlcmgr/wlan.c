@@ -1990,17 +1990,29 @@ static void update_network_params(struct wlan_network *network, const struct wif
         case WLAN_SECURITY_EAP_TLS:
         case WLAN_SECURITY_PEAP_MSCHAPV2:
 #endif
-            network->security.mcstCipher.tkip = res->rsn_mcstCipher.tkip;
-            network->security.ucstCipher.tkip = res->rsn_ucstCipher.tkip;
             network->security.mcstCipher.ccmp = res->rsn_mcstCipher.ccmp;
             network->security.ucstCipher.ccmp = res->rsn_ucstCipher.ccmp;
+            if (!res->rsn_mcstCipher.ccmp)
+            {
+                network->security.mcstCipher.tkip = res->rsn_mcstCipher.tkip;
+            }
+            if (!res->rsn_ucstCipher.ccmp)
+            {
+                network->security.ucstCipher.tkip = res->rsn_ucstCipher.tkip;
+            }
             if (!res->rsn_mcstCipher.tkip && !res->rsn_ucstCipher.tkip && !res->rsn_mcstCipher.ccmp &&
                 !res->rsn_ucstCipher.ccmp)
             {
-                network->security.mcstCipher.tkip = res->wpa_mcstCipher.tkip;
-                network->security.ucstCipher.tkip = res->wpa_ucstCipher.tkip;
                 network->security.mcstCipher.ccmp = res->wpa_mcstCipher.ccmp;
                 network->security.ucstCipher.ccmp = res->wpa_ucstCipher.ccmp;
+                if (!res->wpa_mcstCipher.ccmp)
+                {
+                    network->security.mcstCipher.tkip = res->wpa_mcstCipher.tkip;
+                }
+                if (!res->wpa_ucstCipher.ccmp)
+                {
+                    network->security.ucstCipher.tkip = res->wpa_ucstCipher.tkip;
+                }
             }
             break;
         case WLAN_SECURITY_NONE:
@@ -3049,6 +3061,13 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
     if (wlan.roaming_enabled == true)
     {
         wlan.roam_reassoc = true;
+#ifdef CONFIG_11R
+        wlan.ft_bss = false;
+        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+        {
+            wlan.ft_bss = true;
+        }
+#endif
         wifi_config_bgscan_and_rssi(network->ssid);
         return;
     }
@@ -3732,7 +3751,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     ret = wifi_set_antenna(ant, evaluate_time);
     if (ret != WM_SUCCESS)
     {
-        wlcm_e("Failed to set antenna configuration");
+        wlcm_d("Failed to set antenna configuration");
     }
     else
     {
@@ -4211,6 +4230,8 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
         wlcm_d("Reconnection failed. Giving up.");
         wlan.reassoc_request = false;
         wlan.reassoc_count   = 0;
+
+        CONNECTION_EVENT(WLAN_REASON_CONNECT_FAILED, NULL);
 
         wlcm_d("Disconnecting ... ");
         (void)wlan_disconnect();
@@ -5083,6 +5104,7 @@ int wlan_stop(void)
     }
 #ifndef RW610
     wlan.running = 0;
+    wlan.scan_cb = NULL;
 
 #ifdef OTP_CHANINFO
     wifi_free_fw_region_and_cfp_tables();
@@ -5383,7 +5405,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 
     if ((network->role == WLAN_BSS_ROLE_STA) && (network->security.type == WLAN_SECURITY_WPA3_SAE) &&
-        (!network->security.mfpr || !network->security.mfpc))
+        (!network->security.mfpc || !network->security.mfpr))
     {
         return -WM_E_INVAL;
     }
@@ -5394,12 +5416,7 @@ int wlan_add_network(struct wlan_network *network)
          (network->security.type == WLAN_SECURITY_OWE_ONLY) ||
 #endif
          (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
-        (!network->security.mfpr || !network->security.mfpc))
-    {
-        return -WM_E_INVAL;
-    }
-
-    if ((network->role == WLAN_BSS_ROLE_STA) && (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED))
+        (!network->security.mfpc || !network->security.mfpr))
     {
         return -WM_E_INVAL;
     }
@@ -7387,8 +7404,12 @@ static t_u8 packet_default[40] = {0x45, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x00
                                   0x00, 0x7c, 0xc0, 0xa8, 0x00, 0x8a, 0xc0, 0x03, 0x22, 0xb7, 0xb0, 0xb6, 0x60, 0x9f,
                                   0x42, 0xdd, 0x9e, 0x1e, 0x50, 0x18, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive, t_u16 src_port, t_u16 dst_port,
-                                      t_u32 seq_number, t_u32 ack_number, t_u8 enable)
+int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
+                                      t_u16 src_port,
+                                      t_u16 dst_port,
+                                      t_u32 seq_number,
+                                      t_u32 ack_number,
+                                      t_u8 enable)
 {
     t_u8 keep_alive_enabled = MTRUE;
 
@@ -7407,8 +7428,8 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
         (void)memcpy(keep_alive.src_mac, sta_mac, MLAN_MAC_ADDR_LENGTH);
 
         /* Get source ip */
-        int ret 		 = -WM_FAIL;
-        ret = wlan_get_ipv4_addr(&keep_alive.src_ip);
+        int ret = -WM_FAIL;
+        ret     = wlan_get_ipv4_addr(&keep_alive.src_ip);
         if (ret != WM_SUCCESS)
         {
             wlcm_e("Cannot get IP");
@@ -7416,10 +7437,10 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
         (void)memcpy(packet_default + 12, &keep_alive.src_ip, sizeof(keep_alive.src_ip));
 
         keep_alive.mkeep_alive_id = cloud_keep_alive->mkeep_alive_id;
-        keep_alive.enable = cloud_keep_alive->enable;
-        keep_alive.send_interval = cloud_keep_alive->send_interval;
+        keep_alive.enable         = cloud_keep_alive->enable;
+        keep_alive.send_interval  = cloud_keep_alive->send_interval;
         keep_alive.retry_interval = cloud_keep_alive->retry_interval;
-        keep_alive.retry_count = cloud_keep_alive->retry_count;
+        keep_alive.retry_count    = cloud_keep_alive->retry_count;
         (void)memcpy(keep_alive.dst_mac, cloud_keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
         keep_alive.dst_ip = cloud_keep_alive->dst_ip;
         (void)memcpy(packet_default + 16, &keep_alive.dst_ip, sizeof(keep_alive.dst_ip));
@@ -7429,18 +7450,18 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
     }
     else
     {
-        if((keep_alive.enable == MTRUE) && (ntohs(dst_port) == dst_port_input))
+        if ((keep_alive.enable == MTRUE) && (ntohs(dst_port) == dst_port_input))
         {
             wifi_cloud_keep_alive(&keep_alive, MLAN_ACT_GET, &keep_alive_enabled);
 
-            if(keep_alive_enabled == MTRUE)
+            if (keep_alive_enabled == MTRUE)
             {
                 wlcm_e("Cloud keep alive is already enabled");
                 return -WM_FAIL;
             }
 
             /* Could support the maximum of 4 IDs */
-            if((keep_alive.mkeep_alive_id >= MIN_KEEP_ALIVE_ID) && (keep_alive.mkeep_alive_id <= MAX_KEEP_ALIVE_ID))
+            if ((keep_alive.mkeep_alive_id >= MIN_KEEP_ALIVE_ID) && (keep_alive.mkeep_alive_id <= MAX_KEEP_ALIVE_ID))
             {
                 /* Copy source port, destination port, sequece number, ack number, window size for keep alive.
                    IP header checksum and TCP pesudo header checksum are calculated by WLAN FW */
@@ -7452,8 +7473,8 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
                 keep_alive.pkt_len = pkt_len_default;
                 (void)memcpy(keep_alive.packet, packet_default, keep_alive.pkt_len);
 
-                keep_alive.cached = MTRUE;
-                cloud_keep_alive_param[keep_alive.mkeep_alive_id-1] = keep_alive;
+                keep_alive.cached                                     = MTRUE;
+                cloud_keep_alive_param[keep_alive.mkeep_alive_id - 1] = keep_alive;
             }
         }
     }
@@ -7488,7 +7509,7 @@ int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive)
 
     wifi_cloud_keep_alive(cloud_keep_alive, MLAN_ACT_GET, &enable);
 
-    if(enable == MFALSE)
+    if (enable == MFALSE)
     {
         wlcm_e("Cloud keep alive is already stoped");
         return 0;

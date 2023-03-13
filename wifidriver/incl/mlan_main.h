@@ -1149,6 +1149,8 @@ struct _mlan_private
     t_u8 user_2g_he_cap[54];
 #endif
 
+    t_u8 ssid_filter;
+
     /** max amsdu size */
     t_u16 max_amsdu;
 #if defined(RW610)
@@ -2988,8 +2990,9 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter);
 
 #ifdef CONFIG_COMPRESS_TX_PWTBL
 mlan_status wlan_cmd_region_power_cfg(pmlan_private pmpriv,
-                            HostCmd_DS_COMMAND *cmd,
-                            t_u16 cmd_action, t_void *pdata_buf);
+                                      HostCmd_DS_COMMAND *cmd,
+                                      t_u16 cmd_action,
+                                      t_void *pdata_buf);
 #endif
 
 #ifdef CONFIG_WIFI_CLOCKSYNC

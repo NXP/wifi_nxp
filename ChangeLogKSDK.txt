@@ -3,6 +3,26 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r44.p1
+ - Updates:
+  - Updated CA2, RB3+ firmware to p79
+  - Updated 8801 firmware to p180
+
+ - Features:
+  - Added 11KVR support for CA2 and RB3+
+
+ - Bug fixes:
+  - Fixed: Association Request does not include Group Management Cipher Suite IE in RSNIE when PMF mandatory is set on STA in WPA2-PSK/WPA3/OWE security.
+  - Fixed: Sending of deauth codes in all scenarios
+  - Fixed: Command timeout issues for wlan-eu-crypto
+  - Added Coverity fixes
+  - Fixed command timeout seen during simultaneous AP + STA mode, with high
+  traffic on 8801
+  - Set proper value for Edmac value updated to support Murata 2DS Module
+  - Fixed Channel switch announcement is not seen in beacon in AP+STA mode,
+  when AP changes channel on 8801
+  - Added few BT Sig qualification fixes
+
 Version 1.3.r43.p8
  - Updates:
   - Updated firmware version to p182.1 and added TP signed secure FW too.
@@ -95,6 +115,19 @@ Version 1.3.r43.p1
   - Corrected 11R configuration macro in allMacros_iw61x.txt file and removed the same from ignoreMacros_iw61x.txt file.
   - Coverity fix: Changed all WM_FAIL to -WM_FAIL.
 
+Version 1.3.r42.p4
+  -New Additions:
+   - CA2 and RB3+ f/w updated to v16_xx.21.p64.1
+
+Version 1.3.r42.p3
+  -New Additions:
+   - 8801 f/w update
+  -Bug Fixes:
+   - Fixed Misra issues.
+
+Version 1.3.r42.p2
+  -Bug Fixes:
+   - Fixed Misra issues.
 
 Version 1.3.r42.p1
   -New Additions:

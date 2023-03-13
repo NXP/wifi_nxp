@@ -560,7 +560,7 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     return inbuf;
 }
 
-static int wlan_get_next_seq_num(void)
+static t_u16 wlan_get_next_seq_num(void)
 {
     seqnum++;
     return seqnum;
@@ -784,7 +784,7 @@ static void wlan_set_11n_cfg(void)
     (void)memset(outbuf, 0, SDIO_OUTBUF_LEN);
     wrapper_wlan_cmd_11n_cfg(&sdiopkt->hostcmd);
     /* sdiopkt = outbuf */
-    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
     sdiopkt->pkttype         = MLAN_TYPE_CMD;
     last_cmd_sent            = HostCmd_CMD_11N_CFG;
 
@@ -831,7 +831,7 @@ static void wlan_cmd_shutdown(void)
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.command = HostCmd_CMD_FUNC_SHUTDOWN;
     sdiopkt->hostcmd.size    = (t_u16)S_DS_GEN;
-    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
     sdiopkt->hostcmd.result  = 0;
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
@@ -876,7 +876,7 @@ static void wlan_cmd_init(void)
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.command = HostCmd_CMD_FUNC_INIT;
     sdiopkt->hostcmd.size    = (t_u16)S_DS_GEN;
-    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
     sdiopkt->hostcmd.result  = 0;
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
@@ -949,7 +949,7 @@ static void wlan_fw_init_cfg(void)
 {
     wifi_io_d("FWCMD : INIT (0xa9)");
 
-    (void)wlan_cmd_init();
+    wlan_cmd_init();
 
     while (last_resp_rcvd != HostCmd_CMD_FUNC_INIT)
     {
@@ -987,7 +987,7 @@ static void wlan_fw_init_cfg(void)
         (void)PRINTF("Setting up new cal data\r\n");
         wifi_io_d("CMD : SET_CAL_DATA (0x8f)");
 
-        (void)_wlan_set_cal_data();
+        _wlan_set_cal_data();
 
         while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
         {
@@ -997,7 +997,7 @@ static void wlan_fw_init_cfg(void)
         /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
          * So we need to send reconfigure command. This can be removed if fix is added in firmware.
          */
-        (void)_wlan_reconfigure_tx_buffers();
+        _wlan_reconfigure_tx_buffers();
 
         while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
         {
@@ -1010,7 +1010,7 @@ static void wlan_fw_init_cfg(void)
     {
         wifi_io_d("CMD : SET_MAC_ADDR (0x4d)");
 
-        (void)_wlan_set_mac_addr();
+        _wlan_set_mac_addr();
 
         while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
         {
@@ -1022,7 +1022,7 @@ static void wlan_fw_init_cfg(void)
 #ifdef OTP_CHANINFO
     wifi_io_d("CMD : Channel Region CFG (0x0242)");
 
-    (void)wlan_get_channel_region_cfg();
+    wlan_get_channel_region_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_CHAN_REGION_CFG)
     {
@@ -1033,7 +1033,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_HW_SPEC (0x03)");
 
-    (void)wlan_get_hw_spec();
+    wlan_get_hw_spec();
 
     while (last_resp_rcvd != HostCmd_CMD_GET_HW_SPEC)
     {
@@ -1063,7 +1063,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
-    (void)wlan_get_fw_ver_ext(0);
+    wlan_get_fw_ver_ext(0);
 
     while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
     {
@@ -1073,7 +1073,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
-    (void)wlan_get_mac_addr();
+    wlan_get_mac_addr();
 
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
@@ -1083,7 +1083,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
-    (void)wlan_get_fw_ver_ext(3);
+    wlan_get_fw_ver_ext(3);
 
     while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
     {
@@ -1093,7 +1093,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : MAC_CTRL (0x28)");
 
-    (void)wlan_set_mac_ctrl();
+    wlan_set_mac_ctrl();
 
     while (last_resp_rcvd != HostCmd_CMD_MAC_CONTROL)
     {
@@ -1103,7 +1103,7 @@ static void wlan_fw_init_cfg(void)
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
-    (void)wlan_get_fw_ver_ext(4);
+    wlan_get_fw_ver_ext(4);
 
     while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
     {
@@ -1122,7 +1122,7 @@ static void wlan_fw_init_cfg(void)
 #endif
 
 #ifdef CONFIG_11N
-    (void)wlan_set_11n_cfg();
+    wlan_set_11n_cfg();
 
     while (last_resp_rcvd != HostCmd_CMD_11N_CFG)
     {
@@ -1131,7 +1131,7 @@ static void wlan_fw_init_cfg(void)
     }
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
-    (void)wlan_enable_amsdu();
+    wlan_enable_amsdu();
 
     while (last_resp_rcvd != HostCmd_CMD_AMSDU_AGGR_CTRL)
     {

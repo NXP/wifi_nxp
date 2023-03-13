@@ -34,7 +34,7 @@
 #define NORETURN __attribute__((noreturn))
 
 /* alignment value should be a power of 2 */
-#define ALIGN_X(num, align) MASK(num, (typeof(num))align - 1)
+#define ALIGN_X(num, align) WM_MASK(num, (typeof(num))align - 1)
 
 #define ALIGN_2(num)  ALIGN_X(num, 2)
 #define ALIGN_4(num)  ALIGN_X(num, 4)
@@ -62,8 +62,8 @@
 #endif
 
 /* alignment value should be a power of 2 */
-#define __WM_ALIGN__(num, num_type, align) MASK(num, (num_type)align - 1)
-#define MASK(num, mask)                    ((num + mask) & ~(mask))
+#define __WM_ALIGN__(num, num_type, align) WM_MASK(num, (num_type)align - 1)
+#define WM_MASK(num, mask)                 ((num + mask) & ~(mask))
 
 NORETURN void wmpanic(void);
 

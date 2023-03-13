@@ -101,6 +101,8 @@ uint32_t wm_rand_seed = -1;
 
 os_thread_t wifi_scan_thread;
 
+os_thread_t wifi_scan_thread;
+
 static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 

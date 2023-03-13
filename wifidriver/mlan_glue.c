@@ -1950,6 +1950,11 @@ int wrapper_wifi_assoc(
 #endif
               wlan_security == WLAN_SECURITY_WPA3_SAE))
     {
+        if (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA_WPA2_MIXED)
+
+        {
+            priv->sec_info.authentication_mode = MLAN_AUTH_MODE_OPEN;
+        }
         priv->sec_info.is_wpa_tkip  = is_wpa_tkip;
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
@@ -3452,17 +3457,18 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 break;
 #endif
 #ifdef CONFIG_TSP
-			case HostCmd_CMD_TSP_CFG:
-				if (resp->result == HostCmd_RESULT_OK)
+            case HostCmd_CMD_TSP_CFG:
+                if (resp->result == HostCmd_RESULT_OK)
                 {
-                	TSP_CFG *tsp_get_cfg = (TSP_CFG *)wm_wifi.cmd_resp_priv;
+                    TSP_CFG *tsp_get_cfg     = (TSP_CFG *)wm_wifi.cmd_resp_priv;
                     HostCmd_DS_TSP_CFG *data = &resp->params.tsp_cfg;
                     if (data->action == HostCmd_ACT_GEN_GET)
                     {
-						(void *)memcpy(tsp_get_cfg->thermalPowerMgmtenable, &data->thermalPowerMgmtenable, sizeof(t_u16));
-						(void *)memcpy(tsp_get_cfg->powerMgmtBackoff, &data->powerMgmtBackoff, sizeof(t_u32));
-						(void *)memcpy(tsp_get_cfg->lowPwrBOThrshld, &data->lowPwrBOThrshld, sizeof(t_u32));
-						(void *)memcpy(tsp_get_cfg->highPwrBOThrshld, &data->highPwrBOThrshld, sizeof(t_u32));
+                        (void *)memcpy(tsp_get_cfg->thermalPowerMgmtenable, &data->thermalPowerMgmtenable,
+                                       sizeof(t_u16));
+                        (void *)memcpy(tsp_get_cfg->powerMgmtBackoff, &data->powerMgmtBackoff, sizeof(t_u32));
+                        (void *)memcpy(tsp_get_cfg->lowPwrBOThrshld, &data->lowPwrBOThrshld, sizeof(t_u32));
+                        (void *)memcpy(tsp_get_cfg->highPwrBOThrshld, &data->highPwrBOThrshld, sizeof(t_u32));
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
@@ -4671,8 +4677,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 
             (void)memcpy((void *)debug, (const void *)((uint8_t *)&evt->reason_code), evt->length - 8);
-			(void)PRINTF("EVENT: FW Debug Info %s\r\n", debug);
-			os_mem_free((void *)debug);
+            (void)PRINTF("EVENT: FW Debug Info %s\r\n", debug);
+            os_mem_free((void *)debug);
         }
         break;
 #endif
@@ -4702,15 +4708,17 @@ int wifi_handle_fw_event(struct bus_message *msg)
         {
             Event_Radar_Detected_Info *pRadarDetInfo = NULL;
             pRadarDetInfo = (Event_Radar_Detected_Info *)os_mem_alloc(sizeof(Event_Radar_Detected_Info));
-            if(!pRadarDetInfo)
+            if (!pRadarDetInfo)
             {
                 wifi_w("No mem. Cannot print Event_Radar_Detected_Info.\n\r");
                 break;
             }
-            (void)memcpy((Event_Radar_Detected_Info *)pRadarDetInfo, (Event_Radar_Detected_Info *)msg->data, sizeof(Event_Radar_Detected_Info));
-            wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",wlan_le32_to_cpu(pRadarDetInfo->detect_count),
-				pRadarDetInfo->reg_domain, pRadarDetInfo->main_det_type,
-				(pRadarDetInfo->main_det_type == 2) ? "PRI" : (pRadarDetInfo->main_det_type == 1) ? "PW" : "");
+            (void)memcpy((Event_Radar_Detected_Info *)pRadarDetInfo, (Event_Radar_Detected_Info *)msg->data,
+                         sizeof(Event_Radar_Detected_Info));
+            wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",
+                   wlan_le32_to_cpu(pRadarDetInfo->detect_count), pRadarDetInfo->reg_domain,
+                   pRadarDetInfo->main_det_type,
+                   (pRadarDetInfo->main_det_type == 2) ? "PRI" : (pRadarDetInfo->main_det_type == 1) ? "PW" : "");
             os_mem_free(pRadarDetInfo);
         }
         break;
@@ -5404,11 +5412,11 @@ int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len)
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, 0 /* bss_type */);
-    cmd->result = 0x0;
-    cmd->size = len + S_DS_GEN;
+    cmd->result  = 0x0;
+    cmd->size    = len + S_DS_GEN;
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_REGION_POWER_CFG,
-                    HostCmd_ACT_GEN_SET, 0, NULL, (void *)data, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_REGION_POWER_CFG, HostCmd_ACT_GEN_SET, 0,
+                             NULL, (void *)data, cmd);
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }

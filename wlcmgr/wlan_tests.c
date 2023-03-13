@@ -3157,14 +3157,14 @@ static void test_wlan_eu_validation(int argc, char **argv)
 #endif /* CONFIG_EU_VALIDATION */
 
 #ifdef CONFIG_WIFI_EU_CRYPTO
-static void dump_wlan_eu_crypto(void)
+static void dump_wlan_eu_crypto_rc4(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("Algorithm AES-WRAP encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("Algorithm RC4 encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto-rc4 <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
-static void test_wlan_eu_crypto(int argc, char **argv)
+static void test_wlan_eu_crypto_rc4(int argc, char **argv)
 {
     unsigned int EncDec = 0U;
     t_u8 DATA[80]       = {0};
@@ -3176,14 +3176,162 @@ static void test_wlan_eu_crypto(int argc, char **argv)
     t_u16 KeyIVLength;
     if (argc != 2)
     {
-        dump_wlan_eu_crypto();
+        dump_wlan_eu_crypto_rc4();
         (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
     (void)get_uint(argv[1], &EncDec, 1);
     if (EncDec != 0U && EncDec != 1U)
     {
-        dump_wlan_eu_crypto();
+        dump_wlan_eu_crypto_rc4();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: RC4*/
+    t_u8 Key[16]     = {0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22};
+    KeyLength        = 16;
+    t_u8 EncData[16] = {0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12};
+    Enc_DataLength   = 16;
+    t_u8 DecData[16] = {0xd9, 0x90, 0x42, 0xad, 0x51, 0xab, 0x11, 0x3f, 0x24, 0x46, 0x69, 0xe6, 0xf1, 0xac, 0x49, 0xf5};
+    Dec_DataLength   = 16;
+    t_u8 KeyIV[8]    = {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11};
+    KeyIVLength      = 8;
+
+    if (EncDec == 0U)
+    {
+        (void)memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_RC4_decrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    else
+    {
+        (void)memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_RC4_encrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0U)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+
+static void dump_wlan_eu_crypto_aes_ecb(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-ECB encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto_aes_ecb(int argc, char **argv)
+{
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 KeyIVLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto_aes_ecb();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
+    {
+        dump_wlan_eu_crypto_aes_ecb();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: AES_ECB*/
+    t_u8 Key[16]     = {0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22};
+    KeyLength        = 16;
+    t_u8 EncData[16] = {0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12};
+    Enc_DataLength   = 16;
+    t_u8 DecData[16] = {0xc6, 0x93, 0x9d, 0xaa, 0xd1, 0xd0, 0x68, 0x28, 0xfe, 0x88, 0x52, 0x75, 0xa9, 0x43, 0xf9, 0xc0};
+    Dec_DataLength   = 16;
+    t_u8 KeyIV[8]    = {0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11};
+    KeyIVLength      = 8;
+
+    if (EncDec == 0U)
+    {
+        (void)memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_AES_ECB_decrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    else
+    {
+        (void)memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_AES_ECB_encrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0U)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+
+static void dump_wlan_eu_crypto_aes_wrap(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-WRAP encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto_aes_wrap(int argc, char **argv)
+{
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 KeyIVLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto_aes_wrap();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
+    {
+        dump_wlan_eu_crypto_aes_wrap();
         (void)PRINTF("Error: invalid EncDec\r\n");
         return;
     }
@@ -3209,6 +3357,335 @@ static void test_wlan_eu_crypto(int argc, char **argv)
         (void)memcpy(DATA, EncData, Enc_DataLength);
         Length = Enc_DataLength;
         ret    = wlan_set_crypto_AES_WRAP_encrypt(Key, KeyLength, KeyIV, KeyIVLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0U)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+
+static void dump_wlan_eu_crypto_ccmp_128(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-CCMP-128 encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
+{
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 NonceLength;
+    t_u16 AADLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto_ccmp_128();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
+    {
+        dump_wlan_eu_crypto_ccmp_128();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: AES_CCMP_128*/
+    t_u8 Key[16]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f};
+    KeyLength        = 16;
+    t_u8 EncData[20] = {0xf8, 0xba, 0x1a, 0x55, 0xd0, 0x2f, 0x85, 0xae, 0x96, 0x7b,
+                        0xb6, 0x2f, 0xb6, 0xcd, 0xa8, 0xeb, 0x7e, 0x78, 0xa0, 0x50};
+    Enc_DataLength   = 20;
+    t_u8 DecData[28] = {0xf3, 0xd0, 0xa2, 0xfe, 0x9a, 0x3d, 0xbf, 0x23, 0x42, 0xa6, 0x43, 0xe4, 0x32, 0x46,
+                        0xe8, 0x0c, 0x3c, 0x04, 0xd0, 0x19, 0x78, 0x45, 0xce, 0x0b, 0x16, 0xf9, 0x76, 0x23};
+    Dec_DataLength   = 28;
+    t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
+    NonceLength      = 13;
+    t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
+                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+    AADLength        = 22;
+
+    if (EncDec == 0U)
+    {
+        (void)memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_AES_CCMP_decrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    else
+    {
+        (void)memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_AES_CCMP_encrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0U)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+
+static void dump_wlan_eu_crypto_ccmp_256(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-CCMP-256 encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
+{
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 NonceLength;
+    t_u16 AADLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto_ccmp_256();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
+    {
+        dump_wlan_eu_crypto_ccmp_256();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: AES_WRAP*/
+    t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
+                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    KeyLength        = 32;
+    t_u8 EncData[20] = {0xf8, 0xba, 0x1a, 0x55, 0xd0, 0x2f, 0x85, 0xae, 0x96, 0x7b,
+                        0xb6, 0x2f, 0xb6, 0xcd, 0xa8, 0xeb, 0x7e, 0x78, 0xa0, 0x50};
+    Enc_DataLength   = 20;
+    t_u8 DecData[36] = {0x6d, 0x15, 0x5d, 0x88, 0x32, 0x66, 0x82, 0x56, 0xd6, 0xa9, 0x2b, 0x78,
+                        0xe1, 0x1d, 0x8e, 0x54, 0x49, 0x5d, 0xd1, 0x74, 0x80, 0xaa, 0x56, 0xc9,
+                        0x49, 0x2e, 0x88, 0x2b, 0x97, 0x64, 0x2f, 0x80, 0xd5, 0x0f, 0xe9, 0x7b};
+    Dec_DataLength   = 36;
+    t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
+    NonceLength      = 13;
+    t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
+                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+    AADLength        = 22;
+
+    if (EncDec == 0U)
+    {
+        (void)memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_AES_CCMP_decrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    else
+    {
+        (void)memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_AES_CCMP_encrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0U)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+
+static void dump_wlan_eu_crypto_gcmp_128(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-GCMP-128 encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
+{
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 NonceLength;
+    t_u16 AADLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto_gcmp_128();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
+    {
+        dump_wlan_eu_crypto_gcmp_128();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: AES_WRAP*/
+    t_u8 Key[16]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f};
+    KeyLength        = 16;
+    t_u8 EncData[40] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+                        0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
+                        0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
+    Enc_DataLength   = 40;
+    t_u8 DecData[56] = {0x60, 0xe9, 0x70, 0x0c, 0xc4, 0xd4, 0x0a, 0xc6, 0xd2, 0x88, 0xb2, 0x01, 0xc3, 0x8f,
+                        0x5b, 0xf0, 0x8b, 0x80, 0x74, 0x42, 0x64, 0x0a, 0x15, 0x96, 0xe5, 0xdb, 0xda, 0xd4,
+                        0x1d, 0x1f, 0x36, 0x23, 0xf4, 0x5d, 0x7a, 0x12, 0xdb, 0x7a, 0xfb, 0x23, 0xde, 0xf6,
+                        0x19, 0xc2, 0xa3, 0x74, 0xb6, 0xdf, 0x66, 0xff, 0xa5, 0x3b, 0x6c, 0x69, 0xd7, 0x9e};
+    Dec_DataLength   = 56;
+    t_u8 Nonce[12]   = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
+    NonceLength      = 12;
+    t_u8 AAD[24]     = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
+                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+    AADLength        = 24;
+
+    if (EncDec == 0U)
+    {
+        (void)memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_AES_GCMP_decrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    else
+    {
+        (void)memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_AES_GCMP_encrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Raw Data:\r\n");
+        if (EncDec == 0U)
+        {
+            dump_hex((t_u8 *)DecData, Dec_DataLength);
+            (void)PRINTF("Decrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+        else
+        {
+            dump_hex((t_u8 *)EncData, Enc_DataLength);
+            (void)PRINTF("Encrypted Data:\r\n");
+            dump_hex((t_u8 *)DATA, Length);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+
+static void dump_wlan_eu_crypto_gcmp_256(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Algorithm AES-GCMP-256 encryption and decryption verification\r\n");
+    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
+}
+static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
+{
+    unsigned int EncDec = 0U;
+    t_u8 DATA[80]       = {0};
+    t_u16 Length;
+    int ret;
+    t_u16 Dec_DataLength;
+    t_u16 Enc_DataLength;
+    t_u16 KeyLength;
+    t_u16 NonceLength;
+    t_u16 AADLength;
+    if (argc != 2)
+    {
+        dump_wlan_eu_crypto_gcmp_256();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    (void)get_uint(argv[1], &EncDec, 1);
+    if (EncDec != 0U && EncDec != 1U)
+    {
+        dump_wlan_eu_crypto_gcmp_256();
+        (void)PRINTF("Error: invalid EncDec\r\n");
+        return;
+    }
+    /*Algorithm: AES_WRAP*/
+    t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
+                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+    KeyLength        = 32;
+    t_u8 EncData[40] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+                        0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
+                        0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
+    Enc_DataLength   = 40;
+    t_u8 DecData[56] = {0x65, 0x83, 0x43, 0xc8, 0xb1, 0x44, 0x47, 0xd9, 0x21, 0x1d, 0xef, 0xd4, 0x6a, 0xd8,
+                        0x9c, 0x71, 0x0c, 0x6f, 0xc3, 0x33, 0x33, 0x23, 0x6e, 0x39, 0x97, 0xb9, 0x17, 0x6a,
+                        0x5a, 0x8b, 0xe7, 0x79, 0xb2, 0x12, 0x66, 0x55, 0x5e, 0x70, 0xad, 0x79, 0x11, 0x43,
+                        0x16, 0x85, 0x90, 0x95, 0x47, 0x3d, 0x5b, 0x1b, 0xd5, 0x96, 0xb3, 0xde, 0xa3, 0xbf};
+    Dec_DataLength   = 56;
+    t_u8 Nonce[12]   = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
+    NonceLength      = 12;
+    t_u8 AAD[24]     = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
+                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+    AADLength        = 24;
+
+    if (EncDec == 0U)
+    {
+        (void)memcpy(DATA, DecData, Dec_DataLength);
+        Length = Dec_DataLength;
+        ret    = wlan_set_crypto_AES_GCMP_decrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
+    }
+    else
+    {
+        (void)memcpy(DATA, EncData, Enc_DataLength);
+        Length = Enc_DataLength;
+        ret    = wlan_set_crypto_AES_GCMP_encrypt(Key, KeyLength, AAD, AADLength, Nonce, NonceLength, DATA, &Length);
     }
     if (ret == WM_SUCCESS)
     {
@@ -5048,7 +5525,7 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
                     return;
                 }
                 dst_port_input = (uint16_t)(dst_port & 0XFFFF);
-                dst_port_set = 1;
+                dst_port_set   = 1;
                 arg += 2;
             }
         } while (arg < argc);
@@ -5305,7 +5782,13 @@ static struct cli_command tests[] = {
     {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
 #endif
 #ifdef CONFIG_WIFI_EU_CRYPTO
-    {"wlan-eu-crypto", "<EncDec>", test_wlan_eu_crypto},
+    {"wlan-eu-crypto-rc4", "<EncDec>", test_wlan_eu_crypto_rc4},
+    {"wlan-eu-crypto-aes-wrap", "<EncDec>", test_wlan_eu_crypto_aes_wrap},
+    {"wlan-eu-crypto-aes-ecb", "<EncDec>", test_wlan_eu_crypto_aes_ecb},
+    {"wlan-eu-crypto-ccmp-128", "<EncDec>", test_wlan_eu_crypto_ccmp_128},
+    {"wlan-eu-crypto-ccmp-256", "<EncDec>", test_wlan_eu_crypto_ccmp_256},
+    {"wlan-eu-crypto-gcmp-128", "<EncDec>", test_wlan_eu_crypto_gcmp_128},
+    {"wlan-eu-crypto-gcmp-256", "<EncDec>", test_wlan_eu_crypto_gcmp_256},
 #endif
 #ifdef CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},

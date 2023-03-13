@@ -127,7 +127,7 @@
 #include <wifi.h>
 #include <wlan_11d.h>
 
-#define WLAN_DRV_VERSION "v1.3.r43.p8"
+#define WLAN_DRV_VERSION "v1.3.r44.p2"
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
@@ -4814,8 +4814,12 @@ int wlan_set_rg_power_cfg(t_u16 region_code);
  * \param[in] cloud_keep_alive    cloud keep alive information
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive, t_u16 src_port, t_u16 dst_port,
-                                      t_u32 seq_number, t_u32 ack_number, t_u8 enable);
+int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
+                                      t_u16 src_port,
+                                      t_u16 dst_port,
+                                      t_u32 seq_number,
+                                      t_u32 ack_number,
+                                      t_u8 enable);
 /**
  * Start cloud keep alive
  * \param[in]    void

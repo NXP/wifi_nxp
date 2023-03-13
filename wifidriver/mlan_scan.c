@@ -806,10 +806,11 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     t_u16 len = 0;
 #endif
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-	MrvlIEtypes_ScanChanGap_t *pscan_gap_tlv;
+    MrvlIEtypes_ScanChanGap_t *pscan_gap_tlv;
 #endif
     ENTER();
 
+    pmpriv->ssid_filter = MFALSE;
     /* The tlv_buf_len is calculated for each scan command.  The TLVs added in
        this routine will be preserved since the routine that sends the command
        will append channelTLVs at *ppchan_list_out.  The difference between the
@@ -905,6 +906,10 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         if ((ssid_idx && ssid_filter) ||
             __memcmp(pmadapter, pscan_cfg_out->specific_bssid, &zero_mac, sizeof(zero_mac)))
         {
+            if (ssid_filter)
+            {
+                pmpriv->ssid_filter = ssid_filter;
+            }
             *pfiltered_scan = MTRUE;
         }
     }
@@ -932,27 +937,31 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     }
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
-    if (puser_scan_in) {
-		if (puser_scan_in->scan_chan_gap) {
-			*pmax_chan_per_scan = MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN;
-			PRINTM(MCMND, "Scan: channel gap = 0x%x\n", puser_scan_in->scan_chan_gap);
-			pscan_gap_tlv = (MrvlIEtypes_ScanChanGap_t *)ptlv_pos;
-			pscan_gap_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SCAN_CHANNEL_GAP);
-			pscan_gap_tlv->header.len = sizeof(pscan_gap_tlv->gap);
-			pscan_gap_tlv->gap = wlan_cpu_to_le16((t_u16)puser_scan_in->scan_chan_gap);
-			ptlv_pos += sizeof(pscan_gap_tlv->header) + pscan_gap_tlv->header.len;
-			pscan_gap_tlv->header.len = wlan_cpu_to_le16(pscan_gap_tlv->header.len);
-		}
-	} else if (pmadapter->scan_chan_gap) {
-		*pmax_chan_per_scan = MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN;
-		PRINTM(MCMND, "Scan: channel gap = 0x%x\n",pmadapter->scan_chan_gap);
-		pscan_gap_tlv = (MrvlIEtypes_ScanChanGap_t *)ptlv_pos;
-		pscan_gap_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SCAN_CHANNEL_GAP);
-		pscan_gap_tlv->header.len = sizeof(pscan_gap_tlv->gap);
-		pscan_gap_tlv->gap = wlan_cpu_to_le16((t_u16)pmadapter->scan_chan_gap);
-		ptlv_pos += sizeof(pscan_gap_tlv->header) + pscan_gap_tlv->header.len;
-		pscan_gap_tlv->header.len = wlan_cpu_to_le16(pscan_gap_tlv->header.len);
-	}
+    if (puser_scan_in)
+    {
+        if (puser_scan_in->scan_chan_gap)
+        {
+            *pmax_chan_per_scan = MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN;
+            PRINTM(MCMND, "Scan: channel gap = 0x%x\n", puser_scan_in->scan_chan_gap);
+            pscan_gap_tlv              = (MrvlIEtypes_ScanChanGap_t *)ptlv_pos;
+            pscan_gap_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SCAN_CHANNEL_GAP);
+            pscan_gap_tlv->header.len  = sizeof(pscan_gap_tlv->gap);
+            pscan_gap_tlv->gap         = wlan_cpu_to_le16((t_u16)puser_scan_in->scan_chan_gap);
+            ptlv_pos += sizeof(pscan_gap_tlv->header) + pscan_gap_tlv->header.len;
+            pscan_gap_tlv->header.len = wlan_cpu_to_le16(pscan_gap_tlv->header.len);
+        }
+    }
+    else if (pmadapter->scan_chan_gap)
+    {
+        *pmax_chan_per_scan = MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN;
+        PRINTM(MCMND, "Scan: channel gap = 0x%x\n", pmadapter->scan_chan_gap);
+        pscan_gap_tlv              = (MrvlIEtypes_ScanChanGap_t *)ptlv_pos;
+        pscan_gap_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_SCAN_CHANNEL_GAP);
+        pscan_gap_tlv->header.len  = sizeof(pscan_gap_tlv->gap);
+        pscan_gap_tlv->gap         = wlan_cpu_to_le16((t_u16)pmadapter->scan_chan_gap);
+        ptlv_pos += sizeof(pscan_gap_tlv->header) + pscan_gap_tlv->header.len;
+        pscan_gap_tlv->header.len = wlan_cpu_to_le16(pscan_gap_tlv->header.len);
+    }
 #endif
 
     /* If the input config or adapter has the number of Probes set, add tlv */
@@ -3324,6 +3333,11 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
             PRINTM(MINFO, "SCAN_RESP: BSSID = %02x:%02x:%02x:%02x:%02x:%02x\n", bss_new_entry->mac_address[0],
                    bss_new_entry->mac_address[1], bss_new_entry->mac_address[2], bss_new_entry->mac_address[3],
                    bss_new_entry->mac_address[4], bss_new_entry->mac_address[5]);
+
+            if ((pmpriv->ssid_filter) && ((bss_new_entry->ssid.ssid_len == 0) || (bss_new_entry->ssid.ssid[0] == '\0')))
+            {
+                continue;
+            }
             /*
              * Search the scan table for the same bssid
              */
@@ -3361,6 +3375,15 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 else
                 {
                     num_in_table++;
+                }
+            }
+            else
+            {
+                if ((bss_new_entry->channel != pmadapter->pscan_table[bss_idx].channel) &&
+                    (bss_new_entry->rssi > pmadapter->pscan_table[bss_idx].rssi))
+                {
+                    PRINTM(MCMND, "skip update the duplicate entry with low rssi\n");
+                    continue;
                 }
             }
 
@@ -4162,6 +4185,12 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             PRINTM(MINFO, "EXT_SCAN: BSSID = %02x:%02x:%02x:%02x:%02x:%02x\n", bss_new_entry->mac_address[0],
                    bss_new_entry->mac_address[1], bss_new_entry->mac_address[2], bss_new_entry->mac_address[3],
                    bss_new_entry->mac_address[4], bss_new_entry->mac_address[5]);
+
+            if ((pmpriv->ssid_filter) && ((bss_new_entry->ssid.ssid_len == 0) || (bss_new_entry->ssid.ssid[0] == '\0')))
+            {
+                continue;
+            }
+
             /*
              * Search the scan table for the same bssid
              */
@@ -4199,6 +4228,15 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 else
                 {
                     num_in_table++;
+                }
+            }
+            else
+            {
+                if ((bss_new_entry->channel != pmadapter->pscan_table[bss_idx].channel) &&
+                    (bss_new_entry->rssi > pmadapter->pscan_table[bss_idx].rssi))
+                {
+                    PRINTM(MCMND, "skip update the duplicate entry with low rssi\n");
+                    continue;
                 }
             }
 

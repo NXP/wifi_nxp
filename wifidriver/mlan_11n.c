@@ -1463,6 +1463,18 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
             pext_cap->ext_cap.WNM_Sleep = 0;
         }
 #endif
+
+#ifdef CONFIG_11V
+        if (pbss_desc->pext_cap->ext_cap.BSS_Transition == true)
+        {
+            pext_cap->ext_cap.BSS_Transition = 1;
+        }
+        else
+        {
+            pext_cap->ext_cap.BSS_Transition = 0;
+        }
+#endif
+
 #ifdef CONFIG_11AX_TWT
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
         pext_cap->ext_cap.TWTResp = 0;

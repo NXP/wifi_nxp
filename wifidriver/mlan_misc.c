@@ -1493,12 +1493,19 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
     if (pbss_desc && pbss_desc->multi_bssid_ap)
         SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
-#ifdef CONFIG_11AX
+#ifdef CONFIG_11AX_TWT
     if (wlan_check_11ax_twt_supported(pmpriv, pbss_desc))
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
 #endif
-#ifdef CONFIG_MBO
-    pext_cap->ext_cap.BSS_Transition = 1;
+#ifdef CONFIG_11V
+    if (pbss_desc->pext_cap->ext_cap.BSS_Transition == true)
+    {
+        pext_cap->ext_cap.BSS_Transition = 1;
+    }
+    else
+    {
+        pext_cap->ext_cap.BSS_Transition = 0;
+    }
 #endif
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);
 
