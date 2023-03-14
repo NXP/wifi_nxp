@@ -1624,6 +1624,39 @@ int wlan_get_rate_index(pmlan_adapter pmadapter, t_u16 *rate_bitmap, int size)
 }
 
 /**
+ *  @brief Convert config_bands to B/G/A band
+ *
+ *  @param config_bands     The specified band configuration
+ *
+ *  @return                 BAND_B|BAND_G|BAND_A
+ */
+t_u16 wlan_convert_config_bands(t_u16 config_bands)
+{
+    t_u16 bands = 0;
+    if (config_bands & BAND_B)
+        bands |= BAND_B;
+    if (config_bands & BAND_G || config_bands & BAND_GN
+#ifdef ENABLE_802_11AC
+        || config_bands & BAND_GAC
+#endif
+#ifdef ENABLE_802_11AX
+        || config_bands & BAND_GAX
+#endif
+    )
+        bands |= BAND_G;
+    if (config_bands & BAND_A || config_bands & BAND_AN
+#ifdef ENABLE_802_11AC
+        || config_bands & BAND_AAC
+#endif
+#ifdef ENABLE_802_11AX
+        || config_bands & BAND_AAX
+#endif
+    )
+        bands |= BAND_A;
+    return bands;
+}
+
+/**
  *  @brief Get supported data rates
  *
  *  @param pmpriv           A pointer to mlan_private structure
@@ -1638,123 +1671,62 @@ t_u32 wlan_get_supported_rates(mlan_private *pmpriv,
                                t_u16 config_bands,
                                WLAN_802_11_RATES rates)
 {
-    t_u32 k = 0;
+    t_u32 k     = 0;
+    t_u16 bands = 0;
 
     ENTER();
 
+    bands = wlan_convert_config_bands(config_bands);
     if (bss_mode == MLAN_BSS_MODE_INFRA)
     {
         /* Infra. mode */
-        switch (config_bands)
+        if (bands == BAND_B)
         {
-            case BAND_B:
-                PRINTM(MINFO, "Infra Band=%d SupportedRates_B\n", config_bands);
-                k = wlan_copy_rates(rates, k, SupportedRates_B, (int)sizeof(SupportedRates_B));
-                break;
-            case BAND_G:
-            case BAND_G | BAND_GN:
-            case BAND_G | BAND_GN | BAND_GAC:
-#ifdef CONFIG_11AX
-            case BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
-#endif
-                PRINTM(MINFO, "Infra band=%d SupportedRates_G\n", config_bands);
-                k = wlan_copy_rates(rates, k, SupportedRates_G, (int)sizeof(SupportedRates_G));
-                break;
-            case BAND_B | BAND_G:
-            case BAND_A | BAND_B | BAND_G:
-            case BAND_A | BAND_B:
-            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN:
-            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC:
-            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC:
-#ifdef CONFIG_11AX
-            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_AAX:
-            case BAND_A | BAND_B | BAND_G | BAND_GN | BAND_AN | BAND_AAC | BAND_GAC | BAND_AAX | BAND_GAX:
-#endif
-            case BAND_B | BAND_G | BAND_GN:
-            case BAND_B | BAND_G | BAND_GN | BAND_GAC:
-#ifdef CONFIG_11AX
-            case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
-#endif
-                PRINTM(MINFO, "Infra band=%d SupportedRates_BG\n", config_bands);
+            /* B only */
+            k = wlan_copy_rates(rates, k, SupportedRates_B, sizeof(SupportedRates_B));
+        }
+        else if (bands == BAND_G)
+        {
+            /* G only */
+            k = wlan_copy_rates(rates, k, SupportedRates_G, sizeof(SupportedRates_G));
+        }
+        else if (bands & (BAND_B | BAND_G))
+        {
+            /* BG only */
 #ifdef WIFI_DIRECT_SUPPORT
-                if (pmpriv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
-                    k = wlan_copy_rates(rates, k, SupportedRates_G, sizeof(SupportedRates_G));
-                else
-                    k = wlan_copy_rates(rates, k, SupportedRates_BG, sizeof(SupportedRates_BG));
-#else
-                k = wlan_copy_rates(rates, k, SupportedRates_BG, (int)sizeof(SupportedRates_BG));
+            if (pmpriv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
+                k = wlan_copy_rates(rates, k, SupportedRates_G, sizeof(SupportedRates_G));
+            else
 #endif
-                break;
-            case BAND_A:
-            case BAND_A | BAND_G:
-                PRINTM(MINFO, "Infra band=%d SupportedRates_A\n", config_bands);
-                k = wlan_copy_rates(rates, k, SupportedRates_A, (int)sizeof(SupportedRates_A));
-                break;
-            case BAND_AN:
-            case BAND_A | BAND_AN:
-            case BAND_A | BAND_G | BAND_AN | BAND_GN:
-            case BAND_A | BAND_AN | BAND_AAC:
-            case BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC:
-#ifdef CONFIG_11AX
-            case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
-            case BAND_A | BAND_G | BAND_AN | BAND_GN | BAND_AAC | BAND_AAX:
-#endif
-                PRINTM(MINFO, "Infra band=%d SupportedRates_A\n", config_bands);
-                k = wlan_copy_rates(rates, k, SupportedRates_A, (int)sizeof(SupportedRates_A));
-                break;
-            case BAND_GN:
-            case BAND_GN | BAND_GAC:
-#ifdef CONFIG_11AX
-            case BAND_GN | BAND_GAC | BAND_GAX:
-#endif
-                PRINTM(MINFO, "Infra band=%d SupportedRates_N\n", config_bands);
-                k = wlan_copy_rates(rates, k, SupportedRates_N, (int)sizeof(SupportedRates_N));
-                break;
-            default:
-                PRINTM(MINFO, "Unexpected Infra Band \n");
-                break;
+                k = wlan_copy_rates(rates, k, SupportedRates_BG, sizeof(SupportedRates_BG));
+        }
+        else if (bands & BAND_A)
+        {
+            /* support A */
+            k = wlan_copy_rates(rates, k, SupportedRates_A, sizeof(SupportedRates_A));
         }
     }
     else
     {
-        /* Ad-hoc mode */
-        switch (config_bands)
+        /* Adhoc. mode */
+        if (bands == BAND_B)
         {
-            case BAND_B:
-                PRINTM(MINFO, "Band: Adhoc B\n");
-                k = wlan_copy_rates(rates, k, AdhocRates_B, (int)sizeof(AdhocRates_B));
-                break;
-            case BAND_G:
-            case BAND_G | BAND_GN:
-            case BAND_G | BAND_GN | BAND_GAC:
-#ifdef CONFIG_11AX
-            case BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
-#endif
-                PRINTM(MINFO, "Band: Adhoc G only\n");
-                k = wlan_copy_rates(rates, k, AdhocRates_G, (int)sizeof(AdhocRates_G));
-                break;
-            case BAND_B | BAND_G:
-            case BAND_B | BAND_G | BAND_GN:
-            case BAND_B | BAND_G | BAND_GN | BAND_GAC:
-#ifdef CONFIG_11AX
-            case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
-#endif
-                PRINTM(MINFO, "Band: Adhoc BG\n");
-                k = wlan_copy_rates(rates, k, AdhocRates_BG, (int)sizeof(AdhocRates_BG));
-                break;
-            case BAND_A:
-            case BAND_AN:
-            case BAND_A | BAND_AN:
-            case BAND_A | BAND_AN | BAND_AAC:
-#ifdef CONFIG_11AX
-            case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
-#endif
-                PRINTM(MINFO, "Band: Adhoc A\n");
-                k = wlan_copy_rates(rates, k, AdhocRates_A, (int)sizeof(AdhocRates_A));
-                break;
-            default:
-                PRINTM(MINFO, "Unexpected Adhoc Band \n");
-                break;
+            /* B only */
+            k = wlan_copy_rates(rates, k, AdhocRates_B, sizeof(AdhocRates_B));
+        }
+        else if (bands == BAND_G)
+        {
+            /* G only */
+            k = wlan_copy_rates(rates, k, AdhocRates_G, sizeof(AdhocRates_G));
+        }
+        else if (bands & BAND_A)
+        {
+            /* support A */
+            k = wlan_copy_rates(rates, k, AdhocRates_A, sizeof(AdhocRates_A));
+        }
+        else
+        {
+            k = wlan_copy_rates(rates, k, AdhocRates_BG, sizeof(AdhocRates_BG));
         }
     }
 
