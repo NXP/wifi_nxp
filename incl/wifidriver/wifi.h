@@ -1654,6 +1654,19 @@ void set_ecsa_block_tx_flag(bool block_tx);
  * \return true block tx is required, false not required.
  */
 bool get_ecsa_block_tx_flag();
+
+void wifi_put_ecsa_sem(void);
+
+/** wifi_ecsa_status_control */
+typedef struct _wifi_ecsa_status_control
+{
+    /** block tx required*/
+    bool required;
+    /** block time of one detect period*/
+    t_u8 block_time;
+    /** Semaphore to wait ECSA complete */
+    os_semaphore_t ecsa_sem;
+} wifi_ecsa_status_control;
 #endif
 
 #if defined(CONFIG_WMM_UAPSD) || defined(CONFIG_WMM)

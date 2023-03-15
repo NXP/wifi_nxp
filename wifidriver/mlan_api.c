@@ -4597,26 +4597,31 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
 }
 
 #ifdef CONFIG_ECSA
-mlan_ecsa_block_tx_control ecsa_block_tx_control = {false, 0};
+wifi_ecsa_status_control ecsa_status_control = {false, 0};
 
 void set_ecsa_block_tx_time(t_u8 switch_count)
 {
-    ecsa_block_tx_control.block_time = switch_count;
+    ecsa_status_control.block_time = switch_count;
 }
 
 t_u8 get_ecsa_block_tx_time()
 {
-    return ecsa_block_tx_control.block_time;
+    return ecsa_status_control.block_time;
 }
 
 void set_ecsa_block_tx_flag(bool block_tx)
 {
-    ecsa_block_tx_control.required = block_tx;
+    ecsa_status_control.required = block_tx;
 }
 
 bool get_ecsa_block_tx_flag()
 {
-    return ecsa_block_tx_control.required;
+    return ecsa_status_control.required;
+}
+
+void wifi_put_ecsa_sem()
+{
+    os_semaphore_put(&ecsa_status_control.ecsa_sem);
 }
 
 int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u8 *oper_class)
@@ -4828,7 +4833,9 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
         return -WM_FAIL;
     }
     set_ie_index(mgmt_ie_index);
-    os_thread_sleep((switch_count + 2) * wm_wifi.beacon_period);
+    
+    os_semaphore_get(&ecsa_status_control.ecsa_sem, os_msec_to_ticks((switch_count + 2) *wm_wifi.beacon_period));
+    set_ecsa_block_tx_flag(false);
 
     if (!ie_index_is_set(mgmt_ie_index))
     {

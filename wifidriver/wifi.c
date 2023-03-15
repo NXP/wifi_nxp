@@ -56,6 +56,10 @@ int csi_event_cnt        = 0;
 t_u64 csi_event_data_len = 0;
 #endif
 
+#ifdef CONFIG_ECSA
+extern wifi_ecsa_status_control ecsa_status_control;
+#endif
+
 #define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
 #define WIFI_CORE_STACK_SIZE          (1024)
 /* We don't see events coming in quick succession,
@@ -1735,13 +1739,25 @@ static int wifi_core_init(void)
     wm_wifi.rx_status    = WIFI_DATA_RUNNING;
     wm_wifi.rx_block_cnt = 0;
 #ifdef CONFIG_CSI
-    /* Semaphore to protect wmm data parameters */
+    /* Semaphore to protect data parameters */
     ret = os_semaphore_create(&csi_buff_stat.csi_data_sem, "usb data sem");
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create usb data sem failed");
         goto fail;
     }
+#endif
+
+#ifdef CONFIG_ECSA
+    /* Semaphore to wait ECSA complete */
+    ret = os_semaphore_create(&ecsa_status_control.ecsa_sem, "ecsa sem");
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create ecsa sem failed");
+        goto fail;
+    }
+    
+    os_semaphore_get(&ecsa_status_control.ecsa_sem, OS_WAIT_FOREVER);
 #endif
 
     return WM_SUCCESS;
@@ -1861,6 +1877,13 @@ static void wifi_core_deinit(void)
     {
         os_semaphore_delete(&csi_buff_stat.csi_data_sem);
         csi_buff_stat.csi_data_sem = NULL;
+    }
+#endif
+#ifdef CONFIG_ECSA
+    if (ecsa_status_control.ecsa_sem != NULL)
+    {
+        os_semaphore_delete(&ecsa_status_control.ecsa_sem);
+        ecsa_status_control.ecsa_sem = NULL;
     }
 #endif
 }
@@ -3522,9 +3545,12 @@ static void wifi_driver_tx(void *data)
     {
     get_msg:
 #ifdef CONFIG_ECSA
+        /*
+         * Reduce block tx check interval, try to make it sync with ECSA status.
+         */
         while (true == get_ecsa_block_tx_flag())
         {
-            os_thread_sleep((get_ecsa_block_tx_time() + 2) * wm_wifi.beacon_period);
+            os_thread_sleep(wm_wifi.beacon_period);
         }
 #endif
         ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);

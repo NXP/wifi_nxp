@@ -1085,15 +1085,6 @@ typedef struct _mlan_action_chan_switch
     t_u8 chan_switch_count;
 } mlan_action_chan_switch;
 
-/** mlan_ecsa_blocktx_control */
-typedef struct _mlan_ecsa_block_tx_control
-{
-    /** block tx required*/
-    bool required;
-    /** block time of one detect period*/
-    t_u8 block_time;
-} mlan_ecsa_block_tx_control;
-
 typedef struct _mlan_ds_bw_chan_oper
 {
     /* bandwidth 20:20M 40:40M 80:80M*/
