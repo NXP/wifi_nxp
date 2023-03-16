@@ -3,6 +3,18 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r44.p3
+ - Bug fixes:
+  - Added RSNX IE for WPA3-R3 for uAP
+
+Version 1.3.r44.p2
+ - Updates:
+  - Updated CA2, RB3+ firmware to p82
+  - Bug fixes:
+   - Fixes for 11KR
+   - Fixes for WPA3-R3 STA
+   - Added extra event for Connected notification in case of uAP
+
 Version 1.3.r44.p1
  - Updates:
   - Updated CA2, RB3+ firmware to p79

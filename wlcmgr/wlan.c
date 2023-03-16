@@ -5404,8 +5404,10 @@ int wlan_add_network(struct wlan_network *network)
     }
 #endif
 
-    if ((network->role == WLAN_BSS_ROLE_STA) && (network->security.type == WLAN_SECURITY_WPA3_SAE) &&
-        (!network->security.mfpc || !network->security.mfpr))
+    if ((network->role == WLAN_BSS_ROLE_STA) &&
+        ((network->security.type == WLAN_SECURITY_WPA3_SAE) ||
+         (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
+        (!network->security.mfpc))
     {
         return -WM_E_INVAL;
     }
@@ -5416,12 +5418,7 @@ int wlan_add_network(struct wlan_network *network)
          (network->security.type == WLAN_SECURITY_OWE_ONLY) ||
 #endif
          (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
-        (!network->security.mfpc || !network->security.mfpr))
-    {
-        return -WM_E_INVAL;
-    }
-
-    if ((network->role == WLAN_BSS_ROLE_STA) && (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
+        (!network->security.mfpc))
     {
         return -WM_E_INVAL;
     }
