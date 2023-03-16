@@ -3107,6 +3107,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                 case MFG_CMD_CLR_RX_ERR:
                                 case MFG_CMD_RF_BAND_AG:
                                 case MFG_CMD_RF_CHANNELBW:
+                                case MFG_CMD_RADIO_MODE_CFG:
                                 {
                                     wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg =
                                         (wifi_mfg_cmd_generic_cfg_t *)wm_wifi.cmd_resp_priv;
