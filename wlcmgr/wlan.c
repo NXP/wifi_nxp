@@ -8377,7 +8377,7 @@ int wlan_set_rf_channel(const uint8_t channel)
 
 int wlan_set_rf_radio_mode(const uint8_t mode)
 {
-    return wifi_set_radio_mode(mode);
+    return wifi_set_rf_radio_mode(mode);
 }
 
 int wlan_get_rf_channel(uint8_t *channel)
