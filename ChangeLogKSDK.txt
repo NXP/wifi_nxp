@@ -3,6 +3,16 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r43.p9
+ - Updates:
+  - Added support for RF test mode.
+
+ - Bug Fixes:
+  - Fixed: (pre-cert)Updated help message for TX-OMI command.
+  - Fixed: (pre-cert)STAUT is not scanning Non Transmitted SSID in MBSSID test.
+  - Fixed: (pre-cert)STAUT is not governing OBSS Narrow Bandwidth RU in UL OFDMA Tolerance Support.
+  - Fixed compilation errors and warnings after branch merge.
+
 Version 1.3.r44.p3
  - Bug fixes:
   - Added RSNX IE for WPA3-R3 for uAP
