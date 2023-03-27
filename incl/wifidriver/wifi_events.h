@@ -31,8 +31,12 @@ enum wifi_event
     WIFI_EVENT_UAP_LAST,
     /* All the uAP related events need to be above and STA related events
      * below */
+    /** Scan start event when scan is started */
+    WIFI_EVENT_SCAN_START,
     /** Scan Result */
     WIFI_EVENT_SCAN_RESULT,
+    /** Survey Result Get */
+    WIFI_EVENT_SURVEY_RESULT_GET,
     /** Get hardware spec */
     WIFI_EVENT_GET_HW_SPEC,
     /** Association */
@@ -87,6 +91,8 @@ enum wifi_event
     WIFI_EVENT_NET_DHCP_CONFIG,
     /** Supplicant PMK */
     WIFI_EVENT_SUPPLICANT_PMK,
+    /** WPA Supplicant WPS Successful*/
+    WIFI_EVENT_WPA_SUPPLICANT_WPS_SUCCESS,
     /** Sleep */
     WIFI_EVENT_SLEEP,
     /** Awake */
@@ -110,6 +116,8 @@ enum wifi_event
     /* Add Block Ack */
     /** 802.11N add block ack */
     WIFI_EVENT_11N_ADDBA,
+    /** 802.11N add block ack response sent */
+    WIFI_EVENT_11N_ADDBA_RESP,
     /** 802.11N block Ack stream timeout */
     WIFI_EVENT_11N_BA_STREAM_TIMEOUT,
     /** 802.11n Delete block add */
@@ -128,26 +136,19 @@ enum wifi_event
     /** Auto link switch network */
     WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED,
 #endif
-#ifdef CONFIG_WIFI_FW_DEBUG
-    /* WiFi FW Debug Info */
-    WIFI_EVENT_FW_DEBUG_INFO,
-#endif
-#ifdef CONFIG_ROAMING
     /* Background Scan Report */
     WIFI_EVENT_BG_SCAN_REPORT,
     /* Background Scan Stop */
     WIFI_EVENT_BG_SCAN_STOPPED,
-#endif
     /* Event to indicate RX Management Frame */
     WIFI_EVENT_MGMT_FRAME,
+    /* Event to indicate remain on channel started */
+    WIFI_EVENT_REMAIN_ON_CHANNEL,
+    /* Event to indicate Management tx status */
+    WIFI_EVENT_MGMT_TX_STATUS,
 #ifdef CONFIG_CSI
     /* Recv csi data */
     WIFI_EVENT_CSI,
-#endif
-#ifdef IW61x
-    /*IMD3 Calibration events for IW61X */
-    WIFI_EVENT_IMD3_CAL_START,
-    WIFI_EVENT_IMD3_CAL_END,
 #endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
@@ -164,6 +165,8 @@ enum wifi_event_reason
     WIFI_EVENT_REASON_TIMEOUT,
     /** Failure */
     WIFI_EVENT_REASON_FAILURE,
+    /** Abort */
+    WIFI_EVENT_REASON_ABORT,
 };
 
 /** Network wireless BSS Type */

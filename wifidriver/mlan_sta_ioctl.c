@@ -3365,10 +3365,12 @@ static mlan_status wlan_sec_ioctl_encrypt_key(IN pmlan_adapter pmadapter, IN pml
         {
             status = wlan_sec_ioctl_set_wpa_key(pmadapter, pioctl_req);
         }
+#ifndef CONFIG_MLAN_WMSDK
         else
         {
             status = wlan_sec_ioctl_set_wep_key(pmadapter, pioctl_req);
         }
+#endif /* CONFIG_MLAN_WMSDK */
 #endif /* WPA */
     }
     else
@@ -5852,35 +5854,37 @@ static mlan_status wlan_11k_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req p
 #ifdef CONFIG_11AX
 mlan_status wlan_11ax_ioctl_cmd(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
 {
-	mlan_status status = MLAN_STATUS_SUCCESS;
-	mlan_ds_11ax_cmd_cfg *cfg = MNULL;
-	mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
-	t_u16 cmd_action = 0;
+    mlan_status status        = MLAN_STATUS_SUCCESS;
+    mlan_ds_11ax_cmd_cfg *cfg = MNULL;
+    mlan_private *pmpriv      = pmadapter->priv[pioctl_req->bss_index];
+    t_u16 cmd_action          = 0;
 
-	ENTER();
+    ENTER();
 
-	if (pioctl_req->buf_len < sizeof(mlan_ds_11ax_cmd_cfg)) {
-		PRINTM(MINFO, "MLAN bss IOCTL length is too short.\n");
-		pioctl_req->data_read_written = 0;
-		pioctl_req->buf_len_needed = sizeof(mlan_ds_11ax_cmd_cfg);
-		pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
-		LEAVE();
-		return MLAN_STATUS_RESOURCE;
-	}
-	cfg = (mlan_ds_11ax_cmd_cfg *)pioctl_req->pbuf;
+    if (pioctl_req->buf_len < sizeof(mlan_ds_11ax_cmd_cfg))
+    {
+        PRINTM(MINFO, "MLAN bss IOCTL length is too short.\n");
+        pioctl_req->data_read_written = 0;
+        pioctl_req->buf_len_needed    = sizeof(mlan_ds_11ax_cmd_cfg);
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
+        LEAVE();
+        return MLAN_STATUS_RESOURCE;
+    }
+    cfg = (mlan_ds_11ax_cmd_cfg *)pioctl_req->pbuf;
 
-	if (pioctl_req->action == MLAN_ACT_SET)
-		cmd_action = HostCmd_ACT_GEN_SET;
-	else
-		cmd_action = HostCmd_ACT_GEN_GET;
+    if (pioctl_req->action == MLAN_ACT_SET)
+        cmd_action = HostCmd_ACT_GEN_SET;
+    else
+        cmd_action = HostCmd_ACT_GEN_GET;
 
-	/* Send request to firmware */
- 	status = wifi_prepare_and_send_cmd(pmpriv, HostCmd_CMD_11AX_CMD, cmd_action, 0, (t_void *)pioctl_req, (t_void *)cfg, pmpriv->bss_type, NULL);
-	if (status == MLAN_STATUS_SUCCESS)
-		status = MLAN_STATUS_PENDING;
+    /* Send request to firmware */
+    status = wifi_prepare_and_send_cmd(pmpriv, HostCmd_CMD_11AX_CMD, cmd_action, 0, (t_void *)pioctl_req, (t_void *)cfg,
+                                       pmpriv->bss_type, NULL);
+    if (status == MLAN_STATUS_SUCCESS)
+        status = MLAN_STATUS_PENDING;
 
-	LEAVE();
-	return status;
+    LEAVE();
+    return status;
 }
 
 /**
@@ -5893,28 +5897,29 @@ mlan_status wlan_11ax_ioctl_cmd(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_
  */
 mlan_status wlan_11ax_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
 {
-	mlan_status status = MLAN_STATUS_SUCCESS;
-	mlan_ds_11ax_cfg *cfg = MNULL;
+    mlan_status status    = MLAN_STATUS_SUCCESS;
+    mlan_ds_11ax_cfg *cfg = MNULL;
 
-	ENTER();
+    ENTER();
 
-	cfg = (mlan_ds_11ax_cfg *)pioctl_req->pbuf;
-	switch (cfg->sub_command) {
-	case MLAN_OID_11AX_CMD_CFG:
-		status = wlan_11ax_ioctl_cmd(pmadapter, pioctl_req);
-		break;
+    cfg = (mlan_ds_11ax_cfg *)pioctl_req->pbuf;
+    switch (cfg->sub_command)
+    {
+        case MLAN_OID_11AX_CMD_CFG:
+            status = wlan_11ax_ioctl_cmd(pmadapter, pioctl_req);
+            break;
 #ifndef CONFIG_MLAN_WMSDK
-	case MLAN_OID_11AX_HE_CFG:
-		status = wlan_11ax_ioctl_hecfg(pmadapter, pioctl_req);
-		break;
+        case MLAN_OID_11AX_HE_CFG:
+            status = wlan_11ax_ioctl_hecfg(pmadapter, pioctl_req);
+            break;
 #endif
-	default:
-		pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
-		status = MLAN_STATUS_FAILURE;
-		break;
-	}
-	LEAVE();
-	return status;
+        default:
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+            status                  = MLAN_STATUS_FAILURE;
+            break;
+    }
+    LEAVE();
+    return status;
 }
 #endif
 
@@ -6023,7 +6028,7 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 #ifdef CONFIG_11AX
         case MLAN_IOCTL_11AX_CFG:
             status = wlan_11ax_cfg_ioctl(pmadapter, pioctl_req);
-			break;
+            break;
 #endif
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;

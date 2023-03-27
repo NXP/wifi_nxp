@@ -18,6 +18,9 @@ Change log:
 
 #include "type_decls.h"
 #include <wm_os.h>
+#ifdef CONFIG_WPA_SUPP
+#include <ieee802_11_defs.h>
+#endif
 
 /** MLAN release version */
 #define MLAN_RELEASE_VERSION "310"
@@ -299,6 +302,26 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** Default memory allocation flag */
 #define MLAN_MEM_DEF 0U
 
+/** MrvlExtIEtypesHeader_t */
+typedef MLAN_PACK_START struct _MrvlExtIEtypesHeader
+{
+    /** Header type */
+    t_u16 type;
+    /** Header length */
+    t_u16 len;
+    /** ext id */
+    t_u8 ext_id;
+} MLAN_PACK_END MrvlExtIEtypesHeader_t;
+
+/** MrvlIEtypes_Data_t */
+typedef MLAN_PACK_START struct _MrvlExtIEtypes_Data_t
+{
+    /** Header */
+    MrvlExtIEtypesHeader_t header;
+    /** Data */
+    t_u8 data[];
+} MLAN_PACK_END MrvlExtIEtypes_Data_t;
+
 /** mlan_status */
 typedef enum _mlan_status
 {
@@ -559,9 +582,9 @@ typedef MLAN_PACK_START struct _mlan_event_scan_result
 typedef struct _mlan_buffer
 {
     /** Pointer to previous mlan_buffer */
-    struct _mlan_buffer *pprev;
+    // struct _mlan_buffer *pprev;
     /** Pointer to next mlan_buffer */
-    struct _mlan_buffer *pnext;
+    // struct _mlan_buffer *pnext;
     /** Status code from firmware/driver */
     t_u32 status_code;
     /** Flags for this buffer */
@@ -586,17 +609,17 @@ typedef struct _mlan_buffer
     /** QoS priority */
     t_u32 priority;
     /** Time stamp when packet is received (seconds) */
-    t_u32 in_ts_sec;
+    // t_u32 in_ts_sec;
     /** Time stamp when packet is received (micro seconds) */
-    t_u32 in_ts_usec;
+    // t_u32 in_ts_usec;
     /** Time stamp when packet is processed (seconds) */
-    t_u32 out_ts_sec;
+    // t_u32 out_ts_sec;
     /** Time stamp when packet is processed (micro seconds) */
-    t_u32 out_ts_usec;
+    // t_u32 out_ts_usec;
 
     /** Fields below are valid for MLAN module only */
     /** Pointer to parent mlan_buffer */
-    struct _mlan_buffer *pparent;
+    // struct _mlan_buffer *pparent;
     /** Use count for this buffer */
     t_u32 use_count;
 } mlan_buffer, *pmlan_buffer;
@@ -629,7 +652,11 @@ typedef MLAN_PACK_START enum _mlan_cmd_result_e {
 } MLAN_PACK_END mlan_cmd_result_e;
 
 /** Type enumeration of WMM AC_QUEUES */
+#ifndef CONFIG_WPA_SUPP
 typedef MLAN_PACK_START enum _mlan_wmm_ac_e { WMM_AC_BK, WMM_AC_BE, WMM_AC_VI, WMM_AC_VO } MLAN_PACK_END mlan_wmm_ac_e;
+#else
+typedef enum wmm_ac mlan_wmm_ac_e;
+#endif
 
 /** Type enumeration for the action field in the Queue Config command */
 typedef MLAN_PACK_START enum _mlan_wmm_queue_config_action_e {
@@ -739,6 +766,49 @@ typedef MLAN_PACK_START struct _mlan_ds_misc_custom_ie
     /** Max mgmt IE TLV */
     tlvbuf_max_mgmt_ie max_mgmt_ie;
 } MLAN_PACK_END mlan_ds_misc_custom_ie;
+
+/** channel type */
+enum mlan_channel_type
+{
+    CHAN_NO_HT,
+    CHAN_HT20,
+    CHAN_HT40MINUS,
+    CHAN_HT40PLUS,
+    CHAN_VHT80
+};
+
+/** channel band */
+enum
+{
+    BAND_2GHZ = 0,
+    BAND_5GHZ = 1,
+    BAND_6GHZ = 2,
+    BAND_4GHZ = 3,
+};
+
+/** Band_Config_t */
+typedef MLAN_PACK_START struct _Band_Config_t
+{
+#ifdef BIG_ENDIAN_SUPPORT
+    /** Channel Selection Mode - (00)=manual, (01)=ACS,  (02)=user*/
+    t_u8 scanMode : 2;
+    /** Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below */
+    t_u8 chan2Offset : 2;
+    /** Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz */
+    t_u8 chanWidth : 2;
+    /** Band Info - (00)=2.4GHz, (01)=5GHz */
+    t_u8 chanBand : 2;
+#else
+    /** Band Info - (00)=2.4GHz, (01)=5GHz */
+    t_u8 chanBand : 2;
+    /** Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz */
+    t_u8 chanWidth : 2;
+    /** Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below */
+    t_u8 chan2Offset : 2;
+    /** Channel Selection Mode - (00)=manual, (01)=ACS, (02)=Adoption mode*/
+    t_u8 scanMode : 2;
+#endif
+} MLAN_PACK_END Band_Config_t;
 
 /** csi event data structure */
 #ifdef CONFIG_CSI

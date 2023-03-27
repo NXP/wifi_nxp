@@ -1006,12 +1006,10 @@ static mlan_status wlan_cmd_802_11_key_material(
         {
             pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
         }
-#ifdef ENABLE_802_11W
         if ((pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK) != 0U)
         {
             pkey_material->key_param_set.key_info = KEY_INFO_CMAC_AES_KEY;
         }
-#endif
         pkey_material->key_param_set.key_info = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(pkey_material->action));
@@ -1024,7 +1022,7 @@ static mlan_status wlan_cmd_802_11_key_material(
         pkey_material->key_param_set.type     = wlan_cpu_to_le16(TLV_TYPE_KEY_PARAM_V2);
         pkey_material->key_param_set.length   = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN);
         pkey_material->key_param_set.key_idx  = (t_u8)pkey->key_index & KEY_INDEX_MASK;
-        pkey_material->key_param_set.key_info = KEY_INFO_MCAST_KEY | KEY_INFO_UCAST_KEY;
+        pkey_material->key_param_set.key_info = wlan_cpu_to_le16(KEY_INFO_MCAST_KEY | KEY_INFO_UCAST_KEY);
         (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.mac_addr, pkey->mac_addr, MLAN_MAC_ADDR_LENGTH);
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(pkey_material->action));
@@ -1057,10 +1055,6 @@ static mlan_status wlan_cmd_802_11_key_material(
             else
             {
                 pkey_material->key_param_set.key_info |= KEY_INFO_UCAST_KEY;
-            }
-            if ((pkey->key_flags & KEY_FLAG_SET_TX_KEY) != 0U)
-            {
-                pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
             }
         }
         pkey_material->key_param_set.key_info               = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
@@ -1126,18 +1120,46 @@ static mlan_status wlan_cmd_802_11_key_material(
         }
     }
     pkey_material->key_param_set.key_info = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
-#ifdef ENABLE_802_11W
-    if (pkey->key_len == WPA_AES_KEY_LEN && !(pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
+    if (pkey->key_flags & KEY_FLAG_GCMP || pkey->key_flags & KEY_FLAG_GCMP_256)
     {
-#else
-    if (pkey->key_len == WPA_AES_KEY_LEN)
+        if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
+        {
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.gcmp.pn, pkey->pn, SEQ_MAX_SIZE);
+        }
+        if (pkey->key_flags & KEY_FLAG_GCMP)
+            pkey_material->key_param_set.key_type = KEY_TYPE_ID_GCMP;
+        else
+            pkey_material->key_param_set.key_type = (t_u8)KEY_TYPE_ID_GCMP_256;
+        pkey_material->key_param_set.key_params.gcmp.key_len = wlan_cpu_to_le16(pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.gcmp.key, pkey->key_material,
+                       pkey->key_len);
+        pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(gcmp_param));
+        cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
+                                     sizeof(gcmp_param) + sizeof(pkey_material->action));
+        PRINTM(MCMND, "Set GCMP Key\n");
+        goto done;
+    }
+    if (pkey->key_flags & KEY_FLAG_CCMP_256)
     {
-#endif
         if ((pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID)) != 0U)
         {
-            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.pn, pkey->pn, SEQ_MAX_SIZE);
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.ccmp256.pn, pkey->pn, SEQ_MAX_SIZE);
         }
-        pkey_material->key_param_set.key_type               = (t_u8)KEY_TYPE_ID_AES;
+        pkey_material->key_param_set.key_type                   = (t_u8)KEY_TYPE_ID_CCMP_256;
+        pkey_material->key_param_set.key_params.ccmp256.key_len = wlan_cpu_to_le16(pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.ccmp256.key, pkey->key_material,
+                       pkey->key_len);
+        pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(ccmp_256_param));
+        cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
+                                     sizeof(ccmp_256_param) + sizeof(pkey_material->action));
+        PRINTM(MCMND, "Set CCMP256 Key\n");
+        goto done;
+    }
+    if (pkey->key_len == WPA_AES_KEY_LEN && !(pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
+    {
+        if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.pn, pkey->pn, SEQ_MAX_SIZE);
+        pkey_material->key_param_set.key_type               = KEY_TYPE_ID_AES;
         pkey_material->key_param_set.key_params.aes.key_len = wlan_cpu_to_le16(pkey->key_len);
         (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.aes.key, pkey->key_material,
                        pkey->key_len);
@@ -1147,7 +1169,6 @@ static mlan_status wlan_cmd_802_11_key_material(
         PRINTM(MCMND, "Set AES Key\n");
         goto done;
     }
-#ifdef ENABLE_802_11W
     if (pkey->key_len == WPA_IGTK_KEY_LEN && (pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
     {
         if ((pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID)) != 0U)
@@ -1155,19 +1176,41 @@ static mlan_status wlan_cmd_802_11_key_material(
             (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.ipn, pkey->pn,
                            SEQ_MAX_SIZE);
         }
-        pkey_material->key_param_set.key_info &= ~((t_u16)KEY_INFO_MCAST_KEY);
+        pkey_material->key_param_set.key_info &= ~(wlan_cpu_to_le16(KEY_INFO_MCAST_KEY));
         pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_MCAST_IGTK);
-        pkey_material->key_param_set.key_type                    = (t_u8)KEY_TYPE_ID_AES_CMAC;
+        if (pkey->key_flags & KEY_FLAG_GMAC_128)
+            pkey_material->key_param_set.key_type = KEY_TYPE_ID_BIP_GMAC_128;
+        else
+            pkey_material->key_param_set.key_type = (t_u8)KEY_TYPE_ID_AES_CMAC;
         pkey_material->key_param_set.key_params.cmac_aes.key_len = wlan_cpu_to_le16(pkey->key_len);
         (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.key, pkey->key_material,
                        pkey->key_len);
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(cmac_aes_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(cmac_aes_param) + sizeof(pkey_material->action));
-        PRINTM(MCMND, "Set CMAC AES Key\n");
+        if (pkey->key_flags & KEY_FLAG_GMAC_128)
+            PRINTM(MCMND, "Set AES 128 GMAC Key\n");
+        else
+            PRINTM(MCMND, "Set CMAC AES Key\n");
         goto done;
     }
-#endif
+    if (pkey->key_len == WPA_IGTK_256_KEY_LEN && (pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
+    {
+        if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
+            (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.ipn, pkey->pn,
+                           SEQ_MAX_SIZE);
+        pkey_material->key_param_set.key_info &= ~(wlan_cpu_to_le16(KEY_INFO_MCAST_KEY));
+        pkey_material->key_param_set.key_info |= wlan_cpu_to_le16(KEY_INFO_AES_MCAST_IGTK);
+        pkey_material->key_param_set.key_type                    = KEY_TYPE_ID_BIP_GMAC_256;
+        pkey_material->key_param_set.key_params.cmac_aes.key_len = wlan_cpu_to_le16(pkey->key_len);
+        (void)__memcpy(pmpriv->adapter, pkey_material->key_param_set.key_params.cmac_aes.key, pkey->key_material,
+                       pkey->key_len);
+        pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(gmac_aes_256_param));
+        cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
+                                     sizeof(gmac_aes_256_param) + sizeof(pkey_material->action));
+        PRINTM(MCMND, "Set AES 256 GMAC Key\n");
+        goto done;
+    }
     if (pkey->key_len == WPA_TKIP_KEY_LEN)
     {
         if ((pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID)) != 0U)
@@ -1184,9 +1227,6 @@ static mlan_status wlan_cmd_802_11_key_material(
         PRINTM(MCMND, "Set TKIP Key\n");
     }
 done:
-#if 0
-	dump_hex(cmd, cmd->size);
-#endif
     LEAVE();
     return ret;
 }
@@ -2607,7 +2647,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_802_11_scan(pmpriv, cmd_ptr, pdata_buf);
             break;
 #endif
-#ifdef CONFIG_ROAMING
+#ifdef CONFIG_BG_SCAN
         case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
             ret = wlan_cmd_bgscan_config(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;

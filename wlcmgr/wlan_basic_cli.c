@@ -52,8 +52,10 @@ static void test_wlan_get_mac_address(int argc, char **argv)
     }
     else
     {
-        (void)PRINTF("STA MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", sta_mac[0], sta_mac[1], sta_mac[2], sta_mac[3], sta_mac[4], sta_mac[5]);
-        (void)PRINTF("uAP MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", uap_mac[0], uap_mac[1], uap_mac[2], uap_mac[3], uap_mac[4], uap_mac[5]);
+        (void)PRINTF("STA MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", sta_mac[0], sta_mac[1], sta_mac[2],
+                     sta_mac[3], sta_mac[4], sta_mac[5]);
+        (void)PRINTF("uAP MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", uap_mac[0], uap_mac[1], uap_mac[2],
+                     uap_mac[3], uap_mac[4], uap_mac[5]);
     }
 #ifdef CONFIG_P2P
     (void)PRINTF("P2P MAC address\r\n");

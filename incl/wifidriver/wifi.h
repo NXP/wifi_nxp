@@ -34,13 +34,28 @@
 #define CONFIG_UAP_AMPDU_RX       1
 #define CONFIG_WIFIDRIVER_PS_LOCK 1
 #define CONFIG_WNM_PS             1
-#define CONFIG_WIFI_EU_CRYPTO     1
+#define CONFIG_COMBO_SCAN         1
+#define CONFIG_BG_SCAN            1
+#define CONFIG_HOST_MLME          1
+#define UAP_HOST_MLME             1
+#endif
+
+#ifdef IW61x
+#define CONFIG_WPA_SUPP 1
+#endif
+#ifdef CONFIG_WPA_SUPP
+#define CONFIG_HOSTAPD                    1
+#define CONFIG_WPA_SUPP_AP                1
+#define CONFIG_WPA_SUPP_WPS               1
+#define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 1
 #endif
 
 #ifdef CONFIG_11AX
 #define CONFIG_11K 1
 #define CONFIG_11V 1
+#ifndef CONFIG_WPA_SUPP
 #define CONFIG_MBO 1
+#endif
 #endif
 
 #include <wifi-decl.h>
@@ -55,6 +70,17 @@
 #endif
 
 #define MAX_NUM_CHANS_IN_NBOR_RPT 6U
+
+/** BIT value */
+#ifndef MBIT
+#define MBIT(x) (((t_u32)1) << (x))
+#endif
+
+#define WIFI_MGMT_DIASSOC MBIT(10)
+#define WIFI_MGMT_AUTH    MBIT(11)
+#define WIFI_MGMT_DEAUTH  MBIT(12)
+/** BITMAP for Action frame */
+#define WIFI_MGMT_ACTION MBIT(13)
 
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;
@@ -205,6 +231,7 @@ void wifi_set_tx_status(t_u8 status);
  */
 void wifi_set_rx_status(t_u8 status);
 
+#ifndef CONFIG_WIFI_RX_REORDER
 /**
  * Register Data callback function with Wi-Fi Driver to receive
  * DATA from SDIO.
@@ -222,6 +249,13 @@ int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t
 
 /** Deregister Data callback function from Wi-Fi Driver */
 void wifi_deregister_data_input_callback(void);
+#else
+int wifi_register_gen_pbuf_from_data2_callback(void *(*gen_pbuf_from_data2)(t_u8 *payload,
+                                                                            t_u16 datalen,
+                                                                            void **p_payload));
+
+void wifi_deregister_gen_pbuf_from_data2_callback(void);
+#endif
 
 /**
  * Register Data callback function with Wi-Fi Driver to receive
@@ -242,7 +276,8 @@ int wifi_register_amsdu_data_input_callback(void (*amsdu_data_intput_callback)(u
 /** Deregister Data callback function from Wi-Fi Driver */
 void wifi_deregister_amsdu_data_input_callback(void);
 
-int wifi_register_deliver_packet_above_callback(void (*deliver_packet_above_callback)(uint8_t interface,
+int wifi_register_deliver_packet_above_callback(void (*deliver_packet_above_callback)(void *rxpd,
+                                                                                      uint8_t interface,
                                                                                       void *lwip_pbuf));
 
 void wifi_deregister_deliver_packet_above_callback(void);
@@ -303,7 +338,7 @@ void wifi_sta_ampdu_tx_enable(void);
  */
 void wifi_sta_ampdu_tx_disable(void);
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 /**
  * This API can be used to set tid to enable AMPDU support on the go
  * when station is a transmitter.
@@ -326,7 +361,7 @@ t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
  */
 void wifi_sta_ampdu_rx_enable(void);
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 /**
  * This API can be used to set tid to enable AMPDU support on the go
  * when station is a receiver.
@@ -442,6 +477,8 @@ int wifi_set_txrx_histogram(void *cfg, t_u8 *data);
 
 #ifdef CONFIG_ROAMING
 int wifi_config_roaming(const int enable, const uint8_t rssi_low);
+#endif
+#ifdef CONFIG_BG_SCAN
 void wifi_config_bgscan_and_rssi(const char *ssid);
 #endif
 
@@ -548,14 +585,15 @@ void wifi_set_mac_addr(uint8_t *mac);
 
 /** Set wifi MAC address in firmware at run time.
  *
- * This function may be used to set wifi MAC address in firmware.
+ * This function may be used to set wifi MAC address in firmware as per passed bss type.
  *
  * @param[in] mac The new MAC Address
+ * @param[in] bss_type BSS Type
  *
  */
-void _wifi_set_mac_addr(uint8_t *mac, mlan_bss_type bss_type);
+void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type);
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_WIFI_TX_BUFF
 /**
  * Check whether the tx buffer size setting is reasonable.
@@ -798,8 +836,9 @@ int wifi_get_uap_channel(int *channel);
 int wifi_enable_11d_support(void);
 int wifi_set_domain_params(wifi_domain_param_t *dp);
 int wifi_set_country(country_code_t country);
-int wifi_uap_set_country(country_code_t country);
 country_code_t wifi_get_country(void);
+int wifi_uap_set_country(country_code_t country);
+country_code_t wifi_uap_get_country(void);
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables(void);
 void wifi_free_fw_region_and_cfp_tables(void);
@@ -1112,6 +1151,9 @@ int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
+int wifi_uap_stop();
+int wifi_uap_do_acs();
+
 #ifdef CONFIG_WIFI_CAPA
 /**
  * Set uAP capability
@@ -1131,7 +1173,6 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
 #endif
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 
-int wifi_uap_stop(enum wlan_bss_type type);
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -1144,6 +1185,10 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type);
 
 #ifdef CONFIG_WIFI_FRAG_THRESHOLD
 int wifi_set_frag(int frag, mlan_bss_type bss_type);
+#endif
+
+#ifdef CONFIG_11R
+bool wifi_same_ess_ft();
 #endif
 
 #ifdef CONFIG_11K_OFFLOAD
@@ -1212,6 +1257,25 @@ enum wlan_nlist_mode
     WLAN_NLIST_11V_PREFERRED = 3,
 #endif
 };
+
+#define MAX_NEIGHBOR_AP_LIMIT 6U
+
+typedef struct _wlan_rrm_neighbor_ap_t
+{
+    char ssid[MLAN_MAX_SSID_LENGTH];
+    t_u8 bssid[MLAN_MAX_SSID_LENGTH];
+    t_u8 bssidInfo[32];
+    int op_class;
+    int channel;
+    int phy_type;
+    int freq;
+} wlan_rrm_neighbor_ap_t;
+
+typedef struct _wlan_neighbor_report_t
+{
+    wlan_rrm_neighbor_ap_t neighbor_ap[MAX_NEIGHBOR_AP_LIMIT];
+    int neighbor_cnt;
+} wlan_rrm_neighbor_report_t;
 
 typedef struct _wlan_nlist_report_param
 {
@@ -1389,7 +1453,7 @@ void wifi_handle_event_data_pause(void *data);
 bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue);
 
 uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
 uint8_t *wifi_get_wmm_send_outbuf(mlan_wmm_ac_e ac, t_u8 offset);
 #endif
@@ -1403,7 +1467,7 @@ void wifi_wmm_tx_stats_dump(int bss_type);
 
 wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
 
-int wifi_set_rssi_low_threshold(const uint8_t low_rssi);
+int wifi_set_rssi_low_threshold(uint8_t *low_rssi);
 
 #ifdef CONFIG_HEAP_DEBUG
 /**
@@ -1484,6 +1548,12 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num);
  **/
 
 int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
+
+#ifdef CONFIG_WPA_SUPP
+int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
+int wifi_nxp_scan_res_get(void);
+int wifi_nxp_survey_res_get(void);
+#endif
 
 #ifdef CONFIG_1AS
 /**
@@ -1662,4 +1732,68 @@ void set_monitor_flag(bool flag);
 bool get_monitor_flag();
 
 #endif
+
+#ifdef CONFIG_WMM
+t_u8 wifi_wmm_get_packet_cnt(void);
 #endif
+
+#ifdef CONFIG_CSI
+/**
+ * Send the csi config parameter to FW.
+ *
+ *\param[in] csi_params Csi config parameter
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_csi_cfg(wifi_csi_config_params_t *csi_params);
+int register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
+void csi_local_buff_init();
+void csi_save_data_to_local_buff(void *data);
+void csi_deliver_data_to_user();
+
+typedef struct _csi_local_buff_statu
+{
+    t_u8 write_index;
+    t_u8 read_index;
+    t_u8 valid_data_cnt;
+    /** Semaphore to protect data parameters */
+    os_semaphore_t csi_data_sem;
+} csi_local_buff_statu;
+
+extern int csi_event_cnt;
+extern t_u64 csi_event_data_len;
+#endif
+
+int wifi_send_mgmt_auth_request(const t_u8 channel,
+                                const t_u8 auth_alg,
+                                const t_u8 auth_seq_num,
+                                const t_u8 status_code,
+                                const t_u8 *dest,
+                                const t_u8 *sae_data,
+                                const t_u16 sae_data_len);
+int wifi_send_scan_cmd(t_u8 bss_mode,
+                       const t_u8 *specific_bssid,
+                       const char *ssid,
+                       const char *ssid2,
+                       const t_u8 num_channels,
+                       const wifi_scan_channel_list_t *chan_list,
+                       const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
+#ifdef SCAN_CHANNEL_GAP
+                       const t_u16 scan_chan_gap,
+#endif
+                       const bool keep_previous_scan,
+                       const bool active_scan_triggered);
+int wifi_deauthenticate(uint8_t *bssid);
+
+#ifdef CONFIG_WPA_SUPP_AP
+t_u16 wifi_get_default_ht_capab();
+t_u32 wifi_get_default_vht_capab();
+
+void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled);
+void wifi_uap_client_deauth(t_u8 *sta_addr);
+
+#endif
+
+#endif /* __WIFI_H__ */

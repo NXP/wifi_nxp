@@ -1279,7 +1279,7 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
         {
             for (i = 0; i < MAX_NUM_TID; ++i)
             {
-#if !defined(RW610)
+#if !defined(WIFI_ADD_ON)
                 priv->aggr_prio_tbl[i].amsdu = BA_STREAM_NOT_ALLOWED;
 #endif
 #ifdef WIFI_DIRECT_SUPPORT

@@ -53,6 +53,11 @@ typedef enum _mlan_ioctl_req_id
 #ifdef WIFI_DIRECT_SUPPORT
     MLAN_OID_WIFI_DIRECT_MODE,
 #endif
+#ifdef UAP_HOST_MLME
+#ifdef UAP_SUPPORT
+    MLAN_OID_UAP_ADD_STATION = 0x0002001C,
+#endif
+#endif
 #ifdef CONFIG_ECSA
     MLAN_OID_ACTION_CHAN_SWITCH = 0x0002001E,
 #endif
@@ -307,6 +312,11 @@ typedef struct _mlan_ioctl_req
 /** Max active scan time for each channel in milliseconds  */
 #define MRVDRV_MAX_ACTIVE_SCAN_CHAN_TIME 500
 
+#ifdef SCAN_CHANNEL_GAP
+/** Max gap time between 2 scan in milliseconds  */
+#define MRVDRV_MAX_SCAN_CHAN_GAP_TIME 500
+#endif
+
 /** Maximum number of probes to send on each channel */
 #define MAX_PROBES 4U
 
@@ -327,6 +337,10 @@ typedef struct _wlan_get_scan_table_fixed
     t_u8 channel;
     /** RSSI for the received packet */
     t_u8 rssi;
+#ifdef SCAN_CHANNEL_GAP
+    /** channel load */
+    t_u8 chan_load;
+#endif
     /** TSF value in microseconds from the firmware at packet reception */
     t_u64 network_tsf;
 } wlan_get_scan_table_fixed;
@@ -462,6 +476,12 @@ typedef struct _mlan_scan_resp
     t_u8 *pscan_table;
     /* Age in seconds */
     t_u32 age_in_secs;
+#ifdef SCAN_CHANNEL_GAP
+    /** channel statstics */
+    t_u8 *pchan_stats;
+    /** Number of records in the chan_stats */
+    t_u32 num_in_chan_stats;
+#endif
 } mlan_scan_resp, *pmlan_scan_resp;
 
 /** Type definition of mlan_scan_cfg */
@@ -478,6 +498,10 @@ typedef struct _mlan_scan_cfg
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     /** Extended Scan */
     t_u32 ext_scan;
+#ifdef SCAN_CHANNEL_GAP
+    /** scan channel gap */
+    t_u32 scan_chan_gap;
+#endif
 #endif
 } mlan_scan_cfg, *pmlan_scan_cfg;
 
@@ -599,6 +623,15 @@ typedef struct _mlan_ssid_bssid
     t_u32 idx;
 } mlan_ssid_bssid;
 
+#ifdef UAP_SUPPORT
+/** UAP FLAG: Host based */
+#define UAP_FLAG_HOST_BASED MBIT(0)
+#ifdef UAP_HOST_MLME
+/** UAP FLAG: Host mlme */
+#define UAP_FLAG_HOST_MLME MBIT(1)
+#endif
+#endif
+
 #ifdef CONFIG_11AX
 #define MLAN_11AXCMD_SR_SUBID           0x102
 #define MLAN_11AXCMD_BEAM_SUBID         0x103
@@ -635,7 +668,7 @@ typedef struct _mlan_ssid_bssid
 /** Minimum TX Power Limit */
 #define MIN_TX_POWER 0
 /** MAX station count */
-#define MAX_STA_COUNT 10
+#define MAX_UAP_STA_COUNT 10
 /** Maximum RTS threshold */
 #define MAX_RTS_THRESHOLD 2347
 /** Maximum fragmentation threshold */
@@ -718,12 +751,16 @@ typedef struct _mlan_ssid_bssid
 /** Key_mgmt_owe */
 #define KEY_MGMT_OWE 0x200
 #endif
-/** Key_mgmt_psk */
-#define KEY_MGMT_NONE 0x04
 /** Key_mgmt_none */
+#define KEY_MGMT_NONE 0x04
+/** Key_mgmt_psk */
 #define KEY_MGMT_PSK 0x02
+/** Key_mgmt_psk_sha256 */
+#define KEY_MGMT_PSK_SHA256 0x100
 /** Key_mgmt_eap  */
 #define KEY_MGMT_EAP 0x01
+/** Key_mgmt_psk sha256 */
+#define KEY_MGMT_PSK_SHA256 0x100
 
 /** TKIP */
 #define CIPHER_TKIP 0x04
@@ -1003,6 +1040,8 @@ typedef struct _mlan_uap_bss_param
     scan_chan_list chan_list[MLAN_MAX_CHANNEL];
     /** Wmm parameters */
     wmm_parameter_t wmm_para;
+    /** uap host based config */
+    t_u32 uap_host_based_config;
 } mlan_uap_bss_param;
 
 /** mlan_deauth_param */
@@ -1066,6 +1105,69 @@ typedef struct _mlan_ds_bw_chan_oper
 } mlan_ds_bw_chan_oper;
 #endif
 
+/** mlan_uap_acs_scan */
+typedef struct _mlan_uap_acs_scan
+{
+    /** band */
+    Band_Config_t bandcfg;
+    /** channel */
+    t_u8 chan;
+} mlan_uap_acs_scan;
+
+#ifdef UAP_HOST_MLME
+/** station is authorized (802.1X) */
+#define STA_FLAG_AUTHORIZED MBIT(1)
+/** Station is capable of receiving frames with short barker preamble */
+#define STA_FLAG_SHORT_PREAMBLE MBIT(2)
+/** station is WME/QoS capable */
+#define STA_FLAG_WME MBIT(3)
+/** station uses management frame protection */
+#define STA_FLAG_MFP MBIT(4)
+/** station is authenticated */
+#define STA_FLAG_AUTHENTICATED MBIT(5)
+/** station is a TDLS peer */
+#define STA_FLAG_TDLS_PEER MBIT(6)
+/** station is associated */
+#define STA_FLAG_ASSOCIATED MBIT(7)
+/** mlan_ds_sta_info */
+typedef struct _mlan_ds_sta_info
+{
+    /** aid */
+    t_u16 aid;
+    /** peer_mac */
+    t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
+    /** Listen Interval */
+    int listen_interval;
+    /** Capability Info */
+    t_u16 cap_info;
+    /** station flag */
+    t_u32 sta_flags;
+    /** tlv len */
+    t_u16 tlv_len;
+    /** tlv start */
+    t_u8 tlv[];
+} mlan_ds_sta_info;
+#endif
+
+/** Type definition of mlan_embedded_dhcp_config */
+typedef struct MLAN_PACK_START _mlan_embedded_dhcp_config
+{
+    /** Host IP address */
+    t_u32 host_ip_addr;
+    /** Start IP address */
+    t_u32 start_ip_addr;
+    /** Sub mask */
+    t_u32 subnet_mask;
+    /** Lease time */
+    t_u32 lease_time;
+    /** Limit count */
+    t_u8 limit_count;
+    /** Enabled/disbaled */
+    t_u8 is_enabled;
+    /** Get / Set action*/
+    t_u16 action;
+} MLAN_PACK_END mlan_embedded_dhcp_config, *pmlan_embedded_dhcp_config;
+
 /** Type definition of mlan_ds_bss for MLAN_IOCTL_BSS */
 typedef struct _mlan_ds_bss
 {
@@ -1113,6 +1215,16 @@ typedef struct _mlan_ds_bss
 #ifdef WIFI_DIRECT_SUPPORT
         t_u16 wfd_mode;
 #endif
+        /** AP acs scan MLAN_OID_UAP_ACS_SCAN */
+        mlan_uap_acs_scan ap_acs_scan;
+        /** host based flag for MLAN_OID_BSS_START */
+        t_u8 host_based;
+#ifdef UAP_HOST_MLME
+#ifdef UAP_SUPPORT
+        /** STA info for MLAN_OID_UAP_ADD_STATION */
+        mlan_ds_sta_info sta_info;
+#endif
+#endif
     } param;
 } mlan_ds_bss, *pmlan_ds_bss;
 
@@ -1158,7 +1270,7 @@ typedef struct _mlan_ds_custom_reg_domain
 #define BAND_AAX 512U
 #endif
 
-#ifdef CONFIG_ROAMING
+#ifdef CONFIG_BG_SCAN
 /** band AUTO */
 #define WIFI_FREQUENCY_BAND_AUTO 0
 /** band 5G */
@@ -1468,6 +1580,20 @@ typedef struct _mlan_fw_info
     t_u8 hw_dev_mcs_support;
     /** fw supported band */
     t_u16 fw_bands;
+#ifdef CONFIG_11AX
+    /** length of hw he capability */
+    t_u8 hw_hecap_len;
+    /** 802.11ax HE capability */
+    t_u8 hw_he_cap[54];
+    /** length of hw 2.4G he capability */
+    t_u8 hw_2g_hecap_len;
+    /** 802.11ax 2.4G HE capability */
+    t_u8 hw_2g_he_cap[54];
+#ifdef ENABLE_802_116E
+    /** 802.11ax 6G HE capability */
+    t_u16 hw_he_6g_cap;
+#endif
+#endif
 } mlan_fw_info, *pmlan_fw_info;
 
 /** Version string buffer length */
@@ -1846,8 +1972,23 @@ typedef enum _mlan_psk_type
 #define KEY_FLAG_SET_TX_KEY 0x00000008U
 /** key flag for mcast IGTK */
 #define KEY_FLAG_AES_MCAST_IGTK 0x00000010U
+#ifdef MAC80211_SUPPORT_MESH
+/** key flag for mesh group Rx key */
+#define KEY_FLAG_SET_GRP_TX_KEY 0x00000100
+#endif
 /** key flag for remove key */
-#define KEY_FLAG_REMOVE_KEY 0x80000000U
+#define KEY_FLAG_REMOVE_KEY 0x80000000
+/** key flag for GCMP */
+#define KEY_FLAG_GCMP 0x00000020
+/** key flag for GCMP_256 */
+#define KEY_FLAG_GCMP_256 0x00000040
+/** key flag for ccmp 256 */
+#define KEY_FLAG_CCMP_256 0x00000080
+/** key flag for GMAC_128 */
+#define KEY_FLAG_GMAC_128 0x00000100
+/** key flag for GMAC_256 */
+#define KEY_FLAG_GMAC_256 0x00000200
+
 /* Clear all key indexes */
 #define KEY_INDEX_CLEAR_ALL 0x0000000F
 
@@ -3772,6 +3913,7 @@ typedef struct _mlan_ds_misc_cfg
 #ifdef CONFIG_ECSA
         mlan_ds_bw_chan_oper bw_chan_oper;
 #endif
+        mlan_embedded_dhcp_config embedded_dhcp_config;
     } param;
 } mlan_ds_misc_cfg, *pmlan_ds_misc_cfg;
 

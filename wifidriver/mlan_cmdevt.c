@@ -3251,7 +3251,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 #endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef OTP_CHANINFO
-    if ((pmadapter->otp_region != MNULL) && (pmadapter->otp_region->force_reg != 0U))
+    if ((pmadapter->otp_region != MNULL) && (pmadapter->otp_region->force_reg == 0U))
     {
 #endif
 
@@ -3310,8 +3310,8 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 ext_tlv = (MrvlIEtypes_Extension_t *)tlv;
                 if (ext_tlv->ext_id == HE_CAPABILITY)
                 {
-                    ext_tlv->type          = tlv_type;
-                    ext_tlv->len           = tlv_len;
+                    ext_tlv->type = tlv_type;
+                    ext_tlv->len  = tlv_len;
                     wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
                 }
                 break;
@@ -3532,8 +3532,9 @@ done:
 
 #ifdef CONFIG_COMPRESS_TX_PWTBL
 mlan_status wlan_cmd_region_power_cfg(pmlan_private pmpriv,
-                            HostCmd_DS_COMMAND *cmd,
-                            t_u16 cmd_action, t_void *pdata_buf)
+                                      HostCmd_DS_COMMAND *cmd,
+                                      t_u16 cmd_action,
+                                      t_void *pdata_buf)
 {
     t_u16 buf_len;
 

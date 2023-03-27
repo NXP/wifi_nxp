@@ -9,11 +9,23 @@
 #define __WLAN_BT_FW_H__
 
 #if defined(SD8801)
+#ifdef CONFIG_WPA_SUPP
+#include "sd8801_fp92_wlan.h"
+#else
 #include "sd8801_wlan.h"
+#endif
 #elif defined(SD8978)
+#ifdef CONFIG_WPA_SUPP
+#include "sduartIW416_fp92_wlan_bt.h"
+#else
 #include "sduartIW416_wlan_bt.h"
+#endif
 #elif defined(SD8987)
+#ifdef CONFIG_WPA_SUPP
+#include "sduart8987_fp92_wlan_bt.h"
+#else
 #include "sduart8987_wlan_bt.h"
+#endif
 #elif defined(SD8997)
 #include "sduart8997_wlan_bt.h"
 #elif defined(SD9097)

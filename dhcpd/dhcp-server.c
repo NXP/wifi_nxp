@@ -559,6 +559,9 @@ void dhcp_server(os_thread_arg_t data)
 done:
     dhcp_clean_sockets();
     dns_free_allocations();
+#ifdef CONFIG_WPA_SUPP
+    netconn_thread_cleanup();
+#endif
     (void)os_mutex_put(&dhcpd_mutex);
     os_thread_self_complete(NULL);
 }

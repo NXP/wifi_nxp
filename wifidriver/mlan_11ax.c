@@ -501,17 +501,17 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
  */
 mlan_status wlan_cmd_11ax_cmd(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
 {
-    HostCmd_DS_11AX_CMD_CFG *axcmd    = &cmd->params.axcmd;
-    mlan_ds_11ax_cmd_cfg *ds_11ax_cmd = (mlan_ds_11ax_cmd_cfg *)pdata_buf;
-    mlan_ds_11ax_txomi_cmd *txomi_cmd = (mlan_ds_11ax_txomi_cmd *)&ds_11ax_cmd->param;
+    HostCmd_DS_11AX_CMD_CFG *axcmd        = &cmd->params.axcmd;
+    mlan_ds_11ax_cmd_cfg *ds_11ax_cmd     = (mlan_ds_11ax_cmd_cfg *)pdata_buf;
+    mlan_ds_11ax_txomi_cmd *txomi_cmd     = (mlan_ds_11ax_txomi_cmd *)&ds_11ax_cmd->param;
     mlan_ds_11ax_toltime_cmd *toltime_cmd = (mlan_ds_11ax_toltime_cmd *)&ds_11ax_cmd->param;
 
 #ifndef CONFIG_MLAN_WMSDK
-    mlan_ds_11ax_sr_cmd *sr_cmd           = (mlan_ds_11ax_sr_cmd *)&ds_11ax_cmd->param;
-    mlan_ds_11ax_beam_cmd *beam_cmd       = (mlan_ds_11ax_beam_cmd *)&ds_11ax_cmd->param;
-    mlan_ds_11ax_htc_cmd *htc_cmd         = (mlan_ds_11ax_htc_cmd *)&ds_11ax_cmd->param;
-    mlan_ds_11ax_txop_cmd *txop_cmd       = (mlan_ds_11ax_txop_cmd *)&ds_11ax_cmd->param;
-    MrvlIEtypes_Data_t *tlv               = MNULL;
+    mlan_ds_11ax_sr_cmd *sr_cmd     = (mlan_ds_11ax_sr_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_beam_cmd *beam_cmd = (mlan_ds_11ax_beam_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_htc_cmd *htc_cmd   = (mlan_ds_11ax_htc_cmd *)&ds_11ax_cmd->param;
+    mlan_ds_11ax_txop_cmd *txop_cmd = (mlan_ds_11ax_txop_cmd *)&ds_11ax_cmd->param;
+    MrvlIEtypes_Data_t *tlv         = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
 
     ENTER();

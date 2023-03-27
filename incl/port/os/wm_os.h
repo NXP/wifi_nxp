@@ -64,7 +64,7 @@
 #define os_dprintf(...)
 #endif
 
-#define is_isr_context() ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) > 0U) //(xPortIsInsideInterrupt())
+bool is_isr_context(void);
 
 /* System clock frequency. */
 extern uint32_t SystemCoreClock;
@@ -1074,7 +1074,6 @@ void os_disable_all_interrupts(void);
 /** Enable all interrupts at NVIC lebel */
 void os_enable_all_interrupts(void);
 
-#if defined(RW610)
 /* Init value for rand generator seed */
 extern uint32_t wm_rand_seed;
 
@@ -1115,5 +1114,7 @@ static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
     }
     return (low + os_rand() % (high - low));
 }
-#endif
+
+void os_dump_threadinfo(char *name);
+
 #endif /* ! _WM_OS_H_ */

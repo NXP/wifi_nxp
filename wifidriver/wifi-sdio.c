@@ -149,7 +149,7 @@ static int wlan_deinit_struct(void)
 
 int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
     SDIOPkt *sdiohdr     = (SDIOPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)(void *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 
@@ -159,7 +159,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     ptxpd->tx_pkt_type   = 0xE5;
     ptxpd->tx_control    = 0;
-    ptxpd->priority      = 0;
+    ptxpd->priority      = 7;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
@@ -176,7 +176,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 
 void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
     SDIOPkt *sdiohdr     = (SDIOPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)(void *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 #ifdef CONFIG_WMM
@@ -186,11 +186,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
     ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
-    if (ptxpd->tx_pkt_type == 0xe5U)
-    {
-        ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
-    }
-    ptxpd->tx_control = 0;
+    ptxpd->tx_control    = 0;
 #ifdef CONFIG_WMM
     t_u8 type_ip_offset = ptxpd->tx_pkt_offset + INTF_HEADER_LEN + MLAN_MAC_ADDR_LENGTH + MLAN_MAC_ADDR_LENGTH;
     if (data_ptr[type_ip_offset] == 0x8 && data_ptr[type_ip_offset + 1] == 0x0)
@@ -200,7 +196,22 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 #else
     ptxpd->priority = 0;
 #endif
-    ptxpd->flags         = 0;
+    ptxpd->flags = 0;
+    if (ptxpd->tx_pkt_type == 0xe5U)
+    {
+        ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
+#ifdef CONFIG_WPA_SUPP
+        ptxpd->priority = 7;
+
+        if (interface == BSS_TYPE_UAP)
+        {
+            if (!pmpriv->tx_seq_num)
+                pmpriv->tx_seq_num++;
+            ptxpd->tx_token_id = pmpriv->tx_seq_num++;
+            ptxpd->flags |= MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS;
+        }
+#endif
+    }
     ptxpd->pkt_delay_2ms = 0;
 
     sdiohdr->size = (t_u16)payloadlen;
@@ -560,7 +571,7 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
     return inbuf;
 }
 
-static t_u16 wlan_get_next_seq_num(void)
+static int wlan_get_next_seq_num(void)
 {
     seqnum++;
     return seqnum;
@@ -784,7 +795,7 @@ static void wlan_set_11n_cfg(void)
     (void)memset(outbuf, 0, SDIO_OUTBUF_LEN);
     wrapper_wlan_cmd_11n_cfg(&sdiopkt->hostcmd);
     /* sdiopkt = outbuf */
-    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->pkttype         = MLAN_TYPE_CMD;
     last_cmd_sent            = HostCmd_CMD_11N_CFG;
 
@@ -831,7 +842,7 @@ static void wlan_cmd_shutdown(void)
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.command = HostCmd_CMD_FUNC_SHUTDOWN;
     sdiopkt->hostcmd.size    = (t_u16)S_DS_GEN;
-    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->hostcmd.result  = 0;
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
@@ -876,7 +887,7 @@ static void wlan_cmd_init(void)
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.command = HostCmd_CMD_FUNC_INIT;
     sdiopkt->hostcmd.size    = (t_u16)S_DS_GEN;
-    sdiopkt->hostcmd.seq_num = wlan_get_next_seq_num();
+    sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->hostcmd.result  = 0;
 
     sdiopkt->pkttype = MLAN_TYPE_CMD;
@@ -1243,7 +1254,7 @@ retry_xmit:
         wifi_sdio_unlock();
         if (!retry)
         {
-            return MLAN_STATUS_FAILURE;
+            return MLAN_STATUS_RESOURCE;
         }
         else
         {
@@ -1286,14 +1297,14 @@ retry_xmit:
             wifi_e("USB mount callback is not registered");
 #endif
         wifi_sdio_unlock();
-        return MLAN_STATUS_FAILURE;
+        return MLAN_STATUS_RESOURCE;
     }
 
     wifi_sdio_unlock();
     return MLAN_STATUS_SUCCESS;
 }
 #endif
-mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
+mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 {
     t_u32 tx_blocks = 0, buflen = 0;
     uint32_t resp;
@@ -1327,9 +1338,9 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
         /* Mark the port number we will use */
         mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
     }
-    process_pkt_hdrs((t_u8 *)outbuf, txlen, interface);
+    process_pkt_hdrs((t_u8 *)buffer, txlen, interface);
     /* send CMD53 */
-    ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+    ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
 
     txportno++;
     if (txportno == mlan_adap->mp_end_port)
@@ -1357,7 +1368,7 @@ mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
         else
             wifi_e("USB mount callback is not registered");
 #endif
-        return MLAN_STATUS_FAILURE;
+        return MLAN_STATUS_RESOURCE;
     }
     return MLAN_STATUS_SUCCESS;
 }
@@ -1527,6 +1538,11 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
             rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
             rx_len    = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
+            if ((*rxlen + rx_len) > INBUF_SIZE)
+            {
+                break;
+            }
+
             *rxlen += rx_len;
             *rxblocks += rx_blocks;
 
@@ -1545,10 +1561,12 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             ports++;
 #endif
+#if 0
             if (pkt_cnt == SDIO_MP_AGGR_DEF_PKT_LIMIT)
             {
                 break;
             }
+#endif
 
 #if defined(SD8801)
             if ((pmadapter->curr_rd_port < start_port) &&

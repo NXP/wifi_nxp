@@ -31,6 +31,12 @@
 #define sdio_io_d(...)
 #endif /* ! CONFIG_SDIO_IO_DEBUG */
 
+#ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
+#define INBUF_SIZE (SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE)
+#else
+#define INBUF_SIZE (2 * DATA_BUFFER_SIZE)
+#endif /*CONFIG_SDIO_MULTI_PORT_RX_AGGR*/
+
 extern uint8_t outbuf[DATA_BUFFER_SIZE];
 
 extern uint8_t inbuf[];

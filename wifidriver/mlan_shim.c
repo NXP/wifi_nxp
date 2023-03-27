@@ -398,6 +398,8 @@ MLAN_API mlan_status mlan_unregister(IN t_void *pmlan_adapter)
 
     pcb = &pmadapter->callbacks;
 
+    wlan_free_adapter(pmadapter);
+
     /* Free private structures */
     for (i = 0; i < MIN(pmadapter->priv_num, MLAN_MAX_BSS_NUM); i++)
     {

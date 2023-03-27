@@ -415,8 +415,11 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
             { /* Do Nothing */
             }
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-            if ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT) ||
-                (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE))
+            if ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT)
+#ifdef CONFIG_11AX
+                || (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
+#endif
+            )
             {
                 (void)PRINTF("    NSS:        %d\r\n", (int)ds_rate.param.rate_cfg.nss);
             }

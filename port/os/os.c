@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <wm_os.h>
 #include <wmlog.h>
+#include <lwip/sys.h>
 
 #define mainTEST_TASK_PRIORITY (tskIDLE_PRIORITY)
 #define mainTEST_DELAY         (400 / portTICK_PERIOD_MS)
@@ -18,6 +19,19 @@
 void vApplicationIdleHook(void);
 void os_thread_stackmark(char *name);
 int os_event_flags_delete(event_group_handle_t *hnd);
+
+/** Check if cpu is in isr context
+ *
+ * \return bool value - true if cpu is in isr context
+ */
+bool is_isr_context(void)
+{
+#ifdef __CA7_REV
+    return (0U != if (SystemGetIRQNestingLevel()))
+#else /* __CA7_REV */
+    return (0U != __get_IPSR());
+#endif
+}
 
 /** Get current OS tick counter value
  *
@@ -66,9 +80,12 @@ int os_thread_create(os_thread_t *thandle,
                      os_thread_stack_t *stack,
                      int prio)
 {
-    int ret;
+    int ret = pdFAIL;
 
-    ret = xTaskCreate(main_func, name, (uint16_t)stack->size, arg, (uint32_t)prio, thandle);
+    *thandle = sys_thread_new(name, main_func, arg, (uint16_t)stack->size, (uint32_t)prio);
+
+    if (*thandle != NULL)
+        ret = pdPASS;
 
     os_dprintf(
         " Thread Create: ret %d thandle %p"
@@ -155,7 +172,7 @@ int os_timer_activate(os_timer_t *timer_t)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerStartFromISR(*timer_t, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -203,7 +220,7 @@ int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_timer_tick bloc
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerChangePeriodFromISR(*timer_t, ntime, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -258,7 +275,7 @@ int os_timer_reset(os_timer_t *timer_t)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerResetFromISR(*timer_t, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -288,7 +305,7 @@ int os_timer_deactivate(os_timer_t *timer_t)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerStopFromISR(*timer_t, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -352,7 +369,7 @@ int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned long wait)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xQueueSendToBackFromISR(*qhandle, msg, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1014,7 +1031,7 @@ int os_event_notify_put(os_thread_t task)
          * context, hence use FromISR FreeRTOS APIs.
          */
         vTaskNotifyGiveFromISR(task, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1074,7 +1091,7 @@ int os_semaphore_get(os_semaphore_t *mhandle, unsigned long wait)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xSemaphoreTakeFromISR(*mhandle, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1099,7 +1116,7 @@ int os_semaphore_put(os_semaphore_t *mhandle)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xSemaphoreGiveFromISR(*mhandle, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1149,7 +1166,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
 {
     int ret = WM_SUCCESS;
     ret     = os_mutex_get(&(lock->reader_mutex), OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
+    if (ret != WM_SUCCESS)
     {
         return ret;
     }
@@ -1159,7 +1176,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
         if (lock->reader_cb != NULL)
         {
             ret = lock->reader_cb(lock, wait_time);
-            if (ret == -WM_FAIL)
+            if (ret != WM_SUCCESS)
             {
                 lock->reader_count--;
                 (void)os_mutex_put(&(lock->reader_mutex));
@@ -1173,7 +1190,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
              * else reader will block.
              */
             ret = os_semaphore_get(&(lock->rw_lock), wait_time);
-            if (ret == -WM_FAIL)
+            if (ret != WM_SUCCESS)
             {
                 lock->reader_count--;
                 (void)os_mutex_put(&(lock->reader_mutex));
@@ -1348,6 +1365,19 @@ void os_mem_free(void *ptr)
 void os_dump_mem_stats(void)
 {
     unsigned sta = os_enter_critical_section();
+#ifdef CONFIG_WPA_SUPP
+    const heapAllocatorInfo_t *hI = getheapAllocInfo();
+
+    PRINTF("\n\r");
+    PRINTF("Heap size ---------------------- : %d\n\r", hI->heapSize);
+    PRINTF("Free size ---------------------- : %d\n\r", hI->freeSize);
+    PRINTF("Peak Heap Usage since bootup --- : %d\n\r", hI->peakHeapUsage);
+    PRINTF("Total allocations -------------- : %d\n\r", hI->totalAllocations);
+    PRINTF("Failed allocations ------------- : %d\n\r", hI->failedAllocations);
+    PRINTF("Min overhead per allocation ---- : %d\n\r", hI->minOverheadPerAllocation);
+    PRINTF("Biggest free block available now : %d\n\n\r", hI->biggestFreeBlockAvailable);
+    vHeapSelfTest(1);
+#else
     HeapStats_t HS;
 
     HS.xAvailableHeapSpaceInBytes      = 0;
@@ -1368,7 +1398,7 @@ void os_dump_mem_stats(void)
     (void)PRINTF("Total successful allocations --- : %d\n\r", HS.xNumberOfSuccessfulAllocations);
     (void)PRINTF("Total successful frees --------- : %d\n\r", HS.xNumberOfSuccessfulFrees);
     (void)PRINTF("Min Free since system boot ----- : %d\n\r", HS.xMinimumEverFreeBytesRemaining);
-
+#endif
     os_exit_critical_section(sta);
 }
 #endif

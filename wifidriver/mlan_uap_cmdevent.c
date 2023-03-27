@@ -440,7 +440,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv += sizeof(MrvlIEtypes_pkt_forward_t);
     }
 
-    if (bss->param.bss_config.max_sta_count <= MAX_STA_COUNT)
+    if (bss->param.bss_config.max_sta_count <= MAX_UAP_STA_COUNT)
     {
         tlv_sta_count                = (MrvlIEtypes_max_sta_count_t *)tlv;
         tlv_sta_count->header.type   = wlan_cpu_to_le16(TLV_TYPE_UAP_MAX_STA_CNT);
@@ -861,6 +861,10 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
 
     cmd->size = (t_u16)wlan_cpu_to_le16(cmd_size);
     PRINTM(MCMND, "AP config: cmd_size=%d\n", cmd_size);
+#ifdef CONFIG_WIFI_EXTRA_DEBUG
+    PRINTF("wlan_uap_cmd_ap_config : cmd\r\n");
+    dump_hex(cmd, cmd->size);
+#endif
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
@@ -1496,6 +1500,36 @@ static mlan_status wlan_uap_ret_sys_reset(IN pmlan_private pmpriv,
 }
 
 /**
+ *  @brief This function handles repsonse of acs_scan.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pcmd         A pointer to HostCmd_DS_COMMAND structure
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_ret_cmd_uap_acs_scan(pmlan_private pmpriv,
+                                             const HostCmd_DS_COMMAND *resp,
+                                             mlan_ioctl_req *pioctl_buf)
+{
+    HostCMD_DS_APCMD_ACS_SCAN *acs_scan = (HostCMD_DS_APCMD_ACS_SCAN *)&resp->params.acs_scan;
+    mlan_ds_bss *bss                    = MNULL;
+
+    ENTER();
+    wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", acs_scan->bandcfg, acs_scan->chan);
+    if (pioctl_buf)
+    {
+        bss                            = (mlan_ds_bss *)pioctl_buf->pbuf;
+        bss->param.ap_acs_scan.chan    = acs_scan->chan;
+        bss->param.ap_acs_scan.bandcfg = acs_scan->bandcfg;
+        pioctl_buf->data_read_written  = sizeof(mlan_ds_bss);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
  *  @brief This function handles the command response of sys_config
  *
  *  @param pmpriv       A pointer to mlan_private structure
@@ -1938,7 +1972,7 @@ static mlan_status wlan_uap_cmd_report_mic(pmlan_private pmpriv, IN HostCmd_DS_C
 #endif /* HOST_AUTHENTICATOR */
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
 #ifdef KEY_PARAM_SET_V2
 /**
  *  @brief This function prepares command of key material
@@ -2283,7 +2317,7 @@ done:
     return ret;
 }
 #endif /* KEY_PARAM_SET_V2 */
-#endif /* WAPI_AP || HOST_AUTHENTICATOR */
+#endif /* WAPI_AP || HOST_AUTHENTICATOR || CONFIG_WPA_SUPP_AP */
 
 #ifndef CONFIG_MLAN_WMSDK
 /**
@@ -2324,6 +2358,7 @@ static mlan_status wlan_uap_ret_sta_list(IN pmlan_private pmpriv,
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
+#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  *  @brief This function will search for the specific ie
@@ -2335,7 +2370,7 @@ static mlan_status wlan_uap_ret_sta_list(IN pmlan_private pmpriv,
  *
  *  @return	       N/A
  */
-static void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, sta_node *sta_ptr)
+void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, sta_node *sta_ptr)
 {
     t_u16 tlv_type, tlv_len;
     t_u16 frame_control, frame_sub_type = 0;
@@ -2353,7 +2388,7 @@ static void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, s
         tlv_len  = wlan_le16_to_cpu(tlv->len);
         if ((sizeof(MrvlIEtypesHeader_t) + tlv_len) > (unsigned int)tlv_buf_left)
         {
-            PRINTM(MERROR, "wrong tlv: tlvLen=%d, tlvBufLeft=%d\n", tlv_len, tlv_buf_left);
+            wifi_d("wrong tlv: tlvLen=%d, tlvBufLeft=%d", tlv_len, tlv_buf_left);
             break;
         }
         if (tlv_type == TLV_TYPE_UAP_MGMT_FRAME)
@@ -2371,10 +2406,10 @@ static void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, s
 
                 ie_len       = tlv_len - sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
-                pht_cap      = (IEEEtypes_HTCap_t *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY);
+                pht_cap      = (IEEEtypes_HTCap_t *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
                 if (pht_cap)
                 {
-                    PRINTM(MCMND, "STA supports 11n\n");
+                    wifi_d("STA supports 11n");
                     sta_ptr->is_11n_enabled = MTRUE;
                     if (GETHT_MAXAMSDU(pht_cap->ht_cap.ht_cap_info))
                         sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
@@ -2383,7 +2418,7 @@ static void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, s
                 }
                 else
                 {
-                    PRINTM(MCMND, "STA doesn't support 11n\n");
+                    wifi_d("STA doesn't support 11n");
                 }
                 break;
             }
@@ -2396,6 +2431,7 @@ static void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, s
     return;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /** Fixed size of bss start event */
 #define BSS_START_EVENT_FIX_SIZE 12
 
@@ -2586,6 +2622,319 @@ static t_u32 wlan_process_sta_assoc_event(pmlan_private priv, mlan_event *pevent
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef UAP_HOST_MLME
+/**
+ *  @brief	Check 11B support Rates
+ *
+ *
+ *  @param pmadapter	Private mlan adapter structure
+ *
+ *  @return MTRUE/MFALSE
+ *
+ */
+static t_u8 wlan_check_11B_support_rates(MrvlIEtypes_RatesParamSet_t *prates_tlv)
+{
+    int i;
+    t_u8 rate;
+    t_u8 ret = MTRUE;
+    for (i = 0; i < prates_tlv->header.len; i++)
+    {
+        rate = prates_tlv->rates[i] & 0x7f;
+        if ((rate != 0x02) && (rate != 0x04) && (rate != 0x0b) && (rate != 0x16))
+        {
+            ret = MFALSE;
+            break;
+        }
+    }
+    return ret;
+}
+
+/**
+ *  @brief This function prepares command of sys_config
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   cmd action
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *  @return         MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
+                                            HostCmd_DS_COMMAND *cmd,
+                                            t_u16 cmd_action,
+                                            pmlan_ioctl_req pioctl_buf)
+{
+    mlan_ds_bss *bss                = MNULL;
+    HostCmd_DS_ADD_STATION *new_sta = (HostCmd_DS_ADD_STATION *)&cmd->params.sta_info;
+    sta_node *sta_ptr               = MNULL;
+    t_u16 tlv_buf_left;
+    t_u8 *pos        = MNULL;
+    t_u8 *tlv_buf    = MNULL;
+    t_u16 travel_len = 0;
+    MrvlIEtypesHeader_t *tlv;
+    t_u16 tlv_len = 0;
+    t_u8 b_only   = MFALSE;
+    MrvlIETypes_HTCap_t *phtcap;
+#ifdef CONFIG_11AC
+    MrvlIETypes_VHTCap_t *pvhtcap;
+#endif
+#ifdef CONFIG_11AX
+    MrvlIEtypes_Extension_t *pext_tlv = MNULL;
+#endif
+    MrvlIEtypes_StaFlag_t *pstaflag;
+    int i;
+
+    ENTER();
+
+    if (!pioctl_buf)
+    {
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+    (void)__memset(NULL, new_sta, 0x00, sizeof(HostCmd_DS_ADD_STATION));
+    bss = (mlan_ds_bss *)pioctl_buf->pbuf;
+
+    cmd->command    = wlan_cpu_to_le16(HostCmd_CMD_ADD_NEW_STATION);
+    new_sta->action = wlan_cpu_to_le16(cmd_action);
+    cmd->size       = sizeof(HostCmd_DS_ADD_STATION) + S_DS_GEN;
+    if (cmd_action == HostCmd_ACT_ADD_STA)
+    {
+        sta_ptr = wlan_get_station_entry(pmpriv, bss->param.sta_info.peer_mac);
+        if (!sta_ptr)
+            sta_ptr = wlan_add_station_entry(pmpriv, bss->param.sta_info.peer_mac);
+    }
+    else
+    {
+        sta_ptr = wlan_add_station_entry(pmpriv, bss->param.sta_info.peer_mac);
+    }
+    if (!sta_ptr)
+    {
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+#ifdef EASYMESH
+    /* Save station aid for multi-ap */
+    sta_ptr->aid = bss->param.sta_info.aid;
+#endif
+    (void)__memcpy(NULL, new_sta->peer_mac, bss->param.sta_info.peer_mac, MLAN_MAC_ADDR_LENGTH);
+    if (cmd_action != HostCmd_ACT_ADD_STA)
+        goto done;
+    new_sta->aid             = wlan_cpu_to_le16(bss->param.sta_info.aid);
+    new_sta->listen_interval = wlan_cpu_to_le32(bss->param.sta_info.listen_interval);
+    if (bss->param.sta_info.cap_info)
+        new_sta->cap_info = wlan_cpu_to_le16(bss->param.sta_info.cap_info);
+    else
+        new_sta->cap_info = wlan_cpu_to_le16(sta_ptr->capability);
+    tlv_buf_left = bss->param.sta_info.tlv_len;
+    pos          = new_sta->tlv;
+    tlv_buf      = bss->param.sta_info.tlv;
+    tlv          = (MrvlIEtypesHeader_t *)tlv_buf;
+    if (bss->param.sta_info.sta_flags & STA_FLAG_WME)
+    {
+        PRINTM(MCMND, "STA flags supports wmm \n");
+        sta_ptr->is_wmm_enabled = MTRUE;
+    }
+    // append sta_flag_flags.
+    pstaflag              = (MrvlIEtypes_StaFlag_t *)pos;
+    pstaflag->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_STA_FLAGS);
+    pstaflag->header.len  = wlan_cpu_to_le16(sizeof(t_u32));
+    pstaflag->sta_flags   = wlan_cpu_to_le32(bss->param.sta_info.sta_flags);
+    pos += sizeof(MrvlIEtypes_StaFlag_t);
+    cmd->size += sizeof(MrvlIEtypes_StaFlag_t);
+
+    while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))
+    {
+        if (tlv_buf_left < (sizeof(MrvlIEtypesHeader_t) + tlv->len))
+            break;
+        switch (tlv->type)
+        {
+            case EXT_CAPABILITY:
+                break;
+            case SUPPORTED_RATES:
+                b_only = wlan_check_11B_support_rates((MrvlIEtypes_RatesParamSet_t *)tlv);
+                break;
+            case QOS_INFO:
+                PRINTM(MCMND, "STA supports wmm\n");
+                sta_ptr->is_wmm_enabled = MTRUE;
+                break;
+            case HT_CAPABILITY:
+                PRINTM(MCMND, "STA supports 11n\n");
+                sta_ptr->is_11n_enabled = MTRUE;
+                phtcap                  = (MrvlIETypes_HTCap_t *)tlv;
+                if (sta_ptr->HTcap.ieee_hdr.element_id == HT_CAPABILITY)
+                {
+                    if (GETHT_40MHZ_INTOLARANT(sta_ptr->HTcap.ht_cap.ht_cap_info))
+                    {
+                        PRINTM(MCMND, "SETHT_40MHZ_INTOLARANT\n");
+                        SETHT_40MHZ_INTOLARANT(phtcap->ht_cap.ht_cap_info);
+                    }
+                }
+                if (GETHT_MAXAMSDU(phtcap->ht_cap.ht_cap_info))
+                    sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
+                else
+                    sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_4K;
+                break;
+#ifdef CONFIG_11AC
+            case VHT_CAPABILITY:
+                PRINTM(MCMND, "STA supports 11ac\n");
+                sta_ptr->is_11ac_enabled = MTRUE;
+                pvhtcap                  = (MrvlIETypes_VHTCap_t *)tlv;
+                if (GET_VHTCAP_MAXMPDULEN(pvhtcap->vht_cap.vht_cap_info) == 2)
+                    sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_12K;
+                else if (GET_VHTCAP_MAXMPDULEN(pvhtcap->vht_cap.vht_cap_info) == 1)
+                    sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
+                else
+                    sta_ptr->max_amsdu = MLAN_TX_DATA_BUF_SIZE_4K;
+                break;
+            case OPER_MODE_NTF:
+                break;
+#endif
+#ifdef CONFIG_11AX
+            case EXTENSION:
+                pext_tlv = (MrvlIEtypes_Extension_t *)tlv;
+                if (pext_tlv->ext_id == HE_CAPABILITY)
+                {
+                    sta_ptr->is_11ax_enabled = MTRUE;
+                    PRINTM(MCMND, "STA supports 11ax\n");
+                }
+#ifdef ENABLE_802_116E
+                else if (pext_tlv->ext_id == HE_6G_CAPABILITY)
+                {
+                    MrvlIEtypes_He_6g_cap_t *phe_6g_cap = MNULL;
+                    phe_6g_cap                          = (MrvlIEtypes_He_6g_cap_t *)tlv;
+                    if (GET_6G_BAND_CAP_MAXMPDULEN(phe_6g_cap->capa) == 2)
+                        pmpriv->max_amsdu = MLAN_TX_DATA_BUF_SIZE_12K;
+                    else if (GET_6G_BAND_CAP_MAXMPDULEN(phe_6g_cap->capa) == 1)
+                        pmpriv->max_amsdu = MLAN_TX_DATA_BUF_SIZE_8K;
+                    else
+                        pmpriv->max_amsdu = MLAN_TX_DATA_BUF_SIZE_4K;
+                }
+#endif
+                else
+                {
+                    pext_tlv = MNULL;
+                }
+                break;
+#endif
+            default:
+                break;
+        }
+        tlv->type = wlan_cpu_to_le16(tlv->type);
+        tlv->len  = wlan_cpu_to_le16(tlv->len);
+        tlv_len   = tlv->len;
+        (void *)__memcpy(NULL, pos, (t_u8 *)tlv, sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        pos += sizeof(MrvlIEtypesHeader_t) + tlv_len;
+        tlv_buf += sizeof(MrvlIEtypesHeader_t) + tlv_len;
+        tlv = (MrvlIEtypesHeader_t *)tlv_buf;
+        travel_len += sizeof(MrvlIEtypesHeader_t) + tlv_len;
+        tlv_buf_left -= sizeof(MrvlIEtypesHeader_t) + tlv_len;
+    }
+#ifdef CONFIG_11AX
+    if (sta_ptr->is_11ax_enabled)
+    {
+        if (pext_tlv == MNULL)
+        {
+            tlv       = (MrvlIEtypesHeader_t *)pos;
+            tlv->type = wlan_cpu_to_le16(EXTENSION);
+            tlv->len  = wlan_cpu_to_le16(
+                MIN(sta_ptr->he_cap.ieee_hdr.len, sizeof(IEEEtypes_HECap_t) - sizeof(IEEEtypes_Header_t)));
+
+            pos += sizeof(MrvlIEtypesHeader_t);
+            (void *)__memcpy(NULL, pos, (t_u8 *)&sta_ptr->he_cap.ext_id, tlv->len);
+            travel_len += sizeof(MrvlIEtypesHeader_t) + tlv->len;
+        }
+    }
+#endif
+
+    if (sta_ptr->is_11n_enabled)
+    {
+        if (pmpriv->uap_channel <= 14)
+            sta_ptr->bandmode = BAND_GN;
+#ifdef CONFIG_5GHz_SUPPORT
+        else
+            sta_ptr->bandmode = BAND_AN;
+#endif
+    }
+    else if (!b_only)
+    {
+        if (pmpriv->uap_channel <= 14)
+            sta_ptr->bandmode = BAND_G;
+#ifdef CONFIG_5GHz_SUPPORT
+        else
+            sta_ptr->bandmode = BAND_A;
+#endif
+    }
+    else
+        sta_ptr->bandmode = BAND_B;
+#ifdef CONFIG_11AC
+    if (sta_ptr->is_11ac_enabled)
+    {
+        if (pmpriv->uap_channel <= 14)
+            sta_ptr->bandmode = BAND_GAC;
+        else
+            sta_ptr->bandmode = BAND_AAC;
+    }
+#endif
+#ifdef CONFIG_11AX
+    if (sta_ptr->is_11ax_enabled)
+    {
+        if (pmpriv->uap_channel <= 14)
+            sta_ptr->bandmode = BAND_GAX;
+        else
+            sta_ptr->bandmode = BAND_AAX;
+    }
+#endif
+
+    for (i = 0; i < MAX_NUM_TID; i++)
+    {
+        if (sta_ptr->is_11n_enabled
+#ifdef CONFIG_11AX
+            || sta_ptr->is_11ax_enabled
+#endif
+        )
+            sta_ptr->ampdu_sta[i] = pmpriv->aggr_prio_tbl[i].ampdu_user;
+        else
+            sta_ptr->ampdu_sta[i] = BA_STREAM_NOT_ALLOWED;
+    }
+    memset(sta_ptr->rx_seq, 0xff, sizeof(sta_ptr->rx_seq));
+done:
+    cmd->size += travel_len;
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ *  @brief This function prepares command of bss_start.
+ *
+ * @param pmpriv       A pointer to mlan_private structure
+ * @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *
+ * @return             MLAN_STATUS_SUCCESS
+ **/
+static mlan_status wlan_uap_cmd_bss_start(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd)
+{
+#ifdef UAP_HOST_MLME
+    MrvlIEtypes_HostMlme_t *tlv;
+#endif
+    ENTER();
+    cmd->command = wlan_cpu_to_le16(HOST_CMD_APCMD_BSS_START);
+    cmd->size    = S_DS_GEN;
+#ifdef UAP_HOST_MLME
+    if (pmpriv->uap_host_based)
+    {
+        tlv              = (MrvlIEtypes_HostMlme_t *)((t_u8 *)cmd + cmd->size);
+        tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_HOST_MLME);
+        tlv->header.len  = wlan_cpu_to_le16(sizeof(tlv->host_mlme));
+        tlv->host_mlme   = MTRUE;
+        cmd->size += sizeof(MrvlIEtypes_HostMlme_t);
+    }
+#endif
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
 /********************************************************
     Global Functions
 ********************************************************/
@@ -2620,14 +2969,17 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
     /* Prepare command */
     switch (cmd_no)
     {
+        case HostCMD_APCMD_ACS_SCAN:
         case HostCmd_CMD_SOFT_RESET:
         case HOST_CMD_APCMD_BSS_STOP:
-        case HOST_CMD_APCMD_BSS_START:
         case HOST_CMD_APCMD_SYS_INFO:
         case HOST_CMD_APCMD_SYS_RESET:
         case HOST_CMD_APCMD_STA_LIST:
             cmd_ptr->command = wlan_cpu_to_le16(cmd_no);
             cmd_ptr->size    = wlan_cpu_to_le16(S_DS_GEN);
+            break;
+        case HOST_CMD_APCMD_BSS_START:
+            ret = wlan_uap_cmd_bss_start(pmpriv, cmd_ptr);
             break;
         case HOST_CMD_APCMD_SYS_CONFIGURE:
             ret = wlan_uap_cmd_sys_configure(pmpriv, cmd_ptr, cmd_action, (pmlan_ioctl_req)pioctl_buf, pdata_buf);
@@ -2678,7 +3030,7 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
         case HostCmd_CMD_802_11_KEY_MATERIAL:
             ret = wlan_uap_cmd_key_material(pmpriv, cmd_ptr, cmd_action, cmd_oid, pdata_buf);
             break;
@@ -2733,6 +3085,13 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             cmd_ptr->params.rx_mgmt_ind.mgmt_subtype_mask = (t_u32)(*((t_u32 *)pdata_buf));
             cmd_ptr->size                                 = wlan_cpu_to_le16(sizeof(t_u32) + S_DS_GEN);
             break;
+#endif /* CONFIG_MLAN_WMSDK */
+#ifdef UAP_HOST_MLME
+        case HostCmd_CMD_ADD_NEW_STATION:
+            ret = wlan_uap_cmd_add_station(pmpriv, cmd_ptr, cmd_action, (pmlan_ioctl_req)pioctl_buf);
+            break;
+#endif
+#ifndef CONFIG_MLAN_WMSDK
         case HostCmd_CMD_CFG_TX_DATA_PAUSE:
             ret = wlan_uap_cmd_txdatapause(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
@@ -2832,6 +3191,9 @@ mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
         case HOST_CMD_APCMD_SYS_INFO:
             break;
+        case HostCMD_APCMD_ACS_SCAN:
+            ret = wlan_ret_cmd_uap_acs_scan(pmpriv, resp, pioctl_buf);
+            break;
         case HOST_CMD_APCMD_SYS_CONFIGURE:
             ret = wlan_uap_ret_sys_config(pmpriv, resp, pioctl_buf);
             break;
@@ -2907,6 +3269,10 @@ mlan_status wlan_ops_uap_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_CFG_TX_DATA_PAUSE:
             ret = wlan_uap_ret_txdatapause(pmpriv, resp, pioctl_buf);
             break;
+#ifdef UAP_HOST_MLME
+        case HostCmd_CMD_ADD_NEW_STATION:
+            break;
+#endif
         case HostCmd_CMD_802_11_RADIO_CONTROL:
             ret = wlan_ret_802_11_radio_control(pmpriv, resp, pioctl_buf);
             break;

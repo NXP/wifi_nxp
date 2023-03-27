@@ -226,6 +226,32 @@ static mlan_status wlan_uap_bss_ioctl_reset(IN pmlan_adapter pmadapter, IN pmlan
     return ret;
 }
 
+#ifdef UAP_HOST_MLME
+/**
+ *  @brief This function to process add station.
+ *
+ *  @param pmadapter       A pointer to pmadapter.
+ *
+ *  @param pioctl_req      A pointer to pioctl_req
+ *
+ *  @return            	  MLAN_STATUS_SUCCESS/MLAN_STATUS_FAILURE
+ */
+static mlan_status wlan_uap_bss_ioctl_add_station(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_ADD_NEW_STATION, HostCmd_ACT_ADD_STA, 0, (t_void *)pioctl_req, MNULL);
+
+    if (ret == MLAN_STATUS_SUCCESS)
+        ret = MLAN_STATUS_PENDING;
+
+    LEAVE();
+    return ret;
+}
+#endif
+
 /**
  *  @brief Set/Get MAC address
  *
@@ -630,7 +656,7 @@ static mlan_status wlan_uap_sec_ioctl_report_mic_error(IN pmlan_adapter pmadapte
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
 /**
  *  @brief Set encrypt key
  *
@@ -1229,23 +1255,21 @@ static mlan_status wlan_uap_snmp_mib_ctrl_deauth(IN pmlan_adapter pmadapter, IN 
  *
  *  @return		MLAN_STATUS_PENDING --success, otherwise fail
  */
-mlan_status wlan_uap_bss_ioctl_action_chan_switch(pmlan_adapter pmadapter,
-				 pmlan_ioctl_req pioctl_req)
+mlan_status wlan_uap_bss_ioctl_action_chan_switch(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
 {
     mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
-    mlan_status ret = MLAN_STATUS_SUCCESS;
-    t_u16 cmd_action = 0;
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+    t_u16 cmd_action     = 0;
 
     ENTER();
 
     cmd_action = HostCmd_ACT_GEN_SET;
 
     /* Send request to firmware */
-    ret = wlan_prepare_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, cmd_action,
-    		       0, (t_void *)pioctl_req, MNULL);
+    ret = wlan_prepare_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, cmd_action, 0, (t_void *)pioctl_req, MNULL);
 
     if (ret == MLAN_STATUS_SUCCESS)
-    	ret = MLAN_STATUS_PENDING;
+        ret = MLAN_STATUS_PENDING;
 
     LEAVE();
     return ret;
@@ -1268,10 +1292,10 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
     mlan_ds_get_info *pget_info = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
 #ifdef CONFIG_ECSA
-        mlan_ds_misc_cfg *misc      = MNULL;
-        mlan_ds_bss *bss            = MNULL;
+    mlan_ds_misc_cfg *misc = MNULL;
+    mlan_ds_bss *bss       = MNULL;
 #endif
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
     mlan_ds_sec_cfg *sec = MNULL;
 #endif
 #ifndef CONFIG_MLAN_WMSDK
@@ -1385,7 +1409,7 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_uap_snmp_mib_11h(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
+#if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
         case MLAN_IOCTL_SEC_CFG:
             sec = (mlan_ds_sec_cfg *)pioctl_req->pbuf;
             if (sec->sub_command == MLAN_OID_SEC_CFG_ENCRYPT_KEY)
@@ -1437,17 +1461,17 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_rate_ioctl_cfg(pmadapter, pioctl_req);
             }
             break;
-#ifdef CONFIG_ECSA            
+#ifdef CONFIG_ECSA
         case MLAN_IOCTL_MISC_CFG:
             misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
             if (misc->sub_command == MLAN_OID_MISC_OPER_CLASS)
-                status = wlan_misc_ioctl_oper_class(pmadapter,pioctl_req);
+                status = wlan_misc_ioctl_oper_class(pmadapter, pioctl_req);
             if (misc->sub_command == MLAN_OID_MISC_OPER_CLASS_CHECK)
                 status = wlan_misc_ioctl_operclass_validation(pmadapter, pioctl_req);
             break;
         case MLAN_IOCTL_BSS:
             bss = (mlan_ds_bss *)pioctl_req->pbuf;
-            if(bss->sub_command == MLAN_OID_ACTION_CHAN_SWITCH)
+            if (bss->sub_command == MLAN_OID_ACTION_CHAN_SWITCH)
                 status = wlan_uap_bss_ioctl_action_chan_switch(pmadapter, pioctl_req);
             break;
 #endif

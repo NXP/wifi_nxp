@@ -197,51 +197,79 @@ struct wifi_wfd_event
 /* Wlan Cipher structure */
 typedef struct
 {
+    /** 1 bit value can be set for none */
+    uint16_t none : 1;
     /** 1 bit value can be set for wep40 */
-    uint8_t wep40 : 1;
+    uint16_t wep40 : 1;
     /** 1 bit value can be set for wep104 */
-    uint8_t wep104 : 1;
+    uint16_t wep104 : 1;
     /** 1 bit value can be set for tkip */
-    uint8_t tkip : 1;
+    uint16_t tkip : 1;
     /** 1 bit valuecan be set for ccmp */
-    uint8_t ccmp : 1;
+    uint16_t ccmp : 1;
+    /**  1 bit valuecan be set for aes 128 cmac */
+    uint16_t aes_128_cmac : 1;
+    /** 1 bit value can be set for gcmp */
+    uint16_t gcmp : 1;
+    /** 1 bit value can be set for sms4 */
+    uint16_t sms4 : 1;
+    /** 1 bit value can be set for gcmp 256 */
+    uint16_t gcmp_256 : 1;
+    /** 1 bit valuecan be set for ccmp 256 */
+    uint16_t ccmp_256 : 1;
+    /** 1 bit is reserved */
+    uint16_t rsvd : 1;
+    /** 1 bit value can be set for bip gmac 128 */
+    uint16_t bip_gmac_128 : 1;
+    /** 1 bit value can be set for bip gmac 256 */
+    uint16_t bip_gmac_256 : 1;
+    /** 1 bit value can be set for bip cmac 256 */
+    uint16_t bip_cmac_256 : 1;
+    /** 1 bit valuecan be set for gtk not used */
+    uint16_t gtk_not_used : 1;
     /** 4 bits are reserved */
-    uint8_t rsvd : 4;
+    uint16_t rsvd2 : 2;
 } _Cipher_t;
 
 /* Security mode structure */
 typedef struct
 {
     /** No security */
-    uint16_t noRsn : 1;
+    uint32_t noRsn : 1;
     /** WEP static */
-    uint16_t wepStatic : 1;
+    uint32_t wepStatic : 1;
     /** WEP dynamic */
-    uint16_t wepDynamic : 1;
+    uint32_t wepDynamic : 1;
     /** WPA */
-    uint16_t wpa : 1;
+    uint32_t wpa : 1;
     /** WPA none */
-    uint16_t wpaNone : 1;
+    uint32_t wpaNone : 1;
     /** WPA 2 */
-    uint16_t wpa2 : 1;
+    uint32_t wpa2 : 1;
+    /** WPA 2 sha256 */
+    uint32_t wpa2_sha256 : 1;
     /** OWE */
-    uint16_t owe : 1;
-    /** WPA 3 SAE */
-    uint16_t wpa3_sae : 1;
-#ifdef CONFIG_11R
+    uint32_t owe : 1;
+    /** WPA3 SAE */
+    uint32_t wpa3_sae : 1;
+    /** 802.1x */
+    uint32_t wpa2_entp : 1;
+    /** 802.1x sha256 */
+    uint32_t wpa2_entp_sha256 : 1;
     /** FT 802.1x */
-    uint16_t ft_1x : 1;
+    uint32_t ft_1x : 1;
+    /** FT 802.1x sha384 */
+    uint32_t ft_1x_sha384 : 1;
     /** FT PSK  */
-    uint16_t ft_psk : 1;
+    uint32_t ft_psk : 1;
     /** FT SAE */
-    uint16_t ft_sae : 1;
-    /** Reserved 7 bits */
-    uint16_t rsvd : 7;
-#else
-    /** Reserved 10 bits */
-    uint16_t rsvd : 10;
-#endif
-
+    uint32_t ft_sae : 1;
+    /** WPA3 802.1x sha256 */
+    uint32_t wpa3_1x_sha256 : 1;
+    /** WPA3 802.1x sha384 */
+    uint32_t wpa3_1x_sha384 : 1;
+    /** Reserved 16 bits */
+    uint32_t rsvd : 16;
 } _SecurityMode_t;
 
 /* TODO: clean up the parts brought over from the Host SME BSSDescriptor_t,
@@ -281,6 +309,14 @@ struct wifi_scan_result
      */
     bool phtcap_ie_present;  /*!< PHT CAP IE present info */
     bool phtinfo_ie_present; /*!< PHT INFO IE present info */
+#ifdef CONFIG_11AC
+    /** 11AC VHT capab support */
+    bool pvhtcap_ie_present;
+#endif
+#ifdef CONFIG_11AX
+    /** 11AX HE capab support */
+    bool phecap_ie_present;
+#endif
 
     bool wmm_ie_present; /*!< WMM IE present info */
     uint16_t band;       /*!< Band info */
@@ -536,12 +572,10 @@ typedef PACK_START struct _wifi_ed_mac_ctrl_t
     t_u16 ed_ctrl_2g;
     /** ED Offset 2G */
     t_s16 ed_offset_2g;
-#ifdef CONFIG_5GHz_SUPPORT
     /** ED CTRL 5G */
     t_u16 ed_ctrl_5g;
     /** ED Offset 5G */
     t_s16 ed_offset_5g;
-#endif
 } PACK_END wifi_ed_mac_ctrl_t;
 
 /** Type definition of wifi_bandcfg_t */
@@ -632,7 +666,9 @@ typedef struct
     t_u32 avg_tbtt_offset;
 } wifi_tbtt_offset_t;
 
-#define BIT(n)                           (1U << (n))
+#ifndef BIT
+#define BIT(n) (1U << (n))
+#endif
 #define WOWLAN_MAX_PATTERN_LEN           20
 #define WOWLAN_MAX_OFFSET_LEN            50
 #define MAX_NUM_FILTERS                  10
@@ -1446,13 +1482,21 @@ typedef PACK_START struct _wifi_scan_channel_list_t
 } PACK_END wifi_scan_channel_list_t;
 
 /* Configuration for wireless scanning */
-#define MAX_CHANNEL_LIST 5
+#define MAX_CHANNEL_LIST 6
 #ifdef CONFIG_COMBO_SCAN
 #define MAX_NUM_SSID 2
 #endif
 /** V2 scan parameters */
 typedef PACK_START struct _wifi_scan_params_v2_t
 {
+#ifdef CONFIG_WPA_SUPP
+    /** Scan Only */
+    t_u8 scan_only;
+    /** BSSID present */
+    t_u8 is_bssid;
+    /** SSID present */
+    t_u8 is_ssid;
+#endif
     /** BSSID to scan */
     t_u8 bssid[MLAN_MAC_ADDR_LENGTH];
     /** SSID to scan */
@@ -1471,7 +1515,7 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** Threshold of rssi */
     t_s16 rssi_threshold;
 #endif
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif

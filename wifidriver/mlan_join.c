@@ -423,15 +423,15 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 preference_selected;
     t_u8 cipher_selected_id;
-#if 0 // defined(ENABLE_GCMP_SUPPORT)
-	// embedded supplicant doesn't support GCMP yet
-	t_u8 cipher_preference[11] = {0, 0, 1, 0, 2, 0, 0, 0, 4, 5, 3};
+#ifdef CONFIG_WPA_SUPP
+    t_u8 cipher_preference[11] = {0, 0, 1, 0, 2, 0, 0, 0, 4, 5, 3};
 #else
     t_u8 cipher_preference[5] = {0, 0, 1, 0, 2};
 #endif
     t_u8 oui[4] = {0x00, 0x0f, 0xac, 0x00};
 
     /* AKM Perference Order:
+       (7) AKM_SUITE_TYPE_1X         = 1
        (6) AKM_SUITE_TYPE_FT_SAE     = 9   //Not supported in esupp
        (5) AKM_SUITE_TYPE_SAE        = 8
        (4) AKM_SUITE_TYPE_OWE        = 18
@@ -442,7 +442,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
-    t_u8 akm_preference[19] = {0, 0, 1, 0, 3, 0, 2, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 4};
+    t_u8 akm_preference[19] = {0, 7, 1, 0, 3, 0, 2, 0, 5, 6, 0, 8, 9, 0, 0, 0, 0, 0, 4};
 
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
 
@@ -527,6 +527,18 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
             {
                 *akm_type = AssocAgentAuth_Open;
             }
+            else if (akm_type_id == 1)
+            {
+                *akm_type = AssocAgentAuth_Open;
+            }
+            else if (akm_type_id == 11)
+            {
+                *akm_type = AssocAgentAuth_Open;
+            }
+            else if (akm_type_id == 12)
+            {
+                *akm_type = AssocAgentAuth_Open;
+            }
             else if (akm_type_id == 2)
             {
                 *akm_type = AssocAgentAuth_Open;
@@ -568,6 +580,18 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                     break;
                 }
                 else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 2))
+                {
+                    break;
+                }
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 1))
+                {
+                    break;
+                }
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 11))
+                {
+                    break;
+                }
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 12))
                 {
                     break;
                 }
@@ -841,6 +865,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     t_u8 oper_class = 1;
 #endif
 
+#ifdef CONFIG_HOST_MLME
+    MrvlIEtypes_HostMlme_t *host_mlme_tlv = MNULL;
+#endif
+
     ENTER();
 
     (void)__memset(pmadapter, &rates, 0x00, sizeof(WLAN_802_11_RATES));
@@ -851,6 +879,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     /* Save so we know which BSS Desc to use in the response handler */
     pmpriv->pattempted_bss_desc = pbss_desc;
+#ifdef CONFIG_HOST_MLME
+    pmpriv->assoc_req_size = 0;
+#endif
 
     (void)__memcpy(pmadapter, passo->peer_sta_addr, pbss_desc->mac_address, sizeof(passo->peer_sta_addr));
 
@@ -922,8 +953,12 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             pauth_tlv->auth_type = wlan_cpu_to_le16(AssocAgentAuth_FastBss);
 #endif
 #ifdef CONFIG_OWE
-        else if ((pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OWE) ||
-                 (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_OWE))
+        else if (
+#ifdef CONFIG_HOST_MLME
+            !pmpriv->curr_bss_params.host_mlme &&
+#endif
+            ((pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OWE) ||
+             (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_OWE)))
         {
             pauth_tlv->auth_type = wlan_cpu_to_le16((t_u16)AssocAgentAuth_Owe);
         }
@@ -959,11 +994,11 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         pos += sizeof(pchan_tlv->header) + sizeof(ChanScanParamSet_t);
     }
 
-#ifndef CONFIG_WPA2_ENTP
-#ifdef CONFIG_WPS2
-    if (!wps_session_attempt)
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
+    if (pmpriv->wps.session_enable == MFALSE)
     {
-#endif /* CONFIG_WPS2 */
+#endif /* CONFIG_WPA_SUPP_WPS */
 #endif
         /* fixme: The above 'if' is used instead of below 'if' for now since
            WPS module is mlan integrated yet. Fix after it is done.
@@ -1090,10 +1125,10 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         {
             /* Do nothing */
         }
-#ifndef CONFIG_WPA2_ENTP
-#ifdef CONFIG_WPS2
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
     }
-#endif /* CONFIG_WPS2 */
+#endif /* CONFIG_WPA_SUPP_WPS */
 #endif
 
     if ((pauth_tlv != MNULL) && (pauth_tlv->auth_type == wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae)))
@@ -1153,6 +1188,17 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     else
     {
         /* Do nothing */
+    }
+#endif
+
+#ifdef CONFIG_HOST_MLME
+    if (pmpriv->curr_bss_params.host_mlme)
+    {
+        host_mlme_tlv              = (MrvlIEtypes_HostMlme_t *)pos;
+        host_mlme_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_HOST_MLME);
+        host_mlme_tlv->header.len  = wlan_cpu_to_le16(sizeof(host_mlme_tlv->host_mlme));
+        host_mlme_tlv->host_mlme   = MTRUE;
+        pos += sizeof(host_mlme_tlv->header) + host_mlme_tlv->header.len;
     }
 #endif
 
@@ -1328,9 +1374,29 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     t_u8 media_connected               = pmpriv->media_connected;
     /* mlan_adapter *pmadapter = pmpriv->adapter; */
 
+#ifdef CONFIG_HOST_MLME
+    IEEEtypes_MgmtHdr_t *hdr;
+#endif
+
     ENTER();
 
-    passoc_rsp              = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
+#ifdef CONFIG_HOST_MLME
+    if (pmpriv->curr_bss_params.host_mlme)
+    {
+        hdr = (IEEEtypes_MgmtHdr_t *)&resp->params;
+        if (!__memcmp(pmpriv->adapter, hdr->BssId, pmpriv->pattempted_bss_desc->mac_address, MLAN_MAC_ADDR_LENGTH))
+        {
+            passoc_rsp = (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
+        }
+        else
+        {
+            passoc_rsp = (IEEEtypes_AssocRsp_t *)&resp->params;
+        }
+    }
+    else
+#endif
+
+        passoc_rsp = (IEEEtypes_AssocRsp_t *)(void *)&resp->params;
     passoc_rsp->status_code = wlan_le16_to_cpu(passoc_rsp->status_code);
     if (pmpriv->media_connected == MTRUE)
     {

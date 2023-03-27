@@ -36,7 +36,7 @@
 #define RX_WAIT   OS_WAIT_FOREVER
 #define SEND_WAIT OS_WAIT_FOREVER
 
-#define CONFIG_CLI_STACK_SIZE (5120)
+#define CONFIG_CLI_STACK_SIZE (5376)
 
 static os_mutex_t cli_mutex;
 static os_queue_pool_define(queue_data, IN_QUEUE_SIZE);
@@ -1225,7 +1225,6 @@ int cli_init(void)
     {
         cli_init_done = true;
     }
-    
 #ifdef CONFIG_UART_INTERRUPT
     ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
     if (ret != WM_SUCCESS)

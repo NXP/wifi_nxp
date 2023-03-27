@@ -11,11 +11,18 @@
 #ifndef __WIFI_INTERNAL_H__
 #define __WIFI_INTERNAL_H__
 
+#ifdef CONFIG_WPA_SUPP
+#include "wifi_nxp_internal.h"
+#endif
+
 #include <mlan_api.h>
 
 #include <wm_os.h>
 #include <wifi_events.h>
 #include <wifi-decl.h>
+#ifdef CONFIG_WPA_SUPP
+#include <ieee802_11_defs.h>
+#endif
 
 typedef struct
 {
@@ -50,10 +57,15 @@ typedef struct
 #endif
     os_queue_t *wlc_mgr_event_queue;
 
+#ifndef CONFIG_WIFI_RX_REORDER
     void (*data_intput_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
+#endif
     void (*amsdu_data_intput_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
-    void (*deliver_packet_above_callback)(t_u8 interface, t_void *lwip_pbuf);
+    void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
+#ifdef CONFIG_WIFI_RX_REORDER
+    void *(*gen_pbuf_from_data2)(t_u8 *payload, t_u16 datalen, void **p_payload);
+#endif
 
 #ifdef CONFIG_P2P
     os_queue_t *wfd_event_queue;
@@ -186,6 +198,16 @@ typedef struct
     wlan_user_scan_cfg *g_user_scan_cfg;
 
     bool scan_stop;
+#ifdef CONFIG_WPA_SUPP
+    void *if_priv;
+    void *hapd_if_priv;
+    wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
+    nxp_wifi_event_mlme_t auth_resp;
+    nxp_wifi_assoc_event_mlme_t assoc_resp;
+#endif
+#ifdef CONFIG_HOSTAPD
+    bool hostapd_op;
+#endif
 } wm_wifi_t;
 
 extern wm_wifi_t wm_wifi;
@@ -198,7 +220,42 @@ struct bus_message
     void *data;
 };
 
-PACK_START struct ieee80211_hdr
+/* fixme: This structure seems to have been removed from mlan. This was
+   copied from userif_ext.h file temporarily. Change the handling of events to
+   make it similar to what mlan does */
+
+/** Event structure */
+typedef MLAN_PACK_START struct _Event_Ext_t
+{
+    /** No of bytes in packet including this field */
+    uint16_t length;
+    /** Type: Event (3) */
+    uint16_t type;
+    /** Event ID */
+    uint16_t event_id;
+    /** BSS index number for multiple BSS support */
+    uint8_t bss_index;
+    /** BSS type */
+    uint8_t bss_type;
+    /** Reason code */
+    uint16_t reason_code;
+    /** Source MAC address */
+    uint8_t src_mac_addr[MLAN_MAC_ADDR_LENGTH];
+} MLAN_PACK_END Event_Ext_t;
+
+typedef MLAN_PACK_START struct _mac_address
+{
+    unsigned char addr[MLAN_MAC_ADDR_LENGTH];
+} MLAN_PACK_END mac_address_t;
+
+typedef MLAN_PACK_START struct _nxp_wifi_acl_info
+{
+    unsigned char acl_policy;
+    unsigned int num_mac_acl;
+    mac_address_t mac_acl[];
+} MLAN_PACK_END nxp_wifi_acl_info_t;
+
+/* PACK_START struct ieee80211_hdr
 {
     t_u16 frame_control;
     t_u16 duration_id;
@@ -207,7 +264,7 @@ PACK_START struct ieee80211_hdr
     t_u8 addr3[6];
     t_u16 seq_ctrl;
     t_u8 addr4[6];
-} PACK_END;
+} PACK_END; */
 
 /**
  * This function handles events received from the firmware.
@@ -333,4 +390,44 @@ void wifi_user_scan_config_cleanup(void);
  *
  */
 void wifi_scan_stop(void);
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
+bool wifi_nxp_wps_session_enable(void);
+#endif
+
+int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *mcs_set, t_u8 *a_mpdu_params, t_u8 band);
+
+#ifdef CONFIG_11AC
+int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
+#endif
+
+#ifdef CONFIG_11AX
+int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
+#endif
+int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
+int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
+int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
+int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params);
+int wifi_set_uap_rts(int rts_threshold);
+int wifi_set_uap_frag(int frag_threshold);
+int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params);
+int wifi_nxp_sta_remove(const uint8_t *addr);
+int wifi_nxp_stop_ap(void);
+int wifi_nxp_set_acl(nxp_wifi_acl_info_t *acl_params);
+int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2);
+int wifi_nxp_get_country(unsigned int bss_type, char *alpha2);
+int wifi_nxp_get_signal(unsigned int bss_type, nxp_wifi_signal_info_t *signal_params);
+int wifi_nxp_scan_res_num(void);
+int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
+#endif /* CONFIG_WPA_SUPP */
+
+#if !defined(WIFI_ADD_ON)
+void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported);
+void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action);
+#endif
+
+#ifdef CONFIG_WIFI_RX_REORDER
+int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
+#endif
+
 #endif /* __WIFI_INTERNAL_H__ */

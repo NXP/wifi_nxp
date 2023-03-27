@@ -142,11 +142,28 @@ static t_void wlan_delete_bsspriotbl(pmlan_private priv)
  */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 {
+#ifdef SCAN_CHANNEL_GAP
+    int ret = -WM_FAIL;
     // fixme: this function will need during migration of legacy code.
+    t_u8 chan_2g[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+#ifdef CONFIG_5GHz_SUPPORT
+    t_u8 chan_5g[] = {12,  16,  34,  38,  42,  46,  36,  40,  44,  48,  52,  56,
+                      60,  64,  100, 104, 108, 112, 116, 120, 124, 128, 132, 136,
+#ifdef UNII_4_SUPPORT
+                      140, 144, 149, 153, 157, 161, 165, 169, 173, 177};
+#else
+                      140, 144, 149, 153, 157, 161, 165};
+#endif
+#endif
+#endif
+
+#ifdef SCAN_CHANNEL_GAP
+    t_u32 buf_size;
+#endif
+
 #ifndef CONFIG_MLAN_WMSDK
     mlan_status ret = MLAN_STATUS_SUCCESS;
 #ifdef STA_SUPPORT
-    t_u32 buf_size;
     BSSDescriptor_t *ptemp_scan_table = MNULL;
 #endif
 
@@ -175,6 +192,22 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
     pmadapter->pscan_table = BSS_List;
+#ifdef SCAN_CHANNEL_GAP
+    pmadapter->num_in_chan_stats = sizeof(chan_2g);
+#ifdef CONFIG_5GHz_SUPPORT
+    pmadapter->num_in_chan_stats += sizeof(chan_5g);
+#endif
+    buf_size = sizeof(ChanStatistics_t) * pmadapter->num_in_chan_stats;
+    ret      = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF,
+                                           (t_u8 **)&pmadapter->pchan_stats);
+    if (ret != MLAN_STATUS_SUCCESS || !pmadapter->pchan_stats)
+    {
+        PRINTM(MERROR, "Failed to allocate channel statistics\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+#endif /* SCAN_CHANNEL_GAP */
+
 #ifndef CONFIG_MLAN_WMSDK
     /* Allocate command buffer */
     ret = wlan_alloc_cmd_buffer(pmadapter);
@@ -265,7 +298,12 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->wep_key_curr_index = 0;
     priv->ewpa_query         = MFALSE;
     priv->adhoc_aes_enabled  = MFALSE;
-    priv->curr_pkt_filter    = HostCmd_ACT_MAC_RX_ON | HostCmd_ACT_MAC_TX_ON | HostCmd_ACT_MAC_ETHERNETII_ENABLE;
+    priv->curr_pkt_filter =
+#ifdef CONFIG_11AC
+        HostCmd_ACT_MAC_STATIC_DYNAMIC_BW_ENABLE |
+#endif
+        HostCmd_ACT_MAC_RTS_CTS_ENABLE | HostCmd_ACT_MAC_RX_ON | HostCmd_ACT_MAC_TX_ON |
+        HostCmd_ACT_MAC_ETHERNETII_ENABLE;
 
 #ifndef CONFIG_MLAN_WMSDK
     priv->beacon_period       = MLAN_BEACON_INTERVAL;
@@ -334,9 +372,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #endif /* STA_SUPPORT */
 
 #ifdef RW610
-    priv->tx_bf_cap    = DEFAULT_11N_TX_BF_CAP;
+    priv->tx_bf_cap = DEFAULT_11N_TX_BF_CAP;
 #else
-    priv->tx_bf_cap    = 0;
+    priv->tx_bf_cap = 0;
 #endif
     priv->wmm_required = MTRUE;
     priv->wmm_enabled  = MFALSE;
@@ -357,7 +395,8 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->enable_11k = (t_u8)MFALSE;
 #endif
 #ifdef CONFIG_11K
-    priv->neighbor_rep_token = (t_u8)1U;
+    priv->neighbor_rep_token    = (t_u8)1U;
+    priv->rrm_mgmt_bitmap_index = -1;
 #endif
 #ifdef CONFIG_11V
     priv->bss_trans_query_token = (t_u8)1U;
@@ -388,6 +427,26 @@ mlan_status wlan_init_priv(pmlan_private priv)
         ret = wlan_add_bsspriotbl(priv);
     }
 #endif /* CONFIG_MLAN_WMSDK */
+
+#ifdef UAP_SUPPORT
+    priv->uap_bss_started = MFALSE;
+    priv->uap_host_based  = MFALSE;
+#endif
+
+#ifdef CONFIG_WPA_SUPP
+    priv->probe_req_index = -1;
+#ifdef CONFIG_WPA_SUPP_AP
+    priv->beacon_vendor_index = -1;
+    priv->beacon_index        = 0;
+    priv->proberesp_index     = 1;
+    priv->assocresp_index     = 2;
+    priv->beacon_wps_index    = 3;
+
+    priv->auth_req  = MNULL;
+    priv->assoc_req = MNULL;
+#endif
+#endif
+
     LEAVE();
     return ret;
 }
@@ -531,6 +590,10 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     pmadapter->ecsa_enable = MFALSE;
 
+#ifdef SCAN_CHANNEL_GAP
+    pmadapter->scan_chan_gap = 0;
+#endif
+
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->pscan_table, 0, (sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST));
@@ -544,8 +607,8 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->rssi_threshold = 0;
 #endif
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
-	pmadapter->scan_chan_gap = 0;
+#ifdef SCAN_CHANNEL_GAP
+    pmadapter->scan_chan_gap = 0;
 #endif
 
     /* fixme: enable this later when required */
@@ -808,10 +871,8 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                              priv->wmm.ra_list_spinlock, pmadapter->callbacks.moal_init_lock);
             util_scalar_init((t_void *)pmadapter->pmoal_handle, &priv->wmm.highest_queued_prio, HIGH_PRIO_TID,
                              priv->wmm.ra_list_spinlock, pmadapter->callbacks.moal_init_lock);
-#ifndef CONFIG_MLAN_WMSDK
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->sta_list, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
-#endif /* CONFIG_MLAN_WMSDK */
         }
     }
 
@@ -1018,7 +1079,6 @@ done:
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function frees the structure of adapter
  *
@@ -1028,7 +1088,9 @@ done:
  */
 t_void wlan_free_adapter(pmlan_adapter pmadapter)
 {
+#ifdef SCAN_CHANNEL_GAP
     mlan_callbacks *pcb = (mlan_callbacks *)&pmadapter->callbacks;
+#endif
 
     ENTER();
 
@@ -1039,6 +1101,15 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter)
         return;
     }
 
+#ifdef SCAN_CHANNEL_GAP
+    if (pmadapter->pchan_stats)
+    {
+        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->pchan_stats);
+        pmadapter->pchan_stats = MNULL;
+    }
+#endif
+
+#ifndef CONFIG_MLAN_WMSDK
     wlan_cancel_all_pending_cmd(pmadapter);
     /* Free command buffer */
     PRINTM(MINFO, "Free Command buffer\n");
@@ -1077,11 +1148,13 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter)
 #endif
     wlan_free_mlan_buffer(pmadapter, pmadapter->psleep_cfm);
     pmadapter->psleep_cfm = MNULL;
+#endif /* CONFIG_MLAN_WMSDK */
 
     LEAVE();
     return;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function frees the structure of priv
  *

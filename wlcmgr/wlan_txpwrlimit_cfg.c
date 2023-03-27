@@ -26,10 +26,13 @@ typedef struct _rg_power_cfg
     t_u8 *rg_power_table;
     t_u16 rg_len;
 } rg_power_cfg;
-    
-rg_power_cfg rg_power_cfg_rw610[] = 
-{
-    {0x10, (t_u8 *)rg_rw610, sizeof(rg_rw610),},
+
+rg_power_cfg rg_power_cfg_rw610[] = {
+    {
+        0x10,
+        (t_u8 *)rg_rw610,
+        sizeof(rg_rw610),
+    },
     /*
     There is no power table for below region, comment out temporary, fill Later
     {0xAA, (t_u8 *)rg_rw610, sizeof(rg_rw610),},
@@ -46,10 +49,10 @@ rg_power_cfg rg_power_cfg_rw610[] =
 
 int wlan_set_rg_power_cfg(t_u16 region_code)
 {
-    int i = 0;
+    int i  = 0;
     int rv = WM_SUCCESS;
-    
-    for (i = 0; i < sizeof(rg_power_cfg_rw610)/sizeof(rg_power_cfg); i++)
+
+    for (i = 0; i < sizeof(rg_power_cfg_rw610) / sizeof(rg_power_cfg); i++)
     {
         if (region_code == rg_power_cfg_rw610[i].region_code)
         {
@@ -89,6 +92,10 @@ int wlan_set_wwsm_txpwrlimit()
 int wlan_set_wwsm_txpwrlimit(void)
 {
     int rv = WM_SUCCESS;
+
+#ifdef IW61x
+    ARG_UNUSED(rutxpowerlimit_cfg_set);
+#endif
 
     rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_2g_cfg, &tx_pwrlimit_2g_cfg);
     if (rv != WM_SUCCESS)

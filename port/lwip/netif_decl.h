@@ -93,8 +93,8 @@ extern int wfd_bss_type;
 void (*wps_rx_callback)(const t_u8 *buf, size_t len);
 #endif
 
-#ifdef CONFIG_HOST_SUPP
-void (*supplicant_rx_callback)(const t_u8 interface, const t_u8 *buf, size_t len);
+#ifdef CONFIG_WPA_SUPP
+void (*l2_packet_rx_callback)(const struct pbuf *p);
 #endif /* CONFIG_HOST_SUPP */
 
 void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd);

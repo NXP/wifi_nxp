@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <lwip/opt.h>
+#include <lwip/sys.h>
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <lwip/stats.h>
@@ -30,6 +31,7 @@
 #include <lwip/ip.h>
 #include <lwip/inet_chksum.h>
 #include <lwip/pbuf.h>
+#include <lwip/api.h>
 #include <netif/etharp.h>
 
 #include <wm_os.h>
@@ -242,6 +244,48 @@ int net_wlan_init(void);
  * \return -WM_FAIL otherwise
  */
 int net_wlan_deinit(void);
+
+#ifdef CONFIG_WPA_SUPP
+/** Get STA interface netif structure pointer
+ *
+ * \rerurn A pointer to STA interface netif structure
+ *
+ */
+struct netif *net_get_sta_interface(void);
+
+/** Get uAP interface netif structure pointer
+ *
+ * \rerurn A pointer to uAP interface netif structure
+ *
+ */
+struct netif *net_get_uap_interface(void);
+
+/** Get interface name for given netif
+ *
+ * \param[out] pif_name Buffer to store interface name
+ * \param[in] iface Interface to get the name
+ *
+ * \return WM_SUCCESS on success
+ * \return -WM_FAIL otherwise
+ *
+ */
+int net_get_if_name_netif(char *pif_name, struct netif *iface);
+
+/** Register Layer2 callback to receive layer2 frames.
+ *
+ * \param[in] l2_packet_rx_eapol Function pointer to call when Layer2 frame is received.
+ *
+ * \return void
+ *
+ */
+void l2_packet_register_rx_callback(void (*l2_packet_rx_eapol)(const struct pbuf *p));
+
+/** De-Register Layer2 callback to receive layer2 frames
+ *
+ * \return void
+ */
+void l2_packet_deregister_rx_callback();
+#endif
 
 /** Get station interface handle
  *
@@ -462,4 +506,5 @@ void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss
                                                     const size_t len));
 
 void rx_mgmt_deregister_callback(void);
+
 #endif /* _WM_NET_H_ */

@@ -21,6 +21,8 @@
 #include "wifi-sdio.h"
 #endif
 #include "wifi-internal.h"
+#include "mlan_ieee.h"
+#include <mlan_remap_mem_operations.h>
 
 /* fixme: Some of the following options could be added to kconfig. While
    adding the ranges in kconfig use the ones given as macros in
@@ -38,6 +40,8 @@ static uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 #endif
 
 static uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
+
+country_code_t wifi_uap_11d_country = COUNTRY_NONE;
 
 int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp);
 
@@ -148,7 +152,7 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         /** Do Nothing */
     }
 
-    PRINTM(MCMND, "Uap:11ac=%d vht_cap_info=0x%x, vht_tx_mcs=0x%x, vht_rx_mcs=0x%x\n", action, vht_cfg.vht_cap_info,
+    wifi_d("Uap:11ac=%d vht_cap_info=0x%x, vht_tx_mcs=0x%x, vht_rx_mcs=0x%x\r\n", action, vht_cfg.vht_cap_info,
            vht_cfg.vht_tx_mcs, vht_cfg.vht_rx_mcs);
     ret = (int)wlan_11ac_ioctl_vhtcfg(pmpriv, (t_u8)MLAN_ACT_SET, &vht_cfg);
     return ret;
@@ -290,32 +294,16 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
 
 int wifi_uap_set_country(country_code_t country)
 {
-    int ret;
-    t_u8 nr_sb;
+    wifi_uap_11d_country = country;
 
-    if (wifi_uap_enable_11d() != WM_SUCCESS)
-    {
-        wifi_e("unable to enabled 11d feature\r\n");
-        return (int)-WM_FAIL;
-    }
+    (void)wifi_uap_enable_11d_support();
 
-    wifi_11d_country = country;
-
-    wifi_sub_band_set_t *sub_band = get_sub_band_from_country(country, &nr_sb);
-
-    wifi_domain_param_t *dp = get_11d_domain_params(country, sub_band, nr_sb);
-
-    ret = wifi_uap_set_domain_params(dp);
-
-    if (ret != WM_SUCCESS)
-    {
-        wifi_11d_country = COUNTRY_NONE;
-        os_mem_free(dp);
-        return ret;
-    }
-
-    os_mem_free(dp);
     return WM_SUCCESS;
+}
+
+country_code_t wifi_uap_get_country(void)
+{
+    return wifi_uap_11d_country;
 }
 
 /*
@@ -341,7 +329,7 @@ int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
         return -WM_E_INVAL;
     }
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     (void)wifi_get_uap_channel(NULL);
 
     t_u16 band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
@@ -400,8 +388,10 @@ static int wifi_cmd_uap_config(char *ssid,
         return -WM_E_INVAL;
     }
 
+#ifndef CONFIG_WPA_SUPP
     int passphrase_len = (int)strlen(passphrase);
     int password_len   = (int)strlen(password);
+#endif
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     wifi_uap_set_beacon_period(beacon_period);
@@ -503,7 +493,7 @@ static int wifi_cmd_uap_config(char *ssid,
 #ifdef CONFIG_11AX
     enable_11ax = wifi_check_11ax_capability(pmpriv, bss.param.bss_config.band_cfg);
 #endif
-
+#ifndef CONFIG_WPA_SUPP
     if (security == WLAN_SECURITY_NONE)
     {
         bss.param.bss_config.protocol = PROTOCOL_NO_SECURITY;
@@ -608,7 +598,7 @@ static int wifi_cmd_uap_config(char *ssid,
             (void)memcpy((void *)bss.param.bss_config.wpa_cfg.password, (const void *)password, (size_t)password_len);
         }
     }
-
+#endif
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0 ? (t_u16)0x112c : wm_wifi.ht_cap_info;
     wm_wifi.ht_tx_cfg                = wm_wifi.ht_tx_cfg == 0 ? (t_u16)0x002c : wm_wifi.ht_tx_cfg;
@@ -727,6 +717,7 @@ int wifi_uap_set_domain_params(wifi_domain_param_t *dp)
     if (wm_wifi.dp != NULL)
     {
         wuap_w("Overwriting previous configuration");
+        os_mem_free(wm_wifi.dp);
     }
 
     /*
@@ -761,10 +752,6 @@ int wifi_uap_set_domain_params(wifi_domain_param_t *dp)
     wuap_d("Saved domain info for later use");
     wm_wifi.dp = n_dp;
 
-    (void)wifi_enable_11d_support_APIs();
-
-    wm_wifi.uap_support_11d_apis = wifi_uap_11d_support_apis;
-
     return WM_SUCCESS;
 }
 
@@ -776,14 +763,14 @@ int wifi_uap_set_params(int channel)
     if (channel > 14)
     {
 #ifdef CONFIG_5GHz_SUPPORT
-        sub_band = get_sub_band_from_country_5ghz(wifi_11d_country, &nr_sb);
+        sub_band = get_sub_band_from_country_5ghz(wifi_uap_11d_country, &nr_sb);
 #endif /* CONFIG_5GHz_SUPPORT */
     }
     else
     {
-        sub_band = get_sub_band_from_country(wifi_11d_country, &nr_sb);
+        sub_band = get_sub_band_from_country(wifi_uap_11d_country, &nr_sb);
     }
-    wifi_domain_param_t *dp = get_11d_domain_params(wifi_11d_country, sub_band, nr_sb);
+    wifi_domain_param_t *dp = get_11d_domain_params(wifi_uap_11d_country, sub_band, nr_sb);
     ret                     = wifi_uap_set_domain_params(dp);
 
     if (dp != NULL)
@@ -808,14 +795,14 @@ int wifi_uap_enable_11d(void)
 {
     state_11d_t enable = ENABLE_11D;
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     return wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET, (t_u32)Dot11D_i,
                                          NULL, &enable, MLAN_BSS_TYPE_UAP, NULL);
 }
 
 int wifi_uap_ctrl_deauth(bool enable)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     return wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET, (t_u32)StopDeauth_i,
                                          NULL, &enable, MLAN_BSS_TYPE_UAP, NULL);
 }
@@ -978,9 +965,7 @@ int wifi_uap_start(mlan_bss_type type,
         (void)wifi_uap_pmf_getset(HostCmd_ACT_GEN_SET, (uint8_t *)&mfpc, (uint8_t *)&mfpr);
     }
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-
-    (void)wifi_uap_enable_11d_support();
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
     if (wm_wifi.enable_11d_support && (wm_wifi.uap_support_11d_apis != MNULL))
     {
@@ -988,7 +973,7 @@ int wifi_uap_start(mlan_bss_type type,
         (void)wm_wifi.uap_support_11d_apis->wifi_uap_set_params_p(channel);
     }
 
-    if ((wm_wifi.dp != MNULL) && (wm_wifi.uap_support_11d_apis != MNULL) && type == MLAN_BSS_TYPE_UAP)
+    if ((wm_wifi.dp != MNULL) && (wm_wifi.uap_support_11d_apis != MNULL))
     {
         wuap_d("Downloading domain params");
         (void)wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(wm_wifi.dp);
@@ -1016,7 +1001,7 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
         return -WM_E_INVAL;
     }
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
     /* Start BSS */
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_LIST, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
@@ -1028,7 +1013,7 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
 #ifndef CONFIG_MLAN_WMSDK
 static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     mlan_deauth_param deauth;
 
     if (mac_addr == MNULL)
@@ -1045,13 +1030,36 @@ static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-int wifi_uap_stop(enum wlan_bss_type type)
+int wifi_uap_stop()
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
     /* Start BSS */
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
-                                         (mlan_bss_type)type, NULL);
+                                         MLAN_BSS_TYPE_UAP, NULL);
+}
+
+int wifi_uap_do_acs()
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    MrvlIEtypes_channel_band_t channel_band_tlv;
+
+    (void)memset(&channel_band_tlv, 0, sizeof(MrvlIEtypes_channel_band_t));
+    channel_band_tlv.header.type = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
+    channel_band_tlv.header.len  = (t_u16)sizeof(MrvlIEtypes_channel_band_t);
+    channel_band_tlv.band_config = BAND_CONFIG_ACS_MODE;
+
+    int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, MNULL,
+                                           &channel_band_tlv, MLAN_BSS_TYPE_UAP, NULL);
+
+    if (rv != WM_SUCCESS)
+    {
+        return rv;
+    }
+
+    /* Start ACS SCAN */
+    return wifi_uap_prepare_and_send_cmd(pmpriv, HostCMD_APCMD_ACS_SCAN, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+                                         MLAN_BSS_TYPE_UAP, NULL);
 }
 
 #ifdef CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM
@@ -1163,7 +1171,7 @@ void wifi_uap_enable_sticky_bit(const uint8_t *mac_addr)
  */
 void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
 {
-    mlan_private *pmpriv              = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv              = (mlan_private *)mlan_adap->priv[1];
     HostCmd_DS_SYS_CONFIG *sys_config = (HostCmd_DS_SYS_CONFIG *)&resp->params.sys_config;
     uint8_t *tlv                      = sys_config->tlv_buffer;
     MrvlIEtypesHeader_t *header       = (MrvlIEtypesHeader_t *)(void *)tlv;
@@ -1286,6 +1294,7 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
             {
                 MrvlIEtypes_max_sta_count_t *tlv_sta_cnt = (MrvlIEtypes_max_sta_count_t *)(void *)tlv;
                 pmpriv->uap_state_chan_cb.max_sta_count  = tlv_sta_cnt->max_sta_count;
+                pmpriv->uap_max_sta                      = tlv_sta_cnt->max_sta_count;
                 if (!(sys_config->action == HostCmd_ACT_GEN_GET))
                 {
                     break;
@@ -1541,7 +1550,7 @@ int wifi_uap_group_rekey_timer_getset(uint8_t action, uint32_t *group_rekey_time
 /* Content reproduced from wlan_uap_get_channel() */
 static int wifi_send_uap_get_channel_cmd(int *channel)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     t_u16 tlv_type       = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
 
     int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_GET, 0, MNULL,
@@ -1563,7 +1572,7 @@ static int wifi_send_uap_get_channel_cmd(int *channel)
 /* Content reproduced from wlan_uap_get_channel() */
 static int wifi_send_uap_max_sta_num_cmd(uint8_t action, unsigned int *max_sta_num)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
     MrvlIEtypes_max_sta_count_t max_sta_count_tlv;
 
     (void)memset(&max_sta_count_tlv, 0, sizeof(MrvlIEtypes_max_sta_count_t));
@@ -1733,3 +1742,2588 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
 }
 
 #endif
+
+#ifdef CONFIG_WPA_SUPP_AP
+
+void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
+{
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
+    sta_node *sta_node_ptr;
+#if defined(WIFI_ADD_ON)
+    /* txbastream table also is used as connected STAs data base */
+    wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
+    wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
+#else
+    wlan_update_uap_ampdu_info(sta_addr, 1);
+#endif
+    sta_node_ptr = os_mem_alloc(sizeof(sta_node));
+    if (sta_node_ptr == MNULL)
+    {
+        wifi_w("No mem. Cannot check station type");
+        return;
+    }
+
+    // wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
+
+    sta_node_ptr->is_11n_enabled = is_11n_enabled;
+
+#if defined(WIFI_ADD_ON)
+    if (sta_node_ptr->is_11n_enabled)
+    {
+        wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
+    }
+#else
+    if (sta_node_ptr->is_11n_enabled == MFALSE)
+    {
+        wlan_update_uap_ampdu_supported(sta_addr, MFALSE);
+    }
+#endif
+#ifdef CONFIG_UAP_AMPDU_TX
+    if (sta_node_ptr->is_11n_enabled == MTRUE)
+    {
+        (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)sta_addr);
+    }
+#endif
+
+    os_mem_free(sta_node_ptr);
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
+#endif
+}
+
+void wifi_uap_client_deauth(t_u8 *sta_addr)
+{
+#if defined(WIFI_ADD_ON)
+    if ((mlan_private *)mlan_adap->priv[1]->is_11n_enabled)
+    {
+        wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
+        wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+    }
+#else
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
+    wlan_update_uap_ampdu_info(sta_addr, 0);
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
+#endif
+
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+    wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
+#endif
+}
+
+/**
+ * @brief Verify RSN IE
+ *
+ * @param rsn_ie          Pointer RSN IE
+ * @param sys_config      Pointer to mlan_uap_bss_param structure
+ *
+ * @return                MTRUE/MFALSE
+ */
+static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_config)
+{
+    int left                            = 0;
+    int count                           = 0;
+    int i                               = 0;
+    wpa_suite_auth_key_mgmt_t *key_mgmt = NULL;
+    left                                = rsn_ie->len + 2;
+    if (left < (int)sizeof(IEEEtypes_Rsn_t))
+        return MFALSE;
+    sys_config->wpa_cfg.group_cipher         = 0;
+    sys_config->wpa_cfg.pairwise_cipher_wpa2 = 0;
+    sys_config->key_mgmt                     = 0;
+    /* check the group cipher */
+    switch (rsn_ie->group_cipher.type)
+    {
+        case WPA_CIPHER_TKIP2:
+            sys_config->wpa_cfg.group_cipher = CIPHER_TKIP;
+            break;
+        case WPA_CIPHER_AES_CCM:
+            sys_config->wpa_cfg.group_cipher = CIPHER_AES_CCMP;
+            break;
+        default:
+            break;
+    }
+    count = wlan_le16_to_cpu(rsn_ie->pairwise_cipher.count);
+    for (i = 0; i < count; i++)
+    {
+        switch (rsn_ie->pairwise_cipher.list[i].type)
+        {
+            case WPA_CIPHER_TKIP2:
+                sys_config->wpa_cfg.pairwise_cipher_wpa2 |= CIPHER_TKIP;
+                break;
+            case WPA_CIPHER_AES_CCM:
+                sys_config->wpa_cfg.pairwise_cipher_wpa2 |= CIPHER_AES_CCMP;
+                break;
+            default:
+                break;
+        }
+    }
+    left -= sizeof(IEEEtypes_Rsn_t) + (count - 1) * sizeof(wpa_suite);
+    if (left < (int)sizeof(wpa_suite_auth_key_mgmt_t))
+        return MFALSE;
+    key_mgmt = (wpa_suite_auth_key_mgmt_t *)((u8 *)rsn_ie + sizeof(IEEEtypes_Rsn_t) + (count - 1) * sizeof(wpa_suite));
+    count    = wlan_le16_to_cpu(key_mgmt->count);
+    if (left < (int)(sizeof(wpa_suite_auth_key_mgmt_t) + (count - 1) * sizeof(wpa_suite)))
+        return MFALSE;
+    for (i = 0; i < count; i++)
+    {
+        switch (key_mgmt->list[i].type)
+        {
+            case RSN_AKM_8021X:
+            case RSN_AKM_8021X_SUITEB:
+            case RSN_AKM_8021X_SUITEB_192:
+                sys_config->key_mgmt |= KEY_MGMT_EAP;
+                break;
+            case RSN_AKM_PSK:
+            case RSN_AKM_FT_PSK:
+                sys_config->key_mgmt |= KEY_MGMT_PSK;
+                break;
+            case RSN_AKM_PSK_SHA256:
+                sys_config->key_mgmt |= KEY_MGMT_PSK_SHA256;
+                break;
+#ifdef UAP_HOST_MLME
+            case RSN_AKM_SAE:
+                sys_config->key_mgmt |= KEY_MGMT_SAE;
+                break;
+            case RSN_AKM_OWE:
+#ifdef CONFIG_OWE
+                sys_config->key_mgmt |= KEY_MGMT_OWE;
+#endif
+                break;
+#endif
+        }
+    }
+    return MTRUE;
+}
+
+/**
+ *  @brief Verify WPA IE`
+ *  @param wpa_ie          Pointer WPA IE
+ *  @param sys_config      Pointer to mlan_uap_bss_param structure
+ *
+ * @return                MTRUE/MFALSE
+ */
+static t_u8 wifi_check_wpa_ie(IEEEtypes_Wpa_t *wpa_ie, mlan_uap_bss_param *sys_config)
+{
+    int left                            = 0;
+    int count                           = 0;
+    int i                               = 0;
+    wpa_suite_auth_key_mgmt_t *key_mgmt = NULL;
+    left                                = wpa_ie->len + 2;
+    if (left < (int)sizeof(IEEEtypes_Wpa_t))
+        return MFALSE;
+    sys_config->wpa_cfg.group_cipher        = 0;
+    sys_config->wpa_cfg.pairwise_cipher_wpa = 0;
+    switch (wpa_ie->group_cipher.type)
+    {
+        case WPA_CIPHER_TKIP2:
+            sys_config->wpa_cfg.group_cipher = CIPHER_TKIP;
+            break;
+        case WPA_CIPHER_AES_CCM:
+            sys_config->wpa_cfg.group_cipher = CIPHER_AES_CCMP;
+            break;
+        default:
+            break;
+    }
+    count = wlan_le16_to_cpu(wpa_ie->pairwise_cipher.count);
+    for (i = 0; i < count; i++)
+    {
+        switch (wpa_ie->pairwise_cipher.list[i].type)
+        {
+            case WPA_CIPHER_TKIP2:
+                sys_config->wpa_cfg.pairwise_cipher_wpa |= CIPHER_TKIP;
+                break;
+            case WPA_CIPHER_AES_CCM:
+                sys_config->wpa_cfg.pairwise_cipher_wpa |= CIPHER_AES_CCMP;
+                break;
+            default:
+                break;
+        }
+    }
+    left -= sizeof(IEEEtypes_Wpa_t) + (count - 1) * sizeof(wpa_suite);
+    if (left < (int)sizeof(wpa_suite_auth_key_mgmt_t))
+        return MFALSE;
+    key_mgmt = (wpa_suite_auth_key_mgmt_t *)((u8 *)wpa_ie + sizeof(IEEEtypes_Wpa_t) + (count - 1) * sizeof(wpa_suite));
+    count    = wlan_le16_to_cpu(key_mgmt->count);
+    if (left < (int)(sizeof(wpa_suite_auth_key_mgmt_t) + (count - 1) * sizeof(wpa_suite)))
+        return MFALSE;
+    for (i = 0; i < count; i++)
+    {
+        switch (key_mgmt->list[i].type)
+        {
+            case RSN_AKM_8021X:
+                sys_config->key_mgmt = KEY_MGMT_EAP;
+                break;
+            case RSN_AKM_PSK:
+                sys_config->key_mgmt = KEY_MGMT_PSK;
+                break;
+        }
+    }
+    return MTRUE;
+}
+
+/**
+ * @brief Find RSN/WPA IES
+ *
+ * @param ie              Pointer IE buffer
+ * @param sys_config      Pointer to mlan_uap_bss_param structure
+ * @return                MTRUE/MFALSE
+ */
+static t_u8 wifi_find_wpa_ies(const t_u8 *ie, int len, mlan_uap_bss_param *sys_config)
+{
+    int bytes_left           = len;
+    const t_u8 *pcurrent_ptr = ie;
+    t_u16 total_ie_len;
+    t_u8 element_len;
+    t_u8 wpa2 = 0;
+    t_u8 wpa  = 0;
+    t_u8 ret  = MFALSE;
+    IEEEtypes_ElementId_e element_id;
+    IEEEtypes_VendorSpecific_t *pvendor_ie;
+    const t_u8 wpa_oui[4] = {0x00, 0x50, 0xf2, 0x01};
+    while (bytes_left >= 2)
+    {
+        element_id   = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
+        element_len  = *((t_u8 *)pcurrent_ptr + 1);
+        total_ie_len = element_len + sizeof(IEEEtypes_Header_t);
+        if (bytes_left < total_ie_len)
+        {
+            PRINTM(MERROR, "InterpretIE: Error in processing IE, bytes left < IE length\n");
+            bytes_left = 0;
+            continue;
+        }
+        switch (element_id)
+        {
+            case RSN_IE:
+                wpa2 = wifi_check_rsn_ie((IEEEtypes_Rsn_t *)pcurrent_ptr, sys_config);
+                break;
+            case VENDOR_SPECIFIC_221:
+                pvendor_ie = (IEEEtypes_VendorSpecific_t *)pcurrent_ptr;
+                if (!memcmp(pvendor_ie->vend_hdr.oui, wpa_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                    (pvendor_ie->vend_hdr.oui_type == wpa_oui[3]))
+                {
+                    wpa = wifi_check_wpa_ie((IEEEtypes_Wpa_t *)pcurrent_ptr, sys_config);
+                }
+                break;
+            default:
+                break;
+        }
+        pcurrent_ptr += element_len + 2;
+        /* Need to account for IE ID and IE Len */
+        bytes_left -= (element_len + 2);
+    }
+    if (wpa && wpa2)
+    {
+        sys_config->protocol = PROTOCOL_WPA | PROTOCOL_WPA2;
+        ret                  = MTRUE;
+    }
+    else if (wpa2)
+    {
+        sys_config->protocol = PROTOCOL_WPA2;
+        ret                  = MTRUE;
+    }
+    else if (wpa)
+    {
+        sys_config->protocol = PROTOCOL_WPA;
+        ret                  = MTRUE;
+    }
+    return ret;
+}
+
+/**
+ * @brief Find and set WMM IES
+ *  @param priv            Pointer to moal_private
+ *  @param ie              Pointer IE buffer
+ *  @param sys_config      Pointer to mlan_uap_bss_param structure
+ *
+ * @return                N/A
+ *
+ **/
+static t_void wifi_set_wmm_ies(mlan_private *priv, const t_u8 *ie, int len, mlan_uap_bss_param *sys_config)
+{
+    int bytes_left           = len;
+    const t_u8 *pcurrent_ptr = ie;
+    t_u16 total_ie_len;
+    t_u8 element_len;
+    IEEEtypes_VendorSpecific_t *pvendor_ie;
+    IEEEtypes_ElementId_e element_id;
+    const t_u8 wmm_oui[4] = {0x00, 0x50, 0xf2, 0x02};
+
+    while (bytes_left >= 2)
+    {
+        element_id   = (IEEEtypes_ElementId_e)(*((t_u8 *)pcurrent_ptr));
+        element_len  = *((t_u8 *)pcurrent_ptr + 1);
+        total_ie_len = element_len + sizeof(IEEEtypes_Header_t);
+        if (bytes_left < total_ie_len)
+        {
+            PRINTM(MERROR, "InterpretIE: Error in processing IE, bytes left < IE length\n");
+            bytes_left = 0;
+            continue;
+        }
+        switch (element_id)
+        {
+            case VENDOR_SPECIFIC_221:
+                pvendor_ie = (IEEEtypes_VendorSpecific_t *)pcurrent_ptr;
+                if (!memcmp(pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                    pvendor_ie->vend_hdr.oui_type == wmm_oui[3])
+                {
+                    if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t))
+                    {
+                        /*
+                         * Only accept and copy the WMM IE if
+                         * it matches the size expected for the
+                         * WMM Parameter IE.
+                         */
+                        memcpy(&sys_config->wmm_para, pcurrent_ptr + sizeof(IEEEtypes_Header_t), element_len);
+                        /** set uap_host_based_config to true */
+                        sys_config->uap_host_based_config = MTRUE;
+                    }
+                }
+
+                break;
+            default:
+                break;
+        }
+        pcurrent_ptr += element_len + 2;
+        /* Need to account for IE ID and IE Len */
+        bytes_left -= (element_len + 2);
+    }
+}
+
+/**
+ *  @brief Set/Get system configuration parameters
+ *
+ *  @param priv             A pointer to moal_private structure
+ *  @param action           MLAN_ACT_SET or MLAN_ACT_GET
+ *  @param wait_option      Wait option
+ *  @param sys_cfg          A pointer to mlan_uap_bss_param structure
+ *
+ *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wifi_set_get_sys_config(mlan_private *priv, t_u16 action, mlan_uap_bss_param *sys_cfg)
+{
+    // mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_ds_bss bss;
+    mlan_ioctl_req ioctl_buf;
+
+    ENTER();
+
+    (void)memset(&bss, 0x00, sizeof(mlan_ds_bss));
+
+    bss.sub_command = MLAN_OID_UAP_BSS_CONFIG;
+
+    if (action == MLAN_ACT_SET)
+        memcpy(&bss.param.bss_config, sys_cfg, sizeof(mlan_uap_bss_param));
+
+    (void)memset(&ioctl_buf, 0x00, sizeof(mlan_ioctl_req));
+
+    ioctl_buf.req_id = (t_u32)MLAN_IOCTL_BSS;
+    /** Pointer to buffer */
+    ioctl_buf.pbuf = (t_u8 *)&bss;
+
+    return wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, &ioctl_buf, NULL,
+                                         MLAN_BSS_TYPE_UAP, NULL);
+}
+
+#define IE_MASK_WPS    0x0001
+#define IE_MASK_P2P    0x0002
+#define IE_MASK_WFD    0x0004
+#define IE_MASK_VENDOR 0x0008
+#define IE_MASK_EXTCAP 0x0010
+
+/**
+ * @brief get specific ie
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ * @param ie_out          Pointer to out IE buf
+ * @param ie_out_len    Total length of ie_out
+ * @param mask            IE mask
+ *
+ * @return                out IE length
+ */
+static t_u16 wifi_get_specific_ie(const t_u8 *ie, int len, t_u8 *ie_out, t_u32 ie_out_len, t_u16 mask)
+{
+    int left_len    = len;
+    const t_u8 *pos = ie;
+    int length;
+    t_u8 id                                = 0;
+    t_u16 out_len                          = 0;
+    IEEEtypes_VendorSpecific_t *pvendor_ie = NULL;
+    const u8 wps_oui[4]                    = {0x00, 0x50, 0xf2, 0x04};
+    const u8 p2p_oui[4]                    = {0x50, 0x6f, 0x9a, 0x09};
+    const u8 wfd_oui[4]                    = {0x50, 0x6f, 0x9a, 0x0a};
+    const t_u8 wmm_oui[4]                  = {0x00, 0x50, 0xf2, 0x02};
+
+    ENTER();
+    while (left_len >= 2)
+    {
+        length = *(pos + 1);
+        id     = *pos;
+        if ((length + 2) > left_len)
+            break;
+        if (id == VENDOR_SPECIFIC_221)
+        {
+            pvendor_ie = (IEEEtypes_VendorSpecific_t *)pos;
+            if (!memcmp(pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                pvendor_ie->vend_hdr.oui_type == wmm_oui[3])
+            {
+                PRINTM(MIOCTL, "find WMM IE\n");
+            }
+            else if (!memcmp(pvendor_ie->vend_hdr.oui, p2p_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                     pvendor_ie->vend_hdr.oui_type == p2p_oui[3])
+            {
+                if (mask & IE_MASK_P2P)
+                {
+                    /** only get first p2p ie here */
+                    __memcpy(NULL, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                    break;
+                }
+            }
+            else if (!memcmp(pvendor_ie->vend_hdr.oui, wps_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                     pvendor_ie->vend_hdr.oui_type == wps_oui[3])
+            {
+                if (mask & IE_MASK_WPS)
+                {
+                    if ((out_len + length + 2) < (int)ie_out_len)
+                    {
+                        __memcpy(NULL, ie_out + out_len, pos, length + 2);
+                        out_len += length + 2;
+                    }
+                    else
+                    {
+                        PRINTM(MERROR, "get_specific_ie: IE too big, fail copy WPS IE\n");
+                        break;
+                    }
+                }
+            }
+            else if (!memcmp(pvendor_ie->vend_hdr.oui, wfd_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                     pvendor_ie->vend_hdr.oui_type == wfd_oui[3])
+            {
+                if (mask & IE_MASK_WFD)
+                {
+                    if ((out_len + length + 2) < (int)ie_out_len)
+                    {
+                        __memcpy(NULL, ie_out + out_len, pos, length + 2);
+                        out_len += length + 2;
+                    }
+                    else
+                    {
+                        PRINTM(MERROR, "get_specific_ie: IE too big, fail copy WFD IE\n");
+                        break;
+                    }
+                }
+            }
+            else if (mask & IE_MASK_VENDOR)
+            {
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    __memcpy(NULL, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    PRINTM(MERROR, "get_specific_ie:IE too big, fail copy VENDOR IE\n");
+                    break;
+                }
+            }
+        }
+        pos += (length + 2);
+        left_len -= (length + 2);
+    }
+    LEAVE();
+    return out_len;
+}
+
+/**
+ * @brief Find specific IE from IE buffer
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ * @param spec_ie         Pointer to specific IE buffer
+ * @param spec_len        Total length of specific IE
+ *
+ * @return                out IE length
+ */
+static t_u8 wifi_find_ie(const t_u8 *ie, int len, const t_u8 *spec_ie, int spec_len)
+{
+    int left_len    = len;
+    const t_u8 *pos = ie;
+    int length;
+
+    while (left_len >= 2)
+    {
+        length = *(pos + 1);
+        if ((length + 2) > left_len)
+            break;
+        if ((length + 2) == spec_len)
+        {
+            if (!memcmp(pos, spec_ie, spec_len))
+                return MTRUE;
+        }
+        pos += (length + 2);
+        left_len -= (length + 2);
+    }
+    return MFALSE;
+}
+
+/**
+ * @brief Filter specific IE in ie buf
+ *
+ * @param priv            pointer to moal private structure
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ * @param ie_out		  Pointer to out IE buf
+ * @param ie_out_len      Total length of ie_out
+ * @param wps_flag	      flag for wps/p2p
+ * @param dup_ie          Pointer to duplicate ie
+ * @param dup_ie_len	  duplicate IE len
+ *
+ * @return                out IE length
+ */
+static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
+                                    const t_u8 *ie,
+                                    int len,
+                                    t_u8 *ie_out,
+                                    t_u32 ie_out_len,
+                                    t_u16 wps_flag,
+                                    const t_u8 *dup_ie,
+                                    int dup_ie_len)
+{
+    int left_len    = len;
+    const t_u8 *pos = ie;
+    int length;
+    t_u8 id                                = 0;
+    t_u16 out_len                          = 0;
+    IEEEtypes_VendorSpecific_t *pvendor_ie = NULL;
+    const u8 wps_oui[4]                    = {0x00, 0x50, 0xf2, 0x04};
+    const u8 p2p_oui[4]                    = {0x50, 0x6f, 0x9a, 0x09};
+    const u8 wfd_oui[4]                    = {0x50, 0x6f, 0x9a, 0x0a};
+    const t_u8 wmm_oui[4]                  = {0x00, 0x50, 0xf2, 0x02};
+    t_u8 find_p2p_ie                       = MFALSE;
+    t_u8 enable_11d                        = MFALSE;
+#ifdef CONFIG_11AX
+    t_u8 ext_id = 0;
+#endif
+    // int ie_len;
+
+    /* ERP_INFO/EXTENDED_SUPPORT_RATES/HT_CAPABILITY/HT_OPERATION/WMM
+     * and WPS/P2P/WFD IE will be fileter out
+     */
+    while (left_len >= 2)
+    {
+        length = *(pos + 1);
+        id     = *pos;
+        if ((length + 2) > left_len)
+            break;
+        if (dup_ie && dup_ie_len && wifi_find_ie(dup_ie, dup_ie_len, pos, length + 2))
+        {
+            wifi_d("skip duplicate IE");
+            pos += (length + 2);
+            left_len -= (length + 2);
+            continue;
+        }
+        switch (id)
+        {
+            case COUNTRY_INFO:
+                enable_11d = MTRUE;
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    __memcpy(priv, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy COUNTRY INFO IE");
+                }
+                break;
+            case HT_CAPABILITY:
+            case HT_OPERATION:
+#ifdef CONFIG_11AC
+            case VHT_CAPABILITY:
+            case VHT_OPERATION:
+#endif
+#ifdef CONFIG_HOST_MLME
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    __memcpy(priv, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy COUNTRY INFO IE");
+                }
+#endif
+                break;
+            case EXTENDED_SUPPORTED_RATES:
+            case WLAN_EID_ERP_INFO:
+                /* Fall Through */
+            case REGULATORY_CLASS:
+                /* Fall Through */
+            case OVERLAPBSSSCANPARAM:
+#ifdef WAPI_AP
+                /* Fall Through */
+            case WAPI_IE:
+#endif
+                break;
+#ifdef CONFIG_11AX
+            case EXTENSION:
+                ext_id = *(pos + 2);
+#ifdef UAP_SUPPORT
+#ifdef CONFIG_11AX
+                if (ext_id == HE_CAPABILITY)
+                {
+                    mlan_ds_11ax_he_cfg he_cfg;
+                    IEEEtypes_HECap_t *hecap_ie;
+
+                    if (priv->uap_channel <= 14)
+                        he_cfg.band = MBIT(0);
+                    else
+                        he_cfg.band = MBIT(1);
+
+                    wifi_d("Retrieve 11ax cfg by channel=%d band=%d", priv->uap_channel, he_cfg.band);
+
+                    if (0 == wlan_cmd_11ax_cfg(priv, HostCmd_ACT_GEN_GET, &he_cfg))
+                    {
+                        hecap_ie = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
+
+                        hecap_ie->ieee_hdr.len        = he_cfg.he_cap.len;
+                        hecap_ie->ieee_hdr.element_id = he_cfg.he_cap.id;
+
+                        __memcpy(priv, ie_out + out_len, hecap_ie, hecap_ie->ieee_hdr.len + 2);
+
+                        out_len += hecap_ie->ieee_hdr.len + 2;
+                    }
+                    else
+                    {
+                        wifi_d("Fail to get 11ax he_cap parameters");
+                    }
+                }
+                else
+#endif
+#endif
+                {
+                    if ((out_len + length + 2) < (int)ie_out_len)
+                    {
+                        __memcpy(priv, ie_out + out_len, pos, length + 2);
+                        out_len += length + 2;
+                    }
+                    else
+                    {
+                        wifi_d("IE too big, fail copy EXTENSION IE");
+                    }
+                }
+                break;
+#endif
+            case EXT_CAPABILITY:
+                /* filter out EXTCAP */
+                if (wps_flag & IE_MASK_EXTCAP)
+                {
+#if 0
+                    ie_len = length + 2;
+                    if (MLAN_STATUS_SUCCESS !=
+                            wifi_set_get_gen_ie(priv, MLAN_ACT_SET,
+                                (t_u8 *)pos, &ie_len,
+                                MOAL_IOCTL_WAIT))
+                        PRINTM(MERROR,
+                                "Fail to set EXTCAP IE\n");
+#endif
+                    break;
+                }
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    __memcpy(priv, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy EXTCAP IE");
+                }
+                break;
+            case VENDOR_SPECIFIC_221:
+                /* filter out wmm ie */
+                pvendor_ie = (IEEEtypes_VendorSpecific_t *)pos;
+                if (!memcmp(pvendor_ie->vend_hdr.oui, wmm_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                    pvendor_ie->vend_hdr.oui_type == wmm_oui[3])
+                {
+                    break;
+                }
+                /* filter out wps ie */
+                else if (!memcmp(pvendor_ie->vend_hdr.oui, wps_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                         pvendor_ie->vend_hdr.oui_type == wps_oui[3])
+                {
+                    if (wps_flag & IE_MASK_WPS)
+                        break;
+                }
+                /* filter out first p2p ie */
+                else if (!memcmp(pvendor_ie->vend_hdr.oui, p2p_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                         pvendor_ie->vend_hdr.oui_type == p2p_oui[3])
+                {
+                    if (!find_p2p_ie && (wps_flag & IE_MASK_P2P))
+                    {
+                        find_p2p_ie = MTRUE;
+                        break;
+                    }
+                }
+                /* filter out wfd ie */
+                else if (!memcmp(pvendor_ie->vend_hdr.oui, wfd_oui, sizeof(pvendor_ie->vend_hdr.oui)) &&
+                         pvendor_ie->vend_hdr.oui_type == wfd_oui[3])
+                {
+                    if (wps_flag & IE_MASK_WFD)
+                        break;
+                }
+                else if (wps_flag & IE_MASK_VENDOR)
+                {
+                    // filter out vendor IE
+                    break;
+                }
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    __memcpy(priv, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy VENDOR_SPECIFIC_221 IE");
+                }
+                break;
+            default:
+                if ((out_len + length + 2) < (int)ie_out_len)
+                {
+                    __memcpy(priv, ie_out + out_len, pos, length + 2);
+                    out_len += length + 2;
+                }
+                else
+                {
+                    wifi_d("IE too big, fail copy %d IE", id);
+                }
+                break;
+        }
+
+        pos += (length + 2);
+        left_len -= (length + 2);
+    }
+
+#ifdef UAP_SUPPORT
+    if (enable_11d && !priv->bss_started)
+    {
+        if (wm_wifi.enable_11d_support && (wm_wifi.uap_support_11d_apis != MNULL))
+        {
+            wuap_d("Setting default domain params");
+            (void)wm_wifi.uap_support_11d_apis->wifi_uap_set_params_p(priv->uap_channel);
+        }
+        if ((wm_wifi.dp != MNULL) && (wm_wifi.uap_support_11d_apis != MNULL))
+        {
+            wuap_d("Downloading domain params");
+            (void)wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(wm_wifi.dp);
+            wuap_d("Enabling 11d");
+            (void)wm_wifi.uap_support_11d_apis->wifi_uap_enable_11d_p();
+        }
+    }
+#endif
+    return out_len;
+}
+
+static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
+                                 char *tail_ies,
+                                 unsigned short tail_ies_len,
+                                 char *beacon_ies,
+                                 unsigned short beacon_ies_len,
+                                 char *proberesp_ies,
+                                 unsigned short proberesp_ies_len,
+                                 char *assocresp_ies,
+                                 unsigned short assocresp_ies_len)
+{
+    int ret        = WM_SUCCESS;
+    const t_u8 *ie = NULL;
+    t_u8 ie_buffer[MAX_IE_SIZE];
+    t_u16 ie_len, ie_length = 0;
+    custom_ie *beacon_ies_data     = NULL;
+    custom_ie *beacon_wps_ies_data = NULL;
+    custom_ie *proberesp_ies_data  = NULL;
+    custom_ie *assocresp_ies_data  = NULL;
+
+    beacon_ies_data     = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
+    beacon_wps_ies_data = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
+    proberesp_ies_data  = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
+
+    assocresp_ies_data = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
+
+    if ((!beacon_ies_data) || (!beacon_wps_ies_data) || (!proberesp_ies_data) || (!assocresp_ies_data))
+    {
+        if (beacon_ies_data)
+        {
+            os_mem_free(beacon_ies_data);
+        }
+        if (beacon_wps_ies_data)
+        {
+            os_mem_free(beacon_wps_ies_data);
+        }
+        if (proberesp_ies_data)
+        {
+            os_mem_free(proberesp_ies_data);
+        }
+        if (assocresp_ies_data)
+        {
+            os_mem_free(assocresp_ies_data);
+        }
+        return -WM_FAIL;
+    }
+
+    ie        = (const t_u8 *)tail_ies;
+    ie_len    = tail_ies_len;
+    ie_length = 0;
+
+    if ((ie != NULL) && (ie_len != 0U))
+    {
+        if (priv->beacon_vendor_index != -1)
+        {
+            ret = wifi_clear_mgmt_ie2(MLAN_BSS_TYPE_UAP, priv->beacon_vendor_index);
+            if (ret != WM_SUCCESS)
+            {
+                wuap_e("Clear uAP vendor IE failed");
+                ret = -WM_FAIL;
+                goto done;
+            }
+            priv->beacon_vendor_index = -1;
+        }
+
+        ie_length = wifi_get_specific_ie(ie, ie_len, ie_buffer, MAX_IE_SIZE, IE_MASK_VENDOR);
+#ifdef CONFIG_WIFI_IO_DUMP
+        PRINTF("VENDOR IE\r\n");
+        dump_hex(ie_buffer, ie_length);
+#endif
+
+        if (ie_length)
+        {
+            priv->beacon_vendor_index =
+                wifi_set_mgmt_ie2(MLAN_BSS_TYPE_UAP, MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP,
+                                  (void *)ie_buffer, ie_length);
+
+            if (priv->beacon_vendor_index == -1)
+            {
+                wuap_e("Set uAP vendor IE failed");
+                ret = -WM_FAIL;
+                goto done;
+            }
+        }
+
+        ie_length = wifi_filter_beacon_ies(priv, ie, ie_len, ie_buffer, MAX_IE_SIZE,
+                                           IE_MASK_WPS | IE_MASK_WFD | IE_MASK_P2P | IE_MASK_VENDOR,
+                                           (const t_u8 *)proberesp_ies, proberesp_ies_len);
+#ifdef CONFIG_WIFI_IO_DUMP
+        PRINTF("Beacon IE\r\n");
+        dump_hex(ie_buffer, ie_length);
+#endif
+    }
+
+    beacon_ies_data->ie_index = priv->beacon_index;
+
+    if (ie_length)
+    {
+        beacon_ies_data->mgmt_subtype_mask = MGMT_MASK_BEACON | MGMT_MASK_ASSOC_RESP | MGMT_MASK_PROBE_RESP;
+        beacon_ies_data->ie_length         = ie_length;
+        memcpy(beacon_ies_data->ie_buffer, (void *)ie_buffer, ie_length);
+    }
+    else
+    {
+        beacon_ies_data->mgmt_subtype_mask = MGMT_MASK_CLEAR;
+    }
+
+    ie        = (const t_u8 *)beacon_ies;
+    ie_len    = beacon_ies_len;
+    ie_length = 0;
+
+    if ((ie != NULL) && (ie_len != 0U))
+    {
+        ie_length = wifi_filter_beacon_ies(priv, ie, ie_len, ie_buffer, MAX_IE_SIZE, IE_MASK_VENDOR, NULL, 0);
+#ifdef CONFIG_WIFI_IO_DUMP
+        PRINTF("Beacon WPS IE\r\n");
+        dump_hex(ie_buffer, ie_length);
+#endif
+    }
+
+    beacon_wps_ies_data->ie_index = priv->beacon_wps_index;
+    if (ie_length)
+    {
+        beacon_wps_ies_data->mgmt_subtype_mask = MGMT_MASK_BEACON;
+        beacon_wps_ies_data->ie_length         = ie_length;
+        memcpy(beacon_wps_ies_data->ie_buffer, (void *)ie_buffer, ie_length);
+    }
+    else
+    {
+        beacon_wps_ies_data->mgmt_subtype_mask = MGMT_MASK_CLEAR;
+    }
+
+    ie        = (const t_u8 *)proberesp_ies;
+    ie_len    = proberesp_ies_len;
+    ie_length = 0;
+
+    if ((ie != NULL) && (ie_len != 0U))
+    {
+        ie_length =
+            wifi_filter_beacon_ies(priv, ie, ie_len, ie_buffer, MAX_IE_SIZE, IE_MASK_P2P | IE_MASK_VENDOR, NULL, 0);
+#ifdef CONFIG_WIFI_IO_DUMP
+        PRINTF("ProbeResp IE\r\n");
+        dump_hex(ie_buffer, ie_length);
+#endif
+    }
+
+    proberesp_ies_data->ie_index = priv->proberesp_index;
+    if (ie_length)
+    {
+        proberesp_ies_data->mgmt_subtype_mask = MGMT_MASK_PROBE_RESP;
+        proberesp_ies_data->ie_length         = ie_length;
+        memcpy(proberesp_ies_data->ie_buffer, (void *)ie_buffer, ie_length);
+    }
+    else
+    {
+        proberesp_ies_data->mgmt_subtype_mask = MGMT_MASK_CLEAR;
+    }
+
+    ie        = (const t_u8 *)assocresp_ies;
+    ie_len    = assocresp_ies_len;
+    ie_length = 0;
+
+    if ((ie != NULL) && (ie_len != 0U))
+    {
+#ifdef CONFIG_WIFI_IO_DUMP
+        PRINTF("AssocResp IE\r\n");
+        dump_hex(ie, ie_len);
+#endif
+    }
+
+    assocresp_ies_data->ie_index = priv->assocresp_index;
+    if (ie_len)
+    {
+        assocresp_ies_data->mgmt_subtype_mask = MGMT_MASK_ASSOC_RESP;
+        assocresp_ies_data->ie_length         = ie_len;
+        memcpy(assocresp_ies_data->ie_buffer, (void *)ie, ie_len);
+    }
+    else
+    {
+        assocresp_ies_data->mgmt_subtype_mask = MGMT_MASK_CLEAR;
+    }
+
+    ret = wifi_set_custom_ie(beacon_ies_data, beacon_wps_ies_data, proberesp_ies_data, assocresp_ies_data);
+    if (ret != WM_SUCCESS)
+    {
+        ret = -WM_FAIL;
+        goto done;
+    }
+    ret = WM_SUCCESS;
+done:
+    if (beacon_ies_data)
+    {
+        os_mem_free(beacon_ies_data);
+    }
+    if (beacon_wps_ies_data)
+    {
+        os_mem_free(beacon_wps_ies_data);
+    }
+    if (proberesp_ies_data)
+    {
+        os_mem_free(proberesp_ies_data);
+    }
+    if (assocresp_ies_data)
+    {
+        os_mem_free(assocresp_ies_data);
+    }
+
+    return ret;
+}
+
+#ifdef CONFIG_5GHz_SUPPORT
+/**
+ * @brief Get second channel offset
+ *
+ * @param priv         A pointer to moal_private structure
+ * @param chan             channel num
+ * @return                second channel offset
+ */
+t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
+{
+    t_u8 chan2Offset = SEC_CHAN_NONE;
+
+#ifdef UNII_4_SUPPORT
+    mlan_adapter *pmadapter = priv->adapter;
+    if (pmadapter->region_code != COUNTRY_CODE_US && chan == 165)
+#else
+    if (chan == 165)
+#endif
+        return chan2Offset;
+
+    switch (chan)
+    {
+        case 36:
+        case 44:
+        case 52:
+        case 60:
+        case 100:
+        case 108:
+        case 116:
+        case 124:
+        case 132:
+#ifdef CONFIG_11AC
+        case 140:
+#endif
+        case 149:
+        case 157:
+#ifdef UNII_4_SUPPORT
+        case 165:
+        case 173:
+#endif
+            chan2Offset = SEC_CHAN_ABOVE;
+            break;
+        case 40:
+        case 48:
+        case 56:
+        case 64:
+        case 104:
+        case 112:
+        case 120:
+        case 128:
+        case 136:
+#ifdef CONFIG_11AC
+        case 144:
+#endif
+        case 153:
+        case 161:
+#ifdef UNII_4_SUPPORT
+        case 169:
+        case 177:
+#endif
+            chan2Offset = SEC_CHAN_BELOW;
+            break;
+    }
+    return chan2Offset;
+}
+#endif
+
+/**
+ * @brief Look up specific IE in a buf
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ * @param id              Element id to lookup
+ *
+ * @return                Pointer of the specific IE -- success, NULL -- fail
+ */
+const t_u8 *wifi_parse_ie_tlv(const t_u8 *ie, int len, t_u8 id)
+{
+    int left_len    = len;
+    const t_u8 *pos = ie;
+    int length;
+
+    /* IE format:
+     * |   u8  |   id   |
+     * |   u8  |   len  |
+     * |   var |   data |
+     */
+    while (left_len >= 2)
+    {
+        length = *(pos + 1);
+        if ((*pos == id) && (length + 2) <= left_len)
+            return pos;
+        pos += (length + 2);
+        left_len -= (length + 2);
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Look up specific IE in Extension IE
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ * @param ext_id         Extended Element id to lookup
+ *
+ * @return                Pointer of the specific Extended IE -- success, NULL
+ * -- fail
+ */
+const t_u8 *wifi_parse_ext_ie_tlv(const t_u8 *ie, int len, t_u8 ext_id)
+{
+    int left_len    = len;
+    const t_u8 *pos = ie;
+    int length;
+
+    /* Extension IE format:
+     * |   u8  |   id   |
+     * |   u8  |   len  |
+     * |   u8  |   ext_id |
+     * |   var |   data |
+     */
+    while (left_len >= 2)
+    {
+        length = *(pos + 1);
+        if ((*pos == EXTENSION) && (length + 2) <= left_len)
+        {
+            if (*(pos + 2) == ext_id)
+                return pos;
+        }
+        pos += (length + 2);
+        left_len -= (length + 2);
+    }
+    return NULL;
+}
+
+/**
+ * @brief get ht_cap from beacon ie
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ *
+ * @return                ht_cap
+ */
+static t_u16 wifi_get_htcap_info(const t_u8 *ie, int len)
+{
+    t_u16 ht_cap_info           = 0;
+    IEEEtypes_HTCap_t *htcap_ie = NULL;
+    htcap_ie                    = (IEEEtypes_HTCap_t *)wifi_parse_ie_tlv(ie, len, HT_CAPABILITY);
+    if (htcap_ie)
+    {
+        /* hostap has converted ht_cap_info to little endian, here
+         * conver to host endian */
+        ht_cap_info = wlan_le16_to_cpu(htcap_ie->ht_cap.ht_cap_info);
+        wifi_d("Get ht_cap from beacon ies: 0x%x\r\n", ht_cap_info);
+    }
+    return ht_cap_info;
+}
+
+#ifdef CONFIG_11AC
+/**
+ * @brief get vht_cap from beacon ie
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ *
+ * @return                Pointer to vht_cap ie
+ */
+static IEEEtypes_VHTCap_t *wifi_get_vhtcap_info(const t_u8 *ie, int len)
+{
+    IEEEtypes_VHTCap_t *vhtcap_ie = NULL;
+    vhtcap_ie                     = (IEEEtypes_VHTCap_t *)wifi_parse_ie_tlv(ie, len, VHT_CAPABILITY);
+    if (vhtcap_ie)
+        wifi_d("Get vht_cap from beacon ies: 0x%x\r\n", vhtcap_ie->vht_cap.vht_cap_info);
+    return vhtcap_ie;
+}
+
+/**
+ * @brief get vht_oper from beacon ie
+ *
+ * @param ie              Pointer to IEs
+ * @param len             Total length of ie
+ *
+ * @return                Pointer to vht_opr ie
+ */
+static IEEEtypes_VHTOprat_t *wifi_get_vht_oprat_ie(const t_u8 *ie, int len)
+{
+    IEEEtypes_VHTOprat_t *vht_oprat_ie = NULL;
+    vht_oprat_ie                       = (IEEEtypes_VHTOprat_t *)wifi_parse_ie_tlv(ie, len, VHT_OPERATION);
+    if (vht_oprat_ie)
+        wifi_d("Get vht_oprat_ie from beacon ies: chan_width=%d\r\n", vht_oprat_ie->chan_width);
+    return vht_oprat_ie;
+}
+
+/**
+ *  @brief enable/disable 11AC
+ *
+ *  @param priv     A pointer to moal_private structure
+ *  @param action   MLAN_ACT_DISABLE or MLAN_ACT_ENABLE
+ *  @param vht20_40 Enable VHT 20 MHz or 40 MHz band
+ *  @param vhtcap_ie A pointer to vht capability IE
+ *
+ *  @return         0--success, otherwise failure
+ */
+int wifi_uap_set_11ac_status2(mlan_private *priv, t_u8 action, t_u8 vht20_40, IEEEtypes_VHTCap_t *vhtcap_ie)
+{
+    mlan_adapter *pmadapter = priv->adapter;
+    mlan_ds_11ac_vht_cfg vht_cfg;
+    int ret = 0;
+
+    ENTER();
+
+    (void)memset(&vht_cfg, 0, sizeof(vht_cfg));
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if (priv->uap_channel > MAX_CHANNELS_BG)
+    {
+        vht_cfg.band = BAND_SELECT_A;
+    }
+    else
+    {
+        vht_cfg.band = BAND_SELECT_BG;
+    }
+#else
+    vht_cfg.band = BAND_SELECT_BG;
+#endif
+    vht_cfg.txrx = MLAN_RADIO_TXRX;
+
+    /*
+     * p2p GO (negotiation or auto GO) cases, wpa_supplicant will download
+     * invalid vht capability with value 0 in beacon parameters, so for p2p
+     * GO case (vht_cap_info = 0), driver will use hardware 11ac vht
+     * capability value instead of up layer value.
+     */
+    if (vhtcap_ie && vhtcap_ie->vht_cap.vht_cap_info != 0)
+    {
+        vht_cfg.vht_cap_info = wlan_le32_to_cpu(vhtcap_ie->vht_cap.vht_cap_info);
+        /** todo mcs configuration */
+    }
+    else
+    {
+#ifdef CONFIG_5GHz_SUPPORT
+        vht_cfg.vht_cap_info = pmadapter->usr_dot_11ac_dev_cap_a;
+#else
+        vht_cfg.vht_cap_info = pmadapter->usr_dot_11ac_dev_cap_bg;
+#endif
+    }
+    if (action == MLAN_ACT_DISABLE)
+    {
+        vht_cfg.bwcfg = MFALSE;
+        vht_cfg.vht_cap_info &= ~VHT_CAP_11AC_MASK;
+        vht_cfg.vht_rx_mcs = vht_cfg.vht_tx_mcs = 0xffff;
+        vht_cfg.skip_usr_11ac_mcs_cfg           = MTRUE;
+    }
+    else
+    {
+        if (vht20_40)
+            vht_cfg.bwcfg = MFALSE;
+        else
+            vht_cfg.bwcfg = MTRUE;
+        vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+        vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
+        vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
+        vht_cfg.skip_usr_11ac_mcs_cfg = MTRUE;
+    }
+
+    if ((GET_VHTCAP_MAXMPDULEN(vht_cfg.vht_cap_info)) != 0U)
+    {
+        RESET_11ACMAXMPDULEN(vht_cfg.vht_cap_info);
+    }
+    else
+    {
+        /** Do Nothing */
+    }
+
+    wifi_d("Uap:11ac=%d vht_cap_info=0x%x, vht_tx_mcs=0x%x, vht_rx_mcs=0x%x\r\n", action, vht_cfg.vht_cap_info,
+           vht_cfg.vht_tx_mcs, vht_cfg.vht_rx_mcs);
+
+    ret = (int)wlan_11ac_ioctl_vhtcfg(priv, (t_u8)MLAN_ACT_SET, &vht_cfg);
+    return ret;
+}
+#endif
+
+#ifdef CONFIG_11AX
+
+/**
+ *  @brief enable/disable 11AX
+ *
+ *  @param pmpriv   A pointer to mlan_private structure
+ *  @param action   MLAN_ACT_DISABLE or MLAN_ACT_ENABLE
+ *  @param band     band config
+ *
+ *  @return         0--success, otherwise failure
+ */
+int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEEtypes_HECap_t *hecap_ie)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+    mlan_ds_11ax_he_cfg he_cfg;
+
+    ENTER();
+    if ((band == BAND_CONFIG_5GHZ && !(pmadapter->fw_bands & BAND_AAX)) ||
+        ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX)))
+    {
+        PRINTM(MERROR, "fw doesn't support 11ax\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+    memset(&he_cfg, 0, sizeof(he_cfg));
+    if (band == BAND_CONFIG_5GHZ)
+    {
+        he_cfg.band = MBIT(1);
+        (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
+    }
+    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+    {
+        he_cfg.band = MBIT(0);
+        (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
+    }
+    else
+    {
+        PRINTM(MERROR, "Invalid band!\n");
+        ret = -WM_E_INVAL;
+        goto done;
+    }
+#ifdef RW610
+    he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
+#if 0
+    if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
+    {
+        PRINTM(MERROR, "Fail to get 11ax cfg!\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+#endif
+    if (hecap_ie)
+    {
+        DBG_HEXDUMP(MCMD_D, "hecap_ie", (t_u8 *)hecap_ie, hecap_ie->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        he_cfg.he_cap.id  = hecap_ie->ieee_hdr.element_id;
+        he_cfg.he_cap.len = hecap_ie->ieee_hdr.len;
+        memcpy(&he_cfg.he_cap.ext_id, &hecap_ie->ext_id, he_cfg.he_cap.len);
+    }
+
+    if (action == MLAN_ACT_DISABLE)
+    {
+        if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
+            memset(he_cfg.he_cap.he_txrx_mcs_support, 0xff, sizeof(he_cfg.he_cap.he_txrx_mcs_support));
+        else
+        {
+            PRINTM(MCMND, "11ax already disabled\n");
+            goto done;
+        }
+    }
+    DBG_HEXDUMP(MCMD_D, "HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+    ret = wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_SET, &he_cfg);
+done:
+    LEAVE();
+    return ret;
+}
+#endif /* CONFIG_11AX */
+
+int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+    // mlan_adapter *pmadapter = priv->adapter;
+
+    const t_u8 *ie                 = NULL;
+    int ret                        = 0, ie_len;
+    mlan_uap_bss_param *sys_config = NULL;
+    // int i                          = 0;
+    t_u8 rates_bg[13] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c, 0x00};
+#ifdef CONFIG_5GHz_SUPPORT
+    t_u8 rates_a[9] = {0x8c, 0x12, 0x98, 0x24, 0xb0, 0x48, 0x60, 0x6c, 0x00};
+#endif
+    t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    t_u8 chan2Offset         = SEC_CHAN_NONE;
+    t_u8 enable_11n          = MTRUE;
+    t_u8 bandwidth           = BANDWIDTH_40MHZ;
+    t_u16 ht_cap             = 0;
+#ifdef CONFIG_11AC
+    t_u8 enable_11ac                = MFALSE;
+    t_u8 vht20_40                   = MFALSE;
+    IEEEtypes_VHTCap_t *vhtcap_ie   = NULL;
+    IEEEtypes_VHTOprat_t *vhtopr_ie = NULL;
+#endif
+#ifdef CONFIG_11AX
+    IEEEtypes_HECap_t *hecap_ie = NULL;
+    t_u8 enable_11ax            = MFALSE;
+#endif
+    Band_Config_t bandcfg;
+    t_u8 ap_mfpc = 1, ap_mfpr = 1;
+
+    ENTER();
+
+    if (!params)
+    {
+        return -WM_FAIL;
+    }
+
+    ie     = (const t_u8 *)params->tail_ie.ie;
+    ie_len = params->tail_ie.ie_len;
+
+    if (params->beacon_set)
+    {
+        ret = wifi_nxp_set_mgmt_ies(priv, params->tail_ie.ie, params->tail_ie.ie_len, params->beacon_ies.ie,
+                                    params->beacon_ies.ie_len, params->proberesp_ies.ie, params->proberesp_ies.ie_len,
+                                    params->assocresp_ies.ie, params->assocresp_ies.ie_len);
+        if (ret != WM_SUCCESS)
+        {
+            wuap_e("Set uAP mgmt ie failed");
+            return -WM_FAIL;
+        }
+    }
+    else
+    {
+        sys_config = os_mem_calloc(sizeof(mlan_uap_bss_param));
+        if (!sys_config)
+        {
+            wuap_e("Fail to alloc memory for mlan_uap_bss_param");
+            ret = -WM_FAIL;
+            goto done;
+        }
+
+        memset(&bandcfg, 0, sizeof(Band_Config_t));
+
+        if (priv->uap_max_sta)
+            sys_config->max_sta_count = priv->uap_max_sta;
+
+        /* Setting the default values */
+        sys_config->channel = params->chan.channel;
+        priv->uap_channel   = sys_config->channel;
+        if (priv->uap_channel != 0U)
+        {
+#ifdef CONFIG_5GHz_SUPPORT
+            if (priv->uap_channel > MAX_CHANNELS_BG)
+            {
+                if (wlan_11h_radar_detect_required(priv, priv->uap_channel))
+                {
+                    wuap_e("Cannot start uAP on DFS channel %d", priv->uap_channel);
+                    ret = -WM_FAIL;
+                    goto done;
+                }
+                bandcfg.chanBand = BAND_5GHZ;
+            }
+            else
+            {
+                bandcfg.chanBand = BAND_2GHZ;
+            }
+#else
+            bandcfg.chanBand = BAND_2GHZ;
+#endif
+        }
+
+        sys_config->preamble_type         = 0;
+        sys_config->mgmt_ie_passthru_mask = priv->mgmt_frame_passthru_mask;
+        memcpy(sys_config->mac_addr, params->bssid, ETH_ALEN);
+
+        /* Set frag_threshold, rts_threshold, and retry limit */
+        sys_config->frag_threshold = MLAN_FRAG_MAX_VALUE;
+        sys_config->rts_threshold  = MLAN_RTS_MAX_VALUE;
+
+        if (params->beacon_int)
+            sys_config->beacon_period = params->beacon_int;
+
+        if (params->dtim_period)
+            sys_config->dtim_period = params->dtim_period;
+
+        if (sys_config->channel <= MAX_CHANNELS_BG)
+        {
+            memcpy(sys_config->rates, rates_bg, sizeof(rates_bg));
+        }
+#ifdef CONFIG_5GHz_SUPPORT
+        else
+        {
+            memcpy(sys_config->rates, rates_a, sizeof(rates_a));
+        }
+#endif
+
+        if (params->chan.ht_enabled != 1)
+        {
+            enable_11n = MFALSE;
+        }
+
+        if (params->chan.sec_channel_offset == 1)
+        {
+            chan2Offset = SEC_CHAN_ABOVE;
+        }
+        else if (params->chan.sec_channel_offset == -1)
+        {
+            chan2Offset = SEC_CHAN_BELOW;
+        }
+
+        if (params->chan.bandwidth == 20)
+        {
+            bandwidth         = BANDWIDTH_20MHZ;
+            bandcfg.chanWidth = CHAN_BW_20MHZ;
+        }
+        else if (params->chan.bandwidth == 40)
+        {
+            bandwidth         = BANDWIDTH_40MHZ;
+            bandcfg.chanWidth = CHAN_BW_40MHZ;
+        }
+#ifdef CONFIG_11AC
+        else if (params->chan.bandwidth == 80)
+        {
+            bandwidth         = BANDWIDTH_80MHZ;
+            bandcfg.chanWidth = CHAN_BW_80MHZ;
+            chan2Offset       = wifi_get_second_channel_offset(priv, priv->uap_channel);
+        }
+#endif
+
+        bandcfg.chan2Offset = chan2Offset;
+        (void)memcpy((void *)&sys_config->band_cfg, (const void *)&bandcfg, sizeof(bandcfg));
+
+#ifdef CONFIG_11AC
+        if (params->chan.vht_enabled == 1)
+        {
+            enable_11ac = wifi_check_11ac_capability(priv, bandcfg.chanBand);
+            if (enable_11ac && ((bandwidth == BANDWIDTH_20MHZ) || (bandwidth == BANDWIDTH_40MHZ)))
+            {
+                vht20_40 = MTRUE;
+            }
+        }
+#endif
+#ifdef CONFIG_11AX
+        if (params->chan.he_enabled == 1)
+        {
+            enable_11ax = wifi_check_11ax_capability(priv, bandcfg.chanBand);
+        }
+#endif
+
+        /* Disable GreenField by default */
+        sys_config->ht_cap_info = 0x10c;
+        if (enable_11n)
+            sys_config->ht_cap_info |= 0x20;
+        if (chan2Offset)
+        {
+            sys_config->ht_cap_info |= 0x1042;
+            sys_config->ampdu_param = 3;
+        }
+
+        ht_cap = wifi_get_htcap_info(ie, ie_len);
+        if (ht_cap)
+        {
+            if (bandcfg.chanBand == BAND_2GHZ)
+                sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
+            else
+                sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
+        }
+        wifi_d("11n=%d, ht_cap=0x%x, channel=%d, bandcfg:chanBand=0x%x chanWidth=0x%x chan2Offset=0x%x scanMode=0x%x\n",
+               enable_11n, sys_config->ht_cap_info, priv->uap_channel, bandcfg.chanBand, bandcfg.chanWidth,
+               bandcfg.chan2Offset, bandcfg.scanMode);
+
+#if 0
+        if (enable_11n)
+        {
+            SETHT_SHORTGI20(sys_config->ht_cap_info);
+
+            if (ISSUPP_TXSTBC(usr_dot_11n_dev_cap) != 0U)
+            {
+                SETHT_TXSTBC(sys_config->ht_cap_info);
+            }
+            if (ISSUPP_RXSTBC(usr_dot_11n_dev_cap) != 0U)
+            {
+                SETHT_RXSTBC(sys_config->ht_cap_info, 1);
+            }
+            if (ISSUPP_RXLDPC(usr_dot_11n_dev_cap) != 0U)
+            {
+                SETHT_LDPCCODINGCAP(sys_config->ht_cap_info);
+            }
+        }
+
+        if (bandwidth == BANDWIDTH_40MHZ
+#ifdef CONFIG_11AC
+                || bandwidth == BANDWIDTH_80MHZ
+#endif
+           )
+        {
+            if (ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap) != 0U)
+            {
+                SETHT_SUPPCHANWIDTH(sys_config->ht_cap_info);
+                if (priv->uap_channel <= MAX_CHANNELS_BG)
+                {
+                    SETHT_DSSSCCK40(sys_config->ht_cap_info);
+                }
+                if (ISSUPP_SHORTGI40(usr_dot_11n_dev_cap) != 0U)
+                {
+                    SETHT_SHORTGI40(sys_config->ht_cap_info);
+                }
+            }
+        }
+        else if (bandwidth == BANDWIDTH_20MHZ)
+        {
+        }
+        else
+        {
+            /*Do Nothing*/
+        }
+#endif
+        ret = wifi_uap_set_httxcfg_int(ht_cap);
+        if (ret != WM_SUCCESS)
+        {
+            wuap_e("Cannot set uAP HT TX Cfg:%x", sys_config->ht_cap_info);
+            ret = -WM_FAIL;
+            goto done;
+        }
+
+        sys_config->ampdu_param = 3;
+        (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
+                     sizeof(sys_config->supported_mcs_set));
+
+        if (!params->ssid.ssid || !params->ssid.ssid_len)
+        {
+            ret = -WM_FAIL;
+            goto done;
+        }
+        memcpy(sys_config->ssid.ssid, params->ssid.ssid, MIN(MLAN_MAX_SSID_LENGTH, params->ssid.ssid_len));
+        sys_config->ssid.ssid_len = MIN(MLAN_MAX_SSID_LENGTH, params->ssid.ssid_len);
+        /**
+         * hidden_ssid=0: broadcast SSID in beacons.
+         * hidden_ssid=1: send empty SSID (length=0) in beacon.
+         * hidden_ssid=2: clear SSID (ACSII 0), but keep the original length
+         */
+        if (!params->hide_ssid)
+            sys_config->bcast_ssid_ctl = 1;
+        else if (params->hide_ssid == 1)
+            sys_config->bcast_ssid_ctl = 0;
+        else if (params->hide_ssid == 2)
+            sys_config->bcast_ssid_ctl = 2;
+
+        sys_config->auth_mode = MLAN_AUTH_MODE_OPEN;
+
+        sys_config->protocol = PROTOCOL_NO_SECURITY;
+        if ((params->wpa_version & WIFI_NXP_WPA_VERSION_1) && (params->wpa_version & WIFI_NXP_WPA_VERSION_2))
+            sys_config->protocol = PROTOCOL_WPA | PROTOCOL_WPA2;
+        else if (params->wpa_version & WIFI_NXP_WPA_VERSION_2)
+            sys_config->protocol = PROTOCOL_WPA2;
+        else if (params->wpa_version & WIFI_NXP_WPA_VERSION_1)
+            sys_config->protocol = PROTOCOL_WPA;
+
+        if (params->key_mgmt_suites || (params->privacy && params->wpa_version))
+            wifi_find_wpa_ies(ie, ie_len, sys_config);
+
+        /*find and set wmm ie*/
+        wifi_set_wmm_ies(priv, ie, ie_len, sys_config);
+
+#ifdef CONFIG_11AC
+        if (enable_11ac && enable_11n)
+        {
+            vhtcap_ie = wifi_get_vhtcap_info(ie, ie_len);
+            vhtopr_ie = wifi_get_vht_oprat_ie(ie, ie_len);
+            // Enable VHT80
+            if (vhtopr_ie && vhtopr_ie->chan_width)
+                vht20_40 = 0;
+            wifi_uap_set_11ac_status2(priv, MLAN_ACT_ENABLE, vht20_40, vhtcap_ie);
+        }
+        else
+        {
+            wifi_uap_set_11ac_status2(priv, MLAN_ACT_DISABLE, vht20_40, NULL);
+        }
+#endif
+#ifdef CONFIG_11AX
+        if (enable_11ax && enable_11n)
+        {
+            hecap_ie = (IEEEtypes_HECap_t *)wifi_parse_ext_ie_tlv(ie, ie_len, HE_CAPABILITY);
+            wifi_uap_set_11ax_status2(priv, MLAN_ACT_ENABLE, bandcfg.chanBand, hecap_ie);
+        }
+        else
+            wifi_uap_set_11ax_status2(priv, MLAN_ACT_DISABLE, bandcfg.chanBand, NULL);
+#endif
+
+        if (params->ap_max_inactivity)
+        {
+            sys_config->sta_ageout_timer    = params->ap_max_inactivity * 10;
+            sys_config->ps_sta_ageout_timer = params->ap_max_inactivity * 10;
+        }
+        PRINTM(MIOCTL, "inactivity_timeout=%d\n", params->ap_max_inactivity);
+        PRINTM(MIOCTL, "sta_ageout_timer=%d ps_sta_ageout_timer=%d\n", sys_config->sta_ageout_timer,
+               sys_config->ps_sta_ageout_timer);
+
+        if (MLAN_STATUS_SUCCESS != wifi_set_get_sys_config(priv, MLAN_ACT_SET, sys_config))
+        {
+            wuap_e("Set uAP sys config failed");
+            ret = -WM_FAIL;
+            goto done;
+        }
+
+        ret = wifi_nxp_set_mgmt_ies(priv, params->tail_ie.ie, params->tail_ie.ie_len, params->beacon_ies.ie,
+                                    params->beacon_ies.ie_len, params->proberesp_ies.ie, params->proberesp_ies.ie_len,
+                                    params->assocresp_ies.ie, params->assocresp_ies.ie_len);
+        if (ret != WM_SUCCESS)
+        {
+            wuap_e("Set uAP mgmt ie failed");
+            ret = -WM_FAIL;
+            goto done;
+        }
+
+        (void)wifi_uap_pmf_getset(HostCmd_ACT_GEN_SET, &ap_mfpc, &ap_mfpr);
+
+        priv->uap_host_based = MTRUE;
+
+        if (!params->beacon_set)
+        {
+            wuap_d("Starting BSS");
+            /* Start BSS */
+            if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_START,
+                                                                     HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+                                                                     MLAN_BSS_TYPE_UAP, NULL))
+            {
+                wuap_e("Start BSS failed");
+                priv->uap_host_based = MFALSE;
+                ret                  = -WM_FAIL;
+                goto done;
+            }
+            wuap_d("wlan: AP started");
+
+            (void)wlan_rx_mgmt_indication(
+                WLAN_BSS_TYPE_UAP, WIFI_MGMT_AUTH | MGMT_MASK_ASSOC_REQ | MGMT_MASK_REASSOC_REQ | WIFI_MGMT_DEAUTH,
+                NULL);
+        }
+    done:
+        if (sys_config != NULL)
+        {
+            os_mem_free(sys_config);
+        }
+    }
+
+    LEAVE();
+    return ret;
+}
+
+int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *pmcs_set, t_u8 *a_mpdu_params, t_u8 band)
+{
+    mlan_private *priv      = (mlan_private *)mlan_adap->priv[1];
+    mlan_adapter *pmadapter = priv->adapter;
+    t_u32 usr_dot_11n_dev_cap;
+    int rx_mcs_supp;
+    t_u8 mcs_set[NUM_MCS_FIELD];
+
+    ENTER();
+
+    *ht_capab = HT_CAP_INFO_DSSS_CCK40MHZ;
+
+    *a_mpdu_params = 3;
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if (band == BAND_5GHZ)
+    {
+        usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_a;
+    }
+    else
+#endif
+    {
+        usr_dot_11n_dev_cap = pmadapter->usr_dot_11n_dev_cap_bg;
+    }
+
+    if (ISSUPP_RXLDPC(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_LDPC_CODING_CAP;
+    }
+    if (ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_SUPP_CHANNEL_WIDTH_SET;
+    }
+    else
+    {
+        *ht_capab &= ~(HT_CAP_INFO_DSSS_CCK40MHZ);
+    }
+    if ((usr_dot_11n_dev_cap >> 20) & 0x03) /* Delayed ACK supported */
+    {
+        *ht_capab |= HT_CAP_INFO_DELAYED_BA;
+    }
+    if (ISSUPP_GREENFIELD(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_GREEN_FIELD;
+    }
+    if (ISSUPP_SHORTGI20(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_SHORT_GI20MHZ;
+    }
+    if (ISSUPP_SHORTGI40(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_SHORT_GI40MHZ;
+    }
+    if (ISSUPP_TXSTBC(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_TX_STBC;
+    }
+    if (ISSUPP_RXSTBC(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_RX_STBC_1;
+    }
+    if (ISSUPP_MIMOPS(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_SMPS_STATIC;
+    }
+    else
+    {
+        *ht_capab |= HT_CAP_INFO_SMPS_DISABLED;
+    }
+    if (ISSUPP_MAXAMSDU(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_MAX_AMSDU_SIZE;
+    }
+    if (ISENABLED_40MHZ_INTOLARENT(usr_dot_11n_dev_cap))
+    {
+        *ht_capab |= HT_CAP_INFO_40MHZ_INTOLERANT;
+    }
+
+    rx_mcs_supp = GET_RXMCSSUPP(pmadapter->usr_dev_mcs_support);
+    /* Set MCS for 1x1/2x2 */
+    (void)__memset(pmadapter, (t_u8 *)mcs_set, 0xff, rx_mcs_supp);
+    /* Clear all the other values */
+    (void)__memset(pmadapter, (t_u8 *)&mcs_set[rx_mcs_supp], 0, NUM_MCS_FIELD - rx_mcs_supp);
+    /* Set MCS32 with 40MHz support */
+    if (ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap))
+        SETHT_MCS32(mcs_set);
+
+    (void)__memcpy(pmadapter, pmcs_set, mcs_set, NUM_MCS_FIELD);
+
+    LEAVE();
+
+    return WM_SUCCESS;
+}
+
+t_u16 wifi_get_default_ht_capab()
+{
+    t_u16 ht_capab;
+    t_u8 mcs_set[16];
+    t_u8 a_mpdu_params;
+
+    wifi_setup_ht_cap(&ht_capab, &mcs_set[0], &a_mpdu_params, 0);
+
+    return ht_capab;
+}
+
+#ifdef CONFIG_11AC
+int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band)
+{
+    mlan_private *priv      = (mlan_private *)mlan_adap->priv[1];
+    mlan_adapter *pmadapter = priv->adapter;
+    // t_u32 usr_dot_11ac_dev_cap;
+    t_u16 vht_tx_mcs, vht_rx_mcs;
+
+    ENTER();
+
+    *vht_capab = pmadapter->usr_dot_11ac_dev_cap_a;
+
+    *vht_capab &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+#ifdef RW610
+    *vht_capab &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
+#endif
+
+    if ((GET_VHTCAP_MAXMPDULEN(*vht_capab)) != 0U)
+    {
+        RESET_11ACMAXMPDULEN(*vht_capab);
+    }
+    else
+    {
+        /** Do Nothing */
+    }
+
+    vht_tx_mcs = pmadapter->usr_dot_11ac_mcs_support >> 16;
+    vht_rx_mcs = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
+
+    (void)__memcpy(pmadapter, &vht_mcs_set[0], &vht_rx_mcs, sizeof(t_u16));
+
+    (void)__memcpy(pmadapter, &vht_mcs_set[4], &vht_tx_mcs, sizeof(t_u16));
+
+    LEAVE();
+
+    return WM_SUCCESS;
+}
+
+t_u32 wifi_get_default_vht_capab()
+{
+    t_u32 vht_capab;
+    t_u8 vht_mcs_set[8];
+
+    wifi_setup_vht_cap(&vht_capab, &vht_mcs_set[0], 0);
+
+    return vht_capab;
+}
+#endif
+
+#ifdef CONFIG_11AX
+/*
+===============
+11AX CAP for uAP
+===============
+Note: bits not mentioned below are set to 0.
+
+5G
+===
+HE MAC Cap:
+Bit0:  1  (+HTC HE Support)
+Bit25: 1  (OM Control Support. But uAP does not support
+           Tx OM received from the STA, as it does not support UL OFDMA)
+
+HE PHY Cap:
+Bit1-7: 0x2 (Supported Channel Width Set.
+             Note it would be changed after 80+80 MHz is supported)
+Bit8-11: 0x3 (Punctured Preamble Rx.
+              Note: it would be changed after 80+80 MHz is supported)
+Bit12: 0x0 (Device Class)
+Bit13: 0x1 (LDPC coding in Payload)
+Bit17: 0x1 (NDP with 4xHE-LTF+3.2usGI)
+Bit18: 0x1 (STBC Tx <= 80 MHz)
+Bit19: 0x1 (STBC Rx <= 80 MHz)
+Bit20: 0x1 (Doppler Tx)
+Bit21: 0x1 (Doppler Rx)
+Bit27-28: 0x1 (DCM Max Constellation Rx)
+Bit31: 0x1 (SU Beamformer)
+Bit32: 0x1 (SU BeamFormee)
+Bit34-36: 0x7 (Beamformee STS <= 80 MHz)
+Bit40-42: 0x1 (Number of Sounding Dimentions <= 80 MHz)
+Bit53: 0x1 (Partial Bandwidth Extended Range)
+Bit55: 0x1 (PPE Threshold Present.
+            Note: PPE threshold may have some changes later)
+Bit58: 0x1 (HE SU PPDU and HE MU PPDU with 4xHE-LTF+0.8usGI)
+Bit59-61: 0x1 (Max Nc)
+Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
+*/
+
+#define UAP_HE_MAC_CAP0_MASK  0x00
+#define UAP_HE_MAC_CAP1_MASK  0x00
+#define UAP_HE_MAC_CAP2_MASK  0x00
+#define UAP_HE_MAC_CAP3_MASK  0x02
+#define UAP_HE_MAC_CAP4_MASK  0x00
+#define UAP_HE_MAC_CAP5_MASK  0x00
+#define UAP_HE_PHY_CAP0_MASK  0x04
+#define UAP_HE_PHY_CAP1_MASK  0x23
+#define UAP_HE_PHY_CAP2_MASK  0x3E
+#define UAP_HE_PHY_CAP3_MASK  0x88
+#define UAP_HE_PHY_CAP4_MASK  0x1D
+#define UAP_HE_PHY_CAP5_MASK  0x01
+#define UAP_HE_PHY_CAP6_MASK  0xA0
+#define UAP_HE_PHY_CAP7_MASK  0x0C
+#define UAP_HE_PHY_CAP8_MASK  0x00
+#define UAP_HE_PHY_CAP9_MASK  0x08
+#define UAP_HE_PHY_CAP10_MASK 0x00
+
+/*
+2G
+===
+HE MAC Cap:
+Bit0:   1  (+HTC HE Support)
+Bit25: 1  (OM Control Support. Note: uAP does not support
+        Tx OM received from the STA, as it does not support UL OFDMA)
+
+HE PHY Cap:
+Bit1-7: 0x1 (Supported Channel Width Set)
+Bit8-11: 0x0 (Punctured Preamble Rx)
+Bit12: 0x0 (Device Class)
+Bit13: 0x1 (LDPC coding in Payload)
+Bit17: 0x1 (NDP with 4xLTF+3.2usGI)
+Bit18: 0x1 (STBC Tx <= 80 MHz)
+Bit19: 0x1 (STBC Rx <= 80 MHz)
+Bit20: 0x1 (Doppler Tx)
+Bit21: 0x1 (Doppler Rx)
+Bit27-28: 0x1 (DCM Max Constellation Rx)
+Bit31: 0x1 (SU Beamformer)
+Bit32: 0x1 (SU BeamFormee)
+Bit34-36: 0x7 (Beamformee STS <= 80 MHz)
+Bit40-42: 0x1 (Number of Sounding Dimentions <= 80 MHz)
+Bit53: 0x1 (Partial Bandwidth Extended Range)
+Bit55: 0x1 (PPE Threshold Present.
+            Note: PPE threshold may have some changes later)
+Bit58: 0x1 (HE SU PPDU and HE MU PPDU with 4xHE-LTF+0.8usGI)
+Bit59-61: 0x1 (Max Nc)
+Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
+*/
+#define UAP_HE_2G_MAC_CAP0_MASK  0x00
+#define UAP_HE_2G_MAC_CAP1_MASK  0x00
+#define UAP_HE_2G_MAC_CAP2_MASK  0x00
+#define UAP_HE_2G_MAC_CAP3_MASK  0x02
+#define UAP_HE_2G_MAC_CAP4_MASK  0x00
+#define UAP_HE_2G_MAC_CAP5_MASK  0x00
+#define UAP_HE_2G_PHY_CAP0_MASK  0x02
+#define UAP_HE_2G_PHY_CAP1_MASK  0x20
+#define UAP_HE_2G_PHY_CAP2_MASK  0x3E
+#define UAP_HE_2G_PHY_CAP3_MASK  0x88
+#define UAP_HE_2G_PHY_CAP4_MASK  0x1D
+#define UAP_HE_2G_PHY_CAP5_MASK  0x01
+#define UAP_HE_2G_PHY_CAP6_MASK  0xA0
+#define UAP_HE_2G_PHY_CAP7_MASK  0x0C
+#define UAP_HE_2G_PHY_CAP8_MASK  0x00
+#define UAP_HE_2G_PHY_CAP9_MASK  0x08
+#define UAP_HE_2G_PHY_CAP10_MASK 0x00
+
+/**
+ *  @brief update 11ax ie for AP mode *
+ *  @param band     channel band
+ *  @hecap_ie       a pointer to mlan_ds_11ax_he_capa
+ *
+ *  @return         0--success, otherwise failure
+ */
+static void wifi_uap_update_11ax_ie(t_u8 band, mlan_ds_11ax_he_capa *hecap_ie)
+{
+    if (band == BAND_5GHZ
+#ifdef ENABLE_802_116E
+        || band == BAND_6GHZ
+#endif
+    )
+    {
+        hecap_ie->he_mac_cap[0] &= UAP_HE_MAC_CAP0_MASK;
+        hecap_ie->he_mac_cap[1] &= UAP_HE_MAC_CAP1_MASK;
+        hecap_ie->he_mac_cap[2] &= UAP_HE_MAC_CAP2_MASK;
+        hecap_ie->he_mac_cap[3] &= UAP_HE_MAC_CAP3_MASK;
+        hecap_ie->he_mac_cap[4] &= UAP_HE_MAC_CAP4_MASK;
+        hecap_ie->he_mac_cap[5] &= UAP_HE_MAC_CAP5_MASK;
+        hecap_ie->he_phy_cap[0] &= UAP_HE_PHY_CAP0_MASK;
+        hecap_ie->he_phy_cap[1] &= UAP_HE_PHY_CAP1_MASK;
+        hecap_ie->he_phy_cap[2] &= UAP_HE_PHY_CAP2_MASK;
+        hecap_ie->he_phy_cap[3] &= UAP_HE_PHY_CAP3_MASK;
+        hecap_ie->he_phy_cap[4] &= UAP_HE_PHY_CAP4_MASK;
+        hecap_ie->he_phy_cap[5] &= UAP_HE_PHY_CAP5_MASK;
+        hecap_ie->he_phy_cap[6] &= UAP_HE_PHY_CAP6_MASK;
+        hecap_ie->he_phy_cap[7] &= UAP_HE_PHY_CAP7_MASK;
+        hecap_ie->he_phy_cap[8] &= UAP_HE_PHY_CAP8_MASK;
+        hecap_ie->he_phy_cap[9] &= UAP_HE_PHY_CAP9_MASK;
+        hecap_ie->he_phy_cap[10] &= UAP_HE_PHY_CAP10_MASK;
+    }
+    else
+    {
+        hecap_ie->he_mac_cap[0] &= UAP_HE_2G_MAC_CAP0_MASK;
+        hecap_ie->he_mac_cap[1] &= UAP_HE_2G_MAC_CAP1_MASK;
+        hecap_ie->he_mac_cap[2] &= UAP_HE_2G_MAC_CAP2_MASK;
+        hecap_ie->he_mac_cap[3] &= UAP_HE_2G_MAC_CAP3_MASK;
+        hecap_ie->he_mac_cap[4] &= UAP_HE_2G_MAC_CAP4_MASK;
+        hecap_ie->he_mac_cap[5] &= UAP_HE_2G_MAC_CAP5_MASK;
+        hecap_ie->he_phy_cap[0] &= UAP_HE_2G_PHY_CAP0_MASK;
+        hecap_ie->he_phy_cap[1] &= UAP_HE_2G_PHY_CAP1_MASK;
+        hecap_ie->he_phy_cap[2] &= UAP_HE_2G_PHY_CAP2_MASK;
+        hecap_ie->he_phy_cap[3] &= UAP_HE_2G_PHY_CAP3_MASK;
+        hecap_ie->he_phy_cap[4] &= UAP_HE_2G_PHY_CAP4_MASK;
+        hecap_ie->he_phy_cap[5] &= UAP_HE_2G_PHY_CAP5_MASK;
+        hecap_ie->he_phy_cap[6] &= UAP_HE_2G_PHY_CAP6_MASK;
+        hecap_ie->he_phy_cap[7] &= UAP_HE_2G_PHY_CAP7_MASK;
+        hecap_ie->he_phy_cap[8] &= UAP_HE_2G_PHY_CAP8_MASK;
+        hecap_ie->he_phy_cap[9] &= UAP_HE_2G_PHY_CAP9_MASK;
+        hecap_ie->he_phy_cap[10] &= UAP_HE_2G_PHY_CAP10_MASK;
+    }
+    return;
+}
+
+#if 1
+/**
+ *  @brief Sets up the CFG802.11 specific HE capability fields *  with default
+ * values
+ *
+ *  @param priv         A pointer to moal private structure
+ *  @param iftype_data  A pointer to ieee80211_sband_iftype_data structure
+ *
+ *  @return             N/A
+ */
+int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band)
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+
+    mlan_fw_info fw_info;
+    t_u8 extra_mcs_size           = 0;
+    int ppe_threshold_len         = 0;
+    mlan_ds_11ax_he_capa *phe_cap = NULL;
+    t_u8 hw_hecap_len             = 0;
+
+    memset(&fw_info, 0, sizeof(mlan_fw_info));
+
+    wifi_request_get_fw_info(priv, &fw_info);
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if (band == BAND_5GHZ)
+    {
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        hw_hecap_len = fw_info.hw_hecap_len;
+        wifi_uap_update_11ax_ie(BAND_5GHZ, phe_cap);
+    }
+    else
+#endif
+#ifdef ENABLE_802_116E
+        if (band == BAND_6GHZ)
+    {
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        hw_hecap_len = fw_info.hw_hecap_len;
+        wifi_uap_update_11ax_ie(BAND_6GHZ, phe_cap);
+    }
+    else
+#endif
+    {
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
+        hw_hecap_len = fw_info.hw_2g_hecap_len;
+        wifi_uap_update_11ax_ie(BAND_2GHZ, phe_cap);
+    }
+
+    if (!hw_hecap_len)
+        return -WM_FAIL;
+
+    he_cap->he_supported = 1;
+    (void)__memcpy(priv, he_cap->mac_cap, phe_cap->he_mac_cap, sizeof(phe_cap->he_mac_cap));
+    (void)__memcpy(priv, he_cap->phy_cap, phe_cap->he_phy_cap, sizeof(phe_cap->he_phy_cap));
+    memset(&he_cap->mcs, 0xff, WIFI_HE_MAX_MCS_CAPAB_SIZE);
+    (void)__memcpy(priv, &he_cap->mcs, phe_cap->he_txrx_mcs_support, sizeof(phe_cap->he_txrx_mcs_support));
+
+    // Support 160Mhz
+    if (phe_cap->he_phy_cap[0] & MBIT(3))
+        extra_mcs_size += 4;
+
+    // Support 80+80
+    if (phe_cap->he_phy_cap[0] & MBIT(4))
+        extra_mcs_size += 4;
+    if (extra_mcs_size)
+        (void)__memcpy(priv, (t_u8 *)&he_cap->mcs + sizeof(phe_cap->he_txrx_mcs_support), phe_cap->val, extra_mcs_size);
+
+#define HE_CAP_FIX_SIZE 22
+    // Support PPE threshold
+    ppe_threshold_len = phe_cap->len - HE_CAP_FIX_SIZE - extra_mcs_size;
+    if (phe_cap->he_phy_cap[6] & MBIT(7) && ppe_threshold_len)
+    {
+        (void)__memcpy(priv, he_cap->ppet, &phe_cap->val[extra_mcs_size], ppe_threshold_len);
+    }
+    else
+    {
+        he_cap->phy_cap[6] &= ~MBIT(7);
+        wifi_d("Clear PPE threshold 0x%x\r\n", he_cap->phy_cap[7]);
+    }
+#ifdef ENABLE_802_116E
+    if (band->band == BAND_6GHZ)
+        iftype_data->he_6ghz_capa.capa = fw_info.hw_he_6g_cap;
+#endif
+    LEAVE();
+
+    return WM_SUCCESS;
+}
+#else
+/**
+ *  @brief setup uap he_cap based on FW he_cap
+ *
+ *  @param priv         A pointer to moal private structure
+ *  @param wait_option  wait_option
+ *
+ *  @return             N/A
+ */
+void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
+{
+    mlan_ds_11ax_he_capa *phe_cap = NULL;
+    mlan_ds_11ax_he_cfg he_cfg;
+    t_u8 hw_hecap_len;
+    mlan_fw_info fw_info;
+#ifdef UAP_SUPPORT
+    int ret = 0;
+#endif
+
+    woal_request_get_fw_info(priv, MOAL_IOCTL_WAIT, &fw_info);
+
+    // Enable 2G 11AX on UAP
+    if (fw_info.fw_bands & BAND_GAX)
+    {
+        memset(&he_cfg, 0, sizeof(he_cfg));
+        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
+        hw_hecap_len = fw_info.hw_2g_hecap_len;
+        if (hw_hecap_len)
+        {
+            woal_uap_update_11ax_ie(BAND_2GHZ, phe_cap);
+            he_cfg.band = MBIT(0);
+            moal_memcpy_ext(priv->phandle, &he_cfg.he_cap, phe_cap, hw_hecap_len, sizeof(mlan_ds_11ax_he_capa));
+            DBG_HEXDUMP(MCMD_D, "2G HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+#ifdef UAP_SUPPORT
+            ret = woal_11ax_cfg(priv, MLAN_ACT_SET, &he_cfg, wait_option);
+            if (ret)
+                PRINTM(MERROR, "Fail to set 2G HE CAP\n");
+#endif
+        }
+    }
+#ifdef ENABLE_802_11A
+    // Enable 5G 11AX on UAP
+    if (fw_info.fw_bands & BAND_AAX)
+    {
+        memset(&he_cfg, 0, sizeof(he_cfg));
+        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        hw_hecap_len = fw_info.hw_hecap_len;
+        if (hw_hecap_len)
+        {
+            woal_uap_update_11ax_ie(BAND_5GHZ, phe_cap);
+            he_cfg.band = MBIT(1);
+            moal_memcpy_ext(priv->phandle, &he_cfg.he_cap, phe_cap, hw_hecap_len, sizeof(mlan_ds_11ax_he_capa));
+            DBG_HEXDUMP(MCMD_D, "5G HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+#ifdef UAP_SUPPORT
+            ret = woal_11ax_cfg(priv, MLAN_ACT_SET, &he_cfg, wait_option);
+            if (ret)
+                PRINTM(MERROR, "Fail to set 5G HE CAP\n");
+#endif
+        }
+    }
+#endif
+    return;
+}
+#endif
+#endif
+
+/**
+ *  @brief Set/Get sta information parameters
+ *
+ *  @param priv             A pointer to moal_private structure
+ *  @param action           MLAN_ACT_SET or MLAN_ACT_GET
+ *  @param wait_option      Wait option
+ *  @param sys_cfg          A pointer to mlan_uap_bss_param structure
+ *
+ *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_sta_info *sta_info)
+{
+    // mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_ds_bss bss;
+    mlan_ioctl_req ioctl_buf;
+
+    ENTER();
+
+    (void)memset(&bss, 0x00, sizeof(mlan_ds_bss));
+
+    bss.sub_command = MLAN_OID_UAP_ADD_STATION;
+
+    // if (action == HostCmd_ACT_ADD_STA)
+    memcpy((void *)&bss.param.sta_info, (const void *)sta_info, sizeof(mlan_ds_sta_info) + (size_t)sta_info->tlv_len);
+
+    (void)memset(&ioctl_buf, 0x00, sizeof(mlan_ioctl_req));
+
+    ioctl_buf.req_id = (t_u32)MLAN_IOCTL_BSS;
+    /** Pointer to buffer */
+    ioctl_buf.pbuf = (t_u8 *)&bss;
+
+    return wifi_uap_prepare_and_send_cmd(priv, HostCmd_CMD_ADD_NEW_STATION, action, 0, &ioctl_buf, NULL,
+                                         MLAN_BSS_TYPE_UAP, NULL);
+}
+
+int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
+{
+    mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
+    int ret                    = 0;
+    mlan_ds_sta_info *sta_info = NULL;
+    t_u8 *pos;
+    t_u8 qosinfo;
+    MrvlIEtypes_Data_t *tlv;
+    t_u32 req_len = 0;
+#ifdef CONFIG_11AX
+    MrvlExtIEtypes_Data_t *ext_tlv;
+#endif
+
+    ENTER();
+
+    if (!params)
+    {
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+    req_len = sizeof(mlan_ds_sta_info);
+    if (params->ext_capab_len)
+        req_len += sizeof(MrvlIEtypesHeader_t) + params->ext_capab_len;
+    if (params->supp_rates_len)
+        req_len += sizeof(MrvlIEtypesHeader_t) + params->supp_rates_len;
+    if (params->qosinfo)
+        req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(qosinfo);
+    if (params->ht_capab_len)
+        req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_ht_capab_t);
+#ifdef CONFIG_11AC
+    if (params->vht_capab_len)
+        req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_vht_capab_t);
+#endif
+
+#ifdef CONFIG_11AX
+    if (params->he_capab_len)
+        req_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+#endif
+
+    sta_info = os_mem_alloc(req_len);
+    if (!sta_info)
+    {
+        wuap_e("Fail to alloc memory for mlan_ds_sta_info");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+    memset(sta_info, 0x00, req_len);
+
+    sta_info->listen_interval = params->listen_interval;
+    sta_info->aid             = params->aid;
+    sta_info->cap_info        = params->capability;
+    sta_info->tlv_len         = 0;
+    sta_info->sta_flags       = params->flags;
+
+    memcpy(sta_info->peer_mac, params->addr, MLAN_MAC_ADDR_LENGTH);
+
+    wuap_d("wlan: UAP/GO add peer station, address =" MACSTR "", MAC2STR(params->addr));
+
+    wuap_d("sta_flags=0x%x listen_interval=%d aid=%d cap_info=0x%x", params->flags, params->listen_interval,
+           params->aid, params->capability);
+
+    pos = &sta_info->tlv[0];
+    if (params->ext_capab_len)
+    {
+        tlv              = (MrvlIEtypes_Data_t *)pos;
+        tlv->header.type = EXT_CAPABILITY;
+        tlv->header.len  = params->ext_capab_len;
+        memcpy(tlv->data, params->ext_capab, tlv->header.len);
+        pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+    if (params->supp_rates_len)
+    {
+        tlv              = (MrvlIEtypes_Data_t *)pos;
+        tlv->header.type = SUPPORTED_RATES;
+        tlv->header.len  = params->supp_rates_len;
+        memcpy(tlv->data, params->supp_rates, tlv->header.len);
+        pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+    if (params->qosinfo)
+    {
+        tlv              = (MrvlIEtypes_Data_t *)pos;
+        tlv->header.type = QOS_INFO;
+        tlv->header.len  = sizeof(qosinfo);
+        qosinfo          = params->qosinfo;
+        memcpy(tlv->data, &qosinfo, tlv->header.len);
+        pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+    if (params->ht_capab_len)
+    {
+        tlv              = (MrvlIEtypes_Data_t *)pos;
+        tlv->header.type = HT_CAPABILITY;
+        tlv->header.len  = sizeof(ieee80211_ht_capab_t);
+        memcpy(tlv->data, &params->ht_capab, tlv->header.len);
+        pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+#ifdef CONFIG_11AC
+    if (params->vht_capab_len)
+    {
+        tlv              = (MrvlIEtypes_Data_t *)pos;
+        tlv->header.type = VHT_CAPABILITY;
+        tlv->header.len  = sizeof(ieee80211_vht_capab_t);
+        memcpy(tlv->data, &params->vht_capab, tlv->header.len);
+        pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+#endif
+#ifdef CONFIG_11AX
+    if (params->he_capab_len)
+    {
+        ext_tlv                = (MrvlExtIEtypes_Data_t *)pos;
+        ext_tlv->header.type   = EXTENSION;
+        ext_tlv->header.len    = params->he_capab_len + sizeof(u8);
+        ext_tlv->header.ext_id = HE_CAPABILITY;
+        memcpy(ext_tlv->data, (u8 *)&params->he_capab, params->he_capab_len);
+        pos += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+        sta_info->tlv_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+#endif
+
+    if (MLAN_STATUS_SUCCESS != wifi_uap_sta_info(priv, HostCmd_ACT_ADD_STA, sta_info))
+    {
+        wuap_e("uAP add station failed");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+done:
+    if (sta_info)
+        os_mem_free(sta_info);
+
+    LEAVE();
+    return ret;
+}
+
+int wifi_nxp_sta_remove(const uint8_t *addr)
+{
+    mlan_private *priv         = (mlan_private *)mlan_adap->priv[1];
+    int ret                    = 0;
+    mlan_ds_sta_info *sta_info = NULL;
+
+    ENTER();
+
+    if (!addr)
+    {
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+    sta_info = os_mem_alloc(sizeof(mlan_ds_sta_info));
+    if (!sta_info)
+    {
+        wuap_e("Fail to alloc memory for mlan_ds_sta_info");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+    memset(sta_info, 0x00, sizeof(mlan_ds_sta_info));
+
+    memcpy(sta_info->peer_mac, addr, MLAN_MAC_ADDR_LENGTH);
+
+    wuap_d("wlan: UAP/GO remove peer station, address =" MACSTR "", MAC2STR(addr));
+
+    if (MLAN_STATUS_SUCCESS != wifi_uap_sta_info(priv, HostCmd_ACT_REMOVE_STA, sta_info))
+    {
+        wuap_e("uAP remove station failed");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+done:
+    if (sta_info)
+        os_mem_free(sta_info);
+
+    LEAVE();
+    return ret;
+}
+
+int wifi_set_uap_rts(int rts_threshold)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    MrvlIEtypes_rts_threshold_t rts_threshold_tlv;
+
+    (void)memset(&rts_threshold_tlv, 0, sizeof(MrvlIEtypes_rts_threshold_t));
+    rts_threshold_tlv.header.type   = TLV_TYPE_UAP_RTS_THRESHOLD;
+    rts_threshold_tlv.header.len    = (t_u16)sizeof(MrvlIEtypes_rts_threshold_t);
+    rts_threshold_tlv.rts_threshold = (t_u16)rts_threshold;
+
+    int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, MNULL,
+                                           &rts_threshold_tlv, MLAN_BSS_TYPE_UAP, NULL);
+    if (rv != WM_SUCCESS)
+    {
+        return rv;
+    }
+
+    if (wm_wifi.cmd_resp_status != 0)
+    {
+        wifi_w("Unable to set rts threshold");
+        return wm_wifi.cmd_resp_status;
+    }
+
+    return rv;
+}
+
+int wifi_set_uap_frag(int frag_threshold)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    MrvlIEtypes_frag_threshold_t frag_threshold_tlv;
+
+    (void)memset(&frag_threshold_tlv, 0, sizeof(MrvlIEtypes_frag_threshold_t));
+    frag_threshold_tlv.header.type    = TLV_TYPE_UAP_RTS_THRESHOLD;
+    frag_threshold_tlv.header.len     = (t_u16)sizeof(MrvlIEtypes_frag_threshold_t);
+    frag_threshold_tlv.frag_threshold = (t_u16)frag_threshold;
+
+    int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, MNULL,
+                                           &frag_threshold_tlv, MLAN_BSS_TYPE_UAP, NULL);
+    if (rv != WM_SUCCESS)
+    {
+        return rv;
+    }
+
+    if (wm_wifi.cmd_resp_status != 0)
+    {
+        wifi_w("Unable to set frag threshold");
+        return wm_wifi.cmd_resp_status;
+    }
+
+    return rv;
+}
+
+int wifi_nxp_stop_ap()
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+    int ret            = WM_SUCCESS;
+
+    (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_UAP, 0, NULL);
+
+    if (priv->beacon_vendor_index != -1)
+    {
+        ret = wifi_clear_mgmt_ie2(MLAN_BSS_TYPE_UAP, priv->beacon_vendor_index);
+        if (ret != WM_SUCCESS)
+        {
+            wuap_e("Clear uAP vendor IE failed");
+            return -WM_FAIL;
+        }
+        priv->beacon_vendor_index = -1;
+    }
+
+    ret = wifi_nxp_set_mgmt_ies(priv, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
+    if (ret != WM_SUCCESS)
+    {
+        wuap_e("Set uAP mgmt ie failed");
+        ret = -WM_FAIL;
+        goto done;
+    }
+
+    wuap_d("Stopping BSS"); /* Stop BSS */
+    if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0,
+                                                             NULL, NULL, MLAN_BSS_TYPE_UAP, NULL))
+    {
+        wuap_e("Stop BSS failed");
+        return -WM_FAIL;
+    }
+
+    if (wm_wifi.dp != NULL)
+    {
+        os_mem_free(wm_wifi.dp);
+        wm_wifi.dp = NULL;
+    }
+
+    priv->uap_host_based = MFALSE;
+
+    wuap_d("wlan: AP stopped");
+
+done:
+    LEAVE();
+    return ret;
+}
+
+int wifi_nxp_set_acl(nxp_wifi_acl_info_t *params)
+{
+    mlan_private *priv             = (mlan_private *)mlan_adap->priv[1];
+    int ret                        = -WM_FAIL;
+    mlan_uap_bss_param *sys_config = NULL;
+    bool bss_started               = MFALSE;
+
+    if (!params)
+    {
+        goto done;
+    }
+
+    sys_config = os_mem_alloc(sizeof(mlan_uap_bss_param));
+
+    if (!sys_config)
+    {
+        wuap_e("Fail to alloc memory for mlan_uap_bss_param");
+        goto done;
+    }
+
+    memset(sys_config, 0x00, sizeof(mlan_uap_bss_param));
+
+    if (params->num_mac_acl <= MAX_MAC_FILTER_NUM)
+        sys_config->filter.mac_count = params->num_mac_acl;
+    else
+        sys_config->filter.mac_count = MAX_MAC_FILTER_NUM;
+
+    if (params->acl_policy == 1U)
+        sys_config->filter.filter_mode = MAC_FILTER_MODE_ALLOW_MAC;
+    else if (params->acl_policy == 0U)
+        sys_config->filter.filter_mode = MAC_FILTER_MODE_BLOCK_MAC;
+    memcpy(sys_config->filter.mac_list, params->mac_acl, sys_config->filter.mac_count * sizeof(mlan_802_11_mac_addr));
+
+    if (priv->uap_host_based == MTRUE)
+    {
+        bss_started = MTRUE;
+
+        if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0,
+                                                                 NULL, NULL, MLAN_BSS_TYPE_UAP, NULL))
+        {
+            wuap_e("Stop BSS failed");
+        }
+    }
+
+    if (MLAN_STATUS_SUCCESS == wifi_set_get_sys_config(priv, MLAN_ACT_SET, sys_config))
+    {
+        ret = WM_SUCCESS;
+    }
+
+    if (bss_started)
+    {
+        if (MLAN_STATUS_SUCCESS != wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_BSS_START, HostCmd_ACT_GEN_SET, 0,
+                                                                 NULL, NULL, MLAN_BSS_TYPE_UAP, NULL))
+        {
+            wuap_e("Start BSS failed");
+        }
+    }
+
+done:
+    if (sys_config)
+        os_mem_free(sys_config);
+
+    LEAVE();
+    return ret;
+}
+
+#endif /* CONFIG_WPA_SUPP_AP */

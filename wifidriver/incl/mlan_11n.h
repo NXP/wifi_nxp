@@ -51,7 +51,7 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
 /** Miscellaneous configuration handler */
 mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 /** Delete Tx BA stream table entry */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra);
 #else
 void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx_tbl);
@@ -59,7 +59,7 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx
 /** Delete all Tx BA stream table entries */
 void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv);
 /** Get Tx BA stream table */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, t_u8 *ra);
 /** update Tx ampud_stat */
 void wlan_11n_update_txbastream_tbl_ampdu_stat(mlan_private *priv, t_u8 *ra, t_u8 status, t_u8 tid);
@@ -96,7 +96,7 @@ int wlan_get_rxreorder_tbl(mlan_private *priv, rx_reorder_tbl *buf);
 /** get tx ba stream table */
 int wlan_get_txbastream_tbl(mlan_private *priv, tx_ba_stream_tbl *buf);
 #endif /* CONFIG_MLAN_WMSDK */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
 /** Minimum number of AMSDU */
 #define MIN_NUM_AMSDU 2
@@ -226,7 +226,7 @@ static t_u8 wlan_is_cur_bastream_high_prio(mlan_private *priv, int tid)
 
     while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
         if (priv->aggr_prio_tbl[tid].ampdu_user > priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user)
 #else
         if (priv->aggr_prio_tbl[tid].ampdu_user > priv->aggr_prio_tbl[ptx_tbl->tid].ampdu_user)
@@ -283,7 +283,7 @@ static int wlan_is_amsdu_in_ampdu_allowed(mlan_private *priv, raListTbl *ptr, in
 {
     TxBAStreamTbl *ptx_tbl;
     ENTER();
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ptr->ra);
 #else
     ptx_tbl = wlan_11n_get_txbastream_tbl(priv, tid, ptr->ra);
@@ -384,7 +384,7 @@ static t_u8 wlan_find_stream_to_delete(mlan_private *priv, raListTbl *ptr, int p
 
     while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
         if (tid > priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user)
         {
             tid   = priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user;
@@ -421,7 +421,7 @@ static int wlan_is_bastream_setup(mlan_private *priv, raListTbl *ptr, int tid)
     TxBAStreamTbl *ptx_tbl;
 
     ENTER();
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ptr->ra);
 #else
     ptx_tbl = wlan_11n_get_txbastream_tbl(priv, tid, ptr->ra);
@@ -462,7 +462,7 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
     return ret;
 }
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 /**
  *  @brief This function checks whether amsdu is allowed
  *

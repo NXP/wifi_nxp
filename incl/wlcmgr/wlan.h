@@ -192,9 +192,11 @@ typedef enum
 /* Max WPA3 password can be upto 255 ASCII chars */
 #define WLAN_PASSWORD_MAX_LENGTH 255U
 /* Max WPA2 Enterprise identity can be upto 256 characters */
-#define IDENTITY_MAX_LENGTH 256U
+#define IDENTITY_MAX_LENGTH 64U
 /* Max WPA2 Enterprise password can be upto 256 unicode characters */
-#define PASSWORD_MAX_LENGTH 256U
+#define PASSWORD_MAX_LENGTH 64U
+/** Max identities for EAP server users */
+#define MAX_USERS 8
 
 #ifdef CONFIG_WLAN_KNOWN_NETWORKS
 /** The size of the list of known networks maintained by the WLAN
@@ -256,6 +258,9 @@ typedef enum
 #define CARD_WAKEUP_GPIO_PIN 16 //?
 #endif
 
+#define WLAN_MGMT_DIASSOC MBIT(10)
+#define WLAN_MGMT_AUTH    MBIT(11)
+#define WLAN_MGMT_DEAUTH  MBIT(12)
 /** BITMAP for Action frame */
 #define WLAN_MGMT_ACTION MBIT(13)
 
@@ -528,36 +533,62 @@ struct wlan_scan_result
     enum wlan_bss_role role;
 
     /* network features */
+    /** The network supports 802.11N.  This is set to 0 if the network does not
+     *  support 802.11N or if the system does not have 802.11N support enabled. */
+    unsigned dot11n : 1;
+#ifdef CONFIG_11AC
+    /** The network supports 802.11AC.  This is set to 0 if the network does not
+     *  support 802.11AC or if the system does not have 802.11AC support enabled. */
+    unsigned dot11ac : 1;
+#endif
+#ifdef CONFIG_11AX
+    /** The network supports 802.11AX.  This is set to 0 if the network does not
+     *  support 802.11AX or if the system does not have 802.11AX support enabled. */
+    unsigned dot11ax : 1;
+#endif
 
     /** The network supports WMM.  This is set to 0 if the network does not
      *  support WMM or if the system does not have WMM support enabled. */
     unsigned wmm : 1;
-#ifdef CONFIG_WPS2
+#ifdef CONFIG_WPA_SUPP_WPS
     /** The network supports WPS.  This is set to 0 if the network does not
      *  support WPS or if the system does not have WPS support enabled. */
     unsigned wps : 1;
     /** WPS Type PBC/PIN */
     unsigned int wps_session;
 #endif
-    /** WPA2 Enterprise security */
-    unsigned wpa2_entp : 1;
     /** The network uses WEP security. */
     unsigned wep : 1;
     /** The network uses WPA security. */
     unsigned wpa : 1;
     /** The network uses WPA2 security */
     unsigned wpa2 : 1;
+    /** The network uses WPA2 SHA256 security */
+    unsigned wpa2_sha256 : 1;
+#ifdef CONFIG_OWE
+    /** The network uses OWE security */
+    unsigned owe : 1;
+#endif
     /** The network uses WPA3 SAE security */
     unsigned wpa3_sae : 1;
+    /** The network uses WPA2 Enterprise security */
+    unsigned wpa2_entp : 1;
+    /** The network uses WPA2 Enterprise SHA256 security */
+    unsigned wpa2_entp_sha256 : 1;
+    /** The network uses WPA3 Enterprise SHA256 security */
+    unsigned wpa3_1x_sha256 : 1;
+    /** The network uses WPA3 Enterprise SHA384 security */
+    unsigned wpa3_1x_sha384 : 1;
 #ifdef CONFIG_11R
     /** The network uses FT 802.1x security (For internal use only)*/
     unsigned ft_1x : 1;
+    /** The network uses FT 892.1x SHA384 security */
+    unsigned ft_1x_sha384 : 1;
     /** The network uses FT PSK security (For internal use only)*/
     unsigned ft_psk : 1;
     /** The network uses FT SAE security (For internal use only)*/
     unsigned ft_sae : 1;
 #endif
-
     /** The signal strength of the beacon */
     unsigned char rssi;
     /** The network SSID, represented as a NULL-terminated C string of 0 to 32
@@ -659,9 +690,9 @@ typedef PACK_START struct _Event_AutoLink_SW_Node_t
     /*security type*/
     uint8_t secutype;
     /*multicast cipher*/
-    uint8_t mcstcipher;
+    uint16_t mcstcipher;
     /*unicast cipher*/
-    uint8_t ucstcipher;
+    uint16_t ucstcipher;
     /*peer ssid info*/
     /* tlv type*/
     uint16_t type_ssid;
@@ -707,29 +738,92 @@ enum wlan_security_type
     WLAN_SECURITY_WPA,
     /** The network uses WPA2 security with PSK. */
     WLAN_SECURITY_WPA2,
+#ifdef CONFIG_WPA_SUPP
+    /** The network uses WPA2 security with PSK SHA256. */
+    WLAN_SECURITY_WPA2_SHA256,
+#ifdef CONFIG_11R
+    /** The network uses WPA2 security with PSK FT. */
+    WLAN_SECURITY_WPA2_FT,
+#endif
+#else
     /** The network uses WPA2 security with PSK(SHA-1 and SHA-256).This security mode
      * is specific to uAP or SoftAP only */
     WLAN_SECURITY_WPA2_SHA256,
+#endif
     /** The network uses WPA/WPA2 mixed security with PSK */
     WLAN_SECURITY_WPA_WPA2_MIXED,
-#ifdef CONFIG_WPA2_ENTP
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     /** The network uses WPA2 Enterprise EAP-TLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS,
+    /** The network uses WPA2 Enterprise EAP-TLS SHA256 security
+     * The identity field in \ref wlan_network structure is used */
+    WLAN_SECURITY_EAP_TLS_SHA256,
+#ifdef CONFIG_11R
+    /** The network uses WPA2 Enterprise EAP-TLS FT security
+     * The identity field in \ref wlan_network structure is used */
+    WLAN_SECURITY_EAP_TLS_FT,
+    /** The network uses WPA2 Enterprise EAP-TLS FT SHA384 security
+     * The identity field in \ref wlan_network structure is used */
+    WLAN_SECURITY_EAP_TLS_FT_SHA384,
+#endif
+    /** The network uses WPA2 Enterprise EAP-TTLS security
+     * The identity field in \ref wlan_network structure is used */
+    WLAN_SECURITY_EAP_TTLS,
+    /** The network uses WPA2 Enterprise TTLS-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_TTLS_MSCHAPV2,
+    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_PEAP_MSCHAPV2,
+    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_PEAP_TLS,
+    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_PEAP_GTC,
+    /** The network uses WPA2 Enterprise TTLS-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_FAST_MSCHAPV2,
+    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_FAST_GTC,
+    /** The network uses WPA2 Enterprise SIM security
+     * The identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_SIM,
+    /** The network uses WPA2 Enterprise SIM security
+     * The identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_AKA,
+    /** The network uses WPA2 Enterprise SIM security
+     * The identity and password fields in
+     * \ref wlan_network structure are used */
+    WLAN_SECURITY_EAP_AKA_PRIME,
+    /** The network can use any eap security method. This is often used when
+     * the user only knows the name, identity and password but not the security
+     * type.  */
+    WLAN_SECURITY_EAP_WILDCARD,
 #endif
     /** The network can use any security method. This is often used when
      * the user only knows the name and passphrase but not the security
      * type.  */
     WLAN_SECURITY_WILDCARD,
-#ifdef CONFIG_PEAP_MSCHAPV2
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
-     * The anonymous identity, identity and password fields in
-     * \ref wlan_network structure are used */
-    WLAN_SECURITY_PEAP_MSCHAPV2,
-#endif
     /** The network uses WPA3 security with SAE. Also set the PMF settings using
      * \ref wlan_set_pmfcfg API required for WPA3 SAE */
     WLAN_SECURITY_WPA3_SAE,
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
+    /** The network uses WPA3 security with SAE FT. */
+    WLAN_SECURITY_WPA3_SAE_FT,
+#endif
+#endif
     /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
      * is specific to uAP or SoftAP only */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
@@ -741,38 +835,91 @@ enum wlan_security_type
 /** Wlan Cipher structure */
 struct wlan_cipher
 {
+    /** 1 bit value can be set for none */
+    uint16_t none : 1;
     /** 1 bit value can be set for wep40 */
-    uint8_t wep40 : 1;
+    uint16_t wep40 : 1;
     /** 1 bit value can be set for wep104 */
-    uint8_t wep104 : 1;
+    uint16_t wep104 : 1;
     /** 1 bit value can be set for tkip */
-    uint8_t tkip : 1;
+    uint16_t tkip : 1;
     /** 1 bit valuecan be set for ccmp */
-    uint8_t ccmp : 1;
+    uint16_t ccmp : 1;
+    /**  1 bit valuecan be set for aes 128 cmac */
+    uint16_t aes_128_cmac : 1;
+    /** 1 bit value can be set for gcmp */
+    uint16_t gcmp : 1;
+    /** 1 bit value can be set for sms4 */
+    uint16_t sms4 : 1;
+    /** 1 bit value can be set for gcmp 256 */
+    uint16_t gcmp_256 : 1;
+    /** 1 bit valuecan be set for ccmp 256 */
+    uint16_t ccmp_256 : 1;
+    /** 1 bit is reserved */
+    uint16_t rsvd : 1;
+    /** 1 bit value can be set for bip gmac 128 */
+    uint16_t bip_gmac_128 : 1;
+    /** 1 bit value can be set for bip gmac 256 */
+    uint16_t bip_gmac_256 : 1;
+    /** 1 bit value can be set for bip cmac 256 */
+    uint16_t bip_cmac_256 : 1;
+    /** 1 bit valuecan be set for gtk not used */
+    uint16_t gtk_not_used : 1;
     /** 4 bits are reserved */
-    uint8_t rsvd : 4;
+    uint16_t rsvd2 : 2;
 };
 
 static inline int is_valid_security(int security)
 {
     /*Currently only these modes are supported */
     if ((security == WLAN_SECURITY_NONE) || (security == WLAN_SECURITY_WEP_OPEN) || (security == WLAN_SECURITY_WPA) ||
-        (security == WLAN_SECURITY_WPA2) || (security == WLAN_SECURITY_WPA_WPA2_MIXED) ||
-#ifdef CONFIG_WPA2_ENTP
-        (security == WLAN_SECURITY_EAP_TLS) ||
+        (security == WLAN_SECURITY_WPA2) ||
+#ifdef CONFIG_WPA_SUPP
+        (security == WLAN_SECURITY_WPA2_SHA256) || (security == WLAN_SECURITY_WPA2_FT) ||
 #endif
-#ifdef CONFIG_PEAP_MSCHAPV2
-        (security == WLAN_SECURITY_PEAP_MSCHAPV2) ||
+        (security == WLAN_SECURITY_WPA_WPA2_MIXED) ||
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        (security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
+        (security == WLAN_SECURITY_EAP_TLS_FT) || (security == WLAN_SECURITY_EAP_TLS_FT_SHA384) ||
+        (security == WLAN_SECURITY_EAP_TTLS) || (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
+        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
+        (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
+        (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
+        (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
+        (security == WLAN_SECURITY_EAP_WILDCARD) ||
 #endif
 #ifdef CONFIG_OWE
         (security == WLAN_SECURITY_OWE_ONLY) ||
 #endif
-        (security == WLAN_SECURITY_WPA3_SAE) || (security == WLAN_SECURITY_WILDCARD))
+        (security == WLAN_SECURITY_WPA3_SAE) ||
+#ifdef CONFIG_WPA_SUPP
+        (security == WLAN_SECURITY_WPA3_SAE_FT) ||
+#endif
+        (security == WLAN_SECURITY_WILDCARD))
     {
-        return 0;
+        return 1;
     }
-    return -1;
+    return 0;
 }
+
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+static inline int is_ep_valid_security(int security)
+{
+    /*Currently only these modes are supported */
+    if ((security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
+        (security == WLAN_SECURITY_EAP_TLS_FT) || (security == WLAN_SECURITY_EAP_TLS_FT_SHA384) ||
+        (security == WLAN_SECURITY_EAP_TTLS) || (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
+        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
+        (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
+        (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
+        (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
+        (security == WLAN_SECURITY_EAP_WILDCARD))
+    {
+        return 1;
+    }
+    return 0;
+}
+#endif
 
 /** Network security configuration */
 struct wlan_network_security
@@ -784,6 +931,14 @@ struct wlan_network_security
     struct wlan_cipher mcstCipher;
     /** Type of network security Pairwise Cipher suite used internally*/
     struct wlan_cipher ucstCipher;
+#ifdef CONFIG_WPA_SUPP
+    /** Type of network security Group Cipher suite */
+    int group_cipher;
+    /** Type of network security Pairwise Cipher suite */
+    int pairwise_cipher;
+    /** Type of network security Pairwise Cipher suite */
+    int group_mgmt_cipher;
+#endif
     /** Is PMF required */
     bool is_pmf_required;
     /** Pre-shared key (network password).  For WEP networks this is a hex byte
@@ -833,18 +988,82 @@ struct wlan_network_security
     /** Flag reporting whether bridge pmk is valid or not. */
     bool bridge_pmk_valid;
 #endif
-#ifdef CONFIG_WPA2_ENTP
-    /** TLS client cert configuration */
-    wm_mbedtls_cert_t tls_cert;
-    /** mbedtls_ssl_config handle */
-    mbedtls_ssl_config *wlan_ctx;
-    /** mbedtls_ssl_context handle */
-    mbedtls_ssl_context *wlan_ssl;
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+    /* WPA3 Enterprise mode */
+    unsigned wpa3_sb : 1;
+    /* WPA3 Enterprise Suite B mode */
+    unsigned wpa3_sb_192 : 1;
+    /* PEAP version */
+    unsigned eap_ver : 1;
+    /* PEAP label */
+    unsigned peap_label : 1;
+    /* Identity string for EAP */
+    char identity[IDENTITY_MAX_LENGTH];
+    /* Anonymous identity string for EAP */
+    char anonymous_identity[IDENTITY_MAX_LENGTH];
+    /* Password string for EAP. This field can include
+     * either the plaintext password (using ASCII or
+     * hex string) */
+    char eap_password[PASSWORD_MAX_LENGTH];
+    /** CA cert blob in PEM/DER format */
+    unsigned char *ca_cert_data;
+    /** CA cert blob len */
+    size_t ca_cert_len;
+    /** Client cert blob in PEM/DER format */
+    unsigned char *client_cert_data;
+    /** Client cert blob len */
+    size_t client_cert_len;
+    /** Client key blob */
+    unsigned char *client_key_data;
+    /** Client key blob len */
+    size_t client_key_len;
+    /** Client key password */
+    char client_key_passwd[PASSWORD_MAX_LENGTH];
+    /** PAC blob */
+    unsigned char *pac_data;
+    /** PAC blob len */
+    size_t pac_len;
+    /** CA cert2 blob in PEM/DER format */
+    unsigned char *ca_cert2_data;
+    /** CA cert2 blob len */
+    size_t ca_cert2_len;
+    /** Client cert2 blob in PEM/DER format */
+    unsigned char *client_cert2_data;
+    /** Client cert2 blob len */
+    size_t client_cert2_len;
+    /** Client key2 blob */
+    unsigned char *client_key2_data;
+    /** Client key2 blob len */
+    size_t client_key2_len;
+    /** Client key2 password */
+    char client_key2_passwd[PASSWORD_MAX_LENGTH];
+#ifdef CONFIG_HOSTAPD
+    /** Server cert blob in PEM/DER format */
+    unsigned char *server_cert_data;
+    /** Server cert blob len */
+    size_t server_cert_len;
+    /** Server key blob */
+    unsigned char *server_key_data;
+    /** Server key blob len */
+    size_t server_key_len;
+    /** Server key password */
+    char server_key_passwd[PASSWORD_MAX_LENGTH];
+    /** DH params blob */
+    unsigned char *dh_data;
+    /** DH params blob len */
+    size_t dh_len;
+    /** Number of EAP users */
+    size_t nusers;
+    /** User Identities */
+    char identities[MAX_USERS][IDENTITY_MAX_LENGTH];
+    /** User Passwords */
+    char passwords[MAX_USERS][PASSWORD_MAX_LENGTH];
+#endif
 #endif
 };
 
 /* Configuration for wireless scanning */
-#define MAX_CHANNEL_LIST 5
+#define MAX_CHANNEL_LIST 6
 struct wifi_scan_params_t
 {
     uint8_t *bssid;
@@ -1135,6 +1354,9 @@ struct wlan_ip_config
  */
 struct wlan_network
 {
+#ifdef CONFIG_WPA_SUPP
+    int id;
+#endif
     /** The name of this network profile.  Each network profile that is
      *  added to the WLAN Connection Manager must have a unique name. */
     char name[WLAN_NETWORK_NAME_MAX_LENGTH];
@@ -1175,6 +1397,22 @@ struct wlan_network
     /** Rssi threshold */
     short rssi_threshold;
 #endif
+#ifdef CONFIG_WPA_SUPP
+    /** RSSI */
+    int rssi;
+    /** HT capabilities */
+    unsigned short ht_capab;
+#ifdef CONFIG_11AC
+    /** VHT capabilities */
+    unsigned int vht_capab;
+    /** VHT bandwidth */
+    unsigned char vht_oper_chwidth;
+#endif
+#ifdef CONFIG_11AX
+    /** HE bandwidth */
+    unsigned char he_oper_chwidth;
+#endif
+#endif
     /** BSS type */
     enum wlan_bss_type type;
     /** The network wireless mode enum wlan_bss_role. Set this
@@ -1189,13 +1427,6 @@ struct wlan_network
     /** The network IP address configuration specified by struct
      * wlan_ip_config that should be associated with this interface. */
     struct wlan_ip_config ip;
-#ifdef CONFIG_WPA2_ENTP
-    char identity[IDENTITY_MAX_LENGTH];
-#ifdef CONFIG_PEAP_MSCHAPV2
-    char anonymous_identity[IDENTITY_MAX_LENGTH];
-    char password[PASSWORD_MAX_LENGTH];
-#endif
-#endif
 
     /* Private Fields */
 
@@ -1246,6 +1477,18 @@ struct wlan_network
      * WPS */
     unsigned wps_specific : 1;
 #endif
+
+    /** The network supports 802.11N. (For internal use only) */
+    unsigned dot11n : 1;
+#ifdef CONFIG_11AC
+    /** The network supports 802.11AC. (For internal use only) */
+    unsigned dot11ac : 1;
+#endif
+#ifdef CONFIG_11AX
+    /** The network supports 802.11AX. (For internal use only) */
+    unsigned dot11ax : 1;
+#endif
+
 #ifdef CONFIG_11R
     /* Mobility Domain ID */
     uint16_t mdid;
@@ -3502,7 +3745,7 @@ void wlan_sta_ampdu_rx_enable(void);
  */
 void wlan_sta_ampdu_rx_disable(void);
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 /**
  * This API can be used to enable AMPDU support on the go
  * when uap is a transmitter.
@@ -3933,7 +4176,7 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 
 #endif
 
-#ifdef CONFIG_WIFI_EU_CRYPTO
+#ifdef CONFIG_FIPS
 #define EU_CRYPTO_DATA_MAX_LENGTH  1300U
 #define EU_CRYPTO_KEY_MAX_LENGTH   32U
 #define EU_CRYPTO_KEYIV_MAX_LENGTH 32U
@@ -4399,7 +4642,7 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 void wlan_wmm_tx_stats_dump(int bss_type);
 #endif
 
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
 /**
  * Set scan channel gap.
  * \param[in] scan_chan_gap      Time gap to be used between two consecutive channels scan.
@@ -4750,6 +4993,136 @@ int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer))
  * \return        void
  */
 void wlan_set_rssi_low_threshold(uint8_t threshold);
+#endif
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
+/** Generate valid PIN for WPS session.
+ *
+ *  This function generate PIN for WPS PIN session.
+ *
+ * \param[in]  pin A pointer to WPS pin to be generated.
+ */
+void wlan_wps_generate_pin(unsigned int *pin);
+
+/** Start WPS PIN session.
+ *
+ *  This function starts WPS PIN session.
+ *
+ * \param[in]  pin Pin for WPS session.
+ *
+ * \return WM_SUCCESS if the pin entered is valid.
+ * \return -WM_FAIL if invalid pin entered.
+ */
+int wlan_start_wps_pin(const char *pin);
+
+/** Start WPS PBC session.
+ *
+ *  This function starts WPS PBC session.
+ *
+ * \return  WM_SUCCESS if successful
+ * \return -WM_FAIL if invalid pin entered.
+ *
+ */
+int wlan_start_wps_pbc(void);
+
+/** Cancel WPS session.
+ *
+ *  This function cancels ongoing WPS session.
+ *
+ * \return  WM_SUCCESS if successful
+ * \return -WM_FAIL if invalid pin entered.
+ *
+ */
+int wlan_wps_cancel(void);
+
+#ifdef CONFIG_WPA_SUPP_AP
+/** Start WPS PIN session.
+ *
+ *  This function starts AP WPS PIN session.
+ *
+ * \param[in]  pin Pin for WPS session.
+ *
+ * \return WM_SUCCESS if the pin entered is valid.
+ * \return -WM_FAIL if invalid pin entered.
+ */
+int wlan_start_ap_wps_pin(const char *pin);
+
+/** Start WPS PBC session.
+ *
+ *  This function starts AP WPS PBC session.
+ *
+ * \return  WM_SUCCESS if successful
+ * \return -WM_FAIL if invalid pin entered.
+ *
+ */
+int wlan_start_ap_wps_pbc(void);
+
+/** Cancel AP's WPS session.
+ *
+ *  This function cancels ongoing WPS session.
+ *
+ * \return  WM_SUCCESS if successful
+ * \return -WM_FAIL if invalid pin entered.
+ *
+ */
+int wlan_wps_ap_cancel(void);
+#endif
+#endif
+
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+
+#define FILE_TYPE_NONE              0
+#define FILE_TYPE_ENTP_CA_CERT      1
+#define FILE_TYPE_ENTP_CLIENT_CERT  2
+#define FILE_TYPE_ENTP_CLIENT_KEY   3
+#define FILE_TYPE_ENTP_CA_CERT2     4
+#define FILE_TYPE_ENTP_CLIENT_CERT2 5
+#define FILE_TYPE_ENTP_CLIENT_KEY2  6
+
+#ifdef CONFIG_HOSTAPD
+#define FILE_TYPE_ENTP_SERVER_CERT 7
+#define FILE_TYPE_ENTP_SERVER_KEY  8
+#define FILE_TYPE_ENTP_DH_PARAMS   9
+#endif
+
+/** This function specifies the enterprise certificate file
+ *  This function must be used before adding network profile. It will store certificate data
+ *  in "wlan" global structure. When adding new network profile, it will be get by
+ *  wlan_get_entp_cert_files(), and put into profile security structure after mbedtls parse.
+ *
+ * \param[in]        cert_type   certificate file type:
+ * 1 -- FILE_TYPE_ENTP_CA_CERT,
+ * 2 -- FILE_TYPE_ENTP_CLIENT_CERT,
+ * 3 -- FILE_TYPE_ENTP_CLIENT_KEY.
+ * \param[in]        data        raw data
+ * \param[in]        data_len    size of raw data
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len);
+
+/** This function get enterprise certificate data from "wlan" global structure           *
+ * \param[in]        cert_type   certificate file type:
+ * 1 -- FILE_TYPE_ENTP_CA_CERT,
+ * 2 -- FILE_TYPE_ENTP_CLIENT_CERT,
+ * 3 -- FILE_TYPE_ENTP_CLIENT_KEY.
+ * \param[in]        data        raw data
+ *
+ * \return size of raw data
+ */
+t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data);
+
+/** This function free the temporary memory of enterprise certificate data
+ *  After add new enterprise network profile, the certificate data has been parsed by mbedtls into another data, which
+ * can be freed.
+ *
+ * \param[in]        void
+ *
+ * \return void
+ */
+void wlan_free_entp_cert_files(void);
+#endif
 #endif
 
 #ifdef CONFIG_NET_MONITOR

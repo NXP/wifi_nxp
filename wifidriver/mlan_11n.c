@@ -485,7 +485,7 @@ static mlan_status wlan_11n_ioctl_supported_mcs_set(IN pmlan_adapter pmadapter, 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if !defined(RW610)
+#if !defined(WIFI_ADD_ON)
 /**
  *  @brief This function checks if the given pointer is valid entry of
  *         Tx BA Stream table
@@ -1040,7 +1040,7 @@ mlan_status wlan_cmd_amsdu_aggr_ctrl(mlan_private *priv, HostCmd_DS_COMMAND *cmd
  *
  *  @return        MLAN_STATUS_SUCCESS
  */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
 mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
                                      IN HostCmd_DS_COMMAND *resp,
@@ -1239,7 +1239,6 @@ static int wlan_check_chan_width_ht40_by_region(IN mlan_private *pmpriv, IN BSSD
     return MTRUE;
 }
 
-#define CHAN_BW_80MHZ 3
 /**
  *  @brief This function append the 802_11N tlv
  *
@@ -1439,7 +1438,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         if (pbss_desc && pbss_desc->multi_bssid_ap)
             SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
-#ifdef RW610
+#ifdef WIFI_ADD_ON
         pext_cap->ext_cap.BSS_CoexistSupport = 0;
 #endif
         if (pmpriv->hotspot_cfg & HOTSPOT_ENABLED)
@@ -1576,13 +1575,13 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
  *
  *  @return 	        N/A
  */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra)
 #else
 void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx_tbl)
 #endif
 {
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     TxBAStreamTbl *ptx_tbl = MNULL;
 #endif
     pmlan_adapter pmadapter = priv->adapter;
@@ -1591,7 +1590,7 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx
 
     (void)pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
     {
         PRINTM(MINFO, "Delete BA stream table entry: %p\n", ptx_tbl);
@@ -1613,10 +1612,10 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx
 #endif
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
 
-#if !defined(RW610)
+#ifndef WIFI_ADD_ON
 exit:
-    (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 #endif
+    (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
     LEAVE();
 }
 
@@ -1638,7 +1637,7 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
                 priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, priv->adapter->callbacks.moal_spin_lock,
                 priv->adapter->callbacks.moal_spin_unlock)) != NULL)
     {
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
         wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr->ra);
 #else
         wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr);
@@ -1666,7 +1665,7 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
  *  @return 	   A pointer to first entry matching RA/TID in BA stream
  *                 NULL if not found
  */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, t_u8 *ra)
 #else
 TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra)
@@ -1690,7 +1689,7 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", ptx_tbl->tid);
         DBG_HEXDUMP(MDAT_D, "RA", ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
         if (!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH))
 #else
         if ((!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH)) && (ptx_tbl->tid == tid))
@@ -1707,8 +1706,6 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
     return MNULL;
 }
 
-#if !defined(RW610)
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will create a entry in tx ba stream table for the
  *  		given RA/TID.
@@ -1720,42 +1717,22 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
  *
  *  @return 	    N/A
  */
-void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status)
-{
-    TxBAStreamTbl *newNode  = MNULL;
-    pmlan_adapter pmadapter = priv->adapter;
-
-    ENTER();
-
-    if (!wlan_11n_get_txbastream_tbl(priv, tid, ra))
-    {
-        PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
-        DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
-
-        pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(TxBAStreamTbl), MLAN_MEM_DEF,
-                                         (t_u8 **)&newNode);
-        util_init_list((pmlan_linked_list)newNode);
-
-        newNode->tid       = tid;
-        newNode->ba_status = ba_status;
-        (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
-
-        util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
-                               pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
-    }
-
-    LEAVE();
-}
-#endif /* CONFIG_MLAN_WMSDK */
-#else
+#if defined(WIFI_ADD_ON)
 void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_status)
+#else
+void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status)
+#endif
 {
     TxBAStreamTbl *newNode  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
 
+#if defined(WIFI_ADD_ON)
     if (!wlan_11n_get_txbastream_tbl(priv, ra))
+#else
+    if (!wlan_11n_get_txbastream_tbl(priv, tid, ra))
+#endif
     {
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
@@ -1764,10 +1741,15 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
                                          (t_u8 **)&newNode);
         util_init_list((pmlan_linked_list)newNode);
 
+#if defined(WIFI_ADD_ON)
         (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
 
         newNode->ba_status   = ba_status;
         newNode->txba_thresh = os_rand_range(5, 5);
+#else
+        newNode->tid       = tid;
+        newNode->ba_status = ba_status;
+#endif
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
@@ -1776,9 +1758,8 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
 
     LEAVE();
 }
-#endif
 
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 /**
  *  @brief This function will update ampdu status in tx ba stream table for the
  *  		given RA/TID.
@@ -1941,7 +1922,7 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     add_ba_req.block_ack_param_set =
         (t_u16)((tid << BLOCKACKPARAM_TID_POS) | (priv->add_ba_param.tx_win_size << BLOCKACKPARAM_WINSIZE_POS) |
                 IMMEDIATE_BLOCK_ACK);
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
     /** enable AMSDU inside AMPDU */
     /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
@@ -1971,7 +1952,7 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     }
 
     add_ba_req.dialog_token = dialog_tok;
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     (void)__memset(priv->adapter, &add_ba_req.peer_mac_addr, 0x0, MLAN_MAC_ADDR_LENGTH);
 #endif
     (void)__memcpy(priv->adapter, &add_ba_req.peer_mac_addr, peer_mac, MLAN_MAC_ADDR_LENGTH);

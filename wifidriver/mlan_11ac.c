@@ -19,8 +19,6 @@
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
-#define NO_NSS_SUPPORT 0x3U
-
 /********************************************************
    Local Variables
 ********************************************************/

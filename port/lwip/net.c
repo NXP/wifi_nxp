@@ -79,10 +79,15 @@ err_t lwip_netif_uap_init(struct netif *netif);
 #ifdef CONFIG_P2P
 err_t lwip_netif_wfd_init(struct netif *netif);
 #endif
+#ifndef CONFIG_WIFI_RX_REORDER
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
+#endif
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
-void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
+void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
+#ifdef CONFIG_WIFI_RX_REORDER
+void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload);
+#endif
 
 NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
 
@@ -217,6 +222,7 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 {
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
+
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 }
 #endif /* CONFIG_IPV6 */
@@ -241,10 +247,15 @@ int net_wlan_init(void)
     {
         net_ipv4stack_init();
 #ifndef RW610
+#ifndef CONFIG_WIFI_RX_REORDER
         (void)wifi_register_data_input_callback(&handle_data_packet);
+#endif
         (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
         (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
         (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
+#ifdef CONFIG_WIFI_RX_REORDER
+        (void)wifi_register_gen_pbuf_from_data2_callback(&gen_pbuf_from_data2);
+#endif
 #endif
         ip_2_ip4(&g_mlan.ipaddr)->addr = INADDR_ANY;
         ret = netifapi_netif_add(&g_mlan.netif, ip_2_ip4(&g_mlan.ipaddr), ip_2_ip4(&g_mlan.ipaddr),
@@ -296,6 +307,28 @@ int net_wlan_init(void)
     }
 
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+
+    return WM_SUCCESS;
+}
+
+struct netif *net_get_sta_interface(void)
+{
+    return &g_mlan.netif;
+}
+
+struct netif *net_get_uap_interface(void)
+{
+    return &g_uap.netif;
+}
+
+int net_get_if_name_netif(char *pif_name, struct netif *iface)
+{
+    char if_name[NETIF_NAMESIZE];
+    char *ptr_if_name = NULL;
+
+    ptr_if_name = netif_index_to_name(iface->num + 1, if_name);
+
+    (void)strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
     return WM_SUCCESS;
 }
 
@@ -320,7 +353,9 @@ static int net_netif_deinit(struct netif *netif)
 
     if (netif->state != NULL)
     {
+#ifndef CONFIG_WPA_SUPP
         mem_free(netif->state);
+#endif
         netif->state = NULL;
     }
 
@@ -483,6 +518,7 @@ static void stop_cb(void *ctx)
 static void dhcp_timer_cb(os_timer_arg_t arg)
 {
     (void)tcpip_try_callback(stop_cb, NULL);
+
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, WIFI_EVENT_REASON_FAILURE, NULL);
 }
 
@@ -631,7 +667,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
         {
             wm_netif_ipv6_status_callback(&if_handle->netif);
         }
-        
     }
 #endif
     if (if_handle == &g_mlan)

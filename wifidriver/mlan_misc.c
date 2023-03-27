@@ -1047,6 +1047,7 @@ done:
     LEAVE();
     return ret;
 }
+#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  *  @brief This function will check if station list is empty
@@ -1193,6 +1194,7 @@ t_void wlan_delete_station_list(pmlan_private priv)
     return;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Get extended version information
  *
@@ -1507,6 +1509,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.BSS_Transition = 0;
     }
 #endif
+
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);
 
     LEAVE();

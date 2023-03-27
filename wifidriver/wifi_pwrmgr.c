@@ -116,33 +116,45 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     /* Construct the ARP filter TLV */
     arpfilter       = (arpfilter_header *)((uint32_t)cmd + cmd->size);
     arpfilter->type = TLV_TYPE_ARP_FILTER;
+    arpfilter->len  = 0;
 
     if ((ipv4_addr != 0U) && (action == (t_u16)HS_CONFIGURE) && (conditions != (t_u32)(HOST_SLEEP_CFG_CANCEL)))
     {
-        entry            = (filter_entry *)((uint32_t)arpfilter + sizeof(arpfilter_header));
-        entry->addr_type = ADDR_TYPE_MULTICAST;
-        entry->eth_type  = ETHER_TYPE_ANY;
-        entry->ipv4_addr = IPV4_ADDR_ANY;
-        entry++;
-
-        entry->addr_type = ADDR_TYPE_BROADCAST;
-        if ((conditions & (t_u32)(WIFI_WAKE_ON_ALL_BROADCAST)) != 0U)
+        entry = (filter_entry *)((uint32_t)arpfilter + sizeof(arpfilter_header));
+        if ((conditions & (t_u32)(WIFI_WAKE_ON_MULTICAST)) != 0U)
         {
+            entry->addr_type = ADDR_TYPE_MULTICAST;
             entry->eth_type  = ETHER_TYPE_ANY;
             entry->ipv4_addr = IPV4_ADDR_ANY;
+            entry++;
+            arpfilter->len += sizeof(filter_entry);
         }
-        else
-        {
-            entry->eth_type  = ETHER_TYPE_ARP;
-            entry->ipv4_addr = ipv4_addr;
-        }
-        entry++;
 
-        entry->addr_type = ADDR_TYPE_UNICAST;
-        entry->eth_type  = ETHER_TYPE_ANY;
-        entry->ipv4_addr = IPV4_ADDR_ANY;
-        arpfilter->len   = 3U * sizeof(filter_entry);
-        cmd->size        = (t_u16)(cmd->size + sizeof(arpfilter_header) + arpfilter->len);
+        if ((conditions & (t_u32)(WIFI_WAKE_ON_ALL_BROADCAST | WIFI_WAKE_ON_ARP_BROADCAST)) != 0U)
+        {
+            entry->addr_type = ADDR_TYPE_BROADCAST;
+            if ((conditions & (t_u32)(WIFI_WAKE_ON_ALL_BROADCAST)) != 0U)
+            {
+                entry->eth_type  = ETHER_TYPE_ANY;
+                entry->ipv4_addr = IPV4_ADDR_ANY;
+            }
+            else
+            {
+                entry->eth_type  = ETHER_TYPE_ARP;
+                entry->ipv4_addr = ipv4_addr;
+            }
+            entry++;
+            arpfilter->len += sizeof(filter_entry);
+        }
+
+        if ((conditions & (t_u32)(WIFI_WAKE_ON_UNICAST)) != 0U)
+        {
+            entry->addr_type = ADDR_TYPE_UNICAST;
+            entry->eth_type  = ETHER_TYPE_ANY;
+            entry->ipv4_addr = IPV4_ADDR_ANY;
+            arpfilter->len += sizeof(filter_entry);
+        }
+        cmd->size = (t_u16)(cmd->size + sizeof(arpfilter_header) + arpfilter->len);
     }
     else if (action == (t_u16)HS_ACTIVATE)
     {

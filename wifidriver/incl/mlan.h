@@ -39,13 +39,28 @@ Change log:
 #define CONFIG_UAP_AMPDU_RX       1
 #define CONFIG_WIFIDRIVER_PS_LOCK 1
 #define CONFIG_WNM_PS             1
-#define CONFIG_WIFI_EU_CRYPTO     1
+#define CONFIG_COMBO_SCAN         1
+#define CONFIG_BG_SCAN            1
+#define CONFIG_HOST_MLME          1
+#define UAP_HOST_MLME             1
+#endif
+
+#ifdef IW61x
+#define CONFIG_WPA_SUPP 1
+#endif
+#ifdef CONFIG_WPA_SUPP
+#define CONFIG_HOSTAPD                    1
+#define CONFIG_WPA_SUPP_AP                1
+#define CONFIG_WPA_SUPP_WPS               1
+#define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 1
 #endif
 
 #ifdef CONFIG_11AX
 #define CONFIG_11K 1
 #define CONFIG_11V 1
+#ifndef CONFIG_WPA_SUPP
 #define CONFIG_MBO 1
+#endif
 #endif
 
 #include "mlan_decl.h"

@@ -711,7 +711,7 @@ typedef struct _txAggr_t
     t_u8 ampdu_ap;
     /** AMSDU */
     t_u8 amsdu;
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
     /** peer AMSDU */
     t_u8 amsdu_peer;
@@ -848,6 +848,10 @@ typedef struct
     t_u32 num_of_rates;
     /** Supported rates*/
     t_u8 data_rates[WLAN_SUPPORTED_RATES];
+#ifdef CONFIG_HOST_MLME
+    /** Host MLME flag*/
+    t_u8 host_mlme;
+#endif
 } current_bss_params_t;
 
 /** Sleep_params */
@@ -1069,6 +1073,33 @@ typedef struct _mlan_operations
     /** BSS role */
     mlan_bss_role bss_role;
 } mlan_operations;
+
+typedef MLAN_PACK_START struct _mlan_chan_info
+{
+    unsigned int mode;
+    int freq;
+    int channel;
+    int sec_channel_offset;
+    int bandwidth;
+    int ht_enabled;
+    int vht_enabled;
+    int he_enabled;
+    int center_freq1;
+    int center_freq2;
+} MLAN_PACK_END mlan_chan_info;
+
+#ifdef CONFIG_HOST_MLME
+
+#define WLAN_AUTH_SAE 3
+
+/** AUTH pending flag */
+#define HOST_MLME_AUTH_PENDING MBIT(0)
+/** AUTH complete flag */
+#define HOST_MLME_AUTH_DONE     MBIT(1)
+#define HOST_MLME_ASSOC_PENDING MBIT(2)
+#define HOST_MLME_ASSOC_DONE    MBIT(3)
+#endif
+
 #ifdef RW610
 /**Adapter_operations data structure*/
 typedef struct _bus_operations
@@ -1079,6 +1110,7 @@ typedef struct _bus_operations
     t_u32 intf_header_len;
 } bus_operations;
 #endif
+
 /** Private structure for MLAN */
 struct _mlan_private
 {
@@ -1106,9 +1138,12 @@ struct _mlan_private
     t_bool media_connected;
 
     /** Current packet filter */
-    t_u16 curr_pkt_filter;
+    t_u32 curr_pkt_filter;
     /** Infrastructure mode */
     mlan_bss_mode bss_mode;
+
+    /** Channel info */
+    mlan_chan_info chan;
 
     /** Tx packet control */
     t_u32 pkt_tx_ctrl;
@@ -1153,7 +1188,7 @@ struct _mlan_private
 
     /** max amsdu size */
     t_u16 max_amsdu;
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
     /** amsdu enabled */
     t_bool is_amsdu_enabled;
@@ -1213,6 +1248,13 @@ struct _mlan_private
 
     /** Current SSID/BSSID related parameters*/
     current_bss_params_t curr_bss_params;
+
+#ifdef CONFIG_HOST_MLME
+    /** flag for auth */
+    t_u8 auth_flag;
+    /** flag for auth algorithm */
+    t_u16 auth_alg;
+#endif
 
     /** User selected bands */
     t_u16 config_bands;
@@ -1282,11 +1324,11 @@ struct _mlan_private
     t_u8 wapi_ie[256];
     /** WAPI IE length */
     t_u8 wapi_ie_len;
-    /** Pointer to the station table */
-    mlan_list_head sta_list;
     /** MGMT IE */
     custom_ie mgmt_ie[MAX_MGMT_IE_INDEX];
 #endif /* CONFIG_MLAN_WMSDK */
+    /** Pointer to the station table */
+    mlan_list_head sta_list;
     /** mgmt frame passthru mask */
     t_u32 mgmt_frame_passthru_mask;
     /** Advanced Encryption Standard */
@@ -1321,10 +1363,6 @@ struct _mlan_private
     /** Lock for Rx packets */
     t_void *rx_pkt_lock;
 
-    t_u8 assoc_req_buf[MRVDRV_GENIE_BUF_SIZE];
-    /** Length of the data stored in assoc_rsp_buf */
-    t_u32 assoc_req_size;
-
 #ifdef STA_SUPPORT
 #ifndef CONFIG_MLAN_WMSDK
     /** Buffer to store the association response for application retrieval */
@@ -1344,9 +1382,18 @@ struct _mlan_private
     t_u8 *pcurr_bcn_buf;
     t_u32 curr_bcn_size;
     t_void *curr_bcn_buf_lock;
+#endif /* CONFIG_MLAN_WMSDK */
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
     /** WPS */
     wps_t wps;
-#endif /* CONFIG_MLAN_WMSDK */
+#endif
+#endif
+    /** Buffer to store the association req IEs */
+    t_u8 assoc_req_buf[MRVDRV_ASSOC_RSP_BUF_SIZE];
+    /** Length of the data stored in assoc_rsp_buf */
+    t_u32 assoc_req_size;
 #endif /* STA_SUPPORT */
 
     /** function table */
@@ -1386,11 +1433,21 @@ struct _mlan_private
     /** WNM power save mode */
     bool wnm_set;
 #endif
-#ifdef CONFIG_ROAMING
+#ifdef CONFIG_BG_SCAN
     t_u8 rssi_low;
     t_u8 roaming_enabled;
+#endif
+#ifdef CONFIG_BG_SCAN
+    /** bg_scan_start */
+    t_u8 bg_scan_start;
+    /** bg_scan reported */
+    t_u8 bg_scan_reported;
     /** bg_scan config */
     wlan_bgscan_cfg scan_cfg;
+    /** sched scaning flag */
+    t_u8 sched_scanning;
+    /** bgscan request id */
+    t_u64 bg_scan_reqid;
 #endif
     /* interface pause status */
     t_u8 tx_pause;
@@ -1404,6 +1461,31 @@ struct _mlan_private
     t_u8 enable_mbo;
     int mbo_mgmt_bitmap_index;
 #endif
+    /** tx_seq_num */
+    t_u32 tx_seq_num;
+#ifdef CONFIG_WPA_SUPP
+    int probe_req_index;
+    void *auth_resp;
+    void *assoc_resp;
+#ifdef CONFIG_WPA_SUPP_AP
+    int beacon_vendor_index;
+    int beacon_index;
+    int proberesp_index;
+    int assocresp_index;
+    int beacon_wps_index;
+
+    void *auth_req;
+    void *assoc_req;
+#endif
+#endif
+    /** uAP started or not */
+    bool bss_started;
+    /** host based uap flag */
+    bool uap_host_based;
+    /**UAP operating channel*/
+    t_u8 uap_channel;
+    /** uAP MAX STAs */
+    t_u8 uap_max_sta;
 };
 
 /** BA stream status */
@@ -1422,7 +1504,7 @@ struct _TxBAStreamTbl
     /** TxBAStreamTbl next node */
     TxBAStreamTbl *pnext;
     /** TID */
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     int ampdu_stat[MAX_NUM_TID];
 #else
     int tid;
@@ -1432,7 +1514,7 @@ struct _TxBAStreamTbl
     /** BA stream status */
     baStatus_e ba_status;
     t_u8 amsdu;
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
     t_u32 txpkt_cnt;
     t_u32 txba_thresh;
     t_u8 ampdu_supported[MAX_NUM_TID];
@@ -1562,6 +1644,8 @@ struct _sta_node
     sta_node *pnext;
     /** station mac address */
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
+    /** wmm flag */
+    t_u8 is_wmm_enabled;
     /** 11n flag */
     bool is_11n_enabled;
 #ifdef CONFIG_11AC
@@ -1578,6 +1662,14 @@ struct _sta_node
     t_u16 rx_seq[MAX_NUM_TID];
     /** max amsdu size */
     t_u16 max_amsdu;
+    /** HT cap */
+    IEEEtypes_HTCap_t HTcap;
+#if defined(UAP_HOST_MLME)
+    /** peer capability */
+    t_u16 capability;
+#endif
+    /** station band mode */
+    t_u16 bandmode;
     /** wapi key on off flag */
     t_u8 wapi_key_on;
     /** tx pause status */
@@ -2049,6 +2141,16 @@ struct _mlan_adapter
     t_u32 age_in_secs;
     /** Active scan for hidden ssid triggered */
     t_u8 active_scan_triggered;
+#ifdef SCAN_CHANNEL_GAP
+    /** channel statstics */
+    ChanStatistics_t *pchan_stats;
+    /** Number of records in the chan_stats */
+    t_u32 num_in_chan_stats;
+    /** index of chan stats */
+    t_u32 idx_chan_stats;
+    /** scan channel gap time */
+    t_u16 scan_chan_gap;
+#endif
     /** Number of records in the scan table */
     t_u32 num_in_scan_table;
     /** Scan probes */
@@ -2276,7 +2378,7 @@ struct _mlan_adapter
     t_u8 tx_power_table_a_cols;
 #endif
 #endif
-#if defined(RW610)
+#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_WIFI_TX_BUFF
     /** Tx buffer size */
     t_u16 tx_buffer_size;
@@ -2285,7 +2387,7 @@ struct _mlan_adapter
 #ifdef CONFIG_WIFI_TX_PER_TRACK
     tx_pert_info tx_pert;
 #endif
-#ifdef CONFIG_ROAMING
+#ifdef CONFIG_BG_SCAN
     t_u8 bgscan_reported;
 #endif
 #ifdef CONFIG_MULTI_CHAN
@@ -2396,9 +2498,9 @@ mlan_status wlan_find_bss(mlan_private *pmpriv, pmlan_ioctl_req pioctl_req);
 void wlan_clear_scan_bss(void);
 /** Allocate memory for adapter structure members */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter);
-#ifndef CONFIG_MLAN_WMSDK
 /** Free adapter */
 t_void wlan_free_adapter(pmlan_adapter pmadapter);
+#ifndef CONFIG_MLAN_WMSDK
 /** Free priv */
 t_void wlan_free_priv(mlan_private *pmpriv);
 /** Allocate command buffer */
@@ -2562,7 +2664,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 
 mlan_status wlan_rate_ioctl_cfg(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 mlan_status wlan_ret_802_11_tx_rate_query(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN void *pioctl);
-#if defined(CONFIG_ROAMING)
+#if defined(CONFIG_BG_SCAN)
 /** Handler for bgscan query commands */
 mlan_status wlan_cmd_802_11_bg_scan_query(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action);
 /** Handler for bgscan config command */
@@ -2862,12 +2964,11 @@ mlan_status wlan_misc_country_2_cfp_table_code(IN pmlan_adapter pmadapter,
                                                IN t_u8 *country_code,
                                                OUT t_u8 *cfp_bg,
                                                OUT t_u8 *cfp_a);
+#endif /* CONFIG_MLAN_WMSDK */
 /** check if station list is empty */
 t_u8 wlan_is_station_list_empty(mlan_private *priv);
-#endif /* CONFIG_MLAN_WMSDK */
 /** get station node */
 sta_node *wlan_get_station_entry(mlan_private *priv, t_u8 *mac);
-#ifndef CONFIG_MLAN_WMSDK
 /** delete station list */
 t_void wlan_delete_station_list(pmlan_private priv);
 /** delete station entry */
@@ -2875,7 +2976,8 @@ t_void wlan_delete_station_entry(mlan_private *priv, t_u8 *mac);
 /** add station entry */
 sta_node *wlan_add_station_entry(mlan_private *priv, t_u8 *mac);
 /** process uap rx packet */
-#endif /* CONFIG_MLAN_WMSDK */
+
+void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, sta_node *sta_ptr);
 
 #ifdef CONFIG_RF_TEST_MODE
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf);
@@ -2886,9 +2988,10 @@ t_u8 wlan_ft_akm_is_used(mlan_private *pmpriv, t_u8 *rsn_ie);
 #endif
 
 /** find specific ie */
-#if 0
-t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 * ie_buf, t_u8 ie_len,
-                           IEEEtypes_ElementId_e id);
+#ifndef CONFIG_MLAN_WMSDK
+t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len, IEEEtypes_ElementId_e id);
+#else
+t_u8 *wlan_get_specific_ie(pmlan_private priv, t_u8 *ie_buf, t_u8 ie_len, IEEEtypes_ElementId_e id, t_u8 ext_id);
 #endif
 
 /**
