@@ -100,10 +100,6 @@ SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALI
 /* Global variable wm_rand_seed */
 uint32_t wm_rand_seed = -1;
 
-os_thread_t wifi_scan_thread;
-
-os_thread_t wifi_scan_thread;
-
 static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
@@ -1531,8 +1527,7 @@ static void wifi_scan_input(void *argv)
 
     for (;;)
     {
-        wifi_scan_thread = os_get_current_task_handle();
-
+        wm_wifi.wm_wifi_scan_thread = os_get_current_task_handle();
         /* Wait till we receive scan command */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
 
@@ -1641,8 +1636,6 @@ static int wifi_core_init(void)
         wifi_e("Create wifi scan thread failed");
         goto fail;
     }
-
-    wifi_scan_thread = wm_wifi.wm_wifi_scan_thread;
 
     ret = os_thread_create(&wm_wifi.wm_wifi_core_thread, "stack_dispatcher", wifi_core_input, NULL, &wifi_core_stack,
                            OS_PRIO_1);
@@ -1792,7 +1785,6 @@ static void wifi_core_deinit(void)
     {
         (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
         wm_wifi.wm_wifi_scan_thread = NULL;
-        wifi_scan_thread            = NULL;
     }
 #ifdef CONFIG_WMM
     if (wm_wifi.wm_wifi_driver_tx)
@@ -1988,7 +1980,6 @@ void wifi_destroy_wifidriver_tasks(void)
     {
         (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
         wm_wifi.wm_wifi_scan_thread = NULL;
-        wifi_scan_thread            = NULL;
     }
 
     imu_uninstall_callback();
