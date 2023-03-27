@@ -4202,12 +4202,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
 
                 ie_len       = (t_u8)tlv_len - (t_u8)sizeof(IEEEtypes_FrameCtl_t) - assoc_ie_len;
                 assoc_req_ie = (t_u8 *)tlv + sizeof(MrvlIETypes_MgmtFrameSet_t) + assoc_ie_len;
-                pht_cap = (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY
-#ifdef CONFIG_11AX
-                                                                            ,
-                                                                            0
-#endif
-                );
+                pht_cap =
+                    (IEEEtypes_HTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, HT_CAPABILITY, 0);
 
                 if (pht_cap != NULL)
                 {
@@ -4229,12 +4225,8 @@ static void wrapper_wlan_check_sta_capability(pmlan_private priv, Event_Ext_t *p
                            "support 11n\n");
                 }
 #ifdef CONFIG_11AC
-                pvht_cap = (IEEEtypes_VHTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, VHT_CAPABILITY
-#ifdef CONFIG_11AX
-                                                                              ,
-                                                                              0
-#endif
-                );
+                pvht_cap =
+                    (IEEEtypes_VHTCap_t *)(void *)wlan_get_specific_ie(priv, assoc_req_ie, ie_len, VHT_CAPABILITY, 0);
                 if ((pvht_cap != MNULL) && (priv->is_11ac_enabled == MTRUE))
                 {
                     PRINTM(MCMND, "STA supports 11ac\n");

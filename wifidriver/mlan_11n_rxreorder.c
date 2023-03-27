@@ -28,11 +28,7 @@ Change log:
 /********************************************************
     Global Variables
 ********************************************************/
-#if defined(RW610)
-#ifdef AMSDU_IN_AMPDU
 SDK_ALIGN(uint8_t amsdu_inbuf[4096], 32);
-#endif
-#endif
 /********************************************************
     Local Functions
 ********************************************************/
@@ -55,21 +51,17 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
     {
         pmbuf->data_len = prx_pd->rx_pkt_length;
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
-#if defined(WIFI_ADD_ON)
-#ifdef AMSDU_IN_AMPDU
-        (void) __memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
+
+        (void)__memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
         pbuf_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
         os_mem_free(pmbuf->pbuf);
         pbuf_free(pmbuf->lwip_pbuf);
         pmbuf->pbuf = amsdu_inbuf;
-#endif
+
         (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
-#ifdef AMSDU_IN_AMPDU
+
         os_mem_free(pmbuf);
-#endif
-#else
-        (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
-#endif
+
         LEAVE();
         return MLAN_STATUS_SUCCESS;
     }
@@ -690,11 +682,11 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_WINSIZE_MASK;
 #if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
-        /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
-        if (!priv->add_ba_param.rx_amsdu)
+    /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
+    if (!priv->add_ba_param.rx_amsdu)
 #endif
 #else
-            if (!priv->add_ba_param.rx_amsdu || (priv->aggr_prio_tbl[tid].amsdu == BA_STREAM_NOT_ALLOWED))
+    if (!priv->add_ba_param.rx_amsdu || (priv->aggr_prio_tbl[tid].amsdu == BA_STREAM_NOT_ALLOWED))
 #endif
     {
         /* We do not support AMSDU inside AMPDU, hence reset the bit */
@@ -738,7 +730,7 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     HostCmd_DS_11N_ADDBA_RSP *padd_ba_rsp    = (HostCmd_DS_11N_ADDBA_RSP *)&cmd->params.add_ba_rsp;
     HostCmd_DS_11N_ADDBA_REQ *pevt_addba_req = (HostCmd_DS_11N_ADDBA_REQ *)pdata_buf;
 #if defined(WIFI_ADD_ON)
-    t_u8 tid = 0;
+    t_u8 tid     = 0;
     int win_size = 0;
 #endif
 
@@ -759,7 +751,7 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     padd_ba_rsp->block_ack_param_set = pevt_addba_req->block_ack_param_set;
 #if defined(WIFI_ADD_ON)
     padd_ba_rsp->add_rsp_result = 0;
-    tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
+    tid                         = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
     if (priv->addba_reject[tid])
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
     else
@@ -778,7 +770,7 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_AMSDU_SUPP_MASK;
 
 #if defined(WIFI_ADD_ON)
-#ifdef CONFIG_UAP_AMPDU_RX 
+#ifdef CONFIG_UAP_AMPDU_RX
     if (!wifi_uap_ampdu_rx_enable_per_tid_is_allowed(tid))
     {
         padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
@@ -789,7 +781,7 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
 #endif
 #else
-    padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
+    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
 
 #ifndef CONFIG_UAP_AMPDU_RX
     padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
@@ -815,7 +807,7 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     */
 #endif
 
-        LEAVE();
+    LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
 

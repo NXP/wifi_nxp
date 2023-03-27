@@ -190,9 +190,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
-#if defined(WIFI_ADD_ON)
     u16_t header_type;
-#endif
 
 #ifndef CONFIG_WPA_SUPP
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
@@ -209,8 +207,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
-#if defined(WIFI_ADD_ON)
-#ifdef AMSDU_IN_AMPDU
         Eth803Hdr_t *eth803hdr = (Eth803Hdr_t *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
         /* If the AMSDU packet is unicast and is not for us, drop it */
         if (memcmp(mlan_adap->priv[recv_interface]->curr_addr, eth803hdr->dest_addr, MLAN_MAC_ADDR_LENGTH) &&
@@ -226,16 +222,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             return;
         }
 #endif /* CONFIG_11N */
-#else
-        /* Not support AMSDU, drop it */
-        return;
-#endif
-#else
-#ifdef CONFIG_11N
-        (void)wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
-#endif /* CONFIG_11N */
-        return;
-#endif
     }
 
     if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
@@ -349,29 +335,27 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 #endif
 
-#if defined(WIFI_ADD_ON)
     header_type = htons(ethhdr->type);
-#endif
+
     if (!memcmp((t_u8 *)p->payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
     {
         struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)p->payload + SIZEOF_ETH_HDR);
-#if defined(WIFI_ADD_ON)
-        header_type = htons(ethllchdr->type);
-        if (rxpd->rx_pkt_type != PKT_TYPE_AMSDU)
-#else
-        ethhdr->type = ethllchdr->type;
-#endif
+
+        if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
         {
+            header_type = htons(ethllchdr->type);
+        }
+        else
+        {
+            ethhdr->type = ethllchdr->type;
             p->len -= SIZEOF_ETH_LLC_HDR;
             (void)memcpy((t_u8 *)p->payload + SIZEOF_ETH_HDR, (t_u8 *)p->payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR,
                          p->len - SIZEOF_ETH_LLC_HDR);
+            header_type = htons(ethhdr->type);
         }
     }
-#if defined(WIFI_ADD_ON)
+
     switch (header_type)
-#else
-    switch (htons(ethhdr->type))
-#endif
     {
         case ETHTYPE_IP:
 #ifdef CONFIG_IPV6
@@ -666,11 +650,12 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
+#if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
+
 #ifdef PBUF_LINK_ENCAPSULATION_HLEN
     pbuf_header(p, -pkt_len);
 #endif
 
-#if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
     if (p->len == p->tot_len)
     {
         wmm_outbuf = p->payload;
@@ -710,10 +695,12 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     );
 #endif /* CONFIG_WMM && CONFIG_WMM_ENH */
 
+#if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
 #ifdef PBUF_LINK_ENCAPSULATION_HLEN
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
     pbuf_header(p, pkt_len);
+#endif
 #endif
 
     if (ret == WM_SUCCESS)
