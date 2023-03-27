@@ -4786,6 +4786,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
     switch (evt->event_id)
     {
+#ifdef CONFIG_FW_VDLL
+        case EVENT_VDLL_IND:
+#ifdef CONFIG_FW_VDLL_DEBUG
+            HEXDUMP("vdll data", msg->data, evt->length);
+#endif
+            /* Event as per event sent by firmware is 32 bits/t_u32 so adding t_u32 */
+            wlan_process_vdll_event(pmpriv, msg->data + S_DS_GEN + sizeof(t_u32));
+            break;
+#endif
         case EVENT_LINK_LOST:
             (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
                                         (void *)IEEEtypes_REASON_DEAUTH_LEAVING);

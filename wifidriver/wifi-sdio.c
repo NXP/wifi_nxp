@@ -33,6 +33,9 @@
 
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
+#ifdef CONFIG_FW_VDLL
+static uint8_t vdll_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
+#endif
 static int seqnum;
 // static int pm_handle;
 
@@ -275,6 +278,27 @@ void bus_deregister_special_queue()
 void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr);
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext);
 void wifi_get_value1_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint32_t *dev_value1);
+
+static mlan_status wlan_handle_event_packet(struct bus_message *msg)
+{
+    t_u32 *evttype = (t_u32 *)msg->data;
+    wevt_d("Event %x", *evttype);
+    switch (*evttype)
+    {
+#ifdef CONFIG_FW_VDLL
+        case EVENT_VDLL_IND:
+        {
+            wlan_process_vdll_event((mlan_private *)mlan_adap->priv[0], msg->data + sizeof(evttype));
+            break;
+        }
+#endif
+        default:
+            wevt_d("Unhandled pre Queue event %x", evttype);
+            break;
+    };
+    return MLAN_STATUS_SUCCESS;
+}
+
 static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 {
     HostCmd_DS_GEN *cmdresp;
@@ -465,7 +489,27 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     else
     {
         /* No queues registered yet. Use local handling */
-        (void)wlan_handle_cmd_resp_packet(pmbuf);
+        if (upld_type == MLAN_TYPE_CMD)
+        {
+            (void)wlan_handle_cmd_resp_packet(pmbuf);
+        }
+        else
+        {
+            wifi_io_d("Handling event");
+            SDIOPkt *sdiopkt = (SDIOPkt *)(void *)pmbuf;
+            struct bus_message msg;
+            msg.data = wifi_malloc_eventbuf((size_t)sdiopkt->size);
+            if (msg.data == MNULL)
+            {
+                wifi_io_e("[fail] Buffer alloc: T: %d S: %d", upld_type, sdiopkt->size);
+                return MLAN_STATUS_FAILURE;
+            }
+
+            msg.event = (uint16_t)upld_type;
+            (void)memcpy((void *)msg.data, (const void *)pmbuf + INTF_HEADER_LEN, sdiopkt->size - INTF_HEADER_LEN);
+            HEXDUMP("Event", (t_u8 *)msg.data, sdiopkt->size - 4);
+            (void)wlan_handle_event_packet(&msg);
+        }
     }
 
     return MLAN_STATUS_SUCCESS;
@@ -1178,6 +1222,34 @@ mlan_status wlan_send_gen_sdio_cmd(t_u8 *buf, t_u32 buflen)
 }
 #endif
 
+#ifdef CONFIG_FW_VDLL
+int wlan_send_sdio_vdllcmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
+{
+    SDIOPkt *sdio = (SDIOPkt *)(void *)outbuf;
+    uint32_t resp;
+
+    (void)wifi_sdio_lock();
+
+    (void)memcpy((void *)outbuf, (const void *)buf, tx_blocks * buflen);
+    sdio->pkttype = MLAN_TYPE_VDLL;
+    sdio->size    = sdio->hostcmd.size + INTF_HEADER_LEN;
+
+#ifdef CONFIG_WIFI_IO_DUMP
+    (void)PRINTF("OUT_CMD");
+    dump_hex(outbuf, sdio->size);
+#endif /* CONFIG_WIFI_IO_DUMP */
+#if defined(SD8801)
+    sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+    (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+#endif
+
+    wifi_sdio_unlock();
+
+    return WM_SUCCESS;
+}
+#endif
+
 int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 {
     SDIOPkt *sdio = (SDIOPkt *)(void *)outbuf;
@@ -1209,6 +1281,13 @@ int wifi_send_cmdbuffer(t_u32 tx_blocks, t_u32 len)
 {
     return wlan_send_sdio_cmd(ctrl_cmd_buf, tx_blocks, len);
 }
+
+#ifdef CONFIG_FW_VDLL
+int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len)
+{
+    return wlan_send_sdio_vdllcmd(vdll_cmd_buf, tx_blocks, len);
+}
+#endif
 #ifdef CONFIG_WMM
 extern int retry_attempts;
 
@@ -2226,6 +2305,14 @@ void sd_wifi_deinit(void)
     (void)mlan_subsys_deinit();
     (void)wlan_deinit_struct();
 }
+
+#ifdef CONFIG_FW_VDLL
+HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void)
+{
+    /* First 4 bytes reserved for SDIO pkt header */
+    return (HostCmd_DS_COMMAND *)(void *)(vdll_cmd_buf + INTF_HEADER_LEN);
+}
+#endif
 
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)
 {

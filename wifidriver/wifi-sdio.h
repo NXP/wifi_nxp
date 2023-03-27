@@ -102,6 +102,11 @@ int wifi_send_cmdbuffer(t_u32 tx_blocks, t_u32 len);
  *
  */
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void);
+#ifdef CONFIG_FW_VDLL
+int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len);
+HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void);
+int wlan_send_sdio_vdllcmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen);
+#endif
 
 mlan_status wlan_process_int_status(mlan_adapter *pmadapter);
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface);

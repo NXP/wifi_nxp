@@ -557,6 +557,10 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MLAN_TYPE_DATA 0U
 /** Type event */
 #define MLAN_TYPE_EVENT 3U
+#ifdef CONFIG_FW_VDLL
+/** Type vdll */
+#define MLAN_TYPE_VDLL 4U
+#endif
 /** Type null data */
 #define MLAN_TYPE_NULL_DATA 4
 
@@ -1942,6 +1946,23 @@ typedef struct _mlan_init_para
     t_u32 fw_crc_check;
 } mlan_init_para, *pmlan_init_para;
 
+#ifdef CONFIG_FW_VDLL
+/** vdll_dnld_ctrl structure */
+typedef struct _vdll_dnld_ctrl
+{
+    /**  pending  VDLL block */
+    t_u8 *pending_block;
+    /* pending VDLL block len */
+    t_u16 pending_block_len;
+    /** memory for VDLL fw image */
+    t_u8 *vdll_mem;
+    /**  VDLL fw image len */
+    t_u32 vdll_len;
+    /** cmd buffer for VDLL download */
+    uint8_t *cmd_buf;
+} vdll_dnld_ctrl, *pvdll_dnld_ctrl;
+#endif
+
 /** Adapter data structure for MLAN */
 struct _mlan_adapter
 {
@@ -2000,6 +2021,10 @@ struct _mlan_adapter
     t_u32 fw_cap_info;
     /** Extended firmware capability information */
     t_u32 fw_cap_ext;
+#ifdef CONFIG_FW_VDLL
+    /** vdll ctrl */
+    vdll_dnld_ctrl vdll_ctrl;
+#endif
     /** pint_lock for interrupt handling */
     t_void *pint_lock;
     /** Interrupt status */
@@ -3509,6 +3534,11 @@ static int wlan_get_privs_by_two_cond(mlan_adapter *pmadapter,
 t_u8 wifi_check_no_packet_indication(mlan_private *priv);
 /** Check if this is the last packet */
 t_u8 wifi_check_last_packet_indication(mlan_private *priv);
+#endif
+
+#ifdef CONFIG_FW_VDLL
+mlan_status wlan_download_vdll_block(mlan_adapter *pmadapter, t_u8 *block, t_u16 block_len);
+mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent);
 #endif
 
 #endif /* !_MLAN_MAIN_H_ */

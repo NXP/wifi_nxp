@@ -1280,6 +1280,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: CW Mode */
 #define HostCmd_CMD_CW_MODE_CTRL 0x0239
 
+#ifdef CONFIG_FW_VDLL
+#define HostCmd_CMD_VDLL 0x0240
+#endif
+
 /** Host Command ID : GET TBTT Offset stats */
 #define HostCmd_CMD_TBTT_OFFSET 0x0268
 
@@ -1651,6 +1655,10 @@ typedef enum _ENH_PS_MODES
 #ifdef CONFIG_11K
 #define EVENT_NLIST_REPORT          0x00000079
 #define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
+#endif
+
+#ifdef CONFIG_FW_VDLL
+#define EVENT_VDLL_IND 0x00000081
 #endif
 
 #ifdef CONFIG_WLAN_BRIDGE
@@ -7100,6 +7108,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_CSI
         HostCmd_DS_CSI_CFG csi_params;
 #endif
+#ifdef CONFIG_FW_VDLL
+        uint8_t *vdll_cmd_mem;
+#endif
 #ifdef CONFIG_TSP
         HostCmd_DS_TSP_CFG tsp_cfg;
 #endif
@@ -7133,6 +7144,30 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
     /** New power save command used to send sleep confirmation to the firmware */
     OPT_Confirm_Sleep ps_cfm_sleep;
 } MLAN_PACK_END opt_sleep_confirm_buffer;
+
+#ifdef CONFIG_FW_VDLL
+/** req host side download vdll block */
+#define VDLL_IND_TYPE_REQ 0
+/** notify vdll start offset in firmware image */
+#define VDLL_IND_TYPE_OFFSET 1
+/** notify vdll download error: signature error */
+#define VDLL_IND_TYPE_ERR_SIG 2
+/** notify vdll download error: ID error */
+#define VDLL_IND_TYPE_ERR_ID 3
+
+/** vdll indicate event structure */
+typedef MLAN_PACK_START struct _vdll_ind
+{
+    /*VDLL ind type*/
+    t_u16 type;
+    /*reserved*/
+    t_u16 reserved;
+    /*indicate the offset downloaded so far*/
+    t_u32 offset;
+    /*VDLL block size*/
+    t_u16 block_len;
+} MLAN_PACK_END vdll_ind, *pvdll_ind;
+#endif /* CONFIG_FW_VDLL */
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)

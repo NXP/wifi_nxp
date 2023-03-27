@@ -4157,3 +4157,146 @@ mlan_status wlan_ret_host_clock_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *re
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef CONFIG_FW_VDLL
+#include "wifi-sdio.h"
+#include "wlan_bt_fw.h"
+static bool last_vdllcmd_sent;
+
+/**
+ *  @brief This function download the vdll block.
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param block            A pointer to VDLL block
+ *  @param block_len      The VDLL block length
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_download_vdll_block(mlan_adapter *pmadapter, t_u8 *block, t_u16 block_len)
+{
+    mlan_status status   = MLAN_STATUS_FAILURE;
+    int ret              = -WM_FAIL;
+    pvdll_dnld_ctrl ctrl = &pmadapter->vdll_ctrl;
+    t_u16 msg_len        = block_len + sizeof(HostCmd_DS_GEN);
+    ENTER();
+    if (msg_len > WIFI_FW_CMDBUF_SIZE)
+    {
+        wevt_d("VDLL block mem greater than cmd buf");
+        goto done;
+    }
+    HostCmd_DS_COMMAND *cmd = (HostCmd_DS_COMMAND *)ctrl->cmd_buf;
+
+    cmd->command             = wlan_cpu_to_le16(HostCmd_CMD_VDLL);
+    cmd->seq_num             = wlan_cpu_to_le16(0xFF00);
+    cmd->size                = wlan_cpu_to_le16(msg_len);
+    cmd->params.vdll_cmd_mem = ctrl->cmd_buf + 2 * sizeof(t_u32);
+    wevt_d("DNLD_VDLL : setting cmd params cmd buf %x vdll_cmd_mem %x \n", ctrl->cmd_buf, cmd->params.vdll_cmd_mem);
+
+    (void)__memcpy(pmadapter, cmd->params.vdll_cmd_mem, block, block_len);
+    wevt_d("DNLD_VDLL : block_len=%d\n", block_len);
+
+    ret = wifi_wait_for_vdllcmdresp(NULL);
+
+    if (ret == -WM_FAIL)
+        wevt_d("DNLD_VDLL: Host to Card Failed\n");
+    else
+        status = MLAN_STATUS_SUCCESS;
+
+done:
+    LEAVE();
+    return status;
+}
+
+/**
+ *  @brief The function Get the VDLL image from moal
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param offset          offset
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ *
+ */
+static mlan_status wlan_get_vdll_image(pmlan_adapter pmadapter, t_u32 vdll_len)
+{
+    /*Since f/w is already in .h in RT so we will use the offsets directly*/
+
+    vdll_dnld_ctrl *ctrl = &pmadapter->vdll_ctrl;
+    ENTER();
+    ctrl->vdll_mem = (t_u8 *)(wlan_fw_bin + (wlan_fw_bin_len - vdll_len));
+    ctrl->vdll_len = vdll_len;
+    ctrl->cmd_buf  = (t_u8 *)wifi_get_vdllcommand_buffer();+    LEAVE();
+    return WM_SUCCESS;
+}
+
+/**
+ *  @brief This function handle the multi_chan info event
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pevent       A pointer to event buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
+{
+    mlan_status status      = MLAN_STATUS_SUCCESS;
+    vdll_ind *ind           = MNULL;
+    t_u32 offset            = 0;
+    t_u16 block_len         = 0;
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    vdll_dnld_ctrl *ctrl    = &pmadapter->vdll_ctrl;
+
+    ENTER();
+    ind = (vdll_ind *)pevent;
+
+    switch (wlan_le16_to_cpu(ind->type))
+    {
+        case VDLL_IND_TYPE_REQ:
+            offset    = wlan_le32_to_cpu(ind->offset);
+            block_len = wlan_le16_to_cpu(ind->block_len);
+            wevt_d("VDLL_IND: type=%d offset = 0x%x, len = %d\n", wlan_le16_to_cpu(ind->type), offset, block_len);
+            if (offset <= ctrl->vdll_len)
+            {
+                block_len = MIN(block_len, ctrl->vdll_len - offset);
+                if (!last_vdllcmd_sent)
+                {
+                    last_vdllcmd_sent = MTRUE;
+                    status            = wlan_download_vdll_block(pmadapter, ctrl->vdll_mem + offset, block_len);
+                    if (status)
+                    {
+                        last_vdllcmd_sent = MFALSE;
+                        wevt_d("Fail to download VDLL block\n");
+                    }
+                    last_vdllcmd_sent = MFALSE;
+                }
+                else
+                {
+                    wevt_d("cmd_sent=1, delay download VDLL block\n");
+                    ctrl->pending_block_len = block_len;
+                    ctrl->pending_block     = ctrl->vdll_mem + offset;
+                }
+            }
+            else
+            {
+                wevt_d("Invalid VDLL req: offset=0x%x, len=%d, vdll_len=%d\n", offset, block_len, ctrl->vdll_len);
+            }
+            break;
+
+        case VDLL_IND_TYPE_OFFSET:
+            offset = wlan_le32_to_cpu(ind->offset);
+            wevt_d("VDLL_IND (OFFSET): offset=0x%x\n", offset);
+            wlan_get_vdll_image(pmadapter, offset);
+            break;
+        case VDLL_IND_TYPE_ERR_SIG:
+            wevt_d("VDLL_IND (SIG ERR).\n");
+            break;
+        case VDLL_IND_TYPE_ERR_ID:
+            wevt_d("VDLL_IND (ID ERR).\n");
+            break;
+        default:
+            wevt_d("unknown vdll ind type=%d\n", ind->type);
+            break;
+    }
+    LEAVE();
+    return status;
+}
+#endif /* CONFIG_FW_VDLL */

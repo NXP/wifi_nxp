@@ -286,7 +286,12 @@ bool is_split_scan_complete(void);
  * Waits for Command processing to complete and waits for command response
  */
 int wifi_wait_for_cmdresp(void *cmd_resp_priv);
-
+#ifdef CONFIG_FW_VDLL
+/**
+ * Waits for Command processing to complete and waits for command response for VDLL
+ */
+int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv);
+#endif
 /**
  * Register an event queue
  *

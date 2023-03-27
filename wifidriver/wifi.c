@@ -895,6 +895,56 @@ void wifi_dump_firmware_info()
 #endif
 #endif
 
+#ifdef CONFIG_FW_VDLL
+int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
+{
+    int ret                 = WM_SUCCESS;
+    HostCmd_DS_COMMAND *cmd = wifi_get_vdllcommand_buffer();
+#ifndef RW610
+    t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
+    t_u32 tx_blocks;
+#endif
+
+#ifndef RW610
+#if defined(CONFIG_ENABLE_WARNING_LOGS) || defined(CONFIG_WIFI_CMD_RESP_DEBUG)
+
+    wcmdr_d("VDLL CMD --- : 0x%x Size: %d Seq: %d", cmd->command, cmd->size, cmd->seq_num);
+#endif /* CONFIG_ENABLE_WARNING_LOGS || CONFIG_WIFI_CMD_RESP_DEBUG*/
+#endif
+    if (cmd->size > WIFI_FW_CMDBUF_SIZE)
+    {
+        /*
+         * This is a error added to be flagged during
+         * development cycle. It is not expected to
+         * occur in production. The legacy code below
+         * only sents out MLAN_SDIO_BLOCK_SIZE or 2 *
+         * MLAN_SDIO_BLOCK_SIZE sized packet. If ever
+         * in future greater packet size generated then
+         * this error will help to localize the problem.
+         */
+        wifi_e("cmd size greater than WIFI_FW_CMDBUF_SIZE\r\n");
+        return -WM_FAIL;
+    }
+
+#ifndef RW610
+    tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+
+    if (cmd->size < 512U)
+    {
+        buf_len   = tx_blocks * MLAN_SDIO_BLOCK_SIZE;
+        tx_blocks = 1;
+    }
+#endif
+
+#if defined(RW610)
+    (void)wifi_send_cmdbuffer();
+#else
+    (void)wifi_send_vdllcmdbuffer(tx_blocks, buf_len);
+#endif
+
+    return ret;
+}
+#endif
 int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 {
     int ret;
