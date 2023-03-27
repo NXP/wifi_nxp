@@ -651,12 +651,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
 #if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
-
-#ifdef PBUF_LINK_ENCAPSULATION_HLEN
-    pbuf_header(p, -pkt_len);
-#endif
-
-    if (p->len == p->tot_len)
+#if defined(PBUF_LINK_ENCAPSULATION_HLEN) && (PBUF_LINK_ENCAPSULATION_HLEN == 26)
+    if ((p->len == p->tot_len) && (pbuf_header(p, -pkt_len) == 0))
     {
         wmm_outbuf = p->payload;
         memset(wmm_outbuf, 0x00, pkt_len);
@@ -664,6 +660,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     }
     else
     {
+#endif
 #endif
         memset(wmm_outbuf, 0x00, pkt_len);
         if (p->tot_len > outbuf_len)
@@ -675,7 +672,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         LWIP_ASSERT("uCopied != p->tot_len", uCopied == p->tot_len);
         pkt_len += p->tot_len;
 #if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
+#if defined(PBUF_LINK_ENCAPSULATION_HLEN) && (PBUF_LINK_ENCAPSULATION_HLEN == 26)
     }
+#endif
 #endif
 
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
@@ -696,7 +695,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif /* CONFIG_WMM && CONFIG_WMM_ENH */
 
 #if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
-#ifdef PBUF_LINK_ENCAPSULATION_HLEN
+#if defined(PBUF_LINK_ENCAPSULATION_HLEN) && (PBUF_LINK_ENCAPSULATION_HLEN == 26)
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
     pbuf_header(p, pkt_len);

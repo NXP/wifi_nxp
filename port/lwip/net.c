@@ -238,10 +238,15 @@ int net_wlan_init(void)
     int ret;
 
 #ifdef RW610
+#ifndef CONFIG_WIFI_RX_REORDER
     (void)wifi_register_data_input_callback(&handle_data_packet);
+#endif
     (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
     (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
     (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
+#ifdef CONFIG_WIFI_RX_REORDER
+    (void)wifi_register_gen_pbuf_from_data2_callback(&gen_pbuf_from_data2);
+#endif
 #endif
     if (!net_wlan_init_done)
     {
