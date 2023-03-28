@@ -94,12 +94,53 @@ static inline country_code_t wlan_get_country(void)
  * Driver properties will be set as per the wlan_uap_set_country() function.
  *
  * \param[in] country Country code. Refer to \ref country_code_t.
+ * \param[in] country3 The third octet of the Country String
+ * This parameter is used to set the third octet of the country string.
+ * All environments of the current frequency band and country (default)
+ * country3=0x20
+ * Outdoor environment only
+ * country3=0x4f
+ * Indoor environment only
+ * country3=0x49
+ * Noncountry entity (country_code=XX)
+ * country3=0x58
+ * IEEE 802.11 standard Annex E table indication: 0x01 .. 0x1f
+ * Annex E, Table E-4 (Global operating classes)
+ * country3=0x04
  *
  * \return -WM_FAIL if operation was failed.
  * \return WM_SUCCESS if operation was successful.
  */
-static inline int wlan_uap_set_country(country_code_t country)
+static inline int wlan_uap_set_country(country_code_t country
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+                                       ,
+                                       unsigned char country3
+#endif
+#endif
+)
 {
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *netif = net_get_uap_interface();
+
+    char *country_str = wifi_get_country_str(country);
+    int ret;
+
+    if ((country3 != 0x4f) && (country3 != 0x49) && (country3 != 0x58) && (country3 != 0x04))
+    {
+        country3 = 0x20;
+    }
+
+    ret = freertos_supp_set_ap_country(netif, country_str, country3);
+
+    if (ret != WM_SUCCESS)
+    {
+        return -WM_FAIL;
+    }
+#endif
+#endif
+
     return wifi_uap_set_country(country);
 }
 

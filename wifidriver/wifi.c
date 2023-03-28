@@ -4345,6 +4345,30 @@ int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buf
     return supp_low_level_output((t_u8)bss_type, buff, len);
 }
 
+char *wifi_get_country_str(country_code_t country_code)
+{
+    if (country_code == COUNTRY_WW)
+        return "WW";
+    else if (country_code == COUNTRY_US)
+        return "US";
+    else if (country_code == COUNTRY_CA)
+        return "CA";
+    else if (country_code == COUNTRY_EU)
+        return "EU";
+    else if (country_code == COUNTRY_AU)
+        return "AU";
+    else if (country_code == COUNTRY_KR)
+        return "KR";
+    else if (country_code == COUNTRY_FR)
+        return "FR";
+    else if (country_code == COUNTRY_JP)
+        return "JP";
+    else if (country_code == COUNTRY_CN)
+        return "CN";
+    else
+        return "WW";
+}
+
 country_code_t wifi_get_country_code(const char *alpha2)
 {
     if (strstr(alpha2, "WW"))

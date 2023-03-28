@@ -2962,7 +2962,7 @@ bool wifi_11d_is_channel_allowed(int channel)
     return false;
 }
 
-const char *wifi_get_country_str(country_code_t country)
+static const char *wifi_get_country_str2(country_code_t country)
 {
     if (country == COUNTRY_WW)
     {
@@ -3014,7 +3014,7 @@ wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band
 {
     wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
 
-    (void)memcpy((void *)dp->country_code, (const void *)wifi_get_country_str(country), COUNTRY_CODE_LEN);
+    (void)memcpy((void *)dp->country_code, (const void *)wifi_get_country_str2(country), COUNTRY_CODE_LEN);
 
     dp->no_of_sub_band = nr_sb;
     (void)memcpy((void *)&dp->sub_band[0], (const void *)sub_band, nr_sb * sizeof(wifi_sub_band_set_t));
@@ -3032,7 +3032,7 @@ int wifi_set_country(country_code_t country)
     int ret;
     t_u8 nr_sb;
 
-    if (wlan_enable_11d() != WM_SUCCESS)
+    if (wifi_enable_11d_support() != WM_SUCCESS)
     {
         wifi_e("unable to enabled 11d feature\r\n");
         return -WM_FAIL;

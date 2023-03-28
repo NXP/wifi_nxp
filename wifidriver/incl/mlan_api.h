@@ -372,7 +372,6 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);
-const char *wifi_get_country_str(country_code_t country);
 int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, const uint8_t *mac_addr);
 int wifi_enable_ecsa_support(void);
 int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type);
