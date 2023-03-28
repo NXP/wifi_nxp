@@ -1910,7 +1910,7 @@ static void do_connect_failed(enum wlan_event_reason reason)
     if (wlan.connect_wakelock_taken)
     {
         // wakelock_put(WL_ID_CONNECT);
-        wlan.connect_wakelock_taken = false;
+        // wlan.connect_wakelock_taken = false;
     }
 
 #ifdef CONFIG_OWE
@@ -2693,7 +2693,7 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
             (void)net_get_if_addr(&network->ip, if_handle);
             wlan.sta_state = CM_STA_CONNECTED;
             // wakelock_put(WL_ID_CONNECT);
-            wlan.connect_wakelock_taken = false;
+            // wlan.connect_wakelock_taken = false;
             *next                       = CM_STA_CONNECTED;
             wlan.sta_ipv4_state         = CM_STA_CONNECTED;
 #ifdef CONFIG_P2P
@@ -3025,7 +3025,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             if_handle = net_get_mlan_handle();
             net_interface_up(if_handle);
             // wakelock_put(WL_ID_CONNECT);
-            wlan.connect_wakelock_taken = false;
+            // wlan.connect_wakelock_taken = false;
             wlan.sta_ipv4_state         = CM_STA_CONNECTED;
             *next                       = CM_STA_CONNECTED;
 
@@ -3703,7 +3703,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 
     void *if_handle = NULL;
     // wakelock_put(WL_ID_CONNECT);
-    wlan.connect_wakelock_taken = false;
+    // wlan.connect_wakelock_taken = false;
     if (wlan.sta_ipv4_state == CM_STA_OBTAINING_ADDRESS)
     {
         if (msg->reason != WIFI_EVENT_REASON_SUCCESS)
@@ -4660,7 +4660,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
     if (wlan.connect_wakelock_taken)
     {
         // wakelock_put(WL_ID_CONNECT);
-        wlan.connect_wakelock_taken = false;
+        // wlan.connect_wakelock_taken = false;
     }
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
     (void)os_rwlock_read_unlock(&ps_rwlock);
@@ -4674,11 +4674,12 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     int ret;
     struct wlan_network *new_network = &wlan.networks[(int)msg->data];
 #ifdef CONFIG_WPA_SUPP
+    void *if_handle = NULL;
     struct netif *netif = net_get_sta_interface();
 #endif
 
     // wakelock_get(WL_ID_CONNECT);
-    wlan.connect_wakelock_taken = true;
+    // wlan.connect_wakelock_taken = true;
 #ifdef CONFIG_WLAN_FAST_PATH
     /* Mark the fast path cache invalid. */
     if ((int)msg->data != wlan.cur_network_idx)
@@ -4722,6 +4723,47 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     wlcm_d("starting connection to network: %d", (int)msg->data);
     wlan.cur_network_idx = (int)msg->data;
     ret                  = freertos_supp_connect(netif, new_network);
+#endif
+
+#ifdef CONFIG_WPA_SUPP
+    /* Release the connect scan lock if supp connect returns 1,
+     * that means station already connected with selected
+     * network.
+     */
+    if (ret == 1)
+    {
+
+        wlcm_d("Already connected with the "
+                "selected network %d - do nothing", (int)msg->data);
+        if (wlan.is_scan_lock)
+        {
+            wlcm_d("releasing scan lock (connect scan)");
+            (void)os_semaphore_put(&wlan.scan_lock);
+            wlan.is_scan_lock = 0;
+        }
+
+        if (new_network->type == WLAN_BSS_TYPE_STA)
+        {
+            if_handle = net_get_mlan_handle();
+        }
+
+        if_handle = net_get_mlan_handle();
+        net_interface_up(if_handle);
+
+        (void)net_get_if_addr(&new_network->ip, if_handle);
+        wlan.sta_state      = CM_STA_CONNECTED;
+        *next               = CM_STA_CONNECTED;
+        wlan.sta_ipv4_state = CM_STA_CONNECTED;
+
+        if (wlan.reassoc_control && wlan.reassoc_request)
+        {
+            wlan.reassoc_count   = 0;
+            wlan.reassoc_request = false;
+        }
+
+        CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
+        return;
+    }
 #endif
 
     /* Release the connect scan lock if do_connect fails,
