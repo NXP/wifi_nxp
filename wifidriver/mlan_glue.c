@@ -5191,12 +5191,13 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 #endif
 #ifdef CONFIG_WPA_SUPP
-            os_mem_free((void *)sta_addr);
+            os_mem_free((void *)disassoc_resp);
 #else
-            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
+            if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_DEAUTH, WIFI_EVENT_REASON_SUCCESS, disassoc_resp) !=
+                WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
-                os_mem_free((void *)sta_addr);
+                os_mem_free((void *)disassoc_resp);
             }
 #endif /* CONFIG_WPA_SUPP */
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
