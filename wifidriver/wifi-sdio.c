@@ -1582,13 +1582,25 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
         /* Data */
         while ((pmadapter->mp_rd_bitmap & (1U << pmadapter->curr_rd_port)) != 0U)
         {
+            *pport = pmadapter->curr_rd_port;
+
+            len_reg_l = RD_LEN_P0_L + (*pport << 1U);
+            len_reg_u = RD_LEN_P0_U + (*pport << 1U);
+            rx_len    = ((t_u16)pmadapter->mp_regs[len_reg_u]) << 8;
+            rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
+            rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+            rx_len    = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
+            if ((*rxlen + rx_len) > INBUF_SIZE)
+            {
+                break;
+            }
+
             pmadapter->mp_rd_bitmap &=
 #if defined(SD8801)
                 (t_u16)(~(1 << pmadapter->curr_rd_port));
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             (t_u32)(~(1 << pmadapter->curr_rd_port));
 #endif
-            *pport = pmadapter->curr_rd_port;
 
 #if defined(SD8801)
             if (!pkt_cnt)
@@ -1611,17 +1623,6 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             }
 #endif
 
-            len_reg_l = RD_LEN_P0_L + (*pport << 1U);
-            len_reg_u = RD_LEN_P0_U + (*pport << 1U);
-            rx_len    = ((t_u16)pmadapter->mp_regs[len_reg_u]) << 8;
-            rx_len |= (t_u16)pmadapter->mp_regs[len_reg_l];
-            rx_blocks = (rx_len + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
-            rx_len    = (t_u16)(rx_blocks * MLAN_SDIO_BLOCK_SIZE);
-            if ((*rxlen + rx_len) > INBUF_SIZE)
-            {
-                break;
-            }
-
             *rxlen += rx_len;
             *rxblocks += rx_blocks;
 
@@ -1640,6 +1641,7 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
             ports++;
 #endif
+
 #if 0
             if (pkt_cnt == SDIO_MP_AGGR_DEF_PKT_LIMIT)
             {

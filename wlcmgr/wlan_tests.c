@@ -1821,6 +1821,10 @@ static void test_wlan_remove(int argc, char **argv)
 
 static void test_wlan_connect(int argc, char **argv)
 {
+    (void)PRINTF(
+        "Connecting to network...\r\nUse 'wlan-stat' for "
+        "current connection status.\r\n");
+
     int ret = wlan_connect(argc >= 2 ? argv[1] : NULL);
 
     if (ret == WLAN_ERROR_STATE)
@@ -1835,9 +1839,6 @@ static void test_wlan_connect(int argc, char **argv)
         (void)PRINTF("Error: specify a network to connect\r\n");
         return;
     }
-    (void)PRINTF(
-        "Connecting to network...\r\nUse 'wlan-stat' for "
-        "current connection status.\r\n");
 }
 
 static void test_wlan_start_network(int argc, char **argv)
