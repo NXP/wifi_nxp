@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides the handling of command
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

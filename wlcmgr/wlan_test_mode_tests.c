@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Test Mode APIs
  *
- *  Copyright 2008-2020 NXP
+ *  Copyright 2008-2020, 2023 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *

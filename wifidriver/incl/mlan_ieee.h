@@ -3,7 +3,7 @@
  *  @brief This file contains IEEE information element related
  *  definitions used in MLAN and MOAL module.
  *
- *  Copyright 2008-2021 NXP
+ *  Copyright 2008-2021, 2023 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
