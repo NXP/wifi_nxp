@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  */
 #ifndef _LWIP_DEFAULT_HOOKS_H_
 #define _LWIP_DEFAULT_HOOKS_H_
