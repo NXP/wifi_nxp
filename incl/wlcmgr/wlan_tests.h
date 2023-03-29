@@ -69,5 +69,5 @@ void test_wlan_cfg_process(uint32_t index, int argc, char **argv);
  * 		the TX PWR Limit table received from Wi-Fi firmware.
  *
  */
-void print_txpwrlimit(wlan_txpwrlimit_t txpwrlimit);
+void print_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit);
 #endif /* WLAN_TESTS_H */
