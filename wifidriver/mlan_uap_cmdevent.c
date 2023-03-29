@@ -2753,11 +2753,11 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                 b_only = wlan_check_11B_support_rates((MrvlIEtypes_RatesParamSet_t *)tlv);
                 break;
             case QOS_INFO:
-                wifi("STA supports wmm");
+                wifi_d("STA supports wmm");
                 sta_ptr->is_wmm_enabled = MTRUE;
                 break;
             case HT_CAPABILITY:
-                wifi("STA supports 11n");
+                wifi_d("STA supports 11n");
                 sta_ptr->is_11n_enabled = MTRUE;
                 phtcap                  = (MrvlIETypes_HTCap_t *)tlv;
                 if (sta_ptr->HTcap.ieee_hdr.element_id == HT_CAPABILITY)

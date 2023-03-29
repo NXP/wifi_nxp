@@ -804,6 +804,12 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *s
 
     num = wifi_nxp_scan_res_num();
 
+    if (num == 0)
+    {
+        supp_d("%s: No networks found", __func__);
+        goto done;
+    }
+
     scan_res2->res = (struct wpa_scan_res **)os_mem_calloc(num * sizeof(struct wpa_scan_res *));
     if (!scan_res2->res)
     {
@@ -824,6 +830,7 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *s
         }
     }
 
+done:
     ret = 0;
 out:
     return ret;
