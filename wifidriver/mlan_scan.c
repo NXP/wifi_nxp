@@ -4553,6 +4553,8 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 (void)__memcpy(pmpriv->adapter, &bss_new_entry->network_tsf, &tsf_val,
                                sizeof(bss_new_entry->network_tsf));
                 band = radio_type_to_band(pscan_info_tlv->band);
+                if (bss_new_entry->channel == 0)
+                    bss_new_entry->channel = pscan_info_tlv->channel;
             }
 #ifndef CONFIG_MLAN_WMSDK
             /*

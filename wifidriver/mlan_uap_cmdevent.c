@@ -2730,7 +2730,7 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
     tlv          = (MrvlIEtypesHeader_t *)tlv_buf;
     if (bss->param.sta_info.sta_flags & STA_FLAG_WME)
     {
-        PRINTM(MCMND, "STA flags supports wmm \n");
+        wifi_d("STA flags supports wmm");
         sta_ptr->is_wmm_enabled = MTRUE;
     }
     // append sta_flag_flags.
@@ -2753,18 +2753,18 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                 b_only = wlan_check_11B_support_rates((MrvlIEtypes_RatesParamSet_t *)tlv);
                 break;
             case QOS_INFO:
-                PRINTM(MCMND, "STA supports wmm\n");
+                wifi("STA supports wmm");
                 sta_ptr->is_wmm_enabled = MTRUE;
                 break;
             case HT_CAPABILITY:
-                PRINTM(MCMND, "STA supports 11n\n");
+                wifi("STA supports 11n");
                 sta_ptr->is_11n_enabled = MTRUE;
                 phtcap                  = (MrvlIETypes_HTCap_t *)tlv;
                 if (sta_ptr->HTcap.ieee_hdr.element_id == HT_CAPABILITY)
                 {
                     if (GETHT_40MHZ_INTOLARANT(sta_ptr->HTcap.ht_cap.ht_cap_info))
                     {
-                        PRINTM(MCMND, "SETHT_40MHZ_INTOLARANT\n");
+                        wifi_d("SETHT_40MHZ_INTOLARANT");
                         SETHT_40MHZ_INTOLARANT(phtcap->ht_cap.ht_cap_info);
                     }
                 }
@@ -2775,7 +2775,7 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                 break;
 #ifdef CONFIG_11AC
             case VHT_CAPABILITY:
-                PRINTM(MCMND, "STA supports 11ac\n");
+                wifi_d("STA supports 11ac");
                 sta_ptr->is_11ac_enabled = MTRUE;
                 pvhtcap                  = (MrvlIETypes_VHTCap_t *)tlv;
                 if (GET_VHTCAP_MAXMPDULEN(pvhtcap->vht_cap.vht_cap_info) == 2)
@@ -2794,7 +2794,7 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                 if (pext_tlv->ext_id == HE_CAPABILITY)
                 {
                     sta_ptr->is_11ax_enabled = MTRUE;
-                    PRINTM(MCMND, "STA supports 11ax\n");
+                    wifi_d("STA supports 11ax");
                 }
 #ifdef ENABLE_802_116E
                 else if (pext_tlv->ext_id == HE_6G_CAPABILITY)
