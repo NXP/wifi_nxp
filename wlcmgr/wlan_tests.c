@@ -937,14 +937,14 @@ static void test_wlan_add(int argc, char **argv)
                 if (string_equal(argv[arg + 1], "pwe") != false)
                 {
                     errno                           = 0;
-                    network.security.pwe_derivation = (bool)strtol(argv[arg + 2], NULL, 10);
+                    network.security.pwe_derivation = strtol(argv[arg + 2], NULL, 10);
                     if (errno != 0)
                     {
                         (void)PRINTF("Error during strtoul:pwe errno:%d\r\n", errno);
                     }
                     if (arg + 2 >= argc ||
-                        (network.security.pwe_derivation != 0U && network.security.pwe_derivation != 1U &&
-                         network.security.pwe_derivation != 2U))
+                        (network.security.pwe_derivation != 0 && network.security.pwe_derivation != 1 &&
+                         network.security.pwe_derivation != 2))
                     {
                         (void)PRINTF(
                             "Error: invalid wireless"
@@ -956,16 +956,16 @@ static void test_wlan_add(int argc, char **argv)
                     if (string_equal(argv[arg + 1], "tr") != false)
                     {
                         errno                               = 0;
-                        network.security.transition_disable = (bool)strtol(argv[arg + 2], NULL, 10);
+                        network.security.transition_disable = strtol(argv[arg + 2], NULL, 10);
                         if (errno != 0)
                         {
                             (void)PRINTF("Error during strtoul:pwe errno:%d\r\n", errno);
                         }
                         if (arg + 2 >= argc ||
-                            (network.security.transition_disable != 0U && network.security.transition_disable != 1U
+                            (network.security.transition_disable != 0 && network.security.transition_disable != 1
 #ifdef CONFIG_WPA_SUPP
-                             && network.security.transition_disable != 2U &&
-                             network.security.transition_disable != 4U && network.security.transition_disable != 8U
+                             && network.security.transition_disable != 2 && network.security.transition_disable != 4 &&
+                             network.security.transition_disable != 8
 #endif
                              ))
                         {
@@ -3295,7 +3295,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
     }
     else
     {
-done:
+    done:
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF("Usage:\r\n");
         (void)PRINTF("    wlan-host-sleep <1/0> [wowlan <wake_up_conds>/mef]\r\n");

@@ -791,13 +791,20 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 
 int net_get_if_name(char *pif_name, void *intrfc_handle)
 {
-    interface_t *if_handle = (interface_t *)intrfc_handle;
-    char if_name[NETIF_NAMESIZE];
-    char *ptr_if_name = NULL;
+    interface_t *if_handle       = (interface_t *)intrfc_handle;
+    char if_name[NETIF_NAMESIZE] = {0};
+    int ret;
 
-    ptr_if_name = netifapi_netif_index_to_name(if_handle->netif.num + 1, if_name);
+    ret = netifapi_netif_index_to_name(if_handle->netif.num + 1, if_name);
 
-    (void)strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("get interface name failed");
+        return -WM_FAIL;
+    }
+
+    (void)strncpy(pif_name, if_name, NETIF_NAMESIZE);
+
     return WM_SUCCESS;
 }
 

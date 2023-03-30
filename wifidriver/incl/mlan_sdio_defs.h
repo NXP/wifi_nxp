@@ -165,7 +165,7 @@ Change log:
 /** Data port mask */
 //#define DATA_PORT_MASK			0xfffffffe
 /** Misc. Config Register : Auto Re-enable interrupts */
-#define AUTO_RE_ENABLE_INT MBIT(4)
+#define AUTO_RE_ENABLE_INT (0x1U << 4)
 
 #if defined(SD8801)
 /** Host Control Registers : Host transfer status */

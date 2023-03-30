@@ -2856,6 +2856,7 @@ static mlan_status wlan_sec_ioctl_wpa_enable(IN pmlan_adapter pmadapter, IN pmla
  *
  *  @return		MLAN_STATUS_PENDING --success, otherwise fail
  */
+#ifndef CONFIG_MLAN_WMSDK
 static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
 {
     mlan_status ret          = MLAN_STATUS_SUCCESS;
@@ -3081,6 +3082,7 @@ exit:
     LEAVE();
     return ret;
 }
+#endif
 
 /**
  *  @brief Set WPA key

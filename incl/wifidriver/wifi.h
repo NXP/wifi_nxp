@@ -40,9 +40,6 @@
 #define UAP_HOST_MLME             1
 #endif
 
-#ifdef IW61x
-#define CONFIG_WPA_SUPP 1
-#endif
 #ifdef CONFIG_WPA_SUPP
 #define CONFIG_HOSTAPD                    1
 #define CONFIG_WPA_SUPP_AP                1

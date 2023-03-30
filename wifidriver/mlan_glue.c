@@ -2661,7 +2661,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCMD_APCMD_ACS_SCAN:
             {
+#ifdef CONFIG_WPA_SUPP
                 HostCMD_DS_APCMD_ACS_SCAN *acs_scan = (HostCMD_DS_APCMD_ACS_SCAN *)&resp->params.acs_scan;
+#endif
+
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
@@ -2671,6 +2674,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif /* CONFIG_P2P*/
                     )
                     {
+#ifdef CONFIG_WPA_SUPP
                         nxp_wifi_acs_params acs_params;
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
                         wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", acs_scan->bandcfg, acs_scan->chan);
@@ -2706,6 +2710,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         {
                             wm_wifi.supp_if_callbk_fns->acs_channel_sel_callbk_fn(wm_wifi.hapd_if_priv, &acs_params);
                         }
+#endif
                     }
                 }
                 else
@@ -4550,17 +4555,6 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 
     if (evt->bss_type == (uint8_t)MLAN_BSS_ROLE_UAP)
     {
-        if (pmpriv->auth_req != MNULL)
-        {
-            os_mem_free(pmpriv->auth_req);
-            pmpriv->auth_req = MNULL;
-        }
-        if (pmpriv->assoc_req != MNULL)
-        {
-            os_mem_free(pmpriv->assoc_req);
-            pmpriv->assoc_req = MNULL;
-        }
-
         if (tx_status->packet_type == 0xe5)
         {
             if (tx_status->status == 0U)
@@ -5386,7 +5380,6 @@ static void process_rsn_ie(t_u8 *rsn_ie,
     t_u8 wpa3_oui08[4] = {0x00, 0x0f, 0xac, 0x08};
     t_u8 wpa3_oui0b[4] = {0x00, 0x0f, 0xac, 0x0b};
     t_u8 wpa3_oui0c[4] = {0x00, 0x0f, 0xac, 0x0c};
-    t_u8 wpa3_oui0d[4] = {0x00, 0x0f, 0xac, 0x0d};
 #ifdef CONFIG_OWE
     t_u8 wpa3_oui12[4] = {0x00, 0x0f, 0xac, 0x12};
 #endif
@@ -5394,6 +5387,7 @@ static void process_rsn_ie(t_u8 *rsn_ie,
     t_u8 rsn_ft_1x_oui[4]  = {0x00, 0x0f, 0xac, 0x03};
     t_u8 rsn_ft_psk_oui[4] = {0x00, 0x0f, 0xac, 0x04};
     t_u8 rsn_ft_sae_oui[4] = {0x00, 0x0f, 0xac, 0x09};
+    t_u8 wpa3_oui0d[4]     = {0x00, 0x0f, 0xac, 0x0d};
 #endif
 
     ENTER();

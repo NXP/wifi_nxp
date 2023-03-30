@@ -3392,7 +3392,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                              0,
 #endif
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
                              false, false);
@@ -8898,10 +8898,12 @@ int wlan_set_auto_arp(void)
 
 #define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
 
-//static inline bool is_broadcast_ether_addr(const u8_t *addr)
-//{
-//    return (*(const u16_t *)(addr + 0) & *(const u16_t *)(addr + 2) & *(const u16_t *)(addr + 4)) == 0xffff;
-//}
+#ifndef CONFIG_WPA_SUPP
+static inline bool is_broadcast_ether_addr(const u8_t *addr)
+{
+    return (*(const u16_t *)(addr + 0) & *(const u16_t *)(addr + 2) & *(const u16_t *)(addr + 4)) == 0xffff;
+}
+#endif
 
 /**
  * @brief is_wowlan_pattern_supported

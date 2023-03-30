@@ -15,8 +15,6 @@
 #include "fsl_common.h"
 #include "sdmmc_config.h"
 
-#include <wifi.h>
-
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
@@ -41,8 +39,8 @@ extern uint8_t outbuf[DATA_BUFFER_SIZE];
 
 extern uint8_t inbuf[];
 
-mlan_status sdio_init(void);
-mlan_status sdio_ioport_init(void);
+int sdio_init(void);
+int sdio_ioport_init(void);
 void calculate_sdio_write_params(t_u32 txlen, t_u32 *tx_blocks, t_u32 *buflen);
 bool wlan_card_status(t_u8 bits);
 t_u16 wlan_card_read_f1_base_regs(void);
