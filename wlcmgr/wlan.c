@@ -3207,15 +3207,18 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
 #ifdef CONFIG_ROAMING
     if (wlan.roaming_enabled == true)
     {
-        wlan.roam_reassoc = true;
-#ifdef CONFIG_11R
-        wlan.ft_bss = false;
-        if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+        if (wlan.roam_reassoc == false)
         {
-            wlan.ft_bss = true;
-        }
+            wlan.roam_reassoc = true;
+#ifdef CONFIG_11R
+            wlan.ft_bss = false;
+            if ((network->ft_psk | network->ft_1x | network->ft_sae) == 1U)
+            {
+                wlan.ft_bss = true;
+            }
 #endif
-        wifi_config_bgscan_and_rssi(network->ssid);
+            wifi_config_bgscan_and_rssi(network->ssid);
+        }
         return;
     }
 #endif /* CONFIG_ROAMING */
@@ -4026,7 +4029,20 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
     wlcm_d("%s: %s", __func__, buf);
 
-    if (strstr(buf, WPA_EVENT_AUTH_REJECT))
+    if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
+    {
+        if (wlan.roam_reassoc == true)
+        {
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+#endif
+        }
+        else
+        {
+            do_connect_failed(WLAN_REASON_NETWORK_NOT_FOUND);
+        }
+    }
+    else if (strstr(buf, WPA_EVENT_AUTH_REJECT))
     {
         if (wlan.roam_reassoc != true)
         {
@@ -4034,7 +4050,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         }
         wlan.roam_reassoc = false;
     }
-    if (strstr(buf, AP_STA_CONNECTED))
+    else if (strstr(buf, AP_STA_CONNECTED))
     {
         t_u8 addr[MLAN_MAC_ADDR_LENGTH];
 

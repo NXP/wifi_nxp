@@ -795,7 +795,7 @@ int net_get_if_name(char *pif_name, void *intrfc_handle)
     char if_name[NETIF_NAMESIZE];
     char *ptr_if_name = NULL;
 
-    ptr_if_name = netif_index_to_name(if_handle->netif.num + 1, if_name);
+    ptr_if_name = netifapi_netif_index_to_name(if_handle->netif.num + 1, if_name);
 
     (void)strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
     return WM_SUCCESS;
