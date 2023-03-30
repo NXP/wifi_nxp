@@ -1974,7 +1974,7 @@ typedef MLAN_PACK_START struct
 /** default rssi low threshold */
 #define DEFAULT_RSSI_LOW_THRESHOLD 70
 /** RSSI HYSTERSIS */
-#define RSSI_HYSTERESIS 6
+#define RSSI_HYSTERESIS 4
 /** lowest rssi threshold */
 #define LOWEST_RSSI_THRESHOLD 82
 /** delta rssi */

@@ -4658,7 +4658,7 @@ int wifi_set_rssi_low_threshold(uint8_t *low_rssi)
     cmd->result                 = 0x0;
     subscribe_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     subscribe_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
-    subscribe_evt.low_rssi      = *low_rssi - RSSI_HYSTERESIS;
+    subscribe_evt.low_rssi      = *low_rssi;
     subscribe_evt.low_rssi_freq = 1;
     wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt,
                              cmd);
@@ -6429,7 +6429,7 @@ void wifi_enable_low_pwr_mode()
 #endif
 
 #ifdef CONFIG_ROAMING
-int wifi_config_roaming(const int enable, const uint8_t rssi_low)
+int wifi_config_roaming(const int enable, uint8_t *rssi_low)
 {
     mlan_private *pmpriv = mlan_adap->priv[0];
     int ret              = WM_SUCCESS;
@@ -6437,8 +6437,8 @@ int wifi_config_roaming(const int enable, const uint8_t rssi_low)
     if (enable)
     {
         pmpriv->roaming_enabled = MTRUE;
-        pmpriv->rssi_low        = rssi_low;
-        ret                     = wifi_set_rssi_low_threshold(&pmpriv->rssi_low);
+        pmpriv->rssi_low        = *rssi_low;
+        ret                     = wifi_set_rssi_low_threshold(rssi_low);
         if (ret != WM_SUCCESS)
         {
             wifi_e("Failed to config rssi threshold for roaming");

@@ -3424,6 +3424,11 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
         (void)PRINTF("Station is not connected\r\n");
         return -WM_FAIL;
     }
+    if (wlan.roam_reassoc == true)
+    {
+        (void)PRINTF("Roaming already in progress\r\n");
+        return WM_SUCCESS;
+    }
 
     wlan.roam_reassoc = false;
 
@@ -5640,7 +5645,13 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
+#ifdef CONFIG_ROAMING
+#ifdef CONFIG_WPA_SUPP
+    wlan.roaming_enabled = 1;
+#endif
+#endif
+
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
     wlan.rssi_low_threshold = 70;
 #endif
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
@@ -9574,7 +9585,7 @@ int wlan_set_roaming(const int enable)
 {
     wlan.roaming_enabled = enable;
 
-    return wifi_config_roaming(enable, (t_u8)wlan.rssi_low_threshold);
+    return wifi_config_roaming(enable, &wlan.rssi_low_threshold);
 }
 #endif
 
