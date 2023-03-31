@@ -3178,32 +3178,6 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
 {
     bool set_rssi_threshold = false;
 
-#ifdef CONFIG_11K
-    if (network->neighbor_report_supported == true)
-    {
-        int ret;
-        ret = wlan_host_11k_neighbor_req((t_u8 *)network->ssid);
-        if (ret == WM_SUCCESS)
-        {
-            wlcm_d("Sent 11K neighbor request");
-            return;
-        }
-        set_rssi_threshold = true;
-    }
-#endif /* CONFIG_11K */
-#ifdef CONFIG_11V
-    if (network->bss_transition_supported == true)
-    {
-        int ret;
-        ret = wlan_host_11v_bss_trans_query(0x10);
-        if (ret == WM_SUCCESS)
-        {
-            wlcm_d("Sent 11V bss transition query");
-            return;
-        }
-        set_rssi_threshold = true;
-    }
-#endif /* CONFIG_11V */
 #ifdef CONFIG_ROAMING
     if (wlan.roaming_enabled == true)
     {
@@ -3222,6 +3196,35 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
         return;
     }
 #endif /* CONFIG_ROAMING */
+
+#ifdef CONFIG_11K
+    if (network->neighbor_report_supported == true)
+    {
+        int ret;
+        ret = wlan_host_11k_neighbor_req((t_u8 *)network->ssid);
+        if (ret == WM_SUCCESS)
+        {
+            wlcm_d("Sent 11K neighbor request");
+            return;
+        }
+        set_rssi_threshold = true;
+    }
+#endif /* CONFIG_11K */
+
+#ifdef CONFIG_11V
+    if (network->bss_transition_supported == true)
+    {
+        int ret;
+        ret = wlan_host_11v_bss_trans_query(0x10);
+        if (ret == WM_SUCCESS)
+        {
+            wlcm_d("Sent 11V bss transition query");
+            return;
+        }
+        set_rssi_threshold = true;
+    }
+#endif /* CONFIG_11V */
+
     if (set_rssi_threshold == true)
     {
         (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
@@ -5669,12 +5672,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
-#endif
-
-#ifdef CONFIG_ROAMING
-#ifdef CONFIG_WPA_SUPP
-    wlan.roaming_enabled = 1;
-#endif
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
