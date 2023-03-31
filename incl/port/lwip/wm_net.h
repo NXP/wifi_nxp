@@ -245,7 +245,6 @@ int net_wlan_init(void);
  */
 int net_wlan_deinit(void);
 
-#ifdef CONFIG_WPA_SUPP
 /** Get STA interface netif structure pointer
  *
  * \rerurn A pointer to STA interface netif structure
@@ -285,7 +284,6 @@ void l2_packet_register_rx_callback(void (*l2_packet_rx_eapol)(const struct pbuf
  * \return void
  */
 void l2_packet_deregister_rx_callback();
-#endif
 
 /** Get station interface handle
  *

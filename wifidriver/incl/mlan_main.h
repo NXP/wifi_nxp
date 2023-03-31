@@ -1469,17 +1469,12 @@ struct _mlan_private
     t_u32 tx_seq_num;
 #ifdef CONFIG_WPA_SUPP
     int probe_req_index;
-    void *auth_resp;
-    void *assoc_resp;
 #ifdef CONFIG_WPA_SUPP_AP
     int beacon_vendor_index;
     int beacon_index;
     int proberesp_index;
     int assocresp_index;
     int beacon_wps_index;
-
-    void *auth_req;
-    void *assoc_req;
 #endif
 #endif
     /** uAP started or not */

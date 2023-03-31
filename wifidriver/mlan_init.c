@@ -441,9 +441,6 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->proberesp_index     = 1;
     priv->assocresp_index     = 2;
     priv->beacon_wps_index    = 3;
-
-    priv->auth_req  = MNULL;
-    priv->assoc_req = MNULL;
 #endif
 #endif
 

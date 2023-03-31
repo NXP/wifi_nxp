@@ -507,13 +507,11 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
         case WLAN_SECURITY_WPA:
         case WLAN_SECURITY_WPA2:
 #ifdef CONFIG_WPA_SUPP
-        case WLAN_SECURITY_WPA2_SHA256:
 #ifdef CONFIG_11R
         case WLAN_SECURITY_WPA2_FT:
 #endif
-#else
-        case WLAN_SECURITY_WPA2_SHA256:
 #endif
+        case WLAN_SECURITY_WPA2_SHA256:
             /* copy the PSK phrase */
             sec->psk_len = (uint8_t)strlen(argv[0]);
             if (sec->psk_len < WLAN_PSK_MIN_LENGTH)

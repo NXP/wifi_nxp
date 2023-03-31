@@ -4547,8 +4547,6 @@ void wifi_handle_event_data_pause(void *data)
 static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 {
 #ifdef CONFIG_WPA_SUPP
-    mlan_private *pmpriv = mlan_adap->priv[evt->bss_type];
-
     tx_status_event *tx_status = MNULL;
 
     tx_status = (tx_status_event *)(void *)&evt->reason_code;
@@ -4567,6 +4565,8 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 #endif
 
 #ifdef CONFIG_1AS
+    mlan_private *pmpriv = mlan_adap->priv[evt->bss_type];
+
     /* tx status event includes dot1as info */
     if (evt->length >= sizeof(tx_status_event) + MLAN_FIELD_OFFSET(Event_Ext_t, reason_code))
     {

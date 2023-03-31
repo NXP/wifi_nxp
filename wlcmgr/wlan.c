@@ -1606,14 +1606,14 @@ static void do_scan(struct wlan_network *network)
             chan_list[0].scan_time   = 120;
 #ifdef CONFIG_WLAN_BRIDGE
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, bridge_ssid, 1, chan_list, 0,
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
 #else
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0, 0,
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
@@ -1630,7 +1630,7 @@ static void do_scan(struct wlan_network *network)
         {
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0, 0,
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
@@ -1686,7 +1686,7 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0, 0,
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
                              false, true);
@@ -3490,7 +3490,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
         wlan.ft_bss       = true;
         wlan.roam_reassoc = true;
         ret               = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0,
-#ifdef CONFIG_EXT_SCAN_SUPPORT
+#ifdef SCAN_CHANNEL_GAP
                                  scan_channel_gap,
 #endif
                                  false, false);
@@ -4026,6 +4026,8 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     unsigned char is_11n_enabled;
     int ret;
     struct netif *netif = net_get_uap_interface();
+    struct netif *sta_netif = net_get_sta_interface();
+    struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 
     wlcm_d("%s: %s", __func__, buf);
 
@@ -4039,7 +4041,14 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         }
         else
         {
+            wlan.scan_count++;
+
             do_connect_failed(WLAN_REASON_NETWORK_NOT_FOUND);
+
+            if (wlan.scan_count > WLAN_RESCAN_LIMIT)
+            {
+                (void)freertos_supp_disable(sta_netif, network);
+            }
         }
     }
     else if (strstr(buf, WPA_EVENT_AUTH_REJECT))
@@ -4743,6 +4752,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     ret = do_connect((int)msg->data);
 #else
     wlcm_d("starting connection to network: %d", (int)msg->data);
+    wlan.scan_count      = 0;
     wlan.cur_network_idx = (int)msg->data;
     ret                  = freertos_supp_connect(netif, new_network);
 #endif

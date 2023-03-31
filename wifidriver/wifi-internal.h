@@ -204,6 +204,9 @@ typedef struct
     wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
     nxp_wifi_event_mlme_t auth_resp;
     nxp_wifi_assoc_event_mlme_t assoc_resp;
+#ifdef CONFIG_WPA_SUPP_AP
+    nxp_wifi_event_mlme_t mgmt_rx;
+#endif
 #endif
 #ifdef CONFIG_HOSTAPD
     bool hostapd_op;

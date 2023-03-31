@@ -1756,7 +1756,7 @@ static int wifi_core_init(void)
         PRINTF("Create ecsa sem failed");
         goto fail;
     }
-    
+
     os_semaphore_get(&ecsa_status_control.ecsa_sem, OS_WAIT_FOREVER);
 #endif
 
@@ -2420,7 +2420,6 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
 #endif
     nxp_wifi_event_mlme_t resp;
-    nxp_wifi_event_mlme_t *presp;
 
     ENTER();
     if (payload_len > (MAX_EVENT_SIZE - sizeof(mlan_event)))
@@ -2809,33 +2808,13 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     }
     else if (priv->bss_role == MLAN_BSS_ROLE_UAP)
     {
-        if ((sub_type == (t_u16)SUBTYPE_AUTH) || (sub_type == (t_u16)SUBTYPE_ASSOC_REQUEST) ||
-            (sub_type == (t_u16)SUBTYPE_REASSOC_REQUEST))
-        {
-            presp = (nxp_wifi_event_mlme_t *)os_mem_calloc(sizeof(nxp_wifi_event_mlme_t));
+        nxp_wifi_event_mlme_t *mgmt_rx = &wm_wifi.mgmt_rx;
 
-            if (sub_type == (t_u16)SUBTYPE_AUTH)
-            {
-                priv->auth_req = presp;
-            }
-            else
-            {
-                priv->assoc_req = presp;
-            }
-        }
-        else
+        mgmt_rx->frame.frame_len = payload_len;
+        memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
+        if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
         {
-            presp = &resp;
-        }
-
-        if (presp != MNULL)
-        {
-            presp->frame.frame_len = payload_len;
-            memcpy((void *)presp->frame.frame, (const void *)pieee_pkt_hdr, presp->frame.frame_len);
-            if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
-            {
-                wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, presp, presp->frame.frame_len);
-            }
+            wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
         }
     }
 

@@ -785,6 +785,14 @@ void l2_packet_deregister_rx_callback()
 {
     l2_packet_rx_callback = NULL;
 }
+#else
+void l2_packet_register_rx_callback(void (*l2_packet_rx_eapol)(const struct pbuf *p))
+{
+}
+
+void l2_packet_deregister_rx_callback()
+{
+}
 #endif /* CONFIG_WPA_SUPP */
 
 #ifdef CONFIG_P2P
