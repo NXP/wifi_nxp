@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <wm_os.h>
 #include <wmlog.h>
-#include <lwip/sys.h>
 
 #define mainTEST_TASK_PRIORITY (tskIDLE_PRIORITY)
 #define mainTEST_DELAY         (400 / portTICK_PERIOD_MS)
@@ -80,12 +79,9 @@ int os_thread_create(os_thread_t *thandle,
                      os_thread_stack_t *stack,
                      int prio)
 {
-    int ret = pdFAIL;
+    int ret;
 
-    *thandle = sys_thread_new(name, main_func, arg, (uint16_t)stack->size, (uint32_t)prio);
-
-    if (*thandle != NULL)
-        ret = pdPASS;
+    ret = xTaskCreate(main_func, name, (uint16_t)stack->size, arg, (uint32_t)prio, thandle);
 
     os_dprintf(
         " Thread Create: ret %d thandle %p"

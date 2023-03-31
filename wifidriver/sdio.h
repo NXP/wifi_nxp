@@ -10,6 +10,8 @@
 #ifndef _SDIO_H_
 #define _SDIO_H_
 
+#include "type_decls.h"
+
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"

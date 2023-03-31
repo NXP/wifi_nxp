@@ -45,6 +45,10 @@ Change log:
 #define UAP_HOST_MLME             1
 #endif
 
+#if defined(CONFIG_WPA_SUPP) && (CONFIG_WPA_SUPP == 0)
+#undef CONFIG_WPA_SUPP
+#endif
+
 #ifdef CONFIG_WPA_SUPP
 #define CONFIG_HOSTAPD                    1
 #define CONFIG_WPA_SUPP_AP                1
