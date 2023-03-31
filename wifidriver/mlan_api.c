@@ -4833,8 +4833,8 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
         return -WM_FAIL;
     }
     set_ie_index(mgmt_ie_index);
-    
-    os_semaphore_get(&ecsa_status_control.ecsa_sem, os_msec_to_ticks((switch_count + 2) *wm_wifi.beacon_period));
+
+    os_semaphore_get(&ecsa_status_control.ecsa_sem, os_msec_to_ticks((switch_count + 2) * wm_wifi.beacon_period));
     set_ecsa_block_tx_flag(false);
 
     if (!ie_index_is_set(mgmt_ie_index))
@@ -4922,8 +4922,8 @@ bool wifi_same_ess_ft()
 #endif
 static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
                                        const t_u8 auth_alg,
-                                       const t_u8 auth_seq_num,
-                                       const t_u8 status_code,
+                                       const t_u8 *auth_seq_num,
+                                       const t_u8 *status_code,
                                        const t_u8 *dest,
                                        const t_u8 *sae_data,
                                        const t_u16 sae_data_len)
@@ -4957,10 +4957,10 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
     pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
     pos[0] = auth_alg;
     pos[1] = 0;
-    pos[2] = auth_seq_num;
-    pos[3] = 0;
-    pos[4] = status_code;
-    pos[5] = 0;
+    pos[2] = auth_seq_num[0];
+    pos[3] = auth_seq_num[1];
+    pos[4] = status_code[0];
+    pos[5] = status_code[1];
 
     pos += 6;
 
@@ -4981,8 +4981,8 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
 
 int wifi_send_mgmt_auth_request(const t_u8 channel,
                                 const t_u8 auth_alg,
-                                const t_u8 auth_seq_num,
-                                const t_u8 status_code,
+                                const t_u8 *auth_seq_num,
+                                const t_u8 *status_code,
                                 const t_u8 *dest,
                                 const t_u8 *sae_data,
                                 const t_u16 sae_data_len)

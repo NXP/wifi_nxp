@@ -938,10 +938,10 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
     int status         = -WM_FAIL;
     unsigned char *pos = NULL;
     unsigned char auth_alg;
-    unsigned char auth_trans_num = 1;
-    unsigned char status_code    = 0;
-    int ret                      = -1;
-    unsigned short len           = 0;
+    unsigned char auth_trans_num[2] = {1, 0};
+    unsigned char status_code[2]    = {0, 0};
+    int ret                         = -1;
+    unsigned short len              = 0;
 
     if ((!if_priv) || (!params))
     {
@@ -960,8 +960,10 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
     {
         pos = (unsigned char *)params->auth_data;
 
-        auth_trans_num = pos[0];
-        status_code    = pos[1];
+        auth_trans_num[0] = pos[0];
+        auth_trans_num[1] = pos[1];
+        status_code[0]    = pos[2];
+        status_code[1]    = pos[3];
         pos += 4;
         len = params->auth_data_len - 4;
     }

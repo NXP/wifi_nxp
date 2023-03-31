@@ -1776,8 +1776,8 @@ extern t_u64 csi_event_data_len;
 
 int wifi_send_mgmt_auth_request(const t_u8 channel,
                                 const t_u8 auth_alg,
-                                const t_u8 auth_seq_num,
-                                const t_u8 status_code,
+                                const t_u8 *auth_seq_num,
+                                const t_u8 *status_code,
                                 const t_u8 *dest,
                                 const t_u8 *sae_data,
                                 const t_u16 sae_data_len);
