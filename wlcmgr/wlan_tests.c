@@ -6143,6 +6143,73 @@ static void test_wlan_get_signal(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_SET_SU
+static void dump_wlan_set_su_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-su <0/1>\r\n");
+    (void)PRINTF("    <start/stop>: 1 -- stop su\r\n");
+    (void)PRINTF("                  0 -- start su\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-set-su\r\n");
+    (void)PRINTF("    - Get current su state.\r\n");
+    (void)PRINTF("    wlan-set-su 1\r\n");
+    (void)PRINTF("    - stop su\r\n");
+}
+
+static void test_wlan_set_su(int argc, char **argv)
+{
+    int ret           = -WM_FAIL;
+    uint32_t reqd_len = 0;
+    uint8_t state;
+    u8_t debug_resp_buf[64] = {0};
+
+    (void)memset(debug_resp_buf, 0, sizeof(debug_resp_buf));
+    /**
+     * Command taken from debug.conf
+     *  start_su={
+     *        CmdCode=0x008b
+     *        Action:2=1
+     *        SUBID:2=0x101
+     *        Value:4=1           # 1 -- stop_su;
+     *                            # 0 -- start_su;
+     */
+    uint8_t debug_cmd_buf[] = {0x8b, 0, 0x10, 0, 0, 0, 0, 0, 0x01, 0, 0x01, 0x01, 0x01, 0, 0, 0};
+
+    if (argc > 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_su_usage();
+        return;
+    }
+
+    /* SET */
+    if (argc == 2)
+    {
+        state             = atoi(argv[1]);
+        debug_cmd_buf[12] = state;
+    }
+    else /* GET */
+    {
+        debug_cmd_buf[8] = 0;
+    }
+
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, sizeof(debug_resp_buf),
+                            &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Hostcmd success, response is\r\n");
+        for (ret = 0; ret < reqd_len; ret++)
+            (void)PRINTF("%x\t", debug_resp_buf[ret]);
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+#endif
+
 #ifdef CONFIG_WIFI_FORCE_RTS
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 u8_t debug_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
@@ -7328,6 +7395,9 @@ static struct cli_command tests[] = {
 #endif
 #if defined(CONFIG_IPS)
     {"wlan-set-ips", "<option>", test_wlan_set_ips},
+#endif
+#ifdef CONFIG_SET_SU
+    {"wlan-set-su", "<0/1>", test_wlan_set_su},
 #endif
 #ifdef CONFIG_WIFI_FORCE_RTS
     {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
