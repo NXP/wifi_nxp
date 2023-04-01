@@ -10,6 +10,7 @@
 #ifndef _SDIO_H_
 #define _SDIO_H_
 
+#include <wmerrno.h>
 #include "type_decls.h"
 
 #include "fsl_sdmmc_common.h"

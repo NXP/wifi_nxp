@@ -1141,7 +1141,7 @@ typedef struct _mlan_ds_sta_info
 #endif
 
 /** Type definition of mlan_embedded_dhcp_config */
-typedef struct MLAN_PACK_START _mlan_embedded_dhcp_config
+typedef struct PACK_START _mlan_embedded_dhcp_config
 {
     /** Host IP address */
     t_u32 host_ip_addr;
@@ -1157,7 +1157,7 @@ typedef struct MLAN_PACK_START _mlan_embedded_dhcp_config
     t_u8 is_enabled;
     /** Get / Set action*/
     t_u16 action;
-} MLAN_PACK_END mlan_embedded_dhcp_config, *pmlan_embedded_dhcp_config;
+} PACK_END mlan_embedded_dhcp_config, *pmlan_embedded_dhcp_config;
 
 /** Type definition of mlan_ds_bss for MLAN_IOCTL_BSS */
 typedef struct _mlan_ds_bss
