@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ksdk:manifest xmlns:ksdk="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="SDK_2.x_middleware_nxp_wifi_MIMXRT1062_manifest_v3_10" name="NXP Wi-Fi" brief="NXP Wi-Fi" format_version="3.10" api_version="2.0.0" xsi:schemaLocation="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd http://nxp.com/mcuxpresso/sdk/sdk_manifest_v3.10.xsd">
-  <!--Timestamp (UTC): 2023-01-09 15:35:18.152207-->
-  <!--This manifest is generated based on sdk repo commit: dcc319a0105d6a9ebec0bc625dd7aae64718cd3d-->
+  <!--Timestamp (UTC): 2023-03-27 10:46:24.960061-->
+  <!--This manifest is generated based on sdk repo commit: 7a3cf97dd3582e3ee8a98ede814ff1f2a45ea519-->
   <externalDefinitions>
     <definition extID="MIMXRT1062xxxxA"/>
-    <definition extID="MIMXRT1062xxxxB"/>
     <definition extID="core0_MIMXRT1062xxxxA"/>
-    <definition extID="core0_MIMXRT1062xxxxB"/>
     <definition extID="armgcc"/>
     <definition extID="middleware.freertos-kernel.MIMXRT1062"/>
     <definition extID="utility.debug_console.MIMXRT1062"/>
@@ -19,7 +17,7 @@
   </externalDefinitions>
   <ksdk id="MCUXpressoSDK2130_middleware_nxp_wifi_MIMXRT1062_manifest_v3_10" name="MCUXpressoSDK2130_middleware_nxp_wifi_MIMXRT1062_manifest_v3_10" version="2.13.0"/>
   <components>
-    <component id="middleware.edgefast_wifi.MIMXRT1062" name="edgefast_wifi" brief="Wi-Fi Edgefast Abstraction Layer" version="1.0.0" full_name="Middleware Edgefast Wi-Fi" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/Middleware Edgefast Wi-Fi" user_visible="true" type="middleware" package_base_path="../../edgefast_wifi" project_base_path="edgefast_wifi">
+    <component id="middleware.edgefast_wifi.MIMXRT1062" name="edgefast_wifi" brief="Wi-Fi Edgefast Abstraction Layer" version="1.0.0" full_name="Middleware Edgefast Wi-Fi" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/Middleware Edgefast Wi-Fi" user_visible="true" type="middleware" package_base_path="../../edgefast_wifi" project_base_path="edgefast_wifi">
       <dependencies>
         <component_dependency value="middleware.wifi.MIMXRT1062"/>
       </dependencies>
@@ -33,7 +31,7 @@
         <include_path relative_path="../../include" project_relative_path="include" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.edgefast_wifi_nxp.MIMXRT1062" name="edgefast_wifi_nxp" brief="Blocking layer for NXP Wi-Fi" version="1.0.0" full_name="Middleware Edgefast Wi-Fi NXP" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/Middleware Edgefast Wi-Fi" user_visible="true" type="middleware" package_base_path="../../edgefast_wifi" project_base_path="edgefast_wifi">
+    <component id="middleware.edgefast_wifi_nxp.MIMXRT1062" name="edgefast_wifi_nxp" brief="Blocking layer for NXP Wi-Fi" version="1.0.0" full_name="Middleware Edgefast Wi-Fi NXP" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/Middleware Edgefast Wi-Fi" user_visible="true" type="middleware" package_base_path="../../edgefast_wifi" project_base_path="edgefast_wifi">
       <dependencies>
         <all>
           <component_dependency value="middleware.edgefast_wifi.MIMXRT1062"/>
@@ -48,7 +46,7 @@
         <files mask="middleware_edgefast_wifi_nxp_MIMXRT1062.cmake" hidden="true"/>
       </source>
     </component>
-    <component id="middleware.wifi.MIMXRT1062" name="wifi_nxp" brief="NXP Wi-Fi functionality enables customers to quickly develop applications of interest to add connectivity to different sensors and appliances" version="1.3.38" full_name="NXP Wi-Fi" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.MIMXRT1062" name="wifi_nxp" brief="NXP Wi-Fi functionality enables customers to quickly develop applications of interest to add connectivity to different sensors and appliances" version="1.3.38" full_name="NXP Wi-Fi" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="true" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
           <component_dependency value="middleware.freertos-kernel.MIMXRT1062"/>
@@ -95,7 +93,7 @@
         <include_path relative_path="./port/lwip" project_relative_path="port/lwip" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.cli.MIMXRT1062" name="wifi_nxp_cli" brief="Middlware Wi-Fi CLI" version="1.3.38" full_name="NXP Wi-Fi CLI" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.cli.MIMXRT1062" name="wifi_nxp_cli" brief="Middlware Wi-Fi CLI" version="1.3.38" full_name="NXP Wi-Fi CLI" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
           <component_dependency value="middleware.wifi.MIMXRT1062"/>
@@ -143,7 +141,7 @@
         <include_path relative_path="./incl/wlcmgr" project_relative_path="incl/wlcmgr" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.common_files.MIMXRT1062" name="nxp_wireless_common_files" brief="NXP WLAN common files" version="1.0.0" full_name="NXP WLAN common files" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.common_files.MIMXRT1062" name="nxp_wireless_common_files" brief="NXP WLAN common files" version="1.0.0" full_name="NXP WLAN common files" devices="MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <source relative_path="./incl/port/os" project_relative_path="incl/port/os" type="c_include">
         <files mask="wm_os.h"/>
       </source>
@@ -181,7 +179,7 @@
         <include_path relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.fwdnld.MIMXRT1062" name="nxp_wireless_fwdnld" brief="NXP WLAN f/w dnld driver" version="1.0.0" full_name="NXP WLAN f/w dnld driver" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.fwdnld.MIMXRT1062" name="nxp_wireless_fwdnld" brief="NXP WLAN f/w dnld driver" version="1.0.0" full_name="NXP WLAN f/w dnld driver" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
           <component_dependency value="middleware.freertos-kernel.MIMXRT1062"/>
@@ -222,7 +220,7 @@
         <include_path relative_path="./wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.sdio.MIMXRT1062" name="wifi_nxp_sdio" brief="NXP Wi-Fi SDIO driver" version="1.3.38" full_name="NXP Wi-Fi SDIO" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.sdio.MIMXRT1062" name="wifi_nxp_sdio" brief="NXP Wi-Fi SDIO driver" version="1.3.38" full_name="NXP Wi-Fi SDIO" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <component_dependency value="middleware.wifi.sdio-2.MIMXRT1062"/>
       </dependencies>
@@ -233,7 +231,7 @@
         <files mask="middleware_wifi_sdio_MIMXRT1062.cmake" hidden="true"/>
       </source>
     </component>
-    <component id="middleware.wifi.sdio-2.MIMXRT1062" name="wifi_nxp_sdio_2" brief="NXP Wi-Fi SDIO driver" version="1.3.38" full_name="NXP Wi-Fi SDIO" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.sdio-2.MIMXRT1062" name="wifi_nxp_sdio_2" brief="NXP Wi-Fi SDIO driver" version="1.3.38" full_name="NXP Wi-Fi SDIO" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
           <component_dependency value="middleware.sdmmc.host.usdhc.freertos.MIMXRT1062"/>
@@ -263,7 +261,7 @@
         <include_path relative_path="./wifidriver" project_relative_path="wifidriver" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.template.MIMXRT1062" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../../../components/wifi_bt_module/template" project_base_path="wifi/template">
+    <component id="middleware.wifi.template.MIMXRT1062" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" devices="MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../../../components/wifi_bt_module/template" project_base_path="wifi/template">
       <defines>
         <define name="LWIP_DNS" value="1"/>
         <define name="LWIP_NETIF_HOSTNAME" value="1"/>
@@ -286,12 +284,12 @@
         <include_path relative_path="./" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.unused.MIMXRT1062" name="wifi_nxp_unused" brief="Middlware Wi-Fi unused" version="1.3.38" full_name="NXP Wi-Fi unused" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.unused.MIMXRT1062" name="wifi_nxp_unused" brief="Middlware Wi-Fi unused" version="1.3.38" full_name="NXP Wi-Fi unused" devices="MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <source relative_path="./wifi_bt_firmware" project_relative_path="wifi_bt_firmware" type="doc">
         <files mask="version.txt"/>
       </source>
     </component>
-    <component id="middleware.wifi.wifidriver.MIMXRT1062" name="nxp_wifi_driver" brief="NXP Wi-Fi driver" version="1.3.38" full_name="NXP Wi-Fi driver" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
+    <component id="middleware.wifi.wifidriver.MIMXRT1062" name="nxp_wifi_driver" brief="NXP Wi-Fi driver" version="1.3.38" full_name="NXP Wi-Fi driver" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path=".././" project_base_path="wifi">
       <dependencies>
         <all>
           <component_dependency value="middleware.freertos-kernel.MIMXRT1062"/>
@@ -316,6 +314,10 @@
         <files mask="mlan_11n.h"/>
         <files mask="mlan_11n_aggr.h"/>
         <files mask="mlan_11n_rxreorder.h"/>
+        <files mask="mlan_11v.h"/>
+        <files mask="mlan_action.h"/>
+        <files mask="mlan_11k.h"/>
+        <files mask="mlan_mbo.h"/>
         <files mask="mlan_api.h"/>
         <files mask="mlan_fw.h"/>
         <files mask="mlan_ieee.h"/>
@@ -336,6 +338,10 @@
         <files mask="mlan_11n.c"/>
         <files mask="mlan_11n_aggr.c"/>
         <files mask="mlan_11n_rxreorder.c"/>
+        <files mask="mlan_11v.c"/>
+        <files mask="mlan_action.c"/>
+        <files mask="mlan_11k.c"/>
+        <files mask="mlan_mbo.c"/>
         <files mask="mlan_api.c"/>
         <files mask="mlan_cfp.c"/>
         <files mask="mlan_cmdevt.c"/>

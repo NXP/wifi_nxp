@@ -10,6 +10,10 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_11n.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_11n_aggr.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_11n_rxreorder.c
+    ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_11v.c
+    ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_action.c
+    ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_11k.c
+    ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_mbo.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_api.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_cfp.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/mlan_cmdevt.c
@@ -45,7 +49,6 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/incl
 )
 
-#OR Logic component
 if(${MCUX_DEVICE} STREQUAL "MIMXRT1166_cm7")
     include(middleware_wifi_fwdnld_MIMXRT1166_cm7)
 endif()
@@ -77,5 +80,6 @@ if(${MCUX_DEVICE} STREQUAL "MIMXRT1166_cm4")
     include(middleware_wifi_fwdnld_MIMXRT1166_cm4)
 endif()
 
-include(middleware_wifi_sdio)
+include(middleware_wifi_fwdnld)
 include(utility_debug_console)
+include(middleware_wifi_sdio)

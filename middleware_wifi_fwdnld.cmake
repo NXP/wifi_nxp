@@ -1,14 +1,14 @@
-#Description: NXP WLAN f/w dnld driver; user_visible: True
+#Description: NXP WLAN f/w dnld driver; user_visible: False
 include_guard(GLOBAL)
 message("middleware_wifi_fwdnld component is included.")
 
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/port/os/os.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/sdio.c
     ${CMAKE_CURRENT_LIST_DIR}/wifidriver/firmware_dnld.c
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/.
     ${CMAKE_CURRENT_LIST_DIR}/incl
     ${CMAKE_CURRENT_LIST_DIR}/incl/port/os
     ${CMAKE_CURRENT_LIST_DIR}/incl/wifidriver
@@ -36,6 +36,18 @@ endif()
 if(${MCUX_DEVICE} STREQUAL "MIMXRT1062")
     include(middleware_freertos-kernel_MIMXRT1062)
 endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1042")
+    include(middleware_freertos-kernel_MIMXRT1042)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1176_cm4")
+    include(middleware_freertos-kernel_MIMXRT1176_cm4)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1042")
+    include(middleware_freertos-kernel_MIMXRT1042)
+endif()
+if(${MCUX_DEVICE} STREQUAL "MIMXRT1176_cm4")
+    include(middleware_freertos-kernel_MIMXRT1176_cm4)
+endif()
 if(${MCUX_DEVICE} STREQUAL "MIMXRT1176_cm7")
     include(middleware_freertos-kernel_MIMXRT1176_cm7)
 endif()
@@ -46,4 +58,5 @@ if(${MCUX_DEVICE} STREQUAL "MIMXRT595S_cm33")
     include(middleware_freertos-kernel_MIMXRT595S_cm33)
 endif()
 
+include(middleware_wifi_common_files)
 include(middleware_wifi_sdio-2)
