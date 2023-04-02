@@ -106,41 +106,41 @@ static enum chan_width drv2supp_chan_width(int width)
 
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     struct os_time t;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     os_get_time(&t);
 
-    memcpy(&wifi_if_ctx_freertos->scan_start_tsf_bssid, &wifi_if_ctx_freertos->assoc_bssid, ETH_ALEN);
+    memcpy(&wifi_if_ctx_rtos->scan_start_tsf_bssid, &wifi_if_ctx_rtos->assoc_bssid, ETH_ALEN);
 
-    wifi_if_ctx_freertos->scan_start_tsf = t.sec * 1000;
+    wifi_if_ctx_rtos->scan_start_tsf = t.sec * 1000;
 
-    if (wifi_if_ctx_freertos->supp_callbk_fns.scan_start)
+    if (wifi_if_ctx_rtos->supp_callbk_fns.scan_start)
     {
-        wifi_if_ctx_freertos->supp_callbk_fns.scan_start(wifi_if_ctx_freertos->supp_drv_if_ctx);
+        wifi_if_ctx_rtos->supp_callbk_fns.scan_start(wifi_if_ctx_rtos->supp_drv_if_ctx);
     }
 }
 
 void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    wifi_if_ctx_freertos->scan_in_progress = false;
+    wifi_if_ctx_rtos->scan_in_progress = false;
 
-    wifi_if_ctx_freertos->supp_callbk_fns.scan_abort(wifi_if_ctx_freertos->supp_drv_if_ctx);
+    wifi_if_ctx_rtos->supp_callbk_fns.scan_abort(wifi_if_ctx_rtos->supp_drv_if_ctx);
 }
 
 void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     struct scan_info *info = NULL;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     memset(&event, 0, sizeof(event));
 
@@ -149,21 +149,21 @@ void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted)
     info->external_scan = 0;
     info->nl_scan_event = 1;
 
-    memcpy(&info->scan_start_tsf, &wifi_if_ctx_freertos->scan_start_tsf, sizeof(info->scan_start_tsf));
+    memcpy(&info->scan_start_tsf, &wifi_if_ctx_rtos->scan_start_tsf, sizeof(info->scan_start_tsf));
 
-    memcpy(&info->scan_start_tsf_bssid, &wifi_if_ctx_freertos->scan_start_tsf_bssid, ETH_ALEN);
+    memcpy(&info->scan_start_tsf_bssid, &wifi_if_ctx_rtos->scan_start_tsf_bssid, ETH_ALEN);
 
-    wifi_if_ctx_freertos->scan_in_progress = false;
+    wifi_if_ctx_rtos->scan_in_progress = false;
 
 #ifdef CONFIG_HOSTAPD
-    if (wifi_if_ctx_freertos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd)
     {
-        wifi_if_ctx_freertos->hostapd_callbk_fns.scan_done(wifi_if_ctx_freertos->hapd_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->hostapd_callbk_fns.scan_done(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
     }
     else
 #endif
     {
-        wifi_if_ctx_freertos->supp_callbk_fns.scan_done(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->supp_callbk_fns.scan_done(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
 }
 
@@ -172,23 +172,23 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
                                              unsigned int event_len,
                                              bool more_res)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     struct freq_survey *survey                         = NULL;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     if (survey_res == NULL)
     {
 #ifdef CONFIG_HOSTAPD
-        if (wifi_if_ctx_freertos->hostapd)
+        if (wifi_if_ctx_rtos->hostapd)
         {
-            wifi_if_ctx_freertos->hostapd_callbk_fns.survey_res(wifi_if_ctx_freertos->hapd_drv_if_ctx, survey,
+            wifi_if_ctx_rtos->hostapd_callbk_fns.survey_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, survey,
                                                                 more_res);
         }
         else
 #endif
         {
-            wifi_if_ctx_freertos->supp_callbk_fns.survey_res(wifi_if_ctx_freertos->supp_drv_if_ctx, survey, more_res);
+            wifi_if_ctx_rtos->supp_callbk_fns.survey_res(wifi_if_ctx_rtos->supp_drv_if_ctx, survey, more_res);
         }
         return;
     }
@@ -238,26 +238,26 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
     }
 
 #ifdef CONFIG_HOSTAPD
-    if (wifi_if_ctx_freertos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd)
     {
-        wifi_if_ctx_freertos->hostapd_callbk_fns.survey_res(wifi_if_ctx_freertos->hapd_drv_if_ctx, survey, more_res);
+        wifi_if_ctx_rtos->hostapd_callbk_fns.survey_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, survey, more_res);
     }
     else
 #endif
     {
-        wifi_if_ctx_freertos->supp_callbk_fns.survey_res(wifi_if_ctx_freertos->supp_drv_if_ctx, survey, more_res);
+        wifi_if_ctx_rtos->supp_callbk_fns.survey_res(wifi_if_ctx_rtos->supp_drv_if_ctx, survey, more_res);
     }
 }
 
 void wifi_nxp_wpa_supp_event_proc_auth_resp(void *if_priv, nxp_wifi_event_mlme_t *auth_resp, unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)auth_resp->frame.frame;
     frame_len = auth_resp->frame.frame_len;
@@ -291,14 +291,14 @@ void wifi_nxp_wpa_supp_event_proc_auth_resp(void *if_priv, nxp_wifi_event_mlme_t
         event.auth.ies_len = (frame_len - 24 - sizeof(mgmt->u.auth));
     }
 
-    wifi_if_ctx_freertos->supp_callbk_fns.auth_resp(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+    wifi_if_ctx_rtos->supp_callbk_fns.auth_resp(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }
 
 void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
                                              nxp_wifi_assoc_event_mlme_t *assoc_resp,
                                              unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
@@ -306,7 +306,7 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
     unsigned int frame_len            = 0;
     unsigned short status             = WLAN_STATUS_UNSPECIFIED_FAILURE;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)assoc_resp->frame.frame;
     frame_len = assoc_resp->frame.frame_len;
@@ -321,13 +321,13 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
     }
 
     memset(&event, 0, sizeof(event));
-    memset(&wifi_if_ctx_freertos->assoc_bssid, 0, ETH_ALEN);
+    memset(&wifi_if_ctx_rtos->assoc_bssid, 0, ETH_ALEN);
 
     status = le_to_host16(mgmt->u.assoc_resp.status_code);
 
     if (status != WLAN_STATUS_SUCCESS)
     {
-        wifi_if_ctx_freertos->associated = false;
+        wifi_if_ctx_rtos->associated = false;
         event.assoc_reject.bssid         = mgmt->bssid;
 
         if (frame_len > 24 + sizeof(mgmt->u.assoc_resp))
@@ -340,13 +340,13 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
     }
     else
     {
-        wifi_if_ctx_freertos->associated = true;
-        memcpy(&wifi_if_ctx_freertos->assoc_bssid, mgmt->bssid, ETH_ALEN);
+        wifi_if_ctx_rtos->associated = true;
+        memcpy(&wifi_if_ctx_rtos->assoc_bssid, mgmt->bssid, ETH_ALEN);
 
         event.assoc_info.addr           = mgmt->bssid;
         event.assoc_info.resp_frame     = frame;
         event.assoc_info.resp_frame_len = frame_len;
-        event.assoc_info.freq           = wifi_if_ctx_freertos->assoc_freq;
+        event.assoc_info.freq           = wifi_if_ctx_rtos->assoc_freq;
 
         if (frame_len > 24 + sizeof(mgmt->u.assoc_resp))
         {
@@ -360,18 +360,18 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
         }
     }
 
-    wifi_if_ctx_freertos->supp_callbk_fns.assoc_resp(wifi_if_ctx_freertos->supp_drv_if_ctx, &event, status);
+    wifi_if_ctx_rtos->supp_callbk_fns.assoc_resp(wifi_if_ctx_rtos->supp_drv_if_ctx, &event, status);
 }
 
 void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *deauth, unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)deauth->frame.frame;
     frame_len = deauth->frame.frame_len;
@@ -393,18 +393,18 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
         event.deauth_info.ie_len = (frame + frame_len - mgmt->u.deauth.variable);
     }
 
-    return wifi_if_ctx_freertos->supp_callbk_fns.deauth(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+    return wifi_if_ctx_rtos->supp_callbk_fns.deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }
 
 void wifi_nxp_wpa_supp_event_proc_disassoc(void *if_priv, nxp_wifi_event_mlme_t *disassoc, unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)disassoc->frame.frame;
     frame_len = disassoc->frame.frame_len;
@@ -426,26 +426,26 @@ void wifi_nxp_wpa_supp_event_proc_disassoc(void *if_priv, nxp_wifi_event_mlme_t 
         event.disassoc_info.ie_len = (frame + frame_len - mgmt->u.disassoc.variable);
     }
 
-    wifi_if_ctx_freertos->supp_callbk_fns.disassoc(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+    wifi_if_ctx_rtos->supp_callbk_fns.disassoc(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }
 
 void wifi_nxp_wpa_supp_event_proc_remain_on_channel(void *if_priv, int cancel_channel)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
-    wifi_if_ctx_freertos                               = (struct wifi_nxp_ctx_freertos *)if_priv;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    wifi_if_ctx_rtos                               = (struct wifi_nxp_ctx_rtos *)if_priv;
     union wpa_event_data event;
     os_memset(&event, 0, sizeof(event));
-    event.remain_on_channel.freq     = wifi_if_ctx_freertos->remain_on_channel_freq;
-    event.remain_on_channel.duration = wifi_if_ctx_freertos->remain_on_channel_duration;
-    wifi_if_ctx_freertos->supp_callbk_fns.remain_on_channel(wifi_if_ctx_freertos->supp_drv_if_ctx, cancel_channel,
+    event.remain_on_channel.freq     = wifi_if_ctx_rtos->remain_on_channel_freq;
+    event.remain_on_channel.duration = wifi_if_ctx_rtos->remain_on_channel_duration;
+    wifi_if_ctx_rtos->supp_callbk_fns.remain_on_channel(wifi_if_ctx_rtos->supp_drv_if_ctx, cancel_channel,
                                                             &event);
 }
 
 void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
                                  const char *iface_name,
-                                 struct freertos_wpa_supp_dev_callbk_fns *supp_callbk_fns)
+                                 rtos_wpa_supp_dev_callbk_fns *supp_callbk_fns)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     const struct netif *iface = netif_find(iface_name);
 
@@ -456,55 +456,55 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
     }
 
     if (strstr(iface_name, "ml"))
-        wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.if_priv;
+        wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
     else
-        wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.hapd_if_priv;
+        wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.hapd_if_priv;
 
-    if (!wifi_if_ctx_freertos)
+    if (!wifi_if_ctx_rtos)
     {
         supp_e("%s: Interface %s not properly initialized", __func__, iface_name);
         return NULL;
     }
 
-    memset(wifi_if_ctx_freertos, 0x00, sizeof(struct wifi_nxp_ctx_freertos));
+    memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
 
-    wifi_if_ctx_freertos->iface_ctx       = iface;
-    wifi_if_ctx_freertos->supp_drv_if_ctx = supp_drv_if_ctx;
+    wifi_if_ctx_rtos->iface_ctx       = iface;
+    wifi_if_ctx_rtos->supp_drv_if_ctx = supp_drv_if_ctx;
 
     if (strstr(iface_name, "ml"))
     {
-        wifi_if_ctx_freertos->bss_type = BSS_TYPE_STA;
+        wifi_if_ctx_rtos->bss_type = BSS_TYPE_STA;
     }
     else
     {
-        wifi_if_ctx_freertos->bss_type          = BSS_TYPE_UAP;
-        wifi_if_ctx_freertos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(400);
+        wifi_if_ctx_rtos->bss_type          = BSS_TYPE_UAP;
+        wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(400);
 
-        if (!wifi_if_ctx_freertos->last_mgmt_tx_data)
+        if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
         {
             supp_e("%s: Buffer to store mgmt tx failed", __func__);
             return NULL;
         }
     }
 
-    memcpy(&wifi_if_ctx_freertos->supp_callbk_fns, supp_callbk_fns, sizeof(wifi_if_ctx_freertos->supp_callbk_fns));
-    return wifi_if_ctx_freertos;
+    memcpy(&wifi_if_ctx_rtos->supp_callbk_fns, supp_callbk_fns, sizeof(wifi_if_ctx_rtos->supp_callbk_fns));
+    return wifi_if_ctx_rtos;
 }
 
 void wifi_nxp_wpa_supp_dev_deinit(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    if (wifi_if_ctx_freertos != NULL)
+    if (wifi_if_ctx_rtos != NULL)
     {
-        memset(wifi_if_ctx_freertos, 0x00, sizeof(struct wifi_nxp_ctx_freertos));
+        memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
     }
 }
 
 int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params)
 {
     int status                                         = -WM_FAIL;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                            = -1;
     int i                                              = 0;
     unsigned char num_chans                            = 0;
@@ -519,9 +519,9 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    if (wifi_if_ctx_freertos->scan_in_progress)
+    if (wifi_if_ctx_rtos->scan_in_progress)
     {
         supp_d("%s: Scan already in progress", __func__);
         ret = -EBUSY;
@@ -575,7 +575,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 #ifdef CONFIG_HOSTAPD
     wm_wifi.hostapd_op = false;
 
-    if (wifi_if_ctx_freertos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd)
     {
         wm_wifi.hostapd_op = true;
     }
@@ -595,7 +595,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         goto out;
     }
 
-    wifi_if_ctx_freertos->scan_in_progress = true;
+    wifi_if_ctx_rtos->scan_in_progress = true;
     ret                                    = 0;
 out:
     if (chan_list != NULL)
@@ -609,7 +609,7 @@ out:
 int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *params)
 {
     int status = -WM_FAIL;
-    // struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    // struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret = -1;
     int i   = 0;
     nxp_wifi_trigger_sched_scan_t *wifi_sched_scan_params;
@@ -620,7 +620,7 @@ int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *p
         goto out;
     }
 
-    // wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    // wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     wifi_sched_scan_params = (nxp_wifi_trigger_sched_scan_t *)os_mem_calloc(sizeof(nxp_wifi_trigger_sched_scan_t));
 
@@ -700,12 +700,12 @@ out:
 
 int wifi_nxp_wpa_supp_scan_abort(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int status                                         = -WM_FAIL;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    if (!wifi_if_ctx_freertos || (!wifi_if_ctx_freertos->scan_in_progress))
+    if (!wifi_if_ctx_rtos || (!wifi_if_ctx_rtos->scan_in_progress))
     {
         supp_d("%s:Ignore scan abort, no scan in progress", __func__);
         goto out;
@@ -839,7 +839,7 @@ out:
 int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
 {
     int status                                         = WM_SUCCESS;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                            = -1;
     nxp_wifi_trigger_op_t *wifi_survey_params;
 
@@ -849,7 +849,7 @@ int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     wifi_survey_params = (nxp_wifi_trigger_op_t *)os_mem_calloc(sizeof(nxp_wifi_trigger_op_t));
 
@@ -859,7 +859,7 @@ int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
         goto out;
     }
 
-    wifi_survey_params->hostapd = wifi_if_ctx_freertos->hostapd;
+    wifi_survey_params->hostapd = wifi_if_ctx_rtos->hostapd;
 
     status = wifi_event_completion(WIFI_EVENT_SURVEY_RESULT_GET, WIFI_EVENT_REASON_SUCCESS, wifi_survey_params);
     if (status != WM_SUCCESS)
@@ -992,7 +992,7 @@ out:
 int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_params *params)
 {
     int status                                         = -WM_FAIL;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     nxp_wifi_assoc_info_t *assoc_params;
     int ret = -1;
 
@@ -1002,7 +1002,7 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     assoc_params = (nxp_wifi_assoc_info_t *)os_mem_calloc(sizeof(nxp_wifi_assoc_info_t));
 
@@ -1012,7 +1012,7 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         goto out;
     }
 
-    wifi_if_ctx_freertos->associated = false;
+    wifi_if_ctx_rtos->associated = false;
 
     if (params->bssid)
     {
@@ -1024,11 +1024,11 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         int channel           = freq_to_chan(params->freq.freq);
         assoc_params->channel = channel;
 
-        wifi_if_ctx_freertos->assoc_freq = params->freq.freq;
+        wifi_if_ctx_rtos->assoc_freq = params->freq.freq;
     }
     else
     {
-        wifi_if_ctx_freertos->assoc_freq = 0;
+        wifi_if_ctx_rtos->assoc_freq = 0;
     }
 
     if (params->ssid)
@@ -1079,7 +1079,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
 
 {
     int status                                         = -WM_FAIL;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     unsigned int flags                                 = 0;
     int ret                                            = -1;
     bool is_pairwise                                   = false;
@@ -1091,7 +1091,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
     if ((key_flag & KEY_FLAG_PAIRWISE_MASK) == KEY_FLAG_PAIRWISE_RX_TX_MODIFY)
     {
         wpa_printf(MSG_DEBUG, "SET_KEY (pairwise RX/TX modify)");
@@ -1106,7 +1106,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
     {
         wpa_printf(MSG_DEBUG, "DEL_KEY");
 
-        status = wifi_remove_key(wifi_if_ctx_freertos->bss_type, is_pairwise, key_idx, addr);
+        status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, is_pairwise, key_idx, addr);
 
         if (status != WM_SUCCESS)
         {
@@ -1163,7 +1163,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
         }
 
         status =
-            wifi_set_key(wifi_if_ctx_freertos->bss_type, is_pairwise, key_idx, key, key_len, seq, seq_len, addr, flags);
+            wifi_set_key(wifi_if_ctx_rtos->bss_type, is_pairwise, key_idx, key, key_len, seq, seq_len, addr, flags);
 
         if (status != WM_SUCCESS)
         {
@@ -1184,7 +1184,7 @@ out:
 int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
 {
     int ret                                            = -1;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if ((!if_priv) || (!bssid))
     {
@@ -1192,11 +1192,11 @@ int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     wifi_d("initiating wifi-set-port authorized: %d", authorized);
 
-    if (wifi_if_ctx_freertos->associated)
+    if (wifi_if_ctx_rtos->associated)
     {
 #ifdef CONFIG_WPA_SUPP_WPS
         if (!wifi_nxp_wps_session_enable())
@@ -1218,7 +1218,7 @@ out:
 
 int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if ((!if_priv) || (!alpha2))
     {
@@ -1226,9 +1226,9 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    return wifi_nxp_set_country(wifi_if_ctx_freertos->bss_type, alpha2);
+    return wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
 
 out:
     return -1;
@@ -1236,7 +1236,7 @@ out:
 
 int wifi_nxp_wpa_supp_get_country(void *if_priv, char *alpha2)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if ((!if_priv) || (!alpha2))
     {
@@ -1244,9 +1244,9 @@ int wifi_nxp_wpa_supp_get_country(void *if_priv, char *alpha2)
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    return wifi_nxp_get_country(wifi_if_ctx_freertos->bss_type, alpha2);
+    return wifi_nxp_get_country(wifi_if_ctx_rtos->bss_type, alpha2);
 
 out:
     return -1;
@@ -1254,7 +1254,7 @@ out:
 
 int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, unsigned char *bssid)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                            = -WM_FAIL;
     nxp_wifi_signal_info_t signal_params;
 
@@ -1264,9 +1264,9 @@ int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, uns
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    ret = wifi_nxp_get_signal(wifi_if_ctx_freertos->bss_type, &signal_params);
+    ret = wifi_nxp_get_signal(wifi_if_ctx_rtos->bss_type, &signal_params);
     if (ret != WM_SUCCESS)
     {
         supp_e("%s: wifi_nxp_get_signal failed", __func__);
@@ -1275,7 +1275,7 @@ int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, uns
 
     memset(si, 0x00, sizeof(struct wpa_signal_info));
 
-    si->frequency         = wifi_if_ctx_freertos->assoc_freq;
+    si->frequency         = wifi_if_ctx_rtos->assoc_freq;
     si->current_signal    = signal_params.current_signal;
     si->avg_signal        = signal_params.avg_signal;
     si->avg_beacon_signal = signal_params.avg_beacon_signal;
@@ -1287,10 +1287,10 @@ out:
 
 void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_params *acs_params)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     if (!if_priv)
     {
@@ -1298,7 +1298,7 @@ void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_pa
         return;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     memset(&event, 0, sizeof(event));
 
@@ -1314,20 +1314,20 @@ void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_pa
     event.acs_selected_channels.hw_mode  = acs_params->hw_mode;
 
 #ifdef CONFIG_HOSTAPD
-    if (wifi_if_ctx_freertos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd)
     {
-        wifi_if_ctx_freertos->hostapd_callbk_fns.acs_channel_sel(wifi_if_ctx_freertos->hapd_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->hostapd_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
     }
     else
 #endif
     {
-        wifi_if_ctx_freertos->supp_callbk_fns.acs_channel_sel(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->supp_callbk_fns.acs_channel_sel(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
 }
 
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if (!if_priv)
     {
@@ -1335,7 +1335,7 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
         return;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     if (!mlme_event)
     {
@@ -1343,28 +1343,28 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
         return;
     }
 
-    if (wifi_if_ctx_freertos->bss_type == BSS_TYPE_STA)
+    if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
     {
         supp_d("%s: station mgmt tx status not enabled", __func__);
         return;
     }
 
-    if ((wifi_if_ctx_freertos->bss_type == BSS_TYPE_UAP) && (wifi_if_ctx_freertos->assoc_resp == 0U))
+    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) && (wifi_if_ctx_rtos->assoc_resp == 0U))
     {
         supp_d("%s: Only send assoc resp mgmt tx status", __func__);
         return;
     }
 
-    if ((wifi_if_ctx_freertos->bss_type == BSS_TYPE_UAP) && (wifi_if_ctx_freertos->last_mgmt_tx_data_len))
+    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) && (wifi_if_ctx_rtos->last_mgmt_tx_data_len))
     {
-        memcpy((void *)mlme_event->frame.frame, (const void *)wifi_if_ctx_freertos->last_mgmt_tx_data,
-               (size_t)wifi_if_ctx_freertos->last_mgmt_tx_data_len);
-        mlme_event->frame.frame_len                 = wifi_if_ctx_freertos->last_mgmt_tx_data_len;
-        wifi_if_ctx_freertos->last_mgmt_tx_data_len = 0;
-        wifi_if_ctx_freertos->assoc_resp            = 0;
+        memcpy((void *)mlme_event->frame.frame, (const void *)wifi_if_ctx_rtos->last_mgmt_tx_data,
+               (size_t)wifi_if_ctx_rtos->last_mgmt_tx_data_len);
+        mlme_event->frame.frame_len                 = wifi_if_ctx_rtos->last_mgmt_tx_data_len;
+        wifi_if_ctx_rtos->last_mgmt_tx_data_len = 0;
+        wifi_if_ctx_rtos->assoc_resp            = 0;
     }
 
-    wifi_if_ctx_freertos->assoc_resp = 0;
+    wifi_if_ctx_rtos->assoc_resp = 0;
 
     if (mlme_event->frame.frame_len == 0)
     {
@@ -1373,16 +1373,16 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
     }
 
 #ifdef CONFIG_HOSTAPD
-    if (wifi_if_ctx_freertos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd)
     {
-        wifi_if_ctx_freertos->hostapd_callbk_fns.mgmt_tx_status(wifi_if_ctx_freertos->hapd_drv_if_ctx,
+        wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_tx_status(wifi_if_ctx_rtos->hapd_drv_if_ctx,
                                                                 (const unsigned char *)mlme_event->frame.frame,
                                                                 mlme_event->frame.frame_len, true);
     }
     else
 #endif
     {
-        wifi_if_ctx_freertos->supp_callbk_fns.mgmt_tx_status(wifi_if_ctx_freertos->supp_drv_if_ctx,
+        wifi_if_ctx_rtos->supp_callbk_fns.mgmt_tx_status(wifi_if_ctx_rtos->supp_drv_if_ctx,
                                                              (const unsigned char *)mlme_event->frame.frame,
                                                              mlme_event->frame.frame_len, true);
     }
@@ -1390,7 +1390,7 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
 
 void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv, nxp_wifi_event_mlme_t *unprot_mgmt, unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
@@ -1402,7 +1402,7 @@ void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv, nxp_wifi_event_mlme
         return;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)unprot_mgmt->frame.frame;
     frame_len = unprot_mgmt->frame.frame_len;
@@ -1422,10 +1422,10 @@ void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv, nxp_wifi_event_mlme
 
     //	if (cmd_evnt == NXP_WIFI_EVENT_UNPROT_DEAUTHENTICATE) {
     event.unprot_deauth.reason_code = le_to_host16(mgmt->u.deauth.reason_code);
-    return wifi_if_ctx_freertos->supp_callbk_fns.unprot_deauth(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+    return wifi_if_ctx_rtos->supp_callbk_fns.unprot_deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     //	} else if (cmd_evnt == NXP_WIFI_EVENT_UNPROT_DISASSOCIATE) {
     event.unprot_disassoc.reason_code = le_to_host16(mgmt->u.deauth.reason_code);
-    return wifi_if_ctx_freertos->supp_callbk_fns.unprot_disassoc(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+    return wifi_if_ctx_rtos->supp_callbk_fns.unprot_disassoc(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     //	}
 }
 
@@ -1440,7 +1440,7 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
                            int cookie)
 {
     int status                                         = -WM_FAIL;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     const struct ieee80211_hdr *hdr;
     u16 fc, stype;
 
@@ -1454,9 +1454,9 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    status = wifi_nxp_send_mlme(wifi_if_ctx_freertos->bss_type, freq_to_chan(freq), wait_time, data, data_len);
+    status = wifi_nxp_send_mlme(wifi_if_ctx_rtos->bss_type, freq_to_chan(freq), wait_time, data, data_len);
 
     if (status == -WM_FAIL)
     {
@@ -1464,17 +1464,17 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
         goto out;
     }
 
-    wifi_if_ctx_freertos->assoc_resp = 0;
+    wifi_if_ctx_rtos->assoc_resp = 0;
 
-    if ((wifi_if_ctx_freertos->bss_type == BSS_TYPE_UAP) && (stype == WLAN_FC_STYPE_ASSOC_RESP))
+    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) && (stype == WLAN_FC_STYPE_ASSOC_RESP))
     {
-        memcpy((void *)wifi_if_ctx_freertos->last_mgmt_tx_data, (const void *)data, (size_t)data_len);
-        wifi_if_ctx_freertos->last_mgmt_tx_data_len = data_len;
-        wifi_if_ctx_freertos->assoc_resp            = 1;
+        memcpy((void *)wifi_if_ctx_rtos->last_mgmt_tx_data, (const void *)data, (size_t)data_len);
+        wifi_if_ctx_rtos->last_mgmt_tx_data_len = data_len;
+        wifi_if_ctx_rtos->assoc_resp            = 1;
     }
     else
     {
-        wifi_if_ctx_freertos->last_mgmt_tx_data_len = 0;
+        wifi_if_ctx_rtos->last_mgmt_tx_data_len = 0;
     }
 
 out:
@@ -1485,20 +1485,20 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
 {
     int status                                         = -WM_FAIL;
     int ret                                            = -1;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if (!if_priv)
     {
         supp_e("%s: Invalid params", __func__);
         goto out;
     }
-    wifi_if_ctx_freertos                             = (struct wifi_nxp_ctx_freertos *)if_priv;
-    wifi_if_ctx_freertos->remain_on_channel_freq     = freq;
-    wifi_if_ctx_freertos->remain_on_channel_duration = duration;
+    wifi_if_ctx_rtos                             = (struct wifi_nxp_ctx_rtos *)if_priv;
+    wifi_if_ctx_rtos->remain_on_channel_freq     = freq;
+    wifi_if_ctx_rtos->remain_on_channel_duration = duration;
 
     int channel = freq_to_chan(freq);
 
-    wifi_if_ctx_freertos->supp_called_remain_on_chan = true;
+    wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
     status                                           = wifi_remain_on_channel(true, channel, duration);
 
     if (status != WM_SUCCESS)
@@ -1521,20 +1521,20 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
     int ret    = -1;
     unsigned int freq;
     unsigned int duration;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if (!if_priv)
     {
         supp_e("%s: Invalid params", __func__);
         goto out;
     }
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
-    freq                 = wifi_if_ctx_freertos->remain_on_channel_freq;
-    duration             = wifi_if_ctx_freertos->remain_on_channel_duration;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    freq                 = wifi_if_ctx_rtos->remain_on_channel_freq;
+    duration             = wifi_if_ctx_rtos->remain_on_channel_duration;
 
     int channel = freq_to_chan(freq);
 
-    wifi_if_ctx_freertos->supp_called_remain_on_chan = true;
+    wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
     status                                           = wifi_remain_on_channel(false, channel, duration);
 
     if (status != WM_SUCCESS)
@@ -1553,13 +1553,13 @@ out:
 
 void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx, unsigned int event_len)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
     const struct ieee80211_mgmt *mgmt = NULL;
     const unsigned char *frame        = NULL;
     unsigned int frame_len            = 0;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     frame     = (const unsigned char *)mgmt_rx->frame.frame;
     frame_len = mgmt_rx->frame.frame_len;
@@ -1583,22 +1583,22 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
     event.rx_mgmt.frame_len = frame_len;
 
 #ifdef CONFIG_HOSTAPD
-    if (wifi_if_ctx_freertos->hostapd)
+    if (wifi_if_ctx_rtos->hostapd)
     {
-        wifi_if_ctx_freertos->hostapd_callbk_fns.mgmt_rx(wifi_if_ctx_freertos->hapd_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
     }
     else
 #endif
     {
-        wifi_if_ctx_freertos->supp_callbk_fns.mgmt_rx(wifi_if_ctx_freertos->supp_drv_if_ctx, &event);
+        wifi_if_ctx_rtos->supp_callbk_fns.mgmt_rx(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
 }
 
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
-                                struct freertos_hostapd_dev_callbk_fns *hostapd_callbk_fns)
+                                rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     // osa_status_t status;
 
     const struct netif *iface = netif_find(iface_name);
@@ -1609,46 +1609,46 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
         return NULL;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.hapd_if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.hapd_if_priv;
 
-    if (!wifi_if_ctx_freertos)
+    if (!wifi_if_ctx_rtos)
     {
         supp_e("%s: Interface %s not properly initialized", __func__, iface_name);
         return NULL;
     }
 
-    memset(wifi_if_ctx_freertos, 0x00, sizeof(struct wifi_nxp_ctx_freertos));
+    memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
 
-    wifi_if_ctx_freertos->iface_ctx = iface;
+    wifi_if_ctx_rtos->iface_ctx = iface;
 
-    wifi_if_ctx_freertos->hostapd = true;
+    wifi_if_ctx_rtos->hostapd = true;
 
-    wifi_if_ctx_freertos->bss_type = BSS_TYPE_UAP;
+    wifi_if_ctx_rtos->bss_type = BSS_TYPE_UAP;
 
-    wifi_if_ctx_freertos->hapd_drv_if_ctx = hapd_drv_if_ctx;
+    wifi_if_ctx_rtos->hapd_drv_if_ctx = hapd_drv_if_ctx;
 
-    wifi_if_ctx_freertos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(400);
+    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(400);
 
-    if (!wifi_if_ctx_freertos->last_mgmt_tx_data)
+    if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
     {
         supp_e("%s: Buffer to store mgmt tx failed", __func__);
         return NULL;
     }
 
-    memcpy(&wifi_if_ctx_freertos->hostapd_callbk_fns, hostapd_callbk_fns,
-           sizeof(wifi_if_ctx_freertos->hostapd_callbk_fns));
+    memcpy(&wifi_if_ctx_rtos->hostapd_callbk_fns, hostapd_callbk_fns,
+           sizeof(wifi_if_ctx_rtos->hostapd_callbk_fns));
 
-    return wifi_if_ctx_freertos;
+    return wifi_if_ctx_rtos;
 }
 
 void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    if (wifi_if_ctx_freertos != NULL)
+    if (wifi_if_ctx_rtos != NULL)
     {
-        os_mem_free((void *)wifi_if_ctx_freertos->last_mgmt_tx_data);
-        memset(wifi_if_ctx_freertos, 0x00, sizeof(struct wifi_nxp_ctx_freertos));
+        os_mem_free((void *)wifi_if_ctx_rtos->last_mgmt_tx_data);
+        memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
     }
 }
 
@@ -1763,7 +1763,7 @@ int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_
     int status                                         = -WM_FAIL;
     int ret                                            = -1;
     nxp_wifi_ap_info_t *ap_params                      = NULL;
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     if ((!if_priv) || (!params))
     {
@@ -1868,7 +1868,7 @@ int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_
 
     if (!beacon_set)
     {
-        wifi_if_ctx_freertos->uap_started = true;
+        wifi_if_ctx_rtos->uap_started = true;
     }
 
     ret = 0;
@@ -2086,7 +2086,7 @@ out:
 
 int wifi_nxp_hostapd_stop_ap(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                            = -1;
     if (!if_priv)
     {
@@ -2094,7 +2094,7 @@ int wifi_nxp_hostapd_stop_ap(void *if_priv)
         goto out;
     }
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     ret = wifi_nxp_stop_ap();
     if (ret != 0)
@@ -2102,14 +2102,14 @@ int wifi_nxp_hostapd_stop_ap(void *if_priv)
         supp_e("%s: Stop AP failed", __func__);
         goto out;
     }
-    wifi_if_ctx_freertos->uap_started = false;
+    wifi_if_ctx_rtos->uap_started = false;
 out:
     return ret;
 }
 
 int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params)
 {
-    // struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    // struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                         = -1;
     nxp_wifi_acl_info_t *acl_params = NULL;
     size_t acl_sz                   = 0;
@@ -2121,7 +2121,7 @@ int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params)
         goto out;
     }
 
-    // wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    // wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     acl_sz = WIFI_ETH_ADDR_LEN * params->num_mac_acl;
 

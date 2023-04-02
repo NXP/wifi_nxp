@@ -1,6 +1,6 @@
 /** @file wifi_nxp.c
  *
- * @brief This file provides Core Wi-Fi definition for wpa supplicant FreeRTOS driver.
+ * @brief This file provides Core Wi-Fi definition for wpa supplicant rtos driver.
  *
  * Copyright 2008-2023 NXP
  *
@@ -24,7 +24,7 @@
 #include "supp_main.h"
 
 static t_u8 wifi_supp_init_done;
-static struct wifi_nxp_ctx_freertos *g_wifi_if_ctx_freertos = NULL;
+static struct wifi_nxp_ctx_rtos *g_wifi_if_ctx_rtos = NULL;
 
 int wifi_nxp_set_mac_addr(const t_u8 *mac);
 
@@ -39,7 +39,7 @@ static int wifi_nxp_wpa_supp_set_mac_addr(void *if_priv, const t_u8 *addr)
     return wifi_nxp_set_mac_addr(addr);
 }
 
-static const struct freertos_wpa_supp_dev_ops wpa_supp_ops = {
+static const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .init                     = wifi_nxp_wpa_supp_dev_init,
     .deinit                   = wifi_nxp_wpa_supp_dev_deinit,
     .hapd_init                = wifi_nxp_hostapd_dev_init,
@@ -87,13 +87,13 @@ static void wifi_nxp_event_proc_scan_abort(void *if_ctx)
 
 static void wifi_nxp_event_proc_scan_done(void *if_priv)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    if (wifi_if_ctx_freertos == NULL)
+    if (wifi_if_ctx_rtos == NULL)
     {
-        wifi_e("%s: wifi_if_ctx_freertos is NULL", __func__);
+        wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
     wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0);
@@ -101,13 +101,13 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv)
 
 static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
-    wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    if (wifi_if_ctx_freertos == NULL)
+    if (wifi_if_ctx_rtos == NULL)
     {
-        wifi_e("%s: wifi_if_ctx_freertos is NULL", __func__);
+        wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
     wifi_nxp_wpa_supp_event_proc_remain_on_channel(if_priv, cancel_channel);
@@ -141,15 +141,15 @@ int wifi_supp_init(void)
 
     wm_wifi.supp_if_callbk_fns = (wifi_nxp_callbk_fns_t *)&supp_callbk_fns;
 
-    g_wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_freertos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
 
-    if (!g_wifi_if_ctx_freertos)
+    if (!g_wifi_if_ctx_rtos)
     {
         wifi_e("Interface ctx alloc failed.");
         goto out;
     }
 
-    wm_wifi.if_priv = (void *)g_wifi_if_ctx_freertos;
+    wm_wifi.if_priv = (void *)g_wifi_if_ctx_rtos;
 
     struct netif *iface = net_get_sta_interface();
 
@@ -165,15 +165,15 @@ int wifi_supp_init(void)
 
     (void)net_get_if_name_netif(sta_iface_name, iface);
 
-    g_wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_freertos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
 
-    if (!g_wifi_if_ctx_freertos)
+    if (!g_wifi_if_ctx_rtos)
     {
         wifi_e("Interface ctx alloc failed.");
         goto out;
     }
 
-    wm_wifi.hapd_if_priv = (void *)g_wifi_if_ctx_freertos;
+    wm_wifi.hapd_if_priv = (void *)g_wifi_if_ctx_rtos;
 
     iface = net_get_uap_interface();
 

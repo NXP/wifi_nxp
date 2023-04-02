@@ -1360,10 +1360,10 @@ void wifi_remove_all_mcast_filter(uint8_t need_lock)
         wifi_put_mcastf_lock();
 }
 
-static struct wifi_scan_result common_desc;
-int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc)
+static struct wifi_scan_result2 common_desc;
+int wifi_get_scan_result(unsigned int index, struct wifi_scan_result2 **desc)
 {
-    (void)memset(&common_desc, 0x00, sizeof(struct wifi_scan_result));
+    (void)memset(&common_desc, 0x00, sizeof(struct wifi_scan_result2));
     int rv = wrapper_bssdesc_first_set(
         (int)index, common_desc.bssid, &common_desc.is_ibss_bit_set, &common_desc.ssid_len, common_desc.ssid,
         &common_desc.Channel, &common_desc.RSSI, &common_desc.beacon_period, &common_desc.dtim_period,
@@ -4480,6 +4480,15 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
     data_len = pmgmt_pkt_hdr->frm_len + 2U;
 
     return wifi_inject_frame(bss_type, buf, data_len);
+}
+#else
+int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
+{
+    (void)bss_type;
+    (void)buff;
+    (void)len;
+
+    return WM_SUCCESS;
 }
 #endif
 

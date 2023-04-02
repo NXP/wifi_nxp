@@ -513,12 +513,12 @@ int wifi_unregister_event_queue(os_queue_t *event_queue);
 /** Get scan list
  *
  * @param[in] index Index
- * @param[out] desc Descriptor of type \ref wifi_scan_result
+ * @param[out] desc Descriptor of type \ref wifi_scan_result2
  *
  * @return WM_SUCCESS on success or error code.
  *
  */
-int wifi_get_scan_result(unsigned int index, struct wifi_scan_result **desc);
+int wifi_get_scan_result(unsigned int index, struct wifi_scan_result2 **desc);
 
 /**
  * Get the count of elements in the scan list
@@ -1546,8 +1546,8 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num);
 
 int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
 
-#ifdef CONFIG_WPA_SUPP
 int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
+#ifdef CONFIG_WPA_SUPP
 char *wifi_get_country_str(country_code_t country_code);
 int wifi_nxp_scan_res_get(void);
 int wifi_nxp_survey_res_get(void);

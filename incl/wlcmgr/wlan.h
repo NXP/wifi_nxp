@@ -1363,7 +1363,7 @@ struct wlan_network
 #endif
     /** The name of this network profile.  Each network profile that is
      *  added to the WLAN Connection Manager must have a unique name. */
-    char name[WLAN_NETWORK_NAME_MAX_LENGTH];
+    char name[WLAN_NETWORK_NAME_MAX_LENGTH + 1];
     /** The network SSID, represented as a C string of up to 32 characters
      *  in length.
      *  If this profile is used in the micro-AP mode, this field is

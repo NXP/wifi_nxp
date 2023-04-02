@@ -1,6 +1,6 @@
 /** @file wifi_nxp.h
  *
- * @brief This file provides Core Wi-Fi definition for wpa supplicant FreeRTOS driver.
+ * @brief This file provides Core Wi-Fi definition for wpa supplicant RTOS driver.
  *
  * Copyright 2008-2023 NXP
  *
@@ -14,9 +14,32 @@
 #include <stdio.h>
 #include <wm_net.h>
 #ifdef CONFIG_WPA_SUPP
+
+#if defined(USE_RTOS) && defined(SDK_OS_FREE_RTOS)
 #include <drivers/driver_freertos.h>
 
-struct wifi_nxp_ctx_freertos
+typedef struct freertos_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
+
+#ifdef CONFIG_WPA_SUPP_AP
+typedef struct freertos_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
+#endif
+
+typedef struct freertos_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
+#elif defined(CONFIG_ZEPHYR)
+#include <drivers/driver_zephyr.h>
+
+typedef struct zep_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
+
+#ifdef CONFIG_WPA_SUPP_AP
+typedef struct zep_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
+#endif
+
+typedef struct zep_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
+#else
+#error "Define WPA Supplicant driver interface structs for your RTOS here"
+#endif
+
+struct wifi_nxp_ctx_rtos
 {
     const struct netif *iface_ctx;
     void *supp_drv_if_ctx;
@@ -33,12 +56,12 @@ struct wifi_nxp_ctx_freertos
     bool associated;
     bool uap_started;
     bool hostapd;
-    struct freertos_wpa_supp_dev_callbk_fns supp_callbk_fns;
+    rtos_wpa_supp_dev_callbk_fns supp_callbk_fns;
     bool supp_called_remain_on_chan;
     unsigned int remain_on_channel_freq;
     unsigned int remain_on_channel_duration;
 #ifdef CONFIG_WPA_SUPP_AP
-    struct freertos_hostapd_dev_callbk_fns hostapd_callbk_fns;
+    rtos_hostapd_dev_callbk_fns hostapd_callbk_fns;
     int assoc_resp;
     uint8_t *last_mgmt_tx_data;
     size_t last_mgmt_tx_data_len;

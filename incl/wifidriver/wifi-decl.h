@@ -281,7 +281,7 @@ typedef struct
 #define MLAN_MAX_PASS_LENGTH (64)
 
 /** Scan result information */
-struct wifi_scan_result
+struct wifi_scan_result2
 {
     uint8_t bssid[MLAN_MAC_ADDR_LENGTH]; /*!< BSSID array */
     bool is_ibss_bit_set;                /*!< Is bssid set? */

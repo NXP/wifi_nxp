@@ -132,7 +132,7 @@ static inline int wlan_uap_set_country(country_code_t country
         country3 = 0x20;
     }
 
-    ret = freertos_supp_set_ap_country(netif, country_str, country3);
+    ret = wpa_supp_set_ap_country(netif, country_str, country3);
 
     if (ret != WM_SUCCESS)
     {

@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef __FREERTOS_WPA_SUPP_IF_H__
-#define __FREERTOS_WPA_SUPP_IF_H__
+#ifndef __RTOS_WPA_SUPP_IF_H__
+#define __RTOS_WPA_SUPP_IF_H__
 
 #ifdef CONFIG_WPA_SUPP
 #include "includes.h"
@@ -35,7 +35,7 @@
 
 void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
                                  const char *iface_name,
-                                 struct freertos_wpa_supp_dev_callbk_fns *supp_callbk_fns);
+                                 rtos_wpa_supp_dev_callbk_fns *supp_callbk_fns);
 
 void wifi_nxp_wpa_supp_dev_deinit(void *if_priv);
 
@@ -132,7 +132,7 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
 
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
-                                struct freertos_hostapd_dev_callbk_fns *hostapd_callbk_fns);
+                                rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns);
 void wifi_nxp_hostapd_dev_deinit(void *if_priv);
 int wifi_nxp_hostapd_do_acs(void *priv, struct drv_acs_params *params);
 int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_params *params);
@@ -146,4 +146,4 @@ int wifi_nxp_hostapd_set_frag(void *if_priv, int frag_threshold);
 int wifi_nxp_hostapd_stop_ap(void *if_priv);
 int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params);
 #endif /* CONFIG_WPA_SUPP */
-#endif /*  __FREERTOS_WPA_SUPP_IF_H__ */
+#endif /*  __rtos_WPA_SUPP_IF_H__ */

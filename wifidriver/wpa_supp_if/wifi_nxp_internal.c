@@ -1,6 +1,6 @@
 /** @file wifi_nxp_internal.c
  *
- * @brief This file provides Core Wi-Fi definition for wpa supplicant FreeRTOS driver.
+ * @brief This file provides Core Wi-Fi definition for wpa supplicant rtos driver.
  *
  * Copyright 2008-2023 NXP
  *
@@ -42,9 +42,9 @@ void wifi_survey_result_get(struct wifi_message *msg)
 /* Event handlers*/
 void wifi_scan_start(struct wifi_message *msg)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.if_priv;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
 
-    if (wifi_if_ctx_freertos->scan_in_progress)
+    if (wifi_if_ctx_rtos->scan_in_progress)
     {
         if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
         {
@@ -58,22 +58,22 @@ void wifi_scan_start(struct wifi_message *msg)
 
 void wifi_scan_done(struct wifi_message *msg)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = NULL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
 #ifdef CONFIG_HOSTAPD
     if (wm_wifi.hostapd_op)
     {
-        wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.hapd_if_priv;
+        wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.hapd_if_priv;
 
         wm_wifi.hostapd_op = false;
     }
     else
 #endif
     {
-        wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.if_priv;
+        wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
     }
 
-    if (wifi_if_ctx_freertos->scan_in_progress)
+    if (wifi_if_ctx_rtos->scan_in_progress)
     {
         if (msg->reason == WIFI_EVENT_REASON_FAILURE)
         {
@@ -88,7 +88,7 @@ void wifi_scan_done(struct wifi_message *msg)
             if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
             {
 #ifdef CONFIG_HOSTAPD
-                if (wifi_if_ctx_freertos->hostapd)
+                if (wifi_if_ctx_rtos->hostapd)
                 {
                     wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv);
                 }
@@ -104,22 +104,22 @@ void wifi_scan_done(struct wifi_message *msg)
 
 void wifi_process_remain_on_channel(struct wifi_message *msg)
 {
-    struct wifi_nxp_ctx_freertos *wifi_if_ctx_freertos = (struct wifi_nxp_ctx_freertos *)wm_wifi.if_priv;
-    if (wifi_if_ctx_freertos->supp_called_remain_on_chan == true)
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
+    if (wifi_if_ctx_rtos->supp_called_remain_on_chan == true)
     {
         if ((msg->reason == WIFI_EVENT_REASON_SUCCESS) &&
             (wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn != NULL))
         {
             if (*(t_u8 *)(msg->data) == true)
             {
-                wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn(wifi_if_ctx_freertos, 1);
+                wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn(wifi_if_ctx_rtos, 1);
             }
             else
             {
-                wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn(wifi_if_ctx_freertos, 0);
+                wm_wifi.supp_if_callbk_fns->remain_on_channel_callbk_fn(wifi_if_ctx_rtos, 0);
             }
         }
-        wifi_if_ctx_freertos->supp_called_remain_on_chan = false;
+        wifi_if_ctx_rtos->supp_called_remain_on_chan = false;
     }
     if (msg->data)
     {

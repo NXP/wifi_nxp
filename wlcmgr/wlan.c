@@ -1089,7 +1089,7 @@ static int is_bssid_any(char *b)
 
 /* Check to see if the security features of our network, 'config', match with
  * those of a scan result, 'res' and return 1 if they do, 0 if they do not. */
-static int security_profile_matches(const struct wlan_network *network, const struct wifi_scan_result *res)
+static int security_profile_matches(const struct wlan_network *network, const struct wifi_scan_result2 *res)
 {
     const struct wlan_network_security *config = &network->security;
 
@@ -1202,7 +1202,7 @@ static int security_profile_matches(const struct wlan_network *network, const st
  * new information discovered when parsing 'res'. 192 We may update the channel,
  * BSSID, or SSID but not the security profile. */
 static int network_matches_scan_result(const struct wlan_network *network,
-                                       const struct wifi_scan_result *res,
+                                       const struct wifi_scan_result2 *res,
                                        uint8_t *num_channels,
                                        wlan_scan_channel_list_t *chan_list)
 {
@@ -1355,7 +1355,7 @@ int load_wep_key(const uint8_t *input, uint8_t *output, uint8_t *output_len, con
  * the older TKIP cipher or the newer CCMP cipher.  We prefer CCMP, however we
  * will chose TKIP if the AP doesn't report CCMP support.  CCMP is optional for
  * WPA and required for WPA2, however a WPA2 AP may still have it disabled. */
-static int configure_security(struct wlan_network *network, struct wifi_scan_result *res)
+static int configure_security(struct wlan_network *network, struct wifi_scan_result2 *res)
 {
     int ret = WM_SUCCESS;
     switch (network->security.type)
@@ -1803,7 +1803,7 @@ static int do_start(struct wlan_network *network)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
-        ret = freertos_supp_start_ap(netif, network);
+        ret = wpa_supp_start_ap(netif, network);
 #else
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
 #ifdef CONFIG_P2P
@@ -1856,7 +1856,7 @@ static int do_stop(struct wlan_network *network)
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
 #ifdef CONFIG_WPA_SUPP
-        ret = freertos_supp_stop_ap(netif);
+        ret = wpa_supp_stop_ap(netif);
 #else
         ret = wifi_uap_stop();
 #endif
@@ -1946,7 +1946,7 @@ static void report_scan_results(void)
     }
 }
 
-static void update_network_params(struct wlan_network *network, const struct wifi_scan_result *res)
+static void update_network_params(struct wlan_network *network, const struct wifi_scan_result2 *res)
 {
     if (!network->security_specific)
     {
@@ -2116,7 +2116,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
     }
 }
 
-static int start_association(struct wlan_network *network, struct wifi_scan_result *res)
+static int start_association(struct wlan_network *network, struct wifi_scan_result2 *res)
 {
     int ret                     = WM_SUCCESS;
     unsigned int owe_trans_mode = 0;
@@ -2182,7 +2182,7 @@ static void handle_scan_results(void)
     unsigned int count;
     int ret;
     unsigned int i;
-    struct wifi_scan_result *res;
+    struct wifi_scan_result2 *res;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
     bool matching_ap_found       = false;
     uint8_t num_channels         = 0;
@@ -2201,7 +2201,7 @@ static void handle_scan_results(void)
      * copy. fixme: Can be removed after this issue is fixed in the
      * lower layer.
      */
-    struct wifi_scan_result *best_ap = os_mem_alloc(sizeof(struct wifi_scan_result));
+    struct wifi_scan_result2 *best_ap = os_mem_alloc(sizeof(struct wifi_scan_result2));
     if (best_ap == NULL)
     {
         wlcm_d("%s: Failed to alloc scan result object", __func__);
@@ -2231,7 +2231,7 @@ static void handle_scan_results(void)
                 if (!matching_ap_found)
                 {
                     /* First matching AP found */
-                    (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
+                    (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result2));
                     matching_ap_found = true;
                     /*
                      * Continue the search. There may be an AP
@@ -2249,7 +2249,7 @@ static void handle_scan_results(void)
                      */
                     wlcm_d("Found better AP %s on channel %d", res->ssid, res->Channel);
                     /* Assign the new found as curr_best */
-                    (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result));
+                    (void)memcpy((void *)best_ap, (const void *)res, sizeof(struct wifi_scan_result2));
                 }
 
                 /* Continue the search */
@@ -3060,7 +3060,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             os_timer_deactivate(&wlan.supp_status_timer);
             wlan.status_timeout = 0;
 
-            freertos_supp_network_status(netif, network);
+            wpa_supp_network_status(netif, network);
 #endif
 
 #ifdef CONFIG_11R
@@ -3281,14 +3281,14 @@ int wlan_11k_roam()
 
     }
 
-    ret = freertos_supp_roam(netif, NULL);
+    ret = wpa_supp_roam(netif, NULL);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("wlan ft roam failed");
         return -WM_FAIL;
     }
 
-    ret = freertos_supp_scan(netif, &params);
+    ret = wpa_supp_scan(netif, &params);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("wlan ft roam scan failed");
@@ -3452,14 +3452,14 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
         params.chan_list[0].chan_number = channel;
     }
 
-    ret = freertos_supp_roam(netif, (t_u8 *)bssid);
+    ret = wpa_supp_roam(netif, (t_u8 *)bssid);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("wlan ft roam failed");
         return -WM_FAIL;
     }
 
-    ret = freertos_supp_scan(netif, &params);
+    ret = wpa_supp_scan(netif, &params);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("wlan ft roam scan failed");
@@ -4050,7 +4050,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
             if (wlan.scan_count > WLAN_RESCAN_LIMIT)
             {
-                (void)freertos_supp_disable(sta_netif, network);
+                (void)wpa_supp_disable(sta_netif, network);
             }
         }
     }
@@ -4073,7 +4073,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (hwaddr_aton(s + 1, addr))
             return;
 
-        ret = freertos_supp_get_sta_info(netif, addr, &is_11n_enabled);
+        ret = wpa_supp_get_sta_info(netif, addr, &is_11n_enabled);
         if (ret != 0)
             return;
 
@@ -4161,10 +4161,10 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
 #ifdef CONFIG_WPA_SUPP
-    ret = freertos_supp_init(wpa_supplicant_msg_cb);
+    ret = wpa_supp_init(wpa_supplicant_msg_cb);
     if (ret != 0)
     {
-        wlcm_e("freertos_supp_init failed. status code %d", ret);
+        wlcm_e("wpa_supp_init failed. status code %d", ret);
         return;
     }
 
@@ -4175,10 +4175,10 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
         return;
     }
 
-    ret = freertos_supp_status(netif);
+    ret = wpa_supp_status(netif);
     if (ret != 0)
     {
-        wlcm_e("freertos_supp_status failed. status code %d", ret);
+        wlcm_e("wpa_supp_status failed. status code %d", ret);
         return;
     }
 
@@ -4384,7 +4384,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 os_timer_deactivate(&wlan.supp_status_timer);
                 wlan.status_timeout = 0;
 
-                freertos_supp_network_status(netif, network);
+                wpa_supp_network_status(netif, network);
 #endif
 
                 ret = net_configure_address(&network->ip, if_handle);
@@ -4757,7 +4757,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     wlcm_d("starting connection to network: %d", (int)msg->data);
     wlan.scan_count      = 0;
     wlan.cur_network_idx = (int)msg->data;
-    ret                  = freertos_supp_connect(netif, new_network);
+    ret                  = wpa_supp_connect(netif, new_network);
 #endif
 
 #ifdef CONFIG_WPA_SUPP
@@ -4971,7 +4971,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case CM_STA_USER_REQUEST_DISCONNECT:
 #ifdef CONFIG_WPA_SUPP
-            freertos_supp_disconnect(netif);
+            wpa_supp_disconnect(netif);
 #endif
             wlcm_request_disconnect(&next, network);
             break;
@@ -5594,7 +5594,7 @@ static void supp_status_timer_cb(os_timer_arg_t arg)
 
     if (wlan.status_timeout == 40)
     {
-        ret = freertos_supp_req_status(wlan.connect ? CONNECT : START);
+        ret = wpa_supp_req_status(wlan.connect ? CONNECT : START);
 
         if (ret != WM_SUCCESS)
         {
@@ -5861,10 +5861,10 @@ int wlan_stop(void)
 
     wifi_supp_deinit();
 
-    ret = freertos_supp_deinit();
+    ret = wpa_supp_deinit();
     if (ret != 0)
     {
-        wlcm_e("freertos_supp_deinit failed. status code %d", ret);
+        wlcm_e("wpa_supp_deinit failed. status code %d", ret);
         return WLAN_ERROR_STATE;
     }
 #endif
@@ -6633,7 +6633,7 @@ int wlan_add_network(struct wlan_network *network)
     if (!wlan.wps_session_attempt)
     {
 #endif
-        ret = freertos_supp_add_network(netif, &wlan.networks[pos]);
+        ret = wpa_supp_add_network(netif, &wlan.networks[pos]);
         if (ret < 0)
         {
             memset((void *)&wlan.networks[pos], 0x00, sizeof(struct wlan_network));
@@ -6778,7 +6778,7 @@ int wlan_remove_network(const char *name)
             {
                 /* Do nothing */
             }
-            ret = freertos_supp_remove_network(netif, &wlan.networks[i]);
+            ret = wpa_supp_remove_network(netif, &wlan.networks[i]);
             if (ret < 0)
             {
                 return WLAN_ERROR_STATE;
@@ -7437,7 +7437,7 @@ static void wlan_mon_thread(os_thread_arg_t data)
 
 int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 {
-    struct wifi_scan_result *desc;
+    struct wifi_scan_result2 *desc;
 
     if (res == NULL)
     {
@@ -9240,7 +9240,7 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 #ifdef CONFIG_WPA_SUPP_AP
     struct netif *netif = net_get_uap_interface();
 
-    freertos_supp_set_ap_bw(netif, bandwidth);
+    wpa_supp_set_ap_bw(netif, bandwidth);
 #endif
 #endif
 
@@ -9491,7 +9491,7 @@ int wlan_host_11k_neighbor_req(t_u8 *ssid)
     }
 
 #ifdef CONFIG_WPA_SUPP
-    ret = freertos_supp_send_neighbor_rep(netif, (char *)ssid, 0, 0);
+    ret = wpa_supp_send_neighbor_rep(netif, (char *)ssid, 0, 0);
 #else
     ret = wifi_host_11k_neighbor_req(ssid);
 #endif
@@ -9520,7 +9520,7 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason)
     }
 
 #ifdef CONFIG_WPA_SUPP
-    return freertos_supp_send_btm_query(netif, query_reason);
+    return wpa_supp_send_btm_query(netif, query_reason);
 #else
     ret = wifi_host_11v_bss_trans_query(query_reason);
     if (ret == WM_SUCCESS)
@@ -10651,35 +10651,35 @@ int wlan_start_wps_pbc(void)
     struct netif *netif = net_get_sta_interface();
 
     wlan.wps_session_attempt = 0;
-    return freertos_supp_start_wps_pbc(netif, 0);
+    return wpa_supp_start_wps_pbc(netif, 0);
 }
 
 void wlan_wps_generate_pin(unsigned int *pin)
 {
     struct netif *netif = net_get_sta_interface();
 
-    freertos_supp_wps_generate_pin(netif, pin);
+    wpa_supp_wps_generate_pin(netif, pin);
 }
 
 int wlan_start_wps_pin(const char *pin)
 {
     struct netif *netif = net_get_sta_interface();
 
-    if (freertos_supp_wps_pin_valid(netif, (const unsigned char *)pin) != WM_SUCCESS)
+    if (wpa_supp_wps_pin_valid(netif, (const unsigned char *)pin) != WM_SUCCESS)
     {
         wlcm_d("WPS PIN validation failed for %s", pin);
         return -WM_FAIL;
     }
 
     wlan.wps_session_attempt = 0;
-    return freertos_supp_start_wps_pin(netif, pin, 0);
+    return wpa_supp_start_wps_pin(netif, pin, 0);
 }
 
 int wlan_wps_cancel(void)
 {
     struct netif *netif = net_get_sta_interface();
 
-    return freertos_supp_cancel_wps(netif, 0);
+    return wpa_supp_cancel_wps(netif, 0);
 }
 
 #ifdef CONFIG_WPA_SUPP_AP
@@ -10693,7 +10693,7 @@ int wlan_start_ap_wps_pbc(void)
         return -WM_FAIL;
     }
 
-    return freertos_supp_start_wps_pbc(netif, 1);
+    return wpa_supp_start_wps_pbc(netif, 1);
 }
 
 int wlan_start_ap_wps_pin(const char *pin)
@@ -10706,20 +10706,20 @@ int wlan_start_ap_wps_pin(const char *pin)
         return -WM_FAIL;
     }
 
-    if (freertos_supp_wps_pin_valid(netif, (const unsigned char *)pin) != WM_SUCCESS)
+    if (wpa_supp_wps_pin_valid(netif, (const unsigned char *)pin) != WM_SUCCESS)
     {
         wlcm_d("WPS PIN validation failed for %s", pin);
         return -WM_FAIL;
     }
 
-    return freertos_supp_start_wps_pin(netif, pin, 1);
+    return wpa_supp_start_wps_pin(netif, pin, 1);
 }
 
 int wlan_wps_ap_cancel(void)
 {
     struct netif *netif = net_get_uap_interface();
 
-    return freertos_supp_cancel_wps(netif, 1);
+    return wpa_supp_cancel_wps(netif, 1);
 }
 #endif
 #endif

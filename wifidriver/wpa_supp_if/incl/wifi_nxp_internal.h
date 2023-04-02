@@ -1,6 +1,6 @@
 /** @file wifi_nxp_internal.h
  *
- * @brief This file provides Core Wi-Fi definition for wpa supplicant FreeRTOS driver.
+ * @brief This file provides Core Wi-Fi definition for wpa supplicant RTOS driver.
  *
  * Copyright 2008-2023 NXP
  *
