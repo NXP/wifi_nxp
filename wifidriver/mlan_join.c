@@ -1181,7 +1181,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     (void)wlan_wmm_process_association_req(pmpriv, &pos, &pbss_desc->wmm_ie, pbss_desc->pht_cap);
 
 #ifdef CONFIG_11R
-    if ((ft_akm == 1U) && (pmpriv->md_ie != NULL))
+    if (ft_akm == 1U)
     {
         wlan_cmd_append_pass_through_ie(pmpriv, (IEEEtypes_Generic_t *)(void *)pmpriv->md_ie, &pos);
     }

@@ -108,7 +108,7 @@ static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
 #ifdef CONFIG_STA_AMPDU_TX
-static bool sta_ampdu_tx_enable = true;
+bool sta_ampdu_tx_enable = true;
 #if defined(WIFI_ADD_ON)
 t_u8 sta_ampdu_tx_enable_per_tid = 0xFF;
 #endif

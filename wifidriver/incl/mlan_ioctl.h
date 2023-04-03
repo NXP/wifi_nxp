@@ -1141,7 +1141,7 @@ typedef struct _mlan_ds_sta_info
 #endif
 
 /** Type definition of mlan_embedded_dhcp_config */
-typedef struct PACK_START _mlan_embedded_dhcp_config
+typedef MLAN_PACK_START struct _mlan_embedded_dhcp_config
 {
     /** Host IP address */
     t_u32 host_ip_addr;
@@ -1157,7 +1157,7 @@ typedef struct PACK_START _mlan_embedded_dhcp_config
     t_u8 is_enabled;
     /** Get / Set action*/
     t_u16 action;
-} PACK_END mlan_embedded_dhcp_config, *pmlan_embedded_dhcp_config;
+} MLAN_PACK_END mlan_embedded_dhcp_config, *pmlan_embedded_dhcp_config;
 
 /** Type definition of mlan_ds_bss for MLAN_IOCTL_BSS */
 typedef struct _mlan_ds_bss
@@ -3690,7 +3690,7 @@ typedef struct _mlan_ds_misc_chnrgpwr_cfg
 
 #ifdef CONFIG_RF_TEST_MODE
 /** Configuration for Manufacturing generic command */
-typedef PACK_START struct _mlan_ds_mfg_cmd_generic_cfg
+typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_generic_cfg
 {
     /** MFG command code */
     t_u32 mfg_cmd;
@@ -3706,10 +3706,10 @@ typedef PACK_START struct _mlan_ds_mfg_cmd_generic_cfg
     t_u32 data2;
     /** value 3 */
     t_u32 data3;
-} PACK_END mlan_ds_mfg_cmd_generic_cfg;
+} MLAN_PACK_END mlan_ds_mfg_cmd_generic_cfg;
 
 /** Configuration for Manufacturing command Tx Frame */
-typedef PACK_START struct _mlan_ds_mfg_cmd_tx_frame2
+typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_tx_frame2
 {
     /** MFG command code */
     t_u32 mfg_cmd;
@@ -3749,10 +3749,10 @@ typedef PACK_START struct _mlan_ds_mfg_cmd_tx_frame2
     t_u32 stbc;
     /** power id */
     t_u32 rsvd[2];
-} PACK_END mlan_ds_mfg_cmd_tx_frame2;
+} MLAN_PACK_END mlan_ds_mfg_cmd_tx_frame2;
 
 /** Configuration for Manufacturing command Tx Continuous */
-typedef PACK_START struct _mlan_ds_mfg_cmd_tx_cont
+typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_tx_cont
 {
     /** MFG command code */
     t_u32 mfg_cmd;
@@ -3776,7 +3776,7 @@ typedef PACK_START struct _mlan_ds_mfg_cmd_tx_cont
     t_u32 tx_rate;
     /** power id */
     t_u32 rsvd;
-} PACK_END mlan_ds_mfg_cmd_tx_cont;
+} MLAN_PACK_END mlan_ds_mfg_cmd_tx_cont;
 #endif
 
 #ifdef CONFIG_MULTI_CHAN

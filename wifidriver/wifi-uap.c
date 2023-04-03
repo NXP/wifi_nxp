@@ -3347,7 +3347,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
         (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
                      sizeof(sys_config->supported_mcs_set));
 
-        if (!params->ssid.ssid || !params->ssid.ssid_len)
+        if (!params->ssid.ssid_len)
         {
             ret = -WM_FAIL;
             goto done;

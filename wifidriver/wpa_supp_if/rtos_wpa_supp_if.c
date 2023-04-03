@@ -173,7 +173,7 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
                                              bool more_res)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    struct freq_survey *survey                         = NULL;
+    struct freq_survey *survey                 = NULL;
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
@@ -182,8 +182,7 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
 #ifdef CONFIG_HOSTAPD
         if (wifi_if_ctx_rtos->hostapd)
         {
-            wifi_if_ctx_rtos->hostapd_callbk_fns.survey_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, survey,
-                                                                more_res);
+            wifi_if_ctx_rtos->hostapd_callbk_fns.survey_res(wifi_if_ctx_rtos->hapd_drv_if_ctx, survey, more_res);
         }
         else
 #endif
@@ -328,7 +327,7 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
     if (status != WLAN_STATUS_SUCCESS)
     {
         wifi_if_ctx_rtos->associated = false;
-        event.assoc_reject.bssid         = mgmt->bssid;
+        event.assoc_reject.bssid     = mgmt->bssid;
 
         if (frame_len > 24 + sizeof(mgmt->u.assoc_resp))
         {
@@ -432,13 +431,12 @@ void wifi_nxp_wpa_supp_event_proc_disassoc(void *if_priv, nxp_wifi_event_mlme_t 
 void wifi_nxp_wpa_supp_event_proc_remain_on_channel(void *if_priv, int cancel_channel)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    wifi_if_ctx_rtos                               = (struct wifi_nxp_ctx_rtos *)if_priv;
+    wifi_if_ctx_rtos                           = (struct wifi_nxp_ctx_rtos *)if_priv;
     union wpa_event_data event;
     os_memset(&event, 0, sizeof(event));
     event.remain_on_channel.freq     = wifi_if_ctx_rtos->remain_on_channel_freq;
     event.remain_on_channel.duration = wifi_if_ctx_rtos->remain_on_channel_duration;
-    wifi_if_ctx_rtos->supp_callbk_fns.remain_on_channel(wifi_if_ctx_rtos->supp_drv_if_ctx, cancel_channel,
-                                                            &event);
+    wifi_if_ctx_rtos->supp_callbk_fns.remain_on_channel(wifi_if_ctx_rtos->supp_drv_if_ctx, cancel_channel, &event);
 }
 
 void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
@@ -503,12 +501,12 @@ void wifi_nxp_wpa_supp_dev_deinit(void *if_priv)
 
 int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params)
 {
-    int status                                         = -WM_FAIL;
+    int status                                 = -WM_FAIL;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    int ret                                            = -1;
-    int i                                              = 0;
-    unsigned char num_chans                            = 0;
-    t_u8 bss_mode                                      = BSS_INFRASTRUCTURE;
+    int ret                                    = -1;
+    int i                                      = 0;
+    unsigned char num_chans                    = 0;
+    t_u8 bss_mode                              = BSS_INFRASTRUCTURE;
     const char *ssid = NULL, *ssid2 = NULL;
     const t_u8 *bssid                   = NULL;
     wifi_scan_channel_list_t *chan_list = NULL;
@@ -596,7 +594,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     }
 
     wifi_if_ctx_rtos->scan_in_progress = true;
-    ret                                    = 0;
+    ret                                = 0;
 out:
     if (chan_list != NULL)
     {
@@ -701,7 +699,7 @@ out:
 int wifi_nxp_wpa_supp_scan_abort(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    int status                                         = -WM_FAIL;
+    int status                                 = -WM_FAIL;
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
@@ -838,9 +836,9 @@ out:
 
 int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
 {
-    int status                                         = WM_SUCCESS;
+    int status                                 = WM_SUCCESS;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    int ret                                            = -1;
+    int ret                                    = -1;
     nxp_wifi_trigger_op_t *wifi_survey_params;
 
     if (!if_priv)
@@ -991,7 +989,7 @@ out:
 
 int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_params *params)
 {
-    int status                                         = -WM_FAIL;
+    int status                                 = -WM_FAIL;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     nxp_wifi_assoc_info_t *assoc_params;
     int ret = -1;
@@ -1078,12 +1076,12 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
                               enum key_flag key_flag)
 
 {
-    int status                                         = -WM_FAIL;
+    int status                                 = -WM_FAIL;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    unsigned int flags                                 = 0;
-    int ret                                            = -1;
-    bool is_pairwise                                   = false;
-    int skip_set_key                                   = 1;
+    unsigned int flags                         = 0;
+    int ret                                    = -1;
+    bool is_pairwise                           = false;
+    int skip_set_key                           = 1;
 
     if ((!if_priv) || (!ifname))
     {
@@ -1183,7 +1181,7 @@ out:
 
 int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
 {
-    int ret                                            = -1;
+    int ret                                    = -1;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if ((!if_priv) || (!bssid))
@@ -1255,7 +1253,7 @@ out:
 int wifi_nxp_wpa_supp_signal_poll(void *if_priv, struct wpa_signal_info *si, unsigned char *bssid)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    int ret                                            = -WM_FAIL;
+    int ret                                    = -WM_FAIL;
     nxp_wifi_signal_info_t signal_params;
 
     if (!if_priv || !si || !bssid)
@@ -1359,7 +1357,7 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
     {
         memcpy((void *)mlme_event->frame.frame, (const void *)wifi_if_ctx_rtos->last_mgmt_tx_data,
                (size_t)wifi_if_ctx_rtos->last_mgmt_tx_data_len);
-        mlme_event->frame.frame_len                 = wifi_if_ctx_rtos->last_mgmt_tx_data_len;
+        mlme_event->frame.frame_len             = wifi_if_ctx_rtos->last_mgmt_tx_data_len;
         wifi_if_ctx_rtos->last_mgmt_tx_data_len = 0;
         wifi_if_ctx_rtos->assoc_resp            = 0;
     }
@@ -1376,15 +1374,15 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
     if (wifi_if_ctx_rtos->hostapd)
     {
         wifi_if_ctx_rtos->hostapd_callbk_fns.mgmt_tx_status(wifi_if_ctx_rtos->hapd_drv_if_ctx,
-                                                                (const unsigned char *)mlme_event->frame.frame,
-                                                                mlme_event->frame.frame_len, true);
+                                                            (const unsigned char *)mlme_event->frame.frame,
+                                                            mlme_event->frame.frame_len, true);
     }
     else
 #endif
     {
         wifi_if_ctx_rtos->supp_callbk_fns.mgmt_tx_status(wifi_if_ctx_rtos->supp_drv_if_ctx,
-                                                             (const unsigned char *)mlme_event->frame.frame,
-                                                             mlme_event->frame.frame_len, true);
+                                                         (const unsigned char *)mlme_event->frame.frame,
+                                                         mlme_event->frame.frame_len, true);
     }
 }
 
@@ -1439,7 +1437,7 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
                            unsigned int wait_time,
                            int cookie)
 {
-    int status                                         = -WM_FAIL;
+    int status                                 = -WM_FAIL;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     const struct ieee80211_hdr *hdr;
     u16 fc, stype;
@@ -1483,8 +1481,8 @@ out:
 
 int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsigned int duration)
 {
-    int status                                         = -WM_FAIL;
-    int ret                                            = -1;
+    int status                                 = -WM_FAIL;
+    int ret                                    = -1;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if (!if_priv)
@@ -1499,7 +1497,7 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
     int channel = freq_to_chan(freq);
 
     wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
-    status                                           = wifi_remain_on_channel(true, channel, duration);
+    status                                       = wifi_remain_on_channel(true, channel, duration);
 
     if (status != WM_SUCCESS)
     {
@@ -1529,13 +1527,13 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
         goto out;
     }
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    freq                 = wifi_if_ctx_rtos->remain_on_channel_freq;
-    duration             = wifi_if_ctx_rtos->remain_on_channel_duration;
+    freq             = wifi_if_ctx_rtos->remain_on_channel_freq;
+    duration         = wifi_if_ctx_rtos->remain_on_channel_duration;
 
     int channel = freq_to_chan(freq);
 
     wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
-    status                                           = wifi_remain_on_channel(false, channel, duration);
+    status                                       = wifi_remain_on_channel(false, channel, duration);
 
     if (status != WM_SUCCESS)
     {
@@ -1635,8 +1633,7 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
         return NULL;
     }
 
-    memcpy(&wifi_if_ctx_rtos->hostapd_callbk_fns, hostapd_callbk_fns,
-           sizeof(wifi_if_ctx_rtos->hostapd_callbk_fns));
+    memcpy(&wifi_if_ctx_rtos->hostapd_callbk_fns, hostapd_callbk_fns, sizeof(wifi_if_ctx_rtos->hostapd_callbk_fns));
 
     return wifi_if_ctx_rtos;
 }
@@ -1760,9 +1757,9 @@ out:
 
 int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_params *params)
 {
-    int status                                         = -WM_FAIL;
-    int ret                                            = -1;
-    nxp_wifi_ap_info_t *ap_params                      = NULL;
+    int status                                 = -WM_FAIL;
+    int ret                                    = -1;
+    nxp_wifi_ap_info_t *ap_params              = NULL;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
     if ((!if_priv) || (!params))
@@ -1847,7 +1844,7 @@ int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_
 
     if (params->freq)
     {
-        ap_params->chan.mode               = params->freq->mode;
+        ap_params->chan.mode               = (enum wifi_mode)params->freq->mode;
         ap_params->chan.freq               = params->freq->freq;
         ap_params->chan.channel            = params->freq->channel;
         ap_params->chan.sec_channel_offset = params->freq->sec_channel_offset;
@@ -2036,7 +2033,7 @@ int wifi_nxp_hostapd_set_freq(void *if_priv, struct hostapd_freq_params *freq)
 #endif
     ret = 0;
 
-    chan.mode               = freq->mode;
+    chan.mode               = (enum wifi_mode)freq->mode;
     chan.freq               = freq->freq;
     chan.channel            = freq->channel;
     chan.sec_channel_offset = freq->sec_channel_offset;
@@ -2087,7 +2084,7 @@ out:
 int wifi_nxp_hostapd_stop_ap(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    int ret                                            = -1;
+    int ret                                    = -1;
     if (!if_priv)
     {
         supp_e("%s: Invalid params", __func__);

@@ -2265,10 +2265,10 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
     ret = sd_wifi_preinit();
     if (ret == MLAN_STATUS_SUCCESS)
     {
-        ret = sdio_init();
+        ret = (mlan_status)sdio_init();
         if (ret == MLAN_STATUS_SUCCESS)
         {
-            ret = sdio_ioport_init();
+            ret = (mlan_status)sdio_ioport_init();
             if (ret == MLAN_STATUS_SUCCESS)
             {
                 ret = (mlan_status)firmware_download(fw_start_addr, size);

@@ -2821,7 +2821,7 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
         tlv->type = wlan_cpu_to_le16(tlv->type);
         tlv->len  = wlan_cpu_to_le16(tlv->len);
         tlv_len   = tlv->len;
-        (void *)__memcpy(NULL, pos, (t_u8 *)tlv, sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        (void)__memcpy(NULL, pos, (t_u8 *)tlv, sizeof(MrvlIEtypesHeader_t) + tlv_len);
         pos += sizeof(MrvlIEtypesHeader_t) + tlv_len;
         tlv_buf += sizeof(MrvlIEtypesHeader_t) + tlv_len;
         tlv = (MrvlIEtypesHeader_t *)tlv_buf;
@@ -2839,7 +2839,7 @@ static mlan_status wlan_uap_cmd_add_station(pmlan_private pmpriv,
                 MIN(sta_ptr->he_cap.ieee_hdr.len, sizeof(IEEEtypes_HECap_t) - sizeof(IEEEtypes_Header_t)));
 
             pos += sizeof(MrvlIEtypesHeader_t);
-            (void *)__memcpy(NULL, pos, (t_u8 *)&sta_ptr->he_cap.ext_id, tlv->len);
+            (void)__memcpy(NULL, pos, (t_u8 *)&sta_ptr->he_cap.ext_id, tlv->len);
             travel_len += sizeof(MrvlIEtypesHeader_t) + tlv->len;
         }
     }

@@ -43,9 +43,17 @@ Here are the details about the SD8997 firmware:
 NW61x WIRELESS FIRMWARE
 ========================
 
-Here are the details about the NW61x firmware:
+Here are the details about the NW61x firmwares(signed and unsigned):
 
-1. Firmware Name:      SD-WLAN-UART-BT-NW61x-U16-MMC-W18.99.1.p182.1-18.99.1.p182.1-C4X16679_V2-GPL
+1. Firmware Name:      SD-WLAN-UART-BT-NW61x-U16-MMC-W18.99.2.p7-18.99.2.p7-C4X16679_V2-GPL
+
+
+NW61x RF-TEST MODE FIRMWARE
+===========================
+
+Here are the details about the NW61x's RFTM firmwares(signed and unsigned):
+
+1. Firmware Name:      SD-WLAN-UART-BT-NW61x-U16-MMC-W18.255.2.p7-18.255.2.p7-C4X16679_V2-GPL
 
 
 NW61x MANUFACTURING FIRMWARE
