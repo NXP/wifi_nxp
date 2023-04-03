@@ -390,33 +390,6 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
 
 } MLAN_PACK_END wifi_nxp_callbk_fns_t;
 
-int wifi_supp_cmd_event_init(void);
-int wifi_supp_cmd_event_deinit(void);
-
-int wifi_supp_trigger_scan2(nxp_wifi_trigger_scan_t *wifi_scan_params);
-
-int wifi_supp_trigger_sched_scan(nxp_wifi_trigger_sched_scan_t *wifi_sched_scan_param);
-
-int wifi_supp_stop_sched_scan(void);
-
-int wifi_supp_scan_res_get(nxp_wifi_trigger_op_t *wifi_scan_params);
-
-int wifi_supp_survey_res_get(nxp_wifi_trigger_op_t *wifi_survey_params);
-
-int wifi_supp_scan_abort(void);
-
-int wifi_supp_send_auth(nxp_wifi_auth_info_t *auth_params);
-
-int wifi_supp_send_deauth(nxp_wifi_deauth_info_t *deauth_params);
-
-int wifi_supp_send_assoc(nxp_wifi_assoc_info_t *assoc_params);
-
-int wifi_supp_send_key_info(nxp_wifi_key_info_t *key_params);
-
-int wifi_supp_send_set_port(nxp_wifi_port_info_t *port_params);
-
-int wifi_supp_send_mlme(nxp_wifi_mgmt_tx_info_t *mgmt_tx_params);
-
 typedef struct _chan_to_freq_t
 {
     /** Channel */

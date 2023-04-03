@@ -4792,6 +4792,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_LINK_LOST:
             (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
                                         (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+#ifdef CONFIG_WPA_SUPP
+            wpa_supp_handle_link_lost(pmpriv);
+#endif
 #ifdef CONFIG_11N
             /* fixme: Should this be outside CONFIG_11N ? */
             wlan_handle_disconnect_event(pmpriv);

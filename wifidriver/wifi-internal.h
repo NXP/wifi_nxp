@@ -399,6 +399,8 @@ void wifi_user_scan_config_cleanup(void);
  */
 void wifi_scan_stop(void);
 #ifdef CONFIG_WPA_SUPP
+void wpa_supp_handle_link_lost(mlan_private *priv);
+
 #ifdef CONFIG_WPA_SUPP_WPS
 bool wifi_nxp_wps_session_enable(void);
 #endif

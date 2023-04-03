@@ -3616,10 +3616,12 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     wifi_wfd_event(false, false, NULL);
 #endif
 
+#ifndef CONFIG_WPA_SUPP
     if (wlan.reassoc_control)
     {
         wlcm_request_reconnect(next, network);
     }
+#endif
 }
 
 #ifdef CONFIG_WLAN_BRIDGE

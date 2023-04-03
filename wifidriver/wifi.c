@@ -2370,6 +2370,37 @@ void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void)
 
 #ifdef CONFIG_WPA_SUPP
 
+void wpa_supp_handle_link_lost(mlan_private *priv)
+{
+    t_u8 broadcast_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    nxp_wifi_event_mlme_t resp;
+    IEEE80211_MGMT *mgmt = (IEEE80211_MGMT *)resp.frame.frame;
+
+    if (priv->bss_role == MLAN_BSS_ROLE_STA)
+    {
+        memset(mgmt, 0, sizeof(IEEE80211_MGMT));
+
+        mgmt->frame_control            = SUBTYPE_DEAUTH;
+        mgmt->duration                 = 0;
+        mgmt->seq_ctrl                 = 0;
+        mgmt->u.deauth_req.reason_code = WLAN_REASON_DEAUTH_LEAVING;
+
+        memcpy((void *)mgmt->da, broadcast_addr, MLAN_MAC_ADDR_LENGTH);
+        memcpy((void *)mgmt->sa, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
+        memcpy((void *)mgmt->bssid, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
+
+        resp.frame.frame_len = 26;
+
+        priv->curr_bss_params.host_mlme = 0;
+        priv->auth_flag                 = 0;
+
+        if (wm_wifi.supp_if_callbk_fns->deauth_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, &resp, resp.frame.frame_len);
+        }
+    }
+}
+
 /**
  *   @brief This function processes the 802.11 mgmt Frame
  *

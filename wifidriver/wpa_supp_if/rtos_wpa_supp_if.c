@@ -392,7 +392,7 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
         event.deauth_info.ie_len = (frame + frame_len - mgmt->u.deauth.variable);
     }
 
-    return wifi_if_ctx_rtos->supp_callbk_fns.deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    wifi_if_ctx_rtos->supp_callbk_fns.deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
 }
 
 void wifi_nxp_wpa_supp_event_proc_disassoc(void *if_priv, nxp_wifi_event_mlme_t *disassoc, unsigned int event_len)
@@ -1420,10 +1420,10 @@ void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv, nxp_wifi_event_mlme
 
     //	if (cmd_evnt == NXP_WIFI_EVENT_UNPROT_DEAUTHENTICATE) {
     event.unprot_deauth.reason_code = le_to_host16(mgmt->u.deauth.reason_code);
-    return wifi_if_ctx_rtos->supp_callbk_fns.unprot_deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    wifi_if_ctx_rtos->supp_callbk_fns.unprot_deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     //	} else if (cmd_evnt == NXP_WIFI_EVENT_UNPROT_DISASSOCIATE) {
     event.unprot_disassoc.reason_code = le_to_host16(mgmt->u.deauth.reason_code);
-    return wifi_if_ctx_rtos->supp_callbk_fns.unprot_disassoc(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    wifi_if_ctx_rtos->supp_callbk_fns.unprot_disassoc(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     //	}
 }
 
