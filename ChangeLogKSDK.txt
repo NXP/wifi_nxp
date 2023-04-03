@@ -3,6 +3,56 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r45.p1
+ - Updates:
+  - Updated firmware version to 2.p7 and added TP signed secure FW too.
+  - Removed wifi_features and wifi_cert applications.
+  - Added VDLL support.
+  - Added information for BSD3 license.
+  - Updated WLCMGR and Wi-Fi driver to support WPA supplicant and hostapd.
+  - Added config optio for wifi cli application to use wpa supplicant or embedded supplicant.
+
+ - Features
+  - Added WPA supplicant and hostapd support.
+  - Added WPS 2.0 support for STA and uAP.
+  - Added WPA2 enterprise support for STA and uAP.
+  - Added WPA3 enterprise support with suite b and suite b 192 bit mode for STA and uAP.
+
+ - Bug Fixes:
+  - Fixed: APUT goes into hang state after every disassociation of STA.
+  - Fixed: (pre-cert)AMSDU Rx test fails as STAUT returns the throughput received as 0.
+  - Fixed: Country Information IE with default country code (WW) is seen in beacon even after changing the regions from WW to US/EU/CA/CN.
+  - Fixed: DUT should show "Network not found" message in cli, when Configure SSID is not present in network area.
+  - Fixed: DUT not able to connect to Ex-AP in WPA3R3 security.
+  - Fixed: DUT not able to roam from Ex-AP1 to Ex-AP2.
+  - Fixed: Hostsleep/MEF test condition failures are seen.
+  - Fixed: uAP not coming up in WPA2/WPA3 mixed mode security., getting "WPA initialization failed" on DUT console.
+  - Fixed: DUT shows wrong channel number in wlan-scan-opt and wlan-info command results.
+  - Fixed: DUT sending QoS data packets with LDPC coding when LDPC coding is disabled on Ex-STA.
+  - Fixed: Country Information IE is not seen in uAP Beacon.
+  - Fixed: DUT is going into hang state while running Connect/Disconnect Stress Test
+  - Fixed: Supported MCS and NSS rates are not properly set under HE capabilities IE in beacon frame when CAPA enabled binary is flashed on DUT.
+  - Fixed: Channel Bandwidth is setting to 80Mhz when uAP is configured in 11AX-40Mhz/20Mhz.
+  - Fixed: Beacon frame includes HE IE when uAP is configured in 11AC using Capa command.
+  - Fixed: DUT is not connecting in WPA2/WPA3 Enterprise security.
+  - Fixed: DUT is not getting ipv4 address after Roaming to Ex-AP2.
+  - Fixed: DUT is not roaming from AP1 to Ex-AP2 after running wlan-ft-roam command in 5Ghz.
+  - Fixed: DUT is not following BSS transition Correctly.
+  - Fixed: DUT is not responding Beacon Report Action frame after sending the Beacon request from Ex-AP to DUT.
+  - Fixed: Automatic Channel Selection is not working when DUT configured in MMH mode.
+  - Fixed: DUT is going for Reassociation with the same Ex-AP after running "wlan-host-11k-neighbour-req" command.
+  - Fixed: uAP Beacons does not include SHA256 in RSNIE when PMF mandatory is set on AP in WPA2-PSK security.
+  - Fixed: Low Throughput seen in 11AX, 11AC, 11N (80MHz, 40MHz & 20MHz) TCP-RX/TX, UDP-TX/RX in 2.4Ghz & 5Ghz.
+  - Fixed: DUT is not using "FT using PSK" AKM suite when 802.11R is enabled.
+  - Fixed: DUT not able to connect to Ex-AP in WPA2 security when PMF required is set.
+  - Fixed: Need to reset DUT every time for every new connection to happen.
+  - Fixed: Incorrect VHT IE "RX/TX MCS Map" is seen in uAP beacons.
+  - Fixed: uAP Beacons is advertising 4 Pairwise Cipher Suites [CCMP (256), GCMP (256), AES (CCM), GCMP (128)] in RSNIE with WPA2/WPA3 security.
+  - Fixed: uAP not coming up in 2.4GHz channel 11, getting "uAP start failed, giving up" on DUT console.
+  - Fixed: DUT is going in hang state after Stop/Remove/Start network in wpa2 and wpa3 security, when configured in MMH mode.
+  - Fixed: HE IE is not reflecting in beacons, when DUT is configured in default mode without capa in MMH.
+  - Fixed: DUT is not connecting in WPA3 security, shows "Error: Init of random number generator failed."
+
 Version 1.3.r43.p9
  - Updates:
   - Added support for RF test mode.
