@@ -1,0 +1,456 @@
+# yaml-language-server: $schema=../../bin/generator/sdk_generator/data/sdk_data_schema/v3/software_set_and_project_schema.json
+
+__load__:
+- bin/generator/records_v3/shared/component/docs/wireless/wifi.yml
+middleware.wifi.template:
+  section-type: component
+  contents:
+    repo_base_path: components/wifi_bt_module/template
+    project_base_path: wifi/template
+    cc-include:
+    - repo_relative_path: "./"
+    files:
+    # - source: app_config.h
+    #   attribute: config
+    #   linked_support: true
+    - source: wifi_config.h
+      attribute: config
+    - source: wifi_bt_config.h
+      attribute: config
+    - source: wifi_bt_config.c
+      attribute: config
+    # configuration:
+    #   cc-define:
+    #     LWIP_DNS: 1
+    #     LWIP_NETIF_HOSTNAME: 1
+    #     LWIP_NETIF_STATUS_CALLBACK: 1
+    #     LWIP_IGMP: 1
+    #     SDIO_ENABLED: 
+  belong_to: set.middleware.wifi
+  section_info:
+    type: project_template
+    full_name: Wi-Fi configuration template
+    description: Template configuration file to be edited by user.
+    version: 1.0.0
+    vendor: NXP
+    user_visible: never
+    taxonomy:
+      csub: template
+      belong_to: wifi
+    display_name: Wi-Fi configuration template
+  dependency:
+    allOf:
+    - component.wifi_bt_module.tx_pwr_limits
+middleware.wifi.common_files:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: incl
+    - repo_relative_path: incl/port/os
+    - repo_relative_path: incl/wifidriver
+    - repo_relative_path: incl/wlcmgr
+    - repo_relative_path: wifi_bt_firmware
+    - repo_relative_path: wifidriver
+    - repo_relative_path: wifidriver/incl
+    files:
+    - source: incl/port/os/wm_os.h
+    - source: incl/wifidriver/wifi-decl.h
+    - source: incl/wifidriver/wifi.h
+    - source: incl/wifidriver/wifi_events.h
+    - source: incl/wm_utils.h
+    - source: incl/wmerrno.h
+    - source: incl/wmlog.h
+    - source: incl/wmtypes.h
+    - source: port/os/os.c
+    - source: wifidriver/incl/mlan_decl.h
+    - source: wifidriver/incl/mlan_ioctl.h
+    - source: wifi_bt_firmware/wlan_bt_fw.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP WLAN common files
+    user_visible: never
+    version: 1.0.0
+    description: NXP WLAN common files
+    taxonomy:
+      csub: common_files
+      belong_to: wifi
+    display_name: nxp_wireless_common_files
+middleware.wifi.fwdnld:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: "./"
+    - repo_relative_path: incl
+    - repo_relative_path: incl/port/os
+    - repo_relative_path: incl/wifidriver
+    - repo_relative_path: wifi_bt_firmware
+    - repo_relative_path: wifidriver
+    - repo_relative_path: wifidriver/incl
+    files:
+    - source: incl/WIFI_IW416_BOARD_AW_AM457_CAL_DATA_EXT.h
+    - source: wifidriver/incl/mlan_main_defs.h
+    - source: wifi_bt_firmware/sd8801_wlan.h
+    - source: wifi_bt_firmware/sduartIW416_wlan_bt.h
+    - source: wifi_bt_firmware/sduart8987_wlan_bt.h
+    - source: wifidriver/sdio.c
+    - source: wifidriver/sdio.h
+    - source: wifidriver/firmware_dnld.c
+    - source: wifidriver/firmware_dnld.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP WLAN f/w dnld driver
+    user_visible: always
+    version: 1.0.0
+    description: NXP WLAN f/w dnld driver
+    taxonomy:
+      csub: fwdnld
+      belong_to: wifi
+    display_name: nxp_wireless_fwdnld
+  dependency:
+    allOf:
+    - middleware.freertos-kernel
+    - middleware.wifi.template
+    - middleware.wifi.mlan_sdio
+    - middleware.wifi.common_files
+middleware.wifi.wifidriver:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: incl
+    - repo_relative_path: incl/port/os
+    - repo_relative_path: incl/wifidriver
+    - repo_relative_path: incl/wlcmgr
+    - repo_relative_path: wifi_bt_firmware
+    - repo_relative_path: wifidriver
+    - repo_relative_path: wifidriver/incl
+    files:
+    - source: incl/dhcp-server.h
+    - source: incl/wlcmgr/wlan.h
+    - source: incl/wlcmgr/wlan_11d.h
+    - source: wifidriver/incl/mlan.h
+    - source: wifidriver/incl/mlan_11ac.h
+    - source: wifidriver/incl/mlan_11ax.h
+    - source: wifidriver/incl/mlan_11h.h
+    - source: wifidriver/incl/mlan_11n.h
+    - source: wifidriver/incl/mlan_11n_aggr.h
+    - source: wifidriver/incl/mlan_11n_rxreorder.h
+    - source: wifidriver/incl/mlan_11v.h
+    - source: wifidriver/incl/mlan_action.h
+    - source: wifidriver/incl/mlan_11k.h
+    - source: wifidriver/incl/mlan_mbo.h
+    - source: wifidriver/incl/mlan_api.h
+    - source: wifidriver/incl/mlan_fw.h
+    - source: wifidriver/incl/mlan_ieee.h
+    - source: wifidriver/incl/mlan_init.h
+    - source: wifidriver/incl/mlan_join.h
+    - source: wifidriver/incl/mlan_main.h
+    - source: wifidriver/incl/mlan_meas.h
+    - source: wifidriver/incl/mlan_remap_mem_operations.h
+    - source: wifidriver/incl/mlan_uap.h
+    - source: wifidriver/incl/mlan_util.h
+    - source: wifidriver/incl/mlan_wmm.h
+    - source: wifidriver/mlan_11ac.c
+    - source: wifidriver/mlan_11ax.c
+    - source: wifidriver/mlan_11d.c
+    - source: wifidriver/mlan_11h.c
+    - source: wifidriver/mlan_11n.c
+    - source: wifidriver/mlan_11n_aggr.c
+    - source: wifidriver/mlan_11n_rxreorder.c
+    - source: wifidriver/mlan_11v.c
+    - source: wifidriver/mlan_action.c
+    - source: wifidriver/mlan_11k.c
+    - source: wifidriver/mlan_mbo.c
+    - source: wifidriver/mlan_api.c
+    - source: wifidriver/mlan_cfp.c
+    - source: wifidriver/mlan_cmdevt.c
+    - source: wifidriver/mlan_glue.c
+    - source: wifidriver/mlan_init.c
+    - source: wifidriver/mlan_join.c
+    - source: wifidriver/mlan_misc.c
+    - source: wifidriver/mlan_scan.c
+    - source: wifidriver/mlan_shim.c
+    - source: wifidriver/mlan_sta_cmd.c
+    - source: wifidriver/mlan_sta_cmdresp.c
+    - source: wifidriver/mlan_sta_event.c
+    - source: wifidriver/mlan_sta_ioctl.c
+    - source: wifidriver/mlan_sta_rx.c
+    - source: wifidriver/mlan_txrx.c
+    - source: wifidriver/mlan_uap_cmdevent.c
+    - source: wifidriver/mlan_uap_ioctl.c
+    - source: wifidriver/mlan_wmm.c
+    - source: wifidriver/wifi-debug.c
+    - source: wifidriver/wifi-debug.h
+    - source: wifidriver/wifi-internal.h
+    - source: wifidriver/wifi-mem.c
+    - source: wifidriver/wifi-uap.c
+    - source: wifidriver/wifi.c
+    - source: wifidriver/wifi_common.h
+    - source: wifidriver/wifi_pwrmgr.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi driver
+    user_visible: never
+    version: 1.3.38
+    description: NXP Wi-Fi driver
+    taxonomy:
+      csub: wifidriver
+      belong_to: wifi
+    display_name: nxp_wifi_driver
+  dependency:
+    allOf:
+    - middleware.freertos-kernel
+    - utility.debug_console
+    - middleware.wifi.template
+    - anyOf:
+      - allOf:
+        - middleware.wifi.sdio
+        - middleware.wifi.fwdnld
+      - allOf:
+        - middleware.wifi.imu
+        - middleware.wifi.common_files
+middleware.wifi:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: dhcpd
+    - repo_relative_path: incl
+    - repo_relative_path: incl/port/lwip
+    - repo_relative_path: port/lwip
+    files:
+    - source: dhcpd/dhcp-bootp.h
+    - source: dhcpd/dhcp-priv.h
+    - source: dhcpd/dhcp-server-main.c
+    - source: dhcpd/dhcp-server.c
+    - source: dhcpd/dns-server.c
+    - source: dhcpd/dns.h
+    - source: incl/port/lwip/wm_net.h
+    - source: incl/wmstats.h
+    - source: port/lwip/net.c
+    - source: port/lwip/netif_decl.h
+    - source: port/lwip/wifi_netif.c
+    - source: wlcmgr/wlan.c
+    - source: wlcmgr/wlan_txpwrlimit_cfg.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi
+    user_visible: always
+    version: 1.3.38
+    description: NXP Wi-Fi functionality enables customers to quickly develop applications
+      of interest to add connectivity to different sensors and appliances
+    taxonomy:
+      csub: wifi
+      belong_to: wifi
+    display_name: wifi_nxp
+  dependency:
+    allOf:
+    - middleware.freertos-kernel
+    - utility.debug_console
+    - middleware.wifi.wifidriver
+    - middleware.wifi.template
+    - middleware.lwip
+middleware.wifi.sdio:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    files:
+    - source: wifidriver/wifi-sdio.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi SDIO
+    user_visible: never
+    version: 1.3.38
+    description: NXP Wi-Fi SDIO driver
+    taxonomy:
+      csub: sdio
+      belong_to: wifi
+    display_name: wifi_nxp_sdio
+  dependency:
+    allOf:
+    - middleware.wifi.mlan_sdio
+    - middleware.wifi.wifidriver
+middleware.wifi.mlan_sdio:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: incl/wifidriver
+    - repo_relative_path: wifidriver
+    files:
+    - source: wifidriver/mlan_sdio.c
+    - source: wifidriver/incl/type_decls.h
+    - source: wifidriver/incl/mlan_sdio_defs.h
+    - source: wifidriver/incl/mlan_sdio.h
+    - source: incl/wifidriver/mlan_sdio_api.h
+    - source: wifidriver/wifi-sdio.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi SDIO
+    user_visible: never
+    version: 1.3.38
+    description: NXP Wi-Fi SDIO driver
+    taxonomy:
+      csub: mlan_sdio
+      belong_to: wifi
+    display_name: wifi_nxp_mlan_sdio
+  dependency:
+    allOf:
+    - middleware.sdmmc.host.usdhc.freertos
+    - middleware.sdmmc.sdio
+    - middleware.sdmmc.host.usdhc
+    - middleware.wifi.template
+    - middleware.wifi.common_files
+middleware.wifi.imu:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: wifidriver
+    files:
+    - source: wifidriver/wifi-imu.c
+    - source: wifidriver/wifi-imu.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi IMU
+    user_visible: never
+    version: 1.3.23
+    description: NXP Wi-Fi IMU driver
+    taxonomy:
+      csub: imu
+      belong_to: wifi
+    display_name: wifi_nxp_imu
+  dependency:
+    allOf:
+    - middleware.wifi.common_files
+    - component.wireless_imu_adapter
+    - component.osa_free_rtos
+    - driver.imu
+middleware.wifi.cli:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: cli
+    - repo_relative_path: incl
+    - repo_relative_path: incl/wlcmgr
+    files:
+    - source: cli/cli_mem.h
+    - source: cli/cli.c
+    - source: cli/cli_mem_simple.c
+    - source: cli/cli_utils.c
+    - source: incl/cli.h
+    - source: incl/cli_utils.h
+    - source: nw_utils/wifi_ping.c
+    - source: nw_utils/iperf.c
+    - source: wlcmgr/wlan_basic_cli.c
+    - source: wlcmgr/wlan_enhanced_tests.c
+    - source: wlcmgr/wlan_tests.c
+    - source: wlcmgr/wlan_test_mode_tests.c
+    - source: incl/wlcmgr/wlan_tests.h
+    - source: incl/iperf.h
+    - source: incl/wifi_ping.h
+    - source: dhcpd/dhcp-server-cli.c
+    - source: port/os/os_cli.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi CLI
+    user_visible: never
+    version: 1.3.38
+    description: Middlware Wi-Fi CLI
+    taxonomy:
+      csub: cli
+      belong_to: wifi
+    display_name: wifi_nxp_cli
+  dependency:
+    allOf:
+    - middleware.wifi
+    - middleware.wifi.wifidriver
+    - middleware.lwip.apps.lwiperf
+    - utility.debug_console
+middleware.wifi.unused:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    files:
+    - source: wifi_bt_firmware/version.txt
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi unused
+    user_visible: never
+    version: 1.3.38
+    description: Middlware Wi-Fi unused
+    taxonomy:
+      csub: unused
+      belong_to: wifi
+    display_name: wifi_nxp_unused
+set.middleware.wifi:
+  section-type: set
+  belong_to: set.middleware.wifi
+  section_info:
+    fixed_id: nxp_wifi
+    version: 1.3.38
+    display_name: NXP Wi-Fi
+    description: NXP Wi-Fi
+    set_location:
+      repo_base_path: middleware/wifi_nxp
+    type: middleware
+    vendor: NXP
+    product:
+      kex_package:
+        kex_web_ui:
+          ui_control: true
+          ui_release_specific: true
+          ui_control_default: true
+          ui_category: Middleware
+      cmsis_pack:
+        vendor: NXP
+        supported: false
+    component_taxonomy:
+      wifi:
+        cclass: Wireless
+        cgroup: NXP Wi-Fi
+  dependency:
+    allOf:
+    - board:
+      - evkmimxrt595
+      - evkmimxrt685
+      - mimxrt685audevk
+      - evkmimxrt1020
+      - evkmimxrt1040
+      - evkbimxrt1050
+      - evkmimxrt1060
+      - evkbmimxrt1060
+      - evkcmimxrt1060
+      - evkmimxrt1064
+      - evkmimxrt1160
+      - evkmimxrt1170
+      - evkbmimxrt1170
+      - evkmimxrt1180
+      - evkmimxrt1180a
+      - mcxn9xxevk
+      - mcxn5xxevk
+      - rdrw612bga
+      - rdrw612qfn
+    - set.middleware.lwip
+    - set.middleware.freertos-kernel
