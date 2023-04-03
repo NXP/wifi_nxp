@@ -91,8 +91,6 @@ enum wifi_event
     WIFI_EVENT_NET_DHCP_CONFIG,
     /** Supplicant PMK */
     WIFI_EVENT_SUPPLICANT_PMK,
-    /** WPA Supplicant WPS Successful*/
-    WIFI_EVENT_WPA_SUPPLICANT_WPS_SUCCESS,
     /** Sleep */
     WIFI_EVENT_SLEEP,
     /** Awake */

@@ -339,6 +339,10 @@ enum wlan_event_reason
      *  WLAN Connection Manager should be stopped and started again via
      *  wlan_stop() and wlan_start() respectively. */
     WLAN_REASON_INITIALIZATION_FAILED,
+#ifdef CONFIG_WPA_SUPP_WPS
+    /** The WLAN Connection Manager has received WPS event from WPA supplicant. */
+    WLAN_REASON_WPS_EVENT,
+#endif
     /** The WLAN Connection Manager has entered power save mode. */
     WLAN_REASON_PS_ENTER,
     /** The WLAN Connection Manager has exited from power save mode. */

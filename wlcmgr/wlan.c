@@ -4023,6 +4023,44 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
 }
 #endif
 
+#ifdef CONFIG_WPA_SUPP_WPS
+static void wlcm_process_wps_success_event()
+{
+    int ret, i;
+    struct wlan_network network;
+    const char *name = "wps_network";
+    size_t len       = 0;
+    const char *ssid = "w";
+
+    (void)memset(&network, 0, sizeof(struct wlan_network));
+    (void)memcpy(network.name, name, strlen(name));
+    len = strlen(name);
+    (void)memcpy(network.ssid, ssid, strlen(ssid));
+
+    network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+
+    ret = wlan_add_network(&network);
+
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to add wps network");
+        return;
+    }
+
+    wlan.wps_session_attempt = 0;
+
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
+                !strncmp(wlan.networks[i].name, name, len))
+        {
+            wlan.cur_network_idx = i;
+            break;
+        }
+    }
+}
+#endif
+
 static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 {
     const char *s;
@@ -4036,6 +4074,8 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
     if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
     {
+        wlcm_d("No suitable network was found");
+
         if (wlan.roam_reassoc == true)
         {
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
@@ -4056,6 +4096,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     }
     else if (strstr(buf, WPA_EVENT_AUTH_REJECT))
     {
+        wlcm_d("Authentication rejected during connection attempt");
         if (wlan.roam_reassoc != true)
         {
             (void)send_user_request(CM_STA_USER_REQUEST_CONNECT, wlan.cur_network_idx);
@@ -4064,6 +4105,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     }
     else if (strstr(buf, AP_STA_CONNECTED))
     {
+        wlcm_d("AP: Station connected");
         t_u8 addr[MLAN_MAC_ADDR_LENGTH];
 
         s = strchr(buf, ' ');
@@ -4083,49 +4125,108 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     }
     if (strstr(buf, AP_STA_DISCONNECTED))
     {
-        t_u8 addr[MLAN_MAC_ADDR_LENGTH];
+        wlcm_d("AP: Station dis-connected");
+
+        wifi_uap_client_disassoc_t disassoc_resp;
+
+        disassoc_resp.reason_code = 0;
 
         s = strchr(buf, ' ');
         if (s == NULL)
             return;
 
-        if (hwaddr_aton(s + 1, addr))
+        if (hwaddr_aton(s + 1, disassoc_resp.sta_addr))
             return;
 
-        wifi_uap_client_deauth(addr);
+        wifi_uap_client_deauth(disassoc_resp.sta_addr);
 
-        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, addr);
+        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, (void *)&disassoc_resp);
     }
 #ifdef CONFIG_WPA_SUPP_WPS
+    else if (strstr(buf, WPS_EVENT_OVERLAP))
+    {
+        wlcm_d("WPS overlap detected in PBC mode");
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_OVERLAP);
+    }
+    else if (strstr(buf, WPS_EVENT_AP_AVAILABLE_PBC))
+    {
+        wlcm_d("Available WPS AP with active PBC found in scan results");
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_AP_AVAILABLE_PBC);
+
+    }
+    else if (strstr(buf, WPS_EVENT_AP_AVAILABLE_PIN))
+    {
+        wlcm_d("Available WPS AP with recently selected PIN registrar found in scan results");
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_AP_AVAILABLE_PIN);
+
+    }
+    else if (strstr(buf, WPS_EVENT_AP_AVAILABLE))
+    {
+        wlcm_d("Available WPS AP found in scan results");
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_AP_AVAILABLE);
+
+    }
+    else if (strstr(buf, WPS_EVENT_CRED_RECEIVED))
+    {
+        wlcm_d("A new credential received");
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_CRED_RECEIVED);
+
+    }
+    else if (strstr(buf, WPS_EVENT_DISABLE))
+    {
+        wlcm_d("PBC mode was disabled");
+        wlan.wps_session_attempt = 0;
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_DISABLE);
+
+    }
     else if (strstr(buf, WPS_EVENT_ACTIVE))
     {
+        wlcm_d("PBC mode was activated");
         wlan.wps_session_attempt = 1;
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_ACTIVE);
+
+    }
+    else if (strstr(buf, WPS_EVENT_PIN_ACTIVE))
+    {
+        wlcm_d("PIN mode was activated");
+        wlan.wps_session_attempt = 1;
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_PIN_ACTIVE);
+
     }
     else if (strstr(buf, WPS_EVENT_TIMEOUT))
     {
+        wlcm_d("WPS enrollment attempt timed out and was terminated");
         wlan.wps_session_attempt = 0;
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_TIMEOUT);
+
     }
     else if (strstr(buf, WPS_EVENT_FAIL))
     {
+        wlcm_d("WPS registration failed after M2/M2D");
         wlan.wps_session_attempt = 0;
+        CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_FAIL);
+
     }
     else if (strstr(buf, WPS_EVENT_SUCCESS))
     {
+        wlcm_d("WPS registration completed successfully");
         if (wlan.wps_session_attempt)
         {
-            (void)wifi_event_completion(WIFI_EVENT_WPA_SUPPLICANT_WPS_SUCCESS, WIFI_EVENT_REASON_SUCCESS, NULL);
+            wlcm_process_wps_success_event();
+            CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_SUCCESS);
         }
     }
     else
 #endif
 #ifdef CONFIG_11K
-    if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_RXED))
+        if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_RXED))
     {
+        wlcm_d("11K RRM event neighbor response received");
         wlan_parse_neighbor_report_response(buf, &wlan.nbr_rpt);
     }
     else if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_FAILED))
     {
-
+        wlcm_d("11K RRM event neighbor report request failed");
     }
     else
 #endif
@@ -4678,6 +4779,9 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifdef CONFIG_WPA_SUPP
         if (wlan.status_timeout)
     {
+#ifdef CONFIG_WPA_SUPP_WPS
+        wlan.wps_session_attempt = 0;
+#endif
         os_timer_deactivate(&wlan.supp_status_timer);
         wlan.status_timeout = 0;
     }
@@ -4889,47 +4993,6 @@ static void wlcm_process_mgmt_frame(void *data)
             pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len), rxpd);
     }
 }
-
-#ifdef CONFIG_WPA_SUPP_WPS
-static void wlcm_process_wps_success_event(struct wifi_message *msg, enum cm_sta_state *next)
-{
-    int ret, i;
-    struct wlan_network network;
-    const char *name = "wps_network";
-    size_t len       = 0;
-    const char *ssid = "w";
-
-    if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
-    {
-        (void)memset(&network, 0, sizeof(struct wlan_network));
-        (void)memcpy(network.name, name, strlen(name));
-        len = strlen(name);
-        (void)memcpy(network.ssid, ssid, strlen(ssid));
-
-        network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
-
-        ret = wlan_add_network(&network);
-
-        if (ret != WM_SUCCESS)
-        {
-            wlcm_e("Failed to add wps network");
-            return;
-        }
-
-        wlan.wps_session_attempt = 0;
-
-        for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
-        {
-            if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
-                !strncmp(wlan.networks[i].name, name, len))
-            {
-                wlan.cur_network_idx = i;
-                break;
-            }
-        }
-    }
-}
-#endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
@@ -5254,12 +5317,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_MGMT_TX_STATUS:
             wifi_process_mgmt_tx_status(msg);
             break;
-#ifdef CONFIG_WPA_SUPP_WPS
-        case WIFI_EVENT_WPA_SUPPLICANT_WPS_SUCCESS:
-            wlcm_d("got event: wps success");
-            wlcm_process_wps_success_event(msg, &next);
-            break;
-#endif
 #endif
         default:
             wlcm_w("got unknown message: %d", msg->event);
@@ -7152,6 +7209,14 @@ int wlan_connect(char *name)
     {
         return -WM_E_INVAL;
     }
+
+#ifdef CONFIG_WPA_SUPP_WPS
+    if (wlan.wps_session_attempt)
+    {
+        wlcm_d("WPS session is in progress");
+        return WLAN_ERROR_STATE;
+    }
+#endif
 
     /* connect to a specific network */
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
@@ -10650,7 +10715,12 @@ int wlan_start_wps_pbc(void)
 {
     struct netif *netif = net_get_sta_interface();
 
-    wlan.wps_session_attempt = 0;
+    if (wlan.wps_session_attempt)
+    {
+        wlcm_d("WPS session is already in progress");
+        return -WM_FAIL;
+    }
+
     return wpa_supp_start_wps_pbc(netif, 0);
 }
 
@@ -10665,19 +10735,29 @@ int wlan_start_wps_pin(const char *pin)
 {
     struct netif *netif = net_get_sta_interface();
 
+    if (wlan.wps_session_attempt)
+    {
+        wlcm_d("WPS session is already in progress");
+        return -WM_FAIL;
+    }
+
     if (wpa_supp_wps_pin_valid(netif, (const unsigned char *)pin) != WM_SUCCESS)
     {
         wlcm_d("WPS PIN validation failed for %s", pin);
         return -WM_FAIL;
     }
 
-    wlan.wps_session_attempt = 0;
     return wpa_supp_start_wps_pin(netif, pin, 0);
 }
 
 int wlan_wps_cancel(void)
 {
     struct netif *netif = net_get_sta_interface();
+
+    if (wlan.wps_session_attempt == 0)
+    {
+        return WM_SUCCESS;
+    }
 
     return wpa_supp_cancel_wps(netif, 0);
 }
