@@ -341,7 +341,7 @@ enum wlan_event_reason
     WLAN_REASON_INITIALIZATION_FAILED,
 #ifdef CONFIG_WPA_SUPP_WPS
     /** The WLAN Connection Manager has received WPS event from WPA supplicant. */
-    WLAN_REASON_WPS_EVENT,
+    //WLAN_REASON_WPS_EVENT,
 #endif
     /** The WLAN Connection Manager has entered power save mode. */
     WLAN_REASON_PS_ENTER,
