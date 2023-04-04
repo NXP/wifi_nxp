@@ -476,7 +476,7 @@ int wifi_set_txrx_histogram(void *cfg, t_u8 *data);
 int wifi_config_roaming(const int enable, uint8_t *rssi_low);
 #endif
 #ifdef CONFIG_BG_SCAN
-void wifi_config_bgscan_and_rssi(const char *ssid);
+int wifi_config_bgscan_and_rssi(const char *ssid);
 #endif
 
 /**

@@ -3191,9 +3191,20 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
                 wlan.ft_bss = true;
             }
 #endif
-            wifi_config_bgscan_and_rssi(network->ssid);
+            int ret = wifi_config_bgscan_and_rssi(network->ssid);
+            if (ret == WM_SUCCESS)
+            {
+                wlcm_d("bgscan config successful");
+                return;
+            }
+            wlan.roam_reassoc = false;
+            set_rssi_threshold = true;
         }
-        return;
+        else
+        {
+            wlcm_d("Roaming already in progress");
+            return;
+        }
     }
 #endif /* CONFIG_ROAMING */
 

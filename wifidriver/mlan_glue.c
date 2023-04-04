@@ -4682,20 +4682,19 @@ int wifi_request_bgscan_query(mlan_private *pmpriv)
     return wm_wifi.cmd_resp_status;
 }
 
-void wifi_config_bgscan_and_rssi(const char *ssid)
+int wifi_config_bgscan_and_rssi(const char *ssid)
 {
     mlan_private *pmpriv = mlan_adap->priv[0];
     int band             = 0;
-    int ret              = 0;
+    int ret              = -WM_FAIL;
 
     ENTER();
+
     if (pmpriv->roaming_enabled == MFALSE)
     {
         wifi_d("Roaming is disabled");
         goto done;
     }
-    if (!pmpriv->rssi_low)
-        goto done;
 
     memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
     /* Fill scan config field for bg scan */
@@ -4728,16 +4727,12 @@ void wifi_config_bgscan_and_rssi(const char *ssid)
     if (ret)
     {
         wifi_d("Failed to request bgscan");
-        goto done;
     }
-    if ((pmpriv->rssi_low + RSSI_HYSTERESIS) <= LOWEST_RSSI_THRESHOLD)
-    {
-        pmpriv->rssi_low += RSSI_HYSTERESIS;
-        ret = wifi_set_rssi_low_threshold(&pmpriv->rssi_low);
-    }
+
 done:
     LEAVE();
-    return;
+
+    return ret;
 }
 #endif
 
