@@ -7672,14 +7672,14 @@ void wlan_set_mac_addr(uint8_t *mac)
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
-
         (void)memcpy(ap_mac, mac, MLAN_MAC_ADDR_LENGTH);
         ap_mac[4] += 1;
 
-        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
-
         net_wlan_set_mac_address((unsigned char *)mac, (unsigned char *)ap_mac);
+
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
+
+        _wifi_set_mac_addr(&ap_mac[0], MLAN_BSS_TYPE_UAP);
 
         /* save the sta mac */
         (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);

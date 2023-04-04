@@ -358,6 +358,8 @@ typedef MLAN_PACK_START struct _nxp_wifi_sta_info
  */
 typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
 {
+    void (*mac_changed_callbk_fn)(void *if_priv);
+
     void (*scan_start_callbk_fn)(void *if_priv);
 
     void (*scan_done_callbk_fn)(void *if_priv);

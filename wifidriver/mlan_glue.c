@@ -6259,9 +6259,25 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type)
     (void)wifi_wait_for_cmdresp(NULL);
     /* Also need to update priv->curr_addr, as rx reorder will check mac address using priv->curr_addr */
     if (bss_type == MLAN_BSS_TYPE_STA)
+    {
         (void)memcpy(&mlan_adap->priv[0]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
+#ifdef CONFIG_WPA_SUPP
+        if (wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn(wm_wifi.if_priv);
+        }
+#endif
+    }
     else if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
         (void)memcpy(&mlan_adap->priv[1]->curr_addr[0], &mac[0], MLAN_MAC_ADDR_LENGTH);
+#ifdef CONFIG_WPA_SUPP
+        if (wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn)
+        {
+            wm_wifi.supp_if_callbk_fns->mac_changed_callbk_fn(wm_wifi.hapd_if_priv);
+        }
+#endif
+    }
 }
 
 #ifdef CONFIG_WMM_UAPSD

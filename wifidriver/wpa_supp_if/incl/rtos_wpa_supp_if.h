@@ -91,6 +91,8 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
 
 int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv);
 
+void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv);
+
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv);
 
 void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv);

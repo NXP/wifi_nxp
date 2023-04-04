@@ -104,6 +104,24 @@ static enum chan_width drv2supp_chan_width(int width)
 }
 #endif
 
+void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.mac_changed(wifi_if_ctx_rtos->hapd_drv_if_ctx);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.mac_changed(wifi_if_ctx_rtos->supp_drv_if_ctx);
+    }
+}
+
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
