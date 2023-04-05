@@ -10340,6 +10340,7 @@ int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 swi
 
 #endif
 
+#ifdef CONFIG_11AX
 int wlan_set_tol_time(const t_u32 tol_time)
 {
     if (is_sta_connecting())
@@ -10350,6 +10351,7 @@ int wlan_set_tol_time(const t_u32 tol_time)
 
     return wifi_set_tol_time(tol_time);
 }
+#endif
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
