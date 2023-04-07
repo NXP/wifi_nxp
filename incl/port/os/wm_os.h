@@ -66,8 +66,6 @@
 
 bool is_isr_context(void);
 
-/* System clock frequency. */
-extern uint32_t SystemCoreClock;
 /* the OS timer register is loaded with CNTMAX */
 #define CNTMAX                 ((SystemCoreClock / configTICK_RATE_HZ) - 1UL)
 #define CPU_CLOCK_TICKSPERUSEC (SystemCoreClock / 1000000U)

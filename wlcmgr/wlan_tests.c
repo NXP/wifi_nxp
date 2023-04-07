@@ -1343,7 +1343,7 @@ static void test_wlan_add(int argc, char **argv)
     }
 
     network.ip.ipv4.addr_type = (enum address_types)(info.address);
-
+	network.ssid[IEEEtypes_SSID_SIZE] = '\0';
     ret = wlan_add_network(&network);
     switch (ret)
     {
