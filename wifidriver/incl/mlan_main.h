@@ -593,9 +593,9 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** TDLS indication in extended capa IE */
 #define HOTSPOT_ENABLE_TDLS_IND MBIT(1)
 
-#define MLAN_SET_BIT_64(x, val) ((x) |= (1ULL << (val)))
+#define MLAN_SET_BIT_U64(x, val) ((x) |= (1ULL << (val)))
 #define MLAN_SET_BIT(x, val)    ((x) |= (1U << (val)))
-#define MLAN_CLEAR_BIT(x, val)  ((x) &= ~(1U << (val)))
+#define MLAN_CLEAR_BIT_U64(x, val)  ((x) &= ~(1ULL << (val)))
 
 /** Info for debug purpose */
 typedef struct _wlan_dbg

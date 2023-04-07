@@ -5346,10 +5346,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
         default:
-            wifi_d(
-                "Event %x not implemented."
-                " Please report the event hex value.\n\r",
-                evt->event_id);
+            wifi_d("Event 0x%x not implemented", evt->event_id);
             break;
     }
 
