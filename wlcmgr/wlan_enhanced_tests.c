@@ -83,6 +83,37 @@ static void dump_wlan_get_pmfcfg_usage(void)
     (void)PRINTF("wlan-get-pmfcfg \r\n");
 }
 
+static void dump_wlan_uap_get_pmfcfg_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-uap-get-pmfcfg \r\n");
+}
+
+static void wlan_uap_pmfcfg_get(int argc, char *argv[])
+{
+    int ret;
+    uint8_t mfpc, mfpr;
+
+    if (argc != 1)
+    {
+        dump_wlan_uap_get_pmfcfg_usage();
+        return;
+    }
+
+    ret = wlan_uap_get_pmfcfg(&mfpc, &mfpr);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Uap Management Frame Protection Capability: %s\r\n", mfpc == 1 ? "Yes" : "No");
+        if (mfpc != 0U)
+            (void)PRINTF("Uap Management Frame Protection: %s\r\n", mfpr == 1 ? "Required" : "Optional");
+    }
+    else
+    {
+        (void)PRINTF("Uap PMF configuration read failed\r\n");
+        dump_wlan_uap_get_pmfcfg_usage();
+    }
+}
+
 static void wlan_pmfcfg_get(int argc, char *argv[])
 {
     int ret;
@@ -2001,6 +2032,7 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-data-rate", "<sta/uap>", test_wlan_get_data_rate},
     {"wlan-set-pmfcfg", "<mfpc> <mfpr>", wlan_pmfcfg_set},
     {"wlan-get-pmfcfg", NULL, wlan_pmfcfg_get},
+    {"wlan-uap-get-pmfcfg", NULL, wlan_uap_pmfcfg_get},
 #ifdef CONFIG_5GHz_SUPPORT
     {"wlan-set-ed-mac-mode", "<interface> <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>",
      wlan_ed_mac_mode_set},

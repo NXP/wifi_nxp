@@ -798,6 +798,22 @@ int wifi_set_region_code(t_u32 region_code);
 int wifi_get_uap_channel(int *channel);
 
 /**
+ * Get/Set the uAP mfpc and mfpr
+ *
+ * @param[in] action 
+ * 
+ * \param[in/out] mfpc: Management Frame Protection Capable (MFPC)
+ *                       1: Management Frame Protection Capable
+ *                       0: Management Frame Protection not Capable
+ * \param[in/out] mfpr: Management Frame Protection Required (MFPR)
+ *                       1: Management Frame Protection Required
+ *                       0: Management Frame Protection Optional
+ * 
+ * @return cmd response status
+ */
+int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr);
+
+/**
  * Sets the domain parameters for the uAP.
  *
  * @note This API only saves the domain params inside the driver internal
@@ -1172,6 +1188,8 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
+
+int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset);

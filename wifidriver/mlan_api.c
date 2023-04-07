@@ -540,6 +540,11 @@ int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
     return WM_SUCCESS;
 }
 
+int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
+{
+    return wifi_uap_pmf_getset(HostCmd_ACT_GEN_GET, (bool *)mfpc, (bool *)mfpr);
+}
+
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset)
 {

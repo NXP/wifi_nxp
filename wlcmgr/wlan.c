@@ -8922,6 +8922,15 @@ int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr)
     return wifi_get_pmfcfg(mfpc, mfpr);
 }
 
+int wlan_uap_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr)
+{
+    if (is_uap_started())
+    {
+        return wifi_uap_get_pmfcfg(mfpc, mfpr);
+    }
+    return -WM_FAIL;
+}
+
 #ifdef CONFIG_TBTT_OFFSET
 int wlan_get_tbtt_offset(wlan_tbtt_offset_t *tbtt_offset)
 {

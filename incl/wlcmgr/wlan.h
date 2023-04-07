@@ -2792,7 +2792,7 @@ uint8_t wlan_get_dtim_period(void);
 int wlan_get_data_rate(wlan_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 /**
- * Use this API to set the set management frame protection parameters.
+ * Use this API to set the set management frame protection parameters fot sta.
  *
  * \param[in] mfpc: Management Frame Protection Capable (MFPC)
  *                       1: Management Frame Protection Capable
@@ -2809,7 +2809,7 @@ int wlan_get_data_rate(wlan_ds_rate *ds_rate, mlan_bss_type bss_type);
 int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 
 /**
- * Use this API to get the set management frame protection parameters.
+ * Use this API to get the set management frame protection parameters for sta.
  *
  * \param[out] mfpc: Management Frame Protection Capable (MFPC)
  *                       1: Management Frame Protection Capable
@@ -2822,6 +2822,21 @@ int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
  * \return -WM_FAIL if command fails.
  */
 int wlan_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
+
+/**
+ * Use this API to get the set management frame protection parameters for Uap.
+ *
+ * \param[out] mfpc: Management Frame Protection Capable (MFPC)
+ *                       1: Management Frame Protection Capable
+ *                       0: Management Frame Protection not Capable
+ * \param[out] mfpr: Management Frame Protection Required (MFPR)
+ *                       1: Management Frame Protection Required
+ *                       0: Management Frame Protection Optional
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_uap_get_pmfcfg(uint8_t *mfpc, uint8_t *mfpr);
 
 #ifdef CONFIG_TBTT_OFFSET
 /**

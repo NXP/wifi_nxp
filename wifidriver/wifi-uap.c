@@ -854,8 +854,6 @@ void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
     wm_wifi.ht_tx_cfg = ht_tx_cfg;
 }
 
-static int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr);
-
 #ifdef CONFIG_WIFI_CAPA
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
 {
@@ -1627,7 +1625,7 @@ int wifi_get_uap_channel(int *channel)
     return wifi_send_uap_get_channel_cmd(channel);
 }
 
-static int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
+int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
 {
     uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_PMF_PARAMS);
     wifi_pmf_params_t wifi_pmf_params;
