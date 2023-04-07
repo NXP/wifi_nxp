@@ -2947,6 +2947,10 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
 #ifdef CONFIG_WPA2_ENTP
         wpa2_tls_cleanup(network, true);
 #endif
+        /*
+         *  this scan does not hold scan lock as it was already put by wlcmgr task
+         *  need to check if need to hold scan lock again
+         */
         do_scan(&wlan.networks[wlan.cur_network_idx]);
         *next = CM_STA_SCANNING;
     }

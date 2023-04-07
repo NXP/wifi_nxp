@@ -1065,6 +1065,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_dump_firmware_info();
 #endif
 #endif
+
+	/* assert as command flow cannot work anymore */
+	assert(0);
     }
 
     wm_wifi.cmd_resp_priv = NULL;
