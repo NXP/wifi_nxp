@@ -271,16 +271,16 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 
 #ifndef CONFIG_WPA_SUPP
-    /* Bypass the management frame about Add Block Ack Request or Add Block Ack Response*/
-    if (wlan_bypass_802dot11_mgmt_pkt(p->payload) == WM_SUCCESS)
-    {
-        pbuf_free(p);
-        p = NULL;
-        return;
-    }
-
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
+        /* Bypass the management frame about Add Block Ack Request or Add Block Ack Response*/
+        if (wlan_bypass_802dot11_mgmt_pkt(p->payload) == WM_SUCCESS)
+        {
+            pbuf_free(p);
+            p = NULL;
+            return;
+        }
+
 #ifdef CONFIG_P2P
         if (recv_interface == MLAN_BSS_TYPE_WIFIDIRECT)
         {
