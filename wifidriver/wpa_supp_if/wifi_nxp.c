@@ -160,7 +160,7 @@ int wifi_supp_init(void)
         goto out;
     }
 
-    /* idx = */ (void)netif_alloc_client_data_id();
+    (void)net_alloc_client_data_id();
 
     netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
 

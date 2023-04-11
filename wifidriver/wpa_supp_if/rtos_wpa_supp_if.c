@@ -463,7 +463,11 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
-    const struct netif *iface = netif_find(iface_name);
+    const struct netif *iface = NULL;
+
+    LOCK_TCPIP_CORE();
+    iface = netif_find(iface_name);
+    UNLOCK_TCPIP_CORE();
 
     if (!iface)
     {
@@ -1625,7 +1629,11 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     // osa_status_t status;
 
-    const struct netif *iface = netif_find(iface_name);
+    const struct netif *iface = NULL;
+
+    LOCK_TCPIP_CORE();
+    iface = netif_find(iface_name);
+    UNLOCK_TCPIP_CORE();
 
     if (!iface)
     {

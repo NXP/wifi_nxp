@@ -195,16 +195,37 @@ int net_dhcp_hostname_set(char *hostname)
     return WM_SUCCESS;
 }
 
+static void tcpip_init_done_cb(void *arg)
+{
+    sys_sem_t *init_sem;
+
+    LWIP_ASSERT("arg != NULL", arg != NULL);
+
+    init_sem = (sys_sem_t *)arg;
+
+    sys_sem_signal(init_sem);
+}
+
 void net_ipv4stack_init(void)
 {
     static bool tcpip_init_done;
+    err_t err;
+    sys_sem_t init_sem;
 
     if (tcpip_init_done)
     {
         return;
     }
 
-    tcpip_init(NULL, NULL);
+    err = sys_sem_new(&init_sem, 0);
+    LWIP_ASSERT("failed to create init_sem", err == ERR_OK);
+    LWIP_UNUSED_ARG(err);
+
+    tcpip_init(tcpip_init_done_cb, &init_sem);
+
+    sys_sem_wait(&init_sem);
+    sys_sem_free(&init_sem);
+
     tcpip_init_done = true;
 
     net_d("Initialized TCP/IP v4 stack");
@@ -213,7 +234,9 @@ void net_ipv4stack_init(void)
 #ifdef CONFIG_IPV6
 void net_ipv6stack_init(struct netif *netif)
 {
+    LOCK_TCPIP_CORE();
     netif_create_ip6_linklocal_address(netif, 1);
+    UNLOCK_TCPIP_CORE();
 
     net_d("Initialized TCP/IP v6 stack for interface : %c%c%d", netif->name[0], netif->name[1], netif->num);
 }
@@ -304,7 +327,9 @@ int net_wlan_init(void)
             return ret;
         }
 
+        LOCK_TCPIP_CORE();
         netif_add_ext_callback(&netif_ext_callback, netif_ext_status_callback);
+        UNLOCK_TCPIP_CORE();
 
         net_wlan_init_done = 1;
 
@@ -329,11 +354,18 @@ struct netif *net_get_uap_interface(void)
 int net_get_if_name_netif(char *pif_name, struct netif *iface)
 {
     char if_name[NETIF_NAMESIZE];
-    char *ptr_if_name = NULL;
+    int ret;
 
-    ptr_if_name = netif_index_to_name(iface->num + 1, if_name);
+    ret = netifapi_netif_index_to_name(iface->num + 1, if_name);
 
-    (void)strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("get interface name failed");
+        return -WM_FAIL;
+    }
+
+    (void)strncpy(pif_name, if_name, NETIF_NAMESIZE);
+
     return WM_SUCCESS;
 }
 
@@ -397,7 +429,10 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
+    LOCK_TCPIP_CORE();
     netif_remove_ext_callback(&netif_ext_callback);
+    UNLOCK_TCPIP_CORE();
+
     wm_netif_status_callback_ptr = NULL;
     net_wlan_init_done           = 0;
 
@@ -602,6 +637,17 @@ void *net_get_wfd_handle(void)
 }
 #endif
 
+t_u8 net_alloc_client_data_id()
+{
+    t_u8 idx;
+
+    LOCK_TCPIP_CORE();
+    idx = netif_alloc_client_data_id();
+    UNLOCK_TCPIP_CORE();
+
+    return idx;
+}
+
 void net_interface_up(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
@@ -657,6 +703,8 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     if (if_handle == &g_mlan)
 #endif
     {
+        LOCK_TCPIP_CORE();
+
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
             netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
@@ -664,6 +712,8 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
         }
 
         netif_create_ip6_linklocal_address(&if_handle->netif, 1);
+
+        UNLOCK_TCPIP_CORE();
 
         /* Explicitly call this function so that the linklocal address
          * gets updated even if the interface does not get any IPv6

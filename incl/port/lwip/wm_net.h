@@ -285,6 +285,12 @@ void l2_packet_register_rx_callback(void (*l2_packet_rx_eapol)(const struct pbuf
  */
 void l2_packet_deregister_rx_callback();
 
+/** Get client data index for storing private data in * netif.
+ *
+ * \return allocated client data index
+ */
+t_u8 net_alloc_client_data_id();
+
 /** Get station interface handle
  *
  * Some APIs require the interface handle to be passed to them. The handle can
