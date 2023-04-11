@@ -9632,6 +9632,17 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 }
 #endif
 
+#ifdef CONFIG_WPA_SUPP
+int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
+{
+    char non_pref_chan[128] = {0};
+    struct netif *netif = net_get_sta_interface();
+
+    (void)snprintf(non_pref_chan, sizeof(non_pref_chan), "81:%d:%d:2 81:%d:%d:2", ch0, pefer0, ch1, pefer1);
+    return wpa_supp_mbo_update_non_pref_chan(netif, non_pref_chan);
+}
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {

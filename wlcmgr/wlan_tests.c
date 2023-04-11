@@ -2946,6 +2946,66 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 
 #endif
 
+#ifdef CONFIG_WPA_SUPP
+static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
+{
+    int ret;
+    uint8_t ch0, ch1, preference0, preference1;
+
+    if (argc != 5)
+    {
+        (void)PRINTF(
+            "Usage: %s <ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255> < 0--non-operable; 1--prefers not to "
+            "operate; 255--prefers to operate>\r\n",
+            argv[0]);
+        return;
+    }
+
+    errno = 0;
+    ch0   = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    errno       = 0;
+    preference0 = (uint8_t)strtol(argv[2], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    errno = 0;
+    ch1   = (uint8_t)strtol(argv[3], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    errno       = 0;
+    preference1 = (uint8_t)strtol(argv[4], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+    }
+
+    ret = wlan_mbo_peferch_cfg(ch0, preference0, ch1, preference1);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please add pefer or non-pefer channels.\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to add pefer or non-pefer channels.\r\n");
+    }
+    else
+    {
+        /* Do nothing */
+    }
+}
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 /**
  *  @brief Show usage information for the sta_filter_table command
@@ -7249,6 +7309,10 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_MBO
     {"wlan-mbo-enable", "<0/1>", test_wlan_mbo_cfg},
+    {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
+     test_wlan_mbo_non_prefer_chs},
+#endif
+#ifdef CONFIG_WPA_SUPP
     {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
      test_wlan_mbo_non_prefer_chs},
 #endif

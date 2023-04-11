@@ -340,8 +340,8 @@ enum wlan_event_reason
      *  wlan_stop() and wlan_start() respectively. */
     WLAN_REASON_INITIALIZATION_FAILED,
 #ifdef CONFIG_WPA_SUPP_WPS
-    /** The WLAN Connection Manager has received WPS event from WPA supplicant. */
-    //WLAN_REASON_WPS_EVENT,
+/** The WLAN Connection Manager has received WPS event from WPA supplicant. */
+// WLAN_REASON_WPS_EVENT,
 #endif
     /** The WLAN Connection Manager has entered power save mode. */
     WLAN_REASON_PS_ENTER,
@@ -4698,6 +4698,19 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason);
  */
 int wlan_host_mbo_cfg(int enable_mbo);
 
+/**
+ * mbo channel operation preference configuration
+ *
+ * \param[in] ch0 channel number.
+ * \param[in] prefer0 operation preference for ch0.
+ * \param[in] ch1 channel number.
+ * \param[in] prefer1 operation preference for ch1.
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
+#endif
+
+#ifdef CONFIG_WPA_SUPP
 /**
  * mbo channel operation preference configuration
  *
