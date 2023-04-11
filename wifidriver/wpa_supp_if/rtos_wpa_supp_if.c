@@ -317,11 +317,13 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
-    const struct ieee80211_mgmt *mgmt = NULL;
-    const unsigned char *frame        = NULL;
-    const unsigned char *req_frame    = NULL;
-    unsigned int frame_len            = 0;
-    unsigned short status             = WLAN_STATUS_UNSPECIFIED_FAILURE;
+    const struct ieee80211_mgmt *mgmt              = NULL;
+    const unsigned char *frame                     = NULL;
+    const unsigned char *req_frame                 = NULL;
+    unsigned char *bssid                           = NULL;
+    unsigned int frame_len                         = 0;
+    unsigned short status                          = WLAN_STATUS_UNSPECIFIED_FAILURE;
+    enum sta_connect_fail_reason_codes reason_code = STA_CONNECT_FAIL_REASON_UNSPECIFIED;
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
@@ -333,8 +335,10 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
 
     if (frame_len < 24 + sizeof(mgmt->u.assoc_resp))
     {
-        supp_e("%s: Association response frame too short", __func__);
-        return;
+        supp_d("%s: Association response frame too short", __func__);
+        bssid       = &wifi_if_ctx_rtos->attempt_bssid;
+        reason_code = STA_CONNECT_FAIL_REASON_ASSOC_NO_RESP_RECEIVED;
+        goto fail;
     }
 
     memset(&event, 0, sizeof(event));
@@ -342,10 +346,13 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
 
     status = le_to_host16(mgmt->u.assoc_resp.status_code);
 
+    bssid = mgmt->bssid;
+
     if (status != WLAN_STATUS_SUCCESS)
     {
+    fail:
         wifi_if_ctx_rtos->associated = false;
-        event.assoc_reject.bssid     = mgmt->bssid;
+        event.assoc_reject.bssid     = bssid;
 
         if (frame_len > 24 + sizeof(mgmt->u.assoc_resp))
         {
@@ -354,6 +361,7 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
         }
 
         event.assoc_reject.status_code = status;
+        event.assoc_reject.reason_code = reason_code;
     }
     else
     {
@@ -1044,6 +1052,8 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
 
     if (params->bssid)
     {
+        memcpy(&wifi_if_ctx_rtos->attempt_bssid, params->bssid, ETH_ALEN);
+
         memcpy(assoc_params->bssid, params->bssid, sizeof(assoc_params->bssid));
     }
 

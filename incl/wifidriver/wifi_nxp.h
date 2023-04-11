@@ -52,6 +52,7 @@ struct wifi_nxp_ctx_rtos
     uint8_t scan_start_tsf_bssid[ETH_ALEN];
 
     unsigned int assoc_freq;
+    uint8_t attempt_bssid[ETH_ALEN];
     uint8_t assoc_bssid[ETH_ALEN];
     bool associated;
     bool uap_started;
