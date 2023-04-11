@@ -1436,6 +1436,10 @@ static int __scan_cb(unsigned int count)
         {
             (void)PRINTF("802.11N ");
         }
+        else
+        {
+            (void)PRINTF("802.11BG ");
+        }
         (void)PRINTF("\r\n");
 
         (void)PRINTF("\tchannel: %d\r\n", res.channel);

@@ -3277,75 +3277,36 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             sys_config->ampdu_param = 3;
         }
 
-        ht_cap = wifi_get_htcap_info(ie, ie_len);
-        if (ht_cap)
-        {
-            if (bandcfg.chanBand == BAND_2GHZ)
-                sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
-            else
-                sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
-        }
-        wifi_d("11n=%d, ht_cap=0x%x, channel=%d, bandcfg:chanBand=0x%x chanWidth=0x%x chan2Offset=0x%x scanMode=0x%x\n",
-               enable_11n, sys_config->ht_cap_info, priv->uap_channel, bandcfg.chanBand, bandcfg.chanWidth,
-               bandcfg.chan2Offset, bandcfg.scanMode);
-
-#if 0
         if (enable_11n)
         {
-            SETHT_SHORTGI20(sys_config->ht_cap_info);
+            ht_cap = wifi_get_htcap_info(ie, ie_len);
+            if (ht_cap)
+            {
+                if (bandcfg.chanBand == BAND_2GHZ)
+                    sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
+                else
+                    sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
+            }
+            wifi_d("11n=%d, ht_cap=0x%x, channel=%d, bandcfg:chanBand=0x%x chanWidth=0x%x chan2Offset=0x%x scanMode=0x%x\n",
+                    enable_11n, sys_config->ht_cap_info, priv->uap_channel, bandcfg.chanBand, bandcfg.chanWidth,
+                    bandcfg.chan2Offset, bandcfg.scanMode);
 
-            if (ISSUPP_TXSTBC(usr_dot_11n_dev_cap) != 0U)
+            ret = wifi_uap_set_httxcfg_int(ht_cap);
+            if (ret != WM_SUCCESS)
             {
-                SETHT_TXSTBC(sys_config->ht_cap_info);
+                wuap_e("Cannot set uAP HT TX Cfg:%x", sys_config->ht_cap_info);
+                ret = -WM_FAIL;
+                goto done;
             }
-            if (ISSUPP_RXSTBC(usr_dot_11n_dev_cap) != 0U)
-            {
-                SETHT_RXSTBC(sys_config->ht_cap_info, 1);
-            }
-            if (ISSUPP_RXLDPC(usr_dot_11n_dev_cap) != 0U)
-            {
-                SETHT_LDPCCODINGCAP(sys_config->ht_cap_info);
-            }
-        }
 
-        if (bandwidth == BANDWIDTH_40MHZ
-#ifdef CONFIG_11AC
-                || bandwidth == BANDWIDTH_80MHZ
-#endif
-           )
-        {
-            if (ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap) != 0U)
-            {
-                SETHT_SUPPCHANWIDTH(sys_config->ht_cap_info);
-                if (priv->uap_channel <= MAX_CHANNELS_BG)
-                {
-                    SETHT_DSSSCCK40(sys_config->ht_cap_info);
-                }
-                if (ISSUPP_SHORTGI40(usr_dot_11n_dev_cap) != 0U)
-                {
-                    SETHT_SHORTGI40(sys_config->ht_cap_info);
-                }
-            }
-        }
-        else if (bandwidth == BANDWIDTH_20MHZ)
-        {
+            sys_config->ampdu_param = 3;
+            (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
+                    sizeof(sys_config->supported_mcs_set));
         }
         else
         {
-            /*Do Nothing*/
+            sys_config->ht_cap_info = 0;
         }
-#endif
-        ret = wifi_uap_set_httxcfg_int(ht_cap);
-        if (ret != WM_SUCCESS)
-        {
-            wuap_e("Cannot set uAP HT TX Cfg:%x", sys_config->ht_cap_info);
-            ret = -WM_FAIL;
-            goto done;
-        }
-
-        sys_config->ampdu_param = 3;
-        (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
-                     sizeof(sys_config->supported_mcs_set));
 
         if (!params->ssid.ssid_len)
         {
