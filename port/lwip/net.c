@@ -639,11 +639,13 @@ void *net_get_wfd_handle(void)
 
 t_u8 net_alloc_client_data_id()
 {
-    t_u8 idx;
+    t_u8 idx = -1;
 
+#if LWIP_NUM_NETIF_CLIENT_DATA > 0
     LOCK_TCPIP_CORE();
     idx = netif_alloc_client_data_id();
     UNLOCK_TCPIP_CORE();
+#endif
 
     return idx;
 }

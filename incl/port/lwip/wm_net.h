@@ -24,6 +24,7 @@
 
 #include <lwip/opt.h>
 #include <lwip/sys.h>
+#include <lwip/tcpip.h>
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <lwip/stats.h>
@@ -287,7 +288,8 @@ void l2_packet_deregister_rx_callback();
 
 /** Get client data index for storing private data in * netif.
  *
- * \return allocated client data index
+ * \return allocated client data index, -1 if error or
+ *         not supported.
  */
 t_u8 net_alloc_client_data_id();
 

@@ -13,6 +13,7 @@
 #include "fsl_os_abstraction.h"
 #include "fsl_debug_console.h"
 #include "wifi.h"
+#include <wm_net.h>
 
 #ifdef CONFIG_WPA_SUPP
 
