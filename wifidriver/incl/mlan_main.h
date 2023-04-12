@@ -374,7 +374,7 @@ extern t_u32 drvdbg;
 /** Do nothing */
 #define wlan_le64_to_cpu(x) x
 /** Do nothing */
-#define wlan_cpu_to_le16(x) (t_u16)(x)
+#define wlan_cpu_to_le16(x) x
 /** Do nothing */
 #define wlan_cpu_to_le32(x) x
 /** Do nothing */
@@ -649,6 +649,22 @@ typedef struct _wlan_dbg
     /** Last event index */
     t_u16 last_event_index;
 } wlan_dbg;
+
+#ifdef CONFIG_RF_TEST_MODE
+#define MFG_CMD_SET_TEST_MODE        1
+#define MFG_CMD_UNSET_TEST_MODE      0
+#define MFG_CMD_TX_ANT               0x1004
+#define MFG_CMD_RX_ANT               0x1005
+#define MFG_CMD_TX_CONT              0x1009
+#define MFG_CMD_RF_CHAN              0x100A
+#define MFG_CMD_CLR_RX_ERR           0x1010
+#define MFG_CMD_TX_FRAME             0x1021
+#define MFG_CMD_RF_BAND_AG           0x1034
+#define MFG_CMD_RF_CHANNELBW         0x1044
+#define MFG_CMD_RADIO_MODE_CFG       0x1211
+#define MFG_CMD_CONFIG_MAC_HE_TB_TX  0x110A
+#define MFG_CMD_CONFIG_TRIGGER_FRAME 0x110C
+#endif
 
 /** Hardware status codes */
 typedef enum _WLAN_HARDWARE_STATUS
@@ -2999,6 +3015,7 @@ void wlan_check_sta_capability(pmlan_private priv, pmlan_buffer pevent, sta_node
 
 #ifdef CONFIG_RF_TEST_MODE
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf);
+mlan_status wlan_misc_ioctl_rf_test_cfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
 #endif
 
 #ifdef CONFIG_11R

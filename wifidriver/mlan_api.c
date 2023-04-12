@@ -1083,6 +1083,39 @@ int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action, wifi_mfg_cmd_tx_frame_t *wif
     return wm_wifi.cmd_resp_status;
 }
 
+int wifi_get_set_rf_trigger_frame_cfg(t_u16 cmd_action,
+                                      wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t *wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num   = 0x0;
+    cmd->result    = 0x0;
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+                                              0, NULL, wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr : NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action, wifi_mfg_cmd_he_tb_tx_t *wifi_mfg_cmd_he_tb_tx)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num   = 0x0;
+    cmd->result    = 0x0;
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+                                              0, NULL, wifi_mfg_cmd_he_tb_tx, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? wifi_mfg_cmd_he_tb_tx : NULL);
+    return wm_wifi.cmd_resp_status;
+}
+
 int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action, wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont)
 {
     wifi_get_command_lock();
@@ -1538,6 +1571,105 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     wifi_mfg_cmd_tx_frame.stbc              = stbc;
 
     return wifi_get_set_rf_test_tx_frame(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_frame);
+}
+
+int wifi_rf_trigger_frame_cfg(uint32_t Enable_tx,
+                              uint32_t Standalone_hetb,
+                              uint8_t FRAME_CTRL_TYPE,
+                              uint8_t FRAME_CTRL_SUBTYPE,
+                              uint16_t FRAME_DURATION,
+                              uint64_t TriggerType,
+                              uint64_t UlLen,
+                              uint64_t MoreTF,
+                              uint64_t CSRequired,
+                              uint64_t UlBw,
+                              uint64_t LTFType,
+                              uint64_t LTFMode,
+                              uint64_t LTFSymbol,
+                              uint64_t UlSTBC,
+                              uint64_t LdpcESS,
+                              uint64_t ApTxPwr,
+                              uint64_t PreFecPadFct,
+                              uint64_t PeDisambig,
+                              uint64_t SpatialReuse,
+                              uint64_t Doppler,
+                              uint64_t HeSig2,
+                              uint32_t AID12,
+                              uint32_t RUAllocReg,
+                              uint32_t RUAlloc,
+                              uint32_t UlCodingType,
+                              uint32_t UlMCS,
+                              uint32_t UlDCM,
+                              uint32_t SSAlloc,
+                              uint8_t UlTargetRSSI,
+                              uint8_t MPDU_MU_SF,
+                              uint8_t TID_AL,
+                              uint8_t AC_PL,
+                              uint8_t Pref_AC)
+{
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr;
+
+    (void)memset(&wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr, 0x00, sizeof(wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t));
+
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.mfg_cmd = MFG_CMD_CONFIG_TRIGGER_FRAME;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.action  = HostCmd_ACT_GEN_SET;
+
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.enable_tx       = Enable_tx;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.standalone_hetb = Standalone_hetb;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.frmCtl.type     = FRAME_CTRL_TYPE;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.frmCtl.sub_type = FRAME_CTRL_SUBTYPE;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.duration        = FRAME_DURATION;
+
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.trigger_type    = TriggerType;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ul_len          = UlLen;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.more_tf         = MoreTF;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.cs_required     = CSRequired;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ul_bw           = UlBw;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ltf_type        = LTFType;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ltf_mode        = LTFMode;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ltf_symbol      = LTFSymbol;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ul_stbc         = UlSTBC;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ldpc_ess        = LdpcESS;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.ap_tx_pwr       = ApTxPwr;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.pre_fec_pad_fct = PreFecPadFct;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.pe_disambig     = PeDisambig;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.spatial_reuse   = SpatialReuse;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.doppler         = Doppler;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_common_field.he_sig2         = HeSig2;
+
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.aid12          = AID12;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ru_alloc_reg   = RUAllocReg;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ru_alloc       = RUAlloc;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ul_coding_type = UlCodingType;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ul_mcs         = UlMCS;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ul_dcm         = UlDCM;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ss_alloc       = SSAlloc;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.trig_user_info_field.ul_target_rssi = UlTargetRSSI;
+
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.basic_trig_user_info.mpdu_mu_sf = MPDU_MU_SF;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.basic_trig_user_info.tid_al     = TID_AL;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.basic_trig_user_info.ac_pl      = AC_PL;
+    wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr.basic_trig_user_info.pref_ac    = Pref_AC;
+
+    return wifi_get_set_rf_trigger_frame_cfg(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr);
+}
+
+int wifi_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t axq_mu_timer, int16_t tx_power)
+{
+    wifi_mfg_cmd_he_tb_tx_t wifi_mfg_cmd_he_tb_tx;
+
+    (void)memset(&wifi_mfg_cmd_he_tb_tx, 0x00, sizeof(wifi_mfg_cmd_he_tb_tx_t));
+
+    wifi_mfg_cmd_he_tb_tx.mfg_cmd = MFG_CMD_CONFIG_MAC_HE_TB_TX;
+    wifi_mfg_cmd_he_tb_tx.action  = HostCmd_ACT_GEN_SET;
+
+    wifi_mfg_cmd_he_tb_tx.enable       = enable;
+    wifi_mfg_cmd_he_tb_tx.qnum         = qnum;
+    wifi_mfg_cmd_he_tb_tx.aid          = aid;
+    wifi_mfg_cmd_he_tb_tx.axq_mu_timer = axq_mu_timer;
+    wifi_mfg_cmd_he_tb_tx.tx_power     = tx_power;
+
+    return wifi_get_set_rf_he_tb_tx(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_he_tb_tx);
 }
 #endif
 

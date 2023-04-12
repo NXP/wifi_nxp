@@ -5450,6 +5450,15 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
             status = wlan_misc_get_tsf_info(pmadapter, pioctl_req);
             break;
 #endif /* CONFIG_WIFI_CLOCKSYNC */
+#ifdef CONFIG_RF_TEST_MODE
+        case MLAN_OID_MISC_RF_TEST_GENERIC:
+        case MLAN_OID_MISC_RF_TEST_TX_CONT:
+        case MLAN_OID_MISC_RF_TEST_CONFIG_TRIGGER_FRAME:
+        case MLAN_OID_MISC_RF_TEST_TX_FRAME:
+        case MLAN_OID_MISC_RF_TEST_HE_POWER:
+            status = wlan_misc_ioctl_rf_test_cfg(pmadapter, pioctl_req);
+            break;
+#endif /* CONFIG_RF_TEST_MODE */
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
 

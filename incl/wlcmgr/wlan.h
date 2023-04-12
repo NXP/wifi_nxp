@@ -4065,6 +4065,98 @@ int wlan_set_rf_tx_cont_mode(const uint32_t enable_tx,
                              const uint32_t tx_rate);
 
 /**
+ * Set the RF HE TB TX in Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[in] enable Enable/Disable trigger response mode
+ * \param[in] qnum AXQ to be used for the trigger response frame
+ * \param[in] aid AID of the peer to which response is to be generated
+ * \param[in] axq_mu_timer MU timer for the AXQ on which response is sent
+ * \param[in] tx_power TxPwr to be configured for the response
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t axq_mu_timer, int16_t tx_power);
+
+/**
+ * Set the RF Trigger Frame Config in Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[in] Enable_tx Enable\Disable trigger frame transmission.
+ * \param[in] Standalone_hetb Standalone HE TB support. This is required for Firecrest.
+ * \param[in] FRAME_CTRL_TYPE Frame control type.
+ * \param[in] FRAME_CTRL_SUBTYPE Frame control subtype.
+ * \param[in] FRAME_DURATION Max Duration time.
+ * \param[in] TriggerType Identifies the Trigger frame variant and its encoding.
+ * \param[in] UlLen Indicates the value of the L-SIG LENGTH field of the solicited HE TB PPDU.
+ * \param[in] MoreTF Indicates whether a subsequent Trigger frame is scheduled for transmission.
+ * \param[in] CSRequired Required to use ED to sense the medium and to consider the medium state and the NAV in
+ * determining whether to respond. \param[in] UlBw Indicates the bandwidth in the HE-SIG-A field of the HE TB PPDU.
+ * \param[in] LTFType Indicates the LTF type of the HE TB PPDU response.
+ * \param[in] LTFMode Indicates the LTF mode for an HE TB PPDU.
+ * \param[in] LTFSymbol Indicates the number of LTF symbols present in the HE TB PPDU.
+ * \param[in] UlSTBC Indicates the status of STBC encoding for the solicited HE TB PPDUs.
+ * \param[in] LdpcESS Indicates the status of the LDPC extra symbol segment.
+ * \param[in] ApTxPwr Indicates the AP’s combined transmit power at the transmit antenna connector of all the antennas
+ * used to transmit the triggering PPDU. \param[in] PreFecPadFct Indicates the pre-FEC padding factor. \param[in]
+ * PeDisambig Indicates PE disambiguity. \param[in] SpatialReuse Carries the values to be included in the Spatial Reuse
+ * fields in the HE-SIG-A field of the solicited HE TB PPDUs. \param[in] Doppler Indicate that a midamble is present in
+ * the HE TB PPDU. \param[in] HeSig2 Carries the value to be included in the Reserved field in the HE-SIG-A2 subfield of
+ * the solicited HE TB PPDUs. \param[in] AID12 If set to 0 allocates one or more contiguous RA-RUs for associated STAs.
+ * \param[in] RUAllocReg RUAllocReg.
+ * \param[in] RUAlloc Identifies the size and the location of the RU.
+ * \param[in] UlCodingType Indicates the code type of the solicited HE TB PPDU.
+ * \param[in] UlMCS Indicates the HE-MCS of the solicited HE TB PPDU.
+ * \param[in] UlDCM Indicates DCM of the solicited HE TB PPDU.
+ * \param[in] SSAlloc Indicates the spatial streams of the solicited HE TB PPDU.
+ * \param[in] UlTargetRSSI Indicates the expected receive signal power.
+ * \param[in] MPDU_MU_SF Used for calculating the value by which the minimum MPDU start spacing is multiplied.
+ * \param[in] TID_AL Indicates the MPDUs allowed in an A-MPDU carried in the HE TB PPDU and the maximum number of TIDs
+ * that can be aggregated by the STA in the A-MPDU. \param[in] AC_PL Reserved. \param[in] Pref_AC Indicates the lowest
+ * AC that is recommended for aggregation of MPDUs in the A-MPDU contained in the HE TB PPDU sent as a response to the
+ * Trigger frame.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_rf_trigger_frame_cfg(uint32_t Enable_tx,
+                              uint32_t Standalone_hetb,
+                              uint8_t FRAME_CTRL_TYPE,
+                              uint8_t FRAME_CTRL_SUBTYPE,
+                              uint16_t FRAME_DURATION,
+                              uint64_t TriggerType,
+                              uint64_t UlLen,
+                              uint64_t MoreTF,
+                              uint64_t CSRequired,
+                              uint64_t UlBw,
+                              uint64_t LTFType,
+                              uint64_t LTFMode,
+                              uint64_t LTFSymbol,
+                              uint64_t UlSTBC,
+                              uint64_t LdpcESS,
+                              uint64_t ApTxPwr,
+                              uint64_t PreFecPadFct,
+                              uint64_t PeDisambig,
+                              uint64_t SpatialReuse,
+                              uint64_t Doppler,
+                              uint64_t HeSig2,
+                              uint32_t AID12,
+                              uint32_t RUAllocReg,
+                              uint32_t RUAlloc,
+                              uint32_t UlCodingType,
+                              uint32_t UlMCS,
+                              uint32_t UlDCM,
+                              uint32_t SSAlloc,
+                              uint8_t UlTargetRSSI,
+                              uint8_t MPDU_MU_SF,
+                              uint8_t TID_AL,
+                              uint8_t AC_PL,
+                              uint8_t Pref_AC);
+
+/**
  * Set the RF Tx Antenna in Wi-Fi firmware.
  *
  * \note Please call \ref wlan_set_rf_test_mode API before using this API.

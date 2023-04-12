@@ -2534,3 +2534,96 @@ mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter, mlan_i
     return ret;
 }
 #endif
+
+#ifdef CONFIG_RF_TEST_MODE
+/**
+ *  @brief RF Test Mode config
+ *
+ *  @param pmadapter   A pointer to mlan_adapter structure
+ *  @param pioctl_req  A pointer to ioctl request buffer
+ *
+ *  @return        MLAN_STATUS_PENDING --success, otherwise fail
+ */
+mlan_status wlan_misc_ioctl_rf_test_cfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_private *pmpriv    = MNULL;
+    mlan_ds_misc_cfg *pmisc = MNULL;
+    mlan_status ret         = MLAN_STATUS_FAILURE;
+    t_u16 cmd_action        = 0;
+
+    ENTER();
+
+    if (!pioctl_req)
+        goto done;
+
+    pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    pmisc  = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+
+    switch (pmisc->sub_command)
+    {
+        case MLAN_OID_MISC_RF_TEST_GENERIC:
+            if (pioctl_req->action == MLAN_ACT_SET)
+                cmd_action = HostCmd_ACT_GEN_SET;
+            else
+                cmd_action = HostCmd_ACT_GEN_GET;
+            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_MFG_COMMAND, cmd_action, 0, (t_void *)pioctl_req,
+                                   &(pmisc->param.mfg_generic_cfg));
+            break;
+        case MLAN_OID_MISC_RF_TEST_TX_CONT:
+            if (pioctl_req->action == MLAN_ACT_SET)
+                cmd_action = HostCmd_ACT_GEN_SET;
+            else
+            {
+                PRINTM(MERROR, "Unsupported cmd_action\n");
+                ret = MLAN_STATUS_FAILURE;
+                goto done;
+            }
+            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_MFG_COMMAND, cmd_action, 0, (t_void *)pioctl_req,
+                                   &(pmisc->param.mfg_tx_cont));
+            break;
+        case MLAN_OID_MISC_RF_TEST_TX_FRAME:
+            if (pioctl_req->action == MLAN_ACT_SET)
+                cmd_action = HostCmd_ACT_GEN_SET;
+            else
+            {
+                PRINTM(MERROR, "Unsupported cmd_action\n");
+                ret = MLAN_STATUS_FAILURE;
+                goto done;
+            }
+            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_MFG_COMMAND, cmd_action, 0, (t_void *)pioctl_req,
+                                   &(pmisc->param.mfg_tx_frame2));
+            break;
+        case MLAN_OID_MISC_RF_TEST_CONFIG_TRIGGER_FRAME:
+            if (pioctl_req->action == MLAN_ACT_SET)
+                cmd_action = HostCmd_ACT_GEN_SET;
+            else
+            {
+                PRINTM(MERROR, "Unsupported cmd_action\n");
+                ret = MLAN_STATUS_FAILURE;
+                goto done;
+            }
+            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_MFG_COMMAND, cmd_action, 0, (t_void *)pioctl_req,
+                                   &(pmisc->param.mfg_tx_trigger_config));
+            break;
+
+        case MLAN_OID_MISC_RF_TEST_HE_POWER:
+            if (pioctl_req->action == MLAN_ACT_SET)
+                cmd_action = HostCmd_ACT_GEN_SET;
+            else
+            {
+                PRINTM(MERROR, "Unsupported cmd_action\n");
+                ret = MLAN_STATUS_FAILURE;
+                goto done;
+            }
+            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_MFG_COMMAND, cmd_action, 0, (t_void *)pioctl_req,
+                                   &(pmisc->param.mfg_he_power));
+            break;
+    }
+
+    if (ret == MLAN_STATUS_SUCCESS)
+        ret = MLAN_STATUS_PENDING;
+done:
+    LEAVE();
+    return ret;
+}
+#endif

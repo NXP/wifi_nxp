@@ -9866,6 +9866,32 @@ int wlan_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t p
     return wifi_set_rf_tx_power(power, mod, path_id);
 }
 
+int wlan_cfg_rf_he_tb_tx(uint16_t enable,uint16_t qnum,uint16_t aid,uint16_t axq_mu_timer,int16_t tx_power)
+{
+	return wifi_cfg_rf_he_tb_tx(enable, qnum, aid,axq_mu_timer,tx_power);
+}
+
+int wlan_rf_trigger_frame_cfg(uint32_t Enable_tx,uint32_t Standalone_hetb,uint8_t FRAME_CTRL_TYPE,
+                              uint8_t FRAME_CTRL_SUBTYPE,uint16_t FRAME_DURATION,uint64_t TriggerType,
+							  uint64_t UlLen,uint64_t MoreTF,uint64_t CSRequired,uint64_t UlBw,
+							  uint64_t LTFType,uint64_t LTFMode,uint64_t LTFSymbol,uint64_t UlSTBC,
+							  uint64_t LdpcESS,uint64_t ApTxPwr,uint64_t PreFecPadFct,
+							  uint64_t PeDisambig,uint64_t SpatialReuse,uint64_t Doppler,
+							  uint64_t HeSig2,uint32_t AID12,uint32_t RUAllocReg,uint32_t RUAlloc,
+							  uint32_t UlCodingType,uint32_t UlMCS,uint32_t UlDCM,uint32_t SSAlloc,
+							  uint8_t UlTargetRSSI,uint8_t MPDU_MU_SF,uint8_t TID_AL,uint8_t AC_PL,
+							  uint8_t Pref_AC)
+{
+	return wifi_rf_trigger_frame_cfg(Enable_tx,Standalone_hetb,FRAME_CTRL_TYPE,
+                                     FRAME_CTRL_SUBTYPE,FRAME_DURATION,TriggerType,
+			                         UlLen,MoreTF,CSRequired,UlBw,LTFType,LTFMode,
+			                         LTFSymbol,UlSTBC,LdpcESS,ApTxPwr,PreFecPadFct,
+			                         PeDisambig,SpatialReuse,Doppler,HeSig2,AID12,
+			                         RUAllocReg,RUAlloc,UlCodingType,UlMCS,UlDCM,
+			                         SSAlloc,UlTargetRSSI,MPDU_MU_SF,TID_AL,AC_PL,
+			                         Pref_AC);
+}
+
 int wlan_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t data_rate,
                          const uint32_t frame_pattern,

@@ -6174,18 +6174,20 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t
 
 #ifdef CONFIG_RF_TEST_MODE
 
-#define MFG_CMD_SET_TEST_MODE   1
-#define MFG_CMD_UNSET_TEST_MODE 0
-#define MFG_CMD_TX_ANT          0x1004
-#define MFG_CMD_RX_ANT          0x1005
-#define MFG_CMD_TX_CONT         0x1009
-#define MFG_CMD_RF_CHAN         0x100A
-#define MFG_CMD_CLR_RX_ERR      0x1010
-#define MFG_CMD_TX_FRAME        0x1021
-#define MFG_CMD_RFPWR           0x1033
-#define MFG_CMD_RF_BAND_AG      0x1034
-#define MFG_CMD_RF_CHANNELBW    0x1044
-#define MFG_CMD_RADIO_MODE_CFG  0x1211
+#define MFG_CMD_SET_TEST_MODE        1
+#define MFG_CMD_UNSET_TEST_MODE      0
+#define MFG_CMD_TX_ANT               0x1004
+#define MFG_CMD_RX_ANT               0x1005
+#define MFG_CMD_TX_CONT              0x1009
+#define MFG_CMD_RF_CHAN              0x100A
+#define MFG_CMD_CLR_RX_ERR           0x1010
+#define MFG_CMD_TX_FRAME             0x1021
+#define MFG_CMD_RFPWR                0x1033
+#define MFG_CMD_RF_BAND_AG           0x1034
+#define MFG_CMD_RF_CHANNELBW         0x1044
+#define MFG_CMD_RADIO_MODE_CFG       0x1211
+#define MFG_CMD_CONFIG_MAC_HE_TB_TX  0x110A
+#define MFG_CMD_CONFIG_TRIGGER_FRAME 0x110C
 
 typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_GENERIC_CFG
 {
@@ -6272,6 +6274,58 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_TX_CONT
     /** power id */
     t_u32 rsvd;
 } MLAN_PACK_END HostCmd_DS_MFG_CMD_TX_CONT;
+
+typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_HE_TBTX_T
+{
+    /** MFG command code */
+    t_u32 mfg_cmd;
+    /** Action */
+    t_u16 action;
+    /** Device ID */
+    t_u16 device_id;
+    /** MFG Error code */
+    t_u32 error;
+    /** Enable Tx */
+    t_u16 enable;
+    /** Q num */
+    t_u16 qnum;
+    /** AID */
+    t_u16 aid;
+    /** AXQ Mu Timer */
+    t_u16 axq_mu_timer;
+    /** Tx Power */
+    t_s16 tx_power;
+} MLAN_PACK_END HostCmd_DS_MFG_CMD_HE_TBTX_T;
+
+typedef MLAN_PACK_START struct _HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T
+{
+    /** MFG command code */
+    t_u32 mfg_cmd;
+    /** Action */
+    t_u16 action;
+    /** Device ID */
+    t_u16 device_id;
+    /** MFG Error code */
+    t_u32 error;
+    /** enable Tx*/
+    t_u32 enable_tx;
+    /** enable Stand Alone HE TB */
+    t_u32 standalone_hetb;
+    /** Frame Control */
+    mfg_cmd_IEEEtypes_FrameCtrl_t frmCtl;
+    /** Duration */
+    t_u16 duration;
+    /** Destination MAC Address */
+    t_u8 dest_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Source MAC Address */
+    t_u8 src_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Common Info Field **/
+    mfg_cmd_IEEEtypes_HETrigComInfo_t trig_common_field;
+    /** User Info Field **/
+    mfg_cmd_IEEEtypes_HETrigUserInfo_t trig_user_info_field;
+    /** Trigger Dependent User Info Field **/
+    mfg_cmd_IEEETypes_BasicHETrigUserInfo_t basic_trig_user_info;
+} MLAN_PACK_END HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T;
 #endif
 
 #ifdef OTP_CHANINFO
@@ -7056,6 +7110,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_MFG_CMD_GENERIC_CFG mfg_generic_cfg;
         HostCmd_DS_MFG_CMD_TX_FRAME2 mfg_tx_frame2;
         HostCmd_DS_MFG_CMD_TX_CONT mfg_tx_cont;
+        HostCmd_DS_MFG_CMD_HE_TBTX_T mfg_he_power;
+        HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T mfg_tx_trigger_config;
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
         HostCmd_DS_TX_RX_PKT_STATS pkt_stats;

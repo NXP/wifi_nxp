@@ -1612,6 +1612,58 @@ typedef PACK_START struct _wifi_mfg_cmd_tx_cont
     /** power id */
     t_u32 rsvd;
 } PACK_END wifi_mfg_cmd_tx_cont_t;
+
+typedef PACK_START struct wifi_mfg_cmd_he_tb_tx
+{
+    /** MFG command code */
+    t_u32 mfg_cmd;
+    /** Action */
+    t_u16 action;
+    /** Device ID */
+    t_u16 device_id;
+    /** MFG Error code */
+    t_u32 error;
+    /** Enable Tx */
+    t_u16 enable;
+    /** Q num */
+    t_u16 qnum;
+    /** AID */
+    t_u16 aid;
+    /** AXQ Mu Timer */
+    t_u16 axq_mu_timer;
+    /** Tx Power */
+    t_s16 tx_power;
+} PACK_END wifi_mfg_cmd_he_tb_tx_t;
+
+typedef PACK_START struct wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr
+{
+    /** MFG command code */
+    t_u32 mfg_cmd;
+    /** Action */
+    t_u16 action;
+    /** Device ID */
+    t_u16 device_id;
+    /** MFG Error code */
+    t_u32 error;
+    /** enable Tx*/
+    t_u32 enable_tx;
+    /** enable Stand Alone HE TB */
+    t_u32 standalone_hetb;
+    /** Frame Control */
+    mfg_cmd_IEEEtypes_FrameCtrl_t frmCtl;
+    /** Duration */
+    t_u16 duration;
+    /** Destination MAC Address */
+    t_u8 dest_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Source MAC Address */
+    t_u8 src_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Common Info Field **/
+    mfg_cmd_IEEEtypes_HETrigComInfo_t trig_common_field;
+    /** User Info Field **/
+    mfg_cmd_IEEEtypes_HETrigUserInfo_t trig_user_info_field;
+    /** Trigger Dependent User Info Field **/
+    mfg_cmd_IEEETypes_BasicHETrigUserInfo_t basic_trig_user_info;
+} PACK_END wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t;
 #endif
 
 #ifdef CONFIG_HEAP_DEBUG

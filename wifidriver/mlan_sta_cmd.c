@@ -123,6 +123,82 @@ static mlan_status wlan_cmd_mfg_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAN
 }
 
 /**
+ *  @brief This function prepares command of MFG HE TB Tx.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param action       The action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+
+static mlan_status wlan_cmd_mfg_he_tb_tx(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 action, t_void *pdata_buf)
+{
+    HostCmd_DS_MFG_CMD_HE_TBTX_T *mcmd = (HostCmd_DS_MFG_CMD_HE_TBTX_T *)&cmd->params.mfg_he_power;
+    mlan_ds_mfg_Cmd_HE_TBTx_t *cfg     = (mlan_ds_mfg_Cmd_HE_TBTx_t *)pdata_buf;
+    ENTER();
+    (void)__memset(pmpriv->adapter, mcmd, 0x00, sizeof(HostCmd_DS_MFG_CMD_HE_TBTX_T));
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_MFG_COMMAND);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_MFG_CMD_HE_TBTX_T) + S_DS_GEN);
+
+    mcmd->mfg_cmd = wlan_cpu_to_le32(cfg->mfg_cmd);
+    mcmd->action  = wlan_cpu_to_le16(action);
+    if (action == HostCmd_ACT_GEN_SET)
+    {
+        mcmd->enable       = wlan_cpu_to_le16(cfg->enable);
+        mcmd->qnum         = wlan_cpu_to_le16(cfg->qnum);
+        mcmd->aid          = wlan_cpu_to_le16(cfg->aid);
+        mcmd->axq_mu_timer = wlan_cpu_to_le16(cfg->axq_mu_timer);
+        mcmd->tx_power     = wlan_cpu_to_le16(cfg->tx_power);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function prepares command of MFG config trigger frame.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param action       The action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+static mlan_status wlan_cmd_mfg_config_trigger_frame(pmlan_private pmpriv,
+                                                     HostCmd_DS_COMMAND *cmd,
+                                                     t_u16 action,
+                                                     t_void *pdata_buf)
+{
+    HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T *mcmd =
+        (HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T *)&cmd->params.mfg_tx_trigger_config;
+    mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t *cfg = (mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t *)pdata_buf;
+
+    ENTER();
+    (void)__memset(pmpriv->adapter, mcmd, 0x00, sizeof(HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T));
+    cmd->command  = wlan_cpu_to_le16(HostCmd_CMD_MFG_COMMAND);
+    cmd->size     = wlan_cpu_to_le16(sizeof(HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T) + S_DS_GEN);
+    mcmd->mfg_cmd = wlan_cpu_to_le32(cfg->mfg_cmd);
+    mcmd->action  = wlan_cpu_to_le16(action);
+    if (action == HostCmd_ACT_GEN_SET)
+    {
+        mcmd->enable_tx       = wlan_cpu_to_le32(cfg->enable_tx);
+        mcmd->standalone_hetb = wlan_cpu_to_le32(cfg->standalone_hetb);
+        mcmd->frmCtl.type     = wlan_cpu_to_le16(cfg->frmCtl.type);
+        mcmd->frmCtl.sub_type = wlan_cpu_to_le16(cfg->frmCtl.sub_type);
+        mcmd->duration        = wlan_cpu_to_le16(cfg->duration);
+
+        mcmd->trig_common_field    = wlan_cpu_to_le64(cfg->trig_common_field);
+        mcmd->trig_user_info_field = wlan_cpu_to_le64(cfg->trig_user_info_field);
+        mcmd->basic_trig_user_info = wlan_cpu_to_le16(cfg->basic_trig_user_info);
+    }
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
  *  @brief This function prepares command of MFG cmd.
  *
  *  @param pmpriv       A pointer to mlan_private structure
@@ -153,11 +229,15 @@ static mlan_status wlan_cmd_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t
         case MFG_CMD_TX_FRAME:
             ret = wlan_cmd_mfg_tx_frame(pmpriv, cmd, action, pdata_buf);
             goto cmd_mfg_done;
-            break;
         case MFG_CMD_TX_CONT:
             ret = wlan_cmd_mfg_tx_cont(pmpriv, cmd, action, pdata_buf);
             goto cmd_mfg_done;
-            break;
+        case MFG_CMD_CONFIG_MAC_HE_TB_TX:
+            ret = wlan_cmd_mfg_he_tb_tx(pmpriv, cmd, action, pdata_buf);
+            goto cmd_mfg_done;
+        case MFG_CMD_CONFIG_TRIGGER_FRAME:
+            ret = wlan_cmd_mfg_config_trigger_frame(pmpriv, cmd, action, pdata_buf);
+            goto cmd_mfg_done;
         case MFG_CMD_SET_TEST_MODE:
         case MFG_CMD_UNSET_TEST_MODE:
         case MFG_CMD_TX_ANT:
