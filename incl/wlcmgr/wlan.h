@@ -4711,6 +4711,7 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 #endif
 
 #ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11AX
 /**
  * mbo channel operation preference configuration
  *
@@ -4721,6 +4722,51 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
+
+/**
+ * MBO set Cellular Data Capabilities
+ *
+ * \param[in] cell_capa 1 = Cellular data connection available
+ * 2 = Cellular data connection not available
+ * 3 = Not cellular capable (default)
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_mbo_set_cell_capa(t_u8 cell_capa);
+
+/**
+ * Optimized Connectivity Experience (OCE)
+ *
+ * \param[in] oce Enable OCE features
+ * 1 = Enable OCE in non-AP STA mode (default; disabled if the driver
+ * does not indicate support for OCE in STA mode).
+ * 2 = Enable OCE in STA-CFON mode.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_mbo_set_oce(t_u8 oce);
+#endif
+
+/**
+ * Dump text list of entries in PMKSA cache
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_pmksa_list(char *buf, size_t buflen);
+
+/**
+ * Flush PTKSA cache entries
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_pmksa_flush();
+
+/**
+ * Set wpa supplicant scan interval in seconds
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_scan_interval(int scan_int);
 #endif
 
 #ifdef CONFIG_1AS

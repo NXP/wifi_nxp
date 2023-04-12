@@ -2951,6 +2951,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11AX
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 {
     int ret;
@@ -3008,6 +3009,169 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
         /* Do nothing */
     }
 }
+
+static void test_wlan_mbo_set_cell_capa(int argc, char **argv)
+{
+    int ret;
+    uint8_t cell_capa;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <cell capa: 1/2/3(default)>\r\n", argv[0]);
+        (void)PRINTF("\tMBO Cellular Data Capabilities\r\n"
+            "\t# 1 = Cellular data connection available\r\n"
+            "\t# 2 = Cellular data connection not available\r\n"
+            "\t# 3 = Not cellular capable (default)\r\n");
+        return;
+    }
+
+    errno     = 0;
+    cell_capa = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo cell_capa:%d\r\n", errno);
+    }
+
+    ret = wlan_mbo_set_cell_capa(cell_capa);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please set correct mbo cell capa.\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set mbo cell capa.\r\n");
+    }
+    else
+    {
+        /* Do nothing */
+    }
+}
+
+static void test_wlan_mbo_set_oce(int argc, char **argv)
+{
+    int ret;
+    uint8_t oce;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <oce: 1(default)/2>\r\n", argv[0]);
+        (void)PRINTF("\tOptimized Connectivity Experience (OCE)\r\n"
+            "\t# oce: Enable OCE features\r\n"
+            "\t# 1 = Enable OCE in non-AP STA mode (default;\r\n"
+            "\tdisabled if the driver does not indicate support for OCE in STA mode)\r\n"
+            "\t# 2 = Enable OCE in STA-CFON mode\r\n");
+        return;
+    }
+
+    errno = 0;
+    oce   = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan mbo oce:%d\r\n", errno);
+    }
+
+    ret = wlan_mbo_set_oce(oce);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please set correct mbo oce.\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set mbo oce.\r\n");
+    }
+    else
+    {
+        /* Do nothing */
+    }
+}
+#endif
+
+static void test_wlan_pmksa_list(int argc, char **argv)
+{
+    int ret;
+    char *buf = NULL;
+    size_t buflen = 512;
+
+    if (argc != 1)
+    {
+        (void)PRINTF("Usage: %s \r\n", argv[0]);
+        return;
+    }
+
+    buf = (char *)os_mem_calloc(buflen);
+
+    if (buf == NULL)
+    {
+        (void)PRINTF("Failed to alloc buffer\r\n");
+        return;
+    }
+
+    ret = wlan_pmksa_list(buf, buflen);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("PMKSA list is empty\r\n");
+    }
+    else
+    {
+        (void)PRINTF("PMKSA list\r\n");
+        (void)PRINTF("%s\r\n", buf);
+    }
+}
+
+static void test_wlan_pmksa_flush(int argc, char **argv)
+{
+    int ret;
+
+    if (argc != 1)
+    {
+        (void)PRINTF("Usage: %s \r\n", argv[0]);
+        return;
+    }
+
+    ret = wlan_pmksa_flush();
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("failed to flush pmksa\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Flushed PMKSA cache\r\n");
+    }
+}
+
+static void test_wlan_set_scan_interval(int argc, char **argv)
+{
+    int ret, scan_int;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <scan_int: in seconds>\r\n", argv[0]);
+        return;
+    }
+
+    errno = 0;
+    scan_int   = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan scan int:%d\r\n", errno);
+    }
+
+    ret = wlan_set_scan_interval(scan_int);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set scan interval.\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Scan interval set successfully.\r\n");
+    }
+}
+
 #endif
 
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
@@ -7317,8 +7481,15 @@ static struct cli_command tests[] = {
      test_wlan_mbo_non_prefer_chs},
 #endif
 #ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11AX
     {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
      test_wlan_mbo_non_prefer_chs},
+    {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", test_wlan_mbo_set_cell_capa},
+    {"wlan-mbo-set-oce", "<oce: 1(default)/2>", test_wlan_mbo_set_oce},
+#endif
+    {"wlan-pmksa-list", NULL, test_wlan_pmksa_list},
+    {"wlan-pmksa-flush", NULL, test_wlan_pmksa_flush},
+    {"wlan-set-scan-interval", "<scan_int: in seconds>", test_wlan_set_scan_interval},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},

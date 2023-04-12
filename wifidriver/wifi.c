@@ -4359,20 +4359,17 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
 
     i = wlan_xmit_pkt(outbuf, pkt_len + len, interface);
 
-    if (i == MLAN_STATUS_FAILURE)
-    {
-#if defined(RW610)
-        wifi_imu_unlock();
-#else
-        wifi_sdio_unlock();
-#endif
-        return (int)-WM_FAIL;
-    }
 #if defined(RW610)
     wifi_imu_unlock();
 #else
     wifi_sdio_unlock();
 #endif
+
+    if (i == MLAN_STATUS_FAILURE)
+    {
+        return (int)-WM_FAIL;
+    }
+
     return (int)WM_SUCCESS;
 }
 

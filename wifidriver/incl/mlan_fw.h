@@ -2385,16 +2385,6 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Bssid_List_t
 } MLAN_PACK_END MrvlIEtypes_Bssid_List_t;
 #endif
 
-/** MrvlIEtypes_ScanChanGap_t */
-typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t
-{
-    /** Header */
-    MrvlIEtypesHeader_t header;
-    /** Time gap in units to TUs to be used between
-     * two consecutive channels scan */
-    t_u16 gap;
-} MLAN_PACK_END MrvlIEtypes_ScanChanGap_t;
-
 /** MrvlIEtypes_SsIdParamSet_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_SsIdParamSet_t
 {

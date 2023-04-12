@@ -9633,6 +9633,7 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11AX
 int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 {
     char non_pref_chan[128] = {0};
@@ -9640,6 +9641,53 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 
     (void)snprintf(non_pref_chan, sizeof(non_pref_chan), "81:%d:%d:2 81:%d:%d:2", ch0, pefer0, ch1, pefer1);
     return wpa_supp_mbo_update_non_pref_chan(netif, non_pref_chan);
+}
+
+int wlan_mbo_set_cell_capa(t_u8 cell_capa)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    if (cell_capa != 1 && cell_capa != 2 && cell_capa != 3)
+    {
+        return -WM_E_PERM;
+    }
+
+    return wpa_supp_mbo_set_cell_capa(netif, cell_capa);
+}
+
+int wlan_mbo_set_oce(t_u8 oce)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    if (oce != 1 && oce != 2)
+    {
+        return -WM_E_PERM;
+    }
+
+    return wpa_supp_mbo_set_oce(netif, oce);
+
+}
+#endif
+
+int wlan_pmksa_list(char *buf, size_t buflen)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_pmksa_list(netif, buf, buflen);
+}
+
+int wlan_pmksa_flush()
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_pmksa_flush(netif);
+}
+
+int wlan_set_scan_interval(int scan_int)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_set_scan_interval(netif, scan_int);
 }
 #endif
 
@@ -10739,15 +10787,22 @@ void wlan_set_rssi_low_threshold(uint8_t threshold)
 #ifdef CONFIG_WPA_SUPP_WPS
 int wlan_start_wps_pbc(void)
 {
+    int ret = -WM_FAIL;
     struct netif *netif = net_get_sta_interface();
 
     if (wlan.wps_session_attempt)
     {
         wlcm_d("WPS session is already in progress");
-        return -WM_FAIL;
+        return ret;
     }
 
-    return wpa_supp_start_wps_pbc(netif, 0);
+    ret = wpa_supp_start_wps_pbc(netif, 0);
+
+    if (ret == -2)
+    {
+        wlcm_e("WPS PBC overlap detected");
+    }
+    return ret;
 }
 
 void wlan_wps_generate_pin(unsigned int *pin)
