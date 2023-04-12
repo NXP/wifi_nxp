@@ -1856,7 +1856,7 @@ static int do_stop(struct wlan_network *network)
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
 #ifdef CONFIG_WPA_SUPP
-        ret = wpa_supp_stop_ap(netif);
+        ret = wpa_supp_stop_ap(netif, network);
 #else
         ret = wifi_uap_stop();
 #endif
