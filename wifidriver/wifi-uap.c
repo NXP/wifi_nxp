@@ -412,9 +412,15 @@ static int wifi_cmd_uap_config(char *ssid,
 
     if (bss_type == MLAN_BSS_TYPE_UAP)
     { /* Not required for WFD */
-        bss.param.bss_config.beacon_period  = beacon_period;
-        bss.param.bss_config.dtim_period    = dtim_period;
-        bss.param.bss_config.bcast_ssid_ctl = (t_u8)!wm_wifi.bcast_ssid_ctl;
+        bss.param.bss_config.beacon_period = beacon_period;
+        bss.param.bss_config.dtim_period   = dtim_period;
+        if (!wm_wifi.hidden_ssid)
+            bss.param.bss_config.bcast_ssid_ctl = 1;
+        else if (wm_wifi.hidden_ssid == 1)
+            bss.param.bss_config.bcast_ssid_ctl = 0;
+        else if (wm_wifi.hidden_ssid == 2)
+            bss.param.bss_config.bcast_ssid_ctl = 2;
+
         if (chan_sw_count != 0U)
         {
             bss.param.bss_config.dtim_period   = 1;
@@ -826,9 +832,9 @@ int wifi_uap_set_bandwidth(const t_u8 bandwidth)
     return (-WM_FAIL);
 }
 
-void wifi_uap_set_hidden_ssid(const bool bcast_ssid_ctl)
+void wifi_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 {
-    wm_wifi.bcast_ssid_ctl = bcast_ssid_ctl;
+    wm_wifi.hidden_ssid = hidden_ssid;
 }
 
 void wifi_uap_set_ecsa(void)
@@ -3287,9 +3293,11 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
                 else
                     sys_config->ht_cap_info = (ht_cap & 0x13ff) | 0x0c;
             }
-            wifi_d("11n=%d, ht_cap=0x%x, channel=%d, bandcfg:chanBand=0x%x chanWidth=0x%x chan2Offset=0x%x scanMode=0x%x\n",
-                    enable_11n, sys_config->ht_cap_info, priv->uap_channel, bandcfg.chanBand, bandcfg.chanWidth,
-                    bandcfg.chan2Offset, bandcfg.scanMode);
+            wifi_d(
+                "11n=%d, ht_cap=0x%x, channel=%d, bandcfg:chanBand=0x%x chanWidth=0x%x chan2Offset=0x%x "
+                "scanMode=0x%x\n",
+                enable_11n, sys_config->ht_cap_info, priv->uap_channel, bandcfg.chanBand, bandcfg.chanWidth,
+                bandcfg.chan2Offset, bandcfg.scanMode);
 
             ret = wifi_uap_set_httxcfg_int(ht_cap);
             if (ret != WM_SUCCESS)
@@ -3301,7 +3309,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 
             sys_config->ampdu_param = 3;
             (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
-                    sizeof(sys_config->supported_mcs_set));
+                         sizeof(sys_config->supported_mcs_set));
         }
         else
         {

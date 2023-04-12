@@ -9309,6 +9309,14 @@ void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)
 
 void wlan_uap_set_beacon_period(const uint16_t beacon_period)
 {
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *netif = net_get_uap_interface();
+
+    wpa_supp_set_ap_beacon_int(netif, beacon_period);
+#endif
+#endif
+
     wifi_uap_set_beacon_period(beacon_period);
 }
 
@@ -9325,9 +9333,17 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
     return wifi_uap_set_bandwidth(bandwidth);
 }
 
-void wlan_uap_set_hidden_ssid(const bool bcast_ssid_ctl)
+void wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 {
-    wifi_uap_set_hidden_ssid(bcast_ssid_ctl);
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *netif = net_get_uap_interface();
+
+    wpa_supp_set_ap_bcast_ssid_ctl(netif, hidden_ssid);
+#endif
+#endif
+
+    wifi_uap_set_hidden_ssid(hidden_ssid);
 }
 
 void wlan_uap_ctrl_deauth(const bool enable)

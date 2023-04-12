@@ -124,7 +124,7 @@ typedef struct
      */
     MrvlIEtypes_DomainParamSet_t *dp;
     /** Broadcast ssid control */
-    bool bcast_ssid_ctl;
+    t_u8 hidden_ssid;
     /** beacon period */
     t_u16 beacon_period;
     /** Wi-Fi Bandwidth */

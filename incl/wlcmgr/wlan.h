@@ -3646,13 +3646,15 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth);
  * does not respond to probe requests that contain null SSID and
  * generates beacons that contain null SSID.
  *
- *\param[in] bcast_ssid_ctl Broadcast SSID control if true SSID will be
- *	     hidden otherwise it will be visible.
+ *\param[in] hidden_ssid Hidden SSID control
+ *           hidden_ssid=0: broadcast SSID in beacons.
+ *           hidden_ssid=1: send empty SSID (length=0) in beacon.
+ *           hidden_ssid=2: clear SSID (ACSII 0), but keep the original length
  *
  *\note Please call this API before calling uAP start API.
  *
  */
-void wlan_uap_set_hidden_ssid(const bool bcast_ssid_ctl);
+void wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid);
 
 /** API to control the deauth during uAP channel switch
  *

@@ -1140,7 +1140,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     wlan_add_wps_probe_request_ie(pmpriv, &ptlv_pos);
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef CONFIG_MBO
+#if defined(CONFIG_MBO) || defined(CONFIG_WPA_SUPP)
     wlan_add_ext_capa_info_ie(pmpriv, NULL, &ptlv_pos);
 #endif
 
