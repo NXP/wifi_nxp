@@ -4325,6 +4325,14 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     (void)wifi_get_uap_max_clients(&wlan.uap_supported_max_sta_num);
 
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *uap_netif = net_get_uap_interface();
+
+    wpa_supp_set_ap_max_num_sta(uap_netif, wlan.uap_supported_max_sta_num);
+#endif
+#endif
+
     (void)wrapper_wlan_cmd_get_hw_spec();
 
 #ifndef RW610
@@ -8358,24 +8366,42 @@ int wlan_get_uap_max_clients(unsigned int *max_sta_num)
 
 int wlan_set_uap_max_clients(unsigned int max_sta_num)
 {
+    int ret = -WM_FAIL;
+
     if (is_uap_started() != 0)
     {
         wlcm_e(
-            "Cannot set the max station number "
-            "as the uAP is already running");
+                "Cannot set the max station number "
+                "as the uAP is already running");
         return -WM_FAIL;
     }
     else if (max_sta_num > wlan.uap_supported_max_sta_num)
     {
         wlcm_e(
-            "Maximum supported station number "
-            "limit is = %d",
-            wlan.uap_supported_max_sta_num);
+                "Maximum supported station number "
+                "limit is = %d",
+                wlan.uap_supported_max_sta_num);
         return -WM_FAIL;
     }
     else
     {
-        return wifi_set_uap_max_clients(&max_sta_num);
+        ret = wifi_set_uap_max_clients(&max_sta_num);
+
+        if (ret != WM_SUCCESS)
+        {
+            return ret;
+        }
+
+        wlan.uap_supported_max_sta_num = max_sta_num;
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+        struct netif *uap_netif = net_get_uap_interface();
+
+        wpa_supp_set_ap_max_num_sta(uap_netif, wlan.uap_supported_max_sta_num);
+#endif
+#endif
+        return ret;
     }
 }
 
