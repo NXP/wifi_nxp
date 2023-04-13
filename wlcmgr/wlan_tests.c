@@ -2955,46 +2955,16 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 {
     int ret;
-    uint8_t ch0, ch1, preference0, preference1;
 
-    if (argc != 5)
+    if (argc != 2)
     {
         (void)PRINTF(
-            "Usage: %s <ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255> < 0--non-operable; 1--prefers not to "
-            "operate; 255--prefers to operate>\r\n",
+            "Usage: %s \"<oper_class>:<chan>:<preference>:<reason> <oper_class>:<chan>:<preference>:<reason>\"\r\n",
             argv[0]);
         return;
     }
 
-    errno = 0;
-    ch0   = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
-    }
-
-    errno       = 0;
-    preference0 = (uint8_t)strtol(argv[2], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
-    }
-
-    errno = 0;
-    ch1   = (uint8_t)strtol(argv[3], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
-    }
-
-    errno       = 0;
-    preference1 = (uint8_t)strtol(argv[4], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
-    }
-
-    ret = wlan_mbo_peferch_cfg(ch0, preference0, ch1, preference1);
+    ret = wlan_mbo_peferch_cfg(argv[1]);
 
     if (ret == -WM_E_PERM)
     {
@@ -3006,7 +2976,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     }
     else
     {
-        /* Do nothing */
+        (void)PRINTF("Successfully set MBO non-preferred channels\r\n");
     }
 }
 
@@ -3018,7 +2988,8 @@ static void test_wlan_mbo_set_cell_capa(int argc, char **argv)
     if (argc != 2)
     {
         (void)PRINTF("Usage: %s <cell capa: 1/2/3(default)>\r\n", argv[0]);
-        (void)PRINTF("\tMBO Cellular Data Capabilities\r\n"
+        (void)PRINTF(
+            "\tMBO Cellular Data Capabilities\r\n"
             "\t# 1 = Cellular data connection available\r\n"
             "\t# 2 = Cellular data connection not available\r\n"
             "\t# 3 = Not cellular capable (default)\r\n");
@@ -3056,7 +3027,8 @@ static void test_wlan_mbo_set_oce(int argc, char **argv)
     if (argc != 2)
     {
         (void)PRINTF("Usage: %s <oce: 1(default)/2>\r\n", argv[0]);
-        (void)PRINTF("\tOptimized Connectivity Experience (OCE)\r\n"
+        (void)PRINTF(
+            "\tOptimized Connectivity Experience (OCE)\r\n"
             "\t# oce: Enable OCE features\r\n"
             "\t# 1 = Enable OCE in non-AP STA mode (default;\r\n"
             "\tdisabled if the driver does not indicate support for OCE in STA mode)\r\n"
@@ -3091,7 +3063,7 @@ static void test_wlan_mbo_set_oce(int argc, char **argv)
 static void test_wlan_pmksa_list(int argc, char **argv)
 {
     int ret;
-    char *buf = NULL;
+    char *buf     = NULL;
     size_t buflen = 512;
 
     if (argc != 1)
@@ -3153,8 +3125,8 @@ static void test_wlan_set_scan_interval(int argc, char **argv)
         return;
     }
 
-    errno = 0;
-    scan_int   = (uint8_t)strtol(argv[1], NULL, 10);
+    errno    = 0;
+    scan_int = (uint8_t)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan scan int:%d\r\n", errno);
@@ -7482,7 +7454,7 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11AX
-    {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
+    {"wlan-mbo-nonprefer-ch", "\"<oper_class>:<chan>:<preference>:<reason> <oper_class>:<chan>:<preference>:<reason>\"",
      test_wlan_mbo_non_prefer_chs},
     {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", test_wlan_mbo_set_cell_capa},
     {"wlan-mbo-set-oce", "<oce: 1(default)/2>", test_wlan_mbo_set_oce},

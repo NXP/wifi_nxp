@@ -4822,15 +4822,22 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11AX
 /**
- * mbo channel operation preference configuration
+ * Multi Band Operation (MBO) non-preferred channels
  *
- * \param[in] ch0 channel number.
- * \param[in] prefer0 operation preference for ch0.
- * \param[in] ch1 channel number.
- * \param[in] prefer1 operation preference for ch1.
+ * A space delimited list of non-preferred channels where each channel is a colon delimited list of values.
+ *
+ * Format:
+ *
+ * non_pref_chan=<oper_class>:<chan>:<preference>:<reason>
+ * Example:
+ *
+ * non_pref_chan=81:5:10:2 81:1:0:2 81:9:0:2
+ *
+ * \param[in] non_pref_chan list of non-preferred channels.
+ *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
+int wlan_mbo_peferch_cfg(const char *non_pref_chan);
 
 /**
  * MBO set Cellular Data Capabilities

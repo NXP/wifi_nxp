@@ -9685,12 +9685,10 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11AX
-int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
+int wlan_mbo_peferch_cfg(const char *non_pref_chan)
 {
-    char non_pref_chan[128] = {0};
     struct netif *netif = net_get_sta_interface();
 
-    (void)snprintf(non_pref_chan, sizeof(non_pref_chan), "81:%d:%d:2 81:%d:%d:2", ch0, pefer0, ch1, pefer1);
     return wpa_supp_mbo_update_non_pref_chan(netif, non_pref_chan);
 }
 
