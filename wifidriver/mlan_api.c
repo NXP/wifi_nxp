@@ -542,7 +542,7 @@ int wifi_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
 
 int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
 {
-    return wifi_uap_pmf_getset(HostCmd_ACT_GEN_GET, (bool *)mfpc, (bool *)mfpr);
+    return wifi_uap_pmf_getset(HostCmd_ACT_GEN_GET, mfpc, mfpr);
 }
 
 #ifndef CONFIG_MLAN_WMSDK

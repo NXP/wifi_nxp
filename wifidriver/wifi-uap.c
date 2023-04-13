@@ -1281,10 +1281,6 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
                 MrvlIEtypes_channel_band_t *tlv_cb    = (MrvlIEtypes_channel_band_t *)(void *)tlv;
                 pmpriv->uap_state_chan_cb.band_config = tlv_cb->band_config;
                 pmpriv->uap_state_chan_cb.channel     = tlv_cb->channel;
-                if (!(sys_config->action == HostCmd_ACT_GEN_GET))
-                {
-                    break;
-                }
                 if (wm_wifi.cmd_resp_priv != NULL)
                 {
                     t_u8 *channel         = (t_u8 *)wm_wifi.cmd_resp_priv;
@@ -1299,10 +1295,6 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp)
                 MrvlIEtypes_max_sta_count_t *tlv_sta_cnt = (MrvlIEtypes_max_sta_count_t *)(void *)tlv;
                 pmpriv->uap_state_chan_cb.max_sta_count  = tlv_sta_cnt->max_sta_count;
                 pmpriv->uap_max_sta                      = tlv_sta_cnt->max_sta_count;
-                if (!(sys_config->action == HostCmd_ACT_GEN_GET))
-                {
-                    break;
-                }
                 if (wm_wifi.cmd_resp_priv != NULL)
                 {
                     int *sta_count        = (int *)wm_wifi.cmd_resp_priv;

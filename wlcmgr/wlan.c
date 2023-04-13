@@ -9374,7 +9374,7 @@ void wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 #ifdef CONFIG_WPA_SUPP_AP
     struct netif *netif = net_get_uap_interface();
 
-    wpa_supp_set_ap_bcast_ssid_ctl(netif, hidden_ssid);
+    wpa_supp_set_ap_hidden_ssid(netif, hidden_ssid);
 #endif
 #endif
 
