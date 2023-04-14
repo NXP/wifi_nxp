@@ -1066,8 +1066,8 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #endif
 #endif
 
-	/* assert as command flow cannot work anymore */
-	assert(0);
+        /* assert as command flow cannot work anymore */
+        assert(0);
     }
 
     wm_wifi.cmd_resp_priv = NULL;
@@ -3965,10 +3965,49 @@ int wifi_low_level_output(const uint8_t interface,
             }
             break;
         } /* if (i != MLAN_STATUS_SUCCESS) */
-    }     /* while(true) */
+        break;
+    } /* while(true) */
+#endif
+
+#ifdef CONFIG_STA_AMPDU_TX
+    if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable
+#if defined(WIFI_ADD_ON)
+#ifdef CONFIG_WMM
+        && wifi_sta_ampdu_tx_enable_per_tid_is_allowed(tid)
+#endif
+#endif
+    )
+    {
+        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(sd_buffer))
+        {
+#ifdef CONFIG_WMM
+            (void)wrapper_wlan_sta_ampdu_enable(tid);
+#else
+            (void)wrapper_wlan_sta_ampdu_enable();
+#endif
+        }
+    }
+#endif
+
+#ifdef CONFIG_UAP_AMPDU_TX
+    if (interface == BSS_TYPE_UAP
+#if defined(WIFI_ADD_ON)
+        && uap_ampdu_tx_enable
+#ifdef CONFIG_WMM
+        && wifi_uap_ampdu_tx_enable_per_tid_is_allowed(tid)
+#endif
+#endif
+    )
+
+    {
+        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(sd_buffer))
+        {
+            (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)sd_buffer);
+        }
+    }
+#endif
 
     ret = WM_SUCCESS;
-#endif
 
 exit_fn:
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)

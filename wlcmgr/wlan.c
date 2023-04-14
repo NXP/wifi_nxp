@@ -2838,31 +2838,6 @@ static void wlcm_process_addba_request(struct wifi_message *msg)
     }
 }
 
-static void wlcm_process_addba_response(struct wifi_message *msg)
-{
-    if (is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_REQUESTING_ADDRESS) || is_state(CM_STA_OBTAINING_ADDRESS) ||
-            is_state(CM_STA_CONNECTED) || is_uap_started())
-    {
-#if defined(WIFI_ADD_ON)
-#ifdef CONFIG_WMM
-        if (wifi_sta_ampdu_tx_enable_per_tid_is_allowed(1))
-#endif
-#endif
-        {
-#ifdef CONFIG_WMM
-            (void)wrapper_wlan_sta_ampdu_enable(1);
-#else
-            (void)wrapper_wlan_sta_ampdu_enable();
-#endif
-        }
-    }
-        else
-        {
-            wlcm_d("Ignore ADDBA Response event in disconnected state");
-            os_mem_free((void *)msg->data);
-        }
-}
-
 static void wlcm_process_delba_request(struct wifi_message *msg)
 {
     if (is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_REQUESTING_ADDRESS) || is_state(CM_STA_OBTAINING_ADDRESS) ||
@@ -5292,9 +5267,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #ifdef CONFIG_11N
         case WIFI_EVENT_11N_ADDBA:
             wlcm_process_addba_request(msg);
-            break;
-        case WIFI_EVENT_11N_ADDBA_RESP:
-            wlcm_process_addba_response(msg);
             break;
         case WIFI_EVENT_11N_DELBA:
             wlcm_process_delba_request(msg);

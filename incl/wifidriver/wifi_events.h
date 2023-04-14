@@ -114,8 +114,6 @@ enum wifi_event
     /* Add Block Ack */
     /** 802.11N add block ack */
     WIFI_EVENT_11N_ADDBA,
-    /** 802.11N add block ack response sent */
-    WIFI_EVENT_11N_ADDBA_RESP,
     /** 802.11N block Ack stream timeout */
     WIFI_EVENT_11N_BA_STREAM_TIMEOUT,
     /** 802.11n Delete block add */

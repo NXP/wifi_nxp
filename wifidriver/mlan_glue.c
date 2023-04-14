@@ -815,10 +815,6 @@ static mlan_status do_wlan_ret_11n_addba_resp(HostCmd_DS_COMMAND *resp)
     {
         mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
         rv                   = wlan_ret_11n_addba_resp(pmpriv, resp);
-        if (rv == MLAN_STATUS_SUCCESS)
-        {
-            wifi_event_completion(WIFI_EVENT_11N_ADDBA_RESP, WIFI_EVENT_REASON_SUCCESS, NULL);
-        }
     }
 #ifdef DEBUG_11N_AGGR
     wmprintf("ADDBA RESP RESP: %d\n\r", resp->result);
