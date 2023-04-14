@@ -321,7 +321,7 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
     const struct ieee80211_mgmt *mgmt              = NULL;
     const unsigned char *frame                     = NULL;
     const unsigned char *req_frame                 = NULL;
-    const unsigned char *bssid                           = NULL;
+    const unsigned char *bssid                     = NULL;
     unsigned int frame_len                         = 0;
     unsigned short status                          = WLAN_STATUS_UNSPECIFIED_FAILURE;
     enum sta_connect_fail_reason_codes reason_code = STA_CONNECT_FAIL_REASON_UNSPECIFIED;
@@ -1704,65 +1704,73 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         goto out;
     }
 
-    status = wifi_setup_ht_cap(&modes[0].ht_capab, &modes[0].mcs_set[0], &modes[0].a_mpdu_params, 0);
+    status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211G].ht_capab, &modes[HOSTAPD_MODE_IEEE80211G].mcs_set[0],
+                               &modes[HOSTAPD_MODE_IEEE80211G].a_mpdu_params, 0);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 2G infra ht cap failed", __func__);
         goto out;
     }
 
-    status = wifi_setup_ht_cap(&modes[1].ht_capab, &modes[1].mcs_set[0], &modes[1].a_mpdu_params, 1);
+    status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211A].ht_capab, &modes[HOSTAPD_MODE_IEEE80211A].mcs_set[0],
+                               &modes[HOSTAPD_MODE_IEEE80211A].a_mpdu_params, 1);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
         goto out;
     }
 
-    modes[0].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
-    modes[1].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+    modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+    modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
 
 #ifdef CONFIG_11AC
-    status = wifi_setup_vht_cap((t_u32 *)&modes[0].vht_capab, modes[0].vht_mcs_set, 0);
+    status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211G].vht_capab,
+                                modes[HOSTAPD_MODE_IEEE80211G].vht_mcs_set, 0);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 2G infra vht cap failed", __func__);
         goto out;
     }
 
-    status = wifi_setup_vht_cap((t_u32 *)&modes[1].vht_capab, modes[1].vht_mcs_set, 1);
+    status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211A].vht_capab,
+                                modes[HOSTAPD_MODE_IEEE80211A].vht_mcs_set, 1);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 5G infra vht cap failed", __func__);
         goto out;
     }
 
-    modes[0].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
-    modes[1].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+    modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+    modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
 #endif
 
 #ifdef CONFIG_11AX
-    status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[0].he_capab[IEEE80211_MODE_INFRA], 0);
+    status = wifi_setup_he_cap(
+        (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_INFRA], 0);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 2G infra he cap failed", __func__);
         goto out;
     }
 
-    status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[0].he_capab[IEEE80211_MODE_AP], 0);
+    status =
+        wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP], 0);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 2G ap he cap failed", __func__);
         goto out;
     }
 
-    status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[1].he_capab[IEEE80211_MODE_INFRA], 1);
+    status = wifi_setup_he_cap(
+        (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
         goto out;
     }
 
-    status = wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[1].he_capab[IEEE80211_MODE_AP], 1);
+    status =
+        wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);

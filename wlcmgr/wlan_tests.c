@@ -2621,23 +2621,6 @@ static void test_wlan_set_max_clients_count(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WIFI_HIDDEN_SSID
-static void test_wlan_set_hidden_ssid(int argc, char **argv)
-{
-    int bcast_ssid_ctl;
-
-    if (argc != 2)
-    {
-        (void)PRINTF("Usage: %s hidden ssid control\r\n", argv[0]);
-        return;
-    }
-
-    bcast_ssid_ctl = atoi(argv[1]);
-
-    wlan_uap_set_hidden_ssid(bcast_ssid_ctl);
-}
-#endif
-
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
 static void test_wlan_set_rts(int argc, char **argv)
 {
@@ -3704,6 +3687,45 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
     }
 }
 #endif
+
+static void dump_hidden_ssid_usage()
+{
+    (void)PRINTF("Usage: wlan-set-uap-hidden-ssid <0/1/2>\r\n");
+    (void)PRINTF(
+        "Error: 0: broadcast SSID in beacons.\r\n"
+        "1: send empty SSID (length=0) in beacons.\r\n"
+        "2: clear SSID (ACSII 0), but keep the original length\r\n");
+}
+
+static void test_wlan_set_uap_hidden_ssid(int argc, char **argv)
+{
+    uint8_t hidden_ssid;
+    int ret = -WM_FAIL;
+
+    if (argc < 2)
+    {
+        dump_hidden_ssid_usage();
+        return;
+    }
+
+    errno       = 0;
+    hidden_ssid = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul:uap_bandwidth errno:%d\r\n", errno);
+    }
+
+    ret = wlan_uap_set_hidden_ssid(hidden_ssid);
+
+    if (ret != WM_SUCCESS)
+    {
+        dump_hidden_ssid_usage();
+    }
+    else
+    {
+        (void)PRINTF("SSID broadcast control set successfully\r\n");
+    }
+}
 
 #ifdef CONFIG_WIFI_MEM_ACCESS
 static void dump_wlan_mem_access_usage(void)
@@ -7427,9 +7449,6 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_WIFI_MAX_CLIENTS_CNT
     {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
 #endif
-#ifdef CONFIG_WIFI_HIDDEN_SSID
-    {"wlan-set-hidden-ssid", "<0/1>", test_wlan_set_hidden_ssid},
-#endif
 #ifdef CONFIG_WIFI_RTS_THRESHOLD
     {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
 #endif
@@ -7489,6 +7508,7 @@ static struct cli_command tests[] = {
     {"wlan-set-uap-bandwidth", "<1/2> 1:20 MHz 2:40MHz", test_wlan_set_uap_bandwidth},
 #endif
 #endif
+    {"wlan-set-uap-hidden-ssid", "<0/1/2>", test_wlan_set_uap_hidden_ssid},
 #ifdef SD8801
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
     {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
