@@ -9344,8 +9344,12 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
     return wifi_uap_set_bandwidth(bandwidth);
 }
 
-void wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
+int wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 {
+    if (hidden_ssid != 0 && hidden_ssid != 1 && hidden_ssid != 2)
+    {
+        return -WM_FAIL;
+    }
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_AP
     struct netif *netif = net_get_uap_interface();
@@ -9355,6 +9359,8 @@ void wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 #endif
 
     wifi_uap_set_hidden_ssid(hidden_ssid);
+
+    return WM_SUCCESS;
 }
 
 void wlan_uap_ctrl_deauth(const bool enable)

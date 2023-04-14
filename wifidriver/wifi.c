@@ -3998,7 +3998,6 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
 #endif
     )
-
     {
         if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(sd_buffer))
         {
