@@ -654,7 +654,7 @@ static void timer_poll_udp_client(TimerHandle_t timer)
 
 static void TESTAbort(void)
 {
-    iperf_test_abort((void *)&ctx);
+    (void)tcpip_callback(iperf_test_abort, (void *)&ctx);
 }
 
 static void TCPServer(void)
