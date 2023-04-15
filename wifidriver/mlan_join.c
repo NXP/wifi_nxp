@@ -1060,6 +1060,12 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 akm_type = AssocAgentAuth_Wpa3Sae;
             }
 #endif
+#if defined(CONFIG_HOST_MLME) && defined(CONFIG_OWE)
+            if ((akm_type == AssocAgentAuth_Owe) && (pmpriv->curr_bss_params.host_mlme))
+            {
+                akm_type = AssocAgentAuth_Open;
+            }
+#endif
             if ((pauth_tlv == MNULL) && (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_AUTO))
             {
                 pauth_tlv              = (MrvlIEtypes_AuthType_t *)auth_pos;
