@@ -60,15 +60,19 @@ static bool mcast_mac_valid;
 static void timer_poll_udp_client(TimerHandle_t timer);
 
 /* Report state => string */
-static const char *report_type_str[] = {
-    "TCP_DONE_SERVER (RX)",        /* LWIPERF_TCP_DONE_SERVER,*/
-    "TCP_DONE_CLIENT (TX)",        /* LWIPERF_TCP_DONE_CLIENT,*/
+const char *report_type_str[] = {
+    "TCP_DONE_SERVER (RX)",        /* LWIPERF_TCP_DONE_SERVER_RX,*/
+    "TCP_DONE_SERVER (TX)",        /* LWIPERF_TCP_DONE_SERVER_TX,*/
+    "TCP_DONE_CLIENT (TX)",        /* LWIPERF_TCP_DONE_CLIENT_TX,*/
+    "TCP_DONE_CLIENT (RX)",        /* LWIPERF_TCP_DONE_CLIENT_RX,*/
     "TCP_ABORTED_LOCAL",           /* LWIPERF_TCP_ABORTED_LOCAL, */
     "TCP_ABORTED_LOCAL_DATAERROR", /* LWIPERF_TCP_ABORTED_LOCAL_DATAERROR, */
     "TCP_ABORTED_LOCAL_TXERROR",   /* LWIPERF_TCP_ABORTED_LOCAL_TXERROR, */
     "TCP_ABORTED_REMOTE",          /* LWIPERF_TCP_ABORTED_REMOTE, */
-    "UDP_DONE_SERVER (RX)",        /* LWIPERF_UDP_DONE_SERVER, */
-    "UDP_DONE_CLIENT (TX)",        /* LWIPERF_UDP_DONE_CLIENT, */
+    "UDP_DONE_SERVER (RX)",        /* LWIPERF_UDP_DONE_SERVER_RX, */
+    "UDP_DONE_SERVER (TX)",        /* LWIPERF_UDP_DONE_SERVER_TX, */
+    "UDP_DONE_CLIENT (TX)",        /* LWIPERF_UDP_DONE_CLIENT_TX, */
+    "UDP_DONE_CLIENT (RX)",        /* LWIPERF_UDP_DONE_CLIENT_RX, */
     "UDP_ABORTED_LOCAL",           /* LWIPERF_UDP_ABORTED_LOCAL, */
     "UDP_ABORTED_LOCAL_DATAERROR", /* LWIPERF_UDP_ABORTED_LOCAL_DATAERROR, */
     "UDP_ABORTED_LOCAL_TXERROR",   /* LWIPERF_UDP_ABORTED_LOCAL_TXERROR, */
@@ -236,8 +240,10 @@ static void wmm_iperf_test_start(void *arg)
 /*!
  * @brief Function to abort iperf test.
  */
-static void wmm_iperf_test_abort()
+static void wmm_iperf_test_abort(void *arg)
 {
+    LWIP_UNUSED_ARG(arg);
+
     if (wmm_test_ctx.iperf_session != NULL)
     {
         lwiperf_abort(wmm_test_ctx.iperf_session);
@@ -443,7 +449,7 @@ void test_wmm(int argc, char **argv)
     }
     if (wmm_test_ctx.abort)
     {
-        wmm_iperf_test_abort();
+        tcpip_callback(wmm_iperf_test_abort, NULL);
         return;
     }
     if ((wmm_test_ctx.client1 || wmm_test_ctx.server) && wmm_test_ctx.iperf_session1 != NULL)
@@ -458,7 +464,6 @@ void test_wmm(int argc, char **argv)
         lwiperf_abort(wmm_test_ctx.iperf_session2);
         wmm_test_ctx.iperf_session2 = NULL;
     }
-
     tcpip_callback(wmm_iperf_test_start, NULL);
 }
 #endif
@@ -469,6 +474,10 @@ static void iperf_test_start(void *arg)
 {
     int rv                         = WM_SUCCESS;
     struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
+#ifdef CONFIG_IPV6
+    struct netif *netiftmp  = NULL;
+    struct netif *netifbind = NULL;
+#endif
 
     if (ctx->iperf_session != NULL)
     {
@@ -477,25 +486,29 @@ static void iperf_test_start(void *arg)
         ctx->iperf_session = NULL;
     }
 
-    if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
+    if (!(ctx->tcp))
     {
-        /* Reducing udp Tx timer interval for rx to be served */
-        rv = os_timer_change(&ptimer, os_msec_to_ticks(2), 0);
-        if (rv != WM_SUCCESS)
+        if (ctx->client_type == LWIPERF_DUAL)
         {
-            (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
-            return;
+            /* Reducing udp Tx timer interval for rx to be served */
+            rv = os_timer_change(&ptimer, os_msec_to_ticks(2), 0);
+            if (rv != WM_SUCCESS)
+            {
+                (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
+                return;
+            }
         }
-    }
-    else
-    {
-        /* Returning original timer settings of 1 ms interval*/
-        rv = os_timer_change(&ptimer, 1U / portTICK_PERIOD_MS, 0);
-        if (rv != WM_SUCCESS)
+        else
         {
-            (void)PRINTF("Unable to change period in iperf timer\r\n");
-            return;
+            /* Returning original timer settings of 1 ms interval*/
+            rv = os_timer_change(&ptimer, os_msec_to_ticks(1), 0);
+            if (rv != WM_SUCCESS)
+            {
+                (void)PRINTF("Unable to change period in iperf timer\r\n");
+                return;
+            }
         }
+        os_timer_activate(&ptimer);
     }
 
     if (ctx->server_mode)
@@ -550,7 +563,22 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ip6_addr_assign_zone(ip_2_ip6(&server_address), IP6_UNICAST, netif_default);
+                NETIF_FOREACH(netiftmp)
+                {
+                    if ((netif_get_ip6_addr_match(netiftmp, ip_2_ip6(&bind_address)) >= 0) && netif_is_up(netiftmp))
+                    {
+                        netifbind = netiftmp;
+                        break;
+                    }
+                }
+                if (!netifbind)
+                {
+                    (void)PRINTF("Could not find correspinding netif by bind_address\r\n");
+                    lwiperf_abort(ctx->iperf_session);
+                    ctx->iperf_session = NULL;
+                    return;
+                }
+                ip6_addr_assign_zone(ip_2_ip6(&server_address), IP6_UNICAST, netifbind);
             }
 #endif
             ctx->iperf_session = lwiperf_start_tcp_client(&server_address, port, ctx->client_type, amount, buffer_len,
@@ -630,6 +658,8 @@ static void iperf_test_abort(void *arg)
     }
     (void)PRINTF("IPERF ABORT DONE\r\n");
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
+
+    os_timer_deactivate(&ptimer);
 }
 
 /*!
@@ -693,6 +723,17 @@ static void TCPClientTradeOff(void)
     (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
+#ifdef LWIPERF_REVERSE_MODE
+static void TCPClientReverse(void)
+{
+    ctx.server_mode = false;
+    ctx.tcp         = true;
+    ctx.client_type = LWIPERF_REVERSE;
+
+    tcpip_callback(iperf_test_start, (void *)&ctx);
+}
+#endif
+
 static void UDPServer(void)
 {
     ctx.server_mode = true;
@@ -739,6 +780,17 @@ static void UDPClientTradeOff(void)
     (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
+#ifdef LWIPERF_REVERSE_MODE
+static void UDPClientReverse(void)
+{
+    ctx.server_mode = false;
+    ctx.tcp         = false;
+    ctx.client_type = LWIPERF_REVERSE;
+
+    tcpip_callback(iperf_test_start, (void *)&ctx);
+}
+#endif
+
 /* Display the usage of iperf */
 static void display_iperf_usage(void)
 {
@@ -762,6 +814,9 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -c    <host>   run in client mode, connecting to <host>\r\n");
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
     (void)PRINTF("\t   -r             Do a bidirectional test individually\r\n");
+#ifdef LWIPERF_REVERSE_MODE
+    (void)PRINTF("\t   -R             reverse the test (client receives, server sends)\r\n");
+#endif
     (void)PRINTF("\t   -t    #        time in seconds to transmit for (default 10 secs)\r\n");
     (void)PRINTF(
         "\t   -b    #        for UDP, bandwidth to send at in Mbps, default 100Mbps without the parameter\r\n");
@@ -775,14 +830,15 @@ static void display_iperf_usage(void)
 
 static void cmd_iperf(int argc, char **argv)
 {
-    int arg           = 1;
-    char ip_addr[128] = {0};
+    int arg                = 1;
+    char ip_addr[128]      = {0};
+    char ip_addr_bind[128] = {0};
 
     struct
     {
         unsigned help : 1;
         unsigned udp : 1;
-        unsigned iperf_bind : 1;
+        unsigned bind : 1;
         unsigned bhost : 1;
         unsigned abort : 1;
         unsigned server : 1;
@@ -790,14 +846,17 @@ static void cmd_iperf(int argc, char **argv)
         unsigned chost : 1;
         unsigned dual : 1;
         unsigned tradeoff : 1;
+#ifdef LWIPERF_REVERSE_MODE
+        unsigned reverse : 1;
+#endif
         unsigned time : 1;
 #ifdef CONFIG_WMM
         unsigned tos : 1;
 #endif
+        unsigned dserver : 1;
 #ifdef CONFIG_IPV6
         unsigned ipv6 : 1;
 #endif
-        unsigned dserver : 1;
         unsigned buflen : 1;
         unsigned port : 1;
     } info;
@@ -822,6 +881,7 @@ static void cmd_iperf(int argc, char **argv)
 
     (void)memset(&info, 0, sizeof(info));
     (void)memset(ip_addr, 0, sizeof(ip_addr));
+    (void)memset(ip_addr_bind, 0, sizeof(ip_addr_bind));
 
     if (argc < 2)
     {
@@ -873,23 +933,23 @@ static void cmd_iperf(int argc, char **argv)
                 return;
             }
         }
-        else if ((info.iperf_bind == 0U) && string_equal("-B", argv[arg]))
+        else if ((info.bind == 0U) && string_equal("-B", argv[arg]))
         {
             arg += 1;
-            info.iperf_bind = 1;
+            info.bind = 1;
 
-            if ((info.bhost == 0U) && argv[arg] != NULL)
+            if (!info.bhost && argv[arg] != NULL)
             {
-                (void)inet_aton(argv[arg], (void *)&bind_address);
-
-                info.bhost = 1;
-
-                if (ip_addr_ismulticast(&bind_address))
+                if (strlen(argv[arg]) < sizeof(ip_addr_bind))
                 {
-                    multicast = true;
+                    strncpy(ip_addr_bind, argv[arg], strlen(argv[arg]));
+                    arg += 1;
                 }
-
-                arg += 1;
+                else
+                {
+                    PRINTF("Invalid bind ip addr, length exceeded max ip_addr bytes\r\n");
+                    return;
+                }
             }
         }
         else if ((info.time == 0U) && string_equal("-t", argv[arg]))
@@ -898,7 +958,6 @@ static void cmd_iperf(int argc, char **argv)
             info.time = 1;
             errno     = 0;
             amount    = -(100 * strtol(argv[arg], NULL, 10));
-
             if (errno != 0)
             {
                 (void)PRINTF("Invalid time, error during strtoul errno:%d", errno);
@@ -939,6 +998,13 @@ static void cmd_iperf(int argc, char **argv)
             arg += 1;
             info.tradeoff = 1;
         }
+#ifdef LWIPERF_REVERSE_MODE
+        else if (!info.reverse && string_equal("-R", argv[arg]))
+        {
+            arg += 1;
+            info.reverse = 1;
+        }
+#endif
         else if (string_equal("-b", argv[arg]))
         {
             if (arg + 1 >= argc || (get_uint(argv[arg + 1], &udp_rate_factor, strlen(argv[arg + 1])) != 0))
@@ -1011,23 +1077,58 @@ static void cmd_iperf(int argc, char **argv)
     }
 #endif
 
+    if (info.bind)
+    {
+#ifdef CONFIG_IPV6
+        if (ipv6)
+        {
+            inet6_aton(ip_addr_bind, ip_2_ip6(&bind_address));
+            bind_address.type = IPADDR_TYPE_V6;
+            if (IP_IS_V6(&bind_address) != 0)
+                info.bhost = 1;
+        }
+        else
+        {
+#endif
+            inet_aton(ip_addr_bind, ip_2_ip4(&bind_address));
+#ifdef CONFIG_IPV6
+            bind_address.type = IPADDR_TYPE_V4;
+#endif
+            if (IP_IS_V4(&bind_address) != 0)
+                info.bhost = 1;
+#ifdef CONFIG_IPV6
+        }
+#endif
+        if (ip_addr_ismulticast(&bind_address))
+            multicast = true;
+    }
+
     if (((info.abort == 0U) && (info.server == 0U) && (info.client == 0U)) ||
         ((info.client != 0U) && (info.chost == 0U)) || ((info.server != 0U) && (info.client != 0U)) ||
         ((info.udp != 0U)
 #ifdef CONFIG_IPV6
          && (info.ipv6 == 0U)
 #endif
-         && ((info.iperf_bind == 0U) || (info.bhost == 0U))) ||
-        (((info.dual != 0U) || (info.tradeoff != 0U)) && (info.client == 0U)) ||
-        ((info.dual != 0U) && (info.tradeoff != 0U)) || ((info.dserver != 0U) && (info.server == 0U || info.udp == 0U))
+         && ((info.bind == 0U) || (info.bhost == 0U))) ||
+        (((info.dual != 0U) || (info.tradeoff != 0U)
+#ifdef LWIPERF_REVERSE_MODE
+          || (info.reverse != 0U)
+#endif
+              ) &&
+         (info.client == 0U)) ||
+        ((info.dual != 0U) && (info.tradeoff != 0U)) ||
+#ifdef LWIPERF_REVERSE_MODE
+        ((info.dual != 0U) && (info.reverse != 0U)) || ((info.tradeoff != 0U) && (info.reverse != 0U)) ||
+#endif
+        ((info.dserver != 0U) && (info.server == 0U || info.udp == 0U))
 #ifdef CONFIG_IPV6
-        || ((info.ipv6 != 0U) && (info.iperf_bind != 0U))
+        || ((info.ipv6 != 0U) && (info.bind != 0U))
 #endif
     )
     {
         (void)PRINTF("Incorrect usage\r\n");
 #ifdef CONFIG_IPV6
-        if ((info.ipv6 != 0U) && (info.iperf_bind != 0U))
+        if ((info.ipv6 != 0U) && (info.bind != 0U))
         {
             (void)PRINTF("IPv6: bind to host not allowed\r\n");
         }
@@ -1042,7 +1143,7 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
                 && (info.ipv6 == 0U)
 #endif
-                && ((info.iperf_bind == 0U) || (info.bhost == 0U)))
+                && ((info.bind == 0U) || (info.bhost == 0U)))
             {
                 (void)PRINTF("For UDP tests please specify local interface ip address using -B option\r\n");
             }
@@ -1085,6 +1186,12 @@ static void cmd_iperf(int argc, char **argv)
             {
                 UDPClientTradeOff();
             }
+#ifdef LWIPERF_REVERSE_MODE
+            else if (info.reverse != 0U)
+            {
+                UDPClientReverse();
+            }
+#endif
             else
             {
                 UDPClient();
@@ -1100,6 +1207,12 @@ static void cmd_iperf(int argc, char **argv)
             {
                 TCPClientTradeOff();
             }
+#ifdef LWIPERF_REVERSE_MODE
+            else if (info.reverse != 0U)
+            {
+                TCPClientReverse();
+            }
+#endif
             else
             {
                 TCPClient();
@@ -1140,7 +1253,7 @@ int iperf_cli_init(void)
 
     if (ptimer == NULL)
         rv = os_timer_create(&ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
-                             OS_TIMER_PERIODIC, OS_TIMER_AUTO_ACTIVATE);
+                             OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
 
     if (rv != WM_SUCCESS)
     {
@@ -1157,6 +1270,13 @@ int iperf_cli_init(void)
 int iperf_cli_deinit(void)
 {
     u8_t i;
+
+    if (ctx.iperf_session != NULL)
+    {
+        (void)PRINTF("Abort ongoing IPERF session\r\n");
+        lwiperf_abort(ctx.iperf_session);
+        ctx.iperf_session = NULL;
+    }
 
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
     {
