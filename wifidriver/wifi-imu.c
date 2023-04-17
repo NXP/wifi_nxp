@@ -546,14 +546,6 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         memcpy(msg.data, pmbuf, imupkt->size);
 #endif
 
-#ifdef CONFIG_WMM
-        if (upld_type == MLAN_TYPE_EVENT && imupkt->hostcmd.command == EVENT_TX_DATA_PAUSE)
-        {
-            wifi_handle_event_data_pause(msg.data);
-            wifi_free_eventbuf(msg.data);
-            return MLAN_STATUS_SUCCESS;
-        }
-#endif
         ret = os_queue_send(bus.event_queue, &msg, os_msec_to_ticks(WIFI_RESP_WAIT_TIME));
 
         if (ret != WM_SUCCESS)
