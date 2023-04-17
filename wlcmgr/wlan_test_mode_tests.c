@@ -724,7 +724,7 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
     uint32_t data_rate;
     uint32_t frame_pattern;
     uint32_t frame_length;
-    uint32_t adjust_burst_sifs;
+    uint16_t adjust_burst_sifs;
     uint32_t burst_sifs_in_us;
     uint32_t short_preamble;
     uint32_t act_sub_ch;
@@ -733,7 +733,7 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
     uint32_t tx_bf;
     uint32_t gf_mode;
     uint32_t stbc;
-    uint32_t bssid[MLAN_MAC_ADDR_LENGTH];
+    uint8_t bssid[MLAN_MAC_ADDR_LENGTH];
 
     if (!rf_test_mode)
     {
@@ -766,9 +766,9 @@ static void wlan_rf_tx_frame_set(int argc, char *argv[])
     }
 
     enable        = strtol(argv[1], NULL, 10);
-    data_rate     = strtol(argv[2], NULL, 10);
+    data_rate     = strtol(argv[2], NULL, 16);
     errno         = 0;
-    frame_pattern = strtol(argv[3], NULL, 16);
+    frame_pattern = strtoul(argv[3], NULL, 16);
     if (errno != 0)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
@@ -811,8 +811,8 @@ disable:
         (void)PRINTF("Tx Frame configuration successful\r\n");
         (void)PRINTF("  Enable                    : %s\r\n", enable ? "enable" : "disable");
         (void)PRINTF("  Tx Data Rate              : %d\r\n", data_rate);
-        (void)PRINTF("  Payload Pattern           : 0x%08X\r\n", frame_pattern);
-        (void)PRINTF("  Payload Length            : 0x%08X\r\n", frame_length);
+        (void)PRINTF("  Payload Pattern           : 0x%X\r\n", frame_pattern);
+        (void)PRINTF("  Payload Length            : 0x%X\r\n", frame_length);
         (void)PRINTF("  Adjust Burst SIFS3 Gap    : %s\r\n", adjust_burst_sifs ? "enable" : "disable");
         (void)PRINTF("  Burst SIFS in us          : %d us\r\n", burst_sifs_in_us);
         (void)PRINTF("  Short Preamble            : %s\r\n", short_preamble ? "enable" : "disable");
@@ -845,7 +845,7 @@ static void dump_wlan_set_rf_trigger_frame_cfg_usage(void)
         "<Doppler> <HeSig2> <AID12> <RUAllocReg> <RUAlloc> <UlCodingType> <UlMCS> <UlDCM>"
         "<SSAlloc> <UlTargetRSSI> <MPDU_MU_SF> <TID_AL> <AC_PL> <Pref_AC>\r\n");
     (void)PRINTF("Enable_tx                   (Enable/Disable trigger frame transmission)\r\n");
-    (void)PRINTF("Standalone_hetb             (Standalone HE TB support. This is required for Firecrest)\r\n");
+    (void)PRINTF("Standalone_hetb             (Enable/Disable Standalone HE TB support.)\r\n");
     (void)PRINTF("FRAME_CTRL_TYPE             (Frame control type)\r\n");
     (void)PRINTF("FRAME_CTRL_SUBTYPE          (Frame control subtype)\r\n");
     (void)PRINTF("FRAME_DURATION              (Max Duration time)\r\n");

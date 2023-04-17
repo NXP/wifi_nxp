@@ -1465,7 +1465,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t data_rate,
                          const uint32_t frame_pattern,
                          const uint32_t frame_length,
-                         const uint32_t adjust_burst_sifs,
+                         const uint16_t adjust_burst_sifs,
                          const uint32_t burst_sifs_in_us,
                          const uint32_t short_preamble,
                          const uint32_t act_sub_ch,
@@ -1474,7 +1474,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t tx_bf,
                          const uint32_t gf_mode,
                          const uint32_t stbc,
-                         const uint32_t *bssid);
+                         const uint8_t *bssid);
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
 /** This function registers callbacks which are used to generate FW Dump on USB

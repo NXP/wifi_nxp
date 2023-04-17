@@ -4106,7 +4106,7 @@ int wlan_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t 
  * \note Please call \ref wlan_set_rf_test_mode API before using this API.
  *
  * \param[in] Enable_tx Enable\Disable trigger frame transmission.
- * \param[in] Standalone_hetb Standalone HE TB support. This is required for Firecrest.
+ * \param[in] Standalone_hetb Enable\Disable Standalone HE TB support.
  * \param[in] FRAME_CTRL_TYPE Frame control type.
  * \param[in] FRAME_CTRL_SUBTYPE Frame control subtype.
  * \param[in] FRAME_DURATION Max Duration time.
@@ -4264,7 +4264,7 @@ int wlan_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t data_rate,
                          const uint32_t frame_pattern,
                          const uint32_t frame_length,
-                         const uint32_t adjust_burst_sifs,
+                         const uint16_t adjust_burst_sifs,
                          const uint32_t burst_sifs_in_us,
                          const uint32_t short_preamble,
                          const uint32_t act_sub_ch,
@@ -4273,7 +4273,7 @@ int wlan_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t tx_bf,
                          const uint32_t gf_mode,
                          const uint32_t stbc,
-                         const uint32_t *bssid);
+                         const uint8_t *bssid);
 
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
