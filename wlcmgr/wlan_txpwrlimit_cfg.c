@@ -93,7 +93,7 @@ int wlan_set_wwsm_txpwrlimit(void)
 {
     int rv = WM_SUCCESS;
 
-#ifdef IW61x
+#ifdef CONFIG_11AX
     ARG_UNUSED(rutxpowerlimit_cfg_set);
 #endif
 
