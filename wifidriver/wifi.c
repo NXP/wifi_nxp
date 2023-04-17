@@ -3784,6 +3784,7 @@ int wifi_low_level_output(const uint8_t interface,
 )
 {
     int ret;
+    uint8_t *buffer = sd_buffer + sizeof(TxPD) + INTF_HEADER_LEN;
 #ifdef CONFIG_WMM
     struct bus_message msg;
 #else
@@ -3978,7 +3979,7 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
     )
     {
-        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(sd_buffer))
+        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
 #ifdef CONFIG_WMM
             (void)wrapper_wlan_sta_ampdu_enable(tid);
@@ -3999,9 +4000,9 @@ int wifi_low_level_output(const uint8_t interface,
 #endif
     )
     {
-        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(sd_buffer))
+        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
         {
-            (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)sd_buffer);
+            (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)buffer);
         }
     }
 #endif
