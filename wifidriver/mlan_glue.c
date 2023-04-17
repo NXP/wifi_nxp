@@ -1576,6 +1576,18 @@ static int wifi_send_uap_11n_cfg_ioctl(mlan_act_ioctl action, mlan_ds_11n_cfg *d
     return WM_SUCCESS;
 }
 
+int wifi_set_txbfcap(unsigned int tx_bf_cap)
+{
+    mlan_ds_11n_cfg ds_11n_cfg;
+
+    (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
+
+    ds_11n_cfg.sub_command     = MLAN_OID_11N_CFG_TX_BF_CAP;
+    ds_11n_cfg.param.tx_bf_cap = tx_bf_cap;
+
+    return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
+}
+
 int wifi_set_htcapinfo(unsigned int htcapinfo)
 {
     mlan_ds_11n_cfg ds_11n_cfg;

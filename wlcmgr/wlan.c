@@ -4377,6 +4377,9 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
 
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+
+    wifi_set_txbfcap(0x19e74608);
+
     /*Enabling 20/40MHz enable(bit 1)
      * enabling Short GI in 40 Mhz(bit 6)
      * and 20MHz(bit 5),
@@ -8406,6 +8409,11 @@ int wlan_set_ext_coex_config(const wlan_ext_coex_config_t ext_coex_config)
 int wlan_clear_mgmt_ie(enum wlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index)
 {
     return wifi_clear_mgmt_ie((mlan_bss_type)bss_type, index, mgmt_bitmap_index);
+}
+
+int wlan_set_txbfcap(unsigned int tx_bf_cap)
+{
+    return wifi_set_txbfcap(tx_bf_cap);
 }
 
 int wlan_set_htcapinfo(unsigned int htcapinfo)

@@ -800,15 +800,15 @@ int wifi_get_uap_channel(int *channel);
 /**
  * Get/Set the uAP mfpc and mfpr
  *
- * @param[in] action 
- * 
+ * @param[in] action
+ *
  * \param[in/out] mfpc: Management Frame Protection Capable (MFPC)
  *                       1: Management Frame Protection Capable
  *                       0: Management Frame Protection not Capable
  * \param[in/out] mfpr: Management Frame Protection Required (MFPR)
  *                       1: Management Frame Protection Required
  *                       0: Management Frame Protection Optional
- * 
+ *
  * @return cmd response status
  */
 int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr);
@@ -860,6 +860,7 @@ void wifi_free_fw_region_and_cfp_tables(void);
 #ifdef CONFIG_COMPRESS_TX_PWTBL
 int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len);
 #endif
+int wifi_set_txbfcap(unsigned int tx_bf_cap);
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg);

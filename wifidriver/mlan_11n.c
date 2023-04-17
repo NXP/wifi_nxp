@@ -216,7 +216,6 @@ static mlan_status wlan_11n_ioctl_httxcfg(IN pmlan_adapter pmadapter, IN pmlan_i
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Set/get TX beamforming capabilities
  *
@@ -243,6 +242,7 @@ static mlan_status wlan_11n_ioctl_tx_bf_cap(IN pmlan_adapter pmadapter, IN pmlan
     return ret;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will resend addba request to all
  *          the peer in the TxBAStreamTbl
@@ -1554,10 +1554,10 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
         case MLAN_OID_11N_CFG_SUPPORTED_MCS_SET:
             status = wlan_11n_ioctl_supported_mcs_set(pmadapter, pioctl_req);
             break;
+#endif /* CONFIG_MLAN_WMSDK */
         case MLAN_OID_11N_CFG_TX_BF_CAP:
             status = wlan_11n_ioctl_tx_bf_cap(pmadapter, pioctl_req);
             break;
-#endif /* CONFIG_MLAN_WMSDK */
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
