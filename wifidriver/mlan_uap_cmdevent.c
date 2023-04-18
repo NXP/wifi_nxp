@@ -397,7 +397,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
     }
 #endif /* CONFIG_MLAN_WMSDK */
 
-    if (bss->param.bss_config.bcast_ssid_ctl <= MTRUE)
+    if (bss->param.bss_config.bcast_ssid_ctl <= MAX_BCAST_SSID_CTL)
     {
         tlv_bcast_ssid                 = (MrvlIEtypes_bcast_ssid_t *)(void *)tlv;
         tlv_bcast_ssid->header.type    = wlan_cpu_to_le16(TLV_TYPE_UAP_BCAST_SSID_CTL);

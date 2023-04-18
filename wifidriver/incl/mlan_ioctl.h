@@ -677,6 +677,8 @@ typedef struct _mlan_ssid_bssid
 #define MIN_FRAG_THRESHOLD 256
 /** data rate 54 M */
 #define DATA_RATE_54M 108
+/** Maximum value of bcast_ssid_ctl */
+#define MAX_BCAST_SSID_CTL 2
 /** antenna A */
 #define ANTENNA_MODE_A 0
 /** antenna B */
