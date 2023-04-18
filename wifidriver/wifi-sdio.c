@@ -1643,13 +1643,10 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
             ports++;
 #endif
 
-#if 0
-            if (pkt_cnt == SDIO_MP_AGGR_DEF_PKT_LIMIT)
+            if (pkt_cnt == SDIO_MP_AGGR_DEF_PKT_LIMIT_MAX)
             {
                 break;
             }
-#endif
-
 #if defined(SD8801)
             if ((pmadapter->curr_rd_port < start_port) &&
                 (((MAX_PORT - start_port) + pmadapter->curr_rd_port) >= SDIO_MP_AGGR_DEF_PKT_LIMIT))

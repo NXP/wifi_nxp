@@ -382,7 +382,7 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
     void (*acs_channel_sel_callbk_fn)(void *if_priv, nxp_wifi_acs_params *acs_params);
 
     void (*mgmt_rx_callbk_fn)(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx_event, unsigned int event_len);
-
+    void (*eapol_rx_callbk_fn)(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx_event, unsigned int event_len);
     void (*unprot_mlme_mgmt_rx_callbk_fn)(void *if_priv,
                                           nxp_wifi_event_mlme_t *unprot_mlme_event,
                                           unsigned int event_len);

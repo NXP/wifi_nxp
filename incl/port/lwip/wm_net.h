@@ -271,21 +271,6 @@ struct netif *net_get_uap_interface(void);
  */
 int net_get_if_name_netif(char *pif_name, struct netif *iface);
 
-/** Register Layer2 callback to receive layer2 frames.
- *
- * \param[in] l2_packet_rx_eapol Function pointer to call when Layer2 frame is received.
- *
- * \return void
- *
- */
-void l2_packet_register_rx_callback(void (*l2_packet_rx_eapol)(const struct pbuf *p));
-
-/** De-Register Layer2 callback to receive layer2 frames
- *
- * \return void
- */
-void l2_packet_deregister_rx_callback();
-
 /** Get client data index for storing private data in * netif.
  *
  * \return allocated client data index, -1 if error or

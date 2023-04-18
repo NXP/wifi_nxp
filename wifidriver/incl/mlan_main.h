@@ -593,9 +593,9 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** TDLS indication in extended capa IE */
 #define HOTSPOT_ENABLE_TDLS_IND MBIT(1)
 
-#define MLAN_SET_BIT_U64(x, val) ((x) |= (1ULL << (val)))
-#define MLAN_SET_BIT(x, val)    ((x) |= (1U << (val)))
-#define MLAN_CLEAR_BIT_U64(x, val)  ((x) &= ~(1ULL << (val)))
+#define MLAN_SET_BIT_U64(x, val)   ((x) |= (1ULL << (val)))
+#define MLAN_SET_BIT(x, val)       ((x) |= (1U << (val)))
+#define MLAN_CLEAR_BIT_U64(x, val) ((x) &= ~(1ULL << (val)))
 
 /** Info for debug purpose */
 typedef struct _wlan_dbg
@@ -683,6 +683,17 @@ typedef enum _WLAN_802_11_POWER_MODE
     Wlan802_11PowerModeCAM,
     Wlan802_11PowerModePSP
 } WLAN_802_11_POWER_MODE;
+
+/** Ethernet frame header */
+typedef MLAN_PACK_START struct _eth_hdr
+{
+    /** destination eth addr */
+    t_u8 dest_addr[MLAN_MAC_ADDR_LENGTH];
+    /** source ether addr */
+    t_u8 src_addr[MLAN_MAC_ADDR_LENGTH];
+    /** packet type ID field */
+    t_u16 h_proto;
+} MLAN_PACK_END eth_hdr;
 
 /** tx param */
 typedef struct _mlan_tx_param

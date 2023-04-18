@@ -207,6 +207,7 @@ typedef struct
 #ifdef CONFIG_WPA_SUPP_AP
     nxp_wifi_event_mlme_t mgmt_rx;
 #endif
+    nxp_wifi_event_mlme_t eapol_rx;
 #endif
 #ifdef CONFIG_HOSTAPD
     bool hostapd_op;

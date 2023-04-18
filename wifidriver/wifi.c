@@ -2873,16 +2873,47 @@ static void wifi_is_wpa_supplicant_input(const uint8_t interface, const uint8_t 
                                         pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len),
                                         prx_pd);
 }
+
+static void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
+                                            const uint8_t *src_addr,
+                                            const uint8_t *buffer,
+                                            const uint16_t len)
+{
+    nxp_wifi_event_mlme_t *eapol_rx = &wm_wifi.eapol_rx;
+
+    memcpy((void *)eapol_rx->mac_addr, (const void *)src_addr, MLAN_MAC_ADDR_LENGTH);
+
+    eapol_rx->frame.frame_len = len;
+    memcpy((void *)eapol_rx->frame.frame, (const void *)buffer, eapol_rx->frame.frame_len);
+    if (wm_wifi.supp_if_callbk_fns->eapol_rx_callbk_fn)
+    {
+        wm_wifi.supp_if_callbk_fns->eapol_rx_callbk_fn(
+            interface == MLAN_BSS_TYPE_STA ? wm_wifi.if_priv : wm_wifi.hapd_if_priv, eapol_rx,
+            eapol_rx->frame.frame_len);
+    }
+}
 #endif
 
 #define RX_PKT_TYPE_OFFSET 5U
+#define ETH_PROTO_EAPOL    0x888EU
 
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
 #ifdef CONFIG_WPA_SUPP
+    RxPD *prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
+    eth_hdr *ethh = MNULL;
+
     if (*((t_u16 *)buffer + RX_PKT_TYPE_OFFSET) == PKT_TYPE_MGMT_FRAME)
     {
         wifi_is_wpa_supplicant_input(interface, buffer, len);
+        return WM_SUCCESS;
+    }
+
+    ethh = (eth_hdr *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset);
+    if (mlan_ntohs(ethh->h_proto) == ETH_PROTO_EAPOL)
+    {
+        wifi_wpa_supplicant_eapol_input(interface, ethh->src_addr, (uint8_t *)(ethh + 1),
+                                        prx_pd->rx_pkt_length - sizeof(eth_hdr));
         return WM_SUCCESS;
     }
 #endif
@@ -4411,7 +4442,6 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
     {
         return (int)-WM_FAIL;
     }
-
     return (int)WM_SUCCESS;
 }
 
