@@ -3784,7 +3784,7 @@ int wifi_low_level_output(const uint8_t interface,
 )
 {
     int ret;
-    uint8_t *buffer = sd_buffer + sizeof(TxPD) + INTF_HEADER_LEN;
+    const uint8_t *buffer = sd_buffer + sizeof(TxPD) + INTF_HEADER_LEN;
 #ifdef CONFIG_WMM
     struct bus_message msg;
 #else

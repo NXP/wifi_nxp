@@ -4661,7 +4661,7 @@ int wifi_set_rssi_low_threshold(uint8_t *low_rssi)
     subscribe_evt.evt_action    = SUBSCRIBE_EVT_ACT_BITWISE_SET;
     subscribe_evt.evt_bitmap    = SUBSCRIBE_EVT_RSSI_LOW;
     subscribe_evt.low_rssi      = *low_rssi;
-    subscribe_evt.low_rssi_freq = 1;
+    subscribe_evt.low_rssi_freq = 0;
     wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT, HostCmd_ACT_GEN_SET, 0, NULL, &subscribe_evt,
                              cmd);
     wifi_wait_for_cmdresp(NULL);
