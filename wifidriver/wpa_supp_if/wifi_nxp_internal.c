@@ -73,30 +73,27 @@ void wifi_scan_done(struct wifi_message *msg)
         wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
     }
 
-    if (wifi_if_ctx_rtos->scan_in_progress)
+    if (msg->reason == WIFI_EVENT_REASON_FAILURE)
     {
-        if (msg->reason == WIFI_EVENT_REASON_FAILURE)
+        if (wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn)
         {
-            if (wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn)
-            {
-                wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn(wm_wifi.if_priv);
-            }
+            wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn(wm_wifi.if_priv);
         }
+    }
 
-        if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
+    if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
+    {
+        if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
         {
-            if (wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn)
-            {
 #ifdef CONFIG_HOSTAPD
-                if (wifi_if_ctx_rtos->hostapd)
-                {
-                    wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv);
-                }
-                else
+            if (wifi_if_ctx_rtos->hostapd)
+            {
+                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv);
+            }
+            else
 #endif
-                {
-                    wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.if_priv);
-                }
+            {
+                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.if_priv);
             }
         }
     }
