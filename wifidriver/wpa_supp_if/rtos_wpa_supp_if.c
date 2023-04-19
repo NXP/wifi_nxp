@@ -600,14 +600,19 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
     }
 
 #ifdef CONFIG_WPA_SUPP_WPS
-    status = wifi_add_wps_probe_request_ie((void *)params->extra_ies, params->extra_ies_len);
-
-    if (status != WM_SUCCESS)
+    if (params->extra_ies_len)
     {
-        wifi_d("wifi add wps probe request IE failed");
-        goto out;
+        status = wifi_add_wps_probe_request_ie((void *)params->extra_ies, params->extra_ies_len);
+
+        if (status != WM_SUCCESS)
+        {
+            wifi_d("wifi add wps probe request IE failed");
+            goto out;
+        }
     }
 #endif
+
+    wm_wifi.wpa_supp_scan = true;
 
 #ifdef CONFIG_HOSTAPD
     wm_wifi.hostapd_op = false;
@@ -816,6 +821,8 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
         memcpy(pos, ie, ie_len);
 
         pos += ie_len;
+
+        os_mem_free((void *)ie);
     }
 
     if (scan_res->status)
@@ -1098,7 +1105,7 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         supp_d("%s: Association request sent successfully", __func__);
         ret = 0;
     }
-    os_mem_free(assoc_params);
+    os_mem_free((void *)assoc_params);
 
 out:
     return ret;
@@ -2223,7 +2230,7 @@ int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params)
 
 out:
     if (acl_params)
-        os_mem_free(acl_params);
+        os_mem_free((void *)acl_params);
     return ret;
 }
 #endif

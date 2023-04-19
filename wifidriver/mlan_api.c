@@ -1742,6 +1742,11 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #endif
     mlan_adap->active_scan_triggered = MFALSE;
 
+#ifdef CONFIG_WPA_SUPP
+    mlan_adap->wpa_supp_scan_triggered = wm_wifi.wpa_supp_scan;
+    wm_wifi.wpa_supp_scan              = false;
+#endif
+
     if (ssid != NULL)
     {
         ssid_len = strlen(ssid);

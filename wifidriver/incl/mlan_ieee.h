@@ -2339,7 +2339,7 @@ typedef struct _BSSDescriptor_t
 
 #ifdef CONFIG_WPA_SUPP
     /** Pointer to the returned scan response */
-    t_u8 ies[IEEE_MAX_IE_SIZE];
+    t_u8 *ies;
     /** Length of the stored scan response */
     t_u32 ies_len;
 #endif

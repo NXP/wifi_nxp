@@ -41,6 +41,12 @@ typedef MLAN_PACK_START struct _nxp_wifi_ie
     char ie[WIFI_MAX_IE_LEN];
 } MLAN_PACK_END nxp_wifi_ie_t;
 
+typedef MLAN_PACK_START struct _nxp_wifi_ie2
+{
+    unsigned short ie_len;
+    unsigned char *ie;
+} MLAN_PACK_END nxp_wifi_ie2_t;
+
 #define WIFI_MAX_SSID_LEN 32U
 #define WIFI_ETH_ADDR_LEN 6U
 
@@ -91,7 +97,7 @@ typedef MLAN_PACK_START struct _nxp_wifi_event_new_scan_result
     unsigned long long beacon_ies_tsf;
     unsigned short beacon_interval;
     unsigned short capability;
-    nxp_wifi_ie_t ies;
+    nxp_wifi_ie2_t ies;
     unsigned char rssi;
     unsigned char mac_addr[WIFI_ETH_ADDR_LEN];
     bool more_res;

@@ -2188,6 +2188,10 @@ struct _mlan_adapter
     t_u32 age_in_secs;
     /** Active scan for hidden ssid triggered */
     t_u8 active_scan_triggered;
+#ifdef CONFIG_WPA_SUPP
+    /** WPA supplicant scan triggered */
+    t_u8 wpa_supp_scan_triggered;
+#endif
 #ifdef SCAN_CHANNEL_GAP
     /** channel statstics */
     ChanStatistics_t *pchan_stats;

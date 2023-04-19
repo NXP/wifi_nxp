@@ -208,9 +208,10 @@ typedef struct
     nxp_wifi_event_mlme_t mgmt_rx;
 #endif
     nxp_wifi_event_mlme_t eapol_rx;
-#endif
+    bool wpa_supp_scan;
 #ifdef CONFIG_HOSTAPD
     bool hostapd_op;
+#endif
 #endif
 } wm_wifi_t;
 

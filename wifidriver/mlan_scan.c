@@ -1462,7 +1462,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     }
 
     (void)__memcpy(pmadapter, pbss_entry->mac_address, pcurrent_ptr, MLAN_MAC_ADDR_LENGTH);
-    PRINTM(MINFO, "InterpretIE: AP MAC Addr-%02x:%02x:%02x:%02x:%02x:%02x\n", pbss_entry->mac_address[0],
+    wifi_d("InterpretIE: AP MAC Addr-%02x:%02x:%02x:%02x:%02x:%02x", pbss_entry->mac_address[0],
            pbss_entry->mac_address[1], pbss_entry->mac_address[2], pbss_entry->mac_address[3],
            pbss_entry->mac_address[4], pbss_entry->mac_address[5]);
 
@@ -1519,15 +1519,22 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     bytes_left_for_current_beacon -= 2U;
 
     /* Rest of the current buffer are IE's */
-    PRINTM(MINFO, "InterpretIE: IELength for this AP = %d\n", bytes_left_for_current_beacon);
+    wifi_d("InterpretIE: IELength for this AP = %d", bytes_left_for_current_beacon);
 
     HEXDUMP("InterpretIE: IE info", (t_u8 *)pcurrent_ptr, bytes_left_for_current_beacon);
 
 #ifdef CONFIG_WPA_SUPP
     /* Store IE pointer and len for wpa supplicant scan result, no need to process each IE below*/
-    if (bytes_left_for_current_beacon < sizeof(pbss_entry->ies))
+    if (pmadapter->wpa_supp_scan_triggered == MTRUE)
     {
-        (void)__memcpy(pmadapter, &pbss_entry->ies, (t_u8 *)pcurrent_ptr, bytes_left_for_current_beacon);
+        wifi_d("Alloc ies for BSS");
+        pbss_entry->ies = (u8 *)os_mem_alloc(bytes_left_for_current_beacon);
+        if (pbss_entry->ies == MNULL)
+        {
+            wifi_d("Failed to alloc memory for BSS ies");
+            return MLAN_STATUS_FAILURE;
+        }
+        (void)__memcpy(pmadapter, pbss_entry->ies, (t_u8 *)pcurrent_ptr, bytes_left_for_current_beacon);
         pbss_entry->ies_len = bytes_left_for_current_beacon;
     }
 #endif
@@ -3336,7 +3343,7 @@ mlan_status wlan_cmd_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
  * pointers still point to buffer addresses in the separate structure. We
  * will update them here.
  */
-static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry)
+static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSSDescriptor_t *pbss_new_entry)
 {
     if (pbss_entry->pht_cap != NULL)
     {
@@ -3384,6 +3391,12 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry)
     {
         pbss_entry->prsnx_ie = &pbss_entry->rsnx_ie_saved;
     }
+#ifdef CONFIG_WPA_SUPP
+    if (pbss_new_entry->ies != NULL)
+    {
+        pbss_entry->ies = pbss_new_entry->ies;
+    }
+#endif
 }
 
 #if !defined(CONFIG_EXT_SCAN_SUPPORT) || defined(CONFIG_BG_SCAN)
@@ -3660,7 +3673,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     (void)__memcpy(pmadapter, &pmadapter->pscan_table[lowest_rssi_index], bss_new_entry,
                                    sizeof(pmadapter->pscan_table[lowest_rssi_index]));
-                    adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index]);
+                    adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index], bss_new_entry);
                 }
             }
             else
@@ -3668,7 +3681,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 /* Copy the locally created bss_new_entry to the scan table */
                 (void)__memcpy(pmadapter, &pmadapter->pscan_table[bss_idx], bss_new_entry,
                                sizeof(pmadapter->pscan_table[bss_idx]));
-                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx]);
+                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx], bss_new_entry);
             }
         }
         else
@@ -4215,7 +4228,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             {
                 (void)__memcpy(pmadapter, &pmadapter->pscan_table[lowest_rssi_index], bss_new_entry,
                                sizeof(pmadapter->pscan_table[lowest_rssi_index]));
-                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index]);
+                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index], bss_new_entry);
             }
         }
         else
@@ -4223,7 +4236,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             /* Copy the locally created bss_new_entry to the scan table */
             (void)__memcpy(pmadapter, &pmadapter->pscan_table[bss_idx], bss_new_entry,
                            sizeof(pmadapter->pscan_table[bss_idx]));
-            adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx]);
+            adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx], bss_new_entry);
         }
 #ifndef CONFIG_MLAN_WMSDK
         if (pssid && pbeacon_buf)
@@ -4591,7 +4604,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 {
                     (void)__memcpy(pmadapter, &pmadapter->pscan_table[lowest_rssi_index], bss_new_entry,
                                    sizeof(pmadapter->pscan_table[lowest_rssi_index]));
-                    adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index]);
+                    adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[lowest_rssi_index], bss_new_entry);
                 }
             }
             else
@@ -4599,7 +4612,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 /* Copy the locally created bss_new_entry to the scan table */
                 (void)__memcpy(pmadapter, &pmadapter->pscan_table[bss_idx], bss_new_entry,
                                sizeof(pmadapter->pscan_table[bss_idx]));
-                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx]);
+                adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx], bss_new_entry);
             }
         }
         else
