@@ -2199,7 +2199,9 @@ typedef struct _BSSDescriptor_t
 
 #ifdef SCAN_CHANNEL_GAP
     /** channel load */
-    t_u8 chan_load;
+    t_u16 chan_load;
+    /** channel load */
+    t_u16 chan_noise;
 #endif
 
     /** Channel */

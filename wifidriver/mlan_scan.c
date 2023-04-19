@@ -2500,6 +2500,21 @@ static t_u16 wlan_get_chan_load(mlan_adapter *pmadapter, t_u8 channel)
     return chan_load;
 }
 
+static t_u16 wlan_get_chan_noise(mlan_adapter *pmadapter, t_u8 channel)
+{
+    t_u16 chan_noise = 0;
+    int i;
+    for (i = 0; i < (int)pmadapter->num_in_chan_stats; i++)
+    {
+        if ((pmadapter->pchan_stats[i].chan_num == channel) && pmadapter->pchan_stats[i].noise)
+        {
+            chan_noise = pmadapter->pchan_stats[i].noise;
+            break;
+        }
+    }
+    return chan_noise;
+}
+
 /**
  *  @brief get the chan min/max rssi
  *
@@ -2648,7 +2663,8 @@ static t_void wlan_update_chan_rssi(mlan_adapter *pmadapter)
                pmadapter->pscan_table[i].mac_address[4], pmadapter->pscan_table[i].mac_address[5],
                (t_s32)pmadapter->pscan_table[i].rssi, pmadapter->pscan_table[i].ssid.ssid);
 #ifdef SCAN_CHANNEL_GAP
-        pmadapter->pscan_table[i].chan_load = wlan_get_chan_load(pmadapter, pmadapter->pscan_table[i].channel);
+        pmadapter->pscan_table[i].chan_load  = wlan_get_chan_load(pmadapter, pmadapter->pscan_table[i].channel);
+        pmadapter->pscan_table[i].chan_noise = wlan_get_chan_noise(pmadapter, pmadapter->pscan_table[i].channel);
 #endif
     }
 #ifdef SCAN_CHANNEL_GAP

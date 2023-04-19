@@ -790,7 +790,14 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
 
     r->caps = scan_res->capability;
 
-    r->flags |= WPA_SCAN_NOISE_INVALID;
+    if (scan_res->noise == 0)
+    {
+        r->flags |= WPA_SCAN_NOISE_INVALID;
+    }
+    else
+    {
+        r->noise = scan_res->noise;
+    }
 
     r->level = scan_res->rssi;
 
