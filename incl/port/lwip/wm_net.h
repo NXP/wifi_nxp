@@ -276,7 +276,7 @@ int net_get_if_name_netif(char *pif_name, struct netif *iface);
  * \return allocated client data index, -1 if error or
  *         not supported.
  */
-t_u8 net_alloc_client_data_id();
+int net_alloc_client_data_id();
 
 /** Get station interface handle
  *

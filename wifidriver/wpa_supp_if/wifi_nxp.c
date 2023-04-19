@@ -131,6 +131,8 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
 };
 
+static int g_net_idx = -1;
+
 int wifi_supp_init(void)
 {
     int ret = -WM_FAIL;
@@ -161,7 +163,16 @@ int wifi_supp_init(void)
         goto out;
     }
 
-    (void)net_alloc_client_data_id();
+    if (g_net_idx == -1)
+    {
+        g_net_idx = net_alloc_client_data_id();
+
+        if (g_net_idx == -1)
+        {
+            wifi_e("net_alloc_client_data_id failed. net idx %d", g_net_idx);
+            goto out;
+        }
+    }
 
     netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
 
