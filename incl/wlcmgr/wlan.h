@@ -4312,7 +4312,10 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
  *
- * \return WM_SUCCESS if successful otherwise failure.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
+ *
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the encrypted
  * data. The value of DataLength is updated to the encrypted data length. The length of the encrypted data is the same
  * as the origin DataLength.
@@ -4328,8 +4331,10 @@ int wlan_set_crypto_RC4_encrypt(
  * \param[in] KeyIVLength The maximum keyIV length is 32.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the decrypted
  * data. The value of DataLength is updated to the decrypted data length. The length of the decrypted data is the same
  * as the origin DataLength.
@@ -4345,8 +4350,10 @@ int wlan_set_crypto_RC4_decrypt(
  * \param[in] KeyIVLength The maximum keyIV length is 32.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the encrypted
  * data. The value of DataLength is updated to the encrypted data length. The length of the encrypted data is the same
  * as the origin DataLength.
@@ -4362,8 +4369,10 @@ int wlan_set_crypto_AES_ECB_encrypt(
  * \param[in] KeyIVLength The maximum keyIV length is 32.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the decrypted
  * data. The value of DataLength is updated to the decrypted data length. The length of the decrypted data is the same
  * as the origin DataLength.
@@ -4379,8 +4388,10 @@ int wlan_set_crypto_AES_ECB_decrypt(
  * \param[in] KeyIVLength The maximum keyIV length is 32.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the encrypted
  * data. The value of DataLength is updated to the encrypted data length. The encrypted data is 8 bytes more than the
  * original data. Therefore, the address pointed to by Data needs to reserve enough space.
@@ -4396,8 +4407,10 @@ int wlan_set_crypto_AES_WRAP_encrypt(
  * \param[in] KeyIVLength The maximum keyIV length is 32.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the decrypted
  * data. The value of DataLength is updated to the decrypted data length. The decrypted data is 8 bytes less than the
  * original data.
@@ -4415,8 +4428,10 @@ int wlan_set_crypto_AES_WRAP_decrypt(
  * \param[in] NonceLength The maximum Nonce length is 14.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the encrypted
  * data. The value of DataLength is updated to the encrypted data length. The encrypted data is 8 or 16 bytes more than
  * the original data. Therefore, the address pointed to by Data needs to reserve enough space.
@@ -4440,8 +4455,10 @@ int wlan_set_crypto_AES_CCMP_encrypt(const t_u8 *Key,
  * \param[in] NonceLength The maximum Nonce length is 14.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the decrypted
  * data. The value of DataLength is updated to the decrypted data length. The decrypted data is 8 or 16 bytes less than
  * the original data.
@@ -4465,8 +4482,10 @@ int wlan_set_crypto_AES_CCMP_decrypt(const t_u8 *Key,
  * \param[in] NonceLength The maximum Nonce length is 14.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the encrypted
  * data. The value of DataLength is updated to the encrypted data length. The encrypted data is 16 bytes more than the
  * original data. Therefore, the address pointed to by Data needs to reserve enough space.
@@ -4490,8 +4509,10 @@ int wlan_set_crypto_AES_GCMP_encrypt(const t_u8 *Key,
  * \param[in] NonceLength The maximum Nonce length is 14.
  * \param[in] Data Data
  * \param[in] DataLength The maximum Data length is 1300.
+ * \return WM_SUCCESS if successful.
+ * \return -WM_E_PERM if not supported.
+ * \return -WM_FAIL if failure.
  *
- * \return WM_SUCCESS if successful otherwise failure.
  * \note If the function returns WM_SUCCESS, the data in the memory pointed to by Data is overwritten by the decrypted
  * data. The value of DataLength is updated to the decrypted data length. The decrypted data is 16 bytes less than the
  * original data.

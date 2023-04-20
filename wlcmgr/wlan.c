@@ -10094,6 +10094,10 @@ int wlan_set_crypto_RC4_encrypt(
     t_u16 rc4_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
     t_u16 rc4_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
 
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+
     if (KeyLength > rc4_key_length)
         return -WM_FAIL;
     if (KeyIVLength > rc4_keyiv_length)
@@ -10119,6 +10123,10 @@ int wlan_set_crypto_RC4_decrypt(
     t_u16 rc4_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
     t_u16 rc4_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
     t_u16 rc4_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
 
     if (KeyLength > rc4_key_length)
         return -WM_FAIL;
@@ -10146,6 +10154,10 @@ int wlan_set_crypto_AES_ECB_encrypt(
     t_u16 aes_ecb_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
     t_u16 aes_ecb_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
 
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+
     if (KeyLength > aes_ecb_key_length)
         return -WM_FAIL;
     if (KeyIVLength > aes_ecb_keyiv_length)
@@ -10171,6 +10183,10 @@ int wlan_set_crypto_AES_ECB_decrypt(
     t_u16 aes_ecb_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
     t_u16 aes_ecb_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
     t_u16 aes_ecb_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
 
     if (KeyLength > aes_ecb_key_length)
         return -WM_FAIL;
@@ -10198,6 +10214,10 @@ int wlan_set_crypto_AES_WRAP_encrypt(
     t_u16 aes_wrap_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
     t_u16 aes_wrap_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
 
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+
     if (KeyLength > aes_wrap_key_length)
         return -WM_FAIL;
     if (KeyIVLength > aes_wrap_keyiv_length)
@@ -10224,6 +10244,10 @@ int wlan_set_crypto_AES_WRAP_decrypt(
     t_u16 aes_wrap_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
     t_u16 aes_wrap_keyiv_length = EU_CRYPTO_KEYIV_MAX_LENGTH;
     t_u16 aes_wrap_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
 
     if (KeyLength > aes_wrap_key_length)
         return -WM_FAIL;
@@ -10257,6 +10281,16 @@ int wlan_set_crypto_AES_CCMP_encrypt(const t_u8 *Key,
     t_u16 aes_ccmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
     t_u16 aes_ccmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
     t_u16 aes_ccmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+#if defined(SD8978)
+    if (KeyLength == aes_ccmp_key_length)
+    {
+        return -WM_E_PERM;
+    }
+#endif
 
     if (KeyLength > aes_ccmp_key_length)
         return -WM_FAIL;
@@ -10295,6 +10329,17 @@ int wlan_set_crypto_AES_CCMP_decrypt(const t_u8 *Key,
     t_u16 aes_ccmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
     t_u16 aes_ccmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
 
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+
+#if defined(SD8978)
+    if (KeyLength == aes_ccmp_key_length)
+    {
+        return -WM_E_PERM;
+    }
+#endif
+
     if (KeyLength > aes_ccmp_key_length)
         return -WM_FAIL;
     if (AADLength > aes_ccmp_AAD_length)
@@ -10332,6 +10377,14 @@ int wlan_set_crypto_AES_GCMP_encrypt(const t_u8 *Key,
     t_u16 aes_gcmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
     t_u16 aes_gcmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
 
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+
+#if defined(SD8978)
+    return -WM_E_PERM;
+#endif
+
     if (KeyLength > aes_gcmp_key_length)
         return -WM_FAIL;
     if (AADLength > aes_gcmp_AAD_length)
@@ -10368,6 +10421,14 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
     t_u16 aes_gcmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
     t_u16 aes_gcmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
     t_u16 aes_gcmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
+
+#if defined(SD8801)
+    return -WM_E_PERM;
+#endif
+
+#if defined(SD8978)
+    return -WM_E_PERM;
+#endif
 
     if (KeyLength > aes_gcmp_key_length)
         return -WM_FAIL;
