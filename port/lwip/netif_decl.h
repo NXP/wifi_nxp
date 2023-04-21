@@ -78,7 +78,7 @@ PACK_STRUCT_END
 /* The time to block waiting for input. */
 #define emacBLOCK_TIME_WAITING_FOR_INPUT ((portTickType)100)
 /*------------------------------------------------------*/
-extern int wlan_get_mac_address(unsigned char *sta_mac, unsigned char *uap_mac);
+extern int wlan_get_mac_address(uint8_t *dest);
 extern void wlan_wake_up_card(void);
 
 #ifdef CONFIG_P2P

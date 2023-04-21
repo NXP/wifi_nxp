@@ -443,7 +443,7 @@ void wifi_sta_ampdu_rx_disable(void);
  *
  * @return WM_SUCESS
  */
-int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr);
+int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr_sta, wifi_mac_addr_t *mac_addr_uap);
 
 /**
  * Get the cached string representation of the wlan firmware extended version.

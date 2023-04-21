@@ -134,6 +134,7 @@ void wrapper_wifi_ret_mib(void *resp);
 
 uint32_t dev_value1 = -1;
 uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
+uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
 static uint8_t dev_fw_ver_ext[MLAN_MAX_VER_STR_LEN];
 
 static void wifi_init_imulink(void)
@@ -195,9 +196,10 @@ uint32_t wifi_get_device_value1()
     return dev_value1;
 }
 
-int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr)
+int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr_sta, wifi_mac_addr_t *mac_addr_uap)
 {
-    (void)memcpy(mac_addr->mac, dev_mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(mac_addr_sta->mac, dev_mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(mac_addr_uap->mac, dev_mac_addr_uap, MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 
@@ -385,6 +387,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
     HostCmd_DS_GEN *cmdresp;
     t_u32 cmdtype;
     t_u32 cmdsize;
+    int bss_type;
 
     cmdresp = (HostCmd_DS_GEN *)(pmbuf + INTF_HEADER_LEN); /* size + pkttype=4 */
     cmdtype = cmdresp->command & HostCmd_CMD_ID_MASK;
@@ -395,6 +398,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
     memcpy(inbuf, cmdresp, cmdsize);
 #endif
     cmdresp = (HostCmd_DS_GEN *)inbuf;
+    bss_type = HostCmd_GET_BSS_TYPE(cmdresp->seq_num);
 
     last_resp_rcvd = cmdtype;
 
@@ -434,7 +438,14 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             wifi_get_value1_from_cmdresp(cmdresp, &dev_value1);
             break;
         case HostCmd_CMD_802_11_MAC_ADDRESS:
-            wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr);
+            if(bss_type == MLAN_BSS_TYPE_UAP)
+            {
+                wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr_uap);
+            }
+            else
+            {
+                wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr);
+            }
             break;
 #ifdef OTP_CHANINFO
         case HostCmd_CMD_CHAN_REGION_CFG:
@@ -634,12 +645,32 @@ static int wlan_get_hw_spec()
     return true;
 }
 
-static int wlan_get_mac_addr()
+static int wlan_get_mac_addr_sta()
 {
     (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
 
     /* imupkt = outbuf */
     wifi_prepare_get_mac_addr_cmd(&imupkt->hostcmd, wlan_get_next_seq_num());
+
+    imupkt->pkttype = MLAN_TYPE_CMD;
+    imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
+
+    last_cmd_sent = HostCmd_CMD_802_11_MAC_ADDRESS;
+
+    /* send CMD53 to write the command to get mac address */
+    wifi_send_fw_cmd(HostCmd_CMD_802_11_MAC_ADDRESS, (uint8_t *)outbuf, imupkt->size);
+    return true;
+}
+
+static int wlan_get_mac_addr_uap()
+{
+    int seq_number = 0;
+
+    seq_number = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    (void)memset(outbuf, 0, IMU_INIT_FW_CMD_SIZE);
+
+    /* imupkt = outbuf */
+    wifi_prepare_get_mac_addr_cmd(&imupkt->hostcmd, seq_number);
 
     imupkt->pkttype = MLAN_TYPE_CMD;
     imupkt->size    = imupkt->hostcmd.size + INTF_HEADER_LEN;
@@ -954,8 +985,17 @@ static void wlan_fw_init_cfg()
 
     wcmdr_d("CMD : GET_MAC_ADDR (0x4d)");
 
-    wlan_get_mac_addr();
+    wlan_get_mac_addr_sta();
+    
+    while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
+    {
+        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+    }
 
+    last_resp_rcvd = 0;
+
+    wlan_get_mac_addr_uap();
+    
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
         os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));

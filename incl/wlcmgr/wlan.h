@@ -1957,18 +1957,32 @@ int wlan_start_network(const char *name);
  */
 int wlan_stop_network(const char *name);
 
-/** Retrieve the wireless MAC address of station/micro-AP interface.
+/** Retrieve the wireless MAC address of station interface.
  *
  *  This function copies the MAC address of the station interface to sta mac address and uAP interface to uap mac
  * address.
  *
- *  \param[out] sta_mac A pointer to sta mac addr array.
- *  \param[out] uap_mac A pointer to uap mac addr array.
+ *  \param[out] dest A pointer to a 6-byte array where the MAC address will be
+ *              copied.
  *
  *  \return WM_SUCCESS if the MAC address was copied.
  *  \return -WM_E_INVAL if \a sta_mac or uap_mac is NULL.
  */
-int wlan_get_mac_address(unsigned char *sta_mac, unsigned char *uap_mac);
+int wlan_get_mac_address(uint8_t *dest);
+
+/** Retrieve the wireless MAC address of micro-AP interface.
+ *
+ *  This function copies the MAC address of the wireless interface to
+ *  the 6-byte array pointed to by \a dest.  In the event of an error, nothing
+ *  is copied to \a dest.
+ *
+ *  \param[out] dest A pointer to a 6-byte array where the MAC address will be
+ *              copied.
+ *
+ *  \return WM_SUCCESS if the MAC address was copied.
+ *  \return -WM_E_INVAL if \a dest is NULL.
+ */
+int wlan_get_mac_address_uap(uint8_t *dest);
 
 /** Retrieve the IP address configuration of the station interface.
  *

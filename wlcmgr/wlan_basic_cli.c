@@ -46,7 +46,7 @@ static void test_wlan_get_mac_address(int argc, char **argv)
     uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH], uap_mac[MLAN_MAC_ADDR_LENGTH];
 
     (void)PRINTF("MAC address\r\n");
-    if (wlan_get_mac_address(sta_mac, uap_mac))
+    if (wlan_get_mac_address_uap(uap_mac) || wlan_get_mac_address(sta_mac))
     {
         (void)PRINTF("Error: unable to retrieve MAC address\r\n");
     }

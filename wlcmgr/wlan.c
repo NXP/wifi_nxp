@@ -5536,15 +5536,15 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 
     wlan.status = WLCMGR_INIT_DONE;
     wifi_mac_addr_t mac_addr;
-    ret = wifi_get_device_mac_addr(&mac_addr);
+    wifi_mac_addr_t mac_addr_uap;
+    ret = wifi_get_device_mac_addr(&mac_addr, &mac_addr_uap);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to get mac address");
         return ret;
     }
 
-    (void)memcpy((void *)&wlan.uap_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
-    wlan.uap_mac[4] += 1;
+    (void)memcpy((void *)&wlan.uap_mac[0], (const void *)mac_addr_uap.mac, MLAN_MAC_ADDR_LENGTH);
     (void)memcpy((void *)&wlan.sta_mac[0], (const void *)mac_addr.mac, MLAN_MAC_ADDR_LENGTH);
     (void)PRINTF("MAC Address: ");
     print_mac((const char *)&wlan.uap_mac);
@@ -8015,18 +8015,21 @@ int wlan_get_wfd_address(struct wlan_ip_config *addr)
 }
 #endif
 
-int wlan_get_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
+int wlan_get_mac_address(unsigned char *dest)
 {
-    if (sta_mac == NULL || uap_mac == NULL)
-    {
+    if (!dest)
         return -WM_E_INVAL;
-    }
+    (void)memset(dest, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(dest, &wlan.sta_mac[0], MLAN_MAC_ADDR_LENGTH);
+    return WM_SUCCESS;
+}
 
-    (void)memset((void *)sta_mac, 0, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy((void *)sta_mac, (const void *)&wlan.sta_mac[0], MLAN_MAC_ADDR_LENGTH);
-
-    (void)memset((void *)uap_mac, 0, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy((void *)uap_mac, (const void *)&wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
+int wlan_get_mac_address_uap(unsigned char *dest)
+{
+    if (!dest)
+        return -WM_E_INVAL;
+    (void)memset(dest, 0, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(dest, &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }
 
@@ -8725,8 +8728,8 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
             return -WM_E_INVAL;
         }
         /* Get source mac address */
-        uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH], uap_mac[MLAN_MAC_ADDR_LENGTH];
-        if (wlan_get_mac_address(sta_mac, uap_mac))
+        uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
+        if (wlan_get_mac_address(sta_mac))
         {
             wlcm_e("Unable to retrieve MAC address\r\n");
         }
