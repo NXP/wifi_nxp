@@ -26,63 +26,6 @@
  * NXP Test Framework (MTF) functions
  */
 
-static void dump_wlan_set_pmfcfg_usage(void)
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-set-pmfcfg <mfpc> <mfpr> \r\n");
-    (void)PRINTF("\r\n");
-    (void)PRINTF("\t<mfpc>:   Management Frame Protection Capable (MFPC)\r\n");
-    (void)PRINTF("\t          1: Management Frame Protection Capable\r\n");
-    (void)PRINTF("\t          0: Management Frame Protection not Capable\r\n");
-    (void)PRINTF("\t<mfpr>:   Management Frame Protection Required (MFPR)\r\n");
-    (void)PRINTF("\t          1: Management Frame Protection Required\r\n");
-    (void)PRINTF("\t          0: Management Frame Protection Optional\r\n");
-    (void)PRINTF("\tDefault setting is PMF not capable.\r\n");
-    (void)PRINTF("\tmfpc = 0, mfpr = 1 is an invalid combination\r\n");
-}
-
-static void wlan_pmfcfg_set(int argc, char *argv[])
-{
-    int ret;
-    uint8_t mfpc = 0, mfpr = 0;
-
-    if (argc != 3)
-    {
-        dump_wlan_set_pmfcfg_usage();
-        return;
-    }
-
-    errno = 0;
-    mfpc  = (uint8_t)strtol(argv[1], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during wlan pmfcfg set arg_1 strtoul errno:%d", errno);
-    }
-    errno = 0;
-    mfpr  = (uint8_t)strtol(argv[2], NULL, 10);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during wlan pmfcfg set arg_2 strtoul errno:%d", errno);
-    }
-
-    ret = wlan_set_pmfcfg(mfpc, mfpr);
-    if (ret == WM_SUCCESS)
-    {
-        (void)PRINTF("PMF configuration successful\r\n");
-    }
-    else
-    {
-        (void)PRINTF("PMF configuration failed\r\n");
-        dump_wlan_set_pmfcfg_usage();
-    }
-}
-
-static void dump_wlan_get_pmfcfg_usage(void)
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-get-pmfcfg \r\n");
-}
-
 static void dump_wlan_uap_get_pmfcfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -112,6 +55,12 @@ static void wlan_uap_pmfcfg_get(int argc, char *argv[])
         (void)PRINTF("Uap PMF configuration read failed\r\n");
         dump_wlan_uap_get_pmfcfg_usage();
     }
+}
+
+static void dump_wlan_get_pmfcfg_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-pmfcfg \r\n");
 }
 
 static void wlan_pmfcfg_get(int argc, char *argv[])
@@ -2030,7 +1979,6 @@ static struct cli_command wlan_enhanced_commands[] = {
 #endif
     {"wlan-get-txratecfg", "<sta/uap>", test_wlan_get_txratecfg},
     {"wlan-get-data-rate", "<sta/uap>", test_wlan_get_data_rate},
-    {"wlan-set-pmfcfg", "<mfpc> <mfpr>", wlan_pmfcfg_set},
     {"wlan-get-pmfcfg", NULL, wlan_pmfcfg_get},
     {"wlan-uap-get-pmfcfg", NULL, wlan_uap_pmfcfg_get},
 #ifdef CONFIG_5GHz_SUPPORT

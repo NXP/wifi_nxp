@@ -640,6 +640,8 @@ static bool is_state(enum cm_sta_state state)
     return (wlan.sta_state == state);
 }
 
+static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
+
 int wlan_send_host_sleep(uint32_t wakeup_condition)
 {
     int ret;
@@ -6330,15 +6332,7 @@ int wlan_add_network(struct wlan_network *network)
     }
 #endif
 
-    if ((network->role == WLAN_BSS_ROLE_STA) &&
-        ((network->security.type == WLAN_SECURITY_WPA3_SAE) ||
-         (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
-        (!network->security.mfpc))
-    {
-        return -WM_E_INVAL;
-    }
-
-    if ((network->role == WLAN_BSS_ROLE_UAP) &&
+    if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((network->security.type == WLAN_SECURITY_WPA3_SAE) || (network->security.type == WLAN_SECURITY_WPA2_SHA256) ||
 #ifdef CONFIG_OWE
          (network->security.type == WLAN_SECURITY_OWE_ONLY) ||
@@ -8917,7 +8911,7 @@ int wlan_get_data_rate(wlan_ds_rate *ds_rate, mlan_bss_type bss_type)
     return wifi_get_data_rate(ds_rate, bss_type);
 }
 
-int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr)
+static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr)
 {
     if (!mfpc && mfpr)
     {

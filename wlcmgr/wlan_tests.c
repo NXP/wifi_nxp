@@ -575,7 +575,7 @@ static void dump_wlan_add_usage(void)
         "/wpa2-ft"
 #endif
 #endif
-        " <secret>]"
+        " <secret>] [mfpc <1> mfpr <0/1>] "
         "\r\n");
     (void)PRINTF("      If using WPA2 security, set the PMF configuration if required.\r\n");
 #ifdef CONFIG_WPA_SUPP
