@@ -4878,7 +4878,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             HEXDUMP("vdll data", msg->data, evt->length);
 #endif
             /* Event as per event sent by firmware is 32 bits/t_u32 so adding t_u32 */
-            wlan_process_vdll_event(pmpriv, msg->data + S_DS_GEN + sizeof(t_u32));
+            wlan_process_vdll_event(pmpriv, (t_u8*)msg->data + 2 * sizeof(t_u32));
             break;
 #endif
         case EVENT_LINK_LOST:

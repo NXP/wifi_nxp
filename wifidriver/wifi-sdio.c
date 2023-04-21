@@ -523,8 +523,8 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
             }
 
             msg.event = (uint16_t)upld_type;
-            (void)memcpy((void *)msg.data, (const void *)((t_u8 *)pmbuf + INTF_HEADER_LEN),
-                         sdiopkt->size - INTF_HEADER_LEN);
+            (void)memcpy((void *)msg.data, (const t_u8 *)pmbuf + INTF_HEADER_LEN,
+			    sdiopkt->size - INTF_HEADER_LEN);
             HEXDUMP("Event", (t_u8 *)msg.data, sdiopkt->size - 4);
             (void)wlan_handle_event_packet(&msg);
         }

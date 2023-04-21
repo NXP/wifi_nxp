@@ -4232,8 +4232,9 @@ mlan_status wlan_ret_host_clock_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *re
 
 #ifdef CONFIG_FW_VDLL
 #include "wifi-sdio.h"
-#include "wlan_bt_fw.h"
 static bool last_vdllcmd_sent;
+extern const unsigned char wlan_fw_bin[];
+extern unsigned int wlan_fw_bin_len;
 
 /**
  *  @brief This function download the vdll block.
@@ -4296,7 +4297,8 @@ static mlan_status wlan_get_vdll_image(pmlan_adapter pmadapter, t_u32 vdll_len)
     ENTER();
     ctrl->vdll_mem = (t_u8 *)(wlan_fw_bin + (wlan_fw_bin_len - vdll_len));
     ctrl->vdll_len = vdll_len;
-    ctrl->cmd_buf  = (t_u8 *)wifi_get_vdllcommand_buffer();+    LEAVE();
+    ctrl->cmd_buf  = (t_u8 *)wifi_get_vdllcommand_buffer();
+    LEAVE();
     return WM_SUCCESS;
 }
 
