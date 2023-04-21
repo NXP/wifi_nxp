@@ -1292,6 +1292,14 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_IPS_CONFIG 0x0279
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG
+#define HostCmd_CMD_RX_ABORT_CFG 0x0261
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+#define HostCmd_CMD_CCK_DESENSE_CFG 0x0265
+#endif
+
 #if 0
 /** Enhanced PS modes */
 typedef enum _ENH_PS_MODES
@@ -3993,6 +4001,35 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TX_RX_HISTOGRAM
     /** Choose to get TX, RX or both histogram statistic */
     t_u16 action;
 } MLAN_PACK_END HostCmd_DS_TX_RX_HISTOGRAM;
+#endif
+
+#ifdef CONFIG_RX_ABORT_CFG
+typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG
+{
+    t_u16 action;
+    /** Enable or disable */
+    t_u8 enable;
+    /** RSSI threshold */
+    t_s8 rssi_threshold;
+} MLAN_PACK_END HostCmd_DS_RX_ABORT_CFG;
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+typedef MLAN_PACK_START struct _HostCmd_DS_CCK_DESENSE_CFG
+{
+    /** Action */
+    t_u16 action;
+    /** cck desense mode: 0:disable 1:normal 2:dynamic */
+    t_u16 mode;
+    /** specify rssi margin */
+    t_s8 margin;
+    /** specify ceil rssi threshold */
+    t_s8 ceil_thresh;
+    /** cck desense "on" interval count */
+    t_u8 num_on_intervals;
+    /** cck desense "off" interval count */
+    t_u8 num_off_intervals;
+} MLAN_PACK_END HostCmd_DS_CCK_DESENSE_CFG;
 #endif
 
 /** Power_Group_t */
@@ -7154,6 +7191,14 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_CSI
         HostCmd_DS_CSI_CFG csi_params;
 #endif
+
+#ifdef CONFIG_RX_ABORT_CFG
+		HostCmd_DS_RX_ABORT_CFG rx_abort_cfg;
+#endif
+#ifdef CONFIG_CCK_DESENSE_CFG
+		HostCmd_DS_CCK_DESENSE_CFG cck_desense_cfg;
+#endif
+
 #ifdef CONFIG_FW_VDLL
         uint8_t *vdll_cmd_mem;
 #endif

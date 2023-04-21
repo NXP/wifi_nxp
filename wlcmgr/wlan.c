@@ -559,6 +559,20 @@ int set_scan_params(struct wifi_scan_params_t *wifi_scan_params)
     return WM_SUCCESS;
 }
 
+#ifdef CONFIG_RX_ABORT_CFG
+int wlan_set_get_rx_abort_cfg(struct wlan_rx_abort_cfg *cfg, t_u16 action)
+{
+    return wifi_set_get_rx_abort_cfg((void *)cfg, action);
+}
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+int wlan_set_get_cck_desense_cfg(struct wlan_cck_desense_cfg *cfg, t_u16 action)
+{
+    return wifi_set_get_cck_desense_cfg((void *)cfg, action);
+}
+#endif
+
 int get_scan_params(struct wifi_scan_params_t *wifi_scan_params)
 {
     wifi_scan_params->scan_duration    = g_wifi_scan_params.scan_duration;

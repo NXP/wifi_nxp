@@ -565,6 +565,30 @@ int wifi_get_scan_result_count(unsigned *count);
  */
 int wifi_uap_bss_sta_list(wifi_sta_list_t **list);
 
+#ifdef CONFIG_RX_ABORT_CFG
+/**
+ * Set/Get Rx abort config
+ *
+ * \param[in] cfg User configurations.
+ * \param[in] action Set/Get
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_get_rx_abort_cfg(void *cfg, t_u16 action);
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+/**
+ * Set/Get CCK Desense config
+ *
+ * \param[in] cfg User configurations.
+ * \param[in] action Set/Get
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_get_cck_desense_cfg(void *cfg, t_u16 action);
+#endif
+
 #ifdef WLAN_LOW_POWER_ENABLE
 void wifi_enable_low_pwr_mode();
 #endif

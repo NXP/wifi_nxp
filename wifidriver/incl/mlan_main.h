@@ -564,6 +564,33 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Type null data */
 #define MLAN_TYPE_NULL_DATA 4
 
+#ifdef CONFIG_RX_ABORT_CFG
+/** Data structure of Rx abort configuration */
+typedef struct
+{
+    /** Enable/Disable Rx abort config */
+    t_u8 enable;
+    /** Rx weak RSSI pkt threshold */
+    int rssi_threshold;
+} rx_abort_cfg_t;
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+typedef struct
+{
+    /** cck desense mode: 0:disable 1:normal 2:dynamic */
+    t_u16 mode;
+    /** specify rssi margin */
+    int margin;
+    /** specify ceil rssi threshold */
+    int ceil_thresh;
+    /** cck desense "on" interval count */
+    int num_on_intervals;
+    /** cck desense "off" interval count */
+    int num_off_intervals;
+} cck_desense_cfg_t;
+#endif
+
 #ifdef SDIO_MULTI_PORT_TX_AGGR
 /** Multi port TX aggregation buffer size */
 #define SDIO_MP_TX_AGGR_DEF_BUF_SIZE (16384) /* 16K */
@@ -3177,6 +3204,18 @@ mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *re
 mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req);
 mlan_status wlan_misc_ioctl_oper_class(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req);
 mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel, t_u8 oper_class);
+#endif
+
+#ifdef CONFIG_RX_ABORT_CFG
+mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv,
+				   HostCmd_DS_COMMAND *cmd,
+				   t_u16 cmd_action, t_void *pdata_buf);
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv,
+				      HostCmd_DS_COMMAND *cmd,
+				      t_u16 cmd_action, t_void *pdata_buf);
 #endif
 
 #define BW_20MHZ 0

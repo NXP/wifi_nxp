@@ -1773,7 +1773,60 @@ void wlan_destroy_all_tasks(void);
  *  \return FALSE if not started.
  */
 bool wlan_is_started();
+
+#ifdef CONFIG_RX_ABORT_CFG
+struct wlan_rx_abort_cfg
+{
+    /** Enable/Disable Rx abort config */
+    t_u8 enable;
+    /** Rx weak RSSI pkt threshold */
+    int rssi_threshold;
+};
 #endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+#define CCK_DESENSE_MODE_DISABLED     0
+#define CCK_DESENSE_MODE_DYNAMIC      1
+#define CCK_DESENSE_MODE_DYN_ENH      2
+
+struct wlan_cck_desense_cfg
+{
+    /** cck desense mode: 0:disable 1:normal 2:dynamic */
+    t_u16 mode;
+    /** specify rssi margin */
+    int margin;
+    /** specify ceil rssi threshold */
+    int ceil_thresh;
+    /** cck desense "on" interval count */
+    int num_on_intervals;
+    /** cck desense "off" interval count */
+    int num_off_intervals;
+};
+#endif
+#ifdef CONFIG_RX_ABORT_CFG
+/**
+ * Set/Get RX abort configure to/from Fw.
+ *
+ * \param[in/out] cfg A pointer to information buffer
+ * \param[int] action Command action: GET or SET
+ * 
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_get_rx_abort_cfg(struct wlan_rx_abort_cfg *cfg, t_u16 action);
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+/**
+ * Set/Get CCK Desense configure to/from Fw.
+ *
+ * \param[in/out] cfg A pointer to information buffer
+ * \param[int] action Command action: GET or SET
+ * 
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_get_cck_desense_cfg(struct wlan_cck_desense_cfg *cfg, t_u16 action);
+#endif
+
 /** WLAN initialize micro-AP network information
  *
  * This API intializes a default micro-AP network. The network ssid, passphrase

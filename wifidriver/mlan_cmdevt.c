@@ -3641,6 +3641,78 @@ mlan_status wlan_ret_wifi_direct_mode(IN pmlan_private pmpriv,
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef CONFIG_RX_ABORT_CFG
+/**
+ *  @brief This function sends rx abort cfg command to firmware.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          Hostcmd ID
+ *  @param cmd_action   Command action
+ *  @param pdata_buf    A void pointer to information buffer
+ *  @return             N/A
+ */
+mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv,
+				   HostCmd_DS_COMMAND *cmd,
+				   t_u16 cmd_action, t_void *pdata_buf)
+{
+    HostCmd_DS_RX_ABORT_CFG *rx_abort_cfg = &cmd->params.rx_abort_cfg;
+    rx_abort_cfg_t *cfg = (rx_abort_cfg_t *)pdata_buf;
+
+    ENTER();
+
+    cmd->command         = wlan_cpu_to_le16(HostCmd_CMD_RX_ABORT_CFG);
+    cmd->size            = wlan_cpu_to_le16(sizeof(HostCmd_DS_RX_ABORT_CFG) + S_DS_GEN);
+    rx_abort_cfg->action = wlan_cpu_to_le16(cmd_action);
+
+    if(rx_abort_cfg->action == HostCmd_ACT_GEN_SET)
+    {
+        rx_abort_cfg->enable          = cfg->enable;
+        rx_abort_cfg->rssi_threshold  = (t_s8)cfg->rssi_threshold;
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_CCK_DESENSE_CFG
+/**
+ *  @brief This function sends cck desense cfg command to firmware.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          Hostcmd ID
+ *  @param cmd_action   Command action
+ *  @param pdata_buf    A void pointer to information buffer
+ *  @return             N/A
+ */
+mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv,
+				      HostCmd_DS_COMMAND *cmd,
+				      t_u16 cmd_action, t_void *pdata_buf)
+{
+    HostCmd_DS_CCK_DESENSE_CFG *cfg_cmd =
+		(HostCmd_DS_CCK_DESENSE_CFG *)&cmd->params.cck_desense_cfg;
+    cck_desense_cfg_t *cfg = (cck_desense_cfg_t *)pdata_buf;
+
+    ENTER();
+
+    cmd->command    = wlan_cpu_to_le16(HostCmd_CMD_CCK_DESENSE_CFG);
+    cmd->size       = wlan_cpu_to_le16(sizeof(HostCmd_DS_CCK_DESENSE_CFG) + S_DS_GEN);
+    cfg_cmd->action = wlan_cpu_to_le16(cmd_action);
+
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        cfg_cmd->mode              = wlan_cpu_to_le16(cfg->mode);
+        cfg_cmd->margin            = (t_s8)cfg->margin;
+        cfg_cmd->ceil_thresh       = (t_s8)cfg->ceil_thresh;
+        cfg_cmd->num_on_intervals  = (t_u8)cfg->num_on_intervals;
+        cfg_cmd->num_off_intervals = (t_u8)cfg->num_off_intervals;
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_WIFI_CLOCKSYNC
 /**
  *  @brief This function prepares command of GPIO TSF LATCH.
