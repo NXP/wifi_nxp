@@ -5338,23 +5338,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 #ifdef CONFIG_5GHz_SUPPORT
         case EVENT_RADAR_DETECTED:
-        {
-            Event_Radar_Detected_Info *pRadarDetInfo = NULL;
-            pRadarDetInfo = (Event_Radar_Detected_Info *)os_mem_alloc(sizeof(Event_Radar_Detected_Info));
-            if (!pRadarDetInfo)
-            {
-                wifi_w("No mem. Cannot print Event_Radar_Detected_Info.\n\r");
-                break;
-            }
-            (void)memcpy((Event_Radar_Detected_Info *)pRadarDetInfo, (Event_Radar_Detected_Info *)msg->data,
-                         sizeof(Event_Radar_Detected_Info));
-            wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",
-                   wlan_le32_to_cpu(pRadarDetInfo->detect_count), pRadarDetInfo->reg_domain,
-                   pRadarDetInfo->main_det_type,
-                   (pRadarDetInfo->main_det_type == 2) ? "PRI" : (pRadarDetInfo->main_det_type == 1) ? "PW" : "");
-            os_mem_free(pRadarDetInfo);
-        }
-        break;
+			wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",
+				   wlan_le32_to_cpu(((Event_Radar_Detected_Info *)msg->data)->detect_count),
+				   ((Event_Radar_Detected_Info *)msg->data)->reg_domain,
+				   ((Event_Radar_Detected_Info *)msg->data)->main_det_type,
+				   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 2) ?
+					   "PRI" :
+					   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 1) ? "PW" : "");
+
+        	break;
 #endif
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
         case EVENT_CLOUD_KEEP_ALIVE_RETRY_FAIL:
