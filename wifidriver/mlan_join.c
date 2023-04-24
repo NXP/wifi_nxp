@@ -595,14 +595,30 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 {
                     break;
                 }
+#ifdef CONFIG_11R
                 else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 4))
                 {
                     break;
                 }
+                else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 4))
+                {
+                    break;
+                }
+#endif
                 else if ((*akm_type == AssocAgentAuth_Wpa3Sae) && (ptr[3] == 8))
                 {
                     break;
                 }
+#ifdef CONFIG_11R
+                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 9))
+                {
+                    break;
+                }
+                else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 9))
+                {
+                    break;
+                }
+#endif
 #ifdef CONFIG_OWE
                 else if ((*akm_type == AssocAgentAuth_Owe) && (ptr[3] == 18))
                 {
