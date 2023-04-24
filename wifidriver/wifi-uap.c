@@ -3195,6 +3195,8 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
         sys_config->frag_threshold = MLAN_FRAG_MAX_VALUE;
         sys_config->rts_threshold  = MLAN_RTS_MAX_VALUE;
 
+        sys_config->pwe_derivation = params->sae_pwe;
+
         if (params->beacon_int)
             sys_config->beacon_period = params->beacon_int;
 
