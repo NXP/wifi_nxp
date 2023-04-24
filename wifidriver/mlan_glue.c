@@ -2324,6 +2324,7 @@ static int wifi_assoc_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
                     goto done;
                 }
                 wifi_d("Set FAST_BSS_TRANSITION IE\r\n");
+                priv->sec_info.is_ft = true;
                 break;
             case RIC:
                 if (MLAN_STATUS_SUCCESS != wlan_set_gen_ie_helper(priv, pcurrent_ptr, total_ie_len))
@@ -2433,17 +2434,12 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->sec_info.authentication_mode = MLAN_AUTH_MODE_AUTO;
 
     priv->sec_info.is_wpa_tkip = MFALSE;
+#ifdef CONFIG_11R
+    priv->sec_info.is_ft = MFALSE;
+#endif
 
 #ifdef CONFIG_WPA_SUPP_WPS
     priv->wps.session_enable = MFALSE;
-#endif
-
-#ifdef CONFIG_11R
-    priv->sec_info.is_ft = assoc_info->is_ft;
-    if (assoc_info->is_ft)
-    {
-        priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
-    }
 #endif
 
     ret = wifi_assoc_ies_cfg(priv, (t_u8 *)assoc_info->wpa_ie.ie, assoc_info->wpa_ie.ie_len);
@@ -2453,6 +2449,12 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
         wifi_w("Could not set the IEs");
         return (int)MLAN_STATUS_FAILURE;
     }
+#ifdef CONFIG_11R
+    if (priv->sec_info.is_ft)
+    {
+        priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
+    }
+#endif
 
 #ifdef CONFIG_11N
     /* Reset ADDBA flag so STA sends request on each new connection */
