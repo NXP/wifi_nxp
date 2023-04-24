@@ -38,6 +38,10 @@
 #include <wm_os.h>
 #include <wmtypes.h>
 
+#ifndef LWIP_TCPIP_CORE_LOCKING
+#error "LWIP TCP/IP Core Locking is not enabled"
+#endif
+
 #if CONFIG_IPV6 && !LWIP_IPV6
 #error "CONFIG_IPV6 is enabled, but LWIP_IPV6 is not, enable it from lwipopts.h"
 #elif LWIP_IPV6 && !CONFIG_IPV6
