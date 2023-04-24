@@ -3126,6 +3126,8 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 
     ENTER();
 
+    (void)bandwidth;
+
     if (!params)
     {
         return -WM_FAIL;
@@ -3300,10 +3302,6 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             sys_config->ampdu_param = 3;
             (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
                          sizeof(sys_config->supported_mcs_set));
-        }
-        else
-        {
-            sys_config->ht_cap_info = 0;
         }
 
         if (!params->ssid.ssid_len)
