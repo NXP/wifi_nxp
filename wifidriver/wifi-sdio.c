@@ -354,11 +354,11 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_802_11_MAC_ADDRESS:
             if(bss_type == MLAN_BSS_TYPE_UAP)
             {
-                wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr_uap);
+                wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_mac_addr_uap);
             }
             else
             {
-                wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr);
+                wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_mac_addr);
             }
             break;
 #ifdef OTP_CHANINFO
@@ -1170,7 +1170,7 @@ static void wlan_fw_init_cfg(void)
     
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        os_thread_sleep(os_msec_to_ticks(10));
     }
 
     last_resp_rcvd = 0;
