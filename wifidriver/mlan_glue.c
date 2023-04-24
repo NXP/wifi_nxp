@@ -2438,6 +2438,14 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->wps.session_enable = MFALSE;
 #endif
 
+#ifdef CONFIG_11R
+    priv->sec_info.is_ft = assoc_info->is_ft;
+    if (assoc_info->is_ft)
+    {
+        priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
+    }
+#endif
+
     ret = wifi_assoc_ies_cfg(priv, (t_u8 *)assoc_info->wpa_ie.ie, assoc_info->wpa_ie.ie_len);
 
     if (ret != MLAN_STATUS_SUCCESS)

@@ -950,7 +950,18 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         }
 #ifdef CONFIG_11R
         else if (pmpriv->sec_info.authentication_mode == MLAN_AUTH_MODE_FT)
-            pauth_tlv->auth_type = wlan_cpu_to_le16(AssocAgentAuth_FastBss);
+        {
+#ifdef CONFIG_HOST_MLME
+            if (pmpriv->curr_bss_params.host_mlme)
+            {
+                pauth_tlv->auth_type = wlan_cpu_to_le16(AssocAgentAuth_FastBss_Skip);
+            }
+            else
+#endif
+            {
+                pauth_tlv->auth_type = wlan_cpu_to_le16(AssocAgentAuth_FastBss);
+            }
+        }
 #endif
 #ifdef CONFIG_OWE
         else if (

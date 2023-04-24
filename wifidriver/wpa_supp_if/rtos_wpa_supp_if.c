@@ -1065,6 +1065,11 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
 
     wifi_if_ctx_rtos->associated = false;
 
+    if (params->auth_alg == WPA_AUTH_ALG_FT)
+    {
+        assoc_params->is_ft = true;
+    }
+
     if (params->bssid)
     {
         memcpy(&wifi_if_ctx_rtos->attempt_bssid, params->bssid, ETH_ALEN);

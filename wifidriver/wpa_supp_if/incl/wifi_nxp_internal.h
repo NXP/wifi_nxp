@@ -210,6 +210,7 @@ typedef MLAN_PACK_START struct _nxp_wifi_assoc_info
     nxp_wifi_ie_t wpa_ie;
     unsigned char use_mfp;
     char control_port;
+    bool is_ft;
 } MLAN_PACK_END nxp_wifi_assoc_info_t;
 
 #define WIFI_MAX_KEY_LEN 256U
