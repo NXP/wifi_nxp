@@ -1171,9 +1171,12 @@ static void wlan_fw_init_cfg(void)
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
         os_thread_sleep(os_msec_to_ticks(10));
+        (void)wlan_process_int_status(mlan_adap);
     }
 
     last_resp_rcvd = 0;
+
+    wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
     wlan_get_mac_addr_uap();
 
