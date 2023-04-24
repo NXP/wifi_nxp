@@ -276,14 +276,14 @@ static void wlan_update_chan_statistics(mlan_private *pmpriv, MrvlIEtypes_Channe
 
         if (pmadapter->idx_chan_stats >= pmadapter->num_in_chan_stats)
         {
-            wifi_d("Over flow: idx_chan_stats=%d, num_in_chan_stats=%d\r\n", pmadapter->idx_chan_stats,
+            wifi_d("Over flow: idx_chan_stats=%d, num_in_chan_stats=%d", pmadapter->idx_chan_stats,
                    pmadapter->num_in_chan_stats);
             break;
         }
         pchan_stats->total_networks    = wlan_le16_to_cpu(pchan_stats->total_networks);
         pchan_stats->cca_scan_duration = wlan_le16_to_cpu(pchan_stats->cca_scan_duration);
         pchan_stats->cca_busy_duration = wlan_le16_to_cpu(pchan_stats->cca_busy_duration);
-        wifi_d("chan=%d, noise=%d, total_network=%d scan_duration=%d, busy_duration=%d\r\n", pchan_stats->chan_num,
+        wifi_d("chan=%d, noise=%d, total_network=%d scan_duration=%d, busy_duration=%d", pchan_stats->chan_num,
                pchan_stats->noise, pchan_stats->total_networks, pchan_stats->cca_scan_duration,
                pchan_stats->cca_busy_duration);
         __memcpy(pmadapter, (chan_statistics_t *)&pmadapter->pchan_stats[pmadapter->idx_chan_stats], pchan_stats,
@@ -801,6 +801,10 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         {
             abort_split_scan       = false;
             split_scan_in_progress = false;
+#ifdef CONFIG_WPA_SUPP
+            pmadapter->num_in_scan_table = 0;
+            ret                          = MLAN_STATUS_FAILURE;
+#endif
             break;
         }
     }

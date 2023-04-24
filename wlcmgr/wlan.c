@@ -2626,7 +2626,15 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     else
     {
 #ifdef CONFIG_WPA_SUPP
+        if (wlan.is_scan_lock)
+        {
+            wlcm_d("releasing scan lock (connect scan)");
+            (void)os_semaphore_put(&wlan.scan_lock);
+            wlan.is_scan_lock = 0;
+        }
+
         wifi_scan_done(msg);
+        return;
 #else
         if (wlan.roam_reassoc == true)
         {
@@ -3939,6 +3947,14 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 
 #ifdef CONFIG_WPA_SUPP
 
+static void wlcm_process_scan_failed()
+{
+    if (wlan.sta_state >= CM_STA_ASSOCIATING)
+    {
+        wlan_disconnect();
+    }
+}
+
 #ifdef CONFIG_11K
 static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_rrm_neighbor_report_t *nbr_rpt)
 {
@@ -4066,7 +4082,11 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
     wlcm_d("%s: %s", __func__, buf);
 
-    if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
+    if (strstr(buf, WPA_EVENT_SCAN_FAILED))
+    {
+        wlcm_process_scan_failed();
+    }
+    else if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
     {
         wlcm_d("No suitable network was found");
 
@@ -4751,6 +4771,13 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifndef CONFIG_WPA_SUPP
         (void)wifi_deauthenticate((uint8_t *)curr_nw->bssid);
 #endif
+        if (wlan.is_scan_lock)
+        {
+            wlcm_d("releasing scan lock");
+            (void)os_semaphore_put(&wlan.scan_lock);
+            wlan.is_scan_lock = 0;
+        }
+
         wlan.sta_state      = CM_STA_IDLE;
         *next               = CM_STA_IDLE;
         wlan.sta_ipv4_state = CM_STA_IDLE;
@@ -5018,6 +5045,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
     enum cm_sta_state next       = wlan.sta_state;
     struct wlan_network *network = NULL;
 #ifdef CONFIG_WPA_SUPP
+    int ret;
     struct netif *netif = net_get_sta_interface();
 #endif
 
@@ -5039,6 +5067,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case CM_STA_USER_REQUEST_DISCONNECT:
 #ifdef CONFIG_WPA_SUPP
+            ret = wpa_supp_abort_scan(netif);
+            if (ret == WM_SUCCESS)
+            {
+                break;
+            }
             wpa_supp_disconnect(netif);
 #endif
             wlcm_request_disconnect(&next, network);
@@ -5784,7 +5817,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 
     wlan.cm_stack = g_cm_stack;
-    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_2);
+    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_1);
 
     if (ret != 0)
     {
