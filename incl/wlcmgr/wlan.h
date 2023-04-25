@@ -1773,6 +1773,7 @@ void wlan_destroy_all_tasks(void);
  *  \return FALSE if not started.
  */
 bool wlan_is_started();
+#endif
 
 #ifdef CONFIG_RX_ABORT_CFG
 struct wlan_rx_abort_cfg
