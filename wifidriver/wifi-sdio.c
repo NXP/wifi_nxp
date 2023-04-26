@@ -103,9 +103,14 @@ uint32_t wifi_get_device_value1(void)
     return dev_value1;
 }
 
-int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr_sta, wifi_mac_addr_t *mac_addr_uap)
+int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr)
 {
-    (void)memcpy(mac_addr_sta->mac, dev_mac_addr, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(mac_addr->mac, dev_mac_addr, MLAN_MAC_ADDR_LENGTH);
+    return WM_SUCCESS;
+}
+
+int wifi_get_device_uap_mac_addr(wifi_mac_addr_t *mac_addr_uap)
+{
     (void)memcpy(mac_addr_uap->mac, dev_mac_addr_uap, MLAN_MAC_ADDR_LENGTH);
     return WM_SUCCESS;
 }

@@ -5584,10 +5584,19 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     wlan.status = WLCMGR_INIT_DONE;
     wifi_mac_addr_t mac_addr;
     wifi_mac_addr_t mac_addr_uap;
-    ret = wifi_get_device_mac_addr(&mac_addr, &mac_addr_uap);
+    ret = wifi_get_device_mac_addr(&mac_addr);
+    
     if (ret != WM_SUCCESS)
     {
-        wlcm_e("Failed to get mac address");
+        wlcm_e("Failed to get sta mac address");
+        return ret;
+    }
+
+    ret = wifi_get_device_uap_mac_addr(&mac_addr_uap);
+
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to get uap mac address");
         return ret;
     }
 

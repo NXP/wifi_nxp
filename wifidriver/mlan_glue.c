@@ -52,6 +52,9 @@ uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
 #endif
 #endif
 
+extern uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
+extern uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
+
 #ifdef CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -3136,10 +3139,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 (void)memcpy((void *)sta_addr, (const void *)((uint8_t *)&pmac_addr->mac_addr), MLAN_MAC_ADDR_LENGTH);
                 if (bss_type == MLAN_BSS_TYPE_STA)
                 {
+                    (void)memcpy(dev_mac_addr, sta_addr, MLAN_MAC_ADDR_LENGTH);
                     ret = wifi_event_completion(WIFI_EVENT_STA_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
                 }
                 else if (bss_type == MLAN_BSS_TYPE_UAP)
                 {
+                    (void)memcpy(dev_mac_addr_uap, sta_addr, MLAN_MAC_ADDR_LENGTH);
                     ret = wifi_event_completion(WIFI_EVENT_UAP_MAC_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, sta_addr);
                 }
 
