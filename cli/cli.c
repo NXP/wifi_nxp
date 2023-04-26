@@ -938,7 +938,11 @@ static int cli_start(void)
         return -WM_FAIL;
     }
 
-    ret = os_thread_create(&cli_main_thread, "cli", cli_main, NULL, &cli_stack, OS_PRIO_3);
+#ifdef CONFIG_UART_INTERACTIVE
+    ret = os_thread_create(&cli_main_thread, "cli", cli_main, 0, &cli_stack, OS_PRIO_1);
+#else
+    ret = os_thread_create(&cli_main_thread, "cli", cli_main, 0, &cli_stack, OS_PRIO_3);
+#endif
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create cli thread: %d\r\n", ret);
@@ -1257,7 +1261,11 @@ int cli_init(void)
         cli_init_done = true;
     }
 #ifdef CONFIG_UART_INTERRUPT
-    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
+#ifdef CONFIG_UART_INTERACTIVE
+	ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_1);
+#else
+	ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
+#endif
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create uart thread: %d\r\n", ret);
