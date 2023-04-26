@@ -584,7 +584,7 @@ static int wifi_cmd_uap_config(char *ssid,
         else
         {
 #endif
-            if (security == WLAN_SECURITY_WPA2 || WLAN_SECURITY_WPA2_SHA256 ||
+            if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 ||
                 security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
             {
                 /*app has converted pmk with psk*/
@@ -959,7 +959,7 @@ int wifi_uap_start(mlan_bss_type type,
         return rv;
     }
 
-    if ((security == WLAN_SECURITY_WPA2 || WLAN_SECURITY_WPA2_SHA256 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
+    if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
          security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
 #ifdef CONFIG_OWE
          || security == WLAN_SECURITY_OWE_ONLY

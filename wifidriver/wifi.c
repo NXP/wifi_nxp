@@ -3997,7 +3997,6 @@ int wifi_low_level_output(const uint8_t interface,
             }
             break;
         } /* if (i != MLAN_STATUS_SUCCESS) */
-        break;
     } /* while(true) */
 #endif
 

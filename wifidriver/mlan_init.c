@@ -145,14 +145,12 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 #ifdef SCAN_CHANNEL_GAP
     int ret = -WM_FAIL;
     // fixme: this function will need during migration of legacy code.
-    t_u8 chan_2g[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    t_u8 chan_2g_size = 14;
 #ifdef CONFIG_5GHz_SUPPORT
-    t_u8 chan_5g[] = {12,  16,  34,  38,  42,  46,  36,  40,  44,  48,  52,  56,
-                      60,  64,  100, 104, 108, 112, 116, 120, 124, 128, 132, 136,
 #ifdef UNII_4_SUPPORT
-                      140, 144, 149, 153, 157, 161, 165, 169, 173, 177};
+    t_u8 chan_5g_size = 34;
 #else
-                      140, 144, 149, 153, 157, 161, 165};
+    t_u8 chan_5g_size = 31;
 #endif
 #endif
 #endif
@@ -193,9 +191,9 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 #endif /* CONFIG_MLAN_WMSDK */
     pmadapter->pscan_table = BSS_List;
 #ifdef SCAN_CHANNEL_GAP
-    pmadapter->num_in_chan_stats = sizeof(chan_2g);
+    pmadapter->num_in_chan_stats = chan_2g_size;
 #ifdef CONFIG_5GHz_SUPPORT
-    pmadapter->num_in_chan_stats += sizeof(chan_5g);
+    pmadapter->num_in_chan_stats += chan_5g_size;
 #endif
     buf_size = sizeof(ChanStatistics_t) * pmadapter->num_in_chan_stats;
     ret      = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF,

@@ -84,8 +84,8 @@ static SDIOPkt *sdiopkt = (SDIOPkt *)outbuf;
 void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd);
 
 static uint32_t dev_value1 = -1;
-static uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
-static uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
+uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
+uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
 static uint8_t dev_fw_ver_ext[MLAN_MAX_VER_STR_LEN];
 
 int wifi_sdio_lock(void)
