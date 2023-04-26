@@ -932,12 +932,6 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 
 #ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
-
-    if (cmd->size < 512U)
-    {
-        buf_len   = tx_blocks * MLAN_SDIO_BLOCK_SIZE;
-        tx_blocks = 1;
-    }
 #endif
 
 #if defined(RW610)
@@ -982,12 +976,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 
 #ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
-
-    if (cmd->size < 512U)
-    {
-        buf_len   = tx_blocks * MLAN_SDIO_BLOCK_SIZE;
-        tx_blocks = 1;
-    }
 #endif
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)

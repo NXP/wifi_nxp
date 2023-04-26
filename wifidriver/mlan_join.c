@@ -600,6 +600,10 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 {
                     break;
                 }
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 4))
+                {
+                    break;
+                }
                 else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 4))
                 {
                     break;
