@@ -4085,6 +4085,34 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+            case HostCmd_CMD_RX_ABORT_CFG_EXT:
+            {
+                HostCmd_DS_RX_ABORT_CFG_EXT *cfg;
+                cfg = (HostCmd_DS_RX_ABORT_CFG_EXT *)&resp->params.rx_abort_cfg_ext;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (cfg->action == HostCmd_ACT_GEN_GET)
+                    {
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            rx_abort_cfg_ext_t *rx_abort_cfg_ext   = (rx_abort_cfg_ext_t *)wm_wifi.cmd_resp_priv;
+                            rx_abort_cfg_ext->enable               = cfg->enable;
+                            rx_abort_cfg_ext->rssi_margin          = (int)cfg->rssi_margin;
+                            rx_abort_cfg_ext->ceil_rssi_threshold  = (int)cfg->ceil_rssi_threshold;
+                            rx_abort_cfg_ext->floor_rssi_threshold = (int)cfg->floor_rssi_threshold;
+                            rx_abort_cfg_ext->current_dynamic_rssi_threshold = (int)cfg->current_dynamic_rssi_threshold;
+                            rx_abort_cfg_ext->rssi_default_config            = (int)cfg->rssi_default_config;
+                            rx_abort_cfg_ext->edmac_enable                   = (int)cfg->edmac_enable;
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+#endif
 #ifdef CONFIG_CCK_DESENSE_CFG
             case HostCmd_CMD_CCK_DESENSE_CFG:
             {
@@ -6523,6 +6551,20 @@ int wifi_set_get_rx_abort_cfg(void *cfg, t_u16 action)
     cmd->seq_num            = 0x0;
     cmd->result             = 0x0;
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RX_ABORT_CFG, action, 0, NULL, cfg, cmd);
+    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? cfg : NULL);
+    return wm_wifi.cmd_resp_status;
+}
+#endif
+
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+int wifi_set_get_rx_abort_cfg_ext(void *cfg, t_u16 action)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    cmd->seq_num            = 0x0;
+    cmd->result             = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RX_ABORT_CFG_EXT, action, 0, NULL, cfg,
+                             cmd);
     wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? cfg : NULL);
     return wm_wifi.cmd_resp_status;
 }

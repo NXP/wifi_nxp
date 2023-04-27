@@ -567,6 +567,18 @@ int wlan_set_get_rx_abort_cfg(struct wlan_rx_abort_cfg *cfg, t_u16 action)
 }
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+int wlan_set_rx_abort_cfg_ext(const struct wlan_rx_abort_cfg_ext *cfg)
+{
+    return wifi_set_get_rx_abort_cfg_ext((void *)cfg, ACTION_SET);
+}
+
+int wlan_get_rx_abort_cfg_ext(struct wlan_rx_abort_cfg_ext *cfg)
+{
+    return wifi_set_get_rx_abort_cfg_ext((void *)cfg, ACTION_GET);
+}
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 int wlan_set_get_cck_desense_cfg(struct wlan_cck_desense_cfg *cfg, t_u16 action)
 {

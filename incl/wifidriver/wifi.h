@@ -577,6 +577,18 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list);
 int wifi_set_get_rx_abort_cfg(void *cfg, t_u16 action);
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+/**
+ * Set/Get Rx abort config ext
+ *
+ * \param[in] cfg User configurations.
+ * \param[in] action Set/Get
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_get_rx_abort_cfg_ext(void *cfg, t_u16 action);
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 /**
  * Set/Get CCK Desense config

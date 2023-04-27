@@ -1296,6 +1296,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_RX_ABORT_CFG 0x0261
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+#define HostCmd_CMD_RX_ABORT_CFG_EXT 0x0262
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 #define HostCmd_CMD_CCK_DESENSE_CFG 0x0265
 #endif
@@ -4012,6 +4016,28 @@ typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG
     /** RSSI threshold */
     t_s8 rssi_threshold;
 } MLAN_PACK_END HostCmd_DS_RX_ABORT_CFG;
+#endif
+
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+typedef MLAN_PACK_START struct _HostCmd_DS_RX_ABORT_CFG_EXT
+{
+    /** Action */
+    t_u16 action;
+    /** Enable/disable dyn rx abort on weak pkt rssi */
+    t_u8 enable;
+    /** specify rssi margin */
+    t_s8 rssi_margin;
+    /** specify ceil rssi threshold */
+    t_s8 ceil_rssi_threshold;
+    /** specify floor rssi threshold */
+    t_s8 floor_rssi_threshold;
+    /** current dynamic rssi threshold */
+    t_s8 current_dynamic_rssi_threshold;
+    /** rssi config: default or user configured */
+    t_u8 rssi_default_config;
+    /** EDMAC status */
+    t_u8 edmac_enable;
+} MLAN_PACK_END HostCmd_DS_RX_ABORT_CFG_EXT;
 #endif
 
 #ifdef CONFIG_CCK_DESENSE_CFG
@@ -7197,6 +7223,11 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_RX_ABORT_CFG
 		HostCmd_DS_RX_ABORT_CFG rx_abort_cfg;
 #endif
+
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+        HostCmd_DS_RX_ABORT_CFG_EXT rx_abort_cfg_ext;
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 		HostCmd_DS_CCK_DESENSE_CFG cck_desense_cfg;
 #endif

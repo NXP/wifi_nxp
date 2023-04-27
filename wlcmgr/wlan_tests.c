@@ -4560,6 +4560,246 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
     return;
 }
 #endif
+
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+int rx_abort_cfg_ext_enable = 0;
+static void dump_wlan_rx_abort_cfg_ext_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Get dynamic rx abort cfg:\r\n");
+    (void)PRINTF("  wlan-get-rx-abort-cfg-ext\r\n");
+    (void)PRINTF("Set dynamic rx abort cfg:\r\n");
+    (void)PRINTF(
+        "  wlan-set-rx-abort-cfg-ext enable <enable/disable> margin <margin> ceil <ceil_rssi_thresh> "
+        "floor <floor_rssi_thresh>\r\n");
+    (void)PRINTF("Options: \r\n");
+    (void)PRINTF("    enable <enable>\r\n");
+    (void)PRINTF("              0 -- Disable Rx abort\r\n");
+    (void)PRINTF("              1 -- Enable Rx abort of pkt having weak RSSI\r\n");
+    (void)PRINTF("    margin <margin>\r\n");
+    (void)PRINTF("              rssi margin in dBm (absolute val)\r\n");
+    (void)PRINTF("              (default = 10)\r\n");
+    (void)PRINTF("    ceil <ceil_rssi_thresh>\r\n");
+    (void)PRINTF("              rceiling weak RSSI pkt threshold in dBm (absolute val)\r\n");
+    (void)PRINTF("              (default = 62)\r\n");
+    (void)PRINTF("    floor <floor_rssi_thresh>\r\n");
+    (void)PRINTF("              floor weak RSSI pkt threshold in dBm (absolute val)\r\n");
+    (void)PRINTF("              (default = 82)\r\n");
+    (void)PRINTF("For example:\r\n");
+    (void)PRINTF("    wlan-get-rx-abort-cfg-ext: Display current rx abort configuration\r\n");
+    (void)PRINTF("    wlan-set-rx-abort-cfg-ext enable 1 margin 5 ceil 40 floor 70 :\r\n");
+    (void)PRINTF(
+        "         Enable dynamic rx abort,set margin to -5 dBm, set ceil RSSI Threshold to -40 dBm and set floor RSSI "
+        "threshold to -70 dbm\r\n");
+    (void)PRINTF("    wlan-set-rx-abort-cfg-ext enable 1\r\n");
+    (void)PRINTF("    Don't set RSSI margin, drive will set defult RSSI margin threshold value.\r\n");
+    (void)PRINTF("    Don't set ceil RSSI threshold, driver will set default ceil RSSI threshold value.\r\n");
+    (void)PRINTF("    Don't set floor RSSI threshold, driver will set default floor RSSI threshold value.\r\n");
+    (void)PRINTF("\r\n");
+    (void)PRINTF("    wlan-set-rx-abort-cfg-ext enable 1 ceil 255 \r\n");
+    (void)PRINTF("    Don't set RSSI margin, drive will set defult RSSI margin threshold value.\r\n");
+    (void)PRINTF(
+        "    Input ceil RSSI threshold to 0xff, set ceil value to default based on EDMAC enabled or disabled "
+        "status.\r\n");
+    (void)PRINTF("    In this case, don't set floor RSSI threshold.\r\n");
+    (void)PRINTF("    wlan-set-rx-abort-cfg-ext enable 0    : Disable dynamic rx abort\r\n");
+}
+
+static void test_wlan_get_rx_abort_cfg_ext(int argc, char **argv)
+{
+    struct wlan_rx_abort_cfg_ext cfg;
+    (void)memset(&cfg, 0, sizeof(cfg));
+
+    wlan_get_rx_abort_cfg_ext(&cfg);
+
+    (void)PRINTF("Dynamic Rx Abort %s\r\n", rx_abort_cfg_ext_enable == 1 ? "enabled" : "disabled");
+    if (rx_abort_cfg_ext_enable == 1)
+    {
+        int rssi;
+        rssi = cfg.rssi_margin;
+        if (rssi > 0x7f)
+            rssi = -(256 - rssi);
+        (void)PRINTF("Margin RSSI: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
+
+        rssi = cfg.ceil_rssi_threshold;
+        if (rssi > 0x7f)
+            rssi = -(256 - rssi);
+        (void)PRINTF("Ceil RSSI threshold: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
+
+        rssi = cfg.floor_rssi_threshold;
+        if (rssi > 0x7f)
+            rssi = -(256 - rssi);
+        (void)PRINTF("Floor rssi threshold: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
+
+        rssi = cfg.current_dynamic_rssi_threshold;
+        if (rssi > 0x7f)
+            rssi = -(256 - rssi);
+        (void)PRINTF("Dynamic RSSI Threshold : %d dbm (%s)\r\n", rssi,
+                     cfg.rssi_default_config ? (cfg.edmac_enable ? "EDMAC based" : "Default") : "Config based");
+    }
+    (void)PRINTF("\r\n");
+    return;
+}
+
+static void test_wlan_set_rx_abort_cfg_ext(int argc, char **argv)
+{
+    int arg = 0;
+    unsigned int value;
+    struct wlan_rx_abort_cfg_ext cfg;
+
+    struct
+    {
+        uint8_t enable : 1;
+        uint8_t margin : 1;
+        uint8_t ceil_thresh : 1;
+        uint8_t floor_thresh : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+
+    (void)memset(&cfg, 0, sizeof(cfg));
+
+    if (argc < 3 && argc > 9)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_rx_abort_cfg_ext_usage();
+        return;
+    }
+    arg++;
+    do
+    {
+        if (!info.enable && string_equal("enable", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid enable argument\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            if (value != 0 && value != 1)
+            {
+                (void)PRINTF("Error: invalid action argument\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            if (value == 0) /*Disable dynamic rx bort config*/
+            {
+                cfg.enable              = 0;
+                rx_abort_cfg_ext_enable = 0;
+                break;
+            }
+            else /* Enable dynamic rx abort config*/
+            {
+                cfg.enable              = 1;
+                rx_abort_cfg_ext_enable = 1;
+            }
+            arg += 2;
+            info.enable = 1;
+        }
+        else if (!info.margin && string_equal("margin", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid margin argument\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            if (value > 0x7f)
+            {
+                (void)PRINTF("Error: Invalid Margin value\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            cfg.rssi_margin = value;
+            arg += 2;
+            info.margin = 1;
+        }
+        else if (!info.ceil_thresh && string_equal("ceil", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid ceil argument\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            if (value > 0x7f && value != 0xff)
+            {
+                (void)PRINTF("Error: Invalid ceil value\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            cfg.ceil_rssi_threshold = value;
+            arg += 2;
+            info.ceil_thresh = 1;
+        }
+        else if (!info.floor_thresh && string_equal("floor", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid floor argument\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            if (value > 0x7f)
+            {
+                (void)PRINTF("Error: Invalid floor value\r\n");
+                dump_wlan_rx_abort_cfg_ext_usage();
+                return;
+            }
+            cfg.floor_rssi_threshold = value;
+            arg += 2;
+            info.floor_thresh = 1;
+        }
+        else
+        {
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            dump_wlan_rx_abort_cfg_ext_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if (cfg.enable == 0)
+    {
+        (void)PRINTF("Disable dynamic rx abort config\r\n");
+        wlan_set_rx_abort_cfg_ext((const struct wlan_rx_abort_cfg_ext *)&cfg);
+        return;
+    }
+    if (cfg.rssi_margin == 0)
+    {
+        (void)PRINTF("No Margin RSSI is set by user.\r\n");
+        (void)PRINTF("  Use default value instead.\r\n");
+        cfg.rssi_margin = 10;
+    }
+
+    if (cfg.ceil_rssi_threshold == 0)
+    {
+        (void)PRINTF("No Ceil RSSI threshold is set by user.\r\n");
+        (void)PRINTF("  Use default value instead.\r\n");
+        cfg.ceil_rssi_threshold = 62;
+    }
+
+    if (cfg.floor_rssi_threshold == 0)
+    {
+        if (cfg.ceil_rssi_threshold == 0xff)
+        {
+            (void)PRINTF("No Floor rssi threshold is set by user.\r\n");
+            (void)PRINTF("  Driver set floor rssi threshold to 0xff.\r\n");
+            cfg.floor_rssi_threshold = 0xff;
+        }
+        else
+        {
+            (void)PRINTF("No Floor rssi threshold is set by user.\r\n");
+            (void)PRINTF("  Use default value instead.\r\n");
+            cfg.floor_rssi_threshold = 82;
+        }
+    }
+
+    wlan_set_rx_abort_cfg_ext((const struct wlan_rx_abort_cfg_ext *)&cfg);
+
+    return;
+}
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 static void dump_wlan_cck_desense_cfg_usage()
 {
@@ -7790,6 +8030,11 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_RX_ABORT_CFG
     {"wlan-rx-abort-cfg", NULL, test_wlan_rx_abort_cfg},
+#endif
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+    {"wlan-set-rx-abort-cfg-ext", "enable <enable> margin <margin> ceil <ceil_thresh> floor <floor_thresh>",
+     test_wlan_set_rx_abort_cfg_ext},
+    {"wlan-get-rx-abort-cfg-ext", NULL, test_wlan_get_rx_abort_cfg_ext},
 #endif
 #ifdef CONFIG_CCK_DESENSE_CFG
     {"wlan-cck-desense-cfg", NULL, test_wlan_cck_desense_cfg},

@@ -1796,6 +1796,26 @@ struct wlan_rx_abort_cfg
 };
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+struct wlan_rx_abort_cfg_ext
+{
+    /** Enable/disable dyn rx abort on weak pkt rssi */
+    int enable;
+    /** specify rssi margin */
+    int rssi_margin;
+    /** specify ceil rssi threshold */
+    int ceil_rssi_threshold;
+    /** specify floor rssi threshold */
+    int floor_rssi_threshold;
+    /** current dynamic rssi threshold */
+    int current_dynamic_rssi_threshold;
+    /** rssi config: default or user configured */
+    int rssi_default_config;
+    /** EDMAC status */
+    int edmac_enable;
+};
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 #define CCK_DESENSE_MODE_DISABLED 0
 #define CCK_DESENSE_MODE_DYNAMIC  1
@@ -1825,6 +1845,26 @@ struct wlan_cck_desense_cfg
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_get_rx_abort_cfg(struct wlan_rx_abort_cfg *cfg, t_u16 action);
+#endif
+
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+/**
+ * Set Dynamic RX abort config to Fw.
+ *
+ * \param[in] cfg A pointer to information buffer
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_rx_abort_cfg_ext(const struct wlan_rx_abort_cfg_ext *cfg);
+
+/**
+ * Get Dynamic RX abort config from Fw.
+ *
+ * \param[in/out] cfg A pointer to information buffer
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_rx_abort_cfg_ext(struct wlan_rx_abort_cfg_ext *cfg);
 #endif
 
 #ifdef CONFIG_CCK_DESENSE_CFG

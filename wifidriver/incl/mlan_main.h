@@ -575,6 +575,27 @@ typedef struct
 } rx_abort_cfg_t;
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+/** Data structure of Rx abort configuration */
+typedef struct
+{
+    /** Enable/disable dyn rx abort on weak pkt rssi */
+    int enable;
+    /** specify rssi margin */
+    int rssi_margin;
+    /** specify ceil rssi threshold */
+    int ceil_rssi_threshold;
+    /** specify floor rssi threshold */
+    int floor_rssi_threshold;
+    /** current dynamic rssi threshold */
+    int current_dynamic_rssi_threshold;
+    /** rssi config: default or user configured */
+    int rssi_default_config;
+    /** EDMAC status */
+    int edmac_enable;
+} rx_abort_cfg_ext_t;
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 typedef struct
 {
@@ -3210,6 +3231,13 @@ mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel, 
 
 #ifdef CONFIG_RX_ABORT_CFG
 mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
+#endif
+
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+mlan_status wlan_cmd_rx_abort_cfg_ext(pmlan_private pmpriv,
+                                      HostCmd_DS_COMMAND *cmd,
+                                      t_u16 cmd_action,
+                                      t_void *pdata_buf);
 #endif
 
 #ifdef CONFIG_CCK_DESENSE_CFG

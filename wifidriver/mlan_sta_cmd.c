@@ -3035,6 +3035,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_rx_abort_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+        case HostCmd_CMD_RX_ABORT_CFG_EXT:
+            ret = wlan_cmd_rx_abort_cfg_ext(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
 #ifdef CONFIG_CCK_DESENSE_CFG
         case HostCmd_CMD_CCK_DESENSE_CFG:
             ret = wlan_cmd_cck_desense_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);

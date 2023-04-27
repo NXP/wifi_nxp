@@ -3675,6 +3675,43 @@ mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv,
 }
 #endif
 
+#ifdef CONFIG_RX_ABORT_CFG_EXT
+/**
+ *  @brief This function sends rx abort cfg ext command to firmware.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          Hostcmd ID
+ *  @param cmd_action   Command action
+ *  @param pdata_buf    A void pointer to information buffer
+ *  @return             N/A
+ */
+mlan_status wlan_cmd_rx_abort_cfg_ext(pmlan_private pmpriv,
+                                      HostCmd_DS_COMMAND *cmd,
+                                      t_u16 cmd_action,
+                                      t_void *pdata_buf)
+{
+    HostCmd_DS_RX_ABORT_CFG_EXT *rx_abort_cfg_ext = (HostCmd_DS_RX_ABORT_CFG_EXT *)&cmd->params.rx_abort_cfg_ext;
+    rx_abort_cfg_ext_t *cfg                       = (rx_abort_cfg_ext_t *)pdata_buf;
+
+    ENTER();
+
+    cmd->command             = wlan_cpu_to_le16(HostCmd_CMD_RX_ABORT_CFG_EXT);
+    cmd->size                = wlan_cpu_to_le16(sizeof(HostCmd_DS_RX_ABORT_CFG_EXT) + S_DS_GEN);
+    rx_abort_cfg_ext->action = wlan_cpu_to_le16(cmd_action);
+
+    if (rx_abort_cfg_ext->action == HostCmd_ACT_GEN_SET)
+    {
+        rx_abort_cfg_ext->enable               = cfg->enable;
+        rx_abort_cfg_ext->rssi_margin          = (t_s8)cfg->rssi_margin;
+        rx_abort_cfg_ext->ceil_rssi_threshold  = (t_s8)cfg->ceil_rssi_threshold;
+        rx_abort_cfg_ext->floor_rssi_threshold = (t_s8)cfg->floor_rssi_threshold;
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_CCK_DESENSE_CFG
 /**
  *  @brief This function sends cck desense cfg command to firmware.
