@@ -1001,9 +1001,9 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if ((info.security2 == 0U) &&
                  (string_equal("eap-wild", argv[arg]) || string_equal("eap-tls", argv[arg]) ||
-                  string_equal("eap-tls-sha256", argv[arg])
+                  string_equal("eap-tls-sha256", argv[arg]) ||
 #ifdef CONFIG_11R
-                  || string_equal("eap-tls-ft", argv[arg]) || string_equal("eap-tls-ft-sha384", argv[arg]) ||
+                  string_equal("eap-tls-ft", argv[arg]) || string_equal("eap-tls-ft-sha384", argv[arg]) ||
 #endif
                   string_equal("eap-ttls", argv[arg]) || string_equal("eap-ttls-mschapv2", argv[arg]) ||
                   string_equal("eap-peap-mschapv2", argv[arg]) || string_equal("eap-peap-tls", argv[arg]) ||
@@ -1342,9 +1342,9 @@ static void test_wlan_add(int argc, char **argv)
         }
     }
 
-    network.ip.ipv4.addr_type = (enum address_types)(info.address);
-	network.ssid[IEEEtypes_SSID_SIZE] = '\0';
-    ret = wlan_add_network(&network);
+    network.ip.ipv4.addr_type         = (enum address_types)(info.address);
+    network.ssid[IEEEtypes_SSID_SIZE] = '\0';
+    ret                               = wlan_add_network(&network);
     switch (ret)
     {
         case WM_SUCCESS:
@@ -4522,12 +4522,12 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
     }
     (void)memset(&cfg, 0, sizeof(cfg));
     /* GET */
-    if(argc == 1)
+    if (argc == 1)
     {
         dump_wlan_rx_abort_cfg_usage();
         wlan_set_get_rx_abort_cfg(&cfg, ACTION_GET);
         (void)PRINTF("Static Rx Abort %s\r\n", cfg.enable == 1 ? "enabled" : "disabled");
-        if(cfg.enable == 1)
+        if (cfg.enable == 1)
         {
             (void)PRINTF("RSSI threshold : %ddBm\r\n", cfg.rssi_threshold);
         }
@@ -4536,9 +4536,9 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
     else
     {
         cfg.enable = (t_u8)atoi(argv[1]);
-        if(cfg.enable)
+        if (cfg.enable)
         {
-            if(argc == 2)
+            if (argc == 2)
             {
                 cfg.rssi_threshold = 70;
                 (void)PRINTF("No RSSI threshold set by user.\r\n");
@@ -4547,7 +4547,7 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
             else
             {
                 cfg.rssi_threshold = (int)atoi(argv[2]);
-                if(cfg.rssi_threshold > 0x7f)
+                if (cfg.rssi_threshold > 0x7f)
                 {
                     (void)PRINTF("Invalid threshold value\r\n");
                     (void)PRINTF("RSSI threshold should less than 0x7f\r\n");
@@ -4583,20 +4583,26 @@ static void dump_wlan_cck_desense_cfg_usage()
     (void)PRINTF("For example:\r\n");
     (void)PRINTF("    wlan-cck-desense-cfg              : Get current cck desense config\r\n");
     (void)PRINTF("    wlan-cck-desense-cfg 0            : Disable cck desense\r\n");
-    (void)PRINTF("    wlan-cck-desense-cfg 1 10 70      : Set dynamic mode, margin to -10 dBm and ceil RSSI Threshold to -70 dBm\r\n");
-    (void)PRINTF("    wlan-cck-desense-cfg 2 10 60 30 5 : Set dynamic enhanced mode, margin to -10 dBm, ceil RSSI Threshold to -60 dBm,\r\n");
+    (void)PRINTF(
+        "    wlan-cck-desense-cfg 1 10 70      : Set dynamic mode, margin to -10 dBm and ceil RSSI Threshold to -70 "
+        "dBm\r\n");
+    (void)PRINTF(
+        "    wlan-cck-desense-cfg 2 10 60 30 5 : Set dynamic enhanced mode, margin to -10 dBm, ceil RSSI Threshold to "
+        "-60 dBm,\r\n");
     (void)PRINTF("                                        num on intervals to 30 and num off intervals to 5\r\n");
-    (void)PRINTF("    wlan-cck-desense-cfg 2 5 60       : Set dynamic enhanced mode, set margin to -5 dBm, set ceil RSSI Threshold to -60 dBm,\r\n");
+    (void)PRINTF(
+        "    wlan-cck-desense-cfg 2 5 60       : Set dynamic enhanced mode, set margin to -5 dBm, set ceil RSSI "
+        "Threshold to -60 dBm,\r\n");
     (void)PRINTF("                                        and retain previous num on/off intervals setting.\r\n");
 }
 
 static void test_wlan_cck_desense_cfg(int argc, char **argv)
 {
     struct wlan_cck_desense_cfg cfg;
-    int num_on_intervals = 0;
+    int num_on_intervals  = 0;
     int num_off_intervals = 0;
 
-    if(argc > 6)
+    if (argc > 6)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_cck_desense_cfg_usage();
@@ -4604,15 +4610,14 @@ static void test_wlan_cck_desense_cfg(int argc, char **argv)
     }
     memset(&cfg, 0x0, sizeof(cfg));
     /* GET */
-    if(argc == 1)
+    if (argc == 1)
     {
         dump_wlan_cck_desense_cfg_usage();
         wlan_set_get_cck_desense_cfg(&cfg, ACTION_GET);
         (void)PRINTF("CCK Desense %s\r\n", (cfg.mode) ? "enabled" : "disabled");
         if (cfg.mode != CCK_DESENSE_MODE_DISABLED)
         {
-            (void)PRINTF("Mode: %s\r\n", (cfg.mode == CCK_DESENSE_MODE_DYNAMIC) ?
-                        "Dynamic" : "Dynamic Enhanced");
+            (void)PRINTF("Mode: %s\r\n", (cfg.mode == CCK_DESENSE_MODE_DYNAMIC) ? "Dynamic" : "Dynamic Enhanced");
             (void)PRINTF("Margin : %ddBm\r\n", cfg.margin);
             (void)PRINTF("Ceil RSSI Threshold : %ddBm\r\n", cfg.ceil_thresh);
         }
@@ -4626,7 +4631,7 @@ static void test_wlan_cck_desense_cfg(int argc, char **argv)
     else
     {
         cfg.mode = (t_u16)atoi(argv[1]);
-        if(cfg.mode > CCK_DESENSE_MODE_DYN_ENH)
+        if (cfg.mode > CCK_DESENSE_MODE_DYN_ENH)
         {
             (void)PRINTF("Invalid cck desense mode\r\n");
             dump_wlan_cck_desense_cfg_usage();
@@ -4640,26 +4645,26 @@ static void test_wlan_cck_desense_cfg(int argc, char **argv)
             dump_wlan_cck_desense_cfg_usage();
             return;
         }
-        if(argc > 2)
+        if (argc > 2)
         {
-            cfg.margin = (int)atoi(argv[2]);
+            cfg.margin      = (int)atoi(argv[2]);
             cfg.ceil_thresh = (int)atoi(argv[3]);
-            if(cfg.margin > 0x7f)
+            if (cfg.margin > 0x7f)
             {
                 (void)PRINTF("Invalid margin value\r\n");
                 (void)PRINTF("The margin should less than 0x7f\r\n");
                 return;
             }
-            if(cfg.ceil_thresh > 0x7f)
+            if (cfg.ceil_thresh > 0x7f)
             {
                 (void)PRINTF("Invalid ceil threshold value\r\n");
                 (void)PRINTF("The ceil threshold should less than 0x7f\r\n");
                 return;
             }
         }
-        if(argc > 4)
+        if (argc > 4)
         {
-            num_on_intervals = atoi(argv[4]);
+            num_on_intervals  = atoi(argv[4]);
             num_off_intervals = atoi(argv[5]);
             if (num_on_intervals > 0xff || num_off_intervals > 0xff)
             {
@@ -4667,7 +4672,7 @@ static void test_wlan_cck_desense_cfg(int argc, char **argv)
                 (void)PRINTF("The ON/OFF interval should less than 0xff\r\n");
                 return;
             }
-            cfg.num_on_intervals = (t_u8)num_on_intervals;
+            cfg.num_on_intervals  = (t_u8)num_on_intervals;
             cfg.num_off_intervals = (t_u8)num_off_intervals;
         }
         wlan_set_get_cck_desense_cfg(&cfg, ACTION_SET);
@@ -7782,10 +7787,10 @@ static struct cli_command tests[] = {
     {"wlan-rssi-low-threshold", "<threshold_value>", test_wlan_rssi_low_threshold},
 #endif
 #ifdef CONFIG_RX_ABORT_CFG
-		{"wlan-rx-abort-cfg", NULL, test_wlan_rx_abort_cfg},
+    {"wlan-rx-abort-cfg", NULL, test_wlan_rx_abort_cfg},
 #endif
 #ifdef CONFIG_CCK_DESENSE_CFG
-		{"wlan-cck-desense-cfg", NULL, test_wlan_cck_desense_cfg},
+    {"wlan-cck-desense-cfg", NULL, test_wlan_cck_desense_cfg},
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
     {"wlan-generate-wps-pin", NULL, test_wlan_wps_generate_pin},

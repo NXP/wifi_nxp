@@ -48,13 +48,6 @@
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 #endif
 
-#ifdef CONFIG_WPA_SUPP
-#define CONFIG_HOSTAPD                    1
-#define CONFIG_WPA_SUPP_AP                1
-#define CONFIG_WPA_SUPP_WPS               1
-#define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 1
-#endif
-
 #ifdef CONFIG_11AX
 #define CONFIG_11K 1
 #define CONFIG_11V 1

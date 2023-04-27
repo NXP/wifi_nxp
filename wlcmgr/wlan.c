@@ -1722,6 +1722,7 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 
 static void do_connect_failed(enum wlan_event_reason reason);
 
+#ifndef CONFIG_WPA_SUPP
 /* Start a connection attempt.  To do this we choose a specific network to scan
  * for or the first of our list of known networks. If that network uses WEP
  * security, we first issue the WEP configuration command and enter the
@@ -1773,6 +1774,7 @@ static int do_connect(int netindex)
 
     return WM_SUCCESS;
 }
+#endif
 
 static int do_start(struct wlan_network *network)
 {
@@ -5585,7 +5587,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     wifi_mac_addr_t mac_addr;
     wifi_mac_addr_t mac_addr_uap;
     ret = wifi_get_device_mac_addr(&mac_addr);
-    
+
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to get sta mac address");

@@ -2219,8 +2219,8 @@ static int wifi_assoc_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
     t_u8 element_len;
     int ret = MLAN_STATUS_SUCCESS;
     IEEEtypes_ElementId_e element_id;
-    IEEEtypes_VendorSpecific_t *pvendor_ie;
 #ifdef CONFIG_WPA_SUPP_WPS
+    IEEEtypes_VendorSpecific_t *pvendor_ie;
     t_u8 wps_oui[] = {0x00, 0x50, 0xf2, 0x04};
 #endif
 #ifdef HOST_CCX
@@ -2309,8 +2309,10 @@ static int wifi_assoc_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
                     ret = -WM_FAIL;
                     goto done;
                 }
+#ifdef CONFIG_WPA_SUPP_WPS
                 wifi_d("Set VENDOR SPECIFIC IE, OUI: %02x:%02x:%02x:%02x\r\n", pvendor_ie->vend_hdr.oui[0],
                        pvendor_ie->vend_hdr.oui[1], pvendor_ie->vend_hdr.oui[2], pvendor_ie->vend_hdr.oui_type);
+#endif
                 break;
 #ifdef CONFIG_11R
             case MOBILITY_DOMAIN:
@@ -4048,65 +4050,65 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG
-				case HostCmd_CMD_RX_ABORT_CFG:
-					{
-						HostCmd_DS_RX_ABORT_CFG *cfg;
-						cfg = (HostCmd_DS_RX_ABORT_CFG *)&resp->params.rx_abort_cfg;
-						if (resp->result == HostCmd_RESULT_OK)
-						{
-							if (cfg->action == HostCmd_ACT_GEN_GET)
-							{
-								if (wm_wifi.cmd_resp_priv != NULL)
-								{
-									rx_abort_cfg_t *rx_abort_cfg = (rx_abort_cfg_t *)wm_wifi.cmd_resp_priv;
-									rx_abort_cfg->enable		 = cfg->enable;
-									rx_abort_cfg->rssi_threshold = (int)cfg->rssi_threshold;
-									if(rx_abort_cfg->rssi_threshold > 0x7f)
-									{
-										rx_abort_cfg->rssi_threshold = - (256 - rx_abort_cfg->rssi_threshold);
-									}
-								}
-							}
-							wm_wifi.cmd_resp_status = WM_SUCCESS;
-						}
-						else
-							wm_wifi.cmd_resp_status = -WM_FAIL;
-					}
-					break;
+            case HostCmd_CMD_RX_ABORT_CFG:
+            {
+                HostCmd_DS_RX_ABORT_CFG *cfg;
+                cfg = (HostCmd_DS_RX_ABORT_CFG *)&resp->params.rx_abort_cfg;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (cfg->action == HostCmd_ACT_GEN_GET)
+                    {
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            rx_abort_cfg_t *rx_abort_cfg = (rx_abort_cfg_t *)wm_wifi.cmd_resp_priv;
+                            rx_abort_cfg->enable         = cfg->enable;
+                            rx_abort_cfg->rssi_threshold = (int)cfg->rssi_threshold;
+                            if (rx_abort_cfg->rssi_threshold > 0x7f)
+                            {
+                                rx_abort_cfg->rssi_threshold = -(256 - rx_abort_cfg->rssi_threshold);
+                            }
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
 #endif
 #ifdef CONFIG_CCK_DESENSE_CFG
-			case HostCmd_CMD_CCK_DESENSE_CFG:
-				{
-					HostCmd_DS_CCK_DESENSE_CFG *cfg_cmd;
-					cfg_cmd = (HostCmd_DS_CCK_DESENSE_CFG *)&resp->params.cck_desense_cfg;
-					if (resp->result == HostCmd_RESULT_OK)
-					{
-						if (cfg_cmd->action == HostCmd_ACT_GEN_GET)
-						{
-							if (wm_wifi.cmd_resp_priv != NULL)
-							{
-								cck_desense_cfg_t *cck_desense_cfg = (cck_desense_cfg_t *)wm_wifi.cmd_resp_priv;
-								cck_desense_cfg->mode			   = wlan_le16_to_cpu(cfg_cmd->mode);
-								cck_desense_cfg->margin 		   = (int)cfg_cmd->margin;
-								if(cck_desense_cfg->margin > 0x7f)
-								{
-									 cck_desense_cfg->margin = - (256 - cck_desense_cfg->margin);
-								}
-								cck_desense_cfg->ceil_thresh	   = (int)cfg_cmd->ceil_thresh;
-								if(cck_desense_cfg->ceil_thresh > 0x7f)
-								{
-									cck_desense_cfg->ceil_thresh = - (256 - cck_desense_cfg->ceil_thresh);
-								}
-								cck_desense_cfg->num_on_intervals  = (int)cfg_cmd->num_on_intervals;
-								cck_desense_cfg->num_off_intervals = (int)cfg_cmd->num_off_intervals;
-							}
-						}
-						wm_wifi.cmd_resp_status = WM_SUCCESS;
-					}
-					else
-						wm_wifi.cmd_resp_status = -WM_FAIL;
-				}
-				break;
+            case HostCmd_CMD_CCK_DESENSE_CFG:
+            {
+                HostCmd_DS_CCK_DESENSE_CFG *cfg_cmd;
+                cfg_cmd = (HostCmd_DS_CCK_DESENSE_CFG *)&resp->params.cck_desense_cfg;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (cfg_cmd->action == HostCmd_ACT_GEN_GET)
+                    {
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            cck_desense_cfg_t *cck_desense_cfg = (cck_desense_cfg_t *)wm_wifi.cmd_resp_priv;
+                            cck_desense_cfg->mode              = wlan_le16_to_cpu(cfg_cmd->mode);
+                            cck_desense_cfg->margin            = (int)cfg_cmd->margin;
+                            if (cck_desense_cfg->margin > 0x7f)
+                            {
+                                cck_desense_cfg->margin = -(256 - cck_desense_cfg->margin);
+                            }
+                            cck_desense_cfg->ceil_thresh = (int)cfg_cmd->ceil_thresh;
+                            if (cck_desense_cfg->ceil_thresh > 0x7f)
+                            {
+                                cck_desense_cfg->ceil_thresh = -(256 - cck_desense_cfg->ceil_thresh);
+                            }
+                            cck_desense_cfg->num_on_intervals  = (int)cfg_cmd->num_on_intervals;
+                            cck_desense_cfg->num_off_intervals = (int)cfg_cmd->num_off_intervals;
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
 #endif
 
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
@@ -5408,15 +5410,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 #ifdef CONFIG_5GHz_SUPPORT
         case EVENT_RADAR_DETECTED:
-			wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",
-				   wlan_le32_to_cpu(((Event_Radar_Detected_Info *)msg->data)->detect_count),
-				   ((Event_Radar_Detected_Info *)msg->data)->reg_domain,
-				   ((Event_Radar_Detected_Info *)msg->data)->main_det_type,
-				   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 2) ?
-					   "PRI" :
-					   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 1) ? "PW" : "");
+            wevt_d("EVENT:RADAR_DETECTED -> detect_count=%d, reg_domain=%d, det_type=%d(%s)\n",
+                   wlan_le32_to_cpu(((Event_Radar_Detected_Info *)msg->data)->detect_count),
+                   ((Event_Radar_Detected_Info *)msg->data)->reg_domain,
+                   ((Event_Radar_Detected_Info *)msg->data)->main_det_type,
+                   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 2) ?
+                       "PRI" :
+                       (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 1) ? "PW" : "");
 
-        	break;
+            break;
 #endif
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
         case EVENT_CLOUD_KEEP_ALIVE_RETRY_FAIL:
@@ -6509,10 +6511,9 @@ int wifi_set_get_rx_abort_cfg(void *cfg, t_u16 action)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    cmd->seq_num = 0x0;
-    cmd->result  = 0x0;
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RX_ABORT_CFG, action,
-                              0, NULL, cfg, cmd);
+    cmd->seq_num            = 0x0;
+    cmd->result             = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RX_ABORT_CFG, action, 0, NULL, cfg, cmd);
     wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? cfg : NULL);
     return wm_wifi.cmd_resp_status;
 }
@@ -6523,10 +6524,10 @@ int wifi_set_get_cck_desense_cfg(void *cfg, t_u16 action)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    cmd->seq_num = 0x0;
-    cmd->result  = 0x0;
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_CCK_DESENSE_CFG, action,
-                              0, NULL, cfg, cmd);
+    cmd->seq_num            = 0x0;
+    cmd->result             = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_CCK_DESENSE_CFG, action, 0, NULL, cfg,
+                             cmd);
     wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? cfg : NULL);
     return wm_wifi.cmd_resp_status;
 }

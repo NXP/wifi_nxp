@@ -883,12 +883,17 @@ static inline int is_valid_security(int security)
     if ((security == WLAN_SECURITY_NONE) || (security == WLAN_SECURITY_WEP_OPEN) || (security == WLAN_SECURITY_WPA) ||
         (security == WLAN_SECURITY_WPA2) ||
 #ifdef CONFIG_WPA_SUPP
-        (security == WLAN_SECURITY_WPA2_SHA256) || (security == WLAN_SECURITY_WPA2_FT) ||
+        (security == WLAN_SECURITY_WPA2_SHA256) ||
+#ifdef CONFIG_11R
+        (security == WLAN_SECURITY_WPA2_FT) ||
+#endif
 #endif
         (security == WLAN_SECURITY_WPA_WPA2_MIXED) ||
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         (security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
+#ifdef CONFIG_11R
         (security == WLAN_SECURITY_EAP_TLS_FT) || (security == WLAN_SECURITY_EAP_TLS_FT_SHA384) ||
+#endif
         (security == WLAN_SECURITY_EAP_TTLS) || (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
         (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
         (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
@@ -901,7 +906,9 @@ static inline int is_valid_security(int security)
 #endif
         (security == WLAN_SECURITY_WPA3_SAE) ||
 #ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
         (security == WLAN_SECURITY_WPA3_SAE_FT) ||
+#endif
 #endif
         (security == WLAN_SECURITY_WILDCARD))
     {
@@ -915,7 +922,9 @@ static inline int is_ep_valid_security(int security)
 {
     /*Currently only these modes are supported */
     if ((security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
+#ifdef CONFIG_11R
         (security == WLAN_SECURITY_EAP_TLS_FT) || (security == WLAN_SECURITY_EAP_TLS_FT_SHA384) ||
+#endif
         (security == WLAN_SECURITY_EAP_TTLS) || (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
         (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
         (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
@@ -1786,9 +1795,9 @@ struct wlan_rx_abort_cfg
 #endif
 
 #ifdef CONFIG_CCK_DESENSE_CFG
-#define CCK_DESENSE_MODE_DISABLED     0
-#define CCK_DESENSE_MODE_DYNAMIC      1
-#define CCK_DESENSE_MODE_DYN_ENH      2
+#define CCK_DESENSE_MODE_DISABLED 0
+#define CCK_DESENSE_MODE_DYNAMIC  1
+#define CCK_DESENSE_MODE_DYN_ENH  2
 
 struct wlan_cck_desense_cfg
 {
@@ -1810,7 +1819,7 @@ struct wlan_cck_desense_cfg
  *
  * \param[in/out] cfg A pointer to information buffer
  * \param[int] action Command action: GET or SET
- * 
+ *
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_get_rx_abort_cfg(struct wlan_rx_abort_cfg *cfg, t_u16 action);
@@ -1822,7 +1831,7 @@ int wlan_set_get_rx_abort_cfg(struct wlan_rx_abort_cfg *cfg, t_u16 action);
  *
  * \param[in/out] cfg A pointer to information buffer
  * \param[int] action Command action: GET or SET
- * 
+ *
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_get_cck_desense_cfg(struct wlan_cck_desense_cfg *cfg, t_u16 action);
