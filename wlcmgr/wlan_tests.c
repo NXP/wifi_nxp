@@ -5244,14 +5244,15 @@ static void dump_wlan_subscribe_event_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Subscribe event to firmware:\r\n");
-    (void)PRINTF("    wlan-subscribe-event <action> <type> <value>\r\n");
+    (void)PRINTF("    wlan-subscribe-event <action> <type> <value> <freq>\r\n");
     (void)PRINTF("Options: \r\n");
     (void)PRINTF("    <action>  : 1:set, 2:get, 3:clear\r\n");
     (void)PRINTF(
         "    <type>: 0:rssi_low, 1:rssi_high 2:snr_low, 3:snr_high, 4:max_fail, 5:beacon_missed, 6:data_rssi_low, "
         "7:data_rssi_high, 8:data_snr_low, 9:data_snr_high, 10:link_quality, 11:pre_beacon_lost\r\n");
     (void)PRINTF("    <value>  : when action is set, specific int type value\r\n");
-    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq\r\n");
+    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq, when the freq = 0, "
+		"the event will trigger one time, and the freq = 1, the event will continually trigger.\r\n");
     (void)PRINTF("For example:\r\n");
     (void)PRINTF(
         "    wlan-subscribe-event set 0 50 0 : Subscribe the rssi low event, threshold is 50, freq is 0\r\n"
@@ -6810,14 +6811,15 @@ static void dump_wlan_subscribe_event_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Subscribe event to firmware:\r\n");
-    (void)PRINTF("    wlan-subscribe-event <action> <type> <value>\r\n");
+    (void)PRINTF("    wlan-subscribe-event <action> <type> <value> <freq>\r\n");
     (void)PRINTF("Options: \r\n");
     (void)PRINTF("    <action>  : 1:set, 2:get, 3:clear\r\n");
     (void)PRINTF(
         "    <type>: 0:rssi_low, 1:rssi_high 2:snr_low, 3:snr_high, 4:max_fail, 5:beacon_missed, 6:data_rssi_low, "
         "7:data_rssi_high, 8:data_snr_low, 9:data_snr_high, 10:link_quality, 11:pre_beacon_lost\r\n");
     (void)PRINTF("    <value>  : when action is set, specific int type value\r\n");
-    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq\r\n");
+    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq, when the freq = 0, "
+		"the event will trigger one time, and the freq = 1, the event will continually trigger.\r\n");
     (void)PRINTF("For example:\r\n");
     (void)PRINTF(
         "    wlan-subscribe-event set 0 50 0 : Subscribe the rssi low event, threshold is 50, freq is 0\r\n"
