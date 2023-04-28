@@ -120,7 +120,7 @@
 #ifndef __WLAN_H__
 #define __WLAN_H__
 
-#ifndef IW61x
+#if !defined(IW61x) && !defined(RW610)
 #ifndef CONFIG_WPA_SUPP
 #error "WPA Supplicant is not enabled in wifi_config.h"
 #endif
