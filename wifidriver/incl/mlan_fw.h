@@ -4285,6 +4285,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_RX_MGMT_IND
     t_u16 action;
     /** Mgmt frame subtype mask */
     t_u32 mgmt_subtype_mask;
+    /** Data frame subtype mask */
+    t_u32 data_subtype_mask;
 } MLAN_PACK_END HostCmd_DS_RX_MGMT_IND;
 
 /** HostCmd_DS_802_11_SCAN_RSP */

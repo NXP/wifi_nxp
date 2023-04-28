@@ -66,6 +66,7 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload);
 #endif
 
+#ifndef CONFIG_WPA_SUPP
 static int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type, const wifi_mgmt_frame_t *frame, const size_t len);
 void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
                                                     const wifi_mgmt_frame_t *frame,
@@ -78,6 +79,7 @@ void rx_mgmt_deregister_callback()
 {
     rx_mgmt_callback = NULL;
 }
+#endif
 
 static void register_interface(struct netif *iface, mlan_bss_type iface_type)
 {

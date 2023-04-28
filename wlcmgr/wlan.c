@@ -3953,10 +3953,12 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
                                                     const wlan_mgmt_frame_t *frame,
                                                     const size_t len))
 {
+#ifndef CONFIG_WPA_SUPP
     if (mgmt_subtype_mask)
         rx_mgmt_register_callback(rx_mgmt_callback);
     else
         rx_mgmt_deregister_callback();
+#endif
 
     return wifi_set_rx_mgmt_indication(bss_type, mgmt_subtype_mask);
 }

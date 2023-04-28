@@ -2043,6 +2043,10 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
     rx_mgmt->action            = wlan_cpu_to_le16(cmd_action);
     rx_mgmt->mgmt_subtype_mask = wlan_cpu_to_le32(rx_mgmt_indication->mgmt_subtype_mask);
 
+    rx_mgmt->data_subtype_mask = 0;
+
+    dump_hex(cmd, cmd->size);
+
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
