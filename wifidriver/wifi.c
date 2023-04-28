@@ -2867,7 +2867,7 @@ static void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
                                             const uint8_t *buffer,
                                             const uint16_t len)
 {
-    nxp_wifi_event_mlme_t *eapol_rx = &wm_wifi.eapol_rx;
+    nxp_wifi_event_eapol_mlme_t *eapol_rx = &wm_wifi.eapol_rx;
 
     memcpy((void *)eapol_rx->mac_addr, (const void *)src_addr, MLAN_MAC_ADDR_LENGTH);
 

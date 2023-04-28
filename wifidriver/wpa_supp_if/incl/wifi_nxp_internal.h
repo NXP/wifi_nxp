@@ -142,6 +142,20 @@ typedef MLAN_PACK_START struct _nxp_wifi_event_mlme
     unsigned char mac_addr[WIFI_ETH_ADDR_LEN];
 } MLAN_PACK_END nxp_wifi_event_mlme_t;
 
+#define WIFI_EAPOL_MAX_FRAME_LEN 1500U
+
+typedef MLAN_PACK_START struct _nxp_wifi_eapol_frame
+{
+    int frame_len;
+    unsigned char frame[WIFI_EAPOL_MAX_FRAME_LEN];
+} MLAN_PACK_END nxp_wifi_eapol_frame_t;
+
+typedef MLAN_PACK_START struct _nxp_wifi_event_eapol_mlme
+{
+    nxp_wifi_eapol_frame_t frame;
+    unsigned char mac_addr[WIFI_ETH_ADDR_LEN];
+} MLAN_PACK_END nxp_wifi_event_eapol_mlme_t;
+
 typedef MLAN_PACK_START struct _nxp_wifi_assoc_event_mlme
 {
     nxp_wifi_frame_t frame;
@@ -390,7 +404,7 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
     void (*acs_channel_sel_callbk_fn)(void *if_priv, nxp_wifi_acs_params *acs_params);
 
     void (*mgmt_rx_callbk_fn)(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx_event, unsigned int event_len);
-    void (*eapol_rx_callbk_fn)(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx_event, unsigned int event_len);
+    void (*eapol_rx_callbk_fn)(void *if_priv, nxp_wifi_event_eapol_mlme_t *mgmt_rx_event, unsigned int event_len);
     void (*unprot_mlme_mgmt_rx_callbk_fn)(void *if_priv,
                                           nxp_wifi_event_mlme_t *unprot_mlme_event,
                                           unsigned int event_len);

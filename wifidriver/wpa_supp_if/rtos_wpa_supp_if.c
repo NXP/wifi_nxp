@@ -1652,7 +1652,7 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
     }
 }
 
-void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_mlme_t *eapol_rx, unsigned int event_len)
+void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_eapol_mlme_t *eapol_rx, unsigned int event_len)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
