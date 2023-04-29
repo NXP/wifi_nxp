@@ -6083,9 +6083,6 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 {
     uint8_t comma = 0x2C, space = 0x20;
 
-    uint16_t version_str_len =
-        resp->size - WIFI_HOST_CMD_FIXED_HEADER_LEN - sizeof(resp->params.verext.version_str_sel);
-
     if (!resp->params.verext.version_str_sel)
     {
         /* TODO: Below change is added to change 8978 firmware name to IW416.
@@ -6095,24 +6092,29 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
             (void)memcpy((void *)fw_ver_ext, (const void *)"IW416", 6);
             (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
                          (const void *)&resp->params.verext.version_str[6],
-                         version_str_len - strlen((const char *)fw_ver_ext));
+                         strlen((const char *)(&resp->params.verext.version_str)) - strlen((const char *)fw_ver_ext));
         }
         else
         {
-            (void)memcpy(fw_ver_ext, &resp->params.verext.version_str, version_str_len);
+            (void)memcpy((void *)fw_ver_ext, (const void *)&resp->params.verext.version_str,
+                         strlen((const char *)(&resp->params.verext.version_str)));
         }
     }
-    else if (resp->params.verext.version_str_sel == 3 && version_str_len)
+    else if (resp->params.verext.version_str_sel == 3U && strlen((const char *)(&resp->params.verext.version_str)))
     {
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&comma, 1);
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&space, 1);
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &resp->params.verext.version_str, version_str_len);
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
+                     (const void *)&resp->params.verext.version_str,
+                     strlen((const char *)(&resp->params.verext.version_str)));
     }
-    else if (resp->params.verext.version_str_sel == 4 && version_str_len)
+    else if (resp->params.verext.version_str_sel == 4U && strlen((const char *)(&resp->params.verext.version_str)))
     {
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&comma, 1);
         (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)), (const void *)&space, 1);
-        (void)memcpy(fw_ver_ext + strlen((const char *)fw_ver_ext), &resp->params.verext.version_str, version_str_len);
+        (void)memcpy((void *)(fw_ver_ext + strlen((const char *)fw_ver_ext)),
+                     (const void *)&resp->params.verext.version_str,
+                     strlen((const char *)(&resp->params.verext.version_str)));
     }
     else
     { /* Do Nothing */
