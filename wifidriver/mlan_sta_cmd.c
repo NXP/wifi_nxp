@@ -2045,8 +2045,6 @@ mlan_status wlan_cmd_rx_mgmt_indication(IN pmlan_private pmpriv,
 
     rx_mgmt->data_subtype_mask = 0;
 
-    dump_hex(cmd, cmd->size);
-
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
@@ -3033,14 +3031,14 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             break;
 #endif
 #ifdef CONFIG_RX_ABORT_CFG
-			case HostCmd_CMD_RX_ABORT_CFG:
-				ret = wlan_cmd_rx_abort_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
-				break;
+        case HostCmd_CMD_RX_ABORT_CFG:
+            ret = wlan_cmd_rx_abort_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
 #endif
 #ifdef CONFIG_CCK_DESENSE_CFG
-			case HostCmd_CMD_CCK_DESENSE_CFG:
-				ret = wlan_cmd_cck_desense_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
-				break;
+        case HostCmd_CMD_CCK_DESENSE_CFG:
+            ret = wlan_cmd_cck_desense_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
 #endif
 
         default:

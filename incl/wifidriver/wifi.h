@@ -1637,6 +1637,7 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 
 int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
 #ifdef CONFIG_WPA_SUPP
+t_u8 wifi_get_sec_channel_offset(unsigned int chan);
 char *wifi_get_country_str(country_code_t country_code);
 int wifi_nxp_scan_res_get(void);
 int wifi_nxp_survey_res_get(void);

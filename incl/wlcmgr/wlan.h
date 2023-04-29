@@ -1414,6 +1414,8 @@ struct wlan_network
      *  channel on which the network to connect should be present. Set this
      *  to 0 to allow the network to be found on any channel. */
     unsigned int channel;
+    /** The secondary channel offset **/
+    uint8_t sec_channel_offset;
     /** The ACS band if set channel to 0. **/
     uint16_t acs_band;
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER

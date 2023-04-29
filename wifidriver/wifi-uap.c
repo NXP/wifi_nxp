@@ -854,6 +854,110 @@ void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg)
     wm_wifi.ht_tx_cfg = ht_tx_cfg;
 }
 
+#ifdef CONFIG_WPA_SUPP
+/**
+ * @brief Get second channel offset
+ *
+ * @param chan            channel num
+ * @return                second channel offset
+ */
+t_u8 wlan_get_second_channel_offset(mlan_private *priv, int chan)
+{
+    t_u8 chan2Offset = SEC_CHAN_NONE;
+
+    /* Special Case: 20Mhz-only Channel */
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+    if (priv->adapter->region_code != COUNTRY_CODE_US && chan == 165)
+#else
+    if (chan == 165)
+#endif
+        return chan2Offset;
+
+    switch (chan)
+    {
+        case 36:
+        case 44:
+        case 52:
+        case 60:
+        case 100:
+        case 108:
+        case 116:
+        case 124:
+        case 132:
+        case 140:
+        case 149:
+        case 157:
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+        case 165:
+        case 173:
+#endif
+            chan2Offset = SEC_CHAN_ABOVE;
+            break;
+        case 40:
+        case 48:
+        case 56:
+        case 64:
+        case 104:
+        case 112:
+        case 120:
+        case 128:
+        case 136:
+        case 144:
+        case 153:
+        case 161:
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+        case 169:
+        case 177:
+#endif
+            chan2Offset = SEC_CHAN_BELOW;
+            break;
+    }
+    return chan2Offset;
+}
+
+t_u8 wifi_get_sec_channel_offset(unsigned int chan)
+{
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[1];
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    t_u16 band;
+    t_u8 chan_offset;
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if (chan > MAX_CHANNELS_BG)
+    {
+        band = BAND_AN;
+    }
+    else
+    {
+        band = BAND_GN;
+    }
+#else
+    band = BAND_GN;
+#endif
+
+    chan_offset = SEC_CHAN_ABOVE;
+
+    if (band & BAND_GN)
+    {
+        if ((chan == 1) || (chan == 2) || (chan == 3) || (chan == 4))
+            chan_offset = SEC_CHAN_ABOVE;
+        else if ((chan == 10) || (chan == 11) || (chan == 12) || (chan == 13))
+            chan_offset = SEC_CHAN_BELOW;
+
+        /* check if channel 12 is supported in the region */
+        if (!wlan_find_cfp_by_band_and_channel(pmadapter, band, 12))
+            if ((chan == 8) || (chan == 9))
+                chan_offset = SEC_CHAN_BELOW;
+    }
+#ifdef CONFIG_5GHz_SUPPORT
+    else if (band & BAND_AN)
+        chan_offset = wlan_get_second_channel_offset(pmpriv, chan);
+#endif
+
+    return chan_offset;
+}
+#endif
+
 #ifdef CONFIG_WIFI_CAPA
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
 {
@@ -959,8 +1063,9 @@ int wifi_uap_start(mlan_bss_type type,
         return rv;
     }
 
-    if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
-         security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
+    if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 ||
+         security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA3_SAE ||
+         security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
 #ifdef CONFIG_OWE
          || security == WLAN_SECURITY_OWE_ONLY
 #endif

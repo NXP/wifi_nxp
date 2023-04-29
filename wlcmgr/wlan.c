@@ -1813,6 +1813,12 @@ static int do_start(struct wlan_network *network)
                 }
             }
         }
+#ifdef CONFIG_WPA_SUPP
+        else
+        {
+            network->sec_channel_offset = wifi_get_sec_channel_offset(network->channel);
+        }
+#endif
 
         wlcm_d("starting our own network");
 
