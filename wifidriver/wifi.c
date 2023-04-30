@@ -1595,6 +1595,13 @@ static void wifi_scan_input(void *argv)
                 wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
+            else
+            {
+                (void)wlan_active_scan_req_for_passive_chan((mlan_private *)mlan_adap->priv[0],
+                                                            wm_wifi.g_user_scan_cfg);
+                wifi_user_scan_config_cleanup();
+                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+            }
         }
         scan_thread_in_process = false;
     } /* for ;; */
@@ -3932,6 +3939,7 @@ int wifi_low_level_output(const uint8_t interface,
     msg.event  = MLAN_TYPE_DATA;
     msg.reason = interface;
     ret        = os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+    taskYIELD();
 #else
 #if defined(RW610)
     wifi_imu_lock();
@@ -3985,7 +3993,7 @@ int wifi_low_level_output(const uint8_t interface,
             }
             break;
         } /* if (i != MLAN_STATUS_SUCCESS) */
-    } /* while(true) */
+    }     /* while(true) */
 #endif
 
 #ifdef CONFIG_STA_AMPDU_TX

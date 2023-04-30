@@ -16,6 +16,7 @@
 
 #define wscan_e(...) wmlog_e("wscan", ##__VA_ARGS__)
 #define wscan_w(...) wmlog_w("wscan", ##__VA_ARGS__)
+
 #ifdef CONFIG_WIFI_SCAN_DEBUG
 #define wscan_d(...) wmlog("wscan", ##__VA_ARGS__)
 #else

@@ -533,7 +533,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
  * Max total scan time in milliseconds
  * The total scan time should be less than scan command timeout value (20s)
  */
-#define MRVDRV_MAX_TOTAL_SCAN_TIME (MRVDRV_TIMER_10S * 2U - MRVDRV_TIMER_1S)
+#define MRVDRV_MAX_TOTAL_SCAN_TIME (MRVDRV_TIMER_10S * 3U)
 
 /** Offset for GTK as it has version to skip past for GTK */
 #define RSN_GTK_OUI_OFFSET 2
@@ -2841,6 +2841,8 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
                                IN t_void *pioctl_buf,
                                IN const wlan_user_scan_cfg *puser_scan_in);
 
+bool wlan_active_scan_req_for_passive_chan(IN mlan_private *pmpriv, IN wlan_user_scan_cfg *puser_scan_in);
+
 /** Scan command handler */
 mlan_status wlan_cmd_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 
@@ -3207,15 +3209,14 @@ mlan_status wlan_check_operclass_validation(mlan_private *pmpriv, t_u8 channel, 
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG
-mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv,
-				   HostCmd_DS_COMMAND *cmd,
-				   t_u16 cmd_action, t_void *pdata_buf);
+mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 #endif
 
 #ifdef CONFIG_CCK_DESENSE_CFG
 mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv,
-				      HostCmd_DS_COMMAND *cmd,
-				      t_u16 cmd_action, t_void *pdata_buf);
+                                     HostCmd_DS_COMMAND *cmd,
+                                     t_u16 cmd_action,
+                                     t_void *pdata_buf);
 #endif
 
 #define BW_20MHZ 0
