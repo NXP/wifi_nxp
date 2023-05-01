@@ -1641,7 +1641,7 @@ static mlan_status wlan_ret_inactivity_timeout(IN pmlan_private pmpriv,
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if defined(CONFIG_SUBSCRIBE_EVENT_SUPPORT) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_SUBSCRIBE_EVENT_SUPPORT)
 /**
  *  @brief This function handles the command response of
  *  subscribe event

@@ -116,12 +116,6 @@ void wlan_abort_split_scan(void)
     {
         abort_split_scan = true;
     }
-#ifdef CONFIG_WPA_SUPP
-    else
-    {
-        (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_ABORT, NULL);
-    }
-#endif
 }
 
 /**

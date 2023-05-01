@@ -2788,6 +2788,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 
         if (sub_type == (t_u16)SUBTYPE_DEAUTH)
         {
+            wlan_abort_split_scan();
+            wifi_user_scan_config_cleanup();
+
             resp.frame.frame_len = payload_len;
             memcpy((void *)resp.frame.frame, (const void *)pieee_pkt_hdr, resp.frame.frame_len);
 
@@ -2799,6 +2802,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 
         if (sub_type == (t_u16)SUBTYPE_DISASSOC)
         {
+            wlan_abort_split_scan();
+            wifi_user_scan_config_cleanup();
+
             resp.frame.frame_len = payload_len;
             memcpy((void *)resp.frame.frame, (const void *)pieee_pkt_hdr, resp.frame.frame_len);
 

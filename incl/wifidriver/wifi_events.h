@@ -161,8 +161,6 @@ enum wifi_event_reason
     WIFI_EVENT_REASON_TIMEOUT,
     /** Failure */
     WIFI_EVENT_REASON_FAILURE,
-    /** Abort */
-    WIFI_EVENT_REASON_ABORT,
 };
 
 /** Network wireless BSS Type */

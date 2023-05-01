@@ -360,6 +360,7 @@ static struct
     bool smart_mode_active : 1;
 #ifdef CONFIG_WPA_SUPP
     os_timer_t supp_status_timer;
+    bool pending_disconnect_request : 1;
     int status_timeout;
     bool connect : 1;
 #ifdef CONFIG_WPA_SUPP_WPS
@@ -3973,7 +3974,7 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 
 static void wlcm_process_scan_failed()
 {
-    if (wlan.sta_state >= CM_STA_ASSOCIATING)
+    if (wlan.pending_disconnect_request == true)
     {
         wlan_disconnect();
     }
@@ -5091,9 +5092,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case CM_STA_USER_REQUEST_DISCONNECT:
 #ifdef CONFIG_WPA_SUPP
+            wlan.pending_disconnect_request = false;
             ret = wpa_supp_abort_scan(netif);
             if (ret == WM_SUCCESS)
             {
+                wlan.pending_disconnect_request = true;
                 break;
             }
             wpa_supp_disconnect(netif);
@@ -11075,6 +11078,7 @@ int wlan_wps_ap_cancel(void)
 #endif
 
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_WIFI_USB_FILE_ACCESS
 static void wlan_entp_cert_cleanup()
 {
     if (wlan.ca_cert_data != NULL)
@@ -11117,7 +11121,6 @@ static void wlan_entp_cert_cleanup()
 #endif
 }
 
-#ifdef CONFIG_WIFI_USB_FILE_ACCESS
 int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 {
     if (cert_type == FILE_TYPE_ENTP_CA_CERT)

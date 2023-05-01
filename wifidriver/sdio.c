@@ -46,7 +46,7 @@
  */
 
 /*! @brief Data written to the card */
-SDK_ALIGN(uint8_t outbuf[DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
+SDK_ALIGN(uint8_t outbuf[DATA_BUFFER_SIZE + DATA_BUFFER_SIZE / 2], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 
 /*! @brief Data read from the card */
 #ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR

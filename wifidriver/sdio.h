@@ -38,7 +38,7 @@
 #define INBUF_SIZE (2 * DATA_BUFFER_SIZE)
 #endif /*CONFIG_SDIO_MULTI_PORT_RX_AGGR*/
 
-extern uint8_t outbuf[DATA_BUFFER_SIZE];
+extern uint8_t outbuf[];
 
 extern uint8_t inbuf[];
 

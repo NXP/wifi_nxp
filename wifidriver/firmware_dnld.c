@@ -98,7 +98,7 @@ static int32_t wlan_download_normal_fw(const t_u8 *wlanfw_dl, t_u32 firmwarelen,
             else
             {
                 fwdnld_io_e("Error in wlan_card_status()");
-                break;
+                return FWDNLD_STATUS_FAILURE;
             }
 
             // (void)PRINTF("len %d =>", len);
