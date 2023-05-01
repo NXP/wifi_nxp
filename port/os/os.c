@@ -1361,19 +1361,6 @@ void os_mem_free(void *ptr)
 void os_dump_mem_stats(void)
 {
     unsigned sta = os_enter_critical_section();
-#ifdef CONFIG_WPA_SUPP
-    const heapAllocatorInfo_t *hI = getheapAllocInfo();
-
-    PRINTF("\n\r");
-    PRINTF("Heap size ---------------------- : %d\n\r", hI->heapSize);
-    PRINTF("Free size ---------------------- : %d\n\r", hI->freeSize);
-    PRINTF("Peak Heap Usage since bootup --- : %d\n\r", hI->peakHeapUsage);
-    PRINTF("Total allocations -------------- : %d\n\r", hI->totalAllocations);
-    PRINTF("Failed allocations ------------- : %d\n\r", hI->failedAllocations);
-    PRINTF("Min overhead per allocation ---- : %d\n\r", hI->minOverheadPerAllocation);
-    PRINTF("Biggest free block available now : %d\n\n\r", hI->biggestFreeBlockAvailable);
-    vHeapSelfTest(1);
-#else
     HeapStats_t HS;
 
     HS.xAvailableHeapSpaceInBytes      = 0;
@@ -1394,7 +1381,7 @@ void os_dump_mem_stats(void)
     (void)PRINTF("Total successful allocations --- : %d\n\r", HS.xNumberOfSuccessfulAllocations);
     (void)PRINTF("Total successful frees --------- : %d\n\r", HS.xNumberOfSuccessfulFrees);
     (void)PRINTF("Min Free since system boot ----- : %d\n\r", HS.xMinimumEverFreeBytesRemaining);
-#endif
+
     os_exit_critical_section(sta);
 }
 #endif
