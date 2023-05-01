@@ -1369,7 +1369,7 @@ void wifi_nxp_wpa_supp_event_acs_channel_selected(void *if_priv, nxp_wifi_acs_pa
     event.acs_selected_channels.pri_freq = acs_params->pri_freq;
     event.acs_selected_channels.sec_freq = acs_params->sec_freq;
     event.acs_selected_channels.ch_width = acs_params->ch_width;
-    event.acs_selected_channels.hw_mode  = acs_params->hw_mode;
+    event.acs_selected_channels.hw_mode  = (enum hostapd_hw_mode)acs_params->hw_mode;
 
 #ifdef CONFIG_HOSTAPD
     if (wifi_if_ctx_rtos->hostapd)
@@ -2100,7 +2100,7 @@ int wifi_nxp_hostapd_send_eapol(void *if_priv, const u8 *data, size_t data_len)
         goto out;
     }
 
-    ret = wifi_supp_inject_frame(BSS_TYPE_UAP, data, data_len);
+    ret = wifi_supp_inject_frame(WLAN_BSS_TYPE_UAP, data, data_len);
 
 out:
     return ret;

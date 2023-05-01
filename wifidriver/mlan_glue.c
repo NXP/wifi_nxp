@@ -720,7 +720,6 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 #endif
 }
 
-#if !defined(WIFI_ADD_ON)
 void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
 {
     struct uap_ampdu_stat_t *ampdu_info;
@@ -776,9 +775,13 @@ void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
         }
     }
 }
-#endif
 
-mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr)
+mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
+#ifdef CONFIG_WMM
+        ,
+        t_u8 tid
+#endif
+        )
 {
     int ret;
     struct uap_ampdu_stat_t *ampdu_info;
@@ -787,7 +790,13 @@ mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr)
     {
         if ((ampdu_info->ampudu_stat == MFALSE) && ampdu_info->ampudu_supported)
         {
-            ret = wlan_send_addba(mlan_adap->priv[1], 0, addr);
+            ret = wlan_send_addba(mlan_adap->priv[1],
+#ifdef CONFIG_WMM
+                    tid,
+#else
+                    0,
+#endif
+                    addr);
             if (ret != 0)
             {
                 wifi_d("uap failed to send addba req");
@@ -950,11 +959,11 @@ static bool wlan_is_ampdu_allowed(mlan_private *priv, int tid)
 }
 
 // Only Enable AMPDU for station interface
+mlan_status wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-mlan_status wrapper_wlan_sta_ampdu_enable(t_u8 tid)
-#else
-mlan_status wrapper_wlan_sta_ampdu_enable(void)
+        t_u8 tid
 #endif
+        )
 {
     int ret;
 #ifdef CONFIG_WMM

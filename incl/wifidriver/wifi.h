@@ -336,7 +336,6 @@ void wifi_sta_ampdu_tx_enable(void);
  */
 void wifi_sta_ampdu_tx_disable(void);
 
-#if defined(WIFI_ADD_ON)
 /**
  * This API can be used to set tid to enable AMPDU support on the go
  * when station is a transmitter.
@@ -351,7 +350,6 @@ void wifi_sta_ampdu_tx_enable_per_tid(t_u8 tid);
  * @return MTRUE or MFALSE
  */
 t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
-#endif
 
 /**
  * This API can be used to enable AMPDU support on the go
@@ -981,13 +979,18 @@ int wifi_uap_start(mlan_bss_type type,
 #endif
 );
 
+mlan_status wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-mlan_status wrapper_wlan_sta_ampdu_enable(t_u8 tid);
-#else
-mlan_status wrapper_wlan_sta_ampdu_enable(void);
+        t_u8 tid
 #endif
+        );
 
-mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr);
+mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
+#ifdef CONFIG_WMM
+        ,
+        t_u8 tid
+#endif
+        );
 
 #ifdef CONFIG_WLAN_BRIDGE
 /** Enable Bridge mode in WLAN firmware.

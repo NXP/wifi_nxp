@@ -1879,12 +1879,6 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
         wlan_update_uap_ampdu_supported(sta_addr, MFALSE);
     }
 #endif
-#ifdef CONFIG_UAP_AMPDU_TX
-    if (sta_node_ptr->is_11n_enabled == MTRUE)
-    {
-        (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)sta_addr);
-    }
-#endif
 
     os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
@@ -2204,7 +2198,7 @@ static t_void wifi_set_wmm_ies(mlan_private *priv, const t_u8 *ie, int len, mlan
  */
 mlan_status wifi_set_get_sys_config(mlan_private *priv, t_u16 action, mlan_uap_bss_param *sys_cfg)
 {
-    // mlan_status ret = MLAN_STATUS_SUCCESS;
+    int ret;
     mlan_ds_bss bss;
     mlan_ioctl_req ioctl_buf;
 
@@ -2223,8 +2217,14 @@ mlan_status wifi_set_get_sys_config(mlan_private *priv, t_u16 action, mlan_uap_b
     /** Pointer to buffer */
     ioctl_buf.pbuf = (t_u8 *)&bss;
 
-    return wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, &ioctl_buf, NULL,
+    ret = wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, &ioctl_buf, NULL,
                                          MLAN_BSS_TYPE_UAP, NULL);
+    if (ret != WM_SUCCESS)
+    {
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
 }
 
 #define IE_MASK_WPS    0x0001
@@ -4010,7 +4010,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
  */
 static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_sta_info *sta_info)
 {
-    // mlan_status ret = MLAN_STATUS_SUCCESS;
+    int ret;
     mlan_ds_bss bss;
     mlan_ioctl_req ioctl_buf;
 
@@ -4029,8 +4029,14 @@ static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_s
     /** Pointer to buffer */
     ioctl_buf.pbuf = (t_u8 *)&bss;
 
-    return wifi_uap_prepare_and_send_cmd(priv, HostCmd_CMD_ADD_NEW_STATION, action, 0, &ioctl_buf, NULL,
+    ret = wifi_uap_prepare_and_send_cmd(priv, HostCmd_CMD_ADD_NEW_STATION, action, 0, &ioctl_buf, NULL,
                                          MLAN_BSS_TYPE_UAP, NULL);
+    if (ret != WM_SUCCESS)
+    {
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
 }
 
 int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
