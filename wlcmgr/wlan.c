@@ -10438,18 +10438,13 @@ int wlan_set_crypto_AES_GCMP_encrypt(const t_u8 *Key,
                                      t_u8 *Data,
                                      t_u16 *DataLength)
 {
+#if defined(SD8801) || defined(SD8978)
+    return -WM_E_PERM;
+#else
     t_u16 aes_gcmp_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
     t_u16 aes_gcmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
     t_u16 aes_gcmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
     t_u16 aes_gcmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
-
-#if defined(SD8801)
-    return -WM_E_PERM;
-#endif
-
-#if defined(SD8978)
-    return -WM_E_PERM;
-#endif
 
     if (KeyLength > aes_gcmp_key_length)
         return -WM_FAIL;
@@ -10472,6 +10467,7 @@ int wlan_set_crypto_AES_GCMP_encrypt(const t_u8 *Key,
     t_u16 EncDec = 1;
 
     return wifi_set_eu_crypto(&Crypto_AES_GCMP_Param, CRYPTO_AES_GCMP, EncDec);
+#endif
 }
 
 int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
@@ -10483,18 +10479,13 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
                                      t_u8 *Data,
                                      t_u16 *DataLength)
 {
+#if defined(SD8801) || defined(SD8978)
+    return -WM_E_PERM;
+#else
     t_u16 aes_gcmp_key_length   = EU_CRYPTO_KEY_MAX_LENGTH;
     t_u16 aes_gcmp_AAD_length   = EU_CRYPTO_AAD_MAX_LENGTH;
     t_u16 aes_gcmp_Nonce_length = EU_CRYPTO_NONCE_MAX_LENGTH;
     t_u16 aes_gcmp_data_length  = EU_CRYPTO_DATA_MAX_LENGTH;
-
-#if defined(SD8801)
-    return -WM_E_PERM;
-#endif
-
-#if defined(SD8978)
-    return -WM_E_PERM;
-#endif
 
     if (KeyLength > aes_gcmp_key_length)
         return -WM_FAIL;
@@ -10517,6 +10508,7 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
     t_u16 EncDec = 0;
 
     return wifi_set_eu_crypto(&Crypto_AES_GCMP_Param, CRYPTO_AES_GCMP, EncDec);
+#endif
 }
 #endif /* CONFIG_FIPS */
 
