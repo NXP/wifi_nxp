@@ -399,7 +399,11 @@ static void dump_wlan_set_tx_cont_mode_usage(void)
     (void)PRINTF("Tx Data Rate          (Rate Index corresponding to legacy/HT/VHT rates)\r\n");
     (void)PRINTF("\r\n");
     (void)PRINTF("To Disable:\r\n");
+#ifdef IW61x
+    (void)PRINTF("Set all parameters with expected values\r\n");
+#else
     (void)PRINTF("wlan-set-rf-tx-cont-mode 0\r\n");
+#endif
     (void)PRINTF("\r\n");
 }
 

@@ -1525,8 +1525,12 @@ int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t p
 
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RFPWR;
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
-
+#ifdef IW61x
+    /* Firecrest firmware expects value * 16 */
+    wifi_mfg_cmd_generic_cfg.data1 = power * 16;
+#else
     wifi_mfg_cmd_generic_cfg.data1 = power;
+#endif
     wifi_mfg_cmd_generic_cfg.data2 = mod;
     wifi_mfg_cmd_generic_cfg.data3 = path_id;
 
