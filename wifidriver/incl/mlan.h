@@ -54,7 +54,9 @@ Change log:
 #endif
 
 #if !defined(IW61x) && !defined(RW610)
+#ifndef CONFIG_WPA_SUPP
 #define CONFIG_WPA_SUPP
+#endif
 #endif
 
 #ifdef CONFIG_11AX
