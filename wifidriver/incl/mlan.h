@@ -53,6 +53,10 @@ Change log:
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 #endif
 
+#if !defined(IW61x) && !defined(RW610)
+#define CONFIG_WPA_SUPP
+#endif
+
 #ifdef CONFIG_11AX
 #define CONFIG_11K 1
 #define CONFIG_11V 1

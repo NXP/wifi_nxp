@@ -120,12 +120,6 @@
 #ifndef __WLAN_H__
 #define __WLAN_H__
 
-#if !defined(IW61x) && !defined(RW610)
-#ifndef CONFIG_WPA_SUPP
-#error "WPA Supplicant is not enabled in wifi_config.h"
-#endif
-#endif
-
 #include <wmtypes.h>
 #include <wmerrno.h>
 #include <stdint.h>
