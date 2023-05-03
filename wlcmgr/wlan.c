@@ -4136,7 +4136,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, WPA_EVENT_AUTH_REJECT))
     {
         wlcm_d("Authentication rejected during connection attempt");
-        if (wlan.roam_reassoc != true)
+        if ((wlan.roam_reassoc != true) && (!(strlen(buf) > strlen(WPA_EVENT_AUTH_REJECT))))
         {
             (void)send_user_request(CM_STA_USER_REQUEST_CONNECT, wlan.cur_network_idx);
         }
