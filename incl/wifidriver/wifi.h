@@ -49,8 +49,10 @@
 #endif
 
 #if !defined(IW61x) && !defined(RW610)
+#if !defined(CONFIG_MBED_SUPP)
 #ifndef CONFIG_WPA_SUPP
 #define CONFIG_WPA_SUPP
+#endif
 #endif
 #endif
 
