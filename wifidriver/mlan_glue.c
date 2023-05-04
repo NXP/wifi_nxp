@@ -3377,6 +3377,23 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
             case HostCmd_CMD_802_11_SNMP_MIB:
+#ifdef CONFIG_TURBO_MODE
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    t_u8 *turbo_mode           = (t_u8 *)wm_wifi.cmd_resp_priv;
+                    t_u8 *tlv                  = (t_u8 *)((t_u8 *)resp + S_DS_GEN);
+                    turbo_mode_para *turbo_ptr = (turbo_mode_para *)tlv;
+                    if (turbo_ptr->action == ACTION_GET)
+                    {
+                        (void)memcpy(turbo_mode, &turbo_ptr->mode, sizeof(t_u8));
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+#endif
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
                 if (rv != MLAN_STATUS_SUCCESS)
                 {

@@ -3251,6 +3251,10 @@ mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv,
 #define BW_40MHZ 1
 #define BW_80MHZ 2
 
+#ifdef CONFIG_TURBO_MODE
+int wlan_get_set_turbo_mode(t_u16 action, t_u8 *mode, mlan_bss_type bss_type);
+#endif
+
 #ifdef CONFIG_1AS
 mlan_status wlan_cmd_host_clock_cfg(HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 mlan_status wlan_ret_host_clock_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);

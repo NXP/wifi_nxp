@@ -3800,6 +3800,20 @@ typedef enum _SNMP_MIB_INDEX
     StopDeauth_i    = 44,
 } SNMP_MIB_INDEX;
 
+#ifdef CONFIG_TURBO_MODE
+/** Used just for Turbo mode */
+#define OID_WMM_TURBO_MODE 0x27
+/** turbo_mode parameters */
+typedef MLAN_PACK_START struct _turbo_mode_para
+{
+    t_u16 action;
+    t_u16 oid;
+    t_u16 size;
+    /** set prot mode */
+    t_u8 mode;
+} MLAN_PACK_END turbo_mode_para;
+#endif
+
 /** max SNMP buf size */
 #define MAX_SNMP_BUF_SIZE 128U
 

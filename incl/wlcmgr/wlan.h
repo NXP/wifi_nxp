@@ -5514,6 +5514,52 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal);
 int wlan_set_rg_power_cfg(t_u16 region_code);
 #endif
 
+#ifdef CONFIG_TURBO_MODE
+/**
+ * Get Turbo mode.
+ * \param[out] mode    turbo mode
+ *                          0: disable turbo mode
+ *                          1: turbo mode 1
+ *                          2: turbo mode 2
+ *                          3: turbo mode 3
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_turbo_mode(t_u8 *mode);
+
+/**
+ * Get UAP Turbo mode.
+ * \param[out] mode    turbo mode
+ *                          0: disable turbo mode
+ *                          1: turbo mode 1
+ *                          2: turbo mode 2
+ *                          3: turbo mode 3
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_uap_turbo_mode(t_u8 *mode);
+
+/**
+ * Set Turbo mode.
+ * \param[in] mode    turbo mode
+ *                          0: disable turbo mode
+ *                          1: turbo mode 1
+ *                          2: turbo mode 2
+ *                          3: turbo mode 3
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_turbo_mode(t_u8 mode);
+
+/**
+ * Set UAP Turbo mode.
+ * \param[in] mode    turbo mode
+ *                          0: disable turbo mode
+ *                          1: turbo mode 1
+ *                          2: turbo mode 2
+ *                          3: turbo mode 3
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_uap_turbo_mode(t_u8 mode);
+#endif
+
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
 /**
  * Save start cloud keep alive parameters

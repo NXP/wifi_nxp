@@ -11490,6 +11490,28 @@ int wlan_get_signal_info(wlan_rssi_info_t *signal)
 }
 #endif
 
+#ifdef CONFIG_TURBO_MODE
+int wlan_get_turbo_mode(t_u8 *mode)
+{
+    return wifi_get_turbo_mode(mode);
+}
+
+int wlan_get_uap_turbo_mode(t_u8 *mode)
+{
+    return wifi_get_uap_turbo_mode(mode);
+}
+
+int wlan_set_turbo_mode(t_u8 mode)
+{
+    return wifi_set_turbo_mode(mode);
+}
+
+int wlan_set_uap_turbo_mode(t_u8 mode)
+{
+    return wifi_set_uap_turbo_mode(mode);
+}
+#endif
+
 #if defined(CONFIG_IPS)
 int wlan_set_ips(int option)
 {

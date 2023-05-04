@@ -5354,3 +5354,53 @@ int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *high
     }
 }
 #endif
+
+#ifdef CONFIG_TURBO_MODE
+int wifi_get_turbo_mode(t_u8 *mode)
+{
+    return wlan_get_set_turbo_mode(ACTION_GET, mode, MLAN_BSS_TYPE_STA);
+}
+
+int wifi_get_uap_turbo_mode(t_u8 *mode)
+{
+    return wlan_get_set_turbo_mode(ACTION_GET, mode, MLAN_BSS_TYPE_UAP);
+}
+
+int wifi_set_turbo_mode(t_u8 mode)
+{
+    return wlan_get_set_turbo_mode(ACTION_SET, &mode, MLAN_BSS_TYPE_STA);
+}
+
+int wifi_set_uap_turbo_mode(t_u8 mode)
+{
+    return wlan_get_set_turbo_mode(ACTION_SET, &mode, MLAN_BSS_TYPE_UAP);
+}
+
+int wlan_get_set_turbo_mode(t_u16 action, t_u8 *mode, mlan_bss_type bss_type)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_SNMP_MIB);
+    cmd->size    = S_DS_GEN;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
+
+    uint8_t *tlv = (uint8_t *)((uint8_t *)cmd + S_DS_GEN);
+
+    turbo_mode_para *turbo_ptr = (turbo_mode_para *)tlv;
+    turbo_ptr->action          = action;
+    turbo_ptr->oid             = OID_WMM_TURBO_MODE;
+    turbo_ptr->size            = 0x1;
+    if (action == ACTION_SET)
+        (void)memcpy(&turbo_ptr->mode, mode, sizeof(t_u8));
+
+    cmd->size += sizeof(turbo_mode_para);
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    if (action == ACTION_GET)
+        return wifi_wait_for_cmdresp(mode);
+    else
+        return wifi_wait_for_cmdresp(NULL);
+}
+#endif

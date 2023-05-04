@@ -1903,6 +1903,13 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const bool active_scan_triggered);
 int wifi_deauthenticate(uint8_t *bssid);
 
+#ifdef CONFIG_TURBO_MODE
+int wifi_get_turbo_mode(t_u8 *mode);
+int wifi_get_uap_turbo_mode(t_u8 *mode);
+int wifi_set_turbo_mode(t_u8 mode);
+int wifi_set_uap_turbo_mode(t_u8 mode);
+#endif
+
 #ifdef CONFIG_WPA_SUPP_AP
 t_u16 wifi_get_default_ht_capab();
 t_u32 wifi_get_default_vht_capab();

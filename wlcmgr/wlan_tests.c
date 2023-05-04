@@ -7854,6 +7854,109 @@ static void test_wlan_wps_ap_cancel(int argc, char **argv)
 #endif
 #endif
 
+#ifdef CONFIG_TURBO_MODE
+static void test_wlan_get_turbo_mode(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    uint8_t mode;
+    int bss_type = MLAN_BSS_TYPE_ANY;
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF("Usage: wlan-get-turbo-mode STA/UAP\r\n");
+        return;
+    }
+
+    if (string_equal("STA", argv[1]))
+    {
+        bss_type = MLAN_BSS_TYPE_STA;
+        ret = wlan_get_turbo_mode(&mode);
+    }
+    else if (string_equal("UAP", argv[1]))
+    {
+        bss_type = MLAN_BSS_TYPE_UAP;
+        ret = wlan_get_uap_turbo_mode(&mode);
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid BSS type\r\n");
+        (void)PRINTF("Usage: wlan-get-turbo-mode STA/UAP\r\n");
+        return;
+    }
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("%s Turbo mode: %d\r\n", bss_type == MLAN_BSS_TYPE_STA ? "STA" : "UAP", mode);
+    }
+    else
+    {
+        (void)PRINTF("Failed to get %s turbo mode\r\n", bss_type == MLAN_BSS_TYPE_STA ? "STA" : "UAP");
+    }
+
+    return;
+}
+
+static void dump_wlan_set_turbo_mode_usage()
+{
+    (void)PRINTF("Usage: wlan-set-turbo-mode <STA/UAP> <mode>\r\n");
+    (void)PRINTF("          <STA/UAP>  'STA'  or 'UAP' \r\n");
+    (void)PRINTF("          <mode> can be 0,1,2,3\r\n");
+}
+
+static void test_wlan_set_turbo_mode(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    unsigned int value;
+    uint8_t mode;
+    int bss_type;
+    if (argc != 3)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_turbo_mode_usage();
+        return;
+    }
+
+    if (string_equal("STA", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("UAP", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Error: invalid BSS type\r\n");
+        dump_wlan_set_turbo_mode_usage();
+        return;
+    }
+
+    if (get_uint(argv[2], &value, strlen(argv[2])) && value > 3)
+    {
+        (void)PRINTF("Invalid mode argument\r\n");
+        dump_wlan_set_turbo_mode_usage();
+        return;
+    }
+    mode = value & 0xFF;
+
+    if(bss_type == MLAN_BSS_TYPE_STA)
+    {
+        ret = wlan_set_turbo_mode(mode);
+    }
+    else
+    {
+        ret = wlan_set_uap_turbo_mode(mode);
+    }
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Set %s turbo mode to %d\r\n", bss_type == MLAN_BSS_TYPE_STA ? "STA" : "UAP", mode);
+    }
+    else
+    {
+        (void)PRINTF("Failed to set %s turbo mode\r\n", bss_type == MLAN_BSS_TYPE_STA ? "STA" : "UAP");
+    }
+
+    return;
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
@@ -8077,6 +8180,10 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_11AX
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
+#endif
+#ifdef CONFIG_TURBO_MODE
+    {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},
+    {"wlan-set-turbo-mode", "<STA/UAP> <mode>", test_wlan_set_turbo_mode},
 #endif
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
