@@ -137,6 +137,7 @@ int wifi_supp_init(void)
 {
     int ret = -WM_FAIL;
     char sta_iface_name[NETIF_NAMESIZE], uap_iface_name[NETIF_NAMESIZE];
+    struct netif *iface = NULL;
 
     if (wifi_supp_init_done != 0U)
     {
@@ -155,7 +156,7 @@ int wifi_supp_init(void)
 
     wm_wifi.if_priv = (void *)g_wifi_if_ctx_rtos;
 
-    struct netif *iface = net_get_sta_interface();
+    iface = net_get_sta_interface();
 
     if (iface == NULL)
     {

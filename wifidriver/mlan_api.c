@@ -3613,6 +3613,7 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
     t_u16 len                          = 0;
     mlan_status status                 = MLAN_STATUS_SUCCESS;
     t_u32 remain_len                   = 0;
+    HostCmd_DS_COMMAND *cmd            = NULL;
 
     ENTER();
 
@@ -3666,7 +3667,7 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
 
     (void)wifi_get_command_lock();
 
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    cmd = wifi_get_command_buffer();
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 

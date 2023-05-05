@@ -993,6 +993,7 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
     unsigned char status_code[2]    = {0, 0};
     int ret                         = -1;
     unsigned short len              = 0;
+    int channel;
 
     if ((!if_priv) || (!params))
     {
@@ -1019,7 +1020,7 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
         len = params->auth_data_len - 4;
     }
 
-    int channel = freq_to_chan(params->freq);
+    channel = freq_to_chan(params->freq);
 
     wifi_d("initiating wifi-auth");
 
@@ -1544,6 +1545,7 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
     int status                                 = -WM_FAIL;
     int ret                                    = -1;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int channel;
 
     if (!if_priv)
     {
@@ -1554,7 +1556,7 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
     wifi_if_ctx_rtos->remain_on_channel_freq     = freq;
     wifi_if_ctx_rtos->remain_on_channel_duration = duration;
 
-    int channel = freq_to_chan(freq);
+    channel = freq_to_chan(freq);
 
     wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
     status                                       = wifi_remain_on_channel(true, channel, duration);
@@ -1580,6 +1582,7 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
     unsigned int freq;
     unsigned int duration;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int channel;
 
     if (!if_priv)
     {
@@ -1590,7 +1593,7 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
     freq             = wifi_if_ctx_rtos->remain_on_channel_freq;
     duration         = wifi_if_ctx_rtos->remain_on_channel_duration;
 
-    int channel = freq_to_chan(freq);
+    channel = freq_to_chan(freq);
 
     wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
     status                                       = wifi_remain_on_channel(false, channel, duration);
