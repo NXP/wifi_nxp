@@ -1828,6 +1828,9 @@ static int do_start(struct wlan_network *network)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
+#ifdef SD8801
+        wpa_supp_set_ap_bw(netif, 1);
+#endif
         ret = wpa_supp_start_ap(netif, network);
 #else
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
@@ -5818,6 +5821,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.cb         = cb;
     wlan.scan_cb    = NULL;
 
+#ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     wlan.ca_cert_data     = NULL;
     wlan.ca_cert_len      = 0;
@@ -5832,6 +5836,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.server_key_len   = 0;
     wlan.dh_data          = NULL;
     wlan.dh_len           = 0;
+#endif
 #endif
 #endif
 
@@ -6389,6 +6394,8 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 #endif
+
+#ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     if ((is_ep_valid_security(network->security.type)) && ((network->security.wpa3_sb == 1U) || (network->security.wpa3_sb_192 == 1U)) && (!network->security.mfpc))
     {
@@ -6399,6 +6406,7 @@ int wlan_add_network(struct wlan_network *network)
     {
         return -WM_E_INVAL;
     }
+#endif
 #endif
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
@@ -6522,6 +6530,7 @@ int wlan_add_network(struct wlan_network *network)
     }
 #endif
 
+#ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     if ((network->security.type == WLAN_SECURITY_EAP_WILDCARD) ||
             (wlan_is_eap_tls_security(network->security.type)) ||
@@ -6669,6 +6678,7 @@ int wlan_add_network(struct wlan_network *network)
             }
         }
     }
+#endif
 #endif
     /* Find a slot for the new network but check all existing networks in
      * case the new one has a duplicate name, which is not allowed. */
@@ -7273,12 +7283,14 @@ int wlan_connect(char *name)
         return -WM_E_INVAL;
     }
 
+#ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_WPS
     if (wlan.wps_session_attempt)
     {
         wlcm_d("WPS session is in progress");
         return WLAN_ERROR_STATE;
     }
+#endif
 #endif
 
     /* connect to a specific network */
