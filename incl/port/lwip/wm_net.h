@@ -62,10 +62,6 @@
 #error "Define LWIP_NETIF_EXT_STATUS_CALLBACK as 1 in lwipopts.h"
 #endif
 
-#if (!defined(LWIP_NUM_NETIF_CLIENT_DATA) || (LWIP_NUM_NETIF_CLIENT_DATA < 2))
-#error "Define LWIP_NUM_NETIF_CLIENT_DATA atleast 2 in lwipopts.h"
-#endif
-
 /*
  * fixme: This dependancy of wm_net on wlc manager header should be
  * removed. This is the lowest level file used to access lwip
