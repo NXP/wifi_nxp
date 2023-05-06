@@ -35,7 +35,7 @@ static void dump_wlan_uap_get_pmfcfg_usage()
 static void wlan_uap_pmfcfg_get(int argc, char *argv[])
 {
     int ret;
-    uint8_t mfpc, mfpr;
+    uint8_t mfpc = 0, mfpr = 0;
 
     if (argc != 1)
     {

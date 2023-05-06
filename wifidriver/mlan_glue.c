@@ -5273,15 +5273,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+			wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
+#endif
 
             if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_ASSOC, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
                 os_mem_free((void *)sta_addr);
             }
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
-            wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
-#endif
         }
         break;
         case EVENT_MICRO_AP_RSN_CONNECT:
