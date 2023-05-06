@@ -2303,7 +2303,7 @@ static void dump_wlan_tx_pert_usage(void)
         "    <n>: A watermark of check number (default 5). Fw will start tracking Tx Pert after sending n "
         "packets.\r\n");
     (void)PRINTF("Example:\r\n");
-    (void)PRINTF("    wlan-tx-pert 1 AP 5 3 5\r\n");
+    (void)PRINTF("    wlan-tx-pert 1 UAP 5 3 5\r\n");
     (void)PRINTF("Note:\r\n");
     (void)PRINTF("    Please verify by iperf or ping\r\n");
     (void)PRINTF("    When the traffic quality is good enough, it will not be triggered\r\n");
@@ -8171,7 +8171,7 @@ static struct cli_command tests[] = {
     {"wlan-get-log", "<sta/uap> <ext>", test_wlan_get_log},
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
-    {"wlan-tx-pert", "<0/1> <STA/AP> <p> <r> <n>", test_wlan_tx_pert},
+    {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
 #ifdef CONFIG_ROAMING
     {"wlan-roaming", "<0/1>", test_wlan_roaming},
