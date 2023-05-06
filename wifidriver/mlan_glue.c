@@ -3695,44 +3695,19 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #ifdef CONFIG_RF_TEST_MODE
             case HostCmd_CMD_MFG_COMMAND:
             {
-                const HostCmd_DS_MFG_CMD_GENERIC_CFG *mfg_generic_cfg = &resp->params.mfg_generic_cfg;
-                if (resp->result == HostCmd_RESULT_OK)
+                if ((resp->result == HostCmd_RESULT_OK) && wm_wifi.cmd_resp_priv)
                 {
-                    if (mfg_generic_cfg->action == HostCmd_ACT_GEN_GET)
+                    wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg =
+                        (wifi_mfg_cmd_generic_cfg_t *)wm_wifi.cmd_resp_priv;
+                    rv = wlan_ret_mfg(pmpriv, resp, wifi_mfg_cmd_generic_cfg);
+                    if (rv == MLAN_STATUS_SUCCESS)
                     {
-                        if (wm_wifi.cmd_resp_priv != MNULL)
-                        {
-                            switch (wlan_le32_to_cpu(mfg_generic_cfg->mfg_cmd))
-                            {
-                                case MFG_CMD_SET_TEST_MODE:
-                                case MFG_CMD_UNSET_TEST_MODE:
-                                case MFG_CMD_TX_ANT:
-                                case MFG_CMD_RX_ANT:
-                                case MFG_CMD_RF_CHAN:
-                                case MFG_CMD_CLR_RX_ERR:
-                                case MFG_CMD_RF_BAND_AG:
-                                case MFG_CMD_RF_CHANNELBW:
-                                case MFG_CMD_RADIO_MODE_CFG:
-                                {
-                                    wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg =
-                                        (wifi_mfg_cmd_generic_cfg_t *)wm_wifi.cmd_resp_priv;
-                                    rv = wlan_ret_mfg(pmpriv, resp, wifi_mfg_cmd_generic_cfg);
-                                    if (rv != MLAN_STATUS_SUCCESS)
-                                    {
-                                        wm_wifi.cmd_resp_status = -WM_FAIL;
-                                    }
-                                    else
-                                    {
-                                        wm_wifi.cmd_resp_status = WM_SUCCESS;
-                                    }
-                                }
-                                break;
-                                default:
-                                    wm_wifi.cmd_resp_status = -WM_FAIL;
-                            }
-                        }
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
                     }
-                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                    else
+                    {
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    }
                 }
                 else
                 {

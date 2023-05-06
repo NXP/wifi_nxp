@@ -1068,11 +1068,11 @@ int wifi_get_set_rf_test_generic(t_u16 cmd_action, wifi_mfg_cmd_generic_cfg_t *w
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? wifi_mfg_cmd_generic_cfg : NULL);
+    wifi_wait_for_cmdresp(wifi_mfg_cmd_generic_cfg);
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action, wifi_mfg_cmd_tx_frame_t *wifi_mfg_cmd_tx_frame)
+int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action, wifi_mfg_cmd_tx_frame_t *wifi_mfg_cmd_tx_frame, wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1084,7 +1084,7 @@ int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action, wifi_mfg_cmd_tx_frame_t *wif
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? wifi_mfg_cmd_tx_frame : NULL);
+    wifi_wait_for_cmdresp(wifi_mfg_cmd_generic_cfg);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -1121,7 +1121,7 @@ int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action, wifi_mfg_cmd_he_tb_tx_t *wifi_mfg
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action, wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont)
+int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action, wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont, wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1133,12 +1133,13 @@ int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action, wifi_mfg_cmd_tx_cont_t *wifi_
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? wifi_mfg_cmd_tx_cont : NULL);
+    wifi_wait_for_cmdresp(wifi_mfg_cmd_generic_cfg);
     return wm_wifi.cmd_resp_status;
 }
 
 int wifi_set_rf_test_mode(void)
 {
+    int ret;
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -1146,7 +1147,15 @@ int wifi_set_rf_test_mode(void)
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_SET_TEST_MODE;
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
 
-    return wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
+
+    wifi_e("wifi set rf test mode fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+
 }
 
 int wifi_set_rf_channel(const uint8_t channel)
@@ -1273,10 +1282,14 @@ int wifi_set_rf_band(const uint8_t band)
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
 
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         band_set = 1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("Wifi set rf band fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_get_rf_band(uint8_t *band)
@@ -1297,11 +1310,14 @@ int wifi_get_rf_band(uint8_t *band)
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
-
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         *band = wifi_mfg_cmd_generic_cfg.data1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("Wifi get rf band fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_set_rf_bandwidth(const uint8_t bandwidth)
@@ -1318,8 +1334,9 @@ int wifi_set_rf_bandwidth(const uint8_t bandwidth)
         && (bandwidth != 4U)
 #endif
     )
+	{
         return -WM_FAIL;
-
+    }
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RF_CHANNELBW;
@@ -1328,11 +1345,14 @@ int wifi_set_rf_bandwidth(const uint8_t bandwidth)
     wifi_mfg_cmd_generic_cfg.data1 = bandwidth;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
-
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         bandwidth_set = 1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("Wifi set rf bandwidth fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_get_rf_bandwidth(uint8_t *bandwidth)
@@ -1353,11 +1373,14 @@ int wifi_get_rf_bandwidth(uint8_t *bandwidth)
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
-
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         *bandwidth = wifi_mfg_cmd_generic_cfg.data1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("Wifi get rf bandwidth fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_get_rf_per(uint32_t *rx_tot_pkt_count, uint32_t *rx_mcast_bcast_count, uint32_t *rx_pkt_fcs_error)
@@ -1372,15 +1395,16 @@ int wifi_get_rf_per(uint32_t *rx_tot_pkt_count, uint32_t *rx_mcast_bcast_count, 
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
-
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
     {
         *rx_tot_pkt_count     = wifi_mfg_cmd_generic_cfg.data1;
         *rx_mcast_bcast_count = wifi_mfg_cmd_generic_cfg.data2;
         *rx_pkt_fcs_error     = wifi_mfg_cmd_generic_cfg.data3;
+        return WM_SUCCESS;
     }
 
-    return ret;
+    wifi_e("Wifi get rf per fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_set_rf_tx_cont_mode(const uint32_t enable_tx,
@@ -1391,11 +1415,14 @@ int wifi_set_rf_tx_cont_mode(const uint32_t enable_tx,
                              const uint32_t tx_rate)
 {
     wifi_mfg_cmd_tx_cont_t wifi_mfg_cmd_tx_cont;
+	wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+    int ret;
 
     if ((enable_tx > 1U) || (cw_mode > 1U) || (cs_mode > 1U) || (act_sub_ch == 2U || act_sub_ch > 3U))
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_tx_cont, 0x00, sizeof(wifi_mfg_cmd_tx_cont_t));
+	(void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_tx_cont.mfg_cmd = MFG_CMD_TX_CONT;
     wifi_mfg_cmd_tx_cont.action  = HostCmd_ACT_GEN_SET;
@@ -1407,7 +1434,14 @@ int wifi_set_rf_tx_cont_mode(const uint32_t enable_tx,
     wifi_mfg_cmd_tx_cont.act_sub_ch      = act_sub_ch;
     wifi_mfg_cmd_tx_cont.tx_rate         = tx_rate;
 
-    return wifi_get_set_rf_test_tx_cont(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_cont);
+    ret = wifi_get_set_rf_test_tx_cont(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_cont, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
+
+    wifi_e("Wifi set rf tx cont mode fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_set_rf_tx_antenna(const uint8_t antenna)
@@ -1427,11 +1461,14 @@ int wifi_set_rf_tx_antenna(const uint8_t antenna)
     wifi_mfg_cmd_generic_cfg.data1 = antenna;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
-
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         tx_antenna_set = 1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("Wifi set rf tx antenna fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_get_rf_tx_antenna(uint8_t *antenna)
@@ -1452,11 +1489,14 @@ int wifi_get_rf_tx_antenna(uint8_t *antenna)
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_GET;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_generic_cfg);
-
-    if (ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
         *antenna = wifi_mfg_cmd_generic_cfg.data1;
+        return WM_SUCCESS;
+    }
 
-    return ret;
+    wifi_e("Wifi get rf tx antenna fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;;
 }
 
 int wifi_set_rf_rx_antenna(const uint8_t antenna)
@@ -1476,11 +1516,15 @@ int wifi_set_rf_rx_antenna(const uint8_t antenna)
     wifi_mfg_cmd_generic_cfg.data1 = antenna;
 
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        *antenna = wifi_mfg_cmd_generic_cfg.data1;
+        return WM_SUCCESS;
+    }
 
-    if (ret == WM_SUCCESS)
-        rx_antenna_set = 1;
+    wifi_e("Wifi get rf tx antenna fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 
-    return ret;
 }
 
 int wifi_get_rf_rx_antenna(uint8_t *antenna)
@@ -1511,6 +1555,7 @@ int wifi_get_rf_rx_antenna(uint8_t *antenna)
 int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t path_id)
 {
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+	int ret;
 
     if (power > 24U)
         return -WM_FAIL;
@@ -1533,8 +1578,15 @@ int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t p
 #endif
     wifi_mfg_cmd_generic_cfg.data2 = mod;
     wifi_mfg_cmd_generic_cfg.data3 = path_id;
+	
+    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    if (ret == WM_SUCCESS)
+    {
+        return WM_SUCCESS;
+    }
 
-    return wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    wifi_e("Wifi set rf tx power fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_set_rf_tx_frame(const uint32_t enable,
@@ -1553,6 +1605,8 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint8_t *bssid)
 {
     wifi_mfg_cmd_tx_frame_t wifi_mfg_cmd_tx_frame;
+	wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+    int ret;
 
     if (enable > 1U || frame_length < 1U || frame_length > 0x400U || burst_sifs_in_us > 255U || short_preamble > 1U ||
         act_sub_ch == 2U || act_sub_ch > 3U || short_gi > 1U || adv_coding > 1U || tx_bf > 1U || gf_mode > 1U ||
@@ -1560,6 +1614,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_tx_frame, 0x00, sizeof(wifi_mfg_cmd_tx_frame_t));
+	(void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_tx_frame.mfg_cmd = MFG_CMD_TX_FRAME;
     wifi_mfg_cmd_tx_frame.action  = HostCmd_ACT_GEN_SET;
@@ -1578,8 +1633,15 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     wifi_mfg_cmd_tx_frame.tx_bf             = tx_bf;
     wifi_mfg_cmd_tx_frame.gf_mode           = gf_mode;
     wifi_mfg_cmd_tx_frame.stbc              = stbc;
+	
+    ret = wifi_get_set_rf_test_tx_frame(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_frame, &wifi_mfg_cmd_generic_cfg);
+    if (WM_SUCCESS == ret && wifi_mfg_cmd_generic_cfg.error == 0)
+    {
+        return WM_SUCCESS;
+    }
 
-    return wifi_get_set_rf_test_tx_frame(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_frame);
+    wifi_e("wifi set rf tx frame fail, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
 }
 
 int wifi_rf_trigger_frame_cfg(uint32_t Enable_tx,
