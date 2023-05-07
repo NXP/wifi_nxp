@@ -1759,6 +1759,7 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         goto out;
     }
 
+#ifdef CONFIG_5GHz_SUPPORT
     status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211A].ht_capab, &modes[HOSTAPD_MODE_IEEE80211A].mcs_set[0],
                                &modes[HOSTAPD_MODE_IEEE80211A].a_mpdu_params, 1);
     if (status != WM_SUCCESS)
@@ -1766,9 +1767,12 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         supp_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
         goto out;
     }
+#endif
 
     modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+#ifdef CONFIG_5GHz_SUPPORT
     modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+#endif
 
 #ifdef CONFIG_11AC
     status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211G].vht_capab,
@@ -1779,6 +1783,7 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         goto out;
     }
 
+#ifdef CONFIG_5GHz_SUPPORT
     status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211A].vht_capab,
                                 modes[HOSTAPD_MODE_IEEE80211A].vht_mcs_set, 1);
     if (status != WM_SUCCESS)
@@ -1786,9 +1791,12 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         supp_e("%s: wifi nxp set 5G infra vht cap failed", __func__);
         goto out;
     }
+#endif
 
     modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+#ifdef CONFIG_5GHz_SUPPORT
     modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+#endif
 #endif
 
 #ifdef CONFIG_11AX
@@ -1808,6 +1816,7 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         goto out;
     }
 
+#ifdef CONFIG_5GHz_SUPPORT
     status = wifi_setup_he_cap(
         (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
     if (status != WM_SUCCESS)
@@ -1823,6 +1832,7 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
         goto out;
     }
+#endif
 #endif
     status = WM_SUCCESS;
 
