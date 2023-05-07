@@ -2730,15 +2730,15 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
             PRINTM(MINFO, "Rate index is %d\n", ds_rate->param.rate_cfg.rate);
 
 #ifdef SD8801
-            if (ds_rate->param.rate_cfg.rate < MLAN_RATE_INDEX_MCS0)
-            {
-                ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_LG;
-                ds_rate->param.rate_cfg.rate_index  = ds_rate->param.rate_cfg.rate;
-            }
-            else
+            if (ds_rate->param.rate_cfg.rate >= MLAN_RATE_INDEX_MCS0)
             {
                 ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_HT;
                 ds_rate->param.rate_cfg.rate_index  = ds_rate->param.rate_cfg.rate - MLAN_RATE_INDEX_MCS0;
+            }
+            else
+            {
+                ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_LG;
+                ds_rate->param.rate_cfg.rate_index  = ds_rate->param.rate_cfg.rate;
             }
 #else
             ds_rate->param.rate_cfg.rate_index = ds_rate->param.rate_cfg.rate;
