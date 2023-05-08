@@ -402,7 +402,11 @@ static void dump_wlan_set_tx_cont_mode_usage(void)
 #ifdef IW61x
     (void)PRINTF("Set all parameters with expected values\r\n");
 #else
-    (void)PRINTF("wlan-set-rf-tx-cont-mode 0\r\n");
+	(void)PRINTF("  In Continuous Wave Mode:\r\n");
+	(void)PRINTF("    Step1: wlan-set-rf-tx-cont-mode 0 1 0 0 0 0 \r\n");
+	(void)PRINTF("    Step2: wlan-set-rf-tx-cont-mode 0 \r\n");
+	(void)PRINTF("  In none continuous Wave Mode:\r\n");
+	(void)PRINTF("    Step1: wlan-set-rf-tx-cont-mode 0 \r\n");
 #endif
     (void)PRINTF("\r\n");
 }
