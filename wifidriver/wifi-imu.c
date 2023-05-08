@@ -1291,16 +1291,13 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     ptxpd->pkt_delay_2ms = 0;
     imuhdr->size         = sizeof(TxPD) + INTF_HEADER_LEN;
 
-    wifi_imu_lock();
-    ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, pbuf, imuhdr->size);
-    ;
+    ret = wifi_send_fw_data(pbuf, imuhdr->size);
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
-        wifi_imu_unlock();
+        wifi_io_e("imu_drv_write failed (%d)", ret);
         return MLAN_STATUS_FAILURE;
     }
-    wifi_imu_unlock();
-    wlan_flush_wmm_pkt(1);
+
     return MLAN_STATUS_SUCCESS;
 }
 
