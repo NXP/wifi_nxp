@@ -2683,21 +2683,15 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                     index -= (MLAN_RATE_BITMAP_OFDM0 - MLAN_RATE_INDEX_OFDM0);
                 }
 
-#ifndef SD8801
                 ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_LG;
-#endif
-                ds_rate->param.rate_cfg.rate = (t_u32)index;
+                ds_rate->param.rate_cfg.rate        = (t_u32)index;
             }
             /* check the HT rate */
             index = wlan_get_rate_index(pmadapter, &pmpriv->bitmap_rates[2], 16);
             if (index != -1)
             {
-#ifdef SD8801
-                ds_rate->param.rate_cfg.rate = index + MLAN_RATE_INDEX_MCS0;
-#else
                 ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_HT;
                 ds_rate->param.rate_cfg.rate        = (t_u32)index;
-#endif
             }
 
 #ifdef CONFIG_11AC
@@ -2729,20 +2723,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
             ds_rate->param.rate_cfg.rate_setting = rate_setting;
             PRINTM(MINFO, "Rate index is %d\n", ds_rate->param.rate_cfg.rate);
 
-#ifdef SD8801
-            if (ds_rate->param.rate_cfg.rate >= MLAN_RATE_INDEX_MCS0)
-            {
-                ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_HT;
-                ds_rate->param.rate_cfg.rate_index  = ds_rate->param.rate_cfg.rate - MLAN_RATE_INDEX_MCS0;
-            }
-            else
-            {
-                ds_rate->param.rate_cfg.rate_format = MLAN_RATE_FORMAT_LG;
-                ds_rate->param.rate_cfg.rate_index  = ds_rate->param.rate_cfg.rate;
-            }
-#else
             ds_rate->param.rate_cfg.rate_index = ds_rate->param.rate_cfg.rate;
-#endif
         }
     }
 
@@ -3651,12 +3632,10 @@ mlan_status wlan_ret_wifi_direct_mode(IN pmlan_private pmpriv,
  *  @param pdata_buf    A void pointer to information buffer
  *  @return             N/A
  */
-mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv,
-				   HostCmd_DS_COMMAND *cmd,
-				   t_u16 cmd_action, t_void *pdata_buf)
+mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
 {
     HostCmd_DS_RX_ABORT_CFG *rx_abort_cfg = &cmd->params.rx_abort_cfg;
-    rx_abort_cfg_t *cfg = (rx_abort_cfg_t *)pdata_buf;
+    rx_abort_cfg_t *cfg                   = (rx_abort_cfg_t *)pdata_buf;
 
     ENTER();
 
@@ -3664,10 +3643,10 @@ mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv,
     cmd->size            = wlan_cpu_to_le16(sizeof(HostCmd_DS_RX_ABORT_CFG) + S_DS_GEN);
     rx_abort_cfg->action = wlan_cpu_to_le16(cmd_action);
 
-    if(rx_abort_cfg->action == HostCmd_ACT_GEN_SET)
+    if (rx_abort_cfg->action == HostCmd_ACT_GEN_SET)
     {
-        rx_abort_cfg->enable          = cfg->enable;
-        rx_abort_cfg->rssi_threshold  = (t_s8)cfg->rssi_threshold;
+        rx_abort_cfg->enable         = cfg->enable;
+        rx_abort_cfg->rssi_threshold = (t_s8)cfg->rssi_threshold;
     }
 
     LEAVE();
@@ -3722,13 +3701,10 @@ mlan_status wlan_cmd_rx_abort_cfg_ext(pmlan_private pmpriv,
  *  @param pdata_buf    A void pointer to information buffer
  *  @return             N/A
  */
-mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv,
-				      HostCmd_DS_COMMAND *cmd,
-				      t_u16 cmd_action, t_void *pdata_buf)
+mlan_status wlan_cmd_cck_desense_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
 {
-    HostCmd_DS_CCK_DESENSE_CFG *cfg_cmd =
-		(HostCmd_DS_CCK_DESENSE_CFG *)&cmd->params.cck_desense_cfg;
-    cck_desense_cfg_t *cfg = (cck_desense_cfg_t *)pdata_buf;
+    HostCmd_DS_CCK_DESENSE_CFG *cfg_cmd = (HostCmd_DS_CCK_DESENSE_CFG *)&cmd->params.cck_desense_cfg;
+    cck_desense_cfg_t *cfg              = (cck_desense_cfg_t *)pdata_buf;
 
     ENTER();
 
