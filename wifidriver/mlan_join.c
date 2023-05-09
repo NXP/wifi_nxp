@@ -253,6 +253,7 @@ done:
     return ret;
 }
 
+#if 0
 /**
  *  @brief Create the intersection of the rates supported by a target BSS and
  *         our pmadapter settings for use in an assoc/join command.
@@ -282,6 +283,56 @@ static mlan_status wlan_setup_rates_from_bssdesc(IN mlan_private *pmpriv,
     /* Get the common rates between AP and STA supported rates */
     if (wlan_get_common_rates(pmpriv, pout_rates, WLAN_SUPPORTED_RATES, card_rates, card_rates_size) !=
         MLAN_STATUS_SUCCESS)
+    {
+        *pout_rates_size = 0;
+        PRINTM(MERROR, "wlan_get_common_rates failed\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    *pout_rates_size = MIN(wlan_strlen((char *)pout_rates), WLAN_SUPPORTED_RATES);
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ *  @brief Create the intersection of the rates supported by a target BSS and
+ *         our pmadapter settings for use in an assoc/join command.
+ *
+ *  @param pmpriv           A pointer to mlan_private structure
+ *  @param pbss_desc        BSS Descriptor whose rates are used in the setup
+ *  @param pout_rates       Output: Octet array of rates common between the BSS
+ *                          and the pmadapter supported rates settings
+ *  @param pout_rates_size  Output: Number of rates/octets set in pout_rates
+ *
+ *  @return                 MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wlan_setup_rates_from_bssdesc(mlan_private *pmpriv,
+                                                 BSSDescriptor_t *pbss_desc,
+                                                 t_u8 *pout_rates,
+                                                 t_u32 *pout_rates_size)
+{
+    t_u8 card_rates[WLAN_SUPPORTED_RATES] = {0};
+    t_u32 card_rates_size                 = 0;
+    ENTER();
+    /* Copy AP supported rates */
+    (void)__memcpy(pmpriv->adapter, pout_rates, pbss_desc->supported_rates, WLAN_SUPPORTED_RATES);
+
+    if ((pmpriv->adapter->region_code == COUNTRY_CODE_JP_40 || pmpriv->adapter->region_code == COUNTRY_CODE_JP_FF) &&
+        (pbss_desc->phy_param_set.ds_param_set.current_chan == 14))
+    {
+        /* Special Case: For Japan, 11G rates on CH14 are not allowed*/
+        card_rates_size = wlan_get_supported_rates(pmpriv, pmpriv->bss_mode, BAND_B, card_rates);
+    }
+    else
+    {
+        /* Get the STA supported rates */
+        card_rates_size = wlan_get_supported_rates(pmpriv, pmpriv->bss_mode, pmpriv->config_bands, card_rates);
+    }
+    /* Get the common rates between AP and STA supported rates */
+    if (wlan_get_common_rates(pmpriv, pout_rates, WLAN_SUPPORTED_RATES, card_rates, card_rates_size))
     {
         *pout_rates_size = 0;
         PRINTM(MERROR, "wlan_get_common_rates failed\n");

@@ -468,6 +468,11 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Default country code */
 #define MRVDRV_DEFAULT_COUNTRY_CODE "WW"
 
+/** Japan country code */
+#define COUNTRY_CODE_JP_40 0x40
+/** Japan special country code */
+#define COUNTRY_CODE_JP_FF 0xFF
+
 /** Default factor for calculating beacon average */
 #define DEFAULT_BCN_AVG_FACTOR 8
 /** Default factor for calculating data average */
