@@ -5135,9 +5135,10 @@ static void dump_wlan_get_antcfg_usage(void)
 
 static void wlan_antcfg_get(int argc, char *argv[])
 {
-    int ret;
-    uint32_t ant_mode;
-    uint16_t evaluate_time = 0;
+    int ret                  = -WM_FAIL;
+    uint32_t ant_mode        = 0;
+    uint16_t evaluate_time   = 0;
+    uint16_t current_antenna = 0;
 
     if (argc != 1)
     {
@@ -5145,13 +5146,17 @@ static void wlan_antcfg_get(int argc, char *argv[])
         return;
     }
 
-    ret = wlan_get_antcfg(&ant_mode, &evaluate_time);
+    ret = wlan_get_antcfg(&ant_mode, &evaluate_time, &current_antenna);
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Mode of Tx/Rx path is : %x\r\n", ant_mode);
         if (ant_mode == 0XFFFFU)
         {
             (void)PRINTF("Evaluate time : %x\r\n", evaluate_time);
+        }
+        if (current_antenna > 0)
+        {
+            (void)PRINTF("Current antenna is %d\n", current_antenna);
         }
     }
     else

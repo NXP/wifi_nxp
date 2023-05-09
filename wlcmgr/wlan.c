@@ -8351,9 +8351,9 @@ int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time)
     return WM_SUCCESS;
 }
 
-int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time)
+int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint16_t *current_antenna)
 {
-    int rv = wifi_get_antenna((unsigned int *)ant, evaluate_time);
+    int rv = wifi_get_antenna((unsigned int *)ant, evaluate_time, current_antenna);
     if (rv != WM_SUCCESS)
     {
         wlcm_e("Unable to get current antenna");

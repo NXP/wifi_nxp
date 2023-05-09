@@ -3282,9 +3282,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
                         if (wm_wifi.cmd_resp_priv != NULL)
                         {
-                            wifi_antcfg_t *antcfg = (wifi_antcfg_t *)wm_wifi.cmd_resp_priv;
-                            antcfg->ant_mode      = wlan_cpu_to_le32(rf_antenna_ctrl->antenna_mode);
-                            antcfg->evaluate_time = wlan_cpu_to_le16(rf_antenna_ctrl->evaluate_time);
+                            wifi_antcfg_t *antcfg      = (wifi_antcfg_t *)wm_wifi.cmd_resp_priv;
+                            *(antcfg->ant_mode)        = rf_antenna_ctrl->antenna_mode;
+                            *(antcfg->evaluate_time)   = rf_antenna_ctrl->evaluate_time;
+                            *(antcfg->current_antenna) = rf_antenna_ctrl->current_antenna;
                         }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;

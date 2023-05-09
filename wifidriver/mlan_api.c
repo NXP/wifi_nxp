@@ -2252,17 +2252,16 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, uint8_t tx_antenna, uint8_t rx
 }
 
 #else
-static wifi_antcfg_t wifi_antcfg;
 
-static int wifi_send_rf_antenna_cmd(t_u16 action, t_u32 *ant_mode, t_u16 *evaluate_time)
+static int wifi_send_rf_antenna_cmd(t_u16 action, wifi_antcfg_t *wifi_antcfg)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     mlan_ds_ant_cfg_1x1 ant_cfg_1x1;
 
     (void)memset(&ant_cfg_1x1, 0x00, sizeof(mlan_ds_ant_cfg_1x1));
 
-    ant_cfg_1x1.antenna = *ant_mode;
-    ant_cfg_1x1.evaluate_time = *evaluate_time;
+    ant_cfg_1x1.antenna = (t_u32) * (wifi_antcfg->ant_mode);
+    ant_cfg_1x1.evaluate_time = (t_u16) * (wifi_antcfg->evaluate_time);
 
     if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
     {
@@ -2285,22 +2284,24 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, t_u32 *ant_mode, t_u16 *evalua
         return -WM_FAIL;
     }
 
-    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? &wifi_antcfg : NULL);
-
-    *ant_mode = wifi_antcfg.ant_mode;
-    *evaluate_time = wifi_antcfg.evaluate_time;
+    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? wifi_antcfg : NULL);
 
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time)
+int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u16 *current_antenna)
 {
     if (ant_mode == MNULL)
     {
         return -WM_E_INVAL;
     }
 
-    int rv = wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_GET, ant_mode, evaluate_time);
+    wifi_antcfg_t antenna_cfg;
+    antenna_cfg.ant_mode = ant_mode;
+    antenna_cfg.evaluate_time = evaluate_time;
+    antenna_cfg.current_antenna = current_antenna;
+
+    int rv = wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_GET, &antenna_cfg);
     if (rv != WM_SUCCESS || wm_wifi.cmd_resp_status != WM_SUCCESS)
     {
         return -WM_FAIL;
@@ -2331,7 +2332,11 @@ int wifi_set_antenna(t_u8 tx_antenna, t_u8 rx_antenna)
 #else
 int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 {
-    return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, &ant_mode, &evaluate_time);
+    wifi_antcfg_t antenna_cfg;
+    antenna_cfg.ant_mode = &ant_mode;
+    antenna_cfg.evaluate_time = &evaluate_time;
+
+    return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, &antenna_cfg);
 }
 #endif
 

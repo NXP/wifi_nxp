@@ -2683,11 +2683,12 @@ int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time);
  *
  * \param[out] ant pointer to antenna variable.
  * \param[out] evaluate_time pointer to evaluate_time variable for SAD.
+ * \param[out] current_antenna pointer to current antenna.
  *
  * \return WM_SUCCESS if successful.
  * \return WLAN_ERROR_STATE if unsuccessful.
  */
-int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time);
+int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint16_t *current_antenna);
 #endif
 
 /** Get the wifi firmware version extension string.

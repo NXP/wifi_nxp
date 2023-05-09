@@ -632,9 +632,11 @@ typedef PACK_START struct _wifi_ext_coex_stats_t
 typedef PACK_START struct _wifi_antcfg_t
 {
     /** Antenna Mode */
-    t_u32 ant_mode;
+    t_u32 *ant_mode;
     /** Evaluate Time */
-    t_u16 evaluate_time;
+    t_u16 *evaluate_time;
+    /** Current antenna*/
+    t_u16 *current_antenna;
 } PACK_END wifi_antcfg_t;
 
 /** CW_MODE_CTRL structure */
