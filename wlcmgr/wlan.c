@@ -7520,6 +7520,23 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Stop and Remove all network interfaces */
             wlan_remove_all_networks();
 
+             /*Disconnect form AP if station is associated with an AP.*/
+            if (wlan.sta_state > CM_STA_ASSOCIATING)
+            {
+                (void)wifi_deauthenticate((uint8_t *)wlan.networks[wlan.cur_network_idx].bssid);
+                wlan.sta_return_to = CM_STA_IDLE;
+            }
+
+            /*Stop current uAP if uAP is started.*/
+            if (wlan.uap_state > CM_UAP_CONFIGURED)
+            {
+                wlan_stop_network(wlan.networks[wlan.cur_uap_network_idx].name);
+                while (wlan.uap_state != CM_UAP_INITIALIZING)
+                {
+                    os_thread_sleep(os_msec_to_ticks(1000));
+                }
+            }
+
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
 
