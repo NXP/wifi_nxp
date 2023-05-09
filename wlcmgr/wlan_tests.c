@@ -6795,6 +6795,41 @@ static void test_wlan_get_signal(int argc, char **argv)
 }
 #endif
 
+static void dump_wlan_set_multiple_dtim_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    This command is to set Next Wakeup RX Beacon Time\r\n");
+    (void)PRINTF("    Will take effect after enter power save mode by command wlan-ieee-ps 1\r\n");
+    (void)PRINTF("    Next Wakeup RX Beacon Time = DTIM * BeaconPeriod * multiple_dtim\r\n");
+    
+    (void)PRINTF("    wlan-set-multiple-dtim <value>\r\n");
+    (void)PRINTF("        <value> Value of multiple dtim, range[1,20]\r\n");
+}
+
+static void test_wlan_set_multiple_dtim(int argc, char **argv)
+{
+    uint8_t multiple_dtim = 0;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_multiple_dtim_usage();
+        return;
+    }
+
+    multiple_dtim = (t_u8)atoi(argv[1]);
+
+    if(multiple_dtim < 1 || multiple_dtim > 20)
+    {
+        (void)PRINTF("Error: value of multiple dtim is out of range\r\n");
+        dump_wlan_set_multiple_dtim_usage();
+        return;
+    }
+
+    wlan_set_ps_cfg(multiple_dtim, 5, 0, 0, PS_MODE_AUTO, DELAY_TO_PS_DEFAULT);
+    (void)PRINTF("Set multiple dtim to %d\r\n", multiple_dtim);
+}
+
 #ifdef CONFIG_SET_SU
 static void dump_wlan_set_su_usage(void)
 {
@@ -8185,6 +8220,7 @@ static struct cli_command tests[] = {
     {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},
     {"wlan-set-turbo-mode", "<STA/UAP> <mode>", test_wlan_set_turbo_mode},
 #endif
+    {"wlan-set-multiple-dtim", "<value>", test_wlan_set_multiple_dtim},
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
 #endif

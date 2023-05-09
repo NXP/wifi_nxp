@@ -40,12 +40,12 @@
 static bool ieeeps_enabled;
 static bool deepsleepps_enabled;
 
-static void wifi_set_ps_cfg(t_u16 multiple_dtims,
-                            t_u16 bcn_miss_timeout,
-                            t_u16 local_listen_interval,
-                            t_u16 adhoc_wake_period,
-                            t_u16 mode,
-                            t_u16 delay_to_ps)
+void wifi_set_ps_cfg(t_u16 multiple_dtims,
+                     t_u16 bcn_miss_timeout,
+                     t_u16 local_listen_interval,
+                     t_u16 adhoc_wake_period,
+                     t_u16 mode,
+                     t_u16 delay_to_ps)
 {
     pmlan_adapter pmadapter          = ((mlan_private *)mlan_adap->priv[0])->adapter;
     pmadapter->bcn_miss_time_out     = bcn_miss_timeout;

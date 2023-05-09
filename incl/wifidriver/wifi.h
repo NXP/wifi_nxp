@@ -914,6 +914,7 @@ int wrapper_wlan_cmd_get_hw_spec(void);
 /* fixme: These need to be removed later after complete mlan integration */
 void set_event_chanswann(void);
 void clear_event_chanswann(void);
+void wifi_set_ps_cfg(t_u16 multiple_dtims, t_u16 bcn_miss_timeout, t_u16 local_listen_interval, t_u16 adhoc_wake_period, t_u16 mode, t_u16 delay_to_ps);
 int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions);
 bool wrapper_wlan_11d_support_is_enabled(void);
 void wrapper_wlan_11d_clear_parsedtable(void);

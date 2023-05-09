@@ -5560,6 +5560,25 @@ int wlan_set_turbo_mode(t_u8 mode);
 int wlan_set_uap_turbo_mode(t_u8 mode);
 #endif
 
+/**
+ * set ps configuration.
+ * Currently only used to modify multiple dtim.
+ * \param[in] multiple_dtims        num dtims，range [1,20]
+ * \param[in] bcn_miss_timeout      becaon miss interval
+ * \param[in] local_listen_interval local listen interval
+ * \param[in] adhoc_wake_period     adhoc awake period
+ * \param[in] mode                  mode - (0x01 - firmware to automatically choose PS_POLL or NULL mode, 
+ *                                          0x02 - PS_POLL, 
+ *                                          0x03 - NULL mode )
+ * \param[in] delay_to_ps           Delay to PS in milliseconds
+ */
+void wlan_set_ps_cfg(t_u16 multiple_dtims,
+                     t_u16 bcn_miss_timeout,
+                     t_u16 local_listen_interval,
+                     t_u16 adhoc_wake_period,
+                     t_u16 mode,
+                     t_u16 delay_to_ps);
+
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
 /**
  * Save start cloud keep alive parameters

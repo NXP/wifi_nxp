@@ -11512,6 +11512,16 @@ int wlan_set_uap_turbo_mode(t_u8 mode)
 }
 #endif
 
+void wlan_set_ps_cfg(t_u16 multiple_dtims,
+                     t_u16 bcn_miss_timeout,
+                     t_u16 local_listen_interval,
+                     t_u16 adhoc_wake_period,
+                     t_u16 mode,
+                     t_u16 delay_to_ps)
+{
+    wifi_set_ps_cfg(multiple_dtims, bcn_miss_timeout, local_listen_interval, adhoc_wake_period, mode, delay_to_ps);
+}
+
 #if defined(CONFIG_IPS)
 int wlan_set_ips(int option)
 {
