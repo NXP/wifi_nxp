@@ -108,12 +108,12 @@ static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
 #ifdef CONFIG_STA_AMPDU_TX
-bool sta_ampdu_tx_enable = true;
+bool sta_ampdu_tx_enable         = true;
 t_u8 sta_ampdu_tx_enable_per_tid = 0xFF;
 #endif
 
 #ifdef CONFIG_STA_AMPDU_RX
-bool sta_ampdu_rx_enable = true;
+bool sta_ampdu_rx_enable         = true;
 t_u8 sta_ampdu_rx_enable_per_tid = 0xFF;
 #endif
 
@@ -3278,7 +3278,7 @@ static int wifi_xmit_wmm_ac_pkts_enh()
         if (priv->tx_pause == MTRUE)
             continue;
 
-        for (ac = WMM_AC_VO; ac >= WMM_AC_BK; ac--)
+        for (ac = WMM_AC_VO; ac >= WMM_AC_BE; ac--)
         {
             tid_ptr = &priv->wmm.tid_tbl_ptr[ac];
 
@@ -3999,9 +3999,9 @@ int wifi_low_level_output(const uint8_t interface,
         {
             (void)wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-                    tid
+                tid
 #endif
-                    );
+            );
         }
     }
 #endif
@@ -4017,10 +4017,10 @@ int wifi_low_level_output(const uint8_t interface,
         {
             (void)wrapper_wlan_uap_ampdu_enable((const uint8_t *)buffer
 #ifdef CONFIG_WMM
-                    ,
-                    tid
+                                                ,
+                                                tid
 #endif
-                    );
+            );
         }
     }
 #endif
