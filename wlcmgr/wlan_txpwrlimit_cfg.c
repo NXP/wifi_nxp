@@ -71,7 +71,9 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     ARG_UNUSED(tx_pwrlimit_2g_cfg);
+#ifdef CONFIG_5GHz_SUPPORT
     ARG_UNUSED(tx_pwrlimit_5g_cfg);
+#endif
 
     int rv = WM_SUCCESS;
 
