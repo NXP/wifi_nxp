@@ -5290,6 +5290,42 @@ int wifi_set_tol_time(const t_u32 tol_time)
 
     return wifi_wait_for_cmdresp(NULL);
 }
+
+#ifdef CONFIG_MMSF
+int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
+    cmd->size    = S_DS_GEN;
+
+    HostCmd_DS_MMSF_CFG *MMSF_CFG = (HostCmd_DS_MMSF_CFG *)&cmd->params.mmsf_cfg;
+    MMSF_CFG->action              = wlan_cpu_to_le16(action);
+    MMSF_CFG->sub_id              = wlan_cpu_to_le16(MLAN_11AX_DEBUG_MMSF_SUBID);
+
+    (void)memcpy(&MMSF_CFG->enableMMSF, enable, sizeof(MMSF_CFG->enableMMSF));
+    (void)memcpy(&MMSF_CFG->ampduDensity, Density, sizeof(MMSF_CFG->ampduDensity));
+    (void)memcpy(&MMSF_CFG->ampduMMSF, MMSF, sizeof(MMSF_CFG->ampduMMSF));
+
+    cmd->size += sizeof(HostCmd_DS_MMSF_CFG);
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    if (action == ACTION_SET)
+    {
+        return wifi_wait_for_cmdresp(NULL);
+    }
+    else
+    {
+        wifi_mmsf_cfg_t mmsf_cfg_resp;
+        mmsf_cfg_resp.enable  = enable;
+        mmsf_cfg_resp.Density = Density;
+        mmsf_cfg_resp.MMSF    = MMSF;
+        return wifi_wait_for_cmdresp(&mmsf_cfg_resp);
+    }
+}
+#endif
 #endif
 
 #ifdef CONFIG_TX_AMPDU_PROT_MODE

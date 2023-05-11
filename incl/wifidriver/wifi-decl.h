@@ -486,6 +486,15 @@ typedef PACK_START struct _txrate_setting
                            */
     t_u16 reserverd : 2;  // BIT14-BIT15
 } PACK_END txrate_setting;
+
+#ifdef CONFIG_MMSF
+typedef struct
+{
+    t_u8 *enable;
+    t_u8 *Density;
+    t_u8 *MMSF;
+} wifi_mmsf_cfg_t;
+#endif
 #endif
 
 /** Data structure for cmd txratecfg */

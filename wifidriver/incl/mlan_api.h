@@ -299,6 +299,10 @@ bool wifi_11d_is_channel_allowed(int channel);
 
 #ifdef CONFIG_11AX
 void wifi_request_get_fw_info(mlan_private *priv, mlan_fw_info *fw_info);
+
+#ifdef CONFIG_MMSF
+int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
+#endif
 #endif
 
 /**

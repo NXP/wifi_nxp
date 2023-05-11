@@ -646,6 +646,10 @@ typedef struct _mlan_ssid_bssid
 #define MLAN_11AX_TWT_TEARDOWN_SUBID 0x115
 #define MLAN_11AX_TWT_REPORT_SUBID   0x116
 #endif /* CONFIG_11AX_TWT */
+
+#ifdef CONFIG_MMSF
+#define MLAN_11AX_DEBUG_MMSF_SUBID 0x12d
+#endif
 #endif /* CONFIG_11AX */
 
 #ifdef UAP_SUPPORT

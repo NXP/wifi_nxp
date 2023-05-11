@@ -4637,6 +4637,23 @@ typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
     } param;
 } MLAN_PACK_END HostCmd_DS_TWT_CFG;
 #endif /* CONFIG_11AX_TWT */
+
+#ifdef CONFIG_MMSF
+/** Type definition of hostcmd_mmsf_cfg*/
+typedef MLAN_PACK_START struct _HostCmd_DS_MMSF_CFG
+{
+    /** 1 - set; 0 - get*/
+    t_u16 action;
+    /** sub-command id*/
+    t_u16 sub_id;
+    /** 1 - enable MMSF; 0 - disable MMSF */
+    t_u8 enableMMSF;
+    /** Density value */
+    t_u8 ampduDensity;
+    /** MMSF value */
+    t_u8 ampduMMSF;
+} MLAN_PACK_END HostCmd_DS_MMSF_CFG;
+#endif
 #endif
 
 #ifdef CONFIG_WIFI_CLOCKSYNC
@@ -7111,6 +7128,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** HostCmd_DS_TWT_CFG */
         HostCmd_DS_TWT_CFG twtcfg;
 #endif /* CONFIG_11AX_TWT  */
+#ifdef CONFIG_MMSF
+        /* HostCmd_DS_MMSF_CFG*/
+        HostCmd_DS_MMSF_CFG mmsf_cfg;
+#endif
 #endif /* CONFIG_11AX */
         /** WMM status get */
         HostCmd_DS_WMM_GET_STATUS get_wmm_status;

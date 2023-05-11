@@ -5407,6 +5407,110 @@ static void test_wlan_set_toltime(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_MMSF
+static void dump_wlan_set_mmsf_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("set mmsf:\r\n");
+    (void)PRINTF("wlan-set-mmsf <enable> <Density> <MMSF>\r\n");
+    (void)PRINTF("enable:\r\n");
+    (void)PRINTF("      0: disable\r\n");
+    (void)PRINTF("      1: enable\r\n");
+    (void)PRINTF("Density:\r\n");
+    (void)PRINTF("      Range: [0x0,0xFF]. Default value is 0x30.\r\n");
+    (void)PRINTF("      Pls enter value like this: 0x20 or 0X20\r\n");
+    (void)PRINTF("MMSF:\r\n");
+    (void)PRINTF("      Range: [0x0,0xFF]. Default value is 0x6.\r\n");
+    (void)PRINTF("      Pls enter value like this: 0x20 or 0X20\r\n");
+}
+
+static void test_wlan_set_mmsf(int argc, char **argv)
+{
+    t_u32 value;
+    int ret;
+    t_u8 enable, Density, MMSF;
+
+    if (argc < 2 || argc > 4)
+    {
+        dump_wlan_set_mmsf_usage();
+        return;
+    }
+
+    if (argc >= 2)
+    {
+        if (get_uint(argv[1], &value, strlen(argv[1])) || (value != 0 && value != 1))
+        {
+            dump_wlan_set_mmsf_usage();
+            return;
+        }
+        enable  = value & 0xFF;
+        Density = WLAN_AMPDU_DENSITY;
+        MMSF    = WLAN_AMPDU_MMSF;
+    }
+
+    if (argc >= 3)
+    {
+        if (argv[2][0] == '0' && (argv[2][1] == 'x' || argv[2][1] == 'X'))
+            value = a2hex_or_atoi(argv[2]);
+        else
+        {
+            dump_wlan_set_mmsf_usage();
+            return;
+        }
+        Density = value & 0xFF;
+    }
+
+    if (argc == 4)
+    {
+        if (argv[3][0] == '0' && (argv[3][1] == 'x' || argv[3][1] == 'X'))
+            value = a2hex_or_atoi(argv[3]);
+        else
+        {
+            dump_wlan_set_mmsf_usage();
+            return;
+        }
+        MMSF = value & 0xFF;
+    }
+
+    ret = wlan_set_mmsf(enable, Density, MMSF);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set MMSF config.\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Success to set MMSF config.\r\n");
+    }
+
+    return;
+}
+
+static void test_wlan_get_mmsf(int argc, char **argv)
+{
+    int ret;
+    t_u8 enable, Density, MMSF;
+    (void)memset(&enable, 0x0, sizeof(t_u8));
+    (void)memset(&Density, 0x0, sizeof(t_u8));
+    (void)memset(&MMSF, 0x0, sizeof(t_u8));
+
+    ret = wlan_get_mmsf(&enable, &Density, &MMSF);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to get MMSF configure.\r\n");
+    }
+    else
+    {
+        (void)PRINTF("MMSF configure:\r\n");
+        (void)PRINTF("Enable MMSF: %s\r\n", enable == 0 ? "Disable" : "Enable");
+        (void)PRINTF("Density: 0x%02x\r\n", Density);
+        (void)PRINTF("MMSF: 0x%02x\r\n", MMSF);
+    }
+
+    return;
+}
+#endif
 #endif /* CONFIG_11AX */
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
@@ -8224,6 +8328,10 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_11AX
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
+#ifdef CONFIG_MMSF
+    {"wlan-set-mmsf", "<enable> <Density> <MMSF>", test_wlan_set_mmsf},
+    {"wlan-get-mmsf", NULL, test_wlan_get_mmsf},
+#endif
 #endif
 #ifdef CONFIG_TURBO_MODE
     {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},

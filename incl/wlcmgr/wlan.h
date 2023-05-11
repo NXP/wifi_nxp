@@ -1214,6 +1214,10 @@ typedef wifi_btwt_config_t wlan_btwt_config_t;
  */
 typedef wifi_twt_report_t wlan_twt_report_t;
 #endif /* CONFIG_11AX_TWT */
+#ifdef CONFIG_MMSF
+#define WLAN_AMPDU_DENSITY 0x30
+#define WLAN_AMPDU_MMSF    0x6
+#endif
 #endif
 #ifdef CONFIG_WIFI_CLOCKSYNC
 /** Configuration for Clock Sync GPIO TSF latch
@@ -4764,6 +4768,28 @@ int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
  */
 int wlan_get_twt_report(wlan_twt_report_t *twt_report);
 #endif /* CONFIG_11AX_TWT */
+
+#ifdef CONFIG_MMSF
+/**
+ * Set 11AX AMPDU Density config.
+ * \param[in] enable     0 - Disbale MMSF;  1 - Enable MMSF
+ * \param[in] Density    ampdu Density value. Default value is 0x30.
+ * \param[in] MMSF       ampdu MMSF value. Default value is 0x6.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_mmsf(const t_u8 enable, const t_u8 Density, const t_u8 MMSF);
+
+/**
+ * Get 11AX AMPDU Density config.
+ * \param[out] enable     0 - Disbale MMSF;  1 - Enable MMSF
+ * \param[out] Density    ampdu Density value. Default value is 0x30.
+ * \param[out] MMSF       ampdu MMSF value. Default value is 0x6.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
+#endif
 #endif /* CONFIG_11AX */
 
 #ifdef CONFIG_WIFI_CLOCKSYNC

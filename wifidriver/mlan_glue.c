@@ -3882,6 +3882,30 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+#ifdef CONFIG_MMSF
+            case HostCmd_CMD_DBGS_CFG:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        wifi_mmsf_cfg_t *mmsf_cfg     = (wifi_mmsf_cfg_t *)wm_wifi.cmd_resp_priv;
+                        HostCmd_DS_MMSF_CFG *MMSF_CFG = (HostCmd_DS_MMSF_CFG *)&resp->params.mmsf_cfg;
+                        if(MMSF_CFG->action == HostCmd_ACT_GEN_GET)
+                        {
+                            (void)memcpy(mmsf_cfg->enable, &MMSF_CFG->enableMMSF, sizeof(MMSF_CFG->enableMMSF));
+                            (void)memcpy(mmsf_cfg->Density, &MMSF_CFG->ampduDensity, sizeof(MMSF_CFG->ampduDensity));
+                            (void)memcpy(mmsf_cfg->MMSF, &MMSF_CFG->ampduMMSF, sizeof(MMSF_CFG->ampduMMSF));
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+#endif
 #endif
 #if defined(CONFIG_WIFI_TX_PER_TRACK) || defined(CONFIG_TX_RX_HISTOGRAM)
             case HostCmd_CMD_TX_RX_PKT_STATS:

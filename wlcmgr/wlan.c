@@ -10615,6 +10615,18 @@ int wlan_set_tol_time(const t_u32 tol_time)
 
     return wifi_set_tol_time(tol_time);
 }
+
+#ifdef CONFIG_MMSF
+int wlan_set_mmsf(const t_u8 enable, const t_u8 Density, const t_u8 MMSF)
+{
+    return wifi_mmsf_cfg(ACTION_SET, (t_u8 *)&enable, (t_u8 *)&Density, (t_u8 *)&MMSF);
+}
+
+int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
+{
+    return wifi_mmsf_cfg(ACTION_GET, enable, Density, MMSF);
+}
+#endif
 #endif
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
