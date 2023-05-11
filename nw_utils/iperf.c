@@ -604,7 +604,7 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session = lwiperf_start_udp_client(netif_ip_addr6(netif_default, 0), port, &server_address,
+                ctx->iperf_session = lwiperf_start_udp_client(&bind_address, port, &server_address,
                                                               port, ctx->client_type, amount, buffer_len,
                                                               IPERF_UDP_CLIENT_RATE * udp_rate_factor,
 #ifdef CONFIG_WMM
@@ -1122,15 +1122,15 @@ static void cmd_iperf(int argc, char **argv)
 #endif
         ((info.dserver != 0U) && (info.server == 0U || info.udp == 0U))
 #ifdef CONFIG_IPV6
-        || ((info.ipv6 != 0U) && (info.bind != 0U))
+        || ((info.ipv6 != 0U) && (info.client != 0) && ((info.bind == 0U) || (info.bhost == 0)))
 #endif
     )
     {
         (void)PRINTF("Incorrect usage\r\n");
 #ifdef CONFIG_IPV6
-        if ((info.ipv6 != 0U) && (info.bind != 0U))
+        if ((info.ipv6 != 0U) && (info.client != 0U) && ((info.bind == 0U) || (info.bhost == 0)))
         {
-            (void)PRINTF("IPv6: bind to host not allowed\r\n");
+            (void)PRINTF("IPv6: For client please specify local interface ip address using -B option\r\n");
         }
         else if ((info.ipv6 != 0U) && (IP_IS_V4(&server_address)))
         {
