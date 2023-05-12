@@ -7326,19 +7326,6 @@ int wlan_connect(char *name)
             wlcm_d("got the scan lock (connect scan)");
             wlan.is_scan_lock = 1;
 
-#ifdef CONFIG_ECSA
-            /* If the channel of the Ext-ap to be connected is inconsistent with the uap channel,
-             * FW will switch channel first ,then connect Ext-ap, so driver need to block traffic now.
-             */
-            if (is_uap_started())
-            {
-                if (wlan.networks[i].channel &&
-                    (wlan.networks[i].channel != wlan.networks[wlan.cur_uap_network_idx].channel))
-                {
-                    set_ecsa_block_tx_flag(true);
-                }
-            }
-#endif
             return send_user_request(CM_STA_USER_REQUEST_CONNECT, i);
         }
     }
