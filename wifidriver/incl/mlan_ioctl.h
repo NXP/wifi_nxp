@@ -2235,7 +2235,7 @@ typedef struct _mlan_data_rate
     t_u32 tx_mcs_index;
     t_u32 rx_mcs_index;
 
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     /** NSS */
     t_u32 tx_nss;
     t_u32 rx_nss;

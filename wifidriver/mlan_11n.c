@@ -1477,7 +1477,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         }
 #endif
 
-#ifdef CONFIG_11AX_TWT
+#ifdef CONFIG_11AX
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
         pext_cap->ext_cap.TWTResp = 0;
 #endif

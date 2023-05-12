@@ -37,12 +37,8 @@
 #endif
 
 #ifdef CONFIG_WIFI_CAPA
-#ifdef CONFIG_11AX
-#define WIFI_SUPPORT_11AX (1 << 3)
-#endif
-#ifdef CONFIG_11AC
-#define WIFI_SUPPORT_11AC (1 << 2)
-#endif
+#define WIFI_SUPPORT_11AX   (1 << 3)
+#define WIFI_SUPPORT_11AC   (1 << 2)
 #define WIFI_SUPPORT_11N    (1 << 1)
 #define WIFI_SUPPORT_LEGACY (1 << 0)
 #endif
@@ -531,7 +527,7 @@ typedef PACK_START struct _wifi_data_rate_t
     t_u32 tx_mcs_index;
     /** MCS index */
     t_u32 rx_mcs_index;
-#ifdef CONFIG_11AC
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     /** NSS */
     t_u32 tx_nss;
     /** NSS */

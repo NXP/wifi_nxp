@@ -394,7 +394,7 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
             else
             { /* Do Nothing */
             }
-#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#ifdef CONFIG_11AC
             if ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT)
 #ifdef CONFIG_11AX
                 || (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE)
@@ -993,7 +993,6 @@ void print_txpwrlimit(wlan_txpwrlimit_t *txpwrlimit)
     (void)PRINTF("\r\n");
 }
 
-
 static void print_chanlist(wlan_chanlist_t chanlist)
 {
     unsigned char i;
@@ -1075,7 +1074,7 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
     {
         print_txpwrlimit(txpwrlimit);
     }
-	os_mem_free(txpwrlimit);
+    os_mem_free(txpwrlimit);
 }
 
 static void test_wlan_set_txpwrlimit(int argc, char **argv)
@@ -1106,7 +1105,7 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
         {
 #endif
             txpwrlimit->subband = SubBand_2_4_GHz;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 2G TX PWR Limit configuration\r\n");
@@ -1117,7 +1116,7 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
             }
 #ifdef CONFIG_5GHz_SUPPORT
             txpwrlimit->subband = SubBand_5_GHz_0;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 5G SubBand0 TX PWR Limit configuration\r\n");
@@ -1127,7 +1126,7 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
                 print_txpwrlimit(txpwrlimit);
             }
             txpwrlimit->subband = SubBand_5_GHz_1;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 5G SubBand1 TX PWR Limit configuration\r\n");
@@ -1137,7 +1136,7 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
                 print_txpwrlimit(txpwrlimit);
             }
             txpwrlimit->subband = SubBand_5_GHz_2;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 5G SubBand2 TX PWR Limit configuration\r\n");
@@ -1149,7 +1148,7 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
         }
 #endif
     }
-    os_mem_free(txpwrlimit);	
+    os_mem_free(txpwrlimit);
 }
 
 static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
@@ -1180,7 +1179,7 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
         {
 #endif
             txpwrlimit->subband = SubBand_2_4_GHz;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 2G TX PWR Limit configuration\r\n");
@@ -1191,7 +1190,7 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
             }
 #ifdef CONFIG_5GHz_SUPPORT
             txpwrlimit->subband = SubBand_5_GHz_0;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 5G SubBand0 TX PWR Limit configuration\r\n");
@@ -1201,7 +1200,7 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
                 print_txpwrlimit(txpwrlimit);
             }
             txpwrlimit->subband = SubBand_5_GHz_1;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 5G SubBand1 TX PWR Limit configuration\r\n");
@@ -1211,7 +1210,7 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
                 print_txpwrlimit(txpwrlimit);
             }
             txpwrlimit->subband = SubBand_5_GHz_2;
-            rv                 = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
+            rv                  = wlan_get_txpwrlimit(txpwrlimit->subband, txpwrlimit);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to get 5G SubBand2 TX PWR Limit configuration\r\n");

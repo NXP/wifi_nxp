@@ -382,11 +382,13 @@ static void print_network(struct wlan_network *network)
         {
             if (!enable_11ax)
             {
+#ifdef CONFIG_11AC
                 if (enable_11ac)
                 {
                     (void)PRINTF("\twifi capability: 11ac\r\n");
                 }
                 else
+#endif
                 {
                     (void)PRINTF("\twifi capability: 11n\r\n");
                 }
@@ -5496,8 +5498,9 @@ static void dump_wlan_subscribe_event_usage(void)
         "    <type>: 0:rssi_low, 1:rssi_high 2:snr_low, 3:snr_high, 4:max_fail, 5:beacon_missed, 6:data_rssi_low, "
         "7:data_rssi_high, 8:data_snr_low, 9:data_snr_high, 10:link_quality, 11:pre_beacon_lost\r\n");
     (void)PRINTF("    <value>  : when action is set, specific int type value\r\n");
-    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq, when the freq = 0, "
-		"the event will trigger one time, and the freq = 1, the event will continually trigger.\r\n");
+    (void)PRINTF(
+        "    <freq>  : when action is set, specific unsigned int type freq, when the freq = 0, "
+        "the event will trigger one time, and the freq = 1, the event will continually trigger.\r\n");
     (void)PRINTF("For example:\r\n");
     (void)PRINTF(
         "    wlan-subscribe-event set 0 50 0 : Subscribe the rssi low event, threshold is 50, freq is 0\r\n"
@@ -6806,7 +6809,7 @@ static void dump_wlan_set_multiple_dtim_usage(void)
     (void)PRINTF("    This command is to set Next Wakeup RX Beacon Time\r\n");
     (void)PRINTF("    Will take effect after enter power save mode by command wlan-ieee-ps 1\r\n");
     (void)PRINTF("    Next Wakeup RX Beacon Time = DTIM * BeaconPeriod * multiple_dtim\r\n");
-    
+
     (void)PRINTF("    wlan-set-multiple-dtim <value>\r\n");
     (void)PRINTF("        <value> Value of multiple dtim, range[1,20]\r\n");
 }
@@ -6824,7 +6827,7 @@ static void test_wlan_set_multiple_dtim(int argc, char **argv)
 
     multiple_dtim = (t_u8)atoi(argv[1]);
 
-    if(multiple_dtim < 1 || multiple_dtim > 20)
+    if (multiple_dtim < 1 || multiple_dtim > 20)
     {
         (void)PRINTF("Error: value of multiple dtim is out of range\r\n");
         dump_wlan_set_multiple_dtim_usage();
@@ -7098,8 +7101,9 @@ static void dump_wlan_subscribe_event_usage(void)
         "    <type>: 0:rssi_low, 1:rssi_high 2:snr_low, 3:snr_high, 4:max_fail, 5:beacon_missed, 6:data_rssi_low, "
         "7:data_rssi_high, 8:data_snr_low, 9:data_snr_high, 10:link_quality, 11:pre_beacon_lost\r\n");
     (void)PRINTF("    <value>  : when action is set, specific int type value\r\n");
-    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq, when the freq = 0, "
-		"the event will trigger one time, and the freq = 1, the event will continually trigger.\r\n");
+    (void)PRINTF(
+        "    <freq>  : when action is set, specific unsigned int type freq, when the freq = 0, "
+        "the event will trigger one time, and the freq = 1, the event will continually trigger.\r\n");
     (void)PRINTF("For example:\r\n");
     (void)PRINTF(
         "    wlan-subscribe-event set 0 50 0 : Subscribe the rssi low event, threshold is 50, freq is 0\r\n"
@@ -7910,12 +7914,12 @@ static void test_wlan_get_turbo_mode(int argc, char **argv)
     if (string_equal("STA", argv[1]))
     {
         bss_type = MLAN_BSS_TYPE_STA;
-        ret = wlan_get_turbo_mode(&mode);
+        ret      = wlan_get_turbo_mode(&mode);
     }
     else if (string_equal("UAP", argv[1]))
     {
         bss_type = MLAN_BSS_TYPE_UAP;
-        ret = wlan_get_uap_turbo_mode(&mode);
+        ret      = wlan_get_uap_turbo_mode(&mode);
     }
     else
     {
@@ -7975,7 +7979,7 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
     }
     mode = value & 0xFF;
 
-    if(bss_type == MLAN_BSS_TYPE_STA)
+    if (bss_type == MLAN_BSS_TYPE_STA)
     {
         ret = wlan_set_turbo_mode(mode);
     }
