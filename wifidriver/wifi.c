@@ -3278,7 +3278,7 @@ static int wifi_xmit_wmm_ac_pkts_enh()
         if (priv->tx_pause == MTRUE)
             continue;
 
-        for (ac = WMM_AC_VO; ac >= WMM_AC_BE; ac--)
+        for (ac = WMM_AC_VO; ac >= 0; ac--)
         {
             tid_ptr = &priv->wmm.tid_tbl_ptr[ac];
 
