@@ -1840,6 +1840,10 @@ static int do_start(struct wlan_network *network)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
+        if (network->bssid_specific == 0U)
+        {
+            (void)memcpy(&network->bssid[0], &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
+        }
 #ifdef SD8801
         wpa_supp_set_ap_bw(netif, 1);
 #endif
