@@ -716,7 +716,7 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 #ifdef SD8801
     priv->rxpd_htinfo = rxpd->ht_info;
 #else
-    priv->rxpd_rate_info   = rxpd->rate_info;
+    priv->rxpd_rate_info = rxpd->rate_info;
 #endif
 }
 
@@ -778,10 +778,10 @@ void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
 
 mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
 #ifdef CONFIG_WMM
-        ,
-        t_u8 tid
+                                          ,
+                                          t_u8 tid
 #endif
-        )
+)
 {
     int ret;
     struct uap_ampdu_stat_t *ampdu_info;
@@ -792,11 +792,11 @@ mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
         {
             ret = wlan_send_addba(mlan_adap->priv[1],
 #ifdef CONFIG_WMM
-                    tid,
+                                  tid,
 #else
-                    0,
+                                  0,
 #endif
-                    addr);
+                                  addr);
             if (ret != 0)
             {
                 wifi_d("uap failed to send addba req");
@@ -961,9 +961,9 @@ static bool wlan_is_ampdu_allowed(mlan_private *priv, int tid)
 // Only Enable AMPDU for station interface
 mlan_status wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-        t_u8 tid
+    t_u8 tid
 #endif
-        )
+)
 {
     int ret;
 #ifdef CONFIG_WMM
@@ -2708,34 +2708,47 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
 #ifdef CONFIG_WPA_SUPP
                         nxp_wifi_acs_params acs_params;
+                        t_u8 chan_offset;
+
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
                         wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", acs_scan->bandcfg, acs_scan->chan);
 
                         memset(&acs_params, 0, sizeof(nxp_wifi_acs_params));
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
 
-                        if (acs_scan->bandcfg.chan2Offset == 1)
+                        chan_offset = wifi_get_sec_channel_offset(acs_scan->chan);
+                        if (chan_offset == SEC_CHAN_ABOVE)
                         {
-                            acs_params.sec_freq = channel_to_frequency(acs_scan->chan + 1, acs_scan->bandcfg.chanBand);
+                            acs_params.sec_freq = acs_params.pri_freq + 20;
                         }
-                        else if (acs_scan->bandcfg.chan2Offset == 3)
+                        else if (chan_offset == SEC_CHAN_BELOW)
                         {
-                            acs_params.sec_freq = channel_to_frequency(acs_scan->chan - 1, acs_scan->bandcfg.chanBand);
+                            acs_params.sec_freq = acs_params.pri_freq - 20;
+                        }
+                        else
+                        {
+                            acs_params.sec_freq = acs_params.pri_freq;
                         }
 
-                        if (acs_scan->bandcfg.chanWidth == 0)
+#ifdef CONFIG_5GHz_SUPPORT
+                        if (acs_scan->chan > MAX_CHANNELS_BG)
                         {
-                            acs_params.ch_width = 20;
+#ifdef CONFIG_11AC
+                            if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
+                            {
+                                acs_params.ch_width = 80;
+                            }
+#endif
                         }
-                        else if (acs_scan->bandcfg.chanWidth == 2)
+#endif
+                        if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
                         {
                             acs_params.ch_width = 40;
                         }
-                        else if (acs_scan->bandcfg.chanWidth == 3)
+                        else
                         {
-                            acs_params.ch_width = 80;
+                            acs_params.ch_width = 20;
                         }
-
                         acs_params.hw_mode = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;
 
                         if (wm_wifi.supp_if_callbk_fns->acs_channel_sel_callbk_fn)
@@ -4899,7 +4912,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             HEXDUMP("vdll data", msg->data, evt->length);
 #endif
             /* Event as per event sent by firmware is 32 bits/t_u32 so adding t_u32 */
-            wlan_process_vdll_event(pmpriv, (t_u8*)msg->data + 2 * sizeof(t_u32));
+            wlan_process_vdll_event(pmpriv, (t_u8 *)msg->data + 2 * sizeof(t_u32));
             break;
 #endif
         case EVENT_LINK_LOST:

@@ -357,7 +357,7 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             wifi_get_value1_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, &dev_value1);
             break;
         case HostCmd_CMD_802_11_MAC_ADDRESS:
-            if(bss_type == MLAN_BSS_TYPE_UAP)
+            if (bss_type == MLAN_BSS_TYPE_UAP)
             {
                 wifi_get_mac_address_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_mac_addr_uap);
             }
@@ -392,10 +392,8 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_ED_MAC_MODE:
         case HostCmd_CMD_CHANNEL_TRPC_CONFIG:
             break;
-#if (defined(SD9097) || defined(SD9098))
         case HostCmd_CMD_RECONFIGURE_TX_BUFF:
             break;
-#endif
 #ifdef CONFIG_EXTERNAL_BLE_COEX
         case HostCmd_CMD_ROBUST_COEX:
             break;
@@ -523,8 +521,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
             }
 
             msg.event = (uint16_t)upld_type;
-            (void)memcpy((void *)msg.data, (const t_u8 *)pmbuf + INTF_HEADER_LEN,
-			    sdiopkt->size - INTF_HEADER_LEN);
+            (void)memcpy((void *)msg.data, (const t_u8 *)pmbuf + INTF_HEADER_LEN, sdiopkt->size - INTF_HEADER_LEN);
             HEXDUMP("Event", (t_u8 *)msg.data, sdiopkt->size - 4);
             (void)wlan_handle_event_packet(&msg);
         }
@@ -665,7 +662,7 @@ static void _wlan_set_cal_data(void)
 
 void wifi_prepare_reconfigure_tx_buf_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
 
-static void _wlan_reconfigure_tx_buffers(void)
+static void wlan_reconfigure_tx_buffers(void)
 {
     t_u32 tx_blocks = 4, buflen = MLAN_SDIO_BLOCK_SIZE;
     uint32_t resp;
@@ -732,26 +729,6 @@ static void wlan_get_hw_spec(void)
     (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
 #endif
 }
-
-#if (defined(SD9097) || defined(SD9098))
-static int wlan_reconfigure_tx_buf()
-{
-    uint32_t tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
-    uint32_t resp;
-    (void)memset(outbuf, 0, buflen);
-    /* sdiopkt = outbuf */
-    wifi_prepare_reconfigure_tx_buf_cmd(&sdiopkt->hostcmd, (t_u16)wlan_get_next_seq_num());
-
-    sdiopkt->pkttype = MLAN_TYPE_CMD;
-    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
-
-    last_cmd_sent = HostCmd_CMD_RECONFIGURE_TX_BUFF;
-
-    sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
-
-    return true;
-}
-#endif
 
 static void wlan_get_mac_addr_sta(void)
 {
@@ -1069,17 +1046,7 @@ static void wlan_fw_init_cfg(void)
         }
     }
 #endif
-#ifdef IW61x
-    /* Tx buffer reconfigure command is needed for IW61x chipset only.
-     */
-    _wlan_reconfigure_tx_buffers();
 
-    while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
-    {
-        os_thread_sleep(os_msec_to_ticks(10));
-        wlan_process_int_status(mlan_adap);
-    }
-#endif
     if (cal_data_valid)
     {
         (void)PRINTF("Setting up new cal data\r\n");
@@ -1092,16 +1059,19 @@ static void wlan_fw_init_cfg(void)
             os_thread_sleep(os_msec_to_ticks(10));
             (void)wlan_process_int_status(mlan_adap);
         }
-        /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
-         * So we need to send reconfigure command. This can be removed if fix is added in firmware.
-         */
-        _wlan_reconfigure_tx_buffers();
+    }
 
-        while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
-        {
-            os_thread_sleep(os_msec_to_ticks(10));
-            (void)wlan_process_int_status(mlan_adap);
-        }
+    /* When cal data set command is sent, fimrware looses alignment of SDIO Tx buffers.
+     * So we need to send reconfigure command. This can be removed if fix is added in firmware.
+     */
+    wifi_io_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
+
+    wlan_reconfigure_tx_buffers();
+
+    while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
+    {
+        os_thread_sleep(os_msec_to_ticks(10));
+        wlan_process_int_status(mlan_adap);
     }
 
     if (mac_addr_valid)
@@ -1139,18 +1109,6 @@ static void wlan_fw_init_cfg(void)
         (void)wlan_process_int_status(mlan_adap);
     }
 
-#if (defined(SD9097) || defined(SD9098))
-    wifi_io_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
-
-    wlan_reconfigure_tx_buf();
-
-    while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
-    {
-        os_thread_sleep(os_msec_to_ticks(10));
-        wlan_process_int_status(mlan_adap);
-    }
-#endif
-
     wlan_get_value_1();
 
     while (last_resp_rcvd != HostCmd_CMD_MAC_REG_ACCESS)
@@ -1172,7 +1130,7 @@ static void wlan_fw_init_cfg(void)
     wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
     wlan_get_mac_addr_sta();
-    
+
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
         os_thread_sleep(os_msec_to_ticks(10));

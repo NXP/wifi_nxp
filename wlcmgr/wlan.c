@@ -4460,17 +4460,6 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     }
 
     wlan_uap_set_httxcfg(httxcfg);
-    wlcm_d("HT TX configuration selected: %x", httxcfg);
-    /*Enabling 20/40MHz enable(bit 17)
-     * disabling 40MHz intolerance(bit 8)
-     * enabling Short GI in 40 Mhz(bit 24)
-     * and 20MHz(bit 23)*/
-    ret = wlan_set_htcapinfo(0x1820000); // TODO need to add defines
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_e("Failed to set HT Cap configuration");
-        return;
-    }
 #endif
 
 #ifdef CONFIG_11K

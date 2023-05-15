@@ -497,31 +497,42 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define MAX_SUPPORT_AMSDU_SIZE 4096
 #endif
 #endif
+
+/** Max AMSDU size support */
+#define HWSPEC_MAX_AMSDU_SUPP MBIT(31)
 /** Greenfield support */
 #define HWSPEC_GREENFIELD_SUPP MBIT(29)
+/** SM Power Save enable */
+#define CAPINFO_SMPS_ENABLE MBIT(27)
 /** RX STBC support */
 #define HWSPEC_RXSTBC_SUPP MBIT(26)
 /** ShortGI @ 40Mhz support */
 #define HWSPEC_SHORTGI40_SUPP MBIT(24)
 /** ShortGI @ 20Mhz support */
 #define HWSPEC_SHORTGI20_SUPP MBIT(23)
+/** RX LDPC support */
+#define HWSPEC_LDPC_SUPP MBIT(22)
 /** Channel width 40Mhz support */
 #define HWSPEC_CHANBW40_SUPP MBIT(17)
+/** SM Power Save mode */
+#define CAPINFO_SMPS_MODE MBIT(9)
 /** 40Mhz intolarent enable */
 #define CAPINFO_40MHZ_INTOLARENT MBIT(8)
 
 /** Default 11n capability mask for 2.4GHz */
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
 #define DEFAULT_11N_CAP_MASK_BG \
-    (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP)
+    (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_CHANBW40_SUPP | HWSPEC_LDPC_SUPP)
 #elif defined(SD8801) || defined(RW610)
-#define DEFAULT_11N_CAP_MASK_BG (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP)
+#define DEFAULT_11N_CAP_MASK_BG (HWSPEC_SHORTGI20_SUPP | HWSPEC_RXSTBC_SUPP | HWSPEC_LDPC_SUPP)
 #endif
 /** Default 11n capability mask for 5GHz */
-#define DEFAULT_11N_CAP_MASK_A \
-    (HWSPEC_CHANBW40_SUPP | HWSPEC_SHORTGI20_SUPP | HWSPEC_SHORTGI40_SUPP | HWSPEC_RXSTBC_SUPP)
+#define DEFAULT_11N_CAP_MASK_A                                                                      \
+    (HWSPEC_CHANBW40_SUPP | HWSPEC_SHORTGI20_SUPP | HWSPEC_MAX_AMSDU_SUPP | HWSPEC_SHORTGI40_SUPP | \
+     HWSPEC_RXSTBC_SUPP | HWSPEC_LDPC_SUPP)
+
 /** Bits to ignore in hw_dev_cap as these bits are set in get_hw_spec */
-#define IGN_HW_DEV_CAP (CAPINFO_40MHZ_INTOLARENT)
+#define IGN_HW_DEV_CAP (CAPINFO_40MHZ_INTOLARENT | (CAPINFO_SMPS_ENABLE | CAPINFO_SMPS_MODE))
 
 /** HW_SPEC FwCapInfo : If FW support RSN Replay Detection */
 #define ISSUPP_RSN_REPLAY_DETECTION(FwCapInfo) (FwCapInfo & MBIT(28))
@@ -7235,7 +7246,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG
-		HostCmd_DS_RX_ABORT_CFG rx_abort_cfg;
+        HostCmd_DS_RX_ABORT_CFG rx_abort_cfg;
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG_EXT
@@ -7243,7 +7254,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 
 #ifdef CONFIG_CCK_DESENSE_CFG
-		HostCmd_DS_CCK_DESENSE_CFG cck_desense_cfg;
+        HostCmd_DS_CCK_DESENSE_CFG cck_desense_cfg;
 #endif
 
 #ifdef CONFIG_FW_VDLL

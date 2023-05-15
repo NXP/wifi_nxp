@@ -2218,7 +2218,7 @@ mlan_status wifi_set_get_sys_config(mlan_private *priv, t_u16 action, mlan_uap_b
     ioctl_buf.pbuf = (t_u8 *)&bss;
 
     ret = wifi_uap_prepare_and_send_cmd(priv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, &ioctl_buf, NULL,
-                                         MLAN_BSS_TYPE_UAP, NULL);
+                                        MLAN_BSS_TYPE_UAP, NULL);
     if (ret != WM_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
@@ -2446,7 +2446,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
             case VHT_CAPABILITY:
             case VHT_OPERATION:
 #endif
-#ifdef CONFIG_HOST_MLME
+#ifdef UAP_HOST_MLME
                 if ((out_len + length + 2) < (int)ie_out_len)
                 {
                     __memcpy(priv, ie_out + out_len, pos, length + 2);
@@ -3407,6 +3407,11 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             }
 
             sys_config->ampdu_param = 3;
+
+            /* Set MCS32 with 40MHz support */
+            if ((bandcfg.chanWidth == CHAN_BW_40MHZ) || (bandcfg.chanWidth == CHAN_BW_80MHZ))
+                SETHT_MCS32(supported_mcs_set);
+
             (void)memcpy((void *)sys_config->supported_mcs_set, (const void *)supported_mcs_set,
                          sizeof(sys_config->supported_mcs_set));
         }
@@ -4030,7 +4035,7 @@ static mlan_status wifi_uap_sta_info(mlan_private *priv, t_u16 action, mlan_ds_s
     ioctl_buf.pbuf = (t_u8 *)&bss;
 
     ret = wifi_uap_prepare_and_send_cmd(priv, HostCmd_CMD_ADD_NEW_STATION, action, 0, &ioctl_buf, NULL,
-                                         MLAN_BSS_TYPE_UAP, NULL);
+                                        MLAN_BSS_TYPE_UAP, NULL);
     if (ret != WM_SUCCESS)
     {
         return MLAN_STATUS_FAILURE;
