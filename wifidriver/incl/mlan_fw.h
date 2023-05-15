@@ -989,6 +989,14 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** TLV type : Action frame */
 #define TLV_TYPE_IEEE_ACTION_FRAME (PROPRIETARY_TLV_BASE_ID + 0x8c) // 0x018c
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#define FTM_SESSION_CFG_LCI_TLV_ID            (PROPRIETARY_TLV_BASE_ID + 270) /* 0x20e */
+#define FTM_SESSION_CFG_LOCATION_CIVIC_TLV_ID (PROPRIETARY_TLV_BASE_ID + 271) /* 0x20f */
+#define FTM_SESSION_CFG_INITATOR_TLV_ID       (PROPRIETARY_TLV_BASE_ID + 273) /* 0x211 */
+#define FTM_NTB_RANGING_CFG_TLV_ID            (PROPRIETARY_TLV_BASE_ID + 343) /* 0x257 */
+#define FTM_TB_RANGING_CFG_TLV_ID             (PROPRIETARY_TLV_BASE_ID + 344) /* 0x258 */
+#endif
+
 #ifdef SCAN_CHANNEL_GAP
 /** TLV type : SCAN channel gap */
 #define TLV_TYPE_SCAN_CHANNEL_GAP              \
@@ -1409,6 +1417,12 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_ACT_MAC_DYNAMIC_BW MBIT(17)
 #endif
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+/** Host Command ID : FTM session config and control */
+#define HostCmd_CMD_FTM_SESSION_CFG  0x024d
+#define HostCmd_CMD_FTM_SESSION_CTRL 0x024e
+#endif
+
 /* Define action or option for HostCmd_CMD_802_11_SCAN */
 /** Scan type : BSS */
 #define HostCmd_BSS_MODE_BSS 0x0001
@@ -1675,6 +1689,16 @@ typedef enum _ENH_PS_MODES
 #define EVENT_FW_DEBUG_INFO 0x00000063
 #endif
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#define EVENT_WLS_FTM_COMPLETE 0x00000086
+
+#define WLS_SUB_EVENT_FTM_COMPLETE       0
+#define WLS_SUB_EVENT_RADIO_RECEIVED     1
+#define WLS_SUB_EVENT_RADIO_RPT_RECEIVED 2
+#define WLS_SUB_EVENT_ANQP_RESP_RECEIVED 3
+
+#endif
+
 #ifdef CONFIG_11K
 #define EVENT_NLIST_REPORT          0x00000079
 #define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
@@ -1714,6 +1738,10 @@ typedef enum _ENH_PS_MODES
 #endif
 
 #define EVENT_TX_STATUS_REPORT 0x00000074
+
+#if defined(CONFIG_CSI) || defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#define EVENT_CSI 0x0000008D
+#endif
 
 /** Event ID: EV_SMC_GENERIC */
 #define EVENT_EV_SMC_GENERIC 0x00000077
@@ -6930,6 +6958,217 @@ typedef MLAN_PACK_START struct _MrvlIETypes_mutli_chan_info_t
 } MLAN_PACK_END MrvlIEtypes_multi_chan_info_t;
 #endif
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+/**Structure for FTM complete subevent*/
+typedef MLAN_PACK_START struct _wls_subevent_ftm_complete
+{
+    /** BSS Number */
+    t_u8 bssNum;
+    /** BSS Type */
+    t_u8 bssType;
+    /** MAC address of the responder */
+    t_u8 mac[MLAN_MAC_ADDR_LENGTH];
+    /** Average RTT */
+    t_u32 avg_rtt;
+    /** Average Clock offset */
+    t_u32 avg_clk_offset;
+    /** Measure start timestamp */
+    t_u32 meas_start_tsf;
+} MLAN_PACK_END wls_subevent_ftm_complete_t;
+
+/** Structure for FTM events*/
+typedef MLAN_PACK_START struct _wls_event_t
+{
+    /* No of bytes in packet including this field */
+    t_u16 length;
+    /* Type: Event (3) */
+    t_u16 type;
+    /** Event ID */
+    t_u16 event_id;
+    /** BSS index number for multiple BSS support */
+    t_u8 bss_index;
+    /** BSS type */
+    t_u8 bss_type;
+    /** sub event id */
+    t_u8 sub_event_id;
+    union
+    {
+        /** FTM Complete Sub event*/
+        wls_subevent_ftm_complete_t ftm_complete;
+    } e;
+} MLAN_PACK_END wls_event_t;
+
+/** Structure of FTM_SESSION_CFG_NTB_RANGING / FTM_SESSION_CFG_TB_RANGING TLV data*/
+typedef MLAN_PACK_START struct _ranging_cfg
+{
+    /** Indicates the channel BW for session*/
+    /*0: HE20, 1: HE40, 2: HE80, 3: HE80+80, 4: HE160, 5:HE160_SRF*/
+    t_u8 format_bw;
+    /** indicates for bandwidths less than or equal to 80 MHz the maximum number of space-time streams to be used in
+     * DL/UL NDP frames in the session*/
+    t_u8 max_i2r_sts_upto80;
+    /**indicates for bandwidths less than or equal to 80 MHz the maximum number of space-time streams to be used in
+     * DL/UL NDP frames in the session*/
+    t_u8 max_r2i_sts_upto80;
+    /**Specify measurement freq in Hz to calculate measurement interval*/
+    t_u8 az_measurement_freq;
+    /**Indicates the number of measurements to be done for session*/
+    t_u8 az_number_of_measurements;
+    /** Initator lmr feedback */
+    t_u8 i2r_lmr_feedback;
+    /**Include location civic request (Expect location civic from responder)*/
+    t_u8 civic_req;
+    /**Include LCI request (Expect LCI info from responder)*/
+    t_u8 lci_req;
+} MLAN_PACK_END ranging_cfg_t;
+
+/** Structure of FTM_SESSION_CFG TLV data*/
+typedef MLAN_PACK_START struct _ftm_session_cfg
+{
+    /** Indicates how many burst instances are requested for the FTM session*/
+    t_u8 burst_exponent;
+    /** Indicates the duration of a burst instance*/
+    t_u8 burst_duration;
+    /**Minimum time between consecutive FTM frames*/
+    t_u8 min_delta_FTM;
+    /**ASAP/non-ASAP casel*/
+    t_u8 is_ASAP;
+    /**Number of FTMs per burst*/
+    t_u8 per_burst_FTM;
+    /**FTM channel spacing: HT20/HT40/VHT80/... */
+    t_u8 channel_spacing;
+    /**Indicates the interval between two consecutive burst instances*/
+    t_u16 burst_period;
+} MLAN_PACK_END ftm_session_cfg_t;
+
+/** Structure for FTM_SESSION_CFG_LOCATION_CIVIC TLV data*/
+typedef MLAN_PACK_START struct _civic_loc_cfg
+{
+    /**Civic location type*/
+    t_u8 civic_location_type;
+    /**Country code*/
+    t_u16 country_code;
+    /**Civic address type*/
+    t_u8 civic_address_type;
+    /**Civic address length*/
+    t_u8 civic_address_length;
+    /**Civic Address*/
+    t_u8 civic_address[256];
+} MLAN_PACK_END civic_loc_cfg_t;
+
+/** Structure for FTM_SESSION_CFG_LCI TLV data*/
+typedef MLAN_PACK_START struct _lci_cfg
+{
+    /** known longitude*/
+    double longitude;
+    /** known Latitude*/
+    double latitude;
+    /** known altitude*/
+    double altitude;
+    /** known Latitude uncertainty*/
+    t_u8 lat_unc;
+    /** known Longitude uncertainty*/
+    t_u8 long_unc;
+    /** Known Altitude uncertainty*/
+    t_u8 alt_unc;
+    /** 1 word for additional Z information */
+    t_u32 z_info;
+} MLAN_PACK_END lci_cfg_t;
+
+/** Structure for FTM_SESSION_CFG_NTB_RANGING TLV*/
+typedef MLAN_PACK_START struct _ranging_cfg_tlv
+{
+    /** Type*/
+    t_u16 type;
+    /** Length*/
+    t_u16 len;
+    /** Value*/
+    ranging_cfg_t val;
+} MLAN_PACK_END ranging_cfg_tlv_t;
+
+/** Structure for FTM_SESSION_CFG  TLV*/
+typedef MLAN_PACK_START struct _ftm_session_cfg_tlv
+{
+    /** Type*/
+    t_u16 type;
+    /** Length*/
+    t_u16 len;
+    /** Value*/
+    ftm_session_cfg_t val;
+    t_u8 civic_req;
+    t_u8 lci_req;
+} MLAN_PACK_END ftm_session_cfg_tlv_t;
+
+/** Structure for FTM_SESSION_CFG_LOCATION_CIVIC TLV*/
+typedef MLAN_PACK_START struct _civic_loc_tlv
+{
+    /** Type*/
+    t_u16 type;
+    /** Length*/
+    t_u16 len;
+    /** Value*/
+    civic_loc_cfg_t val;
+} MLAN_PACK_END civic_loc_tlv_t;
+
+/** Structure for FTM_SESSION_CFG_LCI TLV*/
+typedef MLAN_PACK_START struct _lci_tlv
+{
+    /** Type*/
+    t_u16 type;
+    /** Length*/
+    t_u16 len;
+    /** Value*/
+    lci_cfg_t val;
+} MLAN_PACK_END lci_tlv_t;
+
+/** Structure for DOT11MC FTM_SESSION_CFG */
+typedef MLAN_PACK_START struct _dot11mc_ftm_cfg
+{
+    /** FTM session cfg*/
+    ftm_session_cfg_tlv_t sess_tlv;
+    /** Location Request cfg*/
+    lci_tlv_t lci_tlv;
+    /** Civic location cfg*/
+    civic_loc_tlv_t civic_tlv;
+
+} MLAN_PACK_END dot11mc_ftm_cfg_t;
+
+/** Structure for DOT11AZ FTM_SESSION_CFG */
+typedef MLAN_PACK_START struct _dot11az_ftmcfg_ntb_t
+{
+    /** NTB session cfg */
+    ranging_cfg_tlv_t range_tlv;
+} MLAN_PACK_END dot11az_ftm_cfg_t;
+
+/** Type definition for hostcmd_ftm_session_cfg */
+typedef MLAN_PACK_START struct _HostCmd_FTM_SESSION_CFG
+{
+    /** 0:Get, 1:Set */
+    t_u16 action;
+    /** FTM_SESSION_CFG_TLVs*/
+    union
+    {
+        /**11az cfg*/
+        dot11az_ftm_cfg_t cfg_11az;
+        /** 11mc cfg*/
+        dot11mc_ftm_cfg_t cfg_11mc;
+    } tlv;
+} MLAN_PACK_END HostCmd_FTM_SESSION_CFG;
+
+/** Type definition for hostcmd_ftm_session_ctrl */
+typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
+{
+    /** 0: Not used, 1: Start, 2: Stop*/
+    t_u16 action;
+    /*FTM for ranging*/
+    t_u8 for_ranging;
+    /** Mac address of the peer with whom FTM session is required*/
+    t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
+    /** Channel on which FTM must be started */
+    t_u8 chan;
+} MLAN_PACK_END HostCmd_FTM_SESSION_CTRL;
+#endif
+
 #ifdef CONFIG_1AS
 /** HostCmd_DS_HOST_CLOCK_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_HOST_CLOCK_CFG
@@ -7255,6 +7494,12 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_1AS
         HostCmd_DS_HOST_CLOCK_CFG host_clock_cfg;
+#endif
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+        /** hostcmd for session_ctrl user command */
+        HostCmd_FTM_SESSION_CTRL ftm_session_ctrl;
+        /** hostcmd for session_cfg user command */
+        HostCmd_FTM_SESSION_CFG ftm_session_cfg;
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
         HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;

@@ -5059,6 +5059,13 @@ static void wlcm_process_mgmt_frame(void *data)
     }
 }
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+static int wlcm_process_ftm_complete_event()
+{
+	return wifi_process_wlc_ftm_event();
+}
+#endif
+
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
 {
@@ -5387,6 +5394,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_MGMT_TX_STATUS:
             wifi_process_mgmt_tx_status(msg);
             break;
+#endif
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+		case WIFI_EVENT_FTM_COMPLETE:
+			wlcm_d("got event: continue to ftm or stop");
+			wlcm_process_ftm_complete_event();
+			break;
 #endif
         default:
             wlcm_w("got unknown message: %d", msg->event);
@@ -9757,6 +9770,19 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
     {
         return wifi_mbo_preferch_cfg(ch0, pefer0, ch1, pefer1);
     }
+}
+#endif
+
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+int wlan_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel)
+{
+
+	return wifi_ftm_start_stop(action, loop_cnt, mac, channel);
+}
+
+int wlan_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg)
+{
+	return wifi_ftm_cfg(protocol, ftm_ranging_cfg);
 }
 #endif
 

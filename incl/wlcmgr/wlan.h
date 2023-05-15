@@ -521,6 +521,103 @@ enum wlan_monitor_opt
 };
 #endif
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#define FTM_ACTION_START 1
+#define FTM_ACTION_STOP  2
+
+#define PROTO_DOT11AZ_NTB 1
+#define PROTO_DOT11AZ_TB  2
+#define PROTO_DOT11MC     0
+
+/* DOT11MC CFG */
+/* Burst Duration
+ 0 - 1: Reserved
+ 2: 250 micro seconds
+ 3: 500 micro seconds
+ 4: 1 ms
+ 5: 2 ms
+ 6: 4 ms
+ 7: 8 ms
+ 8: 16 ms
+ 9: 32 ms
+ 10: 64 ms
+ 11: 128 ms
+ 12-14 reserved*/
+#define BURST_DURATION 10
+/* Burst Period in units of 100 milli seconds */
+#define BURST_PERIOD 5
+/* FTM frames per burst */
+#define FTM_PER_BURST 10
+/* Indicates minimum time between consecutive Fine Timing Measurement frames. It is specified in in units of 100 micro
+ * seconds. */
+#define MIN_DELTA 10
+/* ASAP */
+#define IS_ASAP 1
+/* Bandwidth
+ 9  - HT20
+ 10 - VHT20
+ 11 - HT40
+ 12 - VHT40
+ 13 - VHT80 */
+#define BW 10 /* RW610 only allows 20M bandwidth */
+/*Indicates how many burst instances are requested for the FTM session */
+#define BURST_EXP 0
+
+/* LCI */
+#define LCI_REQUEST                1
+#define LCI_LATITIUDE              -33.8570095
+#define LCI_LONGITUDE              151.2152005
+#define LCI_LATITUDE_UNCERTAINITY  18
+#define LCI_LONGITUDE_UNCERTAINITY 18
+#define LCI_ALTITUDE               11.2
+#define LCI_ALTITUDE_UNCERTAINITY  15
+
+/* CIVIC */
+#define CIVIC_REQUEST       0
+#define CIVIC_LOCATION      1
+#define CIVIC_LOCATION_TYPE 1
+#define CIVIC_COUNTRY_CODE  0 /* US */
+#define CIVIC_ADDRESS_TYPE  22
+#define CIVIC_ADDRESS       "123, NXP, Shanghai"
+
+/* DOT11AZ CFG */
+#define FORMAT_BW 0 /* RW610 only allows 20M bandwidth */
+/*Maximum number of space-time streams to be used in DL/UL NDP frames in the session upto 80MHz*/
+#define MAX_I2R_STS_UPTO80 0 /* RW610 only allows to send 1 N_STS*/
+#define MAX_R2I_STS_UPTO80 1
+/* Measurement freq in Hz to calculate measurement interval*/
+#define AZ_MEASUREMENT_FREQ       10 /* in 0.1 Hz increments */
+#define AZ_NUMBER_OF_MEASUREMENTS 6
+#define I2R_LMR_FEEDBACK          2 /* allow RSTA to request I2R reporting */
+
+#define FOR_RANGING 0
+
+/** Structure of FTM_SESSION_CFG_NTB_RANGING / FTM_SESSION_CFG_TB_RANGING TLV data*/
+typedef struct _ranging_11az_cfg
+{
+    /** Indicates the channel BW for session*/
+    /*0: HE20, 1: HE40, 2: HE80, 3: HE80+80, 4: HE160, 5:HE160_SRF*/
+    t_u8 format_bw;
+    /** indicates for bandwidths less than or equal to 80 MHz the maximum number of space-time streams to be used in
+     * DL/UL NDP frames in the session*/
+    t_u8 max_i2r_sts_upto80;
+    /**indicates for bandwidths less than or equal to 80 MHz the maximum number of space-time streams to be used in
+     * DL/UL NDP frames in the session*/
+    t_u8 max_r2i_sts_upto80;
+    /**Specify measurement freq in Hz to calculate measurement interval*/
+    t_u8 az_measurement_freq;
+    /**Indicates the number of measurements to be done for session*/
+    t_u8 az_number_of_measurements;
+    /** Initator lmr feedback */
+    t_u8 i2r_lmr_feedback;
+    /**Include location civic request (Expect location civic from responder)*/
+    t_u8 civic_req;
+    /**Include LCI request (Expect LCI info from responder)*/
+    t_u8 lci_req;
+} ranging_11az_cfg_t;
+
+#endif
+
 /** Scan Result */
 struct wlan_scan_result
 {
@@ -4970,6 +5067,28 @@ int wlan_host_mbo_cfg(int enable_mbo);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
+#endif
+
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+/**
+ * start or stop ftm based on the command from cli.
+ * \param[in] action 1: start ftm  2: stop ftm.
+ * \param[in] loop_cnt         number of ftm sessions to run repeatedly ( default:1,  0:non-stop, n>1: n times).
+ * \param[in] mac              Mac address of the peer with whom FTM session is required.
+ * \param[in] channel          Channel on which FTM must be started.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel);
+
+/**
+ * Config ftm protocol.
+ * \param[in] protocol 0:Dot11mc, 1:Dot11az_ntb, 2:Dot11az_tb
+ * \param[in] ftm_ranging_cfg      FTM ranging config
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg);
 #endif
 
 #ifdef CONFIG_WPA_SUPP

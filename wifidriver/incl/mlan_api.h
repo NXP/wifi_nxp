@@ -408,6 +408,33 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
                                       mlan_802_11_mac_addr *Bssid,
                                       t_u16 pkt_len);
 
+#ifdef CONFIG_11MC
+void wlan_dot11mc_ftm_cfg(void *cmd);
+#endif
+#ifdef CONFIG_11AZ
+void wlan_dto11az_ranging_cfg(void *cmd, const t_u8 protocl, HostCmd_FTM_SESSION_CFG *ftm_session_cfg);
+#endif
+
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+/* ftm ctrl params */
+typedef struct
+{
+    int loop_cnt;
+    t_u8 channel;
+    t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
+    t_u8 status;
+} ftm_start_param;
+
+int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel);
+int wifi_ftm_start(const t_u16 action, const t_u8 *mac, const t_u8 channel);
+int wifi_ftm_stop(const t_u16 action, const t_u8 *mac, const t_u8 channel);
+int wifi_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg);
+int wifi_process_wlc_ftm_event();
+void wifi_ftm_process_cfg_resp(void *resp_buff);
+void wifi_ftm_process_ctrl_resp(void *resp_buff);
+void wifi_ftm_process_event(void *p_data);
+#endif
+
 int wifi_set_custom_ie(custom_ie *beacon_ies_data,
                        custom_ie *beacon_wps_ies_data,
                        custom_ie *proberesp_ies_data,

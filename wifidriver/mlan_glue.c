@@ -55,6 +55,11 @@ uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
 extern uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 extern uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+extern ftm_start_param ftm_param;
+static char ftm_address[255] = CIVIC_ADDRESS;
+#endif
+
 #ifdef CONFIG_WPA2_ENTP
 bool scan_enable_wpa2_enterprise_ap_only;
 #endif
@@ -4217,6 +4222,26 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+            case HostCmd_CMD_FTM_SESSION_CFG:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                    wifi_ftm_process_cfg_resp(resp);
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                break;
+            case HostCmd_CMD_FTM_SESSION_CTRL:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                    wifi_ftm_process_ctrl_resp(resp);
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -5490,6 +5515,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
         case EVENT_CLOUD_KEEP_ALIVE_RETRY_FAIL:
             wevt_d("EVENT: EVENT_CLOUD_KEEP_ALIVE_RETRY_FAIL received\n\r");
+            break;
+#endif
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+        case EVENT_WLS_FTM_COMPLETE:
+            wifi_ftm_process_event(msg->data);
             break;
 #endif
         default:
@@ -7501,5 +7531,186 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
     sub_evt.evt_bitmap      = SUBSCRIBE_EVT_PRE_BEACON_LOST;
     sub_evt.pre_beacon_miss = pre_beacon_lost;
     return wifi_subscribe_event_submit(pmpriv, &sub_evt);
+}
+#endif
+
+#ifdef CONFIG_11MC
+void wlan_dot11mc_ftm_cfg(void *p_buf)
+{
+    HostCmd_DS_COMMAND *cmd     = (HostCmd_DS_COMMAND *)p_buf;
+    dot11mc_ftm_cfg_t *cfg_11mc = (dot11mc_ftm_cfg_t *)&cmd->params.ftm_session_cfg.tlv.cfg_11mc;
+
+    cfg_11mc->sess_tlv.type                = wlan_cpu_to_le16(FTM_SESSION_CFG_INITATOR_TLV_ID);
+    cfg_11mc->sess_tlv.len                 = wlan_cpu_to_le16(sizeof(ftm_session_cfg_t) + sizeof(t_u16));
+    cfg_11mc->sess_tlv.val.burst_exponent  = BURST_EXP;
+    cfg_11mc->sess_tlv.val.burst_duration  = BURST_DURATION;
+    cfg_11mc->sess_tlv.val.min_delta_FTM   = MIN_DELTA;
+    cfg_11mc->sess_tlv.val.is_ASAP         = IS_ASAP;
+    cfg_11mc->sess_tlv.val.per_burst_FTM   = FTM_PER_BURST;
+    cfg_11mc->sess_tlv.val.channel_spacing = BW;
+    cfg_11mc->sess_tlv.val.burst_period    = wlan_cpu_to_le16(BURST_PERIOD);
+    cfg_11mc->sess_tlv.civic_req           = LCI_REQUEST;
+    cfg_11mc->sess_tlv.lci_req             = CIVIC_REQUEST;
+    cmd->size += sizeof(ftm_session_cfg_tlv_t);
+
+    if (cfg_11mc->sess_tlv.lci_req)
+    {
+        cfg_11mc->lci_tlv.type          = wlan_cpu_to_le16(FTM_SESSION_CFG_LCI_TLV_ID);
+        cfg_11mc->lci_tlv.len           = wlan_cpu_to_le16(sizeof(lci_cfg_t));
+        cfg_11mc->lci_tlv.val.altitude  = LCI_ALTITUDE;
+        cfg_11mc->lci_tlv.val.alt_unc   = LCI_ALTITUDE_UNCERTAINITY;
+        cfg_11mc->lci_tlv.val.latitude  = LCI_LATITIUDE;
+        cfg_11mc->lci_tlv.val.lat_unc   = LCI_LATITUDE_UNCERTAINITY;
+        cfg_11mc->lci_tlv.val.longitude = LCI_LONGITUDE;
+        cfg_11mc->lci_tlv.val.long_unc  = LCI_LONGITUDE_UNCERTAINITY;
+        cmd->size += sizeof(lci_tlv_t);
+    }
+
+    if (cfg_11mc->sess_tlv.civic_req)
+    {
+        cfg_11mc->civic_tlv.type                     = wlan_cpu_to_le16(FTM_SESSION_CFG_LOCATION_CIVIC_TLV_ID);
+        cfg_11mc->civic_tlv.len                      = wlan_cpu_to_le16(sizeof(civic_loc_cfg_t) -
+                                                   sizeof(cfg_11mc->civic_tlv.val.civic_address) + strlen(ftm_address));
+        cfg_11mc->civic_tlv.val.civic_address_type   = CIVIC_ADDRESS_TYPE;
+        cfg_11mc->civic_tlv.val.civic_location_type  = CIVIC_LOCATION_TYPE;
+        cfg_11mc->civic_tlv.val.country_code         = wlan_cpu_to_le16(CIVIC_COUNTRY_CODE);
+        cfg_11mc->civic_tlv.val.civic_address_length = strlen(ftm_address);
+        (void)memcpy(cfg_11mc->civic_tlv.val.civic_address, ftm_address, strlen(ftm_address));
+        cmd->size += (cfg_11mc->civic_tlv.len + sizeof(t_u32));
+    }
+
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+}
+#endif
+
+#ifdef CONFIG_11AZ
+void wlan_dto11az_ranging_cfg(void *p_buf, const t_u8 protocl, HostCmd_FTM_SESSION_CFG *ftm_session_cfg)
+{
+    HostCmd_DS_COMMAND *cmd        = (HostCmd_DS_COMMAND *)p_buf;
+    dot11az_ftm_cfg_t *cfg_11az    = (dot11az_ftm_cfg_t *)&cmd->params.ftm_session_cfg.tlv.cfg_11az;
+    dot11az_ftm_cfg_t *in_cfg_11az = &ftm_session_cfg->tlv.cfg_11az;
+    cfg_11az->range_tlv.len        = wlan_cpu_to_le16(sizeof(ranging_cfg_t));
+
+    if (protocl == PROTO_DOT11AZ_TB)
+        cfg_11az->range_tlv.type = wlan_cpu_to_le16(FTM_TB_RANGING_CFG_TLV_ID);
+    else
+        cfg_11az->range_tlv.type = wlan_cpu_to_le16(FTM_NTB_RANGING_CFG_TLV_ID);
+
+    cfg_11az->range_tlv.val.format_bw                 = in_cfg_11az->range_tlv.val.format_bw;
+    cfg_11az->range_tlv.val.max_i2r_sts_upto80        = in_cfg_11az->range_tlv.val.max_i2r_sts_upto80;
+    cfg_11az->range_tlv.val.max_r2i_sts_upto80        = in_cfg_11az->range_tlv.val.max_r2i_sts_upto80;
+    cfg_11az->range_tlv.val.az_measurement_freq       = in_cfg_11az->range_tlv.val.az_measurement_freq;
+    cfg_11az->range_tlv.val.az_number_of_measurements = in_cfg_11az->range_tlv.val.az_number_of_measurements;
+    cfg_11az->range_tlv.val.i2r_lmr_feedback          = in_cfg_11az->range_tlv.val.i2r_lmr_feedback;
+
+    cfg_11az->range_tlv.val.civic_req = in_cfg_11az->range_tlv.val.civic_req;
+    cfg_11az->range_tlv.val.lci_req   = in_cfg_11az->range_tlv.val.lci_req;
+
+    cmd->size += (sizeof(dot11az_ftm_cfg_t));
+}
+#endif
+
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+void wifi_ftm_process_cfg_resp(void *resp_buff)
+{
+    HostCmd_DS_COMMAND *resp = (HostCmd_DS_COMMAND *)resp_buff;
+
+    if ((wlan_cpu_to_le16(resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.type) == FTM_NTB_RANGING_CFG_TLV_ID) ||
+        (wlan_cpu_to_le16(resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.type) == FTM_TB_RANGING_CFG_TLV_ID))
+    {
+        if (resp->params.ftm_session_cfg.action == MLAN_ACT_SET)
+            wifi_d("\n\nSet Ranging Parameters: \r\n");
+        else
+            wifi_d("\n\nGet Ranging Parameters: \r\n");
+        wifi_d("---------------------------------\r\n");
+        wifi_d("format_bw:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.val.format_bw);
+        wifi_d("az_measurement_freq:%d \r\n",
+               resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.val.az_measurement_freq);
+        wifi_d("az_number_of_measurements:%d \r\n",
+               resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.val.az_number_of_measurements);
+        wifi_d("max_i2r_sts_upto80:%d \r\n",
+               resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.val.max_i2r_sts_upto80);
+        wifi_d("max_r2i_sts_upto80:%d \r\n",
+               resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.val.max_r2i_sts_upto80);
+        wifi_d("i2r_lmr_feedback:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11az.range_tlv.val.i2r_lmr_feedback);
+    }
+    else if (wlan_cpu_to_le16(resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.type) ==
+             FTM_SESSION_CFG_INITATOR_TLV_ID)
+    {
+        if (resp->params.ftm_session_cfg.action == BG_SCAN_ACT_SET)
+            wifi_d("\n\nSet dot11mc ftm session config: \r\n");
+        else
+            wifi_d("\n\nGet dot11mc ftm session config: \r\n");
+
+        wifi_d("---------------------------------\r\n");
+        wifi_d("burst_exponent:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.burst_exponent);
+        wifi_d("burst_duration:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.burst_duration);
+        wifi_d("min_delta_FTM:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.min_delta_FTM);
+        wifi_d("is_ASAP:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.is_ASAP);
+        wifi_d("per_burst_FTM:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.per_burst_FTM);
+        wifi_d("channel_spacing:%d \r\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.channel_spacing);
+        wifi_d("burst_period:%d \n\n", resp->params.ftm_session_cfg.tlv.cfg_11mc.sess_tlv.val.burst_period);
+    }
+    else
+        wifi_d("Invaild TLV return code \r\n");
+}
+
+void wifi_ftm_process_ctrl_resp(void *resp_buff)
+{
+    HostCmd_DS_COMMAND *resp = (HostCmd_DS_COMMAND *)resp_buff;
+
+    if (resp->result == HostCmd_RESULT_OK)
+    {
+        if (resp->params.ftm_session_ctrl.action == FTM_ACTION_START)
+        {
+            wifi_d("[INFO] FTM Session Control Started on %d channel with Peer %02X:%02X:%02X:%02X:%02X:%02X \r\n",
+                   resp->params.ftm_session_ctrl.chan, resp->params.ftm_session_ctrl.peer_mac[0],
+                   resp->params.ftm_session_ctrl.peer_mac[1], resp->params.ftm_session_ctrl.peer_mac[2],
+                   resp->params.ftm_session_ctrl.peer_mac[3], resp->params.ftm_session_ctrl.peer_mac[4],
+                   resp->params.ftm_session_ctrl.peer_mac[5]);
+        }
+        else if (resp->params.ftm_session_ctrl.action == FTM_ACTION_STOP)
+            wifi_d("[INFO] FTM Session Stopped\r\n");
+        else
+            wifi_d("[ERROR] Hostcmd action not supported\r\n");
+    }
+    else
+    {
+        wifi_d("[ERROR] Hostcmd failed: ReturnCode=%#04x, Result=%#04x\n", wlan_cpu_to_le16(resp->command),
+               wlan_cpu_to_le16(resp->result));
+    }
+}
+
+void wifi_ftm_process_event(void *p_data)
+{
+    wls_event_t *ftm_event = (wls_event_t *)p_data;
+    double distance        = 0.0;
+
+    wevt_d("[INFO] EventID: 0x%x SubeventID:%d \r\n", ftm_event->event_id, ftm_event->sub_event_id);
+
+    switch (ftm_event->sub_event_id)
+    {
+        case WLS_SUB_EVENT_FTM_COMPLETE:
+            PRINTF("\n\nFTM Session Complete:\r\n");
+            PRINTF("=====================\r\n");
+            PRINTF("Average RTT: %d ns\r\n", ftm_event->e.ftm_complete.avg_rtt);
+            PRINTF("Average Clockoffset:%d ns\r\n", ftm_event->e.ftm_complete.avg_clk_offset);
+            distance = ((ftm_event->e.ftm_complete.avg_clk_offset / 2) * (0.0003));
+            PRINTF("Distance: %.6f meters\r\n\n", distance);
+            wlan_wlcmgr_send_msg(WIFI_EVENT_FTM_COMPLETE, WIFI_EVENT_REASON_SUCCESS, NULL);
+            break;
+        case WLS_SUB_EVENT_RADIO_RECEIVED:
+            wifi_d("WLS_SUB_EVENT_RADIO_RECEIVED\n");
+            break;
+        case WLS_SUB_EVENT_RADIO_RPT_RECEIVED:
+            wifi_d("WLS_SUB_EVENT_RADIO_RPT_RECEIVED\n");
+            break;
+        case WLS_SUB_EVENT_ANQP_RESP_RECEIVED:
+            wifi_d("WLS_SUB_EVENT_ANQP_RESP_RECEIVED\n");
+            break;
+        default:
+            wifi_d("[ERROR] Unknown sub event\n");
+            break;
+    }
 }
 #endif

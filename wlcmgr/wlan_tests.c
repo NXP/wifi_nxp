@@ -2935,6 +2935,250 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
 
 #endif
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+static void dump_wlan_ftm_ctrl_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl <action> loop_cnt <count> channel <channel> mac <peer_mac>\r\n");
+    (void)PRINTF("action: 1 start 2: stop \r\n");
+    (void)PRINTF("loop_cnt: number of ftm sessions to run repeatedly (default:1, 0:non-stop, n:times>)\r\n");
+    (void)PRINTF("channel: Channel on which FTM must be started\r\n");
+    (void)PRINTF("mac: Mac address of the peer with whom FTM session is required\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("Start ftm:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl 1 loop_cnt 2 channel 36 mac 00:50:43:20:bc:44\r\n");
+    (void)PRINTF("Stop ftm:\r\n");
+    (void)PRINTF("wlan-ftm-ctrl 2\r\n");
+}
+static void test_wlan_ftm_ctrl(int argc, char **argv)
+{
+    unsigned action, loop_cnt, channel;
+    int arg = 2;
+    t_u8 peer_mac[MLAN_MAC_ADDR_LENGTH];
+    struct
+    {
+        unsigned loop_cnt : 1;
+        unsigned channel : 1;
+        unsigned mac : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+
+    if (argc < 2 || argc > 8)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_ftm_ctrl_usage();
+        return;
+    }
+
+    action = a2hex_or_atoi(argv[1]);
+    if (action != 1 && action != 2)
+    {
+        dump_wlan_ftm_ctrl_usage();
+        return;
+    }
+
+    if (action == 2)
+        goto done;
+
+    do
+    {
+        if (!info.loop_cnt && string_equal("loop_cnt", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &loop_cnt, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid loop_cnt argument\r\n");
+                dump_wlan_ftm_ctrl_usage();
+                return;
+            }
+            arg += 2;
+            info.loop_cnt = 1;
+        }
+        else if (!info.channel && string_equal("channel", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &channel, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid channel argument\r\n");
+                dump_wlan_ftm_ctrl_usage();
+                return;
+            }
+            arg += 2;
+            info.channel = 1;
+        }
+        else if (!info.mac && string_equal("mac", argv[arg]))
+        {
+            if (get_mac(argv[arg + 1], (char *)peer_mac, ':'))
+            {
+                (void)PRINTF("Error: invalid MAC argument\r\n");
+                dump_wlan_ftm_ctrl_usage();
+                return;
+            }
+            arg += 2;
+            info.mac = 1;
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid argument\r\n");
+            dump_wlan_ftm_ctrl_usage();
+            return;
+        }
+    } while (arg < argc);
+done:
+    wlan_ftm_start_stop(action, loop_cnt, peer_mac, channel);
+}
+
+static void dump_wlan_ftm_cfg_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-ftm-cfg <protocol>\r\n");
+    (void)PRINTF(
+        "wlan-ftm-cfg <protocol> num_meas <num_meas> meas_freq <meas_freq> r2i_sts <r2i_sts> i2r_lmr <i2r_lmr>\r\n");
+    (void)PRINTF("protocol:\r\n");
+    /*(void)PRINTF("0: Dot11mc\r\n");*/
+    (void)PRINTF("1: Dot11az_ntb\r\n");
+    /*(void)PRINTF("2: Dot11az_tb\r\n");*/
+    (void)PRINTF("num_meas: 0-255\r\n");
+    (void)PRINTF("meas_freq: 1-255 in 0.1 Hz\r\n");
+    (void)PRINTF("r2i_sts: 0-3\r\n");
+    (void)PRINTF("i2r_lmr: 0 never, 1 always, 2 up to RSTA\r\n");
+}
+
+static void test_wlan_ftm_cfg(int argc, char **argv)
+{
+    unsigned protocol;
+    if ((argc < 2) || (argc > 10))
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_ftm_cfg_usage();
+        return;
+    }
+
+    if (get_uint(argv[1], &protocol, strlen(argv[1])))
+    {
+        (void)PRINTF("Error: invalid protocol argument\r\n");
+        dump_wlan_ftm_ctrl_usage();
+        return;
+    }
+
+    if (protocol != 0 && protocol != 1 && protocol != 2)
+    {
+        (void)PRINTF("Error: invalid protocol argument\r\n");
+        dump_wlan_ftm_cfg_usage();
+        return;
+    }
+
+    if (protocol == 0)
+    {
+        (void)PRINTF("Not support 802_11mc\r\n");
+        dump_wlan_ftm_cfg_usage();
+        return;
+    }
+    else // (protocol == 1) || (protocol == 2)
+    {
+        unsigned num_measurements, measurement_freq, r2i_sts, i2r_lmr, civic_req, lci_req;
+        ranging_11az_cfg_t cfg_11az;
+        int arg = 2;
+        if (protocol == 2) // not yet supported
+        {
+            // cfg_11az->type = FTM_TB_RANGING_CFG_TLV_ID;
+            (void)PRINTF("Not support 802_11az tb\r\n");
+        }
+        else // (protocol == 1)
+        {
+            // cfg_11az->type = FTM_NTB_RANGING_CFG_TLV_ID;
+        }
+
+        if (argc >= 2)
+        {
+            num_measurements = AZ_NUMBER_OF_MEASUREMENTS;
+            measurement_freq = AZ_MEASUREMENT_FREQ;
+            r2i_sts          = MAX_R2I_STS_UPTO80;
+            i2r_lmr          = I2R_LMR_FEEDBACK;
+            civic_req        = CIVIC_REQUEST;
+            lci_req          = LCI_REQUEST;
+        }
+
+        while (arg < argc)
+        {
+            if (string_equal("num_meas", argv[arg]))
+            {
+                if (get_uint(argv[arg + 1], &num_measurements, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid number of measurements argument\r\n");
+                    dump_wlan_ftm_cfg_usage();
+                    return;
+                }
+            }
+            else if (string_equal("meas_freq", argv[arg]))
+            {
+                if (get_uint(argv[arg + 1], &measurement_freq, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid measurement frequency argument\r\n");
+                    dump_wlan_ftm_cfg_usage();
+                    return;
+                }
+            }
+            else if (string_equal("r2i_sts", argv[arg]))
+            {
+                if (get_uint(argv[arg + 1], &r2i_sts, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid R2I STS argument\r\n");
+                    dump_wlan_ftm_cfg_usage();
+                    return;
+                }
+            }
+            else if (string_equal("i2r_lmr", argv[arg]))
+            {
+                if (get_uint(argv[arg + 1], &i2r_lmr, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid R2I STS argument\r\n");
+                    dump_wlan_ftm_cfg_usage();
+                    return;
+                }
+            }
+            else if (string_equal("civic_req", argv[arg]))
+            {
+                if (get_uint(argv[arg + 1], &civic_req, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid civic request argument\r\n");
+                    dump_wlan_ftm_cfg_usage();
+                    return;
+                }
+            }
+            else if (string_equal("lci_req", argv[arg]))
+            {
+                if (get_uint(argv[arg + 1], &lci_req, strlen(argv[arg + 1])))
+                {
+                    (void)PRINTF("Error: invalid LCI request argument\r\n");
+                    dump_wlan_ftm_cfg_usage();
+                    return;
+                }
+            }
+            else
+            {
+                (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
+                dump_wlan_ftm_cfg_usage();
+                return;
+            }
+            arg += 2;
+        }
+
+        cfg_11az.format_bw                 = FORMAT_BW;
+        cfg_11az.max_i2r_sts_upto80        = MAX_I2R_STS_UPTO80;
+        cfg_11az.max_r2i_sts_upto80        = r2i_sts;
+        cfg_11az.az_measurement_freq       = measurement_freq;
+        cfg_11az.az_number_of_measurements = num_measurements;
+        cfg_11az.i2r_lmr_feedback          = i2r_lmr;
+
+        cfg_11az.civic_req = civic_req;
+        cfg_11az.lci_req   = lci_req;
+
+        wlan_ftm_cfg(protocol, &cfg_11az);
+    }
+    return;
+}
+#endif
+
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11AX
 static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
@@ -8163,6 +8407,10 @@ static struct cli_command tests[] = {
     {"wlan-pmksa-list", NULL, test_wlan_pmksa_list},
     {"wlan-pmksa-flush", NULL, test_wlan_pmksa_flush},
     {"wlan-set-scan-interval", "<scan_int: in seconds>", test_wlan_set_scan_interval},
+#endif
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+    {"wlan-ftm-ctrl", "<action> <loop_cnt> <peer_mac> <channel>", test_wlan_ftm_ctrl},
+    {"wlan-ftm-cfg", "<protocol> <num_measurements> <measurement_freq> <r2i_sts> <i2r_lmr>", test_wlan_ftm_cfg},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},

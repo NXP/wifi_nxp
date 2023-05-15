@@ -38,6 +38,10 @@ static const char driver_version[]        = "702.1.0";
 static unsigned int mgmt_ie_index_bitmap = 0x0000000F;
 country_code_t wifi_11d_country          = COUNTRY_NONE;
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+ftm_start_param ftm_param;
+#endif
+
 /* This were static functions in mlan file */
 mlan_status wlan_cmd_802_11_deauthenticate(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
 mlan_status wlan_cmd_reg_access(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
@@ -5506,4 +5510,138 @@ int wlan_get_set_turbo_mode(t_u16 action, t_u8 *mode, mlan_bss_type bss_type)
     else
         return wifi_wait_for_cmdresp(NULL);
 }
+#endif
+
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac, const t_u8 channel)
+{
+    if (action == FTM_ACTION_START)
+    {
+        ftm_param.channel = channel;
+        (void)memcpy(ftm_param.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        ftm_param.loop_cnt = loop_cnt;
+        ftm_param.status   = (ftm_param.loop_cnt == 0) ? 1 : 0;
+        return wifi_ftm_start(FTM_ACTION_START, mac, channel);
+    }
+    else
+    {
+        ftm_param.loop_cnt = 0;
+        ftm_param.status   = 0;
+        return wifi_ftm_stop(FTM_ACTION_STOP, ftm_param.peer_mac, ftm_param.channel);
+    }
+}
+
+int wifi_ftm_start(const t_u16 action, const t_u8 *mac, const t_u8 channel)
+{
+    if (!is_sta_connected())
+    {
+        PRINTF("Cannot Start FTM, STA not associated !\r\n");
+        return -WM_FAIL;
+    }
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command                             = wlan_cpu_to_le16(HostCmd_CMD_FTM_SESSION_CTRL);
+    cmd->size                                = S_DS_GEN + sizeof(HostCmd_FTM_SESSION_CTRL);
+    cmd->size                                = wlan_cpu_to_le16(cmd->size);
+    cmd->params.ftm_session_ctrl.action      = wlan_cpu_to_le16(action);
+    cmd->params.ftm_session_ctrl.for_ranging = wlan_cpu_to_le16(FOR_RANGING);
+    (void)memcpy(cmd->params.ftm_session_ctrl.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
+    cmd->params.ftm_session_ctrl.chan = wlan_cpu_to_le16(channel);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+int wifi_ftm_stop(const t_u16 action, const t_u8 *mac, const t_u8 channel)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command                             = wlan_cpu_to_le16(HostCmd_CMD_FTM_SESSION_CTRL);
+    cmd->size                                = S_DS_GEN + sizeof(HostCmd_FTM_SESSION_CTRL);
+    cmd->size                                = wlan_cpu_to_le16(cmd->size);
+    cmd->params.ftm_session_ctrl.action      = wlan_cpu_to_le16(action);
+    cmd->params.ftm_session_ctrl.for_ranging = wlan_cpu_to_le16(FOR_RANGING);
+    (void)memcpy(cmd->params.ftm_session_ctrl.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
+    cmd->params.ftm_session_ctrl.chan = wlan_cpu_to_le16(channel);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+int wifi_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command                       = wlan_cpu_to_le16(HostCmd_CMD_FTM_SESSION_CFG);
+    cmd->size                          = wlan_cpu_to_le16(S_DS_GEN);
+    cmd->params.ftm_session_cfg.action = MLAN_ACT_SET;
+
+#if defined(CONFIG_11MC) && defined(CONFIG_11AZ)
+    if (protocol == PROTO_DOT11MC)
+        wlan_dot11mc_ftm_cfg(cmd);
+    else
+    {
+        HostCmd_FTM_SESSION_CFG ftm_session_cfg;
+        dot11az_ftm_cfg_t *cfg_11az                       = (dot11az_ftm_cfg_t *)&ftm_session_cfg.tlv.cfg_11az;
+        cfg_11az->range_tlv.val.format_bw                 = ftm_ranging_cfg->format_bw;
+        cfg_11az->range_tlv.val.max_i2r_sts_upto80        = ftm_ranging_cfg->max_i2r_sts_upto80;
+        cfg_11az->range_tlv.val.max_r2i_sts_upto80        = ftm_ranging_cfg->max_r2i_sts_upto80;
+        cfg_11az->range_tlv.val.az_measurement_freq       = ftm_ranging_cfg->az_measurement_freq;
+        cfg_11az->range_tlv.val.az_number_of_measurements = ftm_ranging_cfg->az_number_of_measurements;
+        cfg_11az->range_tlv.val.i2r_lmr_feedback          = ftm_ranging_cfg->i2r_lmr_feedback;
+        cfg_11az->range_tlv.val.civic_req                 = ftm_ranging_cfg->civic_req;
+        cfg_11az->range_tlv.val.lci_req                   = ftm_ranging_cfg->lci_req;
+        wlan_dto11az_ranging_cfg(cmd, protocol, &ftm_session_cfg);
+    }
+#endif
+#if defined(CONFIG_11MC) && !defined(CONFIG_11AZ)
+    if (protocol == PROTO_DOT11MC)
+        wlan_dot11mc_ftm_cfg(cmd);
+    else
+    {
+        PRINTM(MERROR, "The currently protocol is: PROTO_DOT11AZ_NTB/PROTO_DOT11AZ_TB. \r\n");
+        PRINTM(MERROR, "Pls enable CONFIG_11AZ and try again. r\n");
+        return -WM_FAIL;
+    }
+
+#endif
+#if !defined(CONFIG_11MC) && defined(CONFIG_11AZ)
+    if (protocol == PROTO_DOT11MC)
+    {
+        PRINTM(MERROR, "The currently protocol is: PROTO_DOT11MC. \r\n");
+        PRINTM(MERROR, "Pls enable CONFIG_11MC and try again. r\n");
+        return -WM_FAIL;
+    }
+    else
+    {
+        HostCmd_FTM_SESSION_CFG ftm_session_cfg;
+        dot11az_ftm_cfg_t *cfg_11az                       = (dot11az_ftm_cfg_t *)&ftm_session_cfg.tlv.cfg_11az;
+        cfg_11az->range_tlv.val.format_bw                 = ftm_ranging_cfg->format_bw;
+        cfg_11az->range_tlv.val.max_i2r_sts_upto80        = ftm_ranging_cfg->max_i2r_sts_upto80;
+        cfg_11az->range_tlv.val.max_r2i_sts_upto80        = ftm_ranging_cfg->max_r2i_sts_upto80;
+        cfg_11az->range_tlv.val.az_measurement_freq       = ftm_ranging_cfg->az_measurement_freq;
+        cfg_11az->range_tlv.val.az_number_of_measurements = ftm_ranging_cfg->az_number_of_measurements;
+        cfg_11az->range_tlv.val.i2r_lmr_feedback          = ftm_ranging_cfg->i2r_lmr_feedback;
+        cfg_11az->range_tlv.val.civic_req                 = ftm_ranging_cfg->civic_req;
+        cfg_11az->range_tlv.val.lci_req                   = ftm_ranging_cfg->lci_req;
+        wlan_dto11az_ranging_cfg(cmd, protocol, &ftm_session_cfg);
+    }
+#endif
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+int wifi_process_wlc_ftm_event()
+{
+    int ret = -WM_FAIL;
+    if (ftm_param.loop_cnt > 0)
+        ftm_param.loop_cnt--;
+    if (ftm_param.loop_cnt > 0 || (ftm_param.status))
+        ret = wifi_ftm_start(FTM_ACTION_START, ftm_param.peer_mac, ftm_param.channel);
+    // else
+    //    ret = wifi_ftm_stop(FTM_ACTION_STOP, ftm_param.peer_mac, ftm_param.channel);
+
+    return ret;
+}
+
 #endif

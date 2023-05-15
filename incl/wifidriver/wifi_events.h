@@ -146,6 +146,10 @@ enum wifi_event
     /* Recv csi data */
     WIFI_EVENT_CSI,
 #endif
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+    /* Event to trigger or stop ftm*/
+    WIFI_EVENT_FTM_COMPLETE,
+#endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must
