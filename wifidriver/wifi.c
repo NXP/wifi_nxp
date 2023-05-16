@@ -132,6 +132,10 @@ wm_wifi_t wm_wifi;
 static bool xfer_pending;
 static bool scan_thread_in_process = false;
 
+#ifdef CONFIG_HOST_SLEEP
+os_semaphore_t wakelock;
+#endif
+
 typedef enum __mlan_status
 {
     MLAN_CARD_NOT_DETECTED = 3,
@@ -157,6 +161,39 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 static void wifi_driver_tx(void *data);
 #endif
 extern void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
+
+#ifdef CONFIG_HOST_SLEEP
+int wakelock_get(void)
+{
+    int ret = WM_SUCCESS;
+#ifdef CONFIG_POWER_MANAGER
+    ret = os_semaphore_put(&wakelock);
+    if (ret != WM_SUCCESS)
+        wifi_e("Failed to get wakelock");
+#endif
+    return ret;
+}
+
+int wakelock_put(void)
+{
+    int ret = WM_SUCCESS;
+#ifdef CONFIG_POWER_MANAGER
+    ret = os_semaphore_get(&wakelock, 0);
+    if (ret != WM_SUCCESS)
+        wifi_e("Failed to put wakelock");
+#endif
+    return ret;
+}
+
+int wakelock_isheld(void)
+{
+#ifdef CONFIG_POWER_MANAGER
+    return os_semaphore_getcount(&wakelock);
+#else
+    return 1;
+#endif
+}
+#endif
 
 unsigned wifi_get_last_cmd_sent_ms(void)
 {
@@ -217,8 +254,11 @@ static int wifi_put_command_resp_sem(void)
 
 int wifi_get_command_lock(void)
 {
-    int rv; // = wakelock_get(WL_ID_WIFI_CMD);
-            //	if (rv == WM_SUCCESS)
+    int rv;
+    
+#ifdef CONFIG_HOST_SLEEP
+    wakelock_get();
+#endif
     rv = os_mutex_get(&wm_wifi.command_lock, OS_WAIT_FOREVER);
 
     return rv;
@@ -237,8 +277,9 @@ static int wifi_put_mcastf_lock(void)
 int wifi_put_command_lock(void)
 {
     int rv = WM_SUCCESS;
-    //	rv = wakelock_put(WL_ID_WIFI_CMD);
-    //	if (rv == WM_SUCCESS)
+#ifdef CONFIG_HOST_SLEEP
+    wakelock_put();
+#endif
     rv = os_mutex_put(&wm_wifi.command_lock);
 
     return rv;
@@ -3587,6 +3628,9 @@ static void wifi_driver_tx(void *data)
         ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         if (ret == WM_SUCCESS)
         {
+#ifdef CONFIG_HOST_SLEEP
+            wakelock_get();
+#endif
             if (msg.event == MLAN_TYPE_DATA || msg.event == MLAN_TYPE_NULL_DATA)
             {
 #ifdef CONFIG_WMM_UAPSD
@@ -3671,6 +3715,9 @@ static void wifi_driver_tx(void *data)
                 os_rwlock_read_unlock(&ps_rwlock);
 #endif
                 wifi_set_xfer_pending(false);
+#ifdef CONFIG_HOST_SLEEP
+                wakelock_put();
+#endif
             }
         }
     }

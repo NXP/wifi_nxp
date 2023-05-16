@@ -76,6 +76,11 @@ struct rtos_usart_config usart_config = {
     .buffer      = background_buffer,
     .buffer_size = sizeof(background_buffer),
 };
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+extern bool usart_suspend_flag;
+#endif
+#endif
 #endif
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
 #define MAX_CMDS_IN_HISTORY 10
@@ -571,6 +576,15 @@ static int get_input(char *get_inbuf, unsigned int *bp)
     while (true)
     {
 #ifdef CONFIG_UART_INTERRUPT
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+        if (usart_suspend_flag)
+        {
+            os_thread_sleep(os_msec_to_ticks(1000));
+            continue;
+        }
+#endif
+#endif
         ret = USART_RTOS_Receive(&ur_handle, recv_buffer, sizeof(recv_buffer), &n);
         if (ret == kStatus_USART_RxRingBufferOverrun)
         {
@@ -1192,6 +1206,23 @@ static void uart_task(void *pvParameters)
         console_tick();
     }
 }
+
+#ifdef CONFIG_HOST_SLEEP
+int cli_uart_reinit()
+{
+    return USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config);
+}
+
+int cli_uart_deinit()
+{
+    return USART_RTOS_Deinit(&ur_handle);
+}
+
+void cli_uart_notify()
+{
+    xEventGroupSetBits(ur_handle.rxEvent, RTOS_USART_COMPLETE);
+}
+#endif
 #endif
 
 int cli_init(void)

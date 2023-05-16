@@ -156,6 +156,12 @@
 #define IEEEtypes_ADDRESS_SIZE 6
 #endif /* IEEEtypes_ADDRESS_SIZE */
 
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+extern os_queue_t *mon_thread_event_queue;
+#endif
+#endif
+
 typedef enum
 {
     BSS_INFRASTRUCTURE = 1,
@@ -1682,6 +1688,19 @@ typedef enum
     CLI_RESET_WIFI,
 } cli_reset_option;
 #endif
+
+#ifdef CONFIG_HOST_SLEEP
+enum wlan_hostsleep_event
+{
+    HOST_SLEEP_HANDSHAKE = 1,
+    HOST_SLEEP_EXIT,
+};
+
+#define WLAN_HOSTSLEEP_SUCCESS    1
+#define WLAN_HOSTSLEEP_IN_PROCESS 2
+#define WLAN_HOSTSLEEP_FAIL       3
+#endif
+
 #ifdef CONFIG_TX_RX_HISTOGRAM
 struct wlan_txrx_histogram_info
 {
@@ -2655,6 +2674,45 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
  * \return -WM_FAIL if failed.
  */
 int wlan_set_roaming(const int enable);
+#endif
+
+#ifdef CONFIG_HOST_SLEEP
+/** Host sleep configure.
+ * This function may be called to config host sleep in firmware.
+ *
+ * \param[in] is_mef To be wokeup by MEF or not.
+ * \param[in] is_manual Flag to indicate host enter low power mode with power manager or by command.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+void wlan_config_host_sleep(bool is_mef, t_u32 default_val, bool is_manual);
+/** Cancel host sleep.
+ * This function may be called to cancel host sleep in firmware.
+ */
+void wlan_cancel_host_sleep();
+/** Send host sleep command.
+ * This function sends host sleep command to firmware.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_send_host_sleep();
+/** System suspend configure.
+ * This function may be called to config system low power mode.
+ *
+ * \param[in] mode Specific mode system is about to enter.
+ */
+void wlan_config_suspend_mode(int mode);
+/** This function set multicast MEF entry
+ * \param[in] mef_actionTo be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+int wlan_set_multicast(t_u8 mef_action);
+/** This function set/delete mef entries configuration.
+ *
+ * \param[in] type        MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+void wlan_config_mef(int type, t_u8 mef_action);
 #endif
 
 /** Configure Listen interval of IEEE power save mode.
@@ -5373,6 +5431,12 @@ void wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
 int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 #endif
 
+struct wlan_message
+{
+    t_u16 id;
+    void *data;
+};
+
 #ifdef CONFIG_MEF_CFG
 enum wlan_mef_type
 {
@@ -5380,6 +5444,7 @@ enum wlan_mef_type
     MEF_TYPE_PING,
     MEF_TYPE_ARP,
     MEF_TYPE_MULTICAST,
+    MEF_TYPE_IPV6_NS,
     MEF_TYPE_END,
 };
 /** This function set auto ARP configuration.
@@ -5387,12 +5452,25 @@ enum wlan_mef_type
  * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
  */
 int wlan_mef_set_auto_arp(t_u8 mef_action);
+/** This function set auto ping configuration.
+ *
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+int wlan_mef_set_auto_ping(t_u8 mef_action);
 /** This function set/delete mef entries configuration.
  *
  * \param[in] type        MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
  * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
  */
 void wlan_config_mef(int type, t_u8 mef_action);
+/**
+ * Use this API to enable IPv6 Neighbor Solicitation offload in Wi-Fi firmware
+ *
+ * \param[in] mef_action  0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_set_ipv6_ns_mef(t_u8 mef_action);
 #endif
 
 #ifdef CONFIG_CSI

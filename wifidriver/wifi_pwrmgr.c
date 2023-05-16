@@ -170,6 +170,28 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     return (int)status;
 }
 
+#ifdef CONFIG_HOST_SLEEP
+int wifi_cancel_host_sleep(mlan_bss_type interface)
+{
+    void *pdata_buf = NULL;
+    hs_config_param hs_cfg_obj;
+
+    wifi_get_command_lock();
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    (void)memset(&hs_cfg_obj, 0x00, sizeof(hs_config_param));
+
+    cmd->seq_num          = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, interface);
+    hs_cfg_obj.conditions = HOST_SLEEP_CFG_CANCEL;
+    pdata_buf             = &hs_cfg_obj;
+    mlan_status status    = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_HS_CFG_ENH,
+                                                  HostCmd_ACT_GEN_SET, 0, NULL, pdata_buf, cmd);
+    wifi_wait_for_cmdresp(NULL);
+    return status;
+}
+#endif
+
 static int wifi_send_power_save_command(ENH_PS_MODES action, t_u16 ps_bitmap, mlan_bss_type interface, void *pdata_buf)
 {
     mlan_status status;
@@ -311,6 +333,9 @@ void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer)
     {
         pwr_d("Host sleep activated");
         wlan_update_rxreorder_tbl(pmadapter, MTRUE);
+#ifdef CONFIG_HOST_SLEEP
+        wifi_event_completion(WIFI_EVENT_HS_ACTIVATED, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
     }
     else
     {
@@ -471,6 +496,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         )
         {
             mlan_adap->ps_state = PS_STATE_SLEEP;
+#ifdef CONFIG_HOST_SLEEP
+            wakelock_put();
+#endif
         }
 #else
         if (ieeeps_enabled)
@@ -511,6 +539,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 #endif
 
         result = WIFI_EVENT_REASON_SUCCESS;
+#ifdef CONFIG_HOST_SLEEP
+        wifi_event_completion(WIFI_EVENT_SLEEP_CONFIRM_DONE, result, NULL);
+#endif
     }
     else
     { /* Do Nothing */

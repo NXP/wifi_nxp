@@ -58,6 +58,14 @@ static uint8_t mcast_mac[6];
 static bool mcast_mac_valid;
 
 static void timer_poll_udp_client(TimerHandle_t timer);
+#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+extern void APP_SetTicklessIdle(bool enable);
+bool disable_tickless_hook = false;
+#endif
+#endif
+#endif
 
 /* Report state => string */
 const char *report_type_str[] = {
@@ -78,6 +86,32 @@ const char *report_type_str[] = {
     "UDP_ABORTED_LOCAL_TXERROR",   /* LWIPERF_UDP_ABORTED_LOCAL_TXERROR, */
     "UDP_ABORTED_REMOTE",          /* LWIPERF_UDP_ABORTED_REMOTE, */
 };
+
+#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+static void iperf_disable_tickless_hook(bool disable)
+{
+    if (disable == true)
+    {
+        if (disable_tickless_hook == false)
+        {
+            APP_SetTicklessIdle(false);
+            disable_tickless_hook = true;
+        }
+    }
+    else
+    {
+        if (disable_tickless_hook == true)
+        {
+            APP_SetTicklessIdle(true);
+            disable_tickless_hook = false;
+        }
+    }
+}
+#endif
+#endif
+#endif
 
 /** Prototype of a report function that is called when a session is finished.
     This report function shows the test results. */
@@ -137,6 +171,19 @@ static void lwiperf_report(void *arg,
         (void)PRINTF(" IPERF Report error\r\n");
     }
     (void)PRINTF("\r\n");
+#if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+    /* Re-enable Tickless Idle */
+    if (report_type != LWIPERF_TCP_DONE_SERVER_RX && report_type != LWIPERF_UDP_DONE_SERVER_RX
+#ifdef LWIPERF_REVERSE_MODE
+        && report_type != LWIPERF_TCP_DONE_SERVER_TX && report_type != LWIPERF_UDP_DONE_SERVER_TX
+#endif
+    )
+        iperf_disable_tickless_hook(false);
+#endif
+#endif
+#endif
 }
 
 #ifdef CONFIG_WMM_IPERF_TEST
@@ -485,6 +532,17 @@ static void iperf_test_start(void *arg)
         lwiperf_abort(ctx->iperf_session);
         ctx->iperf_session = NULL;
     }
+
+#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+    /* Disable tickless idle when running iperf test */
+    if (ctx->server_mode)
+        (void)PRINTF("Please use iperf -a to close iperf after iperf server mode done\r\n");
+    iperf_disable_tickless_hook(true);
+#endif
+#endif
+#endif
 
     if (!(ctx->tcp))
     {

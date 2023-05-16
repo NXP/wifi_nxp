@@ -151,4 +151,24 @@ void cli_set_echo_mode(bool enabled);
  * CLI help command to print all registered CLIs
  */
 void help_command(int argc, char **argv);
+
+#ifdef CONFIG_UART_INTERRUPT
+#ifdef CONFIG_HOST_SLEEP
+/** Reinit USART
+ *
+ * \return kStatus_Success, others fail.
+ */
+int cli_uart_reinit();
+
+/** Deinit USART
+ *
+ * \return kStatus_Success, others fail.
+ */
+int cli_uart_deinit();
+
+/** Notify uart_task
+ */
+void cli_uart_notify();
+#endif
+#endif
 #endif /* __CLI_H__ */

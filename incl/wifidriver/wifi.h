@@ -879,6 +879,9 @@ void wifi_set_ps_cfg(t_u16 multiple_dtims,
                      t_u16 mode,
                      t_u16 delay_to_ps);
 int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions);
+#ifdef CONFIG_HOST_SLEEP
+int wifi_cancel_host_sleep(mlan_bss_type interface);
+#endif
 bool wrapper_wlan_11d_support_is_enabled(void);
 void wrapper_wlan_11d_clear_parsedtable(void);
 void wrapper_clear_media_connected_event(void);
@@ -1340,6 +1343,13 @@ int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
 int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u8 *enable);
 #endif
 
+#ifdef CONFIG_HOST_SLEEP
+int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
+int wakelock_get(void);
+int wakelock_put(void);
+int wakelock_isheld(void);
+#endif
+
 int wifi_raw_packet_send(const t_u8 *packet, t_u32 length);
 
 int wifi_raw_packet_recv(t_u8 **data, t_u32 *pkt_type);
@@ -1740,6 +1750,15 @@ void wifi_sleep_period(unsigned int *sleep_period, int action);
 
 #ifdef CONFIG_WMM
 t_u8 wifi_wmm_get_packet_cnt(void);
+#endif
+
+#ifdef RW610
+#ifdef CONFIG_HOST_SLEEP
+extern int wakeup_by;
+#define WAKEUP_BY_WLAN 0x1
+#define WAKEUP_BY_RTC  0x2
+#define WAKEUP_BY_PIN1 0x4
+#endif
 #endif
 
 #ifdef CONFIG_CSI

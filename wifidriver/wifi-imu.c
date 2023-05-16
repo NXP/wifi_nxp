@@ -1341,12 +1341,18 @@ hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     assert(0 != length);
     assert((IMU_MSG_RX_DATA == pImuMsg->Hdr.type) || (IMU_MSG_MULTI_RX_DATA == pImuMsg->Hdr.type));
 
+#ifdef CONFIG_HOST_SLEEP
+    wakelock_get();
+#endif
     for (i = 0; i < pImuMsg->Hdr.length; i++)
     {
         inimupkt = (IMUPkt *)pImuMsg->PayloadPtr[i];
         size     = inimupkt->size;
         if ((size <= INTF_HEADER_LEN) || (size > sizeof(inbuf)))
         {
+#ifdef CONFIG_HOST_SLEEP
+            wakelock_put();
+#endif
             wifi_io_e("pImuMsg->PayloadPtr[%u] has invalid size=%u", i, size);
             return kStatus_HAL_RpmsgError;
         }
@@ -1363,7 +1369,9 @@ hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
         if (bus.wifi_low_level_input != NULL)
             bus.wifi_low_level_input(interface, inbuf, size);
     }
-
+#ifdef CONFIG_HOST_SLEEP
+    wakelock_put();
+#endif
     /*! To be the last action of the handler*/
     return kStatus_HAL_RpmsgSuccess;
 }

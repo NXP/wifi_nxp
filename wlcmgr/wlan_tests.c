@@ -3642,8 +3642,21 @@ static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
     int ret = -WM_FAIL;
+#ifdef CONFIG_HOST_SLEEP
+    bool is_mef       = MFALSE;
+    bool is_manual    = MFALSE;
+    t_u32 default_val = 0;
+#endif
 
+#ifdef CONFIG_HOST_SLEEP
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+    if (argc < 3 || argc > 5)
+#else
+    if (argc < 3 || argc > 4)
+#endif
+#else
     if (argc < 2)
+#endif
     {
         goto done;
     }
@@ -3697,6 +3710,51 @@ static void test_wlan_host_sleep(int argc, char **argv)
                 (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
             }
         }
+#ifdef CONFIG_HOST_SLEEP
+        else if (string_equal("mef", argv[2]))
+        {
+            is_mef = MTRUE;
+        }
+        else if (string_equal("default", argv[2]))
+        {
+            if (argc < 4)
+            {
+                (void)PRINTF("default_val need be specified\r\n");
+                return;
+            }
+            if (!ISDIGIT(argv[3]) && !ishexstring(argv[3]))
+            {
+                (void)PRINTF("default_val need be a number\r\n");
+                return;
+            }
+            default_val = a2hex_or_atoi(argv[3]);
+        }
+        else
+        {
+            (void)PRINTF("default/mef need be specified\r\n");
+            goto done;
+        }
+
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+        if ((is_mef && argc == 4) || (!is_mef && argc == 5))
+        {
+            if (string_equal("manual", argv[argc - 1]))
+            {
+                is_manual = MTRUE;
+            }
+            else
+            {
+                (void)PRINTF("Invalid input! Only <manual> is allowed if you want to put host to sleep manually\r\n");
+                (void)PRINTF("Usage:\r\n");
+                (void)PRINTF("    wlan-host-sleep <default [default_val]>/mef> <manual>\r\n");
+                (void)PRINTF("If you want to configure MEF entries, please use command wlan-multi-mef first\r\n");
+                return;
+            }
+        }
+        (void)PRINTF("%s is selected for host sleep\r\n", is_manual ? "Manual mode" : "Power Manager");
+#endif
+        wlan_config_host_sleep(is_mef, default_val, is_manual);
+#else
 #ifdef CONFIG_MEF_CFG
         else if (string_equal(argv[2], "mef"))
         {
@@ -3717,16 +3775,47 @@ static void test_wlan_host_sleep(int argc, char **argv)
             }
         }
 #endif
+
         else
         {
             goto done;
         }
+#endif
     }
     else
     {
     done:
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF("Usage:\r\n");
+#ifdef CONFIG_HOST_SLEEP
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+        (void)PRINTF("    wlan-host-sleep <1/0> <default [default_val]/mef> <manual>\r\n");
+#else
+        (void)PRINTF("    wlan-host-sleep <1/0> <default [default_val]/mef>\r\n");
+#endif
+        (void)PRINTF("    default -- default host wakeup\r\n");
+        (void)PRINTF("    [default_val] -- value for default host wakeup conditions only\r\n");
+        (void)PRINTF("	       bit 0: WAKE_ON_ALL_BROADCAST\r\n");
+        (void)PRINTF("	       bit 1: WAKE_ON_UNICAST\r\n");
+        (void)PRINTF("	       bit 2: WAKE_ON_MAC_EVENT\r\n");
+        (void)PRINTF("	       bit 3: WAKE_ON_MULTICAST\r\n");
+        (void)PRINTF("	       bit 4: WAKE_ON_ARP_BROADCAST\r\n");
+        (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
+        (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
+        (void)PRINTF("    mef     -- MEF host wakeup\r\n");
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+        (void)PRINTF("    manual  -- Optional. Use Power Manager by default if not specified\r\n");
+        (void)PRINTF("               If you want to use suspend command instead of Power Manager,\r\n");
+        (void)PRINTF("               this parameter is mandatory.\r\n");
+#endif
+        (void)PRINTF("Example:\r\n");
+        (void)PRINTF("    wlan-host-sleep mef\r\n");
+        (void)PRINTF("    wlan-host-sleep <1/0> default 0x1e\r\n");
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+        (void)PRINTF("    wlan-host-sleep mef manual\r\n");
+        (void)PRINTF("    wlan-host-sleep <1/0> default 0x1e manual\r\n");
+#endif
+#else
         (void)PRINTF("    wlan-host-sleep <1/0> [wowlan <wake_up_conds>/mef]\r\n");
         (void)PRINTF("    [wake_up_conds] -- value for host wakeup conditions\r\n");
         (void)PRINTF("	       bit 0: WAKE_ON_ALL_BROADCAST\r\n");
@@ -3744,6 +3833,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
 #endif
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
+#endif
         return;
     }
 }
@@ -3752,8 +3842,8 @@ static void test_wlan_host_sleep(int argc, char **argv)
 static void dump_multiple_mef_config_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-multi-mef <ping/arp/multicast/del> [<action>]\r\n");
-    (void)PRINTF("        ping/arp/multicast\r\n");
+    (void)PRINTF("    wlan-multi-mef <ping/arp/multicast/ns/del> [<action>]\r\n");
+    (void)PRINTF("        ping/arp/multicast/ns\r\n");
     (void)PRINTF("                 -- MEF entry type, will add one mef entry at a time\r\n");
     (void)PRINTF("        del      -- Delete all previous MEF entries\r\n");
     (void)PRINTF("        action   -- 0--discard and not wake host\r\n");
@@ -3802,6 +3892,11 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
         else if (string_equal("multicast", argv[1]))
         {
             type       = MEF_TYPE_MULTICAST;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else if (string_equal("ns", argv[1]))
+        {
+            type       = MEF_TYPE_IPV6_NS;
             mef_action = (t_u8)atoi(argv[2]);
         }
         else
@@ -8461,7 +8556,17 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
+#ifdef CONFIG_HOST_SLEEP
+    {"wlan-host-sleep",
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+     "<0/1> <default [default_val]>/mef> <manual>",
+#else
+     "<0/1> <default [default_val]>/mef>",
+#endif
+     test_wlan_host_sleep},
+#else
     {"wlan-host-sleep", "<0/1> mef/[wowlan <wake_up_conds>]", test_wlan_host_sleep},
+#endif
 #else
     {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
 #endif

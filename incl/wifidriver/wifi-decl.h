@@ -731,6 +731,8 @@ typedef struct
  */
 typedef struct _wifi_mef_filter_t
 {
+    /** flag*/
+    t_u32 fill_flag;
     /** BYTE 0X41; Decimal 0X42; Bit 0x43*/
     t_u16 type;
     /** value*/

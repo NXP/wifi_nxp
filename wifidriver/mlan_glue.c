@@ -5057,6 +5057,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
             {
                 mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
+#ifdef CONFIG_HOST_SLEEP
+                wakelock_get();
+#endif
                 if (split_scan_in_progress == false)
                 {
                     (void)wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);

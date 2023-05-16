@@ -77,6 +77,12 @@ enum wifi_event
     /* WiFi Pre Beacon Lost Event */
     WIFI_EVENT_FW_PRE_BCN_LOST,
 #endif
+#ifdef CONFIG_HOST_SLEEP
+    /* Host sleep activated */
+    WIFI_EVENT_HS_ACTIVATED,
+    /* Sleep confirm done */
+    WIFI_EVENT_SLEEP_CONFIRM_DONE,
+#endif
     /** Network station address configuration */
     WIFI_EVENT_NET_STA_ADDR_CONFIG,
     /** Network interface configuration */
