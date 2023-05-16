@@ -121,11 +121,5 @@ void wifi_uap_set_hidden_ssid(const t_u8 bcast_ssid_ctl);
 
 void wifi_uap_set_htcapinfo(const t_u16 ht_cap_info);
 
-int wifi_uap_enable_11d(void);
-
-int wifi_uap_set_domain_params(wifi_domain_param_t *dp);
-
-int wifi_uap_set_params(int channel);
-
 void wifi_uap_set_beacon_period(const t_u16 beacon_period);
 #endif /* _MLAN_UAP_H_ */

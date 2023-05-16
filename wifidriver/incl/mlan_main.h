@@ -3021,6 +3021,15 @@ t_u16 wlan_11d_support_APIs(mlan_private *pmpriv);
 t_bool wlan_11d_support_is_enabled(mlan_private *pmpriv);
 /** Get if 11D is enabled */
 t_bool wlan_11d_is_enabled(mlan_private *pmpriv);
+/** 11D Region code to country code string */
+const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code);
+/** Store 11D domain info */
+mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
+                                     t_u16 band,
+                                     const t_u8 country_code[COUNTRY_CODE_LEN],
+                                     t_u8 num_sub_band,
+                                     IEEEtypes_SubbandSet_t *sub_band_list);
+
 /** Get if priv is station */
 t_bool wlan_is_station(mlan_private *pmpriv);
 /** Command handler for 11D country info */

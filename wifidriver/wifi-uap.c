@@ -41,10 +41,6 @@ static uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
 
 static uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
 
-country_code_t wifi_uap_11d_country = COUNTRY_NONE;
-
-int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp);
-
 #ifdef CONFIG_11AC
 /**
  * @brief initialize AP bss config
@@ -292,19 +288,53 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_uap_set_country(country_code_t country)
+#ifdef CONFIG_5GHz_SUPPORT
+/*
+ * get current band by uap config channel or scan channel list(for ACS case)
+ * if channel == 0 && scan channel <= 14, return 2.4G band
+ * if channel == 0 && scan channel >= 36, return   5G band
+ * if channel <= 14, return 2.4G band
+ * if channel >= 36, return   5G band
+ * other cases will print warnning log and return 2.4G band by default
+ */
+static int wifi_uap_11d_get_band(int channel, wifi_scan_chan_list_t scan_chan_list)
 {
-    wifi_uap_11d_country = country;
+    int band         = BAND_B;
+    t_u8 num_of_chan = scan_chan_list.num_of_chan;
 
-    (void)wifi_uap_enable_11d_support();
+    if (channel == 0)
+    {
+        if (num_of_chan == 0)
+        {
+            wuap_e("wifi_uap_11d_get_band unsupported channel 0, num_of_chan 0");
+        }
+        else if (scan_chan_list.chan_number[0] <= 14 && scan_chan_list.chan_number[num_of_chan - 1] <= 14)
+        {
+            band = BAND_B;
+        }
+        else if (scan_chan_list.chan_number[0] >= 36 && scan_chan_list.chan_number[num_of_chan - 1] >= 36)
+        {
+            band = BAND_A;
+        }
+        else
+        {
+            wuap_e("wifi_uap_downld_domain_params unsupported channel %d, scan_chan_list[0] %d, scan_chan_list[%d] %d",
+                   channel, scan_chan_list.chan_number[0], num_of_chan - 1,
+                   scan_chan_list.chan_number[num_of_chan - 1]);
+        }
+    }
+    else if (channel <= 14)
+    {
+        band = BAND_B;
+    }
+    else
+    {
+        band = BAND_A;
+    }
 
-    return WM_SUCCESS;
+    return band;
 }
-
-country_code_t wifi_uap_get_country(void)
-{
-    return wifi_uap_11d_country;
-}
+#endif
 
 /*
  * Note: wlan_uap_domain_info() and wlan_uap_callback_domain_info() are the
@@ -314,32 +344,51 @@ country_code_t wifi_uap_get_country(void)
  * firmware. Then in the cmd resp handler to sends the domain info
  * command. As per the current design of our driver we cannot send command
  * from command resp handler. Hence, we have modified the control flow to
- * suit our design. The wifi_get_uap_channel() function also helps us in
- * this by updating pmpriv->uap_state_chan_cb.band_config and
- * pmpriv->uap_state_chan_cb.channel.
+ * suit our design.
  *
- * fixme: Need to check how ACS works with this.
+ * This Api is set as callback and called during uap start phase,
+ * getting band by uap config or scan channel list to select 2.4G/5G band,
+ * getting region code by pmadapter.
+ * Then it sends 80211 domain info command to firmware
  */
-int wifi_uap_downld_domain_params(MrvlIEtypes_DomainParamSet_t *dp)
+int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_list)
 {
-    mlan_status rv = MLAN_STATUS_FAILURE;
+    int rv;
+    int band;
+    mlan_private *priv_uap   = mlan_adap->priv[1];
+    int region_code          = mlan_adap->region_code;
+    const t_u8 *country_code = NULL;
+    t_u8 nr_sb;
+    wifi_sub_band_set_t *sub_band_list = NULL;
 
-    if (dp == MNULL)
+    /* get band and sub band lists */
+#ifdef CONFIG_5GHz_SUPPORT
+    band = wifi_uap_11d_get_band(channel, scan_chan_list);
+    if (band == BAND_B)
+        sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
+    else
+        sub_band_list = get_sub_band_from_region_code_5ghz(region_code, &nr_sb);
+#else
+    band          = BAND_B;
+    sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
+#endif
+
+    /* get country code string from region code */
+    country_code = wlan_11d_code_2_region(mlan_adap, (t_u8)region_code);
+    if (country_code == NULL)
     {
-        return -WM_E_INVAL;
+        wuap_e("wifi_uap_downld_domain_params get country_code from region_code failed");
+        return -WM_FAIL;
     }
 
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-    (void)wifi_get_uap_channel(NULL);
+    /* restore domain info params for fw command */
+    wlan_11d_set_domain_info(priv_uap, band, country_code, nr_sb, (IEEEtypes_SubbandSet_t *)sub_band_list);
 
-    t_u16 band = (pmpriv->uap_state_chan_cb.band_config & BAND_CONFIG_5GHZ) ? BAND_A : BAND_B;
-
-    if (pmpriv->support_11d_APIs != NULL)
+    rv = wifi_uap_prepare_and_send_cmd(priv_uap, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+                                       MLAN_BSS_TYPE_UAP, NULL);
+    if (rv != 0)
     {
-        rv = pmpriv->support_11d_APIs->wlan_11d_handle_uap_domain_info_p(pmpriv, band, (t_u8 *)dp, NULL);
-    }
-    if (rv != MLAN_STATUS_SUCCESS)
-    {
+        wuap_w("Unable to send uap domain info");
         return -WM_FAIL;
     }
 
@@ -702,108 +751,16 @@ static int wifi_cmd_uap_config(char *ssid,
 }
 
 static wifi_uap_11d_apis_t wifi_uap_11d_apis = {
-    .wifi_uap_set_params_p           = wifi_uap_set_params,
     .wifi_uap_downld_domain_params_p = wifi_uap_downld_domain_params,
-    .wifi_uap_enable_11d_p           = wifi_uap_enable_11d,
-
 };
-
-static void *wifi_uap_11d_support_apis = (wifi_uap_11d_apis_t *)&wifi_uap_11d_apis;
-
-/*
- * We only save the params to be used later when BSS is (re-)started.
- */
-int wifi_uap_set_domain_params(wifi_domain_param_t *dp)
-{
-    if (dp == MNULL)
-    {
-        return -WM_E_INVAL;
-    }
-
-    if (wm_wifi.dp != NULL)
-    {
-        wuap_w("Overwriting previous configuration");
-        os_mem_free(wm_wifi.dp);
-    }
-
-    /*
-     * We have domain information from caller. Allocate tlv, fill it
-     * up and store as pointer in global wifi structure. It will be
-     * used later by the uap start code.
-     */
-    size_t sz = sizeof(MrvlIEtypes_DomainParamSet_t) + (sizeof(IEEEtypes_SubbandSet_t) * (dp->no_of_sub_band - 1));
-    MrvlIEtypes_DomainParamSet_t *n_dp = os_mem_alloc(sz);
-    if (n_dp == MNULL)
-    {
-        return -WM_E_NOMEM;
-    }
-
-    n_dp->header.type = TLV_TYPE_DOMAIN;
-    n_dp->header.len  = (t_u16)(sizeof(MrvlIEtypes_DomainParamSet_t) - sizeof(MrvlIEtypesHeader_t) +
-                               ((dp->no_of_sub_band - 1) * sizeof(IEEEtypes_SubbandSet_t)));
-
-    (void)memcpy((void *)n_dp->country_code, (const void *)dp->country_code, COUNTRY_CODE_LEN);
-
-    wifi_sub_band_set_t *is   = dp->sub_band;
-    IEEEtypes_SubbandSet_t *s = n_dp->sub_band;
-    t_u8 i;
-    for (i = 0; i < dp->no_of_sub_band; i++)
-    {
-        s[i].first_chan = is[i].first_chan;
-        s[i].no_of_chan = is[i].no_of_chan;
-        s[i].max_tx_pwr = is[i].max_tx_pwr;
-    }
-
-    /* Store for use later */
-    wuap_d("Saved domain info for later use");
-    wm_wifi.dp = n_dp;
-
-    return WM_SUCCESS;
-}
-
-int wifi_uap_set_params(int channel)
-{
-    int ret;
-    wifi_sub_band_set_t *sub_band = NULL;
-    t_u8 nr_sb                    = 0;
-    if (channel > 14)
-    {
-#ifdef CONFIG_5GHz_SUPPORT
-        sub_band = get_sub_band_from_country_5ghz(wifi_uap_11d_country, &nr_sb);
-#endif /* CONFIG_5GHz_SUPPORT */
-    }
-    else
-    {
-        sub_band = get_sub_band_from_country(wifi_uap_11d_country, &nr_sb);
-    }
-    wifi_domain_param_t *dp = get_11d_domain_params(wifi_uap_11d_country, sub_band, nr_sb);
-    ret                     = wifi_uap_set_domain_params(dp);
-
-    if (dp != NULL)
-    {
-        os_mem_free(dp);
-    }
-
-    return ret;
-}
 
 int wifi_uap_enable_11d_support(void)
 {
     wuap_d("Enabling 11d support APIs");
-    (void)wifi_enable_11d_support_APIs();
 
     wm_wifi.enable_11d_support   = true;
-    wm_wifi.uap_support_11d_apis = wifi_uap_11d_support_apis;
+    wm_wifi.uap_support_11d_apis = &wifi_uap_11d_apis;
     return WM_SUCCESS;
-}
-
-int wifi_uap_enable_11d(void)
-{
-    state_11d_t enable = ENABLE_11D;
-
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-    return wifi_uap_prepare_and_send_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET, (t_u32)Dot11D_i,
-                                         NULL, &enable, MLAN_BSS_TYPE_UAP, NULL);
 }
 
 int wifi_uap_ctrl_deauth(bool enable)
@@ -1076,25 +1033,10 @@ int wifi_uap_start(mlan_bss_type type,
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
-    if (wm_wifi.enable_11d_support && (wm_wifi.uap_support_11d_apis != MNULL))
-    {
-        wuap_d("Setting default domain params");
-        (void)wm_wifi.uap_support_11d_apis->wifi_uap_set_params_p(channel);
-    }
-
-    if ((wm_wifi.dp != MNULL) && (wm_wifi.uap_support_11d_apis != MNULL))
+    if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
     {
         wuap_d("Downloading domain params");
-        (void)wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(wm_wifi.dp);
-        wuap_d("Enabling 11d");
-        (void)wm_wifi.uap_support_11d_apis->wifi_uap_enable_11d_p();
-    }
-
-    /* Free dp after the 11d configuration is done */
-    if (wm_wifi.dp != MNULL)
-    {
-        os_mem_free(wm_wifi.dp);
-        wm_wifi.dp = MNULL;
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(channel, scan_chan_list);
     }
 
     wuap_d("Starting BSS");
@@ -2610,18 +2552,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
 #ifdef UAP_SUPPORT
     if (enable_11d && !priv->bss_started)
     {
-        if (wm_wifi.enable_11d_support && (wm_wifi.uap_support_11d_apis != MNULL))
-        {
-            wuap_d("Setting default domain params");
-            (void)wm_wifi.uap_support_11d_apis->wifi_uap_set_params_p(priv->uap_channel);
-        }
-        if ((wm_wifi.dp != MNULL) && (wm_wifi.uap_support_11d_apis != MNULL))
-        {
-            wuap_d("Downloading domain params");
-            (void)wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(wm_wifi.dp);
-            wuap_d("Enabling 11d");
-            (void)wm_wifi.uap_support_11d_apis->wifi_uap_enable_11d_p();
-        }
+        /* TODO: implement later enable 11d */
     }
 #endif
     return out_len;
@@ -4317,12 +4248,6 @@ int wifi_nxp_stop_ap()
     {
         wuap_e("Stop BSS failed");
         return -WM_FAIL;
-    }
-
-    if (wm_wifi.dp != NULL)
-    {
-        os_mem_free(wm_wifi.dp);
-        wm_wifi.dp = NULL;
     }
 
     priv->uap_host_based = MFALSE;

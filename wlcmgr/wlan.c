@@ -1614,6 +1614,9 @@ static void do_scan(struct wlan_network *network)
     }
 
     wlan.sta_state = CM_STA_SCANNING;
+
+    /* comment out this, need to check if 11d needs 3 times full channel scan */
+    /*
     if (wrapper_wlan_11d_support_is_enabled() && wlan.scan_count < WLAN_11D_SCAN_LIMIT)
     {
         ret = wifi_send_scan_cmd((t_u8)g_wifi_scan_params.bss_type, g_wifi_scan_params.bssid, g_wifi_scan_params.ssid,
@@ -1627,6 +1630,7 @@ static void do_scan(struct wlan_network *network)
                                  false, false);
     }
     else
+    */
     {
         if (channel != 0)
         {
@@ -2232,12 +2236,15 @@ static void handle_scan_results(void)
     uint8_t num_channels         = 0;
     wlan_scan_channel_list_t chan_list[40];
 
+    /* comment out this, need to check if 11d needs 3 times full channel scan */
+    /*
     if (wrapper_wlan_11d_support_is_enabled() && wlan.scan_count < WLAN_11D_SCAN_LIMIT)
     {
         wlcm_d("11D enabled, re-scanning");
         do_scan(network);
         return;
     }
+    */
 
     /*
      * We need an allocation here because the lower layer puts all the

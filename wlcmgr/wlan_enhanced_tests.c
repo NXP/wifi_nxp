@@ -302,63 +302,6 @@ static int wlan_memrdwr_getset(int argc, char *argv[])
     return WM_SUCCESS;
 }
 #endif
-static void dump_wlan_set_regioncode_usage(void)
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-set-regioncode <region-code>\r\n");
-    (void)PRINTF("where, region code =\r\n");
-    (void)PRINTF("0xAA : World Wide Safe Mode\r\n");
-    (void)PRINTF("0x10 : US FCC, Singapore\r\n");
-    (void)PRINTF("0x20 : IC Canada\r\n");
-    (void)PRINTF("0x30 : ETSI, Australia, Republic of Korea\r\n");
-    (void)PRINTF("0x32 : France\r\n");
-    (void)PRINTF("0x40 : Japan\r\n");
-    (void)PRINTF("0x50 : China\r\n");
-    (void)PRINTF("0xFF : Japan Special\r\n");
-#ifndef CONFIG_MLAN_WMSDK
-    (void)PRINTF("0x41 : Japan\r\n");
-    (void)PRINTF("0xFE : Japan\r\n");
-#endif
-}
-
-static void test_wlan_set_regioncode(int argc, char **argv)
-{
-    if (argc != 2)
-    {
-        dump_wlan_set_regioncode_usage();
-        return;
-    }
-
-    errno             = 0;
-    t_u32 region_code = (t_u32)strtol(argv[1], NULL, 0);
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
-    }
-    int rv = wifi_set_region_code(region_code);
-    if (rv != WM_SUCCESS)
-    {
-        (void)PRINTF("Unable to set region code: 0x%x\r\n", region_code);
-    }
-    else
-    {
-        (void)PRINTF("Region code: 0x%x set\r\n", region_code);
-    }
-}
-
-static void test_wlan_get_regioncode(int argc, char **argv)
-{
-    t_u32 region_code = 0;
-    int rv            = wifi_get_region_code(&region_code);
-    if (rv != WM_SUCCESS)
-    {
-        (void)PRINTF("Unable to get region code: 0x%x\r\n", region_code);
-    }
-    else
-    {
-        (void)PRINTF("Region code: 0x%x\r\n", region_code);
-    }
-}
 
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
 static char *bw[]           = {"20 MHz", "40 MHz", "80 MHz", "160 MHz"};
@@ -1981,8 +1924,6 @@ static void test_wlan_send_tm(int argc, char **argv)
 #endif
 
 static struct cli_command wlan_enhanced_commands[] = {
-    {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
-    {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
     {"wlan-get-txpwrlimit", "<subband>", test_wlan_get_txpwrlimit},
     {"wlan-set-txpwrlimit", NULL, test_wlan_set_txpwrlimit},
     {"wlan-set-chanlist-and-txpwrlimit", NULL, test_wlan_set_chanlist_and_txpwrlimit},

@@ -145,7 +145,6 @@
 
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
-extern country_code_t wifi_11d_country;
 
 #ifdef CONFIG_WPS2
 extern int wps_session_attempt;
@@ -281,10 +280,6 @@ int wifi_set_smart_mode_cfg(char *ssid,
                             uint8_t *smc_frame_filter,
                             int custom_ie_len,
                             uint8_t *custom_ie);
-wifi_sub_band_set_t *get_sub_band_from_country(country_code_t country, t_u8 *nr_sb);
-#ifdef CONFIG_5GHz_SUPPORT
-wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t country, t_u8 *nr_sb);
-#endif
 int wifi_set_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t id, void *buf, unsigned int buf_len);
 #ifdef SD8801
 int wifi_get_ext_coex_stats(wifi_ext_coex_stats_t *ext_coex_stats);

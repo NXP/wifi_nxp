@@ -16,6 +16,8 @@
 #include <cli_utils.h>
 #include <wifi.h>
 #include <wlan_tests.h>
+#include <wlan_11d.h>
+
 /*
  * NXP Test Framework (MTF) functions
  */
@@ -8349,6 +8351,39 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
 }
 #endif
 
+static void dump_wlan_11d_enable_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-11d-enable <sta/uap> <0/1>, 0: disable, 1: enable\r\n");
+    (void)PRINTF("This command is only used to enable/disable 11D\r\n");
+    (void)PRINTF("Please use wlan-set-regioncode command to set region\r\n");
+}
+
+static void test_wlan_11d_enable(int argc, char **argv)
+{
+    int state;
+
+    if (argc != 3)
+    {
+        dump_wlan_11d_enable_usage();
+        return;
+    }
+
+    state = atoi(argv[2]);
+    if (state != 0 && state != 1)
+    {
+        dump_wlan_11d_enable_usage();
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        wlan_enable_11d(state);
+    else if (string_equal("uap", argv[1]))
+        wlan_enable_uap_11d(state);
+    else
+        dump_wlan_11d_enable_usage();
+}
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
@@ -8490,6 +8525,7 @@ static struct cli_command tests[] = {
 #endif
     {"wlan-set-regioncode", "<region-code>", test_wlan_set_regioncode},
     {"wlan-get-regioncode", NULL, test_wlan_get_regioncode},
+    {"wlan-11d-enable", "<sta/uap> <0/1>", test_wlan_11d_enable},
 #ifdef CONFIG_ECSA
     {"wlan-uap-set-ecsa-cfg", "<block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>",
      test_wlan_uap_set_ecsa_cfg},

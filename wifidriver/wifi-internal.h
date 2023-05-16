@@ -26,9 +26,7 @@
 
 typedef struct
 {
-    int (*wifi_uap_set_params_p)(int channel);
-    int (*wifi_uap_downld_domain_params_p)(MrvlIEtypes_DomainParamSet_t *dp);
-    int (*wifi_uap_enable_11d_p)(void);
+    int (*wifi_uap_downld_domain_params_p)(int channel, wifi_scan_chan_list_t scan_chan_list);
 } wifi_uap_11d_apis_t;
 
 typedef struct mcast_filter
@@ -115,14 +113,10 @@ typedef struct
      * Store 11D support status in Wi-Fi driver.
      */
     bool enable_11d_support;
-    wifi_uap_11d_apis_t *uap_support_11d_apis;
     /*
-     * This is updated when user calls the wifi_uap_set_domain_params()
-     * functions. This is used later during uAP startup. Since the uAP
-     * configuration needs to be done befor uAP is started we keep this
-     * cache. This is needed to enable 11d support in uAP.
+     * 11D support callback function
      */
-    MrvlIEtypes_DomainParamSet_t *dp;
+    wifi_uap_11d_apis_t *uap_support_11d_apis;
     /** Broadcast ssid control */
     t_u8 hidden_ssid;
     /** beacon period */

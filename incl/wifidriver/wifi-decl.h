@@ -920,22 +920,6 @@ typedef struct
 } wifi_sub_band_set_t;
 
 /**
- * Data structure for domain parameters
- *
- * This structure is accepted by wlan_uap_set_domain_params() API. This
- * information is used to generate the country info IE.
- */
-typedef struct
-{
-    /** Country code */
-    t_u8 country_code[COUNTRY_CODE_LEN];
-    /** subbands count */
-    t_u8 no_of_sub_band;
-    /** Set of subbands of no_of_sub_band number of elements */
-    wifi_sub_band_set_t sub_band[1];
-} wifi_domain_param_t;
-
-/**
  * Data structure for Channel attributes
  *
  */

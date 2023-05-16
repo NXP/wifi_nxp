@@ -36,7 +36,6 @@ static const char driver_version_format[] = "SD878x-%s-%s-WM";
 static const char driver_version[]        = "702.1.0";
 
 static unsigned int mgmt_ie_index_bitmap = 0x0000000F;
-country_code_t wifi_11d_country          = COUNTRY_NONE;
 
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
 ftm_start_param ftm_param;
@@ -1076,7 +1075,9 @@ int wifi_get_set_rf_test_generic(t_u16 cmd_action, wifi_mfg_cmd_generic_cfg_t *w
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action, wifi_mfg_cmd_tx_frame_t *wifi_mfg_cmd_tx_frame, wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
+int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action,
+                                  wifi_mfg_cmd_tx_frame_t *wifi_mfg_cmd_tx_frame,
+                                  wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1125,7 +1126,9 @@ int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action, wifi_mfg_cmd_he_tb_tx_t *wifi_mfg
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action, wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont, wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
+int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
+                                 wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont,
+                                 wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -1159,7 +1162,6 @@ int wifi_set_rf_test_mode(void)
 
     wifi_e("wifi set rf test mode fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
     return -WM_FAIL;
-
 }
 
 int wifi_set_rf_channel(const uint8_t channel)
@@ -1338,7 +1340,7 @@ int wifi_set_rf_bandwidth(const uint8_t bandwidth)
         && (bandwidth != 4U)
 #endif
     )
-	{
+    {
         return -WM_FAIL;
     }
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -1419,14 +1421,14 @@ int wifi_set_rf_tx_cont_mode(const uint32_t enable_tx,
                              const uint32_t tx_rate)
 {
     wifi_mfg_cmd_tx_cont_t wifi_mfg_cmd_tx_cont;
-	wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
     int ret;
 
     if ((enable_tx > 1U) || (cw_mode > 1U) || (cs_mode > 1U) || (act_sub_ch == 2U || act_sub_ch > 3U))
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_tx_cont, 0x00, sizeof(wifi_mfg_cmd_tx_cont_t));
-	(void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_tx_cont.mfg_cmd = MFG_CMD_TX_CONT;
     wifi_mfg_cmd_tx_cont.action  = HostCmd_ACT_GEN_SET;
@@ -1500,7 +1502,8 @@ int wifi_get_rf_tx_antenna(uint8_t *antenna)
     }
 
     wifi_e("Wifi get rf tx antenna fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
-    return -WM_FAIL;;
+    return -WM_FAIL;
+    ;
 }
 
 int wifi_set_rf_rx_antenna(const uint8_t antenna)
@@ -1528,7 +1531,6 @@ int wifi_set_rf_rx_antenna(const uint8_t antenna)
 
     wifi_e("Wifi get rf tx antenna fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
     return -WM_FAIL;
-
 }
 
 int wifi_get_rf_rx_antenna(uint8_t *antenna)
@@ -1559,7 +1561,7 @@ int wifi_get_rf_rx_antenna(uint8_t *antenna)
 int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t path_id)
 {
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
-	int ret;
+    int ret;
 
     if (power > 24U)
         return -WM_FAIL;
@@ -1582,7 +1584,7 @@ int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t p
 #endif
     wifi_mfg_cmd_generic_cfg.data2 = mod;
     wifi_mfg_cmd_generic_cfg.data3 = path_id;
-	
+
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
     if (ret == WM_SUCCESS)
     {
@@ -1609,7 +1611,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint8_t *bssid)
 {
     wifi_mfg_cmd_tx_frame_t wifi_mfg_cmd_tx_frame;
-	wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
+    wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
     int ret;
 
     if (enable > 1U || frame_length < 1U || frame_length > 0x400U || burst_sifs_in_us > 255U || short_preamble > 1U ||
@@ -1618,7 +1620,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
         return -WM_FAIL;
 
     (void)memset(&wifi_mfg_cmd_tx_frame, 0x00, sizeof(wifi_mfg_cmd_tx_frame_t));
-	(void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+    (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_tx_frame.mfg_cmd = MFG_CMD_TX_FRAME;
     wifi_mfg_cmd_tx_frame.action  = HostCmd_ACT_GEN_SET;
@@ -1637,7 +1639,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     wifi_mfg_cmd_tx_frame.tx_bf             = tx_bf;
     wifi_mfg_cmd_tx_frame.gf_mode           = gf_mode;
     wifi_mfg_cmd_tx_frame.stbc              = stbc;
-	
+
     ret = wifi_get_set_rf_test_tx_frame(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_tx_frame, &wifi_mfg_cmd_generic_cfg);
     if (WM_SUCCESS == ret && wifi_mfg_cmd_generic_cfg.error == 0)
     {
@@ -2865,79 +2867,47 @@ int wifi_set_region_code(t_u32 region_code)
     return WM_SUCCESS;
 }
 
-static int wifi_send_11d_cfg_ioctl(mlan_ds_11d_cfg *d_cfg)
-{
-    /* fixme: check if this needs to go on heap */
-    mlan_ioctl_req req;
-
-    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-    req.pbuf      = (t_u8 *)d_cfg;
-    req.buf_len   = sizeof(mlan_ds_11d_cfg);
-    req.bss_index = 0;
-    req.req_id    = MLAN_IOCTL_11D_CFG;
-    req.action    = (mlan_act_ioctl)HostCmd_ACT_GEN_SET;
-
-    mlan_status rv = wlan_ops_sta_ioctl(mlan_adap, &req);
-    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
-    {
-        return -WM_FAIL;
-    }
-
-    return WM_SUCCESS;
-}
-int wifi_set_domain_params(wifi_domain_param_t *dp)
-{
-    if (dp == MNULL)
-    {
-        return -WM_E_INVAL;
-    }
-
-    mlan_ds_11d_cfg d_cfg;
-
-    (void)memset(&d_cfg, 0x00, sizeof(mlan_ds_11d_cfg));
-
-    d_cfg.sub_command = MLAN_OID_11D_DOMAIN_INFO;
-
-    (void)memcpy((void *)&d_cfg.param.domain_info.country_code, (const void *)dp->country_code, COUNTRY_CODE_LEN);
-
-    d_cfg.param.domain_info.band = (BAND_B | BAND_G);
-
-#ifdef CONFIG_11N
-    d_cfg.param.domain_info.band |= BAND_GN;
-#ifdef CONFIG_5GHz_SUPPORT
-    d_cfg.param.domain_info.band |= BAND_AN;
-#endif
-#else
-#ifdef CONFIG_5GHz_SUPPORT
-    d_cfg.param.domain_info.band |= BAND_A;
-#endif
-#endif
-    d_cfg.param.domain_info.no_of_sub_band = dp->no_of_sub_band;
-
-    wifi_sub_band_set_t *is  = dp->sub_band;
-    mlan_ds_subband_set_t *s = d_cfg.param.domain_info.sub_band;
-    t_u8 i;
-    for (i = 0; i < dp->no_of_sub_band; i++)
-    {
-        s[i].first_chan = is[i].first_chan;
-        s[i].no_of_chan = is[i].no_of_chan;
-        s[i].max_tx_pwr = is[i].max_tx_pwr;
-    }
-
-    (void)wifi_enable_11d_support_APIs();
-
-    return wifi_send_11d_cfg_ioctl(&d_cfg);
-}
-
-int wifi_enable_11d_support(void)
+int wifi_enable_11d_support()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
 
-    (void)wrapper_wlan_11d_enable();
+    wrapper_wlan_11d_enable(ENABLE_11D);
 
-    (void)wlan_11d_support_APIs(pmpriv);
+    wlan_11d_support_APIs(pmpriv);
 
     return wlan_enable_11d_support(pmpriv);
+}
+
+int wifi_enable_uap_11d_support()
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+
+    wrapper_wlan_uap_11d_enable(ENABLE_11D);
+
+    wlan_11d_support_APIs(pmpriv);
+
+    /* set callback for setting domain params when uap start */
+    wifi_uap_enable_11d_support();
+
+    return wlan_enable_11d_support(pmpriv);
+}
+
+int wifi_disable_11d_support()
+{
+    mlan_adap->priv[0]->state_11d.user_enable_11d_support = DISABLE_11D;
+    wrapper_wlan_11d_enable(DISABLE_11D);
+
+    return WM_SUCCESS;
+}
+
+int wifi_disable_uap_11d_support()
+{
+    mlan_adap->priv[1]->state_11d.user_enable_11d_support = DISABLE_11D;
+    wrapper_wlan_uap_11d_enable(DISABLE_11D);
+
+    wm_wifi.enable_11d_support   = false;
+    wm_wifi.uap_support_11d_apis = MNULL;
+    return WM_SUCCESS;
 }
 
 int wifi_enable_11d_support_APIs(void)
@@ -2947,40 +2917,7 @@ int wifi_enable_11d_support_APIs(void)
     return wlan_11d_support_APIs(pmpriv);
 }
 
-wifi_sub_band_set_t *get_sub_band_from_country(country_code_t country, t_u8 *nr_sb)
-{
-    *nr_sb                        = 1;
-    wifi_sub_band_set_t *ret_band = NULL;
-
-    switch (country)
-    {
-        case COUNTRY_WW:
-            ret_band = subband_WWSM_2_4GHz;
-            break;
-        case COUNTRY_US:
-        case COUNTRY_CA:
-        case COUNTRY_SG:
-            ret_band = subband_US_CA_SG_2_4_GHz;
-            break;
-        case COUNTRY_EU:
-        case COUNTRY_AU:
-        case COUNTRY_KR:
-        case COUNTRY_FR:
-        case COUNTRY_CN:
-            ret_band = subband_EU_AU_KR_CN_2_4GHz;
-            break;
-        case COUNTRY_JP:
-            ret_band = subband_JP_2_4GHz;
-            break;
-        default:
-            *nr_sb   = 2;
-            ret_band = subband_CS_2_4GHz;
-            break;
-    }
-    return ret_band;
-}
-
-static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
+wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
 {
     *nr_sb                        = 1;
     wifi_sub_band_set_t *ret_band = NULL;
@@ -3009,62 +2946,7 @@ static wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 
 }
 
 #ifdef CONFIG_5GHz_SUPPORT
-wifi_sub_band_set_t *get_sub_band_from_country_5ghz(country_code_t country, t_u8 *nr_sb)
-{
-    *nr_sb                        = 1;
-    wifi_sub_band_set_t *ret_band = NULL;
-
-    switch (country)
-    {
-        case COUNTRY_WW:
-            *nr_sb   = 3;
-            ret_band = subband_WWSM_5_GHz;
-            break;
-        case COUNTRY_US:
-#if defined(IW61x)
-            *nr_sb   = 3;
-            ret_band = subband_US_5_GHz;
-            break;
-#endif
-        case COUNTRY_SG:
-        case COUNTRY_FR:
-            *nr_sb = 3;
-#if defined(IW61x)
-            ret_band = subband_SG_FR_5_GHz;
-#else
-            ret_band = subband_US_SG_FR_5_GHz;
-#endif
-            break;
-        case COUNTRY_CA:
-            *nr_sb   = 4;
-            ret_band = subband_CA_5_GHz;
-            break;
-        case COUNTRY_EU:
-        case COUNTRY_AU:
-        case COUNTRY_KR:
-            *nr_sb   = 2;
-            ret_band = subband_EU_AU_KR_5_GHz;
-            break;
-        case COUNTRY_JP:
-            *nr_sb   = 3;
-            ret_band = subband_JP_5_GHz;
-            break;
-        case COUNTRY_CN:
-            ret_band = subband_CN_5_GHz;
-            break;
-        default:
-            *nr_sb = 3;
-#if defined(IW61x)
-            ret_band = subband_US_5_GHz;
-#else
-            ret_band = subband_US_SG_FR_5_GHz;
-            break;
-#endif
-    }
-    return ret_band;
-}
-
-static wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *nr_sb)
+wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *nr_sb)
 {
     *nr_sb                        = 1;
     wifi_sub_band_set_t *ret_band = NULL;
@@ -3129,29 +3011,16 @@ bool wifi_11d_is_channel_allowed(int channel)
     if (channel > 14)
     {
 #ifdef CONFIG_5GHz_SUPPORT
-        if (wifi_11d_country == COUNTRY_NONE)
-        {
-            sub_band = get_sub_band_from_region_code_5ghz(pmpriv->adapter->region_code, &nr_sb);
-        }
-        else
-        {
-            sub_band = get_sub_band_from_country_5ghz(wifi_11d_country, &nr_sb);
-        }
+        sub_band = get_sub_band_from_region_code_5ghz(pmpriv->adapter->region_code, &nr_sb);
 #else
         wifi_w("5 GHz support is not enabled");
 
+        return false;
 #endif /* CONFIG_5GHz_SUPPORT */
     }
     else
     {
-        if (wifi_11d_country == COUNTRY_NONE)
-        {
-            sub_band = get_sub_band_from_region_code(pmpriv->adapter->region_code, &nr_sb);
-        }
-        else
-        {
-            sub_band = get_sub_band_from_country(wifi_11d_country, &nr_sb);
-        }
+        sub_band = get_sub_band_from_region_code(pmpriv->adapter->region_code, &nr_sb);
     }
 
     for (i = 0; i < nr_sb; i++)
@@ -3177,101 +3046,6 @@ bool wifi_11d_is_channel_allowed(int channel)
     }
 
     return false;
-}
-
-static const char *wifi_get_country_str2(country_code_t country)
-{
-    if (country == COUNTRY_WW)
-    {
-        return "WW ";
-    }
-    else if (country == COUNTRY_US)
-    {
-        return "US ";
-    }
-    else if (country == COUNTRY_CA)
-    {
-        return "CA ";
-    }
-    else if (country == COUNTRY_SG)
-    {
-        return "SG ";
-    }
-    else if (country == COUNTRY_EU)
-    {
-        return "EU ";
-    }
-    else if (country == COUNTRY_AU)
-    {
-        return "AU ";
-    }
-    else if (country == COUNTRY_KR)
-    {
-        return "KR ";
-    }
-    else if (country == COUNTRY_FR)
-    {
-        return "FR ";
-    }
-    else if (country == COUNTRY_JP)
-    {
-        return "JP ";
-    }
-    else if (country == COUNTRY_CN)
-    {
-        return "CN ";
-    }
-    else
-    {
-        return "WW ";
-    }
-}
-
-wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb)
-{
-    wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) + (sizeof(wifi_sub_band_set_t) * (nr_sb - 1U)));
-
-    (void)memcpy((void *)dp->country_code, (const void *)wifi_get_country_str2(country), COUNTRY_CODE_LEN);
-
-    dp->no_of_sub_band = nr_sb;
-    (void)memcpy((void *)&dp->sub_band[0], (const void *)sub_band, nr_sb * sizeof(wifi_sub_band_set_t));
-
-    return dp;
-}
-
-country_code_t wifi_get_country(void)
-{
-    return wifi_11d_country;
-}
-
-int wifi_set_country(country_code_t country)
-{
-    int ret;
-    t_u8 nr_sb;
-
-    if (wifi_enable_11d_support() != WM_SUCCESS)
-    {
-        wifi_e("unable to enabled 11d feature\r\n");
-        return -WM_FAIL;
-    }
-
-    wifi_11d_country = country;
-
-    wifi_sub_band_set_t *sub_band = get_sub_band_from_country(country, &nr_sb);
-
-    wifi_domain_param_t *dp = get_11d_domain_params(country, sub_band, nr_sb);
-
-    ret = wifi_set_domain_params(dp);
-
-    if (ret != WM_SUCCESS)
-    {
-        wifi_11d_country = COUNTRY_NONE;
-        os_mem_free(dp);
-        return ret;
-    }
-
-    os_mem_free(dp);
-    return WM_SUCCESS;
 }
 
 int wifi_enable_ecsa_support(void)

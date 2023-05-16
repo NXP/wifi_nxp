@@ -141,7 +141,6 @@ const uint8_t *wlan_11d_country_index_2_string(int country)
     return ((const uint8_t *)region_code_mapping[country - 1].region);
 }
 
-#ifdef STA_SUPPORT
 /**
  *  @brief This function converts integer code to region string
  *
@@ -150,7 +149,7 @@ const uint8_t *wlan_11d_country_index_2_string(int country)
  *
  *  @return             Region string
  */
-static const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
+const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
 {
     t_u8 i;
     t_u8 size = sizeof(region_code_mapping) / sizeof(region_code_mapping_t);
@@ -172,6 +171,7 @@ static const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
     return ((const t_u8 *)region_code_mapping[0].region);
 }
 
+#ifdef STA_SUPPORT
 /**
  *  @brief This function Checks if channel txpwr is learned from AP/IBSS
  *
@@ -644,11 +644,11 @@ static mlan_status wlan_11d_send_domain_info(mlan_private *pmpriv, t_void *pioct
  *
  *  @return                 MLAN_STATUS_SUCCESS
  */
-static mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
-                                            t_u16 band,
-                                            t_u8 country_code[COUNTRY_CODE_LEN],
-                                            t_u8 num_sub_band,
-                                            IEEEtypes_SubbandSet_t *sub_band_list)
+mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
+                                     t_u16 band,
+                                     const t_u8 country_code[COUNTRY_CODE_LEN],
+                                     t_u8 num_sub_band,
+                                     IEEEtypes_SubbandSet_t *sub_band_list)
 {
     mlan_adapter *pmadapter            = pmpriv->adapter;
     wlan_802_11d_domain_reg_t *pdomain = &pmadapter->domain_reg;
@@ -1289,6 +1289,12 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_A:
                         case BAND_AN:
                         case BAND_A | BAND_AN:
+#ifdef CONFIG_11AC
+                        case BAND_A | BAND_AN | BAND_AAC:
+#endif
+#ifdef CONFIG_11AX
+                        case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
+#endif
                             break;
                         default:
                             continue_loop = MTRUE;
@@ -1306,6 +1312,12 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_GN:
                         case BAND_G | BAND_GN:
                         case BAND_B | BAND_G | BAND_GN:
+#ifdef CONFIG_11AC
+                        case BAND_B | BAND_G | BAND_GN | BAND_GAC:
+#endif
+#ifdef CONFIG_11AX
+                        case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                             break;
                         default:
                             continue_loop = MTRUE;

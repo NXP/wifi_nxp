@@ -124,31 +124,6 @@ typedef enum
     MGMT_MBO_IE              = MGMT_VENDOR_SPECIFIC_221,
 } IEEEtypes_ElementId_t;
 
-/** 802.11d country codes */
-typedef PACK_START enum {
-    COUNTRY_NONE = 0,
-    /** World Wide Safe Mode */
-    COUNTRY_WW = 1,
-    /** US FCC */
-    COUNTRY_US,
-    /** IC Canada */
-    COUNTRY_CA,
-    /** Singapore */
-    COUNTRY_SG,
-    /** ETSI */
-    COUNTRY_EU,
-    /** Australia */
-    COUNTRY_AU,
-    /** Republic Of Korea */
-    COUNTRY_KR,
-    /** France */
-    COUNTRY_FR,
-    /** Japan */
-    COUNTRY_JP,
-    /** China */
-    COUNTRY_CN,
-} PACK_END country_code_t;
-
 typedef struct wifi_uap_client_disassoc
 {
     int reason_code;
@@ -857,45 +832,28 @@ int wifi_get_uap_channel(int *channel);
 int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr);
 
 /**
- * Sets the domain parameters for the uAP.
+ * enable/disable 80211d domain feature for the uAP.
  *
- * @note This API only saves the domain params inside the driver internal
- * structures. The actual application of the params will happen only during
+ * @note This API only set 80211d domain feature.
+ * The actual application will happen only during
  * starting phase of uAP. So, if the uAP is already started then the
  * configuration will not apply till uAP re-start.
- *
- * To use this API you will need to fill up the structure
- * \ref wifi_domain_param_t with correct parameters.
- *
- * E.g. Programming for US country code\n
- * <CODE>
- *	wifi_sub_band_set_t sb = {
- *		.first_chan = 1,
- *		.no_of_chan= 11,
- *		.max_tx_pwr = 30,
- *	};
- *
- *	wifi_domain_param_t *dp = os_mem_alloc(sizeof(wifi_domain_param_t) +
- *					       sizeof(wifi_sub_band_set_t));
- *
- *	(void)memcpy(dp->country_code, "US\0", COUNTRY_CODE_LEN);
- *	dp->no_of_sub_band = 1;
- *	(void)memcpy(dp->sub_band, &sb, sizeof(wifi_sub_band_set_t));
- *
- *	wmprintf("wifi uap set domain params\n\r");
- *	wifi_uap_set_domain_params(dp);
- *	os_mem_free(dp);
- * </CODE>
  *
  * @return WM_SUCCESS on success or error code.
  *
  */
-int wifi_enable_11d_support(void);
-int wifi_set_domain_params(wifi_domain_param_t *dp);
-int wifi_set_country(country_code_t country);
-country_code_t wifi_get_country(void);
-int wifi_uap_set_country(country_code_t country);
-country_code_t wifi_uap_get_country(void);
+int wifi_uap_enable_11d_support();
+bool wifi_11d_is_channel_allowed(int channel);
+wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb);
+#ifdef CONFIG_5GHz_SUPPORT
+wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *nr_sb);
+#endif
+
+int wifi_enable_11d_support();
+int wifi_enable_uap_11d_support();
+int wifi_disable_11d_support();
+int wifi_disable_uap_11d_support();
+
 #ifdef OTP_CHANINFO
 int wifi_get_fw_region_and_cfp_tables(void);
 void wifi_free_fw_region_and_cfp_tables(void);
@@ -914,7 +872,12 @@ int wrapper_wlan_cmd_get_hw_spec(void);
 /* fixme: These need to be removed later after complete mlan integration */
 void set_event_chanswann(void);
 void clear_event_chanswann(void);
-void wifi_set_ps_cfg(t_u16 multiple_dtims, t_u16 bcn_miss_timeout, t_u16 local_listen_interval, t_u16 adhoc_wake_period, t_u16 mode, t_u16 delay_to_ps);
+void wifi_set_ps_cfg(t_u16 multiple_dtims,
+                     t_u16 bcn_miss_timeout,
+                     t_u16 local_listen_interval,
+                     t_u16 adhoc_wake_period,
+                     t_u16 mode,
+                     t_u16 delay_to_ps);
 int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions);
 bool wrapper_wlan_11d_support_is_enabled(void);
 void wrapper_wlan_11d_clear_parsedtable(void);
@@ -963,7 +926,8 @@ int wifi_auto_reconnect_disable(void);
 int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
 #endif
 
-int wrapper_wlan_11d_enable(void);
+int wrapper_wlan_11d_enable(t_u32 state);
+int wrapper_wlan_uap_11d_enable(t_u32 state);
 
 int wifi_11h_enable(void);
 
@@ -994,16 +958,16 @@ int wifi_uap_start(mlan_bss_type type,
 
 mlan_status wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
-        t_u8 tid
+    t_u8 tid
 #endif
-        );
+);
 
 mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
 #ifdef CONFIG_WMM
-        ,
-        t_u8 tid
+                                          ,
+                                          t_u8 tid
 #endif
-        );
+);
 
 #ifdef CONFIG_WLAN_BRIDGE
 /** Enable Bridge mode in WLAN firmware.
@@ -1567,8 +1531,6 @@ uint8_t *wifi_get_wmm_send_outbuf(mlan_wmm_ac_e ac, t_u8 offset);
 void wifi_wmm_tx_stats_dump(int bss_type);
 #endif
 
-wifi_domain_param_t *get_11d_domain_params(country_code_t country, wifi_sub_band_set_t *sub_band, t_u8 nr_sb);
-
 int wifi_set_rssi_low_threshold(uint8_t *low_rssi);
 
 #ifdef CONFIG_HEAP_DEBUG
@@ -1654,7 +1616,6 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
 #ifdef CONFIG_WPA_SUPP
 t_u8 wifi_get_sec_channel_offset(unsigned int chan);
-char *wifi_get_country_str(country_code_t country_code);
 int wifi_nxp_scan_res_get(void);
 int wifi_nxp_survey_res_get(void);
 #endif

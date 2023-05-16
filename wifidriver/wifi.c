@@ -4439,90 +4439,15 @@ int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buf
     return supp_low_level_output((t_u8)bss_type, buff, len);
 }
 
-char *wifi_get_country_str(country_code_t country_code)
-{
-    if (country_code == COUNTRY_WW)
-        return "WW";
-    else if (country_code == COUNTRY_US)
-        return "US";
-    else if (country_code == COUNTRY_CA)
-        return "CA";
-    else if (country_code == COUNTRY_EU)
-        return "EU";
-    else if (country_code == COUNTRY_AU)
-        return "AU";
-    else if (country_code == COUNTRY_KR)
-        return "KR";
-    else if (country_code == COUNTRY_FR)
-        return "FR";
-    else if (country_code == COUNTRY_JP)
-        return "JP";
-    else if (country_code == COUNTRY_CN)
-        return "CN";
-    else
-        return "WW";
-}
-
-country_code_t wifi_get_country_code(const char *alpha2)
-{
-    if (strstr(alpha2, "WW"))
-        return COUNTRY_WW;
-    else if (strstr(alpha2, "US"))
-        return COUNTRY_US;
-    else if (strstr(alpha2, "CA"))
-        return COUNTRY_CA;
-    else if (strstr(alpha2, "EU"))
-        return COUNTRY_EU;
-    else if (strstr(alpha2, "AU"))
-        return COUNTRY_AU;
-    else if (strstr(alpha2, "KR"))
-        return COUNTRY_KR;
-    else if (strstr(alpha2, "FR"))
-        return COUNTRY_FR;
-    else if (strstr(alpha2, "JP"))
-        return COUNTRY_JP;
-    else if (strstr(alpha2, "CN"))
-        return COUNTRY_CN;
-    else
-        return COUNTRY_NONE;
-}
-
 int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2)
 {
-    country_code_t country = wifi_get_country_code(alpha2);
-
-    if (country == COUNTRY_NONE)
-        return -WM_FAIL;
-
-    if (bss_type == BSS_TYPE_STA)
-    {
-        return wifi_set_country(country);
-    }
-    else
-    {
-        return wifi_uap_set_country(country);
-    }
+    /* TODO: implement later */
+    return WM_SUCCESS;
 }
 
 int wifi_nxp_get_country(unsigned int bss_type, char *alpha2)
 {
-    country_code_t country = COUNTRY_NONE;
-
-    if (bss_type == BSS_TYPE_STA)
-    {
-        country = wifi_get_country();
-    }
-    else
-    {
-        country = wifi_uap_get_country();
-    }
-
-    if (country == COUNTRY_NONE)
-        return -WM_FAIL;
-
-    strncpy(alpha2, wifi_get_country_str(country), 2);
-    alpha2[2] = '\0';
-
+    /* TODO: implement later */
     return WM_SUCCESS;
 }
 

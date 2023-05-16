@@ -1061,19 +1061,36 @@ mlan_status wrapper_wlan_sta_ampdu_enable(
 }
 #endif /* CONFIG_11N */
 
-int wrapper_wlan_11d_enable(void)
+int wrapper_wlan_11d_enable(t_u32 state)
 {
-    t_u32 enable_11d = (t_u32)ENABLE_11D;
+    t_u32 enable_11d = state;
 
-    (void)wifi_get_command_lock();
+    wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
 
-    cmd->seq_num = 0x0;
+    cmd->seq_num = 0x00;
     cmd->result  = 0x0;
 
-    (void)wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
-                                   (t_u32)Dot11D_i, NULL, &enable_11d, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
+                             Dot11D_i, NULL, &enable_11d, cmd);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+int wrapper_wlan_uap_11d_enable(t_u32 state)
+{
+    t_u32 enable_11d = state;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
+    cmd->result  = 0x0;
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET,
+                             Dot11D_i, NULL, &enable_11d, cmd);
 
     return wifi_wait_for_cmdresp(NULL);
 }
@@ -3896,7 +3913,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
                         wifi_mmsf_cfg_t *mmsf_cfg     = (wifi_mmsf_cfg_t *)wm_wifi.cmd_resp_priv;
                         HostCmd_DS_MMSF_CFG *MMSF_CFG = (HostCmd_DS_MMSF_CFG *)&resp->params.mmsf_cfg;
-                        if(MMSF_CFG->action == HostCmd_ACT_GEN_GET)
+                        if (MMSF_CFG->action == HostCmd_ACT_GEN_GET)
                         {
                             (void)memcpy(mmsf_cfg->enable, &MMSF_CFG->enableMMSF, sizeof(MMSF_CFG->enableMMSF));
                             (void)memcpy(mmsf_cfg->Density, &MMSF_CFG->ampduDensity, sizeof(MMSF_CFG->ampduDensity));
@@ -5299,7 +5316,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 #if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
-			wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
+            wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
 #endif
 
             if (wifi_event_completion(WIFI_EVENT_UAP_CLIENT_ASSOC, WIFI_EVENT_REASON_SUCCESS, sta_addr) != WM_SUCCESS)
