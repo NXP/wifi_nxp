@@ -58,6 +58,9 @@ extern uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
 extern ftm_start_param ftm_param;
 static char ftm_address[255] = CIVIC_ADDRESS;
+#ifdef CONFIG_WLS_CSI_PROC
+extern uint8_t wls_data[WLS_CSI_DATA_LEN];
+#endif
 #endif
 
 #ifdef CONFIG_WPA2_ENTP
@@ -5535,11 +5538,21 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
         break;
 #endif
-#ifdef CONFIG_CSI
+#if defined(CONFIG_CSI) || ((defined(CONFIG_11AZ) || defined(CONFIG_11MC)))
         case EVENT_CSI:
         {
             PRINTM(MEVENT, "EVENT: EVENT_CSI\n");
+#ifdef CONFIG_CSI
             csi_deliver_data_to_user();
+#endif
+#if defined(CONFIG_11AZ) || defined(CONFIG_11MC)
+#ifdef CONFIG_WLS_CSI_PROC
+            wifi_get_wls_csi_sem(); // Get wls csi sem to prevent CSI event raw data from being overwritten before
+                                    // processing.
+            memcpy(wls_data, (t_u8 *)msg->data, WLS_CSI_DATA_LEN);
+            wifi_event_completion(WIFI_EVENT_WLS_CSI, WIFI_EVENT_REASON_SUCCESS, wls_data);
+#endif
+#endif
         }
         break;
 #endif

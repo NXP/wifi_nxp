@@ -155,6 +155,9 @@ enum wifi_event
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
     /* Event to trigger or stop ftm*/
     WIFI_EVENT_FTM_COMPLETE,
+#ifdef CONFIG_WLS_CSI_PROC
+	WIFI_EVENT_WLS_CSI,
+#endif
 #endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,

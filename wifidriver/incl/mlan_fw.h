@@ -995,6 +995,12 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define FTM_SESSION_CFG_INITATOR_TLV_ID       (PROPRIETARY_TLV_BASE_ID + 273) /* 0x211 */
 #define FTM_NTB_RANGING_CFG_TLV_ID            (PROPRIETARY_TLV_BASE_ID + 343) /* 0x257 */
 #define FTM_TB_RANGING_CFG_TLV_ID             (PROPRIETARY_TLV_BASE_ID + 344) /* 0x258 */
+
+#ifdef CONFIG_WLS_CSI_PROC
+#define WLS_CSI_DATA_LEN_DW 181
+#define WLS_CSI_DATA_LEN    (WLS_CSI_DATA_LEN_DW * sizeof(uint32_t))
+#endif
+
 #endif
 
 #ifdef SCAN_CHANNEL_GAP
@@ -7182,6 +7188,34 @@ typedef MLAN_PACK_START struct _Hostcmd_FTM_SESSION_CTRL
     /** Channel on which FTM must be started */
     t_u8 chan;
 } MLAN_PACK_END HostCmd_FTM_SESSION_CTRL;
+
+#ifdef CONFIG_WLS_CSI_PROC
+typedef MLAN_PACK_START struct _CSI_EVENT_HEADER_t
+{
+    /** No of bytes in packet including this field */
+    t_u16 length;
+    /** Type: Event (3) */
+    t_u16 type;
+    /** Event ID */
+    t_u16 event_id;
+    /** BSS index number for multiple BSS support */
+    t_u8 bss_index;
+    /** BSS type */
+    t_u8 bss_type;
+} MLAN_PACK_END csi_event_t;
+
+typedef MLAN_PACK_START struct _Hostcmd_WLS_CSI_ACK
+{
+    t_u16 action;
+    t_u16 sub_id;
+    t_u32 ack;
+    t_u32 phase_roll;
+    t_u32 firstpath_delay;
+    t_u32 fft_size_pointer;
+    t_u32 csi_tsf;
+} MLAN_PACK_END HostCmd_WLS_CSI_ACK;
+#endif
+
 #endif
 
 #ifdef CONFIG_1AS
@@ -7519,6 +7553,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_FTM_SESSION_CTRL ftm_session_ctrl;
         /** hostcmd for session_cfg user command */
         HostCmd_FTM_SESSION_CFG ftm_session_cfg;
+#ifdef CONFIG_WLS_CSI_PROC
+        HostCmd_WLS_CSI_ACK wls_csi_ack;
+#endif
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
         HostCmd_DS_CMD_TX_AMPDU_PROT_MODE tx_ampdu_prot_mode;

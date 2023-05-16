@@ -32,6 +32,15 @@
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
+#if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
+#ifdef CONFIG_WLS_CSI_PROC
+#include <wls_param_defines.h>
+#include <wls_api.h>
+#include <wls_structure_defs.h>
+#include <range_kalman.h>
+#endif
+#endif
+
 static const char driver_version_format[] = "SD878x-%s-%s-WM";
 static const char driver_version[]        = "702.1.0";
 
@@ -39,6 +48,18 @@ static unsigned int mgmt_ie_index_bitmap = 0x0000000F;
 
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
 ftm_start_param ftm_param;
+#ifdef CONFIG_WLS_CSI_PROC
+#define NL_MAX_PAYLOAD (3 * 1024)
+unsigned int csi_res_array[8];
+uint32_t wls_data[WLS_CSI_DATA_LEN_DW];
+range_kalman_state range_input_str = {0};
+#define RANGE_DRIVE_VAR       1e-5f // in meter/(s^2)
+#define RANGE_MEASUREMENT_VAR 4e-2f // in meter^2
+#define RANGE_RATE_INIT       1e-3f // in (meter/s)^2
+#define CSI_TSF_LEN           6 * sizeof(uint32_t)
+#define FFT_INBUFFER_LEN_DW   (MAX_RX * MAX_TX + NUM_PROC_BUF) * (MAX_IFFT_SIZE_CSI)
+uint32_t fftInBuffer_t[FFT_INBUFFER_LEN_DW];
+#endif
 #endif
 
 /* This were static functions in mlan file */
@@ -5381,5 +5402,114 @@ int wifi_process_wlc_ftm_event()
 
     return ret;
 }
+
+#ifdef CONFIG_WLS_CSI_PROC
+
+static int mlanwls_update_distance_to_gui(int distance, unsigned int tsf)
+{
+    int distance_m, distance_cm;
+    unsigned int time_ms = tsf / 1000;
+    float distance_flt   = 1.0f * distance / (1 << 8); // in meters
+    float distance_kalman;
+
+    if (range_input_str.time == 0)
+    {
+        range_kalman_init(&range_input_str, distance_flt, time_ms, RANGE_DRIVE_VAR, RANGE_MEASUREMENT_VAR,
+                          RANGE_RATE_INIT);
+        range_input_str.time = 1;
+    }
+    else
+    {
+        range_input_str.range_measurement = distance_flt;
+        range_input_str.time              = time_ms;
+        range_kalman(&range_input_str);
+    }
+    distance_kalman = range_input_str.last_range;
+
+    distance_cm = (int)(distance_kalman * 100);
+    distance_m  = distance_cm / 100;
+    distance_cm -= distance_m * 100;
+
+    wifi_d("Measured Distance: %f m; Kalman Distance: %f m [%d ms]\r\n", (double)distance_flt, (double)distance_kalman,
+           time_ms);
+
+    return 0;
+}
+
+static int send_csi_ack(unsigned int *resArray)
+{
+    int ret;
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    HostCmd_WLS_CSI_ACK *phostcmd = (HostCmd_WLS_CSI_ACK *)&cmd->params.wls_csi_ack;
+
+    cmd->command     = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
+    cmd->size        = S_DS_GEN + sizeof(HostCmd_WLS_CSI_ACK);
+    phostcmd->action = 0;
+    phostcmd->sub_id = 0x333;
+    phostcmd->ack    = 1;
+
+    phostcmd->phase_roll       = resArray[0];
+    phostcmd->firstpath_delay  = resArray[1];
+    phostcmd->fft_size_pointer = resArray[2];
+    phostcmd->csi_tsf          = resArray[3];
+
+    cmd->size += CSI_TSF_LEN;
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    ret = wifi_wait_for_cmdresp(NULL);
+
+    return ret;
+}
+
+static void proc_csi_event(void *event, unsigned int *resArray)
+{
+    uint8_t *csiBuffer = (uint8_t *)(event);
+    hal_wls_packet_params_t packetparams;
+    hal_wls_processing_input_params_t inputVals;
+    unsigned int tsf = ((unsigned int *)csiBuffer)[3];
+    int distance     = ((unsigned int *)csiBuffer)[19];
+
+    if (distance >= 0)
+        mlanwls_update_distance_to_gui(distance, tsf);
+
+    inputVals.enableCsi              = 1;                  // turn on CSI processing
+    inputVals.enableAoA              = AOA_DEFAULT;        // turn on AoA (req. enableCsi==1)
+    inputVals.nTx                    = 3;                  // limit # tx streams to process
+    inputVals.nRx                    = 3;                  // limit # rx to process
+    inputVals.selCal                 = 0;                  // choose cal values
+    inputVals.dumpMul                = 0;                  // dump extra peaks in AoA
+    inputVals.enableAntCycling       = 0;                  // enable antenna cycling
+    inputVals.dumpRawAngle           = 0;                  // Dump Raw Angle
+    inputVals.useToaMin              = TOA_MIN_DEFAULT;    // 1: use min combining, 0: power combining;
+    inputVals.useSubspace            = SUBSPACE_DEFAULT;   // 1: use subspace algo; 0: no;
+    inputVals.useFindAngleDelayPeaks = ENABLE_DELAY_PEAKS; // use this algorithm for AoA
+
+    resArray[0] = 0xffffffff;
+    resArray[1] = 0xffffffff;
+    resArray[2] = 0xffffffff;
+    resArray[3] = 0xffffffff;
+
+    wls_process_csi((unsigned int *)csiBuffer, (unsigned int *)fftInBuffer_t, &packetparams, &inputVals, resArray);
+    // record TSF
+    resArray[3] = tsf;
+
+    wifi_d("EVENT: MLAN_CSI Processing results: %d | %d (%x), TSF[%x]\r\n", resArray[0], resArray[1], resArray[2], tsf);
+
+    return;
+}
+
+int wifi_process_wls_csi_event(void *p_data)
+{
+    int ret;
+
+    proc_csi_event(((t_u8 *)p_data + sizeof(csi_event_t)), csi_res_array);
+    wifi_put_wls_csi_sem(); // After processing CSI raw data, release csi sem for next CSI event.
+    ret = send_csi_ack(csi_res_array);
+    return ret;
+}
+
+#endif
 
 #endif

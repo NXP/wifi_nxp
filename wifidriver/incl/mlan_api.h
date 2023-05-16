@@ -425,6 +425,10 @@ int wifi_process_wlc_ftm_event();
 void wifi_ftm_process_cfg_resp(void *resp_buff);
 void wifi_ftm_process_ctrl_resp(void *resp_buff);
 void wifi_ftm_process_event(void *p_data);
+#ifdef CONFIG_WLS_CSI_PROC
+int wifi_process_wls_csi_event(void *p_data);
+void wls_csi_process_event(void *p_data);
+#endif
 #endif
 
 int wifi_set_custom_ie(custom_ie *beacon_ies_data,

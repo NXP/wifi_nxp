@@ -344,6 +344,22 @@ int wifi_get_command_lock(void);
  */
 int wifi_put_command_lock(void);
 
+#if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
+/*
+ * @internal
+ *
+ *
+ */
+int wifi_get_wls_csi_sem(void);
+
+/*
+ * @internal
+ *
+ *
+ */
+int wifi_put_wls_csi_sem(void);
+#endif
+
 /*
  * Process the command reponse received from the firmware.
  *

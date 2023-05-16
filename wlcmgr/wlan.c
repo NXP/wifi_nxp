@@ -130,6 +130,10 @@ os_rw_lock_t ps_rwlock;
 os_semaphore_t uapsd_sem;
 #endif
 
+#if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
+os_semaphore_t wls_csi_sem;
+#endif
+
 #ifdef CONFIG_WPS2
 int wps_session_attempt;
 #endif
@@ -5455,6 +5459,32 @@ static int wlcm_process_ftm_complete_event()
 {
 	return wifi_process_wlc_ftm_event();
 }
+
+#ifdef CONFIG_WLS_CSI_PROC
+static int wlcm_process_wls_csi_event(void *p_data)
+{
+	return wifi_process_wls_csi_event(p_data);
+}
+
+int wifi_get_wls_csi_sem(void)
+{
+    int rv = WM_SUCCESS;
+
+    rv = os_semaphore_get(&wls_csi_sem, OS_WAIT_FOREVER);
+
+    return rv;
+}
+
+int wifi_put_wls_csi_sem(void)
+{
+    int rv = WM_SUCCESS;
+
+    rv = os_semaphore_put(&wls_csi_sem);
+
+    return rv;
+}
+#endif
+
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
@@ -5822,6 +5852,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 			wlcm_d("got event: continue to ftm or stop");
 			wlcm_process_ftm_complete_event();
 			break;
+#ifdef CONFIG_WLS_CSI_PROC
+		case WIFI_EVENT_WLS_CSI:
+			wlcm_d("got event: receive WLS csi data");
+			wlcm_process_wls_csi_event(msg->data);
+            break;
+#endif
 #endif
         default:
             wlcm_w("got unknown message: %d", msg->event);
@@ -6315,6 +6351,15 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         (void)os_queue_delete(&wlan.events);
         return -WM_FAIL;
     }
+
+#if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
+    ret = os_semaphore_create(&wls_csi_sem, "wls-csi-sem");
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("unable to create wls csi lock: %d", ret);
+        return -WM_FAIL;
+    }
+#endif
 
     if (os_semaphore_create(&wlan.scan_lock, "wlan-scan") != 0)
     {
