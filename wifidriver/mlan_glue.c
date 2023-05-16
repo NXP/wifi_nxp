@@ -978,7 +978,7 @@ mlan_status wrapper_wlan_sta_ampdu_enable(
     static t_u8 ampdu_set_tid[MAX_NUM_TID];
 #endif
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-    t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH];
+    t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH] = {0};
 #if defined(WIFI_ADD_ON)
     TxBAStreamTbl *ptx_tbl = NULL;
 #endif
@@ -997,7 +997,8 @@ mlan_status wrapper_wlan_sta_ampdu_enable(
             (void)memcpy((void *)cur_mac, (const void *)pmpriv->curr_bss_params.bss_descriptor.mac_address,
                          MLAN_MAC_ADDR_LENGTH);
 #if defined(WIFI_ADD_ON)
-            if (!(wlan_11n_get_txbastream_tbl(pmpriv, cur_mac)))
+        	ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);		
+            if (!ptx_tbl)
             {
                 wlan_11n_create_txbastream_tbl(pmpriv, cur_mac, BA_STREAM_NOT_SETUP);
 
@@ -1022,7 +1023,6 @@ mlan_status wrapper_wlan_sta_ampdu_enable(
         }
 
 #if defined(WIFI_ADD_ON)
-        ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
         wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv, cur_mac);
 
 #ifdef CONFIG_WMM
@@ -3848,14 +3848,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 {
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
                     const HostCmd_DS_AUTO_TX *auto_tx              = (HostCmd_DS_AUTO_TX *)&resp->params.auto_tx;
-                    t_u8 *pos                                      = (t_u8 *)auto_tx + sizeof(auto_tx->action);
+                    t_u16 action                                   = wlan_le16_to_cpu(auto_tx->action);
                     MrvlIEtypes_Cloud_Keep_Alive_t *keep_alive_tlv = MNULL;
                     t_u8 *enable;
+                    MrvlIEtypesHeader_t *header = (MrvlIEtypesHeader_t *)auto_tx->tlv_buffer;
+                    header->type                = wlan_le16_to_cpu(header->type);
 
-                    keep_alive_tlv = (MrvlIEtypes_Cloud_Keep_Alive_t *)pos;
-
-                    if ((auto_tx->action == HostCmd_ACT_GEN_GET) && (wm_wifi.cmd_resp_priv != NULL))
+                    if ((auto_tx->action == HostCmd_ACT_GEN_GET) && (header->type == TLV_TYPE_CLOUD_KEEP_ALIVE) && 
+						(wm_wifi.cmd_resp_priv != NULL))
                     {
+                        keep_alive_tlv        = (MrvlIEtypes_Cloud_Keep_Alive_t *)auto_tx->tlv_buffer;
                         enable                = (t_u8 *)wm_wifi.cmd_resp_priv;
                         *enable               = keep_alive_tlv->enable;
                         wm_wifi.cmd_resp_priv = NULL;

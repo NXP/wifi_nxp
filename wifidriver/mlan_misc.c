@@ -209,7 +209,7 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
             {
                 (void)__memcpy(pmpriv->adapter, ie, pmpriv->mgmt_ie[index].ie_buffer, cnt);
                 if (pmpriv->mgmt_ie[index].ie_length > (cnt + del_len))
-                    (void)__memcpy(pmpriv->adapter, &ie[cnt], &pmpriv->mgmt_ie[index].ie_buffer[cnt + del_len],
+                    (void)__memcpy(pmpriv->adapter, &ie[cnt], &pmpriv->mgmt_ie[index].ie_buffer[MIN((MAX_IE_SIZE - 1),(cnt + del_len))],
                                    (pmpriv->mgmt_ie[index].ie_length - (cnt + del_len)));
                 (void)__memset(pmpriv->adapter, &pmpriv->mgmt_ie[index].ie_buffer, 0,
                                sizeof(pmpriv->mgmt_ie[index].ie_buffer));
