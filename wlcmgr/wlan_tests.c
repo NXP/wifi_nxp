@@ -5323,7 +5323,7 @@ static void dump_wlan_set_antcfg_usage(void)
     (void)PRINTF("\t           0xFFFF  -- Tx/Rx antenna diversity\r\n");
     (void)PRINTF("\t[evaluate_time]: \r\n");
     (void)PRINTF("\t           if ant mode = 0xFFFF, SAD evaluate time interval,\r\n");
-    (void)PRINTF("\t           default value is 6s(0x1770)\r\n");
+    (void)PRINTF("\t           default value is 6000 milli seconds\r\n");
 }
 
 static void wlan_antcfg_set(int argc, char *argv[])
@@ -5354,7 +5354,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     errno = 0;
     if (argc == 3)
     {
-        evaluate_time = (uint16_t)strtol(argv[2], NULL, 16);
+        evaluate_time = (uint16_t)strtol(argv[2], NULL, 10);
     }
     if (errno != 0)
     {
@@ -5398,7 +5398,7 @@ static void wlan_antcfg_get(int argc, char *argv[])
         (void)PRINTF("Mode of Tx/Rx path is : %x\r\n", ant_mode);
         if (ant_mode == 0XFFFFU)
         {
-            (void)PRINTF("Evaluate time : %x\r\n", evaluate_time);
+            (void)PRINTF("Evaluate time : %d\r\n", evaluate_time);
         }
         if (current_antenna > 0)
         {
