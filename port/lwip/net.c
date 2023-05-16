@@ -195,6 +195,7 @@ int net_dhcp_hostname_set(char *hostname)
     return WM_SUCCESS;
 }
 
+#ifndef CONFIG_NO_WIFI_TCPIP_INIT
 static void tcpip_init_done_cb(void *arg)
 {
     sys_sem_t *init_sem;
@@ -230,6 +231,7 @@ void net_ipv4stack_init(void)
 
     net_d("Initialized TCP/IP v4 stack");
 }
+#endif
 
 #ifdef CONFIG_IPV6
 void net_ipv6stack_init(struct netif *netif)
@@ -273,7 +275,10 @@ int net_wlan_init(void)
 #endif
     if (!net_wlan_init_done)
     {
+#ifndef CONFIG_NO_WIFI_TCPIP_INIT
         net_ipv4stack_init();
+#endif
+
 #ifndef RW610
 #ifndef CONFIG_WIFI_RX_REORDER
         (void)wifi_register_data_input_callback(&handle_data_packet);
