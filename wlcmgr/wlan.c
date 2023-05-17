@@ -1892,6 +1892,25 @@ static int do_start(struct wlan_network *network)
     return WM_SUCCESS;
 }
 
+static void wlan_reset_txratecfg(mlan_bss_type bss_type)
+{
+    wlan_ds_rate ds_rate;
+    int rv = WM_SUCCESS;
+
+    (void)memset(&ds_rate, 0, sizeof(wlan_ds_rate));
+
+    ds_rate.sub_command = WIFI_DS_RATE_CFG;
+
+    ds_rate.param.rate_cfg.rate_format = MLAN_RATE_FORMAT_AUTO;
+    ds_rate.param.rate_cfg.rate_index = 0xFF;
+
+    rv = wifi_set_txratecfg(ds_rate, bss_type);
+    if (rv != WM_SUCCESS)
+    {
+        wlcm_e("Unable to set txratecfg");
+    }
+}
+
 static int do_stop(struct wlan_network *network)
 {
     int ret = WM_SUCCESS;
@@ -1903,6 +1922,8 @@ static int do_stop(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
+        wlan_reset_txratecfg(MLAN_BSS_TYPE_UAP);
+
 #ifdef CONFIG_WPA_SUPP
         ret = wpa_supp_stop_ap(netif, network);
 #else
@@ -4757,6 +4778,11 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
      */
     net_interface_dhcp_stop(if_handle);
     net_interface_down(if_handle);
+
+    if (!wlan.reassoc_control)
+    {
+        wlan_reset_txratecfg(MLAN_BSS_TYPE_STA);
+    }
 
     if (
 #ifdef CONFIG_WPS2
