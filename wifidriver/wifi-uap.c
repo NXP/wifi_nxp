@@ -1090,6 +1090,54 @@ int wifi_uap_stop()
                                          MLAN_BSS_TYPE_UAP, NULL);
 }
 
+#ifdef SD8801
+static int wifi_uap_acs_config_set()
+{
+    uint8_t i     = 0;
+    uint32_t size = S_DS_GEN + sizeof(HostCmd_DS_ACS_CONFIG) - 1U;
+    uint8_t active_chan_list[40];
+    uint8_t active_num_chans                      = 0;
+    MrvlIEtypes_ChanListParamSet_t *tlv_chan_list = NULL;
+    HostCmd_DS_COMMAND *cmd;
+
+    wifi_get_active_channel_list(active_chan_list, &active_num_chans, 0);
+
+    (void)wifi_get_command_lock();
+
+    cmd = wifi_get_command_buffer();
+
+    memset(cmd, 0x00, size);
+
+    cmd->command                   = wlan_cpu_to_le16(HostCmd_MMH_ACS_CFG);
+    HostCmd_DS_ACS_CONFIG *acs_cmd = (HostCmd_DS_ACS_CONFIG *)((uint32_t)cmd + S_DS_GEN);
+    uint8_t *tlv                   = acs_cmd->tlv_buffer;
+
+    tlv_chan_list = (MrvlIEtypes_ChanListParamSet_t *)(void *)tlv;
+
+    memset(tlv_chan_list, 0x00, sizeof(MrvlIEtypesHeader_t) + active_num_chans * sizeof(ChanScanParamSet_t));
+
+    tlv_chan_list->header.type = TLV_TYPE_CHANLIST;
+    tlv_chan_list->header.len  = active_num_chans * sizeof(ChanScanParamSet_t);
+
+    for (i = 0; i < active_num_chans; i++)
+    {
+        tlv_chan_list->chan_scan_param[i].chan_number   = active_chan_list[i];
+        tlv_chan_list->chan_scan_param[i].min_scan_time = MRVDRV_ACTIVE_SCAN_CHAN_TIME;
+        tlv_chan_list->chan_scan_param[i].max_scan_time = MRVDRV_ACTIVE_SCAN_CHAN_TIME;
+    }
+
+    size += sizeof(tlv_chan_list->header) + tlv_chan_list->header.len;
+
+    cmd->size    = (t_u16)size;
+    cmd->seq_num = (0x01) << 12;
+    cmd->result  = 0x00;
+
+    (void)wifi_wait_for_cmdresp(NULL);
+
+    return WM_SUCCESS;
+}
+#endif
+
 int wifi_uap_do_acs()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
@@ -1109,8 +1157,12 @@ int wifi_uap_do_acs()
     }
 
     /* Start ACS SCAN */
+#ifdef SD8801
+    return wifi_uap_acs_config_set();
+#else
     return wifi_uap_prepare_and_send_cmd(pmpriv, HostCMD_APCMD_ACS_SCAN, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
                                          MLAN_BSS_TYPE_UAP, NULL);
+#endif
 }
 
 #ifdef CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM

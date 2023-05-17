@@ -2714,11 +2714,17 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
             case HostCMD_APCMD_ACS_SCAN:
+#ifdef SD8801
+            case HostCmd_MMH_ACS_CFG:
+#endif
             {
 #ifdef CONFIG_WPA_SUPP
+#ifdef SD8801
+                HostCmd_DS_ACS_CONFIG *acs_scan = (HostCmd_DS_ACS_CONFIG *)&resp->params.acs_scan;
+#else
                 HostCMD_DS_APCMD_ACS_SCAN *acs_scan = (HostCMD_DS_APCMD_ACS_SCAN *)&resp->params.acs_scan;
 #endif
-
+#endif
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
@@ -2730,12 +2736,24 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     {
 #ifdef CONFIG_WPA_SUPP
                         nxp_wifi_acs_params acs_params;
+#ifndef SD8801
                         t_u8 chan_offset;
+#endif
 
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
+#ifndef SD8801
                         wifi_d("ACS scan done: bandcfg=%x, channel=%d\r\n", acs_scan->bandcfg, acs_scan->chan);
+#else
+                        wifi_d("ACS scan done: bandcfg=0, channel=%d\r\n", acs_scan->chan);
+#endif
 
                         memset(&acs_params, 0, sizeof(nxp_wifi_acs_params));
+
+#ifdef SD8801
+                        acs_params.pri_freq = channel_to_frequency(acs_scan->chan, 0);
+                        acs_params.ch_width = 20;
+                        acs_params.hw_mode  = 1;
+#else
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
 
                         chan_offset = wifi_get_sec_channel_offset(acs_scan->chan);
@@ -2772,7 +2790,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             acs_params.ch_width = 20;
                         }
                         acs_params.hw_mode = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;
-
+#endif
                         if (wm_wifi.supp_if_callbk_fns->acs_channel_sel_callbk_fn)
                         {
                             wm_wifi.supp_if_callbk_fns->acs_channel_sel_callbk_fn(wm_wifi.hapd_if_priv, &acs_params);

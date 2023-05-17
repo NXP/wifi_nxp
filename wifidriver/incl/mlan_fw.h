@@ -1303,6 +1303,10 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_VDLL 0x0240
 #endif
 
+#ifdef SD8801
+#define HostCmd_MMH_ACS_CFG 0x025a
+#endif
+
 /** Host Command ID : GET TBTT Offset stats */
 #define HostCmd_CMD_TBTT_OFFSET 0x0268
 
@@ -6122,6 +6126,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_SYS_CONFIG
     t_u8 tlv_buffer[1];
 } MLAN_PACK_END HostCmd_DS_SYS_CONFIG;
 
+#ifdef SD8801
+/** HostCmd_ACS_CONFIG */
+typedef MLAN_PACK_START struct _HostCmd_DS_ACS_CONFIG
+{
+    /** channel */
+    t_u8 chan;
+    /** Tlv buffer */
+    t_u8 tlv_buffer[1];
+} MLAN_PACK_END HostCmd_DS_ACS_CONFIG;
+#endif
+
 /** HostCmd_SYS_CONFIG */
 typedef MLAN_PACK_START struct _HostCmd_DS_SYS_INFO
 {
@@ -7424,7 +7439,11 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_POWER_MGMT_EXT pm_cfg;
         HostCmd_DS_REPORT_MIC report_mic;
         HostCmd_DS_PMF_PARAMS pmf_params;
+#ifdef SD8801
+        HostCmd_DS_ACS_CONFIG acs_scan;
+#else
         HostCMD_DS_APCMD_ACS_SCAN acs_scan;
+#endif
 #endif /* UAP_SUPPORT */
 #ifdef UAP_HOST_MLME
         HostCmd_DS_ADD_STATION sta_info;
