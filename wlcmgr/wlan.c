@@ -890,15 +890,16 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 }
 #endif
 
-void wlan_config_host_sleep(bool is_mef, t_u32 default_val, bool is_manual)
+void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
 {
     int ret = 0;
-
+#ifdef CONFIG_WMM_UAPSD
     if(mlan_adap->pps_uapsd_mode)
     {
         wlcm_e("Host sleep is not allowed if UAPSD/PPS is activated");
         return;
     }
+#endif
     wlan_is_manual = is_manual;
     if(!is_sta_connected() && !is_uap_started())
     {
@@ -919,7 +920,7 @@ void wlan_config_host_sleep(bool is_mef, t_u32 default_val, bool is_manual)
     }
     else
     {
-        wlan.wakeup_conditions = default_val;
+        wlan.wakeup_conditions = wake_up_conds;
         /* Clear previous MEF entries */
         if(g_flt_cfg.nentries != 0)
         {
