@@ -500,7 +500,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             wakelock_put();
 #endif
         }
-#else
+#endif
         if (ieeeps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
@@ -508,6 +508,11 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
         else if (deepsleepps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_DEEP_SLEEP;
+        }
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+        else if (((mlan_private *)mlan_adap->priv[0])->wnm_set)
+        {
+            *ps_event = (t_u16)WIFI_EVENT_WNM_PS;
         }
 #endif
         else

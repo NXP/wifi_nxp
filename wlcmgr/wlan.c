@@ -141,9 +141,11 @@ int wps_session_attempt;
         (void)wlan.cb(r, data);   \
     }
 
-#if !defined(CONFIG_WIFIDRIVER_PS_LOCK)
-static bool ps_sleep_cb_sent;
-#endif /* CONFIG_WIFIDRIVER_PS_LOCK */
+static bool ieee_ps_sleep_cb_sent;
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+static bool wnm_ps_sleep_cb_sent;
+#endif
+
 #ifdef RW610
 static os_mutex_t reset_lock;
 /* Mon thread */
@@ -2774,6 +2776,19 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
         if (action == DIS_AUTO_PS)
         {
             wlan.cm_ieeeps_configured = false;
+            ieee_ps_sleep_cb_sent     = false;
+            CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
+        }
+        else if (action == SLEEP_CONFIRM)
+        {
+            if (!ieee_ps_sleep_cb_sent)
+            {
+                CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_IEEE);
+                ieee_ps_sleep_cb_sent = true;
+            }
+        }
+        else
+        { /* Do Nothing */
         }
 #else
         if (action == EN_AUTO_PS)
@@ -2784,7 +2799,7 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
         {
             wlan.cm_ieeeps_configured = false;
             wlan.cm_ps_state          = PS_STATE_AWAKE;
-            ps_sleep_cb_sent          = false;
+            ieee_ps_sleep_cb_sent     = false;
             CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
             /* This sends event to state machine
              * to finally set state to init*/
@@ -2796,10 +2811,10 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 
             wlan_ieeeps_sm(IEEEPS_EVENT_SLP_CFM);
 
-            if (!ps_sleep_cb_sent)
+            if (!ieee_ps_sleep_cb_sent)
             {
                 CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_IEEE);
-                ps_sleep_cb_sent = true;
+                ieee_ps_sleep_cb_sent = true;
             }
         }
         else
@@ -2821,6 +2836,24 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
         if (action == DIS_AUTO_PS)
         {
             wlan.cm_deepsleepps_configured = false;
+            // CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
+            /* Skip ps-exit event for the first time
+               after waking from PM4+DS. This will ensure
+               that we do not send ps-exit event until
+               wlan-init event has been sent */
+            if (wlan.skip_ds_exit_cb)
+                wlan.skip_ds_exit_cb = false;
+            else
+            {
+                CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_DEEP_SLEEP);
+            }
+        }
+        else if (action == SLEEP_CONFIRM)
+        {
+            CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
+        }
+        else
+        { /* Do Nothing */
         }
 #else
         if (action == EN_AUTO_PS)
@@ -2892,6 +2925,16 @@ static void wlcm_process_wnmps_event(struct wifi_message *msg)
         {
             wlcm_d("WNM disable success event");
             wlan.cm_wnmps_configured = false;
+            wnm_ps_sleep_cb_sent     = false;
+            CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_WNM);
+        }
+        else if (action == SLEEP_CONFIRM)
+        {
+            if (!wnm_ps_sleep_cb_sent)
+            {
+                CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_WNM);
+                wnm_ps_sleep_cb_sent = true;
+            }
         }
         else
         {
