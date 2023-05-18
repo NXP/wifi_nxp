@@ -2090,12 +2090,6 @@ int wifi_nxp_hostapd_sta_add(void *if_priv, struct hostapd_sta_add_params *param
         sta_params->he_capab_len = params->he_capab_len;
     }
 
-    if (params->supp_rates)
-    {
-        sta_params->supp_rates_len = params->supp_rates_len;
-        memcpy(sta_params->supp_rates, params->supp_rates, sta_params->supp_rates_len);
-    }
-
     status = wifi_nxp_sta_add(sta_params);
     if (status != WM_SUCCESS)
     {
