@@ -637,10 +637,38 @@ static void dump_wlan_set_tx_power_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-tx-power <tx_power> <modulation> <path_id> \r\n");
+#ifdef RW610
+    (void)PRINTF("Power       (0 to 20 dBm)\r\n");
+#else
     (void)PRINTF("Power       (0 to 24 dBm)\r\n");
+#endif
     (void)PRINTF("Modulation  (0: CCK, 1:OFDM, 2:MCS)\r\n");
     (void)PRINTF("Path ID     (0: PathA, 1:PathB, 2:PathA+B)\r\n");
     (void)PRINTF("\r\n");
+}
+
+/*
+ *  @brief PowerLevelToDUT11Bits
+ *
+ *  @param Pwr		A user txpwr values of type int
+ *  @param PowerLevel	A Pointer of uint32 type for converted txpwr vals
+ *  @return		nothing just exit
+ */
+static void PowerLevelToDUT11Bits(int Pwr, uint32_t *PowerLevel)
+{
+    int Z = 0;
+
+    if ((Pwr > 64) || (Pwr < -64))
+        return;
+
+    Z = (int)(Pwr * 16);
+    if (Z < 0)
+    {
+        Z = Z + (1 << 11);
+    }
+    (*PowerLevel) = (uint32_t)Z;
+
+    return;
 }
 
 static void wlan_rf_tx_power_set(int argc, char *argv[])
@@ -649,6 +677,7 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     uint8_t power;
     uint8_t mod;
     uint8_t path_id;
+    uint32_t power_converted = 0xffffffff;
 
     if (!rf_test_mode)
     {
@@ -666,25 +695,31 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     mod     = strtol(argv[2], NULL, 10);
     path_id = strtol(argv[3], NULL, 10);
 
+#ifdef RW610
+    if (power > 20U)
+#else
     if (power > 24U)
+#endif
     {
-        dump_wlan_set_rx_antenna_usage();
+        dump_wlan_set_tx_power_usage();
         return;
     }
 
     if (mod != 0U && mod != 1U && mod != 2U)
     {
-        dump_wlan_set_rx_antenna_usage();
+        dump_wlan_set_tx_power_usage();
         return;
     }
 
     if (path_id != 0U && path_id != 1U && path_id != 2U)
     {
-        dump_wlan_set_rx_antenna_usage();
+        dump_wlan_set_tx_power_usage();
         return;
     }
 
-    ret = wlan_set_rf_tx_power(power, mod, path_id);
+    /* We need to convert user power vals including -ve vals as per labtool */
+    PowerLevelToDUT11Bits((int)power, &power_converted);
+    ret = wlan_set_rf_tx_power(power_converted, mod, path_id);
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Tx Power configuration successful\r\n");

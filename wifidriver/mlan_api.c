@@ -1546,7 +1546,7 @@ int wifi_set_rf_rx_antenna(const uint8_t antenna)
     ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
     if (ret == WM_SUCCESS && wifi_mfg_cmd_generic_cfg.error == 0)
     {
-        *antenna = wifi_mfg_cmd_generic_cfg.data1;
+        rx_antenna_set = 1;
         return WM_SUCCESS;
     }
 
@@ -1579,13 +1579,10 @@ int wifi_get_rf_rx_antenna(uint8_t *antenna)
     return ret;
 }
 
-int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t path_id)
+int wifi_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t path_id)
 {
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
     int ret;
-
-    if (power > 24U)
-        return -WM_FAIL;
 
     if (mod != 0U && mod != 1U && mod != 2U)
         return -WM_FAIL;

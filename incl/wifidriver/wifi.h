@@ -1467,7 +1467,7 @@ int wifi_set_rf_rx_antenna(const uint8_t antenna);
 
 int wifi_get_rf_rx_antenna(uint8_t *antenna);
 
-int wifi_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t path_id);
+int wifi_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t path_id);
 
 int wifi_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t axq_mu_timer, int16_t tx_power);
 

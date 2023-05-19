@@ -4514,13 +4514,14 @@ int wlan_get_rf_rx_antenna(uint8_t *antenna);
  * \note Please call \ref wlan_set_rf_test_mode API before using this API.
  *
  * \param[in] power The RF Tx Power to be set in Wi-Fi firmware.
+ *                  For RW610, 20M bandwidth max linear output power is 20db per data sheet.
  * \param[in] mod The modulation to be set in Wi-Fi firmware.
  * \param[in] path_id The Path ID to be set in Wi-Fi firmware.
  *
  * \return WM_SUCCESS if successful otherwise failure.
  *
  */
-int wlan_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t path_id);
+int wlan_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t path_id);
 
 /**
  * Set the RF Tx Frame in Wi-Fi firmware.

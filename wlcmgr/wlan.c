@@ -10574,7 +10574,7 @@ int wlan_get_rf_rx_antenna(uint8_t *antenna)
     return -WM_FAIL;
 }
 
-int wlan_set_rf_tx_power(const uint8_t power, const uint8_t mod, const uint8_t path_id)
+int wlan_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t path_id)
 {
     return wifi_set_rf_tx_power(power, mod, path_id);
 }
