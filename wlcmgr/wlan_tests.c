@@ -3643,8 +3643,8 @@ static void test_wlan_host_sleep(int argc, char **argv)
     int choice = -1, wowlan = 0;
     int ret = -WM_FAIL;
 #ifdef CONFIG_HOST_SLEEP
-    bool is_mef       = MFALSE;
-    bool is_manual    = MFALSE;
+    bool is_mef    = MFALSE;
+    bool is_manual = MFALSE;
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
@@ -3702,7 +3702,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
                 (void)PRINTF("wake_up_conds need be specified\r\n");
                 return;
             }
-            if (!ISDIGIT(argv[3]) && !ishexstring(argv[3]))
+            if (!ISDIGIT(argv[3]) && !ISHEXSTRING(argv[3]))
             {
                 (void)PRINTF("wake_up_conds need be a number\r\n");
                 return;
@@ -3737,7 +3737,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #else
         if (string_equal(argv[2], "wowlan"))
         {
-            errno  = 0;
+            errno = 0;
             wowlan = (int)strtol(argv[3], NULL, 10);
             if (errno != 0)
             {

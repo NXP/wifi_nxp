@@ -150,7 +150,7 @@ static inline int ISDIGIT(char *x)
  *  @param c    Hex value
  *  @return     Integer value or -1
  */
-static inline int hex2num(char c)
+static inline int HEX2NUM(char c)
 {
     if (c >= '0' && c <= '9')
         return c - '0';
@@ -168,7 +168,7 @@ static inline int hex2num(char c)
  *  @param hex          A pointer to hex string
  *  @return             1 or 0
  */
-static inline int ishexstring(void *hex)
+static inline int ISHEXSTRING(void *hex)
 {
     int i, a;
     char *p = hex;
@@ -180,7 +180,7 @@ static inline int ishexstring(void *hex)
     }
     for (i = 0; i < len; i++)
     {
-        a = hex2num(*p);
+        a = HEX2NUM(*p);
         if (a < 0)
             return 0;
         p++;

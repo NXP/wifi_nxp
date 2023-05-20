@@ -264,7 +264,7 @@ typedef enum
 #define CARD_WAKEUP_GPIO_PIN 3
 #endif
 #else
-#define HOST_WAKEUP_GPIO_PIN 4
+#define HOST_WAKEUP_GPIO_PIN 1
 #define CARD_WAKEUP_GPIO_PIN 16 //?
 #endif
 
@@ -5791,8 +5791,8 @@ int wlan_set_uap_turbo_mode(t_u8 mode);
  * \param[in] bcn_miss_timeout      becaon miss interval
  * \param[in] local_listen_interval local listen interval
  * \param[in] adhoc_wake_period     adhoc awake period
- * \param[in] mode                  mode - (0x01 - firmware to automatically choose PS_POLL or NULL mode, 
- *                                          0x02 - PS_POLL, 
+ * \param[in] mode                  mode - (0x01 - firmware to automatically choose PS_POLL or NULL mode,
+ *                                          0x02 - PS_POLL,
  *                                          0x03 - NULL mode )
  * \param[in] delay_to_ps           Delay to PS in milliseconds
  */

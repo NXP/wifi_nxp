@@ -527,7 +527,6 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
     LEAVE();
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Add WPS IE to probe request frame
  *
@@ -553,7 +552,6 @@ static void wlan_add_wps_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pp
     }
     LEAVE();
 }
-#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  *  @brief Construct and send multiple scan config commands to the firmware
@@ -1134,9 +1132,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     {
         wlan_add_ext_capa_info_ie(pmpriv, &ptlv_pos);
     }
+#endif /* CONFIG_MLAN_WMSDK */
 
     wlan_add_wps_probe_request_ie(pmpriv, &ptlv_pos);
-#endif /* CONFIG_MLAN_WMSDK */
 
 #if defined(CONFIG_MBO) || defined(CONFIG_WPA_SUPP)
     wlan_add_ext_capa_info_ie(pmpriv, NULL, &ptlv_pos);

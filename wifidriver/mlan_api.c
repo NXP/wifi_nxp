@@ -1750,42 +1750,6 @@ int wifi_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t 
 }
 #endif
 
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_WPA_SUPP_WPS
-int wifi_add_wps_probe_request_ie(void *ie, size_t ie_len)
-{
-    int ret = -WM_FAIL;
-
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-
-    if (pmpriv->probe_req_index != -1)
-    {
-        ret = wifi_clear_mgmt_ie2(MLAN_BSS_TYPE_STA, pmpriv->probe_req_index);
-
-        if (ret != WM_SUCCESS)
-        {
-            wifi_e("Clear probe req IE failed");
-            return -WM_FAIL;
-        }
-        pmpriv->probe_req_index = -1;
-    }
-
-    if (ie_len)
-    {
-        pmpriv->probe_req_index = wifi_set_mgmt_ie2(MLAN_BSS_TYPE_STA, MGMT_MASK_PROBE_REQ, ie, ie_len);
-
-        if (pmpriv->probe_req_index == -1)
-        {
-            wuap_e("Set probe req IE failed");
-            return -WM_FAIL;
-        }
-    }
-
-    return WM_SUCCESS;
-}
-#endif
-#endif
-
 /*
  * fixme: Currently, we support only single SSID based scan. We can extend
  * this to a list of multiple SSIDs. The mlan API supports this.

@@ -2242,7 +2242,7 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
     return ret;
 }
 
-static int wifi_assoc_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
+static int wifi_set_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
 {
     int bytes_left     = ie_len;
     t_u8 *pcurrent_ptr = ie;
@@ -2421,6 +2421,24 @@ done:
     return ret;
 }
 
+#ifdef CONFIG_WPA_SUPP_WPS
+int wifi_set_scan_ies(void *ie, size_t ie_len)
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
+    int ret            = -WM_FAIL;
+
+    ret = wifi_set_ies_cfg(priv, (t_u8 *)ie, ie_len);
+
+    if (ret != MLAN_STATUS_SUCCESS)
+    {
+        wifi_w("Could not set the IEs");
+        return (int)-WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+#endif
+
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 {
     int ret                    = 0;
@@ -2478,7 +2496,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->wps.session_enable = MFALSE;
 #endif
 
-    ret = wifi_assoc_ies_cfg(priv, (t_u8 *)assoc_info->wpa_ie.ie, assoc_info->wpa_ie.ie_len);
+    ret = wifi_set_ies_cfg(priv, (t_u8 *)assoc_info->wpa_ie.ie, assoc_info->wpa_ie.ie_len);
 
     if (ret != MLAN_STATUS_SUCCESS)
     {

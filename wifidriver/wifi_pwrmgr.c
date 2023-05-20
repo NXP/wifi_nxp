@@ -90,7 +90,7 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     if (action == (t_u16)HS_CONFIGURE)
     {
         hs_cfg_obj.conditions = conditions;
-        hs_cfg_obj.gap        = 0x2;
+        hs_cfg_obj.gap        = 0xa0;
 #ifdef RW610
         hs_cfg_obj.gpio = 0xff;
 #else

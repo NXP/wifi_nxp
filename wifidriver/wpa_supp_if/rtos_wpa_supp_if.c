@@ -626,11 +626,11 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 #ifdef CONFIG_WPA_SUPP_WPS
     if (params->extra_ies_len)
     {
-        status = wifi_add_wps_probe_request_ie((void *)params->extra_ies, params->extra_ies_len);
+        status = wifi_set_scan_ies((void *)params->extra_ies, params->extra_ies_len);
 
         if (status != WM_SUCCESS)
         {
-            wifi_d("wifi add wps probe request IE failed");
+            wifi_d("wifi set scan IEs failed");
             goto out;
         }
     }
