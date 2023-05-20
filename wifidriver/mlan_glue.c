@@ -2166,7 +2166,7 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
         else
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
-            if ((pvendor_ie->element_id == WPS_IE) && (priv->wps.session_enable == MFALSE) &&
+            if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) && (priv->wps.session_enable == MTRUE) &&
                 (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
         {
             /*
@@ -2427,6 +2427,9 @@ int wifi_set_scan_ies(void *ie, size_t ie_len)
     mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
     int ret            = -WM_FAIL;
 
+    /* Reset the generic IE buffer */
+    priv->gen_ie_buf_len = 0;
+
     ret = wifi_set_ies_cfg(priv, (t_u8 *)ie, ie_len);
 
     if (ret != MLAN_STATUS_SUCCESS)
@@ -2491,6 +2494,9 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 #ifdef CONFIG_11R
     priv->sec_info.is_ft = MFALSE;
 #endif
+
+    /* Reset the generic IE buffer */
+    priv->gen_ie_buf_len = 0;
 
 #ifdef CONFIG_WPA_SUPP_WPS
     priv->wps.session_enable = MFALSE;

@@ -527,6 +527,8 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
     LEAVE();
 }
 
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
 /**
  *  @brief Add WPS IE to probe request frame
  *
@@ -552,6 +554,8 @@ static void wlan_add_wps_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pp
     }
     LEAVE();
 }
+#endif
+#endif
 
 /**
  *  @brief Construct and send multiple scan config commands to the firmware
@@ -1134,7 +1138,11 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     }
 #endif /* CONFIG_MLAN_WMSDK */
 
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
     wlan_add_wps_probe_request_ie(pmpriv, &ptlv_pos);
+#endif
+#endif
 
 #if defined(CONFIG_MBO) || defined(CONFIG_WPA_SUPP)
     wlan_add_ext_capa_info_ie(pmpriv, NULL, &ptlv_pos);
@@ -3716,6 +3724,23 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                     bss_new_entry->mac_address[1], bss_new_entry->mac_address[2], bss_new_entry->mac_address[3],
                     bss_new_entry->mac_address[4], bss_new_entry->mac_address[5]);
 
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
+            if (pmpriv->wps.session_enable == MTRUE)
+            {
+                if ((bss_new_entry->wps_IE_exist == MFALSE) || (bss_new_entry->wps_session == 0xffff))
+                {
+                    if (bss_new_entry->ies != NULL)
+                    {
+                        os_mem_free(bss_new_entry->ies);
+                        bss_new_entry->ies = NULL;
+                    }
+                    continue;
+                }
+            }
+#endif /* CONFIG_WPA_SUPP_WPS */
+#endif
+
             /*
              * Search the scan table for the same bssid
              */
@@ -4723,6 +4748,23 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             PRINTM(MINFO, "EXT_SCAN: BSSID = %02x:%02x:%02x:%02x:%02x:%02x\n", bss_new_entry->mac_address[0],
                    bss_new_entry->mac_address[1], bss_new_entry->mac_address[2], bss_new_entry->mac_address[3],
                    bss_new_entry->mac_address[4], bss_new_entry->mac_address[5]);
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
+            if (pmpriv->wps.session_enable == MTRUE)
+            {
+                if ((bss_new_entry->wps_IE_exist == MFALSE) || (bss_new_entry->wps_session == 0xffff))
+                {
+                    if (bss_new_entry->ies != NULL)
+                    {
+                        os_mem_free(bss_new_entry->ies);
+                        bss_new_entry->ies = NULL;
+                    }
+                    continue;
+                }
+            }
+#endif /* CONFIG_WPA_SUPP_WPS */
+#endif
 
             /*
              * Search the scan table for the same bssid
