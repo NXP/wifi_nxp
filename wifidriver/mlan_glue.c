@@ -2424,8 +2424,9 @@ done:
 #ifdef CONFIG_WPA_SUPP_WPS
 int wifi_set_scan_ies(void *ie, size_t ie_len)
 {
-    mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
-    int ret            = -WM_FAIL;
+    mlan_private *priv       = (mlan_private *)mlan_adap->priv[0];
+    int ret                  = -WM_FAIL;
+    priv->wps.session_enable = MFALSE;
 
     /* Reset the generic IE buffer */
     priv->gen_ie_buf_len = 0;
