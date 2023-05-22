@@ -8463,6 +8463,50 @@ static void test_wlan_11d_enable(int argc, char **argv)
         dump_wlan_11d_enable_usage();
 }
 
+#ifdef CONFIG_WPA_SUPP
+static void dump_wlan_country_code(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Set country code:\r\n");
+    (void)PRINTF("    wlan-set-country <country_code_str 2 bytes>\r\n");
+    (void)PRINTF("Write the regiset:\r\n");
+    (void)PRINTF("    wlan-reg-access <type> <offset> <value>\r\n");
+    (void)PRINTF("For example:\r\n");
+    (void)PRINTF("    wlan-set-country US\r\n");
+    (void)PRINTF("    wlan-set-country EU\r\n");
+    (void)PRINTF("Country Code Options: \r\n");
+    (void)PRINTF("    WW  (World Wide Safe)\r\n");
+    (void)PRINTF("    US  (US FCC)\r\n");
+    (void)PRINTF("    CA  (IC Canada)\r\n");
+    (void)PRINTF("    SG  (Singapore)\r\n");
+    (void)PRINTF("    EU  (ETSI)\r\n");
+    (void)PRINTF("    AU  (Australia)\r\n");
+    (void)PRINTF("    KR  (Republic Of Korea)\r\n");
+    (void)PRINTF("    FR  (France)\r\n");
+    (void)PRINTF("    JP  (Japan)\r\n");
+    (void)PRINTF("    CN  (China)\r\n");
+}
+
+static void test_wlan_set_country_code(int argc, char **argv)
+{
+    int ret;
+    char country_code[3] = {0};
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        dump_wlan_country_code();
+        return;
+    }
+
+    country_code[0] = argv[1][0];
+    country_code[1] = argv[1][1];
+
+    ret = wlan_set_country_code(country_code);
+    (void)PRINTF("Set country code %s ret %d\r\n", country_code, ret);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
@@ -8710,6 +8754,10 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
 #endif
+#ifdef CONFIG_WPA_SUPP
+    {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
+#endif
+
 };
 
 /* Register our commands with the MTF. */

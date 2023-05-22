@@ -26,7 +26,6 @@
 #define KEY_MATERIAL_WEP               1
 #define KEY_PARAM_SET_V2               1
 #define ENABLE_802_11W                 1
-#define OTP_CHANINFO                   1
 #define CONFIG_STA_AMPDU_RX            1
 #define CONFIG_STA_AMPDU_TX            1
 #define CONFIG_ENABLE_AMSDU_RX         1
@@ -804,6 +803,25 @@ int wifi_get_region_code(t_u32 *region_code);
  * @return Standard WMSDK return codes.
  */
 int wifi_set_region_code(t_u32 region_code);
+
+/**
+ * Set/Get country code
+ * \param[in] alpha2 country code in 3bytes string, 2bytes country code and 1byte 0
+ *            WW : World Wide Safe
+ *            US : US FCC
+ *            CA : IC Canada
+ *            SG : Singapore
+ *            EU : ETSI
+ *            AU : Australia
+ *            KR : Republic Of Korea
+ *            FR : France
+ *            JP : Japan
+ *            CN : China
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_set_country_code(const char *alpha2);
+int wifi_get_country_code(char *alpha2);
 
 /**
  * Get the uAP channel number

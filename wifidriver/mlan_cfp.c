@@ -54,8 +54,8 @@ typedef struct _country_code_mapping
     t_u8 cfp_code_a;
 } country_code_mapping_t;
 
-#ifndef CONFIG_MLAN_WMSDK
 static const country_code_mapping_t country_code_mapping[] = {
+    {"WW", 0xaa, 0xaa}, /* World Wide Safe */
     {"US", 0x10, 0x10}, /* US FCC */
     {"CA", 0x10, 0x20}, /* IC Canada */
     {"SG", 0x10, 0x10}, /* Singapore */
@@ -66,7 +66,6 @@ static const country_code_mapping_t country_code_mapping[] = {
     {"JP", 0xFF, 0x40}, /* Japan */
     {"CN", 0x30, 0x50}, /* China */
 };
-#endif /* CONFIG_MLAN_WMSDK */
 
 #define COUNTRY_ID_US 0
 #define COUNTRY_ID_JP 1
@@ -859,7 +858,6 @@ static const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapte
     return MNULL;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
 /********************************************************
     Global Functions
 ********************************************************/
@@ -894,7 +892,6 @@ mlan_status wlan_misc_country_2_cfp_table_code(pmlan_adapter pmadapter, t_u8 *co
     LEAVE();
     return MLAN_STATUS_FAILURE;
 }
-#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef SD8801
 /**

@@ -36,6 +36,7 @@ typedef struct _region_code_mapping
 
 /** Region code mapping table */
 static const region_code_mapping_t region_code_mapping[] = {
+    {"WW ", 0xaa}, /* World Wide Safe */
     {"US ", 0x10}, /* US FCC */
     {"CA ", 0x20}, /* IC Canada */
     {"SG ", 0x10}, /* Singapore */

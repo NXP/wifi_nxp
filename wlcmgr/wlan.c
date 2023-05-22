@@ -12096,3 +12096,24 @@ int wlan_set_ips(int option)
     return wifi_set_ips_config(MLAN_BSS_TYPE_STA, option);
 }
 #endif
+
+int wlan_set_country_code(const char *alpha2)
+{
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+    int ret;
+    unsigned char country3 = 0x20;
+    struct netif *netif = net_get_uap_interface();
+
+    if ((alpha2[2] == 0x4f) || (alpha2[2] == 0x49) || (alpha2[2] == 0x58) || (alpha2[2] == 0x04))
+    {
+        country3 = alpha2[2];
+    }
+
+    ret = wpa_supp_set_ap_country(netif, alpha2, country3);
+    if (ret != 0)
+        return -WM_FAIL;
+#endif
+#endif
+    return wifi_set_country_code(alpha2);
+}

@@ -5829,4 +5829,41 @@ int wlan_start_cloud_keep_alive(void);
 int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive);
 #endif
 
+/**
+ * Set country code
+ *
+ * \note This API should be called after WLAN is initialized
+ * but before starting uAP interface.
+ *
+ * \param[in] alpha2 country code in 3 octets string, 2 octets country code and 1 octet environment
+ *            2 octets country code supported:
+ *            WW : World Wide Safe
+ *            US : US FCC
+ *            CA : IC Canada
+ *            SG : Singapore
+ *            EU : ETSI
+ *            AU : Australia
+ *            KR : Republic Of Korea
+ *            FR : France
+ *            JP : Japan
+ *            CN : China
+ *
+ * For the third octet, STA is always 0.
+ * For uAP environment:
+ * All environments of the current frequency band and country (default)
+ * alpha2[2]=0x20
+ * Outdoor environment only
+ * alpha2[2]=0x4f
+ * Indoor environment only
+ * alpha2[2]=0x49
+ * Noncountry entity (country_code=XX)
+ * alpha[2]=0x58
+ * IEEE 802.11 standard Annex E table indication: 0x01 .. 0x1f
+ * Annex E, Table E-4 (Global operating classes)
+ * alpha[2]=0x04
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_country_code(const char *alpha2);
+
 #endif /* __WLAN_H__ */

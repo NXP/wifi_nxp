@@ -579,12 +579,19 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 
     wifi_d("initiating wifi-scan");
 
-    for (i = 0; params->freqs[i] && i < WIFI_SCAN_MAX_NUM_CHAN; i++)
+    if (params->freqs)
     {
-        channels[i] = freq_to_chan(params->freqs[i]);
-    }
+        for (i = 0; params->freqs[i] && i < WIFI_SCAN_MAX_NUM_CHAN; i++)
+        {
+            channels[i] = freq_to_chan(params->freqs[i]);
+        }
 
-    num_chans = i;
+        num_chans = i;
+    }
+    else
+    {
+        num_chans = 0;
+    }
 
     if (params->num_filter_ssids > 0)
     {
