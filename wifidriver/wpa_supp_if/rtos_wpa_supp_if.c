@@ -363,6 +363,7 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
 
         event.assoc_reject.status_code = status;
         event.assoc_reject.reason_code = reason_code;
+        event.assoc_reject.timeout_reason = NULL;
     }
     else
     {
