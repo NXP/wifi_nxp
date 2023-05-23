@@ -2327,6 +2327,11 @@ static void update_network_params(struct wlan_network *network, const struct wif
             t = WLAN_SECURITY_NONE;
         }
         network->security.type = t;
+        if (network->security.type == WLAN_SECURITY_WPA2)
+        {
+            network->security.mfpr = 0;
+            (void)wlan_set_pmfcfg((t_u8)network->security.mfpc, (t_u8)network->security.mfpr);
+        }
     }
 
     network->dot11n = res->phtcap_ie_present;
