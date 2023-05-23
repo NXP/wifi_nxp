@@ -555,26 +555,7 @@ int mlan_subsys_init(void)
 
 int mlan_subsys_deinit(void)
 {
-#ifdef RW610
-    int i               = 0;
-    pmlan_callbacks pcb = &(mlan_adap->callbacks);
-
-    for (i = 0; i < MIN(mlan_adap->priv_num, MLAN_MAX_BSS_NUM); i++)
-    {
-        if (mlan_adap->priv[i])
-        {
-            pcb->moal_mfree(MNULL, (t_u8 *)(mlan_adap->priv[i]));
-            mlan_adap->priv[i] = MNULL;
-        }
-    }
-    /* free pointers under mlan_adap */
-#ifdef OTP_CHANINFO
-    wlan_free_fw_cfp_tables(mlan_adap);
-#endif
-    pcb->moal_mfree(MNULL, (t_u8 *)mlan_adap);
-#else
     (void)mlan_unregister(mlan_adap);
-#endif
     mlan_adap = MNULL;
 
     wlan_clear_scan_bss();

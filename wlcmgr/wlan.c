@@ -6509,13 +6509,13 @@ int wlan_stop(void)
         wlcm_e("cannot stop wlcmgr. unexpected wlan.running: %d", wlan.running);
         return WLAN_ERROR_STATE;
     }
-#ifndef RW610
-    wlan.running = 0;
-    wlan.scan_cb = NULL;
-
 #ifdef OTP_CHANINFO
     wifi_free_fw_region_and_cfp_tables();
 #endif
+
+#ifndef RW610
+    wlan.running = 0;
+    wlan.scan_cb = NULL;
 
 #ifdef CONFIG_WPA_SUPP
 
