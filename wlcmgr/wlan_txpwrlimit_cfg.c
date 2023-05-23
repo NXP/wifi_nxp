@@ -65,6 +65,41 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 
     return -WM_FAIL;
 }
+#elif defined(CONFIG_COMPRESS_TX_PWTBL)
+typedef struct _rg_power_cfg
+{
+    t_u16 region_code;
+    t_u8 *rg_power_table;
+    t_u16 rg_len;
+} rg_power_cfg;
+
+rg_power_cfg rg_power_cfg_FC[] = {
+    {
+        0x10,
+        (t_u8 *)rg_table_fc,
+        sizeof(rg_table_fc),
+    },
+};
+
+int wlan_set_rg_power_cfg(t_u16 region_code)
+{
+    int i  = 0;
+    int rv = WM_SUCCESS;
+
+    for (i = 0; i < sizeof(rg_power_cfg_FC) / sizeof(rg_power_cfg); i++)
+    {
+        if (region_code == rg_power_cfg_FC[i].region_code)
+        {
+            rv = wlan_set_region_power_cfg(rg_power_cfg_FC[i].rg_power_table, rg_power_cfg_FC[i].rg_len);
+            if (rv != WM_SUCCESS)
+                (void)PRINTF("Unable to set compressed TX power table configuration\r\n");
+            return rv;
+        }
+    }
+
+    return -WM_FAIL;
+}
+
 #endif
 
 #ifdef CONFIG_COMPRESS_TX_PWTBL
@@ -85,7 +120,11 @@ int wlan_set_wwsm_txpwrlimit()
     if (rv != WM_SUCCESS)
         (void)PRINTF("Unable to set 5G chanlist configuration\r\n");
 #endif
+#if defined(RW610)
     rv = wlan_set_region_power_cfg(rg_rw610, rg_rw610_len);
+#else
+    rv = wlan_set_region_power_cfg(rg_table_fc, rg_table_fc_len);
+#endif
     if (rv != WM_SUCCESS)
         (void)PRINTF("Unable to set compressed TX power table configuration\r\n");
     return rv;

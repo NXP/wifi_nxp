@@ -5794,7 +5794,7 @@ int wlan_set_ips(int option);
 int wlan_get_signal_info(wlan_rssi_info_t *signal);
 #endif
 
-#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
+#if defined(CONFIG_COMPRESS_TX_PWTBL)
 /**
  * set region power table
  * \param[in] region_code region code
