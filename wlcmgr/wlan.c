@@ -1574,7 +1574,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         }
     }
 
-    if (!(res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa) && network->security.psk_len)
+    if (!(res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa3_sae || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa) && (network->security.psk_len || network->security.password_len))
     {
         wlcm_d("%s: security profile mismatch", network->ssid);
         return -WM_FAIL;

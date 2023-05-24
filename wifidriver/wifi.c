@@ -61,7 +61,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #endif
 
 #define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
-#define WIFI_CORE_STACK_SIZE          (1024)
+#define WIFI_CORE_STACK_SIZE          (2048)
 /* We don't see events coming in quick succession,
  * MAX_EVENTS = 10 is fairly big value */
 #define MAX_EVENTS    20
@@ -148,9 +148,9 @@ typedef enum __mlan_status
     MLAN_CARD_CMD_TIMEOUT
 } __mlan_status;
 
-static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE * sizeof(portSTACK_TYPE));
-static os_thread_stack_define(wifi_scan_stack, 2048);
-static os_thread_stack_define(wifi_drv_stack, 2048);
+static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
+static os_thread_stack_define(wifi_scan_stack, 1024);
+static os_thread_stack_define(wifi_drv_stack, 1024);
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 #ifdef CONFIG_WMM
 static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
