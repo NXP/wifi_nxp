@@ -2655,6 +2655,19 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
         case SUBTYPE_ACTION:
             category    = *(payload + sizeof(wlan_802_11_header));
             action_code = *(payload + sizeof(wlan_802_11_header) + 1);
+            /*wpa_supplicant only deals with those action frame below*/
+            if (category != IEEE_MGMT_ACTION_CATEGORY_FAST_BSS_TRANS &&
+                category != IEEE_MGMT_ACTION_CATEGORY_WMM_TSPEC &&
+                category != IEEE_MGMT_ACTION_CATEGORY_FST &&
+                category != IEEE_MGMT_ACTION_CATEGORY_PUBLIC &&
+                category != IEEE_MGMT_ACTION_CATEGORY_PROTECTED_DUAL &&
+                category != IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC
+                )
+            {
+                wifi_d("Drop action frame: category = %d, action_code=%d", category, action_code);
+                LEAVE();
+                return ret;
+            }
             if (category == IEEE_MGMT_ACTION_CATEGORY_BLOCK_ACK)
             {
                 wifi_d("Drop BLOCK ACK action frame: action_code=%d", action_code);
@@ -2811,6 +2824,13 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             (uint8_t *)pieee_pkt_hdr + (sizeof(wlan_802_11_header)), payload_len - sizeof(wlan_802_11_header));
 
     payload_len -= MLAN_MAC_ADDR_LENGTH;
+    if (payload_len > sizeof(resp.frame.frame))
+    {
+        wifi_w("The payload length (%d) overs the max length(%d), dropping mgmt frame: type=%d",
+			payload_len, sizeof(resp.frame.frame), sub_type);
+        dump_hex(payload, 64);
+        return MLAN_STATUS_FAILURE;
+    }
 
     if (priv->bss_role == MLAN_BSS_ROLE_STA)
     {
