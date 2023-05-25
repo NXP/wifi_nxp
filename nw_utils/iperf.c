@@ -109,6 +109,28 @@ static void iperf_disable_tickless_hook(bool disable)
         }
     }
 }
+
+/**
+ *  For server mode, we do not re-enable tickless idle in case client runs continuous multiple tests.
+ *  For client mode, we re-enable tickless idle except for one case:
+ *  We start a bidirectional test individually, first TX and then RX. In this case, for the first TX,
+ *  we do not re-enable tickless idle and re-enable it after latter RX is done.
+ */
+static bool iperf_need_enable_tickless_idle(void *arg, enum lwiperf_report_type report_type)
+{
+    struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
+
+    if (!ctx)
+        return true;
+
+    if (ctx->server_mode)
+        return false;
+    else if (ctx->client_type == LWIPERF_TRADEOFF &&
+             (report_type == LWIPERF_TCP_DONE_CLIENT_TX || report_type == LWIPERF_UDP_DONE_CLIENT_TX))
+        return false;
+
+    return true;
+}
 #endif
 #endif
 #endif
@@ -175,11 +197,7 @@ static void lwiperf_report(void *arg,
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
     /* Re-enable Tickless Idle */
-    if (report_type != LWIPERF_TCP_DONE_SERVER_RX && report_type != LWIPERF_UDP_DONE_SERVER_RX
-#ifdef LWIPERF_REVERSE_MODE
-        && report_type != LWIPERF_TCP_DONE_SERVER_TX && report_type != LWIPERF_UDP_DONE_SERVER_TX
-#endif
-    )
+    if (iperf_need_enable_tickless_idle(arg, report_type))
         iperf_disable_tickless_hook(false);
 #endif
 #endif
@@ -576,12 +594,12 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session = lwiperf_start_tcp_server(IP6_ADDR_ANY, port, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_tcp_server(IP6_ADDR_ANY, port, lwiperf_report, ctx);
             }
             else
 #endif
             {
-                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, port, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_tcp_server(IP_ADDR_ANY, port, lwiperf_report, ctx);
             }
         }
         else
@@ -605,12 +623,12 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session = lwiperf_start_udp_server(IP6_ADDR_ANY, port, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_udp_server(IP6_ADDR_ANY, port, lwiperf_report, ctx);
             }
             else
 #endif
             {
-                ctx->iperf_session = lwiperf_start_udp_server(&bind_address, port, lwiperf_report, NULL);
+                ctx->iperf_session = lwiperf_start_udp_server(&bind_address, port, lwiperf_report, ctx);
             }
         }
     }
@@ -645,7 +663,7 @@ static void iperf_test_start(void *arg)
 #else
                                                           0,
 #endif
-                                                          lwiperf_report, 0);
+                                                          lwiperf_report, ctx);
         }
         else
         {
@@ -662,16 +680,16 @@ static void iperf_test_start(void *arg)
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
-                ctx->iperf_session = lwiperf_start_udp_client(&bind_address, port, &server_address,
-                                                              port, ctx->client_type, amount, buffer_len,
-                                                              IPERF_UDP_CLIENT_RATE * udp_rate_factor,
+                ctx->iperf_session =
+                    lwiperf_start_udp_client(&bind_address, port, &server_address, port, ctx->client_type, amount,
+                                             buffer_len, IPERF_UDP_CLIENT_RATE * udp_rate_factor,
 #ifdef CONFIG_WMM
-                                                              qos,
+                                             qos,
 #else
-                                                              0,
+                                             0,
 #endif
 
-                                                              lwiperf_report, NULL);
+                                             lwiperf_report, ctx);
             }
             else
             {
@@ -685,7 +703,7 @@ static void iperf_test_start(void *arg)
                                          0,
 #endif
 
-                                             lwiperf_report, NULL);
+                                             lwiperf_report, ctx);
 #ifdef CONFIG_IPV6
             }
 #endif
