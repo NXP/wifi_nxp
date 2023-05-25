@@ -930,7 +930,7 @@ void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
 {
     int ret = 0;
 #ifdef CONFIG_WMM_UAPSD
-    if (mlan_adap->pps_uapsd_mode)
+    if (mlan_adap && mlan_adap->pps_uapsd_mode)
     {
         wlcm_e("Host sleep is not allowed if UAPSD/PPS is activated");
         return;
