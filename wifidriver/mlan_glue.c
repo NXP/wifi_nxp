@@ -3848,7 +3848,6 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 {
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
                     const HostCmd_DS_AUTO_TX *auto_tx              = (HostCmd_DS_AUTO_TX *)&resp->params.auto_tx;
-                    t_u16 action                                   = wlan_le16_to_cpu(auto_tx->action);
                     MrvlIEtypes_Cloud_Keep_Alive_t *keep_alive_tlv = MNULL;
                     t_u8 *enable;
                     MrvlIEtypesHeader_t *header = (MrvlIEtypesHeader_t *)auto_tx->tlv_buffer;
