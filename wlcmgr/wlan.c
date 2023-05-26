@@ -5009,6 +5009,9 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #endif /* CONFIG_P2P */
 
                 (void)net_get_if_addr(&network->ip, if_handle);
+                /* UAP case set dns same as gateway */
+                network->ip.ipv4.dns1 = network->ip.ipv4.gw;
+                network->ip.ipv4.dns2 = 0;
 #ifdef CONFIG_IPV6
                 (void)net_get_if_ipv6_addr(&network->ip, if_handle);
 #endif
