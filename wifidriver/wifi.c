@@ -4353,6 +4353,11 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
     return WM_SUCCESS;
 }
 
+void wifi_nxp_reset_scan_flag()
+{
+    mlan_adap->wpa_supp_scan_triggered = MFALSE;
+}
+
 int wifi_nxp_survey_res_get(void)
 {
 #ifdef SCAN_CHANNEL_GAP

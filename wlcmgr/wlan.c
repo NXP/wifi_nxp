@@ -4384,6 +4384,13 @@ static void wlcm_process_scan_failed()
     }
 }
 
+#define IEEEtypes_REASON_DEAUTH_LEAVING     3
+
+static void wlcm_process_disconnected()
+{
+    (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE, (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
+}
+
 #ifdef CONFIG_11K
 static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_rrm_neighbor_report_t *nbr_rpt)
 {
@@ -4514,6 +4521,10 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     if (strstr(buf, WPA_EVENT_SCAN_FAILED))
     {
         wlcm_process_scan_failed();
+    }
+    else if (strstr(buf, WPA_EVENT_DISCONNECTED))
+    {
+        wlcm_process_disconnected();
     }
     else if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
     {
@@ -5424,8 +5435,6 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
 
         wlcm_d("Disconnecting ... ");
         (void)wlan_disconnect();
-
-        CONNECTION_EVENT(WLAN_REASON_CONNECT_FAILED, NULL);
     }
 }
 

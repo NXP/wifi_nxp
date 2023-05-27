@@ -1646,6 +1646,7 @@ int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buf
 t_u8 wifi_get_sec_channel_offset(unsigned int chan);
 int wifi_nxp_scan_res_get(void);
 int wifi_nxp_survey_res_get(void);
+void wifi_nxp_reset_scan_flag();
 #endif
 
 #ifdef CONFIG_1AS

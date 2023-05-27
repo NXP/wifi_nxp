@@ -73,6 +73,8 @@ void wifi_scan_done(struct wifi_message *msg)
         wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
     }
 
+    wifi_nxp_reset_scan_flag();
+
     if (msg->reason == WIFI_EVENT_REASON_FAILURE)
     {
         if (wm_wifi.supp_if_callbk_fns->scan_abort_callbk_fn)

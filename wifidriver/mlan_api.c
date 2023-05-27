@@ -1800,8 +1800,13 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     mlan_adap->active_scan_triggered = MFALSE;
 
 #ifdef CONFIG_WPA_SUPP
+    if (mlan_adap->wpa_supp_scan_triggered == MTRUE)
+    {
+        return -WM_E_BUSY;
+    }
+
     mlan_adap->wpa_supp_scan_triggered = wm_wifi.wpa_supp_scan;
-    wm_wifi.wpa_supp_scan              = false;
+    wm_wifi.wpa_supp_scan              = MFALSE;
 #endif
 
     if (ssid != NULL)
