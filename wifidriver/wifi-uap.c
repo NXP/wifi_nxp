@@ -3669,6 +3669,9 @@ t_u32 wifi_get_default_vht_capab()
 
     wifi_setup_vht_cap(&vht_capab, &vht_mcs_set[0], 0);
 
+    RESET_11ACSUBEAMFORMEE(vht_capab);
+    RESET_11ACMURXBEAMFORMEE(vht_capab);
+
     return vht_capab;
 }
 #endif
