@@ -272,15 +272,15 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
 #ifndef CONFIG_MLAN_WMSDK
     MrvlIEtypes_group_rekey_time_t *tlv_rekey_time = MNULL;
     MrvlIEtypes_wep_key_t *tlv_wep_key             = MNULL;
-    MrvlIEtypes_wmm_parameter_t *tlv_wmm_parameter = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
+    MrvlIEtypes_wmm_parameter_t *tlv_wmm_parameter = MNULL;
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     MrvlIETypes_HTCap_t *tlv_htcap = MNULL;
 #endif
     t_u32 cmd_size  = 0;
     t_u8 zero_mac[] = {0, 0, 0, 0, 0, 0};
     t_u16 i;
-    /* t_u16 ac; */
+    t_u16 ac;
 
     ENTER();
     if (pioctl_buf == MNULL)
@@ -833,6 +833,8 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         cmd_size += sizeof(MrvlIEtypes_2040_coex_enable_t);
         tlv += sizeof(MrvlIEtypes_2040_coex_enable_t);
     }
+#endif /* CONFIG_MLAN_WMSDK */
+
     if (bss->param.bss_config.wmm_para.qos_info == 0x80 || bss->param.bss_config.wmm_para.qos_info == 0x00)
     {
         tlv_wmm_parameter              = (MrvlIEtypes_wmm_parameter_t *)tlv;
@@ -857,7 +859,6 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         cmd_size += sizeof(MrvlIEtypes_wmm_parameter_t);
         tlv += sizeof(MrvlIEtypes_wmm_parameter_t);
     }
-#endif /* CONFIG_MLAN_WMSDK */
 
     cmd->size = (t_u16)wlan_cpu_to_le16(cmd_size);
     PRINTM(MCMND, "AP config: cmd_size=%d\n", cmd_size);
