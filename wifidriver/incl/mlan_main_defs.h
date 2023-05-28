@@ -29,7 +29,7 @@ Change log:
 /** Maximum port */
 #define MAX_PORT                       32U
 /** Multi port aggregation packet limit */
-#define SDIO_MP_AGGR_DEF_PKT_LIMIT     (4U)
+#define SDIO_MP_AGGR_DEF_PKT_LIMIT     (8U)
 /** Multi port aggregation max packet limit */
 #define SDIO_MP_AGGR_DEF_PKT_LIMIT_MAX (16U)
 #endif

@@ -2863,8 +2863,8 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
     mlan_private *pmpriv     = pmadapter->priv[pioctl_req->bss_index];
     mlan_ds_sec_cfg *sec     = MNULL;
     mrvl_wep_key_t *pwep_key = MNULL;
-    unsigned int index = 0;
-    unsigned int i = 0;
+    unsigned int index       = 0;
+    unsigned int i           = 0;
 
     ENTER();
 
@@ -2905,8 +2905,8 @@ static mlan_status wlan_sec_ioctl_set_wep_key(IN pmlan_adapter pmadapter, IN pml
 
     if ((sec->param.encrypt_key.key_disable == MTRUE) || (sec->param.encrypt_key.key_remove == MTRUE))
     {
-		index = (index >= MRVL_NUM_WEP_KEY ? (MRVL_NUM_WEP_KEY - 1U) : index);
-		pmpriv->sec_info.wep_status = Wlan802_11WEPDisabled;
+        index                       = (index >= MRVL_NUM_WEP_KEY ? (MRVL_NUM_WEP_KEY - 1U) : index);
+        pmpriv->sec_info.wep_status = Wlan802_11WEPDisabled;
         /* remove key */
         if (sec->param.encrypt_key.key_remove == MTRUE)
         {

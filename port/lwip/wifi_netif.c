@@ -455,15 +455,11 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
     if (p == NULL)
     {
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
-#if defined(WIFI_ADD_ON)
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
-#endif
         return;
     }
-#if defined(WIFI_ADD_ON)
     LINK_STATS_INC(link.recv);
-#endif
 #ifndef CONFIG_WIFI_RX_REORDER
     deliver_packet_above(p, interface);
 #else
@@ -533,7 +529,9 @@ static void low_level_init(struct netif *netif)
     }
 #endif
 }
+
 extern int retry_attempts;
+
 /**
  * This function should do the actual transmission of the packet. The packet is
  * contained in the pbuf that is passed to the function. This pbuf
@@ -556,26 +554,19 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     struct ethernetif *ethernetif = netif->state;
     u32_t pkt_len, outbuf_len;
     u16_t uCopied;
-    t_u8 interface = ethernetif->interface;
-
+    t_u8 interface   = ethernetif->interface;
+    t_u8 *wmm_outbuf = NULL;
 #ifdef CONFIG_WMM
-    t_u8 tid          = 0;
-    int retry         = retry_attempts;
-    bool is_udp_frame = false;
-#ifdef WIFI_ADD_ON
-    struct bus_message msg;
-#endif
+    t_u8 tid  = 0;
+    int retry = 0;
+    t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
+    bool is_tx_pause              = false;
 
-    int pkt_prio = wifi_wmm_get_pkt_prio(p->payload, &tid, &is_udp_frame);
+    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(p->payload, &tid);
     if (pkt_prio == -WM_FAIL)
     {
         return ERR_MEM;
     }
-
-#ifdef CONFIG_WMM_ENH
-    uint8_t ra[MLAN_MAC_ADDR_LENGTH] = {0};
-    uint8_t *wmm_outbuf              = NULL;
-    bool is_tx_pause                 = false;
 
     if (interface > WLAN_BSS_TYPE_UAP)
     {
@@ -583,76 +574,59 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         return ERR_MEM;
     }
 
+    if (wm_wifi.tx_status == WIFI_DATA_BLOCK)
+    {
+        wm_wifi.tx_block_cnt++;
+        return ERR_OK;
+    }
+
     wifi_wmm_da_to_ra(p->payload, ra);
 
-    wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
-    ret        = (wmm_outbuf == NULL) ? true : false;
-    if (ret == true && is_tx_pause == true)
+    do
     {
-        wifi_wmm_drop_pause_drop(interface);
-        return ERR_MEM;
-    }
-#else
-    ret = is_wifi_wmm_queue_full((mlan_wmm_ac_e)pkt_prio);
-#endif
+        if (retry != 0)
+        {
+            send_wifi_driver_tx_data_event(interface);
+            taskYIELD();
+        }
+        else
+        {
+            retry = retry_attempts;
+        }
 
-#ifdef WIFI_ADD_ON
-    while (ret == true && retry > 0)
-#else
-    while (ret == true && !is_udp_frame && retry > 0)
-#endif
-    {
-#ifdef WIFI_ADD_ON
-        msg.event  = MLAN_TYPE_DATA;
-        msg.reason = interface;
-        os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
-
-        taskYIELD();
-#else
-        os_thread_sleep(os_msec_to_ticks(1));
-#endif
-#ifdef CONFIG_WMM_ENH
         wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
         ret        = (wmm_outbuf == NULL) ? true : false;
+
         if (ret == true && is_tx_pause == true)
         {
             wifi_wmm_drop_pause_drop(interface);
             return ERR_MEM;
         }
-#else
-        ret = is_wifi_wmm_queue_full((mlan_wmm_ac_e)pkt_prio);
-#endif
+
         retry--;
-    }
+    } while (ret == true && retry > 0);
+
     if (ret == true)
     {
-#ifdef CONFIG_WMM_ENH
         wifi_wmm_drop_retried_drop(interface);
-#endif
         return ERR_MEM;
     }
-#ifdef CONFIG_WMM_ENH
-    /*
-     *  wmm enhance buffer has more than a list_entry head to enqueue,
-     *  so push forward outbuf ptr for common process,
-     *  and pull back when about to wifi_low_level_output to enqueue
-     */
-    wmm_outbuf += sizeof(mlan_linked_list);
-    outbuf_len -= sizeof(mlan_linked_list);
 #else
-    uint8_t *wmm_outbuf = wifi_wmm_get_outbuf(&outbuf_len, (mlan_wmm_ac_e)pkt_prio);
-#endif
-#else
-    uint8_t *wmm_outbuf = wifi_get_outbuf((uint32_t *)(&outbuf_len));
-#endif
+    wmm_outbuf = wifi_get_outbuf((uint32_t *)(&outbuf_len));
+
     if (wmm_outbuf == NULL)
     {
         return ERR_MEM;
     }
+#endif
 
-    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+    pkt_len =
+#ifdef CONFIG_WMM
+        sizeof(mlan_linked_list) +
+#endif
+        sizeof(TxPD) + INTF_HEADER_LEN;
 
-#if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
+#ifndef CONFIG_WMM
 #ifdef LWIP_NETIF_TX_SINGLE_PBUF
     if ((p->len == p->tot_len) && (pbuf_header(p, pkt_len) == 0))
     {
@@ -669,28 +643,17 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         uCopied = pbuf_copy_partial(p, wmm_outbuf + pkt_len, p->tot_len, 0);
 
         LWIP_ASSERT("uCopied != p->tot_len", uCopied == p->tot_len);
-
         pkt_len += p->tot_len;
     }
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
-    /*
-     *  for enqueue operation, wmm enhance need to use the whole outbuf with
-     *  mlan_linked_list, INTF header, TxPD and data payload,
-     *  so in_param outbuf and len are different from others
-     */
-    wmm_outbuf -= sizeof(mlan_linked_list);
-    ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len + sizeof(mlan_linked_list), pkt_prio, tid);
-#else
-    ret                 = wifi_low_level_output(interface, wmm_outbuf, pkt_len
+    ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len
 #ifdef CONFIG_WMM
                                 ,
                                 pkt_prio, tid
 #endif
     );
-#endif /* CONFIG_WMM && CONFIG_WMM_ENH */
 
-#if !defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 #ifdef LWIP_NETIF_TX_SINGLE_PBUF
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 

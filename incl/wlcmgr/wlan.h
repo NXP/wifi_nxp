@@ -218,6 +218,11 @@ typedef enum
 /** Length of a pairwise master key (PMK).  It's always 256 bits (32 Bytes) */
 #define WLAN_PMK_LENGTH 32
 
+#ifdef CONFIG_WMM_UAPSD
+#define WMM_UAPSD_QOS_INFO     0x0F
+#define WMM_UAPSD_SLEEP_PERIOD 20
+#endif
+
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 /* Max number of sta filter list can be upto 16 */
 #define WLAN_MAX_STA_FILTER_NUM 16
@@ -2637,6 +2642,25 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
  */
 void wlan_set_mac_addr(uint8_t *mac);
 
+#ifdef CONFIG_WMM_UAPSD
+void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
+void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
+void wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
+#endif
+
+#ifdef CONFIG_WIFI_TX_BUFF
+/** Reconfigure wifi tx buffer size in WLAN firmware.
+ *
+ * This function may be called to reconfigure wifi tx buffer size in firmware.
+ * This should be call before \ref wlan_init() function.
+ *
+ * \param[in] buf_size The new buffer size
+ * \param[in] bss_type BSS type
+ *
+ */
+void wlan_recfg_tx_buf_size(uint16_t buf_size, mlan_bss_type bss_type);
+#endif
+
 #ifdef CONFIG_WIFI_TX_PER_TRACK
 /** Set Tx PER tracking config.
  * This function may be called to set Tx PER tracking in firmware.
@@ -4035,7 +4059,6 @@ void wlan_sta_ampdu_rx_enable(void);
  */
 void wlan_sta_ampdu_rx_disable(void);
 
-#if defined(WIFI_ADD_ON)
 /**
  * This API can be used to enable AMPDU support on the go
  * when uap is a transmitter.
@@ -4095,7 +4118,6 @@ void wlan_uap_ampdu_tx_enable_per_tid(t_u8 tid);
  *\param[in] tid tid value.
  */
 void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid);
-#endif
 #endif
 
 /**
@@ -5063,7 +5085,7 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
                                                     const wlan_mgmt_frame_t *frame,
                                                     const size_t len));
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 void wlan_wmm_tx_stats_dump(int bss_type);
 #endif
 

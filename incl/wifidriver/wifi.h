@@ -331,7 +331,6 @@ t_u8 wifi_sta_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
  */
 void wifi_sta_ampdu_rx_enable(void);
 
-#if defined(WIFI_ADD_ON)
 /**
  * This API can be used to set tid to enable AMPDU support on the go
  * when station is a receiver.
@@ -400,7 +399,6 @@ t_u8 wifi_uap_ampdu_tx_enable_per_tid_is_allowed(t_u8 tid);
  * when uap is a transmitter.
  */
 void wifi_uap_ampdu_tx_disable(void);
-#endif
 
 /**
  * This API can be used to disable AMPDU support on the go
@@ -608,7 +606,11 @@ void wifi_set_mac_addr(uint8_t *mac);
  */
 void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type);
 
-#if defined(WIFI_ADD_ON)
+#ifdef CONFIG_WMM_UAPSD
+int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action);
+void wifi_sleep_period(unsigned int *sleep_period, int action);
+#endif
+
 #ifdef CONFIG_WIFI_TX_BUFF
 /**
  * Check whether the tx buffer size setting is reasonable.
@@ -617,7 +619,8 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type);
  *
  */
 bool wifi_calibrate_tx_buf_size(uint16_t buf_size);
-#endif
+void wifi_recfg_tx_buf_size(uint16_t buf_size);
+void _wifi_recfg_tx_buf_size(uint16_t buf_size, mlan_bss_type bss_type);
 #endif
 #ifdef CONFIG_P2P
 int wifi_register_wfd_event_queue(os_queue_t *event_queue);
@@ -977,16 +980,16 @@ int wifi_uap_start(mlan_bss_type type,
 #endif
 );
 
-mlan_status wrapper_wlan_sta_ampdu_enable(
+int wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
     t_u8 tid
 #endif
 );
 
-mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
+int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
 #ifdef CONFIG_WMM
-                                          ,
-                                          t_u8 tid
+                                  ,
+                                  t_u8 tid
 #endif
 );
 
@@ -1533,31 +1536,14 @@ void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
                               int (*wifi_usb_file_write_cb)(uint8_t *data, size_t data_len),
                               int (*wifi_usb_file_close_cb)());
 #endif
+
 #ifdef CONFIG_WMM
-int wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid, bool *is_udp_frame);
-#ifdef CONFIG_WMM_ENH
+t_u32 wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid);
+t_u8 wifi_wmm_get_packet_cnt(void);
 /* handle EVENT_TX_DATA_PAUSE */
 void wifi_handle_event_data_pause(void *data);
-#else
-#define BK_MAX_BUF 4
-#define BE_MAX_BUF 4
-#define VI_MAX_BUF 4
-#define VO_MAX_BUF 4
-
-bool is_wifi_wmm_queue_full(mlan_wmm_ac_e queue);
-
-uint8_t *wifi_wmm_get_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
-#if defined(WIFI_ADD_ON)
-#ifdef AMSDU_IN_AMPDU
-uint8_t *wifi_get_wmm_send_outbuf(mlan_wmm_ac_e ac, t_u8 offset);
-#endif
-#endif
-#endif /* CONFIG_WMM_ENH */
-#endif /* CONFIG_WMM */
-
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
 void wifi_wmm_tx_stats_dump(int bss_type);
-#endif
+#endif /* CONFIG_WMM */
 
 int wifi_set_rssi_low_threshold(uint8_t *low_rssi);
 

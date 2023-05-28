@@ -491,11 +491,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define MAX_RX_AMPDU_SIZE_64K 0x03
 /** Non green field station */
 #define NON_GREENFIELD_STAS 0x04
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
 /** Supported A-MSDU size */
 #define MAX_SUPPORT_AMSDU_SIZE 4096
-#endif
 #endif
 
 /** Max AMSDU size support */
@@ -4875,7 +4873,7 @@ typedef MLAN_PACK_START struct
 typedef MLAN_PACK_START struct
 {
     mlan_wmm_queue_config_action_e action; /**< Set, Get, or Default */
-    mlan_wmm_ac_e access_category;         /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
+    mlan_wmm_ac_e access_category;        /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
     /** @brief MSDU lifetime expiry per 802.11e
      *
      *   - Ignored if 0 on a set command

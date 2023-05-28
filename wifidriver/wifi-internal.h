@@ -11,6 +11,8 @@
 #ifndef __WIFI_INTERNAL_H__
 #define __WIFI_INTERNAL_H__
 
+#include <limits.h>
+
 #ifdef CONFIG_WPA_SUPP
 #include "wifi_nxp_internal.h"
 #endif
@@ -79,11 +81,7 @@ typedef struct
 
     /* Queue for events/data from low level interface driver */
     os_queue_t io_events;
-#ifdef CONFIG_WMM
-    /** Queue for sending data packets to fw */
-    os_queue_t tx_data;
-    os_queue_pool_t tx_data_queue_data;
-#endif
+
     os_queue_pool_t io_events_queue_data;
 
     mcast_filter *start_list;
@@ -131,19 +129,6 @@ typedef struct
     t_u16 ht_cap_info;
     /** HTTX Cfg */
     t_u16 ht_tx_cfg;
-#if defined(CONFIG_WMM) && !defined(CONFIG_WMM_ENH)
-    /** Outbuf index */
-    t_u8 pkt_index[MAX_AC_QUEUES];
-    /** packet count */
-    t_u8 pkt_cnt[MAX_AC_QUEUES];
-    /** send packet index */
-    t_u8 send_index[MAX_AC_QUEUES];
-    /** WMM queues block lengths */
-    t_u32 bk_pkt_len[BK_MAX_BUF];
-    t_u32 be_pkt_len[BE_MAX_BUF];
-    t_u32 vi_pkt_len[VI_MAX_BUF];
-    t_u32 vo_pkt_len[VO_MAX_BUF];
-#endif
     /** tx status: 0-RUNNING, 1-BLOCK */
     t_u8 tx_status;
     /** tx data count blocked */
@@ -444,13 +429,14 @@ int wifi_nxp_scan_res_num(void);
 int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
 #endif /* CONFIG_WPA_SUPP */
 
-#if !defined(WIFI_ADD_ON)
-void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported);
-void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action);
-#endif
-
 #ifdef CONFIG_WIFI_RX_REORDER
 int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
 #endif
+
+#ifdef CONFIG_WMM
+int send_wifi_driver_tx_data_event(t_u8 interface);
+int send_wifi_driver_tx_null_data_event(t_u8 interface);
+#endif
+
 
 #endif /* __WIFI_INTERNAL_H__ */

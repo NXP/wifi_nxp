@@ -162,6 +162,9 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_11N_CFG_SUPPORTED_MCS_SET,
     MLAN_OID_11N_CFG_TX_BF_CAP,
 
+    MLAN_OID_11N_CFG_DELBA            = 0x000C000C,
+    MLAN_OID_11N_CFG_REJECT_ADDBA_REQ = 0x000C000D,
+
     /* 802.11d Configuration Group */
     MLAN_IOCTL_11D_CFG = 0x000D0000,
 #ifdef STA_SUPPORT
@@ -2626,7 +2629,7 @@ typedef struct
 typedef struct
 {
     mlan_wmm_queue_config_action_e action; /**< Set, Get, or Default */
-    mlan_wmm_ac_e access_category;         /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
+    mlan_wmm_ac_e access_category;        /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
     t_u16 msdu_lifetime_expiry;            /**< lifetime expiry in TUs */
     t_u8 supported_rates[10];              /**< Not supported yet */
 } wlan_ioctl_wmm_queue_config_t;
@@ -3173,6 +3176,24 @@ typedef struct _mlan_ds_11n_aggr_prio_tbl
     t_u8 amsdu[MAX_NUM_TID];
 } mlan_ds_11n_aggr_prio_tbl, *pmlan_ds_11n_aggr_prio_tbl;
 
+/** DelBA All TIDs */
+#define DELBA_ALL_TIDS 0xff
+/** DelBA Tx */
+#define DELBA_TX MBIT(0)
+/** DelBA Rx */
+#define DELBA_RX MBIT(1)
+
+/** Type definition of mlan_ds_11n_delba for MLAN_OID_11N_CFG_DELBA */
+typedef struct _mlan_ds_11n_delba
+{
+    /** TID */
+    t_u8 tid;
+    /** Peer MAC address */
+    t_u8 peer_mac_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Direction (Tx: bit 0, Rx: bit 1) */
+    t_u8 direction;
+} mlan_ds_11n_delba, *pmlan_ds_11n_delba;
+
 /** Type definition of mlan_ds_11n_cfg for MLAN_IOCTL_11N_CFG */
 typedef struct _mlan_ds_11n_cfg
 {
@@ -3199,6 +3220,8 @@ typedef struct _mlan_ds_11n_cfg
         t_u8 supported_mcs_set[NUM_MCS_FIELD];
         /** Transmit Beamforming Capabilities field */
         t_u32 tx_bf_cap;
+        /** DelBA for MLAN_OID_11N_CFG_DELBA */
+        mlan_ds_11n_delba del_ba;
     } param;
 } mlan_ds_11n_cfg, *pmlan_ds_11n_cfg;
 

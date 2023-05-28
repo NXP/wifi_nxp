@@ -1852,13 +1852,9 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 {
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     sta_node *sta_node_ptr;
-#if defined(WIFI_ADD_ON)
     /* txbastream table also is used as connected STAs data base */
     wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
     wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
-#else
-    wlan_update_uap_ampdu_info(sta_addr, 1);
-#endif
     sta_node_ptr = os_mem_alloc(sizeof(sta_node));
     if (sta_node_ptr == MNULL)
     {
@@ -1870,41 +1866,28 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 
     sta_node_ptr->is_11n_enabled = is_11n_enabled;
 
-#if defined(WIFI_ADD_ON)
     if (sta_node_ptr->is_11n_enabled)
     {
         wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
     }
-#else
-    if (sta_node_ptr->is_11n_enabled == MFALSE)
-    {
-        wlan_update_uap_ampdu_supported(sta_addr, MFALSE);
-    }
-#endif
 
     os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
 #endif
 }
 
 void wifi_uap_client_deauth(t_u8 *sta_addr)
 {
-#if defined(WIFI_ADD_ON)
     if ((mlan_private *)mlan_adap->priv[1]->is_11n_enabled)
     {
         wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
         wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
     }
-#else
-#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
-    wlan_update_uap_ampdu_info(sta_addr, 0);
-#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
-#endif
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
 #endif
 }

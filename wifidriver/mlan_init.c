@@ -150,7 +150,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 #ifdef UNII_4_SUPPORT
     t_u8 chan_5g_size = 34;
 #else
-    t_u8 chan_5g_size = 31;
+    t_u8 chan_5g_size    = 31;
 #endif
 #endif
 #endif
@@ -844,7 +844,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                                     priv->adapter->callbacks.moal_init_lock);
             }
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
             /* wmm enhanced reuses 4 ac xmit queues */
             for (j = 0; j < MAX_AC_QUEUES; ++j)
             {
@@ -852,7 +852,7 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
                                                                  &priv->wmm.tid_tbl_ptr[j].ra_list.plock) !=
                     MLAN_STATUS_SUCCESS)
                     return MLAN_STATUS_FAILURE;
-#ifdef CONFIG_WMM_ENH_DEBUG
+#ifdef CONFIG_WMM_DEBUG
                 util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->wmm.hist_ra[j], MFALSE, MNULL);
 #endif
             }

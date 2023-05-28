@@ -120,7 +120,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf);
 
 void sdio_enable_interrupt(void);
 
-void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
+void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid);
 
 #ifdef CONFIG_WIFI_FW_DEBUG
 extern void wifi_dump_firmware_info();

@@ -305,7 +305,6 @@ done:
     return ret;
 }
 
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
 int wlan_11n_form_amsdu_pkt(t_u8 *amsdu_buf, t_u8 *data, int pkt_len, int *pad)
 {
@@ -346,7 +345,6 @@ int wlan_11n_form_amsdu_pkt(t_u8 *amsdu_buf, t_u8 *data, int pkt_len, int *pad)
     LEAVE();
     return pkt_len + LLC_SNAP_LEN + *pad;
 }
-#endif
 #endif
 
 #ifndef CONFIG_MLAN_WMSDK

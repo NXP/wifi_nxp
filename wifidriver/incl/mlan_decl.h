@@ -651,12 +651,12 @@ typedef MLAN_PACK_START enum _mlan_cmd_result_e {
     MLAN_CMD_RESULT_INVALID_DATA = 3
 } MLAN_PACK_END mlan_cmd_result_e;
 
-/** Type enumeration of WMM AC_QUEUES */
-#ifndef CONFIG_WPA_SUPP
-typedef MLAN_PACK_START enum _mlan_wmm_ac_e { WMM_AC_BK, WMM_AC_BE, WMM_AC_VI, WMM_AC_VO } MLAN_PACK_END mlan_wmm_ac_e;
-#else
-typedef enum wmm_ac mlan_wmm_ac_e;
-#endif
+#define WMM_AC_BK 0
+#define WMM_AC_BE 1
+#define WMM_AC_VI 2
+#define WMM_AC_VO 3
+
+typedef t_u8 mlan_wmm_ac_e;
 
 /** Type enumeration for the action field in the Queue Config command */
 typedef MLAN_PACK_START enum _mlan_wmm_queue_config_action_e {
@@ -962,7 +962,7 @@ typedef struct _mlan_callbacks
     mlan_status (*moal_spin_lock)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_spin_unlock */
     mlan_status (*moal_spin_unlock)(IN t_void *pmoal_handle, IN t_void *plock);
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     /** moal_init_semaphore */
     mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void **pplock);
     /** moal_free_semaphore */

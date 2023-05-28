@@ -67,7 +67,7 @@ static const t_u8 wmm_aci_to_qidx_map[] = {WMM_AC_BE, WMM_AC_BK, WMM_AC_VI, WMM_
 
 /* Map of TOS UP values to WMM AC */
 static const mlan_wmm_ac_e tos_to_ac[] = {WMM_AC_BE, WMM_AC_BK, WMM_AC_BK, WMM_AC_BE,
-                                          WMM_AC_VI, WMM_AC_VI, WMM_AC_VO, WMM_AC_VO};
+                                           WMM_AC_VI, WMM_AC_VI, WMM_AC_VO, WMM_AC_VO};
 #endif
 
 /**
@@ -1052,7 +1052,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #ifdef SDIO_MULTI_PORT_RX_AGGR_FOR_REF
     MP_RX_AGGR_BUF_RESET(priv->adapter);
 #endif
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     wlan_ralist_del_all_enh(priv);
 #elif !defined(CONFIG_MLAN_WMSDK)
     wlan_wmm_delete_all_ralist(priv);
@@ -1279,22 +1279,9 @@ t_void wlan_wmm_init(pmlan_adapter pmadapter)
         {
             for (i = 0; i < MAX_NUM_TID; ++i)
             {
-#if !defined(WIFI_ADD_ON)
-                priv->aggr_prio_tbl[i].amsdu = BA_STREAM_NOT_ALLOWED;
-#endif
-#ifdef WIFI_DIRECT_SUPPORT
-                if (priv->bss_type == MLAN_BSS_TYPE_WIFIDIRECT)
-                    priv->aggr_prio_tbl[i].ampdu_ap = priv->aggr_prio_tbl[i].ampdu_user = BA_STREAM_NOT_ALLOWED;
-                else
-#endif
-                    priv->aggr_prio_tbl[i].ampdu_ap = priv->aggr_prio_tbl[i].ampdu_user = tos_to_tid_inv[i];
                 priv->wmm.pkts_queued[i]              = 0;
                 priv->wmm.tid_tbl_ptr[i].ra_list_curr = MNULL;
             }
-
-            priv->aggr_prio_tbl[6].ampdu_ap = priv->aggr_prio_tbl[6].ampdu_user = BA_STREAM_NOT_ALLOWED;
-
-            priv->aggr_prio_tbl[7].ampdu_ap = priv->aggr_prio_tbl[7].ampdu_user = BA_STREAM_NOT_ALLOWED;
 
             priv->add_ba_param.timeout = MLAN_DEFAULT_BLOCK_ACK_TIMEOUT;
 #ifdef STA_SUPPORT
@@ -1400,7 +1387,6 @@ int wlan_wmm_lists_empty(pmlan_adapter pmadapter)
     return MTRUE;
 }
 #endif
-
 /**
  *   @brief Get ralist node
  *
@@ -2352,8 +2338,8 @@ mlan_status wlan_ret_wmm_ts_status(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAN
 #endif /* STA_SUPPORT */
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef CONFIG_WMM_ENH
-#ifdef CONFIG_WMM_ENH_DEBUG
+#ifdef CONFIG_WMM
+#ifdef CONFIG_WMM_DEBUG
 #define MAX_HISTORY_RA_LIST_NUM 32
 
 static raListTbl *wlan_ralist_get_history(mlan_private *priv, t_u8 *ra, t_u8 ac)
@@ -2759,7 +2745,7 @@ void wlan_ralist_pkts_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
 /* should be called inside wmm tid_tbl_ptr ra_list lock */
 static void wlan_ralist_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac)
 {
-#ifdef CONFIG_WMM_ENH_DEBUG
+#ifdef CONFIG_WMM_DEBUG
     wlan_ralist_restore_history(priv, ra_list, ac);
 #else
     priv->adapter->callbacks.moal_free_semaphore(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
@@ -2833,7 +2819,7 @@ int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
     int i;
     int update_count   = 0;
     raListTbl *ra_list = MNULL;
-#ifdef CONFIG_WMM_ENH_DEBUG
+#ifdef CONFIG_WMM_DEBUG
     raListTbl *hist_ra_list = MNULL;
 #endif
 
@@ -2857,7 +2843,7 @@ int wlan_ralist_update_enh(mlan_private *priv, t_u8 *old_ra, t_u8 *new_ra)
 
         (void)__memcpy(priv->adapter, ra_list->ra, new_ra, MLAN_MAC_ADDR_LENGTH);
 
-#ifdef CONFIG_WMM_ENH_DEBUG
+#ifdef CONFIG_WMM_DEBUG
         hist_ra_list = wlan_ralist_alloc_enh(priv->adapter, old_ra);
         if (hist_ra_list != MNULL)
         {
@@ -2994,4 +2980,4 @@ void wifi_wmm_drop_pause_replaced(const uint8_t interface)
     else if (interface == MLAN_BSS_TYPE_UAP)
         mlan_adap->priv[1]->driver_error_cnt.tx_wmm_pause_replaced++;
 }
-#endif /* CONFIG_WMM_ENH */
+#endif /* CONFIG_WMM */

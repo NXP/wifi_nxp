@@ -795,12 +795,14 @@ typedef struct _txAggr_t
     t_u8 ampdu_ap;
     /** AMSDU */
     t_u8 amsdu;
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
     /** peer AMSDU */
     t_u8 amsdu_peer;
 #endif
-#endif
+    /** TX packet cnt */
+    t_u32 txpkt_cnt;
+    /** TX BA threshold */
+    t_u32 txba_thresh;
 } tx_aggr_t;
 
 /** RA list table */
@@ -829,7 +831,7 @@ struct _raListTbl
     t_u16 max_amsdu;
     /** tx_pause flag */
     t_u8 tx_pause;
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     /** drop packet count  */
     t_u16 drop_count;
 #endif
@@ -882,7 +884,7 @@ typedef struct _wmm_desc
     mlan_scalar tx_pkts_queued;
     /** Tracks highest priority with a packet queued */
     mlan_scalar highest_queued_prio;
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH) && defined(CONFIG_WMM_ENH_DEBUG)
+#if defined(CONFIG_WMM) && defined(CONFIG_WMM_DEBUG)
     /** Restored historical ralists for debug */
     mlan_list_head hist_ra[MAX_AC_QUEUES];
     /** Restored historical ralists count */
@@ -1107,7 +1109,7 @@ typedef struct
                                                      t_void *pioctl_buf);
 } wlan_11d_apis_t;
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 typedef struct
 {
     mlan_list_head free_list;
@@ -1272,11 +1274,9 @@ struct _mlan_private
 
     /** max amsdu size */
     t_u16 max_amsdu;
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
     /** amsdu enabled */
     t_bool is_amsdu_enabled;
-#endif
 #endif
 #ifdef UAP_SUPPORT
     /** UAP 11n flag */
@@ -1434,6 +1434,8 @@ struct _mlan_private
 
     /** Pointer to the Transmit BA stream table*/
     mlan_list_head tx_ba_stream_tbl_ptr;
+    /** Semaphore to the Transmit BA stream table */
+    os_mutex_t tx_ba_stream_tbl_lock;
     /** Pointer to the priorities for AMSDU/AMPDU table*/
     tx_aggr_t aggr_prio_tbl[MAX_NUM_TID];
     /** Pointer to the priorities for AMSDU/AMPDU table*/
@@ -1535,7 +1537,7 @@ struct _mlan_private
 #endif
     /* interface pause status */
     t_u8 tx_pause;
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     wlan_pkt_stat_t driver_error_cnt;
 #endif
 #ifdef CONFIG_1AS
@@ -1583,21 +1585,15 @@ struct _TxBAStreamTbl
     /** TxBAStreamTbl next node */
     TxBAStreamTbl *pnext;
     /** TID */
-#if defined(WIFI_ADD_ON)
     int ampdu_stat[MAX_NUM_TID];
-#else
-    int tid;
-#endif
     /** RA */
     t_u8 ra[MLAN_MAC_ADDR_LENGTH];
     /** BA stream status */
     baStatus_e ba_status;
     t_u8 amsdu;
-#if defined(WIFI_ADD_ON)
     t_u32 txpkt_cnt;
     t_u32 txba_thresh;
     t_u8 ampdu_supported[MAX_NUM_TID];
-#endif
 };
 
 /** RX reorder table */
@@ -2480,11 +2476,9 @@ struct _mlan_adapter
     t_u8 tx_power_table_a_cols;
 #endif
 #endif
-#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_WIFI_TX_BUFF
     /** Tx buffer size */
     t_u16 tx_buffer_size;
-#endif
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
     tx_pert_info tx_pert;
@@ -2495,7 +2489,7 @@ struct _mlan_adapter
 #ifdef CONFIG_MULTI_CHAN
     t_bool mc_policy;
 #endif
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     /* wmm buffer pool */
     outbuf_pool_t outbuf_pool;
 #endif

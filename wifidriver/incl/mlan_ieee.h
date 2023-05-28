@@ -1953,10 +1953,12 @@ typedef MLAN_PACK_START struct
 #define BG_SCAN_ACT_GET 0x0000
 /** action set all, except pps/uapsd config */
 #define BG_SCAN_ACT_SET 0x0001
+#ifdef CONFIG_WMM_UAPSD
 /** action get pps/uapsd config */
 #define BG_SCAN_ACT_GET_PPS_UAPSD 0x0100
 /** action set pps/uapsd config */
 #define BG_SCAN_ACT_SET_PPS_UAPSD 0x0101
+#endif
 /** action set all */
 #define BG_SCAN_ACT_SET_ALL 0xff01
 /** ssid match */

@@ -9926,7 +9926,6 @@ void wlan_sta_ampdu_rx_disable(void)
     wifi_sta_ampdu_rx_disable();
 }
 
-#if defined(WIFI_ADD_ON)
 void wlan_uap_ampdu_tx_enable(void)
 {
     wifi_uap_ampdu_tx_enable();
@@ -9967,7 +9966,6 @@ void wlan_uap_ampdu_rx_enable_per_tid(t_u8 tid)
 {
     wifi_uap_ampdu_rx_enable_per_tid(tid);
 }
-#endif
 #endif
 
 void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list)
@@ -10625,7 +10623,7 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 }
 #endif
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 void wlan_wmm_tx_stats_dump(int bss_type)
 {
     wifi_wmm_tx_stats_dump(bss_type);

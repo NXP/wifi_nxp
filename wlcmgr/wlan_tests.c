@@ -5519,7 +5519,7 @@ static void test_wlan_set_scan_channel_gap(int argc, char **argv)
 }
 #endif
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 static void test_wlan_wmm_tx_stats(int argc, char **argv)
 {
     int bss_type = atoi(argv[1]);
@@ -6208,7 +6208,6 @@ static void test_wlan_sleep_period(int argc, char **argv)
 }
 #endif
 
-#if defined(RW610)
 #ifdef CONFIG_WIFI_AMPDU_CTRL
 static void dump_wlan_ampdu_enable_usage()
 {
@@ -6391,7 +6390,6 @@ static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
         wlan_tx_ampdu_prot_mode(&data, ACTION_SET);
     }
 }
-#endif
 #endif
 
 #ifdef CONFIG_CSI
@@ -7786,192 +7784,6 @@ static void test_wlan_set_sleep_period(int argc, char **argv)
 }
 #endif
 
-#if defined(WIFI_ADD_ON)
-#ifdef CONFIG_WIFI_AMPDU_CTRL
-static void dump_wlan_ampdu_enable_usage()
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-ampdu-enable <sta/uap> <xx: rx:tx bit map. Tx (bit 0), Rx (bit 1> <xx: TID bit map> \r\n");
-    (void)PRINTF("xx: TID bit map\r\n");
-    (void)PRINTF("  1 - TID 0 enable \r\n");
-    (void)PRINTF("  2 - TID 1 enable\r\n");
-    (void)PRINTF("  4 - TID 2 enable\r\n");
-    (void)PRINTF("  7 - TID0, 1, 2 enable\r\n");
-    (void)PRINTF("  ---------\r\n");
-    (void)PRINTF("  255 - TID 0-7 enable \r\n");
-    (void)PRINTF("  0 - Disable ampdu \r\n");
-    (void)PRINTF("Example: disable sta rx/tx ampdu\r\n");
-    (void)PRINTF("  wlan-ampdu-enable sta 3 0\r\n");
-}
-
-static void test_wlan_ampdu_enable(int argc, char **argv)
-{
-    t_u8 tid;
-    t_u8 direction;
-    int bss_type = 0;
-
-    if (argc != 4)
-    {
-        dump_wlan_ampdu_enable_usage();
-        return;
-    }
-
-    if (string_equal("sta", argv[1]))
-        bss_type = MLAN_BSS_TYPE_STA;
-    else if (string_equal("uap", argv[1]))
-        bss_type = MLAN_BSS_TYPE_UAP;
-    else
-    {
-        dump_wlan_ampdu_enable_usage();
-        return;
-    }
-
-    direction = atoi(argv[2]);
-    tid       = atoi(argv[3]);
-
-    if (bss_type == MLAN_BSS_TYPE_STA)
-    {
-        if (is_sta_connected())
-        {
-            (void)PRINTF("Error: configure ampdu control before sta connection!\r\n", argv[0]);
-            return;
-        }
-
-        if (tid)
-        {
-            if (direction & 0x01)
-            {
-                wlan_sta_ampdu_tx_enable();
-                wlan_sta_ampdu_tx_enable_per_tid(tid);
-            }
-
-            if (direction & 0x02)
-            {
-                wlan_sta_ampdu_rx_enable();
-                wlan_sta_ampdu_rx_enable_per_tid(tid);
-            }
-        }
-        else
-        {
-            if (direction & 0x01)
-            {
-                wlan_sta_ampdu_tx_disable();
-                wlan_sta_ampdu_tx_enable_per_tid(tid);
-            }
-
-            if (direction & 0x02)
-            {
-                wlan_sta_ampdu_rx_disable();
-                wlan_sta_ampdu_rx_enable_per_tid(tid);
-            }
-        }
-    }
-    else
-    {
-        if (is_uap_started())
-        {
-            (void)PRINTF("Error: configure ampdu control before uap start!\r\n", argv[0]);
-            return;
-        }
-        if (tid)
-        {
-            if (direction & 0x01)
-            {
-                wlan_uap_ampdu_tx_enable();
-                wlan_uap_ampdu_tx_enable_per_tid(tid);
-            }
-
-            if (direction & 0x02)
-            {
-                wlan_uap_ampdu_rx_enable();
-                wlan_uap_ampdu_rx_enable_per_tid(tid);
-            }
-        }
-        else
-        {
-            if (direction & 0x01)
-            {
-                wlan_uap_ampdu_tx_disable();
-                wlan_uap_ampdu_tx_enable_per_tid(tid);
-            }
-
-            if (direction & 0x02)
-            {
-                wlan_uap_ampdu_rx_disable();
-                wlan_uap_ampdu_rx_enable_per_tid(tid);
-            }
-        }
-    }
-}
-#endif
-
-#ifdef CONFIG_TX_AMPDU_PROT_MODE
-static void dump_wlan_tx_ampdu_prot_mode_usage()
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-tx-ampdu-prot-mode <mode>\r\n");
-    (void)PRINTF("    <mode>: 0 - Set RTS/CTS mode \r\n");
-    (void)PRINTF("            1 - Set CTS2SELF mode \r\n");
-    (void)PRINTF("            2 - Disable Protection mode \r\n");
-    (void)PRINTF("            3 - Set Dynamic RTS/CTS mode \r\n");
-    (void)PRINTF("Example:\r\n");
-    (void)PRINTF("    wlan-tx-ampdu-prot-mode\r\n");
-    (void)PRINTF("    - Get currently set protection mode for TX AMPDU.\r\n");
-    (void)PRINTF("    wlan-tx-ampdu-prot-mode 1\r\n");
-    (void)PRINTF("    - Set protection mode for TX AMPDU to CTS2SELF.\r\n");
-}
-
-static void test_wlan_tx_ampdu_prot_mode(int argc, char **argv)
-{
-    tx_ampdu_prot_mode_para data;
-
-    if (argc > 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_wlan_tx_ampdu_prot_mode_usage();
-        return;
-    }
-
-    /* GET */
-    if (argc == 1)
-    {
-        dump_wlan_tx_ampdu_prot_mode_usage();
-        wlan_tx_ampdu_prot_mode(&data, ACTION_GET);
-        (void)PRINTF("\r\nTx AMPDU protection mode: ");
-        switch (data.mode)
-        {
-            case TX_AMPDU_RTS_CTS:
-                (void)PRINTF("RTS/CTS\r\n");
-                break;
-            case TX_AMPDU_CTS_2_SELF:
-                (void)PRINTF("CTS-2-SELF\r\n");
-                break;
-            case TX_AMPDU_DISABLE_PROTECTION:
-                (void)PRINTF("Disabled\r\n");
-                break;
-            case TX_AMPDU_DYNAMIC_RTS_CTS:
-                (void)PRINTF("DYNAMIC RTS/CTS\r\n");
-                break;
-            default:
-                (void)PRINTF("Invalid protection mode\r\n");
-                break;
-        }
-    }
-    else /* SET */
-    {
-        data.mode = atoi(argv[1]);
-        if (data.mode < 0 || data.mode > 3)
-        {
-            (void)PRINTF("Error: invalid protection mode\r\n");
-            dump_wlan_tx_ampdu_prot_mode_usage();
-            return;
-        }
-        wlan_tx_ampdu_prot_mode(&data, ACTION_SET);
-    }
-}
-#endif
-#endif
-
 #ifdef CONFIG_CSI
 static void dump_wlan_csi_filter_usage()
 {
@@ -8646,7 +8458,7 @@ static struct cli_command tests[] = {
 #ifdef SCAN_CHANNEL_GAP
     {"wlan-scan-channel-gap", "<channel_gap_value>", test_wlan_set_scan_channel_gap},
 #endif
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     {"wlan-wmm-stat", "<bss_type>", test_wlan_wmm_tx_stats},
 #endif
 #if defined(RW610) && defined(CONFIG_WIFI_RESET)
@@ -8680,14 +8492,12 @@ static struct cli_command tests[] = {
     {"wlan-uapsd-qosinfo", "<qos_info>", test_wlan_wmm_uapsd_qosinfo},
     {"wlan-uapsd-sleep-period", "<sleep_period>", test_wlan_sleep_period},
 #endif
-#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_WIFI_AMPDU_CTRL
     {"wlan-ampdu-enable", "<sta/uap> <xx: rx/tx bit map. Tx(bit 0), Rx(bit 1> <xx: TID bit map>",
      test_wlan_ampdu_enable},
 #endif
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
     {"wlan-tx-ampdu-prot-mode", "<mode>", test_wlan_tx_ampdu_prot_mode},
-#endif
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
     {"wlan-rssi-low-threshold", "<threshold_value>", test_wlan_rssi_low_threshold},

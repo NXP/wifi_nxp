@@ -216,32 +216,6 @@ static mlan_status wlan_11n_ioctl_httxcfg(IN pmlan_adapter pmadapter, IN pmlan_i
     return ret;
 }
 
-/**
- *  @brief Set/get TX beamforming capabilities
- *
- *  @param pmadapter    A pointer to mlan_adapter structure
- *  @param pioctl_req   A pointer to ioctl request buffer
- *
- *  @return             MLAN_STATUS_SUCCESS --success
- */
-static mlan_status wlan_11n_ioctl_tx_bf_cap(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
-{
-    mlan_status ret      = MLAN_STATUS_SUCCESS;
-    mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
-    mlan_ds_11n_cfg *cfg = MNULL;
-
-    ENTER();
-
-    cfg = (mlan_ds_11n_cfg *)pioctl_req->pbuf;
-    if (pioctl_req->action == MLAN_ACT_SET)
-        pmpriv->tx_bf_cap = cfg->param.tx_bf_cap;
-    else
-        cfg->param.tx_bf_cap = pmpriv->tx_bf_cap;
-
-    LEAVE();
-    return ret;
-}
-
 #ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief This function will resend addba request to all
@@ -485,45 +459,268 @@ static mlan_status wlan_11n_ioctl_supported_mcs_set(IN pmlan_adapter pmadapter, 
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#if !defined(WIFI_ADD_ON)
 /**
- *  @brief This function checks if the given pointer is valid entry of
- *         Tx BA Stream table
+ *  @brief This function will send DELBA to entries in the priv's
+ *          Tx BA stream table
  *
- *  @param priv         Pointer to mlan_private
- *  @param ptxtblptr    Pointer to tx ba stream entry
+ *  @param priv                 A pointer to mlan_private
+ *  @param pioctl_req          A pointer to ioctl request buffer
+ *  @param tid                  TID
+ *  @param peer_address         A pointer to peer address
+ *  @param last_tx_ba_to_delete A pointer to the last entry in TxBAStreamTbl
  *
- *  @return             MTRUE or MFALSE
+ *  @return            MLAN_STATUS_SUCCESS or MLAN_STATUS_PENDING
  */
-static int wlan_is_txbastreamptr_valid(mlan_private *priv, TxBAStreamTbl *ptxtblptr)
+static mlan_status wlan_send_delba_to_entry_in_txbastream_tbl(
+    pmlan_private priv, pmlan_ioctl_req pioctl_req, t_u8 tid, t_u8 *peer_address, TxBAStreamTbl *last_tx_ba_to_delete)
 {
-    TxBAStreamTbl *ptx_tbl;
+    pmlan_adapter pmadapter = priv->adapter;
+    TxBAStreamTbl *tx_ba_stream_tbl_ptr;
+    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    mlan_status ret                     = MLAN_STATUS_SUCCESS;
+    int i;
 
     ENTER();
-    ptx_tbl =
-        (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MNULL, MNULL);
 
-    if (ptx_tbl == MNULL)
+    wlan_request_ralist_lock(priv);
+    tx_ba_stream_tbl_ptr =
+        (TxBAStreamTbl *)util_peek_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MNULL, MNULL);
+    if (!tx_ba_stream_tbl_ptr)
     {
+        wlan_release_ralist_lock(priv);
         LEAVE();
-        return MFALSE;
+        return ret;
     }
 
-    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
+    if (__memcmp(pmadapter, peer_address, zero_mac, MLAN_MAC_ADDR_LENGTH))
     {
-        if (ptx_tbl == ptxtblptr)
+        if (!wlan_11n_get_txbastream_tbl(priv, peer_address))
+            return MLAN_STATUS_FAILURE;
+    }
+
+    while (tx_ba_stream_tbl_ptr != (TxBAStreamTbl *)&priv->tx_ba_stream_tbl_ptr)
+    {
+        if (tx_ba_stream_tbl_ptr->ba_status == BA_STREAM_SETUP_COMPLETE)
         {
-            LEAVE();
-            return MTRUE;
+            if (__memcmp(pmadapter, peer_address, zero_mac, MLAN_MAC_ADDR_LENGTH) &&
+                !__memcmp(pmadapter, peer_address, tx_ba_stream_tbl_ptr->ra, MLAN_MAC_ADDR_LENGTH))
+            {
+                tx_ba_stream_tbl_ptr = wlan_11n_get_txbastream_tbl(priv, peer_address);
+
+                if (tid == DELBA_ALL_TIDS)
+                {
+                    for (i = 0; i < MAX_NUM_TID; i++)
+                    {
+                        if (tx_ba_stream_tbl_ptr->ampdu_stat[i])
+                        {
+                            if (last_tx_ba_to_delete && (tx_ba_stream_tbl_ptr == last_tx_ba_to_delete))
+                                ret = wlan_send_delba(priv, pioctl_req, i, tx_ba_stream_tbl_ptr->ra, 1);
+                            else
+                                ret = wlan_send_delba(priv, MNULL, i, tx_ba_stream_tbl_ptr->ra, 1);
+                        }
+                    }
+                }
+                else
+                {
+                    if (tx_ba_stream_tbl_ptr->ampdu_stat[tid])
+                    {
+                        if (last_tx_ba_to_delete && (tx_ba_stream_tbl_ptr == last_tx_ba_to_delete))
+                            ret = wlan_send_delba(priv, pioctl_req, tid, tx_ba_stream_tbl_ptr->ra, 1);
+                        else
+                            ret = wlan_send_delba(priv, MNULL, tid, tx_ba_stream_tbl_ptr->ra, 1);
+                    }
+                }
+
+                return ret;
+            }
+            else
+            {
+                if (tid == DELBA_ALL_TIDS)
+                {
+                    for (i = 0; i < MAX_NUM_TID; i++)
+                    {
+                        if (tx_ba_stream_tbl_ptr->ampdu_stat[i])
+                        {
+                            if (last_tx_ba_to_delete && (tx_ba_stream_tbl_ptr == last_tx_ba_to_delete))
+                                ret = wlan_send_delba(priv, pioctl_req, i, tx_ba_stream_tbl_ptr->ra, 1);
+                            else
+                                ret = wlan_send_delba(priv, MNULL, i, tx_ba_stream_tbl_ptr->ra, 1);
+                        }
+                    }
+                }
+                else
+                {
+                    if (tx_ba_stream_tbl_ptr->ampdu_stat[tid])
+                    {
+                        if (last_tx_ba_to_delete && (tx_ba_stream_tbl_ptr == last_tx_ba_to_delete))
+                            ret = wlan_send_delba(priv, pioctl_req, tid, tx_ba_stream_tbl_ptr->ra, 1);
+                        else
+                            ret = wlan_send_delba(priv, MNULL, tid, tx_ba_stream_tbl_ptr->ra, 1);
+                    }
+                }
+            }
         }
 
-        ptx_tbl = ptx_tbl->pnext;
+        tx_ba_stream_tbl_ptr = tx_ba_stream_tbl_ptr->pnext;
+    }
+    wlan_release_ralist_lock(priv);
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief This function will send DELBA to entries in the priv's
+ *          rx reordering table
+ *
+ *  @param priv                 A pointer to mlan_private
+ *  @param pioctl_req          A pointer to ioctl request buffer
+ *  @param tid                  TID
+ *  @param peer_address         A pointer to peer address
+ *  @param last_rx_ba_to_delete A pointer to the last entry in RxReorderTbl
+ *
+ *  @return            MLAN_STATUS_SUCCESS or MLAN_STATUS_PENDING
+ */
+static mlan_status wlan_send_delba_to_entry_in_reorder_tbl(
+    pmlan_private priv, pmlan_ioctl_req pioctl_req, t_u8 tid, t_u8 *peer_address, RxReorderTbl *last_rx_ba_to_delete)
+{
+    pmlan_adapter pmadapter = priv->adapter;
+    RxReorderTbl *rx_reor_tbl_ptr;
+    RxReorderTbl *next_rx_reor_tbl_ptr;
+    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    mlan_status ret                     = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    rx_reor_tbl_ptr =
+        (RxReorderTbl *)util_peek_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr,
+                                       pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
+    if (!rx_reor_tbl_ptr)
+    {
+        LEAVE();
+        return ret;
+    }
+
+    next_rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;
+
+    while (rx_reor_tbl_ptr != (RxReorderTbl *)&priv->rx_reorder_tbl_ptr)
+    {
+        if (rx_reor_tbl_ptr->ba_status == BA_STREAM_SETUP_COMPLETE)
+        {
+            if (((tid == DELBA_ALL_TIDS) || (tid == rx_reor_tbl_ptr->tid)) &&
+                (!__memcmp(pmadapter, peer_address, zero_mac, MLAN_MAC_ADDR_LENGTH) ||
+                 !__memcmp(pmadapter, peer_address, rx_reor_tbl_ptr->ta, MLAN_MAC_ADDR_LENGTH)))
+            {
+                if (last_rx_ba_to_delete && (rx_reor_tbl_ptr == last_rx_ba_to_delete))
+                    ret = wlan_send_delba(priv, pioctl_req, rx_reor_tbl_ptr->tid, rx_reor_tbl_ptr->ta, 0);
+                else
+                    ret = wlan_send_delba(priv, MNULL, rx_reor_tbl_ptr->tid, rx_reor_tbl_ptr->ta, 0);
+            }
+        }
+
+        rx_reor_tbl_ptr = next_rx_reor_tbl_ptr;
+
+        next_rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;
     }
 
     LEAVE();
-    return MFALSE;
+    return ret;
 }
-#endif
+
+/**
+ *  @brief IOCTL to delete BA
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return			MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+static mlan_status wlan_11n_ioctl_delba(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+    mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_11n_cfg *cfg = MNULL;
+    TxBAStreamTbl *tx_ba_stream_tbl_ptr, *last_tx_ba_to_delete = MNULL;
+    RxReorderTbl *rx_reor_tbl_ptr, *last_rx_ba_to_delete       = MNULL;
+    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+    t_u8 tid, *peer_address;
+
+    ENTER();
+
+    cfg          = (mlan_ds_11n_cfg *)pioctl_req->pbuf;
+    tid          = cfg->param.del_ba.tid;
+    peer_address = cfg->param.del_ba.peer_mac_addr;
+
+    PRINTM(MINFO, "DelBA: direction %d, TID %d, peer address " MACSTR "\n", cfg->param.del_ba.direction, tid,
+           MAC2STR(peer_address));
+
+    if (cfg->param.del_ba.direction & DELBA_RX)
+    {
+        rx_reor_tbl_ptr =
+            (RxReorderTbl *)util_peek_list(pmadapter->pmoal_handle, &pmpriv->rx_reorder_tbl_ptr,
+                                           pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
+
+        if (rx_reor_tbl_ptr)
+        {
+            while (rx_reor_tbl_ptr != (RxReorderTbl *)&pmpriv->rx_reorder_tbl_ptr)
+            {
+                if (rx_reor_tbl_ptr->ba_status == BA_STREAM_SETUP_COMPLETE)
+                {
+                    if (((tid == DELBA_ALL_TIDS) || (tid == rx_reor_tbl_ptr->tid)) &&
+                        (!__memcmp(pmadapter, peer_address, zero_mac, MLAN_MAC_ADDR_LENGTH) ||
+                         !__memcmp(pmadapter, peer_address, rx_reor_tbl_ptr->ta, MLAN_MAC_ADDR_LENGTH)))
+                    {
+                        /* Found RX BA to delete */
+                        last_rx_ba_to_delete = rx_reor_tbl_ptr;
+                    }
+                }
+                rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;
+            }
+        }
+    }
+
+    if ((last_rx_ba_to_delete == MNULL) && (cfg->param.del_ba.direction & DELBA_TX))
+    {
+        wlan_request_ralist_lock(pmpriv);
+        tx_ba_stream_tbl_ptr =
+            (TxBAStreamTbl *)util_peek_list(pmadapter->pmoal_handle, &pmpriv->tx_ba_stream_tbl_ptr, MNULL, MNULL);
+
+        if (tx_ba_stream_tbl_ptr)
+        {
+            while (tx_ba_stream_tbl_ptr != (TxBAStreamTbl *)&pmpriv->tx_ba_stream_tbl_ptr)
+            {
+                if (tx_ba_stream_tbl_ptr->ba_status == BA_STREAM_SETUP_COMPLETE)
+                {
+                    if (((tid == DELBA_ALL_TIDS) || (tx_ba_stream_tbl_ptr->ampdu_stat[tid])) &&
+                        (!__memcmp(pmadapter, peer_address, zero_mac, MLAN_MAC_ADDR_LENGTH) ||
+                         !__memcmp(pmadapter, peer_address, tx_ba_stream_tbl_ptr->ra, MLAN_MAC_ADDR_LENGTH)))
+                    {
+                        /* Found TX BA to delete */
+                        last_tx_ba_to_delete = tx_ba_stream_tbl_ptr;
+                    }
+                }
+                tx_ba_stream_tbl_ptr = tx_ba_stream_tbl_ptr->pnext;
+            }
+        }
+        wlan_release_ralist_lock(pmpriv);
+    }
+
+    if (cfg->param.del_ba.direction & DELBA_TX)
+    {
+        if (last_rx_ba_to_delete)
+            ret = wlan_send_delba_to_entry_in_txbastream_tbl(pmpriv, MNULL, tid, peer_address, MNULL);
+        else
+            ret =
+                wlan_send_delba_to_entry_in_txbastream_tbl(pmpriv, pioctl_req, tid, peer_address, last_tx_ba_to_delete);
+    }
+    if (last_rx_ba_to_delete)
+    {
+        ret = wlan_send_delba_to_entry_in_reorder_tbl(pmpriv, pioctl_req, tid, peer_address, last_rx_ba_to_delete);
+    }
+
+    LEAVE();
+    return ret;
+}
 
 #ifndef CONFIG_MLAN_WMSDK
 /**
@@ -564,11 +761,11 @@ static TxBAStreamTbl *wlan_11n_get_txbastream_status(mlan_private *priv, baStatu
     LEAVE();
     return MNULL;
 }
-
 #endif /* CONFIG_MLAN_WMSDK */
-       /********************************************************
-           Global Functions
-       ********************************************************/
+
+/********************************************************
+    Global Functions
+********************************************************/
 
 #ifdef STA_SUPPORT
 /**
@@ -727,7 +924,10 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
 
     /* Set ampdu param */
     SETAMPDU_SIZE(pht_cap->ht_cap.ampdu_param, AMPDU_FACTOR_64K);
-    SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0);
+
+    SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0x5);
+
+    // SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0);
 
     rx_mcs_supp = GET_RXMCSSUPP(pmadapter->usr_dev_mcs_support);
     /* Set MCS for 1x1/2x2 */
@@ -859,7 +1059,7 @@ mlan_status wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp)
     tid = pdel_ba->del_ba_param_set >> DELBA_TID_POS;
     if (pdel_ba->del_result == BA_RESULT_SUCCESS)
     {
-        mlan_11n_delete_bastream_tbl(priv, tid, pdel_ba->peer_mac_addr, TYPE_DELBA_SENT,
+        mlan_11n_update_bastream_tbl(priv, tid, pdel_ba->peer_mac_addr, TYPE_DELBA_SENT,
                                      INITIATOR_BIT(pdel_ba->del_ba_param_set));
 
         if ((ptx_ba_tbl = wlan_11n_get_txbastream_status(priv, BA_STREAM_SETUP_INPROGRESS)))
@@ -877,7 +1077,7 @@ mlan_status wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp)
             wlan_11n_create_txbastream_tbl(priv, pdel_ba->peer_mac_addr, tid, BA_STREAM_SETUP_INPROGRESS);
             if ((ptx_ba_tbl = wlan_11n_get_txbastream_status(priv, BA_STREAM_SETUP_INPROGRESS)))
             {
-                mlan_11n_delete_bastream_tbl(priv, ptx_ba_tbl->tid, ptx_ba_tbl->ra, TYPE_DELBA_SENT, MTRUE);
+                mlan_11n_update_bastream_tbl(priv, ptx_ba_tbl->tid, ptx_ba_tbl->ra, TYPE_DELBA_SENT, MTRUE);
             }
         }
     }
@@ -934,7 +1134,7 @@ mlan_status wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMMAND *resp)
     }
     else
     {
-        mlan_11n_delete_bastream_tbl(priv, tid, padd_ba_rsp->peer_mac_addr, TYPE_DELBA_SENT, MTRUE);
+        mlan_11n_update_bastream_tbl(priv, tid, padd_ba_rsp->peer_mac_addr, TYPE_DELBA_SENT, MTRUE);
         if (padd_ba_rsp->add_rsp_result != BA_RESULT_TIMEOUT)
         {
 #ifdef UAP_SUPPORT
@@ -1040,7 +1240,6 @@ mlan_status wlan_cmd_amsdu_aggr_ctrl(mlan_private *priv, HostCmd_DS_COMMAND *cmd
  *
  *  @return        MLAN_STATUS_SUCCESS
  */
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
 mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
                                      IN HostCmd_DS_COMMAND *resp,
@@ -1066,35 +1265,6 @@ mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
         cfg->param.amsdu_aggr_ctrl.curr_buf_size = wlan_le16_to_cpu(amsdu_ctrl->curr_buf_size);
     }
     pmpriv->is_amsdu_enabled = wlan_le16_to_cpu(amsdu_ctrl->enable);
-    LEAVE();
-    return MLAN_STATUS_SUCCESS;
-}
-#endif
-#else
-mlan_status wlan_ret_amsdu_aggr_ctrl(IN pmlan_private pmpriv,
-                                     IN HostCmd_DS_COMMAND *resp,
-                                     IN mlan_ioctl_req *pioctl_buf)
-{
-    mlan_ds_11n_cfg *cfg                   = MNULL;
-    HostCmd_DS_AMSDU_AGGR_CTRL *amsdu_ctrl = &resp->params.amsdu_aggr_ctrl;
-
-    ENTER();
-
-#ifdef DEBUG_11N_AGGR
-    wmprintf(
-        "action: %d\n\r"
-        "enable: %d\n\r"
-        "curr_buf_size: %d\n\n\r",
-        amsdu_ctrl->action, amsdu_ctrl->enable, amsdu_ctrl->curr_buf_size);
-#endif /* DEBUG_11N_AGGR */
-
-    if (pioctl_buf != NULL)
-    {
-        cfg                                      = (mlan_ds_11n_cfg *)(void *)pioctl_buf->pbuf;
-        cfg->param.amsdu_aggr_ctrl.enable        = wlan_le16_to_cpu(amsdu_ctrl->enable);
-        cfg->param.amsdu_aggr_ctrl.curr_buf_size = wlan_le16_to_cpu(amsdu_ctrl->curr_buf_size);
-    }
-
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }
@@ -1538,6 +1708,9 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
         case MLAN_OID_11N_HTCAP_CFG:
             status = wlan_11n_ioctl_htusrcfg(pmadapter, pioctl_req);
             break;
+        case MLAN_OID_11N_CFG_DELBA:
+            status = wlan_11n_ioctl_delba(pmadapter, pioctl_req);
+            break;
 #ifndef CONFIG_MLAN_WMSDK
         case MLAN_OID_11N_CFG_AGGR_PRIO_TBL:
             status = wlan_11n_ioctl_aggr_prio_tbl(pmadapter, pioctl_req);
@@ -1557,10 +1730,10 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
         case MLAN_OID_11N_CFG_SUPPORTED_MCS_SET:
             status = wlan_11n_ioctl_supported_mcs_set(pmadapter, pioctl_req);
             break;
-#endif /* CONFIG_MLAN_WMSDK */
         case MLAN_OID_11N_CFG_TX_BF_CAP:
             status = wlan_11n_ioctl_tx_bf_cap(pmadapter, pioctl_req);
             break;
+#endif /* CONFIG_MLAN_WMSDK */
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             status                  = MLAN_STATUS_FAILURE;
@@ -1578,22 +1751,15 @@ mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pi
  *
  *  @return 	        N/A
  */
-#if defined(WIFI_ADD_ON)
 void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra)
-#else
-void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx_tbl)
-#endif
 {
-#if defined(WIFI_ADD_ON)
-    TxBAStreamTbl *ptx_tbl = MNULL;
-#endif
+    TxBAStreamTbl *ptx_tbl  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
 
     (void)pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 
-#if defined(WIFI_ADD_ON)
     if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ra)))
     {
         PRINTM(MINFO, "Delete BA stream table entry: %p\n", ptx_tbl);
@@ -1603,22 +1769,9 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, TxBAStreamTbl *ptx
     }
 
     (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
-#else
-    if (ptx_tbl == MNULL || !wlan_is_txbastreamptr_valid(priv, ptx_tbl))
-    {
-        goto exit;
-    }
-    PRINTM(MINFO, "Delete BA stream table entry: %p\n", ptx_tbl);
 
-    util_unlink_list(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)(void *)ptx_tbl, MNULL,
-                     MNULL);
-#endif
-    (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
+    pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
 
-#ifndef WIFI_ADD_ON
-exit:
-#endif
-    (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
     LEAVE();
 }
 
@@ -1631,28 +1784,20 @@ exit:
  */
 void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
 {
-    int i;
     TxBAStreamTbl *del_tbl_ptr = MNULL;
 
     ENTER();
 
-    while ((del_tbl_ptr = (TxBAStreamTbl *)(void *)util_peek_list(
-                priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, priv->adapter->callbacks.moal_spin_lock,
-                priv->adapter->callbacks.moal_spin_unlock)) != NULL)
+    wlan_request_ralist_lock(priv);
+    while ((del_tbl_ptr = (TxBAStreamTbl *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
+                                                          priv->adapter->callbacks.moal_spin_lock,
+                                                          priv->adapter->callbacks.moal_spin_unlock)) != NULL)
     {
-#if defined(WIFI_ADD_ON)
         wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr->ra);
-#else
-        wlan_11n_delete_txbastream_tbl_entry(priv, del_tbl_ptr);
-#endif
     }
 
-    util_init_list((pmlan_linked_list)(void *)&priv->tx_ba_stream_tbl_ptr);
-
-    for (i = 0; i < MAX_NUM_TID; ++i)
-    {
-        priv->aggr_prio_tbl[i].ampdu_ap = priv->aggr_prio_tbl[i].ampdu_user;
-    }
+    util_init_list((pmlan_linked_list)&priv->tx_ba_stream_tbl_ptr);
+    wlan_release_ralist_lock(priv);
 
     LEAVE();
 }
@@ -1662,17 +1807,12 @@ void wlan_11n_deleteall_txbastream_tbl(mlan_private *priv)
  *  		table which matches the give RA/TID pair
  *
  *  @param priv    A pointer to mlan_private
- *  @param tid	   TID to find in reordering table
  *  @param ra      RA to find in reordering table
  *
  *  @return 	   A pointer to first entry matching RA/TID in BA stream
  *                 NULL if not found
  */
-#if defined(WIFI_ADD_ON)
 TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, t_u8 *ra)
-#else
-TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra)
-#endif
 {
     TxBAStreamTbl *ptx_tbl;
     pmlan_adapter pmadapter = priv->adapter;
@@ -1692,11 +1832,7 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", ptx_tbl->tid);
         DBG_HEXDUMP(MDAT_D, "RA", ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
 
-#if defined(WIFI_ADD_ON)
         if (!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH))
-#else
-        if ((!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH)) && (ptx_tbl->tid == tid))
-#endif
         {
             LEAVE();
             return ptx_tbl;
@@ -1720,22 +1856,14 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, int tid, t_u8 *ra
  *
  *  @return 	    N/A
  */
-#if defined(WIFI_ADD_ON)
 void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_status)
-#else
-void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baStatus_e ba_status)
-#endif
 {
     TxBAStreamTbl *newNode  = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
     ENTER();
 
-#if defined(WIFI_ADD_ON)
     if (!wlan_11n_get_txbastream_tbl(priv, ra))
-#else
-    if (!wlan_11n_get_txbastream_tbl(priv, tid, ra))
-#endif
     {
         PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
@@ -1744,15 +1872,10 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
                                          (t_u8 **)&newNode);
         util_init_list((pmlan_linked_list)newNode);
 
-#if defined(WIFI_ADD_ON)
         (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
 
         newNode->ba_status   = ba_status;
         newNode->txba_thresh = os_rand_range(5, 5);
-#else
-        newNode->tid       = tid;
-        newNode->ba_status = ba_status;
-#endif
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
@@ -1762,7 +1885,6 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, int tid, baSta
     LEAVE();
 }
 
-#if defined(WIFI_ADD_ON)
 /**
  *  @brief This function will update ampdu status in tx ba stream table for the
  *  		given RA/TID.
@@ -1802,6 +1924,7 @@ void wlan_11n_update_txbastream_tbl_ampdu_stat(mlan_private *priv, t_u8 *ra, t_u
  *
  *  @return 	    N/A
  */
+
 void wlan_11n_update_txbastream_tbl_ampdu_supported(mlan_private *priv, t_u8 *ra, t_u8 supported)
 {
     TxBAStreamTbl *ptx_tbl;
@@ -1900,7 +2023,6 @@ int wlan_11n_get_sta_peer_amsdu(mlan_private *priv)
 
     return ret;
 }
-#endif
 
 /**
  *  @brief This function will send a block ack to given tid/ra
@@ -1925,7 +2047,6 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     add_ba_req.block_ack_param_set =
         (t_u16)((tid << BLOCKACKPARAM_TID_POS) | (priv->add_ba_param.tx_win_size << BLOCKACKPARAM_WINSIZE_POS) |
                 IMMEDIATE_BLOCK_ACK);
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
     /** enable AMSDU inside AMPDU */
     /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
@@ -1934,13 +2055,6 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
 #else
     if (priv->add_ba_param.tx_amsdu && priv->bss_type == MLAN_BSS_TYPE_STA)
 #endif
-    {
-        add_ba_req.block_ack_param_set |= BLOCKACKPARAM_AMSDU_SUPP_MASK;
-    }
-#endif
-#else
-    /** enable AMSDU inside AMPDU */
-    if (priv->add_ba_param.tx_amsdu && (priv->aggr_prio_tbl[tid].amsdu != BA_STREAM_NOT_ALLOWED))
     {
         add_ba_req.block_ack_param_set |= BLOCKACKPARAM_AMSDU_SUPP_MASK;
     }
@@ -1955,9 +2069,7 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     }
 
     add_ba_req.dialog_token = dialog_tok;
-#if defined(WIFI_ADD_ON)
     (void)__memset(priv->adapter, &add_ba_req.peer_mac_addr, 0x0, MLAN_MAC_ADDR_LENGTH);
-#endif
     (void)__memcpy(priv->adapter, &add_ba_req.peer_mac_addr, peer_mac, MLAN_MAC_ADDR_LENGTH);
 #ifdef DUMP_PACKET_MAC
     wmprintf("wlan_send_addba bss_type:%d\r\n", priv->bss_type);
@@ -1969,46 +2081,43 @@ int wlan_send_addba(mlan_private *priv, int tid, const t_u8 *peer_mac)
     LEAVE();
     return ret;
 }
-#ifndef CONFIG_MLAN_WMSDK
+
 /**
  *  @brief This function will delete a block ack to given tid/ra
  *
- *  @param priv    		A pointer to mlan_private
- *  @param tid	   		TID to send the ADDBA
- *  @param peer_mac 	MAC address to send the ADDBA
- *  @param initiator 	MTRUE if we have initiated ADDBA, MFALSE otherwise
+ *  @param priv         A pointer to mlan_private
+ *  @param pioctl_req   A pointer to ioctl request buffer
+ *  @param tid          TID to send the ADDBA
+ *  @param peer_mac     MAC address to send the ADDBA
+ *  @param initiator    MTRUE if we have initiated ADDBA, MFALSE otherwise
  *
- *  @return 	        MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ *  @return             MLAN_STATUS_PENDING --success, otherwise fail
  */
-mlan_status wlan_send_delba(mlan_private *priv, int tid, t_u8 *peer_mac, int initiator)
+mlan_status wlan_send_delba(mlan_private *priv, pmlan_ioctl_req pioctl_req, int tid, t_u8 *peer_mac, int initiator)
 {
     HostCmd_DS_11N_DELBA delba;
     mlan_status ret;
 
     ENTER();
 
-    (void)__memset(priv->adapter, &delba, 0, sizeof(delba));
+    __memset(priv->adapter, &delba, 0, sizeof(delba));
     delba.del_ba_param_set = (tid << DELBA_TID_POS);
 
-    if (initiator == MTRUE)
-    {
+    if (initiator)
         DELBA_INITIATOR(delba.del_ba_param_set);
-    }
     else
-    {
         DELBA_RECIPIENT(delba.del_ba_param_set);
-    }
 
     (void)__memcpy(priv->adapter, &delba.peer_mac_addr, peer_mac, MLAN_MAC_ADDR_LENGTH);
 
-    /* We don't wait for the response of this command */
-    ret = wifi_prepare_and_send_cmd(priv, HostCmd_CMD_11N_DELBA, HostCmd_ACT_GEN_SET, 0, MNULL, &delba, priv->bss_type,
-                                    NULL);
+    ret = wlan_prepare_cmd(priv, HostCmd_CMD_11N_DELBA, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req, (t_void *)&delba);
+
+    if (ret == MLAN_STATUS_SUCCESS)
+        ret = MLAN_STATUS_PENDING;
 
     LEAVE();
     return ret;
 }
-#endif
 
 /**
  *  @brief This function handles the command response of
@@ -2031,8 +2140,7 @@ void wlan_11n_delete_bastream(mlan_private *priv, t_u8 *del_ba)
     pdel_ba->reason_code      = wlan_le16_to_cpu(pdel_ba->reason_code);
 
     tid = pdel_ba->del_ba_param_set >> DELBA_TID_POS;
-
-    mlan_11n_delete_bastream_tbl(priv, tid, pdel_ba->peer_mac_addr, TYPE_DELBA_RECEIVE,
+    mlan_11n_update_bastream_tbl(priv, tid, pdel_ba->peer_mac_addr, TYPE_DELBA_RECEIVE,
                                  INITIATOR_BIT(pdel_ba->del_ba_param_set));
 
     LEAVE();
@@ -2122,28 +2230,5 @@ int wlan_get_txbastream_tbl(mlan_private *priv, tx_ba_stream_tbl *buf)
 
     LEAVE();
     return count;
-}
-
-/**
- *  @brief This function cleans up txbastream_tbl for specific station
- *
- *  @param priv    	A pointer to mlan_private
- *  @param ra       RA to find in txbastream_tbl
- *  @return 	   	N/A
- */
-void wlan_11n_cleanup_txbastream_tbl(mlan_private *priv, t_u8 *ra)
-{
-    TxBAStreamTbl *ptx_tbl = MNULL;
-    t_u8 i;
-    ENTER();
-    for (i = 0; i < MAX_NUM_TID; ++i)
-    {
-        if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, i, ra)))
-        {
-            wlan_11n_delete_txbastream_tbl_entry(priv, ptx_tbl);
-        }
-    }
-    LEAVE();
-    return;
 }
 #endif /* CONFIG_MLAN_WMSDK */

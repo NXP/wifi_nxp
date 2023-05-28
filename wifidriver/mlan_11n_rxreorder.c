@@ -680,13 +680,9 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
     }
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_WINSIZE_MASK;
-#if defined(RW610)
 #ifdef AMSDU_IN_AMPDU
     /* To be done: change priv->aggr_prio_tbl[tid].amsdu for specific AMSDU support by CLI cmd */
     if (!priv->add_ba_param.rx_amsdu)
-#endif
-#else
-    if (!priv->add_ba_param.rx_amsdu || (priv->aggr_prio_tbl[tid].amsdu == BA_STREAM_NOT_ALLOWED))
 #endif
     {
         /* We do not support AMSDU inside AMPDU, hence reset the bit */
@@ -703,11 +699,7 @@ mlan_status wlan_cmd_11n_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND *cm
     padd_ba_rsp->block_ack_param_set = wlan_cpu_to_le16(padd_ba_rsp->block_ack_param_set);
 
 #ifdef CONFIG_STA_AMPDU_RX
-#if defined(WIFI_ADD_ON)
     if (!wifi_sta_ampdu_rx_enable_per_tid_is_allowed(tid))
-#else
-    if (!sta_ampdu_rx_enable)
-#endif
     {
         padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
         padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
@@ -729,10 +721,8 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
 {
     HostCmd_DS_11N_ADDBA_RSP *padd_ba_rsp    = (HostCmd_DS_11N_ADDBA_RSP *)&cmd->params.add_ba_rsp;
     HostCmd_DS_11N_ADDBA_REQ *pevt_addba_req = (HostCmd_DS_11N_ADDBA_REQ *)pdata_buf;
-#if defined(WIFI_ADD_ON)
-    t_u8 tid     = 0;
-    int win_size = 0;
-#endif
+    t_u8 tid                                 = 0;
+    int win_size                             = 0;
 
     ENTER();
 
@@ -749,9 +739,8 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     padd_ba_rsp->ssn           = wlan_cpu_to_le16(pevt_addba_req->ssn);
 
     padd_ba_rsp->block_ack_param_set = pevt_addba_req->block_ack_param_set;
-#if defined(WIFI_ADD_ON)
-    padd_ba_rsp->add_rsp_result = 0;
-    tid                         = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
+    padd_ba_rsp->add_rsp_result      = 0;
+    tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
     if (priv->addba_reject[tid])
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
     else
@@ -765,11 +754,9 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     if (!priv->add_ba_param.rx_amsdu)
 #endif
 #endif
-#endif
     /* We do not support AMSDU inside AMPDU, hence reset the bit */
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_AMSDU_SUPP_MASK;
 
-#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_UAP_AMPDU_RX
     if (!wifi_uap_ampdu_rx_enable_per_tid_is_allowed(tid))
     {
@@ -780,32 +767,16 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
     padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
     padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
 #endif
-#else
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT);
-
-#ifndef CONFIG_UAP_AMPDU_RX
-    padd_ba_rsp->status_code    = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
-    padd_ba_rsp->add_rsp_result = BA_RESULT_FAILURE;
-#endif
-#endif
-
-#if defined(WIFI_ADD_ON)
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_WINSIZE_MASK;
     padd_ba_rsp->block_ack_param_set |= (priv->add_ba_param.rx_win_size << BLOCKACKPARAM_WINSIZE_POS);
     win_size = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_WINSIZE_MASK) >> BLOCKACKPARAM_WINSIZE_POS;
     if (win_size == 0)
         padd_ba_rsp->status_code = wlan_cpu_to_le16(ADDBA_RSP_STATUS_DECLINED);
-#endif
 
     padd_ba_rsp->block_ack_param_set = wlan_cpu_to_le16(padd_ba_rsp->block_ack_param_set);
 
-#if defined(WIFI_ADD_ON)
-    /* At present, uAp doesn't use the reorder tbl, so we implicit the code*/
-    /*
-       if (padd_ba_rsp->status_code == wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT))
-           wlan_11n_create_rxreorder_tbl(priv, pevt_addba_req->peer_mac_addr, tid, win_size, pevt_addba_req->ssn);
-    */
-#endif
+    if (padd_ba_rsp->status_code == wlan_cpu_to_le16(ADDBA_RSP_STATUS_ACCEPT))
+        wlan_11n_create_rxreorder_tbl(priv, pevt_addba_req->peer_mac_addr, tid, win_size, pevt_addba_req->ssn);
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;
@@ -1179,7 +1150,7 @@ done:
 }
 
 /**
- *  @brief This function will delete an entry for a given tid/ta pair. tid/ta
+ *  @brief This function will update an entry for a given tid/ta pair. tid/ta
  *  		are taken from delba_event body
  *
  *  @param priv    	    A pointer to mlan_private
@@ -1190,7 +1161,7 @@ done:
  *
  *  @return 	   	    N/A
  */
-void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t_u8 type, int initiator)
+void mlan_11n_update_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t_u8 type, int initiator)
 {
     RxReorderTbl *rx_reor_tbl_ptr;
     TxBAStreamTbl *ptxtbl;
@@ -1225,11 +1196,8 @@ void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
     }
     else
     {
-#if defined(WIFI_ADD_ON)
+        wlan_request_ralist_lock(priv);
         ptxtbl = wlan_11n_get_txbastream_tbl(priv, peer_mac);
-#else
-        ptxtbl = wlan_11n_get_txbastream_tbl(priv, tid, peer_mac);
-#endif
         if (ptxtbl == MNULL)
         {
             PRINTM(MWARN, "TID, RA not found in table!\n");
@@ -1237,11 +1205,8 @@ void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
             return;
         }
 
-#if defined(WIFI_ADD_ON)
-        wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl->ra);
-#else
-        wlan_11n_delete_txbastream_tbl_entry(priv, ptxtbl);
-#endif
+        wlan_11n_update_txbastream_tbl_ampdu_stat(priv, peer_mac, MFALSE, tid);
+        wlan_release_ralist_lock(priv);
     }
 
     LEAVE();
@@ -1452,9 +1417,7 @@ t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv)
         if (rx_reor_tbl_ptr->ba_status == BA_STREAM_SETUP_COMPLETE)
         {
             rx_reor_tbl_ptr->ba_status = BA_STREAM_SETUP_INPROGRESS;
-#ifdef CONFIG_MLAN_WMSDK
             (void)wlan_send_delba(priv, rx_reor_tbl_ptr->tid, rx_reor_tbl_ptr->ta, 0);
-#endif
         }
         rx_reor_tbl_ptr = rx_reor_tbl_ptr->pnext;
     }

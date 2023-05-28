@@ -1263,9 +1263,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         wlan_11ax_bandconfig_allowed(pmpriv, pbss_desc->bss_band))
         wlan_cmd_append_11ax_tlv(pmpriv, pbss_desc, &pos);
 #endif
-    /* Enabled WMM IE in assoc request.
-     * TODO: Check if this is required for all APs. TCP traffic was hampered with Linksys AP 1900AC if this is disabled.
-     * */
+
     (void)wlan_wmm_process_association_req(pmpriv, &pos, &pbss_desc->wmm_ie, pbss_desc->pht_cap);
 
 #ifdef CONFIG_11R
@@ -1503,7 +1501,6 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #endif /* CONFIG_MLAN_WMSDK */
 
     /* fixme: This is not needed as of now. */
-#ifndef CONFIG_MLAN_WMSDK
     if (passoc_rsp->status_code)
     {
         if (pmpriv->media_connected == MTRUE)
@@ -1512,20 +1509,22 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 pmpriv->port_open = pmpriv->prior_port_status;
             if (!__memcmp(pmpriv->adapter, cur_mac, pmpriv->pattempted_bss_desc->mac_address, MLAN_MAC_ADDR_LENGTH))
                 wlan_reset_connect_state(pmpriv, MTRUE);
+#ifndef CONFIG_MLAN_WMSDK
             else
                 wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_ASSOC_FAILURE_REPORT, MNULL);
-        }
-        pmpriv->adapter->dbg.num_cmd_assoc_failure++;
-        PRINTM(MERROR,
-               "ASSOC_RESP: Association Failed, "
-               "status code = %d, error = 0x%x, a_id = 0x%x\n",
-               wlan_le16_to_cpu(passoc_rsp->status_code), wlan_le16_to_cpu(*(t_u16 *)&passoc_rsp->capability),
-               wlan_le16_to_cpu(passoc_rsp->a_id));
-
-        ret = MLAN_STATUS_FAILURE;
-        goto done;
-    }
 #endif /* CONFIG_MLAN_WMSDK */
+        }
+#ifndef CONFIG_MLAN_WMSDK
+        pmpriv->adapter->dbg.num_cmd_assoc_failure++;
+#endif /* CONFIG_MLAN_WMSDK */
+
+        wifi_d(
+            "ASSOC_RESP: Association Failed, "
+            "status code = %d, a_id = 0x%x",
+            wlan_le16_to_cpu(passoc_rsp->status_code), wlan_le16_to_cpu(passoc_rsp->a_id));
+
+        return MLAN_STATUS_FAILURE;
+    }
 
     /* Send a Media Connected event, according to the Spec */
     pmpriv->media_connected = MTRUE;
@@ -1657,7 +1656,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Add the ra_list here for infra mode as there will be only 1 ra always */
     if (media_connected == MTRUE)
     {
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
         if (0 == wlan_ralist_update_enh(pmpriv, cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address))
             wlan_ralist_add_enh(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
 #elif !defined(CONFIG_MLAN_WMSDK)
@@ -1672,7 +1671,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, pmpriv->wmm.ra_list_spinlock);
 #endif /* CONFIG_MLAN_WMSDK */
     }
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     else
         wlan_ralist_add_enh(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
 #elif !defined(CONFIG_MLAN_WMSDK)

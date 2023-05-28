@@ -71,7 +71,7 @@ void wlan_reset_pn_on_rekey(mlan_private *priv, t_u8 *event_buf);
 #endif
 
 mlan_status mlan_11n_rxreorder_pkt(void *priv, t_u16 seq_num, t_u16 tid, t_u8 *ta, t_u8 pkt_type, void *payload);
-void mlan_11n_delete_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t_u8 type, int initiator);
+void mlan_11n_update_bastream_tbl(mlan_private *priv, int Tid, t_u8 *PeerMACAddr, t_u8 type, int initiator);
 void wlan_11n_ba_stream_timeout(mlan_private *priv, HostCmd_DS_11N_BATIMEOUT *event);
 mlan_status wlan_ret_11n_addba_resp(mlan_private *priv, HostCmd_DS_COMMAND *resp);
 mlan_status wlan_cmd_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *cmd, void *pdata_buf);
@@ -80,13 +80,10 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
 mlan_status wlan_cmd_11n_addba_req(mlan_private *priv, HostCmd_DS_COMMAND *cmd, t_void *pdata_buf);
 void wlan_11n_cleanup_reorder_tbl(mlan_private *priv);
 RxReorderTbl *wlan_11n_get_rxreorder_tbl(mlan_private *priv, int tid, t_u8 *ta);
-
-#ifndef CONFIG_MLAN_WMSDK
 void wlan_11n_rxba_sync_event(mlan_private *priv, t_u8 *event_buf, t_u16 len);
+
 /** send delba for all entries in reorder_tbl */
 t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv);
-#endif /* CONFIG_MLAN_WMSDK */
-
 void wlan_update_rxreorder_tbl(pmlan_adapter pmadapter, bool flag);
 
 /** clean up reorder_tbl */

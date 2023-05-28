@@ -173,6 +173,18 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
+#ifdef CONFIG_WPA_SUPP
+    if (interface == BSS_TYPE_UAP)
+    {
+        if (pmpriv->tx_seq_num == 0)
+        {
+            pmpriv->tx_seq_num++;
+        }
+        ptxpd->tx_token_id = pmpriv->tx_seq_num++;
+        ptxpd->flags |= MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS;
+    }
+#endif
+
     sdiohdr->size = (t_u16)(payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN);
 
     return (int)(ptxpd->tx_pkt_offset + INTF_HEADER_LEN);
@@ -184,47 +196,29 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
  */
 /* SDIO  TxPD  PAYLOAD | 4 | 22 | payload | */
 
-void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
+void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
     SDIOPkt *sdiohdr     = (SDIOPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)(void *)((uint8_t *)pbuf + INTF_HEADER_LEN);
-#ifdef CONFIG_WMM
-    t_u8 *data_ptr = (t_u8 *)pbuf;
-#endif
+
     ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
     ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     ptxpd->tx_control    = 0;
-#ifdef CONFIG_WMM
-    t_u8 type_ip_offset = ptxpd->tx_pkt_offset + INTF_HEADER_LEN + MLAN_MAC_ADDR_LENGTH + MLAN_MAC_ADDR_LENGTH;
-    if (data_ptr[type_ip_offset] == 0x8 && data_ptr[type_ip_offset + 1] == 0x0)
-        ptxpd->priority = (data_ptr[type_ip_offset + 3] / 32);
-    else
-        ptxpd->priority = 0;
-#else
-    ptxpd->priority = 0;
-#endif
-    ptxpd->flags = 0;
-    if (ptxpd->tx_pkt_type == 0xe5U)
-    {
-        ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
-#ifdef CONFIG_WPA_SUPP
-        ptxpd->priority = 7;
+    ptxpd->priority      = tid;
+    ptxpd->flags         = 0;
 
-        if (interface == BSS_TYPE_UAP)
-        {
-            if (!pmpriv->tx_seq_num)
-                pmpriv->tx_seq_num++;
-            ptxpd->tx_token_id = pmpriv->tx_seq_num++;
-            ptxpd->flags |= MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS;
-        }
-#endif
-    }
     ptxpd->pkt_delay_2ms = 0;
 
     sdiohdr->size = (t_u16)payloadlen;
+}
+
+void process_pkt_hdrs_flags(void *pbuf, t_u8 flags)
+{
+    TxPD *ptxpd  = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
+    ptxpd->flags = flags;
 }
 
 int bus_register_event_queue(os_queue_t *event_queue)
@@ -485,7 +479,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         msg.event = (uint16_t)upld_type;
         (void)memcpy((void *)msg.data, (const void *)pmbuf, sdiopkt->size);
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
         if (upld_type == MLAN_TYPE_EVENT && sdiopkt->hostcmd.command == EVENT_TX_DATA_PAUSE)
         {
             wifi_handle_event_data_pause(msg.data);
@@ -1301,6 +1295,7 @@ int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len)
     return wlan_send_sdio_vdllcmd(vdll_cmd_buf, tx_blocks, len);
 }
 #endif
+
 #ifdef CONFIG_WMM
 extern int retry_attempts;
 
@@ -1332,12 +1327,18 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     uint32_t resp;
     int ret   = false;
     int retry = retry_attempts;
+#ifdef CONFIG_WMM_UAPSD
+    bool last_packet = 0;
+#endif
+
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, tx_blocks * buflen);
 
     calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
+
 #ifdef CONFIG_WIFI_IO_DEBUG
     (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
 #endif /* CONFIG_WIFI_IO_DEBUG */
+
 retry_xmit:
     wifi_sdio_lock();
     ret = get_free_port();
@@ -1358,7 +1359,16 @@ retry_xmit:
             goto retry_xmit;
         }
     }
-    process_pkt_hdrs(tx_buf, txlen, interface);
+
+#ifdef CONFIG_WMM_UAPSD
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
+        wifi_check_last_packet_indication(mlan_adap->priv[interface]))
+    {
+        process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+        last_packet = 1;
+    }
+#endif
+
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, tx_buf, &resp);
 
@@ -1374,6 +1384,11 @@ retry_xmit:
 
     if (ret == false)
     {
+#ifdef CONFIG_WMM_UAPSD
+        if (last_packet)
+            process_pkt_hdrs_flags((t_u8 *)tx_buf, 0);
+#endif
+
         wifi_io_e("sdio_drv_write failed (%d)", ret);
 #ifdef CONFIG_WIFI_FW_DEBUG
         wifi_sdio_reg_dbg(NULL);
@@ -1392,10 +1407,19 @@ retry_xmit:
         return MLAN_STATUS_RESOURCE;
     }
 
+#ifdef CONFIG_WMM_UAPSD
+    if (last_packet)
+    {
+        mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
+        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+    }
+#endif
+
     wifi_sdio_unlock();
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 {
     t_u32 tx_blocks = 0, buflen = 0;
@@ -1406,7 +1430,9 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 #endif
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
+
     calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
+
 #ifdef CONFIG_WIFI_IO_DEBUG
     (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
 #endif /* CONFIG_WIFI_IO_DEBUG */
@@ -1430,7 +1456,9 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
         /* Mark the port number we will use */
         mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
     }
-    process_pkt_hdrs((t_u8 *)buffer, txlen, interface);
+
+    process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0);
+
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
 

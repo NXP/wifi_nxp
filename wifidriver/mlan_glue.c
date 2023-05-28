@@ -42,13 +42,11 @@ static uint32_t cal_data_len;
 
 bool mac_addr_valid;
 static uint8_t *mac_addr;
-#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_WIFI_TX_BUFF
 #ifdef AMSDU_IN_AMPDU
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_4K;
 #else
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
-#endif
 #endif
 #endif
 
@@ -451,7 +449,7 @@ static mlan_status wrapper_moal_spin_unlock(IN t_void *pmoal_handle, IN t_void *
     return MLAN_STATUS_SUCCESS;
 }
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 /* os_semaphore_t equals (t_void *)(*pplock) */
 static mlan_status wrapper_moal_init_semaphore(IN t_void *pmoal_handle, IN const char *name, OUT t_void **pplock)
 {
@@ -508,7 +506,7 @@ static mlan_callbacks woal_callbacks = {
     .moal_free_lock   = wrapper_moal_free_lock,
     .moal_spin_lock   = wrapper_moal_spin_lock,
     .moal_spin_unlock = wrapper_moal_spin_unlock,
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
     .moal_init_semaphore = wrapper_moal_init_semaphore,
     .moal_free_semaphore = wrapper_moal_free_semaphore,
     .moal_semaphore_get  = wrapper_moal_semaphore_get,
@@ -678,44 +676,6 @@ int wrapper_wlan_cmd_11n_delba_rspgen(void *saved_event_buff)
     return 0;
 }
 
-struct uap_ampdu_stat_t
-{
-    uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
-    bool ampudu_stat;
-    bool ampudu_supported;
-};
-
-static struct uap_ampdu_stat_t uap_ampdu_stat_array[32];
-
-static int wlan_find_ampud_info(const uint8_t *addr, struct uap_ampdu_stat_t **ampdu_info)
-{
-    int i;
-
-    for (i = 0; i < 32; i++)
-    {
-        if (memcmp(addr, uap_ampdu_stat_array[i].mac_addr, MLAN_MAC_ADDR_LENGTH) == 0)
-        {
-            *ampdu_info = &uap_ampdu_stat_array[i];
-            return (int)MLAN_STATUS_SUCCESS;
-        }
-    }
-
-    return (int)MLAN_STATUS_FAILURE;
-}
-
-static void wlan_update_uap_ampdu_stat(uint8_t *addr, bool status)
-{
-    struct uap_ampdu_stat_t *ampdu_info;
-    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
-    {
-        ampdu_info->ampudu_stat = status;
-    }
-    else
-    {
-        wifi_d("failed to udpate uap ampdu status");
-    }
-}
-
 void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 {
     pmlan_private priv = mlan_adap->priv[1];
@@ -728,77 +688,32 @@ void wrapper_wlan_update_uap_rxrate_info(RxPD *rxpd)
 #endif
 }
 
-void wlan_update_uap_ampdu_supported(uint8_t *addr, bool supported)
-{
-    struct uap_ampdu_stat_t *ampdu_info;
-    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
-    {
-        ampdu_info->ampudu_supported = supported;
-    }
-    else
-    {
-        wifi_d("failed to udpate uap ampdu supported");
-    }
-}
-
-void wlan_update_uap_ampdu_info(uint8_t *addr, uint8_t action)
-{
-    struct uap_ampdu_stat_t *ampdu_info;
-    uint8_t temp_addr[MLAN_MAC_ADDR_LENGTH];
-#ifdef DUMP_PACKET_MAC
-    dump_mac_addr("wlan_update_uap_ampdu_info", addr);
-#endif
-    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
-    {
-        if (action != 0U)
-        {
-            wifi_d("already exist for adding uap ampdu info");
-        }
-        else
-        {
-            (void)memset(ampdu_info->mac_addr, 0, MLAN_MAC_ADDR_LENGTH);
-        }
-    }
-    else
-    {
-        if (action != 0U)
-        {
-            (void)memset(temp_addr, 0, MLAN_MAC_ADDR_LENGTH);
-            if (wlan_find_ampud_info(temp_addr, &ampdu_info) == 0)
-            {
-                (void)memcpy((void *)ampdu_info->mac_addr, (const void *)addr, MLAN_MAC_ADDR_LENGTH);
-                ampdu_info->ampudu_stat      = MFALSE;
-                ampdu_info->ampudu_supported = MTRUE;
-            }
-            else
-            {
-                wifi_d(
-                    "not available for adding "
-                    "uap ampdu info");
-            }
-        }
-        else
-        {
-            wifi_d("uap ampdu info has already removed");
-        }
-    }
-}
-
-mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
+int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
 #ifdef CONFIG_WMM
-                                          ,
-                                          t_u8 tid
+                                  ,
+                                  t_u8 tid
 #endif
 )
 {
     int ret;
-    struct uap_ampdu_stat_t *ampdu_info;
+    TxBAStreamTbl *ptx_tbl;
+    mlan_private *pmpriv_uap = mlan_adap->priv[1];
 
-    if (wlan_find_ampud_info(addr, &ampdu_info) == 0)
+    wlan_request_ralist_lock(pmpriv_uap);
+    wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv_uap, addr);
+    if ((ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv_uap, addr)))
     {
-        if ((ampdu_info->ampudu_stat == MFALSE) && ampdu_info->ampudu_supported)
+        if (
+#ifdef CONFIG_WMM
+            !ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid]
+#else
+            !ptx_tbl->ampdu_stat[0] && ptx_tbl->ampdu_supported[0]
+#endif
+            && ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh)
         {
-            ret = wlan_send_addba(mlan_adap->priv[1],
+            ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
+            wlan_release_ralist_lock(pmpriv_uap);
+            ret = wlan_send_addba(pmpriv_uap,
 #ifdef CONFIG_WMM
                                   tid,
 #else
@@ -811,7 +726,11 @@ mlan_status wrapper_wlan_uap_ampdu_enable(const uint8_t *addr
                 return MLAN_STATUS_FAILURE;
             }
         }
+        else
+            wlan_release_ralist_lock(pmpriv_uap);
     }
+    else
+        wlan_release_ralist_lock(pmpriv_uap);
     return MLAN_STATUS_SUCCESS;
 }
 
@@ -839,6 +758,11 @@ static mlan_status do_wlan_ret_11n_addba_resp(HostCmd_DS_COMMAND *resp)
 #ifdef DEBUG_11N_AGGR
     wmprintf("ADDBA RESP RESP: %d\n\r", resp->result);
 #endif /* DEBUG_11N_AGGR */
+    if (bss_type == BSS_TYPE_UAP)
+    {
+        mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+        rv                   = wlan_ret_11n_addba_resp(pmpriv, resp);
+    }
 
     return rv;
 }
@@ -846,10 +770,8 @@ static mlan_status do_wlan_ret_11n_addba_resp(HostCmd_DS_COMMAND *resp)
 static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMMAND *resp)
 {
     t_u8 tid;
-
     HostCmd_DS_11N_ADDBA_RSP *padd_ba_rsp = (HostCmd_DS_11N_ADDBA_RSP *)&resp->params.add_ba_rsp;
     padd_ba_rsp->status_code              = wlan_le16_to_cpu(padd_ba_rsp->status_code);
-#if defined(WIFI_ADD_ON)
     TxBAStreamTbl *ptx_ba_tbl;
 
     padd_ba_rsp->block_ack_param_set = wlan_le16_to_cpu(padd_ba_rsp->block_ack_param_set);
@@ -858,13 +780,10 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
     padd_ba_rsp->status_code         = wlan_le16_to_cpu(padd_ba_rsp->status_code);
 
     tid = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
-#else
-    tid                    = (padd_ba_rsp->block_ack_param_set & BLOCKACKPARAM_TID_MASK) >> BLOCKACKPARAM_TID_POS;
-    mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
-#endif
+
     if (padd_ba_rsp->status_code == BA_RESULT_SUCCESS)
     {
-#if defined(WIFI_ADD_ON)
+        wlan_request_ralist_lock(priv);
         if ((ptx_ba_tbl = wlan_11n_get_txbastream_tbl(priv, padd_ba_rsp->peer_mac_addr)))
         {
             wlan_11n_update_txbastream_tbl_ampdu_stat(priv, padd_ba_rsp->peer_mac_addr, MTRUE, tid);
@@ -882,54 +801,27 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
                 ptx_ba_tbl->amsdu = MTRUE;
             else
                 ptx_ba_tbl->amsdu = MFALSE;
+            wlan_release_ralist_lock(priv);
         }
         else
         {
+            wlan_release_ralist_lock(priv);
             PRINTM(MERROR, "BA stream not created\n");
         }
-#else
-        if (bss_type == MLAN_BSS_TYPE_STA)
-        {
-            ampdu_status_flag = MTRUE;
-        }
-        else if (bss_type == MLAN_BSS_TYPE_UAP)
-        {
-            wlan_update_uap_ampdu_stat(padd_ba_rsp->peer_mac_addr, MTRUE);
-        }
-        else
-        { /* Do Nothing */
-        }
-#endif
     }
     else
     {
-#if defined(WIFI_ADD_ON)
         if (padd_ba_rsp->add_rsp_result != BA_RESULT_TIMEOUT)
         {
+            wlan_request_ralist_lock(priv);
             if ((ptx_ba_tbl = wlan_11n_get_txbastream_tbl(priv, padd_ba_rsp->peer_mac_addr)))
             {
                 wlan_11n_update_txbastream_tbl_ampdu_stat(priv, padd_ba_rsp->peer_mac_addr, MFALSE, tid);
                 ptx_ba_tbl->ampdu_supported[tid] = MFALSE;
             }
+            wlan_release_ralist_lock(priv);
         }
         wifi_d("Failed: ADDBA req: %d", padd_ba_rsp->add_rsp_result);
-#else
-        if (padd_ba_rsp->add_rsp_result != BA_RESULT_TIMEOUT)
-        {
-            wifi_d("Failed: ADDBA req: %d", padd_ba_rsp->add_rsp_result);
-            if (bss_type == MLAN_BSS_TYPE_STA)
-            {
-                priv->aggr_prio_tbl[tid].ampdu_ap = BA_STREAM_NOT_ALLOWED;
-            }
-            else if (bss_type == MLAN_BSS_TYPE_UAP)
-            {
-                wlan_update_uap_ampdu_supported(padd_ba_rsp->peer_mac_addr, MFALSE);
-            }
-            else
-            { /* Do Nothing */
-            }
-        }
-#endif
     }
 
     return MLAN_STATUS_SUCCESS;
@@ -938,20 +830,15 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
 static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND *resp)
 {
     HostCmd_DS_11N_DELBA *pdel_ba = (HostCmd_DS_11N_DELBA *)&resp->params.del_ba;
-    mlan_bss_type bss_type        = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
+    int tid;
+
+    pdel_ba->del_ba_param_set = wlan_le16_to_cpu(pdel_ba->del_ba_param_set);
+    tid                       = pdel_ba->del_ba_param_set >> DELBA_TID_POS;
+
     if (pdel_ba->del_result == BA_RESULT_SUCCESS)
     {
-        if (bss_type == MLAN_BSS_TYPE_STA)
-        {
-            ampdu_status_flag = MFALSE;
-        }
-        else if (bss_type == MLAN_BSS_TYPE_UAP)
-        {
-            wlan_update_uap_ampdu_stat(pdel_ba->peer_mac_addr, MFALSE);
-        }
-        else
-        { /* Do Nothing */
-        }
+        mlan_11n_update_bastream_tbl(priv, tid, pdel_ba->peer_mac_addr, TYPE_DELBA_SENT,
+                                     INITIATOR_BIT(pdel_ba->del_ba_param_set));
     }
     else
     {
@@ -961,91 +848,70 @@ static mlan_status do_wlan_ret_11n_delba(mlan_private *priv, HostCmd_DS_COMMAND 
     return MLAN_STATUS_SUCCESS;
 }
 
-static bool wlan_is_ampdu_allowed(mlan_private *priv, int tid)
+#ifndef CONFIG_MLAN_WMSDK
+static t_u8 wlan_is_ampdu_allowed(mlan_private *priv, int tid)
 {
-    return (priv->aggr_prio_tbl[tid].ampdu_ap != BA_STREAM_NOT_ALLOWED) ? MTRUE : MFALSE;
+    if ((priv->aggr_prio_tbl[tid].ampdu_ap != BA_STREAM_NOT_ALLOWED) &&
+        (priv->aggr_prio_tbl[tid].txpkt_cnt >= priv->aggr_prio_tbl[tid].txba_thresh))
+        return MTRUE;
+    else
+        return MFALSE;
 }
+#endif
 
 // Only Enable AMPDU for station interface
-mlan_status wrapper_wlan_sta_ampdu_enable(
+int wrapper_wlan_sta_ampdu_enable(
 #ifdef CONFIG_WMM
     t_u8 tid
 #endif
 )
 {
     int ret;
-#ifdef CONFIG_WMM
-    static t_u8 ampdu_set_tid[MAX_NUM_TID];
-#endif
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_private *pmpriv               = (mlan_private *)mlan_adap->priv[0];
     t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH] = {0};
-#if defined(WIFI_ADD_ON)
-    TxBAStreamTbl *ptx_tbl = NULL;
-#endif
+    TxBAStreamTbl *ptx_tbl             = NULL;
+
+    wlan_request_ralist_lock(pmpriv);
+    if (pmpriv->media_connected == MTRUE)
+    {
+        (void)memcpy(cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
+        ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
+        if (!ptx_tbl)
+        {
+            wlan_11n_create_txbastream_tbl(pmpriv, cur_mac, BA_STREAM_NOT_SETUP);
+
+            ptx_tbl              = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
+            ptx_tbl->txba_thresh = 1;
+
+            if (pmpriv->curr_bss_params.bss_descriptor.pht_cap)
+            {
+                wlan_11n_update_txbastream_tbl_ampdu_supported(pmpriv, cur_mac, MTRUE);
+            }
+            else
+            {
+                wlan_release_ralist_lock(pmpriv);
+                return MLAN_STATUS_SUCCESS;
+            }
+        }
+    }
+    else
+    {
+        wifi_d("sta not connected: failed to send addba req");
+        wlan_release_ralist_lock(pmpriv);
+        return MLAN_STATUS_FAILURE;
+    }
+
+    wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv, cur_mac);
 
 #ifdef CONFIG_WMM
-    if (!ampdu_status_flag || (!ampdu_set_tid[tid] && wlan_is_ampdu_allowed(mlan_adap->priv[0], tid)))
+    if (!ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
 #else
-    if (!ampdu_status_flag && wlan_is_ampdu_allowed(mlan_adap->priv[0], 0))
+    if (!ptx_tbl->ampdu_stat[0] && ptx_tbl->ampdu_supported[0] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
 #endif
     {
-#ifdef CONFIG_WMM
-        ampdu_set_tid[tid] = true;
-#endif
-        if (pmpriv->media_connected == MTRUE)
-        {
-            (void)memcpy((void *)cur_mac, (const void *)pmpriv->curr_bss_params.bss_descriptor.mac_address,
-                         MLAN_MAC_ADDR_LENGTH);
-#if defined(WIFI_ADD_ON)
-        	ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);		
-            if (!ptx_tbl)
-            {
-                wlan_11n_create_txbastream_tbl(pmpriv, cur_mac, BA_STREAM_NOT_SETUP);
-
-                ptx_tbl              = wlan_11n_get_txbastream_tbl(pmpriv, cur_mac);
-                ptx_tbl->txba_thresh = 1;
-
-                if (pmpriv->curr_bss_params.bss_descriptor.pht_cap)
-                {
-                    wlan_11n_update_txbastream_tbl_ampdu_supported(pmpriv, cur_mac, MTRUE);
-                }
-                else
-                {
-                    return MLAN_STATUS_SUCCESS;
-                }
-            }
-#endif
-        }
-        else
-        {
-            wifi_d("sta not connected: failed to send addba req");
-            return MLAN_STATUS_FAILURE;
-        }
-
-#if defined(WIFI_ADD_ON)
-        wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv, cur_mac);
-
-#ifdef CONFIG_WMM
-        if (!ptx_tbl->ampdu_stat[tid] && ptx_tbl->ampdu_supported[tid] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
-#else
-        if (!ptx_tbl->ampdu_stat[0] && ptx_tbl->ampdu_supported[0] && (ptx_tbl->txpkt_cnt >= ptx_tbl->txba_thresh))
-#endif
-        {
-            ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
-            ret                = wlan_send_addba(mlan_adap->priv[0],
-#ifdef CONFIG_WMM
-                                  tid,
-#else
-                                  0,
-#endif
-                                  (t_u8 *)cur_mac);
-            if (ret != 0)
-            {
-                wifi_d("sta: failed to send addba req");
-                return MLAN_STATUS_FAILURE;
-            }
-#else
-        ret = wlan_send_addba(mlan_adap->priv[0],
+        ptx_tbl->ba_status = BA_STREAM_SETUP_INPROGRESS;
+        wlan_release_ralist_lock(pmpriv);
+        ret = wlan_send_addba(pmpriv,
 #ifdef CONFIG_WMM
                               tid,
 #else
@@ -1056,9 +922,10 @@ mlan_status wrapper_wlan_sta_ampdu_enable(
         {
             wifi_d("sta: failed to send addba req");
             return MLAN_STATUS_FAILURE;
-#endif
         }
     }
+    else
+        wlan_release_ralist_lock(pmpriv);
 
     return MLAN_STATUS_SUCCESS;
 }
@@ -1182,7 +1049,6 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
                                           pdata_buf, cmd);
 
     (void)wifi_wait_for_cmdresp(buffer);
-
     return status;
 }
 
@@ -1429,7 +1295,6 @@ void user_recv_monitor_data(const t_u8 *rcvdata)
     return;
 }
 #endif
-
 void wrapper_wlan_cmd_11n_cfg(HostCmd_DS_COMMAND *cmd)
 {
     mlan_ds_11n_tx_cfg txcfg = {/** HTTxCap */
@@ -1779,6 +1644,7 @@ static int wifi_send_tx_rate_cfg_ioctl(mlan_act_ioctl action, mlan_ds_rate *ds_r
             wifi_e("sta connection required before setting tx rate\n\r");
         }
     }
+
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
     {
         return -WM_FAIL;
@@ -3151,13 +3017,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_11N_ADDBA_RSP:
                 (void)do_wlan_ret_11n_addba_resp(resp);
                 break;
-#if defined(WIFI_ADD_ON)
 #ifdef AMSDU_IN_AMPDU
-            case HostCmd_CMD_AMSDU_AGGR_CTRL:
-                rv = wlan_ret_amsdu_aggr_ctrl(pmpriv, resp, NULL);
-                break;
-#endif
-#else
             case HostCmd_CMD_AMSDU_AGGR_CTRL:
                 rv = wlan_ret_amsdu_aggr_ctrl(pmpriv, resp, NULL);
                 break;
@@ -3170,6 +3030,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
                 if (rv != MLAN_STATUS_SUCCESS)
                 {
+                    (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, WIFI_EVENT_REASON_FAILURE, NULL);
                     return -WM_FAIL;
                 }
 
@@ -3853,8 +3714,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     MrvlIEtypesHeader_t *header = (MrvlIEtypesHeader_t *)auto_tx->tlv_buffer;
                     header->type                = wlan_le16_to_cpu(header->type);
 
-                    if ((auto_tx->action == HostCmd_ACT_GEN_GET) && (header->type == TLV_TYPE_CLOUD_KEEP_ALIVE) && 
-						(wm_wifi.cmd_resp_priv != NULL))
+                    if ((auto_tx->action == HostCmd_ACT_GEN_GET) && (header->type == TLV_TYPE_CLOUD_KEEP_ALIVE) &&
+                        (wm_wifi.cmd_resp_priv != NULL))
                     {
                         keep_alive_tlv        = (MrvlIEtypes_Cloud_Keep_Alive_t *)auto_tx->tlv_buffer;
                         enable                = (t_u8 *)wm_wifi.cmd_resp_priv;
@@ -4636,30 +4497,22 @@ void wlan_update_wnm_ps_status(wnm_ps_result *wnm_ps_result)
 }
 #endif
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 static inline void wifi_wmm_queue_lock(mlan_private *priv, t_u8 ac)
 {
-#ifdef WIFI_ADD_ON
     priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
-#endif
 }
 
 static inline void wifi_wmm_queue_unlock(mlan_private *priv, t_u8 ac)
 {
-#ifdef WIFI_ADD_ON
     priv->adapter->callbacks.moal_semaphore_put(priv->adapter->pmoal_handle, &priv->wmm.tid_tbl_ptr[ac].ra_list.plock);
-#endif
 }
 
 static inline void wifi_wmm_trigger_tx(t_u8 tx_pause)
 {
-    struct bus_message msg;
-
     if (tx_pause == MFALSE)
     {
-        msg.event  = MLAN_TYPE_DATA;
-        msg.reason = 0;
-        os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+        send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_STA);
     }
 }
 
@@ -5126,11 +4979,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->gen_null_pkt &&
                 wifi_check_no_packet_indication(pmpriv))
             {
-                struct bus_message msg_null_data;
-                msg_null_data.event  = MLAN_TYPE_NULL_DATA;
-                msg_null_data.reason = 0;
                 /* wifi_driver_tx task process the null packet sending */
-                os_queue_send(&wm_wifi.tx_data, &msg_null_data, OS_NO_WAIT);
+                send_wifi_driver_tx_null_data_event(MLAN_BSS_TYPE_STA);
             }
 #endif
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
@@ -5335,37 +5185,39 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
-#if defined(WIFI_ADD_ON)
+            wlan_request_ralist_lock(mlan_adap->priv[1]);
+            /* Clear corresponding tx/rx table if necessary */
+            if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
+                wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+            wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
+#ifdef CONFIG_WMM
+            wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
+#endif
             /* txbastream table also is used as connected STAs data base */
             wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
             wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
-#else
-            wlan_update_uap_ampdu_info(sta_addr, 1);
-#endif
+
             sta_node_ptr = os_mem_alloc(sizeof(sta_node));
             if (sta_node_ptr == MNULL)
             {
                 wifi_w("No mem. Cannot check station type");
+                wlan_release_ralist_lock(mlan_adap->priv[1]);
                 os_mem_free(sta_addr);
                 break;
             }
 
             wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
 
-#if defined(WIFI_ADD_ON)
             if (sta_node_ptr->is_11n_enabled)
             {
                 wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
             }
-#else
-            if (sta_node_ptr->is_11n_enabled == MFALSE)
-            {
-                wlan_update_uap_ampdu_supported(sta_addr, MFALSE);
-            }
-#endif
+            wlan_release_ralist_lock(mlan_adap->priv[1]);
+
             os_mem_free(sta_node_ptr);
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+
+#ifdef CONFIG_WMM
             wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
 #endif
 
@@ -5413,22 +5265,24 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
             sta_addr                   = disassoc_resp->sta_addr;
             disassoc_resp->reason_code = (int)evt->reason_code;
-            event_sta_addr             = (t_u8 *)&evt->src_mac_addr;
-            (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
+
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
-#if defined(WIFI_ADD_ON)
+
             if (pmpriv->is_11n_enabled)
             {
                 wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
+                wlan_request_ralist_lock(pmpriv);
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv, sta_addr);
+                wlan_release_ralist_lock(pmpriv);
             }
             if (pmpriv_uap->is_11n_enabled)
             {
                 wlan_cleanup_reorder_tbl(pmpriv_uap, sta_addr);
+                wlan_request_ralist_lock(pmpriv);
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
+                wlan_release_ralist_lock(pmpriv);
             }
-#endif
 #ifdef CONFIG_WPA_SUPP
             os_mem_free((void *)disassoc_resp);
 #else
@@ -5439,13 +5293,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 os_mem_free((void *)disassoc_resp);
             }
 #endif /* CONFIG_WPA_SUPP */
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
             wlan_ralist_del_enh(mlan_adap->priv[1], evt->src_mac_addr);
-#endif
-#if !defined(WIFI_ADD_ON)
-#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
-            wlan_update_uap_ampdu_info(evt->src_mac_addr, 0);
-#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 #endif
             if (evt->reason_code == AP_DEAUTH_REASON_MAC_ADDR_BLOCKED)
             {
@@ -5475,6 +5324,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_IDLE\n");
             pmpriv_uap->media_connected = MFALSE;
             break;
+#ifdef CONFIG_WMM
+        case EVENT_TX_DATA_PAUSE:
+            wifi_handle_event_data_pause(evt);
+            break;
+#endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
         case EVENT_PER_STATUS_REPORT:
             PRINTM(MEVENT, "EVENT: PER_STATUS_REPORT\n");
@@ -6423,7 +6277,6 @@ void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
 }
 #endif
 
-#if defined(WIFI_ADD_ON)
 #ifdef CONFIG_WIFI_TX_BUFF
 void wifi_prepare_set_tx_buf_size(HostCmd_DS_COMMAND *cmd, int seq_number)
 {
@@ -6434,7 +6287,6 @@ void wifi_prepare_set_tx_buf_size(HostCmd_DS_COMMAND *cmd, int seq_number)
     cmd->params.tx_buf.action    = HostCmd_ACT_GEN_SET;
     cmd->params.tx_buf.buff_size = tx_buf_size;
 }
-#endif
 #endif
 
 void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
@@ -6606,17 +6458,15 @@ void wifi_sleep_period(unsigned int *sleep_period, int action)
         *sleep_period = pm_cfg.param.sleep_period;
     }
 }
-
 #endif
 
-#if defined(RW610)
 #ifdef CONFIG_WIFI_TX_BUFF
 bool wifi_calibrate_tx_buf_size(uint16_t buf_size)
 {
     uint16_t pre_tx_buf_size = tx_buf_size;
     tx_buf_size              = MLAN_TX_DATA_BUF_SIZE_2K;
 
-#if defined(WIFI_ADD_ON)
+#if defined(RW610)
     if (buf_size >= MLAN_TX_DATA_BUF_SIZE_4K)
         tx_buf_size = MLAN_TX_DATA_BUF_SIZE_4K;
     _wlan_return_all_tx_buf(kIMU_LinkCpu1Cpu3);
@@ -6629,7 +6479,30 @@ bool wifi_calibrate_tx_buf_size(uint16_t buf_size)
 
     return (tx_buf_size != pre_tx_buf_size) ? true : false;
 }
-#endif
+
+void wifi_recfg_tx_buf_size(uint16_t buf_size)
+{
+    tx_buf_size = buf_size;
+}
+
+void _wifi_recfg_tx_buf_size(uint16_t buf_size, mlan_bss_type bss_type)
+{
+    if (!wifi_calibrate_tx_buf_size(buf_size))
+        return;
+
+    wifi_get_command_lock();
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
+    cmd->result  = 0x0;
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RECONFIGURE_TX_BUFF, HostCmd_ACT_GEN_SET,
+                             0, NULL, &tx_buf_size, cmd);
+    wifi_wait_for_cmdresp(NULL);
+}
+
 #endif
 
 #ifdef CONFIG_WIFI_TX_PER_TRACK
@@ -7111,7 +6984,7 @@ int wifi_set_subscribe_low_rssi_event(const t_u8 low_rssi, const t_u8 low_rssi_f
 }
 #endif
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
 static void wifi_wmm_tx_stats_dump_ralist(mlan_list_head *ra_list_head)
 {
     raListTbl *ra_list = MNULL;
@@ -7169,7 +7042,7 @@ void wifi_wmm_tx_stats_dump(int bss_type)
     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
     wifi_w("TX buffer pool: free_cnt[%d] real_free_cnt[%d]", free_cnt_stat, free_cnt_real);
 
-#ifdef CONFIG_WMM_ENH_DEBUG
+#ifdef CONFIG_WMM_DEBUG
     for (i = 0; i < MAX_AC_QUEUES; i++)
     {
         wifi_w("Dump priv[%d] ac_queue[%d] history ra", bss_type, i);

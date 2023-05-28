@@ -402,7 +402,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 #else
     memcpy(inbuf, cmdresp, cmdsize);
 #endif
-    cmdresp = (HostCmd_DS_GEN *)inbuf;
+    cmdresp  = (HostCmd_DS_GEN *)inbuf;
     bss_type = HostCmd_GET_BSS_TYPE(cmdresp->seq_num);
 
     last_resp_rcvd = cmdtype;
@@ -443,7 +443,7 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             wifi_get_value1_from_cmdresp(cmdresp, &dev_value1);
             break;
         case HostCmd_CMD_802_11_MAC_ADDRESS:
-            if(bss_type == MLAN_BSS_TYPE_UAP)
+            if (bss_type == MLAN_BSS_TYPE_UAP)
             {
                 wifi_get_mac_address_from_cmdresp(cmdresp, dev_mac_addr_uap);
             }
@@ -563,7 +563,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         memcpy(msg.data, pmbuf, imupkt->size);
 #endif
 
-#if defined(CONFIG_WMM) && defined(CONFIG_WMM_ENH)
+#ifdef CONFIG_WMM
         if (upld_type == MLAN_TYPE_EVENT && imupkt->hostcmd.command == EVENT_TX_DATA_PAUSE)
         {
             wifi_handle_event_data_pause(msg.data);
@@ -991,7 +991,7 @@ static void wlan_fw_init_cfg()
     wcmdr_d("CMD : GET_MAC_ADDR (0x4d)");
 
     wlan_get_mac_addr_sta();
-    
+
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
         os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
@@ -1000,7 +1000,7 @@ static void wlan_fw_init_cfg()
     last_resp_rcvd = 0;
 
     wlan_get_mac_addr_uap();
-    
+
     while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
     {
         os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
@@ -1200,12 +1200,7 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
 
 INLINE t_u8 wifi_wmm_get_packet_cnt(void)
 {
-#ifdef CONFIG_WMM_ENH
     return (MAX_WMM_BUF_NUM - mlan_adap->outbuf_pool.free_cnt);
-#else
-    return (wm_wifi.pkt_cnt[WMM_AC_BE] + wm_wifi.pkt_cnt[WMM_AC_BK] + wm_wifi.pkt_cnt[WMM_AC_VI] +
-            wm_wifi.pkt_cnt[WMM_AC_VO]);
-#endif
 }
 
 #ifdef AMSDU_IN_AMPDU
@@ -1389,9 +1384,6 @@ static bool imu_fw_is_hang(void)
 hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 {
     t_u32 imuControlType;
-#ifdef CONFIG_WMM
-    struct bus_message msg;
-#endif
 
     assert(NULL != pImuMsg);
     assert(IMU_MSG_CONTROL == pImuMsg->Hdr.type);
@@ -1401,9 +1393,7 @@ hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     {
         case IMU_MSG_CONTROL_TX_BUF_ADDR:
 #ifdef CONFIG_WMM
-            msg.event  = MLAN_TYPE_DATA;
-            msg.reason = 0;
-            os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+            send_wifi_driver_tx_data_event(interface);
 #endif
             break;
         default:
