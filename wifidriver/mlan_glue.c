@@ -680,6 +680,9 @@ int wrapper_wlan_uap_ampdu_enable(uint8_t *addr
     TxBAStreamTbl *ptx_tbl;
     mlan_private *pmpriv_uap = mlan_adap->priv[1];
 
+    if (!(pmpriv_uap->is_11n_enabled))
+        return MLAN_STATUS_SUCCESS;
+
     wlan_request_ralist_lock(pmpriv_uap);
     wlan_11n_update_txbastream_tbl_tx_cnt(pmpriv_uap, addr);
     if ((ptx_tbl = wlan_11n_get_txbastream_tbl(pmpriv_uap, addr)))
@@ -5186,6 +5189,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 os_mem_free(sta_addr);
                 break;
             }
+            memset(sta_node_ptr, 0x00, sizeof(sta_node));
 
             wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
 
