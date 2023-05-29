@@ -169,7 +169,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->tx_pkt_length = (t_u16)(payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN);
     ptxpd->tx_pkt_type   = 0xE5;
     ptxpd->tx_control    = 0;
-    ptxpd->priority      = 7;
+    ptxpd->priority      = 0;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
@@ -209,6 +209,11 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
     ptxpd->tx_control    = 0;
     ptxpd->priority      = tid;
     ptxpd->flags         = 0;
+
+    if (ptxpd->tx_pkt_type == 0xe5U)
+    {
+        ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
+    }
 
     ptxpd->pkt_delay_2ms = 0;
 
