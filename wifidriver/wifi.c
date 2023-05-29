@@ -1508,7 +1508,10 @@ static void wifi_driver_main_loop(void *argv)
                  * Free the buffer after the event is
                  * handled.
                  */
-                wifi_free_eventbuf(msg.data);
+                if (msg.data != NULL)
+                {
+                    wifi_free_eventbuf(msg.data);
+                }
             }
             else if (msg.event == MLAN_TYPE_CMD)
             {
@@ -2816,11 +2819,20 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             nxp_wifi_event_mlme_t *auth_resp = &wm_wifi.auth_resp;
             memset(auth_resp, 0, sizeof(nxp_wifi_event_mlme_t));
             auth_resp->frame.frame_len = payload_len;
-            memcpy((void *)auth_resp->frame.frame, (const void *)pieee_pkt_hdr, payload_len);
 
-            if (wm_wifi.supp_if_callbk_fns->auth_resp_callbk_fn)
+            if (payload_len <= sizeof(auth_resp->frame.frame))
             {
-                wm_wifi.supp_if_callbk_fns->auth_resp_callbk_fn(wm_wifi.if_priv, auth_resp, auth_resp->frame.frame_len);
+                memcpy((void *)auth_resp->frame.frame, (const void *)pieee_pkt_hdr, payload_len);
+
+                if (wm_wifi.supp_if_callbk_fns->auth_resp_callbk_fn)
+                {
+                    wm_wifi.supp_if_callbk_fns->auth_resp_callbk_fn(wm_wifi.if_priv, auth_resp,
+                                                                    auth_resp->frame.frame_len);
+                }
+            }
+            else
+            {
+                wifi_e("Insufficient frame buffer");
             }
         }
 
@@ -2868,10 +2880,18 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
         nxp_wifi_event_mlme_t *mgmt_rx = &wm_wifi.mgmt_rx;
 
         mgmt_rx->frame.frame_len = payload_len;
-        memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
-        if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
+
+        if (mgmt_rx->frame.frame_len <= (int)sizeof(mgmt_rx->frame.frame))
         {
-            wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+            memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
+            if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
+            {
+                wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+            }
+        }
+        else
+        {
+            wifi_e("Insufficient frame buffer");
         }
     }
 

@@ -4394,8 +4394,8 @@ static void wlcm_process_disconnected()
 #ifdef CONFIG_11K
 static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_rrm_neighbor_report_t *nbr_rpt)
 {
-    char bssid[32];
-    char info[32];
+    char bssid[32] = {0};
+    char info[32]  = {0};
     int op_class,channel,phy_type;
 
     if (!nbr_response || nbr_response[0] == '\0')
@@ -4415,7 +4415,8 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
     if (sscanf(nbr_response,"%*s bssid=%s info=%s op_class=%d chan=%d phy_type=%d", bssid, info, &op_class, &channel, &phy_type) == 5)
     {
         int i;
-        int match = 0;
+        int match  = 0;
+        size_t len = 0;
 
         // Check if the bssid is already present in list
 
@@ -4437,8 +4438,12 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
         if (!match && (nbr_rpt->neighbor_cnt < MAX_NEIGHBOR_AP_LIMIT))
         {
             strncpy((char *)nbr_rpt->neighbor_ap[nbr_rpt->neighbor_cnt].bssid, bssid, sizeof(nbr_rpt->neighbor_ap->bssid));
+            len = strlen(bssid);
+            nbr_rpt->neighbor_ap[nbr_rpt->neighbor_cnt].bssid[len] = (t_u8)'\0';
 
             strncpy((char *)nbr_rpt->neighbor_ap[nbr_rpt->neighbor_cnt].bssidInfo, info, sizeof(nbr_rpt->neighbor_ap->bssidInfo));
+            len = strlen(info);
+            nbr_rpt->neighbor_ap[nbr_rpt->neighbor_cnt].bssidInfo[len] = (t_u8)'\0';
 
             nbr_rpt->neighbor_ap[nbr_rpt->neighbor_cnt].channel = channel;
             wlan.nlist_rep_param.channels[wlan.nlist_rep_param.num_channels] = channel;
@@ -4481,6 +4486,7 @@ static void wlcm_process_wps_success_event()
     (void)memset(&network, 0, sizeof(struct wlan_network));
     (void)memcpy(network.name, name, strlen(name));
     len = strlen(name);
+    network.name[len] = '\0';
     (void)memcpy(network.ssid, ssid, strlen(ssid));
 
     network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;

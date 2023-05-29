@@ -1985,13 +1985,14 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
             __memcpy(priv->adapter, temp, &priv->ext_cap, sizeof(priv->ext_cap));
             for (i = 0; i < MIN(sizeof(priv->ext_cap), pvendor_ie->len); i++)
                 temp[i] |= ie_data_ptr[2 + i];
-            __memcpy(priv->adapter, &priv->ext_cap, temp, sizeof(temp));
+            __memcpy(priv->adapter, &priv->ext_cap, temp, sizeof(priv->ext_cap));
         }
         else
             /* Test to see if it is a WPA IE, if not, then it is a
                gen IE*/
             if (((pvendor_ie->element_id == WPA_IE) &&
-                 (!__memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(wpa_oui)))) ||
+                 (!__memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(pvendor_ie->oui))) &&
+                 (pvendor_ie->oui_type == wpa_oui[3U])) ||
                 (pvendor_ie->element_id == RSN_IE))
         {
             /* IE is a WPA/WPA2 IE so call set_wpa function */
@@ -2011,7 +2012,8 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
 #endif /* WAPI */
 #ifdef ENABLE_HOTSPOT
             if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) &&
-                (!__memcmp(priv->adapter, pvendor_ie->oui, osen_oui, sizeof(osen_oui))))
+                (!__memcmp(priv->adapter, pvendor_ie->oui, osen_oui, sizeof(pvendor_ie->oui))) &&
+                (pvendor_ie->oui_type == osen_oui[3U]))
         {
             /* IE is a OSEN IE so call set_osen function */
             ret = wlan_set_osen_ie(priv, ie_data_ptr, ie_len);
@@ -2020,7 +2022,8 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
             if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) && (priv->wps.session_enable == MTRUE) &&
-                (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
+                (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
+                (pvendor_ie->oui_type == wps_oui[3U]))
         {
             /*
              * Discard first two byte (Element ID and Length)
@@ -2055,7 +2058,8 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
                  * wps session flag */
                 pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
                 if ((pvendor_ie->element_id == WPS_IE) &&
-                    (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(wps_oui))))
+                    (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
+                    (pvendor_ie->oui_type == wps_oui[3U]))
                 {
                     priv->wps.session_enable = MTRUE;
                     PRINTM(MINFO, "WPS Session Enabled.\n");
@@ -2067,7 +2071,8 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
                  * enable wps session flag */
                 pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
                 if ((pvendor_ie->element_id == WPS_IE) &&
-                    (!__memcmp(priv->adapter, pvendor_ie->oui, wpse_oui, sizeof(wps_oui))))
+                    (!__memcmp(priv->adapter, pvendor_ie->oui, wpse_oui, sizeof(pvendor_ie->oui))) &&
+                    (pvendor_ie->oui_type == wpse_oui[3U]))
                 {
                     priv->wps.session_enable = MTRUE;
                     PRINTM(MINFO, "WPSE Session Enabled.\n");

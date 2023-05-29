@@ -2777,6 +2777,7 @@ static void test_wlan_host_11k_cfg(int argc, char **argv)
 static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
 {
     int ret;
+    int len                            = 0;
     t_u8 ssid[IEEEtypes_SSID_SIZE + 1] = {0};
 
     if ((argc != 1 && argc != 3) || (argc == 3 && !string_equal("ssid", argv[1])))
@@ -2796,6 +2797,8 @@ static void test_wlan_host_11k_neighbor_request(int argc, char **argv)
         else
         {
             (void)memcpy((void *)ssid, (const void *)argv[2], (size_t)strlen(argv[2]));
+            len       = (int)strlen(argv[2]);
+            ssid[len] = (t_u8)'\0';
         }
     }
 
