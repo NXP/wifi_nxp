@@ -916,17 +916,6 @@ static void wlan_fw_init_cfg()
         }
     }
 #endif
-    if (cal_data_valid)
-    {
-        wcmdr_d("CMD : SET_CAL_DATA (0x8f)");
-
-        _wlan_set_cal_data();
-
-        while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
-        {
-            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
-        }
-    }
 
     if (mac_addr_valid)
     {
@@ -959,6 +948,22 @@ static void wlan_fw_init_cfg()
     {
         os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
     }
+    if (cal_data_valid
+#ifdef RW610
+        && !cal_data_valid_rw610
+#endif
+    )
+    {
+        wcmdr_d("CMD : SET_CAL_DATA (0x8f)");
+
+        _wlan_set_cal_data();
+
+        while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
+        {
+            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        }
+    }
+    
 #ifdef CONFIG_WIFI_TX_BUFF
     // TODO:Reconfig tx buffer size to 4K
     wcmdr_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
