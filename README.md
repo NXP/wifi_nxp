@@ -9,11 +9,11 @@ This repository is under LA_OPT_NXP_Software_License, license copy please check 
 
 # Wi-Fi Examples
 
-Wi-Fi examples are located in examples/${boards}/wifi_examples
+Wi-Fi examples located in examples/${boards}/wifi_examples
 
 # Supported NXP Boards
 
-Wi-Fi examples are supported in the following NXP boards now:
+Wi-Fi examples are supported for the following NXP boards:
 - EVKB-MIMXRT 1170
 - EVKB-MIMXRT 1060
 - EVKB-MIMXRT 1050
@@ -35,4 +35,4 @@ NXP Wireless chipsets currently supported are:
 
 # Contribution
 
-Contributions are not accepted now, and will be opened in the future.
+Contributions are not accepted now and will be opened in the future.
