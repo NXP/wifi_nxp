@@ -1,7 +1,7 @@
 
 # NXP Middleware Wi-Fi Layer
 
-This repository is for WiFi driver and WLAN Connection Manager. This reposirtory is a part of MCUXpresso SDK overall delivery which is composed of several project deliveries. Please go to the [mcux-sdk](https://github.com/NXPmicro/mcux-sdk/) to get the MCUXpresso overall delivery to be able to build and go to the [mcux-sdk-examples](https://github.com/nxp-mcuxpresso/mcux-sdk-examples) to run Wi-Fi examples that are based on this reposirtory.
+This repository is for WiFi driver and WLAN Connection Manager. This repository is a part of MCUXpresso SDK overall delivery which is composed of several project deliveries. Please go to the [mcux-sdk](https://github.com/NXPmicro/mcux-sdk/) to get the MCUXpresso overall delivery to be able to build and go to the [mcux-sdk-examples](https://github.com/nxp-mcuxpresso/mcux-sdk-examples) to run Wi-Fi examples that are based on this repository.
 
 # License
 
