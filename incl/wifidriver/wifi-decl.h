@@ -1160,7 +1160,7 @@ typedef PACK_START struct
     t_u8 sp_gap;
 } PACK_END wifi_btwt_config_t;
 
-#define WLAN_BTWT_REPORT_LEN     15
+#define WLAN_BTWT_REPORT_LEN     9
 #define WLAN_BTWT_REPORT_MAX_NUM 4
 typedef PACK_START struct
 {

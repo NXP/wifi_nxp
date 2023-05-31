@@ -3093,8 +3093,8 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_report
     /** TWT report length of value in data */
     t_u8 length;
     t_u8 reserve[2];
-    /** TWT report payload for FW response to fill */
-    t_u8 data[60];
+    /** TWT report payload for FW response to fill, 4 * 9bytes */
+    t_u8 data[36];
 } MLAN_PACK_END mlan_ds_twt_report, *pmlan_ds_twt_report;
 /** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twtcfg

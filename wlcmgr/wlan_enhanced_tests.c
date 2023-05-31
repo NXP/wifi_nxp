@@ -1466,7 +1466,7 @@ static test_cfg_param_t g_twt_setup_cfg_param[] = {
     {"announced", 1, 1, "0: Unannounced, 1: Announced TWT"},
     {"trigger_enabled", 2, 1, "0: Non-Trigger enabled, 1: Trigger enabled TWT"},
     {"twt_info_disabled", 3, 1, "0: TWT info enabled, 1: TWT info disabled"},
-    {"negotiation_type", 4, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT time"},
+    {"negotiation_type", 4, 1, "0: Individual TWT, 3: Broadcast TWT"},
     {"twt_wakeup_duration", 5, 1, "time after which the TWT requesting STA can transition to doze state"},
     {"flow_identifier", 6, 1, "Range: [0-7]"},
     {"hard_constraint", 7, 1,

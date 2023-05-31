@@ -4669,7 +4669,7 @@ typedef MLAN_PACK_START struct _hostcmd_twt_report
     t_u8 length;
     t_u8 reserve[2];
     /** TWT report payload for FW response to fill */
-    t_u8 data[60];
+    t_u8 data[36];
 } MLAN_PACK_END hostcmd_twt_report, *phostcmd_twt_report;
 /** HostCmd_DS_TWT_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_TWT_CFG
