@@ -1653,36 +1653,33 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     (void)__memcpy(pmpriv->adapter, (t_u8 *)pevent->event_buf,
                    (t_u8 *)pmpriv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
 #endif /* CONFIG_MLAN_WMSDK */
+
+#ifdef CONFIG_WMM
     /* Add the ra_list here for infra mode as there will be only 1 ra always */
     if (media_connected == MTRUE)
     {
-#ifdef CONFIG_WMM
         if (0 == wlan_ralist_update_enh(pmpriv, cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address))
+        {
             wlan_ralist_add_enh(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
-#elif !defined(CONFIG_MLAN_WMSDK)
-        /** replace ralist's mac address with new mac address */
-        if (0 == wlan_ralist_update(pmpriv, cur_mac, pmpriv->curr_bss_params.bss_descriptor.mac_address))
-            wlan_ralist_add(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
-#endif /* CONFIG_MLAN_WMSDK */
+        }
+
         wlan_11n_cleanup_reorder_tbl(pmpriv);
-#ifndef CONFIG_MLAN_WMSDK
-        pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, pmpriv->wmm.ra_list_spinlock);
         wlan_11n_deleteall_txbastream_tbl(pmpriv);
-        pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, pmpriv->wmm.ra_list_spinlock);
-#endif /* CONFIG_MLAN_WMSDK */
     }
-#ifdef CONFIG_WMM
     else
+    {
         wlan_ralist_add_enh(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
-#elif !defined(CONFIG_MLAN_WMSDK)
-    else
-        wlan_ralist_add(pmpriv, pmpriv->curr_bss_params.bss_descriptor.mac_address);
+    }
+#endif
+
+#ifndef CONFIG_MLAN_WMSDK
 
     wlan_recv_event(pmpriv, MLAN_EVENT_ID_DRV_CONNECTED, pevent);
 
     /* Send OBSS scan param to the application if available */
     wlan_2040_coex_event(pmpriv);
 #endif /* CONFIG_MLAN_WMSDK */
+
     if (!pmpriv->sec_info.wpa_enabled && !pmpriv->sec_info.wpa2_enabled && !pmpriv->sec_info.ewpa_enabled &&
         !pmpriv->sec_info.wapi_enabled)
     {

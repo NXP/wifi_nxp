@@ -46,7 +46,11 @@
  */
 
 /*! @brief Data written to the card */
+#ifdef CONFIG_SDIO_MULTI_PORT_TX_AGGR
+SDK_ALIGN(uint8_t outbuf[SDIO_MP_AGGR_DEF_PKT_LIMIT * 2 * DATA_BUFFER_SIZE], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
+#else
 SDK_ALIGN(uint8_t outbuf[DATA_BUFFER_SIZE + DATA_BUFFER_SIZE / 2], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
+#endif
 
 /*! @brief Data read from the card */
 #ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
@@ -107,22 +111,9 @@ bool wlan_card_status(t_u8 bits)
 
 void calculate_sdio_write_params(t_u32 txlen, t_u32 *tx_blocks, t_u32 *buflen)
 {
-    *tx_blocks = 1;
-    *buflen    = SDIO_BLOCK_SIZE;
+    *tx_blocks = (txlen + SDIO_BLOCK_SIZE - 1) / SDIO_BLOCK_SIZE;
 
-    if (txlen > 512U)
-    {
-        *tx_blocks = (txlen + SDIO_BLOCK_SIZE - 1) / SDIO_BLOCK_SIZE;
-        /* this is really blksize */
-        *buflen = SDIO_BLOCK_SIZE;
-    }
-    else
-    {
-        *tx_blocks = (txlen + SDIO_BLOCK_SIZE - 1) / SDIO_BLOCK_SIZE;
-        *buflen    = *tx_blocks * SDIO_BLOCK_SIZE;
-
-        *tx_blocks = 1; /* tx_blocks of size 512 */
-    }
+    *buflen = SDIO_BLOCK_SIZE;
 }
 
 static uint32_t wlan_card_read_scratch_reg(void)

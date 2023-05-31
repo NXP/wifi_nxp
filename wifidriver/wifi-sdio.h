@@ -52,6 +52,8 @@
 #error "Please keep buffer length aligned to SDIO block size"
 #endif /* Sanity check */
 
+#define SDIO_PAYLOAD_SIZE 8
+
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
@@ -79,6 +81,9 @@ extern bool cal_data_valid;
 extern bool mac_addr_valid;
 
 mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size);
+mlan_status sd_wifi_post_init(enum wlan_type type);
+
+mlan_status wlan_flush_wmm_pkt(t_u8 pkt_cnt);
 
 void sd_wifi_deinit(void);
 

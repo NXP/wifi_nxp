@@ -6149,7 +6149,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     if (wlan.wlan_usb_init_cb != NULL)
         wlan.wlan_usb_init_cb();
     else
-        wifi_e("USB init callback is not registered");
+        wifi_d("USB init callback is not registered");
 #endif
     return ret;
 }

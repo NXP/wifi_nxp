@@ -1052,7 +1052,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     (void)os_rwlock_read_unlock(&sleep_rwlock);
 #endif
 
-    /* Wait max 10 sec for the command response */
+    /* Wait max 20 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
     if (ret != WM_SUCCESS)
     {
@@ -1748,7 +1748,7 @@ static int wifi_core_init(void)
         goto fail;
     }
     ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_drv_stack,
-                           OS_PRIO_1);
+                           OS_PRIO_2);
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create tx data thread failed");
@@ -1906,6 +1906,8 @@ static void wifi_core_deinit(void)
 
 int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 {
+    int ret = WM_SUCCESS;
+
     if (wifi_init_done != 0U)
     {
         return WM_SUCCESS;
@@ -1914,11 +1916,11 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
     (void)memset(&wm_wifi, 0, sizeof(wm_wifi_t));
 
 #if defined(RW610)
-    int ret = (int)imu_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
+    ret = (int)imu_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
 #else
-    int ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
+    ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
 #endif
-    if (ret != 0)
+    if (ret != WM_SUCCESS)
     {
         wifi_e("sd_wifi_init failed. status code %d", ret);
         switch (ret)
@@ -1949,9 +1951,17 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
     }
 
     ret = wifi_core_init();
-    if (ret != 0)
+    if (ret != WM_SUCCESS)
     {
         wifi_e("wifi_core_init failed. status code %d", ret);
+        return ret;
+    }
+
+    ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("wifi_core_init failed. status code %d", ret);
+        return ret;
     }
 
     if (ret == WM_SUCCESS)
@@ -3172,12 +3182,12 @@ static inline t_u8 wifi_is_tx_queue_empty()
 #endif
 }
 
-static inline t_u8 wifi_is_max_tx_cnt(int pkt_cnt)
+static inline t_u8 wifi_is_max_tx_cnt(t_u8 pkt_cnt)
 {
 #ifdef RW610
     return (pkt_cnt >= IMU_PAYLOAD_SIZE) ? MTRUE : MFALSE;
 #else
-    return MFALSE;
+    return (pkt_cnt >= SDIO_PAYLOAD_SIZE) ? MTRUE : MFALSE;
 #endif
 }
 
@@ -3222,7 +3232,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
  *  return MLAN_STATUS_SUCESS to continue looping ralists,
  *  return MLAN_STATUS_RESOURCE to break looping ralists
  */
-static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist, int *pkt_cnt)
+static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist, t_u8 *pkt_cnt)
 {
     mlan_status ret;
 
@@ -3251,9 +3261,7 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl 
         (*pkt_cnt)++;
         if (wifi_is_max_tx_cnt(*pkt_cnt) == MTRUE)
         {
-#ifdef RW610
             wlan_flush_wmm_pkt(*pkt_cnt);
-#endif
             *pkt_cnt = 0;
         }
     }
@@ -3272,7 +3280,7 @@ static int wifi_xmit_wmm_ac_pkts_enh()
     int i;
     int ac;
     mlan_status ret;
-    int pkt_cnt        = 0;
+    t_u8 pkt_cnt       = 0;
     mlan_private *priv = MNULL;
     raListTbl *ralist  = MNULL;
     tid_tbl_t *tid_ptr = MNULL;
@@ -3317,9 +3325,7 @@ static int wifi_xmit_wmm_ac_pkts_enh()
     }
 
 RET:
-#ifdef RW610
     wlan_flush_wmm_pkt(pkt_cnt);
-#endif
     return WM_SUCCESS;
 }
 
@@ -3381,12 +3387,12 @@ static void wifi_driver_tx(void *data)
     uint32_t taskNotification = 0U;
     uint16_t event;
     t_u8 interface;
-   
+
     while (1)
     {
         wm_wifi.wm_wifi_driver_tx = os_get_current_task_handle();
 
-get_msg:
+    get_msg:
 #ifdef CONFIG_ECSA
         /*
          * Reduce block tx check interval, try to make it sync with ECSA status.
@@ -3442,8 +3448,7 @@ get_msg:
         if (event == MLAN_TYPE_DATA || event == MLAN_TYPE_NULL_DATA)
         {
 #ifdef CONFIG_WMM_UAPSD
-            while (pmadapter->pps_uapsd_mode &&
-                    (pmadapter->tx_lock_flag == MTRUE))
+            while (pmadapter->pps_uapsd_mode && (pmadapter->tx_lock_flag == MTRUE))
             {
                 os_thread_sleep(os_msec_to_ticks(1));
             }
@@ -3470,13 +3475,11 @@ get_msg:
                 {
                     /* send null packet until the finish of CMD response processing */
                     os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
-                    if (pmadapter->pps_uapsd_mode &&
-                            pmpriv->media_connected &&
-                            pmadapter->gen_null_pkt)
+                    if (pmadapter->pps_uapsd_mode && pmpriv->media_connected && pmadapter->gen_null_pkt)
                     {
-                        if (wlan_send_null_packet(pmpriv,
-                                    MRVDRV_TxPD_POWER_MGMT_NULL_PACKET |
-                                    MRVDRV_TxPD_POWER_MGMT_LAST_PACKET) == MLAN_STATUS_SUCCESS)
+                        if (wlan_send_null_packet(
+                                pmpriv, MRVDRV_TxPD_POWER_MGMT_NULL_PACKET | MRVDRV_TxPD_POWER_MGMT_LAST_PACKET) ==
+                            MLAN_STATUS_SUCCESS)
                         {
                             pmadapter->tx_lock_flag = MTRUE;
                         }
@@ -3484,11 +3487,9 @@ get_msg:
                     else
                     {
                         wifi_d(
-                                "No need to send null packet, pps_uapsd_mode: %d, media_connected: %d, gen_null_pkt: "
-                                "%d",
-                                pmadapter->pps_uapsd_mode,
-                                pmpriv->media_connected,
-                                pmadapter->gen_null_pkt);
+                            "No need to send null packet, pps_uapsd_mode: %d, media_connected: %d, gen_null_pkt: "
+                            "%d",
+                            pmadapter->pps_uapsd_mode, pmpriv->media_connected, pmadapter->gen_null_pkt);
                         os_semaphore_put(&uapsd_sem);
                         pmadapter->tx_lock_flag = MFALSE;
                     }

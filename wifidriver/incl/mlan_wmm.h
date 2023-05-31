@@ -214,7 +214,7 @@ extern mlan_status wlan_cmd_wmm_delts_req(IN pmlan_private pmpriv, OUT HostCmd_D
 
 #ifdef CONFIG_WMM
 /* wmm enhance buffer pool */
-#define MAX_WMM_BUF_NUM 32
+#define MAX_WMM_BUF_NUM 16
 #define WMM_DATA_LEN    1580
 #define OUTBUF_WMM_LEN  (sizeof(outbuf_t))
 
