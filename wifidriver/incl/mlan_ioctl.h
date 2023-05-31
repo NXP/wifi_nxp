@@ -2629,7 +2629,7 @@ typedef struct
 typedef struct
 {
     mlan_wmm_queue_config_action_e action; /**< Set, Get, or Default */
-    mlan_wmm_ac_e access_category;        /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
+    mlan_wmm_ac_e access_category;         /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
     t_u16 msdu_lifetime_expiry;            /**< lifetime expiry in TUs */
     t_u8 supported_rates[10];              /**< Not supported yet */
 } wlan_ioctl_wmm_queue_config_t;
@@ -2769,6 +2769,9 @@ typedef struct _mlan_ds_wmm_cfg
         mlan_ds_wmm_delts delts;
         /** WMM queue configuration for MLAN_OID_WMM_CFG_QUEUE_CONFIG */
         mlan_ds_wmm_queue_config q_cfg;
+        /** AC Parameters Record WMM_AC_BE, WMM_AC_BK, WMM_AC_VI,
+         * WMM_AC_VO */
+        wmm_ac_parameters_t ac_params[MAX_AC_QUEUES];
         /** WMM queue status for MLAN_OID_WMM_CFG_QUEUE_STATS */
         mlan_ds_wmm_queue_stats q_stats;
         /** WMM queue status for MLAN_OID_WMM_CFG_QUEUE_STATUS */

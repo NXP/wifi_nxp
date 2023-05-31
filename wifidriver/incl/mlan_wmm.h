@@ -138,6 +138,8 @@ t_u8 wlan_get_random_ba_threshold(pmlan_adapter pmadapter);
 t_u8 wlan_wmm_compute_driver_packet_delay(pmlan_private priv, const pmlan_buffer pmbuf);
 /** Initialize WMM */
 t_void wlan_wmm_init(pmlan_adapter pmadapter);
+/** Initialize WMM paramter */
+t_void wlan_init_wmm_param(pmlan_adapter pmadapter);
 /** Setup WMM queues */
 extern void wlan_wmm_setup_queues(pmlan_private priv);
 /* Setup default queues */
@@ -207,10 +209,14 @@ extern mlan_status wlan_cmd_wmm_delts_req(IN pmlan_private pmpriv, OUT HostCmd_D
 t_void wlan_wmm_delete_peer_ralist(pmlan_private priv, t_u8 *mac);
 #endif
 
-#ifdef STA_SUPPORT
-/** WMM DELTS request command handler */
-extern mlan_status wlan_cmd_wmm_delts_req(IN pmlan_private pmpriv, OUT HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
-#endif /* STA_SUPPORT */
+/* process wmm_param_config command */
+mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv,
+                                      HostCmd_DS_COMMAND *cmd,
+                                      t_u8 cmd_action,
+                                      t_void *pdata_buf);
+
+/* process wmm_param_config command response */
+mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
 #ifdef CONFIG_WMM
 /* wmm enhance buffer pool */

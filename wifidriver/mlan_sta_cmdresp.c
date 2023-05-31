@@ -239,7 +239,7 @@ mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *p
         case MFG_CMD_RF_BAND_AG:
         case MFG_CMD_RF_CHANNELBW:
         case MFG_CMD_RADIO_MODE_CFG:
-		case MFG_CMD_RFPWR:
+        case MFG_CMD_RFPWR:
             break;
         default:
             ret = MLAN_STATUS_FAILURE;
@@ -1959,6 +1959,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WMM
+        case HostCmd_CMD_WMM_PARAM_CONFIG:
+            ret = wlan_ret_wmm_param_config(pmpriv, resp, pioctl_buf);
+            break;
+#endif
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
             ret = wlan_ret_subscribe_event(pmpriv, resp, pioctl_buf);

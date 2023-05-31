@@ -1303,6 +1303,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: CW Mode */
 #define HostCmd_CMD_CW_MODE_CTRL 0x0239
 
+#ifdef CONFIG_WMM
+/** Host Command ID: WMM Param Config */
+#define HostCmd_CMD_WMM_PARAM_CONFIG 0x023a
+#endif
+
 #ifdef CONFIG_FW_VDLL
 #define HostCmd_CMD_VDLL 0x0240
 #endif
@@ -2932,6 +2937,15 @@ typedef MLAN_PACK_START struct _WmmParameter_t
     /** AC Parameters Record WMM_AC_BE, WMM_AC_BK, WMM_AC_VI, WMM_AC_VO */
     WmmAcParameters_t ac_params[MAX_AC_QUEUES];
 } MLAN_PACK_END WmmParameter_t, *pWmmParameter_t;
+
+/** Data structure of Host command WMM_PARAM_CFG  */
+typedef MLAN_PACK_START struct _HostCmd_DS_WMM_PARAM_CONFIG
+{
+    /** action */
+    t_u16 action;
+    /** AC Parameters Record WMM_AC_BE, WMM_AC_BK, WMM_AC_VI, WMM_AC_VO */
+    WmmAcParameters_t ac_params[MAX_AC_QUEUES];
+} MLAN_PACK_END HostCmd_DS_WMM_PARAM_CONFIG;
 
 /* Definition of firmware host command */
 /** HostCmd_DS_GEN */
@@ -4873,7 +4887,7 @@ typedef MLAN_PACK_START struct
 typedef MLAN_PACK_START struct
 {
     mlan_wmm_queue_config_action_e action; /**< Set, Get, or Default */
-    mlan_wmm_ac_e access_category;        /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
+    mlan_wmm_ac_e access_category;         /**< WMM_AC_BK(0) to WMM_AC_VO(3) */
     /** @brief MSDU lifetime expiry per 802.11e
      *
      *   - Ignored if 0 on a set command
@@ -7431,6 +7445,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_WMM_QUEUE_STATS queue_stats;
         /** WMM get traffic stream status */
         HostCmd_DS_WMM_TS_STATUS ts_status;
+        /** WMM param config*/
+        HostCmd_DS_WMM_PARAM_CONFIG param_config;
 #if defined(WPA) || defined(WAPI_AP) || defined(HOST_AUTHENTICATOR)
         /** Key material */
         HostCmd_DS_802_11_KEY_MATERIAL key_material;

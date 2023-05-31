@@ -2893,6 +2893,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_ibss_coalescing_status(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WMM
+        case HostCmd_CMD_WMM_PARAM_CONFIG:
+            ret = wlan_cmd_wmm_param_config(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
         case HostCmd_CMD_MGMT_IE_LIST:
             ret = wlan_cmd_mgmt_ie_list(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;

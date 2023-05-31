@@ -416,6 +416,7 @@ static int wifi_cmd_uap_config(char *ssid,
 {
     t_u32 ssid_len = strlen(ssid);
     uint8_t i;
+    const t_u8 wmm_oui[4] = {0x00, 0x50, 0xf2, 0x02};
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     int ret;
     t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -740,6 +741,23 @@ static int wifi_cmd_uap_config(char *ssid,
      * Note that we are leaving htcap info set to zero by default. This
      *  will ensure that 11N is disabled.
      */
+
+    memset(&bss.param.bss_config.wmm_para, 0x00, sizeof(wmm_parameter_t));
+
+    memcpy(&bss.param.bss_config.wmm_para.ouitype, wmm_oui, sizeof(wmm_oui));
+#ifdef CONFIG_WIFI_CAPA
+    if (pmpriv->adapter->usr_dot_11n_enable)
+#endif
+    {
+        bss.param.bss_config.wmm_para.ouisubtype = 0x01;
+        bss.param.bss_config.wmm_para.version = 0x01;
+
+        memcpy(&bss.param.bss_config.wmm_para.ac_params, &mlan_adap->ac_params, sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);
+        for (i = 0; i < MAX_AC_QUEUES; i++)
+        {
+            bss.param.bss_config.wmm_para.ac_params[i].tx_op_limit = wlan_cpu_to_le16(mlan_adap->ac_params[i].tx_op_limit);
+        }
+    }
 
     mlan_ioctl_req ioctl_buf;
     (void)memset(&ioctl_buf, 0x00, sizeof(mlan_ioctl_req));
@@ -2144,14 +2162,29 @@ static t_void wifi_set_wmm_ies(mlan_private *priv, const t_u8 *ie, int len, mlan
                 {
                     if (total_ie_len == sizeof(IEEEtypes_WmmParameter_t))
                     {
-                        /*
-                         * Only accept and copy the WMM IE if
-                         * it matches the size expected for the
-                         * WMM Parameter IE.
-                         */
-                        memcpy(&sys_config->wmm_para, pcurrent_ptr + sizeof(IEEEtypes_Header_t), element_len);
-                        /** set uap_host_based_config to true */
-                        sys_config->uap_host_based_config = MTRUE;
+#ifdef CONFIG_WIFI_CAPA
+                        if (priv->adapter->usr_dot_11n_enable)
+#endif
+                        {
+                            /*
+                             * Only accept and copy the WMM IE if
+                             * it matches the size expected for the
+                             * WMM Parameter IE.
+                             */
+                            memcpy(&sys_config->wmm_para, pcurrent_ptr + sizeof(IEEEtypes_Header_t), element_len);
+
+                            /** Disable U-APSD for now */
+                            sys_config->wmm_para.qos_info &= 0x7F;
+
+                            /** set uap_host_based_config to true */
+                            sys_config->uap_host_based_config = MTRUE;
+                        }
+#ifdef CONFIG_WIFI_CAPA
+                        else
+                        {
+                            memset(sys_config->wmm_para.ac_params, 0x00, sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);
+                        }
+#endif
                     }
                 }
 

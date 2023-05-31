@@ -5460,6 +5460,9 @@ static void wlcm_process_bg_scan_report(void)
 
 static void wlcm_process_get_hw_spec_event(void)
 {
+#ifdef CONFIG_WMM
+    (void)wifi_wmm_init();
+#endif
     /* Set World Wide Safe Mode Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
     CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);

@@ -1538,6 +1538,7 @@ void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
 #endif
 
 #ifdef CONFIG_WMM
+void wifi_wmm_init();
 t_u32 wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid);
 t_u8 wifi_wmm_get_packet_cnt(void);
 /* handle EVENT_TX_DATA_PAUSE */
@@ -1753,10 +1754,6 @@ int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action);
 void wifi_sleep_period(unsigned int *sleep_period, int action);
 #endif
 
-#ifdef CONFIG_WMM
-t_u8 wifi_wmm_get_packet_cnt(void);
-#endif
-
 #ifdef RW610
 #ifdef CONFIG_HOST_SLEEP
 extern int wakeup_by;
@@ -1833,10 +1830,6 @@ void set_monitor_flag(bool flag);
  */
 bool get_monitor_flag();
 
-#endif
-
-#ifdef CONFIG_WMM
-t_u8 wifi_wmm_get_packet_cnt(void);
 #endif
 
 #ifdef CONFIG_CSI

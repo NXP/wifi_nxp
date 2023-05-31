@@ -3042,6 +3042,20 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
 #define WMM_PACKET_TOS_IPV6_02   0xf
 #define TOS_MASK_IPV6            0x0ff0 /* 0000111111110000 */
 
+void wifi_wmm_init()
+{
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    mlan_status status      = MLAN_STATUS_SUCCESS;
+
+    status =
+        wlan_prepare_cmd(pmpriv, HostCmd_CMD_WMM_PARAM_CONFIG, HostCmd_ACT_GEN_SET, 0, MNULL, &pmadapter->ac_params);
+    if (status != MLAN_STATUS_SUCCESS)
+    {
+        wifi_e("ERR: WMM wlan_prepare_cmd returned status=0x%x", status);
+    }
+}
+
 /* Packet priority is 16th byte of payload.
  * Provided that the packet is IPV4 type
  * Since value comes between the range of 0-255, coversion is expected between 0-7 to map to TIDs.

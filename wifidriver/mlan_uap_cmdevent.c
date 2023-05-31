@@ -835,7 +835,9 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
     }
 #endif /* CONFIG_MLAN_WMSDK */
 
-    if (bss->param.bss_config.wmm_para.qos_info == 0x80 || bss->param.bss_config.wmm_para.qos_info == 0x00)
+    if ((bss->param.bss_config.uap_host_based_config == MTRUE) ||
+	    (bss->param.bss_config.wmm_para.qos_info & 0x80 ||
+	     bss->param.bss_config.wmm_para.qos_info == 0x00))
     {
         tlv_wmm_parameter              = (MrvlIEtypes_wmm_parameter_t *)tlv;
         tlv_wmm_parameter->header.type = wlan_cpu_to_le16(TLV_TYPE_VENDOR_SPECIFIC_IE);

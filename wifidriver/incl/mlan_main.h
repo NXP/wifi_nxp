@@ -2209,6 +2209,9 @@ struct _mlan_adapter
     t_u8 cfp_code_bg;
     /** CFP table code for 5GHz */
     t_u8 cfp_code_a;
+    wmm_ac_parameters_t ac_params[MAX_AC_QUEUES];
+    /** Minimum BA Threshold */
+    t_u8 min_ba_threshold;
 #ifdef STA_SUPPORT
     /** Universal Channel data */
     region_chan_t universal_channel[MAX_REGION_CHANNEL_NUM];

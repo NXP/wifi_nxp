@@ -57,6 +57,9 @@ Change log:
 /** WMM information IE */
 static const t_u8 wmm_info_ie[] = {(t_u8)WMM_IE, 0x07, 0x00, 0x50, 0xf2, 0x02, 0x00, 0x01, 0x00};
 
+/** Type enumeration of WMM AC_QUEUES */
+typedef MLAN_PACK_START enum _wmm_ac_e { AC_BE, AC_BK, AC_VI, AC_VO } MLAN_PACK_END wmm_ac_e;
+
 #ifndef CONFIG_MLAN_WMSDK
 /**
  * AC Priorities go from AC_BK to AC_VO.  The ACI enumeration for AC_BK (1)
@@ -67,7 +70,7 @@ static const t_u8 wmm_aci_to_qidx_map[] = {WMM_AC_BE, WMM_AC_BK, WMM_AC_VI, WMM_
 
 /* Map of TOS UP values to WMM AC */
 static const mlan_wmm_ac_e tos_to_ac[] = {WMM_AC_BE, WMM_AC_BK, WMM_AC_BK, WMM_AC_BE,
-                                           WMM_AC_VI, WMM_AC_VI, WMM_AC_VO, WMM_AC_VO};
+                                          WMM_AC_VI, WMM_AC_VI, WMM_AC_VO, WMM_AC_VO};
 #endif
 
 /**
@@ -1259,6 +1262,50 @@ void wlan_ralist_add(mlan_private *priv, t_u8 *ra)
 #endif /* CONFIG_MLAN_WMSDK */
 
 /**
+ *  @brief Initialize the WMM parameter.
+ *
+ *  @param pmadapter  Pointer to the mlan_adapter data structure
+ *
+ *  @return         N/A
+ */
+t_void wlan_init_wmm_param(pmlan_adapter pmadapter)
+{
+    /* Reuse the same structure of WmmAcParameters_t for configuration
+     * purpose here. the definition of acm bit is changed to ucm (user
+     * configuration mode) FW will take the setting of
+     * aifsn,ecw_max,ecw_min, tx_op_limit only when ucm is set to 1.
+     * othewise the default setting/behavoir in firmware will be used.
+     */
+    pmadapter->ac_params[AC_BE].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_BE].aci_aifsn.aci   = AC_BE;
+    pmadapter->ac_params[AC_BE].aci_aifsn.aifsn = 3;
+    pmadapter->ac_params[AC_BE].ecw.ecw_max     = 10;
+    pmadapter->ac_params[AC_BE].ecw.ecw_min     = 4;
+    pmadapter->ac_params[AC_BE].tx_op_limit     = 0;
+
+    pmadapter->ac_params[AC_BK].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_BK].aci_aifsn.aci   = AC_BK;
+    pmadapter->ac_params[AC_BK].aci_aifsn.aifsn = 7;
+    pmadapter->ac_params[AC_BK].ecw.ecw_max     = 10;
+    pmadapter->ac_params[AC_BK].ecw.ecw_min     = 4;
+    pmadapter->ac_params[AC_BK].tx_op_limit     = 0;
+
+    pmadapter->ac_params[AC_VI].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_VI].aci_aifsn.aci   = AC_VI;
+    pmadapter->ac_params[AC_VI].aci_aifsn.aifsn = 2;
+    pmadapter->ac_params[AC_VI].ecw.ecw_max     = 4;
+    pmadapter->ac_params[AC_VI].ecw.ecw_min     = 3;
+    pmadapter->ac_params[AC_VI].tx_op_limit     = 188;
+
+    pmadapter->ac_params[AC_VO].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_VO].aci_aifsn.aci   = AC_VO;
+    pmadapter->ac_params[AC_VO].aci_aifsn.aifsn = 2;
+    pmadapter->ac_params[AC_VO].ecw.ecw_max     = 3;
+    pmadapter->ac_params[AC_VO].ecw.ecw_min     = 2;
+    pmadapter->ac_params[AC_VO].tx_op_limit     = 102;
+}
+
+/**
  *  @brief Initialize the WMM state information and the WMM data path queues.
  *
  *  @param pmadapter  Pointer to the mlan_adapter data structure
@@ -2337,6 +2384,73 @@ mlan_status wlan_ret_wmm_ts_status(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAN
 }
 #endif /* STA_SUPPORT */
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WMM
+/**
+ *  @brief This function prepares the command of WMM_PARAM_CONFIG
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   cmd action.
+ *  @param pdata_buf    A pointer to data buffer
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_wmm_param_config(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u8 cmd_action, t_void *pdata_buf)
+{
+    wmm_ac_parameters_t *ac_params        = (wmm_ac_parameters_t *)pdata_buf;
+    HostCmd_DS_WMM_PARAM_CONFIG *pcmd_cfg = &cmd->params.param_config;
+    t_u8 i                                = 0;
+
+    ENTER();
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_WMM_PARAM_CONFIG);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_WMM_PARAM_CONFIG) + S_DS_GEN);
+    cmd->result  = 0;
+
+    pcmd_cfg->action = cmd_action;
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        (void)__memcpy(pmpriv->adapter, pcmd_cfg->ac_params, ac_params, sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);
+        for (i = 0; i < MAX_AC_QUEUES; i++)
+        {
+            pcmd_cfg->ac_params[i].tx_op_limit = wlan_cpu_to_le16(pcmd_cfg->ac_params[i].tx_op_limit);
+        }
+    }
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function handles the command response of WMM_PARAM_CONFIG
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_wmm_param_config(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    mlan_ds_wmm_cfg *pwmm             = MNULL;
+    HostCmd_DS_WMM_PARAM_CONFIG *pcfg = (HostCmd_DS_WMM_PARAM_CONFIG *)&resp->params.param_config;
+    t_u8 i;
+
+    ENTER();
+
+    if (pioctl_buf)
+    {
+        pwmm = (mlan_ds_wmm_cfg *)pioctl_buf->pbuf;
+        for (i = 0; i < MAX_AC_QUEUES; i++)
+        {
+            pcfg->ac_params[i].tx_op_limit = wlan_le16_to_cpu(pcfg->ac_params[i].tx_op_limit);
+        }
+        (void)__memcpy(pmpriv->adapter, pwmm->param.ac_params, pcfg->ac_params,
+                       sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
 
 #ifdef CONFIG_WMM
 #ifdef CONFIG_WMM_DEBUG
