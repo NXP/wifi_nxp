@@ -131,9 +131,6 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         }
 
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
-        RESET_11ACSUBEAMFORMEE(vht_cfg.vht_cap_info);
-        RESET_11ACMURXBEAMFORMEE(vht_cfg.vht_cap_info);
-
 #ifdef RW610
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
 #endif
@@ -239,9 +236,6 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
 #ifdef RW610
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
 #endif
-
-    /** Reset SU Beamformee support for uAP */
-    he_cfg.he_cap.he_phy_cap[4] &= ~MBIT(0);
 
 #if 0
     if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
@@ -3659,9 +3653,6 @@ t_u32 wifi_get_default_vht_capab()
     t_u8 vht_mcs_set[8];
 
     wifi_setup_vht_cap(&vht_capab, &vht_mcs_set[0], 0);
-
-    RESET_11ACSUBEAMFORMEE(vht_capab);
-    RESET_11ACMURXBEAMFORMEE(vht_capab);
 
     return vht_capab;
 }

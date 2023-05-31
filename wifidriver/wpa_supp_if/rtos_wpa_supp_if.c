@@ -1848,9 +1848,6 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         goto out;
     }
 
-    /** Reset SU Beamformee support for uAP */
-    modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP].phy_cap[4] &= ~MBIT(0);
-
 #ifdef CONFIG_5GHz_SUPPORT
     status = wifi_setup_he_cap(
         (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
@@ -1867,9 +1864,6 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
         goto out;
     }
-
-    /** Reset SU Beamformee support for uAP */
-    modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP].phy_cap[4] &= ~MBIT(0);
 
 #endif
 #endif
