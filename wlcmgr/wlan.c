@@ -4879,6 +4879,10 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #ifdef CONFIG_MBO
     wifi_host_mbo_cfg(1);
 #endif
+#ifdef RW610
+    wlan_ieeeps_on(0);
+    wlan_deepsleepps_on();
+#endif
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
