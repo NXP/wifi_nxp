@@ -5339,7 +5339,6 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     }
 #endif
 
-#ifndef CONFIG_WPA_SUPP
     if (wlan.sta_state >= CM_STA_ASSOCIATING)
     {
         if (new_network->role == WLAN_BSS_ROLE_STA)
@@ -5353,53 +5352,12 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
 
     wlcm_d("starting connection to network: %d", (int)msg->data);
 
+#ifndef CONFIG_WPA_SUPP
     ret = do_connect((int)msg->data);
 #else
-    wlcm_d("starting connection to network: %d", (int)msg->data);
     wlan.scan_count      = 0;
     wlan.cur_network_idx = (int)msg->data;
     ret                  = wpa_supp_connect(netif, new_network);
-#endif
-
-#ifdef CONFIG_WPA_SUPP
-    /* Release the connect scan lock if supp connect returns 1,
-     * that means station already connected with selected
-     * network.
-     */
-    if (ret == 1)
-    {
-
-        wlcm_d("Already connected with the "
-                "selected network %d - do nothing", (int)msg->data);
-        if (wlan.is_scan_lock)
-        {
-            wlcm_d("releasing scan lock (connect scan)");
-            (void)os_semaphore_put(&wlan.scan_lock);
-            wlan.is_scan_lock = 0;
-        }
-
-        if (new_network->type == WLAN_BSS_TYPE_STA)
-        {
-            if_handle = net_get_mlan_handle();
-        }
-
-        if_handle = net_get_mlan_handle();
-        net_interface_up(if_handle);
-
-        (void)net_get_if_addr(&new_network->ip, if_handle);
-        wlan.sta_state      = CM_STA_CONNECTED;
-        *next               = CM_STA_CONNECTED;
-        wlan.sta_ipv4_state = CM_STA_CONNECTED;
-
-        if (wlan.reassoc_control && wlan.reassoc_request)
-        {
-            wlan.reassoc_count   = 0;
-            wlan.reassoc_request = false;
-        }
-
-        CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
-        return;
-    }
 #endif
 
     /* Release the connect scan lock if do_connect fails,
