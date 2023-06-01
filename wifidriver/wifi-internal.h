@@ -404,6 +404,7 @@ bool wifi_nxp_wps_session_enable(void);
 #endif
 
 int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *mcs_set, t_u8 *a_mpdu_params, t_u8 band);
+void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band);
 
 #ifdef CONFIG_11AC
 int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);

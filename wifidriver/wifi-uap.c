@@ -20,6 +20,9 @@
 #else
 #include "wifi-sdio.h"
 #endif
+#ifdef CONFIG_WPA_SUPP_AP
+#include "rtos_wpa_supp_if.h"
+#endif
 #include "wifi-internal.h"
 #include "mlan_ieee.h"
 #include <mlan_remap_mem_operations.h>
@@ -1158,23 +1161,84 @@ static int wifi_uap_acs_config_set()
 }
 #endif
 
-int wifi_uap_do_acs()
+int wifi_uap_do_acs(const int *freq_list)
 {
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-    MrvlIEtypes_channel_band_t channel_band_tlv;
+    mlan_private *pmpriv                          = (mlan_private *)mlan_adap->priv[1];
+    MrvlIEtypes_channel_band_t *tlv_chan_band     = MNULL;
+    MrvlIEtypes_ChanListParamSet_t *tlv_chan_list = MNULL;
+    ChanScanParamSet_t *pscan_chan                = MNULL;
+    t_u8 *tlv                                     = MNULL;
+    uint8_t active_chan_list[WIFI_MAX_CHANNEL_NUM];
+    uint8_t active_num_chans = 0;
+    t_u16 scan_chan_num      = 0;
+    t_u16 cmd_size;
+    int i;
 
-    (void)memset(&channel_band_tlv, 0, sizeof(MrvlIEtypes_channel_band_t));
-    channel_band_tlv.header.type = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
-    channel_band_tlv.header.len  = (t_u16)sizeof(MrvlIEtypes_channel_band_t);
-    channel_band_tlv.band_config = BAND_CONFIG_ACS_MODE;
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd           = wifi_get_command_buffer();
+    HostCmd_DS_SYS_CONFIG *sys_config = (HostCmd_DS_SYS_CONFIG *)&cmd->params.sys_config;
 
-    int rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, HostCmd_ACT_GEN_SET, 0, MNULL,
-                                           &channel_band_tlv, MLAN_BSS_TYPE_UAP, NULL);
+    cmd->command       = wlan_cpu_to_le16(HOST_CMD_APCMD_SYS_CONFIGURE);
+    cmd->seq_num       = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd->result        = 0x00;
+    sys_config->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+    cmd_size           = sizeof(HostCmd_DS_SYS_CONFIG) - 1 + S_DS_GEN;
 
-    if (rv != WM_SUCCESS)
+    /* set band config tlv */
+    tlv                        = (t_u8 *)sys_config->tlv_buffer;
+    tlv_chan_band              = (MrvlIEtypes_channel_band_t *)tlv;
+    tlv_chan_band->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_CHAN_BAND_CONFIG);
+    tlv_chan_band->header.len  = wlan_cpu_to_le16(sizeof(t_u8) + sizeof(t_u8));
+    tlv_chan_band->band_config = BAND_CONFIG_ACS_MODE;
+    tlv_chan_band->channel     = 0;
+    cmd_size += sizeof(MrvlIEtypes_channel_band_t);
+    tlv += sizeof(MrvlIEtypes_channel_band_t);
+
+    /* set scan channel list tlv */
+    tlv_chan_list              = (MrvlIEtypes_ChanListParamSet_t *)tlv;
+    tlv_chan_list->header.type = wlan_cpu_to_le16(TLV_TYPE_CHANLIST);
+    pscan_chan                 = tlv_chan_list->chan_scan_param;
+
+    /* fill in scan channel list */
+    if (freq_list && freq_list[0] != 0)
     {
-        return rv;
+        /* use hostapd channel list */
+        for (i = 0; i < WIFI_MAX_CHANNEL_NUM; i++)
+        {
+            if (freq_list[i] == 0)
+                break;
+
+            (void)memset(pscan_chan, 0x00, sizeof(ChanScanParamSet_t));
+            pscan_chan->chan_number = freq_to_chan(freq_list[i]);
+            pscan_chan->radio_type  = freq_list[i] >= 5180 ? BAND_5GHZ : BAND_2GHZ;
+            pscan_chan++;
+        }
+        scan_chan_num = i;
     }
+    else
+    {
+        /* create our own scan channel list on default 2.4G, as error protection */
+        wifi_get_active_channel_list(active_chan_list, &active_num_chans, BAND_2GHZ);
+        if (active_num_chans != 0 && active_num_chans < WIFI_MAX_CHANNEL_NUM)
+        {
+            for (i = 0; i < active_num_chans; i++)
+            {
+                (void)memset(pscan_chan, 0x00, sizeof(ChanScanParamSet_t));
+                pscan_chan->chan_number = active_chan_list[i];
+                pscan_chan->radio_type  = BAND_2GHZ;
+                pscan_chan++;
+            }
+            scan_chan_num = active_num_chans;
+        }
+    }
+
+    tlv_chan_list->header.len = wlan_cpu_to_le16(scan_chan_num * sizeof(ChanScanParamSet_t));
+    cmd_size += sizeof(tlv_chan_list->header) + (scan_chan_num * sizeof(ChanScanParamSet_t));
+    tlv += sizeof(tlv_chan_list->header) + (scan_chan_num * sizeof(ChanScanParamSet_t));
+
+    cmd->size = (t_u16)wlan_cpu_to_le16(cmd_size);
+
+    wifi_wait_for_cmdresp(NULL);
 
     /* Start ACS SCAN */
 #ifdef SD8801
@@ -3640,6 +3704,74 @@ t_u16 wifi_get_default_ht_capab()
     wifi_setup_ht_cap(&ht_capab, &mcs_set[0], &a_mpdu_params, 0);
 
     return ht_capab;
+}
+
+static void wifi_setup_channel_flag(void *channels, int num_chan, region_chan_t *region)
+{
+    int i;
+    int set_idx                             = 0;
+    int get_idx                             = 0;
+    const chan_freq_power_t *pchans_get           = region->pcfp;
+    struct hostapd_channel_data *pchans_set = (struct hostapd_channel_data *)channels;
+
+    for (i = 0; i < MAX(num_chan, region->num_cfp); i++)
+    {
+        if (set_idx >= num_chan)
+            break;
+
+        if (get_idx >= region->num_cfp || pchans_set[set_idx].chan < pchans_get[get_idx].channel)
+        {
+            pchans_set[set_idx].flag |= HOSTAPD_CHAN_DISABLED;
+
+            set_idx++;
+        }
+        else if (pchans_set[set_idx].chan == pchans_get[get_idx].channel)
+        {
+            /* set passive scan or radar detect flag */
+            if (pchans_get[get_idx].passive_scan_or_radar_detect == MTRUE)
+                pchans_set[set_idx].flag |= HOSTAPD_CHAN_RADAR;
+
+            set_idx++;
+            get_idx++;
+        }
+        else
+        {
+            get_idx++;
+        }
+    }
+}
+
+void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band)
+{
+    mlan_adapter *pmadapter = (mlan_adapter *)mlan_adap;
+    region_chan_t *region   = NULL;
+
+    if (band == BAND_2GHZ)
+    {
+        if (pmadapter->region_channel[0].valid)
+            region = &pmadapter->region_channel[0];
+        else if (pmadapter->universal_channel[0].valid)
+            region = &pmadapter->universal_channel[0];
+        else
+            return;
+
+        wifi_setup_channel_flag(channels, num_channels, region);
+    }
+    else if (band == BAND_5GHZ)
+    {
+        if (pmadapter->region_channel[1].valid)
+            region = &pmadapter->region_channel[1];
+        else if (pmadapter->universal_channel[1].valid)
+            region = &pmadapter->universal_channel[1];
+        else
+            return;
+
+        wifi_setup_channel_flag(channels, num_channels, region);
+    }
+    else
+    {
+        wuap_e("wifi_setup_channel_info unsupported band %d", band);
+    }
 }
 
 #ifdef CONFIG_11AC

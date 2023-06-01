@@ -1867,6 +1867,16 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 
 #endif
 #endif
+
+    wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211B].channels, modes[HOSTAPD_MODE_IEEE80211B].num_channels,
+                            BAND_2GHZ);
+    wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211G].channels, modes[HOSTAPD_MODE_IEEE80211G].num_channels,
+                            BAND_2GHZ);
+#ifdef CONFIG_5GHz_SUPPORT    
+    wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211A].channels, modes[HOSTAPD_MODE_IEEE80211A].num_channels,
+                            BAND_5GHZ);
+#endif
+
     status = WM_SUCCESS;
 
 out:
@@ -1883,7 +1893,7 @@ int wifi_nxp_hostapd_do_acs(void *if_priv, struct drv_acs_params *params)
         goto out;
     }
 
-    status = wifi_uap_do_acs();
+    status = wifi_uap_do_acs(params->freq_list);
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi uap do acs failed", __func__);

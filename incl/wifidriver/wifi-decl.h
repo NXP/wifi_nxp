@@ -24,6 +24,8 @@
 /** Version string buffer length */
 #define MLAN_MAX_VER_STR_LEN 128
 
+#define WIFI_MAX_CHANNEL_NUM 42
+
 #define PMK_BIN_LEN 32
 #define PMK_HEX_LEN 64
 

@@ -3068,13 +3068,11 @@ mlan_status wlan_11d_cfg_ioctl(IN mlan_private *pmpriv, IN pmlan_ioctl_req pioct
 mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u16 band, t_u8 *domain_tlv, t_void *pioctl_buf);
 #endif
 
-#ifndef CONFIG_MLAN_WMSDK
 /** This function converts region string to CFP table code */
 mlan_status wlan_misc_country_2_cfp_table_code(IN pmlan_adapter pmadapter,
                                                IN t_u8 *country_code,
                                                OUT t_u8 *cfp_bg,
                                                OUT t_u8 *cfp_a);
-#endif /* CONFIG_MLAN_WMSDK */
 /** check if station list is empty */
 t_u8 wlan_is_station_list_empty(mlan_private *priv);
 /** get station node */
