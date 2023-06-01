@@ -1457,7 +1457,9 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* t_u8 event_buf[100]; */
     /* mlan_event *pevent = (mlan_event *) event_buf; */
     t_u8 cur_mac[MLAN_MAC_ADDR_LENGTH] = {0x0};
-    t_u8 media_connected               = pmpriv->media_connected;
+#ifdef CONFIG_WMM
+    t_u8 media_connected = pmpriv->media_connected;
+#endif
     /* mlan_adapter *pmadapter = pmpriv->adapter; */
 
 #ifdef CONFIG_HOST_MLME

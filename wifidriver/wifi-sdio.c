@@ -1380,7 +1380,7 @@ mlan_status wlan_get_wr_port_data(t_u8 *pport)
 
     ENTER();
 
-    wifi_d("wlan_get_wr_port_data: mp_wr_bitmap=0x%08x", wr_bitmap);
+    wifi_io_d("wlan_get_wr_port_data: mp_wr_bitmap=0x%08x", wr_bitmap);
 
     if ((1U << txportno) & mlan_adap->mp_wr_bitmap)
     {
@@ -1413,7 +1413,7 @@ mlan_status wlan_get_wr_port_data(t_u8 *pport)
     }
 #endif
 
-    wifi_d("port=%d mp_wr_bitmap=0x%08x -> 0x%08x\n", *pport, wr_bitmap, mlan_adap->mp_wr_bitmap);
+    wifi_io_d("port=%d mp_wr_bitmap=0x%08x -> 0x%08x\n", *pport, wr_bitmap, mlan_adap->mp_wr_bitmap);
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;

@@ -1957,12 +1957,14 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
         return ret;
     }
 
+#ifndef RW610
     ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
     if (ret != WM_SUCCESS)
     {
         wifi_e("wifi_core_init failed. status code %d", ret);
         return ret;
     }
+#endif
 
     if (ret == WM_SUCCESS)
     {
@@ -3351,6 +3353,11 @@ typedef enum _wifi_tx_event
 
 static void notify_wifi_driver_tx_event(uint16_t event)
 {
+    if (wm_wifi.wm_wifi_driver_tx == NULL)
+    {
+        return;
+    }
+
     if (__get_IPSR())
     {
         portBASE_TYPE taskToWake = pdFALSE;
