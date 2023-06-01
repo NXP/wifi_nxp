@@ -1610,7 +1610,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
             SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
 
-#ifndef SD8801
+#if !defined(SD8801) && !defined(RW610)
         pext_cap->ext_cap.BSS_CoexistSupport = 0x01; /*2040 CoEx support must be always set*/
 #endif
 
