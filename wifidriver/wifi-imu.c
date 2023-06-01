@@ -281,7 +281,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 /* SDIO  TxPD  PAYLOAD | 4 | 22 | payload | */
 
 /* we return the offset of the payload from the beginning of the buffer */
-void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
+void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     IMUPkt *imuhdr       = (IMUPkt *)pbuf;
@@ -299,14 +299,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
         payloadlen -= ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
     }
     ptxpd->tx_control = 0;
-#ifdef CONFIG_WMM
-    t_u8 tid          = 0;
-    bool is_udp_frame = false;
-    wifi_wmm_get_pkt_prio(((t_u8 *)(data_ptr + ptxpd->tx_pkt_offset + INTF_HEADER_LEN)), &tid, &is_udp_frame);
-    ptxpd->priority = tid;
-#else
-    ptxpd->priority = 0;
-#endif
+    ptxpd->priority      = tid;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
 
@@ -1092,16 +1085,16 @@ uint8_t *wifi_get_amsdu_outbuf(uint32_t offset)
 }
 #endif
 t_u16 get_mp_end_port(void);
-mlan_status wlan_xmit_pkt(t_u32 txlen, t_u8 interface)
+mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 {
     int ret;
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    process_pkt_hdrs((t_u8 *)outbuf, txlen, interface);
+    process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0);
 
     /* send tx data via imu */
-    ret = wifi_send_fw_data(outbuf, txlen);
+    ret = wifi_send_fw_data(buffer, txlen);
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);
@@ -1201,11 +1194,6 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
         return MLAN_STATUS_FAILURE;
     }
     return MLAN_STATUS_SUCCESS;
-}
-
-INLINE t_u8 wifi_wmm_get_packet_cnt(void)
-{
-    return (MAX_WMM_BUF_NUM - mlan_adap->outbuf_pool.free_cnt);
 }
 
 #ifdef AMSDU_IN_AMPDU
@@ -1398,7 +1386,7 @@ hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     {
         case IMU_MSG_CONTROL_TX_BUF_ADDR:
 #ifdef CONFIG_WMM
-            send_wifi_driver_tx_data_event(interface);
+            send_wifi_driver_tx_data_event(0);
 #endif
             break;
         default:
