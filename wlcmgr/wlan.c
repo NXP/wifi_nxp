@@ -1456,7 +1456,8 @@ static int security_profile_matches(const struct wlan_network *network, const st
     /* WPA2 mode: if we are using WPA2, the AP must use WPA2 */
     if (config->type == WLAN_SECURITY_WPA2)
     {
-        return (int)res->WPA_WPA2_WEP.wpa2;
+        return (int)(res->WPA_WPA2_WEP.wpa2 | res->WPA_WPA2_WEP.wpa2_sha256);
+
     }
 
     /* OWE mode: if we are using OWE, the AP must use OWE */
@@ -1582,7 +1583,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         }
     }
 
-    if (!(res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa3_sae || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa) && (network->security.psk_len || network->security.password_len))
+    if (!(res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa3_sae || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2_sha256) && (network->security.psk_len || network->security.password_len))
     {
         wlcm_d("%s: security profile mismatch", network->ssid);
         return -WM_FAIL;
