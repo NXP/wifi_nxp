@@ -748,6 +748,21 @@ typedef MLAN_PACK_START struct _eth_hdr
     t_u16 h_proto;
 } MLAN_PACK_END eth_hdr;
 
+/** Ethernet LLC frame header */
+typedef MLAN_PACK_START struct _eth_llc_hdr
+{
+    /* destination SAP */
+    t_u8 dsap;
+    /* source SAP */
+    t_u8 ssap;
+    /* LLC control field */
+    t_u8 llc;
+    /* protocol id */
+    t_u8 protid[3];
+    /* ether type field */
+    t_u16 type;
+} MLAN_PACK_END eth_llc_hdr;
+
 /** tx param */
 typedef struct _mlan_tx_param
 {

@@ -2950,14 +2950,18 @@ static void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
 }
 #endif
 
-#define RX_PKT_TYPE_OFFSET 5U
-#define ETH_PROTO_EAPOL    0x888EU
+#define RX_PKT_TYPE_OFFSET  5U
+#define ETH_PROTO_EAPOL     0x888EU
+#define WIFI_SIZEOF_ETH_HDR 14U
+static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
 #ifdef CONFIG_WPA_SUPP
     RxPD *prx_pd  = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
     eth_hdr *ethh = MNULL;
+    t_u16 eth_proto;
+    t_u8 offset = 0;
 
     if (*((t_u16 *)buffer + RX_PKT_TYPE_OFFSET) == PKT_TYPE_MGMT_FRAME)
     {
@@ -2966,10 +2970,21 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
     }
 
     ethh = (eth_hdr *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset);
-    if (mlan_ntohs(ethh->h_proto) == ETH_PROTO_EAPOL)
+
+    eth_proto = mlan_ntohs(ethh->h_proto);
+
+    if (memcmp((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR, rfc1042_eth_hdr,
+               sizeof(rfc1042_eth_hdr)) == 0U)
     {
-        wifi_wpa_supplicant_eapol_input(interface, ethh->src_addr, (uint8_t *)(ethh + 1),
-                                        prx_pd->rx_pkt_length - sizeof(eth_hdr));
+        eth_llc_hdr *ethllchdr = (eth_llc_hdr *)(void *)((t_u8 *)prx_pd + prx_pd->rx_pkt_offset + WIFI_SIZEOF_ETH_HDR);
+        eth_proto              = mlan_ntohs(ethllchdr->type);
+        offset                 = sizeof(eth_llc_hdr);
+    }
+
+    if (eth_proto == ETH_PROTO_EAPOL)
+    {
+        wifi_wpa_supplicant_eapol_input(interface, ethh->src_addr, (uint8_t *)(ethh + 1) + offset,
+                                        prx_pd->rx_pkt_length - sizeof(eth_hdr) - offset);
         return WM_SUCCESS;
     }
 #endif

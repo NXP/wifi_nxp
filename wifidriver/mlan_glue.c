@@ -142,11 +142,6 @@ int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
 
 #ifdef CONFIG_11N
-// track whether ampdu is enabled
-static bool ampdu_status_flag = MFALSE;
-#endif
-
-#ifdef CONFIG_11N
 /*
  * The command event received from the firmware (e.g. EVENT_ADDBA) cannot
  * be processed immediately. We need to do it the WLC manager context. For
@@ -1761,10 +1756,6 @@ int wrapper_wifi_assoc(
         priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
     }
 #endif
-#ifdef CONFIG_11N
-    /* Reset ADDBA flag so STA sends request on each new connection */
-    ampdu_status_flag = MFALSE;
-#endif
     BSSDescriptor_t *d = &mlan_adap->pscan_table[idx];
     /* fixme: This code is quite hacky and is present only because
      * security part is yet not fully integrated into mlan. This will
@@ -2317,10 +2308,6 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 
     wifi_remain_on_channel(false, 0, 0);
 
-#ifdef CONFIG_11N
-    /* Reset ADDBA flag so STA sends request on each new connection */
-    ampdu_status_flag = MFALSE;
-#endif
     if (priv->auth_flag && !(priv->auth_flag & HOST_MLME_AUTH_DONE))
     {
         return -WM_FAIL;
@@ -2373,11 +2360,6 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     {
         priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
     }
-#endif
-
-#ifdef CONFIG_11N
-    /* Reset ADDBA flag so STA sends request on each new connection */
-    ampdu_status_flag = MFALSE;
 #endif
 
     /* The original assoc cmd handling function of mlan sends

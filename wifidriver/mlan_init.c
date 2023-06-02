@@ -697,6 +697,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     wlan_11h_init(pmadapter);
 
     wlan_wmm_init(pmadapter);
+    wlan_init_wmm_param(pmadapter);
 #ifndef CONFIG_MLAN_WMSDK
     if (pmadapter->psleep_cfm)
     {
