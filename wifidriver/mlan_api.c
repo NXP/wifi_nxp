@@ -4071,33 +4071,77 @@ int wifi_mbo_preferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
-    IEEEtypes_VendorSpecific_t mboie;
-    int ret = (int)MLAN_STATUS_SUCCESS;
-    t_u8 *pos;
-    int meas_vend_hdr_len = 0;
+    int ret              = MLAN_STATUS_SUCCESS;
+    t_u8 *buf, *pos, *pos_len1, *pos_len2;
+    t_u8 global_oper_class_0 = 0, global_oper_class_1 = 0, num = 0, i;
 
-    if (0U == pmpriv->enable_mbo)
+    if (0 == pmpriv->enable_mbo)
     {
         wifi_e("Please enable MBO first!\r\n");
-        return (int)MLAN_STATUS_FAILURE;
+        return MLAN_STATUS_FAILURE;
     }
 
-    if (pmpriv->enable_mbo != 0U)
+    if (pmpriv->enable_mbo)
     {
-        mboie.vend_hdr.element_id = (IEEEtypes_ElementId_e)MGMT_MBO_IE;
-        pos                       = mboie.vend_hdr.oui;
-        pos                       = wlan_add_mbo_oui(pos);
-        pos                       = wlan_add_mbo_oui_type(pos);
-        pos                       = wlan_add_mbo_cellular_cap(pos);
-        pos                       = wlan_add_mbo_prefer_ch(pos, ch0, pefer0, ch1, pefer1);
-        meas_vend_hdr_len         = pos - mboie.vend_hdr.oui;
-        mboie.vend_hdr.len        = (t_u8)meas_vend_hdr_len;
-        /*Wi-Fi CERTIFIED Agile Multiband. Test Plan v1.4 section 2.5.1 Test bed AP requirements. For 2.4/5 GHz:?E
-         * MFPC (bit 7) set to 1?E MFPR (bit 6) set to 0*/
-        wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, (t_u8 *)&mboie,
-                                        mboie.vend_hdr.len + (t_u8)2U, false);
+        wlan_get_curr_oper_class(pmpriv, ch0, BW_20MHZ, MNULL, &global_oper_class_0);
+        wlan_get_curr_oper_class(pmpriv, ch1, BW_20MHZ, MNULL, &global_oper_class_1);
+        if (global_oper_class_0 != global_oper_class_1 || pefer0 != pefer1)
+            num = 2;
+        else
+            num = 1;
+
+        buf = os_mem_alloc(sizeof(IEEEtypes_VendorSpecific_t));
+        pos = buf;
+        for (i = 0; i < num; i++)
+        {
+            *pos = MGMT_MBO_IE;
+            pos++;
+            if (i == 0)
+                pos_len1 = pos;
+            else
+                pos_len2 = pos;
+            pos++;
+            pos = wlan_add_mbo_oui(pos);
+            pos = wlan_add_mbo_attr_id(pos);
+            if (num == 1)
+            {
+                pos[0] = global_oper_class_0;
+                pos[1] = ch0;
+                pos[2] = ch1;
+                pos[3] = pefer0;
+                pos += 4;
+            }
+            else
+            {
+                if (i == 0)
+                {
+                    pos[0] = global_oper_class_0;
+                    pos[1] = ch0;
+                    pos[2] = pefer0;
+                }
+                else
+                {
+                    pos[0] = global_oper_class_1;
+                    pos[1] = ch1;
+                    pos[2] = pefer1;
+                }
+                pos += 3;
+            }
+
+            /* Reason code */
+            *pos = 0;
+            pos++;
+
+            if (i == 0)
+                *pos_len1 = pos - (pos_len1 + 1);
+            else
+                *pos_len2 = pos - (pos_len2 + 1);
+        }
+
+        wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, buf, pos - buf, false);
     }
 
+    os_mem_free(buf);
     return ret;
 }
 #endif
