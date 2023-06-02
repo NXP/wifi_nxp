@@ -1113,6 +1113,7 @@ int wifi_uap_stop()
                                          MLAN_BSS_TYPE_UAP, NULL);
 }
 
+#ifdef CONFIG_WPA_SUPP_AP
 #ifdef SD8801
 static int wifi_uap_acs_config_set()
 {
@@ -1163,7 +1164,9 @@ static int wifi_uap_acs_config_set()
 
 int wifi_uap_do_acs(const int *freq_list)
 {
+#ifndef SD8801
     mlan_private *pmpriv                          = (mlan_private *)mlan_adap->priv[1];
+#endif
     MrvlIEtypes_channel_band_t *tlv_chan_band     = MNULL;
     MrvlIEtypes_ChanListParamSet_t *tlv_chan_list = MNULL;
     ChanScanParamSet_t *pscan_chan                = MNULL;
@@ -1248,6 +1251,7 @@ int wifi_uap_do_acs(const int *freq_list)
                                          MLAN_BSS_TYPE_UAP, NULL);
 #endif
 }
+#endif
 
 #ifdef CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM
 /*

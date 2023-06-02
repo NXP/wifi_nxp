@@ -146,7 +146,8 @@ int wps_session_attempt;
     }
 
 static bool ieee_ps_sleep_cb_sent;
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 static bool wnm_ps_sleep_cb_sent;
 #endif
 
@@ -929,6 +930,11 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
 {
     int ret = 0;
+
+#ifndef CONFIG_MEF_CFG
+    (void)is_mef;
+#endif
+
 #ifdef CONFIG_WMM_UAPSD
     if (mlan_adap && mlan_adap->pps_uapsd_mode)
     {
@@ -943,6 +949,7 @@ void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
         (void)PRINTF("Host sleep is not allowed in this situation\r\n");
         return;
     }
+#ifdef CONFIG_MEF_CFG
     if (is_mef)
     {
         wlan.wakeup_conditions = 0;
@@ -964,6 +971,7 @@ void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
             wifi_set_packet_filters(&g_flt_cfg);
         }
     }
+#endif
     if (!wlan_is_manual)
     {
 #ifdef CONFIG_POWER_MANAGER
