@@ -147,7 +147,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     // fixme: this function will need during migration of legacy code.
     t_u8 chan_2g_size = 14;
 #ifdef CONFIG_5GHz_SUPPORT
-#ifdef UNII_4_SUPPORT
+#ifdef CONFIG_UNII4_BAND_SUPPORT
     t_u8 chan_5g_size = 34;
 #else
     t_u8 chan_5g_size    = 31;

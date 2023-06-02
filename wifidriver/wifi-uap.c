@@ -753,12 +753,14 @@ static int wifi_cmd_uap_config(char *ssid,
 #endif
     {
         bss.param.bss_config.wmm_para.ouisubtype = 0x01;
-        bss.param.bss_config.wmm_para.version = 0x01;
+        bss.param.bss_config.wmm_para.version    = 0x01;
 
-        memcpy(&bss.param.bss_config.wmm_para.ac_params, &mlan_adap->ac_params, sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);
+        memcpy(&bss.param.bss_config.wmm_para.ac_params, &mlan_adap->ac_params,
+               sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);
         for (i = 0; i < MAX_AC_QUEUES; i++)
         {
-            bss.param.bss_config.wmm_para.ac_params[i].tx_op_limit = wlan_cpu_to_le16(mlan_adap->ac_params[i].tx_op_limit);
+            bss.param.bss_config.wmm_para.ac_params[i].tx_op_limit =
+                wlan_cpu_to_le16(mlan_adap->ac_params[i].tx_op_limit);
         }
     }
 
@@ -1165,7 +1167,7 @@ static int wifi_uap_acs_config_set()
 int wifi_uap_do_acs(const int *freq_list)
 {
 #ifndef SD8801
-    mlan_private *pmpriv                          = (mlan_private *)mlan_adap->priv[1];
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 #endif
     MrvlIEtypes_channel_band_t *tlv_chan_band     = MNULL;
     MrvlIEtypes_ChanListParamSet_t *tlv_chan_list = MNULL;
@@ -2918,7 +2920,7 @@ t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
 {
     t_u8 chan2Offset = SEC_CHAN_NONE;
 
-#ifdef UNII_4_SUPPORT
+#ifdef CONFIG_UNII4_BAND_SUPPORT
     mlan_adapter *pmadapter = priv->adapter;
     if (pmadapter->region_code != COUNTRY_CODE_US && chan == 165)
 #else
@@ -2942,7 +2944,7 @@ t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
 #endif
         case 149:
         case 157:
-#ifdef UNII_4_SUPPORT
+#ifdef CONFIG_UNII4_BAND_SUPPORT
         case 165:
         case 173:
 #endif
@@ -2962,7 +2964,7 @@ t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
 #endif
         case 153:
         case 161:
-#ifdef UNII_4_SUPPORT
+#ifdef CONFIG_UNII4_BAND_SUPPORT
         case 169:
         case 177:
 #endif
@@ -3715,7 +3717,7 @@ static void wifi_setup_channel_flag(void *channels, int num_chan, region_chan_t 
     int i;
     int set_idx                             = 0;
     int get_idx                             = 0;
-    const chan_freq_power_t *pchans_get           = region->pcfp;
+    const chan_freq_power_t *pchans_get     = region->pcfp;
     struct hostapd_channel_data *pchans_set = (struct hostapd_channel_data *)channels;
 
     for (i = 0; i < MAX(num_chan, region->num_cfp); i++)

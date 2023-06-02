@@ -105,6 +105,9 @@ Change log:
 /** This is current limit on Maximum Rx AMPDU allowed */
 #define MLAN_MAX_RX_BASTREAM_SUPPORTED 16
 
+/** US country code */
+#define COUNTRY_CODE_US 0x10
+
 #ifdef STA_SUPPORT
 #ifdef SD8801
 /** Default Win size attached during ADDBA request */
