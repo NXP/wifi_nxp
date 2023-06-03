@@ -650,7 +650,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         config_bands = pmpriv->config_bands;
         if (pstart_chan->chan_number > MAX_CHANNELS_BG)
         {
-            config_bands &= ~(BAND_B
+            config_bands &= ~(BAND_B | BAND_G | BAND_GN
 #ifdef CONFIG_11AC
                               | BAND_GAC
 #endif
@@ -732,6 +732,12 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
                interation */
             if (!filtered_scan && (ptmp_chan_list->chan_number == 1U || ptmp_chan_list->chan_number == 6U ||
                                    ptmp_chan_list->chan_number == 11U))
+            {
+                done_early = MTRUE;
+            }
+
+            /* Stop the loop if the *next* channel is 36. Get supported rates for 2G/5G channels seperately */
+            if (ptmp_chan_list->chan_number == 36)
             {
                 done_early = MTRUE;
             }
