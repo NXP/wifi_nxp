@@ -2947,12 +2947,12 @@ static void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
             eapol_rx->frame.frame_len);
     }
 }
-#endif
 
 #define RX_PKT_TYPE_OFFSET  5U
 #define ETH_PROTO_EAPOL     0x888EU
 #define WIFI_SIZEOF_ETH_HDR 14U
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
+#endif
 
 static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
