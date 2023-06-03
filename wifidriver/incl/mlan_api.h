@@ -115,6 +115,8 @@
 
 #define SDIO_DMA_ALIGNMENT 4
 
+#define MAX_WAIT_WAKEUP_TIME 3000
+
 /*
  * Bit 0 : Assoc Req
  * Bit 1 : Assoc Resp

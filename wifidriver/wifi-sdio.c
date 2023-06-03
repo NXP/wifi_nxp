@@ -1695,6 +1695,7 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
     t_u32 tx_blocks = 0, buflen = 0;
     uint32_t resp;
     bool ret;
+    int ret2;
 #ifdef CONFIG_WIFI_FW_DEBUG
     int ret_cb;
 #endif
@@ -1727,10 +1728,27 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
         mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
     }
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    ret2 = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
+#else
+    ret2 = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret2 != WM_SUCCESS)
+    {
+        wifi_io_e("Failed to wakeup card");
+        assert(0);
+    }
+
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0);
 
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
 
     txportno++;
     if (txportno == mlan_adap->mp_end_port)

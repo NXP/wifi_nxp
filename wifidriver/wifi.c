@@ -70,7 +70,6 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #define MAX_WAIT_TIME 20
 #else
 #define MAX_WAIT_TIME        35
-#define MAX_WAIT_WAKEUP_TIME 3000
 #endif
 
 #ifndef USB_SUPPORT_ENABLE
@@ -3884,27 +3883,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 
 int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
 {
-    int ret;
-
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
-#else
-    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
-#endif
-    if (ret != WM_SUCCESS)
-    {
-        wifi_e("Failed to wakeup card\r\n");
-        assert(0);
-    }
-
-    ret = raw_low_level_output((t_u8)bss_type, buff, len);
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    os_rwlock_read_unlock(&sleep_rwlock);
-#else
-    os_rwlock_read_unlock(&ps_rwlock);
-#endif
-
-    return ret;
+    return raw_low_level_output((t_u8)bss_type, buff, len);
 }
 
 #ifdef CONFIG_WPA_SUPP
