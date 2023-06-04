@@ -1275,100 +1275,6 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     return ret;
 }
 
-#if !defined(CONFIG_EXT_SCAN_SUPPORT) || defined(CONFIG_BG_SCAN)
-/**
- *  @brief Inspect the scan response buffer for pointers to expected TLVs
- *
- *  TLVs can be included at the end of the scan response BSS information.
- *    Parse the data in the buffer for pointers to TLVs that can potentially
- *    be passed back in the response
- *
- *  @param pmadapter        Pointer to the mlan_adapter structure
- *  @param ptlv             Pointer to the start of the TLV buffer to parse
- *  @param tlv_buf_size     Size of the TLV buffer
- *  @param req_tlv_type     Request TLV's type
- *  @param pptlv            Output parameter: Pointer to the request TLV if found
- *
- *  @return                 N/A
- */
-static t_void wlan_ret_802_11_scan_get_tlv_ptrs(IN pmlan_adapter pmadapter,
-                                                IN MrvlIEtypes_Data_t *ptlv,
-                                                IN t_u32 tlv_buf_size,
-                                                IN t_u32 req_tlv_type,
-                                                OUT MrvlIEtypes_Data_t **pptlv)
-{
-    MrvlIEtypes_Data_t *pcurrent_tlv;
-    t_u32 tlv_buf_left;
-    t_u32 tlv_type;
-    t_u32 tlv_len;
-    bool invalid_tlv = MFALSE;
-
-    ENTER();
-
-    pcurrent_tlv = ptlv;
-    tlv_buf_left = tlv_buf_size;
-    *pptlv       = MNULL;
-
-    PRINTM(MINFO, "SCAN_RESP: tlv_buf_size = %d\n", tlv_buf_size);
-
-    while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))
-    {
-        tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
-        tlv_len  = wlan_le16_to_cpu(pcurrent_tlv->header.len);
-
-        if (sizeof(ptlv->header) + tlv_len > tlv_buf_left)
-        {
-            PRINTM(MERROR, "SCAN_RESP: TLV buffer corrupt\n");
-            break;
-        }
-
-        if (req_tlv_type == tlv_type)
-        {
-            switch (tlv_type)
-            {
-                case TLV_TYPE_TSFTIMESTAMP:
-                    PRINTM(MINFO, "SCAN_RESP: TSF Timestamp TLV, len = %d\n", tlv_len);
-                    *pptlv = (MrvlIEtypes_Data_t *)pcurrent_tlv;
-                    break;
-                case TLV_TYPE_CHANNELBANDLIST:
-                    PRINTM(MINFO, "SCAN_RESP: CHANNEL BAND LIST TLV, len = %d\n", tlv_len);
-                    *pptlv = (MrvlIEtypes_Data_t *)pcurrent_tlv;
-                    break;
-#ifdef SCAN_CHANNEL_GAP
-                case TLV_TYPE_CHANNEL_STATS:
-                    PRINTM(MINFO, "SCAN_RESP: CHANNEL STATS TLV, len = %d\n", tlv_len);
-                    *pptlv = (MrvlIEtypes_Data_t *)pcurrent_tlv;
-                    break;
-#endif
-
-                default:
-                    PRINTM(MERROR, "SCAN_RESP: Unhandled TLV = %d\n", tlv_type);
-                    /* Give up, this seems corrupted */
-                    invalid_tlv = MTRUE;
-                    break;
-            }
-            if (invalid_tlv == MTRUE)
-            {
-                LEAVE();
-                return;
-            }
-        }
-
-        if (*pptlv != NULL)
-        {
-            // HEXDUMP("SCAN_RESP: TLV Buf", (t_u8 *)*pptlv+4, tlv_len);
-            break;
-        }
-
-        tlv_buf_left -= (sizeof(ptlv->header) + tlv_len);
-        pcurrent_tlv = (MrvlIEtypes_Data_t *)(void *)(pcurrent_tlv->data + tlv_len);
-
-    } /* while */
-
-    LEAVE();
-}
-#endif
-
 #ifdef CONFIG_WPA_SUPP_WPS
 
 void check_for_wps_ie(
@@ -3624,6 +3530,10 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     MrvlIEtypes_ChannelStats_t *pchanstats_tlv = MNULL;
 #endif
     t_u8 null_ssid[MLAN_MAX_SSID_LENGTH] = {0};
+    MrvlIEtypes_Data_t *pcurrent_tlv;
+    t_u32 tlv_buf_left;
+    t_u16 tlv_type;
+    t_u16 tlv_len;
 
     ENTER();
     pcb = (pmlan_callbacks)&pmadapter->callbacks;
@@ -3656,6 +3566,12 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     bytes_left = wlan_le16_to_cpu(pscan_rsp->bss_descript_size);
     PRINTM(MINFO, "SCAN_RESP: bss_descript_size %d\n", bytes_left);
 
+    if ((pscan_rsp->number_of_sets == 0U) && (bytes_left == 0U))
+    {
+        wscan_d("SCAN_RESP: number of sets are zero");
+        goto done;
+    }
+
     scan_resp_size = resp->size;
 
     PRINTM(MINFO, "SCAN_RESP: returned %d APs before parsing\n", pscan_rsp->number_of_sets);
@@ -3680,20 +3596,53 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 #endif
     ptlv = (MrvlIEtypes_Data_t *)(void *)(pscan_rsp->bss_desc_and_tlv_buffer + bytes_left);
 
-    /* Search the TLV buffer space in the scan response for any valid TLVs */
-    wlan_ret_802_11_scan_get_tlv_ptrs(pmadapter, ptlv, tlv_buf_size, TLV_TYPE_TSFTIMESTAMP,
-                                      (MrvlIEtypes_Data_t **)(void **)&ptsf_tlv);
+    pcurrent_tlv = ptlv;
+    tlv_buf_left = tlv_buf_size;
 
-    /* Search the TLV buffer space in the scan response for any valid TLVs */
-    wlan_ret_802_11_scan_get_tlv_ptrs(pmadapter, ptlv, tlv_buf_size, TLV_TYPE_CHANNELBANDLIST,
-                                      (MrvlIEtypes_Data_t **)(void **)&pchan_band_tlv);
+    wscan_d("SCAN_RESP: tlv_buf_size = %d", tlv_buf_size);
+
+    while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))
+    {
+        tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
+        tlv_len  = wlan_le16_to_cpu(pcurrent_tlv->header.len);
+
+        if (sizeof(ptlv->header) + tlv_len > tlv_buf_left)
+        {
+            wscan_d("SCAN_RESP: TLV buffer corrupt");
+            break;
+        }
+
+        switch (tlv_type)
+        {
+            case TLV_TYPE_TSFTIMESTAMP:
+                wscan_d("SCAN_RESP: TSF Timestamp TLV, len = %d", tlv_len);
+                ptsf_tlv = (MrvlIEtypes_TsfTimestamp_t *)pcurrent_tlv;
+                break;
+            case TLV_TYPE_CHANNELBANDLIST:
+                wscan_d("SCAN_RESP: CHANNEL BAND LIST TLV, len = %d", tlv_len);
+                pchan_band_tlv = (MrvlIEtypes_ChanBandListParamSet_t *)pcurrent_tlv;
+                break;
+#ifdef SCAN_CHANNEL_GAP
+            case TLV_TYPE_CHANNEL_STATS:
+                wscan_d("SCAN_RESP: CHANNEL STATS TLV, len = %d", tlv_len);
+                pchanstats_tlv = (MrvlIEtypes_ChannelStats_t *)pcurrent_tlv;
+                break;
+#endif
+            default:
+                wscan_d("SCAN_RESP: Unhandled TLV = %d", tlv_type);
+                break;
+        }
+
+        tlv_buf_left -= (sizeof(ptlv->header) + tlv_len);
+        pcurrent_tlv = (MrvlIEtypes_Data_t *)(void *)(pcurrent_tlv->data + tlv_len);
+
+    } /* while */
 
 #ifdef SCAN_CHANNEL_GAP
-    wlan_ret_802_11_scan_get_tlv_ptrs(pmadapter, ptlv, tlv_buf_size, TLV_TYPE_CHANNEL_STATS,
-                                      (MrvlIEtypes_Data_t **)&pchanstats_tlv);
-
-    if (pchanstats_tlv)
+    if (pchanstats_tlv != MNULL)
+    {
         wlan_update_chan_statistics(pmpriv, pchanstats_tlv);
+    }
 #endif
 
     /*
@@ -4658,6 +4607,12 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     bytes_left = scan_resp_size;
     PRINTM(MINFO, "EXT_SCAN: bss_descript_size %d\n", scan_resp_size);
     PRINTM(MINFO, "EXT_SCAN: returned %d APs before parsing\n", number_of_sets);
+
+    if ((number_of_sets == 0U) && (bytes_left == 0U))
+    {
+        wscan_d("SCAN_RESP: number of sets are zero");
+        goto done;
+    }
 
     num_in_table = pmadapter->num_in_scan_table;
     ptlv         = (MrvlIEtypes_Data_t *)pscan_resp;

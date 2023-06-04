@@ -2478,7 +2478,7 @@ static int start_association(struct wlan_network *network, struct wifi_scan_resu
 
     ret = wrapper_wifi_assoc(res->bssid, (int)network->security.type, (bool)network->security.ucstCipher.tkip,
                              owe_trans_mode, is_ft);
-    if (ret != 0)
+    if (ret != WM_SUCCESS)
     {
         wlcm_d("association failed");
 #ifdef CONFIG_WLAN_FAST_PATH

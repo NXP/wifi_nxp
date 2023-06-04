@@ -1711,7 +1711,6 @@ bool wrapper_wlan_11d_support_is_enabled(void)
 int wrapper_wifi_assoc(
     const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode, bool is_ft)
 {
-    int ret = 0;
 #ifndef CONFIG_11R
     (void)is_ft;
 #endif
@@ -1723,8 +1722,7 @@ int wrapper_wifi_assoc(
     if (idx == -1)
     {
         wifi_w("Could not find BSSID in mlan scan list");
-        ret = (int)WLAN_BSSID_NOT_FOUND_IN_SCAN_LIST;
-        return -ret;
+        return -WM_FAIL;
     }
 
     /* Reset all state variables */
@@ -1869,12 +1867,12 @@ int wrapper_wifi_assoc(
             if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, d->bss_band) != MLAN_STATUS_SUCCESS)
             {
                 PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
-                return (int)MLAN_STATUS_FAILURE;
+                return -WM_FAIL;
             }
 
             if (priv->support_11d->wlan_11d_parse_dnld_countryinfo_p(priv, d) != MLAN_STATUS_SUCCESS)
             {
-                return (int)MLAN_STATUS_FAILURE;
+                return -WM_FAIL;
             }
         }
     }
@@ -2097,7 +2095,7 @@ static int wifi_set_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
     t_u8 *pcurrent_ptr = ie;
     int total_ie_len;
     t_u8 element_len;
-    int ret = MLAN_STATUS_SUCCESS;
+    int ret = WM_SUCCESS;
     IEEEtypes_ElementId_e element_id;
 #ifdef CONFIG_WPA_SUPP_WPS
     IEEEtypes_VendorSpecific_t *pvendor_ie;
@@ -2294,7 +2292,7 @@ int wifi_set_scan_ies(void *ie, size_t ie_len)
 
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 {
-    int ret                    = 0;
+    int ret                    = -WM_FAIL;
     const unsigned char *bssid = (const unsigned char *)&assoc_info->bssid;
 
     mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
@@ -2303,8 +2301,6 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     {
         priv->auth_flag = HOST_MLME_AUTH_DONE;
     }
-
-    (void)wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_STA, WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC | WIFI_MGMT_ACTION);
 
     wifi_remain_on_channel(false, 0, 0);
 
@@ -2317,8 +2313,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     if (idx == -1)
     {
         wifi_w("Could not find BSSID in mlan scan list");
-        ret = (int)WLAN_BSSID_NOT_FOUND_IN_SCAN_LIST;
-        return -ret;
+        return ret;
     }
 
     BSSDescriptor_t *d = &mlan_adap->pscan_table[idx];
@@ -2350,11 +2345,14 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 
     ret = wifi_set_ies_cfg(priv, (t_u8 *)assoc_info->wpa_ie.ie, assoc_info->wpa_ie.ie_len);
 
-    if (ret != MLAN_STATUS_SUCCESS)
+    if (ret != WM_SUCCESS)
     {
         wifi_w("Could not set the IEs");
-        return (int)MLAN_STATUS_FAILURE;
+        return -WM_FAIL;
     }
+
+    (void)wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_STA, WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC | WIFI_MGMT_ACTION);
+
 #ifdef CONFIG_11R
     if (priv->sec_info.is_ft)
     {
@@ -2376,12 +2374,12 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
             if (priv->support_11d->wlan_11d_create_dnld_countryinfo_p(priv, d->bss_band) != MLAN_STATUS_SUCCESS)
             {
                 PRINTM(MERROR, "Dnld_countryinfo_11d failed\n");
-                return (int)MLAN_STATUS_FAILURE;
+                return -WM_FAIL;
             }
 
             if (priv->support_11d->wlan_11d_parse_dnld_countryinfo_p(priv, d) != MLAN_STATUS_SUCCESS)
             {
-                return (int)MLAN_STATUS_FAILURE;
+                return -WM_FAIL;
             }
         }
     }
