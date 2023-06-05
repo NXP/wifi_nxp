@@ -298,7 +298,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
         ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
         payloadlen -= ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
     }
-    ptxpd->tx_control = 0;
+    ptxpd->tx_control    = 0;
     ptxpd->priority      = tid;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
@@ -956,7 +956,7 @@ static void wlan_fw_init_cfg()
             os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
         }
     }
-    
+
 #ifdef CONFIG_WIFI_TX_BUFF
     // TODO:Reconfig tx buffer size to 4K
     wcmdr_d("CMD : RECONFIGURE_TX_BUFF (0xd9)");
@@ -1092,9 +1092,23 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0);
-
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Failed to wakeup card\r\n");
+        assert(0);
+    }
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);
