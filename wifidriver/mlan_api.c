@@ -4083,8 +4083,8 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
 
     if (pmpriv->enable_mbo)
     {
-        wlan_get_curr_oper_class(pmpriv, ch0, BW_20MHZ, MNULL, &global_oper_class_0);
-        wlan_get_curr_oper_class(pmpriv, ch1, BW_20MHZ, MNULL, &global_oper_class_1);
+        wlan_get_curr_oper_class(pmpriv, ch0, BW_20MHZ, &global_oper_class_0);
+        wlan_get_curr_oper_class(pmpriv, ch1, BW_20MHZ, &global_oper_class_1);
         if (global_oper_class_0 != global_oper_class_1 || pefer0 != pefer1)
             num = 2;
         else
