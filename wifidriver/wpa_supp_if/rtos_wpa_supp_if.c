@@ -123,6 +123,47 @@ void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv)
     }
 }
 
+void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Missing interface context", __func__);
+        return;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    if (!alpha2)
+    {
+        supp_e("%s: Missing alpha2 data", __func__);
+        return;
+    }
+
+    event.channel_list_changed.initiator = REGDOM_SET_BY_USER;
+    event.channel_list_changed.type      = REGDOM_TYPE_COUNTRY;
+    event.channel_list_changed.alpha2[0] = alpha2[0];
+    event.channel_list_changed.alpha2[1] = alpha2[1];
+    event.channel_list_changed.alpha2[2] = alpha2[2];
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.chan_list_changed(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.chan_list_changed(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
@@ -361,8 +402,8 @@ void wifi_nxp_wpa_supp_event_proc_assoc_resp(void *if_priv,
             event.assoc_reject.resp_ies_len = (frame_len - 24 - sizeof(mgmt->u.assoc_resp));
         }
 
-        event.assoc_reject.status_code = status;
-        event.assoc_reject.reason_code = reason_code;
+        event.assoc_reject.status_code    = status;
+        event.assoc_reject.reason_code    = reason_code;
         event.assoc_reject.timeout_reason = NULL;
     }
     else
@@ -1872,7 +1913,7 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
                             BAND_2GHZ);
     wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211G].channels, modes[HOSTAPD_MODE_IEEE80211G].num_channels,
                             BAND_2GHZ);
-#ifdef CONFIG_5GHz_SUPPORT    
+#ifdef CONFIG_5GHz_SUPPORT
     wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211A].channels, modes[HOSTAPD_MODE_IEEE80211A].num_channels,
                             BAND_5GHZ);
 #endif

@@ -8293,9 +8293,9 @@ static void dump_wlan_country_code(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Set country code:\r\n");
-    (void)PRINTF("    wlan-set-country <country_code_str 2 bytes>\r\n");
-    (void)PRINTF("Write the regiset:\r\n");
-    (void)PRINTF("    wlan-reg-access <type> <offset> <value>\r\n");
+    (void)PRINTF("    wlan-set-country <country_code_str 3 bytes>\r\n");
+    (void)PRINTF("First two octets are used as the\r\n");
+    (void)PRINTF("first two octets of the Country String\r\n");
     (void)PRINTF("For example:\r\n");
     (void)PRINTF("    wlan-set-country US\r\n");
     (void)PRINTF("    wlan-set-country EU\r\n");
@@ -8310,6 +8310,18 @@ static void dump_wlan_country_code(void)
     (void)PRINTF("    FR  (France)\r\n");
     (void)PRINTF("    JP  (Japan)\r\n");
     (void)PRINTF("    CN  (China)\r\n");
+    (void)PRINTF("The third octet of the Country String as below\r\n");
+    (void)PRINTF("All environments of the current frequency band and country (default)\r\n");
+    (void)PRINTF("country3=0x20\r\n");
+    (void)PRINTF("Outdoor environment only\r\n");
+    (void)PRINTF("country3=0x4f\r\n");
+    (void)PRINTF("Indoor environment only\r\n");
+    (void)PRINTF("country3=0x49\r\n");
+    (void)PRINTF("Noncountry entity (country_code=XX)\r\n");
+    (void)PRINTF("country3=0x58\r\n");
+    (void)PRINTF("IEEE 802.11 standard Annex E table indication: 0x01 .. 0x1f\r\n");
+    (void)PRINTF("Annex E, Table E-4 (Global operating classes)\r\n");
+    (void)PRINTF("country3=0x04\r\n");
 }
 
 static void test_wlan_set_country_code(int argc, char **argv)
@@ -8328,7 +8340,14 @@ static void test_wlan_set_country_code(int argc, char **argv)
     country_code[1] = argv[1][1];
 
     ret = wlan_set_country_code(country_code);
-    (void)PRINTF("Set country code %s ret %d\r\n", country_code, ret);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Set country code %s is failed\r\n", country_code);
+    }
+    else
+    {
+        (void)PRINTF("Set country code %s is successful\r\n", country_code);
+    }
 }
 #endif
 

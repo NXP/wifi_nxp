@@ -93,6 +93,8 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv);
 
 void wifi_nxp_wpa_supp_event_proc_mac_changed(void *if_priv);
 
+void wifi_nxp_wpa_supp_event_proc_chan_list_changed(void *if_priv, const char *alpha2);
+
 void wifi_nxp_wpa_supp_event_proc_scan_start(void *if_priv);
 
 void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv);
@@ -130,7 +132,9 @@ void wifi_nxp_wpa_supp_event_proc_unprot_mgmt(void *if_priv,
                                               unsigned int event_len);
 void wifi_nxp_wpa_supp_event_proc_remain_on_channel(void *if_priv, int cancel_channel);
 void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *mgmt_rx, unsigned int event_len);
-void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_eapol_mlme_t *eapol_rx, unsigned int event_len);
+void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv,
+                                           nxp_wifi_event_eapol_mlme_t *eapol_rx,
+                                           unsigned int event_len);
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
 
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,

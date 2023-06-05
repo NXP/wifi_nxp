@@ -69,7 +69,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #ifdef CONFIG_WiFi_878x
 #define MAX_WAIT_TIME 20
 #else
-#define MAX_WAIT_TIME        35
+#define MAX_WAIT_TIME 35
 #endif
 
 #ifndef USB_SUPPORT_ENABLE
@@ -4133,6 +4133,11 @@ int wifi_set_country_code(const char *alpha2)
         return -WM_FAIL;
     }
     (void)memcpy(pmadapter->country_code, country_code, COUNTRY_CODE_LEN);
+
+    if (wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn)
+    {
+        wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv, alpha2);
+    }
 
     return WM_SUCCESS;
 }

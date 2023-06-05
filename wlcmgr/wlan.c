@@ -12165,21 +12165,29 @@ int wlan_set_ips(int option)
 
 int wlan_set_country_code(const char *alpha2)
 {
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_WPA_SUPP_AP
-    int ret;
     unsigned char country3 = 0x20;
-    struct netif *netif = net_get_uap_interface();
+    char country_code[COUNTRY_CODE_LEN] = {0};
 
     if ((alpha2[2] == 0x4f) || (alpha2[2] == 0x49) || (alpha2[2] == 0x58) || (alpha2[2] == 0x04))
     {
         country3 = alpha2[2];
     }
 
+    country_code[0] = alpha2[0];
+    country_code[1] = alpha2[1];
+    country_code[2] = country3;
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_AP
+    int ret;
+    struct netif *netif = net_get_uap_interface();
+
     ret = wpa_supp_set_ap_country(netif, alpha2, country3);
-    if (ret != 0)
+    if (ret != WM_SUCCESS)
+    {
         return -WM_FAIL;
+    }
 #endif
 #endif
-    return wifi_set_country_code(alpha2);
+    return wifi_set_country_code(country_code);
 }

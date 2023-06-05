@@ -115,6 +115,7 @@ static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)
 
 static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mac_changed_callbk_fn         = wifi_nxp_wpa_supp_event_proc_mac_changed,
+    .chan_list_changed_callbk_fn   = wifi_nxp_wpa_supp_event_proc_chan_list_changed,
     .scan_start_callbk_fn          = wifi_nxp_event_proc_scan_start,
     .scan_done_callbk_fn           = wifi_nxp_event_proc_scan_done,
     .scan_abort_callbk_fn          = wifi_nxp_event_proc_scan_abort,
