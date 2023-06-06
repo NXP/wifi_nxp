@@ -606,7 +606,7 @@ static int wifi_cmd_uap_config(char *ssid,
             bss.param.bss_config.protocol = PROTOCOL_WPA2 | PROTOCOL_WPA3_SAE;
             if (mfpc && mfpr)
             {
-                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK_SHA256 | KEY_MGMT_SAE;
+                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK | KEY_MGMT_PSK_SHA256 | KEY_MGMT_SAE;
             }
             else if (mfpc)
             {
