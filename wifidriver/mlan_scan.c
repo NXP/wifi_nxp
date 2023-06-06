@@ -668,7 +668,12 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         prates_tlv              = (MrvlIEtypes_RatesParamSet_t *)ptlv_pos;
         prates_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RATES);
         prates_tlv->header.len  = wlan_cpu_to_le16((t_u16)rates_size);
-        (void)__memcpy(pmadapter, prates_tlv->rates, rates, rates_size);
+
+        if (rates_size != 0U && rates_size <= sizeof(prates_tlv->rates))
+        {
+            (void)__memcpy(pmadapter, prates_tlv->rates, rates, rates_size);
+        }
+
         ptlv_pos += sizeof(prates_tlv->header) + rates_size;
 
         PRINTM(MINFO, "SCAN_CMD: Rates size = %d\n", rates_size);
@@ -5272,8 +5277,13 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
         pwildcard_ssid_tlv->header.type     = wlan_cpu_to_le16(TLV_TYPE_WILDCARDSSID);
         pwildcard_ssid_tlv->header.len      = (t_u16)(ssid_len + sizeof(pwildcard_ssid_tlv->max_ssid_length));
         pwildcard_ssid_tlv->max_ssid_length = bg_scan_in->ssid_list[ssid_idx].max_len;
-        (void)__memcpy(pmadapter, pwildcard_ssid_tlv->ssid, bg_scan_in->ssid_list[ssid_idx].ssid,
-                       MIN(MLAN_MAX_SSID_LENGTH, ssid_len));
+
+        if (ssid_len != 0U)
+        {
+            (void)__memcpy(pmadapter, pwildcard_ssid_tlv->ssid, bg_scan_in->ssid_list[ssid_idx].ssid,
+                           MIN(MLAN_MAX_SSID_LENGTH, ssid_len));
+        }
+
         tlv += sizeof(pwildcard_ssid_tlv->header) + pwildcard_ssid_tlv->header.len;
         cmd_size += sizeof(pwildcard_ssid_tlv->header) + pwildcard_ssid_tlv->header.len;
         pwildcard_ssid_tlv->header.len = wlan_cpu_to_le16(pwildcard_ssid_tlv->header.len);
