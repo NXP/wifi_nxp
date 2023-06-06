@@ -1500,7 +1500,7 @@ static int security_profile_matches(const struct wlan_network *network, const st
         return res->wpa2_entp_IE_exist;
 #endif
 
-    if (config->type == WLAN_SECURITY_WPA3_SAE)
+    if ((config->type == WLAN_SECURITY_WPA3_SAE) || (config->type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
     {
         uint8_t mfpc, mfpr;
 
@@ -1511,7 +1511,10 @@ static int security_profile_matches(const struct wlan_network *network, const st
             wlcm_e("As per WPA3 SAE Certification, PMF is mandatory.\r\n");
             return WM_SUCCESS;
         }
-        return (int)(res->WPA_WPA2_WEP.wpa3_sae | res->WPA_WPA2_WEP.wpa2);
+        if (config->type == WLAN_SECURITY_WPA3_SAE)
+            return (int)(res->WPA_WPA2_WEP.wpa3_sae);
+        if (config->type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
+            return (int)(res->WPA_WPA2_WEP.wpa3_sae | res->WPA_WPA2_WEP.wpa2);
     }
     return WM_SUCCESS;
 }
