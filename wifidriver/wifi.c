@@ -3886,6 +3886,64 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
     return raw_low_level_output((t_u8)bss_type, buff, len);
 }
 
+int wifi_set_country_code(const char *alpha2)
+{
+    mlan_adapter *pmadapter             = (mlan_adapter *)mlan_adap;
+    t_u8 country_code[COUNTRY_CODE_LEN] = {0};
+    t_u8 cfp_bg                         = 0;
+    t_u8 cfp_a                          = 0;
+
+#ifdef OTP_CHANINFO
+    if (pmadapter->otp_region && pmadapter->otp_region->force_reg)
+    {
+        wifi_e("ForceRegionRule is set in the on-chip OTP memory");
+        return -WM_FAIL;
+    }
+#endif
+
+    (void)memcpy(country_code, alpha2, COUNTRY_CODE_LEN - 1);
+
+    /* Update region code and table based on country code */
+    if (wlan_misc_country_2_cfp_table_code(pmadapter, country_code, &cfp_bg, &cfp_a))
+    {
+        wifi_e("%s update country code fail", __func__);
+        return -WM_FAIL;
+    }
+
+    pmadapter->cfp_code_bg = cfp_bg;
+    pmadapter->cfp_code_a  = cfp_a;
+
+    if (cfp_a)
+        pmadapter->region_code = cfp_a;
+    else if (cfp_bg)
+        pmadapter->region_code = cfp_bg;
+    else
+        pmadapter->region_code = 0;
+
+    if (wlan_set_regiontable(pmadapter->priv[0], pmadapter->region_code, pmadapter->config_bands))
+    {
+        wifi_e("%s set regiontable fail", __func__);
+        return -WM_FAIL;
+    }
+    (void)memcpy(pmadapter->country_code, country_code, COUNTRY_CODE_LEN);
+
+#ifdef CONFIG_WPA_SUPP
+    if (wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn)
+    {
+        wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv, alpha2);
+    }
+#endif
+
+    return WM_SUCCESS;
+}
+
+int wifi_get_country_code(char *alpha2)
+{
+    (void)memcpy(alpha2, mlan_adap->country_code, COUNTRY_CODE_LEN - 1);
+
+    return WM_SUCCESS;
+}
+
 #ifdef CONFIG_WPA_SUPP
 int wifi_nxp_scan_res_num(void)
 {
@@ -4091,62 +4149,6 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
 int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
 {
     return supp_low_level_output((t_u8)bss_type, buff, len);
-}
-
-int wifi_set_country_code(const char *alpha2)
-{
-    mlan_adapter *pmadapter             = (mlan_adapter *)mlan_adap;
-    t_u8 country_code[COUNTRY_CODE_LEN] = {0};
-    t_u8 cfp_bg                         = 0;
-    t_u8 cfp_a                          = 0;
-
-#ifdef OTP_CHANINFO
-    if (pmadapter->otp_region && pmadapter->otp_region->force_reg)
-    {
-        wifi_e("ForceRegionRule is set in the on-chip OTP memory");
-        return -WM_FAIL;
-    }
-#endif
-
-    (void)memcpy(country_code, alpha2, COUNTRY_CODE_LEN - 1);
-
-    /* Update region code and table based on country code */
-    if (wlan_misc_country_2_cfp_table_code(pmadapter, country_code, &cfp_bg, &cfp_a))
-    {
-        wifi_e("%s update country code fail", __func__);
-        return -WM_FAIL;
-    }
-
-    pmadapter->cfp_code_bg = cfp_bg;
-    pmadapter->cfp_code_a  = cfp_a;
-
-    if (cfp_a)
-        pmadapter->region_code = cfp_a;
-    else if (cfp_bg)
-        pmadapter->region_code = cfp_bg;
-    else
-        pmadapter->region_code = 0;
-
-    if (wlan_set_regiontable(pmadapter->priv[0], pmadapter->region_code, pmadapter->config_bands))
-    {
-        wifi_e("%s set regiontable fail", __func__);
-        return -WM_FAIL;
-    }
-    (void)memcpy(pmadapter->country_code, country_code, COUNTRY_CODE_LEN);
-
-    if (wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn)
-    {
-        wm_wifi.supp_if_callbk_fns->chan_list_changed_callbk_fn(wm_wifi.if_priv, alpha2);
-    }
-
-    return WM_SUCCESS;
-}
-
-int wifi_get_country_code(char *alpha2)
-{
-    (void)memcpy(alpha2, mlan_adap->country_code, COUNTRY_CODE_LEN - 1);
-
-    return WM_SUCCESS;
 }
 
 /**

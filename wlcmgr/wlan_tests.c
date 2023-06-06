@@ -8288,7 +8288,6 @@ static void test_wlan_11d_enable(int argc, char **argv)
         dump_wlan_11d_enable_usage();
 }
 
-#ifdef CONFIG_WPA_SUPP
 static void dump_wlan_country_code(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -8349,7 +8348,6 @@ static void test_wlan_set_country_code(int argc, char **argv)
         (void)PRINTF("Set country code %s is successful\r\n", country_code);
     }
 }
-#endif
 
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
@@ -8596,10 +8594,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
 #endif
-#ifdef CONFIG_WPA_SUPP
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
-#endif
-
 };
 
 /* Register our commands with the MTF. */
