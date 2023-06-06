@@ -604,7 +604,14 @@ static int wifi_cmd_uap_config(char *ssid,
         else if (security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
         {
             bss.param.bss_config.protocol = PROTOCOL_WPA2 | PROTOCOL_WPA3_SAE;
-            bss.param.bss_config.key_mgmt = KEY_MGMT_SAE | KEY_MGMT_PSK | KEY_MGMT_PSK_SHA256;
+            if (mfpc && mfpr)
+            {
+                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK_SHA256 | KEY_MGMT_SAE;
+            }
+            else if (mfpc)
+            {
+                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK | KEY_MGMT_SAE;
+            }
         }
 #ifdef CONFIG_OWE
         else if (security == WLAN_SECURITY_OWE_ONLY)
