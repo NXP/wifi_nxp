@@ -209,7 +209,8 @@ static mlan_status wlan_custom_ioctl_auto_delete(IN pmlan_private pmpriv,
             {
                 (void)__memcpy(pmpriv->adapter, ie, pmpriv->mgmt_ie[index].ie_buffer, cnt);
                 if (pmpriv->mgmt_ie[index].ie_length > (cnt + del_len))
-                    (void)__memcpy(pmpriv->adapter, &ie[cnt], &pmpriv->mgmt_ie[index].ie_buffer[MIN((MAX_IE_SIZE - 1),(cnt + del_len))],
+                    (void)__memcpy(pmpriv->adapter, &ie[cnt],
+                                   &pmpriv->mgmt_ie[index].ie_buffer[MIN((MAX_IE_SIZE - 1), (cnt + del_len))],
                                    (pmpriv->mgmt_ie[index].ie_length - (cnt + del_len)));
                 (void)__memset(pmpriv->adapter, &pmpriv->mgmt_ie[index].ie_buffer, 0,
                                sizeof(pmpriv->mgmt_ie[index].ie_buffer));
@@ -1491,11 +1492,11 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.WNM_Sleep = 0;
     }
 #endif
+#ifdef CONFIG_11AX
 #ifdef MULTI_BSSID_SUPPORT
     if (pbss_desc && pbss_desc->multi_bssid_ap)
         SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
-#ifdef CONFIG_11AX
     if (wlan_check_11ax_twt_supported(pmpriv, pbss_desc))
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
 #endif
