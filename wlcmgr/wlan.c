@@ -91,6 +91,10 @@
 #define DEF_SWITCH_COUNT 10
 #endif
 
+#ifdef CONFIG_BG_SCAN
+#define BG_SCAN_LIMIT 3
+#endif
+
 static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
@@ -468,6 +472,9 @@ static struct
 #ifdef CONFIG_11R
     bool ft_bss : 1;
     bool same_ess : 1;
+#endif
+#ifdef CONFIG_BG_SCAN
+    unsigned int bgscan_attempt;
 #endif
     bool roam_reassoc : 1;
 #ifdef CONFIG_WIFI_FW_DEBUG
@@ -3453,6 +3460,10 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #endif /* CONFIG_P2P */
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
 
+#ifdef CONFIG_BG_SCAN
+            wlan.bgscan_attempt = 0;
+#endif
+
 #ifdef CONFIG_WPA_SUPP
             os_timer_deactivate(&wlan.supp_status_timer);
             wlan.status_timeout = 0;
@@ -3588,12 +3599,14 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
                 wlan.ft_bss = true;
             }
 #endif
+#ifdef CONFIG_BG_SCAN
             int ret = wifi_config_bgscan_and_rssi(network->ssid);
             if (ret == WM_SUCCESS)
             {
                 wlcm_d("bgscan config successful");
                 return;
             }
+#endif
             wlan.roam_reassoc = false;
             set_rssi_threshold = true;
         }
@@ -5392,6 +5405,25 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
 }
 
 #ifdef CONFIG_BG_SCAN
+static void wifi_process_bg_scan_stopped(struct wifi_message *msg)
+{
+    (void)msg;
+
+    if (wlan.roam_reassoc && wlan.bgscan_attempt < BG_SCAN_LIMIT)
+    {
+        wlan.bgscan_attempt++;
+        wlan.roam_reassoc = false;
+        (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+    }
+    else
+    {
+        wlan.bgscan_attempt = 0;
+        wlan.roam_reassoc = false;
+        PRINTF("Soft Roam: AP with better RSSI not found");
+        CONNECTION_EVENT(WLAN_REASON_BGSCAN_NETWORK_NOT_FOUND, NULL);
+    }
+}
+
 static void wlcm_process_bg_scan_report(void)
 {
     wifi_send_scan_query();
@@ -5797,6 +5829,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #ifdef CONFIG_BG_SCAN
         case WIFI_EVENT_BG_SCAN_STOPPED:
             wlcm_d("got event: BG scan stopped");
+            wifi_process_bg_scan_stopped(msg);
             break;
         case WIFI_EVENT_BG_SCAN_REPORT:
             wlcm_d("got event: BG scan report");
@@ -6257,6 +6290,10 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
     memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
+#endif
+
+#ifdef CONFIG_BG_SCAN
+    wlan.bgscan_attempt = 0;
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
@@ -10399,9 +10436,11 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
 #endif
 
 #ifdef CONFIG_ROAMING
-int wlan_set_roaming(const int enable)
+int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
 {
     wlan.roaming_enabled = enable;
+
+    wlan.rssi_low_threshold = rssi_low_threshold;
 
     return wifi_config_roaming(enable, &wlan.rssi_low_threshold);
 }
@@ -11569,6 +11608,20 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params)
 void wlan_set_rssi_low_threshold(uint8_t threshold)
 {
     wlan.rssi_low_threshold = threshold;
+
+    if (is_sta_connected())
+    {
+#ifdef CONFIG_ROAMING
+        if (wlan.roaming_enabled == true)
+        {
+            (void)wifi_config_roaming(true, &wlan.rssi_low_threshold);
+        }
+        else
+#endif
+        {
+            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+        }
+    }
 }
 #endif
 

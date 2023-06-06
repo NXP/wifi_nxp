@@ -4767,8 +4767,8 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, strlen(ssid));
     pmpriv->scan_cfg.ssid_list[0].max_len = 0;
     pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
-    pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low - RSSI_HYSTERESIS;
-    pmpriv->scan_cfg.repeat_count         = 2;    // DEF_REPEAT_COUNT;
+    pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low;
+    pmpriv->scan_cfg.repeat_count         = DEF_REPEAT_COUNT;
     pmpriv->scan_cfg.scan_interval        = 2000; // MIN_BGSCAN_INTERVAL;
     pmpriv->scan_cfg.chan_per_scan        = 14;
     pmpriv->scan_cfg.num_probes           = 2;

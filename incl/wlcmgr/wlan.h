@@ -319,6 +319,11 @@ enum wlan_event_reason
     /** The WLAN Connection Manager could not find the network that it was
      *  connecting to and it is now in the \ref WLAN_DISCONNECTED state. */
     WLAN_REASON_NETWORK_NOT_FOUND,
+#ifdef CONFIG_BG_SCAN
+    /** The WLAN Connection Manager could not find the network in bg scan during roam attempt that it was
+     *  connecting to and it is now in the \ref WLAN_CONNECTED state with previous AP. */
+    WLAN_REASON_BGSCAN_NETWORK_NOT_FOUND,
+#endif
     /** The WLAN Connection Manager failed to authenticate with the network
      *  and is now in the \ref WLAN_DISCONNECTED state. */
     WLAN_REASON_NETWORK_AUTH_FAILED,
@@ -2685,19 +2690,37 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
 #endif
 
 #ifdef CONFIG_ROAMING
-/** Set roaming config.
- * This function may be called to enable/disable roaming.
+/** Set soft roaming config.
  *
- * \note <b>RSSI Threshold setting for roaming</b>:
- * Use wlan_set_rssi_low_threshold() API to set RSSI threshold for low RSSI event subscription. If not called from
- * application then by default -70dbm will be used.
+ * This function may be called to enable/disable soft roaming
+ * by specifying the RSSI threshold.
+ *
+ * \note <b>RSSI Threshold setting for soft roaming</b>:
+ * The provided RSSI low threshold value is used to subscribe
+ * RSSI low event from firmware, on reception of this event
+ * background scan is started in firmware with same RSSI
+ * threshold to find out APs with better signal strength than
+ * RSSI threshold.
+ *
+ * If AP is found then roam attempt is initiated, otherwise
+ * background scan started again till limit reaches to
+ * \ref BG_SCAN_LIMIT.
+ *
+ * If still AP is not found then WLAN connection manager sends
+ * \ref WLAN_REASON_BGSCAN_NETWORK_NOT_FOUND event to
+ * application. In this case,
+ * if application again wants to use soft roaming then it
+ * can call this API again or use
+ * \ref wlan_set_rssi_low_threshold API to set RSSI low
+ * threshold again.
  *
  * \param[in] enable Enable/disable roaming.
+ * \param[in] rssi_low_threshold RSSI low threshold value
  *
  * \return WM_SUCCESS if the call was successful.
  * \return -WM_FAIL if failed.
  */
-int wlan_set_roaming(const int enable);
+int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
