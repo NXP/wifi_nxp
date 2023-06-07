@@ -5239,13 +5239,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             event_sta_addr = (t_u8 *)&evt->src_mac_addr;
             (void)memcpy((void *)sta_addr, (const void *)event_sta_addr, MLAN_MAC_ADDR_LENGTH);
 
-            if (pmpriv->is_11n_enabled)
-            {
-                wlan_cleanup_reorder_tbl(pmpriv, sta_addr);
-                wlan_request_ralist_lock(pmpriv);
-                wlan_11n_delete_txbastream_tbl_entry(pmpriv, sta_addr);
-                wlan_release_ralist_lock(pmpriv);
-            }
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
             if (pmpriv_uap->is_11n_enabled)
             {
                 wlan_cleanup_reorder_tbl(pmpriv_uap, sta_addr);
@@ -5253,6 +5247,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
                 wlan_release_ralist_lock(pmpriv);
             }
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
+
 #ifdef CONFIG_WPA_SUPP
             os_mem_free((void *)disassoc_resp);
 #else

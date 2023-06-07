@@ -4610,66 +4610,47 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, WPS_EVENT_OVERLAP))
     {
         wlcm_d("WPS overlap detected in PBC mode");
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_OVERLAP);
     }
     else if (strstr(buf, WPS_EVENT_AP_AVAILABLE_PBC))
     {
         wlcm_d("Available WPS AP with active PBC found in scan results");
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_AP_AVAILABLE_PBC);
-
     }
     else if (strstr(buf, WPS_EVENT_AP_AVAILABLE_PIN))
     {
         wlcm_d("Available WPS AP with recently selected PIN registrar found in scan results");
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_AP_AVAILABLE_PIN);
-
     }
     else if (strstr(buf, WPS_EVENT_AP_AVAILABLE))
     {
         wlcm_d("Available WPS AP found in scan results");
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_AP_AVAILABLE);
-
     }
     else if (strstr(buf, WPS_EVENT_CRED_RECEIVED))
     {
         wlcm_d("A new credential received");
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_CRED_RECEIVED);
-
     }
     else if (strstr(buf, WPS_EVENT_DISABLE))
     {
         wlcm_d("PBC mode was disabled");
         wlan.wps_session_attempt = 0;
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_DISABLE);
-
     }
     else if (strstr(buf, WPS_EVENT_ACTIVE))
     {
         wlcm_d("PBC mode was activated");
         wlan.wps_session_attempt = 1;
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_ACTIVE);
-
     }
     else if (strstr(buf, WPS_EVENT_PIN_ACTIVE))
     {
         wlcm_d("PIN mode was activated");
         wlan.wps_session_attempt = 1;
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_PIN_ACTIVE);
-
     }
     else if (strstr(buf, WPS_EVENT_TIMEOUT))
     {
         wlcm_d("WPS enrollment attempt timed out and was terminated");
         wlan.wps_session_attempt = 0;
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_TIMEOUT);
-
     }
     else if (strstr(buf, WPS_EVENT_FAIL))
     {
         wlcm_d("WPS registration failed after M2/M2D");
         wlan.wps_session_attempt = 0;
-        //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_FAIL);
-
     }
     else if (strstr(buf, WPS_EVENT_SUCCESS))
     {
@@ -4677,7 +4658,6 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (wlan.wps_session_attempt)
         {
             wlcm_process_wps_success_event();
-            //CONNECTION_EVENT(WLAN_REASON_WPS_EVENT, (void *)WPS_EVENT_SUCCESS);
         }
     }
     else

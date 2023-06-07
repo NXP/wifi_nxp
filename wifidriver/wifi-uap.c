@@ -1940,27 +1940,28 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
 void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 {
 #if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
-    sta_node *sta_node_ptr;
+    wlan_request_ralist_lock(mlan_adap->priv[1]);
+    /* Clear corresponding tx/rx table if necessary */
+    if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
+    {
+        wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+    }
+
+    wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
+#ifdef CONFIG_WMM
+    wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
+#endif
     /* txbastream table also is used as connected STAs data base */
     wlan_11n_create_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr, BA_STREAM_NOT_SETUP);
     wlan_11n_update_txbastream_tbl_tx_thresh((mlan_private *)mlan_adap->priv[1], sta_addr, 3);
-    sta_node_ptr = os_mem_alloc(sizeof(sta_node));
-    if (sta_node_ptr == MNULL)
-    {
-        wifi_w("No mem. Cannot check station type");
-        return;
-    }
 
-    // wrapper_wlan_check_sta_capability((mlan_private *)mlan_adap->priv[1], msg->data, sta_node_ptr);
-
-    sta_node_ptr->is_11n_enabled = is_11n_enabled;
-
-    if (sta_node_ptr->is_11n_enabled)
+    if (is_11n_enabled)
     {
         wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
     }
 
-    os_mem_free(sta_node_ptr);
+    wlan_release_ralist_lock(mlan_adap->priv[1]);
+
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #ifdef CONFIG_WMM
@@ -1970,11 +1971,15 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 
 void wifi_uap_client_deauth(t_u8 *sta_addr)
 {
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     if ((mlan_private *)mlan_adap->priv[1]->is_11n_enabled)
     {
         wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
+        wlan_request_ralist_lock((mlan_private *)mlan_adap->priv[1]);
         wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+        wlan_release_ralist_lock((mlan_private *)mlan_adap->priv[1]);
     }
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #ifdef CONFIG_WMM
     wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);

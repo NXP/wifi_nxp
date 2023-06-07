@@ -2569,23 +2569,22 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_ROAMING
-#define DEFAULT_RSSI_THRESHOLD 70
 static void dump_wlan_roaming_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
-        "    wlan-roaming <0/1>"
+        "    wlan-roaming <0/1> <rssi_threshold>"
         "\r\n");
     (void)PRINTF("Example:\r\n");
-    (void)PRINTF("    wlan-roaming 1 <rssi_threshold>\r\n");
+    (void)PRINTF("    wlan-roaming 1 40\r\n");
 }
 
 static void test_wlan_roaming(int argc, char **argv)
 {
-    int enable = 0;
-    uint8_t rssi_low_threshold;
+    int enable                 = 0;
+    uint8_t rssi_low_threshold = 0;
 
-    if (argc != 3)
+    if ((argc != 2) && (argc != 3))
     {
         dump_wlan_roaming_usage();
         (void)PRINTF("Error: invalid number of arguments\r\n");
@@ -2599,12 +2598,15 @@ static void test_wlan_roaming(int argc, char **argv)
         (void)PRINTF("Error during strtol:wlan roaming errno:%d\r\n", errno);
     }
 
-    errno              = 0;
-    rssi_low_threshold = (uint8_t)strtol(argv[2], NULL, 10);
-    if (errno != 0)
+    if (argc == 3)
     {
-        (void)PRINTF("Error during strtoul:rssi_threshold errno:%d\r\n", errno);
-        return;
+        errno              = 0;
+        rssi_low_threshold = (uint8_t)strtol(argv[2], NULL, 10);
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtoul:rssi_threshold errno:%d\r\n", errno);
+            return;
+        }
     }
 
     wlan_set_roaming(enable, rssi_low_threshold);
@@ -8422,7 +8424,7 @@ static struct cli_command tests[] = {
     {"wlan-tx-pert", "<0/1> <STA/UAP> <p> <r> <n>", test_wlan_tx_pert},
 #endif
 #ifdef CONFIG_ROAMING
-    {"wlan-roaming", "<0/1>", test_wlan_roaming},
+    {"wlan-roaming", "<0/1> <rssi_threshold>", test_wlan_roaming},
 #endif
 #ifdef CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
