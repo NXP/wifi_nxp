@@ -840,6 +840,8 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if ((info.security == 0U) && string_equal("wpa", argv[arg]))
         {
+            network.security.type = WLAN_SECURITY_WPA;
+
             if (get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA, &network.security) != 0)
             {
                 (void)PRINTF(
@@ -850,7 +852,7 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.security++;
         }
-        else if ((info.security == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])
+        else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
                                            || string_equal("wpa2-ft", argv[arg])
