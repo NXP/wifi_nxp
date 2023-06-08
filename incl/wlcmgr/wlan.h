@@ -1017,7 +1017,7 @@ static inline int is_valid_security(int security)
 #ifdef CONFIG_OWE
         (security == WLAN_SECURITY_OWE_ONLY) ||
 #endif
-        (security == WLAN_SECURITY_WPA3_SAE) ||
+        (security == WLAN_SECURITY_WPA3_SAE) || (security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) ||
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
         (security == WLAN_SECURITY_WPA3_SAE_FT) ||

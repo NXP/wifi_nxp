@@ -1773,6 +1773,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
 #endif
             break;
         case WLAN_SECURITY_WPA3_SAE:
+        case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
             if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
             {
                 wlcm_d("configuring WPA3 SAE security");
@@ -2298,7 +2299,11 @@ static void update_network_params(struct wlan_network *network, const struct wif
          */
         enum wlan_security_type t;
 
-        if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
+        if ((res->WPA_WPA2_WEP.wpa3_sae != 0U) && (res->WPA_WPA2_WEP.wpa2 != 0U))
+        {
+            t = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
+        }
+        else if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
         {
             t = WLAN_SECURITY_WPA3_SAE;
         }
@@ -6743,6 +6748,24 @@ static bool wlan_is_key_valid(struct wlan_network *network)
                 return false;
             }
             break;
+        case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
+            /* check the length of PSK phrase */
+            if (network->security.psk_len < WLAN_PSK_MIN_LENGTH || network->security.psk_len >= WLAN_PSK_MAX_LENGTH)
+            {
+                wlcm_e(
+                    "Invalid passphrase length %d "
+                    "(expected ASCII characters: 8..63)",
+                    network->security.psk_len);
+                return false;
+            }
+            if ((network->security.psk_len == WLAN_PSK_MAX_LENGTH - 1) &&
+                (isHexNumber(network->security.psk, network->security.psk_len) == false))
+            {
+                wlcm_e(
+                    "Invalid hexadecimal digits psk"
+                    "(expected Hexadecimal digits: 64)");
+                return false;
+            }
         case WLAN_SECURITY_WPA3_SAE:
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
@@ -6758,7 +6781,6 @@ static bool wlan_is_key_valid(struct wlan_network *network)
             break;
         case WLAN_SECURITY_NONE:
         case WLAN_SECURITY_WILDCARD:
-        case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
 #ifdef CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
 #endif

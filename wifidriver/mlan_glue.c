@@ -1815,7 +1815,7 @@ int wrapper_wifi_assoc(
 #ifdef CONFIG_OWE
               owe_trans_mode == OWE_TRANS_MODE_OWE || wlan_security == WLAN_SECURITY_OWE_ONLY ||
 #endif
-              wlan_security == WLAN_SECURITY_WPA3_SAE))
+              wlan_security == WLAN_SECURITY_WPA3_SAE || wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
     {
         if (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA_WPA2_MIXED)
 
@@ -1835,7 +1835,8 @@ int wrapper_wifi_assoc(
             return -WM_FAIL;
         }
 #ifdef CONFIG_11R
-        if ((!is_ft) && (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA3_SAE))
+        if ((!is_ft) && (wlan_security == WLAN_SECURITY_WPA2 || wlan_security == WLAN_SECURITY_WPA3_SAE ||
+                         wlan_security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
         {
             if (d->md_ie_buff_len <= sizeof(priv->md_ie))
             {
