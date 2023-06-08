@@ -89,6 +89,7 @@ static t_u8 tos_to_tid[] = {
     0x07  /* 1 1 1 AC_VO */
 };
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  * This table inverses the tos_to_tid operation to get a priority
  * which is in sequential order, and can be compared.
@@ -98,6 +99,7 @@ static t_u8 tos_to_tid_inv[] = {0x02, /* from tos_to_tid[2] = 0 */
                                 0x00, /* from tos_to_tid[0] = 1 */
                                 0x01, /* from tos_to_tid[1] = 2 */
                                 0x03, 0x04, 0x05, 0x06, 0x07};
+#endif /* CONFIG_MLAN_WMSDK */
 
 /**
  * This table will provide the tid value for given ac. This table does not
@@ -1061,10 +1063,13 @@ t_void wlan_clean_txrx(pmlan_private priv)
     wlan_wmm_delete_all_ralist(priv);
 #endif /* CONFIG_MLAN_WMSDK */
     (void)__memcpy(pmadapter, tos_to_tid, ac_to_tid, sizeof(tos_to_tid));
+#ifndef CONFIG_MLAN_WMSDK
     for (i = 0; i < MAX_NUM_TID; i++)
     {
         tos_to_tid_inv[tos_to_tid[i]] = (t_u8)i;
     }
+#endif /* CONFIG_MLAN_WMSDK */
+
 #if defined(UAP_SUPPORT)
     priv->num_drop_pkts = 0;
 #endif
