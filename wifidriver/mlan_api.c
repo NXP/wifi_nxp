@@ -4083,61 +4083,74 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
 
     if (pmpriv->enable_mbo)
     {
-        wlan_get_curr_oper_class(pmpriv, ch0, BW_20MHZ, &global_oper_class_0);
-        wlan_get_curr_oper_class(pmpriv, ch1, BW_20MHZ, &global_oper_class_1);
-        if (global_oper_class_0 != global_oper_class_1 || pefer0 != pefer1)
-            num = 2;
-        else
-            num = 1;
-
         buf = os_mem_alloc(sizeof(IEEEtypes_VendorSpecific_t));
         pos = buf;
-        for (i = 0; i < num; i++)
+
+        /* No non-preferred channels */
+        if (!ch0 && !pefer0 && !ch1 && !pefer1)
         {
             *pos = MGMT_MBO_IE;
             pos++;
-            if (i == 0)
-                pos_len1 = pos;
-            else
-                pos_len2 = pos;
+            *pos = 4;
             pos++;
             pos = wlan_add_mbo_oui(pos);
             pos = wlan_add_mbo_attr_id(pos);
-            if (num == 1)
-            {
-                pos[0] = global_oper_class_0;
-                pos[1] = ch0;
-                pos[2] = ch1;
-                pos[3] = pefer0;
-                pos += 4;
-            }
+        }
+        else
+        {
+            wlan_get_curr_oper_class(pmpriv, ch0, BW_20MHZ, &global_oper_class_0);
+            wlan_get_curr_oper_class(pmpriv, ch1, BW_20MHZ, &global_oper_class_1);
+            if (global_oper_class_0 != global_oper_class_1 || pefer0 != pefer1)
+                num = 2;
             else
+                num = 1;
+
+            for (i = 0; i < num; i++)
             {
+                *pos = MGMT_MBO_IE;
+                pos++;
                 if (i == 0)
+                    pos_len1 = pos;
+                else
+                    pos_len2 = pos;
+                pos++;
+                pos = wlan_add_mbo_oui(pos);
+                pos = wlan_add_mbo_attr_id(pos);
+                if (num == 1)
                 {
                     pos[0] = global_oper_class_0;
                     pos[1] = ch0;
-                    pos[2] = pefer0;
+                    pos[2] = ch1;
+                    pos[3] = pefer0;
+                    pos += 4;
                 }
                 else
                 {
-                    pos[0] = global_oper_class_1;
-                    pos[1] = ch1;
-                    pos[2] = pefer1;
+                    if (i == 0)
+                    {
+                        pos[0] = global_oper_class_0;
+                        pos[1] = ch0;
+                        pos[2] = pefer0;
+                    }
+                    else
+                    {
+                        pos[0] = global_oper_class_1;
+                        pos[1] = ch1;
+                        pos[2] = pefer1;
+                    }
+                    pos += 3;
                 }
-                pos += 3;
+
+                /* Reason code */
+                *pos = 0;
+                pos++;
+
+                if (i == 0)
+                    *pos_len1 = pos - (pos_len1 + 1);
+                else
+                    *pos_len2 = pos - (pos_len2 + 1);
             }
-
-            /* Reason code */
-            *pos = 0;
-            pos++;
-
-            if (i == 0)
-                *pos_len1 = pos - (pos_len1 + 1);
-            else
-                *pos_len2 = pos - (pos_len2 + 1);
         }
-
         wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, buf, pos - buf, false);
     }
 
