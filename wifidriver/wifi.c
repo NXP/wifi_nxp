@@ -127,6 +127,15 @@ bool uap_ampdu_rx_enable         = true;
 t_u8 uap_ampdu_rx_enable_per_tid = 0xFF;
 #endif
 
+/* tx status: 0-RUNNING, 1-BLOCK */
+t_u8 wifi_tx_status = WIFI_DATA_RUNNING;
+/* tx data count blocked */
+t_u8 wifi_tx_block_cnt = 0;
+/* rx status: 0-RUNNING, 1-BLOCK */
+t_u8 wifi_rx_status = WIFI_DATA_RUNNING;
+/* rx data count blocked */
+t_u8 wifi_rx_block_cnt = 0;
+
 int retry_attempts;
 wm_wifi_t wm_wifi;
 static bool xfer_pending;
@@ -1754,11 +1763,6 @@ static int wifi_core_init(void)
         goto fail;
     }
 #endif
-
-    wm_wifi.tx_status    = WIFI_DATA_RUNNING;
-    wm_wifi.tx_block_cnt = 0;
-    wm_wifi.rx_status    = WIFI_DATA_RUNNING;
-    wm_wifi.rx_block_cnt = 0;
 #ifdef CONFIG_CSI
     /* Semaphore to protect data parameters */
     ret = os_semaphore_create(&csi_buff_stat.csi_data_sem, "usb data sem");
@@ -2087,12 +2091,12 @@ void wifi_destroy_wifidriver_tasks(void)
 #endif
 void wifi_set_tx_status(t_u8 status)
 {
-    wm_wifi.tx_status = status;
+    wifi_tx_status = status;
 }
 
 void wifi_set_rx_status(t_u8 status)
 {
-    wm_wifi.rx_status = status;
+    wifi_rx_status = status;
 }
 
 void wifi_set_packet_retry_count(const int count)
@@ -2651,8 +2655,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             action_code = *(payload + sizeof(wlan_802_11_header) + 1);
             /*wpa_supplicant only deals with those action frame below*/
             if (category != IEEE_MGMT_ACTION_CATEGORY_WMM_TSPEC && category != IEEE_MGMT_ACTION_CATEGORY_FST &&
-                category != IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC && category != IEEE_MGMT_ACTION_CATEGORY_PROTECTED_DUAL &&
-                category != IEEE_MGMT_ACTION_CATEGORY_QOS && category != IEEE_MGMT_ACTION_CATEGORY_FAST_BSS_TRANS &&
+                category != IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
+                category != IEEE_MGMT_ACTION_CATEGORY_PROTECTED_DUAL && category != IEEE_MGMT_ACTION_CATEGORY_QOS &&
+                category != IEEE_MGMT_ACTION_CATEGORY_FAST_BSS_TRANS &&
                 category != IEEE_MGMT_ACTION_CATEGORY_SA_QUERY && category != IEEE_MGMT_ACTION_CATEGORY_AV_STREAMING)
             {
                 wifi_d("Drop action frame: category = %d, action_code=%d", category, action_code);
@@ -2986,9 +2991,9 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
         return WM_SUCCESS;
     }
 #endif
-    if (wm_wifi.rx_status == WIFI_DATA_BLOCK)
+    if (wifi_rx_status == WIFI_DATA_BLOCK)
     {
-        wm_wifi.rx_block_cnt++;
+        wifi_rx_block_cnt++;
         return WM_SUCCESS;
     }
 
@@ -3569,12 +3574,6 @@ int wifi_low_level_output(const t_u8 interface,
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
 
     w_pkt_d("Data TX: Kernel=>Driver, if %d, len %d", interface, len);
-
-    if (wm_wifi.tx_status == WIFI_DATA_BLOCK)
-    {
-        wm_wifi.tx_block_cnt++;
-        return WM_SUCCESS;
-    }
 
     // wakelock_get(WL_ID_LL_OUTPUT);
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)

@@ -5734,6 +5734,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #ifdef CONFIG_IPV6
         case WIFI_EVENT_NET_IPV6_CONFIG:
             wlcm_d("got event: net ipv6 config");
+            if (wlan.cur_network_idx >= WLAN_MAX_KNOWN_NETWORKS)
+                break;
+
             wlcm_process_net_ipv6_config(msg, &next, network);
             break;
 #endif /* CONFIG_IPV6 */
@@ -8030,14 +8033,6 @@ void wlan_reset(cli_reset_option ResetOption)
         PRINTF("--- Disable WiFi ---\r\n");
         if (wlan_is_started())
         {
-            /* Block TX data */
-            wifi_set_tx_status(WIFI_DATA_BLOCK);
-            /* Block RX data */
-            wifi_set_rx_status(WIFI_DATA_BLOCK);
-
-            /* Stop and Remove all network interfaces */
-            wlan_remove_all_networks();
-
              /*Disconnect form AP if station is associated with an AP.*/
             if (wlan.sta_state > CM_STA_ASSOCIATING)
             {
@@ -8054,6 +8049,17 @@ void wlan_reset(cli_reset_option ResetOption)
                     os_thread_sleep(os_msec_to_ticks(1000));
                 }
             }
+
+            /* Block TX data */
+            wifi_set_tx_status(WIFI_DATA_BLOCK);
+            /* Block RX data */
+            wifi_set_rx_status(WIFI_DATA_BLOCK);
+#ifdef CONFIG_WPA_SUPP
+            wifi_supp_deinit();
+            wpa_supp_deinit();
+#endif
+            /* Stop and Remove all network interfaces */
+            wlan_remove_all_networks();
 
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
@@ -8096,6 +8102,12 @@ void wlan_reset(cli_reset_option ResetOption)
 
             /* update the netif hwaddr after reset */
             net_wlan_set_mac_address(&wlan.sta_mac[0], &wlan.uap_mac[0]);
+            /* Unblock TX data */
+            wifi_set_tx_status(WIFI_DATA_RUNNING);
+            /* Unblock RX data */
+            wifi_set_rx_status(WIFI_DATA_RUNNING);
+            wifi_tx_block_cnt = 0;
+            wifi_rx_block_cnt = 0;
         }
     }
 

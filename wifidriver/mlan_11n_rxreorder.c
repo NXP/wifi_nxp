@@ -239,7 +239,8 @@ static mlan_status wlan_11n_free_rxreorder_pkt(t_void *priv, RxReorderTbl *rx_re
         pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_tmp_ptr != NULL)
         {
-            pbuf_free((struct pbuf *)(((pmlan_buffer)rx_tmp_ptr)->pbuf));
+            pbuf_free((struct pbuf *)(((pmlan_buffer)rx_tmp_ptr)->lwip_pbuf));
+            os_mem_free(((pmlan_buffer)rx_tmp_ptr)->pbuf);
             os_mem_free(rx_tmp_ptr);
         }
     }

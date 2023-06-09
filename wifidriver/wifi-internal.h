@@ -129,14 +129,6 @@ typedef struct
     t_u16 ht_cap_info;
     /** HTTX Cfg */
     t_u16 ht_tx_cfg;
-    /** tx status: 0-RUNNING, 1-BLOCK */
-    t_u8 tx_status;
-    /** tx data count blocked */
-    t_u8 tx_block_cnt;
-    /** rx status: 0-RUNNING, 1-BLOCK */
-    t_u8 rx_status;
-    /** rx data count blocked */
-    t_u8 rx_block_cnt;
 #ifdef CONFIG_WIFI_FW_DEBUG
     /** This function mount USB device.
      *
@@ -438,6 +430,5 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 int send_wifi_driver_tx_data_event(t_u8 interface);
 int send_wifi_driver_tx_null_data_event(t_u8 interface);
 #endif
-
 
 #endif /* __WIFI_INTERNAL_H__ */

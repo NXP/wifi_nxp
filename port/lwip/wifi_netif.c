@@ -557,8 +557,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     t_u8 interface   = ethernetif->interface;
     t_u8 *wmm_outbuf = NULL;
 #ifdef CONFIG_WMM
-    t_u8 tid  = 0;
-    int retry = 0;
+    t_u8 tid                      = 0;
+    int retry                     = 0;
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
     bool is_tx_pause              = false;
 
@@ -574,9 +574,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         return ERR_MEM;
     }
 
-    if (wm_wifi.tx_status == WIFI_DATA_BLOCK)
+    if (wifi_tx_status == WIFI_DATA_BLOCK)
     {
-        wm_wifi.tx_block_cnt++;
+        wifi_tx_block_cnt++;
         return ERR_OK;
     }
 

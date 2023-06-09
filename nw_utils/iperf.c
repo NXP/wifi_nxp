@@ -891,7 +891,7 @@ static void display_iperf_usage(void)
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\t   -p             server port to listen on/connect to\r\n");
     (void)PRINTF("\tServer specific:\r\n");
-    (void)PRINTF("\t   -s             run in server mode\r\n");
+    (void)PRINTF("\t   -s             run in server mode. Support 8 parallel traffic(-P) maximum from client side\r\n");
     (void)PRINTF(
         "\t   -D             Do a bidirectional UDP test simultaneously and with -d from external iperf client\r\n");
     (void)PRINTF("\tClient specific:\r\n");
