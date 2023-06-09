@@ -129,14 +129,14 @@ void wifi_process_remain_on_channel(struct wifi_message *msg)
 
 void wifi_process_mgmt_tx_status(struct wifi_message *msg)
 {
-    nxp_wifi_event_mlme_t resp;
-    resp.frame.frame_len = 0;
+    nxp_wifi_event_mlme_t *resp = &wm_wifi.mgmt_resp;
+    resp->frame.frame_len = 0;
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
         if (wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn)
         {
-            wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn(wm_wifi.hapd_if_priv, &resp, resp.frame.frame_len);
+            wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn(wm_wifi.hapd_if_priv, resp, resp->frame.frame_len);
         }
     }
 }

@@ -2394,8 +2394,8 @@ void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void)
 void wpa_supp_handle_link_lost(mlan_private *priv)
 {
     t_u8 broadcast_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-    nxp_wifi_event_mlme_t resp;
-    IEEE80211_MGMT *mgmt = (IEEE80211_MGMT *)resp.frame.frame;
+    nxp_wifi_event_mlme_t *deauth_resp = &wm_wifi.mgmt_resp;
+    IEEE80211_MGMT *mgmt = (IEEE80211_MGMT *)deauth_resp->frame.frame;
 
     if (priv->bss_role == MLAN_BSS_ROLE_STA)
     {
@@ -2410,14 +2410,14 @@ void wpa_supp_handle_link_lost(mlan_private *priv)
         memcpy((void *)mgmt->sa, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
         memcpy((void *)mgmt->bssid, priv->curr_bss_params.bss_descriptor.mac_address, MLAN_MAC_ADDR_LENGTH);
 
-        resp.frame.frame_len = 26;
+        deauth_resp->frame.frame_len = 26;
 
         priv->curr_bss_params.host_mlme = 0;
         priv->auth_flag                 = 0;
 
         if (wm_wifi.supp_if_callbk_fns->deauth_callbk_fn)
         {
-            wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, &resp, resp.frame.frame_len);
+            wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, deauth_resp, deauth_resp->frame.frame_len);
         }
     }
 }
@@ -2471,7 +2471,6 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     // pmlan_buffer pmbuf;
 #endif
 #endif
-    nxp_wifi_event_mlme_t resp;
 
     ENTER();
     if (payload_len > (MAX_EVENT_SIZE - sizeof(mlan_event)))
@@ -2820,10 +2819,10 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             (uint8_t *)pieee_pkt_hdr + (sizeof(wlan_802_11_header)), payload_len - sizeof(wlan_802_11_header));
 
     payload_len -= MLAN_MAC_ADDR_LENGTH;
-    if (payload_len > sizeof(resp.frame.frame))
+    if (payload_len > sizeof(wm_wifi.mgmt_resp.frame.frame))
     {
         wifi_w("The payload length (%d) overs the max length(%d), dropping mgmt frame: type=%d", payload_len,
-               sizeof(resp.frame.frame), sub_type);
+               sizeof(wm_wifi.mgmt_resp.frame.frame), sub_type);
         dump_hex(payload, 64);
         return MLAN_STATUS_FAILURE;
     }
@@ -2832,14 +2831,13 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     {
         if (sub_type == (t_u16)SUBTYPE_AUTH)
         {
-            nxp_wifi_event_mlme_t *auth_resp = &wm_wifi.auth_resp;
-            memset(auth_resp, 0, sizeof(nxp_wifi_event_mlme_t));
-            auth_resp->frame.frame_len = payload_len;
+            nxp_wifi_event_mlme_t *auth_resp = &wm_wifi.mgmt_resp;
 
             if (payload_len <= sizeof(auth_resp->frame.frame))
             {
+                memset(auth_resp, 0, sizeof(nxp_wifi_event_mlme_t));
+                auth_resp->frame.frame_len = payload_len;
                 memcpy((void *)auth_resp->frame.frame, (const void *)pieee_pkt_hdr, payload_len);
-
                 if (wm_wifi.supp_if_callbk_fns->auth_resp_callbk_fn)
                 {
                     wm_wifi.supp_if_callbk_fns->auth_resp_callbk_fn(wm_wifi.if_priv, auth_resp,
@@ -2854,40 +2852,67 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 
         if (sub_type == (t_u16)SUBTYPE_DEAUTH)
         {
+            nxp_wifi_event_mlme_t *deauth_resp = &wm_wifi.mgmt_resp;
+
             wlan_abort_split_scan();
             wifi_user_scan_config_cleanup();
 
-            resp.frame.frame_len = payload_len;
-            memcpy((void *)resp.frame.frame, (const void *)pieee_pkt_hdr, resp.frame.frame_len);
-
-            if (wm_wifi.supp_if_callbk_fns->deauth_callbk_fn)
+            if (payload_len <= (int)sizeof(deauth_resp->frame.frame))
             {
-                wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, &resp, resp.frame.frame_len);
+                memset(deauth_resp, 0, sizeof(nxp_wifi_event_mlme_t));
+                deauth_resp->frame.frame_len = payload_len;
+                memcpy((void *)deauth_resp->frame.frame, (const void *)pieee_pkt_hdr, deauth_resp->frame.frame_len);
+                if (wm_wifi.supp_if_callbk_fns->deauth_callbk_fn)
+                {
+                    wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, deauth_resp, deauth_resp->frame.frame_len);
+                }
+            }
+            else
+            {
+                wifi_e("Insufficient frame buffer");
             }
         }
 
         if (sub_type == (t_u16)SUBTYPE_DISASSOC)
         {
+            nxp_wifi_event_mlme_t *disassoc_resp = &wm_wifi.mgmt_resp;
+
             wlan_abort_split_scan();
             wifi_user_scan_config_cleanup();
 
-            resp.frame.frame_len = payload_len;
-            memcpy((void *)resp.frame.frame, (const void *)pieee_pkt_hdr, resp.frame.frame_len);
-
-            if (wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn)
+            if (payload_len <= (int)sizeof(disassoc_resp->frame.frame))
             {
-                wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn(wm_wifi.if_priv, &resp, resp.frame.frame_len);
+                memset(disassoc_resp, 0, sizeof(nxp_wifi_event_mlme_t));
+                disassoc_resp->frame.frame_len = payload_len;
+                memcpy((void *)disassoc_resp->frame.frame, (const void *)pieee_pkt_hdr, disassoc_resp->frame.frame_len);
+                if (wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn)
+                {
+                    wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn(wm_wifi.if_priv, disassoc_resp, disassoc_resp->frame.frame_len);
+                }
+            }
+            else
+            {
+                wifi_e("Insufficient frame buffer");
             }
         }
 
         if (sub_type == (t_u16)SUBTYPE_ACTION)
         {
-            resp.frame.frame_len = payload_len;
-            memcpy((void *)resp.frame.frame, (const void *)pieee_pkt_hdr, resp.frame.frame_len);
+            nxp_wifi_event_mlme_t *mgmt_rx = &wm_wifi.mgmt_rx;
 
-            if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
+            if (payload_len <= (int)sizeof(mgmt_rx->frame.frame))
             {
-                wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.if_priv, &resp, resp.frame.frame_len);
+                memset(mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
+                mgmt_rx->frame.frame_len = payload_len;
+                memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
+                if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
+                {
+                    wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
+                }
+            }
+            else
+            {
+                wifi_e("Insufficient frame buffer");
             }
         }
     }
