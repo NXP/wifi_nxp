@@ -761,6 +761,7 @@ static int wifi_cmd_uap_config(char *ssid,
     {
         bss.param.bss_config.wmm_para.ouisubtype = 0x01;
         bss.param.bss_config.wmm_para.version    = 0x01;
+        bss.param.bss_config.wmm_para.reserved   = 0x00;
 
         memcpy(&bss.param.bss_config.wmm_para.ac_params, &mlan_adap->ac_params,
                sizeof(wmm_ac_parameters_t) * MAX_AC_QUEUES);

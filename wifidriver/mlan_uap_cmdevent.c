@@ -836,8 +836,7 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
 #endif /* CONFIG_MLAN_WMSDK */
 
     if ((bss->param.bss_config.uap_host_based_config == MTRUE) ||
-	    (bss->param.bss_config.wmm_para.qos_info & 0x80 ||
-	     bss->param.bss_config.wmm_para.qos_info == 0x00))
+        (bss->param.bss_config.wmm_para.qos_info & 0x80 || bss->param.bss_config.wmm_para.qos_info == 0x00))
     {
         tlv_wmm_parameter              = (MrvlIEtypes_wmm_parameter_t *)tlv;
         tlv_wmm_parameter->header.type = wlan_cpu_to_le16(TLV_TYPE_VENDOR_SPECIFIC_IE);
@@ -847,10 +846,13 @@ static mlan_status wlan_uap_cmd_ap_config(pmlan_private pmpriv,
         tlv_wmm_parameter->wmm_para.ouisubtype = bss->param.bss_config.wmm_para.ouisubtype;
         tlv_wmm_parameter->wmm_para.version    = bss->param.bss_config.wmm_para.version;
         tlv_wmm_parameter->wmm_para.qos_info   = bss->param.bss_config.wmm_para.qos_info;
+        tlv_wmm_parameter->wmm_para.reserved   = 0x00;
         for (ac = 0; ac < 4; ac++)
         {
             tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.aifsn =
                 bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.aifsn;
+            tlv_wmm_parameter->wmm_para.ac_params[ac].aci_aifsn.aci =
+                bss->param.bss_config.wmm_para.ac_params[ac].aci_aifsn.aci;
             tlv_wmm_parameter->wmm_para.ac_params[ac].ecw.ecw_max =
                 bss->param.bss_config.wmm_para.ac_params[ac].ecw.ecw_max;
             tlv_wmm_parameter->wmm_para.ac_params[ac].ecw.ecw_min =
