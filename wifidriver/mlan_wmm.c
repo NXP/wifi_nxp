@@ -1034,7 +1034,6 @@ t_u8 wlan_get_random_ba_threshold(pmlan_adapter pmadapter)
 t_void wlan_clean_txrx(pmlan_private priv)
 {
     mlan_adapter *pmadapter = priv->adapter;
-    t_u8 i                  = 0;
 
     ENTER();
 

@@ -3893,7 +3893,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
             }
             break;
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
             case HostCmd_CMD_EU_CRYPTO:
             {
                 if (resp->result == HostCmd_RESULT_OK)

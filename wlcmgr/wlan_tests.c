@@ -4269,7 +4269,7 @@ static void test_wlan_eu_validation(int argc, char **argv)
 }
 #endif /* CONFIG_EU_VALIDATION */
 
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 static void dump_wlan_eu_crypto_rc4(void)
 {
     (void)PRINTF("Usage:\r\n");
@@ -8453,7 +8453,7 @@ static struct cli_command tests[] = {
     {"wlan-8801-enable-ext-coex", NULL, test_wlan_8801_enable_ext_coex},
     {"wlan-8801-get-ext-coex-stats", NULL, test_wlan_8801_ext_coex_stats},
 #endif
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
     {"wlan-eu-crypto-rc4", "<EncDec>", test_wlan_eu_crypto_rc4},
     {"wlan-eu-crypto-aes-wrap", "<EncDec>", test_wlan_eu_crypto_aes_wrap},
     {"wlan-eu-crypto-aes-ecb", "<EncDec>", test_wlan_eu_crypto_aes_ecb},

@@ -4522,7 +4522,7 @@ int wifi_send_hostcmd(
     return ret;
 }
 
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec)
 {
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();

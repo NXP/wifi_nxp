@@ -4590,7 +4590,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
         wifi_uap_client_assoc(addr, is_11n_enabled);
 
-        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_ASSOC, addr);
+        CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_CONN, addr);
     }
     if (strstr(buf, AP_STA_DISCONNECTED))
     {
@@ -10747,7 +10747,7 @@ int wlan_set_clocksync_cfg(const wlan_clock_sync_gpio_tsf_t *tsf_latch)
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
 
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 int wlan_set_crypto_RC4_encrypt(
     const t_u8 *Key, const t_u16 KeyLength, const t_u8 *KeyIV, const t_u16 KeyIVLength, t_u8 *Data, t_u16 *DataLength)
 {
@@ -11105,7 +11105,7 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
     return wifi_set_eu_crypto(&Crypto_AES_GCMP_Param, CRYPTO_AES_GCMP, EncDec);
 #endif
 }
-#endif /* CONFIG_FIPS */
+#endif /* CONFIG_WIFI_EU_CRYPTO */
 
 #ifdef CONFIG_HEAP_DEBUG
 void wlan_show_os_mem_stat()

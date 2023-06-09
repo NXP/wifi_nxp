@@ -1102,7 +1102,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID : 802.11 subscribe event */
 #define HostCmd_CMD_802_11_SUBSCRIBE_EVENT 0x0075
 
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 /** Host Command ID : EU Test */
 #define HostCmd_CMD_EU_CRYPTO 0x0078
 #endif
@@ -6796,7 +6796,7 @@ typedef MLAN_PACK_START struct
     t_u8 tlv_buffer[1]; /**< TLV Buffer */
 } MLAN_PACK_END HostCmd_DS_CHAN_RPT_RSP;
 
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 typedef MLAN_PACK_START struct
 {
     /* EncDec: 0-Decrypt, 1-Encrypt */
@@ -7543,7 +7543,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** OFFLOAD FEATURE CTRL */
         HostCmd_OFFLOAD_FEATURE_CTRL fctrl;
 #endif /* CONFIG_11K_OFFLOAD */
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
         HostCmd_DS_EU_AES_CRYPTO eu_aes_crypto;
         HostCmd_DS_EU_CRYPTO eu_crypto;
 #endif

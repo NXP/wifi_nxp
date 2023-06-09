@@ -388,7 +388,7 @@ int wifi_get_chanlist(wifi_chanlist_t *chanlist);
 #if defined(CONFIG_IPS)
 int wifi_set_ips_config(mlan_bss_type interface, int option);
 #endif
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec);
 #endif
 int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype_mask);

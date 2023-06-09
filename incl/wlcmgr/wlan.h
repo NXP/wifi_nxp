@@ -4604,7 +4604,7 @@ void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),
 
 #endif
 
-#ifdef CONFIG_FIPS
+#ifdef CONFIG_WIFI_EU_CRYPTO
 #define EU_CRYPTO_DATA_MAX_LENGTH  1300U
 #define EU_CRYPTO_KEY_MAX_LENGTH   32U
 #define EU_CRYPTO_KEYIV_MAX_LENGTH 32U
