@@ -31,6 +31,7 @@ Change log:
 #define KEY_MATERIAL_WEP               1
 #define KEY_PARAM_SET_V2               1
 #define ENABLE_802_11W                 1
+#define ENABLE_GCMP_SUPPORT            1
 #define CONFIG_STA_AMPDU_RX            1
 #define CONFIG_STA_AMPDU_TX            1
 #define CONFIG_ENABLE_AMSDU_RX         1

@@ -109,47 +109,27 @@ Change log:
 #define COUNTRY_CODE_US 0x10
 
 #ifdef STA_SUPPORT
-#ifdef SD8801
-/** Default Win size attached during ADDBA request */
-#define MLAN_STA_AMPDU_DEF_TXWINSIZE 8
-#else
 /** Default Win size attached during ADDBA request */
 #ifdef RW610
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 64
 #else
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 16
 #endif
-#endif
-#ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
-#ifdef SD8801
-/** Default Win size attached during ADDBA response */
-#define MLAN_STA_AMPDU_DEF_RXWINSIZE 16
-#else
 /** Default Win size attached during ADDBA response */
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
-#endif
-#endif
 #endif /* STA_SUPPORT */
+
 #ifdef UAP_SUPPORT
-#ifdef SD8801
 /** Default Win size attached during ADDBA request */
-#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 8
-#else
 #ifdef RW610
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
 #else
-/** Default Win size attached during ADDBA request */
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 16
 #endif
-#endif
-#ifdef SD8801
-/** Default Win size attached during ADDBA response */
-#define MLAN_UAP_AMPDU_DEF_RXWINSIZE 16
-#else
 /** Default Win size attached during ADDBA response */
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 32
-#endif
 #endif /* UAP_SUPPORT */
+
 /** Block ack timeout value */
 #define MLAN_DEFAULT_BLOCK_ACK_TIMEOUT 0U
 /** Maximum Tx Win size configured for ADDBA request [10 bits] */

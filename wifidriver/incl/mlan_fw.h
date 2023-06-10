@@ -2745,7 +2745,8 @@ typedef MLAN_PACK_START struct _gmac_aes_256_param
     /** IGTK pn */
     t_u8 ipn[IGTK_PN_SIZE];
     /** key_len */
-    t_u16 key_len; /** aes key */
+    t_u16 key_len;
+    /** aes key */
     t_u8 key[WPA_IGTK_256_KEY_LEN];
 } MLAN_PACK_END gmac_aes_256_param;
 
@@ -2797,6 +2798,7 @@ typedef MLAN_PACK_START struct _MrvlIEtype_KeyParamSetV2_t
         wapi_param wapi;
         /** IGTK key param */
         cmac_aes_param cmac_aes;
+        gmac_aes_256_param gmac_aes;
         /** gcmp key param */
         gcmp_param gcmp;
         /** ccmp 256 key parameters */

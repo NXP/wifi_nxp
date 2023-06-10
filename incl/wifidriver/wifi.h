@@ -26,6 +26,7 @@
 #define KEY_MATERIAL_WEP               1
 #define KEY_PARAM_SET_V2               1
 #define ENABLE_802_11W                 1
+#define ENABLE_GCMP_SUPPORT            1
 #define CONFIG_STA_AMPDU_RX            1
 #define CONFIG_STA_AMPDU_TX            1
 #define CONFIG_ENABLE_AMSDU_RX         1
@@ -78,6 +79,11 @@
 #define WIFI_MGMT_DEAUTH  MBIT(12)
 /** BITMAP for Action frame */
 #define WIFI_MGMT_ACTION MBIT(13)
+
+extern t_u8 wifi_tx_status;
+extern t_u8 wifi_tx_block_cnt;
+extern t_u8 wifi_rx_status;
+extern t_u8 wifi_rx_block_cnt;
 
 extern int16_t g_bcn_nf_last;
 extern uint8_t g_rssi;

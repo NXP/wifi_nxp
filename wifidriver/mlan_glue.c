@@ -308,6 +308,26 @@ static mlan_status wrapper_moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_bu
     return MLAN_STATUS_SUCCESS;
 }
 
+/**
+ *  @brief Copy memory from one area to another
+ *
+ *  @param pmoal Pointer to the MOAL context
+ *  @param pdest    Pointer to the dest memory
+ *  @param psrc     Pointer to the src memory
+ *  @param num      Number of bytes to move
+ *  @param dest_size size of dest memory.
+ *
+ *  @return         Pointer to the dest memory
+ */
+t_void *wrapper_moal_memcpy_ext(t_void *pmoal, t_void *pdest, const t_void *psrc, t_u32 num, t_u32 dest_size)
+{
+    t_void *p = pdest;
+    if (pdest && psrc && num && dest_size)
+        p = memcpy(pdest, psrc, MIN(num, dest_size));
+
+    return p;
+}
+
 /** moal_init_timer*/
 static mlan_status wrapper_moal_init_timer(IN t_void *pmoal_handle,
                                            OUT t_void **pptimer,
@@ -493,6 +513,7 @@ static mlan_callbacks woal_callbacks = {
     .moal_malloc      = wrapper_moal_malloc,
     .moal_mfree       = wrapper_moal_mfree,
     .moal_recv_packet = wrapper_moal_recv_packet,
+    .moal_memcpy_ext  = wrapper_moal_memcpy_ext,
     .moal_init_timer  = wrapper_moal_init_timer,
     .moal_free_timer  = wrapper_moal_free_timer,
     .moal_start_timer = wrapper_moal_start_timer,
