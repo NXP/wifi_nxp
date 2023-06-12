@@ -855,10 +855,10 @@ static void test_wlan_add(int argc, char **argv)
         else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-                                           || string_equal("wpa2-ft", argv[arg])
+                                            || string_equal("wpa2-ft", argv[arg])
 #endif
 #endif
-                                               ))
+                                                ))
         {
             if (string_equal("wpa2", argv[arg]))
             {
@@ -7161,13 +7161,13 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
                 dst_mac_set = 1;
                 arg += 2;
             }
-            if (string_equal("dst_ip", argv[arg]))
+            else if (string_equal("dst_ip", argv[arg]))
             {
                 cloud_keep_alive.dst_ip = net_inet_aton(argv[arg + 1]);
                 dst_ip_set              = 1;
                 arg += 2;
             }
-            if (string_equal("dst_port", argv[arg]))
+            else if (string_equal("dst_port", argv[arg]))
             {
                 unsigned int dst_port;
 
@@ -7179,6 +7179,12 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
                 dst_port_input = (uint16_t)(dst_port & 0XFFFF);
                 dst_port_set   = 1;
                 arg += 2;
+            }
+            else
+            {
+                (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+                dump_wlan_cloud_keep_alive_usage();
+                return;
             }
         } while (arg < argc);
         if (!dst_mac_set || !dst_ip_set || !dst_port_set)

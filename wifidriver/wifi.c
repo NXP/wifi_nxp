@@ -2393,9 +2393,9 @@ void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void)
 
 void wpa_supp_handle_link_lost(mlan_private *priv)
 {
-    t_u8 broadcast_addr[ETH_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    t_u8 broadcast_addr[ETH_ALEN]      = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
     nxp_wifi_event_mlme_t *deauth_resp = &wm_wifi.mgmt_resp;
-    IEEE80211_MGMT *mgmt = (IEEE80211_MGMT *)deauth_resp->frame.frame;
+    IEEE80211_MGMT *mgmt               = (IEEE80211_MGMT *)deauth_resp->frame.frame;
 
     if (priv->bss_role == MLAN_BSS_ROLE_STA)
     {
@@ -2864,7 +2864,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 memcpy((void *)deauth_resp->frame.frame, (const void *)pieee_pkt_hdr, deauth_resp->frame.frame_len);
                 if (wm_wifi.supp_if_callbk_fns->deauth_callbk_fn)
                 {
-                    wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, deauth_resp, deauth_resp->frame.frame_len);
+                    wm_wifi.supp_if_callbk_fns->deauth_callbk_fn(wm_wifi.if_priv, deauth_resp,
+                                                                 deauth_resp->frame.frame_len);
                 }
             }
             else
@@ -2887,7 +2888,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 memcpy((void *)disassoc_resp->frame.frame, (const void *)pieee_pkt_hdr, disassoc_resp->frame.frame_len);
                 if (wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn)
                 {
-                    wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn(wm_wifi.if_priv, disassoc_resp, disassoc_resp->frame.frame_len);
+                    wm_wifi.supp_if_callbk_fns->disassoc_callbk_fn(wm_wifi.if_priv, disassoc_resp,
+                                                                   disassoc_resp->frame.frame_len);
                 }
             }
             else
@@ -3354,7 +3356,7 @@ static int wifi_xmit_wmm_ac_pkts_enh()
         if (priv->media_connected == MFALSE || priv->tx_pause == MTRUE)
             continue;
 
-        for (ac = WMM_AC_VO; ac >= WMM_AC_BK; ac--)
+        for (ac = WMM_AC_VO; ac >= 0; ac--)
         {
             tid_ptr = &priv->wmm.tid_tbl_ptr[ac];
 
