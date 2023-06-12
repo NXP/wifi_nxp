@@ -3035,10 +3035,17 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
 
                 assoc_resp->frame.frame_len = resp->size - S_DS_GEN;
-
+                if (assoc_resp->frame.frame_len > (int)sizeof(assoc_resp->frame.frame))
+                {
+                    wifi_e("Assocate response payload length (%d) overs the max length(%d), dropping it",
+                            assoc_resp->frame.frame_len, sizeof(assoc_resp->frame.frame));
+                    assoc_resp->frame.frame_len = 0;
+                    result = WIFI_EVENT_REASON_FAILURE;
+                    goto assoc_resp_ret;
+                }
                 memcpy(assoc_resp->frame.frame, passoc_rsp1, assoc_resp->frame.frame_len);
 
-                if (pmpriv->assoc_req_size)
+                if (pmpriv->assoc_req_size && (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)))
                 {
                     assoc_resp->req_ie_len = pmpriv->assoc_req_size;
                     memcpy(assoc_resp->req_ie, pmpriv->assoc_req_buf, assoc_resp->req_ie_len);
@@ -3066,7 +3073,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     /* Since we have failed assoc attempt clear this */
                     pmpriv->media_connected = MFALSE;
                 }
-
+assoc_resp_ret:
                 (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
