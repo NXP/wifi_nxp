@@ -8061,6 +8061,8 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Stop and Remove all network interfaces */
             wlan_remove_all_networks();
 
+            (void)net_wlan_deinit();
+
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
 
