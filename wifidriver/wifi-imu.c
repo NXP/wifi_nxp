@@ -1509,6 +1509,7 @@ mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr,
 {
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
     int ret                = 0;
+    int retry_cnt          = 3;
 
     ret = wlan_init_struct();
     if (ret != WM_SUCCESS)
@@ -1520,13 +1521,29 @@ mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr,
     /* Initialize the mlan subsystem before initializing 878x driver */
     mlan_subsys_init();
 
+retry:
     /* Comment out this line if CPU1 image is downloaded through J-Link.
      * This is for load service case only.
      */
     power_off_device(LOAD_WIFI_FIRMWARE);
 
     /* Download firmware */
-    sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, 0);
+    ret = sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, (uint32_t)fw_ram_start_addr);
+    /* If fw download is failed, retry downloading for 3 times. */
+    if (ret)
+    {
+        if (retry_cnt != 0)
+        {
+            retry_cnt--;
+            goto retry;
+        }
+        else
+        {
+            wifi_io_e("Download firmware failed");
+            mlanstatus = MLAN_STATUS_FAILURE;
+            return mlanstatus;
+        }
+    }
 
     wifi_init_imulink();
 
