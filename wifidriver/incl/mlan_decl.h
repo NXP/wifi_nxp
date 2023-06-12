@@ -90,7 +90,7 @@ Change log:
 #define MLAN_NET_IP_ALIGN 0
 
 /** DMA alignment */
-#define DMA_ALIGNMENT 64U
+#define DMA_ALIGNMENT 32U
 /** max size of TxPD */
 #define MAX_TXPD_SIZE 32
 
@@ -110,24 +110,35 @@ Change log:
 
 #ifdef STA_SUPPORT
 /** Default Win size attached during ADDBA request */
+#ifndef MLAN_STA_AMPDU_DEF_TXWINSIZE
 #ifdef RW610
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 64
 #else
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 16
 #endif
+#endif
+
 /** Default Win size attached during ADDBA response */
+#ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
+#endif
 #endif /* STA_SUPPORT */
 
 #ifdef UAP_SUPPORT
 /** Default Win size attached during ADDBA request */
+#ifndef MLAN_UAP_AMPDU_DEF_TXWINSIZE
 #ifdef RW610
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
 #else
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 16
 #endif
+#endif
+
 /** Default Win size attached during ADDBA response */
+#ifndef MLAN_UAP_AMPDU_DEF_RXWINSIZE
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 32
+#endif
+
 #endif /* UAP_SUPPORT */
 
 /** Block ack timeout value */
