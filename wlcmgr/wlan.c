@@ -1514,7 +1514,7 @@ static int security_profile_matches(const struct wlan_network *network, const st
         if (config->type == WLAN_SECURITY_WPA3_SAE)
             return (int)(res->WPA_WPA2_WEP.wpa3_sae);
         if (config->type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
-            return (int)(res->WPA_WPA2_WEP.wpa3_sae | res->WPA_WPA2_WEP.wpa2);
+            return (int)(res->WPA_WPA2_WEP.wpa3_sae | res->WPA_WPA2_WEP.wpa2 | res->WPA_WPA2_WEP.wpa2_sha256);
     }
     return WM_SUCCESS;
 }
@@ -1781,7 +1781,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 ret = wifi_send_add_wpa3_password((int)network->role, network->ssid, network->security.password,
                                                   network->security.password_len);
             }
-            else if (res->WPA_WPA2_WEP.wpa2 != 0U)
+            else if (res->WPA_WPA2_WEP.wpa2 != 0U || res->WPA_WPA2_WEP.wpa2_sha256 != 0U)
             {
                 wlcm_d("configuring WPA2 security");
                 wlcm_d("adding SSID and PSK to supplicant cache");
