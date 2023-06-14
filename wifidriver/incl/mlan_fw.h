@@ -2798,6 +2798,7 @@ typedef MLAN_PACK_START struct _MrvlIEtype_KeyParamSetV2_t
         wapi_param wapi;
         /** IGTK key param */
         cmac_aes_param cmac_aes;
+        /** IGTK key param */
         gmac_aes_256_param gmac_aes;
         /** gcmp key param */
         gcmp_param gcmp;

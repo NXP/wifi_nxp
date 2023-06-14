@@ -350,7 +350,7 @@ static int handle_input(char *handle_inbuf)
         unsigned inQuote : 1;
         unsigned done : 1;
     } stat;
-    static char *argv[32];
+    static char *argv[64];
     int argc                          = 0;
     int i                             = 0;
     unsigned int j                    = 0;

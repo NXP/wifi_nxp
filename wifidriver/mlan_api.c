@@ -1866,7 +1866,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
         if (!strncmp(wildcard_ssid, (char *)(user_scan_cfg->ssid_list[i].ssid), strlen(wildcard_ssid)))
         {
-            (void)memset(user_scan_cfg->ssid_list[i].ssid, 0x00, sizeof(wlan_user_scan_ssid));
+            (void)memset(user_scan_cfg->ssid_list[i].ssid, 0x00, sizeof(user_scan_cfg->ssid_list[i].ssid));
             user_scan_cfg->ssid_list[i].max_len = 40;
         }
     }

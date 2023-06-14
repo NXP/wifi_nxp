@@ -1158,6 +1158,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                 pauth_tlv->header.len = wlan_cpu_to_le16(pauth_tlv->header.len);
             }
         }
+#ifndef CONFIG_MLAN_WMSDK
         else if (pmpriv->sec_info.ewpa_enabled != 0U)
         {
             prsn_ie_tlv = (MrvlIEtypes_RsnParamSet_t *)(void *)pos;
@@ -1213,6 +1214,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         {
             /* Do nothing */
         }
+#endif /* CONFIG_MLAN_WMSDK */
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_WPS
     }
