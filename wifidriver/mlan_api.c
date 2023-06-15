@@ -2868,6 +2868,11 @@ int wifi_enable_11d_support()
 int wifi_enable_uap_11d_support()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *netif = net_get_uap_interface();
+
+    wpa_supp_set_ap_11d_state(netif, MTRUE);
+#endif
 
     wrapper_wlan_uap_11d_enable(ENABLE_11D);
 
@@ -2889,6 +2894,12 @@ int wifi_disable_11d_support()
 
 int wifi_disable_uap_11d_support()
 {
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *netif = net_get_uap_interface();
+
+    wpa_supp_set_ap_11d_state(netif, MFALSE);
+#endif
+
     mlan_adap->priv[1]->state_11d.user_enable_11d_support = DISABLE_11D;
     wrapper_wlan_uap_11d_enable(DISABLE_11D);
 

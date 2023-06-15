@@ -2703,7 +2703,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
     }
 
 #ifdef UAP_SUPPORT
-    if (enable_11d && !priv->bss_started)
+    if (enable_11d && !priv->bss_started && !wlan_11d_is_enabled(priv))
     {
         wuap_d("Eanble 11D support");
         wifi_enable_uap_11d_support();
