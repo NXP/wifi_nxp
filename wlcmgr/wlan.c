@@ -886,6 +886,9 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
            (!is_sta_connected() && !is_uap_started())
            || wakelock_isheld() || mlan_adap->pps_uapsd_mode)
             return kStatus_PMPowerStateNotAllowed;
+        /* Skip host sleep handshake for PM1 */
+        if(powerState == PM_LP_STATE_PM1)
+            goto done;
         if (!is_hs_handshake_done)
         {
             is_hs_handshake_done = WLAN_HOSTSLEEP_IN_PROCESS;
@@ -910,6 +913,9 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
     {
         if (is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
         {
+            /* Skip host sleep handshake for PM1 */
+            if(powerState == PM_LP_STATE_PM1)
+                goto done;
 #if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
             if (powerState == PM_LP_STATE_PM3)
             {
@@ -930,6 +936,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 #endif
         }
     }
+done:
     return kStatus_PMSuccess;
 }
 #endif
