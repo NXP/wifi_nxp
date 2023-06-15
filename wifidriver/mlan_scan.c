@@ -780,7 +780,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
                send event to the WLC manager. Since the event is send
                only after command response we can be sure that there
                is no race condition */
-            // split_scan_in_progress = false;
+            split_scan_in_progress = false;
         }
 
         /* Send the scan command to the firmware with the specified cfg */

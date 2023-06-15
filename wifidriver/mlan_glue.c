@@ -5362,14 +5362,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wifi_user_scan_config_cleanup();
                 return -WM_FAIL;
             }
-
-            if (is_split_scan_complete() && !pext_scan_result->more_event)
-            {
-                wifi_d("Split scan complete");
-                wifi_user_scan_config_cleanup();
-
-                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
-            }
             break;
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
