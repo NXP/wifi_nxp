@@ -488,19 +488,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     else if (ps_mode->action == (t_u16)SLEEP_CONFIRM)
     {
         wcmdr_d("#");
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        if (ieeeps_enabled || deepsleepps_enabled
-#ifdef CONFIG_WNM_PS
-            || (((mlan_private *)mlan_adap->priv[0])->wnm_set)
-#endif
-        )
-        {
-            mlan_adap->ps_state = PS_STATE_SLEEP;
-#ifdef CONFIG_HOST_SLEEP
-            wakelock_put();
-#endif
-        }
-#endif
+
         if (ieeeps_enabled)
         {
             *ps_event = (t_u16)WIFI_EVENT_IEEE_PS;
@@ -530,7 +518,11 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             /* sleep confirm response needs to get the sleep_rwlock, for this lock
              * is an indication that host needs to wakeup FW when reader (cmd/tx)
              * could not get the sleep_rwlock */
-            int ret = os_rwlock_write_lock(&sleep_rwlock, OS_WAIT_FOREVER);
+            int ret             = os_rwlock_write_lock(&sleep_rwlock, OS_WAIT_FOREVER);
+            mlan_adap->ps_state = PS_STATE_SLEEP;
+#ifdef CONFIG_HOST_SLEEP
+            wakelock_put();
+#endif
             if (ret == WM_SUCCESS)
             {
                 wcmdr_d("Get sleep rw lock successfully");
@@ -540,6 +532,10 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
                 pwr_e("Failed to get sleep rw lock");
                 return WIFI_EVENT_REASON_FAILURE;
             }
+        }
+        else
+        {
+            return WIFI_EVENT_REASON_FAILURE;
         }
 #endif
 
