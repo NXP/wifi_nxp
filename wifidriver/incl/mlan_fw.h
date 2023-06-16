@@ -7312,6 +7312,59 @@ typedef MLAN_PACK_START struct _TSP_CFG
 } MLAN_PACK_END TSP_CFG;
 #endif
 
+#ifdef CONFIG_COEX_DUTY_CYCLE
+/** TLV type : Coex duty cycle */
+#define TLV_TYPE_COEX_DUTY_CYCLE (PROPRIETARY_TLV_BASE_ID + 0x290)
+
+/** MrvlIETypes_SingleAntDutyCycle_Config_t */
+typedef MLAN_PACK_START struct _MrvlIETypes_SingleAntDutyCycle_Config_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Enable: 0x1 generic time, 0x2 Enable Dutycycle */
+    t_u16 enabled;
+    /** Enter value in Units (1Unit = 1ms), should be no more than wlanTime */
+    t_u16 nbTime;
+    /** Enter value in Units (1Unit = 1ms) */
+    t_u16 wlanTime;
+} MLAN_PACK_END MrvlIETypes_SingleAntDutyCycle_Config_t;
+
+/** HostCmd_SIGNLE_ANT_DUTY_CYCLE structure */
+typedef MLAN_PACK_START struct _HostCmd_SIGNLE_ANT_DUTY_CYCLE
+{
+    /** Action */
+    t_u16 action;
+    /** Reserved field */
+    t_u16 reserved;
+    /** Single Ant Duty Cycle Configuration Data */
+    MrvlIETypes_SingleAntDutyCycle_Config_t single_ant_cfg_data;
+} MLAN_PACK_END HostCmd_SIGNLE_ANT_DUTY_CYCLE;
+
+/** MrvlIETypes_DualAntDutyCycle_Config_t */
+typedef MLAN_PACK_START struct _MrvlIETypes_DualAntDutyCycle_Config_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** Enable: 0x1 generic time, 0x2 Enable Dutycycle */
+    t_u16 enabled;
+    /** Enter value in Units (1Unit = 1ms), should be no more than TotalTime */
+    t_u16 nbTime;
+    /** Enter value in Units (1Unit = 1ms) */
+    t_u16 wlanTime;
+    /** Enter value in Units (1Unit = 1ms) */
+    t_u16 wlanBlockTime;
+} MLAN_PACK_END MrvlIETypes_DualAntDutyCycle_Config_t;
+
+/** HostCmd_DUAL_ANT_DUTY_CYCLE structure */
+typedef MLAN_PACK_START struct _HostCmd_DUAL_ANT_DUTY_CYCLE
+{
+    t_u16 action;
+    t_u16 reserved;
+    /** Dual Ant Duty Cycle Configuration Data */
+    MrvlIETypes_DualAntDutyCycle_Config_t dual_ant_cfg_data;
+} MLAN_PACK_END HostCmd_DUAL_ANT_DUTY_CYCLE;
+#endif
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -7604,6 +7657,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
         HostCmd_DS_AUTO_TX auto_tx;
+#endif
+#ifdef CONFIG_COEX_DUTY_CYCLE
+        HostCmd_SIGNLE_ANT_DUTY_CYCLE single_ant_duty_cycle;
+        HostCmd_DUAL_ANT_DUTY_CYCLE dual_ant_duty_cycle;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

@@ -8359,6 +8359,140 @@ static void test_wlan_set_country_code(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_COEX_DUTY_CYCLE
+static void dump_wlan_single_ant_duty_cycle_usage()
+{
+    (void)PRINTF("Usage: wlan-single-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration>]\r\n");
+    (void)PRINTF("    <enable/disable> Enable - 1, Disable - 0\r\n");
+    (void)PRINTF("    <Ieee154Duration> Enter value in Units (1Unit = 1ms), no more than TotalDuration\r\n");
+    (void)PRINTF("    <TotalDuration> Enter value in Units (1Unit = 1ms), total duty cycle time\r\n");
+    (void)PRINTF("    Ieee154Duration should not equal to TotalDuration-Ieee154Duration\r\n");
+}
+
+static void test_wlan_single_ant_duty_cycle(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    unsigned int enable, nbTime, wlanTime;
+    if (argc != 4 && argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_single_ant_duty_cycle_usage();
+        return;
+    }
+
+    if (get_uint(argv[1], &enable, strlen(argv[1])))
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        dump_wlan_single_ant_duty_cycle_usage();
+        return;
+    }
+
+    if (enable == 1 && argc == 4)
+    {
+        if (get_uint(argv[2], &nbTime, strlen(argv[2])) || get_uint(argv[3], &wlanTime, strlen(argv[3])))
+        {
+            (void)PRINTF("Invalid arguments\r\n");
+            dump_wlan_single_ant_duty_cycle_usage();
+            return;
+        }
+
+        if ((nbTime > wlanTime) || (nbTime == (wlanTime - nbTime)))
+        {
+            (void)PRINTF("Invalid arguments\r\n");
+            dump_wlan_single_ant_duty_cycle_usage();
+            return;
+        }
+    }
+    else
+    {
+        nbTime   = 0;
+        wlanTime = 0;
+    }
+
+    ret = wlan_single_ant_duty_cycle((t_u16)enable, (t_u16)nbTime, (t_u16)wlanTime);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Set single ant duty cycle successfully\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Failed to set single ant duty cycle\r\n");
+    }
+
+    return;
+}
+
+static void dump_wlan_dual_ant_duty_cycle_usage()
+{
+    (void)PRINTF(
+        "Usage: wlan-dual-ant-duty-cycle <enable/disable> [<Ieee154Duration> <TotalDuration> "
+        "<Ieee154FarRangeDuration>]\r\n");
+    (void)PRINTF("    <enable/disable> Enable - 1, Disable - 0\r\n");
+    (void)PRINTF("    <Ieee154Duration> Enter value in Units (1Unit = 1ms), no more than TotalDuration\r\n");
+    (void)PRINTF("    <TotalDuration> Enter value in Units (1Unit = 1ms)\r\n");
+    (void)PRINTF("    <Ieee154FarRangeDuration> Enter value in Units (1Unit = 1ms)\r\n");
+    (void)PRINTF("    Ieee154Duration, TotalDuration and Ieee154FarRangeDuration should not equal to each other\r\n");
+}
+
+static void test_wlan_dual_ant_duty_cycle(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    unsigned int enable, nbTime, wlanTime, wlanBlockTime;
+    if (argc != 5 && argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_dual_ant_duty_cycle_usage();
+        return;
+    }
+
+    if (get_uint(argv[1], &enable, strlen(argv[1])))
+    {
+        (void)PRINTF("Invalid arguments\r\n");
+        dump_wlan_dual_ant_duty_cycle_usage();
+        return;
+    }
+
+    if (enable == 1 && argc == 5)
+    {
+        if (get_uint(argv[2], &nbTime, strlen(argv[2])) || get_uint(argv[3], &wlanTime, strlen(argv[3])) ||
+            get_uint(argv[4], &wlanBlockTime, strlen(argv[4])))
+        {
+            (void)PRINTF("Invalid arguments\r\n");
+            dump_wlan_dual_ant_duty_cycle_usage();
+            return;
+        }
+
+        if ((nbTime > wlanTime) || (nbTime == (wlanTime - nbTime)) || (nbTime == wlanBlockTime) ||
+            (wlanBlockTime == (wlanTime - nbTime)))
+        {
+            (void)PRINTF("Invalid arguments\r\n");
+            dump_wlan_dual_ant_duty_cycle_usage();
+            return;
+        }
+    }
+    else
+    {
+        nbTime        = 0;
+        wlanTime      = 0;
+        wlanBlockTime = 0;
+    }
+
+    ret = wlan_dual_ant_duty_cycle((t_u16)enable, (t_u16)nbTime, (t_u16)wlanTime, (t_u16)wlanBlockTime);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Set dual ant duty cycle successfully\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Failed to set dual ant duty cycle\r\n");
+    }
+
+    return;
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
@@ -8605,6 +8739,12 @@ static struct cli_command tests[] = {
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
 #endif
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
+#ifdef CONFIG_COEX_DUTY_CYCLE
+    {"wlan-single-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration>]",
+    test_wlan_single_ant_duty_cycle},
+    {"wlan-dual-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]",
+    test_wlan_dual_ant_duty_cycle},
+#endif
 };
 
 /* Register our commands with the MTF. */

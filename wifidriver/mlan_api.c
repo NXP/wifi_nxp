@@ -5594,3 +5594,72 @@ int wifi_process_wls_csi_event(void *p_data)
 #endif
 
 #endif
+
+#ifdef CONFIG_COEX_DUTY_CYCLE
+int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command                               = wlan_cpu_to_le16(HostCmd_CMD_ROBUST_COEX);
+    cmd->size                                  = sizeof(HostCmd_SIGNLE_ANT_DUTY_CYCLE) + S_DS_GEN;
+    cmd->seq_num                               = 0x0;
+    cmd->result                                = 0x00;
+    cmd->params.single_ant_duty_cycle.action   = HostCmd_ACT_GEN_SET;
+    cmd->params.single_ant_duty_cycle.reserved = 0;
+    cmd->params.single_ant_duty_cycle.single_ant_cfg_data.header.type = TLV_TYPE_COEX_DUTY_CYCLE;
+
+    if (enable)
+    {
+        cmd->params.single_ant_duty_cycle.single_ant_cfg_data.header.len =
+            sizeof(MrvlIETypes_SingleAntDutyCycle_Config_t) - 4;
+        cmd->params.single_ant_duty_cycle.single_ant_cfg_data.enabled  = 0x0002;
+        cmd->params.single_ant_duty_cycle.single_ant_cfg_data.nbTime   = nbTime;
+        cmd->params.single_ant_duty_cycle.single_ant_cfg_data.wlanTime = wlanTime;
+    }
+    else
+    {
+        cmd->params.single_ant_duty_cycle.single_ant_cfg_data.header.len = sizeof(t_u16);
+        cmd->params.single_ant_duty_cycle.single_ant_cfg_data.enabled    = 0x0004;
+    }
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command                                                  = wlan_cpu_to_le16(HostCmd_CMD_ROBUST_COEX);
+    cmd->size                                                     = sizeof(HostCmd_DUAL_ANT_DUTY_CYCLE) + S_DS_GEN;
+    cmd->seq_num                                                  = 0x0;
+    cmd->result                                                   = 0x00;
+    cmd->params.dual_ant_duty_cycle.action                        = HostCmd_ACT_GEN_SET;
+    cmd->params.dual_ant_duty_cycle.reserved                      = 0;
+    cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.header.type = TLV_TYPE_COEX_DUTY_CYCLE;
+
+    if (enable)
+    {
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.header.len =
+            sizeof(MrvlIETypes_DualAntDutyCycle_Config_t) - 4;
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.enabled       = 0x0002;
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.nbTime        = nbTime;
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.wlanTime      = wlanTime;
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.wlanBlockTime = wlanBlockTime;
+    }
+    else
+    {
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.header.len = sizeof(t_u16);
+        cmd->params.dual_ant_duty_cycle.dual_ant_cfg_data.enabled    = 0x0004;
+    }
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif

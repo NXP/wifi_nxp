@@ -5912,4 +5912,24 @@ int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive);
  */
 int wlan_set_country_code(const char *alpha2);
 
+#ifdef CONFIG_COEX_DUTY_CYCLE
+/**
+ * Set single ant duty cycle.
+ * \param[in] enable
+ * \param[in] nbTime
+ * \param[in] wlanTime
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
+
+/**
+ * Set dual ant duty cycle.
+ * \param[in] enable
+ * \param[in] nbTime
+ * \param[in] wlanTime
+ * \param[in] wlanBlockTime
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
+#endif
 #endif /* __WLAN_H__ */

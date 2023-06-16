@@ -4165,6 +4165,14 @@ assoc_resp_ret:
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
+#ifdef CONFIG_COEX_DUTY_CYCLE
+            case HostCmd_CMD_ROBUST_COEX:
+                if (resp->result == HostCmd_RESULT_OK)
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/

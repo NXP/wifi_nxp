@@ -12222,3 +12222,15 @@ int wlan_set_country_code(const char *alpha2)
 #endif
     return wifi_set_country_code(country_code);
 }
+
+#ifdef CONFIG_COEX_DUTY_CYCLE
+int wlan_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime)
+{
+    return wifi_single_ant_duty_cycle(enable, nbTime, wlanTime);
+}
+
+int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime)
+{
+    return wifi_dual_ant_duty_cycle(enable, nbTime, wlanTime, wlanBlockTime);
+}
+#endif

@@ -1904,4 +1904,8 @@ void wifi_uap_client_deauth(t_u8 *sta_addr);
 
 #endif
 
+#ifdef CONFIG_COEX_DUTY_CYCLE
+int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
+int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
+#endif
 #endif /* __WIFI_H__ */
