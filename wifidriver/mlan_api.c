@@ -29,6 +29,12 @@
 #ifdef CONFIG_MBO
 #include "mlan_mbo.h"
 #endif
+
+#ifdef CONFIG_WPA_SUPP
+#include <wm_net.h>
+#include <supp_api.h>
+#endif
+
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 

@@ -15,6 +15,7 @@
 #include <wm_os.h>
 #include <wm_net.h>
 #include <wifi-debug.h>
+#include <wlan_11d.h>
 #ifdef CONFIG_WMSTATS
 #include <wmstats.h>
 #endif /* CONFIG_WMSTATS */
