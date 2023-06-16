@@ -8043,8 +8043,11 @@ void wlan_reset(cli_reset_option ResetOption)
              /*Disconnect form AP if station is associated with an AP.*/
             if (wlan.sta_state > CM_STA_ASSOCIATING)
             {
-                (void)wifi_deauthenticate((uint8_t *)wlan.networks[wlan.cur_network_idx].bssid);
-                wlan.sta_return_to = CM_STA_IDLE;
+                wlan_disconnect();
+                while (wlan.sta_return_to != CM_STA_IDLE)
+                {
+                    os_thread_sleep(os_msec_to_ticks(1000));
+                }
             }
 
             /*Stop current uAP if uAP is started.*/
@@ -8061,10 +8064,6 @@ void wlan_reset(cli_reset_option ResetOption)
             wifi_set_tx_status(WIFI_DATA_BLOCK);
             /* Block RX data */
             wifi_set_rx_status(WIFI_DATA_BLOCK);
-#ifdef CONFIG_WPA_SUPP
-            wifi_supp_deinit();
-            wpa_supp_deinit();
-#endif
             /* Stop and Remove all network interfaces */
             wlan_remove_all_networks();
 
@@ -8074,6 +8073,10 @@ void wlan_reset(cli_reset_option ResetOption)
                 wifi_send_shutdown_cmd();
 
             wifi_scan_stop();
+#ifdef CONFIG_WPA_SUPP
+            wifi_supp_deinit();
+            wpa_supp_deinit();
+#endif
 
             /* wait for imu task done */
             wlan_imu_get_task_lock();
