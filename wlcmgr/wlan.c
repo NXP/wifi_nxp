@@ -4879,6 +4879,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     wlan_ieeeps_on(0);
     wlan_deepsleepps_on();
 #endif
+    wlan_enable_uap_11d(1);
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
