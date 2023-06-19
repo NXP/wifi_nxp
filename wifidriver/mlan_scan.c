@@ -1282,8 +1282,12 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 
 #ifdef CONFIG_WPA_SUPP_WPS
 
-void check_for_wps_ie(
-    const uint8_t *OuiType, bool *wps_IE_exist, t_u16 *wps_session, void *element_data, unsigned element_len);
+void check_for_wps_ie(const uint8_t *poui,
+                      t_u8 oui_type,
+                      bool *wps_IE_exist,
+                      t_u16 *wps_session,
+                      void *element_data,
+                      unsigned element_len);
 #endif /* CONFIG_WPA_SUPP_WPS */
 
 /**
@@ -1919,8 +1923,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
 #ifdef CONFIG_WPA_SUPP_WPS
                 /* fixme: Added for WMSDK. Check if can be merged properly with
                    mlan. There should be a better way */
-                check_for_wps_ie(pvendor_ie->vend_hdr.oui, &pbss_entry->wps_IE_exist, &pbss_entry->wps_session,
-                                 pcurrent_ptr + 2, element_len);
+                check_for_wps_ie(pvendor_ie->vend_hdr.oui, pvendor_ie->vend_hdr.oui_type, &pbss_entry->wps_IE_exist,
+                                 &pbss_entry->wps_session, pcurrent_ptr + 2, element_len);
 #endif /* CONFIG_WPA_SUPP_WPS */
                 break;
             case RSN_IE:

@@ -73,12 +73,12 @@ static t_u16 wps_parser(t_u8 *message, size_t size)
 }
 
 void check_for_wps_ie(
-    const t_u8 *OuiType, bool *wps_IE_exist, t_u16 *wps_session, void *element_data, unsigned element_len)
+    const t_u8 *poui, t_u8 oui_type, bool *wps_IE_exist, t_u16 *wps_session, void *element_data, unsigned element_len)
 {
-    if (!memcmp(OuiType, &wps_oui, sizeof(wps_oui)))
+    if (!memcmp(poui, &wps_oui, sizeof(wps_oui) - 1U) && oui_type == wps_oui[3])
     {
         /* WPS IE is present in probe response. */
-        wifi_d("WPS IE :: %x:%x:%x:%x", OuiType[0], OuiType[1], OuiType[2], OuiType[3]);
+        wifi_d("WPS IE :: %x:%x:%x:%x", poui[0], poui[1], poui[2], oui_type);
 
         *wps_IE_exist = true;
         *wps_session  = wps_parser(element_data, element_len);
