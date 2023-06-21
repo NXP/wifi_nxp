@@ -11601,9 +11601,9 @@ void wlan_config_mef(int type, t_u8 mef_action)
         case MEF_TYPE_IPV6_NS:
             ret = wlan_set_ipv6_ns_mef(mef_action);
             if (ret == WM_SUCCESS)
-                (void)PRINTF("Add multicast MEF entry successful\n\r");
+                (void)PRINTF("Add ns MEF entry successful\n\r");
             else
-                (void)PRINTF("Add multicast MEF entry Failed %d\n\r");
+                (void)PRINTF("Add ns MEF entry Failed %d\n\r");
             break;
         default:
             (void)PRINTF("Error: unknown MEF type:%d", type);
