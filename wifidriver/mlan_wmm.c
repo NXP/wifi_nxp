@@ -2672,13 +2672,19 @@ uint8_t *wifi_wmm_get_outbuf_enh(
     outbuf_t *buf = MNULL;
     t_u8 tx_pause;
 
-    buf = wifi_wmm_buf_get();
-    if (buf != MNULL)
-        goto SUCC;
-
     /* check tx_pause */
     tx_pause     = wifi_wmm_is_tx_pause(interface, queue, ra);
     *is_tx_pause = (tx_pause == MTRUE) ? true : false;
+
+    if (tx_pause == MTRUE)
+    {
+        *outbuf_len = 0;
+        return MNULL;
+    }
+
+    buf = wifi_wmm_buf_get();
+    if (buf != MNULL)
+        goto SUCC;
 
     /* loop tid_tbl to find buf to replace in wmm ralists */
     for (i = 0; i < MAX_AC_QUEUES; i++)
