@@ -1261,7 +1261,7 @@ void user_recv_monitor_data(const t_u8 *rcvdata)
     t_u16 inimupkt_len     = *(t_u16 *)rcvdata;
 
     datalen = rxpd->rx_pkt_length + sizeof(t_s8);
-    rssi    = rxpd->snr + rxpd->nf;
+    rssi    = rxpd->snr - rxpd->nf;
 
     if ((rxpd->rx_pkt_length + rxpd->rx_pkt_offset + INTF_HEADER_LEN) != inimupkt_len)
     {
