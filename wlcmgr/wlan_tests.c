@@ -636,7 +636,7 @@ static void dump_wlan_add_usage(void)
         "/sae-ft"
 #endif
 #endif
-        " <secret> mfpc <1> mfpr <0/1>]"
+        " <secret> [pwe <0/1/2>] mfpc <1> mfpr <0/1>]"
         "\r\n");
     (void)PRINTF("      If using WPA3 SAE security, always set the PMF configuration.\r\n");
     (void)PRINTF("  For static IP address assignment:\r\n");
