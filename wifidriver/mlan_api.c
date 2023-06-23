@@ -1085,15 +1085,18 @@ int wifi_get_set_rf_test_generic(t_u16 cmd_action, wifi_mfg_cmd_generic_cfg_t *w
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-
+    mlan_ds_misc_cfg misc;
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
+
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
                                               0, NULL, wifi_mfg_cmd_generic_cfg, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(wifi_mfg_cmd_generic_cfg);
+    wifi_wait_for_cmdresp(&misc);
+    memcpy(wifi_mfg_cmd_generic_cfg, (wifi_mfg_cmd_generic_cfg_t *)&misc.param.mfg_generic_cfg, sizeof(wifi_mfg_cmd_generic_cfg_t));
     return wm_wifi.cmd_resp_status;
 }
 
@@ -1102,8 +1105,10 @@ int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action,
                                   wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     wifi_get_command_lock();
+    mlan_ds_misc_cfg misc;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
@@ -1111,7 +1116,8 @@ int wifi_get_set_rf_test_tx_frame(t_u16 cmd_action,
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(wifi_mfg_cmd_generic_cfg);
+    wifi_wait_for_cmdresp(&misc);
+    memcpy(wifi_mfg_cmd_generic_cfg, (wifi_mfg_cmd_generic_cfg_t *)&misc.param.mfg_generic_cfg, sizeof(wifi_mfg_cmd_generic_cfg_t));
     return wm_wifi.cmd_resp_status;
 }
 
@@ -1119,8 +1125,10 @@ int wifi_get_set_rf_trigger_frame_cfg(t_u16 cmd_action,
                                       wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t *wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr)
 {
     wifi_get_command_lock();
+    mlan_ds_misc_cfg misc;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
@@ -1128,15 +1136,18 @@ int wifi_get_set_rf_trigger_frame_cfg(t_u16 cmd_action,
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr : NULL);
+    wifi_wait_for_cmdresp(cmd_action == HostCmd_ACT_GEN_GET ? &misc : NULL);
+    memcpy(wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr, (wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t *)&misc.param.mfg_tx_trigger_config, sizeof(wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t));
     return wm_wifi.cmd_resp_status;
 }
 
 int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action, wifi_mfg_cmd_he_tb_tx_t *wifi_mfg_cmd_he_tb_tx)
 {
     wifi_get_command_lock();
+    mlan_ds_misc_cfg misc;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
@@ -1153,8 +1164,10 @@ int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
                                  wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
 {
     wifi_get_command_lock();
+    mlan_ds_misc_cfg misc;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
@@ -1162,7 +1175,8 @@ int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
     if (rv != MLAN_STATUS_SUCCESS)
         return -WM_FAIL;
 
-    wifi_wait_for_cmdresp(wifi_mfg_cmd_generic_cfg);
+    wifi_wait_for_cmdresp(&misc);
+    memcpy(wifi_mfg_cmd_generic_cfg, (wifi_mfg_cmd_generic_cfg_t *)&misc.param.mfg_generic_cfg, sizeof(wifi_mfg_cmd_generic_cfg_t));
     return wm_wifi.cmd_resp_status;
 }
 

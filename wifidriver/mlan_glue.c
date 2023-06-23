@@ -3634,9 +3634,7 @@ assoc_resp_ret:
             {
                 if ((resp->result == HostCmd_RESULT_OK) && wm_wifi.cmd_resp_priv)
                 {
-                    wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg =
-                        (wifi_mfg_cmd_generic_cfg_t *)wm_wifi.cmd_resp_priv;
-                    rv = wlan_ret_mfg(pmpriv, resp, wifi_mfg_cmd_generic_cfg);
+                    rv = wlan_ret_mfg(pmpriv, resp, wm_wifi.cmd_resp_priv);
                     if (rv == MLAN_STATUS_SUCCESS)
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;

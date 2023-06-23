@@ -56,7 +56,7 @@ static mlan_status wlan_ret_mfg_tx_cont(pmlan_private pmpriv, HostCmd_DS_COMMAND
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-    misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+    misc = (mlan_ds_misc_cfg *)pioctl_buf;
     cfg  = (mlan_ds_mfg_cmd_tx_cont *)&misc->param.mfg_tx_cont;
 
     cfg->error           = wlan_le32_to_cpu(mcmd->error);
@@ -92,7 +92,7 @@ static mlan_status wlan_ret_mfg_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAN
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-    misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+    misc = (mlan_ds_misc_cfg *)pioctl_buf;
     cfg  = (mlan_ds_mfg_cmd_tx_frame2 *)&misc->param.mfg_tx_frame2;
 
     cfg->error             = wlan_le32_to_cpu(mcmd->error);
@@ -108,7 +108,7 @@ static mlan_status wlan_ret_mfg_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAN
     cfg->tx_bf             = wlan_le32_to_cpu(mcmd->tx_bf);
     cfg->gf_mode           = wlan_le32_to_cpu(mcmd->gf_mode);
     cfg->stbc              = wlan_le32_to_cpu(mcmd->stbc);
-    memcpy_ext(pmpriv->adapter, cfg->bssid, mcmd->bssid, MLAN_MAC_ADDR_LENGTH, sizeof(cfg->bssid));
+    memcpy(cfg->bssid, mcmd->bssid, sizeof(cfg->bssid));
 
     LEAVE();
     return MLAN_STATUS_SUCCESS;
@@ -136,7 +136,7 @@ static mlan_status wlan_ret_mfg_he_tb_tx(pmlan_private pmpriv, HostCmd_DS_COMMAN
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-    misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+    misc = (mlan_ds_misc_cfg *)pioctl_buf;
     cfg  = (mlan_ds_mfg_Cmd_HE_TBTx_t *)&misc->param.mfg_he_power;
 
     cfg->enable       = wlan_le16_to_cpu(mcmd->enable);
@@ -173,7 +173,7 @@ static mlan_status wlan_ret_mfg_config_trigger_frame(pmlan_private pmpriv,
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-    misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+    misc = (mlan_ds_misc_cfg *)pioctl_buf;
     cfg  = (mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t *)&misc->param.mfg_tx_trigger_config;
 
     cfg->enable_tx       = wlan_le32_to_cpu(mcmd->enable_tx);
@@ -207,6 +207,7 @@ static mlan_status wlan_ret_mfg_config_trigger_frame(pmlan_private pmpriv,
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf)
 {
     HostCmd_DS_MFG_CMD_GENERIC_CFG *mcmd = (HostCmd_DS_MFG_CMD_GENERIC_CFG *)&resp->params.mfg_generic_cfg;
+    mlan_ds_misc_cfg *misc_cfg = (mlan_ds_misc_cfg*) pioctl_buf;
     mlan_ds_mfg_cmd_generic_cfg *cfg     = MNULL;
     mlan_status ret                      = MLAN_STATUS_SUCCESS;
 
@@ -245,7 +246,7 @@ mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *p
             ret = MLAN_STATUS_FAILURE;
             goto cmd_mfg_done;
     }
-    cfg = (mlan_ds_mfg_cmd_generic_cfg *)pioctl_buf;
+    cfg = (mlan_ds_mfg_cmd_generic_cfg *)&(misc_cfg->param);
 
     cfg->error = wlan_le32_to_cpu(mcmd->error);
     cfg->data1 = wlan_le32_to_cpu(mcmd->data1);
