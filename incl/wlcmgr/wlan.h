@@ -5861,6 +5861,17 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
                                       t_u32 seq_number,
                                       t_u32 ack_number,
                                       t_u8 enable);
+
+/**
+ * Get cloud keep alive status for given destination ip and port
+ *
+ * \param[in] dst_ip Destination ip address
+ * \param[in] dst_port Destination port
+ *
+ * \return 1 if enabled otherwise 0.
+ */
+int wlan_cloud_keep_alive_enabled(t_u32 dst_ip, t_u16 dst_port);
+
 /**
  * Start cloud keep alive
  * \param[in]    void

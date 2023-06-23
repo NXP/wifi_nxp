@@ -239,12 +239,10 @@ static void print_network(struct wlan_network *network)
     }
     (void)PRINTF("\r\n\trole: %s\r\n", print_role(network->role));
 
-#ifdef CONFIG_WPA_SUPP
     if (network->role == WLAN_BSS_ROLE_STA)
     {
         (void)PRINTF("\r\n\tRSSI: %ddBm\r\n", network->rssi);
     }
-#endif
 
     switch (network->security.type)
     {
@@ -7093,10 +7091,142 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
+
+#include "lwip/priv/tcp_priv.h"
+#include "lwip/stats.h"
+#include "lwip/inet.h"
+#include "lwip/inet_chksum.h"
+
+#define DATA_LEN 1460
+
+static void dump_wlan_tcp_client_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-tcp-client dst_ip <dst_ip> src_port <src_port> dst_port <dst_port>\r\n");
+    (void)PRINTF("        <dst_ip> Destination IP\r\n");
+    (void)PRINTF("        <src_port> Source port\r\n");
+    (void)PRINTF("        <dst_port> Destination port\r\n");
+    (void)PRINTF("        Please specify dst_ip src_port and dst_port\r\n");
+    (void)PRINTF("    wlan-tcp-client dst_ip 192.168.1.50 src_port 54236 dst_port 9526\r\n");
+}
+
+static err_t wlan_tcp_client_connected(void *arg, struct tcp_pcb *pcb, err_t err)
+{
+    char clientString[] = "hello\r\n";
+    t_u8 count          = 5;
+    char *clientData    = NULL;
+
+    clientData = os_mem_alloc(DATA_LEN);
+    (void)memset((t_u8 *)clientData, 0, DATA_LEN);
+    (void)memcpy(clientData, clientString, sizeof(clientString));
+
+    while (count--)
+    {
+        tcp_write(pcb, clientData, DATA_LEN, TCP_WRITE_FLAG_COPY);
+        tcp_output(pcb);
+    }
+
+    return ERR_OK;
+}
+
+static void test_wlan_tcp_client(int argc, char **argv)
+{
+    struct tcp_pcb *tcp_client_pcb;
+    ip_addr_t ipaddr;
+    int ret           = -WM_FAIL;
+    int arg           = 0;
+    int dst_ip_set    = 0;
+    int src_port_set  = 0;
+    int dst_port_set  = 0;
+    t_u32 dst_ip      = 0;
+    t_u16 src_port    = 0;
+    t_u16 dst_port    = 0;
+    unsigned int port = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_tcp_client_usage();
+        return;
+    }
+
+    if (!is_sta_connected())
+    {
+        (void)PRINTF("Can not start wlan_tcp_client in disconnected state\r\n");
+        return;
+    }
+
+    arg += 1;
+    do
+    {
+        if (string_equal("dst_ip", argv[arg]))
+        {
+            dst_ip     = net_inet_aton(argv[arg + 1]);
+            dst_ip_set = 1;
+            arg += 2;
+        }
+        else if (string_equal("src_port", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], (unsigned int *)&port, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid src_port argument\r\n");
+                return;
+            }
+            src_port     = (uint16_t)(port & 0XFFFF);
+            src_port_set = 1;
+            arg += 2;
+        }
+        else if (string_equal("dst_port", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], (unsigned int *)&port, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid dst_port argument\r\n");
+                return;
+            }
+            dst_port     = (uint16_t)(port & 0XFFFF);
+            dst_port_set = 1;
+            arg += 2;
+        }
+        else
+        {
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            dump_wlan_tcp_client_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if (!dst_ip_set || !src_port_set || !dst_port_set)
+    {
+        dump_wlan_tcp_client_usage();
+        (void)PRINTF("Error: please specify dst_ip src_port and dst_port\r\n");
+        return;
+    }
+
+    if (!wlan_cloud_keep_alive_enabled(dst_ip, dst_port))
+    {
+        (void)PRINTF("Cloud keep alive not started for given destination ip and port\r\n");
+        return;
+    }
+
+    (void)memcpy(&ipaddr.u_addr.ip4, &dst_ip, sizeof(ip4_addr_t));
+#ifdef CONFIG_IPV6
+    ipaddr.type = IPADDR_TYPE_V4;
+#endif
+
+    tcp_client_pcb = tcp_new();
+    tcp_bind(tcp_client_pcb, IP_ADDR_ANY, src_port);
+
+    if (tcp_client_pcb != NULL)
+    {
+        tcp_connect(tcp_client_pcb, &ipaddr, dst_port, wlan_tcp_client_connected);
+    }
+}
+
 static void dump_wlan_cloud_keep_alive_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-cloud-keep-alive start dst_mac <dst_mac> dst_ip <dst_ip> dst_port <dst_port>\r\n");
+    (void)PRINTF("    wlan-cloud-keep-alive start id <id> dst_mac <dst_mac> dst_ip <dst_ip> dst_port <dst_port>\r\n");
+    (void)PRINTF("        <id> Keep alive id from 0 to 3\r\n");
     (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
     (void)PRINTF("        <dst_ip> Destination IP\r\n");
     (void)PRINTF("        <dst_port> Destination port\r\n");
@@ -7109,17 +7239,19 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
 {
     int ret          = -WM_FAIL;
     int arg          = 1;
+    int id_set       = 0;
     int dst_mac_set  = 0;
     int dst_ip_set   = 0;
     int dst_port_set = 0;
+
     wlan_cloud_keep_alive_t cloud_keep_alive;
-    t_u16 dst_port_input = 0;
-    /* Set the keep alive id to 1 for test */
-    t_u8 mkeep_alive_id_default = 1;
+
     /* Period to send keep alive packet, set the default value to 55s(The unit is milliseconds) */
     t_u32 send_interval_default = 55000;
+
     /* Period to send retry packet, set the default value to 20s(The unit is milliseconds) */
     t_u16 retry_interval_default = 20000;
+
     /* Count to send retry packet, set the default value to 3 */
     t_u16 retry_count_default = 3;
 
@@ -7130,14 +7262,8 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
         return;
     }
 
-    if (!is_sta_connected())
-    {
-        (void)PRINTF("Can not start cloud keep alive in disconnected state\r\n");
-        return;
-    }
+    memset(&cloud_keep_alive, 0x00, sizeof(wlan_cloud_keep_alive_t));
 
-    /* Could support the maximum of 4 IDs, here set the keep alive id to 1 for test */
-    cloud_keep_alive.mkeep_alive_id = mkeep_alive_id_default;
     if (string_equal("start", argv[1]))
     {
         /* Period to send keep alive packet, set the default value to 55s(The unit is milliseconds) */
@@ -7150,7 +7276,19 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
         arg += 1;
         do
         {
-            if (string_equal("dst_mac", argv[arg]))
+            if (string_equal("id", argv[arg]))
+            {
+                errno                           = 0;
+                cloud_keep_alive.mkeep_alive_id = strtol(argv[arg + 1], NULL, 10);
+                if (errno != 0)
+                {
+                    (void)PRINTF("Error during strtoul:id errno:%d\r\n", errno);
+                }
+
+                id_set = 1;
+                arg += 2;
+            }
+            else if (string_equal("dst_mac", argv[arg]))
             {
                 ret = get_mac(argv[arg + 1], (char *)&cloud_keep_alive.dst_mac, ':');
                 if (ret != 0)
@@ -7176,8 +7314,8 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
                     (void)PRINTF("Error: invalid dst_port argument\r\n");
                     return;
                 }
-                dst_port_input = (uint16_t)(dst_port & 0XFFFF);
-                dst_port_set   = 1;
+                cloud_keep_alive.dst_port = (uint16_t)(dst_port & 0XFFFF);
+                dst_port_set              = 1;
                 arg += 2;
             }
             else
@@ -7187,7 +7325,7 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
                 return;
             }
         } while (arg < argc);
-        if (!dst_mac_set || !dst_ip_set || !dst_port_set)
+        if (!id_set || !dst_mac_set || !dst_ip_set || !dst_port_set)
         {
             dump_wlan_cloud_keep_alive_usage();
             (void)PRINTF("Error: please specify dst_mac, dst_ip and dst_port\r\n");
@@ -7208,13 +7346,13 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
     }
     else
     {
-        (void)PRINTF("Error: invalid [%d] argument\r\n", arg + 1);
+        (void)PRINTF("Error: invalid [%d] argument, give start/stop/reset\r\n", arg + 1);
         dump_wlan_cloud_keep_alive_usage();
         return;
     }
     if (cloud_keep_alive.enable == MTRUE)
     {
-        ret = wlan_save_cloud_keep_alive_params(&cloud_keep_alive, 0, dst_port_input, 0, 0, MTRUE);
+        ret = wlan_save_cloud_keep_alive_params(&cloud_keep_alive, 0, 0, 0, 0, MTRUE);
     }
     else
     {
@@ -8737,6 +8875,7 @@ static struct cli_command tests[] = {
     {"wlan-set-multiple-dtim", "<value>", test_wlan_set_multiple_dtim},
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     {"wlan-cloud-keep-alive", "<start/stop/reset>", test_wlan_cloud_keep_alive},
+    {"wlan_tcp_client", "dst_ip <dst_ip> src_port <src_port> dst_port <dst_port>", test_wlan_tcp_client},
 #endif
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
 #ifdef CONFIG_COEX_DUTY_CYCLE

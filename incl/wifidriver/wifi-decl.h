@@ -864,6 +864,7 @@ typedef struct
     t_u16 retry_interval;
     /** Count to send retry packet */
     t_u16 retry_count;
+    /** Source MAC address */
     t_u8 src_mac[MLAN_MAC_ADDR_LENGTH];
     /** Destination MAC address */
     t_u8 dst_mac[MLAN_MAC_ADDR_LENGTH];
@@ -871,6 +872,10 @@ typedef struct
     t_u32 src_ip;
     /** Destination IP */
     t_u32 dst_ip;
+    /** Source Port */
+    t_u16 src_port;
+    /** Destination Port */
+    t_u16 dst_port;
     /** Packet length */
     t_u16 pkt_len;
     /** Packet buffer */

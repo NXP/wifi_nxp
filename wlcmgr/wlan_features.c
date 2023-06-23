@@ -31,52 +31,6 @@ static void test_wlan_ns_offload(int argc, char **argv)
         (void)PRINTF("Failed to enabled wlan auto arp offload, error: %d", ret);
     }
 }
-static void test_wlan_tcp_keep_alive(int argc, char **argv)
-{
-    struct wlan_network network;
-    int ret = -WM_FAIL;
-    t_u8 enable;
-    t_u32 timeout;
-    t_u16 interval, max_keep_alive;
-    wlan_tcp_keep_alive_t keep_alive_params;
-    if (argc < 2)
-    {
-        (void)PRINTF("Usage: %s <0/1>\r\n", argv[0]);
-        (void)PRINTF("Error: Specify 0 to Disable or 1 to Enable\r\n");
-        return;
-    }
-    else if (atoi(argv[1]) == 1 && argc != 5)
-    {
-        (void)PRINTF("Usage:%s <0/1> <timeout_val> <interval_val> <max_keep_alives_val>", argv[0]);
-        return;
-    }
-    enable         = atoi(argv[1]);
-    timeout        = atoi(argv[2]);
-    interval       = atoi(argv[3]);
-    max_keep_alive = atoi(argv[4]);
-    wlan_get_current_network(&network);
-    (void)memset(&keep_alive_params, 0, sizeof(wlan_tcp_keep_alive_t));
-    keep_alive_params.enable          = enable;
-    keep_alive_params.timeout         = timeout;
-    keep_alive_params.interval        = interval;
-    keep_alive_params.max_keep_alives = max_keep_alive;
-    keep_alive_params.dst_ip          = network.ip.ipv4.gw;
-    (void)memcpy(&keep_alive_params.dst_mac[0], &network.bssid[0], MLAN_MAC_ADDR_LENGTH);
-    (void)PRINTF("%02X:%02X:%02X:%02X:%02X:%02X\r\n", keep_alive_params.dst_mac[0], keep_alive_params.dst_mac[1],
-                 keep_alive_params.dst_mac[2], keep_alive_params.dst_mac[3], keep_alive_params.dst_mac[4],
-                 keep_alive_params.dst_mac[5]);
-    (void)PRINTF("1->keep_alive_enable:%d\r\n", keep_alive_params.enable);
-    ret = wlan_tcp_keep_alive(&keep_alive_params);
-    if (ret == WM_SUCCESS)
-    {
-        if (enable)
-            (void)PRINTF("Enabled wlan tcp keep alive feature\r\n");
-        else
-            (void)PRINTF("Disable wlan tcp keep alive feature\r\n");
-    }
-    else
-        (void)PRINTF("Failed to enabled wlan tcp keep alive feature\r\n");
-}
 
 static void test_wlan_auto_arp(int argc, char **argv)
 {
@@ -149,7 +103,6 @@ static void test_wlan_add_packet_filter(int argc, char **argv)
 
 static struct cli_command features[] = {
     {"enable-ns-offload", NULL, test_wlan_ns_offload},
-    {"wlan-tcp-keep-alive", "<0/1> <timeout_value> <interval_value> ...", test_wlan_tcp_keep_alive},
     {"wlan-auto-arp", NULL, test_wlan_auto_arp},
     {"wlan-add-packet-filter", "0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........",
      test_wlan_add_packet_filter},
