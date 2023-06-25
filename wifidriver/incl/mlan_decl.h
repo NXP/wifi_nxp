@@ -164,6 +164,8 @@ Change log:
 #define MLAN_RATE_INDEX_MCS4 4U
 /** Rate index for MCS 7 */
 #define MLAN_RATE_INDEX_MCS7 7U
+/** Rate index for MCS 8 */
+#define MLAN_RATE_INDEX_MCS8 8U
 /** Rate index for MCS 9 */
 #define MLAN_RATE_INDEX_MCS9 9U
 #ifdef CONFIG_11AX

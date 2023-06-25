@@ -578,8 +578,10 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        7       18 Mbps\r\n");
     (void)PRINTF("\t        8       24 Mbps\r\n");
     (void)PRINTF("\t        9       36 Mbps\r\n");
+#ifndef RW610
     (void)PRINTF("\t        10      48 Mbps\r\n");
     (void)PRINTF("\t        11      54 Mbps\r\n");
+#endif
     (void)PRINTF("\tIf <format> is 1 (HT),\r\n");
     (void)PRINTF("\t        0       MCS0\r\n");
     (void)PRINTF("\t        1       MCS1\r\n");
@@ -600,7 +602,9 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        6       MCS6\r\n");
     (void)PRINTF("\t        7       MCS7\r\n");
     (void)PRINTF("\t        8       MCS8\r\n");
+#ifndef RW610
     (void)PRINTF("\t        9       MCS9\r\n");
+#endif
 #endif
 #ifdef CONFIG_11AX
     (void)PRINTF("\tIf <format> is 3 (HE),\r\n");
@@ -614,14 +618,18 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        7       MCS7\r\n");
     (void)PRINTF("\t        8       MCS8\r\n");
     (void)PRINTF("\t        9       MCS9\r\n");
+#ifndef RW610
     (void)PRINTF("\t        10      MCS10\r\n");
     (void)PRINTF("\t        11      MCS11\r\n");
+#endif
 #endif
 #if defined(CONFIG_11AX) || defined(CONFIG_11AC)
     (void)PRINTF("\t<nss> - This parameter specifies the NSS. It is valid only for VHT and HE\r\n");
     (void)PRINTF("\tIf <format> is 2 (VHT) or 3 (HE),\r\n");
     (void)PRINTF("\t        1       NSS1\r\n");
+#ifndef RW610
     (void)PRINTF("\t        2       NSS2\r\n");
+#endif
 #endif
     (void)PRINTF("\t<rate_setting> - This parameter can only specifies the GI types now.\r\n");
     (void)PRINTF("\tIf <format> is 1 (HT),\r\n");
@@ -750,11 +758,19 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 #endif /* CONFIG_11N */
 #ifdef CONFIG_11AC
             || ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_VHT) &&
+#ifndef RW610
                 (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS9))
+#else
+                (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS8))
+#endif
 #endif
 #ifdef CONFIG_11AX
             || ((ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_HE) &&
+#ifndef RW610
                 (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS11))
+#else
+                (ds_rate.param.rate_cfg.rate_index > MLAN_RATE_INDEX_MCS9))
+#endif
 #endif
         )
         {
@@ -762,8 +778,13 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
             goto done;
         }
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+#ifndef RW610
         /* NSS is supported up to 2 */
         if ((ds_rate.param.rate_cfg.nss <= 0) || (ds_rate.param.rate_cfg.nss >= 3))
+#else
+        /* NSS is supported up to 1 */
+        if ((ds_rate.param.rate_cfg.nss <= 0) || (ds_rate.param.rate_cfg.nss >= 2))
+#endif
         {
             (void)PRINTF("Invalid nss selection\r\n");
             goto done;
