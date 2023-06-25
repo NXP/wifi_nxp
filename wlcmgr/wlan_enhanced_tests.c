@@ -1436,15 +1436,15 @@ static wlan_btwt_config_t btwt_config;
 /* cfg tables for 11axcfg and twt commands to FW */
 static uint8_t g_11ax_cfg[] = {
     /* band */
-    0x02,
+    0x03,
     /* HE cap */
     0xff, 0x00,                                                       // ID
-    0x1a, 0x00,                                                       // Length
+    0x18, 0x00,                                                       // Length
     0x23,                                                             // he capability id
-    0x02, 0x08, 0x00, 0x82, 0x00, 0x08,                               // HE MAC capability info
-    0x04, 0x70, 0x7e, 0xc9, 0xfd, 0x01, 0xa0, 0x0e, 0x03, 0x3d, 0x00, // HE PHY capability info
-    0xfe, 0xff, 0xfe, 0xff,                                           // Tx Rx HE-MCS NSS support
-    0xe1, 0xff, 0xc7, 0x71,                                           // PE: 16us
+    0x03, 0x08, 0x00, 0x82, 0x00, 0x00,                               // HE MAC capability info
+    0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31, 0x00, // HE PHY capability info
+    0xfd, 0xff, 0xfd, 0xff,                                           // Tx Rx HE-MCS NSS support
+    0x88, 0x1f  
 };
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
@@ -1456,7 +1456,7 @@ const static test_cfg_param_t g_11ax_cfg_param[] = {
     {"he_mac_cap_info", 6, 6, NULL},
     {"he_phy_cap_info", 12, 11, NULL},
     {"he_mcs_nss_support", 23, 4, NULL},
-    {"pe", 27, 4, NULL},
+    {"pe", 27, 2, NULL},
 };
 
 #ifdef CONFIG_11AX_TWT
@@ -1563,7 +1563,7 @@ static void test_wlan_twt_report(int argc, char **argv)
  *  param_num:     number of cfg param list
  */
 static test_cfg_table_t g_test_cfg_table_list[] = {/*  name         data           total_len    param_list param_num*/
-                                                   {"11axcfg", g_11ax_cfg, 31, g_11ax_cfg_param, 8},
+                                                   {"11axcfg", g_11ax_cfg, 29, g_11ax_cfg_param, 8},
 #ifdef CONFIG_11AX_TWT
                                                    {"twt_bcast", g_btwt_cfg, 12, g_btwt_cfg_param, 8},
                                                    {"twt_setup", g_twt_setup_cfg, 12, g_twt_setup_cfg_param, 11},

@@ -6815,6 +6815,8 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     mlan_ds_twtcfg twt_cfg  = {0};
+    MrvlIEtypes_He_cap_t *hw_he_cap;
+    MrvlIEtypes_He_cap_t *hw_2g_he_cap;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
@@ -6822,6 +6824,20 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
 
     twt_cfg.sub_id = MLAN_11AX_TWT_SETUP_SUBID;
     (void)memcpy(&twt_cfg.param.twt_setup, twt_setup, sizeof(twt_cfg.param.twt_setup));
+
+    /* block BTWT setup command if firmware does not support BTWT */
+    if (twt_cfg.param.twt_setup.negotiation_type == 3)
+    {
+        hw_he_cap    = (MrvlIEtypes_He_cap_t *)&mlan_adap->hw_he_cap[0];
+        hw_2g_he_cap = (MrvlIEtypes_He_cap_t *)&mlan_adap->hw_2g_he_cap[0];
+        /* BTWT support bit 20 */
+        if ((hw_he_cap->he_mac_cap[2] & MBIT(4)) == 0 && (hw_2g_he_cap->he_mac_cap[2] & MBIT(4)) == 0)
+        {
+            wifi_put_command_lock();
+            wifi_e("Firmware does not support Broadcast TWT, please use support BTWT version");
+            return -WM_FAIL;
+        }
+    }
 
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
                              &twt_cfg, cmd);

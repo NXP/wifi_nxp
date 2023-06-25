@@ -394,6 +394,7 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                         pmpriv->user_hecap_len =
                             MIN(tlv_len + sizeof(MrvlIEtypesHeader_t), sizeof(pmpriv->user_he_cap));
                         PRINTM(MCMND, "user_hecap_len=%d\n", pmpriv->user_hecap_len);
+                        wcmdr_d("user_hecap_len=%d\n", pmpriv->user_hecap_len);
                     }
                     else
                     {
@@ -402,6 +403,7 @@ mlan_status wlan_ret_11ax_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, ml
                         pmpriv->user_2g_hecap_len =
                             MIN(tlv_len + sizeof(MrvlIEtypesHeader_t), sizeof(pmpriv->user_2g_he_cap));
                         PRINTM(MCMND, "user_2g_hecap_len=%d\n", pmpriv->user_2g_hecap_len);
+                        wcmdr_d("user_2g_hecap_len=%d\n", pmpriv->user_2g_hecap_len);
                     }
                     break;
                 default:
