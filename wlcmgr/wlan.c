@@ -6458,6 +6458,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     if (!mon_thread_init)
     {
+        wifi_cau_temperature_enable();
+
         mon_thread_events_queue_data = g_mon_event_queue_data;
         ret = os_queue_create(&mon_thread_events, "mon-thread-events", sizeof(struct wlan_message),
                               &mon_thread_events_queue_data);
@@ -8238,6 +8240,7 @@ static void wlan_mon_thread(os_thread_arg_t data)
     unsigned long delay_ms = 1000;
     int ret = 0;
     struct wlan_message msg;
+    int delay_cnt = 0;
 
 #ifdef CONFIG_PALLADIUM_SUPPORT
     delay_ms = 10;
@@ -8269,6 +8272,21 @@ static void wlan_mon_thread(os_thread_arg_t data)
             if (wifi_fw_is_hang())
             {
                 wlan_reset(CLI_RESET_WIFI);
+            }
+            /*
+             *  get CAU module temperature and write to firmware SMU in every 5s
+             *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
+             *  bit[3:2] == 3 means FW is in sleep status
+             */
+            delay_cnt++;
+            if (delay_cnt >= 5
+#ifdef CONFIG_WIFIDRIVER_PS_LOCK
+                && mlan_adap->ps_state == PS_STATE_AWAKE
+#endif
+            )
+            {
+                wifi_cau_temperature_write_to_firmware();
+                delay_cnt = 0;
             }
         }
     }

@@ -1771,6 +1771,8 @@ typedef enum _ENH_PS_MODES
 /** Event ID: Assoc Req IE*/
 #define EVENT_ASSOC_REQ_IE 0x00000095
 
+#define EVENT_ACCESS_BY_HOST 0x00000098
+
 /** Event ID mask */
 #define EVENT_ID_MASK 0xffff
 
@@ -7713,6 +7715,36 @@ typedef MLAN_PACK_START struct _vdll_ind
     t_u16 block_len;
 } MLAN_PACK_END vdll_ind, *pvdll_ind;
 #endif /* CONFIG_FW_VDLL */
+
+#ifndef CONFIG_MLAN_WMSDK
+/* enum for event access mem by host action */
+enum
+{
+    EVENT_ACCESS_ACTION_WRITE = 0,
+    EVENT_ACCESS_ACTION_READ  = 1
+};
+
+enum
+{
+    EVENT_ACCESS_TYPE_REG    = 0,
+    EVENT_ACCESS_TYPE_EEPROM = 1
+};
+
+/** EVENT_ACCESS_BY_HOST structure */
+typedef MLAN_PACK_START struct _event_access_t
+{
+    /* host access addr */
+    t_u32 addr;
+    /* access type: REG/EEPROM */
+    t_u8 type;
+    /* access action: read/write */
+    t_u8 action;
+    /* access size for read/write */
+    t_u16 size;
+    /* payload data */
+    t_u8 data[4];
+} MLAN_PACK_END event_access_t;
+#endif
 
 #ifdef PRAGMA_PACK
 #pragma pack(pop)

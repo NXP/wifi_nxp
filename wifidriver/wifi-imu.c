@@ -490,10 +490,6 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_EVENT_MEM_ACCESS
-static void wifi_handle_event_access_by_host(t_u8 *evt_buff);
-#endif
-
 /*
  * Accepts event and command packets. Redirects them to queues if
  * registered. If queues are not registered (as is the case during
@@ -521,14 +517,6 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         wifi_io_d(" --- Rx: EVENT Response ---");
         if (event_cause != EVENT_PS_SLEEP && event_cause != EVENT_PS_AWAKE)
             wevt_d("Event: 0x%x", event_cause);
-#ifdef CONFIG_EVENT_MEM_ACCESS
-        /* handle origin payload to return result by event ack */
-        if (event_cause == EVENT_ACCESS_BY_HOST)
-        {
-            wifi_handle_event_access_by_host(pmbuf);
-            return MLAN_STATUS_SUCCESS;
-        }
-#endif
     }
 
 #ifdef CONFIG_WIFI_IO_DUMP
@@ -1620,15 +1608,7 @@ bus_operations imu_ops = {
     .intf_header_len = INTF_HEADER_LEN,
 };
 
-#ifdef CONFIG_EVENT_MEM_ACCESS
-#define WIFI_REG8(x)  (*(volatile unsigned char *)(x))
-#define WIFI_REG16(x) (*(volatile unsigned short *)(x))
-#define WIFI_REG32(x) (*(volatile unsigned long *)(x))
-
-#define WIFI_WRITE_REG8(reg, val)  (WIFI_REG8(reg) = (val))
-#define WIFI_WRITE_REG16(reg, val) (WIFI_REG16(reg) = (val))
-#define WIFI_WRITE_REG32(reg, val) (WIFI_REG32(reg) = (val))
-
+#ifndef CONFIG_MLAN_WMSDK
 #define EVENT_PAYLOAD_OFFSET 8
 
 /* access cpu registers, only write(1)/read(0) actions are valid */

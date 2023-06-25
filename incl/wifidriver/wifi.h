@@ -61,6 +61,21 @@
 #include <wm_os.h>
 #include <wmerrno.h>
 
+#define WIFI_REG8(x)  (*(volatile unsigned char *)(x))
+#define WIFI_REG16(x) (*(volatile unsigned short *)(x))
+#define WIFI_REG32(x) (*(volatile unsigned int *)(x))
+
+#define WIFI_WRITE_REG8(reg, val)  (WIFI_REG8(reg) = (val))
+#define WIFI_WRITE_REG16(reg, val) (WIFI_REG16(reg) = (val))
+#define WIFI_WRITE_REG32(reg, val) (WIFI_REG32(reg) = (val))
+
+#ifdef RW610
+#define WLAN_CAU_ENABLE_ADDR         (0x45004008U)
+#define WLAN_CAU_TEMPERATURE_ADDR    (0x4500400CU)
+#define WLAN_CAU_TEMPERATURE_FW_ADDR (0x41382490U)
+#define WLAN_FW_WAKE_STATUS_ADDR     (0x40031068U)
+#endif
+
 #define BANDWIDTH_20MHZ 1U
 #define BANDWIDTH_40MHZ 2U
 #ifdef CONFIG_11AC
@@ -1915,4 +1930,8 @@ void wifi_uap_client_deauth(t_u8 *sta_addr);
 int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
 int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
+
+/* get CAU module temperature and write to firmware */
+void wifi_cau_temperature_enable(void);
+void wifi_cau_temperature_write_to_firmware(void);
 #endif /* __WIFI_H__ */

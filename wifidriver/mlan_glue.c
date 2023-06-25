@@ -5444,6 +5444,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_ftm_process_event(msg->data);
             break;
 #endif
+        case EVENT_ACCESS_BY_HOST:
+            break;
         default:
             wifi_d("Event 0x%x not implemented", evt->event_id);
             break;
@@ -7671,3 +7673,25 @@ void wifi_ftm_process_event(void *p_data)
     }
 }
 #endif
+
+void wifi_cau_temperature_enable()
+{
+#ifdef RW610
+    t_u32 val;
+
+    val = WIFI_REG32(WLAN_CAU_ENABLE_ADDR);
+    val &= ~(0xC);
+    val |= (2 << 2);
+    WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
+#endif
+}
+
+void wifi_cau_temperature_write_to_firmware()
+{
+#ifdef RW610
+    uint32_t val;
+
+    val = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
+#endif
+}
