@@ -23,6 +23,8 @@ Change log:
 /********************************************************
                 Local Constants
 ********************************************************/
+/** minimum scan time for passive to active scan */
+#define MIN_PASSIVE_TO_ACTIVE_SCAN_TIME 150
 
 int get_split_scan_delay_ms(void);
 
@@ -466,7 +468,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                     /* 11D not available... play it safe on DFS channels */
                     if (wlan_11h_radar_detect_required(pmpriv, (t_u8)cfp->channel))
                     {
-                        scan_type = MLAN_SCAN_TYPE_PASSIVE;
+                        scan_type = MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
                     }
                     break;
 #endif
@@ -488,7 +490,7 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                 pscan_chan_list[chan_idx].max_scan_time =
                     wlan_cpu_to_le16((t_u16)puser_scan_in->chan_list[0].scan_time);
             }
-            else if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
+            else if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
             {
                 pscan_chan_list[chan_idx].max_scan_time = wlan_cpu_to_le16(pmadapter->passive_scan_time);
             }
@@ -501,7 +503,13 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                 pscan_chan_list[chan_idx].max_scan_time = wlan_cpu_to_le16(pmadapter->active_scan_time);
             }
 
-            if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
+            if (scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
+            {
+                pscan_chan_list[chan_idx].max_scan_time =
+                    wlan_cpu_to_le16(MAX(pmadapter->passive_scan_time, MIN_PASSIVE_TO_ACTIVE_SCAN_TIME));
+                pscan_chan_list[chan_idx].chan_scan_mode.passive_to_active_scan = MTRUE;
+            }
+            if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
             {
                 pscan_chan_list[chan_idx].chan_scan_mode.passive_scan       = MTRUE;
                 pscan_chan_list[chan_idx].chan_scan_mode.hidden_ssid_report = MTRUE;
@@ -513,7 +521,10 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 
             pscan_chan_list[chan_idx].chan_number = (t_u8)cfp->channel;
 
-            wscan_d("Channel: %d Type: %s %d", cfp->channel, scan_type == MLAN_SCAN_TYPE_PASSIVE ? "Passive" : "Active",
+            wscan_d("Channel: %d Type: %s %d", cfp->channel,
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE ?
+                        "Passive" :
+                        scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" : "Active",
                     cfp->max_tx_power);
             chan_idx++;
 
@@ -1214,7 +1225,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                 {
                     if (wlan_11h_radar_detect_required(pmpriv, channel))
                     {
-                        scan_type = MLAN_SCAN_TYPE_PASSIVE;
+                        scan_type = MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
                     }
                 }
 #endif
@@ -1226,7 +1237,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                     }
                 }
             }
-            if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
+            if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
             {
                 (pscan_chan_list + chan_idx)->chan_scan_mode.passive_scan       = MTRUE;
                 (pscan_chan_list + chan_idx)->chan_scan_mode.hidden_ssid_report = MTRUE;
@@ -1242,7 +1253,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             }
             else
             {
-                if (scan_type == MLAN_SCAN_TYPE_PASSIVE)
+                if (scan_type == MLAN_SCAN_TYPE_PASSIVE || scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
                 {
                     scan_dur = pmadapter->passive_scan_time;
                 }
@@ -1256,10 +1267,18 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                 }
             }
 
+            if (scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE)
+            {
+                (pscan_chan_list + chan_idx)->chan_scan_mode.passive_to_active_scan = MTRUE;
+                scan_dur = MAX(MIN_PASSIVE_TO_ACTIVE_SCAN_TIME, scan_dur);
+            }
             (pscan_chan_list + chan_idx)->min_scan_time = wlan_cpu_to_le16(scan_dur);
             (pscan_chan_list + chan_idx)->max_scan_time = wlan_cpu_to_le16(scan_dur);
 
-            wscan_d("Channel: %d Type: %s ", channel, scan_type == MLAN_SCAN_TYPE_PASSIVE ? "Passive" : "Active");
+            wscan_d("Channel: %d Type: %s ", channel,
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE ?
+                        "Passive" :
+                        scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" : "Active");
         }
 
         /* Check if we are only scanning the current channel */
@@ -5531,7 +5550,7 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN const t_u8 *bssid, IN 
      *   past a matched bssid that is not compatible in case there is an
      *   AP with multiple SSIDs assigned to the same BSSID
      */
-    while (net < 0 && i < pmadapter->num_in_scan_table)
+    while (i < pmadapter->num_in_scan_table)
     {
         if ((__memcmp(pmadapter, pmadapter->pscan_table[i].mac_address, bssid, MLAN_MAC_ADDR_LENGTH) == 0))
         {
@@ -5552,7 +5571,8 @@ t_s32 wlan_find_bssid_in_list(IN mlan_private *pmpriv, IN const t_u8 *bssid, IN 
                     break;
                 default:
                     net = (t_s32)i;
-                    break;
+                    if (pmadapter->pscan_table[i].ssid.ssid_len != 0)
+                        break;
             }
         }
         i++;
