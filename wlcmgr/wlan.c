@@ -150,10 +150,10 @@ int wps_session_attempt;
         (void)wlan.cb(r, data);   \
     }
 
-static bool ieee_ps_sleep_cb_sent;
-
+static bool ieee_ps_sleep_cb_sent = false;
+static bool deep_sleep_ps_sleep_cb_sent = false;
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
-static bool wnm_ps_sleep_cb_sent;
+static bool wnm_ps_sleep_cb_sent = false;
 #endif
 
 #ifdef RW610
@@ -2901,6 +2901,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
         if (action == DIS_AUTO_PS)
         {
             wlan.cm_deepsleepps_configured = false;
+            deep_sleep_ps_sleep_cb_sent = false;
             // CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
             /* Skip ps-exit event for the first time
                after waking from PM4+DS. This will ensure
@@ -2915,7 +2916,11 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
         }
         else if (action == SLEEP_CONFIRM)
         {
-            CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
+            if(!deep_sleep_ps_sleep_cb_sent)
+            {
+                CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
+                deep_sleep_ps_sleep_cb_sent = true;
+            }
         }
         else
         { /* Do Nothing */
@@ -2932,12 +2937,17 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 
             wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_SLP_CFM);
 
-            CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
+            if(!deep_sleep_ps_sleep_cb_sent)
+            {
+                CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
+                deep_sleep_ps_sleep_cb_sent = true;
+            }
         }
         else if (action == DIS_AUTO_PS)
         {
             wlan.cm_deepsleepps_configured = false;
             wlan.cm_ps_state               = PS_STATE_AWAKE;
+            deep_sleep_ps_sleep_cb_sent    = false;
             *next                          = CM_STA_IDLE;
             wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_DISABLE_DONE);
 #ifdef CONFIG_P2P
