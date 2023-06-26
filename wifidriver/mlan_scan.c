@@ -3846,6 +3846,43 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 bss_new_entry->freq = 0;
             }
 
+#ifdef CONFIG_BG_SCAN
+            if ((is_bgscan_resp) && (pmpriv->roaming_enabled == MTRUE))
+            {
+                if (num_in_table == 2U)
+                {
+                    if (pmadapter->pscan_table[0].rssi > bss_new_entry->rssi)
+                    {
+#ifdef CONFIG_WPA_SUPP
+                        /* If the scan table is full, free ies of the lowest rssi entry before this entry is replaced */
+                        if (pmadapter->pscan_table[0].ies != NULL)
+                        {
+                            os_mem_free(pmadapter->pscan_table[0].ies);
+                            pmadapter->pscan_table[0].ies = NULL;
+                        }
+#endif
+                        (void)__memcpy(pmadapter, &pmadapter->pscan_table[0], bss_new_entry,
+                                       sizeof(pmadapter->pscan_table[0]));
+                        adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[0], bss_new_entry);
+                    }
+#ifdef CONFIG_WPA_SUPP
+                    /* If the scan table is full, free ies of the new entry with lowest rssi, which won't be added into
+                     * table */
+                    else
+                    {
+                        if (bss_new_entry->ies != NULL)
+                        {
+                            os_mem_free(bss_new_entry->ies);
+                            bss_new_entry->ies = NULL;
+                        }
+                    }
+#endif
+                    num_in_table--;
+                    continue;
+                }
+            }
+#endif
+
             if (bss_idx == MRVDRV_MAX_BSSID_LIST)
             {
                 if (pmadapter->pscan_table[lowest_rssi_index].rssi > bss_new_entry->rssi)
