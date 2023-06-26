@@ -5576,7 +5576,7 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     {
         (void)PRINTF("Error during strtoul errno:%d", errno);
     }
-    int rv = wifi_set_region_code(region_code);
+    int rv = wlan_set_region_code(region_code);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set region code: 0x%x\r\n", region_code);
@@ -5597,7 +5597,7 @@ static void test_wlan_set_regioncode(int argc, char **argv)
 static void test_wlan_get_regioncode(int argc, char **argv)
 {
     t_u32 region_code = 0;
-    int rv            = wifi_get_region_code(&region_code);
+    int rv            = wlan_get_region_code(&region_code);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to get region code: 0x%x\r\n", region_code);
@@ -8429,9 +8429,9 @@ static void test_wlan_11d_enable(int argc, char **argv)
     }
 
     if (string_equal("sta", argv[1]))
-        wlan_enable_11d(state);
+        wlan_set_11d_state(WLAN_BSS_TYPE_STA, state);
     else if (string_equal("uap", argv[1]))
-        wlan_enable_uap_11d(state);
+        wlan_set_11d_state(WLAN_BSS_TYPE_UAP, state);
     else
         dump_wlan_11d_enable_usage();
 }
@@ -8880,9 +8880,9 @@ static struct cli_command tests[] = {
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
 #ifdef CONFIG_COEX_DUTY_CYCLE
     {"wlan-single-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration>]",
-    test_wlan_single_ant_duty_cycle},
+     test_wlan_single_ant_duty_cycle},
     {"wlan-dual-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]",
-    test_wlan_dual_ant_duty_cycle},
+     test_wlan_dual_ant_duty_cycle},
 #endif
 };
 

@@ -5923,6 +5923,28 @@ int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive);
  */
 int wlan_set_country_code(const char *alpha2);
 
+/** Set region code
+ *
+ * \param[in] region_code
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_region_code(unsigned int region_code);
+
+/** Get region code
+ *
+ * \param[out] region_code pointer
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_region_code(unsigned int *region_code);
+
+/** Set STA/uAP 80211d feature enable/disable
+ *
+ * \param[in] bss_type 0: STA, 1: uAP
+ * \param[in] state    0: disable, 1: enable
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_11d_state(int bss_type, int state);
+
 #ifdef CONFIG_COEX_DUTY_CYCLE
 /**
  * Set single ant duty cycle.

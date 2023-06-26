@@ -4902,7 +4902,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     wlan_ieeeps_on(0);
     wlan_deepsleepps_on();
 #endif
-    wlan_enable_uap_11d(1);
+    wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
 }
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
@@ -12254,6 +12254,46 @@ int wlan_set_country_code(const char *alpha2)
 #endif
 #endif
     return wifi_set_country_code(country_code);
+}
+
+int wlan_set_region_code(unsigned int region_code)
+{
+    char *country;
+
+    if ((region_code == 0x41) || (region_code == 0xFE))
+    {
+        (void)PRINTF("Region code 0XFF is used for Japan to support channels of both 2.4GHz band and 5GHz band.\r\n");
+        (void)PRINTF("Region code 0X40 is used for Japan to support channels of 5GHz band.\r\n");
+        return -WM_FAIL;
+    }
+
+    country = (char *)wlan_11d_code_2_region(mlan_adap, (unsigned char)region_code);
+    return wlan_set_country_code(country);
+}
+
+int wlan_get_region_code(unsigned int *region_code)
+{
+    return wifi_get_region_code(region_code);
+}
+
+int wlan_set_11d_state(int bss_type, int state)
+{
+#ifdef CONFIG_WPA_SUPP_AP
+    struct netif *netif;
+#endif
+    if (bss_type == WLAN_BSS_TYPE_UAP)
+    {
+#ifdef CONFIG_WPA_SUPP_AP
+        netif = net_get_uap_interface();
+        wpa_supp_set_ap_11d_state(netif, state);
+#endif
+
+        return wlan_enable_uap_11d(state);
+    }
+    else
+    {
+        return wlan_enable_11d(state);
+    }
 }
 
 #ifdef CONFIG_COEX_DUTY_CYCLE

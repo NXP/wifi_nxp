@@ -30,11 +30,6 @@
 #include "mlan_mbo.h"
 #endif
 
-#ifdef CONFIG_WPA_SUPP
-#include <wm_net.h>
-#include <supp_api.h>
-#endif
-
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
@@ -2812,22 +2807,7 @@ static wifi_sub_band_set_t subband_WWSM_5_GHz[] = {{36, 8, 8}, {100, 11, 8}, {14
 
 int wifi_get_region_code(t_u32 *region_code)
 {
-    mlan_ds_misc_cfg misc;
-
-    mlan_ioctl_req req = {
-        .bss_index = 0,
-        .pbuf      = (t_u8 *)&misc,
-        .action    = MLAN_ACT_GET,
-    };
-
-    mlan_status mrv = wlan_misc_ioctl_region(mlan_adap, &req);
-    if (mrv != MLAN_STATUS_SUCCESS)
-    {
-        wifi_w("Unable to get region code");
-        return -WM_FAIL;
-    }
-
-    *region_code = misc.param.region_code;
+    *region_code = mlan_adap->region_code;
     return WM_SUCCESS;
 }
 
@@ -2874,11 +2854,6 @@ int wifi_enable_11d_support()
 int wifi_enable_uap_11d_support()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-#ifdef CONFIG_WPA_SUPP_AP
-    struct netif *netif = net_get_uap_interface();
-
-    wpa_supp_set_ap_11d_state(netif, MTRUE);
-#endif
 
     wrapper_wlan_uap_11d_enable(ENABLE_11D);
 
@@ -2900,12 +2875,6 @@ int wifi_disable_11d_support()
 
 int wifi_disable_uap_11d_support()
 {
-#ifdef CONFIG_WPA_SUPP_AP
-    struct netif *netif = net_get_uap_interface();
-
-    wpa_supp_set_ap_11d_state(netif, MFALSE);
-#endif
-
     mlan_adap->priv[1]->state_11d.user_enable_11d_support = DISABLE_11D;
     wrapper_wlan_uap_11d_enable(DISABLE_11D);
 

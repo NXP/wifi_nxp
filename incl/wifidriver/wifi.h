@@ -1210,7 +1210,9 @@ int wifi_get_log(wifi_pkt_stats_t *stats, mlan_bss_type bss_type);
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 
 int wifi_uap_stop();
+#ifdef CONFIG_WPA_SUPP_AP
 int wifi_uap_do_acs(const int *freq_list);
+#endif
 
 #ifdef CONFIG_WIFI_CAPA
 /**
