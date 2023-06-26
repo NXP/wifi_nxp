@@ -562,10 +562,36 @@ static void wlan_add_wps_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pp
         *pptlv_out += sizeof(MrvlIEtypesHeader_t);
         (void)__memcpy(pmpriv->adapter, *pptlv_out, pmpriv->wps.wps_ie.vend_hdr.oui, pmpriv->wps.wps_ie.vend_hdr.len);
         *pptlv_out += (pmpriv->wps.wps_ie.vend_hdr.len + sizeof(MrvlIEtypesHeader_t));
+        *pptlv_out += pmpriv->wps.wps_ie.vend_hdr.len;
     }
     LEAVE();
 }
 #endif
+/**
+ *  @brief Add IE to probe request frame
+ *
+ *  @param pmpriv             A pointer to mlan_private structure
+ *  @param pptlv_out          A pointer to TLV to fill in
+ *
+ *  @return                   N/A
+ */
+static void wlan_add_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pptlv_out)
+{
+    MrvlIEtypesHeader_t *tlv;
+
+    ENTER();
+
+    if (pmpriv->gen_ie_buf_len)
+    {
+        tlv       = (MrvlIEtypesHeader_t *)*pptlv_out;
+        tlv->type = wlan_cpu_to_le16(VENDOR_SPECIFIC_221);
+        tlv->len  = wlan_cpu_to_le16(pmpriv->gen_ie_buf_len - 2);
+        *pptlv_out += sizeof(MrvlIEtypesHeader_t);
+        (void)__memcpy(pmpriv->adapter, *pptlv_out, pmpriv->gen_ie_buf + 2, pmpriv->gen_ie_buf_len - 2);
+        *pptlv_out += pmpriv->gen_ie_buf_len - 2;
+    }
+    LEAVE();
+}
 #endif
 
 /**
@@ -1164,6 +1190,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP_WPS
     wlan_add_wps_probe_request_ie(pmpriv, &ptlv_pos);
 #endif
+    wlan_add_probe_request_ie(pmpriv, &ptlv_pos);
 #endif
 
 #if defined(CONFIG_MBO) || defined(CONFIG_WPA_SUPP)

@@ -1501,14 +1501,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
 #endif
 #ifdef CONFIG_11V
-    if ((pbss_desc != MNULL) && (pbss_desc->pext_cap->ext_cap.BSS_Transition == true))
-    {
         pext_cap->ext_cap.BSS_Transition = 1;
-    }
-    else
-    {
-        pext_cap->ext_cap.BSS_Transition = 0;
-    }
 #endif
 
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);

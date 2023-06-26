@@ -672,7 +672,6 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         }
     }
 
-#ifdef CONFIG_WPA_SUPP_WPS
     if (params->extra_ies_len)
     {
         status = wifi_set_scan_ies((void *)params->extra_ies, params->extra_ies_len);
@@ -683,7 +682,6 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
             goto out;
         }
     }
-#endif
 
     wm_wifi.wpa_supp_scan = true;
 

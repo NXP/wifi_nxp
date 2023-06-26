@@ -2209,10 +2209,8 @@ static int wifi_set_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
                     ret = -WM_FAIL;
                     goto done;
                 }
-#ifdef CONFIG_WPA_SUPP_WPS
                 wifi_d("Set VENDOR SPECIFIC IE, OUI: %02x:%02x:%02x:%02x\r\n", pvendor_ie->vend_hdr.oui[0],
                        pvendor_ie->vend_hdr.oui[1], pvendor_ie->vend_hdr.oui[2], pvendor_ie->vend_hdr.oui_type);
-#endif
                 break;
 #ifdef CONFIG_11R
             case MOBILITY_DOMAIN:
@@ -2290,7 +2288,6 @@ done:
     return ret;
 }
 
-#ifdef CONFIG_WPA_SUPP_WPS
 int wifi_set_scan_ies(void *ie, size_t ie_len)
 {
     mlan_private *priv       = (mlan_private *)mlan_adap->priv[0];
@@ -2310,7 +2307,6 @@ int wifi_set_scan_ies(void *ie, size_t ie_len)
 
     return WM_SUCCESS;
 }
-#endif
 
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
 {
