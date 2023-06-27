@@ -1548,13 +1548,13 @@ struct wlan_network
     uint8_t sec_channel_offset;
     /** The ACS band if set channel to 0. **/
     uint16_t acs_band;
+    /** RSSI */
+    int rssi;
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     /** Rssi threshold */
     short rssi_threshold;
 #endif
 #ifdef CONFIG_WPA_SUPP
-    /** RSSI */
-    int rssi;
     /** HT capabilities */
     unsigned short ht_capab;
 #ifdef CONFIG_11AC
