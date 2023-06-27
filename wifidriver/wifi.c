@@ -1634,6 +1634,7 @@ static void wifi_scan_input(void *argv)
                 wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
+#ifndef SD8801
             else
             {
                 (void)wlan_active_scan_req_for_passive_chan((mlan_private *)mlan_adap->priv[0],
@@ -1641,6 +1642,7 @@ static void wifi_scan_input(void *argv)
                 wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
+#endif
         }
         scan_thread_in_process = false;
     } /* for ;; */
