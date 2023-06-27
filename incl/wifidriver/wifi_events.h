@@ -43,6 +43,10 @@ enum wifi_event
     WIFI_EVENT_ASSOCIATION,
     /** PMK */
     WIFI_EVENT_PMK,
+#ifdef CONFIG_WPA_SUPP
+    /** Autherized */
+    WIFI_EVENT_AUTHERIZED,
+#endif
     /** Authentication */
     WIFI_EVENT_AUTHENTICATION,
     /** Disassociation */
@@ -156,7 +160,7 @@ enum wifi_event
     /* Event to trigger or stop ftm*/
     WIFI_EVENT_FTM_COMPLETE,
 #ifdef CONFIG_WLS_CSI_PROC
-	WIFI_EVENT_WLS_CSI,
+    WIFI_EVENT_WLS_CSI,
 #endif
 #endif
     /** Event to indicate end of Wi-Fi events */

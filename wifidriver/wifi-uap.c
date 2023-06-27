@@ -2014,6 +2014,9 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
             sys_config->wpa_cfg.group_cipher = CIPHER_TKIP;
             break;
         case WPA_CIPHER_AES_CCM:
+        case WPA_CIPHER_AES_GCM:
+        case WPA_CIPHER_AES_CCM_256:
+        case WPA_CIPHER_AES_GCM_256:
             sys_config->wpa_cfg.group_cipher = CIPHER_AES_CCMP;
             break;
         default:
@@ -2028,6 +2031,9 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
                 sys_config->wpa_cfg.pairwise_cipher_wpa2 |= CIPHER_TKIP;
                 break;
             case WPA_CIPHER_AES_CCM:
+            case WPA_CIPHER_AES_GCM:
+            case WPA_CIPHER_AES_CCM_256:
+            case WPA_CIPHER_AES_GCM_256:
                 sys_config->wpa_cfg.pairwise_cipher_wpa2 |= CIPHER_AES_CCMP;
                 break;
             default:

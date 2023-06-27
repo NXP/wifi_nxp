@@ -284,6 +284,25 @@ typedef enum
 #define WMM_UAPSD_SLEEP_PERIOD 20
 #endif
 
+#ifdef CONFIG_WPA_SUPP
+
+#define WLAN_CIPHER_NONE         MBIT(0)
+#define WLAN_CIPHER_WEP40        MBIT(1)
+#define WLAN_CIPHER_WEP104       MBIT(2)
+#define WLAN_CIPHER_TKIP         MBIT(3)
+#define WLAN_CIPHER_CCMP         MBIT(4)
+#define WLAN_CIPHER_AES_128_CMAC MBIT(5)
+#define WLAN_CIPHER_GCMP         MBIT(6)
+#define WLAN_CIPHER_SMS4         MBIT(7)
+#define WLAN_CIPHER_GCMP_256     MBIT(8)
+#define WLAN_CIPHER_CCMP_256     MBIT(9)
+#define WLAN_CIPHER_BIP_GMAC_128 MBIT(11)
+#define WLAN_CIPHER_BIP_GMAC_256 MBIT(12)
+#define WLAN_CIPHER_BIP_CMAC_256 MBIT(13)
+#define WLAN_CIPHER_GTK_NOT_USED MBIT(14)
+
+#endif
+
 /** Enum for wlan errors*/
 enum wm_wlan_errno
 {

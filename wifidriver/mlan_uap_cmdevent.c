@@ -1978,6 +1978,7 @@ static mlan_status wlan_uap_cmd_report_mic(pmlan_private pmpriv, IN HostCmd_DS_C
 #endif /* CONFIG_MLAN_WMSDK */
 
 #if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
+
 /**
  *  @brief This function prepares command of key material
  *
@@ -2011,7 +2012,7 @@ static mlan_status wlan_uap_cmd_key_material(
         cmd->size = wlan_cpu_to_le16(sizeof(pkey_material->action) + S_DS_GEN);
         goto done;
     }
-    (void)__memset(pmpriv->adapter, &pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSetV2_t));
+    memset(&pkey_material->key_param_set, 0, sizeof(MrvlIEtype_KeyParamSetV2_t));
     if (pkey->key_flags & KEY_FLAG_REMOVE_KEY)
     {
         pkey_material->action                 = wlan_cpu_to_le16(HostCmd_ACT_GEN_REMOVE);
@@ -2094,7 +2095,6 @@ static mlan_status wlan_uap_cmd_key_material(
 #endif
     pkey_material->key_param_set.key_info |= KEY_INFO_DEFAULT_KEY;
     pkey_material->key_param_set.key_info = wlan_cpu_to_le16(pkey_material->key_param_set.key_info);
-#ifdef ENABLE_GCMP_SUPPORT
     if (pkey->key_flags & KEY_FLAG_GCMP || pkey->key_flags & KEY_FLAG_GCMP_256)
     {
         if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
@@ -2112,10 +2112,9 @@ static mlan_status wlan_uap_cmd_key_material(
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(gcmp_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(gcmp_param) + sizeof(pkey_material->action));
-        wifi_d("Set GCMP Key");
+        PRINTM(MCMND, "Set GCMP Key\n");
         goto done;
     }
-#endif
     if (pkey->key_flags & KEY_FLAG_CCMP_256)
     {
         if (pkey->key_flags & (KEY_FLAG_RX_SEQ_VALID | KEY_FLAG_TX_SEQ_VALID))
@@ -2130,7 +2129,7 @@ static mlan_status wlan_uap_cmd_key_material(
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(ccmp_256_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(ccmp_256_param) + sizeof(pkey_material->action));
-        wifi_d("Set CCMP256 Key");
+        PRINTM(MCMND, "Set CCMP256 Key\n");
         goto done;
     }
 #ifdef ENABLE_802_11W
@@ -2172,9 +2171,9 @@ static mlan_status wlan_uap_cmd_key_material(
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(cmac_aes_param) + sizeof(pkey_material->action));
         if (pkey->key_flags & KEY_FLAG_GMAC_128)
-            wifi_d("Set AES 128 GMAC Key");
+            PRINTM(MCMND, "Set AES 128 GMAC Key\n");
         else
-            wifi_d("Set CMAC AES Key");
+            PRINTM(MCMND, "Set CMAC AES Key\n");
         goto done;
     }
     if (pkey->key_len == WPA_IGTK_256_KEY_LEN && (pkey->key_flags & KEY_FLAG_AES_MCAST_IGTK))
@@ -2191,7 +2190,7 @@ static mlan_status wlan_uap_cmd_key_material(
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(gmac_aes_256_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(gmac_aes_256_param) + sizeof(pkey_material->action));
-        wifi_d("Set AES 256 GMAC Key");
+        PRINTM(MCMND, "Set AES 256 GMAC Key\n");
         goto done;
     }
 #endif
@@ -2207,7 +2206,7 @@ static mlan_status wlan_uap_cmd_key_material(
         pkey_material->key_param_set.length = wlan_cpu_to_le16(KEY_PARAMS_FIXED_LEN + sizeof(tkip_param));
         cmd->size = wlan_cpu_to_le16(sizeof(MrvlIEtypesHeader_t) + S_DS_GEN + KEY_PARAMS_FIXED_LEN +
                                      sizeof(tkip_param) + sizeof(pkey_material->action));
-        wifi_d("Set TKIP Key");
+        PRINTM(MCMND, "Set TKIP Key\n");
     }
 done:
     LEAVE();

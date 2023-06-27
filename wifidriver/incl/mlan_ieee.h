@@ -610,8 +610,15 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 
 /** cipher TKIP */
 #define WPA_CIPHER_TKIP2 2
-/** cipher AES */
+/** cipher AES CCMP 128 */
 #define WPA_CIPHER_AES_CCM 4
+/** cipher AES GCMP 128 */
+#define WPA_CIPHER_AES_GCM 8
+/** cipher AES CCMP 256 */
+#define WPA_CIPHER_AES_CCM_256 10
+/** cipher AES GCMP 256 */
+#define WPA_CIPHER_AES_GCM_256 9
+
 /** AKM: 8021x */
 #define RSN_AKM_8021X 1
 /** AKM: 8021x SUITE B*/
