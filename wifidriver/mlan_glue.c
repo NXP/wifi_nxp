@@ -3015,11 +3015,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             case HostCmd_CMD_802_11_ASSOCIATE:
             {
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
+#ifndef CONFIG_WPA_SUPP
                 if (rv != MLAN_STATUS_SUCCESS)
                 {
                     (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, WIFI_EVENT_REASON_FAILURE, NULL);
                     return -WM_FAIL;
                 }
+#endif
 
 #ifdef CONFIG_WPA_SUPP
                 nxp_wifi_assoc_event_mlme_t *assoc_resp = &wm_wifi.assoc_resp;
