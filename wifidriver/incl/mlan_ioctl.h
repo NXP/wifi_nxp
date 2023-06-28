@@ -277,7 +277,9 @@ typedef enum _mlan_scan_type
     MLAN_SCAN_TYPE_UNCHANGED = 0,
     MLAN_SCAN_TYPE_ACTIVE,
     MLAN_SCAN_TYPE_PASSIVE,
-    MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE
+#if defined(RW610) || defined(IW61x)
+    MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE,
+#endif
 } mlan_scan_type;
 
 /** mlan_ioctl_req data structure */
