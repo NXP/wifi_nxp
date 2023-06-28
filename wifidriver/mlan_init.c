@@ -432,6 +432,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
+    reset_ie_index();
     priv->probe_req_index = -1;
 #ifdef CONFIG_WPA_SUPP_AP
     priv->beacon_vendor_index = -1;

@@ -209,6 +209,11 @@ void wifi_set_tx_status(t_u8 status);
  */
 void wifi_set_rx_status(t_u8 status);
 
+/**
+ * This API can be used to reset mgmt_ie_index_bitmap.
+ */
+void reset_ie_index();
+
 #ifndef CONFIG_WIFI_RX_REORDER
 /**
  * Register Data callback function with Wi-Fi Driver to receive

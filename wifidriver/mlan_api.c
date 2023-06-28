@@ -1986,7 +1986,7 @@ int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params)
 
         if (pmpriv->probe_req_index == -1)
         {
-            wuap_e("Set probe req IE failed");
+            wifi_e("Set probe req IE failed");
             return -WM_FAIL;
         }
     }
@@ -3117,6 +3117,11 @@ static int wifi_config_ext_coex(int action,
 static bool ie_index_is_set(unsigned int index)
 {
     return (mgmt_ie_index_bitmap & (MBIT(index))) ? MTRUE : MFALSE;
+}
+
+void reset_ie_index()
+{
+    mgmt_ie_index_bitmap = 0x0000000F;
 }
 
 static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
