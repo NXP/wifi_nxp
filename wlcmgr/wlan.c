@@ -8174,10 +8174,11 @@ void wlan_reset(cli_reset_option ResetOption)
 
             (void)net_wlan_deinit();
 
+            wifi_scan_stop();
+
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
 
-            wifi_scan_stop();
 #ifdef CONFIG_WPA_SUPP
             wifi_supp_deinit();
             wpa_supp_deinit();

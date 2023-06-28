@@ -158,8 +158,8 @@ typedef enum __mlan_status
 } __mlan_status;
 
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
-static os_thread_stack_define(wifi_scan_stack, 1024);
-static os_thread_stack_define(wifi_drv_stack, 1024);
+static os_thread_stack_define(wifi_scan_stack, 2048);
+static os_thread_stack_define(wifi_drv_stack, 2048);
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
