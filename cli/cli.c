@@ -30,7 +30,7 @@
 #define PROMPT        "\r\n# "
 #define HALT_MSG      "CLI_HALT"
 #define NUM_BUFFERS   1
-#define MAX_COMMANDS  100U
+#define MAX_COMMANDS  200U
 #define IN_QUEUE_SIZE 4
 
 #define RX_WAIT   OS_WAIT_FOREVER

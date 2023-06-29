@@ -1314,6 +1314,7 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 }
 #endif
 
+#ifndef RW610
 static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {
     int rv;
@@ -1342,6 +1343,7 @@ static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
         print_rutxpwrlimit(&chrupwr);
     }
 }
+#endif
 #endif
 
 static void test_wlan_set_tx_omi(int argc, char **argv)
@@ -1970,10 +1972,12 @@ static struct cli_command wlan_enhanced_commands[] = {
 #ifdef CONFIG_11AX
     {"wlan-set-tx-omi", "<tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
+#ifndef RW610
 #ifndef CONFIG_MLAN_WMSDK
     {"wlan-get-rutxpwrlimit", NULL, test_wlan_get_rutxpwrlimit},
 #endif
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
+#endif
     {"wlan-11axcfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #ifdef CONFIG_11AX_TWT
     {"wlan-bcast-twt", "<bcast_twt_cfg>", test_wlan_bcast_twt},
