@@ -424,7 +424,6 @@ static struct
     int uap_rsn_ie_index;
     bool smart_mode_active : 1;
 #ifdef CONFIG_WPA_SUPP
-    bool autherized : 1;
     os_timer_t supp_status_timer;
     bool pending_disconnect_request : 1;
     int status_timeout;
@@ -3411,38 +3410,6 @@ static void wlcm_process_pmk_event(struct wifi_message *msg, enum cm_sta_state *
     }
 }
 
-#ifdef CONFIG_WPA_SUPP
-static void wlcm_process_autherized_event(struct wifi_message *msg,
-                                              enum cm_sta_state *next,
-                                              struct wlan_network *network)
-{
-    if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
-    {
-        wlan.autherized = true;
-    }
-    else
-    {
-        if (is_state(CM_STA_ASSOCIATED))
-        {
-            (void)wifi_deauthenticate((uint8_t *)network->bssid);
-        }
-        wlan.sta_state      = CM_STA_IDLE;
-        wlan.sta_state      = CM_STA_IDLE;
-        *next               = CM_STA_IDLE;
-        wlan.sta_ipv4_state = CM_STA_IDLE;
-#ifdef CONFIG_IPV6
-        wlan.sta_ipv6_state = CM_STA_IDLE;
-#endif
-        do_connect_failed(WLAN_REASON_NETWORK_AUTH_FAILED);
-
-        if (wlan.reassoc_control)
-        {
-            wlcm_request_reconnect(next, network);
-        }
-    }
-}
-#endif
-
 static void wlcm_process_authentication_event(struct wifi_message *msg,
                                               enum cm_sta_state *next,
                                               struct wlan_network *network)
@@ -4596,14 +4563,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
     wlcm_d("%s: %s", __func__, buf);
 
-    if (strstr(buf, WPA_EVENT_CONNECTED))
-    {
-        if (wlan.autherized == true)
-        {
-            (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
-        }
-    }
-    else if (strstr(buf, WPA_EVENT_SCAN_FAILED))
+    if (strstr(buf, WPA_EVENT_SCAN_FAILED))
     {
         wlcm_process_scan_failed();
     }
@@ -5905,9 +5865,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             pbuf_free(msg->data);
             break;
 #ifdef CONFIG_WPA_SUPP
-        case WIFI_EVENT_AUTHERIZED:
-            wlcm_process_autherized_event(msg, &next, network);
-            break;
         case WIFI_EVENT_REMAIN_ON_CHANNEL:
             wifi_process_remain_on_channel(msg);
             break;

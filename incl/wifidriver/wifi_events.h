@@ -43,10 +43,6 @@ enum wifi_event
     WIFI_EVENT_ASSOCIATION,
     /** PMK */
     WIFI_EVENT_PMK,
-#ifdef CONFIG_WPA_SUPP
-    /** Autherized */
-    WIFI_EVENT_AUTHERIZED,
-#endif
     /** Authentication */
     WIFI_EVENT_AUTHENTICATION,
     /** Disassociation */

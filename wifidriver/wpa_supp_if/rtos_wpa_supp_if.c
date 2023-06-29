@@ -1334,7 +1334,7 @@ int wifi_nxp_wpa_set_supp_port(void *if_priv, int authorized, char *bssid)
 #endif
             if (authorized)
             {
-                (void)wifi_event_completion(WIFI_EVENT_AUTHERIZED, WIFI_EVENT_REASON_SUCCESS, NULL);
+                (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_SUCCESS, NULL);
             }
 #ifdef CONFIG_WPA_SUPP_WPS
         }
