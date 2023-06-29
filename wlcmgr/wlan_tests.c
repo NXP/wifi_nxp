@@ -5914,17 +5914,17 @@ static void print_get_sub_event(wlan_ds_subscribe_evt *sub_evt)
     if (evt_bitmap & SUBSCRIBE_EVT_LINK_QUALITY)
     {
         PRINTF("link quality is enabled! ");
-        PRINTF("value = %u\r\n", sub_evt->pre_beacon_miss);
-    }
-    if (evt_bitmap & SUBSCRIBE_EVT_PRE_BEACON_LOST)
-    {
-        PRINTF("pre beacon lost is enabled! ");
         PRINTF(
             "link_snr = %u, link_snr_freq = %u, "
             "link_rate = %u, link_rate_freq = %u, "
             "link_tx_latency = %u, link_tx_lantency_freq = %u\r\n",
             sub_evt->link_snr, sub_evt->link_snr_freq, sub_evt->link_rate, sub_evt->link_rate_freq,
             sub_evt->link_tx_latency, sub_evt->link_tx_lantency_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_PRE_BEACON_LOST)
+    {
+        PRINTF("pre beacon lost is enabled! ");
+        PRINTF("value = %u\r\n", sub_evt->pre_beacon_miss);
     }
 }
 
