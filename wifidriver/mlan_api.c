@@ -4966,6 +4966,20 @@ bool wifi_same_ess_ft()
     return pmpriv->auth_alg == MLAN_AUTH_MODE_FT ? true : false;
 }
 #endif
+
+int wifi_nxp_set_default_scan_ies(const u8 *ies, size_t ies_len)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+    if (ies && ies_len < sizeof(pmpriv->default_scan_ies))
+    {
+        pmpriv->default_scan_ies_len = ies_len;
+        memcpy(pmpriv->default_scan_ies, ies, ies_len);
+    }
+
+    return WM_SUCCESS;
+}
+
 static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
                                        const t_u8 auth_alg,
                                        const t_u8 *auth_seq_num,

@@ -1479,6 +1479,15 @@ struct _mlan_private
     /** Length of the data stored in gen_ie_buf */
     t_u8 gen_ie_buf_len;
 
+#ifdef CONFIG_WPA_SUPP
+    /**
+     * Default scan ies buffer
+     */
+    t_u8 default_scan_ies[MRVDRV_GENIE_BUF_SIZE];
+    /** Length of the data stored in gen_ie_buf */
+    t_u8 default_scan_ies_len;
+#endif
+
 #ifndef CONFIG_MLAN_WMSDK
     t_u8 *pcurr_bcn_buf;
     t_u32 curr_bcn_size;

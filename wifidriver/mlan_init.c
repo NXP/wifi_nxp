@@ -433,6 +433,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 
 #ifdef CONFIG_WPA_SUPP
     reset_ie_index();
+    priv->default_scan_ies_len = 0;
     priv->probe_req_index = -1;
 #ifdef CONFIG_WPA_SUPP_AP
     priv->beacon_vendor_index = -1;

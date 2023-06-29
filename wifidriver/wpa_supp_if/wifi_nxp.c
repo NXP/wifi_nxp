@@ -46,6 +46,7 @@ static const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .hapd_deinit              = wifi_nxp_hostapd_dev_deinit,
     .set_mac_addr             = wifi_nxp_wpa_supp_set_mac_addr,
     .scan2                    = wifi_nxp_wpa_supp_scan2,
+    .set_default_scan_ies     = wifi_nxp_wpa_supp_set_default_scan_ies,
     .sched_scan               = wifi_nxp_wpa_supp_sched_scan,
     .stop_sched_scan          = wifi_nxp_wpa_supp_stop_sched_scan,
     .scan_abort               = wifi_nxp_wpa_supp_scan_abort,

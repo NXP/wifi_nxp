@@ -588,6 +588,7 @@ static void wlan_add_wps_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pp
     LEAVE();
 }
 #endif
+
 /**
  *  @brief Add IE to probe request frame
  *
@@ -599,18 +600,53 @@ static void wlan_add_wps_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pp
 static void wlan_add_probe_request_ie(IN mlan_private *pmpriv, OUT t_u8 **pptlv_out)
 {
     MrvlIEtypesHeader_t *tlv;
+    t_u8 *ies                     = MNULL;
+    t_u8 ies_len                  = 0;
+    t_u32 bytes_left              = 0;
+    t_u8 *pcurrent_ptr            = MNULL;
+    IEEEtypes_Header_t *pieee_hdr = MNULL;
 
     ENTER();
 
-    if (pmpriv->gen_ie_buf_len)
+    if (pmpriv->default_scan_ies_len != 0)
     {
-        tlv       = (MrvlIEtypesHeader_t *)*pptlv_out;
-        tlv->type = wlan_cpu_to_le16(VENDOR_SPECIFIC_221);
-        tlv->len  = wlan_cpu_to_le16(pmpriv->gen_ie_buf_len - 2);
-        *pptlv_out += sizeof(MrvlIEtypesHeader_t);
-        (void)__memcpy(pmpriv->adapter, *pptlv_out, pmpriv->gen_ie_buf + 2, pmpriv->gen_ie_buf_len - 2);
-        *pptlv_out += pmpriv->gen_ie_buf_len - 2;
+        ies     = pmpriv->default_scan_ies;
+        ies_len = pmpriv->default_scan_ies_len;
     }
+    else if (pmpriv->gen_ie_buf_len != 0)
+    {
+        ies     = pmpriv->gen_ie_buf;
+        ies_len = pmpriv->gen_ie_buf_len;
+    }
+    else
+    {
+        return;
+    }
+
+    bytes_left   = ies_len;
+    pcurrent_ptr = ies;
+
+    while (bytes_left >= sizeof(IEEEtypes_Header_t))
+    {
+        pieee_hdr = (IEEEtypes_Header_t *)pcurrent_ptr;
+
+        if (pieee_hdr->element_id == EXT_CAPABILITY)
+        {
+            goto skip;
+        }
+
+        tlv       = (MrvlIEtypesHeader_t *)*pptlv_out;
+        tlv->type = wlan_cpu_to_le16(pieee_hdr->element_id);
+        tlv->len  = wlan_cpu_to_le16(pieee_hdr->len);
+        *pptlv_out += sizeof(MrvlIEtypesHeader_t);
+        (void)__memcpy(pmpriv->adapter, *pptlv_out, pcurrent_ptr + sizeof(IEEEtypes_Header_t), pieee_hdr->len);
+        *pptlv_out += pieee_hdr->len;
+
+    skip:
+        pcurrent_ptr += pieee_hdr->len + sizeof(IEEEtypes_Header_t);
+        bytes_left -= pieee_hdr->len + sizeof(IEEEtypes_Header_t);
+    }
+
     LEAVE();
 }
 #endif

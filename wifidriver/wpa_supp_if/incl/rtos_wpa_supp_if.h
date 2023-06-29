@@ -41,6 +41,8 @@ void wifi_nxp_wpa_supp_dev_deinit(void *if_priv);
 
 int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params);
 
+int wifi_nxp_wpa_supp_set_default_scan_ies(void *priv, const u8 *ies, size_t ies_len);
+
 int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *params);
 
 int wifi_nxp_wpa_supp_stop_sched_scan(void *if_priv);

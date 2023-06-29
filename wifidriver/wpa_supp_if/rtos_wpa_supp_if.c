@@ -719,6 +719,30 @@ out:
     return ret;
 }
 
+int wifi_nxp_wpa_supp_set_default_scan_ies(void *priv, const u8 *ies, size_t ies_len)
+{
+    int ret = -1;
+
+    if ((!priv) || (!ies))
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    ret = wifi_nxp_set_default_scan_ies(ies, ies_len);
+
+    if (ret != WM_SUCCESS)
+    {
+        supp_e("%s: Default scan ies set failed", __func__);
+    }
+    else
+    {
+        supp_d("%s: Default scan ies set successfully", __func__);
+    }
+out:
+    return ret;
+}
+
 int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *params)
 {
     int status = -WM_FAIL;
@@ -1068,7 +1092,7 @@ int wifi_nxp_wpa_supp_authenticate(void *if_priv, struct wpa_driver_auth_params 
 
     if ((!if_priv) || (!params))
     {
-        supp_e("%s: Invalid params\n", __func__);
+        supp_e("%s: Invalid params", __func__);
         goto out;
     }
 
