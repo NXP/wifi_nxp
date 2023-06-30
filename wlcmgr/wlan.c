@@ -8091,6 +8091,13 @@ int wlan_imu_put_task_lock(void)
     return wifi_imu_put_task_lock();
 }
 
+void wlan_dhcp_cleanup()
+{
+    net_stop_dhcp_timer();
+    net_interface_dhcp_stop(net_get_mlan_handle());
+    net_interface_dhcp_cleanup(net_get_mlan_handle());
+}
+
 void wlan_reset(cli_reset_option ResetOption)
 {
     if (os_mutex_get(&reset_lock, 0) != WM_SUCCESS)
@@ -8128,6 +8135,9 @@ void wlan_reset(cli_reset_option ResetOption)
             wifi_set_tx_status(WIFI_DATA_BLOCK);
             /* Block RX data */
             wifi_set_rx_status(WIFI_DATA_BLOCK);
+
+            /* DHCP Cleanup */
+            wlan_dhcp_cleanup();
             /* Stop and Remove all network interfaces */
             wlan_remove_all_networks();
 

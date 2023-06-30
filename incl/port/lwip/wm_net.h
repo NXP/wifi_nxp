@@ -340,6 +340,17 @@ void net_interface_down(void *intrfc_handle);
  */
 void net_interface_dhcp_stop(void *intrfc_handle);
 
+/** Cleanup DHCP client on given interface
+ *
+ * Cleanup the DHCP client on given interface state. Use net_get_sta_handle(),
+ * net_get_uap_handle() to get interface handle.
+ *
+ * \param[in] intrfc_handle interface handle
+ *
+ * \return void
+ */
+void net_interface_dhcp_cleanup(void *intrfc_handle);
+
 /** Configure IP address for interface
  *
  * \param[in] addr Address that needs to be configured.

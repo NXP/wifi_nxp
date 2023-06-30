@@ -674,6 +674,12 @@ void net_interface_dhcp_stop(void *intrfc_handle)
     wm_netif_status_callback_ptr = NULL;
 }
 
+void net_interface_dhcp_cleanup(void *intrfc_handle)
+{
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+    (void)dhcp_cleanup(&if_handle->netif);
+}
+
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 {
 #ifdef CONFIG_IPV6
