@@ -165,7 +165,6 @@ static bool mon_thread_init = 0;
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
-wlan_flt_cfg_t g_flt_cfg;
 #ifdef CONFIG_POWER_MANAGER
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data);
 AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
@@ -174,6 +173,11 @@ AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
     .data           = NULL,
 };
 bool is_wakeup_cond_set = false;
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+int wlan_host_sleep_state = HOST_SLEEP_DISABLE;
+#else
+int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
+#endif
 #ifdef CONFIG_UART_INTERRUPT
 /* This flag is used for Power Manager only.
  * When using Power Manager, the uart task holds the rxSemaphore and waits
@@ -184,6 +188,7 @@ bool is_wakeup_cond_set = false;
  */
 bool usart_suspend_flag = false;
 #endif
+extern os_timer_t wake_timer;
 #endif
 int is_hs_handshake_done = 0;
 extern os_semaphore_t wakelock;
@@ -752,7 +757,7 @@ static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
 {
     int ret;
-    unsigned int ipv4_addr;
+    unsigned int ipv4_addr = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
     wlan.hs_configured = MFALSE;
 
@@ -769,7 +774,7 @@ static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
             return -WM_FAIL;
         }
     }
-    else
+    else if (is_uap_started())
     {
         ret = wlan_get_ipv4_addr(&ipv4_addr);
         if (ret != WM_SUCCESS)
@@ -778,6 +783,10 @@ static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
             return -WM_FAIL;
         }
         type = WLAN_BSS_TYPE_UAP;
+    }
+    else
+    {
+        ipv4_addr = 0;
     }
     ret = wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE,
                                 wlan_map_to_wifi_wakeup_condtions(wlan.wakeup_conditions));
@@ -888,19 +897,17 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
     if (eventType == kPM_EventEnteringSleep && powerState > PM_LP_STATE_PM0)
     {
         /* Entering low power mode is not allowed in any of below conditions:
-         * 1. Wakeup method is not configured
+         * 1. Host sleep is disabled
          * 2. wlan initialization is still on going
-         * 3. wlan doesn't have connection
-         * 4. wakelock is held by any task
-         * 5. Host sleep handshake is on going or fail
-         * 6. UAPSD/PPS is activated
+         * 3. wakelock is held by any task
+         * 4. Host sleep handshake is on going or fail
+         * 5. UAPSD/PPS is activated
          */
-        if (!is_wakeup_cond_set || wlan.status != WLCMGR_ACTIVATED ||
-           (!is_sta_connected() && !is_uap_started())
-           || wakelock_isheld() || mlan_adap->pps_uapsd_mode)
+        if (!wlan_host_sleep_state || wlan.status != WLCMGR_ACTIVATED ||
+            wakelock_isheld() || mlan_adap->pps_uapsd_mode)
             return kStatus_PMPowerStateNotAllowed;
         /* Skip host sleep handshake for PM1 */
-        if(powerState == PM_LP_STATE_PM1)
+        if (powerState == PM_LP_STATE_PM1)
             goto done;
         if (!is_hs_handshake_done)
         {
@@ -924,19 +931,11 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
     }
     else if (eventType == kPM_EventExitingSleep)
     {
+        /* Skip host sleep handshake for PM1 */
+        if (powerState == PM_LP_STATE_PM1)
+            goto done;
         if (is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
         {
-            /* Skip host sleep handshake for PM1 */
-            if(powerState == PM_LP_STATE_PM1)
-                goto done;
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
-            if (powerState == PM_LP_STATE_PM3)
-            {
-                /* Perihperal state lost, need reinitialize in exit from PM3 */
-                lpm_pm3_exit_hw_reinit();
-                usart_suspend_flag = false;
-            }
-#endif
             ret = powerManager_send_event(HOST_SLEEP_EXIT, NULL);
             if (ret != 0)
                 return kStatus_PMNotifyEventError;
@@ -944,8 +943,9 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
             is_hs_handshake_done = 0;
 #if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
             host_sleep_post_cfg((int)powerState);
-            /* reset wakeup condition set flag after waking up */
-            is_wakeup_cond_set = false;
+            /* If periodic host sleep is not enabled, reset the flag to disable host sleep */
+            if (wlan_host_sleep_state == HOST_SLEEP_ONESHOT)
+                wlan_host_sleep_state = HOST_SLEEP_DISABLE;
 #endif
         }
     }
@@ -954,28 +954,43 @@ done:
 }
 #endif
 
-void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
+int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds)
 {
     int ret = 0;
 
-#ifndef CONFIG_MEF_CFG
-    (void)is_mef;
-#endif
+    if (!wlan_is_started())
+    {
+        (void)PRINTF("Wakeup condition configure is not allowed when WIFI is disabled\r\n");
+        return -WM_FAIL;
+    }
 
-#ifdef CONFIG_WMM_UAPSD
-    if (mlan_adap && mlan_adap->pps_uapsd_mode)
+    /* Check if wake_up_conds is valid or not */
+    if (wake_up_conds && (wake_up_conds & 0x20))
     {
-        wlcm_e("Host sleep is not allowed if UAPSD/PPS is activated");
-        return;
+        (void)PRINTF("Invalid wake_up_conds. Bit 5 is reserved.\r\n");
+        return -WM_FAIL;
     }
+
+    if (!is_sta_connected() && !mlan_adap->priv[1]->media_connected)
+    {
+#ifdef CONFIG_MEF_CFG
+        if (is_mef)
+        {
+            wlcm_e("Connection on STA or uAP is required for MEF configuration\r\n");
+            ret = -WM_FAIL;
+            return ret;
+        }
+        else
 #endif
-    wlan_is_manual = is_manual;
-    if (!is_sta_connected() && !is_uap_started())
-    {
-        (void)PRINTF("No connection on STA and uAP is not up\r\n");
-        (void)PRINTF("Host sleep is not allowed in this situation\r\n");
-        return;
+             if ((wake_up_conds & (WAKE_ON_ALL_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST
+                                   | WAKE_ON_ARP_BROADCAST | WAKE_ON_MGMT_FRAME)) != 0)
+        {
+            wlcm_e("Connection on STA or uAP is required for configured bitmap!\r\n");
+            ret = -WM_FAIL;
+            return ret;
+        }
     }
+
 #ifdef CONFIG_MEF_CFG
     if (is_mef)
     {
@@ -999,21 +1014,55 @@ void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
         }
     }
 #endif
+    return ret;
+}
+
+void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
+{
+    int ret = 0;
+
+#ifdef CONFIG_WMM_UAPSD
+    if (mlan_adap && mlan_adap->pps_uapsd_mode)
+    {
+        wlcm_e("Host sleep is not allowed if UAPSD/PPS is activated");
+        return;
+    }
+#endif
+    wlan_is_manual = is_manual;
     if (!wlan_is_manual)
     {
 #ifdef CONFIG_POWER_MANAGER
-        /* Wakeup condition is configured and host can enter low power mode with Power Manager */
-        is_wakeup_cond_set = true;
+	if (!wlan_is_started())
+        {
+            wlcm_e("Host sleep is not allowed when WIFI is disabled\r\n");
+            return;
+        }
+        if (is_periodic)
+            wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
+        else
+            wlan_host_sleep_state = HOST_SLEEP_ONESHOT;
 #endif
     }
     else
     {
-        /* Start host sleep handshake here if manual mode is selected */
-        ret = wlan_send_host_sleep(wlan.wakeup_conditions);
-        if ((ret != WM_SUCCESS) || (!(is_uap_started()) && !(is_state(CM_STA_CONNECTED))))
+#ifdef CONFIG_POWER_MANAGER
+        /* Reset flag and stop timer if manual mode is selected without cancel periodic sleep */
+        wlan_host_sleep_state = HOST_SLEEP_DISABLE;
+        if (os_timer_is_running(&wake_timer))
         {
-            wlcm_e("Error: Failed to config host sleep");
-            return;
+            os_timer_deactivate(&wake_timer);
+            wakelock_put();
+        }
+#endif
+        if (wlan.status == WLCMGR_ACTIVATED)
+        {
+            /* Start host sleep handshake here if manual mode is selected */
+            ret = wlan_send_host_sleep_int(wlan.hs_wakeup_condition);
+            if (ret != WM_SUCCESS)
+            {
+                wlcm_e("Error: Failed to config host sleep");
+                return;
+            }
         }
     }
 }
@@ -1031,6 +1080,31 @@ void wlan_cancel_host_sleep()
         wlcm_e("Error: Failed to send host sleep cancel command");
         return;
     }
+}
+
+void wlan_clear_host_sleep_config()
+{
+    wlan_is_manual = MFALSE;
+#ifdef CONFIG_POWER_MANAGER
+    wlan_host_sleep_state = HOST_SLEEP_DISABLE;
+#ifdef CONFIG_UART_INTERRUPT
+    usart_suspend_flag = MFALSE;
+#endif
+    if (os_timer_is_running(&wake_timer))
+    {
+        os_timer_deactivate(&wake_timer);
+        wakelock_put();
+    }
+#endif
+    is_hs_handshake_done = 0;
+#ifdef CONFIG_MEF_CFG
+    memset(&g_flt_cfg, 0x0, sizeof(wlan_flt_cfg_t));
+    wifi_set_packet_filters(&g_flt_cfg);
+#endif
+    wakeup_by = 0;
+    wifi_clear_wakeup_reason();
+    wlan.wakeup_conditions = 0;
+    wlan.is_hs_configured = MFALSE;
 }
 #endif
 
@@ -3250,7 +3324,7 @@ static void wlcm_process_hs_config_event(void)
 {
     /* host sleep config done event received */
     int ret = WM_SUCCESS;
-    unsigned int ipv4_addr;
+    unsigned int ipv4_addr = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
 
     ret = wlan_get_ipv4_addr(&ipv4_addr);
@@ -4905,7 +4979,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     wifi_host_mbo_cfg(1);
 #endif
 #ifdef RW610
-    wlan_ieeeps_on(0);
+    wlan_ieeeps_on(wlan.wakeup_conditions);
     wlan_deepsleepps_on();
 #endif
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
@@ -6333,8 +6407,13 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
     wlan.rssi_low_threshold = 70;
 #endif
+
+#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
+#else
+    wlan.wakeup_conditions = 0;
+#endif
 
     wlan.cur_network_idx     = -1;
     wlan.cur_uap_network_idx = -1;
@@ -6437,8 +6516,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
             wlcm_e("unable to create event queue: %d", ret);
             return -WM_FAIL;
         }
-#if !((defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)) && \
-    (!defined(APP_LOWPOWER_ENABLED) || (APP_LOWPOWER_ENABLED == 0)))
+#if ((defined(APP_LOWPOWER_ENABLED) && (APP_LOWPOWER_ENABLED == 1)) && \
+     (defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)))
         /* For coex app, only register wlan notify callback when APP_LOWPOWER_ENABLED == 1 */
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
@@ -8128,7 +8207,13 @@ void wlan_reset(cli_reset_option ResetOption)
         PRINTF("--- Disable WiFi ---\r\n");
         if (wlan_is_started())
         {
-             /*Disconnect form AP if station is associated with an AP.*/
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+            /* Reset host sleep state flag first */
+            wlan_host_sleep_state = HOST_SLEEP_DISABLE;
+#endif
+#endif
+            /*Disconnect form AP if station is associated with an AP.*/
             if (wlan.sta_state > CM_STA_ASSOCIATING)
             {
                 wlan_disconnect();
@@ -8212,6 +8297,14 @@ void wlan_reset(cli_reset_option ResetOption)
             wifi_set_rx_status(WIFI_DATA_RUNNING);
             wifi_tx_block_cnt = 0;
             wifi_rx_block_cnt = 0;
+#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+            /* Re-enable host sleep for coex app */
+            wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
+#endif
+#endif
+#endif
         }
     }
 
@@ -8885,7 +8978,7 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
         return WLAN_ERROR_STATE;
     }
 
-    wlan.wakeup_conditions = wakeup_conditions;
+    //wlan.wakeup_conditions = wakeup_conditions;
 
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
 }
@@ -11535,7 +11628,6 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
     {
         wifi_wmm_qos_cfg(&uapsd_qos_info, 1);
         wifi_sleep_period(&uapsd_sleep_period, 1);
-        condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
 #ifndef CONFIG_WNM_PS
         wlan_ieeeps_on(condition);
 #endif
@@ -11717,6 +11809,13 @@ int wlan_mef_set_multicast(t_u8 mef_action)
 void wlan_config_mef(int type, t_u8 mef_action)
 {
     int ret;
+
+    if(!wlan_is_started())
+    {
+        (void)PRINTF("MEF configure is not allowed when WIFI is disabled\r\n");
+        return;
+    }
+
     switch (type)
     {
         case MEF_TYPE_DELETE:

@@ -1301,6 +1301,17 @@ hal_rpmsg_status_t rpmsg_cmdrsp_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     assert(0 != length);
     assert(IMU_MSG_COMMAND_RESPONSE == pImuMsg->Hdr.type);
 
+#ifdef CONFIG_HOST_SLEEP
+    if (POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
+    {
+        wakeup_by                      = WAKEUP_BY_WLAN;
+        mlan_adap->wlan_wakeup.type    = IMU_MSG_COMMAND_RESPONSE;
+        mlan_adap->wlan_wakeup.subtype = 0;
+        mlan_adap->wlan_wakeup.id      = *(uint16_t *)((uint8_t *)pImuMsg->PayloadPtr[0] + 4);
+        POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
+    }
+#endif
+
     wlan_decode_rx_packet((t_u8 *)pImuMsg->PayloadPtr[0], MLAN_TYPE_CMD);
 
     return kStatus_HAL_RpmsgSuccess;
@@ -1311,6 +1322,17 @@ hal_rpmsg_status_t rpmsg_event_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     assert(NULL != pImuMsg);
     assert(0 != length);
     assert(IMU_MSG_EVENT == pImuMsg->Hdr.type);
+
+#ifdef CONFIG_HOST_SLEEP
+    if (POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
+    {
+        wakeup_by                      = WAKEUP_BY_WLAN;
+        mlan_adap->wlan_wakeup.type    = IMU_MSG_EVENT;
+        mlan_adap->wlan_wakeup.subtype = 0;
+        mlan_adap->wlan_wakeup.id      = *(uint16_t *)((uint8_t *)pImuMsg->PayloadPtr[0] + 4);
+        POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
+    }
+#endif
 
 #ifdef CONFIG_CSI
     if (EVENT_CSI == *((t_u8 *)pImuMsg->PayloadPtr[0] + 4))
@@ -1337,7 +1359,16 @@ hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
 #ifdef CONFIG_HOST_SLEEP
     wakelock_get();
+    if (POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
+    {
+        wakeup_by                      = WAKEUP_BY_WLAN;
+        mlan_adap->wlan_wakeup.type    = pImuMsg->Hdr.type;
+        mlan_adap->wlan_wakeup.subtype = 0;
+        mlan_adap->wlan_wakeup.id      = 0;
+        POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
+    }
 #endif
+
     for (i = 0; i < pImuMsg->Hdr.length; i++)
     {
         inimupkt = (IMUPkt *)pImuMsg->PayloadPtr[i];
@@ -1386,6 +1417,17 @@ hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
     assert(NULL != pImuMsg);
     assert(IMU_MSG_CONTROL == pImuMsg->Hdr.type);
+
+#ifdef CONFIG_HOST_SLEEP
+    if (POWER_GetWakeupStatus(WL_MCI_WAKEUP0_IRQn))
+    {
+        wakeup_by                      = WAKEUP_BY_WLAN;
+        mlan_adap->wlan_wakeup.type    = IMU_MSG_CONTROL;
+        mlan_adap->wlan_wakeup.subtype = pImuMsg->Hdr.sub_type;
+        mlan_adap->wlan_wakeup.id      = 0;
+        POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
+    }
+#endif
 
     imuControlType = pImuMsg->Hdr.sub_type;
     switch (imuControlType)
@@ -1781,3 +1823,22 @@ int imu_put_task_lock(void)
 
     return WM_SUCCESS;
 }
+
+#ifdef CONFIG_HOST_SLEEP
+void wifi_print_wakeup_reason(void)
+{
+    if (mlan_adap->wlan_wakeup.type == IMU_MSG_CONTROL)
+        PRINTF("Woken up by WLAN(IMU ctrl msg subtype 0x%x)\r\n", mlan_adap->wlan_wakeup.subtype);
+    else if (mlan_adap->wlan_wakeup.type == IMU_MSG_COMMAND_RESPONSE)
+        PRINTF("Woken up by WLAN(command response 0x%x)\r\n", mlan_adap->wlan_wakeup.id);
+    else if (mlan_adap->wlan_wakeup.type == IMU_MSG_EVENT)
+        PRINTF("Woken up by WLAN(event 0x%x)\r\n", mlan_adap->wlan_wakeup.id);
+    else if (mlan_adap->wlan_wakeup.type == IMU_MSG_RX_DATA || mlan_adap->wlan_wakeup.type == IMU_MSG_MULTI_RX_DATA)
+        PRINTF("Woken up by WLAN(Rx data)\r\n");
+}
+
+void wifi_clear_wakeup_reason(void)
+{
+    memset(&mlan_adap->wlan_wakeup, 0x0, sizeof(wlan_wakeup_reason));
+}
+#endif

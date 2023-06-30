@@ -2058,6 +2058,19 @@ typedef struct _vdll_dnld_ctrl
 } vdll_dnld_ctrl, *pvdll_dnld_ctrl;
 #endif
 
+#ifdef CONFIG_HOST_SLEEP
+/* WLAN wakeup reason in detail */
+typedef struct
+{
+    /* Rx IMU msg type */
+    uint8_t type;
+    /* IMU msg subtype for ctrl msg */
+    uint8_t subtype;
+    /* cmdresp or event id */
+    uint16_t id;
+} wlan_wakeup_reason;
+#endif
+
 /** Adapter data structure for MLAN */
 struct _mlan_adapter
 {
@@ -2519,6 +2532,9 @@ struct _mlan_adapter
 #ifdef CONFIG_WMM
     /* wmm buffer pool */
     outbuf_pool_t outbuf_pool;
+#endif
+#ifdef CONFIG_HOST_SLEEP
+    wlan_wakeup_reason wlan_wakeup;
 #endif
 };
 

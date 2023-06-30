@@ -1402,6 +1402,8 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 int wakelock_get(void);
 int wakelock_put(void);
 int wakelock_isheld(void);
+void wifi_print_wakeup_reason(void);
+void wifi_clear_wakeup_reason(void);
 #endif
 
 int wifi_raw_packet_send(const t_u8 *packet, t_u32 length);

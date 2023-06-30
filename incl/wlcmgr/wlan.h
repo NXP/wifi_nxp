@@ -1725,6 +1725,13 @@ enum wlan_hostsleep_event
     HOST_SLEEP_EXIT,
 };
 
+enum wlan_hostsleep_state
+{
+    HOST_SLEEP_DISABLE,
+    HOST_SLEEP_ONESHOT,
+    HOST_SLEEP_PERIODIC,
+};
+
 #define WLAN_HOSTSLEEP_SUCCESS    1
 #define WLAN_HOSTSLEEP_IN_PROCESS 2
 #define WLAN_HOSTSLEEP_FAIL       3
@@ -2743,42 +2750,35 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
-/** Host sleep configure.
+/** Wowlan configure.
  * This function may be called to config host sleep in firmware.
  *
- * \param[in] is_mef To be wokeup by MEF or not.
- * \param[in] is_manual Flag to indicate host enter low power mode with power manager or by command.
+ * \param[in] is_mef Flag to indicate use MEF condition or not.
+ * \param[in] wake_up_conds Bit map of default condition.
+ *
  * \return WM_SUCCESS if the call was successful.
  * \return -WM_FAIL if failed.
  */
-void wlan_config_host_sleep(bool is_mef, t_u32 default_val, bool is_manual);
+int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds);
+/** Host sleep configure.
+ * This function may be called to config host sleep in firmware.
+ *
+ * \param[in] is_manual Flag to indicate host enter low power mode with power manager or by command.
+ * \param[in] is_periodic Flag to indicate host enter low power periodically or once with power manager.
+ */
+void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic);
 /** Cancel host sleep.
  * This function may be called to cancel host sleep in firmware.
  */
 void wlan_cancel_host_sleep();
-/** Send host sleep command.
- * This function sends host sleep command to firmware.
- *
- * \return WM_SUCCESS if the call was successful.
- * \return -WM_FAIL if failed.
+/** Clear host sleep configurations in driver.
+ * This function clears all the host sleep related configures in driver.
  */
-int wlan_send_host_sleep();
-/** System suspend configure.
- * This function may be called to config system low power mode.
- *
- * \param[in] mode Specific mode system is about to enter.
- */
-void wlan_config_suspend_mode(int mode);
+void wlan_clear_host_sleep_config();
 /** This function set multicast MEF entry
  * \param[in] mef_actionTo be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
  */
 int wlan_set_multicast(t_u8 mef_action);
-/** This function set/delete mef entries configuration.
- *
- * \param[in] type        MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
- * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
- */
-void wlan_config_mef(int type, t_u8 mef_action);
 #endif
 
 /** Configure Listen interval of IEEE power save mode.

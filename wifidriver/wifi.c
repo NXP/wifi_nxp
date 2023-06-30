@@ -143,6 +143,7 @@ static bool scan_thread_in_process = false;
 
 #ifdef CONFIG_HOST_SLEEP
 os_semaphore_t wakelock;
+int wakeup_by = 0;
 #endif
 
 #ifdef CONFIG_WIFI_RECOVERY

@@ -49,6 +49,10 @@ wlan_net_monitor_t g_net_monitor_param = {
 };
 #endif
 
+#ifdef CONFIG_HOST_SLEEP
+extern uint64_t rtc_timeout;
+#endif
+
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
@@ -2166,8 +2170,6 @@ static void test_wlan_ieee_ps(int argc, char **argv)
     }
     else if (choice == 1)
     {
-        condition = (uint32_t)WAKE_ON_ARP_BROADCAST | (uint32_t)WAKE_ON_UNICAST | (uint32_t)WAKE_ON_MULTICAST |
-                    (uint32_t)WAKE_ON_MAC_EVENT;
         ret = wlan_ieeeps_on(condition);
         if (ret == WM_SUCCESS)
         {
@@ -2216,7 +2218,6 @@ static void test_wlan_wnm_ps(int argc, char **argv)
     {
         if (get_uint(argv[2], &wnm_interval, strlen(argv[2])) == 0)
         {
-            condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
             ret       = wlan_wnmps_on(condition, (t_u16)wnm_interval);
         }
         else
@@ -3651,26 +3652,152 @@ static void test_wlan_get_log(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_MEF_CFG
+#ifdef CONFIG_HOST_SLEEP
+static void test_wlan_wakeup_condition(int argc, char **argv)
+{
+    uint8_t is_mef         = MFALSE;
+    uint32_t wake_up_conds = 0;
+
+    if (argc < 2 || argc > 3)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("    wlan-wakeup-condition <wowlan [wake_up_conds]/mef>\r\n");
+        (void)PRINTF("    wowlan -- default host wakeup\r\n");
+        (void)PRINTF("    [wake_up_conds] -- value for wowlan host wakeup conditions only\r\n");
+        (void)PRINTF("	       bit 0: WAKE_ON_ALL_BROADCAST\r\n");
+        (void)PRINTF("	       bit 1: WAKE_ON_UNICAST\r\n");
+        (void)PRINTF("	       bit 2: WAKE_ON_MAC_EVENT\r\n");
+        (void)PRINTF("	       bit 3: WAKE_ON_MULTICAST\r\n");
+        (void)PRINTF("	       bit 4: WAKE_ON_ARP_BROADCAST\r\n");
+        (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
+        (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
+        (void)PRINTF("    mef     -- MEF host wakeup\r\n");
+        (void)PRINTF("Example:\r\n");
+        (void)PRINTF("    wlan-wakeup-condition mef\r\n");
+        (void)PRINTF("    wlan-wakeup-condition wowlan 0x1e\r\n");
+        return;
+    }
+    if (string_equal("mef", argv[1]))
+    {
+        is_mef = MTRUE;
+    }
+    else if (string_equal("wowlan", argv[1]))
+    {
+        if (argc < 3)
+        {
+            (void)PRINTF("wake_up_conds need be specified\r\n");
+            return;
+        }
+        if (!ISDIGIT(argv[2]) && !ISHEXSTRING(argv[2]))
+        {
+            (void)PRINTF("wake_up_conds need be a number\r\n");
+            return;
+        }
+        wake_up_conds = a2hex_or_atoi(argv[2]);
+    }
+    else
+    {
+        (void)PRINTF("wowlan/mef need be specified\r\n");
+        return;
+    }
+    wlan_wowlan_config(is_mef, wake_up_conds);
+    return;
+}
+
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+static void test_wlan_set_host_sleep(int argc, char **argv)
+{
+    bool is_manual    = MFALSE;
+    int rtc_timeout_s = 0;
+    t_u8 is_periodic  = 0;
+    t_u8 enable       = 0;
+
+    if (argc > 5 || argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("    wlan-host-sleep <enable> <mode> <rtc_timeout> <periodic>\r\n");
+        (void)PRINTF("    enable      -- enable/disable host sleep\r\n");
+        (void)PRINTF("                   0 - disable host sleep\r\n");
+        (void)PRINTF("                   1 - enable host sleep\r\n");
+        (void)PRINTF("    mode        -- Mode of how host enter low power.\r\n");
+        (void)PRINTF("                   manual - Manual mode. Need to use suspend command to enter low power.\r\n");
+        (void)PRINTF("                   pm     - Power Manager.");
+        (void)PRINTF("    rtc_timeout -- RTC timer value. Unit is second.\r\n");
+        (void)PRINTF("    periodic    -- Host enter low power periodically or oneshot\r\n");
+        (void)PRINTF(
+            "                   0 - Oneshot. Host will enter low power only once and keep full power after waking "
+            "up.\r\n");
+        (void)PRINTF("                   1 - Periodic. Host will enter low power periodically.\r\n");
+        (void)PRINTF("    Parameters <rtc_timer> and <periodic> are for Power Manager ONLY!\r\n");
+        (void)PRINTF("Examples:\r\n");
+        (void)PRINTF("    wlan-host-sleep 1 pm 60 1\r\n");
+        (void)PRINTF("    wlan-host-sleep 1 pm 5 0\r\n");
+        (void)PRINTF("    wlan-host-sleep 1 manual\r\n");
+        (void)PRINTF("    wlan-host-sleep 0\r\n");
+        return;
+    }
+
+    enable = (t_u8)atoi(argv[1]);
+    if (enable != 0 && enable != 1)
+    {
+        (void)PRINTF("Error! Invalid input of parameter <enable>\r\n");
+        return;
+    }
+    /* Disable host sleep */
+    if (enable == 0)
+    {
+        wlan_cancel_host_sleep();
+        wlan_clear_host_sleep_config();
+        (void)PRINTF("Host Sleep disabled\r\n");
+        return;
+    }
+    if (string_equal("manual", argv[2]))
+    {
+        is_manual = MTRUE;
+    }
+    else if (string_equal("pm", argv[2]))
+    {
+        if (argc != 5)
+        {
+            (void)PRINTF("Error!Invalid number of inputs! Need to specify both <rtc_timeout> and <periodic>\r\n");
+            return;
+        }
+        rtc_timeout_s = atoi(argv[3]);
+        if (rtc_timeout_s == 0)
+        {
+            (void)PRINTF("Error!Invalid value of <rtc_timeout>!\r\n");
+            return;
+        }
+        rtc_timeout = rtc_timeout_s * 1000000;
+        is_periodic = (t_u8)atoi(argv[4]);
+    }
+    else
+    {
+        (void)PRINTF("Invalid input!\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("    wlan-host-sleep <enable> <mode> <rtc_timer> <periodic>\r\n");
+        return;
+    }
+    (void)PRINTF("%s is selected for host sleep\r\n", is_manual ? "Manual mode" : "Power Manager");
+    if (!is_manual)
+        (void)PRINTF("Host will enter low power %s\r\n", is_periodic ? "periodically" : "only once");
+    wlan_config_host_sleep(is_manual, is_periodic);
+}
+#endif
+#endif /* CONFIG_HOST_SLEEP */
+#endif /* CONFIG_MEF_CFG */
+
+#ifdef CONFIG_MEF_CFG
 extern wlan_flt_cfg_t g_flt_cfg;
 #endif
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
     int ret = -WM_FAIL;
-#ifdef CONFIG_HOST_SLEEP
-    bool is_mef    = MFALSE;
-    bool is_manual = MFALSE;
-#endif
 
-#ifdef CONFIG_HOST_SLEEP
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
-    if (argc < 3 || argc > 5)
-#else
-    if (argc < 3 || argc > 4)
-#endif
-#else
     if (argc < 2)
-#endif
     {
         goto done;
     }
@@ -3705,51 +3832,6 @@ static void test_wlan_host_sleep(int argc, char **argv)
             goto done;
         }
 
-#ifdef CONFIG_HOST_SLEEP
-        if (string_equal("mef", argv[2]))
-        {
-            is_mef = MTRUE;
-        }
-        else if (string_equal("wowlan", argv[2]))
-        {
-            if (argc < 4)
-            {
-                (void)PRINTF("wake_up_conds need be specified\r\n");
-                return;
-            }
-            if (!ISDIGIT(argv[3]) && !ISHEXSTRING(argv[3]))
-            {
-                (void)PRINTF("wake_up_conds need be a number\r\n");
-                return;
-            }
-            wowlan = a2hex_or_atoi(argv[3]);
-        }
-        else
-        {
-            (void)PRINTF("wowlan/mef need be specified\r\n");
-            goto done;
-        }
-
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
-        if ((is_mef && argc == 4) || (!is_mef && argc == 5))
-        {
-            if (string_equal("manual", argv[argc - 1]))
-            {
-                is_manual = MTRUE;
-            }
-            else
-            {
-                (void)PRINTF("Invalid input! Only <manual> is allowed if you want to put host to sleep manually\r\n");
-                (void)PRINTF("Usage:\r\n");
-                (void)PRINTF("    wlan-host-sleep <wowlan [wake_up_conds]>/mef> <manual>\r\n");
-                (void)PRINTF("If you want to configure MEF entries, please use command wlan-multi-mef first\r\n");
-                return;
-            }
-        }
-        (void)PRINTF("%s is selected for host sleep\r\n", is_manual ? "Manual mode" : "Power Manager");
-#endif
-        wlan_config_host_sleep(is_mef, wowlan, is_manual);
-#else
         if (string_equal(argv[2], "wowlan"))
         {
             errno = 0;
@@ -3789,23 +3871,17 @@ static void test_wlan_host_sleep(int argc, char **argv)
             }
         }
 #endif
-
         else
         {
             goto done;
         }
-#endif
     }
     else
     {
     done:
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF("Usage:\r\n");
-#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
-        (void)PRINTF("    wlan-host-sleep <1/0> <wowlan [wake_up_conds]/mef> <manual>\r\n");
-#else
         (void)PRINTF("    wlan-host-sleep <1/0> <wowlan [wake_up_conds]/mef>\r\n");
-#endif
         (void)PRINTF("    [wake_up_conds] -- value for host wakeup conditions\r\n");
         (void)PRINTF("	       bit 0: WAKE_ON_ALL_BROADCAST\r\n");
         (void)PRINTF("	       bit 1: WAKE_ON_UNICAST\r\n");
@@ -3814,23 +3890,12 @@ static void test_wlan_host_sleep(int argc, char **argv)
         (void)PRINTF("	       bit 4: WAKE_ON_ARP_BROADCAST\r\n");
         (void)PRINTF("	       bit 6: WAKE_ON_MGMT_FRAME\r\n");
         (void)PRINTF("	       All bit 0 discard and not wakeup host\r\n");
-#ifndef CONFIG_HOST_SLEEP
         (void)PRINTF("	       All bit 1 cancel host sleep configuration\r\n");
-#endif
 #ifdef CONFIG_MEF_CFG
         (void)PRINTF("    mef     -- MEF host wakeup\r\n");
-#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
-        (void)PRINTF("    manual  -- Optional. Use Power Manager by default if not specified\r\n");
-        (void)PRINTF("               If you want to use suspend command instead of Power Manager,\r\n");
-        (void)PRINTF("               this parameter is mandatory.\r\n");
-#endif
         (void)PRINTF("Example:\r\n");
         (void)PRINTF("    wlan-host-sleep mef\r\n");
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
-#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
-        (void)PRINTF("    wlan-host-sleep mef manual\r\n");
-        (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e manual\r\n");
-#endif
 #endif
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
         return;
@@ -8099,13 +8164,14 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_MEF_CFG
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
-    {"wlan-host-sleep",
-#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
-     "<0/1> mef/[wowlan <wake_up_conds>] <manual>",
-#else
-     "<0/1> mef/[wowlan <wake_up_conds>]",
+#if defined(CONFIG_HOST_SLEEP)
+    {"wlan-wakeup-condition", "<wowlan [wake_up_conds]>/mef>", test_wlan_wakeup_condition},
+#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+    {"wlan-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_set_host_sleep},
 #endif
-     test_wlan_host_sleep},
+#else
+    {"wlan-host-sleep", "<0/1> mef/[wowlan <wake_up_conds>]", test_wlan_host_sleep},
+#endif
 #else
     {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
 #endif
