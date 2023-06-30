@@ -3602,7 +3602,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
         {
             (void)wifi_deauthenticate((uint8_t *)network->bssid);
         }
-        wlan.sta_state      = CM_STA_IDLE;
+        wlan.sta_return_to  = CM_STA_IDLE;
         wlan.sta_state      = CM_STA_IDLE;
         *next               = CM_STA_IDLE;
         wlan.sta_ipv4_state = CM_STA_IDLE;
@@ -4021,6 +4021,14 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
      */
     if (is_state(CM_STA_CONNECTED))
     {
+        if (is_user_scanning() != 0)
+        {
+            wlan.sta_return_to = CM_STA_IDLE;
+        }
+        else
+        {
+            *next = CM_STA_IDLE;
+        }
         wlan.sta_state      = CM_STA_IDLE;
         wlan.sta_ipv4_state = CM_STA_IDLE;
 #ifdef CONFIG_IPV6
@@ -4046,14 +4054,6 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         }
 
         CONNECTION_EVENT(WLAN_REASON_LINK_LOST, NULL);
-        if (is_user_scanning() != 0)
-        {
-            wlan.sta_return_to = CM_STA_IDLE;
-        }
-        else
-        {
-            *next = CM_STA_IDLE;
-        }
     }
     else
     {
@@ -4133,13 +4133,12 @@ static void wlcm_process_disassoc_event(struct wifi_message *msg, enum cm_sta_st
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
 #endif
-    *next          = CM_STA_IDLE;
-    wlan.sta_state = CM_STA_IDLE;
-
     if (is_user_scanning() != 0)
     {
         wlan.sta_return_to = CM_STA_IDLE;
     }
+    *next          = CM_STA_IDLE;
+    wlan.sta_state = CM_STA_IDLE;
 
     do_connect_failed(WLAN_REASON_NETWORK_AUTH_FAILED);
 
@@ -5256,7 +5255,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
             (void)os_semaphore_put(&wlan.scan_lock);
             wlan.is_scan_lock = 0;
         }
-
+        wlan.sta_return_to  = CM_STA_IDLE;
         wlan.sta_state      = CM_STA_IDLE;
         *next               = CM_STA_IDLE;
         wlan.sta_ipv4_state = CM_STA_IDLE;
@@ -8133,7 +8132,7 @@ void wlan_reset(cli_reset_option ResetOption)
             if (wlan.sta_state > CM_STA_ASSOCIATING)
             {
                 wlan_disconnect();
-                while (wlan.sta_return_to != CM_STA_IDLE)
+                while (wlan.sta_state != CM_STA_IDLE)
                 {
                     os_thread_sleep(os_msec_to_ticks(1000));
                 }
