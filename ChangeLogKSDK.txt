@@ -3,14 +3,86 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r46.p7
+ - Updates:
+  - Updated Falcon to p185, CA2 and RB3+ f/w version to 21.p91.5
+ - Bug Fix:
+  - uAP reassociation not working
+  - Traffic stops wen moving from auto rate to mcs0
+  - DUT not sending TCP-KEEP-ALIVE in suspend state
+  - DUT not able to roam from WPA-R1 enabled AP to WPA3-R3 enabled AP
+  - Ex-AP1 to Ex-AP2 roaming not working in wpa3
+  - STAUT is nto following BSS transition correctly
+  - RF test mode commands crash issue
+  - Ping is not working when uAP configured with wpa3-sb-192 bit EAP-TLS/EAP-TTLS/EAP-PEAP enterprise security.
+  - DUT shows network not found, even when connected to Ex-AP
+  - Stress test fixes
+
+Version 1.3.r46.p5
+ - Updates:
+  - Updated CA2 and RB3+ f/w version to 21.p91.5
+ - Bug Fix:
+  - Wifi random crash issue when DUT set to sleep
+  - Enable 11D for uAP by default
+  - STA doesnt get IP address when ieee-ps and deep sleep are enabled
+  - Coverity fixes
+  - BT/BLE fix for PTS test case
+
+Version 1.3.r46.p4
+ - Updates:
+  - Updated CA2 and RB3+ f/w version to 21.p91.4
+ - Bug Fix:
+  - Fixed: pre-cert: 20/40 BSS coexistence management is not supported in association request.
+  - Fixed: pre-cert: STAUT is not correctly following the MU EDCA parameters advertised by the AP.
+  - Fixed: Fail to connect to external AP with security wpa3.
+  - Fixed: uAP with wpa3 security is not connectable.
+  - Fixed: DUT not able to connect to Ex-AP in WPA2 security when PMF required is set.
+  - Fixed: Remove BAND_B rates from Supported rates for 5G channels during scan.
+  - Fixed: pre-cert STAUT is not including operating class 81 and 115 under Alternate Operating Classes in assoc request.
+  - Fixed: Cannot connect to external AP successfully.
+  - Fixed: 5Ghz channel are configured acceptable in 2.4Ghz band
+  - Fixed: wlan_set_rf_tx_power is not consistent with tx-frame power output
+  - Fixed: Getting compilation errors while compiling the binary after defining "CONFIG_UNII4_BAND_SUPPORT" macro in wifi_config.h file.
+  - Fixed: uAP Beacons advertise 3 AKM suites (PSK & PSK SHA256 & SAE SHA256) in RSNIE when WPA2+WPA3 mixed mode is set on AP with mfpc 1 and mfpr 0.
+  - Fixed: STAUT configured with WPA3-SAE associates to WPA2 configured AP.
+  - Fixed: DUT unable to roam from Ex-AP1 to Ex-AP2 on lowering the RSSI of Ex-AP1.
+  - Fixed: pre-cert STAUT is not correctly following the MU EDCA parameters advertised by the AP.
+  - Fixed: DUT-STA is unable to associate with WPA/WPA2 Mixed mode AP when DUT-STA is configure WPA security.
+  - Fixed: pre-cert STAUT fails to roam from WPA3 configured AP1 to WPA2-PSK configured AP2.
+  - Removed IEEE_MGMT_ACTION_CATEGORY_PUBLIC enum.
+  - Fixed logic for consecutive connect for both embedded and wpa supplicant.
+  - Fixed all compilation errors and warnings seen on dapeng.
+  - Resolved MISRA and coverity defects.
+
+Version 1.3.r46.p3
+ - Updates:
+  - Updated CA2 and RB3+ f/w version to 21.p91.2
+ - Bug Fix:
+  - Fixed: TCP and UDP TX traffic stream not working with ex-sta
+  - Fixed: pre-cert: STAUT is not following BSS transition correctly
+  - Fixed: Extend wlan-get-antcfg to print current antenna
+  - Fixed: DUT able to configure MFPR 0 in WPA3 security.
+  - Fixed: DUT MCS rates are not updating to default after stopping/removing previous profile with MCS set to fixed number via fixed rate command.
+  - Fixed: DUT-uAP unable to start with ACS configuration.
+  - Fixed: While running WPS connection with Ex-AP, DUT gets deauthenticated after M4 packet, WPS_NACK is recvd. M1 packet does not have WPS PBC or keypad specific bit set.
+  - Fixed: Fail to create ipv6 iperf client.
+  - Fixed: uAP beacons contain incorrect bit, UAPSD bit is set in WME QoS Info even though it is not supported.
+  - Fixed: uAP beacons contain incorrect bits, SU/MU Beamformer bits are set in HE Phy capabilities and UAPSD bit is set in WME QoS Info even though it is not supported.
+  - Fixed: Data path blocks once we initiate wlan-scan on DUT and change Ex-AP channel at the same time.
+  - Fixed: MISRA defects.
+
+Version 1.3.r46.p2
+ - Updates:
+  - Updated CA2 and RB3+ f/w version to 21.p91
+ - Bug Fix:
+  - Fixed BT connection issue on RB3+
+
 Version 1.3.r46.p1
  - Updates:
-  - Updated CA and RB3+ f/w version to v16_xx.21.p90
-  - Updated 8801 f/w version to V14_xx_36_181
+  - Updated CA and RB3+ f/w version to 21.p90
+  - Updated 8801 f/w version to 36_181
   - CA2 Fixed FIPS GCMP support
-  - Updated firmware version to 2.p7 and added TP signed secure FW too.
-  - Removed wifi_features and wifi_cert applications.
-  - Added VDLL support.
+  - Added all changes as part of r45.p3 as applicable for CA2 and RB3+
   - Added information for BSD3 license.
   - Updated WLCMGR and Wi-Fi driver to support WPA supplicant and hostapd.
   - Deepsleep feature in BLE peripheral role

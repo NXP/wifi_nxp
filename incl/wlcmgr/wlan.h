@@ -126,7 +126,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r46.p1"
+#define WLAN_DRV_VERSION "v1.3.r46.p7"
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
