@@ -1620,7 +1620,8 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
 
     wifi_if_ctx_rtos->assoc_resp = 0;
 
-    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) && (stype == WLAN_FC_STYPE_ASSOC_RESP))
+    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) &&
+        ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP)))
     {
         memcpy((void *)wifi_if_ctx_rtos->last_mgmt_tx_data, (const void *)data, (size_t)data_len);
         wifi_if_ctx_rtos->last_mgmt_tx_data_len = data_len;
