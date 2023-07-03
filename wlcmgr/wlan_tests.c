@@ -7133,7 +7133,6 @@ static void test_wlan_tcp_client(int argc, char **argv)
 {
     struct tcp_pcb *tcp_client_pcb;
     ip_addr_t ipaddr;
-    int ret           = -WM_FAIL;
     int arg           = 0;
     int dst_ip_set    = 0;
     int src_port_set  = 0;

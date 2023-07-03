@@ -9483,8 +9483,6 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
                                       t_u32 ack_number,
                                       t_u8 enable)
 {
-    t_u8 keep_alive_enabled = MTRUE;
-
     if (enable)
     {
         if (cloud_keep_alive == NULL)
@@ -9498,7 +9496,14 @@ int wlan_save_cloud_keep_alive_params(wlan_cloud_keep_alive_t *cloud_keep_alive,
             return -WM_E_INVAL;
         }
 
-        if (cloud_keep_alive->mkeep_alive_id < MIN_KEEP_ALIVE_ID || cloud_keep_alive->mkeep_alive_id >= MAX_KEEP_ALIVE_ID)
+        if (
+#ifndef CONFIG_MLAN_WMSDK
+			/* Since MIN_KEEP_ALIVE_ID is 0 and cloud_keep_alive->mkeep_alive_id is t_u8,
+			 * This comparison is not needed. But make sure to add this if eiher of the value or declaration changes.
+			 */
+			cloud_keep_alive->mkeep_alive_id < MIN_KEEP_ALIVE_ID ||
+#endif
+			cloud_keep_alive->mkeep_alive_id >= MAX_KEEP_ALIVE_ID)
         {
             wlcm_e("Invalid keep alive id");
             return -WM_E_INVAL;
