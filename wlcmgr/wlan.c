@@ -6555,7 +6555,12 @@ int wlan_stop(void)
         return WLAN_ERROR_STATE;
     }
 #else
+    /* If CONFIG_WIFI_RECOVERY is defined, 0xb2 CMD will be skipped, but dhcp_server_stop()
+     * is called in 0xb2 CMD response. So it needs to be called here to stop DHCP server
+     */
+#ifndef CONFIG_WIFI_RECOVERY
     if (wlan.uap_state == CM_UAP_IP_UP)
+#endif
         dhcp_server_stop();
 #endif
     if (wlan.scan_lock)
@@ -8234,12 +8239,15 @@ static void wlan_mon_thread(os_thread_arg_t data)
             }
 #endif
         }
-	    else
+        else
         {
-            if (wifi_fw_is_hang())
+#ifdef CONFIG_WIFI_RECOVERY
+            if (wifi_recovery_enable || wifi_fw_is_hang())
             {
                 wlan_reset(CLI_RESET_WIFI);
+                wifi_recovery_cnt ++;
             }
+#endif
             /*
              *  get CAU module temperature and write to firmware SMU in every 5s
              *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068

@@ -105,6 +105,11 @@ extern uint8_t g_rssi;
 extern uint16_t g_data_nf_last;
 extern uint16_t g_data_snr_last;
 
+#ifdef CONFIG_WIFI_RECOVERY
+extern bool wifi_recovery_enable;
+extern t_u16 wifi_recovery_cnt;
+#endif
+
 /** WiFi Error Code */
 enum
 {

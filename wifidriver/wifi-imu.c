@@ -1088,7 +1088,11 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
     if (ret != WM_SUCCESS)
     {
         wifi_e("Failed to wakeup card\r\n");
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
+#else
         assert(0);
+#endif
     }
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
@@ -1532,6 +1536,13 @@ retry:
             return mlanstatus;
         }
     }
+#ifdef CONFIG_WIFI_RECOVERY
+    if (wifi_recovery_enable)
+    {
+        wifi_w("WiFi recovery mode done!");
+        wifi_recovery_enable = false;
+    }
+#endif
 
     wifi_init_imulink();
 
@@ -1582,6 +1593,10 @@ void imu_wifi_deinit(void)
     wlan_deinit_struct();
 
     flag = MBIT(1) | imu_fw_is_hang();
+#ifdef CONFIG_WIFI_RECOVERY
+    flag |= wifi_recovery_enable;
+#endif
+
     mlan_deinit_wakeup_irq();
     mlan_disable_hs_wakeup_irq();
     HAL_ImuDeinit(kIMU_LinkCpu1Cpu3, flag);

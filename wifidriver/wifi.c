@@ -145,6 +145,11 @@ static bool scan_thread_in_process = false;
 os_semaphore_t wakelock;
 #endif
 
+#ifdef CONFIG_WIFI_RECOVERY
+bool wifi_recovery_enable = false;
+t_u16 wifi_recovery_cnt   = 0;
+#endif
+
 typedef enum __mlan_status
 {
     MLAN_CARD_NOT_DETECTED = 3,
@@ -1016,6 +1021,15 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 
+#ifdef CONFIG_WIFI_RECOVERY
+    if (wifi_recovery_enable)
+    {
+        wifi_w("Recovery in progress. command 0x%x skipped", cmd->command);
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+#endif
+
 #ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
 #endif
@@ -1030,7 +1044,12 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_e("Failed to wakeup card\r\n");
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
         return -WM_FAIL;
+#else
+        assert(0);
+#endif
     }
 #ifdef CONFIG_WMM_UAPSD
     /*
@@ -1090,8 +1109,12 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_dump_firmware_info();
 #endif
 #endif
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
+#else
         /* assert as command flow cannot work anymore */
         assert(0);
+#endif
     }
 
     wm_wifi.cmd_resp_priv = NULL;
@@ -3529,8 +3552,12 @@ static void wifi_driver_tx(void *data)
 #endif
             if (ret != WM_SUCCESS)
             {
-                wifi_e("Error in getting readlock");
-                goto get_msg;
+                wifi_e("Failed to wakeup card for Tx");
+#ifdef CONFIG_WIFI_RECOVERY
+                wifi_recovery_enable = true;
+#else
+                assert(0);
+#endif
             }
             /* Only send packet when the outbuf pool is not empty */
             if (wifi_wmm_get_packet_cnt() > 0)
@@ -3613,8 +3640,12 @@ int wifi_low_level_output(const t_u8 interface,
 #endif
     if (ret != WM_SUCCESS)
     {
-        // wakelock_put(WL_ID_LL_OUTPUT);
-        return ERR_INPROGRESS;
+        wifi_e("Failed to wakeup card");
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
+#else
+        assert(0);
+#endif
     }
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
     if (!pmpriv->media_connected && !pmpriv_uap->media_connected)
