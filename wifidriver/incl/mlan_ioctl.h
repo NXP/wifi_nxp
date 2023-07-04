@@ -327,7 +327,7 @@ typedef struct _mlan_ioctl_req
 #define MAX_PROBES 4U
 
 /** Default number of probes to send on each channel */
-#define DEFAULT_PROBES 4
+#define DEFAULT_PROBES 2
 
 /**
  *  @brief Sub-structure passed in wlan_ioctl_get_scan_table_entry for each BSS

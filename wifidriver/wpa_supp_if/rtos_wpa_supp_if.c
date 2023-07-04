@@ -194,7 +194,7 @@ void wifi_nxp_wpa_supp_event_proc_scan_abort(void *if_priv)
     wifi_if_ctx_rtos->supp_callbk_fns.scan_abort(wifi_if_ctx_rtos->supp_drv_if_ctx);
 }
 
-void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted)
+void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     union wpa_event_data event;
@@ -206,7 +206,7 @@ void wifi_nxp_wpa_supp_event_proc_scan_done(void *if_priv, int aborted)
 
     info                = &event.scan_info;
     info->aborted       = aborted;
-    info->external_scan = 0;
+    info->external_scan = external_scan;
     info->nl_scan_event = 1;
 
     memcpy(&info->scan_start_tsf, &wifi_if_ctx_rtos->scan_start_tsf, sizeof(info->scan_start_tsf));
@@ -683,6 +683,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
         }
     }
 
+    wm_wifi.external_scan = false;
     wm_wifi.wpa_supp_scan = true;
 
 #ifdef CONFIG_HOSTAPD

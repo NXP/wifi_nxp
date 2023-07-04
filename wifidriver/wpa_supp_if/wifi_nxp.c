@@ -86,7 +86,7 @@ static void wifi_nxp_event_proc_scan_abort(void *if_ctx)
     wifi_nxp_wpa_supp_event_proc_scan_abort(if_ctx);
 }
 
-static void wifi_nxp_event_proc_scan_done(void *if_priv)
+static void wifi_nxp_event_proc_scan_done(void *if_priv, int external_scan)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
@@ -97,7 +97,7 @@ static void wifi_nxp_event_proc_scan_done(void *if_priv)
         wifi_e("%s: wifi_if_ctx_rtos is NULL", __func__);
         return;
     }
-    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0);
+    wifi_nxp_wpa_supp_event_proc_scan_done(if_priv, 0, external_scan);
 }
 
 static void wifi_nxp_event_reamin_on_channel(void *if_priv, int cancel_channel)

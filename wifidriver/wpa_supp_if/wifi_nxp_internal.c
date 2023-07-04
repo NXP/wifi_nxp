@@ -90,15 +90,17 @@ void wifi_scan_done(struct wifi_message *msg)
 #ifdef CONFIG_HOSTAPD
             if (wifi_if_ctx_rtos->hostapd)
             {
-                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv);
+                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.hapd_if_priv, wm_wifi.external_scan);
             }
             else
 #endif
             {
-                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.if_priv);
+                wm_wifi.supp_if_callbk_fns->scan_done_callbk_fn(wm_wifi.if_priv, wm_wifi.external_scan);
             }
         }
     }
+
+    wm_wifi.external_scan = false;
 }
 
 void wifi_process_remain_on_channel(struct wifi_message *msg)
@@ -130,7 +132,7 @@ void wifi_process_remain_on_channel(struct wifi_message *msg)
 void wifi_process_mgmt_tx_status(struct wifi_message *msg)
 {
     nxp_wifi_event_mlme_t *resp = &wm_wifi.mgmt_resp;
-    resp->frame.frame_len = 0;
+    resp->frame.frame_len       = 0;
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {

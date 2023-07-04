@@ -3042,6 +3042,9 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     }
     else if (wlan.sta_state == CM_STA_SCANNING_USER)
     {
+#ifdef CONFIG_WPA_SUPP
+        wifi_scan_done(msg);
+#endif
         report_scan_results();
         *next = wlan.sta_return_to;
         wlcm_d("SM: returned to %s", dbg_sta_state_name(*next));
@@ -5105,7 +5108,13 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         wlan_scan_param->scan_chan_gap = 0;
 #endif
 
+#ifdef CONFIG_WPA_SUPP
+    wm_wifi.wpa_supp_scan = true;
+    wm_wifi.external_scan = true;
+#endif
+
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
+
 
     int ret = wifi_send_scan_cmd((t_u8)g_wifi_scan_params.bss_type, wlan_scan_param->bssid,
                                  ssid, ssid2,
