@@ -2268,7 +2268,7 @@ static int do_start(struct wlan_network *network)
 #if defined(SD8801) || defined(RW610)
         wpa_supp_set_ap_bw(netif, 1);
 #endif
-        ret = wpa_supp_start_ap(netif, network);
+        ret = wpa_supp_start_ap(netif, network, 0);
 #else
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
 #ifdef CONFIG_P2P
@@ -4611,12 +4611,11 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
 }
 #endif
 
-#ifdef CONFIG_WPA_SUPP_WPS
-static void wlcm_process_wps_success_event()
+#ifdef CONFIG_WPA_SUPP
+static int wlcm_process_add_unspecified_network(const char *name)
 {
     int ret, i;
     struct wlan_network network;
-    const char *name = "wps_network";
     size_t len       = 0;
     const char *ssid = "w";
 
@@ -4633,11 +4632,8 @@ static void wlcm_process_wps_success_event()
     if (ret != WM_SUCCESS)
     {
         wlcm_e("Failed to add wps network");
-        return;
+        return ret;
     }
-
-    wlan.wps_session_attempt = 0;
-
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
     {
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
@@ -4647,6 +4643,7 @@ static void wlcm_process_wps_success_event()
             break;
         }
     }
+    return WM_SUCCESS;
 }
 #endif
 
@@ -4790,7 +4787,10 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         wlcm_d("WPS registration completed successfully");
         if (wlan.wps_session_attempt)
         {
-            wlcm_process_wps_success_event();
+            if (wlcm_process_add_unspecified_network("wps_network") == WM_SUCCESS)
+            {
+                wlan.wps_session_attempt = 0;
+            }
         }
     }
     else
@@ -4804,6 +4804,204 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_FAILED))
     {
         wlcm_d("11K RRM event neighbor report request failed");
+    }
+    else
+#endif
+#ifdef CONFIG_WPA_SUPP_DPP
+        if (strstr(buf, DPP_EVENT_CONF_RECEIVED))
+    {
+        if (!is_uap_started())
+        {
+            wlcm_d("DPP starts to new a network profile");
+            (void)wlcm_process_add_unspecified_network("dpp_network");
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_CONFOBJ_AKM))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            struct wlan_network_security *security = &(wlan.networks[network_idx].security);
+            if (memcmp("psk", (buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1), strlen("psk")) == 0)
+            {
+                security->type = WLAN_SECURITY_WPA2;
+                security->pairwise_cipher = 0x10; /* CCMP */
+                security->mfpc = 1;
+                security->mfpr = 1;
+                wlan_set_pmfcfg(security->mfpc, security->mfpr);
+            }
+            else if (memcmp("dpp", (buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1), strlen("dpp")) == 0)
+            {
+                security->type = WLAN_SECURITY_DPP;
+                security->pairwise_cipher = 0x10; /* CCMP */
+                security->mfpc = 1;
+                security->mfpr = 1;
+                wlan_set_pmfcfg(security->mfpc, security->mfpr);
+            }
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_CONFOBJ_SSID))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_SSID) - 1;
+            if (strlen(pos) < IEEEtypes_SSID_SIZE)
+            {
+                (void)memcpy(wlan.networks[network_idx].ssid, pos, strlen(pos));
+            }
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_CONFOBJ_PASS))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            char psk[WLAN_PSK_MAX_LENGTH];
+            unsigned int hex_len = 0;
+            struct wlan_network_security *security = &(wlan.networks[network_idx].security);
+            const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_PASS) - 1;
+
+            hex_len = strlen(pos);
+            if (hex_len < (WLAN_PSK_MAX_LENGTH * 2))
+            {
+                memset(psk, 0, sizeof(psk));
+                hexstr2bin(pos, (unsigned char *)psk, hex_len/2);
+                security->psk_len = strlen(psk);
+                (void)strcpy(security->psk, psk);
+            }
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_CONNECTOR))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            struct wlan_network_security *security = &(wlan.networks[network_idx].security);
+            const char *pos = buf + sizeof(DPP_EVENT_CONNECTOR) - 1;
+
+            if (security->dpp_connector)
+            {
+                os_mem_free(security->dpp_connector);
+            }
+            security->dpp_connector = os_mem_calloc(strlen(pos) + 1);
+            if (security->dpp_connector == NULL)
+            {
+                wlcm_e("Allocate %s memory failed!", DPP_EVENT_CONNECTOR);
+                return ;
+            }
+            (void)memcpy(security->dpp_connector, pos, strlen(pos));
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_C_SIGN_KEY))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            struct wlan_network_security *security = &(wlan.networks[network_idx].security);
+            const char *pos = buf + sizeof(DPP_EVENT_C_SIGN_KEY) - 1;
+
+            if (security->dpp_c_sign_key)
+            {
+                os_mem_free(security->dpp_c_sign_key);
+            }
+            security->dpp_c_sign_key = os_mem_calloc(strlen(pos) + 1);
+            if (security->dpp_c_sign_key == NULL)
+            {
+                wlcm_e("Allocate %s memory failed!", DPP_EVENT_C_SIGN_KEY);
+                return ;
+            }
+            (void)memcpy(security->dpp_c_sign_key, pos, strlen(pos));
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_NET_ACCESS_KEY))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            struct wlan_network_security *security = &(wlan.networks[network_idx].security);
+            const char *pos = buf + sizeof(DPP_EVENT_NET_ACCESS_KEY) - 1;
+
+            if (security->dpp_net_access_key)
+            {
+                os_mem_free(security->dpp_net_access_key);
+            }
+            security->dpp_net_access_key = os_mem_calloc(strlen(pos) + 1);
+            if (security->dpp_net_access_key == NULL)
+            {
+                wlcm_e("Allocate %s memory failed!", DPP_EVENT_NET_ACCESS_KEY);
+                return ;
+            }
+            (void)memcpy(security->dpp_net_access_key, pos, strlen(pos));
+            if (is_uap_started())
+            {
+                wlcm_d("DPP reload uap");
+                wlan_enable_uap_11d(MTRUE);
+                wpa_supp_start_ap(netif, &wlan.networks[network_idx], 1);
+            }
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_NETWORK_ID))
+    {
+        unsigned int condition = 0;
+
+        condition = WAKE_ON_ARP_BROADCAST | WAKE_ON_UNICAST | WAKE_ON_MULTICAST | WAKE_ON_MAC_EVENT;
+        (void)wlan_ieeeps_on(condition);
+        wlan_deepsleepps_on();
     }
     else
 #endif
@@ -7715,6 +7913,20 @@ int wlan_remove_network(const char *name)
             }
 #endif
 #endif
+#endif
+#ifdef CONFIG_WPA_SUPP_DPP
+            if (wlan.networks[i].security.dpp_connector)
+            {
+                os_mem_free(wlan.networks[i].security.dpp_connector);
+            }
+            if (wlan.networks[i].security.dpp_c_sign_key)
+            {
+                os_mem_free(wlan.networks[i].security.dpp_c_sign_key);
+            }
+            if (wlan.networks[i].security.dpp_net_access_key)
+            {
+                os_mem_free(wlan.networks[i].security.dpp_net_access_key);
+            }
 #endif
 #endif
             (void)memset(&wlan.networks[i], 0, sizeof(struct wlan_network));
@@ -12723,3 +12935,92 @@ int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
     return wifi_external_coex_pta_cfg(coex_pta_config);
 }
 #endif
+
+#ifdef CONFIG_WPA_SUPP_DPP
+int wlan_dpp_configurator_add(int is_ap)
+{
+    struct netif *netif = net_get_sta_interface();
+    int ret;
+
+    ret = wpa_supp_dpp_configurator_add(netif, is_ap);
+    if (ret <= 0)
+    {
+        wlcm_e("DPP add configurator failed!!");
+        return -WM_FAIL;
+    }
+    return ret;
+}
+
+void wlan_dpp_configurator_params(int is_ap, const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    wpa_supp_dpp_configurator_params(netif, is_ap, cmd);
+}
+
+int wlan_dpp_bootstrap_gen(int is_ap, const char *cmd)
+{
+    int id;
+    struct netif *netif = net_get_sta_interface();
+
+    id = wpa_supp_dpp_bootstrap_gen(netif, is_ap, cmd);
+    if (id < 0)
+    {
+        wlcm_e("DPP generate qrcode failed!!");
+        id = -WM_FAIL;
+    }
+    return id;
+}
+
+const char *wlan_dpp_bootstrap_get_uri(int is_ap, unsigned int id)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_dpp_bootstrap_get_uri(netif, is_ap, id);
+}
+
+int wlan_dpp_qr_code(int is_ap, char *uri)
+{
+    int id;
+    struct netif *netif = net_get_sta_interface();
+
+    id = wpa_supp_dpp_qr_code(netif, is_ap, uri);
+    if (id < 0)
+    {
+        wlcm_e("DPP enter QR code failed!!");
+        return -WM_FAIL;
+    }
+
+    return id;
+}
+
+int wlan_dpp_auth_init(int is_ap, const char *cmd)
+{
+    int ret;
+    struct netif *netif = net_get_sta_interface();
+
+     ret = wpa_supp_dpp_auth_init(netif, is_ap, cmd);
+    if (ret < 0)
+    {
+        wlcm_e("DPP Auth Init failed!!");
+        return -WM_FAIL;
+    }
+    wifi_set_rx_mgmt_indication(is_ap ? WLAN_BSS_ROLE_UAP : WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
+
+    return ret;
+}
+
+int wlan_dpp_listen(int is_ap, const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_dpp_listen(netif, is_ap, cmd);
+}
+
+int wlan_dpp_stop_listen(int is_ap)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_dpp_stop_listen(netif, is_ap);
+}
+#endif /* CONFIG_WPA_SUPP_DPP */

@@ -4647,19 +4647,17 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 {
 #ifdef CONFIG_WPA_SUPP
     tx_status_event *tx_status = MNULL;
+    unsigned int bss_type = (unsigned int)evt->bss_type;
 
     tx_status = (tx_status_event *)(void *)&evt->reason_code;
 
-    if (evt->bss_type == (uint8_t)MLAN_BSS_ROLE_UAP)
+    if (tx_status->packet_type == 0xe5)
     {
-        if (tx_status->packet_type == 0xe5)
+        if (tx_status->status == 0U)
         {
-            if (tx_status->status == 0U)
-            {
-                (void)wifi_event_completion(WIFI_EVENT_MGMT_TX_STATUS, WIFI_EVENT_REASON_SUCCESS, NULL);
-            }
-            return;
+            (void)wifi_event_completion(WIFI_EVENT_MGMT_TX_STATUS, WIFI_EVENT_REASON_SUCCESS, (void *)bss_type);
         }
+        return;
     }
 #endif
 

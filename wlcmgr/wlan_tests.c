@@ -18,6 +18,10 @@
 #include <wlan_tests.h>
 #include <wlan_11d.h>
 
+#ifdef CONFIG_WPA_SUPP_DPP
+#include "dpp.h"
+#endif
+
 /*
  * NXP Test Framework (MTF) functions
  */
@@ -8436,6 +8440,246 @@ static void test_wlan_external_coex_pta(int argc, char **argv)
         (void)PRINTF("Failed to set external coex pta parameters.\r\n");
 
     return;
+
+#ifdef CONFIG_WPA_SUPP_DPP
+static void test_wlan_dpp_configurator_add(int argc, char **argv)
+{
+    int conf_id, is_ap = 0;
+
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    conf_id = wlan_dpp_configurator_add(is_ap);
+    if (conf_id == -WM_FAIL)
+    {
+        (void)PRINTF("\r\nDPP add configurator failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\nconf_id = %d\r\n", conf_id);
+    }
+}
+
+static void dump_dpp_configurator_params_usage(void)
+{
+    (void)PRINTF("set DPP configurator params\r\n");
+    (void)PRINTF("Usage: wlan-dpp-configurator-params \" conf=....\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-configurator-params \" conf=sta-dpp ssid=4450505f54455354 configurator=1\"\r\n");
+    (void)PRINTF("#space character exists between \" & conf word.\r\n");
+}
+
+static void test_wlan_dpp_configurator_params(int argc, char **argv)
+{
+    int is_ap = 0;
+
+    if (argc < 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_configurator_params_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    wlan_dpp_configurator_params(is_ap, argv[1]);
+}
+
+static void dump_dpp_bootstrap_gen_usage(void)
+{
+    (void)PRINTF("Generate QR code\r\n");
+    (void)PRINTF("Usage: wlan-dpp-bootstrap-gen \" type=....\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-bootstrap-gen \"type=qrcode chan=115/36 mac=00:50:43:02:11:22\"\r\n");
+}
+
+static void test_wlan_dpp_bootstrap_gen(int argc, char **argv)
+{
+    int is_ap = 0, id;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_bootstrap_gen_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    id = wlan_dpp_bootstrap_gen(is_ap, argv[1]);
+    if (id == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP bootstrap generate failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n bootstrap generate id = %d\r\n", id);
+    }
+}
+
+static void dump_dpp_bootstrap_get_uri_usage(void)
+{
+    (void)PRINTF("Get QR code string by <bootstrap-id>\r\n");
+    (void)PRINTF("Usage: wlan-dpp-bootstrap-get-uri <bootstrap-id>\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-bootstrap-get-uri 1\r\n");
+}
+
+static void test_wlan_dpp_bootstrap_get_uri(int argc, char **argv)
+{
+    int is_ap = 0, id;
+    const char *uri = NULL;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_bootstrap_get_uri_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    id = (int)atoi(argv[1]);
+
+    uri = wlan_dpp_bootstrap_get_uri(is_ap, id);
+    if (uri)
+    {
+        os_thread_sleep(os_msec_to_ticks(1000));
+        (void)PRINTF("\r\nBootstrapping QR Code URI:\r\n");
+        (void)PRINTF("\r\n%s\r\n\r\n", uri);
+    }
+    else
+    {
+        (void)PRINTF("Error: generate bootstrapping QR Code URI failed!!\r\n");
+    }
+}
+
+static void dump_dpp_qr_code_usage(void)
+{
+    (void)PRINTF("Enter the QR code\r\n");
+    (void)PRINTF("Usage: wlan-dpp-qr-code <URI-from-QR-Code-read-from-enrollee>\r\n");
+}
+
+static void test_wlan_dpp_qr_code(int argc, char **argv)
+{
+    int id;
+    int is_ap = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_qr_code_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    id = wlan_dpp_qr_code(is_ap, argv[1]);
+    if (id == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP bootstrap generate failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP qr code id = %d\r\n", id);
+    }
+}
+
+static void dump_dpp_auth_init_usage(void)
+{
+    (void)PRINTF("Send provisioning Auth request to responder\r\n");
+    (void)PRINTF("Usage: wlan-dpp-auth-init \"peer=...\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-auth-init  \"peer=1 role=enrollee\"\r\n");
+}
+
+static void test_wlan_dpp_auth_init(int argc, char **argv)
+{
+    int ret;
+    int is_ap = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_auth_init_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    (void)wlan_ieeeps_off();
+    (void)wlan_deepsleepps_off();
+    ret = wlan_dpp_auth_init(is_ap, argv[1]);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP Auth Init failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP Auth Init OK!\r\n");
+    }
+}
+
+static void dump_dpp_listen_usage(void)
+{
+    (void)PRINTF("Make device listen to DPP request.\r\n");
+    (void)PRINTF("Usage: wlan-dpp-listen <frequency>\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-listen 5180\r\n");
+}
+
+static void test_wlan_dpp_listen(int argc, char **argv)
+{
+    int ret;
+    int is_ap = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_listen_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    (void)wlan_ieeeps_off();
+    (void)wlan_deepsleepps_off();
+    ret = wlan_dpp_listen(is_ap, argv[1]);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP Listen failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP Listen OK!\r\n");
+    }
+}
+
+static void test_wlan_dpp_stop_listen(int argc, char **argv)
+{
+    int ret;
+    int is_ap = 0;
+
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    ret = wlan_dpp_stop_listen(is_ap);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP Listen STOP failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP Listen STOP OK!\r\n");
+    }
 }
 #endif
 
@@ -8644,6 +8888,16 @@ static struct cli_command tests[] = {
     {"wlan-start-ap-wps-pbc", NULL, test_wlan_start_ap_wps_pbc},
     {"wlan-start-ap-wps-pin", "<8 digit pin>", test_wlan_start_ap_wps_pin},
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
+#ifdef CONFIG_WPA_SUPP_DPP
+    {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
+    {"wlan-dpp-configurator-params", "params", test_wlan_dpp_configurator_params},
+    {"wlan-dpp-bootstrap-gen", "params", test_wlan_dpp_bootstrap_gen},
+    {"wlan-dpp-bootstrap-get-uri", "<bootstrap_gen id>", test_wlan_dpp_bootstrap_get_uri},
+    {"wlan-dpp-qr-code", "<DPP:...>", test_wlan_dpp_qr_code},
+    {"wlan-dpp-auth-init", "params", test_wlan_dpp_auth_init},
+    {"wlan-dpp-listen", "params", test_wlan_dpp_listen},
+    {"wlan-dpp-stop-listen", NULL, test_wlan_dpp_stop_listen},
+#endif
 #endif
 #endif
 #ifdef CONFIG_NET_MONITOR

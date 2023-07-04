@@ -269,6 +269,8 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->priority      = 0;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
+    /* set tx_token_id to 1 to get tx_status_event from FW */
+    ptxpd->tx_token_id   = 1;
 
     imuhdr->size = payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
 

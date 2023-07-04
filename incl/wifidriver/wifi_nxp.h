@@ -63,7 +63,7 @@ struct wifi_nxp_ctx_rtos
     unsigned int remain_on_channel_duration;
 #ifdef CONFIG_WPA_SUPP_AP
     rtos_hostapd_dev_callbk_fns hostapd_callbk_fns;
-    int assoc_resp;
+    int mgmt_tx_status;
     uint8_t *last_mgmt_tx_data;
     size_t last_mgmt_tx_data_len;
 #endif

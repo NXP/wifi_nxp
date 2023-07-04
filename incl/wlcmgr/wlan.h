@@ -971,6 +971,9 @@ enum wlan_security_type
     /** The network uses OWE only security without Transition mode support. */
     WLAN_SECURITY_OWE_ONLY,
 #endif
+#ifdef CONFIG_WPA_SUPP_DPP
+    WLAN_SECURITY_DPP,
+#endif
 };
 /** Wlan Cipher structure */
 struct wlan_cipher
@@ -1208,6 +1211,11 @@ struct wlan_network_security
     /** User Passwords */
     char passwords[MAX_USERS][PASSWORD_MAX_LENGTH];
 #endif
+#endif
+#ifdef CONFIG_WPA_SUPP_DPP
+    unsigned char *dpp_connector;
+    unsigned char *dpp_c_sign_key;
+    unsigned char *dpp_net_access_key;
 #endif
 };
 
@@ -6084,4 +6092,94 @@ int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 #endif
 
+#ifdef CONFIG_WPA_SUPP_DPP
+/** Add a DPP Configurator
+ *
+ *  If this device is DPP Configurator, add it to get configurator ID.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ *
+ * \return configurator ID if successful otherwise failure.
+ */
+int wlan_dpp_configurator_add(int is_ap);
+
+/** Set DPP Configurator parameter
+ *
+ *  set DPP configurator params.
+ *  for example:" conf=<sta-dpp/ap-dpp> ssid=<hex ssid> configurator=conf_id"
+ *  #space character exists between " & conf word.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      " conf=<sta-dpp/ap-dpp/sta-psk> ssid=<hex ssid> configurator=conf_id..."
+ *
+ * \return void
+ */
+void wlan_dpp_configurator_params(int is_ap, const char *cmd);
+
+
+/** Generate QR code
+ *
+ *  This function generates QR code and return bootstrap-id
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      "type=qrcode mac=<mac-address-of-device> chan=<operating-class/channel>..."
+ *
+ * \return bootstrap-id if successful otherwise failure.
+ */
+int wlan_dpp_bootstrap_gen(int is_ap, const char *cmd);
+
+/** Get QR code by bootstrap-id
+ *
+ *  This function get QR code string by bootstrap-id
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  id       bootstrap-id
+ *
+ * \return QR code string if successful otherwise NULL.
+ */
+const char *wlan_dpp_bootstrap_get_uri(int is_ap, unsigned int id);
+
+/** Enter the QR code in the DPP device.
+ *
+ *  This function set the QR code and return qr-code-id.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  uri      QR code provided by other device.
+ *
+ * \return qr-code-id if successful otherwise failure.
+ */
+int wlan_dpp_qr_code(int is_ap, char *uri);
+
+/** Send provisioning Auth request to responder.
+ *
+ *  This function send Auth request to responder by qr-code-id.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      " peer=<qr-code-id> conf=<sta-dpp/ap-dpp/sta-psk> ...."
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_auth_init(int is_ap, const char *cmd);
+
+/** Make device listen to DPP request.
+ *
+ *  Responder generates QR code and listening on its operating channel to wait Auth request.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      "<frequency>"
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_listen(int is_ap, const char *cmd);
+
+/** DPP stop listen
+ *
+ *  Stop dpp listen and clear listen frequency
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_stop_listen(int is_ap);
+#endif
 #endif /* __WLAN_H__ */

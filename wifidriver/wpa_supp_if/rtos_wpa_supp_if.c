@@ -549,7 +549,7 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
     else
     {
         wifi_if_ctx_rtos->bss_type          = BSS_TYPE_UAP;
-        wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(400);
+        wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(1500);
 
         if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
         {
@@ -1498,28 +1498,22 @@ void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t
         return;
     }
 
-    if (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA)
+    if (wifi_if_ctx_rtos->mgmt_tx_status == 0U)
     {
-        supp_d("%s: station mgmt tx status not enabled", __func__);
+        supp_d("%s: Only send mgmt tx status", __func__);
         return;
     }
 
-    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) && (wifi_if_ctx_rtos->assoc_resp == 0U))
-    {
-        supp_d("%s: Only send assoc resp mgmt tx status", __func__);
-        return;
-    }
-
-    if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) && (wifi_if_ctx_rtos->last_mgmt_tx_data_len))
+    if (wifi_if_ctx_rtos->last_mgmt_tx_data_len && wifi_if_ctx_rtos->mgmt_tx_status)
     {
         memcpy((void *)mlme_event->frame.frame, (const void *)wifi_if_ctx_rtos->last_mgmt_tx_data,
                (size_t)wifi_if_ctx_rtos->last_mgmt_tx_data_len);
         mlme_event->frame.frame_len             = wifi_if_ctx_rtos->last_mgmt_tx_data_len;
         wifi_if_ctx_rtos->last_mgmt_tx_data_len = 0;
-        wifi_if_ctx_rtos->assoc_resp            = 0;
+        wifi_if_ctx_rtos->mgmt_tx_status        = 0;
     }
 
-    wifi_if_ctx_rtos->assoc_resp = 0;
+    wifi_if_ctx_rtos->mgmt_tx_status = 0;
 
     if (mlme_event->frame.frame_len == 0)
     {
@@ -1611,22 +1605,25 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
+    wifi_if_ctx_rtos->mgmt_tx_status = 0;
+
     status = wifi_nxp_send_mlme(wifi_if_ctx_rtos->bss_type, freq_to_chan(freq), wait_time, data, data_len);
 
     if (status == -WM_FAIL)
     {
+        wifi_if_ctx_rtos->last_mgmt_tx_data_len = 0;
+        wifi_if_ctx_rtos->mgmt_tx_status        = 0;
         supp_e("%s: wifi_inject_frame failed", __func__);
         goto out;
     }
 
-    wifi_if_ctx_rtos->assoc_resp = 0;
-
     if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) &&
-        ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP)))
+        ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP)) ||
+	(stype == WLAN_FC_STYPE_ACTION))
     {
         memcpy((void *)wifi_if_ctx_rtos->last_mgmt_tx_data, (const void *)data, (size_t)data_len);
         wifi_if_ctx_rtos->last_mgmt_tx_data_len = data_len;
-        wifi_if_ctx_rtos->assoc_resp            = 1;
+        wifi_if_ctx_rtos->mgmt_tx_status        = 1;
     }
     else
     {
@@ -1692,7 +1689,7 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
 
     channel = freq_to_chan(freq);
 
-    wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
+    wifi_if_ctx_rtos->supp_called_remain_on_chan = false; /* callback func that does not require cancel_remain_on_channel */
     status                                       = wifi_remain_on_channel(false, channel, duration);
 
     if (status != WM_SUCCESS)
@@ -1814,7 +1811,7 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     wifi_if_ctx_rtos->hapd_drv_if_ctx = hapd_drv_if_ctx;
 
-    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(400);
+    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(1500);
 
     if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
     {
@@ -2360,4 +2357,29 @@ out:
         os_mem_free((void *)acl_params);
     return ret;
 }
+
+int wifi_nxp_wpa_dpp_listen(void *if_priv, bool enable)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    if (enable)
+    {
+        return wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, WLAN_MGMT_ACTION);
+    }
+    else
+    {
+        return 0;
+    }
+
+out:
+    return -1;
+}
+
 #endif

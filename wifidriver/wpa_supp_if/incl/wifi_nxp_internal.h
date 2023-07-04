@@ -128,7 +128,7 @@ typedef MLAN_PACK_START struct _nxp_wifi_acs_params
     unsigned int hw_mode;
 } MLAN_PACK_END nxp_wifi_acs_params;
 
-#define WIFI_MAX_FRAME_LEN 512U
+#define WIFI_MAX_FRAME_LEN 1500U
 
 typedef MLAN_PACK_START struct _nxp_wifi_frame
 {

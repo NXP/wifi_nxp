@@ -1111,6 +1111,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
             if (prsn_ie_tlv->header.len <= (sizeof(pmpriv->wpa_ie) - 2))
             {
                 (void)__memcpy(pmadapter, prsn_ie_tlv->rsn_ie, &pmpriv->wpa_ie[2], prsn_ie_tlv->header.len);
+#ifndef CONFIG_WPA_SUPP
                 if (pmpriv->sec_info.wpa2_enabled)
                 {
                     akm_type             = pauth_tlv ? wlan_le16_to_cpu(pauth_tlv->auth_type) : AssocAgentAuth_Auto;
@@ -1122,6 +1123,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
                     ft_akm = wlan_ft_akm_is_used(pmpriv, (t_u8 *)prsn_ie_tlv);
 #endif
                 }
+#endif
             }
             else
             {

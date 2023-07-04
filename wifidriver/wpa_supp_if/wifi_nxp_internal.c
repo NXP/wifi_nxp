@@ -138,7 +138,14 @@ void wifi_process_mgmt_tx_status(struct wifi_message *msg)
     {
         if (wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn)
         {
-            wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn(wm_wifi.hapd_if_priv, resp, resp->frame.frame_len);
+            if ((t_u32)(msg->data) == MLAN_BSS_TYPE_UAP)
+            {
+                wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn(wm_wifi.hapd_if_priv, resp, resp->frame.frame_len);
+            }
+            else
+            {
+                wm_wifi.supp_if_callbk_fns->mgmt_tx_status_callbk_fn(wm_wifi.if_priv, resp, resp->frame.frame_len);
+            }
         }
     }
 }
