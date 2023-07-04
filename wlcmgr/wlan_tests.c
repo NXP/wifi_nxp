@@ -2157,11 +2157,11 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         ret = wlan_ieeeps_off();
         if (ret == WM_SUCCESS)
         {
-            (void)PRINTF("Turned off IEEE Power Save mode");
+            (void)PRINTF("Turned off IEEE Power Save mode\r\n");
         }
         else
         {
-            (void)PRINTF("Failed to turn off IEEE Power Save mode, error: %d", ret);
+            (void)PRINTF("Failed to turn off IEEE Power Save mode, error: %d\r\n", ret);
         }
     }
     else if (choice == 1)
@@ -2171,11 +2171,11 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         ret = wlan_ieeeps_on(condition);
         if (ret == WM_SUCCESS)
         {
-            (void)PRINTF("Turned on IEEE Power Save mode");
+            (void)PRINTF("Turned on IEEE Power Save mode\r\n");
         }
         else
         {
-            (void)PRINTF("Failed to turn on IEEE Power Save mode, error: %d", ret);
+            (void)PRINTF("Failed to turn on IEEE Power Save mode, error: %d\r\n", ret);
         }
     }
     else
