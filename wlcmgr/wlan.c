@@ -4057,6 +4057,10 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     }
     else
     {
+        /* Stop the dhcp timer first after link lost occurs, as the dhcp timer
+         * callback may lead to that the connection state is out-of-sync with FW */
+        net_stop_dhcp_timer();
+
         /* we were attempting a connection and lost the link,
          * so treat this as a connection attempt failure
          */

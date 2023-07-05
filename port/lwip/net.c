@@ -563,7 +563,7 @@ static void stop_cb(void *ctx)
 static void dhcp_timer_cb(os_timer_arg_t arg)
 {
     (void)tcpip_try_callback(stop_cb, NULL);
-
+    net_e("DHCP timeout, failed to get IPv4 address");
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, WIFI_EVENT_REASON_FAILURE, NULL);
 }
 
