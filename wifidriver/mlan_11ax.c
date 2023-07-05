@@ -212,10 +212,17 @@ int wlan_cmd_append_11ax_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
  *
  *  @param pmadapater   A pointer to mlan_adapter
  *  @param hw_he_cap    A pointer to MrvlIEtypes_Extension_t
+ *  @param tlv_idx      0 for 2.4G, 1 for 5G
  *
  *  @return N/A
  */
-void wlan_update_11ax_cap(mlan_adapter *pmadapter, MrvlIEtypes_Extension_t *hw_he_cap)
+void wlan_update_11ax_cap(mlan_adapter *pmadapter,
+                          MrvlIEtypes_Extension_t *hw_he_cap
+#ifdef RW610
+                          ,
+                          int tlv_idx
+#endif
+)
 {
     MrvlIEtypes_He_cap_t *phe_cap = MNULL;
     t_u8 i                        = 0;
@@ -229,7 +236,11 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter, MrvlIEtypes_Extension_t *hw_h
         return;
     }
     phe_cap = (MrvlIEtypes_He_cap_t *)hw_he_cap;
+#ifndef RW610
     if (phe_cap->he_phy_cap[0] & (AX_2G_20MHZ_SUPPORT | AX_2G_40MHZ_SUPPORT))
+#else
+    if (tlv_idx == AX_2G_TLV_INDEX)
+#endif
     {
         pmadapter->hw_2g_hecap_len = hw_he_cap->len + sizeof(MrvlIEtypesHeader_t);
         (void)__memcpy(pmadapter, pmadapter->hw_2g_he_cap, (t_u8 *)hw_he_cap,

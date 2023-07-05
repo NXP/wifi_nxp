@@ -3091,6 +3091,9 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     MrvlIEtypesHeader_t *tlv = MNULL;
 #ifdef CONFIG_11AX
     MrvlIEtypes_Extension_t *ext_tlv = MNULL;
+#ifdef RW610
+    int he_tlv_idx = 0;
+#endif
 #endif
     MrvlIEtypes_fw_cap_info_t *fw_cap_tlv = MNULL;
     ENTER();
@@ -3293,7 +3296,12 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     ext_tlv->type = tlv_type;
                     ext_tlv->len  = tlv_len;
+#ifndef RW610
                     wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
+#else
+                    wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv, he_tlv_idx);
+                    he_tlv_idx++;
+#endif
                 }
                 break;
 #endif
