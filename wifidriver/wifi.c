@@ -3633,20 +3633,6 @@ int wifi_low_level_output(const t_u8 interface,
     w_pkt_d("Data TX: Kernel=>Driver, if %d, len %d", interface, len);
 
     // wakelock_get(WL_ID_LL_OUTPUT);
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
-#else
-    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
-#endif
-    if (ret != WM_SUCCESS)
-    {
-        wifi_e("Failed to wakeup card");
-#ifdef CONFIG_WIFI_RECOVERY
-        wifi_recovery_enable = true;
-#else
-        assert(0);
-#endif
-    }
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
     if (!pmpriv->media_connected && !pmpriv_uap->media_connected)
     {
@@ -3768,11 +3754,6 @@ int wifi_low_level_output(const t_u8 interface,
     ret = WM_SUCCESS;
 
 exit_fn:
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    (void)os_rwlock_read_unlock(&sleep_rwlock);
-#else
-    (void)os_rwlock_read_unlock(&ps_rwlock);
-#endif
     wifi_set_xfer_pending(false);
     // wakelock_put(WL_ID_LL_OUTPUT);
 
