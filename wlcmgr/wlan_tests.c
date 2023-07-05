@@ -1851,6 +1851,27 @@ static void test_wlan_connect(int argc, char **argv)
     }
 }
 
+static void test_wlan_reassociate(int argc, char **argv)
+{
+    (void)PRINTF(
+        "Reassociating to network...\r\nUse 'wlan-stat' for "
+        "current connection status.\r\n");
+
+    int ret = wlan_reassociate();
+
+    if (ret == WLAN_ERROR_STATE)
+    {
+        (void)PRINTF("Error: connect manager not running or not connected\r\n");
+        return;
+    }
+
+    if (ret == -WM_E_INVAL)
+    {
+        (void)PRINTF("Usage: %s \r\n", argv[0]);
+        return;
+    }
+}
+
 static void test_wlan_start_network(int argc, char **argv)
 {
     int ret;
@@ -8097,6 +8118,7 @@ static struct cli_command tests[] = {
     {"wlan-remove", "<profile_name>", test_wlan_remove},
     {"wlan-list", NULL, test_wlan_list},
     {"wlan-connect", "<profile_name>", test_wlan_connect},
+    {"wlan-reassociate", NULL, test_wlan_reassociate},
     {"wlan-start-network", "<profile_name>", test_wlan_start_network},
     {"wlan-stop-network", NULL, test_wlan_stop_network},
     {"wlan-disconnect", NULL, test_wlan_disconnect},

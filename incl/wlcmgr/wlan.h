@@ -2159,6 +2159,37 @@ int wlan_remove_network(const char *name);
  */
 int wlan_connect(char *name);
 
+/** Reassociate to a wireless network (Access Point).
+ *
+ *  When this function is called, WLAN Connection Manager starts reassociation
+ *  attempts using same SSID as currently connected network .
+ *  The connection result will be notified asynchronously to the WLCMGR
+ *  callback when the connection process has completed.
+ *
+ *  When connecting to a network, the event refers to the connection
+ *  attempt to that network.
+ *
+ *  Calling this function when the station interface is in the \ref
+ *  WLAN_DISCONNECTED state will have no effect.
+ *
+ *  Calling this function when the station interface is in the \ref
+ *  WLAN_CONNECTED state will, if successful, cause the interface to
+ *  reassociate to another network(AP).
+ *
+ *  If the connection attempt was successful the WLCMGR callback is notified
+ *  with the event \ref WLAN_REASON_SUCCESS, while if the connection attempt
+ *  fails then either of the events, \ref WLAN_REASON_NETWORK_AUTH_FAILED,
+ *  \ref WLAN_REASON_CONNECT_FAILED or \ref WLAN_REASON_ADDRESS_FAILED
+ *  are reported as appropriate.
+ *
+ *  \return WM_SUCCESS if a reassociation attempt was started successfully
+ *  \return WLAN_ERROR_STATE if the WLAN Connection Manager was not running.
+ *          or WLAN Connection Manager was not in \ref WLAN_CONNECTED state.
+ *  \return -WM_E_INVAL if there are no known networks to connect to
+ *  \return -WM_FAIL if an internal error has occurred.
+ */
+int wlan_reassociate();
+
 /** Disconnect from the current wireless network (Access Point).
  *
  *  When this function is called, the WLAN Connection Manager attempts to disconnect

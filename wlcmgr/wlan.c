@@ -477,8 +477,8 @@ static struct
 #endif
 #ifdef CONFIG_11R
     bool ft_bss : 1;
-    bool same_ess : 1;
 #endif
+    bool same_ess : 1;
 #ifdef CONFIG_BG_SCAN
     unsigned int bgscan_attempt;
 #endif
@@ -2737,15 +2737,16 @@ static void handle_scan_results(void)
             }
 #endif
         }
-#ifdef CONFIG_11R
 
         wlan.same_ess = false;
 
+#ifdef CONFIG_11R
         if ((wlan.ft_bss == true) && (network->mdid == best_ap->mdid))
         {
             wlan.same_ess = true;
         }
 #endif
+        wlan.same_ess |= wlan.roam_reassoc;
 
         update_network_params(network, best_ap);
 #ifdef CONFIG_OWE
@@ -3407,6 +3408,14 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         wlan.is_scan_lock = 0;
     }
 #endif
+#ifdef CONFIG_WPA_SUPP
+    if (wlan.is_scan_lock)
+    {
+      	wlcm_d("releasing scan lock (connect scan)");
+       	(void)os_semaphore_put(&wlan.scan_lock);
+       	wlan.is_scan_lock = 0;
+    }
+#endif
 
     /* We have received a response to the association command.  We may now
      * proceed to authenticating if it was successful, otherwise this
@@ -3586,15 +3595,16 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
             wpa_supp_network_status(netif, network);
 #endif
 
-#ifdef CONFIG_11R
 #ifdef CONFIG_WPA_SUPP
-            wlan.roam_reassoc = false;
+            wlan.same_ess = wifi_same_ess_ft() | wlan.roam_reassoc;
 
-            wlan.same_ess = wifi_same_ess_ft();
+            wlan.roam_reassoc = false;
 #endif
             if (wlan.same_ess == true)
             {
+#ifdef CONFIG_11R
                 wlan.ft_bss = false;
+#endif
                 (void)net_get_if_addr(&network->ip, if_handle);
                 wlan.sta_state      = CM_STA_CONNECTED;
                 *next               = CM_STA_CONNECTED;
@@ -3608,7 +3618,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
                 return;
             }
-#endif
+
             ret = net_configure_address(&network->ip, if_handle);
             if (ret != 0)
             {
@@ -5431,7 +5441,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
     }
 #endif
 
-    if (wlan.sta_state >= CM_STA_ASSOCIATING)
+    if ((wlan.roam_reassoc == false) && (wlan.sta_state >= CM_STA_ASSOCIATING))
     {
         if (new_network->role == WLAN_BSS_ROLE_STA)
         {
@@ -5442,14 +5452,21 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
         }
     }
 
-    wlcm_d("starting connection to network: %d", (int)msg->data);
+    wlcm_d("starting %s to network: %d", wlan.roam_reassoc == false ? "connection" : "reassociation", (int)msg->data);
 
 #ifndef CONFIG_WPA_SUPP
     ret = do_connect((int)msg->data);
 #else
     wlan.scan_count      = 0;
     wlan.cur_network_idx = (int)msg->data;
-    ret                  = wpa_supp_connect(netif, new_network);
+    if (wlan.roam_reassoc == true)
+    {
+        ret                  = wpa_supp_reassociate(netif);
+    }
+    else
+    {
+        ret                  = wpa_supp_connect(netif, new_network);
+    }
 #endif
 
     /* Release the connect scan lock if do_connect fails,
@@ -8006,6 +8023,8 @@ int wlan_connect(char *name)
 #endif
 #endif
 
+    wlan.roam_reassoc = false;
+
     /* connect to a specific network */
     for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
     {
@@ -8032,6 +8051,61 @@ int wlan_connect(char *name)
 
     /* specified network was not found */
     return -WM_E_INVAL;
+}
+
+int wlan_reassociate()
+{
+    int ret;
+
+    if (!wlan.running)
+    {
+        return WLAN_ERROR_STATE;
+    }
+
+    if (wlan.num_networks == 0U)
+    {
+        return -WM_E_INVAL;
+    }
+
+    if (!is_sta_connected())
+    {
+        wlcm_d("Error: sta connection is required before sending reassociate request");
+        return WLAN_ERROR_STATE;
+    }
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA_SUPP_WPS
+    if (wlan.wps_session_attempt)
+    {
+        wlcm_d("WPS session is in progress");
+        return WLAN_ERROR_STATE;
+    }
+#endif
+#endif
+
+    wlcm_d("taking the scan lock (reassociate scan)");
+    dbg_lock_info();
+    ret = os_semaphore_get(&wlan.scan_lock, OS_WAIT_FOREVER);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("failed to get scan lock: 0x%X", ret);
+        return WLAN_ERROR_ACTION;
+    }
+    wlcm_d("got the scan lock (reassociate scan)");
+    wlan.is_scan_lock = 1;
+
+    wlan.roam_reassoc = true;
+
+    ret = send_user_request(CM_STA_USER_REQUEST_CONNECT, wlan.cur_network_idx);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_d("Error: Reassociate failed");
+        wlan.roam_reassoc = false;
+        (void)os_semaphore_put(&wlan.scan_lock);
+        wlan.is_scan_lock = 0;
+    }
+
+    return ret;
 }
 
 int wlan_start_network(const char *name)
