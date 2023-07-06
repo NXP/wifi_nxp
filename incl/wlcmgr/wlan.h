@@ -4933,6 +4933,7 @@ int wlan_set_11ax_tol_time(const t_u32 tol_time);
  * \return -WM_FAIL if command fails.
  */
 int wlan_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg_len);
+#ifndef CONFIG_MLAN_WMSDK
 /**
  * Use this API to get the RU tx power limit.
  *
@@ -4942,8 +4943,28 @@ int wlan_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
  * \return -WM_FAIL if command fails.
  */
 
-#ifndef CONFIG_MLAN_WMSDK
 int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
+#endif
+
+/**
+ * Use this API to set the RU tx power limit by channel based approach.
+ *
+ * \param[in] ru_pwr_cfg       11AX rutxpwr of channels to be sent to Firmware.
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_set_11ax_rutxpowerlimit_legacy(const wlan_rutxpwrlimit_t *ru_pwr_cfg);
+
+/**
+ * Use this API to get the RU tx power limit by channel based approach.
+ *
+ * \param[in] ru_pwr_cfg   11AX rutxpwr of channels to be get from Firmware
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_get_11ax_rutxpowerlimit_legacy(wlan_rutxpwrlimit_t *ru_pwr_cfg);
 
 /** Set 11ax config params
  *
@@ -4951,7 +4972,6 @@ int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-#endif
 
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
 

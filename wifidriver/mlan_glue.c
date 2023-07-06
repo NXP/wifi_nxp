@@ -6720,8 +6720,7 @@ int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
     return ret;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
-int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
+int wifi_set_11ax_rutxpowerlimit_legacy(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
 {
     t_u8 i;
     int ret;
@@ -6762,7 +6761,7 @@ int wifi_set_11ax_rutxpowerlimit(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
     return ret;
 }
 
-int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg)
+int wifi_get_11ax_rutxpowerlimit_legacy(wifi_rutxpwrlimit_t *ru_pwr_cfg)
 {
     int ret;
 
@@ -6785,7 +6784,6 @@ int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg)
 
     return ret;
 }
-#endif
 
 int wifi_set_11ax_cfg(wifi_11ax_config_t *ax_config)
 {

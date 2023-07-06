@@ -1415,6 +1415,8 @@ int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_get_11ax_rutxpowerlimit(wifi_rutxpwrlimit_t *ru_pwr_cfg);
 #endif
+int wifi_set_11ax_rutxpowerlimit_legacy(const wifi_rutxpwrlimit_t *ru_pwr_cfg);
+int wifi_get_11ax_rutxpowerlimit_legacy(wifi_rutxpwrlimit_t *ru_pwr_cfg);
 /** Set 11ax config params
  *
  * \param[in, out] ax_config 11AX config parameters to be sent to Firmware

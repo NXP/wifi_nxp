@@ -10850,6 +10850,27 @@ int wlan_get_11ax_rutxpowerlimit(wlan_rutxpwrlimit_t *ru_pwr_cfg)
 }
 #endif
 
+int wlan_set_11ax_rutxpowerlimit_legacy(const wifi_rutxpwrlimit_t *ru_pwr_cfg)
+{
+    if (ru_pwr_cfg != NULL)
+    {
+        return wifi_set_11ax_rutxpowerlimit_legacy(ru_pwr_cfg);
+    }
+
+    return -WM_FAIL;
+}
+
+int wlan_get_11ax_rutxpowerlimit_legacy(wifi_rutxpwrlimit_t *ru_pwr_cfg)
+{
+    if (ru_pwr_cfg != NULL)
+    {
+        (void)memset(ru_pwr_cfg, 0x00, sizeof(wlan_rutxpwrlimit_t));
+        return wifi_get_11ax_rutxpowerlimit_legacy(ru_pwr_cfg);
+    }
+
+    return -WM_FAIL;
+}
+
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
 {
     return wifi_set_11ax_cfg(ax_config);
