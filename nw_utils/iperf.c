@@ -143,6 +143,17 @@ static bool iperf_need_enable_tickless_idle(void *arg, enum lwiperf_report_type 
 #endif
 #endif
 
+static void iperf_free_ctx_iperf_session(void *arg, enum lwiperf_report_type report_type)
+{
+    struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
+
+    if (!ctx || ctx->server_mode || (ctx->client_type == LWIPERF_TRADEOFF &&
+      (report_type == LWIPERF_TCP_DONE_CLIENT_TX || report_type == LWIPERF_UDP_DONE_CLIENT_TX)))
+        return;
+
+    ctx->iperf_session = NULL;
+}
+
 /** Prototype of a report function that is called when a session is finished.
     This report function shows the test results. */
 static void lwiperf_report(void *arg,
@@ -201,6 +212,7 @@ static void lwiperf_report(void *arg,
         (void)PRINTF(" IPERF Report error\r\n");
     }
     (void)PRINTF("\r\n");
+    iperf_free_ctx_iperf_session(arg, report_type);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
