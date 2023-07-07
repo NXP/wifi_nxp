@@ -2041,11 +2041,12 @@ static void test_wlan_list(int argc, char **argv)
 static void test_wlan_info(int argc, char **argv)
 {
     enum wlan_connection_state state;
-    struct wlan_network sta_network;
-    struct wlan_network uap_network;
-#ifndef CONFIG_MULTI_CHAN
-    int sta_found = 0;
-#endif
+    struct wlan_network *network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (!network)
+    {
+        (void)PRINTF("Error: unable to malloc memory\r\n");
+         return;
+    }
 
     if (wlan_get_connection_state(&state) != 0)
     {
@@ -2058,46 +2059,31 @@ static void test_wlan_info(int argc, char **argv)
         switch (state)
         {
             case WLAN_CONNECTED:
-                if (wlan_get_current_network(&sta_network) == WM_SUCCESS)
+                if (!wlan_get_current_network(network))
                 {
                     (void)PRINTF("Station connected to:\r\n");
-                    print_network(&sta_network);
-#ifndef CONFIG_MULTI_CHAN
-                    sta_found = 1;
-#endif
+                    print_network(network);
                 }
                 else
-                {
                     (void)PRINTF("Station not connected\r\n");
-                }
                 break;
             default:
                 (void)PRINTF("Station not connected\r\n");
                 break;
         }
     }
-
-    if (wlan_get_current_uap_network(&uap_network) != 0)
-    {
+    if (wlan_get_current_uap_network(network) != 0)
         (void)PRINTF("uAP not started\r\n");
-    }
     else
     {
-#ifndef CONFIG_MULTI_CHAN
-        /* Since uAP automatically changes the channel to the one that
-         * STA is on */
-        if (sta_found == 1)
-        {
-            uap_network.channel = sta_network.channel;
-        }
-#endif
-        if (uap_network.role == WLAN_BSS_ROLE_UAP)
-        {
+        if (network->role == WLAN_BSS_ROLE_UAP)
             (void)PRINTF("uAP started as:\r\n");
-        }
 
-        print_network(&uap_network);
+        print_network(network);
     }
+    if (network)
+        os_mem_free(network);
+
 }
 
 static void test_wlan_address(int argc, char **argv)
