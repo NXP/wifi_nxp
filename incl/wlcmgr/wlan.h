@@ -4893,6 +4893,7 @@ int wlan_send_hostcmd(
 /**
  * Use this API to set the set 11AX Tx OMI.
  *
+ * \param[in] interface Interface type STA or uAP.
  * \param[in] tx_omi value to be sent to Firmware
  * \param[in] tx_option value to be sent to Firmware
  *            0: send OMI in QoS NULL; 1: send OMI in QoS data;
@@ -4906,7 +4907,7 @@ int wlan_send_hostcmd(
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts);
+int wlan_set_11ax_tx_omi(const t_u8 interface, const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts);
 /**
  * Set 802_11 AX OBSS Narrow Bandwidth RU Tolerance Time
  * In uplink transmission, AP sends a trigger frame to all the stations that will be involved in the upcoming

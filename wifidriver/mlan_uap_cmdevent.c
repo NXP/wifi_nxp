@@ -3022,6 +3022,19 @@ mlan_status wlan_ops_uap_prepare_cmd(IN t_void *priv,
             break;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_11AX
+        case HostCmd_CMD_11AX_CMD:
+            ret = (mlan_status)wlan_cmd_11ax_cmd(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+        case HostCmd_CMD_11AX_CFG:
+            ret = (mlan_status)wlan_cmd_11ax_cfg(pmpriv, cmd_action, pdata_buf);
+            break;
+#ifdef CONFIG_11AX_TWT
+        case HostCmd_CMD_TWT_CFG:
+            ret = wlan_cmd_twt_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif /* CONFIG_11AX_TWT */
+#endif /* CONFIG_11AX */
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             if (pioctl_req != NULL)

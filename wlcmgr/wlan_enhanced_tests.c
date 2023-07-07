@@ -1259,19 +1259,24 @@ static void test_wlan_get_chanlist(int argc, char **argv)
 static void dump_wlan_set_txomi_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-set-tx-omi <tx-omi> <tx-option> <num_data_pkts>\r\n");
+    (void)PRINTF("wlan-set-tx-omi <interface> <tx-omi> <tx-option> <num_data_pkts>\r\n");
+    (void)PRINTF("where, interface = uap or sta\r\n");
     (void)PRINTF("where, tx-omi =\r\n");
     (void)PRINTF("\t Bit 0-2: Rx NSS\r\n");
     (void)PRINTF("\t Bit 3-4: Channel Width. 0: 20MHz  1: 40MHz  2: 80MHz\r\n");
     (void)PRINTF("\t Bit 5  : UL MU Disable\r\n");
-    (void)PRINTF("\t Bit 6-8: Tx NSTS\r\n");
+    (void)PRINTF("\t Bit 6-8: Tx NSTS (applies to client mode only)\r\n");
     (void)PRINTF("\t Bit 9  : ER SU Disable\r\n");
     (void)PRINTF("\t Bit 10 : DL MU-MIMO Resound Recommendation\r\n");
-    (void)PRINTF("\t Bit 11 : UL MU Data Disbale\r\n");
+    (void)PRINTF("\t Bit 11 : DL MU Data Disable\r\n");
+    (void)PRINTF("\t Example : For 1x1 SoC, to set bandwidth,\r\n");
+    (void)PRINTF("20M, tx-omi = 0x00\r\n");
+    (void)PRINTF("40M, tx-omi = 0x08\r\n");
+    (void)PRINTF("80M, tx-omi = 0x10\r\n");
     (void)PRINTF("where, tx-option =\r\n");
-    (void)PRINTF("\t 0: send OMI in QoS NULL\r\n");
+    (void)PRINTF("\t 0: send OMI in NULL Data\r\n");
     (void)PRINTF("\t 1: send OMI in QoS Data\r\n");
-    (void)PRINTF("\t 0XFF: OMI is transmitted in both QoS NULL and QoS data frame\r\n");
+    (void)PRINTF("\t 0xff: send OMI in either QoS Data or NULL Data\r\n");
     (void)PRINTF("where, num_data_pkts =\r\n");
     (void)PRINTF("\t Minimum value is 1\r\n");
     (void)PRINTF("\t Maximum value is 16\r\n");
@@ -1349,32 +1354,36 @@ static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
 static void test_wlan_set_tx_omi(int argc, char **argv)
 {
     int ret;
-
+    t_u8 interface;
     uint16_t tx_omi;
-    uint8_t tx_option;
-    uint8_t num_data_pkts;
+    uint8_t tx_option     = 0;
+    uint8_t num_data_pkts = 0;
 
-    if (argc != 4)
+    if (argc != 5)
     {
         dump_wlan_set_txomi_usage();
         return;
     }
 
-    errno         = 0;
-    tx_omi        = (uint16_t)strtol(argv[1], NULL, 0);
-    tx_option     = (uint8_t)strtol(argv[2], NULL, 0);
-    num_data_pkts = (uint8_t)strtol(argv[3], NULL, 0);
+    errno = 0;
 
-    if ((num_data_pkts < 1) || (num_data_pkts > 16))
+    if (string_equal("sta", argv[1]))
     {
-        (void)PRINTF("Minimum value of num_data_pkts should be 1 and maximum should be 16");
-        return;
+        interface = (t_u8)WLAN_BSS_TYPE_STA;
     }
+    else if (string_equal("uap", argv[1]))
+    {
+        interface = (t_u8)WLAN_BSS_TYPE_UAP;
+    }
+
+    tx_omi        = (uint16_t)strtol(argv[2], NULL, 0);
+    tx_option     = (uint8_t)strtol(argv[3], NULL, 0);
+    num_data_pkts = (uint8_t)strtol(argv[4], NULL, 0);
 
     if (errno != 0)
         (void)PRINTF("Error during strtoul errno:%d", errno);
 
-    ret = wlan_set_11ax_tx_omi(tx_omi, tx_option, num_data_pkts);
+    ret = wlan_set_11ax_tx_omi(interface, tx_omi, tx_option, num_data_pkts);
 
     if (ret == WM_SUCCESS)
     {
@@ -1970,7 +1979,7 @@ static struct cli_command wlan_enhanced_commands[] = {
 #endif
     {"wlan-get-ed-mac-mode", "<interface>", wlan_ed_mac_mode_get},
 #ifdef CONFIG_11AX
-    {"wlan-set-tx-omi", "<tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
+    {"wlan-set-tx-omi", "<interface> <tx-omi> <tx-option> <num_data_pkts>", test_wlan_set_tx_omi},
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
 #ifndef RW610
 #ifndef CONFIG_MLAN_WMSDK

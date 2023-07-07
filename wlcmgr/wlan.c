@@ -10891,13 +10891,103 @@ int wlan_send_hostcmd(
 }
 
 #ifdef CONFIG_11AX
-int wlan_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts)
+int wlan_enable_disable_htc(uint8_t option)
 {
-    if (is_sta_connected())
-        return wifi_set_11ax_tx_omi(tx_omi, tx_option, num_data_pkts);
+    int ret                 = -WM_FAIL;
+    uint8_t send_htc_set[]  = {0x8b, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x24, 0x01, 0x01, 0x00, 0x00, 0x00};
+    u8_t debug_resp_buf[32] = {0};
+    uint32_t reqd_len       = 0;
+
+    send_htc_set[12] = option;
+
+    ret = wlan_send_hostcmd(send_htc_set, sizeof(send_htc_set) / sizeof(u8_t), debug_resp_buf, sizeof(debug_resp_buf),
+                            &reqd_len);
+
+    return ret;
+}
+
+int wlan_send_debug_htc(const uint8_t count,
+		const uint8_t vht,
+		const uint8_t he,
+		const uint8_t rxNss,
+		const uint8_t channelWidth,
+		const uint8_t ulMuDisable,
+		const uint8_t txNSTS,
+		const uint8_t erSuDisable,
+		const uint8_t dlResoundRecomm,
+		const uint8_t ulMuDataDisable)
+{
+    int ret           = -WM_FAIL;
+    int i;
+    uint8_t debug_cmd_buf[] = {0x8b, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x11, 0x01, 0x40, 0x01, 0x01, 0x00,
+			0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    u8_t debug_resp_buf[32] = {0};
+    uint32_t reqd_len = 0;
+
+    (void)memset(debug_resp_buf, 0, sizeof(debug_resp_buf));
+
+    debug_cmd_buf[12] = count;
+    debug_cmd_buf[13] = vht;
+    debug_cmd_buf[14] = he;
+    debug_cmd_buf[15] = rxNss;
+    debug_cmd_buf[16] = channelWidth;
+    debug_cmd_buf[17] = ulMuDisable;
+    debug_cmd_buf[18] = txNSTS;
+    debug_cmd_buf[19] = erSuDisable;
+    debug_cmd_buf[20] = dlResoundRecomm;
+    debug_cmd_buf[21] = ulMuDataDisable;
+
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, sizeof(debug_resp_buf),
+                            &reqd_len);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Hostcmd success, response is\r\n");
+        for (i = 0; i < reqd_len; i++)
+            (void)PRINTF("%x\t", debug_resp_buf[i]);
+    }
     else
     {
-        wifi_d("STA not connected");
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+    return ret;
+}
+int wlan_set_11ax_tx_omi(const t_u8 interface, const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts)
+{
+    if (interface == MLAN_BSS_TYPE_STA)
+    {
+
+        if (num_data_pkts > 16)
+        {
+            (void)PRINTF("Minimum value of num_data_pkts should be 1 and maximum should be 16");
+            return -WM_FAIL;
+        }
+
+        if (is_sta_connected())
+        {
+            return wifi_set_11ax_tx_omi(MLAN_BSS_TYPE_STA, tx_omi, tx_option, num_data_pkts);
+        }
+        else
+        {
+            wifi_d("STA not connected");
+            return -WM_FAIL;
+        }
+    }
+    else if (interface == MLAN_BSS_TYPE_UAP)
+    {
+        if (is_uap_started())
+        {
+            return wifi_set_11ax_tx_omi(MLAN_BSS_TYPE_UAP, tx_omi, tx_option, num_data_pkts);
+        }
+        else
+        {
+            wifi_d("uAP not started");
+            return -WM_FAIL;
+        }
+    }
+    else
+    {
+        wifi_d("Interface not supported");
         return -WM_FAIL;
     }
 }

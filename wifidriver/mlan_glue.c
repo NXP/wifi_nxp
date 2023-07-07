@@ -6625,7 +6625,10 @@ int wifi_config_roaming(const int enable, uint8_t *rssi_low)
 #endif
 
 #ifdef CONFIG_11AX
-int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 num_data_pkts)
+int wifi_set_11ax_tx_omi(const mlan_bss_type bss_type,
+                         const t_u16 tx_omi,
+                         const t_u8 tx_option,
+                         const t_u8 num_data_pkts)
 {
     mlan_ioctl_req req;
 
@@ -6645,15 +6648,20 @@ int wifi_set_11ax_tx_omi(const t_u16 tx_omi, const t_u8 tx_option, const t_u8 nu
     cfg.param.txomi_cfg.tx_option     = tx_option;
     cfg.param.txomi_cfg.num_data_pkts = num_data_pkts;
 
-    if ((cfg.param.txomi_cfg.num_data_pkts < 1) || (cfg.param.txomi_cfg.num_data_pkts > 16))
-    {
-        wifi_e("Minimum value of num_data_pkts should be 1 and maximum should be 16");
-        return -WM_FAIL;
-    }
-
     mlan_status rv;
 
-    rv = wlan_ops_sta_ioctl(mlan_adap, &req);
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_UAP;
+        rv            = wlan_ops_uap_ioctl(mlan_adap, &req);
+    }
+    else
+    {
+        req.bss_index = (t_u32)MLAN_BSS_TYPE_STA;
+        rv            = wlan_ops_sta_ioctl(mlan_adap, &req);
+    }
+
+    wm_wifi.cmd_resp_ioctl = NULL;
 
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
     {

@@ -1475,7 +1475,11 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_uap_bss_ioctl_action_chan_switch(pmadapter, pioctl_req);
             break;
 #endif
-
+#ifdef CONFIG_11AX
+        case MLAN_IOCTL_11AX_CFG:
+            status = wlan_11ax_cfg_ioctl(pmadapter, pioctl_req);
+            break;
+#endif
         default:
             pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
             break;
