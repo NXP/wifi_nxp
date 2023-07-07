@@ -8022,6 +8022,9 @@ int wlan_connect(char *name)
             }
             wlcm_d("got the scan lock (connect scan)");
             wlan.is_scan_lock = 1;
+            /* Reset reassoc count as this is set to WLAN_RECONNECT_LIMIT
+             * during disconnect */
+            wlan.reassoc_count = 0;
 
             return send_user_request(CM_STA_USER_REQUEST_CONNECT, i);
         }
