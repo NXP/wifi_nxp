@@ -725,6 +725,8 @@ struct _rw_lock
 {
     /** Mutex for reader mutual exclusion */
     os_mutex_t reader_mutex;
+    /** Mutex for write mutual exclusion */
+    os_mutex_t write_mutex;
     /** Lock which when held by reader,
      *  writer cannot enter critical section
      */

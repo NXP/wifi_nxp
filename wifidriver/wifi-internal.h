@@ -49,12 +49,15 @@ typedef struct _hostcmd_cfg
 typedef struct
 {
     os_thread_t wm_wifi_main_thread;
+#ifndef RW610
     os_thread_t wm_wifi_core_thread;
+#endif
     os_thread_t wm_wifi_scan_thread;
 #ifdef CONFIG_WMM
     /** Thread handle for sending data */
     os_thread_t wm_wifi_driver_tx;
 #endif
+    os_thread_t wm_wifi_powersave_thread;
     os_queue_t *wlc_mgr_event_queue;
 
 #ifndef CONFIG_WIFI_RX_REORDER
@@ -83,6 +86,8 @@ typedef struct
     os_queue_t io_events;
 
     os_queue_pool_t io_events_queue_data;
+    os_queue_t powersave_queue;
+    os_queue_pool_t powersave_queue_data;
 
     mcast_filter *start_list;
 

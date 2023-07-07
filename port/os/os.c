@@ -1148,6 +1148,11 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
     {
         return -WM_FAIL;
     }
+    ret     = os_mutex_create(&(plock->write_mutex), mutex_name, OS_MUTEX_INHERIT);
+    if (ret == -WM_FAIL)
+    {
+        return -WM_FAIL;
+    }
     ret = os_semaphore_create(&(plock->rw_lock), lock_name);
     if (ret == -WM_FAIL)
     {
@@ -1235,6 +1240,8 @@ void os_rwlock_delete(os_rw_lock_t *lock)
         (void)os_semaphore_delete(&(lock->rw_lock));
     if (lock->reader_mutex)
         (void)os_mutex_delete(&(lock->reader_mutex));
+    if (lock->write_mutex)
+        os_mutex_delete(&(lock->write_mutex));
     lock->reader_count = 0;
 }
 

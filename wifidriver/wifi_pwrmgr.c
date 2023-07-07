@@ -314,7 +314,19 @@ void send_sleep_confirm_command(mlan_bss_type interface)
         mlan_adap->ps_state = PS_STATE_SLEEP_CFM;
 #endif
         wcmdr_d("+");
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        /* Write mutex is used to avoid the case that, during waiting for sleep confirm cmd response, 
+         * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+        os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
+#endif
+
         (void)wifi_wait_for_cmdresp(NULL);
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+        os_mutex_put(&(sleep_rwlock.write_mutex));
+#endif
+
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     }
     else

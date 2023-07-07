@@ -65,8 +65,9 @@ const uint8_t *wlanfw;
 t_u32 last_resp_rcvd, last_cmd_sent;
 
 static os_mutex_t txrx_mutex;
+#ifndef RW610
 os_thread_t wifi_core_thread;
-
+#endif
 static struct
 {
     /* Where the cmdresp/event should be dispached depends on its value */
@@ -1081,7 +1082,11 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0);
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response, 
+     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
+    os_mutex_put(&(sleep_rwlock.write_mutex));
 #else
     ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
 #endif

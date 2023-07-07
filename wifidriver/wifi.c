@@ -162,11 +162,14 @@ typedef enum __mlan_status
 #endif /* CONFIG_XZ_DECOMPRESSION */
     MLAN_CARD_CMD_TIMEOUT
 } __mlan_status;
-
+#ifndef RW610
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
+#endif
 static os_thread_stack_define(wifi_scan_stack, 2048);
 static os_thread_stack_define(wifi_drv_stack, 2048);
+static os_thread_stack_define(wifi_powersave_stack, 512);
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
+static os_queue_pool_define(g_powersave_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 #ifdef CONFIG_WMM
@@ -1560,6 +1563,7 @@ static void wifi_driver_main_loop(void *argv)
     }
 }
 
+#ifndef RW610
 #define WL_ID_WIFI_CORE_INPUT "wifi_core_input"
 /**
  * This function should be called when a packet is ready to be read
@@ -1604,7 +1608,7 @@ static void wifi_core_input(void *argv)
         // wakelock_put(WL_ID_WIFI_CORE_INPUT);
     } /* for ;; */
 }
-
+#endif
 void wifi_user_scan_config_cleanup(void)
 {
     if (wm_wifi.g_user_scan_cfg != NULL)
@@ -1671,6 +1675,29 @@ static void wifi_scan_input(void *argv)
         scan_thread_in_process = false;
     } /* for ;; */
     os_thread_self_complete(NULL);
+}
+
+static void wifi_powersave_thread(void *data)
+{
+    int ret;
+    struct wifi_message msg;
+
+    while (1)
+    {
+        ret = os_queue_recv(&wm_wifi.powersave_queue, &msg, OS_WAIT_FOREVER);
+        if (ret == WM_SUCCESS)
+        {
+            switch (msg.event)
+            {
+                case WIFI_EVENT_SLEEP:
+                    wifi_event_completion(WIFI_EVENT_SLEEP, WIFI_EVENT_REASON_SUCCESS, NULL);
+                    break;
+                default:
+                    wifi_w("got unknown message: %d", msg.event);
+                    break;
+            }
+        }
+    }
 }
 
 static void wifi_core_deinit(void);
@@ -1753,7 +1780,7 @@ static int wifi_core_init(void)
         wifi_e("Create wifi scan thread failed");
         goto fail;
     }
-
+#ifndef RW610
     ret = os_thread_create(&wm_wifi.wm_wifi_core_thread, "stack_dispatcher", wifi_core_input, NULL, &wifi_core_stack,
                            OS_PRIO_1);
 
@@ -1764,6 +1791,7 @@ static int wifi_core_init(void)
     }
 
     wifi_core_thread    = wm_wifi.wm_wifi_core_thread;
+#endif
     wifi_core_init_done = 1;
 
 #ifdef CONFIG_WMM
@@ -1789,6 +1817,23 @@ static int wifi_core_init(void)
         goto fail;
     }
 #endif
+
+    wm_wifi.powersave_queue_data = g_powersave_queue_data;
+    ret = os_queue_create(&wm_wifi.powersave_queue, "powersave", sizeof(struct bus_message), &wm_wifi.powersave_queue_data);
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create power save queue failed");
+        goto fail;
+    }
+
+    ret = os_thread_create(&wm_wifi.wm_wifi_powersave_thread, "wifi_powersave", wifi_powersave_thread, NULL, &wifi_powersave_stack,
+                           OS_PRIO_4);
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create power save thread failed");
+        goto fail;
+    }
+
 #ifdef CONFIG_CSI
     /* Semaphore to protect data parameters */
     ret = os_semaphore_create(&csi_buff_stat.csi_data_sem, "usb data sem");
@@ -1852,6 +1897,12 @@ static void wifi_core_deinit(void)
         wm_wifi.io_events = NULL;
     }
 
+    if (wm_wifi.powersave_queue != NULL)
+    {
+        os_queue_delete(&wm_wifi.powersave_queue);
+        wm_wifi.powersave_queue = NULL;
+    }
+
 #ifdef CONFIG_WMM
     wifi_wmm_buf_pool_deinit();
 #endif
@@ -1896,6 +1947,11 @@ static void wifi_core_deinit(void)
     {
         (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
         wm_wifi.wm_wifi_scan_thread = NULL;
+    }
+    if (wm_wifi.wm_wifi_powersave_thread != NULL)
+    {
+        (void)os_thread_delete(&wm_wifi.wm_wifi_powersave_thread);
+        wm_wifi.wm_wifi_powersave_thread = NULL;
     }
 #ifdef CONFIG_WMM
     if (wm_wifi.wm_wifi_driver_tx)
@@ -2099,17 +2155,24 @@ void wifi_destroy_wifidriver_tasks(void)
         wm_wifi.wm_wifi_main_thread = NULL;
     }
 
+#ifndef RW610
     if (wm_wifi.wm_wifi_core_thread != NULL)
     {
         os_thread_delete(&wm_wifi.wm_wifi_core_thread);
         wm_wifi.wm_wifi_core_thread = NULL;
         wifi_core_thread            = NULL;
     }
-
+#endif
     if (wm_wifi.wm_wifi_scan_thread != NULL)
     {
         (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
         wm_wifi.wm_wifi_scan_thread = NULL;
+    }
+
+    if (wm_wifi.wm_wifi_powersave_thread != NULL)
+    {
+        (void)os_thread_delete(&wm_wifi.wm_wifi_powersave_thread);
+        wm_wifi.wm_wifi_powersave_thread = NULL;
     }
 
     imu_uninstall_callback();
@@ -3547,7 +3610,11 @@ static void wifi_driver_tx(void *data)
             }
 #endif
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+            /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response, 
+             * wifi_driver_tx task might be scheduled and send data to FW */
+            os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
             ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+            os_mutex_put(&(sleep_rwlock.write_mutex));
 #else
             ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
 #endif
