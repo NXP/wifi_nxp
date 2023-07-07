@@ -1072,6 +1072,12 @@ void wlan_cancel_host_sleep()
     int ret = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
 
+    if (!wlan_is_started())
+    {
+        PRINTF("Wlan not started, can't cancel host sleep\r\n");
+        return;
+    }
+
     if (is_uap_started() != 0)
         type = WLAN_BSS_TYPE_UAP;
     ret = wifi_cancel_host_sleep((mlan_bss_type)type);
@@ -1099,7 +1105,11 @@ void wlan_clear_host_sleep_config()
     is_hs_handshake_done = 0;
 #ifdef CONFIG_MEF_CFG
     memset(&g_flt_cfg, 0x0, sizeof(wlan_flt_cfg_t));
-    wifi_set_packet_filters(&g_flt_cfg);
+
+	if (wlan_is_started())
+    {
+		wifi_set_packet_filters(&g_flt_cfg);
+    }
 #endif
     wakeup_by = 0;
     wifi_clear_wakeup_reason();

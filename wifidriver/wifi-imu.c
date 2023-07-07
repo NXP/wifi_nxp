@@ -1844,6 +1844,9 @@ void wifi_print_wakeup_reason(void)
 
 void wifi_clear_wakeup_reason(void)
 {
-    memset(&mlan_adap->wlan_wakeup, 0x0, sizeof(wlan_wakeup_reason));
+    if (mlan_adap != NULL)
+    {
+        memset(&mlan_adap->wlan_wakeup, 0x0, sizeof(wlan_wakeup_reason));
+    }
 }
 #endif
