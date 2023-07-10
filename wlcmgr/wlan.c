@@ -2236,7 +2236,7 @@ static int do_start(struct wlan_network *network)
         {
             (void)memcpy(&network->bssid[0], &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
         }
-#ifdef SD8801
+#if defined(SD8801) || defined(RW610)
         wpa_supp_set_ap_bw(netif, 1);
 #endif
         ret = wpa_supp_start_ap(netif, network);
