@@ -76,6 +76,8 @@
 #define WLAN_FW_WAKE_STATUS_ADDR     (0x40031068U)
 #endif
 
+#define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
+
 #define BANDWIDTH_20MHZ 1U
 #define BANDWIDTH_40MHZ 2U
 #ifdef CONFIG_11AC
@@ -109,6 +111,7 @@ extern uint16_t g_data_snr_last;
 extern bool wifi_recovery_enable;
 extern t_u16 wifi_recovery_cnt;
 #endif
+extern bool wifi_shutdown_enable;
 
 /** WiFi Error Code */
 enum

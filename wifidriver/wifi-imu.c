@@ -866,9 +866,30 @@ static int wlan_set_low_power_mode()
 }
 #endif
 
+static int wlan_wait_for_last_resp_rcvd(t_u16 command)
+{
+    int retry_cnt = WIFI_COMMAND_RESPONSE_WAIT_MS / WIFI_POLL_CMD_RESP_TIME;
+
+    while ((last_resp_rcvd != command) && (retry_cnt > 0))
+    {
+        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        retry_cnt--;
+    }
+
+    if (last_resp_rcvd == command)
+    {
+        return true;
+    }
+    else
+    {
+        wifi_io_e("%s: wait cmd 0x%x fail (last 0x%x)", __FUNCTION__, command, last_resp_rcvd);
+        return false;
+    }
+}
+
 // mlan_status wlan_process_int_status(mlan_adapter *pmadapter);
 /* Setup the firmware with commands */
-static void wlan_fw_init_cfg()
+static int wlan_fw_init_cfg()
 {
     wcmdr_d("FWCMD : INIT (0xa9)");
 
@@ -880,9 +901,9 @@ static void wlan_fw_init_cfg()
 
     wlan_cmd_init();
 
-    while (last_resp_rcvd != HostCmd_CMD_FUNC_INIT)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_FUNC_INIT) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
 #ifdef WLAN_LOW_POWER_ENABLE
@@ -892,9 +913,9 @@ static void wlan_fw_init_cfg()
 
         wlan_set_low_power_mode();
 
-        while (last_resp_rcvd != HostCmd_CMD_LOW_POWER_MODE)
+        if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_LOW_POWER_MODE) != true)
         {
-            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+            return false;
         }
     }
 #endif
@@ -905,9 +926,9 @@ static void wlan_fw_init_cfg()
 
         _wlan_set_mac_addr();
 
-        while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
+        if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_802_11_MAC_ADDRESS) != true)
         {
-            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+            return false;
         }
     }
 
@@ -916,9 +937,9 @@ static void wlan_fw_init_cfg()
 
     wlan_get_channel_region_cfg();
 
-    while (last_resp_rcvd != HostCmd_CMD_CHAN_REGION_CFG)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_CHAN_REGION_CFG) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 #endif
 
@@ -926,9 +947,9 @@ static void wlan_fw_init_cfg()
 
     wlan_get_hw_spec();
 
-    while (last_resp_rcvd != HostCmd_CMD_GET_HW_SPEC)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_GET_HW_SPEC) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
     if (cal_data_valid
 #ifdef RW610
@@ -940,9 +961,9 @@ static void wlan_fw_init_cfg()
 
         _wlan_set_cal_data();
 
-        while (last_resp_rcvd != HostCmd_CMD_CFG_DATA)
+        if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_CFG_DATA) != true)
         {
-            os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+            return false;
         }
     }
 
@@ -952,92 +973,94 @@ static void wlan_fw_init_cfg()
 
     _wlan_recfg_tx_buf_size(tx_buf_size);
 
-    while (last_resp_rcvd != HostCmd_CMD_RECONFIGURE_TX_BUFF)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_RECONFIGURE_TX_BUFF) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
+#endif
 
     wcmdr_d("CMD : MAC_REG_ACCESS (0x19)");
-#endif
+
     wlan_get_value1();
 
-    while (last_resp_rcvd != HostCmd_CMD_MAC_REG_ACCESS)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_MAC_REG_ACCESS) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     wcmdr_d("CMD : GET_FW_VER_EXT (0x97)");
 
     wlan_get_fw_ver_ext(0);
 
-    while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_VERSION_EXT) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     wcmdr_d("CMD : GET_MAC_ADDR (0x4d)");
 
     wlan_get_mac_addr_sta();
 
-    while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_802_11_MAC_ADDRESS) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     last_resp_rcvd = 0;
 
     wlan_get_mac_addr_uap();
 
-    while (last_resp_rcvd != HostCmd_CMD_802_11_MAC_ADDRESS)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_802_11_MAC_ADDRESS) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     wcmdr_d("CMD : GET_FW_VER_EXT (0x97)");
 
     wlan_get_fw_ver_ext(3);
 
-    while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_VERSION_EXT) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     wcmdr_d("CMD : MAC_CTRL (0x28)");
 
     wlan_set_mac_ctrl();
 
-    while (last_resp_rcvd != HostCmd_CMD_MAC_CONTROL)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_MAC_CONTROL) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     wcmdr_d("CMD : GET_FW_VER_EXT (0x97)");
 
     wlan_get_fw_ver_ext(4);
 
-    while (last_resp_rcvd != HostCmd_CMD_VERSION_EXT)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_VERSION_EXT) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        return false;
     }
 
     wcmdr_d("CMD : 11N_CFG (0xcd)");
     wlan_set_11n_cfg();
 
-    while (last_resp_rcvd != HostCmd_CMD_11N_CFG)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_11N_CFG) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(1));
+        return false;
     }
 
 #ifdef AMSDU_IN_AMPDU
     wcmdr_d("CMD : AMSDU_AGGR_CTRL (0xdf)");
     wlan_enable_amsdu();
 
-    while (last_resp_rcvd != HostCmd_CMD_AMSDU_AGGR_CTRL)
+    if (wlan_wait_for_last_resp_rcvd(HostCmd_CMD_AMSDU_AGGR_CTRL) != true)
     {
-        os_thread_sleep(os_msec_to_ticks(1));
+        return false;
     }
 #endif
-    return;
+
+    return true;
 }
 
 int wlan_send_imu_cmd(t_u8 *buf)
@@ -1549,6 +1572,7 @@ mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr,
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
     int ret                = 0;
     int retry_cnt          = 3;
+    int retry_cnt_fw_init  = 3;
 
     ret = wlan_init_struct();
     if (ret != WM_SUCCESS)
@@ -1590,6 +1614,10 @@ retry:
         wifi_recovery_enable = false;
     }
 #endif
+    if (wifi_shutdown_enable)
+    {
+        wifi_shutdown_enable = false;
+    }
 
     wifi_init_imulink();
 
@@ -1606,7 +1634,26 @@ retry:
     switch (type)
     {
         case WLAN_TYPE_NORMAL:
-            wlan_fw_init_cfg();
+            ret = wlan_fw_init_cfg();
+            if (ret != true)
+            {
+                if (retry_cnt_fw_init > 0)
+                {
+                    wifi_io_e("wlan_fw_init_cfg failed: retry %d", retry_cnt_fw_init);
+                    (void)HAL_ImuGetTaskLock();
+                    mlan_deinit_wakeup_irq();
+                    HAL_ImuDeinit(kIMU_LinkCpu1Cpu3, MBIT(1) | MBIT(0));
+                    (void)HAL_ImuPutTaskLock();
+                    retry_cnt_fw_init--;
+                    goto retry;
+                }
+                else
+                {
+                    wifi_io_e("wlan_fw_init_cfg failed: return for retry done");
+                    mlanstatus = MLAN_STATUS_FAILURE;
+                    return mlanstatus;
+                }
+            }
             break;
         case WLAN_TYPE_WIFI_CALIB:
             g_txrx_flag = true;

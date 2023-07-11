@@ -60,7 +60,6 @@ t_u64 csi_event_data_len = 0;
 extern wifi_ecsa_status_control ecsa_status_control;
 #endif
 
-#define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
 #define WIFI_CORE_STACK_SIZE          (2048)
 /* We don't see events coming in quick succession,
  * MAX_EVENTS = 10 is fairly big value */
@@ -150,6 +149,7 @@ int wakeup_by = 0;
 bool wifi_recovery_enable = false;
 t_u16 wifi_recovery_cnt   = 0;
 #endif
+bool wifi_shutdown_enable = false;
 
 typedef enum __mlan_status
 {
@@ -1033,6 +1033,12 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 #endif
+    if (wifi_shutdown_enable)
+    {
+        wifi_w("FW shutdown in progress. command 0x%x skipped", cmd->command);
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
 
 #ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
@@ -1119,6 +1125,11 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         /* assert as command flow cannot work anymore */
         assert(0);
 #endif
+    }
+
+    if (cmd->command == HostCmd_CMD_FUNC_SHUTDOWN)
+    {
+        wifi_shutdown_enable = true;
     }
 
     wm_wifi.cmd_resp_priv = NULL;

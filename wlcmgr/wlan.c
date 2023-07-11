@@ -4874,9 +4874,6 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     wlan.sta_state = CM_STA_IDLE;
     *next          = CM_STA_IDLE;
 
-    /* If WIFI is in deepsleep on  exit from PM4 disable dee-psleep */
-
-    *next = CM_STA_IDLE;
 #ifdef CONFIG_P2P
     /* This call is made to initiate WFD, We are not interested
      * in the response since mac addr is already populated in
@@ -6386,6 +6383,15 @@ bool wlan_is_started()
 }
 #endif
 
+void wlan_wait_wlmgr_ready()
+{
+    while (wlan.sta_state != CM_STA_IDLE)
+    {
+        /* wait for wlmgr ready */
+        os_thread_sleep(os_msec_to_ticks(1000));
+    }
+}
+
 int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 {
     int ret;
@@ -6619,6 +6625,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         return ret;
     }
 #endif
+
+    wlan_wait_wlmgr_ready();
 
     return WM_SUCCESS;
 }
@@ -8367,6 +8375,7 @@ void wlan_reset(cli_reset_option ResetOption)
             {
                 wlcm_e("wlan init failed\r\n");
                 os_mutex_put(&reset_lock);
+                assert(0);
                 return;
             }
 
