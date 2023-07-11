@@ -1202,6 +1202,7 @@ void mlan_11n_update_bastream_tbl(mlan_private *priv, int tid, t_u8 *peer_mac, t
         if (ptxtbl == MNULL)
         {
             PRINTM(MWARN, "TID, RA not found in table!\n");
+            wlan_release_ralist_lock(priv);
             LEAVE();
             return;
         }

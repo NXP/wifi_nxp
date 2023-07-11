@@ -5282,9 +5282,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
             if (pmpriv_uap->is_11n_enabled)
             {
                 wlan_cleanup_reorder_tbl(pmpriv_uap, sta_addr);
-                wlan_request_ralist_lock(pmpriv);
+                wlan_request_ralist_lock(pmpriv_uap);
                 wlan_11n_delete_txbastream_tbl_entry(pmpriv_uap, sta_addr);
-                wlan_release_ralist_lock(pmpriv);
+                wlan_release_ralist_lock(pmpriv_uap);
             }
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
