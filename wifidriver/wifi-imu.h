@@ -13,7 +13,10 @@
 
 #include <wifi.h>
 #include "fsl_power.h"
+
+#ifndef RW610
 #include "firmware_dnld.h"
+#endif
 
 #define wifi_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
 #define wifi_io_w(...) wmlog_w("wifi_io", ##__VA_ARGS__)

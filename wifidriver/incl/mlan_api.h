@@ -25,7 +25,9 @@
 #include "mlan_util.h"
 #include "mlan_fw.h"
 #include "mlan_main.h"
+#ifndef RW610
 #include "mlan_main_defs.h"
+#endif
 #include "mlan_wmm.h"
 #include "mlan_11n.h"
 #include "mlan_11h.h"
