@@ -108,14 +108,16 @@ static void dump_wlan_set_ed_mac_mode_usage(void)
     (void)PRINTF("\t    # 1       - enable EU adaptivity for 2.4GHz band\r\n");
     (void)PRINTF("\ted_offset_2g \r\n");
     (void)PRINTF("\t    # 0       - Default Energy Detect threshold\r\n");
-    (void)PRINTF("\t    #offset value range: 0x80 to 0x7F\r\n");
+    (void)PRINTF("\t    # ed_threshold = ed_base - ed_offset_2g\r\n");
+    (void)PRINTF("\t    # e.g., if ed_base default is -62dBm, ed_offset_2g is 0x8, then ed_threshold is -70dBm\r\n");
 #ifdef CONFIG_5GHz_SUPPORT
     (void)PRINTF("\ted_ctrl_5g \r\n");
     (void)PRINTF("\t    # 0       - disable EU adaptivity for 5GHz band\r\n");
     (void)PRINTF("\t    # 1       - enable EU adaptivity for 5GHz band\r\n");
-    (void)PRINTF("\ted_offset_2g \r\n");
+    (void)PRINTF("\ted_offset_5g \r\n");
     (void)PRINTF("\t    # 0       - Default Energy Detect threshold\r\n");
-    (void)PRINTF("\t    #offset value range: 0x80 to 0x7F\r\n");
+    (void)PRINTF("\t    # ed_threshold = ed_base - ed_offset_5g\r\n");
+    (void)PRINTF("\t    # e.g., if ed_base default is -62dBm, ed_offset_5g is 0x8, then ed_threshold is -70dBm\r\n");
 #endif
 }
 
