@@ -7,8 +7,14 @@
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 
+#include "wifi_shell.h"
 #include <wlan.h>
 #include <wifi.h>
+
+static struct {
+    const struct cli_command *commands[MAX_COMMANDS];
+    unsigned int num_commands;
+} cli;
 
 static int wifi_scan_cb(unsigned int count)
 {
@@ -53,7 +59,6 @@ static int cmd_wifi_scan(const struct shell *shell, size_t argc, char **argv)
 	return 0;
 }
 
-
 static int cmd_wifi_connect(const struct shell *shell, size_t argc, char **argv)
 {
 	struct wlan_network network;
@@ -80,7 +85,6 @@ static int cmd_wifi_connect(const struct shell *shell, size_t argc, char **argv)
 	return ret;
 }
 
-
 static int cmd_wifi_disconnect(const struct shell *shell, size_t argc, char **argv)
 {
 	int ret;
@@ -92,6 +96,185 @@ static int cmd_wifi_disconnect(const struct shell *shell, size_t argc, char **ar
 	return ret;
 }
 
+int cli_register_command(const struct cli_command *command)
+{
+    unsigned int i;
+    if (command->name == NULL || command->function == NULL)
+    {
+        return 1;
+    }
+
+    if (cli.num_commands < MAX_COMMANDS)
+    {
+        /* Check if the command has already been registered.
+         * Return 0, if it has been registered.
+         */
+        for (i = 0; i < cli.num_commands; i++)
+        {
+            if (cli.commands[i] == command)
+            {
+                return 0;
+            }
+        }
+        cli.commands[cli.num_commands++] = command;
+        return 0;
+    }
+
+    return 1;
+}
+
+int cli_unregister_command(const struct cli_command *command)
+{
+    unsigned int i = 0;
+    if (command->name == NULL || command->function == NULL)
+    {
+        return 1;
+    }
+
+    while (i < cli.num_commands)
+    {
+        if (cli.commands[i] == command)
+        {
+            cli.num_commands--;
+            unsigned int remaining_cmds = cli.num_commands - i;
+            if (remaining_cmds > 0U)
+            {
+                (void)memmove(&cli.commands[i], &cli.commands[i + 1U], (remaining_cmds * sizeof(struct cli_command *)));
+            }
+            cli.commands[cli.num_commands] = NULL;
+            return 0;
+        }
+        i++;
+    }
+
+    return 1;
+}
+
+int cli_register_commands(const struct cli_command *commands, int num_commands)
+{
+    int i;
+    for (i = 0; i < num_commands; i++)
+    {
+        if (cli_register_command(commands++) != 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int cli_unregister_commands(const struct cli_command *commands, int num_commands)
+{
+    int i;
+    for (i = 0; i < num_commands; i++)
+    {
+        if (cli_unregister_command(commands++) != 0)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static const struct cli_command *lookup_command(char *name, int len)
+{
+    unsigned int i = 0;
+    unsigned int n = 0;
+
+    while (i < MAX_COMMANDS && n < cli.num_commands)
+    {
+        if (cli.commands[i]->name == NULL)
+        {
+            i++;
+            continue;
+        }
+        /* See if partial or full match is expected */
+        if (len != 0)
+        {
+            if (strncmp(cli.commands[i]->name, name, (size_t)len) == 0)
+            {
+                return cli.commands[i];
+            }
+        }
+        else
+        {
+            if (strcmp(cli.commands[i]->name, name) == 0)
+            {
+                return cli.commands[i];
+            }
+        }
+
+        i++;
+        n++;
+    }
+
+    return NULL;
+}
+
+int wlan_shell_init()
+{
+    int ret;
+
+    ret = wlan_cli_init();
+    if (ret != 0)
+    {
+        printk("wlan shell cli init fail ret %d\r\n", ret);
+        return -1;
+    }
+
+    return 0;
+}
+
+/* prints all registered commands and their help text string, if any. */
+void help_command(int argc, char **argv)
+{
+    unsigned int i = 0, n = 0;
+
+    (void)PRINTF("\r\n");
+    while (i < MAX_COMMANDS && n < cli.num_commands)
+    {
+        if (cli.commands[i]->name != NULL)
+        {
+            (void)PRINTF("%s %s\r\n", cli.commands[i]->name,
+                         cli.commands[i]->help != NULL ? cli.commands[i]->help : "");
+            n++;
+        }
+        i++;
+    }
+}
+
+/* syntax: wlan wlan-add ... */
+static int cmd_wlan(const struct shell *shell, size_t argc, char **argv)
+{
+    struct cli_command *command = NULL;
+
+    if (argc < 2)
+    {
+        shell_print(shell, "wlan command too few arguments");
+        return -1;
+    }
+
+    if (strcmp(argv[1], "help") == 0)
+    {
+        help_command(argc, argv);
+    }
+
+    command = lookup_command(argv[1], strlen(argv[1]));
+    if (command != NULL)
+    {
+        command->function(argc - 1, &argv[1]);
+        shell_print(shell, "Command %s", command->name);
+    }
+    else
+    {
+        shell_print(shell, "Unknown comamnd %s", argv[1]);
+    }
+
+    return 0;
+}
+
+SHELL_CMD_ARG_REGISTER(wlan, NULL, "WLAN commands", cmd_wlan, 2, 10);
 SHELL_CMD_ARG_REGISTER(wifi_scan, NULL, "Scan for wifi", cmd_wifi_scan, 1, 0);
 SHELL_CMD_ARG_REGISTER(wifi_connect, NULL, "Connect to wifi", cmd_wifi_connect, 4, 0);
 SHELL_CMD_ARG_REGISTER(wifi_disconnect, NULL, "Disconnect wifi", cmd_wifi_disconnect, 1, 0);

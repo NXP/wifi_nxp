@@ -13,12 +13,15 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include <fsl_debug_console.h>
 
-#include <cli.h>
 #include <cli_utils.h>
 #include <ctype.h>
 #include <wm_net.h> /* for errno */
+
+#ifndef CONFIG_WIFI_ZEPHYR
+#include <fsl_debug_console.h>
+#include <cli.h>
+#endif
 
 bool string_equal(const char *s1, const char *s2)
 {

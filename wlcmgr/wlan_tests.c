@@ -12,8 +12,6 @@
 #include <wm_os.h>
 #include <wm_net.h> /* for net_inet_aton */
 #include <wlan.h>
-#include <cli.h>
-#include <cli_utils.h>
 #include <wifi.h>
 #include <wlan_tests.h>
 #include <wlan_11d.h>
@@ -22,6 +20,13 @@
 #endif
 #ifdef CONFIG_WPA_SUPP_DPP
 #include "dpp.h"
+#endif
+
+#include <cli_utils.h>
+#ifdef CONFIG_WIFI_ZEPHYR
+#include "wifi_shell.h"
+#else
+#include <cli.h>
 #endif
 
 /*

@@ -31,15 +31,29 @@
 #include <wifi-internal.h>
 
 
-/*------------------------------------------------------*/
+#define NET_MAC_ADDR_LEN 6
+#define SIZEOF_ETH_LLC_HDR (8U)
+
+#define NET_IPV4_ADDR_U32(x) (x).in_addr.s_addr
+
 /*
  * Packets of this type need o be handled
  * for WPS and Supplicant
  */
 #define ETHTYPE_EAPOL 0x888EU /* EAPOL */
 
+/* This is an Token-Ring LLC structure */
+struct eth_llc_hdr
+{
+    t_u8 dsap;      /* destination SAP */
+    t_u8 ssap;      /* source SAP */
+    t_u8 llc;       /* LLC control field */
+    t_u8 protid[3]; /* protocol id */
+    t_u16 type;     /* ether type field */
+} __packed;
 
 #define SIZEOF_ETH_LLC_HDR (8U)
+#define SIZEOF_ETH_HDR (14U)
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'm'
@@ -104,28 +118,9 @@ void user_recv_monitor_data(const t_u8 *rcvdata);
  */
 struct ethernetif
 {
-    struct eth_addr *ethaddr;
+    struct net_eth_addr ethaddr;
     /* Interface to bss type identification that tells the FW wherether
        the data is for STA for UAP */
     t_u8 interface;
     /* Add whatever per-interface state that is needed here. */
 };
-
-/* This is an Token-Ring LLC structure */
-struct eth_llc_hdr
-{
-    t_u8 dsap;      /* destination SAP */
-    t_u8 ssap;      /* source SAP */
-    t_u8 llc;       /* LLC control field */
-    t_u8 protid[3]; /* protocol id */
-    t_u16 type;     /* ether type field */
-} __packed;
-
-
-#define SIZEOF_ETH_LLC_HDR (8U)
-#define SIZEOF_ETH_HDR (14U)
-/*
- * Packets of this type need o be handled
- * for WPS and Supplicant
- */
-#define ETHTYPE_EAPOL 0x888EU /* EAPOL */

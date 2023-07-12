@@ -29,7 +29,10 @@ zephyr_library_include_directories(incl/port/os)
 zephyr_library_include_directories(incl/port/zephyr)
 
 # temporary shell source
+zephyr_library_include_directories(cli)
 zephyr_library_sources(cli/wifi_shell.c)
+zephyr_library_sources(cli/cli_utils.c)
 
 # macros for specific board
 zephyr_library_compile_definitions(WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h")
+zephyr_library_compile_definitions(CONFIG_COMPRESS_TX_PWTBL)
