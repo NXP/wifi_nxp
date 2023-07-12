@@ -754,9 +754,9 @@ mlan_status wlan_cmd_11n_uap_addba_rspgen(mlan_private *priv, HostCmd_DS_COMMAND
 #else
     if (!priv->add_ba_param.rx_amsdu)
 #endif
-#endif
     /* We do not support AMSDU inside AMPDU, hence reset the bit */
     padd_ba_rsp->block_ack_param_set &= ~BLOCKACKPARAM_AMSDU_SUPP_MASK;
+#endif
 
 #ifdef CONFIG_UAP_AMPDU_RX
     if (!wifi_uap_ampdu_rx_enable_per_tid_is_allowed(tid))
