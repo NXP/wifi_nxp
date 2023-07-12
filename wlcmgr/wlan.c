@@ -9277,7 +9277,7 @@ int wlan_remove_all_networks(void)
 
 void wlan_destroy_all_tasks(void)
 {
-    vTaskSuspendAll();
+    os_lock_schedule();
 
     /* Destroy cm_main thread */
     if (wlan.cm_main_thread)
@@ -9304,7 +9304,7 @@ void wlan_destroy_all_tasks(void)
     /* Destroy wifidriver thread */
     wifi_destroy_wifidriver_tasks();
 
-    xTaskResumeAll();
+    os_unlock_schedule();
 }
 
 int wlan_imu_get_task_lock(void)
@@ -10379,7 +10379,7 @@ int load_wep_key(const uint8_t *input, uint8_t *output, uint8_t *output_len, con
     if (len == 10U || len == 26U)
     {
         /* Looks like this is an hexadecimal key */
-        int ret = (int)hex2bin(input, output, max_output_len);
+        int ret = (int)wm_hex2bin(input, output, max_output_len);
         if (ret == 0)
         {
             return -WM_FAIL;

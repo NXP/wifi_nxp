@@ -818,7 +818,7 @@ static void test_wlan_add(int argc, char **argv)
 
     (void)memcpy(network.name, argv[arg], len);
     arg++;
-    info.address = (u8_t)ADDR_TYPE_DHCP;
+    info.address = (uint8_t)ADDR_TYPE_DHCP;
     do
     {
         if ((info.ssid == 0U) && string_equal("ssid", argv[arg]))
@@ -867,7 +867,7 @@ static void test_wlan_add(int argc, char **argv)
                 return;
             }
             arg++;
-            info.address = (u8_t)ADDR_TYPE_STATIC;
+            info.address = (uint8_t)ADDR_TYPE_STATIC;
         }
         else if ((info.security == 0U) && string_equal("wpa", argv[arg]))
         {
@@ -1380,7 +1380,7 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if (strncmp(argv[arg], "autoip", 6) == 0)
         {
-            info.address = (u8_t)ADDR_TYPE_LLA;
+            info.address = (uint8_t)ADDR_TYPE_LLA;
             arg++;
         }
 #ifdef CONFIG_WPA_SUPP
@@ -1780,7 +1780,8 @@ static int __scan_cb(unsigned int count)
 
 static void test_wlan_thread_info(int argc, char **argv)
 {
-    os_dump_threadinfo(NULL);
+    /* TODO: implement */
+    //os_dump_threadinfo(NULL);
 }
 
 #ifdef CONFIG_SCHED_SWITCH_TRACE
@@ -4253,9 +4254,9 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 #endif
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
-static u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+static uint8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 /* Command taken from robust_btc.conf*/
-static u8_t host_cmd_buf[] = {0xe0, 0, 0x12, 0, 0x3c, 0, 0, 0, 0x01, 0, 0, 0, 0x38, 0x02, 0x02, 0, 0x07, 0x01};
+static uint8_t host_cmd_buf[] = {0xe0, 0, 0x12, 0, 0x3c, 0, 0, 0, 0x01, 0, 0, 0, 0x38, 0x02, 0x02, 0, 0x07, 0x01};
 
 static void test_wlan_send_hostcmd(int argc, char **argv)
 {
@@ -4263,7 +4264,7 @@ static void test_wlan_send_hostcmd(int argc, char **argv)
     uint32_t reqd_len = 0;
     uint32_t len;
 
-    ret = wlan_send_hostcmd(host_cmd_buf, sizeof(host_cmd_buf) / sizeof(u8_t), host_cmd_resp_buf,
+    ret = wlan_send_hostcmd(host_cmd_buf, sizeof(host_cmd_buf) / sizeof(uint8_t), host_cmd_resp_buf,
                             HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
 
     if (ret == WM_SUCCESS)
@@ -4566,7 +4567,7 @@ static void dump_wlan_eu_validation(void)
 
 static void test_wlan_eu_validation(int argc, char **argv)
 {
-    u8_t cmd_eu_buf[] = {0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, 0x05, 0};
+    uint8_t cmd_eu_buf[] = {0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, 0x05, 0};
     int value;
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
@@ -4596,7 +4597,7 @@ static void test_wlan_eu_validation(int argc, char **argv)
 
     cmd_eu_buf[10] = value;
 
-    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(u8_t), host_cmd_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
+    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(uint8_t), host_cmd_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
                             &reqd_len);
     if (ret == WM_SUCCESS)
     {
@@ -7774,7 +7775,7 @@ static void test_wlan_set_su(int argc, char **argv)
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
     uint8_t state;
-    u8_t debug_resp_buf[64] = {0};
+    uint8_t debug_resp_buf[64] = {0};
 
     (void)memset(debug_resp_buf, 0, sizeof(debug_resp_buf));
     /**
@@ -7806,7 +7807,7 @@ static void test_wlan_set_su(int argc, char **argv)
         debug_cmd_buf[8] = 0;
     }
 
-    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, sizeof(debug_resp_buf),
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf, sizeof(debug_resp_buf),
                             &reqd_len);
 
     if (ret == WM_SUCCESS)
@@ -7824,7 +7825,7 @@ static void test_wlan_set_su(int argc, char **argv)
 
 #ifdef CONFIG_WIFI_FORCE_RTS
 #define HOSTCMD_RESP_BUFF_SIZE 1024
-u8_t debug_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+uint8_t debug_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 
 static void dump_wlan_set_forceRTS_usage(void)
 {
@@ -7875,7 +7876,7 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
         debug_cmd_buf[8] = 0;
     }
 
-    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
                             &reqd_len);
 
     if (ret == WM_SUCCESS)

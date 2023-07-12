@@ -1,0 +1,41 @@
+# Copyright 2022 NXP
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig WIFI_NXP
+	bool "NXP Wi-Fi driver support"
+#	select SDHC
+#	select SD_STACK
+#	select SDIO_STACK
+	select NET_L2_ETHERNET
+
+if WIFI_NXP
+
+config WIFI_ZEPHYR
+    bool "Wi-Fi driver using ZEPHYR OS"
+    default y
+    help
+      For Zephyr OS this needs to be always enabled.
+
+config IMU
+    bool "NXP IMU driver support"
+    default n
+    help
+      For driver and firmware communicating through IMU interface.
+
+config FW_LOADER
+    bool "NXP firmware loader service support"
+    default n
+    help
+      For driver downloading firmware using loader service.
+
+# Increase default heap size, driver needs memory allocation
+config WIFI_NET_HEAP_SIZE
+	int
+	default 16384
+
+config WIFI_INIT_STACK_SIZE
+	int
+	default 4096
+
+
+endif # WIFI_NXP

@@ -73,7 +73,7 @@ static struct
     /* Where the cmdresp/event should be dispached depends on its value */
     /* int special; */
     /* Default queue where the cmdresp/events will be sent */
-    xQueueHandle *event_queue;
+    os_queue_t *event_queue;
     int (*wifi_low_level_input)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 } bus;
 
@@ -346,7 +346,7 @@ void process_pkt_hdrs_flags(void *pbuf, t_u8 flags)
     ptxpd->flags = flags;
 }
 
-int bus_register_event_queue(xQueueHandle *event_queue)
+int bus_register_event_queue(os_queue_t *event_queue)
 {
     if (bus.event_queue != NULL)
         return -WM_FAIL;

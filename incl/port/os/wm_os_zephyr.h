@@ -1,7 +1,23 @@
 /*
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2020 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
+ *  NXP CONFIDENTIAL
+ *  The source code contained or described herein and all documents related to
+ *  the source code ("Materials") are owned by NXP, its
+ *  suppliers and/or its licensors. Title to the Materials remains with NXP,
+ *  its suppliers and/or its licensors. The Materials contain
+ *  trade secrets and proprietary and confidential information of NXP, its
+ *  suppliers and/or its licensors. The Materials are protected by worldwide copyright
+ *  and trade secret laws and treaty provisions. No part of the Materials may be
+ *  used, copied, reproduced, modified, published, uploaded, posted,
+ *  transmitted, distributed, or disclosed in any way without NXP's prior
+ *  express written permission.
+ *
+ *  No license under any patent, copyright, trade secret or other intellectual
+ *  property right is granted to or conferred upon you by disclosure or delivery
+ *  of the Materials, either expressly, by implication, inducement, estoppel or
+ *  otherwise. Any license under such intellectual property rights must be
+ *  express and approved by NXP in writing.
  *
  */
 
@@ -34,70 +50,43 @@
  *    de-activate the timer using os_timer_activate() or
  *    os_timer_deactivate(). Reset a timer using os_timer_reset().
  * - Dynamic Memory Allocation: Dynamically allocate memory using
- *    os_mem_alloc(), os_mem_calloc() and free it using
+ *    os_mem_alloc(), os_mem_calloc() or os_mem_realloc() and free it using
  *    os_mem_free().
  *
  */
 
-#ifndef _WM_OS_H_
-#define _WM_OS_H_
-
-#ifdef CONFIG_WIFI_ZEPHYR
-#include "wm_os_zephyr.h"
-#else
+#ifndef _WM_OS_ZEPHYR_H_
+#define _WM_OS_ZEPHYR_H_
 
 #include <string.h>
 
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-#include "timers.h"
-#include "portmacro.h"
 
-#if defined(CPU_MIMXRT1062DVL6A)
-#include "clock_config.h"
-#endif
 
 #include <wmerrno.h>
 #include <wm_utils.h>
+#include <zephyr/kernel.h>
+
+#define PRINTF printk
 
 #ifdef CONFIG_OS_DEBUG
-#define os_dprintf(...) ll_log("[OS]" __VA_ARGS__)
+#define os_dprintf(...) printk("[OS]" __VA_ARGS__)
 #else
 #define os_dprintf(...)
 #endif
 
-bool is_isr_context(void);
-
-/* the OS timer register is loaded with CNTMAX */
-#define CNTMAX                 ((SystemCoreClock / configTICK_RATE_HZ) - 1UL)
-#define CPU_CLOCK_TICKSPERUSEC (SystemCoreClock / 1000000U)
-#define USECSPERTICK           (1000000U / configTICK_RATE_HZ)
-
-/**
- * Get the current value of free running microsecond counter
- *
- * \note This will wraparound after CNTMAX and the caller is expected to
- * take care of this.
- *
- * @return The current value of microsecond counter.
- */
-#if 0
-static inline uint32_t os_get_usec_counter()
-{
-	return (CNTMAX - SysTick->VAL) / CPU_CLOCK_TICKSPERUSEC;
-}
-#endif
+#define is_isr_context() k_is_in_isr()
 
 /** Force a context switch */
-#define os_thread_relinquish() taskYIELD()
+#define os_thread_relinquish() k_yield()
 
 /** Get current OS tick counter value
  *
  * \return 32 bit value of ticks since boot-up
  */
-unsigned os_ticks_get(void);
+static inline unsigned os_ticks_get(void)
+{
+    return k_uptime_get_32();
+}
 
 #if 0
 /** Get (wraparound safe) current OS tick counter.
@@ -111,15 +100,9 @@ unsigned os_ticks_get(void);
  */
 static inline unsigned long long os_total_ticks_get()
 {
-    if (is_isr_context())
-        return xTaskGetTotalTickCountFromISR();
-    else
-        return xTaskGetTotalTickCount();
+    return k_uptime_get();
 }
 #endif
-
-/** Get ticks to next thread wakeup */
-#define os_ticks_to_unblock() xTaskGetUnblockTime()
 
 /**
  * Returns time in micro-secs since bootup
@@ -131,32 +114,6 @@ static inline unsigned long long os_total_ticks_get()
  */
 unsigned int os_get_timestamp(void);
 
-/** Convert milliseconds to OS ticks
- *
- * This function converts the given millisecond value to the number of OS
- * ticks.
- *
- * This is useful as functions like os_thread_sleep() accept only ticks
- * as input.
- *
- * @param[in] msecs Milliseconds
- *
- * @return Number of OS ticks corresponding to msecs
- */
-/*! @brief Convert the milliseconds to ticks in FreeRTOS. */
-uint32_t os_msec_to_ticks(uint32_t msecs);
-
-/** Convert ticks to milliseconds
- *
- * This function converts the given ticks value to milliseconds. This is useful
- * as some functions, like os_ticks_get(), return values in units of OS ticks.
- *
- * @param[in] ticks OS ticks
- *
- * @return Number of milliseconds corresponding to ticks
- */
-unsigned long os_ticks_to_msec(unsigned long ticks);
-
 /*** Thread Management ***/
 typedef void *os_thread_arg_t;
 
@@ -165,22 +122,40 @@ typedef void *os_thread_arg_t;
  * os_thread_create(). Please use the macro \ref os_thread_stack_define
  * instead of using this structure directly.
  */
-typedef struct os_thread_stack
-{
-    /** Total stack size */
-    size_t size;
+typedef struct {
+	struct k_thread thread;
+	uint32_t size;
+	k_thread_stack_t *stack;
 } os_thread_stack_t;
 
 /**
  * Helper macro to define the stack size (in bytes) before a new thread is
  * created using the function os_thread_create().
  */
-#define os_thread_stack_define(stackname, stacksize) \
-    os_thread_stack_t stackname = {(stacksize) / (sizeof(portSTACK_TYPE))}
+#define os_thread_stack_define(stackname, stacksize) 			\
+	K_THREAD_STACK_DEFINE(stackname##_stack, stacksize);		\
+	os_thread_stack_t stackname = {					\
+		.size = K_THREAD_STACK_SIZEOF(stackname##_stack),	\
+		.stack = stackname##_stack,				\
+	};
 
-typedef TaskHandle_t os_thread_t;
+typedef k_tid_t os_thread_t;
 
-const char *get_current_taskname(void);
+static inline const char *get_current_taskname(void)
+{
+    os_thread_t tid = k_current_get();
+    const char *name = k_thread_name_get(tid);
+    if (name == NULL) {
+	    return "Unknown";
+    }
+    return name;
+}
+
+/**
+ * Function wrapper used to account for Zephyr's 3 arguments
+ * to a task entry function (OS abstraction expects 1 argument)
+ */
+void thread_wrapper(void *entry, void* arg, void* unused);
 
 /** Create new thread
  *
@@ -214,14 +189,24 @@ const char *get_current_taskname(void);
  * @return WM_SUCCESS if thread was created successfully
  * @return -WM_FAIL if thread creation failed
  */
-int os_thread_create(os_thread_t *thandle,
-                     const char *name,
-                     void (*main_func)(os_thread_arg_t arg),
-                     void *arg,
-                     os_thread_stack_t *stack,
-                     int prio);
+static inline int os_thread_create(os_thread_t *thandle,
+                                   const char *name,
+                                   void (*main_func)(os_thread_arg_t arg),
+                                   void *arg,
+                                   os_thread_stack_t *stack,
+                                   int prio)
+{
+    *thandle = k_thread_create(&stack->thread, stack->stack,
+    	stack->size, thread_wrapper,
+	main_func, arg, NULL, prio, 0, K_NO_WAIT);
+    k_thread_name_set(*thandle, name);
+    return WM_SUCCESS;
+}
 
-os_thread_t os_get_current_task_handle(void);
+static inline os_thread_t os_get_current_task_handle(void)
+{
+    return k_current_get();
+}
 
 /** Terminate a thread
  *
@@ -234,7 +219,21 @@ os_thread_t os_get_current_task_handle(void);
  * @return WM_SUCCESS if operation success
  * @return -WM_FAIL if operation fails
  */
-int os_thread_delete(os_thread_t *thandle);
+static inline int os_thread_delete(os_thread_t *thandle)
+{
+    if (thandle == NULL)
+    {
+        os_dprintf("OS: Thread Self Delete\r\n");
+        return 0;
+    }
+    else
+    {
+        os_dprintf("OS: Thread Delete: %p\r\n", thandle);
+        k_thread_abort(*thandle);
+    }
+
+    return WM_SUCCESS;
+}
 
 /** Sleep for specified number of OS ticks
  *
@@ -254,7 +253,45 @@ int os_thread_delete(os_thread_t *thandle);
  * to be originally scheduled to be woken up. So if sleep was for 10 ticks
  * and the task is woken up after 8 ticks then 2 will be returned.
  */
-void os_thread_sleep(uint32_t ticks);
+static inline void os_thread_sleep(uint32_t ticks)
+{
+    os_dprintf("OS: Thread Sleep: %d\r\n", ticks);
+    k_sleep(K_TICKS(ticks));
+    return;
+}
+
+/** Convert milliseconds to OS ticks
+ *
+ * This function converts the given millisecond value to the number of OS
+ * ticks.
+ *
+ * This is useful as functions like os_thread_sleep() accept only ticks
+ * as input.
+ *
+ * @param[in] msecs Milliseconds
+ *
+ * @return Number of OS ticks corresponding to msecs
+ */
+/*! @brief Convert the milliseconds to ticks in FreeRTOS. */
+
+static inline uint32_t os_msec_to_ticks(uint32_t msecs)
+{
+    return k_ms_to_ticks_near32(msecs);
+}
+
+/** Convert ticks to milliseconds
+ *
+ * This function converts the given ticks value to milliseconds. This is useful
+ * as some functions, like os_ticks_get(), return values in units of OS ticks.
+ *
+ * @param[in] ticks OS ticks
+ *
+ * @return Number of milliseconds corresponding to ticks
+ */
+static inline unsigned long os_ticks_to_msec(unsigned long ticks)
+{
+    return k_ticks_to_ms_near32(ticks);
+}
 
 /** Suspend the given thread
  *
@@ -266,24 +303,45 @@ void os_thread_sleep(uint32_t ticks);
  *
  * @param[in] thandle Pointer to thread handle
  */
-void os_thread_self_complete(os_thread_t *thandle);
+static inline void os_thread_self_complete(os_thread_t *thandle)
+{
+    /* Suspend self until someone calls delete. This is required because in
+     * freeRTOS, main functions of a thread cannot return.
+     */
+    if (thandle != NULL)
+    {
+        os_dprintf("OS: Thread Complete: %p\r\n", thandle);
+        k_thread_suspend(*thandle);
+    }
+    else
+    {
+        os_dprintf("OS: Thread Complete: SELF\r\n");
+        k_thread_suspend(k_current_get());
+    }
 
+    /*
+     * We do not want this function to return ever.
+     */
+    while (true)
+    {
+        os_thread_sleep(os_msec_to_ticks(60000));
+    }
+}
+
+#define CONFIG_WIFI_MAX_PRIO 1
 #ifndef CONFIG_WIFI_MAX_PRIO
 #error Define CONFIG_WIFI_MAX_PRIO in wifi_config.h
-#elif CONFIG_WIFI_MAX_PRIO < 4
-#error CONFIG_WIFI_MAX_PRIO must be defined to be greater than or equal to 4
 #endif
 #define OS_PRIO_0 CONFIG_WIFI_MAX_PRIO /** High **/
-#define OS_PRIO_1 (CONFIG_WIFI_MAX_PRIO - 1)
-#define OS_PRIO_2 (CONFIG_WIFI_MAX_PRIO - 2)
-#define OS_PRIO_3 (CONFIG_WIFI_MAX_PRIO - 3)
-#define OS_PRIO_4 (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
+#define OS_PRIO_1 (CONFIG_WIFI_MAX_PRIO + 1)
+#define OS_PRIO_2 (CONFIG_WIFI_MAX_PRIO + 2)
+#define OS_PRIO_3 (CONFIG_WIFI_MAX_PRIO + 3)
+#define OS_PRIO_4 (CONFIG_WIFI_MAX_PRIO + 4) /** Low **/
 
 /** Structure used for queue definition */
-typedef struct os_queue_pool
-{
-    /** Size of the queue */
-    int size;
+typedef struct {
+	int size;
+	char *buffer;
 } os_queue_pool_t;
 
 /** Define OS Queue pool
@@ -291,9 +349,14 @@ typedef struct os_queue_pool
  * This macro helps define the name and size of the queue to be created
  * using the function os_queue_create().
  */
-#define os_queue_pool_define(poolname, poolsize) os_queue_pool_t poolname = {poolsize};
+#define os_queue_pool_define(poolname, poolsize)				\
+	char __aligned(4) poolname##_pool[poolsize];				\
+	os_queue_pool_t poolname = {						\
+		.size = poolsize,						\
+		.buffer = poolname##_pool,					\
+	};
 
-typedef QueueHandle_t os_queue_t;
+typedef struct k_msgq *os_queue_t;
 
 /** Create an OS queue
  *
@@ -315,7 +378,7 @@ typedef QueueHandle_t os_queue_t;
 int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue_pool_t *poolname);
 
 /** Wait Forever */
-#define OS_WAIT_FOREVER portMAX_DELAY
+#define OS_WAIT_FOREVER UINT32_MAX
 /** Do Not Wait */
 #define OS_NO_WAIT 0
 
@@ -391,20 +454,15 @@ int os_queue_get_msgs_waiting(os_queue_t *qhandle);
 /* Critical Sections */
 static inline unsigned long os_enter_critical_section(void)
 {
-    taskENTER_CRITICAL();
-    return WM_SUCCESS;
+    return irq_lock();
 }
 
 static inline void os_exit_critical_section(unsigned long state)
 {
-    taskEXIT_CRITICAL();
+    return irq_unlock(state);
 }
 
 /*** Tick function */
-#define MAX_CUSTOM_HOOKS 4U
-
-extern void (*g_os_tick_hooks[MAX_CUSTOM_HOOKS])(void);
-extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
 
 /** Setup idle function
  *
@@ -416,7 +474,10 @@ extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
-int os_setup_idle_function(void (*func)(void));
+static inline int os_setup_idle_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
 
 /** Setup tick function
  *
@@ -428,7 +489,10 @@ int os_setup_idle_function(void (*func)(void));
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
-int os_setup_tick_function(void (*func)(void));
+static inline int os_setup_tick_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
 
 /** Remove idle function
  *
@@ -440,7 +504,10 @@ int os_setup_tick_function(void (*func)(void));
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
-int os_remove_idle_function(void (*func)(void));
+static inline int os_remove_idle_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
 
 /** Remove tick function
  *
@@ -451,10 +518,13 @@ int os_remove_idle_function(void (*func)(void));
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
-int os_remove_tick_function(void (*func)(void));
+static inline int os_remove_tick_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
 
 /*** Mutex ***/
-typedef SemaphoreHandle_t os_mutex_t;
+typedef struct k_mutex *os_mutex_t;
 
 /** Priority Inheritance Enabled */
 #define OS_MUTEX_INHERIT 1
@@ -475,7 +545,7 @@ typedef SemaphoreHandle_t os_mutex_t;
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_mutex_create(os_mutex_t *mhandle, const char *name, int flags) WARN_UNUSED_RET;
+int os_mutex_create(os_mutex_t *mhandle, const char *name, int flags);
 
 /** Acquire mutex
  *
@@ -550,6 +620,7 @@ int os_recursive_mutex_create(os_mutex_t *mhandle, const char *name);
  *
  * @return WM_SUCCESS when recursive mutex is acquired
  * @return -WM_FAIL on failure
+
  */
 int os_recursive_mutex_get(os_mutex_t *mhandle, unsigned long wait);
 
@@ -580,6 +651,7 @@ int os_recursive_mutex_put(os_mutex_t *mhandle);
 int os_mutex_delete(os_mutex_t *mhandle);
 
 /*** Event Notification ***/
+
 /**
  * Wait for task notification
  *
@@ -592,7 +664,11 @@ int os_mutex_delete(os_mutex_t *mhandle);
  * @return WM_SUCCESS when notification is successful
  * @return -WM_FAIL on failure or timeout
  */
-int os_event_notify_get(unsigned long wait_time);
+static inline int os_event_notify_get(unsigned long wait_time)
+{
+    int ret = k_sleep(K_TICKS(wait_time));
+    return ret == 0 ? -WM_FAIL : WM_SUCCESS;
+}
 
 /**
  * Give task notification
@@ -606,11 +682,15 @@ int os_event_notify_get(unsigned long wait_time);
  * @return WM_SUCCESS when notification is successful
  * @return -WM_FAIL on failure or timeout
  */
-int os_event_notify_put(os_thread_t task);
+static inline int os_event_notify_put(os_thread_t task)
+{
+    k_wakeup(task);
+    return WM_SUCCESS;
+}
 
 /*** Semaphore ***/
 
-typedef SemaphoreHandle_t os_semaphore_t;
+typedef struct k_sem *os_semaphore_t;
 
 /** Create binary semaphore
  *
@@ -623,7 +703,7 @@ typedef SemaphoreHandle_t os_semaphore_t;
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_semaphore_create(os_semaphore_t *mhandle, const char *name) WARN_UNUSED_RET;
+int os_semaphore_create(os_semaphore_t *mhandle, const char *name);
 
 /** Create counting semaphore
  *
@@ -745,7 +825,7 @@ struct _rw_lock
     unsigned int reader_count;
 };
 
-int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const char *lock_name, cb_fn r_fn);
+int os_rwlock_create_with_cb(os_rw_lock_t *lock, const char *mutex_name, const char *lock_name, cb_fn r_fn);
 
 /** Create reader-writer lock
  *
@@ -758,7 +838,7 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_rwlock_create(os_rw_lock_t *plock, const char *mutex_name, const char *lock_name);
+int os_rwlock_create(os_rw_lock_t *lock, const char *mutex_name, const char *lock_name);
 
 /** Delete a reader-write lock
  *
@@ -828,9 +908,19 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock);
 
 /*** Timer Management ***/
 
-typedef TimerHandle_t os_timer_t;
+/** OS Timer data structure
+ */
+struct timer_data {
+	void (*callback)(void*);
+	void *user_arg;
+	int period;
+	int reload_options;
+	struct k_timer timer;
+};
+
+typedef struct timer_data *os_timer_t;
 typedef os_timer_t os_timer_arg_t;
-typedef TickType_t os_timer_tick;
+typedef int os_timer_tick;
 
 /** OS Timer reload Options
  *
@@ -851,7 +941,7 @@ typedef enum os_timer_reload
 /**
  * OS Timer Activate Options
  */
-typedef enum os_timer_activation
+typedef enum os_timer_activate
 {
     /** Start the timer on creation. */
     OS_TIMER_AUTO_ACTIVATE,
@@ -982,8 +1072,6 @@ int os_timer_deactivate(os_timer_t *timer_t);
  */
 int os_timer_delete(os_timer_t *timer_t);
 
-/* OS Memory allocation API's */
-
 /** Allocate memory
  *
  * This function allocates memory dynamically.
@@ -1007,6 +1095,18 @@ void *os_mem_alloc(size_t size);
  */
 void *os_mem_calloc(size_t size);
 
+/** Reallocate memory
+ *
+ * This function attempts to resize a previously allocated memory block.
+ *
+ *  @param[in] old_ptr Pointer to earlier allocated memory
+ *  @param[in] new_size The new size
+ *
+ * @return Pointer to the newly resized memory block
+ * @return NULL if reallocation fails
+ */
+void *os_mem_realloc(void *old_ptr, size_t new_size);
+
 /** Free Memory
  *
  * This function frees dynamically allocated memory using any of the dynamic
@@ -1016,13 +1116,14 @@ void *os_mem_calloc(size_t size);
  */
 void os_mem_free(void *ptr);
 
-#ifdef CONFIG_HEAP_STAT
+
 /** This function dumps complete statistics
  *  of the heap memory.
  */
-void os_dump_mem_stats(void);
-
-#endif
+static inline void os_dump_mem_stats(void)
+{
+    return;
+}
 
 typedef unsigned int event_group_handle_t;
 
@@ -1051,44 +1152,31 @@ WEAK int os_init(void);
 
 void _os_delay(int cnt);
 
-/**
- * \def os_get_runtime_stats(__buff__)
- *
- * Get ASCII formatted run time statistics
- *
- * Please ensure that your buffer is big enough for the formatted data to
- * fit. Failing to do this may cause memory data corruption.
- */
-#define os_get_runtime_stats(__buff__) vTaskGetRunTimeStats(__buff__)
-
-/**
- * \def os_get_task_list(__buff__)
- *
- * Get ASCII formatted task list
- *
- * Please ensure that your buffer is big enough for the formatted data to
- * fit. Failing to do this may cause memory data corruption.
- */
-
-#define os_get_task_list(__buff__) vTaskList(__buff__)
-
 /** Disables all interrupts at NVIC level */
-void os_disable_all_interrupts(void);
+static inline void os_disable_all_interrupts(void)
+{
+    __disable_irq();
+}
 
 /** Enable all interrupts at NVIC lebel */
-void os_enable_all_interrupts(void);
+static inline void os_enable_all_interrupts(void)
+{
+    __enable_irq();
+}
 
 /** Disable all tasks schedule */
 static inline void os_lock_schedule(void)
 {
-    vTaskSuspendAll();
+    k_sched_lock();
 }
 
 /** Enable all tasks schedule */
 static inline void os_unlock_schedule(void)
 {
-    xTaskResumeAll();
+    k_sched_unlock();
 }
+
+unsigned int os_get_timestamp(void);
 
 /* Init value for rand generator seed */
 extern uint32_t wm_rand_seed;
@@ -1131,13 +1219,4 @@ static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
     return (low + os_rand() % (high - low));
 }
 
-void os_dump_threadinfo(char *name);
-
-#ifdef CONFIG_SCHED_SWITCH_TRACE
-extern int ncp_debug_task_switch_start;
-void trace_task_switch(int in, const char *func_name);
-void trace_task_switch_print();
-#endif
-
-#endif /* ! CONFIG_WIFI_ZEPHYR */
-#endif /* ! _WM_OS_H_ */
+#endif /* ! _WM_OS_ZEPHYR_H_ */
