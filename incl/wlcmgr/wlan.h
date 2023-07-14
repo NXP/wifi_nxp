@@ -1411,6 +1411,44 @@ typedef txrate_setting wlan_txrate_setting;
 typedef wifi_rssi_info_t wlan_rssi_info_t;
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+#define MIN_SAMP_TIMING              20
+#define MAX_SAMP_TIMING              200
+#define COEX_PTA_FEATURE_ENABLE      1
+#define COEX_PTA_FEATURE_DISABLE     0
+#define POL_GRANT_PIN_HIGH           0
+#define POL_GRANT_PIN_LOW            1
+#define STATE_INPUT_DISABLE          0
+#define STATE_PTA_PIN                1
+#define STATE_PRIORITY_PIN           2
+#define SAMPLE_TIMING_VALUE          100
+#define EXT_COEX_PTA_INTERFACE       5
+#define EXT_COEX_WCI2_INTERFACE      6
+#define EXT_COEX_WCI2_GPIO_INTERFACE 7
+
+typedef struct _external_coex_pta_cfg
+{
+    /** Enable: 0x01, Disable: 0x00 */
+    t_u8 enabled;
+    /** Enable ExtWifiBtArb: 0x01, Disable ExWifiBtArb: 0x00 */
+    t_u8 ext_WifiBtArb;
+    /** Active high: 0x00, Active low: 0x01 */
+    t_u8 polGrantPin;
+    /**  Enable PriPtaInt: 0x01, Disable PriPtaInt: 0x00 */
+    t_u8 enable_PriPtaInt;
+    /** State input disable: 0x00, State info is from state pin: 0x01, State info is sampled on priority pin: 0x02 */
+    t_u8 enable_StatusFromPta;
+    /** Timing to sample Priority bit */
+    t_u16 setPriSampTiming;
+    /** Timing to sample Tx/Rx info */
+    t_u16 setStateInfoSampTiming;
+    /** Enable external traffic Tx/Rx Priority: 0x01, Disable external traffic Tx/Rx Priority: 0x00 */
+    t_u8 extRadioTrafficPrio;
+    /** Enable wci-2 interface: 0x01, Disable wci-2 interface: 0x00 */
+    t_u8 extCoexHwIntWci2;
+} ext_coex_pta_cfg;
+#endif
+
 int verify_scan_duration_value(int scan_duration);
 int verify_scan_channel_value(int channel);
 int verify_split_scan_delay(int delay);
@@ -6036,4 +6074,14 @@ int wlan_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
  */
 int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
+
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+/**
+ * Set external coex pta parameters.
+ * \param[in] coex_pta_config
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
+#endif
+
 #endif /* __WLAN_H__ */

@@ -4161,7 +4161,7 @@ assoc_resp_ret:
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
-#ifdef CONFIG_COEX_DUTY_CYCLE
+#if defined(CONFIG_COEX_DUTY_CYCLE) || defined(CONFIG_EXTERNAL_COEX_PTA)
             case HostCmd_CMD_ROBUST_COEX:
                 if (resp->result == HostCmd_RESULT_OK)
                     wm_wifi.cmd_resp_status = WM_SUCCESS;

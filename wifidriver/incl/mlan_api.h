@@ -563,4 +563,8 @@ int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *high
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
+#endif
+
 #endif /* __MLAN_API_H__ */

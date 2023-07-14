@@ -12683,3 +12683,10 @@ int wlan_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
     return wifi_dual_ant_duty_cycle(enable, nbTime, wlanTime, wlanBlockTime);
 }
 #endif
+
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
+{
+    return wifi_external_coex_pta_cfg(coex_pta_config);
+}
+#endif

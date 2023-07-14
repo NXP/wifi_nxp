@@ -5706,6 +5706,11 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 #define TLV_TYPE_HOST_MLME (PROPRIETARY_TLV_BASE_ID + 307)
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+/** TLV type : Robust Coex */
+#define TLV_TYPE_ROBUST_COEX (PROPRIETARY_TLV_BASE_ID + 0x138) // 0x0238
+#endif
+
 /** TLV type : WPA3 SAE Passowrd */
 #define TLV_TYPE_UAP_WPA3_SAE_PASSWORD (PROPRIETARY_TLV_BASE_ID + 0x141) // 0x0241
 
@@ -7367,6 +7372,54 @@ typedef MLAN_PACK_START struct _HostCmd_DUAL_ANT_DUTY_CYCLE
 } MLAN_PACK_END HostCmd_DUAL_ANT_DUTY_CYCLE;
 #endif
 
+
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+
+/** HostCmd_EXTERNAL_COEX_PTA structure */
+typedef MLAN_PACK_START struct _MrvlIETypes_Coex_params_t
+{
+    /** External coex pta type */
+    t_u16 tlv_type;
+    /** Externel coex pta tlv length */
+    t_u16 tlv_length;
+} MLAN_PACK_END MrvlIETypes_Coex_params_t;
+
+/** MrvlIETypes_DualAntDutyCycle_Config_t */
+typedef MLAN_PACK_START struct _MrvlIETypes_ExternalCoexPta_Config_t
+{
+    MrvlIETypes_Coex_params_t param;
+    /** Enable: 0x01, Disable: 0x00 */
+    t_u8 enabled;
+    /** Enable ExtWifiBtArb: 0x01, Disable ExWifiBtArb: 0x00 */
+    t_u8 ext_WifiBtArb;
+    /** Active high: 0x00, Active low: 0x01 */
+    t_u8 polGrantPin;
+    /**  Enable PriPtaInt: 0x01, Disable PriPtaInt: 0x00 */
+    t_u8 enable_PriPtaInt;
+    /** State input disable: 0x00, State info is from state pin: 0x01, State info is sampled on priority pin: 0x02 */
+    t_u8 enable_StatusFromPta;
+    /** Timing to sample Priority bit */
+    t_u16 setPriSampTiming;
+    /** Timing to sample Tx/Rx info */
+    t_u16 setStateInfoSampTiming;
+    /** Enable external traffic Tx/Rx Priority: 0x01, Disable external traffic Tx/Rx Priority: 0x00 */
+    t_u8 extRadioTrafficPrio;
+    /** Enable wci-2 interface: 0x01, Disable wci-2 interface: 0x00 */
+    t_u8 extCoexHwIntWci2;
+} MLAN_PACK_END MrvlIETypes_ExternalCoexPta_Config_t;
+
+/** HostCmd_EXTERNAL_COEX_PTA structure */
+typedef MLAN_PACK_START struct _HostCmd_EXTERNAL_COEX_PTA
+{
+    /** Get: 0x00, Set: 0x01 */
+    t_u16 action;
+    /** Reserved filed */
+    t_u16 reserved;
+    /** External Coex Pta Configuration Data */
+    MrvlIETypes_ExternalCoexPta_Config_t coex_pta_cfg_data;
+} MLAN_PACK_END HostCmd_EXTERNAL_COEX_PTA;
+#endif
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -7663,6 +7716,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_COEX_DUTY_CYCLE
         HostCmd_SIGNLE_ANT_DUTY_CYCLE single_ant_duty_cycle;
         HostCmd_DUAL_ANT_DUTY_CYCLE dual_ant_duty_cycle;
+#endif
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+        HostCmd_EXTERNAL_COEX_PTA external_coex_pta;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

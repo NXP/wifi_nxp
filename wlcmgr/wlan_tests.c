@@ -8094,6 +8094,351 @@ static void test_wlan_dual_ant_duty_cycle(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+
+static void dump_wlan_external_coex_pta_usage()
+{
+    (void)PRINTF(
+        "Usage: wlan-external-coex-pta enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin "
+        "<high/low> "
+        "PriPtaInt <enable/disable>  StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample "
+        "timing> "
+        "InfoSampTiming <Sample timing> TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>\r\n");
+    (void)PRINTF("    enable <enable/disable>\r\n");
+    (void)PRINTF("          Select PTA interface: 5, Select WCI-2 interface: 6, Select WCI-2 GPIO interface: 7.\r\n");
+    (void)PRINTF("    ExtWifiBtArb <enable/disable>\r\n");
+    (void)PRINTF("          Enable Ext-WifiBtArb: 1, Disbale Ext-WifiBtArb: 0.\r\n");
+    (void)PRINTF("    PolGrantPin <high/low> \r\n");
+    (void)PRINTF("          Active High: 0, Active Low: 1.\r\n");
+    (void)PRINTF("    PriPtaInt <enable/disable> \r\n");
+    (void)PRINTF("          Enable PriPta-Init: 1, Disable PriPta-Init: 0.\r\n");
+    (void)PRINTF("    StateFromPta <state pin/ priority pin/ state input disable> \r\n");
+    (void)PRINTF("          State input disbale : 0.\r\n");
+    (void)PRINTF("          State info is from state pin : 1.\r\n");
+    (void)PRINTF("          State info is sampled on priority pin: 2.\r\n");
+    (void)PRINTF("    SampTiming <Sample timing> \r\n");
+    (void)PRINTF("          Timing to sample Priority bit.\r\n");
+    (void)PRINTF("          Sample timing range [20, 200].\r\n");
+    (void)PRINTF("          Defalut value: 100.\r\n");
+    (void)PRINTF("    InfoSampTiming <Sample timing> \r\n");
+    (void)PRINTF("          Timing to sample Tx/Rx info.\r\n");
+    (void)PRINTF("          Sample timing range [20, 200].\r\n");
+    (void)PRINTF("          Defalut value: 100.\r\n");
+    (void)PRINTF("    TrafficPrio <enable/disable> \r\n");
+    (void)PRINTF("          Enable external traffic Tx/Rx Priority: 1.\r\n");
+    (void)PRINTF("          Disable external traffic Tx/Rx Priority: 0.\r\n");
+    (void)PRINTF("    CoexHwIntWic <enable/disable> \r\n");
+    (void)PRINTF("          Enable WCI-2 interface: 1.\r\n");
+    (void)PRINTF("          Disable WCI-2 interface: 0.\r\n");
+}
+
+static void test_wlan_external_coex_pta(int argc, char **argv)
+{
+    int ret = 0, arg = 0;
+    unsigned int value;
+    ext_coex_pta_cfg coex_pta_config;
+
+    if (argc < 2 || argc > 19)
+    {
+        (void)PRINTF("Error: invalid number of arguments.\r\n");
+        dump_wlan_external_coex_pta_usage();
+        return;
+    }
+
+    struct
+    {
+        unsigned enable : 1;
+        unsigned ExtWifiBtArb : 1;
+        unsigned PolGrantPin : 1;
+        unsigned PriPtaInt : 2;
+        unsigned StateFromPta : 1;
+        unsigned SampTiming : 1;
+        unsigned InfoSampTiming : 1;
+        unsigned TrafficPrio : 1;
+        unsigned CoexHwIntWic : 1;
+    } info;
+
+    arg++;
+    (void)memset(&coex_pta_config, 0x0, sizeof(ext_coex_pta_cfg));
+    (void)memset(&info, 0x0, sizeof(info));
+
+    do
+    {
+        if (!info.enable && string_equal("enable", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid enable argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != EXT_COEX_PTA_INTERFACE && value != EXT_COEX_WCI2_INTERFACE &&
+                value != EXT_COEX_WCI2_GPIO_INTERFACE)
+            {
+                (void)PRINTF("Invalid enable argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.enabled = value & 0xFF;
+            info.enable             = 1;
+            arg += 2;
+        }
+        else if (!info.ExtWifiBtArb && string_equal("ExtWifiBtArb", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid ExtWifiBtArb argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid ExtWifiBtArb argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.ext_WifiBtArb = value & 0xFF;
+            info.ExtWifiBtArb             = 1;
+            arg += 2;
+        }
+        else if (!info.PolGrantPin && string_equal("PolGrantPin", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != POL_GRANT_PIN_HIGH && value != POL_GRANT_PIN_LOW)
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.polGrantPin = value & 0x0FF;
+            info.PolGrantPin            = 1;
+            arg += 2;
+        }
+        else if (!info.PriPtaInt && string_equal("PriPtaInt", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid PolGrantPin argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.enable_PriPtaInt = value & 0xFF;
+            info.PriPtaInt                   = 1;
+            arg += 2;
+        }
+        else if (!info.StateFromPta && string_equal("StateFromPta", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid StateFromPta argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != STATE_INPUT_DISABLE && value != STATE_PTA_PIN && value != STATE_PRIORITY_PIN)
+            {
+                (void)PRINTF("Invalid StateFromPta argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.enable_StatusFromPta = value & 0xFF;
+            info.StateFromPta                    = 1;
+            arg += 2;
+        }
+        else if (!info.SampTiming && string_equal("SampTiming", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid SampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value < MIN_SAMP_TIMING || value > MAX_SAMP_TIMING)
+            {
+                (void)PRINTF("Invalid SampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.setPriSampTiming = value & 0xFFFF;
+            info.SampTiming                  = 1;
+            arg += 2;
+        }
+        else if (!info.InfoSampTiming && string_equal("InfoSampTiming", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid InfoSampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value < MIN_SAMP_TIMING || value > MAX_SAMP_TIMING)
+            {
+                (void)PRINTF("Invalid InfoSampTiming argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.setStateInfoSampTiming = value & 0xFFFF;
+            info.InfoSampTiming                    = 1;
+            arg += 2;
+        }
+        else if (!info.TrafficPrio && string_equal("TrafficPrio", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid TrafficPrio argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid TrafficPrio argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.extRadioTrafficPrio = value & 0xFF;
+            info.TrafficPrio                    = 1;
+            arg += 2;
+        }
+        else if (!info.CoexHwIntWic && string_equal("CoexHwIntWic", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Invalid CoexHwIntWic argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+
+            if (value != COEX_PTA_FEATURE_ENABLE && value != COEX_PTA_FEATURE_DISABLE)
+            {
+                (void)PRINTF("Invalid CoexHwIntWic argument.\r\n");
+                dump_wlan_external_coex_pta_usage();
+                return;
+            }
+            coex_pta_config.extCoexHwIntWci2 = value & 0xFF;
+            info.CoexHwIntWic                = 1;
+            arg += 2;
+        }
+        else
+        {
+            (void)PRINTF("Invalid %d argument %s\r\n", arg, argv[arg]);
+            dump_wlan_external_coex_pta_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if (info.enable != 1)
+    {
+        (void)PRINTF("Error: Missing <enable> argument.\r\n");
+        ret++;
+    }
+    if (info.ExtWifiBtArb != 1)
+    {
+        (void)PRINTF("Error: Missing <ExtWifiBtArb> argument.\r\n");
+        ret++;
+    }
+    if (info.PolGrantPin != 1)
+    {
+        (void)PRINTF("Error: Missing <PolGrantPin> argument.\r\n");
+        ret++;
+    }
+    if (info.PriPtaInt != 1)
+    {
+        (void)PRINTF("Error: Missing <PriPtaInt> argument.\r\n");
+        ret++;
+    }
+    if (info.StateFromPta != 1)
+    {
+        (void)PRINTF("Error: Missing <StateFromPta> argument.\r\n");
+        ret++;
+    }
+    if (info.SampTiming != 1)
+    {
+        coex_pta_config.setPriSampTiming = SAMPLE_TIMING_VALUE;
+        (void)PRINTF("Info: Missing <SampTiming> argument. Use default value 100.\r\n");
+    }
+    if (info.InfoSampTiming != 1)
+    {
+        coex_pta_config.setStateInfoSampTiming = SAMPLE_TIMING_VALUE;
+        (void)PRINTF("Info: Missing <InfoSampTiming> argument. Use default value 100.\r\n");
+    }
+    if (info.TrafficPrio != 1)
+    {
+        (void)PRINTF("Error: Missing <TrafficPrio> argument.\r\n");
+        ret++;
+    }
+    if (info.CoexHwIntWic != 1)
+    {
+        (void)PRINTF("Error: Missing <CoexHwIntWic> argument.\r\n");
+        ret++;
+    }
+
+    if (ret != 0)
+    {
+        dump_wlan_external_coex_pta_usage();
+        return;
+    }
+
+    ret = wlan_external_coex_pta_cfg(coex_pta_config);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Success to set external coex pta config:\r\n");
+        (void)PRINTF("Enable ");
+        if (coex_pta_config.enabled == EXT_COEX_PTA_INTERFACE)
+            (void)PRINTF("PTA interface.\r\n");
+        else if (coex_pta_config.enabled == EXT_COEX_WCI2_INTERFACE)
+            (void)PRINTF("WCI-2 interface.\r\n");
+        else if (coex_pta_config.enabled == EXT_COEX_WCI2_GPIO_INTERFACE)
+            (void)PRINTF("WCI-2 GPIO interface.\r\n");
+        else
+            (void)PRINTF("Unknow interface.\r\n");
+
+        (void)PRINTF("%s WifiBtArb.\r\n",
+                     coex_pta_config.ext_WifiBtArb == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+        (void)PRINTF("PolGrantPin active %s.\r\n", coex_pta_config.polGrantPin == POL_GRANT_PIN_HIGH ? "High" : "Low");
+        (void)PRINTF("%s PriPtaInt.\r\n",
+                     coex_pta_config.enable_PriPtaInt == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+        if (coex_pta_config.enable_StatusFromPta == STATE_INPUT_DISABLE)
+            (void)PRINTF("State input disable.\r\n");
+        else if (coex_pta_config.enable_StatusFromPta == STATE_PTA_PIN)
+            (void)PRINTF("State info is from state pin.\r\n");
+        else if (coex_pta_config.enable_StatusFromPta == STATE_PRIORITY_PIN)
+            (void)PRINTF("State info is sampled on priority pin.\r\n");
+        else
+            (void)PRINTF("Unknow state pin info\r\n");
+
+        (void)PRINTF("Timing to sample Priority bit: %d.\r\n", coex_pta_config.setPriSampTiming);
+        (void)PRINTF("Timing to sample Tx/Rx info: %d.\r\n", coex_pta_config.setStateInfoSampTiming);
+        (void)PRINTF("%s external traffic Tx/Rx Priority.\r\n",
+                     coex_pta_config.extRadioTrafficPrio == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+        (void)PRINTF("%s WCI-2 interface.\r\n",
+                     coex_pta_config.extCoexHwIntWci2 == COEX_PTA_FEATURE_ENABLE ? "Enable" : "Disbale");
+    }
+    else
+        (void)PRINTF("Failed to set external coex pta parameters.\r\n");
+
+    return;
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
@@ -8348,6 +8693,14 @@ static struct cli_command tests[] = {
      test_wlan_single_ant_duty_cycle},
     {"wlan-dual-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration> <Ieee154FarRangeDuration>]",
      test_wlan_dual_ant_duty_cycle},
+#endif
+#ifdef CONFIG_EXTERNAL_COEX_PTA
+    {"wlan-external-coex-pta",
+     "enable <PTA/WCI-2/WCI-2 GPIO> ExtWifiBtArb <enable/disable> PolGrantPin <high/low> PriPtaInt <enable/disable> "
+     "StateFromPta <state pin/ priority pin/ state input disable> SampTiming <Sample timing> InfoSampTiming <Sample "
+     "timing> "
+     "TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>",
+     test_wlan_external_coex_pta},
 #endif
 };
 
