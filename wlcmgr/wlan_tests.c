@@ -8538,12 +8538,20 @@ static void test_wlan_external_coex_pta(int argc, char **argv)
 static void test_wlan_dpp_configurator_add(int argc, char **argv)
 {
     int conf_id, is_ap = 0;
+    char empty_cmd[1] = {0};
 
     if (is_uap_started())
     {
         is_ap = 1;
     }
-    conf_id = wlan_dpp_configurator_add(is_ap);
+    if (argc >= 1)
+    {
+        conf_id = wlan_dpp_configurator_add(is_ap, argv[1]);
+    }
+    else
+    {
+        conf_id = wlan_dpp_configurator_add(is_ap, empty_cmd);
+    }
     if (conf_id == -WM_FAIL)
     {
         (void)PRINTF("\r\nDPP add configurator failed!!\r\n");
@@ -8578,6 +8586,31 @@ static void test_wlan_dpp_configurator_params(int argc, char **argv)
         is_ap = 1;
     }
     wlan_dpp_configurator_params(is_ap, argv[1]);
+}
+
+static void dump_dpp_mud_url_usage(void)
+{
+    (void)PRINTF("MUD URL for Enrollee's DPP Configuration Request\r\n");
+    (void)PRINTF("Usage: wlan-dpp-mud-url \"https://....\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-mud-url \"https://example.com/mud\"\r\n");
+}
+
+static void test_wlan_dpp_mud_url(int argc, char **argv)
+{
+    int is_ap = 0;
+
+    if (argc < 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_mud_url_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+    wlan_dpp_mud_url(is_ap, argv[1]);
 }
 
 static void dump_dpp_bootstrap_gen_usage(void)
@@ -8722,7 +8755,7 @@ static void test_wlan_dpp_auth_init(int argc, char **argv)
 static void dump_dpp_listen_usage(void)
 {
     (void)PRINTF("Make device listen to DPP request.\r\n");
-    (void)PRINTF("Usage: wlan-dpp-listen <frequency>\r\n");
+    (void)PRINTF("Usage: wlan-dpp-listen \"<frequency>...\"\r\n");
     (void)PRINTF("\r\nUsage example : \r\n");
     (void)PRINTF("wlan-dpp-listen 5180\r\n");
 }
@@ -8772,6 +8805,115 @@ static void test_wlan_dpp_stop_listen(int argc, char **argv)
     else
     {
         (void)PRINTF("\r\n DPP Listen STOP OK!\r\n");
+    }
+}
+
+static void dump_dpp_pkex_add_usage(void)
+{
+    (void)PRINTF("Set DPP bootstrapping through PKEX(Public Key Exchange)\r\n");
+    (void)PRINTF("Usage: wlan-dpp-pkex-add \"own=<bootstrap_id> identifier=<string> code=<string>...\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-pkex-add \"own=1 identifier=test code=DPP_Device_PKEX\"\r\n");
+}
+
+static void test_wlan_dpp_pkex_add(int argc, char **argv)
+{
+    int ret;
+    int is_ap = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_pkex_add_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+
+    (void)wlan_ieeeps_off();
+    (void)wlan_deepsleepps_off();
+    ret = wlan_dpp_pkex_add(is_ap, argv[1]);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP add PKEX failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP add PKEX OK!\r\n");
+    }
+}
+
+static void dump_dpp_chirp_usage(void)
+{
+    (void)PRINTF("sends DPP presence announcement.\r\n");
+    (void)PRINTF("Usage: wlan-dpp-chirp \"own=<bootstrap id> listen=<freq>...\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-chirp \"own=1 listen=2412\"\r\n");
+}
+
+static void test_wlan_dpp_chirp(int argc, char **argv)
+{
+    int ret;
+    int is_ap = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_chirp_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+
+    (void)wlan_ieeeps_off();
+    (void)wlan_deepsleepps_off();
+    ret = wlan_dpp_chirp(is_ap, argv[1]);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP chirping failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP chirping OK!\r\n");
+    }
+}
+
+static void dump_dpp_reconfig_usage(void)
+{
+    (void)PRINTF("Make STA device do DPP reconfig.\r\n");
+    (void)PRINTF("Usage: wlan-dpp-reconfig \"<network_id> ...\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-reconfig 1\r\n");
+}
+
+static void test_wlan_dpp_reconfig(int argc, char **argv)
+{
+    int ret;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_reconfig_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        (void)PRINTF("\r\n Only support STA to do DPP reconfig\r\n");
+    }
+    (void)wlan_ieeeps_off();
+    (void)wlan_deepsleepps_off();
+    ret = wlan_dpp_reconfig(argv[1]);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP reconfig failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP reconfig OK!\r\n");
     }
 }
 #endif
@@ -8985,13 +9127,17 @@ static struct cli_command tests[] = {
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
 #ifdef CONFIG_WPA_SUPP_DPP
     {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
-    {"wlan-dpp-configurator-params", "params", test_wlan_dpp_configurator_params},
-    {"wlan-dpp-bootstrap-gen", "params", test_wlan_dpp_bootstrap_gen},
+    {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>", test_wlan_dpp_configurator_params},
+    {"wlan-dpp-mud-url", "https://...", test_wlan_dpp_mud_url},
+    {"wlan-dpp-bootstrap-gen", "type=<qrcode> chan=<op>/<ch> mac=<addr>", test_wlan_dpp_bootstrap_gen},
     {"wlan-dpp-bootstrap-get-uri", "<bootstrap_gen id>", test_wlan_dpp_bootstrap_get_uri},
     {"wlan-dpp-qr-code", "<DPP:...>", test_wlan_dpp_qr_code},
-    {"wlan-dpp-auth-init", "params", test_wlan_dpp_auth_init},
-    {"wlan-dpp-listen", "params", test_wlan_dpp_listen},
+    {"wlan-dpp-auth-init", " peer=<id> role=<enrollee/configurator>", test_wlan_dpp_auth_init},
+    {"wlan-dpp-listen", "<frequency>...", test_wlan_dpp_listen},
     {"wlan-dpp-stop-listen", NULL, test_wlan_dpp_stop_listen},
+    {"wlan-dpp-pkex-add", " own=<bootstrap_id> identifier=<string> code=<string>", test_wlan_dpp_pkex_add},
+    {"wlan-dpp-chirp", " own=<bootstrap id> listen=<freq>...", test_wlan_dpp_chirp},
+    {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
 #endif
 #endif
 #endif

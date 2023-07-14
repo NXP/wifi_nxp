@@ -13585,12 +13585,12 @@ int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
 #endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
-int wlan_dpp_configurator_add(int is_ap)
+int wlan_dpp_configurator_add(int is_ap, const char *cmd)
 {
     struct netif *netif = net_get_sta_interface();
     int ret;
 
-    ret = wpa_supp_dpp_configurator_add(netif, is_ap);
+    ret = wpa_supp_dpp_configurator_add(netif, is_ap, cmd);
     if (ret <= 0)
     {
         wlcm_e("DPP add configurator failed!!");
@@ -13604,6 +13604,13 @@ void wlan_dpp_configurator_params(int is_ap, const char *cmd)
     struct netif *netif = net_get_sta_interface();
 
     wpa_supp_dpp_configurator_params(netif, is_ap, cmd);
+}
+
+void wlan_dpp_mud_url(int is_ap, const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    wpa_supp_dpp_mud_url(netif, is_ap, cmd);
 }
 
 int wlan_dpp_bootstrap_gen(int is_ap, const char *cmd)
@@ -13670,5 +13677,39 @@ int wlan_dpp_stop_listen(int is_ap)
     struct netif *netif = net_get_sta_interface();
 
     return wpa_supp_dpp_stop_listen(netif, is_ap);
+}
+
+int wlan_dpp_pkex_add(int is_ap, const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    if (!is_ap)
+    {
+        wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
+    }
+    if (wpa_supp_dpp_pkex_add(netif, is_ap, cmd) < 0)
+    {
+        wlcm_e("DPP add PKEX failed!!");
+        return -WM_FAIL;
+    }
+    return WM_SUCCESS;
+}
+
+int wlan_dpp_chirp(int is_ap, const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    if (!is_ap)
+    {
+        wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
+    }
+    return wpa_supp_dpp_chirp(netif, is_ap, cmd);
+}
+
+int wlan_dpp_reconfig(const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_dpp_reconfig(netif, cmd);
 }
 #endif /* CONFIG_WPA_SUPP_DPP */

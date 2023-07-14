@@ -1647,12 +1647,16 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
         goto out;
     }
     wifi_if_ctx_rtos                             = (struct wifi_nxp_ctx_rtos *)if_priv;
-    wifi_if_ctx_rtos->remain_on_channel_freq     = freq;
+    if (freq)
+    {
+        wifi_if_ctx_rtos->remain_on_channel_freq = freq;
+    }
     wifi_if_ctx_rtos->remain_on_channel_duration = duration;
 
-    channel = freq_to_chan(freq);
+    channel = freq_to_chan(wifi_if_ctx_rtos->remain_on_channel_freq);
 
     wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
+    wifi_if_ctx_rtos->remain_on_chan_is_canceled = false;
     status                                       = wifi_remain_on_channel(true, channel, duration);
 
     if (status != WM_SUCCESS)
@@ -1673,10 +1677,7 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
 {
     int status = -WM_FAIL;
     int ret    = -1;
-    unsigned int freq;
-    unsigned int duration;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    int channel;
 
     if (!if_priv)
     {
@@ -1684,14 +1685,16 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
         goto out;
     }
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    freq             = wifi_if_ctx_rtos->remain_on_channel_freq;
-    duration         = wifi_if_ctx_rtos->remain_on_channel_duration;
+    if (wifi_if_ctx_rtos->remain_on_chan_is_canceled)
+    {
+        supp_d("%s:Already canceled, ignore it", __func__);
+        ret = 0;
+        goto out;
+    }
 
-    channel = freq_to_chan(freq);
-
-    wifi_if_ctx_rtos->supp_called_remain_on_chan =
-        false; /* callback func that does not require cancel_remain_on_channel */
-    status = wifi_remain_on_channel(false, channel, duration);
+    wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
+    wifi_if_ctx_rtos->remain_on_chan_is_canceled = true;
+    status = wifi_remain_on_channel(false, 0, 0);
 
     if (status != WM_SUCCESS)
     {
@@ -1737,6 +1740,7 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
 
     event.rx_mgmt.frame     = (const u8 *)mgmt;
     event.rx_mgmt.frame_len = frame_len;
+    event.rx_mgmt.freq     = mgmt_rx->frame.freq;
 
 #ifdef CONFIG_HOSTAPD
     if (wifi_if_ctx_rtos->hostapd)

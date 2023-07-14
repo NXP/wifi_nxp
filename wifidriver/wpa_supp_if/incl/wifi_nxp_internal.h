@@ -133,6 +133,7 @@ typedef MLAN_PACK_START struct _nxp_wifi_acs_params
 typedef MLAN_PACK_START struct _nxp_wifi_frame
 {
     int frame_len;
+    int freq;
     unsigned char frame[WIFI_MAX_FRAME_LEN];
 } MLAN_PACK_END nxp_wifi_frame_t;
 

@@ -4002,7 +4002,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 t_u8 *cancel_channel                               = (t_u8 *)os_mem_alloc(sizeof(t_u8));
                 if (cancel_channel != NULL)
                 {
-                    *cancel_channel = remain_channel->status;
+                    *cancel_channel = remain_channel->action == HostCmd_ACT_GEN_REMOVE ? MTRUE : MFALSE;
                     if (*cancel_channel)
                     {
                         if (wifi_event_completion(WIFI_EVENT_REMAIN_ON_CHANNEL, WIFI_EVENT_REASON_SUCCESS,

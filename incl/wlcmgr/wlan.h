@@ -6175,10 +6175,11 @@ int wlan_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
  *  If this device is DPP Configurator, add it to get configurator ID.
  *
  * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      "curve=P-256"
  *
  * \return configurator ID if successful otherwise failure.
  */
-int wlan_dpp_configurator_add(int is_ap);
+int wlan_dpp_configurator_add(int is_ap, const char *cmd);
 
 /** Set DPP Configurator parameter
  *
@@ -6193,6 +6194,17 @@ int wlan_dpp_configurator_add(int is_ap);
  */
 void wlan_dpp_configurator_params(int is_ap, const char *cmd);
 
+/** MUD URL for Enrollee's DPP Configuration Request (optional)
+ *
+ *  Wi-Fi_CERTIFIED_Easy_Connect_Test_Plan_v3.0.pdf
+ *  5.1.23 STAUT sends the MUD URL
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      "https://example.com/mud"
+ *
+ * \return void
+ */
+void wlan_dpp_mud_url(int is_ap, const char *cmd);
 
 /** Generate QR code
  *
@@ -6258,5 +6270,39 @@ int wlan_dpp_listen(int is_ap, const char *cmd);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_dpp_stop_listen(int is_ap);
+
+/** Set bootstrapping through PKEX(Public Key Exchange)
+ *
+ *  Support in-band bootstrapping through PKEX
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      "own=<bootstrap_id> identifier=<string> code=<string>"
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_pkex_add(int is_ap, const char *cmd);
+
+/** sends DPP presence announcement.
+ *
+ *  Send DPP presence announcement from responder.
+ *  After the Initiator enters the QRcode URI provided by the Responder,
+ *  the Responder sends the presence announcement to trigger Auth Request from Initiator.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      "own=<bootstrap id> listen=<freq> ..."
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_chirp(int is_ap, const char *cmd);
+
+/** DPP reconfig
+ *
+ *  DPP reconfig and make a new DPP connection.
+ *
+ * \param[in]  cmd      "<network id> ..."
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_reconfig(const char *cmd);
 #endif
 #endif /* __WLAN_H__ */

@@ -100,6 +100,11 @@ SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALI
 SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
 #endif
+
+#ifdef TXPD_RXPD_V3
+#define RXPD_CHAN_MASK 0x3FE0
+#endif
+
 /* Global variable wm_rand_seed */
 uint32_t wm_rand_seed = -1;
 
@@ -2551,8 +2556,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
 #ifdef RX_CHAN_INFO
 #ifdef TXPD_RXPD_V3
-    t_u8 band_config = (prx_pd->rx_info & 0xF);
-    t_u8 chan_num    = (prx_pd->rx_info & RXPD_CHAN_MASK) >> 5;
+    t_u8 band_config = (prx_pd->rx_info & 0x3); /* Bit[1:0] 0: HALCHANBAND_BG, 1:HALCHANBAND_A, 2: HALCHANBAND_6E */
+    t_u8 chan_num    = (prx_pd->rx_info & RXPD_CHAN_MASK) >> 5; /* Bit[13: 5] Non zero channel number on which this packet is received */
 #else
     t_u8 band_config = prx_pd->band_config;
     t_u8 chan_num    = prx_pd->chan_num;
@@ -2573,12 +2578,15 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
 
     ENTER();
+#if 0
+/* rx buffer read from data path, nothing with MAX_EVENT_SIZE */
     if (payload_len > (MAX_EVENT_SIZE - sizeof(mlan_event)))
     {
         wifi_d("Dropping large mgmt frame,len =%d", payload_len);
         LEAVE();
         return ret;
     }
+#endif
     /* Check  packet type-subtype and compare with mgmt_passthru_mask
      * If event is needed to host, just eventify it */
     pieee_pkt_hdr = (wlan_802_11_header *)payload;
@@ -3008,6 +3016,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 memset(mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
                 mgmt_rx->frame.frame_len = payload_len;
                 memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
+#ifdef RX_CHAN_INFO
+                mgmt_rx->frame.freq = channel_to_frequency(chan_num, band_config);
+#endif
                 if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
                 {
                     wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
@@ -3028,6 +3039,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
         if (mgmt_rx->frame.frame_len <= (int)sizeof(mgmt_rx->frame.frame))
         {
             memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
+#ifdef RX_CHAN_INFO
+            mgmt_rx->frame.freq = channel_to_frequency(chan_num, band_config);
+#endif
             if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
             {
                 wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
@@ -4313,6 +4327,10 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
 
     if ((bss_type == BSS_TYPE_STA) && (pmpriv->media_connected == MFALSE))
     {
+        if (wait_time == 0)
+        {
+            wait_time = 1000;
+        }
         wifi_remain_on_channel(true, channel, wait_time);
     }
 
@@ -4360,7 +4378,6 @@ int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint3
         roc.bandcfg |= 1;
     }
 #endif
-
     return wifi_send_remain_on_channel_cmd(MLAN_BSS_TYPE_STA, &roc);
 }
 
