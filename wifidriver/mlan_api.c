@@ -2912,10 +2912,12 @@ wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
     switch (region_code)
     {
         case 0x10:
+        case 0x20:
             ret_band = subband_US_CA_SG_2_4_GHz;
             break;
         case 0x30:
         case 0x32:
+        case 0x50:
             ret_band = subband_EU_AU_KR_CN_2_4GHz;
             break;
         case 0xFF:
@@ -2962,6 +2964,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *n
             ret_band = subband_EU_AU_KR_5_GHz;
             break;
         case 0x40:
+        case 0xFF:
             *nr_sb   = 3;
             ret_band = subband_JP_5_GHz;
             break;
