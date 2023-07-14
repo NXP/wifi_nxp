@@ -5258,13 +5258,13 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         wlcm_w("No interface is up\r\n");
         return;
     }
+    net_stop_dhcp_timer();
     /* Forcefully stop dhcp on given interface.
      * net_interface_dhcp_stop internally does nothing
      * if dhcp client is not started.
      */
     net_interface_dhcp_stop(if_handle);
     net_interface_down(if_handle);
-    net_stop_dhcp_timer();
 
     if (
 #ifdef CONFIG_WPS2
