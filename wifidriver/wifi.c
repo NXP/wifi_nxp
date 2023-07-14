@@ -4030,16 +4030,12 @@ int wifi_set_country_code(const char *alpha2)
     }
 
     pmadapter->cfp_code_bg = cfp_bg;
-    pmadapter->cfp_code_a  = cfp_a;
+#ifdef CONFIG_5GHz_SUPPORT
+    pmadapter->cfp_code_a = cfp_a;
+#endif
+    pmadapter->region_code = 0;
 
-    if (cfp_a)
-        pmadapter->region_code = cfp_a;
-    else if (cfp_bg)
-        pmadapter->region_code = cfp_bg;
-    else
-        pmadapter->region_code = 0;
-
-    if (wlan_set_regiontable(pmadapter->priv[0], pmadapter->region_code, pmadapter->config_bands))
+    if (wlan_set_regiontable(pmadapter->priv[1], pmadapter->region_code, pmadapter->config_bands))
     {
         wifi_e("%s set regiontable fail", __func__);
         return -WM_FAIL;

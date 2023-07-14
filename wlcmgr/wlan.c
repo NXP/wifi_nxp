@@ -2199,11 +2199,13 @@ static int do_start(struct wlan_network *network)
     wifi_scan_chan_list_t scan_chan_list;
 #ifdef CONFIG_WPA_SUPP
     struct netif *netif = net_get_uap_interface();
+#else
+    uint8_t i;
 #endif
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
-        if (!network->channel_specific)
+        if (network->channel_specific == 0U)
         {
             network->channel = UAP_DEFAULT_CHANNEL;
 
@@ -2228,12 +2230,29 @@ static int do_start(struct wlan_network *network)
                 }
             }
         }
-#ifdef CONFIG_WPA_SUPP
         else
         {
+#ifdef CONFIG_WPA_SUPP
             network->sec_channel_offset = wifi_get_sec_channel_offset(network->channel);
-        }
+#else
+            wifi_get_active_channel_list(active_chan_list, &active_num_chans,
+                                                 wlan.networks[wlan.cur_uap_network_idx].acs_band);
+
+            for (i = 0; i < active_num_chans; i++)
+            {
+                if (network->channel == active_chan_list[i])
+                {
+                    break;
+                }
+            }
+            if (i == active_num_chans)
+            {
+                wlcm_e("uAP configured channel not allowed");
+                CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+                return -WM_FAIL;
+            }
 #endif
+        }
 
         wlcm_d("starting our own network");
 
@@ -7434,6 +7453,20 @@ int wlan_add_network(struct wlan_network *network)
     wlan.networks[pos].ssid_specific    = (uint8_t)(network->ssid[0] != '\0');
     wlan.networks[pos].bssid_specific   = (uint8_t)!is_bssid_any(network->bssid);
     wlan.networks[pos].channel_specific = (uint8_t)(network->channel != 0U);
+    if (wlan.networks[pos].channel_specific == 1U)
+    {
+#ifdef CONFIG_5GHz_SUPPORT
+        if (network->channel > MAX_CHANNELS_BG)
+        {
+            wlan.networks[pos].acs_band    = 1;
+        }
+        else
+#endif
+        {
+            wlan.networks[pos].acs_band    = 0;
+        }
+    }
+
     if (network->security.type != WLAN_SECURITY_WILDCARD)
     {
         wlan.networks[pos].security_specific = 1;

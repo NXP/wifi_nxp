@@ -933,6 +933,8 @@ t_u8 wifi_get_sec_channel_offset(unsigned int chan)
             chan_offset = SEC_CHAN_ABOVE;
         else if ((chan == 10) || (chan == 11) || (chan == 12) || (chan == 13))
             chan_offset = SEC_CHAN_BELOW;
+        else if (chan == 14)
+            chan_offset = SEC_CHAN_NONE;
 
         /* check if channel 12 is supported in the region */
         if (!wlan_find_cfp_by_band_and_channel(pmadapter, band, 12))
