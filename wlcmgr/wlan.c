@@ -5288,6 +5288,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
      */
     net_interface_dhcp_stop(if_handle);
     net_interface_down(if_handle);
+    net_stop_dhcp_timer();
 
     if (
 #ifdef CONFIG_WPS2
