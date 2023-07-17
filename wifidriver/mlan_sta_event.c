@@ -83,6 +83,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
 #endif
     priv->max_amsdu = 0;
 
+    priv->tx_pause = 0;
 #ifndef CONFIG_MLAN_WMSDK
     priv->sec_info.ewpa_enabled = MFALSE;
     priv->sec_info.wpa_enabled  = MFALSE;
