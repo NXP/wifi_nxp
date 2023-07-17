@@ -8440,6 +8440,8 @@ static void test_wlan_external_coex_pta(int argc, char **argv)
         (void)PRINTF("Failed to set external coex pta parameters.\r\n");
 
     return;
+}
+#endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
 static void test_wlan_dpp_configurator_add(int argc, char **argv)
