@@ -239,7 +239,10 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
 #ifdef RW610
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
 #endif
-
+#ifdef CONFIG_11AX_TWT
+    /* uap mode clear TWT request bit */
+    he_cfg.he_cap.he_mac_cap[0] &= ~HE_MAC_CAP_TWT_REQ_SUPPORT;
+#endif
 #if 0
     if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
     {
@@ -3255,6 +3258,10 @@ int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEE
     }
 #ifdef RW610
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
+#ifdef CONFIG_11AX_TWT
+    /* uap mode clear TWT request bit */
+    he_cfg.he_cap.he_mac_cap[0] &= ~HE_MAC_CAP_TWT_REQ_SUPPORT;
 #endif
 #if 0
     if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
