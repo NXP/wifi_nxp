@@ -491,6 +491,7 @@ int wifi_config_roaming(const int enable, uint8_t *rssi_low);
 #endif
 #ifdef CONFIG_BG_SCAN
 int wifi_config_bgscan_and_rssi(const char *ssid);
+mlan_status wifi_stop_bgscan();
 #endif
 
 /**

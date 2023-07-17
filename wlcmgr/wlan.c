@@ -1633,6 +1633,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
                                        wlan_scan_channel_list_t *chan_list)
 {
     uint8_t null_ssid[IEEEtypes_SSID_SIZE] = {0};
+    uint16_t idx = 0;
 
 #ifdef CONFIG_11V
     if ((wlan.roam_reassoc == true) && (wlan.nlist_rep_param.nlist_mode == WLAN_NLIST_11V) &&
@@ -1720,6 +1721,20 @@ static int network_matches_scan_result(const struct wlan_network *network,
 #ifdef CONFIG_OWE
     wlcm_d("%s: Match successful", res->trans_mode == OWE_TRANS_MODE_OWE ? network->trans_ssid : network->ssid);
 #endif
+    /* If the bss blacklist is not empty, check whether the network is in the blacklist or not. */
+    /* If yes, skip this network. */
+    if(mlan_adap->blacklist_bss.num_bssid)
+    {
+        for(idx = 0; idx < mlan_adap->blacklist_bss.num_bssid; idx++)
+        {
+            if(!memcmp(res->bssid, mlan_adap->blacklist_bss.bssids[idx], MLAN_MAC_ADDR_LENGTH))
+            {
+                wlcm_d("%02X:%02X:%02X:%02X:%02X:%02X : BSSID is not allowed.", res->bssid[0], res->bssid[1], res->bssid[2],
+                       res->bssid[3], res->bssid[4], res->bssid[5]);
+                return WM_SUCCESS;
+            }
+        }
+    }
     return WM_SUCCESS;
 }
 

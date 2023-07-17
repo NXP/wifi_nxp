@@ -1546,6 +1546,7 @@ struct _mlan_private
 #ifdef CONFIG_BG_SCAN
     t_u8 rssi_low;
     t_u8 roaming_enabled;
+    t_u8 roaming_configured;
 #endif
 #ifdef CONFIG_BG_SCAN
     /** bg_scan_start */
@@ -2041,6 +2042,17 @@ typedef struct _mlan_init_para
     t_u32 fw_crc_check;
 } mlan_init_para, *pmlan_init_para;
 
+#define MLAN_MAX_BLACKLIST_BSSID 16
+
+/* BSSID blacklist */
+typedef struct
+{
+    /** Number of blacklisted BSSIDs */
+    int num_bssid;
+    /** Blacklisted BSSIDs */
+    mlan_802_11_mac_addr bssids[MLAN_MAX_BLACKLIST_BSSID];
+} mlan_blacklisted_bssid_params;
+
 #ifdef CONFIG_FW_VDLL
 /** vdll_dnld_ctrl structure */
 typedef struct _vdll_dnld_ctrl
@@ -2273,6 +2285,8 @@ struct _mlan_adapter
     wlan_meas_state_t state_meas;
     /** Scan table */
     BSSDescriptor_t *pscan_table;
+    /** BSS blacklist */
+    mlan_blacklisted_bssid_params blacklist_bss;
     /** scan age in secs */
     t_u32 age_in_secs;
     /** Active scan for hidden ssid triggered */

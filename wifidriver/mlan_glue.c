@@ -3036,9 +3036,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 if (assoc_resp->frame.frame_len > (int)sizeof(assoc_resp->frame.frame))
                 {
                     wifi_e("Assocate response payload length (%d) overs the max length(%d), dropping it",
-                            assoc_resp->frame.frame_len, sizeof(assoc_resp->frame.frame));
+                           assoc_resp->frame.frame_len, sizeof(assoc_resp->frame.frame));
                     assoc_resp->frame.frame_len = 0;
-                    result = WIFI_EVENT_REASON_FAILURE;
+                    result                      = WIFI_EVENT_REASON_FAILURE;
                     goto assoc_resp_ret;
                 }
                 memcpy(assoc_resp->frame.frame, passoc_rsp1, assoc_resp->frame.frame_len);
@@ -3071,7 +3071,14 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     /* Since we have failed assoc attempt clear this */
                     pmpriv->media_connected = MFALSE;
                 }
-assoc_resp_ret:
+                /** Clear BSS blacklist if association is successful */
+                if (result == WIFI_EVENT_REASON_SUCCESS)
+                {
+                    (void)memset(&pmpriv->adapter->blacklist_bss.bssids, 0x0,
+                                 sizeof(pmpriv->adapter->blacklist_bss.bssids));
+                    pmpriv->adapter->blacklist_bss.num_bssid = 0;
+                }
+            assoc_resp_ret:
                 (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
@@ -3876,9 +3883,14 @@ assoc_resp_ret:
 #ifdef CONFIG_BG_SCAN
             case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
             {
+                HostCmd_DS_802_11_BG_SCAN_CONFIG *bg_scan = &resp->params.bg_scan_config;
                 /* TODO: command response handler for GET command */
                 if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (bg_scan->enable)
+                        pmpriv->roaming_configured = MTRUE;
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
                 else
                     wm_wifi.cmd_resp_status = -WM_FAIL;
             }
@@ -4702,6 +4714,32 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 #endif
 }
 
+#define REASON_CODE_BSS_BLOCKED 0x21
+static void wifi_handle_blocked_sta_report(Event_Ext_t *evt)
+{
+    mlan_adapter *pmadapter = mlan_adap;
+    t_u16 reason_code       = 0;
+    int idx                 = 0;
+
+    reason_code = evt->reason_code;
+    if (reason_code == REASON_CODE_BSS_BLOCKED)
+    {
+        if (pmadapter->blacklist_bss.num_bssid == MLAN_MAX_BSS_NUM)
+        {
+            wifi_e("BSSID blacklist is full!");
+            return;
+        }
+        idx = pmadapter->blacklist_bss.num_bssid;
+        memcpy(pmadapter->blacklist_bss.bssids[idx], evt->src_mac_addr, MLAN_MAC_ADDR_LENGTH);
+        pmadapter->blacklist_bss.num_bssid++;
+        (void)PRINTF("Added BSSID ");
+        print_mac((const char *)evt->src_mac_addr);
+        (void)PRINTF("to blacklist\r\n");
+    }
+    else
+        wifi_w("Unknown reason code! Ignore the event");
+}
+
 /* fixme: duplicated from legacy. needs to be cleaned up later */
 #define IEEEtypes_REASON_UNSPEC             1U
 #define IEEEtypes_REASON_PRIOR_AUTH_INVALID 2U
@@ -4829,6 +4867,21 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
 done:
     LEAVE();
 
+    return ret;
+}
+
+mlan_status wifi_stop_bgscan()
+{
+    mlan_private *pmpriv = mlan_adap->priv[0];
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+
+    memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
+    pmpriv->scan_cfg.bss_type = MLAN_BSS_MODE_INFRA;
+    pmpriv->scan_cfg.action   = BG_SCAN_ACT_SET;
+    pmpriv->scan_cfg.enable   = MFALSE;
+    ret                       = (mlan_status)wifi_request_bgscan(pmpriv);
+    if (ret)
+        PRINTM(MERROR, "Failed to stop bgscan\n");
     return ret;
 }
 #endif
@@ -5028,9 +5081,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #ifdef CONFIG_BG_SCAN
         case EVENT_BG_SCAN_REPORT:
             pmpriv->adapter->bgscan_reported = MTRUE;
+            pmpriv->roaming_configured       = MFALSE;
             (void)wifi_event_completion(WIFI_EVENT_BG_SCAN_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
         case EVENT_BG_SCAN_STOPPED:
+            pmpriv->roaming_configured = MFALSE;
             (void)wifi_event_completion(WIFI_EVENT_BG_SCAN_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif
@@ -5340,6 +5395,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
         case EVENT_TX_STATUS_REPORT:
             wifi_handle_event_tx_status_report(evt);
+            break;
+        case EVENT_BLOCKEDSTA_AUTH_REPORT:
+            wifi_handle_blocked_sta_report(evt);
             break;
 #ifdef CONFIG_WLAN_BRIDGE
         case EVENT_AUTO_LINK_SWITCH_NEW_NODE:
@@ -6616,8 +6674,14 @@ int wifi_config_roaming(const int enable, uint8_t *rssi_low)
         }
     }
     else
-        pmpriv->roaming_enabled = MFALSE;
-
+    {
+        if (pmpriv->roaming_enabled)
+        {
+            pmpriv->roaming_enabled = MFALSE;
+            pmpriv->rssi_low        = 0;
+            wifi_stop_bgscan();
+        }
+    }
     return ret;
 }
 #endif

@@ -177,7 +177,9 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-    pmadapter->pscan_table = ptemp_scan_table;
+    pmadapter->pscan_table             = ptemp_scan_table;
+    pmadapter->blacklist_bss.num_bssid = 0;
+    memset(MNULL, pmadapter->blacklist_bss.bssids, 0x0, sizeof(pmadapter->blacklist_bss.bssids));
     ret = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, DEFAULT_SCAN_BEACON_BUFFER, MLAN_MEM_DEF,
                                            (t_u8 **)&pmadapter->bcn_buf);
     if (ret != MLAN_STATUS_SUCCESS || !pmadapter->bcn_buf)
@@ -434,7 +436,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
 #ifdef CONFIG_WPA_SUPP
     reset_ie_index();
     priv->default_scan_ies_len = 0;
-    priv->probe_req_index = -1;
+    priv->probe_req_index      = -1;
 #ifdef CONFIG_WPA_SUPP_AP
     priv->beacon_vendor_index = -1;
     priv->beacon_index        = 0;

@@ -1768,6 +1768,8 @@ typedef enum _ENH_PS_MODES
 #define EVENT_RESET_PN_ON_REKEY 0x00000092
 #endif
 
+#define EVENT_BLOCKEDSTA_AUTH_REPORT 0x00000093
+
 /** Event ID: Assoc Req IE*/
 #define EVENT_ASSOC_REQ_IE 0x00000095
 
@@ -7371,7 +7373,6 @@ typedef MLAN_PACK_START struct _HostCmd_DUAL_ANT_DUTY_CYCLE
     MrvlIETypes_DualAntDutyCycle_Config_t dual_ant_cfg_data;
 } MLAN_PACK_END HostCmd_DUAL_ANT_DUTY_CYCLE;
 #endif
-
 
 #ifdef CONFIG_EXTERNAL_COEX_PTA
 

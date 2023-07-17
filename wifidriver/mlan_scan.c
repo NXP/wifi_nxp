@@ -724,6 +724,17 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
     /* Set the temp channel struct pointer to the start of the desired list */
     ptmp_chan_list = pscan_chan_list;
 
+#ifdef CONFIG_BG_SCAN
+    if (pmpriv->roaming_configured)
+    {
+        pmpriv->roaming_configured = MFALSE;
+        /* Cancel bg scan */
+        ret = wifi_stop_bgscan();
+        if (ret)
+            return MLAN_STATUS_FAILURE;
+    }
+#endif
+
     /* Loop through the desired channel list, sending a new firmware scan
        commands for each max_chan_per_scan channels (or for 1,6,11 individually
        if configured accordingly) */
