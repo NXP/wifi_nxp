@@ -1805,6 +1805,14 @@ typedef struct _wifi_ecsa_status_control
 } wifi_ecsa_status_control;
 #endif
 
+typedef struct _wifi_ecsa_info
+{
+    t_u8 bss_type;
+    t_u8 band_config;
+    /** channel */
+    t_u8 channel;
+} wifi_ecsa_info;
+
 #if defined(CONFIG_WMM_UAPSD) || defined(CONFIG_WMM)
 int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action);
 void wifi_sleep_period(unsigned int *sleep_period, int action);

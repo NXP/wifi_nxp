@@ -4659,7 +4659,7 @@ static void wifi_handle_event_tx_status_report(Event_Ext_t *evt)
 {
 #ifdef CONFIG_WPA_SUPP
     tx_status_event *tx_status = MNULL;
-    unsigned int bss_type = (unsigned int)evt->bss_type;
+    unsigned int bss_type      = (unsigned int)evt->bss_type;
 
     tx_status = (tx_status_event *)(void *)&evt->reason_code;
 
@@ -4895,7 +4895,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 
     Event_Ext_t *evt = ((Event_Ext_t *)msg->data);
-    t_u8 *sta_addr = NULL, *event_sta_addr = NULL, *new_channel = NULL;
+    t_u8 *sta_addr = NULL, *event_sta_addr = NULL;
+    wifi_ecsa_info *pecsa_info = NULL;
     wifi_uap_client_disassoc_t *disassoc_resp;
 #ifdef CONFIG_WLAN_BRIDGE
     Event_AutoLink_SW_Node_t *pnewNode = NULL;
@@ -5210,21 +5211,23 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
         case EVENT_CHANNEL_SWITCH:
         {
-            MrvlIEtypes_channel_band_t *tlv = (MrvlIEtypes_channel_band_t *)(void *)&evt->reason_code;
-
-            new_channel = os_mem_alloc(sizeof(t_u8));
-            if (new_channel == MNULL)
+            pecsa_info = os_mem_alloc(sizeof(wifi_ecsa_info));
+            if (!pecsa_info)
             {
                 wifi_w("No mem. Cannot process new channel from channel switch");
                 break;
             }
 
-            *new_channel = tlv->channel;
+            MrvlIEtypes_channel_band_t *tlv = (MrvlIEtypes_channel_band_t *)&evt->reason_code;
 
-            if (wifi_event_completion(WIFI_EVENT_CHAN_SWITCH, WIFI_EVENT_REASON_SUCCESS, new_channel) != WM_SUCCESS)
+            pecsa_info->bss_type    = evt->bss_type;
+            pecsa_info->band_config = tlv->band_config;
+            pecsa_info->channel     = tlv->channel;
+
+            if (wifi_event_completion(WIFI_EVENT_CHAN_SWITCH, WIFI_EVENT_REASON_SUCCESS, pecsa_info) != WM_SUCCESS)
             {
                 /* If fail to send message on queue, free allocated memory ! */
-                os_mem_free((void *)new_channel);
+                os_mem_free((void *)pecsa_info);
             }
         }
         break;

@@ -73,6 +73,7 @@
 #include "dh-param.h"
 #endif
 #endif
+#include "mlan_decl.h"
 
 #ifdef CONFIG_NCP_BRIDGE
 #include "app_notify.h"
@@ -3391,22 +3392,244 @@ static void wlcm_process_channel_switch_ann(enum cm_sta_state *next, struct wlan
     }
 }
 
-static void wlcm_process_channel_switch(struct wifi_message *msg)
+#ifdef CONFIG_WPA_SUPP
+enum mlan_channel_type wlan_get_chan_type(nxp_wifi_ch_switch_info chandef)
 {
+    switch (chandef.ch_width) {
+    case CHAN_BAND_WIDTH_20_NOHT:
+        return CHAN_NO_HT;
+    case CHAN_BAND_WIDTH_20:
+        return CHAN_HT20;
+    case CHAN_BAND_WIDTH_40:
+        if (chandef.center_freq1 > chandef.center_freq)
+            return CHAN_HT40PLUS;
+        return CHAN_HT40MINUS;
+    default:
+
+        return CHAN_NO_HT;
+    }
+}
+
+int wlan_get_chan_offset(int width, int freq, int cf1, int cf2)
+{
+    int freq1 = 0;
+
+    switch (width)
+    {
+        case CHAN_BAND_WIDTH_20_NOHT:
+        case CHAN_BAND_WIDTH_20:
+            return 0;
+        case CHAN_BAND_WIDTH_40:
+            freq1 = cf1 - 10;
+            break;
+        case CHAN_BAND_WIDTH_80:
+            freq1 = cf1 - 30;
+            break;
+        case CHAN_BAND_WIDTH_160:
+            freq1 = cf1 - 70;
+            break;
+        case CHAN_BAND_WIDTH_80P80:
+            freq1 = cf1 - 30;
+            break;
+        default:
+            /* FIXME: implement this */
+            return 0;
+    }
+
+    return (abs(freq - freq1) / 20) % 2 == 0 ? 1 : -1;
+}
+
+static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
+{
+    chan_band_info  pchan_band_info ;
+    nxp_wifi_ch_switch_info chandef = {0,};
+    t_u8 band = BAND_2GHZ;
+    enum mlan_channel_type ch_type = CHAN_NO_HT;
+    uint8_t bss_type = 0;
+    pmlan_private pmpriv = NULL;
+    wifi_ecsa_info *pchan_info = NULL;
+    t_u8 channel= 0 ;
+    chan_freq_power_t *cfp = MNULL;
+    mlan_adapter *pmadapter = NULL;
+
     if (wifi_is_ecsa_enabled())
     {
         if (msg->data != NULL)
         {
-            if (is_uap_started())
+            memset(&pchan_band_info , 0, sizeof(chan_band_info));
+            pchan_info = (wifi_ecsa_info *)msg->data;
+            bss_type = pchan_info->bss_type;
+            pmpriv = mlan_adap->priv[bss_type];
+            pmadapter = pmpriv->adapter;
+            channel= pchan_info->channel;
+
+            if(is_uap_started())
             {
-                (void)PRINTF("uap switch to channel %d success!\r\n", *((uint8_t *)msg->data));
-                wlan.networks[wlan.cur_uap_network_idx].channel = *((uint8_t *)msg->data);
+                wlan.networks[wlan.cur_uap_network_idx].channel = channel;
+                pmpriv->uap_channel = channel;
+        		pmpriv->uap_state_chan_cb.channel = channel;
+        		pmpriv->uap_state_chan_cb.band_config = pchan_info->band_config;
+
+                pchan_band_info.is_11n_enabled = pmpriv->is_11n_enabled;
             }
 
             if (is_sta_connected())
             {
-                (void)PRINTF("sta switch to channel %d success!\r\n", *((uint8_t *)msg->data));
-                wlan.networks[wlan.cur_network_idx].channel = *((uint8_t *)msg->data);
+                wlan.networks[wlan.cur_network_idx].channel = channel;
+                wifi_set_curr_bss_channel(wlan.networks[wlan.cur_network_idx].channel);
+
+#define MAX_CHANNEL_BAND_B 14
+			if (channel <= MAX_CHANNEL_BAND_B)
+				cfp = wlan_find_cfp_by_band_and_channel(pmadapter, BAND_B, channel);
+#ifdef CONFIG_5GHz_SUPPORT
+			else
+				cfp = wlan_find_cfp_by_band_and_channel(pmadapter, BAND_A, channel);
+#endif
+			if (cfp)
+				pmpriv->curr_bss_params.bss_descriptor.freq = cfp->freq;
+			else
+				pmpriv->curr_bss_params.bss_descriptor.freq = 0;
+            }
+
+            /* Handle Host-based DFS and non-DFS(normal uap) case */
+            memcpy((t_u8 *)&pchan_band_info.bandcfg,(t_u8 *)&pchan_info->band_config, sizeof(pchan_info->band_config));
+		    pchan_band_info.channel = channel;
+#if defined(CONFIG_11AC)
+		    if (pchan_band_info.bandcfg.chanWidth == CHAN_BW_80MHZ)
+			pchan_band_info.center_chan = wlan_get_center_freq_idx(pmpriv, BAND_AAC,channel,CHANNEL_BW_80MHZ);
+#endif
+
+            /*Get freq and width info*/
+            memset(&chandef,0, sizeof(nxp_wifi_ch_switch_info));
+            chandef.center_freq2 = 0;
+
+            if (pchan_band_info.bandcfg.chanBand == BAND_2GHZ)
+                band = BAND_2GHZ;
+            else if (pchan_band_info.bandcfg.chanBand == BAND_5GHZ)
+                band = BAND_5GHZ;
+
+            chandef.center_freq = channel_to_frequency(pchan_band_info.channel, band);
+
+            switch (pchan_band_info.bandcfg.chanWidth)
+            {
+                case CHAN_BW_20MHZ:
+                    if (pchan_band_info.is_11n_enabled)
+                        chandef.ch_width = CHAN_BAND_WIDTH_20;
+                    else
+                        chandef.ch_width = CHAN_BAND_WIDTH_20_NOHT;
+                    chandef.center_freq1 = chandef.center_freq;
+                    break;
+
+                case CHAN_BW_40MHZ:
+                    chandef.ch_width = CHAN_BAND_WIDTH_40;
+                    if (pchan_band_info.bandcfg.chan2Offset == SEC_CHAN_ABOVE)
+                        chandef.center_freq1 = chandef.center_freq + 10;
+                    else if (pchan_band_info.bandcfg.chan2Offset == SEC_CHAN_BELOW)
+                        chandef.center_freq1 = chandef.center_freq - 10;
+                    break;
+
+#if defined(CONFIG_11AC)
+                case CHAN_BW_80MHZ:
+                    chandef.ch_width = CHAN_BAND_WIDTH_80;
+                    chandef.center_freq1 = channel_to_frequency(pchan_band_info.center_chan, band);
+                    break;
+#endif
+
+                default:
+                    break;
+            }
+
+            /*Get type*/
+            switch (chandef.ch_width)
+            {
+                case CHAN_BAND_WIDTH_20_NOHT:
+                case CHAN_BAND_WIDTH_20:
+                case CHAN_BAND_WIDTH_40:
+                    ch_type = wlan_get_chan_type(chandef);
+                    break;
+                default:
+                    break;
+            }
+
+            chandef.ht_enabled = 1;
+            /*Get ht and ch_offset info*/
+            switch (ch_type)
+            {
+                case CHAN_NO_HT:
+                    chandef.ht_enabled = 0;
+                    break;
+                case CHAN_HT20:
+                    break;
+                case CHAN_HT40PLUS:
+                    chandef.ch_offset = 1;
+                    break;
+                case CHAN_HT40MINUS:
+                    chandef.ch_offset = -1;
+                    break;
+                default:
+                    if (chandef.ch_width && chandef.center_freq1)
+                    {
+                        /* This can happen for example with VHT80 ch switch */
+                        chandef.ch_offset = wlan_get_chan_offset(chandef.ch_width, chandef.center_freq, chandef.center_freq1, chandef.center_freq2 ? chandef.center_freq2 : 0);
+                    }
+                    else
+                    {
+                        PRINTF("Unknown secondary channel information - following channel definition calculations may fail\r\n");
+                    }
+                    break;
+           }
+
+            if(is_uap_started())
+            {
+                wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.hapd_if_priv, &chandef);
+                (void)PRINTF("uap switch to channel %d success!\r\n", channel);
+            }
+
+            if (is_sta_connected())
+            {
+                wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.if_priv, &chandef);
+                (void)PRINTF("sta switch to channel %d success!\r\n", channel);
+            }
+
+            os_mem_free((void *)msg->data);
+        }
+
+#ifdef CONFIG_ECSA
+        wifi_put_ecsa_sem();
+        set_ecsa_block_tx_flag(false);
+#endif
+    }
+    else
+    {
+        wlcm_d("ECSA not support");
+        if (msg->data != NULL)
+            os_mem_free((void *)msg->data);
+    }
+}
+#endif /*End of CONFIG_WPA_SUPP*/
+
+static void wlcm_process_channel_switch(struct wifi_message *msg)
+{
+    t_u8 channel= 0 ;
+    wifi_ecsa_info *pchan_info = NULL;
+
+    if (wifi_is_ecsa_enabled())
+    {
+        if (msg->data != NULL)
+        {
+            pchan_info = (wifi_ecsa_info *)msg->data;
+            channel= pchan_info->channel;
+
+            if(is_uap_started())
+            {
+                (void)PRINTF("uap switch to channel %d success!\r\n", channel);
+                wlan.networks[wlan.cur_uap_network_idx].channel = channel;
+            }
+
+            if (is_sta_connected())
+            {
+                (void)PRINTF("sta switch to channel %d success!\r\n", channel);
+                wlan.networks[wlan.cur_network_idx].channel = channel;
                 wifi_set_curr_bss_channel(wlan.networks[wlan.cur_network_idx].channel);
             }
             os_mem_free((void *)msg->data);
@@ -6223,7 +6446,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
         case WIFI_EVENT_CHAN_SWITCH:
             wlcm_d("got event: channel switch");
+			#ifdef CONFIG_WPA_SUPP
+	        wlcm_process_channel_switch_supp(msg);
+			#else
             wlcm_process_channel_switch(msg);
+		#endif
             break;
 
         case WIFI_EVENT_SLEEP:

@@ -806,6 +806,23 @@ typedef MLAN_PACK_START struct _Band_Config_t
 #endif
 } MLAN_PACK_END Band_Config_t;
 
+/** channel_band_t */
+typedef MLAN_PACK_START struct _chan_band_info
+{
+    /** Band Configuration */
+    Band_Config_t bandcfg;
+    /** channel */
+    t_u8 channel;
+    /** 11n flag */
+    t_u8 is_11n_enabled;
+    /** center channel */
+    t_u8 center_chan;
+#if defined(ENABLE_802_11H) && defined(DFS_SUPPORT)
+    /** dfs channel flag */
+    t_u8 is_dfs_chan;
+#endif
+} MLAN_PACK_END chan_band_info;
+
 /** csi event data structure */
 #ifdef CONFIG_CSI
 typedef MLAN_PACK_START struct _csi_record_ds

@@ -132,6 +132,7 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .remain_on_channel_callbk_fn   = wifi_nxp_event_reamin_on_channel,
     .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
+    .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
 };
 
 static int g_net_idx = -1;

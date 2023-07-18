@@ -1618,8 +1618,8 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
     }
 
     if ((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) &&
-        ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP)) ||
-	(stype == WLAN_FC_STYPE_ACTION))
+            ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP)) ||
+        (stype == WLAN_FC_STYPE_ACTION))
     {
         memcpy((void *)wifi_if_ctx_rtos->last_mgmt_tx_data, (const void *)data, (size_t)data_len);
         wifi_if_ctx_rtos->last_mgmt_tx_data_len = data_len;
@@ -1689,8 +1689,9 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
 
     channel = freq_to_chan(freq);
 
-    wifi_if_ctx_rtos->supp_called_remain_on_chan = false; /* callback func that does not require cancel_remain_on_channel */
-    status                                       = wifi_remain_on_channel(false, channel, duration);
+    wifi_if_ctx_rtos->supp_called_remain_on_chan =
+        false; /* callback func that does not require cancel_remain_on_channel */
+    status = wifi_remain_on_channel(false, channel, duration);
 
     if (status != WM_SUCCESS)
     {
@@ -1771,6 +1772,34 @@ void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv, nxp_wifi_event_eapol_m
 #endif
     {
         wifi_if_ctx_rtos->supp_callbk_fns.eapol_rx(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
+void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.ch_switch.freq       = ch_switch_info->center_freq;
+    event.ch_switch.ht_enabled = ch_switch_info->ht_enabled;
+    event.ch_switch.ch_offset  = ch_switch_info->ch_offset;
+    event.ch_switch.ch_width   = ch_switch_info->ch_width;
+    event.ch_switch.cf1        = ch_switch_info->center_freq1;
+    event.ch_switch.cf2        = ch_switch_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.ecsa_complete(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.ecsa_complete(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
     }
 }
 
