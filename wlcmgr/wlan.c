@@ -5777,7 +5777,9 @@ static void wlcm_process_get_hw_spec_event(void)
     (void)wifi_wmm_init();
 #endif
     /* Set World Wide Safe Mode Tx Power Limits in Wi-Fi firmware */
+#ifndef RW610
     (void)wlan_set_wwsm_txpwrlimit();
+#endif
     CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
 }
 
