@@ -127,6 +127,11 @@
 #include <wifi.h>
 
 #define WLAN_DRV_VERSION "v1.3.r46.p7"
+
+#ifdef CONFIG_WPA2_ENTP
+#include <wm_mbedtls_helper_api.h>
+#endif
+
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
@@ -690,7 +695,7 @@ struct wlan_scan_result
     /** The network supports WMM.  This is set to 0 if the network does not
      *  support WMM or if the system does not have WMM support enabled. */
     unsigned wmm : 1;
-#ifdef CONFIG_WPA_SUPP_WPS
+#if defined(CONFIG_WPA_SUPP_WPS) || defined(CONFIG_WPS2)
     /** The network supports WPS.  This is set to 0 if the network does not
      *  support WPS or if the system does not have WPS support enabled. */
     unsigned wps : 1;
@@ -892,10 +897,12 @@ enum wlan_security_type
 #endif
     /** The network uses WPA/WPA2 mixed security with PSK */
     WLAN_SECURITY_WPA_WPA2_MIXED,
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
     /** The network uses WPA2 Enterprise EAP-TLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS,
+#endif
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     /** The network uses WPA2 Enterprise EAP-TLS SHA256 security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_SHA256,
@@ -917,10 +924,14 @@ enum wlan_security_type
     /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
+#endif
+#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_PEAP_MSCHAPV2) || defined(CONFIG_WPA2_ENTP)
     WLAN_SECURITY_EAP_PEAP_MSCHAPV2,
     /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
+#endif
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     WLAN_SECURITY_EAP_PEAP_TLS,
     /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
@@ -1035,7 +1046,14 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
         (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
         (security == WLAN_SECURITY_EAP_WILDCARD) ||
+#else
+#ifdef CONFIG_WPA2_ENTP
+        (security == WLAN_SECURITY_EAP_TLS) ||
 #endif
+#ifdef CONFIG_PEAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) ||
+#endif
+#endif /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
 #ifdef CONFIG_OWE
         (security == WLAN_SECURITY_OWE_ONLY) ||
 #endif
@@ -1211,6 +1229,13 @@ struct wlan_network_security
     /** User Passwords */
     char passwords[MAX_USERS][PASSWORD_MAX_LENGTH];
 #endif
+#elif defined(CONFIG_WPA2_ENTP)
+    /** TLS client cert configuration */
+    wm_mbedtls_cert_t tls_cert;
+    /** mbedtls_ssl_config handle */
+    mbedtls_ssl_config *wlan_ctx;
+    /** mbedtls_ssl_context handle */
+    mbedtls_ssl_context *wlan_ssl;
 #endif
 #ifdef CONFIG_WPA_SUPP_DPP
     unsigned char *dpp_connector;
@@ -1628,6 +1653,13 @@ struct wlan_network
     /** The network IP address configuration specified by struct
      * wlan_ip_config that should be associated with this interface. */
     struct wlan_ip_config ip;
+#ifdef CONFIG_WPA2_ENTP
+    char identity[IDENTITY_MAX_LENGTH];
+#ifdef CONFIG_PEAP_MSCHAPV2
+    char anonymous_identity[IDENTITY_MAX_LENGTH];
+    char password[PASSWORD_MAX_LENGTH];
+#endif
+#endif
 
     /* Private Fields */
 
@@ -1964,6 +1996,48 @@ int wlan_stop(void);
  *			WLAN_ACTIVE: no action to be taken
  */
 void wlan_deinit(int action);
+
+#ifdef CONFIG_WPS2
+/** Generate valid PIN for WPS session.
+ *
+ *  This function generate PIN for WPS PIN session.
+ *
+ * \param[in]  pin A pointer to WPS pin to be generated.
+ */
+void wlan_wps_generate_pin(uint32_t *pin);
+
+/** Start WPS PIN session.
+ *
+ *  This function starts WPS PIN session.
+ *
+ * \param[in]  pin Pin for WPS session.
+ *
+ * \return WM_SUCCESS if the pin entered is valid.
+ * \return -WM_FAIL if invalid pin entered.
+ */
+int wlan_start_wps_pin(uint32_t pin);
+
+/** Start WPS PBC session.
+ *
+ *  This function starts WPS PBC session.
+ *
+ * \return  WM_SUCCESS if successful
+ */
+int wlan_start_wps_pbc(void);
+/**
+ * Set None/WPS/802.1x session.
+ *
+ *\param[in] session       0 -- PROV_NON_SESSION_ATTEMPT, 1 -- PROV_WPS_SESSION_ATTEMPT, 2 -- PROV_ENTP_SESSION_ATTEMPT.
+ */
+void wlan_set_prov_session(int session);
+
+/**
+ * Get connect session type.
+ *
+ * \return 0 -- PROV_NON_SESSION_ATTEMPT, 1 -- PROV_WPS_SESSION_ATTEMPT, 2 -- PROV_ENTP_SESSION_ATTEMPT.
+ */
+int wlan_get_prov_session(void);
+#endif
 
 #if defined(RW610)
 /** Reset driver.
@@ -5765,9 +5839,9 @@ int wlan_start_ap_wps_pbc(void);
 int wlan_wps_ap_cancel(void);
 #endif
 #endif
+#endif
 
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-
+#if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
 #define FILE_TYPE_NONE              0
 #define FILE_TYPE_ENTP_CA_CERT      1
 #define FILE_TYPE_ENTP_CLIENT_CERT  2
@@ -5818,7 +5892,6 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data);
  * \return void
  */
 void wlan_free_entp_cert_files(void);
-#endif
 #endif
 
 #ifdef CONFIG_NET_MONITOR

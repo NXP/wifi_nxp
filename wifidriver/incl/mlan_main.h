@@ -1499,6 +1499,9 @@ struct _mlan_private
     /** WPS */
     wps_t wps;
 #endif
+#elif defined(CONFIG_WPS2)
+        /** WPS */
+        wps_t wps;
 #endif
     /** Buffer to store the association req IEs */
     t_u8 assoc_req_buf[MRVDRV_ASSOC_RSP_BUF_SIZE];
@@ -3209,12 +3212,13 @@ mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
                                        IN HostCmd_DS_COMMAND *cmd,
                                        IN t_u16 cmd_action,
                                        IN t_void *pdata_buf);
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_NET_MONITOR
 mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
                                         IN HostCmd_DS_COMMAND *cmd,
                                         IN t_u16 cmd_action,
                                         IN t_void *pdata_buf);
-
+#endif
+#ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_ret_802_11_rf_antenna(IN pmlan_private pmpriv,
                                        IN HostCmd_DS_COMMAND *resp,
                                        IN mlan_ioctl_req *pioctl_buf);

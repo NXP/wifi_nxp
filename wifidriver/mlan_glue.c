@@ -1781,12 +1781,12 @@ int wrapper_wifi_assoc(
      * not be necessary after the integration is complete.
      */
 #ifdef CONFIG_WPA2_ENTP
-    if (d->prsn_ie && (wlan_security == WLAN_SECURITY_EAP_TLS || wlan_security == WLAN_SECURITY_PEAP_MSCHAPV2))
+    if (d->prsn_ie && (wlan_security == WLAN_SECURITY_EAP_TLS || wlan_security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2))
     {
         priv->sec_info.wpa2_enabled = true;
         if (d->rsn_ie_buff_len <= sizeof(priv->wpa_ie))
         {
-            (void)memcpy((void *)priv->wpa_ie, (const void *)d->rsn_ie_buff, d->rsn_ie_buff_len);
+            (void)memcpy(priv->wpa_ie, d->rsn_ie_buff, d->rsn_ie_buff_len);
             priv->wpa_ie_len = d->rsn_ie_buff_len;
         }
         else

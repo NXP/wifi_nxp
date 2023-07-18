@@ -1412,8 +1412,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     return ret;
 }
 
-#ifdef CONFIG_WPA_SUPP_WPS
-
+#if defined(CONFIG_WPS2) || defined(CONFIG_WPA_SUPP_WPS)
 void check_for_wps_ie(const uint8_t *poui,
                       t_u8 oui_type,
                       bool *wps_IE_exist,
@@ -2052,7 +2051,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                 }
 #endif
 
-#ifdef CONFIG_WPA_SUPP_WPS
+#if defined(CONFIG_WPS2) || defined(CONFIG_WPA_SUPP_WPS)
                 /* fixme: Added for WMSDK. Check if can be merged properly with
                    mlan. There should be a better way */
                 check_for_wps_ie(pvendor_ie->vend_hdr.oui, pvendor_ie->vend_hdr.oui_type, &pbss_entry->wps_IE_exist,
@@ -3125,15 +3124,14 @@ t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN mla
     }
 #endif /* CONFIG_MLAN_WMSDK */
 
-    /* fixme: Disabled for now */
-#ifndef CONFIG_MLAN_WMSDK
+#if defined(CONFIG_WPS2) || defined(CONFIG_WPA_SUPP_WPS)
     if (pmpriv->wps.session_enable == MTRUE)
     {
         PRINTM(MINFO, "Return success directly in WPS period\n");
         LEAVE();
         return index;
     }
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_WPS2 */
 #ifdef CONFIG_OWE
     if ((pbss_desc->owe_transition_mode == OWE_TRANS_MODE_OPEN) &&
         (pmpriv->sec_info.authentication_mode != MLAN_AUTH_MODE_OWE))

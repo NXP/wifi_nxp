@@ -224,7 +224,9 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter,
 #endif
 )
 {
+#ifndef RW610
     MrvlIEtypes_He_cap_t *phe_cap = MNULL;
+#endif
     t_u8 i                        = 0;
     t_u8 he_cap_2g                = 0;
 #ifdef CONFIG_11AX_TWT
@@ -238,8 +240,8 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter,
         LEAVE();
         return;
     }
-    phe_cap = (MrvlIEtypes_He_cap_t *)hw_he_cap;
 #ifndef RW610
+    phe_cap = (MrvlIEtypes_He_cap_t *)hw_he_cap;
     if (phe_cap->he_phy_cap[0] & (AX_2G_20MHZ_SUPPORT | AX_2G_40MHZ_SUPPORT))
 #else
     if (tlv_idx == AX_2G_TLV_INDEX)

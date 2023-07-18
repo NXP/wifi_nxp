@@ -4034,7 +4034,7 @@ exit:
     return status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPS2
 /**
  *  @brief WPS configuration handler
  *
@@ -4069,6 +4069,8 @@ static mlan_status wlan_wps_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
             {
                 if (pwps->param.wps_session == MLAN_WPS_CFG_SESSION_START)
                     pmpriv->wps.session_enable = MTRUE;
+                else
+                    pmpriv->wps.session_enable = MFALSE;
             }
             else
             {
@@ -4086,7 +4088,9 @@ static mlan_status wlan_wps_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl
     LEAVE();
     return status;
 }
+#endif /* CONFIG_WPS2 */
 
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Read/write adapter register
  *
@@ -5933,11 +5937,11 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
             status = wlan_wmm_cfg_ioctl(pmadapter, pioctl_req);
             break;
 #endif
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPS2
         case MLAN_IOCTL_WPS_CFG:
             status = wlan_wps_cfg_ioctl(pmadapter, pioctl_req);
             break;
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_WPS2 */
         case MLAN_IOCTL_11N_CFG:
             status = wlan_11n_cfg_ioctl(pmadapter, pioctl_req);
             break;

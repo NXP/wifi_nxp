@@ -48,6 +48,11 @@ static struct netif *netif_arr[MAX_INTERFACES_SUPPORTED];
 #ifndef CONFIG_WIFI_RX_REORDER
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 #endif
+#ifdef CONFIG_WPS2
+void (*wps_rx_callback)(const t_u8 *buf, size_t len);
+extern mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface);
+#endif
+
 /*------------------------------------------------------*/
 static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum netif_mac_filter_action action);
 #ifdef CONFIG_IPV6
@@ -685,38 +690,47 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 int wps_low_level_output(const u8_t interface, const u8_t *buf, t_u32 len)
 {
     int i;
-    u32_t pkt_len;
+    u32_t pkt_len, outbuf_len;
 
-    if (len > sizeof(outbuf))
+    uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
+    if (!outbuf)
+        return ERR_MEM;
+    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+    if ((pkt_len + len) > outbuf_len)
     {
-        while (1)
-        {
-            LWIP_DEBUGF(NETIF_DEBUG, ("PANIC: Xmit packet"
-                                      "is bigger than inbuf.\r\n"));
-            vTaskDelay((3000) / portTICK_PERIOD_MS);
-        }
+        return ERR_MEM;
     }
-
+#if defined(RW610)
+    wifi_imu_lock();
+#else
     wifi_sdio_lock();
+#endif
 
     /* XXX: TODO Get rid on the memset once we are convinced that
      * process_pkt_hdrs sets correct values */
-    (void)memset(outbuf, 0, sizeof(outbuf));
-
-    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+    // memset(outbuf, 0, sizeof(outbuf));
+    (void)memset(outbuf, 0x00, pkt_len);
 
     (void)memcpy((u8_t *)outbuf + pkt_len, buf, len);
 
-    i = wlan_xmit_pkt(pkt_len + len, interface);
+    i = wlan_xmit_pkt(outbuf, pkt_len + len, interface);
 
     if (i == MLAN_STATUS_FAILURE)
     {
         LINK_STATS_INC(link.err);
+#if defined(RW610)
+        wifi_imu_unlock();
+#else
         wifi_sdio_unlock();
+#endif
         return ERR_MEM;
     }
     LINK_STATS_INC(link.xmit);
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
     wifi_sdio_unlock();
+#endif
     return ERR_OK;
 }
 
@@ -729,7 +743,7 @@ void wps_deregister_rx_callback()
 {
     wps_rx_callback = NULL;
 }
-#endif
+#endif /* CONFIG_WPS2 */
 
 #ifdef CONFIG_P2P
 int netif_get_bss_type()

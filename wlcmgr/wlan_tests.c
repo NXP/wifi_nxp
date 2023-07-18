@@ -17,7 +17,9 @@
 #include <wifi.h>
 #include <wlan_tests.h>
 #include <wlan_11d.h>
-
+#ifdef CONFIG_WPS2
+#include <wifi_nxp_wps.h>
+#endif
 #ifdef CONFIG_WPA_SUPP_DPP
 #include "dpp.h"
 #endif
@@ -25,9 +27,9 @@
 /*
  * NXP Test Framework (MTF) functions
  */
+static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 #ifdef CONFIG_CSI
-static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 wlan_csi_config_params_t g_csi_params              = {
     .csi_enable         = 1,
     .head_id            = 0x00010203,
@@ -289,10 +291,17 @@ static void print_network(struct wlan_network *network)
         case WLAN_SECURITY_WPA_WPA2_MIXED:
             (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag(network));
             break;
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
         case WLAN_SECURITY_EAP_TLS:
             (void)PRINTF("%s Enterprise EAP-TLS\r\n", sec_tag(network));
             break;
+#endif
+#ifdef CONFIG_PEAP_MSCHAPV2
+        case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
+            (void)PRINTF("%s: WPA2 Enterprise PEAP-MSCHAPV2\r\n", sec_tag(network));
+            break;
+#endif
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         case WLAN_SECURITY_EAP_TLS_SHA256:
             (void)PRINTF("%s Enterprise EAP-TLS SHA256\r\n", sec_tag(network));
             break;
@@ -661,7 +670,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #endif
         " <secret>]"
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
         " [wpa3-sb/wpa3-sb-192] [eap-tls/eap-tls-sha256"
 #ifdef CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
@@ -703,7 +712,7 @@ static void dump_wlan_add_usage(void)
 #ifdef CONFIG_11R
     (void)PRINTF("    [wpa2-ft <secret>] [wpa3 sae-ft <secret>]\r\n");
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
         "    [wpa3-sb/wpa3-sb-192] "
         "[eap-tls/eap-tls-sha256/eap-ttls-mschapv2/eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc/eap-fast-mschapv2/"
@@ -1163,7 +1172,85 @@ static void test_wlan_add(int argc, char **argv)
             info.security2++;
             arg += 1;
         }
-#endif
+#else /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
+#ifdef CONFIG_WPA2_ENTP
+        else if (!info.security2 && string_equal("eap-tls", argv[arg]))
+        {
+            u8_t *data   = NULL;
+            int data_len = 0;
+
+            network.security.type = WLAN_SECURITY_EAP_TLS;
+            /* Set Client Identity */
+            strcpy(network.identity, (const char *)"client1");
+            /** Set SSID specific network search */
+            network.ssid_specific = 1;
+            /* Specify CA certificate */
+            data_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_CA_CERT, &data);
+            if (data_len == 0)
+            {
+                wlan_free_entp_cert_files();
+                (void)PRINTF("Error: invalid ca cert file\r\n");
+                return;
+            }
+            network.security.tls_cert.ca_chain = wm_mbedtls_parse_cert((const unsigned char *)data, (size_t)data_len);
+            /* Specify Client certificate */
+            data_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_CERT, &data);
+            if (data_len == 0)
+            {
+                wlan_free_entp_cert_files();
+                (void)PRINTF("Error: invalid client cert file\r\n");
+                return;
+            }
+            network.security.tls_cert.own_cert = wm_mbedtls_parse_cert((const unsigned char *)data, (size_t)data_len);
+            /* Specify Client key */
+            data_len = wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_KEY, &data);
+            if (data_len == 0)
+            {
+                wlan_free_entp_cert_files();
+                (void)PRINTF("Error: invalid client key file\r\n");
+                return;
+            }
+            network.security.tls_cert.own_key =
+                wm_mbedtls_parse_key((const unsigned char *)data, (size_t)data_len, NULL, 0);
+            /* Specify address type as DHCP */
+            arg += 1;
+            wlan_free_entp_cert_files();
+        }
+#endif /* CONFIG_WPA2_ENTP */
+#ifdef CONFIG_PEAP_MSCHAPV2
+        else if (!info.security2 && string_equal("peap", argv[arg]))
+        {
+            /* Specify address type as DHCP */
+            network.security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
+            /** Set USERNAME */
+            if (strlen(argv[arg + 1]) > IDENTITY_MAX_LENGTH)
+            {
+                (void)PRINTF("Error: USERNAME is too long\r\n");
+                return;
+            }
+            (void)memcpy(network.identity, argv[arg + 1], strlen(argv[arg + 1]));
+            /* Set PASSWORD */
+            if (strlen(argv[arg + 2]) > PASSWORD_MAX_LENGTH)
+            {
+                (void)PRINTF("Error: PASSWORD is too long\r\n");
+                return;
+            }
+            (void)memcpy(network.password, argv[arg + 2], strlen(argv[arg + 2]));
+            /* Set Client Identity(username) */
+            //        strcpy(network.anonymous_identity, (const char *)"MSCHAPV2");
+            strcpy(network.anonymous_identity, (const char *)"anon");
+            /** Set SSID specific network search */
+            network.ssid_specific = 1;
+            /* Set network mode infra */
+            network.type = WLAN_BSS_TYPE_STA;
+            /* Set network mode infra */
+            network.role = WLAN_BSS_ROLE_STA;
+            /* Specify address type as DHCP */
+            network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+            arg += 3;
+        }
+#endif /* CONFIG_PEAP_MSCHAPV2 */
+#endif /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
         else if ((info.role == 0U) && string_equal("role", argv[arg]))
         {
             if (arg + 1 >= argc || get_role(argv[arg + 1], &network.role))
@@ -7675,7 +7762,7 @@ static void test_wlan_set_ips(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_WPA_SUPP_WPS
+#if defined(CONFIG_WPA_SUPP_WPS) || defined(CONFIG_WPS2)
 static void test_wlan_start_wps_pbc(int argc, char **argv)
 {
     int ret;
@@ -7698,7 +7785,11 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 
     PRINTF("Start WPS PIN session with %s pin\r\n", argv[1]);
 
+#if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
+#else
+    ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
+#endif
 
     if (ret != WM_SUCCESS)
     {
@@ -7713,7 +7804,8 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
     wlan_wps_generate_pin((unsigned int *)&pin);
     PRINTF("WPS PIN is: %d\r\n", pin);
 }
-
+#endif
+#ifdef CONFIG_WPA_SUPP_WPS
 static void test_wlan_wps_cancel(int argc, char **argv)
 {
     int ret;
@@ -7725,7 +7817,6 @@ static void test_wlan_wps_cancel(int argc, char **argv)
         PRINTF("Cancel WPS failed\r\n");
     }
 }
-
 #ifdef CONFIG_WPA_SUPP_AP
 static void test_wlan_start_ap_wps_pbc(int argc, char **argv)
 {
@@ -8881,10 +8972,12 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_CCK_DESENSE_CFG
     {"wlan-cck-desense-cfg", NULL, test_wlan_cck_desense_cfg},
 #endif
-#ifdef CONFIG_WPA_SUPP_WPS
+#if defined(CONFIG_WPS2) || defined(CONFIG_WPA_SUPP_WPS)
     {"wlan-generate-wps-pin", NULL, test_wlan_wps_generate_pin},
     {"wlan-start-wps-pbc", NULL, test_wlan_start_wps_pbc},
     {"wlan-start-wps-pin", "<8 digit pin>", test_wlan_start_wps_pin},
+#endif
+#ifdef CONFIG_WPA_SUPP_WPS
     {"wlan-wps-cancel", NULL, test_wlan_wps_cancel},
 #ifdef CONFIG_WPA_SUPP_AP
     {"wlan-start-ap-wps-pbc", NULL, test_wlan_start_ap_wps_pbc},

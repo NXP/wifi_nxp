@@ -230,7 +230,9 @@ int wlan_set_wwsm_txpwrlimit(void)
     int rv = WM_SUCCESS;
 
 #ifdef CONFIG_11AX
+#ifndef RW610
     ARG_UNUSED(rutxpowerlimit_cfg_set);
+#endif
 #endif
 
     rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_2g_cfg, &tx_pwrlimit_2g_cfg);

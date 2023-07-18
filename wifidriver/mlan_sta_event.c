@@ -94,11 +94,12 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
     priv->wapi_ie_len           = 0;
     priv->sec_info.wapi_key_on  = MFALSE;
 
-    priv->wps.session_enable = MFALSE;
-    (void)__memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
-
     priv->sec_info.encryption_mode = MLAN_ENCRYPTION_MODE_NONE;
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WPS2
+    priv->wps.session_enable = MFALSE;
+    (void)__memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
+#endif /* CONFIG_WPS2 */
 
     /* Enable auto data rate */
     priv->is_data_rate_auto = MTRUE;

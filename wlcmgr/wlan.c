@@ -23,10 +23,10 @@
 #ifndef RW610
 #include <mlan_sdio_api.h>
 #endif
-#ifdef CONFIG_HOST_PMK
+#if defined(CONFIG_HOST_PMK) || defined(CONFIG_WPS2)
 #include <wm_mbedtls_helper_api.h>
 #include <mbedtls/x509_crt.h>
-#endif /* CONFIG_HOST_PMK */
+#endif /* defined(CONFIG_HOST_PMK) || defined(CONFIG_WPS2) */
 #ifdef RW610
 #include <wifi_cal_data_ext.h>
 #endif
@@ -52,7 +52,10 @@
 #endif
 #endif
 #endif
-
+#ifdef CONFIG_WPS2
+#include  <wifi_nxp_wps.h>
+#include  <wps_def.h>
+#endif
 #ifdef CONFIG_WPA_SUPP
 #include <supp_main.h>
 #include <supp_api.h>
@@ -60,7 +63,7 @@
 #include "utils/common.h"
 #endif
 
-#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) && !defined(CONFIG_WIFI_USB_FILE_ACCESS)
+#if defined(CONFIG_WPA2_ENTP) || (defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) && !defined(CONFIG_WIFI_USB_FILE_ACCESS))
 #include "ca-cert.h"
 #include "client-cert.h"
 #include "client-key.h"
@@ -140,7 +143,8 @@ os_semaphore_t wls_csi_sem;
 #endif
 
 #ifdef CONFIG_WPS2
-int wps_session_attempt;
+int prov_session_attempt = PROV_NON_SESSION_ATTEMPT;
+extern WPS_DATA wps_global;
 #endif
 
 #define MAX_EVENTS 20
@@ -325,6 +329,55 @@ static os_thread_stack_define(g_cm_stack, 5120);
 #else
 static os_thread_stack_define(g_cm_stack, 5120);
 #endif
+#ifdef CONFIG_WPS2
+static os_thread_stack_define(g_wps_stack, 5120);
+static int wlcm_wps_callback(enum wps_event event, void *data, uint16_t len);
+
+typedef enum
+{
+    PROV_WPS_NONE,
+    PROV_WPS_STARTED,     /* WPS provisioning started */
+    PROV_WPS_PBC_ENABLED, /* WPS pushbutton attempt enabled */
+    PROV_WPS_PIN_ENABLED, /* WPS PIN attempt enabled */
+    PROV_WPS_SUCCESSFUL,  /* WPS based provisioning successful */
+} wps_state_t;
+
+static struct
+{
+    wps_state_t wps_state;
+    enum wps_session_command wps_cmd;
+    uint32_t wps_pin;
+
+    /* WPS thread */
+    os_thread_t wps_main_thread;
+    os_thread_stack_t wps_stack;
+
+    os_semaphore_t wps_scan_done;
+    struct wlan_scan_result wps_res;
+} wlan_wps;
+
+static struct wps_config wps_conf = {
+    .role                    = 1, //WPS_ENROLLEE
+    .pin_generator           = 1,
+    .version                 = 0x20,
+    .version2                = 0x20,
+    .device_name             = "Redfinch",
+    .manufacture             = "NXP",
+    .model_name              = "rw610",
+    .model_number            = "0001",
+    .serial_number           = "0001",
+    .config_methods          = 0x2388,
+    .primary_dev_category    = 01,
+    .primary_dev_subcategory = 01,
+    .rf_bands                = 2,
+    .os_version              = 0xFFFFFFFF,
+    .wps_msg_max_retry       = 5,
+    .wps_msg_timeout         = 5000,
+    .pin_len                 = 8,
+    .wps_callback            = wlcm_wps_callback,
+    .prov_session            = PROV_NON_SESSION_ATTEMPT,
+};
+#endif /* CONFIG_WPS2 */
 #ifdef RW610
 static void wlan_mon_thread(os_thread_arg_t data);
 static os_thread_stack_define(g_mon_stack, 1152);
@@ -436,7 +489,8 @@ static struct
 #ifdef CONFIG_WPA_SUPP_WPS
     int wps_session_attempt;
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#endif
+#if defined(CONFIG_WPA2_ENTP) || (defined(CONFIG_WPA_SUPP) && defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE))
     t_u8 *ca_cert_data;
     t_u32 ca_cert_len;
     t_u8 *client_cert_data;
@@ -456,7 +510,6 @@ static struct
     t_u32 server_key_len;
     t_u8 *dh_data;
     t_u32 dh_len;
-#endif
 #endif
 #endif
     os_timer_t assoc_timer;
@@ -1600,7 +1653,7 @@ static int security_profile_matches(const struct wlan_network *network, const st
 #ifdef CONFIG_WPA2_ENTP
     /* WPA2 Enterprise mode: if we are using WPA2 Enterprise,
      * the AP must use WPA2 Enterpise */
-    if (config->type == WLAN_SECURITY_EAP_TLS || config->type == WLAN_SECURITY_PEAP_MSCHAPV2)
+    if (config->type == WLAN_SECURITY_EAP_TLS || config->type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
         return res->wpa2_entp_IE_exist;
 #endif
 
@@ -1785,6 +1838,7 @@ static void wpa2_tls_cleanup(struct wlan_network *network, bool force)
     }
 
     wpa2_shutdown();
+    wlan_set_prov_session(PROV_NON_SESSION_ATTEMPT);
 }
 #endif
 
@@ -1803,13 +1857,16 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
     {
 #ifdef CONFIG_WPA2_ENTP
         case WLAN_SECURITY_EAP_TLS:
-        case WLAN_SECURITY_PEAP_MSCHAPV2:
-            wps_session_attempt = 1;
-            ret                 = wifi_send_enable_supplicant(network->role, network->ssid);
-            if (ret != WM_SUCCESS)
-                return -WM_FAIL;
+        case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
+            if (network->security.pmk_valid == false)
+            {
+                wlan_set_prov_session(PROV_ENTP_SESSION_ATTEMPT);
+                ret = wpa2_tls_init(network);
+                if (ret != WM_SUCCESS)
+                    return -WM_FAIL;
+            }
 
-            ret = wpa2_tls_init(network);
+            ret                 = wifi_send_enable_supplicant(network->role, network->ssid);
             if (ret != WM_SUCCESS)
                 return -WM_FAIL;
 
@@ -1819,7 +1876,7 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
         case WLAN_SECURITY_WPA2:
         case WLAN_SECURITY_WPA_WPA2_MIXED:
 #ifdef CONFIG_WPS2
-            wps_session_attempt = 0;
+            wlan_set_prov_session(PROV_NON_SESSION_ATTEMPT);
 #endif
             if (network->security.type == WLAN_SECURITY_WPA)
             {
@@ -1935,10 +1992,8 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
 
         case WLAN_SECURITY_NONE:
 #ifdef CONFIG_WPS2
-            if (network->wps_specific != 0U && res->wps_session != (t_u16)WPS_SESSION_INACTIVE)
-            {
-                wps_session_attempt = 1;
-            }
+            if (network->wps_specific && res->wps_session != WPS_SESSION_INACTIVE)
+                wlan_set_prov_session(PROV_WPS_SESSION_ATTEMPT);
 #endif
             break;
         default:
@@ -2358,7 +2413,7 @@ static int do_stop(struct wlan_network *network)
  * connect by releasing the scan lock and informing the user. */
 static void do_connect_failed(enum wlan_event_reason reason)
 {
-#ifdef CONFIG_OWE
+#if defined(CONFIG_OWE) || defined(CONFIG_WPA2_ENTP)
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 #endif
 #ifdef CONFIG_WMSTATS
@@ -2385,7 +2440,10 @@ static void do_connect_failed(enum wlan_event_reason reason)
     }
 #endif
 #ifdef CONFIG_WPA2_ENTP
-    wpa2_tls_cleanup(network, false);
+    if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+    {
+        wpa2_tls_cleanup(network, false);
+    }
 #endif
     if (wlan.connect_wakelock_taken)
     {
@@ -2571,7 +2629,7 @@ static void update_network_params(struct wlan_network *network, const struct wif
         case WLAN_SECURITY_WPA_WPA2_MIXED:
 #ifdef CONFIG_WPA2_ENTP
         case WLAN_SECURITY_EAP_TLS:
-        case WLAN_SECURITY_PEAP_MSCHAPV2:
+        case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
 #endif
             network->security.mcstCipher.ccmp = res->rsn_mcstCipher.ccmp;
             network->security.ucstCipher.ccmp = res->rsn_ucstCipher.ccmp;
@@ -3468,14 +3526,14 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         wlan.sta_state = CM_STA_ASSOCIATED;
         *next          = CM_STA_ASSOCIATED;
 
-#ifdef CONFIG_WPS2
-        if (wps_session_attempt)
-        {
 #ifdef CONFIG_WPA2_ENTP
+        if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+        {
             ret = wpa2_ent_connect(network);
             if (ret != WM_SUCCESS)
+            {
                 wlcm_e("wpa2_ent_connect failed");
-#endif
+            }
         }
 #endif
         wlan.scan_count = 0;
@@ -3485,7 +3543,10 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     {
         wlcm_d("association failed, re-scanning");
 #ifdef CONFIG_WPA2_ENTP
-        wpa2_tls_cleanup(network, true);
+        if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+        {
+            wpa2_tls_cleanup(network, true);
+        }
 #endif
         /*
          *  this scan does not hold scan lock as it was already put by wlcmgr task
@@ -3498,7 +3559,10 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     else
     {
 #ifdef CONFIG_WPA2_ENTP
-        wpa2_tls_cleanup(network, true);
+        if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+        {
+            wpa2_tls_cleanup(network, true);
+        }
 #endif
 #ifdef CONFIG_WPA_SUPP
         os_timer_deactivate(&wlan.supp_status_timer);
@@ -3517,13 +3581,22 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
 
 static void wlcm_process_pmk_event(struct wifi_message *msg, enum cm_sta_state *next, struct wlan_network *network)
 {
+    char *bssid = network->bssid;
+
     if (msg->data != NULL)
     {
         network->security.pmk_valid = true;
         (void)memcpy((void *)network->security.pmk, (const void *)msg->data, WLAN_PMK_LENGTH);
         if (network->role == WLAN_BSS_ROLE_STA)
         {
-            (void)wifi_send_add_wpa_pmk((int)network->role, network->ssid, network->bssid, network->security.pmk,
+#ifdef CONFIG_WPA2_ENTP
+            if (network->security.type == WLAN_SECURITY_EAP_TLS)
+            {
+                /* OKC-802.1X case, roaming without specifying bssid */
+                bssid = NULL;
+            }
+#endif
+            (void)wifi_send_add_wpa_pmk((int)network->role, network->ssid, bssid, network->security.pmk,
                                         WLAN_PMK_LENGTH);
         }
     }
@@ -3539,11 +3612,10 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
     struct netif *netif = net_get_sta_interface();
 #endif
 
-#ifndef CONFIG_WPA2_ENTP
 #ifdef CONFIG_WPS2
-    if (wps_session_attempt)
+    if (wlan_get_prov_session() == PROV_WPS_SESSION_ATTEMPT)
     {
-        if (wlan.connect_wakelock_taken)
+        if(wlan.connect_wakelock_taken)
         {
 #ifdef CONFIG_HOST_SLEEP
             wakelock_put();
@@ -3552,8 +3624,6 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
         }
         return;
     }
-
-#endif
 #endif
 
 #ifndef CONFIG_WPA_SUPP
@@ -3672,7 +3742,11 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
         }
 #endif /* CONFIG_WLAN_FAST_PATH */
 #ifdef CONFIG_WPA2_ENTP
-        wpa2_tls_cleanup(network, false);
+        if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT &&
+            (network->security.type != WLAN_SECURITY_EAP_PEAP_MSCHAPV2))
+        {
+            wpa2_tls_cleanup(network, false);
+        }
 #endif
     }
     else
@@ -3683,7 +3757,19 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
         wlan.fast_path_cache_valid = false;
 #endif /* CONFIG_WLAN_FAST_PATH */
 #ifdef CONFIG_WPA2_ENTP
-        wpa2_tls_cleanup(network, false);
+        if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+        {
+            wpa2_tls_cleanup(network, false);
+        }
+        else if (wlan_get_prov_session() == PROV_NON_SESSION_ATTEMPT &&
+                 network->security.pmk_valid == true &&
+                 (network->security.type == WLAN_SECURITY_EAP_TLS || network->security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
+                )
+        {
+            /* If EAP_TLS re-connected but get auth failed, clear pmk_valid/pmk and enter "PROV_ENTP_SESSION_ATTEMPT" again */
+            network->security.pmk_valid = false;
+            memset(network->security.pmk, 0, WLAN_PMK_LENGTH);
+        }
 #endif
         if (*((uint16_t *)msg->data) == IEEEtypes_REASON_MIC_FAILURE)
         {
@@ -4189,7 +4275,10 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         *next = wlan.sta_state;
     }
 #ifdef CONFIG_WPA2_ENTP
-    wpa2_tls_cleanup(network, false);
+    if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+    {
+        wpa2_tls_cleanup(network, false);
+    }
 #endif
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
@@ -4241,7 +4330,19 @@ static void wlcm_process_disassoc_event(struct wifi_message *msg, enum cm_sta_st
      * proceed accordingly.
      */
 #ifdef CONFIG_WPA2_ENTP
-    wpa2_tls_cleanup(network, false);
+    if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+    {
+        wpa2_tls_cleanup(network, false);
+    }
+    else if (wlan_get_prov_session() == PROV_NON_SESSION_ATTEMPT && is_state(CM_STA_CONNECTED) &&
+             network->security.pmk_valid == true &&
+             (network->security.type == WLAN_SECURITY_EAP_TLS || network->security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
+            )
+    {
+        /* Connects with security EAP_TLS, if AP reset PMK and send disassoc, STA clear pmk_valid/pmk and enter "PROV_ENTP_SESSION_ATTEMPT" again */
+        network->security.pmk_valid = false;
+        memset(network->security.pmk, 0, WLAN_PMK_LENGTH);
+    }
 #endif
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
@@ -4266,7 +4367,10 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
                                                 struct wlan_network *network)
 {
 #ifdef CONFIG_WPA2_ENTP
-    wpa2_tls_cleanup(network, false);
+    if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
+    {
+        wpa2_tls_cleanup(network, false);
+    }
 #endif
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
     if (wlan.cm_ieeeps_configured)
@@ -4380,7 +4484,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         wlan.sta_ipv4_state = CM_STA_CONNECTED;
 
 #ifdef CONFIG_WPS2
-        wps_session_attempt = 0;
+        wlan_set_prov_session(PROV_NON_SESSION_ATTEMPT);
 #endif
         if (wlan.reassoc_control && wlan.reassoc_request)
         {
@@ -5387,7 +5491,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 
     if ((!is_scanning_allowed())
 #ifdef CONFIG_WPS2
-        || (wps_session_attempt)
+        || (wlan_get_prov_session() != PROV_NON_SESSION_ATTEMPT)
 #endif
     )
     {
@@ -5500,7 +5604,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 
     if (
 #ifdef CONFIG_WPS2
-        (!wps_session_attempt) &&
+        (wlan_get_prov_session() == PROV_NON_SESSION_ATTEMPT) &&
 #endif
         (wlan.sta_state < CM_STA_IDLE || is_state(CM_STA_IDLE)
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
@@ -5579,15 +5683,13 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
     { /* Do Nothing */
     }
 
-#ifndef CONFIG_WPA2_ENTP
 #ifdef CONFIG_WPS2
-    if (wps_session_attempt)
+    if (wlan_get_prov_session() == PROV_WPS_SESSION_ATTEMPT)
     {
         CONNECTION_EVENT(WLAN_REASON_WPS_DISCONNECT, NULL);
-        wps_session_attempt = 0;
+        wlan_set_prov_session(PROV_NON_SESSION_ATTEMPT);
     }
     else
-#endif
 #endif
 #ifdef CONFIG_WPA_SUPP
         if (wlan.status_timeout)
@@ -6308,6 +6410,97 @@ static void cm_main(os_thread_arg_t data)
     }
 }
 
+#ifdef CONFIG_WPS2
+/* WLAN Connection Manager scan results callback */
+static int prov_wps_scan_results(unsigned int count)
+{
+    int i;
+    int err;
+
+    if (count == 0)
+    {
+        os_semaphore_put(&wlan_wps.wps_scan_done);
+        return 0;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        err = wlan_get_scan_result(i, &wlan_wps.wps_res);
+        if (err != 0)
+        {
+            wlcm_e("Error: can't get scan res %d", i);
+            continue;
+        }
+
+        if ((wlan_wps.wps_res.wps_session == WPS_SESSION_PBC) || (wlan_wps.wps_res.wps_session == WPS_SESSION_PIN))
+            break;
+    }
+
+    os_semaphore_put(&wlan_wps.wps_scan_done);
+
+    return 0;
+}
+
+static void wps_main(os_thread_arg_t data)
+{
+    int rv = os_semaphore_create(&wlan_wps.wps_scan_done, "wlanwpssem");
+    if (rv != WM_SUCCESS)
+    {
+        wlcm_e("Failed to create WPS scan semaphore");
+    }
+
+    os_semaphore_get(&wlan_wps.wps_scan_done, OS_WAIT_FOREVER);
+    while (1)
+    {
+        os_thread_sleep(os_msec_to_ticks(500));
+        if ((wlan_wps.wps_state == PROV_WPS_PBC_ENABLED) || (wlan_wps.wps_state == PROV_WPS_PIN_ENABLED))
+        {
+            int i = 5;
+
+            wlcm_d("WPS is enabled");
+            if (is_uap_started())
+            {
+                wlan_wps.wps_state = PROV_WPS_STARTED;
+                wps_conf.role = 2; //WPS_REGISTRAR
+                wlan_set_prov_session(PROV_WPS_SESSION_ATTEMPT);
+                wps_connect(wlan_wps.wps_cmd, wlan_wps.wps_pin, &wlan_wps.wps_res);
+            }
+            else
+            {
+                while (i)
+                {
+                    if (wlan_scan(prov_wps_scan_results) != 0)
+                    {
+                        (void)PRINTF("Error: scan request failed, sta_state");
+#ifdef CONFIG_WLCMGR_DEBUG
+                        (void)PRINTF("(%s)", dbg_sta_state_name(wlan.sta_state));
+#else
+                        (void)PRINTF("(%d)", wlan.sta_state);
+#endif
+                        (void)PRINTF(" is not idle/connected\r\n");
+                        (void)PRINTF("Wait or disconnect network\r\n");
+                        break;
+                    }
+                    os_semaphore_get(&wlan_wps.wps_scan_done, OS_WAIT_FOREVER);
+                    if ((wlan_wps.wps_res.wps_session == WPS_SESSION_PIN) ||
+                        (wlan_wps.wps_res.wps_session == WPS_SESSION_PBC))
+                    {
+                        wlcm_d("WPS Session from AP started");
+                        wlan_wps.wps_state = PROV_WPS_STARTED;
+                        wlan_set_prov_session(PROV_WPS_SESSION_ATTEMPT);
+                        wps_connect(wlan_wps.wps_cmd, wlan_wps.wps_pin, &wlan_wps.wps_res);
+                        break;
+                    }
+                    i--;
+                }
+            }
+
+            wlan_wps.wps_state = PROV_WPS_NONE;
+            memset(&wlan_wps.wps_res, 0, sizeof(wlan_wps.wps_res));
+        }
+    }
+}
+#endif
 /*
  * WLAN API
  */
@@ -6391,9 +6584,9 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     wlan_set_cal_data(cal_data_rw610, sizeof(cal_data_rw610));
 #endif
 
-#ifdef CONFIG_HOST_PMK
+#if defined(CONFIG_HOST_PMK) || defined(CONFIG_WPS2)
     wm_mbedtls_lib_init();
-#endif /* CONFIG_HOST_PMK */
+#endif /* defined(CONFIG_HOST_PMK) || defined(CONFIG_WPS2) */
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     ret = os_rwlock_create_with_cb(&sleep_rwlock, "sleep_mutex", "sleep_rwlock", wifi_wakeup_card_cb);
@@ -6495,51 +6688,65 @@ void wlan_deinit(int action)
 #endif
 }
 
-#ifdef CONFIG_WPA2_ENTP
 #ifdef CONFIG_WPS2
 static int wlcm_wps_callback(enum wps_event event, void *data, uint16_t len)
 {
-    int ret = WM_SUCCESS;
+    int ret                  = WM_SUCCESS;
+    struct wlan_network *net = (struct wlan_network *)data;
 
     wlcm_d("WPS EVENT = %d data = %p len=%d", event, data, len);
 
-    if (event == WPS_SESSION_SUCCESSFUL)
+    if (event == WPS_STARTED) {
+        wifi_send_wps_cfg_cmd(1); /* Notify wifidriver that wps session has started */
+    }
+    else if (event == WPS_SESSION_SUCCESSFUL)
     {
-        if (!data)
-            return -WM_FAIL;
+        if (data == NULL)
+        {
+            wifi_send_wps_cfg_cmd(0); /* Notify wifidriver that wps session end */
+            if (wps_conf.role != 2) /* if not WPS_REGISTRAR */
+            {
+                wlcm_e("Invalid data for WPS SESSION SUCCESSFUL");
+                return -WM_FAIL;
+            }
+        }
+        if (len == sizeof(struct wlan_network))
+        {
+            /* It's WPS SESSION */
+            wifi_send_wps_cfg_cmd(0); /* Notify wifidriver that wps session end */
+            ret = wlan_add_network(net);
 
-        ret = wlan_wlcmgr_send_msg(WIFI_EVENT_PMK, WIFI_EVENT_REASON_SUCCESS, data);
+            if (ret != WM_SUCCESS)
+            {
+                wlcm_d("Adding network failed");
+                return ret;
+            }
+#ifdef CONFIG_NCP_BRIDGE
+            CONNECTION_EVENT(WLAN_REASON_WPS_SESSION_DONE, net);
+#endif
+            ret = wlan_connect(net->name);
+            if (ret != WM_SUCCESS)
+            {
+                wlcm_d("Connecting to network failed");
+                return ret;
+            }
+        }
+        else
+        {
+            /* It's ENTP SESSION */
+            ret = wlan_wlcmgr_send_msg(WIFI_EVENT_PMK, WIFI_EVENT_REASON_SUCCESS, data);
+        }
+
     }
     else if (event == WPS_SESSION_TIMEOUT || event == WPS_SESSION_FAILED)
     {
+        wifi_send_wps_cfg_cmd(0); /* Notify wifidriver that wps session end */
         ret =
             wlan_wlcmgr_send_msg(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_FAILURE, (void *)WPA2_ENTERPRISE_FAILED);
     }
 
     return ret;
 }
-
-static struct wps_config wps_conf = {
-    .role                    = 1,
-    .pin_generator           = 1,
-    .version                 = 0x20,
-    .version2                = 0x20,
-    .device_name             = "NXP-Embedded-Client",
-    .manufacture             = "NXP",
-    .model_name              = "RD-88W-PLUG-8787-A0",
-    .model_number            = "0001",
-    .serial_number           = "0001",
-    .config_methods          = 0x2388,
-    .primary_dev_category    = 01,
-    .primary_dev_subcategory = 01,
-    .rf_bands                = 1,
-    .os_version              = 0xFFFFFFFF,
-    .wps_msg_max_retry       = 5,
-    .wps_msg_timeout         = 5000,
-    .pin_len                 = 8,
-    .wps_callback            = wlcm_wps_callback,
-};
-#endif
 #endif
 
 static void assoc_timer_cb(os_timer_arg_t arg)
@@ -6799,11 +7006,22 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlan.status = WLCMGR_ACTIVATED;
 
-#ifdef CONFIG_WPA2_ENTP
 #ifdef CONFIG_WPS2
     wlcm_d("WPS started");
     wps_start(&wps_conf);
-#endif
+
+    wlan_wps.wps_stack = g_wps_stack;
+    ret = os_thread_create(&wlan_wps.wps_main_thread, "wps", wps_main, 0, &wlan_wps.wps_stack, OS_PRIO_3);
+    if (ret != WM_SUCCESS)
+    {
+        wlan.cb = NULL;
+        wifi_unregister_event_queue(&wlan.events);
+        os_queue_delete(&wlan.events);
+        os_thread_delete(&wlan.cm_main_thread);
+        os_semaphore_delete(&wlan.scan_lock);
+        os_mutex_delete(&reset_lock);
+        return -WM_FAIL;
+    }
 #endif
 
     ret = os_timer_create(&wlan.assoc_timer, "assoc-timer", os_msec_to_ticks(BAD_MIC_TIMEOUT), &assoc_timer_cb, NULL,
@@ -7165,7 +7383,9 @@ static bool wlan_is_key_valid(struct wlan_network *network)
 #ifdef CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
 #endif
-#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_WPA2_ENTP
+        case WLAN_SECURITY_EAP_TLS:
+#elif CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
         case WLAN_SECURITY_EAP_WILDCARD:
         case WLAN_SECURITY_EAP_TLS:
@@ -7185,6 +7405,9 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_EAP_FAST_MSCHAPV2:
         case WLAN_SECURITY_EAP_FAST_GTC:
 #endif
+#endif
+#ifdef CONFIG_PEAP_MSCHAPV2
+        case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
 #endif
             valid = true;
             break;
@@ -7300,7 +7523,7 @@ int wlan_add_network(struct wlan_network *network)
      */
     if ((network->role == WLAN_BSS_ROLE_STA) &&
         ((network->security.type != WLAN_SECURITY_EAP_TLS) ||
-         (network->security.type != WLAN_SECURITY_PEAP_MSCHAPV2)) &&
+         (network->security.type != WLAN_SECURITY_EAP_PEAP_MSCHAPV2)) &&
         wlan.allow_wpa2_enterprise_ap_only)
     {
         return -WM_E_INVAL;
@@ -7867,7 +8090,20 @@ int wlan_remove_network(const char *name)
                     return WLAN_ERROR_STATE;
                 }
             }
-
+#ifdef CONFIG_WPA2_ENTP
+            if (wlan.networks[i].security.tls_cert.ca_chain)
+            {
+                wm_mbedtls_free_cert(wlan.networks[i].security.tls_cert.ca_chain);
+            }
+            if (wlan.networks[i].security.tls_cert.own_cert)
+            {
+                wm_mbedtls_free_cert(wlan.networks[i].security.tls_cert.own_cert);
+            }
+            if (wlan.networks[i].security.tls_cert.own_key)
+            {
+                wm_mbedtls_free_key(wlan.networks[i].security.tls_cert.own_key);
+            }
+#endif
 #ifdef CONFIG_WPA_SUPP
             if (wlan.networks[i].role == WLAN_BSS_ROLE_STA)
             {
@@ -8483,11 +8719,36 @@ int wlan_stop_network(const char *name)
 #if defined(RW610)
 int wlan_remove_all_networks(void)
 {
+#ifdef CONFIG_WPA2_ENTP
+    unsigned int i;
+#endif
     void *intrfc_handle = NULL;
     /* No need to remove net interfaces here, as they are added only once.
      * Moreover, removing and adding net interface will increase netif_num cumulatively,
      * which will mismatch with "ua2" during creating dhcpd.
      */
+#ifdef CONFIG_WPA2_ENTP
+    /* find all networks to free security key memory */
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].security.tls_cert.ca_chain)
+        {
+            wm_mbedtls_free_cert(wlan.networks[i].security.tls_cert.ca_chain);
+            wlan.networks[i].security.tls_cert.ca_chain = NULL;
+        }
+        if (wlan.networks[i].security.tls_cert.own_cert)
+        {
+            wm_mbedtls_free_cert(wlan.networks[i].security.tls_cert.own_cert);
+            wlan.networks[i].security.tls_cert.own_cert = NULL;
+        }
+        if (wlan.networks[i].security.tls_cert.own_key)
+        {
+            wm_mbedtls_free_key(wlan.networks[i].security.tls_cert.own_key);
+            wlan.networks[i].security.tls_cert.own_key = NULL;
+        }
+    }
+#endif
+
     intrfc_handle = net_get_sta_handle();
     net_interface_down(intrfc_handle);
 
@@ -8507,6 +8768,21 @@ void wlan_destroy_all_tasks(void)
         os_thread_delete(&wlan.cm_main_thread);
         wlan.cm_main_thread = NULL;
     }
+
+#ifdef CONFIG_WPS2
+    /* Destroy wps_main thread */
+    if (wlan_wps.wps_main_thread)
+    {
+        os_thread_delete(&wlan_wps.wps_main_thread);
+        wlan_wps.wps_main_thread = NULL;
+
+        if (wlan_wps.wps_scan_done != NULL)
+        {
+            os_semaphore_delete(&wlan_wps.wps_scan_done);
+            wlan_wps.wps_scan_done = NULL;
+        }
+    }
+#endif
 
     /* Destroy wifidriver thread */
     wifi_destroy_wifidriver_tasks();
@@ -8596,6 +8872,13 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_imu_get_task_lock();
             /* Destroy all tasks before touch the global vars */
             wlan_destroy_all_tasks();
+#ifdef CONFIG_WPS2
+            wps_stop();
+#endif /* CONFIG_WPS2 */
+
+#ifdef CONFIG_WPA2_ENTP
+            wlan_free_entp_cert_files();
+#endif
 
             wlan_imu_put_task_lock();
             /* Clear wlcmgr */
@@ -8753,12 +9036,16 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 #endif
 
     res->wmm = (uint8_t)desc->wmm_ie_present;
-#ifdef CONFIG_WPA_SUPP_WPS
+#if defined(CONFIG_WPA_SUPP_WPS)
     if (desc->wps_IE_exist == true)
     {
         res->wps         = desc->wps_IE_exist;
         res->wps_session = desc->wps_session;
     }
+#elif defined(CONFIG_WPS2)
+    if (desc->wps_IE_exist == true)
+        res->wps = desc->wps_IE_exist;
+    res->wps_session = desc->wps_session;
 #endif
     if (desc->WPA_WPA2_WEP.wpa2_entp != 0U)
     {
@@ -8899,6 +9186,10 @@ void wlan_set_mac_addr(uint8_t *mac)
     {
         wifi_set_mac_addr(mac);
     }
+#ifdef CONFIG_WPS2
+    (void)memcpy(wps_global.my_mac_addr, mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(wps_global.l2->my_mac_addr, mac, MLAN_MAC_ADDR_LENGTH);
+#endif
 }
 
 int wlan_scan(int (*cb)(unsigned int count))
@@ -9432,6 +9723,37 @@ int wlan_deepsleepps_off(void)
         return WLAN_ERROR_STATE;
     }
 }
+
+#ifdef CONFIG_WPS2
+int wlan_start_wps_pbc()
+{
+    wlan_wps.wps_state = PROV_WPS_PBC_ENABLED;
+    wlan_wps.wps_cmd   = CMD_WPS_PBC;
+    wlan_wps.wps_pin   = 0;
+
+    return WM_SUCCESS;
+}
+
+void wlan_wps_generate_pin(uint32_t *pin)
+{
+    wps_generate_pin(pin);
+}
+
+int wlan_start_wps_pin(uint32_t pin)
+{
+    if (wps_validate_pin(pin) != WM_SUCCESS)
+    {
+        wlcm_d("WPS PIN validation failed for %d", pin);
+        return -WM_FAIL;
+    }
+
+    wlan_wps.wps_state = PROV_WPS_PIN_ENABLED;
+    wlan_wps.wps_cmd   = CMD_WPS_PIN;
+    wlan_wps.wps_pin   = pin;
+
+    return WM_SUCCESS;
+}
+#endif
 
 #ifdef STREAM_2X2
 int wlan_set_current_ant(uint8_t tx_antenna, uint8_t rx_antenna)
@@ -11831,6 +12153,19 @@ int wlan_get_drcs_cfg(wlan_drcs_cfg_t *drcs_cfg, int num)
 }
 #endif
 
+#ifdef CONFIG_WPS2
+void wlan_set_prov_session(int session)
+{
+    prov_session_attempt = session;
+    wps_conf.prov_session = session;
+}
+
+int wlan_get_prov_session(void)
+{
+    return prov_session_attempt;
+}
+#endif
+
 #ifdef CONFIG_1AS
 int wlan_get_fw_timestamp(wlan_correlated_time_t *time)
 {
@@ -12431,8 +12766,9 @@ int wlan_wps_ap_cancel(void)
 }
 #endif
 #endif
+#endif
 
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
 static void wlan_entp_cert_cleanup()
 {
@@ -12777,7 +13113,6 @@ void wlan_free_entp_cert_files(void)
 #endif
 #endif
 }
-#endif
 #endif
 
 #ifdef CONFIG_NET_MONITOR

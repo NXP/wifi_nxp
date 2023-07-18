@@ -258,7 +258,7 @@ void wlan_send_timing_measurement_req_frame(mlan_private *pmpriv, t_u8 *ta, t_u8
     /* set tx_token_id to 1 to get tx_status_event from FW */
     txpd              = (TxPD *)(void *)(buf + INTF_HEADER_LEN);
     txpd->tx_token_id = 1;
-    (void)wlan_xmit_pkt(len, pmpriv->bss_index);
+    (void)wlan_xmit_pkt(buf, len, pmpriv->bss_index);
     wlan_outbuf_unlock();
 }
 
@@ -305,7 +305,7 @@ mlan_status wlan_send_timing_measurement_frame(mlan_private *pmpriv)
     /* set tx_token_id to 1 to get tx_status_event from FW */
     txpd              = (TxPD *)(void *)(buf + INTF_HEADER_LEN);
     txpd->tx_token_id = 1;
-    ret               = wlan_xmit_pkt(len, pmpriv->bss_index);
+    ret               = wlan_xmit_pkt(buf, len, pmpriv->bss_index);
     wlan_outbuf_unlock();
     return ret;
 }

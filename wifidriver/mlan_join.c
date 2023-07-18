@@ -23,6 +23,9 @@ Change log:
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
+#ifdef CONFIG_WPS2
+#include "wifi_nxp_wps.h"
+#endif
 /********************************************************
                 Local Constants
 ********************************************************/
@@ -1081,6 +1084,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     if (pmpriv->wps.session_enable == MFALSE)
     {
 #endif /* CONFIG_WPA_SUPP_WPS */
+#elif defined(CONFIG_WPS2)
+    if (wlan_get_prov_session() != PROV_WPS_SESSION_ATTEMPT)
+    {
 #endif
         /* fixme: The above 'if' is used instead of below 'if' for now since
            WPS module is mlan integrated yet. Fix after it is done.
@@ -1221,6 +1227,8 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #ifdef CONFIG_WPA_SUPP_WPS
     }
 #endif /* CONFIG_WPA_SUPP_WPS */
+#elif defined(CONFIG_WPS2)
+    }
 #endif
 
     if ((pauth_tlv != MNULL) && (pauth_tlv->auth_type == wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae)))

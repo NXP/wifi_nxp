@@ -4617,6 +4617,36 @@ int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_WPS2
+/* enable/disable WPS session */
+int wifi_send_wps_cfg_cmd(int option)
+{
+    mlan_ioctl_req req;
+    mlan_ds_wps_cfg pwps;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&pwps, 0x00, sizeof(mlan_ds_wps_cfg));
+    pwps.sub_command = MLAN_OID_WPS_CFG_SESSION;
+    if (option)
+        pwps.param.wps_session = MLAN_WPS_CFG_SESSION_START;
+    else
+        pwps.param.wps_session = MLAN_WPS_CFG_SESSION_END;
+    req.pbuf      = (t_u8 *)&pwps;
+    req.buf_len   = sizeof(mlan_ds_wps_cfg);
+    req.bss_index = 0;
+    req.req_id    = MLAN_IOCTL_WPS_CFG;
+    req.action    = MLAN_ACT_SET;
+
+    mlan_status rv = wlan_ops_sta_ioctl(mlan_adap, &req);
+    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+#endif /* CONFIG_WPS2 */
+
 wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
                                       mlan_802_11_mac_addr *DestAddr,
                                       mlan_802_11_mac_addr *SrcAddr,

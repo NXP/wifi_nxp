@@ -1601,6 +1601,17 @@ int wifi_set_rssi_low_threshold(uint8_t *low_rssi);
 void wifi_show_os_mem_stat();
 #endif
 
+#ifdef CONFIG_WPS2
+/**
+ * enable/disable WPS session
+ *
+ * \param[in] option -- 1 is WPS session START, 0 is WPS session END
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_send_wps_cfg_cmd(int option);
+#endif /* CONFIG_WPS2 */
+
 #ifdef CONFIG_MULTI_CHAN
 /**
  * Set multi-channel stayed time in us.
