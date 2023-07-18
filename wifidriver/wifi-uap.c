@@ -492,8 +492,9 @@ static int wifi_cmd_uap_config(char *ssid,
     {
 #ifdef CONFIG_5GHz_SUPPORT
         if (channel > MAX_CHANNELS_BG)
-        {
-            if (wlan_11h_radar_detect_required(pmpriv, channel))
+        {   
+	        mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];  
+            if ((priv_sta->media_connected == MFALSE) && wlan_11h_radar_detect_required(pmpriv, channel))
             {
                 wuap_e("Cannot start uAP on DFS channel %d", channel);
                 return -WM_E_INVAL;
