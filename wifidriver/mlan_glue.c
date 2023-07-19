@@ -3078,7 +3078,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                  sizeof(pmpriv->adapter->blacklist_bss.bssids));
                     pmpriv->adapter->blacklist_bss.num_bssid = 0;
                 }
+#ifdef CONFIG_WPA_SUPP
             assoc_resp_ret:
+#endif
                 (void)wifi_event_completion(WIFI_EVENT_ASSOCIATION, result, NULL);
             }
             break;
@@ -7112,11 +7114,9 @@ void wifi_wmm_tx_stats_dump(int bss_type)
     wifi_w("    rx_reorder_drop[%hu]", priv->driver_error_cnt.rx_reorder_drop);
 
     int free_cnt_real   = 0;
-    int free_cnt_stat   = 0;
     mlan_linked_list *p = MNULL;
 
     mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
-    free_cnt_stat = mlan_adap->outbuf_pool.free_cnt;
 
     p = util_peek_list(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list, MNULL, MNULL);
     while (p && p != (mlan_linked_list *)&mlan_adap->outbuf_pool.free_list)
@@ -7126,7 +7126,7 @@ void wifi_wmm_tx_stats_dump(int bss_type)
     }
 
     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
-    wifi_w("TX buffer pool: free_cnt[%d] real_free_cnt[%d]", free_cnt_stat, free_cnt_real);
+    wifi_w("TX buffer pool: free_cnt[%d] real_free_cnt[%d]", mlan_adap->outbuf_pool.free_cnt, free_cnt_real);
 
 #ifdef CONFIG_WMM_DEBUG
     for (i = 0; i < MAX_AC_QUEUES; i++)

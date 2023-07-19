@@ -500,8 +500,6 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer)
  */
 static void low_level_init(struct netif *netif)
 {
-    struct ethernetif *ethernetif = (struct ethernetif *)netif->state;
-
     /* set MAC hardware address length */
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
 

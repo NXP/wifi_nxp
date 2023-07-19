@@ -130,7 +130,6 @@ void imu_wakeup_card();
 #ifdef CONFIG_WIFI_TX_BUFF
 int _wlan_return_all_tx_buf(imu_link_t link);
 #endif
-void mlan_disable_hs_wakeup_irq();
 
 int imu_create_task_lock(void);
 void imu_delete_task_lock(void);

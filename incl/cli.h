@@ -21,6 +21,10 @@
 #define __CLI_H__
 #include <wmtypes.h>
 
+#ifdef RW610
+#define COEX_APP_SUPPORT
+#endif
+
 /** Structure for registering CLI commands */
 struct cli_command
 {

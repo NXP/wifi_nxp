@@ -2282,6 +2282,7 @@ static mlan_status wlan_wmm_ioctl_qos(IN pmlan_adapter pmadapter, IN pmlan_ioctl
 }
 #endif
 #ifdef CONFIG_WMM_UAPSD
+#ifndef CONFIG_MLAN_WMSDK
 /**
  *  @brief Request for add a TSPEC
  *
@@ -2459,6 +2460,7 @@ static mlan_status wlan_wmm_ioctl_ts_status(IN pmlan_adapter pmadapter, IN pmlan
     LEAVE();
     return ret;
 }
+#endif
 #endif
 #ifdef CONFIG_WMM_UAPSD
 /**

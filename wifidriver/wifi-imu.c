@@ -289,9 +289,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     IMUPkt *imuhdr       = (IMUPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
-#ifdef CONFIG_WMM
-    t_u8 *data_ptr = (t_u8 *)pbuf;
-#endif
+    
     ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
@@ -1492,65 +1490,6 @@ void WL_MCI_WAKEUP_DONE0_DriverIRQHandler(void)
     EnableIRQ(irq_num);
 }
 
-void WL_MCI_WAKEUP1_DriverIRQHandler(void)
-{
-    IRQn_Type irq_num = WL_MCI_WAKEUP1_IRQn;
-
-    DisableIRQ(irq_num);
-    /* Set WLAN wakeup done */
-    PMU->WL_BLE_WAKEUP_DONE |= PMU_WL_BLE_WAKEUP_DONE_WL_DONE_BIT1(1);
-    /* Clear wakeup source */
-    POWER_ClearWakeupStatus(WL_MCI_WAKEUP1_IRQn);
-    EnableIRQ(irq_num);
-}
-
-void BLE_MCI_WAKEUP_DONE0_DriverIRQHandler(void)
-{
-    IRQn_Type irq_num = BLE_MCI_WAKEUP_DONE0_IRQn;
-
-    /* Mask IMU ICU interrupt */
-    DisableIRQ(irq_num);
-    /* Clear CPU2 wakeup register */
-    PMU_DisableBleWakeup(1);
-    EnableIRQ(irq_num);
-}
-
-void BLE_MCI_WAKEUP1_DriverIRQHandler(void)
-{
-    IRQn_Type irq_num = BLE_MCI_WAKEUP1_IRQn;
-
-    DisableIRQ(irq_num);
-    /* Set BLE wakeup done */
-    PMU->WL_BLE_WAKEUP_DONE |= PMU_WL_BLE_WAKEUP_DONE_BLE_DONE_BIT1(1);
-    /* Clear wakeup source */
-    POWER_ClearWakeupStatus(BLE_MCI_WAKEUP1_IRQn);
-    EnableIRQ(irq_num);
-}
-
-void mlan_enable_hs_wakeup_irq()
-{
-    /* Enable WLAN Wakeup Mask interrupt */
-    NVIC_SetPriority(WL_MCI_WAKEUP1_IRQn, MCI_WAKEUP_SRC_PRIORITY);
-    NVIC_EnableIRQ(WL_MCI_WAKEUP1_IRQn);
-    /* Enable BLE Wakeup Mask interrupt */
-    NVIC_SetPriority(BLE_MCI_WAKEUP1_IRQn, MCI_WAKEUP_SRC_PRIORITY);
-    NVIC_EnableIRQ(BLE_MCI_WAKEUP1_IRQn);
-    /* Enable WLAN Wakeup Mask */
-    POWER_ClearWakeupStatus(WL_MCI_WAKEUP1_IRQn);
-    POWER_EnableWakeup(WL_MCI_WAKEUP1_IRQn);
-    /* Enable BLE Wakeup Mask */
-    POWER_ClearWakeupStatus(BLE_MCI_WAKEUP1_IRQn);
-    POWER_EnableWakeup(BLE_MCI_WAKEUP1_IRQn);
-}
-
-void mlan_disable_hs_wakeup_irq()
-{
-    NVIC_DisableIRQ(WL_MCI_WAKEUP1_IRQn);
-    NVIC_ClearPendingIRQ(WL_MCI_WAKEUP1_IRQn);
-    NVIC_DisableIRQ(BLE_MCI_WAKEUP1_IRQn);
-    NVIC_ClearPendingIRQ(BLE_MCI_WAKEUP1_IRQn);
-}
-
 void mlan_init_wakeup_irq()
 {
     /* Enable WLAN wakeup done interrupt */
@@ -1694,7 +1633,6 @@ void imu_wifi_deinit(void)
 #endif
 
     mlan_deinit_wakeup_irq();
-    mlan_disable_hs_wakeup_irq();
     HAL_ImuDeinit(kIMU_LinkCpu1Cpu3, flag);
 
     mlan_subsys_deinit();

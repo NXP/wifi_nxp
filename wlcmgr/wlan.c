@@ -12659,7 +12659,9 @@ void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
 
 void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
 {
+#ifndef CONFIG_WNM_PS
     unsigned int condition = 0;
+#endif
 
     if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
     {
