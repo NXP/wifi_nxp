@@ -5633,8 +5633,11 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
-    wakelock_get();
-    wlan.connect_wakelock_taken = true;
+    if (!wlan.connect_wakelock_taken)
+    {
+        wakelock_get();
+        wlan.connect_wakelock_taken = true;
+    }
 #endif
 #ifdef CONFIG_WLAN_FAST_PATH
     /* Mark the fast path cache invalid. */
