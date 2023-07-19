@@ -1264,7 +1264,11 @@ int cli_init(void)
 #ifdef CONFIG_UART_INTERACTIVE
 	ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_1);
 #else
-	ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
+#ifdef CONFIG_NCP_BRIDGE
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_3);
+#else
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
+#endif
 #endif
     if (ret != WM_SUCCESS)
     {

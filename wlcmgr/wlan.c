@@ -74,6 +74,10 @@
 #endif
 #endif
 
+#ifdef CONFIG_NCP_BRIDGE
+#include "app_notify.h"
+#endif
+
 #define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
 
@@ -123,6 +127,12 @@ static int ps_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
 #ifdef CONFIG_WPA2_ENTP
 extern int wpa2_ent_connect(struct wlan_network *wpa2_network);
 extern void wpa2_shutdown();
+#endif
+
+#ifdef CONFIG_NCP_BRIDGE
+/* uap provision callbacks */
+int (*uap_prov_deinit_cb)(void) = NULL;
+void (*uap_prov_cleanup_cb)(void) = NULL;
 #endif
 
 #ifdef CONFIG_WMSTATS
@@ -1113,6 +1123,9 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
             ret = wlan_send_host_sleep_int(wlan.hs_wakeup_condition);
             if (ret != WM_SUCCESS)
             {
+#ifdef CONFIG_NCP_BRIDGE
+                app_notify_event(APP_EVT_HS_CONFIG, APP_EVT_REASON_FAILURE, NULL, 0);
+#endif
                 wlcm_e("Error: Failed to config host sleep");
                 return;
             }
@@ -5588,6 +5601,9 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #endif /* CONFIG_P2P */
     if (if_handle == NULL)
     {
+#ifdef CONFIG_NCP_BRIDGE
+        CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, (void *)(-WM_FAIL));
+#endif
 #ifdef CONFIG_HOST_SLEEP
         wakelock_put();
 #endif
@@ -5612,6 +5628,9 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #endif
              ))
     {
+#ifdef CONFIG_NCP_BRIDGE
+        CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, (void *)(-WM_FAIL));
+#endif
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
         (void)os_rwlock_read_unlock(&ps_rwlock);
 #endif
@@ -8853,6 +8872,11 @@ void wlan_reset(cli_reset_option ResetOption)
 
             /* DHCP Cleanup */
             wlan_dhcp_cleanup();
+#ifdef CONFIG_NCP_BRIDGE
+            /* Stop uap provisioning if it started */
+            if (uap_prov_deinit_cb)
+                uap_prov_deinit_cb();
+#endif
             /* Stop and Remove all network interfaces */
             wlan_remove_all_networks();
 
@@ -8872,6 +8896,10 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_imu_get_task_lock();
             /* Destroy all tasks before touch the global vars */
             wlan_destroy_all_tasks();
+#ifdef CONFIG_NCP_BRIDGE
+            if (uap_prov_cleanup_cb)
+                uap_prov_cleanup_cb();
+#endif
 #ifdef CONFIG_WPS2
             wps_stop();
 #endif /* CONFIG_WPS2 */
@@ -8991,6 +9019,31 @@ static void wlan_mon_thread(os_thread_arg_t data)
             }
         }
     }
+}
+#endif
+
+#ifdef CONFIG_NCP_BRIDGE
+int wlan_stop_all_networks(void)
+{
+    wifi_scan_stop();
+
+    net_interface_down(net_get_sta_handle());
+    wlan_disconnect();
+
+    net_interface_down(net_get_uap_handle());
+    send_user_request(CM_UAP_USER_REQUEST_STOP, 0);
+
+    return WM_SUCCESS;
+}
+
+void wlan_register_uap_prov_deinit_cb(int (*cb)(void))
+{
+    uap_prov_deinit_cb = cb;
+}
+
+void wlan_register_uap_prov_cleanup_cb(void (*cb)(void))
+{
+    uap_prov_cleanup_cb = cb;
 }
 #endif
 

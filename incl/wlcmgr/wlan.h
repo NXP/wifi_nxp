@@ -440,6 +440,12 @@ enum wlan_event_reason
        threshold and frequency. */
     WLAN_REASON_PRE_BEACON_LOST,
 #endif
+#ifdef CONFIG_NCP_BRIDGE
+    /** Scan is done */
+    WLAN_REASON_SCAN_DONE,
+    /** WPS session is done */
+    WLAN_REASON_WPS_SESSION_DONE,
+#endif
 };
 
 /** Wakeup events for which wakeup will occur */
@@ -2060,6 +2066,18 @@ void wlan_destroy_all_tasks(void);
  *  \return FALSE if not started.
  */
 bool wlan_is_started();
+#endif
+
+#ifdef CONFIG_NCP_BRIDGE
+/** uap provisioning deinit callback function */
+void wlan_register_uap_prov_deinit_cb(int (*cb)(void));
+/** uap provisioning cleanup callback function */
+void wlan_register_uap_prov_cleanup_cb(void (*cb)(void));
+/** Stop all wireless network.
+ *
+ *  \return WM_SUCCESS if successful.
+ */
+int wlan_stop_all_networks(void);
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG
