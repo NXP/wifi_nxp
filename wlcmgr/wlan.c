@@ -12651,10 +12651,15 @@ int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t 
 #ifdef CONFIG_WMM_UAPSD
 static t_u8 uapsd_qos_info             = WMM_UAPSD_QOS_INFO;
 static unsigned int uapsd_sleep_period = WMM_UAPSD_SLEEP_PERIOD;
-void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
+int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
 {
-    wifi_wmm_qos_cfg(qos_info, action);
-    uapsd_qos_info = *qos_info;
+    int ret = WM_SUCCESS;
+
+    ret = wifi_wmm_qos_cfg(qos_info, action);
+    if (ret == WM_SUCCESS && action == ACTION_SET)
+        uapsd_qos_info = *qos_info;
+
+    return ret;
 }
 
 void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
@@ -12686,9 +12691,15 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
         wlan_ieeeps_off();
     }
 }
-void wlan_sleep_period(unsigned int *sleep_period, t_u8 action)
+int wlan_sleep_period(unsigned int *sleep_period, t_u8 action)
 {
-    wifi_sleep_period(sleep_period, action);
+    int ret = WM_SUCCESS;
+
+    ret = wifi_sleep_period(sleep_period, action);
+    if (ret == WM_SUCCESS && action == ACTION_SET)
+        uapsd_sleep_period = *sleep_period;
+
+    return ret;
 }
 #endif
 
@@ -12851,14 +12862,14 @@ int wlan_mef_set_multicast(t_u8 mef_action)
     return WM_SUCCESS;
 }
 
-void wlan_config_mef(int type, t_u8 mef_action)
+int wlan_config_mef(int type, t_u8 mef_action)
 {
     int ret;
 
     if(!wlan_is_started())
     {
         (void)PRINTF("MEF configure is not allowed when WIFI is disabled\r\n");
-        return;
+        return -WM_FAIL;
     }
 
     switch (type)
@@ -12901,7 +12912,7 @@ void wlan_config_mef(int type, t_u8 mef_action)
             break;
     }
 
-    return;
+    return ret;
 }
 #endif
 

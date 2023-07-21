@@ -6495,8 +6495,9 @@ int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action)
     return ret;
 }
 
-void wifi_sleep_period(unsigned int *sleep_period, int action)
+int wifi_sleep_period(unsigned int *sleep_period, int action)
 {
+    int ret = WM_SUCCESS;
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
@@ -6505,7 +6506,7 @@ void wifi_sleep_period(unsigned int *sleep_period, int action)
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SLEEP_PERIOD, action, 0, NULL,
                              sleep_period, cmd);
     if (action == HostCmd_ACT_GEN_SET)
-        wifi_wait_for_cmdresp(NULL);
+        ret = wifi_wait_for_cmdresp(NULL);
     else if (action == HostCmd_ACT_GEN_GET)
     {
         mlan_ds_pm_cfg pm_cfg;
@@ -6513,10 +6514,11 @@ void wifi_sleep_period(unsigned int *sleep_period, int action)
         pioctl_buf.pbuf = (t_u8 *)&pm_cfg;
         memset((t_u8 *)&pioctl_buf, 0, sizeof(pioctl_buf));
         memset((t_u8 *)&pm_cfg, 0, sizeof(pm_cfg));
-        wifi_wait_for_cmdresp(&pioctl_buf);
+        ret = wifi_wait_for_cmdresp(&pioctl_buf);
         pm_cfg        = *(mlan_ds_pm_cfg *)pioctl_buf.pbuf;
         *sleep_period = pm_cfg.param.sleep_period;
     }
+    return ret;
 }
 #endif
 

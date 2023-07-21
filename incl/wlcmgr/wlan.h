@@ -2843,9 +2843,9 @@ void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
 void wlan_set_mac_addr(uint8_t *mac);
 
 #ifdef CONFIG_WMM_UAPSD
-void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
+int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
 void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
-void wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
+int wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
 #endif
 
 #ifdef CONFIG_WIFI_TX_BUFF
@@ -5659,22 +5659,6 @@ int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lo
 int wlan_reg_access(wifi_reg_t type, uint16_t action, uint32_t offset, uint32_t *value);
 #endif
 
-#ifdef CONFIG_WMM_UAPSD
-void wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
-/**
- * Enable/disable UAPSD feature
- * \param[in] uapsd_enable 0 to Disable, 1 to enable uapsd.
- *
- */
-void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
-/**
- * Set uapsd sleep time
- * \param[in] sleep_period uapsd sleep time, unit is ms.
- *
- */
-void wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
-#endif
-
 #ifdef CONFIG_TX_AMPDU_PROT_MODE
 /**
  * Set/Get Tx ampdu prot mode.
@@ -5716,8 +5700,10 @@ int wlan_mef_set_auto_ping(t_u8 mef_action);
  *
  * \param[in] type        MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
  * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
  */
-void wlan_config_mef(int type, t_u8 mef_action);
+int wlan_config_mef(int type, t_u8 mef_action);
 /**
  * Use this API to enable IPv6 Neighbor Solicitation offload in Wi-Fi firmware
  *

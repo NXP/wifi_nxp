@@ -643,7 +643,7 @@ void _wifi_set_mac_addr(const uint8_t *mac, mlan_bss_type bss_type);
 
 #ifdef CONFIG_WMM_UAPSD
 int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action);
-void wifi_sleep_period(unsigned int *sleep_period, int action);
+int wifi_sleep_period(unsigned int *sleep_period, int action);
 #endif
 
 #ifdef CONFIG_WIFI_TX_BUFF
@@ -1812,11 +1812,6 @@ typedef struct _wifi_ecsa_info
     /** channel */
     t_u8 channel;
 } wifi_ecsa_info;
-
-#if defined(CONFIG_WMM_UAPSD) || defined(CONFIG_WMM)
-int wifi_wmm_qos_cfg(t_u8 *qos_cfg, t_u8 action);
-void wifi_sleep_period(unsigned int *sleep_period, int action);
-#endif
 
 #ifdef RW610
 #ifdef CONFIG_HOST_SLEEP
