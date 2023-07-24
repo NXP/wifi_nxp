@@ -123,13 +123,13 @@ if RW610
 
 config IMU
     bool "NXP IMU driver support"
-    default n
+    default y
     help
       For driver and firmware communicating through IMU interface.
 
 config FW_LOADER
     bool "NXP firmware loader service support"
-    default n
+    default y
     help
       For driver downloading firmware using loader service.
 
