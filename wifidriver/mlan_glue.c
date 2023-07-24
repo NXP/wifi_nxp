@@ -6784,15 +6784,15 @@ int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
 
     if (ret == WM_SUCCESS)
     {
-        (void)PRINTF("RUTXcmd success, response is \r\n");
+        wifi_d("RUTXcmd success, response is \r\n");
         for (len = 0; len < reqd_len; len++)
         {
-            (void)PRINTF("%x\t", *((uint8_t *)rutxcmd_resp_buff + len));
+            wifi_d("%x\t", *((uint8_t *)rutxcmd_resp_buff + len));
         }
     }
     else
     {
-        (void)PRINTF("RUTXcmd failed error: %d", ret);
+        wifi_d("RUTXcmd failed error: %d", ret);
     }
 
     if (rutxcmd_resp_buff != NULL)
