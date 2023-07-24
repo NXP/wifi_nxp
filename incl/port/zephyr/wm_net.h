@@ -238,14 +238,14 @@ int net_wlan_deinit(void);
  * \rerurn A pointer to STA interface netif structure
  *
  */
-struct netif *net_get_sta_interface(void);
+struct net_if *net_get_sta_interface(void);
 
 /** Get uAP interface netif structure pointer
  *
  * \rerurn A pointer to uAP interface netif structure
  *
  */
-struct netif *net_get_uap_interface(void);
+struct net_if *net_get_uap_interface(void);
 
 /** Get interface name for given netif
  *

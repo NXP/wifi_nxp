@@ -15,7 +15,6 @@ zephyr_library_sources(${WIFI_SRC})
 
 file(GLOB SUPPLICANT_SRC ./wlcmgr/*.c)
 zephyr_library_sources(${SUPPLICANT_SRC})
-
 # include OS abstraction layer source
 zephyr_library_sources(port/os/os_zephyr.c)
 
@@ -44,4 +43,23 @@ zephyr_library_compile_definitions(CONFIG_EXT_SCAN_SUPPORT)
 zephyr_library_compile_definitions(WIFI_ADD_ON=1)
 zephyr_library_compile_definitions(SCAN_CHANNEL_GAP=1)
 zephyr_library_compile_definitions(CONFIG_ENABLE_ERROR_LOGS=1)
+endif()
+
+# macros for wpa_supplicant
+if(CONFIG_WPA_SUPP)
+zephyr_include_directories(
+    wifidriver/incl
+    incl
+    incl/wifidriver
+    incl/wlcmgr
+    incl/port/os
+    incl/port/zephyr
+)
+
+zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if/incl)
+
+# macros for wpa_supplicant
+zephyr_library_compile_definitions(CONFIG_WPA_SUPP_WPS=1)
+#zephyr_library_compile_definitions(CONFIG_WPA_SUPP_AP=1)
+
 endif()
