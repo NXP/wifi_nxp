@@ -160,6 +160,7 @@ static os_thread_stack_define(wifi_drv_stack, 2048);
 static os_thread_stack_define(wifi_powersave_stack, 512);
 #ifdef CONFIG_WMM
 static os_thread_stack_define(wifi_tx_stack, 2048);
+static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
 #endif
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 static os_queue_pool_define(g_powersave_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
@@ -1916,6 +1917,14 @@ static int wifi_core_init(void)
     if (ret != WM_SUCCESS)
     {
         wifi_e("Unable to init wmm buffer pool");
+        goto fail;
+    }
+
+    wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
+    ret = os_queue_create(&wm_wifi.tx_data, "tx_data", sizeof(struct bus_message), &wm_wifi.tx_data_queue_data);
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create tx data queue failed");
         goto fail;
     }
 
@@ -3717,6 +3726,15 @@ static void notify_wifi_driver_tx_event(uint16_t event)
         return;
     }
 
+#ifdef CONFIG_WIFI_ZEPHYR
+    /* TODO: use zephyr event and regroup */
+    struct bus_message msg;
+
+    msg.event = (event & MBIT(TX_TYPE_DATA)) ? MLAN_TYPE_DATA : MLAN_TYPE_NULL_DATA;
+    msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
+
+    os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+#else
     if (__get_IPSR())
     {
         portBASE_TYPE taskToWake = pdFALSE;
@@ -3734,6 +3752,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
         xTaskNotify(wm_wifi.wm_wifi_driver_tx, event, eSetBits);
         portYIELD();
     }
+#endif
 }
 
 int send_wifi_driver_tx_data_event(t_u8 interface)
@@ -3770,6 +3789,9 @@ static void wifi_driver_tx(void *data)
     int i;
     mlan_private *pmpriv    = NULL;
     mlan_adapter *pmadapter = NULL;
+#ifdef CONFIG_ZEPHYR
+    struct bus_message msg;
+#endif
 
     while (1)
     {
@@ -3787,6 +3809,12 @@ static void wifi_driver_tx(void *data)
         taskNotification = 0U;
         event = interface = 0xFF;
 
+#ifdef CONFIG_WIFI_ZEPHYR
+        /* TODO: use zephyr event and regroup */
+        ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
+        event = msg.event;
+        interface = msg.reason;
+#else
         xTaskNotifyWait(0U, ULONG_MAX, &taskNotification, OS_WAIT_FOREVER);
 
         if (taskNotification == 0U)
@@ -3818,6 +3846,7 @@ static void wifi_driver_tx(void *data)
         {
             event = MLAN_TYPE_NULL_DATA;
         }
+#endif
 
         pmadapter = mlan_adap;
 

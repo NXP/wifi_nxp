@@ -75,14 +75,12 @@ void* os_mem_alloc(size_t size)
     lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
     __ASSERT_NO_MSG(lock_ret == 0);
 
-    void *ptr = sys_heap_aligned_alloc(&osa_malloc_heap,
-    					__alignof__(z_max_align_t),
-					size);
+    void *ptr = sys_heap_aligned_alloc(&osa_malloc_heap, __alignof__(z_max_align_t), size);
     if (ptr == NULL && size != 0) {
     	errno = ENOMEM;
     }
 
-    (void) k_mutex_unlock(&osa_malloc_heap_mutex);
+    (void)k_mutex_unlock(&osa_malloc_heap_mutex);
     return ptr;
 }
 
@@ -103,7 +101,7 @@ void *os_mem_realloc(void *old_ptr, size_t new_size)
     lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
     __ASSERT_NO_MSG(lock_ret == 0);
     void *ptr = sys_heap_aligned_realloc(&osa_malloc_heap, old_ptr,
-    	__alignof__(z_max_align_t), new_size);
+        __alignof__(z_max_align_t), new_size);
     if (ptr == NULL && new_size != 0) {
 	return NULL;
     }
@@ -404,10 +402,24 @@ int os_semaphore_delete(os_semaphore_t *mhandle)
 }
 
 /*** Timer ***/
+/* TODO: add this to highest prio workqueue */
+static void timer_callback_work_handler(struct k_work *item)
+{
+	struct timer_data *ptimer = CONTAINER_OF(item, struct timer_data, work);
+
+	ptimer->callback(ptimer);
+}
+
 static void timer_callback(struct k_timer *tmr)
 {
-	struct timer_data *ptimer = k_timer_user_data_get(tmr);
-	ptimer->callback(ptimer->user_arg);
+    int ret;
+    struct timer_data *ptimer = k_timer_user_data_get(tmr);
+
+    ret = k_work_submit(&ptimer->work);
+    if (ret < 0)
+    {
+        printk("timer[%p] submit to system queue fail ret %d\r\n", (void *)ptimer, ret);
+    }
 }
 
 int os_timer_create(os_timer_t *timer_t,
@@ -423,15 +435,20 @@ int os_timer_create(os_timer_t *timer_t,
     ptimer = os_mem_alloc(sizeof(struct timer_data));
     if (ptimer == NULL)
     {
-        printk("OS: Timer Alloc fail name %s\r\n", name);
+        printk("OS: Timer Alloc fail\r\n");
         return -WM_FAIL;
     }
 
     ptimer->reload_options = reload;
     ptimer->period = ticks;
+    ptimer->callback = call_back;
     ptimer->user_arg = cb_arg;
     k_timer_init(&ptimer->timer, timer_callback, NULL);
     k_timer_user_data_set(&ptimer->timer, ptimer);
+
+    /* put callback in system work queue thread to avoid non-isr operations in isr context */
+    k_work_init(&ptimer->work, timer_callback_work_handler);
+
     if (activate == OS_TIMER_AUTO_ACTIVATE)
     {
 	    if (ptimer->reload_options == OS_TIMER_ONE_SHOT)
@@ -474,7 +491,7 @@ int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_timer_tick bloc
         return -WM_E_INVAL;
 
     ptimer = (struct timer_data *)(*timer_t);
-    k_timer_start(&ptimer->timer, K_TICKS(ntime), K_TICKS(ntime));
+    ptimer->period = ntime;
     return WM_SUCCESS;
 }
 
@@ -879,6 +896,11 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
 {
     int ret = WM_SUCCESS;
     ret     = os_mutex_create(&(plock->reader_mutex), mutex_name, OS_MUTEX_INHERIT);
+    if (ret == -WM_FAIL)
+    {
+        return -WM_FAIL;
+    }
+    ret     = os_mutex_create(&(plock->write_mutex), mutex_name, OS_MUTEX_INHERIT);
     if (ret == -WM_FAIL)
     {
         return -WM_FAIL;

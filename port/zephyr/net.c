@@ -41,15 +41,6 @@ uint16_t g_data_snr_last;
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] =
 	{0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 
-struct iw416_data {
-	struct net_if *iface;
-	uint8_t mac_addr[6U];
-	struct ethernetif state;
-	struct k_mutex tx_mutex;
-};
-
-struct iw416_data iw416_data;
-
 typedef struct {
     struct net_if *netif;
     struct net_addr ipaddr;
@@ -86,10 +77,13 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
             }
 
             /* full packet send to tcpip_thread to process */
-            lwiperr = net_recv_data(iw416_data.iface, p);
+            if (recv_interface == WLAN_BSS_TYPE_UAP)
+                lwiperr = net_recv_data(g_uap.netif, p);
+            else
+                lwiperr = net_recv_data(g_mlan.netif, p);
             if (lwiperr != 0)
             {
-		LOG_ERR("Net input error");
+                LOG_ERR("Net input error");
                 (void)net_pkt_unref(p);
                 p = NULL;
             }
@@ -107,11 +101,17 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
     }
 }
 
-static struct net_pkt *gen_pkt_from_data(t_u8 *payload, t_u16 datalen)
+static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
+    struct net_pkt *pkt = NULL;
+
+    /* TODO: port wifi_netif.c and use netif_arr[] */
     /* We allocate a network buffer */
-    struct net_pkt *pkt = net_pkt_rx_alloc_with_buffer(iw416_data.iface, datalen,
-    	AF_UNSPEC, 0, K_NO_WAIT);
+    if (interface == WLAN_BSS_TYPE_UAP)
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
+    else
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
+
     if (pkt == NULL)
     {
         return NULL;
@@ -142,7 +142,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 
     t_u8 *payload  = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
-    struct net_pkt *p = gen_pkt_from_data(payload, rxpd->rx_pkt_length);
+    struct net_pkt *p = gen_pkt_from_data(recv_interface, payload, rxpd->rx_pkt_length);
     /* If there are no more buffers, we do nothing, so the data is
        lost. We have to go back and read the other ports */
     if (p == NULL)
@@ -150,11 +150,11 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         return;
     }
 
-
     /* points to packet payload, which starts with an Ethernet header */
     struct net_eth_hdr *ethhdr = NET_ETH_HDR(p);
 
 #ifdef CONFIG_FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
+    /* TODO: port wifi_netif.c */
     if ((ISLOCALLY_ADMINISTERED_ADDR(ethhdr->src.addr[0]) &&
          (!memcmp(&ethhdr->src.addr[3], &iw416_data.mac_addr[3], 3))) ||
         (!memcmp(&ethhdr->src.addr, &iw416_data.mac_addr[0], ETHARP_HWADDR_LEN)))
@@ -223,7 +223,7 @@ void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 d
 
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
 {
-    struct net_pkt *p = gen_pkt_from_data(rcvdata, datalen);
+    struct net_pkt *p = gen_pkt_from_data(interface, rcvdata, datalen);
     if (p == NULL)
     {
         w_pkt_e("[amsdu] No pbuf available. Dropping packet");
@@ -261,89 +261,228 @@ static void printSeparator(void)
     printk("========================================\n");
 }
 
+static struct wlan_network sta_network;
+static struct wlan_network uap_network;
+
+/* Callback Function passed to WLAN Connection Manager. The callback function
+ * gets called when there are WLAN Events that need to be handled by the
+ * application.
+ */
 int wlan_event_callback(enum wlan_event_reason reason, void *data)
 {
-    static int auth_fail = 0;
+    int ret;
+    struct wlan_ip_config addr;
+    char ip[16];
+    static int auth_fail                      = 0;
+    wlan_uap_client_disassoc_t *disassoc_resp = data;
 
     printSeparator();
-    printk("app_cb: WLAN: received event %d\n", reason);
+    PRINTF("app_cb: WLAN: received event %d\r\n", reason);
     printSeparator();
 
     switch (reason)
     {
         case WLAN_REASON_INITIALIZED:
-        	printk("app_cb: WLAN initialized\n");
-        	break;
+            PRINTF("app_cb: WLAN initialized\r\n");
+            printSeparator();
+
+            ret = wlan_basic_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize BASIC WLAN CLIs\r\n");
+                return 0;
+            }
+
+            ret = wlan_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WLAN CLIs\r\n");
+                return 0;
+            }
+            PRINTF("WLAN CLIs are initialized\r\n");
+            printSeparator();
+#ifdef RW610
+            ret = wlan_enhanced_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WLAN CLIs\r\n");
+                return 0;
+            }
+            PRINTF("ENHANCED WLAN CLIs are initialized\r\n");
+            printSeparator();
+
+#ifdef CONFIG_HOST_SLEEP
+            ret = host_sleep_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WLAN CLIs\r\n");
+                return 0;
+            }
+            PRINTF("HOST SLEEP CLIs are initialized\r\n");
+            printSeparator();
+#endif
+#endif
+            help_command(0, NULL);
+            printSeparator();
+            break;
         case WLAN_REASON_INITIALIZATION_FAILED:
-        	printk("app_cb: WLAN: initialization failed\n");
-        	break;
+            PRINTF("app_cb: WLAN: initialization failed\r\n");
+            break;
         case WLAN_REASON_AUTH_SUCCESS:
-        	printk("app_cb: WLAN: authenticated to network\n");
-		/* Add network interface callbacks to wifi manager */
-        //(void)wifi_register_data_input_callback(&handle_data_packet);
-        //(void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
-        //(void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
-        //(void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
-        /* Mark the interface as up */
-		net_if_up(iw416_data.iface);
-		/* Notify the wlan manager that the TCP stack is ready */
- 		wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG,
-			WIFI_EVENT_REASON_SUCCESS, NULL);
-        	break;
+            PRINTF("app_cb: WLAN: authenticated to network\r\n");
+            break;
         case WLAN_REASON_SUCCESS:
-        	printk("app_cb: WLAN: connect succeeded\n");
-		    /* Mark interface as up */
-		    net_eth_carrier_on(iw416_data.iface);
-        	break;
+            net_eth_carrier_on(g_mlan.netif);
+            PRINTF("app_cb: WLAN: connected to network\r\n");
+            ret = wlan_get_address(&addr);
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("failed to get IP address\r\n");
+                return 0;
+            }
+
+            net_inet_ntoa(addr.ipv4.address, ip);
+
+            ret = wlan_get_current_network(&sta_network);
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to get External AP network\r\n");
+                return 0;
+            }
+
+            PRINTF("Connected to following BSS:\r\n");
+            PRINTF("SSID = [%s]\r\n", sta_network.ssid);
+            if (addr.ipv4.address != 0U)
+            {
+                PRINTF("IPv4 Address: [%s]\r\n", ip);
+            }
+#ifdef CONFIG_IPV6
+            int i;
+            for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
+            {
+                if (ip6_addr_isvalid(addr.ipv6[i].addr_state))
+                {
+                    (void)PRINTF("IPv6 Address: %-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc(&addr.ipv6[i]),
+                                 inet6_ntoa(addr.ipv6[i].address), ipv6_addr_state_to_desc(addr.ipv6[i].addr_state));
+                }
+            }
+            (void)PRINTF("\r\n");
+#endif
+            auth_fail = 0;
+            break;
         case WLAN_REASON_CONNECT_FAILED:
-        	printk("app_cb: WLAN: connect failed\n");
-		    net_eth_carrier_off(iw416_data.iface);
-        	break;
+            net_eth_carrier_off(g_mlan.netif);
+            PRINTF("app_cb: WLAN: connect failed\r\n");
+            break;
         case WLAN_REASON_NETWORK_NOT_FOUND:
-        	printk("app_cb: WLAN: network not found\n");
-		    net_eth_carrier_off(iw416_data.iface);
-        	break;
+            net_eth_carrier_off(g_mlan.netif);
+            PRINTF("app_cb: WLAN: network not found\r\n");
+            break;
         case WLAN_REASON_NETWORK_AUTH_FAILED:
-        	printk("app_cb: WLAN: network authentication failed\n");
-		    net_eth_carrier_off(iw416_data.iface);
-        	break;
+            net_eth_carrier_off(g_mlan.netif);
+            PRINTF("app_cb: WLAN: network authentication failed\r\n");
+            auth_fail++;
+            if (auth_fail >= 3)
+            {
+                PRINTF("Authentication Failed. Disconnecting ... \r\n");
+                wlan_disconnect();
+                auth_fail = 0;
+            }
+            break;
         case WLAN_REASON_ADDRESS_SUCCESS:
-        	printk("network mgr: DHCP new lease\n");
-        	break;
+            PRINTF("network mgr: DHCP new lease\r\n");
+            break;
         case WLAN_REASON_ADDRESS_FAILED:
-        	printk("app_cb: failed to obtain an IP address\n");
-        	break;
+            PRINTF("app_cb: failed to obtain an IP address\r\n");
+            break;
         case WLAN_REASON_USER_DISCONNECT:
-        	printk("app_cb: disconnected\n");
-		    net_eth_carrier_off(iw416_data.iface);
-        	auth_fail = 0;
-        	break;
+            net_eth_carrier_off(g_mlan.netif);
+            PRINTF("app_cb: disconnected\r\n");
+            auth_fail = 0;
+            break;
         case WLAN_REASON_LINK_LOST:
-        	printk("app_cb: WLAN: link lost\n");
-        	break;
+            PRINTF("app_cb: WLAN: link lost\r\n");
+            break;
         case WLAN_REASON_CHAN_SWITCH:
-        	printk("app_cb: WLAN: channel switch\n");
-        	break;
+            PRINTF("app_cb: WLAN: channel switch\r\n");
+            break;
         case WLAN_REASON_UAP_SUCCESS:
-        	printk("app_cb: WLAN: UAP Started\n");
-        	break;
+            PRINTF("app_cb: WLAN: UAP Started\r\n");
+            ret = wlan_get_current_uap_network(&uap_network);
+
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to get Soft AP network\r\n");
+                return 0;
+            }
+
+            printSeparator();
+            PRINTF("Soft AP \"%s\" started successfully\r\n", uap_network.ssid);
+            printSeparator();
+            if (dhcp_server_start(net_get_uap_handle()))
+                PRINTF("Error in starting dhcp server\r\n");
+
+            PRINTF("DHCP Server started successfully\r\n");
+            printSeparator();
+            break;
         case WLAN_REASON_UAP_CLIENT_ASSOC:
-           	printk("app_cb: WLAN: UAP a Client Associated\n");
-          	break;
+            PRINTF("app_cb: WLAN: UAP a Client Associated\r\n");
+            printSeparator();
+            PRINTF("Client => ");
+            print_mac((const char *)data);
+            PRINTF("Associated with Soft AP\r\n");
+            printSeparator();
+            break;
+        case WLAN_REASON_UAP_CLIENT_CONN:
+            PRINTF("app_cb: WLAN: UAP a Client Connected\r\n");
+            printSeparator();
+            PRINTF("Client => ");
+            print_mac((const char *)data);
+            PRINTF("Connected with Soft AP\r\n");
+            printSeparator();
+            break;
         case WLAN_REASON_UAP_CLIENT_DISSOC:
-        	printk("app_cb: WLAN: UAP a Client Dissociated\n");
-        	break;
+            printSeparator();
+            PRINTF("app_cb: WLAN: UAP a Client Dissociated:");
+            PRINTF(" Client MAC => ");
+            print_mac((const char *)(disassoc_resp->sta_addr));
+            PRINTF(" Reason code => ");
+            PRINTF("%d\r\n", disassoc_resp->reason_code);
+            printSeparator();
+            break;
         case WLAN_REASON_UAP_STOPPED:
-        	printk("app_cb: WLAN: UAP Stopped\n");
-        	break;
+            PRINTF("app_cb: WLAN: UAP Stopped\r\n");
+            printSeparator();
+            PRINTF("Soft AP \"%s\" stopped successfully\r\n", uap_network.ssid);
+            printSeparator();
+
+            dhcp_server_stop();
+
+            PRINTF("DHCP Server stopped successfully\r\n");
+            printSeparator();
+            break;
         case WLAN_REASON_PS_ENTER:
-        	printk("app_cb: WLAN: PS_ENTER\n");
-        	break;
+            PRINTF("app_cb: WLAN: PS_ENTER\r\n");
+            break;
         case WLAN_REASON_PS_EXIT:
-        	printk("app_cb: WLAN: PS EXIT\n");
-        	break;
+            PRINTF("app_cb: WLAN: PS EXIT\r\n");
+            break;
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+        case WLAN_REASON_RSSI_HIGH:
+        case WLAN_REASON_SNR_LOW:
+        case WLAN_REASON_SNR_HIGH:
+        case WLAN_REASON_MAX_FAIL:
+        case WLAN_REASON_BEACON_MISSED:
+        case WLAN_REASON_DATA_RSSI_LOW:
+        case WLAN_REASON_DATA_RSSI_HIGH:
+        case WLAN_REASON_DATA_SNR_LOW:
+        case WLAN_REASON_DATA_SNR_HIGH:
+        case WLAN_REASON_LINK_QUALITY:
+        case WLAN_REASON_PRE_BEACON_LOST:
+            break;
+#endif
         default:
-        	printk("app_cb: WLAN: Unknown Event: %d\n", reason);
+            PRINTF("app_cb: WLAN: Unknown Event: %d\r\n", reason);
     }
     return 0;
 }
@@ -356,10 +495,8 @@ extern void WL_MCI_WAKEUP0_DriverIRQHandler(void);
 /* IW416 network init thread */
 void net_wifi_init_thread(void *dev, void* arg2, void *arg3)
 {
-	const struct device *iw416_dev = dev;
-	struct iw416_data *data = iw416_dev->data;
-	wifi_mac_addr_t mac_addr;
 	int ret;
+    LOG_ERR("Debug In %s", __func__);
 
     IRQ_CONNECT(72, 1, WL_MCI_WAKEUP0_DriverIRQHandler, 0, 0);
     irq_enable(72);
@@ -377,15 +514,8 @@ void net_wifi_init_thread(void *dev, void* arg2, void *arg3)
 	}
 }
 
-volatile int g_debug_run_flag = 1;
-int debug_cnt;
 static int wifi_net_init(const struct device *dev)
 {
-    while (g_debug_run_flag != 0)
-    {
-        debug_cnt++;
-    }
-    g_debug_run_flag = 0;
     return 0;
 }
 
@@ -396,7 +526,7 @@ static int wifi_net_init_thread(const struct device *dev)
     g_mlan.state.interface = WLAN_BSS_TYPE_STA;
     g_uap.state.interface  = WLAN_BSS_TYPE_UAP;
 
-    /* TODO: do we have to init in new thread? */
+    /* kickoff init thread to avoid stack overflow */
     k_thread_create(&net_wifi_thread, net_wifi_init_stack,
         K_THREAD_STACK_SIZEOF(net_wifi_init_stack),
         net_wifi_init_thread, (void *)dev, NULL, NULL,
@@ -419,127 +549,129 @@ static void wifi_net_iface_init(struct net_if *iface)
     if (!init_done)
     {
         wifi_net_init_thread(dev);
-        wlan_shell_init();
         init_done = 1;
     }
 
-    /* Don't start iface until wifi connects */
     net_if_flag_set(iface, NET_IF_NO_AUTO_START);
-
-    /* Get the MAC address of the wifi device */
-    if (intf->state.interface == WLAN_BSS_TYPE_STA)
-    {
-        ret = wlan_get_mac_address(intf->state.ethaddr.addr);
-        if (ret != 0)
-        {
-            LOG_ERR("could not get STA wifi mac addr");
-            return;
-        }
-    }
-    else if (intf->state.interface == WLAN_BSS_TYPE_UAP)
-    {
-        ret = wlan_get_mac_address_uap(intf->state.ethaddr.addr);
-        if (ret != 0)
-        {
-            LOG_ERR("could not get uAP wifi mac addr");
-            return;
-        }
-    }
-    else
-    {
-        LOG_ERR("unknown interface bss type %d", intf->state.interface);
-        return;
-    }
-
-    net_if_set_link_addr(iface, intf->state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
-    ethernet_init(iface);
-
-    LOG_ERR("wifi_net_iface_init complete %d", intf->state.interface);
 }
+
+extern int retry_attempts;
 
 static int low_level_output(const struct device *dev, struct net_pkt *pkt)
 {
     int ret;
-    uint32_t header_pkt_len, outbuf_len;
-    uint16_t net_pkt_len = net_pkt_get_len(pkt);
-    struct iw416_data *data = dev->data;
-    struct ethernetif *ethernetif = &data->state;
-
-    k_mutex_lock(&data->tx_mutex, K_FOREVER);
+    interface_t *if_handle = (interface_t *)dev->data;
+    t_u8 interface   = if_handle->state.interface;
+    t_u16 net_pkt_len = net_pkt_get_len(pkt);
+    t_u32 pkt_len, outbuf_len;
+    t_u8 *wmm_outbuf = NULL;
 #ifdef CONFIG_WMM
-    t_u8 tid;
-    int retry         = retry_attempts;
-    bool is_udp_frame = false;
-    int pkt_prio      = wifi_wmm_get_pkt_prio(p->payload, &tid, &is_udp_frame);
+    t_u8 *payload = net_pkt_data(pkt);
+    t_u8 tid                      = 0;
+    int retry                     = 0;
+    t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
+    bool is_tx_pause              = false;
+
+    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(payload, &tid);
     if (pkt_prio == -WM_FAIL)
     {
-    	k_mutex_unlock(&data->tx_mutex);
         return -ENOMEM;
     }
-    ret = is_wifi_wmm_queue_full(pkt_prio);
-    while (ret == true && !is_udp_frame && retry > 0)
+
+    if (interface > WLAN_BSS_TYPE_UAP)
     {
-        os_thread_sleep(os_msec_to_ticks(1));
-        ret = is_wifi_wmm_queue_full(pkt_prio);
-        retry--;
+        wifi_wmm_drop_no_media(interface);
+        return -ENOMEM;
     }
+
+    if (wifi_tx_status == WIFI_DATA_BLOCK)
+    {
+        wifi_tx_block_cnt++;
+        return 0;
+    }
+
+    wifi_wmm_da_to_ra(payload, ra);
+
+    do
+    {
+        if (retry != 0)
+        {
+            send_wifi_driver_tx_data_event(interface);
+            k_yield();
+        }
+        else
+        {
+            retry = retry_attempts;
+        }
+
+        wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
+        ret        = (wmm_outbuf == NULL) ? true : false;
+
+        if (is_tx_pause == true)
+        {
+            wifi_wmm_drop_pause_drop(interface);
+            return -ENOMEM;
+        }
+
+        retry--;
+    } while (ret == true && retry > 0);
+
     if (ret == true)
     {
-    	k_mutex_unlock(&data->tx_mutex);
+        wifi_wmm_drop_retried_drop(interface);
         return -ENOMEM;
     }
-    uint8_t *outbuf = wifi_wmm_get_outbuf(&outbuf_len, pkt_prio);
 #else
-    uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
-#endif
-    if (outbuf == NULL)
+    wmm_outbuf = wifi_get_outbuf((uint32_t *)(&outbuf_len));
+
+    if (wmm_outbuf == NULL)
     {
-    	k_mutex_unlock(&data->tx_mutex);
         return -ENOMEM;
     }
+#endif
 
-    header_pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
-    if ((header_pkt_len + net_pkt_len) > outbuf_len) {
-	    while (true) {
-		    printk("Panic: not enough storage in wifi outbuf\n");
-		    k_msleep(3000);
-	    }
-    }
-    (void)memset(outbuf, 0x00, header_pkt_len + net_pkt_len);
+    pkt_len =
+#ifdef CONFIG_WMM
+        sizeof(mlan_linked_list) +
+#endif
+        sizeof(TxPD) + INTF_HEADER_LEN;
 
-    if (net_pkt_read(pkt, outbuf + header_pkt_len, net_pkt_len)) {
-    	k_mutex_unlock(&data->tx_mutex);
+    /* TODO: check if we can zero copy */
+
+    assert(pkt_len + net_pkt_len <= outbuf_len);
+
+    memset(wmm_outbuf, 0x00, pkt_len);
+
+    if (net_pkt_read(pkt, wmm_outbuf + pkt_len, net_pkt_len))
         return -EIO;
-    }
 
+    pkt_len += net_pkt_len;
 
-    ret = wifi_low_level_output(ethernetif->interface, outbuf + header_pkt_len,
-                                net_pkt_len
+    ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len
 #ifdef CONFIG_WMM
                                 ,
                                 pkt_prio, tid
 #endif
     );
 
-    if (ret == -WM_E_NOMEM)
+    if (ret == WM_SUCCESS)
     {
-	LOG_ERR("Wifi Net OOM");
+        ret = 0;
+    }
+    else if (ret == -WM_E_NOMEM)
+    {
+        LOG_ERR("Wifi Net OOM");
         ret = -ENOMEM;
     }
     else if (ret == -WM_E_BUSY)
     {
-	LOG_ERR("Wifi Net Busy");
+        LOG_ERR("Wifi Net Busy");
         ret = -ETIMEDOUT;
-    }
-    else if (ret == WM_SUCCESS)
-    {
-        ret = 0;
     }
     else
     { /* Do Nothing */
     }
 
-    k_mutex_unlock(&data->tx_mutex);
     return ret;
 }
 
@@ -778,7 +910,12 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 #endif /* CONFIG_IPV6 */
 
 /* TODO: DHCP server */
-void dhcp_server_stop()
+int dhcp_server_start(void *intrfc_handle)
+{
+    return 0;
+}
+
+void dhcp_server_stop(void)
 {
 }
 
@@ -867,51 +1004,31 @@ int net_wlan_init(void)
 
     if (!net_wlan_init_done)
     {
-#if 0
-        net_ipv4stack_init();
-
-        ip_2_ip4(&g_mlan.ipaddr)->addr = INADDR_ANY;
-        ret = netifapi_netif_add(&g_mlan.netif, ip_2_ip4(&g_mlan.ipaddr), ip_2_ip4(&g_mlan.ipaddr),
-                                 ip_2_ip4(&g_mlan.ipaddr), NULL, lwip_netif_init, tcpip_input);
+        /* init STA netif */
+        ret = wlan_get_mac_address(g_mlan.state.ethaddr.addr);
         if (ret != 0)
         {
-            net_e("MLAN interface add failed");
-            return -WM_FAIL;
+            net_e("could not get STA wifi mac addr");
+            return;
         }
-#ifdef CONFIG_IPV6
-        net_ipv6stack_init(&g_mlan.netif);
-#endif /* CONFIG_IPV6 */
 
-        ret = netifapi_netif_add(&g_uap.netif, ip_2_ip4(&g_uap.ipaddr), ip_2_ip4(&g_uap.ipaddr),
-                                 ip_2_ip4(&g_uap.ipaddr), NULL, lwip_netif_uap_init, tcpip_input);
+        net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+        ethernet_init(g_mlan.netif);
+
+        /* init uAP netif */
+        ret = wlan_get_mac_address_uap(g_uap.state.ethaddr.addr);
         if (ret != 0)
         {
-            net_e("UAP interface add failed");
-            return -WM_FAIL;
+            net_e("could not get uAP wifi mac addr");
+            return;
         }
-#ifdef CONFIG_IPV6
-        net_ipv6stack_init(&g_uap.netif);
-#endif /* CONFIG_IPV6 */
 
-#ifdef CONFIG_P2P
-        g_wfd.ipaddr.addr = INADDR_ANY;
-        ret               = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
-                                 ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
-        if (ret)
-        {
-            net_e("P2P interface add failed\r\n");
-            return -WM_FAIL;
-        }
-#endif
-
-        LOCK_TCPIP_CORE();
-        netif_add_ext_callback(&netif_ext_callback, netif_ext_status_callback);
-        UNLOCK_TCPIP_CORE();
+        net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+        ethernet_init(g_uap.netif);
 
         net_wlan_init_done = 1;
+        net_d("Initialized TCP/IP networking stack");
 
-        net_l("Initialized TCP/IP networking stack");
-#endif
         ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT), &dhcp_timer_cb, NULL,
                               OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
         if (ret != WM_SUCCESS)
@@ -921,7 +1038,7 @@ int net_wlan_init(void)
         }
     }
 
-    LOG_ERR("Initialized TCP/IP networking stack");
+    LOG_ERR("Debug Initialized TCP/IP networking stack");
     wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     return WM_SUCCESS;
 }

@@ -127,7 +127,6 @@ out:
 #endif
 }
 
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
 static const char *print_role(enum wlan_bss_role role)
 {
     if (role == WLAN_BSS_ROLE_STA)
@@ -147,7 +146,6 @@ static const char *print_role(enum wlan_bss_role role)
         return "unknown";
     }
 }
-#endif
 
 inline static const char *sec_tag(struct wlan_network *network)
 {
@@ -1584,7 +1582,6 @@ enum wps_session_types
 
 static int __scan_cb(unsigned int count)
 {
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     struct wlan_scan_result res;
     unsigned int i;
     int err;
@@ -1778,7 +1775,6 @@ static int __scan_cb(unsigned int count)
         }
 #endif
     }
-#endif
 
     return 0;
 }

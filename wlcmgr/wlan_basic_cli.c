@@ -36,14 +36,12 @@ static void test_wfa_wlan_version(int argc, char **argv)
 
 static void test_wlan_version(int argc, char **argv)
 {
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     char *version_str;
 
     version_str = wlan_get_firmware_version_ext();
 
     (void)PRINTF("WLAN Driver Version   : %s\r\n", WLAN_DRV_VERSION);
     (void)PRINTF("WLAN Firmware Version : %s\r\n", version_str);
-#endif
 }
 
 static void test_wlan_get_mac_address(int argc, char **argv)

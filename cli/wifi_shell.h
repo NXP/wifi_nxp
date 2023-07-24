@@ -34,13 +34,6 @@ struct cli_command
     void (*function)(int argc, char **argv);
 };
 
-/** Init wlan cli for shell
- *
- * \return 0 on success
- * \return -1 on failure
- */
-int wlan_shell_init(void);
-
 /** Register a CLI command
  *
  * This function registers a command with the command-line interface.

@@ -212,20 +212,6 @@ static const struct cli_command *lookup_command(char *name, int len)
     return NULL;
 }
 
-int wlan_shell_init()
-{
-    int ret;
-
-    ret = wlan_cli_init();
-    if (ret != 0)
-    {
-        printk("wlan shell cli init fail ret %d\r\n", ret);
-        return -1;
-    }
-
-    return 0;
-}
-
 /* prints all registered commands and their help text string, if any. */
 void help_command(int argc, char **argv)
 {
@@ -244,8 +230,11 @@ void help_command(int argc, char **argv)
     }
 }
 
-/* syntax: wlan wlan-add ... */
-static int cmd_wlan(const struct shell *shell, size_t argc, char **argv)
+/**
+ *  wlan shell entry
+ *  syntax: wlansh wlan-add ...
+ */
+static int cmd_wlansh(const struct shell *shell, size_t argc, char **argv)
 {
     struct cli_command *command = NULL;
 
@@ -274,7 +263,7 @@ static int cmd_wlan(const struct shell *shell, size_t argc, char **argv)
     return 0;
 }
 
-SHELL_CMD_ARG_REGISTER(wlan, NULL, "WLAN commands", cmd_wlan, 2, 10);
+SHELL_CMD_ARG_REGISTER(wlansh, NULL, "WLAN commands", cmd_wlansh, 2, 10);
 SHELL_CMD_ARG_REGISTER(wifi_scan, NULL, "Scan for wifi", cmd_wifi_scan, 1, 0);
 SHELL_CMD_ARG_REGISTER(wifi_connect, NULL, "Connect to wifi", cmd_wifi_connect, 4, 0);
 SHELL_CMD_ARG_REGISTER(wifi_disconnect, NULL, "Disconnect wifi", cmd_wifi_disconnect, 1, 0);

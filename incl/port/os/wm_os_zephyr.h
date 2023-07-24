@@ -128,6 +128,19 @@ typedef struct {
 	k_thread_stack_t *stack;
 } os_thread_stack_t;
 
+#ifdef CONFIG_NO_OPTIMIZATIONS
+/**
+ * Helper macro to define the stack size (in bytes) before a new thread is
+ * created using the function os_thread_create().
+ * Double stack size for -O0 optimization level as threads consume much more stack memory.
+ */
+#define os_thread_stack_define(stackname, stacksize) 			\
+	K_THREAD_STACK_DEFINE(stackname##_stack, (stacksize * 2));		\
+	os_thread_stack_t stackname = {					\
+		.size = K_THREAD_STACK_SIZEOF(stackname##_stack),	\
+		.stack = stackname##_stack,				\
+	};
+#else
 /**
  * Helper macro to define the stack size (in bytes) before a new thread is
  * created using the function os_thread_create().
@@ -138,6 +151,7 @@ typedef struct {
 		.size = K_THREAD_STACK_SIZEOF(stackname##_stack),	\
 		.stack = stackname##_stack,				\
 	};
+#endif
 
 typedef k_tid_t os_thread_t;
 
@@ -197,8 +211,7 @@ static inline int os_thread_create(os_thread_t *thandle,
                                    int prio)
 {
     *thandle = k_thread_create(&stack->thread, stack->stack,
-    	stack->size, thread_wrapper,
-	main_func, arg, NULL, prio, 0, K_NO_WAIT);
+        stack->size, thread_wrapper, main_func, arg, NULL, prio, 0, K_NO_WAIT);
     k_thread_name_set(*thandle, name);
     return WM_SUCCESS;
 }
@@ -328,9 +341,8 @@ static inline void os_thread_self_complete(os_thread_t *thandle)
     }
 }
 
-#define CONFIG_WIFI_MAX_PRIO 1
 #ifndef CONFIG_WIFI_MAX_PRIO
-#error Define CONFIG_WIFI_MAX_PRIO in wifi_config.h
+#define CONFIG_WIFI_MAX_PRIO 1
 #endif
 #define OS_PRIO_0 CONFIG_WIFI_MAX_PRIO /** High **/
 #define OS_PRIO_1 (CONFIG_WIFI_MAX_PRIO + 1)
@@ -916,6 +928,7 @@ struct timer_data {
 	int period;
 	int reload_options;
 	struct k_timer timer;
+	struct k_work work;
 };
 
 typedef struct timer_data *os_timer_t;
