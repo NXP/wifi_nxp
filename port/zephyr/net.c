@@ -49,6 +49,9 @@ typedef struct {
     struct ethernetif state;
 } interface_t;
 
+static struct net_mgmt_event_callback wifi_dhcp_cb;
+#define DHCPV4_MASK (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
+
 static interface_t g_mlan;
 static interface_t g_uap;
 
@@ -736,6 +739,21 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 #endif
 }
 
+static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
+{
+    const struct wifi_status *status = (const struct wifi_status *)cb->info;
+    enum wifi_event_reason wifi_event_reason;
+
+    switch (mgmt_event) {
+        case NET_EVENT_IPV4_DHCP_BOUND:
+            wifi_event_reason = WIFI_EVENT_REASON_SUCCESS;
+            wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
+            break;
+        default:
+            break;
+    }
+}
+
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 {
 #ifdef CONFIG_IPV6
@@ -814,20 +832,11 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             net_if_up(if_handle->netif);
             break;
         case ADDR_TYPE_DHCP:
-            /* TODO: DHCP */
-#if 0
-            /* Reset the address since we might be
-               transitioning from static to DHCP */
-            (void)memset(&if_handle->ipaddr, 0, sizeof(ip_addr_t));
-            (void)memset(&if_handle->nmask, 0, sizeof(ip_addr_t));
-            (void)memset(&if_handle->gw, 0, sizeof(ip_addr_t));
-            (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
-                                          ip_2_ip4(&if_handle->gw));
-            (void)netifapi_netif_set_up(&if_handle->netif);
-            (void)os_timer_activate(&dhcp_timer);
-            wm_netif_status_callback_ptr = wm_netif_status_callback;
-            (void)netifapi_dhcp_start(&if_handle->netif);
-#endif
+            net_if_up(if_handle->netif);
+            net_mgmt_init_event_callback(&wifi_dhcp_cb, wifi_net_event_handler, DHCPV4_MASK);
+            net_mgmt_add_event_callback(&wifi_dhcp_cb);
+            os_timer_activate(&dhcp_timer);
+            net_dhcpv4_start(if_handle->netif);
             break;
         case ADDR_TYPE_LLA:
             /* For dhcp, instead of netifapi_netif_set_up, a
@@ -871,10 +880,11 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
+    struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
-    addr->ipv4.address = NET_IPV4_ADDR_U32(if_handle->ipaddr);
-    addr->ipv4.netmask = NET_IPV4_ADDR_U32(if_handle->nmask);
-    addr->ipv4.gw      = NET_IPV4_ADDR_U32(if_handle->gw);
+    addr->ipv4.address = NET_IPV4_ADDR_U32(ipv4->unicast[0].address);
+    addr->ipv4.netmask = ipv4->netmask.s_addr;
+    addr->ipv4.gw      = ipv4->gw.s_addr;
 
     /* TODO: if need DNS server */
 #if 0

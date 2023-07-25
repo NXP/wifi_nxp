@@ -66,11 +66,18 @@ wlan_net_monitor_t g_net_monitor_param = {
 #ifdef CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
+#ifdef CONFIG_WIFI_ZEPHYR
+extern char *net_sprint_addr(sa_family_t af, const void *addr);
+#endif
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+#ifndef CONFIG_WIFI_ZEPHYR
     struct ip4_addr ip, gw, nm, dns1, dns2;
+#else
+    struct in_addr ip, gw, nm;
+#endif
     char addr_type[10] = {0};
 
     /* If the current network role is STA and ipv4 is not connected then do
@@ -79,11 +86,17 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
+#ifndef CONFIG_WIFI_ZEPHYR
     ip.addr   = addr->ipv4.address;
     gw.addr   = addr->ipv4.gw;
     nm.addr   = addr->ipv4.netmask;
     dns1.addr = addr->ipv4.dns1;
     dns2.addr = addr->ipv4.dns2;
+#else
+    ip.s_addr = addr->ipv4.address;
+    gw.s_addr = addr->ipv4.gw;
+    nm.s_addr = addr->ipv4.netmask;
+#endif
     if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
         (void)strncpy(addr_type, "STATIC", strlen("STATIC"));
@@ -99,11 +112,17 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
     (void)PRINTF("\taddress: %s", addr_type);
+#ifndef CONFIG_WIFI_ZEPHYR
     (void)PRINTF("\r\n\t\tIP:\t\t%s", inet_ntoa(ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", inet_ntoa(gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", inet_ntoa(nm));
     (void)PRINTF("\r\n\t\tdns1:\t\t%s", inet_ntoa(dns1));
     (void)PRINTF("\r\n\t\tdns2:\t\t%s", inet_ntoa(dns2));
+#else
+    (void)PRINTF("\r\n\t\tIP:\t\t%s", net_sprint_addr(AF_INET, &ip));
+    (void)PRINTF("\r\n\t\tgateway:\t%s", net_sprint_addr(AF_INET, &gw));
+    (void)PRINTF("\r\n\t\tnetmask:\t%s", net_sprint_addr(AF_INET, &nm));
+#endif
     (void)PRINTF("\r\n");
 out:
 #ifdef CONFIG_IPV6
@@ -124,7 +143,7 @@ out:
     }
 #endif
     return;
-#endif
+//#endif
 }
 
 static const char *print_role(enum wlan_bss_role role)
@@ -211,7 +230,7 @@ static int get_capa(char *arg, uint8_t *wlan_capa)
 
 static void print_network(struct wlan_network *network)
 {
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     (void)PRINTF("\"%s\"\r\n\tSSID: %s\r\n\tBSSID: ", network->name,
                  network->ssid[0] != '\0' ? network->ssid : "(hidden)");
     print_mac(network->bssid);
@@ -472,7 +491,7 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
 #endif
-#endif
+//#endif
 }
 
 /* Parse the 'arg' string as "ip:ipaddr,gwaddr,netmask,[dns1,dns2]" into
@@ -2313,7 +2332,7 @@ static void test_wlan_get_uap_channel(int argc, char **argv)
 
 static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     int i;
     wifi_sta_list_t *sl = NULL;
 
@@ -2339,7 +2358,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
     }
 
     os_mem_free(sl);
-#endif
+//#endif
 }
 
 static void test_wlan_ieee_ps(int argc, char **argv)
