@@ -1843,7 +1843,7 @@ static int wifi_core_init(void)
     }
 
     ret = os_thread_create(&wm_wifi.wm_wifi_powersave_thread, "wifi_powersave", wifi_powersave_thread, NULL, &wifi_powersave_stack,
-                           OS_PRIO_4);
+                           OS_PRIO_3);
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create power save thread failed");
