@@ -11,7 +11,7 @@
 #ifndef __WMLOG_H__
 #define __WMLOG_H__
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include <zephyr/kernel.h>
 
 #ifndef PRINTF

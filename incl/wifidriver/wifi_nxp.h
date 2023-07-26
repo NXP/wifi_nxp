@@ -15,7 +15,6 @@
 #include <wm_net.h>
 #ifdef CONFIG_WPA_SUPP
 
-#if defined(USE_RTOS) && defined(SDK_OS_FREE_RTOS)
 #include <drivers/driver_freertos.h>
 
 typedef struct freertos_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
@@ -25,7 +24,9 @@ typedef struct freertos_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
 #endif
 
 typedef struct freertos_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-#elif defined(CONFIG_ZEPHYR)
+
+#if 0
+/* current zephyr implement uses freertos structures */
 #include <drivers/driver_zephyr.h>
 
 typedef struct zep_wpa_supp_dev_callbk_fns rtos_wpa_supp_dev_callbk_fns;
@@ -35,7 +36,6 @@ typedef struct zep_hostapd_dev_callbk_fns rtos_hostapd_dev_callbk_fns;
 #endif
 
 typedef struct zep_wpa_supp_dev_ops rtos_wpa_supp_dev_ops;
-#else
 #error "Define WPA Supplicant driver interface structs for your RTOS here"
 #endif
 

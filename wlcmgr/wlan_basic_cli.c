@@ -10,7 +10,7 @@
 
 #include <wlan.h>
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include "wifi_shell.h"
 #else
 #include <cli.h>

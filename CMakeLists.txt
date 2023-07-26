@@ -63,6 +63,8 @@ zephyr_include_directories(
 )
 
 zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if/incl)
+file(GLOB WIFI_SUPP_SRC ./wifidriver/wpa_supp_if/*.c)
+zephyr_library_sources(${WIFI_SUPP_SRC})
 
 # macros for wpa_supplicant
 #zephyr_library_compile_definitions(CONFIG_WPA_SUPP_WPS=1)

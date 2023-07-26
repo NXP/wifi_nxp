@@ -18,14 +18,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include <zephyr/kernel.h>
 #include <strings.h>
 #else
 #include "fsl_debug_console.h"
 #endif
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #ifndef PRINTF
 #define PRINTF printk
 #endif
@@ -98,7 +98,7 @@ NORETURN void wmpanic(void);
  */
 static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned max_olen)
 {
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
     unsigned int i;      /* loop iteration variable */
     unsigned int j  = 0; /* current character */
     unsigned int by = 0; /* byte value for conversion */
@@ -143,7 +143,7 @@ static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsign
 #endif
 }
 
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
 /**
  * Convert given binary array to equivalent hex representation.
  *
@@ -155,7 +155,7 @@ static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsign
  * @return void
  */
 void bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
-#endif /* ! CONFIG_WIFI_ZEPHYR */
+#endif /* ! CONFIG_ZEPHYR */
 
 /** Function prototype for a random entropy/seed generator
  *

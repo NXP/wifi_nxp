@@ -14,7 +14,7 @@
 #include <wmtypes.h>
 #include <wlan.h>
 
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
 #include "fsl_debug_console.h"
 #endif
 

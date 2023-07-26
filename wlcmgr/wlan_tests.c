@@ -23,7 +23,7 @@
 #endif
 
 #include <cli_utils.h>
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include "wifi_shell.h"
 #else
 #include <cli.h>
@@ -66,14 +66,14 @@ wlan_net_monitor_t g_net_monitor_param = {
 #ifdef CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 extern char *net_sprint_addr(sa_family_t af, const void *addr);
 #endif
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 //#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
     struct ip4_addr ip, gw, nm, dns1, dns2;
 #else
     struct in_addr ip, gw, nm;
@@ -86,7 +86,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
     ip.addr   = addr->ipv4.address;
     gw.addr   = addr->ipv4.gw;
     nm.addr   = addr->ipv4.netmask;
@@ -112,7 +112,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
     (void)PRINTF("\taddress: %s", addr_type);
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
     (void)PRINTF("\r\n\t\tIP:\t\t%s", inet_ntoa(ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", inet_ntoa(gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", inet_ntoa(nm));

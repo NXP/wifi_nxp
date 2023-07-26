@@ -125,7 +125,7 @@
 #include <stdint.h>
 #include <wifi_events.h>
 #include <wifi.h>
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include <wm_net_decl.h>
 #endif
 

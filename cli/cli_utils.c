@@ -18,7 +18,7 @@
 #include <ctype.h>
 #include <wm_net.h> /* for errno */
 
-#ifndef CONFIG_WIFI_ZEPHYR
+#ifndef CONFIG_ZEPHYR
 #include <fsl_debug_console.h>
 #include <cli.h>
 #endif

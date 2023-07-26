@@ -1862,6 +1862,12 @@ struct netif *net_get_uap_interface(void)
     return (struct netif *)g_uap.netif;
 }
 
+int net_get_if_name_netif(char *pif_name, struct netif *iface)
+{
+    strncpy(pif_name, iface->if_dev->dev->name, NETIF_NAMESIZE);
+    return WM_SUCCESS;
+}
+
 void net_stop_dhcp_timer(void)
 {
     (void)os_timer_deactivate((os_timer_t *)&dhcp_timer);

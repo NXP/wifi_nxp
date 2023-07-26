@@ -11,7 +11,7 @@
 #ifndef __MTF_UTILS_H__
 #define __MTF_UTILS_H__
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include <stdbool.h>
 #endif
 

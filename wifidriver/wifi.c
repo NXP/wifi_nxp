@@ -3719,7 +3719,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
         return;
     }
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
     /* TODO: use zephyr event and regroup */
     struct bus_message msg;
 
@@ -3802,7 +3802,7 @@ static void wifi_driver_tx(void *data)
         taskNotification = 0U;
         event = interface = 0xFF;
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
         /* TODO: use zephyr event and regroup */
         ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         event = msg.event;

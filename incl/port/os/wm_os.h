@@ -42,7 +42,7 @@
 #ifndef _WM_OS_H_
 #define _WM_OS_H_
 
-#ifdef CONFIG_WIFI_ZEPHYR
+#ifdef CONFIG_ZEPHYR
 #include "wm_os_zephyr.h"
 #else
 
