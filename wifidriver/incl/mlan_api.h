@@ -566,4 +566,8 @@ int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 #endif
 
+#ifdef CONFIG_IMD3_CFG
+int wifi_imd3_cfg(t_u8 enable);
+#endif
+
 #endif /* __MLAN_API_H__ */

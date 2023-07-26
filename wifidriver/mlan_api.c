@@ -5743,3 +5743,34 @@ int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
     return wm_wifi.cmd_resp_status;
 }
 #endif
+
+#ifdef CONFIG_IMD3_CFG
+int wifi_imd3_cfg(t_u8 enable)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_ROBUST_COEX);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_IMD3_CFG) + S_DS_GEN);
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x00;
+
+    HostCmd_IMD3_CFG *imd3_cfg = (HostCmd_IMD3_CFG *)&cmd->params.imd3_cfg;
+    imd3_cfg->action           = wlan_cpu_to_le16(ACTION_SET);
+    imd3_cfg->reserved         = 0x00;
+
+    MrvlIETypes_IMD_Config_t *imd_cfg = (MrvlIETypes_IMD_Config_t *)&imd3_cfg->imd_cfg;
+
+    imd_cfg->param.tlv_type   = wlan_cpu_to_le16(TLV_TYPE_IMD_VALIDATION);
+    imd_cfg->param.tlv_length = wlan_cpu_to_le16(sizeof(MrvlIETypes_IMD_Config_t) - sizeof(MrvlIETypes_Coex_params_t));
+
+    imd_cfg->rbc_mode    = 0x00;
+    imd_cfg->reserved    = wlan_cpu_to_le16(enable);
+    imd_cfg->DynamicMode = 0x0000;
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif

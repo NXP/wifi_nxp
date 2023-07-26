@@ -5679,6 +5679,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_ExtBLECoex_Config_t
 /** TLV type : AP ECSA CONFIG TLV */
 #define TLV_TYPE_UAP_ECSA_CONFIG (PROPRIETARY_TLV_BASE_ID + 289)
 
+#ifdef CONFIG_IMD3_CFG
+#define TLV_TYPE_IMD_VALIDATION (PROPRIETARY_TLV_BASE_ID + 0x60) // 0x0160
+#endif
+
 /** TLV : 20/40 coex config */
 #define TLV_TYPE_2040_BSS_COEX_CONTROL (PROPRIETARY_TLV_BASE_ID + 0x98) // 0x0198
 /**TLV type: AP pairwise handshake timeout */
@@ -7374,7 +7378,7 @@ typedef MLAN_PACK_START struct _HostCmd_DUAL_ANT_DUTY_CYCLE
 } MLAN_PACK_END HostCmd_DUAL_ANT_DUTY_CYCLE;
 #endif
 
-#ifdef CONFIG_EXTERNAL_COEX_PTA
+#if defined(CONFIG_EXTERNAL_COEX_PTA) || defined(CONFIG_IMD3_CFG)
 
 /** HostCmd_EXTERNAL_COEX_PTA structure */
 typedef MLAN_PACK_START struct _MrvlIETypes_Coex_params_t
@@ -7384,7 +7388,9 @@ typedef MLAN_PACK_START struct _MrvlIETypes_Coex_params_t
     /** Externel coex pta tlv length */
     t_u16 tlv_length;
 } MLAN_PACK_END MrvlIETypes_Coex_params_t;
+#endif
 
+#ifdef CONFIG_EXTERNAL_COEX_PTA
 /** MrvlIETypes_DualAntDutyCycle_Config_t */
 typedef MLAN_PACK_START struct _MrvlIETypes_ExternalCoexPta_Config_t
 {
@@ -7419,6 +7425,31 @@ typedef MLAN_PACK_START struct _HostCmd_EXTERNAL_COEX_PTA
     /** External Coex Pta Configuration Data */
     MrvlIETypes_ExternalCoexPta_Config_t coex_pta_cfg_data;
 } MLAN_PACK_END HostCmd_EXTERNAL_COEX_PTA;
+#endif
+
+#ifdef CONFIG_IMD3_CFG
+/** MrvlIETypes_IMD_Config_t */
+typedef MLAN_PACK_START struct _MrvlIETypes_IMD_Config_t
+{
+    /** Tlv param*/
+    MrvlIETypes_Coex_params_t param;
+    /** Rbc mode*/
+    t_u8 rbc_mode;
+    /** Reserved filed*/
+    t_u8 reserved;
+    /** Dynamic Mode */
+    t_u16 DynamicMode;
+} MLAN_PACK_END MrvlIETypes_IMD_Config_t;
+/** HostCmd_IMD3_CFG structure */
+typedef MLAN_PACK_START struct _HostCmd_IMD3_CFG
+{
+    /** Get: 0x00, Set: 0x01 */
+    t_u16 action;
+    /** Reserved filed */
+    t_u16 reserved;
+    /** Imd config */
+    MrvlIETypes_IMD_Config_t imd_cfg;
+} MLAN_PACK_END HostCmd_IMD3_CFG;
 #endif
 
 /** HostCmd_DS_COMMAND */
@@ -7720,6 +7751,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #endif
 #ifdef CONFIG_EXTERNAL_COEX_PTA
         HostCmd_EXTERNAL_COEX_PTA external_coex_pta;
+#endif
+#ifdef CONFIG_IMD3_CFG
+        HostCmd_IMD3_CFG imd3_cfg;
 #endif
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;

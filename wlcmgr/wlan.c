@@ -13723,3 +13723,10 @@ int wlan_dpp_reconfig(const char *cmd)
     return wpa_supp_dpp_reconfig(netif, cmd);
 }
 #endif /* CONFIG_WPA_SUPP_DPP */
+
+#ifdef CONFIG_IMD3_CFG
+int wlan_imd3_cfg(t_u8 enable)
+{
+    return wifi_imd3_cfg(enable);
+}
+#endif

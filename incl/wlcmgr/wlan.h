@@ -6305,4 +6305,13 @@ int wlan_dpp_chirp(int is_ap, const char *cmd);
  */
 int wlan_dpp_reconfig(const char *cmd);
 #endif
+
+#ifdef CONFIG_IMD3_CFG
+/**
+ * Set imd validation parameters.
+ * \param[in] enable   enable : 1 / disable : 0
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_imd3_cfg(t_u8 enable);
+#endif
 #endif /* __WLAN_H__ */

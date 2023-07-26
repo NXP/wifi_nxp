@@ -8918,6 +8918,50 @@ static void test_wlan_dpp_reconfig(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_IMD3_CFG
+
+static void dump_wlan_imd3_cfg_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-imd3-cfg <enable / disable>\r\n");
+    (void)PRINTF("    Only support enable now.\r\n");
+}
+
+static void test_wlan_imd3_cfg(int argc, char **argv)
+{
+    int ret = 0;
+    uint8_t enable;
+    unsigned int value;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments.\r\n");
+        dump_wlan_imd3_cfg_usage();
+        return;
+    }
+
+    if (get_uint(argv[1], &value, strlen(argv[1])) || value != 1)
+    {
+        (void)PRINTF("Invalid <enable> argument \r\n");
+        dump_wlan_imd3_cfg_usage();
+        return;
+    }
+
+    enable = value & 0xFF;
+
+    ret = wlan_imd3_cfg(enable);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Success to set IMD cfg.\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Failed to set IMD cfg.\r\n");
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
@@ -9196,6 +9240,9 @@ static struct cli_command tests[] = {
      "timing> "
      "TrafficPrio <enable/disable> CoexHwIntWic <enable/disable>",
      test_wlan_external_coex_pta},
+#endif
+#ifdef CONFIG_IMD3_CFG
+    {"wlan-imd3-cfg", "<enable>", test_wlan_imd3_cfg},
 #endif
 };
 

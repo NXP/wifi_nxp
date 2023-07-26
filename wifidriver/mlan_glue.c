@@ -4175,7 +4175,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
-#if defined(CONFIG_COEX_DUTY_CYCLE) || defined(CONFIG_EXTERNAL_COEX_PTA)
+#if defined(CONFIG_COEX_DUTY_CYCLE) || defined(CONFIG_EXTERNAL_COEX_PTA) || defined(CONFIG_IMD3_CFG)
             case HostCmd_CMD_ROBUST_COEX:
                 if (resp->result == HostCmd_RESULT_OK)
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
