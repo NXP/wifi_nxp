@@ -16,11 +16,7 @@
 #ifndef _WM_NET_H_
 #define _WM_NET_H_
 
-#include <zephyr/kernel.h>
-#include <zephyr/net/ethernet.h>                                                                                                                                             
-#include <zephyr/net/net_pkt.h>                                                                                                                                              
-#include <zephyr/net/net_if.h>
-
+#include <wm_net_decl.h>
 #include <wm_os.h>
 #include <wmtypes.h>
 
@@ -238,14 +234,14 @@ int net_wlan_deinit(void);
  * \rerurn A pointer to STA interface netif structure
  *
  */
-struct net_if *net_get_sta_interface(void);
+struct netif *net_get_sta_interface(void);
 
 /** Get uAP interface netif structure pointer
  *
  * \rerurn A pointer to uAP interface netif structure
  *
  */
-struct net_if *net_get_uap_interface(void);
+struct netif *net_get_uap_interface(void);
 
 /** Get interface name for given netif
  *

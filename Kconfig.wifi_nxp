@@ -133,10 +133,418 @@ config FW_LOADER
     help
       For driver downloading firmware using loader service.
 
-# Increase default heap size, driver needs memory allocation
-config WIFI_NET_HEAP_SIZE
-	int
-	default 16384
+endif
+
+if IW61x
+
+config 11AX
+       bool "802.11ax Support"
+       def_bool y
+       select 11AC
+       #select WMM
+       depends on IW61x
+       help
+         This option enables the use of 802.11ax support. Say Y if you
+	 wish to enable this feature.
+endif
+
+if IW61x || SD8987
+
+config 11AC
+       bool "802.11ac Support"
+       #select WMM
+       def_bool y
+       help
+         This option enables the use of 802.11ac support. Say Y if you
+	 wish to enable this feature.
+
+endif
+
+config WMM
+       bool "802.11 WMM Support"
+       def_bool n
+       help
+         This option enables the use of 802.11 WMM support. Say Y if you
+	 wish to enable this feature.
+
+menu "IPv6 Support"
+
+config IPV6
+	bool "Support for IPv6"
+	def_bool y
+        help
+         This option enables the use of IPv6 support. Say Y if you
+	 wish to enable this feature.
+
+config MAX_IPV6_ADDRESSES
+       int "Maximum IPv6 addresses"
+       range 3 10
+       default 3
+       depends on IPV6
+       help
+       This option sets Maximum number of IPv6 addresses that can be supported. Minimum is three. 
+
+endmenu
+
+if IW61x || SD8987
+
+config 5GHz_SUPPORT
+       bool "5GHz Support(Band A)"
+       def_bool y
+       help
+         This option enables the use of 5GHz. Say Y if you
+	 wish to enable this feature.
+endif
+
+menu "WPA Supplicant"
+config WPA_SUPP
+       bool "WPA Supplicant"
+       default n
+       select REQUIRES_FULL_LIBC
+       help
+       This option enables the use of wpa supplicant and hostapd support. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_THREAD_STACK_SIZE
+       int "WPA Supplicant thread stack size"
+       default 8192
+       depends on WPA_SUPP
+       help
+       This option enables WPS 2.0 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_IFACE_WQ_STACK_SIZE
+       int "WPA Supplicant WQ stack size"
+       default 4096
+       depends on WPA_SUPP
+       help
+       This option enables WPS 2.0 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_WPS
+       bool "WPS 2.0"
+       def_bool n
+       depends on WPA_SUPP
+       help
+       This option enables WPS 2.0 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_WPA3
+       bool "WPA3"
+       def_bool n
+       depends on WPA_SUPP
+       help
+       This option enables WPA3 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_CRYPTO_ENTERPRISE
+       bool "WPA2/3 Enterprise"
+       def_bool n
+       depends on WPA_SUPP
+       help
+       This option enables WPA2/3 Enterprise support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_DEBUG_LEVEL
+       int "WPA Supplicant debug level"
+       range 0 5
+       default 3
+       depends on WPA_SUPP
+       help
+       This option enables WPA2/3 Enterprise support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+config WPA_SUPP_LOG_LEVEL
+       int "WPA Supplicant log level"
+       range 0 5
+       default 3
+       depends on WPA_SUPP
+       help
+       This option enables WPA2/3 Enterprise support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
+
+endmenu
+
+config HOST_SLEEP
+       bool "HOST Sleep"
+       def_bool n
+       help
+	 This option enables HOST Sleep support for MCU.Say Y if you wish to enable this feature.
+
+config ROAMING
+       bool "Wi-Fi Soft Roaming"
+       def_bool y
+       help
+	 This option enables Soft Roaming support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config CLOUD_KEEP_ALIVE
+       bool "Cloud Keep Alive"
+       def_bool n
+       help
+	 This option enables Cloud Keep Alive support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config MEF_CFG
+       bool "Memory Efficient Filtering"
+       def_bool n
+       help
+	 This option enables Memory Efficient Filtering support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config WIFI_FEATURES
+       bool "Wi-Fi features"
+       def_bool n
+       help
+	 This option enables Wi-Fi features support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config OFFLOAD
+       bool "Wi-Fi Offload"
+       def_bool n
+       help
+	 This option enables Wi-Fi offload support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
+       bool "Filter Locally Administered and Self Mac Address"
+       def_bool n
+       help
+         This option enables the filtering of the locally administered MAC address and Self address packets.
+	 Say Y if you wish to enable this feature.
+
+config EXT_SCAN_SUPPORT
+       bool "Extended Scan Support"
+       def_bool y
+       help
+         This option enables the use of extended scan support. Say Y if you wish to enable this feature.
+
+config FIPS
+       bool "FIPS"
+       def_bool y
+       help
+	 This option enables Wi-Fi FIPS support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config OWE
+       bool "Opportunistic Wireless Encryption"
+       def_bool n
+       help
+	 This option enables Wi-Fi Opportunistic Wireless Encryption support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+config 11K
+       bool "802.11k Support"
+       def_bool y
+       help
+         This option enables the use of 802.11k support. Say Y if you
+	 wish to enable this feature.
+
+config 11V
+       bool "802.11v Support"
+       def_bool y
+       help
+         This option enables the use of 802.11v support. Say Y if you
+	 wish to enable this feature.
+
+config 11R
+       bool "802.11r Support"
+       def_bool y
+       help
+         This option enables the use of 802.11r support. Say Y if you
+	 wish to enable this feature.
+
+config WLAN_FW_HEARTBEAT
+	bool "WLAN FW Heartbeat Event Support"
+	def_bool y
+	help
+	  This option enables support for heartbeat event to be sent to the
+	  WLAN firmware periodically. This helps in identifying and taking
+	  corrective action in case the WLAN firmware is inactive or
+	  unresponsive.
+
+menu "uAP configuration"
+
+choice "Wi-Fi Capability"
+	prompt "Wi-Fi Capability"
+        help
+	 This option enables uAP Wi-Fi Capability in the Wi-Fi driver.
+
+config WIFI_SUPPORT_11AX
+        bool "802.11ax"
+        depends on 11AX
+
+config WIFI_SUPPORT_11AC
+        bool "802.11ac"
+        depends on 11AC
+
+config WIFI_SUPPORT_11N
+        bool "802.11n"
+
+config WIFI_SUPPORT_LEGACY
+        bool "802.11g"
+
+endchoice
+
+config WIFI_UAP_WORKAROUND_STICKY_TIM
+       def_bool y
+       help
+	This config enables the workaround of a
+	particular firmware issue which causes packets
+   	being sent on air even if STA is in IEEE PS. When
+	enabled this will enable the sticky TIM bit
+ 	workaround. A downside of this is that the STA
+	client of the uAP will not be able to go in IEEE PS.
+
+endmenu
+
+menu "Development and Debugging"
+
+config ENABLE_ERROR_LOGS
+       bool
+       prompt "Enable error logs"
+       default y
+       help
+		If you enable this, error messages
+		will be printed in case of error
+		conditions. This will increase the
+		size of the image. It is strongly
+		recommended to keep it enabled
+		during development, to quickly
+		localize problems.
+
+config ENABLE_WARNING_LOGS
+       bool
+       prompt "Enable warning logs"
+       default y
+       help
+		If you enable this, error messages
+		will be printed in case of error
+		conditions. This will increase the
+		size of the image. It is strongly
+		recommended to keep it enabled
+		during development, to quickly
+		localize problems.
+
+config DEBUG_BUILD
+       bool
+       prompt  "Debug build"
+       default n
+       help
+		If you enable this the debug options will be
+      		 enabled. Asserts will be also be enabled.
+
+config WLCMGR_DEBUG
+       bool "Wireless Connection Manager"
+       depends on DEBUG_OUTPUT
+       def_bool n
+
+menu "Wifi extra debug options"
+config WIFI_EXTRA_DEBUG
+       bool "Enable extra debug"
+       default n
+       help
+	This macro helps you to get additional debugging
+	information from the wifi driver. For e.g. more
+	detailed reason will be given if an assoc failure
+	happens.
+
+config WIFI_UAP_DEBUG
+       bool "Enable uAP debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will print out logs related
+		to the uAP. This is enable to developer
+		to localize issues related to uAP. Apart from
+		other logs, uAP initialization and configuration
+		logs are printed out.
+
+config WIFI_EVENTS_DEBUG
+       bool "Dump event information"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will dump event codes of
+		events received on from the firmware.
+		This helps the developer to checks the
+		events received from the firmware along
+		with their timestamp.
+
+config WIFI_CMD_RESP_DEBUG
+       bool "Dump command and response codes"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will dump command and response
+		codes send to and received from firmware
+		respectively. Timestamp will also be printed
+		help localize timing issues.
+
+config WIFI_SCAN_DEBUG
+       bool "Scan debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will enable scan code logs
+		This helps the developer to localize wlan
+		scan related issues like split scan, channel
+		selections, etc
+
+config WIFI_IO_INFO_DUMP
+       bool "Input-Output debug (basic)"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will dump information
+		about input/ouput data packets. This information
+		has information like packet size and interface
+		for which packet is destined.
+
+config WIFI_IO_DEBUG
+       bool "Input-Output debug (advanced)"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will enable I/O debugging
+		of wifi driver. This enables you to see
+		how the driver is interacting with the
+		SDIO bus.
+
+config WIFI_IO_DUMP
+       bool "Hex Dump packets"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will enable I/O debugging
+		of wifi driver. This enables you to see
+		all the packets that are received/sent from/to
+		the SDIO bus.
+
+config WIFI_MEM_DEBUG
+       bool "Allocations debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will enable monitoring
+		memory allocations and free's done by
+		the wifi driver. This enables you to gauge
+		and/or debug heap memory used by the driver.
+
+config WIFI_AMPDU_DEBUG
+       bool "AMPDU debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will help you to  monitor what
+		is happening to AMPDU Rx packets. Note
+		that AMPDU Tx is not supported by the driver. Note that
+		you will need to enable timer debug separately to see
+		timer activity going on during out of order packets
+		handling.
+
+config WIFI_TIMER_DEBUG
+       bool "Timers debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+       	 Enable this to monitor timer activity of the
+	 driver. Timers are generally used for AMPDU out of
+	 order packet handling. It is also used for command
+	 timeout related functionality.
+
+config WIFI_SDIO_DEBUG
+       bool "SDIO debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+	Enable this to monitor SDIO driver read write errors
+	 for data and command operations.
 
 config WIFI_INIT_STACK_SIZE
 	int

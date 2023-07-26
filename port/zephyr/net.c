@@ -688,14 +688,14 @@ void *net_get_uap_handle(void)
     return &g_uap;
 }
 
-struct net_if *net_get_sta_interface(void)
+struct netif *net_get_sta_interface(void)
 {
-    return g_mlan.netif;
+    return (struct netif *)g_mlan.netif;
 }
 
-struct net_if *net_get_uap_interface(void)
+struct netif *net_get_uap_interface(void)
 {
-    return g_uap.netif;
+    return (struct netif *)g_uap.netif;
 }
 
 void net_stop_dhcp_timer(void)

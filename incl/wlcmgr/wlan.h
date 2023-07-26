@@ -125,6 +125,9 @@
 #include <stdint.h>
 #include <wifi_events.h>
 #include <wifi.h>
+#ifdef CONFIG_WIFI_ZEPHYR
+#include <wm_net_decl.h>
+#endif
 
 #define WLAN_DRV_VERSION "v1.3.r46.p7"
 
