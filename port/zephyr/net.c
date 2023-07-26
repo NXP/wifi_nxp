@@ -20,6 +20,13 @@ LOG_MODULE_REGISTER(wifi_nxp, CONFIG_WIFI_LOG_LEVEL);
 #include "netif_decl.h"
 #include "wm_net.h"
 #include "wifi_shell.h"
+#ifdef CONFIG_WPA_SUPP
+#include "wifi_nxp.h"
+
+extern const rtos_wpa_supp_dev_ops wpa_supp_ops;
+#else
+static int wpa_supp_ops = 0;
+#endif
 
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
 

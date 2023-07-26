@@ -11,9 +11,12 @@
 
 #include <stdlib.h>
 #include "fsl_os_abstraction.h"
-#include "fsl_debug_console.h"
 #include "wifi.h"
 #include <wm_net.h>
+
+#ifndef CONFIG_ZEPHYR
+#include "fsl_debug_console.h"
+#endif
 
 #ifdef CONFIG_WPA_SUPP
 

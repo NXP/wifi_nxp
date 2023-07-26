@@ -21,6 +21,9 @@
 #include <zephyr/net/net_pkt.h>
 #include <zephyr/net/net_if.h>
 
+#define NETIF_NAMESIZE 6
+#define NETIF_MAX_HWADDR_LEN 6
+
 /* copy zephyr struct net if */
 struct netif {
     /** The net_if_dev instance the net_if is related to */
