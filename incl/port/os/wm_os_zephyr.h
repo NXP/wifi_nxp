@@ -153,11 +153,16 @@ typedef struct {
 	};
 #endif
 
-typedef k_tid_t os_thread_t;
+struct zep_thread {
+	k_tid_t id;
+	struct k_sem event;
+};
+
+typedef struct zep_thread *os_thread_t;
 
 static inline const char *get_current_taskname(void)
 {
-    os_thread_t tid = k_current_get();
+    k_tid_t tid = k_current_get();
     const char *name = k_thread_name_get(tid);
     if (name == NULL) {
 	    return "Unknown";
@@ -203,22 +208,16 @@ void thread_wrapper(void *entry, void* arg, void* unused);
  * @return WM_SUCCESS if thread was created successfully
  * @return -WM_FAIL if thread creation failed
  */
-static inline int os_thread_create(os_thread_t *thandle,
-                                   const char *name,
-                                   void (*main_func)(os_thread_arg_t arg),
-                                   void *arg,
-                                   os_thread_stack_t *stack,
-                                   int prio)
-{
-    *thandle = k_thread_create(&stack->thread, stack->stack,
-        stack->size, thread_wrapper, main_func, arg, NULL, prio, 0, K_NO_WAIT);
-    k_thread_name_set(*thandle, name);
-    return WM_SUCCESS;
-}
+int os_thread_create(os_thread_t *thandle,
+                     const char *name,
+                     void (*main_func)(os_thread_arg_t arg),
+                     void *arg,
+                     os_thread_stack_t *stack,
+                     int prio);
 
 static inline os_thread_t os_get_current_task_handle(void)
 {
-    return k_current_get();
+    return k_thread_custom_data_get();
 }
 
 /** Terminate a thread
@@ -232,21 +231,7 @@ static inline os_thread_t os_get_current_task_handle(void)
  * @return WM_SUCCESS if operation success
  * @return -WM_FAIL if operation fails
  */
-static inline int os_thread_delete(os_thread_t *thandle)
-{
-    if (thandle == NULL)
-    {
-        os_dprintf("OS: Thread Self Delete\r\n");
-        return 0;
-    }
-    else
-    {
-        os_dprintf("OS: Thread Delete: %p\r\n", thandle);
-        k_thread_abort(*thandle);
-    }
-
-    return WM_SUCCESS;
-}
+int os_thread_delete(os_thread_t *thandle);
 
 /** Sleep for specified number of OS ticks
  *
@@ -324,7 +309,7 @@ static inline void os_thread_self_complete(os_thread_t *thandle)
     if (thandle != NULL)
     {
         os_dprintf("OS: Thread Complete: %p\r\n", thandle);
-        k_thread_suspend(*thandle);
+        k_thread_suspend((*thandle)->id);
     }
     else
     {
@@ -678,7 +663,8 @@ int os_mutex_delete(os_mutex_t *mhandle);
  */
 static inline int os_event_notify_get(unsigned long wait_time)
 {
-    int ret = k_sleep(K_TICKS(wait_time));
+    os_thread_t task = os_get_current_task_handle();
+    int ret = k_sem_take(&task->event, K_TICKS(wait_time));
     return ret == 0 ? -WM_FAIL : WM_SUCCESS;
 }
 
@@ -696,7 +682,7 @@ static inline int os_event_notify_get(unsigned long wait_time)
  */
 static inline int os_event_notify_put(os_thread_t task)
 {
-    k_wakeup(task);
+    k_sem_give(&task->event);
     return WM_SUCCESS;
 }
 

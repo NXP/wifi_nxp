@@ -61,6 +61,49 @@ typedef struct event_group_t
     event_wait_t *list;
 } event_group_t;
 
+
+int os_thread_create(os_thread_t *thandle,
+                                   const char *name,
+                                   void (*main_func)(os_thread_arg_t arg),
+                                   void *arg,
+                                   os_thread_stack_t *stack,
+                                   int prio)
+{
+    struct zep_thread *thread = NULL;
+
+    thread = os_mem_alloc(sizeof(struct zep_thread));
+    if (thread == NULL) {
+        printk("OS: Thread Alloc fail name %s\r\n", name);
+	return -WM_FAIL;
+    }
+    thread->id = k_thread_create(&stack->thread, stack->stack,
+        stack->size, thread_wrapper, main_func, arg, thread, prio, 0, K_NO_WAIT);
+    k_thread_name_set(thread->id, name);
+    k_sem_init(&thread->event, 0, 1);
+
+    *thandle = thread;
+    return WM_SUCCESS;
+}
+
+
+int os_thread_delete(os_thread_t *thandle)
+{
+    if (thandle == NULL)
+    {
+        os_dprintf("OS: Thread Self Delete\r\n");
+        os_mem_free(*thandle);
+        return 0;
+    }
+    else
+    {
+        os_dprintf("OS: Thread Delete: %p\r\n", thandle);
+        k_thread_abort((*thandle)->id);
+        os_mem_free(*thandle);
+    }
+
+    return WM_SUCCESS;
+}
+
 /* Memory allocation OSA layer. Based on Zephyr's libc malloc implementation. */
 #define HEAP_BYTES CONFIG_WIFI_NET_HEAP_SIZE
 
@@ -166,8 +209,10 @@ static int osa_prepare(const struct device *unused)
 SYS_INIT(osa_prepare, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
 
 /* Used to convert 3 argument zephyr threads to one arg OSA threads */
-void thread_wrapper(void *entry, void* arg, void* unused)
+void thread_wrapper(void *entry, void* arg, void* tdata)
 {
+    /* Save thread data */
+    k_thread_custom_data_set(tdata);
     void (*func)(void*) = entry;
     func(arg);
 }
