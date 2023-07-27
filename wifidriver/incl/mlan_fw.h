@@ -1849,11 +1849,7 @@ typedef MLAN_PACK_START struct _power_table_attr
 #endif
 
 #ifdef CONFIG_5GHz_SUPPORT
-#ifdef ENABLE_802_11P
-#define FW_CFP_TABLE_MAX_ROWS_A 40
-#else
-#define FW_CFP_TABLE_MAX_ROWS_A 39
-#endif
+#define FW_CFP_TABLE_MAX_ROWS_A 42
 #ifdef STREAM_2X2
 #define FW_CFP_TABLE_MAX_COLS_A 29
 #else

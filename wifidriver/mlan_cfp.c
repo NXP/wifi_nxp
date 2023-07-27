@@ -2249,7 +2249,7 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
         cfp_no = pmadapter->region_channel[i].num_cfp;
         for (j = 0; j < cfp_no; j++)
         {
-            if (!cfp[j].passive_scan_or_radar_detect)
+            if ((!(cfp[j].dynamic.flags & NXP_CHANNEL_DISABLED)) && (!cfp[j].passive_scan_or_radar_detect))
             {
                 *(chan_list++) = cfp[j].channel;
                 *num_chans     = *num_chans + 1;
@@ -2265,7 +2265,7 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
 
         for (j = 0; j < cfp_no; j++)
         {
-            if (!cfp[j].passive_scan_or_radar_detect)
+            if ((!(cfp[j].dynamic.flags & NXP_CHANNEL_DISABLED)) && (!cfp[j].passive_scan_or_radar_detect))
             {
                 *(chan_list++) = (t_u8)cfp[j].channel;
                 *num_chans     = *num_chans + 1U;
