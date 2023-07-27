@@ -1174,3 +1174,32 @@ NET_DEVICE_INIT(wifi_nxp_uap, "ua", wifi_net_init, NULL, &g_uap,
 #endif
     CONFIG_ETH_INIT_PRIORITY, &wifi_netif_apis,
     ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);
+
+const struct netif *net_if_get_binding(const char *ifname)
+{
+    struct netif *iface = NULL;
+    const struct device *dev = NULL;
+
+    dev = device_get_binding(ifname);
+    if (!dev) {
+		return NULL;
+	}
+
+    iface = net_if_lookup_by_dev(dev);
+	if (!iface) {
+		return NULL;
+	}
+
+    return iface;
+}
+
+const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif* iface)
+{
+    const struct freertos_wpa_supp_dev_ops *dev_ops = NULL;
+    const struct device *dev = NULL;
+
+    dev = net_if_get_device(iface);
+    dev_ops = dev->config;
+
+    return dev_ops;
+}

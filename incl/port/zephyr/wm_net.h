@@ -483,4 +483,7 @@ void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss
 void rx_mgmt_deregister_callback(void);
 #endif
 
+const struct netif *net_if_get_binding(const char *ifname);
+const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif* iface);
+
 #endif /* _WM_NET_H_ */
