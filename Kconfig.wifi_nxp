@@ -133,6 +133,21 @@ config FW_LOADER
     help
       For driver downloading firmware using loader service.
 
+config 11AX
+    bool "802.11ax Support"
+    def_bool y
+    select 11AC
+    depends on RW610
+    help
+        This option enables the use of 802.11ax support. Say Y if you
+        wish to enable this feature.
+
+config 11AC
+    bool "802.11ac Support"
+    def_bool y
+    help
+        This option enables the use of 802.11ac support. Say Y if you
+        wish to enable this feature.
 endif
 
 if IW61x
