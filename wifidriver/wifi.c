@@ -1554,7 +1554,7 @@ int wifi_get_scan_result(unsigned int index, struct wifi_scan_result2 **desc)
 #endif
                                     &common_desc.trans_mode, common_desc.trans_bssid, &common_desc.trans_ssid_len,
                                     common_desc.trans_ssid
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
                                     ,
                                     &common_desc.mbo_assoc_disallowed
 #endif

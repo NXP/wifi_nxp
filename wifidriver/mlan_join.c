@@ -944,7 +944,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #ifdef CONFIG_11R
     t_u8 ft_akm = 0;
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     t_u8 oper_class = 1;
 #endif
 
@@ -1311,7 +1311,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
 #endif
 
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     wlan_get_curr_global_oper_class(pmpriv, pbss_desc->phy_param_set.ds_param_set.current_chan, BW_20MHZ, &oper_class);
     wlan_add_supported_oper_class_ie(pmpriv, &pos, oper_class);
 #endif

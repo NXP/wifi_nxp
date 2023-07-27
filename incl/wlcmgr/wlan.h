@@ -5449,7 +5449,7 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason);
 #endif
 
 #ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
 /**
  * enable/disable MBO feature
  *

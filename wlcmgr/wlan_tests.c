@@ -3102,7 +3102,7 @@ static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
 #endif
 
 #ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
 static void test_wlan_mbo_cfg(int argc, char **argv)
 {
     int enable_mbo;
@@ -9590,6 +9590,8 @@ static struct cli_command tests[] = {
 #if CONFIG_SCHED_SWITCH_TRACE
     {"wlan-sched-switch-debug", NULL, test_wlan_sched_switch_debug},
 #endif
+static struct cli_command tests[] = {
+    {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -9633,7 +9635,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_11V
     {"wlan-host-11v-bss-trans-query", "<0..16>", test_wlan_host_11v_bss_trans_query},
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     {"wlan-mbo-enable", "<0/1>", test_wlan_mbo_cfg},
     {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>",
      test_wlan_mbo_non_prefer_chs},

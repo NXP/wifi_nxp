@@ -2424,7 +2424,7 @@ typedef struct _BSSDescriptor_t
 #ifdef CONFIG_11V
     bool bss_transition_supported;
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     bool mbo_assoc_disallowed;
 #endif
 } BSSDescriptor_t, *pBSSDescriptor_t;

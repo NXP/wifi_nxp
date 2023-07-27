@@ -1797,7 +1797,7 @@ static int network_matches_scan_result(const struct wlan_network *network,
         return -WM_FAIL;
     }
 
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     if (res->mbo_assoc_disallowed)
     {
         wlcm_d("%s: MBO Association disallowed.", network->ssid);
@@ -5735,7 +5735,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #endif
 
 #ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     wifi_host_mbo_cfg(1);
 #endif
 #endif
@@ -11752,7 +11752,7 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason)
 #endif
 
 #ifndef CONFIG_WPA_SUPP
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
 int wlan_host_mbo_cfg(int enable_mbo)
 {
     return wifi_host_mbo_cfg(enable_mbo);

@@ -63,7 +63,7 @@ Change log:
 #define CONFIG_11K 1
 #define CONFIG_11V 1
 #ifndef CONFIG_WPA_SUPP
-#define CONFIG_MBO 1
+#define CONFIG_DRIVER_MBO 1
 #endif
 #endif
 

@@ -26,7 +26,7 @@
 #endif
 #include "wifi-internal.h"
 
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
 #include "mlan_mbo.h"
 #endif
 
@@ -4050,7 +4050,7 @@ int wifi_host_11v_bss_trans_query(t_u8 query_reason)
 }
 #endif
 
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
 int wifi_host_mbo_cfg(int enable_mbo)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];

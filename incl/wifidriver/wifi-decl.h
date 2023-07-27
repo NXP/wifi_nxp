@@ -326,7 +326,7 @@ struct wifi_scan_result2
     uint8_t trans_bssid[MLAN_MAC_ADDR_LENGTH]; /*!< Trans bssid array */
     uint8_t trans_ssid[MLAN_MAX_SSID_LENGTH];  /*!< Trans ssid array */
     int trans_ssid_len;                        /*!< Trans bssid length */
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     bool mbo_assoc_disallowed; /*!< MBO disallowed */
 #endif
 #ifdef CONFIG_11R

@@ -6005,7 +6005,7 @@ int wrapper_bssdesc_second_set(int bss_index,
                                uint8_t *trans_bssid,
                                int *trans_ssid_len,
                                uint8_t *trans_ssid
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
                                ,
                                bool *mbo_assoc_disallowed
 #endif
@@ -6067,7 +6067,7 @@ int wrapper_bssdesc_second_set(int bss_index,
         *wmm_ie_present = false;
     }
 
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     *mbo_assoc_disallowed = d->mbo_assoc_disallowed;
 #endif
 

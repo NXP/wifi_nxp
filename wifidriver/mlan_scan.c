@@ -1257,7 +1257,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     wlan_add_probe_request_ie(pmpriv, &ptlv_pos);
 #endif
 
-#if defined(CONFIG_MBO) || defined(CONFIG_WPA_SUPP)
+#if defined(CONFIG_DRIVER_MBO) || defined(CONFIG_WPA_SUPP)
     wlan_add_ext_capa_info_ie(pmpriv, NULL, &ptlv_pos);
 #endif
 
@@ -1604,7 +1604,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 owe_type[1] = {0x01c};
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     const t_u8 scan_mbo_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 scan_mbo_type[1] = {0x016};
 #endif
@@ -2002,7 +2002,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                            pbss_entry->trans_ssid.ssid);
                 }
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
                 else if (__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, scan_mbo_oui, sizeof(scan_mbo_oui)) == 0 &&
                          (pvendor_ie->vend_hdr.oui_type == scan_mbo_type[0]))
                 {

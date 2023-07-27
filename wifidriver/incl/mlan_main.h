@@ -1644,7 +1644,7 @@ struct _mlan_private
 #ifdef CONFIG_1AS
     wifi_dot1as_info_t dot1as_info;
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
     t_u8 enable_mbo;
     int mbo_mgmt_bitmap_index;
 #endif

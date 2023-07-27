@@ -59,7 +59,7 @@
 #define CONFIG_11K 1
 #define CONFIG_11V 1
 #ifndef CONFIG_WPA_SUPP
-#define CONFIG_MBO 1
+#define CONFIG_DRIVER_MBO 1
 #endif
 #endif
 
@@ -1745,7 +1745,7 @@ int wifi_start_timing_measurement(int bss_type, t_u8 *peer_mac, uint8_t num_of_t
  */
 void wifi_end_timing_measurement(int bss_type);
 #endif
-#ifdef CONFIG_MBO
+#ifdef CONFIG_DRIVER_MBO
 int wifi_host_mbo_cfg(int enable_mbo);
 int wifi_mbo_preferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
 int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1);
