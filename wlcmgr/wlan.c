@@ -2906,6 +2906,16 @@ static void handle_scan_results(void)
         return;
     }
 
+#ifdef RW610
+    /* If reset is in process, skip re-scan */
+    if (os_mutex_get(&reset_lock, 0) != WM_SUCCESS)
+    {
+        (void)PRINTF("skip re-scan when reset is in process\r\n");
+        return;
+    }
+    os_mutex_put(&reset_lock);
+#endif
+
     /* We didn't find our network in the scan results set: rescan if we
      * have rescan attempts remaining, otherwise give up.
      */
