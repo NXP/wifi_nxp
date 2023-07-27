@@ -519,9 +519,13 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
+#ifdef CONFIG_ZEPHYR
+    iface = net_if_get_binding(iface_name);
+#else
     LOCK_TCPIP_CORE();
     iface = netif_find(iface_name);
     UNLOCK_TCPIP_CORE();
+#endif
 
     if (!iface)
     {
@@ -1818,9 +1822,13 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
+#ifdef CONFIG_ZEPHYR
+    iface = net_if_get_binding(iface_name);
+#else
     LOCK_TCPIP_CORE();
     iface = netif_find(iface_name);
     UNLOCK_TCPIP_CORE();
+#endif
 
     if (!iface)
     {
