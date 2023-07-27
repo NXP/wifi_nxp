@@ -39,7 +39,7 @@ static int wifi_nxp_wpa_supp_set_mac_addr(void *if_priv, const t_u8 *addr)
     return wifi_nxp_set_mac_addr(addr);
 }
 
-static const rtos_wpa_supp_dev_ops wpa_supp_ops = {
+const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .init                     = wifi_nxp_wpa_supp_dev_init,
     .deinit                   = wifi_nxp_wpa_supp_dev_deinit,
     .hapd_init                = wifi_nxp_hostapd_dev_init,

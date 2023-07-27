@@ -2322,7 +2322,9 @@ int wifi_set_scan_ies(void *ie, size_t ie_len)
 {
     mlan_private *priv       = (mlan_private *)mlan_adap->priv[0];
     int ret                  = -WM_FAIL;
+#if defined(CONFIG_WPA_SUPP) && defined(CONFIG_WPA_SUPP_WPS)
     priv->wps.session_enable = MFALSE;
+#endif
 
     /* Reset the generic IE buffer */
     priv->gen_ie_buf_len = 0;

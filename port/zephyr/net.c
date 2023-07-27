@@ -24,8 +24,6 @@ LOG_MODULE_REGISTER(wifi_nxp, CONFIG_WIFI_LOG_LEVEL);
 #include "wifi_nxp.h"
 
 extern const rtos_wpa_supp_dev_ops wpa_supp_ops;
-#else
-static int wpa_supp_ops = 0;
 #endif
 
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
@@ -1159,12 +1157,20 @@ static const struct ethernet_api wifi_netif_apis = {
 	.send =  low_level_output,
 };
 
-NET_DEVICE_INIT(wifi_nxp_sta, "WIFI_NXP_STA", wifi_net_init,
-    NULL, &g_mlan, NULL, CONFIG_ETH_INIT_PRIORITY,
-    &wifi_netif_apis, ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2),
-    NET_ETH_MTU);
+NET_DEVICE_INIT(wifi_nxp_sta, "ml", wifi_net_init, NULL, &g_mlan,
+#ifdef CONFIG_WPA_SUPP
+    &wpa_supp_ops,
+#else
+    NULL,
+#endif
+    CONFIG_ETH_INIT_PRIORITY, &wifi_netif_apis,
+    ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);
 
-NET_DEVICE_INIT(wifi_nxp_uap, "WIFI_NXP_UAP", wifi_net_init,
-    NULL, &g_uap, NULL, CONFIG_ETH_INIT_PRIORITY,
-    &wifi_netif_apis, ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2),
-    NET_ETH_MTU);
+NET_DEVICE_INIT(wifi_nxp_uap, "ua", wifi_net_init, NULL, &g_uap,
+#ifdef CONFIG_WPA_SUPP
+    &wpa_supp_ops,
+#else
+    NULL,
+#endif
+    CONFIG_ETH_INIT_PRIORITY, &wifi_netif_apis,
+    ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);

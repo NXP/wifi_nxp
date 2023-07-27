@@ -4044,7 +4044,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-            wlan.same_ess = wifi_same_ess_ft();
+            wlan.same_ess = wifi_same_ess_ft() | wlan.roam_reassoc;
 #endif
 
             wlan.roam_reassoc = false;

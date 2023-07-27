@@ -59,7 +59,7 @@ zephyr_include_directories(
 zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if/incl)
 
 # macros for wpa_supplicant
-zephyr_library_compile_definitions(CONFIG_WPA_SUPP_WPS=1)
+#zephyr_library_compile_definitions(CONFIG_WPA_SUPP_WPS=1)
 #zephyr_library_compile_definitions(CONFIG_WPA_SUPP_AP=1)
 
 endif()
