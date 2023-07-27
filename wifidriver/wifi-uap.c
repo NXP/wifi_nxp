@@ -296,54 +296,6 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
     return wm_wifi.cmd_resp_status;
 }
 
-#ifdef CONFIG_5GHz_SUPPORT
-/*
- * get current band by uap config channel or scan channel list(for ACS case)
- * if channel == 0 && scan channel <= 14, return 2.4G band
- * if channel == 0 && scan channel >= 36, return   5G band
- * if channel <= 14, return 2.4G band
- * if channel >= 36, return   5G band
- * other cases will print warnning log and return 2.4G band by default
- */
-static int wifi_uap_11d_get_band(int channel, wifi_scan_chan_list_t scan_chan_list)
-{
-    int band         = BAND_B;
-    t_u8 num_of_chan = scan_chan_list.num_of_chan;
-
-    if (channel == 0)
-    {
-        if (num_of_chan == 0)
-        {
-            wuap_e("wifi_uap_11d_get_band unsupported channel 0, num_of_chan 0");
-        }
-        else if (scan_chan_list.chan_number[0] <= 14 && scan_chan_list.chan_number[num_of_chan - 1] <= 14)
-        {
-            band = BAND_B;
-        }
-        else if (scan_chan_list.chan_number[0] >= 36 && scan_chan_list.chan_number[num_of_chan - 1] >= 36)
-        {
-            band = BAND_A;
-        }
-        else
-        {
-            wuap_e("wifi_uap_downld_domain_params unsupported channel %d, scan_chan_list[0] %d, scan_chan_list[%d] %d",
-                   channel, scan_chan_list.chan_number[0], num_of_chan - 1,
-                   scan_chan_list.chan_number[num_of_chan - 1]);
-        }
-    }
-    else if (channel <= 14)
-    {
-        band = BAND_B;
-    }
-    else
-    {
-        band = BAND_A;
-    }
-
-    return band;
-}
-#endif
-
 /*
  * Note: wlan_uap_domain_info() and wlan_uap_callback_domain_info() are the
  * original function which handles this functionality. However, it does it
@@ -355,14 +307,12 @@ static int wifi_uap_11d_get_band(int channel, wifi_scan_chan_list_t scan_chan_li
  * suit our design.
  *
  * This Api is set as callback and called during uap start phase,
- * getting band by uap config or scan channel list to select 2.4G/5G band,
  * getting region code by pmadapter.
  * Then it sends 80211 domain info command to firmware
  */
-int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_list)
+int wifi_uap_downld_domain_params(int band)
 {
     int rv;
-    int band;
     mlan_private *priv_uap   = mlan_adap->priv[1];
     int region_code          = mlan_adap->region_code;
     const t_u8 *country_code = NULL;
@@ -371,7 +321,6 @@ int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_l
 
     /* get band and sub band lists */
 #ifdef CONFIG_5GHz_SUPPORT
-    band = wifi_uap_11d_get_band(channel, scan_chan_list);
     if (band == BAND_B)
         sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
     else
@@ -1075,7 +1024,8 @@ int wifi_uap_start(mlan_bss_type type,
     if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
     {
         wuap_d("Downloading domain params");
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(channel, scan_chan_list);
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
     }
 
     wuap_d("Starting BSS");
@@ -2717,8 +2667,10 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
 #ifdef UAP_SUPPORT
     if (enable_11d && !priv->bss_started && !wlan_11d_is_enabled(priv))
     {
-        wuap_d("Eanble 11D support");
+        wuap_d("Enable 11D support");
         wifi_enable_uap_11d_support();
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
     }
 #endif
     return out_len;
