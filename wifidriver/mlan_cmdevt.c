@@ -3643,6 +3643,7 @@ mlan_status wlan_ret_wifi_direct_mode(IN pmlan_private pmpriv,
 mlan_status wlan_cmd_rx_abort_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
 {
     HostCmd_DS_RX_ABORT_CFG *rx_abort_cfg = &cmd->params.rx_abort_cfg;
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     rx_abort_cfg_t *cfg                   = (rx_abort_cfg_t *)pdata_buf;
 
     ENTER();
