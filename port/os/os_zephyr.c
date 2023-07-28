@@ -64,12 +64,13 @@ typedef struct event_group_t
 /* Memory allocation OSA layer. Based on Zephyr's libc malloc implementation. */
 #define HEAP_BYTES CONFIG_WIFI_NET_HEAP_SIZE
 
-static struct sys_heap osa_malloc_heap;
-struct k_mutex osa_malloc_heap_mutex;
-static char osa_malloc_heap_mem[HEAP_BYTES];
+//static struct sys_heap osa_malloc_heap;
+//struct k_mutex osa_malloc_heap_mutex;
+//static char osa_malloc_heap_mem[HEAP_BYTES];
 
 void* os_mem_alloc(size_t size)
 {
+#if 0
     int lock_ret;
 
     lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
@@ -82,6 +83,8 @@ void* os_mem_alloc(size_t size)
 
     (void)k_mutex_unlock(&osa_malloc_heap_mutex);
     return ptr;
+#endif
+    return malloc(size);
 }
 
 void *os_mem_calloc(size_t size)
@@ -96,6 +99,7 @@ void *os_mem_calloc(size_t size)
 
 void *os_mem_realloc(void *old_ptr, size_t new_size)
 {
+#if 0
     int lock_ret;
 
     lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
@@ -108,16 +112,21 @@ void *os_mem_realloc(void *old_ptr, size_t new_size)
 
     (void)k_mutex_unlock(&osa_malloc_heap_mutex);
     return ptr;
+#endif
+    return realloc(old_ptr, new_size);
 }
 
 void os_mem_free(void *ptr)
 {
+#if 0
     int lock_ret;
 
     lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
     __ASSERT_NO_MSG(lock_ret == 0);
     sys_heap_free(&osa_malloc_heap, ptr);
     (void)k_mutex_unlock(&osa_malloc_heap_mutex);
+#endif
+    free(ptr);
 }
 
 /* Prepares OSA layer, by setting up heap */
@@ -125,8 +134,8 @@ static int osa_prepare(const struct device *unused)
 {
     ARG_UNUSED(unused);
 
-    sys_heap_init(&osa_malloc_heap, osa_malloc_heap_mem, HEAP_BYTES);
-    k_mutex_init(&osa_malloc_heap_mutex);
+//    sys_heap_init(&osa_malloc_heap, osa_malloc_heap_mem, HEAP_BYTES);
+//    k_mutex_init(&osa_malloc_heap_mutex);
     return 0;
 }
 

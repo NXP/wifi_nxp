@@ -272,6 +272,16 @@ static void printSeparator(void)
 static struct wlan_network sta_network;
 static struct wlan_network uap_network;
 
+/* TODO: DHCP server */
+int dhcp_server_start(void *intrfc_handle)
+{
+    return 0;
+}
+
+void dhcp_server_stop(void)
+{
+}
+
 /* Callback Function passed to WLAN Connection Manager. The callback function
  * gets called when there are WLAN Events that need to be handled by the
  * application.
@@ -546,7 +556,6 @@ static int wifi_net_init_thread(const struct device *dev)
 static void wifi_net_iface_init(struct net_if *iface)
 {
     static int init_done = 0;
-    int ret;
     const struct device *dev = net_if_get_device(iface);
     interface_t *intf = dev->data;
 
@@ -746,7 +755,7 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 
 static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
 {
-    const struct wifi_status *status = (const struct wifi_status *)cb->info;
+    //const struct wifi_status *status = (const struct wifi_status *)cb->info;
     enum wifi_event_reason wifi_event_reason;
 
     switch (mgmt_event) {
@@ -934,16 +943,6 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 }
 #endif /* CONFIG_IPV6 */
 
-/* TODO: DHCP server */
-int dhcp_server_start(void *intrfc_handle)
-{
-    return 0;
-}
-
-void dhcp_server_stop(void)
-{
-}
-
 #if 0
 int net_get_if_name(char *pif_name, void *intrfc_handle)
 {
@@ -1034,7 +1033,7 @@ int net_wlan_init(void)
         if (ret != 0)
         {
             net_e("could not get STA wifi mac addr");
-            return;
+            return ret;
         }
 
         net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
@@ -1045,7 +1044,7 @@ int net_wlan_init(void)
         if (ret != 0)
         {
             net_e("could not get uAP wifi mac addr");
-            return;
+            return ret;
         }
 
         net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
@@ -1182,13 +1181,13 @@ const struct netif *net_if_get_binding(const char *ifname)
 
     dev = device_get_binding(ifname);
     if (!dev) {
-		return NULL;
-	}
+        return NULL;
+    }
 
     iface = net_if_lookup_by_dev(dev);
-	if (!iface) {
-		return NULL;
-	}
+    if (!iface) {
+        return NULL;
+    }
 
     return iface;
 }

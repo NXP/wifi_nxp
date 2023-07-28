@@ -75,7 +75,7 @@ endchoice
 # Increase default heap size, driver needs memory allocation
 config WIFI_NET_HEAP_SIZE
 	int "Net Heap Size"
-	default 131072
+	default 16384
 
 config WIFI_INIT_STACK_SIZE
 	int "Init Stack Size"
@@ -323,7 +323,7 @@ config EXT_SCAN_SUPPORT
 
 config FIPS
        bool "FIPS"
-       def_bool y
+       def_bool n
        help
 	 This option enables Wi-Fi FIPS support in the Wi-Fi driver. Say Y if you wish to enable this feature.
 
