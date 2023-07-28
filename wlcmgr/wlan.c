@@ -5196,22 +5196,63 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
         {
             struct wlan_network_security *security = &(wlan.networks[network_idx].security);
-            if (memcmp("psk", (buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1), strlen("psk")) == 0)
+            char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1;
+            security->pmk_valid = false;
+            security->type = WLAN_SECURITY_NONE;
+            security->dpp_akm_dpp = 0;
+            security->dpp_akm_psk = 0;
+            security->dpp_akm_sae = 0;
+            security->dpp_akm_11x = 0;
+            if (memcmp("psk", pos, strlen("psk")) == 0)
             {
-                security->type = WLAN_SECURITY_WPA2;
-                security->pairwise_cipher = 0x10; /* CCMP */
-                security->mfpc = 1;
-                security->mfpr = 1;
-                wlan_set_pmfcfg(security->mfpc, security->mfpr);
+                security->type        = WLAN_SECURITY_WPA2_SHA256;
+                security->dpp_akm_psk = 1;
             }
-            else if (memcmp("dpp", (buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1), strlen("dpp")) == 0)
+            else if (memcmp("sae", pos, strlen("sae")) == 0)
+            {
+                security->type        = WLAN_SECURITY_WPA3_SAE;
+                security->dpp_akm_sae = 1;
+            }
+            else if ((memcmp("psk-sae", pos, strlen("psk-sae")) == 0) ||
+                     (memcmp("psk+sae", pos, strlen("psk+sae")) == 0))
+            {
+                security->type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
+                security->dpp_akm_psk = 1;
+                security->dpp_akm_sae = 1;
+            }
+            else if ((memcmp("sae-dpp", pos, strlen("sae-dpp")) == 0) ||
+                     (memcmp("dpp+sae", pos, strlen("dpp+sae")) == 0))
+            {
+                security->type        = WLAN_SECURITY_WPA3_SAE;
+                security->dpp_akm_dpp = 1;
+                security->dpp_akm_sae = 1;
+            }
+            else if ((memcmp("psk-sae-dpp", pos, strlen("psk-sae-dpp")) == 0) ||
+                     (memcmp("dpp+psk+sae", pos, strlen("dpp+psk+sae")) == 0))
+            {
+                security->type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
+                security->dpp_akm_dpp = 1;
+                security->dpp_akm_psk = 1;
+                security->dpp_akm_sae = 1;
+            }
+            else if (memcmp("dpp", pos, strlen("dpp")) == 0)
             {
                 security->type = WLAN_SECURITY_DPP;
-                security->pairwise_cipher = 0x10; /* CCMP */
-                security->mfpc = 1;
-                security->mfpr = 1;
-                wlan_set_pmfcfg(security->mfpc, security->mfpr);
             }
+            else if (memcmp("dot1x", pos, strlen("dot1x")) == 0)
+            {
+                security->type = WLAN_SECURITY_EAP_TLS_SHA256;
+                security->dpp_akm_11x = 1;
+            }
+            else
+            {
+                wlcm_e("DPP AKM type(%s) unknown!", pos);
+                return ;
+            }
+            security->pairwise_cipher = 0x10; /* CCMP */
+            security->mfpc = 1;
+            security->mfpr = 1;
+            wlan_set_pmfcfg(security->mfpc, security->mfpr);
         }
     }
     else if (strstr(buf, DPP_EVENT_CONFOBJ_SSID))
@@ -5255,12 +5296,43 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_PASS) - 1;
 
             hex_len = strlen(pos);
-            if (hex_len < (WLAN_PSK_MAX_LENGTH * 2))
+            if (hex_len <= (WLAN_PSK_MAX_LENGTH * 2))
             {
                 memset(psk, 0, sizeof(psk));
                 hexstr2bin(pos, (unsigned char *)psk, hex_len/2);
                 security->psk_len = strlen(psk);
                 (void)strcpy(security->psk, psk);
+                security->password_len = strlen(psk);
+                (void)strcpy(security->password, psk);
+            }
+        }
+    }
+    else if (strstr(buf, DPP_EVENT_CONFOBJ_PSK))
+    {
+        unsigned int network_idx = -1;
+
+        if (is_uap_started())
+        {
+            network_idx = wlan.cur_uap_network_idx;
+        }
+        else
+        {
+            network_idx = wlan.cur_network_idx;
+        }
+        if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
+        {
+            char pmk[WLAN_PMK_LENGTH];
+            unsigned int hex_len = 0;
+            struct wlan_network_security *security = &(wlan.networks[network_idx].security);
+            const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_PSK) - 1;
+
+            hex_len = strlen(pos);
+            if (hex_len <= (WLAN_PMK_LENGTH * 2))
+            {
+                memset(pmk, 0, sizeof(pmk));
+                hexstr2bin(pos, (unsigned char *)pmk, hex_len/2);
+                security->pmk_valid = true;
+                (void)memcpy(security->pmk, pmk, WLAN_PMK_LENGTH);
             }
         }
     }
@@ -13664,13 +13736,16 @@ int wlan_dpp_auth_init(int is_ap, const char *cmd)
     int ret;
     struct netif *netif = net_get_sta_interface();
 
-     ret = wpa_supp_dpp_auth_init(netif, is_ap, cmd);
+    if (!is_ap)
+    {
+        wifi_set_rx_mgmt_indication(WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
+    }
+    ret = wpa_supp_dpp_auth_init(netif, is_ap, cmd);
     if (ret < 0)
     {
         wlcm_e("DPP Auth Init failed!!");
         return -WM_FAIL;
     }
-    wifi_set_rx_mgmt_indication(is_ap ? WLAN_BSS_ROLE_UAP : WLAN_BSS_ROLE_STA, WLAN_MGMT_ACTION);
 
     return ret;
 }
@@ -13721,6 +13796,13 @@ int wlan_dpp_reconfig(const char *cmd)
     struct netif *netif = net_get_sta_interface();
 
     return wpa_supp_dpp_reconfig(netif, cmd);
+}
+
+int wlan_dpp_configurator_sign(int is_ap, const char *cmd)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    return wpa_supp_dpp_configurator_sign(netif, is_ap, cmd);
 }
 #endif /* CONFIG_WPA_SUPP_DPP */
 

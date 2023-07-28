@@ -8916,6 +8916,42 @@ static void test_wlan_dpp_reconfig(int argc, char **argv)
         (void)PRINTF("\r\n DPP reconfig OK!\r\n");
     }
 }
+
+static void dump_dpp_configurator_sign_usage(void)
+{
+    (void)PRINTF("Configurator configures itself as an Enrollee AP/STA\r\n");
+    (void)PRINTF("Usage: wlan-dpp-configurator-sign \" conf=....\"\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-dpp-configurator-sign \" conf=sta-dpp ssid=4450505f54455354 configurator=1\"\r\n");
+    (void)PRINTF("#space character exists between \" & conf word.\r\n");
+}
+
+static void test_wlan_dpp_configurator_sign(int argc, char **argv)
+{
+    int ret;
+    int is_ap = 0;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_dpp_configurator_sign_usage();
+        return;
+    }
+    if (is_uap_started())
+    {
+        is_ap = 1;
+    }
+
+    ret = wlan_dpp_configurator_sign(is_ap, argv[1]);
+    if (ret == -WM_FAIL)
+    {
+        (void)PRINTF("\r\n DPP chirping failed!!\r\n");
+    }
+    else
+    {
+        (void)PRINTF("\r\n DPP chirping OK!\r\n");
+    }
+}
 #endif
 
 #ifdef CONFIG_IMD3_CFG
@@ -9182,6 +9218,7 @@ static struct cli_command tests[] = {
     {"wlan-dpp-pkex-add", " own=<bootstrap_id> identifier=<string> code=<string>", test_wlan_dpp_pkex_add},
     {"wlan-dpp-chirp", " own=<bootstrap id> listen=<freq>...", test_wlan_dpp_chirp},
     {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
+    {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>", test_wlan_dpp_configurator_sign},
 #endif
 #endif
 #endif

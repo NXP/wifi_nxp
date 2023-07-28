@@ -2402,7 +2402,7 @@ int wifi_nxp_wpa_dpp_listen(void *if_priv, bool enable)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    if (enable)
+    if (enable && (wifi_if_ctx_rtos->bss_type == BSS_TYPE_STA))
     {
         return wifi_set_rx_mgmt_indication(wifi_if_ctx_rtos->bss_type, WLAN_MGMT_ACTION);
     }

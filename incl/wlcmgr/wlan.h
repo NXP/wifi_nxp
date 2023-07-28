@@ -989,6 +989,7 @@ enum wlan_security_type
     WLAN_SECURITY_OWE_ONLY,
 #endif
 #ifdef CONFIG_WPA_SUPP_DPP
+    /** The network uses DPP security with NAK(Net Access Key) */
     WLAN_SECURITY_DPP,
 #endif
 };
@@ -1244,6 +1245,14 @@ struct wlan_network_security
     mbedtls_ssl_context *wlan_ssl;
 #endif
 #ifdef CONFIG_WPA_SUPP_DPP
+    /* DPP akm types include DPP */
+    unsigned dpp_akm_dpp : 1;
+    /* DPP akm types include PSK & PSK_SHA256 */
+    unsigned dpp_akm_psk : 1;
+    /* DPP akm types include WPA3_SAE */
+    unsigned dpp_akm_sae : 1;
+    /* DPP akm types include IEEE8021X & IEEE8021X_SHA256 */
+    unsigned dpp_akm_11x : 1;
     unsigned char *dpp_connector;
     unsigned char *dpp_c_sign_key;
     unsigned char *dpp_net_access_key;
@@ -6304,6 +6313,21 @@ int wlan_dpp_chirp(int is_ap, const char *cmd);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_dpp_reconfig(const char *cmd);
+
+/** Configurator configures itself as an Enrollee AP/STA
+ *
+ *  Wi-Fi_CERTIFIED_Easy_Connect_Test_Plan_v3.0.pdf
+ *  5.3.8 & 5.3.9 Configurator configures itself as an Enrollee AP/STA
+ *
+ *  for example:" conf=<sta-dpp/ap-dpp> ssid=<hex ssid> configurator=conf_id"
+ *  #space character exists between " & conf word.
+ *
+ * \param[in]  is_ap    0 is sta, 1 is uap
+ * \param[in]  cmd      " conf=<sta-dpp/ap-dpp/sta-psk> ssid=<hex ssid> configurator=conf_id..."
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_dpp_configurator_sign(int is_ap, const char *cmd);
 #endif
 
 #ifdef CONFIG_IMD3_CFG
