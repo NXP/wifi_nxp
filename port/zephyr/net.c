@@ -7,6 +7,7 @@
 #include <zephyr/net/ethernet.h>
 #include <zephyr/net/net_pkt.h>
 #include <zephyr/net/net_if.h>
+#include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/device.h>
 #include <soc.h>
 #include <ethernet/eth_stats.h>
@@ -15,6 +16,7 @@ LOG_MODULE_REGISTER(wifi_nxp, CONFIG_WIFI_LOG_LEVEL);
 
 #include "wlan_bt_fw.h"
 #include "wlan.h"
+#include "wpl.h"
 #include "wifi.h"
 #include <wm_os.h>
 #include "netif_decl.h"
@@ -40,6 +42,57 @@ extern const rtos_wpa_supp_dev_ops wpa_supp_ops;
 #define DHCP_TIMEOUT (120 * 1000)
 #endif
 
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+
+#define MAX_JSON_NETWORK_RECORD_LENGTH 185
+
+#define WPL_SYNC_TIMEOUT_MS K_FOREVER
+
+#define UAP_NETWORK_NAME "uap-network"
+
+#define EVENT_BIT(event) (1 << event)
+
+#define WPL_SYNC_INIT_GROUP EVENT_BIT(WLAN_REASON_INITIALIZED) | EVENT_BIT(WLAN_REASON_INITIALIZATION_FAILED)
+
+#define WPL_SYNC_CONNECT_GROUP                                                                  \
+    EVENT_BIT(WLAN_REASON_SUCCESS) | EVENT_BIT(WLAN_REASON_CONNECT_FAILED) |                    \
+        EVENT_BIT(WLAN_REASON_NETWORK_NOT_FOUND) | EVENT_BIT(WLAN_REASON_NETWORK_AUTH_FAILED) | \
+        EVENT_BIT(WLAN_REASON_ADDRESS_FAILED)
+
+#define WPL_SYNC_DISCONNECT_GROUP EVENT_BIT(WLAN_REASON_USER_DISCONNECT)
+
+#define WPL_SYNC_UAP_START_GROUP EVENT_BIT(WLAN_REASON_UAP_SUCCESS) | EVENT_BIT(WLAN_REASON_UAP_START_FAILED)
+
+#define WPL_SYNC_UAP_STOP_GROUP EVENT_BIT(WLAN_REASON_UAP_STOPPED) | EVENT_BIT(WLAN_REASON_UAP_STOP_FAILED)
+
+#define EVENT_SCAN_DONE     23
+#define WPL_SYNC_SCAN_GROUP EVENT_BIT(EVENT_SCAN_DONE)
+
+typedef enum _wpl_state
+{
+    WPL_NOT_INITIALIZED,
+    WPL_INITIALIZED,
+    WPL_STARTED,
+} wpl_state_t;
+
+/*******************************************************************************
+ * Variables
+ ******************************************************************************/
+static wpl_state_t s_wplState            = WPL_NOT_INITIALIZED;
+static bool s_wplStaConnected            = false;
+static bool s_wplUapActivated            = false;
+static struct k_event s_wplSyncEvent;
+static linkLostCb_t s_linkLostCb         = NULL;
+
+/*******************************************************************************
+ * Prototypes
+ ******************************************************************************/
+int wlan_event_callback(enum wlan_event_reason reason, void *data);
+static int WLP_process_results(unsigned int count);
+static void LinkStatusChangeCallback(bool linkState);
+
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 
@@ -52,6 +105,7 @@ typedef struct {
     struct net_addr nmask;
     struct net_addr gw;
     struct ethernetif state;
+    scan_result_cb_t scan_cb;
 } interface_t;
 
 static struct net_mgmt_event_callback wifi_dhcp_cb;
@@ -298,6 +352,11 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     PRINTF("app_cb: WLAN: received event %d\r\n", reason);
     printSeparator();
 
+    if (s_wplState >= WPL_INITIALIZED)
+    {
+        k_event_set(&s_wplSyncEvent, EVENT_BIT(reason));
+    }
+
     switch (reason)
     {
         case WLAN_REASON_INITIALIZED:
@@ -437,11 +496,6 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             PRINTF("Soft AP \"%s\" started successfully\r\n", uap_network.ssid);
             printSeparator();
-            if (dhcp_server_start(net_get_uap_handle()))
-                PRINTF("Error in starting dhcp server\r\n");
-
-            PRINTF("DHCP Server started successfully\r\n");
-            printSeparator();
             break;
         case WLAN_REASON_UAP_CLIENT_ASSOC:
             PRINTF("app_cb: WLAN: UAP a Client Associated\r\n");
@@ -473,11 +527,6 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             PRINTF("Soft AP \"%s\" stopped successfully\r\n", uap_network.ssid);
             printSeparator();
-
-            dhcp_server_stop();
-
-            PRINTF("DHCP Server stopped successfully\r\n");
-            printSeparator();
             break;
         case WLAN_REASON_PS_ENTER:
             PRINTF("app_cb: WLAN: PS_ENTER\r\n");
@@ -505,6 +554,800 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     return 0;
 }
 
+/* Link lost callback */
+static void LinkStatusChangeCallback(bool linkState)
+{
+    if (linkState == false)
+    {
+        PRINTF("-------- LINK LOST --------\r\n");
+    }
+    else
+    {
+        PRINTF("-------- LINK REESTABLISHED --------\r\n");
+    }
+}
+
+int WPL_Init(void)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+
+    if (s_wplState != WPL_NOT_INITIALIZED)
+    {
+        status = WPLRET_FAIL;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        k_event_init(&s_wplSyncEvent);
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = wlan_init(wlan_fw_bin, wlan_fw_bin_len);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        s_wplState = WPL_INITIALIZED;
+    }
+
+    if (status != WPLRET_SUCCESS)
+        return -1;
+
+    return 0;
+}
+
+int WPL_Start(linkLostCb_t callbackFunction)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    uint32_t syncBit;
+
+    if (s_wplState != WPL_INITIALIZED)
+    {
+        status = WPLRET_NOT_READY;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        k_event_clear(&s_wplSyncEvent, WPL_SYNC_INIT_GROUP);
+
+        ret = wlan_start(wlan_event_callback);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        syncBit = k_event_wait(&s_wplSyncEvent, WPL_SYNC_INIT_GROUP, true, WPL_SYNC_TIMEOUT_MS);
+        if (syncBit & EVENT_BIT(WLAN_REASON_INITIALIZED))
+        {
+            s_linkLostCb = callbackFunction;
+            status       = WPLRET_SUCCESS;
+        }
+        else if (syncBit & EVENT_BIT(WLAN_REASON_INITIALIZATION_FAILED))
+        {
+            status = WPLRET_FAIL;
+        }
+        else
+        {
+            status = WPLRET_TIMEOUT;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        s_wplState = WPL_STARTED;
+    }
+
+    if (status != WPLRET_SUCCESS)
+        return -1;
+
+    return 0;
+}
+
+int WPL_Stop(void)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+
+    if (s_wplState != WPL_STARTED)
+    {
+        status = WPLRET_NOT_READY;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = wlan_stop();
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        s_wplState = WPL_INITIALIZED;
+    }
+
+    if (status != WPLRET_SUCCESS)
+        return -1;
+
+    return 0;
+}
+
+static int WPL_Start_AP(const struct device *dev,
+			 struct wifi_connect_req_params *params)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    uint32_t syncBit;
+    interface_t *if_handle = (interface_t *)dev->data;
+
+    if (if_handle->state.interface != WLAN_BSS_TYPE_UAP)
+    {
+        LOG_ERR("Wi-Fi not in uAP mode");
+        return -EIO; 
+    }
+
+    if ((s_wplState != WPL_STARTED) || (s_wplUapActivated != false))
+    {
+        status = WPLRET_NOT_READY;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        if ((params->ssid_length == 0) || (params->ssid_length > IEEEtypes_SSID_SIZE))
+        {
+            status = WPLRET_BAD_PARAM;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        wlan_remove_network(uap_network.name);
+
+        wlan_initialize_uap_network(&uap_network);
+
+        memcpy(uap_network.ssid, params->ssid, params->ssid_length);
+        uap_network.channel          = params->channel;
+
+        if (params->mfp == WIFI_MFP_REQUIRED)
+        {
+            uap_network.security.mfpc = true;
+            uap_network.security.mfpr = true;
+        }
+        else if (params->mfp == WIFI_MFP_OPTIONAL)
+        {
+            uap_network.security.mfpc = true;
+            uap_network.security.mfpr = false;
+        }
+
+        if (params->security == WIFI_SECURITY_TYPE_NONE)
+        {
+            uap_network.security.type = WLAN_SECURITY_NONE;
+        }
+        else if (params->security == WIFI_SECURITY_TYPE_PSK)
+        {
+            uap_network.security.type = WLAN_SECURITY_WPA2;
+            uap_network.security.psk_len = params->psk_length;
+            strncpy(uap_network.security.psk, params->psk, params->psk_length);
+        }
+#ifdef CONFIG_WPA_SUPP
+        else if (params->security == WIFI_SECURITY_TYPE_PSK_SHA256)
+        {
+            uap_network.security.type = WLAN_SECURITY_WPA2_SHA256;
+            uap_network.security.psk_len = params->psk_length;
+            strncpy(uap_network.security.psk, params->psk, params->psk_length);
+        }
+#endif
+        else if (params->security == WIFI_SECURITY_TYPE_SAE)
+        {
+            uap_network.security.type = WLAN_SECURITY_WPA3_SAE;
+            uap_network.security.password_len = params->sae_password_length;
+            strncpy(uap_network.security.password, params->sae_password, params->sae_password_length);
+        }
+        else
+        {
+            status = WPLRET_BAD_PARAM;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = wlan_add_network(&uap_network);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        k_event_clear(&s_wplSyncEvent, WPL_SYNC_UAP_START_GROUP);
+
+        ret = wlan_start_network(uap_network.name);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+        else
+        {
+            syncBit =
+               k_event_wait(&s_wplSyncEvent, WPL_SYNC_UAP_START_GROUP, true, WPL_SYNC_TIMEOUT_MS);
+            if (syncBit & EVENT_BIT(WLAN_REASON_UAP_SUCCESS))
+            {
+                status = WPLRET_SUCCESS;
+            }
+            else if (syncBit & EVENT_BIT(WLAN_REASON_UAP_START_FAILED))
+            {
+                status = WPLRET_FAIL;
+            }
+            else
+            {
+                status = WPLRET_TIMEOUT;
+            }
+        }
+
+        if (status != WPLRET_SUCCESS)
+        {
+            wlan_remove_network(uap_network.name);
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = dhcp_server_start(net_get_uap_handle());
+        if (ret != WM_SUCCESS)
+        {
+            wlan_stop_network(uap_network.name);
+            wlan_remove_network(uap_network.name);
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        s_wplUapActivated = true;
+    }
+
+    if (status != WPLRET_SUCCESS)
+    {
+        LOG_ERR("Failed to enable Wi-Fi AP mode");
+	return -EAGAIN;
+    }
+
+    return 0;
+}
+
+static int WPL_Stop_AP(const struct device *dev)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    uint32_t syncBit;
+
+    if ((s_wplState != WPL_STARTED) || (s_wplUapActivated != true))
+    {
+        status = WPLRET_NOT_READY;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        dhcp_server_stop();
+
+        k_event_clear(&s_wplSyncEvent, WPL_SYNC_UAP_START_GROUP);
+
+        ret = wlan_stop_network(UAP_NETWORK_NAME);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+        else
+        {
+            syncBit =
+                k_event_wait(&s_wplSyncEvent, WPL_SYNC_UAP_STOP_GROUP, true, WPL_SYNC_TIMEOUT_MS);
+            if (syncBit & EVENT_BIT(WLAN_REASON_UAP_STOPPED))
+            {
+                status = WPLRET_SUCCESS;
+            }
+            else if (syncBit & EVENT_BIT(WLAN_REASON_UAP_STOP_FAILED))
+            {
+                status = WPLRET_FAIL;
+            }
+            else
+            {
+                status = WPLRET_TIMEOUT;
+            }
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = wlan_remove_network(UAP_NETWORK_NAME);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        s_wplUapActivated = false;
+    }
+
+    if (status != WPLRET_SUCCESS)
+    {
+        LOG_ERR("Failed to disable Wi-Fi AP mode");
+	return -EAGAIN;
+    }
+
+    return 0;
+}
+
+static int WLP_process_results(unsigned int count)
+{
+    struct wlan_scan_result scan_result = {0};
+    struct wifi_scan_result res = { 0 };
+
+    if (!count)
+    {
+	LOG_INF("No Wi-Fi AP found");
+	goto out;
+    }
+
+    for (int i = 0; i < count; i++)
+    {
+        wlan_get_scan_result(i, &scan_result);
+
+        memset(&res, 0, sizeof(struct wifi_scan_result));
+
+        memcpy(res.mac, scan_result.bssid, WIFI_MAC_ADDR_LEN);
+        res.mac_length = WIFI_MAC_ADDR_LEN;
+	res.ssid_length = scan_result.ssid_len;
+	strncpy(res.ssid, scan_result.ssid, scan_result.ssid_len);
+	
+        res.rssi = -scan_result.rssi;
+        res.channel = scan_result.channel;
+        res.band = scan_result.channel > 14 ? WIFI_FREQ_BAND_5_GHZ : WIFI_FREQ_BAND_2_4_GHZ; 
+
+	res.security = WIFI_SECURITY_TYPE_NONE;
+
+        if (scan_result.wpa2_entp)
+        {
+        }
+        if (scan_result.wpa2)
+        {
+            res.security = WIFI_SECURITY_TYPE_PSK;
+        }
+#ifdef CONFIG_WPA_SUPP
+        if (scan_result.wpa2_sha256)
+        {
+            res.security = WIFI_SECURITY_TYPE_PSK_SHA256;
+        }
+#endif
+        if (scan_result.wpa3_sae)
+        {
+            res.security = WIFI_SECURITY_TYPE_SAE;
+        }
+
+	if (g_mlan.scan_cb)
+        {
+	    g_mlan.scan_cb(g_mlan.netif, 0, &res);
+
+	    /* ensure notifications get delivered */
+	    k_yield();
+	}
+    }
+
+out:
+    /* report end of scan event */
+    g_mlan.scan_cb(g_mlan.netif, 0, NULL);
+    g_mlan.scan_cb = NULL;
+
+    k_event_set(&s_wplSyncEvent, EVENT_BIT(EVENT_SCAN_DONE));
+
+    return WM_SUCCESS;
+}
+
+static int WPL_Scan(const struct device *dev, scan_result_cb_t cb)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    uint32_t syncBit;
+    interface_t *if_handle = (interface_t *)dev->data;
+
+    if (if_handle->state.interface != WLAN_BSS_TYPE_STA)
+    {
+        LOG_ERR("Wi-Fi not in station mode");
+        return -EIO; 
+    }
+
+    if (if_handle->scan_cb != NULL) {
+        LOG_INF("Scan callback in progress");
+	return -EINPROGRESS;
+    }
+
+    if_handle->scan_cb = cb;
+
+    if (s_wplState != WPL_STARTED)
+    {
+        status = WPLRET_NOT_READY;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = wlan_scan(WLP_process_results);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        syncBit = k_event_wait(&s_wplSyncEvent, WPL_SYNC_SCAN_GROUP, true, WPL_SYNC_TIMEOUT_MS);
+        if (syncBit & EVENT_BIT(EVENT_SCAN_DONE))
+        {
+            status = WPLRET_SUCCESS;
+        }
+        else
+        {
+            status = WPLRET_TIMEOUT;
+        }
+    }
+
+    if (status != WPLRET_SUCCESS)
+    {
+        LOG_ERR("Failed to start Wi-Fi scanning");
+    	return -EAGAIN;
+    }
+
+    return 0;
+}
+
+static int WPL_Disconnect(const struct device *dev);
+
+static int WPL_Connect(const struct device *dev,
+			    struct wifi_connect_req_params *params)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    uint32_t syncBit;
+    interface_t *if_handle = (interface_t *)dev->data;
+
+    if ((s_wplState != WPL_STARTED) || (s_wplStaConnected != false))
+    {
+        status = WPLRET_NOT_READY;
+        wifi_mgmt_raise_connect_result_event(g_mlan.netif, -1);
+        return -EALREADY;
+    }
+
+    if (if_handle->state.interface != WLAN_BSS_TYPE_STA)
+    {
+        LOG_ERR("Wi-Fi not in station mode");
+	wifi_mgmt_raise_connect_result_event(g_mlan.netif, -1);
+        return -EIO; 
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        if ((params->ssid_length == 0) || (params->ssid_length > IEEEtypes_SSID_SIZE))
+        {
+            status = WPLRET_BAD_PARAM;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        wlan_remove_network(sta_network.name);
+
+        wlan_initialize_sta_network(&sta_network);
+
+        memcpy(sta_network.ssid, params->ssid, params->ssid_length);
+        sta_network.ssid_specific     = 1;
+
+        sta_network.channel          = params->channel;
+
+        if (params->mfp == WIFI_MFP_REQUIRED)
+        {
+            sta_network.security.mfpc = true;
+            sta_network.security.mfpr = true;
+        }
+        else if (params->mfp == WIFI_MFP_OPTIONAL)
+        {
+            sta_network.security.mfpc = true;
+            sta_network.security.mfpr = false;
+        }
+
+        if (params->security == WIFI_SECURITY_TYPE_NONE)
+        {
+            sta_network.security.type = WLAN_SECURITY_NONE;
+        }
+        else if (params->security == WIFI_SECURITY_TYPE_PSK)
+        {
+            sta_network.security.type = WLAN_SECURITY_WPA2;
+            sta_network.security.psk_len = params->psk_length;
+            strncpy(sta_network.security.psk, params->psk, params->psk_length);
+        }
+#ifdef CONFIG_WPA_SUPP
+        else if (params->security == WIFI_SECURITY_TYPE_PSK_SHA256)
+        {
+            sta_network.security.type = WLAN_SECURITY_WPA2_SHA256;
+            sta_network.security.psk_len = params->psk_length;
+            strncpy(sta_network.security.psk, params->psk, params->psk_length);
+        }
+#endif
+        else if (params->security == WIFI_SECURITY_TYPE_SAE)
+        {
+            sta_network.security.type = WLAN_SECURITY_WPA3_SAE;
+            sta_network.security.password_len = params->sae_password_length;
+            strncpy(sta_network.security.password, params->sae_password, params->sae_password_length);
+        }
+        else
+        {
+            status = WPLRET_BAD_PARAM;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        ret = wlan_add_network(&sta_network);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        k_event_clear(&s_wplSyncEvent, WPL_SYNC_CONNECT_GROUP);
+
+        ret = wlan_connect(sta_network.name);
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        syncBit = k_event_wait(&s_wplSyncEvent, WPL_SYNC_CONNECT_GROUP, true, WPL_SYNC_TIMEOUT_MS);
+        if (syncBit & EVENT_BIT(WLAN_REASON_SUCCESS))
+        {
+            status = WPLRET_SUCCESS;
+        }
+        else if (syncBit & EVENT_BIT(WLAN_REASON_CONNECT_FAILED))
+        {
+            status = WPLRET_FAIL;
+        }
+        else if (syncBit & EVENT_BIT(WLAN_REASON_NETWORK_NOT_FOUND))
+        {
+            status = WPLRET_NOT_FOUND;
+        }
+        else if (syncBit & EVENT_BIT(WLAN_REASON_NETWORK_AUTH_FAILED))
+        {
+            status = WPLRET_AUTH_FAILED;
+        }
+        else if (syncBit & EVENT_BIT(WLAN_REASON_ADDRESS_FAILED))
+        {
+            status = WPLRET_ADDR_FAILED;
+        }
+        else
+        {
+            status = WPLRET_TIMEOUT;
+        }
+
+        if (status != WPLRET_SUCCESS)
+        {
+            /* Abort the next connection attempt */
+            WPL_Disconnect(dev);
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        s_wplStaConnected = true;
+        wifi_mgmt_raise_connect_result_event(g_mlan.netif, 0);
+    }
+
+    if (status != WPLRET_SUCCESS)
+    {
+        LOG_ERR("Failed to connect to Wi-Fi access point");
+	return -EAGAIN;
+    }
+
+    return 0;
+}
+
+static int WPL_Disconnect(const struct device *dev)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    uint32_t syncBit;
+    interface_t *if_handle = (interface_t *)dev->data;
+
+    if (s_wplState != WPL_STARTED)
+    {
+        status = WPLRET_NOT_READY;
+    }
+
+    if (if_handle->state.interface != WLAN_BSS_TYPE_STA)
+    {
+        LOG_ERR("Wi-Fi not in station mode");
+        return -EIO; 
+    }
+
+    enum wlan_connection_state connection_state = WLAN_DISCONNECTED;
+    wlan_get_connection_state(&connection_state);
+    if (connection_state == WLAN_DISCONNECTED)
+    {
+        s_wplStaConnected = false;
+        wifi_mgmt_raise_disconnect_result_event(g_mlan.netif, -1);
+        return WPLRET_SUCCESS;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        k_event_clear(&s_wplSyncEvent, WPL_SYNC_DISCONNECT_GROUP);
+
+        ret = wlan_disconnect();
+        if (ret != WM_SUCCESS)
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        syncBit = k_event_wait(&s_wplSyncEvent, WPL_SYNC_DISCONNECT_GROUP, true, WPL_SYNC_TIMEOUT_MS);
+        if (syncBit & EVENT_BIT(WLAN_REASON_USER_DISCONNECT))
+        {
+            status = WPLRET_SUCCESS;
+        }
+        else
+        {
+            status = WPLRET_TIMEOUT;
+        }
+    }
+
+    s_wplStaConnected = false;
+
+    if (status != WPLRET_SUCCESS)
+    {
+        LOG_ERR("Failed to disconnect from AP");
+        wifi_mgmt_raise_disconnect_result_event(g_mlan.netif, -1);
+	return -EAGAIN;
+    }
+
+    wifi_mgmt_raise_disconnect_result_event(g_mlan.netif, 0);
+
+    return 0;
+}
+
+int WPL_GetIP(char *ip, int client)
+{
+    wpl_ret_t status = WPLRET_SUCCESS;
+    int ret;
+    struct wlan_ip_config addr;
+
+    if (ip == NULL)
+    {
+        status = WPLRET_FAIL;
+    }
+
+    if (status == WPLRET_SUCCESS)
+    {
+        if (client)
+        {
+            ret = wlan_get_address(&addr);
+        }
+        else
+        {
+            ret = wlan_get_uap_address(&addr);
+        }
+
+        if (ret == WM_SUCCESS)
+        {
+            net_inet_ntoa(addr.ipv4.address, ip);
+        }
+        else
+        {
+            status = WPLRET_FAIL;
+        }
+    }
+
+    if (status != WPLRET_SUCCESS)
+        return -1;
+
+    return 0;
+}
+
+static inline enum wifi_security_type WPL_key_mgmt_to_zephyr(enum wlan_security_type type)
+{
+    switch(type) {
+        case WLAN_SECURITY_NONE:
+            return WIFI_SECURITY_TYPE_NONE;
+        case WLAN_SECURITY_WPA2:
+            return WIFI_SECURITY_TYPE_PSK;
+#ifdef CONFIG_WPA_SUPP
+        case WLAN_SECURITY_WPA2_SHA256:
+            return WIFI_SECURITY_TYPE_PSK_SHA256;
+#endif
+        case WLAN_SECURITY_WPA3_SAE:
+            return WIFI_SECURITY_TYPE_SAE;
+        default:
+            return WIFI_SECURITY_TYPE_UNKNOWN;
+    }
+}
+
+static int WPL_Status(const struct device *dev,
+			struct wifi_iface_status *status)
+{
+    enum wlan_connection_state connection_state = WLAN_DISCONNECTED;
+    wlan_get_connection_state(&connection_state);
+    struct wlan_network *network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (!network)
+    {
+        LOG_ERR("Error: unable to malloc memory");
+        return -1;
+    }
+
+    if (s_wplState != WPL_STARTED)
+    {
+        status->state = WIFI_STATE_INTERFACE_DISABLED; 
+        return WPLRET_SUCCESS;
+    }
+
+    if (connection_state == WLAN_DISCONNECTED)
+    {
+        status->state = WIFI_STATE_DISCONNECTED;
+    }
+    else if (connection_state == WLAN_SCANNING)
+    {
+        status->state = WIFI_STATE_SCANNING;
+    }
+    else if (connection_state == WLAN_ASSOCIATING)
+    {
+        status->state = WIFI_STATE_ASSOCIATING;
+    }
+    else if (connection_state == WLAN_ASSOCIATED)
+    {
+        status->state = WIFI_STATE_ASSOCIATED;
+    }
+    else if (connection_state == WLAN_CONNECTED)
+    {
+        status->state = WIFI_STATE_COMPLETED;
+
+        if (!wlan_get_current_network(network))
+        {
+            strncpy(status->ssid, network->ssid, strlen(network->ssid));
+            status->ssid_len = strlen(network->ssid);
+
+            memcpy(status->bssid, network->bssid, WIFI_MAC_ADDR_LEN);
+
+            status->rssi = network->rssi;
+
+            status->channel = network->channel;
+
+            status->iface_mode = WIFI_MODE_INFRA;
+
+            status->band = network->channel > 14 ? WIFI_FREQ_BAND_5_GHZ : WIFI_FREQ_BAND_2_4_GHZ; 
+	    status->security = WPL_key_mgmt_to_zephyr(network->security.type);
+	    status->mfp = network->security.mfpr ? WIFI_MFP_REQUIRED : network->security.mfpc ? WIFI_MFP_OPTIONAL : 0;
+        }
+    }
+
+    return 0;
+}
+
+
 K_THREAD_STACK_DEFINE(net_wifi_init_stack, CONFIG_WIFI_INIT_STACK_SIZE);
 struct k_thread net_wifi_thread;
 
@@ -514,18 +1357,17 @@ extern void WL_MCI_WAKEUP0_DriverIRQHandler(void);
 void net_wifi_init_thread(void *dev, void* arg2, void *arg3)
 {
 	int ret;
-    LOG_ERR("Debug In %s", __func__);
 
     IRQ_CONNECT(72, 1, WL_MCI_WAKEUP0_DriverIRQHandler, 0, 0);
     irq_enable(72);
 
 	/* Initialize the wifi subsystem */
-	ret = wlan_init(wlan_fw_bin, wlan_fw_bin_len);
+	ret = WPL_Init();
 	if (ret) {
 		LOG_ERR("wlan initialization failed");
 		return;
 	}
-	ret = wlan_start(wlan_event_callback);
+	ret = WPL_Start(LinkStatusChangeCallback);
 	if (ret) {
 		LOG_ERR("could not start wlan threads");
 		return;
@@ -539,8 +1381,6 @@ static int wifi_net_init(const struct device *dev)
 
 static int wifi_net_init_thread(const struct device *dev)
 {
-    LOG_ERR("Debug In %s", __func__);
-
     g_mlan.state.interface = WLAN_BSS_TYPE_STA;
     g_uap.state.interface  = WLAN_BSS_TYPE_UAP;
 
@@ -560,8 +1400,6 @@ static void wifi_net_iface_init(struct net_if *iface)
     interface_t *intf = dev->data;
 
     intf->netif = iface;
-
-    LOG_ERR("Debug In %s", __func__);
 
     if (!init_done)
     {
@@ -1019,8 +1857,6 @@ int net_wlan_init(void)
 {
     int ret;
 
-    LOG_ERR("Debug In %s", __func__);
-
     wifi_register_data_input_callback(&handle_data_packet);
     wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
     wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
@@ -1062,7 +1898,7 @@ int net_wlan_init(void)
         }
     }
 
-    LOG_ERR("Debug Initialized TCP/IP networking stack");
+    LOG_DBG("Initialized TCP/IP networking stack");
     wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
     return WM_SUCCESS;
 }
@@ -1146,17 +1982,73 @@ int net_wlan_deinit(void)
 
     net_wlan_init_done           = 0;
 
-    LOG_ERR("DeInitialized TCP/IP networking stack");
+    LOG_DBG("DeInitialized TCP/IP networking stack");
 
     return WM_SUCCESS;
 }
 
-static const struct ethernet_api wifi_netif_apis = {
-	.iface_api.init	= wifi_net_iface_init,
-	.send =  low_level_output,
+#ifdef CONFIG_NET_STATISTICS_WIFI
+int z_wpa_supplicant_get_stats(const struct device *dev,
+				struct net_stats_wifi *stats)
+{
+    PRINTF("%s\r\n", __func__);
+
+    return 0;
+}
+#endif
+
+static int z_wpa_supplicant_set_power_save(const struct device *dev,
+				struct wifi_ps_params *params)
+{
+    PRINTF("%s\r\n", __func__);
+
+    return 0;
+}
+
+static int z_wpa_supplicant_set_twt(const struct device *dev,
+				struct wifi_twt_params *params)
+{
+    PRINTF("%s\r\n", __func__);
+
+    return 0;
+}
+
+int z_wpa_supplicant_get_power_save_config(const struct device *dev,
+				struct wifi_ps_config *config)
+{
+    PRINTF("%s\r\n", __func__);
+
+    return 0;
+}
+
+int z_wpa_supplicant_reg_domain(const struct device *dev,
+				struct wifi_reg_domain *reg_domain)
+{
+    PRINTF("%s\r\n", __func__);
+
+    return 0;
+}
+
+static const struct net_wifi_mgmt_offload wifi_netif_apis = {
+	.wifi_iface.iface_api.init = wifi_net_iface_init,
+	.wifi_iface.send = low_level_output,
+	.scan = WPL_Scan,
+	.connect = WPL_Connect,
+	.disconnect = WPL_Disconnect,
+        .ap_enable = WPL_Start_AP,
+        .ap_disable = WPL_Stop_AP,
+	.iface_status = WPL_Status,
+#ifdef CONFIG_NET_STATISTICS_WIFI
+	.get_stats = z_wpa_supplicant_get_stats,
+#endif
+	.set_power_save = z_wpa_supplicant_set_power_save,
+	.set_twt = z_wpa_supplicant_set_twt,
+	.get_power_save_config = z_wpa_supplicant_get_power_save_config,
+	.reg_domain = z_wpa_supplicant_reg_domain,
 };
 
-NET_DEVICE_INIT(wifi_nxp_sta, "ml", wifi_net_init, NULL, &g_mlan,
+
+NET_DEVICE_INIT_INSTANCE(wifi_nxp_sta, "ml", 0, wifi_net_init, NULL, &g_mlan,
 #ifdef CONFIG_WPA_SUPP
     &wpa_supp_ops,
 #else
@@ -1165,7 +2057,7 @@ NET_DEVICE_INIT(wifi_nxp_sta, "ml", wifi_net_init, NULL, &g_mlan,
     CONFIG_ETH_INIT_PRIORITY, &wifi_netif_apis,
     ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);
 
-NET_DEVICE_INIT(wifi_nxp_uap, "ua", wifi_net_init, NULL, &g_uap,
+NET_DEVICE_INIT_INSTANCE(wifi_nxp_uap, "ua", 1, wifi_net_init, NULL, &g_uap,
 #ifdef CONFIG_WPA_SUPP
     &wpa_supp_ops,
 #else
@@ -1173,6 +2065,7 @@ NET_DEVICE_INIT(wifi_nxp_uap, "ua", wifi_net_init, NULL, &g_uap,
 #endif
     CONFIG_ETH_INIT_PRIORITY, &wifi_netif_apis,
     ETHERNET_L2, NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);
+
 
 const struct netif *net_if_get_binding(const char *ifname)
 {
@@ -1184,7 +2077,7 @@ const struct netif *net_if_get_binding(const char *ifname)
         return NULL;
     }
 
-    iface = net_if_lookup_by_dev(dev);
+    iface = (struct netif *)net_if_lookup_by_dev(dev);
     if (!iface) {
         return NULL;
     }
@@ -1197,7 +2090,7 @@ const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif* ifac
     const struct freertos_wpa_supp_dev_ops *dev_ops = NULL;
     const struct device *dev = NULL;
 
-    dev = net_if_get_device(iface);
+    dev = net_if_get_device((struct net_if *)iface);
     dev_ops = dev->config;
 
     return dev_ops;

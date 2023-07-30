@@ -25,9 +25,6 @@
 #include "sdio.h"
 #include "firmware_dnld.h"
 
-#ifdef CONFIG_WMM
-#include "sdmmc_config.h"
-#endif
 #endif
 #ifdef RW610
 #include "fsl_adapter_rfimu.h"
@@ -77,10 +74,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #endif
 
 #ifdef CONFIG_WMM
-#ifdef RW610
 #define BOARD_DATA_BUFFER_ALIGN_SIZE 32
-#else
-#define BOARD_DATA_BUFFER_ALIGN_SIZE BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE
 #endif
 
 SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER_ALIGN_SIZE);
@@ -2279,7 +2273,7 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
                 ret = -WIFI_ERROR_FW_NOT_READY;
                 break;
             default:
-                wifi_d("sd_wifi_init enexpected MLAN Status \n", ret);
+                wifi_d("sd_wifi_init unexpected MLAN Status %d", ret);
                 break;
         }
         return ret;

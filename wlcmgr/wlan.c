@@ -1198,7 +1198,7 @@ void wlan_clear_host_sleep_config()
 		wifi_set_packet_filters(&g_flt_cfg);
     }
 #endif
-    wakeup_by = 0;
+    //wakeup_by = 1;
     wifi_clear_wakeup_reason();
     wlan.wakeup_conditions = 0;
     wlan.is_hs_configured = MFALSE;
@@ -3838,6 +3838,9 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     int ret;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 #endif
+#ifdef CONFIG_WPA_SUPP
+    void *if_handle = NULL;
+#endif
 
 #ifdef CONFIG_WLAN_FAST_PATH
     if (wlan.is_scan_lock)
@@ -3874,6 +3877,14 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         wlan.sta_state = CM_STA_ASSOCIATED;
         *next          = CM_STA_ASSOCIATED;
 
+#ifdef CONFIG_WPA_SUPP
+        if_handle = net_get_mlan_handle();
+        net_interface_up(if_handle);
+#endif
+
+#ifdef CONFIG_WPS2
+        if (wps_session_attempt)
+        {
 #ifdef CONFIG_WPA2_ENTP
         if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
         {
@@ -7307,7 +7318,7 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
 }
 #endif
 
-bool wlan_is_started()
+int wlan_is_started()
 {
     return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
 }
@@ -7800,6 +7811,21 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->ip.ipv4.netmask = htonl(0xffffff00UL);
     /* Specify address type as static assignment */
     net->ip.ipv4.addr_type = ADDR_TYPE_STATIC;
+}
+
+void wlan_initialize_sta_network(struct wlan_network *net)
+{
+    (void)memset(net, 0, sizeof(struct wlan_network));
+    /* Set profile name */
+    (void)strcpy(net->name, "sta-network");
+    /* Set channel selection to auto (0) */
+    net->channel = 0;
+    /* Set network type to sta */
+    net->type = WLAN_BSS_TYPE_STA;
+    /* Set network role to sta */
+    net->role = WLAN_BSS_ROLE_STA;
+    /* Specify address type as dynamic assignment */
+    net->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 }
 
 static bool isHexNumber(const char *str, const uint8_t len)

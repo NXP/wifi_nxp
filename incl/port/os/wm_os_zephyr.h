@@ -920,20 +920,22 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock);
 
 /*** Timer Management ***/
 
+struct timer_data;
+
+typedef struct timer_data *os_timer_t;
+typedef os_timer_t os_timer_arg_t;
+typedef int os_timer_tick;
+
 /** OS Timer data structure
  */
 struct timer_data {
-	void (*callback)(void*);
+	void (*callback)(os_timer_arg_t);
 	void *user_arg;
 	int period;
 	int reload_options;
 	struct k_timer timer;
 	struct k_work work;
 };
-
-typedef struct timer_data *os_timer_t;
-typedef os_timer_t os_timer_arg_t;
-typedef int os_timer_tick;
 
 /** OS Timer reload Options
  *

@@ -2110,7 +2110,7 @@ void wlan_destroy_all_tasks(void);
  *  \return TRUE if started.
  *  \return FALSE if not started.
  */
-bool wlan_is_started();
+int wlan_is_started();
 #endif
 
 #ifdef CONFIG_NCP_BRIDGE
@@ -2228,6 +2228,15 @@ int wlan_set_get_cck_desense_cfg(struct wlan_cck_desense_cfg *cfg, t_u16 action)
  * \param[out] net Pointer to the initialized micro-AP network
  */
 void wlan_initialize_uap_network(struct wlan_network *net);
+
+/** WLAN initialize station network information
+ *
+ * This API intializes a default station network. The network ssid, passphrase
+ * is initialized to NULL. Channel is set to auto. 
+ *
+ * \param[out] net Pointer to the initialized micro-AP network
+ */
+void wlan_initialize_sta_network(struct wlan_network *net);
 
 /** Add a network profile to the list of known networks.
  *

@@ -3,18 +3,29 @@
 
 menuconfig WIFI_NXP
 	bool "NXP Wi-Fi driver support"
-#	select SDHC
-#	select SD_STACK
-#	select SDIO_STACK
-	select NET_L2_ETHERNET
+	select NET_SOCKETS
+	select GPIO
+	select NET_L2_WIFI_MGMT
+	select WIFI_USE_NATIVE_NETWORKING
 
 if WIFI_NXP
 
-config WIFI_ZEPHYR
-    bool "Wi-Fi driver using ZEPHYR OS"
+module = WIFI_NXP
+module-str = wifi_nxp
+
+# Increase default heap size, driver needs memory allocation
+config ZEPHYR
+    bool
+    # Kernel features needed by OSA
+    select THREAD_NAME
+    select THREAD_CUSTOM_DATA
     default y
     help
       For Zephyr OS this needs to be always enabled.
+
+config WIFI_MAX_PRIO
+    int
+    default 1
 
 choice
 	prompt "Wi-Fi Chipset"
@@ -74,20 +85,12 @@ endchoice
 
 # Increase default heap size, driver needs memory allocation
 config WIFI_NET_HEAP_SIZE
-	int "Net Heap Size"
+	int
 	default 16384
 
 config WIFI_INIT_STACK_SIZE
 	int "Init Stack Size"
 	default 4096
-
-#config WIFI_NXP_NET_HEAP_SIZE
-#	int "Heap size"
-#	default 184320
-
-#config WIFI_NXP_INIT_STACK_SIZE
-#	int "Init stack size"
-#	default 4096
 
 config MAX_AP_ENTRIES
        int "Maximum scan entries"
@@ -156,7 +159,7 @@ config 11AX
        bool "802.11ax Support"
        def_bool y
        select 11AC
-       #select WMM
+       select WMM
        depends on IW61x
        help
          This option enables the use of 802.11ax support. Say Y if you
@@ -167,7 +170,7 @@ if IW61x || SD8987
 
 config 11AC
        bool "802.11ac Support"
-       #select WMM
+       select WMM
        def_bool y
        help
          This option enables the use of 802.11ac support. Say Y if you
@@ -177,7 +180,7 @@ endif
 
 config WMM
        bool "802.11 WMM Support"
-       def_bool n
+       def_bool y
        help
          This option enables the use of 802.11 WMM support. Say Y if you
 	 wish to enable this feature.
@@ -186,7 +189,7 @@ menu "IPv6 Support"
 
 config IPV6
 	bool "Support for IPv6"
-	def_bool y
+	def_bool n
         help
          This option enables the use of IPv6 support. Say Y if you
 	 wish to enable this feature.
@@ -201,7 +204,7 @@ config MAX_IPV6_ADDRESSES
 
 endmenu
 
-if IW61x || SD8987
+if IW61x || SD8987 || SD8978 || RW610
 
 config 5GHz_SUPPORT
        bool "5GHz Support(Band A)"
@@ -211,67 +214,6 @@ config 5GHz_SUPPORT
 	 wish to enable this feature.
 endif
 
-menu "WPA Supplicant"
-config WPA_SUPP
-       bool "WPA Supplicant"
-       default n
-       select REQUIRES_FULL_LIBC
-       help
-       This option enables the use of wpa supplicant and hostapd support. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_THREAD_STACK_SIZE
-       int "WPA Supplicant thread stack size"
-       default 8192
-       depends on WPA_SUPP
-       help
-       This option enables WPS 2.0 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_IFACE_WQ_STACK_SIZE
-       int "WPA Supplicant WQ stack size"
-       default 4096
-       depends on WPA_SUPP
-       help
-       This option enables WPS 2.0 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_WPS
-       bool "WPS 2.0"
-       def_bool n
-       depends on WPA_SUPP
-       help
-       This option enables WPS 2.0 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_WPA3
-       bool "WPA3"
-       def_bool n
-       depends on WPA_SUPP
-       help
-       This option enables WPA3 support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_CRYPTO_ENTERPRISE
-       bool "WPA2/3 Enterprise"
-       def_bool n
-       depends on WPA_SUPP
-       help
-       This option enables WPA2/3 Enterprise support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_DEBUG_LEVEL
-       int "WPA Supplicant debug level"
-       range 0 5
-       default 3
-       depends on WPA_SUPP
-       help
-       This option enables WPA2/3 Enterprise support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-config WPA_SUPP_LOG_LEVEL
-       int "WPA Supplicant log level"
-       range 0 5
-       default 3
-       depends on WPA_SUPP
-       help
-       This option enables WPA2/3 Enterprise support in the wpa supplicant and hostapd. Say Y if you wish to enable this feature.
-
-endmenu
-
 config HOST_SLEEP
        bool "HOST Sleep"
        def_bool n
@@ -280,7 +222,7 @@ config HOST_SLEEP
 
 config ROAMING
        bool "Wi-Fi Soft Roaming"
-       def_bool y
+       def_bool n
        help
 	 This option enables Soft Roaming support in the Wi-Fi driver. Say Y if you wish to enable this feature.
 
@@ -296,30 +238,35 @@ config MEF_CFG
        help
 	 This option enables Memory Efficient Filtering support in the Wi-Fi driver. Say Y if you wish to enable this feature.
 
-config WIFI_FEATURES
-       bool "Wi-Fi features"
-       def_bool n
-       help
-	 This option enables Wi-Fi features support in the Wi-Fi driver. Say Y if you wish to enable this feature.
-
-config OFFLOAD
-       bool "Wi-Fi Offload"
-       def_bool n
-       help
-	 This option enables Wi-Fi offload support in the Wi-Fi driver. Say Y if you wish to enable this feature.
-
 config FILTER_LOCALLY_ADMINISTERED_AND_SELF_MAC_ADDR
-       bool "Filter Locally Administered and Self Mac Address"
+       bool
        def_bool n
        help
          This option enables the filtering of the locally administered MAC address and Self address packets.
 	 Say Y if you wish to enable this feature.
+
+if IW61x || SD8987 || SD8978 || RW610
 
 config EXT_SCAN_SUPPORT
        bool "Extended Scan Support"
        def_bool y
        help
          This option enables the use of extended scan support. Say Y if you wish to enable this feature.
+
+config TURBO_MODE
+       bool "Turbo Mode"
+       def_bool n
+       help
+	 This option enables WMM Turbo Mode support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+
+config WIFI_EU_CRYPTO
+       bool "Wi-Fi EU Crypto"
+       def_bool n
+       help
+	 This option enables Wi-Fi EU Crypto support in the Wi-Fi driver. Say Y if you wish to enable this feature.
+
+endif
 
 config FIPS
        bool "FIPS"
@@ -334,25 +281,39 @@ config OWE
 	 This option enables Wi-Fi Opportunistic Wireless Encryption support in the Wi-Fi driver. Say Y if you wish to enable this feature.
 
 config 11K
-       bool "802.11k Support"
-       def_bool y
+       bool "802.11K Support"
+       def_bool n
        help
          This option enables the use of 802.11k support. Say Y if you
 	 wish to enable this feature.
 
 config 11V
-       bool "802.11v Support"
-       def_bool y
+       bool "802.11V Support"
+       def_bool n
        help
          This option enables the use of 802.11v support. Say Y if you
 	 wish to enable this feature.
 
+if IW61x || RW610
+
 config 11R
-       bool "802.11r Support"
-       def_bool y
+       bool "802.11R Support"
+       def_bool n
+       depends on WPA_SUPP
        help
          This option enables the use of 802.11r support. Say Y if you
 	 wish to enable this feature.
+endif
+
+if SD8987 || SD8978
+
+config 11R
+       bool "802.11R Support"
+       def_bool n
+       help
+         This option enables the use of 802.11r support. Say Y if you
+	 wish to enable this feature.
+endif
 
 config WLAN_FW_HEARTBEAT
 	bool "WLAN FW Heartbeat Event Support"

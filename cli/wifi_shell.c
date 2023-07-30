@@ -236,7 +236,7 @@ void help_command(int argc, char **argv)
  */
 static int cmd_wlansh(const struct shell *shell, size_t argc, char **argv)
 {
-    struct cli_command *command = NULL;
+    const struct cli_command *command = NULL;
 
     if (argc < 2)
     {
