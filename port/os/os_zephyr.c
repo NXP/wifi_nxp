@@ -84,7 +84,7 @@ void* os_mem_alloc(size_t size)
     (void)k_mutex_unlock(&osa_malloc_heap_mutex);
     return ptr;
 #endif
-    return malloc(size);
+    return k_malloc(size);
 }
 
 void *os_mem_calloc(size_t size)
@@ -113,7 +113,31 @@ void *os_mem_realloc(void *old_ptr, size_t new_size)
     (void)k_mutex_unlock(&osa_malloc_heap_mutex);
     return ptr;
 #endif
-    return realloc(old_ptr, new_size);
+    void *p;
+
+    if (new_size == 0)
+    {
+        os_mem_free(old_ptr);
+        return NULL;
+    }
+
+    if (old_ptr == NULL)
+    {
+        return os_mem_alloc(new_size);
+    }
+
+    p = os_mem_calloc(new_size);
+
+    if (p)
+    {
+        if (old_ptr != NULL)
+        {
+            memcpy(p, old_ptr, new_size);
+            os_mem_free(old_ptr);
+        }
+    }
+
+    return p;
 }
 
 void os_mem_free(void *ptr)
@@ -126,7 +150,7 @@ void os_mem_free(void *ptr)
     sys_heap_free(&osa_malloc_heap, ptr);
     (void)k_mutex_unlock(&osa_malloc_heap_mutex);
 #endif
-    free(ptr);
+    k_free(ptr);
 }
 
 /* Prepares OSA layer, by setting up heap */
