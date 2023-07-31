@@ -151,6 +151,14 @@ config 11AC
     help
         This option enables the use of 802.11ac support. Say Y if you
         wish to enable this feature.
+
+config ENABLE_HTTPSERVER
+    bool "Simple HTTP Server"
+    default n
+    help
+        This HTTP server does not really parse an incoming HTTP request,
+        just reads and discards it, and always serve a single static page.
+
 endif
 
 if IW61x

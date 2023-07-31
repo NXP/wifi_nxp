@@ -63,3 +63,9 @@ zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if
 #zephyr_library_compile_definitions(CONFIG_WPA_SUPP_AP=1)
 
 endif()
+
+# HTTP Server
+if(CONFIG_ENABLE_HTTPSERVER)
+set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
+generate_inc_file_for_target(app response_big.html.bin   ${gen_dir}/response_big.html.bin.inc)
+endif()

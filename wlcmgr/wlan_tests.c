@@ -9585,13 +9585,137 @@ static void test_wlan_independent_reset(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_ENABLE_HTTPSERVER
+#include <zephyr/net/socket.h>
+#include <zephyr/kernel.h>
+#include <zephyr/net/net_pkt.h>
+
+#define BIND_PORT 8080
+#define CHECK(r) { if (r == -1) { printf("Error: " #r "\n"); exit(1); } }
+static const char content[] = {
+    #include "response_big.html.bin.inc"
+};
+
+static void test_wlan_start_httpserver(int argc, char **argv)
+{
+    int serv;
+	struct sockaddr_in bind_addr;
+	static int counter;
+	int ret;
+
+    serv = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	CHECK(serv);
+
+	bind_addr.sin_family = AF_INET;
+	bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	bind_addr.sin_port = htons(BIND_PORT);
+	CHECK(bind(serv, (struct sockaddr *)&bind_addr, sizeof(bind_addr)));
+
+	CHECK(listen(serv, 5));
+
+	PRINTF("Single-threaded dumb HTTP server waits for a connection on "
+	       "port %d...\n", BIND_PORT);
+
+    while (1) {
+		struct sockaddr_in client_addr;
+		socklen_t client_addr_len = sizeof(client_addr);
+		char addr_str[32];
+		int req_state = 0;
+		const char *data;
+		size_t len;
+
+		int client = accept(serv, (struct sockaddr *)&client_addr,
+				    &client_addr_len);
+		if (client < 0) {
+			PRINTF("Error in accept: %d - continuing\n", errno);
+			continue;
+		}
+
+		inet_ntop(client_addr.sin_family, &client_addr.sin_addr,
+			  addr_str, sizeof(addr_str));
+		PRINTF("Connection #%d from %s\n", counter++, addr_str);
+
+        /* Discard HTTP request (or otherwise client will get
+		 * connection reset error).
+		 */
+		while (1) {
+			ssize_t r;
+			char c;
+
+			r = recv(client, &c, 1, 0);
+			if (r == 0) {
+				goto close_client;
+			}
+
+			if (r < 0) {
+				if (errno == EAGAIN || errno == EINTR) {
+					continue;
+				}
+
+				PRINTF("Got error %d when receiving from "
+				       "socket\n", errno);
+				goto close_client;
+			}
+			if (req_state == 0 && c == '\r') {
+				req_state++;
+			} else if (req_state == 1 && c == '\n') {
+				req_state++;
+			} else if (req_state == 2 && c == '\r') {
+				req_state++;
+			} else if (req_state == 3 && c == '\n') {
+				break;
+			} else {
+				req_state = 0;
+			}
+		}
+
+		data = content;
+		len = sizeof(content);
+		while (len) {
+			int sent_len = send(client, data, len, 0);
+
+			if (sent_len == -1) {
+				PRINTF("Error sending data to peer, errno: %d\n", errno);
+				break;
+			}
+			data += sent_len;
+			len -= sent_len;
+		}
+
+close_client:
+		ret = close(client);
+		if (ret == 0) {
+			PRINTF("Connection from %s closed\n", addr_str);
+		} else {
+			PRINTF("Got error %d while closing the "
+			       "socket\n", errno);
+		}
+
+        ret = close(serv);
+        if (ret == 0) {
+			PRINTF("Sever socket closed\n");
+		} else {
+			PRINTF("Got error %d while closing the "
+			       "server socket\n", errno);
+		}
+
+        struct k_mem_slab *rx, *tx;
+		struct net_buf_pool *rx_data, *tx_data;
+
+		net_pkt_get_info(&rx, &tx, &rx_data, &tx_data);
+		printf("rx buf: %d, tx buf: %d\n",
+		       atomic_get(&rx_data->avail_count), atomic_get(&tx_data->avail_count));
+
+        return;
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
     {"wlan-sched-switch-debug", NULL, test_wlan_sched_switch_debug},
 #endif
-static struct cli_command tests[] = {
-    {"wlan-thread-info", NULL, test_wlan_thread_info},
     {"wlan-net-stats", NULL, test_wlan_net_stats},
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},
@@ -9882,7 +10006,6 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_IMD3_CFG
     {"wlan-imd3-cfg", "<enable>", test_wlan_imd3_cfg},
 #endif
-
 #ifdef CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
@@ -9890,6 +10013,9 @@ static struct cli_command tests[] = {
     {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
     {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
     {"wlan-independent-reset", NULL, test_wlan_independent_reset},
+#endif
+#ifdef CONFIG_ENABLE_HTTPSERVER
+    {"wlan-start-httpserver", NULL, test_wlan_start_httpserver},
 #endif
 };
 
