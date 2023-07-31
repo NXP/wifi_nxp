@@ -168,7 +168,7 @@ static inline int HEX2NUM(char c)
  *  @param hex          A pointer to hex string
  *  @return             1 or 0
  */
-static inline int ISHEXSTRING(void *hex)
+static inline int ISHEXSTRING(char *hex)
 {
     int i, a;
     char *p = hex;
