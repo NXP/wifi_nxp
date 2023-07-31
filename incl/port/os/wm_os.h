@@ -1117,4 +1117,10 @@ static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
 
 void os_dump_threadinfo(char *name);
 
+#ifdef CONFIG_SCHED_SWITCH_TRACE
+extern int ncp_debug_task_switch_start;
+void trace_task_switch(int in, const char *func_name);
+void trace_task_switch_print();
+#endif
+
 #endif /* ! _WM_OS_H_ */

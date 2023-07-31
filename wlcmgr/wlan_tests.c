@@ -1737,6 +1737,18 @@ static void test_wlan_thread_info(int argc, char **argv)
     os_dump_threadinfo(NULL);
 }
 
+#ifdef CONFIG_SCHED_SWITCH_TRACE
+static void test_wlan_sched_switch_debug(int argc, char **argv)
+{
+    if (strncmp(argv[1], "start", strlen("start")+1))
+        ncp_debug_task_switch_start = 1;
+    else if (strncmp(argv[1], "stop", strlen("stop")+1))
+        ncp_debug_task_switch_start = 0;
+    else if (strncmp(argv[1], "print", strlen("print")+1))
+        trace_task_switch_print();
+}
+#endif
+
 static void test_wlan_net_stats(int argc, char **argv)
 {
     net_stat();
@@ -9221,6 +9233,9 @@ static void test_wlan_imd3_cfg(int argc, char **argv)
 
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
+#if CONFIG_SCHED_SWITCH_TRACE
+    {"wlan-sched-switch-debug", NULL, test_wlan_sched_switch_debug},
+#endif
     {"wlan-net-stats", NULL, test_wlan_net_stats},
     {"wlan-set-mac", "<MAC_Address>", test_wlan_set_mac_address},
     {"wlan-scan", NULL, test_wlan_scan},

@@ -1404,3 +1404,36 @@ void os_enable_all_interrupts(void)
 {
     taskENABLE_INTERRUPTS();
 }
+
+#ifdef CONFIG_SCHED_SWITCH_TRACE
+#ifndef NCP_DEBUG_TIME_SWITCH
+#define NCP_DEBUG_TIME_SWITCH 5 * 4096
+#endif
+unsigned long task_switch_num = 0;
+unsigned long ncp_debug_task_switch_interval[NCP_DEBUG_TIME_SWITCH] = {0};
+const char *ncp_debug_task_switch[NCP_DEBUG_TIME_SWITCH] = {0};
+int ncp_debug_task_switch_start = 0;
+unsigned long ncp_debug_task_switch_time_in;
+void trace_task_switch(int in, const char *func_name)
+{
+    if (ncp_debug_task_switch_start && task_switch_num < NCP_DEBUG_TIME_SWITCH)
+    {
+        ncp_debug_task_switch[task_switch_num] = func_name;
+        if (in)
+        {
+           ncp_debug_task_switch_time_in = os_get_timestamp();
+        }
+        if (!in)
+        {
+           ncp_debug_task_switch_interval[task_switch_num] = os_get_timestamp() - ncp_debug_task_switch_time_in;
+        }
+        task_switch_num++;
+    }
+}
+
+void trace_task_switch_print()
+{
+    for (unsigned long i = 0; i < task_switch_num; i++)
+        (void)PRINTF("%d-%s-%lu\r\n", i, ncp_debug_task_switch[i], ncp_debug_task_switch_interval[i]);
+}
+#endif
