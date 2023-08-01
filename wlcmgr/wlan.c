@@ -32,6 +32,8 @@
 #endif
 #ifdef OVERRIDE_CALIBRATION_DATA
 #include OVERRIDE_CALIBRATION_DATA
+#else
+#include <wifi_cal_data_ext.h>
 #endif
 #include <fsl_common.h>
 #include <dhcp-server.h>
@@ -729,6 +731,13 @@ int get_scan_params(struct wifi_scan_params_t *wifi_scan_params)
     wifi_scan_params->channel[0]       = g_wifi_scan_params.channel[0];
     wifi_scan_params->split_scan_delay = g_wifi_scan_params.split_scan_delay;
     return WM_SUCCESS;
+}
+
+void wlan_dhcp_cleanup()
+{
+    net_stop_dhcp_timer();
+    net_interface_dhcp_stop(net_get_mlan_handle());
+    net_interface_dhcp_cleanup(net_get_mlan_handle());
 }
 
 static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_condtions)
@@ -2316,8 +2325,28 @@ static int do_start(struct wlan_network *network)
         }
         else
         {
+            t_u8 bandwidth = wifi_uap_get_bandwidth();
+
+            if (bandwidth == BANDWIDTH_80MHZ)
+            {
+                if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
+#ifdef CONFIG_WIFI_CAPA
+                        || ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 1) && (!(network->wlan_capa & (WIFI_SUPPORT_11AX | WIFI_SUPPORT_11AC))))
+#endif
+                   )
+                {
+                    wlcm_e("uAP configured bandwidth not allowed");
+                    CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+                    return -WM_FAIL;
+                }
+            }
+
 #ifdef CONFIG_WPA_SUPP
             network->sec_channel_offset = wifi_get_sec_channel_offset(network->channel);
+            if (network->channel == 14)
+            {
+                wpa_supp_set_ap_bw(netif, 1);
+            }
 #else
             wifi_get_active_channel_list(active_chan_list, &active_num_chans,
                                                  wlan.networks[wlan.cur_uap_network_idx].acs_band);
@@ -2341,7 +2370,14 @@ static int do_start(struct wlan_network *network)
         wlcm_d("starting our own network");
 
 #ifdef CONFIG_WIFI_CAPA
-        wifi_uap_config_wifi_capa(network->wlan_capa);
+        if (network->channel == 14)
+        {
+            wifi_uap_config_wifi_capa(WIFI_SUPPORT_LEGACY);
+        }
+        else
+        {
+            wifi_uap_config_wifi_capa(network->wlan_capa);
+        }
 #endif
 
 #ifdef CONFIG_WPA_SUPP
@@ -2354,6 +2390,11 @@ static int do_start(struct wlan_network *network)
 #endif
         ret = wpa_supp_start_ap(netif, network, 0);
 #else
+        if (network->channel == 14)
+        {
+            wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+        }
+
         ret = wifi_uap_start((mlan_bss_type)network->type, network->ssid,
 #ifdef CONFIG_P2P
                              wlan.wfd_mac,
@@ -3941,7 +3982,9 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #endif
 
 #ifdef CONFIG_WPA_SUPP
-            wlan.same_ess = wifi_same_ess_ft() | wlan.roam_reassoc;
+#ifdef CONFIG_11R
+            wlan.same_ess = wifi_same_ess_ft();
+#endif
 
             wlan.roam_reassoc = false;
 #endif
@@ -5534,6 +5577,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #ifndef RW610
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
+    (void)wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl);
 #endif
 
     (void)wifi_enable_ecsa_support();
@@ -5857,6 +5901,10 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
     {
         wlcm_e("wifi send scan cmd failed");
         *next = wlan.sta_state;
+#ifdef CONFIG_WPA_SUPP
+        wm_wifi.wpa_supp_scan = false;
+        wm_wifi.external_scan = false;
+#endif
         wlcm_d("releasing scan lock");
         (void)os_semaphore_put(&wlan.scan_lock);
         wlan.is_scan_lock = 0;
@@ -5881,6 +5929,7 @@ static void wlcm_deinit(int action)
 
     wifi_scan_stop();
     wifi_deinit();
+    wlan_dhcp_cleanup();
 
     wlan.status = WLCMGR_INACTIVE;
 }
@@ -6179,11 +6228,19 @@ static void wifi_process_bg_scan_stopped(struct wifi_message *msg)
 {
     (void)msg;
 
-    wlan.roam_reassoc = false;
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
-    /* Set rssi low threshold and subscribe rssi low event again */
-    (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
-#endif
+    if (wlan.roam_reassoc && wlan.bgscan_attempt < BG_SCAN_LIMIT)
+    {
+        wlan.bgscan_attempt++;
+        wlan.roam_reassoc = false;
+        (void)wifi_event_completion(WIFI_EVENT_RSSI_LOW, WIFI_EVENT_REASON_SUCCESS, NULL);
+    }
+    else
+    {
+        wlan.bgscan_attempt = 0;
+        wlan.roam_reassoc = false;
+        PRINTF("Soft Roam: AP with better RSSI not found");
+        CONNECTION_EVENT(WLAN_REASON_BGSCAN_NETWORK_NOT_FOUND, NULL);
+    }
 }
 
 static void wlcm_process_bg_scan_report(void)
@@ -6906,10 +6963,12 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 
 #ifdef OVERRIDE_CALIBRATION_DATA
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
-#endif
-    // TODO: Cal data will be read from EEPROM.
-#ifdef RW610
+#else
+#ifndef RW610
+    wlan_set_cal_data(int_cal_data, sizeof(int_cal_data));
+#else
     wlan_set_cal_data(cal_data_rw610, sizeof(cal_data_rw610));
+#endif
 #endif
 
 #if defined(CONFIG_HOST_PMK) || defined(CONFIG_WPS2)
@@ -7091,7 +7150,11 @@ static void supp_status_timer_cb(os_timer_arg_t arg)
 {
     int ret;
 
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+    if (wlan.status_timeout == 60)
+#else
     if (wlan.status_timeout == 40)
+#endif
     {
         ret = wpa_supp_req_status(wlan.connect ? CONNECT : START);
 
@@ -7124,12 +7187,10 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
 }
 #endif
 
-#ifdef RW610
 bool wlan_is_started()
 {
     return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
 }
-#endif
 
 void wlan_wait_wlmgr_ready()
 {
@@ -7961,6 +8022,16 @@ int wlan_add_network(struct wlan_network *network)
     }
 
 #ifdef CONFIG_WPA_SUPP
+    if ((network->role == WLAN_BSS_ROLE_STA) &&
+        ((network->security.type == WLAN_SECURITY_WPA3_SAE)
+         || (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
+#ifdef CONFIG_OWE
+         || (network->security.type == WLAN_SECURITY_OWE_ONLY)
+#endif
+         ))
+    {
+        network->security.pkc = 1;
+    }
 #ifdef CONFIG_WPA_SUPP_AP
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
@@ -9508,7 +9579,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     return WM_SUCCESS;
 }
 
-void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size)
+void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size)
 {
     wifi_set_cal_data(cal_data, cal_data_size);
 }
@@ -11634,6 +11705,19 @@ int wlan_mbo_set_oce(t_u8 oce)
 }
 #endif
 
+int wlan_set_okc(t_u8 okc)
+{
+    struct netif *netif = net_get_sta_interface();
+
+    if (okc != 0 && okc != 1)
+    {
+        return -WM_E_PERM;
+    }
+
+    return wpa_supp_set_okc(netif, okc);
+
+}
+
 int wlan_pmksa_list(char *buf, size_t buflen)
 {
     struct netif *netif = net_get_sta_interface();
@@ -12580,6 +12664,7 @@ int wlan_set_tol_time(const t_u32 tol_time)
 
     return wifi_set_tol_time(tol_time);
 }
+#endif
 
 #ifdef CONFIG_MMSF
 int wlan_set_mmsf(const t_u8 enable, const t_u8 Density, const t_u8 MMSF)
@@ -12591,7 +12676,6 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
 {
     return wifi_mmsf_cfg(ACTION_GET, enable, Density, MMSF);
 }
-#endif
 #endif
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
@@ -13582,6 +13666,22 @@ int wlan_set_country_code(const char *alpha2)
 {
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
+    char region_code[COUNTRY_CODE_LEN] = {0};
+    const char *wlan_region_code = NULL;
+
+    wlan_region_code = wlan_get_wlan_region_code();
+
+    region_code[0] = alpha2[0];
+    region_code[1] = alpha2[1];
+
+    if (strstr(wlan_region_code, region_code) == NULL)
+    {
+        if (strstr(wlan_region_code, "WW") == NULL)
+        {
+            wlcm_e("%s: Specific region is configured, reconfig not allowed");
+            return -WM_FAIL;
+        }
+    }
 
     if ((alpha2[2] == 0x4f) || (alpha2[2] == 0x49) || (alpha2[2] == 0x58) || (alpha2[2] == 0x04))
     {
@@ -13620,6 +13720,15 @@ int wlan_set_region_code(unsigned int region_code)
 
     country = (char *)wlan_11d_code_2_region(mlan_adap, (unsigned char)region_code);
     return wlan_set_country_code(country);
+
+#ifndef CONFIG_MLAN_WMSDK
+    rv = wlan_set_rg_power_cfg(region_code);
+    if (rv != WM_SUCCESS)
+        (void)PRINTF("Set region 0x%x tx power table failed \r\n", region_code);
+    else
+        (void)PRINTF("Set region 0x%x tx power table success \r\n", region_code);
+#endif
+
 }
 
 int wlan_get_region_code(unsigned int *region_code)

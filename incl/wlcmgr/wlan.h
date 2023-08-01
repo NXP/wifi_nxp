@@ -212,6 +212,10 @@ typedef enum
 #define PASSWORD_MAX_LENGTH 64U
 /** Max identities for EAP server users */
 #define MAX_USERS 8
+/** MAX CA Cert hash len */
+#define HASH_MAX_LENGTH 40U
+/** MAX domain len */
+#define DOMAIN_MATCH_MAX_LENGTH 64U
 
 #ifdef CONFIG_WLAN_KNOWN_NETWORKS
 /** The size of the list of known networks maintained by the WLAN
@@ -927,15 +931,15 @@ enum wlan_security_type
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_TTLS_MSCHAPV2,
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
-     * The anonymous identity, identity and password fields in
-     * \ref wlan_network structure are used */
+/** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+ * The anonymous identity, identity and password fields in
+ * \ref wlan_network structure are used */
 #endif
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_PEAP_MSCHAPV2) || defined(CONFIG_WPA2_ENTP)
     WLAN_SECURITY_EAP_PEAP_MSCHAPV2,
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
-     * The anonymous identity, identity and password fields in
-     * \ref wlan_network structure are used */
+/** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+ * The anonymous identity, identity and password fields in
+ * \ref wlan_network structure are used */
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     WLAN_SECURITY_EAP_PEAP_TLS,
@@ -1109,6 +1113,8 @@ struct wlan_network_security
     /** Type of network security Pairwise Cipher suite used internally*/
     struct wlan_cipher ucstCipher;
 #ifdef CONFIG_WPA_SUPP
+    /** Proactive Key Caching */
+    unsigned pkc : 1;
     /** Type of network security Group Cipher suite */
     int group_cipher;
     /** Type of network security Pairwise Cipher suite */
@@ -1196,6 +1202,10 @@ struct wlan_network_security
     size_t client_key_len;
     /** Client key password */
     char client_key_passwd[PASSWORD_MAX_LENGTH];
+    /** CA cert HASH */
+    char ca_cert_hash[HASH_MAX_LENGTH];
+    /** Domain */
+    char domain_match[DOMAIN_MATCH_MAX_LENGTH];
     /** PAC blob */
     unsigned char *pac_data;
     /** PAC blob len */
@@ -2836,7 +2846,7 @@ int wlan_get_uap_ed_mac_mode(wlan_ed_mac_ctrl_t *wlan_ed_mac_ctrl);
  * \param[in] cal_data_size Size of calibration data buffer.
  *
  */
-void wlan_set_cal_data(uint8_t *cal_data, unsigned int cal_data_size);
+void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size);
 
 /** Set wireless MAC Address in WLAN firmware.
  *
@@ -3847,6 +3857,14 @@ int wlan_set_sta_tx_power(t_u32 power_level);
  *
  */
 int wlan_set_wwsm_txpwrlimit(void);
+
+/**
+ * Get wlan region code from tx power config
+ *
+ * \return wlan region code in string format.
+ *
+ */
+const char *wlan_get_wlan_region_code(void);
 
 /**
  * Get Management IE for given BSS type (interface) and index.
@@ -5069,13 +5087,46 @@ int wlan_send_hostcmd(
 
 #ifdef CONFIG_11AX
 /**
+ * This function is used to set HTC parameter.
+ *
+ *  \param[in]    count
+ *  \param[in]    vht
+ *  \param[in]    he
+ *  \param[in]    rxNss
+ *  \param[in]    channelWidth
+ *  \param[in]    ulMuDisable
+ *  \param[in]    txNSTS
+ *  \param[in]    erSuDisable
+ *  \param[in]    dlResoundRecomm
+ *  \param[in]    ulMuDataDisable
+ */
+int wlan_send_debug_htc(const uint8_t count,
+                        const uint8_t vht,
+                        const uint8_t he,
+                        const uint8_t rxNss,
+                        const uint8_t channelWidth,
+                        const uint8_t ulMuDisable,
+                        const uint8_t txNSTS,
+                        const uint8_t erSuDisable,
+                        const uint8_t dlResoundRecomm,
+                        const uint8_t ulMuDataDisable);
+
+/**
+ * This function is used to enable/disable HTC.
+ *
+ *  \param[in]    option         1 => Enable; 0 => Disable
+ */
+int wlan_enable_disable_htc(uint8_t option);
+#endif
+
+#ifdef CONFIG_11AX
+/**
  * Use this API to set the set 11AX Tx OMI.
  *
  * \param[in] interface Interface type STA or uAP.
  * \param[in] tx_omi value to be sent to Firmware
  * \param[in] tx_option value to be sent to Firmware
- *            0: send OMI in QoS NULL; 1: send OMI in QoS data;
- *            0xFF: OMI is transmitted in both QoS NULL and QoS data frame.
+ *            1: send OMI in QoS data.
  * \param[in] num_data_pkts value to be sent to Firmware
  *            num_data_pkts is applied only if OMI is sent in QoS data frame.
  *            It specifies the number of consecutive data frames containing the OMI.
@@ -5458,6 +5509,23 @@ int wlan_mbo_set_oce(t_u8 oce);
 #endif
 
 /**
+ * Opportunistic Key Caching (also known as Proactive Key Caching) default
+ * This parameter can be used to set the default behavior for the
+ * proactive_key_caching parameter. By default, OKC is disabled unless enabled
+ * with the global okc=1 parameter or with the per-network
+ * pkc(proactive_key_caching)=1 parameter. With okc=1, OKC is enabled by default, but
+ * can be disabled with per-network pkc(proactive_key_caching)=0 parameter.
+ *
+ * \param[in] okc Enable Opportunistic Key Caching
+ *
+ * 0 = Disable OKC (default)
+ * 1 = Enable OKC
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_okc(t_u8 okc);
+
+/**
  * Dump text list of entries in PMKSA cache
  *
  * \return WM_SUCCESS if successful otherwise failure.
@@ -5537,6 +5605,7 @@ void wlan_report_timing_measurement(wlan_dot1as_info_t *info);
 int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width);
 #endif
 
+#ifdef CONFIG_11AX
 /**
  * Set 802_11 AX OBSS Narrow Bandwidth RU Tolerance Time
  * In uplink transmission, AP sends a trigger frame to all the stations that will be involved in the upcoming
@@ -5552,6 +5621,7 @@ int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 swi
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_tol_time(const t_u32 tol_time);
+#endif
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 

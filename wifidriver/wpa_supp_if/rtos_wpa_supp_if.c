@@ -1646,7 +1646,7 @@ int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsign
         supp_e("%s: Invalid params", __func__);
         goto out;
     }
-    wifi_if_ctx_rtos                             = (struct wifi_nxp_ctx_rtos *)if_priv;
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
     if (freq)
     {
         wifi_if_ctx_rtos->remain_on_channel_freq = freq;
@@ -1675,8 +1675,8 @@ out:
 
 int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
 {
-    int status = -WM_FAIL;
-    int ret    = -1;
+    int status                                 = -WM_FAIL;
+    int ret                                    = -1;
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
 
     if (!if_priv)
@@ -1694,7 +1694,7 @@ int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv)
 
     wifi_if_ctx_rtos->supp_called_remain_on_chan = true;
     wifi_if_ctx_rtos->remain_on_chan_is_canceled = true;
-    status = wifi_remain_on_channel(false, 0, 0);
+    status                                       = wifi_remain_on_channel(false, 0, 0);
 
     if (status != WM_SUCCESS)
     {
@@ -1740,7 +1740,7 @@ void wifi_nxp_wpa_supp_event_proc_mgmt_rx(void *if_priv, nxp_wifi_event_mlme_t *
 
     event.rx_mgmt.frame     = (const u8 *)mgmt;
     event.rx_mgmt.frame_len = frame_len;
-    event.rx_mgmt.freq     = mgmt_rx->frame.freq;
+    event.rx_mgmt.freq      = mgmt_rx->frame.freq;
 
 #ifdef CONFIG_HOSTAPD
     if (wifi_if_ctx_rtos->hostapd)
@@ -1812,7 +1812,6 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
-    // osa_status_t status;
 
     const struct netif *iface = NULL;
 

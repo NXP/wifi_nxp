@@ -463,7 +463,7 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MRVDRV_MAX_CFP_CODE_A 5
 
 /** Default region code */
-#define MRVDRV_DEFAULT_REGION_CODE 0xAA
+#define MRVDRV_DEFAULT_REGION_CODE 0x00
 
 /** Default country code */
 #define MRVDRV_DEFAULT_COUNTRY_CODE "WW"
@@ -762,6 +762,79 @@ typedef MLAN_PACK_START struct _eth_llc_hdr
     /* ether type field */
     t_u16 type;
 } MLAN_PACK_END eth_llc_hdr;
+
+/* The IPv4 header */
+typedef MLAN_PACK_START struct _ip_hdr
+{
+#ifdef BIG_ENDIAN_SUPPORT
+    /* version */
+    t_u8 _version : 4;
+    /* header length */
+    t_u8 ihl : 4;
+#else
+    /* header length */
+    t_u8 ihl : 4;
+    /* version */
+    t_u8 _version : 4;
+#endif
+    /* type of service */
+    t_u8 _tos;
+    /* total length */
+    t_u16 tot_len;
+    /* identification */
+    t_u16 _id;
+    /* fragment offset field */
+    t_u16 doff;
+    /* time to live */
+    t_u8 _ttl;
+    /* protocol*/
+    t_u8 protocol;
+    /* checksum */
+    t_u16 _chksum;
+    /* source and destination IP addresses */
+    t_u32 src;
+    t_u32 dest;
+} MLAN_PACK_END ip_hdr;
+
+/** TCP HDR flags */
+typedef MLAN_PACK_START struct _tcp_hdr_flags_t
+{
+#ifdef BIG_ENDIAN_SUPPORT
+    t_u16 doff : 4;
+    t_u16 res1 : 4;
+    t_u16 cwr : 1;
+    t_u16 ece : 1;
+    t_u16 urg : 1;
+    t_u16 ack : 1;
+    t_u16 psh : 1;
+    t_u16 rst : 1;
+    t_u16 syn : 1;
+    t_u16 fin : 1;
+#else
+    t_u16 res1 : 4;
+    t_u16 doff : 4;
+    t_u16 fin : 1;
+    t_u16 syn : 1;
+    t_u16 rst : 1;
+    t_u16 psh : 1;
+    t_u16 ack : 1;
+    t_u16 urg : 1;
+    t_u16 ece : 1;
+    t_u16 cwr : 1;
+#endif
+} MLAN_PACK_END tcp_hdr_flags_t;
+
+typedef MLAN_PACK_START struct _tcp_hdr
+{
+    t_u16 src;
+    t_u16 dest;
+    t_u32 seqno;
+    t_u32 ackno;
+    tcp_hdr_flags_t _hdrlen_rsvd_flags;
+    t_u16 wnd;
+    t_u16 chksum;
+    t_u16 urgp;
+} MLAN_PACK_END tcp_hdr;
 
 /** tx param */
 typedef struct _mlan_tx_param
@@ -1500,8 +1573,8 @@ struct _mlan_private
     wps_t wps;
 #endif
 #elif defined(CONFIG_WPS2)
-        /** WPS */
-        wps_t wps;
+    /** WPS */
+    wps_t wps;
 #endif
     /** Buffer to store the association req IEs */
     t_u8 assoc_req_buf[MRVDRV_ASSOC_RSP_BUF_SIZE];
@@ -1595,6 +1668,9 @@ struct _mlan_private
     t_u8 uap_channel;
     /** uAP MAX STAs */
     t_u8 uap_max_sta;
+#ifdef CONFIG_TCP_ACK_ENH
+    bool enable_tcp_ack_enh;
+#endif
 };
 
 /** BA stream status */
@@ -2069,7 +2145,7 @@ typedef struct _vdll_dnld_ctrl
     /**  VDLL fw image len */
     t_u32 vdll_len;
     /** cmd buffer for VDLL download */
-    uint8_t *cmd_buf;
+    t_u8 *cmd_buf;
 } vdll_dnld_ctrl, *pvdll_dnld_ctrl;
 #endif
 
@@ -2147,6 +2223,10 @@ struct _mlan_adapter
 #ifdef CONFIG_FW_VDLL
     /** vdll ctrl */
     vdll_dnld_ctrl vdll_ctrl;
+    /** VDLL operation in progress */
+    volatile t_bool vdll_in_progress;
+    /** Timer for vdll */
+    t_void *vdll_timer;
 #endif
     /** pint_lock for interrupt handling */
     t_void *pint_lock;
@@ -2261,6 +2341,7 @@ struct _mlan_adapter
     t_u8 cfp_code_bg;
     /** CFP table code for 5GHz */
     t_u8 cfp_code_a;
+    /** WMM AC params */
     wmm_ac_parameters_t ac_params[MAX_AC_QUEUES];
     /** Minimum BA Threshold */
     t_u8 min_ba_threshold;

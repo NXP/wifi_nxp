@@ -110,9 +110,11 @@ static int32_t wlan_download_normal_fw(const t_u8 *wlanfw_dl, t_u32 firmwarelen,
 
         if (len == 0U)
         {
-            fwdnld_io_e("Card timeout %s:%d", __func__, __LINE__);
             if (offset > 0)
+            {
                 return FWDNLD_STATUS_SUCCESS;
+            }
+            fwdnld_io_e("Card timeout %s:%d", __func__, __LINE__);
             return FWDNLD_STATUS_FAILURE;
         }
         else if (len > outbuf_len)

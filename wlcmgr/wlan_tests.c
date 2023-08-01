@@ -30,7 +30,7 @@
 static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 #ifdef CONFIG_CSI
-wlan_csi_config_params_t g_csi_params              = {
+wlan_csi_config_params_t g_csi_params = {
     .csi_enable         = 1,
     .head_id            = 0x00010203,
     .tail_id            = 0x00010203,
@@ -455,6 +455,12 @@ static void print_network(struct wlan_network *network)
         }
     }
 #endif
+#ifdef CONFIG_WPA_SUPP
+    if (network->role == WLAN_BSS_ROLE_STA)
+    {
+        (void)PRINTF("\tProactive Key Caching: %s\r\n", network->security.pkc == 1 ? "Enabled" : "Disabled");
+    }
+#endif
     print_address(&network->ip, network->role);
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
@@ -598,6 +604,7 @@ static void dump_wlan_add_usage(void)
         "\r\n");
     (void)PRINTF("      If using WPA2 security, set the PMF configuration if required.\r\n");
 #ifdef CONFIG_WPA_SUPP
+    (void)PRINTF("If using proactive key caching set pkc as 1, to disable set to 0(default)\r\n");
     (void)PRINTF("If using specific ciphers, set the group, pairwise and group mgmt using gc, pc and gmc options.\r\n");
     (void)PRINTF("supported ciphers: ccmp=0x10, gcmp=0x40, gcmp_256=0x100, ccmp_256=0x200\r\n");
     (void)PRINTF(
@@ -611,7 +618,8 @@ static void dump_wlan_add_usage(void)
 #endif
         " id <identity> "
         "[key_passwd "
-        "<client_key_passwd>]] [mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 gc 0x20]"
+        "<client_key_passwd>][hash <hash>][domain_match <domain_match_string>]] [mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 "
+        "gc 0x20]"
         "\r\n");
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
@@ -768,9 +776,12 @@ static void test_wlan_add(int argc, char **argv)
         unsigned role : 1;
         unsigned mfpc : 1;
         unsigned mfpr : 1;
+#ifdef CONFIG_WPA_SUPP
+        unsigned pkc : 1;
         unsigned gcipher : 1;
         unsigned pcipher : 1;
         unsigned gmcipher : 1;
+#endif
 #ifdef CONFIG_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
 #endif
@@ -1169,6 +1180,20 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 
+            if (string_equal(argv[arg + 1], "hash") != false)
+            {
+                /* CA Cert hash */
+                strcpy(network.security.ca_cert_hash, argv[arg + 2]);
+                arg += 2;
+            }
+
+            if (string_equal(argv[arg + 1], "domain_match") != false)
+            {
+                /* Domain match */
+                strcpy(network.security.domain_match, argv[arg + 2]);
+                arg += 2;
+            }
+
             info.security2++;
             arg += 1;
         }
@@ -1305,6 +1330,22 @@ static void test_wlan_add(int argc, char **argv)
             arg++;
         }
 #ifdef CONFIG_WPA_SUPP
+        else if (!info.pkc && string_equal("pkc", argv[arg]))
+        {
+            unsigned short pkc;
+            if (arg + 1 >= argc)
+            {
+                (void)PRINTF(
+                    "Error: invalid proactive key caching"
+                    " argument \r\n");
+                return;
+            }
+            pkc = a2hex_or_atoi(argv[arg + 1]);
+
+            network.security.pkc = pkc;
+            arg += 2;
+            info.pkc = 1;
+        }
         else if (!info.gcipher && string_equal("gc", argv[arg]))
         {
             unsigned short gcipher;
@@ -2136,7 +2177,7 @@ static void test_wlan_info(int argc, char **argv)
     if (!network)
     {
         (void)PRINTF("Error: unable to malloc memory\r\n");
-         return;
+        return;
     }
 
     if (wlan_get_connection_state(&state) != 0)
@@ -2174,7 +2215,6 @@ static void test_wlan_info(int argc, char **argv)
     }
     if (network)
         os_mem_free(network);
-
 }
 
 static void test_wlan_address(int argc, char **argv)
@@ -2316,7 +2356,7 @@ static void test_wlan_wnm_ps(int argc, char **argv)
     {
         if (get_uint(argv[2], &wnm_interval, strlen(argv[2])) == 0)
         {
-            ret       = wlan_wnmps_on(condition, (t_u16)wnm_interval);
+            ret = wlan_wnmps_on(condition, (t_u16)wnm_interval);
         }
         else
         {
@@ -3405,6 +3445,49 @@ static void test_wlan_mbo_set_oce(int argc, char **argv)
 }
 #endif
 
+static void test_wlan_set_okc(int argc, char **argv)
+{
+    int ret;
+    uint8_t okc;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <okc: 0(default)/1>\r\n", argv[0]);
+        (void)PRINTF(
+            "\tOpportunistic Key Caching (also known as Proactive Key Caching) default\r\n"
+            "\tThis parameter can be used to set the default behavior for the\r\n"
+            "\tBy default, OKC is disabled unless enabled with the global okc=1 parameter \r\n"
+            "\tor with the per-network proactive_key_caching=1 parameter.\r\n"
+            "With okc=1, OKC is enabled by default, but can be disabled with per-network proactive_key_caching=0 "
+            "parameter.\r\n"
+            "\t# 0 = Disable OKC (default)\r\n"
+            "\t# 1 = Enable OKC\r\n");
+        return;
+    }
+
+    errno = 0;
+    okc   = (uint8_t)strtol(argv[1], NULL, 10);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol:wlan okc:%d\r\n", errno);
+    }
+
+    ret = wlan_set_okc(okc);
+
+    if (ret == -WM_E_PERM)
+    {
+        (void)PRINTF("Please set correct okc.\r\n");
+    }
+    else if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set okc.\r\n");
+    }
+    else
+    {
+        /* Do nothing */
+    }
+}
+
 static void test_wlan_pmksa_list(int argc, char **argv)
 {
     int ret;
@@ -3932,7 +4015,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
         if (string_equal(argv[2], "wowlan"))
         {
-            errno = 0;
+            errno  = 0;
             wowlan = (int)strtol(argv[3], NULL, 10);
             if (errno != 0)
             {
@@ -5748,13 +5831,6 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     {
         (void)PRINTF("Region code: 0x%x set\r\n", region_code);
     }
-#if defined(CONFIG_COMPRESS_TX_PWTBL)
-    rv = wlan_set_rg_power_cfg(region_code);
-    if (rv != WM_SUCCESS)
-        (void)PRINTF("Set region 0x%x tx power table failed \r\n", region_code);
-    else
-        (void)PRINTF("Set region 0x%x tx power table success \r\n", region_code);
-#endif
 }
 
 static void test_wlan_get_regioncode(int argc, char **argv)
@@ -7588,6 +7664,73 @@ static void test_wlan_set_multiple_dtim(int argc, char **argv)
     (void)PRINTF("Set multiple dtim to %d\r\n", multiple_dtim);
 }
 
+static void dump_wlan_set_debug_htc_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-debug-htc \r\n");
+    (void)PRINTF("    <count>:1\r\n");
+    (void)PRINTF("    <vht:1>\r\n");
+    (void)PRINTF("    <he:1>\r\n");
+    (void)PRINTF("    <rxNss:1>\r\n");
+    (void)PRINTF("    <channelWidth:1>\r\n");
+    (void)PRINTF("    <ulMuDisable:1>\r\n");
+    (void)PRINTF("    <txNSTS:1>\r\n");
+    (void)PRINTF("    <erSuDisable:1>\r\n");
+    (void)PRINTF("    <dlResoundRecomm:1>\r\n");
+    (void)PRINTF("    <ulMuDataDisable:1>\r\n");
+}
+
+static void test_wlan_set_debug_htc(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    u8_t count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm, ulMuDataDisable;
+    /**
+     * Command taken from debug.conf
+     * 	send_om_set={
+     *  CmdCode=0x008b          # do NOT change this line
+     *  Action:2=1              # 1 - HE-TB-PPDU with dummy UPH
+     *  SUBID:2=0x111           # Send NULL
+     *  count:1=0x40            # Count of packets with OM in HE-TB-PPDU format
+     *  vht:1=1                 # HT Control Field: For HT Variant-0, VHT variant-1, HE Variant-1
+     *  he:1=1                  # HT Control Field: For VHT Variant-0, HE variant-1
+     *  rxNss:1=0
+     *  channelWidth:1=0
+     *  ulMuDisable:1=0
+     *  txNSTS:1=0
+     *  erSuDisable:1=0
+     *  dlResoundRecomm:1=0
+     *  ulMuDataDisable:1=0
+     *     }
+     *
+     */
+
+    if (argc != 11)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_debug_htc_usage();
+        return;
+    }
+
+    count           = atoi(argv[1]);
+    vht             = atoi(argv[2]);
+    he              = atoi(argv[3]);
+    rxNss           = atoi(argv[4]);
+    channelWidth    = atoi(argv[5]);
+    ulMuDisable     = atoi(argv[6]);
+    txNSTS          = atoi(argv[7]);
+    erSuDisable     = atoi(argv[8]);
+    dlResoundRecomm = atoi(argv[9]);
+    ulMuDataDisable = atoi(argv[10]);
+
+    ret = wlan_send_debug_htc(count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm,
+                              ulMuDataDisable);
+
+    if (ret == WM_SUCCESS)
+        (void)PRINTF("HTC parameter set successfully\r\n");
+    else
+        (void)PRINTF("Failed to set HTC parameter\r\n");
+}
+
 #ifdef CONFIG_SET_SU
 static void dump_wlan_set_su_usage(void)
 {
@@ -7759,6 +7902,612 @@ static void test_wlan_set_ips(int argc, char **argv)
     }
 
     wlan_set_ips(option);
+}
+#endif
+
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/**
+ *  @brief This function print the get subscribe event from firmware for user test.
+ */
+static void print_get_sub_event(wlan_ds_subscribe_evt *sub_evt)
+{
+    t_u16 evt_bitmap = sub_evt->evt_bitmap;
+    PRINTF("evt_bitmap = %u\r\n", evt_bitmap);
+    if (evt_bitmap & SUBSCRIBE_EVT_RSSI_LOW)
+    {
+        PRINTF("rssi low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->low_rssi, sub_evt->low_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_RSSI_HIGH)
+    {
+        PRINTF("rssi high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->high_rssi, sub_evt->high_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_SNR_LOW)
+    {
+        PRINTF("snr low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->low_snr, sub_evt->low_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_SNR_HIGH)
+    {
+        PRINTF("snr high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->high_snr, sub_evt->high_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_MAX_FAIL)
+    {
+        PRINTF("max fail is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->failure_count, sub_evt->failure_count_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_BEACON_MISSED)
+    {
+        PRINTF("beacon miss is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->beacon_miss, sub_evt->beacon_miss_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_RSSI_LOW)
+    {
+        PRINTF("data rssi low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_low_rssi, sub_evt->data_low_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_RSSI_HIGH)
+    {
+        PRINTF("data rssi high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_high_rssi, sub_evt->data_high_rssi_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_SNR_LOW)
+    {
+        PRINTF("data snr low is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_low_snr, sub_evt->data_low_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_DATA_SNR_HIGH)
+    {
+        PRINTF("data snr high is enabled! ");
+        PRINTF("value = %u, freq = %u\r\n", sub_evt->data_high_snr, sub_evt->data_high_snr_freq);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_LINK_QUALITY)
+    {
+        PRINTF("link quality is enabled! ");
+        PRINTF("value = %u\r\n", sub_evt->pre_beacon_miss);
+    }
+    if (evt_bitmap & SUBSCRIBE_EVT_PRE_BEACON_LOST)
+    {
+        PRINTF("pre beacon lost is enabled! ");
+        PRINTF(
+            "link_snr = %u, link_snr_freq = %u, "
+            "link_rate = %u, link_rate_freq = %u, "
+            "link_tx_latency = %u, link_tx_lantency_freq = %u\r\n",
+            sub_evt->link_snr, sub_evt->link_snr_freq, sub_evt->link_rate, sub_evt->link_rate_freq,
+            sub_evt->link_tx_latency, sub_evt->link_tx_lantency_freq);
+    }
+}
+
+/**
+ *  @brief This function dump the usage of wlan-subscribe-event cmd for user test.
+ */
+static void dump_wlan_subscribe_event_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Subscribe event to firmware:\r\n");
+    (void)PRINTF("    wlan-subscribe-event <action> <type> <value>\r\n");
+    (void)PRINTF("Options: \r\n");
+    (void)PRINTF("    <action>  : 1:set, 2:get, 3:clear\r\n");
+    (void)PRINTF(
+        "    <type>: 0:rssi_low, 1:rssi_high 2:snr_low, 3:snr_high, 4:max_fail, 5:beacon_missed, 6:data_rssi_low, "
+        "7:data_rssi_high, 8:data_snr_low, 9:data_snr_high, 10:link_quality, 11:pre_beacon_lost\r\n");
+    (void)PRINTF("    <value>  : when action is set, specific int type value\r\n");
+    (void)PRINTF("    <freq>  : when action is set, specific unsigned int type freq\r\n");
+    (void)PRINTF("For example:\r\n");
+    (void)PRINTF(
+        "    wlan-subscribe-event set 0 50 0 : Subscribe the rssi low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 2 50 0 : Subscribe the snr low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 4 50 0 : Subscribe the max_fail event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 5 50 0 : Subscribe the beacon_missed event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 6 50 0 : Subscribe the data rssi low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 8 50 0 : Subscribe the data snr low event, threshold is 50, freq is 0\r\n"
+        "    wlan-subscribe-event set 11 50 0 : Subscribe the pre_beacon_lost event, threshold is 50, freq is 0\r\n");
+    (void)PRINTF(
+        "    wlan-subscribe-event set 10 5 0 5 0 5 0  : Subscribe the link quanlity event"
+        "    link_snr threshold is 5, link_snr freq is 0"
+        "    link_rate threshold is 5, link_rate freq is 0"
+        "    link_tx_latency threshold is 5, link_tx_latency freq is 0\r\n");
+    (void)PRINTF("    wlan-subscribe-event get      : Get the all subscribe event parameter\r\n");
+    (void)PRINTF(
+        "    wlan-subscribe-event clear 0  : Disable the rssi_low event\r\n"
+        "    wlan-subscribe-event clear 2  : Disable the snr_low event\r\n"
+        "    wlan-subscribe-event clear 4  : Disable the max_fail event\r\n"
+        "    wlan-subscribe-event clear 5  : Disable the beacon_missed event\r\n"
+        "    wlan-subscribe-event clear 6  : Disable the data_rssi_low event\r\n"
+        "    wlan-subscribe-event clear 8  : Disable the data_snr_low event\r\n"
+        "    wlan-subscribe-event clear 10 : Disable the link_quality event\r\n"
+        "    wlan-subscribe-event clear 11 : Disable the pre_beacon_lost event\r\n");
+}
+
+/**
+ *  @brief This function subscribe event to firmware for user test.
+ */
+static void test_wlan_subscribe_event(int argc, char **argv)
+{
+    int ret                   = 0;
+    unsigned int thresh_value = 0, freq = 0;
+
+    /*analyse action type*/
+    switch (argc)
+    {
+        case 2:
+        {
+            if (strncmp(argv[1], "get", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            wlan_ds_subscribe_evt sub_evt;
+            ret = wlan_get_subscribe_event(&sub_evt);
+            if (ret == WM_SUCCESS)
+                print_get_sub_event(&sub_evt);
+            break;
+        }
+        case 3:
+        {
+            if (strncmp(argv[1], "clear", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            unsigned int event_id = MAX_EVENT_ID;
+            if (get_uint(argv[2], &event_id, strlen(argv[2])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (event_id >= MAX_EVENT_ID)
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            ret = wlan_clear_subscribe_event(event_id);
+            break;
+        }
+        case 5:
+        {
+            if (strncmp(argv[1], "set", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[3], &thresh_value, strlen(argv[3])) || get_uint(argv[4], &freq, strlen(argv[4])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            unsigned int event_id = MAX_EVENT_ID;
+            if (get_uint(argv[2], &event_id, strlen(argv[2])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (event_id >= MAX_EVENT_ID)
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            ret = wlan_set_subscribe_event(event_id, thresh_value, freq);
+            break;
+        }
+        case 9:
+        {
+            unsigned int link_snr = 0, link_snr_freq = 0, link_rate = 0;
+            unsigned int link_rate_freq = 0, link_tx_latency = 0, link_tx_lantency_freq = 0;
+            if (strncmp(argv[1], "set", strlen(argv[1])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[3], &link_snr, strlen(argv[3])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[4], &link_snr_freq, strlen(argv[4])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[5], &link_rate, strlen(argv[5])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[6], &link_rate_freq, strlen(argv[6])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[7], &link_tx_latency, strlen(argv[7])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (get_uint(argv[8], &link_tx_lantency_freq, strlen(argv[8])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            unsigned int event_id = MAX_EVENT_ID;
+            if (get_uint(argv[2], &event_id, strlen(argv[2])))
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            if (event_id >= MAX_EVENT_ID)
+            {
+                dump_wlan_subscribe_event_usage();
+                return;
+            }
+            ret = wlan_set_threshold_link_quality(event_id, link_snr, link_snr_freq, link_rate, link_rate_freq,
+                                                  link_tx_latency, link_tx_lantency_freq);
+        }
+        break;
+        default:
+            dump_wlan_subscribe_event_usage();
+            return;
+    }
+    if (ret == WM_E_INVAL)
+        dump_wlan_subscribe_event_usage();
+    else if (ret != WM_SUCCESS)
+        (void)PRINTF("wlan-subscribe-event unkown fail\r\n");
+    return;
+}
+#endif
+
+#ifdef CONFIG_WIFI_REG_ACCESS
+static void dump_wlan_reg_access_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Read the register:\r\n");
+    (void)PRINTF("    wlan-reg-access <type> <offset>\r\n");
+    (void)PRINTF("Write the register:\r\n");
+    (void)PRINTF("    wlan-reg-access <type> <offset> <value>\r\n");
+    (void)PRINTF("Options: \r\n");
+    (void)PRINTF("    <type>  : 1:MAC, 2:BBP, 3:RF, 4:CAU\r\n");
+    (void)PRINTF("    <offset>: offset of register\r\n");
+    (void)PRINTF("For example:\r\n");
+    (void)PRINTF("    wlan-reg-access 1 0x9b8             : Read the MAC register\r\n");
+    (void)PRINTF("    wlan-reg-access 1 0x9b8 0x80000000 : Write 0x80000000 to MAC register\r\n");
+}
+
+static void test_wlan_reg_access(int argc, char **argv)
+{
+    t_u32 type, offset, value;
+    t_u16 action = ACTION_GET;
+    int ret;
+
+    if (argc < 3 || argc > 4)
+    {
+        dump_wlan_reg_access_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    if ((a2hex_or_atoi(argv[1]) != 1 && a2hex_or_atoi(argv[1]) != 2 && a2hex_or_atoi(argv[1]) != 3 &&
+         a2hex_or_atoi(argv[1]) != 4))
+    {
+        dump_wlan_reg_access_usage();
+        (void)PRINTF("Error: Illegal register type %s. Must be either '1','2','3' or '4'.\r\n", argv[1]);
+        return;
+    }
+    type   = a2hex_or_atoi(argv[1]);
+    offset = a2hex_or_atoi(argv[2]);
+    if (argc == 4)
+    {
+        action = ACTION_SET;
+        value  = a2hex_or_atoi(argv[3]);
+    }
+
+    ret = wlan_reg_access((wifi_reg_t)type, action, offset, (uint32_t *)&value);
+
+    if (ret == WM_SUCCESS)
+    {
+        if (action == ACTION_GET)
+            (void)PRINTF("Value = 0x%x\r\n", value);
+        else
+            (void)PRINTF("Set the register successfully\r\n");
+    }
+    else
+        (void)PRINTF("Read/write register failed");
+}
+#endif
+
+#ifdef CONFIG_WMM_UAPSD
+static void test_wlan_set_wmm_uapsd(int argc, char **argv)
+{
+    t_u8 enable;
+
+    enable = atoi(argv[1]);
+    if (argc != 2 || (enable != 0 && enable != 1))
+    {
+        (void)PRINTF("Usage: %s <enable>\r\n", argv[0]);
+        (void)PRINTF("0 to Disable UAPSD\r\n");
+        (void)PRINTF("1 to Enable UAPSD\r\n");
+        return;
+    }
+
+    wlan_set_wmm_uapsd(enable);
+}
+
+static void test_wlan_set_sleep_period(int argc, char **argv)
+{
+    uint16_t period;
+
+    period = (uint16_t)atoi(argv[1]);
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s <period(ms)>\r\n", argv[0]);
+        return;
+    }
+
+    wlan_set_sleep_period(period);
+}
+#endif
+
+#ifdef CONFIG_CSI
+static void dump_wlan_csi_filter_usage()
+{
+    (void)PRINTF("Error: invalid number of arguments\r\n");
+    (void)PRINTF("Usage : wlan-set-csi-filter <opt> <macaddr> <pkt_type> <type> <flag>\r\n");
+    (void)PRINTF("opt   : add/delete/clear/dump \r\n");
+    (void)PRINTF("add   : All options need to be filled in \r\n");
+    (void)PRINTF("delete: Delete recent filter information \r\n");
+    (void)PRINTF("clear : Clear all filter information \r\n");
+    (void)PRINTF("dump  : Dump csi cfg information \r\n");
+
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-set-csi-filter add 00:18:E7:ED:2D:C1 255 255 0 \r\n");
+    (void)PRINTF("wlan-set-csi-filter delete \r\n");
+    (void)PRINTF("wlan-set-csi-filter clear \r\n");
+    (void)PRINTF("wlan-set-csi-filter dump \r\n");
+}
+
+void dump_csi_param_header()
+{
+    (void)PRINTF("\r\nThe current csi_param is: \r\n");
+    (void)PRINTF("csi_enable    : %d \r\n", g_csi_params.csi_enable);
+    (void)PRINTF("head_id       : %d \r\n", g_csi_params.head_id);
+    (void)PRINTF("tail_id       : %d \r\n", g_csi_params.tail_id);
+    (void)PRINTF("csi_filter_cnt: %d \r\n", g_csi_params.csi_filter_cnt);
+    (void)PRINTF("chip_id       : %d \r\n", g_csi_params.chip_id);
+    (void)PRINTF("band_config   : %d \r\n", g_csi_params.band_config);
+    (void)PRINTF("channel       : %d \r\n", g_csi_params.channel);
+    (void)PRINTF("csi_monitor_enable : %d \r\n", g_csi_params.csi_monitor_enable);
+    (void)PRINTF("ra4us         : %d \r\n", g_csi_params.ra4us);
+
+    (void)PRINTF("\r\n");
+}
+
+void set_csi_param_header(t_u16 csi_enable,
+                          t_u32 head_id,
+                          t_u32 tail_id,
+                          t_u8 chip_id,
+                          t_u8 band_config,
+                          t_u8 channel,
+                          t_u8 csi_monitor_enable,
+                          t_u8 ra4us)
+{
+    g_csi_params.csi_enable         = csi_enable;
+    g_csi_params.head_id            = head_id;
+    g_csi_params.tail_id            = tail_id;
+    g_csi_params.chip_id            = chip_id;
+    g_csi_params.band_config        = band_config;
+    g_csi_params.channel            = channel;
+    g_csi_params.csi_monitor_enable = csi_monitor_enable;
+    g_csi_params.ra4us              = ra4us;
+
+    dump_csi_param_header();
+}
+
+void set_csi_filter(t_u8 pkt_type, t_u8 subtype, t_u8 flags, int op_index, t_u8 *mac)
+{
+    t_u8 temp_filter_cnt = g_csi_params.csi_filter_cnt;
+    int i                = 0;
+
+    switch (op_index)
+    {
+        case CSI_FILTER_OPT_ADD:
+            if (temp_filter_cnt < CSI_FILTER_MAX)
+            {
+                (void)memcpy(&g_csi_params.csi_filter[temp_filter_cnt].mac_addr[0], mac, MLAN_MAC_ADDR_LENGTH);
+                g_csi_params.csi_filter[temp_filter_cnt].pkt_type = pkt_type;
+                g_csi_params.csi_filter[temp_filter_cnt].subtype  = subtype;
+                g_csi_params.csi_filter[temp_filter_cnt].flags    = flags;
+                g_csi_params.csi_filter_cnt++;
+            }
+            else
+            {
+                (void)PRINTF("max csi filter cnt is 16 \r\n");
+                return;
+            }
+            break;
+
+        case CSI_FILTER_OPT_DELETE:
+            if (temp_filter_cnt > 0)
+            {
+                memset(&g_csi_params.csi_filter[temp_filter_cnt], 0, sizeof(wifi_csi_filter_t));
+                g_csi_params.csi_filter_cnt--;
+            }
+            else
+            {
+                (void)PRINTF("csi filter cnt is 0 \r\n");
+                return;
+            }
+            break;
+
+        case CSI_FILTER_OPT_CLEAR:
+            for (i = 0; i < temp_filter_cnt; i++)
+            {
+                memset(&g_csi_params.csi_filter[i], 0, sizeof(wifi_csi_filter_t));
+            }
+            g_csi_params.csi_filter_cnt = 0;
+            break;
+
+        case CSI_FILTER_OPT_DUMP:
+            dump_csi_param_header();
+
+            for (i = 0; i < temp_filter_cnt; i++)
+            {
+                (void)PRINTF("mac_addr      : %02X:%02X:%02X:%02X:%02X:%02X \r\n",
+                             g_csi_params.csi_filter[i].mac_addr[0], g_csi_params.csi_filter[i].mac_addr[1],
+                             g_csi_params.csi_filter[i].mac_addr[2], g_csi_params.csi_filter[i].mac_addr[3],
+                             g_csi_params.csi_filter[i].mac_addr[4], g_csi_params.csi_filter[i].mac_addr[5]);
+
+                (void)PRINTF("pkt_type      : %d \r\n", g_csi_params.csi_filter[i].pkt_type);
+                (void)PRINTF("subtype       : %d \r\n", g_csi_params.csi_filter[i].subtype);
+                (void)PRINTF("flags         : %d \r\n", g_csi_params.csi_filter[i].flags);
+                (void)PRINTF("\r\n");
+            }
+            break;
+
+        default:
+            (void)PRINTF("unknown argument!\r\n");
+            break;
+    }
+}
+
+static void test_wlan_set_csi_param_header(int argc, char **argv)
+{
+    t_u16 csi_enable        = 0;
+    t_u32 head_id           = 0;
+    t_u32 tail_id           = 0;
+    t_u8 chip_id            = 0;
+    t_u8 band_config        = 0;
+    t_u8 channel            = 0;
+    t_u8 csi_monitor_enable = 0;
+    t_u8 ra4us              = 0;
+
+    if (argc != 9)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF(
+            "Usage: %s <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
+            "<ra4us>\r\n\r\n",
+            argv[0]);
+
+        (void)PRINTF("[csi_enable] :1/2 to Enable/DisEnable CSI\r\n");
+        (void)PRINTF("[head_id, head_id, chip_id] are used to seperate CSI event records received from FW\r\n");
+        (void)PRINTF(
+            "[Bandcfg] defined as below: \r\n"
+            "    Band Info - (00)=2.4GHz, (01)=5GHz \r\n"
+            "    t_u8  chanBand    : 2;\r\n"
+            "    Channel Width - (00)=20MHz, (10)=40MHz, (11)=80MHz\r\n"
+            "    t_u8  chanWidth   : 2;\r\n"
+            "    Secondary Channel Offset - (00)=None, (01)=Above, (11)=Below\r\n"
+            "    t_u8  chan2Offset : 2;\r\n"
+            "    Channel Selection Mode - (00)=manual, (01)=ACS, (02)=Adoption mode\r\n"
+            "    t_u8  scanMode    : 2;\r\n");
+        (void)PRINTF("[channel] : monitor channel number\r\n");
+        (void)PRINTF("[csi_monitor_enable] : 1-csi_monitor enable, 0-MAC filter enable\r\n");
+        (void)PRINTF(
+            "[ra4us] : 1/0 to Enable/DisEnable CSI data received in cfg channel with mac addr filter, not only RA is "
+            "us or other\r\n");
+
+        (void)PRINTF("\r\nUsage example : \r\n");
+        (void)PRINTF("wlan-set-csi-param-header 1 66051 66051 170 0 11 1 1\r\n");
+
+        dump_csi_param_header();
+
+        return;
+    }
+
+    /*
+     * csi param header headid, tailid, chipid are used to seperate CSI event records received from FW.
+     * FW adds user configured headid, chipid and tailid for each CSI event record.
+     * User could configure these fields and used these fields to parse CSI event buffer and do verification.
+     * All the CSI filters share the same CSI param header.
+     */
+    csi_enable         = (t_u16)atoi(argv[1]);
+    head_id            = (t_u32)atoi(argv[2]);
+    tail_id            = (t_u32)atoi(argv[3]);
+    chip_id            = (t_u8)atoi(argv[4]);
+    band_config        = (t_u8)atoi(argv[5]);
+    channel            = (t_u8)atoi(argv[6]);
+    csi_monitor_enable = (t_u8)atoi(argv[7]);
+    ra4us              = (t_u8)atoi(argv[8]);
+
+    set_csi_param_header(csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
+}
+
+static void test_wlan_set_csi_filter(int argc, char **argv)
+{
+    int ret = 0;
+    t_u8 raw_mac[MLAN_MAC_ADDR_LENGTH];
+    t_u8 pkt_type = 0;
+    t_u8 subtype  = 0;
+    t_u8 flags    = 0;
+    int op_index  = 0;
+
+    if (argc < 2)
+    {
+        dump_wlan_csi_filter_usage();
+        return;
+    }
+
+    if (string_equal("add", argv[1]))
+    {
+        if (6 == argc)
+        {
+            ret = get_mac(argv[2], (char *)raw_mac, ':');
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: invalid MAC argument\r\n");
+                return;
+            }
+            if ((memcmp(&raw_mac[0], broadcast_mac, MLAN_MAC_ADDR_LENGTH) == 0) || (raw_mac[0] & 0x01))
+            {
+                (void)PRINTF("Error: only support unicast mac\r\n");
+                return;
+            }
+
+            /*
+             * pkt_type and subtype are the 802.11 framecontrol pkttype and subtype
+             * flags:
+             * bit0 reserved, must be 0
+             * bit1 set to 1: wait for trigger
+             * bit2 set to 1: send csi error event when timeout
+             */
+            pkt_type = (t_u8)atoi(argv[3]);
+            subtype  = (t_u8)atoi(argv[4]);
+            flags    = (t_u8)atoi(argv[5]);
+
+            op_index = CSI_FILTER_OPT_ADD;
+        }
+        else
+        {
+            dump_wlan_csi_filter_usage();
+            return;
+        }
+    }
+    else if (string_equal("delete", argv[1]))
+        op_index = CSI_FILTER_OPT_DELETE;
+    else if (string_equal("clear", argv[1]))
+        op_index = CSI_FILTER_OPT_CLEAR;
+    else if (string_equal("dump", argv[1]))
+        op_index = CSI_FILTER_OPT_DUMP;
+    else
+    {
+        (void)PRINTF("Unknown argument!\r\n");
+        return;
+    }
+
+    set_csi_filter(pkt_type, subtype, flags, op_index, raw_mac);
+}
+
+static void test_wlan_csi_cfg(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_csi_cfg(&g_csi_params);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to send csi cfg\r\n");
+    }
 }
 #endif
 
@@ -7958,6 +8707,48 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
     }
 
     return;
+}
+#endif
+
+#ifdef CONFIG_11AX
+static void dump_wlan_enable_disable_htc_usage()
+{
+    (void)PRINTF("Usage: wlan-enable-disable-htc <option>\r\n");
+    (void)PRINTF("          <option>  0 => disable \r\n");
+    (void)PRINTF("                    1 => enable \r\n");
+}
+
+static void test_wlan_enable_disable_htc(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    unsigned int option;
+
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_enable_disable_htc_usage();
+        return;
+    }
+    if (get_uint(argv[1], &option, strlen(argv[1])) && option > 1)
+    {
+        (void)PRINTF("Invalid option argument\r\n");
+        dump_wlan_enable_disable_htc_usage();
+        return;
+    }
+
+    ret = wlan_enable_disable_htc((uint8_t)option);
+
+    if (ret == WM_SUCCESS)
+    {
+        if (option)
+            (void)PRINTF("HTC enabled\r\n");
+        else
+            (void)PRINTF("HTC disabled\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Failed to enable/disable HTC\r\n");
+    }
 }
 #endif
 
@@ -8656,7 +9447,7 @@ static void dump_dpp_bootstrap_get_uri_usage(void)
 
 static void test_wlan_dpp_bootstrap_get_uri(int argc, char **argv)
 {
-    int is_ap = 0, id;
+    int is_ap       = 0, id;
     const char *uri = NULL;
 
     if (argc < 2)
@@ -9054,6 +9845,7 @@ static struct cli_command tests[] = {
     {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", test_wlan_mbo_set_cell_capa},
     {"wlan-mbo-set-oce", "<oce: 1(default)/2>", test_wlan_mbo_set_oce},
 #endif
+    {"wlan-set-okc", "<okc: 0(default)/1>", test_wlan_set_okc},
     {"wlan-pmksa-list", NULL, test_wlan_pmksa_list},
     {"wlan-pmksa-flush", NULL, test_wlan_pmksa_flush},
     {"wlan-set-scan-interval", "<scan_int: in seconds>", test_wlan_set_scan_interval},
@@ -9207,7 +9999,8 @@ static struct cli_command tests[] = {
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
 #ifdef CONFIG_WPA_SUPP_DPP
     {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
-    {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>", test_wlan_dpp_configurator_params},
+    {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
+     test_wlan_dpp_configurator_params},
     {"wlan-dpp-mud-url", "https://...", test_wlan_dpp_mud_url},
     {"wlan-dpp-bootstrap-gen", "type=<qrcode> chan=<op>/<ch> mac=<addr>", test_wlan_dpp_bootstrap_gen},
     {"wlan-dpp-bootstrap-get-uri", "<bootstrap_gen id>", test_wlan_dpp_bootstrap_get_uri},
@@ -9218,7 +10011,8 @@ static struct cli_command tests[] = {
     {"wlan-dpp-pkex-add", " own=<bootstrap_id> identifier=<string> code=<string>", test_wlan_dpp_pkex_add},
     {"wlan-dpp-chirp", " own=<bootstrap id> listen=<freq>...", test_wlan_dpp_chirp},
     {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
-    {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>", test_wlan_dpp_configurator_sign},
+    {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
+     test_wlan_dpp_configurator_sign},
 #endif
 #endif
 #endif
@@ -9241,6 +10035,12 @@ static struct cli_command tests[] = {
 #if defined(CONFIG_IPS)
     {"wlan-set-ips", "<option>", test_wlan_set_ips},
 #endif
+#ifdef CONFIG_11AX
+    {"wlan-set-debug-htc",
+     "<count> <vht> <he> <rxNss> <channelWidth> <ulMuDisable> <txNSTS> <erSuDisable> <erSuDisable> <erSuDisable>",
+     test_wlan_set_debug_htc},
+    {"wlan-enable-disable-htc", "<option>", test_wlan_enable_disable_htc},
+#endif
 #ifdef CONFIG_SET_SU
     {"wlan-set-su", "<0/1>", test_wlan_set_su},
 #endif
@@ -9249,10 +10049,10 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_11AX
     {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
+#endif
 #ifdef CONFIG_MMSF
     {"wlan-set-mmsf", "<enable> <Density> <MMSF>", test_wlan_set_mmsf},
     {"wlan-get-mmsf", NULL, test_wlan_get_mmsf},
-#endif
 #endif
 #ifdef CONFIG_TURBO_MODE
     {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},

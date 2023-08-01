@@ -64,6 +64,9 @@ typedef MLAN_PACK_START struct
 
 } MLAN_PACK_END RxPacketHdr_t;
 
+/** Enable Rate ctrl in TxPD */
+#define TXPD_TXRATE_ENABLE MBIT(15)
+
 /** Rates supported in band B */
 #define B_SUPPORTED_RATES 5
 /** Rates supported in band G */
@@ -2031,7 +2034,7 @@ typedef MLAN_PACK_START struct _RxPD
     t_u64 reserved1;
 #ifdef TXPD_RXPD_V3
     t_u32 rx_info;
-#else /* TXPD_RXPD_V3 */
+#else  /* TXPD_RXPD_V3 */
     /** band config */
     t_u8 band_config;
     /** chan number */
@@ -7792,6 +7795,10 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
 #define VDLL_IND_TYPE_ERR_SIG 2
 /** notify vdll download error: ID error */
 #define VDLL_IND_TYPE_ERR_ID 3
+/** notify vdll download error: Secure error */
+#define VDLL_IND_TYPE_ERR_SECURE 4
+/** notify vdll download vdll complete */
+#define VDLL_IND_TYPE_COMPLETE 5
 
 /** vdll indicate event structure */
 typedef MLAN_PACK_START struct _vdll_ind

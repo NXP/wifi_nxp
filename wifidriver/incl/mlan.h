@@ -51,6 +51,12 @@ Change log:
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_MEF_CFG                 1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+
+#if defined(IW61x)
+#define CONFIG_TCP_ACK_ENH 1
+#define CONFIG_FW_VDLL     1
+#define CONFIG_WIFI_CAPA   1
+#endif
 #endif
 
 #ifdef CONFIG_11AX

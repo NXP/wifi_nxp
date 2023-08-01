@@ -485,6 +485,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     t_u8 oui[4] = {0x00, 0x0f, 0xac, 0x00};
 
     /* AKM Perference Order:
+       (8) AKM_SUITE_TYPE_1X_SHA256  = 5
        (7) AKM_SUITE_TYPE_1X         = 1
        (6) AKM_SUITE_TYPE_FT_SAE     = 9   //Not supported in esupp
        (5) AKM_SUITE_TYPE_SAE        = 8
@@ -496,7 +497,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
     */
     t_u8 akm_type_selected;
     t_u8 akm_type_id        = 0;
-    t_u8 akm_preference[19] = {0, 7, 1, 0, 3, 0, 2, 0, 5, 6, 0, 8, 9, 0, 0, 0, 0, 0, 4};
+    t_u8 akm_preference[19] = {0, 7, 1, 0, 3, 8, 2, 0, 5, 6, 0, 8, 9, 0, 0, 0, 0, 0, 4};
 
     int ap_mfpc = 0, ap_mfpr = 0, ret = MLAN_STATUS_SUCCESS;
 
@@ -585,6 +586,10 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
             {
                 *akm_type = AssocAgentAuth_Open;
             }
+            else if (akm_type_id == 5)
+            {
+                *akm_type = AssocAgentAuth_Open;
+            }
             else if (akm_type_id == 11)
             {
                 *akm_type = AssocAgentAuth_Open;
@@ -638,6 +643,10 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                     break;
                 }
                 else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 1))
+                {
+                    break;
+                }
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 5))
                 {
                     break;
                 }

@@ -111,32 +111,32 @@ Change log:
 #ifdef STA_SUPPORT
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_STA_AMPDU_DEF_TXWINSIZE
-#ifdef RW610
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 64
-#else
-#define MLAN_STA_AMPDU_DEF_TXWINSIZE 16
-#endif
 #endif
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
+#if defined(IW61x)
+#define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
+#else
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
+#endif
 #endif
 #endif /* STA_SUPPORT */
 
 #ifdef UAP_SUPPORT
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_UAP_AMPDU_DEF_TXWINSIZE
-#ifdef RW610
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
-#else
-#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
-#endif
 #endif
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_UAP_AMPDU_DEF_RXWINSIZE
+#if defined(IW61x)
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 64
+#else
+#define MLAN_UAP_AMPDU_DEF_RXWINSIZE 32
+#endif
 #endif
 
 #endif /* UAP_SUPPORT */
@@ -965,6 +965,8 @@ typedef struct _mlan_callbacks
     mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void **pptimer);
     /** moal_start_timer*/
     mlan_status (*moal_start_timer)(IN t_void *pmoal_handle, IN t_void *ptimer, IN bool periodic, IN t_u32 msec);
+    /** moal_reset_timer*/
+    mlan_status (*moal_reset_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_stop_timer*/
     mlan_status (*moal_stop_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_init_lock */

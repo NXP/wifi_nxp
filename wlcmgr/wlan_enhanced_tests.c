@@ -16,6 +16,8 @@
 #include <wifi.h>
 #include <wlan_tests.h>
 
+#define ARG_UNUSED(x) (void)(x)
+
 #ifdef WIFI_BT_TX_PWR_LIMITS
 #include WIFI_BT_TX_PWR_LIMITS
 #else
@@ -1044,6 +1046,8 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
     os_mem_free(txpwrlimit);
 }
 
+#ifndef CONFIG_COMPRESS_TX_PWTBL
+
 static void test_wlan_set_txpwrlimit(int argc, char **argv)
 {
     wlan_txpwrlimit_t *txpwrlimit = NULL;
@@ -1203,10 +1207,16 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
     }
     os_mem_free(txpwrlimit);
 }
+#endif
 
 static void test_wlan_set_chanlist(int argc, char **argv)
 {
     wlan_chanlist_t chanlist;
+
+#if defined(CONFIG_COMPESS_TX_PWTBL)
+    ARG_UNUSED(rg_table_fc);
+    ARG_UNUSED(rg_table_fc_len);
+#endif
 
     (void)memset(&chanlist, 0x00, sizeof(wlan_chanlist_t));
 
@@ -1325,13 +1335,30 @@ static void print_rutxpwrlimit(wlan_rutxpwrlimit_t *txpwrlimit)
 static void test_wlan_set_rutxpwrlimit(int argc, char **argv)
 {
     int rv;
-
+#ifdef CONFIG_COMPRESS_RU_TX_PWTBL
     rv = wlan_set_11ax_rutxpowerlimit(rutxpowerlimit_cfg_set, sizeof(rutxpowerlimit_cfg_set));
 
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set RU TX PWR Limit configuration\r\n");
     }
+#else
+    rv = wlan_set_11ax_rutxpowerlimit_legacy(&rutxpowerlimit_2g_cfg_set);
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
+    }
+#ifdef CONFIG_5GHz_SUPPORT
+    else
+    {
+        rv = wlan_set_11ax_rutxpowerlimit_legacy(&rutxpowerlimit_5g_cfg_set);
+        if (rv != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to set 5G RU TX PWR Limit configuration\r\n");
+        }
+    }
+#endif /* CONFIG_5GHz_SUPPORT */
+#endif /* CONFIG_COMPRESS_RU_TX_PWTBL */
 }
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -1356,7 +1383,7 @@ static void test_wlan_get_rutxpwrlimit(int argc, char **argv)
 static void test_wlan_set_tx_omi(int argc, char **argv)
 {
     int ret;
-    t_u8 interface;
+    t_u8 interface = 0;
     uint16_t tx_omi;
     uint8_t tx_option     = 0;
     uint8_t num_data_pkts = 0;
@@ -1447,18 +1474,17 @@ static wlan_btwt_config_t btwt_config;
 #endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
-static uint8_t g_11ax_cfg[] = {
-    /* band */
-    0x03,
-    /* HE cap */
-    0xff, 0x00,                                                       // ID
-    0x18, 0x00,                                                       // Length
-    0x23,                                                             // he capability id
-    0x03, 0x08, 0x00, 0x82, 0x00, 0x00,                               // HE MAC capability info
-    0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31, 0x00, // HE PHY capability info
-    0xfd, 0xff, 0xfd, 0xff,                                           // Tx Rx HE-MCS NSS support
-    0x88, 0x1f  
-};
+static uint8_t g_11ax_cfg[] = {/* band */
+                               0x03,
+                               /* HE cap */
+                               0xff, 0x00,                         // ID
+                               0x18, 0x00,                         // Length
+                               0x23,                               // he capability id
+                               0x03, 0x08, 0x00, 0x82, 0x00, 0x00, // HE MAC capability info
+                               0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31,
+                               0x00,                   // HE PHY capability info
+                               0xfd, 0xff, 0xfd, 0xff, // Tx Rx HE-MCS NSS support
+                               0x88, 0x1f};
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
     /* name                 offset  len     notes */
@@ -1960,8 +1986,10 @@ static void test_wlan_send_tm(int argc, char **argv)
 
 static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-get-txpwrlimit", "<subband>", test_wlan_get_txpwrlimit},
+#ifndef CONFIG_COMPRESS_TX_PWTBL
     {"wlan-set-txpwrlimit", NULL, test_wlan_set_txpwrlimit},
     {"wlan-set-chanlist-and-txpwrlimit", NULL, test_wlan_set_chanlist_and_txpwrlimit},
+#endif
     {"wlan-set-chanlist", NULL, test_wlan_set_chanlist},
     {"wlan-get-chanlist", NULL, test_wlan_get_chanlist},
 #ifdef CONFIG_11AC

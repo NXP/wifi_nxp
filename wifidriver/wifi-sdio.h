@@ -52,7 +52,7 @@
 #error "Please keep buffer length aligned to SDIO block size"
 #endif /* Sanity check */
 
-#define SDIO_PAYLOAD_SIZE 8
+#define SDIO_PAYLOAD_SIZE 16
 
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
@@ -114,7 +114,7 @@ int wlan_send_sdio_vdllcmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen);
 #endif
 
 mlan_status wlan_process_int_status(mlan_adapter *pmadapter);
-mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface);
+mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control);
 int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
 uint32_t wifi_get_device_value1(void);
 
@@ -125,7 +125,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf);
 
 void sdio_enable_interrupt(void);
 
-void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid);
+void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control);
 
 #ifdef CONFIG_WIFI_FW_DEBUG
 extern void wifi_dump_firmware_info();

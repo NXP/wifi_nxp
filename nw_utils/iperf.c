@@ -147,8 +147,9 @@ static void iperf_free_ctx_iperf_session(void *arg, enum lwiperf_report_type rep
 {
     struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
 
-    if (!ctx || ctx->server_mode || (ctx->client_type == LWIPERF_TRADEOFF &&
-      (report_type == LWIPERF_TCP_DONE_CLIENT_TX || report_type == LWIPERF_UDP_DONE_CLIENT_TX)))
+    if (!ctx || ctx->server_mode ||
+        (ctx->client_type == LWIPERF_TRADEOFF &&
+         (report_type == LWIPERF_TCP_DONE_CLIENT_TX || report_type == LWIPERF_UDP_DONE_CLIENT_TX)))
         return;
 
     ctx->iperf_session = NULL;
@@ -211,6 +212,7 @@ static void lwiperf_report(void *arg,
     {
         (void)PRINTF(" IPERF Report error\r\n");
     }
+    os_timer_deactivate(&ptimer);
     (void)PRINTF("\r\n");
     iperf_free_ctx_iperf_session(arg, report_type);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
@@ -587,7 +589,7 @@ static void iperf_test_start(void *arg)
         if (ctx->client_type == LWIPERF_DUAL)
         {
             /* Reducing udp Tx timer interval for rx to be served */
-            rv = os_timer_change(&ptimer, os_msec_to_ticks(2), 0);
+            rv = os_timer_change(&ptimer, os_msec_to_ticks(1), 0);
             if (rv != WM_SUCCESS)
             {
                 (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
@@ -1218,13 +1220,13 @@ static void cmd_iperf(int argc, char **argv)
 #endif
         ((info.dserver != 0U) && (info.server == 0U || info.udp == 0U))
 #ifdef CONFIG_IPV6
-        || ((info.ipv6 != 0U) && (info.client != 0) && ((info.bind == 0U) || (info.bhost == 0)))
+        || ((info.ipv6 != 0U) && (info.client != 0U) && ((info.bind == 0U) || (info.bhost == 0U)))
 #endif
     )
     {
         (void)PRINTF("Incorrect usage\r\n");
 #ifdef CONFIG_IPV6
-        if ((info.ipv6 != 0U) && (info.client != 0U) && ((info.bind == 0U) || (info.bhost == 0)))
+        if ((info.ipv6 != 0U) && (info.client != 0U) && ((info.bind == 0U) || (info.bhost == 0U)))
         {
             (void)PRINTF("IPv6: For client please specify local interface ip address using -B option\r\n");
         }

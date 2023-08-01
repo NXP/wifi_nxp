@@ -1831,6 +1831,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         ssid_len = strlen(ssid);
         if (ssid_len > MLAN_MAX_SSID_LENGTH)
         {
+#ifdef CONFIG_WPA_SUPP
+            mlan_adap->wpa_supp_scan_triggered = MFALSE;
+#endif
             return -WM_E_INVAL;
         }
     }
@@ -1840,6 +1843,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         ssid2_len = strlen(ssid2);
         if (ssid2_len > MLAN_MAX_SSID_LENGTH)
         {
+#ifdef CONFIG_WPA_SUPP
+            mlan_adap->wpa_supp_scan_triggered = MFALSE;
+#endif
             return -WM_E_INVAL;
         }
     }
@@ -1847,6 +1853,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     wlan_user_scan_cfg *user_scan_cfg = os_mem_alloc(sizeof(wlan_user_scan_cfg));
     if (user_scan_cfg == MNULL)
     {
+#ifdef CONFIG_WPA_SUPP
+        mlan_adap->wpa_supp_scan_triggered = MFALSE;
+#endif
         return -WM_E_NOMEM;
     }
 
@@ -1924,7 +1933,12 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     if (wm_wifi.g_user_scan_cfg != NULL)
     {
         os_mem_free((void *)user_scan_cfg);
+#ifdef CONFIG_WPA_SUPP
+        mlan_adap->wpa_supp_scan_triggered = MFALSE;
+        return -WM_E_BUSY;
+#else
         return WM_SUCCESS;
+#endif
     }
 
     wm_wifi.g_user_scan_cfg = user_scan_cfg;
@@ -2805,6 +2819,7 @@ static wifi_sub_band_set_t subband_CA_5_GHz[] = {{36, 8, 20}, {100, 5, 20}, {132
 static wifi_sub_band_set_t subband_EU_AU_KR_5_GHz[] = {
     {36, 8, 20},
     {100, 11, 20},
+    {149, 5, 20},
 };
 
 /* Region: Japan(JP) 5 GHz */
@@ -2816,6 +2831,8 @@ static wifi_sub_band_set_t subband_JP_5_GHz[] = {
 
 /* Region: China(CN) 5 Ghz */
 static wifi_sub_band_set_t subband_CN_5_GHz[] = {
+    {36, 4, 23},
+    {52, 4, 23},
     {149, 5, 33},
 };
 

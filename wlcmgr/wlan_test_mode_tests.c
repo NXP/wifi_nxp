@@ -402,11 +402,11 @@ static void dump_wlan_set_tx_cont_mode_usage(void)
 #ifdef IW61x
     (void)PRINTF("Set all parameters with expected values\r\n");
 #else
-	(void)PRINTF("  In Continuous Wave Mode:\r\n");
-	(void)PRINTF("    Step1: wlan-set-rf-tx-cont-mode 0 1 0 0 0 0 \r\n");
-	(void)PRINTF("    Step2: wlan-set-rf-tx-cont-mode 0 \r\n");
-	(void)PRINTF("  In none continuous Wave Mode:\r\n");
-	(void)PRINTF("    Step1: wlan-set-rf-tx-cont-mode 0 \r\n");
+    (void)PRINTF("  In Continuous Wave Mode:\r\n");
+    (void)PRINTF("    Step1: wlan-set-rf-tx-cont-mode 0 1 0 0 0 0 \r\n");
+    (void)PRINTF("    Step2: wlan-set-rf-tx-cont-mode 0 \r\n");
+    (void)PRINTF("  In none continuous Wave Mode:\r\n");
+    (void)PRINTF("    Step1: wlan-set-rf-tx-cont-mode 0 \r\n");
 #endif
     (void)PRINTF("\r\n");
 }
@@ -647,6 +647,7 @@ static void dump_wlan_set_tx_power_usage(void)
     (void)PRINTF("\r\n");
 }
 
+#if !defined(SD8978) && !defined(SD8987)
 /*
  *  @brief PowerLevelToDUT11Bits
  *
@@ -670,6 +671,7 @@ static void PowerLevelToDUT11Bits(int Pwr, uint32_t *PowerLevel)
 
     return;
 }
+#endif
 
 static void wlan_rf_tx_power_set(int argc, char *argv[])
 {
@@ -677,7 +679,9 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     uint8_t power;
     uint8_t mod;
     uint8_t path_id;
+#if !defined(SD8978) && !defined(SD8987)
     uint32_t power_converted = 0xffffffff;
+#endif
 
     if (!rf_test_mode)
     {
@@ -717,9 +721,13 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
         return;
     }
 
+#if !defined(SD8978) && !defined(SD8987)
     /* We need to convert user power vals including -ve vals as per labtool */
     PowerLevelToDUT11Bits((int)power, &power_converted);
     ret = wlan_set_rf_tx_power(power_converted, mod, path_id);
+#else
+    ret = wlan_set_rf_tx_power(power, mod, path_id);
+#endif
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Tx Power configuration successful\r\n");

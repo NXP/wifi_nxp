@@ -399,6 +399,21 @@ static mlan_status wrapper_moal_start_timer(IN t_void *pmoal_handle, IN t_void *
     return MLAN_STATUS_SUCCESS;
 }
 
+/** moal_reset_timer*/
+static mlan_status wrapper_moal_reset_timer(IN t_void *pmoal_handle, IN t_void *ptimer)
+{
+    w_tmr_d("Resetting timer: %p", ptimer);
+
+    int rv = os_timer_reset((os_timer_t *)&ptimer);
+    if (rv != WM_SUCCESS)
+    {
+        w_tmr_e("Unable to reset timer.");
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+
 /** moal_stop_timer*/
 static mlan_status wrapper_moal_stop_timer(IN t_void *pmoal_handle, IN t_void *ptimer)
 {
@@ -517,6 +532,7 @@ static mlan_callbacks woal_callbacks = {
     .moal_init_timer  = wrapper_moal_init_timer,
     .moal_free_timer  = wrapper_moal_free_timer,
     .moal_start_timer = wrapper_moal_start_timer,
+    .moal_reset_timer = wrapper_moal_reset_timer,
     .moal_stop_timer  = wrapper_moal_stop_timer,
     .moal_init_lock   = wrapper_moal_init_lock,
     .moal_free_lock   = wrapper_moal_free_lock,
@@ -1775,6 +1791,7 @@ int wrapper_wifi_assoc(
         priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
     }
 #endif
+
     BSSDescriptor_t *d = &mlan_adap->pscan_table[idx];
     /* fixme: This code is quite hacky and is present only because
      * security part is yet not fully integrated into mlan. This will
@@ -2801,8 +2818,17 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
             case HostCmd_CMD_802_11D_DOMAIN_INFO:
-                /* No processing needed as of now */
-                break;
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
             case HostCmd_CMD_GET_HW_SPEC:
                 rv = wlan_ops_sta_process_cmdresp(pmpriv, command, resp, NULL);
                 if (rv != MLAN_STATUS_SUCCESS)
@@ -4928,15 +4954,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
 
     switch (evt->event_id)
     {
-#ifdef CONFIG_FW_VDLL
-        case EVENT_VDLL_IND:
-#ifdef CONFIG_FW_VDLL_DEBUG
-            HEXDUMP("vdll data", msg->data, evt->length);
-#endif
-            /* Event as per event sent by firmware is 32 bits/t_u32 so adding t_u32 */
-            wlan_process_vdll_event(pmpriv, (t_u8 *)msg->data + 2 * sizeof(t_u32));
-            break;
-#endif
         case EVENT_LINK_LOST:
             (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
                                         (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
@@ -5255,6 +5272,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             /* Clear corresponding tx/rx table if necessary */
             if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
                 wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
+
             wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
 #ifdef CONFIG_WMM
             wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
@@ -5279,6 +5297,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
             {
                 wlan_11n_update_txbastream_tbl_ampdu_supported((mlan_private *)mlan_adap->priv[1], sta_addr, MTRUE);
             }
+
             wlan_release_ralist_lock(mlan_adap->priv[1]);
 
             os_mem_free(sta_node_ptr);
@@ -6391,10 +6410,10 @@ void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
     return;
 }
 
-void wifi_set_cal_data(uint8_t *cdata, unsigned int clen)
+void wifi_set_cal_data(const uint8_t *cdata, const unsigned int clen)
 {
-    cal_data       = cdata;
-    cal_data_len   = clen;
+    cal_data       = (uint8_t *)cdata;
+    cal_data_len   = (unsigned int)clen;
     cal_data_valid = true;
 }
 
@@ -6514,7 +6533,7 @@ int wifi_sleep_period(unsigned int *sleep_period, int action)
         pioctl_buf.pbuf = (t_u8 *)&pm_cfg;
         memset((t_u8 *)&pioctl_buf, 0, sizeof(pioctl_buf));
         memset((t_u8 *)&pm_cfg, 0, sizeof(pm_cfg));
-        ret = wifi_wait_for_cmdresp(&pioctl_buf);
+        ret           = wifi_wait_for_cmdresp(&pioctl_buf);
         pm_cfg        = *(mlan_ds_pm_cfg *)pioctl_buf.pbuf;
         *sleep_period = pm_cfg.param.sleep_period;
     }

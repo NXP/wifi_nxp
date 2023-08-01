@@ -21,8 +21,8 @@
 #elif defined(SD9098)
 #include "pvt_sd9098_wlan.h"
 #elif defined(IW61x)
-#if defined(CONFIG_RF_TEST_MODE)
-#include "sduart_nw61x_fp255_se.h"
+#if defined(CONFIG_UART_WIFI_BRIDGE)
+#include "sduart_nw61x_mfg.h"
 #else
 #include "sduart_nw61x_se.h"
 #endif

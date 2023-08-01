@@ -1605,7 +1605,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         (void)__memcpy(pmadapter, (t_u8 *)pext_cap + sizeof(MrvlIEtypesHeader_t),
                        (t_u8 *)pbss_desc->pext_cap + sizeof(IEEEtypes_Header_t), pbss_desc->pext_cap->ieee_hdr.len);
 
-#if defined(MULTI_BSSID_SUPPORT) && defined(CONFIG_11AX)
+#ifdef MULTI_BSSID_SUPPORT
         if (pbss_desc && pbss_desc->multi_bssid_ap)
             SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif
@@ -1870,9 +1870,9 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
 
         pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(TxBAStreamTbl), MLAN_MEM_DEF,
                                          (t_u8 **)&newNode);
-        util_init_list((pmlan_linked_list)newNode);
 
         (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
+        util_init_list((pmlan_linked_list)newNode);
 
         newNode->ba_status   = ba_status;
         newNode->txba_thresh = os_rand_range(5, 5);

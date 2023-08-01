@@ -39,10 +39,12 @@
 #define MAX_RATES       14U
 
 #ifdef CONFIG_5GHz_SUPPORT
-static uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c};
+static uint8_t rates_5ghz[] = {0x8c, 0x98, 0xb0, 0x12, 0x24, 0x48, 0x60, 0x6c, 0x00};
 #endif
 
-static uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c};
+static uint8_t rates_2ghz[] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c, 0x00};
+
+static uint8_t rates_2ghz_b[] = {0x82, 0x84, 0x8b, 0x96, 0x00};
 
 #ifdef CONFIG_11AC
 /**
@@ -238,10 +240,6 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
 
 #ifdef RW610
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
-#endif
-#ifdef CONFIG_11AX_TWT
-    /* uap mode clear TWT request bit */
-    he_cfg.he_cap.he_mac_cap[0] &= ~HE_MAC_CAP_TWT_REQ_SUPPORT;
 #endif
 #if 0
     if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
@@ -441,8 +439,8 @@ static int wifi_cmd_uap_config(char *ssid,
     {
 #ifdef CONFIG_5GHz_SUPPORT
         if (channel > MAX_CHANNELS_BG)
-        {   
-	        mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];  
+        {
+            mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];
             if ((priv_sta->media_connected == MFALSE) && wlan_11h_radar_detect_required(pmpriv, channel))
             {
                 wuap_e("Cannot start uAP on DFS channel %d", channel);
@@ -463,11 +461,25 @@ static int wifi_cmd_uap_config(char *ssid,
         }
         else
         {
-            (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_2ghz, sizeof(rates_2ghz));
+            if (channel == 14)
+            {
+                (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_2ghz_b, sizeof(rates_2ghz_b));
+            }
+            else
+            {
+                (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_2ghz, sizeof(rates_2ghz));
+            }
             bss.param.bss_config.band_cfg = BAND_CONFIG_MANUAL;
         }
 #else
-        (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_2ghz, sizeof(rates_2ghz));
+        if (channel == 14)
+        {
+            (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_2ghz_b, sizeof(rates_2ghz_b));
+        }
+        else
+        {
+            (void)memcpy((void *)bss.param.bss_config.rates, (const void *)rates_2ghz, sizeof(rates_2ghz));
+        }
         bss.param.bss_config.band_cfg = BAND_CONFIG_MANUAL;
 #endif
         bss.param.bss_config.channel = channel;
@@ -775,6 +787,11 @@ int wifi_uap_set_bandwidth(const t_u8 bandwidth)
     return (-WM_FAIL);
 }
 
+const t_u8 wifi_uap_get_bandwidth()
+{
+    return wm_wifi.bandwidth;
+}
+
 void wifi_uap_set_hidden_ssid(const t_u8 hidden_ssid)
 {
     wm_wifi.hidden_ssid = hidden_ssid;
@@ -990,6 +1007,11 @@ int wifi_uap_start(mlan_bss_type type,
         /** Do Nothing */
     }
 #endif
+    if (channel == 14)
+    {
+        wm_wifi.bandwidth = BANDWIDTH_20MHZ;
+    }
+
     /* Configure SSID */
     int rv = wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, (t_u8)channel,
                                  scan_chan_list, pwe_derivation, transition_disable,
@@ -3259,6 +3281,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     int ret                        = 0, ie_len;
     mlan_uap_bss_param *sys_config = NULL;
     // int i                          = 0;
+    t_u8 rates_b[5]   = {0x82, 0x84, 0x8b, 0x96, 0x00};
     t_u8 rates_bg[13] = {0x82, 0x84, 0x8b, 0x96, 0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c, 0x00};
 #ifdef CONFIG_5GHz_SUPPORT
     t_u8 rates_a[9] = {0x8c, 0x12, 0x98, 0x24, 0xb0, 0x48, 0x60, 0x6c, 0x00};
@@ -3363,7 +3386,14 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 
         if (sys_config->channel <= MAX_CHANNELS_BG)
         {
-            memcpy(sys_config->rates, rates_bg, sizeof(rates_bg));
+            if (sys_config->channel == 14)
+            {
+                memcpy(sys_config->rates, rates_b, sizeof(rates_b));
+            }
+            else
+            {
+                memcpy(sys_config->rates, rates_bg, sizeof(rates_bg));
+            }
         }
 #ifdef CONFIG_5GHz_SUPPORT
         else

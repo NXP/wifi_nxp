@@ -55,7 +55,7 @@ typedef struct _country_code_mapping
 } country_code_mapping_t;
 
 static const country_code_mapping_t country_code_mapping[] = {
-    {"WW", 0xaa, 0xaa}, /* World Wide Safe */
+    {"WW", 0x00, 0x00}, /* World Wide Safe */
     {"US", 0x10, 0x10}, /* US FCC */
     {"CA", 0x10, 0x20}, /* IC Canada */
     {"SG", 0x10, 0x10}, /* Singapore */
@@ -278,7 +278,7 @@ static chan_freq_power_t channel_freq_power_WW_BG[] = {
     {7, 2442, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},  {8, 2447, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {9, 2452, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},  {10, 2457, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {11, 2462, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {12, 2467, WLAN_TX_PWR_WW_DEFAULT, (bool)MTRUE},
-    {13, 2472, WLAN_TX_PWR_WW_DEFAULT, (bool)MTRUE},  {14, 2484, WLAN_TX_PWR_WW_DEFAULT, (bool)MTRUE}};
+    {13, 2472, WLAN_TX_PWR_WW_DEFAULT, (bool)MTRUE}};
 
 /** Band : 'B/G', Region: Custom - Place holder for Max 14 channels (As defined in WWSM)*/
 static chan_freq_power_t channel_freq_power_Custom_BG[] = {
@@ -305,7 +305,7 @@ static uint8_t rf_radio_modes_group[] = {
  */
 static cfp_table_t cfp_table_BG[] = {
     {
-        0xAA, /* World Wide Safe */
+        0x00, /* World Wide Safe */
         (chan_freq_power_t *)channel_freq_power_WW_BG,
         (int)(sizeof(channel_freq_power_WW_BG) / sizeof(chan_freq_power_t)),
     },
@@ -524,7 +524,7 @@ static const chan_freq_power_t channel_freq_power_low_high_band[] = {
  */
 static cfp_table_t cfp_table_A[] = {
     {
-        0xAA, /* World Wide Safe*/
+        0x00, /* World Wide Safe*/
         (chan_freq_power_t *)channel_freq_power_WW_A,
         (int)(sizeof(channel_freq_power_WW_A) / sizeof(chan_freq_power_t)),
     },
@@ -606,7 +606,7 @@ static cfp_table_t cfp_table_A[] = {
 /**
  * The table to keep region code
  */
-t_u16 region_code_index[MRVDRV_MAX_REGION_CODE] = {0xAA, 0x10, 0x20, 0x30, 0x32, 0x40, 0x41, 0x50, 0xfe, 0xff};
+t_u16 region_code_index[MRVDRV_MAX_REGION_CODE] = {0x00, 0x10, 0x20, 0x30, 0x32, 0x40, 0x41, 0x50, 0xfe, 0xff};
 
 #ifndef CONFIG_MLAN_WMSDK
 /** The table to keep CFP code for BG */

@@ -18,6 +18,7 @@
 #endif
 
 #ifdef CONFIG_WIFI_INTERNAL
+#define LWIPERF_REVERSE_MODE           1
 #define CONFIG_MLAN_WMSDK              1
 #define CONFIG_11N                     1
 #define STA_SUPPORT                    1
@@ -46,6 +47,12 @@
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_MEF_CFG                 1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+
+#if defined(IW61x)
+#define CONFIG_TCP_ACK_ENH 1
+#define CONFIG_FW_VDLL     1
+#define CONFIG_WIFI_CAPA   1
+#endif
 #endif
 
 #ifdef CONFIG_11AX
@@ -620,7 +627,7 @@ void wifi_enable_low_pwr_mode();
  * @param[in] clen Length of calibration data
  *
  */
-void wifi_set_cal_data(uint8_t *cdata, unsigned int clen);
+void wifi_set_cal_data(const uint8_t *cdata, const unsigned int clen);
 
 /** Set wifi MAC address in firmware at load time.
  *
@@ -1263,6 +1270,9 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
+const t_u8 wifi_uap_get_bandwidth();
+
+int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
 int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 

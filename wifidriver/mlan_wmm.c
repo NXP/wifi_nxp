@@ -1058,9 +1058,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
 #endif
 #ifdef CONFIG_WMM
     wlan_ralist_del_all_enh(priv);
-#elif !defined(CONFIG_MLAN_WMSDK)
-    wlan_wmm_delete_all_ralist(priv);
-#endif /* CONFIG_MLAN_WMSDK */
+#endif /* CONFIG_WMM */
     (void)__memcpy(pmadapter, tos_to_tid, ac_to_tid, sizeof(tos_to_tid));
 #ifndef CONFIG_MLAN_WMSDK
     for (i = 0; i < MAX_NUM_TID; i++)

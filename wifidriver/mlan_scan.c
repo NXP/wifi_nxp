@@ -4280,7 +4280,7 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
                                                   IEEEtypes_ExtCap_t *pnew_extcap,
                                                   IEEEtypes_Generic_t *pnew_rsnx)
 {
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
     mlan_callbacks *pcb = (pmlan_callbacks)&pmadapter->callbacks;
     t_u8 *pbeacon_buf   = MNULL;
 #endif
@@ -4295,16 +4295,26 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
 
     if (pnew_rsnx)
         beacon_buf_size += pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
     ret = pcb->moal_malloc(pmadapter->pmoal_handle, beacon_buf_size, MLAN_MEM_DEF, (t_u8 **)&pbeacon_buf);
     if (ret != MLAN_STATUS_SUCCESS || !pbeacon_buf)
     {
-        PRINTM(MERROR, "Memory allocation for beacon buf for bss_new_entry\n");
+        wifi_d("Memory allocation for beacon buf for bss_new_entry");
         goto done;
     }
 #endif
+
+#ifdef CONFIG_WIFI_IO_DUMP
+    wifi_d("BSS Entry");
+    dump_hex(pbss_entry->pbeacon_buf, pbss_entry->beacon_buf_size);
+#endif
+
     pnew_entry->beacon_buf_size = beacon_buf_size;
-    pnew_entry->pbeacon_buf     = pbss_entry->pbeacon_buf;
+#ifdef CONFIG_WPA_SUPP
+    pnew_entry->pbeacon_buf = pbeacon_buf;
+#else
+    pnew_entry->pbeacon_buf = pbss_entry->pbeacon_buf;
+#endif
     if (pnew_entry->pext_cap)
     {
         pnew_entry->ext_cap_offset += offset;
@@ -4321,16 +4331,17 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
         pnew_entry->prsnx_ie = &pnew_entry->rsnx_ie_saved;
     }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
     /** copy fixed IE */
-    (void)memcpy(pmadapter, pbeacon_buf, pbss_entry->pbeacon_buf, BEACON_FIX_SIZE);
+    (void)__memcpy(pmadapter, pbeacon_buf, pbss_entry->pbeacon_buf, BEACON_FIX_SIZE);
     /** copy new ssid ie */
-    (void)memcpy(pmadapter, pbeacon_buf + BEACON_FIX_SIZE, (t_u8 *)pssid, pssid->len + sizeof(IEEEtypes_Header_t));
+    (void)__memcpy(pmadapter, pbeacon_buf + BEACON_FIX_SIZE, (t_u8 *)pssid, pssid->len + sizeof(IEEEtypes_Header_t));
     /** copy left IE to new beacon buffer */
-    (void)memcpy(
+    (void)__memcpy(
         pmadapter, pbeacon_buf + BEACON_FIX_SIZE + pssid->len + sizeof(IEEEtypes_Header_t),
         pbss_entry->pbeacon_buf + BEACON_FIX_SIZE + pbss_entry->ssid.ssid_len + sizeof(IEEEtypes_Header_t),
         pbss_entry->beacon_buf_size - BEACON_FIX_SIZE - (pbss_entry->ssid.ssid_len + sizeof(IEEEtypes_Header_t)));
+#if 0
     /* adjust the ie pointer */
     if (pnew_entry->pwpa_ie)
         pnew_entry->wpa_offset += offset;
@@ -4345,7 +4356,7 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
     if (pnew_entry->posen_ie)
         pnew_entry->osen_offset += offset;
 #endif /* ENABLE_HOTSPOT */
-#ifdef ENABLE_802_11R
+#ifdef CONFIG_11R
     if (pnew_entry->pmd_ie)
         pnew_entry->md_offset += offset;
 #endif /* ENABLE_HOTSPOT */
@@ -4357,7 +4368,7 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
         pnew_entry->bss_co_2040_offset += offset;
     if (pnew_entry->poverlap_bss_scan_param)
         pnew_entry->overlap_bss_offset += offset;
-#ifdef ENABLE_802_11AC
+#ifdef CONFIG_11AC
     if (pnew_entry->pvht_cap)
         pnew_entry->vht_cap_offset += offset;
     if (pnew_entry->pvht_oprat)
@@ -4372,21 +4383,26 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
         pnew_entry->quiet_chan_offset += offset;
     if (pnew_entry->poper_mode)
         pnew_entry->oper_mode_offset += offset;
-#endif /* ENABLE_802_11AC */
-#ifdef ENABLE_802_11AX
+#endif /* CONFIG_11AC */
+#ifdef CONFIG_11AX
     if (pnew_entry->phe_cap)
         pnew_entry->he_cap_offset += offset;
     if (pnew_entry->phe_oprat)
         pnew_entry->he_oprat_offset += offset;
-#endif /* ENABLE_802_11AX */
+#endif /* CONFIG_11AX */
 #ifdef ENABLE_802_116E
     if (pnew_entry->phe_6g_cap)
         pnew_entry->he_6g_cap_offset += offset;
 #endif
-    DBG_HEXDUMP(MCMD_D, "MBSSID beacon buf", pbeacon_buf, beacon_buf_size);
+#endif
+
+#ifdef CONFIG_WIFI_IO_DUMP
+    wifi_d("BSS New Entry");
+    dump_hex(pbeacon_buf, beacon_buf_size);
+#endif
 #endif
     ret = MLAN_STATUS_SUCCESS;
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
 done:
 #endif
     return ret;
@@ -4460,7 +4476,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     t_u32 num_in_tbl               = *num_in_table;
     mlan_callbacks *pcb            = (pmlan_callbacks)&pmadapter->callbacks;
     BSSDescriptor_t *bss_new_entry = MNULL;
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
     t_u8 *pbeacon_buf = MNULL;
 #endif
     IEEEtypes_ExtCap_t *pextcap = MNULL;
@@ -4542,13 +4558,28 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
                 pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
                 goto done;
             }
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
             pbeacon_buf = bss_new_entry->pbeacon_buf;
 #endif
         }
         (void)__memcpy(pmadapter, &bss_new_entry->cap_info, &pcap->cap,
                        MIN(sizeof(IEEEtypes_CapInfo_t), sizeof(IEEEtypes_CapInfo_t)));
         bss_new_entry->multi_bssid_ap = MULTI_BSSID_SUB_AP;
+#ifdef CONFIG_WPA_SUPP
+        if (pmadapter->wpa_supp_scan_triggered == MTRUE)
+        {
+            wifi_d("Alloc ies for Multi BSS. ies_len=%d", bss_new_entry->beacon_buf_size);
+            bss_new_entry->ies = (u8 *)os_mem_alloc(bss_new_entry->beacon_buf_size - BEACON_FIX_SIZE);
+            if (bss_new_entry->ies == MNULL)
+            {
+                wifi_d("Failed to alloc memory for Multi BSS ies");
+                goto done;
+            }
+            (void)__memcpy(pmadapter, bss_new_entry->ies, bss_new_entry->pbeacon_buf + BEACON_FIX_SIZE,
+                           bss_new_entry->beacon_buf_size - BEACON_FIX_SIZE);
+            bss_new_entry->ies_len = bss_new_entry->beacon_buf_size;
+        }
+#endif
         /*add to scan table*/
         /*
          * Search the scan table for the same bssid
@@ -4626,7 +4657,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
                            sizeof(pmadapter->pscan_table[bss_idx]));
             adjust_pointers_to_internal_buffers(&pmadapter->pscan_table[bss_idx], bss_new_entry);
         }
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_WPA_SUPP
         if (pssid && pbeacon_buf)
             pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pbeacon_buf);
 #endif
