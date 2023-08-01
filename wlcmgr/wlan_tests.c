@@ -618,8 +618,9 @@ static void dump_wlan_add_usage(void)
 #endif
         " id <identity> "
         "[key_passwd "
-        "<client_key_passwd>][hash <hash>][domain_match <domain_match_string>]] [mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 "
-        "gc 0x20]"
+        "<client_key_passwd>][hash <hash>][domain_match <domain_match_string>][domain_suffix_match "
+        "<domain_suffix_match_string>]] "
+        "[mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 gc 0x20]"
         "\r\n");
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
@@ -1191,6 +1192,13 @@ static void test_wlan_add(int argc, char **argv)
             {
                 /* Domain match */
                 strcpy(network.security.domain_match, argv[arg + 2]);
+                arg += 2;
+            }
+
+            if (string_equal(argv[arg + 1], "domain_suffix_match") != false)
+            {
+                /* Domain match */
+                strcpy(network.security.domain_suffix_match, argv[arg + 2]);
                 arg += 2;
             }
 

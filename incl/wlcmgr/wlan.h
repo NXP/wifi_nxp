@@ -1206,6 +1206,8 @@ struct wlan_network_security
     char ca_cert_hash[HASH_MAX_LENGTH];
     /** Domain */
     char domain_match[DOMAIN_MATCH_MAX_LENGTH];
+    /** Domain Suffix */
+    char domain_suffix_match[DOMAIN_MATCH_MAX_LENGTH]; /*suffix max length same as full domain name length*/
     /** PAC blob */
     unsigned char *pac_data;
     /** PAC blob len */
