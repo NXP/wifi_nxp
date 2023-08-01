@@ -263,7 +263,7 @@ static int cmd_wlansh(const struct shell *shell, size_t argc, char **argv)
     return 0;
 }
 
-SHELL_CMD_ARG_REGISTER(wlansh, NULL, "WLAN commands", cmd_wlansh, 2, 10);
+SHELL_CMD_ARG_REGISTER(wlansh, NULL, "WLAN commands", cmd_wlansh, 2, 16);
 SHELL_CMD_ARG_REGISTER(wifi_scan, NULL, "Scan for wifi", cmd_wifi_scan, 1, 0);
 SHELL_CMD_ARG_REGISTER(wifi_connect, NULL, "Connect to wifi", cmd_wifi_connect, 4, 0);
 SHELL_CMD_ARG_REGISTER(wifi_disconnect, NULL, "Disconnect wifi", cmd_wifi_disconnect, 1, 0);
