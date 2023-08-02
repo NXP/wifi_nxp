@@ -277,10 +277,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 /* Callback function called from the wifi module */
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen)
 {
-    if (interface == MLAN_BSS_TYPE_STA)
-    {
-        process_data_packet(rcvdata, datalen);
-    }
+    process_data_packet(rcvdata, datalen);
 }
 
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
@@ -484,6 +481,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             PRINTF("app_cb: WLAN: channel switch\r\n");
             break;
         case WLAN_REASON_UAP_SUCCESS:
+            net_eth_carrier_on(g_uap.netif);
             PRINTF("app_cb: WLAN: UAP Started\r\n");
             ret = wlan_get_current_uap_network(&uap_network);
 
@@ -523,6 +521,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_UAP_STOPPED:
+            net_eth_carrier_off(g_uap.netif);
             PRINTF("app_cb: WLAN: UAP Stopped\r\n");
             printSeparator();
             PRINTF("Soft AP \"%s\" stopped successfully\r\n", uap_network.ssid);
