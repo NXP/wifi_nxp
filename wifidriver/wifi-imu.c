@@ -284,7 +284,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
 /* SDIO  TxPD  PAYLOAD | 4 | 22 | payload | */
 
 /* we return the offset of the payload from the beginning of the buffer */
-void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
+void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control)
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     IMUPkt *imuhdr       = (IMUPkt *)pbuf;
@@ -299,7 +299,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid)
         ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
         payloadlen -= ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
     }
-    ptxpd->tx_control    = 0;
+    ptxpd->tx_control    = tx_control;
     ptxpd->priority      = tid;
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
@@ -1097,13 +1097,13 @@ uint8_t *wifi_get_amsdu_outbuf(uint32_t offset)
 }
 #endif
 t_u16 get_mp_end_port(void);
-mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
+mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control)
 {
     int ret;
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0);
+    process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0, tx_control);
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response, 
      * wifi_driver_tx task or other tx task might be scheduled and send data to FW */

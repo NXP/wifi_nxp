@@ -3459,7 +3459,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
  *  return MLAN_STATUS_SUCESS to continue looping ralists,
  *  return MLAN_STATUS_RESOURCE to break looping ralists
  */
-static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist, int *pkt_cnt)
+static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist, t_u8 *pkt_cnt)
 {
     mlan_status ret;
 
@@ -3707,9 +3707,13 @@ static void wifi_driver_tx(void *data)
             /* Only send packet when the outbuf pool is not empty */
             if (wifi_wmm_get_packet_cnt() > 0)
             {
+#ifndef RW610
                 wifi_sdio_lock();
+#endif
                 wifi_xmit_wmm_ac_pkts_enh();
+#ifndef RW610
                 wifi_sdio_unlock();
+#endif
             }
 #ifdef CONFIG_WMM_UAPSD
             else

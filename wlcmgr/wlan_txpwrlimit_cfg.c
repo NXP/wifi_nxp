@@ -198,7 +198,12 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
-
+#ifdef RW610
+    ARG_UNUSED(tx_pwrlimit_2g_cfg);
+#ifdef CONFIG_5GHz_SUPPORT
+    ARG_UNUSED(tx_pwrlimit_5g_cfg);
+#endif
+#endif
 #ifdef CONFIG_COMPRESS_TX_PWTBL
     rv = wlan_set_chanlist(&chanlist_2g_cfg);
     if (rv != WM_SUCCESS)
@@ -217,29 +222,33 @@ int wlan_set_wwsm_txpwrlimit()
     if (rv != WM_SUCCESS)
         (void)PRINTF("Unable to set compressed TX power table configuration\r\n");
 #else
-    int wlan_set_wwsm_txpwrlimit(void)
-    {
-        int rv = WM_SUCCESS;
+int wlan_set_wwsm_txpwrlimit(void)
+{
+    int rv = WM_SUCCESS;
 
 #ifdef CONFIG_11AX
 #ifndef RW610
-        ARG_UNUSED(rutxpowerlimit_cfg_set);
+    ARG_UNUSED(rutxpowerlimit_cfg_set);
 #endif
 #endif
 
-        rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_2g_cfg, &tx_pwrlimit_2g_cfg);
-        if (rv != WM_SUCCESS)
-        {
-            (void)PRINTF("Unable to set 2G TX PWR Limit configuration\r\n");
-        }
+    rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_2g_cfg, &tx_pwrlimit_2g_cfg);
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set 2G TX PWR Limit configuration\r\n");
+    }
 #ifdef CONFIG_5GHz_SUPPORT
-        rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_5g_cfg, &tx_pwrlimit_5g_cfg);
-        if (rv != WM_SUCCESS)
-        {
-            (void)PRINTF("Unable to set 5G TX PWR Limit configuration\r\n");
-        }
+    rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_5g_cfg, &tx_pwrlimit_5g_cfg);
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set 5G TX PWR Limit configuration\r\n");
+    }
 #endif
 #endif
+
+#ifdef RW610
+    return rv;
+#else
 
 #ifdef CONFIG_11AX
 #ifdef CONFIG_COMPRESS_RU_TX_PWTBL
@@ -270,8 +279,10 @@ int wlan_set_wwsm_txpwrlimit()
 #ifdef WLAN_REGION_CODE
     return wlan_set_country_code(WLAN_REGION_CODE);
 #endif
+#endif /* RW610 */
 }
 
+#ifndef RW610
 const char *wlan_get_wlan_region_code(void)
 {
 #ifdef WLAN_REGION_CODE
@@ -280,3 +291,4 @@ const char *wlan_get_wlan_region_code(void)
 #error "Please define WLAN_REGION_CODE in Region tx power config file"
 #endif
 }
+#endif

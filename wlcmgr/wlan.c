@@ -5239,7 +5239,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
         {
             struct wlan_network_security *security = &(wlan.networks[network_idx].security);
-            char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1;
+            char *pos = (char *)buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1;
             security->pmk_valid = false;
             security->type = WLAN_SECURITY_NONE;
             security->dpp_akm_dpp = 0;
@@ -9197,13 +9197,6 @@ int wlan_imu_get_task_lock(void)
 int wlan_imu_put_task_lock(void)
 {
     return wifi_imu_put_task_lock();
-}
-
-void wlan_dhcp_cleanup()
-{
-    net_stop_dhcp_timer();
-    net_interface_dhcp_stop(net_get_mlan_handle());
-    net_interface_dhcp_cleanup(net_get_mlan_handle());
 }
 
 void wlan_reset(cli_reset_option ResetOption)
@@ -13666,6 +13659,7 @@ int wlan_set_country_code(const char *alpha2)
 {
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
+#ifndef RW610
     char region_code[COUNTRY_CODE_LEN] = {0};
     const char *wlan_region_code = NULL;
 
@@ -13682,6 +13676,7 @@ int wlan_set_country_code(const char *alpha2)
             return -WM_FAIL;
         }
     }
+#endif
 
     if ((alpha2[2] == 0x4f) || (alpha2[2] == 0x49) || (alpha2[2] == 0x58) || (alpha2[2] == 0x04))
     {

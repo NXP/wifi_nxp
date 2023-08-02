@@ -3860,6 +3860,7 @@ int wlan_set_sta_tx_power(t_u32 power_level);
  */
 int wlan_set_wwsm_txpwrlimit(void);
 
+#ifndef RW610
 /**
  * Get wlan region code from tx power config
  *
@@ -3867,6 +3868,7 @@ int wlan_set_wwsm_txpwrlimit(void);
  *
  */
 const char *wlan_get_wlan_region_code(void);
+#endif
 
 /**
  * Get Management IE for given BSS type (interface) and index.

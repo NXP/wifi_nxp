@@ -107,11 +107,13 @@ int wifi_send_cmdbuffer(void);
  */
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void);
 
-mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface);
+mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control);
 int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface);
 uint32_t wifi_get_device_value1();
 
 uint8_t *wifi_get_imu_outbuf(uint32_t *outbuf_len);
+
+void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control);
 
 #ifdef CONFIG_WIFI_FW_DEBUG
 extern void wifi_dump_firmware_info();
