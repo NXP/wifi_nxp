@@ -5281,6 +5281,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             else if (memcmp("dpp", pos, strlen("dpp")) == 0)
             {
                 security->type = WLAN_SECURITY_DPP;
+                security->dpp_akm_dpp = 1;
             }
             else if (memcmp("dot1x", pos, strlen("dot1x")) == 0)
             {
