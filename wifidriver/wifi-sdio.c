@@ -993,6 +993,8 @@ static void wlan_set_11n_cfg(void)
     /* sdiopkt = outbuf */
     sdiopkt->hostcmd.seq_num = (t_u16)wlan_get_next_seq_num();
     sdiopkt->pkttype         = MLAN_TYPE_CMD;
+    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
+
     last_cmd_sent            = HostCmd_CMD_11N_CFG;
 
 #if defined(SD8801)
