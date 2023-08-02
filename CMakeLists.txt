@@ -54,6 +54,7 @@ zephyr_include_directories(
     incl/wlcmgr
     incl/port/os
     incl/port/zephyr
+    certs
 )
 
 zephyr_library_include_directories(wifidriver/wpa_supp_if wifidriver/wpa_supp_if/incl)
