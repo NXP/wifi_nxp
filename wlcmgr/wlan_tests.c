@@ -4975,6 +4975,8 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
     t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
+    t_u16 Dec_DataOnlyLength;
+    t_u16 Dec_TagLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 NonceLength;
@@ -5019,7 +5021,7 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
                     0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
-    AADLength        = 24;
+    AADLength      = 24;
 
     if (EncDec == 0U)
     {
@@ -5069,6 +5071,8 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     t_u16 Length;
     int ret;
     t_u16 Dec_DataLength;
+    t_u16 Dec_DataOnlyLength;
+    t_u16 Dec_TagLength;
     t_u16 Enc_DataLength;
     t_u16 KeyLength;
     t_u16 NonceLength;
@@ -5116,7 +5120,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
                     0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
-    AADLength        = 24;
+    AADLength      = 24;
 
     if (EncDec == 0U)
     {
