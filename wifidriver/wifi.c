@@ -1854,8 +1854,13 @@ static int wifi_core_init(void)
         PRINTF("Create tx data sem failed");
         goto fail;
     }
+#ifdef RW610
+    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_drv_stack,
+                           OS_PRIO_2);
+#else
     ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_drv_stack,
                            OS_PRIO_1);
+#endif
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create tx data thread failed");
@@ -3959,49 +3964,12 @@ int wifi_low_level_output(const t_u8 interface,
             break;
         } /* if (i != MLAN_STATUS_SUCCESS) */
     }     /* while(true) */
-#endif
-
-#ifdef CONFIG_STA_AMPDU_TX
-    if (interface == BSS_TYPE_STA && sta_ampdu_tx_enable
-#ifdef CONFIG_WMM
-        && wifi_sta_ampdu_tx_enable_per_tid_is_allowed(tid)
-#endif
-    )
-    {
-        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
-        {
-            (void)wrapper_wlan_sta_ampdu_enable(
-#ifdef CONFIG_WMM
-                tid
-#endif
-            );
-        }
-    }
-#endif
-
-#ifdef CONFIG_UAP_AMPDU_TX
-    if (interface == BSS_TYPE_UAP && uap_ampdu_tx_enable
-#ifdef CONFIG_WMM
-        && wifi_uap_ampdu_tx_enable_per_tid_is_allowed(tid)
-#endif
-    )
-    {
-        if (wm_wifi.wrapper_net_is_ip_or_ipv6_callback(buffer))
-        {
-            (void)wrapper_wlan_uap_ampdu_enable((uint8_t *)buffer
-#ifdef CONFIG_WMM
-                                                ,
-                                                tid
-#endif
-            );
-        }
-    }
-#endif
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     os_rwlock_read_unlock(&sleep_rwlock);
 #else
     os_rwlock_read_unlock(&ps_rwlock);
+#endif
 #endif
 
 #ifdef CONFIG_STA_AMPDU_TX
