@@ -1671,6 +1671,10 @@ struct _mlan_private
 #ifdef CONFIG_TCP_ACK_ENH
     bool enable_tcp_ack_enh;
 #endif
+#ifdef CONFIG_WPA_SUPP_DPP
+    /** configured by DPP */
+    bool is_dpp_connect;
+#endif
 };
 
 /** BA stream status */

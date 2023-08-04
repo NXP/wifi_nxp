@@ -5236,6 +5236,8 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         {
             network_idx = wlan.cur_network_idx;
         }
+        /* Only for STA associate */
+        mlan_adap->priv[0]->is_dpp_connect = MTRUE;
         if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
         {
             struct wlan_network_security *security = &(wlan.networks[network_idx].security);

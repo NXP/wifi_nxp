@@ -449,6 +449,10 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->enable_tcp_ack_enh = MTRUE;
 #endif
 
+#ifdef CONFIG_WPA_SUPP_DPP
+    priv->is_dpp_connect = MFALSE;
+#endif
+
     LEAVE();
     return ret;
 }
