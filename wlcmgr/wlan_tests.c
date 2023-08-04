@@ -9152,24 +9152,29 @@ static void test_wlan_dpp_configurator_sign(int argc, char **argv)
 static void dump_wlan_imd3_cfg_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-imd3-cfg <enable / disable>\r\n");
-    (void)PRINTF("    Only support enable now.\r\n");
+    (void)PRINTF("    wlan-imd3-cfg <enable / disable> <isolation index>\r\n");
+    (void)PRINTF("      <enable> 1: enable / 0: disable\r\n");
+    (void)PRINTF("      <isolation index> range: 1 ~ 5 or 15\r\n");
+    (void)PRINTF("      If set index to 15, use default value.");
+    (void)PRINTF("Fox example:\r\n");
+    (void)PRINTF("    wlan-imd3-cfg 0  \r\n");
+    (void)PRINTF("    wlan-imd3-cfg 1 3\r\n");
 }
 
 static void test_wlan_imd3_cfg(int argc, char **argv)
 {
     int ret = 0;
-    uint8_t enable;
+    uint8_t enable, index, imd3_cfg = 0;
     unsigned int value;
 
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
     {
         (void)PRINTF("Error: invalid number of arguments.\r\n");
         dump_wlan_imd3_cfg_usage();
         return;
     }
 
-    if (get_uint(argv[1], &value, strlen(argv[1])) || value != 1)
+    if (get_uint(argv[1], &value, strlen(argv[1])) || (value != 1 && value != 0))
     {
         (void)PRINTF("Invalid <enable> argument \r\n");
         dump_wlan_imd3_cfg_usage();
@@ -9178,7 +9183,30 @@ static void test_wlan_imd3_cfg(int argc, char **argv)
 
     enable = value & 0xFF;
 
-    ret = wlan_imd3_cfg(enable);
+    if (enable == 1 && argc == 2)
+    {
+        (void)PRINTF("Missing <isolation index> argument \r\n");
+        dump_wlan_imd3_cfg_usage();
+        return;
+    }
+
+    if (enable == 1 && argc == 3)
+    {
+        if (get_uint(argv[2], &value, strlen(argv[2])) || ((value < 1 || value > 5) && value != 15))
+        {
+            (void)PRINTF("Invalid <index> argument \r\n");
+            dump_wlan_imd3_cfg_usage();
+            return;
+        }
+
+        index = value & 0xFF;
+        /* imd3_cfg --> low 4 bits: enable / high 4 bits: index*/
+        imd3_cfg |= enable;
+        index <<= 4;
+        imd3_cfg |= index;
+    }
+
+    ret = wlan_imd3_cfg(imd3_cfg);
 
     if (ret == WM_SUCCESS)
     {

@@ -5762,7 +5762,7 @@ int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config)
 #endif
 
 #ifdef CONFIG_IMD3_CFG
-int wifi_imd3_cfg(t_u8 enable)
+int wifi_imd3_cfg(t_u8 imd3_value)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -5783,7 +5783,7 @@ int wifi_imd3_cfg(t_u8 enable)
     imd_cfg->param.tlv_length = wlan_cpu_to_le16(sizeof(MrvlIETypes_IMD_Config_t) - sizeof(MrvlIETypes_Coex_params_t));
 
     imd_cfg->rbc_mode    = 0x00;
-    imd_cfg->reserved    = wlan_cpu_to_le16(enable);
+    imd_cfg->reserved    = wlan_cpu_to_le16(imd3_value);
     imd_cfg->DynamicMode = 0x0000;
 
     wifi_wait_for_cmdresp(NULL);

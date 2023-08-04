@@ -567,7 +567,7 @@ int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 #endif
 
 #ifdef CONFIG_IMD3_CFG
-int wifi_imd3_cfg(t_u8 enable);
+int wifi_imd3_cfg(t_u8 imd3_value);
 #endif
 
 #endif /* __MLAN_API_H__ */

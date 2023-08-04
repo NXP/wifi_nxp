@@ -6407,9 +6407,10 @@ int wlan_dpp_configurator_sign(int is_ap, const char *cmd);
 #ifdef CONFIG_IMD3_CFG
 /**
  * Set imd validation parameters.
- * \param[in] enable   enable : 1 / disable : 0
+ * \param[in] imd3_value   disable imd3: imd3_value = 0;
+ *                         enable imd3: low 4 bits: enable, high 4 bits: isolation index.
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_imd3_cfg(t_u8 enable);
+int wlan_imd3_cfg(t_u8 imd3_value);
 #endif
 #endif /* __WLAN_H__ */

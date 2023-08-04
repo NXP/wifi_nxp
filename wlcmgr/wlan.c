@@ -13912,8 +13912,8 @@ int wlan_dpp_configurator_sign(int is_ap, const char *cmd)
 #endif /* CONFIG_WPA_SUPP_DPP */
 
 #ifdef CONFIG_IMD3_CFG
-int wlan_imd3_cfg(t_u8 enable)
+int wlan_imd3_cfg(t_u8 imd3_value)
 {
-    return wifi_imd3_cfg(enable);
+    return wifi_imd3_cfg(imd3_value);
 }
 #endif
