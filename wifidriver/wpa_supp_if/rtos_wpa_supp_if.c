@@ -23,6 +23,8 @@
 #include "rtos_wpa_supp_if.h"
 #include "wifi-internal.h"
 
+#define MAX_MGMT_TX_FRAME_SIZE 1500
+
 static unsigned char get_algo_from_auth_type(int wpa_auth_alg)
 {
     if (wpa_auth_alg & WPA_AUTH_ALG_OPEN)
@@ -555,14 +557,14 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
     }
     else
     {
-        wifi_if_ctx_rtos->bss_type          = BSS_TYPE_UAP;
-        wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(1500);
+        wifi_if_ctx_rtos->bss_type = BSS_TYPE_UAP;
+    }
+    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(MAX_MGMT_TX_FRAME_SIZE);
 
-        if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
-        {
-            supp_e("%s: Buffer to store mgmt tx failed", __func__);
-            return NULL;
-        }
+    if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
+    {
+        supp_e("%s: Buffer to store mgmt tx failed", __func__);
+        return NULL;
     }
 
     memcpy(&wifi_if_ctx_rtos->supp_callbk_fns, supp_callbk_fns, sizeof(wifi_if_ctx_rtos->supp_callbk_fns));
@@ -1855,7 +1857,7 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     wifi_if_ctx_rtos->hapd_drv_if_ctx = hapd_drv_if_ctx;
 
-    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(1500);
+    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(MAX_MGMT_TX_FRAME_SIZE);
 
     if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
     {
