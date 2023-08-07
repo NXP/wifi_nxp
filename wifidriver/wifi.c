@@ -171,8 +171,8 @@ typedef enum __mlan_status
 #ifndef RW610
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
 #endif
-static os_thread_stack_define(wifi_scan_stack, 1024);
-static os_thread_stack_define(wifi_drv_stack, 1024);
+static os_thread_stack_define(wifi_scan_stack, 2048);
+static os_thread_stack_define(wifi_drv_stack, 2048);
 static os_thread_stack_define(wifi_powersave_stack, 512);
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 static os_queue_pool_define(g_powersave_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
