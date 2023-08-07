@@ -67,6 +67,9 @@ static inline uint8_t pbuf_free(void *pkt)
 #define net_read(sock, data, len)                     read(sock, data, len)
 #define net_write(sock, data, len)                    write(sock, data, len)
 
+/* directly map this to the zephyr internal functions */
+#define inet_aton(cp, addr)     inet_pton(AF_INET, cp, (char *)addr)
+
 /** Set hostname for network interface
  *
  * \param[in] hostname Hostname to be set.
