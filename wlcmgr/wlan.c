@@ -2326,7 +2326,7 @@ static int do_start(struct wlan_network *network)
         else
         {
             t_u8 bandwidth = wifi_uap_get_bandwidth();
-
+#ifdef CONFIG_11AC
             if (bandwidth == BANDWIDTH_80MHZ)
             {
                 if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
@@ -2340,7 +2340,7 @@ static int do_start(struct wlan_network *network)
                     return -WM_FAIL;
                 }
             }
-
+#endif
 #ifdef CONFIG_WPA_SUPP
             network->sec_channel_offset = wifi_get_sec_channel_offset(network->channel);
             if (network->channel == 14)
