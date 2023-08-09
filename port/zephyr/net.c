@@ -442,10 +442,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             PRINTF("app_cb: WLAN: initialization failed\r\n");
             break;
         case WLAN_REASON_AUTH_SUCCESS:
+            net_eth_carrier_on(g_mlan.netif);
             PRINTF("app_cb: WLAN: authenticated to network\r\n");
             break;
         case WLAN_REASON_SUCCESS:
-            net_eth_carrier_on(g_mlan.netif);
             PRINTF("app_cb: WLAN: connected to network\r\n");
             ret = wlan_get_address(&addr);
             if (ret != WM_SUCCESS)
