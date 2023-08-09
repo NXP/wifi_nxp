@@ -83,23 +83,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #define BOARD_DATA_BUFFER_ALIGN_SIZE BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE
 #endif
 
-#ifdef CONFIG_WMM
 SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER_ALIGN_SIZE);
-#else
-/* @brief decription about the read/write buffer
- * The size of the read/write buffer should be a multiple of 512, since SDHC/SDXC card uses 512-byte fixed
- * block length and this driver example is enabled with a SDHC/SDXC card.If you are using a SDSC card, you
- * can define the block length by yourself if the card supports partial access.
- * The address of the read/write buffer should align to the specific DMA data buffer address align value if
- * DMA transfer is used, otherwise the buffer address is not important.
- * At the same time buffer address/size should be aligned to the cache line size if cache is supported.
- */
-/*! @brief Data written to the card */
-SDK_ALIGN(uint8_t outbuf_bk[BK_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
-SDK_ALIGN(uint8_t outbuf_vi[VI_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
-SDK_ALIGN(uint8_t outbuf_vo[VO_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
-SDK_ALIGN(uint8_t outbuf_be[BE_MAX_BUF][DATA_BUFFER_SIZE], BOARD_DATA_BUFFER_ALIGN_SIZE);
-#endif
 #endif
 
 #ifdef TXPD_RXPD_V3
@@ -174,6 +158,9 @@ static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
 static os_thread_stack_define(wifi_scan_stack, 2048);
 static os_thread_stack_define(wifi_drv_stack, 2048);
 static os_thread_stack_define(wifi_powersave_stack, 512);
+#ifdef CONFIG_WMM
+static os_thread_stack_define(wifi_tx_stack, 2048);
+#endif
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 static os_queue_pool_define(g_powersave_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
@@ -1855,10 +1842,10 @@ static int wifi_core_init(void)
         goto fail;
     }
 #ifdef RW610
-    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_drv_stack,
+    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack,
                            OS_PRIO_2);
 #else
-    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_drv_stack,
+    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack,
                            OS_PRIO_1);
 #endif
     if (ret != WM_SUCCESS)
