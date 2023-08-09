@@ -16,8 +16,6 @@
 #include <wifi.h>
 #include <wlan_tests.h>
 
-#define ARG_UNUSED(x) (void)(x)
-
 #ifdef WIFI_BT_TX_PWR_LIMITS
 #include WIFI_BT_TX_PWR_LIMITS
 #else

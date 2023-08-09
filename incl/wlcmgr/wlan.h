@@ -132,6 +132,8 @@
 #include <wm_mbedtls_helper_api.h>
 #endif
 
+#define ARG_UNUSED(x) (void)(x)
+
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
