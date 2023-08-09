@@ -197,7 +197,8 @@ menu "IPv6 Support"
 
 config IPV6
 	bool "Support for IPv6"
-	def_bool n
+	def_bool y
+        depends on NET_IPV6
         help
          This option enables the use of IPv6 support. Say Y if you
 	 wish to enable this feature.
@@ -206,7 +207,7 @@ config MAX_IPV6_ADDRESSES
        int "Maximum IPv6 addresses"
        range 3 10
        default 3
-       depends on IPV6
+       depends on NET_IPV6 && NET_IF_MAX_IPV6_ADDR
        help
        This option sets Maximum number of IPv6 addresses that can be supported. Minimum is three. 
 
@@ -403,6 +404,18 @@ config DEBUG_BUILD
 		If you enable this the debug options will be
       		 enabled. Asserts will be also be enabled.
 
+config OS_DEBUG
+       bool
+       prompt "OS debug"
+       depends on DEBUG_BUILD
+       def_bool n
+
+config NET_DEBUG
+       bool
+       prompt "NET debug"
+       depends on DEBUG_BUILD
+       def_bool n
+
 config WLCMGR_DEBUG
        bool "Wireless Connection Manager"
        depends on DEBUG_OUTPUT
@@ -459,6 +472,15 @@ config WIFI_SCAN_DEBUG
 		This helps the developer to localize wlan
 		scan related issues like split scan, channel
 		selections, etc
+
+config WIFI_PKT_DEBUG
+       bool "Packet debug"
+       default n
+       depends on WIFI_EXTRA_DEBUG
+       help
+		Enabling this will enable packet TX/RX code logs
+		This helps the developer to localize wlan
+		data path related issues like tx/rx failures, etc
 
 config WIFI_IO_INFO_DUMP
        bool "Input-Output debug (basic)"

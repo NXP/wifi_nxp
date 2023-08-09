@@ -462,6 +462,11 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
 void net_ipv4stack_init(void);
 
 #ifdef CONFIG_IPV6
+
+#undef CONFIG_MAX_IPV6_ADDRESSES
+
+#define CONFIG_MAX_IPV6_ADDRESSES NET_IF_MAX_IPV6_ADDR
+
 /** Initialize the IPv6 network stack
  *
  * \param[in] netif network interface on which ipv6 stack is initialized.

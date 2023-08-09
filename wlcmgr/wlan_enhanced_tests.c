@@ -1468,17 +1468,18 @@ static wlan_btwt_config_t btwt_config;
 #endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
-static uint8_t g_11ax_cfg[] = {/* band */
-                               0x03,
-                               /* HE cap */
-                               0xff, 0x00,                         // ID
-                               0x18, 0x00,                         // Length
-                               0x23,                               // he capability id
-                               0x03, 0x08, 0x00, 0x82, 0x00, 0x00, // HE MAC capability info
-                               0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31,
-                               0x00,                   // HE PHY capability info
-                               0xfd, 0xff, 0xfd, 0xff, // Tx Rx HE-MCS NSS support
-                               0x88, 0x1f};
+static uint8_t g_11ax_cfg[] = {
+    /* band */
+    0x03,
+    /* HE cap */
+    0xff, 0x00,                                                       // ID
+    0x18, 0x00,                                                       // Length
+    0x23,                                                             // he capability id
+    0x03, 0x08, 0x00, 0x82, 0x00, 0x00,                               // HE MAC capability info
+    0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31, 0x00, // HE PHY capability info
+    0xfd, 0xff, 0xfd, 0xff,                                           // Tx Rx HE-MCS NSS support
+    0x88, 0x1f, 0x00, 0x00
+};
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
     /* name                 offset  len     notes */
@@ -1612,7 +1613,7 @@ static void dump_cfg_data_param(int param_id, uint8_t *data, const test_cfg_para
     if (param_cfg->notes != NULL)
         (void)PRINTF("#### %s\r\n", param_cfg->notes);
     else
-        (void)PRINTF("\r\n", param_cfg->notes);
+        (void)PRINTF("\r\n");
 
     (void)PRINTF("[%d]: ", param_id);
     for (i = 0; i < param_cfg->len; i++)

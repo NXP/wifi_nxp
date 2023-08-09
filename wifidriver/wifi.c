@@ -75,7 +75,6 @@ extern wifi_ecsa_status_control ecsa_status_control;
 
 #ifdef CONFIG_WMM
 #define BOARD_DATA_BUFFER_ALIGN_SIZE 32
-#endif
 
 SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
@@ -4004,15 +4003,18 @@ int wifi_low_level_output(const t_u8 interface,
     int retry = retry_attempts;
     mlan_status i;
 #endif
+#ifndef CONFIG_ZEPHYR
     /** Tx control */
     t_u32 tx_control = 0;
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
+#endif
 
     w_pkt_d("Data TX: Kernel=>Driver, if %d, len %d", interface, len);
 
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
+#ifndef CONFIG_ZEPHYR
     if (pmpriv->media_connected == MFALSE)
     {
 #ifdef CONFIG_WMM
@@ -4058,6 +4060,7 @@ int wifi_low_level_output(const t_u8 interface,
     }
 #endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX */
+#endif
 
 #ifdef CONFIG_WMM
     /* process packet headers with interface header and TxPD */

@@ -130,9 +130,17 @@ out:
     {
         int i;
         (void)PRINTF("\r\n\tIPv6 Addresses\r\n");
+#ifndef CONFIG_ZEPHYR
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
             if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
+#else
+        for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES && i < addr->ipv6_count; i++)
+        {
+
+            if ((addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_TENTATIVE) ||
+                    (addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_PREFERRED))
+#endif
             {
                 (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
                              ipv6_addr_addr_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),

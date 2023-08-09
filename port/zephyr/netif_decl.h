@@ -31,7 +31,6 @@
 #include <wifi-internal.h>
 
 #define NET_MAC_ADDR_LEN 6
-#define SIZEOF_ETH_LLC_HDR (8U)
 
 #define NET_IPV4_ADDR_U32(x) (x).in_addr.s_addr
 

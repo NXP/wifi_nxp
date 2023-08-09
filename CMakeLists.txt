@@ -13,8 +13,9 @@ list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
 
 zephyr_library_sources(${WIFI_SRC})
 
-file(GLOB SUPPLICANT_SRC ./wlcmgr/*.c)
-zephyr_library_sources(${SUPPLICANT_SRC})
+file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
+zephyr_library_sources(${WLCMGR_SRC})
+
 # include OS abstraction layer source
 zephyr_library_sources(port/os/os_zephyr.c)
 

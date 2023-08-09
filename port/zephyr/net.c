@@ -26,6 +26,19 @@ LOG_MODULE_REGISTER(wifi_nxp, CONFIG_WIFI_LOG_LEVEL);
 #ifdef CONFIG_WPA_SUPP
 #include "wifi_nxp.h"
 
+#ifdef CONFIG_IPV6
+#define IPV6_ADDR_STATE_TENTATIVE  "Tentative"
+#define IPV6_ADDR_STATE_PREFERRED  "Preferred"
+#define IPV6_ADDR_STATE_INVALID    "Invalid"
+#define IPV6_ADDR_STATE_VALID      "Valid"
+#define IPV6_ADDR_STATE_DEPRECATED "Deprecated"
+#define IPV6_ADDR_TYPE_LINKLOCAL   "Link-Local"
+#define IPV6_ADDR_TYPE_GLOBAL      "Global"
+#define IPV6_ADDR_TYPE_UNIQUELOCAL "Unique-Local"
+#define IPV6_ADDR_TYPE_SITELOCAL   "Site-Local"
+#define IPV6_ADDR_UNKNOWN          "Unknown"
+#endif
+
 extern const rtos_wpa_supp_dev_ops wpa_supp_ops;
 #endif
 
@@ -78,6 +91,13 @@ typedef enum _wpl_state
     WPL_STARTED,
 } wpl_state_t;
 
+enum netif_mac_filter_action {
+  /** Delete a filter entry */
+  NET_IF_DEL_MAC_FILTER = 0,
+  /** Add a filter entry */
+  NET_IF_ADD_MAC_FILTER = 1
+};
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -93,6 +113,12 @@ static linkLostCb_t s_linkLostCb         = NULL;
 int wlan_event_callback(enum wlan_event_reason reason, void *data);
 static int WLP_process_results(unsigned int count);
 static void LinkStatusChangeCallback(bool linkState);
+
+static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enum netif_mac_filter_action action);
+
+#ifdef CONFIG_IPV6
+static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enum netif_mac_filter_action action);
+#endif
 
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
@@ -112,6 +138,11 @@ typedef struct {
 static struct net_mgmt_event_callback net_event_v4_cb;
 #define DHCPV4_MASK (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
 #define MCASTV4_MASK (NET_EVENT_IPV4_MADDR_ADD | NET_EVENT_IPV4_MADDR_DEL)
+
+#ifdef CONFIG_IPV6
+static struct net_mgmt_event_callback net_event_v6_cb;
+#define MCASTV6_MASK (NET_EVENT_IPV6_MADDR_ADD | NET_EVENT_IPV6_MADDR_DEL)
+#endif
 
 static interface_t g_mlan;
 static interface_t g_uap;
@@ -449,12 +480,19 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
 #ifdef CONFIG_IPV6
             int i;
+#ifndef CONFIG_ZEPHYR
             for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
             {
                 if (ip6_addr_isvalid(addr.ipv6[i].addr_state))
+#else
+            for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES && i < sta_network.ip.ipv6_count; i++)
+            {
+                if ((addr.ipv6[i].addr_state == NET_ADDR_TENTATIVE) ||
+                        (addr.ipv6[i].addr_state == NET_ADDR_PREFERRED))
+#endif
                 {
                     (void)PRINTF("IPv6 Address: %-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc(&addr.ipv6[i]),
-                                 inet6_ntoa(addr.ipv6[i].address), ipv6_addr_state_to_desc(addr.ipv6[i].addr_state));
+                                 ipv6_addr_addr_to_desc(&addr.ipv6[i]), ipv6_addr_state_to_desc(addr.ipv6[i].addr_state));
                 }
             }
             (void)PRINTF("\r\n");
@@ -1531,7 +1569,7 @@ static int low_level_output(const struct device *dev, struct net_pkt *pkt)
     }
     else if (ret == -WM_E_NOMEM)
     {
-        LOG_ERR("Wifi Net OOM");
+        LOG_ERR("Wifi Net NOMEM");
         ret = -ENOMEM;
     }
     else if (ret == -WM_E_BUSY)
@@ -1545,6 +1583,228 @@ static int low_level_output(const struct device *dev, struct net_pkt *pkt)
 
     return ret;
 }
+
+/* Below struct is used for creating IGMP IPv4 multicast list */
+typedef struct group_ip4_addr
+{
+    struct group_ip4_addr *next;
+    uint32_t group_ip;
+} group_ip4_addr_t;
+
+/* Head of list that will contain IPv4 multicast IP's */
+static group_ip4_addr_t *igmp_ip4_list;
+
+/* Callback called by LwiP to add or delete an entry in the multicast filter table */
+static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enum netif_mac_filter_action action)
+{
+    uint8_t mcast_mac[6];
+    int result;
+    int error;
+
+    /* IPv4 to MAC conversion as per section 6.4 of rfc1112 */
+    wifi_get_ipv4_multicast_mac(ntohl(group->s_addr), mcast_mac);
+    group_ip4_addr_t *curr, *prev;
+
+    switch (action)
+    {
+        case NET_IF_ADD_MAC_FILTER:
+            /* LwIP takes care of duplicate IP addresses and it always send
+             * unique IP address. Simply add IP to top of list*/
+            curr = (group_ip4_addr_t *)os_mem_alloc(sizeof(group_ip4_addr_t));
+            if (curr == NULL)
+            {
+                result = -WM_FAIL;
+                goto done;
+            }
+            curr->group_ip = group->s_addr;
+            curr->next     = igmp_ip4_list;
+            igmp_ip4_list  = curr;
+            /* Add multicast MAC filter */
+            error = wifi_add_mcast_filter(mcast_mac);
+            if (error == 0)
+            {
+                result = WM_SUCCESS;
+            }
+            else if (error == -WM_E_EXIST)
+            {
+                result = WM_SUCCESS;
+            }
+            else
+            {
+                /* In case of failure remove IP from list */
+                curr          = igmp_ip4_list;
+                igmp_ip4_list = curr->next;
+                os_mem_free(curr);
+                curr   = NULL;
+                result = -WM_FAIL;
+            }
+            break;
+        case NET_IF_DEL_MAC_FILTER:
+            /* Remove multicast IP address from list */
+            curr = igmp_ip4_list;
+            prev = curr;
+            while (curr != NULL)
+            {
+                if (curr->group_ip == group->s_addr)
+                {
+                    if (prev == curr)
+                    {
+                        igmp_ip4_list = curr->next;
+                        os_mem_free(curr);
+                    }
+                    else
+                    {
+                        prev->next = curr->next;
+                        os_mem_free(curr);
+                    }
+                    curr = NULL;
+                    break;
+                }
+                prev = curr;
+                curr = curr->next;
+            }
+            /* Check if other IP is mapped to same MAC */
+            curr = igmp_ip4_list;
+            while (curr != NULL)
+            {
+                /* If other IP is mapped to same MAC than skip Multicast MAC removal */
+                if ((ntohl(curr->group_ip) & 0x7FFFFFU) == (ntohl(group->s_addr) & 0x7FFFFFU))
+                {
+                    result = WM_SUCCESS;
+                    goto done;
+                }
+                curr = curr->next;
+            }
+            /* Remove Multicast MAC filter */
+            error = wifi_remove_mcast_filter(mcast_mac);
+            if (error == 0)
+            {
+                result = WM_SUCCESS;
+            }
+            else
+            {
+                result = -WM_FAIL;
+            }
+            break;
+        default:
+            result = -WM_FAIL;
+            break;
+    }
+done:
+    return result;
+}
+
+#ifdef CONFIG_IPV6
+/* Below struct is used for creating IGMP IPv6 multicast list */
+typedef struct group_ip6_addr
+{
+    struct group_ip6_addr *next;
+    uint32_t group_ip;
+} group_ip6_addr_t;
+
+/* Head of list that will contain IPv6 multicast IP's */
+static group_ip6_addr_t *mld_ip6_list;
+
+/* Callback called by LwiP to add or delete an entry in the IPv6 multicast filter table */
+static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enum netif_mac_filter_action action)
+{
+    uint8_t mcast_mac[6];
+    int result;
+    int error;
+
+    /* IPv6 to MAC conversion as per section 7 of rfc2464 */
+    wifi_get_ipv6_multicast_mac(ntohl(group->s6_addr32[3]), mcast_mac);
+    group_ip6_addr_t *curr, *prev;
+
+    switch (action)
+    {
+        case NET_IF_ADD_MAC_FILTER:
+            /* LwIP takes care of duplicate IP addresses and it always send
+             * unique IP address. Simply add IP to top of list*/
+            curr = (group_ip6_addr_t *)os_mem_alloc(sizeof(group_ip6_addr_t));
+            if (curr == NULL)
+            {
+                result = -WM_FAIL;
+                goto done;
+            }
+            curr->group_ip = group->s6_addr32[3];
+            curr->next     = mld_ip6_list;
+            mld_ip6_list   = curr;
+            /* Add multicast MAC filter */
+            error = wifi_add_mcast_filter(mcast_mac);
+            if (error == 0)
+            {
+                result = WM_SUCCESS;
+            }
+            else if (error == -WM_E_EXIST)
+            {
+                result = WM_SUCCESS;
+            }
+            else
+            {
+                /* In case of failure remove IP from list */
+                curr         = mld_ip6_list;
+                mld_ip6_list = mld_ip6_list->next;
+                os_mem_free(curr);
+                curr   = NULL;
+                result = -WM_FAIL;
+            }
+            break;
+        case NET_IF_DEL_MAC_FILTER:
+            /* Remove multicast IP address from list */
+            curr = mld_ip6_list;
+            prev = curr;
+            while (curr != NULL)
+            {
+                if (curr->group_ip == group->s6_addr32[3])
+                {
+                    if (prev == curr)
+                    {
+                        mld_ip6_list = curr->next;
+                        os_mem_free(curr);
+                    }
+                    else
+                    {
+                        prev->next = curr->next;
+                        os_mem_free(curr);
+                    }
+                    curr = NULL;
+                    break;
+                }
+                prev = curr;
+                curr = curr->next;
+            }
+            /* Check if other IP is mapped to same MAC */
+            curr = mld_ip6_list;
+            while (curr != NULL)
+            {
+                /* If other IP is mapped to same MAC than skip Multicast MAC removal */
+                if ((ntohl(curr->group_ip) & 0xFFFFFF) == (ntohl(group->s6_addr32[3]) & 0xFFFFFF))
+                {
+                    result = WM_SUCCESS;
+                    goto done;
+                }
+                curr = curr->next;
+            }
+            /* Remove Multicast MAC filter */
+            error = wifi_remove_mcast_filter(mcast_mac);
+            if (error == 0)
+            {
+                result = WM_SUCCESS;
+            }
+            else
+            {
+                result = -WM_FAIL;
+            }
+            break;
+        default:
+            result = -WM_FAIL;
+            break;
+    }
+done:
+    return result;
+}
+#endif /* #ifdef CONFIG_IPV6 */
 
 void *net_get_sta_handle(void)
 {
@@ -1577,7 +1837,7 @@ static void stop_cb(void *ctx)
 
     net_dhcpv4_stop(if_handle->netif);
     (void)net_if_down(if_handle->netif);
-#if 0
+#ifndef CONFIG_ZEPHYR
     wm_netif_status_callback_ptr = NULL;
 #endif
 }
@@ -1602,10 +1862,36 @@ void net_interface_down(void *intrfc_handle)
 void net_interface_dhcp_stop(void *intrfc_handle)
 {
     net_dhcpv4_stop(((interface_t *)intrfc_handle)->netif);
-#if 0
+#ifndef CONFIG_ZEPHYR
     wm_netif_status_callback_ptr = NULL;
 #endif
 }
+
+static void ipv4_mcast_add(struct net_mgmt_event_callback *cb,
+			 struct net_if *iface)
+{
+    igmp_mac_filter((struct netif *)iface, cb->info, NET_IF_ADD_MAC_FILTER);
+}
+
+static void ipv4_mcast_delete(struct net_mgmt_event_callback *cb,
+			 struct net_if *iface)
+{
+    igmp_mac_filter((struct netif *)iface, cb->info, NET_IF_DEL_MAC_FILTER);
+}
+
+#ifdef CONFIG_IPV6
+static void ipv6_mcast_add(struct net_mgmt_event_callback *cb,
+			 struct net_if *iface)
+{
+    mld_mac_filter((struct netif *)iface, cb->info, NET_IF_ADD_MAC_FILTER);
+}
+
+static void ipv6_mcast_delete(struct net_mgmt_event_callback *cb,
+			 struct net_if *iface)
+{
+    mld_mac_filter((struct netif *)iface, cb->info, NET_IF_DEL_MAC_FILTER);
+}
+#endif
 
 static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
 {
@@ -1617,16 +1903,33 @@ static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t 
             wifi_event_reason = WIFI_EVENT_REASON_SUCCESS;
             wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
             break;
+        case NET_EVENT_IPV4_MADDR_ADD:
+            ipv4_mcast_add(cb, iface);
+            break;
+        case NET_EVENT_IPV4_MADDR_DEL:
+            ipv4_mcast_delete(cb, iface);
+            break;
+#ifdef CONFIG_IPV6
+        case NET_EVENT_IPV6_MADDR_ADD:
+            ipv6_mcast_add(cb, iface);
+            break;
+        case NET_EVENT_IPV6_MADDR_DEL:
+            ipv6_mcast_delete(cb, iface);
+            break;
+#endif
         default:
+            net_d("Unhandled net event: %x", mgmt_event);
             break;
     }
 }
 
 int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 {
+#ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_IPV6
     t_u8 i;
     ip_addr_t zero_addr = IPADDR6_INIT_HOST(0x0, 0x0, 0x0, 0x0);
+#endif
 #endif
 
     if (addr == NULL)
@@ -1649,37 +1952,39 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 #endif
 
     (void)net_if_down(if_handle->netif);
-#if 0
+
+#ifndef CONFIG_ZEPHYR
+
     wm_netif_status_callback_ptr = NULL;
-#endif
 
 #ifdef CONFIG_IPV6
 #ifdef RW610
-        if (if_handle == &g_mlan || if_handle == &g_uap)
+    if (if_handle == &g_mlan || if_handle == &g_uap)
 #else
-        if (if_handle == &g_mlan)
+    if (if_handle == &g_mlan)
 #endif
+    {
+        LOCK_TCPIP_CORE();
+
+        for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
-            LOCK_TCPIP_CORE();
-
-            for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
-            {
-                netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
-                netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
-            }
-
-            netif_create_ip6_linklocal_address(&if_handle->netif, 1);
-
-            UNLOCK_TCPIP_CORE();
-
-            /* Explicitly call this function so that the linklocal address
-             * gets updated even if the interface does not get any IPv6
-             * address in its lifetime */
-            if (if_handle == &g_mlan)
-            {
-                wm_netif_ipv6_status_callback(&if_handle->netif);
-            }
+            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
+            netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
         }
+
+        netif_create_ip6_linklocal_address(&if_handle->netif, 1);
+
+        UNLOCK_TCPIP_CORE();
+
+        /* Explicitly call this function so that the linklocal address
+         * gets updated even if the interface does not get any IPv6
+         * address in its lifetime */
+        if (if_handle == &g_mlan)
+        {
+            wm_netif_ipv6_status_callback(&if_handle->netif);
+        }
+    }
+#endif
 #endif
 
     if (if_handle == &g_mlan)
@@ -1782,15 +2087,93 @@ int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 }
 
 #ifdef CONFIG_IPV6
+char *ipv6_addr_state_to_desc(unsigned char addr_state)
+{
+    if (addr_state == NET_ADDR_TENTATIVE)
+    {
+        return IPV6_ADDR_STATE_TENTATIVE;
+    }
+    else if (addr_state == NET_ADDR_PREFERRED)
+    {
+        return IPV6_ADDR_STATE_PREFERRED;
+    }
+    else if (addr_state == NET_ADDR_DEPRECATED)
+    {
+        return IPV6_ADDR_STATE_DEPRECATED;
+    }
+    else
+    {
+        return IPV6_ADDR_UNKNOWN;
+    }
+}
+
+char *info = NULL;
+char extra_info[NET_IPV6_ADDR_LEN];
+
+char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
+{
+    struct in6_addr ip6_addr;
+
+    (void)memcpy((void *)&ip6_addr, (const void *)ipv6_conf->address, sizeof(ip6_addr));
+
+    info = net_addr_ntop(AF_INET6, &ip6_addr, extra_info,
+				     NET_IPV6_ADDR_LEN);
+
+    return info;
+}
+
+char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
+{
+    struct in6_addr ip6_addr;
+
+    (void)memcpy((void *)&ip6_addr, (const void *)ipv6_conf->address, sizeof(ip6_addr));
+
+    if (net_ipv6_is_ll_addr(&ip6_addr))
+    {
+        return IPV6_ADDR_TYPE_LINKLOCAL;
+    }
+    else if (net_ipv6_is_global_addr(&ip6_addr))
+    {
+        return IPV6_ADDR_TYPE_GLOBAL;
+    }
+    else if (net_ipv6_is_ula_addr(&ip6_addr))
+    {
+        return IPV6_ADDR_TYPE_UNIQUELOCAL;
+    }
+    else if (net_ipv6_is_ll_addr(&ip6_addr))
+    {
+        return IPV6_ADDR_TYPE_SITELOCAL;
+    }
+    else
+    {
+        return IPV6_ADDR_UNKNOWN;
+    }
+}
+
 int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
     int i;
+    struct net_if_ipv6 *ipv6;
+    struct net_if_addr *unicast;
 
-    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
+    ipv6 = if_handle->netif->config.ip.ipv6;
+
+    addr->ipv6_count = 0;
+
+    for (i = 0; ipv6 && i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
-        (void)memcpy(addr->ipv6[i].address, ip_2_ip6(&(if_handle->netif.ip6_addr[i]))->addr, 16);
-        addr->ipv6[i].addr_state = if_handle->netif.ip6_addr_state[i];
+        unicast = &ipv6->unicast[i];
+
+        if (!unicast->is_used)
+        {
+            continue;
+        }
+
+        (void)memcpy(addr->ipv6[i].address, &unicast->address.in6_addr, 16);
+        addr->ipv6[i].addr_type = unicast->addr_type;
+        addr->ipv6[i].addr_state = unicast->addr_state;
+        addr->ipv6_count++;
     }
     /* TODO carry out more processing based on IPv6 fields in netif */
     return WM_SUCCESS;
@@ -1800,34 +2183,41 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 {
     int i, ret = 0;
     interface_t *if_handle = (interface_t *)intrfc_handle;
+    struct net_if_ipv6 *ipv6;
+    struct net_if_addr *unicast;
+    //struct net_if_mcast_addr *mcast;
 
-    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
+    ipv6 = if_handle->netif->config.ip.ipv6;
+
+    addr->ipv6_count = 0;
+
+    for (i = 0; ipv6 && i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
-        if (if_handle->netif.ip6_addr_state[i] == IP6_ADDR_PREFERRED)
+        unicast = &ipv6->unicast[i];
+
+        if (!unicast->is_used)
         {
-            (void)memcpy(addr->ipv6[ret++].address, ip_2_ip6(&(if_handle->netif.ip6_addr[i]))->addr, 16);
+            continue;
+        }
+
+        if (unicast->addr_state == NET_ADDR_PREFERRED)
+        {
+            (void)memcpy(addr->ipv6[ret++].address, &unicast->address.in6_addr, 16);
+            addr->ipv6_count++;
         }
     }
     return ret;
 }
 #endif /* CONFIG_IPV6 */
 
-#if 0
+
 int net_get_if_name(char *pif_name, void *intrfc_handle)
 {
     interface_t *if_handle       = (interface_t *)intrfc_handle;
-    char if_name[NETIF_NAMESIZE] = {0};
-    int ret;
-
-    ret = netifapi_netif_index_to_name(if_handle->netif.num + 1, if_name);
-
-    if (ret != WM_SUCCESS)
-    {
-        net_e("get interface name failed");
-        return -WM_FAIL;
-    }
-
-    (void)strncpy(pif_name, if_name, NETIF_NAMESIZE);
+    const struct device *dev = NULL;
+    dev = net_if_get_device((struct net_if *)if_handle->netif);
+    strncpy(pif_name, dev->name, NETIF_NAMESIZE - 1);
+    pif_name[NETIF_NAMESIZE - 1] = '\0';
 
     return WM_SUCCESS;
 }
@@ -1835,19 +2225,20 @@ int net_get_if_name(char *pif_name, void *intrfc_handle)
 int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
+    struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
-    *ip = ip_2_ip4(&(if_handle->netif.ip_addr))->addr;
+    *ip = NET_IPV4_ADDR_U32(ipv4->unicast[0].address);
     return WM_SUCCESS;
 }
 
 int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
+    struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
-    *nm = ip_2_ip4(&(if_handle->netif.netmask))->addr;
+    *nm = ipv4->netmask.s_addr;
     return WM_SUCCESS;
 }
-#endif /* DHCP server */
 
 void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
 {
@@ -1889,6 +2280,12 @@ static void setup_mgmt_events(void)
     net_mgmt_init_event_callback(&net_event_v4_cb, wifi_net_event_handler, MCASTV4_MASK | DHCPV4_MASK);
 
     net_mgmt_add_event_callback(&net_event_v4_cb);
+
+#ifdef CONFIG_IPV6
+    net_mgmt_init_event_callback(&net_event_v6_cb, wifi_net_event_handler, MCASTV6_MASK);
+
+    net_mgmt_add_event_callback(&net_event_v6_cb);
+#endif
 }
 
 int net_wlan_init(void)

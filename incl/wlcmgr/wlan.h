@@ -1598,7 +1598,13 @@ struct wlan_ip_config
 #ifdef CONFIG_IPV6
     /** The network IPv6 address configuration that should be
      * associated with this interface. */
+#ifndef CONFIG_ZEPHYR
     struct ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
+#else
+    struct ipv6_config ipv6[NET_IF_MAX_IPV6_ADDR];
+    /** The network IPv6 valid addresses count */
+    size_t ipv6_count;
+#endif
 #endif
     /** The network IPv4 address configuration that should be
      * associated with this interface. */

@@ -3838,7 +3838,7 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     int ret;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 #endif
-#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_ZEPHYR
     void *if_handle = NULL;
 #endif
 
@@ -3877,7 +3877,7 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         wlan.sta_state = CM_STA_ASSOCIATED;
         *next          = CM_STA_ASSOCIATED;
 
-#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_ZEPHYR
         if_handle = net_get_mlan_handle();
         net_interface_up(if_handle);
 #endif
@@ -4946,9 +4946,16 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
     }
 
     net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);
+#ifndef CONFIG_ZEPHYR
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
         if (ip6_addr_isvalid((network->ip.ipv6[i].addr_state)) != 0U)
+#else
+    for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES && i < network->ip.ipv6_count; i++)
+    {
+        if ((network->ip.ipv6[i].addr_state == NET_ADDR_TENTATIVE) ||
+                (network->ip.ipv6[i].addr_state == NET_ADDR_PREFERRED))
+#endif
         {
             found++;
             /* Not considering link-local address as of now */
@@ -5821,6 +5828,10 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 wlan.status_timeout = 0;
 
                 wpa_supp_network_status(netif, network);
+#endif
+
+#ifdef CONFIG_ZEPHYR
+                net_interface_up(if_handle);
 #endif
 
                 ret = net_configure_address((struct net_ip_config *)&network->ip, if_handle);
@@ -7432,7 +7443,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 
     wlan.cm_stack = g_cm_stack;
-    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_1);
+    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_2);
 
     if (ret != 0)
     {
