@@ -6,6 +6,7 @@ menuconfig WIFI_NXP
 	select NET_SOCKETS
 	select GPIO
 	select NET_L2_WIFI_MGMT
+        select NET_SOCKETPAIR
 	select WIFI_USE_NATIVE_NETWORKING
 
 if WIFI_NXP

@@ -176,7 +176,7 @@ static int process_dns_message(char *msg, int len, struct sockaddr_in *fromaddr)
         hdr->flags.fields.aa    = 1;
         hdr->flags.fields.rcode = 0;
         hdr->flags.num          = htons(hdr->flags.num);
-        hdr->answer_rrs         = htons((u16_t)i);
+        hdr->answer_rrs         = htons((uint16_t)i);
         /* the response consists of:
          * - 1 x DNS header
          * - num_questions x query fields from the message we're parsing

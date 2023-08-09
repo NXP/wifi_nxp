@@ -16,6 +16,10 @@ zephyr_library_sources(${WIFI_SRC})
 file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
 zephyr_library_sources(${WLCMGR_SRC})
 
+file(GLOB DHCPD_SRC ./dhcpd/*.c)
+zephyr_library_sources(${DHCPD_SRC})
+zephyr_library_include_directories(dhcpd)
+
 # include OS abstraction layer source
 zephyr_library_sources(port/os/os_zephyr.c)
 

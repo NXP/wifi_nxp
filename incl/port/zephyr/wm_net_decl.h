@@ -20,6 +20,7 @@
 #include <zephyr/net/ethernet.h>
 #include <zephyr/net/net_pkt.h>
 #include <zephyr/net/net_if.h>
+#include <zephyr/net/socket.h>
 
 #define NETIF_NAMESIZE 6
 #define NETIF_MAX_HWADDR_LEN 6

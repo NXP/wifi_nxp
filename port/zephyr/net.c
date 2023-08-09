@@ -22,6 +22,7 @@ LOG_MODULE_REGISTER(wifi_nxp, CONFIG_WIFI_LOG_LEVEL);
 #include <wm_os.h>
 #include "netif_decl.h"
 #include "wm_net.h"
+#include "dhcp-server.h"
 #include "wifi_shell.h"
 #ifdef CONFIG_WPA_SUPP
 #include "wifi_nxp.h"
@@ -371,16 +372,6 @@ static void printSeparator(void)
 static struct wlan_network sta_network;
 static struct wlan_network uap_network;
 
-/* TODO: DHCP server */
-int dhcp_server_start(void *intrfc_handle)
-{
-    return 0;
-}
-
-void dhcp_server_stop(void)
-{
-}
-
 /* Callback Function passed to WLAN Connection Manager. The callback function
  * gets called when there are WLAN Events that need to be handled by the
  * application.
@@ -549,6 +540,14 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             PRINTF("Soft AP \"%s\" started successfully\r\n", uap_network.ssid);
             printSeparator();
+            if (dhcp_server_start(net_get_uap_handle()))
+            {
+                PRINTF("Error in starting dhcp server\r\n");
+                break;
+            }
+
+            PRINTF("DHCP Server started successfully\r\n");
+            printSeparator();
             break;
         case WLAN_REASON_UAP_CLIENT_ASSOC:
             PRINTF("app_cb: WLAN: UAP a Client Associated\r\n");
@@ -580,6 +579,11 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             PRINTF("app_cb: WLAN: UAP Stopped\r\n");
             printSeparator();
             PRINTF("Soft AP \"%s\" stopped successfully\r\n", uap_network.ssid);
+            printSeparator();
+
+            dhcp_server_stop();
+
+            PRINTF("DHCP Server stopped successfully\r\n");
             printSeparator();
             break;
         case WLAN_REASON_PS_ENTER:

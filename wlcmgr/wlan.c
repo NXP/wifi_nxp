@@ -7443,7 +7443,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 
     wlan.cm_stack = g_cm_stack;
-    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_2);
+    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_1);
 
     if (ret != 0)
     {

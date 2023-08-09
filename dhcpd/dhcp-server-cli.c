@@ -34,7 +34,7 @@ static struct cli_command dhcp_cmds[] = {
 
 int dhcpd_cli_init(void)
 {
-    u8_t i;
+    uint8_t i;
 
     for (i = 0; i < sizeof(dhcp_cmds) / sizeof(struct cli_command); i++)
     {
