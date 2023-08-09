@@ -7,6 +7,7 @@
 #include <zephyr/net/ethernet.h>
 #include <zephyr/net/net_pkt.h>
 #include <zephyr/net/net_if.h>
+#include <zephyr/net/dns_resolve.h>
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/device.h>
 #include <soc.h>
@@ -108,8 +109,9 @@ typedef struct {
     scan_result_cb_t scan_cb;
 } interface_t;
 
-static struct net_mgmt_event_callback wifi_dhcp_cb;
+static struct net_mgmt_event_callback net_event_v4_cb;
 #define DHCPV4_MASK (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
+#define MCASTV4_MASK (NET_EVENT_IPV4_MADDR_ADD | NET_EVENT_IPV4_MADDR_DEL)
 
 static interface_t g_mlan;
 static interface_t g_uap;
@@ -166,6 +168,16 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
+    struct net_eth_hdr *ethhdr = (struct net_eth_hdr *)payload;
+    t_u8 llc = 0;
+
+    if (!memcmp((t_u8 *)payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
+    {
+        struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)payload + SIZEOF_ETH_HDR);
+        ethhdr->type                  = ethllchdr->type;
+	datalen -= SIZEOF_ETH_LLC_HDR;
+        llc = 1;
+    }
 
     /* TODO: port wifi_netif.c and use netif_arr[] */
     /* We allocate a network buffer */
@@ -179,7 +191,18 @@ static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 da
         return NULL;
     }
 
-    if (net_pkt_write(pkt, payload, datalen) != 0) {
+    if (llc)
+    {
+        if (net_pkt_write(pkt, payload, SIZEOF_ETH_HDR) != 0) {
+	    net_pkt_unref(pkt);
+	    pkt = NULL;
+        }
+        if (net_pkt_write(pkt, payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR, datalen - SIZEOF_ETH_HDR) != 0) {
+	    net_pkt_unref(pkt);
+	    pkt = NULL;
+        }
+    }
+    else if (net_pkt_write(pkt, payload, datalen) != 0) {
 	    net_pkt_unref(pkt);
 	    pkt = NULL;
     }
@@ -227,12 +250,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 #endif
 
-    if (!memcmp((t_u8 *)payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
-    {
-        struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)payload + SIZEOF_ETH_HDR);
-        ethhdr->type                  = ethllchdr->type;
-	net_pkt_skip(p, SIZEOF_ETH_LLC_HDR);
-    }
     switch (htons(ethhdr->type))
     {
         case NET_ETH_PTYPE_IP:
@@ -1673,7 +1690,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     switch (addr->ipv4.addr_type)
     {
         case ADDR_TYPE_STATIC:
-            LOG_ERR("Debug set addr 0x%x", addr->ipv4.address);
+            LOG_DBG("Debug set addr 0x%x", addr->ipv4.address);
             NET_IPV4_ADDR_U32(if_handle->ipaddr) = addr->ipv4.address;
             NET_IPV4_ADDR_U32(if_handle->nmask)  = addr->ipv4.netmask;
             NET_IPV4_ADDR_U32(if_handle->gw)     = addr->ipv4.gw;
@@ -1684,8 +1701,6 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             break;
         case ADDR_TYPE_DHCP:
             net_if_up(if_handle->netif);
-            net_mgmt_init_event_callback(&wifi_dhcp_cb, wifi_net_event_handler, DHCPV4_MASK);
-            net_mgmt_add_event_callback(&wifi_dhcp_cb);
             os_timer_activate(&dhcp_timer);
             net_dhcpv4_start(if_handle->netif);
             break;
@@ -1737,15 +1752,32 @@ int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     addr->ipv4.netmask = ipv4->netmask.s_addr;
     addr->ipv4.gw      = ipv4->gw.s_addr;
 
-    /* TODO: if need DNS server */
-#if 0
-    const ip_addr_t *tmp;
+#if defined(CONFIG_DNS_RESOLVER)
+    struct dns_resolve_context *ctx;
 
-    tmp             = dns_getserver(0);
-    addr->ipv4.dns1 = ip_2_ip4(tmp)->addr;
-    tmp             = dns_getserver(1);
-    addr->ipv4.dns2 = ip_2_ip4(tmp)->addr;
+    /* DNS status */
+    ctx = dns_resolve_get_default();
+    if (ctx)
+    {
+        int i;
+
+        for (i = 0; i < CONFIG_DNS_RESOLVER_MAX_SERVERS; i++)
+        {
+            if (ctx->servers[i].dns_server.sa_family == AF_INET)
+            {
+                if (i == 0)
+                {
+                    addr->ipv4.dns1 = net_sin(&ctx->servers[i].dns_server)->sin_addr.s_addr;
+                }
+                if (i == 1)
+                {
+                    addr->ipv4.dns2 = net_sin(&ctx->servers[i].dns_server)->sin_addr.s_addr;
+                }
+            }
+        }
+    }
 #endif
+
     return WM_SUCCESS;
 }
 
@@ -1852,6 +1884,13 @@ void net_stat(void)
     //net_print_statistics();
 }
 
+static void setup_mgmt_events(void)
+{
+    net_mgmt_init_event_callback(&net_event_v4_cb, wifi_net_event_handler, MCASTV4_MASK | DHCPV4_MASK);
+
+    net_mgmt_add_event_callback(&net_event_v4_cb);
+}
+
 int net_wlan_init(void)
 {
     int ret;
@@ -1896,6 +1935,8 @@ int net_wlan_init(void)
             return ret;
         }
     }
+
+    setup_mgmt_events();
 
     LOG_DBG("Initialized TCP/IP networking stack");
     wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -1972,7 +2013,7 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
-#if 0
+#ifndef CONFIG_ZEPHYR
     LOCK_TCPIP_CORE();
     netif_remove_ext_callback(&netif_ext_callback);
     UNLOCK_TCPIP_CORE();
