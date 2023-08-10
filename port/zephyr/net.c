@@ -521,6 +521,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             auth_fail = 0;
             break;
         case WLAN_REASON_LINK_LOST:
+            net_eth_carrier_off(g_mlan.netif);
             PRINTF("app_cb: WLAN: link lost\r\n");
             break;
         case WLAN_REASON_CHAN_SWITCH:
