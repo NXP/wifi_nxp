@@ -2800,7 +2800,7 @@ static wifi_sub_band_set_t subband_CS_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 #ifdef CONFIG_5GHz_SUPPORT
 
-#if defined(IW61x)
+#if defined(CONFIG_UNII4_BAND_SUPPORT)
 /* Region: US(US) 5 GHz */
 wifi_sub_band_set_t subband_US_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 8, 20}};
 
@@ -2965,7 +2965,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *n
     switch (region_code)
     {
         case 0x10:
-#if defined(IW61x)
+#if defined(CONFIG_UNII4_BAND_SUPPORT)
             *nr_sb = 3;
             return subband_US_5_GHz;
 #endif
@@ -3055,6 +3055,12 @@ bool wifi_11d_is_channel_allowed(int channel)
                 j++;
             }
         }
+    }
+
+    /*For channel 144*/
+    if (144 == channel)
+    {
+        return wlan_check_channel_by_region_table(pmpriv, channel);
     }
 
     return false;

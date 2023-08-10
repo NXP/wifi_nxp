@@ -463,10 +463,10 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 #define MRVDRV_MAX_CFP_CODE_A 5
 
 /** Default region code */
-#define MRVDRV_DEFAULT_REGION_CODE 0x00
+#define MRVDRV_DEFAULT_REGION_CODE 0x10
 
 /** Default country code */
-#define MRVDRV_DEFAULT_COUNTRY_CODE "WW"
+#define MRVDRV_DEFAULT_COUNTRY_CODE "US"
 
 /** Japan country code */
 #define COUNTRY_CODE_JP_40 0x40
@@ -3273,6 +3273,8 @@ t_void wlan_drop_tx_pkts(pmlan_private priv);
 /* process the recevied packet and bridge the packet */
 mlan_status wlan_uap_recv_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf);
 #endif /* UAP_SUPPORT */
+
+t_bool wlan_check_channel_by_region_table(mlan_private *pmpriv, t_u8 chan_num);
 
 mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                                            IN pmlan_ioctl_req pioctl_req,
