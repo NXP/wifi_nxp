@@ -129,6 +129,9 @@
 #include <wm_net_decl.h>
 #endif
 
+#ifdef CONFIG_ZEPHYR
+#define WLAN_DRV_VERSION "zephyr.pvt.p1"
+#else
 #define WLAN_DRV_VERSION "v1.3.r46.p7"
 
 #ifdef CONFIG_WPA2_ENTP
@@ -137,6 +140,7 @@
 
 #define ARG_UNUSED(x) (void)(x)
 
+#endif
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
