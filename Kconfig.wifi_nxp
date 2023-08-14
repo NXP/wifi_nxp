@@ -160,6 +160,12 @@ config ENABLE_HTTPSERVER
         This HTTP server does not really parse an incoming HTTP request,
         just reads and discards it, and always serve a single static page.
 
+config TX_RX_ZERO_COPY
+    bool "Zero copy"
+    default y
+    select NET_IPV4_FRAGMENT
+    help
+        For zero copy in driver data path. Now only support RX.
 endif
 
 if IW61x

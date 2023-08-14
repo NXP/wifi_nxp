@@ -201,8 +201,12 @@ static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 da
 {
     struct net_pkt *pkt = NULL;
     struct net_eth_hdr *ethhdr = (struct net_eth_hdr *)payload;
+#ifndef CONFIG_TX_RX_ZERO_COPY
     t_u8 llc = 0;
+#endif
+    t_u8 retry_cnt = 3;
 
+#ifndef CONFIG_TX_RX_ZERO_COPY
     if (!memcmp((t_u8 *)payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
     {
         struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)payload + SIZEOF_ETH_HDR);
@@ -210,33 +214,48 @@ static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 da
 	datalen -= SIZEOF_ETH_LLC_HDR;
         llc = 1;
     }
-
+#endif
+retry:
     /* TODO: port wifi_netif.c and use netif_arr[] */
     /* We allocate a network buffer */
     if (interface == WLAN_BSS_TYPE_UAP)
-        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
     else
-        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
 
     if (pkt == NULL)
     {
+        if (retry_cnt)
+        {
+            retry_cnt--;
+            k_yield();
+            goto retry;
+        }
         return NULL;
     }
 
+#ifndef CONFIG_TX_RX_ZERO_COPY
     if (llc)
     {
-        if (net_pkt_write(pkt, payload, SIZEOF_ETH_HDR) != 0) {
-	    net_pkt_unref(pkt);
-	    pkt = NULL;
+        if (net_pkt_write(pkt, payload, SIZEOF_ETH_HDR) != 0)
+        {
+            net_pkt_unref(pkt);
+            pkt = NULL;
         }
-        if (net_pkt_write(pkt, payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR, datalen - SIZEOF_ETH_HDR) != 0) {
-	    net_pkt_unref(pkt);
-	    pkt = NULL;
+        if (net_pkt_write(pkt, payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR, datalen - SIZEOF_ETH_HDR) != 0)
+        {
+            net_pkt_unref(pkt);
+            pkt = NULL;
         }
     }
-    else if (net_pkt_write(pkt, payload, datalen) != 0) {
-	    net_pkt_unref(pkt);
-	    pkt = NULL;
+    else 
+#endif
+    {
+        if (net_pkt_write(pkt, payload, datalen) != 0)
+        {
+            net_pkt_unref(pkt);
+            pkt = NULL;
+        }
     }
     return pkt;
 }
@@ -259,13 +278,24 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 
     t_u8 *payload  = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    t_u16 header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+    struct net_pkt *p = gen_pkt_from_data(recv_interface, rcvdata, rxpd->rx_pkt_length + header_len);
+#else
     struct net_pkt *p = gen_pkt_from_data(recv_interface, payload, rxpd->rx_pkt_length);
+#endif
     /* If there are no more buffers, we do nothing, so the data is
        lost. We have to go back and read the other ports */
     if (p == NULL)
     {
         return;
     }
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Skip interface header and RxPD */
+    net_buf_pull(p->frags, header_len);
+    net_pkt_cursor_init(p);
+#endif
 
     /* points to packet payload, which starts with an Ethernet header */
     struct net_eth_hdr *ethhdr = NET_ETH_HDR(p);
@@ -288,6 +318,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #ifdef CONFIG_IPV6
         case NET_ETH_PTYPE_IPV6:
 #endif
+        /* Unicast ARP also need do rx reorder */
+        case NET_ETH_PTYPE_ARP:
             /* To avoid processing of unwanted udp broadcast packets, adding
              * filter for dropping packets received on ports other than
              * pre-defined ports.
