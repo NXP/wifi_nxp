@@ -1475,8 +1475,6 @@ void imu_wakeup_card()
 {
     /* Wakeup CPU1 */
     PMU_EnableWlanWakeup(1);
-    /* Wakeup CPU2 */
-    PMU_EnableBleWakeup(1);
 }
 
 void WL_MCI_WAKEUP_DONE0_DriverIRQHandler(void)
