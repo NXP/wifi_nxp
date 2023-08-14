@@ -1410,17 +1410,23 @@ hal_rpmsg_status_t rpmsg_rxpkt_handler(IMU_Msg_t *pImuMsg, uint32_t length)
             return kStatus_HAL_RpmsgError;
         }
 
+#ifndef CONFIG_TX_RX_ZERO_COPY
 #ifdef CONFIG_IMU_GDMA
         HAL_ImuGdmaCopyData(inbuf, inimupkt, size);
 #else
         memcpy(inbuf, inimupkt, size);
+#endif
 #endif
         interface = *((t_u8 *)inimupkt + INTF_HEADER_LEN);
         wifi_io_info_d("IN: i/f: %d len: %d", interface, size);
         w_pkt_d("Data RX: FW=>Driver, if %d, len %d", interface, size);
 
         if (bus.wifi_low_level_input != NULL)
+#ifdef CONFIG_TX_RX_ZERO_COPY
+            bus.wifi_low_level_input(interface, (uint8_t *)inimupkt, size);
+#else
             bus.wifi_low_level_input(interface, inbuf, size);
+#endif
     }
 #ifdef CONFIG_HOST_SLEEP
     wakelock_put();

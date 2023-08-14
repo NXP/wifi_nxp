@@ -267,7 +267,13 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         payload_len = rxpd->rx_pkt_length;
     }
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+    p                = gen_pbuf_from_data((t_u8 *)rcvdata, rxpd->rx_pkt_length + header_len);
+#else
     p = gen_pbuf_from_data(payload, payload_len);
+#endif
+
     /* If there are no more buffers, we do nothing, so the data is
        lost. We have to go back and read the other ports */
     if (p == NULL)
@@ -276,6 +282,11 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         LINK_STATS_INC(link.drop);
         return;
     }
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Skip interface header and RxPD */
+    pbuf_header(p, -(s16_t)header_len);
+#endif
 
 #ifndef CONFIG_WPA_SUPP
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
