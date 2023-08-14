@@ -69,6 +69,7 @@
 #include "ca-cert.h"
 #include "client-cert.h"
 #include "client-key.h"
+#include "pac-data.h"
 #ifdef CONFIG_HOSTAPD
 #include "server-cert.h"
 #include "server-key.h"
@@ -516,6 +517,8 @@ static struct
     t_u32 client_cert2_len;
     t_u8 *client_key2_data;
     t_u32 client_key2_len;
+    t_u8 *pac_data;
+    t_u32 pac_len;
 #ifdef CONFIG_HOSTAPD
     t_u8 *server_cert_data;
     t_u32 server_cert_len;
@@ -8205,6 +8208,18 @@ int wlan_add_network(struct wlan_network *network)
                     return -WM_E_INVAL;
                 }
             }
+            else
+            {
+                /* Specify PAC Data */
+                network->security.pac_len =
+                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_PAC_DATA, &network->security.pac_data);
+                if (network->security.pac_len == 0)
+                {
+                    wlan_free_entp_cert_files();
+                    wlcm_e("PAC data is not configured");
+                    return -WM_E_INVAL;
+                }
+            }
 #ifdef CONFIG_HOSTAPD
         }
 #endif
@@ -13251,6 +13266,10 @@ static void wlan_entp_cert_cleanup()
     {
         os_mem_free(wlan.client_key2_data);
     }
+    if (wlan.pac_data != NULL)
+    {
+        os_mem_free(wlan.pac_data);
+    }
 #ifdef CONFIG_HOSTAPD
     if (wlan.server_cert_data != NULL)
     {
@@ -13341,6 +13360,18 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         memcpy(wlan.client_key2_data, data, data_len);
         wlan.client_key2_len = data_len;
     }
+    if (cert_type == FILE_TYPE_ENTP_PAC_DATA)
+    {
+        wlan.pac_data = os_mem_alloc(data_len);
+        if (!wlan.pac_data)
+        {
+            wlan_entp_cert_cleanup();
+            wlcm_e("PAC DATA malloc failed");
+            return -WM_FAIL;
+        }
+        memcpy(wlan.pac_data, data, data_len);
+        wlan.pac_len = data_len;
+    }
 #ifdef CONFIG_HOSTAPD
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
@@ -13378,7 +13409,6 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         memcpy(wlan.dh_data, data, data_len);
         wlan.dh_len = data_len;
     }
-
 #endif
     else
     {
@@ -13471,6 +13501,19 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 #endif
         wlan.client_key2_data = NULL;
     }
+    if (cert_type == FILE_TYPE_ENTP_PAC_DATA)
+    {
+        *data = wlan.pac_data;
+        len   = wlan.pac_len;
+#ifndef CONFIG_WIFI_USB_FILE_ACCESS
+        if (!wlan.pac_data)
+        {
+            *data = (t_u8 *)pac_data;
+            len   = pac_data_len;
+        }
+#endif
+        wlan.pac_data = NULL;
+    }
 #ifdef CONFIG_HOSTAPD
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
@@ -13548,6 +13591,11 @@ void wlan_free_entp_cert_files(void)
     {
         wlan.client_key2_data = NULL;
         wlan.client_key2_len  = 0;
+    }
+    if (wlan.pac_data != NULL)
+    {
+        wlan.pac_data = NULL;
+        wlan.pac_len  = 0;
     }
 #ifdef CONFIG_HOSTAPD
     if (wlan.server_cert_data != NULL)

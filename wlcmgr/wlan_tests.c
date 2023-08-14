@@ -1127,6 +1127,45 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 
+            network.security.eap_result_ind = 1;
+            if (string_equal(argv[arg + 1], "result_ind") != false)
+            {
+                errno                           = 0;
+                network.security.eap_result_ind = (bool)strtol(argv[arg + 2], NULL, 10);
+                if (errno != 0)
+                {
+                    (void)PRINTF("Error during strtoul:eap_result_ind errno:%d\r\n", errno);
+                }
+                if (arg + 1 >= argc || (network.security.eap_result_ind != 0U && network.security.eap_result_ind != 1U))
+                {
+                    (void)PRINTF(
+                        "Error: invalid wireless"
+                        " network result indication\r\n");
+                    return;
+                }
+                arg += 2;
+            }
+
+            if (string_equal(argv[arg + 1], "eap_crypto_binding") != false)
+            {
+                errno                               = 0;
+                network.security.eap_crypto_binding = strtol(argv[arg + 2], NULL, 10);
+                if (errno != 0)
+                {
+                    (void)PRINTF("Error during strtoul:eap_crypto_binding errno:%d\r\n", errno);
+                }
+                if (arg + 1 >= argc ||
+                    (network.security.eap_crypto_binding != 0U && network.security.eap_crypto_binding != 1U &&
+                     network.security.eap_crypto_binding != 2U))
+                {
+                    (void)PRINTF(
+                        "Error: invalid wireless"
+                        " network eap_crypto_binding\r\n");
+                    return;
+                }
+                arg += 2;
+            }
+
             if (string_equal(argv[arg + 1], "label") != false)
             {
                 errno                       = 0;

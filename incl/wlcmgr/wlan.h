@@ -211,7 +211,7 @@ typedef enum
 /* Max WPA2 Enterprise identity can be upto 256 characters */
 #define IDENTITY_MAX_LENGTH 64U
 /* Max WPA2 Enterprise password can be upto 256 unicode characters */
-#define PASSWORD_MAX_LENGTH 64U
+#define PASSWORD_MAX_LENGTH 128U
 /** Max identities for EAP server users */
 #define MAX_USERS 8
 /** MAX CA Cert hash len */
@@ -1182,6 +1182,13 @@ struct wlan_network_security
     unsigned eap_ver : 1;
     /* PEAP label */
     unsigned peap_label : 1;
+    /* eap_result_ind=1 can be used to enable \ref WLAN_SECURITY_EAP_SIM, \ref WLAN_SECURITY_EAP_AKA and \ref
+     * WLAN_SECURITY_EAP_AKA_PRIME to use protected result indication.*/
+    unsigned eap_result_ind : 1;
+    /* crypto_binding option can be used to control \ref WLAN_SECURITY_EAP_PEAP_MSCHAPV2, \ref
+     * WLAN_SECURITY_EAP_PEAP_TLS and \ref WLAN_SECURITY_EAP_PEAP_GTC version 0 cryptobinding behavior: 0 = do not use
+     * cryptobinding (default) 1 = use cryptobinding if server supports it 2 = require cryptobinding */
+    uint8_t eap_crypto_binding;
     /* Identity string for EAP */
     char identity[IDENTITY_MAX_LENGTH];
     /* Anonymous identity string for EAP */
@@ -5938,11 +5945,12 @@ int wlan_wps_ap_cancel(void);
 #define FILE_TYPE_ENTP_CA_CERT2     4
 #define FILE_TYPE_ENTP_CLIENT_CERT2 5
 #define FILE_TYPE_ENTP_CLIENT_KEY2  6
+#define FILE_TYPE_ENTP_PAC_DATA     7
 
 #ifdef CONFIG_HOSTAPD
-#define FILE_TYPE_ENTP_SERVER_CERT 7
-#define FILE_TYPE_ENTP_SERVER_KEY  8
-#define FILE_TYPE_ENTP_DH_PARAMS   9
+#define FILE_TYPE_ENTP_SERVER_CERT 8
+#define FILE_TYPE_ENTP_SERVER_KEY  9
+#define FILE_TYPE_ENTP_DH_PARAMS   10
 #endif
 
 /** This function specifies the enterprise certificate file
