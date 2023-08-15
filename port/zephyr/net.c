@@ -342,7 +342,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             }
             p = NULL;
             break;
-        case NET_ETH_PTYPE_ARP:
         case ETHTYPE_EAPOL:
 
             deliver_packet_above(p, recv_interface);
