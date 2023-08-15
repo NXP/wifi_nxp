@@ -2381,8 +2381,8 @@ void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
     (void)memcpy(g_mlan.state.ethaddr.addr, &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
     (void)memcpy(g_uap.state.ethaddr.addr, &uap_mac[0], MLAN_MAC_ADDR_LENGTH);
 
-    net_if_set_link_addr(g_mlan.netif, sta_mac, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
-    net_if_set_link_addr(g_uap.netif, uap_mac, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+    net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+    net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
 }
 
 static int net_netif_deinit(struct net_if *netif)
