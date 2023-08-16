@@ -269,7 +269,7 @@ typedef enum
 #if defined(SD8997) || defined(SD9098) || defined(SD9064) || defined(RW610)
 #define HOST_WAKEUP_GPIO_PIN 12
 #define CARD_WAKEUP_GPIO_PIN 13
-#elif defined(IW61x)
+#elif defined(SD9177)
 #define HOST_WAKEUP_GPIO_PIN 17
 #define CARD_WAKEUP_GPIO_PIN 16
 #elif defined(SD9097)

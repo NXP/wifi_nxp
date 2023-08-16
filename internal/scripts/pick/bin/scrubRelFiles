@@ -37,7 +37,7 @@ printUsage() {
     echo "Usage : scrubRelFile <destinationDirectoryName> [SoC_type]"
     echo ""
     echo "(Optional) SoC Types Available:"
-    echo "IW61x and RW610 [Default operation is for 8987, 8978 and 8801 SoC types]"
+    echo "SD9177 and RW610 [Default operation is for 8987, 8978 and 8801 SoC types]"
     echo ""
 }
 
@@ -85,7 +85,7 @@ if [ -f "$scriptDir/removeMacros.txt" ]; then
 fi
 if [ "$soc_type" = "RW610" ]; then
     $scriptDir/genMacroList.x64 -a $scriptDir/allMacros_rw610.txt -r $scriptDir/keepMacros_rw610.txt >> $scriptDir/removeMacros.txt
-elif [ "$soc_type" = "IW61x" ]; then
+elif [ "$soc_type" = "SD9177" ]; then
     $scriptDir/genMacroList.x64 -a $scriptDir/allMacros_iw61x.txt -r $scriptDir/keepMacros_iw61x.txt >> $scriptDir/removeMacros.txt
 else
     $scriptDir/genMacroList.x64 -a $scriptDir/allMacros.txt -r $scriptDir/keepMacros.txt >> $scriptDir/removeMacros.txt
@@ -104,7 +104,7 @@ if [ "$soc_type" = "RW610" ]; then
     echo -n "- keep the Redfinch code controlled by a defined macro "
     echo -D$x
     done
-elif [ "$soc_type" = "IW61x" ]; then
+elif [ "$soc_type" = "SD9177" ]; then
     for x in `cat $scriptDir/keepMacros_iw61x.txt`
     do
     unifdef_arg="$unifdef_arg -D$x"

@@ -5148,7 +5148,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         }
         break;
 #endif
-#ifdef IW61x
+#ifdef SD9177
         case EVENT_IMD3_CAL_START:
             wifi_d("got event: IMD3 cal started");
             break;

@@ -610,7 +610,7 @@ void wifi_sdio_reg_dbg()
     }
 }
 #endif
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x) || \
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || \
     defined(RW610_SERIES)
 
 #define DEBUG_HOST_READY     0xCC

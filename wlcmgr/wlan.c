@@ -5506,7 +5506,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     struct netif *netif = net_get_sta_interface();
 #endif
 
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x) || \
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || \
     defined(SD8801) || defined(CONFIG_11AC) || defined(STREAM_2X2)
     int ret;
 #endif
@@ -5645,7 +5645,7 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     wifi_set_packet_retry_count(MAX_RETRY_TICKS);
 
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
 
     wifi_set_txbfcap(0x19e74608);
 

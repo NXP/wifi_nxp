@@ -20,7 +20,7 @@
 #include "pvt_sd9097_wlan.h"
 #elif defined(SD9098)
 #include "pvt_sd9098_wlan.h"
-#elif defined(IW61x)
+#elif defined(SD9177)
 #if defined(CONFIG_UART_WIFI_BRIDGE)
 #include "sduart_nw61x_mfg.h"
 #else

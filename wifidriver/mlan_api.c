@@ -1614,7 +1614,7 @@ int wifi_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t 
 
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RFPWR;
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
-#ifdef IW61x
+#ifdef SD9177
     /* Firecrest firmware expects value * 16 */
     wifi_mfg_cmd_generic_cfg.data1 = power * 16;
 #else
@@ -2971,7 +2971,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *n
 #endif
         case 0x32:
             *nr_sb = 3;
-#if defined(IW61x)
+#if defined(SD9177)
             ret_band = subband_SG_FR_5_GHz;
 #else
             ret_band = subband_US_SG_FR_5_GHz;
@@ -2999,7 +2999,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *n
             break;
         default:
             *nr_sb = 3;
-#if defined(IW61x)
+#if defined(SD9177)
             ret_band = subband_US_5_GHz;
 #else
             ret_band = subband_US_SG_FR_5_GHz;
@@ -4250,7 +4250,7 @@ int wifi_set_ed_mac_mode(wifi_ed_mac_ctrl_t *wifi_ed_mac_ctrl, int bss_type)
 #ifdef CONFIG_5GHz_SUPPORT
     ed_mac_mode->ed_ctrl_5g   = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_ctrl_5g);
     ed_mac_mode->ed_offset_5g = wlan_cpu_to_le16(wifi_ed_mac_ctrl->ed_offset_5g);
-#if defined(IW61x)
+#if defined(SD9177)
     ed_mac_mode->ed_bitmap_txq_lock = 0x1e00ff;
 #else
     ed_mac_mode->ed_bitmap_txq_lock = 0xff;

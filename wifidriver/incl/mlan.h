@@ -52,7 +52,7 @@ Change log:
 #define CONFIG_MEF_CFG                 1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 
-#if defined(IW61x)
+#if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
 #define CONFIG_WIFI_CAPA   1
