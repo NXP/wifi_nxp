@@ -5246,7 +5246,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         if (network_idx < WLAN_MAX_KNOWN_NETWORKS)
         {
             struct wlan_network_security *security = &(wlan.networks[network_idx].security);
-            char *pos = (char *)buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1;
+            const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1;
             security->pmk_valid = false;
             security->type = WLAN_SECURITY_NONE;
             security->dpp_akm_dpp = 0;
