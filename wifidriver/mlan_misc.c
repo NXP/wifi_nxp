@@ -1967,11 +1967,18 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         bitmap_rates[9] = 0x3FFF;
 #ifdef CONFIG_11AC
         /* [10..17] VHT */
+#ifdef RW610
+        /* RW610 only supports VHT MCS0 ~ MCS8*/
+        bitmap_rates[10] = 0x01FF; /* 9 Bits valid */
+        /* RW610 only supports 1 NSS*/
+        bitmap_rates[11] = 0x0;
+#else
         /* Support all VHT-MCSs rate for NSS 1 and 2 */
         for (i = 10; i < 12; i++)
         {
             bitmap_rates[i] = 0x03FF; /* 10 Bits valid */
         }
+#endif
         /* Set to 0 as default value for all other NSSs */
         for (i = 12; i < NELEMENTS(bitmap_rates); i++)
         {
@@ -1980,9 +1987,16 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #endif
 #ifdef CONFIG_11AX
         /* [18..25] HE */
+#ifdef RW610
+        /* RW610 only supports HE MCS0 ~ MCS9*/
+        bitmap_rates[18] = 0x03FF; /* 10 Bits valid */
+        /* RW610 only supports 1 NSS*/
+        bitmap_rates[19] = 0x0;
+#else
         /* Support all HE-MCSs rate for NSS1 and 2 */
         for (i = 18; i < 20; i++)
             bitmap_rates[i] = 0x0FFF;
+#endif
         for (i = 20; i < NELEMENTS(bitmap_rates); i++)
             bitmap_rates[i] = 0x0;
 #endif
