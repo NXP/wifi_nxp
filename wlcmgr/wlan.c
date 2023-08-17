@@ -2462,6 +2462,7 @@ static int do_stop(struct wlan_network *network)
             return -WM_FAIL;
         }
         wlan.uap_state = CM_UAP_INITIALIZING;
+        wlan.cur_uap_network_idx = -1;
     }
 
     return WM_SUCCESS;
@@ -6063,6 +6064,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
     else
     { /* Do Nothing */
     }
+    wlan.cur_network_idx =-1;
 
 #ifdef CONFIG_WPS2
     if (wlan_get_prov_session() == PROV_WPS_SESSION_ATTEMPT)
@@ -8496,17 +8498,11 @@ int wlan_remove_network(const char *name)
                 wlan.auth_cache_valid      = false;
                 wlan.fast_path_cache_valid = false;
 #endif /* CONFIG_WLAN_FAST_PATH */
-                if (is_state(CM_STA_CONNECTED))
-                {
-                    return WLAN_ERROR_STATE;
-                }
+                return WLAN_ERROR_STATE;
             }
             if (wlan.cur_uap_network_idx == i)
             {
-                if (is_uap_state(CM_UAP_IP_UP) != 0)
-                {
-                    return WLAN_ERROR_STATE;
-                }
+            	return WLAN_ERROR_STATE;
             }
 #ifdef CONFIG_WPA2_ENTP
             if (wlan.networks[i].security.tls_cert.ca_chain)
