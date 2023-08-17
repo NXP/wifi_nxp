@@ -7537,7 +7537,6 @@ int wlan_stop(void)
             return WLAN_ERROR_STATE;
         }
     }
-    wlan.scan_cb = NULL;
 
 #ifdef CONFIG_WPA_SUPP
     ret = os_timer_delete(&wlan.supp_status_timer);
