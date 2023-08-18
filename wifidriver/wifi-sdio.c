@@ -1962,7 +1962,23 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
 #endif /* CONFIG_WIFI_IO_DEBUG */
 }
 
+#ifdef CONFIG_TP_OPTIMIZATIONS
+static t_u32 bitcount(t_u32 num)
+{
+    t_u32 count = 0;
+    static t_u32 nibblebits[] = { 0, 1, 1, 2, 1, 2, 2, 3,
+                    1, 2, 2, 3, 2, 3, 3, 4 };
+    for (; num != 0; num >>= 4)
+        count += nibblebits[num & 0x0f];
+    return count;
+}
+#endif
 #ifdef CONFIG_SDIO_MULTI_PORT_RX_AGGR
+#ifdef CONFIG_TP_OPTIMIZATIONS
+static t_u8 start_check = 0;
+static t_u8 skip_int = 0;
+#endif
+
 /* returns port number from rd_bitmap. if ctrl port, then it clears
  * the bit and does nothing else
  * if data port then increments curr_port value also */
@@ -2026,7 +2042,29 @@ static mlan_status wlan_get_rd_port(mlan_adapter *pmadapter, t_u32 *pport, t_u32
     else
     {
 #endif
+
+#ifdef CONFIG_TP_OPTIMIZATIONS
+        /* This change is being added to handle low throughput caused for Tx due to excess interrupts received for Rx.
+        * The intention is to ignore the interrupt if received agreggated packets are less than 4.
+        * However, there could be single data packets during DHCP request, etc. whose Rx interrupt should not be skipped.
+        * For actual data, we are checking if read bitmap has at least 4 ports available if current read port is 27.
+        * If current read port is greater than 27 then any number of available ports is fine. */
+        if (bitcount(pmadapter->mp_rd_bitmap) == 8U)
+        {
+            start_check = 1;
+        }
+
+        if (skip_int == 2)
+        {
+            start_check = 0;
+        }
         /* Data */
+        if ((start_check) && ((pmadapter->mp_rd_bitmap & ((pmadapter->curr_rd_port > 27 ? 1U : 0xFU) << pmadapter->curr_rd_port)) == 0U))
+        {
+            skip_int++;
+            return MLAN_STATUS_FAILURE;
+        }
+#endif
         while ((pmadapter->mp_rd_bitmap & (1U << pmadapter->curr_rd_port)) != 0U)
         {
             *pport = pmadapter->curr_rd_port;
