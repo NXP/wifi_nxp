@@ -21,7 +21,7 @@
 #define __WIFI_SHELL_H__
 #include <wmtypes.h>
 
-#define MAX_COMMANDS  100U
+#define MAX_COMMANDS  200U
 
 /** Structure for registering CLI commands */
 struct cli_command

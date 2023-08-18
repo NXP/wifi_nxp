@@ -4003,10 +4003,10 @@ int wifi_low_level_output(const t_u8 interface,
     int retry = retry_attempts;
     mlan_status i;
 #endif
-#ifndef CONFIG_ZEPHYR
+
     /** Tx control */
     t_u32 tx_control = 0;
-
+#ifndef CONFIG_ZEPHYR
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
 #endif
 

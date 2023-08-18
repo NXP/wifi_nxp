@@ -3893,6 +3893,7 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
             {
                 wlcm_e("wpa2_ent_connect failed");
             }
+#endif
         }
 #endif
         wlan.scan_count = 0;
@@ -6017,7 +6018,9 @@ static void wlcm_deinit(int action)
 
     wifi_scan_stop();
     wifi_deinit();
+#ifndef CONFIG_ZEPHYR
     wlan_dhcp_cleanup();
+#endif
 
     wlan.status = WLCMGR_INACTIVE;
 }
@@ -9398,8 +9401,10 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Block RX data */
             wifi_set_rx_status(WIFI_DATA_BLOCK);
 
+#ifndef CONFIG_ZEPHYR
             /* DHCP Cleanup */
             wlan_dhcp_cleanup();
+#endif
 #ifdef CONFIG_NCP_BRIDGE
             /* Stop uap provisioning if it started */
             if (uap_prov_deinit_cb)

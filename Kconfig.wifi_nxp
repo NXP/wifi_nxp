@@ -166,6 +166,74 @@ config TX_RX_ZERO_COPY
     select NET_IPV4_FRAGMENT
     help
         For zero copy in driver data path. Now only support RX.
+
+config WIFI_CAPA
+    bool "Wi-Fi Capability"
+    default y
+    help
+      This option enables uAP Wi-Fi Capability in the Wi-Fi driver.
+
+config UAP_STA_MAC_ADDR_FILTER
+    bool "Wi-Fi white/black list"
+    default y
+    help
+      Allow/Block MAC addresses specified in the allowed list.
+
+config WMM_UAPSD
+    bool "UAPSD mode"
+    default y
+    help
+      This option enables WMM UAPSD in the Wi-Fi driver.
+
+config WIFI_GET_LOG
+   bool "Get 802.11 log"
+   default y
+   help
+     This option gets 802.11 log in the Wi-Fi driver.
+
+config WIFI_TX_PER_TRACK
+   bool "TX packet error tracking"
+   default y
+   help
+     This option is used to track Tx packet error ratio.
+
+config CSI
+   bool "CSI support"
+   default y
+   help
+     This option enable/disable channel state information collection.
+
+config WIFI_RESET
+   bool "Wi-Fi reset"
+   default y
+   help
+     This option is used to enable/disable/reset Wi-Fi.
+
+config NET_MONITOR
+   bool "Networking monitor"
+   default y
+   help
+     This option is used to set/get network monitor configuration.
+
+config ECSA
+   bool "ECSA"
+   default y
+   help
+     This option is used to do channel switch according to spec.
+
+config TSP
+   bool "TSP"
+   default y
+   help
+     This option is used to set and get Thermal Safeguard Protection configuration.
+
+config 11AX_TWT
+   bool "802.11ax TWT support"
+   select 11AX
+   default y
+   help
+     This option enables 11ax TWT in the Wi-Fi driver.
+
 endif
 
 if IW61x
@@ -271,7 +339,7 @@ config EXT_SCAN_SUPPORT
 
 config TURBO_MODE
        bool "Turbo Mode"
-       def_bool n
+       def_bool y
        help
 	 This option enables WMM Turbo Mode support in the Wi-Fi driver. Say Y if you wish to enable this feature.
 
@@ -292,20 +360,20 @@ config FIPS
 
 config OWE
        bool "Opportunistic Wireless Encryption"
-       def_bool n
+       def_bool y
        help
 	 This option enables Wi-Fi Opportunistic Wireless Encryption support in the Wi-Fi driver. Say Y if you wish to enable this feature.
 
 config 11K
        bool "802.11K Support"
-       def_bool n
+       def_bool y
        help
          This option enables the use of 802.11k support. Say Y if you
 	 wish to enable this feature.
 
 config 11V
        bool "802.11V Support"
-       def_bool n
+       def_bool y
        help
          This option enables the use of 802.11v support. Say Y if you
 	 wish to enable this feature.
@@ -314,7 +382,7 @@ if IW61x || RW610
 
 config 11R
        bool "802.11R Support"
-       def_bool n
+       def_bool y
        depends on WPA_SUPP
        help
          This option enables the use of 802.11r support. Say Y if you
@@ -341,27 +409,6 @@ config WLAN_FW_HEARTBEAT
 	  unresponsive.
 
 menu "uAP configuration"
-
-choice "Wi-Fi Capability"
-	prompt "Wi-Fi Capability"
-        help
-	 This option enables uAP Wi-Fi Capability in the Wi-Fi driver.
-
-config WIFI_SUPPORT_11AX
-        bool "802.11ax"
-        depends on 11AX
-
-config WIFI_SUPPORT_11AC
-        bool "802.11ac"
-        depends on 11AC
-
-config WIFI_SUPPORT_11N
-        bool "802.11n"
-
-config WIFI_SUPPORT_LEGACY
-        bool "802.11g"
-
-endchoice
 
 config WIFI_UAP_WORKAROUND_STICKY_TIM
        def_bool y

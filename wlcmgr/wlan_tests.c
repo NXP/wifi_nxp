@@ -8178,7 +8178,7 @@ static void dump_wlan_set_debug_htc_usage(void)
 static void test_wlan_set_debug_htc(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    u8_t count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm, ulMuDataDisable;
+    uint8_t count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm, ulMuDataDisable;
     /**
      * Command taken from debug.conf
      * 	send_om_set={
