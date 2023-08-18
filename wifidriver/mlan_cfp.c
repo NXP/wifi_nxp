@@ -779,9 +779,9 @@ static const chan_freq_power_t *wlan_get_region_cfp_table(pmlan_adapter pmadapte
 #ifdef CONFIG_5GHz_SUPPORT
     cfp_a = region;
 #endif /* CONFIG_5GHz_SUPPORT */
-    if (region == 0U)
+    if (region == 0U || region == 0x40)
     {
-        /* Invalid region code, use CFP code */
+        /* Invalid region code or Japan case, use CFP code */
         cfp_bg = pmadapter->cfp_code_bg;
 #ifdef CONFIG_5GHz_SUPPORT
         cfp_a = pmadapter->cfp_code_a;

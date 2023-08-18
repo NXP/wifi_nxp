@@ -4213,7 +4213,30 @@ int wifi_set_country_code(const char *alpha2)
 #ifdef CONFIG_5GHz_SUPPORT
     pmadapter->cfp_code_a = cfp_a;
 #endif
-    pmadapter->region_code = 0;
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if(cfp_a)
+    {
+        pmadapter->region_code = cfp_a;
+    }
+    else if(cfp_bg)
+    {
+        pmadapter->region_code = cfp_bg;
+    }
+    else
+    {
+        pmadapter->region_code = 0;
+    }
+#else
+    if(cfp_bg)
+    {
+        pmadapter->region_code = cfp_bg;
+    }
+    else
+    {
+        pmadapter->region_code = 0;
+    }
+#endif
 
     if (wlan_set_regiontable(pmadapter->priv[1], pmadapter->region_code, pmadapter->config_bands))
     {
