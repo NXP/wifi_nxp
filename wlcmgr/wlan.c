@@ -69,7 +69,9 @@
 #include "ca-cert.h"
 #include "client-cert.h"
 #include "client-key.h"
+#ifdef CONFIG_WPA_SUPP
 #include "pac-data.h"
+#endif
 #ifdef CONFIG_HOSTAPD
 #include "server-cert.h"
 #include "server-key.h"
