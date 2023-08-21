@@ -2647,10 +2647,15 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 
                         memset(&acs_params, 0, sizeof(nxp_wifi_acs_params));
 
+#if defined(SD8801) || defined(RW610)
 #ifdef SD8801
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, 0);
-                        acs_params.ch_width = 20;
                         acs_params.hw_mode  = 1;
+#else
+                        acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
+                        acs_params.hw_mode = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;
+#endif
+                        acs_params.ch_width = 20;
 #else
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
 
