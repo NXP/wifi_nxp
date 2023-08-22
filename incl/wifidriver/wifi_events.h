@@ -53,6 +53,30 @@ enum wifi_event
     WIFI_EVENT_LINK_LOSS,
     /* WiFi RSSI Low Event */
     WIFI_EVENT_RSSI_LOW,
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+    /* WiFi RSSI High Event */
+    WIFI_EVENT_RSSI_HIGH,
+    /* WiFi SRN Low Event */
+    WIFI_EVENT_SNR_LOW,
+    /* WiFi SNR High Event */
+    WIFI_EVENT_SNR_HIGH,
+    /* WiFi Max Fail Event */
+    WIFI_EVENT_MAX_FAIL,
+    /* WiFi Beacon miised Event */
+    WIFI_EVENT_BEACON_MISSED,
+    /* WiFi Data RSSI Low Event */
+    WIFI_EVENT_DATA_RSSI_LOW,
+    /* WiFi Data RSSI High Event */
+    WIFI_EVENT_DATA_RSSI_HIGH,
+    /* WiFi Data SNR Low Event */
+    WIFI_EVENT_DATA_SNR_LOW,
+    /* WiFi Data SNR High Event */
+    WIFI_EVENT_DATA_SNR_HIGH,
+    /* WiFi Link Quality Event */
+    WIFI_EVENT_FW_LINK_QUALITY,
+    /* WiFi Pre Beacon Lost Event */
+    WIFI_EVENT_FW_PRE_BCN_LOST,
+#endif
 #ifdef CONFIG_HOST_SLEEP
     /* Host sleep activated */
     WIFI_EVENT_HS_ACTIVATED,
@@ -110,6 +134,10 @@ enum wifi_event
     /** IPv6 address state change */
     WIFI_EVENT_NET_IPV6_CONFIG,
 #endif
+#ifdef CONFIG_WLAN_BRIDGE
+    /** Auto link switch network */
+    WIFI_EVENT_AUTOLINK_NETWORK_SWITCHED,
+#endif
     /* Background Scan Report */
     WIFI_EVENT_BG_SCAN_REPORT,
     /* Background Scan Stop */
@@ -120,6 +148,10 @@ enum wifi_event
     WIFI_EVENT_REMAIN_ON_CHANNEL,
     /* Event to indicate Management tx status */
     WIFI_EVENT_MGMT_TX_STATUS,
+#ifdef CONFIG_CSI
+    /* Recv csi data */
+    WIFI_EVENT_CSI,
+#endif
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must
@@ -144,6 +176,10 @@ enum wlan_bss_type
     WLAN_BSS_TYPE_STA = 0,
     /** uAP */
     WLAN_BSS_TYPE_UAP = 1,
+#ifdef CONFIG_P2P
+    /** WiFi Direct */
+    WLAN_BSS_TYPE_WIFIDIRECT = 2,
+#endif
     /** Any */
     WLAN_BSS_TYPE_ANY = 0xff,
 };

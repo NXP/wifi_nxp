@@ -12,6 +12,10 @@
 
 #include <mlan_sdio_api.h>
 
+#if defined(CONFIG_XZ_DECOMPRESSION)
+#include <xz.h>
+#include <decompress.h>
+#endif /* CONFIG_XZ_DECOMPRESSION */
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
@@ -31,6 +35,9 @@
 
 /* Buffer pointers to point to command and, command response buffer */
 static uint8_t ctrl_cmd_buf[WIFI_FW_CMDBUF_SIZE];
+#ifdef CONFIG_FW_VDLL
+static uint8_t vdll_cmd_buf[WIFI_FW_CMDBUF_SIZE] = {0};
+#endif
 static int seqnum;
 // static int pm_handle;
 
@@ -59,6 +66,11 @@ static struct
     /* int special; */
     /* Default queue where the cmdresp/events will be sent */
     os_queue_t *event_queue;
+#ifdef CONFIG_P2P
+    /* Special queue on which only cmdresp will be sent based on
+     * value in special */
+    os_queue_t *special_queue;
+#endif /* CONFIG_P2P */
     int (*wifi_low_level_input)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 } bus;
 
@@ -310,6 +322,21 @@ void bus_deregister_data_input_funtion(void)
     bus.wifi_low_level_input = NULL;
 }
 
+#ifdef CONFIG_P2P
+int bus_register_special_queue(os_queue_t *special_queue)
+{
+    if (bus.special_queue)
+        return -WM_FAIL;
+    bus.special_queue = special_queue;
+    return WM_SUCCESS;
+}
+
+void bus_deregister_special_queue()
+{
+    if (bus.special_queue)
+        bus.special_queue = NULL;
+}
+#endif
 
 void wifi_get_mac_address_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *mac_addr);
 void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint8_t *fw_ver_ext);
@@ -321,6 +348,13 @@ static mlan_status wlan_handle_event_packet(struct bus_message *msg)
     wevt_d("Event %x", *evttype);
     switch (*evttype)
     {
+#ifdef CONFIG_FW_VDLL
+        case EVENT_VDLL_IND:
+        {
+            wlan_process_vdll_event((mlan_private *)mlan_adap->priv[0], msg->data + sizeof(evttype));
+            break;
+        }
+#endif
         default:
             wevt_d("Unhandled pre Queue event %x", evttype);
             break;
@@ -398,9 +432,11 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
         case HostCmd_CMD_VERSION_EXT:
             wifi_get_firmware_ver_ext_from_cmdresp((HostCmd_DS_COMMAND *)(void *)cmdresp, dev_fw_ver_ext);
             break;
+#ifdef CONFIG_11N
         case HostCmd_CMD_11N_CFG:
         case HostCmd_CMD_AMSDU_AGGR_CTRL:
             break;
+#endif
         case HostCmd_CMD_FUNC_SHUTDOWN:
             break;
 #ifdef WLAN_LOW_POWER_ENABLE
@@ -412,6 +448,10 @@ static mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
             break;
         case HostCmd_CMD_RECONFIGURE_TX_BUFF:
             break;
+#ifdef CONFIG_EXTERNAL_BLE_COEX
+        case HostCmd_CMD_ROBUST_COEX:
+            break;
+#endif
         default:
             wifi_io_d("Unimplemented Resp : (0x%x)", cmdtype);
 #ifdef CONFIG_WIFI_IO_DUMP
@@ -447,10 +487,40 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         wifi_io_d(" --- Rx: EVENT Response ---");
     }
 
+#ifdef CONFIG_P2P
+    t_u8 *cmdBuf;
+#endif /* CONFIG_P2P */
     SDIOPkt *sdiopkt = (SDIOPkt *)(void *)pmbuf;
     int ret;
     struct bus_message msg;
 
+#ifdef CONFIG_P2P
+    if (bus.special_queue != NULL && upld_type == MLAN_TYPE_CMD)
+    {
+        msg.data = os_mem_alloc(sdiopkt->size);
+        if (!msg.data)
+        {
+            wifi_io_e("Buffer allocation failed");
+            return MLAN_STATUS_FAILURE;
+        }
+
+        msg.event = upld_type;
+        cmdBuf    = pmbuf;
+        cmdBuf    = cmdBuf + INTF_HEADER_LEN;
+        (void)memcpy((void *)msg.data, (const void *)cmdBuf, sdiopkt->size);
+
+        ret = os_queue_send(bus.special_queue, &msg, 0);
+
+        if (ret != WM_SUCCESS)
+        {
+            wifi_io_e("Failed to send response on Queue");
+            if (upld_type != MLAN_TYPE_CMD)
+                wifi_free_eventbuf(msg.data);
+            return MLAN_STATUS_FAILURE;
+        }
+    }
+    else
+#endif /* CONFIG_P2P */
         if ((fw_init_cfg == 0U) && (bus.event_queue != NULL))
     {
         if (upld_type == MLAN_TYPE_CMD)
@@ -902,6 +972,7 @@ static void _wlan_set_mac_addr(void)
 
 }
 
+#ifdef CONFIG_11N
 static void wlan_set_11n_cfg(void)
 {
     t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
@@ -929,6 +1000,7 @@ static void wlan_set_11n_cfg(void)
 
 }
 
+#ifdef CONFIG_ENABLE_AMSDU_RX
 void wifi_prepare_enable_amsdu_cmd(HostCmd_DS_COMMAND *cmd, int seq_number);
 static void wlan_enable_amsdu(void)
 {
@@ -958,6 +1030,8 @@ static void wlan_enable_amsdu(void)
     wifi_sdio_wait_for_cmdresp();
 
 }
+#endif /* CONFIG_ENABLE_AMSDU_RX */
+#endif /* CONFIG_11N */
 
 static void wlan_cmd_shutdown(void)
 {
@@ -1065,6 +1139,43 @@ static int wlan_set_low_power_mode()
 }
 #endif
 
+#ifdef CONFIG_EXTERNAL_BLE_COEX
+void wifi_prepare_set_coex_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number);
+
+static int wlan_set_ext_ble_coex_mode()
+{
+    t_u32 tx_blocks = 1, buflen = MLAN_SDIO_BLOCK_SIZE;
+    uint32_t resp;
+
+    if (!board_coex_interface())
+    {
+        return false;
+    }
+
+    wifi_sdio_lock();
+
+    board_coex_pin_config(1);
+
+    (void)memset(outbuf, 0, buflen);
+
+    /* sdiopkt = outbuf */
+    wifi_prepare_set_coex_cmd(&sdiopkt->hostcmd, (t_u16)wlan_get_next_seq_num());
+
+    sdiopkt->pkttype = MLAN_TYPE_CMD;
+    sdiopkt->size    = sdiopkt->hostcmd.size + INTF_HEADER_LEN;
+
+    last_cmd_sent = HostCmd_CMD_ROBUST_COEX;
+
+    /* send CMD53 to write the command to set mac control */
+    sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+
+    wifi_sdio_unlock();
+
+    wifi_sdio_wait_for_cmdresp();
+
+    return true;
+}
+#endif
 
 /* Setup the firmware with commands */
 static void wlan_fw_init_cfg(void)
@@ -1139,17 +1250,73 @@ static void wlan_fw_init_cfg(void)
 
     wlan_get_fw_ver_ext(4);
 
+#ifdef CONFIG_EXTERNAL_BLE_COEX
+    wlan_set_ext_ble_coex_mode();
+#endif
 
+#ifdef CONFIG_11N
     wlan_set_11n_cfg();
 
+#ifdef CONFIG_ENABLE_AMSDU_RX
 
     wlan_enable_amsdu();
 
+#endif /* CONFIG_ENABLE_AMSDU_RX */
+#endif /* CONFIG_11N */
 
     return;
 }
 
+#ifdef CONFIG_P2P
+mlan_status wlan_send_gen_sdio_cmd(t_u8 *buf, t_u32 buflen)
+{
+    SDIOPkt *sdio = (SDIOPkt *)outbuf;
+    uint32_t resp;
 
+    (void)memset(outbuf, 0, 512);
+
+    wifi_sdio_lock();
+    (void)memcpy((void *)outbuf, (const void *)buf, buflen);
+    sdio->pkttype         = MLAN_TYPE_CMD;
+    sdio->hostcmd.seq_num = (0x01) << 13;
+    sdio->size            = sdio->hostcmd.size + INTF_HEADER_LEN;
+
+    sdio_drv_write(mlan_adap->ioport, 1, 1, buflen, (t_u8 *)outbuf, &resp);
+
+    last_cmd_sent = sdio->hostcmd.command;
+    wifi_sdio_unlock();
+
+    return 0;
+}
+#endif
+
+#ifdef CONFIG_FW_VDLL
+int wlan_send_sdio_vdllcmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
+{
+    SDIOPkt *sdio = (SDIOPkt *)(void *)outbuf;
+    uint32_t resp;
+
+    (void)wifi_sdio_lock();
+
+    (void)memcpy((void *)outbuf, (const void *)buf, tx_blocks * buflen);
+    sdio->pkttype = MLAN_TYPE_VDLL;
+    sdio->size    = sdio->hostcmd.size + INTF_HEADER_LEN;
+
+#ifdef CONFIG_WIFI_IO_DUMP
+    (void)PRINTF("OUT_CMD");
+    dump_hex(outbuf, sdio->size);
+#endif /* CONFIG_WIFI_IO_DUMP */
+#if defined(SD8801)
+    sdio_drv_write(mlan_adap->ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+    (void)sdio_drv_write(mlan_adap->ioport | CMD_PORT_SLCT, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+#endif
+
+    wifi_sdio_unlock();
+
+    return WM_SUCCESS;
+}
+#endif
 
 int wlan_send_sdio_cmd(t_u8 *buf, t_u32 tx_blocks, t_u32 buflen)
 {
@@ -1183,6 +1350,12 @@ int wifi_send_cmdbuffer(t_u32 tx_blocks, t_u32 len)
     return wlan_send_sdio_cmd(ctrl_cmd_buf, tx_blocks, len);
 }
 
+#ifdef CONFIG_FW_VDLL
+int wifi_send_vdllcmdbuffer(t_u32 tx_blocks, t_u32 len)
+{
+    return wlan_send_sdio_vdllcmd(vdll_cmd_buf, tx_blocks, len);
+}
+#endif
 
 #ifdef CONFIG_WMM
 
@@ -1305,6 +1478,9 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 {
     t_u32 tx_blocks = 0, buflen = 0;
     mlan_status ret = MLAN_STATUS_SUCCESS;
+#ifdef CONFIG_WMM_UAPSD
+    bool last_packet = 0;
+#endif
     t_u8 port     = 0;
 
     if (buf_block_len == 0)
@@ -1326,6 +1502,14 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
         return MLAN_STATUS_RESOURCE;
     }
 
+#ifdef CONFIG_WMM_UAPSD
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
+        wifi_check_last_packet_indication(mlan_adap->priv[interface]))
+    {
+        process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+        last_packet = 1;
+    }
+#endif
 
     if (buf_block_len == 0)
     {
@@ -1339,6 +1523,13 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     ports++;
     pkt_cnt++;
 
+#ifdef CONFIG_WMM_UAPSD
+    if (last_packet)
+    {
+        mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
+        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+    }
+#endif
 
     wifi_io_info_d("OUT: i/f: %d, len: %d, start port: %d, pkt_cnt: %d, bufblocklen %d", interface, tx_blocks * buflen, start_port, pkt_cnt, buf_block_len);
 
@@ -1354,7 +1545,11 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
 
     w_pkt_d("Data TX: Driver=>FW, pkt_count %d", pkt_count);
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
     if (ret != WM_SUCCESS)
     {
         wifi_io_e("Failed to wakeup card");
@@ -1369,7 +1564,11 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
 
     wifi_sdio_unlock();
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
 
     if (ret != MLAN_STATUS_SUCCESS)
     {
@@ -1410,6 +1609,9 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     int ret   = false;
     int ret2;
     int retry = retry_attempts;
+#ifdef CONFIG_WMM_UAPSD
+    bool last_packet = 0;
+#endif
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, tx_blocks * buflen);
 
@@ -1419,7 +1621,11 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
 #endif /* CONFIG_WIFI_IO_DEBUG */
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     ret2 = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
+#else
+    ret2 = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
     if (ret2 != WM_SUCCESS)
     {
         wifi_io_e("Failed to wakeup card");
@@ -1448,6 +1654,14 @@ retry_xmit:
         }
     }
 
+#ifdef CONFIG_WMM_UAPSD
+    if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
+        wifi_check_last_packet_indication(mlan_adap->priv[interface]))
+    {
+        process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+        last_packet = 1;
+    }
+#endif
 
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, tx_buf, &resp);
@@ -1464,6 +1678,10 @@ retry_xmit:
 
     if (ret == false)
     {
+#ifdef CONFIG_WMM_UAPSD
+        if (last_packet)
+            process_pkt_hdrs_flags((t_u8 *)tx_buf, 0);
+#endif
 
         wifi_io_e("sdio_drv_write failed (%d)", ret);
 #ifdef CONFIG_WIFI_FW_DEBUG
@@ -1483,13 +1701,24 @@ retry_xmit:
         goto exit_fn;
     }
 
+#ifdef CONFIG_WMM_UAPSD
+    if (last_packet)
+    {
+        mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
+        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+    }
+#endif
 
     ret = MLAN_STATUS_SUCCESS;
 
 exit_fn:
     wifi_sdio_unlock();
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
 
     return ret;
 }
@@ -2398,6 +2627,16 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
     return ret;
 }
 
+#ifdef CONFIG_BT_SUPPORT
+uint8_t read_sdio_function_recvd()
+{
+    uint32_t resp = 0;
+    uint8_t val;
+    sdio_drv_creg_read(0x5, 0x0, &resp);
+    val = resp & 0xf;
+    return val;
+}
+#endif
 
 void sd_wifi_deinit(void)
 {
@@ -2414,6 +2653,13 @@ void sd_wifi_deinit(void)
     (void)wlan_deinit_struct();
 }
 
+#ifdef CONFIG_FW_VDLL
+HostCmd_DS_COMMAND *wifi_get_vdllcommand_buffer(void)
+{
+    /* First 4 bytes reserved for SDIO pkt header */
+    return (HostCmd_DS_COMMAND *)(void *)(vdll_cmd_buf + INTF_HEADER_LEN);
+}
+#endif
 
 HostCmd_DS_COMMAND *wifi_get_command_buffer(void)
 {

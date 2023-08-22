@@ -8,7 +8,9 @@
 #include <mlan_api.h>
 #include <wm_net.h>
 #include <wmlog.h>
+#ifndef RW610
 #include <wifi-sdio.h>
+#endif
 #include <wifi-internal.h>
 
 #include "lwip/opt.h"
@@ -26,6 +28,9 @@
 #include "netif/ethernet.h"
 #include "netif/ppp/pppoe.h"
 
+#ifdef CONFIG_HOST_SUPP
+#include <wm_supplicant.h>
+#endif
 /*------------------------------------------------------*/
 /*
  * Packets of this type need o be handled
@@ -63,7 +68,11 @@ PACK_STRUCT_END
  * So for 8801 based platforms the wait time is now 35 ms.
  */
 
+#ifdef CONFIG_WiFi_878x
+#define MAX_WAIT_TIME 20
+#else
 #define MAX_WAIT_TIME 35
+#endif
 #define MAX_INTERFACES_SUPPORTED 3U
 
 /* The time to block waiting for input. */
@@ -72,7 +81,17 @@ PACK_STRUCT_END
 extern int wlan_get_mac_address(uint8_t *dest);
 extern void wlan_wake_up_card(void);
 
+#ifdef CONFIG_P2P
+mlan_status wlan_send_gen_sdio_cmd(uint8_t *buf, uint32_t buflen);
+#endif
+#ifdef CONFIG_P2P
+extern int wlan_get_wfd_mac_address(t_u8 *);
+extern int wfd_bss_type;
+#endif
 
+#ifdef CONFIG_WPS2
+void (*wps_rx_callback)(const t_u8 *buf, size_t len);
+#endif
 
 #ifdef CONFIG_WPA_SUPP
 void (*l2_packet_rx_callback)(const struct pbuf *p);
@@ -84,6 +103,9 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
 
+#ifdef CONFIG_NET_MONITOR
+void user_recv_monitor_data(const t_u8 *rcvdata);
+#endif
 
 /**
  * Helper struct to hold private data used to operate your ethernet interface.

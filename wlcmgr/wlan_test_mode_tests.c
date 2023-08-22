@@ -629,7 +629,11 @@ static void dump_wlan_set_tx_power_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-tx-power <tx_power> <modulation> <path_id> \r\n");
+#ifdef RW610
+    (void)PRINTF("Power       (0 to 20 dBm)\r\n");
+#else
     (void)PRINTF("Power       (0 to 24 dBm)\r\n");
+#endif
     (void)PRINTF("Modulation  (0: CCK, 1:OFDM, 2:MCS)\r\n");
     (void)PRINTF("Path ID     (0: PathA, 1:PathB, 2:PathA+B)\r\n");
     (void)PRINTF("\r\n");
@@ -687,7 +691,11 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     mod     = strtol(argv[2], NULL, 10);
     path_id = strtol(argv[3], NULL, 10);
 
+#ifdef RW610
+    if (power > 20U)
+#else
     if (power > 24U)
+#endif
     {
         dump_wlan_set_tx_power_usage();
         return;

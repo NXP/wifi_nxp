@@ -45,10 +45,12 @@ mlan_status wlan_cmd_tx_bf_cfg(IN pmlan_private pmpriv,
                                IN t_void *pdata_buf);
 /** Handle the command response TX BF configuration */
 mlan_status wlan_ret_tx_bf_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *resp, IN mlan_ioctl_req *pioctl_buf);
+#ifdef STA_SUPPORT
 /** Append the 802_11N tlv */
 t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_desc, OUT t_u8 **ppbuffer);
 /** wlan fill HT cap tlv */
 void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u16 bands);
+#endif /* STA_SUPPORT */
 /** Miscellaneous configuration handler */
 mlan_status wlan_11n_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 /** Delete Tx BA stream table entry */
@@ -176,6 +178,44 @@ static void disable_station_ampdu(mlan_private *priv, t_u8 tid, t_u8 *ra)
     return;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+/**
+ *  @brief This function checks whether current BA stream is high priority or not
+ *
+ *  @param priv     A pointer to mlan_private
+ *  @param tid	    TID
+ *
+ *  @return 	    MTRUE or MFALSE
+ */
+INLINE
+static t_u8 wlan_is_cur_bastream_high_prio(mlan_private *priv, int tid)
+{
+    TxBAStreamTbl *ptx_tbl;
+
+    ENTER();
+    ptx_tbl = (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
+                                                      priv->adapter->callbacks.moal_spin_lock,
+                                                      priv->adapter->callbacks.moal_spin_unlock);
+    if (ptx_tbl == MNULL)
+    {
+        return MFALSE;
+    }
+
+    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
+    {
+        if (priv->aggr_prio_tbl[tid].ampdu_user > priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user)
+        {
+            LEAVE();
+            return MTRUE;
+        }
+
+        ptx_tbl = ptx_tbl->pnext;
+    }
+
+    LEAVE();
+    return MFALSE;
+}
+#endif
 
 /**
  *  @brief This function checks whether AMPDU is allowed or not
@@ -191,8 +231,10 @@ INLINE
 static t_u8
 wlan_is_ampdu_allowed(mlan_private * priv, raListTbl * ptr, int tid)
 {
+#ifdef UAP_SUPPORT
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
         return is_station_ampdu_allowed(priv, ptr, tid);
+#endif /* UAP_SUPPORT */
     if (priv->sec_info.wapi_enabled && !priv->sec_info.wapi_key_on)
         return MFALSE;
 
@@ -239,6 +281,7 @@ INLINE
 static t_u8
 wlan_is_amsdu_allowed(mlan_private * priv, raListTbl * ptr, int tid)
 {
+#ifdef UAP_SUPPORT
     sta_node *sta_ptr = MNULL;
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) {
         if ((sta_ptr = wlan_get_station_entry(priv, ptr->ra))) {
@@ -246,6 +289,7 @@ wlan_is_amsdu_allowed(mlan_private * priv, raListTbl * ptr, int tid)
                 return MFALSE;
         }
     }
+#endif /* UAP_SUPPORT */
 #define TXRATE_BITMAP_INDEX_MCS0_7 2
     return (((priv->aggr_prio_tbl[tid].amsdu != BA_STREAM_NOT_ALLOWED)
              && ((priv->is_data_rate_auto)
@@ -278,6 +322,54 @@ static t_u8 wlan_is_bastream_avail(mlan_private *priv)
     return ((bastream_num < MLAN_MAX_TX_BASTREAM_SUPPORTED) ? MTRUE : MFALSE);
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+/**
+ *  @brief This function finds the stream to delete
+ *
+ *  @param priv     A pointer to mlan_private
+ *  @param ptr      A pointer to RA list table
+ *  @param ptr_tid  TID value of ptr
+ *  @param ptid     A pointer to TID of stream to delete, if return MTRUE
+ *  @param ra       RA of stream to delete, if return MTRUE
+ *
+ *  @return 	    MTRUE or MFALSE
+ */
+INLINE
+static t_u8 wlan_find_stream_to_delete(mlan_private *priv, raListTbl *ptr, int ptr_tid, int *ptid, t_u8 *ra)
+{
+    t_u8 tid;
+    t_u8 ret = MFALSE;
+    TxBAStreamTbl *ptx_tbl;
+
+    ENTER();
+    ptx_tbl = (TxBAStreamTbl *)(void *)util_peek_list(priv->adapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr,
+                                                      priv->adapter->callbacks.moal_spin_lock,
+                                                      priv->adapter->callbacks.moal_spin_unlock);
+    if (ptx_tbl == MNULL)
+    {
+        LEAVE();
+        return ret;
+    }
+
+    tid = priv->aggr_prio_tbl[ptr_tid].ampdu_user;
+
+    while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
+    {
+        if (tid > priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user)
+        {
+            tid   = priv->aggr_prio_tbl[ptx_tbl->ampdu_stat[tid]].ampdu_user;
+            *ptid = ptx_tbl->ampdu_stat[tid];
+            (void)memcpy(ra, ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
+            ret = MTRUE;
+        }
+
+        ptx_tbl = ptx_tbl->pnext;
+    }
+
+    LEAVE();
+    return ret;
+}
+#endif
 
 /**
  *  @brief This function checks whether BA stream is setup
@@ -318,6 +410,7 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
 {
     int ret = MFALSE;
     ENTER();
+#ifdef UAP_SUPPORT
     if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
     {
         if ((!(ra[0] & 0x01U)) && (priv->is_11n_enabled))
@@ -325,6 +418,7 @@ static int wlan_is_11n_enabled(mlan_private *priv, t_u8 *ra)
             ret = (int)is_station_11n_enabled(priv, ra);
         }
     }
+#endif /* UAP_SUPPORT */
     LEAVE();
     return ret;
 }

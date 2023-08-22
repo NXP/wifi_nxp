@@ -11,6 +11,10 @@
 #include <fsl_os_abstraction.h>
 #include <mlan_sdio_api.h>
 
+#if defined(CONFIG_XZ_DECOMPRESSION)
+#include <xz.h>
+#include <decompress.h>
+#endif /* CONFIG_XZ_DECOMPRESSION */
 
 /* Additional WMSDK header files */
 #include "mlan_sdio_defs.h"
@@ -141,6 +145,114 @@ static int32_t wlan_download_normal_fw(const t_u8 *wlanfw_dl, t_u32 firmwarelen,
     return FWDNLD_STATUS_SUCCESS;
 }
 
+#if defined(CONFIG_XZ_DECOMPRESSION)
+int32_t wlan_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport)
+{
+    t_u32 tx_blocks = 0, txlen = 0, buflen = 0;
+    t_u16 len    = 0;
+    t_u32 offset = 0;
+    t_u32 tries  = 0;
+    uint32_t resp;
+
+    (void)memset(outbuf, 0, SDIO_OUTBUF_LEN);
+
+#define SBUF_SIZE 2048
+    int ret;
+    struct xz_buf stream;
+    uint32_t retlen, readlen = 0;
+    t_u8 *sbuf = (t_u8 *)os_mem_alloc(SBUF_SIZE);
+    if (sbuf == NULL)
+    {
+        fwdnld_io_e("Allocation failed");
+        return FWDNLD_STATUS_FAILURE;
+    }
+
+    xz_uncompress_init(&stream, sbuf, outbuf);
+
+    do
+    {
+        /* Read CARD_STATUS_REG (0X30) FN =1 */
+        for (tries = 0; tries < MAX_POLL_TRIES; tries++)
+        {
+            if (wlan_card_status(DN_LD_CARD_RDY | CARD_IO_READY) == true)
+            {
+                len = wlan_card_read_f1_base_regs();
+            }
+            else
+            {
+                fwdnld_io_e("Error in wlan_card_status()");
+                break;
+            }
+
+            if (len)
+                break;
+        }
+
+        if (!len)
+        {
+            fwdnld_io_e("Card timeout %s:%d", __func__, __LINE__);
+            break;
+        }
+        else if (len > WLAN_UPLD_SIZE)
+        {
+            fwdnld_io_e("FW Download Failure. Invalid len");
+            xz_uncompress_end();
+            os_mem_free(sbuf);
+            return FWDNLD_STATUS_FW_DNLD_FAILED;
+        }
+
+        txlen = len;
+
+        do
+        {
+            if (stream.in_pos == stream.in_size)
+            {
+                readlen = MIN(SBUF_SIZE, firmwarelen);
+                (void)memcpy((void *)sbuf, (const void *)(wlanfw_xz + offset), readlen);
+                offset += readlen;
+                firmwarelen -= readlen;
+            }
+            ret = xz_uncompress_stream(&stream, sbuf, readlen, outbuf, txlen, &retlen);
+
+            if (ret == XZ_STREAM_END)
+            {
+                txlen = retlen;
+                break;
+            }
+            else if (ret != XZ_OK)
+            {
+                fwdnld_io_e("Decompression failed:%d", ret);
+                break;
+            }
+        } while (retlen == 0);
+
+        calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
+
+        sdio_drv_write(ioport, 1, tx_blocks, buflen, (t_u8 *)outbuf, &resp);
+
+        if (ret == XZ_STREAM_END)
+        {
+            fwdnld_io_d("Decompression successful");
+            break;
+        }
+        else if (ret != XZ_OK)
+        {
+            fwdnld_io_e("Exit:%d", ret);
+            break;
+        }
+        len = 0;
+    } while (1);
+
+    xz_uncompress_end();
+    os_mem_free(sbuf);
+
+    if (ret == XZ_OK || ret == XZ_STREAM_END)
+        return FWDNLD_STATUS_SUCCESS;
+    else
+        return FWDNLD_STATUS_FW_XZ_FAILED;
+}
+
+#endif /* CONFIG_XZ_DECOMPRESSION */
 
 /*
  * FW dnld blocksize set 0x110 to 0 and 0x111 to 0x01 => 0x100 => 256
@@ -188,6 +300,22 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size)
 
     firmwarelen = size;
 
+#if defined(CONFIG_XZ_DECOMPRESSION)
+    t_u8 buffer[6];
+
+    (void)memcpy((void *)buffer, (const void *)wlanfw, sizeof(buffer));
+
+    /* See if image is XZ compressed or not */
+    if (verify_xz_header(buffer) == WM_SUCCESS)
+    {
+        fwdnld_io_d(
+            "XZ Compressed image found, start decompression,"
+            " len: %d",
+            firmwarelen);
+        ret = wlan_download_decomp_fw(wlanfw, firmwarelen, ioport_g);
+    }
+    else
+#endif /* CONFIG_XZ_DECOMPRESSION */
     {
         fwdnld_io_d(
             "Un-compressed image found, start download,"

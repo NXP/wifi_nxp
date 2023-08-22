@@ -10,14 +10,20 @@
 
 #include <stdio.h>
 #include <mlan_api.h>
+#ifdef CONFIG_COMBO_SCAN
 #include <string.h>
+#endif
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <wm_os.h>
 
 #include <wifi.h>
 
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 #include "wifi-internal.h"
 
 #ifdef CONFIG_MBO
@@ -36,14 +42,36 @@ static unsigned int mgmt_ie_index_bitmap = 0x0000000F;
 mlan_status wlan_cmd_802_11_deauthenticate(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_void *pdata_buf);
 mlan_status wlan_cmd_reg_access(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
 mlan_status wlan_cmd_mem_access(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
+#ifdef CONFIG_WLAN_BRIDGE
+mlan_status wlan_cmd_bridge_mode(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
+#endif
 mlan_status wlan_cmd_auto_reconnect(IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action, IN t_void *pdata_buf);
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
+#ifdef CONFIG_11K_OFFLOAD
+mlan_status wlan_cmd_11k_neighbor_req(mlan_private *pmpriv, HostCmd_DS_COMMAND *pcmd);
+#endif
 
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wifi_send_disable_supplicant(int mode);
 int wifi_send_rf_channel_cmd(wifi_rf_channel_t *rf_channel);
 int wifi_get_set_rf_tx_power(t_u16 cmd_action, wifi_tx_power_t *tx_power);
 
+#ifdef RW610
+int wifi_send_shutdown_cmd()
+{
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    wifi_get_command_lock();
+
+    cmd->command = HostCmd_CMD_FUNC_SHUTDOWN;
+    cmd->size    = S_DS_GEN;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wifi_wait_for_cmdresp(NULL);
+    return WM_SUCCESS;
+}
+#endif
 int wifi_deauthenticate(uint8_t *bssid)
 {
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -51,7 +79,11 @@ int wifi_deauthenticate(uint8_t *bssid)
     (void)wifi_get_command_lock();
 
     /* fixme: check if this static selection is ok */
+#ifdef CONFIG_P2P
+    cmd->seq_num = (0x01) << 13;
+#else
     cmd->seq_num = 0x0;
+#endif
     cmd->result = 0x0;
 
     (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[0], cmd, bssid);
@@ -177,6 +209,49 @@ int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+static int wifi_auto_reconnect(uint16_t action, wifi_auto_reconnect_config_t *auto_reconnect_config)
+{
+    mlan_ds_auto_reconnect auto_reconnect;
+
+    (void)memset(&auto_reconnect, 0x00, sizeof(mlan_ds_auto_reconnect));
+
+    if (auto_reconnect_config)
+    {
+        auto_reconnect.reconnect_counter  = auto_reconnect_config->reconnect_counter;
+        auto_reconnect.reconnect_interval = auto_reconnect_config->reconnect_interval;
+        auto_reconnect.flags              = auto_reconnect_config->flags;
+    }
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command = HostCmd_CMD_AUTO_RECONNECT;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wlan_cmd_auto_reconnect(cmd, action, &auto_reconnect);
+
+    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? auto_reconnect_config : NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config)
+{
+    return wifi_auto_reconnect(HostCmd_ACT_GEN_SET, &auto_reconnect_config);
+}
+
+int wifi_auto_reconnect_disable(void)
+{
+    return wifi_auto_reconnect(HostCmd_ACT_GEN_SET, NULL);
+}
+
+int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config)
+{
+    return wifi_auto_reconnect(HostCmd_ACT_GEN_GET, auto_reconnect_config);
+}
+#endif
 
 int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low)
 {
@@ -205,6 +280,129 @@ int wifi_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_WLAN_BRIDGE
+static int wifi_bridge_mode(uint16_t action, uint8_t *enable, wifi_bridge_cfg_t *bridgecfg)
+{
+    mlan_bridge_mode bridge_mode;
+    bridge_mode.enable = *enable;
+
+    t_u8 *tlv                                       = NULL;
+    MrvlIEtypes_BridgeParamSet_t *bridge_params     = NULL;
+    MrvlIEtypes_AutoLinkParamSet_t *autolink_params = NULL;
+    MrvlIEtypes_SsIdParamSet_t *ssid                = NULL;
+    MrvlIEtypes_Passphrase_t *pass                  = NULL;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command = HostCmd_CMD_BRIDGE_MODE;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wlan_cmd_bridge_mode(cmd, action, &bridge_mode);
+
+    if (action == HostCmd_ACT_GEN_GET)
+        goto done;
+
+    if (bridgecfg == NULL)
+        goto done;
+
+    tlv = (t_u8 *)cmd + sizeof(HostCmd_BRIDGE_MODE) + S_DS_GEN;
+
+    bridge_params = (MrvlIEtypes_BridgeParamSet_t *)tlv;
+
+    bridge_params->header.type = wlan_cpu_to_le16(TLV_TYPE_BRIDGE_PARAM);
+    bridge_params->header.len  = 4 * sizeof(MrvlIEtypesHeader_t) + bridgecfg->ex_ap_ssid_len +
+                                bridgecfg->ex_ap_pass_len + bridgecfg->bridge_ssid_len + bridgecfg->bridge_pass_len;
+    tlv = (t_u8 *)bridge_params;
+
+    ssid              = (MrvlIEtypes_SsIdParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t));
+    ssid->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
+    ssid->header.len  = bridgecfg->ex_ap_ssid_len;
+    (void)memcpy((void *)ssid->ssid, (const void *)bridgecfg->ex_ap_ssid, bridgecfg->ex_ap_ssid_len);
+    tlv = (t_u8 *)ssid;
+
+    pass              = (MrvlIEtypes_Passphrase_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + ssid->header.len);
+    pass->header.type = wlan_cpu_to_le16(TLV_TYPE_PASSPHRASE);
+    pass->header.len  = bridgecfg->ex_ap_pass_len;
+    (void)memcpy((void *)pass->passphrase, (const void *)bridgecfg->ex_ap_pass, bridgecfg->ex_ap_pass_len);
+
+    tlv = (t_u8 *)pass;
+
+    ssid              = (MrvlIEtypes_SsIdParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + pass->header.len);
+    ssid->header.type = wlan_cpu_to_le16(TLV_TYPE_SSID);
+    ssid->header.len  = bridgecfg->bridge_ssid_len;
+    (void)memcpy((void *)ssid->ssid, (const void *)bridgecfg->bridge_ssid, bridgecfg->bridge_ssid_len);
+
+    tlv = (t_u8 *)ssid;
+
+    pass              = (MrvlIEtypes_Passphrase_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + ssid->header.len);
+    pass->header.type = wlan_cpu_to_le16(TLV_TYPE_PASSPHRASE);
+    pass->header.len  = bridgecfg->bridge_pass_len;
+    (void)memcpy((void *)pass->passphrase, (const void *)bridgecfg->bridge_pass, bridgecfg->bridge_pass_len);
+
+    cmd->size += bridge_params->header.len + sizeof(MrvlIEtypesHeader_t);
+
+    /*prepare autolink info*/
+    tlv             = (t_u8 *)pass;
+    autolink_params = (MrvlIEtypes_AutoLinkParamSet_t *)(tlv + sizeof(MrvlIEtypesHeader_t) + pass->header.len);
+    autolink_params->header.type          = wlan_cpu_to_le16(TLV_TYPE_AUTOLINK_PARAM);
+    autolink_params->header.len           = sizeof(MrvlIEtypes_AutoLinkParamSet_t) - sizeof(MrvlIEtypesHeader_t);
+    autolink_params->scan_timer_interval  = wlan_cpu_to_le32(bridgecfg->autolink.scan_timer_interval);
+    autolink_params->scan_timer_condition = bridgecfg->autolink.scan_timer_condition;
+    autolink_params->scan_channel_list    = bridgecfg->autolink.scan_channel_list;
+    cmd->size += autolink_params->header.len + sizeof(MrvlIEtypesHeader_t);
+
+done:
+
+    wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? bridgecfg : NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+
+int wifi_enable_bridge_mode(wifi_bridge_cfg_t *cfg)
+{
+    uint8_t enable = 0x01;
+
+    if (cfg->auto_link)
+    {
+        enable |= 1 << ENABLE_AUTOLINK_BIT;
+    }
+    if (cfg->hidden_ssid)
+    {
+        enable |= 1 << HIDDEN_SSID_BIT;
+    }
+
+    return wifi_bridge_mode(HostCmd_ACT_GEN_SET, &enable, cfg);
+}
+
+int wifi_disable_bridge_mode()
+{
+    uint8_t disable = 0x00;
+    return wifi_bridge_mode(HostCmd_ACT_GEN_SET, &disable, NULL);
+}
+
+int wifi_get_bridge_mode_config(wifi_bridge_cfg_t *cfg)
+{
+    uint8_t config = 0x00;
+    return wifi_bridge_mode(HostCmd_ACT_GEN_GET, &config, cfg);
+}
+
+int wifi_config_bridge_tx_buf(uint16_t buf_size)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command = HostCmd_CMD_RECONFIGURE_TX_BUFF;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wlan_cmd_recfg_tx_buf((mlan_private *)mlan_adap->priv[0], cmd, HostCmd_ACT_GEN_SET, &buf_size);
+
+    wifi_wait_for_cmdresp(NULL);
+    return wm_wifi.cmd_resp_status;
+}
+#endif
 
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info)
 {
@@ -347,6 +545,25 @@ int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr)
     return wifi_uap_pmf_getset(HostCmd_ACT_GEN_GET, mfpc, mfpr);
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+int wifi_get_tbtt_offset(wifi_tbtt_offset_t *tbtt_offset)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv =
+        wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TBTT_OFFSET, 0, 0, NULL, NULL, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    wifi_wait_for_cmdresp(tbtt_offset);
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif /* CONFIG_MLAN_WMSDK */
 
 int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg)
 {
@@ -658,6 +875,62 @@ int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
 }
 #endif /*ENABLE_OFFLOAD */
 
+#ifndef CONFIG_MLAN_WMSDK
+int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip, t_u16 src_port)
+{
+    t_u16 d_port, s_port;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    t_u8 payload[40]        = {0x00, 0x26, 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00, 0x00, 0x1d,
+                        0xbe, 0xef, 0x00, 0x00, 0x80, 0x11, 0xf9, 0xc5, 0xc0, 0xa8, 0x01, 0x03, 0xff, 0xff,
+                        0xff, 0xff, 0x11, 0x94, 0x11, 0x94, 0x00, 0x09, 0x5b, 0x98, 0xff, 0x00};
+    t_u8 payload_len        = 40;
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_AUTO_TX);
+
+    HostCmd_DS_802_11_AUTO_TX *auto_tx_cmd = (HostCmd_DS_802_11_AUTO_TX *)((t_u8 *)cmd + S_DS_GEN);
+
+    auto_tx_cmd->action = HostCmd_ACT_GEN_SET;
+
+    MrvlIEtypesHeader_t *header = &auto_tx_cmd->auto_tx.header;
+
+    header->type = wlan_cpu_to_le16(TLV_TYPE_AUTO_TX);
+    header->len  = wlan_cpu_to_le16(0x3a);
+
+    AutoTx_MacFrame_t *atmf = &auto_tx_cmd->auto_tx.auto_tx_mac_frame;
+
+    (void)memset(atmf, 0, sizeof(AutoTx_MacFrame_t));
+
+    atmf->interval  = wlan_cpu_to_le16(keep_alive->interval);
+    atmf->priority  = 0x07;
+    atmf->frame_len = wlan_cpu_to_le16(0x34);
+
+    (void)memcpy((void *)atmf->dest_mac_addr, (const void *)keep_alive->dst_mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)atmf->src_mac_addr, (const void *)src_mac, MLAN_MAC_ADDR_LENGTH);
+
+    (void)memcpy((void *)atmf->payload, (const void *)payload, payload_len);
+
+    (void)memcpy((void *)(atmf->payload + 22), (const void *)&src_ip, sizeof(t_u32));
+    (void)memcpy((void *)(atmf->payload + 26), (const void *)&keep_alive->dst_ip, sizeof(t_u32));
+
+    s_port = mlan_htons(src_port);
+    (void)memcpy((void *)(atmf->payload + 30), (const void *)&s_port, sizeof(t_u16));
+
+    d_port = mlan_htons(keep_alive->dst_port);
+    (void)memcpy((void *)(atmf->payload + 32), (const void *)&d_port, sizeof(t_u16));
+
+    cmd->size = 0x48;
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    cmd->seq_num = 0x00;
+    cmd->result  = 0x00;
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
 int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u8 *enable)
@@ -1497,14 +1770,21 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
+#ifdef SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered)
 {
     int ssid_len  = 0;
     int ssid2_len = 0;
     t_u8 i;
+#ifdef CONFIG_COMBO_SCAN
     const char wildcard_ssid[] = "*";
+#endif
     mlan_adap->active_scan_triggered = MFALSE;
 
 #ifdef CONFIG_WPA_SUPP
@@ -1555,6 +1835,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     user_scan_cfg->bss_mode           = bss_mode;
     user_scan_cfg->keep_previous_scan = keep_previous_scan;
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    user_scan_cfg->rssi_threshold = rssi_threshold;
+#endif
 
     if (num_probes > 0U && num_probes <= MAX_PROBES)
     {
@@ -1578,6 +1861,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         (void)memcpy((void *)user_scan_cfg->ssid_list[1].ssid, (const void *)ssid2, ssid2_len);
     }
 
+#ifdef CONFIG_COMBO_SCAN
     for (i = 0; (i < MRVDRV_MAX_SSID_LIST_LENGTH) && (*user_scan_cfg->ssid_list[i].ssid); i++)
     {
         if (!strncmp(wildcard_ssid, (char *)(user_scan_cfg->ssid_list[i].ssid), strlen(wildcard_ssid)))
@@ -1586,6 +1870,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
             user_scan_cfg->ssid_list[i].max_len = 40;
         }
     }
+#endif
 
     if (num_channels > 0U && num_channels <= WLAN_USER_SCAN_CHAN_MAX && chan_list != MNULL)
     {
@@ -1613,7 +1898,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
         mlan_adap->active_scan_triggered = MTRUE;
     }
+#ifdef SCAN_CHANNEL_GAP
     user_scan_cfg->scan_chan_gap = scan_chan_gap;
+#endif
     if (wm_wifi.g_user_scan_cfg != NULL)
     {
         os_mem_free((void *)user_scan_cfg);
@@ -1878,7 +2165,91 @@ int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, co
     return wifi_send_key_material_cmd(bss_index, &sec);
 }
 
+#ifdef STREAM_2X2
+static int wifi_send_11n_cfg_cmd(t_u16 action, uint16_t httxcfg)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_ds_11n_tx_cfg dot11n_tx_cfg;
 
+    (void)memset(&dot11n_tx_cfg, 0x00, sizeof(mlan_ds_11n_tx_cfg));
+
+    dot11n_tx_cfg.httxcap = httxcfg;
+
+    if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
+        return -WM_FAIL;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_11N_CFG, action, 0, NULL, &dot11n_tx_cfg, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+static int wifi_send_11ac_cfg_cmd(t_u16 action, uint32_t vhtcap, uint16_t tx_mcs_map, uint16_t rx_mcs_map)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_ds_11ac_vht_cfg dot11ac_cfg;
+
+    (void)memset(&dot11ac_cfg, 0x00, sizeof(mlan_ds_11ac_vht_cfg));
+
+    dot11ac_cfg.band         = 2;
+    dot11ac_cfg.txrx         = 1;
+    dot11ac_cfg.vht_cap_info = vhtcap;
+    dot11ac_cfg.vht_tx_mcs   = tx_mcs_map;
+    dot11ac_cfg.vht_rx_mcs   = rx_mcs_map;
+
+    if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
+        return -WM_FAIL;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_11AC_CFG, action, 0, NULL, &dot11ac_cfg, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+
+#endif
+
+#ifdef STREAM_2X2
+static int wifi_send_rf_antenna_cmd(t_u16 action, uint8_t tx_antenna, uint8_t rx_antenna)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+    mlan_ds_ant_cfg ant_cfg;
+
+    (void)memset(&ant_cfg, 0x00, sizeof(mlan_ds_ant_cfg));
+
+    ant_cfg.tx_antenna = tx_antenna;
+    ant_cfg.rx_antenna = rx_antenna;
+
+    if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
+        return -WM_FAIL;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_RF_ANTENNA, action, 0, NULL, &ant_cfg, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    return wifi_wait_for_cmdresp(/*action == HostCmd_ACT_GEN_GET ? ant_mode : */ NULL);
+}
+
+#else
 
 static int wifi_send_rf_antenna_cmd(t_u16 action, wifi_antcfg_t *wifi_antcfg)
 {
@@ -1936,8 +2307,27 @@ int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u16 *current_anten
 
     return WM_SUCCESS;
 }
+#endif
 
+#ifdef STREAM_2X2
+int wifi_set_11n_cfg(uint16_t httxcfg)
+{
+    return wifi_send_11n_cfg_cmd(HostCmd_ACT_GEN_SET, httxcfg);
+}
 
+int wifi_set_11ac_cfg(uint32_t vhtcap, uint16_t tx_mcs_map, uint16_t rx_mcs_map)
+{
+    return wifi_send_11ac_cfg_cmd(HostCmd_ACT_GEN_SET, vhtcap, tx_mcs_map, rx_mcs_map);
+}
+
+#endif
+
+#ifdef STREAM_2X2
+int wifi_set_antenna(t_u8 tx_antenna, t_u8 rx_antenna)
+{
+    return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, tx_antenna, rx_antenna);
+}
+#else
 int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 {
     wifi_antcfg_t antenna_cfg;
@@ -1946,7 +2336,37 @@ int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 
     return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, &antenna_cfg);
 }
+#endif
 
+#ifdef CONFIG_WIFI_GET_LOG
+static int wifi_send_get_log_cmd(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, bss_type);
+    cmd->result  = 0x0;
+
+    mlan_status rv =
+        wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_GET_LOG, HostCmd_ACT_GEN_GET, 0, NULL, NULL, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    return wifi_wait_for_cmdresp(stats);
+}
+
+int wifi_get_log(wlan_pkt_stats_t *stats, mlan_bss_type bss_type)
+
+{
+    int rv = wifi_send_get_log_cmd(stats, bss_type);
+    if (rv != WM_SUCCESS || wm_wifi.cmd_resp_status != WM_SUCCESS)
+        return -WM_FAIL;
+
+    return WM_SUCCESS;
+}
+#endif
 
 static int wifi_send_cmd_802_11_supplicant_pmk(int mode, mlan_ds_sec_cfg *sec, mlan_act_ioctl action)
 {
@@ -2259,6 +2679,25 @@ int wifi_get_cal_data(wifi_cal_data_t *cal_data)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_11AX
+void wifi_request_get_fw_info(mlan_private *priv, mlan_fw_info *fw_info)
+{
+    (void)memset(fw_info, 0x0, sizeof(mlan_fw_info));
+
+    fw_info->fw_ver = mlan_adap->fw_release_number;
+    (void)memcpy(fw_info->mac_addr, priv->curr_addr, MLAN_MAC_ADDR_LENGTH);
+    fw_info->fw_bands           = mlan_adap->fw_bands;
+    fw_info->hw_dev_mcs_support = mlan_adap->hw_dev_mcs_support;
+
+    fw_info->hw_2g_hecap_len = mlan_adap->hw_2g_hecap_len;
+
+    (void)memcpy(fw_info->hw_2g_he_cap, mlan_adap->hw_2g_he_cap, mlan_adap->hw_2g_hecap_len);
+
+    fw_info->hw_hecap_len = mlan_adap->hw_hecap_len;
+
+    (void)memcpy(fw_info->hw_he_cap, mlan_adap->hw_he_cap, mlan_adap->hw_hecap_len);
+}
+#endif
 
 #ifdef CONFIG_WIFI_CAPA
 void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands)
@@ -3080,8 +3519,10 @@ void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp)
     pscan_resp->pscan_table       = (t_u8 *)pmadapter->pscan_table;
     pscan_resp->num_in_scan_table = pmadapter->num_in_scan_table;
     pscan_resp->age_in_secs       = pmadapter->age_in_secs;
+#ifdef SCAN_CHANNEL_GAP
     pscan_resp->pchan_stats       = (t_u8 *)pmadapter->pchan_stats;
     pscan_resp->num_in_chan_stats = pmadapter->num_in_chan_stats;
+#endif
 }
 #endif
 
@@ -3255,7 +3696,148 @@ int wifi_get_txpwrlimit(wifi_SubBand_t subband, wifi_txpwrlimit_t *txpwrlimit)
     return ret;
 }
 
+#ifdef CONFIG_WIFI_RTS_THRESHOLD
+int wifi_set_rts(int rts, mlan_bss_type bss_type)
+{
+    mlan_ioctl_req req;
+    mlan_ds_snmp_mib *mib = NULL;
+    mlan_status ret       = MLAN_STATUS_FAILURE;
+    wifi_sta_list_t *sl   = NULL;
 
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    /* Allocate an IOCTL request buffer */
+    mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
+    if (mib == NULL)
+        return -WM_FAIL;
+
+    /* Fill request buffer */
+    mib->sub_command = MLAN_OID_SNMP_MIB_RTS_THRESHOLD;
+    req.pbuf         = (t_u8 *)mib;
+    req.buf_len      = sizeof(mlan_ds_snmp_mib);
+    req.req_id       = MLAN_IOCTL_SNMP_MIB;
+    req.action       = MLAN_ACT_SET;
+    req.bss_index    = bss_type;
+
+    if (req.action == MLAN_ACT_SET)
+    {
+        if (rts < MLAN_RTS_MIN_VALUE || rts > MLAN_RTS_MAX_VALUE)
+        {
+            os_mem_free(mib);
+            return -WM_FAIL;
+        }
+        mib->param.rts_threshold = rts;
+    }
+
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
+        if (!is_uap_started())
+        {
+            wifi_e("uap isn't up\n\r");
+            return -WM_FAIL;
+        }
+        wifi_uap_bss_sta_list(&sl);
+        if (!sl)
+        {
+            wifi_e("Failed to get sta list\n\r");
+            return -WM_FAIL;
+        }
+        if (sl->count >= 1)
+            ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        else
+            wifi_e("uap required sta to connect before setting rts threshold\n\r");
+    }
+    else if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+        if (is_sta_connected())
+            ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        else
+            wifi_e("sta connection required before setting rts threshold\n\r");
+    }
+
+    if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+    {
+        os_mem_free(mib);
+        return -WM_FAIL;
+    }
+
+    os_mem_free(mib);
+
+    return WM_SUCCESS;
+}
+#endif
+
+#ifdef CONFIG_WIFI_FRAG_THRESHOLD
+int wifi_set_frag(int frag, mlan_bss_type bss_type)
+{
+    mlan_ioctl_req req;
+    mlan_ds_snmp_mib *mib = NULL;
+    mlan_status ret       = MLAN_STATUS_FAILURE;
+    wifi_sta_list_t *sl   = NULL;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    /* Allocate an IOCTL request buffer */
+    mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
+    if (mib == NULL)
+        return -WM_FAIL;
+
+    /* Fill request buffer */
+    mib->sub_command = MLAN_OID_SNMP_MIB_FRAG_THRESHOLD;
+    req.pbuf         = (t_u8 *)mib;
+    req.buf_len      = sizeof(mlan_ds_snmp_mib);
+    req.req_id       = MLAN_IOCTL_SNMP_MIB;
+    req.action       = MLAN_ACT_SET;
+    req.bss_index    = bss_type;
+
+    if (req.action == MLAN_ACT_SET)
+    {
+        if (frag < MLAN_FRAG_MIN_VALUE || frag > MLAN_FRAG_MAX_VALUE)
+        {
+            os_mem_free(mib);
+            return -WM_FAIL;
+        }
+        mib->param.frag_threshold = frag;
+    }
+
+    if (bss_type == MLAN_BSS_TYPE_UAP)
+    {
+        if (!is_uap_started())
+        {
+            wifi_e("uap isn't up\n\r");
+            return -WM_FAIL;
+        }
+        wifi_uap_bss_sta_list(&sl);
+        if (!sl)
+        {
+            wifi_e("Failed to get sta list\n\r");
+            return -WM_FAIL;
+        }
+
+        if (sl->count >= 1)
+            ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        else
+            wifi_e("uap required sta to connect before setting fragment threshold\n\r");
+    }
+    else if (bss_type == MLAN_BSS_TYPE_STA)
+    {
+        if (is_sta_connected())
+            ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        else
+            wifi_e("sta connection required before setting fragment threshold\n\r");
+    }
+
+    if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+    {
+        os_mem_free(mib);
+        return -WM_FAIL;
+    }
+
+    os_mem_free(mib);
+
+    return WM_SUCCESS;
+}
+#endif
 
 void wifi_set_curr_bss_channel(uint8_t channel)
 {
@@ -3264,6 +3846,78 @@ void wifi_set_curr_bss_channel(uint8_t channel)
     pmpriv->curr_bss_params.bss_descriptor.channel = channel;
 }
 
+#ifdef CONFIG_11K_OFFLOAD
+int wifi_11k_cfg(int enable_11k)
+{
+    mlan_ioctl_req req;
+    mlan_ds_11k_cfg *pcfg_11k = NULL;
+    mlan_status ret           = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    /* Allocate an IOCTL request buffer */
+    pcfg_11k = os_mem_alloc(sizeof(mlan_ds_11k_cfg));
+    if (pcfg_11k == NULL)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        return ret;
+    }
+
+    /* Fill request buffer */
+    pcfg_11k->sub_command = MLAN_OID_11K_CFG_ENABLE;
+    req.pbuf              = (t_u8 *)pcfg_11k;
+    req.buf_len           = sizeof(mlan_ds_11k_cfg);
+    req.req_id            = MLAN_IOCTL_11K_CFG;
+    req.action            = MLAN_ACT_SET;
+
+    if (enable_11k != 0 && enable_11k != 1)
+    {
+        ret = MLAN_STATUS_FAILURE;
+        os_mem_free(pcfg_11k);
+        return ret;
+    }
+
+    pcfg_11k->param.enable_11k = enable_11k;
+
+    if (!is_sta_connected())
+    {
+        ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+        if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+        {
+            os_mem_free(pcfg_11k);
+            return -WM_FAIL;
+        }
+    }
+    else
+        wifi_e("sta disconnection is required before enable/disable 11k\r\n");
+
+    os_mem_free(pcfg_11k);
+
+    return WM_SUCCESS;
+}
+
+int wifi_11k_neighbor_req()
+{
+    if (!is_sta_connected())
+    {
+        wifi_e("sta connection is required before sending neighbor report req\r\n");
+        return -WM_FAIL;
+    }
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    wifi_get_command_lock();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    wlan_cmd_11k_neighbor_req((mlan_private *)mlan_adap->priv[0], cmd);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return WM_SUCCESS;
+}
+#endif
 
 #ifdef CONFIG_11K
 int wifi_host_11k_cfg(int enable_11k)
@@ -3274,6 +3928,13 @@ int wifi_host_11k_cfg(int enable_11k)
 #endif
     int ret = (int)MLAN_STATUS_SUCCESS;
 
+#ifdef CONFIG_11K_OFFLOAD
+    /* Check if fw base 11k is enabled */
+    if (enable_11k == 1 && pmpriv->enable_11k == (t_u8)1U)
+    {
+        return -WM_E_PERM;
+    }
+#endif
     if (enable_11k == (int)pmpriv->enable_host_11k)
     {
         return (int)MLAN_STATUS_SUCCESS;
@@ -3756,6 +4417,7 @@ int wifi_stop_smart_mode(void)
     return WM_SUCCESS;
 }
 
+#ifdef CONFIG_BG_SCAN
 void wifi_get_band(mlan_private *pmpriv, int *band)
 {
     int support_band = 0;
@@ -3808,6 +4470,7 @@ done:
     LEAVE();
     return ret;
 }
+#endif
 
 int wifi_send_hostcmd(
     const void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len)
@@ -3925,7 +4588,11 @@ int wifi_set_rx_mgmt_indication(unsigned int bss_type, unsigned int mgmt_subtype
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     cmd->command = HostCmd_CMD_RX_MGMT_IND;
+#ifdef CONFIG_P2P
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
+#else
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+#endif /* CONFIG_P2P */
     cmd->result = 0x0;
 
     wlan_cmd_rx_mgmt_indication(pmpriv, cmd, HostCmd_ACT_GEN_SET, &rx_mgmt_indication);
@@ -3963,6 +4630,316 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
     return pmgmt_pkt_hdr;
 }
 
+#ifdef CONFIG_ECSA
+wifi_ecsa_status_control ecsa_status_control = {false, 0};
+
+void set_ecsa_block_tx_time(t_u8 switch_count)
+{
+    ecsa_status_control.block_time = switch_count;
+}
+
+t_u8 get_ecsa_block_tx_time()
+{
+    return ecsa_status_control.block_time;
+}
+
+void set_ecsa_block_tx_flag(bool block_tx)
+{
+    ecsa_status_control.required = block_tx;
+}
+
+bool get_ecsa_block_tx_flag()
+{
+    return ecsa_status_control.required;
+}
+
+void wifi_put_ecsa_sem()
+{
+    os_semaphore_put(&ecsa_status_control.ecsa_sem);
+}
+
+int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u8 *oper_class)
+{
+    int ret = 0;
+    mlan_ioctl_req req;
+    mlan_ds_misc_cfg *misc = NULL;
+    mlan_status status     = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
+
+    req.bss_index                      = MLAN_BSS_ROLE_UAP;
+    req.pbuf                           = (t_u8 *)misc;
+    misc->sub_command                  = MLAN_OID_MISC_OPER_CLASS;
+    req.req_id                         = MLAN_IOCTL_MISC_CFG;
+    req.action                         = MLAN_ACT_GET;
+    misc->param.bw_chan_oper.bandwidth = bandwidth;
+    misc->param.bw_chan_oper.channel   = channel;
+
+    status = wlan_ops_uap_ioctl(mlan_adap, &req);
+    if (status != MLAN_STATUS_SUCCESS)
+    {
+        wifi_e("Failed to get operclass\n");
+        os_mem_free(misc);
+        return -WM_FAIL;
+    }
+    *oper_class = misc->param.bw_chan_oper.oper_class;
+
+    os_mem_free(misc);
+
+    return ret;
+}
+
+int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width, t_u8 ecsa)
+{
+    IEEEtypes_ExtChanSwitchAnn_t *ext_chan_switch = NULL;
+    IEEEtypes_ChanSwitchAnn_t *chan_switch        = NULL;
+    custom_ie *pcust_chansw_ie                    = NULL;
+    t_u32 usr_dot_11n_dev_cap                     = 0;
+    mlan_private *pmpriv                          = (mlan_private *)mlan_adap->priv[1];
+    BSSDescriptor_t *pbss_desc;
+    pbss_desc           = &pmpriv->curr_bss_params.bss_descriptor;
+    t_u8 new_oper_class = oper_class;
+    t_u8 bw;
+    int ret = MLAN_STATUS_SUCCESS;
+#if defined(CONFIG_11AC)
+    t_u8 center_freq_idx                       = 0;
+    IEEEtypes_Header_t *pChanSwWrap_ie         = NULL;
+    IEEEtypes_WideBWChanSwitch_t *pbwchansw_ie = NULL;
+    IEEEtypes_VhtTpcEnvelope_t *pvhttpcEnv_ie  = NULL;
+#endif
+    uint8_t *buf               = NULL;
+    tlvbuf_custom_ie *tlv      = NULL;
+    unsigned int mgmt_ie_index = -1;
+    int total_len = sizeof(tlvbuf_custom_ie) + (sizeof(custom_ie) - MAX_IE_SIZE) + sizeof(IEEEtypes_ChanSwitchAnn_t) +
+                    sizeof(IEEEtypes_ExtChanSwitchAnn_t);
+#if defined(CONFIG_11AC)
+    total_len += sizeof(IEEEtypes_WideBWChanSwitch_t) + sizeof(IEEEtypes_VhtTpcEnvelope_t) + sizeof(IEEEtypes_Header_t);
+#endif
+    uint16_t buf_len = 0;
+
+    buf = (uint8_t *)os_mem_alloc(total_len);
+    if (!buf)
+    {
+        wifi_e("ECSA allocate memory failed \r\n");
+        return -WM_FAIL;
+    }
+
+    (void)memset(buf, 0, total_len);
+    tlv       = (tlvbuf_custom_ie *)buf;
+    tlv->type = MRVL_MGMT_IE_LIST_TLV_ID;
+
+    ret = get_free_mgmt_ie_index(&mgmt_ie_index);
+    if (WM_SUCCESS != ret)
+    {
+        os_mem_free(buf);
+        return -WM_FAIL;
+    }
+
+    pcust_chansw_ie                    = (custom_ie *)(tlv->ie_data);
+    pcust_chansw_ie->ie_index          = mgmt_ie_index;
+    pcust_chansw_ie->ie_length         = sizeof(IEEEtypes_ChanSwitchAnn_t);
+    pcust_chansw_ie->mgmt_subtype_mask = MGMT_MASK_BEACON | MGMT_MASK_PROBE_RESP; /*Add IE for
+                                                                 BEACON/probe resp*/
+    chan_switch                    = (IEEEtypes_ChanSwitchAnn_t *)pcust_chansw_ie->ie_buffer;
+    chan_switch->element_id        = CHANNEL_SWITCH_ANN;
+    chan_switch->len               = 3;
+    chan_switch->chan_switch_mode  = block_tx;
+    chan_switch->new_channel_num   = channel;
+    chan_switch->chan_switch_count = switch_count;
+    DBG_HEXDUMP(MCMD_D, "CSA IE", (t_u8 *)pcust_chansw_ie->ie_buffer, pcust_chansw_ie->ie_length);
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if (pbss_desc->bss_band & BAND_A)
+        usr_dot_11n_dev_cap = mlan_adap->usr_dot_11n_dev_cap_a;
+    else
+#endif
+        usr_dot_11n_dev_cap = mlan_adap->usr_dot_11n_dev_cap_bg;
+
+    if (!ISSUPP_CHANWIDTH40(usr_dot_11n_dev_cap))
+    {
+        band_width = 0;
+    }
+
+    switch (band_width)
+    {
+        case CHANNEL_BW_40MHZ_ABOVE:
+        case CHANNEL_BW_40MHZ_BELOW:
+            bw = 40;
+            break;
+#if defined(CONFIG_11AC)
+        case CHANNEL_BW_80MHZ:
+            bw = 80;
+            break;
+        case CHANNEL_BW_160MHZ:
+            bw = 160;
+            break;
+#endif
+        default:
+            bw = 20;
+            break;
+    }
+
+    if (!new_oper_class && ecsa)
+        wlan_get_nonglobal_operclass_by_bw_channel(bw, channel, &new_oper_class);
+
+    if (new_oper_class)
+    {
+        pcust_chansw_ie->ie_length += sizeof(IEEEtypes_ExtChanSwitchAnn_t);
+        ext_chan_switch =
+            (IEEEtypes_ExtChanSwitchAnn_t *)(pcust_chansw_ie->ie_buffer + sizeof(IEEEtypes_ChanSwitchAnn_t));
+        ext_chan_switch->element_id        = EXTEND_CHANNEL_SWITCH_ANN;
+        ext_chan_switch->len               = 4;
+        ext_chan_switch->chan_switch_mode  = block_tx;
+        ext_chan_switch->new_oper_class    = new_oper_class;
+        ext_chan_switch->new_channel_num   = channel;
+        ext_chan_switch->chan_switch_count = switch_count;
+        DBG_HEXDUMP(MCMD_D, "ECSA IE", (t_u8 *)(pcust_chansw_ie->ie_buffer + sizeof(IEEEtypes_ChanSwitchAnn_t)),
+                    pcust_chansw_ie->ie_length - sizeof(IEEEtypes_ChanSwitchAnn_t));
+    }
+
+#if defined(CONFIG_11AC)
+    /* bandwidth 40/80/160 should set channel switch wrapper ie for 11ac 5G
+     * channel*/
+    if (band_width && channel > 14)
+    {
+        pChanSwWrap_ie             = (IEEEtypes_Header_t *)(pcust_chansw_ie->ie_buffer + pcust_chansw_ie->ie_length);
+        pChanSwWrap_ie->element_id = EXT_POWER_CONSTR;
+        pChanSwWrap_ie->len        = sizeof(IEEEtypes_WideBWChanSwitch_t);
+
+        pbwchansw_ie = (IEEEtypes_WideBWChanSwitch_t *)((t_u8 *)pChanSwWrap_ie + sizeof(IEEEtypes_Header_t));
+        pbwchansw_ie->ieee_hdr.element_id = BW_CHANNEL_SWITCH;
+        pbwchansw_ie->ieee_hdr.len        = sizeof(IEEEtypes_WideBWChanSwitch_t) - sizeof(IEEEtypes_Header_t);
+
+        center_freq_idx = wlan_get_center_freq_idx((mlan_private *)mlan_adap->priv[1], BAND_AAC, channel, band_width);
+        if (band_width == CHANNEL_BW_40MHZ_ABOVE || band_width == CHANNEL_BW_40MHZ_BELOW)
+        {
+            pbwchansw_ie->new_channel_width        = 0;
+            pbwchansw_ie->new_channel_center_freq0 = center_freq_idx;
+        }
+        else if (band_width == CHANNEL_BW_80MHZ)
+        {
+            pbwchansw_ie->new_channel_width        = 1;
+            pbwchansw_ie->new_channel_center_freq0 = center_freq_idx - 4;
+            pbwchansw_ie->new_channel_center_freq1 = center_freq_idx + 4;
+        }
+        else if (band_width == CHANNEL_BW_160MHZ)
+        {
+            pbwchansw_ie->new_channel_width        = 2;
+            pbwchansw_ie->new_channel_center_freq0 = center_freq_idx - 8;
+            pbwchansw_ie->new_channel_center_freq1 = center_freq_idx + 8;
+        }
+        else
+            wifi_e("Invalid bandwidth.Support value 1/3/4/5 for 40+/40-/80/160MHZ\n");
+
+        /*prepare the VHT Transmit Power Envelope IE*/
+        pvhttpcEnv_ie = (IEEEtypes_VhtTpcEnvelope_t *)((t_u8 *)pChanSwWrap_ie + sizeof(IEEEtypes_Header_t) +
+                                                       sizeof(IEEEtypes_WideBWChanSwitch_t));
+        pvhttpcEnv_ie->ieee_hdr.element_id = VHT_TX_POWER_ENV;
+        pvhttpcEnv_ie->ieee_hdr.len        = sizeof(IEEEtypes_VhtTpcEnvelope_t) - sizeof(IEEEtypes_Header_t);
+        /* Local Max TX Power Count= 3,
+         * Local TX Power Unit Inter=EIP(0) */
+        pvhttpcEnv_ie->tpc_info                     = 3;
+        pvhttpcEnv_ie->local_max_tp_20mhz           = 0xff;
+        pvhttpcEnv_ie->local_max_tp_40mhz           = 0xff;
+        pvhttpcEnv_ie->local_max_tp_80mhz           = 0xff;
+        pvhttpcEnv_ie->local_max_tp_160mhz_80_80mhz = 0xff;
+        pChanSwWrap_ie->len += sizeof(IEEEtypes_VhtTpcEnvelope_t);
+        pcust_chansw_ie->ie_length += pChanSwWrap_ie->len + sizeof(IEEEtypes_Header_t);
+        DBG_HEXDUMP(MCMD_D, "Channel switch wrapper IE", (t_u8 *)pChanSwWrap_ie,
+                    pChanSwWrap_ie->len + sizeof(IEEEtypes_Header_t));
+    }
+#endif
+    tlv->length = sizeof(custom_ie) + pcust_chansw_ie->ie_length - MAX_IE_SIZE;
+
+    buf_len = pcust_chansw_ie->ie_length + sizeof(tlvbuf_custom_ie) + sizeof(custom_ie) - MAX_IE_SIZE;
+
+    ret = wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
+    if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+    {
+        wifi_e("Failed to set ECSA IE\n");
+        os_mem_free(buf);
+        return -WM_FAIL;
+    }
+    set_ie_index(mgmt_ie_index);
+
+    os_semaphore_get(&ecsa_status_control.ecsa_sem, os_msec_to_ticks((switch_count + 2) * wm_wifi.beacon_period));
+    set_ecsa_block_tx_flag(false);
+
+    if (!ie_index_is_set(mgmt_ie_index))
+    {
+        os_mem_free(buf);
+        return -WM_FAIL;
+    }
+
+    /*Clear ECSA ie*/
+    (void)memset(buf, 0, total_len);
+    tlv         = (tlvbuf_custom_ie *)buf;
+    tlv->type   = MRVL_MGMT_IE_LIST_TLV_ID;
+    tlv->length = sizeof(custom_ie) - MAX_IE_SIZE;
+
+    pcust_chansw_ie->mgmt_subtype_mask = MGMT_MASK_CLEAR;
+    pcust_chansw_ie->ie_length         = 0;
+    pcust_chansw_ie->ie_index          = mgmt_ie_index;
+    buf_len                            = sizeof(tlvbuf_custom_ie) + tlv->length;
+
+    ret = wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
+    if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+    {
+        wifi_e("Failed to clear ECSA IE\n");
+        os_mem_free(buf);
+        return -WM_FAIL;
+    }
+    clear_ie_index(mgmt_ie_index);
+
+    os_mem_free(buf);
+
+    return WM_SUCCESS;
+}
+
+int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count)
+{
+    mlan_status ret  = MLAN_STATUS_SUCCESS;
+    mlan_ds_bss *bss = NULL;
+    mlan_ioctl_req req;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    bss = os_mem_alloc(sizeof(mlan_ds_bss));
+    if (bss == NULL)
+    {
+        return -WM_FAIL;
+    }
+
+    req.bss_index                           = MLAN_BSS_ROLE_UAP;
+    req.pbuf                                = (t_u8 *)bss;
+    bss->sub_command                        = MLAN_OID_ACTION_CHAN_SWITCH;
+    req.req_id                              = MLAN_IOCTL_BSS;
+    req.action                              = MLAN_ACT_SET;
+    bss->param.chanswitch.chan_switch_mode  = block_tx;
+    bss->param.chanswitch.new_channel_num   = channel;
+    bss->param.chanswitch.chan_switch_count = switch_count;
+    bss->param.chanswitch.new_oper_class    = oper_class;
+
+    ret = wlan_ops_uap_ioctl(mlan_adap, &req);
+
+    if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
+    {
+        wifi_e("Failed to set ECSA IE\n");
+        os_mem_free(bss);
+        return -WM_FAIL;
+    }
+    os_mem_free(bss);
+
+    return WM_SUCCESS;
+}
+
+#endif
 
 #define SUBTYPE_AUTH          11
 #define AUTH_REQUEST_BUF_SIZE 512
@@ -4093,8 +5070,63 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
 }
 #endif
 
+#ifdef CONFIG_WMM_UAPSD
+int wifi_set_wmm_qos_cfg(t_u8 qos_cfg)
+{
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+    mlan_ioctl_req req;
+    mlan_ds_wmm_cfg cfg;
 
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    (void)memset(&cfg, 0x00, sizeof(mlan_ds_wmm_cfg));
+    cfg.sub_command   = MLAN_OID_WMM_CFG_QOS;
+    cfg.param.qos_cfg = qos_cfg;
+    req.pbuf          = (t_u8 *)&cfg;
+    req.buf_len       = sizeof(mlan_ds_wmm_cfg);
+    req.req_id        = MLAN_IOCTL_WMM_CFG;
+    req.action        = MLAN_ACT_SET;
 
+    ret = wlan_ops_sta_ioctl(mlan_adap, &req);
+    return ret;
+}
+
+void wifi_set_sleep_period(uint16_t sleep_period)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_STA);
+    cmd->result  = 0x0;
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_SLEEP_PERIOD, HostCmd_ACT_GEN_SET,
+                             0, NULL, &sleep_period, cmd);
+    wifi_wait_for_cmdresp(NULL);
+}
+#endif
+
+#ifdef CONFIG_11AX
+int wifi_set_tol_time(const t_u32 tol_time)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    HostCmd_DS_11AX_CMD_CFG *axcmd = &cmd->params.axcmd;
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AX_CMD);
+    cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN;
+
+    axcmd->action = wlan_cpu_to_le16(MLAN_ACT_SET);
+    axcmd->sub_id = wlan_cpu_to_le16(MLAN_11AXCMD_OBSS_TOLTIME_SUBID);
+
+    memcpy(axcmd->val, &tol_time, sizeof(t_u32));
+    cmd->size += sizeof(t_u32);
+
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif
+
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
 {
     wifi_get_command_lock();
@@ -4108,10 +5140,121 @@ int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
 
     return wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? prot_mode : NULL);
 }
+#endif
 
+#ifdef CONFIG_CSI
+int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
+{
+    t_u16 action = CSI_CMD_DISABLE;
 
+    action = csi_params->csi_enable;
+    if (action != CSI_CMD_ENABLE && action != CSI_CMD_DISABLE)
+        return -WM_FAIL;
 
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_CSI,
+                                              csi_params->csi_enable, 0, NULL, csi_params, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+    {
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif
+
+#if defined(CONFIG_IPS)
+/* enable/disable config for IPS */
+int wifi_set_ips_config(mlan_bss_type interface, int option)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    t_u16 cmd_size;
+
+    if ((option != 0) && (option != 1))
+        return -WM_FAIL;
+
+    cmd_size = sizeof(HostCmd_DS_IPS_CONFIG) + S_DS_GEN /* cmd header */;
+    (void)memset(cmd, 0x00, cmd_size);
+    cmd->command = HostCmd_CMD_IPS_CONFIG;
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, interface);
+    cmd->size    = cmd_size;
+
+    cmd->params.ips_config.enable = option;
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif
+
+#ifdef CONFIG_NET_MONITOR
+int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
+{
+    t_u16 action = HostCmd_ACT_GEN_SET;
+
+    action = monitor->action;
+
+    if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
+        return -WM_FAIL;
+
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_NET_MONITOR,
+                                              monitor->action, 0, NULL, monitor, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    return wifi_wait_for_cmdresp(NULL);
+}
+#endif
+
+#ifdef CONFIG_TSP
+int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    HostCmd_DS_TSP_CFG *tsp_cfg = &cmd->params.tsp_cfg;
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_TSP_CFG);
+    cmd->size    = sizeof(HostCmd_DS_TSP_CFG) + S_DS_GEN;
+
+    (void)memcpy(&tsp_cfg->thermalPowerMgmtenable, enable, sizeof(t_u16));
+    (void)memcpy(&tsp_cfg->powerMgmtBackoff, back_off, sizeof(t_u32));
+    (void)memcpy(&tsp_cfg->highPwrBOThrshld, highThreshold, sizeof(t_u32));
+    (void)memcpy(&tsp_cfg->lowPwrBOThrshld, lowThreshold, sizeof(t_u32));
+
+    tsp_cfg->action                 = wlan_cpu_to_le16(action);
+    tsp_cfg->thermalPowerMgmtenable = wlan_cpu_to_le16(tsp_cfg->thermalPowerMgmtenable);
+    tsp_cfg->powerMgmtBackoff       = wlan_cpu_to_le16(tsp_cfg->powerMgmtBackoff);
+    tsp_cfg->highPwrBOThrshld       = wlan_cpu_to_le16(tsp_cfg->highPwrBOThrshld);
+    tsp_cfg->lowPwrBOThrshld        = wlan_cpu_to_le16(tsp_cfg->lowPwrBOThrshld);
+
+    cmd->size = wlan_cpu_to_le16(cmd->size);
+
+    if (action == MLAN_ACT_SET)
+        return wifi_wait_for_cmdresp(NULL);
+    else
+    {
+        TSP_CFG tsp_get_cfg;
+        tsp_get_cfg.thermalPowerMgmtenable = enable;
+        tsp_get_cfg.powerMgmtBackoff       = back_off;
+        tsp_get_cfg.highPwrBOThrshld       = highThreshold;
+        tsp_get_cfg.lowPwrBOThrshld        = lowThreshold;
+
+        return wifi_wait_for_cmdresp(&tsp_get_cfg);
+    }
+}
+#endif
 
 #ifdef CONFIG_TURBO_MODE
 int wifi_get_turbo_mode(t_u8 *mode)

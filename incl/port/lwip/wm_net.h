@@ -509,6 +509,9 @@ void net_ipv6stack_init(struct netif *netif);
  */
 void net_stat(void);
 
+#ifdef CONFIG_P2P
+int netif_get_bss_type();
+#endif
 
 #ifndef CONFIG_WPA_SUPP
 void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,

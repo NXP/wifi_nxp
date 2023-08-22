@@ -60,6 +60,10 @@ static bool mcast_mac_valid;
 static void timer_poll_udp_client(TimerHandle_t timer);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+extern void APP_SetTicklessIdle(bool enable);
+bool disable_tickless_hook = false;
+#endif
 #endif
 #endif
 
@@ -85,6 +89,27 @@ const char *report_type_str[] = {
 
 #if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+static void iperf_disable_tickless_hook(bool disable)
+{
+    if (disable == true)
+    {
+        if (disable_tickless_hook == false)
+        {
+            APP_SetTicklessIdle(false);
+            disable_tickless_hook = true;
+        }
+    }
+    else
+    {
+        if (disable_tickless_hook == true)
+        {
+            APP_SetTicklessIdle(true);
+            disable_tickless_hook = false;
+        }
+    }
+}
+#endif
 #endif
 #endif
 
@@ -134,7 +159,11 @@ static void lwiperf_report(void *arg,
             (void)PRINTF(" Port %d \r\n", remote_port);
             (void)PRINTF(" Bytes Transferred %llu \r\n", bytes_transferred);
             (void)PRINTF(" Duration (ms) %d \r\n", ms_duration);
+#if defined(RW610)
+            (void)PRINTF(" Bandwidth (Mbitpsec) %.2f \r\n", (double)bandwidth_kbitpsec / 1000U);
+#else
             (void)PRINTF(" Bandwidth (Mbitpsec) %d \r\n", bandwidth_kbitpsec / 1000U);
+#endif
         }
     }
     else
@@ -144,10 +173,347 @@ static void lwiperf_report(void *arg,
     (void)PRINTF("\r\n");
 #if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+    /* Re-enable Tickless Idle */
+    if (report_type != LWIPERF_TCP_DONE_SERVER_RX && report_type != LWIPERF_UDP_DONE_SERVER_RX
+#ifdef LWIPERF_REVERSE_MODE
+        && report_type != LWIPERF_TCP_DONE_SERVER_TX && report_type != LWIPERF_UDP_DONE_SERVER_TX
+#endif
+    )
+        iperf_disable_tickless_hook(false);
+#endif
 #endif
 #endif
 }
 
+#ifdef CONFIG_WMM_IPERF_TEST
+struct wmm_test_data_t
+{
+    uint16_t port1;
+    uint16_t port2;
+    uint32_t rate1;
+    uint32_t rate2;
+    uint32_t time1;
+    uint32_t time2;
+    uint8_t traffic1;
+    uint8_t traffic2;
+} wmm_test_data;
+
+struct wmm_test_ctx_t
+{
+    unsigned help : 1;
+    unsigned udp : 1;
+    unsigned abort : 1;
+    unsigned server : 1;
+    unsigned client1 : 1;
+    unsigned client2 : 1;
+    unsigned chost : 1;
+    unsigned time1 : 1;
+    unsigned time2 : 1;
+    unsigned port1 : 1;
+    unsigned port2 : 1;
+    unsigned rate1 : 1;
+    unsigned rate2 : 1;
+    unsigned traffic1 : 1;
+    unsigned traffic2 : 1;
+    void *iperf_session;
+    void *iperf_session1;
+    void *iperf_session2;
+} wmm_test_ctx;
+
+static void wmm_iperf_test_start(void *arg)
+{
+    if (wmm_test_ctx.server)
+    {
+        if (wmm_test_ctx.udp)
+        {
+            PRINTF("Starting UDP server");
+            wmm_test_ctx.iperf_session =
+                lwiperf_start_udp_server(netif_ip_addr4(netif_default), port, lwiperf_report, 0);
+            vTaskDelay(os_msec_to_ticks(50));
+        }
+        else
+        {
+            PRINTF("Starting TCP server");
+            wmm_test_ctx.iperf_session =
+                lwiperf_start_tcp_server(netif_ip_addr4(netif_default), port, lwiperf_report, 0);
+            vTaskDelay(os_msec_to_ticks(50));
+        }
+    }
+    if (wmm_test_ctx.client1)
+    {
+        if (IP_IS_V4(&server_address) != 0)
+        {
+            if (wmm_test_ctx.udp)
+            {
+                PRINTF("Starting UDP client 1\r\n");
+                wmm_test_ctx.iperf_session1 =
+                    lwiperf_start_udp_client(netif_ip_addr4(netif_default), wmm_test_data.port1, &server_address,
+                                             wmm_test_data.port1, LWIPERF_CLIENT, wmm_test_data.time1, 0,
+                                             wmm_test_data.rate1, wmm_test_data.traffic1, lwiperf_report, NULL);
+            }
+            else
+            {
+                PRINTF("Starting TCP client 1\r\n");
+                wmm_test_ctx.iperf_session1 =
+                    lwiperf_start_tcp_client(&server_address, wmm_test_data.port1, LWIPERF_CLIENT, wmm_test_data.time1,
+                                             0, wmm_test_data.traffic1, lwiperf_report, NULL);
+            }
+        }
+    }
+    if (wmm_test_ctx.client2)
+    {
+        if (IP_IS_V4(&server_address) != 0)
+        {
+            if (wmm_test_ctx.udp)
+            {
+                PRINTF("Starting UDP client 2\r\n");
+                wmm_test_ctx.iperf_session2 =
+                    lwiperf_start_udp_client(netif_ip_addr4(netif_default), wmm_test_data.port2, &server_address,
+                                             wmm_test_data.port2, LWIPERF_CLIENT, wmm_test_data.time2, 0,
+                                             wmm_test_data.rate2, wmm_test_data.traffic2, lwiperf_report, NULL);
+            }
+            else
+            {
+                PRINTF("Starting TCP client 2\r\n");
+                wmm_test_ctx.iperf_session2 =
+                    lwiperf_start_tcp_client(&server_address, wmm_test_data.port2, LWIPERF_CLIENT, wmm_test_data.time2,
+                                             0, wmm_test_data.traffic2, lwiperf_report, NULL);
+            }
+        }
+    }
+}
+
+/*!
+ * @brief Function to abort iperf test.
+ */
+static void wmm_iperf_test_abort(void *arg)
+{
+    LWIP_UNUSED_ARG(arg);
+
+    if (wmm_test_ctx.iperf_session != NULL)
+    {
+        lwiperf_abort(wmm_test_ctx.iperf_session);
+        wmm_test_ctx.iperf_session = NULL;
+    }
+
+    if (wmm_test_ctx.iperf_session1 != NULL)
+    {
+        lwiperf_abort(wmm_test_ctx.iperf_session1);
+        wmm_test_ctx.iperf_session1 = NULL;
+    }
+    if (wmm_test_ctx.iperf_session2 != NULL)
+    {
+        lwiperf_abort(wmm_test_ctx.iperf_session2);
+        wmm_test_ctx.iperf_session2 = NULL;
+    }
+
+    memset(&wmm_test_ctx, 0, sizeof(struct wmm_test_ctx_t));
+}
+
+/* Display the usage of iperf */
+static void display_wmm_iperf_usage()
+{
+    PRINTF("Usage:\r\n");
+    PRINTF("\twmm_iperf [-s|-c <host>|-a] [options]\r\n");
+    PRINTF("\twmm_iperf [-h]\r\n");
+    PRINTF("\r\n");
+    PRINTF("\tClient/Server:\r\n");
+    PRINTF("\t   -u             use UDP rather than TCP\r\n");
+    PRINTF("\t   -a             abort ongoing iperf session\r\n");
+    PRINTF("\tServer specific:\r\n");
+    PRINTF("\t   -s             run in server mode\r\n");
+    PRINTF("\tClient specific:\r\n");
+    PRINTF("\t   -c1    <host>   run in client mode, connecting to <host> creates 1 iperf instance\r\n");
+    PRINTF("\t   -c2    <host>   run in client mode, connecting to <host> creates 1 iperf instance\r\n");
+    PRINTF("\t   -t1    #        time in seconds to transmit for (default 10 secs) 1st client\r\n");
+    PRINTF("\t   -t2    #        time in seconds to transmit for (default 10 secs) 2nd client\r\n");
+    PRINTF("\t   -p1    #        port to connect to server (default 5001) 1st client\r\n");
+    PRINTF("\t   -p2    #        port to connect to server (default 5001) 2nd client\r\n");
+    PRINTF("\t   -b1    #        expected throughput (default 10Mbps) 1st client\r\n");
+    PRINTF("\t   -b2    #        expected throughput (default 10Mbps) 2nd client\r\n");
+    PRINTF("\t   -S1    #        Traffic type for 1st client(default 0, range 0-255)\r\n");
+    PRINTF("\t   -S2    #        Traffic type for 2nd client(default 0, range 0-255)\r\n");
+    PRINTF(
+        "\t   Note: bandwidth will be in # Mbps, \r\n\tmore than 2 instances are not "
+        "possible(any 2 combinations), \r\n\tonly 1 server is supported\r\n\tProvide host only for one client and it "
+        "will be reflected for rest");
+}
+
+void set_wmm_test_default_data()
+{
+    wmm_test_data.port1    = 5001;
+    wmm_test_data.port2    = 5001;
+    wmm_test_data.rate1    = (10 * 1024 * 1024);
+    wmm_test_data.rate2    = (10 * 1024 * 1024);
+    wmm_test_data.time1    = IPERF_CLIENT_AMOUNT;
+    wmm_test_data.time2    = IPERF_CLIENT_AMOUNT;
+    wmm_test_data.traffic1 = 0;
+    wmm_test_data.traffic2 = 0;
+}
+
+void test_wmm(int argc, char **argv)
+{
+    int arg = 1;
+
+    memset(&wmm_test_ctx, 0, sizeof(wmm_test_ctx));
+    set_wmm_test_default_data();
+    if (argc < 2)
+    {
+        PRINTF("Incorrect usage\r\n");
+        display_wmm_iperf_usage();
+        return;
+    }
+    do
+    {
+        if (!wmm_test_ctx.help && string_equal("-h", argv[arg]))
+        {
+            display_wmm_iperf_usage();
+            return;
+        }
+        else if (!wmm_test_ctx.udp && string_equal("-u", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.udp = 1;
+        }
+        else if (!wmm_test_ctx.abort && string_equal("-a", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.abort = 1;
+        }
+        else if (!wmm_test_ctx.server && string_equal("-s", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.server = 1;
+        }
+        else if (!wmm_test_ctx.client1 && string_equal("-c1", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.client1 = 1;
+            if (!wmm_test_ctx.chost && argv[arg] != NULL)
+            {
+                inet_aton(argv[arg], &server_address);
+
+                if (IP_IS_V4(&server_address) != 0)
+                    wmm_test_ctx.chost = 1;
+                arg += 1;
+            }
+        }
+        else if (!wmm_test_ctx.client2 && string_equal("-c2", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.client2 = 1;
+
+            if (!wmm_test_ctx.chost && argv[arg] != NULL)
+            {
+                inet_aton(argv[arg], &server_address);
+
+                if (IP_IS_V4(&server_address) != 0)
+                    wmm_test_ctx.chost = 1;
+                arg += 1;
+            }
+        }
+        else if (!wmm_test_ctx.time1 && string_equal("-t1", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.time1  = 1;
+            wmm_test_data.time1 = -(100 * strtoul(argv[arg], NULL, 10));
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.time2 && string_equal("-t2", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.time2  = 1;
+            wmm_test_data.time2 = -(100 * strtoul(argv[arg], NULL, 10));
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.port1 && string_equal("-p1", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.port1  = 1;
+            wmm_test_data.port1 = strtoul(argv[arg], NULL, 10);
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.port2 && string_equal("-p2", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.port2  = 1;
+            wmm_test_data.port2 = strtoul(argv[arg], NULL, 10);
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.rate1 && string_equal("-b1", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.rate1  = 1;
+            wmm_test_data.rate1 = strtoul(argv[arg], NULL, 10);
+            wmm_test_data.rate1 = wmm_test_data.rate1 * 1024 * 1024;
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.rate2 && string_equal("-b2", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.rate2  = 1;
+            wmm_test_data.rate2 = strtoul(argv[arg], NULL, 10);
+            wmm_test_data.rate2 = wmm_test_data.rate2 * 1024 * 1024;
+
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.traffic1 && string_equal("-S1", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.traffic1  = 1;
+            wmm_test_data.traffic1 = strtoul(argv[arg], NULL, 10);
+            arg += 1;
+        }
+        else if (!wmm_test_ctx.traffic2 && string_equal("-S2", argv[arg]))
+        {
+            arg += 1;
+            wmm_test_ctx.traffic2  = 1;
+            wmm_test_data.traffic2 = strtoul(argv[arg], NULL, 10);
+            arg += 1;
+        }
+        else
+        {
+            PRINTF("Incorrect usage\r\n");
+            display_wmm_iperf_usage();
+            PRINTF("Error: argument %d is invalid\r\n", arg);
+            return;
+        }
+        vTaskDelay(os_msec_to_ticks(20));
+    } while (arg < argc);
+
+    if (((wmm_test_ctx.client1 || wmm_test_ctx.client2) && !wmm_test_ctx.chost))
+    {
+        PRINTF("Incorrect usage\r\n");
+        display_wmm_iperf_usage();
+        return;
+    }
+    if (wmm_test_ctx.client1 && wmm_test_ctx.client2 && wmm_test_ctx.server)
+    {
+        PRINTF("Only 2 iperf instances are supported\r\n");
+        display_wmm_iperf_usage();
+        return;
+    }
+    if (wmm_test_ctx.abort)
+    {
+        tcpip_callback(wmm_iperf_test_abort, NULL);
+        return;
+    }
+    if ((wmm_test_ctx.client1 || wmm_test_ctx.server) && wmm_test_ctx.iperf_session1 != NULL)
+    {
+        PRINTF("Abort ongoing client 1 IPERF session\r\n");
+        lwiperf_abort(wmm_test_ctx.iperf_session1);
+        wmm_test_ctx.iperf_session1 = NULL;
+    }
+    if (wmm_test_ctx.client2 && wmm_test_ctx.iperf_session2 != NULL)
+    {
+        PRINTF("Abort ongoing client 2 IPERF session\r\n");
+        lwiperf_abort(wmm_test_ctx.iperf_session2);
+        wmm_test_ctx.iperf_session2 = NULL;
+    }
+    tcpip_callback(wmm_iperf_test_start, NULL);
+}
+#endif
 /*!
  * @brief Function to start iperf test.
  */
@@ -169,6 +535,12 @@ static void iperf_test_start(void *arg)
 
 #if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+    /* Disable tickless idle when running iperf test */
+    if (ctx->server_mode)
+        (void)PRINTF("Please use iperf -a to close iperf after iperf server mode done\r\n");
+    iperf_disable_tickless_hook(true);
+#endif
 #endif
 #endif
 
@@ -912,6 +1284,9 @@ static void cmd_iperf(int argc, char **argv)
 
 static struct cli_command iperf[] = {
     {"iperf", "[-s|-c <host>|-a|-h] [options]", cmd_iperf},
+#ifdef CONFIG_WMM_IPERF_TEST
+    {"wmm_iperf", "wmm_test iperf instances commands...", test_wmm},
+#endif
 };
 
 int iperf_cli_init(void)

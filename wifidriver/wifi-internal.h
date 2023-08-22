@@ -57,11 +57,19 @@ typedef struct
 #endif
     os_queue_t *wlc_mgr_event_queue;
 
+#ifndef CONFIG_WIFI_RX_REORDER
     void (*data_intput_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
+#endif
     void (*amsdu_data_intput_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
     void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
+#ifdef CONFIG_WIFI_RX_REORDER
+    void *(*gen_pbuf_from_data2)(t_u8 *payload, t_u16 datalen, void **p_payload);
+#endif
 
+#ifdef CONFIG_P2P
+    os_queue_t *wfd_event_queue;
+#endif
     os_mutex_t command_lock;
     os_semaphore_t command_resp_sem;
     os_mutex_t mcastf_mutex;
@@ -252,6 +260,12 @@ bool is_split_scan_complete(void);
  * Waits for Command processing to complete and waits for command response
  */
 int wifi_wait_for_cmdresp(void *cmd_resp_priv);
+#ifdef CONFIG_FW_VDLL
+/**
+ * Waits for Command processing to complete and waits for command response for VDLL
+ */
+int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv);
+#endif
 /**
  * Register an event queue
  *
@@ -264,6 +278,17 @@ int bus_register_event_queue(os_queue_t *event_queue);
  * De-register the event queue.
  */
 void bus_deregister_event_queue(void);
+#ifdef CONFIG_P2P
+/**
+ * Register a special queue for WPS
+ */
+int bus_register_special_queue(os_queue_t *special_queue);
+
+/**
+ * Deregister special queue
+ */
+void bus_deregister_special_queue(void);
+#endif
 
 /**
  * Register DATA input function with SDIO driver.
@@ -322,8 +347,13 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);
 mlan_status wrapper_moal_mfree(t_void *pmoal_handle, t_u8 *pbuf);
 
+#if defined(RW610)
+int wifi_imu_lock(void);
+void wifi_imu_unlock(void);
+#else
 int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
+#endif
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
 
@@ -354,6 +384,9 @@ void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band);
 int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
 #endif
 
+#ifdef CONFIG_11AX
+int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
+#endif
 int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
 int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
 int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
@@ -371,6 +404,9 @@ int wifi_nxp_scan_res_num(void);
 int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
 #endif /* CONFIG_WPA_SUPP */
 
+#ifdef CONFIG_WIFI_RX_REORDER
+int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
+#endif
 
 #ifdef CONFIG_WMM
 int send_wifi_driver_tx_data_event(t_u8 interface);

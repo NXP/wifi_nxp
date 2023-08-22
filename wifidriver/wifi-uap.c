@@ -15,7 +15,11 @@
 #include <wm_os.h>
 
 #include <wifi.h>
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 #ifdef CONFIG_WPA_SUPP_AP
 #include "rtos_wpa_supp_if.h"
 #endif
@@ -26,7 +30,11 @@
 /* fixme: Some of the following options could be added to kconfig. While
    adding the ranges in kconfig use the ones given as macros in
    mlan_uap_cmdevent.c */
+#ifdef RW610
+#define UAP_BEACON_PERIOD 100U
+#else
 #define UAP_BEACON_PERIOD 200U
+#endif
 #define UAP_DTIM_PERIOD 10
 #define MAX_RATES       14U
 
@@ -126,6 +134,9 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         }
 
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+#ifdef RW610
+        vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
+#endif
         vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
         vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
         vht_cfg.skip_usr_11ac_mcs_cfg = MTRUE;
@@ -147,6 +158,113 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
 }
 #endif
 
+#ifdef CONFIG_11AX
+/**
+ * @brief initialize AP bss config
+ * @param pmpriv            A pointer to mlan_private structure
+ * @param band            BAND_5G/BAND_2GHZ
+ * @return                0 -- success, otherwise fail
+ */
+static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    t_u8 enable_11ax        = MFALSE;
+
+    ENTER();
+#ifdef CONFIG_WIFI_CAPA
+    if (!pmadapter->usr_dot_11ax_enable)
+    {
+        return enable_11ax;
+    }
+#endif
+    if ((band == BAND_CONFIG_5GHZ) && !(pmadapter->fw_bands & BAND_AAX))
+    {
+        PRINTM(MCMND, "FW don't support 5G AX\n");
+        LEAVE();
+        return enable_11ax;
+    }
+    if ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX))
+    {
+        PRINTM(MCMND, "FW don't support 2G AX\n");
+        LEAVE();
+        return enable_11ax;
+    }
+    enable_11ax = MTRUE;
+    PRINTM(MCMND, "enable_11ax=%d\n", enable_11ax);
+    LEAVE();
+    return enable_11ax;
+}
+
+/**
+ *  @brief enable/disable 11AX
+ *
+ *  @param pmpriv   A pointer to mlan_private structure
+ *  @param action   MLAN_ACT_DISABLE or MLAN_ACT_ENABLE
+ *  @param band     band config
+ *
+ *  @return         0--success, otherwise failure
+ */
+int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+    mlan_ds_11ax_he_cfg he_cfg;
+
+    ENTER();
+    if ((band == BAND_CONFIG_5GHZ && !(pmadapter->fw_bands & BAND_AAX)) ||
+        ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX)))
+    {
+        PRINTM(MERROR, "fw doesn't support 11ax\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+    memset(&he_cfg, 0, sizeof(he_cfg));
+    if (band == BAND_CONFIG_5GHZ)
+    {
+        he_cfg.band = MBIT(1);
+        (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
+    }
+    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+    {
+        he_cfg.band = MBIT(0);
+        (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
+    }
+    else
+    {
+        PRINTM(MERROR, "Invalid band!\n");
+        ret = -WM_E_INVAL;
+        goto done;
+    }
+
+#ifdef RW610
+    he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
+
+#if 0
+    if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
+    {
+        PRINTM(MERROR, "Fail to get 11ax cfg!\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+#endif
+    if (action == MLAN_ACT_DISABLE)
+    {
+        if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
+            memset(he_cfg.he_cap.he_txrx_mcs_support, 0xff, sizeof(he_cfg.he_cap.he_txrx_mcs_support));
+        else
+        {
+            PRINTM(MCMND, "11ax already disabled\n");
+            goto done;
+        }
+    }
+    DBG_HEXDUMP(MCMD_D, "HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+    ret = wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_SET, &he_cfg);
+done:
+    LEAVE();
+    return ret;
+}
+#endif /* CONFIG_11AX */
 
 int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u16 cmd_no,
@@ -302,11 +420,16 @@ static int wifi_cmd_uap_config(char *ssid,
     t_u32 ssid_len = strlen(ssid);
     uint8_t i;
     const t_u8 wmm_oui[4] = {0x00, 0x50, 0xf2, 0x02};
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     int ret;
     t_u8 supported_mcs_set[] = {0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+#endif
 #ifdef CONFIG_11AC
     bool enable_11ac = MFALSE;
+#endif
+#ifdef CONFIG_11AX
+    t_u8 enable_11ax = MFALSE;
 #endif
 
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 ||
@@ -372,6 +495,14 @@ static int wifi_cmd_uap_config(char *ssid,
                 wuap_e("Cannot start uAP on DFS channel %d", channel);
                 return -WM_E_INVAL;
             }
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+            /* TODO: Temporary work around until firmware fix is available */
+            if (channel == 173)
+            {
+                bss.param.bss_config.band_cfg = BAND_CONFIG_CH_173;
+            }
+            else
+#endif
             {
                 bss.param.bss_config.band_cfg = BAND_CONFIG_5GHZ;
             }
@@ -419,6 +550,9 @@ static int wifi_cmd_uap_config(char *ssid,
 
 #ifdef CONFIG_11AC
     enable_11ac = wifi_check_11ac_capability(pmpriv, bss.param.bss_config.band_cfg);
+#endif
+#ifdef CONFIG_11AX
+    enable_11ax = wifi_check_11ax_capability(pmpriv, bss.param.bss_config.band_cfg);
 #endif
 #ifndef CONFIG_WPA_SUPP
     if (security == WLAN_SECURITY_NONE)
@@ -496,6 +630,22 @@ static int wifi_cmd_uap_config(char *ssid,
          ****************************************/
         bss.param.bss_config.key_mgmt_operation = 0x00;
 
+#ifdef CONFIG_HOST_PMK
+        if ((security == WLAN_SECURITY_WPA2 || WLAN_SECURITY_WPA2_SHA256 ||
+             security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) &&
+            passphrase_len < 64)
+        {
+            char pmk_bin[PMK_BIN_LEN]           = {0};
+            char pmk_hex[PMK_HEX_LEN + 2]       = {0};
+            bss.param.bss_config.wpa_cfg.length = PMK_HEX_LEN;
+            mrvl_generate_psk(ssid, strlen(ssid), passphrase, pmk_bin);
+            bin2hex((uint8_t *)pmk_bin, pmk_hex, PMK_BIN_LEN, PMK_HEX_LEN + 2);
+            wuap_d("psk %s, pmk_hex %s", passphrase, pmk_hex);
+            (void)memcpy((void *)bss.param.bss_config.wpa_cfg.passphrase, (const void *)pmk_hex, PMK_HEX_LEN);
+        }
+        else
+        {
+#endif
             if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 ||
                 security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
             {
@@ -504,6 +654,9 @@ static int wifi_cmd_uap_config(char *ssid,
                 (void)memcpy((void *)bss.param.bss_config.wpa_cfg.passphrase, (const void *)passphrase,
                              (size_t)passphrase_len);
             }
+#ifdef CONFIG_HOST_PMK
+        }
+#endif
         if (security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
         {
             bss.param.bss_config.auth_mode               = MLAN_AUTH_MODE_AUTO;
@@ -514,6 +667,7 @@ static int wifi_cmd_uap_config(char *ssid,
         }
     }
 #endif
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     bss.param.bss_config.ht_cap_info = wm_wifi.ht_cap_info == 0 ? (t_u16)0x112c : wm_wifi.ht_cap_info;
     wm_wifi.ht_tx_cfg                = wm_wifi.ht_tx_cfg == 0 ? (t_u16)0x002c : wm_wifi.ht_tx_cfg;
 
@@ -564,6 +718,10 @@ static int wifi_cmd_uap_config(char *ssid,
     if (!ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
         bss.param.bss_config.ht_cap_info &= (~MBIT(12));
 
+#ifdef RW610
+    /* Set Tx Beam Forming Cap */
+    bss.param.bss_config.tx_bf_cap = mlan_adap->priv[1]->tx_bf_cap;
+#endif
 
 #ifdef CONFIG_11AC
     if (enable_11ac)
@@ -575,9 +733,20 @@ static int wifi_cmd_uap_config(char *ssid,
         (void)wifi_uap_set_11ac_status(pmpriv, MLAN_ACT_DISABLE, bandwidth, channel);
     }
 #endif
+#ifdef CONFIG_11AX
+    if (enable_11ax)
+    {
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg);
+    }
+    else
+    {
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg);
+    }
+#endif
     bss.param.bss_config.ampdu_param = 0x03;
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
                  sizeof(bss.param.bss_config.supported_mcs_set));
+#endif
     /*
      * Note that we are leaving htcap info set to zero by default. This
      *  will ensure that 11N is disabled.
@@ -687,7 +856,11 @@ t_u8 wlan_get_second_channel_offset(mlan_private *priv, int chan)
     t_u8 chan2Offset = SEC_CHAN_NONE;
 
     /* Special Case: 20Mhz-only Channel */
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+    if (priv->adapter->region_code != COUNTRY_CODE_US && chan == 165)
+#else
     if (chan == 165)
+#endif
         return chan2Offset;
 
     switch (chan)
@@ -704,6 +877,10 @@ t_u8 wlan_get_second_channel_offset(mlan_private *priv, int chan)
         case 140:
         case 149:
         case 157:
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+        case 165:
+        case 173:
+#endif
             chan2Offset = SEC_CHAN_ABOVE;
             break;
         case 40:
@@ -718,6 +895,10 @@ t_u8 wlan_get_second_channel_offset(mlan_private *priv, int chan)
         case 144:
         case 153:
         case 161:
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+        case 169:
+        case 177:
+#endif
             chan2Offset = SEC_CHAN_BELOW;
             break;
     }
@@ -781,12 +962,25 @@ void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
             if (wlan_capa & WIFI_SUPPORT_11AC)
             {
                 mlan_adap->usr_dot_11ac_enable = MTRUE;
+#ifdef CONFIG_11AX
+                if (wlan_capa & WIFI_SUPPORT_11AX)
+                {
+                    mlan_adap->usr_dot_11ax_enable = MTRUE;
+                }
+                else
+                {
+                    mlan_adap->usr_dot_11ax_enable = MFALSE;
+                }
+#endif
             }
             else
 #endif
             {
 #ifdef CONFIG_11AC
                 mlan_adap->usr_dot_11ac_enable = MFALSE;
+#endif
+#ifdef CONFIG_11AX
+                mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
             }
         }
@@ -795,6 +989,9 @@ void wifi_uap_config_wifi_capa(uint8_t wlan_capa)
             mlan_adap->usr_dot_11n_enable = MFALSE;
 #ifdef CONFIG_11AC
             mlan_adap->usr_dot_11ac_enable = MFALSE;
+#endif
+#ifdef CONFIG_11AX
+            mlan_adap->usr_dot_11ax_enable = MFALSE;
 #endif
         }
     }
@@ -817,7 +1014,12 @@ int wifi_uap_start(mlan_bss_type type,
                    uint8_t pwe_derivation,
                    uint8_t transition_disable,
                    bool mfpc,
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                   bool mfpr,
+                   uint8_t dtim
+#else
                    bool mfpr
+#endif
 )
 {
     wuap_d("Configuring");
@@ -840,7 +1042,11 @@ int wifi_uap_start(mlan_bss_type type,
                                  scan_chan_list, pwe_derivation, transition_disable,
                                  wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
                                  wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                                 dtim == 0 ? UAP_DTIM_PERIOD : dtim,
+#else
                                  UAP_DTIM_PERIOD,
+#endif
                                  wm_wifi.chan_sw_count, type, mfpc, mfpr);
 
     if (rv != WM_SUCCESS)
@@ -890,6 +1096,25 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
     /* *list must have been filled now if everything went well */
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    mlan_deauth_param deauth;
+
+    if (mac_addr == MNULL)
+    {
+        return -WM_FAIL;
+    }
+
+    (void)memcpy((void *)deauth.mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
+    deauth.reason_code = reason_code;
+
+    /* Start BSS */
+    return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_DEAUTH, HostCmd_ACT_GEN_SET, 0, NULL, &deauth,
+                                         MLAN_BSS_TYPE_UAP, NULL);
+}
+#endif /* CONFIG_MLAN_WMSDK */
 
 int wifi_uap_stop()
 {
@@ -1631,11 +1856,93 @@ int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+{
+    t_u8 *buffer  = NULL;
+    t_u16 cmd_len = 0;
+    t_u16 buf_len = MRVDRV_SIZE_OF_CMD_BUFFER;
+
+    HostCmd_DS_GEN *cmd_buf           = NULL;
+    MrvlIEtypes_mac_filter_t *tlv     = NULL;
+    HostCmd_DS_SYS_CONFIG *sys_config = NULL;
+
+    /* Initialize the command length */
+    if (filter_mode == 0)
+    {
+        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
+                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + (WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
+                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + mac_count * MLAN_MAC_ADDR_LENGTH;
+    }
+
+    /* Initialize the command buffer */
+    buffer = (t_u8 *)os_mem_alloc(buf_len);
+    if (!buffer)
+    {
+        wuap_e("ERR:Cannot allocate buffer for command!\r\n");
+        return -WM_FAIL;
+    }
+
+    memset(buffer, 0, buf_len);
+
+    /* Locate headers */
+    cmd_buf    = (HostCmd_DS_GEN *)buffer;
+    sys_config = (HostCmd_DS_SYS_CONFIG *)(buffer + sizeof(HostCmd_DS_GEN));
+    tlv        = (MrvlIEtypes_mac_filter_t *)(buffer + sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1));
+
+    /* Fill the command buffer */
+    cmd_buf->command = HOST_CMD_APCMD_SYS_CONFIGURE;
+    cmd_buf->size    = cmd_len;
+    cmd_buf->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd_buf->result  = 0;
+
+    sys_config->action = HostCmd_ACT_GEN_SET;
+
+    tlv->count       = mac_count;
+    tlv->filter_mode = filter_mode;
+    tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_STA_MAC_ADDR_FILTER);
+
+    if (tlv->count)
+    {
+        tlv->header.len = tlv->count * MLAN_MAC_ADDR_LENGTH + 2;
+        (void)memcpy(tlv->mac_address, mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        tlv->header.len = WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH + 2;
+    }
+
+    if (is_uap_started())
+    {
+        wuap_e("down the uap before setting sta filter\n\r");
+        os_mem_free(buffer);
+        return -WM_FAIL;
+    }
+
+    wifi_get_command_lock();
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)memcpy((t_u8 *)cmd, cmd_buf, cmd_len);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    os_mem_free(buffer);
+
+    return WM_SUCCESS;
+}
+
+#endif
 
 #ifdef CONFIG_WPA_SUPP_AP
 
 void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 {
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     wlan_request_ralist_lock(mlan_adap->priv[1]);
     /* Clear corresponding tx/rx table if necessary */
     if (wlan_11n_get_txbastream_tbl((mlan_private *)mlan_adap->priv[1], sta_addr))
@@ -1658,6 +1965,7 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 
     wlan_release_ralist_lock(mlan_adap->priv[1]);
 
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #ifdef CONFIG_WMM
     wlan_ralist_add_enh(mlan_adap->priv[1], sta_addr);
@@ -1666,6 +1974,7 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled)
 
 void wifi_uap_client_deauth(t_u8 *sta_addr)
 {
+#if defined(CONFIG_UAP_AMPDU_TX) || defined(CONFIG_UAP_AMPDU_RX)
     if ((mlan_private *)mlan_adap->priv[1]->is_11n_enabled)
     {
         wlan_cleanup_reorder_tbl((mlan_private *)mlan_adap->priv[1], sta_addr);
@@ -1673,6 +1982,7 @@ void wifi_uap_client_deauth(t_u8 *sta_addr)
         wlan_11n_delete_txbastream_tbl_entry((mlan_private *)mlan_adap->priv[1], sta_addr);
         wlan_release_ralist_lock((mlan_private *)mlan_adap->priv[1]);
     }
+#endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
 #ifdef CONFIG_WMM
     wlan_ralist_del_enh(mlan_adap->priv[1], sta_addr);
@@ -1755,6 +2065,7 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
             case RSN_AKM_PSK_SHA256:
                 sys_config->key_mgmt |= KEY_MGMT_PSK_SHA256;
                 break;
+#ifdef UAP_HOST_MLME
             case RSN_AKM_SAE:
                 sys_config->key_mgmt |= KEY_MGMT_SAE;
                 break;
@@ -1763,6 +2074,7 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
                 sys_config->key_mgmt |= KEY_MGMT_OWE;
 #endif
                 break;
+#endif
         }
     }
     return MTRUE;
@@ -2196,6 +2508,9 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
     const t_u8 wmm_oui[4]                  = {0x00, 0x50, 0xf2, 0x02};
     t_u8 find_p2p_ie                       = MFALSE;
     t_u8 enable_11d                        = MFALSE;
+#ifdef CONFIG_11AX
+    t_u8 ext_id = 0;
+#endif
     // int ie_len;
 
     /* ERP_INFO/EXTENDED_SUPPORT_RATES/HT_CAPABILITY/HT_OPERATION/WMM
@@ -2234,6 +2549,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
             case VHT_CAPABILITY:
             case VHT_OPERATION:
 #endif
+#ifdef UAP_HOST_MLME
                 if ((out_len + length + 2) < (int)ie_out_len)
                 {
                     __memcpy(priv, ie_out + out_len, pos, length + 2);
@@ -2243,6 +2559,7 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
                 {
                     wifi_d("IE too big, fail copy COUNTRY INFO IE");
                 }
+#endif
                 break;
             case EXTENDED_SUPPORTED_RATES:
             case WLAN_EID_ERP_INFO:
@@ -2250,7 +2567,60 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
             case REGULATORY_CLASS:
                 /* Fall Through */
             case OVERLAPBSSSCANPARAM:
+#ifdef WAPI_AP
+                /* Fall Through */
+            case WAPI_IE:
+#endif
                 break;
+#ifdef CONFIG_11AX
+            case EXTENSION:
+                ext_id = *(pos + 2);
+#ifdef UAP_SUPPORT
+#ifdef CONFIG_11AX
+                if (ext_id == HE_CAPABILITY)
+                {
+                    mlan_ds_11ax_he_cfg he_cfg;
+                    IEEEtypes_HECap_t *hecap_ie;
+
+                    if (priv->uap_channel <= 14)
+                        he_cfg.band = MBIT(0);
+                    else
+                        he_cfg.band = MBIT(1);
+
+                    wifi_d("Retrieve 11ax cfg by channel=%d band=%d", priv->uap_channel, he_cfg.band);
+
+                    if (0 == wlan_cmd_11ax_cfg(priv, HostCmd_ACT_GEN_GET, &he_cfg))
+                    {
+                        hecap_ie = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
+
+                        hecap_ie->ieee_hdr.len        = he_cfg.he_cap.len;
+                        hecap_ie->ieee_hdr.element_id = he_cfg.he_cap.id;
+
+                        __memcpy(priv, ie_out + out_len, hecap_ie, hecap_ie->ieee_hdr.len + 2);
+
+                        out_len += hecap_ie->ieee_hdr.len + 2;
+                    }
+                    else
+                    {
+                        wifi_d("Fail to get 11ax he_cap parameters");
+                    }
+                }
+                else
+#endif
+#endif
+                {
+                    if ((out_len + length + 2) < (int)ie_out_len)
+                    {
+                        __memcpy(priv, ie_out + out_len, pos, length + 2);
+                        out_len += length + 2;
+                    }
+                    else
+                    {
+                        wifi_d("IE too big, fail copy EXTENSION IE");
+                    }
+                }
+                break;
+#endif
             case EXT_CAPABILITY:
                 /* filter out EXTCAP */
                 if (wps_flag & IE_MASK_EXTCAP)
@@ -2340,11 +2710,13 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
         left_len -= (length + 2);
     }
 
+#ifdef UAP_SUPPORT
     if (enable_11d && !priv->bss_started && !wlan_11d_is_enabled(priv))
     {
         wuap_d("Eanble 11D support");
         wifi_enable_uap_11d_support();
     }
+#endif
     return out_len;
 }
 
@@ -2569,7 +2941,12 @@ t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
 {
     t_u8 chan2Offset = SEC_CHAN_NONE;
 
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+    mlan_adapter *pmadapter = priv->adapter;
+    if (pmadapter->region_code != COUNTRY_CODE_US && chan == 165)
+#else
     if (chan == 165)
+#endif
         return chan2Offset;
 
     switch (chan)
@@ -2588,6 +2965,10 @@ t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
 #endif
         case 149:
         case 157:
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+        case 165:
+        case 173:
+#endif
             chan2Offset = SEC_CHAN_ABOVE;
             break;
         case 40:
@@ -2604,6 +2985,10 @@ t_u8 wifi_get_second_channel_offset(mlan_private *priv, int chan)
 #endif
         case 153:
         case 161:
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+        case 169:
+        case 177:
+#endif
             chan2Offset = SEC_CHAN_BELOW;
             break;
     }
@@ -2826,6 +3211,84 @@ int wifi_uap_set_11ac_status2(mlan_private *priv, t_u8 action, t_u8 vht20_40, IE
 }
 #endif
 
+#ifdef CONFIG_11AX
+
+/**
+ *  @brief enable/disable 11AX
+ *
+ *  @param pmpriv   A pointer to mlan_private structure
+ *  @param action   MLAN_ACT_DISABLE or MLAN_ACT_ENABLE
+ *  @param band     band config
+ *
+ *  @return         0--success, otherwise failure
+ */
+int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEEtypes_HECap_t *hecap_ie)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    int ret                 = 0;
+    mlan_ds_11ax_he_cfg he_cfg;
+
+    ENTER();
+    if ((band == BAND_CONFIG_5GHZ && !(pmadapter->fw_bands & BAND_AAX)) ||
+        ((band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL) && !(pmadapter->fw_bands & BAND_GAX)))
+    {
+        PRINTM(MERROR, "fw doesn't support 11ax\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+    memset(&he_cfg, 0, sizeof(he_cfg));
+    if (band == BAND_CONFIG_5GHZ)
+    {
+        he_cfg.band = MBIT(1);
+        (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_he_cap, pmadapter->hw_hecap_len);
+    }
+    else if (band == BAND_CONFIG_ACS_MODE || band == BAND_CONFIG_MANUAL)
+    {
+        he_cfg.band = MBIT(0);
+        (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
+    }
+    else
+    {
+        PRINTM(MERROR, "Invalid band!\n");
+        ret = -WM_E_INVAL;
+        goto done;
+    }
+#ifdef RW610
+    he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
+#if 0
+    if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
+    {
+        PRINTM(MERROR, "Fail to get 11ax cfg!\n");
+        ret = -WM_FAIL;
+        goto done;
+    }
+#endif
+    if (hecap_ie)
+    {
+        DBG_HEXDUMP(MCMD_D, "hecap_ie", (t_u8 *)hecap_ie, hecap_ie->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        he_cfg.he_cap.id  = hecap_ie->ieee_hdr.element_id;
+        he_cfg.he_cap.len = hecap_ie->ieee_hdr.len;
+        memcpy(&he_cfg.he_cap.ext_id, &hecap_ie->ext_id, he_cfg.he_cap.len);
+    }
+
+    if (action == MLAN_ACT_DISABLE)
+    {
+        if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
+            memset(he_cfg.he_cap.he_txrx_mcs_support, 0xff, sizeof(he_cfg.he_cap.he_txrx_mcs_support));
+        else
+        {
+            PRINTM(MCMND, "11ax already disabled\n");
+            goto done;
+        }
+    }
+    DBG_HEXDUMP(MCMD_D, "HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+    ret = wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_SET, &he_cfg);
+done:
+    LEAVE();
+    return ret;
+}
+#endif /* CONFIG_11AX */
 
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 {
@@ -2851,6 +3314,10 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     t_u8 vht20_40                   = MFALSE;
     IEEEtypes_VHTCap_t *vhtcap_ie   = NULL;
     IEEEtypes_VHTOprat_t *vhtopr_ie = NULL;
+#endif
+#ifdef CONFIG_11AX
+    IEEEtypes_HECap_t *hecap_ie = NULL;
+    t_u8 enable_11ax            = MFALSE;
 #endif
     Band_Config_t bandcfg;
     t_u8 ap_mfpc = 1, ap_mfpr = 1;
@@ -2991,6 +3458,12 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             }
         }
 #endif
+#ifdef CONFIG_11AX
+        if (params->chan.he_enabled == 1)
+        {
+            enable_11ax = wifi_check_11ax_capability(priv, bandcfg.chanBand);
+        }
+#endif
 
         /* Disable GreenField by default */
         sys_config->ht_cap_info = 0x10c;
@@ -3085,6 +3558,15 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
         {
             wifi_uap_set_11ac_status2(priv, MLAN_ACT_DISABLE, vht20_40, NULL);
         }
+#endif
+#ifdef CONFIG_11AX
+        if (enable_11ax && enable_11n)
+        {
+            hecap_ie = (IEEEtypes_HECap_t *)wifi_parse_ext_ie_tlv(ie, ie_len, HE_CAPABILITY);
+            wifi_uap_set_11ax_status2(priv, MLAN_ACT_ENABLE, bandcfg.chanBand, hecap_ie);
+        }
+        else
+            wifi_uap_set_11ax_status2(priv, MLAN_ACT_DISABLE, bandcfg.chanBand, NULL);
 #endif
 
         if (params->ap_max_inactivity)
@@ -3333,6 +3815,9 @@ int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band)
     *vht_capab = pmadapter->usr_dot_11ac_dev_cap_a;
 
     *vht_capab &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+#ifdef RW610
+    *vht_capab &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
+#endif
 
     if ((GET_VHTCAP_MAXMPDULEN(*vht_capab)) != 0U)
     {
@@ -3366,6 +3851,319 @@ t_u32 wifi_get_default_vht_capab()
 }
 #endif
 
+#ifdef CONFIG_11AX
+/*
+===============
+11AX CAP for uAP
+===============
+Note: bits not mentioned below are set to 0.
+
+5G
+===
+HE MAC Cap:
+Bit0:  1  (+HTC HE Support)
+Bit25: 1  (OM Control Support. But uAP does not support
+           Tx OM received from the STA, as it does not support UL OFDMA)
+
+HE PHY Cap:
+Bit1-7: 0x2 (Supported Channel Width Set.
+             Note it would be changed after 80+80 MHz is supported)
+Bit8-11: 0x3 (Punctured Preamble Rx.
+              Note: it would be changed after 80+80 MHz is supported)
+Bit12: 0x0 (Device Class)
+Bit13: 0x1 (LDPC coding in Payload)
+Bit17: 0x1 (NDP with 4xHE-LTF+3.2usGI)
+Bit18: 0x1 (STBC Tx <= 80 MHz)
+Bit19: 0x1 (STBC Rx <= 80 MHz)
+Bit20: 0x1 (Doppler Tx)
+Bit21: 0x1 (Doppler Rx)
+Bit27-28: 0x1 (DCM Max Constellation Rx)
+Bit31: 0x1 (SU Beamformer)
+Bit32: 0x1 (SU BeamFormee)
+Bit34-36: 0x7 (Beamformee STS <= 80 MHz)
+Bit40-42: 0x1 (Number of Sounding Dimentions <= 80 MHz)
+Bit53: 0x1 (Partial Bandwidth Extended Range)
+Bit55: 0x1 (PPE Threshold Present.
+            Note: PPE threshold may have some changes later)
+Bit58: 0x1 (HE SU PPDU and HE MU PPDU with 4xHE-LTF+0.8usGI)
+Bit59-61: 0x1 (Max Nc)
+Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
+*/
+
+#define UAP_HE_MAC_CAP0_MASK  0x00
+#define UAP_HE_MAC_CAP1_MASK  0x00
+#define UAP_HE_MAC_CAP2_MASK  0x00
+#define UAP_HE_MAC_CAP3_MASK  0x02
+#define UAP_HE_MAC_CAP4_MASK  0x00
+#define UAP_HE_MAC_CAP5_MASK  0x00
+#define UAP_HE_PHY_CAP0_MASK  0x04
+#define UAP_HE_PHY_CAP1_MASK  0x23
+#define UAP_HE_PHY_CAP2_MASK  0x3E
+#define UAP_HE_PHY_CAP3_MASK  0x88
+#define UAP_HE_PHY_CAP4_MASK  0x1D
+#define UAP_HE_PHY_CAP5_MASK  0x01
+#define UAP_HE_PHY_CAP6_MASK  0xA0
+#define UAP_HE_PHY_CAP7_MASK  0x0C
+#define UAP_HE_PHY_CAP8_MASK  0x00
+#define UAP_HE_PHY_CAP9_MASK  0x08
+#define UAP_HE_PHY_CAP10_MASK 0x00
+
+/*
+2G
+===
+HE MAC Cap:
+Bit0:   1  (+HTC HE Support)
+Bit25: 1  (OM Control Support. Note: uAP does not support
+        Tx OM received from the STA, as it does not support UL OFDMA)
+
+HE PHY Cap:
+Bit1-7: 0x1 (Supported Channel Width Set)
+Bit8-11: 0x0 (Punctured Preamble Rx)
+Bit12: 0x0 (Device Class)
+Bit13: 0x1 (LDPC coding in Payload)
+Bit17: 0x1 (NDP with 4xLTF+3.2usGI)
+Bit18: 0x1 (STBC Tx <= 80 MHz)
+Bit19: 0x1 (STBC Rx <= 80 MHz)
+Bit20: 0x1 (Doppler Tx)
+Bit21: 0x1 (Doppler Rx)
+Bit27-28: 0x1 (DCM Max Constellation Rx)
+Bit31: 0x1 (SU Beamformer)
+Bit32: 0x1 (SU BeamFormee)
+Bit34-36: 0x7 (Beamformee STS <= 80 MHz)
+Bit40-42: 0x1 (Number of Sounding Dimentions <= 80 MHz)
+Bit53: 0x1 (Partial Bandwidth Extended Range)
+Bit55: 0x1 (PPE Threshold Present.
+            Note: PPE threshold may have some changes later)
+Bit58: 0x1 (HE SU PPDU and HE MU PPDU with 4xHE-LTF+0.8usGI)
+Bit59-61: 0x1 (Max Nc)
+Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
+*/
+#define UAP_HE_2G_MAC_CAP0_MASK  0x00
+#define UAP_HE_2G_MAC_CAP1_MASK  0x00
+#define UAP_HE_2G_MAC_CAP2_MASK  0x00
+#define UAP_HE_2G_MAC_CAP3_MASK  0x02
+#define UAP_HE_2G_MAC_CAP4_MASK  0x00
+#define UAP_HE_2G_MAC_CAP5_MASK  0x00
+#define UAP_HE_2G_PHY_CAP0_MASK  0x02
+#define UAP_HE_2G_PHY_CAP1_MASK  0x20
+#define UAP_HE_2G_PHY_CAP2_MASK  0x3E
+#define UAP_HE_2G_PHY_CAP3_MASK  0x88
+#define UAP_HE_2G_PHY_CAP4_MASK  0x1D
+#define UAP_HE_2G_PHY_CAP5_MASK  0x01
+#define UAP_HE_2G_PHY_CAP6_MASK  0xA0
+#define UAP_HE_2G_PHY_CAP7_MASK  0x0C
+#define UAP_HE_2G_PHY_CAP8_MASK  0x00
+#define UAP_HE_2G_PHY_CAP9_MASK  0x08
+#define UAP_HE_2G_PHY_CAP10_MASK 0x00
+
+/**
+ *  @brief update 11ax ie for AP mode *
+ *  @param band     channel band
+ *  @hecap_ie       a pointer to mlan_ds_11ax_he_capa
+ *
+ *  @return         0--success, otherwise failure
+ */
+static void wifi_uap_update_11ax_ie(t_u8 band, mlan_ds_11ax_he_capa *hecap_ie)
+{
+    if (band == BAND_5GHZ
+#ifdef ENABLE_802_116E
+        || band == BAND_6GHZ
+#endif
+    )
+    {
+        hecap_ie->he_mac_cap[0] &= UAP_HE_MAC_CAP0_MASK;
+        hecap_ie->he_mac_cap[1] &= UAP_HE_MAC_CAP1_MASK;
+        hecap_ie->he_mac_cap[2] &= UAP_HE_MAC_CAP2_MASK;
+        hecap_ie->he_mac_cap[3] &= UAP_HE_MAC_CAP3_MASK;
+        hecap_ie->he_mac_cap[4] &= UAP_HE_MAC_CAP4_MASK;
+        hecap_ie->he_mac_cap[5] &= UAP_HE_MAC_CAP5_MASK;
+        hecap_ie->he_phy_cap[0] &= UAP_HE_PHY_CAP0_MASK;
+        hecap_ie->he_phy_cap[1] &= UAP_HE_PHY_CAP1_MASK;
+        hecap_ie->he_phy_cap[2] &= UAP_HE_PHY_CAP2_MASK;
+        hecap_ie->he_phy_cap[3] &= UAP_HE_PHY_CAP3_MASK;
+        hecap_ie->he_phy_cap[4] &= UAP_HE_PHY_CAP4_MASK;
+        hecap_ie->he_phy_cap[5] &= UAP_HE_PHY_CAP5_MASK;
+        hecap_ie->he_phy_cap[6] &= UAP_HE_PHY_CAP6_MASK;
+        hecap_ie->he_phy_cap[7] &= UAP_HE_PHY_CAP7_MASK;
+        hecap_ie->he_phy_cap[8] &= UAP_HE_PHY_CAP8_MASK;
+        hecap_ie->he_phy_cap[9] &= UAP_HE_PHY_CAP9_MASK;
+        hecap_ie->he_phy_cap[10] &= UAP_HE_PHY_CAP10_MASK;
+    }
+    else
+    {
+        hecap_ie->he_mac_cap[0] &= UAP_HE_2G_MAC_CAP0_MASK;
+        hecap_ie->he_mac_cap[1] &= UAP_HE_2G_MAC_CAP1_MASK;
+        hecap_ie->he_mac_cap[2] &= UAP_HE_2G_MAC_CAP2_MASK;
+        hecap_ie->he_mac_cap[3] &= UAP_HE_2G_MAC_CAP3_MASK;
+        hecap_ie->he_mac_cap[4] &= UAP_HE_2G_MAC_CAP4_MASK;
+        hecap_ie->he_mac_cap[5] &= UAP_HE_2G_MAC_CAP5_MASK;
+        hecap_ie->he_phy_cap[0] &= UAP_HE_2G_PHY_CAP0_MASK;
+        hecap_ie->he_phy_cap[1] &= UAP_HE_2G_PHY_CAP1_MASK;
+        hecap_ie->he_phy_cap[2] &= UAP_HE_2G_PHY_CAP2_MASK;
+        hecap_ie->he_phy_cap[3] &= UAP_HE_2G_PHY_CAP3_MASK;
+        hecap_ie->he_phy_cap[4] &= UAP_HE_2G_PHY_CAP4_MASK;
+        hecap_ie->he_phy_cap[5] &= UAP_HE_2G_PHY_CAP5_MASK;
+        hecap_ie->he_phy_cap[6] &= UAP_HE_2G_PHY_CAP6_MASK;
+        hecap_ie->he_phy_cap[7] &= UAP_HE_2G_PHY_CAP7_MASK;
+        hecap_ie->he_phy_cap[8] &= UAP_HE_2G_PHY_CAP8_MASK;
+        hecap_ie->he_phy_cap[9] &= UAP_HE_2G_PHY_CAP9_MASK;
+        hecap_ie->he_phy_cap[10] &= UAP_HE_2G_PHY_CAP10_MASK;
+    }
+    return;
+}
+
+#if 1
+/**
+ *  @brief Sets up the CFG802.11 specific HE capability fields *  with default
+ * values
+ *
+ *  @param priv         A pointer to moal private structure
+ *  @param iftype_data  A pointer to ieee80211_sband_iftype_data structure
+ *
+ *  @return             N/A
+ */
+int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band)
+{
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
+
+    mlan_fw_info fw_info;
+    t_u8 extra_mcs_size           = 0;
+    int ppe_threshold_len         = 0;
+    mlan_ds_11ax_he_capa *phe_cap = NULL;
+    t_u8 hw_hecap_len             = 0;
+
+    memset(&fw_info, 0, sizeof(mlan_fw_info));
+
+    wifi_request_get_fw_info(priv, &fw_info);
+
+#ifdef CONFIG_5GHz_SUPPORT
+    if (band == BAND_5GHZ)
+    {
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        hw_hecap_len = fw_info.hw_hecap_len;
+        wifi_uap_update_11ax_ie(BAND_5GHZ, phe_cap);
+    }
+    else
+#endif
+#ifdef ENABLE_802_116E
+        if (band == BAND_6GHZ)
+    {
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        hw_hecap_len = fw_info.hw_hecap_len;
+        wifi_uap_update_11ax_ie(BAND_6GHZ, phe_cap);
+    }
+    else
+#endif
+    {
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
+        hw_hecap_len = fw_info.hw_2g_hecap_len;
+        wifi_uap_update_11ax_ie(BAND_2GHZ, phe_cap);
+    }
+
+    if (!hw_hecap_len)
+        return -WM_FAIL;
+
+    he_cap->he_supported = 1;
+    (void)__memcpy(priv, he_cap->mac_cap, phe_cap->he_mac_cap, sizeof(phe_cap->he_mac_cap));
+    (void)__memcpy(priv, he_cap->phy_cap, phe_cap->he_phy_cap, sizeof(phe_cap->he_phy_cap));
+    memset(&he_cap->mcs, 0xff, WIFI_HE_MAX_MCS_CAPAB_SIZE);
+    (void)__memcpy(priv, &he_cap->mcs, phe_cap->he_txrx_mcs_support, sizeof(phe_cap->he_txrx_mcs_support));
+
+    // Support 160Mhz
+    if (phe_cap->he_phy_cap[0] & MBIT(3))
+        extra_mcs_size += 4;
+
+    // Support 80+80
+    if (phe_cap->he_phy_cap[0] & MBIT(4))
+        extra_mcs_size += 4;
+    if (extra_mcs_size)
+        (void)__memcpy(priv, (t_u8 *)&he_cap->mcs + sizeof(phe_cap->he_txrx_mcs_support), phe_cap->val, extra_mcs_size);
+
+#define HE_CAP_FIX_SIZE 22
+    // Support PPE threshold
+    ppe_threshold_len = phe_cap->len - HE_CAP_FIX_SIZE - extra_mcs_size;
+    if (phe_cap->he_phy_cap[6] & MBIT(7) && ppe_threshold_len)
+    {
+        (void)__memcpy(priv, he_cap->ppet, &phe_cap->val[extra_mcs_size], ppe_threshold_len);
+    }
+    else
+    {
+        he_cap->phy_cap[6] &= ~MBIT(7);
+        wifi_d("Clear PPE threshold 0x%x\r\n", he_cap->phy_cap[7]);
+    }
+#ifdef ENABLE_802_116E
+    if (band->band == BAND_6GHZ)
+        iftype_data->he_6ghz_capa.capa = fw_info.hw_he_6g_cap;
+#endif
+    LEAVE();
+
+    return WM_SUCCESS;
+}
+#else
+/**
+ *  @brief setup uap he_cap based on FW he_cap
+ *
+ *  @param priv         A pointer to moal private structure
+ *  @param wait_option  wait_option
+ *
+ *  @return             N/A
+ */
+void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
+{
+    mlan_ds_11ax_he_capa *phe_cap = NULL;
+    mlan_ds_11ax_he_cfg he_cfg;
+    t_u8 hw_hecap_len;
+    mlan_fw_info fw_info;
+#ifdef UAP_SUPPORT
+    int ret = 0;
+#endif
+
+    woal_request_get_fw_info(priv, MOAL_IOCTL_WAIT, &fw_info);
+
+    // Enable 2G 11AX on UAP
+    if (fw_info.fw_bands & BAND_GAX)
+    {
+        memset(&he_cfg, 0, sizeof(he_cfg));
+        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
+        hw_hecap_len = fw_info.hw_2g_hecap_len;
+        if (hw_hecap_len)
+        {
+            woal_uap_update_11ax_ie(BAND_2GHZ, phe_cap);
+            he_cfg.band = MBIT(0);
+            moal_memcpy_ext(priv->phandle, &he_cfg.he_cap, phe_cap, hw_hecap_len, sizeof(mlan_ds_11ax_he_capa));
+            DBG_HEXDUMP(MCMD_D, "2G HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+#ifdef UAP_SUPPORT
+            ret = woal_11ax_cfg(priv, MLAN_ACT_SET, &he_cfg, wait_option);
+            if (ret)
+                PRINTM(MERROR, "Fail to set 2G HE CAP\n");
+#endif
+        }
+    }
+#ifdef ENABLE_802_11A
+    // Enable 5G 11AX on UAP
+    if (fw_info.fw_bands & BAND_AAX)
+    {
+        memset(&he_cfg, 0, sizeof(he_cfg));
+        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        hw_hecap_len = fw_info.hw_hecap_len;
+        if (hw_hecap_len)
+        {
+            woal_uap_update_11ax_ie(BAND_5GHZ, phe_cap);
+            he_cfg.band = MBIT(1);
+            moal_memcpy_ext(priv->phandle, &he_cfg.he_cap, phe_cap, hw_hecap_len, sizeof(mlan_ds_11ax_he_capa));
+            DBG_HEXDUMP(MCMD_D, "5G HE_CFG ", (t_u8 *)&he_cfg, sizeof(he_cfg));
+#ifdef UAP_SUPPORT
+            ret = woal_11ax_cfg(priv, MLAN_ACT_SET, &he_cfg, wait_option);
+            if (ret)
+                PRINTM(MERROR, "Fail to set 5G HE CAP\n");
+#endif
+        }
+    }
+#endif
+    return;
+}
+#endif
+#endif
 
 /**
  *  @brief Set/Get sta information parameters
@@ -3417,6 +4215,9 @@ int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
     t_u8 qosinfo;
     MrvlIEtypes_Data_t *tlv;
     t_u32 req_len = 0;
+#ifdef CONFIG_11AX
+    MrvlExtIEtypes_Data_t *ext_tlv;
+#endif
 
     ENTER();
 
@@ -3440,6 +4241,10 @@ int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
         req_len += sizeof(MrvlIEtypesHeader_t) + sizeof(ieee80211_vht_capab_t);
 #endif
 
+#ifdef CONFIG_11AX
+    if (params->he_capab_len)
+        req_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+#endif
 
     sta_info = os_mem_alloc(req_len);
     if (!sta_info)
@@ -3515,6 +4320,19 @@ int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
         memcpy(tlv->data, &params->vht_capab, tlv->header.len);
         pos += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
         sta_info->tlv_len += sizeof(MrvlIEtypesHeader_t) + tlv->header.len;
+        tlv = (MrvlIEtypes_Data_t *)pos;
+    }
+#endif
+#ifdef CONFIG_11AX
+    if (params->he_capab_len)
+    {
+        ext_tlv                = (MrvlExtIEtypes_Data_t *)pos;
+        ext_tlv->header.type   = EXTENSION;
+        ext_tlv->header.len    = params->he_capab_len + sizeof(u8);
+        ext_tlv->header.ext_id = HE_CAPABILITY;
+        memcpy(ext_tlv->data, (u8 *)&params->he_capab, params->he_capab_len);
+        pos += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
+        sta_info->tlv_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
         tlv = (MrvlIEtypes_Data_t *)pos;
     }
 #endif

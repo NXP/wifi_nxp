@@ -30,8 +30,13 @@
 #include "mlan_11n.h"
 #include "mlan_11h.h"
 #include "mlan_11ac.h"
+#ifdef CONFIG_11AX
+#include "mlan_11ax.h"
+#endif
 #include "mlan_11n_aggr.h"
+#ifndef RW610
 #include "mlan_sdio.h"
+#endif
 #include "mlan_11n_rxreorder.h"
 #include "mlan_meas.h"
 #include "mlan_uap.h"
@@ -143,14 +148,30 @@
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
 
+#ifdef CONFIG_WPS2
+extern int wps_session_attempt;
+#endif
 
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
 extern os_rw_lock_t sleep_rwlock;
+#else
+extern os_rw_lock_t ps_rwlock;
+#endif
 
+#ifdef CONFIG_WMM_UAPSD
+extern os_semaphore_t uapsd_sem;
+#endif
 
+#ifdef CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
+#endif
 #ifdef DUMP_PACKET_MAC
 void dump_mac_addr(const char *msg, unsigned char *addr);
 #endif /* DUMP_PACKET_MAC */
+#ifdef DEBUG_11N_ASSOC
+void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
+void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);
+#endif /* DEBUG_11N_ASSOC */
 mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
                                       IN t_u16 cmd_no,
                                       IN t_u16 cmd_action,
@@ -184,6 +205,41 @@ void wlan_scan_process_results(IN mlan_private *pmpriv);
 
 bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, unsigned element_len);
 
+#ifdef CONFIG_WPA2_ENTP
+bool wifi_get_scan_enable_wpa2_enterprise_ap_only();
+
+static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry,
+                                                              IEEEtypes_ElementId_e element_id)
+{
+    if (element_id == RSN_IE)
+    {
+        if ((wifi_get_scan_enable_wpa2_enterprise_ap_only()) &&
+            (!check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
+                                     pbss_entry->rsn_ie_buff_len - 10)))
+        {
+            return MLAN_STATUS_RESOURCE;
+        }
+        else
+        {
+            check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
+                                   pbss_entry->rsn_ie_buff_len - 10);
+        }
+    }
+    else if (element_id == VENDOR_SPECIFIC_221)
+    {
+        if (wifi_get_scan_enable_wpa2_enterprise_ap_only())
+            return MLAN_STATUS_RESOURCE;
+    }
+    else if (!element_id)
+    {
+        if ((wifi_get_scan_enable_wpa2_enterprise_ap_only()) && (pbss_entry->privacy != Wlan802_11PrivFilter8021xWEP) &&
+            (!pbss_entry->pwpa_ie) && (!pbss_entry->prsn_ie))
+            return MLAN_STATUS_RESOURCE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+#else
 static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry,
                                                               IEEEtypes_ElementId_e element_id)
 {
@@ -194,9 +250,12 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
     }
     return MLAN_STATUS_SUCCESS;
 }
+#endif
+#ifdef CONFIG_BG_SCAN
 int wifi_request_bgscan_query(mlan_private *pmpriv);
 int wifi_send_scan_query(void);
 void wifi_get_band(mlan_private *pmpriv, int *band);
+#endif
 
 int wifi_send_hostcmd(
     const void *cmd_buf, uint32_t cmd_buf_len, void *resp_buf, uint32_t resp_buf_len, uint32_t *reqd_resp_len);
@@ -232,6 +291,9 @@ int wifi_send_add_wpa3_password(int mode, char *ssid, char *password, unsigned i
 int wifi_send_add_wpa_pmk(int mode, char *ssid, char *bssid, char *pmk, unsigned int len);
 bool wifi_11d_is_channel_allowed(int channel);
 
+#ifdef CONFIG_11AX
+void wifi_request_get_fw_info(mlan_private *priv, mlan_fw_info *fw_info);
+#endif
 
 /**
  * Get the string representation of the wlan firmware extended version.
@@ -295,7 +357,12 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
+#ifdef SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
+#endif
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
 int wifi_stop_smart_mode(void);
@@ -314,6 +381,9 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
 void wifi_set_curr_bss_channel(uint8_t channel);
 int wifi_get_chanlist(wifi_chanlist_t *chanlist);
+#if defined(CONFIG_IPS)
+int wifi_set_ips_config(mlan_bss_type interface, int option);
+#endif
 #ifdef CONFIG_WIFI_EU_CRYPTO
 int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec);
 #endif
@@ -376,6 +446,9 @@ int wrapper_bssdesc_second_set(int bss_index,
 #ifdef CONFIG_11AC
                                bool *pvhtcap_ie_present,
 #endif
+#ifdef CONFIG_11AX
+                               bool *phecap_ie_present,
+#endif
                                bool *wmm_ie_present,
                                uint16_t *band,
                                bool *wps_IE_exist,
@@ -404,7 +477,9 @@ int wifi_get_mgmt_ie2(mlan_bss_type bss_type, void *buf, unsigned int *buf_len);
 int wifi_set_mgmt_ie2(mlan_bss_type bss_type, unsigned short mask, void *buf, unsigned int buf_len);
 int wifi_clear_mgmt_ie2(mlan_bss_type bss_type, int mgmt_bitmap_index);
 
+#ifdef CONFIG_BG_SCAN
 int wifi_request_bgscan(mlan_private *pmpriv);
+#endif
 
 #ifdef CONFIG_WPA_SUPP
 int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params);
@@ -412,8 +487,43 @@ int wifi_send_stop_sched_scan_cmd(void);
 #endif
 int wifi_set_tol_time(const t_u32 tol_time);
 
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/*submit subscribe event cmd to firmware*/
+int wifi_subscribe_event_submit(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt);
 
+/*get subscribe event*/
+int wifi_get_subscribe_event(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt);
 
+/*disable specific subscribe event*/
+int wifi_clear_subscribe_event(mlan_private *pmpriv, int evt_bitmap);
+
+/*set subscribe event thresh_value and freq*/
+int wifi_set_threshold_rssi_low(mlan_private *pmpriv, unsigned int rssi_low, unsigned int freq);
+int wifi_set_threshold_rssi_high(mlan_private *pmpriv, unsigned int rssi_high, unsigned int freq);
+int wifi_set_threshold_snr_low(mlan_private *pmpriv, unsigned int snr_low, unsigned int freq);
+int wifi_set_threshold_snr_high(mlan_private *pmpriv, unsigned int snr_high, unsigned int freq);
+int wifi_set_threshold_max_fail(mlan_private *pmpriv, unsigned int max_fail, unsigned int freq);
+int wifi_set_threshold_beacon_miss(mlan_private *pmpriv, unsigned int beacon_miss, unsigned int freq);
+int wifi_set_threshold_data_rssi_low(mlan_private *pmpriv, unsigned int data_rssi_low, unsigned int freq);
+int wifi_set_threshold_data_rssi_high(mlan_private *pmpriv, unsigned int data_rssi_high, unsigned int freq);
+int wifi_set_threshold_data_snr_low(mlan_private *pmpriv, unsigned int data_snr_low, unsigned int freq);
+int wifi_set_threshold_data_snr_high(mlan_private *pmpriv, unsigned int data_snr_high, unsigned int freq);
+int wifi_set_threshold_link_quality(mlan_private *pmpriv,
+                                    unsigned int link_snr,
+                                    unsigned int link_snr_freq,
+                                    unsigned int link_rate,
+                                    unsigned int link_rate_freq,
+                                    unsigned int link_tx_latency,
+                                    unsigned int link_tx_lantency_freq);
+int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_beacon_lost, unsigned int freq);
+#endif
+
+#ifdef CONFIG_TSP
+int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
+#endif
+
+#ifdef CONFIG_TX_AMPDU_PROT_MODE
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
+#endif
 
 #endif /* __MLAN_API_H__ */
