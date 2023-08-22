@@ -2805,7 +2805,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             action_code = *(payload + sizeof(wlan_802_11_header) + 1);
             /*wpa_supplicant only deals with those action frame below*/
             if (category != IEEE_MGMT_ACTION_CATEGORY_WMM_TSPEC && category != IEEE_MGMT_ACTION_CATEGORY_FST &&
-                category != IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
+                category != IEEE_MGMT_ACTION_CATEGORY_PUBLIC && category != IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
                 category != IEEE_MGMT_ACTION_CATEGORY_PROTECTED_DUAL && category != IEEE_MGMT_ACTION_CATEGORY_QOS &&
                 category != IEEE_MGMT_ACTION_CATEGORY_FAST_BSS_TRANS &&
                 category != IEEE_MGMT_ACTION_CATEGORY_SA_QUERY && category != IEEE_MGMT_ACTION_CATEGORY_AV_STREAMING &&
