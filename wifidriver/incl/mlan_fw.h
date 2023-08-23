@@ -2039,12 +2039,12 @@ typedef MLAN_PACK_START struct _RxPD
     t_u64 reserved1;
 #ifdef CONFIG_TXPD_RXPD_V3
     t_u32 rx_info;
-#else  /* CONFIG_TXPD_RXPD_V3*/
+#else  /* CONFIG_TXPD_RXPD_V3 */
     /** band config */
     t_u8 band_config;
     /** chan number */
     t_u8 chan_num;
-#endif /* CONFIG_TXPD_RXPD_V3*/
+#endif /* CONFIG_TXPD_RXPD_V3 */
 #ifdef CONFIG_RSN_REPLAY_DETECTION
     /** PN number high 32 bits*/
     t_u32 hi_rx_count32;
