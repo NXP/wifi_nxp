@@ -1004,7 +1004,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 
 #endif
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /** TLV type : SCAN channel gap */
 #define TLV_TYPE_SCAN_CHANNEL_GAP              \
     (PROPRIETARY_TLV_BASE_ID + 0xc5) /* 0x01c5 \
@@ -2032,14 +2032,14 @@ typedef MLAN_PACK_START struct _RxPD
     t_u8 antenna;
     /** Reserved */
     t_u64 reserved1;
-#ifdef TXPD_RXPD_V3
+#ifdef CONFIG_TXPD_RXPD_V3
     t_u32 rx_info;
-#else  /* TXPD_RXPD_V3 */
+#else  /* CONFIG_TXPD_RXPD_V3*/
     /** band config */
     t_u8 band_config;
     /** chan number */
     t_u8 chan_num;
-#endif /* TXPD_RXPD_V3 */
+#endif /* CONFIG_TXPD_RXPD_V3*/
 #ifdef CONFIG_RSN_REPLAY_DETECTION
     /** PN number high 32 bits*/
     t_u32 hi_rx_count32;
@@ -2587,7 +2587,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_AuthType_t
     t_u16 auth_type;
 } MLAN_PACK_END MrvlIEtypes_AuthType_t;
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /** MrvlIEtypes_ScanChanGap_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_ScanChanGap_t
 {

@@ -5395,7 +5395,7 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
 void wlan_wmm_tx_stats_dump(int bss_type);
 #endif
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /**
  * Set scan channel gap.
  * \param[in] scan_chan_gap      Time gap to be used between two consecutive channels scan.

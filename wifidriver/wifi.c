@@ -86,7 +86,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
 
-#ifdef TXPD_RXPD_V3
+#ifdef CONFIG_TXPD_RXPD_V3
 #define RXPD_CHAN_MASK 0x3FE0
 #endif
 
@@ -2596,8 +2596,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     IEEE80211_MGMT *mgmt = MNULL;
 #endif
 #endif
-#ifdef RX_CHAN_INFO
-#ifdef TXPD_RXPD_V3
+#ifdef CONFIG_RX_CHAN_INFO
+#ifdef CONFIG_TXPD_RXPD_V3
     t_u8 band_config = (prx_pd->rx_info & 0x3); /* Bit[1:0] 0: HALCHANBAND_BG, 1:HALCHANBAND_A, 2: HALCHANBAND_6E */
     t_u8 chan_num    = (prx_pd->rx_info & RXPD_CHAN_MASK) >>
                     5; /* Bit[13: 5] Non zero channel number on which this packet is received */
@@ -2838,7 +2838,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #ifdef DOT1AS_SUPPORT
             if ((category == IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM) && (action_code == 0x1))
             {
-#ifdef TXPD_RXPD_V3
+#ifdef CONFIG_TXPD_RXPD_V3
                 prx_pd->toa_tod_tstamps = wlan_le64_to_cpu(prx_pd->toa_tod_tstamps);
                 tstamps.t3              = prx_pd->toa_tod_tstamps >> 32;
                 tstamps.t2              = (t_u32)prx_pd->toa_tod_tstamps;
@@ -2932,7 +2932,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
 		pevent->event_id = MLAN_EVENT_ID_DRV_MGMT_FRAME;
 		pevent->event_len = payload_len + sizeof(pevent->event_id);
-#ifdef RX_CHAN_INFO
+#ifdef CONFIG_RX_CHAN_INFO
 		pevent->event_buf[0] = band_config;
 		pevent->event_buf[1] = chan_num;
 #else
@@ -3059,7 +3059,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 memset(mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
                 mgmt_rx->frame.frame_len = payload_len;
                 memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
-#ifdef RX_CHAN_INFO
+#ifdef CONFIG_RX_CHAN_INFO
                 mgmt_rx->frame.freq = channel_to_frequency(chan_num, band_config);
 #endif
                 if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
@@ -3082,7 +3082,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
         if (mgmt_rx->frame.frame_len <= (int)sizeof(mgmt_rx->frame.frame))
         {
             memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
-#ifdef RX_CHAN_INFO
+#ifdef CONFIG_RX_CHAN_INFO
             mgmt_rx->frame.freq = channel_to_frequency(chan_num, band_config);
 #endif
             if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
@@ -4318,7 +4318,7 @@ void wifi_nxp_reset_scan_flag()
 
 int wifi_nxp_survey_res_get(void)
 {
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     mlan_private *pmpriv          = (mlan_private *)mlan_adap->priv[0];
     ChanStatistics_t *pchan_stats = NULL;
     mlan_scan_resp scan_resp;
@@ -4330,7 +4330,7 @@ int wifi_nxp_survey_res_get(void)
     ENTER();
     wifi_d("dump_survey");
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     memset(&scan_resp, 0, sizeof(scan_resp));
     wifi_get_scan_table(pmpriv, &scan_resp);
 

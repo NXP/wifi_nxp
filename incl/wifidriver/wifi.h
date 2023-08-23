@@ -35,7 +35,7 @@
 #define CONFIG_UAP_AMPDU_RX            1
 #define CONFIG_WIFIDRIVER_PS_LOCK      1
 #define CONFIG_WNM_PS                  1
-#define SCAN_CHANNEL_GAP               1
+#define CONFIG_SCAN_CHANNEL_GAP               1
 #define CONFIG_COMBO_SCAN              1
 #define CONFIG_BG_SCAN                 1
 #define CONFIG_HOST_MLME               1
@@ -1918,7 +1918,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
 #endif
                        const bool keep_previous_scan,

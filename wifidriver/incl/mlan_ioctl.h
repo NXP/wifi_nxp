@@ -318,7 +318,7 @@ typedef struct _mlan_ioctl_req
 /** Max active scan time for each channel in milliseconds  */
 #define MRVDRV_MAX_ACTIVE_SCAN_CHAN_TIME 500
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /** Max gap time between 2 scan in milliseconds  */
 #define MRVDRV_MAX_SCAN_CHAN_GAP_TIME 500
 #endif
@@ -343,7 +343,7 @@ typedef struct _wlan_get_scan_table_fixed
     t_u8 channel;
     /** RSSI for the received packet */
     t_u8 rssi;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** channel load */
     t_u8 chan_load;
 #endif
@@ -482,7 +482,7 @@ typedef struct _mlan_scan_resp
     t_u8 *pscan_table;
     /* Age in seconds */
     t_u32 age_in_secs;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** channel statstics */
     t_u8 *pchan_stats;
     /** Number of records in the chan_stats */
@@ -504,7 +504,7 @@ typedef struct _mlan_scan_cfg
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     /** Extended Scan */
     t_u32 ext_scan;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u32 scan_chan_gap;
 #endif

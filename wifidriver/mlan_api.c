@@ -1802,7 +1802,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
 #endif
                        const bool keep_previous_scan,
@@ -1927,7 +1927,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     {
         mlan_adap->active_scan_triggered = MTRUE;
     }
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     user_scan_cfg->scan_chan_gap = scan_chan_gap;
 #endif
     if (wm_wifi.g_user_scan_cfg != NULL)
@@ -3562,7 +3562,7 @@ void wifi_get_scan_table(mlan_private *pmpriv, mlan_scan_resp *pscan_resp)
     pscan_resp->pscan_table       = (t_u8 *)pmadapter->pscan_table;
     pscan_resp->num_in_scan_table = pmadapter->num_in_scan_table;
     pscan_resp->age_in_secs       = pmadapter->age_in_secs;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     pscan_resp->pchan_stats       = (t_u8 *)pmadapter->pchan_stats;
     pscan_resp->num_in_chan_stats = pmadapter->num_in_chan_stats;
 #endif

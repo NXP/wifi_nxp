@@ -222,7 +222,7 @@ bool wlan_is_manual = false;
 os_queue_t mon_thread_events;
 os_queue_pool_t mon_thread_events_queue_data;
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 #define SCAN_CHANNEL_GAP_VALUE 50U
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
 #endif
@@ -2120,7 +2120,7 @@ static void do_scan(struct wlan_network *network)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                  0,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                  scan_channel_gap,
 #endif
                                  false, false);
@@ -2135,20 +2135,20 @@ static void do_scan(struct wlan_network *network)
             chan_list[0].scan_time   = 120;
 #ifdef CONFIG_WLAN_BRIDGE
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, bridge_ssid, 1, chan_list, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
 #else
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
 #else
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 1, chan_list, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
@@ -2159,13 +2159,13 @@ static void do_scan(struct wlan_network *network)
         {
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
 #else
             ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, 0, NULL, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                      scan_channel_gap,
 #endif
                                      false, false);
@@ -2215,13 +2215,13 @@ static void do_hidden_scan(struct wlan_network *network, uint8_t num_channels, w
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
                              false, true);
 #else
     ret = wifi_send_scan_cmd((t_u8)type, bssid, ssid, NULL, num_channels, chan_list, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
                              false, true);
@@ -4350,7 +4350,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                              0,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                              scan_channel_gap,
 #endif
                              false, false);
@@ -4448,7 +4448,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
         wlan.ft_bss       = true;
         wlan.roam_reassoc = true;
         ret               = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0,
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                  scan_channel_gap,
 #endif
                                  false, false);
@@ -5880,7 +5880,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 #else
     ssid = wlan_scan_param->ssid;
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     if (is_uap_started() || is_sta_connected())
         wlan_scan_param->scan_chan_gap = scan_channel_gap;
     else
@@ -5901,7 +5901,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                  wlan_scan_param->scan_chan_gap,
 #endif
                                  false, false);
@@ -11532,7 +11532,7 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 
     (void)memcpy(&wlan.rrm_scan_cb_param, scan_cb_param, sizeof(wlan_rrm_scan_cb_param));
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     if (is_uap_started() || is_sta_connected())
         wlan_scan_param->scan_chan_gap = scan_channel_gap;
     else
@@ -11545,7 +11545,7 @@ void wlan_rrm_request_scan(wlan_scan_params_v2_t *wlan_scan_param, wlan_rrm_scan
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                  wlan_scan_param->rssi_threshold,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                  wlan_scan_param->scan_chan_gap,
 #endif
                                  false, false);
@@ -11574,7 +11574,7 @@ int wlan_11k_neighbor_req(void)
 }
 #endif
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 void wlan_set_scan_channel_gap(unsigned scan_chan_gap)
 {
     scan_channel_gap = (t_u16)scan_chan_gap;

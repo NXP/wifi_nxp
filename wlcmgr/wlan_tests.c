@@ -5814,7 +5814,7 @@ static void wlan_antcfg_get(int argc, char *argv[])
 }
 #endif
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 static void test_wlan_set_scan_channel_gap(int argc, char **argv)
 {
     unsigned scan_chan_gap;
@@ -9412,7 +9412,7 @@ static struct cli_command tests[] = {
     {"wlan-set-antcfg", "<ant mode> [evaluate_time]", wlan_antcfg_set},
     {"wlan-get-antcfg", NULL, wlan_antcfg_get},
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     {"wlan-scan-channel-gap", "<channel_gap_value>", test_wlan_set_scan_channel_gap},
 #endif
 #ifdef CONFIG_WMM

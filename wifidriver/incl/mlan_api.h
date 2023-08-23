@@ -365,7 +365,7 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                        const t_s16 rssi_threshold,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                        const t_u16 scan_chan_gap,
 #endif
                        const bool keep_previous_scan,

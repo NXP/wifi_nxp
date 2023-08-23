@@ -247,7 +247,7 @@ static t_u16 radio_type_to_band(t_u8 radio_type)
     return ret_band;
 }
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /**
  *  @brief This function will update the channel statistics from scan result
  *
@@ -1010,7 +1010,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     MrvlIEtypes_Extension_t *phe_cap;
     t_u16 len = 0;
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     MrvlIEtypes_ScanChanGap_t *pscan_gap_tlv;
 #endif
     ENTER();
@@ -1139,7 +1139,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     {
         *pmax_chan_per_scan = MRVDRV_CHANNELS_PER_SCAN_CMD;
     }
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     if (puser_scan_in)
     {
         if (puser_scan_in->scan_chan_gap)
@@ -2672,7 +2672,7 @@ static t_void wlan_restore_curr_bcn(IN mlan_private *pmpriv)
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /**
  *  @brief get the chan load from chan stats.
  *
@@ -2859,12 +2859,12 @@ static t_void wlan_update_chan_rssi(mlan_adapter *pmadapter)
                pmadapter->pscan_table[i].mac_address[2], pmadapter->pscan_table[i].mac_address[3],
                pmadapter->pscan_table[i].mac_address[4], pmadapter->pscan_table[i].mac_address[5],
                (t_s32)pmadapter->pscan_table[i].rssi, pmadapter->pscan_table[i].ssid.ssid);
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
         pmadapter->pscan_table[i].chan_load  = wlan_get_chan_load(pmadapter, pmadapter->pscan_table[i].channel);
         pmadapter->pscan_table[i].chan_noise = wlan_get_chan_noise(pmadapter, pmadapter->pscan_table[i].channel);
 #endif
     }
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     wlan_update_chan_rssi(pmadapter);
 #endif
     /*
@@ -3343,7 +3343,7 @@ t_s32 wlan_is_network_compatible(IN mlan_private *pmpriv, IN t_u32 index, IN mla
  */
 mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter)
 {
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     t_u8 i = 0;
 #endif
 
@@ -3357,7 +3357,7 @@ mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter)
     (void)__memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);
     pmadapter->pbcn_buf_end = pmadapter->bcn_buf;
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     for (i = 0; i < pmadapter->num_in_chan_stats; i++)
         pmadapter->pchan_stats[i].cca_scan_duration = 0;
     pmadapter->idx_chan_stats = 0;
@@ -3465,7 +3465,7 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
 #endif /* CONFIG_MLAN_WMSDK */
     }
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     pmadapter->idx_chan_stats = 0;
 #endif
 
@@ -3665,7 +3665,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 #endif
     /* t_u32 age_ts_usec; */
     t_u32 lowest_rssi_index = 0;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     MrvlIEtypes_ChannelStats_t *pchanstats_tlv = MNULL;
 #endif
     t_u8 null_ssid[MLAN_MAX_SSID_LENGTH] = {0};
@@ -3761,7 +3761,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 wscan_d("SCAN_RESP: CHANNEL BAND LIST TLV, len = %d", tlv_len);
                 pchan_band_tlv = (MrvlIEtypes_ChanBandListParamSet_t *)pcurrent_tlv;
                 break;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
             case TLV_TYPE_CHANNEL_STATS:
                 wscan_d("SCAN_RESP: CHANNEL STATS TLV, len = %d", tlv_len);
                 pchanstats_tlv = (MrvlIEtypes_ChannelStats_t *)pcurrent_tlv;
@@ -3777,7 +3777,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 
     } /* while */
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     if (pchanstats_tlv != MNULL)
     {
         wlan_update_chan_statistics(pmpriv, pchanstats_tlv);
@@ -4177,10 +4177,10 @@ mlan_status wlan_cmd_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMM
  */
 mlan_status wlan_ret_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf)
 {
-#if defined(SCAN_CHANNEL_GAP) || defined(EXT_SCAN_ENH)
+#if defined(CONFIG_SCAN_CHANNEL_GAP) || defined(EXT_SCAN_ENH)
     HostCmd_DS_802_11_SCAN_EXT *pext_scan_cmd = &(resp->params.ext_scan);
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     MrvlIEtypesHeader_t *tlv                  = MNULL;
     MrvlIEtypes_ChannelStats_t *tlv_chanstats = MNULL;
     t_u16 tlv_buf_left                        = 0;
@@ -4230,7 +4230,7 @@ mlan_status wlan_ret_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMM
         return MLAN_STATUS_SUCCESS;
     }
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     tlv          = (MrvlIEtypesHeader_t *)pext_scan_cmd->tlv_buffer;
     tlv_buf_left = resp->size - (sizeof(HostCmd_DS_802_11_SCAN_EXT) - 1 + S_DS_GEN);
     while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))

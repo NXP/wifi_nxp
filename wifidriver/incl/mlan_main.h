@@ -2383,7 +2383,7 @@ struct _mlan_adapter
     /** WPA supplicant scan triggered */
     t_u8 wpa_supp_scan_triggered;
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** channel statstics */
     ChanStatistics_t *pchan_stats;
     /** Number of records in the chan_stats */

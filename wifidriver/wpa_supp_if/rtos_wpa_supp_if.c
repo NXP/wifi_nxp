@@ -699,7 +699,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
                                 params->filter_rssi,
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
                                 50U,
 #endif
                                 false, false);

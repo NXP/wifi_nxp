@@ -142,7 +142,7 @@ static t_void wlan_delete_bsspriotbl(pmlan_private priv)
  */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 {
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     int ret = -WM_FAIL;
     // fixme: this function will need during migration of legacy code.
     t_u8 chan_2g_size = 14;
@@ -155,7 +155,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 #endif
 #endif
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     t_u32 buf_size;
 #endif
 
@@ -192,7 +192,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
     pmadapter->pscan_table = BSS_List;
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     pmadapter->num_in_chan_stats = chan_2g_size;
 #ifdef CONFIG_5GHz_SUPPORT
     pmadapter->num_in_chan_stats += chan_5g_size;
@@ -206,7 +206,7 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
         LEAVE();
         return MLAN_STATUS_FAILURE;
     }
-#endif /* SCAN_CHANNEL_GAP */
+#endif /* CONFIG_SCAN_CHANNEL_GAP */
 
 #ifndef CONFIG_MLAN_WMSDK
     /* Allocate command buffer */
@@ -596,7 +596,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     pmadapter->ecsa_enable = MFALSE;
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     pmadapter->scan_chan_gap = 0;
 #endif
 
@@ -613,7 +613,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->rssi_threshold = 0;
 #endif
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     pmadapter->scan_chan_gap = 0;
 #endif
 
@@ -1101,7 +1101,7 @@ done:
  */
 t_void wlan_free_adapter(pmlan_adapter pmadapter)
 {
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     mlan_callbacks *pcb = (mlan_callbacks *)&pmadapter->callbacks;
 #endif
 
@@ -1114,7 +1114,7 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter)
         return;
     }
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     if (pmadapter->pchan_stats)
     {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->pchan_stats);

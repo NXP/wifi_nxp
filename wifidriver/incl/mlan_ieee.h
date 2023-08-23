@@ -1870,7 +1870,7 @@ typedef MLAN_PACK_START struct _wlan_user_scan_chan
     t_u32 scan_time;
 } MLAN_PACK_END wlan_user_scan_chan;
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
 /** channel statictics */
 typedef MLAN_PACK_START struct _ChanStatistics_t
 {
@@ -1948,7 +1948,7 @@ typedef MLAN_PACK_START struct
      *  Variable number (fixed maximum) of channels to scan up
      */
     wlan_user_scan_chan chan_list[WLAN_USER_SCAN_CHAN_MAX];
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif
@@ -2155,7 +2155,7 @@ typedef MLAN_PACK_START struct
     wlan_user_scan_ssid ssid_list[MRVDRV_MAX_SSID_LIST_LENGTH];
     /** Variable number (fixed maximum) of channels to scan up */
     wlan_user_scan_chan chan_list[WLAN_BG_SCAN_CHAN_MAX];
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif
@@ -2208,7 +2208,7 @@ typedef struct _BSSDescriptor_t
     /** Receive signal strength in dBm */
     t_s32 rssi;
 
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** channel load */
     t_u16 chan_load;
     /** channel load */

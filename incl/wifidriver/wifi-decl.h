@@ -1515,7 +1515,7 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** Threshold of rssi */
     t_s16 rssi_threshold;
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     /** scan channel gap */
     t_u16 scan_chan_gap;
 #endif
