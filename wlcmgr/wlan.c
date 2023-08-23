@@ -748,7 +748,9 @@ void wlan_dhcp_cleanup()
 {
     net_stop_dhcp_timer();
     net_interface_dhcp_stop(net_get_mlan_handle());
+#ifndef CONFIG_ZEPHYR
     net_interface_dhcp_cleanup(net_get_mlan_handle());
+#endif
 }
 
 static uint32_t wlan_map_to_wifi_wakeup_condtions(const uint32_t wlan_wakeup_condtions)

@@ -1711,7 +1711,6 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     t_u32 tx_blocks = 0, buflen = 0;
     uint32_t resp;
     int ret   = false;
-    int ret2;
     int retry = retry_attempts;
 #ifdef CONFIG_WMM_UAPSD
     bool last_packet = 0;
