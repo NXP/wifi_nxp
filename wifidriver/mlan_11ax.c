@@ -117,12 +117,14 @@ t_u8 wlan_check_11ax_twt_supported(mlan_private *pmpriv, BSSDescriptor_t *pbss_d
  *
  *  @return bytes added to the phe_cap
  */
-t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u8 band, MrvlIEtypes_Extension_t *phe_cap, t_u8 flag)
+
+t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u16 band, MrvlIEtypes_Extension_t *phe_cap, t_u8 flag)
 {
     t_u16 len = 0;
 
     if (!phe_cap)
         return 0;
+
     if (user_he_cap_band)
     {
         if (user_he_cap_band & MBIT(1))
@@ -138,7 +140,7 @@ t_u16 wlan_fill_he_cap_tlv(mlan_private *pmpriv, t_u8 band, MrvlIEtypes_Extensio
     }
     else
     {
-        if (band & (t_u8)BAND_AAX)
+        if (band & (t_u16)BAND_AAX)
         {
             (void)__memcpy(pmpriv->adapter, (t_u8 *)phe_cap, pmpriv->user_he_cap, pmpriv->user_hecap_len);
             len = pmpriv->user_hecap_len;

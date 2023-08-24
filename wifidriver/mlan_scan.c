@@ -1210,7 +1210,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     if (IS_FW_SUPPORT_11AX(pmadapter) && (pmpriv->config_bands & BAND_AAX))
     {
         phe_cap = (MrvlIEtypes_Extension_t *)ptlv_pos;
-        len     = wlan_fill_he_cap_tlv(pmpriv, BAND_A, phe_cap, MFALSE);
+        len     = wlan_fill_he_cap_tlv(pmpriv, pmpriv->config_bands, phe_cap, MFALSE);
         HEXDUMP("SCAN: HE_CAPABILITIES IE", (t_u8 *)phe_cap, len);
         ptlv_pos += len;
     }
