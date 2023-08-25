@@ -3304,6 +3304,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 #endif
     Band_Config_t bandcfg;
     t_u8 ap_mfpc = 1, ap_mfpr = 1;
+    wifi_scan_chan_list_t scan_chan_list;
 
     ENTER();
 
@@ -3313,6 +3314,8 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     {
         return -WM_FAIL;
     }
+
+    memset(&scan_chan_list, 0, sizeof(wifi_scan_chan_list_t));
 
     ie     = (const t_u8 *)params->tail_ie.ie;
     ie_len = params->tail_ie.ie_len;
@@ -3583,6 +3586,18 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             wuap_e("Set uAP mgmt ie failed");
             ret = -WM_FAIL;
             goto done;
+        }
+
+        if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
+        {
+            wuap_d("Downloading domain params");
+#ifdef CONFIG_5GHz_SUPPORT
+            if (sys_config->channel > MAX_CHANNELS_BG)
+                mlan_adap->region_code = mlan_adap->cfp_code_a;
+            else
+#endif
+                mlan_adap->region_code = mlan_adap->cfp_code_bg;
+            wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(sys_config->channel, scan_chan_list);
         }
 
         (void)wifi_uap_pmf_getset(HostCmd_ACT_GEN_SET, &ap_mfpc, &ap_mfpr);
