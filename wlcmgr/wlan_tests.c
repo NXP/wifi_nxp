@@ -4254,9 +4254,10 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 static u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
-/* Command taken from Robust_btc.conf*/
-static u8_t host_cmd_buf[] = {0xe0, 0,    0x18, 0, 0x29, 0, 0,    0, 0x01, 0,    0, 0,
-                              0x38, 0x02, 0x08, 0, 0x05, 0, 0x01, 0, 0x02, 0x01, 0, 0x01};
+/* Command taken from robust_btc.conf*/
+static u8_t host_cmd_buf[] = {0xe0, 0,    0x12, 0,    0x3c, 0,    0,    0,
+                              0x01, 0,    0,    0,    0x38, 0x02, 0x02, 0,
+                              0x07, 0x01};
 
 static void test_wlan_send_hostcmd(int argc, char **argv)
 {
