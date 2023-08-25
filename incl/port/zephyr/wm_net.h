@@ -20,6 +20,15 @@
 #include <wm_os.h>
 #include <wmtypes.h>
 
+typedef struct {
+    struct net_if *netif;
+    struct net_addr ipaddr;
+    struct net_addr nmask;
+    struct net_addr gw;
+    struct ethernetif state;
+    scan_result_cb_t scan_cb;
+} interface_t;
+
 static inline uint16_t pbuf_copy_partial(void *pkt, void *dst, uint16_t len, uint16_t offset)
 {
     int ret;
@@ -491,6 +500,7 @@ void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss
 void rx_mgmt_deregister_callback(void);
 #endif
 
+int low_level_output(const struct device *dev, struct net_pkt *pkt);
 const struct netif *net_if_get_binding(const char *ifname);
 const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif* iface);
 

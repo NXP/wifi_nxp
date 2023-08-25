@@ -107,18 +107,3 @@ int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen
 #ifdef CONFIG_NET_MONITOR
 void user_recv_monitor_data(const t_u8 *rcvdata);
 #endif
-
-/**
- * Helper struct to hold private data used to operate your ethernet interface.
- * Keeping the ethernet address of the MAC in this struct is not necessary
- * as it is already kept in the struct netif.
- * But this is only an example, anyway...
- */
-struct ethernetif
-{
-    struct net_eth_addr ethaddr;
-    /* Interface to bss type identification that tells the FW wherether
-       the data is for STA for UAP */
-    t_u8 interface;
-    /* Add whatever per-interface state that is needed here. */
-};
