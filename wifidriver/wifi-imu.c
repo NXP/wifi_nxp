@@ -1491,15 +1491,26 @@ void WL_MCI_WAKEUP_DONE0_DriverIRQHandler(void)
 
 void mlan_init_wakeup_irq()
 {
+#ifndef CONFIG_ZEPHYR
     /* Enable WLAN wakeup done interrupt */
     NVIC_SetPriority(WL_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
     NVIC_EnableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
+#else
+    /* Enable WLAN wakeup done interrupt */
+    IRQ_CONNECT(WL_MCI_WAKEUP_DONE0_IRQn, 1, WL_MCI_WAKEUP_DONE0_DriverIRQHandler, 0, 0);
+    irq_enable(WL_MCI_WAKEUP_DONE0_IRQn);
+#endif
 }
 
 void mlan_deinit_wakeup_irq()
 {
+#ifndef CONFIG_ZEPHYR
     NVIC_DisableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
     NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
+#else
+    irq_disable(WL_MCI_WAKEUP_DONE0_IRQn);
+    NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
+#endif
 }
 
 mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr, const size_t size)
