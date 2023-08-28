@@ -1499,17 +1499,12 @@ void mlan_init_wakeup_irq()
     /* Enable WLAN wakeup done interrupt */
     NVIC_SetPriority(WL_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
     NVIC_EnableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-    /* Enable BLE Wakeup done interrupt */
-    NVIC_SetPriority(BLE_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
-    NVIC_EnableIRQ(BLE_MCI_WAKEUP_DONE0_IRQn);
 }
 
 void mlan_deinit_wakeup_irq()
 {
     NVIC_DisableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
     NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-    NVIC_DisableIRQ(BLE_MCI_WAKEUP_DONE0_IRQn);
-    NVIC_ClearPendingIRQ(BLE_MCI_WAKEUP_DONE0_IRQn);
 }
 
 mlan_status imu_wifi_init(enum wlan_type type, const uint8_t *fw_ram_start_addr, const size_t size)

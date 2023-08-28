@@ -306,16 +306,13 @@ static int wlan_memrdwr_getset(int argc, char *argv[])
 }
 #endif
 
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
 static char *bw[]           = {"20 MHz", "40 MHz", "80 MHz", "160 MHz"};
 static char *rate_format[4] = {"LG", "HT", "VHT", "HE"};
 static char *lg_rate[]      = {"1 Mbps",  "2 Mbps",  "5.5 Mbps", "11 Mbps", "6 Mbps",  "9 Mbps",
                           "12 Mbps", "18 Mbps", "24 Mbps",  "36 Mbps", "48 Mbps", "54 Mbps"};
-#endif
 
 static void print_ds_rate(wlan_ds_rate ds_rate)
 {
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     if (ds_rate.sub_command == WIFI_DS_RATE_CFG)
     {
         (void)PRINTF("Tx Rate Configuration: \r\n");
@@ -544,7 +541,6 @@ static void print_ds_rate(wlan_ds_rate ds_rate)
     else
     { /* Do Nothing */
     }
-#endif
 }
 
 static void dump_wlan_set_txratecfg_usage(void)
