@@ -206,7 +206,7 @@ static t_u8 wifi_check_11ax_capability(mlan_private *pmpriv, t_u8 band)
  *
  *  @return         0--success, otherwise failure
  */
-int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
+int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band, t_u8 bandwidth)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int ret                 = 0;
@@ -230,6 +230,10 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band)
     {
         he_cfg.band = MBIT(0);
         (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
+        if (bandwidth == BANDWIDTH_20MHZ)
+        {
+            he_cfg.he_cap.he_phy_cap[0] &= ~(MBIT(1));
+        }
     }
     else
     {
@@ -701,11 +705,11 @@ static int wifi_cmd_uap_config(char *ssid,
 #ifdef CONFIG_11AX
     if (enable_11ax)
     {
-        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg);
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_ENABLE, bss.param.bss_config.band_cfg, bandwidth);
     }
     else
     {
-        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg);
+        wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg, bandwidth);
     }
 #endif
     bss.param.bss_config.ampdu_param = 0x03;
@@ -3200,7 +3204,7 @@ int wifi_uap_set_11ac_status2(mlan_private *priv, t_u8 action, t_u8 vht20_40, IE
  *
  *  @return         0--success, otherwise failure
  */
-int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEEtypes_HECap_t *hecap_ie)
+int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEEtypes_HECap_t *hecap_ie, t_u8 bandwidth)
 {
     mlan_adapter *pmadapter = pmpriv->adapter;
     int ret                 = 0;
@@ -3224,6 +3228,10 @@ int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEE
     {
         he_cfg.band = MBIT(0);
         (void)memcpy((void *)&he_cfg.he_cap, (const void *)pmadapter->hw_2g_he_cap, pmadapter->hw_2g_hecap_len);
+        if (bandwidth == BANDWIDTH_20MHZ)
+        {
+            he_cfg.he_cap.he_phy_cap[0] &= ~(MBIT(1));
+        }
     }
     else
     {
@@ -3252,6 +3260,10 @@ int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEE
         he_cfg.he_cap.id  = hecap_ie->ieee_hdr.element_id;
         he_cfg.he_cap.len = hecap_ie->ieee_hdr.len;
         memcpy(&he_cfg.he_cap.ext_id, &hecap_ie->ext_id, he_cfg.he_cap.len);
+        if ((band == BAND_2GHZ) && (bandwidth == BANDWIDTH_20MHZ))
+        {
+            he_cfg.he_cap.he_phy_cap[0] &= ~(MBIT(1));
+        }
     }
 
     if (action == MLAN_ACT_DISABLE)
@@ -3556,10 +3568,10 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
         if (enable_11ax && enable_11n)
         {
             hecap_ie = (IEEEtypes_HECap_t *)wifi_parse_ext_ie_tlv(ie, ie_len, HE_CAPABILITY);
-            wifi_uap_set_11ax_status2(priv, MLAN_ACT_ENABLE, bandcfg.chanBand, hecap_ie);
+            wifi_uap_set_11ax_status2(priv, MLAN_ACT_ENABLE, bandcfg.chanBand, hecap_ie, bandwidth);
         }
         else
-            wifi_uap_set_11ax_status2(priv, MLAN_ACT_DISABLE, bandcfg.chanBand, NULL);
+            wifi_uap_set_11ax_status2(priv, MLAN_ACT_DISABLE, bandcfg.chanBand, NULL, bandwidth);
 #endif
 
         if (params->ap_max_inactivity)
