@@ -2034,6 +2034,11 @@ static void wifi_core_deinit(void)
     }
 
 #ifdef CONFIG_WMM
+    if (wm_wifi.tx_data != NULL)
+    {
+        (void)os_queue_delete(&wm_wifi.tx_data);
+        wm_wifi.tx_data = NULL;
+    }
     wifi_wmm_buf_pool_deinit();
 #endif
 

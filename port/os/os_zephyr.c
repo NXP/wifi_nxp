@@ -76,10 +76,12 @@ int os_thread_create(os_thread_t *thandle,
         printk("OS: Thread Alloc fail name %s\r\n", name);
 	return -WM_FAIL;
     }
+
+    /* init semaphore before create thread to avoid restart thread getting semaphore unexpectedly */
+    k_sem_init(&thread->event, 0, 1);
     thread->id = k_thread_create(&stack->thread, stack->stack,
         stack->size, thread_wrapper, main_func, arg, thread, prio, 0, K_NO_WAIT);
     k_thread_name_set(thread->id, name);
-    k_sem_init(&thread->event, 0, 1);
 
     *thandle = thread;
     return WM_SUCCESS;
@@ -111,6 +113,11 @@ int os_thread_delete(os_thread_t *thandle)
 //struct k_mutex osa_malloc_heap_mutex;
 //static char osa_malloc_heap_mem[HEAP_BYTES];
 
+/*
+ *  Actual allocated memory size will be 8 bytes larger than required,
+ *  for Zephyr mem mgmt.
+ *  So Zephyr heap stats allocated size will increase 8 bytes more.
+ */
 void* os_mem_alloc(size_t size)
 {
 #if 0
@@ -1066,7 +1073,11 @@ void os_rwlock_write_unlock(os_rw_lock_t *lock)
 void os_rwlock_delete(os_rw_lock_t *lock)
 {
     lock->reader_cb = NULL;
-    (void)os_semaphore_delete(&(lock->rw_lock));
-    (void)os_mutex_delete(&(lock->reader_mutex));
+    if (lock->rw_lock)
+        (void)os_semaphore_delete(&(lock->rw_lock));
+    if (lock->reader_mutex)
+        (void)os_mutex_delete(&(lock->reader_mutex));
+    if (lock->write_mutex)
+        os_mutex_delete(&(lock->write_mutex));
     lock->reader_count = 0;
 }
