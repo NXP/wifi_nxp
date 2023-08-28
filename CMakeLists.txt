@@ -31,6 +31,7 @@ zephyr_include_directories(
     wifidriver
     wifidriver/incl
     wifi_bt_firmware
+    cli
 )
 
 # OS abstraction layer source
@@ -52,7 +53,6 @@ zephyr_library_sources(${DHCPD_SRC})
 zephyr_library_include_directories(dhcpd)
 
 # temporary shell source
-zephyr_library_include_directories(cli)
 zephyr_library_sources(cli/wifi_shell.c)
 zephyr_library_sources(cli/cli_utils.c)
 
@@ -85,8 +85,8 @@ zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
                      ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
-                     ${ZEPHYR_BASE}/modules/hal_nxp/imu/fsl_adapter_rfimu.c
-                     ${ZEPHYR_BASE}/modules/hal_nxp/imu/fsl_imu.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/components/rpmsg/fsl_adapter_rfimu.c
                      LOCATION RAM)
 
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)
