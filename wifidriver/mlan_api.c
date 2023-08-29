@@ -5177,27 +5177,6 @@ void wifi_set_sleep_period(uint16_t sleep_period)
 #endif
 
 #ifdef CONFIG_11AX
-int wifi_set_tol_time(const t_u32 tol_time)
-{
-    wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-    HostCmd_DS_11AX_CMD_CFG *axcmd = &cmd->params.axcmd;
-
-    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_11AX_CMD);
-    cmd->size    = sizeof(HostCmd_DS_11AX_CMD_CFG) + S_DS_GEN;
-
-    axcmd->action = wlan_cpu_to_le16(MLAN_ACT_SET);
-    axcmd->sub_id = wlan_cpu_to_le16(MLAN_11AXCMD_OBSS_TOLTIME_SUBID);
-
-    memcpy(axcmd->val, &tol_time, sizeof(t_u32));
-    cmd->size += sizeof(t_u32);
-
-    cmd->size = wlan_cpu_to_le16(cmd->size);
-
-    return wifi_wait_for_cmdresp(NULL);
-}
-
 #ifdef CONFIG_MMSF
 int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
 {

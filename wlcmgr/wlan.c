@@ -12664,20 +12664,7 @@ int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 swi
 }
 
 #endif
-
 #ifdef CONFIG_11AX
-int wlan_set_tol_time(const t_u32 tol_time)
-{
-    if (is_sta_connecting())
-    {
-        wlcm_d("Pls set OBSS Tolerance Time value before connecting to AP.\r\n");
-        return -WM_FAIL;
-    }
-
-    return wifi_set_tol_time(tol_time);
-}
-#endif
-
 #ifdef CONFIG_MMSF
 int wlan_set_mmsf(const t_u8 enable, const t_u8 Density, const t_u8 MMSF)
 {
@@ -12689,7 +12676,7 @@ int wlan_get_mmsf(t_u8 *enable, t_u8 *Density, t_u8 *MMSF)
     return wifi_mmsf_cfg(ACTION_GET, enable, Density, MMSF);
 }
 #endif
-
+#endif
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /**
  *  @brief This function subscribe event to firmware.

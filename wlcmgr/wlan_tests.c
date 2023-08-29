@@ -6000,51 +6000,6 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
 #endif /* CONFIG_ECSA */
 
 #ifdef CONFIG_11AX
-static void dump_wlan_set_tol_time_usage()
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("set OBSS Narrow Bandwidth RU Tolerance Time\r\n");
-    (void)PRINTF("Pls set toltime when sta is in disconnect state.\r\n");
-    (void)PRINTF("wlan-set-toltime value\r\n");
-    (void)PRINTF("value:\r\n");
-    (void)PRINTF("Valid range[1..3600]\r\n");
-}
-
-static void test_wlan_set_toltime(int argc, char **argv)
-{
-    unsigned int value;
-    int ret;
-    if (argc != 2)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_wlan_set_tol_time_usage();
-        return;
-    }
-
-    if (get_uint(argv[1], &value, strlen(argv[1])))
-    {
-        (void)PRINTF("Error: invalid option argument\r\n");
-        dump_wlan_set_tol_time_usage();
-        return;
-    }
-
-    if (value < 1 || value > 3600)
-    {
-        (void)PRINTF("Error: invalid tolerance time value\r\n");
-        dump_wlan_set_tol_time_usage();
-        return;
-    }
-
-    ret = wlan_set_tol_time(value);
-
-    if (ret != WM_SUCCESS)
-    {
-        (void)PRINTF("Error: Failed to set Tolerance Time.\r\n");
-        dump_wlan_set_tol_time_usage();
-        return;
-    }
-}
-
 #ifdef CONFIG_MMSF
 static void dump_wlan_set_mmsf_usage()
 {
@@ -9532,11 +9487,10 @@ static struct cli_command tests[] = {
     {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
 #endif
 #ifdef CONFIG_11AX
-    {"wlan-set-toltime", "<value>", test_wlan_set_toltime},
-#endif
 #ifdef CONFIG_MMSF
     {"wlan-set-mmsf", "<enable> <Density> <MMSF>", test_wlan_set_mmsf},
     {"wlan-get-mmsf", NULL, test_wlan_get_mmsf},
+#endif
 #endif
 #ifdef CONFIG_TURBO_MODE
     {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},

@@ -521,7 +521,6 @@ int wifi_request_bgscan(mlan_private *pmpriv);
 int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params);
 int wifi_send_stop_sched_scan_cmd(void);
 #endif
-int wifi_set_tol_time(const t_u32 tol_time);
 
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
 /*submit subscribe event cmd to firmware*/
