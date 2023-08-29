@@ -10066,7 +10066,7 @@ int wlan_ieeeps_off(void)
     else
     {
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        wlcm_e("ieee ps not enabled yet: %d", wlan.cm_ieeeps_configured);
+        wlcm_w("ieee ps not enabled yet: %d", wlan.cm_ieeeps_configured);
 #endif
         return WLAN_ERROR_STATE;
     }
@@ -10163,7 +10163,7 @@ int wlan_deepsleepps_off(void)
     else
     {
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        wlcm_e("deep sleep ps not enabled yet: %d", wlan.cm_deepsleepps_configured);
+        wlcm_w("deep sleep ps not enabled yet: %d", wlan.cm_deepsleepps_configured);
 #endif
         return WLAN_ERROR_STATE;
     }
