@@ -22,7 +22,7 @@
 #include "pvt_sd9098_wlan.h"
 #elif defined(SD9177)
 #if defined(CONFIG_UART_WIFI_BRIDGE)
-#include "sduart_nw61x_mfg.h"
+#include "sduart_nw61x_mfg_se.h"
 #else
 #include "sduart_nw61x_se.h"
 #endif
