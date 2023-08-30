@@ -2665,6 +2665,11 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
 
     wlan_set_txrx_histogram(&txrx_histogram, buf);
 
+    if (buf == NULL)
+    {
+        return;
+    }
+
     /*Make the pos pointer points to the size*/
     pos = (t_u8 *)buf;
     memcpy(&resp_value_size, pos, sizeof(resp_value_size));
