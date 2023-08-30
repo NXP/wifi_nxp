@@ -183,7 +183,13 @@ static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
         return NULL;
     }
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Reserve space for mlan_buffer */
+    pbuf_header(p, -(s16_t)(sizeof(mlan_buffer)));
+    if (pbuf_take(p, payload, datalen - sizeof(mlan_buffer)) != 0)
+#else
     if (pbuf_take(p, payload, datalen) != 0)
+#endif
     {
         (void)pbuf_free(p);
         p = NULL;
@@ -269,7 +275,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
 #ifdef CONFIG_TX_RX_ZERO_COPY
     u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
-    p                = gen_pbuf_from_data((t_u8 *)rcvdata, rxpd->rx_pkt_length + header_len);
+    payload_len = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
+    p = gen_pbuf_from_data((t_u8 *)rcvdata, payload_len);
 #else
     p = gen_pbuf_from_data(payload, payload_len);
 #endif
@@ -283,14 +290,13 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         return;
     }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
-    /* Skip interface header and RxPD */
-    pbuf_header(p, -(s16_t)header_len);
-#endif
-
 #ifndef CONFIG_WPA_SUPP
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+        /* Skip interface header */
+        pbuf_header(p, -(s16_t)(INTF_HEADER_LEN));
+#endif
         /* Bypass the management frame about Add Block Ack Request or Add Block Ack Response*/
         if (wlan_bypass_802dot11_mgmt_pkt(p->payload) == WM_SUCCESS)
         {
@@ -339,6 +345,13 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #endif
         return;
     }
+#endif
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Directly use rxpd from pbuf */
+    rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
+    /* Skip interface header and RxPD */
+    pbuf_header(p, -(s16_t)header_len);
 #endif
 
     /* points to packet payload, which starts with an Ethernet header */

@@ -305,9 +305,11 @@ static mlan_status wrapper_moal_recv_packet(IN t_void *pmoal_handle, IN pmlan_bu
 
     wm_wifi.deliver_packet_above_callback((void *)prx_pd, prx_pd->bss_type, pmbuf->lwip_pbuf);
 
+#ifndef CONFIG_TX_RX_ZERO_COPY
     /* Free RxPD */
     os_mem_free(pmbuf->pbuf);
     os_mem_free(pmbuf);
+#endif
     return MLAN_STATUS_SUCCESS;
 }
 
@@ -1075,6 +1077,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 {
     w_pkt_d("[recv]                  : %p T: %d L: %d", p, rxpd->rx_pkt_type, rxpd->rx_pkt_length);
 
+#ifndef CONFIG_TX_RX_ZERO_COPY
     /* fixme: Check if mlan buffer can be allocated from standard mlan
        function */
     pmlan_buffer pmbuf = os_mem_alloc(sizeof(mlan_buffer));
@@ -1086,7 +1089,9 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
         return -WM_FAIL;
     }
     (void)memset(pmbuf, 0x00, sizeof(mlan_buffer));
-
+#else
+    pmlan_buffer pmbuf = (pmlan_buffer)((t_u8 *)rxpd - INTF_HEADER_LEN - sizeof(mlan_buffer));
+#endif
     /** Buffer descriptor, e.g. skb in Linux */
     /* Note: We are storing payload member here. We need to unwind
        pointer when passing pbuf to lwip */
@@ -1104,6 +1109,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
     the code which assumes that there is ethernet packet after RxPD */
     /** Pointer to buffer */
     /* fixme: CHK this*/
+#ifndef CONFIG_TX_RX_ZERO_COPY
     pmbuf->pbuf = (t_u8 *)os_mem_alloc(sizeof(RxPD));
     if (pmbuf->pbuf == MNULL)
     {
@@ -1114,7 +1120,9 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
         return -WM_FAIL;
     }
     (void)memcpy((void *)pmbuf->pbuf, (const void *)rxpd, sizeof(RxPD));
-
+#else
+    pmbuf->pbuf = (t_u8 *)rxpd;
+#endif
     /** Offset to data */
     /* This should ideally be INTF_HEADER_LEN. But we not be storing
        initial INTF_HEADER_LEN bytes. We will store RxPD directly */
@@ -1153,8 +1161,10 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 
            We need to free allocated structures.
         */
+#ifndef CONFIG_TX_RX_ZERO_COPY
         os_mem_free(pmbuf->pbuf);
         os_mem_free(pmbuf);
+#endif
         return -WM_FAIL;
     }
 
