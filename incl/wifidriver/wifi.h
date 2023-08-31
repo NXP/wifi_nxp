@@ -1270,7 +1270,8 @@ void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
 int wifi_get_data_rate(wifi_ds_rate *ds_rate, mlan_bss_type bss_type);
 
 int wifi_uap_set_bandwidth(const t_u8 bandwidth);
-const t_u8 wifi_uap_get_bandwidth();
+
+t_u8 wifi_uap_get_bandwidth();
 
 int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 

@@ -787,7 +787,7 @@ int wifi_uap_set_bandwidth(const t_u8 bandwidth)
     return (-WM_FAIL);
 }
 
-const t_u8 wifi_uap_get_bandwidth()
+t_u8 wifi_uap_get_bandwidth()
 {
     return wm_wifi.bandwidth;
 }
