@@ -1693,7 +1693,7 @@ int wifi_get_mc_cfg_ext(wifi_drcs_cfg_t *drcs, int num);
 
 int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
 
-int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len);
+int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, const size_t len);
 #ifdef CONFIG_WPA_SUPP
 t_u8 wifi_get_sec_channel_offset(unsigned int chan);
 int wifi_nxp_scan_res_get(void);

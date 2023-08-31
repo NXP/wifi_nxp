@@ -2330,8 +2330,8 @@ static int do_start(struct wlan_network *network)
         }
         else
         {
-            t_u8 bandwidth = wifi_uap_get_bandwidth();
 #ifdef CONFIG_11AC
+            t_u8 bandwidth = wifi_uap_get_bandwidth();
             if (bandwidth == BANDWIDTH_80MHZ)
             {
                 if ((wlan.networks[wlan.cur_uap_network_idx].acs_band == 0)
@@ -3364,7 +3364,7 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
 #ifdef CONFIG_WMSTATS
             g_wm_stats.wm_addr_type = 0;
 #endif /* CONFIG_WMSTATS */
-            net_configure_dns(&network->ip, network->role);
+            net_configure_dns((struct net_ip_config *)&network->ip, network->role);
             if (network->type == WLAN_BSS_TYPE_STA)
             {
                 if_handle = net_get_mlan_handle();
@@ -3373,7 +3373,7 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
             else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
                 if_handle = net_get_wfd_handle();
 #endif /* CONFIG_P2P */
-            (void)net_get_if_addr(&network->ip, if_handle);
+            (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
             wlan.sta_state = CM_STA_CONNECTED;
             if (wlan.connect_wakelock_taken)
             {
@@ -3505,7 +3505,7 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
     pmlan_private pmpriv = NULL;
     wifi_ecsa_info *pchan_info = NULL;
     t_u8 channel= 0 ;
-    chan_freq_power_t *cfp = MNULL;
+    const chan_freq_power_t *cfp = MNULL;
     mlan_adapter *pmadapter = NULL;
 
     if (wifi_is_ecsa_enabled())
@@ -3998,7 +3998,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #ifdef CONFIG_11R
                 wlan.ft_bss = false;
 #endif
-                (void)net_get_if_addr(&network->ip, if_handle);
+                (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
                 wlan.sta_state      = CM_STA_CONNECTED;
                 *next               = CM_STA_CONNECTED;
                 wlan.sta_ipv4_state = CM_STA_CONNECTED;
@@ -4012,7 +4012,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                 return;
             }
 
-            ret = net_configure_address(&network->ip, if_handle);
+            ret = net_configure_address((struct net_ip_config *)&network->ip, if_handle);
             if (ret != 0)
             {
                 wlcm_e("Configure Address failed");
@@ -4762,7 +4762,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
 #endif /* CONFIG_WMSTATS */
         wlcm_d("got event: DHCP success");
         net_stop_dhcp_timer();
-        net_configure_dns(&network->ip, network->role);
+        net_configure_dns((struct net_ip_config *)&network->ip, network->role);
         if (network->type == WLAN_BSS_TYPE_STA)
         {
             if_handle = net_get_mlan_handle();
@@ -4771,7 +4771,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
         else if (network->type == WLAN_BSS_TYPE_WIFIDIRECT)
             if_handle = net_get_wfd_handle();
 #endif /* CONFIG_P2P */
-        (void)net_get_if_addr(&network->ip, if_handle);
+        (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         // net_inet_ntoa(network->ip.ipv4.address, ip);
         wlan.sta_state      = CM_STA_CONNECTED;
         *next               = CM_STA_CONNECTED;
@@ -4861,7 +4861,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             /*Do nothing*/
         }
 #endif /* CONFIG_P2P */
-        (void)net_get_if_addr(&network->ip, if_handle);
+        (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
         CONNECTION_EVENT(WLAN_REASON_ADDRESS_SUCCESS, NULL);
     }
 }
@@ -4878,7 +4878,7 @@ static void wlcm_process_net_ipv6_config(struct wifi_message *msg,
         return;
     }
 
-    net_get_if_ipv6_addr(&network->ip, if_handle);
+    net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);
     for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
     {
         if (ip6_addr_isvalid((network->ip.ipv6[i].addr_state)) != 0U)
@@ -4914,7 +4914,7 @@ int wlan_rx_mgmt_indication(const enum wlan_bss_type bss_type,
                                                     const wlan_mgmt_frame_t *frame,
                                                     const size_t len))
 {
-#ifndef CONFIG_WPA_SUPP
+#ifdef MGMT_RX
     if (mgmt_subtype_mask)
         rx_mgmt_register_callback(rx_mgmt_callback);
     else
@@ -5754,7 +5754,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 wpa_supp_network_status(netif, network);
 #endif
 
-                ret = net_configure_address(&network->ip, if_handle);
+                ret = net_configure_address((struct net_ip_config *)&network->ip, if_handle);
                 if (ret != 0)
                 {
                     wlcm_e("TCP/IP stack setup failed");
@@ -5820,12 +5820,12 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 }
 #endif /* CONFIG_P2P */
 
-                (void)net_get_if_addr(&network->ip, if_handle);
+                (void)net_get_if_addr((struct net_ip_config *)&network->ip, if_handle);
                 /* UAP case set dns same as gateway */
                 network->ip.ipv4.dns1 = network->ip.ipv4.gw;
                 network->ip.ipv4.dns2 = 0;
 #ifdef CONFIG_IPV6
-                (void)net_get_if_ipv6_addr(&network->ip, if_handle);
+                (void)net_get_if_ipv6_addr((struct net_ip_config *)&network->ip, if_handle);
 #endif
                 next = CM_UAP_IP_UP;
                 CONNECTION_EVENT(WLAN_REASON_UAP_SUCCESS, NULL);
@@ -6973,7 +6973,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
 #else
 #ifndef RW610
-    wlan_set_cal_data(int_cal_data, sizeof(int_cal_data));
+    //wlan_set_cal_data(int_cal_data, sizeof(int_cal_data));
 #else
     wlan_set_cal_data(cal_data_rw610, sizeof(cal_data_rw610));
 #endif
@@ -9903,13 +9903,13 @@ int wlan_get_address(struct wlan_ip_config *addr)
     }
 
     if_handle = net_get_mlan_handle();
-    if (net_get_if_addr(addr, if_handle) != 0)
+    if (net_get_if_addr((struct net_ip_config *)addr, if_handle) != 0)
     {
         return -WM_FAIL;
     }
 
 #ifdef CONFIG_IPV6
-    if (net_get_if_ipv6_addr(addr, if_handle) != 0)
+    if (net_get_if_ipv6_addr((struct net_ip_config *)addr, if_handle) != 0)
     {
         return -WM_FAIL;
     }
@@ -9931,7 +9931,7 @@ int wlan_get_uap_address(struct wlan_ip_config *addr)
     }
 
     if_handle = net_get_uap_handle();
-    if (net_get_if_addr(addr, if_handle) != 0)
+    if (net_get_if_addr((struct net_ip_config *)addr, if_handle) != 0)
     {
         return -WM_FAIL;
     }
@@ -9962,7 +9962,7 @@ int wlan_get_wfd_address(struct wlan_ip_config *addr)
         return WLAN_ERROR_STATE;
 
     if_handle = net_get_wfd_handle();
-    if (net_get_if_addr(addr, if_handle))
+    if (net_get_if_addr((struct net_ip_config *)addr, if_handle))
         return -WM_FAIL;
     return WM_SUCCESS;
 }
@@ -13029,7 +13029,7 @@ int wlan_mef_set_multicast(t_u8 mef_action)
 
 int wlan_config_mef(int type, t_u8 mef_action)
 {
-    int ret;
+    int ret = -WM_FAIL;
 
     if(!wlan_is_started())
     {

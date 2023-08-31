@@ -3273,8 +3273,11 @@ t_void wlan_drop_tx_pkts(pmlan_private priv);
 /* process the recevied packet and bridge the packet */
 mlan_status wlan_uap_recv_packet(IN mlan_private *priv, IN pmlan_buffer pmbuf);
 #endif /* UAP_SUPPORT */
+#endif /* CONFIG_MLAN_WMSDK */
 
 t_bool wlan_check_channel_by_region_table(mlan_private *pmpriv, t_u8 chan_num);
+
+#ifndef CONFIG_MLAN_WMSDK
 
 mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
                                            IN pmlan_ioctl_req pioctl_req,

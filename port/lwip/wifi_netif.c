@@ -71,7 +71,7 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
 void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload);
 #endif
 
-#ifndef CONFIG_WPA_SUPP
+#ifdef MGMT_RX
 static int (*rx_mgmt_callback)(const enum wlan_bss_type bss_type, const wifi_mgmt_frame_t *frame, const size_t len);
 void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
                                                     const wifi_mgmt_frame_t *frame,
@@ -324,6 +324,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             }
         }
 #endif
+#ifdef MGMT_RX
         if (rx_mgmt_callback)
         {
             wifi_mgmt_frame_t *frame = (wifi_mgmt_frame_t *)(void *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
@@ -335,6 +336,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
                 return;
             }
         }
+#endif
         return;
     }
 #endif

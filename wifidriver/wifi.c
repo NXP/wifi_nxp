@@ -4464,7 +4464,7 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
     return (int)WM_SUCCESS;
 }
 
-int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
+int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, const size_t len)
 {
     return supp_low_level_output((t_u8)bss_type, buff, len);
 }
@@ -4539,7 +4539,7 @@ int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_tim
     return wifi_inject_frame((enum wlan_bss_type)bss_type, buf, data_len);
 }
 #else
-int wifi_supp_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
+int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, const size_t len)
 {
     (void)bss_type;
     (void)buff;

@@ -27,7 +27,10 @@
 /*
  * NXP Test Framework (MTF) functions
  */
+
+#if defined(CONFIG_CSI) || defined(CONFIG_NET_MONITOR)
 static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+#endif
 
 #ifdef CONFIG_CSI
 wlan_csi_config_params_t g_csi_params = {
@@ -107,8 +110,8 @@ out:
         {
             if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
             {
-                (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc(&addr->ipv6[i]),
-                             ipv6_addr_addr_to_desc(&addr->ipv6[i]), ipv6_addr_state_to_desc(addr->ipv6[i].addr_state));
+                (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
+                             ipv6_addr_addr_to_desc((struct net_ipv6_config *)&addr->ipv6[i]), ipv6_addr_state_to_desc(addr->ipv6[i].addr_state));
             }
         }
         (void)PRINTF("\r\n");
@@ -7678,73 +7681,6 @@ static void test_wlan_set_multiple_dtim(int argc, char **argv)
     (void)PRINTF("Set multiple dtim to %d\r\n", multiple_dtim);
 }
 
-static void dump_wlan_set_debug_htc_usage(void)
-{
-    (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-set-debug-htc \r\n");
-    (void)PRINTF("    <count>:1\r\n");
-    (void)PRINTF("    <vht:1>\r\n");
-    (void)PRINTF("    <he:1>\r\n");
-    (void)PRINTF("    <rxNss:1>\r\n");
-    (void)PRINTF("    <channelWidth:1>\r\n");
-    (void)PRINTF("    <ulMuDisable:1>\r\n");
-    (void)PRINTF("    <txNSTS:1>\r\n");
-    (void)PRINTF("    <erSuDisable:1>\r\n");
-    (void)PRINTF("    <dlResoundRecomm:1>\r\n");
-    (void)PRINTF("    <ulMuDataDisable:1>\r\n");
-}
-
-static void test_wlan_set_debug_htc(int argc, char **argv)
-{
-    int ret = -WM_FAIL;
-    u8_t count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm, ulMuDataDisable;
-    /**
-     * Command taken from debug.conf
-     * 	send_om_set={
-     *  CmdCode=0x008b          # do NOT change this line
-     *  Action:2=1              # 1 - HE-TB-PPDU with dummy UPH
-     *  SUBID:2=0x111           # Send NULL
-     *  count:1=0x40            # Count of packets with OM in HE-TB-PPDU format
-     *  vht:1=1                 # HT Control Field: For HT Variant-0, VHT variant-1, HE Variant-1
-     *  he:1=1                  # HT Control Field: For VHT Variant-0, HE variant-1
-     *  rxNss:1=0
-     *  channelWidth:1=0
-     *  ulMuDisable:1=0
-     *  txNSTS:1=0
-     *  erSuDisable:1=0
-     *  dlResoundRecomm:1=0
-     *  ulMuDataDisable:1=0
-     *     }
-     *
-     */
-
-    if (argc != 11)
-    {
-        (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_wlan_set_debug_htc_usage();
-        return;
-    }
-
-    count           = atoi(argv[1]);
-    vht             = atoi(argv[2]);
-    he              = atoi(argv[3]);
-    rxNss           = atoi(argv[4]);
-    channelWidth    = atoi(argv[5]);
-    ulMuDisable     = atoi(argv[6]);
-    txNSTS          = atoi(argv[7]);
-    erSuDisable     = atoi(argv[8]);
-    dlResoundRecomm = atoi(argv[9]);
-    ulMuDataDisable = atoi(argv[10]);
-
-    ret = wlan_send_debug_htc(count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm,
-                              ulMuDataDisable);
-
-    if (ret == WM_SUCCESS)
-        (void)PRINTF("HTC parameter set successfully\r\n");
-    else
-        (void)PRINTF("Failed to set HTC parameter\r\n");
-}
-
 #ifdef CONFIG_SET_SU
 static void dump_wlan_set_su_usage(void)
 {
@@ -8119,6 +8055,75 @@ static void test_wlan_set_turbo_mode(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_11AX
+
+static void dump_wlan_set_debug_htc_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-debug-htc \r\n");
+    (void)PRINTF("    <count>:1\r\n");
+    (void)PRINTF("    <vht:1>\r\n");
+    (void)PRINTF("    <he:1>\r\n");
+    (void)PRINTF("    <rxNss:1>\r\n");
+    (void)PRINTF("    <channelWidth:1>\r\n");
+    (void)PRINTF("    <ulMuDisable:1>\r\n");
+    (void)PRINTF("    <txNSTS:1>\r\n");
+    (void)PRINTF("    <erSuDisable:1>\r\n");
+    (void)PRINTF("    <dlResoundRecomm:1>\r\n");
+    (void)PRINTF("    <ulMuDataDisable:1>\r\n");
+}
+
+static void test_wlan_set_debug_htc(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    u8_t count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm, ulMuDataDisable;
+    /**
+     * Command taken from debug.conf
+     * 	send_om_set={
+     *  CmdCode=0x008b          # do NOT change this line
+     *  Action:2=1              # 1 - HE-TB-PPDU with dummy UPH
+     *  SUBID:2=0x111           # Send NULL
+     *  count:1=0x40            # Count of packets with OM in HE-TB-PPDU format
+     *  vht:1=1                 # HT Control Field: For HT Variant-0, VHT variant-1, HE Variant-1
+     *  he:1=1                  # HT Control Field: For VHT Variant-0, HE variant-1
+     *  rxNss:1=0
+     *  channelWidth:1=0
+     *  ulMuDisable:1=0
+     *  txNSTS:1=0
+     *  erSuDisable:1=0
+     *  dlResoundRecomm:1=0
+     *  ulMuDataDisable:1=0
+     *     }
+     *
+     */
+
+    if (argc != 11)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_debug_htc_usage();
+        return;
+    }
+
+    count           = atoi(argv[1]);
+    vht             = atoi(argv[2]);
+    he              = atoi(argv[3]);
+    rxNss           = atoi(argv[4]);
+    channelWidth    = atoi(argv[5]);
+    ulMuDisable     = atoi(argv[6]);
+    txNSTS          = atoi(argv[7]);
+    erSuDisable     = atoi(argv[8]);
+    dlResoundRecomm = atoi(argv[9]);
+    ulMuDataDisable = atoi(argv[10]);
+
+    ret = wlan_send_debug_htc(count, vht, he, rxNss, channelWidth, ulMuDisable, txNSTS, erSuDisable, dlResoundRecomm,
+                              ulMuDataDisable);
+
+    if (ret == WM_SUCCESS)
+        (void)PRINTF("HTC parameter set successfully\r\n");
+    else
+        (void)PRINTF("Failed to set HTC parameter\r\n");
+}
+
+
 static void dump_wlan_enable_disable_htc_usage()
 {
     (void)PRINTF("Usage: wlan-enable-disable-htc <option>\r\n");

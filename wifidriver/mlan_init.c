@@ -872,6 +872,12 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
 
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
+            ret = (mlan_status)os_mutex_create(&priv->tx_ba_stream_tbl_lock, "Tx BA tbl lock", OS_MUTEX_INHERIT);
+            if (ret != MLAN_STATUS_SUCCESS)
+            {
+                wifi_e("Create Tx BA tbl sem failed");
+                return ret;
+            }
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
             util_scalar_init((t_void *)pmadapter->pmoal_handle, &priv->wmm.tx_pkts_queued, 0,

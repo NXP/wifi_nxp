@@ -49,7 +49,10 @@ uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_4K;
 uint16_t tx_buf_size = MLAN_TX_DATA_BUF_SIZE_2K;
 #endif
 #endif
+#ifdef RW610
 extern t_u32 last_resp_rcvd;
+#endif
+
 extern uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 extern uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
 
@@ -2547,7 +2550,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     t_u8 *sta_addr;
 
     t_u16 command = (resp->command & HostCmd_CMD_ID_MASK);
+#ifdef RW610
     last_resp_rcvd = command;
+#endif
 
     wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
 
