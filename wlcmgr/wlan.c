@@ -6973,7 +6973,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
 #else
 #ifndef RW610
-    //wlan_set_cal_data(int_cal_data, sizeof(int_cal_data));
+    wlan_set_cal_data(int_cal_data, sizeof(int_cal_data));
 #else
     wlan_set_cal_data(cal_data_rw610, sizeof(cal_data_rw610));
 #endif
@@ -9591,9 +9591,12 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     return WM_SUCCESS;
 }
 
-void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size)
+void wlan_set_cal_data(uint8_t *cal_data, size_t cal_data_size)
 {
-    wifi_set_cal_data(cal_data, cal_data_size);
+    if (cal_data_size > 1)
+    {
+        wifi_set_cal_data(cal_data, cal_data_size);
+    }
 }
 
 void wlan_set_mac_addr(uint8_t *mac)

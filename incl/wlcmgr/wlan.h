@@ -2857,7 +2857,7 @@ int wlan_get_uap_ed_mac_mode(wlan_ed_mac_ctrl_t *wlan_ed_mac_ctrl);
  * \param[in] cal_data_size Size of calibration data buffer.
  *
  */
-void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size);
+void wlan_set_cal_data(uint8_t *cal_data, size_t cal_data_size);
 
 /** Set wireless MAC Address in WLAN firmware.
  *

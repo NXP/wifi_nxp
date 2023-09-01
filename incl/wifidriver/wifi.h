@@ -627,7 +627,7 @@ void wifi_enable_low_pwr_mode();
  * @param[in] clen Length of calibration data
  *
  */
-void wifi_set_cal_data(const uint8_t *cdata, const unsigned int clen);
+void wifi_set_cal_data(uint8_t *cdata, size_t clen);
 
 /** Set wifi MAC address in firmware at load time.
  *
