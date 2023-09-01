@@ -38,7 +38,7 @@ bool low_power_mode;
 #endif
 bool cal_data_valid;
 static uint8_t *cal_data;
-static size_t cal_data_len;
+static uint32_t cal_data_len;
 
 bool mac_addr_valid;
 static uint8_t *mac_addr;
@@ -6421,10 +6421,10 @@ void wlan_prepare_mac_control_cmd(HostCmd_DS_COMMAND *cmd, t_u16 seq_number)
     return;
 }
 
-void wifi_set_cal_data(uint8_t *cdata, size_t clen)
+void wifi_set_cal_data(const uint8_t *cdata, const unsigned int clen)
 {
-    cal_data       = cdata;
-    cal_data_len   = clen;
+    cal_data       = (uint8_t *)cdata;
+    cal_data_len   = (unsigned int)clen;
     cal_data_valid = true;
 }
 

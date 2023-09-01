@@ -9591,7 +9591,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
     return WM_SUCCESS;
 }
 
-void wlan_set_cal_data(uint8_t *cal_data, size_t cal_data_size)
+void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size)
 {
     if (cal_data_size > 1)
     {
