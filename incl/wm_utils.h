@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
+#include <strings.h>
 #include "fsl_debug_console.h"
 
 #define ffs __builtin_ffs
