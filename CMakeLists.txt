@@ -22,6 +22,8 @@ zephyr_compile_definitions_ifdef(CONFIG_RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
 )
 
+zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S)
+
 zephyr_include_directories(
     incl
     incl/wifidriver
