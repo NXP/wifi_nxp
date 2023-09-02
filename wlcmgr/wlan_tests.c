@@ -111,7 +111,8 @@ out:
             if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
             {
                 (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
-                             ipv6_addr_addr_to_desc((struct net_ipv6_config *)&addr->ipv6[i]), ipv6_addr_state_to_desc(addr->ipv6[i].addr_state));
+                             ipv6_addr_addr_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
+                             ipv6_addr_state_to_desc(addr->ipv6[i].addr_state));
             }
         }
         (void)PRINTF("\r\n");
@@ -974,7 +975,8 @@ static void test_wlan_add(int argc, char **argv)
                     network.security.pwe_derivation = strtol(argv[arg + 2], NULL, 10);
                     if (errno != 0)
                     {
-                        (void)PRINTF("Error during strtoul:pwe errno:%d\r\n", errno);
+                        (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
+                        return;
                     }
                     if (arg + 2 >= argc ||
                         (network.security.pwe_derivation != 0 && network.security.pwe_derivation != 1 &&
@@ -993,7 +995,8 @@ static void test_wlan_add(int argc, char **argv)
                         network.security.transition_disable = strtol(argv[arg + 2], NULL, 10);
                         if (errno != 0)
                         {
-                            (void)PRINTF("Error during strtoul:pwe errno:%d\r\n", errno);
+                            (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
+                            return;
                         }
                         if (arg + 2 >= argc ||
                             (network.security.transition_disable != 0 && network.security.transition_disable != 1
@@ -1118,7 +1121,8 @@ static void test_wlan_add(int argc, char **argv)
                 network.security.eap_ver = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtoul:eap_ver errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:eap_ver errno:%d\r\n", errno);
+                    return;
                 }
                 if (arg + 1 >= argc || (network.security.eap_ver != 0U && network.security.eap_ver != 1U))
                 {
@@ -1137,7 +1141,8 @@ static void test_wlan_add(int argc, char **argv)
                 network.security.eap_result_ind = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtoul:eap_result_ind errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:eap_result_ind errno:%d\r\n", errno);
+                    return;
                 }
                 if (arg + 1 >= argc || (network.security.eap_result_ind != 0U && network.security.eap_result_ind != 1U))
                 {
@@ -1155,7 +1160,8 @@ static void test_wlan_add(int argc, char **argv)
                 network.security.eap_crypto_binding = strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtoul:eap_crypto_binding errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:eap_crypto_binding errno:%d\r\n", errno);
+                    return;
                 }
                 if (arg + 1 >= argc ||
                     (network.security.eap_crypto_binding != 0U && network.security.eap_crypto_binding != 1U &&
@@ -1175,7 +1181,8 @@ static void test_wlan_add(int argc, char **argv)
                 network.security.peap_label = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtoul:peap_label errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:peap_label errno:%d\r\n", errno);
+                    return;
                 }
                 if (arg + 1 >= argc || (network.security.peap_label != 0U && network.security.peap_label != 1U))
                 {
@@ -1344,7 +1351,8 @@ static void test_wlan_add(int argc, char **argv)
             network.security.mfpc = (bool)strtol(argv[arg + 1], NULL, 10);
             if (errno != 0)
             {
-                (void)PRINTF("Error during strtoul:mfpc errno:%d\r\n", errno);
+                (void)PRINTF("Error during strtol:mfpc errno:%d\r\n", errno);
+                return;
             }
             if (arg + 1 >= argc || (network.security.mfpc != false && network.security.mfpc != true))
             {
@@ -1362,7 +1370,8 @@ static void test_wlan_add(int argc, char **argv)
             network.security.mfpr = (bool)strtol(argv[arg + 1], NULL, 10);
             if (errno != 0)
             {
-                (void)PRINTF("Error during strtoul:mfpr errno:%d\r\n", errno);
+                (void)PRINTF("Error during strtol:mfpr errno:%d\r\n", errno);
+                return;
             }
             if (arg + 1 >= argc || (network.security.mfpr != false && network.security.mfpr != true))
             {
@@ -1782,11 +1791,11 @@ static void test_wlan_thread_info(int argc, char **argv)
 #ifdef CONFIG_SCHED_SWITCH_TRACE
 static void test_wlan_sched_switch_debug(int argc, char **argv)
 {
-    if (strncmp(argv[1], "start", strlen("start")+1))
+    if (strncmp(argv[1], "start", strlen("start") + 1))
         ncp_debug_task_switch_start = 1;
-    else if (strncmp(argv[1], "stop", strlen("stop")+1))
+    else if (strncmp(argv[1], "stop", strlen("stop") + 1))
         ncp_debug_task_switch_start = 0;
-    else if (strncmp(argv[1], "print", strlen("print")+1))
+    else if (strncmp(argv[1], "print", strlen("print") + 1))
         trace_task_switch_print();
 }
 #endif
@@ -2353,7 +2362,8 @@ static void test_wlan_ieee_ps(int argc, char **argv)
     choice = strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:mfpc errno:%d\r\n", errno);
+        (void)PRINTF("Error during strtol:mfpc errno:%d\r\n", errno);
+        return;
     }
 
     if (choice == 0)
@@ -2454,7 +2464,8 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
     choice = strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:deep_sleep_ps errno:%d\r\n", errno);
+        (void)PRINTF("Error during strtol:deep_sleep_ps errno:%d\r\n", errno);
+        return;
     }
 
     if (choice == 0)
@@ -2797,6 +2808,7 @@ static void test_wlan_roaming(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan roaming errno:%d\r\n", errno);
+        return;
     }
 
     if (argc == 3)
@@ -2805,7 +2817,7 @@ static void test_wlan_roaming(int argc, char **argv)
         rssi_low_threshold = (uint8_t)strtol(argv[2], NULL, 10);
         if (errno != 0)
         {
-            (void)PRINTF("Error during strtoul:rssi_threshold errno:%d\r\n", errno);
+            (void)PRINTF("Error during strtol:rssi_threshold errno:%d\r\n", errno);
             return;
         }
     }
@@ -2928,6 +2940,7 @@ static void test_wlan_11k_cfg(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan_11k errno:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_11k_cfg(enable_11k);
@@ -2969,6 +2982,7 @@ static void test_wlan_host_11k_cfg(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan_host_11k errno:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_host_11k_cfg(enable_11k);
@@ -3041,6 +3055,7 @@ static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan_host_11v_bss_trans_query errno:%d\r\n", errno);
+        return;
     }
 
     if (query_reason < 0 || query_reason > 16)
@@ -3075,6 +3090,7 @@ static void test_wlan_mbo_cfg(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo cfg:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_host_mbo_cfg(enable_mbo);
@@ -3112,6 +3128,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+        return;
     }
 
     errno       = 0;
@@ -3119,6 +3136,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+        return;
     }
 
     errno = 0;
@@ -3126,6 +3144,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+        return;
     }
 
     errno       = 0;
@@ -3133,6 +3152,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo non prefer chs:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_mbo_peferch_cfg(ch0, preference0, ch1, preference1);
@@ -3448,6 +3468,7 @@ static void test_wlan_mbo_set_cell_capa(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo cell_capa:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_mbo_set_cell_capa(cell_capa);
@@ -3488,6 +3509,7 @@ static void test_wlan_mbo_set_oce(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan mbo oce:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_mbo_set_oce(oce);
@@ -3532,6 +3554,7 @@ static void test_wlan_set_okc(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan okc:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_set_okc(okc);
@@ -3620,6 +3643,7 @@ static void test_wlan_set_scan_interval(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:wlan scan int:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_set_scan_interval(scan_int);
@@ -3932,12 +3956,14 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
             (void)PRINTF("wake_up_conds need be specified\r\n");
             return;
         }
-        if (!ISDIGIT(argv[2]) && !ISHEXSTRING(argv[2]))
+
+        errno         = 0;
+        wake_up_conds = (int)strtol(argv[2], NULL, 16);
+        if (errno != 0)
         {
-            (void)PRINTF("wake_up_conds need be a number\r\n");
+            (void)PRINTF("Error during strtol:wake_up_conds errno:%d\r\n", errno);
             return;
         }
-        wake_up_conds = a2hex_or_atoi(argv[2]);
     }
     else
     {
@@ -4049,7 +4075,8 @@ static void test_wlan_host_sleep(int argc, char **argv)
     choice = (int)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:host_sleep errno:%d\r\n", errno);
+        (void)PRINTF("Error during strtol:host_sleep errno:%d\r\n", errno);
+        return;
     }
 
     if (choice == 0)
@@ -4078,10 +4105,11 @@ static void test_wlan_host_sleep(int argc, char **argv)
         if (string_equal(argv[2], "wowlan"))
         {
             errno  = 0;
-            wowlan = (int)strtol(argv[3], NULL, 10);
+            wowlan = (int)strtol(argv[3], NULL, 16);
             if (errno != 0)
             {
-                (void)PRINTF("Error during strtoul:wowlan errno:%d\r\n", errno);
+                (void)PRINTF("Error during strtol:wowlan errno:%d\r\n", errno);
+                return;
             }
 
             ret = wlan_send_host_sleep(wowlan);
@@ -4316,7 +4344,8 @@ static void test_wlan_set_uap_bandwidth(int argc, char **argv)
     bandwidth = (uint8_t)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:uap_bandwidth errno:%d\r\n", errno);
+        (void)PRINTF("Error during strtol:uap_bandwidth errno:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_uap_set_bandwidth(bandwidth);
@@ -4362,7 +4391,8 @@ static void test_wlan_set_uap_hidden_ssid(int argc, char **argv)
     hidden_ssid = (uint8_t)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:uap_bandwidth errno:%d\r\n", errno);
+        (void)PRINTF("Error during strtol:uap_bandwidth errno:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_uap_set_hidden_ssid(hidden_ssid);
@@ -5616,6 +5646,7 @@ static void test_wlan_set_multi_chan_status(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:enable multi chan status errno:%d\r\n", errno);
+        return;
     }
 
     ret = wlan_set_multi_chan_status(enable);
@@ -5665,6 +5696,7 @@ static void get_drcs_cfg(char **data, wlan_drcs_cfg_t *drcs_cfg)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:drcs_cfg chantime errno:%d\r\n", errno);
+        return;
     }
 
     errno                = 0;
@@ -5672,6 +5704,7 @@ static void get_drcs_cfg(char **data, wlan_drcs_cfg_t *drcs_cfg)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:drcs_cfg switchtime errno:%d\r\n", errno);
+        return;
     }
 
     errno                = 0;
@@ -5679,6 +5712,7 @@ static void get_drcs_cfg(char **data, wlan_drcs_cfg_t *drcs_cfg)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:drcs_cfg undozetime errno:%d\r\n", errno);
+        return;
     }
 
     errno          = 0;
@@ -5686,6 +5720,7 @@ static void get_drcs_cfg(char **data, wlan_drcs_cfg_t *drcs_cfg)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:drcs_cfg mode errno:%d\r\n", errno);
+        return;
     }
 }
 
@@ -5774,7 +5809,8 @@ static void wlan_antcfg_set(int argc, char *argv[])
     ant_mode = (uint32_t)strtol(argv[1], NULL, 16);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
+        return;
     }
 
     if ((argc == 3) && (ant_mode != 0xFFFFU))
@@ -5790,7 +5826,8 @@ static void wlan_antcfg_set(int argc, char *argv[])
     }
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
+        return;
     }
 
     ret = wlan_set_antcfg(ant_mode, evaluate_time);
@@ -5910,7 +5947,8 @@ static void test_wlan_set_regioncode(int argc, char **argv)
     t_u32 region_code = (t_u32)strtol(argv[1], NULL, 0);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
+        (void)PRINTF("Error during strtol errno:%d", errno);
+        return;
     }
     int rv = wlan_set_region_code(region_code);
     if (rv != WM_SUCCESS)
@@ -6970,7 +7008,7 @@ static void test_wlan_rssi_low_threshold(int argc, char **argv)
     rssi_threshold = (uint8_t)strtol(argv[1], NULL, 10);
     if (errno != 0)
     {
-        (void)PRINTF("Error during strtoul:rssi_threshold errno:%d\r\n", errno);
+        (void)PRINTF("Error during strtol:rssi_threshold errno:%d\r\n", errno);
         return;
     }
 
@@ -7565,7 +7603,8 @@ static void test_wlan_cloud_keep_alive(int argc, char **argv)
                 cloud_keep_alive.mkeep_alive_id = strtol(argv[arg + 1], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtoul:id errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:id errno:%d\r\n", errno);
+                    return;
                 }
 
                 id_set = 1;
@@ -7909,7 +7948,7 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 #if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
 #else
-    ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
+    ret             = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
 #endif
 
     if (ret != WM_SUCCESS)
@@ -8150,7 +8189,6 @@ static void test_wlan_set_debug_htc(int argc, char **argv)
     else
         (void)PRINTF("Failed to set HTC parameter\r\n");
 }
-
 
 static void dump_wlan_enable_disable_htc_usage()
 {
