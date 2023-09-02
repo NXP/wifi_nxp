@@ -1791,7 +1791,7 @@ void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switc
     event.ch_switch.freq       = ch_switch_info->center_freq;
     event.ch_switch.ht_enabled = ch_switch_info->ht_enabled;
     event.ch_switch.ch_offset  = ch_switch_info->ch_offset;
-    event.ch_switch.ch_width   = ch_switch_info->ch_width;
+    event.ch_switch.ch_width   = (enum chan_width)ch_switch_info->ch_width;
     event.ch_switch.cf1        = ch_switch_info->center_freq1;
     event.ch_switch.cf2        = ch_switch_info->center_freq2;
 

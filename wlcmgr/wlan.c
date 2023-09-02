@@ -3662,8 +3662,7 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
             os_mem_free((void *)msg->data);
     }
 }
-#endif /*End of CONFIG_WPA_SUPP*/
-
+#else
 static void wlcm_process_channel_switch(struct wifi_message *msg)
 {
     t_u8 channel= 0 ;
@@ -3703,6 +3702,7 @@ static void wlcm_process_channel_switch(struct wifi_message *msg)
             os_mem_free((void *)msg->data);
     }
 }
+#endif /*End of CONFIG_WPA_SUPP*/
 
 static void wlcm_process_hs_config_event(void)
 {
@@ -6593,11 +6593,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
         case WIFI_EVENT_CHAN_SWITCH:
             wlcm_d("got event: channel switch");
-			#ifdef CONFIG_WPA_SUPP
-	        wlcm_process_channel_switch_supp(msg);
-			#else
+#ifdef CONFIG_WPA_SUPP
+            wlcm_process_channel_switch_supp(msg);
+#else
             wlcm_process_channel_switch(msg);
-		#endif
+#endif
             break;
 
         case WIFI_EVENT_SLEEP:
