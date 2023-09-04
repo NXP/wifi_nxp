@@ -3617,7 +3617,6 @@ static void wifi_driver_tx(void *data)
     {
         wm_wifi.wm_wifi_driver_tx = os_get_current_task_handle();
 
-    get_msg:
 #ifdef CONFIG_ECSA
         /*
          * Reduce block tx check interval, try to make it sync with ECSA status.

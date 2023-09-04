@@ -11651,6 +11651,7 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason)
 }
 #endif
 
+#ifndef CONFIG_WPA_SUPP
 #ifdef CONFIG_MBO
 int wlan_host_mbo_cfg(int enable_mbo)
 {
@@ -11670,6 +11671,7 @@ int wlan_mbo_peferch_cfg(t_u8 ch0, t_u8 pefer0, t_u8 ch1, t_u8 pefer1)
         return wifi_mbo_preferch_cfg(ch0, pefer0, ch1, pefer1);
     }
 }
+#endif
 #endif
 
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)

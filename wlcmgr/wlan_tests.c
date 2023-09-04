@@ -3073,6 +3073,7 @@ static void test_wlan_host_11v_bss_trans_query(int argc, char **argv)
 }
 #endif
 
+#ifndef CONFIG_WPA_SUPP
 #ifdef CONFIG_MBO
 static void test_wlan_mbo_cfg(int argc, char **argv)
 {
@@ -3170,7 +3171,7 @@ static void test_wlan_mbo_non_prefer_chs(int argc, char **argv)
         /* Do nothing */
     }
 }
-
+#endif
 #endif
 
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)

@@ -2127,7 +2127,7 @@ int wifi_set_key(int bss_index,
         else
         {
             memcpy(sec.param.encrypt_key.mac_addr, bcast_addr, MLAN_MAC_ADDR_LENGTH);
-            sec.param.encrypt_key.key_flags |= KEY_FLAG_GROUP_KEY | KEY_FLAG_SET_TX_KEY;
+            sec.param.encrypt_key.key_flags |= KEY_FLAG_GROUP_KEY;
         }
         sec.param.encrypt_key.key_index = key_index;
 
@@ -2800,7 +2800,7 @@ static wifi_sub_band_set_t subband_CS_2_4GHz[] = {{1, 9, 20}, {10, 2, 10}};
 
 #ifdef CONFIG_5GHz_SUPPORT
 
-#if defined(CONFIG_UNII4_BAND_SUPPORT)
+#if defined(SD9177)
 /* Region: US(US) 5 GHz */
 wifi_sub_band_set_t subband_US_5_GHz[] = {{36, 8, 20}, {100, 11, 20}, {149, 8, 20}};
 
@@ -2965,7 +2965,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *n
     switch (region_code)
     {
         case 0x10:
-#if defined(CONFIG_UNII4_BAND_SUPPORT)
+#if defined(SD9177)
             *nr_sb = 3;
             return subband_US_5_GHz;
 #endif
