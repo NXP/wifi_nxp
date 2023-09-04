@@ -4255,9 +4255,7 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 static u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
 /* Command taken from robust_btc.conf*/
-static u8_t host_cmd_buf[] = {0xe0, 0,    0x12, 0,    0x3c, 0,    0,    0,
-                              0x01, 0,    0,    0,    0x38, 0x02, 0x02, 0,
-                              0x07, 0x01};
+static u8_t host_cmd_buf[] = {0xe0, 0, 0x12, 0, 0x3c, 0, 0, 0, 0x01, 0, 0, 0, 0x38, 0x02, 0x02, 0, 0x07, 0x01};
 
 static void test_wlan_send_hostcmd(int argc, char **argv)
 {
@@ -9517,6 +9515,8 @@ static struct cli_command tests[] = {
     {"wlan-start-ap-wps-pbc", NULL, test_wlan_start_ap_wps_pbc},
     {"wlan-start-ap-wps-pin", "<8 digit pin>", test_wlan_start_ap_wps_pin},
     {"wlan-wps-ap-cancel", NULL, test_wlan_wps_ap_cancel},
+#endif
+#endif
 #ifdef CONFIG_WPA_SUPP_DPP
     {"wlan-dpp-configurator-add", NULL, test_wlan_dpp_configurator_add},
     {"wlan-dpp-configurator-params", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
@@ -9533,7 +9533,6 @@ static struct cli_command tests[] = {
     {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
     {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_sign},
-#endif
 #endif
 #ifdef CONFIG_NET_MONITOR
     {"wlan-net-monitor-cfg", NULL, test_wlan_net_monitor_cfg},

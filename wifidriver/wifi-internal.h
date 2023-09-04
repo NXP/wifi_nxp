@@ -28,7 +28,7 @@
 
 typedef struct
 {
-    int (*wifi_uap_downld_domain_params_p)(int band);
+    int (*wifi_uap_downld_domain_params_p)(int channel, wifi_scan_chan_list_t scan_chan_list);
 } wifi_uap_11d_apis_t;
 
 typedef struct mcast_filter

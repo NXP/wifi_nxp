@@ -29,7 +29,7 @@ Change log:
 /** Maximum port */
 #define MAX_PORT    32U
 /** Multi port aggregation packet limit */
-#if defined(IW61x)
+#if defined(SD9177)
 #define SDIO_MP_AGGR_DEF_PKT_LIMIT (8U)
 #else
 #define SDIO_MP_AGGR_DEF_PKT_LIMIT (4U)

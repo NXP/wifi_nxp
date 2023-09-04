@@ -116,7 +116,7 @@ Change log:
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
-#if defined(IW61x)
+#if defined(SD9177)
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
 #else
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
@@ -132,7 +132,7 @@ Change log:
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_UAP_AMPDU_DEF_RXWINSIZE
-#if defined(IW61x)
+#if defined(SD9177)
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 64
 #else
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 32

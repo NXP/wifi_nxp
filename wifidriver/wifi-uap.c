@@ -312,9 +312,10 @@ int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
  * getting region code by pmadapter.
  * Then it sends 80211 domain info command to firmware
  */
-int wifi_uap_downld_domain_params(int band)
+int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_list)
 {
     int rv;
+    int band;
     mlan_private *priv_uap   = mlan_adap->priv[1];
     int region_code          = mlan_adap->region_code;
     const t_u8 *country_code = NULL;
@@ -1050,8 +1051,13 @@ int wifi_uap_start(mlan_bss_type type,
     if (wm_wifi.enable_11d_support && wm_wifi.uap_support_11d_apis)
     {
         wuap_d("Downloading domain params");
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
+#ifdef CONFIG_5GHz_SUPPORT
+        if (channel > MAX_CHANNELS_BG)
+            mlan_adap->region_code = mlan_adap->cfp_code_a;
+        else
+#endif
+            mlan_adap->region_code = mlan_adap->cfp_code_bg;
+        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(channel, scan_chan_list);
     }
 
     wuap_d("Starting BSS");
@@ -2695,8 +2701,6 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
     {
         wuap_d("Enable 11D support");
         wifi_enable_uap_11d_support();
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_B);
-        wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(BAND_A);
     }
 #endif
     return out_len;
