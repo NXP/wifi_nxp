@@ -1211,9 +1211,12 @@ int wifi_set_rf_channel(const uint8_t channel)
 
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
+    /* To align with mxdriver, skip channel valid check for rf test mode */
+#if 0
     /* Check if Channel is allowed as per WWSM */
     if (!wlan_is_channel_valid(channel))
         return -WM_FAIL;
+#endif
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
