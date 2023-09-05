@@ -9301,7 +9301,9 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Clear wlcmgr */
             wlan_stop();
         }
-
+#if defined (CONFIG_WPA_SUPP) && (CONFIG_UAP_STA_MAC_ADDR_FILTER)
+        wifi_host_set_sta_mac_filter(0, 0, NULL);
+#endif
         power_off_device(LOAD_WIFI_FIRMWARE);
     }
 
@@ -11757,7 +11759,11 @@ int wlan_set_scan_interval(int scan_int)
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
+#ifdef CONFIG_WPA_SUPP
+    return wifi_host_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
+#else
     return wifi_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
+#endif
 }
 #endif
 

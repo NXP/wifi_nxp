@@ -234,14 +234,6 @@ typedef enum
 #define WMM_UAPSD_SLEEP_PERIOD 20
 #endif
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-/* Max number of sta filter list can be upto 16 */
-#define WLAN_MAX_STA_FILTER_NUM 16
-
-/* The length of wlan mac address */
-#define WLAN_MAC_ADDR_LENGTH 6
-#endif
-
 /* Error Codes */
 
 /** The operation was successful. */

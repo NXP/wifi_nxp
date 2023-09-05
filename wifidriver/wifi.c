@@ -610,8 +610,8 @@ void wifi_sdio_reg_dbg()
     }
 }
 #endif
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || \
-    defined(RW610_SERIES)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
+    defined(SD9177) || defined(RW610_SERIES)
 
 #define DEBUG_HOST_READY     0xCC
 #define DEBUG_FW_DONE        0xFF
@@ -627,20 +627,20 @@ char fw_dump_file_name[] = _T("1:/fw_dump.bin");
 
 typedef enum
 {
-    DUMP_TYPE_ITCM        = 0,
-    DUMP_TYPE_DTCM        = 1,
-    DUMP_TYPE_SQRAM       = 2,
-    DUMP_TYPE_APU_REGS    = 3,
-    DUMP_TYPE_CIU_REGS    = 4,
-    DUMP_TYPE_ICU_REGS    = 5,
-    DUMP_TYPE_MAC_REGS    = 6,
-    DUMP_TYPE_EXTEND_7    = 7,
-    DUMP_TYPE_EXTEND_8    = 8,
-    DUMP_TYPE_EXTEND_9    = 9,
-    DUMP_TYPE_EXTEND_10   = 10,
-    DUMP_TYPE_EXTEND_11   = 11,
-    DUMP_TYPE_EXTEND_12   = 12,
-    DUMP_TYPE_EXTEND_13   = 13,
+    DUMP_TYPE_ITCM = 0,
+    DUMP_TYPE_DTCM = 1,
+    DUMP_TYPE_SQRAM = 2,
+    DUMP_TYPE_APU_REGS = 3,
+    DUMP_TYPE_CIU_REGS = 4,
+    DUMP_TYPE_ICU_REGS = 5,
+    DUMP_TYPE_MAC_REGS = 6,
+    DUMP_TYPE_EXTEND_7 = 7,
+    DUMP_TYPE_EXTEND_8 = 8,
+    DUMP_TYPE_EXTEND_9 = 9,
+    DUMP_TYPE_EXTEND_10 = 10,
+    DUMP_TYPE_EXTEND_11 = 11,
+    DUMP_TYPE_EXTEND_12 = 12,
+    DUMP_TYPE_EXTEND_13 = 13,
     DUMP_TYPE_EXTEND_LAST = 14
 } dumped_mem_type;
 
@@ -662,7 +662,7 @@ typedef enum
 {
     RDWR_STATUS_SUCCESS = 0,
     RDWR_STATUS_FAILURE = 1,
-    RDWR_STATUS_DONE    = 2
+    RDWR_STATUS_DONE = 2
 } rdwr_status;
 
 /**
@@ -674,15 +674,15 @@ typedef enum
  */
 rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
 {
-    int ret                = 0;
-    int tries              = 0;
-    t_u8 ctrl_data         = 0;
+    int ret = 0;
+    int tries = 0;
+    t_u8 ctrl_data = 0;
     t_u8 dbg_dump_ctrl_reg = 0;
-    t_u8 debug_host_ready  = 0;
+    t_u8 debug_host_ready = 0;
     uint32_t resp;
 
     dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG;
-    debug_host_ready  = DEBUG_HOST_READY;
+    debug_host_ready = DEBUG_HOST_READY;
 
     ret = sdio_drv_creg_write(dbg_dump_ctrl_reg, 1, debug_host_ready, &resp);
     if (!ret)
@@ -730,20 +730,20 @@ rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
  */
 void wifi_dump_firmware_info()
 {
-    int ret   = 0;
+    int ret = 0;
     int tries = 0;
     unsigned int reg, reg_start, reg_end;
     t_u8 start_flag = 0;
-    t_u8 doneflag   = 0;
+    t_u8 doneflag = 0;
     rdwr_status stat;
-    t_u8 dbg_dump_start_reg                    = 0;
-    t_u8 dbg_dump_end_reg                      = 0;
+    t_u8 dbg_dump_start_reg = 0;
+    t_u8 dbg_dump_end_reg = 0;
     memory_type_mapping *pmem_type_mapping_tbl = &mem_type_mapping_tbl;
     t_u8 data[8], i;
     uint32_t resp;
 
     dbg_dump_start_reg = DEBUG_DUMP_START_REG;
-    dbg_dump_end_reg   = DEBUG_DUMP_END_REG;
+    dbg_dump_end_reg = DEBUG_DUMP_END_REG;
 
     wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", os_get_timestamp());
     /* read the number of the memories which will dump */
@@ -797,8 +797,8 @@ void wifi_dump_firmware_info()
             goto done;
 
         reg_start = dbg_dump_start_reg;
-        reg_end   = dbg_dump_end_reg;
-        i         = 0;
+        reg_end = dbg_dump_end_reg;
+        i = 0;
         for (reg = reg_start; reg <= reg_end; reg++)
         {
             ret = sdio_drv_creg_read(reg, 1, &resp);
@@ -874,33 +874,33 @@ void wifi_sdio_reg_dbg()
         if (loop == 0)
         {
             /* Read the registers of SDIO function0 */
-            func      = loop;
+            func = loop;
             reg_start = 0;
-            reg_end   = 9;
+            reg_end = 9;
         }
         else if (loop == 1)
         {
             /* Read the registers of SDIO function1 */
-            func      = loop;
+            func = loop;
             reg_start = 0x10;
-            reg_end   = 0x17;
+            reg_end = 0x17;
         }
         else if (loop == 2)
         {
             /* Read specific registers of SDIO function1 */
-            index     = 0;
-            func      = 1;
+            index = 0;
+            func = 1;
             reg_start = reg_table[index++];
-            reg_end   = reg_table[ARRAY_SIZE(reg_table) - 1];
+            reg_end = reg_table[ARRAY_SIZE(reg_table) - 1];
         }
         else
         {
             /* Read the scratch registers of SDIO function1 */
             if (loop == 4)
                 os_thread_sleep(os_msec_to_ticks(1));
-            func      = 1;
+            func = 1;
             reg_start = scratch_reg;
-            reg_end   = scratch_reg + 10;
+            reg_end = scratch_reg + 10;
         }
         if (loop != 2)
             ptr += sprintf(ptr, "SDIO Func%d (%#x-%#x): ", func, reg_start, reg_end);
@@ -908,7 +908,7 @@ void wifi_sdio_reg_dbg()
             ptr += sprintf(ptr, "SDIO Func%d: ", func);
         for (reg = reg_start; reg <= reg_end;)
         {
-            ret  = sdio_drv_creg_read(reg, func, &resp);
+            ret = sdio_drv_creg_read(reg, func, &resp);
             data = resp & 0xff;
             if (loop == 2)
                 ptr += sprintf(ptr, "(%#x) ", reg);
@@ -1842,11 +1842,11 @@ static int wifi_core_init(void)
         goto fail;
     }
 #ifdef RW610
-    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack,
-                           OS_PRIO_2);
+    ret =
+        os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack, OS_PRIO_2);
 #else
-    ret = os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack,
-                           OS_PRIO_1);
+    ret =
+        os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack, OS_PRIO_1);
 #endif
     if (ret != WM_SUCCESS)
     {
@@ -2569,6 +2569,62 @@ void wpa_supp_handle_link_lost(mlan_private *priv)
     }
 }
 
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+wifi_sta_filter_t wifi_host_sta_filter;
+
+int wifi_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+{
+    wifi_host_sta_filter.filter_mode = filter_mode;
+    wifi_host_sta_filter.mac_count   = mac_count;
+
+    memset(&wifi_host_sta_filter.mac_addr[0], 0, WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH);
+
+    if ((0 != filter_mode) && (NULL != mac_addr))
+        (void)memcpy(&wifi_host_sta_filter.mac_addr[0], mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
+
+    return MLAN_STATUS_SUCCESS;
+}
+
+static int wifi_check_sta_mac_filter(unsigned char *mac_addr)
+{
+    int index = 0;
+
+    for (index = 0; index < wifi_host_sta_filter.mac_count; index++)
+    {
+        if (!memcmp(&wifi_host_sta_filter.mac_addr[index * WLAN_MAC_ADDR_LENGTH], mac_addr, MLAN_MAC_ADDR_LENGTH))
+            return MLAN_STATUS_SUCCESS;
+    }
+
+    return MLAN_STATUS_FAILURE;
+}
+
+static int wifi_is_auth_allowed(unsigned char *mac_addr)
+{
+    int filter_result = wifi_check_sta_mac_filter(mac_addr);
+    int filter_mode   = wifi_host_sta_filter.filter_mode;
+
+    switch (filter_mode)
+    {
+        case 0:
+            return STTA_FILTER_AUTH_NON_BLOCKING;
+
+        case 1:
+            if (MLAN_STATUS_SUCCESS == filter_result)
+                return STTA_FILTER_AUTH_NON_BLOCKING;
+            else
+                return STTA_FILTER_AUTH_BLOCKING;
+
+        case 2:
+            if (MLAN_STATUS_SUCCESS == filter_result)
+                return STTA_FILTER_AUTH_BLOCKING;
+            else
+                return STTA_FILTER_AUTH_NON_BLOCKING;
+
+        default:
+            return STTA_FILTER_AUTH_NON_BLOCKING;
+    }
+}
+#endif
 /**
  *   @brief This function processes the 802.11 mgmt Frame
  *
@@ -3075,6 +3131,16 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     }
     else if (priv->bss_role == MLAN_BSS_ROLE_UAP)
     {
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+        if (sub_type == (t_u16)SUBTYPE_AUTH)
+        {
+            if (STTA_FILTER_AUTH_BLOCKING == wifi_is_auth_allowed(pieee_pkt_hdr->addr2))
+            {
+                wevt_d("EVENT: Blacklist sta " MACSTR " try to join the network \r\n", MAC2STR(pieee_pkt_hdr->addr2));
+                return MLAN_STATUS_SUCCESS;
+            }
+        }
+#endif
         nxp_wifi_event_mlme_t *mgmt_rx = &wm_wifi.mgmt_rx;
 
         mgmt_rx->frame.frame_len = payload_len;
@@ -4214,11 +4280,11 @@ int wifi_set_country_code(const char *alpha2)
 #endif
 
 #ifdef CONFIG_5GHz_SUPPORT
-    if(cfp_a)
+    if (cfp_a)
     {
         pmadapter->region_code = cfp_a;
     }
-    else if(cfp_bg)
+    else if (cfp_bg)
     {
         pmadapter->region_code = cfp_bg;
     }
@@ -4227,7 +4293,7 @@ int wifi_set_country_code(const char *alpha2)
         pmadapter->region_code = 0;
     }
 #else
-    if(cfp_bg)
+    if (cfp_bg)
     {
         pmadapter->region_code = cfp_bg;
     }
