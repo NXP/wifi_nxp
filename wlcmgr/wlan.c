@@ -10642,9 +10642,19 @@ int wlan_auto_reconnect_enable(wlan_auto_reconnect_config_t auto_reconnect_confi
     return wifi_auto_reconnect_enable(auto_reconnect_config);
 }
 
-int wlan_auto_reconnect_disable()
+int wlan_auto_reconnect_disable(void)
 {
     return wifi_auto_reconnect_disable();
+}
+
+int wlan_get_auto_reconnect_config(wlan_auto_reconnect_config_t *auto_reconnect_config)
+{
+    if (auto_reconnect_config == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    return wifi_get_auto_reconnect_config(auto_reconnect_config);
 }
 #endif
 
@@ -11245,16 +11255,6 @@ uint8_t wlan_get_current_channel(void)
 
     return (uint8_t)network.channel;
 }
-
-#ifdef CONFIG_AUTO_RECONNECT
-int wlan_get_auto_reconnect_config(wlan_auto_reconnect_config_t *auto_reconnect_config)
-{
-    if (!auto_reconnect_config)
-        return -WM_E_INVAL;
-
-    return wifi_get_auto_reconnect_config(auto_reconnect_config);
-}
-#endif
 
 void wlan_sta_ampdu_tx_enable(void)
 {

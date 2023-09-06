@@ -4133,7 +4133,7 @@ int wlan_auto_reconnect_enable(wlan_auto_reconnect_config_t auto_reconnect_confi
  * \return -WM_FAIL if command fails.
  *
  */
-int wlan_auto_reconnect_disable();
+int wlan_auto_reconnect_disable(void);
 
 /**
  * Get Auto Reconnect configuration from WLAN firmware.

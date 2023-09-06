@@ -569,4 +569,10 @@ int wifi_external_coex_pta_cfg(ext_coex_pta_cfg coex_pta_config);
 int wifi_imd3_cfg(t_u8 imd3_value);
 #endif
 
+#ifdef CONFIG_AUTO_RECONNECT
+int wifi_auto_reconnect_enable(wifi_auto_reconnect_config_t auto_reconnect_config);
+int wifi_auto_reconnect_disable(void);
+int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
+#endif
+
 #endif /* __MLAN_API_H__ */

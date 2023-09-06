@@ -9308,6 +9308,149 @@ static void test_wlan_imd3_cfg(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_AUTO_RECONNECT
+#define AUTO_RECON_CNT_DEF      255U
+#define AUTO_RECON_TIME_INT_DEF 10U
+#define AUTO_RECON_FLAG_DEF     0U
+
+static void dump_wlan_auto_reconnect_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-auto-reconnect <0/1/2> [<reconnect counter> <reconnect interval> <flags>]\r\n");
+    (void)PRINTF("        <0/1/2> : 0 - Disable auto reconnect\r\n");
+    (void)PRINTF("                  1 - Enable auto reconnect\r\n");
+    (void)PRINTF("                  2 - Get auto reconnect configuration\r\n");
+    (void)PRINTF("        <reconnect counter>  : 1-255 Auto reconnect attempts (Defult:255 - retry forever)\r\n");
+    (void)PRINTF("        <reconnect interval> : 0-255 Auto reconnect time period in seconds(Default:10 sec)\r\n");
+    (void)PRINTF(
+        "        <flags> : 0-15, 0: Default, Don't report link loss, 1: Report link loss to host, 2-15: Reserved\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("    wlan-auto-reconnect 0\r\n");
+    (void)PRINTF("    wlan-auto-reconnect 1 10 10 0\r\n");
+    (void)PRINTF("    wlan-auto-reconnect 2\r\n");
+    return;
+}
+
+static void test_wlan_auto_reconnect(int argc, char **argv)
+{
+    int ret      = -WM_FAIL;
+    char *endptr = NULL;
+    int enable   = -1;
+    wlan_auto_reconnect_config_t recon_config;
+
+    uint8_t recon_counter  = AUTO_RECON_CNT_DEF;
+    uint8_t recon_interval = AUTO_RECON_TIME_INT_DEF;
+    uint16_t flags         = AUTO_RECON_FLAG_DEF;
+
+    if (argc < 2 || argc > 5)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        goto done;
+    }
+
+    errno  = 0;
+    enable = (int)strtol(argv[1], &endptr, 10);
+    if (errno != 0 || *endptr != '\0')
+    {
+        (void)PRINTF("Error during strtol:enable\r\n");
+        goto done;
+    }
+
+    if (enable == 0)
+    {
+        ret = wlan_auto_reconnect_disable();
+        if (ret == WM_SUCCESS)
+        {
+            (void)PRINTF("Disabled auto reconnect\r\n");
+        }
+        else
+        {
+            (void)PRINTF("Failed to disable auto reconnect, error: %d\r\n", ret);
+        }
+    }
+    else if (enable == 1)
+    {
+        if (argc > 2)
+        {
+            errno         = 0;
+            recon_counter = (uint8_t)strtol(argv[2], &endptr, 10);
+            if (errno != 0 || *endptr != '\0')
+            {
+                (void)PRINTF("Error during strtol:reconnect counter\r\n");
+                goto done;
+            }
+        }
+
+        if (recon_counter == 0)
+        {
+            (void)PRINTF("Auto reconnect counter can not be 0\r\n");
+            goto done;
+        }
+
+        if (argc > 3)
+        {
+            errno          = 0;
+            recon_interval = (uint8_t)strtol(argv[3], &endptr, 10);
+            if (errno != 0 || *endptr != '\0')
+            {
+                (void)PRINTF("Error during strtol:reconnect interval\r\n");
+                goto done;
+            }
+        }
+
+        if (argc > 4)
+        {
+            errno = 0;
+            flags = (uint16_t)strtol(argv[4], &endptr, 10);
+            if (errno != 0 || *endptr != '\0')
+            {
+                (void)PRINTF("Error during strtol:flags\r\n");
+                goto done;
+            }
+        }
+
+        recon_config.reconnect_counter  = recon_counter;
+        recon_config.reconnect_interval = recon_interval;
+        recon_config.flags              = flags;
+
+        ret = wlan_auto_reconnect_enable(recon_config);
+        if (ret == WM_SUCCESS)
+        {
+            (void)PRINTF("Enabled auto reconnect\r\n");
+        }
+        else
+        {
+            (void)PRINTF("Failed to enable auto reconnect, error: %d\r\n", ret);
+        }
+    }
+    else if (enable == 2)
+    {
+        ret = wlan_get_auto_reconnect_config(&recon_config);
+        if (ret == WM_SUCCESS)
+        {
+            (void)PRINTF("Auto Reconnect Counter = %d\r\n", recon_config.reconnect_counter);
+            (void)PRINTF("Auto Reconnect Interval = %d\r\n", recon_config.reconnect_interval);
+            (void)PRINTF("Auto Reconnect Flags = %d\r\n", recon_config.flags);
+        }
+        else
+        {
+            (void)PRINTF("Failed to get auto reconnect configuration, error: %d\r\n", ret);
+        }
+    }
+    else
+    {
+        (void)PRINTF("Error: Specify 0/1/2 to Disable/Enable/Get auto reconnect configuration\r\n");
+        goto done;
+    }
+
+    return;
+
+done:
+    dump_wlan_auto_reconnect_usage();
+    return;
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -9602,6 +9745,10 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_IMD3_CFG
     {"wlan-imd3-cfg", "<enable>", test_wlan_imd3_cfg},
+#endif
+
+#ifdef CONFIG_AUTO_RECONNECT
+    {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
 };
 

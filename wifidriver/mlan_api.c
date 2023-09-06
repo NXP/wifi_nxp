@@ -234,7 +234,7 @@ int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
     return wm_wifi.cmd_resp_status;
 }
 
-#ifndef CONFIG_MLAN_WMSDK
+#ifdef CONFIG_AUTO_RECONNECT
 static int wifi_auto_reconnect(uint16_t action, wifi_auto_reconnect_config_t *auto_reconnect_config)
 {
     mlan_ds_auto_reconnect auto_reconnect;
