@@ -2351,6 +2351,7 @@ static int do_start(struct wlan_network *network)
                 {
                     wlcm_e("uAP configured bandwidth not allowed");
                     CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+                    wlan.cur_uap_network_idx = -1;
                     return -WM_FAIL;
                 }
             }
@@ -2376,6 +2377,7 @@ static int do_start(struct wlan_network *network)
             {
                 wlcm_e("uAP configured channel not allowed");
                 CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+                wlan.cur_uap_network_idx = -1;
                 return -WM_FAIL;
             }
 #endif
@@ -2431,6 +2433,7 @@ static int do_start(struct wlan_network *network)
         {
             wlcm_e("uAP start failed, giving up");
             CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
+            wlan.cur_uap_network_idx = -1;
             return -WM_FAIL;
         }
 
@@ -6312,6 +6315,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
             (void)os_semaphore_put(&wlan.scan_lock);
             wlan.is_scan_lock = 0;
         }
+        wlan.cur_network_idx = -1;
         CONNECTION_EVENT(WLAN_REASON_CONNECT_FAILED, NULL);
     }
 
@@ -6351,6 +6355,7 @@ static void wlcm_request_reconnect(enum cm_sta_state *next, struct wlan_network 
         wlan.reassoc_request = false;
         wlan.reassoc_count   = 0;
 
+        wlan.cur_network_idx = -1;
         CONNECTION_EVENT(WLAN_REASON_CONNECT_FAILED, NULL);
 
         wlcm_d("Disconnecting ... ");
