@@ -81,7 +81,7 @@ zephyr_code_relocate(FILES
                      wifidriver/mlan_wmm.c
                      wifidriver/wifi.c
                      wifidriver/wifi-imu.c
-                     LOCATION RAM)
+                     LOCATION RAM_TEXT)
 
 zephyr_code_relocate(FILES
                      # fsl_cache.c
@@ -89,21 +89,21 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/components/rpmsg/fsl_adapter_rfimu.c
-                     LOCATION RAM)
+                     LOCATION RAM_TEXT)
 
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)
-zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION RAM)
+zephyr_code_relocate(FILES ${ZPERF_SRC} LOCATION RAM_TEXT)
 
 file(GLOB SOCKET_SRC ${ZEPHYR_BASE}/subsys/net/lib/sockets/*.c)
-zephyr_code_relocate(FILES ${SOCKET_SRC} LOCATION RAM)
+zephyr_code_relocate(FILES ${SOCKET_SRC} LOCATION RAM_TEXT)
 
 file(GLOB NET_SRC ${ZEPHYR_BASE}/subsys/net/ip/*.c)
-zephyr_code_relocate(FILES ${NET_SRC} LOCATION RAM)
+zephyr_code_relocate(FILES ${NET_SRC} LOCATION RAM_TEXT)
 
 file(GLOB ETH_SRC ${ZEPHYR_BASE}/subsys/net/l2/ethernet/*.c)
-zephyr_code_relocate(FILES ${ETH_SRC} LOCATION RAM)
+zephyr_code_relocate(FILES ${ETH_SRC} LOCATION RAM_TEXT)
 
-zephyr_code_relocate(FILES ${ZEPHYR_BASE}/subsys/net/buf.c LOCATION RAM)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/subsys/net/buf.c LOCATION RAM_TEXT)
 
 zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/mem_slab.c
@@ -115,4 +115,4 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/sem.c
                      ${ZEPHYR_BASE}/kernel/thread.c
                      ${ZEPHYR_BASE}/kernel/work.c
-                     LOCATION RAM)
+                     LOCATION RAM_TEXT)
