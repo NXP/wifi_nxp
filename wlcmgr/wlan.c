@@ -5678,13 +5678,15 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
     (void)wlan_rx_mgmt_indication(WLAN_BSS_TYPE_STA, WLAN_MGMT_ACTION, NULL);
 #endif
 #endif
+
+#ifndef CONFIG_WPA_SUPP
 #ifdef CONFIG_MBO
     wifi_host_mbo_cfg(1);
 #endif
-#ifdef RW610
+#endif
+
     wlan_ieeeps_on(wlan.wakeup_conditions);
     wlan_deepsleepps_on();
-#endif
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
 }
 
@@ -7262,12 +7264,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.rssi_low_threshold = 70;
 #endif
 
-#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
-#else
-    wlan.wakeup_conditions = 0;
-#endif
 
     wlan.cur_network_idx     = -1;
     wlan.cur_uap_network_idx = -1;
@@ -10033,15 +10031,16 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
     {
         return WLAN_ERROR_PS_ACTION;
     }
+
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     if (wlan.cm_ieeeps_configured
 #ifdef CONFIG_WNM_PS
         || wlan.cm_wnmps_configured
 #endif
+       )
 #else
-    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured
+    if (wlan.cm_ieeeps_configured)
 #endif
-    )
     {
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
 #ifdef CONFIG_WNM_PS
@@ -10053,8 +10052,6 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
 #endif
         return WLAN_ERROR_STATE;
     }
-
-    //wlan.wakeup_conditions = wakeup_conditions;
 
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
 }
