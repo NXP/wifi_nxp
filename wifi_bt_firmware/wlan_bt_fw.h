@@ -11,9 +11,19 @@
 #if defined(SD8801)
 #include "sd8801_wlan.h"
 #elif defined(SD8978)
+#ifndef CONFIG_WIFI_IND_RESET
 #include "sduartIW416_wlan_bt.h"
+#else
+#include "sdIW416_wlan.h"
+#include "uartIW416_bt.h"
+#endif
 #elif defined(SD8987)
+#ifndef CONFIG_WIFI_IND_RESET
 #include "sduart8987_wlan_bt.h"
+#else
+#include "sd8987_wlan.h"
+#include "uart8987_bt.h"
+#endif
 #elif defined(SD8997)
 #include "sduart8997_wlan_bt.h"
 #elif defined(SD9097)
@@ -24,7 +34,12 @@
 #if defined(CONFIG_UART_WIFI_BRIDGE)
 #include "sduart_nw61x_mfg_se.h"
 #else
+#ifndef CONFIG_WIFI_IND_RESET
 #include "sduart_nw61x_se.h"
+#else
+#include "sd_nw61x_se.h"
+#include "uart_nw61x_se.h"
+#endif
 #endif
 #elif defined(RW610)
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
