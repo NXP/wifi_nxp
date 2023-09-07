@@ -8,6 +8,7 @@
  *
  */
 #include <string.h>
+#include <fsl_os_abstraction.h>
 #include "fwdnld_intf_abs.h"
 #include "fwdnld_sdio.h"
 #include "mlan_sdio_defs.h"
@@ -64,7 +65,7 @@ static bool wlan_card_ready_wait(t_u32 card_poll)
             sdio_io_d("Firmware Ready");
             return true;
         }
-        os_thread_sleep(os_msec_to_ticks(5));
+        OSA_TimeDelay(5U);
     }
     return false;
 }

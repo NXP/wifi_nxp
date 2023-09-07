@@ -49002,3 +49002,7 @@ const unsigned char wlan_fw_bin[] = {
   0x1f, 0xdb, 0x8c, 0x18
 };
 unsigned int wlan_fw_bin_len = 588004;
+
+const unsigned char bt_fw_bin[] = { 0x00 };
+
+unsigned int bt_fw_bin_len = 0;

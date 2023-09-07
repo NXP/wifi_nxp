@@ -176,6 +176,11 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
     int32_t ret         = FWDNLD_STATUS_SUCCESS;
     fwdnld_intf_t *intf = (fwdnld_intf_t *)interface;
 
+    if (size == 0)
+    {
+        return ret;
+    }
+
     if (intf->intf_s.fwdnld_intf_prepare)
     {
         ret = intf->intf_s.fwdnld_intf_prepare(intf, NULL);
