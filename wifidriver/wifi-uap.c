@@ -324,10 +324,16 @@ int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_l
 
     /* get band and sub band lists */
 #ifdef CONFIG_5GHz_SUPPORT
-    if (band == BAND_B)
-        sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
-    else
+    if (channel > MAX_CHANNELS_BG)
+    {
+        band          = BAND_A;
         sub_band_list = get_sub_band_from_region_code_5ghz(region_code, &nr_sb);
+    }
+    else
+    {
+        band          = BAND_B;
+        sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
+    }
 #else
     band          = BAND_B;
     sub_band_list = get_sub_band_from_region_code(region_code, &nr_sb);
