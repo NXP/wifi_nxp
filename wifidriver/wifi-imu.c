@@ -1104,31 +1104,10 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0, tx_control);
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response, 
-     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
-    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
-    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
-    os_mutex_put(&(sleep_rwlock.write_mutex));
-#else
-    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
-#endif
-    if (ret != WM_SUCCESS)
-    {
-        wifi_e("Failed to wakeup card\r\n");
-#ifdef CONFIG_WIFI_RECOVERY
-        wifi_recovery_enable = true;
-#else
-        assert(0);
-#endif
-    }
+
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    os_rwlock_read_unlock(&sleep_rwlock);
-#else
-    os_rwlock_read_unlock(&ps_rwlock);
-#endif
+
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("sdio_drv_write failed (%d)", ret);

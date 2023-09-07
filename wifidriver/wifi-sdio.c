@@ -1757,12 +1757,6 @@ retry_xmit:
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, tx_buf, &resp);
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    os_rwlock_read_unlock(&sleep_rwlock);
-#else
-    os_rwlock_read_unlock(&ps_rwlock);
-#endif
-
     txportno++;
     if (txportno == mlan_adap->mp_end_port)
     {
@@ -1862,12 +1856,6 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
 
     /* send CMD53 */
     ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
-
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    os_rwlock_read_unlock(&sleep_rwlock);
-#else
-    os_rwlock_read_unlock(&ps_rwlock);
-#endif
 
     txportno++;
     if (txportno == mlan_adap->mp_end_port)

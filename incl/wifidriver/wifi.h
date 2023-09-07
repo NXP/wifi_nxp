@@ -1621,7 +1621,14 @@ void wifi_show_os_mem_stat();
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wifi_send_wps_cfg_cmd(int option);
+
+int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint16_t len);
+
 #endif /* CONFIG_WPS2 */
+
+#ifdef CONFIG_1AS
+mlan_status raw_wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control);
+#endif
 
 #ifdef CONFIG_MULTI_CHAN
 /**

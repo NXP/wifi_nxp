@@ -3953,7 +3953,11 @@ int wifi_low_level_output(const t_u8 interface,
 #else
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response,
+     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+    os_mutex_put(&(sleep_rwlock.write_mutex));
 #else
     ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
 #endif
@@ -4205,12 +4209,28 @@ void wifi_show_os_mem_stat()
  */
 static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
+    int ret = WM_SUCCESS;
     mlan_status i;
     t_u32 pkt_len       = 0;
     uint32_t outbuf_len = 0;
     uint8_t *poutbuf    = wifi_get_outbuf(&outbuf_len);
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response,
+     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+    os_mutex_put(&(sleep_rwlock.write_mutex));
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        wifi_io_e("Failed to wakeup card");
+        assert(0);
+    }
 
 #if defined(RW610)
     wifi_imu_lock();
@@ -4225,22 +4245,23 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     (void)raw_process_pkt_hdrs((t_u8 *)poutbuf, pkt_len + len - 2U, interface);
     (void)memcpy((void *)((t_u8 *)poutbuf + pkt_len - 2), (const void *)buf, (size_t)len);
     i = wlan_xmit_pkt(poutbuf, pkt_len + len - 2U, interface, 0);
-    if (i == MLAN_STATUS_FAILURE)
-    {
-#if defined(RW610)
-        wifi_imu_unlock();
-#else
-        wifi_sdio_unlock();
-#endif
-
-        return (int)-WM_FAIL;
-    }
 
 #if defined(RW610)
     wifi_imu_unlock();
 #else
     wifi_sdio_unlock();
 #endif
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
+
+    if (i == MLAN_STATUS_FAILURE)
+    {
+        return (int)-WM_FAIL;
+    }
 
     return WM_SUCCESS;
 }
@@ -4249,6 +4270,73 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 {
     return raw_low_level_output((t_u8)bss_type, buff, len);
 }
+
+#ifdef CONFIG_WPS2
+int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint16_t len)
+{
+    mlan_status i;
+    u32_t pkt_len, outbuf_len;
+
+    uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
+    if (!outbuf)
+        return (int)-WM_FAIL;
+
+    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+    if ((pkt_len + len) > outbuf_len)
+    {
+        return (int)-WM_FAIL;
+    }
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response,
+     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+    os_mutex_put(&(sleep_rwlock.write_mutex));
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        wifi_io_e("Failed to wakeup card");
+        assert(0);
+    }
+
+#if defined(RW610)
+    wifi_imu_lock();
+#else
+    wifi_sdio_lock();
+#endif
+
+    /* XXX: TODO Get rid on the memset once we are convinced that
+     * process_pkt_hdrs sets correct values */
+    // memset(outbuf, 0, sizeof(outbuf));
+    (void)memset(outbuf, 0x00, pkt_len);
+
+    (void)memcpy((u8_t *)outbuf + pkt_len, buf, len);
+
+    i = wlan_xmit_pkt(outbuf, pkt_len + len, interface, 0);
+
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
+    wifi_sdio_unlock();
+#endif
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
+
+    if (i == MLAN_STATUS_FAILURE)
+    {
+        return (int)-WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+#endif /* CONFIG_WPS2 */
 
 int wifi_set_country_code(const char *alpha2)
 {
@@ -4482,9 +4570,43 @@ bool wifi_nxp_wps_session_enable(void)
 }
 #endif
 
+#ifdef CONFIG_1AS
+mlan_status raw_wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control)
+{
+    int ret;
+    mlan_status i;
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response,
+     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+    os_mutex_put(&(sleep_rwlock.write_mutex));
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        wifi_io_e("Failed to wakeup card");
+        assert(0);
+    }
+
+    i = wlan_xmit_pkt(buffer, txlen, interface, tx_conttol);
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
+#endif
+
+    return i;
+}
+#endif
+
 static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
-    int i;
+    mlan_status i;
+    int ret;
     uint32_t pkt_len, outbuf_len;
 
     uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
@@ -4499,6 +4621,21 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
     if ((len + pkt_len) > outbuf_len)
     {
         return (int)-WM_FAIL;
+    }
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response,
+     * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
+    os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
+    ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
+    os_mutex_put(&(sleep_rwlock.write_mutex));
+#else
+    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        wifi_io_e("Failed to wakeup card");
+        assert(0);
     }
 
 #if defined(RW610)
@@ -4520,6 +4657,12 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
     wifi_imu_unlock();
 #else
     wifi_sdio_unlock();
+#endif
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    os_rwlock_read_unlock(&sleep_rwlock);
+#else
+    os_rwlock_read_unlock(&ps_rwlock);
 #endif
 
     if (i == MLAN_STATUS_FAILURE)
