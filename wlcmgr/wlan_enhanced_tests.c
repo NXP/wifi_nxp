@@ -1207,7 +1207,7 @@ static void test_wlan_set_chanlist(int argc, char **argv)
 {
     wlan_chanlist_t chanlist;
 
-#if defined(CONFIG_COMPRESS_TX_PWTBL)
+#if defined(CONFIG_COMPRESS_TX_PWTBL) && !defined(RW610)
     ARG_UNUSED(rg_table_fc);
     ARG_UNUSED(rg_table_fc_len);
 #endif
