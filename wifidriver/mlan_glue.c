@@ -1052,7 +1052,7 @@ mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int le
 #ifdef CONFIG_P2P
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
 #else
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
+    cmd->seq_num       = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, bss_type);
 #endif
     cmd->result = 0x0;
 
@@ -1121,7 +1121,7 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
     }
     (void)memcpy((void *)pmbuf->pbuf, (const void *)rxpd, sizeof(RxPD));
 #else
-    pmbuf->pbuf = (t_u8 *)rxpd;
+    pmbuf->pbuf        = (t_u8 *)rxpd;
 #endif
     /** Offset to data */
     /* This should ideally be INTF_HEADER_LEN. But we not be storing
@@ -1401,7 +1401,7 @@ mlan_status wifi_prepare_and_send_cmd(IN mlan_private *pmpriv,
 #ifdef CONFIG_P2P
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, MLAN_BSS_TYPE_WIFIDIRECT);
 #else
-    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)bss_type);
+    cmd->seq_num       = HostCmd_SET_SEQ_NO_BSS_INFO(0U /* seq_num */, 0U /* bss_num */, (t_u8)bss_type);
 #endif /* CONFIG_P2P */
     cmd->result = 0x0;
 
@@ -2669,7 +2669,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         acs_params.hw_mode  = 1;
 #else
                         acs_params.pri_freq = channel_to_frequency(acs_scan->chan, acs_scan->bandcfg.chanBand);
-                        acs_params.hw_mode = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;
+                        acs_params.hw_mode  = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;
 #endif
                         acs_params.ch_width = 20;
 #else
@@ -2734,6 +2734,11 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif /* CONFIG_P2P*/
                     )
                     {
+#ifdef CONFIG_WMM_UAPSD
+                        /* disable uapsd for uAP */
+                        mlan_adap->pps_uapsd_mode = MFALSE;
+                        mlan_adap->tx_lock_flag   = MFALSE;
+#endif
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
                         (void)wifi_event_completion(WIFI_EVENT_UAP_STARTED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
