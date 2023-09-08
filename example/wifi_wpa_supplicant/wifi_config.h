@@ -99,6 +99,7 @@
 #define CONFIG_WIFI_FEATURES 1
 #define ENABLE_OFFLOAD       1
 #define CONFIG_TURBO_MODE    1
+#define CONFIG_AUTO_RECONNECT 1
 
 #if !defined(SD8801)
 #define CONFIG_EXT_SCAN_SUPPORT 1

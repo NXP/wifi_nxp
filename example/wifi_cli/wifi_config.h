@@ -97,6 +97,7 @@
 #define CONFIG_ROAMING    1
 #define CONFIG_CLOUD_KEEP_ALIVE 1
 #define CONFIG_TURBO_MODE       1
+#define CONFIG_AUTO_RECONNECT   1
 
 #if !defined(SD8801)
 #define CONFIG_EXT_SCAN_SUPPORT 1

@@ -93,8 +93,16 @@ middleware.wifi.fwdnld:
     cc-include:
     - repo_relative_path: incl
     - repo_relative_path: wifi_bt_firmware
+    - repo_relative_path: wifi_bt_firmware/8801
+    - repo_relative_path: wifi_bt_firmware/IW416
+    - repo_relative_path: wifi_bt_firmware/8987
+    - repo_relative_path: wifi_bt_firmware/nw61x
     - repo_relative_path: wifidriver
     - repo_relative_path: wifidriver/incl
+    - repo_relative_path: firmware_dnld
+    - repo_relative_path: sdio_nxp_abs
+    - repo_relative_path: sdio_nxp_abs/incl
+    - repo_relative_path: fwdnld_intf_abs
     files:
     - source: incl/WIFI_IW416_BOARD_AW_AM457_CAL_DATA_EXT.h
     - source: wifidriver/incl/mlan_main_defs.h
@@ -103,10 +111,23 @@ middleware.wifi.fwdnld:
     - source: wifi_bt_firmware/sduart8987_wlan_bt.h
     - source: wifi_bt_firmware/sduart_nw61x.h
     - source: wifi_bt_firmware/sduart_nw61x_se.h
+    - source: wifi_bt_firmware/8801/sd8801_wlan.h
+    - source: wifi_bt_firmware/IW416/sduartIW416_wlan_bt.h
+    - source: wifi_bt_firmware/IW416/sdIW416_wlan.h
+    - source: wifi_bt_firmware/IW416/uartIW416_bt.h
+    - source: wifi_bt_firmware/8987/sduart8987_wlan_bt.h
+    - source: wifi_bt_firmware/8987/sd8987_wlan.h
+    - source: wifi_bt_firmware/8987/uart8987_bt.h
+    - source: wifi_bt_firmware/nw61x/sduart_nw61x.h
+    - source: wifi_bt_firmware/nw61x/sd_nw61x.h
+    - source: wifi_bt_firmware/nw61x/uart_nw61x.h
+    - source: wifi_bt_firmware/nw61x/sduart_nw61x_se.h
+    - source: wifi_bt_firmware/nw61x/sd_nw61x_se.h
+    - source: wifi_bt_firmware/nw61x/uart_nw61x_se.h
     - source: wifidriver/sdio.c
     - source: wifidriver/sdio.h
-    - source: wifidriver/firmware_dnld.c
-    - source: wifidriver/firmware_dnld.h
+    - source: firmware_dnld/firmware_dnld.c
+    - source: firmware_dnld/firmware_dnld.h
   belong_to: set.middleware.wifi
   section_info:
     type: middleware
@@ -124,6 +145,7 @@ middleware.wifi.fwdnld:
     - middleware.wifi.template
     - middleware.wifi.mlan_sdio
     - middleware.wifi.common_files
+    - middleware.wifi.fwdnld_intf_abs
 middleware.wifi.wifidriver:
   section-type: component
   contents:
@@ -137,6 +159,9 @@ middleware.wifi.wifidriver:
     - repo_relative_path: wifidriver/wpa_supp_if
     - repo_relative_path: wifidriver/wpa_supp_if/incl
     - repo_relative_path: certs
+    - repo_relative_path: firmware_dnld
+    - repo_relative_path: sdio_nxp_abs
+    - repo_relative_path: sdio_nxp_abs/incl
     files:
     - source: incl/dhcp-server.h
     - source: incl/wlcmgr/wlan.h
@@ -234,6 +259,7 @@ middleware.wifi.wifidriver:
       - allOf:
         - middleware.wifi.sdio
         - middleware.wifi.fwdnld
+        - middleware.wifi.fwdnld_intf_abs
       - allOf:
         - middleware.wifi.imu
         - middleware.wifi.common_files
@@ -314,12 +340,16 @@ middleware.wifi.mlan_sdio:
     - repo_relative_path: incl/wifidriver
     - repo_relative_path: wifidriver
     - repo_relative_path: wifidriver/incl
+    - repo_relative_path: sdio_nxp_abs
+    - repo_relative_path: sdio_nxp_abs/incl
     files:
-    - source: wifidriver/mlan_sdio.c
+    - source: sdio_nxp_abs/mlan_sdio.c
+    - source: sdio_nxp_abs/fwdnld_sdio.c
+    - source: sdio_nxp_abs/incl/fwdnld_sdio.h
     - source: wifidriver/incl/type_decls.h
-    - source: wifidriver/incl/mlan_sdio_defs.h
-    - source: wifidriver/incl/mlan_sdio.h
-    - source: incl/wifidriver/mlan_sdio_api.h
+    - source: sdio_nxp_abs/incl/mlan_sdio_defs.h
+    - source: sdio_nxp_abs/incl/mlan_sdio.h
+    - source: sdio_nxp_abs/incl/mlan_sdio_api.h
     - source: wifidriver/wifi-sdio.h
   belong_to: set.middleware.wifi
   section_info:
@@ -339,6 +369,27 @@ middleware.wifi.mlan_sdio:
     - middleware.sdmmc.host.usdhc
     - middleware.wifi.template
     - middleware.wifi.common_files
+middleware.wifi.fwdnld_intf_abs:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: fwdnld_intf_abs
+    files:
+    - source: fwdnld_intf_abs/fwdnld_intf_abs.c
+    - source: fwdnld_intf_abs/fwdnld_intf_abs.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Firmware Download abstraction layer
+    user_visible: always
+    version: 1.3.46
+    description: NXP Wi-Fi Interface Abstraction Layer
+    taxonomy:
+      csub: fwdnld_intf_abs
+      belong_to: wifi
+    display_name: wifi_nxp_fwdnld_intf_abs
 middleware.wifi.imu:
   section-type: component
   contents:
