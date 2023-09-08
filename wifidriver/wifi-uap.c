@@ -280,7 +280,7 @@ void wifi_uap_clear_domain_info()
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11D_DOMAIN_INFO);
-    cmd->size    = S_DS_GEN + 6;
+    cmd->size    = S_DS_GEN + sizeof(domain_info->action) + sizeof(MrvlIEtypesHeader_t);
 
     domain_info->action = HostCmd_ACT_GEN_SET;
     domain_info->domain.header.type = wlan_cpu_to_le16(TLV_TYPE_DOMAIN);
