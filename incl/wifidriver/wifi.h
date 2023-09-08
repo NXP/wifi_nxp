@@ -1935,12 +1935,6 @@ typedef struct _wifi_sta_filter_t
     unsigned char mac_addr[WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH];
 } wifi_sta_filter_t;
 
-/**
- * Save filter data to local variable.
- *
- * \return true always.
- */
-int wifi_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 #endif
 

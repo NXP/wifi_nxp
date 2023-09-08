@@ -9300,7 +9300,7 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_stop();
         }
 #if defined (CONFIG_WPA_SUPP) && (CONFIG_UAP_STA_MAC_ADDR_FILTER)
-        wifi_host_set_sta_mac_filter(0, 0, NULL);
+        wlan_set_sta_mac_filter(0, 0, NULL);
 #endif
         power_off_device(LOAD_WIFI_FIRMWARE);
     }
@@ -11757,7 +11757,7 @@ int wlan_set_scan_interval(int scan_int)
 int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
 #ifdef CONFIG_WPA_SUPP
-    return wifi_host_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
+    return wlan_host_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
 #else
     return wifi_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
 #endif
@@ -13960,3 +13960,18 @@ int wlan_imd3_cfg(t_u8 imd3_value)
     return wifi_imd3_cfg(imd3_value);
 }
 #endif
+
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+{
+    int ret = 0;
+    struct netif *uap_netif = net_get_uap_interface();
+    ret = wpa_supp_set_mac_acl(uap_netif, filter_mode, mac_count, mac_addr);
+    if (ret < 0)
+        return -WM_FAIL;
+    else
+        return WM_SUCCESS;
+}
+#endif
+
+

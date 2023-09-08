@@ -2572,19 +2572,6 @@ void wpa_supp_handle_link_lost(mlan_private *priv)
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 wifi_sta_filter_t wifi_host_sta_filter;
 
-int wifi_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
-{
-    wifi_host_sta_filter.filter_mode = filter_mode;
-    wifi_host_sta_filter.mac_count   = mac_count;
-
-    memset(&wifi_host_sta_filter.mac_addr[0], 0, WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH);
-
-    if ((0 != filter_mode) && (NULL != mac_addr))
-        (void)memcpy(&wifi_host_sta_filter.mac_addr[0], mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
-
-    return MLAN_STATUS_SUCCESS;
-}
-
 static int wifi_check_sta_mac_filter(unsigned char *mac_addr)
 {
     int index = 0;

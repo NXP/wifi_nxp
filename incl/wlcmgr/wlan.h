@@ -6399,4 +6399,9 @@ int wlan_dpp_configurator_sign(int is_ap, const char *cmd);
  */
 int wlan_imd3_cfg(t_u8 imd3_value);
 #endif
+
+#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
+int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
+#endif
+
 #endif /* __WLAN_H__ */
