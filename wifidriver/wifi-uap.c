@@ -277,7 +277,6 @@ void wifi_uap_clear_domain_info()
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)((t_u8 *)cmd + S_DS_GEN);
 
-
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11D_DOMAIN_INFO);
