@@ -749,7 +749,7 @@ static void dump_wlan_set_tx_frame_usage(void)
         "wlan-set-rf-tx-frame <start> <data_rate> <frame_pattern> <frame_len> <adjust_burst_sifs> <burst_sifs_in_us> "
         "<short_preamble> <act_sub_ch> <short_gi> <adv_coding> <tx_bf> <gf_mode> <stbc> <bssid>\r\n");
     (void)PRINTF("Enable                 (0:disable, 1:enable)\r\n");
-    (void)PRINTF("Tx Data Rate           (Rate Index corresponding to legacy/HT/VHT rates)\r\n");
+    (void)PRINTF("Tx Data Rate           (Rate Index corresponding to legacy/HT/VHT rates)(Enter hexadecimal value)\r\n");
     (void)PRINTF("Payload Pattern        (0 to 0xFFFFFFFF) (Enter hexadecimal value)\r\n");
     (void)PRINTF("Payload Length         (1 to 0x400) (Enter hexadecimal value)\r\n");
     (void)PRINTF("Adjust Burst SIFS3 Gap (0:disable, 1:enable)\r\n");
