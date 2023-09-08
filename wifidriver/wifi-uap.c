@@ -271,6 +271,24 @@ done:
 }
 #endif /* CONFIG_11AX */
 
+void wifi_uap_clear_domain_info()
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)((t_u8 *)cmd + S_DS_GEN);
+
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11D_DOMAIN_INFO);
+    cmd->size    = S_DS_GEN + 6;
+
+    domain_info->action = HostCmd_ACT_GEN_SET;
+    domain_info->domain.header.type = wlan_cpu_to_le16(TLV_TYPE_DOMAIN);
+
+    wifi_wait_for_cmdresp(NULL);
+}
+
 int wifi_uap_prepare_and_send_cmd(mlan_private *pmpriv,
                                   t_u16 cmd_no,
                                   t_u16 cmd_action,
@@ -1111,10 +1129,14 @@ static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 int wifi_uap_stop()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    int rv = 0;
 
     /* Start BSS */
-    return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+    rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
                                          MLAN_BSS_TYPE_UAP, NULL);
+    wifi_uap_clear_domain_info();
+
+    return rv;
 }
 
 #ifdef CONFIG_WPA_SUPP_AP
@@ -4507,7 +4529,7 @@ int wifi_nxp_stop_ap()
         wuap_e("Stop BSS failed");
         return -WM_FAIL;
     }
-
+    wifi_uap_clear_domain_info();
     priv->uap_host_based = MFALSE;
 
     wuap_d("wlan: AP stopped");
