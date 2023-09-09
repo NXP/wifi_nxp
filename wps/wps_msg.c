@@ -1320,7 +1320,7 @@ int wps_eap_tls_response_send(const uint8_t *buf, const size_t len)
                     wps_mem_free(gpwps_info->more_frag_buffer);
                     gpwps_info->more_frag_buffer = NULL;
                 }
-                gpwps_info->more_frag_buffer = wps_mem_calloc(1, 2048);
+                gpwps_info->more_frag_buffer = wps_mem_calloc(1, 4096);
                 if (!gpwps_info->more_frag_buffer)
                 {
                     wps_d("%s Not enough memory allocated !", __func__);
@@ -1328,6 +1328,13 @@ int wps_eap_tls_response_send(const uint8_t *buf, const size_t len)
                 }
             }
             ptr = gpwps_info->more_frag_buffer + gpwps_info->include_length;
+            if (gpwps_info->include_length + len > 4096)
+            {
+                (void)PRINTF("eap-tls more_frag_buffer overflow, want=%d, actual=%d\r\n", gpwps_info->include_length + len, 4096);
+                wps_mem_free(gpwps_info->more_frag_buffer);
+                gpwps_info->more_frag_buffer = NULL;
+                return WPS_STATUS_FAIL;
+            }
             (void)memcpy(ptr, buf, len);
             gpwps_info->include_length += len;
 
