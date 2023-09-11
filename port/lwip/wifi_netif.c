@@ -651,7 +651,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         sizeof(TxPD) + INTF_HEADER_LEN;
 
 #ifndef CONFIG_WMM
-#ifdef LWIP_NETIF_TX_SINGLE_PBUF
+#if LWIP_NETIF_TX_SINGLE_PBUF
     if ((p->len == p->tot_len) && (pbuf_header(p, pkt_len) == 0))
     {
         wmm_outbuf = p->payload;
@@ -677,8 +677,8 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif
     );
 
-#ifdef CONFIG_WMM
-#ifdef LWIP_NETIF_TX_SINGLE_PBUF
+#ifndef CONFIG_WMM
+#if LWIP_NETIF_TX_SINGLE_PBUF
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
     pbuf_header(p, -pkt_len);
