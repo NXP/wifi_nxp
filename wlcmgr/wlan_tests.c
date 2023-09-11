@@ -616,7 +616,7 @@ static void dump_wlan_add_usage(void)
         "bip_cmac_256=0x2000\r\n");
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-wild/eap-tls/eap-tls-sha256"
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-tls/eap-tls-sha256"
 #ifdef CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
 #endif
@@ -1039,8 +1039,7 @@ static void test_wlan_add(int argc, char **argv)
             info.wpa3_sb = 1;
         }
         else if ((info.security2 == 0U) &&
-                 (string_equal("eap-wild", argv[arg]) || string_equal("eap-tls", argv[arg]) ||
-                  string_equal("eap-tls-sha256", argv[arg]) ||
+                 (string_equal("eap-tls", argv[arg]) || string_equal("eap-tls-sha256", argv[arg]) ||
 #ifdef CONFIG_11R
                   string_equal("eap-tls-ft", argv[arg]) || string_equal("eap-tls-ft-sha384", argv[arg]) ||
 #endif
@@ -1050,11 +1049,7 @@ static void test_wlan_add(int argc, char **argv)
                   string_equal("eap-fast-gtc", argv[arg]) || string_equal("eap-sim", argv[arg]) ||
                   string_equal("eap-aka", argv[arg]) || string_equal("eap-aka-prime", argv[arg])))
         {
-            if (string_equal("eap-wild", argv[arg]))
-            {
-                network.security.type = WLAN_SECURITY_EAP_WILDCARD;
-            }
-            else if (string_equal("eap-tls", argv[arg]))
+            if (string_equal("eap-tls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS;
             }

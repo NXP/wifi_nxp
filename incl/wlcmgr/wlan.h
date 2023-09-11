@@ -1050,7 +1050,6 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
         (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
         (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
-        (security == WLAN_SECURITY_EAP_WILDCARD) ||
 #else
 #ifdef CONFIG_WPA2_ENTP
         (security == WLAN_SECURITY_EAP_TLS) ||
@@ -1087,8 +1086,7 @@ static inline int is_ep_valid_security(int security)
         (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
         (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
         (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
-        (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
-        (security == WLAN_SECURITY_EAP_WILDCARD))
+        (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME))
     {
         return 1;
     }

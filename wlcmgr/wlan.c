@@ -7784,7 +7784,6 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_EAP_TLS:
 #elif CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-        case WLAN_SECURITY_EAP_WILDCARD:
         case WLAN_SECURITY_EAP_TLS:
         case WLAN_SECURITY_EAP_TLS_SHA256:
 #ifdef CONFIG_11R
@@ -8121,8 +8120,7 @@ int wlan_add_network(struct wlan_network *network)
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-    if ((network->security.type == WLAN_SECURITY_EAP_WILDCARD) ||
-            (wlan_is_eap_tls_security(network->security.type)) ||
+    if ((wlan_is_eap_tls_security(network->security.type)) ||
             (wlan_is_eap_ttls_security(network->security.type)) ||
             (wlan_is_eap_ttls_mschapv2_security(network->security.type)) ||
             (wlan_is_eap_peap_security(network->security.type)) ||
@@ -8225,8 +8223,7 @@ int wlan_add_network(struct wlan_network *network)
 #ifdef CONFIG_HOSTAPD
         }
 #endif
-        if ((network->security.type == WLAN_SECURITY_EAP_WILDCARD) ||
-                wlan_is_eap_ttls_security(network->security.type))
+        if (wlan_is_eap_ttls_security(network->security.type))
         {
             if (network->role == WLAN_BSS_ROLE_STA)
             {
@@ -13975,4 +13972,3 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
 }
 #endif
 #endif
-
