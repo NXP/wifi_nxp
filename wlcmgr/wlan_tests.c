@@ -4334,7 +4334,7 @@ static void test_wlan_8801_ext_coex_stats(int argc, char **argv)
 }
 #endif
 
-#if !defined(SD8801)
+#if !defined(SD8801) && !defined(RW610)
 static void test_wlan_set_uap_bandwidth(int argc, char **argv)
 {
     uint8_t bandwidth;
@@ -4696,7 +4696,7 @@ static void dump_wlan_eu_crypto_aes_ecb(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-ECB encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("wlan-eu-crypto-aes-ecb <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
 static void test_wlan_eu_crypto_aes_ecb(int argc, char **argv)
@@ -4770,7 +4770,7 @@ static void dump_wlan_eu_crypto_aes_wrap(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-WRAP encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("wlan-eu-crypto-aes-wrap <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
 static void test_wlan_eu_crypto_aes_wrap(int argc, char **argv)
@@ -4845,7 +4845,7 @@ static void dump_wlan_eu_crypto_ccmp_128(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-CCMP-128 encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("wlan-eu-crypto-ccmp-128 <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
 static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
@@ -4925,7 +4925,7 @@ static void dump_wlan_eu_crypto_ccmp_256(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-CCMP-256 encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("wlan-eu-crypto-ccmp-256 <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
 static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
@@ -5007,7 +5007,7 @@ static void dump_wlan_eu_crypto_gcmp_128(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-GCMP-128 encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("wlan-eu-crypto-gcmp-128 <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
 static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
@@ -5047,7 +5047,7 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
                             0x5b, 0xf0, 0x8b, 0x80, 0x74, 0x42, 0x64, 0x0a, 0x15, 0x96, 0xe5, 0xdb, 0xda, 0xd4,
                             0x1d, 0x1f, 0x36, 0x23, 0xf4, 0x5d, 0x7a, 0x12, 0xdb, 0x7a, 0xfb, 0x23};
     Dec_DataOnlyLength   = 40;
-#if defined(SD9177)
+#if defined(SD9177) || defined(RW610)
     t_u8 DecTag[16] = {0xde, 0xf6, 0x19, 0xc2, 0xa3, 0x74, 0xb6, 0xdf, 0x66, 0xff, 0xa5, 0x3b, 0x6c, 0x69, 0xd7, 0x9e};
 #else
     t_u8 DecTag[16] = {0xe9, 0x04, 0x97, 0xa1, 0xec, 0x9c, 0x5e, 0x8b, 0x85, 0x5b, 0x9d, 0xc3, 0xa8, 0x16, 0x91, 0xa3};
@@ -5103,7 +5103,7 @@ static void dump_wlan_eu_crypto_gcmp_256(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("Algorithm AES-GCMP-256 encryption and decryption verification\r\n");
-    (void)PRINTF("wlan-eu-crypto <EncDec>\r\n");
+    (void)PRINTF("wlan-eu-crypto-gcmp-256 <EncDec>\r\n");
     (void)PRINTF("EncDec: 0-Decrypt, 1-Encrypt\r\n");
 }
 static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
@@ -5146,7 +5146,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
                             0x5a, 0x8b, 0xe7, 0x79, 0xb2, 0x12, 0x66, 0x55, 0x5e, 0x70, 0xad, 0x79};
     Dec_DataOnlyLength   = 40;
 
-#if defined(SD9177)
+#if defined(SD9177) || defined(RW610)
     t_u8 DecTag[16] = {0x11, 0x43, 0x16, 0x85, 0x90, 0x95, 0x47, 0x3d, 0x5b, 0x1b, 0xd5, 0x96, 0xb3, 0xde, 0xa3, 0xbf};
 #else
     t_u8 DecTag[16] = {0x11, 0x53, 0x9a, 0x0e, 0x22, 0xc1, 0x26, 0x0c, 0xbb, 0xe8, 0x35, 0x93, 0x35, 0xf3, 0x37, 0x65};
@@ -9546,7 +9546,7 @@ static struct cli_command tests[] = {
     {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
 #endif
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
-#if !defined(SD8801)
+#if !defined(SD8801) && !defined(RW610)
 #ifdef CONFIG_11AC
     {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
 #else
