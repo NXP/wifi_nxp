@@ -2886,7 +2886,7 @@ void wlan_set_mac_addr(uint8_t *mac);
 
 #ifdef CONFIG_WMM_UAPSD
 int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
-void wlan_set_wmm_uapsd(t_u8 uapsd_enable);
+int wlan_set_wmm_uapsd(t_u8 uapsd_enable);
 int wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
 #endif
 

@@ -12937,7 +12937,7 @@ int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action)
     return ret;
 }
 
-void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
+int wlan_set_wmm_uapsd(t_u8 uapsd_enable)
 {
 #ifndef CONFIG_WNM_PS
     unsigned int condition = 0;
@@ -12946,25 +12946,26 @@ void wlan_set_wmm_uapsd(t_u8 uapsd_enable)
     if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
     {
         (void)PRINTF("Failed to enable/disable UAPSD, because uAP is up/STA is connecting\n");
-        return;
+        return -WM_FAIL;
     }
 
     if (uapsd_enable)
     {
-        wifi_wmm_qos_cfg(&uapsd_qos_info, 1);
-        wifi_sleep_period(&uapsd_sleep_period, 1);
+        (void)wifi_wmm_qos_cfg(&uapsd_qos_info, 1);
+        (void)wifi_sleep_period(&uapsd_sleep_period, 1);
 #ifndef CONFIG_WNM_PS
-        wlan_ieeeps_on(condition);
+        (void)wlan_ieeeps_on(condition);
 #endif
     }
     else
     {
         t_u8 qos_info       = 0;
         unsigned int period = 0;
-        wifi_wmm_qos_cfg(&qos_info, 1);
-        wifi_sleep_period(&period, 1);
-        wlan_ieeeps_off();
+        (void)wifi_wmm_qos_cfg(&qos_info, 1);
+        (void)wifi_sleep_period(&period, 1);
+        (void)wlan_ieeeps_off();
     }
+	return WM_SUCCESS;
 }
 int wlan_sleep_period(unsigned int *sleep_period, t_u8 action)
 {

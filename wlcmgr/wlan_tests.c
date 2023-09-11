@@ -6532,7 +6532,7 @@ static void test_wlan_set_wmm_uapsd(int argc, char **argv)
         return;
     }
 
-    wlan_set_wmm_uapsd(enable);
+    (void)wlan_set_wmm_uapsd(enable);
 }
 
 static void test_wlan_sleep_period(int argc, char **argv)
