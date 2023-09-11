@@ -13151,36 +13151,39 @@ int wlan_config_mef(int type, t_u8 mef_action)
     {
         case MEF_TYPE_DELETE:
             (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
-            wifi_set_packet_filters(&g_flt_cfg);
-            (void)PRINTF("delete all MEF entries Successful\n\r");
+            ret = wifi_set_packet_filters(&g_flt_cfg);
+            if(ret == WM_SUCCESS)
+                (void)PRINTF("delete all MEF entries Successful\n\r");
+            else
+                (void)PRINTF("delete all MEF entries Failed\n\r");
             break;
         case MEF_TYPE_PING:
             ret = wlan_mef_set_auto_ping(mef_action);
             if (ret == WM_SUCCESS)
                 (void)PRINTF("Add ping MEF entry successful\n\r");
             else
-                (void)PRINTF("Add ping MEF entry Failed %d\n\r");
+                (void)PRINTF("Add ping MEF entry Failed\n\r");
             break;
         case MEF_TYPE_ARP:
             ret = wlan_mef_set_auto_arp(mef_action);
             if (ret == WM_SUCCESS)
                 (void)PRINTF("Add ARP MEF entry successful\n\r");
             else
-                (void)PRINTF("Add ARP MEF entry Failed %d\n\r");
+                (void)PRINTF("Add ARP MEF entry Failed\n\r");
             break;
         case MEF_TYPE_MULTICAST:
             ret = wlan_mef_set_multicast(mef_action);
             if (ret == WM_SUCCESS)
                 (void)PRINTF("Add multicast MEF entry successful\n\r");
             else
-                (void)PRINTF("Add multicast MEF entry Failed %d\n\r");
+                (void)PRINTF("Add multicast MEF entry Failed\n\r");
             break;
         case MEF_TYPE_IPV6_NS:
             ret = wlan_set_ipv6_ns_mef(mef_action);
             if (ret == WM_SUCCESS)
                 (void)PRINTF("Add ns MEF entry successful\n\r");
             else
-                (void)PRINTF("Add ns MEF entry Failed %d\n\r");
+                (void)PRINTF("Add ns MEF entry Failed\n\r");
             break;
         default:
             (void)PRINTF("Error: unknown MEF type:%d", type);
