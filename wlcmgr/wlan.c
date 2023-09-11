@@ -13961,6 +13961,7 @@ int wlan_imd3_cfg(t_u8 imd3_value)
 }
 #endif
 
+#ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
 {
@@ -13973,5 +13974,5 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
         return WM_SUCCESS;
 }
 #endif
-
+#endif
 
