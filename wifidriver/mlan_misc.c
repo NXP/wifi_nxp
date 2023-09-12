@@ -1501,7 +1501,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         SET_EXTCAP_TWT_REQ(pext_cap->ext_cap);
 #endif
 #ifdef CONFIG_11V
-        pext_cap->ext_cap.BSS_Transition = 1;
+    pext_cap->ext_cap.BSS_Transition = 1;
 #endif
 
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);
@@ -2631,6 +2631,38 @@ mlan_status wlan_misc_ioctl_rf_test_cfg(pmlan_adapter pmadapter, pmlan_ioctl_req
     if (ret == MLAN_STATUS_SUCCESS)
         ret = MLAN_STATUS_PENDING;
 done:
+    LEAVE();
+    return ret;
+}
+#endif
+
+#ifdef GPIO_INDEPENDENT_RESET
+/**
+ *  @brief Configure GPIO independent reset
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param pioctl_req   A pointer to ioctl request buffer
+ *
+ *  @return             MLAN_STATUS_PENDING --success, otherwise fail
+ */
+mlan_status wlan_misc_ioctl_ind_rst_cfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_private *pmpriv   = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_misc_cfg *misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    mlan_status ret        = MLAN_STATUS_SUCCESS;
+    t_u16 cmd_action       = 0;
+
+    ENTER();
+
+    if (pioctl_req->action == MLAN_ACT_GET)
+        cmd_action = HostCmd_ACT_GEN_GET;
+    else
+        cmd_action = HostCmd_ACT_GEN_SET;
+
+    /* Send request to firmware */
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_INDEPENDENT_RESET_CFG, cmd_action, 0, (t_void *)pioctl_req,
+                           (t_void *)&misc->param.ind_rst_cfg);
+
     LEAVE();
     return ret;
 }

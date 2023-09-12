@@ -1861,6 +1861,9 @@ typedef MLAN_PACK_START struct _power_table_attr
 #endif /* CONFIG_5GHz_SUPPORT */
 #endif /* OTP_CHANINFO */
 
+/** Host Command ID : GPIO independent reset configure */
+#define HostCmd_CMD_INDEPENDENT_RESET_CFG 0x0243
+
 #ifdef CONFIG_COMPRESS_TX_PWTBL
 /** used in hostcmd to download region power cfg setting to firmware */
 #define HostCmd_CMD_REGION_POWER_CFG 0x0249
@@ -3409,6 +3412,19 @@ typedef MLAN_PACK_START struct _HostCmd_DS_IND_RST
     /** CMD_SUBID */
     t_u16 sub_id;
 } MLAN_PACK_END HostCmd_DS_IND_RST;
+
+#ifdef GPIO_INDEPENDENT_RESET
+/** HostCmd_DS_INDEPENDENT_RESET_CFG */
+typedef MLAN_PACK_START struct _HostCmd_DS_INDEPENDENT_RESET_CFG
+{
+    /** ACT_GET/ACT_SET */
+    t_u16 action;
+    /** out band independent reset */
+    t_u8 ir_mode;
+    /** gpio pin */
+    t_u8 gpio_pin;
+} MLAN_PACK_END HostCmd_DS_INDEPENDENT_RESET_CFG;
+#endif
 
 /** HostCmd_DS_CMD_TX_DATA_PAUSE */
 typedef MLAN_PACK_START struct _HostCmd_DS_CMD_TX_DATA_PAUSE
@@ -7485,7 +7501,12 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_CFG_DATA cfg_data;
         /** MAC control */
         HostCmd_DS_MAC_CONTROL mac_ctrl;
+        /** Test Independent reset */
         HostCmd_DS_IND_RST ind_rst;
+#ifdef GPIO_INDEPENDENT_RESET
+        /** GPIO Independent reset configure */
+        HostCmd_DS_INDEPENDENT_RESET_CFG ind_rst_cfg;
+#endif
         /** MAC address */
         HostCmd_DS_802_11_MAC_ADDRESS mac_addr;
         /** MAC muticast address */

@@ -1865,4 +1865,14 @@ typedef PACK_START struct _wifi_csi_config_params_t
 } PACK_END wifi_csi_config_params_t;
 #endif /* CSI_SUPPORT */
 
+#ifdef GPIO_INDEPENDENT_RESET
+typedef PACK_START struct
+{
+    /** reset mode enable/ disable */
+    t_u8 ir_mode;
+    /** gpio pin */
+    t_u8 gpio_pin;
+} PACK_END wifi_indrst_cfg_t;
+#endif
+
 #endif /* __WIFI_DECL_H__ */

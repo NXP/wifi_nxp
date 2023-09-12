@@ -1462,6 +1462,13 @@ typedef wifi_csi_config_params_t wlan_csi_config_params_t;
 typedef wifi_net_monitor_t wlan_net_monitor_t;
 #endif
 
+#ifdef GPIO_INDEPENDENT_RESET
+/** Configuration for GPIO independent reset
+ * \ref wifi_indrst_cfg_t
+ */
+typedef wifi_indrst_cfg_t wlan_indrst_cfg_t;
+#endif
+
 #ifdef CONFIG_11AX
 /** Configuration for TX Rate Setting from
  * \ref txrate_setting
@@ -6408,11 +6415,30 @@ int wlan_imd3_cfg(t_u8 imd3_value);
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
-/** Independent Firmware reset
+#ifdef GPIO_INDEPENDENT_RESET
+/**
+ * Set GPIO independent reset configuration
+ *
+ * \param[in] indrst_cfg GPIO independent reset config to be sent to Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg);
+
+/* Get GPIO independent reset configuration
+ *
+ * \param[out] indrst_cfg GPIO independent reset config set in Firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
+#endif
+
+/** Test Independent Firmware reset
  *
  * This function will send cmd that will cause timeout in firmware
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_independent_reset();
+int wlan_test_independent_reset();
 #endif /* __WLAN_H__ */

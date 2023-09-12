@@ -144,7 +144,7 @@ static const char *print_role(enum wlan_bss_role role)
 }
 #endif
 
-static inline const char *sec_tag(struct wlan_network *network)
+inline static const char *sec_tag(struct wlan_network *network)
 {
     if (network->security_specific == 0U)
     {
@@ -9446,11 +9446,113 @@ done:
 }
 #endif
 
+#ifdef GPIO_INDEPENDENT_RESET
+static void dump_wlan_set_ind_rst_cfg_usage(void)
+{
+    (void)PRINTF("Usage :                                                                \r\n");
+    (void)PRINTF("         wlan-set-indrstcfg <ir_mode> [gpio_pin]                       \r\n");
+    (void)PRINTF("         ir_mode   : 0 -- Disable                                      \r\n");
+    (void)PRINTF("                     1 -- Enable out band reset, disable in band       \r\n");
+    (void)PRINTF("                     2 -- Enable in band, disable out band             \r\n");
+    (void)PRINTF("         gpio_pin  : 255 -- Default pin for reset                      \r\n");
+    (void)PRINTF("                     any other number for changing the gpio for reset. \r\n");
+    (void)PRINTF("Example :                                                                                \r\n");
+    (void)PRINTF("         wlan-set-indrstcfg 1 255   : Set default pin on interface mlan0 as reset pin    \r\n");
+    (void)PRINTF("         wlan-set-indrstcfg 0       : Disable the gpio 17 as reset pin on interface mlan0\r\n");
+    (void)PRINTF("         wlan-set-indrstcfg 2       : Enable in band reset mode                          \r\n");
+}
+
+static void test_set_indrst_cfg(int argc, char **argv)
+{
+    wifi_indrst_cfg_t indrst_cfg;
+
+    if (argc < 2 || argc > 3)
+    {
+        dump_wlan_set_ind_rst_cfg_usage();
+        return;
+    }
+
+    memset(&indrst_cfg, 0, sizeof(wifi_indrst_cfg_t));
+
+    if ((argc == 2) || (argc == 3))
+    {
+        errno              = 0;
+        indrst_cfg.ir_mode = (uint8_t)strtol(argv[1], NULL, 0);
+
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtoul errno:%d", errno);
+        }
+
+        /* ir_mode */
+        if (indrst_cfg.ir_mode < 0 || indrst_cfg.ir_mode > 2)
+        {
+            (void)PRINTF("Invalid ir mode parameter (0/1/2)!\n\r");
+            return;
+        }
+
+        /* gpio_pin */
+        if (argc == 3)
+        {
+            errno               = 0;
+            indrst_cfg.gpio_pin = (uint8_t)strtol(argv[2], NULL, 0);
+
+            if (errno != 0)
+            {
+                (void)PRINTF("Error during strtoul errno:%d", errno);
+            }
+
+            if ((indrst_cfg.gpio_pin != 0xFF) && (indrst_cfg.gpio_pin < 0))
+            {
+                (void)PRINTF("Invalid gpio pin no !\n\r");
+                return;
+            }
+        }
+    }
+
+    int rv = wlan_set_indrst_cfg(&indrst_cfg);
+
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set independent reset config\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Independent Reset Mode set as :%s\n\r",
+                     (indrst_cfg.ir_mode == 0) ? "disabled" : ((indrst_cfg.ir_mode == 1) ? "Out Band" : "In Band"));
+    }
+}
+
+static void test_get_indrst_cfg(int argc, char **argv)
+{
+    wifi_indrst_cfg_t indrst_cfg;
+
+    memset(&indrst_cfg, 0, sizeof(wifi_indrst_cfg_t));
+    int rv = wlan_get_indrst_cfg(&indrst_cfg);
+
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to get independent reset config\r\n");
+    }
+    else
+    {
+        if ((indrst_cfg.ir_mode < 0) || (indrst_cfg.ir_mode > 2))
+        {
+            (void)PRINTF("FW error Mode must be 0, 1 or 2\n");
+            return;
+        }
+        PRINTF("Independent Reset Mode = %s\r\n",
+               (indrst_cfg.ir_mode == 0) ? "disabled" : ((indrst_cfg.ir_mode == 1) ? "Out Band" : "In Band"));
+        if (indrst_cfg.ir_mode == 1)
+            (void)PRINTF("GPIO Pin = %d\n\n", indrst_cfg.gpio_pin);
+    }
+}
+#endif
 static void test_wlan_independent_reset(int argc, char **argv)
 {
     int ret;
 
-    ret = wlan_independent_reset();
+    ret = wlan_test_independent_reset();
 
     if (ret == WM_SUCCESS)
     {
@@ -9760,6 +9862,10 @@ static struct cli_command tests[] = {
 
 #ifdef CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
+#endif
+#ifdef GPIO_INDEPENDENT_RESET
+    {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
+    {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
 #endif
     {"wlan-independent-reset", NULL, test_wlan_independent_reset},
 };

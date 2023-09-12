@@ -234,7 +234,12 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
 #ifdef CONFIG_ECSA
-    MLAN_OID_MISC_OPER_CLASS       = 0x00200038,
+    MLAN_OID_MISC_OPER_CLASS = 0x00200038,
+#endif
+#ifdef GPIO_INDEPENDENT_RESET
+    MLAN_OID_MISC_IND_RST_CFG = 0x00200040,
+#endif
+#ifdef CONFIG_ECSA
     MLAN_OID_MISC_OPER_CLASS_CHECK = 0x00200049,
 #endif
     MLAN_OID_MISC_GET_REGIONPWR_CFG,
@@ -4084,6 +4089,18 @@ typedef struct _mlan_ds_host_clock
 } mlan_ds_host_clock;
 #endif
 
+#ifdef GPIO_INDEPENDENT_RESET
+typedef struct _mlan_ds_ind_rst_cfg
+{
+    /** Set or Get */
+    t_u16 action;
+    /** oob mode enable/ disable */
+    t_u8 ir_mode;
+    /** gpio pin */
+    t_u8 gpio_pin;
+} mlan_ds_ind_rst_cfg;
+#endif
+
 /** Type definition of mlan_ds_misc_cfg for MLAN_IOCTL_MISC_CFG */
 typedef struct _mlan_ds_misc_cfg
 {
@@ -4170,6 +4187,9 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_bw_chan_oper bw_chan_oper;
 #endif
         mlan_embedded_dhcp_config embedded_dhcp_config;
+#ifdef GPIO_INDEPENDENT_RESET
+        mlan_ds_ind_rst_cfg ind_rst_cfg;
+#endif
     } param;
 } mlan_ds_misc_cfg, *pmlan_ds_misc_cfg;
 

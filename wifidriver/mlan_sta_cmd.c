@@ -2665,7 +2665,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_cck_desense_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
-
+#ifdef GPIO_INDEPENDENT_RESET
+        case HostCmd_CMD_INDEPENDENT_RESET_CFG:
+            ret = wlan_cmd_ind_rst_cfg(cmd_ptr, cmd_action, pdata_buf);
+            break;
+#endif
         default:
             PRINTM(MERROR, "PREP_CMD: unknown command- %#x\n", cmd_no);
             ret = MLAN_STATUS_FAILURE;

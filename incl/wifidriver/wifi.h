@@ -1988,4 +1988,11 @@ void wifi_cau_temperature_enable(void);
 void wifi_cau_temperature_write_to_firmware(void);
 
 int wifi_independent_reset();
+
+#ifdef GPIO_INDEPENDENT_RESET
+int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
+int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
+#endif
+
+int wifi_test_independent_reset();
 #endif /* __WIFI_H__ */

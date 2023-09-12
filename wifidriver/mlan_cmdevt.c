@@ -4425,3 +4425,64 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
     return status;
 }
 #endif /* CONFIG_FW_VDLL */
+
+#ifdef GPIO_INDEPENDENT_RESET
+/**
+ *  @brief This function prepares command of independent reset.
+ *
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   the action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_ind_rst_cfg(HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
+{
+    mlan_ds_ind_rst_cfg *pdata_ind_rst            = (mlan_ds_ind_rst_cfg *)pdata_buf;
+    HostCmd_DS_INDEPENDENT_RESET_CFG *ind_rst_cfg = (HostCmd_DS_INDEPENDENT_RESET_CFG *)&cmd->params.ind_rst_cfg;
+
+    ENTER();
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_INDEPENDENT_RESET_CFG);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_INDEPENDENT_RESET_CFG) + S_DS_GEN);
+
+    ind_rst_cfg->action = wlan_cpu_to_le16(cmd_action);
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        ind_rst_cfg->ir_mode  = pdata_ind_rst->ir_mode;
+        ind_rst_cfg->gpio_pin = pdata_ind_rst->gpio_pin;
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+/**
+ *  @brief This function handles the command response of independent reset
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to command buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_ind_rst_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    mlan_ds_misc_cfg *misc                              = MNULL;
+    const HostCmd_DS_INDEPENDENT_RESET_CFG *ind_rst_cfg = (HostCmd_DS_INDEPENDENT_RESET_CFG *)&resp->params.ind_rst_cfg;
+
+    ENTER();
+
+    if (pioctl_buf)
+    {
+        misc = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+
+        if (wlan_le16_to_cpu(ind_rst_cfg->action) == HostCmd_ACT_GEN_GET)
+        {
+            misc->param.ind_rst_cfg.ir_mode  = ind_rst_cfg->ir_mode;
+            misc->param.ind_rst_cfg.gpio_pin = ind_rst_cfg->gpio_pin;
+        }
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif

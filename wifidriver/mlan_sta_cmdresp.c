@@ -207,7 +207,7 @@ static mlan_status wlan_ret_mfg_config_trigger_frame(pmlan_private pmpriv,
 mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *pioctl_buf)
 {
     HostCmd_DS_MFG_CMD_GENERIC_CFG *mcmd = (HostCmd_DS_MFG_CMD_GENERIC_CFG *)&resp->params.mfg_generic_cfg;
-    mlan_ds_misc_cfg *misc_cfg = (mlan_ds_misc_cfg*) pioctl_buf;
+    mlan_ds_misc_cfg *misc_cfg           = (mlan_ds_misc_cfg *)pioctl_buf;
     mlan_ds_mfg_cmd_generic_cfg *cfg     = MNULL;
     mlan_status ret                      = MLAN_STATUS_SUCCESS;
 
@@ -2022,6 +2022,11 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
 #ifdef CONFIG_1AS
         case HostCmd_CMD_HOST_CLOCK_CFG:
             ret = wlan_ret_host_clock_cfg(pmpriv, resp, pioctl_buf);
+            break;
+#endif
+#ifdef GPIO_INDEPENDENT_RESET
+        case HostCmd_CMD_INDEPENDENT_RESET_CFG:
+            ret = wlan_ret_ind_rst_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
         default:
