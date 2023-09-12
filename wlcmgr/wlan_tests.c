@@ -647,7 +647,7 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [eap-sim id <identity> pass <password>]"
+        "    wlan-add <profile_name> ssid <ssid> [eap-sim/eap-aka/eap-aka-prime id <identity> pass <password>]"
         "\r\n");
 
     (void)PRINTF("      If using WPA2/WPA3 Enterprise security, set the PMF configuration as required.\r\n");
@@ -1104,7 +1104,7 @@ static void test_wlan_add(int argc, char **argv)
             {
                 network.security.type = WLAN_SECURITY_EAP_AKA;
             }
-            else if (string_equal("eap-aka_prime", argv[arg]))
+            else if (string_equal("eap-aka-prime", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_AKA_PRIME;
             }
