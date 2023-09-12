@@ -3795,7 +3795,7 @@ mlan_status wlan_download_vdll_block(mlan_adapter *pmadapter, t_u8 *block, t_u16
 mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent);
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 mlan_status wlan_misc_ioctl_ind_rst_cfg(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
 mlan_status wlan_cmd_ind_rst_cfg(HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 

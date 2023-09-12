@@ -3404,6 +3404,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MAC_CONTROL
     t_u32 action;
 } MLAN_PACK_END HostCmd_DS_MAC_CONTROL;
 
+#ifdef CONFIG_WIFI_IND_RESET
 /** HostCmd_DS_IND_RST */
 typedef MLAN_PACK_START struct _HostCmd_DS_IND_RST
 {
@@ -3413,7 +3414,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_IND_RST
     t_u16 sub_id;
 } MLAN_PACK_END HostCmd_DS_IND_RST;
 
-#ifdef GPIO_INDEPENDENT_RESET
 /** HostCmd_DS_INDEPENDENT_RESET_CFG */
 typedef MLAN_PACK_START struct _HostCmd_DS_INDEPENDENT_RESET_CFG
 {
@@ -7501,9 +7501,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_CFG_DATA cfg_data;
         /** MAC control */
         HostCmd_DS_MAC_CONTROL mac_ctrl;
+#ifdef CONFIG_WIFI_IND_RESET
         /** Test Independent reset */
         HostCmd_DS_IND_RST ind_rst;
-#ifdef GPIO_INDEPENDENT_RESET
         /** GPIO Independent reset configure */
         HostCmd_DS_INDEPENDENT_RESET_CFG ind_rst_cfg;
 #endif

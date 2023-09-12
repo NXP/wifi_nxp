@@ -9446,7 +9446,7 @@ done:
 }
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 static void dump_wlan_set_ind_rst_cfg_usage(void)
 {
     (void)PRINTF("Usage :                                                                \r\n");
@@ -9456,10 +9456,10 @@ static void dump_wlan_set_ind_rst_cfg_usage(void)
     (void)PRINTF("                     2 -- Enable in band, disable out band             \r\n");
     (void)PRINTF("         gpio_pin  : 255 -- Default pin for reset                      \r\n");
     (void)PRINTF("                     any other number for changing the gpio for reset. \r\n");
-    (void)PRINTF("Example :                                                                                \r\n");
-    (void)PRINTF("         wlan-set-indrstcfg 1 255   : Set default pin on interface mlan0 as reset pin    \r\n");
-    (void)PRINTF("         wlan-set-indrstcfg 0       : Disable the gpio 17 as reset pin on interface mlan0\r\n");
-    (void)PRINTF("         wlan-set-indrstcfg 2       : Enable in band reset mode                          \r\n");
+    (void)PRINTF("Example :                                                              \r\n");
+    (void)PRINTF("         wlan-set-indrstcfg 1 255   : Set default pin as reset pin     \r\n");
+    (void)PRINTF("         wlan-set-indrstcfg 0       : Disable the independent reset    \r\n");
+    (void)PRINTF("         wlan-set-indrstcfg 2       : Enable in band reset mode        \r\n");
 }
 
 static void test_set_indrst_cfg(int argc, char **argv)
@@ -9547,7 +9547,6 @@ static void test_get_indrst_cfg(int argc, char **argv)
             (void)PRINTF("GPIO Pin = %d\n\n", indrst_cfg.gpio_pin);
     }
 }
-#endif
 static void test_wlan_independent_reset(int argc, char **argv)
 {
     int ret;
@@ -9563,6 +9562,7 @@ static void test_wlan_independent_reset(int argc, char **argv)
         (void)PRINTF("Independent reset failed\r\n");
     }
 }
+#endif
 
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
@@ -9863,11 +9863,11 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
     {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
     {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
-#endif
     {"wlan-independent-reset", NULL, test_wlan_independent_reset},
+#endif
 };
 
 /* Register our commands with the MTF. */

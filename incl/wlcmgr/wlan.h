@@ -381,7 +381,7 @@ enum wlan_event_reason
 /** The WLAN Connection Manager has received WPS event from WPA supplicant. */
 // WLAN_REASON_WPS_EVENT,
 #endif
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
     /** The WLAN Connection Manager has entered in hang mode. */
     WLAN_REASON_FW_HANG,
     /** The WLAN Connection Manager has reset fw successfully. */
@@ -1462,7 +1462,7 @@ typedef wifi_csi_config_params_t wlan_csi_config_params_t;
 typedef wifi_net_monitor_t wlan_net_monitor_t;
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 /** Configuration for GPIO independent reset
  * \ref wifi_indrst_cfg_t
  */
@@ -6415,7 +6415,7 @@ int wlan_imd3_cfg(t_u8 imd3_value);
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 /**
  * Set GPIO independent reset configuration
  *
@@ -6432,7 +6432,6 @@ int wlan_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
-#endif
 
 /** Test Independent Firmware reset
  *
@@ -6441,4 +6440,5 @@ int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_test_independent_reset();
+#endif
 #endif /* __WLAN_H__ */

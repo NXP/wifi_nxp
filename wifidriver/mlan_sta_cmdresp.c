@@ -2024,7 +2024,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_host_clock_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
         case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             ret = wlan_ret_ind_rst_cfg(pmpriv, resp, pioctl_buf);
             break;

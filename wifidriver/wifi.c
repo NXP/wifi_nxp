@@ -988,7 +988,7 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 }
 #endif
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
 static int wifi_reinit();
 t_u8 wifi_rx_block_cnt;
 t_u8 wifi_tx_block_cnt;
@@ -1211,7 +1211,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         wifi_recovery_enable = true;
 #else
         /* assert as command flow cannot work anymore */
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
         wlan_process_hang();
 #else
         ASSERT(0);
@@ -2197,7 +2197,7 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
     return ret;
 }
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
 static int wifi_reinit()
 {
     int ret = WM_SUCCESS;

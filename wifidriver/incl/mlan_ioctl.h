@@ -236,7 +236,7 @@ typedef enum _mlan_ioctl_req_id
 #ifdef CONFIG_ECSA
     MLAN_OID_MISC_OPER_CLASS = 0x00200038,
 #endif
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
     MLAN_OID_MISC_IND_RST_CFG = 0x00200040,
 #endif
 #ifdef CONFIG_ECSA
@@ -4089,7 +4089,7 @@ typedef struct _mlan_ds_host_clock
 } mlan_ds_host_clock;
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 typedef struct _mlan_ds_ind_rst_cfg
 {
     /** Set or Get */
@@ -4187,7 +4187,7 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_bw_chan_oper bw_chan_oper;
 #endif
         mlan_embedded_dhcp_config embedded_dhcp_config;
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
         mlan_ds_ind_rst_cfg ind_rst_cfg;
 #endif
     } param;

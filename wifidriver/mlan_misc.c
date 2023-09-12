@@ -2636,7 +2636,7 @@ done:
 }
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 /**
  *  @brief Configure GPIO independent reset
  *

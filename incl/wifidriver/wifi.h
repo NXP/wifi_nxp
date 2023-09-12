@@ -1987,12 +1987,9 @@ int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 w
 void wifi_cau_temperature_enable(void);
 void wifi_cau_temperature_write_to_firmware(void);
 
-int wifi_independent_reset();
-
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
-#endif
-
 int wifi_test_independent_reset();
+#endif
 #endif /* __WIFI_H__ */

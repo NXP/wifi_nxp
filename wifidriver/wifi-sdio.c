@@ -2752,7 +2752,7 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
     return ret;
 }
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
 mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;

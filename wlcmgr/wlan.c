@@ -3344,7 +3344,7 @@ static void wlcm_request_healthmon()
 
 static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network *curr_nw);
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
 static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
     (void)msg;
@@ -6495,7 +6495,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_scan_result_event(msg, &next);
             break;
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
         case WIFI_EVENT_FW_HANG:
             wlcm_d("got event: fw hang");
             wlcm_process_fw_hang_event(msg, &next);
@@ -14081,7 +14081,7 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
 #endif
 #endif
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 int wlan_set_indrst_cfg(const wlan_indrst_cfg_t *indrst_cfg)
 {
     return wifi_set_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
@@ -14091,9 +14091,9 @@ int wlan_get_indrst_cfg(wlan_indrst_cfg_t *indrst_cfg)
 {
        return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
-#endif
 
 int wlan_test_independent_reset()
 {
     return wifi_test_independent_reset();
 }
+#endif

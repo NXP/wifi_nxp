@@ -278,7 +278,7 @@ Change log:
 /** Rx unit register (SCRATCH0_3) */
 #define CARD_RX_UNIT_REG 0xeb
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
 #if defined(SD8978) || defined(SD8987) || defined(IW61x)
 /** Firmware reset register */
 #define CARD_FW_RESET_REG 0xEE
@@ -351,7 +351,7 @@ Change log:
 /** Rx unit register (SCRATCH0_3) */
 #define CARD_RX_UNIT_REG    0x63
 
-#if defined(CONFIG_FW_RELOAD)
+#if defined(CONFIG_WIFI_IND_DNLD)
 /** Firmware reset register */
 #define CARD_FW_RESET_REG 0x64
 /** Firmware reset register */

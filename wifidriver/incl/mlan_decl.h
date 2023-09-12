@@ -471,7 +471,7 @@ typedef struct _mlan_fw_image
     t_u8 *pfw_buf;
     /** Firmware image length */
     t_u32 fw_len;
-#ifdef CONFIG_FW_RELOAD
+#ifdef CONFIG_WIFI_IND_DNLD
     /** Firmware reload flag */
     t_u8 fw_reload;
 #endif

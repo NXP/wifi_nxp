@@ -4235,7 +4235,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
             case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -7840,7 +7840,7 @@ void wifi_cau_temperature_write_to_firmware()
 #endif
 }
 
-#ifdef GPIO_INDEPENDENT_RESET
+#ifdef CONFIG_WIFI_IND_RESET
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
     int ret;
@@ -7901,7 +7901,6 @@ int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
     }
     return ret;
 }
-#endif
 
 int wifi_test_independent_reset()
 {
@@ -7923,3 +7922,4 @@ int wifi_test_independent_reset()
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
+#endif

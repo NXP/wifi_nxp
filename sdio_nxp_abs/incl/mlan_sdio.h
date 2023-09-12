@@ -142,7 +142,7 @@ t_void wlan_interrupt(mlan_adapter *pmadapter);
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */
 
-#ifdef CONFIG_FW_RELOAD
+#ifdef CONFIG_WIFI_IND_DNLD
 mlan_status wlan_reset_fw(pmlan_adapter pmadapter);
 #endif
 
