@@ -23,7 +23,7 @@ fwdnld_sdio_intf_specific sdio_intf_specific_g;
  * Note this only applies to the blockmode we use 256 bytes
  * as block because MLAN_SDIO_BLOCK_SIZE = 256
  */
-static int32_t wlan_set_fw_dnld_size(void)
+static fwdnld_intf_ret_t wlan_set_fw_dnld_size(void)
 {
     uint32_t resp;
 

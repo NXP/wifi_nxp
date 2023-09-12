@@ -4191,7 +4191,6 @@ void wifi_show_os_mem_stat()
  */
 static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
-    int ret = WM_SUCCESS;
     mlan_status i;
     t_u32 pkt_len       = 0;
     uint32_t outbuf_len = 0;
@@ -4531,7 +4530,6 @@ mlan_status raw_wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 t
 static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
     mlan_status i;
-    int ret;
     uint32_t pkt_len, outbuf_len;
 
     uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
