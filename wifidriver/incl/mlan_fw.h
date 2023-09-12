@@ -3401,6 +3401,15 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MAC_CONTROL
     t_u32 action;
 } MLAN_PACK_END HostCmd_DS_MAC_CONTROL;
 
+/** HostCmd_DS_IND_RST */
+typedef MLAN_PACK_START struct _HostCmd_DS_IND_RST
+{
+    /** Action */
+    t_u16 action;
+    /** CMD_SUBID */
+    t_u16 sub_id;
+} MLAN_PACK_END HostCmd_DS_IND_RST;
+
 /** HostCmd_DS_CMD_TX_DATA_PAUSE */
 typedef MLAN_PACK_START struct _HostCmd_DS_CMD_TX_DATA_PAUSE
 {
@@ -7476,6 +7485,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_CFG_DATA cfg_data;
         /** MAC control */
         HostCmd_DS_MAC_CONTROL mac_ctrl;
+        HostCmd_DS_IND_RST ind_rst;
         /** MAC address */
         HostCmd_DS_802_11_MAC_ADDRESS mac_addr;
         /** MAC muticast address */

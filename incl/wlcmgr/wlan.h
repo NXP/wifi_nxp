@@ -6408,4 +6408,11 @@ int wlan_imd3_cfg(t_u8 imd3_value);
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
+/** Independent Firmware reset
+ *
+ * This function will send cmd that will cause timeout in firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_independent_reset();
 #endif /* __WLAN_H__ */

@@ -9446,6 +9446,22 @@ done:
 }
 #endif
 
+static void test_wlan_independent_reset(int argc, char **argv)
+{
+    int ret;
+
+    ret = wlan_independent_reset();
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Independent reset success\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Independent reset failed\r\n");
+    }
+}
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -9745,6 +9761,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
+    {"wlan-independent-reset", NULL, test_wlan_independent_reset},
 };
 
 /* Register our commands with the MTF. */

@@ -990,6 +990,8 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 
 #if defined(CONFIG_FW_RELOAD)
 static int wifi_reinit();
+t_u8 wifi_rx_block_cnt;
+t_u8 wifi_tx_block_cnt;
 
 void wlan_process_hang()
 {
@@ -1047,6 +1049,14 @@ void wlan_process_hang()
         ASSERT(0);
     }
 
+#ifndef RW610
+    ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("sd_wifi_post_init failed. status code %d", ret);
+        return;
+    }
+#endif
     /* Unblock TX data */
     wifi_set_tx_status(WIFI_DATA_RUNNING);
     /* Unblock RX data */
@@ -2218,11 +2228,12 @@ static int wifi_reinit()
                 break;
             default:
                 PRINTM(MINFO, "Unexpected MLAN FW Status \n");
+                ret = -WM_FAIL;
                 break;
         }
     }
 
-    return -WM_FAIL;
+    return ret;
 }
 #endif
 

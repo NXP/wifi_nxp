@@ -7819,3 +7819,24 @@ void wifi_cau_temperature_write_to_firmware()
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
 #endif
 }
+
+int wifi_independent_reset()
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    HostCmd_DS_IND_RST ind;
+    /** Action */
+    ind.action = 0;
+    /** CMD_SUBID */
+    ind.sub_id = 0x117;
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
+    cmd->size    = sizeof(HostCmd_DS_IND_RST) + S_DS_GEN;
+    (void)memcpy(&cmd->params.ind_rst, &ind, sizeof(HostCmd_DS_IND_RST));
+
+    wifi_wait_for_cmdresp(NULL);
+    return WM_SUCCESS;
+}

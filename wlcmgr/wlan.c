@@ -3357,6 +3357,7 @@ static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_sta
         wpa_supp_disconnect(netif);
 #endif
         wlcm_request_disconnect(next, &wlan.networks[wlan.cur_network_idx]);
+        wlan_dhcp_cleanup();
     }
 
     if (wlan.uap_state > CM_UAP_INITIALIZING)
@@ -14079,3 +14080,8 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
 }
 #endif
 #endif
+
+int wlan_independent_reset()
+{
+    return wifi_independent_reset();
+}
