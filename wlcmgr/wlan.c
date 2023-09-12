@@ -8027,18 +8027,7 @@ int wlan_add_network(struct wlan_network *network)
         network->dot11n = 1;
 #endif
     }
-
 #ifdef CONFIG_WPA_SUPP
-    if ((network->role == WLAN_BSS_ROLE_STA) &&
-        ((network->security.type == WLAN_SECURITY_WPA3_SAE)
-         || (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
-#ifdef CONFIG_OWE
-         || (network->security.type == WLAN_SECURITY_OWE_ONLY)
-#endif
-         ))
-    {
-        network->security.pkc = 1;
-    }
 #ifdef CONFIG_WPA_SUPP_AP
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
@@ -8117,7 +8106,6 @@ int wlan_add_network(struct wlan_network *network)
         }
     }
 #endif
-
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     if ((wlan_is_eap_tls_security(network->security.type)) ||
