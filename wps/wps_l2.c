@@ -86,7 +86,7 @@ int wps_l2_get_mac(WPS_L2_INFO *l2, u8 *addr)
     return WPS_STATUS_SUCCESS;
 }
 
-extern int wps_low_level_output(const u8 interface, const u8 *buf, u32 len);
+extern int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint16_t len);
 /**
  *  @brief Process Layer 2 socket send function
  *

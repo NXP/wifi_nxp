@@ -4237,7 +4237,7 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint16_t len)
 {
     mlan_status i;
-    u32_t pkt_len, outbuf_len;
+    t_u32 pkt_len, outbuf_len;
 
     uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
     if (!outbuf)
@@ -4261,7 +4261,7 @@ int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint
     // memset(outbuf, 0, sizeof(outbuf));
     (void)memset(outbuf, 0x00, pkt_len);
 
-    (void)memcpy((u8_t *)outbuf + pkt_len, buf, len);
+    (void)memcpy((t_u8 *)outbuf + pkt_len, buf, len);
 
     i = wlan_xmit_pkt(outbuf, pkt_len + len, interface, 0);
 
