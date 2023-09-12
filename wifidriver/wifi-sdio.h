@@ -83,6 +83,11 @@ extern bool cal_data_valid;
 extern bool mac_addr_valid;
 
 mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size);
+
+#if defined(CONFIG_FW_RELOAD)
+mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size);
+#endif
+
 mlan_status sd_wifi_post_init(enum wlan_type type);
 
 mlan_status wlan_flush_wmm_pkt(t_u8 pkt_cnt);

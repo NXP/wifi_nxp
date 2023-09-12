@@ -141,6 +141,11 @@ t_void wlan_interrupt(mlan_adapter *pmadapter);
 /** Process Interrupt Status */
 /* wmsdk */
 /* mlan_status wlan_process_int_status(mlan_adapter * pmadapter); */
+
+#ifdef CONFIG_FW_RELOAD
+mlan_status wlan_reset_fw(pmlan_adapter pmadapter);
+#endif
+
 /** Transfer data to card */
 #ifndef CONFIG_MLAN_WMSDK
 mlan_status wlan_sdio_host_to_card(mlan_adapter *pmadapter, t_u8 type, mlan_buffer *mbuf, mlan_tx_param *tx_param);

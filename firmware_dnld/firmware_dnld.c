@@ -170,9 +170,10 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
  * The firmware is stored in Flash.
  * in param intf returned from the interface init
  */
-int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void *interface)
+int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void *interface, uint8_t fw_reload)
 {
     t_u32 firmwarelen;
+    t_u32 poll_num      = 10;
     int32_t ret         = FWDNLD_STATUS_SUCCESS;
     fwdnld_intf_t *intf = (fwdnld_intf_t *)interface;
 
@@ -189,6 +190,17 @@ int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void 
             return ret;
         }
     }
+
+#if defined(CONFIG_FW_RELOAD)
+    if ((fw_reload != 0) && (intf->intf_s.fwdnld_intf_check_reload))
+    {
+        ret = intf->intf_s.fwdnld_intf_check_reload(intf, fw_reload);
+        if (ret != FWDNLD_STATUS_SUCCESS)
+        {
+            return ret;
+        }
+    }
+#endif
 
     conn_fw = fw_start_addr;
 

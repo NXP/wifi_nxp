@@ -471,6 +471,10 @@ typedef struct _mlan_fw_image
     t_u8 *pfw_buf;
     /** Firmware image length */
     t_u32 fw_len;
+#ifdef CONFIG_FW_RELOAD
+    /** Firmware reload flag */
+    t_u8 fw_reload;
+#endif
 } mlan_fw_image, *pmlan_fw_image;
 
 /** Custom data structure */

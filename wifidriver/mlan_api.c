@@ -99,7 +99,14 @@ int wifi_send_shutdown_cmd()
 #endif
 int wifi_deauthenticate(uint8_t *bssid)
 {
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    if (pmpriv->media_connected == MFALSE)
+    {
+        return WM_SUCCESS;
+    }
 
     (void)wifi_get_command_lock();
 
@@ -127,6 +134,11 @@ int wifi_nxp_deauthenticate(unsigned int bss_type, const uint8_t *bssid, uint16_
     pmpriv->curr_bss_params.host_mlme = 0;
     pmpriv->auth_flag                 = 0;
     pmpriv->auth_alg                  = 0xFFFF;
+
+    if (pmpriv->media_connected == MFALSE)
+    {
+        return WM_SUCCESS;
+    }
 
     (void)wifi_get_command_lock();
 

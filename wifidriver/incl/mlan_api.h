@@ -53,6 +53,26 @@
 #endif
 /* #define CONFIG_WIFI_DEBUG */
 
+static inline void panic(const char *msg)
+{
+    PRINTF("%s\r\n", msg);
+    while (1)
+    {
+        os_thread_sleep(100);
+    }
+}
+
+/** Wait until a condition becomes true */
+#define ASSERT(cond)                                          \
+    do                                                        \
+    {                                                         \
+        if (!(cond))                                          \
+        {                                                     \
+            PRINTF("ASSERT: %s: %d\r\n", __func__, __LINE__); \
+            panic("Assert failed: Panic!");                   \
+        }                                                     \
+    } while (0)
+
 #ifdef CONFIG_WIFI_DEBUG
 /* #define DEBUG_11N_ASSOC */
 /* #define DEBUG_11N_AGGR */

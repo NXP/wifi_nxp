@@ -381,6 +381,12 @@ enum wlan_event_reason
 /** The WLAN Connection Manager has received WPS event from WPA supplicant. */
 // WLAN_REASON_WPS_EVENT,
 #endif
+#if defined(CONFIG_FW_RELOAD)
+    /** The WLAN Connection Manager has entered in hang mode. */
+    WLAN_REASON_FW_HANG,
+    /** The WLAN Connection Manager has reset fw successfully. */
+    WLAN_REASON_FW_RESET,
+#endif
     /** The WLAN Connection Manager has entered power save mode. */
     WLAN_REASON_PS_ENTER,
     /** The WLAN Connection Manager has exited from power save mode. */

@@ -52,7 +52,7 @@ static void wlan_card_fw_status(t_u16 *dat)
     *dat |= (t_u16)((resp & 0xffU) << 8);
 }
 
-static bool wlan_card_ready_wait(t_u32 card_poll)
+static bool wlan_sdio_check_fw_status(t_u32 card_poll)
 {
     t_u16 dat = 0U;
     t_u32 i   = 0U;
@@ -70,6 +70,116 @@ static bool wlan_card_ready_wait(t_u32 card_poll)
     return false;
 }
 
+#ifdef CONFIG_FW_RELOAD
+/**
+ *  @brief This function probes the driver
+ *
+ *  @param pmadapter  A pointer to mlan_adapter structure
+ *  @return           MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+int32_t wlan_sdio_probe()
+{
+    int32_t ret         = FWDNLD_INTF_SUCCESS;
+    uint32_t sdio_ireg  = 0;
+    t_u32 host_int_mask = 0;
+    uint32_t resp;
+
+    /*
+     * Read the HOST_INT_STATUS_REG for ACK the first interrupt got
+     * from the bootloader. If we don't do this we get a interrupt
+     * as soon as we register the irq.
+     */
+    (void)sdio_drv_creg_read(HOST_INT_STATUS_REG, 1, &sdio_ireg);
+
+    /* Update with the mask and write back to the register */
+    host_int_mask &= ~HIM_DISABLE;
+
+    (void)sdio_drv_creg_write(HOST_INT_MASK_REG, 1, host_int_mask, &resp);
+
+    /* Get SDIO ioport */
+    ret = sdio_ioport_init();
+
+    return ret;
+}
+
+int32_t wlan_reset_fw()
+{
+    t_u32 tries = 0;
+    int32_t ret = FWDNLD_INTF_SUCCESS;
+    bool rv;
+    uint32_t resp;
+
+#if defined(HS_SUPPORT) || defined(DEEP_SLEEP) || defined(ENABLE_PS_MODE)
+    //	wlan_pm_sdio_wakeup_card(pmadapter, MFALSE);
+
+    rv = sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_POWER_UP, &resp);
+    if (rv == false)
+    {
+        return FWDNLD_INTF_FAIL;
+    }
+#endif
+
+    /** wait SOC fully wake up */
+    for (tries = 0; tries < MAX_POLL_TRIES; ++tries)
+    {
+        rv = sdio_drv_creg_write(CARD_FW_RESET_REG, 1, 0xba, &resp);
+        if (rv == true)
+        {
+            (void)sdio_drv_creg_read(CARD_FW_RESET_REG, 1, &resp);
+
+            if (resp == 0xba)
+            {
+                sdio_io_d("FW wake up");
+                break;
+            }
+        }
+        OSA_TimeDelay(5U);
+    }
+    /* Write register to notify FW */
+    rv = sdio_drv_creg_write(CARD_FW_RESET_REG, 1, CARD_FW_RESET_VAL, &resp);
+    if (rv == false)
+    {
+        sdio_io_d("Failed to write register.");
+        ret = FWDNLD_INTF_FAIL;
+        goto done;
+    }
+#if defined(SD8978) || defined(SD8987) || defined(IW61x)
+    (void)sdio_drv_creg_read(HOST_TO_CARD_EVENT_REG, 1, &resp);
+
+    rv = sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, resp | HOST_POWER_UP, &resp);
+    if (rv == false)
+    {
+        sdio_io_e("Failed to write register.");
+        ret = FWDNLD_INTF_FAIL;
+        goto done;
+    }
+#endif
+    /* Poll register around 100 ms */
+    for (tries = 0; tries < MAX_POLL_TRIES; ++tries)
+    {
+        (void)sdio_drv_creg_read(CARD_FW_RESET_REG, 1, &resp);
+        if (resp == 0)
+        {
+            /* FW is ready */
+            sdio_io_d("FW is ready");
+            break;
+        }
+        OSA_TimeDelay(5U);
+    }
+
+    if (resp)
+    {
+        sdio_io_e("Failed to poll FW reset register %X=0x%x", CARD_FW_RESET_REG, resp);
+        ret = FWDNLD_INTF_FAIL;
+        goto done;
+    }
+    sdio_io_d("FW Reset success");
+    ret = wlan_sdio_probe();
+done:
+    return ret;
+}
+#endif
+
 static fwdnld_intf_ret_t sdio_prep_for_fwdnld(fwdnld_intf_t *intf, void *settings)
 {
     /* set fw download block size */
@@ -78,7 +188,7 @@ static fwdnld_intf_ret_t sdio_prep_for_fwdnld(fwdnld_intf_t *intf, void *setting
 
 static fwdnld_intf_ret_t sdio_post_fwdnld_check_conn_ready(fwdnld_intf_t *intf, void *settings)
 {
-    if (wlan_card_ready_wait(1000) != true)
+    if (wlan_sdio_check_fw_status(1000) != true)
     {
         sdio_io_e("SDIO - FW Ready Registers not set");
         return FWDNLD_INTF_FAIL;
@@ -89,6 +199,35 @@ static fwdnld_intf_ret_t sdio_post_fwdnld_check_conn_ready(fwdnld_intf_t *intf, 
         return FWDNLD_INTF_SUCCESS;
     }
 }
+
+#if defined(CONFIG_FW_RELOAD)
+static fwdnld_intf_ret_t sdio_fwdnld_check_reaload(fwdnld_intf_t *intf, uint8_t fw_reload)
+{
+    t_u32 poll_num = 10;
+    int32_t ret;
+
+    /* Check if firmware is already running */
+    ret = wlan_sdio_check_fw_status(poll_num);
+    if (ret == true)
+    {
+        if (fw_reload == FW_RELOAD_SDIO_INBAND_RESET)
+        {
+            sdio_io_d("Try reset fw in mlan");
+            ret = wlan_reset_fw();
+            if (ret == FWDNLD_INTF_FAIL)
+            {
+                sdio_io_e("FW reset failure!");
+                return FWDNLD_INTF_FAIL;
+            }
+        }
+        else
+        {
+            sdio_io_d("WLAN FW already running! Skip FW download");
+        }
+    }
+    return FWDNLD_INTF_SUCCESS;
+}
+#endif
 
 static fwdnld_intf_ret_t sdio_interface_send(fwdnld_intf_t *intf,
                                              const uint8_t *buffer,
@@ -182,11 +321,14 @@ fwdnld_intf_t *sdio_init_interface(void *settings)
     {
         return NULL;
     }
-    sdio_intf_g.intf_s.fwdnld_intf_send        = sdio_interface_send;
-    sdio_intf_g.intf_s.fwdnld_intf_prepare     = sdio_prep_for_fwdnld;
-    sdio_intf_g.intf_s.fwdnld_intf_check_ready = sdio_post_fwdnld_check_conn_ready;
-    sdio_intf_g.intf_s.outbuf                  = wifi_get_sdio_outbuf(&sdio_intf_g.intf_s.outbuf_len);
-    sdio_intf_g.intf_s.intf_specific           = &sdio_intf_specific_g;
+    sdio_intf_g.intf_s.fwdnld_intf_send         = sdio_interface_send;
+    sdio_intf_g.intf_s.fwdnld_intf_prepare      = sdio_prep_for_fwdnld;
+    sdio_intf_g.intf_s.fwdnld_intf_check_ready  = sdio_post_fwdnld_check_conn_ready;
+#if defined(CONFIG_FW_RELOAD)
+    sdio_intf_g.intf_s.fwdnld_intf_check_reload = sdio_fwdnld_check_reaload;
+#endif
+    sdio_intf_g.intf_s.outbuf                   = wifi_get_sdio_outbuf(&sdio_intf_g.intf_s.outbuf_len);
+    sdio_intf_g.intf_s.intf_specific            = &sdio_intf_specific_g;
 
     ret = sdio_ioport_init();
     if (ret != 0)

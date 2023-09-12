@@ -48,6 +48,9 @@ typedef struct intf_elems
                                           uint32_t *transferred_len);
     fwdnld_intf_ret_t (*fwdnld_intf_prepare)(struct fwdnldintf *intf, void *params);
     fwdnld_intf_ret_t (*fwdnld_intf_check_ready)(struct fwdnldintf *intf, void *params);
+#if defined(CONFIG_FW_RELOAD)
+    fwdnld_intf_ret_t (*fwdnld_intf_check_reload)(struct fwdnldintf *intf, uint8_t fw_reload);
+#endif
     /* interface values to be stored */
     uint8_t *outbuf; /* For Tx */
     uint32_t outbuf_len;
@@ -65,5 +68,16 @@ typedef struct fwdnldintf
 #define GET_INTF_TYPE(x)      ((x)->intf_type)
 #define GET_INTF_OUTBUF(x)    ((x)->intf_s.outbuf)
 #define GET_INTF_OUTBUFLEN(x) ((x)->intf_s.outbuf_len)
+
+#ifdef CONFIG_FW_RELOAD
+/** driver initial the fw reset */
+#define FW_RELOAD_SDIO_INBAND_RESET 1
+/** out band reset trigger reset, no interface re-emulation */
+#define FW_RELOAD_NO_EMULATION 2
+/** out band reset with interface re-emulation */
+#define FW_RELOAD_WITH_EMULATION 3
+/** sdio hw reset */
+#define FW_RELOAD_SDIO_HW_RESET 5
+#endif
 
 #endif /*_FWDNLD_INTF_ABS_H_*/

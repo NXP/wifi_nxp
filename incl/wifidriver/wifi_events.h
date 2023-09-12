@@ -53,6 +53,10 @@ enum wifi_event
     WIFI_EVENT_LINK_LOSS,
     /* WiFi RSSI Low Event */
     WIFI_EVENT_RSSI_LOW,
+    /** Firmware Hang event */
+    WIFI_EVENT_FW_HANG,
+    /** Firmware Reset event */
+    WIFI_EVENT_FW_RESET,
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
     /* WiFi RSSI High Event */
     WIFI_EVENT_RSSI_HIGH,

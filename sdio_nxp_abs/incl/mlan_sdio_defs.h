@@ -278,6 +278,15 @@ Change log:
 /** Rx unit register (SCRATCH0_3) */
 #define CARD_RX_UNIT_REG 0xeb
 
+#if defined(CONFIG_FW_RELOAD)
+#if defined(SD8978) || defined(SD8987) || defined(IW61x)
+/** Firmware reset register */
+#define CARD_FW_RESET_REG 0xEE
+/** Firmware reset val */
+#define CARD_FW_RESET_VAL 0x99
+#endif
+#endif
+
 /** Card Control Registers : Card OCR 0 register */
 #define CARD_OCR_0_REG 0xD4
 /** Card Control Registers : Card OCR 1 register */
@@ -342,16 +351,23 @@ Change log:
 /** Rx unit register (SCRATCH0_3) */
 #define CARD_RX_UNIT_REG    0x63
 
+#if defined(CONFIG_FW_RELOAD)
+/** Firmware reset register */
+#define CARD_FW_RESET_REG 0x64
+/** Firmware reset register */
+#define CARD_FW_RESET_VAL 0x00
+#endif
+
 /** Card Control Registers : Card OCR 0 register */
-#define CARD_OCR_0_REG      0x68
+#define CARD_OCR_0_REG    0x68
 /** Card Control Registers : Card OCR 1 register */
-#define CARD_OCR_1_REG      0x69
+#define CARD_OCR_1_REG    0x69
 /** Card Control Registers : Card OCR 3 register */
-#define CARD_OCR_3_REG      0x6A
+#define CARD_OCR_3_REG    0x6A
 /** Card Control Registers : Card config register */
-#define CARD_CONFIG_REG     0x6B
+#define CARD_CONFIG_REG   0x6B
 /** Card Control Registers : Miscellaneous Configuration Register */
-#define CARD_MISC_CFG_REG   0x6C
+#define CARD_MISC_CFG_REG 0x6C
 #endif
 
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)

@@ -2730,10 +2730,11 @@ mlan_status sd_wifi_post_init(enum wlan_type type)
     return mlanstatus;
 }
 
+static void *intf;
+
 mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
-    void *intf;
 
     ret = sd_wifi_preinit();
     if (ret == MLAN_STATUS_SUCCESS)
@@ -2741,11 +2742,22 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
         intf = (void *)sdio_init_interface(NULL);
         if (intf != MNULL)
         {
-            ret = (mlan_status)firmware_download(fw_start_addr, size, intf);
+            ret = (mlan_status)firmware_download(fw_start_addr, size, intf, 0);
         }
     }
     return ret;
 }
+
+#if defined(CONFIG_FW_RELOAD)
+mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size)
+{
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+
+    ret = (mlan_status)firmware_download(fw_start_addr, size, intf, FW_RELOAD_SDIO_INBAND_RESET);
+
+    return ret;
+}
+#endif
 
 #ifdef CONFIG_BT_SUPPORT
 uint8_t read_sdio_function_recvd()

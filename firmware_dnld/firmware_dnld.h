@@ -19,6 +19,6 @@
 #define fwdnld_io_d(...)
 #endif /* ! CONFIG_DWDNLD_IO_DEBUG */
 
-int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void *intf);
+int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void *intf, uint8_t fw_reload);
 
 #endif //_FIMRWARE_DNLD_H_

@@ -1119,6 +1119,11 @@ static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
     (void)memcpy((void *)deauth.mac_addr, (const void *)mac_addr, MLAN_MAC_ADDR_LENGTH);
     deauth.reason_code = reason_code;
 
+    if (pmpriv->media_connected == MFALSE)
+    {
+        return -WM_FAIL;
+    }
+
     /* Start BSS */
     return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_DEAUTH, HostCmd_ACT_GEN_SET, 0, NULL, &deauth,
                                          MLAN_BSS_TYPE_UAP, NULL);
@@ -4499,6 +4504,11 @@ int wifi_nxp_stop_ap()
 {
     mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
     int ret            = WM_SUCCESS;
+
+    if (priv->media_connected == MFALSE)
+    {
+        return ret;
+    }
 
     (void)wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_UAP, 0);
 
