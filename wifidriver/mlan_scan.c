@@ -905,10 +905,6 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
             break;
         }
 
-        /* This delay helps the UAP send beacons and avoids clients from
-           disconnecting from the UAP. Issue was observed on Windows */
-        /* fixme: Should this delay be conditional on UAP active? */
-        os_thread_sleep(os_msec_to_ticks((uint32_t)get_split_scan_delay_ms()));
         if (abort_split_scan)
         {
             abort_split_scan       = false;
