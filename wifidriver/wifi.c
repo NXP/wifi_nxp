@@ -2697,49 +2697,6 @@ void wpa_supp_handle_link_lost(mlan_private *priv)
     }
 }
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-wifi_sta_filter_t wifi_host_sta_filter;
-
-static int wifi_check_sta_mac_filter(unsigned char *mac_addr)
-{
-    int index = 0;
-
-    for (index = 0; index < wifi_host_sta_filter.mac_count; index++)
-    {
-        if (!memcmp(&wifi_host_sta_filter.mac_addr[index * WLAN_MAC_ADDR_LENGTH], mac_addr, MLAN_MAC_ADDR_LENGTH))
-            return MLAN_STATUS_SUCCESS;
-    }
-
-    return MLAN_STATUS_FAILURE;
-}
-
-static int wifi_is_auth_allowed(unsigned char *mac_addr)
-{
-    int filter_result = wifi_check_sta_mac_filter(mac_addr);
-    int filter_mode   = wifi_host_sta_filter.filter_mode;
-
-    switch (filter_mode)
-    {
-        case 0:
-            return STTA_FILTER_AUTH_NON_BLOCKING;
-
-        case 1:
-            if (MLAN_STATUS_SUCCESS == filter_result)
-                return STTA_FILTER_AUTH_NON_BLOCKING;
-            else
-                return STTA_FILTER_AUTH_BLOCKING;
-
-        case 2:
-            if (MLAN_STATUS_SUCCESS == filter_result)
-                return STTA_FILTER_AUTH_BLOCKING;
-            else
-                return STTA_FILTER_AUTH_NON_BLOCKING;
-
-        default:
-            return STTA_FILTER_AUTH_NON_BLOCKING;
-    }
-}
-#endif
 /**
  *   @brief This function processes the 802.11 mgmt Frame
  *
@@ -3246,16 +3203,6 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
     }
     else if (priv->bss_role == MLAN_BSS_ROLE_UAP)
     {
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-        if (sub_type == (t_u16)SUBTYPE_AUTH)
-        {
-            if (STTA_FILTER_AUTH_BLOCKING == wifi_is_auth_allowed(pieee_pkt_hdr->addr2))
-            {
-                wevt_d("EVENT: Blacklist sta " MACSTR " try to join the network \r\n", MAC2STR(pieee_pkt_hdr->addr2));
-                return MLAN_STATUS_SUCCESS;
-            }
-        }
-#endif
         nxp_wifi_event_mlme_t *mgmt_rx = &wm_wifi.mgmt_rx;
 
         mgmt_rx->frame.frame_len = payload_len;

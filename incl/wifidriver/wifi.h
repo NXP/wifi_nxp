@@ -1911,33 +1911,6 @@ bool get_monitor_flag();
 
 #endif
 
-#ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
-/* Max number of sta filter list can be upto 16 */
-#define WLAN_MAX_STA_FILTER_NUM 16
-
-/* The length of wlan mac address */
-#define WLAN_MAC_ADDR_LENGTH 6
-
-#ifdef CONFIG_WPA_SUPP
-/** sta filter status */
-typedef enum _sta_filter_status
-{
-    /*block sta to connect*/
-    STTA_FILTER_AUTH_BLOCKING = 0,
-    /*don't block sta to connect*/
-    STTA_FILTER_AUTH_NON_BLOCKING,
-} sta_filter_status;
-
-typedef struct _wifi_sta_filter_t
-{
-    int filter_mode;
-    int mac_count;
-    unsigned char mac_addr[WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH];
-} wifi_sta_filter_t;
-
-#endif
-#endif
-
 int wifi_send_mgmt_auth_request(const t_u8 channel,
                                 const t_u8 auth_alg,
                                 const t_u8 *auth_seq_num,
