@@ -99,6 +99,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
     err_t lwiperr = ERR_OK;
     /* points to packet payload, which starts with an Ethernet header */
     struct eth_hdr *ethhdr = p->payload;
+    t_u8 retry_cnt = 1;
 
 #ifdef CONFIG_WIFI_RX_REORDER
     if (netif_arr[recv_interface] == NULL)
@@ -137,10 +138,17 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
                 wrapper_wlan_update_uap_rxrate_info(rxpd);
             }
 #endif
+            retry:
             /* full packet send to tcpip_thread to process */
             lwiperr = netif_arr[recv_interface]->input(p, netif_arr[recv_interface]);
             if (lwiperr != (s8_t)ERR_OK)
             {
+                if (retry_cnt)
+                {
+                    retry_cnt--;
+                    portYIELD();
+                    goto retry;
+                }
                 LINK_STATS_INC(link.proterr);
                 LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
                 (void)pbuf_free(p);
