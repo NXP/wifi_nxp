@@ -18,7 +18,9 @@ Change log:
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <wm_os.h>
-
+#ifdef CONFIG_TX_RX_ZERO_COPY
+#include <wm_net.h>
+#endif
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 /********************************************************
@@ -2652,6 +2654,10 @@ SUCC:
     mlan_adap->priv[interface]->wmm.pkts_queued[queue]--;
     ra_list->total_pkts--;
     ra_list->drop_count++;
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Before replacement, need free the buffer from stack first */
+    net_stack_buffer_free(buf->buffer);
+#endif
 
     mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ra_list->buf_head.plock);
 
@@ -2740,8 +2746,11 @@ int wlan_wmm_add_buf_txqueue_enh(const uint8_t interface, const uint8_t *buffer,
         priv = mlan_adap->priv[1];
 
     /* refer to low_level_output payload memcpy */
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->eth_header[0], ra);
+#else
     wifi_wmm_da_to_ra(&((outbuf_t *)buffer)->data[0], ra);
-
+#endif
     mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &priv->wmm.tid_tbl_ptr[pkt_prio].ra_list.plock);
 
     ralist = wlan_wmm_get_queue_raptr_enh(priv, pkt_prio, ra);
@@ -2796,6 +2805,11 @@ void wifi_wmm_buf_put(outbuf_t *buf)
     mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list.plock);
 
     assert(mlan_adap->outbuf_pool.free_cnt < MAX_WMM_BUF_NUM);
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Free driver's reference count for network buffer */
+    net_stack_buffer_free(buf->buffer);
+#endif
 
     util_enqueue_list_tail(mlan_adap->pmoal_handle, &mlan_adap->outbuf_pool.free_list, &buf->entry, MNULL, MNULL);
     mlan_adap->outbuf_pool.free_cnt++;

@@ -6336,8 +6336,7 @@ static void wlcm_process_get_hw_spec_event(void)
 
 static void wlcm_process_mgmt_frame(void *data)
 {
-    struct pbuf *p               = (struct pbuf *)data;
-    RxPD *rxpd                   = (RxPD *)p->payload;
+    RxPD *rxpd                   = (RxPD *)(net_stack_buffer_get_payload(data));
     wlan_mgmt_pkt *pmgmt_pkt_hdr = NULL;
 
     pmgmt_pkt_hdr          = (wlan_mgmt_pkt *)(void *)((uint8_t *)rxpd + rxpd->rx_pkt_offset);
@@ -6756,7 +6755,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: management frame");
             wlcm_process_mgmt_frame(msg->data);
             next = wlan.sta_state;
-            pbuf_free(msg->data);
+            net_stack_buffer_free(msg->data);
             break;
 #ifdef CONFIG_WPA_SUPP
         case WIFI_EVENT_REMAIN_ON_CHANNEL:

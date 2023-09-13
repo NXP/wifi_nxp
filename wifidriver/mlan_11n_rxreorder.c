@@ -53,11 +53,11 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
 
         (void)__memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
-        pbuf_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
+        net_stack_buffer_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
 #ifndef CONFIG_TX_RX_ZERO_COPY
         os_mem_free(pmbuf->pbuf);
 #endif
-        pbuf_free(pmbuf->lwip_pbuf);
+        net_stack_buffer_free(pmbuf->lwip_pbuf);
         pmbuf->pbuf = amsdu_inbuf;
 
         (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
@@ -241,7 +241,7 @@ static mlan_status wlan_11n_free_rxreorder_pkt(t_void *priv, RxReorderTbl *rx_re
         pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_tmp_ptr != NULL)
         {
-            pbuf_free((struct pbuf *)(((pmlan_buffer)rx_tmp_ptr)->lwip_pbuf));
+            net_stack_buffer_free(((pmlan_buffer)rx_tmp_ptr)->lwip_pbuf);
 #ifndef CONFIG_TX_RX_ZERO_COPY
             os_mem_free(((pmlan_buffer)rx_tmp_ptr)->pbuf);
             os_mem_free(rx_tmp_ptr);
@@ -906,7 +906,7 @@ t_u8 wlan_is_rsn_replay_attack(mlan_private *pmpriv, t_void *payload, RxReorderT
         PRINTM(MERROR, "Drop packet because of invalid PN value. Seq_num %d Last PN:0x%x 0x%x,New PN:0x%x 0x%x\n",
                prx_pd->seq_num, rx_reor_tbl_ptr->hi_curr_rx_count32, rx_reor_tbl_ptr->lo_curr_rx_count16,
                prx_pd->hi_rx_count32, prx_pd->lo_rx_count16);
-        pbuf_free(((pmlan_buffer)payload)->lwip_pbuf);
+        net_stack_buffer_free(((pmlan_buffer)payload)->lwip_pbuf);
 #ifndef CONFIG_TX_RX_ZERO_COPY
         os_mem_free(((pmlan_buffer)payload)->pbuf);
         os_mem_free(payload);

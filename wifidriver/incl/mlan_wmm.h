@@ -229,7 +229,18 @@ typedef struct
     mlan_linked_list entry;
     t_u8 intf_header[INTF_HEADER_LEN];
     TxPD tx_pd;
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    t_u8 eth_header[ETH_HDR_LEN];
+#ifdef AMSDU_IN_AMPDU
+    t_u8 llc_header[LLC_SNAP_LEN];
+#endif
+    /* Data payload pointer */
+    t_u8 *payload;
+    /* Packet buffer structure pointer */
+    void *buffer;
+#else
     t_u8 data[WMM_DATA_LEN];
+#endif
 } outbuf_t;
 
 /* transfer destination address to receive address */

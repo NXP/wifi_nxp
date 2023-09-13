@@ -129,10 +129,11 @@ IMUPkt *imupkt = (IMUPkt *)outbuf;
 #else
 #define WIFI_POLL_CMD_RESP_TIME 10
 #endif
-
+#ifdef CONFIG_TX_RX_ZERO_COPY
+extern void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, t_u32 len);
+#endif
 void wrapper_wlan_cmd_11n_cfg(void *hostcmd);
 void wrapper_wifi_ret_mib(void *resp);
-
 uint32_t dev_value1 = -1;
 uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
@@ -1146,17 +1147,32 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
         wifi_check_last_packet_indication(mlan_adap->priv[interface]))
     {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+        process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+#else
         process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+#endif
         last_packet = 1;
     }
 #endif
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    ret = HAL_ImuAddWlanTxPacketExt(kIMU_LinkCpu1Cpu3, tx_buf, txlen, net_tx_zerocopy_process_cb);
+#else
     ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
+#endif
+
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
 #ifdef CONFIG_WMM_UAPSD
         if (last_packet)
+        {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+            process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], 0);
+#else
             process_pkt_hdrs_flags((t_u8 *)tx_buf, 0);
+#endif
+        }
 #endif
 
         wifi_imu_unlock();

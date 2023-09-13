@@ -3585,8 +3585,13 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 
     /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
     /* this will get card port lock and probably sleep */
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
+                            (t_u8 *)buf);
+#else
     ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
                             (t_u8 *)&buf->intf_header[0]);
+#endif
     if (ret != MLAN_STATUS_SUCCESS)
     {
 #ifdef RW610
@@ -3759,7 +3764,6 @@ int send_wifi_driver_tx_null_data_event(t_u8 interface)
 
 static void wifi_driver_tx(void *data)
 {
-    int ret;
     uint32_t taskNotification = 0U;
     uint16_t event;
     t_u8 interface;
@@ -3908,19 +3912,31 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
     ENTER();
 
     /** check the tcp packet */
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    ethh = (eth_hdr *)(((outbuf_t *)pmbuf)->eth_header);
+#else
     ethh = (eth_hdr *)(pmbuf);
+#endif
     if (mlan_ntohs(ethh->h_proto) != ETH_PROTO_IP)
     {
         LEAVE();
         return 0;
     }
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    iph = (ip_hdr *)(((outbuf_t *)pmbuf)->payload);
+#else
     iph = (ip_hdr *)((t_u8 *)ethh + sizeof(eth_hdr));
+#endif
     if (iph->protocol != WIFI_IPPROTO_TCP)
     {
         LEAVE();
         return 0;
     }
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    tcph = (tcp_hdr *)(net_stack_buffer_skip(((outbuf_t *)pmbuf)->buffer, (uint16_t)(iph->ihl * 4)));
+#else
     tcph = (tcp_hdr *)((t_u8 *)iph + iph->ihl * 4);
+#endif
 
     if (*((t_u8 *)tcph + 13) == 0x10)
     {
@@ -3952,11 +3968,15 @@ int wifi_low_level_output(const t_u8 interface,
 )
 {
     int ret;
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    const t_u8 *buffer = ((outbuf_t *)sd_buffer)->eth_header;
+#else
     const t_u8 *buffer = sd_buffer +
 #ifdef CONFIG_WMM
                          sizeof(mlan_linked_list) +
 #endif
                          sizeof(TxPD) + INTF_HEADER_LEN;
+#endif
 #ifndef CONFIG_WMM
     int retry = retry_attempts;
     mlan_status i;
@@ -3984,7 +4004,11 @@ int wifi_low_level_output(const t_u8 interface,
     if ((interface == MLAN_BSS_TYPE_STA) && (pmpriv->enable_tcp_ack_enh == MTRUE) &&
         (pmpriv->curr_bss_params.bss_descriptor.phe_cap != NULL))
     {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+        ret = wlan_is_tcp_ack(pmpriv, sd_buffer);
+#else
         ret = wlan_is_tcp_ack(pmpriv, buffer);
+#endif
         if (ret)
         {
             if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_80MHZ)
@@ -4127,16 +4151,10 @@ int wifi_low_level_output(const t_u8 interface,
 exit_fn:
 
 #ifndef CONFIG_WMM
-
     if (ret != WM_SUCCESS)
     {
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        os_rwlock_read_unlock(&sleep_rwlock);
-#else
-        os_rwlock_read_unlock(&ps_rwlock);
-#endif
+        wifi_tx_card_awake_unlock();
     }
-
 #endif
 
     wifi_set_xfer_pending(false);

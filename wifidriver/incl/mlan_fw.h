@@ -731,6 +731,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 /** LLC/SNAP header len   */
 #define LLC_SNAP_LEN 8
+/** Ethernet header len */
+#define ETH_HDR_LEN 14
 
 /** bandwidth following HTCAP */
 #define BW_FOLLOW_HTCAP 0

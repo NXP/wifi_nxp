@@ -90,6 +90,17 @@ static void register_interface(struct netif *iface, mlan_bss_type iface_type)
     netif_arr[iface_type] = iface;
 }
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, t_u32 len)
+{
+    outbuf_t *buf = (outbuf_t *)srcAddr;
+    t_u16 header_len = INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN;
+
+    (void)memcpy((t_u8 *)destAddr, &buf->intf_header[0], header_len);
+    pbuf_copy_partial((struct pbuf *)(buf->buffer), (t_u8 *)destAddr + header_len, (t_u16)(len - header_len), 0);
+}
+#endif
+
 #ifndef CONFIG_WIFI_RX_REORDER
 static void deliver_packet_above(struct pbuf *p, int recv_interface)
 #else
@@ -586,7 +597,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     int ret;
     struct ethernetif *ethernetif = netif->state;
     u32_t pkt_len, outbuf_len;
+#ifndef CONFIG_TX_RX_ZERO_COPY
     u16_t uCopied;
+#endif
     t_u8 interface   = ethernetif->interface;
     t_u8 *wmm_outbuf = NULL;
 #ifdef CONFIG_WMM
@@ -670,12 +683,27 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif
 #endif
     {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+        pkt_len += ETH_HDR_LEN;
+        memset(wmm_outbuf, 0x00, pkt_len);
+        /* Save the ethernet header */
+        pbuf_copy_partial(p, ((outbuf_t *)wmm_outbuf)->eth_header, ETH_HDR_LEN, 0);
+        /* Skip ethernet header */
+        pbuf_header(p, -(s16_t)ETH_HDR_LEN);
+        ((outbuf_t *)wmm_outbuf)->buffer  = p;
+        /* Save the data payload pointer without ethernet header */
+        ((outbuf_t *)wmm_outbuf)->payload = (t_u8 *)p->payload;
+        pkt_len += p->tot_len;
+        /* Driver will free this pbuf */
+        pbuf_ref(p);
+#else
         memset(wmm_outbuf, 0x00, pkt_len);
 
         uCopied = pbuf_copy_partial(p, wmm_outbuf + pkt_len, p->tot_len, 0);
 
         LWIP_ASSERT("uCopied != p->tot_len", uCopied == p->tot_len);
         pkt_len += p->tot_len;
+#endif
     }
 
     ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len

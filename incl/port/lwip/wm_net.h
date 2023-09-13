@@ -233,6 +233,54 @@ static inline uint32_t net_inet_aton(const char *cp)
  */
 void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
 
+/** Skip a number of bytes at the start of a stack buffer
+ *
+ * \param[in] buf input stack buffer.
+ * \param[in] in_offset offset to skip.
+ *
+ * \return the payload pointer after skip a number of bytes
+ */
+static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
+{
+    uint16_t out_offset = 0;
+    struct pbuf *p = pbuf_skip((struct pbuf *)buf, in_offset, &out_offset);
+    return (uint8_t*)(p->payload) + out_offset;
+}
+
+/** Free a buffer allocated from stack memory
+ *
+ * \param[in] buf stack buffer pointer.
+ *
+ */
+static inline void net_stack_buffer_free(void *buf)
+{
+    pbuf_free((struct pbuf *)buf);
+}
+
+/** Copy (part of) the contents of a packet buffer to an application supplied buffer
+ *
+ * \param[in] stack_buffer the stack buffer from which to copy data.
+ * \param[in] dst the destination buffer.
+ * \param[in] len length of data to copy.
+ * \param[in] offset offset into the stack buffer from where to begin copying
+ * \return copy status based on stack definition.
+ */
+static inline int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset)
+{
+    return pbuf_copy_partial((const struct pbuf *)stack_buffer, dst, len, offset);
+}
+
+/** Get the data payload inside the stack buffer.
+ *
+ * \param[in] buf input stack buffer.
+ *
+ * \return the payload pointer of the stack buffer.
+ */
+static inline void *net_stack_buffer_get_payload(void *buf)
+{
+    return ((struct pbuf *)buf)->payload;
+}
+
 /**
  * Get network host entry
  *
