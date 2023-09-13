@@ -4396,7 +4396,7 @@ int wifi_set_country_code(const char *alpha2)
     }
     else
     {
-        pmadapter->region_code = 0;
+        pmadapter->region_code = region_string_2_region_code(&country_code);
     }
 #else
     if (cfp_bg)
@@ -4405,7 +4405,7 @@ int wifi_set_country_code(const char *alpha2)
     }
     else
     {
-        pmadapter->region_code = 0;
+        pmadapter->region_code = region_string_2_region_code(&country_code);
     }
 #endif
 

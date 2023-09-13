@@ -1950,6 +1950,14 @@ void wifi_uap_client_assoc(t_u8 *sta_addr, unsigned char is_11n_enabled);
 void wifi_uap_client_deauth(t_u8 *sta_addr);
 
 #endif
+/**
+ *  @brief This function converts region string to region code
+ *
+ *  @param region_string    Region string
+ *
+ *  @return                 Region code
+ */
+t_u8 region_string_2_region_code(t_u8 *region_string);
 
 #ifdef CONFIG_COEX_DUTY_CYCLE
 int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);

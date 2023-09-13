@@ -96,6 +96,44 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
 ********************************************************/
 
 /**
+ *  @brief This function converts region string to region code
+ *
+ *  @param region_string    Region string
+ *
+ *  @return                 Region code
+ */
+t_u8 region_string_2_region_code(t_u8 *region_string)
+{
+        t_u8 i;
+
+        ENTER();
+
+        for (i = 0; i < ARRAY_SIZE(region_code_mapping); i++)
+        {
+            if (memcmp(region_string, region_code_mapping[i].region, COUNTRY_CODE_LEN) == 0)
+            {
+                LEAVE();
+                return region_code_mapping[i].code;
+            }
+        }
+#ifndef CONFIG_MLAN_WMSDK
+        /* If still not found, look for code in EU country code table */
+        for (i = 0; i < ARRAY_SIZE(eu_country_code_table); i++)
+        {
+            if (!memcmp(region_string, eu_country_code_table[i], COUNTRY_CODE_LEN - 1))
+            {
+                PRINTM(MIOCTL, "found region code=%d in EU table\n", EU_REGION_CODE);
+                LEAVE();
+                return EU_REGION_CODE;
+            }
+        }
+#endif
+        /* Default is WW */
+        LEAVE();
+        return region_code_mapping[0].code;
+}
+
+/**
  *  @brief This function converts region string to integer code
  *
  *  @param pmadapter    A pointer to mlan_adapter structure
