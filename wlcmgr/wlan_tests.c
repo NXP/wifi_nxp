@@ -10045,3 +10045,22 @@ int wlan_cli_init(void)
 
     return WM_SUCCESS;
 }
+
+/* Unregister our commands with the MTF. */
+int wlan_cli_deinit(void)
+{
+    int i;
+
+    if (cli_unregister_commands(tests, (int)(sizeof(tests) / sizeof(struct cli_command))) != 0)
+    {
+        return -WM_FAIL;
+    }
+
+    i = wlan_basic_cli_deinit();
+    if (i != WLAN_ERROR_NONE)
+    {
+        return i;
+    }
+
+    return WM_SUCCESS;
+}

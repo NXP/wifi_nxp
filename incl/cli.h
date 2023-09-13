@@ -68,6 +68,13 @@ int cli_unregister_command(const struct cli_command *command);
  */
 int cli_init(void);
 
+/** DeInitialize the CLI module
+ *
+ * \return WM_SUCCESS on success
+ * \return error code otherwise.
+ */
+int cli_deinit(void);
+
 /** Stop the CLI thread and carry out the cleanup
  *
  * \return WM_SUCCESS on success

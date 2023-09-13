@@ -151,17 +151,5 @@ extern int wmtime_init(void);
  */
 bool is_wmtime_init_done();
 
-/**
- * Register wmtime cli commands for the application use
- *
- * \note This function can be called by the application
- * after time subsystem is initialized.
- *
- * \return success or failure as:
- *     0: Success
- *     non-zero: Failure
- */
-int wmtime_cli_init(void);
-
 int gettimeofday(struct timeval *tv, void *tz);
 #endif

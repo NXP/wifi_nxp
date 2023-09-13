@@ -82,6 +82,7 @@ int wlan_driver_reset(void);
 int wlan_reset_cli_init(void);
 #ifdef CONFIG_WPS2
 static int wlan_prov_cli_init(void);
+static int wlan_prov_cli_deinit(void);
 #endif
 
 /*******************************************************************************
@@ -722,6 +723,21 @@ static int wlan_prov_cli_init(void)
     for (i = 0; i < sizeof(wlan_prov_commands) / sizeof(struct cli_command); i++)
     {
         if (cli_register_command(&wlan_prov_commands[i]) != 0)
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int wlan_prov_cli_deinit(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(wlan_prov_commands) / sizeof(struct cli_command); i++)
+    {
+        if (cli_unregister_command(&wlan_prov_commands[i]) != 0)
         {
             return -1;
         }

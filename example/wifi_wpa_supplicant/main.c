@@ -50,6 +50,7 @@ int wlan_driver_init(void);
 int wlan_driver_deinit(void);
 int wlan_driver_reset(void);
 int wlan_reset_cli_init(void);
+int wlan_reset_cli_deinit(void);
 
 /*******************************************************************************
  * Code
@@ -420,6 +421,21 @@ int wlan_reset_cli_init(void)
     for (i = 0; i < sizeof(reset_commands) / sizeof(struct cli_command); i++)
     {
         if (cli_register_command(&reset_commands[i]) != 0)
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int wlan_reset_cli_deinit(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(reset_commands) / sizeof(struct cli_command); i++)
+    {
+        if (cli_unregister_command(&reset_commands[i]) != 0)
         {
             return -1;
         }

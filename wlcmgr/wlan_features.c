@@ -123,4 +123,19 @@ int wlan_features_cli_init(void)
 
     return WLAN_ERROR_NONE;
 }
+
+int wlan_features_cli_deinit(void)
+{
+    int i;
+
+    for (i = 0; i < sizeof(features) / sizeof(struct cli_command); i++)
+    {
+        if (cli_unregister_command(&features[i]) != 0)
+        {
+            return WLAN_ERROR_ACTION;
+        }
+    }
+
+    return WLAN_ERROR_NONE;
+}
 #endif

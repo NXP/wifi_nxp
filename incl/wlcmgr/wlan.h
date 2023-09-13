@@ -3631,6 +3631,19 @@ int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, v
  */
 int wlan_wfa_basic_cli_init(void);
 
+/** Unregister WFA basic WLAN CLI commands
+ *
+ * This function unregisters basic WLAN CLI commands like showing
+ * version information, MAC address
+ *
+ * \note This function can only be called by the application after
+ * \ref wlan_init() called.
+ *
+ * \return WLAN_ERROR_NONE if the CLI commands were unregistered or
+ * \return WLAN_ERROR_ACTION if they were not unregistered
+ */
+int wlan_wfa_basic_cli_deinit(void);
+
 /** Register basic WLAN CLI commands
  *
  * This function registers basic WLAN CLI commands like showing
@@ -3650,6 +3663,25 @@ int wlan_wfa_basic_cli_init(void);
  */
 int wlan_basic_cli_init(void);
 
+/** Unregister basic WLAN CLI commands
+ *
+ * This function unregisters basic WLAN CLI commands like showing
+ * version information, MAC address
+ *
+ * \note This function can only be called by the application after
+ * \ref wlan_init() called.
+ *
+ * \note This function gets called by \ref wlan_cli_init(), hence
+ * only one function out of these two functions should be called in
+ * the application.
+ *
+ * \return WLAN_ERROR_NONE if the CLI commands were unregistered or
+ * \return WLAN_ERROR_ACTION if they were not unregistered (for example
+ *   if this function was called while the CLI commands were already
+ *   registered).
+ */
+int wlan_basic_cli_deinit(void);
+
 /** Register WLAN CLI commands.
  *
  *  Try to register the WLAN CLI commands with the CLI subsystem. This
@@ -3668,6 +3700,24 @@ int wlan_basic_cli_init(void);
  */
 int wlan_cli_init(void);
 
+/** Unregister WLAN CLI commands.
+ *
+ *  Try to unregister the WLAN CLI commands with the CLI subsystem. This
+ *  function is available for the application for use.
+ *
+ *  \note This function can only be called by the application after \ref wlan_init()
+ *  called.
+ *
+ *  \note This function internally calls \ref wlan_basic_cli_deinit(), hence
+ *  only one function out of these two functions should be called in
+ *  the application.
+ *
+ *  \return WM_SUCCESS if the CLI commands were unregistered or
+ *  \return -WM_FAIL if they were not (for example if this function
+ *          was called while the CLI commands were already unregistered).
+ */
+int wlan_cli_deinit(void);
+
 /** Register WLAN enhanced CLI commands.
  *
  *  Register the WLAN enhanced CLI commands like set or get tx-power,
@@ -3681,6 +3731,20 @@ int wlan_cli_init(void);
  *           was called while the CLI commands were already registered).
  */
 int wlan_enhanced_cli_init(void);
+
+/** Unregister WLAN enhanced CLI commands.
+ *
+ *  Unregister the WLAN enhanced CLI commands like set or get tx-power,
+ *  tx-datarate, tx-modulation etc with the CLI subsystem.
+ *
+ *  \note This function can only be called by the application after \ref wlan_init()
+ *  called.
+ *
+ *  \return WM_SUCCESS if the CLI commands were unregistered or
+ *  \return -WM_FAIL if they were not unregistered.
+ */
+
+int wlan_enhanced_cli_deinit(void);
 
 #ifdef CONFIG_RF_TEST_MODE
 /** Register WLAN Test Mode CLI commands.
@@ -3696,6 +3760,19 @@ int wlan_enhanced_cli_init(void);
  *           was called while the CLI commands were already registered).
  */
 int wlan_test_mode_cli_init(void);
+
+/** Unregister WLAN Test Mode CLI commands.
+ *
+ *  Unregister the WLAN Test Mode CLI commands like set or get channel,
+ *  band, bandwidth, PER and more with the CLI subsystem.
+ *
+ *  \note This function can only be called by the application after \ref wlan_init()
+ *  called.
+ *
+ *  \return WM_SUCCESS if the CLI commands were unregistered or
+ *  \return -WM_FAIL if they were not unregistered
+ */
+int wlan_test_mode_cli_deinit(void);
 #endif
 
 /**

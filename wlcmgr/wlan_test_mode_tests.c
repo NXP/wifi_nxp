@@ -1208,4 +1208,15 @@ int wlan_test_mode_cli_init(void)
 
     return WM_SUCCESS;
 }
+
+int wlan_test_mode_cli_deinit(void)
+{
+    if (cli_unregister_commands(wlan_test_mode_commands,
+		                sizeof(wlan_test_mode_commands) / sizeof(struct cli_command)) != 0U)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
 #endif

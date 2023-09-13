@@ -2041,3 +2041,14 @@ int wlan_enhanced_cli_init(void)
 
     return WM_SUCCESS;
 }
+
+int wlan_enhanced_cli_deinit(void)
+{
+    if (cli_unregister_commands(wlan_enhanced_commands,
+                                (int)(sizeof(wlan_enhanced_commands) / sizeof(struct cli_command))) != 0)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}

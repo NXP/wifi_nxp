@@ -1278,3 +1278,14 @@ int cli_init(void)
 #endif
     return ret;
 }
+
+int cli_deinit(void)
+{
+    /*Remove our built-in commands */
+    if (cli_unregister_commands(&built_ins[0], (int)(sizeof(built_ins) / sizeof(struct cli_command))) != 0)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}

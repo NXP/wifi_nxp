@@ -136,4 +136,10 @@ int healthmon_set_final_about_to_die_handler(void (*fun)(void *data));
  * \return -WM_FAIL in case of error
  */
 int healthmon_cli_init(void);
+
+/** Unegister healthmon cli
+ * \return WM_SUCCESS if cli unregistered successfully
+ * \return -WM_FAIL in case of error
+ */
+int healthmon_cli_deinit(void);
 #endif /* _HEALTHMON_H_ */

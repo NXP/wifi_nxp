@@ -25,3 +25,8 @@ int healthmon_cli_init(void)
 {
     return cli_register_command(&healthmon_cmds[0]);
 }
+
+int healthmon_cli_deinit(void)
+{
+    return cli_unregister_command(&healthmon_cmds[0]);
+}
