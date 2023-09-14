@@ -274,6 +274,7 @@ middleware.wifi:
     - repo_relative_path: incl/port/lwip
     - repo_relative_path: port/lwip
     - repo_relative_path: incl/port/lwip/hooks
+    - repo_relative_path: healthmon
     files:
     - source: dhcpd/dhcp-bootp.h
     - source: dhcpd/dhcp-priv.h
@@ -287,6 +288,12 @@ middleware.wifi:
     - source: port/lwip/netif_decl.h
     - source: port/lwip/wifi_netif.c
     - source: wlcmgr/wlan.c
+    - source: wlcmgr/fw_heartbeat.c
+    - source: wlcmgr/fw_heartbeat.h
+    - source: incl/healthmon.h
+    - source: healthmon/healthmon.c
+    - source: healthmon/healthmon_cli.c
+    - source: healthmon/healthmon_int.h
     - source: wlcmgr/wlan_txpwrlimit_cfg.c
     - source: incl/port/lwip/hooks/lwip_default_hooks.h
     - source: port/lwip/hooks/lwip_default_hooks.c
