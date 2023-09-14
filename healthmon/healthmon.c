@@ -378,4 +378,6 @@ int healthmon_init()
 
     healthmon_initialized = 1;
     healthmon_running     = 0;
+
+    return ret;
 }

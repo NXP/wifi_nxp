@@ -201,7 +201,7 @@ static fwdnld_intf_ret_t sdio_post_fwdnld_check_conn_ready(fwdnld_intf_t *intf, 
 }
 
 #if defined(CONFIG_WIFI_IND_DNLD)
-static fwdnld_intf_ret_t sdio_fwdnld_check_reaload(fwdnld_intf_t *intf, uint8_t fw_reload)
+static fwdnld_intf_ret_t sdio_fwdnld_check_reload(fwdnld_intf_t *intf, uint8_t fw_reload)
 {
     t_u32 poll_num = 10;
     int32_t ret;
@@ -325,7 +325,7 @@ fwdnld_intf_t *sdio_init_interface(void *settings)
     sdio_intf_g.intf_s.fwdnld_intf_prepare      = sdio_prep_for_fwdnld;
     sdio_intf_g.intf_s.fwdnld_intf_check_ready  = sdio_post_fwdnld_check_conn_ready;
 #if defined(CONFIG_WIFI_IND_DNLD)
-    sdio_intf_g.intf_s.fwdnld_intf_check_reload = sdio_fwdnld_check_reaload;
+    sdio_intf_g.intf_s.fwdnld_intf_check_reload = sdio_fwdnld_check_reload;
 #endif
     sdio_intf_g.intf_s.outbuf                   = wifi_get_sdio_outbuf(&sdio_intf_g.intf_s.outbuf_len);
     sdio_intf_g.intf_s.intf_specific            = &sdio_intf_specific_g;

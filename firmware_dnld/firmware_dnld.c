@@ -174,7 +174,6 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
 int32_t firmware_download(const uint8_t *fw_start_addr, const size_t size, void *interface, uint8_t fw_reload)
 {
     t_u32 firmwarelen;
-    t_u32 poll_num      = 10;
     int32_t ret         = FWDNLD_STATUS_SUCCESS;
     fwdnld_intf_t *intf = (fwdnld_intf_t *)interface;
 

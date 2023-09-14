@@ -316,6 +316,7 @@ middleware.wifi:
     - middleware.wifi.wifidriver
     - middleware.wifi.template
     - middleware.lwip
+    - driver.wdog01
 middleware.wifi.sdio:
   section-type: component
   contents:
