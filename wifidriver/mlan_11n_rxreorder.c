@@ -912,7 +912,6 @@ t_u8 wlan_is_rsn_replay_attack(mlan_private *pmpriv, t_void *payload, RxReorderT
         os_mem_free(payload);
 #endif
         rx_reor_tbl_ptr->pn_drop_count++;
-        LINK_STATS_INC(link.drop);
 
         LEAVE();
         return MTRUE;

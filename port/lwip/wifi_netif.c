@@ -414,7 +414,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #endif
         /* Unicast ARP also need do rx reorder */
         case ETHTYPE_ARP:
-            LINK_STATS_INC(link.recv);
 #ifdef CONFIG_11N
             if (recv_interface == MLAN_BSS_TYPE_STA)
             {
@@ -438,7 +437,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             p = NULL;
             break;
         case ETHTYPE_EAPOL:
-            LINK_STATS_INC(link.recv);
             deliver_packet_above(p, recv_interface);
             break;
         default:
@@ -508,7 +506,6 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
         LINK_STATS_INC(link.drop);
         return;
     }
-    LINK_STATS_INC(link.recv);
 #ifndef CONFIG_WIFI_RX_REORDER
     deliver_packet_above(p, interface);
 #else
