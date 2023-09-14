@@ -209,6 +209,7 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         if (preport == NULL)
         {
             wifi_e("No memory available for neighbor report.");
+            os_mem_free((void *)pnlist_rep_param);
             return;
         }
 

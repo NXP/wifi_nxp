@@ -2596,7 +2596,8 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
                 if (ext_id == HE_CAPABILITY)
                 {
                     mlan_ds_11ax_he_cfg he_cfg;
-                    IEEEtypes_HECap_t *hecap_ie;
+                    IEEEtypes_HECap_t *hecap_ie = NULL;
+                    (void)memset((void *)&he_cfg, 0, sizeof(mlan_ds_11ax_he_cfg));
 
                     if (priv->uap_channel <= 14)
                         he_cfg.band = MBIT(0);
