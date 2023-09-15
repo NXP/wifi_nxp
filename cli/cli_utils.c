@@ -14,14 +14,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <cli_utils.h>
-#include <ctype.h>
-#include <wm_net.h> /* for errno */
-
 #ifndef CONFIG_ZEPHYR
 #include <fsl_debug_console.h>
 #include <cli.h>
 #endif
+#include <cli_utils.h>
+#include <ctype.h>
+#include <wm_net.h> /* for errno */
 
 bool string_equal(const char *s1, const char *s2)
 {

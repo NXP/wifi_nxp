@@ -153,7 +153,9 @@ static os_thread_stack_define(wifi_drv_stack, 2048);
 static os_thread_stack_define(wifi_powersave_stack, 512);
 #ifdef CONFIG_WMM
 static os_thread_stack_define(wifi_tx_stack, 2048);
+#ifdef CONFIG_ZEPHYR
 static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
+#endif
 #endif
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 static os_queue_pool_define(g_powersave_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
@@ -1913,6 +1915,7 @@ static int wifi_core_init(void)
         goto fail;
     }
 
+#ifdef CONFIG_ZEPHYR
     wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
     ret = os_queue_create(&wm_wifi.tx_data, "tx_data", sizeof(struct bus_message), &wm_wifi.tx_data_queue_data);
     if (ret != WM_SUCCESS)
@@ -1920,6 +1923,7 @@ static int wifi_core_init(void)
         PRINTF("Create tx data queue failed");
         goto fail;
     }
+#endif
 
     /* Semaphore to protect wmm data parameters */
     ret = os_semaphore_create(&wm_wifi.tx_data_sem, "tx data sem");
@@ -2034,11 +2038,13 @@ static void wifi_core_deinit(void)
     }
 
 #ifdef CONFIG_WMM
+#ifdef CONFIG_ZEPHYR
     if (wm_wifi.tx_data != NULL)
     {
         (void)os_queue_delete(&wm_wifi.tx_data);
         wm_wifi.tx_data = NULL;
     }
+#endif
     wifi_wmm_buf_pool_deinit();
 #endif
 
@@ -3809,7 +3815,7 @@ static void wifi_driver_tx(void *data)
 
 #ifdef CONFIG_ZEPHYR
         /* TODO: use zephyr event and regroup */
-        ret = os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
+        (void)os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         event = msg.event;
         interface = msg.reason;
 #else

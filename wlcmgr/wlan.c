@@ -1200,7 +1200,7 @@ void wlan_clear_host_sleep_config()
 		wifi_set_packet_filters(&g_flt_cfg);
     }
 #endif
-    //wakeup_by = 1;
+    wakeup_by = 0;
     wifi_clear_wakeup_reason();
     wlan.wakeup_conditions = 0;
     wlan.is_hs_configured = MFALSE;
@@ -12166,12 +12166,12 @@ int wlan_enable_disable_htc(uint8_t option)
 {
     int ret                 = -WM_FAIL;
     uint8_t send_htc_set[]  = {0x8b, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x24, 0x01, 0x01, 0x00, 0x00, 0x00};
-    u8_t debug_resp_buf[32] = {0};
+    uint8_t debug_resp_buf[32] = {0};
     uint32_t reqd_len       = 0;
 
     send_htc_set[12] = option;
 
-    ret = wlan_send_hostcmd(send_htc_set, sizeof(send_htc_set) / sizeof(u8_t), debug_resp_buf, sizeof(debug_resp_buf),
+    ret = wlan_send_hostcmd(send_htc_set, sizeof(send_htc_set) / sizeof(uint8_t), debug_resp_buf, sizeof(debug_resp_buf),
                             &reqd_len);
 
     return ret;
@@ -12193,7 +12193,7 @@ int wlan_send_debug_htc(const uint8_t count,
     uint8_t debug_cmd_buf[] = {0x8b, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x11, 0x01, 0x40, 0x01, 0x01, 0x00,
 			0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-    u8_t debug_resp_buf[32] = {0};
+    uint8_t debug_resp_buf[32] = {0};
     uint32_t reqd_len = 0;
 
     (void)memset(debug_resp_buf, 0, sizeof(debug_resp_buf));
@@ -12209,7 +12209,7 @@ int wlan_send_debug_htc(const uint8_t count,
     debug_cmd_buf[20] = dlResoundRecomm;
     debug_cmd_buf[21] = ulMuDataDisable;
 
-    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, sizeof(debug_resp_buf),
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf, sizeof(debug_resp_buf),
                             &reqd_len);
     if (ret == WM_SUCCESS)
     {

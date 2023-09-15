@@ -912,7 +912,7 @@ static int get_netmask_from_interface(uint32_t *nm, void *interface_handle)
     return net_get_if_ip_mask(nm, interface_handle);
 }
 
-#if 0
+#ifndef CONFIG_ZEPHYR
 void dhcp_stat(void)
 {
     int i = 0;

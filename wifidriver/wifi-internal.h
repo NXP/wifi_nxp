@@ -81,9 +81,11 @@ typedef struct
 #ifdef CONFIG_WMM
     /** Semaphore to protect data parameters */
     os_semaphore_t tx_data_sem;
+#ifdef CONFIG_ZEPHYR
     /** Queue for sending data packets to fw */
     os_queue_t tx_data;
     os_queue_pool_t tx_data_queue_data;
+#endif
 #endif
     unsigned last_sent_cmd_msec;
 

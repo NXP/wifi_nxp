@@ -130,7 +130,7 @@
 #endif
 
 #ifdef CONFIG_ZEPHYR
-#define WLAN_DRV_VERSION "zephyr.pvt.p1"
+#define WLAN_DRV_VERSION "zephyr.pvt.p3"
 #else
 #define WLAN_DRV_VERSION "v1.3.r46.p7"
 
@@ -143,7 +143,9 @@
 #endif
 /* Configuration */
 
+#ifndef CONFIG_WLAN_KNOWN_NETWORKS
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
+#endif
 
 #include <wmlog.h>
 #define wlcm_e(...) wmlog_e("wlcm", ##__VA_ARGS__)
