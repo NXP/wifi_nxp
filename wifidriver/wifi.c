@@ -4454,7 +4454,7 @@ int wifi_set_country_code(const char *alpha2)
     }
     else
     {
-        pmadapter->region_code = region_string_2_region_code(&country_code);
+        pmadapter->region_code = region_string_2_region_code(country_code);
     }
 #endif
 

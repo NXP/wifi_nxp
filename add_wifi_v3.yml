@@ -292,7 +292,6 @@ middleware.wifi:
     - source: wlcmgr/fw_heartbeat.h
     - source: incl/healthmon.h
     - source: healthmon/healthmon.c
-    - source: healthmon/healthmon_cli.c
     - source: healthmon/healthmon_int.h
     - source: wlcmgr/wlan_txpwrlimit_cfg.c
     - source: incl/port/lwip/hooks/lwip_default_hooks.h
@@ -451,6 +450,7 @@ middleware.wifi.cli:
     - source: incl/iperf.h
     - source: incl/wifi_ping.h
     - source: dhcpd/dhcp-server-cli.c
+    - source: healthmon/healthmon_cli.c
     - source: port/os/os_cli.c
   belong_to: set.middleware.wifi
   section_info:
