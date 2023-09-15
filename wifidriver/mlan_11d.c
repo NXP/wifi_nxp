@@ -110,7 +110,7 @@ t_u8 region_string_2_region_code(t_u8 *region_string)
 
         for (i = 0; i < ARRAY_SIZE(region_code_mapping); i++)
         {
-            if (memcmp(region_string, region_code_mapping[i].region, COUNTRY_CODE_LEN) == 0)
+            if (memcmp(region_string, region_code_mapping[i].region, COUNTRY_CODE_LEN - 1) == 0)
             {
                 LEAVE();
                 return region_code_mapping[i].code;
