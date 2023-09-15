@@ -5560,7 +5560,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             }
         }
     }
-    else if (strstr(buf, DPP_EVENT_NETWORK_ID))
+    else if (strstr(buf, DPP_EVENT_INTRO))
     {
         unsigned int condition = 0;
 
