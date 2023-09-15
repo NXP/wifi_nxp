@@ -87,8 +87,8 @@
 #define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
 
-#include "healthmon.h"
 #ifdef CONFIG_WLAN_FW_HEARTBEAT
+#include "healthmon.h"
 #include "fw_heartbeat.h"
 #endif
 
