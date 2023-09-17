@@ -985,10 +985,6 @@ enum wlan_security_type
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA_PRIME,
-    /** The network can use any eap security method. This is often used when
-     * the user only knows the name, identity and password but not the security
-     * type.  */
-    WLAN_SECURITY_EAP_WILDCARD,
 #endif
     /** The network can use any security method. This is often used when
      * the user only knows the name and passphrase but not the security

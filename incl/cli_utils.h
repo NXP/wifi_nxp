@@ -8,12 +8,10 @@
  *
  */
 
-#ifndef __MTF_UTILS_H__
-#define __MTF_UTILS_H__
+#ifndef __CLI_UTILS_H__
+#define __CLI_UTILS_H__
 
-#ifdef CONFIG_ZEPHYR
 #include <stdbool.h>
-#endif
 
 bool string_equal(const char *s1, const char *s2);
 bool get_uint(const char *arg, unsigned int *dest, unsigned int len);

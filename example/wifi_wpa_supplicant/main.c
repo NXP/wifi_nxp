@@ -38,6 +38,7 @@
 #ifdef CONFIG_HOST_SLEEP
 #include "host_sleep.h"
 #endif
+#include "wpa_cli.h"
 
 /*******************************************************************************
  * Definitions
@@ -165,6 +166,13 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             if (ret != WM_SUCCESS)
             {
                 PRINTF("Failed to initialize DHCP Server CLI\r\n");
+                return 0;
+            }
+
+            ret = wpa_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WPA SUPP CLI\r\n");
                 return 0;
             }
 

@@ -8093,11 +8093,6 @@ int wlan_add_network(struct wlan_network *network)
     {
         return -WM_E_INVAL;
     }
-
-    if ((network->role == WLAN_BSS_ROLE_UAP) && ((network->security.type == WLAN_SECURITY_EAP_SIM) || (network->security.type == WLAN_SECURITY_EAP_AKA) || (network->security.type == WLAN_SECURITY_EAP_AKA_PRIME) || (network->security.type == WLAN_SECURITY_EAP_WILDCARD)))
-    {
-        return -WM_E_INVAL;
-    }
 #endif
 #endif
 

@@ -377,9 +377,6 @@ static void print_network(struct wlan_network *network)
         case WLAN_SECURITY_EAP_AKA_PRIME:
             (void)PRINTF("%s Enterprise EAP AKA PRIME\r\n", sec_tag(network));
             break;
-        case WLAN_SECURITY_EAP_WILDCARD:
-            (void)PRINTF("%s Enterprise EAP WILDCARD\r\n", sec_tag(network));
-            break;
 #endif
 #ifdef CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
@@ -758,7 +755,7 @@ static void dump_wlan_add_usage(void)
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
         "    [wpa3-sb/wpa3-sb-192] "
-        "[eap-tls/eap-tls-sha256/eap-ttls-mschapv2/eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc/eap-fast-mschapv2/"
+        "[eap-tls/eap-tls-sha256/eap-ttls-mschapv2/eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc/eap-sim/eap-aka/eap-aka-prime/eap-fast-mschapv2/"
         "eap-fast-gtc]\r\n");
 #ifdef CONFIG_11R
     (void)PRINTF("    [eap-tls-ft/eap-tls-ft-sha384]\r\n");
@@ -770,8 +767,11 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("    [owe_only]\r\n");
 #endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
+#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
+    (void)PRINTF("    If using eap-sim/eap-aka/eap-aka-prime use read_gsm_triplets to add GSM authentication triplets and read_milenage to add Milenage keys and hlr_cli to start hlr_auc_gw\r\n");
+#endif
 #ifdef CONFIG_WIFI_DTIM_PERIOD
-    (void)PRINTF("If seting dtim\r\n");
+    (void)PRINTF("If setting dtim\r\n");
     (void)PRINTF("The value of dtim is an integer. The default value is 10.\r\n");
 #endif
 #ifdef CONFIG_11AC
