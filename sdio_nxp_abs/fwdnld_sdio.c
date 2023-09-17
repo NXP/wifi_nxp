@@ -270,6 +270,10 @@ static fwdnld_intf_ret_t sdio_interface_send(fwdnld_intf_t *intf,
 
         if (*len == 0U)
         {
+            if (offset > 0)
+            {
+                return FWDNLD_INTF_SUCCESS;
+            }
             sdio_io_e("Card timeout %s:%d", __func__, __LINE__);
             return FWDNLD_INTF_FAIL;
         }
@@ -279,7 +283,7 @@ static fwdnld_intf_ret_t sdio_interface_send(fwdnld_intf_t *intf,
             return FWDNLD_INTF_FAIL;
         }
         else
-        {
+        { /* Do Nothing */
         }
 
         txlen = *len;
@@ -321,14 +325,14 @@ fwdnld_intf_t *sdio_init_interface(void *settings)
     {
         return NULL;
     }
-    sdio_intf_g.intf_s.fwdnld_intf_send         = sdio_interface_send;
-    sdio_intf_g.intf_s.fwdnld_intf_prepare      = sdio_prep_for_fwdnld;
-    sdio_intf_g.intf_s.fwdnld_intf_check_ready  = sdio_post_fwdnld_check_conn_ready;
+    sdio_intf_g.intf_s.fwdnld_intf_send        = sdio_interface_send;
+    sdio_intf_g.intf_s.fwdnld_intf_prepare     = sdio_prep_for_fwdnld;
+    sdio_intf_g.intf_s.fwdnld_intf_check_ready = sdio_post_fwdnld_check_conn_ready;
 #if defined(CONFIG_WIFI_IND_DNLD)
     sdio_intf_g.intf_s.fwdnld_intf_check_reload = sdio_fwdnld_check_reload;
 #endif
-    sdio_intf_g.intf_s.outbuf                   = wifi_get_sdio_outbuf(&sdio_intf_g.intf_s.outbuf_len);
-    sdio_intf_g.intf_s.intf_specific            = &sdio_intf_specific_g;
+    sdio_intf_g.intf_s.outbuf        = wifi_get_sdio_outbuf(&sdio_intf_g.intf_s.outbuf_len);
+    sdio_intf_g.intf_s.intf_specific = &sdio_intf_specific_g;
 
     ret = sdio_ioport_init();
     if (ret != 0)

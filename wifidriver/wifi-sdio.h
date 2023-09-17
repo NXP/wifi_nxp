@@ -90,6 +90,8 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
 
 mlan_status sd_wifi_post_init(enum wlan_type type);
 
+void sd_wifi_reset_ports();
+
 mlan_status wlan_flush_wmm_pkt(t_u8 pkt_cnt);
 
 void sd_wifi_deinit(void);

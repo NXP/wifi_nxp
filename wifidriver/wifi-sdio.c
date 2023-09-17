@@ -2685,6 +2685,17 @@ static mlan_status sd_wifi_preinit(void)
     return mlanstatus;
 }
 
+void sd_wifi_reset_ports()
+{
+#if defined(SD8801)
+    txportno = 1;
+    mlan_adap->curr_rd_port = 1;
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+    txportno = 0;
+    mlan_adap->curr_rd_port = 0;
+#endif
+}
+
 mlan_status sd_wifi_post_init(enum wlan_type type)
 {
     mlan_status mlanstatus = MLAN_STATUS_SUCCESS;
@@ -2722,13 +2733,7 @@ mlan_status sd_wifi_post_init(enum wlan_type type)
         return MLAN_STATUS_FAILURE;
     }
 
-#if defined(SD8801)
-    txportno = 1;
-    mlan_adap->curr_rd_port = 1;
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
-    txportno = 0;
-    mlan_adap->curr_rd_port = 0;
-#endif
+    sd_wifi_reset_ports();
 
     return mlanstatus;
 }
