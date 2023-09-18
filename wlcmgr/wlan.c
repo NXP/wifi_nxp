@@ -5101,19 +5101,29 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
 static int wlcm_process_add_unspecified_network(const char *name)
 {
     int ret, i;
-    struct wlan_network network;
+    struct wlan_network *network;
     size_t len       = 0;
     const char *ssid = "w";
 
-    (void)memset(&network, 0, sizeof(struct wlan_network));
-    (void)memcpy(network.name, name, strlen(name));
+    network = os_mem_alloc(sizeof(struct wlan_network));
+
+    if (network == NULL)
+    {
+        wlcm_d("%s: Failed to alloc wlan_network network", __func__);
+        return -WM_FAIL;
+    }
+
+    (void)memset(network, 0, sizeof(struct wlan_network));
+    (void)memcpy(network->name, name, strlen(name));
     len = strlen(name);
-    network.name[len] = '\0';
-    (void)memcpy(network.ssid, ssid, strlen(ssid));
+    network->name[len] = '\0';
+    (void)memcpy(network->ssid, ssid, strlen(ssid));
 
-    network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+    network->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 
-    ret = wlan_add_network(&network);
+    ret = wlan_add_network(network);
+
+    os_mem_free(network);
 
     if (ret != WM_SUCCESS)
     {
