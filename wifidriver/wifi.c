@@ -4525,7 +4525,9 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
     }
 
     scan_res->rssi  = (t_u8) - (bss_new_entry->rssi);
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     scan_res->noise = bss_new_entry->chan_noise;
+#endif
 
     if ((pmpriv->media_connected == MTRUE) &&
         (memcmp(bss_new_entry->mac_address, (t_u8 *)&pmpriv->curr_bss_params.bss_descriptor.mac_address,

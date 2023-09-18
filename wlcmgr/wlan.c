@@ -3884,9 +3884,6 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         net_interface_up(if_handle);
 #endif
 
-#ifdef CONFIG_WPS2
-        if (wps_session_attempt)
-        {
 #ifdef CONFIG_WPA2_ENTP
         if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
         {
@@ -3895,7 +3892,6 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
             {
                 wlcm_e("wpa2_ent_connect failed");
             }
-#endif
         }
 #endif
         wlan.scan_count = 0;
@@ -9373,6 +9369,9 @@ void wlan_reset(cli_reset_option ResetOption)
             wlan_host_sleep_state = HOST_SLEEP_DISABLE;
 #endif
 #endif
+#if defined(CONFIG_WPA_SUPP) && defined(CONFIG_UAP_STA_MAC_ADDR_FILTER)
+        wlan_set_sta_mac_filter(0, 0, NULL);
+#endif
             /*Disconnect form AP if station is associated with an AP.*/
             if (wlan.sta_state > CM_STA_ASSOCIATING)
             {
@@ -9442,9 +9441,6 @@ void wlan_reset(cli_reset_option ResetOption)
             /* Clear wlcmgr */
             wlan_stop();
         }
-#if defined (CONFIG_WPA_SUPP) && (CONFIG_UAP_STA_MAC_ADDR_FILTER)
-        wlan_set_sta_mac_filter(0, 0, NULL);
-#endif
         power_off_device(LOAD_WIFI_FIRMWARE);
     }
 
