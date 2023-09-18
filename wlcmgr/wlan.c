@@ -44,7 +44,7 @@
 #ifdef CONFIG_HOST_SLEEP
 #ifdef RW610
 #include  "fsl_power.h"
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
 #include  "lpm.h"
 #include  "host_sleep.h"
 #endif
@@ -198,7 +198,7 @@ AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
     .data           = NULL,
 };
 bool is_wakeup_cond_set = false;
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
 int wlan_host_sleep_state = HOST_SLEEP_DISABLE;
 #else
 int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
@@ -1011,7 +1011,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
             is_hs_handshake_done = 0;
             return kStatus_PMNotifyEventError;
         }
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
         host_sleep_pre_cfg((int)powerState);
 #endif
     }
@@ -1027,7 +1027,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
                 return kStatus_PMNotifyEventError;
             /* reset hs hanshake flag after waking up */
             is_hs_handshake_done = 0;
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
             host_sleep_post_cfg((int)powerState);
             /* If periodic host sleep is not enabled, reset the flag to disable host sleep */
             if (wlan_host_sleep_state == HOST_SLEEP_ONESHOT)
@@ -6627,7 +6627,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 if (!wlan_is_manual)
                 {
                     is_hs_handshake_done = WLAN_HOSTSLEEP_SUCCESS;
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
                     host_sleep_cli_notify();
 #endif
                 }

@@ -4011,7 +4011,7 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
     return;
 }
 
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
 static void test_wlan_set_host_sleep(int argc, char **argv)
 {
     bool is_manual    = MFALSE;
@@ -9804,7 +9804,7 @@ static struct cli_command tests[] = {
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
 #if defined(CONFIG_HOST_SLEEP)
     {"wlan-wakeup-condition", "<wowlan [wake_up_conds]>/mef>", test_wlan_wakeup_condition},
-#if !defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0)
+#if !defined(CONFIG_WIFI_BLE_COEX_APP)
     {"wlan-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_set_host_sleep},
 #endif
 #else
