@@ -66,7 +66,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #ifdef CONFIG_WiFi_878x
 #define MAX_WAIT_TIME 20
 #else
-#define MAX_WAIT_TIME 3000
+#define MAX_WAIT_TIME 5000
 #endif
 
 #ifndef USB_SUPPORT_ENABLE
