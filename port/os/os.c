@@ -1380,6 +1380,8 @@ void os_dump_mem_stats(void)
 
     vPortGetHeapStats(&HS);
 
+    os_exit_critical_section(sta);
+
     (void)PRINTF("\n\r");
     (void)PRINTF("Heap size ---------------------- : %d\n\r", HS.xAvailableHeapSpaceInBytes);
     (void)PRINTF("Largest Free Block size -------- : %d\n\r", HS.xSizeOfLargestFreeBlockInBytes);
@@ -1388,8 +1390,6 @@ void os_dump_mem_stats(void)
     (void)PRINTF("Total successful allocations --- : %d\n\r", HS.xNumberOfSuccessfulAllocations);
     (void)PRINTF("Total successful frees --------- : %d\n\r", HS.xNumberOfSuccessfulFrees);
     (void)PRINTF("Min Free since system boot ----- : %d\n\r", HS.xMinimumEverFreeBytesRemaining);
-
-    os_exit_critical_section(sta);
 }
 #endif
 
