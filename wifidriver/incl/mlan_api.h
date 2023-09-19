@@ -45,7 +45,9 @@
 #include "mlan_meas.h"
 #include "mlan_uap.h"
 #include <wifi-debug.h>
+#ifndef RW610
 #include <wifi-sdio.h>
+#endif
 #include "wifi-internal.h"
 #include "mlan_action.h"
 #ifdef CONFIG_11V
