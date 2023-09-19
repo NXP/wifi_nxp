@@ -4597,6 +4597,13 @@ static inline void print_mac(const char *mac)
 int wlan_set_rf_test_mode(void);
 
 /**
+ * UnSet the RF Test Mode on in Wi-Fi firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_unset_rf_test_mode(void);
+
+/**
  * Set the RF Channel in Wi-Fi firmware.
  *
  * \note Please call \ref wlan_set_rf_test_mode API before using this API.

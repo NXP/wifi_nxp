@@ -7831,12 +7831,12 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
 #if defined(SD9177)
 /** notify vdll download error: Secure error */
 #define VDLL_IND_TYPE_ERR_SECURE 4
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
-/** notify VDLL_V2 interface reset */
-#define VDLL_IND_TYPE_INTF_RESET 4
-#endif
 /** notify vdll download vdll complete */
 #define VDLL_IND_TYPE_COMPLETE 5
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
+/** notify VDLL_V2 interface reset */
+#define VDLL_IND_TYPE_INTF_RESET 5
+#endif
 
 /** vdll indicate event structure */
 typedef MLAN_PACK_START struct _vdll_ind

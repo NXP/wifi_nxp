@@ -249,7 +249,7 @@ static int wifi_get_command_resp_sem(unsigned long wait)
     return os_semaphore_get(&wm_wifi.command_resp_sem, wait);
 }
 
-static int wifi_put_command_resp_sem(void)
+int wifi_put_command_resp_sem(void)
 {
     return os_semaphore_put(&wm_wifi.command_resp_sem);
 }

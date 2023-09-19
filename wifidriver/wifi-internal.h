@@ -325,6 +325,8 @@ void bus_deregister_data_input_funtion(void);
  */
 int wifi_get_command_lock(void);
 
+int wifi_put_command_resp_sem(void);
+
 /*
  * @internal
  *

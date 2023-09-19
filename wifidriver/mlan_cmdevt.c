@@ -4415,15 +4415,16 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
         case VDLL_IND_TYPE_ERR_SECURE:
             wevt_d("VDLL_IND (SECURE ERR).");
             break;
+        case VDLL_IND_TYPE_COMPLETE:
+            wevt_d("VDLL_IND (ID COMPLETE).");
+            break;
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997)
         case VDLL_IND_TYPE_INTF_RESET:
             wevt_d("VDLLV2_IND (INTF RESET).");
             sd_wifi_reset_ports();
+            (void)wifi_put_command_resp_sem();
             break;
 #endif
-        case VDLL_IND_TYPE_COMPLETE:
-            wevt_d("VDLL_IND (ID COMPLETE).");
-            break;
         default:
             wevt_d("unknown vdll ind type=%d", ind->type);
             break;

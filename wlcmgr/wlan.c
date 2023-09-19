@@ -10270,11 +10270,10 @@ int wlan_deepsleepps_on(void)
         return WLAN_ERROR_PS_ACTION;
     }
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-    if (wlan.cm_deepsleepps_configured
+    if (wlan.cm_deepsleepps_configured)
 #else
-    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured
+    if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured)
 #endif
-    )
     {
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
         wlcm_e("deep sleep ps already enabled: %d", wlan.cm_deepsleepps_configured);
@@ -11969,7 +11968,18 @@ int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
 
 int wlan_set_rf_test_mode(void)
 {
+    wlan_ieeeps_off();
+    wlan_deepsleepps_off();
     return wifi_set_rf_test_mode();
+}
+
+int wlan_unset_rf_test_mode(void)
+{
+    (void)wifi_unset_rf_test_mode();
+    wlan_ieeeps_on(wlan.wakeup_conditions);
+    wlan_deepsleepps_on();
+
+    return WM_SUCCESS;
 }
 
 int wlan_set_rf_channel(const uint8_t channel)

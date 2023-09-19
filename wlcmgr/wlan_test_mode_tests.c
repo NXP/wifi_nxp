@@ -51,12 +51,42 @@ static void wlan_rf_test_mode_set(int argc, char *argv[])
     if (ret == WM_SUCCESS)
     {
         rf_test_mode = true;
-        (void)PRINTF("RF Test Mode configuration successful\r\n");
+        (void)PRINTF("RF Test Mode Set configuration successful\r\n");
     }
     else
     {
-        (void)PRINTF("RF Test Mode configuration failed\r\n");
+        (void)PRINTF("RF Test Mode Set configuration failed\r\n");
         dump_wlan_set_rf_test_mode_usage();
+    }
+}
+
+static void dump_wlan_unset_rf_test_mode_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-unset-rf-test-mode \r\n");
+    (void)PRINTF("\r\n");
+}
+
+static void wlan_rf_test_mode_unset(int argc, char *argv[])
+{
+    int ret;
+
+    if (argc != 1)
+    {
+        dump_wlan_unset_rf_test_mode_usage();
+        return;
+    }
+
+    ret = wlan_unset_rf_test_mode();
+    if (ret == WM_SUCCESS)
+    {
+        rf_test_mode = false;
+        (void)PRINTF("RF Test Mode Unset configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("RF Test Mode Unset configuration failed\r\n");
+        dump_wlan_unset_rf_test_mode_usage();
     }
 }
 
@@ -1168,6 +1198,7 @@ static void wlan_rf_radio_mode_set(int argc, char *argv[])
 
 static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-set-rf-test-mode", NULL, wlan_rf_test_mode_set},
+    {"wlan-unset-rf-test-mode", NULL, wlan_rf_test_mode_unset},
     {"wlan-set-rf-tx-antenna", "<antenna>", wlan_rf_tx_antenna_set},
     {"wlan-get-rf-tx-antenna", NULL, wlan_rf_tx_antenna_get},
     {"wlan-set-rf-rx-antenna", "<antenna>", wlan_rf_rx_antenna_set},

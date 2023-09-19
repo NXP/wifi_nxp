@@ -1491,6 +1491,8 @@ int wifi_get_tsf_info(wifi_tsf_info_t *tsf_info);
 
 int wifi_set_rf_test_mode(void);
 
+int wifi_unset_rf_test_mode(void);
+
 int wifi_set_rf_channel(const uint8_t channel);
 
 int wifi_set_rf_radio_mode(const uint8_t mode);
