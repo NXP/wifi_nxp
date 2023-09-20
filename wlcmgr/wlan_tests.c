@@ -4610,6 +4610,61 @@ static void test_wlan_send_hostcmd(int argc, char **argv)
     }
 }
 
+#if defined(RW610) || defined(SD9177)
+static void test_wlan_ext_coex_uwb_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-ext-coex-uwb \r\n");
+    (void)PRINTF("        - Enable UWB Coex\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-ext-coex-uwb \r\n");
+    (void)PRINTF("    - Enable UWB Coex \r\n");
+}
+
+static void test_wlan_ext_coex_uwb(int argc, char **argv)
+{
+    int ret           = -WM_FAIL;
+    uint32_t reqd_len = 0;
+    uint8_t action;
+    u8_t cmd_buf[] = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01/* Get/Set */, 0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
+    u8_t resp_buf[64] = {0};
+
+    /**
+     * Command taken from robust_btc.conf
+     *    external_coex_uwb_config={
+     *        CmdCode=0x00e0
+     *        Action:2=1                          # 0x0 get, 0x1 set
+     *        RSVD:2=0
+     *        RobustCoexTlvType:2=0x0238          # TLV ID
+     *        RobustCoexTlvLength:2={
+     *            Enabled:1=0x03                  # 0x03 to configure UWB
+     *        }
+     *}
+     */
+
+    if (argc > 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        test_wlan_ext_coex_uwb_usage();
+        return;
+    }
+
+    ret = wlan_send_hostcmd(cmd_buf, sizeof(cmd_buf) / sizeof(u8_t), resp_buf, sizeof(resp_buf),
+            &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Hostcmd success, response is\r\n");
+        for (ret = 0; ret < reqd_len; ret++)
+            (void)PRINTF("%x\t", resp_buf[ret]);
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
+#endif
+
 #ifdef SD8801
 static void test_wlan_8801_enable_ext_coex(int argc, char **argv)
 {
@@ -10306,6 +10361,9 @@ static struct cli_command tests[] = {
 #endif
 #endif
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
+#if defined(RW610) || defined(SD9177)
+    {"wlan-ext-coex-uwb", NULL, test_wlan_ext_coex_uwb},
+#endif
 #if !defined(SD8801) && !defined(RW610)
 #ifdef CONFIG_11AC
     {"wlan-set-uap-bandwidth", "<1/2/3> 1:20 MHz 2:40MHz 3:80MHz", test_wlan_set_uap_bandwidth},
