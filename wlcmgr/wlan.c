@@ -6415,6 +6415,16 @@ int wifi_put_wls_csi_sem(void)
 
 #endif
 
+#ifdef CONFIG_FW_VDLL
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
+static void wlcm_process_intf_reset()
+{
+    wlan_ieeeps_on(wlan.wakeup_conditions);
+    wlan_deepsleepps_on();
+}
+#endif
+#endif
+
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
 {
@@ -6799,14 +6809,21 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
-		case WIFI_EVENT_FTM_COMPLETE:
-			wlcm_d("got event: continue to ftm or stop");
-			wlcm_process_ftm_complete_event();
-			break;
+        case WIFI_EVENT_FTM_COMPLETE:
+            wlcm_d("got event: continue to ftm or stop");
+            wlcm_process_ftm_complete_event();
+            break;
 #ifdef CONFIG_WLS_CSI_PROC
-		case WIFI_EVENT_WLS_CSI:
-			wlcm_d("got event: receive WLS csi data");
-			wlcm_process_wls_csi_event(msg->data);
+        case WIFI_EVENT_WLS_CSI:
+            wlcm_d("got event: receive WLS csi data");
+            wlcm_process_wls_csi_event(msg->data);
+            break;
+#endif
+#endif
+#ifdef CONFIG_FW_VDLL
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
+        case WIFI_EVENT_INTF_RESET:
+            wlcm_process_intf_reset();
             break;
 #endif
 #endif
@@ -11986,8 +12003,6 @@ int wlan_set_rf_test_mode(void)
 int wlan_unset_rf_test_mode(void)
 {
     (void)wifi_unset_rf_test_mode();
-    wlan_ieeeps_on(wlan.wakeup_conditions);
-    wlan_deepsleepps_on();
 
     return WM_SUCCESS;
 }

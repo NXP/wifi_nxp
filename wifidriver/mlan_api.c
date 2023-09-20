@@ -1219,7 +1219,6 @@ int wifi_set_rf_test_mode(void)
 
 int wifi_unset_rf_test_mode(void)
 {
-    int ret;
     wifi_mfg_cmd_generic_cfg_t wifi_mfg_cmd_generic_cfg;
 
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
@@ -1227,7 +1226,7 @@ int wifi_unset_rf_test_mode(void)
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_UNSET_TEST_MODE;
     wifi_mfg_cmd_generic_cfg.action  = HostCmd_ACT_GEN_SET;
 
-    ret = wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
+    (void)wifi_get_set_rf_test_generic(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_generic_cfg);
 
     return WM_SUCCESS;
 }
