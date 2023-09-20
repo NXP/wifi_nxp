@@ -37,6 +37,7 @@ void wifi_survey_result_get(struct wifi_message *msg)
 #endif
 
     wifi_nxp_survey_res_get();
+    os_mem_free(wifi_survey_params);
 }
 
 /* Event handlers*/

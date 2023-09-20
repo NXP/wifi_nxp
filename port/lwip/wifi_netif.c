@@ -91,7 +91,7 @@ static void register_interface(struct netif *iface, mlan_bss_type iface_type)
 }
 
 #ifdef CONFIG_TX_RX_ZERO_COPY
-void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, t_u32 len)
+void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
 {
     outbuf_t *buf = (outbuf_t *)srcAddr;
     t_u16 header_len = INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN;

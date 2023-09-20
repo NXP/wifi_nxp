@@ -130,7 +130,7 @@ IMUPkt *imupkt = (IMUPkt *)outbuf;
 #define WIFI_POLL_CMD_RESP_TIME 10
 #endif
 #ifdef CONFIG_TX_RX_ZERO_COPY
-extern void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, t_u32 len);
+extern void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len);
 #endif
 void wrapper_wlan_cmd_11n_cfg(void *hostcmd);
 void wrapper_wifi_ret_mib(void *resp);

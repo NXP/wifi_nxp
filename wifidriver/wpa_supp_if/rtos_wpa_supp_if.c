@@ -1019,6 +1019,7 @@ int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi_supp_survey_res_get failed", __func__);
+        os_mem_free(wifi_survey_params);
         goto out;
     }
     ret = 0;
