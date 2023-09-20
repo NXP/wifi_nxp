@@ -6415,7 +6415,7 @@ int wifi_put_wls_csi_sem(void)
 #endif
 
 #ifdef CONFIG_FW_VDLL
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997)
 static void wlcm_process_intf_reset()
 {
     wlan_ieeeps_on(wlan.wakeup_conditions);
@@ -6820,7 +6820,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
 #endif
 #ifdef CONFIG_FW_VDLL
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
+#if defined(SD8978) || defined(SD8987) || defined(SD8997)
         case WIFI_EVENT_INTF_RESET:
             wlcm_process_intf_reset();
             break;
