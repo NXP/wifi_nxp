@@ -692,6 +692,11 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
     t_u32 done_early;
     t_u32 cmd_no;
 
+#ifdef CONFIG_11AX
+    MrvlIEtypes_Extension_t *phe_cap;
+    t_u16 len = 0;
+#endif
+
     ENTER();
 
     if ((pscan_cfg_out == MNULL) || (pchan_tlv_out == MNULL) || (pscan_chan_list == MNULL))
@@ -762,6 +767,12 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
 #endif
             );
         }
+        else
+        {
+#ifdef CONFIG_11AX
+            config_bands &= ~(BAND_AAX);
+#endif
+        }
 
         config_bands = (pmpriv->bss_mode == MLAN_BSS_MODE_INFRA) ? config_bands : pmadapter->adhoc_start_band;
 
@@ -778,8 +789,17 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
         }
 
         ptlv_pos += sizeof(prates_tlv->header) + rates_size;
-
         PRINTM(MINFO, "SCAN_CMD: Rates size = %d\n", rates_size);
+
+#ifdef CONFIG_11AX
+        if (IS_FW_SUPPORT_11AX(pmadapter) && ((config_bands & BAND_GAX) || (config_bands & BAND_AAX)))
+        {
+            phe_cap = (MrvlIEtypes_Extension_t *)ptlv_pos;
+            len     = wlan_fill_he_cap_tlv(pmpriv, config_bands, phe_cap, MFALSE);
+            HEXDUMP("SCAN: HE_CAPABILITIES IE", (t_u8 *)phe_cap, len);
+            ptlv_pos += len;
+        }
+#endif
 
         pchan_tlv_out              = (MrvlIEtypes_ChanListParamSet_t *)ptlv_pos;
         pchan_tlv_out->header.type = wlan_cpu_to_le16(TLV_TYPE_CHANLIST);
@@ -1004,7 +1024,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     MrvlIEtypes_Extension_t *phe_cap;
     t_u16 len = 0;
 #endif
-#ifdef CONFIG_SCAN_CHANNEL_GAP
+#ifdef SCAN_CHANNEL_GAP
     MrvlIEtypes_ScanChanGap_t *pscan_gap_tlv;
 #endif
     ENTER();
@@ -1199,16 +1219,6 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         ptlv_pos += sizeof(MrvlIETypes_VHTCap_t);
         pvht_cap->header.len = wlan_cpu_to_le16(pvht_cap->header.len);
     }
-
-#ifdef CONFIG_11AX
-    if (IS_FW_SUPPORT_11AX(pmadapter) && (pmpriv->config_bands & BAND_AAX))
-    {
-        phe_cap = (MrvlIEtypes_Extension_t *)ptlv_pos;
-        len     = wlan_fill_he_cap_tlv(pmpriv, pmpriv->config_bands, phe_cap, MFALSE);
-        HEXDUMP("SCAN: HE_CAPABILITIES IE", (t_u8 *)phe_cap, len);
-        ptlv_pos += len;
-    }
-#endif
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     /*
@@ -4177,6 +4187,7 @@ mlan_status wlan_cmd_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMM
     pcmd->size = wlan_cpu_to_le16((t_u16)(sizeof(pext_scan_cmd->reserved) + pscan_cfg->tlv_buf_len + S_DS_GEN));
 
     LEAVE();
+
     return MLAN_STATUS_SUCCESS;
 }
 
