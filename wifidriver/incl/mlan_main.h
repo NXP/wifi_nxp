@@ -3133,7 +3133,7 @@ t_bool wlan_is_channel_valid(t_u8 chan_num);
 /** Check if radio mode number is valid */
 t_bool wlan_is_radio_mode_valid(t_u8 mode);
 /** Check if channel number and its frequency is valid */
-t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq);
+t_bool wlan_is_channel_and_freq_valid(mlan_adapter *pmadapter, t_u8 chan_num, t_u16 chan_freq);
 /** Set Custom CFP Table */
 #ifdef CONFIG_5GHz_SUPPORT
 mlan_status wlan_set_custom_cfp_table(wifi_chanlist_t *chanlist, t_u8 *cfp_no_bg, t_u8 *cfp_no_a);

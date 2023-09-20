@@ -44,9 +44,9 @@ static const region_code_mapping_t region_code_mapping[] = {
     {"AU ", 0x30}, /* Australia */
     {"KR ", 0x30}, /* Republic Of Korea */
     {"FR ", 0x32}, /* France */
-    {"JP ", 0x40}, /* Japan */
-    {"CN ", 0x50}, /* China */
     {"JP ", 0xFF}, /* Japan Special */
+    {"CN ", 0x50}, /* China */
+    {"JP ", 0x40}, /* Japan */
 #ifndef CONFIG_MLAN_WMSDK
     {"JP ", 0x41}, /* Japan */
     {"JP ", 0xFE}, /* Japan */
@@ -104,33 +104,33 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
  */
 t_u8 region_string_2_region_code(t_u8 *region_string)
 {
-        t_u8 i;
+    t_u8 i;
 
-        ENTER();
+    ENTER();
 
-        for (i = 0; i < ARRAY_SIZE(region_code_mapping); i++)
+    for (i = 0; i < ARRAY_SIZE(region_code_mapping); i++)
+    {
+        if (memcmp(region_string, region_code_mapping[i].region, COUNTRY_CODE_LEN - 1) == 0)
         {
-            if (memcmp(region_string, region_code_mapping[i].region, COUNTRY_CODE_LEN - 1) == 0)
-            {
-                LEAVE();
-                return region_code_mapping[i].code;
-            }
+            LEAVE();
+            return region_code_mapping[i].code;
         }
+    }
 #ifndef CONFIG_MLAN_WMSDK
-        /* If still not found, look for code in EU country code table */
-        for (i = 0; i < ARRAY_SIZE(eu_country_code_table); i++)
+    /* If still not found, look for code in EU country code table */
+    for (i = 0; i < ARRAY_SIZE(eu_country_code_table); i++)
+    {
+        if (!memcmp(region_string, eu_country_code_table[i], COUNTRY_CODE_LEN - 1))
         {
-            if (!memcmp(region_string, eu_country_code_table[i], COUNTRY_CODE_LEN - 1))
-            {
-                PRINTM(MIOCTL, "found region code=%d in EU table\n", EU_REGION_CODE);
-                LEAVE();
-                return EU_REGION_CODE;
-            }
+            PRINTM(MIOCTL, "found region code=%d in EU table\n", EU_REGION_CODE);
+            LEAVE();
+            return EU_REGION_CODE;
         }
+    }
 #endif
-        /* Default is WW */
-        LEAVE();
-        return region_code_mapping[0].code;
+    /* Default is WW */
+    LEAVE();
+    return region_code_mapping[0].code;
 }
 
 /**

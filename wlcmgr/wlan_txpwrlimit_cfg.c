@@ -121,6 +121,14 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
+#ifdef WLAN_REGION_CODE
+    rv = wlan_set_country_code(WLAN_REGION_CODE);
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set country code\r\n");
+        return -WM_FAIL;
+    }
+#endif
 #ifdef RW610
     ARG_UNUSED(tx_pwrlimit_2g_cfg);
 #ifdef CONFIG_5GHz_SUPPORT
@@ -129,11 +137,17 @@ int wlan_set_wwsm_txpwrlimit()
 #endif
     rv = wlan_set_chanlist(&chanlist_2g_cfg);
     if (rv != WM_SUCCESS)
+    {
         (void)PRINTF("Unable to set 2G chanlist configuration\r\n");
+        return -WM_FAIL;
+    }
 #ifdef CONFIG_5GHz_SUPPORT
     rv = wlan_set_chanlist(&chanlist_5g_cfg);
     if (rv != WM_SUCCESS)
+    {
         (void)PRINTF("Unable to set 5G chanlist configuration\r\n");
+        return -WM_FAIL;
+    }
 #endif
 #ifdef RW610
     /*Default set FCC power table */
@@ -142,7 +156,10 @@ int wlan_set_wwsm_txpwrlimit()
     rv = wlan_set_region_power_cfg(rg_table_fc, rg_table_fc_len);
 #endif
     if (rv != WM_SUCCESS)
+    {
         (void)PRINTF("Unable to set compressed TX power table configuration\r\n");
+        return -WM_FAIL;
+    }
 #ifndef RW610
 #ifdef CONFIG_11AX
 #ifdef CONFIG_COMPRESS_RU_TX_PWTBL
@@ -150,12 +167,14 @@ int wlan_set_wwsm_txpwrlimit()
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set RU TX PWR Limit configuration\r\n");
+        return -WM_FAIL;
     }
 #else
     rv = wlan_set_11ax_rutxpowerlimit_legacy(&rutxpowerlimit_2g_cfg_set);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
+        return -WM_FAIL;
     }
 #ifdef CONFIG_5GHz_SUPPORT
     else
@@ -164,6 +183,7 @@ int wlan_set_wwsm_txpwrlimit()
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to set 5G RU TX PWR Limit configuration\r\n");
+            return -WM_FAIL;
         }
     }
 #endif
@@ -171,27 +191,32 @@ int wlan_set_wwsm_txpwrlimit()
 #endif /* CONFIG_11AX */
 #endif /* RW610 */
 
-#ifdef WLAN_REGION_CODE
-    return wlan_set_country_code(WLAN_REGION_CODE);
-#else
     return rv;
-#endif
 }
 #else
 int wlan_set_wwsm_txpwrlimit(void)
 {
     int rv = WM_SUCCESS;
-
+#ifdef WLAN_REGION_CODE
+    rv     = wlan_set_country_code(WLAN_REGION_CODE);
+    if (rv != WM_SUCCESS)
+    {
+        (void)PRINTF("Unable to set country code\r\n");
+        return -WM_FAIL;
+    }
+#endif
     rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_2g_cfg, &tx_pwrlimit_2g_cfg);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set 2G TX PWR Limit configuration\r\n");
+        return -WM_FAIL;
     }
 #ifdef CONFIG_5GHz_SUPPORT
     rv = wlan_set_chanlist_and_txpwrlimit(&chanlist_5g_cfg, &tx_pwrlimit_5g_cfg);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set 5G TX PWR Limit configuration\r\n");
+        return -WM_FAIL;
     }
 #endif
 
@@ -202,12 +227,14 @@ int wlan_set_wwsm_txpwrlimit(void)
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set RU TX PWR Limit configuration\r\n");
+        return -WM_FAIL;
     }
 #else
     rv = wlan_set_11ax_rutxpowerlimit_legacy(&rutxpowerlimit_2g_cfg_set);
     if (rv != WM_SUCCESS)
     {
         (void)PRINTF("Unable to set 2G RU TX PWR Limit configuration\r\n");
+        return -WM_FAIL;
     }
 #ifdef CONFIG_5GHz_SUPPORT
     else
@@ -216,6 +243,7 @@ int wlan_set_wwsm_txpwrlimit(void)
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to set 5G RU TX PWR Limit configuration\r\n");
+            return -WM_FAIL;
         }
     }
 #endif
@@ -223,11 +251,7 @@ int wlan_set_wwsm_txpwrlimit(void)
 #endif /* CONFIG_11AX */
 #endif /* RW610 */
 
-#ifdef WLAN_REGION_CODE
-    return wlan_set_country_code(WLAN_REGION_CODE);
-#else
     return rv;
-#endif
 }
 #endif /* CONFIG_COMPRESS_TX_PWTBL */
 

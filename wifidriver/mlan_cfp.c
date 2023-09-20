@@ -423,17 +423,16 @@ static const chan_freq_power_t channel_freq_power_EU_A[] = {
 
 /** Band: 'A', Region: Japan */
 static const chan_freq_power_t channel_freq_power_JPN_A[] = {
-    {36, 5180, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE},
-    {40, 5200, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE}, {44, 5220, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE},
-    {48, 5240, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE}, {52, 5260, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {56, 5280, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},  {60, 5300, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {64, 5320, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},  {100, 5500, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {104, 5520, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {108, 5540, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {112, 5560, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {116, 5580, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {120, 5600, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {124, 5620, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {128, 5640, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {132, 5660, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {136, 5680, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {140, 5700, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
-    {144, 5720, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}};
+    {36, 5180, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE}, {40, 5200, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE},
+    {44, 5220, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE}, {48, 5240, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MFALSE},
+    {52, 5260, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},  {56, 5280, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {60, 5300, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},  {64, 5320, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {100, 5500, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {104, 5520, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {108, 5540, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {112, 5560, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {116, 5580, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {120, 5600, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {124, 5620, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {128, 5640, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {132, 5660, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {136, 5680, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE},
+    {140, 5700, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}, {144, 5720, WLAN_TX_PWR_JP_A_DEFAULT, (bool)MTRUE}};
 
 /** Band: 'A', Region: China */
 static const chan_freq_power_t channel_freq_power_CN_A[] = {
@@ -2110,17 +2109,16 @@ t_bool wlan_is_radio_mode_valid(t_u8 mode)
  *
  * @return		Valid or Invalid
  */
-t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq)
+t_bool wlan_is_channel_and_freq_valid(mlan_adapter *pmadapter, t_u8 chan_num, t_u16 chan_freq)
 {
     t_bool valid = MFALSE;
     int i        = 0;
-    chan_freq_power_t *cfp_wwsm;
+    const chan_freq_power_t *cfp;
     int cfp_no;
 
     ENTER();
 
-    cfp_wwsm = (chan_freq_power_t *)channel_freq_power_WW_BG;
-    cfp_no   = ((int)sizeof(channel_freq_power_WW_BG) / (int)sizeof(chan_freq_power_t));
+    cfp = wlan_get_region_cfp_table(pmadapter, pmadapter->region_code, (BAND_G | BAND_B | BAND_GN), &cfp_no);
 
     for (i = 0; i < cfp_no; i++)
     {
@@ -2132,16 +2130,16 @@ t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq)
             break;
         }
 
-        if (chan_num == cfp_wwsm[i].channel)
+        if (chan_num == cfp[i].channel)
         {
             /* Channel Number is valid. Now validate the corresponding frequency as well */
-            if (chan_freq == cfp_wwsm[i].freq)
+            if (chan_freq == cfp[i].freq)
             {
                 valid = MTRUE;
             }
             else
             {
-                PRINTM(MERROR, "Channel freq mismatch. Expected %d, Configured %d\r\n", cfp_wwsm[i].freq, chan_freq);
+                PRINTM(MERROR, "Channel freq mismatch. Expected %d, Configured %d\r\n", cfp[i].freq, chan_freq);
                 valid = MFALSE;
             }
 
@@ -2152,8 +2150,7 @@ t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq)
 #ifdef CONFIG_5GHz_SUPPORT
     if (!valid)
     {
-        cfp_wwsm = (chan_freq_power_t *)channel_freq_power_WW_A;
-        cfp_no   = ((int)sizeof(channel_freq_power_WW_A) / (int)sizeof(chan_freq_power_t));
+        cfp = wlan_get_region_cfp_table(pmadapter, pmadapter->region_code, BAND_A, &cfp_no);
 
         for (i = 0; i < cfp_no; i++)
         {
@@ -2165,16 +2162,16 @@ t_bool wlan_is_channel_and_freq_valid(t_u8 chan_num, t_u16 chan_freq)
                 break;
             }
 
-            if (chan_num == cfp_wwsm[i].channel)
+            if (chan_num == cfp[i].channel)
             {
                 /* Channel Number is valid. Now validate the corresponding frequency as well */
-                if (chan_freq == cfp_wwsm[i].freq)
+                if (chan_freq == cfp[i].freq)
                 {
                     valid = MTRUE;
                 }
                 else
                 {
-                    PRINTM(MERROR, "Channel freq mismatch. Expected %d, Configured %d\r\n", cfp_wwsm[i].freq,
+                    PRINTM(MERROR, "Channel freq mismatch. Expected %d, Configured %d\r\n", cfp[i].freq,
                            chan_freq);
                     valid = MFALSE;
                 }

@@ -3649,9 +3649,9 @@ int wifi_set_chanlist(wifi_chanlist_t *chanlist)
 #ifdef CONFIG_5GHz_SUPPORT
     t_u8 cfp_no_a = 0;
 #endif
+    mlan_adapter *pmadapter = mlan_adap->priv[0]->adapter;
 
 #ifdef OTP_CHANINFO
-    mlan_adapter *pmadapter = mlan_adap->priv[0]->adapter;
     if ((pmadapter->otp_region == MNULL) || (pmadapter->otp_region->force_reg == 0U))
     {
 #endif
@@ -3661,7 +3661,8 @@ int wifi_set_chanlist(wifi_chanlist_t *chanlist)
          */
         for (i = 0; i < chanlist->num_chans; i++)
         {
-            if (!wlan_is_channel_and_freq_valid(chanlist->chan_info[i].chan_num, chanlist->chan_info[i].chan_freq))
+            if (!wlan_is_channel_and_freq_valid(pmadapter, chanlist->chan_info[i].chan_num,
+                                                chanlist->chan_info[i].chan_freq))
             {
                 wifi_e("Invalid channel %d\r\n", chanlist->chan_info[i].chan_num);
                 return -WM_FAIL;
