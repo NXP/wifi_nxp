@@ -129,18 +129,13 @@
 #include <wm_net_decl.h>
 #endif
 
-#ifdef CONFIG_ZEPHYR
-#define WLAN_DRV_VERSION "zephyr.pvt.p3"
-#else
-#define WLAN_DRV_VERSION "v1.3.r46.p7"
+#define WLAN_DRV_VERSION "v1.3.r47.p1"
 
 #ifdef CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
 #endif
 
 #define ARG_UNUSED(x) (void)(x)
-
-#endif
 /* Configuration */
 
 #ifndef CONFIG_WLAN_KNOWN_NETWORKS
