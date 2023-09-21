@@ -6326,6 +6326,12 @@ static void test_wlan_set_regioncode(int argc, char **argv)
         return;
     }
 
+    if (is_uap_started())
+    {
+        (void)PRINTF("Error: region code can not be set after uAP start!\r\n");
+        return;
+    }
+
     errno             = 0;
     t_u32 region_code = (t_u32)strtol(argv[1], NULL, 0);
     if (errno != 0)
@@ -8659,7 +8665,14 @@ static void test_wlan_11d_enable(int argc, char **argv)
     if (string_equal("sta", argv[1]))
         wlan_set_11d_state(WLAN_BSS_TYPE_STA, state);
     else if (string_equal("uap", argv[1]))
+    {
+        if (is_uap_started())
+        {
+            (void)PRINTF("Error: 11d status can not be changed after uAP start!\r\n");
+            return;
+        }
         wlan_set_11d_state(WLAN_BSS_TYPE_UAP, state);
+    }
     else
         dump_wlan_11d_enable_usage();
 }
