@@ -163,8 +163,6 @@ enum wifi_event
     WIFI_EVENT_WLS_CSI,
 #endif
 #endif
-    /** Event to notify interface reset */
-    WIFI_EVENT_INTF_RESET,
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must

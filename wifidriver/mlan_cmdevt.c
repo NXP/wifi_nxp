@@ -4423,7 +4423,6 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
             wevt_d("VDLLV2_IND (INTF RESET).");
             sd_wifi_reset_ports();
             (void)wifi_put_command_resp_sem();
-            (void)wifi_event_completion(WIFI_EVENT_INTF_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
 #endif
         default:

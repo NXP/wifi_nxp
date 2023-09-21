@@ -5767,8 +5767,11 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 #endif
 #endif
 
+#ifndef CONFIG_RF_TEST_MODE
     wlan_ieeeps_on(wlan.wakeup_conditions);
     wlan_deepsleepps_on();
+#endif
+
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
 }
 
@@ -6362,7 +6365,7 @@ static void wlcm_process_get_hw_spec_event(void)
 #endif
     /* Set Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
-	
+
     CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
 }
 
@@ -6412,16 +6415,6 @@ int wifi_put_wls_csi_sem(void)
 }
 #endif
 
-#endif
-
-#ifdef CONFIG_FW_VDLL
-#if defined(SD8978) || defined(SD8987) || defined(SD8997)
-static void wlcm_process_intf_reset()
-{
-    wlan_ieeeps_on(wlan.wakeup_conditions);
-    wlan_deepsleepps_on();
-}
-#endif
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
@@ -6816,13 +6809,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_WLS_CSI:
             wlcm_d("got event: receive WLS csi data");
             wlcm_process_wls_csi_event(msg->data);
-            break;
-#endif
-#endif
-#ifdef CONFIG_FW_VDLL
-#if defined(SD8978) || defined(SD8987) || defined(SD8997)
-        case WIFI_EVENT_INTF_RESET:
-            wlcm_process_intf_reset();
             break;
 #endif
 #endif
@@ -11994,8 +11980,6 @@ int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
 
 int wlan_set_rf_test_mode(void)
 {
-    wlan_ieeeps_off();
-    wlan_deepsleepps_off();
     return wifi_set_rf_test_mode();
 }
 
