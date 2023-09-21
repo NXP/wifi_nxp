@@ -87,11 +87,6 @@
 #define DELAYED_SLP_CFM_DUR 10U
 #define BAD_MIC_TIMEOUT     (60 * 1000)
 
-#ifdef CONFIG_WLAN_FW_HEARTBEAT
-#include "healthmon.h"
-#include "fw_heartbeat.h"
-#endif
-
 #ifdef CONFIG_WPA_SUPP
 #define SUPP_STATUS_TIMEOUT (2 * 1000)
 #define ROAM_SCAN_TIMEOUT   (60 * 1000)
@@ -249,7 +244,6 @@ enum user_request_type
     CM_STA_USER_REQUEST_HS,
     CM_STA_USER_REQUEST_PS_ENTER,
     CM_STA_USER_REQUEST_PS_EXIT,
-    CM_STA_USER_REQUEST_HEALTHMON,
     CM_STA_USER_REQUEST_LAST,
     /* All the STA related request are above and uAP related requests are
        below */
@@ -3332,16 +3326,6 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
 
     (void)os_semaphore_put(&wlan.scan_lock);
     wlan.is_scan_lock = 0;
-}
-
-static void wlcm_request_healthmon()
-{
-    wifi_rssi_info_t rssi_info;
-
-    wifi_send_rssi_info_cmd(&rssi_info);
-//    os_rwlock_read_unlock(&ps_rwlock);
-    wifi_set_xfer_pending(false);
-//    wakelock_put(WL_ID_WIFI_RSSI);
 }
 
 static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network *curr_nw);
@@ -6515,10 +6499,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlan_disable_power_save((int)msg->data);
             break;
 
-        case CM_STA_USER_REQUEST_HEALTHMON:
-            wlcm_request_healthmon();
-            break;
-
         case WIFI_EVENT_SCAN_START:
 #ifdef CONFIG_WPA_SUPP
             wifi_scan_start(msg);
@@ -7021,44 +7001,6 @@ static int send_user_request(enum user_request_type request, unsigned int data)
     }
 
     return -WM_FAIL;
-}
-
-int wlan_healthmon_test_cmd_to_firmware()
-{
-    int ret = WM_SUCCESS;
-
-    if (!wlan.running)
-    {
-        return WLAN_ERROR_STATE;
-    }
-#if 0
-    else if (uap_ps_mode != WLAN_UAP_ACTIVE || is_state(CM_STA_DEEP_SLEEP))
-    {
-        /* If uap power save or power down or deep sleep state
-         * or smart config mode is on then update the cmd timer
-         * to current time */
-        wifi_update_last_cmd_sent_ms();
-        return WLAN_ERROR_NONE;
-    }
-#endif
-    else
-    {
-        //wakelock_get(WL_ID_WIFI_RSSI);
-
-#if 0
-      ret = os_rwlock_read_lock(&ps_rwlock, OS_WAIT_FOREVER);
-        if (ret != WM_SUCCESS)
-        {
-            wakelock_put(WL_ID_WIFI_RSSI);
-            return ret;
-        }
-#endif
-        ret = send_user_request(CM_STA_USER_REQUEST_HEALTHMON, 0);
-
-        //if (ret != WM_SUCCESS)
-//            wakelock_put(WL_ID_WIFI_RSSI);
-    }
-    return ret;
 }
 
 static void copy_network(struct wlan_network *dst, struct wlan_network *src)
@@ -7784,10 +7726,6 @@ int wlan_stop(void)
 
     (void)net_wlan_deinit();
 
-#ifdef CONFIG_WLAN_FW_HEARTBEAT
-    // wlan_fw_heartbeat_unregister_healthmon();
-#endif
-
     wlan.status = WLCMGR_INIT_DONE;
     wlcm_d("WLCMGR thread deleted\n\r");
 #else
@@ -8069,18 +8007,6 @@ int wlan_add_network(struct wlan_network *network)
         wlcm_e("IP address and Default gateway must be same for uAP");
         return -WM_E_INVAL;
     }
-
-
-#ifdef CONFIG_WLAN_FW_HEARTBEAT
-    /* Healthmon is required for FW Hearbeat */
-    healthmon_init();
-    ret = wlan_fw_heartbeat_register_healthmon();
-    if (ret)
-    {
-        wlcm_e("failed to register heartbeat to healthmon");
-        return ret;
-    }
-#endif
 
 #ifdef CONFIG_WPA2_ENTP
     /* make sure that if in policy wireless connection is allowed

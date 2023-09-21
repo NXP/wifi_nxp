@@ -48,12 +48,6 @@ list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
 zephyr_library_sources(${WIFI_SRC})
 
 file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
-if(CONFIG_WLAN_FW_HEARTBEAT)
-zephyr_library_sources(healthmon/healthmon.c
-                       healthmon/healthmon_cli.c)
-else()
-list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*fw_heartbeat.c$")
-endif()
 zephyr_library_sources(${WLCMGR_SRC})
 
 file(GLOB DHCPD_SRC ./dhcpd/*.c)
