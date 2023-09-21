@@ -8111,6 +8111,8 @@ int wlan_add_network(struct wlan_network *network)
 
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
+        if (network->channel != 14)
+        {
 #ifdef CONFIG_WIFI_CAPA
         /* If no capability was configured, set capa up to 11ax by default */
         if (!network->wlan_capa)
@@ -8122,6 +8124,11 @@ int wlan_add_network(struct wlan_network *network)
                 WIFI_SUPPORT_11AC |
 #endif
                 WIFI_SUPPORT_11N | WIFI_SUPPORT_LEGACY;
+        }
+        else
+        {
+            network->wlan_capa = WIFI_SUPPORT_LEGACY;
+        }
 
 #ifdef CONFIG_11AX
         if (network->wlan_capa & WIFI_SUPPORT_11AX)
@@ -8140,6 +8147,8 @@ int wlan_add_network(struct wlan_network *network)
             network->dot11n = 1;
         }
 #else
+        if (network->channel != 14)
+        {
 #ifdef CONFIG_11AX
         network->dot11ax = 1;
 #endif
@@ -8147,6 +8156,7 @@ int wlan_add_network(struct wlan_network *network)
         network->dot11ac = 1;
 #endif
         network->dot11n = 1;
+        }
 #endif
     }
 #ifdef CONFIG_WPA_SUPP
