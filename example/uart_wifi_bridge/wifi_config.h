@@ -28,6 +28,8 @@
 #undef CONFIG_WIFI_CAPA
 #endif
 
+#define CONFIG_UART_WIFI_BRIDGE 1
+
 /* Logs */
 #define CONFIG_ENABLE_ERROR_LOGS   1
 #define CONFIG_ENABLE_WARNING_LOGS 1

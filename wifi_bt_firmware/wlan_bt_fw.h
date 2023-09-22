@@ -32,22 +32,12 @@
 #include "uart8987_bt.h"
 #endif
 #endif
-#elif defined(SD8997)
-#include "sduart8997_wlan_bt.h"
-#elif defined(SD9097)
-#include "pvt_sd9097_wlan.h"
-#elif defined(SD9098)
-#include "pvt_sd9098_wlan.h"
 #elif defined(SD9177)
-#if defined(CONFIG_UART_WIFI_BRIDGE)
-#include "sduart_nw61x_mfg_se.h"
-#else
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 #include "sduart_nw61x_se.h"
 #else
 #include "sd_nw61x_se.h"
 #include "uart_nw61x_se.h"
-#endif
 #endif
 #elif defined(RW610)
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;

@@ -4253,7 +4253,7 @@ mlan_status wlan_ret_host_clock_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *re
 #endif
 
 #ifdef CONFIG_FW_VDLL
-#include "wifi-sdio.h"
+
 extern const unsigned char wlan_fw_bin[];
 extern unsigned int wlan_fw_bin_len;
 

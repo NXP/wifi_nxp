@@ -585,6 +585,143 @@ wifi_wpa_supplicant:
         required: true
       preinclude_file:
         required: true
+uart_wifi_bridge:
+  section-type: application
+  dependency:
+  - middleware.freertos-kernel
+  - middleware.freertos-kernel.heap_4
+  - middleware.wifi
+  - middleware.lwip
+  - middleware.lwip.apps.lwiperf
+  - middleware.wifi.cli
+  __remove__:
+    merge_segment:
+    - middleware.lwip.default_heap_stack
+  merge_segment:
+  - middleware.lwip.default_heap_stack
+  contents:
+    document:
+      support_CMSIS_PACK: false
+      name: uart_wifi_bridge
+      readme:
+      - boards/${board}/wifi_examples/common/board.readme
+      - boards/src/wifi_examples/uart_wifi_bridge/uart_wifi_bridge.readme
+      category: wifi_examples
+      brief: uart_wifi_bridge
+    project-root-path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+    configuration:
+      tools:
+        __common__:
+          config:
+            __common__:
+              cc-define:
+                USE_RTOS: 1
+                PRINTF_ADVANCED_ENABLE: 1
+        iar:
+          config:
+            __common__:
+              ad-flags:
+              - __stack_size__=0x400
+              - __heap_size__=0x400
+              cx-flags:
+              - "--no_clustering"
+        mdk:
+          config:
+            __common__:
+              ad-flags:
+              - --predefine="-D__stack_size__=0x400"
+              - --predefine="-D__heap_size__=0x400"
+        armgcc:
+          config:
+            __common__:
+              ad-flags:
+              - "-Xlinker --defsym=__stack_size__=0x400"
+              - "-Xlinker --defsym=__heap_size__=0x400"
+        mcux:
+          config:
+            __common__:
+              ad-flags:
+              - "-Xlinker --defsym=__stack_size__=0x400"
+              - "-Xlinker --defsym=__heap_size__=0x400"
+              ld-flags:
+              - "-lib=newlibnano.nohost"
+    modules:
+      demo:
+        required: true
+        cc-include:
+        - path: boards/${board}
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        - path: boards/${board}/wifi_examples/common
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: board
+        files:
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/main.c
+          merge-to-main: main
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        - source: boards/${board}/FreeRTOSConfigBoard.h
+          merge-to-freertosconfig: sub
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        - source: boards/${board}/wifi_examples/uart_wifi_bridge/pin_mux.c
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/uart_wifi_bridge/pin_mux.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/readme_modules.txt
+          package_path: project-root-path
+          project_path: doc
+          exclude: true
+      demo_configs:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/uart_wifi_bridge
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        as-include:
+        - path: middleware/wifi_nxp/example/uart_wifi_bridge
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/lwipopts.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/lwippools.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware/mfg_wlan_bt_fw.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware/sd8801_mfg_wlan.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware/sduart8987_mfg_wlan_bt.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware/sduartIW416_mfg_wlan_bt.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware/sduart_nw61x_mfg.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/mfg_wifi_bt_firmware/sduart_nw61x_mfg_se.h
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}/mfg_wifi_bt_firmware
+          project_path: source
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/FreeRTOSConfig.h
+          merge-to-freertosconfig: main
+          package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
+          project_path: source
+      pinset:
+        required: true
+      sdmmc_config:
+        required: true
+      preinclude_file:
+        required: true
 wifi_test_mode:
   section-type: application
   dependency:

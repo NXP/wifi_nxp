@@ -26,7 +26,7 @@
 #include "fsl_usart_freertos.h"
 #include "fsl_loader.h"
 #else
-#include "wlan_bt_fw.h"
+#include "mfg_wlan_bt_fw.h"
 #include "wlan.h"
 #include "wifi.h"
 #include "wm_net.h"
@@ -38,11 +38,13 @@
 #include "wifi-internal.h"
 #include "wifi-sdio.h"
 #include "fsl_adapter_gpio.h"
-
-#include "fsl_sdmmc_host.h"
-#include "fsl_common.h"
 #include "fsl_lpuart_freertos.h"
-#include "fsl_component_serial_manager.h"
+#include "fsl_lpuart.h"
+#include "fsl_sdmmc_host.h"
+#if defined(MIMXRT1176_cm7_SERIES)
+#include "fsl_lpspi.h"
+#endif
+#endif
 
 /*******************************************************************************
  * Definitions
@@ -53,29 +55,27 @@
 #define DEMO_LPUART          LPUART1
 #define DEMO_LPUART_CLK_FREQ BOARD_DebugConsoleSrcFreq()
 #define DEMO_LPUART_IRQn     LPUART1_IRQn
+#endif
 
-#define UART_BUF_SIZE            2048
-#define LABTOOL_PATTERN_HDR_LEN  4
-#define CHECKSUM_LEN             4
-#define CRC32_POLY               0x04c11db7
+#define UART_BUF_SIZE           2048
+#define LABTOOL_PATTERN_HDR_LEN 4
+#define CHECKSUM_LEN            4
+#define CRC32_POLY              0x04c11db7
+
 #define LABTOOL_HCI_RESP_HDR_LEN 3
 
+#if defined(MIMXRT1176_cm7_SERIES)
 /* SPI related */
 #define LPSPI_MASTER_BASEADDR         (LPSPI1)
 #define LPSPI_MASTER_IRQN             (LPSPI1_IRQn)
 #define LPSPI_MASTER_PCS_FOR_INIT     (kLPSPI_Pcs0)
 #define LPSPI_MASTER_PCS_FOR_TRANSFER (kLPSPI_MasterPcs0)
 
-#define SPI_INT_GPIO      GPIO3
-#define SPI_INT_GPIO_PORT 3
-#define SPI_INT_GPIO_PIN  5
-#define SPI_INT_IRQ       GPIO3_Combined_0_15_IRQn
-#define SPI_INT_TYPE      kHAL_GpioInterruptFallingEdge
-
 #define LPSPI_MASTER_CLK_FREQ (CLOCK_GetFreqFromObs(CCM_OBS_LPSPI1_CLK_ROOT))
 
 #define LPSPI_DEALY_COUNT 0xFFFFFU
-#define TRANSFER_BAUDRATE 100000U /*! Transfer baudrate - 100k */
+#define TRANSFER_BAUDRATE 500000U /*! Transfer baudrate - 500k */
+#endif
 
 /** Command type: WLAN */
 #define TYPE_WLAN     0x0002
@@ -98,56 +98,37 @@
 #define WM_SUCCESS 0
 #define WM_FAIL    1
 
-#define SPI_BUF_ST_IDLE  0
-#define SPI_BUF_ST_READY 1
-#define SPI_BUF_ST_READ  2
-#define SPI_BUF_ST_INUSE 3
+#define UNUSED(x) (void)(x)
 
 #define REMOTE_EPT_ADDR_BT     (40U)
 #define LOCAL_EPT_ADDR_BT      (30U)
 #define REMOTE_EPT_ADDR_ZIGBEE (20U)
 #define LOCAL_EPT_ADDR_ZIGBEE  (10U)
 
-#define EVENT_ACCESS_BY_HOST 0x00000098
-
 #define WIFI_REG8(x)  (*(volatile unsigned char *)(x))
 #define WIFI_REG16(x) (*(volatile unsigned short *)(x))
-#define WIFI_REG32(x) (*(volatile unsigned long *)(x))
+#define WIFI_REG32(x) (*(volatile unsigned int *)(x))
 
 #define WIFI_WRITE_REG8(reg, val)  (WIFI_REG8(reg) = (val))
 #define WIFI_WRITE_REG16(reg, val) (WIFI_REG16(reg) = (val))
 #define WIFI_WRITE_REG32(reg, val) (WIFI_REG32(reg) = (val))
 
-#define EVENT_PAYLOAD_OFFSET 8
-
-/** Return the byte offset of a field in the given structure */
-#define MLAN_FIELD_OFFSET(type, field) ((uint32_t)(uint32_t) & (((type *)0)->field))
-
-#if defined(RW610_SERIES) || defined(RW612_SERIES)
 /* Set default mode of fw download */
 #ifndef CONFIG_SUPPORT_WIFI
 #define CONFIG_SUPPORT_WIFI 1
 #endif
 #ifndef CONFIG_SUPPORT_BLE
-#define CONFIG_SUPPORT_BLE 0
+#define CONFIG_SUPPORT_BLE 1
 #endif
 #ifndef CONFIG_SUPPORT_15D4
-#define CONFIG_SUPPORT_15D4 0
-#endif
+#define CONFIG_SUPPORT_15D4 1
 #endif
 
-/* enum for event access mem by host action */
-enum
-{
-    EVENT_ACCESS_ACTION_WRITE = 0,
-    EVENT_ACCESS_ACTION_READ  = 1
-};
+#define WLAN_CAU_ENABLE_ADDR         (0x45004008U)
+#define WLAN_CAU_TEMPERATURE_ADDR    (0x4500400CU)
+#define WLAN_CAU_TEMPERATURE_FW_ADDR (0x41382490U)
+#define WLAN_FW_WAKE_STATUS_ADDR     (0x40031068U)
 
-enum
-{
-    EVENT_ACCESS_TYPE_REG    = 0,
-    EVENT_ACCESS_TYPE_EEPROM = 1
-};
 #endif
 
 enum
@@ -160,8 +141,6 @@ enum
     MLAN_CARD_CMD_TIMEOUT
 };
 
-GPIO_HANDLE_DEFINE(s_SpiMasterGpioHandle);
-
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -173,9 +152,10 @@ uint8_t background_buffer[UART_BUF_SIZE];
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
 usart_rtos_handle_t handle;
 struct _usart_handle t_handle;
+TimerHandle_t g_wifi_cau_temperature_timer = NULL;
 
 struct rtos_usart_config usart_config = {
-    .baudrate    = 4800,
+    .baudrate    = 115200,
     .parity      = kUSART_ParityDisabled,
     .stopbits    = kUSART_OneStopBit,
     .buffer      = background_buffer,
@@ -191,9 +171,7 @@ uint32_t remote_ept_list[] = {REMOTE_EPT_ADDR_BT, REMOTE_EPT_ADDR_ZIGBEE};
 uint32_t local_ept_list[]  = {LOCAL_EPT_ADDR_BT, LOCAL_EPT_ADDR_ZIGBEE};
 #else
 lpuart_rtos_handle_t handle;
-lpuart_rtos_handle_t handle_bt;
 struct _lpuart_handle t_handle;
-struct _lpuart_handle t_handle_bt;
 
 lpuart_rtos_config_t lpuart_config = {
     .baudrate    = 115200,
@@ -203,8 +181,13 @@ lpuart_rtos_config_t lpuart_config = {
     .buffer_size = sizeof(background_buffer),
 };
 
+uint8_t background_buffer_bt[UART_BUF_SIZE];
+
+lpuart_rtos_handle_t handle_bt;
+struct _lpuart_handle t_handle_bt;
+
 lpuart_rtos_config_t lpuart_config_bt = {
-    .baudrate    = BOARD_BT_UART_BAUDRATE,
+    .baudrate    = 115200,
     .parity      = kLPUART_ParityDisabled,
     .stopbits    = kLPUART_OneStopBit,
     .buffer      = background_buffer_bt,
@@ -212,6 +195,7 @@ lpuart_rtos_config_t lpuart_config_bt = {
     .enableRxRTS = true,
     .enableTxCTS = true,
 };
+#endif
 
 typedef struct _uart_cb
 { /* uart control block */
@@ -224,6 +208,7 @@ typedef struct _uart_cb
 
 static uart_cb uartcb;
 static uart_cb uartcb_bt;
+
 /** UART start pattern*/
 typedef struct _uart_header
 {
@@ -248,69 +233,23 @@ typedef struct _cmd_header
     int reserved;
 } cmd_header;
 
-typedef MLAN_PACK_START struct _SDIOPkt
+/** IMUPkt/SDIOPkt only name difference, same definition */
+typedef struct _SDIOPkt
 {
-    t_u16 size;
-    t_u16 pkttype;
+    uint16_t size;
+    uint16_t pkttype;
     HostCmd_DS_COMMAND hostcmd;
-} MLAN_PACK_END SDIOPkt;
-
-typedef struct __attribute__((__packed__)) zigbee_cmd_header
-{
-    /** Command Type */
-    unsigned char type;
-    /** Command Length */
-    unsigned char length;
-    /** Control data */
-    unsigned int controldata;
-    /** Command Data */
-    unsigned char data[SPI_DATA_LENGTH];
-} zigbee_cmd_header;
-
-typedef struct __attribute__((__packed__)) _zigbee_cmd_rsp_header
-{
-    /** Command Type */
-    unsigned char type;
-    /** Command Length */
-    unsigned char length;
-    /** Eno of message */
-    unsigned char endofmessage;
-    /** Command Data */
-    unsigned char data[SPI_MSG_BUF_SIZE];
-} zigbee_cmd_rsp_header;
-
-typedef struct __attribute__((__packed__)) spi_frame_hdr
-{
-    unsigned char bit0 : 1; // must be 0
-    unsigned char bit1 : 1; // must be 1
-    unsigned char reserve : 3;
-    unsigned char ccf : 1;
-    unsigned char crc : 1;
-    unsigned char rst : 1;
-    unsigned short recv_len;
-    unsigned short data_len;
-} spi_frame_hdr;
-
-typedef struct __attribute__((__packed__)) Wrapper_Spinel_CMD_Hdr
-{
-    unsigned char FLG : 2;
-    unsigned char IID : 2;
-    unsigned char TID : 4;
-    unsigned short SPINEL_CMD_NUM;
-    unsigned char MFG_CMD_Payload_Length;
-} Wrapper_Spinel_CMD_Hdr;
+} SDIOPkt;
 
 static uint8_t *rx_buf;
 static cmd_header last_cmd_hdr;
-t_u8 *local_outbuf;
+uint8_t *local_outbuf;
 static SDIOPkt *sdiopkt;
 
+#if defined(MIMXRT1176_cm7_SERIES)
 lpspi_master_config_t spiConfig;
 lpspi_transfer_t handle_spi;
-int spi_buf_len = 0;
-uint8_t spi_message_buf[SPI_MSG_BUF_SIZE];
-uint8_t zigbee_rsp_buf[SPI_MSG_BUF_SIZE];
-int spi_buf_st = SPI_BUF_ST_READY;
+#endif
 
 /*******************************************************************************
  * Code
@@ -324,8 +263,6 @@ const int TASK_MAIN_STACK_SIZE = 5 * 2048;
 
 portSTACK_TYPE *task_main_stack = NULL;
 TaskHandle_t task_main_task_handler;
-
-#define SDK_VERSION "NXPSDK_v1.3.r13.p1"
 
 static void uart_init_crc32(uart_cb *uartcb)
 {
@@ -350,200 +287,6 @@ static uint32_t uart_get_crc32(uart_cb *uart, int len, unsigned char *buf)
     return ~crc;
 }
 
-int set_spi_frame_hdr(spi_frame_hdr *pspihdr,
-                      unsigned char rst_flag,
-                      unsigned char crc_flag,
-                      unsigned char ccf_flag,
-                      unsigned short recv_len,
-                      unsigned short data_len)
-{
-    if (!pspihdr)
-        return -1;
-    memset(pspihdr, 0, sizeof(spi_frame_hdr));
-    pspihdr->rst      = rst_flag;
-    pspihdr->crc      = crc_flag;
-    pspihdr->ccf      = ccf_flag;
-    pspihdr->bit1     = 1;
-    pspihdr->bit0     = 0;
-    pspihdr->recv_len = recv_len;
-    pspihdr->data_len = data_len;
-
-    return 0;
-}
-
-void spi_rx_collection()
-{
-    uint8_t tr_txbuf[SPI_TR_DEFAULT_SIZE];
-    uint8_t tr_rxbuf[SPI_TR_DEFAULT_SIZE];
-
-    uint8_t tr_rxtemp[SPI_TR_DEFAULT_SIZE];
-
-    int rd_len = SPI_TR_DEFAULT_SIZE + 16 + SPI_HEADER_LENGTH;
-    int i;
-
-    spi_frame_hdr *pspihdr;
-
-    spi_buf_st = SPI_BUF_ST_INUSE;
-
-    memset(tr_txbuf, 0, SPI_TR_DEFAULT_SIZE);
-    memset(tr_rxbuf, 0, SPI_TR_DEFAULT_SIZE);
-
-    pspihdr = (spi_frame_hdr *)tr_txbuf;
-
-    set_spi_frame_hdr(pspihdr, 0, 0, 0, (unsigned short)SPI_TR_DEFAULT_SIZE, 0);
-
-    handle_spi.txData   = tr_txbuf;
-    handle_spi.rxData   = tr_rxbuf;
-    handle_spi.dataSize = rd_len;
-
-    handle_spi.configFlags = LPSPI_MASTER_PCS_FOR_TRANSFER | kLPSPI_MasterPcsContinuous | kLPSPI_MasterByteSwap;
-
-    LPSPI_MasterTransferBlocking(LPSPI_MASTER_BASEADDR, &handle_spi);
-
-    for (i = 0; i < SPI_DATA_LENGTH; i++)
-    {
-        if (tr_rxbuf[i] != 0xFF)
-            break;
-    }
-
-    memset(tr_rxtemp, 0, SPI_TR_DEFAULT_SIZE);
-    memcpy(tr_rxtemp, &tr_rxbuf[i], (SPI_TR_DEFAULT_SIZE - i));
-    memcpy(tr_rxbuf, tr_rxtemp, SPI_TR_DEFAULT_SIZE);
-
-    pspihdr = (spi_frame_hdr *)tr_rxbuf;
-
-    if (pspihdr->data_len > (SPI_TR_DEFAULT_SIZE - SPI_HEADER_LENGTH))
-    {
-        return;
-    }
-
-    spi_buf_len = 0;
-
-    if (pspihdr->data_len > 0)
-    {
-        if ((pspihdr->data_len + spi_buf_len) <= SPI_MSG_BUF_SIZE)
-        {
-            memcpy(&spi_message_buf[spi_buf_len], &tr_rxbuf[sizeof(spi_frame_hdr)], pspihdr->data_len);
-            spi_buf_len += pspihdr->data_len;
-        }
-    }
-
-    spi_buf_st = SPI_BUF_ST_READ;
-}
-
-int read_message_from_spi_buf(char *outBuf, int bufSize)
-{
-    int byte_read = 0;
-
-    // get data from spi_buf
-    if (bufSize >= spi_buf_len)
-    {
-        memcpy(outBuf, spi_message_buf, spi_buf_len);
-        byte_read = spi_buf_len;
-
-        // flush spi_buf
-        memset(spi_message_buf, 0, SPI_MSG_BUF_SIZE);
-        spi_buf_len = 0;
-    }
-    else
-    {
-        memcpy(outBuf, spi_message_buf, bufSize);
-        byte_read   = bufSize;
-        spi_buf_len = spi_buf_len - bufSize;
-        memcpy(spi_message_buf, &spi_message_buf[bufSize], spi_buf_len);
-    }
-
-    return byte_read;
-}
-
-int read_zigbee(unsigned char *buf, int buflen)
-{
-    char rcv_buf[2 * 1024] = "";
-    int readlen            = 0;
-
-    readlen = read_message_from_spi_buf(rcv_buf, 2 * 1024);
-
-    if (readlen < buflen)
-        memcpy(buf, rcv_buf, readlen);
-    else
-        memcpy(buf, rcv_buf, buflen);
-
-    return readlen;
-}
-
-char *check_TxRspMesg(char *inpBuf, int inpLen)
-{
-    char *chkPtr = NULL;
-    Wrapper_Spinel_CMD_Hdr *hdrPtr;
-
-    if (!inpBuf)
-        return inpBuf;
-
-    // Check comand response from Spinel layer
-    hdrPtr = (Wrapper_Spinel_CMD_Hdr *)inpBuf;
-
-    // check FLG, SPINEL_CMD_NUM, length;
-    if ((hdrPtr->FLG == WRAPPER_SPINEL_MFG_CMD_FLG) && (hdrPtr->SPINEL_CMD_NUM == WRAPPER_SPINEL_MFG_CMD_NUM))
-    {
-        if (hdrPtr->MFG_CMD_Payload_Length == (inpLen - sizeof(Wrapper_Spinel_CMD_Hdr)))
-        {
-            return inpBuf;
-        }
-    }
-    return chkPtr;
-}
-
-void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
-{
-    uint32_t bridge_chksum = 0;
-    uint32_t msglen;
-    int index;
-    uart_header *uart_hdr;
-    uart_cb *uart = &uartcb;
-
-    memset(rx_buf, 0, BUF_LEN);
-    memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), rxData, payloadlen);
-
-    /* Added to send correct cmd header len */
-    cmd_header *cmd_hdr;
-    cmd_hdr         = &last_cmd_hdr;
-    cmd_hdr->length = payloadlen + sizeof(cmd_header);
-
-    memcpy(rx_buf + sizeof(uart_header), (uint8_t *)&last_cmd_hdr, sizeof(cmd_header));
-
-    uart_hdr          = (uart_header *)rx_buf;
-    uart_hdr->length  = payloadlen + sizeof(cmd_header);
-    uart_hdr->pattern = 0x5555;
-
-    /* calculate CRC. The uart_header is excluded */
-    msglen        = payloadlen + sizeof(cmd_header);
-    bridge_chksum = uart_get_crc32(uart, msglen, rx_buf + sizeof(uart_header));
-    index         = sizeof(uart_header) + msglen;
-
-    rx_buf[index]     = bridge_chksum & 0xff;
-    rx_buf[index + 1] = (bridge_chksum & 0xff00) >> 8;
-    rx_buf[index + 2] = (bridge_chksum & 0xff0000) >> 16;
-    rx_buf[index + 3] = (bridge_chksum & 0xff000000) >> 24;
-
-    /* write response to uart */
-    LPUART_RTOS_Send(&handle, rx_buf, payloadlen + sizeof(cmd_header) + sizeof(uart_header) + 4);
-    memset(rx_buf, 0, BUF_LEN);
-}
-
-void SPI_MASTER_Callback(void *param)
-{
-    DisableIRQ(SPI_INT_IRQ);
-    GPIO_DisableInterrupts(SPI_INT_GPIO, 1U << SPI_INT_GPIO_PIN);
-    GPIO_ClearPinsInterruptFlags(SPI_INT_GPIO, 1U << SPI_INT_GPIO_PIN);
-
-    spi_rx_collection();
-
-    EnableIRQ(SPI_INT_IRQ);
-    GPIO_EnableInterrupts(SPI_INT_GPIO, 1U << SPI_INT_GPIO_PIN);
-
-    SDK_ISR_EXIT_BARRIER;
-}
-
 /*
  send_response_to_uart() handles the response from the firmware.
  This involves
@@ -551,7 +294,7 @@ void SPI_MASTER_Callback(void *param)
  2. computation of the crc of the payload
  3. sending it out to the uart
 */
-static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type)
+static int send_response_to_uart(uart_cb *uart, const uint8_t *resp, int type)
 {
     uint32_t bridge_chksum = 0;
     uint32_t msglen;
@@ -600,6 +343,8 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type)
     USART_RTOS_Send(&handle, rx_buf, payloadlen + sizeof(cmd_header) + sizeof(uart_header) + 4);
 #else
     LPUART_RTOS_Send(&handle, rx_buf, payloadlen + sizeof(cmd_header) + sizeof(uart_header) + 4);
+#endif
+
     memset(rx_buf, 0, BUF_LEN);
 
     return 0;
@@ -660,18 +405,42 @@ int check_command_complete(uint8_t *buf)
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
 hal_rpmsg_status_t wifi_send_imu_raw_data(uint8_t *data, uint32_t length)
 {
-    hal_rpmsg_status_t state = kStatus_HAL_RpmsgSuccess;
-
     if (data == NULL || length == 0)
         return kStatus_HAL_RpmsgError;
 
-    state = HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, data, length);
-    assert(kStatus_HAL_RpmsgSuccess == state);
+    if (kStatus_HAL_RpmsgSuccess != (HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, data, length)))
+    {
+        return kStatus_HAL_RpmsgError;
+    }
 
     return kStatus_HAL_RpmsgSuccess;
 }
 
 int rpmsg_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
+{
+    uint32_t payloadlen;
+
+    cmd_header *cmd_hd = (cmd_header *)(buf + sizeof(uart_header));
+
+    payloadlen = m_len - sizeof(uart_header) - sizeof(cmd_header) - 4;
+
+    memset(local_outbuf, 0, BUF_LEN);
+    memcpy(local_outbuf, buf + sizeof(uart_header) + sizeof(cmd_header), payloadlen);
+
+    memcpy(&last_cmd_hdr, cmd_hd, sizeof(cmd_header));
+
+    if (kStatus_HAL_RpmsgSuccess !=
+        (HAL_RpmsgSend((hal_rpmsg_handle_t)rpmsgHandleList[t_type - 2], local_outbuf, payloadlen)))
+    {
+        return kStatus_HAL_RpmsgError;
+    }
+
+    memset(local_outbuf, 0, BUF_LEN);
+
+    return t_type;
+}
+#else
+int bt_raw_packet_send(uint8_t *buf, int m_len)
 {
     uint32_t payloadlen;
 
@@ -691,103 +460,34 @@ int rpmsg_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
     return RET_TYPE_BT;
 }
 
-int write_cmd_spi(uint8_t *inbuf, char *outbuf, int payloadlen)
+#if defined(MIMXRT1176_cm7_SERIES)
+int zigbee_raw_packet_send(uint8_t *buf, int m_len)
 {
-    uint8_t tr_txbuf[SPI_TR_DEFAULT_SIZE];
-    uint8_t tr_rxbuf[SPI_TR_DEFAULT_SIZE];
-    spi_frame_hdr *pspihdr;
+    uint32_t payloadlen;
 
-    memset(tr_txbuf, 0, SPI_TR_DEFAULT_SIZE);
-    memset(tr_rxbuf, 0, SPI_TR_DEFAULT_SIZE);
+    cmd_header *cmd_hd = (cmd_header *)(buf + sizeof(uart_header));
 
-    memset(outbuf, 0, SPI_DATA_LENGTH);
+    payloadlen = m_len - sizeof(uart_header) - sizeof(cmd_header) - 4;
 
-    pspihdr = (spi_frame_hdr *)tr_txbuf;
+    memset(local_outbuf, 0, BUF_LEN);
+    memcpy(local_outbuf, buf + sizeof(uart_header) + sizeof(cmd_header), payloadlen);
 
-    set_spi_frame_hdr(pspihdr, 0, 0, 0, 0, (unsigned char)payloadlen);
+    memcpy(&last_cmd_hdr, cmd_hd, sizeof(cmd_header));
 
-    memcpy(tr_txbuf + sizeof(spi_frame_hdr), inbuf, payloadlen);
-
-    handle_spi.txData   = tr_txbuf;
-    handle_spi.rxData   = tr_rxbuf;
-    handle_spi.dataSize = SPI_DATA_LENGTH + SPI_HEADER_LENGTH;
+    handle_spi.txData   = local_outbuf;
+    handle_spi.rxData   = NULL;
+    handle_spi.dataSize = payloadlen;
 
     handle_spi.configFlags = LPSPI_MASTER_PCS_FOR_TRANSFER | kLPSPI_MasterPcsContinuous | kLPSPI_MasterByteSwap;
 
     LPSPI_MasterTransferBlocking(LPSPI_MASTER_BASEADDR, &handle_spi);
 
-    pspihdr = (spi_frame_hdr *)tr_rxbuf;
-
-    if (pspihdr->data_len > 0)
-    {
-        /* read from SPI */
-        memcpy(outbuf, tr_rxbuf, SPI_DATA_LENGTH);
-    }
-
-    return 0;
-}
-
-int zigbee_raw_packet_send(uint8_t *buf, int m_len)
-{
-    uint32_t payloadlen;
-    zigbee_cmd_header *cmd_ptr         = (zigbee_cmd_header *)(buf + sizeof(uart_header) + sizeof(cmd_header));
-    zigbee_cmd_rsp_header *cmd_rsp_ptr = (zigbee_cmd_rsp_header *)zigbee_rsp_buf;
-    int readlen                        = 0;
-    long delay                         = 0;
-
-    char *tx_str_per = NULL;
-    char local_buf[10000];
-
-    uint8_t txbuf[SPI_DATA_LENGTH];
-
-    char outbuf[SPI_DATA_LENGTH];
-
-    memcpy(txbuf, cmd_ptr->data, cmd_ptr->length);
-
-    memset(outbuf, 0, 16);
-    write_cmd_spi(txbuf, outbuf, cmd_ptr->length);
-
-    cmd_header *cmd_hd = (cmd_header *)(buf + sizeof(uart_header));
-
-    memcpy(&last_cmd_hdr, cmd_hd, sizeof(cmd_header));
-
-    os_thread_sleep(os_msec_to_ticks(50));
-
-    if (cmd_ptr->type == DELAY_FOR_READ_COMMAND)
-    {
-        delay = cmd_ptr->controldata;
-        while (delay > 0)
-        {
-            readlen    = read_zigbee((unsigned char *)local_buf, 10000);
-            tx_str_per = check_TxRspMesg((char *)local_buf, readlen);
-            if (tx_str_per != NULL)
-            {
-                break;
-            }
-            os_thread_sleep(os_msec_to_ticks(500));
-            delay = delay - 500;
-        }
-    }
-
-    readlen    = read_zigbee(cmd_rsp_ptr->data, UART_BUF_SIZE);
-    payloadlen = readlen + 3;
-
-    if (cmd_ptr->type == DELAY_FOR_READ_COMMAND)
-    {
-        if (tx_str_per != NULL)
-        {
-            memcpy(cmd_rsp_ptr->data, tx_str_per, 7);
-            readlen    = 7;
-            payloadlen = readlen + 3;
-        }
-    }
-
-    memcpy(zigbee_rsp_buf, cmd_rsp_ptr, sizeof(zigbee_cmd_rsp_header));
-
-    send_zigbee_response_to_uart(zigbee_rsp_buf, payloadlen);
+    memset(local_outbuf, 0, BUF_LEN);
 
     return RET_TYPE_ZIGBEE;
 }
+#endif
+#endif
 
 /*
  process_input_cmd() sends command to the wlan
@@ -842,15 +542,16 @@ int process_input_cmd(uint8_t *buf, int m_len)
         wifi_send_imu_raw_data(local_outbuf, (m_len - sizeof(cmd_header) + INTF_HEADER_LEN));
 #else
         wifi_raw_packet_send(local_outbuf, BUF_LEN);
-
+#endif
         ret = RET_TYPE_WLAN;
     }
     else if (cmd_hd->type == TYPE_BT)
     {
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
         ret = rpmsg_raw_packet_send(buf, m_len, RET_TYPE_BT);
-#elif defined(MIMXRT1176_cm7_SERIES)
+#else
         ret = bt_raw_packet_send(buf, m_len);
+#endif
     }
     else if (cmd_hd->type == TYPE_15_4)
     {
@@ -858,6 +559,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
         ret = rpmsg_raw_packet_send(buf, m_len, RET_TYPE_ZIGBEE);
 #elif defined(MIMXRT1176_cm7_SERIES)
         ret = zigbee_raw_packet_send(buf, m_len);
+#endif
     }
 
     return ret;
@@ -902,7 +604,7 @@ void send_rpmsg_response_to_uart(uint8_t *resp, int msg_len)
     USART_RTOS_Send(&handle, rx_buf, payloadlen + sizeof(cmd_header) + sizeof(uart_header) + 4);
     memset(rx_buf, 0, BUF_LEN);
 }
-#elif defined(MIMXRT1176_cm7_SERIES)
+#else
 void send_bt_response_to_uart(uart_cb *uart_bt, int msg_len)
 {
     uint32_t bridge_chksum = 0;
@@ -943,6 +645,7 @@ void send_bt_response_to_uart(uart_cb *uart_bt, int msg_len)
     memset(rx_buf, 0, BUF_LEN);
 }
 
+#if defined(MIMXRT1176_cm7_SERIES)
 void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
 {
     uint32_t bridge_chksum = 0;
@@ -980,6 +683,7 @@ void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
     memset(rx_buf, 0, BUF_LEN);
 }
 #endif
+#endif
 
 /*
  read_wlan_resp() handles the responses from the wlan card.
@@ -1015,7 +719,7 @@ void read_wlan_resp()
 {
     uart_cb *uart = &uartcb;
     uint8_t *packet;
-    t_u32 pkt_type;
+    unsigned int pkt_type;
     int rv = wifi_raw_packet_recv(&packet, &pkt_type);
     if (rv != WM_SUCCESS)
         PRINTF("Receive response failed\r\n");
@@ -1025,7 +729,6 @@ void read_wlan_resp()
             send_response_to_uart(uart, packet, 1);
     }
 }
-#if defined(MIMXRT1176_cm7_SERIES)
 void read_bt_resp()
 {
     uart_cb *uart_bt = &uartcb_bt;
@@ -1069,6 +772,7 @@ void read_bt_resp()
     memset(uart_bt->uart_buf, 0, sizeof(uart_bt->uart_buf));
 }
 
+#if defined(MIMXRT1176_cm7_SERIES)
 void read_zigbee_resp()
 {
     handle_spi.txData   = NULL;
@@ -1106,7 +810,7 @@ static hal_rpmsg_status_t rpmsg_config(uint32_t linkId)
 {
     hal_rpmsg_status_t state = kStatus_HAL_RpmsgSuccess;
 
-    hal_rpmsg_config_t config;
+    hal_rpmsg_config_t config = {0};
     /* Init RPMSG/IMU Channel */
     config.local_addr  = local_ept_list[linkId];
     config.remote_addr = remote_ept_list[linkId];
@@ -1131,17 +835,45 @@ static hal_rpmsg_status_t rpmsg_init()
     hal_rpmsg_status_t state = kStatus_HAL_RpmsgSuccess;
 
     /* Init RPMSG/IMU Channel */
-#if defined (CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)
+#if defined(CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)
     linkId = 0;
-    state = rpmsg_config(linkId);
+    state  = rpmsg_config(linkId);
 #endif
 #if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1)
     linkId = 1;
-    state = rpmsg_config(linkId);
+    state  = rpmsg_config(linkId);
 #endif
 
     return state;
 }
+
+static void wifi_cau_temperature_enable()
+{
+    uint32_t val;
+
+    val = WIFI_REG32(WLAN_CAU_ENABLE_ADDR);
+    val &= ~(0xC);
+    val |= (2 << 2);
+    WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
+}
+
+static void wifi_cau_temperature_write_to_firmware()
+{
+    uint32_t val;
+
+    val = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
+}
+
+static void wifi_cau_temperature_timer_cb(TimerHandle_t timer)
+{
+    /* write CAU temperature to CPU1 when it is not sleeping */
+    if ((WIFI_REG32(WLAN_FW_WAKE_STATUS_ADDR) & 0x0CU) != 0x0CU)
+    {
+        wifi_cau_temperature_write_to_firmware();
+    }
+}
+#endif
 
 /*
  task_main() runs in a loop. It polls the uart ring buffer
@@ -1152,16 +884,13 @@ void task_main(void *param)
 {
     int32_t result = 0;
     (void)result;
+#if defined(MIMXRT1176_cm7_SERIES)
     uint32_t srcClock_Hz;
 #endif
 
-
-#if !defined(RW610_SERIES) && !defined(RW612_SERIES) 
-    result = sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, WLAN_FW_IN_RAM, wlan_fw_bin, wlan_fw_bin_len);
-    /* Initialize WIFI Driver */
-#else
+#if !defined(RW610_SERIES) && !defined(RW612_SERIES)
     result = sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, wlan_fw_bin, wlan_fw_bin_len);
-#endif
+
     if (result != 0)
     {
         switch (result)
@@ -1185,76 +914,76 @@ void task_main(void *param)
                 result = -WIFI_ERROR_FW_NOT_READY;
                 break;
         }
-
         PRINTF("sd_wifi_init failed, result:%d\r\n", result);
     }
 
     assert(WM_SUCCESS == result);
+#endif
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
     NVIC_SetPriority(BOARD_UART_IRQ, 5);
     usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
     usart_config.base   = BOARD_DEBUG_UART;
-    hal_gpio_pin_config_t sw_config = {
-        kHAL_GpioDirectionIn,
-        0,
-        SPI_INT_GPIO_PORT,
-        SPI_INT_GPIO_PIN,
-    };
 
-    HAL_GpioInit(s_SpiMasterGpioHandle, &sw_config);
-    HAL_GpioSetTriggerMode(s_SpiMasterGpioHandle, SPI_INT_TYPE);
-    HAL_GpioInstallCallback(s_SpiMasterGpioHandle, SPI_MASTER_Callback, NULL);
-
-    GPIO_ClearPinsInterruptFlags(SPI_INT_GPIO, 1U << SPI_INT_GPIO_PIN);
-    GPIO_EnableInterrupts(SPI_INT_GPIO, 1U << SPI_INT_GPIO_PIN);
-    EnableIRQ(SPI_INT_IRQ);
-
+    if (kStatus_Success != USART_RTOS_Init(&handle, &t_handle, &usart_config))
+    {
+        vTaskSuspend(NULL);
+    }
+#else
     NVIC_SetPriority(LPUART1_IRQn, 5);
+#if defined(MIMXRT1176_cm7_SERIES)
     NVIC_SetPriority(LPUART7_IRQn, HAL_UART_ISR_PRIORITY);
+#else
+    NVIC_SetPriority(LPUART3_IRQn, HAL_UART_ISR_PRIORITY);
+#endif
 
     lpuart_config.srcclk = DEMO_LPUART_CLK_FREQ;
     lpuart_config.base   = DEMO_LPUART;
-
-    lpuart_config_bt.srcclk = BOARD_BT_UART_CLK_FREQ;
-    lpuart_config_bt.base   = LPUART7;
 
     if (kStatus_Success != LPUART_RTOS_Init(&handle, &t_handle, &lpuart_config))
     {
         vTaskSuspend(NULL);
     }
 
+    lpuart_config_bt.srcclk = BOARD_BT_UART_CLK_FREQ;
+#if defined(MIMXRT1176_cm7_SERIES)
+    lpuart_config_bt.base   = LPUART7;
+#else
+    lpuart_config_bt.base = LPUART3;
+#endif
+
     if (kStatus_Success != LPUART_RTOS_Init(&handle_bt, &t_handle_bt, &lpuart_config_bt))
     {
         vTaskSuspend(NULL);
     }
+#endif
 
-    local_outbuf = os_mem_alloc(SDIO_OUTBUF_LEN);
+    local_outbuf = pvPortMalloc(SDIO_OUTBUF_LEN);
 
     if (local_outbuf == NULL)
     {
         PRINTF("Failed to allocate buffer\r\n");
         return;
     }
-    rx_buf = os_mem_alloc(BUF_LEN);
+    rx_buf = pvPortMalloc(BUF_LEN);
 
+#if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);
     spiConfig.baudRate = TRANSFER_BAUDRATE;
     spiConfig.whichPcs = LPSPI_MASTER_PCS_FOR_INIT;
 
     srcClock_Hz = LPSPI_MASTER_CLK_FREQ;
     LPSPI_MasterInit(LPSPI_MASTER_BASEADDR, &spiConfig, srcClock_Hz);
-
-    /* Flushing the SPI RX buffer */
-    spi_rx_collection();
+#endif
 
     uart_cb *uart = &uartcb;
     uart_init_crc32(uart);
-    
+
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
     /* Download firmware */
 #if (CONFIG_SUPPORT_WIFI == 0) && (CONFIG_SUPPORT_15D4 == 0) && (CONFIG_SUPPORT_BLE == 0)
-#error "One of CONFIG_SUPPORT_WIFI CONFIG_SUPPORT_15D4 and CONFIG_SUPPORT_BLE should be defined, or it will not download any formware!!"
+#error \
+    "One of CONFIG_SUPPORT_WIFI CONFIG_SUPPORT_15D4 and CONFIG_SUPPORT_BLE should be defined, or it will not download any formware!!"
 #endif
 #if defined(CONFIG_SUPPORT_WIFI) && (CONFIG_SUPPORT_WIFI == 1)
     sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, 0);
@@ -1264,7 +993,8 @@ void task_main(void *param)
     sb3_fw_download(LOAD_15D4_FIRMWARE, 1, 0);
 #endif
     /* only ble, no 15d4 */
-#if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 0) && defined (CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)
+#if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 0) && defined(CONFIG_SUPPORT_BLE) && \
+    (CONFIG_SUPPORT_BLE == 1)
     sb3_fw_download(LOAD_BLE_FIRMWARE, 1, 0);
 #endif
 
@@ -1273,6 +1003,27 @@ void task_main(void *param)
 
     /* Initialize rpmsg */
     rpmsg_init();
+
+    /* Initialize CAU temperature timer */
+    wifi_cau_temperature_enable();
+    g_wifi_cau_temperature_timer =
+        xTimerCreate("CAU Timer", 5000 / portTICK_PERIOD_MS, pdTRUE, NULL, wifi_cau_temperature_timer_cb);
+    if (g_wifi_cau_temperature_timer == NULL)
+    {
+        PRINTF("Failed to create CAU temperature timer\r\n");
+        while (1)
+        {
+        }
+    }
+
+    result = xTimerStart(g_wifi_cau_temperature_timer, 5000 / portTICK_PERIOD_MS);
+    if (result != pdPASS)
+    {
+        PRINTF("Failed to start CAU temperature timer\r\n");
+        while (1)
+        {
+        }
+    }
 #endif
     size_t uart_rx_len = 0;
     int len            = 0;
@@ -1289,6 +1040,7 @@ void task_main(void *param)
             USART_RTOS_Receive(&handle, uart->uart_buf + len, LABTOOL_PATTERN_HDR_LEN, &uart_rx_len);
 #else
             LPUART_RTOS_Receive(&handle, uart->uart_buf + len, LABTOOL_PATTERN_HDR_LEN, &uart_rx_len);
+#endif
             len += uart_rx_len;
         }
 
@@ -1306,6 +1058,7 @@ void task_main(void *param)
 #else
             LPUART_RTOS_Receive(&handle, uart->uart_buf + LABTOOL_PATTERN_HDR_LEN + len, msg_len + CHECKSUM_LEN - len,
                                 &uart_rx_len);
+#endif
             len += uart_rx_len;
         }
 
@@ -1322,13 +1075,20 @@ void task_main(void *param)
 #else
             if (ret == RET_TYPE_WLAN)
             {
-#ifdef SD8978
                 vTaskDelay(pdMS_TO_TICKS(60));
-#endif
                 read_wlan_resp();
             }
             else if (ret == RET_TYPE_BT)
+            {
                 read_bt_resp();
+            }
+#if defined(MIMXRT1176_cm7_SERIES)
+            else if (ret == RET_TYPE_ZIGBEE)
+            {
+                read_zigbee_resp();
+            }
+#endif
+#endif
         }
         else
         {
@@ -1340,14 +1100,22 @@ void task_main(void *param)
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-
 int main(void)
 {
     BaseType_t result = 0;
     (void)result;
-    BOARD_InitHardware();
+
+#if defined(MIMXRT1176_cm7_SERIES)
+    BOARD_ConfigMPU();
+    BOARD_InitPins();
+    BOARD_InitBootClocks();
     BOARD_InitBTUARTPins();
+    BOARD_InitDebugConsole();
     BOARD_InitSpiPins();
+#else
+    extern void BOARD_InitHardware(void);
+    BOARD_InitHardware();
+#endif
 
     result =
         xTaskCreate(task_main, "main", TASK_MAIN_STACK_SIZE, task_main_stack, TASK_MAIN_PRIO, &task_main_task_handler);

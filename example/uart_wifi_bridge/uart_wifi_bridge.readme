@@ -24,7 +24,6 @@ Jumper settings for AzureWave AW-NM191NF-uSD Module:
   - J11 1-2: VIO_SD 1.8V (Voltage level of SDIO pins is 1.8V)
   - J2  1-2: 3.3V VIO_uSD (Power Supply from uSD connector)
 
-
 Prepare the Demo
 ================
 1.  Connect a micro USB cable between the PC host and the CMSIS DAP USB port on the board
@@ -34,7 +33,7 @@ Prepare the Demo
     - No parity
     - One stop bit
     - No flow control
-3.  Connect the Wi-Fi module.
+3.  Connect the WiFi module to SD card slot.
 4.  Download the program to the target board.
 5.  Either press the reset button on your board or launch the debugger in your IDE to begin running the demo.
 

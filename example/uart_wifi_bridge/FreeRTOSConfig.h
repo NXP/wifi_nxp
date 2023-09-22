@@ -45,7 +45,7 @@
 #define configTICK_RATE_HZ                      ((TickType_t)1000)
 #define configMAX_PRIORITIES                    5
 #define configMINIMAL_STACK_SIZE                ((unsigned short)128)
-#define configMAX_TASK_NAME_LEN                 10
+#define configMAX_TASK_NAME_LEN                 20
 #define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1
 #define configUSE_TASK_NOTIFICATIONS            1
@@ -108,6 +108,7 @@
 #define INCLUDE_uxTaskPriorityGet           1
 #define INCLUDE_vTaskDelete                 1
 #define INCLUDE_vTaskSuspend                1
+#define INCLUDE_xResumeFromISR              1
 #define INCLUDE_vTaskDelayUntil             1
 #define INCLUDE_vTaskDelay                  1
 #define INCLUDE_xTaskGetSchedulerState      1
@@ -115,6 +116,7 @@
 #define INCLUDE_uxTaskGetStackHighWaterMark 0
 #define INCLUDE_xTaskGetIdleTaskHandle      0
 #define INCLUDE_eTaskGetState               0
+#define INCLUDE_xEventGroupSetBitFromISR    1
 #define INCLUDE_xTimerPendFunctionCall      1
 #define INCLUDE_xTaskAbortDelay             0
 #define INCLUDE_xTaskGetHandle              0
