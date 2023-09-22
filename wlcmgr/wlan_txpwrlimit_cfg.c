@@ -61,100 +61,22 @@ rg_power_cfg rg_power_cfg_rw610[] = {
      .power_info[PKG_TYPE_BGA] = {(t_u8 *)rg_rw610_JP, sizeof(rg_rw610_JP)}},
 };
 
-static uint32_t soc_otp_read_line(uint32_t addr_line, uint64_t *value)
-{
-    uint32_t dly                   = (0x2AU * 1000);
-    SOC_OTP_CTRL->OTP_ADDR         = addr_line;
-    SOC_OTP_CTRL->OTP_BYPASS_MODE1 = 0;
-    SOC_OTP_CTRL->OTP_CMD_START    = 0;
-    SOC_OTP_CTRL->OTP_CMD_START |= SOC_OTP_CTRL_OTP_CMD_START_OTP_CMD_START_MASK;
-    while (dly && ((SOC_OTP_CTRL->OTP_CTRL0 & SOC_OTP_CTRL_OTP_CTRL0_CTRL_CMD_DONE_MASK) == 0U))
-    {
-        dly--; /* If something horrible happens, bail out after a delay */
-    }
-
-    if (dly && ((SOC_OTP_CTRL->OTP_WDATA4 & SOC_OTP_CTRL_OTP_WDATA4_DATA_LINE_VALID_BIT_MASK) != 0U))
-    {
-        *value = ((uint64_t)SOC_OTP_CTRL->OTP_WDATA3 << 48) | ((uint64_t)SOC_OTP_CTRL->OTP_WDATA2 << 32) |
-                 ((uint64_t)SOC_OTP_CTRL->OTP_WDATA1 << 16) | ((uint64_t)SOC_OTP_CTRL->OTP_WDATA0);
-        return 1;
-    }
-
-    return 0;
-}
-
-int OCOTP_Read_pkgtype(uint8_t *board_type)
-{
-    int status    = kStatus_Fail;
-    uint64_t data = 0ULL;
-    uint32_t i;
-
-    /* Read SOC_OTP values */
-    for (i = 0U; i < MAX_SOC_OTP_LINE; i++)
-    {
-        if (soc_otp_read_line(i, &data) == 0U)
-            continue;
-
-        if ((data & 0xFFFF) == OTP_PKG_TAG)
-        {
-            status      = kStatus_Success;
-            *board_type = (data >> 16) & 0xFF;
-            break;
-        }
-    }
-
-    return status;
-}
-
 int wlan_set_rg_power_cfg(t_u16 region_code)
 {
     int i              = 0;
-    uint8_t board_type = 0;
+    uint8_t board_type = PKG_TYPE_BGA;
     int rv             = WM_SUCCESS;
-    OCOTP_OtpInit();
 
     for (i = 0; i < sizeof(rg_power_cfg_rw610) / sizeof(rg_power_cfg); i++)
     {
         if (region_code == rg_power_cfg_rw610[i].region_code)
         {
-            if (kStatus_Success == OCOTP_Read_pkgtype(&board_type))
-            {
-                /*Get board type correctly*/
-                if (PKG_TYPE_QFN == board_type)
-                {
-                    (void)PRINTF("PKG_TYPE: QFN\r\n");
-                    (void)PRINTF("Set QFN tx power table data \r\n");
-                }
-                else if (PKG_TYPE_BGA == board_type)
-                {
-                    (void)PRINTF("PKG_TYPE: BGA\r\n");
-                    (void)PRINTF("Set BGA tx power table data \r\n");
-                }
-                else if (PKG_TYPE_CSP == board_type)
-                {
-                    (void)PRINTF("PKG_TYPE: CSP\r\n");
-                    (void)PRINTF("Set BGA tx power table data \r\n");
-                    (void)PRINTF("We didn't get data of CSP baord, so use bga data temporary \r\n");
-                }
-            }
-            else
-            {
-                board_type = PKG_TYPE_BGA;
-                (void)PRINTF("PKG_TYPE: UNKNOWN\r\n");
-                (void)PRINTF("Set BGA tx power table data \r\n");
-                (void)PRINTF("Can't get board type, we use bga data default \r\n");
-            }
-
             rv = wlan_set_region_power_cfg(rg_power_cfg_rw610[i].power_info[board_type].rg_power_table,
                                            rg_power_cfg_rw610[i].power_info[board_type].rg_len);
-
-            OCOTP_OtpDeinit();
 
             return rv;
         }
     }
-
-    OCOTP_OtpDeinit();
 
     return -WM_FAIL;
 }
