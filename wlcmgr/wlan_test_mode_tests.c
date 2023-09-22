@@ -677,7 +677,7 @@ static void dump_wlan_set_tx_power_usage(void)
     (void)PRINTF("\r\n");
 }
 
-#if !defined(SD8978) && !defined(SD8987)
+#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177)
 /*
  *  @brief PowerLevelToDUT11Bits
  *
@@ -706,10 +706,10 @@ static void PowerLevelToDUT11Bits(int Pwr, uint32_t *PowerLevel)
 static void wlan_rf_tx_power_set(int argc, char *argv[])
 {
     int ret;
-    uint8_t power;
+    uint32_t power;
     uint8_t mod;
     uint8_t path_id;
-#if !defined(SD8978) && !defined(SD8987)
+#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177)
     uint32_t power_converted = 0xffffffff;
 #endif
 
@@ -751,7 +751,7 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
         return;
     }
 
-#if !defined(SD8978) && !defined(SD8987)
+#if !defined(SD8978) && !defined(SD8987) && !defined(SD9177)
     /* We need to convert user power vals including -ve vals as per labtool */
     PowerLevelToDUT11Bits((int)power, &power_converted);
     ret = wlan_set_rf_tx_power(power_converted, mod, path_id);
