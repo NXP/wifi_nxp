@@ -245,14 +245,12 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band, t_u8 
 #ifdef RW610
     he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
 #endif
-#if 0
-    if (wlan_cmd_11ax_cfg(pmpriv, HostCmd_ACT_GEN_GET, &he_cfg))
-    {
-        PRINTM(MERROR, "Fail to get 11ax cfg!\n");
-        ret = -WM_FAIL;
-        goto done;
-    }
+
+#ifdef CONFIG_11AX_TWT
+    /* uap mode clear TWT request bit */
+    he_cfg.he_cap.he_mac_cap[0] &= ~HE_MAC_CAP_TWT_REQ_SUPPORT;
 #endif
+
     if (action == MLAN_ACT_DISABLE)
     {
         if (he_cfg.he_cap.len && (he_cfg.he_cap.ext_id == HE_CAPABILITY))
@@ -274,7 +272,7 @@ done:
 void wifi_uap_clear_domain_info()
 {
     wifi_get_command_lock();
-    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    HostCmd_DS_COMMAND *cmd                     = wifi_get_command_buffer();
     HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)((t_u8 *)cmd + S_DS_GEN);
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
@@ -282,7 +280,7 @@ void wifi_uap_clear_domain_info()
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11D_DOMAIN_INFO);
     cmd->size    = S_DS_GEN + sizeof(domain_info->action) + sizeof(MrvlIEtypesHeader_t);
 
-    domain_info->action = HostCmd_ACT_GEN_SET;
+    domain_info->action             = HostCmd_ACT_GEN_SET;
     domain_info->domain.header.type = wlan_cpu_to_le16(TLV_TYPE_DOMAIN);
 
     wifi_wait_for_cmdresp(NULL);
@@ -1133,11 +1131,11 @@ static int wifi_sta_deauth(uint8_t *mac_addr, uint16_t reason_code)
 int wifi_uap_stop()
 {
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-    int rv = 0;
+    int rv               = 0;
 
     /* Start BSS */
     rv = wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_BSS_STOP, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
-                                         MLAN_BSS_TYPE_UAP, NULL);
+                                       MLAN_BSS_TYPE_UAP, NULL);
     wifi_uap_clear_domain_info();
 
     return rv;
@@ -4505,7 +4503,7 @@ int wifi_nxp_stop_ap()
     mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
     int ret            = WM_SUCCESS;
 
-    if (priv->media_connected == MFALSE)
+    if ((mlan_adap->in_reset == MTRUE) && (priv->media_connected == MFALSE))
     {
         return ret;
     }

@@ -9,6 +9,7 @@
 #
 
 import os
+import sys
 import argparse
 
 continue_loop = True
@@ -17,7 +18,7 @@ out_file = None
 
 def main():
 
-    parser = argparse.ArgumentParser(description='nfcpy to wpa_supplicant integration for WPS NFC operations')
+    parser = argparse.ArgumentParser(description='EAP FAST PAC convertor')
     parser.add_argument('--pac',
                         help='summary file for writing status updates')
     parser.add_argument('--out',
@@ -44,15 +45,22 @@ def main():
     h.writelines(eap_fast_pac_ver)
     count += 2
 
+    idx = 0
     f=open(pac_file)
     for line in f:
         x = line.find("PAC-Type")
         if x != -1:
+            pt = 0
+            pk = 0
+            po = 0
+            pi = 0
             l = line.rsplit("=")
             h.write(" 0x00, ")
             h2 = "0x{:02x}".format(int(l[1].rstrip(), 16))
             h.write(h2+", \n")
-            count += 2  
+            count += 2
+            pt = 1
+            idx += 1
         x = line.find("PAC-Key")
         if x != -1:
             l = line.rsplit("=")
@@ -62,6 +70,7 @@ def main():
                 h.write(" "+h2+", ")
                 count += 1
             h.write("\n")
+            pk = 1
         x = line.find("PAC-Opaque")
         if x != -1:
             l = line.rsplit("=")
@@ -74,6 +83,7 @@ def main():
                 h.write(" "+h2+", ")
                 count += 1
             h.write("\n")
+            po = 1
         x = line.find("PAC-Info")
         if x != -1:
             l = line.rsplit("=")
@@ -86,6 +96,22 @@ def main():
                 h.write(" "+h2+", ")
                 count += 1
             h.write("\n")
+            pi = 1
+
+        x = line.find("END")
+        if x != -1:
+            if pt == 0:
+                sys.stderr.write('Entry '+str(idx)+': PAC-Type is not provided\n')
+                quit()
+            if pk == 0:
+                sys.stderr.write('Entry '+str(idx)+': PAC-Key is not provided\n')
+                quit()
+            if po == 0:
+                sys.stderr.write('Entry '+str(idx)+': PAC-Opaque is not provided\n')
+                quit()
+            if pi == 0:
+                sys.stderr.write('Entry '+str(idx)+': PAC-Info is not provided\n')
+                quit()
 
     h.write("};\n")
     h.write("\n")
