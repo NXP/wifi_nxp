@@ -217,7 +217,13 @@ typedef enum
 /* Max WPA2 Enterprise password can be upto 256 unicode characters */
 #define PASSWORD_MAX_LENGTH 128U
 /** Max identities for EAP server users */
-#define MAX_USERS 8
+#define MAX_USERS 8U
+/** Encryption key for EAP-FAST PAC-Opaque values. This key must be a secret, random value. It is configured as a
+ * 16-octet value in hex format. */
+#define PAC_OPAQUE_ENCR_KEY_MAX_LENGTH 33U
+/** A-ID indicates the identity of the authority that issues PACs. The A-ID should be unique across all issuing servers.
+ * A-ID to be 16 octets in length */
+#define A_ID_MAX_LENGTH 33U
 /** MAX CA Cert hash len */
 #define HASH_MAX_LENGTH 40U
 /** MAX domain len */
@@ -1261,6 +1267,17 @@ struct wlan_network_security
     char identities[MAX_USERS][IDENTITY_MAX_LENGTH];
     /** User Passwords */
     char passwords[MAX_USERS][PASSWORD_MAX_LENGTH];
+    /** Encryption key for EAP-FAST PAC-Opaque values */
+    char pac_opaque_encr_key[PAC_OPAQUE_ENCR_KEY_MAX_LENGTH];
+    /** EAP-FAST authority identity (A-ID) */
+    char a_id[A_ID_MAX_LENGTH];
+    /** EAP-FAST provisioning modes:
+     * 0 = provisioning disabled
+     * 1 = only anonymous provisioning allowed
+     * 2 = only authenticated provisioning allowed
+     * 3 = both provisioning modes allowed (default)
+     */
+    uint8_t fast_prov;
 #endif
 #elif defined(CONFIG_WPA2_ENTP)
     /** TLS client cert configuration */
@@ -2235,7 +2252,7 @@ void wlan_initialize_uap_network(struct wlan_network *net);
 /** WLAN initialize station network information
  *
  * This API intializes a default station network. The network ssid, passphrase
- * is initialized to NULL. Channel is set to auto. 
+ * is initialized to NULL. Channel is set to auto.
  *
  * \param[out] net Pointer to the initialized micro-AP network
  */

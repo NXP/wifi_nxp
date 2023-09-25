@@ -1255,6 +1255,41 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 
+            if (string_equal(argv[arg + 1], "pac_opa_enc_key") != false)
+            {
+                /* Encryption key for EAP-FAST PAC-Opaque values. */
+                strcpy(network.security.pac_opaque_encr_key, argv[arg + 2]);
+                arg += 2;
+            }
+
+            if (string_equal(argv[arg + 1], "a_id") != false)
+            {
+                /* EAP-FAST authority identity (A-ID) */
+                strcpy(network.security.a_id, argv[arg + 2]);
+                arg += 2;
+            }
+
+            if (string_equal(argv[arg + 1], "fast_prov") != false)
+            {
+                /* EAP-FAST provisioning modes */
+                errno                      = 0;
+                network.security.fast_prov = strtol(argv[arg + 2], NULL, 10);
+                if (errno != 0)
+                {
+                    (void)PRINTF("Error during strtol:fast_prov errno:%d\r\n", errno);
+                    return;
+                }
+                if (arg + 1 >= argc || (network.security.fast_prov != 0U && network.security.fast_prov != 1U &&
+			                network.security.fast_prov != 2U &&  network.security.fast_prov != 3U))
+                {
+                    (void)PRINTF(
+                        "Error: invalid wireless"
+                        " network fast_prov\r\n");
+                    return;
+                }
+                arg += 2;
+            }
+
             if (string_equal(argv[arg + 1], "hash") != false)
             {
                 /* CA Cert hash */
