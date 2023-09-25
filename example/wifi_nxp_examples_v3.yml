@@ -670,6 +670,9 @@ uart_wifi_bridge:
         - source: boards/${board}/wifi_examples/uart_wifi_bridge/pin_mux.h
           package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
           project_path: board
+        - source: middleware/wifi_nxp/example/uart_wifi_bridge/wifi_config.h
+          package_path: project-root-path
+          project_path: source
         - source: boards/${board}/wifi_examples/readme_modules.txt
           package_path: project-root-path
           project_path: doc
