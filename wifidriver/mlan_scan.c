@@ -548,11 +548,6 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                     cfp->max_tx_power);
 #endif
             chan_idx++;
-
-            if (filtered_scan != 0U)
-            {
-                pscan_chan_list[chan_idx].chan_scan_mode.disable_chan_filt = MTRUE;
-            }
         }
     }
 
@@ -5357,7 +5352,6 @@ static t_u8 wlan_bgscan_create_channel_list(IN mlan_private *pmpriv,
             }
 
             tlv_chan_list->chan_scan_param[chan_idx].chan_number                      = (t_u8)cfp->channel;
-            tlv_chan_list->chan_scan_param[chan_idx].chan_scan_mode.disable_chan_filt = MTRUE;
         }
     }
 
