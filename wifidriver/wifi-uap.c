@@ -3350,7 +3350,6 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     t_u8 enable_11ax            = MFALSE;
 #endif
     Band_Config_t bandcfg;
-    t_u8 ap_mfpc = 1, ap_mfpr = 1;
     wifi_scan_chan_list_t scan_chan_list;
 
     ENTER();
@@ -3646,8 +3645,6 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
                 mlan_adap->region_code = mlan_adap->cfp_code_bg;
             wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(sys_config->channel, scan_chan_list);
         }
-
-        (void)wifi_uap_pmf_getset(HostCmd_ACT_GEN_SET, &ap_mfpc, &ap_mfpr);
 
         priv->uap_host_based = MTRUE;
 
