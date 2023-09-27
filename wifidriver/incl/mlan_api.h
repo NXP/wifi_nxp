@@ -600,4 +600,7 @@ int wifi_auto_reconnect_disable(void);
 int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
 #endif
 
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action);
+#endif
 #endif /* __MLAN_API_H__ */

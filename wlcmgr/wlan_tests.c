@@ -9837,6 +9837,80 @@ static void test_wlan_start_httpserver(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+static void dump_wlan_sta_inactivityto_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-sta-inactivityto <n> <m> <l> [k] [j]\r\n");
+    (void)PRINTF("where the parameter are:\r\n");
+    (void)PRINTF("      <n>: timeout unit in microseconds.\r\n");
+    (void)PRINTF("      <m>: Inactivity timeout for unicast data.\r\n");
+    (void)PRINTF("      <l>: Inactivity timeout for multicast data.\r\n");
+    (void)PRINTF("      [k]: Inactivity timeout for new Rx traffic after PS notification to AP.\r\n");
+    (void)PRINTF("      [j]: Inactivity timeout for cmd.\r\n");
+    (void)PRINTF("Fox example:\r\n");
+    (void)PRINTF("    wlan-sta-inactivityto          : Get the timeout value\r\n");
+    (void)PRINTF("    wlan-sta-inactivityto 1000 2 3 : Set timeout unit to 1000 us (1 ms),\r\n");
+    (void)PRINTF("                                     inactivity timeout for unicast data is 2 ms,\r\n");
+    (void)PRINTF("                                     inactivity timeout for multicast data is 3 ms\r\n");
+}
+
+static void test_wlan_sta_inactivityto(int argc, char **argv)
+{
+    int ret      = 0;
+    t_u16 action = 0;
+    wlan_inactivity_to_t inac_to;
+
+    (void)memset(&inac_to, 0, sizeof(wlan_inactivity_to_t));
+
+    /* Check if arguments are valid */
+    if ((argc != 1) && (argc != 4) && (argc != 5) && (argc != 6))
+    {
+        (void)PRINTF("Error: invalid number of arguments.\r\n");
+        dump_wlan_sta_inactivityto_usage();
+        return;
+    }
+
+    /* GET operation */
+    if (argc == 1)
+    {
+        action = ACTION_GET;
+    }
+    else /* SET operation */
+    {
+        action                  = ACTION_SET;
+        inac_to.timeout_unit    = strtol(argv[1], NULL, 0);
+        inac_to.unicast_timeout = strtol(argv[2], NULL, 0);
+        inac_to.mcast_timeout   = strtol(argv[3], NULL, 0);
+        if (argc >= 5)
+            inac_to.ps_entry_timeout = strtol(argv[4], NULL, 0);
+        if (argc == 6)
+            inac_to.ps_cmd_timeout = strtol(argv[5], NULL, 0);
+    }
+
+    ret = wlan_sta_inactivityto(&inac_to, action);
+    if (ret == WM_SUCCESS)
+    {
+        if (action == ACTION_GET)
+        {
+            (void)PRINTF("Timeout unit is %d us\r\n", inac_to.timeout_unit);
+            (void)PRINTF("Inactivity timeout for unicast data is %d ms\r\n", inac_to.unicast_timeout);
+            (void)PRINTF("Inactivity timeout for multicast data is %d ms\r\n", inac_to.mcast_timeout);
+            (void)PRINTF("Inactivity timeout for new Rx traffic is %d ms\r\n", inac_to.ps_entry_timeout);
+            (void)PRINTF("Inactivity timeout for cmd is %d ms\r\n", inac_to.ps_cmd_timeout);
+        }
+        else
+        {
+            (void)PRINTF("Success to set STA inactivity timeout.\r\n");
+        }
+    }
+    else
+    {
+        (void)PRINTF("Failed to set STA inactivity timeout.\r\n");
+    }
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -10145,6 +10219,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_ENABLE_HTTPSERVER
     {"wlan-start-httpserver", NULL, test_wlan_start_httpserver},
+#endif
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+    {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},
 #endif
 };
 

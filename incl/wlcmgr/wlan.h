@@ -2011,6 +2011,10 @@ typedef struct _tx_ampdu_prot_mode_para
 
 typedef wifi_uap_client_disassoc_t wlan_uap_client_disassoc_t;
 
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+typedef wifi_inactivity_to_t wlan_inactivity_to_t;
+#endif
+
 /* WLAN Connection Manager API */
 
 /** Initialize the SDIO driver and create the wifi driver thread.
@@ -6587,5 +6591,15 @@ int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_test_independent_reset();
+#endif
+
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+/**
+ * Get/Set inactivity timeout extend
+ * \param[in] inac_to
+ * \param[in] action
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action);
 #endif
 #endif /* __WLAN_H__ */

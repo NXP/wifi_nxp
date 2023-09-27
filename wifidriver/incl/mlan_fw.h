@@ -5558,8 +5558,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_INACTIVITY_TIMEOUT_EXT
     t_u16 mcast_timeout;
     /** Timeout for additional RX traffic after Null PM1 packet exchange */
     t_u16 ps_entry_timeout;
-    /** Reserved to further expansion */
-    t_u16 reserved;
+    /** Inactivity timeout for cmd */
+    t_u16 ps_cmd_timeout;
 } MLAN_PACK_END HostCmd_DS_INACTIVITY_TIMEOUT_EXT;
 
 /** HostCmd_DS_CMD_TX_AMPDU_PROT_MODE */

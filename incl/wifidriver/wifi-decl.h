@@ -1875,4 +1875,22 @@ typedef PACK_START struct
 } PACK_END wifi_indrst_cfg_t;
 #endif
 
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+/** Type definition of wifi_inactivity_to
+ *  for MLAN_OID_PM_CFG_INACTIVITY_TO
+ */
+typedef PACK_START struct
+{
+    /** Timeout unit in microsecond, 0 means 1000us (1ms) */
+    t_u32 timeout_unit;
+    /** Inactivity timeout for unicast data */
+    t_u32 unicast_timeout;
+    /** Inactivity timeout for multicast data */
+    t_u32 mcast_timeout;
+    /** Timeout for additional Rx traffic after Null PM1 packet exchange */
+    t_u32 ps_entry_timeout;
+    /** Inactivity timeout for cmd */
+    t_u32 ps_cmd_timeout;
+} PACK_END wifi_inactivity_to_t;
+#endif
 #endif /* __WIFI_DECL_H__ */

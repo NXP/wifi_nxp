@@ -5824,3 +5824,35 @@ int wifi_imd3_cfg(t_u8 imd3_value)
     return wm_wifi.cmd_resp_status;
 }
 #endif
+
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    HostCmd_DS_INACTIVITY_TIMEOUT_EXT *inac_to_ext = (HostCmd_DS_INACTIVITY_TIMEOUT_EXT *)&cmd->params.inactivity_to;
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_INACTIVITY_TIMEOUT_EXT);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_INACTIVITY_TIMEOUT_EXT) + S_DS_GEN);
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x00;
+
+    inac_to_ext->action = wlan_cpu_to_le16(cmd_action);
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        inac_to_ext->timeout_unit     = wlan_cpu_to_le16((t_u16)inac_to->timeout_unit);
+        inac_to_ext->unicast_timeout  = wlan_cpu_to_le16((t_u16)inac_to->unicast_timeout);
+        inac_to_ext->mcast_timeout    = wlan_cpu_to_le16((t_u16)inac_to->mcast_timeout);
+        inac_to_ext->ps_entry_timeout = wlan_cpu_to_le16((t_u16)inac_to->ps_entry_timeout);
+        inac_to_ext->ps_cmd_timeout   = wlan_cpu_to_le16((t_u16)inac_to->ps_cmd_timeout);
+        wifi_wait_for_cmdresp(NULL);
+    }
+    else
+    {
+        wifi_wait_for_cmdresp(inac_to);
+    }
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif

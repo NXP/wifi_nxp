@@ -14092,3 +14092,10 @@ int wlan_test_independent_reset()
     return wifi_test_independent_reset();
 }
 #endif
+
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
+{
+    return wifi_sta_inactivityto(inac_to, action);
+}
+#endif

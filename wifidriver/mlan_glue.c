@@ -4281,6 +4281,29 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             }
             break;
 #endif
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+            case HostCmd_CMD_INACTIVITY_TIMEOUT_EXT:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    const HostCmd_DS_INACTIVITY_TIMEOUT_EXT *data = &resp->params.inactivity_to;
+                    if (data->action == HostCmd_ACT_GEN_GET)
+                    {
+                        if (wm_wifi.cmd_resp_priv != NULL)
+                        {
+                            wifi_inactivity_to_t *inac_to = (wifi_inactivity_to_t *)wm_wifi.cmd_resp_priv;
+                            inac_to->timeout_unit         = data->timeout_unit;
+                            inac_to->unicast_timeout      = data->unicast_timeout;
+                            inac_to->mcast_timeout        = data->mcast_timeout;
+                            inac_to->ps_entry_timeout     = data->ps_entry_timeout;
+                            inac_to->ps_cmd_timeout       = data->ps_cmd_timeout;
+                        }
+                    }
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                break;
+#endif
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
