@@ -16,7 +16,7 @@
 #define CONFIG_MAX_AP_ENTRIES 10
 #endif
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(RW610)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(RW610) || defined(SD9177)
 #define CONFIG_5GHz_SUPPORT 1
 #endif
 
@@ -24,9 +24,18 @@
 #define CONFIG_SDIO_MULTI_PORT_RX_AGGR 1
 #endif
 
-#if defined(SD8987) || defined(RW610)
-#define CONFIG_11AC
+#if defined(SD8987) || defined(RW610) || defined(SD9177)
 #undef CONFIG_WMM
+#define CONFIG_11AC
+#endif
+
+#if defined (SD9177)
+#ifdef CONFIG_11AC
+#define CONFIG_11AX
+#endif
+#define CONFIG_WMM
+#define CONFIG_COMPRESS_TX_PWTBL
+#define CONFIG_COMPRESS_RU_TX_PWTBL
 #endif
 
 #if defined(RW610)
@@ -103,8 +112,10 @@
 #undef CONFIG_WIFI_TIMER_DEBUG
 #undef CONFIG_WIFI_SDIO_DEBUG
 #undef CONFIG_WIFI_FW_DEBUG
+#undef CONFIG_WIFI_UAP_DEBUG
 #undef CONFIG_WPS_DEBUG
 #undef CONFIG_DPP_DEBUG
+#undef CONFIG_FW_VDLL_DEBUG
 
 /*
  * Heap debug options

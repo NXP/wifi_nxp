@@ -136,7 +136,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
             PRINTF("WLAN CLIs are initialized\r\n");
             printSeparator();
-#ifdef RW610
+
             ret = wlan_enhanced_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -145,7 +145,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
             PRINTF("ENHANCED WLAN CLIs are initialized\r\n");
             printSeparator();
-#endif
+
             ret = ping_cli_init();
             if (ret != WM_SUCCESS)
             {

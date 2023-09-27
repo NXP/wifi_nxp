@@ -12,18 +12,28 @@
 
 #define CONFIG_MAX_AP_ENTRIES 10
 
-#if defined(SD8978) || defined(SD8987) || defined(RW610)
+#if defined(SD8978) || defined(SD8987) || defined(RW610) || defined(SD9177)
 #define CONFIG_5GHz_SUPPORT 1
 #endif
 
 #define CONFIG_SDIO_MULTI_PORT_RX_AGGR 1
 
-#if defined(SD8987)
+#if defined(SD8987) || defined(SD9177)
 #define CONFIG_11AC
 #undef CONFIG_WMM
 #endif
 
 #define CONFIG_RF_TEST_MODE 1
+#if defined(SD9177)
+#ifdef CONFIG_11AC
+#define CONFIG_11AX
+#endif
+#define CONFIG_EXT_SCAN_SUPPORT 1
+#define CONFIG_OWE              1
+#define CONFIG_COMPRESS_TX_PWTBL
+#define CONFIG_COMPRESS_RU_TX_PWTBL
+#undef CONFIG_UNII4_BAND_SUPPORT
+#endif
 
 /* Logs */
 #define CONFIG_ENABLE_ERROR_LOGS   1

@@ -16,7 +16,7 @@
 #define CONFIG_MAX_AP_ENTRIES 30
 #endif
 
-#if defined(SD8978) || defined(SD8987) || defined(RW610)
+#if defined(SD8978) || defined(SD8987) || defined(RW610) || defined(SD9177)
 #define CONFIG_5GHz_SUPPORT 1
 #endif
 
@@ -24,9 +24,21 @@
 #define CONFIG_SDIO_MULTI_PORT_RX_AGGR 1
 #endif
 
-#if defined(SD8987) || defined(RW610)
-#undef CONFIG_WMM
+#if defined(SD8987) || defined(RW610) || defined(SD9177)
 #define CONFIG_11AC
+#undef CONFIG_WMM
+#endif
+
+#if defined(SD9177)
+#define CONFIG_WMM
+#define CONFIG_SDIO_MULTI_PORT_TX_AGGR 1
+#define CONFIG_COMPRESS_TX_PWTBL
+#define CONFIG_COMPRESS_RU_TX_PWTBL
+#define CONFIG_WIFI_FEATURES    1
+#define ENABLE_OFFLOAD          1
+#ifdef CONFIG_11AC
+#define CONFIG_11AX
+#endif
 #endif
 
 #if defined(RW610)
@@ -92,14 +104,13 @@
 #define CONFIG_IPV6               1
 #define CONFIG_MAX_IPV6_ADDRESSES 3
 
-#if defined(SD8978) || defined(SD8987) || defined(SD8801)
+#if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
 #define CONFIG_WIFI_CAPA 1
 #define CONFIG_ROAMING    1
 #define CONFIG_CLOUD_KEEP_ALIVE 1
-#define CONFIG_WIFI_FEATURES 1
-#define ENABLE_OFFLOAD       1
 #define CONFIG_TURBO_MODE    1
 #define CONFIG_AUTO_RECONNECT 1
+#define CONFIG_OWE 1
 
 #if !defined(SD8801)
 #define CONFIG_EXT_SCAN_SUPPORT 1
@@ -110,8 +121,6 @@
 #undef CONFIG_HOST_SLEEP
 
 #undef CONFIG_FIPS
-
-#define CONFIG_OWE 1
 
 #define CONFIG_11K 1
 #define CONFIG_11V 1
@@ -153,6 +162,7 @@
 #undef CONFIG_WIFI_FW_DEBUG
 #undef CONFIG_WIFI_UAP_DEBUG
 #undef CONFIG_WPS_DEBUG
+#undef CONFIG_FW_VDLL_DEBUG
 
 /*
  * Heap debug options

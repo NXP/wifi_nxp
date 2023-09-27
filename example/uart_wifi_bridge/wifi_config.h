@@ -11,18 +11,18 @@
 
 #define CONFIG_MAX_AP_ENTRIES 10
 
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(IW61x)
+#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(SD9177)
 #define CONFIG_5GHz_SUPPORT 1
 #endif
 
 #define CONFIG_SDIO_MULTI_PORT_RX_AGGR 1
 
-#if defined(SD8987) || defined(IW61x)
+#if defined(SD8987) || defined(SD9177)
 #define CONFIG_11AC
 #undef CONFIG_WMM
 #endif
 
-#if defined(IW61x)
+#if defined(SD9177)
 #define CONFIG_11AX
 #define CONFIG_EXT_SCAN_SUPPORT 1
 #undef CONFIG_WIFI_CAPA
