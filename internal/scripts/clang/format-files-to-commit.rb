@@ -52,7 +52,7 @@ end
 Applicable_formats_clang = [".c", ".h", ".cpp", ".hpp"]
 Applicable_formats_eol   = (Applicable_formats_clang | [".yml"])
 Clang_version = "10.0.0"
-Clang_format = "clang-format"
+Clang_format = "clang-format-10"
 Ignore_list_path = "internal/scripts/clang/.clang-ignore"
 Test = false
 Verbose = false

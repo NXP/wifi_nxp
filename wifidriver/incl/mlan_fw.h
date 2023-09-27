@@ -1317,6 +1317,8 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_VDLL 0x0240
 #endif
 
+#define HostCmd_CMD_BOOT_SLEEP 0x0258
+
 #ifdef SD8801
 #define HostCmd_MMH_ACS_CFG 0x025a
 #endif
@@ -7327,6 +7329,15 @@ typedef MLAN_PACK_START struct _HostCmd_DS_CSI_CFG
 } MLAN_PACK_END HostCmd_DS_CSI_CFG;
 #endif
 
+/** HostCmd_DS_BOOT_SLEEP */
+typedef MLAN_PACK_START struct _HostCmd_DS_BOOT_SLEEP
+{
+    /** Set or Get */
+    t_u16 action;
+    /** 1 on or 0 off */
+    t_u16 enable;
+} MLAN_PACK_END HostCmd_DS_BOOT_SLEEP;
+
 #ifdef CONFIG_TSP
 typedef MLAN_PACK_START struct _HostCmd_DS_TSP_CFG
 {
@@ -7759,6 +7770,9 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_CSI
         HostCmd_DS_CSI_CFG csi_params;
 #endif
+
+        /** boot sleep configure */
+        HostCmd_DS_BOOT_SLEEP boot_sleep;
 
 #ifdef CONFIG_RX_ABORT_CFG
         HostCmd_DS_RX_ABORT_CFG rx_abort_cfg;

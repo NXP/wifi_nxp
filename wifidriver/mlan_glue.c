@@ -2320,8 +2320,8 @@ done:
 
 int wifi_set_scan_ies(void *ie, size_t ie_len)
 {
-    mlan_private *priv       = (mlan_private *)mlan_adap->priv[0];
-    int ret                  = -WM_FAIL;
+    mlan_private *priv = (mlan_private *)mlan_adap->priv[0];
+    int ret            = -WM_FAIL;
 #if defined(CONFIG_WPA_SUPP) && defined(CONFIG_WPA_SUPP_WPS)
     priv->wps.session_enable = MFALSE;
 #endif
@@ -3726,6 +3726,30 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         t_u64 *tsf = (t_u64 *)(wm_wifi.cmd_resp_priv);
 
                         *tsf = tsf_pointer->tsf;
+
+                        wm_wifi.cmd_resp_status = WM_SUCCESS;
+                    }
+                    else
+                    {
+                        wm_wifi.cmd_resp_status = -WM_FAIL;
+                    }
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
+            case HostCmd_CMD_BOOT_SLEEP:
+            {
+                const HostCmd_DS_BOOT_SLEEP *boot_sleep_pointer = (HostCmd_DS_BOOT_SLEEP *)&resp->params.tsf_cfg;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        t_u16 *enable = (t_u16 *)(wm_wifi.cmd_resp_priv);
+
+                        *enable = boot_sleep_pointer->enable;
 
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
                     }

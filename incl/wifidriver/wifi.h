@@ -1975,4 +1975,9 @@ int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_t
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_test_independent_reset();
 #endif
+
+#ifdef CONFIG_WIFI_BOOT_SLEEP
+int wifi_boot_sleep(uint16_t action, uint16_t *enable);
+#endif
+
 #endif /* __WIFI_H__ */

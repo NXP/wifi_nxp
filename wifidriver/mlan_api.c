@@ -246,6 +246,25 @@ int wifi_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifdef CONFIG_WIFI_BOOT_SLEEP
+int wifi_boot_sleep(uint16_t action, uint16_t *enable)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+
+    (void)wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    cmd->command = HostCmd_CMD_BOOT_SLEEP;
+    cmd->seq_num = 0x0;
+    cmd->result  = 0x0;
+
+    (void)wlan_cmd_boot_sleep(pmpriv, cmd, action, enable);
+
+    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? enable : NULL);
+    return wm_wifi.cmd_resp_status;
+}
+#endif
+
 #ifdef CONFIG_AUTO_RECONNECT
 static int wifi_auto_reconnect(uint16_t action, wifi_auto_reconnect_config_t *auto_reconnect_config)
 {

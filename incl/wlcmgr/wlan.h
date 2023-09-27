@@ -5192,7 +5192,29 @@ int wlan_set_crypto_AES_GCMP_decrypt(const t_u8 *Key,
 #endif
 
 #ifdef CONFIG_WIFI_MEM_ACCESS
+/** This function reads/writes adapter memory location value.
+ *
+ *\param[in]        action      0 -- read, 1 -- write
+ *\param[in]        addr        Specifies the memory address that is to be read/write.
+ *\param[in/out]    value       Value if specified, stand for write action, then that value will be written to that
+ *offset in the specified register. Value should be specified in hexadecimal. Otherwise, it stands for read action, the
+ *value is updated with read value.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
 int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value);
+#endif
+
+#ifdef CONFIG_WIFI_BOOT_SLEEP
+/** This function get/set wlan boot sleep enable status.
+ *
+ *\param[in]        action      0 -- get, 1 -- set
+ *\param[in/out]    enable      If action is get then enable value is used to store firmware returned Value otherwise it
+ *is set in firmware.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_boot_sleep(uint16_t action, uint16_t *enable);
 #endif
 
 /**

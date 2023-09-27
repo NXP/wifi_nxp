@@ -4494,3 +4494,52 @@ mlan_status wlan_ret_ind_rst_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp,
     return MLAN_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ *  @brief This function sends boot sleep configure command to firmware.
+ *
+ *  @param pmpriv         A pointer to mlan_private structure
+ *  @param cmd          Hostcmd ID
+ *  @param cmd_action   Command action
+ *  @param pdata_buf    A void pointer to information buffer
+ *  @return             MLAN_STATUS_SUCCESS/ MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_cmd_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf)
+{
+    HostCmd_DS_BOOT_SLEEP *boot_sleep = MNULL;
+    t_u16 enable                      = *(t_u16 *)pdata_buf;
+
+    ENTER();
+
+    cmd->command       = wlan_cpu_to_le16(HostCmd_CMD_BOOT_SLEEP);
+    boot_sleep         = &cmd->params.boot_sleep;
+    boot_sleep->action = wlan_cpu_to_le16(cmd_action);
+    boot_sleep->enable = wlan_cpu_to_le16(enable);
+
+    cmd->size = wlan_cpu_to_le16(S_DS_GEN + sizeof(HostCmd_DS_BOOT_SLEEP));
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function handles the command response of boot sleep cfg
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *
+ *  @return        MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    HostCmd_DS_BOOT_SLEEP *boot_sleep = &resp->params.boot_sleep;
+    mlan_ds_misc_cfg *cfg             = (mlan_ds_misc_cfg *)pioctl_buf->pbuf;
+
+    ENTER();
+
+    cfg->param.boot_sleep = wlan_le16_to_cpu(boot_sleep->enable);
+    PRINTM(MCMND, "boot sleep cfg status %u", cfg->param.boot_sleep);
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}

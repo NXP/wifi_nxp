@@ -11902,6 +11902,19 @@ int wlan_mem_access(uint16_t action, uint32_t addr, uint32_t *value)
 }
 #endif
 
+#ifdef CONFIG_WIFI_BOOT_SLEEP
+int wlan_boot_sleep(uint16_t action, uint16_t *enable)
+{
+
+    if ((*enable != 0) && (*enable != 1))
+    {
+        return -WM_FAIL;
+    }
+
+    return wifi_boot_sleep(action, enable);
+}
+#endif
+
 #ifdef CONFIG_RF_TEST_MODE
 
 int wlan_set_rf_test_mode(void)

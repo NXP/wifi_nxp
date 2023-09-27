@@ -137,9 +137,8 @@ out:
 #else
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES && i < addr->ipv6_count; i++)
         {
-
             if ((addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_TENTATIVE) ||
-                    (addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_PREFERRED))
+                (addr->ipv6[i].addr_state == (unsigned char)NET_ADDR_PREFERRED))
 #endif
             {
                 (void)PRINTF("\t%-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr->ipv6[i]),
@@ -151,7 +150,7 @@ out:
     }
 #endif
     return;
-//#endif
+    //#endif
 }
 
 static const char *print_role(enum wlan_bss_role role)
@@ -238,7 +237,7 @@ static int get_capa(char *arg, uint8_t *wlan_capa)
 
 static void print_network(struct wlan_network *network)
 {
-//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+    //#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     (void)PRINTF("\"%s\"\r\n\tSSID: %s\r\n\tBSSID: ", network->name,
                  network->ssid[0] != '\0' ? network->ssid : "(hidden)");
     print_mac(network->bssid);
@@ -496,7 +495,7 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
 #endif
-//#endif
+    //#endif
 }
 
 /* Parse the 'arg' string as "ip:ipaddr,gwaddr,netmask,[dns1,dns2]" into
@@ -755,7 +754,8 @@ static void dump_wlan_add_usage(void)
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
         "    [wpa3-sb/wpa3-sb-192] "
-        "[eap-tls/eap-tls-sha256/eap-ttls-mschapv2/eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc/eap-sim/eap-aka/eap-aka-prime/eap-fast-mschapv2/"
+        "[eap-tls/eap-tls-sha256/eap-ttls-mschapv2/eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc/eap-sim/eap-aka/"
+        "eap-aka-prime/eap-fast-mschapv2/"
         "eap-fast-gtc]\r\n");
 #ifdef CONFIG_11R
     (void)PRINTF("    [eap-tls-ft/eap-tls-ft-sha384]\r\n");
@@ -768,7 +768,9 @@ static void dump_wlan_add_usage(void)
 #endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-    (void)PRINTF("    If using eap-sim/eap-aka/eap-aka-prime use read_gsm_triplets to add GSM authentication triplets and read_milenage to add Milenage keys and hlr_cli to start hlr_auc_gw\r\n");
+    (void)PRINTF(
+        "    If using eap-sim/eap-aka/eap-aka-prime use read_gsm_triplets to add GSM authentication triplets and "
+        "read_milenage to add Milenage keys and hlr_cli to start hlr_auc_gw\r\n");
 #endif
 #ifdef CONFIG_WIFI_DTIM_PERIOD
     (void)PRINTF("If setting dtim\r\n");
@@ -1280,7 +1282,7 @@ static void test_wlan_add(int argc, char **argv)
                     return;
                 }
                 if (arg + 1 >= argc || (network.security.fast_prov != 0U && network.security.fast_prov != 1U &&
-			                network.security.fast_prov != 2U &&  network.security.fast_prov != 3U))
+                                        network.security.fast_prov != 2U && network.security.fast_prov != 3U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
@@ -1844,7 +1846,7 @@ static int __scan_cb(unsigned int count)
 static void test_wlan_thread_info(int argc, char **argv)
 {
     /* TODO: implement */
-    //os_dump_threadinfo(NULL);
+    // os_dump_threadinfo(NULL);
 }
 
 #ifdef CONFIG_SCHED_SWITCH_TRACE
@@ -2375,7 +2377,7 @@ static void test_wlan_get_uap_channel(int argc, char **argv)
 
 static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
-//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+    //#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     int i;
     wifi_sta_list_t *sl = NULL;
 
@@ -2401,7 +2403,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
     }
 
     os_mem_free(sl);
-//#endif
+    //#endif
 }
 
 static void test_wlan_ieee_ps(int argc, char **argv)
@@ -4541,6 +4543,52 @@ static void test_wlan_mem_access(int argc, char **argv)
     }
     else
         wlcm_e("Read/write Mem failed");
+}
+#endif
+
+#ifdef CONFIG_WIFI_BOOT_SLEEP
+static void dump_wlan_boot_sleep_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("Get boot sleep status:\r\n");
+    (void)PRINTF("    wlan-boot-sleep \r\n");
+    (void)PRINTF("Set boot sleep:\r\n");
+    (void)PRINTF("    wlan-boot-sleep <0/1>\r\n");
+}
+
+static void test_wlan_boot_sleep(int argc, char **argv)
+{
+    int ret;
+    uint16_t action = 0;
+    uint16_t enable = 0;
+    if (argc < 1 || argc > 2)
+    {
+        dump_wlan_boot_sleep_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    else if (argc == 1)
+        action = ACTION_GET;
+    else
+    {
+        action = ACTION_SET;
+        enable = a2hex_or_atoi(argv[1]);
+    }
+
+    ret = wlan_boot_sleep(action, &enable);
+
+    if (ret == WM_SUCCESS)
+    {
+        if (action == ACTION_GET)
+            (void)PRINTF("Boot sleep status: %d\r\n", enable);
+        else
+            (void)PRINTF("Boot sleep status is: %s\r\n", enable == 1 ? "Enabled" : "Disabled");
+    }
+    else
+    {
+        dump_wlan_boot_sleep_usage();
+        wlcm_e("Wlan boot sleep failed");
+    }
 }
 #endif
 
@@ -7870,8 +7918,8 @@ static void test_wlan_set_su(int argc, char **argv)
         debug_cmd_buf[8] = 0;
     }
 
-    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf, sizeof(debug_resp_buf),
-                            &reqd_len);
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf,
+                            sizeof(debug_resp_buf), &reqd_len);
 
     if (ret == WM_SUCCESS)
     {
@@ -7939,8 +7987,8 @@ static void test_wlan_set_forceRTS(int argc, char **argv)
         debug_cmd_buf[8] = 0;
     }
 
-    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
-                            &reqd_len);
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(uint8_t), debug_resp_buf,
+                            HOSTCMD_RESP_BUFF_SIZE, &reqd_len);
 
     if (ret == WM_SUCCESS)
     {
@@ -8019,7 +8067,7 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 #if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
 #else
-    ret             = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
+    ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
 #endif
 
     if (ret != WM_SUCCESS)
@@ -9634,120 +9682,155 @@ static void test_wlan_independent_reset(int argc, char **argv)
 #include <zephyr/net/net_pkt.h>
 
 #define BIND_PORT 8080
-#define CHECK(r) { if (r == -1) { printf("Error: " #r "\n"); exit(1); } }
+#define CHECK(r)                       \
+    {                                  \
+        if (r == -1)                   \
+        {                              \
+            printf("Error: " #r "\n"); \
+            exit(1);                   \
+        }                              \
+    }
 static const char content[] = {
-    #include "response_big.html.bin.inc"
+#include "response_big.html.bin.inc"
 };
 
 static void test_wlan_start_httpserver(int argc, char **argv)
 {
     int serv;
-	struct sockaddr_in bind_addr;
-	static int counter;
-	int ret;
+    struct sockaddr_in bind_addr;
+    static int counter;
+    int ret;
 
     serv = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	CHECK(serv);
+    CHECK(serv);
 
-	bind_addr.sin_family = AF_INET;
-	bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	bind_addr.sin_port = htons(BIND_PORT);
-	CHECK(bind(serv, (struct sockaddr *)&bind_addr, sizeof(bind_addr)));
+    bind_addr.sin_family      = AF_INET;
+    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    bind_addr.sin_port        = htons(BIND_PORT);
+    CHECK(bind(serv, (struct sockaddr *)&bind_addr, sizeof(bind_addr)));
 
-	CHECK(listen(serv, 5));
+    CHECK(listen(serv, 5));
 
-	PRINTF("Single-threaded dumb HTTP server waits for a connection on "
-	       "port %d...\n", BIND_PORT);
+    PRINTF(
+        "Single-threaded dumb HTTP server waits for a connection on "
+        "port %d...\n",
+        BIND_PORT);
 
-    while (1) {
-		struct sockaddr_in client_addr;
-		socklen_t client_addr_len = sizeof(client_addr);
-		char addr_str[32];
-		int req_state = 0;
-		const char *data;
-		size_t len;
+    while (1)
+    {
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        char addr_str[32];
+        int req_state = 0;
+        const char *data;
+        size_t len;
 
-		int client = accept(serv, (struct sockaddr *)&client_addr,
-				    &client_addr_len);
-		if (client < 0) {
-			PRINTF("Error in accept: %d - continuing\n", errno);
-			continue;
-		}
+        int client = accept(serv, (struct sockaddr *)&client_addr, &client_addr_len);
+        if (client < 0)
+        {
+            PRINTF("Error in accept: %d - continuing\n", errno);
+            continue;
+        }
 
-		inet_ntop(client_addr.sin_family, &client_addr.sin_addr,
-			  addr_str, sizeof(addr_str));
-		PRINTF("Connection #%d from %s\n", counter++, addr_str);
+        inet_ntop(client_addr.sin_family, &client_addr.sin_addr, addr_str, sizeof(addr_str));
+        PRINTF("Connection #%d from %s\n", counter++, addr_str);
 
         /* Discard HTTP request (or otherwise client will get
-		 * connection reset error).
-		 */
-		while (1) {
-			ssize_t r;
-			char c;
+         * connection reset error).
+         */
+        while (1)
+        {
+            ssize_t r;
+            char c;
 
-			r = recv(client, &c, 1, 0);
-			if (r == 0) {
-				goto close_client;
-			}
+            r = recv(client, &c, 1, 0);
+            if (r == 0)
+            {
+                goto close_client;
+            }
 
-			if (r < 0) {
-				if (errno == EAGAIN || errno == EINTR) {
-					continue;
-				}
+            if (r < 0)
+            {
+                if (errno == EAGAIN || errno == EINTR)
+                {
+                    continue;
+                }
 
-				PRINTF("Got error %d when receiving from "
-				       "socket\n", errno);
-				goto close_client;
-			}
-			if (req_state == 0 && c == '\r') {
-				req_state++;
-			} else if (req_state == 1 && c == '\n') {
-				req_state++;
-			} else if (req_state == 2 && c == '\r') {
-				req_state++;
-			} else if (req_state == 3 && c == '\n') {
-				break;
-			} else {
-				req_state = 0;
-			}
-		}
+                PRINTF(
+                    "Got error %d when receiving from "
+                    "socket\n",
+                    errno);
+                goto close_client;
+            }
+            if (req_state == 0 && c == '\r')
+            {
+                req_state++;
+            }
+            else if (req_state == 1 && c == '\n')
+            {
+                req_state++;
+            }
+            else if (req_state == 2 && c == '\r')
+            {
+                req_state++;
+            }
+            else if (req_state == 3 && c == '\n')
+            {
+                break;
+            }
+            else
+            {
+                req_state = 0;
+            }
+        }
 
-		data = content;
-		len = sizeof(content);
-		while (len) {
-			int sent_len = send(client, data, len, 0);
+        data = content;
+        len  = sizeof(content);
+        while (len)
+        {
+            int sent_len = send(client, data, len, 0);
 
-			if (sent_len == -1) {
-				PRINTF("Error sending data to peer, errno: %d\n", errno);
-				break;
-			}
-			data += sent_len;
-			len -= sent_len;
-		}
+            if (sent_len == -1)
+            {
+                PRINTF("Error sending data to peer, errno: %d\n", errno);
+                break;
+            }
+            data += sent_len;
+            len -= sent_len;
+        }
 
-close_client:
-		ret = close(client);
-		if (ret == 0) {
-			PRINTF("Connection from %s closed\n", addr_str);
-		} else {
-			PRINTF("Got error %d while closing the "
-			       "socket\n", errno);
-		}
+    close_client:
+        ret = close(client);
+        if (ret == 0)
+        {
+            PRINTF("Connection from %s closed\n", addr_str);
+        }
+        else
+        {
+            PRINTF(
+                "Got error %d while closing the "
+                "socket\n",
+                errno);
+        }
 
         ret = close(serv);
-        if (ret == 0) {
-			PRINTF("Sever socket closed\n");
-		} else {
-			PRINTF("Got error %d while closing the "
-			       "server socket\n", errno);
-		}
+        if (ret == 0)
+        {
+            PRINTF("Sever socket closed\n");
+        }
+        else
+        {
+            PRINTF(
+                "Got error %d while closing the "
+                "server socket\n",
+                errno);
+        }
 
         struct k_mem_slab *rx, *tx;
-		struct net_buf_pool *rx_data, *tx_data;
+        struct net_buf_pool *rx_data, *tx_data;
 
-		net_pkt_get_info(&rx, &tx, &rx_data, &tx_data);
-		printf("rx buf: %d, tx buf: %d\n",
-		       atomic_get(&rx_data->avail_count), atomic_get(&tx_data->avail_count));
+        net_pkt_get_info(&rx, &tx, &rx_data, &tx_data);
+        printf("rx buf: %d, tx buf: %d\n", atomic_get(&rx_data->avail_count), atomic_get(&tx_data->avail_count));
 
         return;
     }
@@ -9872,6 +9955,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_WIFI_MEM_ACCESS
     {"wlan-mem-access", "<memory_address> [<value>]", test_wlan_mem_access},
+#endif
+#ifdef CONFIG_WIFI_BOOT_SLEEP
+    {"wlan-boot-sleep", "<0/1> 0:Disable 1:Enable", test_wlan_boot_sleep},
 #endif
 #ifdef CONFIG_HEAP_STAT
     {"heap-stat", NULL, test_heap_stat},

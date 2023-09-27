@@ -4153,6 +4153,10 @@ typedef struct _mlan_ds_misc_cfg
         /** Driver debug bit masks */
         t_u32 drvdbg;
 #endif
+
+        /** boot sleep enable or disable */
+        t_u16 boot_sleep;
+
         /** Hotspot config param set */
         t_u32 hotspot_cfg;
         mlan_ds_misc_otp_user_data otp_user_data;

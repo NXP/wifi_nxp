@@ -1993,6 +1993,9 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_chan_region_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
+        case HostCmd_CMD_BOOT_SLEEP:
+            ret = wlan_ret_boot_sleep(pmpriv, resp, pioctl_buf);
+            break;
 #ifdef CONFIG_11AX
         case HostCmd_CMD_11AX_CMD:
             ret = wlan_ret_11ax_cmd(pmpriv, resp, pioctl_buf);
