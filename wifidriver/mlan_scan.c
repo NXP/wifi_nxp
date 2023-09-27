@@ -1591,10 +1591,16 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     /* IEEEtypes_ERPInfo_t *perp_info; */
 
     IEEEtypes_VendorSpecific_t *pvendor_ie;
-    const t_u8 wpa_oui[3]  = {0x00, 0x50, 0xf2};
-    const t_u8 wpa_type[1] = {0x01};
-    const t_u8 wmm_oui[3]  = {0x00, 0x50, 0xf2};
-    const t_u8 wmm_type[1] = {0x02};
+    const t_u8 wpa_oui[3]       = {0x00, 0x50, 0xf2};
+    const t_u8 wpa_type[1]      = {0x01};
+    const t_u8 wmm_oui[3]       = {0x00, 0x50, 0xf2};
+    const t_u8 wmm_type[1]      = {0x02};
+    const t_u8 brcm_oui[3]      = {0x00, 0x10, 0x18};
+    const t_u8 brcm_type[1]     = {0x02};
+    const t_u8 epigram_oui[3]   = {0x00, 0x90, 0x4c};
+    const t_u8 epigram_type1[1] = {0x33};
+    const t_u8 epigram_type2[1] = {0x34};
+
 #ifdef CONFIG_OWE
     const t_u8 owe_oui[3]  = {0x50, 0x6f, 0x9a};
     const t_u8 owe_type[1] = {0x01c};
@@ -1960,6 +1966,17 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         (void)__memcpy(pmadapter, (t_u8 *)&pbss_entry->wmm_ie, pcurrent_ptr, total_ie_len);
                         HEXDUMP("InterpretIE: Resp WMM_IE", (t_u8 *)&pbss_entry->wmm_ie, total_ie_len);
                     }
+                }
+                else if ((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, brcm_oui, sizeof(brcm_oui))) == 0 &&
+                         (pvendor_ie->vend_hdr.oui_type == brcm_type[0]))
+                {
+                    pbss_entry->brcm_ie_exist = 1;
+                }
+                else if ((__memcmp(pmadapter, pvendor_ie->vend_hdr.oui, epigram_oui, sizeof(epigram_oui))) == 0 &&
+                         (pvendor_ie->vend_hdr.oui_type == epigram_type1[0] ||
+                          pvendor_ie->vend_hdr.oui_type == epigram_type2[0]))
+                {
+                    pbss_entry->epigram_ie_exist = 1;
                 }
 #ifdef CONFIG_OWE
                 else if (IS_FW_SUPPORT_EMBEDDED_OWE(pmadapter) &&
@@ -5351,7 +5368,7 @@ static t_u8 wlan_bgscan_create_channel_list(IN mlan_private *pmpriv,
                 tlv_chan_list->chan_scan_param[chan_idx].chan_scan_mode.passive_scan = MFALSE;
             }
 
-            tlv_chan_list->chan_scan_param[chan_idx].chan_number                      = (t_u8)cfp->channel;
+            tlv_chan_list->chan_scan_param[chan_idx].chan_number = (t_u8)cfp->channel;
         }
     }
 

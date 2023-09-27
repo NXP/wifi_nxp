@@ -1501,6 +1501,12 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         pht_cap->ht_cap.ht_cap_info = wlan_le16_to_cpu(pht_cap->ht_cap.ht_cap_info);
         pht_cap->ht_cap.ht_ext_cap  = wlan_le16_to_cpu(pht_cap->ht_cap.ht_ext_cap);
         wlan_fill_ht_cap_tlv(pmpriv, pht_cap, pbss_desc->bss_band);
+        if (wlan_use_non_default_ht_vht_cap(pbss_desc))
+        {
+            /* Indicate 3 streams in TxBF cap*/
+            pht_cap->ht_cap.tx_bf_cap = ((pht_cap->ht_cap.tx_bf_cap & (~(0x3 << 23))) | (0x2 << 23));
+            pht_cap->ht_cap.tx_bf_cap = ((pht_cap->ht_cap.tx_bf_cap & (~(0x3 << 27))) | (0x2 << 27));
+        }
 
         HEXDUMP("HT_CAPABILITIES IE", (t_u8 *)pht_cap, sizeof(MrvlIETypes_HTCap_t));
         *ppbuffer += sizeof(MrvlIETypes_HTCap_t);

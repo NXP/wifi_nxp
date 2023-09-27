@@ -2407,6 +2407,9 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_Rsnx_t rsnx_ie_saved;
     /** RSNX IE offset in the beacon buffer */
     t_u16 rsnx_offset;
+
+    bool brcm_ie_exist;
+    bool epigram_ie_exist;
 #if defined(CONFIG_11R) || defined(CONFIG_11K)
     unsigned char md_ie_buff[MLAN_MAX_MDIE_LEN];
     size_t md_ie_buff_len;

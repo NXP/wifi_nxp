@@ -1130,7 +1130,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #ifdef CONFIG_WPA_SUPP_DPP
                     && pmpriv->is_dpp_connect == MFALSE
 #endif
-                    )
+                )
                 {
                     akm_type             = pauth_tlv ? wlan_le16_to_cpu(pauth_tlv->auth_type) : AssocAgentAuth_Auto;
                     t_u16 rsn_ie_tlv_len = prsn_ie_tlv->header.len;
@@ -2621,4 +2621,23 @@ t_u8 wlan_band_to_radio_type(IN t_u8 band)
 
     LEAVE();
     return ret_radio_type;
+}
+
+bool wlan_use_non_default_ht_vht_cap(IN BSSDescriptor_t *pbss_desc)
+{
+    /* If connect to 11ax or non-brcm AP, still use default HT/VHT cap */
+    if (pbss_desc->phe_cap || (!pbss_desc->brcm_ie_exist && !pbss_desc->epigram_ie_exist))
+        return false;
+
+    /* In HT cap, check if "Transmit Null Data Packet" is set to 0,
+     * In VHT cap, check if "Number of Sounding Dimensions" is set to 3,
+     * If both are true, do not use default HT/VHT cap */
+    if ((pbss_desc->pht_cap && (((pbss_desc->ht_cap_saved.ht_cap.tx_bf_cap >> 4) & 0x1) == 0x0)) &&
+        (!pbss_desc->pvht_cap ||
+         (pbss_desc->pvht_cap && (GET_VHTCAP_NUMSNDDM(pbss_desc->vht_cap_saved.vht_cap.vht_cap_info) == 0x2))))
+    {
+        return true;
+    }
+
+    return false;
 }

@@ -229,7 +229,7 @@ bool wmsdk_is_11N_enabled(void);
 void wlan_abort_split_scan(void);
 
 void wlan_scan_process_results(IN mlan_private *pmpriv);
-
+bool wlan_use_non_default_ht_vht_cap(IN BSSDescriptor_t *pbss_desc);
 bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, unsigned element_len);
 
 #ifdef CONFIG_WPA2_ENTP
