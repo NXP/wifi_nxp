@@ -2626,15 +2626,22 @@ t_u8 wlan_band_to_radio_type(IN t_u8 band)
 bool wlan_use_non_default_ht_vht_cap(IN BSSDescriptor_t *pbss_desc)
 {
     /* If connect to 11ax or non-brcm AP, still use default HT/VHT cap */
-    if (pbss_desc->phe_cap || (!pbss_desc->brcm_ie_exist && !pbss_desc->epigram_ie_exist))
+    if (
+#ifdef CONFIG_11AX
+        pbss_desc->phe_cap ||
+#endif
+        (!pbss_desc->brcm_ie_exist && !pbss_desc->epigram_ie_exist))
         return false;
 
     /* In HT cap, check if "Transmit Null Data Packet" is set to 0,
      * In VHT cap, check if "Number of Sounding Dimensions" is set to 3,
      * If both are true, do not use default HT/VHT cap */
-    if ((pbss_desc->pht_cap && (((pbss_desc->ht_cap_saved.ht_cap.tx_bf_cap >> 4) & 0x1) == 0x0)) &&
-        (!pbss_desc->pvht_cap ||
-         (pbss_desc->pvht_cap && (GET_VHTCAP_NUMSNDDM(pbss_desc->vht_cap_saved.vht_cap.vht_cap_info) == 0x2))))
+    if ((pbss_desc->pht_cap && (((pbss_desc->ht_cap_saved.ht_cap.tx_bf_cap >> 4) & 0x1) == 0x0))
+#ifdef CONFIG_11AC
+        && (!pbss_desc->pvht_cap ||
+         (pbss_desc->pvht_cap && (GET_VHTCAP_NUMSNDDM(pbss_desc->vht_cap_saved.vht_cap.vht_cap_info) == 0x2)))
+#endif
+       )
     {
         return true;
     }
