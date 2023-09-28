@@ -470,6 +470,9 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                     /* 11D not available... play it safe on DFS channels */
                     if (wlan_11h_radar_detect_required(pmpriv, (t_u8)cfp->channel))
                     {
+                        /* Skip DFS channels if required */
+                        if(pmadapter->skip_dfs)
+                            continue;
 #if defined(RW610) || defined(SD9177)
                         scan_type = MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 #else
@@ -1311,6 +1314,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
                 {
                     if (wlan_11h_radar_detect_required(pmpriv, channel))
                     {
+                        /* Skip DFS channels if required */
+                        if(pmadapter->skip_dfs)
+                            continue;
 #if defined(RW610) || defined(SD9177)
                         scan_type = MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE;
 #else

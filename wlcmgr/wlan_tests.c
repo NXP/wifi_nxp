@@ -2115,6 +2115,50 @@ static void test_wlan_connect(int argc, char **argv)
     }
 }
 
+static void dump_wlan_connect_opt_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "    wlan-connect-opt <profile_name> skipDFS\r\n");
+    (void)PRINTF("    Need to specify profile_name at least.\r\n");
+    (void)PRINTF("    Other parameters are optional.\r\n");
+    (void)PRINTF("  To skip DFS channels when scanning:\r\n");
+    (void)PRINTF("    wlan-connect-opt <profile_name> skipDFS\r\n");
+}
+
+static void test_wlan_connect_opt(int argc, char **argv)
+{
+    bool skip_dfs = false;
+    int arg    = 2;
+    int ret = 0;
+
+    if(argc < 2)
+    {
+        dump_wlan_connect_opt_usage();
+        return;
+    }
+    else if (argc > 2)
+    {
+            if(string_equal("skipDFS", argv[arg]))
+            {
+                skip_dfs = true;
+                arg++;
+            }
+            else
+            {
+                dump_wlan_connect_opt_usage();
+                (void)PRINTF("Error! Argument %d is invalid\r\n", arg);
+                return;
+            }
+    }
+    ret = wlan_connect_opt(argv[1], skip_dfs);
+    if (ret == WLAN_ERROR_STATE)
+    {
+        (void)PRINTF("Error: connect manager not running\r\n");
+        return;
+    }
+}
+
 static void test_wlan_reassociate(int argc, char **argv)
 {
     (void)PRINTF(
@@ -9947,6 +9991,7 @@ static struct cli_command tests[] = {
     {"wlan-remove", "<profile_name>", test_wlan_remove},
     {"wlan-list", NULL, test_wlan_list},
     {"wlan-connect", "<profile_name>", test_wlan_connect},
+    {"wlan-connect-opt", "<profile_name> ...", test_wlan_connect_opt},
     {"wlan-reassociate", NULL, test_wlan_reassociate},
     {"wlan-start-network", "<profile_name>", test_wlan_start_network},
     {"wlan-stop-network", NULL, test_wlan_stop_network},

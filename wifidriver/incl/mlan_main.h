@@ -2638,6 +2638,7 @@ struct _mlan_adapter
 #ifdef CONFIG_HOST_SLEEP
     wlan_wakeup_reason wlan_wakeup;
 #endif
+    bool skip_dfs;
 };
 
 /** Ethernet packet type for EAPOL */

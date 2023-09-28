@@ -2393,6 +2393,47 @@ int wlan_remove_network(const char *name);
  */
 int wlan_connect(char *name);
 
+/** Connect to a wireless network (Access Point) with options.
+ *
+ *  When this function is called, WLAN Connection Manager starts connection attempts
+ *  to the network specified by \a name. The connection result will be notified
+ *  asynchronously to the WLCMGR callback when the connection process has
+ *  completed.
+ *
+ *  When connecting to a network, the event refers to the connection
+ *  attempt to that network.
+ *
+ *  Calling this function when the station interface is in the \ref
+ *  WLAN_DISCONNECTED state will, if successful, cause the interface to
+ *  transition into the \ref WLAN_CONNECTING state.  If the connection attempt
+ *  succeeds, the station interface will transition to the \ref WLAN_CONNECTED state,
+ *  otherwise it will return to the \ref WLAN_DISCONNECTED state.  If this
+ *  function is called while the station interface is in the \ref
+ *  WLAN_CONNECTING or \ref WLAN_CONNECTED state, the WLAN Connection Manager
+ *  will first cancel its connection attempt or disconnect from the network,
+ *  respectively, and generate an event with reason \ref
+ *  WLAN_REASON_USER_DISCONNECT. This will be followed by a second event that
+ *  reports the result of the new connection attempt.
+ *
+ *  If the connection attempt was successful the WLCMGR callback is notified
+ *  with the event \ref WLAN_REASON_SUCCESS, while if the connection attempt
+ *  fails then either of the events, \ref WLAN_REASON_NETWORK_NOT_FOUND, \ref
+ *  WLAN_REASON_NETWORK_AUTH_FAILED, \ref WLAN_REASON_CONNECT_FAILED
+ *  or \ref WLAN_REASON_ADDRESS_FAILED are reported as appropriate.
+ *
+ *  \param[in] name A pointer to a string representing the name of the network
+ *              to connect to.
+ *  \param[in] skip_dfs Option to skip DFS channel when doing scan.
+ *
+ *  \return WM_SUCCESS if a connection attempt was started successfully
+ *  \return WLAN_ERROR_STATE if the WLAN Connection Manager was not running.
+ *  \return -WM_E_INVAL if there are no known networks to connect to
+ *          or the network specified by \a name is not in the list
+ *          of known networks or network \a name is NULL.
+ *  \return -WM_FAIL if an internal error has occurred.
+ */
+int wlan_connect_opt(char *name, bool skip_dfs);
+
 /** Reassociate to a wireless network (Access Point).
  *
  *  When this function is called, WLAN Connection Manager starts reassociation

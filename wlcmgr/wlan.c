@@ -3434,6 +3434,7 @@ static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
                     wlan.reassoc_count   = 0;
                     wlan.reassoc_request = false;
                 }
+            mlan_adap->skip_dfs = false;
             CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
 #ifdef CONFIG_P2P
             wifi_wfd_event(false, false, (void *)1);
@@ -4004,6 +4005,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                 wlan.reassoc_count   = 0;
                 wlan.reassoc_request = false;
             }
+            mlan_adap->skip_dfs = false;
             CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
         }
         else
@@ -4058,6 +4060,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                     wlan.reassoc_count   = 0;
                     wlan.reassoc_request = false;
                 }
+                mlan_adap->skip_dfs = false;
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
                 return;
             }
@@ -4797,6 +4800,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
                 }
 
                 net_interface_up(if_handle);
+                mlan_adap->skip_dfs = false;
                 CONNECTION_EVENT(WLAN_REASON_SUCCESS, NULL);
             }
             else
@@ -4835,6 +4839,7 @@ static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
             wlan.reassoc_count   = 0;
             wlan.reassoc_request = false;
         }
+        mlan_adap->skip_dfs = false;
         CONNECTION_EVENT(WLAN_REASON_SUCCESS, &ip);
 
 #ifdef CONFIG_P2P
@@ -9037,6 +9042,24 @@ int wlan_connect(char *name)
     return -WM_E_INVAL;
 }
 
+int wlan_connect_opt(char *name, bool skip_dfs)
+{
+    int ret = 0;
+    unsigned int len = strlen(name);
+
+    mlan_adap->skip_dfs = false;
+    if(skip_dfs)
+        mlan_adap->skip_dfs = true;
+ 
+    ret = wlan_connect(name);
+    if(ret != WM_SUCCESS)
+    {
+        mlan_adap->skip_dfs = false;
+    }
+
+    return ret;
+}
+
 int wlan_reassociate()
 {
     int ret;
@@ -9350,7 +9373,7 @@ void wlan_reset(cli_reset_option ResetOption)
             (void)net_wlan_deinit();
 
             wifi_scan_stop();
-
+            mlan_adap->skip_dfs = false;
             if (!wifi_fw_is_hang())
                 wifi_send_shutdown_cmd();
 

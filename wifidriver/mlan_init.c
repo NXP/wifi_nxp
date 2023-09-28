@@ -754,6 +754,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     (void)__memset(pmadapter, &pmadapter->arp_filter, 0, sizeof(pmadapter->arp_filter));
     pmadapter->arp_filter_size = 0;
 #endif /* STA_SUPPORT */
+    pmadapter->skip_dfs = MFALSE;
 
     LEAVE();
 #endif /* CONFIG_MLAN_WMSDK */
