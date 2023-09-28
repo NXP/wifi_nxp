@@ -4202,6 +4202,8 @@ static void test_wlan_set_host_sleep(int argc, char **argv)
 #ifdef CONFIG_MEF_CFG
 extern wlan_flt_cfg_t g_flt_cfg;
 #endif
+
+#ifndef CONFIG_HOST_SLEEP
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -4313,6 +4315,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
         return;
     }
 }
+#endif
 
 #ifdef CONFIG_MEF_CFG
 static void dump_multiple_mef_config_usage()

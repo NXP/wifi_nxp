@@ -212,6 +212,7 @@ extern os_timer_t wake_timer;
 #endif
 int is_hs_handshake_done = 0;
 extern os_semaphore_t wakelock;
+extern int wakeup_by;
 bool wlan_is_manual = false;
 #endif
 
@@ -950,6 +951,11 @@ int wlan_send_host_sleep(uint32_t wakeup_condition)
     (void)send_user_request(CM_STA_USER_REQUEST_HS, wakeup_condition);
 
     return WM_SUCCESS;
+}
+
+int wlan_is_started()
+{
+    return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
 }
 
 #ifdef CONFIG_HOST_SLEEP
@@ -7328,11 +7334,6 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
 }
 #endif
 
-int wlan_is_started()
-{
-    return ((wlan.running == 1) && (wlan.status == WLCMGR_ACTIVATED));
-}
-
 void wlan_wait_wlmgr_ready()
 {
     while (wlan.sta_state != CM_STA_IDLE)
@@ -9066,7 +9067,6 @@ int wlan_connect(char *name)
 int wlan_connect_opt(char *name, bool skip_dfs)
 {
     int ret = 0;
-    unsigned int len = strlen(name);
 
     mlan_adap->skip_dfs = false;
     if(skip_dfs)
