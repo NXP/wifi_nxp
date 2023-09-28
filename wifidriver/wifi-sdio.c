@@ -2690,7 +2690,7 @@ void sd_wifi_reset_ports()
 #if defined(SD8801)
     txportno = 1;
     mlan_adap->curr_rd_port = 1;
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(IW61x)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
     txportno = 0;
     mlan_adap->curr_rd_port = 0;
 #endif

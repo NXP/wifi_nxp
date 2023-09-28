@@ -260,7 +260,7 @@ int wifi_boot_sleep(uint16_t action, uint16_t *enable)
 
     (void)wlan_cmd_boot_sleep(pmpriv, cmd, action, enable);
 
-    (void)wifi_wait_for_cmdresp(action == HostCmd_ACT_GEN_GET ? enable : NULL);
+    (void)wifi_wait_for_cmdresp(enable);
     return wm_wifi.cmd_resp_status;
 }
 #endif

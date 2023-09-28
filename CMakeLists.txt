@@ -12,8 +12,8 @@ zephyr_compile_definitions_ifdef(CONFIG_SD8978
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_IW61x
-    IW61x
+zephyr_compile_definitions_ifdef(CONFIG_SD9177
+    SD9177
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
 )
 

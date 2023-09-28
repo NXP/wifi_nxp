@@ -571,6 +571,7 @@ static struct
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
     uint8_t rssi_low_threshold;
 #endif
+    uint8_t ind_reset;
 } wlan;
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
@@ -3328,39 +3329,6 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     wlan.is_scan_lock = 0;
 }
 
-static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network *curr_nw);
-
-#if defined(CONFIG_WIFI_IND_DNLD)
-static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_state *next)
-{
-    (void)msg;
-
-    CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
-
-    if (wlan.sta_state > CM_STA_IDLE)
-    {
-#ifdef CONFIG_WPA_SUPP
-        wpa_supp_disconnect(netif);
-#endif
-        wlcm_request_disconnect(next, &wlan.networks[wlan.cur_network_idx]);
-        wlan_dhcp_cleanup();
-    }
-
-    if (wlan.uap_state > CM_UAP_INITIALIZING)
-    {
-        (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
-    }
-}
-
-static void wlcm_process_fw_reset_event(struct wifi_message *msg, enum cm_sta_state *next)
-{
-    (void)msg;
-    (void)next;
-
-    CONNECTION_EVENT(WLAN_REASON_FW_RESET, NULL);
-}
-#endif
-
 static void wlcm_process_sta_addr_config_event(struct wifi_message *msg,
                                                enum cm_sta_state *next,
                                                struct wlan_network *network)
@@ -5572,63 +5540,39 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
 #define MAX_RETRY_TICKS 50
 
-static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
+static void wlcm_process_init_params()
 {
-#ifdef CONFIG_WPA_SUPP
-    struct netif *netif = net_get_sta_interface();
+    wlan.cm_ps_state          = PS_STATE_AWAKE;
+    wlan.cm_ieeeps_configured = false;
+
+    wlan.cm_deepsleepps_configured = false;
+
+#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+    wlan.cm_wnmps_configured = false;
+    wlan.wnm_sleep_time      = 0;
+#endif
+#if defined(CONFIG_11K) || defined(CONFIG_11V)
+    memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
 #endif
 
-#if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177) || \
-    defined(SD8801) || defined(CONFIG_11AC) || defined(STREAM_2X2) || defined(RW610)
+#ifdef CONFIG_BG_SCAN
+    wlan.bgscan_attempt = 0;
+#endif
+
+    wlan.cur_network_idx     = -1;
+    wlan.cur_uap_network_idx = -1;
+}
+
+static void wlcm_process_init(enum cm_sta_state *next)
+{
     int ret;
-#endif
-    if (wlan.sta_state != CM_STA_INITIALIZING)
-    {
-        wlcm_d("ignoring TCP configure response");
-        return;
-    }
 
-    if (msg->reason != WIFI_EVENT_REASON_SUCCESS)
-    {
-        wlcm_e("Interfaces init failed");
-        CONNECTION_EVENT(WLAN_REASON_INITIALIZATION_FAILED, NULL);
-        /* stay here until user re-inits */
-        *next = CM_STA_INITIALIZING;
-        return;
-    }
-#ifdef CONFIG_WPA_SUPP
-    ret = wpa_supp_init(wpa_supplicant_msg_cb);
-    if (ret != 0)
-    {
-        wlcm_e("wpa_supp_init failed. status code %d", ret);
-        return;
-    }
-
-    ret = wifi_supp_init();
-    if (ret != 0)
-    {
-        wlcm_e("wifi_supp_init failed. status code %d", ret);
-        return;
-    }
-
-    ret = wpa_supp_status(netif);
-    if (ret != 0)
-    {
-        wlcm_e("wpa_supp_status failed. status code %d", ret);
-        return;
-    }
-
-    /* ret = monitor_start();
-    if (ret != 0)
-    {
-        wlcm_e("monitor_start failed. status code %d", ret);
-        return;
-    } */
-
-#endif
+    (void)ret;
 
     wlan.sta_state = CM_STA_IDLE;
     *next          = CM_STA_IDLE;
+
+    wlcm_process_init_params();
 
 #ifdef CONFIG_P2P
     /* This call is made to initiate WFD, We are not interested
@@ -5763,6 +5707,98 @@ static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_s
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
 }
+
+static void wlcm_process_net_if_config_event(struct wifi_message *msg, enum cm_sta_state *next)
+{
+#ifdef CONFIG_WPA_SUPP
+    struct netif *netif = net_get_sta_interface();
+    int ret;
+#endif
+
+    if (wlan.sta_state != CM_STA_INITIALIZING)
+    {
+        wlcm_d("ignoring TCP configure response");
+        return;
+    }
+
+    if (msg->reason != WIFI_EVENT_REASON_SUCCESS)
+    {
+        wlcm_e("Interfaces init failed");
+        CONNECTION_EVENT(WLAN_REASON_INITIALIZATION_FAILED, NULL);
+        /* stay here until user re-inits */
+        *next = CM_STA_INITIALIZING;
+        return;
+    }
+#ifdef CONFIG_WPA_SUPP
+    ret = wpa_supp_init(wpa_supplicant_msg_cb);
+    if (ret != 0)
+    {
+        wlcm_e("wpa_supp_init failed. status code %d", ret);
+        return;
+    }
+
+    ret = wifi_supp_init();
+    if (ret != 0)
+    {
+        wlcm_e("wifi_supp_init failed. status code %d", ret);
+        return;
+    }
+
+    ret = wpa_supp_status(netif);
+    if (ret != 0)
+    {
+        wlcm_e("wpa_supp_status failed. status code %d", ret);
+        return;
+    }
+
+    /* ret = monitor_start();
+    if (ret != 0)
+    {
+        wlcm_e("monitor_start failed. status code %d", ret);
+        return;
+    } */
+
+#endif
+
+    wlcm_process_init(next);
+}
+
+static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network *curr_nw);
+
+#ifdef CONFIG_WIFI_IND_RESET
+static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_state *next)
+{
+    (void)msg;
+
+    CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
+
+    if (wlan.sta_state > CM_STA_IDLE)
+    {
+#ifdef CONFIG_WPA_SUPP
+        wpa_supp_disconnect(netif);
+#endif
+        wlcm_request_disconnect(next, &wlan.networks[wlan.cur_network_idx]);
+        wlan_dhcp_cleanup();
+    }
+
+    if (wlan.uap_state > CM_UAP_INITIALIZING)
+    {
+        (void)do_stop(&wlan.networks[wlan.cur_uap_network_idx]);
+    }
+}
+
+static void wlcm_process_fw_reset_event(struct wifi_message *msg, enum cm_sta_state *next)
+{
+    (void)msg;
+    (void)next;
+
+    wlan.ind_reset = 1;
+
+    wlcm_process_init(next);
+
+    CONNECTION_EVENT(WLAN_REASON_FW_RESET, NULL);
+}
+#endif
 
 static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 {
@@ -6355,7 +6391,10 @@ static void wlcm_process_get_hw_spec_event(void)
     /* Set Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
 
-    CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
+    if (wlan.ind_reset == 0)
+    {
+        CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
+    }
 }
 
 static void wlcm_process_mgmt_frame(void *data)
@@ -6514,7 +6553,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_process_scan_result_event(msg, &next);
             break;
 
-#if defined(CONFIG_WIFI_IND_DNLD)
+#ifdef CONFIG_WIFI_IND_RESET
         case WIFI_EVENT_FW_HANG:
             wlcm_d("got event: fw hang");
             wlcm_process_fw_hang_event(msg, &next);
@@ -7332,22 +7371,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.reassoc_control = true;
     wlan.hidden_scan_on  = false;
 
-    wlan.cm_ps_state          = PS_STATE_AWAKE;
-    wlan.cm_ieeeps_configured = false;
-
-    wlan.cm_deepsleepps_configured = false;
-
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
-    wlan.cm_wnmps_configured = false;
-    wlan.wnm_sleep_time      = 0;
-#endif
-#if defined(CONFIG_11K) || defined(CONFIG_11V)
-    memset(&wlan.nlist_rep_param, 0x00, sizeof(wlan_nlist_report_param));
-#endif
-
-#ifdef CONFIG_BG_SCAN
-    wlan.bgscan_attempt = 0;
-#endif
+    wlcm_process_init_params();
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
     wlan.rssi_low_threshold = 70;
@@ -7355,9 +7379,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
-
-    wlan.cur_network_idx     = -1;
-    wlan.cur_uap_network_idx = -1;
 
     wlan.num_networks = 0;
     (void)memset(&wlan.networks[0], 0, sizeof(wlan.networks));

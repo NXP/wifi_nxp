@@ -143,7 +143,7 @@ int32_t wlan_reset_fw()
         ret = FWDNLD_INTF_FAIL;
         goto done;
     }
-#if defined(SD8978) || defined(SD8987) || defined(IW61x)
+#if defined(SD8978) || defined(SD8987) || defined(SD9177)
     (void)sdio_drv_creg_read(HOST_TO_CARD_EVENT_REG, 1, &resp);
 
     rv = sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, resp | HOST_POWER_UP, &resp);
