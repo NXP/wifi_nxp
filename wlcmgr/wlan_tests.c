@@ -2457,6 +2457,29 @@ static void test_wlan_ieee_ps(int argc, char **argv)
     }
 }
 
+static void test_wlan_set_ps_cfg(int argc, char **argv)
+{
+    struct wlan_ieeeps_config pscfg;
+    int ret = -WM_FAIL;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Usage: %s <null_pkt_interval>\r\n", argv[0]);
+        (void)PRINTF("null_pkt_interval (0: Unchanged, -1: Disable, n: Interval in seconds)\r\n");
+        return;
+    }
+
+    (void)memset(&pscfg, 0, sizeof(pscfg));
+    pscfg.ps_null_interval = atoi(argv[1]);
+
+    ret = wlan_set_ieeeps_cfg(&pscfg);
+    if (ret == WM_SUCCESS)
+        (void)PRINTF("Set power save cfg successfully");
+    else
+        (void)PRINTF("Failed to set power save cfg, error: %d", ret);
+
+}
+
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
 static void test_wlan_wnm_ps(int argc, char **argv)
 {
@@ -9934,6 +9957,7 @@ static struct cli_command tests[] = {
     {"wlan-get-uap-channel", NULL, test_wlan_get_uap_channel},
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
+    {"wlan-set-ps-cfg", "<null_pkt_interval>", test_wlan_set_ps_cfg},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
     {"wlan-get-beacon-interval", NULL, test_wlan_get_beacon_interval},
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)

@@ -1838,6 +1838,24 @@ struct wlan_network
 #endif
 };
 
+struct wlan_ieeeps_config
+{
+    /** PS null interval in seconds */
+    t_u32 ps_null_interval;
+    /** Multiple DTIM interval */
+    t_u32 multiple_dtim_interval;
+    /** Listen interval */
+    t_u32 listen_interval;
+    /** Adhoc awake period */
+    t_u32 adhoc_awake_period;
+    /** Beacon miss timeout in milliseconds */
+    t_u32 bcn_miss_timeout;
+    /** Delay to PS in milliseconds */
+    t_s32 delay_to_ps;
+    /** PS mode */
+    t_u32 ps_mode;
+};
+
 #ifdef CONFIG_WIFI_TX_PER_TRACK
 /** Tx Per Tracking Structure
  * Driver sets tx per tracking statistic to fw.
@@ -3027,6 +3045,14 @@ void wlan_clear_host_sleep_config();
  */
 int wlan_set_multicast(t_u8 mef_action);
 #endif
+
+/** Set configuration parameters of IEEE power save mode.
+ *
+ * \param [in] ps_cfg : powersave configuratiuon includes multiple parameters.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg);
 
 /** Configure Listen interval of IEEE power save mode.
  *

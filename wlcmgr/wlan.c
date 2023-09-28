@@ -10081,6 +10081,13 @@ void wlan_wake_up_card(void)
     wifi_wake_up_card(&resp);
 }
 
+int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg)
+{
+    wlan_configure_null_pkt_interval(ps_cfg->ps_null_interval);
+
+    return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
+}
+
 void wlan_configure_listen_interval(int listen_interval)
 {
     wifi_configure_listen_interval(listen_interval);
