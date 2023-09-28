@@ -42,7 +42,7 @@
 
 #define WIFI_RESP_WAIT_TIME 10
 
-#define WLAN_VALUE1 0x80002080
+#define WLAN_VALUE1 0x45001114
 
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
