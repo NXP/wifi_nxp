@@ -133,7 +133,7 @@
 #ifdef CONFIG_WPA_SUPP
 #define CONFIG_WPA_SUPP_WPS               1
 #define CONFIG_WPA_SUPP_WPA3              1
-#define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE 1
+#undef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #endif
 #endif
 

@@ -454,6 +454,9 @@ wifi_cli:
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/wifi_cli/${multicore_foldername}
           project_path: source
+      wifi_config:
+        required: true
+        files:
         - source: middleware/wifi_nxp/example/wifi_cli/wifi_config.h
           package_path: project-root-path
           project_path: source

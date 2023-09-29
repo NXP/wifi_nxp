@@ -30,12 +30,12 @@
 #endif
 
 #if defined(SD9177)
-#define CONFIG_WMM
-#define CONFIG_SDIO_MULTI_PORT_TX_AGGR 1
+#undef CONFIG_WMM
+#undef CONFIG_SDIO_MULTI_PORT_TX_AGGR
 #define CONFIG_COMPRESS_TX_PWTBL
 #define CONFIG_COMPRESS_RU_TX_PWTBL
-#define CONFIG_WIFI_FEATURES    1
-#define ENABLE_OFFLOAD          1
+#undef CONFIG_WIFI_FEATURES
+#undef ENABLE_OFFLOAD
 #ifdef CONFIG_11AC
 #define CONFIG_11AX
 #endif
@@ -114,7 +114,9 @@
 #if !defined(SD8801)
 #define CONFIG_EXT_SCAN_SUPPORT 1
 #define CONFIG_WIFI_EU_CRYPTO 1
+#if !defined(SD9177)
 #define CONFIG_11R 1
+#endif
 #define CONFIG_OWE 1
 #endif
 
