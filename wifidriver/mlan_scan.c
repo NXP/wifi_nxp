@@ -1024,7 +1024,7 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     MrvlIEtypes_Extension_t *phe_cap;
     t_u16 len = 0;
 #endif
-#ifdef SCAN_CHANNEL_GAP
+#ifdef CONFIG_SCAN_CHANNEL_GAP
     MrvlIEtypes_ScanChanGap_t *pscan_gap_tlv;
 #endif
     ENTER();
@@ -1208,17 +1208,19 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         pht_cap->header.len = wlan_cpu_to_le16(pht_cap->header.len);
     }
 
-    if (ISSUPP_11ACENABLED(pmpriv->adapter->fw_cap_info) && (pmpriv->config_bands & BAND_AAC))
-    {
-        pvht_cap = (MrvlIETypes_VHTCap_t *)(void *)ptlv_pos;
-        (void)__memset(pmadapter, pvht_cap, 0, sizeof(MrvlIETypes_VHTCap_t));
-        pvht_cap->header.type = wlan_cpu_to_le16(VHT_CAPABILITY);
-        pvht_cap->header.len  = (t_u16)sizeof(VHT_capa_t);
-        wlan_fill_vht_cap_tlv(pmpriv, pvht_cap, pmpriv->config_bands, MFALSE);
-        HEXDUMP("SCAN: VHT_CAPABILITIES IE", (t_u8 *)pvht_cap, sizeof(MrvlIETypes_VHTCap_t));
-        ptlv_pos += sizeof(MrvlIETypes_VHTCap_t);
-        pvht_cap->header.len = wlan_cpu_to_le16(pvht_cap->header.len);
-    }
+#ifdef CONFIG_11AC
+		if (ISSUPP_11ACENABLED(pmpriv->adapter->fw_cap_info) && (pmpriv->config_bands & BAND_AAC))
+		{
+			pvht_cap = (MrvlIETypes_VHTCap_t *)(void *)ptlv_pos;
+			(void)__memset(pmadapter, pvht_cap, 0, sizeof(MrvlIETypes_VHTCap_t));
+			pvht_cap->header.type = wlan_cpu_to_le16(VHT_CAPABILITY);
+			pvht_cap->header.len  = (t_u16)sizeof(VHT_capa_t);
+			wlan_fill_vht_cap_tlv(pmpriv, pvht_cap, pmpriv->config_bands, MFALSE);
+			HEXDUMP("SCAN: VHT_CAPABILITIES IE", (t_u8 *)pvht_cap, sizeof(MrvlIETypes_VHTCap_t));
+			ptlv_pos += sizeof(MrvlIETypes_VHTCap_t);
+			pvht_cap->header.len = wlan_cpu_to_le16(pvht_cap->header.len);
+		}
+#endif
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     /*
