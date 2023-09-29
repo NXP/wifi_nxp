@@ -2118,8 +2118,7 @@ static void test_wlan_connect(int argc, char **argv)
 static void dump_wlan_connect_opt_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF(
-        "    wlan-connect-opt <profile_name> skipDFS\r\n");
+    (void)PRINTF("    wlan-connect-opt <profile_name> skipDFS\r\n");
     (void)PRINTF("    Need to specify profile_name at least.\r\n");
     (void)PRINTF("    Other parameters are optional.\r\n");
     (void)PRINTF("  To skip DFS channels when scanning:\r\n");
@@ -2129,27 +2128,27 @@ static void dump_wlan_connect_opt_usage()
 static void test_wlan_connect_opt(int argc, char **argv)
 {
     bool skip_dfs = false;
-    int arg    = 2;
-    int ret = 0;
+    int arg       = 2;
+    int ret       = 0;
 
-    if(argc < 2)
+    if (argc < 2)
     {
         dump_wlan_connect_opt_usage();
         return;
     }
     else if (argc > 2)
     {
-            if(string_equal("skipDFS", argv[arg]))
-            {
-                skip_dfs = true;
-                arg++;
-            }
-            else
-            {
-                dump_wlan_connect_opt_usage();
-                (void)PRINTF("Error! Argument %d is invalid\r\n", arg);
-                return;
-            }
+        if (string_equal("skipDFS", argv[arg]))
+        {
+            skip_dfs = true;
+            arg++;
+        }
+        else
+        {
+            dump_wlan_connect_opt_usage();
+            (void)PRINTF("Error! Argument %d is invalid\r\n", arg);
+            return;
+        }
     }
     ret = wlan_connect_opt(argv[1], skip_dfs);
     if (ret == WLAN_ERROR_STATE)
@@ -2521,7 +2520,6 @@ static void test_wlan_set_ps_cfg(int argc, char **argv)
         (void)PRINTF("Set power save cfg successfully");
     else
         (void)PRINTF("Failed to set power save cfg, error: %d", ret);
-
 }
 
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
@@ -4203,7 +4201,7 @@ static void test_wlan_set_host_sleep(int argc, char **argv)
 extern wlan_flt_cfg_t g_flt_cfg;
 #endif
 
-#ifndef CONFIG_HOST_SLEEP
+#ifdef CONFIG_HOST_SLEEP
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -10075,7 +10073,9 @@ static struct cli_command tests[] = {
     {"wlan-host-sleep", "<0/1> mef/[wowlan <wake_up_conds>]", test_wlan_host_sleep},
 #endif
 #else
+#if defined(CONFIG_HOST_SLEEP)
     {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
+#endif
 #endif
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 #if !defined(SD8801) && !defined(RW610)

@@ -2814,3 +2814,13 @@ void set_ioport_inmlan(t_u32 port)
 {
     mlan_adap->ioport = port;
 }
+
+#ifdef CONFIG_HOST_SLEEP
+void wifi_clear_wakeup_reason(void)
+{
+    if (mlan_adap != NULL)
+    {
+        memset(&mlan_adap->wlan_wakeup, 0x0, sizeof(wlan_wakeup_reason));
+    }
+}
+#endif

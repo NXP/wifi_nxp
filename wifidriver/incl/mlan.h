@@ -39,7 +39,7 @@ Change log:
 #define CONFIG_UAP_AMPDU_RX            1
 #define CONFIG_WIFIDRIVER_PS_LOCK      1
 #define CONFIG_WNM_PS                  1
-#define CONFIG_SCAN_CHANNEL_GAP               1
+#define CONFIG_SCAN_CHANNEL_GAP        1
 #define CONFIG_COMBO_SCAN              1
 #define CONFIG_BG_SCAN                 1
 #define CONFIG_HOST_MLME               1
@@ -49,7 +49,6 @@ Change log:
 #define CONFIG_UAP_STA_MAC_ADDR_FILTER 1
 #define CONFIG_WIFI_FRAG_THRESHOLD     1
 #define CONFIG_WIFI_FORCE_RTS          1
-#define CONFIG_MEF_CFG                 1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 
 #if defined(SD9177)
