@@ -234,14 +234,14 @@ typedef struct _cmd_header
 } cmd_header;
 
 /** IMUPkt/SDIOPkt only name difference, same definition */
-typedef struct _SDIOPkt
+typedef MLAN_PACK_START struct _SDIOPkt
 {
     uint16_t size;
     uint16_t pkttype;
     HostCmd_DS_COMMAND hostcmd;
-} SDIOPkt;
+} MLAN_PACK_END SDIOPkt;
 
-static uint8_t *rx_buf;
+static uint8_t rx_buf[BUF_LEN];
 static cmd_header last_cmd_hdr;
 uint8_t *local_outbuf;
 static SDIOPkt *sdiopkt;
@@ -250,6 +250,8 @@ static SDIOPkt *sdiopkt;
 lpspi_master_config_t spiConfig;
 lpspi_transfer_t handle_spi;
 #endif
+uint8_t host_resp_buf[BUF_LEN];
+uint32_t resp_buf_len, reqd_resp_len;
 
 /*******************************************************************************
  * Code
@@ -259,7 +261,7 @@ const int TASK_MAIN_PRIO = CONFIG_WIFI_MAX_PRIO - 3;
 #else
 const int TASK_MAIN_PRIO = OS_PRIO_3;
 #endif
-const int TASK_MAIN_STACK_SIZE = 5 * 2048;
+const int TASK_MAIN_STACK_SIZE = 3 * 2048;
 
 portSTACK_TYPE *task_main_stack = NULL;
 TaskHandle_t task_main_task_handler;
@@ -294,17 +296,16 @@ static uint32_t uart_get_crc32(uart_cb *uart, int len, unsigned char *buf)
  2. computation of the crc of the payload
  3. sending it out to the uart
 */
-static int send_response_to_uart(uart_cb *uart, const uint8_t *resp, int type)
+static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_t reqd_resp_len)
 {
     uint32_t bridge_chksum = 0;
     uint32_t msglen;
     int index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
-    SDIOPkt *sdio = (SDIOPkt *)resp;
 
-    int iface_len;
-
+    int iface_len = 0;
+#if 0
     if (type == 2)
         /* This is because, the last byte of the sdio header
          * (packet type) is also requried by the labtool, to
@@ -312,8 +313,9 @@ static int send_response_to_uart(uart_cb *uart, const uint8_t *resp, int type)
         iface_len = INTF_HEADER_LEN - 1;
     else
         iface_len = INTF_HEADER_LEN;
+#endif
 
-    payloadlen = sdio->size - iface_len;
+    payloadlen = reqd_resp_len;
     memset(rx_buf, 0, BUF_LEN);
     memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), resp + iface_len, payloadlen);
 
@@ -503,16 +505,11 @@ int process_input_cmd(uint8_t *buf, int m_len)
     if (cmd_hd->type == TYPE_WLAN)
     {
         memset(local_outbuf, 0, BUF_LEN);
-        sdiopkt = (SDIOPkt *)local_outbuf;
 
         uarthdr = (uart_header *)buf;
 
-        /* sdiopkt = local_outbuf */
-        sdiopkt->pkttype = SDIOPKTTYPE_CMD;
-
-        sdiopkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
-        d             = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
-        s             = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
+        d = (uint8_t *)local_outbuf;
+        s = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 
         for (i = 0; i < uarthdr->length - sizeof(cmd_header); i++)
         {
@@ -540,8 +537,6 @@ int process_input_cmd(uint8_t *buf, int m_len)
         }
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
         wifi_send_imu_raw_data(local_outbuf, (m_len - sizeof(cmd_header) + INTF_HEADER_LEN));
-#else
-        wifi_raw_packet_send(local_outbuf, BUF_LEN);
 #endif
         ret = RET_TYPE_WLAN;
     }
@@ -717,18 +712,19 @@ hal_rpmsg_return_status_t read_rpmsg_resp(void *param, uint8_t *packet, uint32_t
 #else
 void read_wlan_resp()
 {
-    uart_cb *uart = &uartcb;
-    uint8_t *packet;
-    unsigned int pkt_type;
+    // uart_cb *uart = &uartcb;
+    t_u8 *packet;
+    t_u32 pkt_type;
     int rv = wifi_raw_packet_recv(&packet, &pkt_type);
     if (rv != WM_SUCCESS)
         PRINTF("Receive response failed\r\n");
     else
     {
-        if (pkt_type == MLAN_TYPE_CMD)
-            send_response_to_uart(uart, packet, 1);
+        //        if (pkt_type == MLAN_TYPE_CMD)
+        //            send_response_to_uart(uart, packet, 1);
     }
 }
+
 void read_bt_resp()
 {
     uart_cb *uart_bt = &uartcb_bt;
@@ -889,7 +885,7 @@ void task_main(void *param)
 #endif
 
 #if !defined(RW610_SERIES) && !defined(RW612_SERIES)
-    result = sd_wifi_init(WLAN_TYPE_FCC_CERTIFICATION, wlan_fw_bin, wlan_fw_bin_len);
+    result = wifi_init_fcc(wlan_fw_bin, wlan_fw_bin_len);
 
     if (result != 0)
     {
@@ -958,14 +954,13 @@ void task_main(void *param)
     }
 #endif
 
-    local_outbuf = pvPortMalloc(SDIO_OUTBUF_LEN);
+    local_outbuf = os_mem_alloc(SDIO_OUTBUF_LEN);
 
     if (local_outbuf == NULL)
     {
         PRINTF("Failed to allocate buffer\r\n");
         return;
     }
-    rx_buf = pvPortMalloc(BUF_LEN);
 
 #if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);
@@ -1069,14 +1064,20 @@ void task_main(void *param)
                stripping off uart header */
             int ret = process_input_cmd(uart->uart_buf, msg_len + 8);
             memset(uart->uart_buf, 0, sizeof(uart->uart_buf));
-
+            memset(host_resp_buf, 0x00, BUF_LEN);
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
             UNUSED(ret);
 #else
             if (ret == RET_TYPE_WLAN)
             {
                 vTaskDelay(pdMS_TO_TICKS(60));
-                read_wlan_resp();
+                int rv = wlan_send_hostcmd(local_outbuf, BUF_LEN, host_resp_buf, BUF_LEN, &reqd_resp_len);
+                if (rv != WM_SUCCESS)
+                    PRINTF("Receive response failed\r\n");
+                else
+                {
+                    send_response_to_uart(uart, host_resp_buf, RET_TYPE_WLAN, reqd_resp_len);
+                }
             }
             else if (ret == RET_TYPE_BT)
             {
