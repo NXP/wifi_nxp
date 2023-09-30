@@ -131,9 +131,27 @@
 #define CONFIG_WPA_SUPP 1
 
 #ifdef CONFIG_WPA_SUPP
-#define CONFIG_WPA_SUPP_WPS               1
-#define CONFIG_WPA_SUPP_WPA3              1
-#undef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#define CONFIG_WPA_SUPP_WPS                  1
+#define CONFIG_WPA_SUPP_WPA3                 1
+#define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE    1
+#define CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE 1
+
+#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE)
+
+#define CONFIG_EAP_TLS
+#define CONFIG_EAP_PEAP
+#define CONFIG_EAP_TTLS
+#define CONFIG_EAP_FAST
+#define CONFIG_EAP_SIM
+#define CONFIG_EAP_AKA
+#define CONFIG_EAP_AKA_PRIME
+
+#if defined(CONFIG_EAP_PEAP) || defined(CONFIG_EAP_TTLS) || defined(CONFIG_EAP_FAST)
+#define CONFIG_EAP_MSCHAPV2
+#define CONFIG_EAP_GTC
+#endif
+
+#endif
 #endif
 #endif
 

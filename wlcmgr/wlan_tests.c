@@ -325,9 +325,11 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag(network));
             break;
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
+#ifdef CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_TLS:
             (void)PRINTF("%s Enterprise EAP-TLS\r\n", sec_tag(network));
             break;
+#endif
 #endif
 #ifdef CONFIG_PEAP_MSCHAPV2
         case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
@@ -335,6 +337,7 @@ static void print_network(struct wlan_network *network)
             break;
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_TLS_SHA256:
             (void)PRINTF("%s Enterprise EAP-TLS SHA256\r\n", sec_tag(network));
             break;
@@ -346,36 +349,61 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("%s Enterprise EAP-TLS FT SHA384\r\n", sec_tag(network));
             break;
 #endif
+#endif
+#ifdef CONFIG_EAP_TTLS
         case WLAN_SECURITY_EAP_TTLS:
             (void)PRINTF("%s Enterprise EAP-TTLSv%d\r\n", sec_tag(network), network->security.eap_ver);
             break;
+#ifdef CONFIG_EAP_MSCHAPV2
         case WLAN_SECURITY_EAP_TTLS_MSCHAPV2:
             (void)PRINTF("%s Enterprise EAP-TTLSv%d-MSCHAPV2\r\n", sec_tag(network), network->security.eap_ver);
             break;
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_MSCHAPV2
         case WLAN_SECURITY_EAP_PEAP_MSCHAPV2:
             (void)PRINTF("%s Enterprise EAP-PEAPv%d-MSCHAPV2\r\n", sec_tag(network), network->security.eap_ver);
             break;
+#endif
+#ifdef CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_PEAP_TLS:
             (void)PRINTF("%s Enterprise EAP-PEAPv%d-TLS\r\n", sec_tag(network), network->security.eap_ver);
             break;
+#endif
+#ifdef CONFIG_EAP_GTC
         case WLAN_SECURITY_EAP_PEAP_GTC:
             (void)PRINTF("%s Enterprise EAP-PEAPv%d-GTC\r\n", sec_tag(network), network->security.eap_ver);
             break;
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
         case WLAN_SECURITY_EAP_FAST_MSCHAPV2:
             (void)PRINTF("%s Enterprise EAP-FAST-MSCHAPV2\r\n", sec_tag(network));
             break;
+#endif
+#ifdef CONFIG_EAP_GTC
         case WLAN_SECURITY_EAP_FAST_GTC:
             (void)PRINTF("%s Enterprise EAP-FAST-GTC\r\n", sec_tag(network));
             break;
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
         case WLAN_SECURITY_EAP_SIM:
             (void)PRINTF("%s Enterprise EAP SIM\r\n", sec_tag(network));
             break;
+#endif
+#ifdef CONFIG_EAP_AKA
         case WLAN_SECURITY_EAP_AKA:
             (void)PRINTF("%s Enterprise EAP AKA\r\n", sec_tag(network));
             break;
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
         case WLAN_SECURITY_EAP_AKA_PRIME:
             (void)PRINTF("%s Enterprise EAP AKA PRIME\r\n", sec_tag(network));
             break;
+#endif
 #endif
 #ifdef CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
@@ -642,9 +670,12 @@ static void dump_wlan_add_usage(void)
         "bip_cmac_256=0x2000\r\n");
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-tls/eap-tls-sha256"
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
+#ifdef CONFIG_EAP_TLS
+        "eap-tls/eap-tls-sha256"
 #ifdef CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
+#endif
 #endif
         " id <identity> "
         "[key_passwd "
@@ -652,30 +683,64 @@ static void dump_wlan_add_usage(void)
         "<domain_suffix_match_string>]] "
         "[mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 gc 0x20]"
         "\r\n");
+#ifdef CONFIG_EAP_TTLS
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
         "<client_key2_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
+#ifdef CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 aid <anonymous identity> id "
         "<identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc "
-        "[ver 0/1] id <identity> pass "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
+#ifdef CONFIG_EAP_MSCHAPV2
+        "eap-peap-mschapv2"
+#endif
+#ifdef CONFIG_EAP_TLS
+        "/eap-peap-tls"
+#endif
+#ifdef CONFIG_EAP_GTC
+        "/eap-peap-gtc"
+#endif
+        " [ver 0/1] id <identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
+#endif
+#ifdef CONFIG_EAP_FAST
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-fast-mschapv2/eap-fast-gtc aid <anonymous "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
+#ifdef CONFIG_EAP_MSCHAPV2
+        "eap-fast-mschapv2"
+#endif
+#ifdef CONFIG_EAP_GTC
+        "/eap-fast-gtc"
+#endif
+        " aid <anonymous "
         "identity> id <identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
-
+#endif
+#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [eap-sim/eap-aka/eap-aka-prime id <identity> pass <password>]"
+        "    wlan-add <profile_name> ssid <ssid> ["
+#ifdef CONFIG_EAP_SIM
+        "eap-sim"
+#endif
+#ifdef CONFIG_EAP_AKA
+        "/eap-aka"
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+        "/eap-aka-prime"
+#endif
+        " id <identity> pass <password>]"
         "\r\n");
-
+#endif
     (void)PRINTF("      If using WPA2/WPA3 Enterprise security, set the PMF configuration as required.\r\n");
 #endif
 #endif
@@ -710,9 +775,12 @@ static void dump_wlan_add_usage(void)
 #endif
         " <secret>]"
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-        " [wpa3-sb/wpa3-sb-192] [eap-tls/eap-tls-sha256"
+        " [wpa3-sb/wpa3-sb-192] "
+#ifdef CONFIG_EAP_TLS
+        "[eap-tls/eap-tls-sha256"
 #ifdef CONFIG_11R
         "/eap-tls-ft/eap-tls-ft-sha384"
+#endif
 #endif
         "]"
 #endif
@@ -754,9 +822,45 @@ static void dump_wlan_add_usage(void)
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
         "    [wpa3-sb/wpa3-sb-192] "
-        "[eap-tls/eap-tls-sha256/eap-ttls-mschapv2/eap-peap-mschapv2/eap-peap-tls/eap-peap-gtc/eap-sim/eap-aka/"
-        "eap-aka-prime/eap-fast-mschapv2/"
-        "eap-fast-gtc]\r\n");
+        "["
+#ifdef CONFIG_EAP_TLS
+        "eap-tls/eap-tls-sha256"
+#endif
+#ifdef CONFIG_EAP_TTLS
+        "/eap-ttls"
+#ifdef CONFIG_EAP_MSCHAPV2
+        "/eap-ttls-mschapv2"
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_MSCHAPV2
+        "/eap-peap-mschapv2"
+#endif
+#ifdef CONFIG_EAP_TLS
+        "/eap-peap-tls"
+#endif
+#ifdef CONFIG_EAP_GTC
+        "/eap-peap-gtc"
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+        "/eap-fast-mschapv2"
+#endif
+#ifdef CONFIG_EAP_GTC
+        "/eap-fast-gtc"
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+        "/eap-sim"
+#endif
+#ifdef CONFIG_EAP_AKA
+        "/eap-aka"
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+        "/eap-aka-prime"
+#endif
+        "]\r\n");
 #ifdef CONFIG_11R
     (void)PRINTF("    [eap-tls-ft/eap-tls-ft-sha384]\r\n");
 #endif
@@ -768,9 +872,11 @@ static void dump_wlan_add_usage(void)
 #endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
+#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
     (void)PRINTF(
         "    If using eap-sim/eap-aka/eap-aka-prime use read_gsm_triplets to add GSM authentication triplets and "
         "read_milenage to add Milenage keys and hlr_cli to start hlr_auc_gw\r\n");
+#endif
 #endif
 #ifdef CONFIG_WIFI_DTIM_PERIOD
     (void)PRINTF("If setting dtim\r\n");
@@ -1071,76 +1177,135 @@ static void test_wlan_add(int argc, char **argv)
             info.wpa3_sb = 1;
         }
         else if ((info.security2 == 0U) &&
-                 (string_equal("eap-tls", argv[arg]) || string_equal("eap-tls-sha256", argv[arg]) ||
+                 (
+#ifdef CONFIG_EAP_TLS
+                     string_equal("eap-tls", argv[arg]) || string_equal("eap-tls-sha256", argv[arg]) ||
 #ifdef CONFIG_11R
-                  string_equal("eap-tls-ft", argv[arg]) || string_equal("eap-tls-ft-sha384", argv[arg]) ||
+                     string_equal("eap-tls-ft", argv[arg]) || string_equal("eap-tls-ft-sha384", argv[arg]) ||
 #endif
-                  string_equal("eap-ttls", argv[arg]) || string_equal("eap-ttls-mschapv2", argv[arg]) ||
-                  string_equal("eap-peap-mschapv2", argv[arg]) || string_equal("eap-peap-tls", argv[arg]) ||
-                  string_equal("eap-peap-gtc", argv[arg]) || string_equal("eap-fast-mschapv2", argv[arg]) ||
-                  string_equal("eap-fast-gtc", argv[arg]) || string_equal("eap-sim", argv[arg]) ||
-                  string_equal("eap-aka", argv[arg]) || string_equal("eap-aka-prime", argv[arg])))
+#endif
+#ifdef CONFIG_EAP_TTLS
+                     string_equal("eap-ttls", argv[arg]) ||
+#ifdef CONFIG_EAP_MSCHAPV2
+                     string_equal("eap-ttls-mschapv2", argv[arg]) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_MSCHAPV2
+                     string_equal("eap-peap-mschapv2", argv[arg]) ||
+#endif
+#ifdef CONFIG_EAP_TLS
+                     string_equal("eap-peap-tls", argv[arg]) ||
+#endif
+#ifdef CONFIG_EAP_GTC
+                     string_equal("eap-peap-gtc", argv[arg]) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+                     string_equal("eap-fast-mschapv2", argv[arg]) ||
+#endif
+#ifdef CONFIG_EAP_GTC
+                     string_equal("eap-fast-gtc", argv[arg]) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+                     string_equal("eap-sim", argv[arg]) ||
+#endif
+#ifdef CONFIG_EAP_AKA
+                     string_equal("eap-aka", argv[arg]) ||
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+                     string_equal("eap-aka-prime", argv[arg]) ||
+#endif
+                     false))
         {
+#ifdef CONFIG_EAP_TLS
             if (string_equal("eap-tls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS;
             }
-            else if (string_equal("eap-tls-sha256", argv[arg]))
+            if (string_equal("eap-tls-sha256", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS_SHA256;
             }
 #ifdef CONFIG_11R
-            else if (string_equal("eap-tls-ft", argv[arg]))
+            if (string_equal("eap-tls-ft", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS_FT;
             }
-            else if (string_equal("eap-tls-ft-sha384", argv[arg]))
+            if (string_equal("eap-tls-ft-sha384", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TLS_FT_SHA384;
             }
-            else
 #endif
-                if (string_equal("eap-ttls", argv[arg]))
+#endif
+#ifdef CONFIG_EAP_TTLS
+            if (string_equal("eap-ttls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TTLS;
             }
-            else if (string_equal("eap-ttls-mschapv2", argv[arg]))
+#ifdef CONFIG_EAP_MSCHAPV2
+            if (string_equal("eap-ttls-mschapv2", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_TTLS_MSCHAPV2;
             }
-            else if (string_equal("eap-peap-mschapv2", argv[arg]))
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_MSCHAPV2
+            if (string_equal("eap-peap-mschapv2", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_PEAP_MSCHAPV2;
             }
-            else if (string_equal("eap-peap-tls", argv[arg]))
+#endif
+#ifdef CONFIG_EAP_TLS
+            if (string_equal("eap-peap-tls", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_PEAP_TLS;
             }
-            else if (string_equal("eap-peap-gtc", argv[arg]))
+#endif
+#ifdef CONFIG_EAP_GTC
+            if (string_equal("eap-peap-gtc", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_PEAP_GTC;
             }
-            else if (string_equal("eap-fast-mschapv2", argv[arg]))
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+            if (string_equal("eap-fast-mschapv2", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_FAST_MSCHAPV2;
             }
-            else if (string_equal("eap-fast-gtc", argv[arg]))
+#endif
+#ifdef CONFIG_EAP_GTC
+            if (string_equal("eap-fast-gtc", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_FAST_GTC;
             }
-            else if (string_equal("eap-sim", argv[arg]))
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+            if (string_equal("eap-sim", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_SIM;
             }
-            else if (string_equal("eap-aka", argv[arg]))
+#endif
+#ifdef CONFIG_EAP_AKA
+            if (string_equal("eap-aka", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_AKA;
             }
-            else if (string_equal("eap-aka-prime", argv[arg]))
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+            if (string_equal("eap-aka-prime", argv[arg]))
             {
                 network.security.type = WLAN_SECURITY_EAP_AKA_PRIME;
             }
+#endif
 
+#ifdef CONFIG_EAP_PEAP
             network.security.eap_ver = 1;
             if (string_equal(argv[arg + 1], "ver") != false)
             {
@@ -1161,21 +1326,20 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 
-            network.security.eap_result_ind = 1;
-            if (string_equal(argv[arg + 1], "result_ind") != false)
+            if (string_equal(argv[arg + 1], "label") != false)
             {
-                errno                           = 0;
-                network.security.eap_result_ind = (bool)strtol(argv[arg + 2], NULL, 10);
+                errno                       = 0;
+                network.security.peap_label = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtol:eap_result_ind errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:peap_label errno:%d\r\n", errno);
                     return;
                 }
-                if (arg + 1 >= argc || (network.security.eap_result_ind != 0U && network.security.eap_result_ind != 1U))
+                if (arg + 1 >= argc || (network.security.peap_label != 0U && network.security.peap_label != 1U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
-                        " network result indication\r\n");
+                        " network peap label\r\n");
                     return;
                 }
                 arg += 2;
@@ -1201,26 +1365,28 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 arg += 2;
             }
-
-            if (string_equal(argv[arg + 1], "label") != false)
+#endif
+#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
+            network.security.eap_result_ind = 1;
+            if (string_equal(argv[arg + 1], "result_ind") != false)
             {
-                errno                       = 0;
-                network.security.peap_label = (bool)strtol(argv[arg + 2], NULL, 10);
+                errno                           = 0;
+                network.security.eap_result_ind = (bool)strtol(argv[arg + 2], NULL, 10);
                 if (errno != 0)
                 {
-                    (void)PRINTF("Error during strtol:peap_label errno:%d\r\n", errno);
+                    (void)PRINTF("Error during strtol:eap_result_ind errno:%d\r\n", errno);
                     return;
                 }
-                if (arg + 1 >= argc || (network.security.peap_label != 0U && network.security.peap_label != 1U))
+                if (arg + 1 >= argc || (network.security.eap_result_ind != 0U && network.security.eap_result_ind != 1U))
                 {
                     (void)PRINTF(
                         "Error: invalid wireless"
-                        " network peap label\r\n");
+                        " network result indication\r\n");
                     return;
                 }
                 arg += 2;
             }
-
+#endif
             if (string_equal(argv[arg + 1], "aid") != false)
             {
                 /* Set Client Anonymous Identity */
@@ -1257,6 +1423,7 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
             }
 
+#ifdef CONFIG_EAP_FAST
             if (string_equal(argv[arg + 1], "pac_opa_enc_key") != false)
             {
                 /* Encryption key for EAP-FAST PAC-Opaque values. */
@@ -1291,7 +1458,7 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 arg += 2;
             }
-
+#endif
             if (string_equal(argv[arg + 1], "hash") != false)
             {
                 /* CA Cert hash */
@@ -7057,7 +7224,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
             "<ra4us>\r\n\r\n",
             argv[0]);
 
-        (void)PRINTF("[csi_enable] :1/2 to Enable/DisEnable CSI\r\n");
+        (void)PRINTF("[csi_enable] :1/2 to Enable/Disable CSI\r\n");
         (void)PRINTF("[head_id, head_id, chip_id] are used to seperate CSI event records received from FW\r\n");
         (void)PRINTF(
             "[Bandcfg] defined as below: \r\n"

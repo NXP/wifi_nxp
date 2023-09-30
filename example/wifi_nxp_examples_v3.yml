@@ -608,7 +608,7 @@ uart_wifi_bridge:
       name: uart_wifi_bridge
       readme:
       - boards/${board}/wifi_examples/common/board.readme
-      - boards/src/wifi_examples/uart_wifi_bridge/uart_wifi_bridge.readme
+      - middleware/wifi_nxp/example/uart_wifi_bridge/uart_wifi_bridge.readme
       category: wifi_examples
       brief: uart_wifi_bridge
     project-root-path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}

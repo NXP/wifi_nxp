@@ -932,6 +932,7 @@ enum wlan_security_type
     WLAN_SECURITY_EAP_TLS,
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_TLS
     /** The network uses WPA2 Enterprise EAP-TLS SHA256 security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_SHA256,
@@ -943,49 +944,72 @@ enum wlan_security_type
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_FT_SHA384,
 #endif
+#endif
+#ifdef CONFIG_EAP_TTLS
     /** The network uses WPA2 Enterprise EAP-TTLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TTLS,
-    /** The network uses WPA2 Enterprise TTLS-MSCHAPV2 security
+#ifdef CONFIG_EAP_MSCHAPV2
+    /** The network uses WPA2 Enterprise EAP-TTLS-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_TTLS_MSCHAPV2,
-/** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
- * The anonymous identity, identity and password fields in
- * \ref wlan_network structure are used */
+#endif
+#endif
 #endif
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_PEAP_MSCHAPV2) || defined(CONFIG_WPA2_ENTP)
+    /** The network uses WPA2 Enterprise EAP-PEAP-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_MSCHAPV2,
-/** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
- * The anonymous identity, identity and password fields in
- * \ref wlan_network structure are used */
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_TLS
+    /** The network uses WPA2 Enterprise EAP-PEAP-TLS security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_TLS,
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+#endif
+#ifdef CONFIG_EAP_GTC
+    /** The network uses WPA2 Enterprise EAP-PEAP-GTC security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_GTC,
-    /** The network uses WPA2 Enterprise TTLS-MSCHAPV2 security
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+    /** The network uses WPA2 Enterprise EAP-FAST-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_FAST_MSCHAPV2,
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+#endif
+#ifdef CONFIG_EAP_GTC
+    /** The network uses WPA2 Enterprise EAP-FAST-GTC security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_FAST_GTC,
-    /** The network uses WPA2 Enterprise SIM security
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+    /** The network uses WPA2 Enterprise EAP-SIM security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_SIM,
-    /** The network uses WPA2 Enterprise SIM security
+#endif
+#ifdef CONFIG_EAP_AKA
+    /** The network uses WPA2 Enterprise EAP-AKA security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA,
-    /** The network uses WPA2 Enterprise SIM security
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+    /** The network uses WPA2 Enterprise EAP-AKA-PRIME security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA_PRIME,
+#endif
 #endif
     /** The network can use any security method. This is often used when
      * the user only knows the name and passphrase but not the security
@@ -1062,15 +1086,46 @@ static inline int is_valid_security(int security)
 #endif
         (security == WLAN_SECURITY_WPA_WPA2_MIXED) ||
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_TLS
         (security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
 #ifdef CONFIG_11R
         (security == WLAN_SECURITY_EAP_TLS_FT) || (security == WLAN_SECURITY_EAP_TLS_FT_SHA384) ||
 #endif
-        (security == WLAN_SECURITY_EAP_TTLS) || (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
-        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
-        (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
-        (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
-        (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
+#endif
+#ifdef CONFIG_EAP_TTLS
+        (security == WLAN_SECURITY_EAP_TTLS) ||
+#ifdef CONFIG_EAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) ||
+#endif
+#ifdef CONFIG_EAP_TLS
+        (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
+#endif
+#ifdef CONFIG_EAP_GTC
+        (security == WLAN_SECURITY_EAP_PEAP_GTC) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
+#endif
+#ifdef CONFIG_EAP_GTC
+        (security == WLAN_SECURITY_EAP_FAST_GTC) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+        (security == WLAN_SECURITY_EAP_SIM) ||
+#endif
+#ifdef CONFIG_EAP_AKA
+        (security == WLAN_SECURITY_EAP_AKA) ||
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+        (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
+#endif
 #else
 #ifdef CONFIG_WPA2_ENTP
         (security == WLAN_SECURITY_EAP_TLS) ||
@@ -1099,15 +1154,48 @@ static inline int is_valid_security(int security)
 static inline int is_ep_valid_security(int security)
 {
     /*Currently only these modes are supported */
-    if ((security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
+    if (
+#ifdef CONFIG_EAP_TLS
+        (security == WLAN_SECURITY_EAP_TLS) || (security == WLAN_SECURITY_EAP_TLS_SHA256) ||
 #ifdef CONFIG_11R
         (security == WLAN_SECURITY_EAP_TLS_FT) || (security == WLAN_SECURITY_EAP_TLS_FT_SHA384) ||
 #endif
-        (security == WLAN_SECURITY_EAP_TTLS) || (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
-        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) || (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
-        (security == WLAN_SECURITY_EAP_PEAP_GTC) || (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
-        (security == WLAN_SECURITY_EAP_FAST_GTC) || (security == WLAN_SECURITY_EAP_SIM) ||
-        (security == WLAN_SECURITY_EAP_AKA) || (security == WLAN_SECURITY_EAP_AKA_PRIME))
+#endif
+#ifdef CONFIG_EAP_TTLS
+        (security == WLAN_SECURITY_EAP_TTLS) ||
+#ifdef CONFIG_EAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2) ||
+#endif
+#ifdef CONFIG_EAP_TLS
+        (security == WLAN_SECURITY_EAP_PEAP_TLS) ||
+#endif
+#ifdef CONFIG_EAP_GTC
+        (security == WLAN_SECURITY_EAP_PEAP_GTC) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+        (security == WLAN_SECURITY_EAP_FAST_MSCHAPV2) ||
+#endif
+#ifdef CONFIG_EAP_GTC
+        (security == WLAN_SECURITY_EAP_FAST_GTC) ||
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+        (security == WLAN_SECURITY_EAP_SIM) ||
+#endif
+#ifdef CONFIG_EAP_AKA
+        (security == WLAN_SECURITY_EAP_AKA) ||
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+        (security == WLAN_SECURITY_EAP_AKA_PRIME) ||
+#endif
+        false)
     {
         return 1;
     }
@@ -1187,19 +1275,23 @@ struct wlan_network_security
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     /* WPA3 Enterprise mode */
     unsigned wpa3_sb : 1;
-    /* WPA3 Enterprise Suite B mode */
+    /* WPA3 Enterprise Suite B 192 mode */
     unsigned wpa3_sb_192 : 1;
+#ifdef CONFIG_EAP_PEAP
     /* PEAP version */
     unsigned eap_ver : 1;
     /* PEAP label */
     unsigned peap_label : 1;
-    /* eap_result_ind=1 can be used to enable \ref WLAN_SECURITY_EAP_SIM, \ref WLAN_SECURITY_EAP_AKA and \ref
-     * WLAN_SECURITY_EAP_AKA_PRIME to use protected result indication.*/
-    unsigned eap_result_ind : 1;
     /* crypto_binding option can be used to control \ref WLAN_SECURITY_EAP_PEAP_MSCHAPV2, \ref
      * WLAN_SECURITY_EAP_PEAP_TLS and \ref WLAN_SECURITY_EAP_PEAP_GTC version 0 cryptobinding behavior: 0 = do not use
      * cryptobinding (default) 1 = use cryptobinding if server supports it 2 = require cryptobinding */
     uint8_t eap_crypto_binding;
+#endif
+#if defined(CONFIG_EAP_SIM) || defined(CONFIG_EAP_AKA) || defined(CONFIG_EAP_AKA_PRIME)
+    /* eap_result_ind=1 can be used to enable \ref WLAN_SECURITY_EAP_SIM, \ref WLAN_SECURITY_EAP_AKA and \ref
+     * WLAN_SECURITY_EAP_AKA_PRIME to use protected result indication.*/
+    unsigned eap_result_ind : 1;
+#endif
     /* Identity string for EAP */
     char identity[IDENTITY_MAX_LENGTH];
     /* Anonymous identity string for EAP */
@@ -1228,10 +1320,12 @@ struct wlan_network_security
     char domain_match[DOMAIN_MATCH_MAX_LENGTH];
     /** Domain Suffix */
     char domain_suffix_match[DOMAIN_MATCH_MAX_LENGTH]; /*suffix max length same as full domain name length*/
+#ifdef CONFIG_EAP_FAST
     /** PAC blob */
     unsigned char *pac_data;
     /** PAC blob len */
     size_t pac_len;
+#endif
     /** CA cert2 blob in PEM/DER format */
     unsigned char *ca_cert2_data;
     /** CA cert2 blob len */
@@ -1247,6 +1341,7 @@ struct wlan_network_security
     /** Client key2 password */
     char client_key2_passwd[PASSWORD_MAX_LENGTH];
 #ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     /** Server cert blob in PEM/DER format */
     unsigned char *server_cert_data;
     /** Server cert blob len */
@@ -1267,6 +1362,7 @@ struct wlan_network_security
     char identities[MAX_USERS][IDENTITY_MAX_LENGTH];
     /** User Passwords */
     char passwords[MAX_USERS][PASSWORD_MAX_LENGTH];
+#ifdef CONFIG_EAP_FAST
     /** Encryption key for EAP-FAST PAC-Opaque values */
     char pac_opaque_encr_key[PAC_OPAQUE_ENCR_KEY_MAX_LENGTH];
     /** EAP-FAST authority identity (A-ID) */
@@ -1278,6 +1374,8 @@ struct wlan_network_security
      * 3 = both provisioning modes allowed (default)
      */
     uint8_t fast_prov;
+#endif
+#endif
 #endif
 #elif defined(CONFIG_WPA2_ENTP)
     /** TLS client cert configuration */

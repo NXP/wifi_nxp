@@ -1953,7 +1953,7 @@ t_bool wlan_is_channel_valid(t_u8 chan_num)
     t_bool valid = MFALSE;
     int i        = 0;
     chan_freq_power_t *cfp_wwsm;
-    int cfp_no;
+    int cfp_no = 0;
 
     ENTER();
 
@@ -2114,7 +2114,7 @@ t_bool wlan_is_channel_and_freq_valid(mlan_adapter *pmadapter, t_u8 chan_num, t_
     t_bool valid = MFALSE;
     int i        = 0;
     const chan_freq_power_t *cfp;
-    int cfp_no;
+    int cfp_no = 0;
 
     ENTER();
 
