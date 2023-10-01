@@ -6147,7 +6147,13 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
+int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, size_t len));
+
+/** This function unregisters callback which are used to deliver CSI data to user.
+ *
+ * \return  WM_SUCCESS if successful
+ */
+int wlan_unregister_csi_user_callback(void);
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)

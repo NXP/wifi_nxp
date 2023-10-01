@@ -13318,18 +13318,27 @@ int wlan_config_mef(int type, t_u8 mef_action)
 #endif
 
 #ifdef CONFIG_CSI
-int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer))
+int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, size_t len))
 {
     return register_csi_user_callback(csi_data_recv_callback);
+}
+
+int wlan_unregister_csi_user_callback(void)
+{
+    return unregister_csi_user_callback();
 }
 
 int wlan_csi_cfg(wlan_csi_config_params_t *csi_params)
 {
     int ret = WM_SUCCESS;
 
-    if (true == (1 == csi_params->csi_enable) ? true : false)
+    if (csi_params->csi_enable == 1)
     {
         csi_local_buff_init();
+    }
+    else
+    {
+        ret = unregister_csi_user_callback();
     }
 
     ret = wifi_csi_cfg(csi_params);

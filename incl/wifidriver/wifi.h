@@ -1851,7 +1851,8 @@ extern int wakeup_by;
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wifi_csi_cfg(wifi_csi_config_params_t *csi_params);
-int register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer));
+int register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, size_t len));
+int unregister_csi_user_callback(void);
 void csi_local_buff_init();
 void csi_save_data_to_local_buff(void *data);
 void csi_deliver_data_to_user();

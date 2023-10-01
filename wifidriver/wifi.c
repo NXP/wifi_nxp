@@ -4829,20 +4829,27 @@ int wifi_imu_put_task_lock(void)
 #ifdef CONFIG_CSI
 
 /* csi data recv user callback */
-int (*csi_data_recv)(void *buffer) = NULL;
+int (*csi_data_recv)(void *buffer, size_t len) = NULL;
 
-int register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer))
+int register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, size_t len))
 {
     csi_data_recv = csi_data_recv_callback;
 
     return WM_SUCCESS;
 }
 
-void process_csi_info_callback(void *data)
+int unregister_csi_user_callback(void)
+{
+    csi_data_recv = NULL;
+
+    return WM_SUCCESS;
+}
+
+void process_csi_info_callback(void *data, size_t len)
 {
     if (csi_data_recv != NULL)
     {
-        csi_data_recv(data);
+        csi_data_recv(data, len);
     }
 }
 
@@ -4891,7 +4898,7 @@ void csi_deliver_data_to_user()
         save_data_len             = (csi_record->Len & 0x1fff) * 4;
         save_data_len = (save_data_len >= CSI_LOCAL_BUF_ENTRY_SIZE) ? CSI_LOCAL_BUF_ENTRY_SIZE : save_data_len;
 
-        process_csi_info_callback((t_u8 *)csi_record);
+        process_csi_info_callback((t_u8 *)csi_record, save_data_len);
 
         csi_buff_stat.valid_data_cnt--;
 

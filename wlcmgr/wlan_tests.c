@@ -7205,6 +7205,13 @@ void set_csi_filter(t_u8 pkt_type, t_u8 subtype, t_u8 flags, int op_index, t_u8 
     }
 }
 
+int csi_data_recv_user(void *buffer, size_t data_len)
+{
+    PRINTF("CSI user callback: Event CSI data\r\n");
+    dump_hex(buffer, data_len);
+    return WM_SUCCESS;
+}
+
 static void test_wlan_set_csi_param_header(int argc, char **argv)
 {
     t_u16 csi_enable        = 0;
@@ -7215,6 +7222,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     t_u8 channel            = 0;
     t_u8 csi_monitor_enable = 0;
     t_u8 ra4us              = 0;
+    int ret                 = -1;
 
     if (argc != 9)
     {
@@ -7264,6 +7272,15 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     channel            = (t_u8)atoi(argv[6]);
     csi_monitor_enable = (t_u8)atoi(argv[7]);
     ra4us              = (t_u8)atoi(argv[8]);
+
+    if (csi_enable == 1)
+    {
+        ret = wlan_register_csi_user_callback(csi_data_recv_user);
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Error during register csi user callback\r\n");
+        }
+    }
 
     set_csi_param_header(csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
 }

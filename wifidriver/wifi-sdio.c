@@ -515,6 +515,12 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         return wlan_handle_event_packet(pmbuf + INTF_HEADER_LEN);
     }
 #endif
+#ifdef CONFIG_CSI
+    if (upld_type == MLAN_TYPE_EVENT && (wlan_le16_to_cpu(sdiopkt->hostcmd.command) == EVENT_CSI))
+    {
+        csi_save_data_to_local_buff((t_u8 *)pmbuf + 8);
+    }
+#endif
 
 #ifdef CONFIG_P2P
     t_u8 *cmdBuf;
