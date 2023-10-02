@@ -233,18 +233,9 @@ typedef struct _cmd_header
     int reserved;
 } cmd_header;
 
-/** IMUPkt/SDIOPkt only name difference, same definition */
-typedef MLAN_PACK_START struct _SDIOPkt
-{
-    uint16_t size;
-    uint16_t pkttype;
-    HostCmd_DS_COMMAND hostcmd;
-} MLAN_PACK_END SDIOPkt;
-
 static uint8_t rx_buf[BUF_LEN];
 static cmd_header last_cmd_hdr;
 uint8_t *local_outbuf;
-static SDIOPkt *sdiopkt;
 
 #if defined(MIMXRT1176_cm7_SERIES)
 lpspi_master_config_t spiConfig;

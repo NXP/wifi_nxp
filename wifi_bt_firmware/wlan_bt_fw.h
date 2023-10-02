@@ -11,26 +11,18 @@
 #if defined(SD8801)
 #include "sd8801_wlan.h"
 #elif defined(SD8978)
-#ifdef CONFIG_FW_VDLL
-#include "sdIW416_wlan_vdllv2.h"
-#else
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 #include "sduartIW416_wlan_bt.h"
 #else
 #include "sdIW416_wlan.h"
 #include "uartIW416_bt.h"
 #endif
-#endif
 #elif defined(SD8987)
-#ifdef CONFIG_FW_VDLL
-#include "sd8987_wlan_vdllv2.h"
-#else
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 #include "sduart8987_wlan_bt.h"
 #else
 #include "sd8987_wlan.h"
 #include "uart8987_bt.h"
-#endif
 #endif
 #elif defined(SD9177)
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)

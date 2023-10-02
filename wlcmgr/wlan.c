@@ -1049,7 +1049,7 @@ done:
 
 int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds)
 {
-    int ret = 0;
+    int ret = WM_SUCCESS;
 
     if (!wlan_is_started())
     {
@@ -1097,16 +1097,19 @@ int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds)
         wifi_set_packet_filters(&g_flt_cfg);
     }
     else
+#endif
     {
         wlan.wakeup_conditions = wake_up_conds;
+#ifdef CONFIG_MEF_CFG
         /* Clear previous MEF entries */
         if (g_flt_cfg.nentries != 0)
         {
             (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
             wifi_set_packet_filters(&g_flt_cfg);
         }
-    }
 #endif
+    }
+
     return ret;
 }
 
