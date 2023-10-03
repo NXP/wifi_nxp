@@ -6896,7 +6896,12 @@ int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
     ret = wlan_send_hostcmd(rutx_pwr_cfg, rutx_pwr_cfg_len / sizeof(uint8_t), rutxcmd_resp_buff, RUTXCMD_RESP_BUFF_SIZE,
                             &reqd_len);
 
-    if (ret == WM_SUCCESS)
+    if (ret != WM_SUCCESS)
+    {
+        wifi_d("RUTXcmd failed error: %d", ret);
+    }
+#ifndef CONFIG_MLAN_WMSDK
+    else
     {
         wifi_d("RUTXcmd success, response is \r\n");
         for (len = 0; len < reqd_len; len++)
@@ -6904,10 +6909,7 @@ int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
             wifi_d("%x\t", *((uint8_t *)rutxcmd_resp_buff + len));
         }
     }
-    else
-    {
-        wifi_d("RUTXcmd failed error: %d", ret);
-    }
+#endif
 
     if (rutxcmd_resp_buff != NULL)
     {
