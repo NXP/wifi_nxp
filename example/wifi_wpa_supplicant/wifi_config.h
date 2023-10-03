@@ -182,6 +182,9 @@
 #undef CONFIG_WIFI_UAP_DEBUG
 #undef CONFIG_WPS_DEBUG
 #undef CONFIG_FW_VDLL_DEBUG
+#undef CONFIG_DHCP_SERVER_DEBUG
+#undef CONFIG_WIFI_SDIO_DEBUG
+#undef CONFIG_FWDNLD_IO_DEBUG
 
 /*
  * Heap debug options
@@ -192,6 +195,8 @@
 /*
  * wpa supplicant debug options
  */
-#define CONFIG_WPA_SUPP_DEBUG_LEVEL 3
+#define CONFIG_WPA_SUPP_DEBUG_LEVEL 6
+
+#undef CONFIG_SUPP_DEBUG
 
 #endif /* _WIFI_CONFIG_H_ */

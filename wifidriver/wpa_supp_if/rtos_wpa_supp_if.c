@@ -1259,17 +1259,17 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
     if ((key_flag & KEY_FLAG_PAIRWISE_MASK) == KEY_FLAG_PAIRWISE_RX_TX_MODIFY)
     {
-        wpa_printf(MSG_DEBUG, "SET_KEY (pairwise RX/TX modify)");
+        supp_d("SET_KEY (pairwise RX/TX modify)");
     }
     else if (alg == WPA_ALG_NONE && (key_flag & KEY_FLAG_RX_TX))
     {
-        wpa_printf(MSG_DEBUG, "%s: invalid key_flag to delete key", __func__);
+        supp_d("%s: invalid key_flag to delete key", __func__);
         ret = -1;
         goto out;
     }
     else if (alg == WPA_ALG_NONE)
     {
-        wpa_printf(MSG_DEBUG, "DEL_KEY");
+        supp_d("DEL_KEY");
 
         status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, is_pairwise, key_idx, addr);
 
@@ -1299,29 +1299,29 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
             }
             else if (!(key_flag & KEY_FLAG_PAIRWISE))
             {
-                wpa_printf(MSG_DEBUG, "   key_flag missing PAIRWISE when setting a pairwise key");
+                supp_d("   key_flag missing PAIRWISE when setting a pairwise key");
                 ret = -1;
                 goto out;
             }
             else if (alg == WPA_ALG_WEP && (key_flag & KEY_FLAG_RX_TX) == KEY_FLAG_RX_TX)
             {
-                wpa_printf(MSG_DEBUG, "   unicast WEP key");
+                supp_d("   unicast WEP key");
                 skip_set_key = 0;
             }
             else
             {
-                wpa_printf(MSG_DEBUG, "   pairwise key");
+                supp_d("   pairwise key");
             }
         }
         else if ((key_flag & KEY_FLAG_PAIRWISE) || !(key_flag & KEY_FLAG_GROUP))
         {
-            wpa_printf(MSG_DEBUG, "   invalid key_flag for a broadcast key");
+            supp_d("   invalid key_flag for a broadcast key");
             ret = -1;
             goto out;
         }
         else
         {
-            wpa_printf(MSG_DEBUG, "   broadcast key");
+            supp_d("   broadcast key");
             is_pairwise = false;
             if (key_flag & KEY_FLAG_DEFAULT)
                 skip_set_key = 0;

@@ -1,4 +1,3 @@
-#ifdef CONFIG_11AX
 /** @file mlan_11ax.c
  *
  *  @brief This file defines the private and adapter data
@@ -16,6 +15,8 @@
 /* Additional WMSDK header files */
 #include <wmerrno.h>
 #include <wm_os.h>
+
+#ifdef CONFIG_11AX
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
