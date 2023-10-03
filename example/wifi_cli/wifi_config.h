@@ -118,6 +118,8 @@
 #define CONFIG_11R 1
 #endif
 #define CONFIG_OWE 1
+#undef CONFIG_WIFI_IND_DNLD
+#undef CONFIG_WIFI_IND_RESET
 #endif
 
 #undef CONFIG_HOST_SLEEP
