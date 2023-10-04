@@ -6884,7 +6884,9 @@ int wifi_set_11ax_rutxpowerlimit(const void *rutx_pwr_cfg, uint32_t rutx_pwr_cfg
 {
     int ret;
     uint32_t reqd_len = 0;
+#ifndef CONFIG_MLAN_WMSDK
     uint32_t len;
+#endif
 
     void *rutxcmd_resp_buff = os_mem_alloc(RUTXCMD_RESP_BUFF_SIZE);
 

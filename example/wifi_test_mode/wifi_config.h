@@ -23,6 +23,10 @@
 #undef CONFIG_WMM
 #endif
 
+#if defined(SD8978) || defined(SD8987) || defined(SD9177)
+#define CONFIG_FW_VDLL
+#endif
+
 #define CONFIG_RF_TEST_MODE 1
 #if defined(SD9177)
 #ifdef CONFIG_11AC
