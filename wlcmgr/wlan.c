@@ -8322,6 +8322,7 @@ int wlan_add_network(struct wlan_network *network)
             return -WM_E_INVAL;
         }
 #ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
         if (network->role == WLAN_BSS_ROLE_UAP)
         {
             /* Specify Server certificate */
@@ -8364,8 +8365,9 @@ int wlan_add_network(struct wlan_network *network)
             }
         }
         else
-        {
 #endif
+#endif
+        {
             if (wlan_is_eap_fast_security(network->security.type) == false)
             {
                 /* Specify Client certificate */
@@ -8406,9 +8408,7 @@ int wlan_add_network(struct wlan_network *network)
                     return -WM_E_INVAL;
                 }
             }
-#ifdef CONFIG_HOSTAPD
         }
-#endif
         if (wlan_is_eap_ttls_security(network->security.type))
         {
             if (network->role == WLAN_BSS_ROLE_STA)

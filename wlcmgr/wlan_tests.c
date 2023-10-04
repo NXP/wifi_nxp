@@ -1398,8 +1398,10 @@ static void test_wlan_add(int argc, char **argv)
             {
                 /* For Station Set Client Identity */
                 strcpy(network.security.identity, argv[arg + 2]);
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 /* For uAP Set External Client Identity */
                 strcpy(network.security.identities[network.security.nusers], argv[arg + 2]);
+#endif
 
                 arg += 2;
 
@@ -1407,21 +1409,28 @@ static void test_wlan_add(int argc, char **argv)
                 {
                     /* Set Client Password */
                     strcpy(network.security.eap_password, argv[arg + 2]);
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                     /* For uAP Set External Client Identity */
                     strcpy(network.security.passwords[network.security.nusers], argv[arg + 2]);
+#endif
                     arg += 2;
                 }
-
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 network.security.nusers += 1;
+#endif
             }
 
             if (string_equal(argv[arg + 1], "key_passwd") != false)
             {
                 /* Set Client/Server Key password */
                 strcpy(network.security.client_key_passwd, argv[arg + 2]);
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
                 strcpy(network.security.server_key_passwd, argv[arg + 2]);
+#endif
                 arg += 2;
             }
+
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
 
 #ifdef CONFIG_EAP_FAST
             if (string_equal(argv[arg + 1], "pac_opa_enc_key") != false)
@@ -1458,6 +1467,7 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 arg += 2;
             }
+#endif
 #endif
             if (string_equal(argv[arg + 1], "hash") != false)
             {
