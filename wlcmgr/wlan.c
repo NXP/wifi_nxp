@@ -8398,6 +8398,7 @@ int wlan_add_network(struct wlan_network *network)
             }
             else
             {
+#ifdef CONFIG_EAP_FAST
                 /* Specify PAC Data */
                 network->security.pac_len =
                     wlan_get_entp_cert_files(FILE_TYPE_ENTP_PAC_DATA, &network->security.pac_data);
@@ -8407,6 +8408,7 @@ int wlan_add_network(struct wlan_network *network)
                     wlcm_e("PAC data is not configured");
                     return -WM_E_INVAL;
                 }
+#endif
             }
         }
         if (wlan_is_eap_ttls_security(network->security.type))
