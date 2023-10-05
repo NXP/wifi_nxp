@@ -34,8 +34,8 @@
 #define CONFIG_SDIO_MULTI_PORT_TX_AGGR 1
 #define CONFIG_COMPRESS_TX_PWTBL
 #define CONFIG_COMPRESS_RU_TX_PWTBL
-#define CONFIG_WIFI_FEATURES    1
-#define ENABLE_OFFLOAD          1
+#define CONFIG_WIFI_FEATURES 1
+#define ENABLE_OFFLOAD       1
 #ifdef CONFIG_11AC
 #define CONFIG_11AX
 #endif
@@ -105,17 +105,17 @@
 #define CONFIG_MAX_IPV6_ADDRESSES 3
 
 #if defined(SD8978) || defined(SD8987) || defined(SD8801) || defined(SD9177)
-#define CONFIG_WIFI_CAPA 1
-#define CONFIG_ROAMING    1
+#define CONFIG_WIFI_CAPA        1
+#define CONFIG_ROAMING          1
 #define CONFIG_CLOUD_KEEP_ALIVE 1
-#define CONFIG_TURBO_MODE    1
-#define CONFIG_AUTO_RECONNECT 1
-#define CONFIG_OWE 1
+#define CONFIG_TURBO_MODE       1
+#define CONFIG_AUTO_RECONNECT   1
+#define CONFIG_OWE              1
 
 #if !defined(SD8801)
 #define CONFIG_EXT_SCAN_SUPPORT 1
-#define CONFIG_WIFI_EU_CRYPTO 1
-#define CONFIG_11R 1
+#define CONFIG_WIFI_EU_CRYPTO   1
+#define CONFIG_11R              1
 #undef CONFIG_WIFI_IND_DNLD
 #undef CONFIG_WIFI_IND_RESET
 #endif
@@ -133,9 +133,20 @@
 #define CONFIG_WPA_SUPP 1
 
 #ifdef CONFIG_WPA_SUPP
-#define CONFIG_WPA_SUPP_WPS               1
-#define CONFIG_WPA_SUPP_WPA3              1
+#define CONFIG_WPA_SUPP_WPS  1
+#define CONFIG_WPA_SUPP_WPA3 1
 #undef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+
+#if defined(SD9177)
+#undef CONFIG_WPA_SUPP_DPP
+
+#ifdef CONFIG_WPA_SUPP_DPP
+#define CONFIG_WPA_SUPP_DPP2 1
+#define CONFIG_WPA_SUPP_DPP3 1
+#define CONFIG_RX_CHAN_INFO  1
+#define CONFIG_TXPD_RXPD_V3  1
+#endif
+#endif
 
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 

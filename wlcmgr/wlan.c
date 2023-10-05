@@ -5350,7 +5350,9 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             }
             else if (memcmp("dot1x", pos, strlen("dot1x")) == 0)
             {
+#ifdef CONFIG_EAP_TLS
                 security->type = WLAN_SECURITY_EAP_TLS_SHA256;
+#endif
                 security->dpp_akm_11x = 1;
             }
             else

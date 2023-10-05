@@ -232,15 +232,12 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->pkt_delay_2ms = 0;
 
 #ifdef CONFIG_WPA_SUPP
-    if (interface == BSS_TYPE_UAP)
+    if (pmpriv->tx_seq_num == 0)
     {
-        if (pmpriv->tx_seq_num == 0)
-        {
-            pmpriv->tx_seq_num++;
-        }
-        ptxpd->tx_token_id = pmpriv->tx_seq_num++;
-        ptxpd->flags |= MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS;
+        pmpriv->tx_seq_num++;
     }
+    ptxpd->tx_token_id = pmpriv->tx_seq_num++;
+    ptxpd->flags |= MRVDRV_TxPD_FLAGS_TX_PACKET_STATUS;
 #endif
 
     sdiohdr->size = (t_u16)(payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN);
