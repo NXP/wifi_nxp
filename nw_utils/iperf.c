@@ -584,7 +584,7 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 
-    if (!(ctx->tcp))
+    if (!(ctx->tcp) && !(ctx->server_mode))
     {
         if (ctx->client_type == LWIPERF_DUAL)
         {
