@@ -4422,7 +4422,6 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
         case VDLL_IND_TYPE_INTF_RESET:
             wevt_d("VDLLV2_IND (INTF RESET).");
             sd_wifi_reset_ports();
-            (void)wifi_put_command_resp_sem();
             break;
 #endif
         default:
