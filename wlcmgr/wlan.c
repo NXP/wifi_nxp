@@ -343,13 +343,16 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
                                                        153};
 
 static os_queue_pool_define(g_wlan_event_queue_data, (int)(sizeof(struct wifi_message) * MAX_EVENTS));
-#ifdef CONFIG_WPA2_ENTP
-static os_thread_stack_define(g_cm_stack, 5120);
-#else
-static os_thread_stack_define(g_cm_stack, 5120);
+
+#ifndef CONFIG_WLCMGR_STACK_SIZE
+#define CONFIG_WLCMGR_STACK_SIZE 5120
 #endif
+static os_thread_stack_define(g_cm_stack, CONFIG_WLCMGR_STACK_SIZE);
 #ifdef CONFIG_WPS2
-static os_thread_stack_define(g_wps_stack, 5120);
+#ifndef CONFIG_WPS_STACK_SIZE
+#define CONFIG_WPS_STACK_SIZE 5120
+#endif
+static os_thread_stack_define(g_wps_stack, CONFIG_WPS_STACK_SIZE);
 static int wlcm_wps_callback(enum wps_event event, void *data, uint16_t len);
 
 typedef enum
@@ -398,8 +401,11 @@ static struct wps_config wps_conf = {
 };
 #endif /* CONFIG_WPS2 */
 #ifdef RW610
+#ifndef CONFIG_MON_THREAD_STACK_SIZE
+#define CONFIG_MON_THREAD_STACK_SIZE 1152
+#endif
 static void wlan_mon_thread(os_thread_arg_t data);
-static os_thread_stack_define(g_mon_stack, 1152);
+static os_thread_stack_define(g_mon_stack, CONFIG_MON_THREAD_STACK_SIZE);
 static os_queue_pool_define(g_mon_event_queue_data, sizeof(struct wlan_message) * MAX_EVENTS);
 #endif
 typedef enum

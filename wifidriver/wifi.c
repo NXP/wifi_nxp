@@ -148,11 +148,27 @@ typedef enum __mlan_status
 #ifndef RW610
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
 #endif
-static os_thread_stack_define(wifi_scan_stack, 2048);
-static os_thread_stack_define(wifi_drv_stack, 2048);
-static os_thread_stack_define(wifi_powersave_stack, 512);
+
+#ifndef CONFIG_WIFI_SCAN_STACK_SIZE
+#define CONFIG_WIFI_SCAN_STACK_SIZE 2048
+#endif
+
+#ifndef CONFIG_WIFI_DRIVER_STACK_SIZE
+#define CONFIG_WIFI_DRIVER_STACK_SIZE 2048
+#endif
+
+#ifndef CONFIG_WIFI_POWERSAVE_STACK_SIZE
+#define CONFIG_WIFI_POWERSAVE_STACK_SIZE 512
+#endif
+
+static os_thread_stack_define(wifi_scan_stack, CONFIG_WIFI_SCAN_STACK_SIZE);
+static os_thread_stack_define(wifi_drv_stack, CONFIG_WIFI_DRIVER_STACK_SIZE);
+static os_thread_stack_define(wifi_powersave_stack, CONFIG_WIFI_POWERSAVE_STACK_SIZE);
 #ifdef CONFIG_WMM
-static os_thread_stack_define(wifi_tx_stack, 2048);
+#ifndef CONFIG_WIFI_TX_STACK_SIZE
+#define CONFIG_WIFI_TX_STACK_SIZE 2048
+#endif
+static os_thread_stack_define(wifi_tx_stack, CONFIG_WIFI_TX_STACK_SIZE);
 #ifdef CONFIG_ZEPHYR
 static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
 #endif
