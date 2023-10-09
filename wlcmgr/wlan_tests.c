@@ -2022,8 +2022,10 @@ static int __scan_cb(unsigned int count)
 
 static void test_wlan_thread_info(int argc, char **argv)
 {
-    /* TODO: implement */
-    // os_dump_threadinfo(NULL);
+    /* TODO: implement for Zephyr */
+#ifndef CONFIG_ZEPHYR
+    os_dump_threadinfo(NULL);
+#endif
 }
 
 #ifdef CONFIG_SCHED_SWITCH_TRACE
