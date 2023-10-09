@@ -2334,6 +2334,13 @@ static int do_start(struct wlan_network *network)
             if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
             {
                 network->channel = wlan.networks[wlan.cur_network_idx].channel;
+#ifdef CONFIG_WPA_SUPP
+            network->sec_channel_offset = wifi_get_sec_channel_offset(network->channel);
+            if (network->channel == 14)
+            {
+                wpa_supp_set_ap_bw(netif, 1);
+            }
+#endif
             }
             else
             {
