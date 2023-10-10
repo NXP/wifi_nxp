@@ -10273,12 +10273,12 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
 #if defined(CONFIG_WIFIDRIVER_PS_LOCK)
 #ifdef CONFIG_WNM_PS
         if (wlan.cm_wnmps_configured == true)
-            wlcm_e("wnm ps already enabled: %d, ieee ps could not be enabled", wlan.cm_wnmps_configured);
-        else
+        {
+            return WM_SUCCESS;
+        }
 #endif
-            wlcm_e("ieee ps already enabled: %d", wlan.cm_ieeeps_configured);
 #endif
-        return WLAN_ERROR_STATE;
+        return WM_SUCCESS;
     }
 
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_IEEE);
@@ -10364,10 +10364,7 @@ int wlan_deepsleepps_on(void)
     if (wlan.cm_ieeeps_configured || wlan.cm_deepsleepps_configured)
 #endif
     {
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
-        wlcm_e("deep sleep ps already enabled: %d", wlan.cm_deepsleepps_configured);
-#endif
-        return WLAN_ERROR_STATE;
+        return WM_SUCCESS;
     }
 
 #ifndef CONFIG_WIFIDRIVER_PS_LOCK
