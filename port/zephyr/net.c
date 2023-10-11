@@ -1074,8 +1074,33 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     }
     return ret;
 }
-#endif /* CONFIG_IPV6 */
 
+static void net_clear_ipv6_ll_address(void *intrfc_handle)
+{
+    struct net_if *iface = ((interface_t *)intrfc_handle)->netif;
+
+    if (iface == NULL)
+    {
+        return;
+    }
+
+    /* We need to remove the old IPv6 link layer address, that is
+     * generated from old MAC address, from network interface if
+     * needed.
+     */
+	if (IS_ENABLED(CONFIG_NET_NATIVE_IPV6))
+	{
+        struct in6_addr iid;
+
+        net_ipv6_addr_create_iid(&iid, net_if_get_link_addr(iface));
+
+        /* No need to check the return value in this case. It
+         * is not an error if the address is not found atm.
+         */
+        (void)net_if_ipv6_addr_rm(iface, &iid);
+    }
+}
+#endif /* CONFIG_IPV6 */
 
 int net_get_if_name(char *pif_name, void *intrfc_handle)
 {
@@ -1217,6 +1242,11 @@ int net_wlan_init(void)
 
 void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
 {
+#ifdef CONFIG_IPV6
+    net_clear_ipv6_ll_address(&g_mlan);
+    net_clear_ipv6_ll_address(&g_uap);
+#endif
+
     (void)memcpy(g_mlan.state.ethaddr.addr, &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
     (void)memcpy(g_uap.state.ethaddr.addr, &uap_mac[0], MLAN_MAC_ADDR_LENGTH);
 
