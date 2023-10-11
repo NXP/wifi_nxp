@@ -4371,9 +4371,9 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
     else
     {
 #ifdef CONFIG_MEF_CFG
-        (void)printf("wowlan/mef need be specified\r\n");
+        (void)PRINTF("wowlan/mef need be specified\r\n");
 #else
-        (void)printf("wowlan need be specified\r\n");
+        (void)PRINTF("wowlan need be specified\r\n");
 #endif
         return;
     }
