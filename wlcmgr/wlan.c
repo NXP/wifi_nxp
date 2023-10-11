@@ -13616,6 +13616,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.client_key2_len = data_len;
     }
 #ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
     {
         wlan.dh_data = os_mem_alloc(data_len);
@@ -13763,6 +13764,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
         wlan.client_key2_data = NULL;
     }
 #ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
     {
         *data = wlan.dh_data;

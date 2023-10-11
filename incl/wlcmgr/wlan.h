@@ -1340,12 +1340,12 @@ struct wlan_network_security
     size_t client_key2_len;
     /** Client key2 password */
     char client_key2_passwd[PASSWORD_MAX_LENGTH];
+#ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     /** DH params blob */
     unsigned char *dh_data;
     /** DH params blob len */
     size_t dh_len;
-#ifdef CONFIG_HOSTAPD
-#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     /** Server cert blob in PEM/DER format */
     unsigned char *server_cert_data;
     /** Server cert blob len */
