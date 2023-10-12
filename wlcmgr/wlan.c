@@ -13630,6 +13630,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.dh_len = data_len;
     }
 #endif
+#endif
 #ifdef CONFIG_EAP_FAST
     else if (cert_type == FILE_TYPE_ENTP_PAC_DATA)
     {
@@ -13778,6 +13779,7 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
 #endif
         wlan.dh_data = NULL;
     }
+#endif
 #endif
 #ifdef CONFIG_EAP_FAST
     else if (cert_type == FILE_TYPE_ENTP_PAC_DATA)
