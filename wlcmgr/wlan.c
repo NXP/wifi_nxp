@@ -5809,6 +5809,10 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifdef CONFIG_WIFI_IND_RESET
 static void wlcm_process_fw_hang_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
+#ifdef CONFIG_WPA_SUPP
+    struct netif *netif = net_get_sta_interface();
+#endif
+
     (void)msg;
 
     CONNECTION_EVENT(WLAN_REASON_FW_HANG, NULL);
