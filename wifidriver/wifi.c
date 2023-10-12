@@ -4071,20 +4071,6 @@ int wifi_low_level_output(const t_u8 interface,
                 tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
         }
     }
-    else if ((interface == MLAN_BSS_TYPE_UAP) &&
-             ((mlan_adap->usr_dot_11ax_enable == MTRUE) || (mlan_adap->usr_dot_11ac_enable == MTRUE)))
-    {
-        ret = wlan_is_tcp_ack(pmpriv, buffer);
-        if (ret)
-        {
-            if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
-            else if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
-            else if (wm_wifi.bandwidth == BANDWIDTH_20MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
-        }
-    }
 #endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX */
 #endif
