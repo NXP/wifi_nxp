@@ -746,7 +746,11 @@ static void dump_wlan_add_usage(void)
 #endif
 #ifdef CONFIG_OWE
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [owe_only] mfpc 1 mfpr 1"
+        "    wlan-add <profile_name> ssid <ssid> <owe_only> "
+#ifdef CONFIG_WPA_SUPP
+        "[og <\"19 20 21\">] "
+#endif
+        "mfpc 1 mfpr 1"
         "\r\n");
     (void)PRINTF("      If using OWE only security, always set the PMF configuration.\r\n");
 #endif
@@ -757,7 +761,11 @@ static void dump_wlan_add_usage(void)
         "/sae-ft"
 #endif
 #endif
-        " <secret> [pwe <0/1/2>] mfpc <1> mfpr <0/1>]"
+        " <secret> "
+#ifdef CONFIG_WPA_SUPP
+        "[sg <\"19 20 21\">] "
+#endif
+        "[pwe <0/1/2>] mfpc <1> mfpr <0/1>]"
         "\r\n");
     (void)PRINTF("      If using WPA3 SAE security, always set the PMF configuration.\r\n");
     (void)PRINTF("  For static IP address assignment:\r\n");
@@ -809,7 +817,11 @@ static void dump_wlan_add_usage(void)
 #ifdef CONFIG_WPA_SUPP
         "/wpa2-sha256"
 #endif
-        " <secret>] [wpa3 sae <secret> [pwe <0/1/2>] [tr <0/1"
+        " <secret>] [wpa3 sae <secret> "
+#ifdef CONFIG_WPA_SUPP
+        "[sg <\"19 20 21\">] "
+#endif
+        "[pwe <0/1/2>] [tr <0/1"
 #ifdef CONFIG_WPA_SUPP
         "/2/4/8"
 #endif
@@ -868,7 +880,11 @@ static void dump_wlan_add_usage(void)
 #endif
 #endif
 #ifdef CONFIG_OWE
-    (void)PRINTF("    [owe_only]\r\n");
+    (void)PRINTF("    [owe_only "
+#ifdef CONFIG_WPA_SUPP
+            "[og <\"19 20 21\">]"
+#endif
+            "]\r\n");
 #endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
@@ -1061,6 +1077,14 @@ static void test_wlan_add(int argc, char **argv)
             network.security.type = WLAN_SECURITY_OWE_ONLY;
             arg += 1;
             info.security++;
+
+#ifdef CONFIG_WPA_SUPP
+            if (string_equal(argv[arg], "og") != false)
+            {
+                network.security.owe_groups = argv[arg + 1];
+                arg += 2;
+            }
+#endif
         }
 #endif
         else if ((info.security3 == 0U) && string_equal("wpa3", argv[arg]))
@@ -1107,6 +1131,13 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 arg += 2;
 
+#ifdef CONFIG_WPA_SUPP
+                if (string_equal(argv[arg + 1], "sg") != false)
+                {
+                    network.security.sae_groups = argv[arg + 2];
+                    arg += 2;
+                }
+#endif
                 if (string_equal(argv[arg + 1], "pwe") != false)
                 {
                     errno                           = 0;

@@ -1240,10 +1240,16 @@ struct wlan_network_security
     /** Length of the WPA3 SAE Password, \ref WLAN_PASSWORD_MIN_LENGTH to \ref
      * WLAN_PASSWORD_MAX_LENGTH.  Ignored for networks with no security. */
     size_t password_len;
+    /** SAE Groups */
+    char *sae_groups;
     /** PWE derivation */
     uint8_t pwe_derivation;
     /** transition disable */
     uint8_t transition_disable;
+#ifdef CONFIG_OWE
+    /** OWE Groups */
+    char *owe_groups;
+#endif
     /** Pairwise Master Key.  When pmk_valid is set, this is the PMK calculated
      * from the PSK for WPA/PSK networks.  If pmk_valid is not set, this field
      * is not valid.  When adding networks with \ref wlan_add_network, users
