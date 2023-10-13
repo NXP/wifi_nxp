@@ -5045,7 +5045,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             break;
         case EVENT_DEAUTHENTICATED:
-#ifndef CONFIG_WPA_SUPP
             if (evt->reason_code == 0U)
             {
                 (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
@@ -5056,10 +5055,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 (void)wifi_event_completion(WIFI_EVENT_AUTHENTICATION, WIFI_EVENT_REASON_FAILURE,
                                             (void *)&evt->reason_code);
             }
-#else
-            (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, WIFI_EVENT_REASON_FAILURE,
-                                        (void *)&evt->reason_code);
-#endif
 
 #ifdef CONFIG_11N
             /* fixme: Should this be outside CONFIG_11N ? */
