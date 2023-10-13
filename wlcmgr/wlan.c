@@ -2000,7 +2000,24 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
             }
 #endif
             break;
+#ifdef CONFIG_OWE
         case WLAN_SECURITY_OWE_ONLY:
+            if (res->WPA_WPA2_WEP.owe != 0U)
+            {
+                /** This is dummy command to enable the embedded supplicant in Wi-Fi fimrware, OWE never uses any password */
+                wlcm_d("configuring OWE security");
+                ret = wifi_send_add_wpa3_password((int)network->role, network->ssid, "12345678",
+                                                  8U);
+            }
+            else
+            { /* Do Nothing */
+            }
+            if (ret != WM_SUCCESS)
+            {
+                return -WM_FAIL;
+            }
+            break;
+#endif
         case WLAN_SECURITY_WPA3_SAE:
         case WLAN_SECURITY_WPA2_WPA3_SAE_MIXED:
             if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
@@ -2016,12 +2033,6 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
                 wlcm_d("adding SSID and PSK to supplicant cache");
                 ret = wifi_send_add_wpa_psk((int)network->role, network->ssid, network->security.password,
                                             network->security.password_len);
-            }
-            else if (res->WPA_WPA2_WEP.owe != 0U)
-            {
-                wlcm_d("configuring OWE security");
-                ret = wifi_send_add_wpa3_password((int)network->role, network->ssid, "12345678",
-                                                  8U);
             }
             else
             { /* Do Nothing */

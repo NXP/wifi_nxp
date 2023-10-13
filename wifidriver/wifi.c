@@ -4337,9 +4337,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     (void)wifi_sdio_lock();
 #endif
 
-    /* XXX: TODO Get rid on the memset once we are convinced that
-     * process_pkt_hdrs sets correct values */
-    (void)memset(poutbuf, 0, sizeof(&outbuf_len));
+    (void)memset(poutbuf, 0, pkt_len);
 
     (void)raw_process_pkt_hdrs((t_u8 *)poutbuf, pkt_len + len - 2U, interface);
     (void)memcpy((void *)((t_u8 *)poutbuf + pkt_len - 2), (const void *)buf, (size_t)len);
@@ -4388,9 +4386,6 @@ int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint
     wifi_sdio_lock();
 #endif
 
-    /* XXX: TODO Get rid on the memset once we are convinced that
-     * process_pkt_hdrs sets correct values */
-    // memset(outbuf, 0, sizeof(outbuf));
     (void)memset(outbuf, 0x00, pkt_len);
 
     (void)memcpy((t_u8 *)outbuf + pkt_len, buf, len);
@@ -4661,9 +4656,55 @@ mlan_status raw_wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 t
 }
 #endif
 
+static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
+{
+    mlan_status i;
+    uint32_t pkt_len, outbuf_len;
+
+    uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
+
+    if (!outbuf)
+    {
+        return (int)-WM_FAIL;
+    }
+
+    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+
+    if ((len + pkt_len) > outbuf_len)
+    {
+        return (int)-WM_FAIL;
+    }
+
+    wifi_tx_card_awake_lock();
+#if defined(RW610)
+    wifi_imu_lock();
+#else
+    wifi_sdio_lock();
+#endif
+
+    (void)memset(outbuf, 0x00, pkt_len);
+
+    (void)memcpy((t_u8 *)outbuf + pkt_len, buf, len);
+
+    i = wlan_xmit_pkt(outbuf, pkt_len + len, interface, 0);
+
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
+    wifi_sdio_unlock();
+#endif
+    wifi_tx_card_awake_unlock();
+
+    if (i == MLAN_STATUS_FAILURE)
+    {
+        return (int)-WM_FAIL;
+    }
+    return (int)WM_SUCCESS;
+}
+
 int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, const size_t len)
 {
-    return raw_low_level_output((t_u8)bss_type, buff, len);
+    return supp_low_level_output((t_u8)bss_type, buff, len);
 }
 
 /**
