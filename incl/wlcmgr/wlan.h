@@ -527,12 +527,13 @@ typedef enum wlan_ps_mode
     WLAN_IEEE,
     /** Deep sleep power save mode */
     WLAN_DEEP_SLEEP,
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
+    /** IEEE and Deep sleep power save mode */
     WLAN_IEEE_DEEP_SLEEP,
 #ifdef CONFIG_WNM_PS
+    /** WNM power save mode */
     WLAN_WNM,
+    /** WNM and Deep sleep power save mode */
     WLAN_WNM_DEEP_SLEEP,
-#endif
 #endif
 } wlan_ps_mode;
 
@@ -548,7 +549,7 @@ typedef enum _ENH_PS_MODES
 {
     GET_PS        = 0,
     SLEEP_CONFIRM = 5,
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
     DIS_WNM_PS = 0xfc,
     EN_WNM_PS  = 0xfd,
 #endif
@@ -562,7 +563,7 @@ typedef enum _Host_Sleep_Action
     HS_ACTIVATE  = 0x0002,
 } Host_Sleep_Action;
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
 typedef PACK_START struct
 {
     uint8_t action;
@@ -3380,8 +3381,6 @@ int wlan_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low);
  *            \ref WAKE_ON_MGMT_FRAME
  *
  * \return WM_SUCCESS if the call was successful.
- * \return WLAN_ERROR_STATE if the call was made in a state where such an
- *         operation is illegal.
  * \return -WM_FAIL otherwise.
  *
  */
@@ -3393,14 +3392,12 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions);
  *       only when all requisite conditions are met.
  *
  * \return WM_SUCCESS if the call was successful.
- * \return WLAN_ERROR_STATE if the call was made in a state where such an
- *         operation is illegal.
  * \return -WM_FAIL otherwise.
  *
  */
 int wlan_ieeeps_off(void);
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
 /** Enable WNM with Host Sleep Configuration
  *
  * When enabled, it opportunistically puts the wireless card into IEEEPS mode.
@@ -3421,8 +3418,6 @@ int wlan_ieeeps_off(void);
  *            wnm_sleep_time: wnm sleep interval.(number of dtims)
  *
  * \return WM_SUCCESS if the call was successful.
- * \return WLAN_ERROR_STATE if the call was made in a state where such an
- *         operation is illegal.
  * \return -WM_FAIL otherwise.
  *
  */
@@ -3434,8 +3429,6 @@ int wlan_wnmps_on(unsigned int wakeup_conditions, t_u16 wnm_sleep_time);
  *       only when all requisite conditions are met.
  *
  * \return WM_SUCCESS if the call was successful.
- * \return WLAN_ERROR_STATE if the call was made in a state where such an
- *         operation is illegal.
  * \return -WM_FAIL otherwise.
  *
  */
@@ -3449,8 +3442,8 @@ int wlan_wnmps_off(void);
  * disconnected for this to work.
  *
  * \return WM_SUCCESS if the call was successful.
- * \return WLAN_ERROR_STATE if the call was made in a state where such an
- *         operation is illegal.
+ * \return -WM_FAIL otherwise.
+ *
  */
 int wlan_deepsleepps_on(void);
 
@@ -3460,8 +3453,8 @@ int wlan_deepsleepps_on(void);
  *       only when all requisite conditions are met.
  *
  * \return WM_SUCCESS if the call was successful.
- * \return WLAN_ERROR_STATE if the call was made in a state where such an
- *         operation is illegal.
+ * \return -WM_FAIL otherwise.
+ *
  */
 int wlan_deepsleepps_off(void);
 

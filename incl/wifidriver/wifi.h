@@ -33,7 +33,6 @@
 #define CONFIG_ENABLE_AMSDU_RX         1
 #define CONFIG_UAP_AMPDU_TX            1
 #define CONFIG_UAP_AMPDU_RX            1
-#define CONFIG_WIFIDRIVER_PS_LOCK      1
 #define CONFIG_WNM_PS                  1
 #define CONFIG_SCAN_CHANNEL_GAP        1
 #define CONFIG_COMBO_SCAN              1
@@ -958,7 +957,7 @@ int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
                                        unsigned int max_awake);
 int wifi_enter_ieee_power_save(void);
 int wifi_exit_ieee_power_save(void);
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
 int wifi_enter_wnm_power_save(t_u16 wnm_sleep_time);
 int wifi_exit_wnm_power_save(void);
 #endif

@@ -37,7 +37,6 @@ Change log:
 #define CONFIG_ENABLE_AMSDU_RX         1
 #define CONFIG_UAP_AMPDU_TX            1
 #define CONFIG_UAP_AMPDU_RX            1
-#define CONFIG_WIFIDRIVER_PS_LOCK      1
 #define CONFIG_WNM_PS                  1
 #define CONFIG_SCAN_CHANNEL_GAP        1
 #define CONFIG_COMBO_SCAN              1

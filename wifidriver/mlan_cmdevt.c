@@ -1844,7 +1844,7 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
     else if (cmd_action == DIS_WNM_PS)
     {
         psmode_enh->action           = (ENH_PS_MODES)(wlan_cpu_to_le16(DIS_WNM_PS));
@@ -1937,7 +1937,7 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         /*#endif*/
         cmd->size = wlan_cpu_to_le16(cmd_size);
     }
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
     else if (cmd_action == EN_WNM_PS)
     {
         psmode_enh->action                   = wlan_cpu_to_le16(EN_WNM_PS);

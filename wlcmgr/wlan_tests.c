@@ -270,6 +270,10 @@ static void print_network(struct wlan_network *network)
         {
             (void)PRINTF("802.11N ");
         }
+        else
+        {
+            (void)PRINTF("802.11BG ");
+        }
     }
 
     if (network->channel != 0U)
@@ -2451,7 +2455,6 @@ static void test_wlan_stat(int argc, char **argv)
         case WLAN_DEEP_SLEEP:
             (void)strcpy(ps_mode_str, "Deep sleep");
             break;
-#ifdef CONFIG_WIFIDRIVER_PS_LOCK
         case WLAN_IEEE_DEEP_SLEEP:
             (void)strcpy(ps_mode_str, "IEEE ps and Deep sleep");
             break;
@@ -2462,7 +2465,6 @@ static void test_wlan_stat(int argc, char **argv)
         case WLAN_WNM_DEEP_SLEEP:
             (void)strcpy(ps_mode_str, "WNM ps and Deep sleep");
             break;
-#endif
 #endif
         case WLAN_ACTIVE:
         default:
@@ -2687,10 +2689,6 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         {
             (void)PRINTF("Turned off IEEE Power Save mode\r\n");
         }
-        else
-        {
-            (void)PRINTF("Failed to turn off IEEE Power Save mode, error: %d\r\n", ret);
-        }
     }
     else if (choice == 1)
     {
@@ -2701,7 +2699,7 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         }
         else
         {
-            (void)PRINTF("Failed to turn on IEEE Power Save mode, error: %d\r\n", ret);
+            (void)PRINTF("Failed to turn on IEEE Power Save mode\r\n");
         }
     }
     else
@@ -2732,7 +2730,7 @@ static void test_wlan_set_ps_cfg(int argc, char **argv)
         (void)PRINTF("Failed to set power save cfg, error: %d", ret);
 }
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
 static void test_wlan_wnm_ps(int argc, char **argv)
 {
     int choice                = -1;
@@ -2756,9 +2754,9 @@ static void test_wlan_wnm_ps(int argc, char **argv)
     {
         ret = wlan_wnmps_off();
         if (ret == WM_SUCCESS)
-            (void)PRINTF("Turned off WNM Power Save mode");
+            (void)PRINTF("Turned off WNM Power Save mode\r\n");
         else
-            (void)PRINTF("Failed to turn off WNM Power Save mode, error: %d", ret);
+            (void)PRINTF("Failed to turn off WNM Power Save mode\r\n");
     }
     else if (choice == 1)
     {
@@ -2773,9 +2771,9 @@ static void test_wlan_wnm_ps(int argc, char **argv)
         }
 
         if (ret == WM_SUCCESS)
-            (void)PRINTF("Turned on WNM Power Save mode");
+            (void)PRINTF("Turned on WNM Power Save mode\r\n");
         else
-            (void)PRINTF("Failed to turn on WNM Power Save mode, error: %d", ret);
+            (void)PRINTF("Failed to turn on WNM Power Save mode\r\n");
     }
     else
     {
@@ -2813,7 +2811,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         }
         else
         {
-            (void)PRINTF("Failed to turn off Deep Sleep Power Save mode, error: %d", ret);
+            (void)PRINTF("Failed to turn off Deep Sleep Power Save mode\r\n");
         }
     }
     else if (choice == 1)
@@ -2825,7 +2823,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         }
         else
         {
-            (void)PRINTF("Failed to turn on Deep Sleep Power Save mode, error: %d", ret);
+            (void)PRINTF("Failed to turn on Deep Sleep Power Save mode\r\n");
         }
     }
     else
@@ -4656,7 +4654,7 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
-    uint8_t action;
+    
     u8_t cmd_buf[] = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01/* Get/Set */, 0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
     u8_t resp_buf[64] = {0};
 
@@ -10318,7 +10316,7 @@ static struct cli_command tests[] = {
     {"wlan-set-ps-cfg", "<null_pkt_interval>", test_wlan_set_ps_cfg},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
     {"wlan-get-beacon-interval", NULL, test_wlan_get_beacon_interval},
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
     {"wlan-wnm-ps", "<0/1> <sleep_interval>", test_wlan_wnm_ps},
 #endif
 #ifdef CONFIG_WIFI_MAX_CLIENTS_CNT

@@ -179,11 +179,7 @@ extern mlan_adapter *mlan_adap;
 extern int wps_session_attempt;
 #endif
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
 extern os_rw_lock_t sleep_rwlock;
-#else
-extern os_rw_lock_t ps_rwlock;
-#endif
 
 #ifdef CONFIG_WMM_UAPSD
 extern os_semaphore_t uapsd_sem;

@@ -1481,7 +1481,7 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.TDLSSupport = 1;
     }
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
     if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc != MNULL) &&
         (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
     {

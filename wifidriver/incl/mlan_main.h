@@ -1615,7 +1615,7 @@ struct _mlan_private
     t_u8 ip_addr[IPADDR_LEN];
     t_u32 hotspot_cfg;
     ExtCap_t ext_cap;
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK) && defined(CONFIG_WNM_PS)
+#if defined(CONFIG_WNM_PS)
     /** WNM power save mode */
     bool wnm_set;
 #endif

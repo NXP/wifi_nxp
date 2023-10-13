@@ -1142,11 +1142,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
 #endif
 #ifndef CONFIG_UART_WIFI_BRIDGE
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
-#else
-    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
-#endif
     if (ret != WM_SUCCESS)
     {
         wifi_e("Failed to wakeup card\r\n");
@@ -1179,14 +1175,12 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
 #endif
 #ifndef CONFIG_UART_WIFI_BRIDGE
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     /* put the sleep_rwlock after send command but not wait for the command response,
      * for sleep confirm command, sleep confirm response(in wifi_process_ps_enh_response())
      * would try to get the sleep_rwlock until get it,
      * so here put the sleep_rwlock as early as possible.
      */
     (void)os_rwlock_read_unlock(&sleep_rwlock);
-#endif
 #endif
 
     /* Wait max 20 sec for the command response */
@@ -1239,9 +1233,6 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     wm_wifi.cmd_resp_priv = NULL;
 #ifdef CONFIG_WMM_UAPSD
     os_semaphore_put(&uapsd_sem);
-#endif
-#ifndef CONFIG_WIFIDRIVER_PS_LOCK
-    os_rwlock_read_unlock(&ps_rwlock);
 #endif
     wifi_set_xfer_pending(false);
     (void)wifi_put_command_lock();
@@ -3341,13 +3332,8 @@ static int wifi_low_level_input(const uint8_t interface, const uint8_t *buffer, 
 
     if (mlan_adap->ps_state == PS_STATE_SLEEP)
     {
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
         os_rwlock_write_unlock(&sleep_rwlock);
-#endif
         mlan_adap->ps_state = PS_STATE_AWAKE;
-#ifndef CONFIG_WIFIDRIVER_PS_LOCK
-        wifi_event_completion(WIFI_EVENT_AWAKE, WIFI_EVENT_REASON_SUCCESS, MNULL);
-#endif
     }
 
 #ifdef CONFIG_WIFI_RX_REORDER
@@ -3389,15 +3375,11 @@ void wifi_tx_card_awake_lock(void)
 {
     int ret;
 
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     /* Write mutex is used to avoid the case that, during waitting for sleep confirm cmd response,
      * wifi_driver_tx task might be scheduled and send data to FW */
     os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_WAKEUP_TIME);
     os_mutex_put(&(sleep_rwlock.write_mutex));
-#else
-    ret = os_rwlock_read_lock(&ps_rwlock, MAX_WAIT_TIME);
-#endif
     if (ret != WM_SUCCESS)
     {
         wifi_e("Failed to wakeup card for Tx");
@@ -3411,11 +3393,7 @@ void wifi_tx_card_awake_lock(void)
 
 void wifi_tx_card_awake_unlock(void)
 {
-#if defined(CONFIG_WIFIDRIVER_PS_LOCK)
     os_rwlock_read_unlock(&sleep_rwlock);
-#else
-    os_rwlock_read_unlock(&ps_rwlock);
-#endif
 }
 
 #ifdef CONFIG_WMM
@@ -3615,8 +3593,7 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
     /* TODO: this may go wrong for TxPD->tx_pkt_type 0xe5 */
     /* this will get card port lock and probably sleep */
 #ifdef CONFIG_TX_RX_ZERO_COPY
-    ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
-                            (t_u8 *)buf);
+    ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN, (t_u8 *)buf);
 #else
     ret = wlan_xmit_wmm_pkt(priv->bss_index, buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN,
                             (t_u8 *)&buf->intf_header[0]);
@@ -3750,7 +3727,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     /* TODO: use zephyr event and regroup */
     struct bus_message msg;
 
-    msg.event = (event & MBIT(TX_TYPE_DATA)) ? MLAN_TYPE_DATA : MLAN_TYPE_NULL_DATA;
+    msg.event  = (event & MBIT(TX_TYPE_DATA)) ? MLAN_TYPE_DATA : MLAN_TYPE_NULL_DATA;
     msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
 
     os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
@@ -3832,7 +3809,7 @@ static void wifi_driver_tx(void *data)
 #ifdef CONFIG_ZEPHYR
         /* TODO: use zephyr event and regroup */
         (void)os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
-        event = msg.event;
+        event     = msg.event;
         interface = msg.reason;
 #else
         xTaskNotifyWait(0U, ULONG_MAX, &taskNotification, OS_WAIT_FOREVER);
@@ -3974,7 +3951,7 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
 #ifdef CONFIG_TX_RX_ZERO_COPY
     iph = (ip_hdr *)(((outbuf_t *)pmbuf)->payload);
 #else
-    iph = (ip_hdr *)((t_u8 *)ethh + sizeof(eth_hdr));
+    iph  = (ip_hdr *)((t_u8 *)ethh + sizeof(eth_hdr));
 #endif
     if (iph->protocol != WIFI_IPPROTO_TCP)
     {
@@ -4521,7 +4498,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
         scan_res->ies.ie_len = (t_u16)0U;
     }
 
-    scan_res->rssi  = (t_u8) - (bss_new_entry->rssi);
+    scan_res->rssi = (t_u8) - (bss_new_entry->rssi);
 #ifdef CONFIG_SCAN_CHANNEL_GAP
     scan_res->noise = bss_new_entry->chan_noise;
 #endif
