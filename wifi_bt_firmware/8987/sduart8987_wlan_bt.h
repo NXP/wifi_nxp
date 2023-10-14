@@ -1,3 +1,13 @@
+/*
+ *  Copyright 2021 NXP
+ *
+ *  SPDX-License-Identifier: BSD-3-Clause
+ *
+ */
+
+#ifndef __SDUART_WLAN_BT_FW_H__
+#define __SDUART_WLAN_BT_FW_H__
+
 const unsigned char wlan_fw_bin[] = {
   0x07, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
   0x9b, 0x55, 0x7e, 0x22, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0xa0,
@@ -50176,3 +50186,5 @@ const unsigned int wlan_fw_bin_len = 602048;
 const unsigned char bt_fw_bin[] = {0x00};
 
 unsigned int bt_fw_bin_len = 0;
+
+#endif /* __SDUART_WLAN_BT_FW_H__ */

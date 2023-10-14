@@ -3,6 +3,26 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r47.p2
+
+Version 1.3.r47.p1
+ - Updates:
+  - Updated CA2 and RB3+ f/w version to 21.p109
+  - Updated 8801 f/w version to 36_186
+  - Updated Firecrest firmware version to p66.5.
+
+ - Features
+  - Added EVKC board support for all SoCs.
+  - Added WPA2/3 Enterprise support for EAP-SIM/EAP-AKA/EAP-AKA-PRIME for STA and uAP.
+  - Added CSI support.
+  - Added Auto Reconnect support.
+  - Added CA2 and RB3+ Parallel FW Download support.
+  - Added CA2 and RB3+ Independent Reset via In-band support.
+  - Added CA2 and RB3+ Independent Reset via Out-of-Band support.
+  - Added CA2 and RB3+ Boot sleep patch support.
+
+ - Bug Fixes:
+
 Version 1.3.r46.p7
  - Updates:
   - Updated Falcon to p185, CA2 and RB3+ f/w version to 21.p91.5
@@ -79,7 +99,7 @@ Version 1.3.r46.p2
 
 Version 1.3.r46.p1
  - Updates:
-  - Updated CA and RB3+ f/w version to 21.p90
+  - Updated CA2 and RB3+ f/w version to 21.p90
   - Updated 8801 f/w version to 36_181
   - CA2 Fixed FIPS GCMP support
   - Added all changes as part of r45.p3 as applicable for CA2 and RB3+
