@@ -113,10 +113,6 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     static int auth_fail                      = 0;
     wlan_uap_client_disassoc_t *disassoc_resp = data;
 
-    printSeparator();
-    PRINTF("app_cb: WLAN: received event %d\r\n", reason);
-    printSeparator();
-
     switch (reason)
     {
         case WLAN_REASON_INITIALIZED:
@@ -313,10 +309,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_PS_ENTER:
-            PRINTF("app_cb: WLAN: PS_ENTER\r\n");
             break;
         case WLAN_REASON_PS_EXIT:
-            PRINTF("app_cb: WLAN: PS EXIT\r\n");
             break;
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case WLAN_REASON_RSSI_HIGH:
@@ -394,31 +388,16 @@ static void test_wlan_reset(int argc, char **argv)
 }
 
 #ifdef CONFIG_HOST_SLEEP
-static void test_mcu_system_wait(int argc, char **argv)
-{
-    (void)lpm_SystemWait();
-}
-static void test_mcu_low_pwr_idle(int argc, char **argv)
-{
-    (void)lpm_LowPwrIdle();
-}
 static void test_mcu_suspend(int argc, char **argv)
 {
-    (void)lpm_Suspend();
-}
-static void test_mcu_shutdown(int argc, char **argv)
-{
-    (void)lpm_Shutdown();
+    (void)mcu_suspend();
 }
 #endif
 
 static struct cli_command reset_commands[] = {
     {"wlan-reset", NULL, test_wlan_reset},
 #ifdef CONFIG_HOST_SLEEP
-    {"mcu-system-wait", NULL, test_mcu_system_wait},
-    {"mcu-low-pwr-idle", NULL, test_mcu_low_pwr_idle},
     {"mcu-suspend", NULL, test_mcu_suspend},
-    {"mcu-shutdown", NULL, test_mcu_shutdown},
 #endif
 };
 
@@ -609,6 +588,16 @@ void task_main(void *param)
 
     assert(WM_SUCCESS == result);
 
+#ifndef RW610
+    result = wlan_reset_cli_init();
+
+    assert(WM_SUCCESS == result);
+#endif
+
+#ifdef CONFIG_HOST_SLEEP
+    hostsleep_init();
+#endif
+
 #ifdef RW610
 #ifdef CONFIG_POWER_MANAGER
     PRINTF("Initialize Power Manager\r\n");
@@ -624,16 +613,6 @@ void task_main(void *param)
     result = wlan_driver_init();
 
     assert(WM_SUCCESS == result);
-
-#ifndef RW610
-    result = wlan_reset_cli_init();
-
-    assert(WM_SUCCESS == result);
-#endif
-
-#ifdef CONFIG_HOST_SLEEP
-    hostsleep_init();
-#endif
 
     while (1)
     {
