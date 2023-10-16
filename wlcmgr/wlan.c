@@ -7873,7 +7873,7 @@ int wlan_add_network(struct wlan_network *network)
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((network->security.type == WLAN_SECURITY_WPA2_SHA256) ||
          (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
-        (!network->security.mfpc))
+        (!network->security.mfpc || network->security.mfpr))
     {
         return -WM_E_INVAL;
     }
