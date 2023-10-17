@@ -2165,7 +2165,11 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 #endif
     if (ret != WM_SUCCESS)
     {
+#if defined(RW610)
+        wifi_e("imu_wifi_init failed. status code %d", ret);
+#else
         wifi_e("sd_wifi_init failed. status code %d", ret);
+#endif
         switch (ret)
         {
             case MLAN_CARD_CMD_TIMEOUT:

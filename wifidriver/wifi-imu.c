@@ -1103,7 +1103,7 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
 
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
-        wifi_io_e("sdio_drv_write failed (%d)", ret);
+        wifi_io_e("Send tx data via imu failed (%d)", ret);
 #ifdef CONFIG_WIFI_FW_DEBUG
 #if 0
         if (wm_wifi.wifi_usb_mount_cb != NULL)
