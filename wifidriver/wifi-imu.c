@@ -1527,7 +1527,7 @@ retry:
      * This is for load service case only.
      */
     power_off_device(LOAD_WIFI_FIRMWARE);
-
+    wifi_io_d("%u IMU download WLAN FW.\n", os_ticks_get());
     /* Download firmware */
     ret = sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, (uint32_t)fw_ram_start_addr);
     /* If fw download is failed, retry downloading for 3 times. */
@@ -1545,6 +1545,7 @@ retry:
             return mlanstatus;
         }
     }
+    wifi_io_d("%u WLAN FW is active.\n", os_ticks_get());
 #ifdef CONFIG_WIFI_RECOVERY
     if (wifi_recovery_enable)
     {
