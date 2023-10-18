@@ -7102,12 +7102,12 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
 }
 #endif
 
-void wlan_wait_wlmgr_ready()
+static void wlan_wait_wlmgr_ready()
 {
-    while (wlan.sta_state != CM_STA_IDLE)
+    while (wlan.sta_state == CM_STA_INITIALIZING)
     {
         /* wait for wlmgr ready */
-        os_thread_sleep(os_msec_to_ticks(1000));
+        os_thread_sleep(os_msec_to_ticks(50));
     }
 }
 
