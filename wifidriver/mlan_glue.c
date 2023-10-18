@@ -20,6 +20,7 @@
 #include "wifi-internal.h"
 #if defined(RW610)
 #include "wifi-imu.h"
+#include "fsl_ocotp.h"
 #else
 #include "wifi-sdio.h"
 #endif
@@ -7841,6 +7842,7 @@ void wifi_ftm_process_event(void *p_data)
 }
 #endif
 
+#ifdef CONFIG_CAU_TEMPERATURE
 void wifi_cau_temperature_enable()
 {
 #ifdef RW610
@@ -7853,15 +7855,72 @@ void wifi_cau_temperature_enable()
 #endif
 }
 
+#ifdef RW610
+static uint32_t wifi_get_board_type()
+{
+    status_t status;
+    static uint32_t wifi_rw610_package_type = 0xFFFFFFFF;
+    
+    if(0xFFFFFFFF == wifi_rw610_package_type)
+    {
+        OCOTP_OtpInit();
+        status = OCOTP_ReadPackage(&wifi_rw610_package_type);
+        if (status != kStatus_Success)
+        {
+            /*If status error, use BGA as default type*/
+            wifi_rw610_package_type = RW610_PACKAGE_TYPE_BGA;
+        }
+        OCOTP_OtpDeinit();   
+    }
+    
+    return wifi_rw610_package_type;
+}
+#endif
+
+uint32_t wifi_get_temperature(void)
+{
+#ifdef RW610  
+    uint32_t val;
+    uint32_t board_type = 0;
+    
+    val = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    val = ((val & 0XFFC00) >> 10);
+    board_type = wifi_get_board_type();
+    
+    switch (board_type) 
+    {
+      case RW610_PACKAGE_TYPE_QFN:
+        val = (uint32_t)((484260*val - 220040600)/1000000);
+        break;
+        
+      case RW610_PACKAGE_TYPE_CSP:
+        val = (uint32_t)((480560*val - 220707000)/1000000);
+        break;
+        
+      case RW610_PACKAGE_TYPE_BGA:
+        val = (uint32_t)((480561*val - 220707400)/1000000);
+        break;
+        
+      default:
+        PRINTF("Unknown board type, use BGA temperature \r\n");
+        val = (uint32_t)((480561*val - 220707400)/1000000);
+        break;
+    }
+
+    return val; 
+#endif
+}
+
 void wifi_cau_temperature_write_to_firmware()
 {
 #ifdef RW610
-    uint32_t val;
-
-    val = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    uint32_t val = 0;
+    
+    val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
 #endif
 }
+#endif
 
 #ifdef CONFIG_WIFI_IND_RESET
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)

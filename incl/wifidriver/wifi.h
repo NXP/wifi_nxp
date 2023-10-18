@@ -82,6 +82,12 @@
 #define WLAN_FW_WAKE_STATUS_ADDR     (0x40031068U)
 #endif
 
+#ifdef RW610
+#define RW610_PACKAGE_TYPE_QFN 0
+#define RW610_PACKAGE_TYPE_CSP 1
+#define RW610_PACKAGE_TYPE_BGA 2
+#endif
+
 #define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
 
 #define BANDWIDTH_20MHZ 1U
@@ -1966,9 +1972,12 @@ int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
 int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
 
+#ifdef CONFIG_CAU_TEMPERATURE
 /* get CAU module temperature and write to firmware */
 void wifi_cau_temperature_enable(void);
 void wifi_cau_temperature_write_to_firmware(void);
+uint32_t wifi_get_temperature(void);
+#endif
 
 #ifdef CONFIG_WIFI_IND_RESET
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);

@@ -10289,6 +10289,17 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_CAU_TEMPERATURE
+static void test_wlan_get_temperature(int argc, char **argv)
+{
+    uint32_t board_temperature = 0;
+  
+    board_temperature = wlan_get_temperature();
+  
+    (void)PRINTF("Board temperature :%d \r\n", board_temperature);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -10609,6 +10620,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
     {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},
+#endif
+#ifdef CONFIG_CAU_TEMPERATURE
+    {"wlan-get-temperature", NULL , test_wlan_get_temperature},
 #endif
 };
 

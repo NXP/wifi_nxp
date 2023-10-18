@@ -7239,8 +7239,9 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     if (!mon_thread_init)
     {
+#ifdef CONFIG_CAU_TEMPERATURE
         wifi_cau_temperature_enable();
-
+#endif
         mon_thread_events_queue_data = g_mon_event_queue_data;
         ret = os_queue_create(&mon_thread_events, "mon-thread-events", sizeof(struct wlan_message),
                               &mon_thread_events_queue_data);
@@ -9342,7 +9343,9 @@ static void wlan_mon_thread(os_thread_arg_t data)
                 && mlan_adap->ps_state == PS_STATE_AWAKE
             )
             {
+#ifdef CONFIG_CAU_TEMPERATURE
                 wifi_cau_temperature_write_to_firmware();
+#endif
                 delay_cnt = 0;
             }
         }
@@ -13910,5 +13913,12 @@ int wlan_test_independent_reset()
 int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
 {
     return wifi_sta_inactivityto(inac_to, action);
+}
+#endif
+
+#ifdef CONFIG_CAU_TEMPERATURE
+uint32_t wlan_get_temperature()
+{
+    return wifi_get_temperature();
 }
 #endif
