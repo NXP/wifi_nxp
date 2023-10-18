@@ -306,6 +306,37 @@ typedef enum
 #define WMM_UAPSD_SLEEP_PERIOD 20
 #endif
 
+#define WLAN_KEY_MGMT_IEEE8021X             MBIT(0)
+#define WLAN_KEY_MGMT_PSK                   MBIT(1)
+#define WLAN_KEY_MGMT_NONE                  MBIT(2)
+#define WLAN_KEY_MGMT_IEEE8021X_NO_WPA      MBIT(3)
+#define WLAN_KEY_MGMT_WPA_NONE              MBIT(4)
+#define WLAN_KEY_MGMT_FT_IEEE8021X          MBIT(5)
+#define WLAN_KEY_MGMT_FT_PSK                MBIT(6)
+#define WLAN_KEY_MGMT_IEEE8021X_SHA256      MBIT(7)
+#define WLAN_KEY_MGMT_PSK_SHA256            MBIT(8)
+#define WLAN_KEY_MGMT_WPS                   MBIT(9)
+#define WLAN_KEY_MGMT_SAE                   MBIT(10)
+#define WLAN_KEY_MGMT_FT_SAE                MBIT(11)
+#define WLAN_KEY_MGMT_WAPI_PSK              MBIT(12)
+#define WLAN_KEY_MGMT_WAPI_CERT             MBIT(13)
+#define WLAN_KEY_MGMT_CCKM                  MBIT(14)
+#define WLAN_KEY_MGMT_OSEN                  MBIT(15)
+#define WLAN_KEY_MGMT_IEEE8021X_SUITE_B     MBIT(16)
+#define WLAN_KEY_MGMT_IEEE8021X_SUITE_B_192 MBIT(17)
+#define WLAN_KEY_MGMT_FILS_SHA256           MBIT(18)
+#define WLAN_KEY_MGMT_FILS_SHA384           MBIT(19)
+#define WLAN_KEY_MGMT_FT_FILS_SHA256        MBIT(20)
+#define WLAN_KEY_MGMT_FT_FILS_SHA384        MBIT(21)
+#define WLAN_KEY_MGMT_OWE                   MBIT(22)
+#define WLAN_KEY_MGMT_DPP                   MBIT(23)
+#define WLAN_KEY_MGMT_FT_IEEE8021X_SHA384   MBIT(24)
+#define WLAN_KEY_MGMT_PASN                  MBIT(25)
+
+#define WLAN_KEY_MGMT_FT                                                                                            \
+    (WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_FT_IEEE8021X | WLAN_KEY_MGMT_FT_IEEE8021X_SHA384 | WLAN_KEY_MGMT_FT_SAE | \
+     WLAN_KEY_MGMT_FT_FILS_SHA256 | WLAN_KEY_MGMT_FT_FILS_SHA384)
+
 #ifdef CONFIG_WPA_SUPP
 
 #define WLAN_CIPHER_NONE         MBIT(0)
@@ -913,20 +944,28 @@ enum wlan_security_type
     WLAN_SECURITY_WPA,
     /** The network uses WPA2 security with PSK. */
     WLAN_SECURITY_WPA2,
-#ifdef CONFIG_WPA_SUPP
-    /** The network uses WPA2 security with PSK SHA256. */
-    WLAN_SECURITY_WPA2_SHA256,
+    /** The network uses WPA/WPA2 mixed security with PSK */
+    WLAN_SECURITY_WPA_WPA2_MIXED,
 #ifdef CONFIG_11R
     /** The network uses WPA2 security with PSK FT. */
     WLAN_SECURITY_WPA2_FT,
 #endif
-#else
-    /** The network uses WPA2 security with PSK(SHA-1 and SHA-256).This security mode
-     * is specific to uAP or SoftAP only */
-    WLAN_SECURITY_WPA2_SHA256,
+    /** The network uses WPA3 security with SAE. Also set the PMF settings using
+     * \ref wlan_set_pmfcfg API required for WPA3 SAE */
+    WLAN_SECURITY_WPA3_SAE,
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
+    /** The network uses WPA3 security with SAE FT. */
+    WLAN_SECURITY_WPA3_FT_SAE,
 #endif
-    /** The network uses WPA/WPA2 mixed security with PSK */
-    WLAN_SECURITY_WPA_WPA2_MIXED,
+#endif
+    /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
+     * is specific to uAP or SoftAP only */
+    WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
+#ifdef CONFIG_OWE
+    /** The network uses OWE only security without Transition mode support. */
+    WLAN_SECURITY_OWE_ONLY,
+#endif
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
     /** The network uses WPA2 Enterprise EAP-TLS security
      * The identity field in \ref wlan_network structure is used */
@@ -1012,30 +1051,14 @@ enum wlan_security_type
     WLAN_SECURITY_EAP_AKA_PRIME,
 #endif
 #endif
-    /** The network can use any security method. This is often used when
-     * the user only knows the name and passphrase but not the security
-     * type.  */
-    WLAN_SECURITY_WILDCARD,
-    /** The network uses WPA3 security with SAE. Also set the PMF settings using
-     * \ref wlan_set_pmfcfg API required for WPA3 SAE */
-    WLAN_SECURITY_WPA3_SAE,
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
-    /** The network uses WPA3 security with SAE FT. */
-    WLAN_SECURITY_WPA3_SAE_FT,
-#endif
-#endif
-    /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
-     * is specific to uAP or SoftAP only */
-    WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
-#ifdef CONFIG_OWE
-    /** The network uses OWE only security without Transition mode support. */
-    WLAN_SECURITY_OWE_ONLY,
-#endif
 #ifdef CONFIG_WPA_SUPP_DPP
     /** The network uses DPP security with NAK(Net Access Key) */
     WLAN_SECURITY_DPP,
 #endif
+    /** The network can use any security method. This is often used when
+     * the user only knows the name and passphrase but not the security
+     * type.  */
+    WLAN_SECURITY_WILDCARD,
 };
 /** Wlan Cipher structure */
 struct wlan_cipher
@@ -1079,11 +1102,8 @@ static inline int is_valid_security(int security)
     /*Currently only these modes are supported */
     if ((security == WLAN_SECURITY_NONE) || (security == WLAN_SECURITY_WEP_OPEN) || (security == WLAN_SECURITY_WPA) ||
         (security == WLAN_SECURITY_WPA2) ||
-#ifdef CONFIG_WPA_SUPP
-        (security == WLAN_SECURITY_WPA2_SHA256) ||
 #ifdef CONFIG_11R
         (security == WLAN_SECURITY_WPA2_FT) ||
-#endif
 #endif
         (security == WLAN_SECURITY_WPA_WPA2_MIXED) ||
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
@@ -1141,7 +1161,7 @@ static inline int is_valid_security(int security)
         (security == WLAN_SECURITY_WPA3_SAE) || (security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) ||
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-        (security == WLAN_SECURITY_WPA3_SAE_FT) ||
+        (security == WLAN_SECURITY_WPA3_FT_SAE) ||
 #endif
 #endif
         (security == WLAN_SECURITY_WILDCARD))
@@ -1210,6 +1230,8 @@ struct wlan_network_security
     /** Type of network security to use specified by enum
      * wlan_security_type. */
     enum wlan_security_type type;
+    /** Key management type */
+    int key_mgmt;
     /** Type of network security Group Cipher suite used internally*/
     struct wlan_cipher mcstCipher;
     /** Type of network security Pairwise Cipher suite used internally*/
@@ -1393,14 +1415,6 @@ struct wlan_network_security
     mbedtls_ssl_context *wlan_ssl;
 #endif
 #ifdef CONFIG_WPA_SUPP_DPP
-    /* DPP akm types include DPP */
-    unsigned dpp_akm_dpp : 1;
-    /* DPP akm types include PSK & PSK_SHA256 */
-    unsigned dpp_akm_psk : 1;
-    /* DPP akm types include WPA3_SAE */
-    unsigned dpp_akm_sae : 1;
-    /* DPP akm types include IEEE8021X & IEEE8021X_SHA256 */
-    unsigned dpp_akm_11x : 1;
     unsigned char *dpp_connector;
     unsigned char *dpp_c_sign_key;
     unsigned char *dpp_net_access_key;

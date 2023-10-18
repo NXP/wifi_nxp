@@ -306,23 +306,21 @@ static void print_network(struct wlan_network *network)
             (void)PRINTF("%s: WPA\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_WPA2:
-            (void)PRINTF("%s: WPA2", sec_tag(network));
 #if defined(CONFIG_11R)
             if (network->ft_psk == 1U)
             {
-                (void)PRINTF(" with FT_PSK");
+                (void)PRINTF("%s: WPA2-FT-PSK", sec_tag(network));
             }
+            else
 #endif
+            {
+                (void)PRINTF("%s: WPA2", sec_tag(network));
+            }
             (void)PRINTF("\r\n");
             break;
-#ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
         case WLAN_SECURITY_WPA2_FT:
-            (void)PRINTF("%s: WPA2 FT\r\n", sec_tag(network));
-            break;
-#endif
-        case WLAN_SECURITY_WPA2_SHA256:
-            (void)PRINTF("%s: WPA2 SHA256\r\n", sec_tag(network));
+            (void)PRINTF("%s: WPA2-FT-PSK\r\n", sec_tag(network));
             break;
 #endif
         case WLAN_SECURITY_WPA_WPA2_MIXED:
@@ -343,14 +341,14 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
 #ifdef CONFIG_EAP_TLS
         case WLAN_SECURITY_EAP_TLS_SHA256:
-            (void)PRINTF("%s Enterprise EAP-TLS SHA256\r\n", sec_tag(network));
+            (void)PRINTF("%s Enterprise EAP-TLS-SHA256\r\n", sec_tag(network));
             break;
 #ifdef CONFIG_11R
         case WLAN_SECURITY_EAP_TLS_FT:
-            (void)PRINTF("%s Enterprise EAP-TLS FT\r\n", sec_tag(network));
+            (void)PRINTF("%s Enterprise EAP-TLS-FT\r\n", sec_tag(network));
             break;
         case WLAN_SECURITY_EAP_TLS_FT_SHA384:
-            (void)PRINTF("%s Enterprise EAP-TLS FT SHA384\r\n", sec_tag(network));
+            (void)PRINTF("%s Enterprise EAP-TLS-FT-SHA384\r\n", sec_tag(network));
             break;
 #endif
 #endif
@@ -395,17 +393,17 @@ static void print_network(struct wlan_network *network)
 #endif
 #ifdef CONFIG_EAP_SIM
         case WLAN_SECURITY_EAP_SIM:
-            (void)PRINTF("%s Enterprise EAP SIM\r\n", sec_tag(network));
+            (void)PRINTF("%s Enterprise EAP-SIM\r\n", sec_tag(network));
             break;
 #endif
 #ifdef CONFIG_EAP_AKA
         case WLAN_SECURITY_EAP_AKA:
-            (void)PRINTF("%s Enterprise EAP AKA\r\n", sec_tag(network));
+            (void)PRINTF("%s Enterprise EAP-AKA\r\n", sec_tag(network));
             break;
 #endif
 #ifdef CONFIG_EAP_AKA_PRIME
         case WLAN_SECURITY_EAP_AKA_PRIME:
-            (void)PRINTF("%s Enterprise EAP AKA PRIME\r\n", sec_tag(network));
+            (void)PRINTF("%s Enterprise EAP-AKA-PRIME\r\n", sec_tag(network));
             break;
 #endif
 #endif
@@ -415,19 +413,22 @@ static void print_network(struct wlan_network *network)
             break;
 #endif
         case WLAN_SECURITY_WPA3_SAE:
-            (void)PRINTF("%s: WPA3 SAE", sec_tag(network));
 #if defined(CONFIG_11R)
             if (network->ft_sae == 1U)
             {
-                (void)PRINTF(" with FT_SAE");
+                (void)PRINTF("%s: WPA3-FT-SAE", sec_tag(network));
             }
+            else
 #endif
+            {
+                (void)PRINTF("%s: WPA3-SAE", sec_tag(network));
+            }
             (void)PRINTF("\r\n");
             break;
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-        case WLAN_SECURITY_WPA3_SAE_FT:
-            (void)PRINTF("%s: WPA3 SAE FT\r\n", sec_tag(network));
+        case WLAN_SECURITY_WPA3_FT_SAE:
+            (void)PRINTF("%s: WPA3-FT-SAE\r\n", sec_tag(network));
             break;
 #endif
 #endif
@@ -581,7 +582,7 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
     return 0;
 }
 
-static int get_security(int argc, char **argv, enum wlan_security_type type, struct wlan_network_security *sec)
+static int get_security(int argc, char **argv, struct wlan_network_security *sec)
 {
     int ret = WM_SUCCESS;
     if (argc < 1)
@@ -589,35 +590,19 @@ static int get_security(int argc, char **argv, enum wlan_security_type type, str
         return -WM_FAIL;
     }
 
-    switch (type)
+    /* copy the PSK phrase */
+    sec->psk_len = (uint8_t)strlen(argv[0]);
+    if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
     {
-        case WLAN_SECURITY_WPA:
-        case WLAN_SECURITY_WPA2:
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
-        case WLAN_SECURITY_WPA2_FT:
-#endif
-#endif
-        case WLAN_SECURITY_WPA2_SHA256:
-            /* copy the PSK phrase */
-            sec->psk_len = (uint8_t)strlen(argv[0]);
-            if (sec->psk_len < WLAN_PSK_MIN_LENGTH)
-            {
-                return -WM_FAIL;
-            }
-            if (sec->psk_len < sizeof(sec->psk))
-            {
-                (void)strcpy(sec->psk, argv[0]);
-            }
-            else
-            {
-                return -WM_FAIL;
-            }
-            sec->type = type;
-            break;
-        default:
-            ret = -WM_FAIL;
-            break;
+        return -WM_FAIL;
+    }
+    if (sec->psk_len < sizeof(sec->psk))
+    {
+        (void)strcpy(sec->psk, argv[0]);
+    }
+    else
+    {
+        return -WM_FAIL;
     }
 
     return ret;
@@ -655,18 +640,15 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("For Station interface\r\n");
     (void)PRINTF("  For DHCP IP Address assignment:\r\n");
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa2"
-#ifdef CONFIG_WPA_SUPP
-        "/wpa2-sha256"
+        "    wlan-add <profile_name> ssid <ssid> [wpa2 [psk/psk-sha256"
 #ifdef CONFIG_11R
-        "/wpa2-ft"
+        "/ft-psk"
 #endif
-#endif
-        " <secret>] [mfpc <1> mfpr <0/1>] "
+        "] <secret>] [mfpc <1> mfpr <0>] "
         "\r\n");
-    (void)PRINTF("      If using WPA2 security, set the PMF configuration if required.\r\n");
+    (void)PRINTF("      If using WPA2 security, set the PMF configuration as mentioned above.\r\n");
 #ifdef CONFIG_WPA_SUPP
-    (void)PRINTF("If using proactive key caching set pkc as 1, to disable set to 0(default)\r\n");
+    (void)PRINTF("If using proactive key caching set pkc as 1, to disable set to 0(default), if okc is set this is not used.\r\n");
     (void)PRINTF("If using specific ciphers, set the group, pairwise and group mgmt using gc, pc and gmc options.\r\n");
     (void)PRINTF("supported ciphers: ccmp=0x10, gcmp=0x40, gcmp_256=0x100, ccmp_256=0x200\r\n");
     (void)PRINTF(
@@ -762,7 +744,7 @@ static void dump_wlan_add_usage(void)
         "    wlan-add <profile_name> ssid <ssid> [wpa3 sae"
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-        "/sae-ft"
+        "/ft-sae"
 #endif
 #endif
         " <secret> "
@@ -772,20 +754,21 @@ static void dump_wlan_add_usage(void)
         "[pwe <0/1/2>] mfpc <1> mfpr <0/1>]"
         "\r\n");
     (void)PRINTF("      If using WPA3 SAE security, always set the PMF configuration.\r\n");
+    (void)PRINTF(
+        "    wlan-add <profile_name> ssid <ssid> [wpa2 psk psk-sha256 <secret> wpa3 sae <secret>] [mfpc <1> mfpr <0>] "
+        "\r\n");
+    (void)PRINTF("      If using WPA2/WPA3 Mixed security, set the PMF configuration as mentioned above.\r\n");
     (void)PRINTF("  For static IP address assignment:\r\n");
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid>\r\n"
         "    ip:<ip_addr>,<gateway_ip>,<netmask>\r\n");
     (void)PRINTF(
         "    [bssid <bssid>] [channel <channel number>]\r\n"
-        "    [wpa2"
-#ifdef CONFIG_WPA_SUPP
-        "/wpa2-sha256"
+        "    [wpa2 [psk/psk-sha256"
 #ifdef CONFIG_11R
-        "/wap2-ft"
+        "/ft-psk"
 #endif
-#endif
-        " <secret>]"
+        "] <secret>]"
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
         " [wpa3-sb/wpa3-sb-192] "
 #ifdef CONFIG_EAP_TLS
@@ -802,7 +785,7 @@ static void dump_wlan_add_usage(void)
         " [wpa3 sae"
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-        "/sae-ft"
+        "/ft-sae"
 #endif
 #endif
         " <secret>]"
@@ -817,11 +800,7 @@ static void dump_wlan_add_usage(void)
         "    role uap [bssid <bssid>]\r\n"
         "    [channel <channelnumber>]\r\n");
     (void)PRINTF(
-        "    [wpa2"
-#ifdef CONFIG_WPA_SUPP
-        "/wpa2-sha256"
-#endif
-        " <secret>] [wpa3 sae <secret> "
+        "    [wpa2 [psk/psk-sha256] <secret>] [wpa3 sae <secret> "
 #ifdef CONFIG_WPA_SUPP
         "[sg <\"19 20 21\">] "
 #endif
@@ -833,7 +812,7 @@ static void dump_wlan_add_usage(void)
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_11R
-    (void)PRINTF("    [wpa2-ft <secret>] [wpa3 sae-ft <secret>]\r\n");
+    (void)PRINTF("    [ft-psk <secret>] [wpa3 ft-sae <secret>]\r\n");
 #endif
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
     (void)PRINTF(
@@ -1029,9 +1008,29 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if ((info.security == 0U) && string_equal("wpa", argv[arg]))
         {
-            network.security.type = WLAN_SECURITY_WPA;
+            network.security.key_mgmt = WLAN_KEY_MGMT_PSK;
 
-            if (get_security(argc - arg - 1, argv + arg + 1, WLAN_SECURITY_WPA, &network.security) != 0)
+            if (string_equal(argv[arg + 1], "wpa2") != false)
+            {
+                network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
+                arg += 1;
+
+                if (string_equal(argv[arg + 1], "psk") != false)
+                {
+                    arg += 1;
+                }
+            }
+            else
+            {
+                network.security.type = WLAN_SECURITY_WPA;
+
+                if (string_equal(argv[arg + 1], "psk") != false)
+                {
+                    arg += 1;
+                }
+            }
+
+            if (get_security(argc - arg - 1, argv + arg + 1, &network.security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA security"
@@ -1041,34 +1040,63 @@ static void test_wlan_add(int argc, char **argv)
             arg += 2;
             info.security++;
         }
-        else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg]) || string_equal("wpa2-sha256", argv[arg])
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
-                                            || string_equal("wpa2-ft", argv[arg])
-#endif
-#endif
-                                                ))
+        else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg])))
         {
-            if (string_equal("wpa2", argv[arg]))
+            network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+
+            if (string_equal(argv[arg + 1], "wpa") != false)
+            {
+                network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
+                arg += 1;
+
+                if (string_equal(argv[arg + 1], "psk") != false)
+                {
+                    arg += 1;
+                }
+            }
+            else
             {
                 network.security.type = WLAN_SECURITY_WPA2;
-            }
-#ifdef CONFIG_WPA_SUPP
-            else if (string_equal("wpa2-sha256", argv[arg]))
-            {
-                network.security.type = WLAN_SECURITY_WPA2_SHA256;
-            }
+
+                if (string_equal(argv[arg + 1], "psk") != false)
+                {
+                    arg += 1;
+
 #ifdef CONFIG_11R
-            else if (string_equal("wpa2-ft", argv[arg]))
-            {
-                network.security.type = WLAN_SECURITY_WPA2_FT;
+                    if (string_equal(argv[arg + 1], "ft-psk") != false)
+                    {
+                        network.security.type = WLAN_SECURITY_WPA2_FT;
+                        network.security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
+                        arg += 1;
+                    }
+#endif
+
+                    if (string_equal(argv[arg + 1], "psk-sha256") != false)
+                    {
+                        network.security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+                        arg += 1;
+                    }
+                }
+                else if (string_equal(argv[arg + 1], "psk-sha256") != false)
+                {
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+                    arg += 1;
+                }
+#ifdef CONFIG_11R
+                else if (string_equal(argv[arg + 1], "ft-psk") != false)
+                {
+                    network.security.type = WLAN_SECURITY_WPA2_FT;
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
+
+                    arg += 1;
+                }
+#endif
             }
-#endif
-#endif
-            if (get_security(argc - arg - 1, argv + arg + 1, network.security.type, &network.security) != 0)
+
+            if (get_security(argc - arg - 1, argv + arg + 1, &network.security) != 0)
             {
                 (void)PRINTF(
-                    "Error: invalid WPA2/WPA2_FT security"
+                    "Error: invalid WPA2 security"
                     " argument\r\n");
                 return;
             }
@@ -1079,6 +1107,9 @@ static void test_wlan_add(int argc, char **argv)
         else if (!info.security && string_equal("owe_only", argv[arg]))
         {
             network.security.type = WLAN_SECURITY_OWE_ONLY;
+
+            network.security.key_mgmt = WLAN_KEY_MGMT_OWE;
+
             arg += 1;
             info.security++;
 
@@ -1096,7 +1127,7 @@ static void test_wlan_add(int argc, char **argv)
             if ((string_equal(argv[arg + 1], "sae") != false)
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-                || (string_equal(argv[arg + 1], "sae-ft") != false)
+                || (string_equal(argv[arg + 1], "ft-sae") != false)
 #endif
 #endif
             )
@@ -1104,17 +1135,38 @@ static void test_wlan_add(int argc, char **argv)
                 if (string_equal(argv[arg + 1], "sae") != false)
                 {
                     network.security.type = WLAN_SECURITY_WPA3_SAE;
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
+                    arg += 1;
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
+                    if (string_equal(argv[arg + 1], "ft-sae") != false)
+                    {
+                        network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
+                        arg += 1;
+                    }
+#endif
+#endif
                 }
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-                else if (string_equal(argv[arg + 1], "sae-ft") != false)
+                else if (string_equal(argv[arg + 1], "ft-sae") != false)
                 {
-                    network.security.type = WLAN_SECURITY_WPA3_SAE_FT;
+                    network.security.type = WLAN_SECURITY_WPA3_FT_SAE;
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
+                    arg += 1;
+
+                    if (string_equal(argv[arg + 1], "sae") != false)
+                    {
+                        network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
+                        arg += 1;
+                    }
+
                 }
 #endif
 #endif
                 /* copy the PSK phrase */
-                network.security.password_len = strlen(argv[arg + 2]);
+                network.security.password_len = strlen(argv[arg + 1]);
                 if (network.security.password_len == 0U)
                 {
                     (void)PRINTF(
@@ -1124,7 +1176,7 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 if (network.security.password_len < sizeof(network.security.password))
                 {
-                    (void)strcpy(network.security.password, argv[arg + 2]);
+                    (void)strcpy(network.security.password, argv[arg + 1]);
                 }
                 else
                 {
@@ -1136,22 +1188,22 @@ static void test_wlan_add(int argc, char **argv)
                 arg += 2;
 
 #ifdef CONFIG_WPA_SUPP
-                if (string_equal(argv[arg + 1], "sg") != false)
+                if (string_equal(argv[arg], "sg") != false)
                 {
-                    network.security.sae_groups = argv[arg + 2];
+                    network.security.sae_groups = argv[arg + 1];
                     arg += 2;
                 }
 #endif
-                if (string_equal(argv[arg + 1], "pwe") != false)
+                if (string_equal(argv[arg], "pwe") != false)
                 {
                     errno                           = 0;
-                    network.security.pwe_derivation = strtol(argv[arg + 2], NULL, 10);
+                    network.security.pwe_derivation = strtol(argv[arg + 1], NULL, 10);
                     if (errno != 0)
                     {
                         (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
                         return;
                     }
-                    if (arg + 2 >= argc ||
+                    if (arg + 1 >= argc ||
                         (network.security.pwe_derivation != 0 && network.security.pwe_derivation != 1 &&
                          network.security.pwe_derivation != 2))
                     {
@@ -1162,16 +1214,16 @@ static void test_wlan_add(int argc, char **argv)
                     }
                     arg += 2;
 
-                    if (string_equal(argv[arg + 1], "tr") != false)
+                    if (string_equal(argv[arg], "tr") != false)
                     {
                         errno                               = 0;
-                        network.security.transition_disable = strtol(argv[arg + 2], NULL, 10);
+                        network.security.transition_disable = strtol(argv[arg + 1], NULL, 10);
                         if (errno != 0)
                         {
                             (void)PRINTF("Error during strtol:pwe errno:%d\r\n", errno);
                             return;
                         }
-                        if (arg + 2 >= argc ||
+                        if (arg + 1 >= argc ||
                             (network.security.transition_disable != 0 && network.security.transition_disable != 1
 #ifdef CONFIG_WPA_SUPP
                              && network.security.transition_disable != 2 && network.security.transition_disable != 4 &&
@@ -1195,7 +1247,6 @@ static void test_wlan_add(int argc, char **argv)
                     " argument\r\n");
                 return;
             }
-            arg += 1;
             info.security3++;
         }
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
@@ -1801,12 +1852,6 @@ static void test_wlan_add(int argc, char **argv)
         return;
     }
 
-    if ((network.security.type == WLAN_SECURITY_WPA) || (network.security.type == WLAN_SECURITY_WPA2))
-    {
-        if (network.security.psk_len && info.security && info.security2)
-            network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
-    }
-
     if ((network.security.type == WLAN_SECURITY_WPA2) || (network.security.type == WLAN_SECURITY_WPA3_SAE))
     {
         if ((network.security.psk_len != 0U) && (network.security.password_len != 0U))
@@ -1941,16 +1986,16 @@ static int __scan_cb(unsigned int count)
             }
             if (res.wpa2_sha256 != 0U)
             {
-                (void)PRINTF("WPA2 SHA256");
+                (void)PRINTF("WPA2-SHA256");
             }
             if (res.wpa3_sae != 0U)
             {
-                (void)PRINTF("WPA3 SAE ");
+                (void)PRINTF("WPA3-SAE ");
             }
 #ifdef CONFIG_OWE
             if (res.owe != 0U)
             {
-                (void)PRINTF("OWE ");
+                (void)PRINTF("OWE Only");
             }
 #endif
             if (res.wpa2_entp != 0U)
@@ -1959,15 +2004,15 @@ static int __scan_cb(unsigned int count)
             }
             if (res.wpa2_entp_sha256 != 0U)
             {
-                (void)PRINTF("WPA2 SHA256 Enterprise ");
+                (void)PRINTF("WPA2-SHA256 Enterprise ");
             }
             if (res.wpa3_1x_sha256 != 0U)
             {
-                (void)PRINTF("WPA3 SHA256 Enterprise ");
+                (void)PRINTF("WPA3-SHA256 Enterprise ");
             }
             if (res.wpa3_1x_sha384 != 0U)
             {
-                (void)PRINTF("WPA3 SHA384 Enterprise ");
+                (void)PRINTF("WPA3-SHA384 Enterprise ");
             }
         }
 #if defined(CONFIG_11R)

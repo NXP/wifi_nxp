@@ -379,6 +379,7 @@ int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_l
 static int wifi_cmd_uap_config(char *ssid,
                                t_u8 *mac_addr,
                                enum wlan_security_type security,
+                               int key_mgmt,
                                char *passphrase,
                                char *password,
                                t_u8 channel,
@@ -409,8 +410,8 @@ static int wifi_cmd_uap_config(char *ssid,
 #endif
 
     if (!(security == WLAN_SECURITY_NONE || security == WLAN_SECURITY_WPA2 ||
-          security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA2_SHA256 ||
-          security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
+          security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA3_SAE ||
+          security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
 #ifdef CONFIG_OWE
           || security == WLAN_SECURITY_OWE_ONLY
 #endif
@@ -551,9 +552,8 @@ static int wifi_cmd_uap_config(char *ssid,
         bss.param.bss_config.protocol = PROTOCOL_NO_SECURITY;
     }
 
-    if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 ||
-        security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA3_SAE ||
-        security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
+    if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
+        security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
 #ifdef CONFIG_OWE
         || security == WLAN_SECURITY_OWE_ONLY
 #endif
@@ -564,14 +564,13 @@ static int wifi_cmd_uap_config(char *ssid,
         if (security == WLAN_SECURITY_WPA2)
         {
             bss.param.bss_config.protocol = PROTOCOL_WPA2;
-            bss.param.bss_config.key_mgmt = KEY_MGMT_PSK;
-            if (mfpc)
+            if (key_mgmt & WLAN_KEY_MGMT_PSK)
             {
                 bss.param.bss_config.key_mgmt = KEY_MGMT_PSK;
             }
-            if (mfpc && mfpr)
+            if (key_mgmt & WLAN_KEY_MGMT_PSK_SHA256)
             {
-                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK_SHA256;
+                bss.param.bss_config.key_mgmt |= KEY_MGMT_PSK_SHA256;
             }
         }
         else if (security == WLAN_SECURITY_WPA_WPA2_MIXED)
@@ -582,33 +581,38 @@ static int wifi_cmd_uap_config(char *ssid,
             bss.param.bss_config.wpa_cfg.pairwise_cipher_wpa2 = CIPHER_TKIP | CIPHER_AES_CCMP;
             bss.param.bss_config.wpa_cfg.group_cipher         = CIPHER_TKIP;
         }
-        else if (security == WLAN_SECURITY_WPA2_SHA256)
-        {
-            bss.param.bss_config.protocol = PROTOCOL_WPA2;
-            bss.param.bss_config.key_mgmt = KEY_MGMT_PSK | KEY_MGMT_PSK_SHA256;
-        }
         else if (security == WLAN_SECURITY_WPA3_SAE)
         {
             bss.param.bss_config.protocol = PROTOCOL_WPA3_SAE;
-            bss.param.bss_config.key_mgmt = KEY_MGMT_SAE;
+            if (key_mgmt & WLAN_KEY_MGMT_SAE)
+            {
+                bss.param.bss_config.key_mgmt = KEY_MGMT_SAE;
+            }
         }
         else if (security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
         {
             bss.param.bss_config.protocol = PROTOCOL_WPA2 | PROTOCOL_WPA3_SAE;
-            if (mfpc && mfpr)
+            if (key_mgmt & WLAN_KEY_MGMT_PSK)
             {
-                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK | KEY_MGMT_PSK_SHA256 | KEY_MGMT_SAE;
+                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK;
             }
-            else if (mfpc)
+            if (key_mgmt & WLAN_KEY_MGMT_PSK_SHA256)
             {
-                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK | KEY_MGMT_SAE;
+                bss.param.bss_config.key_mgmt |= KEY_MGMT_PSK_SHA256;
+            }
+            if (key_mgmt & WLAN_KEY_MGMT_SAE)
+            {
+                bss.param.bss_config.key_mgmt |= KEY_MGMT_SAE;
             }
         }
 #ifdef CONFIG_OWE
         else if (security == WLAN_SECURITY_OWE_ONLY)
         {
             bss.param.bss_config.protocol = PROTOCOL_OWE;
-            bss.param.bss_config.key_mgmt = KEY_MGMT_OWE;
+            if (key_mgmt & WLAN_KEY_MGMT_OWE)
+            {
+                bss.param.bss_config.key_mgmt = KEY_MGMT_OWE;
+            }
         }
 #endif
         else
@@ -622,9 +626,7 @@ static int wifi_cmd_uap_config(char *ssid,
         bss.param.bss_config.key_mgmt_operation = 0x00;
 
 #ifdef CONFIG_HOST_PMK
-        if ((security == WLAN_SECURITY_WPA2 || WLAN_SECURITY_WPA2_SHA256 ||
-             security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) &&
-            passphrase_len < 64)
+        if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) && passphrase_len < 64)
         {
             char pmk_bin[PMK_BIN_LEN]           = {0};
             char pmk_hex[PMK_HEX_LEN + 2]       = {0};
@@ -637,8 +639,8 @@ static int wifi_cmd_uap_config(char *ssid,
         else
         {
 #endif
-            if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 ||
-                security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
+            if (security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
+                security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
             {
                 /*app has converted pmk with psk*/
                 bss.param.bss_config.wpa_cfg.length = (t_u32)passphrase_len;
@@ -1003,6 +1005,7 @@ int wifi_uap_start(mlan_bss_type type,
                    char *ssid,
                    uint8_t *mac_addr,
                    int security,
+                   int key_mgmt,
                    char *passphrase,
                    char *password,
                    int channel,
@@ -1039,8 +1042,8 @@ int wifi_uap_start(mlan_bss_type type,
     }
 
     /* Configure SSID */
-    int rv = wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, passphrase, password, (t_u8)channel,
-                                 scan_chan_list, pwe_derivation, transition_disable,
+    int rv = wifi_cmd_uap_config(ssid, mac_addr, (enum wlan_security_type)security, key_mgmt, passphrase, password,
+                                 (t_u8)channel, scan_chan_list, pwe_derivation, transition_disable,
                                  wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
                                  wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
 #ifdef CONFIG_WIFI_DTIM_PERIOD
@@ -1056,9 +1059,8 @@ int wifi_uap_start(mlan_bss_type type,
         return rv;
     }
 
-    if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA2_SHA256 ||
-         security == WLAN_SECURITY_WPA_WPA2_MIXED || security == WLAN_SECURITY_WPA3_SAE ||
-         security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
+    if ((security == WLAN_SECURITY_WPA2 || security == WLAN_SECURITY_WPA_WPA2_MIXED ||
+         security == WLAN_SECURITY_WPA3_SAE || security == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED
 #ifdef CONFIG_OWE
          || security == WLAN_SECURITY_OWE_ONLY
 #endif

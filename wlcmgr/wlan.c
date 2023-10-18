@@ -2360,7 +2360,7 @@ static int do_start(struct wlan_network *network)
 #else
                              wlan.uap_mac,
 #endif
-                             (int)network->security.type, &network->security.psk[0], &network->security.password[0],
+                             (int)network->security.type, network->security.key_mgmt, &network->security.psk[0], &network->security.password[0],
                              (int)network->channel, wlan.scan_chan_list,
                              network->security.pwe_derivation,
                              network->security.transition_disable,
@@ -2502,23 +2502,28 @@ static void update_network_params(struct wlan_network *network, const struct wif
          * security available in the scan result to the configuration
          * structure
          */
-        enum wlan_security_type t;
+        enum wlan_security_type t = WLAN_SECURITY_NONE;
+        int key_mgmt = WLAN_KEY_MGMT_NONE;
 
         if ((res->WPA_WPA2_WEP.wpa3_sae != 0U) && (res->WPA_WPA2_WEP.wpa2 != 0U))
         {
             t = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
+            key_mgmt = WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_SAE;
         }
         else if (res->WPA_WPA2_WEP.wpa3_sae != 0U)
         {
             t = WLAN_SECURITY_WPA3_SAE;
+            key_mgmt = WLAN_KEY_MGMT_SAE;
         }
         else if (res->WPA_WPA2_WEP.wpa2 != 0U)
         {
             t = WLAN_SECURITY_WPA2;
+            key_mgmt = WLAN_KEY_MGMT_PSK;
         }
         else if (res->WPA_WPA2_WEP.wpa != 0U)
         {
             t = WLAN_SECURITY_WPA_WPA2_MIXED;
+            key_mgmt = WLAN_KEY_MGMT_PSK;
         }
         else if (res->WPA_WPA2_WEP.wepStatic != 0U)
         {
@@ -2528,14 +2533,19 @@ static void update_network_params(struct wlan_network *network, const struct wif
         else if (res->WPA_WPA2_WEP.wpa2 && res->WPA_WPA2_WEP.owe)
         {
             t = WLAN_SECURITY_OWE_ONLY;
+            key_mgmt = WLAN_KEY_MGMT_OWE;
         }
 #endif
         else
         {
             t = WLAN_SECURITY_NONE;
+            key_mgmt = WLAN_KEY_MGMT_NONE;
         }
+
         network->security.type = t;
-        if (network->security.type == WLAN_SECURITY_WPA2)
+        network->security.key_mgmt = key_mgmt;
+
+        if ((network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA3_SAE) || (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
         {
             network->security.mfpr = 0;
             (void)wlan_set_pmfcfg((t_u8)network->security.mfpc, (t_u8)network->security.mfpr);
@@ -5100,53 +5110,45 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
             const char *pos = buf + sizeof(DPP_EVENT_CONFOBJ_AKM) - 1;
             security->pmk_valid = false;
             security->type = WLAN_SECURITY_NONE;
-            security->dpp_akm_dpp = 0;
-            security->dpp_akm_psk = 0;
-            security->dpp_akm_sae = 0;
-            security->dpp_akm_11x = 0;
             if (memcmp("psk", pos, strlen("psk")) == 0)
             {
-                security->type        = WLAN_SECURITY_WPA2_SHA256;
-                security->dpp_akm_psk = 1;
+                security->type     = WLAN_SECURITY_WPA2;
+                security->key_mgmt = WLAN_KEY_MGMT_PSK;
             }
             else if (memcmp("sae", pos, strlen("sae")) == 0)
             {
-                security->type        = WLAN_SECURITY_WPA3_SAE;
-                security->dpp_akm_sae = 1;
+                security->type     = WLAN_SECURITY_WPA3_SAE;
+                security->key_mgmt = WLAN_KEY_MGMT_SAE;
             }
             else if ((memcmp("psk-sae", pos, strlen("psk-sae")) == 0) ||
                      (memcmp("psk+sae", pos, strlen("psk+sae")) == 0))
             {
                 security->type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
-                security->dpp_akm_psk = 1;
-                security->dpp_akm_sae = 1;
+                security->key_mgmt = WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_SAE;
             }
             else if ((memcmp("sae-dpp", pos, strlen("sae-dpp")) == 0) ||
                      (memcmp("dpp+sae", pos, strlen("dpp+sae")) == 0))
             {
                 security->type        = WLAN_SECURITY_WPA3_SAE;
-                security->dpp_akm_dpp = 1;
-                security->dpp_akm_sae = 1;
+                security->key_mgmt = WLAN_KEY_MGMT_DPP | WLAN_KEY_MGMT_SAE;
             }
             else if ((memcmp("psk-sae-dpp", pos, strlen("psk-sae-dpp")) == 0) ||
                      (memcmp("dpp+psk+sae", pos, strlen("dpp+psk+sae")) == 0))
             {
                 security->type = WLAN_SECURITY_WPA2_WPA3_SAE_MIXED;
-                security->dpp_akm_dpp = 1;
-                security->dpp_akm_psk = 1;
-                security->dpp_akm_sae = 1;
+                security->key_mgmt = WLAN_KEY_MGMT_DPP | WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_SAE;
             }
             else if (memcmp("dpp", pos, strlen("dpp")) == 0)
             {
                 security->type = WLAN_SECURITY_DPP;
-                security->dpp_akm_dpp = 1;
+                security->key_mgmt = WLAN_KEY_MGMT_DPP;
             }
             else if (memcmp("dot1x", pos, strlen("dot1x")) == 0)
             {
 #ifdef CONFIG_EAP_TLS
                 security->type = WLAN_SECURITY_EAP_TLS_SHA256;
 #endif
-                security->dpp_akm_11x = 1;
+                security->key_mgmt = WLAN_KEY_MGMT_IEEE8021X;
             }
             else
             {
@@ -7567,6 +7569,8 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_UAP;
     /* Set network role to uAP */
     net->role = WLAN_BSS_ROLE_UAP;
+    /* Set network key mgmt to none for open security */
+    net->security.key_mgmt = WLAN_KEY_MGMT_NONE;
     /* Set IP address to 192.168.10.1 */
     net->ip.ipv4.address = htonl(uap_ip);
     /* Set default gateway to 192.168.10.1 */
@@ -7588,6 +7592,8 @@ void wlan_initialize_sta_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_STA;
     /* Set network role to sta */
     net->role = WLAN_BSS_ROLE_STA;
+    /* Set network key mgmt to none for open security */
+    net->security.key_mgmt = WLAN_KEY_MGMT_NONE;
     /* Specify address type as dynamic assignment */
     net->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 }
@@ -7615,13 +7621,8 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_WPA:
         case WLAN_SECURITY_WPA2:
         case WLAN_SECURITY_WPA_WPA2_MIXED:
-#ifdef CONFIG_WPA_SUPP
-        case WLAN_SECURITY_WPA2_SHA256:
 #ifdef CONFIG_11R
         case WLAN_SECURITY_WPA2_FT:
-#endif
-#else
-        case WLAN_SECURITY_WPA2_SHA256:
 #endif
             /* check the length of PSK phrase */
             if (network->security.psk_len < WLAN_PSK_MIN_LENGTH || network->security.psk_len >= WLAN_PSK_MAX_LENGTH)
@@ -7662,7 +7663,7 @@ static bool wlan_is_key_valid(struct wlan_network *network)
         case WLAN_SECURITY_WPA3_SAE:
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-        case WLAN_SECURITY_WPA3_SAE_FT:
+        case WLAN_SECURITY_WPA3_FT_SAE:
 #endif
 #endif
             if (network->security.password_len < WLAN_PASSWORD_MIN_LENGTH ||
@@ -7815,6 +7816,79 @@ static bool wlan_is_eap_fast_security(enum wlan_security_type security)
 #endif
 #endif
 
+static inline int wlan_key_mgmt_wpa_psk(int akm)
+{
+    akm &= ~(WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_PSK_SHA256);
+
+    return (!akm && (WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_PSK_SHA256));
+}
+
+#ifdef CONFIG_11R
+static inline int wlan_key_mgmt_ft_psk(int akm)
+{
+    akm &= ~WLAN_KEY_MGMT_FT_PSK;
+
+    return (!akm && WLAN_KEY_MGMT_FT_PSK);
+}
+#endif
+
+static inline int wlan_key_mgmt_sae(int akm)
+{
+    akm &= ~(
+#ifdef CONFIG_WPA_SUPP_DPP
+            WLAN_KEY_MGMT_DPP |
+#endif
+            WLAN_KEY_MGMT_SAE);
+
+    return (!akm && (
+#ifdef CONFIG_WPA_SUPP_DPP
+            WLAN_KEY_MGMT_DPP |
+#endif
+            WLAN_KEY_MGMT_SAE));
+}
+
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
+static inline int wlan_key_mgmt_ft_sae(int akm)
+{
+    akm &= ~WLAN_KEY_MGMT_FT_SAE;
+
+    return (!akm && WLAN_KEY_MGMT_FT_SAE);
+}
+#endif
+#endif
+
+static inline int wlan_key_mgmt_wpa_psk_sae(int akm)
+{
+    akm &= ~(
+#ifdef CONFIG_WPA_SUPP_DPP
+            WLAN_KEY_MGMT_DPP |
+#endif
+            WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256 | WLAN_KEY_MGMT_SAE);
+
+    return (!akm && (
+#ifdef CONFIG_WPA_SUPP_DPP
+                WLAN_KEY_MGMT_DPP |
+#endif
+                WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256 | WLAN_KEY_MGMT_SAE));
+}
+
+static inline int wlan_key_mgmt_owe(int akm)
+{
+    akm &= ~WLAN_KEY_MGMT_OWE;
+
+    return (!akm && WLAN_KEY_MGMT_OWE);
+}
+
+#ifdef CONFIG_WPA_SUPP_DPP
+static inline int wlan_key_mgmt_dpp(int akm)
+{
+    akm &= ~WLAN_KEY_MGMT_OWE;
+
+    return (!akm && WLAN_KEY_MGMT_OWE);
+}
+#endif
+
 int wlan_add_network(struct wlan_network *network)
 {
     int pos = -1;
@@ -7880,8 +7954,39 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
-        ((network->security.type == WLAN_SECURITY_WPA2_SHA256) ||
-         (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)) &&
+        ((((network->security.type == WLAN_SECURITY_WPA) || (network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED)) &&
+        (!wlan_key_mgmt_wpa_psk(network->security.key_mgmt)))
+#ifdef CONFIG_11R
+        || ((network->security.type == WLAN_SECURITY_WPA2_FT) && (!wlan_key_mgmt_ft_psk(network->security.key_mgmt)))
+#endif
+        || ((network->security.type == WLAN_SECURITY_WPA3_SAE) && (!wlan_key_mgmt_sae(network->security.key_mgmt)))
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
+        || ((network->security.type == WLAN_SECURITY_WPA3_FT_SAE) && (!wlan_key_mgmt_ft_sae(network->security.key_mgmt)))
+#endif
+#endif
+        || ((network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) && (!wlan_key_mgmt_wpa_psk_sae(network->security.key_mgmt)))
+#ifdef CONFIG_OWE
+        || ((network->security.type == WLAN_SECURITY_OWE_ONLY) && (!wlan_key_mgmt_owe(network->security.key_mgmt)))
+#endif
+#ifdef CONFIG_WPA_SUPP_DPP
+        || ((network->security.type == WLAN_SECURITY_DPP) && (!wlan_key_mgmt_dpp(network->security.key_mgmt)))
+#endif
+        ))
+    {
+        wlcm_e("Invalid key mgmt is configured");
+        return -WM_E_INVAL;
+    }
+
+    if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
+        (network->security.key_mgmt == WLAN_KEY_MGMT_PSK_SHA256) &&
+        (!network->security.mfpc || !network->security.mfpr))
+    {
+        return -WM_E_INVAL;
+    }
+
+    if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
+        (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) &&
         (!network->security.mfpc || network->security.mfpr))
     {
         return -WM_E_INVAL;
@@ -7975,6 +8080,44 @@ int wlan_add_network(struct wlan_network *network)
         network->dot11n = 1;
         }
 #endif
+    }
+
+    if (network->security.key_mgmt == 0)
+    {
+        if (network->security.type == WLAN_SECURITY_NONE)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_NONE;
+        }
+        else if ((network->security.type == WLAN_SECURITY_WPA) || (network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED))
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_PSK;
+        }
+        else if (network->security.type == WLAN_SECURITY_WPA3_SAE)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_SAE;
+        }
+#ifdef CONFIG_OWE
+        else if (network->security.type == WLAN_SECURITY_OWE_ONLY)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_OWE;
+        }
+#endif
+#ifdef CONFIG_11R
+        else if (network->security.type == WLAN_SECURITY_WPA2_FT)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
+        }
+#ifdef CONFIG_WPA_SUPP
+        else if (network->security.type == WLAN_SECURITY_WPA3_FT_SAE)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_FT_SAE;
+        }
+#endif
+#endif
+        else if (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_SAE;
+        }
     }
 
 #ifdef CONFIG_WPA_SUPP
@@ -11677,7 +11820,15 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
 #ifdef CONFIG_ROAMING
 int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
 {
+#ifdef CONFIG_WPA_SUPP
+    struct netif *netif = net_get_sta_interface();
+#endif
+
     wlan.roaming_enabled = enable;
+
+#ifdef CONFIG_WPA_SUPP
+    wpa_supp_set_okc(netif, wlan.roaming_enabled == true ? 0 : 1);
+#endif
 
     wlan.rssi_low_threshold = rssi_low_threshold;
 
