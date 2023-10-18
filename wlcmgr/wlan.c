@@ -813,18 +813,26 @@ static int wlan_get_current_sta_network(struct wlan_network *network)
 
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
-    struct wlan_network network;
+    struct wlan_network* network;
     int ret;
 
-    ret = wlan_get_current_sta_network(&network);
+    network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (network == NULL)
+    {
+        wlcm_e("%s: Failed to alloc wlan_network network", __func__);
+        return -WM_FAIL;
+    }
+    ret = wlan_get_current_sta_network(network);
 
     if (ret != WM_SUCCESS)
     {
         wlcm_e("cannot get network info");
         *ipv4_addr = 0;
+        os_mem_free((void *)network);
         return -WM_FAIL;
     }
-    *ipv4_addr = network.ip.ipv4.address;
+    *ipv4_addr = network->ip.ipv4.address;
+    os_mem_free((void *)network);
     return ret;
 }
 
