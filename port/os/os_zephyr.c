@@ -107,13 +107,6 @@ int os_thread_delete(os_thread_t *thandle)
     return WM_SUCCESS;
 }
 
-/* Memory allocation OSA layer. Based on Zephyr's libc malloc implementation. */
-#define HEAP_BYTES CONFIG_WIFI_NET_HEAP_SIZE
-
-// static struct sys_heap osa_malloc_heap;
-// struct k_mutex osa_malloc_heap_mutex;
-// static char osa_malloc_heap_mem[HEAP_BYTES];
-
 /*
  *  Actual allocated memory size will be 8 bytes larger than required,
  *  for Zephyr mem mgmt.
@@ -121,20 +114,6 @@ int os_thread_delete(os_thread_t *thandle)
  */
 void *os_mem_alloc(size_t size)
 {
-#if 0
-    int lock_ret;
-
-    lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
-    __ASSERT_NO_MSG(lock_ret == 0);
-
-    void *ptr = sys_heap_aligned_alloc(&osa_malloc_heap, __alignof__(z_max_align_t), size);
-    if (ptr == NULL && size != 0) {
-    	errno = ENOMEM;
-    }
-
-    (void)k_mutex_unlock(&osa_malloc_heap_mutex);
-    return ptr;
-#endif
     return k_malloc(size);
 }
 
@@ -151,20 +130,6 @@ void *os_mem_calloc(size_t size)
 
 void *os_mem_realloc(void *old_ptr, size_t new_size)
 {
-#if 0
-    int lock_ret;
-
-    lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
-    __ASSERT_NO_MSG(lock_ret == 0);
-    void *ptr = sys_heap_aligned_realloc(&osa_malloc_heap, old_ptr,
-        __alignof__(z_max_align_t), new_size);
-    if (ptr == NULL && new_size != 0) {
-	return NULL;
-    }
-
-    (void)k_mutex_unlock(&osa_malloc_heap_mutex);
-    return ptr;
-#endif
     void *p;
 
     if (new_size == 0)
@@ -194,30 +159,8 @@ void *os_mem_realloc(void *old_ptr, size_t new_size)
 
 void os_mem_free(void *ptr)
 {
-#if 0
-    int lock_ret;
-
-    lock_ret = k_mutex_lock(&osa_malloc_heap_mutex, K_FOREVER);
-    __ASSERT_NO_MSG(lock_ret == 0);
-    sys_heap_free(&osa_malloc_heap, ptr);
-    (void)k_mutex_unlock(&osa_malloc_heap_mutex);
-#endif
     k_free(ptr);
 }
-
-#if 0
-/* Prepares OSA layer, by setting up heap */
-static int osa_prepare(const struct device *unused)
-{
-    ARG_UNUSED(unused);
-
-//    sys_heap_init(&osa_malloc_heap, osa_malloc_heap_mem, HEAP_BYTES);
-//    k_mutex_init(&osa_malloc_heap_mutex);
-    return 0;
-}
-
-SYS_INIT(osa_prepare, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
-#endif
 
 /* Used to convert 3 argument zephyr threads to one arg OSA threads */
 void thread_wrapper(void *entry, void *arg, void *tdata)
