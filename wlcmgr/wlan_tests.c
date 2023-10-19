@@ -8544,7 +8544,7 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
 {
     uint32_t pin = 0;
 
-    wlan_wps_generate_pin((unsigned int *)&pin);
+    wlan_wps_generate_pin(&pin);
     PRINTF("WPS PIN is: %d\r\n", pin);
 }
 #endif

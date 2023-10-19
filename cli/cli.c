@@ -852,6 +852,8 @@ static void cli_main(os_thread_arg_t data)
     }
     os_thread_self_complete(NULL);
 }
+
+#ifndef CONFIG_UART_INTERRUPT
 /* Automatically bind an input processor to the console */
 static int cli_install_UART_Tick(void)
 {
@@ -862,13 +864,15 @@ static int cli_remove_UART_Tick(void)
 {
     return os_remove_idle_function(console_tick);
 }
+#endif
 
 /* Internal cleanup function. */
 static int __cli_cleanup(void)
 {
     int ret, final = WM_SUCCESS;
     char *halt_msg = HALT_MSG;
-
+	
+#ifndef CONFIG_UART_INTERRUPT
     if (cli_remove_UART_Tick() != WM_SUCCESS)
     {
         (void)PRINTF(
@@ -876,6 +880,7 @@ static int __cli_cleanup(void)
             "\r\n");
         final = -WM_FAIL;
     }
+#endif
 
     ret = cli_submit_cmd_buffer(&halt_msg);
     if (ret != WM_SUCCESS)

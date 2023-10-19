@@ -4348,7 +4348,8 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint16_t len)
 {
     mlan_status i;
-    t_u32 pkt_len, outbuf_len;
+    t_u32 pkt_len;
+    uint32_t outbuf_len = 0;
 
     uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
     if (!outbuf)

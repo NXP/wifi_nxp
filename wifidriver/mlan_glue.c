@@ -4208,11 +4208,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     HostCmd_DS_TSP_CFG *data = &resp->params.tsp_cfg;
                     if (data->action == HostCmd_ACT_GEN_GET)
                     {
-                        (void *)memcpy(tsp_get_cfg->thermalPowerMgmtenable, &data->thermalPowerMgmtenable,
-                                       sizeof(t_u16));
-                        (void *)memcpy(tsp_get_cfg->powerMgmtBackoff, &data->powerMgmtBackoff, sizeof(t_u32));
-                        (void *)memcpy(tsp_get_cfg->lowPwrBOThrshld, &data->lowPwrBOThrshld, sizeof(t_u32));
-                        (void *)memcpy(tsp_get_cfg->highPwrBOThrshld, &data->highPwrBOThrshld, sizeof(t_u32));
+						tsp_get_cfg->thermalPowerMgmtenable = data->thermalPowerMgmtenable;
+						tsp_get_cfg->powerMgmtBackoff = data->powerMgmtBackoff;
+						tsp_get_cfg->lowPwrBOThrshld = data->lowPwrBOThrshld;
+						tsp_get_cfg->highPwrBOThrshld = data->highPwrBOThrshld;
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
