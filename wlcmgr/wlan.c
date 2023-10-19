@@ -849,6 +849,7 @@ static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
     wlan_start_cloud_keep_alive();
 #endif
 #ifdef CONFIG_HOST_SLEEP
+    wlan.wakeup_conditions = wakeup_condition;
     if (is_sta_ipv4_connected() != 0)
     {
         ret = wlan_get_ipv4_addr(&ipv4_addr);
@@ -6528,7 +6529,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_SLEEP:
             wlcm_d("got event: sleep");
+#ifdef CONFIG_HOST_SLEEP
+            wlan_host_sleep_and_sleep_confirm();
+#else
             send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
+#endif
             break;
         case WIFI_EVENT_AWAKE:
             wlcm_d("got event: awake");
