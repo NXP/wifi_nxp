@@ -6883,4 +6883,17 @@ int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action);
 uint32_t wlan_get_temperature(void);
 #endif
 
+#ifdef CONFIG_CPU_LOADING
+/**
+ * Set parameters for cpu loading test.
+ *
+ * \param[in]  start    0 stop test, 1 start test.
+ * \param[in]  number   The number of cpu loading test.
+ * \param[in]  period   The period of cpu loading test.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period);
+#endif
+
 #endif /* __WLAN_H__ */

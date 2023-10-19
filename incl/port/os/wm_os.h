@@ -1136,5 +1136,7 @@ void trace_task_switch(int in, const char *func_name);
 void trace_task_switch_print();
 #endif
 
+void os_get_num_of_tasks(uint8_t *num_tasks);
+
 #endif /* ! CONFIG_WIFI_ZEPHYR */
 #endif /* ! _WM_OS_H_ */

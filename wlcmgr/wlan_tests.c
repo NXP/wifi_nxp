@@ -7851,6 +7851,135 @@ void test_wlan_cpu_task_info(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_CPU_LOADING
+static void dump_wlan_cpu_loading_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-cpu-loading start <start> sample_loops <number> sample_period <period>\r\n");
+    (void)PRINTF("    <start>: \r\n");
+    (void)PRINTF("	        0: stop ongoing collecting cpu loading info.\r\n");
+    (void)PRINTF("	        1: start collecting cpu loading info.\r\n");
+    (void)PRINTF("    <number>: \r\n");
+    (void)PRINTF("	        The cycle numbers to collect cpu loading info.\r\n");
+    (void)PRINTF(
+        "	        If no value is set, will keep collect cpu loading info until a stop command is received.\r\n");
+    (void)PRINTF("    <period>: \r\n");
+    (void)PRINTF("	        The period to collect cpu loading info.\r\n");
+    (void)PRINTF("	        If no value is set, period is asigned as 2s.\r\n");
+    (void)PRINTF("	        Note: The smaller the period, the greater the impact on performance.\r\n");
+    (void)PRINTF("	   For example:\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 0\r\n");
+    (void)PRINTF("	            stop ongoing collecting cpu loading info.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1 sample_loops 10\r\n");
+    (void)PRINTF(
+        "	            The cycle numbers of collecting cpu loading is 10 and collect period is default value 2s.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1 sample_loops 10 sample_period 5\r\n");
+    (void)PRINTF("	            The cycle numbers of collecting cpu loading is 10 and collect period is 5s.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1\r\n");
+    (void)PRINTF("	            Ongoing colloecting cpu loading info until execute 'wlan-cpu-loading 0'.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1 sample_period 4\r\n");
+    (void)PRINTF(
+        "	            Ongoing colloecting cpu loading info until execute 'wlan-cpu-loading 0'. And the collect period "
+        "is 4s.\r\n");
+}
+
+static void test_wlan_cpu_loading(int argc, char **argv)
+{
+    int arg = 0;
+    unsigned int value;
+    uint8_t start, period = 0;
+    uint32_t number = 0;
+
+    struct
+    {
+        uint8_t start : 1;
+        uint8_t number : 1;
+        uint8_t period : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+
+    if (argc < 2 && argc > 4)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_cpu_loading_usage();
+        return;
+    }
+
+    arg++;
+    do
+    {
+        if (!info.start && string_equal("start", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid <start> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+            if (value != 0 && value != 1)
+            {
+                (void)PRINTF("Error: invalid <start> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+
+            start = value & 0xFF;
+            arg += 2;
+            info.start = 1;
+        }
+        else if (!info.number && string_equal("sample_loops", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid <number> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+
+            number = value;
+            arg += 2;
+            info.number = 1;
+        }
+        else if (!info.period && string_equal("sample_period", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid <period> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+
+            period = value & 0xFF;
+            arg += 2;
+            info.period = 1;
+        }
+        else
+        {
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            dump_wlan_cpu_loading_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if (start == 1)
+    {
+        (void)PRINTF("Start cpu loading test:\r\n");
+        if (number == 0)
+            (void)PRINTF("%s\r\n", "Keeping CPU loading test");
+        else
+            (void)PRINTF("Cycle numbers of CPU loading test: %d\r\n", number);
+
+        if (period == 0)
+            (void)PRINTF("Period of CPU loading test: 2s\r\n");
+        else
+            (void)PRINTF("Period of CPU loading test: %d s\r\n", period);
+    }
+
+    wlan_cpu_loading(start, number, period);
+}
+#endif
+
 #ifdef CONFIG_TSP
 static void dump_wlan_tsp_cfg_usage()
 {
@@ -10691,6 +10820,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_CPU_TASK_STATUS
     {"wlan-cpu-task-info", NULL, test_wlan_cpu_task_info},
+#endif
+#ifdef CONFIG_CPU_LOADING
+    {"wlan-cpu-loading", "start <start> sample_loops <number> sample_period <period>", test_wlan_cpu_loading},
 #endif
 #ifdef STA_SUPPORT
     {"wlan-get-signal", NULL, test_wlan_get_signal},

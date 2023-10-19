@@ -1437,3 +1437,13 @@ void trace_task_switch_print()
         (void)PRINTF("%d-%s-%lu\r\n", i, ncp_debug_task_switch[i], ncp_debug_task_switch_interval[i]);
 }
 #endif
+
+void os_get_num_of_tasks(uint8_t *num_tasks)
+{
+    UBaseType_t number;
+    number = uxTaskGetNumberOfTasks();
+
+    *num_tasks = number & 0xFF;
+
+    return;
+}

@@ -145,6 +145,51 @@ os_rw_lock_t sleep_rwlock;
 os_semaphore_t uapsd_sem;
 #endif
 
+#ifdef CONFIG_CPU_LOADING
+#define CPU_LOADING_ACTION_STOP        0
+#define CPU_LOADING_ACTION_START       1
+#define CPU_LOADING_STATUS_ONGOING     2
+#define CPU_LOADING_STATUS_ENDING      3
+#define CPU_LOADING_STATUS_DEAD        4
+#define CPU_LOADING_PERIOD             2000
+#define CPU_LOADING_TASK_NUM           20
+#define CPU_LOADING_KEEPING            -1
+static os_thread_stack_define(cpu_loading_stack, 2048);
+
+static struct
+{
+    /*The number of tasks.*/
+    uint8_t task_nums;
+    /*The total length of cpu info struct*/
+    uint32_t task_status_len;
+    /*Pointer to buffer of storing cpu Loading info.*/
+    char *cpu_loading_info;
+    /*CPU loading status: CPU_LOADING_STATUS_ENDING / CPU_LOADING_STATUS_ONGOING / CPU_LOADING_STATUS_DEAD*/
+    uint8_t status;
+    /*Index of collecting CPU loading info.*/
+    uint32_t index;
+    /*Remaining time of collecting CPU loading info.*/
+    int sampling_loops;
+    /*The value of timer time out*/
+    uint32_t sampling_period;
+    /*CPU loading timer.*/
+    os_timer_t cpu_loading_timer;
+    /*CPU loading thread.*/
+    os_thread_t cpu_loading_thread;
+
+    /*Array of recording names of tasks.*/
+    char task_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
+    /*Array of recording runing time of tasks.*/
+    uint64_t data_cur[CPU_LOADING_TASK_NUM];
+    uint64_t data_pre[CPU_LOADING_TASK_NUM];
+    /*Array of recording the first runing time of tasks.*/
+    uint64_t first_data[CPU_LOADING_TASK_NUM];
+}cpu_loading;
+
+char task_string_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
+
+#endif
+
 #if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
 os_semaphore_t wls_csi_sem;
 #endif
@@ -236,6 +281,9 @@ enum user_request_type
     CM_STA_USER_REQUEST_HS,
     CM_STA_USER_REQUEST_PS_ENTER,
     CM_STA_USER_REQUEST_PS_EXIT,
+#ifdef CONFIG_CPU_LOADING
+    CM_STA_USER_REQUEST_CPU_LOADING,
+#endif
     CM_STA_USER_REQUEST_LAST,
     /* All the STA related request are above and uAP related requests are
        below */
@@ -6341,6 +6389,83 @@ static void wlcm_send_host_sleep(struct wifi_message *msg, enum cm_sta_state *ne
     (void)wlan_send_host_sleep_int(wakeup_condition);
 }
 
+#ifdef CONFIG_CPU_LOADING
+
+static void wlan_cpu_loading_info_display(void)
+{
+    uint64_t total_runtime = 0;
+    uint64_t task_runtime[CPU_LOADING_TASK_NUM] = {0};
+    float task_runtime_percentage[CPU_LOADING_TASK_NUM] = {0};
+    uint8_t task_index = 0, i = 0;
+    uint32_t collect_time = 0;
+    char cpu_loading_task_name[] = "cpu_loading_task";
+
+    for(i = 0; i < cpu_loading.task_nums; i++) //Don't calculate cpu info of cpu_loading_thread task.
+    {
+        if(!memcmp(cpu_loading_task_name, cpu_loading.task_name[i], strlen(cpu_loading_task_name)))
+            continue;
+
+        if(cpu_loading.status == CPU_LOADING_STATUS_ONGOING)
+            task_runtime[i] = cpu_loading.data_cur[i] - cpu_loading.data_pre[i];
+        else
+            task_runtime[i] = cpu_loading.data_cur[i] - cpu_loading.first_data[i];
+
+        total_runtime += task_runtime[i];
+    }
+
+    collect_time = ((cpu_loading.index - 1) * cpu_loading.sampling_period) /1000;
+    (void)PRINTF("\r\n");
+    if(cpu_loading.status != CPU_LOADING_STATUS_ENDING)
+        (void)PRINTF("CPU loading: %ds ~ %ds \r\n", (collect_time - cpu_loading.sampling_period /1000) + 1, collect_time);
+    else
+        (void)PRINTF("Total CPU loading info in previous %d seconds\r\n", cpu_loading.index * cpu_loading.sampling_period / 1000);
+
+    (void)PRINTF("taskName             \t\tPercentage\r\n");
+    for(int i = 0; i < cpu_loading.task_nums; i++)
+    {
+        if(!memcmp(cpu_loading_task_name, cpu_loading.task_name[i], strlen(cpu_loading_task_name)))
+            continue;
+        task_runtime_percentage[i] = (float)(((float)(task_runtime[i]) / total_runtime) * 100);
+        (void)PRINTF("%s \t\t%6.2f%%\r\n", task_string_name[i], task_runtime_percentage[i]);
+    }
+}
+
+static int wlan_cpu_loading_stop()
+{
+    cpu_loading.status = CPU_LOADING_STATUS_ENDING;
+    wlan_cpu_loading_info_display();
+
+    cpu_loading.index = 0;
+
+    (void)send_user_request(CM_STA_USER_REQUEST_CPU_LOADING, 0); // Notify wlcmgr task to destory cpu_loading_thread task.
+
+    return WM_SUCCESS;
+}
+
+static void wlan_cpu_loading_request()
+{
+    int ret;
+
+    ret = os_timer_delete(&cpu_loading.cpu_loading_timer);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to delete cpu loading timer: %d.\r\n", ret);
+    }
+
+    os_mem_free(cpu_loading.cpu_loading_info);
+
+    ret = os_thread_delete(&cpu_loading.cpu_loading_thread);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to delete cpu_loading_task: %d.\r\n", ret);
+    }
+
+    cpu_loading.status = CPU_LOADING_STATUS_DEAD;
+
+    (void)PRINTF("Success to stop CPU loading test.\r\n");
+}
+#endif
+
 /*
  * Event Handlers
  */
@@ -6418,7 +6543,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             }
             wlan_disable_power_save((int)msg->data);
             break;
-
+#ifdef CONFIG_CPU_LOADING
+        case CM_STA_USER_REQUEST_CPU_LOADING:
+            wlan_cpu_loading_request();
+            break;
+#endif
         case WIFI_EVENT_SCAN_START:
 #ifdef CONFIG_WPA_SUPP
             wifi_scan_start(msg);
@@ -7406,6 +7535,11 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         os_mutex_delete(&reset_lock);
         return -WM_FAIL;
     }
+#endif
+
+#ifdef CONFIG_CPU_LOADING
+    cpu_loading.status = CPU_LOADING_STATUS_DEAD;
+    cpu_loading.sampling_period = CPU_LOADING_PERIOD;
 #endif
 
     ret = os_timer_create(&wlan.assoc_timer, "assoc-timer", os_msec_to_ticks(BAD_MIC_TIMEOUT), &assoc_timer_cb, NULL,
@@ -9528,7 +9662,14 @@ void wlan_reset(cli_reset_option ResetOption)
                     os_thread_sleep(os_msec_to_ticks(1000));
                 }
             }
-
+#ifdef CONFIG_CPU_LOADING
+            if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
+                wlan_cpu_loading_stop();
+            while(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
+            {
+                os_thread_sleep(os_msec_to_ticks(50));
+            }
+#endif
             /* Block TX data */
             wifi_set_tx_status(WIFI_DATA_BLOCK);
             /* Block RX data */
@@ -14421,4 +14562,208 @@ uint32_t wlan_get_temperature()
 {
     return wifi_get_temperature();
 }
+#endif
+
+#ifdef CONFIG_CPU_LOADING
+
+static void wlan_cpu_loading_record_data(void)
+{
+    memset(cpu_loading.cpu_loading_info, 0, cpu_loading.task_status_len);
+
+    char run_task_name[configMAX_TASK_NAME_LEN];
+    char cpu_run_data[20];
+    unsigned int value;
+    int task_name_index = 0, task_time_index = 0, index = 0, task_index = 0;
+
+    os_get_runtime_stats(cpu_loading.cpu_loading_info);
+
+    uint32_t len_data = strlen(cpu_loading.cpu_loading_info);
+    do
+    {
+        memset(run_task_name, 0, strlen(run_task_name));
+        /*Record task name*/
+        do
+        {
+            if(cpu_loading.cpu_loading_info[index] == ' ' && cpu_loading.cpu_loading_info[index + 1] == ' ') // Complete name parsing
+                break;
+            else
+                run_task_name[task_name_index++] = cpu_loading.cpu_loading_info[index++];
+        }while(index < len_data);
+
+        do      //Filter out padding spaces between task names and run time values.
+        {
+            if(cpu_loading.cpu_loading_info[index++] == '\t')
+                break;
+        } while (index < len_data);
+
+        /*Record task run time*/
+        do
+        {
+            if(cpu_loading.cpu_loading_info[index] < '0' || cpu_loading.cpu_loading_info[index] > '9')
+                break;
+            cpu_run_data[task_time_index++] = cpu_loading.cpu_loading_info[index++];
+        }while(index < len_data);
+
+        cpu_run_data[task_time_index] = '\0';
+        get_uint(cpu_run_data, &value, strlen(cpu_run_data));
+
+        if(cpu_loading.index > 0)
+        {
+            for(int i = 0; i < cpu_loading.task_nums; i++)  // To collect CPU loading info according to fixed task name sequence.
+            {
+                if(!strcmp(cpu_loading.task_name[i], run_task_name))
+                {
+                    cpu_loading.data_pre[i] = cpu_loading.data_cur[i];
+                    cpu_loading.data_cur[i] = value;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            memset(task_string_name[task_index],' ', configMAX_TASK_NAME_LEN);
+            task_string_name[task_index][configMAX_TASK_NAME_LEN -1] = '\0';
+
+            memcpy(cpu_loading.task_name[task_index], run_task_name, strlen(run_task_name));
+            memcpy(task_string_name[task_index], run_task_name, strlen(run_task_name));
+            cpu_loading.data_pre[task_index] = value;
+            cpu_loading.data_cur[task_index] = value;
+            cpu_loading.first_data[task_index] = value;
+
+            cpu_loading.task_name[task_index][strlen(run_task_name)] = '\0';
+        }
+
+        /*Filter percentage value*/
+        do
+        {
+            if(cpu_loading.cpu_loading_info[index] == '\r' && cpu_loading.cpu_loading_info[index + 1] == '\n')
+            {
+                index += 2;
+                break;
+            }
+
+            index++;
+        }while((index < len_data));
+
+        task_time_index = 0;
+        task_name_index = 0;
+        task_index ++;
+
+    }while (index < len_data);
+
+    cpu_loading.index ++;
+    cpu_loading.sampling_loops --;
+}
+
+static void wlan_cpu_loading_handler(os_thread_arg_t data)
+{
+    for(;;)
+    {
+        /* Wait till cpu loading timer time out. */
+        (void)os_event_notify_get(OS_WAIT_FOREVER);
+
+        if(cpu_loading.sampling_loops == 0)
+        {
+            wlan_cpu_loading_stop();
+        }
+        else
+        {
+            wlan_cpu_loading_record_data();
+            if(cpu_loading.index > 1)
+                wlan_cpu_loading_info_display();
+        }
+    }
+
+    os_thread_self_complete(NULL);
+}
+
+static void cpu_loading_cb(os_timer_arg_t arg)
+{
+    (void)os_event_notify_put(cpu_loading.cpu_loading_thread);
+}
+
+static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
+{
+    int ret;
+
+    if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
+    {
+        memset(&cpu_loading, 0, sizeof(cpu_loading));
+        if(period == 0)
+            cpu_loading.sampling_period = CPU_LOADING_PERIOD;
+        else
+            cpu_loading.sampling_period = period * (CPU_LOADING_PERIOD / 2);
+
+        ret = os_timer_create(&cpu_loading.cpu_loading_timer, "cpu-loading-timer", os_msec_to_ticks(cpu_loading.sampling_period),
+                                &cpu_loading_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
+        if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to create cpu loading timer.\r\n");
+            return ret;
+        }
+
+        ret = os_thread_create(&cpu_loading.cpu_loading_thread, "cpu_loading_task", wlan_cpu_loading_handler, 0,
+                                &cpu_loading_stack, OS_PRIO_1);
+        if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to create cpu loading thread.\r\n");
+            return ret;
+        }
+
+        os_get_num_of_tasks(&cpu_loading.task_nums);
+        cpu_loading.task_status_len = cpu_loading.task_nums * sizeof(TaskStatus_t);
+        cpu_loading.cpu_loading_info = (char *)os_mem_alloc(cpu_loading.task_status_len);
+        if (cpu_loading.cpu_loading_info == NULL)
+        {
+            (void)PRINTF("%s: Failed to alloc cpu loading info\r\n", __func__);
+            return -WM_FAIL;
+        }
+
+        cpu_loading.index = 0;
+        if(number != 0)
+            cpu_loading.sampling_loops = number;
+        else
+            cpu_loading.sampling_loops = CPU_LOADING_KEEPING;
+
+        cpu_loading.status = CPU_LOADING_STATUS_ONGOING;
+
+        memset(cpu_loading.data_cur, 0, sizeof(cpu_loading.data_cur));
+        memset(cpu_loading.data_pre, 0, sizeof(cpu_loading.data_pre));
+        (void)os_timer_activate(&cpu_loading.cpu_loading_timer);
+        return WM_SUCCESS;
+    }
+    else
+    {
+        wlcm_e("Unable to start cpu loading timer, pls stop the previous cpu loading test firstly.");
+        return -WM_FAIL;
+    }
+}
+
+int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period)
+{
+    int ret;
+    if(start == CPU_LOADING_ACTION_STOP)
+    {
+        if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
+        {
+            (void)PRINTF("Collecting CPU loading info has already ended.\r\n");
+            return WM_SUCCESS;
+        }
+        else
+        {
+            cpu_loading.sampling_loops = 0;
+            os_timer_change(&cpu_loading.cpu_loading_timer, os_msec_to_ticks(100), 0); // Chages value of cpu loading timer to stop cpu loading test quickly.
+            if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
+            {
+                os_thread_sleep(os_msec_to_ticks(50));
+            }
+            return WM_SUCCESS;
+        }
+    }
+    else
+    {
+        return wlan_cpu_loading_start(number, period);
+    }
+}
+
 #endif
