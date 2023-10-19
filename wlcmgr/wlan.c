@@ -7569,8 +7569,6 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_UAP;
     /* Set network role to uAP */
     net->role = WLAN_BSS_ROLE_UAP;
-    /* Set network key mgmt to none for open security */
-    net->security.key_mgmt = WLAN_KEY_MGMT_NONE;
     /* Set IP address to 192.168.10.1 */
     net->ip.ipv4.address = htonl(uap_ip);
     /* Set default gateway to 192.168.10.1 */
@@ -7592,8 +7590,6 @@ void wlan_initialize_sta_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_STA;
     /* Set network role to sta */
     net->role = WLAN_BSS_ROLE_STA;
-    /* Set network key mgmt to none for open security */
-    net->security.key_mgmt = WLAN_KEY_MGMT_NONE;
     /* Specify address type as dynamic assignment */
     net->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
 }
@@ -7955,6 +7951,44 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 #endif
 
+    if (network->security.key_mgmt == 0)
+    {
+        if (network->security.type == WLAN_SECURITY_NONE)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_NONE;
+        }
+        else if ((network->security.type == WLAN_SECURITY_WPA) || (network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED))
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_PSK;
+        }
+        else if (network->security.type == WLAN_SECURITY_WPA3_SAE)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_SAE;
+        }
+#ifdef CONFIG_OWE
+        else if (network->security.type == WLAN_SECURITY_OWE_ONLY)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_OWE;
+        }
+#endif
+#ifdef CONFIG_11R
+        else if (network->security.type == WLAN_SECURITY_WPA2_FT)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
+        }
+#ifdef CONFIG_WPA_SUPP
+        else if (network->security.type == WLAN_SECURITY_WPA3_FT_SAE)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_FT_SAE;
+        }
+#endif
+#endif
+        else if (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_SAE;
+        }
+    }
+
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((((network->security.type == WLAN_SECURITY_WPA) || (network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED)) &&
         (!wlan_key_mgmt_wpa_psk(network->security.key_mgmt)))
@@ -8082,44 +8116,6 @@ int wlan_add_network(struct wlan_network *network)
         network->dot11n = 1;
         }
 #endif
-    }
-
-    if (network->security.key_mgmt == 0)
-    {
-        if (network->security.type == WLAN_SECURITY_NONE)
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_NONE;
-        }
-        else if ((network->security.type == WLAN_SECURITY_WPA) || (network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED))
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_PSK;
-        }
-        else if (network->security.type == WLAN_SECURITY_WPA3_SAE)
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_SAE;
-        }
-#ifdef CONFIG_OWE
-        else if (network->security.type == WLAN_SECURITY_OWE_ONLY)
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_OWE;
-        }
-#endif
-#ifdef CONFIG_11R
-        else if (network->security.type == WLAN_SECURITY_WPA2_FT)
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
-        }
-#ifdef CONFIG_WPA_SUPP
-        else if (network->security.type == WLAN_SECURITY_WPA3_FT_SAE)
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_FT_SAE;
-        }
-#endif
-#endif
-        else if (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED)
-        {
-            network->security.key_mgmt = WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_SAE;
-        }
     }
 
 #ifdef CONFIG_WPA_SUPP
