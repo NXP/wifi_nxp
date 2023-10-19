@@ -7873,19 +7873,21 @@ static inline int wlan_key_mgmt_wpa_psk_sae(int akm)
                 WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256 | WLAN_KEY_MGMT_SAE));
 }
 
+#ifdef CONFIG_OWE
 static inline int wlan_key_mgmt_owe(int akm)
 {
     akm &= ~WLAN_KEY_MGMT_OWE;
 
     return (!akm && WLAN_KEY_MGMT_OWE);
 }
+#endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
 static inline int wlan_key_mgmt_dpp(int akm)
 {
-    akm &= ~WLAN_KEY_MGMT_OWE;
+    akm &= ~WLAN_KEY_MGMT_DPP;
 
-    return (!akm && WLAN_KEY_MGMT_OWE);
+    return (!akm && WLAN_KEY_MGMT_DPP);
 }
 #endif
 
