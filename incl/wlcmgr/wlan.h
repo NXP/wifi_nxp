@@ -129,7 +129,7 @@
 #include <wm_net_decl.h>
 #endif
 
-#define WLAN_DRV_VERSION "v1.3.r47.p2"
+#define WLAN_DRV_VERSION "v1.3.r47.p3"
 
 #ifdef CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>

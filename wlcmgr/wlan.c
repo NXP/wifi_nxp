@@ -7817,78 +7817,131 @@ static bool wlan_is_eap_fast_security(enum wlan_security_type security)
 #endif
 #endif
 
-static inline int wlan_key_mgmt_wpa_psk(int akm)
+static int wlan_key_mgmt_wpa_psk(int akm)
 {
+    int rakm = (WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_PSK_SHA256);
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
     akm &= ~(WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_PSK_SHA256);
 
-    return (!akm && (WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_FT_PSK | WLAN_KEY_MGMT_PSK_SHA256));
+    return (!akm && rakm);
 }
 
 #ifdef CONFIG_11R
-static inline int wlan_key_mgmt_ft_psk(int akm)
+static int wlan_key_mgmt_ft_psk(int akm)
 {
+    int rakm = WLAN_KEY_MGMT_FT_PSK;
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
     akm &= ~WLAN_KEY_MGMT_FT_PSK;
 
-    return (!akm && WLAN_KEY_MGMT_FT_PSK);
+    return (!akm && rakm);
 }
 #endif
 
-static inline int wlan_key_mgmt_sae(int akm)
+static int wlan_key_mgmt_sae(int akm)
 {
+    int rakm;
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
+    rakm = (
+#ifdef CONFIG_WPA_SUPP_DPP
+            WLAN_KEY_MGMT_DPP |
+#endif
+            WLAN_KEY_MGMT_SAE);
+
     akm &= ~(
 #ifdef CONFIG_WPA_SUPP_DPP
             WLAN_KEY_MGMT_DPP |
 #endif
             WLAN_KEY_MGMT_SAE);
 
-    return (!akm && (
-#ifdef CONFIG_WPA_SUPP_DPP
-            WLAN_KEY_MGMT_DPP |
-#endif
-            WLAN_KEY_MGMT_SAE));
+    return (!akm && rakm);
 }
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-static inline int wlan_key_mgmt_ft_sae(int akm)
+static int wlan_key_mgmt_ft_sae(int akm)
 {
+    int rakm =~WLAN_KEY_MGMT_FT_SAE;
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
     akm &= ~WLAN_KEY_MGMT_FT_SAE;
 
-    return (!akm && WLAN_KEY_MGMT_FT_SAE);
+    return (!akm && rakm);
 }
 #endif
 #endif
 
-static inline int wlan_key_mgmt_wpa_psk_sae(int akm)
+static int wlan_key_mgmt_wpa_psk_sae(int akm)
 {
+    int rakm;
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
+    rakm = (
+#ifdef CONFIG_WPA_SUPP_DPP
+                WLAN_KEY_MGMT_DPP |
+#endif
+                WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256 | WLAN_KEY_MGMT_SAE);
+
     akm &= ~(
 #ifdef CONFIG_WPA_SUPP_DPP
             WLAN_KEY_MGMT_DPP |
 #endif
             WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256 | WLAN_KEY_MGMT_SAE);
 
-    return (!akm && (
-#ifdef CONFIG_WPA_SUPP_DPP
-                WLAN_KEY_MGMT_DPP |
-#endif
-                WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256 | WLAN_KEY_MGMT_SAE));
+    return (!akm && rakm);
 }
 
 #ifdef CONFIG_OWE
-static inline int wlan_key_mgmt_owe(int akm)
+static int wlan_key_mgmt_owe(int akm)
 {
+    int rakm = WLAN_KEY_MGMT_OWE;
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
     akm &= ~WLAN_KEY_MGMT_OWE;
 
-    return (!akm && WLAN_KEY_MGMT_OWE);
+    return (!akm && rakm);
 }
 #endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
-static inline int wlan_key_mgmt_dpp(int akm)
+static int wlan_key_mgmt_dpp(int akm)
 {
+    int rakm = WLAN_KEY_MGMT_DPP;
+
+    if (akm == 0)
+    {
+        return 0;
+    }
+
     akm &= ~WLAN_KEY_MGMT_DPP;
 
-    return (!akm && WLAN_KEY_MGMT_DPP);
+    return (!akm && rakm);
 }
 #endif
 
