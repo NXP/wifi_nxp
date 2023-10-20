@@ -142,7 +142,7 @@ t_u8 region_string_2_region_code(t_u8 *region_string)
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-static mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region, OUT t_u8 *code)
+mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region, OUT t_u8 *code)
 {
     t_u8 i;
     t_u8 size = sizeof(region_code_mapping) / sizeof(region_code_mapping_t);

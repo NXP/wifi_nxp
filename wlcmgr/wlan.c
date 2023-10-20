@@ -13832,6 +13832,10 @@ int wlan_set_ips(int option)
 
 int wlan_set_country_code(const char *alpha2)
 {
+    int rv;
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
+    t_u8 region_code_rw610;
+#endif
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
 #ifndef RW610
@@ -13874,13 +13878,22 @@ int wlan_set_country_code(const char *alpha2)
     }
 #endif
 #endif
-    return wifi_set_country_code(country_code);
+    rv = wifi_set_country_code(country_code);
+    if (rv != WM_SUCCESS)
+        return rv;
+
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)    
+    wlan_11d_region_2_code(mlan_adap, (t_u8 *)&country_code[0], &region_code_rw610);
+    return wlan_set_rg_power_cfg(region_code_rw610);
+#else
+    return rv;
+#endif
 }
 
 int wlan_set_region_code(unsigned int region_code)
 {
     char *country;
-
+    
     if ((region_code == 0x41) || (region_code == 0xFE))
     {
         (void)PRINTF("Region code 0XFF is used for Japan to support channels of both 2.4GHz band and 5GHz band.\r\n");
@@ -13890,15 +13903,6 @@ int wlan_set_region_code(unsigned int region_code)
 
     country = (char *)wlan_11d_code_2_region(mlan_adap, (unsigned char)region_code);
     return wlan_set_country_code(country);
-
-#ifndef CONFIG_MLAN_WMSDK
-    rv = wlan_set_rg_power_cfg(region_code);
-    if (rv != WM_SUCCESS)
-        (void)PRINTF("Set region 0x%x tx power table failed \r\n", region_code);
-    else
-        (void)PRINTF("Set region 0x%x tx power table success \r\n", region_code);
-#endif
-
 }
 
 int wlan_get_region_code(unsigned int *region_code)

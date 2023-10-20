@@ -3163,6 +3163,8 @@ t_bool wlan_11d_support_is_enabled(mlan_private *pmpriv);
 t_bool wlan_11d_is_enabled(mlan_private *pmpriv);
 /** 11D Region code to country code string */
 const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code);
+/**converts region string to integer code*/
+mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region, OUT t_u8 *code);
 /** Store 11D domain info */
 mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
                                      t_u16 band,
