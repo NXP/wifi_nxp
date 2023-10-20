@@ -377,7 +377,7 @@ int low_level_output(const struct device *dev, struct net_pkt *pkt)
         wmm_outbuf = wifi_wmm_get_outbuf_enh(&outbuf_len, (mlan_wmm_ac_e)pkt_prio, interface, ra, &is_tx_pause);
         ret        = (wmm_outbuf == NULL) ? true : false;
 
-        if (is_tx_pause == true)
+        if (ret == true && is_tx_pause == true)
         {
             wifi_wmm_drop_pause_drop(interface);
             return -ENOMEM;

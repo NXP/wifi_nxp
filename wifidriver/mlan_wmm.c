@@ -2680,12 +2680,6 @@ uint8_t *wifi_wmm_get_outbuf_enh(
     tx_pause     = wifi_wmm_is_tx_pause(interface, queue, ra);
     *is_tx_pause = (tx_pause == MTRUE) ? true : false;
 
-    if (tx_pause == MTRUE)
-    {
-        *outbuf_len = 0;
-        return MNULL;
-    }
-
     buf = wifi_wmm_buf_get();
     if (buf != MNULL)
         goto SUCC;
