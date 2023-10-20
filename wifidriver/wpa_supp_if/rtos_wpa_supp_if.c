@@ -577,6 +577,10 @@ void wifi_nxp_wpa_supp_dev_deinit(void *if_priv)
 
     if (wifi_if_ctx_rtos != NULL)
     {
+        if (wifi_if_ctx_rtos->last_mgmt_tx_data != NULL)
+        {
+            os_mem_free(wifi_if_ctx_rtos->last_mgmt_tx_data);
+        }
         memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
     }
 }
