@@ -266,6 +266,13 @@ static fwdnld_intf_ret_t sdio_interface_send(fwdnld_intf_t *intf,
             {
                 break;
             }
+            else if (offset > 0)
+            {
+                return FWDNLD_INTF_SUCCESS;
+            }
+            else
+            { /* Do Nothing */
+            }
         }
 
         if (*len == 0U)
