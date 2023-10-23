@@ -61,10 +61,7 @@
 static inline void panic(const char *msg)
 {
     PRINTF("%s\r\n", msg);
-    while (1)
-    {
-        os_thread_sleep(100);
-    }
+    assert(0);
 }
 
 /** Wait until a condition becomes true */
