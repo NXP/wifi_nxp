@@ -395,9 +395,7 @@ static int net_netif_deinit(struct netif *netif)
 
     if (netif->state != NULL)
     {
-#ifndef CONFIG_WPA_SUPP
         mem_free(netif->state);
-#endif
         netif->state = NULL;
     }
 
