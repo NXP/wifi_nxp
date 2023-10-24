@@ -230,6 +230,55 @@ static int sdio_card_init(void)
     return ret;
 }
 
+static void print_card_info(sdio_card_t *card)
+{
+    assert(card != NULL);
+
+    if (card->operationVoltage == kSDMMC_OperationVoltage330V)
+    {
+        sdio_d("Voltage: 3.3V");
+    }
+    else if (card->operationVoltage == kSDMMC_OperationVoltage180V)
+    {
+        sdio_d("Voltage: 1.8V");
+    }
+
+    if (card->currentTiming == kSD_TimingSDR12DefaultMode)
+    {
+        if (card->operationVoltage == kSDMMC_OperationVoltage330V)
+        {
+            sdio_d("Timing mode: Default mode");
+        }
+        else if (card->operationVoltage == kSDMMC_OperationVoltage180V)
+        {
+            sdio_d("Timing mode: SDR12 mode");
+        }
+    }
+    else if (card->currentTiming == kSD_TimingSDR25HighSpeedMode)
+    {
+        if (card->operationVoltage == kSDMMC_OperationVoltage180V)
+        {
+            sdio_d("Timing mode: SDR25");
+        }
+        else
+        {
+            sdio_d("Timing mode: High Speed");
+        }
+    }
+    else if (card->currentTiming == kSD_TimingSDR50Mode)
+    {
+        sdio_d("Timing mode: SDR50");
+    }
+    else if (card->currentTiming == kSD_TimingSDR104Mode)
+    {
+        sdio_d("Timing mode: SDR104");
+    }
+    else if (card->currentTiming == kSD_TimingDDR50Mode)
+    {
+        sdio_d("Timing mode: DDR50");
+    }
+}
+
 int sdio_drv_init(void (*cd_int)(int))
 {
     osa_status_t ret;
@@ -252,6 +301,8 @@ int sdio_drv_init(void (*cd_int)(int))
     {
         sdio_d("Card initialization successful");
     }
+
+    print_card_info(&wm_g_sd);
 
     return WM_SUCCESS;
 }

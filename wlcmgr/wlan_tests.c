@@ -585,6 +585,7 @@ static int get_address(char *arg, struct wlan_ip_config *ip)
 static int get_security(int argc, char **argv, struct wlan_network_security *sec)
 {
     int ret = WM_SUCCESS;
+
     if (argc < 1)
     {
         return -WM_FAIL;
@@ -596,6 +597,7 @@ static int get_security(int argc, char **argv, struct wlan_network_security *sec
     {
         return -WM_FAIL;
     }
+
     if (sec->psk_len < sizeof(sec->psk))
     {
         (void)strcpy(sec->psk, argv[0]);
@@ -1010,12 +1012,14 @@ static void test_wlan_add(int argc, char **argv)
         {
             network.security.key_mgmt = WLAN_KEY_MGMT_PSK;
 
-            if (string_equal(argv[arg + 1], "wpa2") != false)
+            arg += 1;
+
+            if (string_equal(argv[arg], "wpa2") != false)
             {
                 network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
                 arg += 1;
 
-                if (string_equal(argv[arg + 1], "psk") != false)
+                if (string_equal(argv[arg], "psk") != false)
                 {
                     arg += 1;
                 }
@@ -1024,13 +1028,13 @@ static void test_wlan_add(int argc, char **argv)
             {
                 network.security.type = WLAN_SECURITY_WPA;
 
-                if (string_equal(argv[arg + 1], "psk") != false)
+                if (string_equal(argv[arg], "psk") != false)
                 {
                     arg += 1;
                 }
             }
 
-            if (get_security(argc - arg - 1, argv + arg + 1, &network.security) != 0)
+            if (get_security(argc - arg, argv + arg, &network.security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA security"
@@ -1042,14 +1046,16 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg])))
         {
-            network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+            arg += 1;
 
-            if (string_equal(argv[arg + 1], "wpa") != false)
+            if (string_equal(argv[arg], "wpa") != false)
             {
                 network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
+                network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
+
                 arg += 1;
 
-                if (string_equal(argv[arg + 1], "psk") != false)
+                if (string_equal(argv[arg], "psk") != false)
                 {
                     arg += 1;
                 }
@@ -1057,50 +1063,50 @@ static void test_wlan_add(int argc, char **argv)
             else
             {
                 network.security.type = WLAN_SECURITY_WPA2;
+                network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
 
-                if (string_equal(argv[arg + 1], "psk") != false)
+                if (string_equal(argv[arg], "psk") != false)
                 {
                     arg += 1;
 
 #ifdef CONFIG_11R
-                    if (string_equal(argv[arg + 1], "ft-psk") != false)
+                    if (string_equal(argv[arg], "ft-psk") != false)
                     {
-                        network.security.type = WLAN_SECURITY_WPA2_FT;
                         network.security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
                         arg += 1;
                     }
 #endif
 
-                    if (string_equal(argv[arg + 1], "psk-sha256") != false)
+                    if (string_equal(argv[arg], "psk-sha256") != false)
                     {
                         network.security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
                         arg += 1;
                     }
                 }
-                else if (string_equal(argv[arg + 1], "psk-sha256") != false)
+                else if (string_equal(argv[arg], "psk-sha256") != false)
                 {
                     network.security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
                     arg += 1;
                 }
 #ifdef CONFIG_11R
-                else if (string_equal(argv[arg + 1], "ft-psk") != false)
+                else if (string_equal(argv[arg], "ft-psk") != false)
                 {
                     network.security.type = WLAN_SECURITY_WPA2_FT;
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_FT_PSK;
+                    network.security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
 
                     arg += 1;
                 }
 #endif
             }
 
-            if (get_security(argc - arg - 1, argv + arg + 1, &network.security) != 0)
+            if (get_security(argc - arg, argv + arg, &network.security) != 0)
             {
                 (void)PRINTF(
                     "Error: invalid WPA2 security"
                     " argument\r\n");
                 return;
             }
-            arg += 2;
+            arg += 1;
             info.security2++;
         }
 #ifdef CONFIG_OWE
@@ -1124,15 +1130,20 @@ static void test_wlan_add(int argc, char **argv)
 #endif
         else if ((info.security3 == 0U) && string_equal("wpa3", argv[arg]))
         {
-            if ((string_equal(argv[arg + 1], "sae") != false)
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
-                || (string_equal(argv[arg + 1], "ft-sae") != false)
-#endif
-#endif
+            if ((string_equal(argv[arg + 1], "sae") != false) || (string_equal(argv[arg + 1], "ft-sae") != false)
             )
             {
-                if (string_equal(argv[arg + 1], "sae") != false)
+                arg += 1;
+
+#ifndef CONFIG_WPA_SUPP
+                if (string_equal(argv[arg], "ft-sae") != false)
+                {
+                    (void)PRINTF("Error: WPA3 FT-SAE not supported\r\n");
+                    return;
+                }
+#endif
+
+                if (string_equal(argv[arg], "sae") != false)
                 {
                     network.security.type = WLAN_SECURITY_WPA3_SAE;
                     network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
@@ -1140,7 +1151,7 @@ static void test_wlan_add(int argc, char **argv)
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-                    if (string_equal(argv[arg + 1], "ft-sae") != false)
+                    if (string_equal(argv[arg], "ft-sae") != false)
                     {
                         network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
                         arg += 1;
@@ -1150,13 +1161,13 @@ static void test_wlan_add(int argc, char **argv)
                 }
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_11R
-                else if (string_equal(argv[arg + 1], "ft-sae") != false)
+                else if (string_equal(argv[arg], "ft-sae") != false)
                 {
                     network.security.type = WLAN_SECURITY_WPA3_FT_SAE;
                     network.security.key_mgmt |= WLAN_KEY_MGMT_FT_SAE;
                     arg += 1;
 
-                    if (string_equal(argv[arg + 1], "sae") != false)
+                    if (string_equal(argv[arg], "sae") != false)
                     {
                         network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                         arg += 1;
@@ -1165,8 +1176,8 @@ static void test_wlan_add(int argc, char **argv)
                 }
 #endif
 #endif
-                /* copy the PSK phrase */
-                network.security.password_len = strlen(argv[arg + 1]);
+                /* copy the SAE password */
+                network.security.password_len = strlen(argv[arg]);
                 if (network.security.password_len == 0U)
                 {
                     (void)PRINTF(
@@ -1176,7 +1187,7 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 if (network.security.password_len < sizeof(network.security.password))
                 {
-                    (void)strcpy(network.security.password, argv[arg + 1]);
+                    (void)strcpy(network.security.password, argv[arg]);
                 }
                 else
                 {
@@ -1185,7 +1196,7 @@ static void test_wlan_add(int argc, char **argv)
                         " argument\r\n");
                     return;
                 }
-                arg += 2;
+                arg += 1;
 
 #ifdef CONFIG_WPA_SUPP
                 if (string_equal(argv[arg], "sg") != false)

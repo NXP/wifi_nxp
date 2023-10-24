@@ -8009,6 +8009,12 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 #endif
 
+    if (!is_valid_security(network->security.type))
+    {
+        wlcm_e("Invalid security is configured");
+        return -WM_E_INVAL;
+    }
+
     if (network->security.key_mgmt == 0)
     {
         if (network->security.type == WLAN_SECURITY_NONE)
@@ -8068,7 +8074,7 @@ int wlan_add_network(struct wlan_network *network)
 #endif
         ))
     {
-        wlcm_e("Invalid key mgmt is configured");
+        wlcm_e("Invalid security/key mgmt is configured");
         return -WM_E_INVAL;
     }
 
