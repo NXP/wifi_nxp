@@ -7977,12 +7977,14 @@ int wlan_add_network(struct wlan_network *network)
     len = strlen(network->name);
     if (len < WLAN_NETWORK_NAME_MIN_LENGTH || len >= WLAN_NETWORK_NAME_MAX_LENGTH)
     {
+        wlcm_e("name length is out of bounds");
         return -WM_E_INVAL;
     }
 
     /* make sure that either the SSID or BSSID field is present */
     if (network->ssid[0] == '\0' && is_bssid_any(network->bssid))
     {
+        wlcm_e("SSID or BSSID is required");
         return -WM_E_INVAL;
     }
 
@@ -8009,14 +8011,28 @@ int wlan_add_network(struct wlan_network *network)
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     if ((is_ep_valid_security(network->security.type)) && ((network->security.wpa3_sb == 1U) || (network->security.wpa3_sb_192 == 1U)) && (!network->security.mfpc))
     {
+        wlcm_e("MFP is not configured");
         return -WM_E_INVAL;
     }
 #endif
 #endif
 
+#ifdef CONFIG_11R
+    if ((network->role == WLAN_BSS_ROLE_STA) &&
+            ((network->security.type == WLAN_SECURITY_WPA2_FT)
+#ifdef CONFIG_WPA_SUPP
+             || (network->security.type == WLAN_SECURITY_WPA3_FT_SAE)
+#endif
+            ) && (network->channel != 0U))
+    {
+        wlcm_e("Specific channel not allowed in FT security");
+        return -WM_E_INVAL;
+    }
+#endif
+
     if (!is_valid_security(network->security.type))
     {
-        wlcm_e("Invalid security is configured");
+        wlcm_e("Invalid security type is configured");
         return -WM_E_INVAL;
     }
 
@@ -8087,6 +8103,7 @@ int wlan_add_network(struct wlan_network *network)
         (network->security.key_mgmt == WLAN_KEY_MGMT_PSK_SHA256) &&
         (!network->security.mfpc || !network->security.mfpr))
     {
+        wlcm_e("MFP is not configured");
         return -WM_E_INVAL;
     }
 
@@ -8094,6 +8111,7 @@ int wlan_add_network(struct wlan_network *network)
         (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) &&
         (!network->security.mfpc || network->security.mfpr))
     {
+        wlcm_e("MFP required is not allowed");
         return -WM_E_INVAL;
     }
 
@@ -8105,11 +8123,13 @@ int wlan_add_network(struct wlan_network *network)
          ) &&
         (!network->security.mfpc || !network->security.mfpr))
     {
+        wlcm_e("MFP is not configured");
         return -WM_E_INVAL;
     }
 
     if (wlan_is_key_valid(network) == false)
     {
+        wlcm_e("Invalid passphrase/password is configured");
         return -WM_E_INVAL;
     }
 
