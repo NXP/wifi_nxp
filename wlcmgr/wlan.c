@@ -3081,7 +3081,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 #if defined(CONFIG_WNM_PS)
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action                      = (uint16_t)((uint32_t)msg->data);
+    uint16_t action                      = (uint16_t)(*(uint32_t *)(msg->data));
     wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
     os_mem_free(msg->data);
 
@@ -10180,6 +10180,15 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
 #endif
        )
     {
+        if (wlan.cm_wnmps_configured == true)
+        {
+            wlcm_d("wnm ps already enabled: %d, ieee ps could not be enabled", wlan.cm_wnmps_configured);
+            return -WM_FAIL;
+        }
+        else
+        {
+            wlcm_d("ieee ps already enabled");
+        }
         return WM_SUCCESS;
     }
 

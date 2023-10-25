@@ -2758,7 +2758,7 @@ static void test_wlan_ieee_ps(int argc, char **argv)
         }
         else
         {
-            (void)PRINTF("Failed to turn on IEEE Power Save mode\r\n");
+            (void)PRINTF("Failed to turn on IEEE Power Save mode or WNM Power Save mode is enabled\r\n");
         }
     }
     else
@@ -2832,7 +2832,7 @@ static void test_wlan_wnm_ps(int argc, char **argv)
         if (ret == WM_SUCCESS)
             (void)PRINTF("Turned on WNM Power Save mode\r\n");
         else
-            (void)PRINTF("Failed to turn on WNM Power Save mode\r\n");
+            (void)PRINTF("Failed to turn on WNM Power Save mode or IEEE Power Save mode is enabled\r\n");
     }
     else
     {

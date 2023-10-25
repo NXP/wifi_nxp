@@ -2957,7 +2957,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         if (ps_event == WIFI_EVENT_WNM_PS)
                         {
                             if (wifi_event_completion((enum wifi_event)ps_event, result,
-                                                      (void *)((t_u32)(*ps_action_p))) != WM_SUCCESS)
+                                                      (void *)((t_u32)ps_action_p)) != WM_SUCCESS)
                             {
                                 os_mem_free((void *)ps_action_p);
                             }
