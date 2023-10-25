@@ -2345,8 +2345,13 @@ static int do_start(struct wlan_network *network)
         {
             (void)memcpy(&network->bssid[0], &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH);
         }
+
+        t_u8 bandwidth = wifi_uap_get_bandwidth();
+
 #if defined(SD8801) || defined(RW610)
         wpa_supp_set_ap_bw(netif, 1);
+#else
+        wpa_supp_set_ap_bw(netif, bandwidth);
 #endif
         ret = wpa_supp_start_ap(netif, network, 0);
 #else
