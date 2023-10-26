@@ -69,13 +69,13 @@ bool disable_tickless_hook = false;
 
 /* Report state => string */
 const char *report_type_str[] = {
-    "TCP_DONE_SERVER (RX)",        /* LWIPERF_TCP_DONE_SERVER_RX,*/
+    "TCP_DONE_SERVER (RX)", /* LWIPERF_TCP_DONE_SERVER_RX,*/
 #ifdef LWIPERF_REVERSE_MODE
-    "TCP_DONE_SERVER (TX)",        /* LWIPERF_TCP_DONE_SERVER_TX,*/
+    "TCP_DONE_SERVER (TX)", /* LWIPERF_TCP_DONE_SERVER_TX,*/
 #endif
-    "TCP_DONE_CLIENT (TX)",        /* LWIPERF_TCP_DONE_CLIENT_TX,*/
+    "TCP_DONE_CLIENT (TX)", /* LWIPERF_TCP_DONE_CLIENT_TX,*/
 #ifdef LWIPERF_REVERSE_MODE
-    "TCP_DONE_CLIENT (RX)",        /* LWIPERF_TCP_DONE_CLIENT_RX,*/
+    "TCP_DONE_CLIENT (RX)", /* LWIPERF_TCP_DONE_CLIENT_RX,*/
 #endif
     "TCP_ABORTED_LOCAL",           /* LWIPERF_TCP_ABORTED_LOCAL, */
     "TCP_ABORTED_LOCAL_DATAERROR", /* LWIPERF_TCP_ABORTED_LOCAL_DATAERROR, */
@@ -83,11 +83,11 @@ const char *report_type_str[] = {
     "TCP_ABORTED_REMOTE",          /* LWIPERF_TCP_ABORTED_REMOTE, */
     "UDP_DONE_SERVER (RX)",        /* LWIPERF_UDP_DONE_SERVER_RX, */
 #ifdef LWIPERF_REVERSE_MODE
-    "UDP_DONE_SERVER (TX)",        /* LWIPERF_UDP_DONE_SERVER_TX, */
+    "UDP_DONE_SERVER (TX)", /* LWIPERF_UDP_DONE_SERVER_TX, */
 #endif
-    "UDP_DONE_CLIENT (TX)",        /* LWIPERF_UDP_DONE_CLIENT_TX, */
+    "UDP_DONE_CLIENT (TX)", /* LWIPERF_UDP_DONE_CLIENT_TX, */
 #ifdef LWIPERF_REVERSE_MODE
-    "UDP_DONE_CLIENT (RX)",        /* LWIPERF_UDP_DONE_CLIENT_RX, */
+    "UDP_DONE_CLIENT (RX)", /* LWIPERF_UDP_DONE_CLIENT_RX, */
 #endif
     "UDP_ABORTED_LOCAL",           /* LWIPERF_UDP_ABORTED_LOCAL, */
     "UDP_ABORTED_LOCAL_DATAERROR", /* LWIPERF_UDP_ABORTED_LOCAL_DATAERROR, */
@@ -212,11 +212,6 @@ static void lwiperf_report(void *arg,
     {
         (void)PRINTF(" IPERF Report error\r\n");
     }
-
-    /*Give a 500 ms delay before de-activation. For bi-directional exchange, if Server finishes first, this delay
-     ensures that Client also closes its UDP connection in the lwiperf_udp_client_send_more() function.*/
-    os_thread_sleep(os_msec_to_ticks(500));
-
     os_timer_deactivate(&ptimer);
     (void)PRINTF("\r\n");
     iperf_free_ctx_iperf_session(arg, report_type);
