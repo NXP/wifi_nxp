@@ -4424,9 +4424,12 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
+#ifdef RW610
 static void test_wlan_wakeup_condition(int argc, char **argv)
 {
+#ifdef CONFIG_MEF_CFG
     uint8_t is_mef         = MFALSE;
+#endif
     uint32_t wake_up_conds = 0;
 
 #ifdef CONFIG_MEF_CFG
@@ -4493,9 +4496,14 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
 #endif
         return;
     }
+#ifdef CONFIG_MEF_CFG
     wlan_wowlan_config(is_mef, wake_up_conds);
+#else
+    wlan_wowlan_config(wake_up_conds);
+#endif
     return;
 }
+#endif /*RW610*/
 
 #ifdef CONFIG_MEF_CFG
 extern wlan_flt_cfg_t g_flt_cfg;
@@ -10474,19 +10482,23 @@ static struct cli_command tests[] = {
     {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
 #endif
 #if defined(CONFIG_HOST_SLEEP)
+#ifdef RW610
 #ifdef CONFIG_MEF_CFG
     {"wlan-wakeup-condition", "<mef/wowlan wake_up_conds>", test_wlan_wakeup_condition},
-    {"wlan-host-sleep", "<0/1> mef/wowlan <wake_up_conds>", test_wlan_host_sleep},
 #else
     {"wlan-wakeup-condition", "<wowlan wake_up_conds>", test_wlan_wakeup_condition},
-    {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
-#endif
-#ifdef RW610
+#endif /*CONFIG_MEF_CFG*/
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
     {"wlan-auto-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_auto_host_sleep},
 #endif
-#endif
-#endif
+#else
+#ifdef CONFIG_MEF_CFG
+    {"wlan-host-sleep", "<0/1> mef/wowlan <wake_up_conds>", test_wlan_host_sleep},
+#else
+    {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
+#endif /*CONFIG_MEF_CFG*/
+#endif /*RW610*/
+#endif /*CONFIG_HOST_SLEEP*/
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 #if defined(RW610) || defined(SD9177)
     {"wlan-ext-coex-uwb", NULL, test_wlan_ext_coex_uwb},

@@ -1058,7 +1058,11 @@ done:
 }
 #endif
 
+#ifdef CONFIG_MEF_CFG
 int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds)
+#else
+int wlan_wowlan_config(t_u32 wake_up_conds)
+#endif
 {
     int ret = WM_SUCCESS;
 
@@ -1164,7 +1168,7 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
         if (wlan.status == WLCMGR_ACTIVATED)
         {
             /* Start host sleep handshake here if manual mode is selected */
-            ret = wlan_send_host_sleep_int(wlan.hs_wakeup_condition);
+            ret = wlan_send_host_sleep_int(wlan.wakeup_conditions);
             if (ret != WM_SUCCESS)
             {
 #ifdef CONFIG_NCP_BRIDGE
@@ -6571,10 +6575,14 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_SLEEP:
             wlcm_d("got event: sleep");
 #ifdef CONFIG_HOST_SLEEP
+#ifdef RW610
+            send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
+#else
             wlan_host_sleep_and_sleep_confirm();
+#endif /*RW610*/
 #else
             send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
-#endif
+#endif /*CONFIG_HOST_SLEEP*/
             break;
         case WIFI_EVENT_AWAKE:
             wlcm_d("got event: awake");
@@ -7202,8 +7210,17 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.rssi_low_threshold = 70;
 #endif
 
+#ifdef RW610
+#if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
                              (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
+#else
+    wlan.wakeup_conditions = 0;
+#endif
+#else
+    wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
+                             (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;    
+#endif
 
     wlan.num_networks = 0;
     (void)memset(&wlan.networks[0], 0, sizeof(wlan.networks));

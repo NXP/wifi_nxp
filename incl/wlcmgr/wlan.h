@@ -3175,6 +3175,7 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_MEF_CFG
 /** Wowlan configure.
  * This function may be called to config host sleep in firmware.
  *
@@ -3185,6 +3186,17 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
  * \return -WM_FAIL if failed.
  */
 int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds);
+#else
+/** Wowlan configure.
+ * This function may be called to config host sleep in firmware.
+ *
+ * \param[in] wake_up_conds Bit map of default condition.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_wowlan_config(t_u32 wake_up_conds);
+#endif
 /** Host sleep configure.
  * This function may be called to config host sleep in firmware.
  *
