@@ -522,6 +522,7 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
     HostCmd_DS_802_11_SNMP_MIB *psnmp_mib = &cmd->params.smib;
     mlan_status ret                       = MLAN_STATUS_SUCCESS;
     t_u8 *psnmp_oid                       = MNULL;
+    t_u32 ul_temp;
     t_u8 i;
 
     t_u8 snmp_oids[] = {
@@ -594,6 +595,20 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
                 psnmp_mib->buf_size = wlan_cpu_to_le16(sizeof(t_u8));
                 psnmp_mib->value[0] = *((t_u8 *)pdata_buf);
                 cmd->size += (t_u16)sizeof(t_u8);
+                break;
+            case FragThresh_i:
+                psnmp_mib->oid                 = wlan_cpu_to_le16((t_u16)FragThresh_i);
+                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                        = *((t_u32 *)pdata_buf);
+                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                cmd->size += sizeof(t_u16);
+                break;
+            case RtsThresh_i:
+                psnmp_mib->oid                 = wlan_cpu_to_le16((t_u16)RtsThresh_i);
+                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                        = *((t_u32 *)pdata_buf);
+                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                cmd->size += sizeof(t_u16);
                 break;
             default:
                 PRINTM(MERROR, "Unsupported OID.\n");

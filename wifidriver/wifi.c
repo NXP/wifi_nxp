@@ -44,7 +44,7 @@ wifi_os_mem_info wifi_os_mem_stat[OS_MEM_STAT_TABLE_SIZE];
  * MAX_EVENTS = 10 is fairly big value */
 #define MAX_EVENTS    20
 #define MAX_MCAST_LEN (MLAN_MAX_MULTICAST_LIST_SIZE * MLAN_MAC_ADDR_LENGTH)
-#define MAX_WAIT_TIME 35
+#define MAX_WAIT_TIME 3000
 
 #ifndef USB_SUPPORT_ENABLE
 #define _T(x) x
@@ -893,7 +893,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     }
 
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
-
+#ifndef CONFIG_UART_WIFI_BRIDGE
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
     if (ret != WM_SUCCESS)
     {
@@ -902,6 +902,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
+#endif
     /*
      * This is the private pointer. Only the command response handler
      * function knows what it means or where it points to. It can be
@@ -909,13 +910,14 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
      */
     wm_wifi.cmd_resp_priv = cmd_resp_priv;
     (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
-
+#ifndef CONFIG_UART_WIFI_BRIDGE
     /* put the sleep_rwlock after send command but not wait for the command response,
      * for sleep confirm command, sleep confirm response(in wifi_process_ps_enh_response())
      * would try to get the sleep_rwlock until get it,
      * so here put the sleep_rwlock as early as possible.
      */
     (void)os_rwlock_read_unlock(&sleep_rwlock);
+#endif
 
     /* Wait max 20 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
@@ -1770,6 +1772,13 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
     if (ret == WM_SUCCESS)
     {
         wifi_init_done = 1;
+    }
+
+    ret = (int)sd_wifi_post_init(WLAN_TYPE_FCC_CERTIFICATION);
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("sd_wifi_post_init failed. status code %d", ret);
+        return ret;
     }
 
     return ret;

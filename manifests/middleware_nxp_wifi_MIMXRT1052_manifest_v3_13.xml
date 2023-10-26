@@ -13,7 +13,7 @@
     <definition extID="middleware.sdmmc.host.usdhc.MIMXRT1052"/>
     <definition extID="middleware.lwip.apps.lwiperf.MIMXRT1052"/>
   </externalDefinitions>
-  <ksdk id="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1052_manifest_v3_13" name="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1052_manifest_v3_13" version="2.14.0"/>
+  <ksdk id="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1052_manifest_v3_13" name="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1052_manifest_v3_13" version="2.14.0" revision="Provided by Script"/>
   <components>
     <component id="middleware.wifi.common_files.MIMXRT1052" name="nxp_wireless_common_files" brief="NXP WLAN common files" version="1.0.0" full_name="NXP WLAN common files" devices="MIMXRT1052xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path="../middleware/wifi_nxp" project_base_path="wifi">
       <source relative_path="../../incl/port/os" project_relative_path="incl/port/os" type="c_include">

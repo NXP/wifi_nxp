@@ -369,6 +369,28 @@ static mlan_status wlan_cmd_802_11_snmp_mib(
 
     switch (cmd_oid)
     {
+        case FragThresh_i:
+            psnmp_mib->oid = wlan_cpu_to_le16((t_u16)FragThresh_i);
+            if (cmd_action == HostCmd_ACT_GEN_SET)
+            {
+                psnmp_mib->query_type          = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+                psnmp_mib->buf_size            = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                        = *((t_u32 *)pdata_buf);
+                *((t_u16 *)(psnmp_mib->value)) = wlan_cpu_to_le16((t_u16)ul_temp);
+                cmd->size += sizeof(t_u16);
+            }
+            break;
+        case RtsThresh_i:
+            psnmp_mib->oid = wlan_cpu_to_le16((t_u16)RtsThresh_i);
+            if (cmd_action == HostCmd_ACT_GEN_SET)
+            {
+                psnmp_mib->query_type        = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+                psnmp_mib->buf_size          = wlan_cpu_to_le16(sizeof(t_u16));
+                ul_temp                      = *((t_u32 *)pdata_buf);
+                *(t_u16 *)(psnmp_mib->value) = wlan_cpu_to_le16((t_u16)ul_temp);
+                cmd->size += sizeof(t_u16);
+            }
+            break;
         case Dot11D_i:
             psnmp_mib->oid = wlan_cpu_to_le16((t_u16)Dot11D_i);
             if (cmd_action == HostCmd_ACT_GEN_SET)

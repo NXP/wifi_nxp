@@ -68,6 +68,7 @@
 static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
+wlan_flt_cfg_t g_flt_cfg;
 
 static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
 
@@ -644,6 +645,8 @@ static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
         {
             wlan.hs_configured       = false;
             wlan.hs_wakeup_condition = wakeup_condition;
+            (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+            wifi_set_packet_filters(&g_flt_cfg);
         }
         else if (wlan.hs_wakeup_condition != wlan_map_to_wifi_wakeup_condtions(wakeup_condition))
         {
@@ -704,7 +707,6 @@ void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
 {
     int ret = 0;
 
-    (void)is_mef;
 
     wlan_is_manual = is_manual;
     if (!is_sta_connected() && !is_uap_started())
@@ -713,6 +715,28 @@ void wlan_config_host_sleep(bool is_mef, t_u32 wake_up_conds, bool is_manual)
         (void)PRINTF("Host sleep is not allowed in this situation\r\n");
         return;
     }
+    if (is_mef)
+    {
+        wlan.wakeup_conditions = 0;
+        if (g_flt_cfg.nentries == 0)
+        {
+            (void)PRINTF("No user configured MEF entries, use default ARP filters.\r\n");
+            /* User doesn't configure MEF, use default MEF entry */
+            wlan_mef_set_auto_arp(MEF_ACTION_ALLOW_AND_WAKEUP_HOST);
+        }
+        wifi_set_packet_filters(&g_flt_cfg);
+    }
+    else
+    {
+        wlan.wakeup_conditions = wake_up_conds;
+        /* Clear previous MEF entries */
+        if (g_flt_cfg.nentries != 0)
+        {
+            (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+            wifi_set_packet_filters(&g_flt_cfg);
+        }
+    }
+
     if (!wlan_is_manual)
     {
     }
@@ -4913,7 +4937,11 @@ static void supp_status_timer_cb(os_timer_arg_t arg)
 {
     int ret;
 
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+    if (wlan.status_timeout == 60)
+#else
     if (wlan.status_timeout == 40)
+#endif
     {
         ret = wpa_supp_req_status(wlan.connect ? CONNECT : START);
 
@@ -8075,7 +8103,25 @@ void wlan_uap_set_httxcfg(unsigned short httxcfg)
 }
 
 
+int wlan_set_rts(int rts)
+{
+    return wifi_set_rts(rts, MLAN_BSS_TYPE_STA);
+}
 
+int wlan_set_uap_rts(int rts)
+{
+    return wifi_set_rts(rts, MLAN_BSS_TYPE_UAP);
+}
+
+int wlan_set_frag(int frag)
+{
+    return wifi_set_frag(frag, MLAN_BSS_TYPE_STA);
+}
+
+int wlan_set_uap_frag(int frag)
+{
+    return wifi_set_frag(frag, MLAN_BSS_TYPE_UAP);
+}
 
 #ifdef CONFIG_11K
 int _wlan_rrm_scan_cb(unsigned int count)
@@ -8334,6 +8380,10 @@ int wlan_set_scan_interval(int scan_int)
 }
 #endif
 
+int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+{
+    return wifi_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
+}
 
 
 void wlan_version_extended(void)
@@ -8940,6 +8990,202 @@ int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
     return wifi_tx_ampdu_prot_mode(prot_mode, action);
 }
 
+int wlan_mef_set_auto_arp(t_u8 mef_action)
+{
+    int ret, index;
+    unsigned int ipv4_addr;
+    ret = wlan_get_ipv4_addr(&ipv4_addr);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Cannot get IP");
+        return -WM_FAIL;
+    }
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
+    g_flt_cfg.nentries++;
+
+    g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action                      = (MEF_AUTO_ARP | (mef_action & 0xF));
+    g_flt_cfg.mef_entry[index].filter_num                  = 2;
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 2;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[0].byte_seq, "\x08\x06", 2);
+    g_flt_cfg.mef_entry[index].rpn[1] = RPN_TYPE_AND;
+
+    g_flt_cfg.mef_entry[index].filter_item[1].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset       = 46;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 4;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[1].byte_seq, &ipv4_addr, 4);
+
+    return WM_SUCCESS;
+}
+
+int wlan_mef_set_auto_ping(t_u8 mef_action)
+{
+    int ret, index;
+    unsigned int ipv4_addr;
+
+    ret = wlan_get_ipv4_addr(&ipv4_addr);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Cannot get IP");
+        return -WM_FAIL;
+    }
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
+    g_flt_cfg.nentries++;
+    g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action                      = (MEF_AUTO_PING | (mef_action & 0xF));
+    g_flt_cfg.mef_entry[index].filter_num                  = 3;
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 2;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[0].byte_seq, "\x08\x00", 2);
+    g_flt_cfg.mef_entry[index].rpn[1] = RPN_TYPE_AND;
+
+    g_flt_cfg.mef_entry[index].filter_item[1].type      = TYPE_DNUM_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].pattern   = ICMP_OF_IP_PROTOCOL;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset    = IP_PROTOCOL_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_bytes = 1;
+    g_flt_cfg.mef_entry[index].rpn[2]                   = RPN_TYPE_AND;
+
+    g_flt_cfg.mef_entry[index].filter_item[2].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[2].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[2].offset       = 38;
+    g_flt_cfg.mef_entry[index].filter_item[2].num_byte_seq = 4;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[2].byte_seq, &ipv4_addr, 4);
+
+    return WM_SUCCESS;
+}
+
+int wlan_set_ipv6_ns_mef(t_u8 mef_action)
+{
+	int index;
+
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_UNICAST | CRITERIA_MULTICAST);
+    g_flt_cfg.nentries++;
+    g_flt_cfg.mef_entry[index].mode = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action = (MEF_NS_RESP| (mef_action & 0xF));
+    g_flt_cfg.mef_entry[index].filter_num = 2;
+
+	g_flt_cfg.mef_entry[index].filter_item[0].fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET | FILLING_BYTE_SEQ);
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 2;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[0].byte_seq, "\x86\xdd", 2);
+    g_flt_cfg.mef_entry[index].rpn[1] = RPN_TYPE_AND;
+
+	g_flt_cfg.mef_entry[index].filter_item[1].fill_flag = (FILLING_TYPE | FILLING_REPEAT | FILLING_OFFSET | FILLING_BYTE_SEQ);
+    g_flt_cfg.mef_entry[index].filter_item[1].type         = TYPE_BYTE_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].repeat       = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset       = 62;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 1;
+    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[1].byte_seq, "\x87", 1);
+
+    return WM_SUCCESS;
+}
+
+int wlan_mef_set_multicast(t_u8 mef_action)
+{
+    t_u32 index = 0;
+
+    if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
+    {
+        wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
+        return -WM_FAIL;
+    }
+    index = g_flt_cfg.nentries;
+    g_flt_cfg.criteria |= (CRITERIA_MULTICAST | CRITERIA_UNICAST);
+    g_flt_cfg.nentries++;
+
+    g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
+    g_flt_cfg.mef_entry[index].action                      = mef_action;
+    g_flt_cfg.mef_entry[index].filter_num                  = 2;
+    g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BIT_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[0].offset       = 0;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_byte_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].byte_seq[0]  = 0x01;
+    g_flt_cfg.mef_entry[index].filter_item[0].num_mask_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[0].mask_seq[0]  = 0x01;
+    g_flt_cfg.mef_entry[index].rpn[1]                      = RPN_TYPE_OR;
+
+    g_flt_cfg.mef_entry[index].filter_item[1].type         = TYPE_BIT_EQ;
+    g_flt_cfg.mef_entry[index].filter_item[1].offset       = 38;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].byte_seq[0]  = 0xE0;
+    g_flt_cfg.mef_entry[index].filter_item[1].num_mask_seq = 1;
+    g_flt_cfg.mef_entry[index].filter_item[1].mask_seq[0]  = 0xF0;
+
+    return WM_SUCCESS;
+}
+
+void wlan_config_mef(int type, t_u8 mef_action)
+{
+    int ret;
+    switch (type)
+    {
+        case MEF_TYPE_DELETE:
+            (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+            wifi_set_packet_filters(&g_flt_cfg);
+            (void)PRINTF("delete all MEF entries Successful\n\r");
+            break;
+        case MEF_TYPE_PING:
+            ret = wlan_mef_set_auto_ping(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add ping MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add ping MEF entry Failed %d\n\r");
+            break;
+        case MEF_TYPE_ARP:
+            ret = wlan_mef_set_auto_arp(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add ARP MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add ARP MEF entry Failed %d\n\r");
+            break;
+        case MEF_TYPE_MULTICAST:
+            ret = wlan_mef_set_multicast(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add multicast MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add multicast MEF entry Failed %d\n\r");
+            break;
+        case MEF_TYPE_IPV6_NS:
+            ret = wlan_set_ipv6_ns_mef(mef_action);
+            if (ret == WM_SUCCESS)
+                (void)PRINTF("Add multicast MEF entry successful\n\r");
+            else
+                (void)PRINTF("Add multicast MEF entry Failed %d\n\r");
+            break;
+        default:
+            (void)PRINTF("Error: unknown MEF type:%d", type);
+            break;
+    }
+
+    return;
+}
 
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)

@@ -524,8 +524,9 @@ static void dump_wlan_add_usage(void)
 #endif
         " id <identity> "
         "[key_passwd "
-        "<client_key_passwd>][hash <hash>][domain_match <domain_match_string>]] [mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 "
-        "gc 0x20]"
+        "<client_key_passwd>][hash <hash>][domain_match <domain_match_string>][domain_suffix_match "
+        "<domain_suffix_match_string>]] "
+        "[mfpc <1> mfpr <0/1>] [mc 0x10 uc 0x10 gc 0x20]"
         "\r\n");
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
@@ -1088,6 +1089,13 @@ static void test_wlan_add(int argc, char **argv)
             {
                 /* Domain match */
                 strcpy(network.security.domain_match, argv[arg + 2]);
+                arg += 2;
+            }
+
+            if (string_equal(argv[arg + 1], "domain_suffix_match") != false)
+            {
+                /* Domain match */
+                strcpy(network.security.domain_suffix_match, argv[arg + 2]);
                 arg += 2;
             }
 
@@ -2173,8 +2181,95 @@ static void test_wlan_roaming(int argc, char **argv)
 }
 #endif
 
+static void test_wlan_set_max_clients_count(int argc, char **argv)
+{
+    int max_clients_count;
+    int ret;
 
+    if (argc != 2)
+    {
+        (void)PRINTF("Usage: %s  max_clients_count\r\n", argv[0]);
+        return;
+    }
 
+    max_clients_count = atoi(argv[1]);
+
+    ret = wlan_set_uap_max_clients(max_clients_count);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set max clients count\r\n");
+    }
+}
+
+static void test_wlan_set_rts(int argc, char **argv)
+{
+    int rthr;
+    int ret;
+    mlan_bss_type bss_type = MLAN_BSS_TYPE_STA;
+
+    if (argc != 3)
+    {
+        (void)PRINTF("Usage: %s <sta/uap> <rts threshold>\r\n", argv[0]);
+        return;
+    }
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Usage: %s <sta/uap> <rts threshold>\r\n", argv[0]);
+        return;
+    }
+
+    rthr = atoi(argv[2]);
+
+    if (bss_type == MLAN_BSS_TYPE_STA)
+        ret = wlan_set_rts(rthr);
+    else
+        ret = wlan_set_uap_rts(rthr);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set rts threshold\r\n");
+    }
+}
+
+static void test_wlan_set_frag(int argc, char **argv)
+{
+    int frag;
+    int ret;
+    mlan_bss_type bss_type = MLAN_BSS_TYPE_STA;
+
+    if (argc != 3)
+    {
+        (void)PRINTF("Usage: %s <sta/uap> <fragment threshold>\r\n", argv[0]);
+        return;
+    }
+
+    if (string_equal("sta", argv[1]))
+        bss_type = MLAN_BSS_TYPE_STA;
+    else if (string_equal("uap", argv[1]))
+        bss_type = MLAN_BSS_TYPE_UAP;
+    else
+    {
+        (void)PRINTF("Usage: %s <sta/uap> <fragment threshold>\r\n", argv[0]);
+        return;
+    }
+
+    frag = atoi(argv[2]);
+
+    if (bss_type == MLAN_BSS_TYPE_STA)
+        ret = wlan_set_frag(frag);
+    else
+        ret = wlan_set_uap_frag(frag);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to set fragment threshold\r\n");
+    }
+}
 
 
 #ifdef CONFIG_11K
@@ -2509,8 +2604,76 @@ static void test_wlan_set_scan_interval(int argc, char **argv)
 
 #endif
 
+/**
+ *  @brief Show usage information for the sta_filter_table command
+ *
+ *  $return         N/A
+ */
+static void print_sta_filter_table_usage(void)
+{
+    (void)PRINTF("\r\nUsage : sta_filter_table <FILTERMODE> <MACADDRESS_LIST>\r\n");
+    (void)PRINTF("\r\nOptions: FILTERMODE : 0 - Disable filter table");
+    (void)PRINTF("\r\n                      1 - allow MAC addresses specified in the allowed list");
+    (void)PRINTF("\r\n                      2 - block MAC addresses specified in the banned list");
+    (void)PRINTF("\r\n         MACADDRESS_LIST is the list of MAC addresses to be acted upon. Each");
+    (void)PRINTF("\r\n                      MAC address must be separated with a space. Maximum of");
+    (void)PRINTF("\r\n                      16 MAC addresses are supported.\r\n");
+    return;
+}
+
+static void test_wlan_set_sta_filter(int argc, char **argv)
+{
+    int i           = 0;
+    int ret         = WM_SUCCESS;
+    int filter_mode = 0;
+    int mac_count   = 0;
+    unsigned char mac_addr[WLAN_MAX_STA_FILTER_NUM * WLAN_MAC_ADDR_LENGTH];
+
+    if (argc < 2 || argc > (WLAN_MAX_STA_FILTER_NUM + 2))
+    {
+        (void)PRINTF("ERR:Too many or too few farguments.\r\n");
+        print_sta_filter_table_usage();
+        return;
+    }
+
+    argc--;
+    argv++;
+
+    if (((atoi(argv[0]) < 0) || (atoi(argv[0]) > 2)))
+    {
+        (void)PRINTF("ERR:Illegal FILTERMODE parameter %s. Must be either '0', '1', or '2'.\r\n", argv[1]);
+        print_sta_filter_table_usage();
+        return;
+    }
+
+    filter_mode = atoi(argv[0]);
+
+    mac_count = argc - 1;
+
+    if (mac_count)
+    {
+        for (i = 0; i < mac_count; i++)
+        {
+            ret = get_mac(argv[i + 1], (char *)&mac_addr[i * WLAN_MAC_ADDR_LENGTH], ':');
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: invalid MAC argument\r\n");
+                return;
+            }
+        }
+    }
+    else
+    {
+        memset(mac_addr, 0, 16 * WLAN_MAC_ADDR_LENGTH);
+    }
+
+    wlan_set_sta_mac_filter(filter_mode, mac_count, mac_addr);
+
+    return;
+}
 
 
+extern wlan_flt_cfg_t g_flt_cfg;
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -2554,7 +2717,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
     }
     else if (choice == 1)
     {
-        if (argc < 4)
+        if (argc < 3)
         {
             goto done;
         }
@@ -2623,6 +2786,24 @@ static void test_wlan_host_sleep(int argc, char **argv)
                 (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
             }
         }
+        else if (string_equal(argv[2], "mef"))
+        {
+            if (g_flt_cfg.nentries == 0)
+            {
+                /* User doesn't configure MEF, use default MEF entry */
+                wlan_mef_set_auto_arp(MEF_ACTION_ALLOW_AND_WAKEUP_HOST);
+            }
+            wifi_set_packet_filters(&g_flt_cfg);
+            ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
+            if (ret == WM_SUCCESS)
+            {
+                (void)PRINTF("Host sleep configuration successs with MEF");
+            }
+            else
+            {
+                (void)PRINTF("Failed to host sleep configuration, error: %d", ret);
+            }
+        }
 
         else
         {
@@ -2651,11 +2832,92 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #ifndef CONFIG_HOST_SLEEP
         (void)PRINTF("	       All bit 1 cancel host sleep configuration\r\n");
 #endif
+        (void)PRINTF("    mef     -- MEF host wakeup\r\n");
+#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
+        (void)PRINTF("    manual  -- Optional. Use Power Manager by default if not specified\r\n");
+        (void)PRINTF("               If you want to use suspend command instead of Power Manager,\r\n");
+        (void)PRINTF("               this parameter is mandatory.\r\n");
+#endif
+        (void)PRINTF("Example:\r\n");
+        (void)PRINTF("    wlan-host-sleep mef\r\n");
+        (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
+#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
+        (void)PRINTF("    wlan-host-sleep mef manual\r\n");
+        (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e manual\r\n");
+#endif
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
         return;
     }
 }
 
+static void dump_multiple_mef_config_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-multi-mef <ping/arp/multicast/ns/del> [<action>]\r\n");
+    (void)PRINTF("        ping/arp/multicast/ns\r\n");
+    (void)PRINTF("                 -- MEF entry type, will add one mef entry at a time\r\n");
+    (void)PRINTF("        del      -- Delete all previous MEF entries\r\n");
+    (void)PRINTF("        action   -- 0--discard and not wake host\r\n");
+    (void)PRINTF("                    1--discard and wake host\r\n");
+    (void)PRINTF("                    3--allow and wake host\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-multi-mef ping 3\r\n");
+    (void)PRINTF("    wlan-multi-mef del\r\n");
+}
+
+static void test_wlan_set_multiple_mef_config(int argc, char **argv)
+{
+    int type        = MEF_TYPE_END;
+    t_u8 mef_action = 0;
+    if (argc < 2)
+    {
+        dump_multiple_mef_config_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+    /* Delete previous MEF configure */
+    if (argc == 2)
+    {
+        if (string_equal("del", argv[1]))
+            type = MEF_TYPE_DELETE;
+        else
+        {
+            dump_multiple_mef_config_usage();
+            (void)PRINTF("Error: invalid mef type\r\n");
+            return;
+        }
+    }
+    /* Add MEF entry */
+    else if (argc >= 3)
+    {
+        if (string_equal("ping", argv[1]))
+        {
+            type       = MEF_TYPE_PING;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else if (string_equal("arp", argv[1]))
+        {
+            type       = MEF_TYPE_ARP;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else if (string_equal("multicast", argv[1]))
+        {
+            type       = MEF_TYPE_MULTICAST;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else if (string_equal("ns", argv[1]))
+        {
+            type       = MEF_TYPE_IPV6_NS;
+            mef_action = (t_u8)atoi(argv[2]);
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid mef type\r\n");
+            return;
+        }
+    }
+    wlan_config_mef(type, mef_action);
+}
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
 static u8_t host_cmd_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
@@ -4118,6 +4380,72 @@ static void test_wlan_set_su(int argc, char **argv)
 }
 #endif
 
+#define HOSTCMD_RESP_BUFF_SIZE 1024
+u8_t debug_resp_buf[HOSTCMD_RESP_BUFF_SIZE] = {0};
+
+static void dump_wlan_set_forceRTS_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-forceRTS <0/1>\r\n");
+    (void)PRINTF("    <start/stop>: 1 -- start forceRTS\r\n");
+    (void)PRINTF("                  0 -- stop forceRTS\r\n");
+    (void)PRINTF("Example:\r\n");
+    (void)PRINTF("    wlan-set-forceRTS\r\n");
+    (void)PRINTF("    - Get current forceRTS state.\r\n");
+    (void)PRINTF("    wlan-set-forceRTS 1\r\n");
+    (void)PRINTF("    - Set start forceRTS\r\n");
+}
+
+/* Bypass wmmTurboMode TxopLimit setting if for certificate is true, for BE traffic only. (Case: HE 5.71.1) */
+static void test_wlan_set_forceRTS(int argc, char **argv)
+{
+    int ret           = -WM_FAIL;
+    uint32_t reqd_len = 0;
+    uint8_t state;
+    /**
+     * Command taken from debug.conf
+     * start_forceRTS={
+     *      CmdCode=0x008b
+     *      Action:2=1
+     *      SUBID:2=0x104
+     *      Value:1=1           # 1 -- start forceRTS;
+     *                          # 0 -- stop forceRTS;
+     */
+    uint8_t debug_cmd_buf[] = {0x8b, 0, 0x0d, 0, 0, 0, 0, 0, 0x01, 0, 0x04, 0x01, 0x01};
+
+    if (argc > 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_forceRTS_usage();
+        return;
+    }
+
+    /* SET */
+    if (argc == 2)
+    {
+        state             = atoi(argv[1]);
+        debug_cmd_buf[12] = state;
+    }
+    else /* GET */
+    {
+        dump_wlan_set_forceRTS_usage();
+        debug_cmd_buf[8] = 0;
+    }
+
+    ret = wlan_send_hostcmd(debug_cmd_buf, sizeof(debug_cmd_buf) / sizeof(u8_t), debug_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
+                            &reqd_len);
+
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Hostcmd success, response is\r\n");
+        for (ret = 0; ret < reqd_len; ret++)
+            (void)PRINTF("%x\t", debug_resp_buf[ret]);
+    }
+    else
+    {
+        (void)PRINTF("Hostcmd failed error: %d", ret);
+    }
+}
 
 
 
@@ -4434,6 +4762,9 @@ static struct cli_command tests[] = {
     {"wlan-get-uap-sta-list", NULL, test_wlan_get_uap_sta_list},
     {"wlan-ieee-ps", "<0/1>", test_wlan_ieee_ps},
     {"wlan-deep-sleep-ps", "<0/1>", test_wlan_deep_sleep_ps},
+    {"wlan-set-max-clients-count", "<max clients count>", test_wlan_set_max_clients_count},
+    {"wlan-rts", "<sta/uap> <rts threshold>", test_wlan_set_rts},
+    {"wlan-frag", "<sta/uap> <fragment threshold>", test_wlan_set_frag},
 #ifdef CONFIG_11K
     {"wlan-host-11k-enable", "<0/1>", test_wlan_host_11k_cfg},
     {"wlan-host-11k-neighbor-req", "[ssid <ssid>]", test_wlan_host_11k_neighbor_request},
@@ -4452,10 +4783,18 @@ static struct cli_command tests[] = {
     {"wlan-pmksa-flush", NULL, test_wlan_pmksa_flush},
     {"wlan-set-scan-interval", "<scan_int: in seconds>", test_wlan_set_scan_interval},
 #endif
+    {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
 #ifdef CONFIG_ROAMING
     {"wlan-roaming", "<0/1> <rssi_threshold>", test_wlan_roaming},
 #endif
-    {"wlan-host-sleep", "<0/1> wowlan <wake_up_conds>", test_wlan_host_sleep},
+    {"wlan-multi-mef", "<ping/arp/multicast/del> [<action>]", test_wlan_set_multiple_mef_config},
+    {"wlan-host-sleep",
+#if defined(CONFIG_HOST_SLEEP) && (!defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 0))
+     "<0/1> mef/[wowlan <wake_up_conds>] <manual>",
+#else
+     "<0/1> mef/[wowlan <wake_up_conds>]",
+#endif
+     test_wlan_host_sleep},
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
 #if !defined(SD8801)
 #ifdef CONFIG_11AC
@@ -4515,6 +4854,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_SET_SU
     {"wlan-set-su", "<0/1>", test_wlan_set_su},
 #endif
+    {"wlan-set-forceRTS", "<0/1>", test_wlan_set_forceRTS},
 #ifdef CONFIG_TURBO_MODE
     {"wlan-get-turbo-mode", "<STA/UAP>", test_wlan_get_turbo_mode},
     {"wlan-set-turbo-mode", "<STA/UAP> <mode>", test_wlan_set_turbo_mode},

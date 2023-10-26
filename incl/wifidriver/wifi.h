@@ -839,7 +839,9 @@ int wifi_uap_set_bandwidth(const t_u8 bandwidth);
 int wifi_uap_get_pmfcfg(t_u8 *mfpc, t_u8 *mfpr);
 
 
+int wifi_set_rts(int rts, mlan_bss_type bss_type);
 
+int wifi_set_frag(int frag, mlan_bss_type bss_type);
 
 #ifdef CONFIG_11R
 bool wifi_same_ess_ft();
@@ -944,6 +946,7 @@ typedef struct _wlan_nlist_report_param
 
 int wifi_clear_mgmt_ie(mlan_bss_type bss_type, IEEEtypes_ElementId_t index, int mgmt_bitmap_index);
 
+int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 
 int wifi_set_auto_arp(t_u32 *ipv4_addr);
 

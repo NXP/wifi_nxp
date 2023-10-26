@@ -126,7 +126,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r46.p8"
+#define WLAN_DRV_VERSION "v1.3.r46.p9"
 /* Configuration */
 
 #define CONFIG_WLAN_KNOWN_NETWORKS 5U
@@ -216,6 +216,11 @@ typedef enum
 #define WLAN_PMK_LENGTH 32
 
 
+/* Max number of sta filter list can be upto 16 */
+#define WLAN_MAX_STA_FILTER_NUM 16
+
+/* The length of wlan mac address */
+#define WLAN_MAC_ADDR_LENGTH 6
 
 /* Error Codes */
 
@@ -938,6 +943,8 @@ struct wlan_network_security
     char ca_cert_hash[HASH_MAX_LENGTH];
     /** Domain */
     char domain_match[DOMAIN_MATCH_MAX_LENGTH];
+    /** Domain Suffix */
+    char domain_suffix_match[DOMAIN_MATCH_MAX_LENGTH]; /*suffix max length same as full domain name length*/
     /** PAC blob */
     unsigned char *pac_data;
     /** PAC blob len */
@@ -3369,9 +3376,54 @@ void wlan_uap_ampdu_rx_disable(void);
 void wlan_uap_set_scan_chan_list(wifi_scan_chan_list_t scan_chan_list);
 
 
+/**
+ * Set the rts threshold of sta in WLAN firmware.
+ *
+ * \param[in]  the value of rts threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_rts(int rts);
+
+/**
+ * Set the rts threshold of uap in WLAN firmware.
+ *
+ * \param[in]  the value of rts threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_uap_rts(int rts);
+
+/**
+ * Set the fragment threshold of sta in WLAN firmware.
+ *
+ * \param[in]  the value of fragment threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_frag(int frag);
+
+/**
+ * Set the fragment threshold of uap in WLAN firmware.
+ *
+ * \param[in]  the value of fragment threshold configuration.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_uap_frag(int frag);
 
 
-
+/**
+ * Set the sta mac filter in Wi-Fi firmware.
+ *
+ * \param[in] channel filter mode (disable/white/black list)
+ * \param[in] the count of mac list
+ * \param[in] the pointer to mac address list
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 
 static inline void print_mac(const char *mac)
 {
@@ -4215,6 +4267,39 @@ struct wlan_message
     void *data;
 };
 
+enum wlan_mef_type
+{
+    MEF_TYPE_DELETE = 0,
+    MEF_TYPE_PING,
+    MEF_TYPE_ARP,
+    MEF_TYPE_MULTICAST,
+    MEF_TYPE_IPV6_NS,
+    MEF_TYPE_END,
+};
+/** This function set auto ARP configuration.
+ *
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+int wlan_mef_set_auto_arp(t_u8 mef_action);
+/** This function set auto ping configuration.
+ *
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+int wlan_mef_set_auto_ping(t_u8 mef_action);
+/** This function set/delete mef entries configuration.
+ *
+ * \param[in] type        MEF type: MEF_TYPE_DELETE, MEF_TYPE_AUTO_PING, MEF_TYPE_AUTO_ARP
+ * \param[in] mef_action  To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ */
+void wlan_config_mef(int type, t_u8 mef_action);
+/**
+ * Use this API to enable IPv6 Neighbor Solicitation offload in Wi-Fi firmware
+ *
+ * \param[in] mef_action  0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_set_ipv6_ns_mef(t_u8 mef_action);
 
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)

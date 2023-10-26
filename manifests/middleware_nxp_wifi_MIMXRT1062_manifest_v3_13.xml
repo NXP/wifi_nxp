@@ -2,8 +2,8 @@
 <ksdk:manifest xmlns:ksdk="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="SDK_2.x_middleware_nxp_wifi_MIMXRT1062_manifest_v3_13" name="NXP Wi-Fi" brief="NXP Wi-Fi" format_version="3.13" api_version="2.0.0" xsi:schemaLocation="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd http://nxp.com/mcuxpresso/sdk/sdk_manifest_v3.13.xsd">
 
   <externalDefinitions>
-    <definition extID="MIMXRT1062xxxxA"/>
     <definition extID="MIMXRT1062xxxxB"/>
+    <definition extID="MIMXRT1062xxxxA"/>
     <definition extID="armgcc"/>
     <definition extID="component.wifi_bt_module.tx_pwr_limits.MIMXRT1062"/>
     <definition extID="middleware.freertos-kernel.MIMXRT1062"/>
@@ -14,9 +14,9 @@
     <definition extID="middleware.sdmmc.host.usdhc.MIMXRT1062"/>
     <definition extID="middleware.lwip.apps.lwiperf.MIMXRT1062"/>
   </externalDefinitions>
-  <ksdk id="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1062_manifest_v3_13" name="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1062_manifest_v3_13" version="2.14.0"/>
+  <ksdk id="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1062_manifest_v3_13" name="MCUXpressoSDK2140_middleware_nxp_wifi_MIMXRT1062_manifest_v3_13" version="2.14.0" revision="Provided by Script"/>
   <components>
-    <component id="middleware.wifi.common_files.MIMXRT1062" name="nxp_wireless_common_files" brief="NXP WLAN common files" version="1.0.0" full_name="NXP WLAN common files" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path="../middleware/wifi_nxp" project_base_path="wifi">
+    <component id="middleware.wifi.common_files.MIMXRT1062" name="nxp_wireless_common_files" brief="NXP WLAN common files" version="1.0.0" full_name="NXP WLAN common files" devices="MIMXRT1062xxxxB MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="middleware" package_base_path="../middleware/wifi_nxp" project_base_path="wifi">
       <source relative_path="../../incl/port/os" project_relative_path="incl/port/os" type="c_include">
         <files mask="wm_os.h"/>
       </source>
@@ -54,7 +54,7 @@
         <include_path relative_path="../../wifidriver/incl" project_relative_path="wifidriver/incl" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.wifi.template.MIMXRT1062" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../components/wifi_bt_module/template" project_base_path="wifi/template">
+    <component id="middleware.wifi.template.MIMXRT1062" name="Wi-Fi configuration template" brief="Template configuration file to be edited by user." version="1.0.0" full_name="Wi-Fi configuration template" devices="MIMXRT1062xxxxB MIMXRT1062xxxxA" category="Wireless/NXP Wi-Fi" user_visible="false" type="project_template" package_base_path="../components/wifi_bt_module/template" project_base_path="wifi/template">
       <defines>
         <define name="LWIP_DNS" value="1"/>
         <define name="LWIP_NETIF_HOSTNAME" value="1"/>

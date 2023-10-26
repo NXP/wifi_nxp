@@ -36,6 +36,71 @@ Change log:
 mlan_status wlan_misc_ioctl_region(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req);
 t_u8 wlan_get_random_charactor(pmlan_adapter pmadapter);
 
+/**
+ *  @brief Set/Get SNMP MIB handler
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_PENDING --success, otherwise fail
+ */
+static mlan_status wlan_snmp_mib_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
+{
+    pmlan_private pmpriv  = pmadapter->priv[pioctl_req->bss_index];
+    mlan_status ret       = MLAN_STATUS_SUCCESS;
+    t_u16 cmd_action      = 0;
+    t_u16 cmd_oid         = 0;
+    mlan_ds_snmp_mib *mib = MNULL;
+    t_u32 value           = 0;
+
+    ENTER();
+
+    if (pioctl_req->buf_len < sizeof(mlan_ds_snmp_mib))
+    {
+        PRINTM(MWARN, "MLAN IOCTL information buffer length is too short.\n");
+        pioctl_req->data_read_written = 0;
+        pioctl_req->buf_len_needed    = sizeof(mlan_ds_snmp_mib);
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
+        ret                           = MLAN_STATUS_RESOURCE;
+        goto exit;
+    }
+
+    mib = (mlan_ds_snmp_mib *)pioctl_req->pbuf;
+    if (pioctl_req->action == MLAN_ACT_SET)
+        cmd_action = HostCmd_ACT_GEN_SET;
+    else
+        cmd_action = HostCmd_ACT_GEN_GET;
+
+    switch (mib->sub_command)
+    {
+        case MLAN_OID_SNMP_MIB_RTS_THRESHOLD:
+            value   = mib->param.rts_threshold;
+            cmd_oid = RtsThresh_i;
+            break;
+        case MLAN_OID_SNMP_MIB_FRAG_THRESHOLD:
+            value   = mib->param.frag_threshold;
+            cmd_oid = FragThresh_i;
+            break;
+        case MLAN_OID_SNMP_MIB_RETRY_COUNT:
+            value   = mib->param.retry_count;
+            cmd_oid = ShortRetryLim_i;
+            break;
+        case MLAN_OID_SNMP_MIB_DTIM_PERIOD:
+            value   = mib->param.dtim_period;
+            cmd_oid = DtimPeriod_i;
+            break;
+    }
+
+    /* Send request to firmware */
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, cmd_action, cmd_oid, (t_void *)pioctl_req, &value);
+
+    if (ret == MLAN_STATUS_SUCCESS)
+        ret = MLAN_STATUS_PENDING;
+
+exit:
+    LEAVE();
+    return ret;
+}
 
 /**
  *  @brief Start BSS
@@ -1092,6 +1157,9 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
     {
         case MLAN_IOCTL_BSS:
             status = wlan_bss_ioctl(pmadapter, pioctl_req);
+            break;
+        case MLAN_IOCTL_SNMP_MIB:
+            status = wlan_snmp_mib_ioctl(pmadapter, pioctl_req);
             break;
         case MLAN_IOCTL_SEC_CFG:
             status = wlan_sec_cfg_ioctl(pmadapter, pioctl_req);

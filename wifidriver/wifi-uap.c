@@ -1631,6 +1631,85 @@ int wifi_uap_pmf_getset(uint8_t action, uint8_t *mfpc, uint8_t *mfpr)
     return wm_wifi.cmd_resp_status;
 }
 
+int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr)
+{
+    t_u8 *buffer  = NULL;
+    t_u16 cmd_len = 0;
+    t_u16 buf_len = MRVDRV_SIZE_OF_CMD_BUFFER;
+
+    HostCmd_DS_GEN *cmd_buf           = NULL;
+    MrvlIEtypes_mac_filter_t *tlv     = NULL;
+    HostCmd_DS_SYS_CONFIG *sys_config = NULL;
+
+    /* Initialize the command length */
+    if (filter_mode == 0)
+    {
+        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
+                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + (WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        cmd_len = sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1) +
+                  (sizeof(MrvlIEtypes_mac_filter_t) - 1) + mac_count * MLAN_MAC_ADDR_LENGTH;
+    }
+
+    /* Initialize the command buffer */
+    buffer = (t_u8 *)os_mem_alloc(buf_len);
+    if (!buffer)
+    {
+        wuap_e("ERR:Cannot allocate buffer for command!\r\n");
+        return -WM_FAIL;
+    }
+
+    memset(buffer, 0, buf_len);
+
+    /* Locate headers */
+    cmd_buf    = (HostCmd_DS_GEN *)buffer;
+    sys_config = (HostCmd_DS_SYS_CONFIG *)(buffer + sizeof(HostCmd_DS_GEN));
+    tlv        = (MrvlIEtypes_mac_filter_t *)(buffer + sizeof(HostCmd_DS_GEN) + (sizeof(HostCmd_DS_SYS_CONFIG) - 1));
+
+    /* Fill the command buffer */
+    cmd_buf->command = HOST_CMD_APCMD_SYS_CONFIGURE;
+    cmd_buf->size    = cmd_len;
+    cmd_buf->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, MLAN_BSS_TYPE_UAP);
+    cmd_buf->result  = 0;
+
+    sys_config->action = HostCmd_ACT_GEN_SET;
+
+    tlv->count       = mac_count;
+    tlv->filter_mode = filter_mode;
+    tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_UAP_STA_MAC_ADDR_FILTER);
+
+    if (tlv->count)
+    {
+        tlv->header.len = tlv->count * MLAN_MAC_ADDR_LENGTH + 2;
+        (void)memcpy(tlv->mac_address, mac_addr, mac_count * MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        tlv->header.len = WLAN_MAX_STA_FILTER_NUM * MLAN_MAC_ADDR_LENGTH + 2;
+    }
+
+    if (is_uap_started())
+    {
+        wuap_e("down the uap before setting sta filter\n\r");
+        os_mem_free(buffer);
+        return -WM_FAIL;
+    }
+
+    wifi_get_command_lock();
+
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)memcpy((t_u8 *)cmd, cmd_buf, cmd_len);
+
+    wifi_wait_for_cmdresp(NULL);
+
+    os_mem_free(buffer);
+
+    return WM_SUCCESS;
+}
+
 
 #ifdef CONFIG_WPA_SUPP_AP
 
