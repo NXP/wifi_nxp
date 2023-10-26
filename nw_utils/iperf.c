@@ -167,6 +167,11 @@ static void lwiperf_report(void *arg,
                            u32_t ms_duration,
                            u32_t bandwidth_kbitpsec)
 {
+    if(arg == NULL)
+    {
+        (void)PRINTF("Unable to print iperf report\r\n");
+        return;
+    }
     (void)PRINTF("-------------------------------------------------\r\n");
     if (report_type < (enum lwiperf_report_type)(sizeof(report_type_str) / sizeof(report_type_str[0])))
     {
@@ -212,7 +217,11 @@ static void lwiperf_report(void *arg,
     {
         (void)PRINTF(" IPERF Report error\r\n");
     }
-    os_timer_deactivate(&ptimer);
+    struct iperf_test_context *test_ctx = (struct iperf_test_context *)arg;
+    if(test_ctx->server_mode == 0)
+    {
+        os_timer_deactivate(&ptimer);
+    }
     (void)PRINTF("\r\n");
     iperf_free_ctx_iperf_session(arg, report_type);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
@@ -584,30 +593,7 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 
-    if (!(ctx->tcp) && !(ctx->server_mode))
-    {
-        if (ctx->client_type == LWIPERF_DUAL)
-        {
-            /* Reducing udp Tx timer interval for rx to be served */
-            rv = os_timer_change(&ptimer, os_msec_to_ticks(1), 0);
-            if (rv != WM_SUCCESS)
-            {
-                (void)PRINTF("Unable to change period in iperf timer for LWIPERF_DUAL\r\n");
-                return;
-            }
-        }
-        else
-        {
-            /* Returning original timer settings of 1 ms interval*/
-            rv = os_timer_change(&ptimer, os_msec_to_ticks(1), 0);
-            if (rv != WM_SUCCESS)
-            {
-                (void)PRINTF("Unable to change period in iperf timer\r\n");
-                return;
-            }
-        }
-        os_timer_activate(&ptimer);
-    }
+    os_timer_activate(&ptimer);
 
     if (ctx->server_mode)
     {
