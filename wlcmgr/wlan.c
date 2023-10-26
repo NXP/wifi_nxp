@@ -8074,6 +8074,18 @@ int wlan_add_network(struct wlan_network *network)
         }
     }
 
+    if ((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA))
+    {
+        if (((network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED)) && (network->security.mfpr))
+        {
+            network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+        }
+        if ((network->security.type == WLAN_SECURITY_WPA2) && (!network->security.mfpc && !network->security.mfpr) && (network->security.key_mgmt == (WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256)))
+        {
+            network->security.key_mgmt = WLAN_KEY_MGMT_PSK;
+        }
+    }
+
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         ((((network->security.type == WLAN_SECURITY_WPA) || (network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED)) &&
         (!wlan_key_mgmt_wpa_psk(network->security.key_mgmt)))
@@ -8101,7 +8113,7 @@ int wlan_add_network(struct wlan_network *network)
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         (network->security.key_mgmt == WLAN_KEY_MGMT_PSK_SHA256) &&
-        (!network->security.mfpc || !network->security.mfpr))
+        (!network->security.mfpc && !network->security.mfpr))
     {
         wlcm_e("MFP is not configured");
         return -WM_E_INVAL;
@@ -8109,9 +8121,9 @@ int wlan_add_network(struct wlan_network *network)
 
     if (((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA)) &&
         (network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) &&
-        (!network->security.mfpc || network->security.mfpr))
+        (!(network->security.mfpc && !network->security.mfpr)))
     {
-        wlcm_e("MFP required is not allowed");
+        wlcm_e("MFP capable only is allowed");
         return -WM_E_INVAL;
     }
 

@@ -576,7 +576,14 @@ static int wifi_cmd_uap_config(char *ssid,
         else if (security == WLAN_SECURITY_WPA_WPA2_MIXED)
         {
             bss.param.bss_config.protocol                     = PROTOCOL_WPA2_MIXED;
-            bss.param.bss_config.key_mgmt                     = KEY_MGMT_PSK;
+            if (key_mgmt & WLAN_KEY_MGMT_PSK)
+            {
+                bss.param.bss_config.key_mgmt = KEY_MGMT_PSK;
+            }
+            if (key_mgmt & WLAN_KEY_MGMT_PSK_SHA256)
+            {
+                bss.param.bss_config.key_mgmt |= KEY_MGMT_PSK_SHA256;
+            }
             bss.param.bss_config.wpa_cfg.pairwise_cipher_wpa  = CIPHER_TKIP | CIPHER_AES_CCMP;
             bss.param.bss_config.wpa_cfg.pairwise_cipher_wpa2 = CIPHER_TKIP | CIPHER_AES_CCMP;
             bss.param.bss_config.wpa_cfg.group_cipher         = CIPHER_TKIP;

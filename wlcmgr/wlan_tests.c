@@ -642,11 +642,11 @@ static void dump_wlan_add_usage(void)
     (void)PRINTF("For Station interface\r\n");
     (void)PRINTF("  For DHCP IP Address assignment:\r\n");
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa2 [psk/psk-sha256"
+        "    wlan-add <profile_name> ssid <ssid> [wpa2 <psk/psk-sha256"
 #ifdef CONFIG_11R
         "/ft-psk"
 #endif
-        "] <secret>] [mfpc <1> mfpr <0>] "
+        "> <secret>] [mfpc <1> mfpr <0>] "
         "\r\n");
     (void)PRINTF("      If using WPA2 security, set the PMF configuration as mentioned above.\r\n");
 #ifdef CONFIG_WPA_SUPP
@@ -766,11 +766,11 @@ static void dump_wlan_add_usage(void)
         "    ip:<ip_addr>,<gateway_ip>,<netmask>\r\n");
     (void)PRINTF(
         "    [bssid <bssid>] [channel <channel number>]\r\n"
-        "    [wpa2 [psk/psk-sha256"
+        "    [wpa2 <psk/psk-sha256"
 #ifdef CONFIG_11R
         "/ft-psk"
 #endif
-        "] <secret>]"
+        "> <secret>]"
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
         " [wpa3-sb/wpa3-sb-192] "
 #ifdef CONFIG_EAP_TLS
@@ -802,7 +802,7 @@ static void dump_wlan_add_usage(void)
         "    role uap [bssid <bssid>]\r\n"
         "    [channel <channelnumber>]\r\n");
     (void)PRINTF(
-        "    [wpa2 [psk/psk-sha256] <secret>] [wpa3 sae <secret> "
+        "    [wpa2 <psk/psk-sha256> <secret>] [wpa3 sae <secret> "
 #ifdef CONFIG_WPA_SUPP
         "[sg <\"19 20 21\">] "
 #endif
@@ -1010,8 +1010,6 @@ static void test_wlan_add(int argc, char **argv)
         }
         else if ((info.security == 0U) && string_equal("wpa", argv[arg]))
         {
-            network.security.key_mgmt = WLAN_KEY_MGMT_PSK;
-
             arg += 1;
 
             if (string_equal(argv[arg], "wpa2") != false)
@@ -1021,7 +1019,15 @@ static void test_wlan_add(int argc, char **argv)
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
+                }
+                else
+                {
+                    (void)PRINTF(
+                            "Error: invalid WPA WPA2 security"
+                            " argument\r\n");
+                    return;
                 }
             }
             else
@@ -1030,7 +1036,15 @@ static void test_wlan_add(int argc, char **argv)
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
+                }
+                else
+                {
+                    (void)PRINTF(
+                            "Error: invalid WPA security"
+                            " argument\r\n");
+                    return;
                 }
             }
 
@@ -1041,7 +1055,7 @@ static void test_wlan_add(int argc, char **argv)
                     " argument\r\n");
                 return;
             }
-            arg += 2;
+            arg += 1;
             info.security++;
         }
         else if ((info.security2 == 0U) && (string_equal("wpa2", argv[arg])))
@@ -1051,22 +1065,29 @@ static void test_wlan_add(int argc, char **argv)
             if (string_equal(argv[arg], "wpa") != false)
             {
                 network.security.type = WLAN_SECURITY_WPA_WPA2_MIXED;
-                network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
 
                 arg += 1;
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
+                }
+                else
+                {
+                    (void)PRINTF(
+                            "Error: invalid WPA2 WPA security"
+                            " argument\r\n");
+                    return;
                 }
             }
             else
             {
                 network.security.type = WLAN_SECURITY_WPA2;
-                network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
 
                 if (string_equal(argv[arg], "psk") != false)
                 {
+                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK;
                     arg += 1;
 
 #ifdef CONFIG_11R
@@ -1097,6 +1118,13 @@ static void test_wlan_add(int argc, char **argv)
                     arg += 1;
                 }
 #endif
+                else
+                {
+                    (void)PRINTF(
+                            "Error: invalid WPA2 security"
+                            " argument\r\n");
+                    return;
+                }
             }
 
             if (get_security(argc - arg, argv + arg, &network.security) != 0)
