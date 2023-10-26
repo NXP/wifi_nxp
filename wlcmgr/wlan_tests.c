@@ -2190,14 +2190,17 @@ static void test_wlan_scan_opt(int argc, char **argv)
     }
     do
     {
-        if ((info.ssid == 0U) && string_equal("ssid", argv[arg]))
-        {
 #ifdef CONFIG_COMBO_SCAN
-            if (num_ssid > MAX_NUM_SSID)
+        if (string_equal("ssid", argv[arg]))
+        {
+            if (num_ssid >= MAX_NUM_SSID)
             {
                 (void)PRINTF("Error: the number of SSID is more than 2\r\n");
                 return;
-            }
+            }     
+#else
+        if ((info.ssid == 0U) && string_equal("ssid", argv[arg]))
+        {
 #endif
             if (strlen(argv[arg + 1]) > IEEEtypes_SSID_SIZE)
             {
