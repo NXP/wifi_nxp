@@ -836,6 +836,31 @@ static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
     return ret;
 }
 
+static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
+{
+    struct wlan_network* network;
+    int ret;
+
+    network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (network == NULL)
+    {
+        wlcm_e("%s: Failed to alloc wlan_network network", __func__);
+        return -WM_FAIL;
+    }
+    ret = wlan_get_current_uap_network(network);
+
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("cannot get uap network info");
+        *ipv4_addr = 0;
+        os_mem_free((void *)network);
+        return -WM_FAIL;
+    }
+    *ipv4_addr = network->ip.ipv4.address;
+    os_mem_free((void *)network);
+    return ret;
+}
+
 static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 
 static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
@@ -861,7 +886,7 @@ static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
     }
     else if (is_uap_started())
     {
-        ret = wlan_get_ipv4_addr(&ipv4_addr);
+        ret = wlan_get_uap_ipv4_addr(&ipv4_addr);
         if (ret != WM_SUCCESS)
         {
             wlcm_e("HS: cannot get UAP IP, check if uAP stopped");
@@ -3579,21 +3604,32 @@ static void wlcm_process_hs_config_event(void)
     unsigned int ipv4_addr = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
 
-    ret = wlan_get_ipv4_addr(&ipv4_addr);
-    if (ret != WM_SUCCESS)
+    if(is_sta_ipv4_connected() != 0)
     {
-        wlcm_e("HS : Cannot get IP");
-        return;
+        ret = wlan_get_ipv4_addr(&ipv4_addr);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("HS : Cannot get STA IP, check if STA disconnected");
+            return;
+        }
     }
     /* If uap interface is up
      * configure host sleep for uap interface
      * else confiugre host sleep for station
      * interface.
      */
-    if (is_uap_started() != 0)
+    else if (is_uap_started() != 0)
     {
+        ret = wlan_get_uap_ipv4_addr(&ipv4_addr);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("HS: Cannot get UAP IP, check if uAP stopped");
+            return;
+        }
         type = WLAN_BSS_TYPE_UAP;
     }
+    else
+        ipv4_addr = 0;
 
     (void)wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, (uint16_t)HS_ACTIVATE, 0);
 }
@@ -13076,17 +13112,43 @@ int wlan_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action)
 int wlan_mef_set_auto_arp(t_u8 mef_action)
 {
     int ret, index;
-    unsigned int ipv4_addr;
-    ret = wlan_get_ipv4_addr(&ipv4_addr);
-    if (ret != WM_SUCCESS)
+    unsigned int ipv4_addr[2];
+    int ipv4_addr_num = 0;
+    int filter_num = 0;
+
+    if(!is_sta_ipv4_connected() && !is_uap_started())
     {
-        wlcm_e("Cannot get IP");
-        return -WM_FAIL;
+        wlcm_e("No connection on STA and uAP is not activated.");
+        wlcm_e("Should at least meet one condition.");
+        return -WM_E_PERM;
     }
+
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {
         wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
         return -WM_FAIL;
+    }
+
+    (void)memset(ipv4_addr, 0x0, sizeof(ipv4_addr));
+    if(is_sta_ipv4_connected() != 0)
+    {
+        ret = wlan_get_ipv4_addr(&ipv4_addr[0]);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("Cannot get STA IP");
+            return -WM_FAIL;
+        }
+        ipv4_addr_num++;
+    }
+    if(is_uap_started() != 0)
+    {
+        ret = wlan_get_uap_ipv4_addr(&ipv4_addr[1]);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("Cannot get UAP IP");
+            return -WM_FAIL;
+        }
+        ipv4_addr_num++;
     }
     index = g_flt_cfg.nentries;
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
@@ -13094,7 +13156,7 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
 
     g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
     g_flt_cfg.mef_entry[index].action                      = (MEF_AUTO_ARP | (mef_action & 0xF));
-    g_flt_cfg.mef_entry[index].filter_num                  = 2;
+    g_flt_cfg.mef_entry[index].filter_num                  = 1;
     g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
     g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
     g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
@@ -13102,11 +13164,31 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
     (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[0].byte_seq, "\x08\x06", 2);
     g_flt_cfg.mef_entry[index].rpn[1] = RPN_TYPE_AND;
 
-    g_flt_cfg.mef_entry[index].filter_item[1].type         = TYPE_BYTE_EQ;
-    g_flt_cfg.mef_entry[index].filter_item[1].repeat       = 1;
-    g_flt_cfg.mef_entry[index].filter_item[1].offset       = 46;
-    g_flt_cfg.mef_entry[index].filter_item[1].num_byte_seq = 4;
-    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[1].byte_seq, &ipv4_addr, 4);
+    if(is_sta_ipv4_connected() != 0)
+    {
+        g_flt_cfg.mef_entry[index].filter_num++;
+        filter_num = g_flt_cfg.mef_entry[index].filter_num;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].type         = TYPE_BYTE_EQ;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].repeat       = 1;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].offset       = 46;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].num_byte_seq = 4;
+        (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].byte_seq,
+                     &ipv4_addr[0], 4); // STA IP address
+    }
+
+    if(is_uap_started() != 0)
+    {
+        g_flt_cfg.mef_entry[index].filter_num++;
+        filter_num = g_flt_cfg.mef_entry[index].filter_num;
+        if(ipv4_addr_num == 2)
+            g_flt_cfg.mef_entry[index].rpn[filter_num] = RPN_TYPE_OR;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].type         = TYPE_BYTE_EQ;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].repeat       = 1;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].offset       = 46;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].num_byte_seq = 4;
+        (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].byte_seq,
+                     &ipv4_addr[1], 4); // UAP IP address
+    }
 
     return WM_SUCCESS;
 }
@@ -13114,25 +13196,50 @@ int wlan_mef_set_auto_arp(t_u8 mef_action)
 int wlan_mef_set_auto_ping(t_u8 mef_action)
 {
     int ret, index;
-    unsigned int ipv4_addr;
+    unsigned int ipv4_addr[2];
+    int ipv4_addr_num = 0;
+    int filter_num = 0;
 
-    ret = wlan_get_ipv4_addr(&ipv4_addr);
-    if (ret != WM_SUCCESS)
+    if(!is_sta_ipv4_connected() && !is_uap_started())
     {
-        wlcm_e("Cannot get IP");
-        return -WM_FAIL;
+        wlcm_e("No connection on STA and uAP is not activated.");
+        wlcm_e("Should at least meet one condition.");
+        return -WM_E_PERM;
     }
+
     if (g_flt_cfg.nentries >= MAX_NUM_ENTRIES)
     {
         wlcm_e("Number of MEF entries(%d) exceeds limit(8)!", g_flt_cfg.nentries);
         return -WM_FAIL;
+    }
+
+    (void)memset(ipv4_addr, 0x0, sizeof(ipv4_addr));
+    if(is_sta_ipv4_connected() != 0)
+    {
+        ret = wlan_get_ipv4_addr(&ipv4_addr[0]);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("Cannot get STA IP");
+            return -WM_FAIL;
+        }
+        ipv4_addr_num++;
+    }
+    if(is_uap_started() != 0)
+    {
+        ret = wlan_get_uap_ipv4_addr(&ipv4_addr[1]);
+        if (ret != WM_SUCCESS)
+        {
+            wlcm_e("Cannot get UAP IP");
+            return -WM_FAIL;
+        }
+        ipv4_addr_num++;
     }
     index = g_flt_cfg.nentries;
     g_flt_cfg.criteria |= (CRITERIA_BROADCAST | CRITERIA_UNICAST);
     g_flt_cfg.nentries++;
     g_flt_cfg.mef_entry[index].mode                        = MEF_MODE_HOST_SLEEP;
     g_flt_cfg.mef_entry[index].action                      = (MEF_AUTO_PING | (mef_action & 0xF));
-    g_flt_cfg.mef_entry[index].filter_num                  = 3;
+    g_flt_cfg.mef_entry[index].filter_num                  = 2;
     g_flt_cfg.mef_entry[index].filter_item[0].type         = TYPE_BYTE_EQ;
     g_flt_cfg.mef_entry[index].filter_item[0].repeat       = 1;
     g_flt_cfg.mef_entry[index].filter_item[0].offset       = IPV4_PKT_OFFSET;
@@ -13146,11 +13253,31 @@ int wlan_mef_set_auto_ping(t_u8 mef_action)
     g_flt_cfg.mef_entry[index].filter_item[1].num_bytes = 1;
     g_flt_cfg.mef_entry[index].rpn[2]                   = RPN_TYPE_AND;
 
-    g_flt_cfg.mef_entry[index].filter_item[2].type         = TYPE_BYTE_EQ;
-    g_flt_cfg.mef_entry[index].filter_item[2].repeat       = 1;
-    g_flt_cfg.mef_entry[index].filter_item[2].offset       = 38;
-    g_flt_cfg.mef_entry[index].filter_item[2].num_byte_seq = 4;
-    (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[2].byte_seq, &ipv4_addr, 4);
+    if(is_sta_ipv4_connected() != 0)
+    {
+        g_flt_cfg.mef_entry[index].filter_num++;
+        filter_num = g_flt_cfg.mef_entry[index].filter_num;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].type         = TYPE_BYTE_EQ;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].repeat       = 1;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].offset       = 38;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].num_byte_seq = 4;
+        (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].byte_seq,
+                     &ipv4_addr[0], 4); //STA IP address
+    }
+
+    if(is_uap_started() != 0)
+    {
+        g_flt_cfg.mef_entry[index].filter_num++;
+        filter_num = g_flt_cfg.mef_entry[index].filter_num;
+        if(ipv4_addr_num == 2)
+            g_flt_cfg.mef_entry[index].rpn[filter_num - 1] = RPN_TYPE_OR;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].type         = TYPE_BYTE_EQ;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].repeat       = 1;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].offset       = 38;
+        g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].num_byte_seq = 4;
+        (void)memcpy(g_flt_cfg.mef_entry[index].filter_item[filter_num - 1].byte_seq,
+                     &ipv4_addr[1], 4); // UAP IP address
+    }
 
     return WM_SUCCESS;
 }
@@ -13980,7 +14107,7 @@ int wlan_set_country_code(const char *alpha2)
     if (rv != WM_SUCCESS)
         return rv;
 
-#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)    
+#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
     wlan_11d_region_2_code(mlan_adap, (t_u8 *)&country_code[0], &region_code_rw610);
     return wlan_set_rg_power_cfg(region_code_rw610);
 #else
@@ -13991,7 +14118,7 @@ int wlan_set_country_code(const char *alpha2)
 int wlan_set_region_code(unsigned int region_code)
 {
     char *country;
-    
+
     if ((region_code == 0x41) || (region_code == 0xFE))
     {
         (void)PRINTF("Region code 0XFF is used for Japan to support channels of both 2.4GHz band and 5GHz band.\r\n");
