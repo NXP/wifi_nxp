@@ -5547,8 +5547,13 @@ int wlan_get_11ax_rutxpowerlimit_legacy(wlan_rutxpwrlimit_t *ru_pwr_cfg);
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
+
+/** Get default 11ax config params
+ *
+ * \return 11AX config parameters default array.
+ */
+uint8_t * wlan_get_11ax_cfg();
 
 #ifdef CONFIG_11AX_TWT
 /** Set btwt config params
@@ -5559,6 +5564,12 @@ int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
  */
 int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config);
 
+/** Get btwt config params
+ *
+ * \return Broadcast TWT Setup parameters default config array.
+ */
+uint8_t * wlan_get_btwt_cfg();
+
 /** Set twt setup config params
  *
  * \param[in] twt_setup TWT Setup parameters to be sent to Firmware
@@ -5567,6 +5578,12 @@ int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config);
  */
 int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup);
 
+/** Get twt setup config params
+ *
+ * \return TWT Setup parameters default array.
+ */
+uint8_t * wlan_get_twt_setup_cfg();
+
 /** Set twt teardown config params
  *
  * \param[in] teardown_config TWT Teardown parameters sent to Firmware
@@ -5574,6 +5591,12 @@ int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config);
+
+/** Get twt teardown config params
+ *
+ * \return TWT Teardown parameters default array
+ */
+uint8_t * wlan_get_twt_teardown_cfg();
 
 /** Get twt report
  *

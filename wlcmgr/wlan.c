@@ -12301,16 +12301,50 @@ int wlan_get_11ax_rutxpowerlimit_legacy(wifi_rutxpwrlimit_t *ru_pwr_cfg)
     return -WM_FAIL;
 }
 
+/* cfg tables for 11axcfg and twt commands to FW */
+static uint8_t g_11ax_cfg_default[] = {
+    /* band */
+    0x03,
+    /* HE cap */
+    0xff, 0x00,                                                       // ID
+    0x18, 0x00,                                                       // Length
+    0x23,                                                             // he capability id
+    0x03, 0x08, 0x00, 0x82, 0x00, 0x00,                               // HE MAC capability info
+    0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31, 0x00, // HE PHY capability info
+    0xfd, 0xff, 0xfd, 0xff,                                           // Tx Rx HE-MCS NSS support
+    0x88, 0x1f, 0x00, 0x00
+};
+
+
 int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config)
 {
     return wifi_set_11ax_cfg(ax_config);
 }
 
+uint8_t * wlan_get_11ax_cfg()
+{
+    return g_11ax_cfg_default;
+}
+
 #ifdef CONFIG_11AX_TWT
+static uint8_t g_btwt_cfg_default[] = {/* action */
+                               0x01, 0x00,
+                               /* sub_id */
+                               0x25, 0x01,
+                               /* btwt_cfg */
+                               0x40, 0x04, 0x63, 0x00, 0x70, 0x02, 0x0a, 0x05};
+
 int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config)
 {
     return wifi_set_btwt_cfg(btwt_config);
 }
+
+uint8_t * wlan_get_btwt_cfg()
+{
+    return g_btwt_cfg_default;
+}
+
+static uint8_t g_twt_setup_cfg_default[] = {0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, 0x01, 0x0a, 0x00, 0x02, 0x00};
 
 /* Below macros are defined as in FW under dot11ax_twt.c */
 #define TWT_EARLY_WAKEUP_ADJUSTMENT 1000                                // us
@@ -12327,9 +12361,21 @@ int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup)
     return wifi_set_twt_setup_cfg(twt_setup);
 }
 
+uint8_t * wlan_get_twt_setup_cfg()
+{
+    return g_twt_setup_cfg_default;
+}
+
+static uint8_t g_twt_teardown_cfg_default[] = {0x00, 0x00, 0x00};
+
 int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
 {
     return wifi_set_twt_teardown_cfg(teardown_config);
+}
+
+uint8_t * wlan_get_twt_teardown_cfg()
+{
+    return g_twt_teardown_cfg_default;
 }
 
 int wlan_get_twt_report(wlan_twt_report_t *twt_report)

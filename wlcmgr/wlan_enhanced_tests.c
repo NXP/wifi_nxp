@@ -1468,18 +1468,7 @@ static wlan_btwt_config_t btwt_config;
 #endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
-static uint8_t g_11ax_cfg[] = {
-    /* band */
-    0x03,
-    /* HE cap */
-    0xff, 0x00,                                                       // ID
-    0x18, 0x00,                                                       // Length
-    0x23,                                                             // he capability id
-    0x03, 0x08, 0x00, 0x82, 0x00, 0x00,                               // HE MAC capability info
-    0x40, 0x50, 0x42, 0x49, 0x0d, 0x00, 0x20, 0x1e, 0x17, 0x31, 0x00, // HE PHY capability info
-    0xfd, 0xff, 0xfd, 0xff,                                           // Tx Rx HE-MCS NSS support
-    0x88, 0x1f, 0x00, 0x00
-};
+static uint8_t g_11ax_cfg[29] = { 0 };
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
     /* name                 offset  len     notes */
@@ -1494,12 +1483,7 @@ const static test_cfg_param_t g_11ax_cfg_param[] = {
 };
 
 #ifdef CONFIG_11AX_TWT
-static uint8_t g_btwt_cfg[] = {/* action */
-                               0x01, 0x00,
-                               /* sub_id */
-                               0x25, 0x01,
-                               /* btwt_cfg */
-                               0x40, 0x04, 0x63, 0x00, 0x70, 0x02, 0x0a, 0x05};
+static uint8_t g_btwt_cfg[12] = { 0 };
 
 const static test_cfg_param_t g_btwt_cfg_param[] = {
     /* name             offset  len   notes */
@@ -1513,7 +1497,7 @@ const static test_cfg_param_t g_btwt_cfg_param[] = {
     {"sp_gap", 11, 1, NULL},
 };
 
-static uint8_t g_twt_setup_cfg[] = {0x01, 0x00, 0x00, 0x01, 0x00, 0x40, 0x00, 0x01, 0x0a, 0x00, 0x02, 0x00};
+static uint8_t g_twt_setup_cfg[12] = { 0 };
 
 static test_cfg_param_t g_twt_setup_cfg_param[] = {
     /* name                 offset  len  notes */
@@ -1531,7 +1515,7 @@ static test_cfg_param_t g_twt_setup_cfg_param[] = {
     {"twt_request", 11, 1, "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
 };
 
-static uint8_t g_twt_teardown_cfg[] = {0x00, 0x00, 0x00};
+static uint8_t g_twt_teardown_cfg[3] = { 0 };
 
 static test_cfg_param_t g_twt_teardown_cfg_param[] = {
     /* name             offset  len  notes */
@@ -1587,6 +1571,16 @@ static void test_wlan_twt_report(int argc, char **argv)
     }
 }
 #endif /* CONFIG_11AX_TWT */
+
+static void wlan_init_g_test_cfg_arrays()
+{
+    memcpy(g_11ax_cfg, wlan_get_11ax_cfg(), 29);
+#ifdef CONFIG_11AX_TWT
+    memcpy(g_btwt_cfg, wlan_get_btwt_cfg(), 12);
+    memcpy(g_twt_setup_cfg, wlan_get_twt_setup_cfg(), 12);
+    memcpy(g_twt_teardown_cfg, wlan_get_twt_teardown_cfg(), 3);
+#endif /* CONFIG_11AX_TWT */
+}
 
 /*
  *  Cfg table for mutiple params commands in freeRTOS.
@@ -2012,12 +2006,12 @@ static struct cli_command wlan_enhanced_commands[] = {
 #endif
     {"wlan-set-rutxpwrlimit", NULL, test_wlan_set_rutxpwrlimit},
 #endif
-    {"wlan-11axcfg", "<11ax_cfg>", test_wlan_11ax_cfg},
+    {"wlan-11ax-cfg", "<11ax_cfg>", test_wlan_11ax_cfg},
 #ifdef CONFIG_11AX_TWT
-    {"wlan-bcast-twt", "<bcast_twt_cfg>", test_wlan_bcast_twt},
-    {"wlan-twt-setup", "<twt_cfg>", test_wlan_twt_setup},
-    {"wlan-twt-teardown", "<twt_cfg>", test_wlan_twt_teardown},
-    {"wlan-twt-report", "<twt_report_get>", test_wlan_twt_report},
+    {"wlan-11ax-bcast-twt", "<bcast_twt_cfg>", test_wlan_bcast_twt},
+    {"wlan-11ax-twt-setup", "<twt_cfg>", test_wlan_twt_setup},
+    {"wlan-11ax-twt-teardown", "<twt_cfg>", test_wlan_twt_teardown},
+    {"wlan-11ax-twt-report", "<twt_report_get>", test_wlan_twt_report},
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
 #ifdef CONFIG_WIFI_CLOCKSYNC
@@ -2033,6 +2027,10 @@ static struct cli_command wlan_enhanced_commands[] = {
 
 int wlan_enhanced_cli_init(void)
 {
+#ifdef CONFIG_11AX
+    wlan_init_g_test_cfg_arrays();
+#endif
+
     if (cli_register_commands(wlan_enhanced_commands,
                               (int)(sizeof(wlan_enhanced_commands) / sizeof(struct cli_command))) != 0)
     {
