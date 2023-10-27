@@ -10228,12 +10228,14 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
 #endif
        )
     {
+#ifdef CONFIG_WNM_PS
         if (wlan.cm_wnmps_configured == true)
         {
             wlcm_d("wnm ps already enabled: %d, ieee ps could not be enabled", wlan.cm_wnmps_configured);
             return -WM_FAIL;
         }
         else
+#endif
         {
             wlcm_d("ieee ps already enabled");
         }
