@@ -568,7 +568,6 @@ void test_wmm(int argc, char **argv)
  */
 static void iperf_test_start(void *arg)
 {
-    int rv                         = WM_SUCCESS;
     struct iperf_test_context *ctx = (struct iperf_test_context *)arg;
 #ifdef CONFIG_IPV6
     struct netif *netiftmp  = NULL;

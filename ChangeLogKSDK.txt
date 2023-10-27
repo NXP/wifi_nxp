@@ -3,6 +3,10 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r47.p4
+
+Version 1.3.r47.p3
+
 Version 1.3.r47.p2
 
 Version 1.3.r47.p1
