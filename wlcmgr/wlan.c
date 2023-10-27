@@ -2497,6 +2497,7 @@ static void do_connect_failed(enum wlan_event_reason reason)
 #ifdef CONFIG_HOST_SLEEP
         wakelock_put();
 #endif
+        wlan.connect_wakelock_taken = false;
     }
 
 #ifdef CONFIG_OWE
