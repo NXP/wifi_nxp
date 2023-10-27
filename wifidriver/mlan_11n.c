@@ -925,9 +925,11 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
     /* Set ampdu param */
     SETAMPDU_SIZE(pht_cap->ht_cap.ampdu_param, AMPDU_FACTOR_64K);
 
+#ifdef RW610_SERIES
     SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0x5);
-
-    // SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0);
+#else
+    SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0);
+#endif
 
     rx_mcs_supp = GET_RXMCSSUPP(pmadapter->usr_dev_mcs_support);
     /* Set MCS for 1x1/2x2 */

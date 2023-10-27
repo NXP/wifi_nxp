@@ -35,7 +35,7 @@
 #else
 #define UAP_BEACON_PERIOD 200U
 #endif
-#define UAP_DTIM_PERIOD 10
+#define UAP_DTIM_PERIOD 1
 #define MAX_RATES       14U
 
 #ifdef CONFIG_5GHz_SUPPORT
@@ -743,7 +743,11 @@ static int wifi_cmd_uap_config(char *ssid,
         wifi_uap_set_11ax_status(pmpriv, MLAN_ACT_DISABLE, bss.param.bss_config.band_cfg, bandwidth);
     }
 #endif
+#ifdef RW610_SERIES
+    bss.param.bss_config.ampdu_param = 0x17;
+#else
     bss.param.bss_config.ampdu_param = 0x03;
+#endif
     (void)memcpy((void *)bss.param.bss_config.supported_mcs_set, (const void *)supported_mcs_set,
                  sizeof(bss.param.bss_config.supported_mcs_set));
 #endif
