@@ -497,6 +497,9 @@ static struct
     bool pending_disconnect_request : 1;
     int status_timeout;
     bool connect : 1;
+#ifdef CONFIG_11K
+    bool enable_11k : 1;
+#endif
 #ifdef CONFIG_WPA_SUPP_WPS
     int wps_session_attempt;
 #endif
@@ -3175,7 +3178,12 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
     else if (wlan.sta_state == CM_STA_SCANNING_USER)
     {
 #ifdef CONFIG_WPA_SUPP
-        wifi_scan_done(msg);
+#ifdef CONFIG_11K
+        if (wlan.enable_11k == 1U)
+        {
+            wifi_scan_done(msg);
+        }
+#endif
 #endif
         if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
         {
@@ -5868,8 +5876,13 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
 #endif
 
 #ifdef CONFIG_WPA_SUPP
-    wm_wifi.wpa_supp_scan = true;
-    wm_wifi.external_scan = true;
+#ifdef CONFIG_11K
+    if (wlan.enable_11k == 1U)
+    {
+        wm_wifi.wpa_supp_scan = true;
+        wm_wifi.external_scan = true;
+    }
+#endif
 #endif
 
     wlcm_d("initiating wlan-scan (return to %s)", dbg_sta_state_name(wlan.sta_state));
@@ -11757,6 +11770,7 @@ void wlan_set_scan_channel_gap(unsigned scan_chan_gap)
 int wlan_host_11k_cfg(int enable_11k)
 {
 #ifdef CONFIG_WPA_SUPP
+    wlan.enable_11k = enable_11k;
     return WM_SUCCESS;
 #else
     return wifi_host_11k_cfg(enable_11k);
