@@ -206,7 +206,9 @@ static int sdio_card_init(void)
     wm_g_sd.operationVoltage = kSDMMC_OperationVoltage180V;
 #endif
 
+#if !defined(COEX_APP_SUPPORT) || (defined(COEX_APP_SUPPORT) && !defined(CONFIG_WIFI_IND_DNLD))
     BOARD_WIFI_BT_Enable(true);
+#endif
 
     ret = SDIO_CardInit(&wm_g_sd);
     if (ret != WM_SUCCESS)
