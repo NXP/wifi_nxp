@@ -70,6 +70,7 @@ fi
 mkdir -p $destinationDir
 cd $destinationDir
 cp -r $dir/* .
+rm -rf internal
 echo "done."
 
 ########################################

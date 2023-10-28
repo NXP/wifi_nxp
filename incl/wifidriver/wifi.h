@@ -236,11 +236,16 @@ int wifi_send_shutdown_cmd(void);
 #endif
 /**
  * This API can be used to set wifi driver tx status.
+ *
+ * @param[in] status Status to set for TX
  */
 void wifi_set_tx_status(t_u8 status);
 
 /**
  * This API can be used to set wifi driver rx status.
+ *
+ * @param[in] status Status to set for RX
+ *
  */
 void wifi_set_rx_status(t_u8 status);
 
@@ -314,6 +319,8 @@ void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void);
  *  Direct interface.
  * \param[in] buffer A pointer pointing to DATA frame.
  * \param[in] len Length of DATA frame.
+ * \param[in] pkt_prio Priority for.sending packet.
+ * \param[in] tid TID for tx.
  *
  * \return WM_SUCCESS on success or -WM_E_NOMEM if memory is not available
  *  or -WM_E_BUSY if SDIO is busy.
@@ -464,7 +471,7 @@ int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr);
 /**
  * Get the device uap MAC address
  *
- * @param[out] mac_addr Mac address
+ * @param[out] mac_addr_uap Mac address
  *
  * @return WM_SUCESS
  */
@@ -760,7 +767,6 @@ int wifi_remove_mcast_filter(uint8_t *mac_addr);
  * \param[in] ipaddr ipaddress(input)
  * \param[in] mac_addr multicast mapped MAC address(output)
  *
- * \return  void
  */
 void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr);
 
@@ -775,7 +781,6 @@ void wifi_get_ipv4_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr);
  * \param[in] ipaddr last 4 bytes of IPv6 address
  * \param[in] mac_addr multicast mapped MAC address
  *
- * \return void
  */
 void wifi_get_ipv6_multicast_mac(uint32_t ipaddr, uint8_t *mac_addr);
 #endif /* CONFIG_IPV6 */
@@ -888,10 +893,10 @@ int wifi_get_uap_channel(int *channel);
  *
  * @param[in] action
  *
- * \param[in/out] mfpc: Management Frame Protection Capable (MFPC)
+ * \param[in, out] mfpc Management Frame Protection Capable (MFPC)
  *                       1: Management Frame Protection Capable
  *                       0: Management Frame Protection not Capable
- * \param[in/out] mfpr: Management Frame Protection Required (MFPR)
+ * \param[in, out] mfpr Management Frame Protection Required (MFPR)
  *                       1: Management Frame Protection Required
  *                       0: Management Frame Protection Optional
  *
@@ -1272,7 +1277,6 @@ int wifi_uap_do_acs(const int *freq_list);
  *                      0011 - 11N
  *                      0001 - legacy
  *
- * @return void
  */
 void wifi_uap_config_wifi_capa(uint8_t wlan_capa);
 void wifi_get_fw_info(mlan_bss_type type, t_u16 *fw_bands);
@@ -1343,17 +1347,10 @@ typedef struct _wlan_rrm_scan_cb_param
 
 int wifi_host_11k_cfg(int enable_11k);
 
-/**
- * host send neighbor report request
- * \param[in] ssid ssid for neighbor report
- */
 int wifi_host_11k_neighbor_req(t_u8 *ssid);
 #endif
 
 #ifdef CONFIG_11V
-/**
- * host send bss transition management query
- */
 int wifi_host_11v_bss_trans_query(t_u8 query_reason);
 #endif
 
@@ -1596,7 +1593,6 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
  * \param[in] wifi_usb_file_write_cb Callback to write FW dump data to opened file.
  * \param[in] wifi_usb_file_close_cb Callback to close FW dump file.
  *
- * \return void
  */
 void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
                               int (*wifi_usb_file_open_cb)(char *test_file_name),
@@ -1619,7 +1615,6 @@ int wifi_set_rssi_low_threshold(uint8_t *low_rssi);
 /**
  * Show os mem alloc and free info.
  *
- * \return void.
  */
 void wifi_show_os_mem_stat();
 #endif

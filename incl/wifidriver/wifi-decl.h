@@ -330,6 +330,7 @@ struct wifi_scan_result2
     bool mbo_assoc_disallowed; /*!< MBO disallowed */
 #endif
 #ifdef CONFIG_11R
+    /** Mobility domain identifier */
     uint16_t mdid;
 #endif
 #ifdef CONFIG_11K
@@ -409,8 +410,10 @@ typedef struct
 } wifi_remain_on_channel_t;
 
 #ifdef CONFIG_11AX
+/** TX Rate Setting */
 typedef PACK_START struct _txrate_setting
 {
+    /** Preamble */
     t_u16 preamble : 2;   /*BIT1-BIT0:
                            *  For legacy 11b: preamble type
                            *    00    = long
@@ -428,6 +431,7 @@ typedef PACK_START struct _txrate_setting
                            *    10 = HE-MU
                            *    11 = HE trigger based
                            */
+    /** Bandwidth */
     t_u16 bandwidth : 3;  /* BIT2- BIT4
                            * For 11n and 11ac traffic: Bandwidth
                            *    0 = 20Mhz
@@ -459,6 +463,7 @@ typedef PACK_START struct _txrate_setting
                            * in 160 Mhz or 80 Mhz + 80 Mhz,  where in the primary 80 Mhz of the preamble the primary 40
                            * Mhz is present.
                            */
+    /** Short GI */
     t_u16 shortGI : 2;    /*BIT5- BIT6
                            *  For legacy: not used
                            *  For 11n: 00 = normal, 01 =shortGI, 10/11 = reserved
@@ -472,20 +477,26 @@ typedef PACK_START struct _txrate_setting
                            *           11 = 4xHELTF+GI0.8 usec if both DCM and STBC are 1
                            *                4xHELTF+GI3.2 usec otherwise
                            */
+    /** STBC */
     t_u16 stbc : 1;       // BIT7, 0: no STBC; 1: STBC
+    /** DCM */
     t_u16 dcm : 1;        // BIT8, 0: no DCM; 1: DCM used.
+    /** Adv coding */
     t_u16 adv_coding : 1; // BIT9, 0: BCC; 1: LDPC.
+    /** Doppler */
     t_u16 doppler : 2;    /* BIT11-BIT10,
                              00: Doppler0
                              01: Doppler 1 with Mma =10
                              10: Doppler 1 with Mma =20
                           */
+    /** Max PK text */
     t_u16 max_pktext : 2; /*BIT12-BIT13:
                            * Max packet extension
                            *  0 - 0 usec
                            *  1 - 8 usec
                            *  2 - 16 usec.
                            */
+    /** Reserved */
     t_u16 reserverd : 2;  // BIT14-BIT15
 } PACK_END txrate_setting;
 
@@ -796,7 +807,7 @@ typedef struct
     t_u8 mask[6];
 } wifi_wowlan_pattern_t;
 
-/* Wowlan Pattern config struct */
+/** Wowlan Pattern config struct */
 typedef struct
 {
     /** Enable user defined pattern*/
@@ -1087,9 +1098,10 @@ typedef PACK_START struct
     wifi_rupwrlimit_config_t rupwrlimit_config[MAX_RUTXPWR_NUM];
 } PACK_END wifi_rutxpwrlimit_t;
 
+/** Wi-Fi 11AX Configuration */
 typedef PACK_START struct
 {
-    /* band */
+    /** Band */
     t_u8 band;
     /** tlv id of he capability */
     t_u16 id;
@@ -1108,6 +1120,7 @@ typedef PACK_START struct
 } PACK_END wifi_11ax_config_t;
 
 #ifdef CONFIG_11AX_TWT
+/** Wi-Fi TWT setup configuration */
 typedef PACK_START struct
 {
     /** Implicit, 0: TWT session is explicit, 1: Session is implicit */
@@ -1138,6 +1151,7 @@ typedef PACK_START struct
     t_u8 twt_request;
 } PACK_END wifi_twt_setup_config_t;
 
+/** Wi-Fi Teardown Configuration */
 typedef PACK_START struct
 {
     /** TWT Flow Identifier. Range: [0-7] */
@@ -1149,6 +1163,7 @@ typedef PACK_START struct
     t_u8 teardown_all_twt;
 } PACK_END wifi_twt_teardown_config_t;
 
+/** Wi-Fi BTWT Configuration */
 typedef PACK_START struct
 {
     /** Only support 1: Set*/
@@ -1159,20 +1174,26 @@ typedef PACK_START struct
     t_u8 nominal_wake;
     /** Max STA Support */
     t_u8 max_sta_support;
+    /** TWT Mantissa */
     t_u16 twt_mantissa;
+    /** TWT Offset */
     t_u16 twt_offset;
+    /** TWT Exponent */
     t_u8 twt_exponent;
+    /** SP Gap */
     t_u8 sp_gap;
 } PACK_END wifi_btwt_config_t;
 
 #define WLAN_BTWT_REPORT_LEN     9
 #define WLAN_BTWT_REPORT_MAX_NUM 4
+/** Wi-Fi TWT Report Configuration */
 typedef PACK_START struct
 {
     /** TWT report type, 0: BTWT id */
     t_u8 type;
     /** TWT report length of value in data */
     t_u8 length;
+    /** Reserved 2 */
     t_u8 reserve[2];
     /** TWT report buffer */
     t_u8 data[WLAN_BTWT_REPORT_LEN * WLAN_BTWT_REPORT_MAX_NUM];
@@ -1181,6 +1202,7 @@ typedef PACK_START struct
 #endif
 
 #ifdef CONFIG_WIFI_CLOCKSYNC
+/** Wi-Fi Clock sync configuration */
 typedef PACK_START struct
 {
     /**clock sync Mode */
@@ -1195,6 +1217,7 @@ typedef PACK_START struct
     t_u16 clock_sync_gpio_pulse_width;
 } PACK_END wifi_clock_sync_gpio_tsf_t;
 
+/** Wi-Fi TSF information */
 typedef PACK_START struct
 {
     /**get tsf info format */
@@ -1670,7 +1693,6 @@ typedef PACK_START struct wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr
 #define MAX_FUNC_SYMBOL_LEN    64
 #define OS_MEM_STAT_TABLE_SIZE 128
 
-/** Structure of mem alloc and free info */
 typedef struct
 {
     char name[MAX_FUNC_SYMBOL_LEN];
@@ -1834,9 +1856,9 @@ typedef PACK_START struct _wifi_csi_filter_t
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
     /** Pakcet type of the interested CSI */
     t_u8 pkt_type;
-    /* Packet subtype of the interested CSI */
+    /** Packet subtype of the interested CSI */
     t_u8 subtype;
-    /* Other filter flags */
+    /** Other filter flags */
     t_u8 flags;
 } PACK_END wifi_csi_filter_t;
 /** Structure of CSI parameters */
@@ -1866,6 +1888,7 @@ typedef PACK_START struct _wifi_csi_config_params_t
 #endif /* CSI_SUPPORT */
 
 #ifdef CONFIG_WIFI_IND_RESET
+/** Wi-Fi independent reset config */
 typedef PACK_START struct
 {
     /** reset mode enable/ disable */

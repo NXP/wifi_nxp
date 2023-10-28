@@ -363,14 +363,14 @@ int net_wlan_deinit(void);
 
 /** Get STA interface netif structure pointer
  *
- * \rerurn A pointer to STA interface netif structure
+ * \return A pointer to STA interface netif structure
  *
  */
 struct netif *net_get_sta_interface(void);
 
 /** Get uAP interface netif structure pointer
  *
- * \rerurn A pointer to uAP interface netif structure
+ * \return A pointer to uAP interface netif structure
  *
  */
 struct netif *net_get_uap_interface(void);
@@ -419,7 +419,6 @@ void *net_get_uap_handle(void);
  *
  * \param[in] intrfc_handle interface handle
  *
- * \return void
  */
 void net_interface_up(void *intrfc_handle);
 
@@ -430,7 +429,6 @@ void net_interface_up(void *intrfc_handle);
  *
  * \param[in] intrfc_handle interface handle
  *
- * \return void
  */
 void net_interface_down(void *intrfc_handle);
 
@@ -441,7 +439,6 @@ void net_interface_down(void *intrfc_handle);
  *
  * \param[in] intrfc_handle interface handle
  *
- * \return void
  */
 void net_interface_dhcp_stop(void *intrfc_handle);
 
@@ -452,7 +449,6 @@ void net_interface_dhcp_stop(void *intrfc_handle);
  *
  * \param[in] intrfc_handle interface handle
  *
- * \return void
  */
 void net_interface_dhcp_cleanup(void *intrfc_handle);
 
@@ -579,7 +575,7 @@ int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle);
  * net_get_sta_handle(), net_get_uap_handle() to get
  * interface handle.
  *
- * \param[in] mask Subnet Mask pointer
+ * \param[in] nm Subnet Mask pointer
  * \param[in] intrfc_handle interface
  *
  * \return WM_SUCCESS on success or error code.

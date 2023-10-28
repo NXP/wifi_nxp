@@ -248,11 +248,6 @@ int os_thread_delete(os_thread_t *thandle);
  *
  * @param[in] ticks Number of ticks to sleep
  *
- * @return 0 If slept for given ticks or more
- * @return Positive value if woken up before given ticks.
- * @note The value returned is amount of ticks left before the task was
- * to be originally scheduled to be woken up. So if sleep was for 10 ticks
- * and the task is woken up after 8 ticks then 2 will be returned.
  */
 void os_thread_sleep(uint32_t ticks);
 
@@ -751,7 +746,7 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
  *
  * This function creates a reader-writer lock.
  *
- * @param[in] lock Pointer to a reader-writer lock handle
+ * @param[in] plock Pointer to a reader-writer lock handle
  * @param[in] mutex_name Name of the mutex
  * @param[in] lock_name Name of the lock
  *
@@ -1094,7 +1089,9 @@ static inline void os_unlock_schedule(void)
 extern uint32_t wm_rand_seed;
 
 /** This function initialize the seed for rand generator
- *  @return a uint32_t random numer
+ *
+ * @param [in] seed Seed for random number generator
+ *
  */
 static inline void os_srand(uint32_t seed)
 {

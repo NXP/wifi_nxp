@@ -152,7 +152,6 @@ static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsign
  * @param[in] src_len Length of the input buffer
  * @param[in] dest_len Length of the output buffer
  *
- * @return void
  */
 void bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
 #endif /* ! CONFIG_ZEPHYR */
@@ -381,7 +380,6 @@ float wm_strtof(const char *str, char **endptr);
  * @param[in] first_byte This is the value of first byte in the sequential
  * pattern.
  *
- * @return void
  */
 void fill_sequential_pattern(void *buffer, int size, uint8_t first_byte);
 
