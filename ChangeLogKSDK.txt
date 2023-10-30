@@ -4,17 +4,45 @@
 @section wifi NXP WiFi
 
 Version 1.3.r47.p4
+ - Features
+  - Added support for Doxygen.
+ - Bug Fix:
+  - AKM checks are wrong for UAP PMF MANDATORY WPA2 PSK STA PMF MANDATORY WPA2 PSK for 11AN[20Mhz] as well as BGN[20Mhz] mode.
+  - On DUT manually configured parameters of 11axcfg, not getting reset to default after "wlan-reset" command execution.
+  - 2G to 5G and 5G to 2G FTOA roaming fails , link lost observed with permanent disconnect
+  - Change of bandwidth from 80Mhz to 40 MHz is observed after uAP (APUT) is stopped and started again, in HE/VHT band.
+  - STAUT unable to scan Ex-AP in UNII4 channels (169,173,177) with any Band/security.
+  - "Command response timed out. command 0x107" observed after 945 iterations in Scan-Connect-Disconnect Test without any traffic [Idle Test].
+  - RT Console hangs after enabling WLAN/BT Independent Download.
+  - Cannot get full iperf summary.
+  - While running UDP Bi-directional traffic, QOS data packets are not going from APUT/STAUT.
 
 Version 1.3.r47.p3
+ - Updates:
+  - Updated FC's f/w version to 2.p66.6.
+  - Updated CA2 and RB3+ f/w version to 21.221.
+ - Features
+  - Added FW (Parallel) Download support.
+ - Bug Fix:
+  - WiFi hang up with memory alloc buffer error during perform WiFi-scan along with WiFi independent reset loop test(OT already form the NTW)
+  - TCP-Keep-Alive packets are not seen in sniffer after successfully setting configuration commands for cloud keep alive and STAUT is not waking up after putting in suspend state.
+  - STAUT is not waking up from suspend state while running Host-sleep test even after running Unicast/Broadcast traffic from Ex-AP to STAUT.
+  - AKM checks are wrong for UAP PMF MANDATORY WPA2 PSK STA PMF MANDATORY WPA2 PSK for 11AN[20Mhz] as well as BGN[20Mhz] mode.
+  - Ex-STA (Kestrel, Firecrest RT1060-EVKC) Failed to associate in WPA2 PMF disabled mode to APUT configured in WPA2/WPA3 mixed security mode.
+  - STAUT, failed to Associate in WPA2 security with PMF disabled to Ex-AP configured in WPA2/WPA3 mixed security mode.
 
 Version 1.3.r47.p2
+ - Bug Fix:
+  - Fail to disable IEEE Power save mode, while giving command to disable it.
+  - NXP devices Kestrel/KF2-RD(STA) unable to connect to DUT as MMH-AP but connecting with Mobile, Four way Handshake Timeout is observed with NXP Devices
+  - Ex-STA(Kestrel, KF2) Assoc-reject is observed with uAP configured in OWE security mode.
+  - Cannot connect to 5g external AP.
 
 Version 1.3.r47.p1
  - Updates:
   - Updated CA2 and RB3+ f/w version to 21.p109
   - Updated 8801 f/w version to 36_186
   - Updated Firecrest firmware version to p66.5.
-
  - Features
   - Added EVKC board support for all SoCs.
   - Added WPA2/3 Enterprise support for EAP-SIM/EAP-AKA/EAP-AKA-PRIME for STA and uAP.
@@ -24,8 +52,6 @@ Version 1.3.r47.p1
   - Added CA2 and RB3+ Independent Reset via In-band support.
   - Added CA2 and RB3+ Independent Reset via Out-of-Band support.
   - Added CA2 and RB3+ Boot sleep patch support.
-
- - Bug Fixes:
 
 Version 1.3.r46.p7
  - Updates:
