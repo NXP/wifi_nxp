@@ -4303,6 +4303,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 {
     int ret;
     wlan_scan_params_v2_t params;
+    t_u8 curr_bss[MLAN_MAC_ADDR_LENGTH] = {0};
 
     struct netif *netif = net_get_sta_interface();
 
@@ -4323,6 +4324,15 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 
     if (bssid)
     {
+        if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+        {
+            memcpy(curr_bss, wlan.networks[wlan.cur_network_idx].bssid, MLAN_MAC_ADDR_LENGTH);
+            if(memcmp(curr_bss, bssid, MLAN_MAC_ADDR_LENGTH) == 0)
+            {
+                (void)PRINTF("Already connected to this BSS. Skip roaming.\r\n");
+                return WM_SUCCESS;
+            }
+        }
         memcpy(params.bssid, bssid, MLAN_MAC_ADDR_LENGTH);
         params.is_bssid = 1;
     }
