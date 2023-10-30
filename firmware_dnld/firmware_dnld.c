@@ -2,9 +2,9 @@
  *
  *  @brief  This file provides firmware download related API
  *
- *  Copyright 2021-2022 NXP
+ *  Copyright 2021-2023 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
