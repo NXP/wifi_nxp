@@ -1280,6 +1280,35 @@ t_void wlan_init_wmm_param(pmlan_adapter pmadapter)
      * aifsn,ecw_max,ecw_min, tx_op_limit only when ucm is set to 1.
      * othewise the default setting/behavoir in firmware will be used.
      */
+#ifdef RW610
+    pmadapter->ac_params[AC_BE].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_BE].aci_aifsn.aci   = AC_BE;
+    pmadapter->ac_params[AC_BE].aci_aifsn.aifsn = 5;
+    pmadapter->ac_params[AC_BE].ecw.ecw_max     = 6;
+    pmadapter->ac_params[AC_BE].ecw.ecw_min     = 4;
+    pmadapter->ac_params[AC_BE].tx_op_limit     = 0;
+
+    pmadapter->ac_params[AC_BK].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_BK].aci_aifsn.aci   = AC_BK;
+    pmadapter->ac_params[AC_BK].aci_aifsn.aifsn = 9;
+    pmadapter->ac_params[AC_BK].ecw.ecw_max     = 10;
+    pmadapter->ac_params[AC_BK].ecw.ecw_min     = 4;
+    pmadapter->ac_params[AC_BK].tx_op_limit     = 0;
+
+    pmadapter->ac_params[AC_VI].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_VI].aci_aifsn.aci   = AC_VI;
+    pmadapter->ac_params[AC_VI].aci_aifsn.aifsn = 3;
+    pmadapter->ac_params[AC_VI].ecw.ecw_max     = 4;
+    pmadapter->ac_params[AC_VI].ecw.ecw_min     = 3;
+    pmadapter->ac_params[AC_VI].tx_op_limit     = 94;
+
+    pmadapter->ac_params[AC_VO].aci_aifsn.acm   = 0;
+    pmadapter->ac_params[AC_VO].aci_aifsn.aci   = AC_VO;
+    pmadapter->ac_params[AC_VO].aci_aifsn.aifsn = 3;
+    pmadapter->ac_params[AC_VO].ecw.ecw_max     = 3;
+    pmadapter->ac_params[AC_VO].ecw.ecw_min     = 2;
+    pmadapter->ac_params[AC_VO].tx_op_limit     = 47;
+#else
     pmadapter->ac_params[AC_BE].aci_aifsn.acm   = 0;
     pmadapter->ac_params[AC_BE].aci_aifsn.aci   = AC_BE;
     pmadapter->ac_params[AC_BE].aci_aifsn.aifsn = 3;
@@ -1307,6 +1336,7 @@ t_void wlan_init_wmm_param(pmlan_adapter pmadapter)
     pmadapter->ac_params[AC_VO].ecw.ecw_max     = 3;
     pmadapter->ac_params[AC_VO].ecw.ecw_min     = 2;
     pmadapter->ac_params[AC_VO].tx_op_limit     = 102;
+#endif
 }
 
 /**
