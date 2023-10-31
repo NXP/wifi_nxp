@@ -870,7 +870,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
         case ADDR_TYPE_DHCP:
             net_if_up(if_handle->netif);
             os_timer_activate(&dhcp_timer);
-            net_dhcpv4_start(if_handle->netif);
+            net_dhcpv4_restart(if_handle->netif);
             break;
         case ADDR_TYPE_LLA:
             /* For dhcp, instead of netifapi_netif_set_up, a
