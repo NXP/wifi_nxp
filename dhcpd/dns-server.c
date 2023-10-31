@@ -262,7 +262,7 @@ void dns_process_packet(void)
     socklen_t flen = sizeof(caddr);
     int len;
     len = recvfrom(dnss.dnssock, dhcps.msg, sizeof(dhcps.msg), 0, (struct sockaddr *)(void *)&caddr, &flen);
-    if (len > 0)
+    if (len > 0 && len < SERVER_BUFFER_SIZE)
     {
         dhcp_d("recved msg on dns sock len: %d", len);
         (void)dhcp_dns_server_handler(dhcps.msg, len, &caddr);
