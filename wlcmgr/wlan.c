@@ -477,6 +477,9 @@ static struct
 #ifdef CONFIG_HOST_SLEEP
     bool is_hs_configured;
 #endif
+#ifdef CONFIG_MEF_CFG
+    bool mef_set;
+#endif
 #if defined(CONFIG_WNM_PS)
     bool cm_wnmps_configured;
     t_u16 wnm_sleep_time;
@@ -868,16 +871,47 @@ static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 
 static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
 {
-    int ret;
+    int ret = WM_SUCCESS;
     unsigned int ipv4_addr = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
-    wlan.hs_configured = MFALSE;
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     wlan_start_cloud_keep_alive();
 #endif
 #ifdef CONFIG_HOST_SLEEP
-    wlan.wakeup_conditions = wakeup_condition;
+    if (wakeup_condition == HOST_SLEEP_CFG_CANCEL)
+    {
+        wlan.hs_configured       = false;
+        wlan.hs_wakeup_condition = wakeup_condition;
+#ifdef CONFIG_MEF_CFG
+        wlan.mef_set = false;
+        (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
+        wifi_set_packet_filters(&g_flt_cfg);
+#endif
+    }
+#ifndef RW610
+#ifdef CONFIG_MEF_CFG
+    else if (wakeup_condition == HOST_SLEEP_NO_COND)
+    {
+        wlan.hs_wakeup_condition = wakeup_condition;
+        if (g_flt_cfg.nentries == 0)
+        {
+            (void)PRINTF("No user configured MEF entries, use default ARP filters.\r\n");
+            /* User doesn't configure MEF, use default MEF entry */
+            wlan_mef_set_auto_arp(MEF_ACTION_ALLOW_AND_WAKEUP_HOST);
+        }
+        if (!wlan.mef_set)
+        {
+            wlan.mef_set = true;
+            wifi_set_packet_filters(&g_flt_cfg);
+        }
+    }
+#endif
+#endif
+    else
+    {
+        wlan.hs_wakeup_condition = wlan_map_to_wifi_wakeup_condtions(wakeup_condition);
+    }
     if (is_sta_ipv4_connected() != 0)
     {
         ret = wlan_get_ipv4_addr(&ipv4_addr);
@@ -901,60 +935,17 @@ static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
     {
         ipv4_addr = 0;
     }
-    ret = wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE,
-                                wlan_map_to_wifi_wakeup_condtions(wlan.wakeup_conditions));
+
+    ret = wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
     if (ret == WM_SUCCESS)
     {
-        wlan.hs_configured = MTRUE;
+        if (wakeup_condition != HOST_SLEEP_CFG_CANCEL)
+        {
+            wlan.hs_configured = MTRUE;
+        }
     }
-
+#endif
     return ret;
-#else
-    if (wlan.hs_configured == true)
-    {
-        if (wakeup_condition == HOST_SLEEP_CFG_CANCEL)
-        {
-            wlan.hs_configured       = false;
-            wlan.hs_wakeup_condition = wakeup_condition;
-#ifdef CONFIG_MEF_CFG
-            (void)memset(&g_flt_cfg, 0, sizeof(wlan_flt_cfg_t));
-            wifi_set_packet_filters(&g_flt_cfg);
-#endif
-        }
-        else if (wlan.hs_wakeup_condition != wlan_map_to_wifi_wakeup_condtions(wakeup_condition))
-        {
-            wlcm_d("Cancel previous confiuration to configure new configuration\r\n");
-            /* already configured */
-            return -WM_FAIL;
-        }
-        else
-        {
-            /*Do Nothing*/
-        }
-    }
-    else
-    {
-        wlan.hs_configured       = true;
-        wlan.hs_wakeup_condition = wlan_map_to_wifi_wakeup_condtions(wakeup_condition);
-    }
-    ret = wlan_get_ipv4_addr(&ipv4_addr);
-    if (ret != WM_SUCCESS)
-    {
-        wlcm_e("HS: cannot get IP");
-        return -WM_FAIL;
-    }
-    /* If uap interface is up
-     * configure host sleep for uap interface
-     * else confiugre host sleep for station
-     * interface.
-     */
-    if (is_uap_started() != 0)
-    {
-        type = WLAN_BSS_TYPE_UAP;
-    }
-
-    return wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, (uint16_t)HS_CONFIGURE, wlan.hs_wakeup_condition);
-#endif
 }
 
 int wlan_send_host_sleep(uint32_t wakeup_condition)
@@ -1245,7 +1236,8 @@ static void wlan_host_sleep_and_sleep_confirm(void)
         g_req_sl_confirm = 1;
         return;
     }
-
+#ifdef CONFIG_HOST_SLEEP
+#ifndef RW610
     if (wlan.hs_configured)
     {
         ret = wlan_send_host_sleep_int(wlan.hs_wakeup_condition);
@@ -1255,6 +1247,8 @@ static void wlan_host_sleep_and_sleep_confirm(void)
             return;
         }
     }
+#endif
+#endif
     /* tbdel */
     wlan.cm_ps_state = PS_STATE_SLEEP_CFM;
 
@@ -3029,6 +3023,11 @@ static void wlan_enable_power_save(int action)
             wlcm_d("Unexpected ps mode");
             break;
     }
+}
+
+static void wlcm_process_sleep_event(void)
+{
+    wlan_host_sleep_and_sleep_confirm();
 }
 
 static void wlcm_process_awake_event(void)
@@ -6435,7 +6434,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_ASSOCIATION:
             wlcm_d("got event: association result: %s",
-                   msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
 
             wlcm_process_association_event(msg, &next);
             break;
@@ -6455,7 +6454,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
              */
         case WIFI_EVENT_AUTHENTICATION:
             wlcm_d("got event: authentication result: %s",
-                   msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             wlcm_process_authentication_event(msg, &next, network);
             break;
         case WIFI_EVENT_LINK_LOSS:
@@ -6521,7 +6520,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_SLEEP_CONFIRM_DONE:
             if (wlan.hs_configured)
             {
+#ifdef RW610
                 wlan.hs_configured = MFALSE;
+#endif
 #ifdef CONFIG_POWER_MANAGER
                 if (!wlan_is_manual)
                 {
@@ -6598,15 +6599,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_SLEEP:
             wlcm_d("got event: sleep");
-#ifdef CONFIG_HOST_SLEEP
-#ifdef RW610
-            send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
-#else
-            wlan_host_sleep_and_sleep_confirm();
-#endif /*RW610*/
-#else
-            send_sleep_confirm_command((mlan_bss_type)WLAN_BSS_TYPE_STA);
-#endif /*CONFIG_HOST_SLEEP*/
+            wlcm_process_sleep_event();
             break;
         case WIFI_EVENT_AWAKE:
             wlcm_d("got event: awake");
@@ -6620,7 +6613,7 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 
         case WIFI_EVENT_DEEP_SLEEP:
             wlcm_d("got event: deep sleep result: %s",
-                   msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             wlcm_process_deepsleep_event(msg, &next);
 
             break;
@@ -6632,12 +6625,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
         case WIFI_EVENT_IEEE_DEEP_SLEEP:
             wlcm_d("got event: IEEE deep sleep result: %s",
-                   msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             os_mem_free(msg->data);
             break;
         case WIFI_EVENT_WNM_DEEP_SLEEP:
             wlcm_d("got event: WNM deep sleep result: %s",
-                   msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+                    msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
             os_mem_free(msg->data);
             break;
         case WIFI_EVENT_HS_CONFIG:

@@ -4514,7 +4514,11 @@ static void test_wlan_host_sleep(int argc, char **argv)
     int choice = -1, wowlan = 0;
     int ret = -WM_FAIL;
 
-    if (argc < 2)
+#ifdef CONFIG_MEF_CFG
+        if (argc < 3)
+#else
+        if (argc < 4)
+#endif
     {
         goto done;
     }
@@ -4573,12 +4577,6 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #ifdef CONFIG_MEF_CFG
         else if (string_equal(argv[2], "mef"))
         {
-            if (g_flt_cfg.nentries == 0)
-            {
-                /* User doesn't configure MEF, use default MEF entry */
-                wlan_mef_set_auto_arp(MEF_ACTION_ALLOW_AND_WAKEUP_HOST);
-            }
-            wifi_set_packet_filters(&g_flt_cfg);
             ret = wlan_send_host_sleep(HOST_SLEEP_NO_COND);
             if (ret == WM_SUCCESS)
             {
@@ -4613,7 +4611,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #ifdef CONFIG_MEF_CFG
         (void)PRINTF("    mef     -- MEF host wakeup\r\n");
         (void)PRINTF("Example:\r\n");
-        (void)PRINTF("    wlan-host-sleep mef\r\n");
+        (void)PRINTF("    wlan-host-sleep <1/0> mef\r\n");
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
 #endif
         (void)PRINTF("    wlan-host-sleep <1/0> wowlan 0x1e\r\n");
