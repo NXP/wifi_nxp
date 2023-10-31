@@ -40,11 +40,12 @@
 #define DHCP_TIMEOUT (120 * 1000)
 #endif
 
-enum netif_mac_filter_action {
-  /** Delete a filter entry */
-  NET_IF_DEL_MAC_FILTER = 0,
-  /** Add a filter entry */
-  NET_IF_ADD_MAC_FILTER = 1
+enum netif_mac_filter_action
+{
+    /** Delete a filter entry */
+    NET_IF_DEL_MAC_FILTER = 0,
+    /** Add a filter entry */
+    NET_IF_ADD_MAC_FILTER = 1
 };
 
 /*******************************************************************************
@@ -64,11 +65,10 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 
-static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] =
-	{0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
+static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
 
 static struct net_mgmt_event_callback net_event_v4_cb;
-#define DHCPV4_MASK (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
+#define DHCPV4_MASK  (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
 #define MCASTV4_MASK (NET_EVENT_IPV4_MADDR_ADD | NET_EVENT_IPV4_MADDR_DEL)
 
 #ifdef CONFIG_IPV6
@@ -130,7 +130,7 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
 
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
-    struct net_pkt *pkt = NULL;
+    struct net_pkt *pkt        = NULL;
     struct net_eth_hdr *ethhdr = (struct net_eth_hdr *)payload;
 #ifndef CONFIG_TX_RX_ZERO_COPY
     t_u8 llc = 0;
@@ -142,7 +142,7 @@ static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 da
     {
         struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)payload + SIZEOF_ETH_HDR);
         ethhdr->type                  = ethllchdr->type;
-	datalen -= SIZEOF_ETH_LLC_HDR;
+        datalen -= SIZEOF_ETH_LLC_HDR;
         llc = 1;
     }
 #endif
@@ -179,7 +179,7 @@ retry:
             pkt = NULL;
         }
     }
-    else 
+    else
 #endif
     {
         if (net_pkt_write(pkt, payload, datalen) != 0)
@@ -208,9 +208,9 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         g_data_snr_last = rxpd->snr;
     }
 
-    t_u8 *payload  = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
+    t_u8 *payload = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
 #ifdef CONFIG_TX_RX_ZERO_COPY
-    t_u16 header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+    t_u16 header_len  = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
     struct net_pkt *p = gen_pkt_from_data(recv_interface, rcvdata, rxpd->rx_pkt_length + header_len);
 #else
     struct net_pkt *p = gen_pkt_from_data(recv_interface, payload, rxpd->rx_pkt_length);
@@ -311,7 +311,7 @@ void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf
     (void)rxpd;
     deliver_packet_above(p, interface);
 #else
-    RxPD *prxpd = (RxPD *)rxpd;
+    RxPD *prxpd       = (RxPD *)rxpd;
     deliver_packet_above(prxpd, p, interface);
 #endif
 }
@@ -319,8 +319,9 @@ void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer)
 {
     struct net_eth_hdr *hdr = (struct net_eth_hdr *)buffer;
-    uint16_t type = ntohs(hdr->type);
-    if ((type == NET_ETH_PTYPE_IP) || type == NET_ETH_PTYPE_IPV6) {
+    uint16_t type           = ntohs(hdr->type);
+    if ((type == NET_ETH_PTYPE_IP) || type == NET_ETH_PTYPE_IPV6)
+    {
         return true;
     }
     return false;
@@ -331,12 +332,12 @@ int low_level_output(const struct device *dev, struct net_pkt *pkt)
 {
     int ret;
     interface_t *if_handle = (interface_t *)dev->data;
-    t_u8 interface   = if_handle->state.interface;
-    t_u16 net_pkt_len = net_pkt_get_len(pkt);
+    t_u8 interface         = if_handle->state.interface;
+    t_u16 net_pkt_len      = net_pkt_get_len(pkt);
     t_u32 pkt_len, outbuf_len;
     t_u8 *wmm_outbuf = NULL;
 #ifdef CONFIG_WMM
-    t_u8 *payload = net_pkt_data(pkt);
+    t_u8 *payload                 = net_pkt_data(pkt);
     t_u8 tid                      = 0;
     int retry                     = 0;
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
@@ -379,8 +380,7 @@ int low_level_output(const struct device *dev, struct net_pkt *pkt)
 
         if (ret == true && is_tx_pause == true)
         {
-            wifi_wmm_drop_pause_drop(interface);
-            return -ENOMEM;
+            os_thread_sleep(os_msec_to_ticks(1));
         }
 
         retry--;
@@ -734,27 +734,23 @@ void net_interface_dhcp_stop(void *intrfc_handle)
 #endif
 }
 
-static void ipv4_mcast_add(struct net_mgmt_event_callback *cb,
-			 struct net_if *iface)
+static void ipv4_mcast_add(struct net_mgmt_event_callback *cb, struct net_if *iface)
 {
     igmp_mac_filter((struct netif *)iface, cb->info, NET_IF_ADD_MAC_FILTER);
 }
 
-static void ipv4_mcast_delete(struct net_mgmt_event_callback *cb,
-			 struct net_if *iface)
+static void ipv4_mcast_delete(struct net_mgmt_event_callback *cb, struct net_if *iface)
 {
     igmp_mac_filter((struct netif *)iface, cb->info, NET_IF_DEL_MAC_FILTER);
 }
 
 #ifdef CONFIG_IPV6
-static void ipv6_mcast_add(struct net_mgmt_event_callback *cb,
-			 struct net_if *iface)
+static void ipv6_mcast_add(struct net_mgmt_event_callback *cb, struct net_if *iface)
 {
     mld_mac_filter((struct netif *)iface, cb->info, NET_IF_ADD_MAC_FILTER);
 }
 
-static void ipv6_mcast_delete(struct net_mgmt_event_callback *cb,
-			 struct net_if *iface)
+static void ipv6_mcast_delete(struct net_mgmt_event_callback *cb, struct net_if *iface)
 {
     mld_mac_filter((struct netif *)iface, cb->info, NET_IF_DEL_MAC_FILTER);
 }
@@ -762,10 +758,11 @@ static void ipv6_mcast_delete(struct net_mgmt_event_callback *cb,
 
 static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
 {
-    //const struct wifi_status *status = (const struct wifi_status *)cb->info;
+    // const struct wifi_status *status = (const struct wifi_status *)cb->info;
     enum wifi_event_reason wifi_event_reason;
 
-    switch (mgmt_event) {
+    switch (mgmt_event)
+    {
         case NET_EVENT_IPV4_DHCP_BOUND:
             wifi_event_reason = WIFI_EVENT_REASON_SUCCESS;
             wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, wifi_event_reason, NULL);
@@ -916,7 +913,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 
 int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 {
-    interface_t *if_handle = (interface_t *)intrfc_handle;
+    interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
     addr->ipv4.address = NET_IPV4_ADDR_U32(ipv4->unicast[0].address);
@@ -982,8 +979,7 @@ char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
 
     (void)memcpy((void *)&ip6_addr, (const void *)ipv6_conf->address, sizeof(ip6_addr));
 
-    info = net_addr_ntop(AF_INET6, &ip6_addr, extra_info,
-				     NET_IPV6_ADDR_LEN);
+    info = net_addr_ntop(AF_INET6, &ip6_addr, extra_info, NET_IPV6_ADDR_LEN);
 
     return info;
 }
@@ -1037,7 +1033,7 @@ int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
         }
 
         (void)memcpy(addr->ipv6[i].address, &unicast->address.in6_addr, 16);
-        addr->ipv6[i].addr_type = unicast->addr_type;
+        addr->ipv6[i].addr_type  = unicast->addr_type;
         addr->ipv6[i].addr_state = unicast->addr_state;
         addr->ipv6_count++;
     }
@@ -1051,7 +1047,7 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     interface_t *if_handle = (interface_t *)intrfc_handle;
     struct net_if_ipv6 *ipv6;
     struct net_if_addr *unicast;
-    //struct net_if_mcast_addr *mcast;
+    // struct net_if_mcast_addr *mcast;
 
     ipv6 = if_handle->netif->config.ip.ipv6;
 
@@ -1088,8 +1084,8 @@ static void net_clear_ipv6_ll_address(void *intrfc_handle)
      * generated from old MAC address, from network interface if
      * needed.
      */
-	if (IS_ENABLED(CONFIG_NET_NATIVE_IPV6))
-	{
+    if (IS_ENABLED(CONFIG_NET_NATIVE_IPV6))
+    {
         struct in6_addr iid;
 
         net_ipv6_addr_create_iid(&iid, net_if_get_link_addr(iface));
@@ -1104,9 +1100,9 @@ static void net_clear_ipv6_ll_address(void *intrfc_handle)
 
 int net_get_if_name(char *pif_name, void *intrfc_handle)
 {
-    interface_t *if_handle       = (interface_t *)intrfc_handle;
+    interface_t *if_handle   = (interface_t *)intrfc_handle;
     const struct device *dev = NULL;
-    dev = net_if_get_device((struct net_if *)if_handle->netif);
+    dev                      = net_if_get_device((struct net_if *)if_handle->netif);
     strncpy(pif_name, dev->name, NETIF_NAMESIZE - 1);
     pif_name[NETIF_NAMESIZE - 1] = '\0';
 
@@ -1115,7 +1111,7 @@ int net_get_if_name(char *pif_name, void *intrfc_handle)
 
 int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle)
 {
-    interface_t *if_handle = (interface_t *)intrfc_handle;
+    interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
     *ip = NET_IPV4_ADDR_U32(ipv4->unicast[0].address);
@@ -1124,7 +1120,7 @@ int net_get_if_ip_addr(uint32_t *ip, void *intrfc_handle)
 
 int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle)
 {
-    interface_t *if_handle = (interface_t *)intrfc_handle;
+    interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
 
     *nm = ipv4->netmask.s_addr;
@@ -1163,7 +1159,7 @@ void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
 
 void net_stat(void)
 {
-    //net_print_statistics();
+    // net_print_statistics();
 }
 
 static void setup_mgmt_events(void)
@@ -1324,7 +1320,7 @@ int net_wlan_deinit(void)
     wm_netif_status_callback_ptr = NULL;
 #endif
 
-    net_wlan_init_done           = 0;
+    net_wlan_init_done = 0;
 
     net_d("DeInitialized TCP/IP networking stack");
 
@@ -1333,28 +1329,30 @@ int net_wlan_deinit(void)
 
 const struct netif *net_if_get_binding(const char *ifname)
 {
-    struct netif *iface = NULL;
+    struct netif *iface      = NULL;
     const struct device *dev = NULL;
 
     dev = device_get_binding(ifname);
-    if (!dev) {
+    if (!dev)
+    {
         return NULL;
     }
 
     iface = (struct netif *)net_if_lookup_by_dev(dev);
-    if (!iface) {
+    if (!iface)
+    {
         return NULL;
     }
 
     return iface;
 }
 
-const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif* iface)
+const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface)
 {
     const struct freertos_wpa_supp_dev_ops *dev_ops = NULL;
-    const struct device *dev = NULL;
+    const struct device *dev                        = NULL;
 
-    dev = net_if_get_device((struct net_if *)iface);
+    dev     = net_if_get_device((struct net_if *)iface);
     dev_ops = dev->config;
 
     return dev_ops;

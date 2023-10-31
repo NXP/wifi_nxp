@@ -93,7 +93,7 @@ static void register_interface(struct netif *iface, mlan_bss_type iface_type)
 #ifdef CONFIG_TX_RX_ZERO_COPY
 void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
 {
-    outbuf_t *buf = (outbuf_t *)srcAddr;
+    outbuf_t *buf    = (outbuf_t *)srcAddr;
     t_u16 header_len = INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN;
 
     (void)memcpy((t_u8 *)destAddr, &buf->intf_header[0], header_len);
@@ -110,7 +110,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
     err_t lwiperr = ERR_OK;
     /* points to packet payload, which starts with an Ethernet header */
     struct eth_hdr *ethhdr = p->payload;
-    t_u8 retry_cnt = 1;
+    t_u8 retry_cnt         = 1;
 
 #ifdef CONFIG_WIFI_RX_REORDER
     if (netif_arr[recv_interface] == NULL)
@@ -149,7 +149,7 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
                 wrapper_wlan_update_uap_rxrate_info(rxpd);
             }
 #endif
-            retry:
+        retry:
             /* full packet send to tcpip_thread to process */
             lwiperr = netif_arr[recv_interface]->input(p, netif_arr[recv_interface]);
             if (lwiperr != (s8_t)ERR_OK)
@@ -293,8 +293,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
 #ifdef CONFIG_TX_RX_ZERO_COPY
     u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
-    payload_len = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
-    p = gen_pbuf_from_data((t_u8 *)rcvdata, payload_len);
+    payload_len      = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
+    p                = gen_pbuf_from_data((t_u8 *)rcvdata, payload_len);
 #else
     p = gen_pbuf_from_data(payload, payload_len);
 #endif
@@ -641,8 +641,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
         if (ret == true && is_tx_pause == true)
         {
-            wifi_wmm_drop_pause_drop(interface);
-            return ERR_MEM;
+            os_thread_sleep(os_msec_to_ticks(1));
         }
 
         retry--;
@@ -687,7 +686,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         pbuf_copy_partial(p, ((outbuf_t *)wmm_outbuf)->eth_header, ETH_HDR_LEN, 0);
         /* Skip ethernet header */
         pbuf_header(p, -(s16_t)ETH_HDR_LEN);
-        ((outbuf_t *)wmm_outbuf)->buffer  = p;
+        ((outbuf_t *)wmm_outbuf)->buffer = p;
         /* Save the data payload pointer without ethernet header */
         ((outbuf_t *)wmm_outbuf)->payload = (t_u8 *)p->payload;
         pkt_len += p->tot_len;
