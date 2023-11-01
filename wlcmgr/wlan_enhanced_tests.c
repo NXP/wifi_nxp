@@ -1214,35 +1214,20 @@ static void test_wlan_set_chanlist(int argc, char **argv)
 
     (void)memset(&chanlist, 0x00, sizeof(wlan_chanlist_t));
 
-    int rv = wlan_set_chanlist(&chanlist_2g_cfg);
-    if (rv != WM_SUCCESS)
+    /* Get channel list of current region */
+    int ret = wlan_get_chanlist(&chanlist);
+    if(ret != WM_SUCCESS)
     {
-        (void)PRINTF("Unable to set 2G channel list configuration\r\n");
+      (void)PRINTF("Unable to get channel list of current region\r\n"); 
+      return;
     }
-    else
+    ret = wlan_set_chanlist(&chanlist);
+    if (ret != WM_SUCCESS)
     {
-#ifdef CONFIG_5GHz_SUPPORT
-        rv = wlan_set_chanlist(&chanlist_5g_cfg);
-        if (rv != WM_SUCCESS)
-        {
-            (void)PRINTF("Unable to set 5G channel list configuration\r\n");
-        }
-        else
-        {
-#endif
-            rv = wlan_get_chanlist(&chanlist);
-            if (rv != WM_SUCCESS)
-            {
-                (void)PRINTF("Unable to get channel list configuration\r\n");
-            }
-            else
-            {
-                print_chanlist(chanlist);
-            }
-#ifdef CONFIG_5GHz_SUPPORT
-        }
-#endif
+        (void)PRINTF("Failed to set channel list!\r\n");
+        return;
     }
+    print_chanlist(chanlist);
 }
 
 static void test_wlan_get_chanlist(int argc, char **argv)
