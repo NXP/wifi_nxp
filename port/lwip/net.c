@@ -718,8 +718,8 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
-            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
             netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
+            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
         }
 
         netif_create_ip6_linklocal_address(&if_handle->netif, 1);
