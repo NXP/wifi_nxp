@@ -650,7 +650,9 @@ static void dump_wlan_add_usage(void)
         "\r\n");
     (void)PRINTF("      If using WPA2 security, set the PMF configuration as mentioned above.\r\n");
 #ifdef CONFIG_WPA_SUPP
-    (void)PRINTF("If using proactive key caching set pkc as 1, to disable set to 0(default), if okc is set this is not used.\r\n");
+    (void)PRINTF(
+        "If using proactive key caching set pkc as 1, to disable set to 0(default), if okc is set this is not "
+        "used.\r\n");
     (void)PRINTF("If using specific ciphers, set the group, pairwise and group mgmt using gc, pc and gmc options.\r\n");
     (void)PRINTF("supported ciphers: ccmp=0x10, gcmp=0x40, gcmp_256=0x100, ccmp_256=0x200\r\n");
     (void)PRINTF(
@@ -865,11 +867,12 @@ static void dump_wlan_add_usage(void)
 #endif
 #endif
 #ifdef CONFIG_OWE
-    (void)PRINTF("    [owe_only "
+    (void)PRINTF(
+        "    [owe_only "
 #ifdef CONFIG_WPA_SUPP
-            "[og <\"19 20 21\">]"
+        "[og <\"19 20 21\">]"
 #endif
-            "]\r\n");
+        "]\r\n");
 #endif
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
@@ -1025,8 +1028,8 @@ static void test_wlan_add(int argc, char **argv)
                 else
                 {
                     (void)PRINTF(
-                            "Error: invalid WPA WPA2 security"
-                            " argument\r\n");
+                        "Error: invalid WPA WPA2 security"
+                        " argument\r\n");
                     return;
                 }
             }
@@ -1042,8 +1045,8 @@ static void test_wlan_add(int argc, char **argv)
                 else
                 {
                     (void)PRINTF(
-                            "Error: invalid WPA security"
-                            " argument\r\n");
+                        "Error: invalid WPA security"
+                        " argument\r\n");
                     return;
                 }
             }
@@ -1076,8 +1079,8 @@ static void test_wlan_add(int argc, char **argv)
                 else
                 {
                     (void)PRINTF(
-                            "Error: invalid WPA2 WPA security"
-                            " argument\r\n");
+                        "Error: invalid WPA2 WPA security"
+                        " argument\r\n");
                     return;
                 }
             }
@@ -1112,7 +1115,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_11R
                 else if (string_equal(argv[arg], "ft-psk") != false)
                 {
-                    network.security.type = WLAN_SECURITY_WPA2_FT;
+                    network.security.type     = WLAN_SECURITY_WPA2_FT;
                     network.security.key_mgmt = WLAN_KEY_MGMT_FT_PSK;
 
                     arg += 1;
@@ -1121,8 +1124,8 @@ static void test_wlan_add(int argc, char **argv)
                 else
                 {
                     (void)PRINTF(
-                            "Error: invalid WPA2 security"
-                            " argument\r\n");
+                        "Error: invalid WPA2 security"
+                        " argument\r\n");
                     return;
                 }
             }
@@ -1158,8 +1161,7 @@ static void test_wlan_add(int argc, char **argv)
 #endif
         else if ((info.security3 == 0U) && string_equal("wpa3", argv[arg]))
         {
-            if ((string_equal(argv[arg + 1], "sae") != false) || (string_equal(argv[arg + 1], "ft-sae") != false)
-            )
+            if ((string_equal(argv[arg + 1], "sae") != false) || (string_equal(argv[arg + 1], "ft-sae") != false))
             {
                 arg += 1;
 
@@ -1200,7 +1202,6 @@ static void test_wlan_add(int argc, char **argv)
                         network.security.key_mgmt |= WLAN_KEY_MGMT_SAE;
                         arg += 1;
                     }
-
                 }
 #endif
 #endif
@@ -2225,7 +2226,7 @@ static void test_wlan_scan_opt(int argc, char **argv)
             {
                 (void)PRINTF("Error: the number of SSID is more than 2\r\n");
                 return;
-            }     
+            }
 #else
         if ((info.ssid == 0U) && string_equal("ssid", argv[arg]))
         {
@@ -4428,7 +4429,7 @@ static void test_wlan_set_multiple_mef_config(int argc, char **argv)
 static void test_wlan_wakeup_condition(int argc, char **argv)
 {
 #ifdef CONFIG_MEF_CFG
-    uint8_t is_mef         = MFALSE;
+    uint8_t is_mef = MFALSE;
 #endif
     uint32_t wake_up_conds = 0;
 
@@ -4515,9 +4516,9 @@ static void test_wlan_host_sleep(int argc, char **argv)
     int ret = -WM_FAIL;
 
 #ifdef CONFIG_MEF_CFG
-        if (argc < 3)
+    if (argc < 3)
 #else
-        if (argc < 4)
+    if (argc < 4)
 #endif
     {
         goto done;
@@ -4747,8 +4748,9 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
 {
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
-    
-    u8_t cmd_buf[] = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01/* Get/Set */, 0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
+
+    u8_t cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
+                      0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
     u8_t resp_buf[64] = {0};
 
     /**
@@ -4771,8 +4773,7 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
         return;
     }
 
-    ret = wlan_send_hostcmd(cmd_buf, sizeof(cmd_buf) / sizeof(u8_t), resp_buf, sizeof(resp_buf),
-            &reqd_len);
+    ret = wlan_send_hostcmd(cmd_buf, sizeof(cmd_buf) / sizeof(u8_t), resp_buf, sizeof(resp_buf), &reqd_len);
 
     if (ret == WM_SUCCESS)
     {
@@ -8915,6 +8916,44 @@ static void test_wlan_set_country_code(int argc, char **argv)
     }
 }
 
+static void dump_wlan_set_country_ie_ignore_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-set-country-ignore-ie <0/1>\r\n");
+    (void)PRINTF("    <enable/disable>: 1 -- Ignore country ie\r\n");
+    (void)PRINTF("                      0 -- Use country ie(default)\r\n");
+}
+
+static void test_wlan_set_country_ie_ignore(int argc, char **argv)
+{
+    int ret        = -WM_FAIL;
+    uint8_t ignore = 0;
+
+    if (argc > 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_set_country_ie_ignore_usage();
+        return;
+    }
+
+    /* SET */
+    if (argc == 2)
+    {
+        ignore = atoi(argv[1]);
+    }
+
+    ret = wlan_set_country_ie_ignore(&ignore);
+
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Set country ie ignore is failed\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Country ie \"%s\" is set\r\n", ignore == 0 ? "follow" : "ignore");
+    }
+}
+
 #ifdef CONFIG_COEX_DUTY_CYCLE
 static void dump_wlan_single_ant_duty_cycle_usage()
 {
@@ -10386,9 +10425,9 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
 static void test_wlan_get_temperature(int argc, char **argv)
 {
     uint32_t board_temperature = 0;
-  
+
     board_temperature = wlan_get_temperature();
-  
+
     (void)PRINTF("Board temperature :%d \r\n", board_temperature);
 }
 #endif
@@ -10687,6 +10726,7 @@ static struct cli_command tests[] = {
     {"wlan_tcp_client", "dst_ip <dst_ip> src_port <src_port> dst_port <dst_port>", test_wlan_tcp_client},
 #endif
     {"wlan-set-country", "<country_code_str>", test_wlan_set_country_code},
+    {"wlan-set-country-ie-ignore", "<0/1>", test_wlan_set_country_ie_ignore},
 #ifdef CONFIG_COEX_DUTY_CYCLE
     {"wlan-single-ant-duty-cycle", "<enable/disable> [<Ieee154Duration> <TotalDuration>]",
      test_wlan_single_ant_duty_cycle},
@@ -10719,7 +10759,7 @@ static struct cli_command tests[] = {
     {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},
 #endif
 #ifdef CONFIG_CAU_TEMPERATURE
-    {"wlan-get-temperature", NULL , test_wlan_get_temperature},
+    {"wlan-get-temperature", NULL, test_wlan_get_temperature},
 #endif
 };
 

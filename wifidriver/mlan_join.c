@@ -1575,6 +1575,24 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     pmpriv->curr_bss_params.band = (t_u8)pbss_desc->bss_band;
 
+    if (!pmpriv->adapter->country_ie_ignore)
+    {
+        /*Update region code and cfp table according to bss descriptor*/
+        (void)__memcpy(pmpriv->adapter, &pmpriv->adapter->country_code, pbss_desc->country_info.country_code,
+                       COUNTRY_CODE_LEN);
+        pmpriv->adapter->region_code = region_string_2_region_code(pmpriv->adapter->country_code);
+        /* Update region code and table based on country code */
+        if (wlan_misc_country_2_cfp_table_code(pmpriv->adapter, pmpriv->adapter->country_code,
+                                               &pmpriv->adapter->cfp_code_bg, &pmpriv->adapter->cfp_code_a))
+        {
+            wifi_e("%s: Fail to update country code", __func__);
+        }
+        if (wlan_set_regiontable(pmpriv, pmpriv->adapter->region_code, pbss_desc->bss_band) != MLAN_STATUS_SUCCESS)
+        {
+            wifi_d("%s: Failed to update region table accoring to bss descriptor.", __func__);
+        }
+    }
+
 #ifndef CONFIG_MLAN_WMSDK
     /*
      * Adjust the timestamps in the scan table to be relative to the newly
@@ -2639,9 +2657,9 @@ bool wlan_use_non_default_ht_vht_cap(IN BSSDescriptor_t *pbss_desc)
     if ((pbss_desc->pht_cap && (((pbss_desc->ht_cap_saved.ht_cap.tx_bf_cap >> 4) & 0x1) == 0x0))
 #ifdef CONFIG_11AC
         && (!pbss_desc->pvht_cap ||
-         (pbss_desc->pvht_cap && (GET_VHTCAP_NUMSNDDM(pbss_desc->vht_cap_saved.vht_cap.vht_cap_info) == 0x2)))
+            (pbss_desc->pvht_cap && (GET_VHTCAP_NUMSNDDM(pbss_desc->vht_cap_saved.vht_cap.vht_cap_info) == 0x2)))
 #endif
-       )
+    )
     {
         return true;
     }

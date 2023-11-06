@@ -80,10 +80,7 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
     {136, 5680, TX_PWR_DEFAULT}, {140, 5700, TX_PWR_DEFAULT}, {149, 5745, TX_PWR_DEFAULT}, {153, 5765, TX_PWR_DEFAULT},
     {157, 5785, TX_PWR_DEFAULT}, {161, 5805, TX_PWR_DEFAULT},
 #ifdef CONFIG_UNII4_BAND_SUPPORT
-    {165, 5825, TX_PWR_DEFAULT},
-    {169, 5845, TX_PWR_DEFAULT},
-    {173, 5865, TX_PWR_DEFAULT},
-    {177, 5885, TX_PWR_DEFAULT},
+    {165, 5825, TX_PWR_DEFAULT}, {169, 5845, TX_PWR_DEFAULT}, {173, 5865, TX_PWR_DEFAULT}, {177, 5885, TX_PWR_DEFAULT},
 #else
     {165, 5825, TX_PWR_DEFAULT}
 #endif
@@ -1016,6 +1013,40 @@ mlan_status wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
 #endif /* CONFIG_MLAN_WMSDK */
 
 #ifdef STA_SUPPORT
+
+/** Region code mapping */
+typedef struct _region_code_t
+{
+    /** Region */
+    t_u8 region[COUNTRY_CODE_LEN];
+} region_code_t;
+
+/**
+ *  @brief This function check cfg80211 special region code.
+ *
+ *  @param region_string         Region string
+ *
+ *  @return     MTRUE/MFALSE
+ */
+t_u8 is_special_region_code(t_u8 *region_string)
+{
+    t_u8 i;
+    region_code_t special_region_code[] = {{"00 "}, {"99 "}, {"98 "}, {"97 "}};
+
+    for (i = 0; i < COUNTRY_CODE_LEN && region_string[i]; i++)
+        region_string[i] = toupper(region_string[i]);
+
+    for (i = 0; i < ARRAY_SIZE(special_region_code); i++)
+    {
+        if (!memcmp(region_string, special_region_code[i].region, COUNTRY_CODE_LEN))
+        {
+            PRINTM(MINFO, "special region code=%s\n", region_string);
+            return MTRUE;
+        }
+    }
+    return MFALSE;
+}
+
 /**
  *  @brief This function parses country information for region channel
  *
@@ -1440,12 +1471,24 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
 
         (void)__memcpy(pmadapter, &region_chan, &pmadapter->parsed_region_chan, sizeof(parsed_region_chan_11d_t));
 
+        /** Country code */
+        t_u8 country_code[COUNTRY_CODE_LEN];
+        country_code[0] = pbss_desc->country_info.country_code[0];
+        country_code[1] = pbss_desc->country_info.country_code[1];
+        country_code[2] = ' ';
+
+        if (is_special_region_code(country_code))
+        {
+            PRINTM(MINFO, "Skip special region code in CountryIE");
+            LEAVE();
+            return MLAN_STATUS_SUCCESS;
+        }
+
         if (pbss_desc != MNULL)
         {
             /* Parse domain info if available */
             ret = wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, pbss_desc->bss_band,
                                              &bssdesc_region_chan);
-
             if (ret == MLAN_STATUS_SUCCESS)
             {
                 /* Update the channel-power table */

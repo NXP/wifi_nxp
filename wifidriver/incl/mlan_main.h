@@ -2187,6 +2187,8 @@ struct _mlan_adapter
     /** bus operations*/
     bus_operations bus_ops;
 #endif
+    /** Country ie ignore */
+    t_u8 country_ie_ignore;
     /** In reset status now */
     t_u8 in_reset;
 #ifndef CONFIG_MLAN_WMSDK

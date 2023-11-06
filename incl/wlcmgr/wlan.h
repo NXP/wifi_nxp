@@ -5435,17 +5435,13 @@ int wlan_boot_sleep(uint16_t action, uint16_t *enable);
  *
  *  \param[in]    cmd_buf         Buffer containing the host command with header
  *  \param[in]    cmd_buf_len     length of valid bytes in cmd_buf
- *  \param[out]   host_resp_buf        Caller provided buffer, in case of success command response is copied to this buffer
- *                                Can be same as cmd_buf
- *  \param[in]    resp_buf_len    resp_buf's allocated length
- *  \param[out]   reqd_resp_len    length of valid bytes in response buffer if successful otherwise invalid.
- *  \return                       WM_SUCCESS in case of success.
- *  \return                       WM_E_INBIG in case cmd_buf_len is bigger than the commands that can be handled by
- *                                driver.
- *  \return                       WM_E_INSMALL in case cmd_buf_len is smaller than the minimum length. Minimum
- *                                length is atleast the length of command header. Please see Note for same.
- *  \return                       WM_E_OUTBIG in case the resp_buf_len is not sufficient to copy response from
- *                                firmware. reqd_resp_len is updated with the response size.
+ *  \param[out]   host_resp_buf        Caller provided buffer, in case of success command response is copied to this
+ * buffer Can be same as cmd_buf \param[in]    resp_buf_len    resp_buf's allocated length \param[out]   reqd_resp_len
+ * length of valid bytes in response buffer if successful otherwise invalid. \return                       WM_SUCCESS in
+ * case of success. \return                       WM_E_INBIG in case cmd_buf_len is bigger than the commands that can be
+ * handled by driver. \return                       WM_E_INSMALL in case cmd_buf_len is smaller than the minimum length.
+ * Minimum length is atleast the length of command header. Please see Note for same. \return WM_E_OUTBIG in case the
+ * resp_buf_len is not sufficient to copy response from firmware. reqd_resp_len is updated with the response size.
  *  \return                       WM_E_INVAL in case cmd_buf_len and resp_buf_len have invalid values.
  *  \return                       WM_E_NOMEM in case cmd_buf, resp_buf and reqd_resp_len are NULL
  *  \note                         Brief on the Command Header: Start 8 bytes of cmd_buf should have these values set.
@@ -5587,7 +5583,7 @@ int wlan_set_11ax_cfg(wlan_11ax_config_t *ax_config);
  *
  * \return 11AX config parameters default array.
  */
-uint8_t * wlan_get_11ax_cfg();
+uint8_t *wlan_get_11ax_cfg();
 
 #ifdef CONFIG_11AX_TWT
 /** Set btwt config params
@@ -5602,7 +5598,7 @@ int wlan_set_btwt_cfg(const wlan_btwt_config_t *btwt_config);
  *
  * \return Broadcast TWT Setup parameters default config array.
  */
-uint8_t * wlan_get_btwt_cfg();
+uint8_t *wlan_get_btwt_cfg();
 
 /** Set twt setup config params
  *
@@ -5616,7 +5612,7 @@ int wlan_set_twt_setup_cfg(const wlan_twt_setup_config_t *twt_setup);
  *
  * \return TWT Setup parameters default array.
  */
-uint8_t * wlan_get_twt_setup_cfg();
+uint8_t *wlan_get_twt_setup_cfg();
 
 /** Set twt teardown config params
  *
@@ -5630,7 +5626,7 @@ int wlan_set_twt_teardown_cfg(const wlan_twt_teardown_config_t *teardown_config)
  *
  * \return TWT Teardown parameters default array
  */
-uint8_t * wlan_get_twt_teardown_cfg();
+uint8_t *wlan_get_twt_teardown_cfg();
 
 /** Get twt report
  *
@@ -6545,7 +6541,7 @@ void wlan_set_ps_cfg(t_u16 multiple_dtims,
  * \param[in] dst_port Destination port
  * \param[in] seq_number Sequence number
  * \param[in] ack_number Acknowledgement number
- * \param[in] enable Enable 
+ * \param[in] enable Enable
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
@@ -6616,6 +6612,13 @@ int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_set_country_code(const char *alpha2);
+
+/** Set ignore region code
+ *
+ * \param[in] ignore     0: Don't ignore 1: ignore
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_set_country_ie_ignore(uint8_t *ignore);
 
 /** Set region code
  *

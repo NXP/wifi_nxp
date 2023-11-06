@@ -1913,7 +1913,7 @@ int wrapper_wifi_assoc(
        new cmd while the current cmd is being sent. We will change the
        default flow a little and send the 801.11D domain info commands
        first and skip that step later */
-    if (wlan_11d_support_is_enabled(priv))
+    if (wlan_11d_support_is_enabled(priv) && !mlan_adap->country_ie_ignore)
     {
         if (priv->support_11d != NULL)
         {
@@ -2418,7 +2418,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
        new cmd while the current cmd is being sent. We will change the
        default flow a little and send the 801.11D domain info commands
        first and skip that step later */
-    if (wlan_11d_support_is_enabled(priv))
+    if (wlan_11d_support_is_enabled(priv) && !mlan_adap->country_ie_ignore)
     {
         if (priv->support_11d != NULL)
         {
@@ -4208,10 +4208,10 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     HostCmd_DS_TSP_CFG *data = &resp->params.tsp_cfg;
                     if (data->action == HostCmd_ACT_GEN_GET)
                     {
-						tsp_get_cfg->thermalPowerMgmtenable = data->thermalPowerMgmtenable;
-						tsp_get_cfg->powerMgmtBackoff = data->powerMgmtBackoff;
-						tsp_get_cfg->lowPwrBOThrshld = data->lowPwrBOThrshld;
-						tsp_get_cfg->highPwrBOThrshld = data->highPwrBOThrshld;
+                        tsp_get_cfg->thermalPowerMgmtenable = data->thermalPowerMgmtenable;
+                        tsp_get_cfg->powerMgmtBackoff       = data->powerMgmtBackoff;
+                        tsp_get_cfg->lowPwrBOThrshld        = data->lowPwrBOThrshld;
+                        tsp_get_cfg->highPwrBOThrshld       = data->highPwrBOThrshld;
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }

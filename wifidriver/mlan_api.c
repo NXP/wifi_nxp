@@ -120,6 +120,11 @@ int wifi_deauthenticate(uint8_t *bssid)
 
     (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[0], cmd, bssid);
     (void)wifi_wait_for_cmdresp(NULL);
+    if (!mlan_adap->country_ie_ignore)
+    {
+        wifi_restore_region_code();
+    }
+
     return WM_SUCCESS;
 }
 
@@ -161,6 +166,12 @@ int wifi_nxp_deauthenticate(unsigned int bss_type, const uint8_t *bssid, uint16_
         pdeauth->reason_code = wlan_cpu_to_le16(reason_code);
     }
     (void)wifi_wait_for_cmdresp(NULL);
+
+    if (!mlan_adap->country_ie_ignore)
+    {
+        wifi_restore_region_code();
+    }
+
     return WM_SUCCESS;
 }
 #endif
@@ -5881,3 +5892,23 @@ int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action)
     return wm_wifi.cmd_resp_status;
 }
 #endif
+
+void wifi_restore_region_code()
+{
+    /* Set the region code to WWSM by default after disconnecting bss*/
+    mlan_adap->region_code = MRVDRV_DEFAULT_REGION_CODE;
+    (void)memcpy(mlan_adap->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
+
+    /* Recover region code and table based on country code */
+    if (wlan_misc_country_2_cfp_table_code(mlan_adap, mlan_adap->country_code, &mlan_adap->cfp_code_bg,
+                                           &mlan_adap->cfp_code_a))
+    {
+        wifi_e("%s: Fail to recover country code", __func__);
+    }
+
+    if (wlan_set_regiontable(mlan_adap->priv[0], (t_u8)mlan_adap->region_code, mlan_adap->fw_bands) !=
+        MLAN_STATUS_SUCCESS)
+    {
+        wifi_d("%s: Failed to recover region table.", __func__);
+    }
+}

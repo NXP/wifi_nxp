@@ -877,6 +877,7 @@ int wifi_set_region_code(t_u32 region_code);
  */
 int wifi_set_country_code(const char *alpha2);
 int wifi_get_country_code(char *alpha2);
+int wifi_set_country_ie_ignore(uint8_t *ignore);
 
 /**
  * Get the uAP channel number
@@ -1986,5 +1987,7 @@ int wifi_test_independent_reset();
 #ifdef CONFIG_WIFI_BOOT_SLEEP
 int wifi_boot_sleep(uint16_t action, uint16_t *enable);
 #endif
+
+void wifi_restore_region_code();
 
 #endif /* __WIFI_H__ */

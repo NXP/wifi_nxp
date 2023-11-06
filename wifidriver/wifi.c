@@ -4467,6 +4467,12 @@ int wifi_get_country_code(char *alpha2)
     return WM_SUCCESS;
 }
 
+int wifi_set_country_ie_ignore(uint8_t *ignore)
+{
+    mlan_adap->country_ie_ignore = *ignore;
+    return WM_SUCCESS;
+}
+
 #ifdef CONFIG_WPA_SUPP
 int wifi_nxp_scan_res_num(void)
 {

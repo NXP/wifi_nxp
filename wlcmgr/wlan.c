@@ -4507,6 +4507,11 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     wifi_wfd_event(false, false, NULL);
 #endif
 
+    if(!mlan_adap->country_ie_ignore)
+    {
+         wifi_restore_region_code();
+    }
+
 #ifndef CONFIG_WPA_SUPP
     if (wlan.reassoc_control)
     {
@@ -4579,6 +4584,11 @@ static void wlcm_process_disassoc_event(struct wifi_message *msg, enum cm_sta_st
 
     do_connect_failed(WLAN_REASON_NETWORK_AUTH_FAILED);
 
+    if(!mlan_adap->country_ie_ignore)
+    {
+         wifi_restore_region_code();
+    }
+
     if (wlan.reassoc_control)
     {
         wlcm_request_reconnect(next, network);
@@ -4598,6 +4608,10 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
 #endif
+    if(!mlan_adap->country_ie_ignore)
+    {
+         wifi_restore_region_code();
+    }
 }
 
 static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
@@ -7236,7 +7250,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 #else
     wlan.wakeup_conditions = (unsigned int)WAKE_ON_UNICAST | (unsigned int)WAKE_ON_MAC_EVENT |
-                             (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;    
+                             (unsigned int)WAKE_ON_MULTICAST | (unsigned int)WAKE_ON_ARP_BROADCAST;
 #endif
 
     wlan.num_networks = 0;
@@ -14150,6 +14164,11 @@ int wlan_set_country_code(const char *alpha2)
 #else
     return rv;
 #endif
+}
+
+int wlan_set_country_ie_ignore(uint8_t *ignore)
+{
+    return wifi_set_country_ie_ignore(ignore);
 }
 
 int wlan_set_region_code(unsigned int region_code)
