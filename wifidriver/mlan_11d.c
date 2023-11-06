@@ -938,7 +938,7 @@ mlan_status wlan_cmd_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
 
     /* Set domain info fields */
     domain->header.type = wlan_cpu_to_le16(TLV_TYPE_DOMAIN);
-    (void)__memcpy(pmadapter, domain->country_code, pmadapter->country_code, sizeof(domain->country_code));
+    (void)__memcpy(pmadapter, domain->country_code, pmadapter->domain_reg.country_code, sizeof(domain->country_code));
 
     domain->header.len = (t_u16)(((no_of_sub_band * sizeof(IEEEtypes_SubbandSet_t)) + sizeof(domain->country_code)));
 
