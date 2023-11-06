@@ -41,7 +41,12 @@ static t_u16 wps_parser(t_u8 *message, size_t size)
 
     while ((void *)ptlv < (void *)plast_byte)
     {
-        ptlv->Type   = mlan_ntohs(ptlv->Type);
+		/* Barriers are normally not required but do ensure the code is
+		 * completely within the specified behaviour for the architecture. */
+        __asm volatile ( "dsb" ::: "memory" );
+        __asm volatile ( "isb" );
+
+		ptlv->Type   = mlan_ntohs(ptlv->Type);
         ptlv->Length = mlan_ntohs(ptlv->Length);
 
         switch (ptlv->Type)

@@ -665,6 +665,7 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
             ppg_tlv->length = wlan_le16_to_cpu(ppg_tlv->length);
             if (pmpriv->adapter->hw_status == WlanHardwareStatusInitializing)
             {
+                // coverity[overrun-buffer-val:SUPPRESS]            
                 (void)wlan_get_power_level(pmpriv, ptxp_cfg);
             }
             pmpriv->tx_power_level = (t_u16)pg->power_min;

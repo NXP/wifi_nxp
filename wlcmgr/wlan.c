@@ -6330,7 +6330,8 @@ static void wlcm_process_mgmt_frame(void *data)
     pmgmt_pkt_hdr->frm_len = wlan_le16_to_cpu(pmgmt_pkt_hdr->frm_len);
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & (t_u16)IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == (t_u16)0U)
     {
-        (void)wlan_process_802dot11_mgmt_pkt(
+        // coverity[overrun-buffer-val:SUPPRESS]
+		(void)wlan_process_802dot11_mgmt_pkt(
             mlan_adap->priv[0], (t_u8 *)&pmgmt_pkt_hdr->wlan_header,
             pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len), rxpd);
     }

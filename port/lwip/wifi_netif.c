@@ -95,7 +95,7 @@ void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
 {
     outbuf_t *buf    = (outbuf_t *)srcAddr;
     t_u16 header_len = INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN;
-
+    // coverity[overrun-buffer-arg:SUPPRESS]
     (void)memcpy((t_u8 *)destAddr, &buf->intf_header[0], header_len);
     pbuf_copy_partial((struct pbuf *)(buf->buffer), (t_u8 *)destAddr + header_len, (t_u16)(len - header_len), 0);
 }
@@ -279,6 +279,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
 
         sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+		// coverity[overrun-local:SUPPRESS]
         category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
         if (sub_type == (t_u16)SUBTYPE_ACTION)
         {

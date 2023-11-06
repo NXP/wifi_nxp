@@ -302,6 +302,8 @@ void wlan_process_mgmt_wnm_btm_req(t_u8 *pos, t_u8 *end, t_u8 *src_addr, t_u8 *d
         }
 
         wlan_send_mgmt_wnm_btm_resp(dialog_token, status, dest_addr, src_addr, NULL, ptagnr, tagnr_len, protect);
+		/* If don't use variable pnlist_rep_param, free allocated memory ! */
+        os_mem_free((void *)pnlist_rep_param);
     }
 }
 

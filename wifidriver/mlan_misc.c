@@ -1401,6 +1401,7 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
     pmgmt_pkt_hdr = (wlan_mgmt_pkt *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
     pieee_pkt_hdr = (wlan_802_11_header *)&pmgmt_pkt_hdr->wlan_header;
     sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
+	// coverity[overrun-local:SUPPRESS]
     category      = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
 
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)

@@ -2621,9 +2621,10 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
 
                     if (0 == wlan_cmd_11ax_cfg(priv, HostCmd_ACT_GEN_GET, &he_cfg))
                     {
-                        hecap_ie = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
-
-                        hecap_ie->ieee_hdr.len        = he_cfg.he_cap.len;
+                        t_u16 he_cap_len;
+						hecap_ie = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
+                        he_cap_len = he_cfg.he_cap.len;
+                        hecap_ie->ieee_hdr.len        = he_cap_len;
                         hecap_ie->ieee_hdr.element_id = he_cfg.he_cap.id;
 
                         __memcpy(priv, ie_out + out_len, hecap_ie, hecap_ie->ieee_hdr.len + 2);

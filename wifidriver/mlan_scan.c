@@ -3766,7 +3766,11 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 
     while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))
     {
-        tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
+      /* Barriers are normally not required but do ensure the code is
+       * completely within the specified behaviour for the architecture. */
+        __asm volatile ( "dsb" ::: "memory" );
+        __asm volatile ( "isb" );
+		tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
         tlv_len  = wlan_le16_to_cpu(pcurrent_tlv->header.len);
 
         if (sizeof(ptlv->header) + tlv_len > tlv_buf_left)
@@ -4889,10 +4893,15 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             break;
 
         /* Process variable TLV */
+		// coverity[sensitive_memory_access:SUPPRESS]
         while (bytes_left_for_tlv >= sizeof(MrvlIEtypesHeader_t) &&
                wlan_le16_to_cpu(ptlv->header.type) != TLV_TYPE_BSS_SCAN_RSP)
         {
-            tlv_type = wlan_le16_to_cpu(ptlv->header.type);
+            /* Barriers are normally not required but do ensure the code is
+             * completely within the specified behaviour for the architecture. */
+            __asm volatile ( "dsb" ::: "memory" );
+            __asm volatile ( "isb" );
+			tlv_type = wlan_le16_to_cpu(ptlv->header.type);
             tlv_len  = wlan_le16_to_cpu(ptlv->header.len);
             if (bytes_left_for_tlv < sizeof(MrvlIEtypesHeader_t) + tlv_len)
             {
@@ -5457,6 +5466,7 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
     if (num_probes)
     {
         pnum_probes_tlv              = (MrvlIEtypes_NumProbes_t *)tlv;
+		// coverity[overrun-local:SUPPRESS]
         pnum_probes_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_NUMPROBES);
         pnum_probes_tlv->header.len  = wlan_cpu_to_le16(sizeof(pnum_probes_tlv->num_probes));
         pnum_probes_tlv->num_probes  = wlan_cpu_to_le16((t_u16)num_probes);

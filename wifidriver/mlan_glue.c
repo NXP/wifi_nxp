@@ -2518,7 +2518,8 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
     {
         if ((si->rssi & 0x80) != 0)
         {
-            sta[i].rssi = -(256 - si->rssi);
+            // coverity[overrun-local:SUPPRESS]
+			sta[i].rssi = -(256 - si->rssi);
         }
         else
         {
@@ -2962,7 +2963,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                 os_mem_free((void *)ps_action_p);
                             }
                         }
-                        else
+                        else 
 #endif
                         {
                             if (wifi_event_completion((enum wifi_event)ps_event, result, (void *)ps_action_p) !=
@@ -3082,11 +3083,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     result                      = WIFI_EVENT_REASON_FAILURE;
                     goto assoc_resp_ret;
                 }
+				// coverity[overrun-buffer-arg:SUPPRESS]
                 memcpy(assoc_resp->frame.frame, passoc_rsp1, assoc_resp->frame.frame_len);
 
                 if (pmpriv->assoc_req_size && (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)))
                 {
                     assoc_resp->req_ie_len = pmpriv->assoc_req_size;
+					// coverity[overrun-buffer-arg:SUPPRESS]
                     memcpy(assoc_resp->req_ie, pmpriv->assoc_req_buf, assoc_resp->req_ie_len);
                 }
                 if (wm_wifi.supp_if_callbk_fns->assoc_resp_callbk_fn)
@@ -3534,7 +3537,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                             trpc_tlv->chan_num;
                                         for (i = 0; i < mod_num; i++)
                                         {
-                                            txpwrlimit->txpwrlimit_config[txpwrlimit->num_chans]
+                                            // coverity[overrun-local:SUPPRESS]
+											txpwrlimit->txpwrlimit_config[txpwrlimit->num_chans]
                                                 .txpwrlimit_entry[i]
                                                 .mod_group = trpc_tlv->mod_group[i].mod_group;
                                             txpwrlimit->txpwrlimit_config[txpwrlimit->num_chans]

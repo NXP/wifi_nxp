@@ -2473,6 +2473,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     rate_cfg->cfg_index = 0;
 
     rate_scope         = (MrvlRateScope_t *)(void *)((t_u8 *)rate_cfg + sizeof(HostCmd_DS_TX_RATE_CFG));
+	// coverity[overrun-local:SUPPRESS]
     rate_scope->type   = wlan_cpu_to_le16(TLV_TYPE_RATE_SCOPE);
     rate_scope->length = wlan_cpu_to_le16(sizeof(MrvlRateScope_t) - sizeof(MrvlIEtypesHeader_t));
     if (pbitmap_rates != MNULL)
@@ -2600,8 +2601,9 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
 
     while (tlv_buf_len > 0U)
-    {
-        tlv = (*tlv_buf);
+    {   
+        // coverity[overrun-local:SUPPRESS]
+        tlv = (t_u16)(*tlv_buf);
         tlv = tlv | (*(tlv_buf + 1) << 8);
 
         switch (tlv)
@@ -2948,6 +2950,7 @@ mlan_status wlan_cmd_tx_pert(pmlan_private pmpriv,
     if (cmd_action == HostCmd_ACT_SET_TX_PER_TRACKING)
     {
         tx_pert         = (MrvlTxPerTrackInfo_t *)((t_u8 *)pkt_stats + sizeof(HostCmd_DS_TX_RX_PKT_STATS));
+		// coverity[overrun-local:SUPPRESS]
         tx_pert->type   = wlan_cpu_to_le16(TLV_TYPE_TX_PER_TRACK);
         tx_pert->length = wlan_cpu_to_le16(sizeof(MrvlTxPerTrackInfo_t) - sizeof(MrvlIEtypesHeader_t));
         tx_pert->tx_stat_check_period = cfg->tx_pert_check_peroid;

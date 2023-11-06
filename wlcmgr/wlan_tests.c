@@ -7015,7 +7015,8 @@ static void dump_wlan_reg_access_usage()
 
 static void test_wlan_reg_access(int argc, char **argv)
 {
-    t_u32 type, offset, value;
+    t_u32 type, offset;
+	t_u32 value = 0;
     t_u16 action = ACTION_GET;
     int ret;
 
