@@ -1702,6 +1702,8 @@ struct _TxBAStreamTbl
     t_u32 txpkt_cnt;
     t_u32 txba_thresh;
     t_u8 ampdu_supported[MAX_NUM_TID];
+    /** last rx_seq */
+    t_u16 rx_seq[MAX_NUM_TID];
 };
 
 /** RX reorder table */
@@ -2983,9 +2985,13 @@ mlan_status wlan_flush_scan_table(IN pmlan_adapter pmadapter);
 /** Queue scan command handler */
 t_void wlan_queue_scan_cmd(IN mlan_private *pmpriv, IN cmd_ctrl_node *pcmd_node);
 #endif /* CONFIG_MLAN_WMSDK */
-#ifdef STA_SUPPORT
+#if defined(STA_SUPPORT) || defined(UAP_SUPPORT)
+/** rx handler for station/uap mode */
+mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf);
 /** Process received packet */
 mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf);
+#endif
+#ifdef STA_SUPPORT
 /** ioctl handler for station mode */
 mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req);
 
@@ -3000,9 +3006,6 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
 
 /** cmdresp handler for station mode */
 mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, IN t_void *pcmd_buf, IN t_void *pioctl);
-
-/** rx handler for station mode */
-mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf);
 
 /** Scan for networks */
 mlan_status wlan_scan_networks(IN mlan_private *pmpriv,

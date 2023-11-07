@@ -194,10 +194,20 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
 
 static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 {
+    t_u8 retry_cnt = 3;
+    struct pbuf *p = NULL;
+
+retry:
     /* We allocate a pbuf chain of pbufs from the pool. */
-    struct pbuf *p = pbuf_alloc(PBUF_RAW, datalen, PBUF_POOL);
+    p = pbuf_alloc(PBUF_RAW, datalen, PBUF_POOL);
     if (p == NULL)
     {
+        if (retry_cnt)
+        {
+            retry_cnt--;
+            portYIELD();
+            goto retry;
+        }
         return NULL;
     }
 
@@ -415,7 +425,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         /* Unicast ARP also need do rx reorder */
         case ETHTYPE_ARP:
 #ifdef CONFIG_11N
-            if (recv_interface == MLAN_BSS_TYPE_STA)
+            if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
             {
                 int rv = wrapper_wlan_handle_rx_packet(datalen, rxpd, p, payload);
                 if (rv != WM_SUCCESS)

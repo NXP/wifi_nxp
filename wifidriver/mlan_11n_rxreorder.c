@@ -118,14 +118,14 @@ static mlan_status wlan_11n_dispatch_pkt(t_void *priv, t_void *payload, RxReorde
 #endif /* UAP_SUPPORT */
 #endif /* CONFIG_MLAN_WMSDK */
 
-#ifdef STA_SUPPORT
+#if defined(STA_SUPPORT) || defined(UAP_SUPPORT)
     if (MLAN_STATUS_SUCCESS == wlan_11n_dispatch_amsdu_pkt((mlan_private *)priv, (pmlan_buffer)payload))
     {
         LEAVE();
         return ret;
     }
     ret = wlan_process_rx_packet(pmadapter, (pmlan_buffer)payload);
-#endif /* STA_SUPPORT */
+#endif
     LEAVE();
     return ret;
 }
@@ -496,15 +496,15 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
         new_node->pkt_count = 0;
         if (queuing_ra_based(priv) == MTRUE)
         {
-#ifndef CONFIG_MLAN_WMSDK /* fixme: This part seems something related to UAP. Disable for now. */
-            // TODO for adhoc
             if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
             {
-                if ((sta_ptr = wlan_get_station_entry(priv, ta)))
-                    last_seq = sta_ptr->rx_seq[tid];
+                TxBAStreamTbl *ptx_tbl = NULL;
+                /* txbastream table also is used as connected STAs data base */
+                if ((ptx_tbl = wlan_11n_get_txbastream_tbl(priv, ta)))
+                {
+                    last_seq = ptx_tbl->rx_seq[tid];
+                }
             }
-            PRINTM(MINFO, "UAP/ADHOC:last_seq=%d start_win=%d\n", last_seq, new_node->start_win);
-#endif /* CONFIG_MLAN_WMSDK */
         }
         else
         {

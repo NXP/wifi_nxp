@@ -1885,6 +1885,7 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
         newNode->ba_status   = ba_status;
         newNode->txba_thresh = os_rand_range(5, 5);
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
+        (void)__memset(priv->adapter, newNode->rx_seq, 0xff, sizeof(newNode->rx_seq));
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
                                pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);

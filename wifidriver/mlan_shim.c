@@ -51,7 +51,7 @@ static mlan_operations mlan_sta_ops = {
     wlan_ops_sta_process_cmdresp,
 #endif /* CONFIG_MLAN_WMSDK */
     /* rx handler */
-    wlan_ops_sta_process_rx_packet,
+    wlan_ops_process_rx_packet,
 #ifndef CONFIG_MLAN_WMSDK
     /* Event handler */
     wlan_ops_sta_process_event,
@@ -77,7 +77,7 @@ static mlan_operations mlan_uap_ops = {
     wlan_ops_uap_process_cmdresp,
 #endif /* CONFIG_MLAN_WMSDK */
        /* rx handler */
-    /* wlan_ops_uap_process_rx_packet, */ NULL,
+    wlan_ops_process_rx_packet,
 #ifndef CONFIG_MLAN_WMSDK
     /* Event handler */
     wlan_ops_uap_process_event,
