@@ -380,12 +380,12 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
     }
 
     /*
-     * If the packet is not an unicast packet then send the packet
-     * directly to os. Don't pass thru rx reordering
+     * If 11n isn't enabled, or if the packet is not an unicast packet for STA case, 
+     * then send the packet directly to os. Don't pass thru rx reordering
      */
-    if (((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) && (!IS_11N_ENABLED(priv))) ||
-        ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl && (!ptx_tbl->ampdu_supported[0])) ||
-        __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))
+    if (((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) && ((!IS_11N_ENABLED(priv)) ||
+        __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))) ||
+        ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl && (!ptx_tbl->ampdu_supported[0])))
     {
         (void)wlan_process_rx_packet(pmadapter, pmbuf);
         goto done;
