@@ -1216,10 +1216,10 @@ static void test_wlan_set_chanlist(int argc, char **argv)
 
     /* Get channel list of current region */
     int ret = wlan_get_chanlist(&chanlist);
-    if(ret != WM_SUCCESS)
+    if (ret != WM_SUCCESS)
     {
-      (void)PRINTF("Unable to get channel list of current region\r\n"); 
-      return;
+        (void)PRINTF("Unable to get channel list of current region\r\n");
+        return;
     }
     ret = wlan_set_chanlist(&chanlist);
     if (ret != WM_SUCCESS)
@@ -1269,6 +1269,7 @@ static void dump_wlan_set_txomi_usage()
     (void)PRINTF("\t 1: send OMI in QoS Data\r\n");
     (void)PRINTF("\t 0xff: send OMI in either QoS Data or NULL Data\r\n");
     (void)PRINTF("where, num_data_pkts =\r\n");
+    (void)PRINTF("\t Set this value only when tx-option is 1 or 0xff.\r\n");
     (void)PRINTF("\t Minimum value is 1\r\n");
     (void)PRINTF("\t Maximum value is 16\r\n");
     (void)PRINTF("\t num_data_pkts is applied only if OMI is sent in QoS data frame\r\n");
@@ -1367,13 +1368,50 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
     uint8_t tx_option     = 0;
     uint8_t num_data_pkts = 0;
 
-    if (argc != 5)
+    if (argc != 4 && argc != 5)
     {
         dump_wlan_set_txomi_usage();
         return;
     }
 
     errno = 0;
+
+    tx_omi    = (uint16_t)strtol(argv[2], NULL, 0);
+    tx_option = (uint8_t)strtol(argv[3], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+        errno = 0;
+    }
+
+    if (argc == 4)
+    {
+        if (tx_option != 0)
+        {
+            dump_wlan_set_txomi_usage();
+            return;
+        }
+        num_data_pkts = 1;
+    }
+    else
+    {
+        if (tx_option == 0)
+        {
+            dump_wlan_set_txomi_usage();
+            return;
+        }
+        num_data_pkts = (uint8_t)strtol(argv[4], NULL, 0);
+
+        if (errno != 0)
+            (void)PRINTF("Error during strtoul errno:%d", errno);
+
+        if (num_data_pkts < 1 || num_data_pkts > 16)
+        {
+            dump_wlan_set_txomi_usage();
+            return;
+        }
+    }
 
     if (string_equal("sta", argv[1]))
     {
@@ -1383,13 +1421,6 @@ static void test_wlan_set_tx_omi(int argc, char **argv)
     {
         interface = (t_u8)WLAN_BSS_TYPE_UAP;
     }
-
-    tx_omi        = (uint16_t)strtol(argv[2], NULL, 0);
-    tx_option     = (uint8_t)strtol(argv[3], NULL, 0);
-    num_data_pkts = (uint8_t)strtol(argv[4], NULL, 0);
-
-    if (errno != 0)
-        (void)PRINTF("Error during strtoul errno:%d", errno);
 
     ret = wlan_set_11ax_tx_omi(interface, tx_omi, tx_option, num_data_pkts);
 
@@ -1453,7 +1484,7 @@ static wlan_btwt_config_t btwt_config;
 #endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
-static uint8_t g_11ax_cfg[29] = { 0 };
+static uint8_t g_11ax_cfg[29] = {0};
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
     /* name                 offset  len     notes */
@@ -1468,7 +1499,7 @@ const static test_cfg_param_t g_11ax_cfg_param[] = {
 };
 
 #ifdef CONFIG_11AX_TWT
-static uint8_t g_btwt_cfg[12] = { 0 };
+static uint8_t g_btwt_cfg[12] = {0};
 
 const static test_cfg_param_t g_btwt_cfg_param[] = {
     /* name             offset  len   notes */
@@ -1482,7 +1513,7 @@ const static test_cfg_param_t g_btwt_cfg_param[] = {
     {"sp_gap", 11, 1, NULL},
 };
 
-static uint8_t g_twt_setup_cfg[12] = { 0 };
+static uint8_t g_twt_setup_cfg[12] = {0};
 
 static test_cfg_param_t g_twt_setup_cfg_param[] = {
     /* name                 offset  len  notes */
@@ -1500,7 +1531,7 @@ static test_cfg_param_t g_twt_setup_cfg_param[] = {
     {"twt_request", 11, 1, "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
 };
 
-static uint8_t g_twt_teardown_cfg[3] = { 0 };
+static uint8_t g_twt_teardown_cfg[3] = {0};
 
 static test_cfg_param_t g_twt_teardown_cfg_param[] = {
     /* name             offset  len  notes */
