@@ -4921,6 +4921,7 @@ static void wlcm_process_disconnected()
 #ifdef CONFIG_11K
 static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_rrm_neighbor_report_t *nbr_rpt)
 {
+    char event[32] = {0};
     char bssid[32] = {0};
     char info[32]  = {0};
     int op_class,channel,phy_type;
@@ -4939,7 +4940,7 @@ static void wlan_parse_neighbor_report_response(const char *nbr_response, wlan_r
 // Sample Response Pattern
 //<3>RRM-NEIGHBOR-REP-RECEIVED bssid=ec:aa:a0:81:7f:20 info=0x1801 op_class=0 chan=153 phy_type=1 lci=0100080010000000000000000000000000000000000406000000000000060101 civic=02000b0000ed000000
 
-    if (sscanf(nbr_response,"%*s bssid=%s info=%s op_class=%d chan=%d phy_type=%d", bssid, info, &op_class, &channel, &phy_type) == 5)
+    if (sscanf(nbr_response,"%s bssid=%s info=%s op_class=%d chan=%d phy_type=%d", event, bssid, info, &op_class, &channel, &phy_type) == 6)
     {
         int i;
         int match  = 0;
