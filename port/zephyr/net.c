@@ -65,9 +65,7 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 
-#ifndef CONFIG_TX_RX_ZERO_COPY
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
-#endif
 
 static struct net_mgmt_event_callback net_event_v4_cb;
 #define DHCPV4_MASK  (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
@@ -133,23 +131,9 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
-#ifndef CONFIG_TX_RX_ZERO_COPY
-    struct net_eth_hdr *ethhdr = (struct net_eth_hdr *)payload;
-    t_u8 llc                   = 0;
-#endif
     t_u8 retry_cnt = 3;
 
-#ifndef CONFIG_TX_RX_ZERO_COPY
-    if (!memcmp((t_u8 *)payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
-    {
-        struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)((t_u8 *)payload + SIZEOF_ETH_HDR);
-        ethhdr->type                  = ethllchdr->type;
-        datalen -= SIZEOF_ETH_LLC_HDR;
-        llc = 1;
-    }
-#endif
 retry:
-    /* TODO: port wifi_netif.c and use netif_arr[] */
     /* We allocate a network buffer */
     if (interface == WLAN_BSS_TYPE_UAP)
         pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
@@ -167,49 +151,68 @@ retry:
         return NULL;
     }
 
-#ifndef CONFIG_TX_RX_ZERO_COPY
-    if (llc)
+    if (net_pkt_write(pkt, payload, datalen) != 0)
     {
-        if (net_pkt_write(pkt, payload, SIZEOF_ETH_HDR) != 0)
-        {
-            net_pkt_unref(pkt);
-            pkt = NULL;
-        }
-        if (net_pkt_write(pkt, payload + SIZEOF_ETH_HDR + SIZEOF_ETH_LLC_HDR, datalen - SIZEOF_ETH_HDR) != 0)
-        {
-            net_pkt_unref(pkt);
-            pkt = NULL;
-        }
+        net_pkt_unref(pkt);
+        pkt = NULL;
     }
-    else
-#endif
-    {
-#ifdef CONFIG_TX_RX_ZERO_COPY
-        /* Reserve space for mlan_buffer */
-        net_pkt_memset(pkt, 0, sizeof(mlan_buffer));
-        net_buf_pull(pkt->frags, sizeof(mlan_buffer));
-        net_pkt_cursor_init(pkt);
-        if (net_pkt_write(pkt, payload, datalen - sizeof(mlan_buffer)) != 0)
-#else
-        if (net_pkt_write(pkt, payload, datalen) != 0)
-#endif
-        {
-            net_pkt_unref(pkt);
-            pkt = NULL;
-        }
-    }
+
     return pkt;
 }
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
+static struct net_pkt *gen_pkt_from_data_for_zerocopy(t_u8 interface, t_u8 *payload, t_u16 datalen)
+{
+    struct net_pkt *pkt = NULL;
+    t_u8 retry_cnt = 3;
+
+retry:
+    /* We allocate a network buffer */
+    if (interface == WLAN_BSS_TYPE_UAP)
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+    else
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+
+    if (pkt == NULL)
+    {
+        if (retry_cnt)
+        {
+            retry_cnt--;
+            k_yield();
+            goto retry;
+        }
+        return NULL;
+    }
+
+    /* Reserve space for mlan_buffer */
+    net_pkt_memset(pkt, 0, sizeof(mlan_buffer));
+    net_buf_pull(pkt->frags, sizeof(mlan_buffer));
+    net_pkt_cursor_init(pkt);
+    if (net_pkt_write(pkt, payload, datalen - sizeof(mlan_buffer)) != 0)
+    {
+        net_pkt_unref(pkt);
+        pkt = NULL;
+    }
+
+    return pkt;
+}
+#endif
 
 static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
+    t_u16 header_type;
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
-        (void)wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
-        return;
+        Eth803Hdr_t *eth803hdr = (Eth803Hdr_t *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
+        /* If the AMSDU packet is unicast and is not for us, drop it */
+        if (memcmp(mlan_adap->priv[recv_interface]->curr_addr, eth803hdr->dest_addr, MLAN_MAC_ADDR_LENGTH) &&
+            ((eth803hdr->dest_addr[0] & 0x01) == 0))
+        {
+            return;
+        }
     }
 
     if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
@@ -222,7 +225,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #ifdef CONFIG_TX_RX_ZERO_COPY
     t_u16 header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
     struct net_pkt *p =
-        gen_pkt_from_data(recv_interface, (t_u8 *)rcvdata, rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer));
+        gen_pkt_from_data_for_zerocopy(recv_interface, (t_u8 *)rcvdata, rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer));
 #else
     struct net_pkt *p = gen_pkt_from_data(recv_interface, payload, rxpd->rx_pkt_length);
 #endif
@@ -256,7 +259,28 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 #endif
 
-    switch (htons(ethhdr->type))
+    header_type = htons(ethhdr->type);
+
+    if (!memcmp(payload + SIZEOF_ETH_HDR, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)))
+    {
+        struct eth_llc_hdr *ethllchdr = (struct eth_llc_hdr *)(void *)(payload + SIZEOF_ETH_HDR);
+
+        if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
+        {
+            header_type = htons(ethllchdr->type);
+        }
+        else
+        {
+            /* Remove the LLC header if not the AMSDU packet */
+            ethhdr->type = ethllchdr->type;
+            (void)memmove(payload + SIZEOF_ETH_LLC_HDR, payload, SIZEOF_ETH_HDR);
+            net_buf_pull(p->frags, SIZEOF_ETH_LLC_HDR);
+            net_pkt_cursor_init(p);
+            header_type = htons(ethhdr->type);
+        }
+    }
+
+    switch (header_type)
     {
         case NET_ETH_PTYPE_IP:
 #ifdef CONFIG_IPV6
