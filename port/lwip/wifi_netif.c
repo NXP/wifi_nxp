@@ -192,6 +192,38 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
     }
 }
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+static struct pbuf *gen_pbuf_from_data_for_zerocopy(t_u8 *payload, t_u16 datalen)
+{
+    t_u8 retry_cnt = 3;
+    struct pbuf *p = NULL;
+
+retry:
+    /* We allocate a pbuf chain of pbufs from the pool. */
+    p = pbuf_alloc(PBUF_RAW, datalen, PBUF_POOL);
+    if (p == NULL)
+    {
+        if (retry_cnt)
+        {
+            retry_cnt--;
+            portYIELD();
+            goto retry;
+        }
+        return NULL;
+    }
+
+    /* Reserve space for mlan_buffer */
+    pbuf_header(p, -(s16_t)(sizeof(mlan_buffer)));
+    if (pbuf_take(p, payload, datalen - sizeof(mlan_buffer)) != 0)
+    {
+        (void)pbuf_free(p);
+        p = NULL;
+    }
+
+    return p;
+}
+#endif
+
 static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 {
     t_u8 retry_cnt = 3;
@@ -211,13 +243,7 @@ retry:
         return NULL;
     }
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
-    /* Reserve space for mlan_buffer */
-    pbuf_header(p, -(s16_t)(sizeof(mlan_buffer)));
-    if (pbuf_take(p, payload, datalen - sizeof(mlan_buffer)) != 0)
-#else
     if (pbuf_take(p, payload, datalen) != 0)
-#endif
     {
         (void)pbuf_free(p);
         p = NULL;
@@ -255,14 +281,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         {
             return;
         }
-
-#ifdef CONFIG_11N
-        if (rxpd->bss_type == MLAN_BSS_ROLE_UAP)
-        {
-            wrapper_wlan_handle_amsdu_rx_packet(rcvdata, datalen);
-            return;
-        }
-#endif /* CONFIG_11N */
     }
 
     if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
@@ -305,7 +323,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 #ifdef CONFIG_TX_RX_ZERO_COPY
     u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
     payload_len      = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
-    p                = gen_pbuf_from_data((t_u8 *)rcvdata, payload_len);
+    p                = gen_pbuf_from_data_for_zerocopy((t_u8 *)rcvdata, payload_len);
 #else
     p = gen_pbuf_from_data(payload, payload_len);
 #endif

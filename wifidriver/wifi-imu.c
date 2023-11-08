@@ -1225,7 +1225,7 @@ mlan_status wlan_flush_wmm_pkt(int pkt_cnt)
  *
  *  @return        MTRUE or MFALSE
  */
-static t_u8 wifi_check_last_amsdu_packet_indication(mlan_private priv, t_u8 amsdu_cnt)
+static t_u8 wifi_check_last_amsdu_packet_indication(mlan_private *priv, t_u8 amsdu_cnt)
 {
     if ((wifi_wmm_get_packet_cnt() == amsdu_cnt) && priv->wmm_qosinfo && priv->curr_bss_params.wmm_uapsd_enabled)
         return TRUE;
