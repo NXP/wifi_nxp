@@ -16,6 +16,7 @@
 #include <wm_os.h>
 
 #include "wifi-internal.h"
+#include <wm_net.h>
 #if defined(RW610)
 #include "wifi-imu.h"
 #else
@@ -3402,8 +3403,8 @@ void wifi_tx_card_awake_unlock(void)
 
 #ifdef CONFIG_WMM
 
-#define ETHER_TYPE_IPV4_01       0xc
-#define ETHER_TYPE_IPV4_02       0xd
+#define ETHER_TYPE_IP_01         0xc
+#define ETHER_TYPE_IP_02         0xd
 #define ETHER_TYPE_IPV4_VALUE_01 0x8
 #define ETHER_TYPE_IPV4_VALUE_02 0x0
 #define WMM_PACKET_TOS_IV4       0xf
@@ -3411,8 +3412,6 @@ void wifi_tx_card_awake_unlock(void)
 #define UDP_IDENTIFIER_POS       0x11
 #define UDP_IDENTIFIER_VAL       0xda
 
-#define ETHER_TYPE_IPV6_01       0xc
-#define ETHER_TYPE_IPV6_02       0xd
 #define ETHER_TYPE_IPV6_VALUE_01 0x86
 #define ETHER_TYPE_IPV6_VALUE_02 0xdd
 #define WMM_PACKET_TOS_IPV6_01   0xe
@@ -3437,22 +3436,30 @@ void wifi_wmm_init()
  * Provided that the packet is IPV4 type
  * Since value comes between the range of 0-255, coversion is expected between 0-7 to map to TIDs.
  * */
-t_u32 wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid)
+t_u32 wifi_wmm_get_pkt_prio(void *buf, t_u8 *tid)
 {
+    bool ip_hdr = 0;
+
     if (buf == NULL)
         return -WM_FAIL;
-    if ((buf[ETHER_TYPE_IPV4_01] == ETHER_TYPE_IPV4_VALUE_01 && buf[ETHER_TYPE_IPV4_02] == ETHER_TYPE_IPV4_VALUE_02) ||
-        (buf[ETHER_TYPE_IPV6_01] == ETHER_TYPE_IPV6_VALUE_01 && buf[ETHER_TYPE_IPV6_02] == ETHER_TYPE_IPV6_VALUE_02))
+    t_u8 *type_01 = net_stack_buffer_skip(buf, ETHER_TYPE_IP_01);
+    t_u8 *type_02 = net_stack_buffer_skip(buf, ETHER_TYPE_IP_02);
+    if (*type_01 == ETHER_TYPE_IPV4_VALUE_01 && *type_02 == ETHER_TYPE_IPV4_VALUE_02)
     {
-        if (buf[ETHER_TYPE_IPV4_01] == ETHER_TYPE_IPV4_VALUE_01 && buf[ETHER_TYPE_IPV4_02] == ETHER_TYPE_IPV4_VALUE_02)
-        {
-            *tid = (buf[WMM_PACKET_TOS_IV4] / PRIORITY_COMPENSATOR);
-        }
-        else
-        {
-            t_u16 ipv6_tos = (buf[WMM_PACKET_TOS_IPV6_01] << 8) | (buf[WMM_PACKET_TOS_IPV6_02]);
-            *tid           = (t_u8)(((ipv6_tos & TOS_MASK_IPV6) >> 4) / PRIORITY_COMPENSATOR);
-        }
+        t_u8 *id = net_stack_buffer_skip(buf, WMM_PACKET_TOS_IV4);
+        *tid     = *id / PRIORITY_COMPENSATOR;
+        ip_hdr   = 1;
+    }
+    else if (*type_01 == ETHER_TYPE_IPV6_VALUE_01 && *type_02 == ETHER_TYPE_IPV6_VALUE_02)
+    {
+        t_u8 *tos1     = net_stack_buffer_skip(buf, WMM_PACKET_TOS_IPV6_01);
+        t_u8 *tos2     = net_stack_buffer_skip(buf, WMM_PACKET_TOS_IPV6_02);
+        t_u16 ipv6_tos = (*tos1 << 8) | (*tos2);
+        *tid           = (t_u8)(((ipv6_tos & TOS_MASK_IPV6) >> 4) / PRIORITY_COMPENSATOR);
+        ip_hdr         = 1;
+    }
+    if (ip_hdr)
+    {
         switch (*tid)
         {
             case 0:

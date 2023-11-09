@@ -616,7 +616,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
     bool is_tx_pause              = false;
 
-    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(p->payload, &tid);
+    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(p, &tid);
     if (pkt_prio == -WM_FAIL)
     {
         return ERR_MEM;

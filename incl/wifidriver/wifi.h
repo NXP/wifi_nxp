@@ -1603,7 +1603,7 @@ void wifi_register_fw_dump_cb(int (*wifi_usb_mount_cb)(),
 
 #ifdef CONFIG_WMM
 void wifi_wmm_init();
-t_u32 wifi_wmm_get_pkt_prio(t_u8 *buf, t_u8 *tid);
+t_u32 wifi_wmm_get_pkt_prio(void *buf, t_u8 *tid);
 t_u8 wifi_wmm_get_packet_cnt(void);
 /* handle EVENT_TX_DATA_PAUSE */
 void wifi_handle_event_data_pause(void *data);
