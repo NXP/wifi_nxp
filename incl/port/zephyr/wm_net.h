@@ -20,7 +20,8 @@
 #include <wm_os.h>
 #include <wmtypes.h>
 
-typedef struct {
+typedef struct
+{
     struct net_if *netif;
     struct net_addr ipaddr;
     struct net_addr nmask;
@@ -28,22 +29,6 @@ typedef struct {
     struct ethernetif state;
     scan_result_cb_t scan_cb;
 } interface_t;
-
-static inline uint16_t pbuf_copy_partial(void *pkt, void *dst, uint16_t len, uint16_t offset)
-{
-    int ret;
-    assert(offset == 0);
-
-    ret = net_pkt_read(pkt, dst, len);
-    assert(ret == 0);
-    return len;
-}
-
-static inline uint8_t pbuf_free(void *pkt)
-{
-    net_pkt_unref(pkt);
-    return 1;
-}
 
 /*
  * fixme: This dependancy of wm_net on wlc manager header should be
@@ -77,7 +62,7 @@ static inline uint8_t pbuf_free(void *pkt)
 #define net_write(sock, data, len)                    write(sock, data, len)
 
 /* directly map this to the zephyr internal functions */
-#define inet_aton(cp, addr)     inet_pton(AF_INET, cp, (char *)addr)
+#define inet_aton(cp, addr) inet_pton(AF_INET, cp, (char *)addr)
 
 /** Set hostname for network interface
  *
@@ -103,7 +88,7 @@ void net_stop_dhcp_timer(void);
  */
 static inline int net_socket_blocking(int sock, int state)
 {
-    //return ioctlsocket(sock, FIONBIO, &state);
+    // return ioctlsocket(sock, FIONBIO, &state);
     /* TODO: implement */
     return 0;
 }
@@ -157,6 +142,57 @@ static inline uint32_t net_inet_aton(const char *cp)
  *
  */
 void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
+
+/** Skip a number of bytes at the start of a stack buffer
+ *
+ * \param[in] buf input stack buffer.
+ * \param[in] in_offset offset to skip.
+ *
+ * \return the payload pointer after skip a number of bytes
+ */
+static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
+{
+    uint16_t offset_left = in_offset;
+    struct net_buf *frag = ((struct net_pkt *)buf)->frags;
+    while (frag && (frag->len <= offset_left))
+    {
+        offset_left = offset_left - frag->len;
+        frag        = frag->frags;
+    }
+
+    return (uint8_t *)(frag->data + offset_left);
+}
+
+/** Free a buffer allocated from stack memory
+ *
+ * \param[in] buf stack buffer pointer.
+ *
+ */
+static inline void net_stack_buffer_free(void *buf)
+{
+    net_pkt_unref((struct net_pkt *)buf);
+}
+
+/** Copy (part of) the contents of a packet buffer to an application supplied buffer
+ *
+ * \param[in] stack_buffer the stack buffer from which to copy data.
+ * \param[in] dst the destination buffer.
+ * \param[in] len length of data to copy.
+ * \param[in] offset offset into the stack buffer from where to begin copying
+ * \return copy status based on stack definition.
+ */
+int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset);
+
+/** Get the data payload inside the stack buffer.
+ *
+ * \param[in] buf input stack buffer.
+ *
+ * \return the payload pointer of the stack buffer.
+ */
+static inline void *net_stack_buffer_get_payload(void *buf)
+{
+    return net_pkt_data((struct net_pkt *)buf);
+}
 
 /* TODO: if it is used */
 #if 0
@@ -502,6 +538,6 @@ void rx_mgmt_deregister_callback(void);
 
 int low_level_output(const struct device *dev, struct net_pkt *pkt);
 const struct netif *net_if_get_binding(const char *ifname);
-const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif* iface);
+const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface);
 
 #endif /* _WM_NET_H_ */

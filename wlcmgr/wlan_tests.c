@@ -4749,9 +4749,9 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
 
-    u8_t cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
+    t_u8 cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
                       0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
-    u8_t resp_buf[64] = {0};
+    t_u8 resp_buf[64] = {0};
 
     /**
      * Command taken from robust_btc.conf
@@ -4773,7 +4773,7 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
         return;
     }
 
-    ret = wlan_send_hostcmd(cmd_buf, sizeof(cmd_buf) / sizeof(u8_t), resp_buf, sizeof(resp_buf), &reqd_len);
+    ret = wlan_send_hostcmd(cmd_buf, sizeof(cmd_buf) / sizeof(t_u8), resp_buf, sizeof(resp_buf), &reqd_len);
 
     if (ret == WM_SUCCESS)
     {
@@ -7016,7 +7016,7 @@ static void dump_wlan_reg_access_usage()
 static void test_wlan_reg_access(int argc, char **argv)
 {
     t_u32 type, offset;
-	t_u32 value = 0;
+    t_u32 value  = 0;
     t_u16 action = ACTION_GET;
     int ret;
 

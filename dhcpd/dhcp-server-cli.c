@@ -49,7 +49,7 @@ int dhcpd_cli_init(void)
 
 int dhcpd_cli_deinit(void)
 {
-    u8_t i;
+    uint8_t i;
 
     for (i = 0; i < sizeof(dhcp_cmds) / sizeof(struct cli_command); i++)
     {

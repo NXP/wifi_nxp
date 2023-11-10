@@ -65,7 +65,9 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 
+#ifndef CONFIG_TX_RX_ZERO_COPY
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
+#endif
 
 static struct net_mgmt_event_callback net_event_v4_cb;
 #define DHCPV4_MASK  (NET_EVENT_IPV4_DHCP_BOUND | NET_EVENT_IPV4_DHCP_STOP)
@@ -130,10 +132,10 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
 
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
-    struct net_pkt *pkt        = NULL;
-    struct net_eth_hdr *ethhdr = (struct net_eth_hdr *)payload;
+    struct net_pkt *pkt = NULL;
 #ifndef CONFIG_TX_RX_ZERO_COPY
-    t_u8 llc = 0;
+    struct net_eth_hdr *ethhdr = (struct net_eth_hdr *)payload;
+    t_u8 llc                   = 0;
 #endif
     t_u8 retry_cnt = 3;
 
@@ -182,7 +184,15 @@ retry:
     else
 #endif
     {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+        /* Reserve space for mlan_buffer */
+        net_pkt_memset(pkt, 0, sizeof(mlan_buffer));
+        net_buf_pull(pkt->frags, sizeof(mlan_buffer));
+        net_pkt_cursor_init(pkt);
+        if (net_pkt_write(pkt, payload, datalen - sizeof(mlan_buffer)) != 0)
+#else
         if (net_pkt_write(pkt, payload, datalen) != 0)
+#endif
         {
             net_pkt_unref(pkt);
             pkt = NULL;
@@ -210,8 +220,9 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
     t_u8 *payload = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
 #ifdef CONFIG_TX_RX_ZERO_COPY
-    t_u16 header_len  = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
-    struct net_pkt *p = gen_pkt_from_data(recv_interface, rcvdata, rxpd->rx_pkt_length + header_len);
+    t_u16 header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+    struct net_pkt *p =
+        gen_pkt_from_data(recv_interface, (t_u8 *)rcvdata, rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer));
 #else
     struct net_pkt *p = gen_pkt_from_data(recv_interface, payload, rxpd->rx_pkt_length);
 #endif
@@ -223,6 +234,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 
 #ifdef CONFIG_TX_RX_ZERO_COPY
+    /* Directly use rxpd from net_pkt */
+    rxpd = (RxPD *)(void *)(net_pkt_data(p) + INTF_HEADER_LEN);
     /* Skip interface header and RxPD */
     net_buf_pull(p->frags, header_len);
     net_pkt_cursor_init(p);
@@ -256,7 +269,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
              * pre-defined ports.
              */
 
-            if (recv_interface == MLAN_BSS_TYPE_STA)
+            if (recv_interface == MLAN_BSS_TYPE_STA || recv_interface == MLAN_BSS_TYPE_UAP)
             {
                 int rv = wrapper_wlan_handle_rx_packet(datalen, rxpd, p, payload);
                 if (rv != WM_SUCCESS)
@@ -311,7 +324,7 @@ void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf
     (void)rxpd;
     deliver_packet_above(p, interface);
 #else
-    RxPD *prxpd       = (RxPD *)rxpd;
+    RxPD *prxpd = (RxPD *)rxpd;
     deliver_packet_above(prxpd, p, interface);
 #endif
 }
@@ -343,7 +356,7 @@ int low_level_output(const struct device *dev, struct net_pkt *pkt)
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
     bool is_tx_pause              = false;
 
-    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(payload, &tid);
+    t_u32 pkt_prio = wifi_wmm_get_pkt_prio(pkt, &tid);
     if (pkt_prio == -WM_FAIL)
     {
         return -ENOMEM;
@@ -406,15 +419,24 @@ int low_level_output(const struct device *dev, struct net_pkt *pkt)
 #endif
         sizeof(TxPD) + INTF_HEADER_LEN;
 
-    /* TODO: check if we can zero copy */
-
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    memset(wmm_outbuf, 0x00, pkt_len + ETH_HDR_LEN);
+    /* Save the ethernet header */
+    net_pkt_set_overwrite(pkt, false);
+    net_pkt_read(pkt, ((outbuf_t *)wmm_outbuf)->eth_header, ETH_HDR_LEN);
+    ((outbuf_t *)wmm_outbuf)->buffer = pkt;
+    /* Save the data payload pointer without ethernet header */
+    ((outbuf_t *)wmm_outbuf)->payload = pkt->cursor.pos;
+    /* Driver will free this pbuf */
+    net_pkt_ref(pkt);
+#else
     assert(pkt_len + net_pkt_len <= outbuf_len);
 
     memset(wmm_outbuf, 0x00, pkt_len);
 
     if (net_pkt_read(pkt, wmm_outbuf + pkt_len, net_pkt_len))
         return -EIO;
-
+#endif
     pkt_len += net_pkt_len;
 
     ret = wifi_low_level_output(interface, wmm_outbuf, pkt_len
@@ -1357,3 +1379,42 @@ const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *ifac
 
     return dev_ops;
 }
+
+int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset)
+{
+    struct net_buf *frag = NULL;
+    uint16_t left = 0, total_copied = 0, copy_buf_len;
+
+    for (frag = ((struct net_pkt *)stack_buffer)->frags; len != 0 && frag != NULL; frag = frag->frags)
+    {
+        if ((offset != 0) && (offset >= frag->len))
+        {
+            offset = offset - frag->len;
+        }
+        else
+        {
+            copy_buf_len = frag->len - offset;
+            if (copy_buf_len > len)
+                copy_buf_len = len;
+
+            memcpy(&((char *)dst)[left], &((char *)frag->data)[offset], copy_buf_len);
+            total_copied = total_copied + copy_buf_len;
+            left         = left + copy_buf_len;
+            len          = len - copy_buf_len;
+            offset       = 0;
+        }
+    }
+
+    return total_copied;
+}
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
+void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len)
+{
+    outbuf_t *buf    = (outbuf_t *)srcAddr;
+    t_u16 header_len = INTF_HEADER_LEN + sizeof(TxPD) + ETH_HDR_LEN;
+
+    (void)memcpy((t_u8 *)destAddr, &buf->intf_header[0], header_len);
+    net_pkt_read((struct net_pkt *)(buf->buffer), (t_u8 *)destAddr + header_len, (t_u16)(len - header_len));
+}
+#endif
