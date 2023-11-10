@@ -1471,21 +1471,20 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
 
         (void)__memcpy(pmadapter, &region_chan, &pmadapter->parsed_region_chan, sizeof(parsed_region_chan_11d_t));
 
-        /** Country code */
-        t_u8 country_code[COUNTRY_CODE_LEN];
-        country_code[0] = pbss_desc->country_info.country_code[0];
-        country_code[1] = pbss_desc->country_info.country_code[1];
-        country_code[2] = ' ';
-
-        if (is_special_region_code(country_code))
-        {
-            PRINTM(MINFO, "Skip special region code in CountryIE");
-            LEAVE();
-            return MLAN_STATUS_SUCCESS;
-        }
-
         if (pbss_desc != MNULL)
         {
+            /** Country code */
+            t_u8 country_code[COUNTRY_CODE_LEN];
+            country_code[0] = pbss_desc->country_info.country_code[0];
+            country_code[1] = pbss_desc->country_info.country_code[1];
+            country_code[2] = ' ';
+
+            if (is_special_region_code(country_code))
+            {
+                PRINTM(MINFO, "Skip special region code in CountryIE");
+                LEAVE();
+                return MLAN_STATUS_SUCCESS;
+            }
             /* Parse domain info if available */
             ret = wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, pbss_desc->bss_band,
                                              &bssdesc_region_chan);
