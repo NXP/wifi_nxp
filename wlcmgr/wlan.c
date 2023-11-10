@@ -9815,8 +9815,8 @@ static void wlan_mon_thread(os_thread_arg_t data)
              *  bit[3:2] == 3 means FW is in sleep status
              */
             delay_cnt++;
-            if (delay_cnt >= 5
-                && mlan_adap->ps_state == PS_STATE_AWAKE
+            if ((delay_cnt >= 5) && (mlan_adap != NULL)
+                && (mlan_adap->ps_state == PS_STATE_AWAKE)
             )
             {
 #ifdef CONFIG_CAU_TEMPERATURE
