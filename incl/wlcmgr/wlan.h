@@ -1770,6 +1770,8 @@ struct wlan_network
 #ifdef CONFIG_WPA_SUPP
     /** Identifier for network profile */
     int id;
+    /* wps_network marks the network is for wps*/
+    int wps_network;
 #endif
     /** The name of this network profile.  Each network profile that is
      *  added to the WLAN Connection Manager must have a unique name. */

@@ -13661,6 +13661,22 @@ void wlan_set_rssi_low_threshold(uint8_t threshold)
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_WPS
+static int wlan_remove_wps_network(void)
+{
+    unsigned int len, i;
+    int ret = -WM_E_INVAL;
+    struct netif *netif = net_get_sta_interface();
+
+    ret = wpa_supp_cancel_scan(netif);
+    /* find the first network whose name matches and clear it out */
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].wps_network)
+            ret = wpa_supp_remove_network(netif, &wlan.networks[i]);
+    }
+    return ret;
+}
+
 int wlan_start_wps_pbc(void)
 {
     int ret = -WM_FAIL;
@@ -13671,7 +13687,7 @@ int wlan_start_wps_pbc(void)
         wlcm_d("WPS session is already in progress");
         return ret;
     }
-
+    wlan_remove_wps_network();
     ret = wpa_supp_start_wps_pbc(netif, 0);
 
     if (ret == -2)
@@ -13703,7 +13719,7 @@ int wlan_start_wps_pin(const char *pin)
         wlcm_d("WPS PIN validation failed for %s", pin);
         return -WM_FAIL;
     }
-
+    wlan_remove_wps_network();
     return wpa_supp_start_wps_pin(netif, pin, 0);
 }
 
