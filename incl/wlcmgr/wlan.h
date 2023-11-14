@@ -2342,8 +2342,8 @@ struct wlan_cck_desense_cfg
 /**
  * Set/Get RX abort configure to/from Fw.
  *
- * \param[in/out] cfg A pointer to information buffer
- * \param[int] action Command action: GET or SET
+ * \param[in,out] cfg A pointer to information buffer
+ * \param[in] action Command action: GET or SET
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
@@ -2363,7 +2363,7 @@ int wlan_set_rx_abort_cfg_ext(const struct wlan_rx_abort_cfg_ext *cfg);
 /**
  * Get Dynamic RX abort config from Fw.
  *
- * \param[in/out] cfg A pointer to information buffer
+ * \param[in,out] cfg A pointer to information buffer
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
@@ -2374,8 +2374,8 @@ int wlan_get_rx_abort_cfg_ext(struct wlan_rx_abort_cfg_ext *cfg);
 /**
  * Set/Get CCK Desense configure to/from Fw.
  *
- * \param[in/out] cfg A pointer to information buffer
- * \param[int] action Command action: GET or SET
+ * \param[in,out] cfg A pointer to information buffer
+ * \param[in] action Command action: GET or SET
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
@@ -3226,7 +3226,10 @@ void wlan_cancel_host_sleep();
 void wlan_clear_host_sleep_config();
 
 /** This function set multicast MEF entry
- * \param[in] mef_actionTo be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ *
+ * \param[in] mef_action To be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
  */
 int wlan_set_multicast(t_u8 mef_action);
 #endif
@@ -3454,7 +3457,7 @@ int wlan_ieeeps_off(void);
  *            \ref WAKE_ON_MULTICAST,
  *            \ref WAKE_ON_ARP_BROADCAST,
  *            \ref WAKE_ON_MGMT_FRAME
- *            wnm_sleep_time: wnm sleep interval.(number of dtims)
+ * \param[in] wnm_sleep_time wnm sleep interval.(number of dtims)
  *
  * \return WM_SUCCESS if the call was successful.
  * \return -WM_FAIL otherwise.
@@ -6553,7 +6556,7 @@ int wlan_set_uap_turbo_mode(t_u8 mode);
 /**
  * set ps configuration.
  * Currently only used to modify multiple dtim.
- * \param[in] multiple_dtims        num dtims，range [1,20]
+ * \param[in] multiple_dtims        num dtims, range [1,20]
  * \param[in] bcn_miss_timeout      becaon miss interval
  * \param[in] local_listen_interval local listen interval
  * \param[in] adhoc_wake_period     adhoc awake period

@@ -20,7 +20,7 @@
  *
  */
 
-/** @file wps.h
+/** @file wifi_nxp_wps.h
  *
  *  @brief WPS - WiFi Protected Setup
  *
@@ -243,7 +243,7 @@ struct wps_config
     uint16_t pin_len;
     /** WPS callback */
     int (*wps_callback)(enum wps_event event, void *data, uint16_t len);
-    /** session attempt #PROV_NON_SESSION_ATTEMPT/#PROV_WPS_SESSION_ATTEMPT/#PROV_ENTP_SESSION_ATTEMPT */
+    /** session attempt PROV_NON_SESSION_ATTEMPT/PROV_WPS_SESSION_ATTEMPT/PROV_ENTP_SESSION_ATTEMPT */
     uint8_t prov_session;
 };
 
@@ -287,7 +287,6 @@ int wps_validate_pin(uint32_t wps_pin);
 
 /** Deletes WPS thread and message queue
  *
-#endif
  * \returns WM_SUCCESS if successful, -WM_FAIL otherwise
  */
 int wps_stop();

@@ -1,4 +1,4 @@
-/** @file wifi_cal_data.h
+/** @file wifi_cal_data_ext.h
  *
  *  @brief  This file contains the cal data
  */
