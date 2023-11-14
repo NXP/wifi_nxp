@@ -4343,6 +4343,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
         return (int)-WM_FAIL;
     }
 
+    wifi_set_xfer_pending(false);
     return WM_SUCCESS;
 }
 
@@ -4694,6 +4695,8 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
     {
         return (int)-WM_FAIL;
     }
+
+    wifi_set_xfer_pending(false);
     return (int)WM_SUCCESS;
 }
 

@@ -3075,7 +3075,7 @@ static void wlan_enable_power_save(int action)
 
 static void wlcm_process_sleep_event(void)
 {
-    wlan_host_sleep_and_sleep_confirm();
+    wlan_send_sleep_confirm();
 }
 
 static void wlcm_process_awake_event(void)
