@@ -11698,6 +11698,13 @@ int wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)
     {
         return -WM_FAIL;
     }
+
+    if (is_uap_started())
+    {
+        (void)PRINTF("Pls set hidden_ssid before start uAP.\r\n");
+        return -WM_FAIL;
+    }
+
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_AP
     struct netif *netif = net_get_uap_interface();
