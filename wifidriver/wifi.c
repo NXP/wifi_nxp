@@ -4422,8 +4422,6 @@ int wifi_set_country_code(const char *alpha2)
 {
     mlan_adapter *pmadapter             = (mlan_adapter *)mlan_adap;
     t_u8 country_code[COUNTRY_CODE_LEN] = {0};
-    t_u8 cfp_bg                         = 0;
-    t_u8 cfp_a                          = 0;
 
 #ifdef OTP_CHANINFO
     if (pmadapter->otp_region && pmadapter->otp_region->force_reg)
@@ -4435,40 +4433,11 @@ int wifi_set_country_code(const char *alpha2)
 
     (void)memcpy(country_code, alpha2, COUNTRY_CODE_LEN - 1);
 
-    /* Update region code and table based on country code */
-    if (wlan_misc_country_2_cfp_table_code(pmadapter, country_code, &cfp_bg, &cfp_a))
-    {
-        wifi_e("%s update country code fail", __func__);
-        return -WM_FAIL;
-    }
+    pmadapter->region_code = region_string_2_region_code(country_code);
 
-    pmadapter->cfp_code_bg = cfp_bg;
+    pmadapter->cfp_code_bg = pmadapter->region_code;
 #ifdef CONFIG_5GHz_SUPPORT
-    pmadapter->cfp_code_a = cfp_a;
-#endif
-
-#ifdef CONFIG_5GHz_SUPPORT
-    if (cfp_a)
-    {
-        pmadapter->region_code = cfp_a;
-    }
-    else if (cfp_bg)
-    {
-        pmadapter->region_code = cfp_bg;
-    }
-    else
-    {
-        pmadapter->region_code = region_string_2_region_code(country_code);
-    }
-#else
-    if (cfp_bg)
-    {
-        pmadapter->region_code = cfp_bg;
-    }
-    else
-    {
-        pmadapter->region_code = region_string_2_region_code(country_code);
-    }
+    pmadapter->cfp_code_a = pmadapter->region_code;
 #endif
 
     if (wlan_set_regiontable(pmadapter->priv[1], pmadapter->region_code, pmadapter->config_bands))
