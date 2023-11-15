@@ -45,7 +45,10 @@
 #define CONFIG_WIFI_FRAG_THRESHOLD     1
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+#endif
 
+#if !defined(SD8801)
+#define CONFIG_GTK_REKEY_OFFLOAD       1
 #endif
 
 #if defined(SD9177)
@@ -936,6 +939,7 @@ void wifi_free_fw_region_and_cfp_tables(void);
 int wifi_set_region_power_cfg(const t_u8 *data, t_u16 len);
 #endif
 int wifi_set_txbfcap(unsigned int tx_bf_cap);
+int wifi_set_delba(t_u8 tid, t_u8 *peer_mac_addr, t_u8 direction);
 int wifi_set_htcapinfo(unsigned int htcapinfo);
 int wifi_set_httxcfg(unsigned short httxcfg);
 void wifi_uap_set_httxcfg(const t_u16 ht_tx_cfg);
@@ -975,6 +979,8 @@ int wifi_exit_wnm_power_save(void);
 #endif
 int wifi_enter_deepsleep_power_save(void);
 int wifi_exit_deepsleep_power_save(void);
+int wifi_set_power_save_mode(void);
+int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason);
 void send_sleep_confirm_command(mlan_bss_type interface);
 void wifi_configure_listen_interval(int listen_interval);
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
@@ -1425,7 +1431,7 @@ int wifi_set_packet_filters(wifi_flt_cfg_t *flt_cfg);
 int wakelock_get(void);
 int wakelock_put(void);
 int wakelock_isheld(void);
-void wifi_print_wakeup_reason(void);
+void wifi_print_wakeup_reason(t_u16 hs_wakeup_reason);
 void wifi_clear_wakeup_reason(void);
 #endif
 
@@ -1978,7 +1984,7 @@ void wifi_cau_temperature_write_to_firmware(void);
 uint32_t wifi_get_temperature(void);
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_test_independent_reset();

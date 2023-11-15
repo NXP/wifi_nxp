@@ -89,6 +89,9 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
                               size_t key_len,
                               enum key_flag key_flag);
 
+int wifi_nxp_wpa_supp_set_rekey_info(
+    void *if_priv, const u8 *kek, size_t kek_len, const u8 *kck, size_t kck_len, const u8 *replay_ctr);
+
 int wifi_nxp_wpa_supp_remain_on_channel(void *if_priv, unsigned int freq, unsigned int duration);
 
 int wifi_nxp_wpa_supp_cancel_remain_on_channel(void *if_priv);

@@ -106,11 +106,6 @@ middleware.wifi.fwdnld:
     files:
     - source: incl/WIFI_IW416_BOARD_AW_AM457_CAL_DATA_EXT.h
     - source: wifidriver/incl/mlan_main_defs.h
-    - source: wifi_bt_firmware/sd8801_wlan.h
-    - source: wifi_bt_firmware/sduartIW416_wlan_bt.h
-    - source: wifi_bt_firmware/sduart8987_wlan_bt.h
-    - source: wifi_bt_firmware/sduart_nw61x.h
-    - source: wifi_bt_firmware/sduart_nw61x_se.h
     - source: wifi_bt_firmware/8801/sd8801_wlan.h
     - source: wifi_bt_firmware/IW416/sduartIW416_wlan_bt.h
     - source: wifi_bt_firmware/IW416/sdIW416_wlan.h

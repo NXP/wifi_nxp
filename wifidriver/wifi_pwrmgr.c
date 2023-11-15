@@ -73,6 +73,7 @@ void wifi_configure_listen_interval(int listen_interval)
     pmadapter->local_listen_interval = (t_u16)listen_interval;
 }
 
+#ifdef CONFIG_HOST_SLEEP
 int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions)
 {
     arpfilter_header *arpfilter = NULL;
@@ -170,7 +171,6 @@ int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action,
     return (int)status;
 }
 
-#ifdef CONFIG_HOST_SLEEP
 int wifi_cancel_host_sleep(mlan_bss_type interface)
 {
     void *pdata_buf = NULL;
@@ -256,6 +256,13 @@ int wifi_exit_deepsleep_power_save(void)
     return wifi_send_power_save_command(DIS_AUTO_PS, BITMAP_AUTO_DS, MLAN_BSS_TYPE_STA, &idletime);
 }
 
+int wifi_set_power_save_mode(void)
+{
+    t_u32 mode = BLOCK_CMD_IN_PRE_ASLEEP;
+
+    return wifi_send_power_save_command(EXT_PS_PARAM, 0U, MLAN_BSS_TYPE_STA, &mode);
+}
+
 int wifi_uap_ps_inactivity_sleep_enter(mlan_bss_type type,
                                        unsigned int ctrl_bitmap,
                                        unsigned int min_sleep,
@@ -311,7 +318,9 @@ void send_sleep_confirm_command(mlan_bss_type interface)
     if (mlan_adap->ps_state == PS_STATE_PRE_SLEEP)
     {
         mlan_adap->ps_state = PS_STATE_SLEEP_CFM;
+#ifdef CONFIG_WIFI_PS_DEBUG
         wcmdr_d("+");
+#endif
 
         /* Write mutex is used to avoid the case that, during waiting for sleep confirm cmd response,
          * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
@@ -490,7 +499,9 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     }
     else if (ps_mode->action == (t_u16)SLEEP_CONFIRM)
     {
+#ifdef CONFIG_WIFI_PS_DEBUG
         wcmdr_d("#");
+#endif
 
         if ((ieeeps_enabled) && (deepsleepps_enabled))
         {
@@ -537,11 +548,15 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 #endif
             if (ret == WM_SUCCESS)
             {
+#ifdef CONFIG_WIFI_PS_DEBUG
                 wcmdr_d("Get sleep rw lock successfully");
+#endif
             }
             else
             {
+#ifdef CONFIG_WIFI_PS_DEBUG
                 pwr_e("Failed to get sleep rw lock");
+#endif
                 return WIFI_EVENT_REASON_FAILURE;
             }
         }
@@ -561,6 +576,23 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
 
     return result;
 }
+
+#ifdef CONFIG_HOST_SLEEP
+int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_HS_WAKEUP_REASON, HostCmd_ACT_GEN_GET, 0,
+                             NULL, hs_wakeup_reason, cmd);
+    wifi_wait_for_cmdresp(hs_wakeup_reason);
+    return WM_SUCCESS;
+}
+#endif
 
 #ifdef CONFIG_P2P
 int wifi_wfd_ps_inactivity_sleep_enter(unsigned int ctrl_bitmap,

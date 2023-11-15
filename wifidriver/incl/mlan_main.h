@@ -462,11 +462,21 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Maximum number of CFP codes for A */
 #define MRVDRV_MAX_CFP_CODE_A 5
 
+#ifdef RW610
 /** Default region code */
 #define MRVDRV_DEFAULT_REGION_CODE 0x10
+#else
+/** Default region code */
+#define MRVDRV_DEFAULT_REGION_CODE 0x00
+#endif
 
+#ifdef RW610
 /** Default country code */
 #define MRVDRV_DEFAULT_COUNTRY_CODE "US"
+#else
+/** Default country code */
+#define MRVDRV_DEFAULT_COUNTRY_CODE "WW"
+#endif
 
 /** Japan country code */
 #define COUNTRY_CODE_JP_40 0x40
@@ -1417,6 +1427,10 @@ struct _mlan_private
 
     /** Attempted BSS descriptor */
     BSSDescriptor_t *pattempted_bss_desc;
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+    /** GTK rekey data*/
+    mlan_ds_misc_gtk_rekey_data gtk_rekey;
+#endif
 
     /** Current SSID/BSSID related parameters*/
     current_bss_params_t curr_bss_params;
@@ -1751,6 +1765,8 @@ struct _RxReorderTbl
     bool check_start_win;
     /** pkt receive after BA setup */
     t_u8 pkt_count;
+    /** flush data flag */
+    t_u8 flush_data;
     /** BA window bitmap */
     t_u64 bitmap;
 #ifdef CONFIG_RSN_REPLAY_DETECTION
@@ -2193,6 +2209,8 @@ struct _mlan_adapter
     t_u8 country_ie_ignore;
     /** In reset status now */
     t_u8 in_reset;
+    /** flush data flag */
+    t_u8 flush_data;
 #ifndef CONFIG_MLAN_WMSDK
     /** mlan_lock for init/shutdown */
     t_void *pmlan_lock;
@@ -2454,6 +2472,8 @@ struct _mlan_adapter
 #endif
     /** Power Save state */
     enum wlan_ps_state ps_state;
+    /** keep_wakeup */
+    t_u8 keep_wakeup;
 #ifndef CONFIG_MLAN_WMSDK
     /** Need to wakeup flag */
     t_u8 need_to_wakeup;
@@ -3797,6 +3817,10 @@ t_u8 wifi_check_no_packet_indication(mlan_private *priv);
 /** Check if this is the last packet */
 t_u8 wifi_check_last_packet_indication(mlan_private *priv);
 #endif
+
+mlan_status wlan_cmd_hs_wakeup_reason(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_void *pdata_buf);
+
+mlan_status wlan_ret_hs_wakeup_reason(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
 #ifdef CONFIG_FW_VDLL
 mlan_status wlan_download_vdll_block(mlan_adapter *pmadapter, t_u8 *block, t_u16 block_len);

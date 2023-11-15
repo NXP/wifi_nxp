@@ -1109,7 +1109,7 @@ static void test_wlan_add(int argc, char **argv)
                 }
                 else if (string_equal(argv[arg], "psk-sha256") != false)
                 {
-                    network.security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+                    network.security.key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
                     arg += 1;
                 }
 #ifdef CONFIG_11R
@@ -4515,11 +4515,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
     int choice = -1, wowlan = 0;
     int ret = -WM_FAIL;
 
-#ifdef CONFIG_MEF_CFG
-    if (argc < 3)
-#else
-    if (argc < 4)
-#endif
+    if ((argc < 2) || (argc > 4))
     {
         goto done;
     }
@@ -4529,7 +4525,11 @@ static void test_wlan_host_sleep(int argc, char **argv)
     if (errno != 0)
     {
         (void)PRINTF("Error during strtol:host_sleep errno:%d\r\n", errno);
-        return;
+        goto done;
+    }
+    if ((choice != 0) && (choice != 1))
+    {
+        goto done;
     }
 
     if (choice == 0)
@@ -4702,7 +4702,7 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
     wlan_config_host_sleep(is_manual, is_periodic);
 }
 #endif
-#endif
+#endif /*RW610*/
 #endif /* CONFIG_HOST_SLEEP */
 
 #define HOSTCMD_RESP_BUFF_SIZE 1024
@@ -5073,11 +5073,7 @@ static void test_wlan_ft_roam(int argc, char **argv)
     }
 
     ret = wlan_ft_roam(bssid, channel);
-    if (ret == WM_SUCCESS)
-    {
-        (void)PRINTF("Started FT roaming\r\n");
-    }
-    else
+    if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Failed to start FT roaming\r\n");
     }
@@ -10198,7 +10194,7 @@ done:
 }
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 static void dump_wlan_set_ind_rst_cfg_usage(void)
 {
     (void)PRINTF("Usage :                                                                \r\n");
@@ -10880,7 +10876,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_AUTO_RECONNECT
     {"wlan-auto-reconnect", "<0/1/2> [<reconnect counter> <reconnect interval> <flags>]", test_wlan_auto_reconnect},
 #endif
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
     {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
     {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
     {"wlan-independent-reset", NULL, test_wlan_independent_reset},

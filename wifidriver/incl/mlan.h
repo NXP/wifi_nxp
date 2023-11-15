@@ -49,7 +49,10 @@ Change log:
 #define CONFIG_WIFI_FRAG_THRESHOLD     1
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+#endif
 
+#if !defined(SD8801)
+#define CONFIG_GTK_REKEY_OFFLOAD       1
 #endif
 
 #if defined(SD9177)

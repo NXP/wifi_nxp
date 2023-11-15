@@ -309,6 +309,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->beacon_period       = MLAN_BEACON_INTERVAL;
     priv->pattempted_bss_desc = MNULL;
 #endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+    (void)__memset(pmadapter, &priv->gtk_rekey, 0, sizeof(priv->gtk_rekey));
+#endif
     (void)__memset(pmadapter, &priv->curr_bss_params, 0, sizeof(priv->curr_bss_params));
     priv->listen_interval = MLAN_DEFAULT_LISTEN_INTERVAL;
 #ifndef CONFIG_MLAN_WMSDK
@@ -360,7 +363,6 @@ mlan_status wlan_init_priv(pmlan_private priv)
     (void)__memset(pmadapter, &priv->wpa_ie, 0, sizeof(priv->wpa_ie));
     (void)__memset(pmadapter, &priv->aes_key, 0, sizeof(priv->aes_key));
     priv->wpa_ie_len            = 0;
-    priv->wpa_is_gtk_set        = MFALSE;
     priv->sec_info.wapi_enabled = MFALSE;
     priv->wapi_ie_len           = 0;
     priv->sec_info.wapi_key_on  = MFALSE;
@@ -369,6 +371,7 @@ mlan_status wlan_init_priv(pmlan_private priv)
     (void)__memset(pmadapter, &priv->gen_ie_buf, 0, sizeof(priv->gen_ie_buf));
     priv->gen_ie_buf_len = 0;
 #endif /* CONFIG_MLAN_WMSDK */
+    priv->wpa_is_gtk_set = MFALSE;
 #endif /* STA_SUPPORT */
 
 #ifdef RW610
@@ -647,8 +650,9 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     pmadapter->delay_null_pkt = MFALSE;
 #endif /* CONFIG_MLAN_WMSDK */
-    pmadapter->delay_to_ps      = DELAY_TO_PS_DEFAULT;
-    pmadapter->enhanced_ps_mode = PS_MODE_AUTO;
+    pmadapter->delay_to_ps       = DELAY_TO_PS_DEFAULT;
+    pmadapter->enhanced_ps_mode  = PS_MODE_AUTO;
+    pmadapter->bcn_miss_time_out = DEFAULT_BCN_MISS_TIMEOUT;
 
 #ifdef CONFIG_WMM_UAPSD
     pmadapter->gen_null_pkt   = MFALSE; /* Disable NULL Pkt generation-default */
@@ -744,7 +748,6 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     (void)__memset(pmadapter, &pmadapter->region_channel, 0, sizeof(pmadapter->region_channel));
     pmadapter->region_code = MRVDRV_DEFAULT_REGION_CODE;
     (void)__memcpy(pmadapter, pmadapter->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
-    pmadapter->bcn_miss_time_out  = DEFAULT_BCN_MISS_TIMEOUT;
     pmadapter->adhoc_awake_period = 0;
     pmadapter->ps_state           = PS_STATE_AWAKE;
 #ifndef CONFIG_MLAN_WMSDK

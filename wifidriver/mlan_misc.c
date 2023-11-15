@@ -1401,8 +1401,8 @@ mlan_status wlan_bypass_802dot11_mgmt_pkt(void *data)
     pmgmt_pkt_hdr = (wlan_mgmt_pkt *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
     pieee_pkt_hdr = (wlan_802_11_header *)&pmgmt_pkt_hdr->wlan_header;
     sub_type      = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-	// coverity[overrun-local:SUPPRESS]
-    category      = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
+    // coverity[overrun-local:SUPPRESS]
+    category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
 
     if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)
     {
@@ -1627,6 +1627,35 @@ mlan_status wlan_get_pm_info(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioc
                pmadapter->curr_cmd, wlan_wmm_lists_empty(pmadapter), wlan_bypass_tx_list_empty(pmadapter),
                pmadapter->sdio_ireg);
     }
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief Get hs wakeup reason
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		        MLAN_STATUS_SUCCESS --success
+ */
+mlan_status wlan_get_hs_wakeup_reason(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    pmlan_private pmpriv   = pmadapter->priv[pioctl_req->bss_index];
+    pmlan_ds_pm_cfg pm_cfg = MNULL;
+    mlan_status ret        = MLAN_STATUS_FAILURE;
+
+    ENTER();
+
+    pm_cfg = (mlan_ds_pm_cfg *)pioctl_req->pbuf;
+
+    /* Send command to firmware */
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_HS_WAKEUP_REASON, HostCmd_ACT_GEN_GET, 0, (t_void *)pioctl_req,
+                           &pm_cfg->param.wakeup_reason);
+
+    if (ret == MLAN_STATUS_SUCCESS)
+        ret = MLAN_STATUS_PENDING;
+
     LEAVE();
     return ret;
 }
@@ -2637,7 +2666,7 @@ done:
 }
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 /**
  *  @brief Configure GPIO independent reset
  *

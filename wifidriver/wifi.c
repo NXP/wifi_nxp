@@ -229,7 +229,10 @@ uint32_t wifi_get_value1(void)
 /* Wake up Wi-Fi card */
 void wifi_wake_up_card(uint32_t *resp)
 {
+#ifdef CONFIG_WIFI_PS_DEBUG
     wcmdr_d("Wakeup device...");
+#endif
+
 #ifndef RW610
     (void)sdio_drv_creg_write(0x0, 1, 0x02, resp);
 #else
@@ -1089,15 +1092,21 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
 #endif
-#ifdef CONFIG_FW_VDLL
     mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
     mlan_adapter *pmadapter = pmpriv->adapter;
-#endif
 
 #ifndef RW610
 #if defined(CONFIG_ENABLE_WARNING_LOGS) || defined(CONFIG_WIFI_CMD_RESP_DEBUG)
 
+#ifndef CONFIG_WIFI_PS_DEBUG
+    if (cmd->command != HostCmd_CMD_802_11_PS_MODE_ENH)
+    {
+        wcmdr_d("CMD --- : 0x%x Size: %d Seq: %d", cmd->command, cmd->size, cmd->seq_num);
+    }
+#else
     wcmdr_d("CMD --- : 0x%x Size: %d Seq: %d", cmd->command, cmd->size, cmd->seq_num);
+#endif
+
 #endif /* CONFIG_ENABLE_WARNING_LOGS || CONFIG_WIFI_CMD_RESP_DEBUG*/
 #endif
 
@@ -1184,10 +1193,13 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     (void)os_rwlock_read_unlock(&sleep_rwlock);
 #endif
 
+    pmadapter->cmd_sent = MTRUE;
+
     /* Wait max 20 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
     if (ret != WM_SUCCESS)
     {
+        pmadapter->cmd_sent = MFALSE;
 #ifdef CONFIG_ENABLE_WARNING_LOGS
         t_u32 outbuf_len = 0;
         HostCmd_DS_COMMAND *tmo_cmd =
@@ -1679,6 +1691,8 @@ static void wifi_driver_main_loop(void *argv)
 static void wifi_core_input(void *argv)
 {
     int sta;
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_adapter *pmadapter = pmpriv->adapter;
 
     for (;;)
     {
@@ -1712,6 +1726,12 @@ static void wifi_core_input(void *argv)
 #else
         wifi_sdio_unlock();
 #endif
+
+        if (pmadapter->flush_data)
+        {
+            pmadapter->flush_data = MFALSE;
+            wlan_flush_rxreorder_tbl(pmadapter);
+        }
         // wakelock_put(WL_ID_WIFI_CORE_INPUT);
     } /* for ;; */
 }

@@ -997,6 +997,11 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
     wifi_SubBand_t subband;
     wlan_txpwrlimit_t *txpwrlimit = NULL;
 
+    ARG_UNUSED(chanlist_2g_cfg);
+#ifdef CONFIG_5GHz_SUPPORT
+    ARG_UNUSED(chanlist_5g_cfg);
+#endif
+
     if (argc != 2)
     {
         dump_wlan_get_txpwrlimit_usage();

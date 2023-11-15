@@ -1887,7 +1887,7 @@ typedef PACK_START struct _wifi_csi_config_params_t
 } PACK_END wifi_csi_config_params_t;
 #endif /* CSI_SUPPORT */
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 /** Wi-Fi independent reset config */
 typedef PACK_START struct
 {

@@ -682,7 +682,6 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 {
 #ifdef CONFIG_IPV6
     t_u8 i;
-    ip_addr_t zero_addr = IPADDR6_INIT_HOST(0x0, 0x0, 0x0, 0x0);
 #endif
 
     if (addr == NULL)
@@ -718,8 +717,11 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
-            netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
-            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
+            if (if_handle->netif.ip6_addr_state[i] != IP6_ADDR_INVALID)
+            {
+                netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
+                netif_ip6_addr_set(&if_handle->netif, i, IP6_ADDR_ANY6);
+            }
         }
 
         netif_create_ip6_linklocal_address(&if_handle->netif, 1);

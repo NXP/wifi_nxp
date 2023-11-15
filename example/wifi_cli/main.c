@@ -55,7 +55,7 @@ int wlan_reset_cli_init(void);
  * Code
  ******************************************************************************/
 
-const int TASK_MAIN_PRIO       = OS_PRIO_3;
+const int TASK_MAIN_PRIO = OS_PRIO_3;
 #ifdef CONFIG_WPS2
 const int TASK_MAIN_STACK_SIZE = 1500;
 #else
@@ -73,12 +73,12 @@ AT_ALWAYS_ON_DATA(pm_wakeup_source_t rtcWakeupSource);
 AT_ALWAYS_ON_DATA(pm_wakeup_source_t pin1WakeupSource);
 extern pm_notify_element_t wlan_notify;
 extern bool is_wakeup_cond_set;
-#define APP_PM2_CONSTRAINTS \
+#define APP_PM2_CONSTRAINTS                                                                           \
     6U, PM_RESC_SRAM_0K_384K_STANDBY, PM_RESC_SRAM_384K_448K_STANDBY, PM_RESC_SRAM_448K_512K_STANDBY, \
-    PM_RESC_SRAM_512K_640K_STANDBY, PM_RESC_SRAM_640K_896K_STANDBY, PM_RESC_SRAM_896K_1216K_STANDBY
-#define APP_PM3_CONSTRAINTS \
+        PM_RESC_SRAM_512K_640K_STANDBY, PM_RESC_SRAM_640K_896K_STANDBY, PM_RESC_SRAM_896K_1216K_STANDBY
+#define APP_PM3_CONSTRAINTS                                                                                 \
     6U, PM_RESC_SRAM_0K_384K_RETENTION, PM_RESC_SRAM_384K_448K_RETENTION, PM_RESC_SRAM_448K_512K_RETENTION, \
-    PM_RESC_SRAM_512K_640K_RETENTION, PM_RESC_SRAM_640K_896K_RETENTION, PM_RESC_SRAM_896K_1216K_RETENTION
+        PM_RESC_SRAM_512K_640K_RETENTION, PM_RESC_SRAM_640K_896K_RETENTION, PM_RESC_SRAM_896K_1216K_RETENTION
 #if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
 #ifndef POWER_MANAGER_RTC_PIN1_PRIORITY
 #define POWER_MANAGER_RTC_PIN1_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1)
@@ -204,7 +204,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             {
                 if (ip6_addr_isvalid(addr.ipv6[i].addr_state))
                 {
-                    (void)PRINTF("IPv6 Address: %-13s:\t%s (%s)\r\n", ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr.ipv6[i]),
+                    (void)PRINTF("IPv6 Address: %-13s:\t%s (%s)\r\n",
+                                 ipv6_addr_type_to_desc((struct net_ipv6_config *)&addr.ipv6[i]),
                                  inet6_ntoa(addr.ipv6[i].address), ipv6_addr_state_to_desc(addr.ipv6[i].addr_state));
                 }
             }
@@ -486,18 +487,18 @@ void powerManager_Wakeupsource_Init()
 
 void powerManager_WakeupSourceDump()
 {
-    if(wakeup_by == 0x1)
+    if (wakeup_by == 0x1)
         PRINTF("Woken up by WLAN\r\n");
-    if(wakeup_by == 0x2)
+    if (wakeup_by == 0x2)
         PRINTF("Woken up by RTC\r\n");
-    if(wakeup_by == 0x4)
+    if (wakeup_by == 0x4)
         PRINTF("Woken up by PIN1\r\n");
 }
 
 void powerManager_EnterLowPower()
 {
     /* Check is_wakeup_cond_set first, as wakelcok will be deleted in wlan-reset 0 */
-    if(is_wakeup_cond_set && pm_handle.enable && !wakelock_isheld())
+    if (is_wakeup_cond_set && pm_handle.enable && !wakelock_isheld())
     {
 #ifdef CONFIG_RW610_A1
         PM_SetConstraints(PM_LP_STATE_PM3, APP_PM3_CONSTRAINTS);
@@ -522,10 +523,9 @@ void powerManager_EnterLowPower()
 void powerManager_Init()
 {
     uint32_t resetSrc;
-    power_init_config_t initCfg =
-    {
+    power_init_config_t initCfg = {
         /* VCORE AVDD18 supplied from iBuck on RD board. */
-        .iBuck         = true,
+        .iBuck = true,
         /* CAU_SOC_SLP_REF_CLK not needed. */
         .gateCauRefClk = true,
     };
@@ -571,7 +571,7 @@ void task_main(void *param)
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
-    hostsleep_init();
+    hostsleep_init(wlan_hs_pre_cfg, wlan_hs_post_cfg);
 #endif
 
 #ifdef RW610

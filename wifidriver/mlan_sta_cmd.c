@@ -1120,6 +1120,44 @@ done:
     return ret;
 }
 
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+/**
+ *  @brief This function prepares command of gtk rekey offload
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param cmd_action   The action: GET or SET
+ *  @param cmd_oid      OID: ENABLE or DISABLE
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wlan_cmd_gtk_rekey_offload(
+    pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_u32 cmd_oid, t_void *pdata_buf)
+{
+    HostCmd_DS_GTK_REKEY_PARAMS *rekey = &cmd->params.gtk_rekey;
+    mlan_ds_misc_gtk_rekey_data *data  = (mlan_ds_misc_gtk_rekey_data *)pdata_buf;
+    t_u64 rekey_ctr;
+
+    ENTER();
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG);
+    cmd->size    = wlan_cpu_to_le16(sizeof(*rekey) + S_DS_GEN);
+
+    rekey->action = wlan_cpu_to_le16(cmd_action);
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        memcpy_ext(pmpriv->adapter, rekey->kek, data->kek, MLAN_KEK_LEN, MLAN_KEK_LEN);
+        memcpy_ext(pmpriv->adapter, rekey->kck, data->kck, MLAN_KCK_LEN, MLAN_KCK_LEN);
+        rekey_ctr              = wlan_le64_to_cpu(swap_byte_64(*(t_u64 *)data->replay_ctr));
+        rekey->replay_ctr_low  = wlan_cpu_to_le32((t_u32)rekey_ctr);
+        rekey->replay_ctr_high = wlan_cpu_to_le32((t_u64)rekey_ctr >> 32);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 /**
  *  @brief This function prepares command of supplicant pmk
  *
@@ -2444,6 +2482,11 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_802_11_key_material(pmpriv, cmd_ptr, cmd_action, cmd_oid, pdata_buf);
             break;
 #endif /* End of WPA */
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+        case HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG:
+            ret = wlan_cmd_gtk_rekey_offload(pmpriv, cmd_ptr, cmd_action, cmd_oid, pdata_buf);
+            break;
+#endif
         case HostCmd_CMD_SUPPLICANT_PMK:
             ret = wlan_cmd_802_11_supplicant_pmk(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
@@ -2578,6 +2621,9 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
         case HostCmd_CMD_OTP_READ_USER_DATA:
             ret = wlan_cmd_otp_user_data(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
+        case HostCmd_CMD_HS_WAKEUP_REASON:
+            ret = wlan_cmd_hs_wakeup_reason(pmpriv, cmd_ptr, pdata_buf);
+            break;
 #ifndef CONFIG_MLAN_WMSDK
         case HostCMD_CONFIG_LOW_POWER_MODE:
             ret = wlan_cmd_low_pwr_mode(pmpriv, cmd_ptr, pdata_buf);
@@ -2668,7 +2714,7 @@ mlan_status wlan_ops_sta_prepare_cmd(IN t_void *priv,
             ret = wlan_cmd_cck_desense_cfg(pmpriv, cmd_ptr, cmd_action, pdata_buf);
             break;
 #endif
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
         case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             ret = wlan_cmd_ind_rst_cfg(cmd_ptr, cmd_action, pdata_buf);
             break;

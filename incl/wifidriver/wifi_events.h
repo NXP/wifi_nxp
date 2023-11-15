@@ -84,6 +84,8 @@ enum wifi_event
 #ifdef CONFIG_HOST_SLEEP
     /* Host sleep activated */
     WIFI_EVENT_HS_ACTIVATED,
+    /** HS configuration */
+    WIFI_EVENT_HS_CONFIG,
     /* Sleep confirm done */
     WIFI_EVENT_SLEEP_CONFIRM_DONE,
 #endif
@@ -117,8 +119,6 @@ enum wifi_event
     WIFI_EVENT_WNM_DEEP_SLEEP,
     /** PS Invalid */
     WIFI_EVENT_PS_INVALID,
-    /** HS configuration */
-    WIFI_EVENT_HS_CONFIG,
     /** Error Multicast */
     WIFI_EVENT_ERR_MULTICAST,
     /** error Unicast */

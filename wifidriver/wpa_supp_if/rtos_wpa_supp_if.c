@@ -1336,7 +1336,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
 
         if (status != WM_SUCCESS)
         {
-            supp_e("%s: wifi_nxp_add_key failed", __func__);
+            supp_e("%s: wifi_set_key failed", __func__);
         }
         else
         {
@@ -1346,6 +1346,37 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
         if (ret || skip_set_key)
             return ret;
     }
+out:
+    return ret;
+}
+
+int wifi_nxp_wpa_supp_set_rekey_info(
+    void *if_priv, const u8 *kek, size_t kek_len, const u8 *kck, size_t kck_len, const u8 *replay_ctr)
+{
+    int status                                 = -WM_FAIL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -1;
+
+    if ((!if_priv) || (!kek) || (!kck) || (!replay_ctr))
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    status = wifi_set_rekey_info(wifi_if_ctx_rtos->bss_type, kek, kek_len, kck, kck_len, replay_ctr);
+
+    if (status != WM_SUCCESS)
+    {
+        supp_e("%s: wifi_set_rekey_info failed", __func__);
+        goto out;
+    }
+    else
+    {
+        ret = 0;
+    }
+
 out:
     return ret;
 }
@@ -1632,7 +1663,7 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
     }
 
     if (((wifi_if_ctx_rtos->bss_type == BSS_TYPE_UAP) &&
-            ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP))) ||
+         ((stype == WLAN_FC_STYPE_ASSOC_RESP) || (stype == WLAN_FC_STYPE_REASSOC_RESP))) ||
         (stype == WLAN_FC_STYPE_ACTION))
     {
         memcpy((void *)wifi_if_ctx_rtos->last_mgmt_tx_data, (const void *)data, (size_t)data_len);

@@ -134,6 +134,7 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_PM_CFG_PS_MODE,
 #endif /* UAP_SUPPORT */
     MLAN_OID_PM_INFO,
+    MLAN_OID_PM_HS_WAKEUP_REASON = 0x0009000B,
 
     /* WMM Configuration Group */
     MLAN_IOCTL_WMM_CFG = 0x000A0000,
@@ -233,10 +234,13 @@ typedef enum _mlan_ioctl_req_id
 #ifdef WLAN_LOW_POWER_ENABLE
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+    MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD = 0x00200037,
+#endif
 #ifdef CONFIG_ECSA
     MLAN_OID_MISC_OPER_CLASS = 0x00200038,
 #endif
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
     MLAN_OID_MISC_IND_RST_CFG = 0x00200040,
 #endif
 #ifdef CONFIG_ECSA
@@ -257,7 +261,10 @@ typedef enum _mlan_act_ioctl
 {
     MLAN_ACT_SET = 1,
     MLAN_ACT_GET,
-    MLAN_ACT_CANCEL
+    MLAN_ACT_CANCEL,
+    MLAN_ACT_CLEAR,
+    MLAN_ACT_RESET,
+    MLAN_ACT_DEFAULT
 } mlan_act_ioctl;
 
 /** Enumeration for generic enable/disable */
@@ -2545,6 +2552,12 @@ typedef struct _mlan_ds_ps_info
     t_u32 is_suspend_allowed;
 } mlan_ds_ps_info;
 
+/** Type definition of mlan_ds_wakeup_reason for MLAN_OID_PM_HS_WAKEUP_REASON */
+typedef struct _mlan_ds_hs_wakeup_reason
+{
+    t_u16 hs_wakeup_reason;
+} mlan_ds_hs_wakeup_reason;
+
 /** Type definition of mlan_ds_pm_cfg for MLAN_IOCTL_PM_CFG */
 typedef struct _mlan_ds_pm_cfg
 {
@@ -2571,6 +2584,8 @@ typedef struct _mlan_ds_pm_cfg
         mlan_ds_ps_mgmt ps_mgmt;
         /** power info for MLAN_OID_PM_INFO */
         mlan_ds_ps_info ps_info;
+        /** hs wakeup reason for MLAN_OID_PM_HS_WAKEUP_REASON */
+        mlan_ds_hs_wakeup_reason wakeup_reason;
     } param;
 } mlan_ds_pm_cfg, *pmlan_ds_pm_cfg;
 
@@ -4089,7 +4104,23 @@ typedef struct _mlan_ds_host_clock
 } mlan_ds_host_clock;
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_GTK_REKEY_OFFLOAD)
+#define MLAN_KCK_LEN        16
+#define MLAN_KEK_LEN        16
+#define MLAN_REPLAY_CTR_LEN 8
+/** mlan_ds_misc_gtk_rekey_data */
+typedef struct _mlan_ds_misc_gtk_rekey_data
+{
+    /** key encryption key */
+    t_u8 kek[MLAN_KEK_LEN];
+    /** key confirmation key */
+    t_u8 kck[MLAN_KCK_LEN];
+    /** replay counter */
+    t_u8 replay_ctr[MLAN_REPLAY_CTR_LEN];
+} mlan_ds_misc_gtk_rekey_data;
+#endif
+
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 typedef struct _mlan_ds_ind_rst_cfg
 {
     /** Set or Get */
@@ -4191,7 +4222,11 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_bw_chan_oper bw_chan_oper;
 #endif
         mlan_embedded_dhcp_config embedded_dhcp_config;
-#ifdef CONFIG_WIFI_IND_RESET
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+        /** GTK rekey data */
+        mlan_ds_misc_gtk_rekey_data gtk_rekey;
+#endif
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
         mlan_ds_ind_rst_cfg ind_rst_cfg;
 #endif
     } param;

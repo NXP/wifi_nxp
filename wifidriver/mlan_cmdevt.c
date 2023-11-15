@@ -1858,6 +1858,15 @@ mlan_status wlan_cmd_enh_power_mode(pmlan_private pmpriv,
         psmode_enh->params.ps_bitmap = wlan_cpu_to_le16(ps_bitmap);
         cmd->size                    = wlan_cpu_to_le16(S_DS_GEN + AUTO_PS_FIX_SIZE);
     }
+    else if (cmd_action == EXT_PS_PARAM)
+    {
+        psmode_enh->action                    = wlan_cpu_to_le16(EXT_PS_PARAM);
+        psmode_enh->params.ext_param.reserved = 0;
+        cmd->size                             = wlan_cpu_to_le16(S_DS_GEN + sizeof(t_u16) + sizeof(ext_ps_param));
+        psmode_enh->params.ext_param.param.header.type = wlan_cpu_to_le16(TLV_TYPE_PS_EXT_PARAM);
+        psmode_enh->params.ext_param.param.header.len  = sizeof(t_u32);
+        psmode_enh->params.ext_param.param.mode        = wlan_cpu_to_le32(*((t_u32 *)pdata_buf));
+    }
     else if (cmd_action == EN_AUTO_PS)
     {
         psmode_enh->action                   = (ENH_PS_MODES)(wlan_cpu_to_le16(EN_AUTO_PS));
@@ -2473,7 +2482,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     rate_cfg->cfg_index = 0;
 
     rate_scope         = (MrvlRateScope_t *)(void *)((t_u8 *)rate_cfg + sizeof(HostCmd_DS_TX_RATE_CFG));
-	// coverity[overrun-local:SUPPRESS]
+    // coverity[overrun-local:SUPPRESS]
     rate_scope->type   = wlan_cpu_to_le16(TLV_TYPE_RATE_SCOPE);
     rate_scope->length = wlan_cpu_to_le16(sizeof(MrvlRateScope_t) - sizeof(MrvlIEtypesHeader_t));
     if (pbitmap_rates != MNULL)
@@ -2601,7 +2610,7 @@ mlan_status wlan_ret_tx_rate_cfg(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     }
 
     while (tlv_buf_len > 0U)
-    {   
+    {
         // coverity[overrun-local:SUPPRESS]
         tlv = (t_u16)(*tlv_buf);
         tlv = tlv | (*(tlv_buf + 1) << 8);
@@ -4436,7 +4445,7 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
 }
 #endif /* CONFIG_FW_VDLL */
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 /**
  *  @brief This function prepares command of independent reset.
  *
@@ -4542,6 +4551,50 @@ mlan_status wlan_ret_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, 
 
     cfg->param.boot_sleep = wlan_le16_to_cpu(boot_sleep->enable);
     PRINTM(MCMND, "boot sleep cfg status %u", cfg->param.boot_sleep);
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function prepares command of hs wakeup reason.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param pdata_buf    A pointer to data buffer
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_cmd_hs_wakeup_reason(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_void *pdata_buf)
+{
+    ENTER();
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_HS_WAKEUP_REASON);
+    cmd->size    = wlan_cpu_to_le16((sizeof(HostCmd_DS_HS_WAKEUP_REASON)) + S_DS_GEN);
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
+ *  @brief This function handles the command response of
+ *          hs wakeup reason
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to command buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+mlan_status wlan_ret_hs_wakeup_reason(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    HostCmd_DS_HS_WAKEUP_REASON *hs_wakeup_reason = (HostCmd_DS_HS_WAKEUP_REASON *)&resp->params.hs_wakeup_reason;
+    mlan_ds_pm_cfg *pm_cfg                        = MNULL;
+
+    ENTER();
+
+    pm_cfg                                       = (mlan_ds_pm_cfg *)pioctl_buf->pbuf;
+    pm_cfg->param.wakeup_reason.hs_wakeup_reason = wlan_le16_to_cpu(hs_wakeup_reason->wakeup_reason);
+    pioctl_buf->data_read_written                = sizeof(mlan_ds_pm_cfg);
+
     LEAVE();
     return MLAN_STATUS_SUCCESS;
 }

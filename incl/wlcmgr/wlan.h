@@ -129,7 +129,7 @@
 #include <wm_net_decl.h>
 #endif
 
-#define WLAN_DRV_VERSION "v1.3.r47.p4"
+#define WLAN_DRV_VERSION "v1.3.r47.p5"
 
 #ifdef CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
@@ -580,6 +580,7 @@ typedef enum _ENH_PS_MODES
 {
     GET_PS        = 0,
     SLEEP_CONFIRM = 5,
+    EXT_PS_PARAM  = 6,
 #if defined(CONFIG_WNM_PS)
     DIS_WNM_PS = 0xfc,
     EN_WNM_PS  = 0xfd,
@@ -1606,7 +1607,7 @@ typedef wifi_csi_config_params_t wlan_csi_config_params_t;
 typedef wifi_net_monitor_t wlan_net_monitor_t;
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 /** Configuration for GPIO independent reset
  * \ref wifi_indrst_cfg_t
  */
@@ -3181,6 +3182,7 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
+#ifdef RW610
 #ifdef CONFIG_MEF_CFG
 /** Wowlan configure.
  * This function may be called to config host sleep in firmware.
@@ -3203,6 +3205,7 @@ int wlan_wowlan_config(uint8_t is_mef, t_u32 wake_up_conds);
  */
 int wlan_wowlan_config(t_u32 wake_up_conds);
 #endif
+
 /** Host sleep configure.
  * This function may be called to config host sleep in firmware.
  *
@@ -3210,14 +3213,18 @@ int wlan_wowlan_config(t_u32 wake_up_conds);
  * \param[in] is_periodic Flag to indicate host enter low power periodically or once with power manager.
  */
 void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic);
+#endif /*RW610*/
+
 /** Cancel host sleep.
  * This function may be called to cancel host sleep in firmware.
  */
 void wlan_cancel_host_sleep();
+
 /** Clear host sleep configurations in driver.
  * This function clears all the host sleep related configures in driver.
  */
 void wlan_clear_host_sleep_config();
+
 /** This function set multicast MEF entry
  * \param[in] mef_actionTo be 0--discard and not wake host, 1--discard and wake host 3--allow and wake host.
  */
@@ -3752,6 +3759,15 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg);
  */
 int wlan_set_ipv6_ns_offload();
 #endif
+
+#ifdef CONFIG_HOST_SLEEP
+
+/** WLCMGR host sleep pre configuration */
+void wlan_hs_pre_cfg(void);
+
+/** WLCMGR host sleep post configuration */
+void wlan_hs_post_cfg(void);
+
 /**
  * Use this API to configure host sleep params in Wi-Fi firmware.
  *
@@ -3766,8 +3782,27 @@ int wlan_set_ipv6_ns_offload();
  * \return WM_SUCCESS if operation is successful.
  * \return -WM_FAIL if command fails.
  */
-
 int wlan_send_host_sleep(uint32_t wakeup_condition);
+
+/**
+ * Use this API to get host sleep wakeup reason from Wi-Fi firmware.
+ *
+ * \param[out] hs_wakeup_reason wakeupReason:
+ *                              0: unknown
+ *                              1: Broadcast data matched
+ *                              2: Multicast data matched
+ *                              3: Unicast data matched
+ *                              4: Maskable event matched
+ *                              5. Non-maskable event matched
+ *                              6: Non-maskable condition matched (EAPoL rekey)
+ *                              7: Magic pattern matched
+ *                              Others: reserved. (set to 0)
+ *
+ * \return WM_SUCCESS if operation is successful.
+ * \return -WM_FAIL if command fails.
+ */
+int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason);
+#endif
 
 /**
  * Use this API to get the BSSID of associated BSS.
@@ -6264,7 +6299,7 @@ void wlan_set_rssi_low_threshold(uint8_t threshold);
  *
  * \param[in]  pin A pointer to WPS pin to be generated.
  */
-void wlan_wps_generate_pin(unsigned int *pin);
+void wlan_wps_generate_pin(uint32_t *pin);
 
 /** Start WPS PIN session.
  *
@@ -6840,7 +6875,7 @@ int wlan_imd3_cfg(t_u8 imd3_value);
 int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_addr);
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 /**
  * Set GPIO independent reset configuration
  *

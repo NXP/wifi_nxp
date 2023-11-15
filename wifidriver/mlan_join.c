@@ -1585,7 +1585,7 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         if (wlan_misc_country_2_cfp_table_code(pmpriv->adapter, pmpriv->adapter->country_code,
                                                &pmpriv->adapter->cfp_code_bg, &pmpriv->adapter->cfp_code_a))
         {
-            wifi_e("%s: Fail to update country code", __func__);
+            wifi_d("%s: Fail to update country code", __func__);
         }
         if (wlan_set_regiontable(pmpriv, pmpriv->adapter->region_code, pbss_desc->bss_band) != MLAN_STATUS_SUCCESS)
         {

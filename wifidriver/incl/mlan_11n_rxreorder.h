@@ -86,6 +86,8 @@ void wlan_11n_rxba_sync_event(mlan_private *priv, t_u8 *event_buf, t_u16 len);
 t_void wlan_send_delba_to_all_in_reorder_tbl(pmlan_private priv);
 void wlan_update_rxreorder_tbl(pmlan_adapter pmadapter, bool flag);
 
+void wlan_flush_rxreorder_tbl(pmlan_adapter pmadapter);
+
 /** clean up reorder_tbl */
 void wlan_cleanup_reorder_tbl(mlan_private *priv, t_u8 *ta);
 #endif /* _MLAN_11N_RXREORDER_H_ */

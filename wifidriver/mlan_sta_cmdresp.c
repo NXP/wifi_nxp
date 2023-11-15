@@ -1023,6 +1023,9 @@ static mlan_status wlan_ret_802_11_key_material(IN pmlan_private pmpriv,
 {
     HostCmd_DS_802_11_KEY_MATERIAL *pkey = &resp->params.key_material;
     mlan_ds_sec_cfg *sec                 = MNULL;
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+    t_u8 zero_kek[MLAN_KEK_LEN] = {0};
+#endif
 
     ENTER();
 
@@ -1038,6 +1041,19 @@ static mlan_status wlan_ret_802_11_key_material(IN pmlan_private pmpriv,
                 PRINTM(MINFO, "GTK_SET: Open port for WPA/WPA2 h-supp mode\n");
                 pmpriv->port_open = MTRUE;
             }
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+            if (memcmp(pmpriv->adapter, pmpriv->gtk_rekey.kek, zero_kek, sizeof(zero_kek)) != 0)
+            {
+                mlan_status ret = MLAN_STATUS_SUCCESS;
+                ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG, HostCmd_ACT_GEN_SET, 0, MNULL,
+                                       &pmpriv->gtk_rekey);
+                if (ret)
+                {
+                    PRINTM(MINFO, "Error sending message to FW\n");
+                }
+                memset(pmpriv->adapter, &pmpriv->gtk_rekey, 0, sizeof(mlan_ds_misc_gtk_rekey_data));
+            }
+#endif
             pmpriv->scan_block = MFALSE;
         }
     }
@@ -1852,6 +1868,10 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
         case HostCmd_CMD_802_11_KEY_MATERIAL:
             ret = wlan_ret_802_11_key_material(pmpriv, resp, pioctl_buf);
             break;
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+        case HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG:
+            break;
+#endif
         case HostCmd_CMD_SUPPLICANT_PMK:
             ret = wlan_ret_802_11_supplicant_pmk(pmpriv, resp, pioctl_buf);
             break;
@@ -2028,7 +2048,7 @@ mlan_status wlan_ops_sta_process_cmdresp(IN t_void *priv, IN t_u16 cmdresp_no, I
             ret = wlan_ret_host_clock_cfg(pmpriv, resp, pioctl_buf);
             break;
 #endif
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
         case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             ret = wlan_ret_ind_rst_cfg(pmpriv, resp, pioctl_buf);
             break;

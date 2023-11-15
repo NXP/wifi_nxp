@@ -3,6 +3,13 @@
  
 @section wifi NXP WiFi
 
+Version 1.3.r47.p5
+ - Updates:
+  - Updated FC's f/w version to 2.p66.11.
+ - Bug Fix:
+  - AKM checks are wrong for UAP PMF MANDATORY WPA2 PSK STA PMF MANDATORY WPA2 PSK for 11AN[20Mhz] as well as BGN[20Mhz] mode.
+  - STAUT is not waking up in any scenarios after giving Host-sleep commands with default power save enabled mode.
+
 Version 1.3.r47.p4
  - Features
   - Added support for Doxygen.

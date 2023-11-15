@@ -839,7 +839,6 @@ static mlan_status do_wlan_ret_11n_addba_req(mlan_private *priv, HostCmd_DS_COMM
             if ((ptx_ba_tbl = wlan_11n_get_txbastream_tbl(priv, padd_ba_rsp->peer_mac_addr)))
             {
                 wlan_11n_update_txbastream_tbl_ampdu_stat(priv, padd_ba_rsp->peer_mac_addr, MFALSE, tid);
-                ptx_ba_tbl->ampdu_supported[tid] = MFALSE;
             }
             wlan_release_ralist_lock(priv);
         }
@@ -1516,6 +1515,20 @@ int wifi_set_txbfcap(unsigned int tx_bf_cap)
 
     ds_11n_cfg.sub_command     = MLAN_OID_11N_CFG_TX_BF_CAP;
     ds_11n_cfg.param.tx_bf_cap = tx_bf_cap;
+
+    return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
+}
+
+int wifi_set_delba(t_u8 tid, t_u8 *peer_mac_addr, t_u8 direction)
+{
+    mlan_ds_11n_cfg ds_11n_cfg;
+
+    (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
+
+    ds_11n_cfg.sub_command      = MLAN_OID_11N_CFG_DELBA;
+    ds_11n_cfg.param.del_ba.tid = tid;
+    memcpy(ds_11n_cfg.param.del_ba.peer_mac_addr, peer_mac_addr, MLAN_MAC_ADDR_LENGTH);
+    ds_11n_cfg.param.del_ba.direction = direction;
 
     return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
@@ -2519,7 +2532,7 @@ static void load_bss_list(const HostCmd_DS_STA_LIST *sta_list)
         if ((si->rssi & 0x80) != 0)
         {
             // coverity[overrun-local:SUPPRESS]
-			sta[i].rssi = -(256 - si->rssi);
+            sta[i].rssi = -(256 - si->rssi);
         }
         else
         {
@@ -2568,7 +2581,14 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
     last_resp_rcvd = command;
 #endif
 
+#ifndef CONFIG_WIFI_PS_DEBUG
+    if ((resp->command & 0x0fffU) != HostCmd_CMD_802_11_PS_MODE_ENH)
+    {
+        wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
+    }
+#else
     wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
+#endif
 
     mlan_bss_type bss_type = (mlan_bss_type)HostCmd_GET_BSS_TYPE(resp->seq_num);
 
@@ -3083,13 +3103,13 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     result                      = WIFI_EVENT_REASON_FAILURE;
                     goto assoc_resp_ret;
                 }
-				// coverity[overrun-buffer-arg:SUPPRESS]
+                // coverity[overrun-buffer-arg:SUPPRESS]
                 memcpy(assoc_resp->frame.frame, passoc_rsp1, assoc_resp->frame.frame_len);
 
                 if (pmpriv->assoc_req_size && (pmpriv->assoc_req_size <= (int)sizeof(assoc_resp->req_ie)))
                 {
                     assoc_resp->req_ie_len = pmpriv->assoc_req_size;
-					// coverity[overrun-buffer-arg:SUPPRESS]
+                    // coverity[overrun-buffer-arg:SUPPRESS]
                     memcpy(assoc_resp->req_ie, pmpriv->assoc_req_buf, assoc_resp->req_ie_len);
                 }
                 if (wm_wifi.supp_if_callbk_fns->assoc_resp_callbk_fn)
@@ -3469,6 +3489,25 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+            case HostCmd_CMD_HS_WAKEUP_REASON:
+            {
+                const HostCmd_DS_HS_WAKEUP_REASON *hs_wakeup_reason = &resp->params.hs_wakeup_reason;
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    if (wm_wifi.cmd_resp_priv != NULL)
+                    {
+                        t_u16 *wakeup_reason = (t_u16 *)wm_wifi.cmd_resp_priv;
+                        *wakeup_reason       = hs_wakeup_reason->wakeup_reason;
+                    }
+
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
             case HostCmd_CMD_RX_MGMT_IND:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -3538,7 +3577,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                         for (i = 0; i < mod_num; i++)
                                         {
                                             // coverity[overrun-local:SUPPRESS]
-											txpwrlimit->txpwrlimit_config[txpwrlimit->num_chans]
+                                            txpwrlimit->txpwrlimit_config[txpwrlimit->num_chans]
                                                 .txpwrlimit_entry[i]
                                                 .mod_group = trpc_tlv->mod_group[i].mod_group;
                                             txpwrlimit->txpwrlimit_config[txpwrlimit->num_chans]
@@ -4251,7 +4290,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD) 
             case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -5003,6 +5042,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
+    mlan_adapter *pmadapter  = pmpriv->adapter;
+
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_status rv = MLAN_STATUS_SUCCESS;
 #endif
@@ -5027,7 +5068,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
         wevt_d("No mem allocated for msg.data");
         return -WM_FAIL;
     }
+
+#ifndef CONFIG_WIFI_PS_DEBUG
+    if ((evt->event_id != EVENT_PS_SLEEP) && (evt->event_id != EVENT_PS_AWAKE))
+    {
+        wevt_d("EVENT - : 0x%x Len : %d Reason: %d", evt->event_id, evt->length, evt->reason_code);
+    }
+#else
     wevt_d("EVENT - : 0x%x Len : %d Reason: %d", evt->event_id, evt->length, evt->reason_code);
+#endif
 
     if ((evt->event_id != EVENT_PS_AWAKE) && (mlan_adap->ps_state == PS_STATE_SLEEP))
     {
@@ -5085,36 +5134,49 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             break;
         case EVENT_PS_SLEEP:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wevt_d("_");
-            if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
-            {
-                mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
-#ifdef CONFIG_HOST_SLEEP
-                wakelock_get();
 #endif
-                if (split_scan_in_progress == false)
+            if (!pmadapter->cmd_sent && !pmadapter->keep_wakeup)
+            {
+                if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
                 {
-                    /* When received EVENT_PS_SLEEP, firstly send msg to wifi_powersave task
-                     * with lowest priority, then send msg to wlcmgr task. This will let all
-                     * TX data transmitted, then continue the 0xe4 cmd handshake */
-                    struct wifi_message ps_msg;
-                    ps_msg.reason = WIFI_EVENT_REASON_SUCCESS;
-                    ps_msg.event  = WIFI_EVENT_SLEEP;
-                    os_queue_send(&wm_wifi.powersave_queue, &ps_msg, OS_NO_WAIT);
+                    mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
+#ifdef CONFIG_HOST_SLEEP
+                    wakelock_get();
+#endif
+                    if (split_scan_in_progress == false)
+                    {
+                        /* When received EVENT_PS_SLEEP, firstly send msg to wifi_powersave task
+                         * with lowest priority, then send msg to wlcmgr task. This will let all
+                         * TX data transmitted, then continue the 0xe4 cmd handshake */
+                        struct wifi_message ps_msg;
+                        ps_msg.reason = WIFI_EVENT_REASON_SUCCESS;
+                        ps_msg.event  = WIFI_EVENT_SLEEP;
+                        os_queue_send(&wm_wifi.powersave_queue, &ps_msg, OS_NO_WAIT);
+                    }
+                    else
+                    {
+                        /** Do Nothing */
+                    }
                 }
                 else
                 {
-                    /** Do Nothing */
+                    /* Unexpected PS SLEEP event */
+                    wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
                 }
             }
             else
             {
-                /* Unexpected PS SLEEP event */
-                wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
+#ifdef CONFIG_WIFI_PS_DEBUG
+                wevt_d("+");
+#endif
             }
             break;
         case EVENT_PS_AWAKE:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wevt_d("|");
+#endif
 #ifdef CONFIG_WMM_UAPSD
             if (!pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->sleep_period.period)
             {
@@ -5185,9 +5247,11 @@ int wifi_handle_fw_event(struct bus_message *msg)
             wifi_wfd_event(true, false, &evt->event_id);
             break;
 #endif
+#ifdef CONFIG_HOST_SLEEP
         case EVENT_HS_ACT_REQ:
             (void)wifi_event_completion(WIFI_EVENT_HS_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
             break;
+#endif
 #ifdef CONFIG_11K_OFFLOAD
         case EVENT_NLIST_REPORT:
         {
@@ -5250,6 +5314,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
 #ifdef CONFIG_11N
+        case EVENT_RXBA_SYNC:
+            wifi_d("EVENT:  RXBA_SYNC");
+            wlan_11n_rxba_sync_event(pmpriv, (t_u8 *)evt + 8, evt->length - 8);
+            break;
         case EVENT_ADDBA:
         {
             void *saved_event_buff = wifi_11n_save_request(evt);
@@ -7925,7 +7993,7 @@ void wifi_cau_temperature_write_to_firmware()
 }
 #endif
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
     int ret;

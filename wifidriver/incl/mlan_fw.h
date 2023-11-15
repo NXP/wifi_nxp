@@ -1264,6 +1264,11 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: Tx data pause */
 #define HostCmd_CMD_CFG_TX_DATA_PAUSE 0x0103
 
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+/** Host Command ID: GTK REKEY OFFLOAD CFG */
+#define HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG 0x010f
+#endif
+
 #ifdef WIFI_DIRECT_SUPPORT
 /** Host Command ID: WIFI_DIRECT_MODE_CONFIG */
 #define HOST_CMD_WIFI_DIRECT_MODE_CONFIG 0x00eb
@@ -1478,6 +1483,9 @@ typedef enum _ENH_PS_MODES
 /** Host Command ID: GPIO TSF LATCH */
 #define HostCmd_GPIO_TSF_LATCH_PARAM_CONFIG 0x0278
 #endif /* CONFIG_WIFI_CLOCKSYNC */
+
+/** Host Command ID: HS Wakeup Reason */
+#define HostCmd_CMD_HS_WAKEUP_REASON 0x0116
 
 #ifdef CONFIG_MULTI_CHAN
 /** Host Command ID: Multi chan config */
@@ -2870,6 +2878,23 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_KEY_MATERIAL
 } MLAN_PACK_END HostCmd_DS_802_11_KEY_MATERIAL;
 #endif /* WPA || WAPI_AP || HOST_AUTHENTICATOR */
 
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+/** HostCmd_DS_GTK_REKEY_PARAMS */
+typedef MLAN_PACK_START struct _HostCmd_DS_GTK_REKEY_PARAMS
+{
+    /** Action */
+    t_u16 action;
+    /** Key confirmation key */
+    t_u8 kck[MLAN_KCK_LEN];
+    /** Key encryption key */
+    t_u8 kek[MLAN_KEK_LEN];
+    /** Replay counter low 32 bit */
+    t_u32 replay_ctr_low;
+    /** Replay counter high 32 bit */
+    t_u32 replay_ctr_high;
+} MLAN_PACK_END HostCmd_DS_GTK_REKEY_PARAMS;
+#endif
+
 /** Data structure of WMM QoS information */
 typedef MLAN_PACK_START struct _WmmQosInfo_t
 {
@@ -3183,6 +3208,26 @@ typedef struct __sleep_confirm_param
     t_u16 resp_ctrl;
 } sleep_confirm_param;
 
+/* bit define for pre_asleep*/
+#define BLOCK_CMD_IN_PRE_ASLEEP MBIT(0)
+/** MrvlIEtypes_ext_ps_param_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_ext_ps_param_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** mode: bit0:BLOCK_CMD_IN_PRE_ASLEEP */
+    t_u32 mode;
+} MLAN_PACK_END MrvlIEtypes_ext_ps_param_t;
+
+/** ext_ps_param_t */
+typedef MLAN_PACK_START struct _ext_ps_param
+{
+    /** reserved */
+    t_u16 reserved;
+    /** ext_ps_param tlv */
+    MrvlIEtypes_ext_ps_param_t param;
+} MLAN_PACK_END ext_ps_param;
+
 /** bitmap for get auto deepsleep */
 #define BITMAP_AUTO_DS 0x01U
 /** bitmap for sta power save */
@@ -3212,6 +3257,8 @@ typedef struct _auto_ps_param
 /** TLV type : wnm param */
 #define TLV_TYPE_WNM_PARAM (PROPRIETARY_TLV_BASE_ID + 0x158) // 0x0258
 #endif
+/** TLV type: ps_ext_param */
+#define TLV_TYPE_PS_EXT_PARAM (PROPRIETARY_TLV_BASE_ID + 0x15F) /* 0x25F */
 
 /** MrvlIEtypes_auto_ds_param_t */
 typedef MLAN_PACK_START struct _MrvlIEtypes_auto_ds_param_t
@@ -3275,6 +3322,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_PS_MODE_ENH
         /** wnm ps param */
         wnm_ps_param param;
 #endif
+        /** ext ps param */
+        ext_ps_param ext_param;
     } params;
 } MLAN_PACK_END HostCmd_DS_802_11_PS_MODE_ENH;
 
@@ -3408,7 +3457,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MAC_CONTROL
     t_u32 action;
 } MLAN_PACK_END HostCmd_DS_MAC_CONTROL;
 
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 /** HostCmd_DS_IND_RST */
 typedef MLAN_PACK_START struct _HostCmd_DS_IND_RST
 {
@@ -5514,6 +5563,22 @@ typedef MLAN_PACK_START struct _HostCmd_DS_AUTO_RECONNECT
     t_u16 flags;
 } MLAN_PACK_END HostCmd_DS_AUTO_RECONNECT;
 
+/** HostCmd_CMD_HS_WAKEUP_REASON */
+typedef MLAN_PACK_START struct _HostCmd_DS_HS_WAKEUP_REASON
+{
+    /** wakeupReason:
+     * 0: unknown
+     * 1: Broadcast data matched
+     * 2: Multicast data matched
+     * 3: Unicast data matched
+     * 4: Maskable event matched
+     * 5. Non-maskable event matched
+     * 6: Non-maskable condition matched (EAPoL rekey)
+     * 7: Magic pattern matched
+     * Others: reserved. (set to 0) */
+    t_u16 wakeup_reason;
+} MLAN_PACK_END HostCmd_DS_HS_WAKEUP_REASON;
+
 /** HostCmd_BRIDGE_MODE */
 typedef MLAN_PACK_START struct _HostCmd_BRIDGE_MODE
 {
@@ -7514,7 +7579,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_802_11_CFG_DATA cfg_data;
         /** MAC control */
         HostCmd_DS_MAC_CONTROL mac_ctrl;
-#ifdef CONFIG_WIFI_IND_RESET
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
         /** Test Independent reset */
         HostCmd_DS_IND_RST ind_rst;
         /** GPIO Independent reset configure */
@@ -7641,6 +7706,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         /** Key material */
         HostCmd_DS_802_11_KEY_MATERIAL key_material;
 #endif /*WPA || WAPI_AP || HOST_AUTHENTICATOR*/
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+        /** GTK Rekey parameters */
+        HostCmd_DS_GTK_REKEY_PARAMS gtk_rekey;
+#endif
         /** E-Supplicant PSK */
         HostCmd_DS_802_11_SUPPLICANT_PMK esupplicant_psk;
         /** E-Supplicant profile */
@@ -7667,6 +7736,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_BRIDGE_MODE bridge_mode;
         /** Auto Reconnect */
         HostCmd_DS_AUTO_RECONNECT auto_reconnect;
+        /** HS Wakeup Reason */
+        HostCmd_DS_HS_WAKEUP_REASON hs_wakeup_reason;
         /** Inactivity timeout extend */
         HostCmd_DS_INACTIVITY_TIMEOUT_EXT inactivity_to;
 #ifdef UAP_SUPPORT

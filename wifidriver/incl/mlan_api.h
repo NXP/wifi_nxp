@@ -359,6 +359,9 @@ int wifi_set_key(int bss_index,
                  unsigned seq_len,
                  const uint8_t *mac_addr,
                  unsigned int flags);
+int wifi_set_rekey_info(
+    int bss_index, const t_u8 *kek, size_t kek_len, const t_u8 *kck, size_t kck_len, const t_u8 *replay_ctr);
+
 /**
  * Get User Data from OTP Memory
  *

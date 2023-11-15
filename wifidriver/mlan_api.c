@@ -120,10 +120,8 @@ int wifi_deauthenticate(uint8_t *bssid)
 
     (void)wlan_cmd_802_11_deauthenticate((mlan_private *)mlan_adap->priv[0], cmd, bssid);
     (void)wifi_wait_for_cmdresp(NULL);
-    if (!mlan_adap->country_ie_ignore)
-    {
-        wifi_restore_region_code();
-    }
+
+    wifi_restore_region_code();
 
     return WM_SUCCESS;
 }
@@ -167,10 +165,7 @@ int wifi_nxp_deauthenticate(unsigned int bss_type, const uint8_t *bssid, uint16_
     }
     (void)wifi_wait_for_cmdresp(NULL);
 
-    if (!mlan_adap->country_ie_ignore)
-    {
-        wifi_restore_region_code();
-    }
+    wifi_restore_region_code();
 
     return WM_SUCCESS;
 }
@@ -2182,7 +2177,12 @@ int wifi_set_key(int bss_index,
 {
     /* fixme: check if this needs to go on heap */
     mlan_ds_sec_cfg sec;
+    int ret           = WM_SUCCESS;
     t_u8 bcast_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+    mlan_private *pmpriv        = (mlan_private *)mlan_adap->priv[bss_index];
+    t_u8 zero_kek[MLAN_KEK_LEN] = {0};
+#endif
 
     (void)memset(&sec, 0x00, sizeof(mlan_ds_sec_cfg));
     sec.sub_command = MLAN_OID_SEC_CFG_ENCRYPT_KEY;
@@ -2228,7 +2228,71 @@ int wifi_set_key(int bss_index,
     sec.param.encrypt_key.key_len = key_len;
     (void)memcpy((void *)sec.param.encrypt_key.key_material, (const void *)key, key_len);
 
-    return wifi_send_key_material_cmd(bss_index, &sec);
+    ret = wifi_send_key_material_cmd(bss_index, &sec);
+
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+
+    if ((ret == WM_SUCCESS) && (is_pairwise == false))
+    {
+        if (memcmp(pmpriv->gtk_rekey.kek, zero_kek, sizeof(zero_kek)) != 0)
+        {
+            mlan_status status = MLAN_STATUS_SUCCESS;
+            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG, HostCmd_ACT_GEN_SET, 0, MNULL,
+                                   &pmpriv->gtk_rekey);
+            if (status)
+            {
+                PRINTM(MINFO, "Error sending message to FW\n");
+                ret = -WM_FAIL;
+            }
+            (void)__memset(pmpriv->adapter, &pmpriv->gtk_rekey, 0, sizeof(mlan_ds_misc_gtk_rekey_data));
+        }
+    }
+#endif
+
+    return ret;
+}
+
+int wifi_set_rekey_info(
+    int bss_index, const t_u8 *kek, size_t kek_len, const t_u8 *kck, size_t kck_len, const t_u8 *replay_ctr)
+{
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+    mlan_ds_misc_cfg misc;
+    mlan_ioctl_req req;
+    mlan_status rv = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+
+    misc.sub_command = MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD;
+
+    (void)memcpy(misc.param.gtk_rekey.kek, kek, MLAN_KEK_LEN);
+    (void)memcpy(misc.param.gtk_rekey.kck, kck, MLAN_KCK_LEN);
+    (void)memcpy(misc.param.gtk_rekey.replay_ctr, replay_ctr, MLAN_REPLAY_CTR_LEN);
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+    req.pbuf      = (t_u8 *)&misc;
+    req.buf_len   = sizeof(mlan_ds_misc_cfg);
+    req.bss_index = bss_index;
+    req.req_id    = MLAN_IOCTL_MISC_CFG;
+    req.action    = MLAN_ACT_SET;
+
+    if (bss_index != 0)
+    {
+        rv = wlan_ops_uap_ioctl(mlan_adap, &req);
+    }
+    else
+    {
+        rv = wlan_ops_sta_ioctl(mlan_adap, &req);
+    }
+
+    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+#else
+    return -WM_FAIL;
+#endif
 }
 
 int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index, const uint8_t *key, unsigned key_len)
@@ -5895,20 +5959,23 @@ int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action)
 
 void wifi_restore_region_code()
 {
-    /* Set the region code to WWSM by default after disconnecting bss*/
-    mlan_adap->region_code = MRVDRV_DEFAULT_REGION_CODE;
-    (void)memcpy(mlan_adap->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
-
-    /* Recover region code and table based on country code */
-    if (wlan_misc_country_2_cfp_table_code(mlan_adap, mlan_adap->country_code, &mlan_adap->cfp_code_bg,
-                                           &mlan_adap->cfp_code_a))
+    if (!mlan_adap->country_ie_ignore)
     {
-        wifi_e("%s: Fail to recover country code", __func__);
-    }
+        /* Set the region code to WWSM by default after disconnecting bss*/
+        mlan_adap->region_code = MRVDRV_DEFAULT_REGION_CODE;
+        (void)memcpy(mlan_adap->country_code, MRVDRV_DEFAULT_COUNTRY_CODE, COUNTRY_CODE_LEN);
 
-    if (wlan_set_regiontable(mlan_adap->priv[0], (t_u8)mlan_adap->region_code, mlan_adap->fw_bands) !=
-        MLAN_STATUS_SUCCESS)
-    {
-        wifi_d("%s: Failed to recover region table.", __func__);
+        /* Recover region code and table based on country code */
+        if (wlan_misc_country_2_cfp_table_code(mlan_adap, mlan_adap->country_code, &mlan_adap->cfp_code_bg,
+                                               &mlan_adap->cfp_code_a))
+        {
+            wifi_e("%s: Fail to recover country code", __func__);
+        }
+
+        if (wlan_set_regiontable(mlan_adap->priv[0], (t_u8)mlan_adap->region_code, mlan_adap->fw_bands) !=
+            MLAN_STATUS_SUCCESS)
+        {
+            wifi_d("%s: Failed to recover region table.", __func__);
+        }
     }
 }

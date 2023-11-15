@@ -2819,6 +2819,46 @@ void set_ioport_inmlan(t_u32 port)
 }
 
 #ifdef CONFIG_HOST_SLEEP
+void wifi_print_wakeup_reason(t_u16 hs_wakeup_reason)
+{
+    if (hs_wakeup_reason == 0)
+    {
+        PRINTF("Woken up by unknown reason\r\n");
+    }
+    else if (hs_wakeup_reason == 1)
+    {
+        PRINTF("Woken up by Broadcast data matched\r\n");
+    }
+    else if (hs_wakeup_reason == 2)
+    {
+        PRINTF("Woken up by Multicast data matched\r\n");
+    }
+    else if (hs_wakeup_reason == 3)
+    {
+        PRINTF("Woken up by Unicast data matched\r\n");
+    }
+    else if (hs_wakeup_reason == 4)
+    {
+        PRINTF("Woken up by Maskable event matched\r\n");
+    }
+    else if (hs_wakeup_reason == 5)
+    {
+        PRINTF("Woken up by Non-maskable event matched\r\n");
+    }
+    else if (hs_wakeup_reason == 6)
+    {
+        PRINTF("Woken up by Non-maskable condition matched (EAPoL rekey)\r\n");
+    }
+    else if (hs_wakeup_reason == 7)
+    {
+        PRINTF("Woken up by Magic pattern matched\r\n");
+    }
+    else
+    {
+        PRINTF("Woken up by reserved reason\r\n");
+    }
+}
+
 void wifi_clear_wakeup_reason(void)
 {
     if (mlan_adap != NULL)
