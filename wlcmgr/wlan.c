@@ -10935,13 +10935,11 @@ int wlan_set_uap_max_clients(unsigned int max_sta_num)
             return ret;
         }
 
-        wlan.uap_supported_max_sta_num = max_sta_num;
-
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_AP
         struct netif *uap_netif = net_get_uap_interface();
 
-        wpa_supp_set_ap_max_num_sta(uap_netif, wlan.uap_supported_max_sta_num);
+        wpa_supp_set_ap_max_num_sta(uap_netif, max_sta_num);
 #endif
 #endif
         return ret;
