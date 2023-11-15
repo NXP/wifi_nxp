@@ -64,34 +64,34 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
     uint32_t board_type = 0;
     int rv              = WM_SUCCESS;
 
+    board_type = wifi_get_board_type();
+    if (RW610_PACKAGE_TYPE_QFN == board_type)
+    {
+        (void)PRINTF("PKG_TYPE: QFN\r\n");
+        (void)PRINTF("Set QFN tx power table data \r\n");
+    }
+    else if (RW610_PACKAGE_TYPE_BGA == board_type)
+    {
+        (void)PRINTF("PKG_TYPE: BGA\r\n");
+        (void)PRINTF("Set BGA tx power table data \r\n");
+    }
+    else if (RW610_PACKAGE_TYPE_CSP == board_type)
+    {
+        (void)PRINTF("PKG_TYPE: CSP\r\n");
+        (void)PRINTF("Set CSP tx power table data \r\n");
+    }
+    else
+    {
+        board_type = RW610_PACKAGE_TYPE_BGA;
+        (void)PRINTF("PKG_TYPE: UNKNOWN\r\n");
+        (void)PRINTF("Set BGA tx power table data \r\n");
+        (void)PRINTF("Can't get board type, we use bga data default \r\n");
+    }
+
     for (i = 0; i < sizeof(rg_power_cfg_rw610) / sizeof(rg_power_cfg); i++)
     {
         if (region_code == rg_power_cfg_rw610[i].region_code)
         {
-            board_type = wifi_get_board_type();
-            if (RW610_PACKAGE_TYPE_QFN == board_type)
-            {
-                (void)PRINTF("PKG_TYPE: QFN\r\n");
-                (void)PRINTF("Set QFN tx power table data \r\n");
-            }
-            else if (RW610_PACKAGE_TYPE_BGA == board_type)
-            {
-                (void)PRINTF("PKG_TYPE: BGA\r\n");
-                (void)PRINTF("Set BGA tx power table data \r\n");
-            }
-            else if (RW610_PACKAGE_TYPE_CSP == board_type)
-            {
-                (void)PRINTF("PKG_TYPE: CSP\r\n");
-                (void)PRINTF("Set CSP tx power table data \r\n");
-            }
-            else
-            {
-                board_type = RW610_PACKAGE_TYPE_BGA;
-                (void)PRINTF("PKG_TYPE: UNKNOWN\r\n");
-                (void)PRINTF("Set BGA tx power table data \r\n");
-                (void)PRINTF("Can't get board type, we use bga data default \r\n");
-            }
-
             rv = wlan_set_region_power_cfg(rg_power_cfg_rw610[i].power_info[board_type].rg_power_table,
                                            rg_power_cfg_rw610[i].power_info[board_type].rg_len);
 
@@ -99,7 +99,13 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
         }
     }
 
-    return -WM_FAIL;
+    /* Set FCC power table if rg_power_cfg_rw610 does not have a corresponding region_code temporarily */
+    wlcm_d("power_info of region_code %d not available, use US power table by default.", region_code);
+
+    rv = wlan_set_region_power_cfg(rg_power_cfg_rw610[0].power_info[board_type].rg_power_table,
+                                           rg_power_cfg_rw610[0].power_info[board_type].rg_len);
+
+    return rv;
 }
 #elif defined(CONFIG_COMPRESS_TX_PWTBL)
 typedef struct _rg_power_cfg
