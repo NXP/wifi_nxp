@@ -261,7 +261,7 @@ static fwdnld_intf_ret_t sdio_interface_send(fwdnld_intf_t *intf,
                 break;
             }
 
-            // (void)PRINTF("len %d =>", len);
+            // (void)PRINTF("len %d =>\r\n", *len);
             if (*len != 0U)
             {
                 break;
