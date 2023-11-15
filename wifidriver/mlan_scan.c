@@ -4968,6 +4968,46 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #endif /* CONFIG_WPA_SUPP_WPS */
 #endif
 
+            band = BAND_G;
+            /*
+             * If the BSS info TLV was appended to the scan results, save
+             *   this entry's TSF value in the networkTSF field. The
+             *   networkTSF is the firmware's TSF value at the time the
+             *   beacon or probe response was received.
+             */
+            if (pscan_info_tlv)
+            {
+                /* RSSI is 2 byte long */
+                bss_new_entry->rssi = -(t_s32)(wlan_le16_to_cpu(pscan_info_tlv->rssi));
+#if 0
+                if(bss_new_entry->rssi > 0x7f)
+                    bss_new_entry->rssi = - (256 - bss_new_entry->rssi);
+#endif
+                PRINTM(MINFO, "EXT_SCAN: RSSI=%d\n", bss_new_entry->rssi);
+                (void)__memcpy(pmpriv->adapter, &tsf_val, &pscan_info_tlv->tsf, sizeof(tsf_val));
+                tsf_val = wlan_le64_to_cpu(tsf_val);
+                (void)__memcpy(pmpriv->adapter, &bss_new_entry->network_tsf, &tsf_val,
+                               sizeof(bss_new_entry->network_tsf));
+                band = radio_type_to_band(pscan_info_tlv->band);
+                if (bss_new_entry->channel == 0)
+                    bss_new_entry->channel = pscan_info_tlv->channel;
+            }
+            /* Save the band designation for this entry for use in join */
+            bss_new_entry->bss_band = band;
+            cfp = wlan_find_cfp_by_band_and_channel(pmadapter, bss_new_entry->bss_band, (t_u16)bss_new_entry->channel);
+
+            if (cfp)
+                bss_new_entry->freq = cfp->freq;
+            else
+                bss_new_entry->freq = 0;
+#ifdef MULTI_BSSID_SUPPORT
+            if (IS_FW_SUPPORT_MULTIBSSID(pmadapter))
+            {
+                if (bss_new_entry->multi_bssid_ap == MULTI_BSSID_AP)
+                    wlan_parse_multi_bssid_ap(pmpriv, bss_new_entry, &num_in_table);
+            }
+#endif
+
             /*
              * Search the scan table for the same bssid
              */
@@ -5036,30 +5076,6 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 }
             }
 
-            band = BAND_G;
-            /*
-             * If the BSS info TLV was appended to the scan results, save
-             *   this entry's TSF value in the networkTSF field. The
-             *   networkTSF is the firmware's TSF value at the time the
-             *   beacon or probe response was received.
-             */
-            if (pscan_info_tlv)
-            {
-                /* RSSI is 2 byte long */
-                bss_new_entry->rssi = -(t_s32)(wlan_le16_to_cpu(pscan_info_tlv->rssi));
-#if 0
-		if(bss_new_entry->rssi > 0x7f)
-                bss_new_entry->rssi = - (256 - bss_new_entry->rssi);
-#endif
-                PRINTM(MINFO, "EXT_SCAN: RSSI=%d\n", bss_new_entry->rssi);
-                (void)__memcpy(pmpriv->adapter, &tsf_val, &pscan_info_tlv->tsf, sizeof(tsf_val));
-                tsf_val = wlan_le64_to_cpu(tsf_val);
-                (void)__memcpy(pmpriv->adapter, &bss_new_entry->network_tsf, &tsf_val,
-                               sizeof(bss_new_entry->network_tsf));
-                band = radio_type_to_band(pscan_info_tlv->band);
-                if (bss_new_entry->channel == 0)
-                    bss_new_entry->channel = pscan_info_tlv->channel;
-            }
 #ifndef CONFIG_MLAN_WMSDK
             /*
              * Save the beacon/probe response returned for later application
@@ -5074,21 +5090,6 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 continue;
             }
 #endif /* CONFIG_MLAN_WMSDK */
-            /* Save the band designation for this entry for use in join */
-            bss_new_entry->bss_band = band;
-            cfp = wlan_find_cfp_by_band_and_channel(pmadapter, bss_new_entry->bss_band, (t_u16)bss_new_entry->channel);
-
-            if (cfp)
-                bss_new_entry->freq = cfp->freq;
-            else
-                bss_new_entry->freq = 0;
-#ifdef MULTI_BSSID_SUPPORT
-            if (IS_FW_SUPPORT_MULTIBSSID(pmadapter))
-            {
-                if (bss_new_entry->multi_bssid_ap == MULTI_BSSID_AP)
-                    wlan_parse_multi_bssid_ap(pmpriv, bss_new_entry, &num_in_table);
-            }
-#endif
             if (bss_idx == MRVDRV_MAX_BSSID_LIST)
             {
                 if (pmadapter->pscan_table[lowest_rssi_index].rssi > bss_new_entry->rssi)
