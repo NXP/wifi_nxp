@@ -167,6 +167,8 @@ enum wifi_event
     WIFI_EVENT_WLS_CSI,
 #endif
 #endif
+    /** Event to sync region code with connected AP*/
+    WIFI_EVENT_SYNC_REGION_CODE,
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must

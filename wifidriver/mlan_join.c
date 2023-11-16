@@ -1577,20 +1577,8 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 
     if (!pmpriv->adapter->country_ie_ignore)
     {
-        /*Update region code and cfp table according to bss descriptor*/
-        (void)__memcpy(pmpriv->adapter, &pmpriv->adapter->country_code, pbss_desc->country_info.country_code,
-                       COUNTRY_CODE_LEN);
-        pmpriv->adapter->region_code = region_string_2_region_code(pmpriv->adapter->country_code);
-        /* Update region code and table based on country code */
-        if (wlan_misc_country_2_cfp_table_code(pmpriv->adapter, pmpriv->adapter->country_code,
-                                               &pmpriv->adapter->cfp_code_bg, &pmpriv->adapter->cfp_code_a))
-        {
-            wifi_d("%s: Fail to update country code", __func__);
-        }
-        if (wlan_set_regiontable(pmpriv, pmpriv->adapter->region_code, pbss_desc->bss_band) != MLAN_STATUS_SUCCESS)
-        {
-            wifi_d("%s: Failed to update region table accoring to bss descriptor.", __func__);
-        }
+        wifi_event_completion(WIFI_EVENT_SYNC_REGION_CODE, WIFI_EVENT_REASON_SUCCESS,
+                              pbss_desc->country_info.country_code);
     }
 
 #ifndef CONFIG_MLAN_WMSDK

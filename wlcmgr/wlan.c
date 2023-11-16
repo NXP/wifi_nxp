@@ -6461,6 +6461,27 @@ int wifi_put_wls_csi_sem(void)
 
 #endif
 
+static void wlcm_process_sync_region_code(t_u8 *code)
+{
+    int ret;
+    t_u8 country_code[COUNTRY_CODE_LEN + 1] = {0};
+    unsigned char country3                  = 0x20;
+    t_u8 region_code;
+
+    country_code[0] = code[0];
+    country_code[1] = code[1];
+    country_code[2] = country3;
+
+    ret = wlan_11d_region_2_code(mlan_adap, country_code, &region_code);
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_d("%s, Can't find '%s' in region code mapping table. Keep region code unchanged.", __func__, country_code);
+        return;
+    }
+
+    wlan_set_country_code((const char *)country_code);
+}
+
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
 {
@@ -6944,6 +6965,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
 #endif
+        case WIFI_EVENT_SYNC_REGION_CODE:
+            wlcm_process_sync_region_code((t_u8 *)msg->data);
+            break;
         default:
             wlcm_w("got unknown message: %d", msg->event);
             break;
@@ -14510,10 +14534,8 @@ int wlan_set_ips(int option)
 
 int wlan_set_country_code(const char *alpha2)
 {
-    int rv;
-#if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
+    int ret;
     t_u8 region_code_rw610;
-#endif
     unsigned char country3 = 0x20;
     char country_code[COUNTRY_CODE_LEN] = {0};
 #ifndef RW610
@@ -14544,9 +14566,15 @@ int wlan_set_country_code(const char *alpha2)
     country_code[1] = alpha2[1];
     country_code[2] = country3;
 
+    ret = wlan_11d_region_2_code(mlan_adap, (t_u8 *)country_code, &region_code_rw610);
+    if(ret != WM_SUCCESS)
+    {
+        wlcm_e("%s: Invalid country code.",country_code);
+        return ret;
+    }
+
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_AP
-    int ret;
     struct netif *netif = net_get_uap_interface();
 
     ret = wpa_supp_set_ap_country(netif, alpha2, country3);
@@ -14556,15 +14584,14 @@ int wlan_set_country_code(const char *alpha2)
     }
 #endif
 #endif
-    rv = wifi_set_country_code(country_code);
-    if (rv != WM_SUCCESS)
-        return rv;
+    ret = wifi_set_country_code(country_code);
+    if (ret != WM_SUCCESS)
+        return ret;
 
 #if defined(RW610) && defined(CONFIG_COMPRESS_TX_PWTBL)
-    wlan_11d_region_2_code(mlan_adap, (t_u8 *)&country_code[0], &region_code_rw610);
     return wlan_set_rg_power_cfg(region_code_rw610);
 #else
-    return rv;
+    return ret;
 #endif
 }
 

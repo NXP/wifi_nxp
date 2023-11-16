@@ -4470,6 +4470,17 @@ int wifi_set_country_ie_ignore(uint8_t *ignore)
     return WM_SUCCESS;
 }
 
+void wifi_restore_region_code()
+{
+    if (mlan_adap->region_code != MRVDRV_DEFAULT_REGION_CODE)
+    {
+        const t_u8 *country_code = wlan_11d_code_2_region(mlan_adap, MRVDRV_DEFAULT_REGION_CODE);
+        wifi_event_completion(WIFI_EVENT_SYNC_REGION_CODE, WIFI_EVENT_REASON_SUCCESS, (void *)country_code);
+    }
+
+    return;
+}
+
 #ifdef CONFIG_WPA_SUPP
 int wifi_nxp_scan_res_num(void)
 {
