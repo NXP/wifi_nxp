@@ -271,7 +271,7 @@ int raw_process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface)
     ptxpd->flags         = 0;
     ptxpd->pkt_delay_2ms = 0;
     /* set tx_token_id to 1 to get tx_status_event from FW */
-    ptxpd->tx_token_id   = 1;
+    ptxpd->tx_token_id = 1;
 
     imuhdr->size = payloadlen + ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
 
@@ -290,7 +290,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     IMUPkt *imuhdr       = (IMUPkt *)pbuf;
     TxPD *ptxpd          = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
-    
+
     ptxpd->bss_type      = interface;
     ptxpd->bss_num       = GET_BSS_NUM(pmpriv);
     ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
@@ -298,7 +298,7 @@ void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_
     if (ptxpd->tx_pkt_type == 0xe5)
     {
         ptxpd->tx_pkt_offset = 0x14; /* Override for special frame */
-        payloadlen -= ptxpd->tx_pkt_offset + INTF_HEADER_LEN;
+        ptxpd->tx_pkt_length = payloadlen - ptxpd->tx_pkt_offset - INTF_HEADER_LEN;
     }
     ptxpd->tx_control    = tx_control;
     ptxpd->priority      = tid;
@@ -1097,7 +1097,6 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0, tx_control);
-
     /* send tx data via imu */
     ret = wifi_send_fw_data(buffer, txlen);
 
@@ -1123,6 +1122,45 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
     }
     return MLAN_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_WMM
+mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
+{
+    int ret;
+
+    wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
+
+    wifi_imu_lock();
+    /* send tx data via imu */
+    ret = wifi_send_fw_data(buffer, txlen);
+
+    if (ret != kStatus_HAL_RpmsgSuccess)
+    {
+        wifi_io_e("Send tx data via imu failed (%d)", ret);
+#ifdef CONFIG_WIFI_FW_DEBUG
+#if 0
+        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        {
+            ret = wm_wifi.wifi_usb_mount_cb();
+            if (ret == WM_SUCCESS)
+                wifi_dump_firmware_info(NULL);
+            else
+                wifi_e("USB mounting failed");
+        }
+        else
+            wifi_e("USB mount callback is not registered");
+#endif
+        wifi_dump_firmware_info();
+#endif
+
+        wifi_imu_unlock();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    wifi_imu_unlock();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
 
 #ifdef CONFIG_WMM
 mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
@@ -1151,7 +1189,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
 #ifdef CONFIG_TX_RX_ZERO_COPY
     ret = HAL_ImuAddWlanTxPacketExt(kIMU_LinkCpu1Cpu3, tx_buf, txlen, net_tx_zerocopy_process_cb);
 #else
-    ret = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
+    ret              = HAL_ImuAddWlanTxPacket(kIMU_LinkCpu1Cpu3, tx_buf, txlen);
 #endif
 
     if (ret != kStatus_HAL_RpmsgSuccess)
@@ -1455,6 +1493,12 @@ hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
     {
         case IMU_MSG_CONTROL_TX_BUF_ADDR:
 #ifdef CONFIG_WMM
+
+            if (mlan_adap->wait_txbuf == true)
+            {
+                os_semaphore_put(&txbuf_sem);
+            }
+
             send_wifi_driver_tx_data_event(0);
 #endif
             break;

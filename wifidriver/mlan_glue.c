@@ -2584,7 +2584,8 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #ifndef CONFIG_WIFI_PS_DEBUG
     if ((resp->command & 0x0fffU) != HostCmd_CMD_802_11_PS_MODE_ENH)
     {
-        wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
+        wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size,
+                resp->seq_num);
     }
 #else
     wcmdr_d("CMD_RESP - : 0x%x, result %d, len %d, seqno 0x%x", resp->command, resp->result, resp->size, resp->seq_num);
@@ -4290,7 +4291,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
-#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD) 
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
             case HostCmd_CMD_INDEPENDENT_RESET_CFG:
             {
                 if (resp->result == HostCmd_RESULT_OK)
@@ -5669,6 +5670,15 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
         case EVENT_ACCESS_BY_HOST:
             break;
+#ifdef CONFIG_WMM
+        case EVENT_REMAIN_ON_CHANNEL_EXPIRED:
+            /* Restore tx after remain on channel expired */
+            wifi_set_tx_status(WIFI_DATA_RUNNING);
+
+            send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_STA);
+            send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_UAP);
+            break;
+#endif
         default:
             wifi_d("Event 0x%x not implemented", evt->event_id);
             break;

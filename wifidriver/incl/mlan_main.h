@@ -579,6 +579,9 @@ extern t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond);
 /** Type null data */
 #define MLAN_TYPE_NULL_DATA 4
 
+/** Type bypass data */
+#define MLAN_TYPE_BYPASS_DATA 5
+
 #ifdef CONFIG_RX_ABORT_CFG
 /** Data structure of Rx abort configuration */
 typedef struct
@@ -1527,7 +1530,12 @@ struct _mlan_private
     t_u8 wmm_qosinfo;
     /** WMM related variable*/
     wmm_desc_t wmm;
-
+#ifdef CONFIG_WMM
+    /** Bypass TX queue*/
+    mlan_list_head bypass_txq;
+    /** Bypass TX queue cnt*/
+    t_u8 bypass_txq_cnt;
+#endif
     /* Mgmt Frame Protection config */
     mlan_ds_misc_pmfcfg pmfcfg;
 
@@ -2658,6 +2666,7 @@ struct _mlan_adapter
 #ifdef CONFIG_WMM
     /* wmm buffer pool */
     outbuf_pool_t outbuf_pool;
+    bool wait_txbuf;
 #endif
 #ifdef CONFIG_HOST_SLEEP
     wlan_wakeup_reason wlan_wakeup;

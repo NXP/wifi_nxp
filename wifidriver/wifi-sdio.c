@@ -1890,6 +1890,79 @@ mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_co
     return MLAN_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_WMM
+mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
+{
+    t_u32 tx_blocks = 0, buflen = 0;
+    uint32_t resp;
+    bool ret;
+#ifdef CONFIG_WIFI_FW_DEBUG
+    int ret_cb;
+#endif
+
+    wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
+
+    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
+
+#ifdef CONFIG_WIFI_IO_DEBUG
+    (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
+#endif /* CONFIG_WIFI_IO_DEBUG */
+    /* Check if the port is available */
+    if (!((1U << txportno) & mlan_adap->mp_wr_bitmap))
+    {
+        /*
+         * fixme: This condition is triggered in legacy as well as
+         * this new code. Check this out later.
+         */
+#ifdef CONFIG_WIFI_IO_DEBUG
+        wifi_io_e(
+            "txportno out of sync txportno "
+            "= (%d) mp_wr_bitmap = (0x%x)",
+            txportno, mlan_adap->mp_wr_bitmap);
+#endif /* CONFIG_WIFI_IO_DEBUG */
+        return MLAN_STATUS_RESOURCE;
+    }
+    else
+    {
+        /* Mark the port number we will use */
+        mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
+    }
+
+    /* send CMD53 */
+    ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
+
+    txportno++;
+    if (txportno == mlan_adap->mp_end_port)
+    {
+#if defined(SD8801)
+        txportno = 1;
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
+        txportno   = 0;
+#endif
+    }
+
+    if (ret == false)
+    {
+        wifi_io_e("sdio_drv_write failed (%d)", ret);
+#ifdef CONFIG_WIFI_FW_DEBUG
+        wifi_sdio_reg_dbg(NULL);
+        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        {
+            ret_cb = wm_wifi.wifi_usb_mount_cb();
+            if (ret_cb == WM_SUCCESS)
+                wifi_dump_firmware_info(NULL);
+            else
+                wifi_e("USB mounting failed");
+        }
+        else
+            wifi_e("USB mount callback is not registered");
+#endif
+        return MLAN_STATUS_RESOURCE;
+    }
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
+
 /*
  * This function gets interrupt status.
  */

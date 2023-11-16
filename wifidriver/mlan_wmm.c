@@ -1039,12 +1039,10 @@ t_void wlan_clean_txrx(pmlan_private priv)
 
     ENTER();
 
-#ifndef CONFIG_MLAN_WMSDK
-    if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA)
-    {
-        wlan_cleanup_bypass_txq(pmadapter);
-    }
-#endif /* CONFIG_MLAN_WMSDK */
+#ifdef CONFIG_WMM
+    wlan_cleanup_bypass_txq(MLAN_BSS_TYPE_STA);
+#endif
+
     wlan_11n_cleanup_reorder_tbl(priv);
 
     (void)pmadapter->callbacks.moal_spin_lock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
@@ -3109,5 +3107,97 @@ void wifi_wmm_drop_pause_replaced(const uint8_t interface)
         mlan_adap->priv[0]->driver_error_cnt.tx_wmm_pause_replaced++;
     else if (interface == MLAN_BSS_TYPE_UAP)
         mlan_adap->priv[1]->driver_error_cnt.tx_wmm_pause_replaced++;
+}
+
+void wlan_get_bypass_lock(uint8_t interface)
+{
+    pmlan_private priv = mlan_adap->priv[interface];
+
+    mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &priv->bypass_txq.plock);
+}
+
+void wlan_put_bypass_lock(uint8_t interface)
+{
+    pmlan_private priv = mlan_adap->priv[interface];
+
+    mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &priv->bypass_txq.plock);
+}
+
+void wlan_add_buf_bypass_txq(const uint8_t *buffer, const uint8_t interface)
+{
+    pmlan_private priv = mlan_adap->priv[interface];
+
+    wlan_get_bypass_lock(interface);
+
+    util_enqueue_list_tail(mlan_adap->pmoal_handle, &priv->bypass_txq, (mlan_linked_list *)buffer, MNULL, MNULL);
+    priv->bypass_txq_cnt++;
+
+    wlan_put_bypass_lock(interface);
+}
+
+t_u8 wlan_bypass_txq_empty(uint8_t interface)
+{
+    return (mlan_adap->priv[interface]->bypass_txq_cnt) ? MFALSE : MTRUE;
+}
+
+int wifi_bypass_txq_init(void)
+{
+    pmlan_private priv = NULL;
+    int i;
+
+    for (i = 0; i < mlan_adap->priv_num; ++i)
+    {
+        priv = mlan_adap->priv[i];
+        if (priv != MNULL)
+        {
+            /* Initialize bypass_txq */
+            util_init_list_head((t_void *)mlan_adap->pmoal_handle, &priv->bypass_txq, MFALSE, MNULL);
+            priv->bypass_txq_cnt = 0;
+
+            if (mlan_adap->callbacks.moal_init_semaphore(mlan_adap->pmoal_handle, "bypass_txq_sem",
+                                                         &priv->bypass_txq.plock) != MLAN_STATUS_SUCCESS)
+                return WM_E_NOMEM;
+        }
+    }
+
+    return WM_SUCCESS;
+}
+
+void wlan_cleanup_bypass_txq(uint8_t interface)
+{
+    bypass_outbuf_t *buf;
+    pmlan_private priv = mlan_adap->priv[interface];
+
+    /*Free hold buff*/
+    while (!wlan_bypass_txq_empty(interface))
+    {
+        wlan_get_bypass_lock(interface);
+
+        buf = (bypass_outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &priv->bypass_txq, MNULL, MNULL);
+        priv->bypass_txq_cnt--;
+        os_mem_free((t_u8 *)buf);
+
+        wlan_put_bypass_lock(interface);
+    }
+}
+
+void wifi_bypass_txq_deinit(void)
+{
+    pmlan_private priv = NULL;
+    int i;
+
+    for (i = 0; i < mlan_adap->priv_num; ++i)
+    {
+        priv = mlan_adap->priv[i];
+        if (priv != MNULL)
+        {
+            wlan_cleanup_bypass_txq(i);
+
+            mlan_adap->callbacks.moal_free_semaphore(mlan_adap->pmoal_handle, &priv->bypass_txq.plock);
+            /* Deinit bypass_txq */
+            util_free_list_head(mlan_adap->pmoal_handle, &priv->bypass_txq, MNULL);
+            priv->bypass_txq_cnt = 0;
+        }
+    }
 }
 #endif /* CONFIG_WMM */

@@ -92,8 +92,6 @@ mlan_status sd_wifi_post_init(enum wlan_type type);
 
 void sd_wifi_reset_ports();
 
-mlan_status wlan_flush_wmm_pkt(t_u8 pkt_cnt);
-
 void sd_wifi_deinit(void);
 
 /*
@@ -130,6 +128,12 @@ uint32_t wifi_get_device_value1(void);
 #ifdef CONFIG_WMM
 uint8_t *wifi_wmm_get_sdio_outbuf(uint32_t *outbuf_len, mlan_wmm_ac_e queue);
 mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf);
+mlan_status wlan_flush_wmm_pkt(t_u8 pkt_cnt);
+mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface);
+#ifdef AMSDU_IN_AMPDU
+uint8_t *wifi_get_amsdu_outbuf(uint32_t offset);
+mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txlen, t_u8 *tx_buf, t_u8 amsdu_cnt);
+#endif
 #endif
 
 void sdio_enable_interrupt(void);

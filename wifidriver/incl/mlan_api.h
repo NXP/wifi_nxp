@@ -182,6 +182,10 @@ extern os_rw_lock_t sleep_rwlock;
 extern os_semaphore_t uapsd_sem;
 #endif
 
+#ifdef CONFIG_WMM
+extern os_semaphore_t txbuf_sem;
+#endif
+
 #ifdef CONFIG_STA_AMPDU_RX
 extern bool sta_ampdu_rx_enable;
 #endif

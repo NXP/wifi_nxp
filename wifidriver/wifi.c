@@ -90,6 +90,10 @@ uint32_t wm_rand_seed = -1;
 static t_u8 wifi_init_done;
 static t_u8 wifi_core_init_done;
 
+#ifdef CONFIG_WMM
+os_semaphore_t txbuf_sem;
+#endif
+
 #ifdef CONFIG_STA_AMPDU_TX
 bool sta_ampdu_tx_enable         = true;
 t_u8 sta_ampdu_tx_enable_per_tid = 0xFF;
@@ -1943,6 +1947,22 @@ static int wifi_core_init(void)
         goto fail;
     }
 
+    ret = wifi_bypass_txq_init();
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Init bypass txq failed\r\n");
+        goto fail;
+    }
+
+    ret = os_semaphore_create(&txbuf_sem, "tx buf sem");
+    if (ret != WM_SUCCESS)
+    {
+        wifi_e("Create tx buf sem failed");
+        return ret;
+    }
+    /* Take the tx buf lock immediately so that we can later block on */
+    os_semaphore_get(&txbuf_sem, OS_WAIT_FOREVER);
+
 #ifdef CONFIG_ZEPHYR
     wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
     ret = os_queue_create(&wm_wifi.tx_data, "tx_data", sizeof(struct bus_message), &wm_wifi.tx_data_queue_data);
@@ -2074,6 +2094,13 @@ static void wifi_core_deinit(void)
     }
 #endif
     wifi_wmm_buf_pool_deinit();
+    wifi_bypass_txq_deinit();
+
+    if (txbuf_sem != NULL)
+    {
+        os_semaphore_delete(&txbuf_sem);
+        txbuf_sem = NULL;
+    }
 #endif
 
     wifi_remove_all_mcast_filter(0);
@@ -3591,12 +3618,12 @@ static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *
 }
 #endif
 
-static inline t_u8 wifi_is_tx_queue_empty()
+t_u8 wifi_txbuf_available()
 {
 #ifdef RW610
-    return HAL_ImuIsTxBufQueueEmpty(kIMU_LinkCpu1Cpu3);
+    return !(HAL_ImuIsTxBufQueueEmpty(kIMU_LinkCpu1Cpu3));
 #else
-    return MFALSE;
+    return !!(mlan_adap->mp_wr_bitmap);
 #endif
 }
 
@@ -3663,7 +3690,7 @@ static mlan_status wifi_xmit_ralist_pkts(mlan_private *priv, t_u8 ac, raListTbl 
 
     while (ralist->total_pkts > 0)
     {
-        if (wifi_is_tx_queue_empty() == MTRUE)
+        if ((wifi_txbuf_available() == MFALSE) || (WIFI_DATA_RUNNING != wifi_tx_status))
             break;
 
 #ifdef AMSDU_IN_AMPDU
@@ -3741,10 +3768,46 @@ RET:
     return WM_SUCCESS;
 }
 
+t_void wlan_process_bypass_txq(t_u8 interface)
+{
+    bypass_outbuf_t *buf;
+    mlan_status status = MLAN_STATUS_SUCCESS;
+    pmlan_private priv = mlan_adap->priv[interface];
+
+    wifi_tx_card_awake_lock();
+#ifndef RW610
+    wifi_sdio_lock();
+#endif
+
+    while (!wlan_bypass_txq_empty(interface) && (wifi_txbuf_available() == MTRUE))
+    {
+        wlan_get_bypass_lock(interface);
+        buf = (bypass_outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &priv->bypass_txq, MNULL, MNULL);
+        priv->bypass_txq_cnt--;
+        wlan_put_bypass_lock(interface);
+
+        status = wlan_xmit_bypass_pkt((t_u8 *)&buf->intf_header[0],
+                                      buf->tx_pd.tx_pkt_length + sizeof(TxPD) + INTF_HEADER_LEN, interface);
+
+        os_mem_free((t_u8 *)buf);
+
+        if (status != MLAN_STATUS_SUCCESS)
+        {
+            wifi_d("[%s] bypass xmit pkt failed \r\n", __func__);
+        }
+    }
+
+#ifndef RW610
+    wifi_sdio_unlock();
+#endif
+    wifi_tx_card_awake_unlock();
+}
+
 typedef enum _wifi_tx_event
 {
     TX_TYPE_DATA = 10U,
     TX_TYPE_NULL_DATA,
+    TX_TYPE_BYPASS_DATA,
 } wifi_tx_event_t;
 
 static void notify_wifi_driver_tx_event(uint16_t event)
@@ -3758,7 +3821,24 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     /* TODO: use zephyr event and regroup */
     struct bus_message msg;
 
-    msg.event  = (event & MBIT(TX_TYPE_DATA)) ? MLAN_TYPE_DATA : MLAN_TYPE_NULL_DATA;
+    switch (event & 0XFFFFFFFE)
+    {
+        case TX_TYPE_DATA:
+            msg.event = MLAN_TYPE_DATA;
+            break;
+
+        case TX_TYPE_NULL_DATA:
+            msg.event = MLAN_TYPE_NULL_DATA;
+            break;
+
+        case TX_TYPE_BYPASS_DATA:
+            msg.event = MLAN_TYPE_BYPASS_DATA;
+            break;
+
+        default:
+            break;
+    }
+
     msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
 
     os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
@@ -3803,6 +3883,19 @@ int send_wifi_driver_tx_null_data_event(t_u8 interface)
     event = (1U << interface);
 
     event |= (1U << TX_TYPE_NULL_DATA);
+
+    notify_wifi_driver_tx_event(event);
+
+    return 0;
+}
+
+int send_wifi_driver_bypass_data_event(t_u8 interface)
+{
+    uint16_t event;
+
+    event = (1U << interface);
+
+    event |= (1U << TX_TYPE_BYPASS_DATA);
 
     notify_wifi_driver_tx_event(event);
 
@@ -3874,6 +3967,11 @@ static void wifi_driver_tx(void *data)
         {
             event = MLAN_TYPE_NULL_DATA;
         }
+
+        if (taskNotification & (1U << TX_TYPE_BYPASS_DATA))
+        {
+            event = MLAN_TYPE_BYPASS_DATA;
+        }
 #endif
 
         pmadapter = mlan_adap;
@@ -3881,7 +3979,7 @@ static void wifi_driver_tx(void *data)
 #ifdef CONFIG_HOST_SLEEP
         wakelock_get();
 #endif
-        if (event == MLAN_TYPE_DATA || event == MLAN_TYPE_NULL_DATA)
+        if (event == MLAN_TYPE_DATA || event == MLAN_TYPE_NULL_DATA || event == MLAN_TYPE_BYPASS_DATA)
         {
 #ifdef CONFIG_WMM_UAPSD
             while (pmadapter->pps_uapsd_mode && (pmadapter->tx_lock_flag == MTRUE))
@@ -3889,9 +3987,14 @@ static void wifi_driver_tx(void *data)
                 os_thread_sleep(os_msec_to_ticks(1));
             }
 #endif
+            if (!wlan_bypass_txq_empty(interface))
+            {
+                /*Give high priority to xmit bypass txqueue*/
+                wlan_process_bypass_txq(interface);
+            }
 
-            /* Only send packet when the outbuf pool is not empty */
-            if (wifi_wmm_get_packet_cnt() > 0)
+            /* Send packet when the outbuf pool is not empty and not in block tx status*/
+            if ((wifi_wmm_get_packet_cnt() > 0) && (WIFI_DATA_RUNNING == wifi_tx_status))
             {
                 for (i = 0; i < MLAN_MAX_BSS_NUM; i++)
                 {
@@ -4331,10 +4434,38 @@ void wifi_show_os_mem_stat()
  */
 static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
+#if defined(CONFIG_WMM)
+    t_u32 pkt_len            = 0;
+    t_u32 link_point_len     = 0;
+    bypass_outbuf_t *poutbuf = NULL;
+
+    /*Dword align*/
+    pkt_len        = sizeof(TxPD) + INTF_HEADER_LEN - 2;
+    link_point_len = sizeof(mlan_linked_list);
+
+    poutbuf = os_mem_alloc(link_point_len + pkt_len + len);
+    if (!poutbuf)
+    {
+        wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+        return -WM_FAIL;
+    }
+
+    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+
+    (void)raw_process_pkt_hdrs((t_u8 *)poutbuf + link_point_len, pkt_len + len, interface);
+    (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
+    /* process packet headers with interface header and TxPD */
+    process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+
+    wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
+    send_wifi_driver_bypass_data_event(interface);
+
+    return WM_SUCCESS;
+#else
     mlan_status i;
-    t_u32 pkt_len       = 0;
+    t_u32 pkt_len = 0;
     uint32_t outbuf_len = 0;
-    uint8_t *poutbuf    = wifi_get_outbuf(&outbuf_len);
+    uint8_t *poutbuf = wifi_get_outbuf(&outbuf_len);
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
@@ -4365,6 +4496,8 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
 
     wifi_set_xfer_pending(false);
     return WM_SUCCESS;
+
+#endif
 }
 
 int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, const size_t len)
@@ -4654,6 +4787,33 @@ mlan_status raw_wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 t
 
 static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len)
 {
+#if defined(CONFIG_WMM)
+    t_u32 pkt_len            = 0;
+    t_u32 link_point_len     = 0;
+    bypass_outbuf_t *poutbuf = NULL;
+
+    /*Dword align*/
+    pkt_len        = sizeof(TxPD) + INTF_HEADER_LEN;
+    link_point_len = sizeof(mlan_linked_list);
+
+    poutbuf = os_mem_alloc(link_point_len + pkt_len + len);
+    if (!poutbuf)
+    {
+        wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+        return -WM_FAIL;
+    }
+
+    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+
+    (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
+    /* process packet headers with interface header and TxPD */
+    process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+
+    wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
+    send_wifi_driver_bypass_data_event(interface);
+
+    return WM_SUCCESS;
+#else
     mlan_status i;
     uint32_t pkt_len, outbuf_len;
 
@@ -4698,6 +4858,8 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
 
     wifi_set_xfer_pending(false);
     return (int)WM_SUCCESS;
+
+#endif
 }
 
 int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, const size_t len)
@@ -4803,6 +4965,31 @@ int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint3
         roc.bandcfg |= 1;
     }
 #endif
+#ifdef CONFIG_WMM
+    if (true == status)
+    {
+        /* Block tx data before send remain on channel,
+         * then get txbuf_sem, keep the next auth frame can get txbuf
+         */
+        wifi_set_tx_status(WIFI_DATA_BLOCK);
+
+        if (wifi_txbuf_available() == MFALSE)
+        {
+            mlan_adap->wait_txbuf = true;
+            os_semaphore_get(&txbuf_sem, OS_WAIT_FOREVER);
+            mlan_adap->wait_txbuf = false;
+        }
+    }
+    else if (false == status)
+    {
+        /* Restore tx when cancel remain on channel*/
+        wifi_set_tx_status(WIFI_DATA_RUNNING);
+
+        send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_STA);
+        send_wifi_driver_tx_data_event(MLAN_BSS_TYPE_UAP);
+    }
+#endif
+
     return wifi_send_remain_on_channel_cmd(MLAN_BSS_TYPE_STA, &roc);
 }
 
