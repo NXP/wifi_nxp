@@ -105,8 +105,6 @@ enum wifi_event
     WIFI_EVENT_SUPPLICANT_PMK,
     /** Sleep */
     WIFI_EVENT_SLEEP,
-    /** Awake */
-    WIFI_EVENT_AWAKE,
     /** IEEE PS */
     WIFI_EVENT_IEEE_PS,
     /** Deep Sleep */

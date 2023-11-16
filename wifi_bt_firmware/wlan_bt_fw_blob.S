@@ -26,7 +26,7 @@ wlan_fw_bin_len
 #endif
 
 #if defined(SD8978)
-#if !defined(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
@@ -77,7 +77,7 @@ bt_fw_bin_len
 #endif
 
 #if defined(SD8987)
-#if !defined(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
@@ -128,7 +128,7 @@ bt_fw_bin_len
 #endif
 
 #if defined(SD9177)
-#if !defined(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
@@ -201,7 +201,7 @@ wlan_fw_bin_len:
 #endif
 
 #if defined(SD8978)
-#if !defined(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
         .section .m0code , "ax" @progbits @preinit_array
         .global wlan_fw_bin
@@ -272,7 +272,7 @@ bt_fw_bin_len:
 #endif
 
 #if defined(SD8987)
-#if !defined(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
         .section .m0code , "ax" @progbits @preinit_array
         .global wlan_fw_bin
@@ -343,7 +343,7 @@ bt_fw_bin_len:
 #endif
 
 #if defined(SD9177)
-#if !defined(CONFIG_WIFI_IND_DNLD) && !(CONFIG_BT_IND_DNLD)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
         .section .m0code , "ax" @progbits @preinit_array
         .global wlan_fw_bin

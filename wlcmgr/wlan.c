@@ -111,7 +111,6 @@
 #define BG_SCAN_LIMIT 3
 #endif
 
-static bool g_req_sl_confirm;
 static bool wlan_uap_scan_chan_list_set;
 
 #ifdef CONFIG_MEF_CFG
@@ -331,55 +330,6 @@ enum cm_uap_state
     CM_UAP_IP_UP,
 };
 
-#define WL_ID_WIFI_AWAKE_IEEEPS "wifi_awake_from_ieeeps"
-
-enum wlan_ieeeps_event
-{
-    IEEEPS_EVENT_ENTER,
-    IEEEPS_EVENT_ENABLE,
-    IEEEPS_EVENT_ENABLE_DONE,
-    IEEEPS_EVENT_AWAKE,
-    IEEEPS_EVENT_SLEEP,
-    IEEEPS_EVENT_SLP_CFM,
-    IEEEPS_EVENT_DISABLE,
-    IEEEPS_EVENT_DISABLE_DONE,
-
-};
-
-enum wlan_ieeeps_state
-{
-    IEEEPS_INIT,
-    IEEEPS_CONFIGURING,
-    IEEEPS_AWAKE,
-    IEEEPS_PRE_SLEEP,
-    IEEEPS_SLEEP,
-    IEEEPS_PRE_DISABLE,
-    IEEEPS_DISABLING
-};
-
-enum wlan_deepsleepps_state
-{
-    DEEPSLEEPPS_INIT,
-    DEEPSLEEPPS_CONFIGURING,
-    DEEPSLEEPPS_AWAKE,
-    DEEPSLEEPPS_PRE_SLEEP,
-    DEEPSLEEPPS_SLEEP,
-    DEEPSLEEPPS_PRE_DISABLE,
-    DEEPSLEEPPS_DISABLING
-};
-
-enum wlan_deepsleepps_event
-{
-    DEEPSLEEPPS_EVENT_ENTER,
-    DEEPSLEEPPS_EVENT_ENABLE,
-    DEEPSLEEPPS_EVENT_ENABLE_DONE,
-    DEEPSLEEPPS_EVENT_AWAKE,
-    DEEPSLEEPPS_EVENT_SLEEP,
-    DEEPSLEEPPS_EVENT_SLP_CFM,
-    DEEPSLEEPPS_EVENT_DISABLE,
-    DEEPSLEEPPS_EVENT_DISABLE_DONE,
-};
-
 static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
                                                        NULL,
                                                        {
@@ -526,11 +476,6 @@ static struct
      * These are states corresponding to the network that we are currently
      * connected to. Not relevant, when we are not connected.
      */
-    enum wlan_ps_state cm_ps_state;
-    enum wlan_ieeeps_state ieeeps_state;
-    enum wlan_ieeeps_state ieeeps_prev_state;
-    enum wlan_deepsleepps_state deepsleepps_state;
-    bool skip_ds_exit_cb : 1;
     bool cm_ieeeps_configured : 1;
     bool cm_deepsleepps_configured : 1;
     bool connect_wakelock_taken : 1;
@@ -1351,42 +1296,6 @@ void wlan_clear_host_sleep_config()
 }
 #endif
 
-static void wlan_host_sleep_and_sleep_confirm(void)
-{
-#ifdef CONFIG_HOST_SLEEP
-    int ret                 = WM_SUCCESS;
-#endif
-    enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
-
-    if (wifi_get_xfer_pending())
-    {
-        g_req_sl_confirm = 1;
-        return;
-    }
-#ifdef CONFIG_HOST_SLEEP
-#ifndef RW610
-    if (wlan.hs_configured == MTRUE)
-    {
-        ret = wlan_send_host_sleep_int(wlan.hs_wakeup_condition);
-        if ((ret != WM_SUCCESS) || (!(is_uap_started()) && !(is_state(CM_STA_CONNECTED))))
-        {
-            g_req_sl_confirm = 1;
-            return;
-        }
-    }
-#endif
-#endif
-    /* tbdel */
-    wlan.cm_ps_state = PS_STATE_SLEEP_CFM;
-
-    // if (is_uap_started())
-    //	type = WLAN_BSS_TYPE_UAP;
-
-    send_sleep_confirm_command((mlan_bss_type)type);
-
-    g_req_sl_confirm = 0;
-}
-
 static void wlan_send_sleep_confirm(void)
 {
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
@@ -1396,280 +1305,7 @@ static void wlan_send_sleep_confirm(void)
         type = WLAN_BSS_TYPE_UAP;
     }
 
-    wlan.cm_ps_state = PS_STATE_SLEEP_CFM;
     send_sleep_confirm_command((mlan_bss_type)type);
-}
-
-static void wlan_ieeeps_sm(enum wlan_ieeeps_event event)
-{
-    enum wlan_ieeeps_state next_state;
-    enum wlan_ieeeps_state prev_state;
-
-    while (true)
-    {
-        next_state = wlan.ieeeps_state;
-        prev_state = wlan.ieeeps_prev_state;
-        wlcm_d("IEEE PS Event : %d", event);
-
-        switch (wlan.ieeeps_state)
-        {
-            case IEEEPS_INIT:
-                if (event == IEEEPS_EVENT_ENABLE)
-                {
-                    (void)wifi_enter_ieee_power_save();
-                }
-
-                if (event == IEEEPS_EVENT_ENABLE_DONE)
-                {
-                    next_state = IEEEPS_CONFIGURING;
-                }
-
-                break;
-            case IEEEPS_CONFIGURING:
-                if (event == IEEEPS_EVENT_AWAKE)
-                {
-                    next_state = IEEEPS_AWAKE;
-                }
-                if (event == IEEEPS_EVENT_SLEEP)
-                {
-                    next_state = IEEEPS_PRE_SLEEP;
-                    // wakelock_get(WL_ID_WIFI_AWAKE_IEEEPS);
-                }
-                if (event == IEEEPS_EVENT_DISABLE)
-                {
-                    next_state = IEEEPS_DISABLING;
-                }
-
-                break;
-            case IEEEPS_AWAKE:
-                if (event == IEEEPS_EVENT_ENTER)
-                {
-                    // wakelock_get(WL_ID_WIFI_AWAKE_IEEEPS);
-                    wlan.cm_ps_state = PS_STATE_AWAKE;
-                }
-
-                if (event == IEEEPS_EVENT_SLEEP)
-                {
-                    next_state = IEEEPS_PRE_SLEEP;
-                }
-
-                if (event == IEEEPS_EVENT_DISABLE)
-                {
-                    // wakelock_put(WL_ID_WIFI_AWAKE_IEEEPS);
-                    next_state = IEEEPS_DISABLING;
-                }
-
-                break;
-            case IEEEPS_PRE_SLEEP:
-                if (event == IEEEPS_EVENT_ENTER)
-                {
-                    wlan_host_sleep_and_sleep_confirm();
-                }
-
-                if (event == IEEEPS_EVENT_SLEEP)
-                {
-                    wlan_host_sleep_and_sleep_confirm();
-                }
-
-                if (event == IEEEPS_EVENT_SLP_CFM)
-                {
-                    next_state = IEEEPS_SLEEP;
-                }
-
-                if (event == IEEEPS_EVENT_DISABLE)
-                {
-                    g_req_sl_confirm = 0;
-                    next_state       = IEEEPS_DISABLING;
-                }
-                break;
-            case IEEEPS_SLEEP:
-                if (event == IEEEPS_EVENT_ENTER)
-                {
-                    g_req_sl_confirm = 0;
-                    // wakelock_put(WL_ID_WIFI_AWAKE_IEEEPS);
-                }
-
-                if (event == IEEEPS_EVENT_AWAKE)
-                {
-                    next_state = IEEEPS_AWAKE;
-                }
-
-                if (event == IEEEPS_EVENT_SLEEP)
-                {
-                    /* We already sent the sleep confirm but it appears that
-                     * the firmware is still up */
-                    next_state = IEEEPS_PRE_SLEEP;
-                }
-
-                if (event == IEEEPS_EVENT_DISABLE)
-                {
-                    if (is_state(CM_STA_CONNECTED))
-                    {
-                        next_state = IEEEPS_PRE_DISABLE;
-                    }
-                    else
-                    {
-                        next_state = IEEEPS_DISABLING;
-                    }
-                }
-                break;
-            case IEEEPS_PRE_DISABLE:
-                if (event == IEEEPS_EVENT_ENTER)
-                {
-                    next_state = IEEEPS_DISABLING;
-                }
-
-                break;
-            case IEEEPS_DISABLING:
-                if ((prev_state == IEEEPS_CONFIGURING || prev_state == IEEEPS_AWAKE || prev_state == IEEEPS_SLEEP ||
-                     prev_state == IEEEPS_PRE_DISABLE) &&
-                    (event == IEEEPS_EVENT_ENTER))
-                {
-                    (void)wifi_exit_ieee_power_save();
-                }
-
-                if (prev_state == IEEEPS_PRE_SLEEP && event == IEEEPS_EVENT_AWAKE)
-                {
-                    (void)wifi_exit_ieee_power_save();
-                }
-
-                if (event == IEEEPS_EVENT_DISABLE_DONE)
-                {
-                    next_state = IEEEPS_INIT;
-                }
-
-                break;
-            default:
-                wlcm_d("Unexpected ieee ps state");
-                break;
-
-        } /* end of switch  */
-
-        /* state change detected
-         * call the same function with event ENTER*/
-        if (wlan.ieeeps_state != next_state)
-        {
-            wlcm_d("IEEE PS: %d ---> %d", wlan.ieeeps_state, next_state);
-
-            wlan.ieeeps_prev_state = wlan.ieeeps_state;
-            wlan.ieeeps_state      = next_state;
-            event                  = IEEEPS_EVENT_ENTER;
-            continue;
-        }
-        else
-        {
-            return;
-        }
-
-    } /* while(true) */
-}
-
-static void wlan_deepsleepps_sm(enum wlan_deepsleepps_event event)
-{
-    enum wlan_deepsleepps_state next_state;
-
-    while (true)
-    {
-        next_state = wlan.deepsleepps_state;
-        wlcm_d("Deep Sleep Event : %d", event);
-
-        switch (wlan.deepsleepps_state)
-        {
-            case DEEPSLEEPPS_INIT:
-                if (event == DEEPSLEEPPS_EVENT_ENABLE)
-                {
-                    // wakelock_get(WL_ID_DEEPSLEEP_SM);
-                    (void)wifi_enter_deepsleep_power_save();
-                }
-                if (event == DEEPSLEEPPS_EVENT_ENABLE_DONE)
-                {
-                    next_state = DEEPSLEEPPS_CONFIGURING;
-                }
-                break;
-            case DEEPSLEEPPS_CONFIGURING:
-                if (event == DEEPSLEEPPS_EVENT_SLEEP)
-                {
-                    next_state = DEEPSLEEPPS_PRE_SLEEP;
-                }
-
-                break;
-            case DEEPSLEEPPS_AWAKE:
-                if (event == DEEPSLEEPPS_EVENT_ENTER)
-                {
-                    wlan.cm_ps_state = PS_STATE_AWAKE;
-                }
-
-                if (event == DEEPSLEEPPS_EVENT_SLEEP)
-                {
-                    next_state = DEEPSLEEPPS_PRE_SLEEP;
-                }
-                break;
-            case DEEPSLEEPPS_PRE_SLEEP:
-                if (event == DEEPSLEEPPS_EVENT_ENTER)
-                {
-                    wlan_send_sleep_confirm();
-                }
-
-                if (event == DEEPSLEEPPS_EVENT_SLP_CFM)
-                {
-                    g_req_sl_confirm = 0;
-                    // wakelock_put(WL_ID_DEEPSLEEP_SM);
-                    next_state = DEEPSLEEPPS_SLEEP;
-                }
-                break;
-            case DEEPSLEEPPS_SLEEP:
-                if (event == DEEPSLEEPPS_EVENT_AWAKE)
-                {
-                    next_state = DEEPSLEEPPS_AWAKE;
-                }
-
-                if (event == DEEPSLEEPPS_EVENT_DISABLE)
-                {
-                    next_state = DEEPSLEEPPS_PRE_DISABLE;
-                }
-
-                break;
-            case DEEPSLEEPPS_PRE_DISABLE:
-                if (event == DEEPSLEEPPS_EVENT_ENTER)
-                {
-                    next_state = DEEPSLEEPPS_DISABLING;
-                }
-
-                break;
-            case DEEPSLEEPPS_DISABLING:
-                if (event == DEEPSLEEPPS_EVENT_ENTER)
-                {
-                    (void)wifi_exit_deepsleep_power_save();
-                }
-
-                if (event == DEEPSLEEPPS_EVENT_DISABLE_DONE)
-                {
-                    // wakelock_put(WL_ID_DEEPSLEEP_SM);
-                    next_state = DEEPSLEEPPS_INIT;
-                }
-
-                break;
-            default:
-                wlcm_d("Unexpected deepsleep state");
-                break;
-
-        } /* end of switch  */
-
-        /* state change detected
-         * call the same function with event ENTER*/
-        if (wlan.deepsleepps_state != next_state)
-        {
-            wlcm_d("Deep Sleep: %d ---> %d", wlan.deepsleepps_state, next_state);
-            wlan.deepsleepps_state = next_state;
-            event                  = DEEPSLEEPPS_EVENT_ENTER;
-            continue;
-        }
-        else
-        {
-            return;
-        }
-
-    } /* while(true) */
 }
 
 static int is_bssid_any(char *b)
@@ -3166,14 +2802,6 @@ static void wlcm_process_sleep_event(void)
     wlan_send_sleep_confirm();
 }
 
-static void wlcm_process_awake_event(void)
-{
-    /* tbdel */
-    wlan.cm_ps_state = PS_STATE_AWAKE;
-    wlan_ieeeps_sm(IEEEPS_EVENT_AWAKE);
-    wlan_deepsleepps_sm(DEEPSLEEPPS_EVENT_AWAKE);
-}
-
 static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 {
     ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
@@ -3230,12 +2858,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
                after waking from PM4+DS. This will ensure
                that we do not send ps-exit event until
                wlan-init event has been sent */
-            if (wlan.skip_ds_exit_cb)
-                wlan.skip_ds_exit_cb = false;
-            else
-            {
-                CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_DEEP_SLEEP);
-            }
+            CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_DEEP_SLEEP);
         }
         else if (action == SLEEP_CONFIRM)
         {
@@ -5570,7 +5193,6 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
 static void wlcm_process_init_params()
 {
-    wlan.cm_ps_state          = PS_STATE_AWAKE;
     wlan.cm_ieeeps_configured = false;
 
     wlan.cm_deepsleepps_configured = false;
@@ -6147,7 +5769,6 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifdef CONFIG_NCP_BRIDGE
         CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, (void *)(-WM_FAIL));
 #endif
-        wifi_set_xfer_pending(false);
 
 #ifdef CONFIG_WPA_SUPP
         if (wlan.status_timeout)
@@ -6251,7 +5872,6 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #endif
         wlan.connect_wakelock_taken = false;
     }
-    wifi_set_xfer_pending(false);
 #ifdef CONFIG_HOST_SLEEP
     wakelock_put();
 #endif
@@ -6861,10 +6481,6 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: sleep");
             wlcm_process_sleep_event();
             break;
-        case WIFI_EVENT_AWAKE:
-            wlcm_d("got event: awake");
-            wlcm_process_awake_event();
-            break;
 
         case WIFI_EVENT_IEEE_PS:
             wlcm_d("got event: IEEE ps result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
@@ -7006,10 +6622,7 @@ static void cm_main(os_thread_arg_t data)
 
     while (true)
     {
-        /* If delayed sleep confirmed should be performed, wait for
-           DELAYED_SLP_CFM_DUR else wait forever */
-        ret = os_queue_recv(&wlan.events, &msg,
-                            os_msec_to_ticks(g_req_sl_confirm ? DELAYED_SLP_CFM_DUR : OS_WAIT_FOREVER));
+        ret = os_queue_recv(&wlan.events, &msg, OS_WAIT_FOREVER);
 
         if (wlan.stop_request != 0U)
         {
@@ -7054,16 +6667,6 @@ static void cm_main(os_thread_arg_t data)
         else
         {
             wlcm_d("SM queue recv Timed out ");
-
-            if (!is_state(CM_STA_CONNECTED))
-            {
-                continue;
-            }
-
-            if (g_req_sl_confirm)
-            {
-                wlan_ieeeps_sm(IEEEPS_EVENT_SLEEP);
-            }
         }
     }
 }
@@ -7215,7 +6818,6 @@ static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time)
     if (ret == -WM_FAIL)
     {
         wlan_wake_up_card();
-        wifi_set_xfer_pending(true);
         ret = os_semaphore_get(&(plock->rw_lock), wait_time);
     }
     return ret;
