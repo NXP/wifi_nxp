@@ -6339,17 +6339,28 @@ static void test_wlan_get_drcs_cfg(int argc, char **argv)
 static void dump_wlan_set_antcfg_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
+#ifndef RW610
     (void)PRINTF("wlan-set-antcfg <ant mode> [evaluate_time] \r\n");
+#else
+    (void)PRINTF("wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_time>\r\n");
+#endif
     (void)PRINTF("\r\n");
-    (void)PRINTF("\t<ant mode>: \r\n");
+    (void)PRINTF("\t<ant_mode>: \r\n");
     (void)PRINTF("\t           Bit 0   -- Tx/Rx antenna 1\r\n");
     (void)PRINTF("\t           Bit 1   -- Tx/Rx antenna 2\r\n");
     (void)PRINTF("\t           0xFFFF  -- Tx/Rx antenna diversity\r\n");
     (void)PRINTF("\t[evaluate_time]: \r\n");
     (void)PRINTF("\t           if ant mode = 0xFFFF, SAD evaluate time interval,\r\n");
     (void)PRINTF("\t           default value is 6000 milli seconds\r\n");
+#ifdef RW610
+    (void)PRINTF("\t<evaluate_mode>: \r\n");
+    (void)PRINTF("\t           0: PCB Ant. + Ext Ant0\r\n");
+    (void)PRINTF("\t           1: Ext Ant0 + Ext Ant1\r\n");
+    (void)PRINTF("\t           2: PCB Ant. + Ext Ant1\r\n");
+#endif
 }
 
+#ifndef RW610
 static void wlan_antcfg_set(int argc, char *argv[])
 {
     int ret;
@@ -6398,6 +6409,62 @@ static void wlan_antcfg_set(int argc, char *argv[])
         dump_wlan_set_antcfg_usage();
     }
 }
+#else
+static void wlan_antcfg_set(int argc, char *argv[])
+{
+    int ret;
+    uint32_t ant_mode;
+    uint16_t evaluate_time = 0;
+    uint8_t evaluate_mode = 0xFF;
+
+    if (argc < 2 || argc > 4)
+    {
+        dump_wlan_set_antcfg_usage();
+        return;
+    }
+
+    errno = 0;
+    ant_mode = (uint32_t)strtol(argv[1], NULL, 16);
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol errno:%d", errno);
+        return;
+    }
+
+    if ((argc == 3 || argc == 4) && (ant_mode != 0xFFFFU))
+    {
+        dump_wlan_set_antcfg_usage();
+        return;
+    }
+
+    errno = 0;
+    if (argc == 3 || argc == 4)
+    {
+        evaluate_time = (uint16_t)strtol(argv[2], NULL, 10);
+    }
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtol errno:%d", errno);
+        return;
+    }
+
+    if (argc == 4)
+    {
+        evaluate_mode = (uint8_t)strtol(argv[3], NULL, 10);
+    }
+
+    ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Antenna configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Antenna configuration failed\r\n");
+        dump_wlan_set_antcfg_usage();
+    }
+}
+#endif /*RW610*/
 
 static void dump_wlan_get_antcfg_usage(void)
 {

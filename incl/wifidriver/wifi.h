@@ -48,7 +48,7 @@
 #endif
 
 #if !defined(SD8801)
-#define CONFIG_GTK_REKEY_OFFLOAD       1
+#define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
 
 #if defined(SD9177)
@@ -796,8 +796,13 @@ int wifi_set_11ac_cfg(uint32_t vhtcap, uint16_t tx_mcs_map, uint16_t rx_mcs_map)
 #ifdef STREAM_2X2
 int wifi_set_antenna(t_u8 tx_antenna, t_u8 rx_antenna);
 #else
+#ifndef RW610
 int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time);
 int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u16 *current_antenna);
+#else
+int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time, t_u8 evaluate_mode);
+int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u8 *evaluate_mode, t_u16 *current_antenna);
+#endif
 #endif
 
 void wifi_process_hs_cfg_resp(t_u8 *cmd_res_buffer);

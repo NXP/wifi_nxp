@@ -10422,6 +10422,7 @@ int wlan_set_current_ant(uint8_t tx_antenna, uint8_t rx_antenna)
     return WM_SUCCESS;
 }
 #else
+#ifndef RW610
 int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time)
 {
     int rv = wifi_set_antenna(ant, evaluate_time);
@@ -10445,6 +10446,31 @@ int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint16_t *current_an
 
     return WM_SUCCESS;
 }
+#else
+int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time, uint8_t evaluate_mode)
+{
+    int rv = wifi_set_antenna(ant, evaluate_time, evaluate_mode);
+    if (rv != WM_SUCCESS)
+    {
+        wlcm_e("Unable to set antenna");
+        return WLAN_ERROR_STATE;
+    }
+
+    return WM_SUCCESS;
+}
+
+int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint8_t *evaluate_mode, uint16_t *current_antenna)
+{
+    int rv = wifi_get_antenna((unsigned int *)ant, evaluate_time, evaluate_mode, current_antenna);
+    if (rv != WM_SUCCESS)
+    {
+        wlcm_e("Unable to get current antenna");
+        return WLAN_ERROR_STATE;
+    }
+
+    return WM_SUCCESS;
+}
+#endif /*RW610*/
 
 #endif
 

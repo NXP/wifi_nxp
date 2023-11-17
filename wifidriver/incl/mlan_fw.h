@@ -5457,6 +5457,10 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_RF_ANTENNA
     t_u16 evaluate_time;
     /** Current antenna */
     t_u16 current_antenna;
+#ifdef RW610
+    /** Evaluate mode */
+    t_u8 evaluate_mode;
+#endif
 #endif
 } MLAN_PACK_END HostCmd_DS_802_11_RF_ANTENNA;
 

@@ -2231,6 +2231,9 @@ mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
         pantenna->action        = wlan_cpu_to_le16(HostCmd_ACT_SET_BOTH);
         pantenna->antenna_mode  = wlan_cpu_to_le16((t_u16)ant_cfg_1x1->antenna);
         pantenna->evaluate_time = wlan_cpu_to_le16((t_u16)ant_cfg_1x1->evaluate_time);
+#ifdef RW610
+        pantenna->evaluate_mode = wlan_cpu_to_le16((t_u8)ant_cfg_1x1->evaluate_mode);
+#endif
 #endif
     }
     else

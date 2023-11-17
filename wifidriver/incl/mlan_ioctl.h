@@ -1370,6 +1370,10 @@ typedef struct _mlan_ds_ant_cfg_1x1
     t_u16 evaluate_time;
     /** Current antenna */
     t_u16 current_antenna;
+#ifdef RW610
+    /** Evaluate time */
+    t_u8 evaluate_mode;
+#endif
 } mlan_ds_ant_cfg_1x1, *pmlan_ds_ant_cfg_1x1;
 
 #ifdef STREAM_2X2

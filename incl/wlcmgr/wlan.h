@@ -3343,7 +3343,7 @@ void wlan_configure_null_pkt_interval(int time_in_secs);
  */
 int wlan_set_current_ant(uint8_t tx_antenna, uint8_t rx_antenna);
 #else
-
+#ifndef RW610
 /** This API can be used to set the mode of Tx/Rx antenna.
  * If SAD is enabled, this API can also used to set SAD antenna
  * evaluate time interval(antenna mode must be antenna diversity
@@ -3375,6 +3375,45 @@ int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time);
  * \return WLAN_ERROR_STATE if unsuccessful.
  */
 int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint16_t *current_antenna);
+#else
+/** This API can be used to set the mode of Tx/Rx antenna.
+ * If SAD is enabled, this API can also used to set SAD antenna
+ * evaluate time interval(antenna mode must be antenna diversity
+ * when set SAD evaluate time interval).
+ *
+ * \param[in] ant Antenna valid values are 1, 2 and 65535
+ *                1 : Tx/Rx antenna 1
+ *                2 : Tx/Rx antenna 2
+ *	          0xFFFF: Tx/Rx antenna diversity
+ * \param[in] evaluate_time
+ *	      SAD evaluate time interval, default value is 6s(0x1770).
+ *  \param[in] evaluate_mode
+ *	            0: PCB Ant  + Ext Ant0
+ *              1: Ext Ant0 + Ext Ant1
+ *              2: PCB Ant  + Ext Ant1
+ *           0xFF: Default divisity mode.
+ *
+ * \return WM_SUCCESS if successful.
+ * \return WLAN_ERROR_STATE if unsuccessful.
+ *
+ */
+int wlan_set_antcfg(uint32_t ant, uint16_t evaluate_time, uint8_t evaluate_mode);
+
+/** This API can be used to get the mode of Tx/Rx antenna.
+ * If SAD is enabled, this API can also used to get SAD antenna
+ * evaluate time interval(antenna mode must be antenna diversity
+ * when set SAD evaluate time interval).
+ *
+ * \param[out] ant pointer to antenna variable.
+ * \param[out] evaluate_time pointer to evaluate_time variable for SAD.
+ * \param[out] current_mode pointer to evaluate_mode.
+ * \param[out] current_antenna pointer to current antenna.
+ *
+ * \return WM_SUCCESS if successful.
+ * \return WLAN_ERROR_STATE if unsuccessful.
+ */
+int wlan_get_antcfg(uint32_t *ant, uint16_t *evaluate_time, uint8_t *evaluate_mode, uint16_t *current_antenna);
+#endif /*RW610*/
 #endif
 
 /** Get the wifi firmware version extension string.

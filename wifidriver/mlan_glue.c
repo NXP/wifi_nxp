@@ -2984,7 +2984,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                                 os_mem_free((void *)ps_action_p);
                             }
                         }
-                        else 
+                        else
 #endif
                         {
                             if (wifi_event_completion((enum wifi_event)ps_event, result, (void *)ps_action_p) !=
@@ -3298,6 +3298,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                             *(antcfg->ant_mode)        = rf_antenna_ctrl->antenna_mode;
                             *(antcfg->evaluate_time)   = rf_antenna_ctrl->evaluate_time;
                             *(antcfg->current_antenna) = rf_antenna_ctrl->current_antenna;
+#ifdef RW610
+                            *(antcfg->evaluate_mode) = rf_antenna_ctrl->evaluate_mode;
+#endif
                         }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;

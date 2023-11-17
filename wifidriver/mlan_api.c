@@ -2436,6 +2436,9 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, wifi_antcfg_t *wifi_antcfg)
 
     ant_cfg_1x1.antenna = (t_u32) * (wifi_antcfg->ant_mode);
     ant_cfg_1x1.evaluate_time = (t_u16) * (wifi_antcfg->evaluate_time);
+#ifdef RW610
+    ant_cfg_1x1.evaluate_mode = (t_u8) * (wifi_antcfg->evaluate_mode);
+#endif
 
     if (action != HostCmd_ACT_GEN_GET && action != HostCmd_ACT_GEN_SET)
     {
@@ -2463,7 +2466,11 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, wifi_antcfg_t *wifi_antcfg)
     return wm_wifi.cmd_resp_status;
 }
 
+#ifndef RW610
 int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u16 *current_antenna)
+#else
+int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u8 *evaluate_mode, t_u16 *current_antenna)
+#endif
 {
     if (ant_mode == MNULL)
     {
@@ -2473,6 +2480,9 @@ int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u16 *current_anten
     wifi_antcfg_t antenna_cfg;
     antenna_cfg.ant_mode = ant_mode;
     antenna_cfg.evaluate_time = evaluate_time;
+#ifdef RW610
+    antenna_cfg.evaluate_mode = evaluate_mode;
+#endif
     antenna_cfg.current_antenna = current_antenna;
 
     int rv = wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_GET, &antenna_cfg);
@@ -2504,6 +2514,7 @@ int wifi_set_antenna(t_u8 tx_antenna, t_u8 rx_antenna)
     return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, tx_antenna, rx_antenna);
 }
 #else
+#ifndef RW610
 int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 {
     wifi_antcfg_t antenna_cfg;
@@ -2512,6 +2523,17 @@ int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 
     return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, &antenna_cfg);
 }
+#else
+int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time, t_u8 evaluate_mode)
+{
+    wifi_antcfg_t antenna_cfg;
+    antenna_cfg.ant_mode      = &ant_mode;
+    antenna_cfg.evaluate_time = &evaluate_time;
+    antenna_cfg.evaluate_mode = &evaluate_mode;
+
+    return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, &antenna_cfg);
+}
+#endif /*RW610*/
 #endif
 
 #ifdef CONFIG_WIFI_GET_LOG
