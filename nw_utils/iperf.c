@@ -167,7 +167,7 @@ static void lwiperf_report(void *arg,
                            u32_t ms_duration,
                            u32_t bandwidth_kbitpsec)
 {
-    if(arg == NULL)
+    if (arg == NULL)
     {
         (void)PRINTF("Unable to print iperf report\r\n");
         return;
@@ -218,7 +218,7 @@ static void lwiperf_report(void *arg,
         (void)PRINTF(" IPERF Report error\r\n");
     }
     struct iperf_test_context *test_ctx = (struct iperf_test_context *)arg;
-    if(test_ctx->server_mode == 0)
+    if (test_ctx->server_mode == 0 && test_ctx->client_type != LWIPERF_DUAL)
     {
         os_timer_deactivate(&ptimer);
     }
