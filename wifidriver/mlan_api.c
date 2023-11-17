@@ -1375,6 +1375,14 @@ int wifi_set_rf_band(const uint8_t band)
     )
         return -WM_FAIL;
 
+#ifdef CONFIG_5GHz_SUPPORT
+    if ((band == 1) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wifi_e("Not support 5G, please set 2G band");
+        return -WM_FAIL;
+    }
+#endif
+
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RF_BAND_AG;
@@ -1390,7 +1398,7 @@ int wifi_set_rf_band(const uint8_t band)
         return WM_SUCCESS;
     }
 
-    wifi_e("Wifi set rf band fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    wifi_e("Wifi set rf band fails, error code: 0x%x", wifi_mfg_cmd_generic_cfg.error);
     return -WM_FAIL;
 }
 
@@ -1439,6 +1447,13 @@ int wifi_set_rf_bandwidth(const uint8_t bandwidth)
     {
         return -WM_FAIL;
     }
+
+    if ((bandwidth != 0) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wifi_e("Not support 5G, please set 2G bandwidth");
+        return -WM_FAIL;
+    }
+
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 
     wifi_mfg_cmd_generic_cfg.mfg_cmd = MFG_CMD_RF_CHANNELBW;
@@ -1453,7 +1468,7 @@ int wifi_set_rf_bandwidth(const uint8_t bandwidth)
         return WM_SUCCESS;
     }
 
-    wifi_e("Wifi set rf bandwidth fails, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    wifi_e("Wifi set rf bandwidth fails, error code: 0x%x", wifi_mfg_cmd_generic_cfg.error);
     return -WM_FAIL;
 }
 

@@ -2481,7 +2481,7 @@ mlan_status wlan_cmd_tx_rate_cfg(IN pmlan_private pmpriv,
     rate_cfg->action    = wlan_cpu_to_le16(cmd_action);
     rate_cfg->cfg_index = 0;
 
-    rate_scope         = (MrvlRateScope_t *)(void *)((t_u8 *)rate_cfg + sizeof(HostCmd_DS_TX_RATE_CFG));
+    rate_scope = (MrvlRateScope_t *)(void *)((t_u8 *)rate_cfg + sizeof(HostCmd_DS_TX_RATE_CFG));
     // coverity[overrun-local:SUPPRESS]
     rate_scope->type   = wlan_cpu_to_le16(TLV_TYPE_RATE_SCOPE);
     rate_scope->length = wlan_cpu_to_le16(sizeof(MrvlRateScope_t) - sizeof(MrvlIEtypesHeader_t));
@@ -2958,10 +2958,10 @@ mlan_status wlan_cmd_tx_pert(pmlan_private pmpriv,
     pkt_stats->enable = cfg->tx_pert_check;
     if (cmd_action == HostCmd_ACT_SET_TX_PER_TRACKING)
     {
-        tx_pert         = (MrvlTxPerTrackInfo_t *)((t_u8 *)pkt_stats + sizeof(HostCmd_DS_TX_RX_PKT_STATS));
-		// coverity[overrun-local:SUPPRESS]
-        tx_pert->type   = wlan_cpu_to_le16(TLV_TYPE_TX_PER_TRACK);
-        tx_pert->length = wlan_cpu_to_le16(sizeof(MrvlTxPerTrackInfo_t) - sizeof(MrvlIEtypesHeader_t));
+        tx_pert = (MrvlTxPerTrackInfo_t *)((t_u8 *)pkt_stats + sizeof(HostCmd_DS_TX_RX_PKT_STATS));
+        // coverity[overrun-local:SUPPRESS]
+        tx_pert->type                 = wlan_cpu_to_le16(TLV_TYPE_TX_PER_TRACK);
+        tx_pert->length               = wlan_cpu_to_le16(sizeof(MrvlTxPerTrackInfo_t) - sizeof(MrvlIEtypesHeader_t));
         tx_pert->tx_stat_check_period = cfg->tx_pert_check_peroid;
         tx_pert->tx_stat_check_ratio  = cfg->tx_pert_check_ratio;
         tx_pert->tx_stat_check_num    = wlan_cpu_to_le16(cfg->tx_pert_check_num);
@@ -3081,6 +3081,41 @@ mlan_status wlan_ret_cfg_data(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND *re
 }
 #endif /* CONFIG_MLAN_WMSDK */
 
+/** *  @brief This function gets the no 5G status
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static mlan_status wlan_get_no_5G_status(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp)
+{
+    mlan_adapter *pmadapter = pmpriv->adapter;
+    t_u16 left_len;
+    t_u16 tlv_type                        = 0;
+    t_u16 tlv_len                         = 0;
+    MrvlIEtypesHeader_t *tlv              = MNULL;
+    MrvlIEtypes_fw_cap_info_t *fw_cap_tlv = MNULL;
+
+    left_len = resp->size - sizeof(HostCmd_DS_GET_HW_SPEC) - S_DS_GEN;
+    tlv      = (MrvlIEtypesHeader_t *)((t_u8 *)resp + S_DS_GEN + sizeof(HostCmd_DS_GET_HW_SPEC));
+    while (left_len > sizeof(MrvlIEtypesHeader_t))
+    {
+        tlv_type = wlan_le16_to_cpu(tlv->type);
+        tlv_len  = wlan_le16_to_cpu(tlv->len);
+        if (tlv_type == TLV_TYPE_FW_CAP_INFO)
+        {
+            fw_cap_tlv            = (MrvlIEtypes_fw_cap_info_t *)tlv;
+            pmadapter->fw_cap_ext = wlan_le32_to_cpu(fw_cap_tlv->fw_cap_ext);
+            break;
+        }
+        left_len -= (sizeof(MrvlIEtypesHeader_t) + tlv_len);
+        tlv = (MrvlIEtypesHeader_t *)((t_u8 *)tlv + tlv_len + sizeof(MrvlIEtypesHeader_t));
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+
 /**
  *  @brief This function handles the command response of get_hw_spec
  *
@@ -3111,10 +3146,16 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
     ENTER();
 
     pmadapter->fw_cap_info = wlan_le32_to_cpu(hw_spec->fw_cap_info);
+    /* Get no 5G status to check whether need to disable 5G */
+    wlan_get_no_5G_status(pmpriv, resp);
 #ifdef STA_SUPPORT
     if ((IS_SUPPORT_MULTI_BANDS(pmadapter)) != 0U)
     {
         pmadapter->fw_bands = (t_u16)GET_FW_DEFAULT_BANDS(pmadapter);
+        if (ISSUPP_NO5G(pmadapter->fw_cap_ext))
+        {
+            pmadapter->fw_bands &= ~(BAND_A | BAND_AN | BAND_AAC);
+        }
 #ifndef CONFIG_5GHz_SUPPORT
         /* fixme: Re-check if this is the correct way to disable 5 GHz. */
         pmadapter->fw_bands &= ~(BAND_A | BAND_AN | BAND_AAC);
@@ -3312,12 +3353,15 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     ext_tlv->type = tlv_type;
                     ext_tlv->len  = tlv_len;
+                    if ((he_tlv_idx == AX_2G_TLV_INDEX) || !ISSUPP_NO5G(pmadapter->fw_cap_ext))
+                    {
 #ifndef RW610
-                    wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
+                        wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
 #else
-                    wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv, he_tlv_idx);
-                    he_tlv_idx++;
+                        wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv, he_tlv_idx);
+                        he_tlv_idx++;
 #endif
+                    }
                 }
                 break;
 #endif

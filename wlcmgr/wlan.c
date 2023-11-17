@@ -8041,6 +8041,17 @@ int wlan_add_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
+    if ((network->channel > MAX_CHANNELS_BG) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wlcm_e("Not support 5G, please set 2G channel");
+        return -WM_E_INVAL;
+    }
+    if ((network->acs_band == 1) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wlcm_e("Not support 5G, please not set acs_band 1");
+        return -WM_E_INVAL;
+    }
+
     if (network->role == WLAN_BSS_ROLE_STA)
     {
         if (is_running() && !is_state(CM_STA_IDLE) && !is_state(CM_STA_ASSOCIATED) && !is_state(CM_STA_CONNECTED))
@@ -9226,7 +9237,13 @@ static int wlan_set_uap_ecsa_cfg(
 
     if (wlan_11h_radar_detect_required(pmpriv, channel))
     {
-        (void)PRINTF("Please set non-dfs channel\n\r");
+        wlcm_e("Please set non-dfs channel");
+        return -WM_FAIL;
+    }
+
+    if ((channel > MAX_CHANNELS_BG) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wlcm_e("Not support 5G, please set 2G channel");
         return -WM_FAIL;
     }
 
@@ -9236,7 +9253,7 @@ static int wlan_set_uap_ecsa_cfg(
         {
             if (wlan_check_valid_channel_operclass(channel, oper_class))
             {
-                (void)PRINTF("Wrong channel switch parameters!\n\r");
+                wlcm_e("Wrong channel switch parameters!");
                 return -EINVAL;
             }
         }
@@ -9255,7 +9272,7 @@ static int wlan_set_uap_ecsa_cfg(
     }
     else
     {
-        (void)PRINTF("uap isn't up \n\r");
+        wlcm_e("uap isn't up");
         return -WM_FAIL;
     }
 }

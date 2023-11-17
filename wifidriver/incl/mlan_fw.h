@@ -748,6 +748,9 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define ISSUPP_11AC2GENABLED(FwCapInfo) ((FwCapInfo)&MBIT(12))
 #define ISSUPP_11AC5GENABLED(FwCapInfo) ((FwCapInfo)&MBIT(13))
 
+/** HW_SPEC FwCapExt: no 5G enabled */
+#define ISSUPP_NO5G(FwCapExt) (FwCapExt & MBIT(17))
+
 /** HW_SPEC Dot11acDevCap : HTC-VHT supported */
 #define ISSUPP_11ACVHTHTCVHT(Dot11acDevCap) (Dot11acDevCap & MBIT(22))
 /** HW_SPEC Dot11acDevCap : VHT TXOP PS support */
