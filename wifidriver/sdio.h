@@ -13,15 +13,24 @@
 #include <wmerrno.h>
 #include "type_decls.h"
 
+#ifndef CONFIG_ZEPHYR
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
 #include "sdmmc_config.h"
+#else
+#include <wifi.h>
+#include <zephyr/sd/sdio.h>
+#endif
 
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
+#ifndef CONFIG_ZEPHYR
 #define DATA_BUFFER_SIZE (FSL_SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
+#else
+#define DATA_BUFFER_SIZE (SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
+#endif
 
 /** The number of times to try when polling for status bits */
 #if defined(SD8997)

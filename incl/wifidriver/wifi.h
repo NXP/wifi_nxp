@@ -13,6 +13,10 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
+#ifndef SDK_OS_FREE_RTOS
+#include "nxp_wifi.h"
+#endif
+
 #ifndef CONFIG_WIFI_INTERNAL
 #define CONFIG_WIFI_INTERNAL 1
 #endif
@@ -47,6 +51,8 @@
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 #endif
 
+#ifndef CONFIG_ZEPHYR
+
 #if !defined(SD8801)
 #define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
@@ -63,6 +69,8 @@
 #ifndef CONFIG_WPA_SUPP
 #define CONFIG_DRIVER_MBO 1
 #endif
+#endif
+
 #endif
 
 #include <wifi-decl.h>
@@ -988,6 +996,9 @@ int wifi_set_power_save_mode(void);
 int wifi_get_wakeup_reason(t_u16 *hs_wakeup_reason);
 void send_sleep_confirm_command(mlan_bss_type interface);
 void wifi_configure_listen_interval(int listen_interval);
+void wifi_configure_delay_to_ps(unsigned int timeout_ms);
+unsigned short wifi_get_listen_interval();
+unsigned int wifi_get_delay_to_ps();
 void wifi_configure_null_pkt_interval(unsigned int null_pkt_interval);
 int wrapper_wifi_assoc(
     const unsigned char *bssid, int wlan_security, bool is_wpa_tkip, unsigned int owe_trans_mode, bool is_ft);
@@ -1359,7 +1370,7 @@ typedef struct _wlan_rrm_scan_cb_param
 
 int wifi_host_11k_cfg(int enable_11k);
 
-int wifi_host_11k_neighbor_req(t_u8 *ssid);
+int wifi_host_11k_neighbor_req(const char *ssid);
 #endif
 
 #ifdef CONFIG_11V

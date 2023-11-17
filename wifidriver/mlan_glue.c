@@ -4800,7 +4800,7 @@ void wifi_handle_event_data_pause(void *data)
             }
             else
             {
-                wifi_w("%s not support bss_type %d", evt->bss_type);
+                wifi_w("Not support bss_type %d", evt->bss_type);
             }
         }
 
@@ -4989,7 +4989,7 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
 
     memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
     /* Fill scan config field for bg scan */
-    strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, strlen(ssid));
+    strcpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid);
     pmpriv->scan_cfg.ssid_list[0].max_len = 0;
     pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
     pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low;

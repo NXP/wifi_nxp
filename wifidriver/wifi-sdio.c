@@ -24,10 +24,12 @@
 #include <mlan_fw.h>
 #include "wifi-sdio.h"
 #include "wifi-internal.h"
+#ifndef CONFIG_ZEPHYR
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
 #include "sdmmc_config.h"
+#endif
 #include "sdio.h"
 #include "firmware_dnld.h"
 #include "fwdnld_sdio.h"

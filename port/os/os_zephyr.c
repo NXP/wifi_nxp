@@ -23,6 +23,9 @@
  *  express and approved by NXP in writing.
  *
  */
+
+#include "nxp_wifi.h"
+
 #include <zephyr/init.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -31,7 +34,6 @@
 
 #define mainTEST_TASK_PRIORITY (tskIDLE_PRIORITY)
 #define mainTEST_DELAY         (400 / portTICK_RATE_MS)
-
 
 /* Freertos handles this internally? */
 void os_thread_stackmark(char *name)
@@ -61,32 +63,31 @@ typedef struct event_group_t
     event_wait_t *list;
 } event_group_t;
 
-
 int os_thread_create(os_thread_t *thandle,
-                                   const char *name,
-                                   void (*main_func)(os_thread_arg_t arg),
-                                   void *arg,
-                                   os_thread_stack_t *stack,
-                                   int prio)
+                     const char *name,
+                     void (*main_func)(os_thread_arg_t arg),
+                     void *arg,
+                     os_thread_stack_t *stack,
+                     int prio)
 {
     struct zep_thread *thread = NULL;
 
     thread = os_mem_alloc(sizeof(struct zep_thread));
-    if (thread == NULL) {
+    if (thread == NULL)
+    {
         printk("OS: Thread Alloc fail name %s\r\n", name);
-	return -WM_FAIL;
+        return -WM_FAIL;
     }
 
     /* init semaphore before create thread to avoid restart thread getting semaphore unexpectedly */
     k_sem_init(&thread->event, 0, 1);
-    thread->id = k_thread_create(&stack->thread, stack->stack,
-        stack->size, thread_wrapper, main_func, arg, thread, prio, 0, K_NO_WAIT);
+    thread->id = k_thread_create(&stack->thread, stack->stack, stack->size, thread_wrapper, main_func, arg, thread,
+                                 prio, 0, K_NO_WAIT);
     k_thread_name_set(thread->id, name);
 
     *thandle = thread;
     return WM_SUCCESS;
 }
-
 
 int os_thread_delete(os_thread_t *thandle)
 {
@@ -109,16 +110,16 @@ int os_thread_delete(os_thread_t *thandle)
 /* Memory allocation OSA layer. Based on Zephyr's libc malloc implementation. */
 #define HEAP_BYTES CONFIG_WIFI_NET_HEAP_SIZE
 
-//static struct sys_heap osa_malloc_heap;
-//struct k_mutex osa_malloc_heap_mutex;
-//static char osa_malloc_heap_mem[HEAP_BYTES];
+// static struct sys_heap osa_malloc_heap;
+// struct k_mutex osa_malloc_heap_mutex;
+// static char osa_malloc_heap_mem[HEAP_BYTES];
 
 /*
  *  Actual allocated memory size will be 8 bytes larger than required,
  *  for Zephyr mem mgmt.
  *  So Zephyr heap stats allocated size will increase 8 bytes more.
  */
-void* os_mem_alloc(size_t size)
+void *os_mem_alloc(size_t size)
 {
 #if 0
     int lock_ret;
@@ -140,8 +141,9 @@ void* os_mem_alloc(size_t size)
 void *os_mem_calloc(size_t size)
 {
     void *ptr = os_mem_alloc(size);
-    if (ptr == NULL && size != 0) {
-	return NULL;
+    if (ptr == NULL && size != 0)
+    {
+        return NULL;
     }
     memset(ptr, 0, size);
     return ptr;
@@ -203,6 +205,7 @@ void os_mem_free(void *ptr)
     k_free(ptr);
 }
 
+#if 0
 /* Prepares OSA layer, by setting up heap */
 static int osa_prepare(const struct device *unused)
 {
@@ -214,13 +217,14 @@ static int osa_prepare(const struct device *unused)
 }
 
 SYS_INIT(osa_prepare, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+#endif
 
 /* Used to convert 3 argument zephyr threads to one arg OSA threads */
-void thread_wrapper(void *entry, void* arg, void* tdata)
+void thread_wrapper(void *entry, void *arg, void *tdata)
 {
     /* Save thread data */
     k_thread_custom_data_set(tdata);
-    void (*func)(void*) = entry;
+    void (*func)(void *) = entry;
     func(arg);
 }
 
@@ -236,9 +240,9 @@ int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue
         return -WM_FAIL;
     }
 
-	k_msgq_init(msgq, poolname->buffer, msgsize, poolname->size / msgsize);
-	*qhandle = msgq;
-	return WM_SUCCESS;
+    k_msgq_init(msgq, poolname->buffer, msgsize, poolname->size / msgsize);
+    *qhandle = msgq;
+    return WM_SUCCESS;
 }
 
 int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned long wait)
@@ -254,7 +258,7 @@ int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned long wait)
     ret = k_msgq_put(*qhandle, msg, K_TICKS(wait));
     os_dprintf("OS: Queue Send: done\r\n");
 
-    return ret == 0 ? WM_SUCCESS: -WM_FAIL;
+    return ret == 0 ? WM_SUCCESS : -WM_FAIL;
 }
 
 int os_queue_recv(os_queue_t *qhandle, void *msg, unsigned long wait)
@@ -384,7 +388,6 @@ int os_recursive_mutex_put(os_mutex_t *mhandle)
 
 int os_mutex_delete(os_mutex_t *mhandle)
 {
-    
     if (mhandle == NULL || (*mhandle) == NULL)
         return WM_SUCCESS;
 
@@ -420,9 +423,9 @@ int os_semaphore_create(os_semaphore_t *mhandle, const char *name)
 }
 
 int os_semaphore_create_counting(os_semaphore_t *mhandle,
-                                               const char *name,
-                                               unsigned long maxcount,
-                                               unsigned long initcount)
+                                 const char *name,
+                                 unsigned long maxcount,
+                                 unsigned long initcount)
 {
     int ret;
     struct k_sem *sem = NULL;
@@ -490,9 +493,9 @@ int os_semaphore_delete(os_semaphore_t *mhandle)
 /* TODO: add this to highest prio workqueue */
 static void timer_callback_work_handler(struct k_work *item)
 {
-	struct timer_data *ptimer = CONTAINER_OF(item, struct timer_data, work);
+    struct timer_data *ptimer = CONTAINER_OF(item, struct timer_data, work);
 
-	ptimer->callback(ptimer);
+    ptimer->callback(ptimer);
 }
 
 static void timer_callback(struct k_timer *tmr)
@@ -525,9 +528,9 @@ int os_timer_create(os_timer_t *timer_t,
     }
 
     ptimer->reload_options = reload;
-    ptimer->period = ticks;
-    ptimer->callback = call_back;
-    ptimer->user_arg = cb_arg;
+    ptimer->period         = ticks;
+    ptimer->callback       = call_back;
+    ptimer->user_arg       = cb_arg;
     k_timer_init(&ptimer->timer, timer_callback, NULL);
     k_timer_user_data_set(&ptimer->timer, ptimer);
 
@@ -536,14 +539,14 @@ int os_timer_create(os_timer_t *timer_t,
 
     if (activate == OS_TIMER_AUTO_ACTIVATE)
     {
-	    if (ptimer->reload_options == OS_TIMER_ONE_SHOT)
-	    {
-	        k_timer_start(&ptimer->timer, K_TICKS(ptimer->period), K_NO_WAIT);
-	    } else
-	    {
-	        k_timer_start(&ptimer->timer, K_TICKS(ptimer->period),
-			K_TICKS(ptimer->period));
-	    }
+        if (ptimer->reload_options == OS_TIMER_ONE_SHOT)
+        {
+            k_timer_start(&ptimer->timer, K_TICKS(ptimer->period), K_NO_WAIT);
+        }
+        else
+        {
+            k_timer_start(&ptimer->timer, K_TICKS(ptimer->period), K_TICKS(ptimer->period));
+        }
     }
 
     *timer_t = ptimer;
@@ -554,16 +557,16 @@ int os_timer_activate(os_timer_t *timer_t)
 {
     struct timer_data *ptimer;
     if (timer_t == NULL)
-       return -WM_E_INVAL;
+        return -WM_E_INVAL;
 
     ptimer = (struct timer_data *)(*timer_t);
     if (ptimer->reload_options == OS_TIMER_ONE_SHOT)
     {
         k_timer_start(&ptimer->timer, K_TICKS(ptimer->period), K_NO_WAIT);
-    } else
+    }
+    else
     {
-        k_timer_start(&ptimer->timer, K_TICKS(ptimer->period),
-        K_TICKS(ptimer->period));
+        k_timer_start(&ptimer->timer, K_TICKS(ptimer->period), K_TICKS(ptimer->period));
     }
     return WM_SUCCESS;
 }
@@ -575,7 +578,7 @@ int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_timer_tick bloc
     if (timer_t == NULL)
         return -WM_E_INVAL;
 
-    ptimer = (struct timer_data *)(*timer_t);
+    ptimer         = (struct timer_data *)(*timer_t);
     ptimer->period = ntime;
     return WM_SUCCESS;
 }
@@ -589,7 +592,7 @@ bool os_timer_is_running(os_timer_t *timer_t)
         return false;
 
     ptimer = (struct timer_data *)(*timer_t);
-    ret = k_timer_remaining_ticks(&ptimer->timer);
+    ret    = k_timer_remaining_ticks(&ptimer->timer);
     return ret == 0 ? false : true;
 }
 
@@ -985,7 +988,7 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
     {
         return -WM_FAIL;
     }
-    ret     = os_mutex_create(&(plock->write_mutex), mutex_name, OS_MUTEX_INHERIT);
+    ret = os_mutex_create(&(plock->write_mutex), mutex_name, OS_MUTEX_INHERIT);
     if (ret == -WM_FAIL)
     {
         return -WM_FAIL;

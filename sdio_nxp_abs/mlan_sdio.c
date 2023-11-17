@@ -51,7 +51,7 @@ int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
     return 1;
 }
 
-bool sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
+int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
     osa_status_t ret;
 
@@ -59,20 +59,20 @@ bool sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
     if (ret != KOSA_StatusSuccess)
     {
         sdio_e("failed to get mutex\r\n");
-        return false;
+        return 0;
     }
 
     if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != KOSA_StatusSuccess)
     {
         (void)OSA_MutexUnlock(&sdio_mutex);
-        return false;
+        return 0;
     }
 
     *resp = data;
 
     (void)OSA_MutexUnlock(&sdio_mutex);
 
-    return true;
+    return 1;
 }
 
 int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
@@ -109,7 +109,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
     return 1;
 }
 
-bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
+int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
     osa_status_t ret;
     uint32_t flags = 0;
@@ -119,7 +119,7 @@ bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, u
     if (ret != KOSA_StatusSuccess)
     {
         sdio_e("failed to get mutex\r\n");
-        return false;
+        return 0;
     }
 
     if (bcnt > 1U)
@@ -135,12 +135,12 @@ bool sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, u
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
         (void)OSA_MutexUnlock(&sdio_mutex);
-        return false;
+        return 0;
     }
 
     (void)OSA_MutexUnlock(&sdio_mutex);
 
-    return true;
+    return 1;
 }
 
 static void SDIO_CardInterruptCallBack(void *userData)

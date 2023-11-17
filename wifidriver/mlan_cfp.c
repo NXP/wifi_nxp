@@ -2328,7 +2328,7 @@ void wlan_get_active_channel_list(mlan_private *pmpriv, t_u8 *chan_list, t_u8 *n
     }
     if (acs_band == 1)
     {
-#if CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_5GHz_SUPPORT
         i      = 1;
         cfp    = pmadapter->region_channel[i].pcfp;
         cfp_no = (int)pmadapter->region_channel[i].num_cfp;

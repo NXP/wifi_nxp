@@ -18,6 +18,10 @@ Change log:
 #ifndef _MLAN_H_
 #define _MLAN_H_
 
+#ifndef SDK_OS_FREE_RTOS
+#include "nxp_wifi.h"
+#endif
+
 #ifndef CONFIG_WIFI_INTERNAL
 #define CONFIG_WIFI_INTERNAL 1
 #endif
@@ -51,8 +55,10 @@ Change log:
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 #endif
 
+#ifndef CONFIG_ZEPHYR
+
 #if !defined(SD8801)
-#define CONFIG_GTK_REKEY_OFFLOAD       1
+#define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
 
 #if defined(SD9177)
@@ -67,6 +73,8 @@ Change log:
 #ifndef CONFIG_WPA_SUPP
 #define CONFIG_DRIVER_MBO 1
 #endif
+#endif
+
 #endif
 
 #include "mlan_decl.h"

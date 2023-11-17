@@ -73,6 +73,27 @@ void wifi_configure_listen_interval(int listen_interval)
     pmadapter->local_listen_interval = (t_u16)listen_interval;
 }
 
+void wifi_configure_delay_to_ps(unsigned int timeout_ms)
+{
+    pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
+
+    pmadapter->delay_to_ps = (t_u16)timeout_ms;
+}
+
+unsigned short wifi_get_listen_interval()
+{
+    pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
+
+    return (unsigned short)pmadapter->local_listen_interval;
+}
+
+unsigned int wifi_get_delay_to_ps()
+{
+    pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
+
+    return (unsigned int)pmadapter->delay_to_ps;
+}
+
 #ifdef CONFIG_HOST_SLEEP
 int wifi_send_hs_cfg_cmd(mlan_bss_type interface, t_u32 ipv4_addr, t_u16 action, t_u32 conditions)
 {

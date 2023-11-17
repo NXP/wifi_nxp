@@ -19,8 +19,10 @@ Change log:
 #include <wmerrno.h>
 #include <wm_os.h>
 #include "fsl_common.h"
+#ifndef CONFIG_ZEPHYR
 #ifndef RW610
 #include "sdmmc_config.h"
+#endif
 #endif
 
 /* Always keep this include at the end of all include files */

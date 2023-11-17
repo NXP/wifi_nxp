@@ -1497,9 +1497,14 @@ typedef PACK_START struct _wifi_auto_reconnect_config_t
     t_u16 flags;
 } PACK_END wifi_auto_reconnect_config_t;
 
+/** Scan all the channels in specified band */
+#define BAND_SPECIFIED 0x80U
+
 /** Scan channel list */
 typedef PACK_START struct _wifi_scan_channel_list_t
 {
+    /** Channel scan parameter : Radio type */
+    t_u8 radio_type;
     /** Channel numder */
     t_u8 chan_number;
     /** Scan type Active = 1, Passive = 2 */

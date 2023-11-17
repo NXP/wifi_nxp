@@ -15,4 +15,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "nxp_wifi.h"
+
 #endif /* ! _WMTYPES_H_ */

@@ -4055,6 +4055,7 @@ static void wifi_driver_tx(void *data)
 }
 #endif /* CONFIG_WMM */
 
+#ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_11AX
 #ifdef CONFIG_TCP_ACK_ENH
 #define ETH_PROTO_IP             0x0800U
@@ -4116,6 +4117,7 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
 }
 #endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX*/
+#endif
 
 int wifi_low_level_output(const t_u8 interface,
                           const t_u8 *sd_buffer,

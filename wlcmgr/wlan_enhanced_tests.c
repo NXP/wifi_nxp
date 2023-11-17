@@ -1489,7 +1489,7 @@ static wlan_btwt_config_t btwt_config;
 #endif /* CONFIG_11AX_TWT */
 
 /* cfg tables for 11axcfg and twt commands to FW */
-static uint8_t g_11ax_cfg[29] = {0};
+static uint8_t g_11ax_cfg[31] = {0};
 
 const static test_cfg_param_t g_11ax_cfg_param[] = {
     /* name                 offset  len     notes */
@@ -1595,7 +1595,7 @@ static void test_wlan_twt_report(int argc, char **argv)
 
 static void wlan_init_g_test_cfg_arrays()
 {
-    memcpy(g_11ax_cfg, wlan_get_11ax_cfg(), 29);
+    memcpy(g_11ax_cfg, wlan_get_11ax_cfg(), 31);
 #ifdef CONFIG_11AX_TWT
     memcpy(g_btwt_cfg, wlan_get_btwt_cfg(), 12);
     memcpy(g_twt_setup_cfg, wlan_get_twt_setup_cfg(), 12);

@@ -1981,6 +1981,7 @@ typedef MLAN_PACK_START struct
 #define MIN_BGSCAN_INTERVAL 30000
 /** default repeat count */
 #define DEF_REPEAT_COUNT 6
+#endif
 
 /** default rssi low threshold */
 #define DEFAULT_RSSI_LOW_THRESHOLD 70
@@ -1990,7 +1991,6 @@ typedef MLAN_PACK_START struct
 #define LOWEST_RSSI_THRESHOLD 82
 /** delta rssi */
 #define DELTA_RSSI 10
-#endif
 
 #ifdef CONFIG_11AX
 typedef MLAN_PACK_START struct _IEEEtypes_Extension_t

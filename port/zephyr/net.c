@@ -833,7 +833,7 @@ static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t 
     }
 }
 
-int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 {
 #ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_IPV6
@@ -855,10 +855,10 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 
 #ifdef CONFIG_P2P
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
-          (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+          (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
-          (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+          (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
 #endif
 
     (void)net_if_down(if_handle->netif);
@@ -904,7 +904,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 
     switch (addr->ipv4.addr_type)
     {
-        case ADDR_TYPE_STATIC:
+        case NET_ADDR_TYPE_STATIC:
             NET_IPV4_ADDR_U32(if_handle->ipaddr) = addr->ipv4.address;
             NET_IPV4_ADDR_U32(if_handle->nmask)  = addr->ipv4.netmask;
             NET_IPV4_ADDR_U32(if_handle->gw)     = addr->ipv4.gw;
@@ -913,12 +913,12 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             net_if_ipv4_set_netmask(if_handle->netif, &if_handle->nmask.in_addr);
             net_if_up(if_handle->netif);
             break;
-        case ADDR_TYPE_DHCP:
+        case NET_ADDR_TYPE_DHCP:
             net_if_up(if_handle->netif);
             os_timer_activate(&dhcp_timer);
             net_dhcpv4_restart(if_handle->netif);
             break;
-        case ADDR_TYPE_LLA:
+        case NET_ADDR_TYPE_LLA:
             /* For dhcp, instead of netifapi_netif_set_up, a
                netifapi_dhcp_start() call will be used */
             net_e("Not supported as of now...");
@@ -957,7 +957,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     interface_t *if_handle   = (interface_t *)intrfc_handle;
     struct net_if_ipv4 *ipv4 = if_handle->netif->config.ip.ipv4;
@@ -1019,7 +1019,7 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
 char *info = NULL;
 char extra_info[NET_IPV6_ADDR_LEN];
 
-char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
+char *ipv6_addr_addr_to_desc(struct net_ipv6_config *ipv6_conf)
 {
     struct in6_addr ip6_addr;
 
@@ -1030,7 +1030,7 @@ char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
     return info;
 }
 
-char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
+char *ipv6_addr_type_to_desc(struct net_ipv6_config *ipv6_conf)
 {
     struct in6_addr ip6_addr;
 
@@ -1058,7 +1058,7 @@ char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
     }
 }
 
-int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_get_if_ipv6_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
     int i;
@@ -1087,7 +1087,7 @@ int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_get_if_ipv6_pref_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     int i, ret = 0;
     interface_t *if_handle = (interface_t *)intrfc_handle;
@@ -1173,9 +1173,9 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
+void net_configure_dns(struct net_ip_config *ip, unsigned int role)
 {
-    if (ip->ipv4.addr_type == ADDR_TYPE_STATIC)
+    if (ip->ipv4.addr_type == NET_ADDR_TYPE_STATIC)
     {
         if (role != WLAN_BSS_ROLE_UAP)
         {

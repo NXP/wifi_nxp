@@ -263,9 +263,11 @@ os_queue_pool_t mon_thread_events_queue_data;
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
 #endif
 
+#ifndef CONFIG_ZEPHYR
 #ifdef SD9177
 #define POLL_TIMEOUT (20 * 1000)
 static struct udp_pcb *udp_raw_pcb;
+#endif
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
@@ -569,8 +571,10 @@ static struct
 #ifdef CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
+#ifndef CONFIG_ZEPHYR
 #ifdef SD9177
     os_timer_t poll_timer;
+#endif
 #endif
 #ifdef CONFIG_11R
 #ifdef CONFIG_WPA_SUPP
@@ -578,6 +582,7 @@ static struct
 #endif
 #endif
 #ifdef CONFIG_11K
+    bool enable_11k;
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
@@ -894,8 +899,10 @@ static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
 {
     int ret = WM_SUCCESS;
+#ifdef CONFIG_HOST_SLEEP
     unsigned int ipv4_addr = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
+#endif
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     wlan_start_cloud_keep_alive();
@@ -3661,8 +3668,10 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #endif /* CONFIG_P2P */
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
 
+#ifndef CONFIG_ZEPHYR
 #ifdef SD9177
             os_timer_activate(&wlan.poll_timer);
+#endif
 #endif
 
 #ifdef CONFIG_BG_SCAN
@@ -3846,7 +3855,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
     if (network->neighbor_report_supported == true)
     {
         int ret;
-        ret = wlan_host_11k_neighbor_req((t_u8 *)network->ssid);
+        ret = wlan_host_11k_neighbor_req((const char *)network->ssid);
         if (ret == WM_SUCCESS)
         {
             wlcm_d("Sent 11K neighbor request");
@@ -5249,7 +5258,19 @@ static void wlcm_process_init(enum cm_sta_state *next)
     (void)wrapper_wlan_cmd_get_hw_spec();
 
 #ifndef RW610
+#ifndef CONFIG_ZEPHYR
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
+#else
+    wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = {
+        CONFIG_NXP_WIFI_ED_CTRL_2G,
+        CONFIG_NXP_WIFI_ED_OFFSET_2G
+#ifdef CONFIG_5GHz_SUPPORT
+        ,
+        CONFIG_NXP_WIFI_ED_CTRL_5G,
+        CONFIG_NXP_WIFI_ED_OFFSET_5G
+#endif
+    };
+#endif
     (void)wlan_set_ed_mac_mode(wlan_ed_mac_ctrl);
     (void)wlan_set_uap_ed_mac_mode(wlan_ed_mac_ctrl);
 #endif
@@ -7059,6 +7080,7 @@ static void ft_roam_timer_cb(os_timer_arg_t arg)
 #endif
 #endif
 
+#ifndef CONFIG_ZEPHYR
 #ifdef SD9177
 
 #include "lwip/udp.h"
@@ -7140,6 +7162,7 @@ static void poll_timer_cb(os_timer_arg_t arg)
         }
     }
 }
+#endif
 #endif
 
 static void wlan_wait_wlmgr_ready()
@@ -7391,6 +7414,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     }
 #endif
 
+#ifndef CONFIG_ZEPHYR
 #ifdef SD9177
     ret = os_timer_create(&wlan.poll_timer, "poll-timer", os_msec_to_ticks(POLL_TIMEOUT),
                           &poll_timer_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
@@ -7399,6 +7423,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         wlcm_e("Unable to start poll timer");
         return ret;
     }
+#endif
 #endif
 
 #ifdef CONFIG_11R
@@ -9865,19 +9890,19 @@ void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size
     }
 }
 
-void wlan_set_mac_addr(uint8_t *mac)
+int wlan_set_mac_addr(uint8_t *mac)
 {
     uint8_t ap_mac[MLAN_MAC_ADDR_LENGTH];
 
     /* Only suppoprt unicast mac */
     if (mac[0] & 0x01)
     {
-        return;
+        return -WM_FAIL;
     }
 
     if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
     {
-        return;
+        return -WM_FAIL;
     }
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
@@ -9904,6 +9929,51 @@ void wlan_set_mac_addr(uint8_t *mac)
     (void)memcpy(wps_global.my_mac_addr, mac, MLAN_MAC_ADDR_LENGTH);
     (void)memcpy(wps_global.l2->my_mac_addr, mac, MLAN_MAC_ADDR_LENGTH);
 #endif
+
+    return WM_SUCCESS;
+}
+
+int wlan_set_uap_mac_addr(uint8_t *mac)
+{
+    uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
+
+    /* Only suppoprt unicast mac */
+    if (mac[0] & 0x01)
+    {
+        return -WM_FAIL;
+    }
+
+    if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
+    {
+        return -WM_FAIL;
+    }
+
+    if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
+    {
+        (void)memcpy(sta_mac, mac, MLAN_MAC_ADDR_LENGTH);
+        sta_mac[4] -= 1;
+
+        net_wlan_set_mac_address((unsigned char *)sta_mac, (unsigned char *)mac);
+
+        _wifi_set_mac_addr(&sta_mac[0], MLAN_BSS_TYPE_STA);
+
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_UAP);
+
+        /* save the sta mac */
+        (void)memcpy(&wlan.sta_mac[0], &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
+        /* save the uap mac */
+        (void)memcpy(&wlan.uap_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        wifi_set_mac_addr(sta_mac);
+    }
+#ifdef CONFIG_WPS2
+    (void)memcpy(wps_global.my_mac_addr, sta_mac, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(wps_global.l2->my_mac_addr, sta_mac, MLAN_MAC_ADDR_LENGTH);
+#endif
+
+    return WM_SUCCESS;
 }
 
 int wlan_scan(int (*cb)(unsigned int count))
@@ -10261,6 +10331,35 @@ int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg)
 void wlan_configure_listen_interval(int listen_interval)
 {
     wifi_configure_listen_interval(listen_interval);
+}
+
+void wlan_configure_delay_to_ps(unsigned int timeout_ms)
+{
+    wifi_configure_delay_to_ps(timeout_ms);
+}
+
+unsigned short wlan_get_listen_interval()
+{
+    return wifi_get_listen_interval();
+}
+
+unsigned int wlan_get_delay_to_ps()
+{
+    return wifi_get_delay_to_ps();
+}
+
+bool wlan_is_power_save_enabled()
+{
+    if (wlan.cm_ieeeps_configured
+#ifdef CONFIG_WNM_PS
+        || wlan.cm_wnmps_configured
+#endif
+        || wlan.cm_deepsleepps_configured)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void wlan_configure_null_pkt_interval(int time_in_secs)
@@ -11833,7 +11932,12 @@ int wlan_host_11k_cfg(int enable_11k)
 #endif
 }
 
-int wlan_host_11k_neighbor_req(t_u8 *ssid)
+bool wlan_get_host_11k_status()
+{
+    return wlan.enable_11k;
+}
+
+int wlan_host_11k_neighbor_req(const char *ssid)
 {
     int ret = -WM_FAIL;
 #ifdef CONFIG_WPA_SUPP
@@ -12066,6 +12170,11 @@ int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold)
     wlan.rssi_low_threshold = rssi_low_threshold;
 
     return wifi_config_roaming(enable, &wlan.rssi_low_threshold);
+}
+
+int wlan_get_roaming_status()
+{
+    return wlan.roaming_enabled;
 }
 #endif
 
@@ -14179,7 +14288,7 @@ int wlan_set_country_code(const char *alpha2)
     {
         if (strstr(wlan_region_code, "WW") == NULL)
         {
-            wlcm_e("%s: Specific region is configured, reconfig not allowed");
+            wlcm_e("%s: Specific region is configured, reconfig not allowed", wlan_region_code);
             return -WM_FAIL;
         }
     }

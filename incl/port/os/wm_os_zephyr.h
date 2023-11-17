@@ -60,7 +60,7 @@
 
 #include <string.h>
 
-
+#include "nxp_wifi.h"
 
 #include <wmerrno.h>
 #include <wm_utils.h>
@@ -122,10 +122,11 @@ typedef void *os_thread_arg_t;
  * os_thread_create(). Please use the macro \ref os_thread_stack_define
  * instead of using this structure directly.
  */
-typedef struct {
-	struct k_thread thread;
-	uint32_t size;
-	k_thread_stack_t *stack;
+typedef struct
+{
+    struct k_thread thread;
+    uint32_t size;
+    k_thread_stack_t *stack;
 } os_thread_stack_t;
 
 #ifdef CONFIG_NO_OPTIMIZATIONS
@@ -134,38 +135,40 @@ typedef struct {
  * created using the function os_thread_create().
  * Double stack size for -O0 optimization level as threads consume much more stack memory.
  */
-#define os_thread_stack_define(stackname, stacksize) 			\
-	K_THREAD_STACK_DEFINE(stackname##_stack, (stacksize * 2));		\
-	os_thread_stack_t stackname = {					\
-		.size = K_THREAD_STACK_SIZEOF(stackname##_stack),	\
-		.stack = stackname##_stack,				\
-	};
+#define os_thread_stack_define(stackname, stacksize)           \
+    K_THREAD_STACK_DEFINE(stackname##_stack, (stacksize * 2)); \
+    os_thread_stack_t stackname = {                            \
+        .size  = K_THREAD_STACK_SIZEOF(stackname##_stack),     \
+        .stack = stackname##_stack,                            \
+    };
 #else
 /**
  * Helper macro to define the stack size (in bytes) before a new thread is
  * created using the function os_thread_create().
  */
-#define os_thread_stack_define(stackname, stacksize) 			\
-	K_THREAD_STACK_DEFINE(stackname##_stack, stacksize);		\
-	os_thread_stack_t stackname = {					\
-		.size = K_THREAD_STACK_SIZEOF(stackname##_stack),	\
-		.stack = stackname##_stack,				\
-	};
+#define os_thread_stack_define(stackname, stacksize)       \
+    K_THREAD_STACK_DEFINE(stackname##_stack, stacksize);   \
+    os_thread_stack_t stackname = {                        \
+        .size  = K_THREAD_STACK_SIZEOF(stackname##_stack), \
+        .stack = stackname##_stack,                        \
+    };
 #endif
 
-struct zep_thread {
-	k_tid_t id;
-	struct k_sem event;
+struct zep_thread
+{
+    k_tid_t id;
+    struct k_sem event;
 };
 
 typedef struct zep_thread *os_thread_t;
 
 static inline const char *get_current_taskname(void)
 {
-    k_tid_t tid = k_current_get();
+    k_tid_t tid      = k_current_get();
     const char *name = k_thread_name_get(tid);
-    if (name == NULL) {
-	    return "Unknown";
+    if (name == NULL)
+    {
+        return "Unknown";
     }
     return name;
 }
@@ -174,7 +177,7 @@ static inline const char *get_current_taskname(void)
  * Function wrapper used to account for Zephyr's 3 arguments
  * to a task entry function (OS abstraction expects 1 argument)
  */
-void thread_wrapper(void *entry, void* arg, void* unused);
+void thread_wrapper(void *entry, void *arg, void *unused);
 
 /** Create new thread
  *
@@ -336,9 +339,10 @@ static inline void os_thread_self_complete(os_thread_t *thandle)
 #define OS_PRIO_4 (CONFIG_WIFI_MAX_PRIO + 4) /** Low **/
 
 /** Structure used for queue definition */
-typedef struct {
-	int size;
-	char *buffer;
+typedef struct
+{
+    int size;
+    char *buffer;
 } os_queue_pool_t;
 
 /** Define OS Queue pool
@@ -346,12 +350,12 @@ typedef struct {
  * This macro helps define the name and size of the queue to be created
  * using the function os_queue_create().
  */
-#define os_queue_pool_define(poolname, poolsize)				\
-	char __aligned(4) poolname##_pool[poolsize];				\
-	os_queue_pool_t poolname = {						\
-		.size = poolsize,						\
-		.buffer = poolname##_pool,					\
-	};
+#define os_queue_pool_define(poolname, poolsize) \
+    char __aligned(4) poolname##_pool[poolsize]; \
+    os_queue_pool_t poolname = {                 \
+        .size   = poolsize,                      \
+        .buffer = poolname##_pool,               \
+    };
 
 typedef struct k_msgq *os_queue_t;
 
@@ -664,7 +668,7 @@ int os_mutex_delete(os_mutex_t *mhandle);
 static inline int os_event_notify_get(unsigned long wait_time)
 {
     os_thread_t task = os_get_current_task_handle();
-    int ret = k_sem_take(&task->event, K_TICKS(wait_time));
+    int ret          = k_sem_take(&task->event, K_TICKS(wait_time));
     return ret == 0 ? -WM_FAIL : WM_SUCCESS;
 }
 
@@ -914,13 +918,14 @@ typedef int os_timer_tick;
 
 /** OS Timer data structure
  */
-struct timer_data {
-	void (*callback)(os_timer_arg_t);
-	void *user_arg;
-	int period;
-	int reload_options;
-	struct k_timer timer;
-	struct k_work work;
+struct timer_data
+{
+    void (*callback)(os_timer_arg_t);
+    void *user_arg;
+    int period;
+    int reload_options;
+    struct k_timer timer;
+    struct k_work work;
 };
 
 /** OS Timer reload Options
@@ -1116,7 +1121,6 @@ void *os_mem_realloc(void *old_ptr, size_t new_size);
  * @param[in] ptr Pointer to the memory to be freed
  */
 void os_mem_free(void *ptr);
-
 
 /** This function dumps complete statistics
  *  of the heap memory.

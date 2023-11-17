@@ -28,14 +28,8 @@ typedef struct
     struct net_addr gw;
     struct ethernetif state;
     scan_result_cb_t scan_cb;
+    uint16_t max_bss_cnt;
 } interface_t;
-
-/*
- * fixme: This dependancy of wm_net on wlc manager header should be
- * removed. This is the lowest level file used to access lwip
- * functionality and should not contain higher layer dependancies.
- */
-#include <wlan.h>
 
 #define NET_SUCCESS WM_SUCCESS
 #define NET_ERROR   (-WM_FAIL)
@@ -63,6 +57,69 @@ typedef struct
 
 /* directly map this to the zephyr internal functions */
 #define inet_aton(cp, addr) inet_pton(AF_INET, cp, (char *)addr)
+enum net_address_types
+{
+    /** static IP address */
+    NET_ADDR_TYPE_STATIC = 0,
+    /** Dynamic  IP address*/
+    NET_ADDR_TYPE_DHCP = 1,
+    /** Link level address */
+    NET_ADDR_TYPE_LLA = 2,
+};
+
+/** This data structure represents an IPv4 address */
+struct net_ipv4_config
+{
+    /** Set to \ref ADDR_TYPE_DHCP to use DHCP to obtain the IP address or
+     *  \ref ADDR_TYPE_STATIC to use a static IP. In case of static IP
+     *  address ip, gw, netmask and dns members must be specified.  When
+     *  using DHCP, the ip, gw, netmask and dns are overwritten by the
+     *  values obtained from the DHCP server. They should be zeroed out if
+     *  not used. */
+    enum net_address_types addr_type;
+    /** The system's IP address in network order. */
+    unsigned address;
+    /** The system's default gateway in network order. */
+    unsigned gw;
+    /** The system's subnet mask in network order. */
+    unsigned netmask;
+    /** The system's primary dns server in network order. */
+    unsigned dns1;
+    /** The system's secondary dns server in network order. */
+    unsigned dns2;
+};
+
+#ifdef CONFIG_IPV6
+/** This data structure represents an IPv6 address */
+struct net_ipv6_config
+{
+    /** The system's IPv6 address in network order. */
+    unsigned address[4];
+    /** The address type: linklocal, site-local or global. */
+    unsigned char addr_type;
+    /** The state of IPv6 address (Tentative, Preferred, etc). */
+    unsigned char addr_state;
+};
+#endif
+
+/** Network IP configuration.
+ *
+ *  This data structure represents the network IP configuration
+ *  for IPv4 as well as IPv6 addresses
+ */
+struct net_ip_config
+{
+#ifdef CONFIG_IPV6
+    /** The network IPv6 address configuration that should be
+     * associated with this interface. */
+    struct net_ipv6_config ipv6[NET_IF_MAX_IPV6_ADDR];
+    /** The network IPv6 valid addresses count */
+    size_t ipv6_count;
+#endif
+    /** The network IPv4 address configuration that should be
+     * associated with this interface. */
+    struct net_ipv4_config ipv4;
+};
 
 /** Set hostname for network interface
  *
@@ -368,7 +425,7 @@ void net_interface_dhcp_stop(void *intrfc_handle);
  *
  * \return WM_SUCCESS on success or an error code.
  */
-int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle);
+int net_configure_address(struct net_ip_config *addr, void *intrfc_handle);
 
 /** Configure DNS server address
  *
@@ -376,47 +433,47 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle);
  * \param[in] role Network wireless BSS Role
  *
  */
-void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role);
+void net_configure_dns(struct net_ip_config *ip, unsigned int role);
 
-/** Get interface IP Address in \ref wlan_ip_config
+/** Get interface IP Address in \ref net_ip_config
  *
  * This function will get the IP address of a given interface. Use
  * net_get_sta_handle(), net_get_uap_handle() to get
  * interface handle.
  *
- * \param[out] addr \ref wlan_ip_config
+ * \param[out] addr \ref net_ip_config
  * \param[in] intrfc_handle interface handle
  *
  * \return WM_SUCCESS on success or error code.
  */
-int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle);
+int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle);
 
 #ifdef CONFIG_IPV6
-/** Get interface IPv6 Addresses & their states in \ref wlan_ip_config
+/** Get interface IPv6 Addresses & their states in \ref net_ip_config
  *
  * This function will get the IPv6 addresses & address states of a given
  * interface. Use net_get_sta_handle() to get interface handle.
  *
- * \param[out] addr \ref wlan_ip_config
+ * \param[out] addr \ref net_ip_config
  * \param[in] intrfc_handle interface handle
  *
  * \return WM_SUCCESS on success or error code.
  */
-int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle);
+int net_get_if_ipv6_addr(struct net_ip_config *addr, void *intrfc_handle);
 
 /** Get list of preferred IPv6 Addresses of a given interface
- * in \ref wlan_ip_config
+ * in \ref net_ip_config
  *
  * This function will get the list of IPv6 addresses whose address state
  * is Preferred.
  * Use net_get_sta_handle() to get interface handle.
  *
- * \param[out] addr \ref wlan_ip_config
+ * \param[out] addr \ref net_ip_config
  * \param[in] intrfc_handle interface handle
  *
  * \return Number of IPv6 addresses whose address state is Preferred
  */
-int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle);
+int net_get_if_ipv6_pref_addr(struct net_ip_config *addr, void *intrfc_handle);
 
 /** Get the description of IPv6 address state
  *
@@ -434,22 +491,22 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state);
  * This function will get the IPv6 address type description like -
  * Linklocal, Global, Sitelocal, Uniquelocal
  *
- * \param[in] ipv6_conf Pointer to IPv6 configuration of type \ref ipv6_config
+ * \param[in] ipv6_conf Pointer to IPv6 configuration of type \ref net_ipv6_config
  *
  * \return IPv6 address description
  */
-char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf);
+char *ipv6_addr_addr_to_desc(struct net_ipv6_config *ipv6_conf);
 
 /** Get the description of IPv6 address type
  *
  * This function will get the IPv6 address type description like -
  * Linklocal, Global, Sitelocal, Uniquelocal
  *
- * \param[in] ipv6_conf Pointer to IPv6 configuration of type \ref ipv6_config
+ * \param[in] ipv6_conf Pointer to IPv6 configuration of type \ref net_ipv6_config
  *
  * \return IPv6 address type description
  */
-char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf);
+char *ipv6_addr_type_to_desc(struct net_ipv6_config *ipv6_conf);
 #endif /* CONFIG_IPV6 */
 
 /** Get interface Name string containing name and number
@@ -526,14 +583,6 @@ void net_stat(void);
 
 #ifdef CONFIG_P2P
 int netif_get_bss_type();
-#endif
-
-#ifndef CONFIG_WPA_SUPP
-void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss_type,
-                                                    const wifi_mgmt_frame_t *frame,
-                                                    const size_t len));
-
-void rx_mgmt_deregister_callback(void);
 #endif
 
 int low_level_output(const struct device *dev, struct net_pkt *pkt);

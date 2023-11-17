@@ -99,15 +99,15 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 #endif
     if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
-        (void)strncpy(addr_type, "STATIC", strlen("STATIC"));
+        (void)strcpy(addr_type, "STATIC");
     }
     else if (addr->ipv4.addr_type == ADDR_TYPE_STATIC)
     {
-        (void)strncpy(addr_type, "AUTO IP", strlen("AUTO IP"));
+        (void)strcpy(addr_type, "AUTO IP");
     }
     else
     {
-        (void)strncpy(addr_type, "DHCP", strlen("DHCP"));
+        (void)strcpy(addr_type, "DHCP");
     }
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");

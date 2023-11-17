@@ -2,24 +2,37 @@
 # Copyright 2022 NXP
 
 # define part number for this driver
-zephyr_compile_definitions_ifdef(CONFIG_SD8987
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_8987
     SD8987
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_SD8978
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_8978
     SD8978
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_SD9177
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_9177
     SD9177
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_8801
+    SD8801
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_RW610
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_RW610
     RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_USD_INTERFACE
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_M2_INTERFACE
+    WIFI_BT_USE_M2_INTERFACE
 )
 
 zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S)
@@ -30,9 +43,16 @@ zephyr_include_directories(
     incl/wlcmgr
     incl/port/os
     incl/port/zephyr
+    sdio_nxp_abs/incl
+    firmware_dnld
+    fwdnld_intf_abs
     wifidriver
     wifidriver/incl
     wifi_bt_firmware
+    wifi_bt_firmware/8987
+    wifi_bt_firmware/IW416
+    wifi_bt_firmware/nw61x
+    wifi_bt_firmware/8801
     cli
 )
 
@@ -42,8 +62,23 @@ zephyr_library_sources(port/os/os_zephyr.c)
 zephyr_library_sources(port/zephyr/net.c)
 
 file(GLOB WIFI_SRC ./wifidriver/*.c)
+list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*sdio.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
+
+zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_RW610
+    wifidriver/wifi-imu.c
+)
+
+zephyr_library_sources_ifdef(CONFIG_SDIO_STACK
+    wifidriver/sdio.c
+    sdio_nxp_abs/fwdnld_sdio.c
+    sdio_nxp_abs/mlan_sdio_zephyr.c
+    wifidriver/wifi-sdio.c
+    firmware_dnld/firmware_dnld.c
+    fwdnld_intf_abs/fwdnld_intf_abs.c
+    wifi_bt_firmware/wlan_bt_fw_blob_zephyr.S
+)
 
 zephyr_library_sources(${WIFI_SRC})
 
@@ -53,10 +88,6 @@ zephyr_library_sources(${WLCMGR_SRC})
 file(GLOB DHCPD_SRC ./dhcpd/*.c)
 zephyr_library_sources(${DHCPD_SRC})
 zephyr_library_include_directories(dhcpd)
-
-# temporary shell source
-zephyr_library_sources(cli/wifi_shell.c)
-zephyr_library_sources(cli/cli_utils.c)
 
 # macros for wpa_supplicant
 if(CONFIG_WPA_SUPP)
@@ -68,7 +99,7 @@ zephyr_library_sources(${WIFI_SUPP_SRC})
 endif()
 
 # HTTP Server
-if(CONFIG_ENABLE_HTTPSERVER)
+if(CONFIG_NXP_WIFI_ENABLE_HTTPSERVER)
 set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
 generate_inc_file_for_target(app response_big.html.bin   ${gen_dir}/response_big.html.bin.inc)
 endif()
@@ -80,6 +111,7 @@ zephyr_code_relocate(FILES
                      wifidriver/mlan_11n_rxreorder.c
                      wifidriver/mlan_wmm.c
                      wifidriver/wifi.c
+                     wifidriver/wifi-sdio.c
                      wifidriver/wifi-imu.c
                      LOCATION RAM_TEXT)
 

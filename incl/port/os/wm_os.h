@@ -42,6 +42,10 @@
 #ifndef _WM_OS_H_
 #define _WM_OS_H_
 
+#ifndef SDK_OS_FREE_RTOS
+#include "nxp_wifi.h"
+#endif
+
 #ifdef CONFIG_ZEPHYR
 #include "wm_os_zephyr.h"
 #else
@@ -268,11 +272,11 @@ void os_thread_self_complete(os_thread_t *thandle);
 #elif CONFIG_WIFI_MAX_PRIO < 4
 #error CONFIG_WIFI_MAX_PRIO must be defined to be greater than or equal to 4
 #endif
-#define OS_PRIO_0 CONFIG_WIFI_MAX_PRIO /** High **/
-#define OS_PRIO_1 (CONFIG_WIFI_MAX_PRIO - 1)
-#define OS_PRIO_2 (CONFIG_WIFI_MAX_PRIO - 2)
-#define OS_PRIO_3 (CONFIG_WIFI_MAX_PRIO - 3)
-#define OS_PRIO_4 (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
+#define OS_PRIO_0                                CONFIG_WIFI_MAX_PRIO /** High **/
+#define OS_PRIO_1                                (CONFIG_WIFI_MAX_PRIO - 1)
+#define OS_PRIO_2                                (CONFIG_WIFI_MAX_PRIO - 2)
+#define OS_PRIO_3                                (CONFIG_WIFI_MAX_PRIO - 3)
+#define OS_PRIO_4                                (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
 
 /** Structure used for queue definition */
 typedef struct os_queue_pool
@@ -310,9 +314,9 @@ typedef QueueHandle_t os_queue_t;
 int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue_pool_t *poolname);
 
 /** Wait Forever */
-#define OS_WAIT_FOREVER portMAX_DELAY
+#define OS_WAIT_FOREVER                          portMAX_DELAY
 /** Do Not Wait */
-#define OS_NO_WAIT 0
+#define OS_NO_WAIT                               0
 
 /** Post an item to the back of the queue.
  *
@@ -396,7 +400,7 @@ static inline void os_exit_critical_section(unsigned long state)
 }
 
 /*** Tick function */
-#define MAX_CUSTOM_HOOKS 4U
+#define MAX_CUSTOM_HOOKS                         4U
 
 extern void (*g_os_tick_hooks[MAX_CUSTOM_HOOKS])(void);
 extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
@@ -452,9 +456,9 @@ int os_remove_tick_function(void (*func)(void));
 typedef SemaphoreHandle_t os_mutex_t;
 
 /** Priority Inheritance Enabled */
-#define OS_MUTEX_INHERIT 1
+#define OS_MUTEX_INHERIT                         1
 /** Priority Inheritance Disabled */
-#define OS_MUTEX_NO_INHERIT 0
+#define OS_MUTEX_NO_INHERIT                      0
 
 /** Create mutex
  *
@@ -1029,9 +1033,9 @@ typedef enum flag_rtrv_option_t_
     EF_OR_CLEAR
 } flag_rtrv_option_t;
 
-#define EF_NO_WAIT      0
-#define EF_WAIT_FOREVER 0xFFFFFFFFUL
-#define EF_NO_EVENTS    0x7
+#define EF_NO_WAIT                     0
+#define EF_WAIT_FOREVER                0xFFFFFFFFUL
+#define EF_NO_EVENTS                   0x7
 
 int os_event_flags_create(event_group_handle_t *hnd);
 int os_event_flags_get(event_group_handle_t hnd,

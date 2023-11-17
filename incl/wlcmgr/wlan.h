@@ -3098,8 +3098,25 @@ void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size
  * \param[in] mac The MAC Address in 6 byte array format like
  *                uint8_t mac[] = { 0x00, 0x50, 0x43, 0x21, 0x19, 0x6E};
  *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
  */
-void wlan_set_mac_addr(uint8_t *mac);
+int wlan_set_mac_addr(uint8_t *mac);
+
+/** Set wireless MAC Address in WLAN firmware.
+ *
+ * This function may be called to set wireless MAC Address in firmware.
+ * This should be call before \ref wlan_init() function.
+ * When called after wlan init done, the incoming mac is treated as the sta mac address directly. And mac[4] plus 1 the
+ * modifed mac as the UAP mac address.
+ *
+ * \param[in] mac The MAC Address in 6 byte array format like
+ *                uint8_t mac[] = { 0x00, 0x50, 0x43, 0x21, 0x19, 0x6E};
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_set_uap_mac_addr(uint8_t *mac);
 
 #ifdef CONFIG_WMM_UAPSD
 int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
@@ -3179,6 +3196,8 @@ void wlan_set_txrx_histogram(struct wlan_txrx_histogram_info *txrx_histogram, t_
  * \return -WM_FAIL if failed.
  */
 int wlan_set_roaming(const int enable, const uint8_t rssi_low_threshold);
+
+int wlan_get_roaming_status();
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
@@ -3311,6 +3330,14 @@ int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg);
  *            >= 50: Value in TUs\n
  */
 void wlan_configure_listen_interval(int listen_interval);
+
+void wlan_configure_delay_to_ps(unsigned int timeout_ms);
+
+unsigned short wlan_get_listen_interval();
+
+unsigned int wlan_get_delay_to_ps();
+
+bool wlan_is_power_save_enabled();
 
 /** Configure Null packet interval of IEEE power save mode.
  *
@@ -5878,6 +5905,8 @@ void wlan_set_scan_channel_gap(unsigned scan_chan_gap);
  */
 int wlan_host_11k_cfg(int enable_11k);
 
+bool wlan_get_host_11k_status();
+
 /**
  * host send neighbor report request
  *
@@ -5885,7 +5914,7 @@ int wlan_host_11k_cfg(int enable_11k);
  * \note ssid parameter is optional
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_host_11k_neighbor_req(t_u8 *ssid);
+int wlan_host_11k_neighbor_req(const char *ssid);
 #endif
 
 #ifdef CONFIG_11V

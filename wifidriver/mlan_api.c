@@ -1979,7 +1979,11 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
     }
 #endif
 
-    if (num_channels > 0U && num_channels <= WLAN_USER_SCAN_CHAN_MAX && chan_list != MNULL)
+    if ((chan_list != MNULL) && (chan_list[0].radio_type & BAND_SPECIFIED))
+    {
+        user_scan_cfg->chan_list[0].radio_type = chan_list[0].radio_type;
+    }
+    else if (num_channels > 0U && num_channels <= WLAN_USER_SCAN_CHAN_MAX && chan_list != MNULL)
     {
         for (i = 0; i < num_channels; i++)
         {
@@ -4185,7 +4189,7 @@ int wifi_host_11k_cfg(int enable_11k)
     return ret;
 }
 
-int wifi_host_11k_neighbor_req(t_u8 *ssid)
+int wifi_host_11k_neighbor_req(const char *ssid)
 {
     if (wlan_strlen((t_s8 *)ssid) > IEEEtypes_SSID_SIZE)
     {
@@ -4193,7 +4197,7 @@ int wifi_host_11k_neighbor_req(t_u8 *ssid)
     }
     else
     {
-        return wlan_send_mgmt_rm_neighbor_request(mlan_adap->priv[0], ssid, (t_u8)wlan_strlen((t_s8 *)ssid));
+        return wlan_send_mgmt_rm_neighbor_request(mlan_adap->priv[0], (t_u8 *)ssid, (t_u8)wlan_strlen((t_s8 *)ssid));
     }
 }
 #endif
