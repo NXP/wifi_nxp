@@ -21,7 +21,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
 #endif
 
@@ -41,7 +40,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
         .global bt_fw_bin
         .type bt_fw_bin, %object
@@ -55,7 +53,6 @@ bt_fw_bin_end:
         .align 4
 bt_fw_bin_len:
         .int  bt_fw_bin_end - bt_fw_bin
-        .end
 
 #else
 
@@ -72,7 +69,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
         .global bt_fw_bin
         .type bt_fw_bin, %object
@@ -87,7 +83,6 @@ bt_fw_bin_end:
         .align 4
 bt_fw_bin_len:
         .int  bt_fw_bin_end - bt_fw_bin
-        .end
 
 #endif
 #endif
@@ -108,7 +103,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
         .global bt_fw_bin
         .type bt_fw_bin, %object
@@ -122,7 +116,6 @@ bt_fw_bin_end:
         .align 4
 bt_fw_bin_len:
         .int  bt_fw_bin_end - bt_fw_bin
-        .end
 
 #else
 
@@ -139,7 +132,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
         .global bt_fw_bin
         .type bt_fw_bin, %object
@@ -154,7 +146,6 @@ bt_fw_bin_end:
         .align 4
 bt_fw_bin_len:
         .int  bt_fw_bin_end - bt_fw_bin
-        .end
 
 #endif
 #endif
@@ -175,7 +166,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
         .global bt_fw_bin
         .type bt_fw_bin, %object
@@ -189,7 +179,6 @@ bt_fw_bin_end:
         .align 4
 bt_fw_bin_len:
         .int  bt_fw_bin_end - bt_fw_bin
-        .end
 
 #else
 
@@ -206,7 +195,6 @@ wlan_fw_bin_end:
         .align 4
 wlan_fw_bin_len:
         .int  wlan_fw_bin_end - wlan_fw_bin
-        .end
 
         .global bt_fw_bin
         .type bt_fw_bin, %object
@@ -221,7 +209,6 @@ bt_fw_bin_end:
         .align 4
 bt_fw_bin_len:
         .int  bt_fw_bin_end - bt_fw_bin
-        .end
 
 #endif
 #endif

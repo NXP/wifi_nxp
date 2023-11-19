@@ -363,7 +363,9 @@ void wifi_dump_firmware_info()
     int tries;
     t_u8 data[8], i;
     uint32_t resp;
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT START: %d ====", os_get_timestamp());
+#endif
     if (wm_wifi.wifi_usb_file_open_cb != NULL)
     {
         ret = wm_wifi.wifi_usb_file_open_cb(itcm_dump_file_name);
@@ -378,7 +380,9 @@ void wifi_dump_firmware_info()
         wifi_e("File open callback is not registered");
         goto done;
     }
+#ifndef CONFIG_ZEPHYR
     wifi_d("Start ITCM output %d, please wait...", os_get_timestamp());
+#endif
     reg_start = DEBUG_DUMP_START_REG;
     reg_end   = DEBUG_DUMP_END_REG;
     do
@@ -480,7 +484,9 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
+#ifndef CONFIG_ZEPHYR
                     wifi_d("Start DTCM output %d, please wait...", os_get_timestamp());
+#endif
                 }
                 else
                 {
@@ -511,7 +517,9 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
+#ifndef CONFIG_ZEPHYR
                     wifi_d("Start SQRAM output %u.%06u, please wait...", os_get_timestamp());
+#endif
                 }
                 else
                 {
@@ -545,7 +553,9 @@ void wifi_dump_firmware_info()
     wifi_d("The output ITCM/DTCM/SQRAM have been saved to files successfully!");
     /* end dump fw memory */
 done:
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
+#endif
 
     while (1)
         ;
@@ -765,7 +775,9 @@ void wifi_dump_firmware_info()
     dbg_dump_start_reg = DEBUG_DUMP_START_REG;
     dbg_dump_end_reg = DEBUG_DUMP_END_REG;
 
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", os_get_timestamp());
+#endif
     /* read the number of the memories which will dump */
     if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag))
         goto done;
@@ -809,7 +821,9 @@ void wifi_dump_firmware_info()
     }
 
     doneflag = pmem_type_mapping_tbl->done_flag;
+#ifndef CONFIG_ZEPHYR
     wifi_d("Start %s output %d, please wait...", pmem_type_mapping_tbl->mem_name, os_get_timestamp());
+#endif
     do
     {
         stat = wifi_cmd52_rdwr_firmware(doneflag);
@@ -864,7 +878,9 @@ void wifi_dump_firmware_info()
         }
     } while (1);
 
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
+#endif
     /* end dump fw memory */
 done:
     while (1)

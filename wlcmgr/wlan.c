@@ -5262,11 +5262,11 @@ static void wlcm_process_init(enum cm_sta_state *next)
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = WLAN_ED_MAC_CTRL;
 #else
     wlan_ed_mac_ctrl_t wlan_ed_mac_ctrl = {
-        CONFIG_NXP_WIFI_ED_CTRL_2G,
+        0x01,
         CONFIG_NXP_WIFI_ED_OFFSET_2G
 #ifdef CONFIG_5GHz_SUPPORT
         ,
-        CONFIG_NXP_WIFI_ED_CTRL_5G,
+        0x01,
         CONFIG_NXP_WIFI_ED_OFFSET_5G
 #endif
     };

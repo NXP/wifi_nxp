@@ -57,12 +57,8 @@ int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
     }
 
     struct sdio_func *func = &g_sdio_funcs[fn];
-    if (sdio_write_byte(func, addr, data) != 0)
-    {
-        (void)os_mutex_put(&sdio_mutex);
-        return 0;
-    }
-    if (sdio_read_byte(func, addr, (uint8_t *)resp) != 0)
+
+    if (sdio_rw_byte(func, addr, data, (uint8_t *)resp) != 0)
     {
         (void)os_mutex_put(&sdio_mutex);
         return 0;
@@ -87,7 +83,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
     struct sdio_func *func = &g_sdio_funcs[fn];
 
 #if 1
-    if (sdio_read_fifo(func, addr, buf, bsize * bcnt) != 0)
+    if (sdio_read_addr(func, addr, buf, bsize * bcnt) != 0)
     {
         (void)os_mutex_put(&sdio_mutex);
         return 0;
@@ -122,7 +118,7 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     struct sdio_func *func = &g_sdio_funcs[fn];
 
 #if 1
-    if (sdio_write_fifo(func, addr, buf, bsize * bcnt) != 0)
+    if (sdio_write_addr(func, addr, buf, bsize * bcnt) != 0)
     {
         (void)os_mutex_put(&sdio_mutex);
         return 0;
@@ -211,23 +207,26 @@ static int sdio_card_init(void)
         sdio_e("sdio_enable_func BACKPLANE_FUNCTION, error: %x", ret);
         return ret;
     }
+#if 0
     ret = sdio_init_func(&wm_g_sd, &g_sdio_funcs[2], SDIO_FUNC_NUM_2);
     if (ret)
     {
         sdio_e("sdio_enable_func WLAN_FUNCTION, error: %x", ret);
         return ret;
     }
+#endif
     /* Mask interrupts in card */
     (void)sdio_drv_creg_write(0x4, 0, 0x3, &resp);
     /* Enable IO in card */
     (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
-    ret = sdio_set_block_size(&g_sdio_funcs[0], 256);
+    ret = sdio_set_block_size(&g_sdio_funcs[0], 1);
     if (ret)
     {
         sdio_e("Can't set block size for func 0, error: %x", ret);
         return ret;
     }
+
     ret = sdio_set_block_size(&g_sdio_funcs[1], 256);
     if (ret)
     {
