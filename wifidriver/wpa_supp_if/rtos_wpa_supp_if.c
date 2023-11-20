@@ -1176,7 +1176,7 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
 
     wifi_if_ctx_rtos->associated = false;
 
-    if (params->auth_alg == WPA_AUTH_ALG_FT)
+    if (params->auth_alg & WPA_AUTH_ALG_FT)
     {
         assoc_params->is_ft = true;
     }
@@ -1420,7 +1420,7 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
     int ret                                    = -WM_FAIL;
-    char *country = NULL;
+    char *country                              = NULL;
 
     country = os_mem_calloc(COUNTRY_CODE_LEN);
     (void)memcpy(country, alpha2, COUNTRY_CODE_LEN - 1);
@@ -1432,9 +1432,9 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
-    ret = wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
+    ret              = wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
 
-    if(ret == WM_SUCCESS)
+    if (ret == WM_SUCCESS)
     {
         (void)wifi_event_completion(WIFI_EVENT_REGION_POWER_CFG, WIFI_EVENT_REASON_SUCCESS, (void *)country);
     }
