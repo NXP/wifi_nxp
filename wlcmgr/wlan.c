@@ -839,7 +839,7 @@ static int wlan_get_current_sta_network(struct wlan_network *network)
     return WLAN_ERROR_STATE;
 }
 
-#if defined(CONFIG_HOST_SLEEP) || defined(CONFIG_MEF_CFG) || defined(ENABLE_OFFLOAD) || defined(CONFIG_NAT_KEEP_ALIVE) || defined(CONFIG_CLOUD_KEEP_ALIVE)
+#if defined(CONFIG_HOST_SLEEP) || defined(CONFIG_MEF_CFG) || defined(CONFIG_NAT_KEEP_ALIVE) || defined(CONFIG_CLOUD_KEEP_ALIVE)
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
     struct wlan_network* network;
@@ -11010,7 +11010,6 @@ int wlan_get_tsf(uint32_t *tsf_high, uint32_t *tsf_low)
     return wifi_get_tsf(tsf_high, tsf_low);
 }
 
-#ifdef ENABLE_OFFLOAD
 int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *tcp_keep_alive)
 {
     int ret;
@@ -11025,7 +11024,6 @@ int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *tcp_keep_alive)
 
     return wifi_tcp_keep_alive(tcp_keep_alive, wlan.sta_mac, ipv4_addr);
 }
-#endif /*ENABLE_OFFLOAD*/
 
 #ifdef CONFIG_NAT_KEEP_ALIVE
 int wlan_nat_keep_alive(wlan_nat_keep_alive_t *nat_keep_alive)
@@ -11305,7 +11303,6 @@ int wlan_get_tbtt_offset(wlan_tbtt_offset_t *tbtt_offset)
 }
 #endif
 
-#ifdef ENABLE_OFFLOAD
 int wlan_set_packet_filters(wlan_flt_cfg_t *flt_cfg)
 {
     return wifi_set_packet_filters(flt_cfg);
@@ -11503,7 +11500,6 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg)
     flt_cfg.mef_entry[0].filter_num = filt_num;
     return wifi_set_packet_filters(&flt_cfg);
 }
-#endif /*ENABLE_OFFLOAD*/
 
 #ifdef CONFIG_AUTO_PING
 int wlan_set_auto_ping()
@@ -11536,7 +11532,6 @@ int wlan_set_auto_ping()
 }
 #endif /* CONFIG_AUTO_PING */
 
-#ifdef ENABLE_OFFLOAD
 int wlan_set_ipv6_ns_offload()
 {
     wlan_flt_cfg_t flt_cfg;
@@ -11566,7 +11561,6 @@ int wlan_set_ipv6_ns_offload()
 
     return wifi_set_packet_filters(&flt_cfg);
 }
-#endif
 
 int wlan_get_current_bssid(uint8_t *bssid)
 {

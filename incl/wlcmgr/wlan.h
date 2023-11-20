@@ -3566,7 +3566,6 @@ int wlan_deepsleepps_on(void);
  */
 int wlan_deepsleepps_off(void);
 
-#ifdef ENABLE_OFFLOAD
 /**
  * Use this API to configure the TCP Keep alive parameters in Wi-Fi firmware.
  * \ref wlan_tcp_keep_alive_t provides the parameters which are available
@@ -3595,7 +3594,6 @@ int wlan_deepsleepps_off(void);
  * \return -WM_FAIL if command fails.
  */
 int wlan_tcp_keep_alive(wlan_tcp_keep_alive_t *keep_alive);
-#endif
 
 #ifdef CONFIG_NAT_KEEP_ALIVE
 /**
@@ -3810,7 +3808,6 @@ int wlan_set_auto_arp(void);
 int wlan_set_auto_ping();
 #endif /*  CONFIG_AUTO_PING */
 
-#ifdef ENABLE_OFFLOAD
 /**
  * Use this API to enable WOWLAN on magic pkt rx in Wi-Fi firmware
  *
@@ -3827,7 +3824,6 @@ int wlan_wowlan_cfg_ptn_match(wlan_wowlan_ptn_cfg_t *ptn_cfg);
  * \return -WM_FAIL if command fails.
  */
 int wlan_set_ipv6_ns_offload();
-#endif
 
 #ifdef CONFIG_HOST_SLEEP
 

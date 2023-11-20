@@ -804,8 +804,6 @@ done:
     return wm_wifi.cmd_resp_status;
 }
 
-#ifdef ENABLE_OFFLOAD
-
 #define FLTR_BUF_IP_OFFSET 24
 
 int wifi_set_auto_arp(t_u32 *ipv4_addr)
@@ -935,7 +933,6 @@ int wifi_tcp_keep_alive(wifi_tcp_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
 
     return wm_wifi.cmd_resp_status;
 }
-#endif /*ENABLE_OFFLOAD */
 
 #ifndef CONFIG_MLAN_WMSDK
 int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 src_ip, t_u16 src_port)
