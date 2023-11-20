@@ -148,6 +148,9 @@ int wlan_set_rg_power_cfg(t_u16 region_code)
 int wlan_set_wwsm_txpwrlimit()
 {
     int rv = WM_SUCCESS;
+#ifdef RW610
+    unsigned int region_code = 0;
+#endif
 #ifdef WLAN_REGION_CODE
     rv = wlan_set_country_code(WLAN_REGION_CODE);
     if (rv != WM_SUCCESS)
@@ -162,6 +165,7 @@ int wlan_set_wwsm_txpwrlimit()
     ARG_UNUSED(tx_pwrlimit_5g_cfg);
 #endif
 #endif
+#ifndef RW610
     rv = wlan_set_chanlist(&chanlist_2g_cfg);
     if (rv != WM_SUCCESS)
     {
@@ -176,9 +180,10 @@ int wlan_set_wwsm_txpwrlimit()
         return -WM_FAIL;
     }
 #endif
+#endif
 #ifdef RW610
-    /*Default set FCC power table */
-    rv = wlan_set_rg_power_cfg(0x10);
+    wlan_get_region_code(&region_code);
+    rv = wlan_set_rg_power_cfg(region_code);
 #else
     rv = wlan_set_region_power_cfg(rg_table_fc, rg_table_fc_len);
 #endif

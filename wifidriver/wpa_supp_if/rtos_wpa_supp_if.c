@@ -1419,6 +1419,11 @@ out:
 int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -WM_FAIL;
+    char *country = NULL;
+
+    country = os_mem_calloc(COUNTRY_CODE_LEN);
+    (void)memcpy(country, alpha2, COUNTRY_CODE_LEN - 1);
 
     if ((!if_priv) || (!alpha2))
     {
@@ -1427,8 +1432,14 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    ret = wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
 
-    return wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
+    if(ret == WM_SUCCESS)
+    {
+        (void)wifi_event_completion(WIFI_EVENT_REGION_POWER_CFG, WIFI_EVENT_REASON_SUCCESS, (void *)country);
+    }
+
+    return ret;
 
 out:
     return -1;

@@ -3252,7 +3252,7 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
 #endif
 
         /* Set the region code to WWSM by default */
-        pmadapter->region_code = MRVDRV_DEFAULT_REGION_CODE;
+        pmadapter->region_code = hw_spec->region_code;
         for (i = 0; i < MRVDRV_MAX_REGION_CODE; i++)
         {
             /* Use the region code to search for the index */
@@ -3267,6 +3267,10 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
             pmadapter->region_code = MRVDRV_DEFAULT_REGION_CODE;
             PRINTM(MWARN, "unidentified region code, use the default (0x%02x)\n", MRVDRV_DEFAULT_REGION_CODE);
         }
+
+        /* Back up hw_region_code in case it is overwritten by the supplicant process*/
+        pmadapter->hw_region_code = pmadapter->region_code;
+
         /* Synchronize CFP code with region code */
         pmadapter->cfp_code_bg = (t_u8)pmadapter->region_code;
         pmadapter->cfp_code_a  = (t_u8)pmadapter->region_code;

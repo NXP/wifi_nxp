@@ -2369,6 +2369,8 @@ struct _mlan_adapter
 #endif /* CONFIG_MLAN_WMSDK */
     /** Region code */
     t_u16 region_code;
+    /** Region code from HW*/
+    t_u16 hw_region_code;
     /** Region Channel data */
     region_chan_t region_channel[MAX_REGION_CHANNEL_NUM];
     /** CFP table code for 2.4GHz */

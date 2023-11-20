@@ -6545,7 +6545,7 @@ static void dump_wlan_set_regioncode_usage(void)
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-regioncode <region-code>\r\n");
     (void)PRINTF("where, region code =\r\n");
-    (void)PRINTF("0xAA : World Wide Safe Mode\r\n");
+    (void)PRINTF("0x00 : World Wide Safe Mode\r\n");
     (void)PRINTF("0x10 : US FCC, Singapore\r\n");
     (void)PRINTF("0x20 : IC Canada\r\n");
     (void)PRINTF("0x30 : ETSI, Australia, Republic of Korea\r\n");

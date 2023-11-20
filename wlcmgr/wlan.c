@@ -6123,6 +6123,20 @@ static void wlcm_process_sync_region_code(t_u8 *code)
     wlan_set_country_code((const char *)country_code);
 }
 
+static void wlcm_process_region_power_cfg(struct wifi_message *msg)
+{
+    t_u8 *country_code = (t_u8 *)msg->data;
+
+#ifdef CONFIG_COMPRESS_TX_PWTBL
+    t_u8 region_code;
+
+    region_code = region_string_2_region_code(country_code);
+    wlan_set_rg_power_cfg(region_code);
+#endif
+
+    os_mem_free(country_code);
+}
+
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
 static void wlcm_set_rssi_low_threshold(enum cm_sta_state *next, struct wlan_network *curr_nw)
 {
@@ -6604,6 +6618,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
         case WIFI_EVENT_SYNC_REGION_CODE:
             wlcm_process_sync_region_code((t_u8 *)msg->data);
+            break;
+        case WIFI_EVENT_REGION_POWER_CFG:
+            wlcm_process_region_power_cfg(msg);
             break;
         default:
             wlcm_w("got unknown message: %d", msg->event);
