@@ -1859,8 +1859,9 @@ int imu_put_task_lock(void)
 }
 
 #ifdef CONFIG_HOST_SLEEP
-void wifi_print_wakeup_reason(void)
+void wifi_print_wakeup_reason(t_u16 hs_wakeup_reason)
 {
+    ARG_UNUSED(hs_wakeup_reason);
     if (mlan_adap->wlan_wakeup.type == IMU_MSG_CONTROL)
         PRINTF("Woken up by WLAN(IMU ctrl msg subtype 0x%x)\r\n", mlan_adap->wlan_wakeup.subtype);
     else if (mlan_adap->wlan_wakeup.type == IMU_MSG_COMMAND_RESPONSE)
