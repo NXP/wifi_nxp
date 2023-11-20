@@ -158,7 +158,7 @@ bt_fw_bin_len
         EXPORT wlan_fw_bin_end
         EXOORT wlan_fw_bin_len
 wlan_fw_bin
-        INCBIN nw61x/sd_nw61x_se.bin
+        INCBIN nw61x/sd_nw61x.bin.se
 wlan_fw_bin_end
 wlan_fw_bin_len
         INT wlan_fw_bin_end - wlan_fw_bin
@@ -169,7 +169,7 @@ wlan_fw_bin_len
         EXPORT bt_fw_bin_end
         EXOORT bt_fw_bin_len
 bt_fw_bin
-        INCBIN nw61x/uart_nw61x_se.bin
+        INCBIN nw61x/uart_nw61x.bin.se
 bt_fw_bin_end
 bt_fw_bin_len
         INT bt_fw_bin_end - bt_fw_bin
@@ -383,7 +383,7 @@ bt_fw_bin_len:
         .type wlan_fw_bin, %object
         .align 4
 wlan_fw_bin:
-        .incbin "nw61x/sd_nw61x_se.bin"
+        .incbin "nw61x/sd_nw61x.bin.se"
         .global wlan_fw_bin_end
         .type wlan_fw_bin_end, %object
 wlan_fw_bin_end:
@@ -399,7 +399,7 @@ wlan_fw_bin_len:
         .type bt_fw_bin, %object
         .align 4
 bt_fw_bin:
-        .incbin "nw61x/uart_nw61x_se.bin"
+        .incbin "nw61x/uart_nw61x.bin.se"
         .global bt_fw_bin_end
         .type bt_fw_bin_end, %object
 bt_fw_bin_end:
