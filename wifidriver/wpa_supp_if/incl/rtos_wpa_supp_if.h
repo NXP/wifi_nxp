@@ -160,5 +160,6 @@ int wifi_nxp_hostapd_set_frag(void *if_priv, int frag_threshold);
 int wifi_nxp_hostapd_stop_ap(void *if_priv);
 int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params);
 int wifi_nxp_wpa_dpp_listen(void *if_priv, bool enable);
+bool wifi_nxp_wpa_get_modes(void *if_priv);
 #endif /* CONFIG_WPA_SUPP */
 #endif /*  __rtos_WPA_SUPP_IF_H__ */

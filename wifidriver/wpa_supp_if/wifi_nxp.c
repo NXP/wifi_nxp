@@ -76,6 +76,7 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .stop_ap                  = wifi_nxp_hostapd_stop_ap,
     .set_acl                  = wifi_nxp_hostapd_set_acl,
     .dpp_listen               = wifi_nxp_wpa_dpp_listen,
+    .get_modes                = wifi_nxp_wpa_get_modes,
 };
 
 static void wifi_nxp_event_proc_scan_start(void *if_ctx)

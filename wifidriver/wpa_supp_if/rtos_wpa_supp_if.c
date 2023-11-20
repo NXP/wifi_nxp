@@ -1946,18 +1946,24 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211A].ht_capab, &modes[HOSTAPD_MODE_IEEE80211A].mcs_set[0],
-                               &modes[HOSTAPD_MODE_IEEE80211A].a_mpdu_params, 1);
-    if (status != WM_SUCCESS)
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
-        supp_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
-        goto out;
+        status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211A].ht_capab, &modes[HOSTAPD_MODE_IEEE80211A].mcs_set[0],
+                                   &modes[HOSTAPD_MODE_IEEE80211A].a_mpdu_params, 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
+            goto out;
+        }
     }
 #endif
 
     modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
 #ifdef CONFIG_5GHz_SUPPORT
-    modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+    }
 #endif
 
 #ifdef CONFIG_11AC
@@ -1970,18 +1976,24 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211A].vht_capab,
-                                modes[HOSTAPD_MODE_IEEE80211A].vht_mcs_set, 1);
-    if (status != WM_SUCCESS)
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
-        supp_e("%s: wifi nxp set 5G infra vht cap failed", __func__);
-        goto out;
+        status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211A].vht_capab,
+                                    modes[HOSTAPD_MODE_IEEE80211A].vht_mcs_set, 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G infra vht cap failed", __func__);
+            goto out;
+        }
     }
 #endif
 
     modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
 #ifdef CONFIG_5GHz_SUPPORT
-    modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+    }
 #endif
 #endif
 
@@ -2003,22 +2015,24 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    status = wifi_setup_he_cap(
-        (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
-    if (status != WM_SUCCESS)
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
-        supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
-        goto out;
-    }
+        status = wifi_setup_he_cap(
+            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
+            goto out;
+        }
 
-    status =
-        wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
-    if (status != WM_SUCCESS)
-    {
-        supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
-        goto out;
+        status =
+            wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
+            goto out;
+        }
     }
-
 #endif
 #endif
 
@@ -2027,8 +2041,11 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211G].channels, modes[HOSTAPD_MODE_IEEE80211G].num_channels,
                             BAND_2GHZ);
 #ifdef CONFIG_5GHz_SUPPORT
-    wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211A].channels, modes[HOSTAPD_MODE_IEEE80211A].num_channels,
-                            BAND_5GHZ);
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211A].channels, modes[HOSTAPD_MODE_IEEE80211A].num_channels,
+                                BAND_5GHZ);
+    }
 #endif
 
     status = WM_SUCCESS;
@@ -2474,4 +2491,8 @@ out:
     return -1;
 }
 
+bool wifi_nxp_wpa_get_modes(void *if_priv)
+{
+    return (!ISSUPP_NO5G(mlan_adap->fw_cap_ext));
+}
 #endif
