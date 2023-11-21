@@ -3837,22 +3837,22 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     /* TODO: use zephyr event and regroup */
     struct bus_message msg;
 
-    switch (event & 0XFFFFFFFE)
+    if (event & MBIT(TX_TYPE_DATA))
     {
-        case TX_TYPE_DATA:
-            msg.event = MLAN_TYPE_DATA;
-            break;
-
-        case TX_TYPE_NULL_DATA:
-            msg.event = MLAN_TYPE_NULL_DATA;
-            break;
-
-        case TX_TYPE_BYPASS_DATA:
-            msg.event = MLAN_TYPE_BYPASS_DATA;
-            break;
-
-        default:
-            break;
+        msg.event = MLAN_TYPE_DATA;
+    }
+    else if (event & MBIT(TX_TYPE_NULL_DATA))
+    {
+        msg.event = MLAN_TYPE_NULL_DATA;
+    }
+    else if (event & MBIT(TX_TYPE_BYPASS_DATA))
+    {
+        msg.event = MLAN_TYPE_BYPASS_DATA;
+    }
+    else
+    {
+        msg.event = MLAN_TYPE_DATA;
+        wifi_w("unknown tx event");
     }
 
     msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
