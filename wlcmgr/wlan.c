@@ -508,9 +508,6 @@ static struct
     bool pending_disconnect_request : 1;
     int status_timeout;
     bool connect : 1;
-#ifdef CONFIG_11K
-    bool enable_11k : 1;
-#endif
 #ifdef CONFIG_WPA_SUPP_WPS
     int wps_session_attempt;
 #endif
@@ -582,7 +579,7 @@ static struct
 #endif
 #endif
 #ifdef CONFIG_11K
-    bool enable_11k;
+    bool enable_11k : 1;
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
