@@ -72,7 +72,7 @@ extern char *net_sprint_addr(sa_family_t af, const void *addr);
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
-//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+// #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
 #ifndef CONFIG_ZEPHYR
     struct ip4_addr ip, gw, nm, dns1, dns2;
 #else
@@ -150,7 +150,7 @@ out:
     }
 #endif
     return;
-    //#endif
+    // #endif
 }
 
 static const char *print_role(enum wlan_bss_role role)
@@ -237,7 +237,7 @@ static int get_capa(char *arg, uint8_t *wlan_capa)
 
 static void print_network(struct wlan_network *network)
 {
-    //#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+    // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     (void)PRINTF("\"%s\"\r\n\tSSID: %s\r\n\tBSSID: ", network->name,
                  network->ssid[0] != '\0' ? network->ssid : "(hidden)");
     print_mac(network->bssid);
@@ -528,7 +528,7 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
 #endif
-    //#endif
+    // #endif
 }
 
 /* Parse the 'arg' string as "ip:ipaddr,gwaddr,netmask,[dns1,dns2]" into
@@ -654,10 +654,19 @@ static void dump_wlan_add_usage(void)
         "If using proactive key caching set pkc as 1, to disable set to 0(default), if okc is set this is not "
         "used.\r\n");
     (void)PRINTF("If using specific ciphers, set the group, pairwise and group mgmt using gc, pc and gmc options.\r\n");
-    (void)PRINTF("supported ciphers: ccmp=0x10, gcmp=0x40, gcmp_256=0x100, ccmp_256=0x200\r\n");
     (void)PRINTF(
-        "supported group mgmt ciphers: aes_128_cmac=0x20, bip_gmac_128=0x800, bip_gmac_256=0x1000, "
-        "bip_cmac_256=0x2000\r\n");
+        "supported ciphers: ccmp=0x10"
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        ", gcmp=0x40, gcmp_256=0x100, ccmp_256=0x200"
+#endif
+        "\r\n");
+    (void)PRINTF(
+        "supported group mgmt ciphers: aes_128_cmac=0x20"
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        ", bip_gmac_128=0x800, bip_gmac_256=0x1000, "
+        "bip_cmac_256=0x2000"
+#endif
+        "\r\n");
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     (void)PRINTF(
         "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
@@ -1619,7 +1628,7 @@ static void test_wlan_add(int argc, char **argv)
             info.security2++;
             arg += 1;
         }
-#else /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
+#else  /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
 #ifdef CONFIG_WPA2_ENTP
         else if (!info.security2 && string_equal("eap-tls", argv[arg]))
         {
@@ -2720,7 +2729,7 @@ static void test_wlan_get_uap_channel(int argc, char **argv)
 
 static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
-    //#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+    // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
     int i;
     wifi_sta_list_t *sl = NULL;
 
@@ -2746,7 +2755,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
     }
 
     os_mem_free(sl);
-    //#endif
+    // #endif
 }
 
 static void test_wlan_ieee_ps(int argc, char **argv)
@@ -5515,7 +5524,7 @@ static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
     t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
     NonceLength      = 13;
     t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
-                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+                        0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
     AADLength        = 22;
 
     if (EncDec == 0U)
@@ -5585,7 +5594,7 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
     }
     /*Algorithm: AES_WRAP*/
     t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
-                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     KeyLength        = 32;
     t_u8 EncData[20] = {0xf8, 0xba, 0x1a, 0x55, 0xd0, 0x2f, 0x85, 0xae, 0x96, 0x7b,
                         0xb6, 0x2f, 0xb6, 0xcd, 0xa8, 0xeb, 0x7e, 0x78, 0xa0, 0x50};
@@ -5597,7 +5606,7 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
     t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
     NonceLength      = 13;
     t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
-                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+                        0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
     AADLength        = 22;
 
     if (EncDec == 0U)
@@ -5693,7 +5702,7 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
     t_u8 Nonce[12] = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
-                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+                      0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
     AADLength      = 24;
 
     if (EncDec == 0U)
@@ -5765,7 +5774,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     }
     /*Algorithm: AES_WRAP*/
     t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
-                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     KeyLength        = 32;
     t_u8 EncData[40] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
                         0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
@@ -5792,7 +5801,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     t_u8 Nonce[12] = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
-                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+                      0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
     AADLength      = 24;
 
     if (EncDec == 0U)
@@ -8811,7 +8820,7 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 #if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
 #else
-    ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
+    ret             = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
 #endif
 
     if (ret != WM_SUCCESS)

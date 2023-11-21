@@ -8382,6 +8382,42 @@ int wlan_add_network(struct wlan_network *network)
             network->security.group_cipher = WLAN_CIPHER_CCMP;
         }
     }
+    else
+    {
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        if (network->security.wpa3_sb_192 == 1U)
+        {
+            if (network->security.group_cipher != WLAN_CIPHER_GCMP_256)
+            {
+                wlcm_e("Invalid group cipher is configured");
+                return -WM_E_INVAL;
+            }
+        }
+        else if (network->security.wpa3_sb == 1U)
+        {
+            if ((network->security.group_cipher != WLAN_CIPHER_GCMP_256) && (network->security.group_cipher != WLAN_CIPHER_CCMP_256) && (network->security.group_cipher != WLAN_CIPHER_GCMP) && (network->security.group_cipher != WLAN_CIPHER_CCMP))
+            {
+                wlcm_e("Invalid group cipher is configured");
+                return -WM_E_INVAL;
+            }
+        }
+        else
+#endif
+            if (network->security.type != WLAN_SECURITY_NONE)
+        {
+                if ((network->security.group_cipher != WLAN_CIPHER_CCMP) && (network->security.group_cipher != WLAN_CIPHER_TKIP))
+                {
+                    wlcm_e("Invalid group cipher is configured");
+                    return -WM_E_INVAL;
+                }
+        }
+        else
+        {
+            wlcm_e("Group cipher configuration not allowed");
+            return -WM_E_INVAL;
+        }
+    }
+
     if (network->security.pairwise_cipher == 0)
     {
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
@@ -8399,6 +8435,42 @@ int wlan_add_network(struct wlan_network *network)
             network->security.pairwise_cipher = WLAN_CIPHER_CCMP;
         }
     }
+    else
+    {
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        if (network->security.wpa3_sb_192 == 1U)
+        {
+            if (network->security.pairwise_cipher != WLAN_CIPHER_GCMP_256)
+            {
+                wlcm_e("Invalid pairwise cipher is configured");
+                return -WM_E_INVAL;
+            }
+        }
+        else if (network->security.wpa3_sb == 1U)
+        {
+            if ((network->security.pairwise_cipher != WLAN_CIPHER_GCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_GCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP))
+            {
+                wlcm_e("Invalid pairwise cipher is configured");
+                return -WM_E_INVAL;
+            }
+        }
+        else
+#endif
+            if (network->security.type != WLAN_SECURITY_NONE)
+        {
+                if ((network->security.pairwise_cipher != WLAN_CIPHER_CCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_TKIP))
+                {
+                    wlcm_e("Invalid pairwise cipher is configured");
+                    return -WM_E_INVAL;
+                }
+        }
+        else
+        {
+            wlcm_e("Pairwise cipher configuration not allowed");
+            return -WM_E_INVAL;
+        }
+    }
+
     if (network->security.group_mgmt_cipher == 0)
     {
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
@@ -8416,6 +8488,42 @@ int wlan_add_network(struct wlan_network *network)
             network->security.group_mgmt_cipher = WLAN_CIPHER_AES_128_CMAC;
         }
     }
+    else
+    {
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+        if (network->security.wpa3_sb_192 == 1U)
+        {
+            if (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_256)
+            {
+                wlcm_e("Invalid group mgmt cipher is configured");
+                return -WM_E_INVAL;
+            }
+        }
+        else if (network->security.wpa3_sb == 1U)
+        {
+            if ((network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_CMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_128) && (network->security.group_mgmt_cipher != WLAN_CIPHER_AES_128_CMAC))
+            {
+                wlcm_e("Invalid group mgmt cipher is configured");
+                return -WM_E_INVAL;
+            }
+        }
+        else
+#endif
+            if (network->security.type != WLAN_SECURITY_NONE)
+        {
+                if (network->security.group_mgmt_cipher != WLAN_CIPHER_AES_128_CMAC)
+                {
+                    wlcm_e("Invalid group mgmt cipher is configured");
+                    return -WM_E_INVAL;
+                }
+        }
+        else
+        {
+            wlcm_e("Group mgmt cipher configuration not allowed");
+            return -WM_E_INVAL;
+        }
+    }
+
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     if (
 #ifdef CONFIG_EAP_TLS
