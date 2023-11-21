@@ -5998,6 +5998,18 @@ static void process_wpa_ie(t_u8 *wpa_ie,
         {
             memmove(temp, (temp + 4), (4 + sizeof(t_u16) + 4));
         }
+        else
+        {
+            /* 2 bytes header + 4 bytes oui + 2 bytes version + 4 bytes group_cipher_suite +
+            *  2 bytes pairwise_cipher_count + pairwise_cipher_1 (4) +
+            *  pairwise_cipher_2 (4) + 2 bytes akm_suite_count +
+            *  akm_suite_count * AKM_SUITE_LEN (4)
+            *
+            *  Here move memory of 4bytes(pairwise_cipher_2) if the cipher type is not wpa_oui04,
+            *  dest = (temp + 4) and src = (temp + 8),
+            *  this memmove will keep akm data intact */
+            memmove((temp + 4), (temp + 8), (sizeof(t_u16) + 4));
+        }
     }
 done:
     LEAVE();
