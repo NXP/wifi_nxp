@@ -6000,7 +6000,6 @@ static void wifi_process_bg_scan_stopped(struct wifi_message *msg)
 
 static void wlcm_process_bg_scan_report(void)
 {
-    wlan.roam_reassoc = false;
     wifi_send_scan_query();
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
     /* Set rssi low threshold and subscribe rssi low event again */
