@@ -3475,11 +3475,6 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         wlan.sta_state = CM_STA_ASSOCIATED;
         *next          = CM_STA_ASSOCIATED;
 
-#ifdef CONFIG_ZEPHYR
-        if_handle = net_get_mlan_handle();
-        net_interface_up(if_handle);
-#endif
-
 #ifdef CONFIG_WPA2_ENTP
         if (wlan_get_prov_session() == PROV_ENTP_SESSION_ATTEMPT)
         {
