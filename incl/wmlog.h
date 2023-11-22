@@ -11,9 +11,9 @@
 #ifndef __WMLOG_H__
 #define __WMLOG_H__
 
-#include "nxp_wifi.h"
 
 #ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 

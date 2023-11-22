@@ -18,7 +18,7 @@ Change log:
 #ifndef _MLAN_H_
 #define _MLAN_H_
 
-#ifndef SDK_OS_FREE_RTOS
+#ifdef CONFIG_ZEPHYR
 #include "nxp_wifi.h"
 #endif
 

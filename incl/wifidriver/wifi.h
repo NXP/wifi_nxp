@@ -13,7 +13,7 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
-#ifndef SDK_OS_FREE_RTOS
+#ifdef CONFIG_ZEPHYR
 #include "nxp_wifi.h"
 #endif
 

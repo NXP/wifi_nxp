@@ -42,11 +42,8 @@
 #ifndef _WM_OS_H_
 #define _WM_OS_H_
 
-#ifndef SDK_OS_FREE_RTOS
-#include "nxp_wifi.h"
-#endif
-
 #ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
 #include "wm_os_zephyr.h"
 #else
 
