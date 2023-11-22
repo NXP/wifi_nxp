@@ -27,6 +27,9 @@ typedef struct
     struct net_addr nmask;
     struct net_addr gw;
     struct ethernetif state;
+#if defined(CONFIG_NET_STATISTICS_WIFI)
+    struct net_stats_wifi stats;
+#endif
     scan_result_cb_t scan_cb;
     uint16_t max_bss_cnt;
 } interface_t;
@@ -585,7 +588,7 @@ void net_stat(void);
 int netif_get_bss_type();
 #endif
 
-int low_level_output(const struct device *dev, struct net_pkt *pkt);
+int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt);
 const struct netif *net_if_get_binding(const char *ifname);
 const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface);
 

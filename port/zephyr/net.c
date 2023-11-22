@@ -365,7 +365,8 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer)
 }
 
 extern int retry_attempts;
-int low_level_output(const struct device *dev, struct net_pkt *pkt)
+
+int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 {
     int ret;
     interface_t *if_handle = (interface_t *)dev->data;

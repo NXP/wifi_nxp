@@ -819,74 +819,47 @@ static bool is_state(enum cm_sta_state state)
     return (wlan.sta_state == state);
 }
 
-static int wlan_get_current_sta_network(struct wlan_network *network)
+static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
-    if (network == NULL)
-    {
-        return -WM_E_INVAL;
-    }
+    struct wlan_network* network = NULL;
 
     if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
     {
-        (void)memcpy((void *)network, (const void *)&wlan.networks[wlan.cur_network_idx], sizeof(struct wlan_network));
-
-        return WM_SUCCESS;
+        network = &wlan.networks[wlan.cur_network_idx];
     }
 
-    return WLAN_ERROR_STATE;
-}
-
-#if defined(CONFIG_HOST_SLEEP) || defined(CONFIG_MEF_CFG) || defined(CONFIG_NAT_KEEP_ALIVE) || defined(CONFIG_CLOUD_KEEP_ALIVE)
-static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
-{
-    struct wlan_network* network;
-    int ret;
-
-    network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
     if (network == NULL)
-    {
-        wlcm_e("%s: Failed to alloc wlan_network network", __func__);
-        return -WM_FAIL;
-    }
-    ret = wlan_get_current_sta_network(network);
-
-    if (ret != WM_SUCCESS)
     {
         wlcm_e("cannot get network info");
         *ipv4_addr = 0;
-        os_mem_free((void *)network);
         return -WM_FAIL;
     }
+
     *ipv4_addr = network->ip.ipv4.address;
-    os_mem_free((void *)network);
-    return ret;
+
+    return WM_SUCCESS;
 }
-#endif
 
 #if defined(CONFIG_HOST_SLEEP) || defined(CONFIG_MEF_CFG)
 static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 {
     struct wlan_network* network;
-    int ret;
 
-    network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
-    if (network == NULL)
+    if (wlan.running && (is_uap_state(CM_UAP_IP_UP) || is_uap_state(CM_UAP_STARTED)))
     {
-        wlcm_e("%s: Failed to alloc wlan_network network", __func__);
-        return -WM_FAIL;
+        network = &wlan.networks[wlan.cur_uap_network_idx];
     }
-    ret = wlan_get_current_uap_network(network);
 
-    if (ret != WM_SUCCESS)
+    if (network == NULL)
     {
         wlcm_e("cannot get uap network info");
         *ipv4_addr = 0;
-        os_mem_free((void *)network);
         return -WM_FAIL;
     }
+
     *ipv4_addr = network->ip.ipv4.address;
-    os_mem_free((void *)network);
-    return ret;
+
+    return WM_SUCCESS;
 }
 #endif
 
@@ -9057,6 +9030,23 @@ int wlan_get_current_network(struct wlan_network *network)
     return WLAN_ERROR_STATE;
 }
 
+int wlan_get_current_network_ssid(char *ssid)
+{
+    if (ssid == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    {
+        (void)memcpy((void *)ssid, (const void *)&wlan.networks[wlan.cur_network_idx].ssid, IEEEtypes_SSID_SIZE + 1);
+
+        return WM_SUCCESS;
+    }
+
+    return WLAN_ERROR_STATE;
+}
+
 int wlan_get_current_uap_network(struct wlan_network *network)
 {
     if (network == NULL)
@@ -9070,6 +9060,23 @@ int wlan_get_current_uap_network(struct wlan_network *network)
                      sizeof(struct wlan_network));
         return WM_SUCCESS;
     }
+    return WLAN_ERROR_STATE;
+}
+
+int wlan_get_current_uap_network_ssid(char *ssid)
+{
+    if (ssid == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    if (wlan.running && (is_uap_state(CM_UAP_IP_UP) || is_uap_state(CM_UAP_STARTED)))
+    {
+        (void)memcpy((void *)ssid, (const void *)&wlan.networks[wlan.cur_uap_network_idx].ssid, IEEEtypes_SSID_SIZE + 1);
+
+        return WM_SUCCESS;
+    }
+
     return WLAN_ERROR_STATE;
 }
 
@@ -10115,12 +10122,16 @@ int wlan_scan(int (*cb)(unsigned int count))
 
 static int wlan_pscan(int (*cb)(unsigned int count))
 {
-    struct wlan_network network;
-    int ret;
+    struct wlan_network* network = NULL;
     wlan_scan_params_v2_t wlan_scan_param;
+    int ret;
 
-    ret = wlan_get_current_sta_network(&network);
-    if (ret != WM_SUCCESS)
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    {
+        network = &wlan.networks[wlan.cur_network_idx];
+    }
+
+    if (network == NULL)
     {
         wlcm_e("cannot get network info");
         return -WM_FAIL;
@@ -10130,13 +10141,13 @@ static int wlan_pscan(int (*cb)(unsigned int count))
 
     wlan_scan_param.cb = cb;
 
-    (void)memcpy((void *)wlan_scan_param.bssid, (const void *)network.bssid, MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy((void *)wlan_scan_param.bssid, (const void *)network->bssid, MLAN_MAC_ADDR_LENGTH);
 
-    (void)memcpy((void *)wlan_scan_param.ssid, (const void *)network.ssid, strlen(network.ssid));
+    (void)memcpy((void *)wlan_scan_param.ssid, (const void *)network->ssid, strlen(network->ssid));
 
     wlan_scan_param.num_channels = 1;
 
-    wlan_scan_param.chan_list[0].chan_number = (t_u8)network.channel;
+    wlan_scan_param.chan_list[0].chan_number = (t_u8)network->channel;
     wlan_scan_param.chan_list[0].scan_type   = MLAN_SCAN_TYPE_PASSIVE;
     wlan_scan_param.chan_list[0].scan_time   = 200;
 
@@ -11291,17 +11302,20 @@ int wlan_stop_cloud_keep_alive(wlan_cloud_keep_alive_t *cloud_keep_alive)
 
 uint16_t wlan_get_beacon_period(void)
 {
-    struct wlan_network network;
-    int ret;
+    struct wlan_network* network = NULL;
 
-    ret = wlan_get_current_sta_network(&network);
-    if (ret != WM_SUCCESS)
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    {
+        network = &wlan.networks[wlan.cur_network_idx];
+    }
+
+    if (network == NULL)
     {
         wlcm_e("cannot get network info");
         return 0;
     }
 
-    return network.beacon_period;
+    return network->beacon_period;
 }
 
 static os_semaphore_t wlan_dtim_sem;
@@ -11459,12 +11473,14 @@ int wlan_set_auto_arp(void)
     return wifi_set_packet_filters(&flt_cfg);
 }
 
+#ifndef CONFIG_ZEPHYR
 #define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
+#endif
 
 #ifndef CONFIG_WPA_SUPP
-static inline bool is_broadcast_ether_addr(const u8_t *addr)
+static inline bool is_broadcast_ether_addr(const t_u8 *addr)
 {
-    return (*(const u16_t *)(addr + 0) & *(const u16_t *)(addr + 2) & *(const u16_t *)(addr + 4)) == 0xffff;
+    return (*(const t_u16 *)(addr + 0) & *(const t_u16 *)(addr + 2) & *(const t_u16 *)(addr + 4)) == 0xffff;
 }
 #endif
 
@@ -11477,7 +11493,7 @@ static inline bool is_broadcast_ether_addr(const u8_t *addr)
  *
  * @return                      1 -- support, 0 -- not support
  */
-static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, u8_t *byte_seq)
+static t_bool is_wowlan_pattern_supported(wifi_wowlan_pattern_t *pat, t_u8 *byte_seq)
 {
     int j, k, valid_byte_cnt = 0;
     t_bool dont_care_byte = false;
@@ -11669,18 +11685,21 @@ int wlan_set_ipv6_ns_offload()
 
 int wlan_get_current_bssid(uint8_t *bssid)
 {
-    struct wlan_network network;
-    int ret;
+    struct wlan_network* network = NULL;
 
-    ret = wlan_get_current_sta_network(&network);
-    if (ret != WM_SUCCESS)
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    {
+        network = &wlan.networks[wlan.cur_network_idx];
+    }
+
+    if (network == NULL)
     {
         wlcm_e("cannot get network info");
         return -WM_FAIL;
     }
     if (bssid != NULL)
     {
-        (void)memcpy((void *)bssid, (const void *)network.bssid, IEEEtypes_ADDRESS_SIZE);
+        (void)memcpy((void *)bssid, (const void *)network->bssid, IEEEtypes_ADDRESS_SIZE);
         return WM_SUCCESS;
     }
 
@@ -11689,17 +11708,20 @@ int wlan_get_current_bssid(uint8_t *bssid)
 
 uint8_t wlan_get_current_channel(void)
 {
-    struct wlan_network network;
-    int ret;
+    struct wlan_network* network = NULL;
 
-    ret = wlan_get_current_sta_network(&network);
-    if (ret != WM_SUCCESS)
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    {
+        network = &wlan.networks[wlan.cur_network_idx];
+    }
+
+    if (network == NULL)
     {
         wlcm_e("cannot get network info");
         return 0;
     }
 
-    return (uint8_t)network.channel;
+    return (uint8_t)network->channel;
 }
 
 void wlan_sta_ampdu_tx_enable(void)

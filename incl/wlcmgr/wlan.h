@@ -2745,6 +2745,21 @@ int wlan_get_uap_channel(int *channel);
  */
 int wlan_get_current_network(struct wlan_network *network);
 
+/** Retrieve the current network ssid of station interface.
+ *
+ *  This function retrieves the current network ssid of station
+ *  interface when the station interface is in the \ref WLAN_CONNECTED
+ *  state.
+ *
+ *  \param[out] ssid A pointer to the ssid.
+ *
+ *  \return WM_SUCCESS if successful.
+ *  \return -WM_E_INVAL if \a network is NULL.
+ *  \return WLAN_ERROR_STATE if the WLAN Connection Manager was
+ *          not running or not in the \ref WLAN_CONNECTED state.
+ */
+int wlan_get_current_network_ssid(char *ssid);
+
 /** Retrieve the current network configuration of micro-AP interface.
  *
  *  This function retrieves the current network configuration of micro-AP
@@ -2758,6 +2773,20 @@ int wlan_get_current_network(struct wlan_network *network);
  *           not running or not in the \ref WLAN_UAP_STARTED state.
  */
 int wlan_get_current_uap_network(struct wlan_network *network);
+
+/** Retrieve the current network ssid of micro-AP interface.
+ *
+ *  This function retrieves the current network ssid of micro-AP
+ *  interface when the micro-AP interface is in the \ref WLAN_UAP_STARTED state.
+ *
+ *  \param[out] ssid A pointer to the ssid.
+ *
+ *  \return WM_SUCCESS if successful.
+ *  \return -WM_E_INVAL if \a network is NULL.
+ *  \return WLAN_ERROR_STATE if the WLAN Connection Manager was
+ *           not running or not in the \ref WLAN_UAP_STARTED state.
+ */
+int wlan_get_current_uap_network_ssid(char *ssid);
 
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
 int wlan_set_rssi_threshold(int rssithr);
