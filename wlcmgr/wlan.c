@@ -14478,10 +14478,9 @@ int wlan_set_region_code(unsigned int region_code)
 {
     char *country;
 
-    if ((region_code == 0x41) || (region_code == 0xFE))
+    if ((region_code == 0x40) || (region_code == 0x41) || (region_code == 0xFE))
     {
         (void)PRINTF("Region code 0XFF is used for Japan to support channels of both 2.4GHz band and 5GHz band.\r\n");
-        (void)PRINTF("Region code 0X40 is used for Japan to support channels of 5GHz band.\r\n");
         return -WM_FAIL;
     }
 

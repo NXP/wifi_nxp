@@ -3115,7 +3115,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code(int region_code, t_u8 *nr_sb)
         case 0xFF:
             ret_band = subband_JP_2_4GHz;
             break;
-        case 0xAA:
+        case 0x00:
             ret_band = subband_WWSM_2_4GHz;
             break;
         default:
@@ -3163,7 +3163,7 @@ wifi_sub_band_set_t *get_sub_band_from_region_code_5ghz(int region_code, t_u8 *n
         case 0x50:
             ret_band = subband_CN_5_GHz;
             break;
-        case 0xAA:
+        case 0x00:
             *nr_sb   = 3;
             ret_band = subband_WWSM_5_GHz;
             break;
