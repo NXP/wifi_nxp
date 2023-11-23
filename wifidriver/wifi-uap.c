@@ -337,6 +337,12 @@ int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_l
     t_u8 nr_sb;
     wifi_sub_band_set_t *sub_band_list = NULL;
 
+    /* uap acs case, set sub_band_list based on scan_chan_list */
+    if(channel == 0)
+    {
+        channel = scan_chan_list.chan_number[0];
+    }
+
     /* get band and sub band lists */
 #ifdef CONFIG_5GHz_SUPPORT
     if (channel > MAX_CHANNELS_BG)
