@@ -4141,6 +4141,9 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
         wlan.ft_bss       = true;
         wlan.roam_reassoc = true;
         ret               = wifi_send_scan_cmd((t_u8)BSS_INFRASTRUCTURE, bssid, network->ssid, NULL, 1, &chan_list, 0,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                                 0,
+#endif
 #ifdef CONFIG_SCAN_CHANNEL_GAP
                                  scan_channel_gap,
 #endif
