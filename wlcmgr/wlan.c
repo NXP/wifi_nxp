@@ -319,6 +319,7 @@ enum cm_sta_state
     CM_STA_SCANNING_USER,
     CM_STA_ASSOCIATING,
     CM_STA_ASSOCIATED,
+    CM_STA_AUTHENTICATED,
     CM_STA_REQUESTING_ADDRESS,
     CM_STA_OBTAINING_ADDRESS,
     CM_STA_CONNECTED,
@@ -3673,6 +3674,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                 return;
             }
 
+#ifdef CONFIG_STA_AUTO_DHCPV4
             ret = net_configure_address((struct net_ip_config *)&network->ip, if_handle);
             if (ret != 0)
             {
@@ -3688,6 +3690,14 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                 wlan.sta_ipv6_state = CM_STA_REQUESTING_ADDRESS;
 #endif
             }
+#else
+            *next               = CM_STA_AUTHENTICATED;
+            wlan.sta_ipv4_state = CM_STA_AUTHENTICATED;
+#ifdef CONFIG_IPV6
+            wlan.sta_ipv6_state = CM_STA_AUTHENTICATED;
+#endif
+#endif
+
 #ifdef CONFIG_WLAN_FAST_PATH
             wlan.auth_cache_valid = false;
             /* Mark the fast path cache valid after
@@ -10247,6 +10257,9 @@ int wlan_get_connection_state(enum wlan_connection_state *state)
             break;
         case CM_STA_ASSOCIATED:
             *state = WLAN_ASSOCIATED;
+            break;
+        case CM_STA_AUTHENTICATED:
+            *state = WLAN_AUTHENTICATED;
             break;
         case CM_STA_REQUESTING_ADDRESS:
         case CM_STA_OBTAINING_ADDRESS:

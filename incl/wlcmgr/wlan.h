@@ -531,6 +531,8 @@ enum wlan_connection_state
     WLAN_CONNECTING,
     /** The WLAN Connection Manager is not connected but associated. */
     WLAN_ASSOCIATED,
+    /** The WLAN Connection Manager is not connected but authenticated. */
+    WLAN_AUTHENTICATED,
     /** The WLAN Connection Manager is connected.  It is possible to scan and
      *  connect to another network at this time.  Information about the current
      *  network configuration is available. */

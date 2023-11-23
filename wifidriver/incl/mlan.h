@@ -53,6 +53,7 @@ Change log:
 #define CONFIG_WIFI_FRAG_THRESHOLD     1
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+#define CONFIG_STA_AUTO_DHCPV4         1
 #endif
 
 #if !defined(SD8801)
