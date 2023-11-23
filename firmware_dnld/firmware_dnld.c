@@ -54,6 +54,7 @@ static int32_t conn_download_normal_fw(const t_u8 *connfw_dl, t_u32 firmwarelen,
 
     return ret;
 }
+
 #if defined(CONFIG_XZ_DECOMPRESSION)
 int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport)
 {

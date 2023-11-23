@@ -3,176 +3,143 @@
 
 # define part number for this driver
 
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8987_BOARD_AW_CM358_USD
+zephyr_compile_definitions_ifdef(CONFIG_88W8987
     SD8987
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_USD_INTERFACE
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8987_BOARD_AW_CM358MA_M2
-    SD8987
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8987_BOARD_MURATA_1ZM_USD
-    SD8987
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1ZM_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x06
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x06
-    WIFI_BT_USE_USD_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8987_BOARD_MURATA_1ZM_M2
-    SD8987
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1ZM_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x06
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x06
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8987_BOARD_UBX_JODY_W2_USD
-    SD8987
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_USD_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW416_BOARD_AW_AM457_USD
+zephyr_compile_definitions_ifdef(CONFIG_IW416
     SD8978
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_USD_INTERFACE
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW416_BOARD_AW_AM457MA_M2
-    SD8978
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW416_BOARD_AW_AM510_USD
-    SD8978
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_USD_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW416_BOARD_AW_AM510MA_M2
-    SD8978
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW416_BOARD_MURATA_1XK_USD
-    SD8978
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x00
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_USD_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW416_BOARD_MURATA_1XK_M2
-    SD8978
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x00
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW612_BOARD_MURATA_2EL_USD
+zephyr_compile_definitions_ifdef(CONFIG_IW61X
     SD9177
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
-    WIFI_BT_USE_USD_INTERFACE
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW612_BOARD_MURATA_2EL_M2
-    SD9177
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW611_BOARD_MURATA_2DL_USD
-    SD9177
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
-    WIFI_BT_USE_USD_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_IW611_BOARD_MURATA_2DL_M2
-    SD9177
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_AW611_BOARD_UBX_JODY_W5_USD
-    SD9177
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
-    WIFI_BT_USE_USD_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_AW611_BOARD_UBX_JODY_W5_M2
-    SD9177
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
-    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
-    WIFI_BT_USE_M2_INTERFACE
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8801_BOARD_AW_NM191_USD
+zephyr_compile_definitions_ifdef(CONFIG_88W8801
     SD8801
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x1B
 )
 
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8801_BOARD_AW_NM191MA_M2
-    SD8801
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x1B
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8801_BOARD_MURATA_2DS_USD
-    SD8801
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2DS_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0E
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8801_BOARD_MURATA_2DS_M2
-    SD8801
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2DS_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0E
-)
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_88W8801_BOARD_UBX_LILY_W1_USD
-    SD8801
-    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
-    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x1B
-)
-
-
-zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_RW610
+zephyr_compile_definitions_ifdef(CONFIG_RW610
     RW610
     WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW_rw610.h"
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8987_AW_CM358_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8987_AW_CM358MA_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8987_MURATA_1ZM_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1ZM_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x06
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x06
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8987_MURATA_1ZM_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1ZM_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x06
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x06
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW416_AW_AM457_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW416_AW_AM457MA_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW416_AW_AM510_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW416_AW_AM510MA_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x09
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW416_MURATA_1XK_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x00
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW416_MURATA_1XK_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_1XK_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x00
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0C
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW612_MURATA_2EL_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW612_MURATA_2EL_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW611_MURATA_2DL_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
+    WIFI_BT_USE_USD_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_IW611_MURATA_2DL_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2EL_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0A
+    CONFIG_NXP_WIFI_ED_OFFSET_5G=0x0A
+    WIFI_BT_USE_M2_INTERFACE
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8801_AW_NM191_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x1B
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8801_AW_NM191MA_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x1B
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8801_MURATA_2DS_USD
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2DS_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0E
+)
+
+zephyr_compile_definitions_ifdef(CONFIG_88W8801_MURATA_2DS_M2
+    WIFI_BT_TX_PWR_LIMITS="wlan_txpwrlimit_cfg_murata_2DS_WW.h"
+    CONFIG_NXP_WIFI_ED_OFFSET_2G=0x0E
 )
 
 zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_USD_INTERFACE

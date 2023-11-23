@@ -16,6 +16,9 @@
 
 #define SDIO_CMD_TIMEOUT 2000
 
+const struct device *sdhc_dev = DEVICE_DT_GET(
+                DT_BUS(DT_COMPAT_GET_ANY_STATUS_OKAY(nxp_wifi)));
+
 static struct sd_card wm_g_sd;
 static struct sdio_func g_sdio_funcs[8];
 
@@ -83,10 +86,18 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
     struct sdio_func *func = &g_sdio_funcs[fn];
 
 #if 1
-    if (sdio_read_addr(func, addr, buf, bsize * bcnt) != 0)
-    {
-        (void)os_mutex_put(&sdio_mutex);
-        return 0;
+    if (bcnt > 1) {
+        if (sdio_read_blocks_fifo(func, addr, buf, bcnt) != 0)
+        {
+            (void)os_mutex_put(&sdio_mutex);
+            return 0;
+        }
+    } else {
+        if (sdio_read_fifo(func, addr, buf, bsize * bcnt) != 0)
+        {
+            (void)os_mutex_put(&sdio_mutex);
+            return 0;
+        }
     }
 #else
     for (int i = 0; i < bsize * bcnt; i++)
@@ -118,10 +129,18 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     struct sdio_func *func = &g_sdio_funcs[fn];
 
 #if 1
-    if (sdio_write_addr(func, addr, buf, bsize * bcnt) != 0)
-    {
-        (void)os_mutex_put(&sdio_mutex);
-        return 0;
+    if (bcnt > 1) {
+        if (sdio_write_blocks_fifo(func, addr, buf, bcnt) != 0)
+        {
+            (void)os_mutex_put(&sdio_mutex);
+            return 0;
+        }
+    } else {
+        if (sdio_write_fifo(func, addr, buf, bsize * bcnt) != 0)
+        {
+            (void)os_mutex_put(&sdio_mutex);
+            return 0;
+        }
     }
 #else
     for (int i = 0; i < bsize * bcnt; i++)
@@ -160,16 +179,16 @@ extern void handle_cdint(int error);
 
 void sdio_irq_handler(const struct device *dev, int reason, const void *user_data)
 {
-    if (reason == SDHC_INT_SDIO)
+    if (reason & SDHC_INT_SDIO)
     {
-        sdhc_disable_interrupt(DEVICE_DT_GET(DT_NODELABEL(usdhc1)), SDHC_INT_SDIO);
+        sdhc_disable_interrupt(sdhc_dev, SDHC_INT_SDIO);
         handle_cdint(0);
     }
 }
 
 void sdio_enable_interrupt(void)
 {
-    sdhc_enable_interrupt(DEVICE_DT_GET(DT_NODELABEL(usdhc1)), (sdhc_interrupt_cb_t)sdio_irq_handler, SDHC_INT_SDIO,
+    sdhc_enable_interrupt(sdhc_dev, (sdhc_interrupt_cb_t)sdio_irq_handler, SDHC_INT_SDIO,
                           NULL);
     return;
 }
@@ -179,8 +198,6 @@ static void sdio_controller_init(void)
     (void)memset(&wm_g_sd, 0, sizeof(struct sd_card));
 
     sdio_enable_interrupt();
-
-    // BOARD_WIFI_BT_Config(&wm_g_sd, SDIO_CardInterruptCallBack);
 }
 
 static int sdio_card_init(void)
@@ -190,7 +207,17 @@ static int sdio_card_init(void)
 
     BOARD_WIFI_BT_Enable(true);
 
-    ret = sd_init(DEVICE_DT_GET(DT_NODELABEL(usdhc1)), &wm_g_sd);
+    if (!device_is_ready(sdhc_dev)) {
+        sdio_e("SD controller not ready");
+	return -EIO;
+    }
+
+    if (!sdhc_card_present(sdhc_dev)) {
+        sdio_e("SDIO card not present");
+	return -EIO;
+    }
+
+    ret = sd_init(sdhc_dev, &wm_g_sd);
     if (ret)
     {
         return ret;
@@ -201,38 +228,18 @@ static int sdio_card_init(void)
 
     sdio_d("Card Version - (0x%x)", resp & 0xff);
     /* Init SDIO functions */
-    ret = sdio_init_func(&wm_g_sd, &g_sdio_funcs[1], SDIO_FUNC_NUM_1);
-    if (ret)
-    {
-        sdio_e("sdio_enable_func BACKPLANE_FUNCTION, error: %x", ret);
-        return ret;
-    }
-#if 0
-    ret = sdio_init_func(&wm_g_sd, &g_sdio_funcs[2], SDIO_FUNC_NUM_2);
-    if (ret)
-    {
-        sdio_e("sdio_enable_func WLAN_FUNCTION, error: %x", ret);
-        return ret;
-    }
-#endif
+    sdio_init_func(&wm_g_sd, &g_sdio_funcs[1], SDIO_FUNC_NUM_1);
+    sdio_init_func(&wm_g_sd, &g_sdio_funcs[2], SDIO_FUNC_NUM_2);
+
     /* Mask interrupts in card */
     (void)sdio_drv_creg_write(0x4, 0, 0x3, &resp);
     /* Enable IO in card */
     (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
-    ret = sdio_set_block_size(&g_sdio_funcs[0], 1);
-    if (ret)
-    {
-        sdio_e("Can't set block size for func 0, error: %x", ret);
-        return ret;
-    }
 
-    ret = sdio_set_block_size(&g_sdio_funcs[1], 256);
-    if (ret)
-    {
-        sdio_e("Can't set block size for func 1, error: %x", ret);
-        return ret;
-    }
+    (void)sdio_set_block_size(&g_sdio_funcs[0], 256);
+    (void)sdio_set_block_size(&g_sdio_funcs[1], 256);
+    (void)sdio_set_block_size(&g_sdio_funcs[2], 256);
 
     return ret;
 }
