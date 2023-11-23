@@ -819,6 +819,11 @@ static bool is_state(enum cm_sta_state state)
     return (wlan.sta_state == state);
 }
 
+static bool is_uap_state(enum cm_uap_state state)
+{
+    return (wlan.uap_state == state);
+}
+
 static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 {
     struct wlan_network* network = NULL;
@@ -843,7 +848,7 @@ static int wlan_get_ipv4_addr(unsigned int *ipv4_addr)
 #if defined(CONFIG_HOST_SLEEP) || defined(CONFIG_MEF_CFG)
 static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 {
-    struct wlan_network* network;
+    struct wlan_network* network = NULL;
 
     if (wlan.running && (is_uap_state(CM_UAP_IP_UP) || is_uap_state(CM_UAP_STARTED)))
     {
@@ -1762,11 +1767,6 @@ static int configure_security(struct wlan_network *network, struct wifi_scan_res
 static bool is_running(void)
 {
     return (wlan.running && wlan.sta_state >= CM_STA_IDLE);
-}
-
-static bool is_uap_state(enum cm_uap_state state)
-{
-    return (wlan.uap_state == state);
 }
 
 static bool is_sta_connecting(void)
