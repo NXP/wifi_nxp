@@ -3353,15 +3353,15 @@ mlan_status wlan_ret_get_hw_spec(IN pmlan_private pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     ext_tlv->type = tlv_type;
                     ext_tlv->len  = tlv_len;
+#ifndef RW610
+                    wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
+#else
                     if ((he_tlv_idx == AX_2G_TLV_INDEX) || !ISSUPP_NO5G(pmadapter->fw_cap_ext))
                     {
-#ifndef RW610
-                        wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv);
-#else
                         wlan_update_11ax_cap(pmadapter, (MrvlIEtypes_Extension_t *)ext_tlv, he_tlv_idx);
                         he_tlv_idx++;
-#endif
                     }
+#endif
                 }
                 break;
 #endif

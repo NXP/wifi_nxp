@@ -3436,9 +3436,6 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     int ret;
     struct wlan_network *network = &wlan.networks[wlan.cur_network_idx];
 #endif
-#ifdef CONFIG_ZEPHYR
-    void *if_handle = NULL;
-#endif
 
 #ifdef CONFIG_WLAN_FAST_PATH
     if (wlan.is_scan_lock)
