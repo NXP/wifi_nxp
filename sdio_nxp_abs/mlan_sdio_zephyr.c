@@ -179,7 +179,7 @@ extern void handle_cdint(int error);
 
 void sdio_irq_handler(const struct device *dev, int reason, const void *user_data)
 {
-    if (reason & SDHC_INT_SDIO)
+    if (reason == SDHC_INT_SDIO)
     {
         sdhc_disable_interrupt(sdhc_dev, SDHC_INT_SDIO);
         handle_cdint(0);

@@ -13,7 +13,7 @@
 #ifndef __WIFI_H__
 #define __WIFI_H__
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
@@ -51,8 +51,6 @@
 #define CONFIG_TX_AMPDU_PROT_MODE      1
 #endif
 
-#ifndef CONFIG_ZEPHYR
-
 #if !defined(SD8801)
 #define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
@@ -60,17 +58,21 @@
 #if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
+#ifndef CONFIG_WIFI_CAPA
 #define CONFIG_WIFI_CAPA   1
+#endif
 #endif
 
 #ifdef CONFIG_11AX
+#ifndef CONFIG_11K
 #define CONFIG_11K 1
+#endif
+#ifndef CONFIG_11V
 #define CONFIG_11V 1
+#endif
 #ifndef CONFIG_WPA_SUPP
 #define CONFIG_DRIVER_MBO 1
 #endif
-#endif
-
 #endif
 
 #include <wifi-decl.h>

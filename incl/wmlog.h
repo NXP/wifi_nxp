@@ -12,7 +12,7 @@
 #define __WMLOG_H__
 
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
