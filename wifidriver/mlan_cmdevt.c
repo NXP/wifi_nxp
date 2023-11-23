@@ -4427,7 +4427,7 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
             if (offset <= ctrl->vdll_len)
             {
                 block_len = MIN(block_len, ctrl->vdll_len - offset);
-                if (!pmadapter->cmd_sent)
+                //if (!pmadapter->cmd_sent)
                 {
                     status = wlan_download_vdll_block(pmadapter, ctrl->vdll_mem + offset, block_len);
                     if (status)
@@ -4435,12 +4435,14 @@ mlan_status wlan_process_vdll_event(pmlan_private pmpriv, t_u8 *pevent)
                         wevt_d("Fail to download VDLL block");
                     }
                 }
+#if 0
                 else
                 {
                     wevt_d("cmd_sent=1, delay download VDLL block");
                     ctrl->pending_block_len = block_len;
                     ctrl->pending_block     = ctrl->vdll_mem + offset;
                 }
+#endif
                 if (pmadapter->vdll_in_progress == MFALSE)
                 {
                     (void)pmadapter->callbacks.moal_start_timer(pmadapter->pmoal_handle, pmadapter->vdll_timer, MFALSE,

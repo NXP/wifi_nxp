@@ -622,6 +622,8 @@ static char *dbg_sta_state_name(enum cm_sta_state state)
             return "associating";
         case CM_STA_ASSOCIATED:
             return "associated";
+        case CM_STA_AUTHENTICATED:
+            return "authenticated";
         case CM_STA_REQUESTING_ADDRESS:
             return "requesting address";
         case CM_STA_OBTAINING_ADDRESS:
@@ -1778,7 +1780,7 @@ static bool is_sta_connecting(void)
 /* Check whether we are allowed to start a user-requested scan right now. */
 static bool is_scanning_allowed(void)
 {
-    return (is_state(CM_STA_IDLE) || is_state(CM_STA_CONNECTED));
+    return (is_state(CM_STA_IDLE) || is_state(CM_STA_CONNECTED) || is_state(CM_STA_AUTHENTICATED));
 }
 
 /*
@@ -2814,7 +2816,11 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_state *next)
 {
     ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
+
+#ifdef CONFIG_WIFI_PS_DEBUG
     wlcm_d("got msg data :: %x", action);
+#endif
+
     os_mem_free(msg->data);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
@@ -3553,7 +3559,9 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
                                               enum cm_sta_state *next,
                                               struct wlan_network *network)
 {
+#ifdef CONFIG_STA_AUTO_DHCPV4
     int ret         = 0;
+#endif
     void *if_handle = NULL;
 #ifdef CONFIG_WPA_SUPP
     struct netif *netif = net_get_sta_interface();
@@ -6484,30 +6492,40 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 
         case WIFI_EVENT_SLEEP:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: sleep");
+#endif
             wlcm_process_sleep_event();
             break;
 
         case WIFI_EVENT_IEEE_PS:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: IEEE ps result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+#endif
             wlcm_process_ieeeps_event(msg);
             break;
 
         case WIFI_EVENT_DEEP_SLEEP:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: deep sleep result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+#endif
             wlcm_process_deepsleep_event(msg, &next);
 
             break;
 #if defined(CONFIG_WNM_PS)
         case WIFI_EVENT_WNM_PS:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: WNM ps result: %s", msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+#endif
             wlcm_process_wnmps_event(msg);
             break;
 #endif
         case WIFI_EVENT_IEEE_DEEP_SLEEP:
+#ifdef CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: IEEE deep sleep result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+#endif
             os_mem_free(msg->data);
             break;
         case WIFI_EVENT_WNM_DEEP_SLEEP:
@@ -6642,8 +6660,15 @@ static void cm_main(os_thread_arg_t data)
 
         if (ret == WM_SUCCESS)
         {
-            wlcm_d("got wifi message: %d %d %p", msg.event, msg.reason, msg.data);
-
+#ifndef CONFIG_WIFI_PS_DEBUG
+	    if (msg.event != WIFI_EVENT_SLEEP && msg.event != WIFI_EVENT_IEEE_PS && 
+			msg.event != WIFI_EVENT_DEEP_SLEEP && msg.event != WIFI_EVENT_IEEE_DEEP_SLEEP)
+	    {
+		wlcm_d("got wifi message: %d %d %p", msg.event, msg.reason, msg.data);
+	    }
+#else
+	    wlcm_d("got wifi message: %d %d %p", msg.event, msg.reason, msg.data);
+#endif
             if (is_uap_msg(&msg) != 0)
             {
                 /* uAP related msg */
@@ -9028,7 +9053,7 @@ int wlan_get_current_network(struct wlan_network *network)
         return -WM_E_INVAL;
     }
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_AUTHENTICATED)))
     {
         (void)memcpy((void *)network, (const void *)&wlan.networks[wlan.cur_network_idx], sizeof(struct wlan_network));
 
@@ -9049,7 +9074,7 @@ int wlan_get_current_network_ssid(char *ssid)
         return -WM_E_INVAL;
     }
 
-    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED) || is_state(CM_STA_AUTHENTICATED)))
     {
         (void)memcpy((void *)ssid, (const void *)&wlan.networks[wlan.cur_network_idx].ssid, IEEEtypes_SSID_SIZE + 1);
 
