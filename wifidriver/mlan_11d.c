@@ -568,6 +568,10 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
 
             if (j == parsed_region_chan->no_of_chan && j < MAX_NO_OF_CHAN)
             {
+                if (parsed_region_chan->no_of_chan + num_chan_added >=  MAX_NO_OF_CHAN)
+                {
+                    break;
+                }
                 /*
                  * Channel does not exist in the channel power table,
                  * update this new chan and tx_power to the channel power table
@@ -583,6 +587,10 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
             }
         }
         parsed_region_chan->no_of_chan += (t_u8)num_chan_added;
+        if (parsed_region_chan->no_of_chan > MAX_NO_OF_CHAN)
+        {
+            parsed_region_chan->no_of_chan = MAX_NO_OF_CHAN;
+        }
     }
     else
     {
