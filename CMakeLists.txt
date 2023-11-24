@@ -200,6 +200,9 @@ zephyr_library_sources_ifdef(CONFIG_SDIO_STACK
 zephyr_library_sources(${WIFI_SRC})
 
 file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
+list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*tests*")
+list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*cli*")
+
 zephyr_library_sources(${WLCMGR_SRC})
 
 file(GLOB DHCPD_SRC ./dhcpd/*.c)
