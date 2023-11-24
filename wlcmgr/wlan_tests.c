@@ -1628,7 +1628,7 @@ static void test_wlan_add(int argc, char **argv)
             info.security2++;
             arg += 1;
         }
-#else  /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
+#else /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
 #ifdef CONFIG_WPA2_ENTP
         else if (!info.security2 && string_equal("eap-tls", argv[arg]))
         {
@@ -4715,7 +4715,7 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
 static void test_wlan_ns_offload(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    ret     = wlan_set_ipv6_ns_offload();
+    ret = wlan_set_ipv6_ns_offload();
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Enabled  wlan IPv6 NS offload feature");
@@ -4729,7 +4729,7 @@ static void test_wlan_ns_offload(int argc, char **argv)
 static void test_wlan_auto_arp(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    ret     = wlan_set_auto_arp();
+    ret = wlan_set_auto_arp();
     if (ret == WM_SUCCESS)
         (void)PRINTF("Enabled  wlan auto arp offload feature\r\n");
     else
@@ -5524,7 +5524,7 @@ static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
     t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
     NonceLength      = 13;
     t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
-                        0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
     AADLength        = 22;
 
     if (EncDec == 0U)
@@ -5594,7 +5594,7 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
     }
     /*Algorithm: AES_WRAP*/
     t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
-                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     KeyLength        = 32;
     t_u8 EncData[20] = {0xf8, 0xba, 0x1a, 0x55, 0xd0, 0x2f, 0x85, 0xae, 0x96, 0x7b,
                         0xb6, 0x2f, 0xb6, 0xcd, 0xa8, 0xeb, 0x7e, 0x78, 0xa0, 0x50};
@@ -5606,7 +5606,7 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
     t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
     NonceLength      = 13;
     t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
-                        0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
     AADLength        = 22;
 
     if (EncDec == 0U)
@@ -5702,7 +5702,7 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
     t_u8 Nonce[12] = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
-                      0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
     AADLength      = 24;
 
     if (EncDec == 0U)
@@ -5774,7 +5774,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     }
     /*Algorithm: AES_WRAP*/
     t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
-                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     KeyLength        = 32;
     t_u8 EncData[40] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
                         0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
@@ -5801,7 +5801,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     t_u8 Nonce[12] = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
-                      0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
     AADLength      = 24;
 
     if (EncDec == 0U)
@@ -6569,9 +6569,12 @@ static void dump_wlan_get_antcfg_usage(void)
 
 static void wlan_antcfg_get(int argc, char *argv[])
 {
-    int ret                  = -WM_FAIL;
-    uint32_t ant_mode        = 0;
-    uint16_t evaluate_time   = 0;
+    int ret                = -WM_FAIL;
+    uint32_t ant_mode      = 0;
+    uint16_t evaluate_time = 0;
+#ifdef RW610
+    uint8_t evaluate_mode = 0;
+#endif
     uint16_t current_antenna = 0;
 
     if (argc != 1)
@@ -6580,13 +6583,27 @@ static void wlan_antcfg_get(int argc, char *argv[])
         return;
     }
 
+#ifndef RW610
     ret = wlan_get_antcfg(&ant_mode, &evaluate_time, &current_antenna);
+#else
+    ret = wlan_get_antcfg(&ant_mode, &evaluate_time, &evaluate_mode, &current_antenna);
+#endif
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Mode of Tx/Rx path is : %x\r\n", ant_mode);
         if (ant_mode == 0XFFFFU)
         {
             (void)PRINTF("Evaluate time : %d\r\n", evaluate_time);
+#ifdef RW610
+            if (evaluate_mode == 0)
+                (void)PRINTF("Evaluate mode : PCB Ant + Ext Ant0\r\n");
+            if (evaluate_mode == 1)
+                (void)PRINTF("Evaluate mode : Ext Ant0 + Ext Ant1\r\n");
+            if (evaluate_mode == 2)
+                (void)PRINTF("Evaluate mode : PCB Ant. + Ext Ant1\r\n");
+            if (evaluate_mode == 0xFF)
+                (void)PRINTF("Default diversity mode.\r\n");
+#endif
         }
         if (current_antenna > 0)
         {
@@ -8820,7 +8837,7 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 #if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
 #else
-    ret             = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
+    ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
 #endif
 
     if (ret != WM_SUCCESS)
@@ -10880,7 +10897,11 @@ static struct cli_command tests[] = {
     {"wlan-ft-roam", "<bssid> <channel>", test_wlan_ft_roam},
 #endif
 #ifndef STREAM_2X2
+#ifndef RW610
     {"wlan-set-antcfg", "<ant mode> [evaluate_time]", wlan_antcfg_set},
+#else
+    {"wlan-set-antcfg", "<ant_mode> <evaluate_time> <evaluate_mode>", wlan_antcfg_set},
+#endif
     {"wlan-get-antcfg", NULL, wlan_antcfg_get},
 #endif
 #ifdef CONFIG_SCAN_CHANNEL_GAP
