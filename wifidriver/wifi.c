@@ -270,7 +270,7 @@ void wifi_update_last_cmd_sent_ms(void)
 
 static int wifi_get_command_resp_sem(unsigned long wait)
 {
-    return os_semaphore_get(&wm_wifi.command_resp_sem, wait);
+    return os_semaphore_get(&wm_wifi.command_resp_sem, os_msec_to_ticks(wait));
 }
 
 int wifi_put_command_resp_sem(void)
@@ -4135,6 +4135,54 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
 #endif /** CONFIG_11AX*/
 #endif
 
+#ifdef CONFIG_WMM
+
+int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
+{
+    t_u32 pkt_len            = 0;
+    t_u32 link_point_len     = 0;
+    bypass_outbuf_t *poutbuf = NULL;
+    t_u16 eth_type           = 0;
+    t_u32 magic_cookie       = 0;
+
+    eth_type = mlan_ntohs(*(t_u16 *)(net_stack_buffer_skip(pkt, MLAN_ETHER_PKT_TYPE_OFFSET)));
+
+    if (len > MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE_OFFSET)
+    {
+        magic_cookie = mlan_ntohl(*((t_u32 *)(net_stack_buffer_skip(pkt, MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE_OFFSET))));
+    }
+
+    if ((eth_type == MLAN_ETHER_PKT_TYPE_EAPOL) || (eth_type == MLAN_ETHER_PKT_TYPE_ARP) ||
+        (magic_cookie == MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE))
+    {
+        /*Dword align*/
+        pkt_len        = sizeof(TxPD) + INTF_HEADER_LEN;
+        link_point_len = sizeof(mlan_linked_list);
+
+        poutbuf = os_mem_alloc(link_point_len + pkt_len + len);
+        if (!poutbuf)
+        {
+            wuap_e("[%s] ERR:Cannot allocate buffer!\r\n", __func__);
+            return -WM_FAIL;
+        }
+
+        (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
+
+        (void)net_stack_buffer_copy_partial(pkt, (void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (t_u16)len, 0);
+
+        /* process packet headers with interface header and TxPD */
+        process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
+
+        wlan_add_buf_bypass_txq((t_u8 *)poutbuf, interface);
+        send_wifi_driver_bypass_data_event(interface);
+
+        return WM_SUCCESS;
+    }
+
+    return -WM_FAIL;
+}
+#endif
+
 int wifi_low_level_output(const t_u8 interface,
                           const t_u8 *sd_buffer,
                           const t_u16 len
@@ -4468,7 +4516,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
         return -WM_FAIL;
     }
 
-    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
 
     (void)raw_process_pkt_hdrs((t_u8 *)poutbuf + link_point_len, pkt_len + len, interface);
     (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
@@ -4821,7 +4869,7 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
         return -WM_FAIL;
     }
 
-    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
 
     (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
     /* process packet headers with interface header and TxPD */

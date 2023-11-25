@@ -2680,8 +2680,15 @@ struct _mlan_adapter
 #define MLAN_ETHER_PKT_TYPE_EAPOL (0x888E)
 /** Ethernet packet type for WAPI */
 #define MLAN_ETHER_PKT_TYPE_WAPI (0x88B4)
+/** Ethernet packet type for ARP */
+#define MLAN_ETHER_PKT_TYPE_ARP (0x0806)
+/** Ethernet packet type for ARP */
+#define MLAN_ETHER_PKT_TYPE_IPV6 (0x86dd)
 /** Ethernet packet type offset */
 #define MLAN_ETHER_PKT_TYPE_OFFSET (12)
+
+#define MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE        0x63825363UL
+#define MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE_OFFSET 278
 
 mlan_status wlan_cmd_get_tsf(pmlan_private pmpriv, IN HostCmd_DS_COMMAND *cmd, IN t_u16 cmd_action);
 

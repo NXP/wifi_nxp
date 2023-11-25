@@ -63,6 +63,10 @@ static os_mutex_t txrx_mutex;
 static os_semaphore_t sdio_command_resp_sem;
 os_thread_t wifi_core_thread;
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+extern void net_tx_zerocopy_process_cb(void *destAddr, void *srcAddr, uint32_t len);
+#endif
+
 static struct
 {
     /* Where the cmdresp/event should be dispached depends on its value */
@@ -106,7 +110,7 @@ void wifi_sdio_unlock(void)
 
 static int wifi_sdio_get_command_resp_sem(unsigned long wait)
 {
-    return os_semaphore_get(&sdio_command_resp_sem, wait);
+    return os_semaphore_get(&sdio_command_resp_sem, os_msec_to_ticks(wait));
 }
 
 static int wifi_sdio_put_command_resp_sem(void)
@@ -1504,7 +1508,7 @@ static t_u8 pkt_cnt        = 0;
  */
 mlan_status wlan_get_wr_port_data(t_u8 *pport)
 {
-#ifdef CONFIG_WIFI_EXTRA_DEBUG
+#ifdef CONFIG_WIFI_IO_DEBUG
     t_u32 wr_bitmap = mlan_adap->mp_wr_bitmap;
 #endif
 
@@ -1536,7 +1540,7 @@ mlan_status wlan_get_wr_port_data(t_u8 *pport)
 #if defined(SD8801)
     if (*pport == CTRL_PORT)
     {
-        wifi_d("Invalid data port=%d cur port=%d mp_wr_bitmap=0x%08x -> 0x%08x\r\n", *pport, txportno, wr_bitmap,
+        wifi_io_d("Invalid data port=%d cur port=%d mp_wr_bitmap=0x%08x -> 0x%08x\r\n", *pport, txportno, wr_bitmap,
                mlan_adap->mp_wr_bitmap);
         LEAVE();
         return MLAN_STATUS_FAILURE;
@@ -1636,7 +1640,11 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     if (mlan_adap->priv[interface]->adapter->pps_uapsd_mode &&
         wifi_check_last_packet_indication(mlan_adap->priv[interface]))
     {
+#ifdef CONFIG_TX_RX_ZERO_COPY
+        process_pkt_hdrs_flags(&((outbuf_t *)tx_buf)->intf_header[0], MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+#else
         process_pkt_hdrs_flags((t_u8 *)tx_buf, MRVDRV_TxPD_POWER_MGMT_LAST_PACKET);
+#endif
         last_packet = 1;
     }
 #endif
@@ -1646,7 +1654,11 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
         start_port = port;
     }
 
+#ifdef CONFIG_TX_RX_ZERO_COPY
+    net_tx_zerocopy_process_cb(outbuf + buf_block_len, tx_buf, txlen);
+#else
     memcpy(outbuf + buf_block_len, tx_buf, txlen);
+#endif
 
     buf_block_len += tx_blocks * buflen;
 

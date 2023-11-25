@@ -297,7 +297,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
 
         sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
-		// coverity[overrun-local:SUPPRESS]
+        // coverity[overrun-local:SUPPRESS]
         category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
         if (sub_type == (t_u16)SUBTYPE_ACTION)
         {
@@ -628,6 +628,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 #endif
     t_u8 interface   = ethernetif->interface;
     t_u8 *wmm_outbuf = NULL;
+
 #ifdef CONFIG_WMM
     t_u8 tid                      = 0;
     int retry                     = 0;
@@ -649,6 +650,12 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     if (wifi_tx_status == WIFI_DATA_BLOCK)
     {
         wifi_tx_block_cnt++;
+        return ERR_OK;
+    }
+
+    if (wifi_add_to_bypassq(interface, p, p->tot_len) == WM_SUCCESS)
+    {
+        LINK_STATS_INC(link.xmit);
         return ERR_OK;
     }
 

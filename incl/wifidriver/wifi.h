@@ -329,6 +329,10 @@ int wifi_register_wrapper_net_is_ip_or_ipv6_callback(bool (*wrapper_net_is_ip_or
 
 void wifi_deregister_wrapper_net_is_ip_or_ipv6_callback(void);
 
+#ifdef CONFIG_WMM
+int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len);
+#endif
+
 /**
  * Wi-Fi Driver low level output function.
  *
