@@ -228,6 +228,9 @@ endif()
 zephyr_code_relocate(FILES
                      port/os/os_zephyr.c
                      port/zephyr/net.c
+                     sdio_nxp_abs/mlan_sdio_zephyr.c
+                     wifidriver/mlan_11n.c
+                     wifidriver/mlan_11n_aggr.c
                      wifidriver/mlan_11n_rxreorder.c
                      wifidriver/mlan_wmm.c
                      wifidriver/wifi.c
@@ -235,12 +238,21 @@ zephyr_code_relocate(FILES
                      wifidriver/wifi-imu.c
                      LOCATION RAM_TEXT)
 
+if(CONFIG_RW610)
 zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
                      ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/components/rpmsg/fsl_adapter_rfimu.c
+                     LOCATION RAM_TEXT)
+endif()
+
+zephyr_code_relocate(FILES
+                     # fsl_cache.c
+                     # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
+                     # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S
                      LOCATION RAM_TEXT)
 
 file(GLOB ZPERF_SRC ${ZEPHYR_BASE}/subsys/net/lib/zperf/*.c)

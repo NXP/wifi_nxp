@@ -85,30 +85,11 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
 
     struct sdio_func *func = &g_sdio_funcs[fn];
 
-#if 1
-    if (bcnt > 1) {
-        if (sdio_read_blocks_fifo(func, addr, buf, bcnt) != 0)
-        {
-            (void)os_mutex_put(&sdio_mutex);
-            return 0;
-        }
-    } else {
-        if (sdio_read_fifo(func, addr, buf, bsize * bcnt) != 0)
-        {
-            (void)os_mutex_put(&sdio_mutex);
-            return 0;
-        }
-    }
-#else
-    for (int i = 0; i < bsize * bcnt; i++)
+    if (sdio_read_addr(func, addr, buf, bcnt * bsize) != 0)
     {
-        if (sdio_read_byte(func, addr, &buf[i]))
-        {
-            os_mutex_put(&sdio_mutex);
-            return 0;
-        }
+        (void)os_mutex_put(&sdio_mutex);
+        return 0;
     }
-#endif
 
     (void)os_mutex_put(&sdio_mutex);
 
@@ -128,30 +109,11 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
 
     struct sdio_func *func = &g_sdio_funcs[fn];
 
-#if 1
-    if (bcnt > 1) {
-        if (sdio_write_blocks_fifo(func, addr, buf, bcnt) != 0)
-        {
-            (void)os_mutex_put(&sdio_mutex);
-            return 0;
-        }
-    } else {
-        if (sdio_write_fifo(func, addr, buf, bsize * bcnt) != 0)
-        {
-            (void)os_mutex_put(&sdio_mutex);
-            return 0;
-        }
-    }
-#else
-    for (int i = 0; i < bsize * bcnt; i++)
+    if (sdio_write_addr(func, addr, buf, bcnt * bsize) != 0)
     {
-        if (sdio_write_byte(func, addr, buf[i]))
-        {
-            os_mutex_put(&sdio_mutex);
-            return 0;
-        }
+        (void)os_mutex_put(&sdio_mutex);
+        return 0;
     }
-#endif
 
     (void)os_mutex_put(&sdio_mutex);
 
