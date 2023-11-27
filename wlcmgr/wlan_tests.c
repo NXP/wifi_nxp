@@ -4517,6 +4517,7 @@ static void test_wlan_wakeup_condition(int argc, char **argv)
 extern wlan_flt_cfg_t g_flt_cfg;
 #endif
 
+#ifndef RW610
 static void test_wlan_host_sleep(int argc, char **argv)
 {
     int choice = -1, wowlan = 0;
@@ -4626,6 +4627,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
         return;
     }
 }
+#endif
 
 #ifdef RW610
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
@@ -8848,7 +8850,11 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
 {
     uint32_t pin = 0;
 
+#ifdef CONFIG_WPA_SUPP_WPS
+    wlan_wps_generate_pin((unsigned int *)&pin);
+#else
     wlan_wps_generate_pin(&pin);
+#endif
     PRINTF("WPS PIN is: %d\r\n", pin);
 }
 #endif

@@ -1217,6 +1217,15 @@ static void test_wlan_set_chanlist(int argc, char **argv)
     ARG_UNUSED(rg_table_fc_len);
 #endif
 
+#if defined(CONFIG_COMPRESS_TX_PWTBL) && defined(RW610)
+    ARG_UNUSED(tx_pwrlimit_2g_cfg);
+    ARG_UNUSED(chanlist_2g_cfg);
+#ifdef CONFIG_5GHz_SUPPORT
+    ARG_UNUSED(tx_pwrlimit_5g_cfg);
+    ARG_UNUSED(chanlist_5g_cfg);
+#endif
+#endif
+
     (void)memset(&chanlist, 0x00, sizeof(wlan_chanlist_t));
 
     /* Get channel list of current region */

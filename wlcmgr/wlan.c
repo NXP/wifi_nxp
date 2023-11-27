@@ -877,10 +877,8 @@ static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 static int wlan_send_host_sleep_int(uint32_t wakeup_condition)
 {
     int ret = WM_SUCCESS;
-#ifdef CONFIG_HOST_SLEEP
     unsigned int ipv4_addr = 0;
     enum wlan_bss_type type = WLAN_BSS_TYPE_STA;
-#endif
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
     wlan_start_cloud_keep_alive();
