@@ -1176,7 +1176,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
     {
         if (lock->reader_cb != NULL)
         {
-            ret = lock->reader_cb(lock, wait_time);
+            ret = lock->reader_cb(lock, os_msec_to_ticks(wait_time));
             if (ret != WM_SUCCESS)
             {
                 lock->reader_count--;
@@ -1190,7 +1190,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
              * if writer is not active, reader will get access
              * else reader will block.
              */
-            ret = os_semaphore_get(&(lock->rw_lock), wait_time);
+            ret = os_semaphore_get(&(lock->rw_lock), os_msec_to_ticks(wait_time));
             if (ret != WM_SUCCESS)
             {
                 lock->reader_count--;
@@ -1224,7 +1224,7 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock)
 
 int os_rwlock_write_lock(os_rw_lock_t *lock, unsigned int wait_time)
 {
-    int ret = os_semaphore_get(&(lock->rw_lock), wait_time);
+    int ret = os_semaphore_get(&(lock->rw_lock), os_msec_to_ticks(wait_time));
     return ret;
 }
 

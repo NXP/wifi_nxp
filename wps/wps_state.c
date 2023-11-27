@@ -334,7 +334,7 @@ int wait_for_receive()
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    return os_semaphore_get(&wps_s->ssl_sync_sem, SSL_WAIT);
+    return os_semaphore_get(&wps_s->ssl_sync_sem, os_msec_to_ticks(SSL_WAIT));
 }
 #endif
 
