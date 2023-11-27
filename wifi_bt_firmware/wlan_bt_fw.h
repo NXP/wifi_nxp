@@ -17,8 +17,8 @@ extern const unsigned int wlan_fw_bin_len;
 extern const unsigned char bt_fw_bin[];
 extern const unsigned int bt_fw_bin_len;
 #elif defined(RW610)
-const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
-const unsigned int wlan_fw_bin_len = 0;
+extern const unsigned char *wlan_fw_bin;
+extern unsigned int wlan_fw_bin_len;
 #endif
 
 #endif /* __WLAN_BT_FW_H__ */

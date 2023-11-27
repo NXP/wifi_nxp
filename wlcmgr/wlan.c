@@ -117,8 +117,8 @@ static bool wlan_uap_scan_chan_list_set;
 wlan_flt_cfg_t g_flt_cfg;
 #endif
 #ifdef RW610
-extern const unsigned char *wlan_fw_bin;
-extern unsigned int wlan_fw_bin_len;
+const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
+const unsigned int wlan_fw_bin_len = 0;
 extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
 #endif
 
