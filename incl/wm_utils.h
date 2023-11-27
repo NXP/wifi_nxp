@@ -29,6 +29,9 @@
 #ifndef PRINTF
 #define PRINTF printk
 #endif
+#ifndef SDK_DEBUGCONSOLE
+#define SDK_DEBUGCONSOLE CONFIG_WIFI_EXTRA_DEBUG
+#endif
 #endif
 
 #define ffs __builtin_ffs

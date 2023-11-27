@@ -5354,10 +5354,12 @@ static void wlcm_process_init(enum cm_sta_state *next)
 #endif
 #endif
 
+#ifdef CONFIG_WIFI_AUTO_POWER_SAVE
 #ifndef CONFIG_RF_TEST_MODE
     wlan_deepsleepps_on();
     wifi_set_power_save_mode();
     wlan_ieeeps_on(wlan.wakeup_conditions);
+#endif
 #endif
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
@@ -6664,7 +6666,7 @@ static void cm_main(os_thread_arg_t data)
         if (ret == WM_SUCCESS)
         {
 #ifndef CONFIG_WIFI_PS_DEBUG
-	    if (msg.event != WIFI_EVENT_SLEEP && msg.event != WIFI_EVENT_IEEE_PS && 
+	    if (msg.event != WIFI_EVENT_SLEEP && msg.event != WIFI_EVENT_IEEE_PS &&
 			msg.event != WIFI_EVENT_DEEP_SLEEP && msg.event != WIFI_EVENT_IEEE_DEEP_SLEEP)
 	    {
 		wlcm_d("got wifi message: %d %d %p", msg.event, msg.reason, msg.data);
@@ -7216,7 +7218,9 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.uap_state     = CM_UAP_INITIALIZING;
     wlan.uap_return_to = CM_UAP_INITIALIZING;
 
+#ifdef CONFIG_WIFI_STA_RECONNECT
     wlan.reassoc_control = true;
+#endif
     wlan.hidden_scan_on  = false;
 
     wlcm_process_init_params();

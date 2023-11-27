@@ -56,7 +56,19 @@ Change log:
 
 #ifndef __ZEPHYR__
 #ifndef CONFIG_STA_AUTO_DHCPV4
-#define CONFIG_STA_AUTO_DHCPV4         1
+#define CONFIG_STA_AUTO_DHCPV4 1
+#endif
+#endif
+
+#ifndef __ZEPHYR__
+#ifndef CONFIG_WIFI_STA_RECONNECT
+#define CONFIG_WIFI_STA_RECONNECT 1
+#endif
+#endif
+
+#ifndef __ZEPHYR__
+#ifndef CONFIG_WIFI_AUTO_POWER_SAVE
+#define CONFIG_WIFI_AUTO_POWER_SAVE 1
 #endif
 #endif
 
@@ -70,7 +82,7 @@ Change log:
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
 #ifndef CONFIG_WIFI_CAPA
-#define CONFIG_WIFI_CAPA   1
+#define CONFIG_WIFI_CAPA 1
 #endif
 #endif
 
