@@ -292,7 +292,22 @@
  * designed to accomodate single full size TCP frame in one pbuf, including
  * TCP_MSS, IP header, and link header.
  */
+#ifdef CONFIG_TX_RX_ZERO_COPY
+/**
+ * Original PBUF_POOL_BUFSIZE + interface header + rxpd->rx_pkt_offset
+ * + sizeof(mlan_buffer)
+ */
+#define PBUF_POOL_BUFSIZE 1752
+
+/**
+ * PBUF_LINK_ENCAPSULATION_HLEN: interface header + sizeof(TxPD)
+ */
+/**
+#define PBUF_LINK_ENCAPSULATION_HLEN 26
+*/
+#else
 #define PBUF_POOL_BUFSIZE 1580
+#endif
 
 /**
  * MEMP_NUM_FRAG_PBUF: the number of IP fragments simultaneously sent
@@ -383,7 +398,11 @@
  * (2 * TCP_MSS) for things to work well
  **/
 #ifdef CONFIG_NETWORK_HIGH_PERF
+#ifdef RW610
+#define TCP_WND (15 * TCP_MSS)
+#else
 #define TCP_WND (32 * TCP_MSS)
+#endif
 #else
 #define TCP_WND (10 * TCP_MSS)
 #endif
@@ -491,6 +510,11 @@
 #define TCP_RESOURCE_FAIL_RETRY_LIMIT 50
 
 #define LWIP_COMPAT_MUTEX_ALLOWED 1
+
+#ifndef LWIP_HOOK_FILENAME
+#define LWIP_HOOK_FILENAME "lwiphooks.h"
+#define LWIP_HOOK_IP4_ROUTE_SRC(src, dest)   lwip_hook_ip4_route_src(src, dest)
+#endif
 
 /**
  * LWIP_CHECKSUM_ON_COPY==1: Calculate checksum when copying data from

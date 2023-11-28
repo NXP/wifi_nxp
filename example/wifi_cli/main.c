@@ -28,11 +28,8 @@
 #ifndef RW610
 #include "wifi_bt_config.h"
 #else
-#include "pin_mux.h"
 #include "fsl_power.h"
-#include "fsl_pm_core.h"
-#include "fsl_pm_device.h"
-#include "fsl_rtc.h"
+#include "fsl_ocotp.h"
 #endif
 #include "cli_utils.h"
 #ifdef CONFIG_HOST_SLEEP
@@ -64,32 +61,6 @@ const int TASK_MAIN_STACK_SIZE = 800;
 
 portSTACK_TYPE *task_main_stack = NULL;
 TaskHandle_t task_main_task_handler;
-#ifdef RW610
-#ifdef CONFIG_POWER_MANAGER
-/* Global power manager handle */
-AT_ALWAYS_ON_DATA(pm_handle_t pm_handle);
-AT_ALWAYS_ON_DATA(pm_wakeup_source_t wlanWakeupSource);
-AT_ALWAYS_ON_DATA(pm_wakeup_source_t rtcWakeupSource);
-AT_ALWAYS_ON_DATA(pm_wakeup_source_t pin1WakeupSource);
-extern pm_notify_element_t wlan_notify;
-extern bool is_wakeup_cond_set;
-#define APP_PM2_CONSTRAINTS                                                                           \
-    6U, PM_RESC_SRAM_0K_384K_STANDBY, PM_RESC_SRAM_384K_448K_STANDBY, PM_RESC_SRAM_448K_512K_STANDBY, \
-        PM_RESC_SRAM_512K_640K_STANDBY, PM_RESC_SRAM_640K_896K_STANDBY, PM_RESC_SRAM_896K_1216K_STANDBY
-#define APP_PM3_CONSTRAINTS                                                                                 \
-    6U, PM_RESC_SRAM_0K_384K_RETENTION, PM_RESC_SRAM_384K_448K_RETENTION, PM_RESC_SRAM_448K_512K_RETENTION, \
-        PM_RESC_SRAM_512K_640K_RETENTION, PM_RESC_SRAM_640K_896K_RETENTION, PM_RESC_SRAM_896K_1216K_RETENTION
-#if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
-#ifndef POWER_MANAGER_RTC_PIN1_PRIORITY
-#define POWER_MANAGER_RTC_PIN1_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1)
-#endif
-#else
-#ifndef POWER_MANAGER_RTC_PIN1_PRIORITY
-#define POWER_MANAGER_RTC_PIN1_PRIORITY (3U)
-#endif
-#endif
-#endif
-#endif
 
 static void printSeparator(void)
 {
@@ -141,7 +112,18 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
             PRINTF("ENHANCED WLAN CLIs are initialized\r\n");
             printSeparator();
-
+#ifdef RW610
+#ifdef CONFIG_HOST_SLEEP
+            ret = host_sleep_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WLAN CLIs\r\n");
+                return 0;
+            }
+            PRINTF("HOST SLEEP CLIs are initialized\r\n");
+            printSeparator();
+#endif
+#endif
             ret = ping_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -409,149 +391,6 @@ int wlan_reset_cli_init(void)
 }
 #endif
 
-#ifdef RW610
-#ifdef CONFIG_POWER_MANAGER
-void powerManager_StartRtcTimer(uint64_t timeOutUs)
-{
-    uint32_t currSeconds;
-
-    PM_EnableWakeupSource(&rtcWakeupSource);
-    /* Read the RTC seconds register to get current time in seconds */
-    currSeconds = RTC_GetSecondsTimerCount(RTC);
-    /* Add alarm seconds to current time */
-    currSeconds += (timeOutUs + 999999U) / 1000000U;
-    /* Set alarm time in seconds */
-    RTC_SetSecondsTimerMatch(RTC, currSeconds);
-}
-
-void powerManager_StopRtcTimer()
-{
-    RTC_ClearStatusFlags(RTC, kRTC_AlarmFlag);
-    PM_DisableWakeupSource(&rtcWakeupSource);
-}
-
-void RTC_IRQHandler()
-{
-    if (RTC_GetStatusFlags(RTC) & kRTC_AlarmFlag)
-    {
-        RTC_ClearStatusFlags(RTC, kRTC_AlarmFlag);
-        PM_DisableWakeupSource(&rtcWakeupSource);
-        wakeup_by = WAKEUP_BY_RTC;
-    }
-}
-
-void PIN1_INT_IRQHandler()
-{
-    POWER_ConfigWakeupPin(kPOWER_WakeupPin1, kPOWER_WakeupEdgeHigh);
-    NVIC_ClearPendingIRQ(PIN1_INT_IRQn);
-    DisableIRQ(PIN1_INT_IRQn);
-    POWER_ClearWakeupStatus(PIN1_INT_IRQn);
-    POWER_DisableWakeup(PIN1_INT_IRQn);
-    wakeup_by = WAKEUP_BY_PIN1;
-}
-
-void powerManager_RTC_Init()
-{
-    DisableIRQ(RTC_IRQn);
-    POWER_ClearWakeupStatus(RTC_IRQn);
-    POWER_DisableWakeup(RTC_IRQn);
-    RTC_Init(RTC);
-    /* Enable wakeup in PD mode */
-    RTC_EnableAlarmTimerInterruptFromDPD(RTC, true);
-    /* Start RTC */
-    RTC_ClearStatusFlags(RTC, kRTC_AlarmFlag);
-    RTC_StartTimer(RTC);
-    /* Register RTC timer callbacks in power manager */
-    PM_RegisterTimerController(&pm_handle, powerManager_StartRtcTimer, powerManager_StopRtcTimer, NULL, NULL);
-}
-
-void powerManager_Wakeupsource_Init()
-{
-    memset(&wlanWakeupSource, 0x0, sizeof(pm_wakeup_source_t));
-    memset(&rtcWakeupSource, 0x0, sizeof(pm_wakeup_source_t));
-    memset(&pin1WakeupSource, 0x0, sizeof(pm_wakeup_source_t));
-    /* Init WLAN wakeup source. Power manager API PM_InitWakeupSource()
-     * can't be called to init WLAN wakeup source since RW610 use IMU
-     * interrupt to wakeup host and can't be disabled here.
-     */
-    wlanWakeupSource.wsId    = WL_MCI_WAKEUP0_IRQn;
-    wlanWakeupSource.service = NULL;
-    wlanWakeupSource.enabled = false;
-    wlanWakeupSource.active  = false;
-    POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
-    POWER_DisableWakeup(WL_MCI_WAKEUP0_IRQn);
-    /* Init other wakeup sources. Corresponding IRQ numbers act as wsId here. */
-    PM_InitWakeupSource(&rtcWakeupSource, RTC_IRQn, NULL, false);
-    PM_InitWakeupSource(&pin1WakeupSource, PM_WSID_WAKEUP_PIN1_LOW_LEVEL, NULL, false);
-}
-
-void powerManager_WakeupSourceDump()
-{
-    if (wakeup_by == 0x1)
-        PRINTF("Woken up by WLAN\r\n");
-    if (wakeup_by == 0x2)
-        PRINTF("Woken up by RTC\r\n");
-    if (wakeup_by == 0x4)
-        PRINTF("Woken up by PIN1\r\n");
-}
-
-void powerManager_EnterLowPower()
-{
-    /* Check is_wakeup_cond_set first, as wakelcok will be deleted in wlan-reset 0 */
-    if (is_wakeup_cond_set && pm_handle.enable && !wakelock_isheld())
-    {
-#ifdef CONFIG_RW610_A1
-        PM_SetConstraints(PM_LP_STATE_PM3, APP_PM3_CONSTRAINTS);
-#else
-        PM_SetConstraints(PM_LP_STATE_PM2, APP_PM2_CONSTRAINTS);
-#endif
-        /* Enable PIN1 as wakeup sources */
-        PM_EnableWakeupSource(&pin1WakeupSource);
-        /* duration unit is us here */
-        PM_EnterLowPower(60000000);
-        powerManager_WakeupSourceDump();
-        wakeup_by = 0;
-        /* Exit low power and reset constraints */
-#ifdef CONFIG_RW610_A1
-        PM_ReleaseConstraints(PM_LP_STATE_PM3, APP_PM3_CONSTRAINTS);
-#else
-        PM_ReleaseConstraints(PM_LP_STATE_PM2, APP_PM2_CONSTRAINTS);
-#endif
-    }
-}
-
-void powerManager_Init()
-{
-    uint32_t resetSrc;
-    power_init_config_t initCfg = {
-        /* VCORE AVDD18 supplied from iBuck on RD board. */
-        .iBuck = true,
-        /* CAU_SOC_SLP_REF_CLK not needed. */
-        .gateCauRefClk = true,
-    };
-    POWER_InitPowerConfig(&initCfg);
-    resetSrc = POWER_GetResetCause();
-    PRINTF("\r\nMCU wakeup source 0x%x...\r\n", resetSrc);
-    /* In case PM3/PM4 wakeup, the wakeup config and status need to be cleared */
-    POWER_ClearResetCause(resetSrc);
-
-    PM_CreateHandle(&pm_handle);
-    /* Init and start RTC time counter */
-    powerManager_RTC_Init();
-    /* Set priority of RTC and PIN1 interrupt */
-    NVIC_SetPriority(RTC_IRQn, POWER_MANAGER_RTC_PIN1_PRIORITY);
-    NVIC_SetPriority(PIN1_INT_IRQn, POWER_MANAGER_RTC_PIN1_PRIORITY);
-    /* Register WLAN notifier */
-    PM_RegisterNotify(kPM_NotifyGroup0, &wlan_notify);
-    /* Init WLAN wakeup source */
-    powerManager_Wakeupsource_Init();
-    PM_EnablePowerManager(true);
-    os_setup_idle_function(powerManager_EnterLowPower);
-    wakeup_by = 0;
-}
-#endif
-#endif
-
 void task_main(void *param)
 {
     int32_t result = 0;
@@ -571,14 +410,10 @@ void task_main(void *param)
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
+#ifndef RW610
     hostsleep_init(wlan_hs_pre_cfg, wlan_hs_post_cfg);
-#endif
-
-#ifdef RW610
-#ifdef CONFIG_POWER_MANAGER
-    PRINTF("Initialize Power Manager\r\n");
-    powerManager_Init();
-    printSeparator();
+#else
+    hostsleep_init();
 #endif
 #endif
 

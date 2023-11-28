@@ -512,6 +512,12 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         wifi_io_d("  --- Rx: Cmd Response ---");
         wcmdr_d("CMD_RESP: 0x%x, result %d, len %d, seqno 0x%x", imupkt->hostcmd.command, imupkt->hostcmd.result,
                 imupkt->hostcmd.size, imupkt->hostcmd.seq_num);
+
+        if (mlan_adap->cmd_sent != 0U)
+        {
+            mlan_adap->cmd_sent = MFALSE;
+        }
+        PRINTM(MINFO, "cmd_sent=%d\n", mlan_adap->cmd_sent);
     }
     else
     {
