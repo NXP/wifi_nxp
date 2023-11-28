@@ -1630,6 +1630,10 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t gf_mode,
                          const uint32_t stbc,
                          const uint8_t *bssid);
+
+int wifi_set_rf_otp_mac_addr(uint8_t *mac);
+
+int wifi_get_rf_otp_mac_addr(uint8_t *mac);
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
 /** This function registers callbacks which are used to generate FW Dump on USB

@@ -1196,6 +1196,84 @@ static void wlan_rf_radio_mode_set(int argc, char *argv[])
     }
 }
 
+static void dump_wlan_set_otp_mac_addr_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-rf-otp-mac-addr <mac_addr> \r\n");
+}
+
+static void wlan_rf_otp_mac_addr_set(int argc, char *argv[])
+{
+    int ret;
+    uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 2)
+    {
+        dump_wlan_set_otp_mac_addr_usage();
+        return;
+    }
+
+    ret = get_mac(argv[1], (char *)mac_addr, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    ret = wlan_set_rf_otp_mac_addr(mac_addr);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("OTP MAC address configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("OTP MAC address configuration failed\r\n");
+        dump_wlan_set_otp_mac_addr_usage();
+    }
+}
+
+static void dump_wlan_get_otp_mac_addr_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-rf-otp-mac-addr \r\n");
+}
+
+static void wlan_rf_otp_mac_addr_get(int argc, char *argv[])
+{
+    int ret;
+    uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 1)
+    {
+        dump_wlan_get_otp_mac_addr_usage();
+        return;
+    }
+
+    ret = wlan_get_rf_otp_mac_addr(mac_addr);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("OTP MAC address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", mac_addr[0], mac_addr[1], mac_addr[2],
+                      mac_addr[3], mac_addr[4], mac_addr[5]);
+    }
+    else
+    {
+        (void)PRINTF("OTP MAC address read failed\r\n");
+        dump_wlan_get_otp_mac_addr_usage();
+    }
+}
+
 static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-set-rf-test-mode", NULL, wlan_rf_test_mode_set},
     {"wlan-unset-rf-test-mode", NULL, wlan_rf_test_mode_unset},
@@ -1227,6 +1305,8 @@ static struct cli_command wlan_test_mode_commands[] = {
      wlan_set_rf_trigger_frame_cfg},
     {"wlan-set-rf-he-tb-tx", "<enable> <qnum> <aid> <axq_mu_timer> <tx_power>", wlan_set_rf_he_tb_tx},
     {"wlan-get-and-reset-rf-per", NULL, wlan_rf_per_get},
+    {"wlan-set-rf-otp-mac-addr", "<mac_addr>", wlan_rf_otp_mac_addr_set},
+    {"wlan-get-rf-otp-mac-addr", NULL, wlan_rf_otp_mac_addr_get},
 };
 
 int wlan_test_mode_cli_init(void)

@@ -6571,6 +6571,7 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_action_chan_switch_t
 #define MFG_CMD_RADIO_MODE_CFG       0x1211
 #define MFG_CMD_CONFIG_MAC_HE_TB_TX  0x110A
 #define MFG_CMD_CONFIG_TRIGGER_FRAME 0x110C
+#define MFG_CMD_OTP_MAC_ADD          0x108C
 
 typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_GENERIC_CFG
 {
@@ -6709,6 +6710,20 @@ typedef MLAN_PACK_START struct _HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T
     /** Trigger Dependent User Info Field **/
     mfg_cmd_IEEETypes_BasicHETrigUserInfo_t basic_trig_user_info;
 } MLAN_PACK_END HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T;
+
+typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T
+{
+    /** MFG command code */
+    t_u32  mfg_cmd;
+    /** Action */
+    t_u16  action;
+    /** Device ID */
+    t_u16  device_id;
+    /** MFG Error code */
+    t_u32  error;
+    /** Destination MAC Address */
+    t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
+} MLAN_PACK_END HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T;
 #endif
 
 #ifdef OTP_CHANINFO
@@ -7909,6 +7924,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_MFG_CMD_TX_CONT mfg_tx_cont;
         HostCmd_DS_MFG_CMD_HE_TBTX_T mfg_he_power;
         HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T mfg_tx_trigger_config;
+        HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T mfg_otp_mac_addr_rd_wr;
 #endif
 #ifdef CONFIG_WIFI_TX_PER_TRACK
         HostCmd_DS_TX_RX_PKT_STATS pkt_stats;

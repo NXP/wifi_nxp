@@ -158,6 +158,37 @@ static mlan_status wlan_cmd_mfg_he_tb_tx(pmlan_private pmpriv, HostCmd_DS_COMMAN
 }
 
 /**
+ *  @brief This function prepares command of MFG OTP MAC add.
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param cmd          A pointer to HostCmd_DS_COMMAND structure
+ *  @param action       The action: GET or SET
+ *  @param pdata_buf    A pointer to data buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+
+static mlan_status wlan_cmd_mfg_otp_mac_add(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 action, t_void *pdata_buf)
+{
+    HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T *mcmd     = (HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T *)&cmd->params.mfg_otp_mac_addr_rd_wr;
+    mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t *cfg  = (mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t *)pdata_buf;
+    ENTER();
+    (void)__memset(pmpriv->adapter, mcmd, 0x00, sizeof(HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T));
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_MFG_COMMAND);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T) + S_DS_GEN);
+
+    mcmd->mfg_cmd = wlan_cpu_to_le32(cfg->mfg_cmd);
+    mcmd->action  = wlan_cpu_to_le16(action);
+    if (action == HostCmd_ACT_GEN_SET)
+    {
+        (void)__memcpy(pmpriv->adapter, mcmd->mac_addr, cfg->mac_addr, MLAN_MAC_ADDR_LENGTH);
+    }
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
  *  @brief This function prepares command of MFG config trigger frame.
  *
  *  @param pmpriv       A pointer to mlan_private structure
@@ -237,6 +268,9 @@ static mlan_status wlan_cmd_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t
             goto cmd_mfg_done;
         case MFG_CMD_CONFIG_TRIGGER_FRAME:
             ret = wlan_cmd_mfg_config_trigger_frame(pmpriv, cmd, action, pdata_buf);
+            goto cmd_mfg_done;
+        case MFG_CMD_OTP_MAC_ADD:
+            ret = wlan_cmd_mfg_otp_mac_add(pmpriv, cmd, action, pdata_buf);
             goto cmd_mfg_done;
         case MFG_CMD_SET_TEST_MODE:
         case MFG_CMD_UNSET_TEST_MODE:

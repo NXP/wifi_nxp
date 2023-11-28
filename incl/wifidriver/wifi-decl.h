@@ -1696,6 +1696,20 @@ typedef PACK_START struct wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr
     /** Trigger Dependent User Info Field **/
     mfg_cmd_IEEETypes_BasicHETrigUserInfo_t basic_trig_user_info;
 } PACK_END wifi_mfg_cmd_IEEEtypes_CtlBasicTrigHdr_t;
+
+typedef PACK_START struct wifi_mfg_cmd_otp_mac_addr_rd_wr
+{
+    /** MFG command code */
+    t_u32  mfg_cmd;
+    /** Action */
+    t_u16  action;
+    /** Device ID */
+    t_u16  device_id;
+    /** MFG Error code */
+    t_u32  error;
+    /** Destination MAC Address */
+    t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
+} PACK_END wifi_mfg_cmd_otp_mac_addr_rd_wr_t;
 #endif
 
 #ifdef CONFIG_HEAP_DEBUG

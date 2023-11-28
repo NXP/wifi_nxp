@@ -1230,6 +1230,27 @@ int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action,
     return wm_wifi.cmd_resp_status;
 }
 
+int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action,
+                                wifi_mfg_cmd_otp_mac_addr_rd_wr_t *wifi_mfg_cmd_otp_mac_addr_rd_wr)
+{
+    wifi_get_command_lock();
+    mlan_ds_misc_cfg misc;
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+    cmd->seq_num   = 0x0;
+    cmd->result    = 0x0;
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+                                              0, NULL, wifi_mfg_cmd_otp_mac_addr_rd_wr, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+        return -WM_FAIL;
+
+    wifi_wait_for_cmdresp(&misc);
+    memcpy(wifi_mfg_cmd_otp_mac_addr_rd_wr, (wifi_mfg_cmd_otp_mac_addr_rd_wr_t *)&misc.param.mfg_otp_mac_addr_rd_wr,
+           sizeof(wifi_mfg_cmd_otp_mac_addr_rd_wr_t));
+    return wm_wifi.cmd_resp_status;
+}
+
 int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
                                  wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont,
                                  wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
@@ -1926,6 +1947,50 @@ int wifi_cfg_rf_he_tb_tx(uint16_t enable, uint16_t qnum, uint16_t aid, uint16_t 
     }
 
     wifi_e("wifi set rf tx frame fail, error code: 0x%x\r\n", wifi_mfg_cmd_generic_cfg.error);
+    return -WM_FAIL;
+}
+
+int wifi_set_rf_otp_mac_addr(uint8_t *mac)
+{
+    int ret;
+
+    wifi_mfg_cmd_otp_mac_addr_rd_wr_t wifi_mfg_cmd_otp_mac_addr_rd_wr;
+
+    (void)memset(&wifi_mfg_cmd_otp_mac_addr_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_mac_addr_rd_wr_t));
+
+    wifi_mfg_cmd_otp_mac_addr_rd_wr.mfg_cmd = MFG_CMD_OTP_MAC_ADD;
+    wifi_mfg_cmd_otp_mac_addr_rd_wr.action  = HostCmd_ACT_GEN_SET;
+    (void)memcpy((void *)wifi_mfg_cmd_otp_mac_addr_rd_wr.mac_addr, (const void *)mac, MLAN_MAC_ADDR_LENGTH);
+
+    ret = wifi_get_set_rf_otp_mac_addr(HostCmd_ACT_GEN_SET, &wifi_mfg_cmd_otp_mac_addr_rd_wr);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_otp_mac_addr_rd_wr.error == 0)
+    {
+        return WM_SUCCESS;
+    }
+
+    wifi_e("wifi set otp mac address fails, error code: 0x%x\r\n", wifi_mfg_cmd_otp_mac_addr_rd_wr.error);
+    return -WM_FAIL;
+}
+
+int wifi_get_rf_otp_mac_addr(uint8_t *mac)
+{
+    int ret;
+
+    wifi_mfg_cmd_otp_mac_addr_rd_wr_t wifi_mfg_cmd_otp_mac_addr_rd_wr;
+
+    (void)memset(&wifi_mfg_cmd_otp_mac_addr_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_mac_addr_rd_wr_t));
+
+    wifi_mfg_cmd_otp_mac_addr_rd_wr.mfg_cmd = MFG_CMD_OTP_MAC_ADD;
+    wifi_mfg_cmd_otp_mac_addr_rd_wr.action  = HostCmd_ACT_GEN_GET;
+
+    ret = wifi_get_set_rf_otp_mac_addr(HostCmd_ACT_GEN_GET, &wifi_mfg_cmd_otp_mac_addr_rd_wr);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_otp_mac_addr_rd_wr.error == 0)
+    {
+        (void)memcpy((void *)mac, (const void *)wifi_mfg_cmd_otp_mac_addr_rd_wr.mac_addr, MLAN_MAC_ADDR_LENGTH);
+        return WM_SUCCESS;
+    }
+
+    wifi_e("wifi get otp mac address fails, error code: 0x%x\r\n", wifi_mfg_cmd_otp_mac_addr_rd_wr.error);
     return -WM_FAIL;
 }
 #endif

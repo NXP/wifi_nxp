@@ -12763,6 +12763,19 @@ int wlan_set_rf_tx_frame(const uint32_t enable,
     return wifi_set_rf_tx_frame(enable, data_rate, frame_pattern, frame_length, adjust_burst_sifs, burst_sifs_in_us,
                                 short_preamble, act_sub_ch, short_gi, adv_coding, tx_bf, gf_mode, stbc, bssid);
 }
+
+int wlan_set_rf_otp_mac_addr(uint8_t *mac)
+{
+    return wifi_set_rf_otp_mac_addr(mac);
+}
+
+int wlan_get_rf_otp_mac_addr(uint8_t *mac)
+{
+    if (mac != NULL)
+      return wifi_get_rf_otp_mac_addr(mac);
+
+    return -WM_FAIL;
+}
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
 void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),

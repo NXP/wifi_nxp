@@ -5336,6 +5336,29 @@ int wlan_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t stbc,
                          const uint8_t *bssid);
 
+/**
+ * Set the RF OTP MAC address in Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[in] mac A Pointer to a variable where OTP MAC address is to be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_set_rf_otp_mac_addr(uint8_t *mac);
+
+/**
+ * Get the RF OTP MAC address from Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[out] mac A Pointer to a variable where OTP MAC address is to be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_get_rf_otp_mac_addr(uint8_t *mac);
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
 /** This function registers callbacks which are used to generate FW Dump on USB
