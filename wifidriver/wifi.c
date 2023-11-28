@@ -3858,6 +3858,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
 
     os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+    k_yield();
 #else
     if (__get_IPSR())
     {
