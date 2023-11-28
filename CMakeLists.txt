@@ -224,6 +224,7 @@ set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
 generate_inc_file_for_target(app response_big.html.bin   ${gen_dir}/response_big.html.bin.inc)
 endif()
 
+if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
                      port/os/os_zephyr.c
@@ -280,3 +281,4 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/thread.c
                      ${ZEPHYR_BASE}/kernel/work.c
                      LOCATION RAM_TEXT)
+endif()

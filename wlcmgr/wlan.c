@@ -5353,11 +5353,9 @@ static void wlcm_process_init(enum cm_sta_state *next)
 #endif
 
 #ifdef CONFIG_WIFI_AUTO_POWER_SAVE
-#ifndef CONFIG_RF_TEST_MODE
     wlan_deepsleepps_on();
     wifi_set_power_save_mode();
     wlan_ieeeps_on(wlan.wakeup_conditions);
-#endif
 #endif
 
     wlan_set_11d_state(WLAN_BSS_TYPE_UAP, 1);
@@ -12391,13 +12389,18 @@ int wlan_boot_sleep(uint16_t action, uint16_t *enable)
 
 int wlan_set_rf_test_mode(void)
 {
+    wlan_ieeeps_off();
+    wlan_deepsleepps_off();
     return wifi_set_rf_test_mode();
 }
 
 int wlan_unset_rf_test_mode(void)
 {
     (void)wifi_unset_rf_test_mode();
-
+#ifdef CONFIG_WIFI_AUTO_POWER_SAVE
+    wlan_deepsleepps_on();
+    wlan_ieeeps_on(wlan.wakeup_conditions);
+#endif
     return WM_SUCCESS;
 }
 
