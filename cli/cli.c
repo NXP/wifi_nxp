@@ -375,9 +375,9 @@ static int handle_input(char *handle_inbuf)
         {
             if (j < (INBUF_SIZE - 1U))
             {
-                (void)memmove((handle_inbuf + j), handle_inbuf + j + 1, (INBUF_SIZE - (unsigned int)i));
+                (void)memmove((handle_inbuf + j), handle_inbuf + j + 1, (INBUF_SIZE - 1 - j));
             }
-            handle_inbuf[INBUF_SIZE] = (char)(0x00);
+            handle_inbuf[INBUF_SIZE - 1] = (char)(0x00);
         }
     }
 
