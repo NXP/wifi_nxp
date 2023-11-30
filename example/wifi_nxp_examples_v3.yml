@@ -1003,29 +1003,28 @@ wifi_cli_fw_dump:
         required: true
       preinclude_file:
         required: true
-bridge_app:
+mcu_bridge_app:
   section-type: application
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
-  - middleware.wifi
-  - middleware.lwip
-  - middleware.lwip.apps.lwiperf
-  - middleware.wifi.cli
+  - utility.debug_console
+  - driver.lpc_crc
+  - middleware.usb.host.stack(middleware.usb.host.ehci)
+  - middleware.usb.host.cdc
+  - component.mrt_adapter
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
-  merge_segment:
-  - middleware.lwip.default_heap_stack
   contents:
     document:
-      name: bridge_app
+      name: mcu_bridge_app
       readme:
       - boards/${board}/wifi_examples/common/board.readme
-      - middleware/wifi_nxp/example/bridge_app/bridge_app.readme
+      - middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_app.readme
       category: wifi_examples
-      brief: bridge_app
-    project-root-path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+      brief: mcu_bridge_app
+    project-root-path:  boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
     configuration:
       tools:
         __common__:
@@ -1034,7 +1033,7 @@ bridge_app:
               cc-define:
                 USE_RTOS: 1
                 PRINTF_ADVANCED_ENABLE: 1
-                SDK_DEBUGCONSOLE: 2
+                MBEDTLS_CONFIG_FILE: '"wifi_mbedtls_config.h"'
         iar:
           config:
             __common__:
@@ -1056,38 +1055,57 @@ bridge_app:
               - "-Xlinker --defsym=__stack_size__=0x400"
               - "-Xlinker --defsym=__heap_size__=0x400"
         mcux:
-          config:
-            __common__:
-              ad-flags:
-              - "-Xlinker --defsym=__stack_size__=0x400"
-              - "-Xlinker --defsym=__heap_size__=0x400"
-              ld-flags:
-              - "-lib=newlibnano.nohost"
+          ignore: true
+          __remove__:
     modules:
       demo:
         required: true
         cc-include:
-        - path: boards/${board}
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+        - path: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
         - path: boards/${board}/wifi_examples/common
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: board
         files:
-        - source: middleware/wifi_nxp/example/bridge_app/main.c
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/main.c
           merge-to-main: main
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
         - source: boards/${board}/FreeRTOSConfigBoard.h
           merge-to-freertosconfig: sub
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
         - source: boards/${board}/wifi_examples/common/pin_mux.c
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: board
         - source: boards/${board}/wifi_examples/common/pin_mux.h
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: board
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_cli.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_cli.c
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_command.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_command.c
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_os.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/mcu_bridge_utils.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
+          project_path: source
         - source: boards/${board}/wifi_examples/readme_modules.txt
           package_path: project-root-path
           project_path: doc
@@ -1095,29 +1113,72 @@ bridge_app:
       demo_configs:
         required: true
         cc-include:
-        - path: middleware/wifi_nxp/example/bridge_app
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+        - path: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
+        - path: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/spi
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/spi
+          project_path: spi
         as-include:
-        - path: middleware/wifi_nxp/example/bridge_app
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+        - path: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
         files:
-        - source: middleware/wifi_nxp/example/bridge_app/lwipopts.h
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host/host_cdc_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host/host_cdc_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host/host_cdc.c
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host/host_cdc.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/usb_host/usb_host_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/usb_host
+          project_path: usb_host
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/spi/spi_master_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/spi
+          project_path: spi
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/spi/spi_master_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}/spi
+          project_path: spi
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/lwipopts.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/lwippools.h
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/lwippools.h
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/FreeRTOSConfig.h
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/FreeRTOSConfig.h
           merge-to-freertosconfig: main
-          package_path: boards/${board}/wifi_examples/bridge_app/${multicore_foldername}
+          package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/mcu_bridge_app_demo/${multicore_foldername}
           project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/wifi_config.h
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/wifi_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/external_host_app/mcu_bridge_app_demo/wifi_mbedtls_config.h
           package_path: project-root-path
           project_path: source
       pinset:
         required: true
+        cc-include:
+        - path: boards/${board}/wifi_examples/common/${multicore_foldername}
+          project_path: board
+        files:
+        - source: boards/${board}/wifi_examples/common/${multicore_foldername}/hardware_init.c
+          merge-to-main: sub
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/${multicore_foldername}/app.h
+          merge-to-main: sub
+          project_path: board
       sdmmc_config:
         required: true
       preinclude_file:
@@ -1328,3 +1389,729 @@ scr.board.${board}.wifi:
     Description: SDK Wi-Fi examples.
     Origin: NXP (BSD-3-Clause)
     Location: "./boards/${board}/wifi_examples"
+
+ncp_bridge:
+  section-type: application
+  dependency:
+  - middleware.freertos-kernel
+  - middleware.freertos-kernel.heap_4
+  - middleware.lwip(middleware.wifi)
+  - middleware.lwip.apps.lwiperf(middleware.freertos-kernel)
+  - middleware.wifi
+  - middleware.wifi.cli
+  - middleware.wifi.wps
+  - middleware.fatf
+  - middleware.fatfs.usb
+  - middleware.mbedtls
+  - component.els_pkc
+  - middleware.mbedtls.port.els_pkc
+  - middleware.wifi.wmtime
+  - platform.drivers.lpc_rtc
+  - middleware.wifi.wmcrypto
+  - middleware.lwip.apps.httpsrv
+  - middleware.usb.device.stack.external
+  - middleware.usb.host.cdc_rndis
+  - driver.lpc_crc
+  - middleware.littlefs
+  - middleware.usb.device.controller.driver(middleware.usb.device.ehci)
+  - component.mrt_adapter
+  - middleware.lwip.apps.mdns
+  contents:
+    document:
+      name: ncp_bridge
+      readme:
+      - boards/${board}/wifi_examples/common/board.readme
+      - middleware/wifi_nxp/example/bridge_app/ncp_bridge/ncp_bridge.readme
+      category: wifi_examples
+      brief: ncp_bridge
+    project-root-path:  boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+    configuration:
+      tools:
+        __common__:
+          config:
+            __common__:
+              cc-define:
+                USE_RTOS: 1
+                PRINTF_ADVANCED_ENABLE: 1
+                MBEDTLS_CONFIG_FILE: '"wifi_mbedtls_config.h"'
+                LFS_CONFIG: "littlefs_config.h"
+        iar:
+          config:
+            __common__:
+              ad-flags:
+              - __stack_size__=0x400
+              - __heap_size__=0x400
+              cx-flags:
+              - "--no_clustering"
+        mdk:
+          config:
+            __common__:
+              ad-flags:
+              - --predefine="-D__stack_size__=0x400"
+              - --predefine="-D__heap_size__=0x400"
+        armgcc:
+          config:
+            __common__:
+              ad-flags:
+              - "-Xlinker --defsym=__stack_size__=0x400"
+              - "-Xlinker --defsym=__heap_size__=0x400"
+        mcux:
+          ignore: true
+          __remove__:
+    modules:
+      demo:
+        required: true
+        cc-include:
+        - path: boards/${board}/wifi_examples/common
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/ncp_bridge
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - path: boards/${board}/wifi_examples/common/lpm/
+          package_path: boards/${board}/wifi_examples/common/lpm/${multicore_foldername}
+          project_path: board
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/main.c
+          merge-to-main: main
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: boards/${board}/FreeRTOSConfigBoard.h
+          merge-to-freertosconfig: sub
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: boards/${board}/wifi_examples/common/pin_mux.c
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/pin_mux.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/lpm/lpm.c
+          package_path: boards/${board}/wifi_examples/common/lpm/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/lpm/lpm.h
+          package_path: boards/${board}/wifi_examples/common/lpm/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/lpm/host_sleep.c
+          package_path: boards/${board}/wifi_examples/common/lpm/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/lpm/host_sleep.h
+          package_path: boards/${board}/wifi_examples/common/lpm/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/readme_modules.txt
+          package_path: project-root-path
+          project_path: doc
+          exclude: true
+      demo_configs:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/ncp_bridge
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: usb
+        - path: middleware/wifi_nxp/example/bridge_app/common/uap_prov
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common/httpc/inc
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/httpc/inc
+          project_path: http
+        - path: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/httpc/inc/json_parser
+          project_path: http
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb_device
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: usb
+        - path: middleware/wifi_nxp/example/bridge_app/common/spi
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/spi
+          project_path: spi
+        - path: middleware/wifi_nxp/example/bridge_app/common/crc
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
+          project_path: source
+        as-include:
+        - path: boards/${board}
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/ncp_bridge
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/lwipopts.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/lwippools.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/usb_host_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_api.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/ffconf.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/httpsrv_fs_data.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/http_server.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/http_server.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/uap_prov.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/uap_prov.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/FreeRTOSConfig.h
+          merge-to-freertosconfig: main
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/wifi_mbedtls_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/wifi_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_cmd.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_glue.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_glue.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/app_notify.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/app_notify.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser/jsmn.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser/json_generator.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser/json_parser.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/httpc.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/http-strings.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_errno.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_httpc.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_network.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_socket.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/websockets.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/wmstats.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/httpc/httpc.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/httpc/httpc_tests.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/json_parser/json_generator.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/serial_httpc/serial_httpc.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/serial_httpc/serial_network.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/serial_httpc/serial_socket.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/websockets.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslay.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslay_frame.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslay_frame.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslayver.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/spi/spi_slave_app.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/spi/spi_slave_app.h
+          package_path: project-root-path
+          project_path: source
+      pinset:
+        required: true
+      sdmmc_config:
+        required: true
+      preinclude_file:
+        required: true
+      mdns_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/common/mdns
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/mdns
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/common/mdns/mdns_service.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/mdns/mdns_service.h
+          package_path: project-root-path
+          project_path: source
+      ncp_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/common/ncp_config
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/ncp_config
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_config.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_adapter.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_adapter.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/ncp_config.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/ncp_config.h
+          package_path: project-root-path
+          project_path: source
+
+ncp_bridge_supp:
+  section-type: application
+  dependency:
+  - middleware.freertos-kernel
+  - middleware.freertos-kernel.heap_4
+  - middleware.lwip(middleware.wifi)
+  - middleware.lwip.apps.lwiperf(middleware.freertos-kernel)
+  - middleware.wifi
+  - middleware.wifi.cli
+  - middleware.fatf
+  - middleware.fatfs.usb
+  - middleware.mbedtls
+  - component.els_pkc
+  - middleware.mbedtls.port.els_pkc
+  - middleware.wifi.ncp_supp_wmcrypto
+  - platform.drivers.lpc_rtc
+  - middleware.lwip.apps.httpsrv
+  - driver.lpc_crc
+  - middleware.usb.device.stack.external
+  - middleware.usb.host.cdc_rndis
+  - middleware.littlefs
+  - middleware.usb.device.controller.driver(middleware.usb.device.ehci)
+  - component.mrt_adapter
+  - middleware.lwip.apps.mdns
+  __remove__:
+    merge_segment:
+    - middleware.lwip.default_heap_stack
+  merge_segment:
+  - middleware.lwip.default_heap_stack
+  contents:
+    document:
+      name: ncp_bridge_supp
+      readme:
+      - boards/${board}/wifi_examples/common/board.readme
+      - middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/ncp_bridge_supp.readme
+      category: wifi_examples
+      brief: ncp_bridge_supp
+    project-root-path:  boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+    configuration:
+      tools:
+        __common__:
+          config:
+            __common__:
+              cc-define:
+                USE_RTOS: 1
+                PRINTF_ADVANCED_ENABLE: 1
+                MBEDTLS_CONFIG_FILE: '"wifi_mbedtls_config.h"'
+                LFS_CONFIG: "littlefs_config.h"
+                MBEDTLS_CONFIG_FILE: '"wpa_supp_els_pkc_mbedtls_config.h"'
+        iar:
+          config:
+            __common__:
+              ad-flags:
+              - __stack_size__=0x400
+              - __heap_size__=0x400
+              cx-flags:
+              - "--no_clustering"
+        mdk:
+          config:
+            __common__:
+              ad-flags:
+              - --predefine="-D__stack_size__=0x400"
+              - --predefine="-D__heap_size__=0x400"
+        armgcc:
+          config:
+            __common__:
+              ad-flags:
+              - "-Xlinker --defsym=__stack_size__=0x400"
+              - "-Xlinker --defsym=__heap_size__=0x400"
+        mcux:
+          ignore: true
+          __remove__:
+    modules:
+      demo:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - path: boards/${board}/wifi_examples/common
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: board
+        - path: boards/${board}/wifi_examples/common/lpm/
+          package_path: boards/${board}/wifi_examples/common/lpm/${multicore_foldername}
+          project_path: board
+        - path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: board
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/main.c
+          merge-to-main: main
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: boards/${board}/FreeRTOSConfigBoard.h
+          merge-to-freertosconfig: sub
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: boards/${board}/wifi_examples/common/pin_mux.c
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/pin_mux.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}/hardware_init.c
+          merge-to-main: sub
+          project_path: board
+        - source: boards/${board}/wifi_examples/common/${multicore_foldername}/app.h
+          merge-to-main: sub
+          project_path: board
+        - source: boards/${board}/wifi_examples/readme_modules.txt
+          package_path: project-root-path
+          project_path: doc
+          exclude: true
+      demo_configs:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/common
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: usb
+        - path: middleware/wifi_nxp/example/bridge_app/common/uap_prov
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common/httpc/inc
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/httpc/inc
+          project_path: http
+        - path: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/httpc/inc/json_parser
+          project_path: http
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb_device
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: usb
+        - path: middleware/wifi_nxp/example/bridge_app/common/spi
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/spi
+          project_path: spi
+        - path: middleware/wifi_nxp/example/bridge_app/common/crc
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
+          project_path: source
+        as-include:
+        - path: boards/${board}
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/lwipopts.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/lwippools.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/lwiphooks.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/FreeRTOSConfig.h
+          merge-to-freertosconfig: main
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/wifi_mbedtls_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/wifi_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: boards/${board}/FreeRTOSConfigBoard.h
+          merge-to-freertosconfig: sub
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/usb_host_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_api.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/ffconf.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/httpsrv_fs_data.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/http_server.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/http_server.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/uap_prov.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/uap_prov.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_cmd.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_glue.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_glue.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/app_notify.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/app_notify.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser/jsmn.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser/json_generator.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser/json_parser.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/httpc.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/http-strings.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_errno.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_httpc.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_network.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/serial_socket.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/websockets.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/wmstats.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/httpc/httpc.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/httpc/httpc_tests.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/json_parser/json_generator.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/serial_httpc/serial_httpc.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/serial_httpc/serial_network.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/serial_httpc/serial_socket.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/websockets.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslay.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslay_frame.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslay_frame.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/httpc/src/websocket/wslayver.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/spi/spi_slave_app.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/spi/spi_slave_app.h
+          package_path: project-root-path
+          project_path: source
+      pinset:
+        required: false
+      sdmmc_config:
+        required: true
+      preinclude_file:
+        required: true
+      mdns_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/common/mdns
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/mdns
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/common/mdns/mdns_service.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/mdns/mdns_service.h
+          package_path: project-root-path
+          project_path: source
+      ncp_config:
+        required: true
+        cc-include:
+        - path: middleware/wifi_nxp/example/bridge_app/common/ncp_config
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/ncp_config
+          project_path: source
+        files:
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_config.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_config.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_adapter.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/littlefs_adapter.h
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/ncp_config.c
+          package_path: project-root-path
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_config/ncp_config.h
+          package_path: project-root-path
+          project_path: source

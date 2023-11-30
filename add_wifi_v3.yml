@@ -444,6 +444,162 @@ middleware.wifi.cli:
     - middleware.wifi.wifidriver
     - middleware.lwip.apps.lwiperf
     - utility.debug_console
+middleware.wifi.wmcrypto:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: wmcrypto
+    - repo_relative_path: incl/wmcrypto
+    - repo_relative_path: wmcrypto/aescrypto
+    files:
+    - source: wmcrypto/wmcrypto.c
+    - source: incl/wmcrypto/wmcrypto.h
+    - source: wmcrypto/wmcrypto_mem.c
+    - source: wmcrypto/wmcrypto_mem.h
+    - source: wmcrypto/wm_mbedtls_debug.h
+    - source: wmcrypto/wm_mbedtls_entropy.c
+    - source: wmcrypto/wm_mbedtls_entropy.h
+    - source: wmcrypto/wm_mbedtls_mem.c
+    - source: wmcrypto/wm_mbedtls_mem.h
+    - source: wmcrypto/wm_mbedtls_net.c
+    - source: wmcrypto/wm_mbedtls_net.h
+    - source: wmcrypto/wm_mbedtls_helper_api.c
+    - source: wmcrypto/wm_mbedtls_helper_api.h
+    - source: wmcrypto/wm_utils.c
+    - source: wmcrypto/aescrypto/aes.h
+    - source: wmcrypto/aescrypto/aes_siv.h
+    - source: wmcrypto/aescrypto/aes-siv.c
+    - source: wmcrypto/aescrypto/aes-ctr.c
+    - source: wmcrypto/aescrypto/aes-omac1.c
+    - source: wmcrypto/aescrypto/aes-wrap.c
+    - source: wmcrypto/aescrypto/aes_wrap.h
+    - source: wmcrypto/aescrypto/common.h
+    - source: wmcrypto/aescrypto/crypto.h
+    - source: wmcrypto/aescrypto/includes.h
+    - source: wmcrypto/aescrypto/type_def.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi WMCRYPTO
+    user_visible: never
+    version: 1.0.0
+    description: Middlware Wi-Fi WMCRYPTO
+    taxonomy:
+      csub: wmcrypto
+      belong_to: wifi
+    display_name: wifi_nxp_wmcrypto
+  dependency:
+    allOf:
+    - middleware.wifi
+    - middleware.wifi.wifidriver
+middleware.wifi.wmtime:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: wmtime
+    - repo_relative_path: incl
+    files:
+    - source: wmtime/wmtime.c
+    - source: incl/wmtime.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi WMTIME
+    user_visible: never
+    version: 1.0.0
+    description: Middlware Wi-Fi WMTIME
+    taxonomy:
+      csub: cli
+      belong_to: wifi
+    display_name: wifi_nxp_wmtime
+  dependency:
+    allOf:
+    - middleware.wifi
+    - middleware.wifi.wifidriver
+middleware.wifi.wps:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: wps
+    - repo_relative_path: incl/wps
+    files:
+    - source: incl/wps/wps.h
+    - source: wps/wps_def.h
+    - source: wps/wps_eapol.c
+    - source: wps/wps_eapol.h
+    - source: wps/wps_l2.c
+    - source: wps/wps_l2.h
+    - source: wps/wps_main.c
+    - source: wps/wps_mem.c
+    - source: wps/wps_mem.h
+    - source: wps/wps_msg.c
+    - source: wps/wps_msg.h
+    - source: wps/wps_os.c
+    - source: wps/wps_os.h
+    - source: wps/wps_start.c
+    - source: wps/wps_state.c
+    - source: wps/wps_wlan.c
+    - source: wps/wps_wlan.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi WPS
+    user_visible: never
+    version: 1.0.0
+    description: Middlware Wi-Fi WPS
+    taxonomy:
+      csub: wps
+      belong_to: wifi
+    display_name: wifi_nxp_wps
+  dependency:
+    allOf:
+    - middleware.wifi
+    - middleware.wifi.wifidriver
+    - middleware.wifi.wmtime
+    - middleware.wifi.wmcrypto
+middleware.wifi.ncp_supp_wmcrypto:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: wmcrypto
+    - repo_relative_path: incl/wmcrypto
+    files:
+    - source: incl/wmcrypto/wmcrypto.h
+    - source: wmcrypto/wmcrypto_mem.c
+    - source: wmcrypto/wmcrypto_mem.h
+    - source: wmcrypto/wm_mbedtls_debug.h
+    - source: wmcrypto/wm_mbedtls_entropy.c
+    - source: wmcrypto/wm_mbedtls_entropy.h
+    - source: wmcrypto/wm_mbedtls_mem.c
+    - source: wmcrypto/wm_mbedtls_mem.h
+    - source: wmcrypto/wm_mbedtls_net.c
+    - source: wmcrypto/wm_mbedtls_net.h
+    - source: wmcrypto/wm_mbedtls_helper_api.c
+    - source: wmcrypto/wm_mbedtls_helper_api.h
+    - source: wmcrypto/wm_utils.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi NCP_SUPP_WMCRYPTO
+    user_visible: never
+    version: 1.0.0
+    description: Middlware Wi-Fi NCP_SUPP_WMCRYPTO
+    taxonomy:
+      csub: ncp_supp
+      belong_to: wifi
+    display_name: ncp_supp_wmcrypto
+  dependency:
+    allOf:
+    - middleware.wifi
+    - middleware.wifi.wifidriver
 middleware.wifi.unused:
   section-type: container
   contents:
