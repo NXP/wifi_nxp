@@ -2729,6 +2729,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         }
                         else
                         {
+                            acs_params.sec_freq = 0;
                             acs_params.ch_width = 20;
                         }
                         acs_params.hw_mode = acs_scan->bandcfg.chanBand == 0 ? 1 : 2;

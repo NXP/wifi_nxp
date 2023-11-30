@@ -1930,6 +1930,7 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 {
     int status = -WM_FAIL;
+    t_u8 bandwidth = wifi_uap_get_bandwidth();
 
     if ((!if_priv) || (!modes))
     {
@@ -2013,7 +2014,10 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         supp_e("%s: wifi nxp set 2G ap he cap failed", __func__);
         goto out;
     }
-
+    if (bandwidth == BANDWIDTH_20MHZ)
+    {
+        modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
+    }
 #ifdef CONFIG_5GHz_SUPPORT
     if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
@@ -2032,6 +2036,10 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
             supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
             goto out;
         }
+    }
+    if (bandwidth == BANDWIDTH_20MHZ)
+    {
+        modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
     }
 #endif
 #endif
