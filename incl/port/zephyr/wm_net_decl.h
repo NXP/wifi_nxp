@@ -62,4 +62,70 @@ struct ethernetif
     /* Add whatever per-interface state that is needed here. */
 };
 
+/** Address types to be used by the element net_ip_config.addr_type below
+ */
+enum net_address_types
+{
+    /** static IP address */
+    NET_ADDR_TYPE_STATIC = 0,
+    /** Dynamic  IP address*/
+    NET_ADDR_TYPE_DHCP = 1,
+    /** Link level address */
+    NET_ADDR_TYPE_LLA = 2,
+};
+
+/** This data structure represents an IPv4 address */
+struct net_ipv4_config
+{
+    /** Set to \ref ADDR_TYPE_DHCP to use DHCP to obtain the IP address or
+     *  \ref ADDR_TYPE_STATIC to use a static IP. In case of static IP
+     *  address ip, gw, netmask and dns members must be specified.  When
+     *  using DHCP, the ip, gw, netmask and dns are overwritten by the
+     *  values obtained from the DHCP server. They should be zeroed out if
+     *  not used. */
+    enum net_address_types addr_type;
+    /** The system's IP address in network order. */
+    unsigned address;
+    /** The system's default gateway in network order. */
+    unsigned gw;
+    /** The system's subnet mask in network order. */
+    unsigned netmask;
+    /** The system's primary dns server in network order. */
+    unsigned dns1;
+    /** The system's secondary dns server in network order. */
+    unsigned dns2;
+};
+
+#ifdef CONFIG_IPV6
+/** This data structure represents an IPv6 address */
+struct net_ipv6_config
+{
+    /** The system's IPv6 address in network order. */
+    unsigned address[4];
+    /** The address type: linklocal, site-local or global. */
+    unsigned char addr_type;
+    /** The state of IPv6 address (Tentative, Preferred, etc). */
+    unsigned char addr_state;
+};
+#endif
+
+/** Network IP configuration.
+ *
+ *  This data structure represents the network IP configuration
+ *  for IPv4 as well as IPv6 addresses
+ */
+struct net_ip_config
+{
+#ifdef CONFIG_IPV6
+    /** The network IPv6 address configuration that should be
+     * associated with this interface. */
+    struct net_ipv6_config ipv6[NET_IF_MAX_IPV6_ADDR];
+    /** The network IPv6 valid addresses count */
+    size_t ipv6_count;
+#endif
+    /** The network IPv4 address configuration that should be
+     * associated with this interface. */
+    struct net_ipv4_config ipv4;
+};
+
 #endif /* _WM_NET_DECL_H_ */

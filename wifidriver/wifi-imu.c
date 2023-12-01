@@ -1325,7 +1325,6 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
 {
     int ret;
     t_u8 pbuf[32]  = {0};
-    IMUPkt *imuhdr = (IMUPkt *)pbuf;
     TxPD *ptxpd    = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 
     ptxpd->bss_type      = priv->bss_type;
@@ -1336,9 +1335,8 @@ mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
     ptxpd->priority      = 0;
     ptxpd->flags         = flags;
     ptxpd->pkt_delay_2ms = 0;
-    imuhdr->size         = sizeof(TxPD) + INTF_HEADER_LEN;
 
-    ret = wifi_send_fw_data(pbuf, imuhdr->size);
+    ret = wifi_send_fw_data(pbuf, sizeof(TxPD) + INTF_HEADER_LEN);
     if (ret != kStatus_HAL_RpmsgSuccess)
     {
         wifi_io_e("imu_drv_write failed (%d)", ret);

@@ -7243,7 +7243,7 @@ static void test_wlan_wmm_uapsd_qosinfo(int argc, char **argv)
     else if (argc == 2 && !get_uint(argv[1], &qos_info, strlen(argv[1])))
     {
         if (qos_info == 0)
-            (void)PRINTF("qos_info can't be zero\r\n", argv[0]);
+            (void)PRINTF("qos_info can't be zero, input %s\r\n", argv[1]);
         else
             wlan_wmm_uapsd_qosinfo((t_u8 *)&qos_info, 1);
     }
