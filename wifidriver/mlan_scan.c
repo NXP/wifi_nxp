@@ -456,12 +456,6 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
                 continue;
             }
 
-            if (scan_type == MLAN_SCAN_TYPE_ACTIVE && wlan_11d_support_is_enabled(pmpriv))
-            {
-                scan_type = wlan_11d_get_scan_type(pmpriv, pscan_region->band, (t_u8)cfp->channel,
-                                                   &pmadapter->parsed_region_chan);
-            }
-
             switch (pscan_region->band)
             {
 #ifdef CONFIG_5GHz_SUPPORT
