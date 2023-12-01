@@ -10741,6 +10741,108 @@ static void test_wlan_get_temperature(int argc, char **argv)
 }
 #endif
 
+#ifdef CONFIG_AUTO_NULL_TX
+static void dump_wlan_auto_null_tx_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-auto-null-tx start interval <interval> dst_mac <dst_mac>\r\n");
+    (void)PRINTF("        <interval> bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval\r\n");
+    (void)PRINTF("                   Please set interval Hexadecimal value. For example: 0x8064\r\n");
+    (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
+    (void)PRINTF("                  Please specify dst_mac if not connected to AP\r\n");
+    (void)PRINTF("                  If connected to AP, no need to input dst_mac\r\n");
+    (void)PRINTF("    wlan-auto-null-tx stop\r\n");
+}
+
+static void test_wlan_auto_null_tx(int argc, char **argv)
+{
+    int ret = -WM_FAIL;
+    int arg = 1;
+
+    wlan_auto_null_tx_t auto_null_tx;
+
+    if (argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_auto_null_tx_usage();
+        return;
+    }
+
+    memset(&auto_null_tx, 0x00, sizeof(wlan_auto_null_tx_t));
+
+    if (string_equal("start", argv[1]))
+    {
+        auto_null_tx.start = MTRUE;
+        arg += 1;
+        if (string_equal("interval", argv[arg]))
+        {
+            if (argv[arg + 1][0] == '0' && (argv[arg + 1][1] == 'x' || argv[arg + 1][1] == 'X'))
+            {
+                auto_null_tx.interval = a2hex_or_atoi(argv[arg + 1]);
+            }
+            else
+            {
+                (void)PRINTF("Error: invalid interval argument\r\n");
+                dump_wlan_auto_null_tx_usage();
+                return;
+            }
+            arg += 2;
+        }
+        else
+        {
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            dump_wlan_auto_null_tx_usage();
+            return;
+        }
+
+        if (is_sta_connected())
+        {
+            ret = wlan_get_current_network_bssid((char *)&auto_null_tx.dst_mac);
+            if (ret != 0)
+            {
+                (void)PRINTF("Error: could not get current network bssid\r\n");
+                return;
+            }
+        }
+        else
+        {
+            if (string_equal("dst_mac", argv[arg]))
+            {
+                ret = get_mac(argv[arg + 1], (char *)&auto_null_tx.dst_mac, ':');
+                if (ret != 0)
+                {
+                    dump_wlan_auto_null_tx_usage();
+                    (void)PRINTF("Error: invalid dst_mac argument\r\n");
+                    return;
+                }
+                arg += 2;
+            }
+            else
+            {
+                (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+                dump_wlan_auto_null_tx_usage();
+                return;
+            }
+        }
+    }
+    else if (string_equal("stop", argv[1]))
+    {
+        auto_null_tx.start = MFALSE;
+    }
+    else
+    {
+        (void)PRINTF("Error: invalid [%d] argument, give start/stop\r\n", arg + 1);
+        dump_wlan_auto_null_tx_usage();
+        return;
+    }
+
+    /* bit7-4: bandwidth. bit3-0: priority, ignored if non-WMM */
+    auto_null_tx.priority = 0x07;
+
+    ret = wlan_auto_null_tx(&auto_null_tx);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -11080,6 +11182,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_CAU_TEMPERATURE
     {"wlan-get-temperature", NULL, test_wlan_get_temperature},
+#endif
+#ifdef CONFIG_AUTO_NULL_TX
+    {"wlan-auto-null-tx", "<start/stop>", test_wlan_auto_null_tx},
 #endif
 };
 

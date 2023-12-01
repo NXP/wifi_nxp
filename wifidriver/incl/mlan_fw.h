@@ -4061,6 +4061,29 @@ typedef MLAN_PACK_START struct MAPP_HostCmd_DS_802_11_AUTO_TX
     MrvlIEtypes_AutoTx_t auto_tx; /**< Auto Tx */
 } MLAN_PACK_END HostCmd_DS_802_11_AUTO_TX;
 
+/** MrvlIEtypes_Auto_Null_Tx_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_Auto_Null_Tx_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval */
+    t_u16 interval;
+    /** bit7-4: bandwidth. bit3-0: priority, ignored if non-WMM */
+    t_u8 priority;
+    /** Packet index, set to 0 */
+    t_u8 index;
+    /** Set to 0 for auto null tx */
+    t_u8 getTodToAForPkts;
+    /** Length of MAC frame payload */
+    t_u16 frame_len;
+    /** Destination MAC address */
+    t_u8 dest_mac_addr[MLAN_MAC_ADDR_LENGTH];
+    /** Source MAC address */
+    t_u8 src_mac_addr[MLAN_MAC_ADDR_LENGTH]; /**< Source MAC address */
+    /** '0x00,0x00' for auto null tx */
+    t_u16 frame_body_len;
+} MLAN_PACK_END MrvlIEtypes_Auto_Null_Tx_t;
+
 /** Radio on */
 #define RADIO_ON 0x01
 /** Radio off */

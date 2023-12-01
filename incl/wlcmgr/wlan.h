@@ -2762,6 +2762,21 @@ int wlan_get_current_network(struct wlan_network *network);
  */
 int wlan_get_current_network_ssid(char *ssid);
 
+/** Retrieve the current network bssid of station interface.
+ *
+ *  This function retrieves the current network bssid of station
+ *  interface when the station interface is in the \ref WLAN_CONNECTED
+ *  state.
+ *
+ *  \param[out] bssid A pointer to the bssid.
+ *
+ *  \return WM_SUCCESS if successful.
+ *  \return -WM_E_INVAL if \a network is NULL.
+ *  \return WLAN_ERROR_STATE if the WLAN Connection Manager was
+ *          not running or not in the \ref WLAN_CONNECTED state.
+ */
+int wlan_get_current_network_bssid(char *bssid);
+
 /** Retrieve the current network configuration of micro-AP interface.
  *
  *  This function retrieves the current network configuration of micro-AP
@@ -7029,6 +7044,20 @@ int32_t wlan_get_temperature(void);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period);
+#endif
+
+#ifdef CONFIG_AUTO_NULL_TX
+/** Configuration for auto null tx parameters from
+ * \ref wifi_auto_null_tx_t
+ */
+typedef wifi_auto_null_tx_t wlan_auto_null_tx_t;
+
+/**
+ * Start/Stop auto tx null
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx);
 #endif
 
 #endif /* __WLAN_H__ */

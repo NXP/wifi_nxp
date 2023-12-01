@@ -5995,3 +5995,53 @@ int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action)
     return wm_wifi.cmd_resp_status;
 }
 #endif
+
+#ifdef CONFIG_AUTO_NULL_TX
+int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd         = wifi_get_command_buffer();
+    HostCmd_DS_AUTO_TX *auto_tx_cmd = (HostCmd_DS_AUTO_TX *)((t_u8 *)cmd + S_DS_GEN);
+
+    if (auto_null_tx == NULL)
+        return -WM_E_INVAL;
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num        = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->command        = wlan_cpu_to_le16(HostCmd_CMD_AUTO_TX);
+    cmd->size           = S_DS_GEN + sizeof(HostCmd_DS_AUTO_TX);
+    auto_tx_cmd->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+
+    if (auto_null_tx->start)
+    {
+        MrvlIEtypes_Auto_Null_Tx_t *auto_null_tx_tlv =
+            (MrvlIEtypes_Auto_Null_Tx_t *)((t_u8 *)auto_tx_cmd + sizeof(auto_tx_cmd->action));
+        auto_null_tx_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_AUTO_TX);
+        auto_null_tx_tlv->header.len =
+            wlan_cpu_to_le16(sizeof(MrvlIEtypes_Auto_Null_Tx_t) - sizeof(MrvlIEtypesHeader_t));
+        auto_null_tx_tlv->interval = auto_null_tx->interval;
+        auto_null_tx_tlv->priority = auto_null_tx->priority;
+        /* Packet index, set to 0 for auto null tx */
+        auto_null_tx_tlv->index = 0;
+        /* getTodToAForPkts, set to 0 for auto null tx */
+        auto_null_tx_tlv->getTodToAForPkts = 0;
+        auto_null_tx_tlv->frame_len        = sizeof(auto_null_tx_tlv->dest_mac_addr) +
+                                      sizeof(auto_null_tx_tlv->dest_mac_addr) +
+                                      sizeof(auto_null_tx_tlv->frame_body_len);
+
+        (void)memcpy((void *)auto_null_tx_tlv->dest_mac_addr, (const void *)auto_null_tx->dst_mac,
+                     MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy((void *)auto_null_tx_tlv->src_mac_addr, (const void *)auto_null_tx->src_mac, MLAN_MAC_ADDR_LENGTH);
+        /* fram body length, '0x00,0x00' for auto null tx */
+        auto_null_tx_tlv->frame_body_len = 0;
+        cmd->size                        = cmd->size + sizeof(MrvlIEtypes_Auto_Null_Tx_t);
+        cmd->size                        = wlan_cpu_to_le16(cmd->size);
+    }
+
+    cmd->result = 0x00;
+
+    wifi_wait_for_cmdresp(NULL);
+
+    return wm_wifi.cmd_resp_status;
+}
+#endif

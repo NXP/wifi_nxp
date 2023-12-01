@@ -1925,4 +1925,21 @@ typedef PACK_START struct
     t_u32 ps_cmd_timeout;
 } PACK_END wifi_inactivity_to_t;
 #endif
+
+#ifdef CONFIG_AUTO_NULL_TX
+/** auto null tx information */
+typedef struct
+{
+    /** 1-start 0-stop */
+    t_u8 start;
+    /** bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval */
+    t_u16 interval;
+    /** bit7-4: bandwidth. bit3-0: priority, ignored if non-WMM */
+    t_u8 priority;
+    /** Destination MAC address */
+    t_u8 dst_mac[MLAN_MAC_ADDR_LENGTH];
+    /** Source MAC address */
+    t_u8 src_mac[MLAN_MAC_ADDR_LENGTH];
+} wifi_auto_null_tx_t;
+#endif
 #endif /* __WIFI_DECL_H__ */

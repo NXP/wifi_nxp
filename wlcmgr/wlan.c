@@ -9087,6 +9087,23 @@ int wlan_get_current_network_ssid(char *ssid)
     return WLAN_ERROR_STATE;
 }
 
+int wlan_get_current_network_bssid(char *bssid)
+{
+    if (bssid == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
+    {
+        (void)memcpy((void *)bssid, (const void *)&wlan.networks[wlan.cur_network_idx].bssid, IEEEtypes_SSID_SIZE + 1);
+
+        return WM_SUCCESS;
+    }
+
+    return WLAN_ERROR_STATE;
+}
+
 int wlan_get_current_uap_network(struct wlan_network *network)
 {
     if (network == NULL)
@@ -14982,4 +14999,16 @@ int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period)
     }
 }
 
+#endif
+
+#ifdef CONFIG_AUTO_NULL_TX
+int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx)
+{
+    if (auto_null_tx == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    return wifi_auto_null_tx(auto_null_tx);
+}
 #endif
