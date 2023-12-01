@@ -14774,7 +14774,7 @@ int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
 #endif
 
 #ifdef CONFIG_CAU_TEMPERATURE
-uint32_t wlan_get_temperature()
+int32_t wlan_get_temperature()
 {
     return wifi_get_temperature();
 }

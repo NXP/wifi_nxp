@@ -7974,33 +7974,35 @@ void wifi_cau_temperature_enable()
 #endif
 }
 
-uint32_t wifi_get_temperature(void)
+int32_t wifi_get_temperature(void)
 {
 #ifdef RW610
-    uint32_t val;
-    uint32_t board_type = 0;
+    int32_t val                = 0;
+    uint32_t reg_val           = 0;
+    uint32_t temp_Cau_Raw_Reading = 0;
+    uint32_t board_type        = 0;
 
-    val        = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
-    val        = ((val & 0XFFC00) >> 10);
-    board_type = wifi_get_board_type();
+    reg_val           = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    temp_Cau_Raw_Reading = ((reg_val & 0XFFC00) >> 10);
+    board_type        = wifi_get_board_type();
 
     switch (board_type)
     {
         case RW610_PACKAGE_TYPE_QFN:
-            val = (uint32_t)((484260 * val - 220040600) / 1000000);
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 484260) - 220040600) / 1000000);
             break;
 
         case RW610_PACKAGE_TYPE_CSP:
-            val = (uint32_t)((480560 * val - 220707000) / 1000000);
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480560) - 220707000) / 1000000);
             break;
 
         case RW610_PACKAGE_TYPE_BGA:
-            val = (uint32_t)((480561 * val - 220707400) / 1000000);
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480561) - 220707400) / 1000000);
             break;
 
         default:
             PRINTF("Unknown board type, use BGA temperature \r\n");
-            val = (uint32_t)((480561 * val - 220707400) / 1000000);
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480561) - 220707400) / 1000000);
             break;
     }
 
@@ -8011,7 +8013,7 @@ uint32_t wifi_get_temperature(void)
 void wifi_cau_temperature_write_to_firmware()
 {
 #ifdef RW610
-    uint32_t val = 0;
+    int32_t val = 0;
 
     val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);

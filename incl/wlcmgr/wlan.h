@@ -7015,7 +7015,7 @@ int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action);
  * Get board temperature.
  * \return board temperature.
  */
-uint32_t wlan_get_temperature(void);
+int32_t wlan_get_temperature(void);
 #endif
 
 #ifdef CONFIG_CPU_LOADING

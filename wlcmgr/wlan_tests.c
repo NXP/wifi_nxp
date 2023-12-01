@@ -10733,7 +10733,7 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
 #ifdef CONFIG_CAU_TEMPERATURE
 static void test_wlan_get_temperature(int argc, char **argv)
 {
-    uint32_t board_temperature = 0;
+    int32_t board_temperature = 0;
 
     board_temperature = wlan_get_temperature();
 
