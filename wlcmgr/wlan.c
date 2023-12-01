@@ -4904,6 +4904,14 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         wlcm_d("11K RRM event neighbor response received");
         wlan_parse_neighbor_report_response(buf, &wlan.nbr_rpt);
     }
+    else if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_COMPLETED))
+    {
+        if (wlan.nbr_rpt.neighbor_cnt != 0U)
+        {
+            memset(&wlan.nbr_rpt, 0x00, sizeof(wlan_rrm_neighbor_report_t));
+            (void)wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
+        }
+    }
     else if (strstr(buf, RRM_EVENT_NEIGHBOR_REP_FAILED))
     {
         wlcm_d("11K RRM event neighbor report request failed");
@@ -7072,14 +7080,6 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
     if (wlan.neighbor_req == true)
     {
         wlan.neighbor_req = false;
-#ifdef CONFIG_WPA_SUPP
-        if (wlan.nbr_rpt.neighbor_cnt != 0U)
-        {
-            memset(&wlan.nbr_rpt, 0x00, sizeof(wlan_rrm_neighbor_report_t));
-            (void)wifi_event_completion(WIFI_EVENT_NLIST_REPORT, WIFI_EVENT_REASON_SUCCESS, NULL);
-            return;
-        }
-#endif
         (void)send_user_request(CM_STA_USER_REQUEST_SET_RSSI_THRESHOLD, 0);
     }
 }
