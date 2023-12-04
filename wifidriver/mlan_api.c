@@ -1110,6 +1110,40 @@ int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u
 #endif
 
 #ifdef CONFIG_RF_TEST_MODE
+#ifdef RW610
+/* 802.11ac VHT MCS rates ID */
+#define VHT_SS1_MCS0 0x1100
+#define VHT_SS1_MCS1 0x1101
+#define VHT_SS1_MCS2 0x1102
+#define VHT_SS1_MCS3 0x1103
+#define VHT_SS1_MCS4 0x1104
+#define VHT_SS1_MCS5 0x1105
+#define VHT_SS1_MCS6 0x1106
+#define VHT_SS1_MCS7 0x1107
+#define VHT_SS1_MCS8 0x1108
+
+/* 802.11ax HE MCS rates ID */
+#define HE_SS1_MCS0 0x2100
+#define HE_SS1_MCS1 0x2101
+#define HE_SS1_MCS2 0x2102
+#define HE_SS1_MCS3 0x2103
+#define HE_SS1_MCS4 0x2104
+#define HE_SS1_MCS5 0x2105
+#define HE_SS1_MCS6 0x2106
+#define HE_SS1_MCS7 0x2107
+#define HE_SS1_MCS8 0x2108
+#define HE_SS1_MCS9 0x2109
+
+static uint32_t tx_data_rate_ids[] = {
+  /* 802.11ac VHT MCS rates id */
+  VHT_SS1_MCS0, VHT_SS1_MCS1, VHT_SS1_MCS2, VHT_SS1_MCS3, VHT_SS1_MCS4,
+  VHT_SS1_MCS5, VHT_SS1_MCS6, VHT_SS1_MCS7, VHT_SS1_MCS8,
+  /* 802.11ax HE MCS rates ID */
+  HE_SS1_MCS0, HE_SS1_MCS1, HE_SS1_MCS2, HE_SS1_MCS3, HE_SS1_MCS4,
+  HE_SS1_MCS5, HE_SS1_MCS6, HE_SS1_MCS7, HE_SS1_MCS8, HE_SS1_MCS9
+};
+#endif
+
 static uint8_t band_set       = 0;
 static uint8_t bandwidth_set  = 0;
 static uint8_t tx_antenna_set = 0;
@@ -1703,6 +1737,21 @@ int wifi_set_rf_tx_power(const uint32_t power, const uint8_t mod, const uint8_t 
     return -WM_FAIL;
 }
 
+#ifdef RW610
+static int wifi_check_data_rate_id(const uint32_t data_rate)
+{
+    uint8_t i;
+    for(i = 0; i < sizeof(tx_data_rate_ids)/sizeof(tx_data_rate_ids[0]); i++)
+    {
+       if(data_rate == tx_data_rate_ids[i])
+       {
+           return WM_SUCCESS;
+       }
+    }
+    return -WM_FAIL;
+}
+#endif
+
 int wifi_set_rf_tx_frame(const uint32_t enable,
                          const uint32_t data_rate,
                          const uint32_t frame_pattern,
@@ -1729,6 +1778,14 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
 
     (void)memset(&wifi_mfg_cmd_tx_frame, 0x00, sizeof(wifi_mfg_cmd_tx_frame_t));
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
+#ifdef RW610
+    ret = wifi_check_data_rate_id(data_rate);
+    if(ret != WM_SUCCESS)
+    {	
+        wifi_e("The configured data rate ID is illegal. data_rate_id: 0x%x\r\n", data_rate);
+        return ret;
+    }
+#endif
 
     wifi_mfg_cmd_tx_frame.mfg_cmd = MFG_CMD_TX_FRAME;
     wifi_mfg_cmd_tx_frame.action  = HostCmd_ACT_GEN_SET;
