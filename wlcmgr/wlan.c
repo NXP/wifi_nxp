@@ -44,6 +44,7 @@
 #ifdef CONFIG_HOST_SLEEP
 #ifdef RW610
 #include  "fsl_power.h"
+#ifndef CONFIG_ZEPHYR
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
 #include  "lpm.h"
 #include  "host_sleep.h"
@@ -51,6 +52,7 @@
 #ifdef CONFIG_POWER_MANAGER
 #include  "fsl_pm_core.h"
 #include  "fsl_pm_device.h"
+#endif
 #endif
 #endif
 #endif
@@ -221,6 +223,7 @@ static bool mon_thread_init = 0;
 
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
+#ifndef CONFIG_ZEPHYR
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data);
 AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
 {
@@ -228,6 +231,7 @@ AT_ALWAYS_ON_DATA_INIT(pm_notify_element_t wlan_notify) =
     .data           = NULL,
 };
 bool is_wakeup_cond_set = false;
+#endif
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
 int wlan_host_sleep_state = HOST_SLEEP_DISABLE;
 #else
@@ -243,8 +247,7 @@ int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
  */
 bool usart_suspend_flag = false;
 #endif
-extern os_timer_t wake_timer;
-#endif
+os_timer_t wake_timer;
 int is_hs_handshake_done = 0;
 extern os_semaphore_t wakelock;
 extern int wakeup_by;
@@ -1004,6 +1007,12 @@ int wlan_is_started()
 
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
+static void wake_timer_cb(os_timer_arg_t arg)
+{
+    if(wakelock_isheld())
+        wakelock_put();
+}
+
 status_t powerManager_send_event(int id, void *data)
 {
     struct wlan_message msg;
@@ -1016,11 +1025,20 @@ status_t powerManager_send_event(int id, void *data)
     if (ret != 0)
     {
         (void)PRINTF("PM: Failed to send msg to queue\r\n");
+#ifdef CONFIG_ZEPHYR
+        return -WM_FAIL;
+#else
         return kStatus_PMNotifyEventError;
+#endif
     }
+#ifdef CONFIG_ZEPHYR
+    return WM_SUCCESS;
+#else
     return kStatus_PMSuccess;
+#endif
 }
 
+#ifndef CONFIG_ZEPHYR
 status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, void *data)
 {
     int ret;
@@ -1101,6 +1119,7 @@ done:
 #endif
     return kStatus_PMSuccess;
 }
+#endif
 #endif
 
 #ifdef CONFIG_MEF_CFG
@@ -6429,8 +6448,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
                 {
                     is_hs_handshake_done = WLAN_HOSTSLEEP_SUCCESS;
 #ifdef RW610
+#ifndef CONFIG_ZEPHYR
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
                     host_sleep_cli_notify();
+#endif
 #endif
 #endif
                 }
@@ -9838,15 +9859,18 @@ void wlan_reset(cli_reset_option ResetOption)
 
 static void wlan_mon_thread(os_thread_arg_t data)
 {
-    unsigned long delay_ms = 1000;
+    unsigned long delay_ms = 5000;
     int ret = 0;
     struct wlan_message msg;
-    int delay_cnt = 0;
 
 #ifdef CONFIG_PALLADIUM_SUPPORT
     delay_ms = 10;
 #endif
 
+#ifdef CONFIG_POWER_MANAGER
+    os_timer_create(&wake_timer, "wake_timer", os_msec_to_ticks(5000), &wake_timer_cb, NULL,
+                    OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
+#endif
     while (1)
     {
         ret = os_queue_recv(&mon_thread_events, &msg, os_msec_to_ticks(delay_ms));
@@ -9864,7 +9888,14 @@ static void wlan_mon_thread(os_thread_arg_t data)
             }
             else if (msg.id == HOST_SLEEP_EXIT)
             {
-                 wlan_cancel_host_sleep();
+#ifdef CONFIG_POWER_MANAGER
+                if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
+                {
+                    wakelock_get();
+                    os_timer_activate(&wake_timer);
+                }
+#endif
+                wlan_cancel_host_sleep();
             }
 #endif
         }
@@ -9882,15 +9913,11 @@ static void wlan_mon_thread(os_thread_arg_t data)
              *  can also read FW power status by REG PMU->WLAN_CTRL 0x4003_1068
              *  bit[3:2] == 3 means FW is in sleep status
              */
-            delay_cnt++;
-            if ((delay_cnt >= 5) && (mlan_adap != NULL)
-                && (mlan_adap->ps_state == PS_STATE_AWAKE)
-            )
+            if ((mlan_adap != NULL) && (mlan_adap->ps_state == PS_STATE_AWAKE))
             {
 #ifdef CONFIG_CAU_TEMPERATURE
                 wifi_cau_temperature_write_to_firmware();
 #endif
-                delay_cnt = 0;
             }
         }
     }
@@ -13505,6 +13532,11 @@ int wlan_sleep_period(unsigned int *sleep_period, t_u8 action)
         uapsd_sleep_period = *sleep_period;
 
     return ret;
+}
+
+t_u8 wlan_is_wmm_uapsd_enabled(void)
+{
+    return (mlan_adap ? mlan_adap->pps_uapsd_mode : false);
 }
 #endif
 

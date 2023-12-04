@@ -4631,6 +4631,49 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
 #ifdef RW610
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
+#ifdef CONFIG_ZEPHYR
+static void test_wlan_auto_host_sleep(int argc, char **argv)
+{
+    bool is_manual    = MFALSE;
+    t_u8 is_periodic  = 0;
+    t_u8 enable       = 0;
+
+    if (argc > 3 || argc < 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        (void)PRINTF("Usage:\r\n");
+        (void)PRINTF("    wlan-auto-host-sleep <enable> <periodic>\r\n");
+        (void)PRINTF("    enable      -- enable/disable host sleep\r\n");
+        (void)PRINTF("                   0 - disable host sleep\r\n");
+        (void)PRINTF("                   1 - enable host sleep\r\n");
+        (void)PRINTF("    periodic    -- Host enter low power periodically or oneshot\r\n");
+        (void)PRINTF(
+            "                            0 - Oneshot. Host will enter low power only once and keep full power after waking "
+            "up.\r\n");
+        (void)PRINTF("                   1 - Periodic. Host will enter low power periodically.\r\n");
+        (void)PRINTF("Examples:\r\n");
+        (void)PRINTF("    wlan-auto-host-sleep 1 1\r\n");
+        (void)PRINTF("    wlan-auto-host-sleep 0\r\n");
+        return;
+    }
+    enable = (t_u8)atoi(argv[1]);
+    if (enable != 0 && enable != 1)
+    {
+        (void)PRINTF("Error! Invalid input of parameter <enable>\r\n");
+        return;
+    }
+	/* Disable auto host sleep */
+	if (enable == 0)
+    {
+        wlan_cancel_host_sleep();
+        wlan_clear_host_sleep_config();
+        (void)PRINTF("Auto Host Sleep disabled\r\n");
+        return;
+    }
+    is_periodic = (t_u8)atoi(argv[2]);
+    wlan_config_host_sleep(is_manual, is_periodic);
+}
+#else
 static void test_wlan_auto_host_sleep(int argc, char **argv)
 {
     bool is_manual    = MFALSE;
@@ -4710,6 +4753,7 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
         (void)PRINTF("Host will enter low power %s\r\n", is_periodic ? "periodically" : "only once");
     wlan_config_host_sleep(is_manual, is_periodic);
 }
+#endif
 #endif
 #else
 static void test_wlan_ns_offload(int argc, char **argv)
@@ -8850,11 +8894,7 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
 {
     uint32_t pin = 0;
 
-#ifdef CONFIG_WPA_SUPP_WPS
-    wlan_wps_generate_pin((unsigned int *)&pin);
-#else
     wlan_wps_generate_pin(&pin);
-#endif
     PRINTF("WPS PIN is: %d\r\n", pin);
 }
 #endif
@@ -10937,7 +10977,11 @@ static struct cli_command tests[] = {
     {"wlan-wakeup-condition", "<wowlan wake_up_conds>", test_wlan_wakeup_condition},
 #endif /*CONFIG_MEF_CFG*/
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
+#ifdef CONFIG_ZEPHYR
+    {"wlan-auto-host-sleep", "<enable> <periodic>", test_wlan_auto_host_sleep},
+#else
     {"wlan-auto-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_auto_host_sleep},
+#endif
 #endif
 #else
     {"enable-ns-offload", NULL, test_wlan_ns_offload},

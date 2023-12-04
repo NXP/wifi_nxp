@@ -1529,10 +1529,6 @@ void mlan_init_wakeup_irq()
     /* Enable WLAN wakeup done interrupt */
     NVIC_SetPriority(WL_MCI_WAKEUP_DONE0_IRQn, MCI_WAKEUP_DONE_PRIORITY);
     NVIC_EnableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-#else
-    /* Enable WLAN wakeup done interrupt */
-    IRQ_CONNECT(WL_MCI_WAKEUP_DONE0_IRQn, 1, WL_MCI_WAKEUP_DONE0_DriverIRQHandler, 0, 0);
-    irq_enable(WL_MCI_WAKEUP_DONE0_IRQn);
 #endif
 }
 

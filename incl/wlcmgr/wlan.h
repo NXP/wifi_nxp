@@ -3165,9 +3165,38 @@ int wlan_set_mac_addr(uint8_t *mac);
 int wlan_set_uap_mac_addr(uint8_t *mac);
 
 #ifdef CONFIG_WMM_UAPSD
+/** Set QOS info in WLAN firmware.
+ *
+ * \param[in] qos_info UAPSD QOS info.
+ * \param[in] action Set/get action.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
 int wlan_wmm_uapsd_qosinfo(t_u8 *qos_info, t_u8 action);
+/** Enable/disable UAPSD in WLAN firmware.
+ *
+ * \param[in] uapsd_enable Enable/disable UAPSD.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
 int wlan_set_wmm_uapsd(t_u8 uapsd_enable);
+/** Set/get UAPSD sleep period in WLAN firmware.
+ *
+ * \param[in] sleep_period UAPSD sleep period.
+ * \param[in] action Set/get action.
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
 int wlan_sleep_period(unsigned int *sleep_period, t_u8 action);
+/** Check if UAPSD is enabled or not.
+ *
+ * \return true if UAPSD is enabled.
+ * \return false if UAPSD is disabled.
+ */
+t_u8 wlan_is_wmm_uapsd_enabled(void);
 #endif
 
 #ifdef CONFIG_WIFI_TX_BUFF
@@ -3297,6 +3326,13 @@ void wlan_clear_host_sleep_config();
  * \return -WM_FAIL if failed.
  */
 int wlan_set_multicast(t_u8 mef_action);
+#ifdef CONFIG_POWER_MANAGER
+/** This function sent power Manager events to mon_thread
+ * \param[in] id Event ID.
+ * \param[in] data Pointer to event msg.
+ */
+status_t powerManager_send_event(int id, void *data);
+#endif
 #endif
 
 /** Set configuration parameters of IEEE power save mode.
