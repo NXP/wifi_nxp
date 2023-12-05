@@ -184,6 +184,9 @@ typedef enum
 
 /** The number of times that the WLAN Connection Manager will look for a
  *  network before giving up. */
+#ifdef CONFIG_MAX_RESCAN_LIMIT
+#define WLAN_RESCAN_LIMIT CONFIG_MAX_RESCAN_LIMIT
+#else
 #ifdef CONFIG_WPA_SUPP
 #define WLAN_RESCAN_LIMIT 30U
 #else
@@ -191,8 +194,9 @@ typedef enum
 #define WLAN_RESCAN_LIMIT 10U
 #else
 #define WLAN_RESCAN_LIMIT 5U
-#endif
+#endif /* CONFIG_P2P */
 #endif /* CONFIG_WPA_SUPP */
+#endif /* CONFIG_MAX_RESCAN_LIMIT */
 
 #define WLAN_11D_SCAN_LIMIT 3U
 /** The number of times that the WLAN Connection Manager will attempt a
