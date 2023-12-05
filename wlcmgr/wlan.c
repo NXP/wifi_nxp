@@ -7950,6 +7950,19 @@ static bool wlan_is_eap_fast_security(enum wlan_security_type security)
 #endif
     return false;
 }
+
+static bool wlan_is_skip_cert_cfg(enum wlan_security_type security)
+{
+#ifdef CONFIG_EAP_MSCHAPV2
+    if (security == WLAN_SECURITY_EAP_TTLS_MSCHAPV2)
+        return true;
+
+    if (security == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
+        return true;
+#endif
+
+    return false;
+}
 #endif
 #endif
 #endif
@@ -8574,19 +8587,20 @@ int wlan_add_network(struct wlan_network *network)
 #endif
             false)
     {
-        /* Specify CA certificate */
-        network->security.ca_cert_len =
-            wlan_get_entp_cert_files(FILE_TYPE_ENTP_CA_CERT, &network->security.ca_cert_data);
-        if (network->security.ca_cert_len == 0)
-        {
-            wlan_free_entp_cert_files();
-            wlcm_e("CA cert is not configured");
-            return -WM_E_INVAL;
-        }
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
         if (network->role == WLAN_BSS_ROLE_UAP)
         {
+            /* Specify CA certificate */
+            network->security.ca_cert_len =
+                wlan_get_entp_cert_files(FILE_TYPE_ENTP_CA_CERT, &network->security.ca_cert_data);
+            if (network->security.ca_cert_len == 0)
+            {
+                wlan_free_entp_cert_files();
+                wlcm_e("CA cert is not configured");
+                return -WM_E_INVAL;
+            }
+
             /* Specify Server certificate */
             network->security.server_cert_len =
                 wlan_get_entp_cert_files(FILE_TYPE_ENTP_SERVER_CERT, &network->security.server_cert_data);
@@ -8630,8 +8644,18 @@ int wlan_add_network(struct wlan_network *network)
 #endif
 #endif
         {
-            if (wlan_is_eap_fast_security(network->security.type) == false)
+            if (false == wlan_is_skip_cert_cfg(network->security.type))
             {
+                /* Specify CA certificate */
+                network->security.ca_cert_len =
+                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_CA_CERT, &network->security.ca_cert_data);
+                if (network->security.ca_cert_len == 0)
+                {
+                    wlan_free_entp_cert_files();
+                    wlcm_e("CA cert is not configured");
+                    return -WM_E_INVAL;
+                }
+
                 /* Specify Client certificate */
                 network->security.client_cert_len =
                     wlan_get_entp_cert_files(FILE_TYPE_ENTP_CLIENT_CERT, &network->security.client_cert_data);
@@ -8658,7 +8682,8 @@ int wlan_add_network(struct wlan_network *network)
                     return -WM_E_INVAL;
                 }
             }
-            else
+
+            if(true == wlan_is_eap_fast_security(network->security.type))
             {
 #ifdef CONFIG_EAP_FAST
                 /* Specify PAC Data */
@@ -8673,7 +8698,8 @@ int wlan_add_network(struct wlan_network *network)
 #endif
             }
         }
-        if (wlan_is_eap_ttls_security(network->security.type))
+
+        if (WLAN_SECURITY_EAP_TTLS == network->security.type)
         {
             if (network->role == WLAN_BSS_ROLE_STA)
             {
