@@ -3486,11 +3486,14 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
      * while connecting (that is, we are in the CM_STA_ASSOCIATING state).
      * Otherwise, it is ignored. */
 
+#ifndef CONFIG_WPA_SUPP
     if (!is_state(CM_STA_ASSOCIATING))
     {
         wlcm_d("ignoring association result event");
         return;
     }
+#endif
+
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
         wlan.sta_state = CM_STA_ASSOCIATED;
@@ -3538,13 +3541,15 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         os_timer_deactivate(&wlan.supp_status_timer);
         wlan.status_timeout = 0;
 #endif
+
+#ifndef CONFIG_WPA_SUPP
         do_connect_failed(WLAN_REASON_NETWORK_NOT_FOUND);
 
         if (wlan.reassoc_control)
         {
             wlcm_request_reconnect(next, &wlan.networks[wlan.cur_network_idx]);
         }
-
+#endif
         *next = wlan.sta_state;
     }
 }
