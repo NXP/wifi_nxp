@@ -253,6 +253,7 @@ extern os_semaphore_t wakelock;
 extern int wakeup_by;
 bool wlan_is_manual = false;
 #endif
+#endif
 
 /* The monitor thread event queue receives events from the power manager
  * wlan notifier when idle hook is invoked and host is ready to enter
@@ -4289,8 +4290,6 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
     wifi_wfd_event(false, false, NULL);
 #endif
 
-    wifi_restore_region_code();
-
 #ifndef CONFIG_WPA_SUPP
     if (wlan.reassoc_control)
     {
@@ -4363,8 +4362,6 @@ static void wlcm_process_disassoc_event(struct wifi_message *msg, enum cm_sta_st
 
     do_connect_failed(WLAN_REASON_NETWORK_AUTH_FAILED);
 
-    wifi_restore_region_code();
-
     if (wlan.reassoc_control)
     {
         wlcm_request_reconnect(next, network);
@@ -4384,8 +4381,6 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
 #endif
-
-    wifi_restore_region_code();
 }
 
 static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
