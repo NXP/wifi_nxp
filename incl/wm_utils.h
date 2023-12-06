@@ -18,7 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
-#ifdef __ZEPHYR__
+#ifdef CONFIG_ZEPHYR
 #include <zephyr/kernel.h>
 #include <strings.h>
 #else

@@ -42,7 +42,7 @@
 #ifndef _WM_OS_H_
 #define _WM_OS_H_
 
-#ifdef __ZEPHYR__
+#ifdef CONFIG_ZEPHYR
 #include "nxp_wifi.h"
 #include "wm_os_zephyr.h"
 #else

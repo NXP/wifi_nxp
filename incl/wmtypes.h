@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifdef __ZEPHYR__
+#ifdef CONFIG_ZEPHYR
 #include "nxp_wifi.h"
 #endif
 
