@@ -1775,7 +1775,7 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     (void)memset(&wifi_mfg_cmd_generic_cfg, 0x00, sizeof(wifi_mfg_cmd_generic_cfg_t));
 #ifdef RW610
     ret = wifi_check_data_rate_id(data_rate);
-    if (ret != WM_SUCCESS)
+    if ((enable == 1U) && (ret != WM_SUCCESS))
     {
         wifi_e("The configured data rate ID is illegal. data_rate_id: 0x%x\r\n", data_rate);
         return ret;
