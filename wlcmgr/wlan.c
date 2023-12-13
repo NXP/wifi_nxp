@@ -8244,13 +8244,24 @@ int wlan_add_network(struct wlan_network *network)
 
     if ((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA))
     {
-        if (((network->security.type == WLAN_SECURITY_WPA2) || (network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED)) && (network->security.mfpr))
+        if ((network->security.type == WLAN_SECURITY_WPA2) && (network->security.mfpc))
         {
             network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
         }
-        if ((network->security.type == WLAN_SECURITY_WPA2) && (!network->security.mfpc && !network->security.mfpr) && (network->security.key_mgmt == (WLAN_KEY_MGMT_PSK | WLAN_KEY_MGMT_PSK_SHA256)))
+        if ((network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED) && (network->security.mfpr))
         {
-            network->security.key_mgmt = WLAN_KEY_MGMT_PSK;
+            network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+        }
+        if (network->role == WLAN_BSS_ROLE_UAP)
+        {
+            if ((network->security.type == WLAN_SECURITY_WPA2) && (network->security.mfpr))
+            {
+                network->security.key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
+            }
+            if ((network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) && (network->security.mfpc))
+            {
+                network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+            }
         }
     }
 
