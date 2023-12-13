@@ -3858,7 +3858,10 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
 
     os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
-    k_yield();
+    if (msg.event == MLAN_TYPE_BYPASS_DATA && !k_is_in_isr())
+    {
+        k_yield();
+    }
 #else
     if (__get_IPSR())
     {
@@ -3875,7 +3878,10 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     else
     {
         xTaskNotify(wm_wifi.wm_wifi_driver_tx, event, eSetBits);
-        portYIELD();
+        if (event & (1U << TX_TYPE_BYPASS_DATA))
+        {
+            portYIELD();
+        }
     }
 #endif
 }
