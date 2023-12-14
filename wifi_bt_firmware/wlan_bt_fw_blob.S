@@ -15,7 +15,7 @@
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN 8801/sd8801_wlan.bin
 wlan_fw_bin_end
@@ -31,7 +31,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN IW416/sduartIW416_wlan_bt.bin
 wlan_fw_bin_end
@@ -42,7 +42,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
 wlan_fw_bin_end
 wlan_fw_bin_len
@@ -54,7 +54,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN IW416/sdIW416_wlan.bin
 wlan_fw_bin_end
@@ -65,7 +65,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT bt_fw_bin
         EXPORT bt_fw_bin_end
-        EXOORT bt_fw_bin_len
+        EXPORT bt_fw_bin_len
 bt_fw_bin
         INCBIN IW416/uartIW416_bt.bin
 bt_fw_bin_end
@@ -82,7 +82,7 @@ bt_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN 8987/sduart8987_wlan_bt.bin
 wlan_fw_bin_end
@@ -93,7 +93,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT bt_fw_bin
         EXPORT bt_fw_bin_end
-        EXOORT bt_fw_bin_len
+        EXPORT bt_fw_bin_len
 bt_fw_bin
 bt_fw_bin_end
 bt_fw_bin_len
@@ -105,7 +105,7 @@ bt_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN 8987/sd8987_wlan.bin
 wlan_fw_bin_end
@@ -116,7 +116,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT bt_fw_bin
         EXPORT bt_fw_bin_end
-        EXOORT bt_fw_bin_len
+        EXPORT bt_fw_bin_len
 bt_fw_bin
         INCBIN 8987/uart8987_bt.bin
 bt_fw_bin_end
@@ -133,7 +133,7 @@ bt_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN "nw61x/sduart_nw61x.bin.se"
 wlan_fw_bin_end
@@ -144,7 +144,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT bt_fw_bin
         EXPORT bt_fw_bin_end
-        EXOORT bt_fw_bin_len
+        EXPORT bt_fw_bin_len
 bt_fw_bin
 bt_fw_bin_end
 bt_fw_bin_len
@@ -156,7 +156,7 @@ bt_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT wlan_fw_bin
         EXPORT wlan_fw_bin_end
-        EXOORT wlan_fw_bin_len
+        EXPORT wlan_fw_bin_len
 wlan_fw_bin
         INCBIN nw61x/sd_nw61x.bin.se
 wlan_fw_bin_end
@@ -167,7 +167,7 @@ wlan_fw_bin_len
         AREA M0CODE, DATA, READONLY, PREINIT_ARRAY, ALIGN=3
         EXPORT bt_fw_bin
         EXPORT bt_fw_bin_end
-        EXOORT bt_fw_bin_len
+        EXPORT bt_fw_bin_len
 bt_fw_bin
         INCBIN nw61x/uart_nw61x.bin.se
 bt_fw_bin_end
