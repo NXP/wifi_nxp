@@ -144,8 +144,13 @@ static bool wlan_uap_scan_chan_list_set;
 wlan_flt_cfg_t g_flt_cfg;
 #endif
 #ifdef RW610
+#if defined(CONFIG_NXP_FW_LOADER_MONOLITHIC) && defined(CONFIG_ZEPHYR)
+extern const unsigned char *wlan_fw_bin;
+extern const unsigned int wlan_fw_bin_len;
+#else
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
 const unsigned int wlan_fw_bin_len = 0;
+#endif /* CONFIG_NXP_FW_LOADER_MONOLITHIC */
 extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
 #endif
 
