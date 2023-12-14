@@ -1305,6 +1305,8 @@ struct wlan_network_security
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     /** WPA3 Enterprise mode */
+    unsigned wpa3_ent : 1;
+    /** WPA3 Enterprise Suite B mode */
     unsigned wpa3_sb : 1;
     /** WPA3 Enterprise Suite B 192 mode */
     unsigned wpa3_sb_192 : 1;
