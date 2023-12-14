@@ -9258,7 +9258,7 @@ int wlan_get_current_network_bssid(char *bssid)
 
     if (wlan.running && (is_state(CM_STA_CONNECTED) || is_state(CM_STA_ASSOCIATED)))
     {
-        (void)memcpy((void *)bssid, (const void *)&wlan.networks[wlan.cur_network_idx].bssid, IEEEtypes_SSID_SIZE + 1);
+        (void)memcpy((void *)bssid, (const void *)&wlan.networks[wlan.cur_network_idx].bssid, IEEEtypes_ADDRESS_SIZE);
 
         return WM_SUCCESS;
     }
