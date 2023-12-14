@@ -5883,9 +5883,13 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
             CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, NULL);
         }
 #endif
+        if (wlan.connect_wakelock_taken)
+        {
 #ifdef CONFIG_HOST_SLEEP
-        wakelock_put();
+            wakelock_put();
 #endif
+            wlan.connect_wakelock_taken = false;
+        }
         return;
     }
 
@@ -5977,6 +5981,9 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         wlan.connect_wakelock_taken = false;
     }
 #ifdef CONFIG_HOST_SLEEP
+     /* The wakelock will be taken when user issue disconnect command and this time flag wlan.connect_wakelock_taken is false.
+      * Release wakelock when disconnect process is done without check.
+      */
     wakelock_put();
 #endif
 }
