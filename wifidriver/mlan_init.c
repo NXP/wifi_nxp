@@ -31,15 +31,15 @@ Change log:
         Global Variables
 ********************************************************/
 
-/* We are allocating BSS list globally as we need heap for other purposes */
-static BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST];
-
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
 static t_u8 mp_regs_buffer[MAX_MP_REGS + DMA_ALIGNMENT];
 #elif defined(SD8801)
 SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE);
 #endif
+
+/* We are allocating BSS list globally as we need heap for other purposes */
+SDK_ALIGN(BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST], 32);
 
 /********************************************************
         Local Functions
@@ -193,6 +193,8 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
     pmadapter->bcn_buf_size = DEFAULT_SCAN_BEACON_BUFFER;
 #endif
 #endif /* CONFIG_MLAN_WMSDK */
+    (void)__memset(MNULL, &BSS_List, 0x00, sizeof(BSS_List));
+
     pmadapter->pscan_table = BSS_List;
 #ifdef CONFIG_SCAN_CHANNEL_GAP
     pmadapter->num_in_chan_stats = chan_2g_size;
@@ -618,10 +620,6 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->rssi_threshold = 0;
 #endif
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
-    pmadapter->scan_chan_gap = 0;
-#endif
-
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->bcn_buf, 0, pmadapter->bcn_buf_size);
@@ -660,6 +658,25 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->gen_null_pkt   = MFALSE; /* Disable NULL Pkt generation-default */
     pmadapter->pps_uapsd_mode = MFALSE; /* Disable pps/uapsd mode -default */
 #endif
+#ifdef CONFIG_HOST_SLEEP
+    pmadapter->is_hs_configured          = MFALSE;
+    pmadapter->mgmt_filter[0].action     = 0;        /* discard and not wakeup host */
+    pmadapter->mgmt_filter[0].type       = 0xff;     /* management frames */
+    pmadapter->mgmt_filter[0].frame_mask = 0x1400;   /* Frame-Mask bits :
+                                                        : Bit 0 - Association Request
+                                                        : Bit 1 - Association Response
+                                                        : Bit 2 - Re-Association Request
+                                                        : Bit 3 - Re-Association Response
+                                                        : Bit 4 - Probe Request
+                                                        : Bit 5 - Probe Response
+                                                        : Bit 8 - Beacon Frames
+                                                        : Bit 10 - Disassociation
+                                                        : Bit 11 - Authentication
+                                                        : Bit 12 - Deauthentication
+                                                        : Bit 13 - Action Frames
+                                                     */
+#endif
+
 #ifndef CONFIG_MLAN_WMSDK
     pmadapter->delay_null_pkt = MFALSE;
 

@@ -58,8 +58,7 @@ t_u64 csi_event_data_len = 0;
 extern wifi_ecsa_status_control ecsa_status_control;
 #endif
 
-#define WIFI_COMMAND_RESPONSE_WAIT_MS 20000
-#define WIFI_CORE_STACK_SIZE          (2048)
+#define WIFI_CORE_STACK_SIZE (2048)
 /* We don't see events coming in quick succession,
  * MAX_EVENTS = 10 is fairly big value */
 #define MAX_EVENTS    20
@@ -141,7 +140,8 @@ bool wifi_shutdown_enable = false;
 
 typedef enum __mlan_status
 {
-    MLAN_CARD_NOT_DETECTED = 3,
+    MLAN_STATUS_FW_DNLD_SKIP = 1,
+    MLAN_CARD_NOT_DETECTED   = 3,
     MLAN_STATUS_FW_DNLD_FAILED,
     MLAN_STATUS_FW_NOT_DETECTED,
     MLAN_STATUS_FW_NOT_READY,
@@ -1025,13 +1025,19 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 #endif
 
 #if defined(CONFIG_WIFI_IND_DNLD)
-static int wifi_reinit();
+static int wifi_reinit(uint8_t fw_reload);
 t_u8 wifi_rx_block_cnt;
 t_u8 wifi_tx_block_cnt;
 
-void wlan_process_hang()
+void wlan_process_hang(uint8_t fw_reload)
 {
     int i, ret = WM_SUCCESS;
+
+    if (mlan_adap->in_reset == true)
+    {
+        wifi_d("Already in process hanging");
+        return;
+    }
 
     wifi_d("Start to process hanging");
 
@@ -1078,21 +1084,13 @@ void wlan_process_hang()
 
     (void)wifi_event_completion(WIFI_EVENT_FW_HANG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
-    ret = wifi_reinit();
+    ret = wifi_reinit(fw_reload);
 
     if (ret != WM_SUCCESS)
     {
         ASSERT(0);
     }
 
-#ifndef RW610
-    ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
-    if (ret != WM_SUCCESS)
-    {
-        wifi_e("sd_wifi_post_init failed. status code %d", ret);
-        return;
-    }
-#endif
     /* Unblock TX data */
     wifi_set_tx_status(WIFI_DATA_RUNNING);
     /* Unblock RX data */
@@ -1175,7 +1173,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
     if (ret != WM_SUCCESS)
     {
-        wifi_e("Failed to wakeup card\r\n");
+#ifdef CONFIG_WIFI_PS_DEBUG
+        wifi_e("Failed to wakeup card");
+#endif
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
 #ifdef CONFIG_WIFI_RECOVERY
@@ -1251,7 +1251,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #else
         /* assert as command flow cannot work anymore */
 #if defined(CONFIG_WIFI_IND_DNLD)
-        wlan_process_hang();
+        wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
 #else
         ASSERT(0);
 #endif
@@ -1809,15 +1809,6 @@ static void wifi_scan_input(void *argv)
                 wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
-#ifndef SD8801
-            else
-            {
-                (void)wlan_active_scan_req_for_passive_chan((mlan_private *)mlan_adap->priv[0],
-                                                            wm_wifi.g_user_scan_cfg);
-                wifi_user_scan_config_cleanup();
-                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
-            }
-#endif
         }
         scan_thread_in_process = false;
     } /* for ;; */
@@ -1953,6 +1944,7 @@ static int wifi_core_init(void)
 
     wifi_core_thread = wm_wifi.wm_wifi_core_thread;
 #endif
+
     wifi_core_init_done = 1;
 
 #ifdef CONFIG_WMM
@@ -2052,6 +2044,12 @@ static int wifi_core_init(void)
 #ifdef CONFIG_FW_VDLL
     (void)mlan_adap->callbacks.moal_init_timer(mlan_adap->pmoal_handle, &mlan_adap->vdll_timer, wlan_vdll_complete,
                                                NULL);
+#endif
+
+#if defined(SD8801) || defined(RW610)
+    wifi_uap_set_bandwidth(BANDWIDTH_20MHZ);
+#else
+    wifi_uap_set_bandwidth(BANDWIDTH_40MHZ);
 #endif
 
     return WM_SUCCESS;
@@ -2286,14 +2284,17 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 }
 
 #if defined(CONFIG_WIFI_IND_DNLD)
-static int wifi_reinit()
+static int wifi_reinit(uint8_t fw_reload)
 {
     int ret = WM_SUCCESS;
 
-    ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, wm_wifi.fw_start_addr, wm_wifi.size);
+    ret = (int)sd_wifi_reinit(WLAN_TYPE_NORMAL, wm_wifi.fw_start_addr, wm_wifi.size, fw_reload);
     if (ret != WM_SUCCESS)
     {
-        wifi_e("sd_wifi_reinit failed. status code %d", ret);
+        if (ret != MLAN_STATUS_FW_DNLD_SKIP)
+        {
+            wifi_e("sd_wifi_reinit failed. status code %d", ret);
+        }
         switch (ret)
         {
             case MLAN_CARD_CMD_TIMEOUT:
@@ -2314,12 +2315,26 @@ static int wifi_reinit()
             case MLAN_STATUS_FW_NOT_READY:
                 ret = -WIFI_ERROR_FW_NOT_READY;
                 break;
+            case MLAN_STATUS_FW_DNLD_SKIP:
+                ret = WM_SUCCESS;
+                break;
             default:
                 PRINTM(MINFO, "Unexpected MLAN FW Status \n");
                 ret = -WM_FAIL;
                 break;
         }
     }
+#ifndef RW610
+    else
+    {
+        ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
+        if (ret != WM_SUCCESS)
+        {
+            wifi_e("sd_wifi_post_init failed. status code %d", ret);
+            return ret;
+        }
+    }
+#endif
 
     return ret;
 }
@@ -3450,7 +3465,9 @@ void wifi_tx_card_awake_lock(void)
     os_mutex_put(&(sleep_rwlock.write_mutex));
     if (ret != WM_SUCCESS)
     {
+#ifdef CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card for Tx");
+#endif
 #ifdef CONFIG_WIFI_RECOVERY
         wifi_recovery_enable = true;
 #else
@@ -4081,11 +4098,20 @@ static void wifi_driver_tx(void *data)
 #ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_11AX
 #ifdef CONFIG_TCP_ACK_ENH
-#define ETH_PROTO_IP             0x0800U
-#define WIFI_IPPROTO_TCP         6
+#define ETH_PROTO_IP     0x0800U
+#define WIFI_IPPROTO_TCP 6
+
 #define RATEID_VHT_MCS7_1SS_BW80 58
 #define RATEID_VHT_MCS7_1SS_BW40 48
 #define RATEID_VHT_MCS7_1SS_BW20 38
+
+#define RATEID_VHT_MCS8_1SS_BW80 59
+#define RATEID_VHT_MCS8_1SS_BW40 49
+#define RATEID_VHT_MCS8_1SS_BW20 39
+
+#define RATEID_VHT_MCS9_1SS_BW80 60
+#define RATEID_VHT_MCS9_1SS_BW40 50
+#define RATEID_VHT_MCS9_1SS_BW20 40
 
 static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
 {
@@ -4226,7 +4252,7 @@ int wifi_low_level_output(const t_u8 interface,
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
 #ifndef CONFIG_ZEPHYR
-    if (pmpriv->media_connected == MFALSE)
+    if ((pmpriv->media_connected == MFALSE) && (interface == WLAN_BSS_TYPE_STA))
     {
 #ifdef CONFIG_WMM
         wifi_wmm_buf_put((outbuf_t *)sd_buffer);
@@ -4248,10 +4274,24 @@ int wifi_low_level_output(const t_u8 interface,
         if (ret)
         {
             if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_80MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
             else if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_40MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                tx_control = (RATEID_VHT_MCS9_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
             else if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_20MHZ)
+                tx_control = (RATEID_VHT_MCS9_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+        }
+    }
+    else if ((interface == MLAN_BSS_TYPE_UAP) &&
+             ((mlan_adap->usr_dot_11ax_enable == MTRUE) || (mlan_adap->usr_dot_11ac_enable == MTRUE)))
+    {
+        ret = wlan_is_tcp_ack(pmpriv, buffer);
+        if (ret)
+        {
+            if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
+                tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+            else if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
+                tx_control = (RATEID_VHT_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+            else if (wm_wifi.bandwidth == BANDWIDTH_20MHZ)
                 tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
         }
     }

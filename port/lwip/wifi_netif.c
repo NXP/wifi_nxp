@@ -653,10 +653,13 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         return ERR_OK;
     }
 
-    if (wifi_add_to_bypassq(interface, p, p->tot_len) == WM_SUCCESS)
+    if (interface == WLAN_BSS_TYPE_STA)
     {
-        LINK_STATS_INC(link.xmit);
-        return ERR_OK;
+        if (wifi_add_to_bypassq(interface, p, p->tot_len) == WM_SUCCESS)
+        {
+            LINK_STATS_INC(link.xmit);
+            return ERR_OK;
+        }
     }
 
     wifi_wmm_da_to_ra(p->payload, ra);

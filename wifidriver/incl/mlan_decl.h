@@ -259,6 +259,8 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 /** BIT value */
 #define MBIT(x) (((t_u32)1) << (x))
 
+#define MRVL_PKT_TYPE_MGMT_FRAME 0xE5
+
 /** Buffer flag for requeued packet */
 #define MLAN_BUF_FLAG_REQUEUED_PKT MBIT(0)
 /** Buffer flag for transmit buf from moal */
@@ -268,6 +270,9 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Buffer flag for bridge packet */
 #define MLAN_BUF_FLAG_BRIDGE_BUF MBIT(3)
+
+/** Buffer flag for TX_STATUS */
+#define MLAN_BUF_FLAG_TX_STATUS MBIT(10)
 
 #ifdef DEBUG_LEVEL1
 /** Debug level bit definition */
@@ -297,6 +302,17 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Default memory allocation flag */
 #define MLAN_MEM_DEF 0U
+
+#ifdef CONFIG_WIFI_IND_DNLD
+/** driver initial the fw reset */
+#define FW_RELOAD_SDIO_INBAND_RESET 1
+/** out band reset trigger reset, no interface re-emulation */
+#define FW_RELOAD_NO_EMULATION 2
+/** out band reset with interface re-emulation */
+#define FW_RELOAD_WITH_EMULATION 3
+/** sdio hw reset */
+#define FW_RELOAD_SDIO_HW_RESET 5
+#endif
 
 /** MrvlExtIEtypesHeader_t */
 typedef MLAN_PACK_START struct _MrvlExtIEtypesHeader

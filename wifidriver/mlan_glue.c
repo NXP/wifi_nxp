@@ -25,6 +25,10 @@
 #include "wifi-sdio.h"
 #endif
 
+#ifdef CONFIG_WPA_SUPP
+#include "wifi_nxp.h"
+#endif
+
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
@@ -144,6 +148,8 @@ int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payl
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);
 
 int wrapper_wlan_handle_amsdu_rx_packet(const t_u8 *rcvdata, const t_u16 datalen);
+
+void wlan_process_hang(uint8_t fw_reload);
 
 #ifdef CONFIG_11N
 /*
@@ -2964,7 +2970,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
 #endif
                 break;
             case HostCmd_CMD_802_11_HS_CFG_ENH:
+#ifdef CONFIG_HOST_SLEEP
                 wifi_process_hs_cfg_resp((t_u8 *)resp);
+#endif
                 break;
             case HostCmd_CMD_802_11_PS_MODE_ENH:
             {
@@ -4338,6 +4346,18 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     wm_wifi.cmd_resp_status = -WM_FAIL;
                 break;
 #endif
+            case HostCmd_CMD_802_11_TX_FRAME:
+            {
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+            }
+            break;
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -4989,6 +5009,12 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     }
 
     memset(&pmpriv->scan_cfg, 0, sizeof(pmpriv->scan_cfg));
+
+    if (wm_wifi.g_user_scan_cfg != NULL)
+    {
+        pmpriv->scan_cfg.start_later = MTRUE;
+    }
+
     /* Fill scan config field for bg scan */
     strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, MLAN_MAX_SSID_LENGTH);
     pmpriv->scan_cfg.ssid_list[0].ssid[MLAN_MAX_SSID_LENGTH] = '\0';
@@ -4996,8 +5022,8 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
     pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low;
     pmpriv->scan_cfg.repeat_count         = DEF_REPEAT_COUNT;
-    pmpriv->scan_cfg.scan_interval        = 2000; // MIN_BGSCAN_INTERVAL;
-    pmpriv->scan_cfg.chan_per_scan        = 14;
+    pmpriv->scan_cfg.scan_interval        = MIN_BGSCAN_INTERVAL;
+    pmpriv->scan_cfg.chan_per_scan        = WLAN_USER_SCAN_CHAN_MAX;
     pmpriv->scan_cfg.num_probes           = 2;
 
     wifi_get_band(pmpriv, &band);
@@ -5048,10 +5074,13 @@ int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
-    mlan_adapter *pmadapter  = pmpriv->adapter;
 
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_status rv = MLAN_STATUS_SUCCESS;
+#endif
+
+#ifdef CONFIG_WPA_SUPP
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)wm_wifi.if_priv;
 #endif
 
     Event_Ext_t *evt = ((Event_Ext_t *)msg->data);
@@ -5096,6 +5125,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
                                         (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
 #ifdef CONFIG_WPA_SUPP
+            wifi_if_ctx_rtos->associated = MFALSE;
+
             wpa_supp_handle_link_lost(pmpriv);
 #endif
 #ifdef CONFIG_11N
@@ -5104,6 +5135,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             break;
         case EVENT_DEAUTHENTICATED:
+#ifdef CONFIG_WPA_SUPP
+            wifi_if_ctx_rtos->associated = MFALSE;
+#endif
             if (evt->reason_code == 0U)
             {
                 (void)wifi_event_completion(WIFI_EVENT_LINK_LOSS, WIFI_EVENT_REASON_FAILURE,
@@ -5121,6 +5155,10 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
             break;
         case EVENT_DISASSOCIATED:
+#ifdef CONFIG_WPA_SUPP
+            wifi_if_ctx_rtos->associated = MFALSE;
+#endif
+
 #ifndef CONFIG_WPA_SUPP
             (void)wifi_event_completion(WIFI_EVENT_DISASSOCIATION, WIFI_EVENT_REASON_FAILURE,
                                         (void *)IEEEtypes_REASON_DEAUTH_LEAVING);
@@ -5143,40 +5181,31 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #ifdef CONFIG_WIFI_PS_DEBUG
             wevt_d("_");
 #endif
-            if (!pmadapter->cmd_sent && !pmadapter->keep_wakeup)
+            if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
             {
-                if (mlan_adap->ps_state != PS_STATE_PRE_SLEEP)
-                {
-                    mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
+                mlan_adap->ps_state = PS_STATE_PRE_SLEEP;
 #ifdef CONFIG_HOST_SLEEP
-                    wakelock_get();
+                wakelock_get();
 #endif
-                    if (split_scan_in_progress == false)
-                    {
-                        /* When received EVENT_PS_SLEEP, firstly send msg to wifi_powersave task
-                         * with lowest priority, then send msg to wlcmgr task. This will let all
-                         * TX data transmitted, then continue the 0xe4 cmd handshake */
-                        struct wifi_message ps_msg;
-                        ps_msg.reason = WIFI_EVENT_REASON_SUCCESS;
-                        ps_msg.event  = WIFI_EVENT_SLEEP;
-                        os_queue_send(&wm_wifi.powersave_queue, &ps_msg, OS_NO_WAIT);
-                    }
-                    else
-                    {
-                        /** Do Nothing */
-                    }
+                if (split_scan_in_progress == false)
+                {
+                    /* When received EVENT_PS_SLEEP, firstly send msg to wifi_powersave task
+                     * with lowest priority, then send msg to wlcmgr task. This will let all
+                     * TX data transmitted, then continue the 0xe4 cmd handshake */
+                    struct wifi_message ps_msg;
+                    ps_msg.reason = WIFI_EVENT_REASON_SUCCESS;
+                    ps_msg.event  = WIFI_EVENT_SLEEP;
+                    os_queue_send(&wm_wifi.powersave_queue, &ps_msg, OS_NO_WAIT);
                 }
                 else
                 {
-                    /* Unexpected PS SLEEP event */
-                    wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
+                    /** Do Nothing */
                 }
             }
             else
             {
-#ifdef CONFIG_WIFI_PS_DEBUG
-                wevt_d("+");
-#endif
+                /* Unexpected PS SLEEP event */
+                wevt_w("Receive PS SLEEP event when presleep: %d", mlan_adap->ps_state);
             }
             break;
         case EVENT_PS_AWAKE:
@@ -5595,6 +5624,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 wifi_user_scan_config_cleanup();
                 return -WM_FAIL;
             }
+            if (is_split_scan_complete() && !pext_scan_result->more_event)
+            {
+                wifi_d("Split scan complete");
+                wifi_user_scan_config_cleanup();
+                wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
+            }
             break;
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
@@ -5646,6 +5681,12 @@ int wifi_handle_fw_event(struct bus_message *msg)
 #endif
 #ifdef CONFIG_WPA_SUPP
         case EVENT_ASSOC_REQ_IE:
+#ifdef CONFIG_AUTO_RECONNECT
+            if (pmpriv->media_connected == MTRUE)
+            {
+                wifi_event_completion(WIFI_EVENT_ASSOCIATION_NOTIFY, WIFI_EVENT_REASON_SUCCESS, NULL);
+            }
+#endif
             pmpriv->assoc_req_size = evt->length - 8;
             (void)memcpy((void *)pmpriv->assoc_req_buf, (const void *)((uint8_t *)&evt->reason_code),
                          pmpriv->assoc_req_size);
@@ -8104,4 +8145,12 @@ int wifi_test_independent_reset()
     wifi_wait_for_cmdresp(NULL);
     return WM_SUCCESS;
 }
+
+int wifi_trigger_oob_indrst()
+{
+    wlan_process_hang(FW_RELOAD_NO_EMULATION);
+
+    return WM_SUCCESS;
+}
+
 #endif

@@ -4576,7 +4576,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
             ret = wlan_send_host_sleep(wowlan);
             if (ret == WM_SUCCESS)
             {
-                (void)PRINTF("Host sleep configuration successs with regular condition");
+                (void)PRINTF("Host sleep configuration req sent");
             }
             else
             {
@@ -8860,6 +8860,12 @@ static void test_wlan_start_wps_pbc(int argc, char **argv)
 {
     int ret;
 
+    if (argc != 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
     ret = wlan_start_wps_pbc();
 
     if (ret == -WM_FAIL)
@@ -8870,13 +8876,21 @@ static void test_wlan_start_wps_pbc(int argc, char **argv)
     {
         PRINTF("FAIL-PBC-OVERLAP\r\n");
     }
+    else
+    {
+        PRINTF("Started WPS PBC session\r\n");
+    }
 }
 
 static void test_wlan_start_wps_pin(int argc, char **argv)
 {
     int ret = -WM_FAIL;
 
-    PRINTF("Start WPS PIN session with %s pin\r\n", argv[1]);
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
 
 #if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
@@ -8888,11 +8902,21 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
     {
         PRINTF("Invalid PIN entered\r\n");
     }
+    else
+    {
+        PRINTF("Started WPS PIN session with pin as: %s\r\n", argv[1]);
+    }
 }
 
 static void test_wlan_wps_generate_pin(int argc, char **argv)
 {
     uint32_t pin = 0;
+
+    if (argc != 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
 
     wlan_wps_generate_pin(&pin);
     PRINTF("WPS PIN is: %d\r\n", pin);
@@ -8902,6 +8926,12 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
 static void test_wlan_wps_cancel(int argc, char **argv)
 {
     int ret;
+
+    if (argc != 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
 
     ret = wlan_wps_cancel();
 
@@ -8915,6 +8945,12 @@ static void test_wlan_start_ap_wps_pbc(int argc, char **argv)
 {
     int ret;
 
+    if (argc != 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
     ret = wlan_start_ap_wps_pbc();
 
     if (ret != WM_SUCCESS)
@@ -8927,7 +8963,11 @@ static void test_wlan_start_ap_wps_pin(int argc, char **argv)
 {
     int ret = -WM_FAIL;
 
-    PRINTF("Start AP WPS PIN session with %s pin\r\n", argv[1]);
+    if (argc != 2)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
 
     ret = wlan_start_ap_wps_pin(argv[1]);
 
@@ -8935,11 +8975,21 @@ static void test_wlan_start_ap_wps_pin(int argc, char **argv)
     {
         PRINTF("Start AP WPS PIN failed\r\n");
     }
+    else
+    {
+        PRINTF("Started AP WPS PIN session with pin as: %s\r\n", argv[1]);
+    }
 }
 
 static void test_wlan_wps_ap_cancel(int argc, char **argv)
 {
     int ret;
+
+    if (argc != 1)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
 
     ret = wlan_wps_ap_cancel();
 
@@ -10489,7 +10539,7 @@ static void test_set_indrst_cfg(int argc, char **argv)
     }
     else
     {
-        (void)PRINTF("Independent Reset Mode set as :%s\n\r",
+        (void)PRINTF("Independent Reset Mode set as: %s\n\r",
                      (indrst_cfg.ir_mode == 0) ? "disabled" : ((indrst_cfg.ir_mode == 1) ? "Out Band" : "In Band"));
     }
 }
@@ -10518,11 +10568,50 @@ static void test_get_indrst_cfg(int argc, char **argv)
             (void)PRINTF("GPIO Pin = %d\n\n", indrst_cfg.gpio_pin);
     }
 }
+
+static void dump_wlan_independent_reset_usage(void)
+{
+    (void)PRINTF("Usage :                                               \r\n");
+    (void)PRINTF("         wlan-independent-reset <ir_mode>             \r\n");
+    (void)PRINTF("         ir_mode   : 1 -- Trigger out band reset      \r\n");
+    (void)PRINTF("                     2 -- Trigger in band reset       \r\n");
+}
+
 static void test_wlan_independent_reset(int argc, char **argv)
 {
-    int ret;
+    int ret = -WM_FAIL;
+    uint8_t ir_mode;
 
-    ret = wlan_test_independent_reset();
+    if (argc != 2)
+    {
+        dump_wlan_independent_reset_usage();
+        return;
+    }
+
+    errno   = 0;
+    ir_mode = (uint8_t)strtol(argv[1], NULL, 0);
+
+    if (errno != 0)
+    {
+        (void)PRINTF("Error during strtoul errno:%d", errno);
+    }
+
+    /* ir_mode */
+    if (ir_mode != 1 && ir_mode != 2)
+    {
+        (void)PRINTF("Invalid ir mode parameter (1/2)!\n\r");
+        dump_wlan_independent_reset_usage();
+        return;
+    }
+
+    if (ir_mode == 1)
+    {
+        ret = wlan_trigger_oob_ind_reset();
+    }
+    else if (ir_mode == 2)
+    {
+        ret = wlan_test_independent_reset();
+    }
 
     if (ret == WM_SUCCESS)
     {
@@ -11216,7 +11305,7 @@ static struct cli_command tests[] = {
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
     {"wlan-set-indrstcfg", "<mode> <gpio_pin>", test_set_indrst_cfg},
     {"wlan-get-indrstcfg", NULL, test_get_indrst_cfg},
-    {"wlan-independent-reset", NULL, test_wlan_independent_reset},
+    {"wlan-independent-reset", "<mode>", test_wlan_independent_reset},
 #endif
 #ifdef CONFIG_ENABLE_HTTPSERVER
     {"wlan-start-httpserver", NULL, test_wlan_start_httpserver},

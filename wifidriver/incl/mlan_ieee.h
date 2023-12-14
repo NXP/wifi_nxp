@@ -1977,6 +1977,10 @@ typedef MLAN_PACK_START struct
 #define BG_SCAN_WAIT_ALL_CHAN_DONE 0x80000000
 /** Maximum number of channels that can be sent in bg scan config */
 #define WLAN_BG_SCAN_CHAN_MAX 38
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+/** max bgscan chan number, include UNII_4 channel */
+#define WLAN_BG_SCAN_CHAN_MAX_UNII_4 41
+#endif
 /** Min BGSCAN interval 30 second */
 #define MIN_BGSCAN_INTERVAL 30000
 /** default repeat count */
@@ -2151,6 +2155,8 @@ typedef MLAN_PACK_START struct
     t_u8 snr_threshold;
     /** repeat count */
     t_u16 repeat_count;
+    /** start later flag */
+    t_u16 start_later;
     /** SSID filter list used in the to limit the scan results */
     wlan_user_scan_ssid ssid_list[MRVDRV_MAX_SSID_LIST_LENGTH];
     /** Variable number (fixed maximum) of channels to scan up */

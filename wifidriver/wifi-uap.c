@@ -112,7 +112,7 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         vht_cfg.band = BAND_SELECT_BG;
     }
 #else
-    vht_cfg.band = BAND_SELECT_BG;
+    vht_cfg.band                     = BAND_SELECT_BG;
 #endif
     vht_cfg.txrx = MLAN_RADIO_TXRX;
 
@@ -338,7 +338,7 @@ int wifi_uap_downld_domain_params(int channel, wifi_scan_chan_list_t scan_chan_l
     wifi_sub_band_set_t *sub_band_list = NULL;
 
     /* uap acs case, set sub_band_list based on scan_chan_list */
-    if(channel == 0)
+    if (channel == 0)
     {
         channel = scan_chan_list.chan_number[0];
     }
@@ -581,7 +581,7 @@ static int wifi_cmd_uap_config(char *ssid,
         }
         else if (security == WLAN_SECURITY_WPA_WPA2_MIXED)
         {
-            bss.param.bss_config.protocol                     = PROTOCOL_WPA2_MIXED;
+            bss.param.bss_config.protocol = PROTOCOL_WPA2_MIXED;
             if (key_mgmt & WLAN_KEY_MGMT_PSK)
             {
                 bss.param.bss_config.key_mgmt = KEY_MGMT_PSK;
@@ -2628,8 +2628,8 @@ static t_u16 wifi_filter_beacon_ies(mlan_private *priv,
                     if (0 == wlan_cmd_11ax_cfg(priv, HostCmd_ACT_GEN_GET, &he_cfg))
                     {
                         t_u16 he_cap_len;
-						hecap_ie = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
-                        he_cap_len = he_cfg.he_cap.len;
+                        hecap_ie                      = (IEEEtypes_HECap_t *)&he_cfg.he_cap.len;
+                        he_cap_len                    = he_cfg.he_cap.len;
                         hecap_ie->ieee_hdr.len        = he_cap_len;
                         hecap_ie->ieee_hdr.element_id = he_cfg.he_cap.id;
 
@@ -3946,6 +3946,7 @@ Bit18: 0x1 (STBC Tx <= 80 MHz)
 Bit19: 0x1 (STBC Rx <= 80 MHz)
 Bit20: 0x1 (Doppler Tx)
 Bit21: 0x1 (Doppler Rx)
+Bit24-25: 0x1 (DCM Max Constellation Tx)
 Bit27-28: 0x1 (DCM Max Constellation Rx)
 Bit31: 0x1 (SU Beamformer)
 Bit32: 0x1 (SU BeamFormee)
@@ -3968,7 +3969,7 @@ Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 #define UAP_HE_PHY_CAP0_MASK  0x04
 #define UAP_HE_PHY_CAP1_MASK  0x23
 #define UAP_HE_PHY_CAP2_MASK  0x3E
-#define UAP_HE_PHY_CAP3_MASK  0x88
+#define UAP_HE_PHY_CAP3_MASK  0x89
 #define UAP_HE_PHY_CAP4_MASK  0x1D
 #define UAP_HE_PHY_CAP5_MASK  0x01
 #define UAP_HE_PHY_CAP6_MASK  0xA0
@@ -3995,6 +3996,7 @@ Bit18: 0x1 (STBC Tx <= 80 MHz)
 Bit19: 0x1 (STBC Rx <= 80 MHz)
 Bit20: 0x1 (Doppler Tx)
 Bit21: 0x1 (Doppler Rx)
+Bit24-25: 0x1 (DCM Max Constellation Tx)
 Bit27-28: 0x1 (DCM Max Constellation Rx)
 Bit31: 0x1 (SU Beamformer)
 Bit32: 0x1 (SU BeamFormee)
@@ -4016,7 +4018,7 @@ Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 #define UAP_HE_2G_PHY_CAP0_MASK  0x02
 #define UAP_HE_2G_PHY_CAP1_MASK  0x20
 #define UAP_HE_2G_PHY_CAP2_MASK  0x3E
-#define UAP_HE_2G_PHY_CAP3_MASK  0x88
+#define UAP_HE_2G_PHY_CAP3_MASK  0x89
 #define UAP_HE_2G_PHY_CAP4_MASK  0x1D
 #define UAP_HE_2G_PHY_CAP5_MASK  0x01
 #define UAP_HE_2G_PHY_CAP6_MASK  0xA0

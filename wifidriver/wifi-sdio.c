@@ -2010,8 +2010,45 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
         pmadapter->sdio_ireg |= sdio_ireg;
     }
 
+#ifdef CONFIG_WMM
+    t_u32 wr_bitmap;
+
+#if defined(SD8801)
+    wr_bitmap = ((t_u16)mp_regs[WR_BITMAP_U]) << 8;
+    wr_bitmap |= (t_u16)mp_regs[WR_BITMAP_L];
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
+    wr_bitmap = (t_u32)mp_regs[WR_BITMAP_L];
+    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_U]) << 8;
+    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1L]) << 16;
+    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1U]) << 24;
+#endif
+
+    if (!!wr_bitmap)
+    {
+        if (mlan_adap->wait_txbuf == true)
+        {
+            os_semaphore_put(&txbuf_sem);
+        }
+        send_wifi_driver_tx_data_event(0);
+    }
+#endif
+
 #ifdef CONFIG_WIFI_IO_DEBUG
-    t_u32 rd_bitmap, wr_bitmap;
+    t_u32 rd_bitmap;
+#ifndef CONFIG_WMM
+    t_u32 wr_bitmap;
+
+#if defined(SD8801)
+    wr_bitmap = ((t_u16)mp_regs[WR_BITMAP_U]) << 8;
+    wr_bitmap |= (t_u16)mp_regs[WR_BITMAP_L];
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
+    wr_bitmap = (t_u32)mp_regs[WR_BITMAP_L];
+    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_U]) << 8;
+    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1L]) << 16;
+    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1U]) << 24;
+#endif
+
+#endif
 #if defined(SD8801)
     rd_bitmap = ((t_u16)mp_regs[RD_BITMAP_U]) << 8;
     rd_bitmap |= (t_u16)mp_regs[RD_BITMAP_L];
@@ -2023,16 +2060,6 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
 #endif
 
     (void)PRINTF("INT : rd_bitmap=0x%x\n\r", rd_bitmap);
-
-#if defined(SD8801)
-    wr_bitmap = ((t_u16)mp_regs[WR_BITMAP_U]) << 8;
-    wr_bitmap |= (t_u16)mp_regs[WR_BITMAP_L];
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
-    wr_bitmap = (t_u32)mp_regs[WR_BITMAP_L];
-    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_U]) << 8;
-    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1L]) << 16;
-    wr_bitmap |= ((t_u32)mp_regs[WR_BITMAP_1U]) << 24;
-#endif
 
     (void)PRINTF("INT : wr_bitmap=0x%x\n\r", wr_bitmap);
 
@@ -2841,17 +2868,46 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
         if (intf != MNULL)
         {
             ret = (mlan_status)firmware_download(fw_start_addr, size, intf, 0);
-        }
+        } else {
+            ret = MLAN_STATUS_FAILURE;
+	}
     }
     return ret;
 }
 
 #if defined(CONFIG_WIFI_IND_DNLD)
-mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size)
+mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
-    ret = (mlan_status)firmware_download(fw_start_addr, size, intf, FW_RELOAD_SDIO_INBAND_RESET);
+    if (fw_reload == FW_RELOAD_NO_EMULATION)
+    {
+        int sta = (int)os_enter_critical_section();
+        /* Allow interrupt handler to deliver us a packet */
+        g_txrx_flag = false;
+
+        sdio_disable_interrupt();
+
+        os_exit_critical_section((unsigned long)sta);
+
+        sdio_ioport_init();
+    }
+
+    ret = (mlan_status)firmware_download(fw_start_addr, size, intf, fw_reload);
+
+    if (ret != MLAN_STATUS_FAILURE)
+    {
+        if (fw_reload == FW_RELOAD_NO_EMULATION)
+        {
+            int sta = (int)os_enter_critical_section();
+            /* Allow interrupt handler to deliver us a packet */
+            g_txrx_flag = true;
+
+            sdio_enable_interrupt();
+
+            os_exit_critical_section((unsigned long)sta);
+        }
+    }
 
     return ret;
 }
@@ -2939,6 +2995,22 @@ void wifi_print_wakeup_reason(t_u16 hs_wakeup_reason)
     else if (hs_wakeup_reason == 7)
     {
         PRINTF("Woken up by Magic pattern matched\r\n");
+    }
+    else if (hs_wakeup_reason == 8)
+    {
+        PRINTF("Woken up by control frames matched \r\n");
+    }
+    else if (hs_wakeup_reason == 9)
+    {
+        PRINTF("Woken up by management frame matched \r\n");
+    }
+    else if (hs_wakeup_reason == 10)
+    {
+        PRINTF("Woken up by GTK rekey failure\r\n");
+    }
+    else if (hs_wakeup_reason == 11)
+    {
+        PRINTF("Woken up by management frame filter extension matched\r\n");
     }
     else
     {

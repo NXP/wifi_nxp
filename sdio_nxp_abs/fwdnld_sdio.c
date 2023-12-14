@@ -75,17 +75,39 @@ static bool wlan_sdio_check_fw_status(t_u32 card_poll)
 }
 
 #ifdef CONFIG_WIFI_IND_DNLD
+
+/**  @brief This function disables the host interrupts mask.
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param mask         the interrupt mask
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+static int32_t wlan_sdio_disable_host_int_mask()
+{
+    uint32_t host_int_mask = 0;
+    uint32_t resp;
+
+    (void)sdio_drv_creg_read(HOST_INT_MASK_REG, 1, &host_int_mask);
+
+    /* Update with the mask and write back to the register */
+    host_int_mask &= ~HIM_DISABLE;
+
+    (void)sdio_drv_creg_write(HOST_INT_MASK_REG, 1, host_int_mask, &resp);
+
+    return FWDNLD_INTF_SUCCESS;
+}
+
 /**
  *  @brief This function probes the driver
  *
  *  @param pmadapter  A pointer to mlan_adapter structure
  *  @return           MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-int32_t wlan_sdio_probe()
+static int32_t wlan_sdio_probe()
 {
-    int32_t ret         = FWDNLD_INTF_SUCCESS;
-    uint32_t sdio_ireg  = 0;
-    t_u32 host_int_mask = 0;
+    int32_t ret            = FWDNLD_INTF_SUCCESS;
+    uint32_t sdio_ireg     = 0;
+    uint32_t host_int_mask = 0;
     uint32_t resp;
 
     /*
@@ -94,6 +116,8 @@ int32_t wlan_sdio_probe()
      * as soon as we register the irq.
      */
     (void)sdio_drv_creg_read(HOST_INT_STATUS_REG, 1, &sdio_ireg);
+
+    (void)sdio_drv_creg_read(HOST_INT_MASK_REG, 1, &host_int_mask);
 
     /* Update with the mask and write back to the register */
     host_int_mask &= ~HIM_DISABLE;
@@ -113,7 +137,6 @@ int32_t wlan_reset_fw()
     bool rv;
     uint32_t resp;
 
-#if defined(HS_SUPPORT) || defined(DEEP_SLEEP) || defined(ENABLE_PS_MODE)
     //	wlan_pm_sdio_wakeup_card(pmadapter, MFALSE);
 
     rv = sdio_drv_creg_write(HOST_TO_CARD_EVENT_REG, 1, HOST_POWER_UP, &resp);
@@ -121,7 +144,6 @@ int32_t wlan_reset_fw()
     {
         return FWDNLD_INTF_FAIL;
     }
-#endif
 
     /** wait SOC fully wake up */
     for (tries = 0; tries < MAX_POLL_TRIES; ++tries)
@@ -235,8 +257,14 @@ static fwdnld_intf_ret_t sdio_fwdnld_check_reload(fwdnld_intf_t *intf, uint8_t f
         else
         {
             sdio_io_d("WLAN FW already running! Skip FW download");
+            return FWDNLD_INTF_SKIP;
         }
     }
+    else if (fw_reload == FW_RELOAD_NO_EMULATION)
+    {
+        ret = wlan_sdio_disable_host_int_mask();
+    }
+
     return FWDNLD_INTF_SUCCESS;
 }
 #endif

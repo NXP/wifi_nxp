@@ -663,6 +663,9 @@ typedef struct
 #define MLAN_SET_BIT(x, val)       ((x) |= (1U << (val)))
 #define MLAN_CLEAR_BIT_U64(x, val) ((x) &= ~(1ULL << (val)))
 
+/** scan GAP value is optional */
+#define GAP_FLAG_OPTIONAL MBIT(15)
+
 /** Info for debug purpose */
 typedef struct _wlan_dbg
 {
@@ -2285,6 +2288,8 @@ struct _mlan_adapter
 
     /** ECSA support */
     bool ecsa_enable;
+    /* Firmware support cmd_tx_data */
+    t_u8 cmd_tx_data;
 
 #ifndef CONFIG_MLAN_WMSDK
 #ifdef SDIO_MULTI_PORT_TX_AGGR
@@ -2535,9 +2540,14 @@ struct _mlan_adapter
 #ifndef CONFIG_MLAN_WMSDK
     /** Number of wakeup tries */
     t_u32 pm_wakeup_fw_try;
-
+#endif
+#ifdef CONFIG_HOST_SLEEP
     /** Host Sleep configured flag */
     t_u8 is_hs_configured;
+    /** management frame wakeup filter config */
+    mgmt_frame_filter mgmt_filter[MAX_MGMT_FRAME_FILTER];
+#endif
+#ifndef CONFIG_MLAN_WMSDK
     /** Host Sleep configuration */
     hs_config_param hs_cfg;
     /** Host Sleep activated flag */
@@ -2549,6 +2559,8 @@ struct _mlan_adapter
     t_u32 hw_dot_11n_dev_cap;
     /** Device support for MIMO abstraction of MCSs */
     t_u8 hw_dev_mcs_support;
+    /** mpdu density */
+    t_u8 hw_mpdu_density;
     /** 802.11n Device Capabilities for 2.4GHz */
     t_u32 usr_dot_11n_dev_cap_bg;
     /** 802.11n Device Capabilities for 5GHz */
@@ -3050,8 +3062,6 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
                                IN t_void *pioctl_buf,
                                IN const wlan_user_scan_cfg *puser_scan_in);
 
-bool wlan_active_scan_req_for_passive_chan(IN mlan_private *pmpriv, IN wlan_user_scan_cfg *puser_scan_in);
-
 /** Scan command handler */
 mlan_status wlan_cmd_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *pcmd, IN t_void *pdata_buf);
 
@@ -3425,6 +3435,8 @@ mlan_status wlan_cmd_drcs_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
 mlan_status wlan_ret_drcs_cfg(pmlan_private pmpriv, const HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
 #endif
+
+mlan_status wlan_cmd_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 
 #ifdef CONFIG_ECSA
 mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req);

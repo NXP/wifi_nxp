@@ -157,6 +157,14 @@ void sdio_enable_interrupt(void)
     }
 }
 
+void sdio_disable_interrupt(void)
+{
+    if (wm_g_sd.isHostReady)
+    {
+        SDMMCHOST_EnableCardInt(wm_g_sd.host, false);
+    }
+}
+
 static void sdio_controller_init(void)
 {
     (void)memset(&wm_g_sd, 0, sizeof(sdio_card_t));

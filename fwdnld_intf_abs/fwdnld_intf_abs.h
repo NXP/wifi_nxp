@@ -21,6 +21,7 @@ typedef enum
      * APIs just return interface returned return types*/
     FWDNLD_INTF_FAIL    = 0xffffffff,
     FWDNLD_INTF_SUCCESS = 0,
+    FWDNLD_INTF_SKIP,
     FWDNLD_INTF_PART_WRITE,
     FWDNLD_INTF_PART_READ,
     FWDNLD_INTF_WAIT,

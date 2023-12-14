@@ -16,6 +16,8 @@
 #define CONFIG_MAX_AP_ENTRIES 30
 #endif
 
+#define CONFIG_MAX_RESCAN_LIMIT 30
+
 #if defined(SD8978) || defined(SD8987) || defined(RW610) || defined(SD9177)
 #define CONFIG_5GHz_SUPPORT 1
 #endif
@@ -40,7 +42,6 @@
 #endif
 
 #if defined(RW610)
-#define PRINTF_FLOAT_ENABLE 1
 #define CONFIG_11AX
 #undef CONFIG_IMU_GDMA
 /* WMM options */
@@ -99,6 +100,8 @@
 #define CONFIG_CAU_TEMPERATURE
 #endif
 
+#define PRINTF_FLOAT_ENABLE 1
+
 #define CONFIG_IPV6               1
 #define CONFIG_MAX_IPV6_ADDRESSES 3
 
@@ -123,7 +126,7 @@
 #endif
 
 #undef CONFIG_HOST_SLEEP
-
+#undef CONFIG_MEF_CFG
 #undef CONFIG_FIPS
 
 #define CONFIG_11K 1
@@ -153,7 +156,6 @@
 #undef CONFIG_WIFI_MEM_DEBUG
 #undef CONFIG_WIFI_AMPDU_DEBUG
 #undef CONFIG_WIFI_TIMER_DEBUG
-#undef CONFIG_WIFI_SDIO_DEBUG
 #undef CONFIG_WIFI_FW_DEBUG
 #undef CONFIG_WIFI_UAP_DEBUG
 #undef CONFIG_WPS_DEBUG

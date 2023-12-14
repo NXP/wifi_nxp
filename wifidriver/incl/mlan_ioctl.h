@@ -485,6 +485,27 @@ typedef struct _mlan_scan_req
     mlan_user_scan user_scan;
 } mlan_scan_req, *pmlan_scan_req;
 
+/** Type definition of mlan_ds_misc_tx_frame for MLAN_OID_MISC_TX_FRAME */
+typedef struct _mlan_ds_misc_tx_frame
+{
+    /** Band Configuration */
+    Band_Config_t bandcfg;
+    /** channel */
+    t_u8 channel;
+    /** Buffer type: data, cmd, event etc. */
+    mlan_buf_type buf_type;
+    /** QoS priority */
+    t_u32 priority;
+    /** Flags for this buffer */
+    t_u32 flags;
+    /** tx_seq_num */
+    t_u32 tx_seq_num;
+    /** tx_buf length */
+    t_u16 data_len;
+    /** Tx buffer */
+    t_u8 tx_buf[512];
+} mlan_ds_misc_tx_frame;
+
 /** Type defnition of mlan_scan_resp */
 typedef struct _mlan_scan_resp
 {
@@ -2338,6 +2359,7 @@ typedef struct _mlan_ds_power_cfg
 /*-----------------------------------------------------------------*/
 /** Power Management Configuration Group */
 /*-----------------------------------------------------------------*/
+#ifdef CONFIG_HOST_SLEEP
 /** Host sleep config conditions : Cancel */
 #define HOST_SLEEP_CFG_CANCEL 0xffffffffU
 /** Host sleep config conditions : NULL (used for offload features) */
@@ -2376,6 +2398,7 @@ typedef struct _mlan_ds_hs_cfg
     /** Gap in milliseconds or or 0xff for special setting when GPIO is used to wakeup host */
     t_u32 gap;
 } mlan_ds_hs_cfg, *pmlan_ds_hs_cfg;
+#endif
 
 /** Enable deep sleep mode */
 #define DEEP_SLEEP_ON 1
@@ -2572,8 +2595,10 @@ typedef struct _mlan_ds_pm_cfg
     {
         /** Power saving mode for MLAN_OID_PM_CFG_IEEE_PS */
         t_u32 ps_mode;
+#ifdef CONFIG_HOST_SLEEP
         /** Host Sleep configuration for MLAN_OID_PM_CFG_HS_CFG */
         mlan_ds_hs_cfg hs_cfg;
+#endif
         /** Deep sleep mode for MLAN_OID_PM_CFG_DEEP_SLEEP */
         mlan_ds_auto_ds auto_deep_sleep;
         /** Inactivity timeout for MLAN_OID_PM_CFG_INACTIVITY_TO */

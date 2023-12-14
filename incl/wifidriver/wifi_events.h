@@ -41,6 +41,12 @@ enum wifi_event
     WIFI_EVENT_GET_HW_SPEC,
     /** Association */
     WIFI_EVENT_ASSOCIATION,
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_AUTO_RECONNECT
+    /** Association Notify */
+    WIFI_EVENT_ASSOCIATION_NOTIFY,
+#endif
+#endif
     /** PMK */
     WIFI_EVENT_PMK,
     /** Authentication */

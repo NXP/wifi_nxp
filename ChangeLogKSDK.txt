@@ -1,7 +1,44 @@
 /*!
 @page middleware_log Middleware Change Log
- 
+
 @section wifi NXP WiFi
+
+Version 1.3.r47.p8
+ - Bug Fix:
+  - "WLAN: network not found & Warn: Scan temporary failure" is observed after disconnecting from one network and Re-connecting to same network after renaming SSID of Ex-AP.
+  - "Network not found" is seen on the STAUT after disconnection and reconnection of the same profile in UNII4 channels (169,173,177).
+  - Beacons not stopping in the older channel, after uAP switching the channel according to the Ex-AP in simultaneous mode.
+  - Incorrect return value on error.
+
+Version 1.3.r47.p7
+ - Bug Fix:
+  - STA STRESS | Independent Reset, DUT went to hang state after 134 iterations of independent reset with status "ASSERT: wlan_process_hang: 982 Assert failed: Panic"!
+  - Error message "'is_mef' undeclared(first use in this function)" is observed while the time of compilation of binary after enabling macro for the host-sleep.
+  - DUT not able to roam from AP1 to AP2 in different channel (DFS) and same Band on reducing the RSSI of AP1.
+  - STAUT failed to roam from Ex-AP1 to Ex-AP2 with WPA3 security mode while running UDP-Tx traffic.
+  - MEF, DUT fails to wakeup with mef conditions ping 1,3 and arp 1 & 3.
+
+Version 1.3.r47.p6
+ - Features
+  - Add GTK rekey offload support.
+  - Independent Reset via In-band
+  - Independent Reset via Out-of-Band
+ - Updates:
+  - Updated FC's f/w version to 2.p66.14.
+ - Bug Fix:
+  - Power save/host sleep support improvements.
+  - Messy log output after in band independent reset(17 in 31)
+  - Association_Req content corrupted when Dut config as WPA/WPA2 mix mode and connecting to AP WPA+TKIP
+  - Cannot connect to AP with security wpa3_sb_192_eap_tls.
+  - Command "wlan-add-packet-filter 1" is not available for setting MEF filter configuration in Host-sleep.
+  - WPA3 Enterprise support (Host based - Remaining set of authentication methods)
+  - STAUT failed to roam from Ex-AP1 to Ex-AP2 with WPA3 security mode while running UDP-Tx traffic.
+  - No Link lost is observed while switching from 11n[2.4G | 20Mhz] to legacy[2.4G] mode.
+  - The introduction of new features does not follow the scope limitations of modules and apps
+  - STAUT 11r, DUT unable to roam to particular BSSID after 10 to 15 iterations of roam, showing "Roaming already in progress Started FT roaming"
+  - STAUT | After DUT wake up from Hostsleep condition 0x10 (WAKE_ON_ARP_BROADCAST) Ping failed from AP_Backend to DUT and Delayed ping from DUT to AP_Backend
+  - Error: ignoring scan request in invalid state
+  - Fix COVERITY Issue for midware_wifi
 
 Version 1.3.r47.p5
  - Updates:
@@ -534,7 +571,7 @@ Version 1.3.r40.p4
 
 Version 1.3.r40.p3
   -Bug Fixes:
-   - Added wlan_uap_set_httxcfg API to set 40 MHz support in 2.4 GHz. 
+   - Added wlan_uap_set_httxcfg API to set 40 MHz support in 2.4 GHz.
    - Fix for build issue seen for wifi_setup 1020
 
 Version 1.3.r40.p2
@@ -865,7 +902,7 @@ version 1.3.r15.p1
    - Added support for sysinfo CLI to get threads information, network stats, wlan stats and heap stats.
    - Added -d and -r options to iperf CLI for dual and trade-off mode.
    - Added support for antenna configuration for 8801.
-   - Added support for band configuration. 
+   - Added support for band configuration.
    - Added new FW for 8977
 
   - Bug Fixes:

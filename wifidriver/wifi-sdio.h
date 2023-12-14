@@ -89,7 +89,7 @@ extern bool mac_addr_valid;
 mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size);
 
 #if defined(CONFIG_WIFI_IND_DNLD)
-mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size);
+mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, const size_t size, uint8_t fw_reload);
 #endif
 
 mlan_status sd_wifi_post_init(enum wlan_type type);
@@ -141,6 +141,8 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 #endif
 
 void sdio_enable_interrupt(void);
+
+void sdio_disable_interrupt(void);
 
 void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control);
 

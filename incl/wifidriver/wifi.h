@@ -49,6 +49,7 @@
 #define CONFIG_WIFI_FRAG_THRESHOLD     1
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+#endif
 
 #ifndef CONFIG_ZEPHYR
 #ifndef CONFIG_STA_AUTO_DHCPV4
@@ -66,8 +67,6 @@
 #ifndef CONFIG_WIFI_AUTO_POWER_SAVE
 #define CONFIG_WIFI_AUTO_POWER_SAVE 1
 #endif
-#endif
-
 #endif
 
 #if !defined(SD8801)
@@ -2029,6 +2028,7 @@ int32_t wifi_get_temperature(void);
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type);
 int wifi_test_independent_reset();
+int wifi_trigger_oob_indrst();
 #endif
 
 #ifdef CONFIG_WIFI_BOOT_SLEEP

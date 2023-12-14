@@ -449,6 +449,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 /** TLV ID : Management Frame */
 #define TLV_TYPE_MGMT_FRAME (PROPRIETARY_TLV_BASE_ID + 0x68) /* 0x0168 */
+/** TLV type: management filter  */
+#define TLV_TYPE_MGMT_FRAME_WAKEUP (PROPRIETARY_TLV_BASE_ID + 0x116) /* 0x0216 */
 
 /** ADDBA TID mask */
 #define ADDBA_TID_MASK (MBIT(2) | MBIT(3) | MBIT(4) | MBIT(5))
@@ -602,6 +604,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define GET_TXMCSSUPP(DevMCSSupported) ((DevMCSSupported) >> 4)
 /** DevMCSSupported : Rx MCS supported */
 #define GET_RXMCSSUPP(DevMCSSupported) ((DevMCSSupported)&0x0fU)
+/** hw_dev_cap : MPDU DENSITY */
+#define GET_MPDU_DENSITY(hw_dev_cap) (hw_dev_cap & 0x7)
 
 /** GET HTCapInfo : Supported Channel BW */
 #define GETHT_SUPPCHANWIDTH(HTCapInfo) ((HTCapInfo)&MBIT(1))
@@ -728,6 +732,11 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** Check if Multi BSSID supported by firmware */
 #define IS_FW_SUPPORT_MULTIBSSID(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_MULTI_BSSID)
 #endif
+
+/** FW cap info bit 16: Tx mgmt pkt with command*/
+#define FW_CAPINFO_EXT_CMD_TX_DATA MBIT(16)
+/** Check if transmit mgmt pkt through command supported by firmware */
+#define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_CMD_TX_DATA)
 
 /** LLC/SNAP header len   */
 #define LLC_SNAP_LEN 8
@@ -1351,6 +1360,9 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 #define HostCmd_CMD_CCK_DESENSE_CFG 0x0265
 #endif
 
+/** Host Command ID: Tx Frame */
+#define HostCmd_CMD_802_11_TX_FRAME 0x0283
+
 #if 0
 /** Enhanced PS modes */
 typedef enum _ENH_PS_MODES
@@ -1950,6 +1962,66 @@ typedef MLAN_PACK_START struct
     t_u16 filter_type;
 
 } MLAN_PACK_END MrvlIETypes_SmcAddrRange_t;
+
+#ifdef CONFIG_HOST_SLEEP
+#define MAX_MGMT_FRAME_FILTER         2
+#define EVENT_MANAGEMENT_FRAME_WAKEUP 0x00000088
+
+typedef MLAN_PACK_START struct _mgmt_frame_filter
+{
+    /** action - bitmap
+     ** On matching rx'd pkt and filter during NON_HOSTSLEEP mode:
+     **   Action[1]=0  Discard
+     **   Action[1]=1  Allow
+     ** Note that default action on non-match is "Allow".
+     **
+     ** On matching rx'd pkt and filter during HOSTSLEEP mode:
+     **   Action[1:0]=00  Discard and Not Wake host
+     **   Action[1:0]=01  Discard and Wake host
+     **   Action[1:0]=10  Invalid
+     ** Note that default action on non-match is "Discard and Not Wake
+     *host".
+     **/
+    t_u8 action;
+    /** Frame type(p2p...)
+     ** type=0: invalid
+     ** type=1: p2p
+     ** type=0xff: management frames(assoc req/rsp, probe req/rsp,...)
+     ** type=others: reserved
+     **/
+    t_u8 type;
+    /** Frame mask according to each type
+     ** When type=1 for p2p, frame-mask have following define:
+     **    Bit      Frame
+     **     0       GO Negotiation Request
+     **     1       GO Negotiation Response
+     **     2       GO Negotiation Confirmation
+     **     3       P2P Invitation Request
+     **     4       P2P Invitation Response
+     **     5       Device Discoverability Request
+     **     6       Device Discoverability Response
+     **     7       Provision Discovery Request
+     **     8       Provision Discovery Response
+     **     9       Notice of Absence
+     **     10      P2P Presence Request
+     **     11      P2P Presence Response
+     **     12      GO Discoverability Request
+     **     13-31   Reserved
+     **
+     ** When type=others, frame-mask is reserved.
+     **/
+    t_u32 frame_mask;
+} MLAN_PACK_END mgmt_frame_filter;
+
+/** MrvlIEtypes_MgmtFrameFilter_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_MgmtFrameFilter_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** management frame filters */
+    mgmt_frame_filter filter[MAX_MGMT_FRAME_FILTER];
+} MLAN_PACK_END MrvlIEtypes_MgmtFrameFilter_t;
+#endif
 
 /** MrvlIETypes_SMCFrameFilter_t */
 
@@ -3361,8 +3433,8 @@ typedef MLAN_PACK_START struct _HostCmd_DS_GET_HW_SPEC
     t_u16 number_of_antenna;
     /** FW release number, example 0x1234=1.2.3.4 */
     t_u32 fw_release_number;
-    /** Reserved field */
-    t_u32 reserved_1;
+    /** hw dev cap */
+    t_u32 hw_dev_cap;
     /** Reserved field */
     t_u32 reserved_2;
     /** Reserved field */
@@ -7588,6 +7660,23 @@ typedef MLAN_PACK_START struct _HostCmd_IMD3_CFG
 } MLAN_PACK_END HostCmd_IMD3_CFG;
 #endif
 
+/** HostCmd_DS_80211_TX_FRAME */
+typedef MLAN_PACK_START struct _HostCmd_DS_80211_TX_FRAME
+{
+    /** Action Set or get */
+    t_u16 action;
+    /** status */
+    t_u16 status;
+    /** BandConfig */
+    t_u8 band_config;
+    /** channel */
+    t_u8 channel;
+    /** reserved */
+    t_u32 reserved;
+    /** buffer include TxPD and full Tx packet */
+    t_u8 buffer[];
+} MLAN_PACK_END HostCmd_DS_80211_TX_FRAME;
+
 /** HostCmd_DS_COMMAND */
 /* Note in case the fixed header of 8 bytes is modified please modify WIFI_HOST_CMD_FIXED_HEADER_LEN too */
 typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
@@ -7906,6 +7995,7 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
 #ifdef CONFIG_IMD3_CFG
         HostCmd_IMD3_CFG imd3_cfg;
 #endif
+        HostCmd_DS_80211_TX_FRAME tx_frame;
     } params;
 } MLAN_PACK_END HostCmd_DS_COMMAND;
 

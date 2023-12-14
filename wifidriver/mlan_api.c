@@ -5280,7 +5280,14 @@ int wifi_nxp_set_default_scan_ies(const u8 *ies, size_t ies_len)
     return WM_SUCCESS;
 }
 
+#define HEADER_SIZE 8
+// frmctl + durationid + addr1 + addr2 + addr3 + seqctl + addr4
+#define MGMT_HEADER_LEN (2 + 2 + 6 + 6 + 6 + 2 + 6)
+// 6   = auth_alg + auth_transaction +auth_status
+#define AUTH_BODY_LEN 6
+
 static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
+                                       const t_u8 channel,
                                        const t_u8 auth_alg,
                                        const t_u8 *auth_seq_num,
                                        const t_u8 *status_code,
@@ -5288,7 +5295,8 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
                                        const t_u8 *sae_data,
                                        const t_u16 sae_data_len)
 {
-    t_u16 pkt_len;
+    mlan_adapter *pmadapter      = pmpriv->adapter;
+    t_u16 pkt_len                = 0;
     mlan_802_11_mac_addr *da     = MNULL;
     mlan_802_11_mac_addr *sa     = MNULL;
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
@@ -5302,41 +5310,120 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
         return (int)MLAN_STATUS_FAILURE;
     }
 
-    da            = (mlan_802_11_mac_addr *)(void *)dest;
-    sa            = (mlan_802_11_mac_addr *)(void *)(&pmpriv->curr_addr[0]);
-    pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(SUBTYPE_AUTH, da, sa, da, sizeof(wlan_mgmt_pkt) + AUTH_REQUEST_BUF_SIZE);
-    if (pmgmt_pkt_hdr == MNULL)
+    da = (mlan_802_11_mac_addr *)(void *)dest;
+    sa = (mlan_802_11_mac_addr *)(void *)(&pmpriv->curr_addr[0]);
+
+    if (pmadapter->cmd_tx_data == 1U)
     {
-        wifi_e("No memory for auth request");
-        return (int)MLAN_STATUS_FAILURE;
+        (void)wifi_get_command_lock();
+        HostCmd_DS_COMMAND *cmd           = wifi_get_command_buffer();
+        mlan_ds_misc_tx_frame tx_frame    = {0};
+        wlan_802_11_header *pwlan_pkt_hdr = MNULL;
+        IEEEtypes_FrameCtl_t *mgmt_fc_p   = MNULL;
+        t_u8 *pBuf                        = &tx_frame.tx_buf[0];
+        t_u32 pkt_type, tx_control;
+
+        pkt_len = MGMT_HEADER_LEN + AUTH_BODY_LEN;
+
+        memset(cmd, 0x00, pkt_len);
+
+        pkt_type   = MRVL_PKT_TYPE_MGMT_FRAME;
+        tx_control = 0;
+
+        /* Add pkt_type and tx_control */
+        memcpy(pBuf, &pkt_type, sizeof(pkt_type));
+        memcpy(pBuf + sizeof(pkt_type), &tx_control, sizeof(tx_control));
+
+        pwlan_pkt_hdr = (wlan_802_11_header *)(void *)(pBuf + HEADER_SIZE + sizeof(pkt_len));
+        /* 802.11 header */
+        mgmt_fc_p           = (IEEEtypes_FrameCtl_t *)(void *)&pwlan_pkt_hdr->frm_ctl;
+        mgmt_fc_p->sub_type = SUBTYPE_AUTH;
+        mgmt_fc_p->type     = (t_u8)IEEE_TYPE_MANAGEMENT;
+        (void)memcpy(pwlan_pkt_hdr->addr1, da, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy(pwlan_pkt_hdr->addr2, sa, MLAN_MAC_ADDR_LENGTH);
+        (void)memcpy(pwlan_pkt_hdr->addr3, da, MLAN_MAC_ADDR_LENGTH);
+
+        (void)memcpy(pwlan_pkt_hdr->addr4, addr, MLAN_MAC_ADDR_LENGTH);
+
+        /* 802.11 management body */
+        pos    = (t_u8 *)pwlan_pkt_hdr + sizeof(wlan_802_11_header);
+        pos[0] = auth_alg;
+        pos[1] = 0;
+        pos[2] = auth_seq_num[0];
+        pos[3] = auth_seq_num[1];
+        pos[4] = status_code[0];
+        pos[5] = status_code[1];
+
+        pos += 6;
+
+        if ((sae_data != NULL) && (sae_data_len > 0))
+        {
+            memcpy(pos, sae_data, sae_data_len);
+            pos += sae_data_len;
+        }
+
+        meas_pkt_len = pos - (t_u8 *)pwlan_pkt_hdr;
+        pkt_len      = (t_u16)meas_pkt_len;
+
+        /*Add packet len*/
+        pkt_len = wlan_cpu_to_le16(pkt_len);
+        memcpy(pBuf + HEADER_SIZE, &pkt_len, sizeof(pkt_len));
+
+        tx_frame.bandcfg.chanBand = channel > 14 ? BAND_5GHZ : BAND_2GHZ;
+        tx_frame.channel          = channel;
+        tx_frame.data_len         = HEADER_SIZE + pkt_len + sizeof(pkt_len);
+        tx_frame.buf_type         = MLAN_BUF_TYPE_RAW_DATA;
+        tx_frame.priority         = 7;
+
+        cmd->seq_num = 0x0;
+        cmd->result  = 0x0;
+
+        mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_802_11_TX_FRAME,
+                                                  HostCmd_ACT_GEN_SET, 0, NULL, &tx_frame, cmd);
+        if (rv != MLAN_STATUS_SUCCESS)
+        {
+            return -WM_FAIL;
+        }
+
+        (void)wifi_wait_for_cmdresp(NULL);
+        return wm_wifi.cmd_resp_status;
     }
-
-    (void)memcpy(pmgmt_pkt_hdr->wlan_header.addr4, addr, MLAN_MAC_ADDR_LENGTH);
-
-    /* 802.11 management body */
-    pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
-    pos[0] = auth_alg;
-    pos[1] = 0;
-    pos[2] = auth_seq_num[0];
-    pos[3] = auth_seq_num[1];
-    pos[4] = status_code[0];
-    pos[5] = status_code[1];
-
-    pos += 6;
-
-    if ((sae_data != NULL) && (sae_data_len > 0))
+    else
     {
-        memcpy(pos, sae_data, sae_data_len);
-        pos += sae_data_len;
+        pmgmt_pkt_hdr = wifi_PrepDefaultMgtMsg(SUBTYPE_AUTH, da, sa, da, sizeof(wlan_mgmt_pkt) + AUTH_REQUEST_BUF_SIZE);
+        if (pmgmt_pkt_hdr == MNULL)
+        {
+            wifi_e("No memory for auth request");
+            return (int)MLAN_STATUS_FAILURE;
+        }
+
+        (void)memcpy(pmgmt_pkt_hdr->wlan_header.addr4, addr, MLAN_MAC_ADDR_LENGTH);
+
+        /* 802.11 management body */
+        pos    = (t_u8 *)pmgmt_pkt_hdr + sizeof(wlan_mgmt_pkt);
+        pos[0] = auth_alg;
+        pos[1] = 0;
+        pos[2] = auth_seq_num[0];
+        pos[3] = auth_seq_num[1];
+        pos[4] = status_code[0];
+        pos[5] = status_code[1];
+
+        pos += 6;
+
+        if ((sae_data != NULL) && (sae_data_len > 0))
+        {
+            memcpy(pos, sae_data, sae_data_len);
+            pos += sae_data_len;
+        }
+
+        meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
+        pkt_len                = (t_u16)meas_pkt_len;
+        pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
+
+        (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
+        os_mem_free(pmgmt_pkt_hdr);
+        return (int)MLAN_STATUS_SUCCESS;
     }
-
-    meas_pkt_len           = pos - (t_u8 *)pmgmt_pkt_hdr;
-    pkt_len                = (t_u16)meas_pkt_len;
-    pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
-
-    (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
-    os_mem_free(pmgmt_pkt_hdr);
-    return (int)MLAN_STATUS_SUCCESS;
 }
 
 int wifi_send_mgmt_auth_request(const t_u8 channel,
@@ -5367,7 +5454,8 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
     pmpriv->auth_flag                 = HOST_MLME_AUTH_PENDING;
     pmpriv->auth_alg                  = wlan_cpu_to_le16(auth_alg);
 
-    ret = wlan_send_mgmt_auth_request(pmpriv, auth_alg, auth_seq_num, status_code, dest, sae_data, sae_data_len);
+    ret =
+        wlan_send_mgmt_auth_request(pmpriv, channel, auth_alg, auth_seq_num, status_code, dest, sae_data, sae_data_len);
 
     if (ret != WM_SUCCESS)
     {

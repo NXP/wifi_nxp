@@ -43,7 +43,7 @@ Change Log:
 /** 2000mW */
 #define WLAN_TX_PWR_CN_2000MW 33
 /** 20dBm */
-#define WLAN_TX_PWR_WW_DEFAULT 20
+#define WLAN_TX_PWR_WW_DEFAULT 8
 
 /** Region code mapping */
 typedef struct _country_code_mapping
@@ -476,10 +476,6 @@ static chan_freq_power_t channel_freq_power_Custom_A[] = {
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
     {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
-#ifdef CONFIG_UNII4_BAND_SUPPORT
-    {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE}, {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
-    {0, 0, WLAN_TX_PWR_WW_DEFAULT, (bool)MFALSE},
-#endif
 };
 
 #ifndef CONFIG_MLAN_WMSDK

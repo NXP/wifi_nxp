@@ -928,7 +928,7 @@ void wlan_fill_ht_cap_tlv(mlan_private *priv, MrvlIETypes_HTCap_t *pht_cap, t_u1
 #ifdef RW610_SERIES
     SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0x5);
 #else
-    SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, 0);
+    SETAMPDU_SPACING(pht_cap->ht_cap.ampdu_param, pmadapter->hw_mpdu_density);
 #endif
 
     rx_mcs_supp = GET_RXMCSSUPP(pmadapter->usr_dev_mcs_support);
@@ -1837,7 +1837,6 @@ TxBAStreamTbl *wlan_11n_get_txbastream_tbl(mlan_private *priv, t_u8 *ra)
 
     while (ptx_tbl != (TxBAStreamTbl *)(void *)&priv->tx_ba_stream_tbl_ptr)
     {
-        PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", ptx_tbl->tid);
         DBG_HEXDUMP(MDAT_D, "RA", ptx_tbl->ra, MLAN_MAC_ADDR_LENGTH);
 
         if (!__memcmp(pmadapter, ptx_tbl->ra, ra, MLAN_MAC_ADDR_LENGTH))
@@ -1873,7 +1872,6 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
 
     if (!wlan_11n_get_txbastream_tbl(priv, ra))
     {
-        PRINTM(MDAT_D, "get_txbastream_tbl TID %d\n", tid);
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
 
         pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(TxBAStreamTbl), MLAN_MEM_DEF,

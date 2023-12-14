@@ -2,7 +2,7 @@
  *
  *  @brief main file
  *
- *  Copyright 2020-2021 NXP
+ *  Copyright 2020-2021,2023 NXP
  *  All rights reserved.
  *
  *  SPDX-License-Identifier: BSD-3-Clause
@@ -90,7 +90,7 @@
 #define RET_TYPE_ZIGBEE 3
 
 #define SDIOPKTTYPE_CMD 0x1
-#define BUF_LEN         1024
+#define BUF_LEN         2048
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
 #define CONFIG_WIFI_MAX_PRIO (configMAX_PRIORITIES - 1)
@@ -235,7 +235,7 @@ typedef struct _cmd_header
 
 static uint8_t rx_buf[BUF_LEN];
 static cmd_header last_cmd_hdr;
-uint8_t *local_outbuf;
+static uint8_t local_outbuf[BUF_LEN];
 
 #if defined(MIMXRT1176_cm7_SERIES)
 lpspi_master_config_t spiConfig;
@@ -512,7 +512,6 @@ int process_input_cmd(uint8_t *buf, int m_len)
                 *d++ = *s++;
             }
         }
-
         d = (uint8_t *)&last_cmd_hdr;
         s = (uint8_t *)buf + sizeof(uart_header);
 
@@ -944,14 +943,6 @@ void task_main(void *param)
         vTaskSuspend(NULL);
     }
 #endif
-
-    local_outbuf = os_mem_alloc(SDIO_OUTBUF_LEN);
-
-    if (local_outbuf == NULL)
-    {
-        PRINTF("Failed to allocate buffer\r\n");
-        return;
-    }
 
 #if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);

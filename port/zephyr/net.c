@@ -399,9 +399,13 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
         return 0;
     }
 
-    if (wifi_add_to_bypassq(interface, pkt, net_pkt_len) == WM_SUCCESS)
+    if (interface == WLAN_BSS_TYPE_STA)
     {
-        return 0;
+
+        if (wifi_add_to_bypassq(interface, pkt, net_pkt_len) == WM_SUCCESS)
+        {
+            return 0;
+        }
     }
 
     wifi_wmm_da_to_ra(payload, ra);

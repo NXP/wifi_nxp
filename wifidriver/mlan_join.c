@@ -646,15 +646,18 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
         {
             if (ptr[3] < sizeof(akm_preference))
             {
-                if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 6))
+#ifdef CONFIG_11R
+                if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 13))
                 {
                     break;
                 }
-                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 2))
+                else
+#endif
+                if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 12))
                 {
                     break;
                 }
-                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 1))
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 11))
                 {
                     break;
                 }
@@ -668,14 +671,30 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 {
                     break;
                 }
-                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 11))
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 1))
                 {
                     break;
                 }
-                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 12))
+#ifdef CONFIG_11R
+                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 9))
                 {
                     break;
                 }
+                else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 9))
+                {
+                    break;
+                }
+#endif
+                else if ((*akm_type == AssocAgentAuth_Wpa3Sae) && (ptr[3] == 8))
+                {
+                    break;
+                }
+#ifdef CONFIG_OWE
+                else if ((*akm_type == AssocAgentAuth_Owe) && (ptr[3] == 18))
+                {
+                    break;
+                }
+#endif
 #ifdef CONFIG_11R
                 else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 13))
                 {
@@ -694,26 +713,14 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                     break;
                 }
 #endif
-                else if ((*akm_type == AssocAgentAuth_Wpa3Sae) && (ptr[3] == 8))
+                if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 6))
                 {
                     break;
                 }
-#ifdef CONFIG_11R
-                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 9))
+                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 2))
                 {
                     break;
                 }
-                else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 9))
-                {
-                    break;
-                }
-#endif
-#ifdef CONFIG_OWE
-                else if ((*akm_type == AssocAgentAuth_Owe) && (ptr[3] == 18))
-                {
-                    break;
-                }
-#endif
             }
             ptr += AKM_SUITE_LEN;
         }

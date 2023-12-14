@@ -129,7 +129,7 @@
 #include <wm_net_decl.h>
 #endif
 
-#define WLAN_DRV_VERSION "v1.3.r47.p5"
+#define WLAN_DRV_VERSION "v1.3.r47.p12"
 
 #ifdef CONFIG_WPA2_ENTP
 #include <wm_mbedtls_helper_api.h>
@@ -431,10 +431,6 @@ enum wlan_event_reason
      *  WLAN Connection Manager should be stopped and started again via
      *  wlan_stop() and wlan_start() respectively. */
     WLAN_REASON_INITIALIZATION_FAILED,
-#ifdef CONFIG_WPA_SUPP_WPS
-/** The WLAN Connection Manager has received WPS event from WPA supplicant. */
-// WLAN_REASON_WPS_EVENT,
-#endif
 #if defined(CONFIG_WIFI_IND_DNLD)
     /** The WLAN Connection Manager has entered in hang mode. */
     WLAN_REASON_FW_HANG,
@@ -696,7 +692,7 @@ enum wlan_monitor_opt
 /* Measurement freq in Hz to calculate measurement interval*/
 #define AZ_MEASUREMENT_FREQ       10 /* in 0.1 Hz increments */
 #define AZ_NUMBER_OF_MEASUREMENTS 6
-#define I2R_LMR_FEEDBACK          2 /* allow RSTA to request I2R reporting */
+#define I2R_LMR_FEEDBACK          2  /* allow RSTA to request I2R reporting */
 
 #define FOR_RANGING 0
 
@@ -7053,6 +7049,15 @@ int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_test_independent_reset();
+
+/** Trigger Out of band Independent Firmware reset
+ *
+ * This function will send GPIO pulse that will cause out of band reset in firmware
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_trigger_oob_ind_reset();
+
 #endif
 
 #ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
