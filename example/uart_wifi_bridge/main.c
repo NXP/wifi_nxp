@@ -89,8 +89,10 @@
 #define TYPE_15_4       0x0004
 #define RET_TYPE_ZIGBEE 3
 
+#define INTF_HEADER_LEN 4
 #define SDIOPKTTYPE_CMD 0x1
 #define BUF_LEN         2048
+#define SDIO_OUTBUF_LEN 2048
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
 #define CONFIG_WIFI_MAX_PRIO (configMAX_PRIORITIES - 1)
@@ -148,13 +150,13 @@ enum
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-uint8_t background_buffer[UART_BUF_SIZE];
+static uint8_t background_buffer[UART_BUF_SIZE];
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
 usart_rtos_handle_t handle;
 struct _usart_handle t_handle;
 TimerHandle_t g_wifi_cau_temperature_timer = NULL;
 
-struct rtos_usart_config usart_config = {
+static struct rtos_usart_config usart_config ={
     .baudrate    = 115200,
     .parity      = kUSART_ParityDisabled,
     .stopbits    = kUSART_OneStopBit,
@@ -207,7 +209,9 @@ typedef struct _uart_cb
 } uart_cb;
 
 static uart_cb uartcb;
+#if !defined(RW610_SERIES) && !defined(RW612_SERIES)
 static uart_cb uartcb_bt;
+#endif
 
 /** UART start pattern*/
 typedef struct _uart_header
@@ -233,9 +237,32 @@ typedef struct _cmd_header
     int reserved;
 } cmd_header;
 
-static uint8_t rx_buf[BUF_LEN];
+/** HostCmd_DS_COMMAND */
+typedef struct _HostCmd_DS_COMMAND
+{
+    /** Command Header : Command */
+    uint16_t command;
+    /** Command Header : Size */
+    uint16_t size;
+    /** Command Header : Sequence number */
+    uint16_t seq_num;
+    /** Command Header : Result */
+    uint16_t result;
+    /** Command Body */
+} HostCmd_DS_COMMAND;
+
+/** IMUPkt/SDIOPkt only name difference, same definition */
+typedef struct _SDIOPkt
+{
+    uint16_t size;
+    uint16_t pkttype;
+    HostCmd_DS_COMMAND hostcmd;
+} SDIOPkt;
+
+static uint8_t *rx_buf;
 static cmd_header last_cmd_hdr;
-static uint8_t local_outbuf[BUF_LEN];
+uint8_t *local_outbuf;
+static SDIOPkt *sdiopkt;
 
 #if defined(MIMXRT1176_cm7_SERIES)
 lpspi_master_config_t spiConfig;
@@ -252,10 +279,12 @@ const int TASK_MAIN_PRIO = CONFIG_WIFI_MAX_PRIO - 3;
 #else
 const int TASK_MAIN_PRIO = OS_PRIO_3;
 #endif
-const int TASK_MAIN_STACK_SIZE = 3 * 2048;
+const int TASK_MAIN_STACK_SIZE = 5 * 2048;
 
 portSTACK_TYPE *task_main_stack = NULL;
 TaskHandle_t task_main_task_handler;
+
+#define SDK_VERSION "NXPSDK_2.15.0_r48.p1"
 
 static void uart_init_crc32(uart_cb *uartcb)
 {
@@ -294,9 +323,12 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
     int index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
+	
+	int iface_len = 0;
+	
+#if defined(RW610_SERIES) || defined(RW612_SERIES)
+    SDIOPkt *sdio = (SDIOPkt *)resp;
 
-    int iface_len = 0;
-#if 0
     if (type == 2)
         /* This is because, the last byte of the sdio header
          * (packet type) is also requried by the labtool, to
@@ -304,9 +336,10 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
         iface_len = INTF_HEADER_LEN - 1;
     else
         iface_len = INTF_HEADER_LEN;
-#endif
-
+	payloadlen = sdio->size - iface_len;
+#else
     payloadlen = reqd_resp_len;
+#endif
     memset(rx_buf, 0, BUF_LEN);
     memcpy(rx_buf + sizeof(uart_header) + sizeof(cmd_header), resp + iface_len, payloadlen);
 
@@ -496,11 +529,20 @@ int process_input_cmd(uint8_t *buf, int m_len)
     if (cmd_hd->type == TYPE_WLAN)
     {
         memset(local_outbuf, 0, BUF_LEN);
-
+		
         uarthdr = (uart_header *)buf;
+#if defined(RW610_SERIES) || defined(RW612_SERIES)
+        sdiopkt = (SDIOPkt *)local_outbuf;
+		/* sdiopkt = local_outbuf */
+        sdiopkt->pkttype = SDIOPKTTYPE_CMD;
 
+        sdiopkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
+        d             = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
+        s             = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
+#else
         d = (uint8_t *)local_outbuf;
         s = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
+#endif
 
         for (i = 0; i < uarthdr->length - sizeof(cmd_header); i++)
         {
@@ -685,7 +727,7 @@ hal_rpmsg_status_t read_wlan_resp(IMU_Msg_t *pImuMsg, uint32_t len)
 
     uart_cb *uart = &uartcb;
 
-    send_response_to_uart(uart, (uint8_t *)(pImuMsg->PayloadPtr[0]), 1);
+    send_response_to_uart(uart, (uint8_t *)(pImuMsg->PayloadPtr[0]), 1, len);
 
     return kStatus_HAL_RpmsgSuccess;
 }
@@ -833,7 +875,11 @@ static hal_rpmsg_status_t rpmsg_init()
     return state;
 }
 
-static void wifi_cau_temperature_enable()
+#define RW610_PACKAGE_TYPE_QFN 0
+#define RW610_PACKAGE_TYPE_CSP 1
+#define RW610_PACKAGE_TYPE_BGA 2
+
+void wifi_cau_temperature_enable()
 {
     uint32_t val;
 
@@ -843,11 +889,65 @@ static void wifi_cau_temperature_enable()
     WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
 }
 
-static void wifi_cau_temperature_write_to_firmware()
+static uint32_t wifi_get_board_type()
 {
-    uint32_t val;
+    status_t status;
+    static uint32_t wifi_rw610_package_type = 0xFFFFFFFF;
 
-    val = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    if (0xFFFFFFFF == wifi_rw610_package_type)
+    {
+        OCOTP_OtpInit();
+        status = OCOTP_ReadPackage(&wifi_rw610_package_type);
+        if (status != kStatus_Success)
+        {
+            /*If status error, use BGA as default type*/
+            wifi_rw610_package_type = RW610_PACKAGE_TYPE_BGA;
+        }
+        OCOTP_OtpDeinit();
+    }
+
+    return wifi_rw610_package_type;
+}
+
+int32_t wifi_get_temperature(void)
+{
+    int32_t val                   = 0;
+    uint32_t reg_val              = 0;
+    uint32_t temp_Cau_Raw_Reading = 0;
+    uint32_t board_type           = 0;
+
+    reg_val              = WIFI_REG32(WLAN_CAU_TEMPERATURE_ADDR);
+    temp_Cau_Raw_Reading = ((reg_val & 0XFFC00) >> 10);
+    board_type           = wifi_get_board_type();
+
+    switch (board_type)
+    {
+        case RW610_PACKAGE_TYPE_QFN:
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 484260) - 220040600) / 1000000);
+            break;
+
+        case RW610_PACKAGE_TYPE_CSP:
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480560) - 220707000) / 1000000);
+            break;
+
+        case RW610_PACKAGE_TYPE_BGA:
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480561) - 220707400) / 1000000);
+            break;
+
+        default:
+            PRINTF("Unknown board type, use BGA temperature \r\n");
+            val = (((((int32_t)(temp_Cau_Raw_Reading)) * 480561) - 220707400) / 1000000);
+            break;
+    }
+
+    return val;
+}
+
+void wifi_cau_temperature_write_to_firmware()
+{
+    int32_t val = 0;
+
+    val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
 }
 
@@ -943,6 +1043,15 @@ void task_main(void *param)
         vTaskSuspend(NULL);
     }
 #endif
+
+    local_outbuf = pvPortMalloc(SDIO_OUTBUF_LEN);
+
+    if (local_outbuf == NULL)
+    {
+        PRINTF("Failed to allocate buffer\r\n");
+        return;
+    }
+    rx_buf = pvPortMalloc(BUF_LEN);
 
 #if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);
