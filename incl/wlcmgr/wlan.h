@@ -1353,12 +1353,6 @@ struct wlan_network_security
     char domain_match[DOMAIN_MATCH_MAX_LENGTH];
     /** Domain Suffix */
     char domain_suffix_match[DOMAIN_MATCH_MAX_LENGTH]; /*suffix max length same as full domain name length*/
-#ifdef CONFIG_EAP_FAST
-    /** PAC blob */
-    unsigned char *pac_data;
-    /** PAC blob len */
-    size_t pac_len;
-#endif
     /** CA cert2 blob in PEM/DER format */
     unsigned char *ca_cert2_data;
     /** CA cert2 blob len */
@@ -6526,7 +6520,6 @@ int wlan_wps_ap_cancel(void);
 #define FILE_TYPE_ENTP_CA_CERT2     4
 #define FILE_TYPE_ENTP_CLIENT_CERT2 5
 #define FILE_TYPE_ENTP_CLIENT_KEY2  6
-#define FILE_TYPE_ENTP_PAC_DATA     7
 
 #ifdef CONFIG_HOSTAPD
 #define FILE_TYPE_ENTP_SERVER_CERT 8

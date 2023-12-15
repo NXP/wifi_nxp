@@ -72,9 +72,6 @@
 #include "client-cert.h"
 #include "client-key.h"
 #include "dh-param.h"
-#ifdef CONFIG_EAP_FAST
-#include "pac-data.h"
-#endif
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
 #include "server-cert.h"
@@ -558,10 +555,6 @@ static struct
     t_u32 client_cert2_len;
     t_u8 *client_key2_data;
     t_u32 client_key2_len;
-#ifdef CONFIG_EAP_FAST
-    t_u8 *pac_data;
-    t_u32 pac_len;
-#endif
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     t_u8 *dh_data;
@@ -8821,21 +8814,6 @@ int wlan_add_network(struct wlan_network *network)
                     return -WM_E_INVAL;
                 }
             }
-
-            if(true == wlan_is_eap_fast_security(network->security.type))
-            {
-#ifdef CONFIG_EAP_FAST
-                /* Specify PAC Data */
-                network->security.pac_len =
-                    wlan_get_entp_cert_files(FILE_TYPE_ENTP_PAC_DATA, &network->security.pac_data);
-                if (network->security.pac_len == 0)
-                {
-                    wlan_free_entp_cert_files();
-                    wlcm_e("PAC data is not configured");
-                    return -WM_E_INVAL;
-                }
-#endif
-            }
         }
 
         if (WLAN_SECURITY_EAP_TTLS == network->security.type)
@@ -14218,12 +14196,6 @@ static void wlan_entp_cert_cleanup()
     {
         os_mem_free(wlan.client_key2_data);
     }
-#ifdef CONFIG_EAP_FAST
-    if (wlan.pac_data != NULL)
-    {
-        os_mem_free(wlan.pac_data);
-    }
-#endif
 
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
@@ -14332,20 +14304,6 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         wlan.dh_len = data_len;
     }
 #endif
-#endif
-#ifdef CONFIG_EAP_FAST
-    else if (cert_type == FILE_TYPE_ENTP_PAC_DATA)
-    {
-        wlan.pac_data = os_mem_alloc(data_len);
-        if (!wlan.pac_data)
-        {
-            wlan_entp_cert_cleanup();
-            wlcm_e("PAC DATA malloc failed");
-            return -WM_FAIL;
-        }
-        memcpy(wlan.pac_data, data, data_len);
-        wlan.pac_len = data_len;
-    }
 #endif
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
@@ -14483,21 +14441,6 @@ t_u32 wlan_get_entp_cert_files(int cert_type, t_u8 **data)
     }
 #endif
 #endif
-#ifdef CONFIG_EAP_FAST
-    else if (cert_type == FILE_TYPE_ENTP_PAC_DATA)
-    {
-        *data = wlan.pac_data;
-        len   = wlan.pac_len;
-#ifndef CONFIG_WIFI_USB_FILE_ACCESS
-        if (!wlan.pac_data)
-        {
-            *data = (t_u8 *)pac_data;
-            len   = pac_data_len;
-        }
-#endif
-        wlan.pac_data = NULL;
-    }
-#endif
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
@@ -14565,13 +14508,6 @@ void wlan_free_entp_cert_files(void)
         wlan.client_key2_data = NULL;
         wlan.client_key2_len  = 0;
     }
-#ifdef CONFIG_EAP_FAST
-    if (wlan.pac_data != NULL)
-    {
-        wlan.pac_data = NULL;
-        wlan.pac_len  = 0;
-    }
-#endif
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     if (wlan.dh_data != NULL)
