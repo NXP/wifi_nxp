@@ -291,7 +291,6 @@ os_queue_t mon_thread_events;
 os_queue_pool_t mon_thread_events_queue_data;
 
 #ifdef CONFIG_SCAN_CHANNEL_GAP
-#define SCAN_CHANNEL_GAP_VALUE 50U
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
 #endif
 

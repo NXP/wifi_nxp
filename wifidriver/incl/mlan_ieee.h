@@ -1995,7 +1995,10 @@ typedef MLAN_PACK_START struct
 #define LOWEST_RSSI_THRESHOLD 82
 /** delta rssi */
 #define DELTA_RSSI 10
-
+#ifdef CONFIG_SCAN_CHANNEL_GAP
+/** Scan channel gap */
+#define SCAN_CHANNEL_GAP_VALUE 50U
+#endif
 #ifdef CONFIG_11AX
 typedef MLAN_PACK_START struct _IEEEtypes_Extension_t
 {

@@ -5025,6 +5025,9 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     pmpriv->scan_cfg.scan_interval        = MIN_BGSCAN_INTERVAL;
     pmpriv->scan_cfg.chan_per_scan        = WLAN_USER_SCAN_CHAN_MAX;
     pmpriv->scan_cfg.num_probes           = 2;
+#ifdef CONFIG_SCAN_CHANNEL_GAP
+    pmpriv->scan_cfg.scan_chan_gap        = SCAN_CHANNEL_GAP_VALUE;
+#endif
 
     wifi_get_band(pmpriv, &band);
     switch (band)
