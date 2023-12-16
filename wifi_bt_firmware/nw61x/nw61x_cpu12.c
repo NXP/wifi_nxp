@@ -6,7 +6,7 @@
  *
  */
 
-#if defined(SD9177)
+#if defined(WIFI_IW612_BOARD_RD_USD) || defined(WIFI_IW612_BOARD_RD_M2)
 
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
 
