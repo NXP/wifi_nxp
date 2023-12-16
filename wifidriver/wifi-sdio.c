@@ -2867,6 +2867,8 @@ mlan_status sd_wifi_init(enum wlan_type type, const uint8_t *fw_start_addr, cons
         intf = (void *)sdio_init_interface(NULL);
         if (intf != MNULL)
         {
+            mlan_adap->fw_start_addr = fw_start_addr;
+
             ret = (mlan_status)firmware_download(fw_start_addr, size, intf, 0);
         } else {
             ret = MLAN_STATUS_FAILURE;

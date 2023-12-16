@@ -4394,7 +4394,7 @@ static mlan_status wlan_get_vdll_image(pmlan_adapter pmadapter, t_u32 vdll_len)
     ENTER();
     if (ctrl != NULL)
     {
-        ctrl->vdll_mem = (t_u8 *)(wlan_fw_bin + (wlan_fw_bin_len - vdll_len));
+        ctrl->vdll_mem = (t_u8 *)(pmadapter->fw_start_addr + (wlan_fw_bin_len - vdll_len));
         ctrl->vdll_len = vdll_len;
         ctrl->cmd_buf  = (t_u8 *)wifi_get_vdllcommand_buffer();
     }

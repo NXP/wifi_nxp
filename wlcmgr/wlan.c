@@ -274,10 +274,10 @@ bool usart_suspend_flag = false;
 #endif
 os_timer_t wake_timer;
 int is_hs_handshake_done = 0;
+#endif
 extern os_semaphore_t wakelock;
 extern int wakeup_by;
 bool wlan_is_manual = false;
-#endif
 #endif
 
 /* The monitor thread event queue receives events from the power manager
@@ -1333,8 +1333,8 @@ void wlan_clear_host_sleep_config()
         os_timer_deactivate(&wake_timer);
         wakelock_put();
     }
-#endif
     is_hs_handshake_done = 0;
+#endif
 #ifdef CONFIG_MEF_CFG
     memset(&g_flt_cfg, 0x0, sizeof(wlan_flt_cfg_t));
 

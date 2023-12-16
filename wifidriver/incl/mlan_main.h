@@ -2204,6 +2204,8 @@ struct _mlan_adapter
     pmlan_private priv[MLAN_MAX_BSS_NUM];
     /** Total number of Priv number */
     t_u8 priv_num;
+    /** Firmware start addr */
+    const t_u8 *fw_start_addr;
 #ifndef CONFIG_MLAN_WMSDK
     /** Priority table for bss */
     mlan_bssprio_tbl bssprio_tbl[MLAN_MAX_BSS_NUM];

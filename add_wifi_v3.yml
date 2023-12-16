@@ -73,7 +73,6 @@ middleware.wifi.common_files:
     - source: port/os/os.c
     - source: wifidriver/incl/mlan_decl.h
     - source: wifidriver/incl/mlan_ioctl.h
-    - source: wifi_bt_firmware/wlan_bt_fw_blob.S
     - source: wifi_bt_firmware/wlan_bt_fw.h
   belong_to: set.middleware.wifi
   section_info:
@@ -107,19 +106,45 @@ middleware.wifi.fwdnld:
     files:
     - source: incl/WIFI_IW416_BOARD_AW_AM457_CAL_DATA_EXT.h
     - source: wifidriver/incl/mlan_main_defs.h
-    - source: wifi_bt_firmware/8801/sd8801_wlan.bin
-    - source: wifi_bt_firmware/IW416/sduartIW416_wlan_bt.bin
-    - source: wifi_bt_firmware/IW416/sdIW416_wlan.bin
-    - source: wifi_bt_firmware/IW416/uartIW416_bt.bin
-    - source: wifi_bt_firmware/8987/sduart8987_wlan_bt.bin
-    - source: wifi_bt_firmware/8987/sd8987_wlan.bin
-    - source: wifi_bt_firmware/8987/uart8987_bt.bin
-    - source: wifi_bt_firmware/nw61x/sduart_nw61x.bin
-    - source: wifi_bt_firmware/nw61x/sd_nw61x.bin
-    - source: wifi_bt_firmware/nw61x/uart_nw61x.bin
-    - source: wifi_bt_firmware/nw61x/sduart_nw61x.bin.se
-    - source: wifi_bt_firmware/nw61x/sd_nw61x.bin.se
-    - source: wifi_bt_firmware/nw61x/uart_nw61x.bin.se
+    - source: wifi_bt_firmware/8801/sd8801_wlan.bin.inc
+    - source: wifi_bt_firmware/8801/sd8801_wlan.h
+    - source: wifi_bt_firmware/8801/8801_cpu1.c
+    - source: wifi_bt_firmware/IW416/sduartIW416_wlan_bt.bin.inc
+    - source: wifi_bt_firmware/IW416/sdIW416_wlan.bin.inc
+    - source: wifi_bt_firmware/IW416/uartIW416_bt.bin.inc
+    - source: wifi_bt_firmware/IW416/sduartIW416_wlan_bt.h
+    - source: wifi_bt_firmware/IW416/sdIW416_wlan.h
+    - source: wifi_bt_firmware/IW416/uartIW416_bt.h
+    - source: wifi_bt_firmware/IW416/IW416_cpu12.c
+    - source: wifi_bt_firmware/IW416/IW416_cpu1.c
+    - source: wifi_bt_firmware/IW416/IW416_cpu2.c
+    - source: wifi_bt_firmware/8987/sduart8987_wlan_bt.bin.inc
+    - source: wifi_bt_firmware/8987/sd8987_wlan.bin.inc
+    - source: wifi_bt_firmware/8987/uart8987_bt.bin.inc
+    - source: wifi_bt_firmware/8987/sduart8987_wlan_bt.h
+    - source: wifi_bt_firmware/8987/sd8987_wlan.h
+    - source: wifi_bt_firmware/8987/uart8987_bt.h
+    - source: wifi_bt_firmware/8987/8987_cpu12.c
+    - source: wifi_bt_firmware/8987/8987_cpu1.c
+    - source: wifi_bt_firmware/8987/8987_cpu2.c
+    - source: wifi_bt_firmware/nw61x/sduart_nw61x.bin.se.inc
+    - source: wifi_bt_firmware/nw61x/sd_nw61x.bin.se.inc
+    - source: wifi_bt_firmware/nw61x/uart_nw61x.bin.se.inc
+    - source: wifi_bt_firmware/nw61x/sduart_nw61x.bin.inc
+    - source: wifi_bt_firmware/nw61x/sd_nw61x.bin.inc
+    - source: wifi_bt_firmware/nw61x/uart_nw61x.bin.inc
+    - source: wifi_bt_firmware/nw61x/sduart_nw61x_se.h
+    - source: wifi_bt_firmware/nw61x/sd_nw61x_se.h
+    - source: wifi_bt_firmware/nw61x/uart_nw61x_se.h
+    - source: wifi_bt_firmware/nw61x/sduart_nw61x.h
+    - source: wifi_bt_firmware/nw61x/sd_nw61x.h
+    - source: wifi_bt_firmware/nw61x/uart_nw61x.h
+    - source: wifi_bt_firmware/nw61x/nw61x_cpu12_se.c
+    - source: wifi_bt_firmware/nw61x/nw61x_cpu1_se.c
+    - source: wifi_bt_firmware/nw61x/nw61x_cpu2_se.c
+    - source: wifi_bt_firmware/nw61x/nw61x_cpu12.c
+    - source: wifi_bt_firmware/nw61x/nw61x_cpu1.c
+    - source: wifi_bt_firmware/nw61x/nw61x_cpu2.c
     - source: wifidriver/sdio.c
     - source: wifidriver/sdio.h
     - source: firmware_dnld/firmware_dnld.c
