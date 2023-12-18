@@ -89,6 +89,11 @@
  ******************************************************************************/
 extern int network_services;
 
+#ifdef RW610
+extern const unsigned char *wlan_fw_bin;
+extern const unsigned int wlan_fw_bin_len;
+#endif
+
 const int TASK_MAIN_PRIO       = OS_PRIO_3;
 const int TASK_MAIN_STACK_SIZE = 800;
 
