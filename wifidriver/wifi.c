@@ -3895,10 +3895,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
     else
     {
         xTaskNotify(wm_wifi.wm_wifi_driver_tx, event, eSetBits);
-        if (event & (1U << TX_TYPE_BYPASS_DATA))
-        {
-            portYIELD();
-        }
+        portYIELD();
     }
 #endif
 }

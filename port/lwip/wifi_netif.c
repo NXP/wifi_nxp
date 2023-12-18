@@ -669,7 +669,6 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
         if (retry != 0)
         {
             send_wifi_driver_tx_data_event(interface);
-            os_thread_relinquish();
         }
         else
         {
