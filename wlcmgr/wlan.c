@@ -273,8 +273,8 @@ int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
 bool usart_suspend_flag = false;
 #endif
 os_timer_t wake_timer;
-int is_hs_handshake_done = 0;
 #endif
+int is_hs_handshake_done = 0;
 extern os_semaphore_t wakelock;
 extern int wakeup_by;
 bool wlan_is_manual = false;
