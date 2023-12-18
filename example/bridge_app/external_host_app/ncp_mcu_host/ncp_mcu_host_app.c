@@ -29,7 +29,7 @@
 #include "spi_master_app.h"
 #endif
 
-os_thread_t mcu_bridge_resp_thread;
+os_thread_t ncp_host_resp_thread;
 uint8_t background_resp_buffer[256];
 #define USART_SEND_SIZE 1
 uint8_t send_buffer[USART_SEND_SIZE];
@@ -68,7 +68,7 @@ extern uint32_t mcu_last_cmd_sent;
 /*ID number of command response received from ncp*/
 uint32_t mcu_last_resp_rcvd;
 
-static uint8_t mcu_response_buff[MCU_BRIDGE_RESPONSE_LEN];
+static uint8_t mcu_response_buff[NCP_HOST_RESPONSE_LEN];
 
 /**
  * @brief       This function judges if s1 and s2 are equal.
@@ -141,8 +141,8 @@ void usb_host_save_recv_data(uint8_t *recv_data, uint32_t packet_len)
 
         if (usb_rx_len >= NCP_BRIDGE_CMD_HEADER_LEN)
         {
-            usb_transfer_len = ((mcu_response_buff[MCU_BRIDGE_CMD_SIZE_HIGH_BYTE] << 8) |
-                                mcu_response_buff[MCU_BRIDGE_CMD_SIZE_LOW_BYTE]) +
+            usb_transfer_len = ((mcu_response_buff[NCP_HOST_CMD_SIZE_HIGH_BYTE] << 8) |
+                                mcu_response_buff[NCP_HOST_CMD_SIZE_LOW_BYTE]) +
                                MCU_CHECKSUM_LEN;
         }
     }
@@ -165,7 +165,7 @@ void usb_host_save_recv_data(uint8_t *recv_data, uint32_t packet_len)
 
         usb_rx_len       = 0;
         usb_transfer_len = 0;
-        os_event_notify_put(mcu_bridge_resp_thread);
+        os_event_notify_put(ncp_host_resp_thread);
 
         PRINTF("data recv success \r\n");
     }
@@ -195,7 +195,7 @@ void USB_HostCdcDataInCb(void *param, uint8_t *data, uint32_t dataLength, usb_st
 /**
  * @brief       Receive tlv reponses from ncp_bridge and process tlv reponses.
  */
-static void mcu_bridge_resp_task(void *pvParameters)
+static void ncp_host_resp_task(void *pvParameters)
 {
     int ret;
     uint16_t msg_type = 0;
@@ -223,9 +223,9 @@ static void mcu_bridge_resp_task(void *pvParameters)
         }
 #elif defined(CONFIG_SPI_BRIDGE)
         os_event_notify_get(OS_WAIT_FOREVER);
-        ret = mcu_bridge_spi_master_transfer(mcu_response_buff + len,
+        ret = ncp_host_spi_master_transfer(mcu_response_buff + len,
                                              NCP_BRIDGE_CMD_HEADER_LEN,
-                                             MCU_BRIDGE_MASTER_RX, true);
+                                             NCP_HOST_MASTER_RX, true);
         if (ret != WM_SUCCESS)
         {
             mcu_e("Failed to receive command header(%d)", ret);
@@ -237,7 +237,7 @@ static void mcu_bridge_resp_task(void *pvParameters)
         /* Length of the packet is indicated by byte[4] & byte[5] of
          * the packet excluding checksum [4 bytes]*/
         resp_len =
-            (mcu_response_buff[MCU_BRIDGE_CMD_SIZE_HIGH_BYTE] << 8) | mcu_response_buff[MCU_BRIDGE_CMD_SIZE_LOW_BYTE];
+            (mcu_response_buff[NCP_HOST_CMD_SIZE_HIGH_BYTE] << 8) | mcu_response_buff[NCP_HOST_CMD_SIZE_LOW_BYTE];
         rx_len = 0;
 #ifdef CONFIG_UART_BRIDGE
         while (len < resp_len + MCU_CHECKSUM_LEN)
@@ -245,7 +245,7 @@ static void mcu_bridge_resp_task(void *pvParameters)
             ret = USART_RTOS_Receive(&mcu_ncp_uart_handle, mcu_response_buff + len, resp_len + MCU_CHECKSUM_LEN - len,
                                      &rx_len);
             len += rx_len;
-            if ((ret == kStatus_USART_RxRingBufferOverrun) || len >= MCU_BRIDGE_RESPONSE_LEN)
+            if ((ret == kStatus_USART_RxRingBufferOverrun) || len >= NCP_HOST_RESPONSE_LEN)
             {
                 /* Notify about hardware buffer overrun, clear uart ring buffer and cmd buffer */
                 memset(background_resp_buffer, 0, sizeof(background_resp_buffer));
@@ -255,13 +255,13 @@ static void mcu_bridge_resp_task(void *pvParameters)
         }
 #elif defined(CONFIG_SPI_BRIDGE)
         total_len = resp_len + MCU_CHECKSUM_LEN;
-        if(resp_len < NCP_BRIDGE_CMD_HEADER_LEN || total_len >= MCU_BRIDGE_RESPONSE_LEN)
+        if(resp_len < NCP_BRIDGE_CMD_HEADER_LEN || total_len >= NCP_HOST_RESPONSE_LEN)
         {
             mcu_e("Invalid tlv reponse length from ncp bridge");
             goto done;
         }
-        ret = mcu_bridge_spi_master_transfer(mcu_response_buff + len, total_len - NCP_BRIDGE_CMD_HEADER_LEN,
-                                             MCU_BRIDGE_MASTER_RX, false);
+        ret = ncp_host_spi_master_transfer(mcu_response_buff + len, total_len - NCP_BRIDGE_CMD_HEADER_LEN,
+                                             NCP_HOST_MASTER_RX, false);
         if (ret != WM_SUCCESS)
         {
             mcu_e("Failed to receive command buffer(%d)", ret);
@@ -270,12 +270,12 @@ static void mcu_bridge_resp_task(void *pvParameters)
         }
         len = total_len;
 #endif
-#ifdef CONFIG_MCU_BRIDGE_IO_DUMP
+#ifdef CONFIG_NCP_HOST_IO_DUMP
         PRINTF("Command response:\r\n");
         dump_hex(mcu_response_buff, len);
 #endif
 #endif
-        msg_type = ((NCP_MCU_BRIDGE_COMMAND *)mcu_response_buff)->msg_type;
+        msg_type = ((NCP_HOST_COMMAND *)mcu_response_buff)->msg_type;
         /* validate the command including checksum */
         if (check_command_complete(mcu_response_buff) == WM_SUCCESS)
         {
@@ -306,7 +306,7 @@ static void mcu_bridge_resp_task(void *pvParameters)
         }
     done:
         /* Reset command response buffer */
-        memset(mcu_response_buff, 0, MCU_BRIDGE_RESPONSE_LEN);
+        memset(mcu_response_buff, 0, NCP_HOST_RESPONSE_LEN);
 #ifndef CONFIG_USB_BRIDGE
         len    = 0;
         rx_len = 0;
@@ -328,11 +328,11 @@ static void mcu_bridge_resp_task(void *pvParameters)
 
 int check_command_complete(uint8_t *buf)
 {
-    NCP_MCU_BRIDGE_COMMAND *new_cmd;
+    NCP_HOST_COMMAND *new_cmd;
     uint16_t msglen;
     uint32_t local_checksum = 0, remote_checksum = 0;
 
-    new_cmd = (NCP_MCU_BRIDGE_COMMAND *)buf;
+    new_cmd = (NCP_HOST_COMMAND *)buf;
     /* check crc */
     msglen = new_cmd->size;
 
@@ -340,7 +340,7 @@ int check_command_complete(uint8_t *buf)
     local_checksum  = uart_get_crc32(buf, msglen);
     if (remote_checksum == local_checksum)
     {
-#ifdef CONFIG_MCU_BRIDGE_DEBUG
+#ifdef CONFIG_NCP_HOST_DEBUG
         mcu_d("local checksum == remote checksum: 0x%02x \r\n", local_checksum);
 #endif
         return 0;
@@ -396,7 +396,7 @@ void vApplicationIdleHook(void)
 }
 
 #ifdef CONFIG_UART_BRIDGE
-static int mcu_bridge_init_ncp_uart()
+static int ncp_host_init_ncp_uart()
 {
     int ret;
     CLOCK_SetFRGClock(BOARD_DEBUG_UART_USBUART_FRG_CLK);
@@ -419,7 +419,7 @@ static int mcu_bridge_init_ncp_uart()
  *
  * @return      Status returned
  */
-int mcu_bridge_app_init()
+int ncp_host_app_init()
 {
     int ret;
 
@@ -438,9 +438,9 @@ int mcu_bridge_app_init()
     }
 
 #ifdef CONFIG_UART_BRIDGE
-    ret = mcu_bridge_init_ncp_uart();
+    ret = ncp_host_init_ncp_uart();
 #elif defined(CONFIG_SPI_BRIDGE)
-    ret = mcu_bridge_init_spi_master();
+    ret = ncp_host_init_spi_master();
 #endif
     if (ret != WM_SUCCESS)
     {
@@ -452,7 +452,7 @@ int mcu_bridge_app_init()
         return -WM_FAIL;
     }
 
-    ret = os_thread_create(&mcu_bridge_resp_thread, "mcu bridge resp task", mcu_bridge_resp_task, 0,
+    ret = os_thread_create(&ncp_host_resp_thread, "mcu bridge resp task", ncp_host_resp_task, 0,
                            &bridge_app_stack, OS_PRIO_2);
     if (ret != WM_SUCCESS)
     {

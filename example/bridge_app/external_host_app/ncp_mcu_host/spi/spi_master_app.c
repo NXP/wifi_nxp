@@ -13,10 +13,10 @@
 #include "fsl_spi.h"
 #include "fsl_spi_dma.h"
 #include "fsl_dma.h"
-#include "mcu_bridge_utils.h"
-#include "mcu_bridge_command.h"
+#include "ncp_host_utils.h"
+#include "ncp_host_command.h"
 #include "fsl_gpio.h"
-#include "mcu_bridge_os.h"
+#include "ncp_host_os.h"
 
 /*******************************************************************************
  * Variables
@@ -33,7 +33,7 @@ gpio_interrupt_config_t input_pin_cfg = {
     kGPIO_PinIntEnableEdge,
     kGPIO_PinIntEnableHighOrRise
 };
-extern os_thread_t mcu_bridge_resp_thread;
+extern os_thread_t ncp_host_resp_thread;
 #define BOARD_DEBUG_FLEXCOMM0_FRG_CLK \
     (&(const clock_frg_clk_config_t){0, kCLOCK_FrgMainClk, 255, 0})
 #define SPI_MASTER_INT_RX_MASK 0x8000000
@@ -49,22 +49,22 @@ void GPIO_INTA_IRQHandler(void)
     uint32_t status = 0;
 
     DisableIRQ(GPIO_INTA_IRQn);
-    status = GPIO_PortGetInterruptStatus(GPIO, MCU_BRIDGE_GPIO_PORT, 0);
+    status = GPIO_PortGetInterruptStatus(GPIO, NCP_HOST_GPIO_PORT, 0);
     /* Notify mcu bridge resp task */
     if(status & SPI_MASTER_INT_RX_MASK)
     {
-        GPIO_PinClearInterruptFlag(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_RX, 0);
-        os_event_notify_put(mcu_bridge_resp_thread);
+        GPIO_PinClearInterruptFlag(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_RX, 0);
+        os_event_notify_put(ncp_host_resp_thread);
     }
     if(status & SPI_MASTER_INT_TX_MASK)
     {
-        GPIO_PinClearInterruptFlag(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_TX, 0);
+        GPIO_PinClearInterruptFlag(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_TX, 0);
         os_semaphore_put(&spi_master_sem);
     }
     EnableIRQ(GPIO_INTA_IRQn);
 }
 
-static void mcu_bridge_spi_master_cb(SPI_Type *base,
+static void ncp_host_spi_master_cb(SPI_Type *base,
                                      spi_dma_handle_t *handle,
                                      status_t status,
                                      void *userData)
@@ -75,7 +75,7 @@ static void mcu_bridge_spi_master_cb(SPI_Type *base,
     }
 }
 
-int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer_type, uint8_t is_header)
+int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer_type, uint8_t is_header)
 {
     int ret = 0;
     spi_transfer_t masterXfer;
@@ -83,7 +83,7 @@ int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transf
     uint8_t *p = NULL;
 
     /* Fill SPI transfer config */
-    if(transfer_type == MCU_BRIDGE_MASTER_TX)
+    if(transfer_type == NCP_HOST_MASTER_TX)
     {
         /* Wait for slave Rx is ready */
         os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
@@ -94,7 +94,7 @@ int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transf
         masterXfer.rxData = NULL;
         masterXfer.dataSize = NCP_BRIDGE_CMD_HEADER_LEN;
         masterXfer.configFlags = kSPI_FrameAssert;
-        ret = (int)SPI_MasterTransferDMA(MCU_BRIDGE_SPI_MASTER, &masterHandle, &masterXfer);
+        ret = (int)SPI_MasterTransferDMA(NCP_HOST_SPI_MASTER, &masterHandle, &masterXfer);
         if(ret)
         {
             (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
@@ -114,7 +114,7 @@ int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transf
                 masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
             masterXfer.configFlags = kSPI_FrameAssert;
             os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
-            ret = (int)SPI_MasterTransferDMA(MCU_BRIDGE_SPI_MASTER, &masterHandle, &masterXfer);
+            ret = (int)SPI_MasterTransferDMA(NCP_HOST_SPI_MASTER, &masterHandle, &masterXfer);
             if(ret)
             {
                 (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
@@ -125,7 +125,7 @@ int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transf
             p += masterXfer.dataSize;
         }
     }
-    else if(transfer_type == MCU_BRIDGE_MASTER_RX)
+    else if(transfer_type == NCP_HOST_MASTER_RX)
     {
         if(is_header)
         {
@@ -133,7 +133,7 @@ int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transf
             masterXfer.rxData = buff;
             masterXfer.dataSize = data_size;
             masterXfer.configFlags = kSPI_FrameAssert;
-            ret = (int)SPI_MasterTransferDMA(MCU_BRIDGE_SPI_MASTER, &masterHandle, &masterXfer);
+            ret = (int)SPI_MasterTransferDMA(NCP_HOST_SPI_MASTER, &masterHandle, &masterXfer);
             if(ret)
             {
                 (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
@@ -155,7 +155,7 @@ int mcu_bridge_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transf
                     masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
                 masterXfer.configFlags = kSPI_FrameAssert;
                 os_event_notify_get(OS_WAIT_FOREVER);
-                ret = (int)SPI_MasterTransferDMA(MCU_BRIDGE_SPI_MASTER, &masterHandle, &masterXfer);
+                ret = (int)SPI_MasterTransferDMA(NCP_HOST_SPI_MASTER, &masterHandle, &masterXfer);
                 if(ret)
                 {
                     (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
@@ -171,56 +171,56 @@ done:
     return ret;
 }
 
-static void mcu_bridge_master_dma_setup(void)
+static void ncp_host_master_dma_setup(void)
 {
     /* DMA init */
-    DMA_Init(MCU_BRIDGE_DMA);
+    DMA_Init(NCP_HOST_DMA);
     /* Configure the DMA channel,priority and handle. */
-    DMA_EnableChannel(MCU_BRIDGE_DMA, MCU_BRIDGE_SPI_MASTER_TX_CHANNEL);
-    DMA_EnableChannel(MCU_BRIDGE_DMA, MCU_BRIDGE_SPI_MASTER_RX_CHANNEL);
-    DMA_SetChannelPriority(MCU_BRIDGE_DMA, MCU_BRIDGE_SPI_MASTER_TX_CHANNEL, kDMA_ChannelPriority3);
-    DMA_SetChannelPriority(MCU_BRIDGE_DMA, MCU_BRIDGE_SPI_MASTER_RX_CHANNEL, kDMA_ChannelPriority2);
-    DMA_CreateHandle(&masterTxHandle, MCU_BRIDGE_DMA, MCU_BRIDGE_SPI_MASTER_TX_CHANNEL);
-    DMA_CreateHandle(&masterRxHandle, MCU_BRIDGE_DMA, MCU_BRIDGE_SPI_MASTER_RX_CHANNEL);
+    DMA_EnableChannel(NCP_HOST_DMA, NCP_HOST_SPI_MASTER_TX_CHANNEL);
+    DMA_EnableChannel(NCP_HOST_DMA, NCP_HOST_SPI_MASTER_RX_CHANNEL);
+    DMA_SetChannelPriority(NCP_HOST_DMA, NCP_HOST_SPI_MASTER_TX_CHANNEL, kDMA_ChannelPriority3);
+    DMA_SetChannelPriority(NCP_HOST_DMA, NCP_HOST_SPI_MASTER_RX_CHANNEL, kDMA_ChannelPriority2);
+    DMA_CreateHandle(&masterTxHandle, NCP_HOST_DMA, NCP_HOST_SPI_MASTER_TX_CHANNEL);
+    DMA_CreateHandle(&masterRxHandle, NCP_HOST_DMA, NCP_HOST_SPI_MASTER_RX_CHANNEL);
 }
 
-static int mcu_bridge_master_init(void)
+static int ncp_host_master_init(void)
 {
     /* SPI init */
     int ret = 0;
     uint32_t srcClock_Hz = 0U;
     spi_master_config_t masterConfig;
-    srcClock_Hz = MCU_BRIDGE_SPI_MASTER_CLK_FREQ;
+    srcClock_Hz = NCP_HOST_SPI_MASTER_CLK_FREQ;
 
     SPI_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = 30000000U; // decrease this value for testing purpose.
-    masterConfig.sselNum = (spi_ssel_t)MCU_BRIDGE_SPI_SSEL;
-    masterConfig.sselPol = (spi_spol_t)MCU_BRIDGE_MASTER_SPI_SPOL;
-    ret = (int)SPI_MasterInit(MCU_BRIDGE_SPI_MASTER, &masterConfig, srcClock_Hz);
+    masterConfig.sselNum = (spi_ssel_t)NCP_HOST_SPI_SSEL;
+    masterConfig.sselPol = (spi_spol_t)NCP_HOST_MASTER_SPI_SPOL;
+    ret = (int)SPI_MasterInit(NCP_HOST_SPI_MASTER, &masterConfig, srcClock_Hz);
 
     return ret;
 }
 
-void mcu_bridge_gpio_init(void)
+void ncp_host_gpio_init(void)
 {
     /* Config GPIO_11 and GPIO_27 as input GPIO */
-    GPIO_PinInit(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_RX, &input_pin);
-    GPIO_PinInit(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_TX, &input_pin);
+    GPIO_PinInit(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_RX, &input_pin);
+    GPIO_PinInit(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_TX, &input_pin);
     /* Config and enable GPIO pin interrupt */
-    GPIO_SetPinInterruptConfig(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_RX, &input_pin_cfg);
-    GPIO_SetPinInterruptConfig(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_TX, &input_pin_cfg);
-    GPIO_PinEnableInterrupt(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_RX, 0);
-    GPIO_PinEnableInterrupt(GPIO, MCU_BRIDGE_GPIO_PORT, MCU_BRIDGE_GPIO_PIN_TX, 0);
+    GPIO_SetPinInterruptConfig(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_RX, &input_pin_cfg);
+    GPIO_SetPinInterruptConfig(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_TX, &input_pin_cfg);
+    GPIO_PinEnableInterrupt(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_RX, 0);
+    GPIO_PinEnableInterrupt(GPIO, NCP_HOST_GPIO_PORT, NCP_HOST_GPIO_PIN_TX, 0);
     NVIC_SetPriority(GPIO_INTA_IRQn, 3U);
     NVIC_ClearPendingIRQ(GPIO_INTA_IRQn);
     EnableIRQ(GPIO_INTA_IRQn);
 }
 
-int mcu_bridge_init_spi_master(void)
+int ncp_host_init_spi_master(void)
 {
     int ret = WM_SUCCESS;
 
-    mcu_bridge_gpio_init();
+    ncp_host_gpio_init();
     ret = os_semaphore_create(&spi_master_sem, "spi master semaphore");
     if (ret != WM_SUCCESS)
     {
@@ -237,16 +237,16 @@ int mcu_bridge_init_spi_master(void)
     /* Set FRG clock with main clk and attach Flexcomm0 to FRG clk */
     CLOCK_SetFRGClock(BOARD_DEBUG_FLEXCOMM0_FRG_CLK);
     CLOCK_AttachClk(kFRG_to_FLEXCOMM0);
-    ret = mcu_bridge_master_init();
+    ret = ncp_host_master_init();
     if(ret != WM_SUCCESS)
     {
         PRINTF("Failed to initialize SPI master(%d)\r\n", ret);
         return ret;
     }
-    mcu_bridge_master_dma_setup();
+    ncp_host_master_dma_setup();
     /* Set up handle for spi master */
-    ret = (int)SPI_MasterTransferCreateHandleDMA(MCU_BRIDGE_SPI_MASTER, &masterHandle,
-                                                 mcu_bridge_spi_master_cb, NULL,
+    ret = (int)SPI_MasterTransferCreateHandleDMA(NCP_HOST_SPI_MASTER, &masterHandle,
+                                                 ncp_host_spi_master_cb, NULL,
                                                  &masterTxHandle, &masterRxHandle);
 
     return ret;

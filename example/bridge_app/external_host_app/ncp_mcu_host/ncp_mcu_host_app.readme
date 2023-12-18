@@ -6,10 +6,10 @@ This is a MCU bridge app demo. Need to use with ncp_bridge application.
 
 Prepare the Demo
 ================
-1.  Generate mcu_bridge_app application. 
+1.  Generate ncp_host_app application. 
     For example: go to bin/generator/batch_v2.
-                 run 'ruby all_rdrw610.rb -p mcu_bridge_app' to generate mcu_bridge_app.
-2.  Compile mcu_bridge_app through IAR/ARMGCC tool chain.
+                 run 'ruby all_rdrw610.rb -p ncp_host_app' to generate ncp_host_app.
+2.  Compile ncp_host_app through IAR/ARMGCC tool chain.
 3.  Download the program to board A.
 4.  Download ncp_bridge application to board B.
 5.  Connect board A and board B with FLEXCOMM0.

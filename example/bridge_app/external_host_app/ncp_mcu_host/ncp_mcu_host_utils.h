@@ -1,4 +1,4 @@
-/**@file mcu_bridge_utils.h
+/**@file ncp_mcu_host_utils.h
  *
  * \brief Utility functions
  *
@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef __MCU_BRIDGE_UTILS_H__
-#define __MCU_BRIDGE_UTILS_H__
+#ifndef __NCP_MCU_HOST_UTILS_H__
+#define __NCP_MCU_HOST_UTILS_H__
 
 #include <string.h>
 #include <ctype.h>
@@ -853,4 +853,4 @@ static inline uint16_t inet_chksum(const void *dataptr, int len)
 
     return (uint16_t)(~(unsigned int)(uint16_t)sum);
 }
-#endif /* __MCU_BRIDGE_UTILS_H__ */
+#endif /* __NCP_MCU_HOST_UTILS_H__ */

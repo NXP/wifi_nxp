@@ -1,4 +1,4 @@
-/**@file mcu_bridge_app.h
+/**@file ncp_mcu_host_app.h
  *
  *  Copyright 2008-2023 NXP
  *
@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef _MCU_BRIDGE_APP_H_
-#define _MCU_BRIDGE_APP_H_
+#ifndef _NCP_MCU_HOST_APP_H_
+#define _NCP_MCU_HOST_APP_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,16 +17,16 @@
 #define mcu_e(...) wmlog_e("mcu bridge", ##__VA_ARGS__)
 #define mcu_w(...) wmlog_w("mcu bridge", ##__VA_ARGS__)
 
-#ifdef CONFIG_MCU_BRIDGE_DEBUG
+#ifdef CONFIG_NCP_HOST_DEBUG
 #define mcu_d(...) wmlog("mcu bridge", ##__VA_ARGS__)
 #else
 #define mcu_d(...)
 #endif
 
-#define MCU_BRIDGE_CMD_SIZE_BIT1     4
-#define MCU_BRIDGE_CMD_SIZE_BIT2     5
-#define MCU_BRIDGE_CMD_SEQUENCE_BIT1 6
-#define MCU_BRIDGE_CMD_SEQUENCE_BIT2 7
+#define NCP_HOST_CMD_SIZE_BIT1     4
+#define NCP_HOST_CMD_SIZE_BIT2     5
+#define NCP_HOST_CMD_SEQUENCE_BIT1 6
+#define NCP_HOST_CMD_SEQUENCE_BIT2 7
 
 #define CRC32_POLY 0x04c11db7
 
@@ -35,7 +35,7 @@
 #define BRIDGE_MUTEX_INHERIT 1
 #define TLV_CMD_BUF          200
 
-int mcu_bridge_app_init();
+int ncp_host_app_init();
 
 int bridge_put_command_lock();
 
@@ -55,4 +55,4 @@ int mcu_get_command_lock();
 
 int mcu_put_command_lock();
 
-#endif /*_MCU_BRIDGE_APP_H_*/
+#endif /*_NCP_MCU_HOST_APP_H_*/

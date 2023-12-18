@@ -54,14 +54,14 @@ static struct
     unsigned int bp; /* buffer pointer */
     char *inbuf;
 
-    const struct mcu_bridge_cli_command *commands[MAX_COMMANDS];
+    const struct ncp_host_cli_command *commands[MAX_COMMANDS];
     unsigned int num_commands;
     bool echo_disabled;
 
-} mcu_bridge_cli;
+} ncp_host_cli;
 
 static char mcu_string_command_buff[MCU_CLI_STRING_SIZE];
-static uint8_t mcu_tlv_command_buff[MCU_BRIDGE_COMMAND_LEN] = {0};
+static uint8_t mcu_tlv_command_buff[NCP_HOST_COMMAND_LEN] = {0};
 
 //extern usart_rtos_handle_t mcu_ncp_uart_handle;
 
@@ -70,7 +70,7 @@ static os_thread_t mcu_cli_cmd_thread;
 static os_thread_stack_define(mcu_cli_cmd_stack, 1024);
 #define USART_INPUT_SIZE 1
 #define USART_NVIC_PRIO  5
-uint8_t background_cli_buffer[MCU_BRIDGE_CLI_BACKGROUND_SIZE];
+uint8_t background_cli_buffer[NCP_HOST_CLI_BACKGROUND_SIZE];
 uint8_t recv_buffer[USART_INPUT_SIZE];
 #if 0
 static usart_rtos_handle_t mcu_cli_uart_handle;
@@ -94,18 +94,18 @@ static os_thread_stack_define(ping_sock_stack, 1024);
 os_thread_t ncp_iperf_tx_thread, ncp_iperf_rx_thread;
 static os_thread_stack_define(ncp_iperf_tx_stack, 1024);
 static os_thread_stack_define(ncp_iperf_rx_stack, 1024);
-/* Find the command 'name' in the bridge mcu_bridge_cli commands table.
+/* Find the command 'name' in the bridge ncp_host_cli commands table.
  * If len is 0 then full match will be performed else upto len bytes.
- * Returns: a pointer to the corresponding mcu_bridge_cli_command struct or NULL.
+ * Returns: a pointer to the corresponding ncp_host_cli_command struct or NULL.
  */
-const struct mcu_bridge_cli_command *lookup_command(char *name, int len)
+const struct ncp_host_cli_command *lookup_command(char *name, int len)
 {
     int i = 0;
     int n = 0;
 
-    while (i < MAX_COMMANDS && n < mcu_bridge_cli.num_commands)
+    while (i < MAX_COMMANDS && n < ncp_host_cli.num_commands)
     {
-        if (mcu_bridge_cli.commands[i]->name == NULL)
+        if (ncp_host_cli.commands[i]->name == NULL)
         {
             i++;
             continue;
@@ -113,13 +113,13 @@ const struct mcu_bridge_cli_command *lookup_command(char *name, int len)
         /* See if partial or full match is expected */
         if (len != 0)
         {
-            if (!strncmp(mcu_bridge_cli.commands[i]->name, name, len))
-                return mcu_bridge_cli.commands[i];
+            if (!strncmp(ncp_host_cli.commands[i]->name, name, len))
+                return ncp_host_cli.commands[i];
         }
         else
         {
-            if (!strcmp(mcu_bridge_cli.commands[i]->name, name))
-                return mcu_bridge_cli.commands[i];
+            if (!strcmp(ncp_host_cli.commands[i]->name, name))
+                return ncp_host_cli.commands[i];
         }
 
         i++;
@@ -130,7 +130,7 @@ const struct mcu_bridge_cli_command *lookup_command(char *name, int len)
 }
 
 /* Parse input line and locate arguments (if any), keeping count of the number
- * of arguments and their locations.  Look up and call the corresponding mcu_bridge_cli
+ * of arguments and their locations.  Look up and call the corresponding ncp_host_cli
  * function if one is found and pass it the argv array.
  *
  * Returns: WM_SUCCESS on success: the input line contained at least a function name and
@@ -154,7 +154,7 @@ static int handle_input(char *inbuf)
     int argc                                     = 0;
     int i                                        = 0;
     int j                                        = 0;
-    const struct mcu_bridge_cli_command *command = NULL;
+    const struct ncp_host_cli_command *command = NULL;
     const char *p;
 
     (void)memset((void *)&argv, 0, sizeof(argv));
@@ -246,7 +246,7 @@ static int handle_input(char *inbuf)
     if (argc < 1)
         return WM_INVAILD_STRING_FAIL;
 
-    if (!mcu_bridge_cli.echo_disabled)
+    if (!ncp_host_cli.echo_disabled)
         (void)PRINTF("\r\n");
 
     /*
@@ -285,7 +285,7 @@ static int get_input(char *inbuf, unsigned int *bp)
 //        if (ret == kStatus_USART_RxRingBufferOverrun)
         {
             /* Notify about hardware buffer overrun and un-received buffer content */
-            memset(background_cli_buffer, 0, MCU_BRIDGE_CLI_BACKGROUND_SIZE);
+            memset(background_cli_buffer, 0, NCP_HOST_CLI_BACKGROUND_SIZE);
             memset(inbuf, 0, MCU_CLI_STRING_SIZE);
             mcu_e("Ring buffer overrun, please enter string command again");
             continue;
@@ -343,7 +343,7 @@ static int get_input(char *inbuf, unsigned int *bp)
             if (*bp > 0)
             {
                 (*bp)--;
-                if (!mcu_bridge_cli.echo_disabled)
+                if (!ncp_host_cli.echo_disabled)
                     (void)PRINTF("%c %c", 0x08, 0x08);
             }
             continue;
@@ -355,7 +355,7 @@ static int get_input(char *inbuf, unsigned int *bp)
             continue;
         }
 
-        if (!mcu_bridge_cli.echo_disabled)
+        if (!ncp_host_cli.echo_disabled)
             (void)PRINTF("%c", inbuf[*bp]);
 
         (*bp)++;
@@ -402,12 +402,12 @@ int help_command(int argc, char **argv)
     int i, n;
 
     (void)PRINTF("\r\n");
-    for (i = 0, n = 0; i < MAX_COMMANDS && n < mcu_bridge_cli.num_commands; i++)
+    for (i = 0, n = 0; i < MAX_COMMANDS && n < ncp_host_cli.num_commands; i++)
     {
-        if (mcu_bridge_cli.commands[i]->name != NULL)
+        if (ncp_host_cli.commands[i]->name != NULL)
         {
-            (void)PRINTF("%s %s\r\n", mcu_bridge_cli.commands[i]->name,
-                         mcu_bridge_cli.commands[i]->help ? mcu_bridge_cli.commands[i]->help : "");
+            (void)PRINTF("%s %s\r\n", ncp_host_cli.commands[i]->name,
+                         ncp_host_cli.commands[i]->help ? ncp_host_cli.commands[i]->help : "");
             n++;
         }
     }
@@ -415,55 +415,55 @@ int help_command(int argc, char **argv)
     return WM_SUCCESS;
 }
 
-static struct mcu_bridge_cli_command built_ins[] = {
+static struct ncp_host_cli_command built_ins[] = {
     {"help", NULL, help_command},
 };
 
 /*
- * Register bridge mcu_bridge_cli command API
+ * Register bridge ncp_host_cli command API
  */
 
-int mcu_bridge_cli_register_command(const struct mcu_bridge_cli_command *command)
+int ncp_host_cli_register_command(const struct ncp_host_cli_command *command)
 {
     int i;
     if (!command->name || !command->function)
         return 1;
 
-    if (mcu_bridge_cli.num_commands < MAX_COMMANDS)
+    if (ncp_host_cli.num_commands < MAX_COMMANDS)
     {
         /* Check if the command has already been registered.
          * Return 0, if it has been registered.
          */
-        for (i = 0; i < mcu_bridge_cli.num_commands; i++)
+        for (i = 0; i < ncp_host_cli.num_commands; i++)
         {
-            if (mcu_bridge_cli.commands[i] == command)
+            if (ncp_host_cli.commands[i] == command)
                 return 0;
         }
-        mcu_bridge_cli.commands[mcu_bridge_cli.num_commands++] = command;
+        ncp_host_cli.commands[ncp_host_cli.num_commands++] = command;
         return 0;
     }
 
     return 1;
 }
 
-int mcu_bridge_cli_unregister_command(const struct mcu_bridge_cli_command *command)
+int ncp_host_cli_unregister_command(const struct ncp_host_cli_command *command)
 {
     int i;
     if (!command->name || !command->function)
         return 1;
 
-    for (i = 0; i < mcu_bridge_cli.num_commands; i++)
+    for (i = 0; i < ncp_host_cli.num_commands; i++)
     {
-        if (mcu_bridge_cli.commands[i] == command)
+        if (ncp_host_cli.commands[i] == command)
         {
-            mcu_bridge_cli.num_commands--;
-            int remaining_cmds = mcu_bridge_cli.num_commands - i;
+            ncp_host_cli.num_commands--;
+            int remaining_cmds = ncp_host_cli.num_commands - i;
             if (remaining_cmds > 0)
             {
-                (void)memmove(&mcu_bridge_cli.commands[i], &mcu_bridge_cli.commands[i + 1],
-                              (remaining_cmds * sizeof(struct mcu_bridge_cli_command *)));
+                (void)memmove(&ncp_host_cli.commands[i], &ncp_host_cli.commands[i + 1],
+                              (remaining_cmds * sizeof(struct ncp_host_cli_command *)));
             }
-            mcu_bridge_cli.commands[mcu_bridge_cli.num_commands] = NULL;
+            ncp_host_cli.commands[ncp_host_cli.num_commands] = NULL;
             return 0;
         }
     }
@@ -471,20 +471,20 @@ int mcu_bridge_cli_unregister_command(const struct mcu_bridge_cli_command *comma
     return 1;
 }
 
-int mcu_bridge_cli_register_commands(const struct mcu_bridge_cli_command *commands, int num_commands)
+int ncp_host_cli_register_commands(const struct ncp_host_cli_command *commands, int num_commands)
 {
     int i;
     for (i = 0; i < num_commands; i++)
-        if (mcu_bridge_cli_register_command(commands++) != 0)
+        if (ncp_host_cli_register_command(commands++) != 0)
             return 1;
     return 0;
 }
 
-int mcu_bridge_cli_unregister_commands(const struct mcu_bridge_cli_command *commands, int num_commands)
+int ncp_host_cli_unregister_commands(const struct ncp_host_cli_command *commands, int num_commands)
 {
     int i;
     for (i = 0; i < num_commands; i++)
-        if (mcu_bridge_cli_unregister_command(commands++) != 0)
+        if (ncp_host_cli_unregister_command(commands++) != 0)
             return 1;
 
     return 0;
@@ -514,7 +514,7 @@ int usb_host_send_data(uint8_t *data, uint16_t data_len)
 
     while (remaining_data_len > 0)
     {
-        packet_size = (remaining_data_len > MCU_BRIDGE_COMMAND_LEN) ? MCU_BRIDGE_COMMAND_LEN : remaining_data_len;
+        packet_size = (remaining_data_len > NCP_HOST_COMMAND_LEN) ? NCP_HOST_COMMAND_LEN : remaining_data_len;
 
         USB_HostCdcDataSend(g_cdc.classHandle, (uint8_t *)data + data_len - remaining_data_len, packet_size,
                             USB_HostCdcDataOutCb, &g_cdc);
@@ -536,12 +536,12 @@ int usb_host_send_cmd(uint16_t transfer_size)
 
 #endif
 
-MCU_NCPCmd_DS_COMMAND *ncp_mcu_bridge_get_command_buffer()
+MCU_NCPCmd_DS_COMMAND *ncp_host_get_command_buffer()
 {
     return (MCU_NCPCmd_DS_COMMAND *)(mcu_tlv_command_buff);
 }
 
-static void mcu_bridge_cmd_task(void *pvParameters)
+static void ncp_host_cmd_task(void *pvParameters)
 {
 #if 0
     usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
@@ -559,24 +559,24 @@ static void mcu_bridge_cmd_task(void *pvParameters)
     {
         int ret;
 
-        if (mcu_bridge_cli.inbuf == NULL)
+        if (ncp_host_cli.inbuf == NULL)
         {
-            mcu_bridge_cli.inbuf = mcu_string_command_buff;
-            mcu_bridge_cli.bp    = 0;
+            ncp_host_cli.inbuf = mcu_string_command_buff;
+            ncp_host_cli.bp    = 0;
         }
 
-        if (get_input(mcu_bridge_cli.inbuf, &mcu_bridge_cli.bp))
+        if (get_input(ncp_host_cli.inbuf, &ncp_host_cli.bp))
         {
             /*Wait for command response semaphore.*/
             mcu_get_command_resp_sem();
 
-            if (strcmp(mcu_bridge_cli.inbuf, HALT_MSG) == 0)
+            if (strcmp(ncp_host_cli.inbuf, HALT_MSG) == 0)
                 break;
 
-            ret = handle_input(mcu_bridge_cli.inbuf);
+            ret = handle_input(ncp_host_cli.inbuf);
             if (ret == WM_LOOKUP_FAIL)
             {
-                print_bad_command(mcu_bridge_cli.inbuf);
+                print_bad_command(ncp_host_cli.inbuf);
                 /*If string commands don't match with registered commands, release command response semaphore.*/
                 mcu_put_command_resp_sem();
             }
@@ -588,12 +588,12 @@ static void mcu_bridge_cmd_task(void *pvParameters)
             }
             else if (ret == -WM_FAIL)
             {
-                (void)PRINTF("Failed to process '%s' command\r\n", mcu_bridge_cli.inbuf);
+                (void)PRINTF("Failed to process '%s' command\r\n", ncp_host_cli.inbuf);
                 /*If failed to process string command, release command response semaphore.*/
                 mcu_put_command_resp_sem();
             }
             else /*Send tlv command to ncp bridge app */
-                mcu_bridge_send_tlv_command();
+                ncp_host_send_tlv_command();
 
 //            (void)PRINTF(PROMPT);
         }
@@ -677,7 +677,7 @@ static void ping_sock_task(void *pvParameters)
             ping_prepare_echo(iecho, (uint16_t)ping_size, i);
 
             mcu_get_command_lock();
-            MCU_NCPCmd_DS_COMMAND *ping_sock_command = ncp_mcu_bridge_get_command_buffer();
+            MCU_NCPCmd_DS_COMMAND *ping_sock_command = ncp_host_get_command_buffer();
             ping_sock_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO;
             ping_sock_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
             ping_sock_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
@@ -696,7 +696,7 @@ static void ping_sock_task(void *pvParameters)
             ping_sock_command->header.size += ping_size;
 
             /* Send ping TLV command */
-            mcu_bridge_send_tlv_command();
+            ncp_host_send_tlv_command();
             /* Get the current ticks as the start time */
             ping_time = os_ticks_get();
 
@@ -711,7 +711,7 @@ static void ping_sock_task(void *pvParameters)
 
             mcu_get_command_lock();
             /* Prepare get-ping-result command */
-            MCU_NCPCmd_DS_COMMAND *ping_res_command = ncp_mcu_bridge_get_command_buffer();
+            MCU_NCPCmd_DS_COMMAND *ping_res_command = ncp_host_get_command_buffer();
             ping_res_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM;
             ping_res_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
             ping_res_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
@@ -727,7 +727,7 @@ static void ping_sock_task(void *pvParameters)
             ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
 
             /* Send get-ping-result TLV command */
-            mcu_bridge_send_tlv_command();
+            ncp_host_send_tlv_command();
 
             /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command response */
             (void)os_event_notify_get(OS_WAIT_FOREVER);
@@ -776,12 +776,12 @@ uint32_t uart_get_crc32(uint8_t *buf, uint16_t len)
 }
 #endif
 
-int mcu_bridge_send_tlv_command()
+int ncp_host_send_tlv_command()
 {
     int ret                        = WM_SUCCESS;
     uint32_t bridge_chksum         = 0;
     uint16_t cmd_len               = 0, index;
-    MCU_NCPCmd_DS_COMMAND *mcu_cmd = ncp_mcu_bridge_get_command_buffer();
+    MCU_NCPCmd_DS_COMMAND *mcu_cmd = ncp_host_get_command_buffer();
 #ifdef CONFIG_SPI_BRIDGE
     uint16_t total_len             = 0;
 #endif
@@ -789,7 +789,7 @@ int mcu_bridge_send_tlv_command()
     /* set cmd seqno */
     mcu_cmd->header.seqnum = g_cmd_seqno;
 
-    if (cmd_len + MCU_CHECKSUM_LEN >= MCU_BRIDGE_COMMAND_LEN)
+    if (cmd_len + MCU_CHECKSUM_LEN >= NCP_HOST_COMMAND_LEN)
     {
         PRINTF("The command length exceeds the receiving capacity of mcu bridge application!\r\n");
         ret = -WM_FAIL;
@@ -835,8 +835,8 @@ int mcu_bridge_send_tlv_command()
         ret = usb_host_send_cmd(cmd_len + MCU_CHECKSUM_LEN);
 #elif defined(CONFIG_SPI_BRIDGE)
         total_len = cmd_len + MCU_CHECKSUM_LEN;
-        ret = mcu_bridge_spi_master_transfer((uint8_t *)&mcu_tlv_command_buff[0], total_len,
-                                              MCU_BRIDGE_MASTER_TX, true);
+        ret = ncp_host_spi_master_transfer((uint8_t *)&mcu_tlv_command_buff[0], total_len,
+                                              NCP_HOST_MASTER_TX, true);
         if (ret != WM_SUCCESS)
         {
             mcu_e("failed to write response");
@@ -855,14 +855,14 @@ int mcu_bridge_send_tlv_command()
         g_cmd_seqno++;
         /*Record command id*/
         mcu_last_cmd_sent = mcu_cmd->header.cmd;
-#ifdef CONFIG_MCU_BRIDGE_IO_DUMP
+#ifdef CONFIG_NCP_HOST_IO_DUMP
         PRINTF("TLV Command:\r\n");
         dump_hex(mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
 #endif
     }
     else
     {
-        mcu_e("command length is less than mcu_bridge_app header length (%d), cmd_len = %d", NCP_BRIDGE_CMD_HEADER_LEN,
+        mcu_e("command length is less than ncp_host_app header length (%d), cmd_len = %d", NCP_BRIDGE_CMD_HEADER_LEN,
               cmd_len);
         ret = -WM_FAIL;
         goto done;
@@ -942,7 +942,7 @@ static void ncp_iperf_tx_task(void *pvParameters)
                 (void)PRINTF("ncp bridge tx pkg_num = %d\r\n", pkg_num);
 
             mcu_get_command_lock();
-            MCU_NCPCmd_DS_COMMAND *iperf_command = ncp_mcu_bridge_get_command_buffer();
+            MCU_NCPCmd_DS_COMMAND *iperf_command = ncp_host_get_command_buffer();
             iperf_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_SEND;
             iperf_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
             iperf_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
@@ -959,7 +959,7 @@ static void ncp_iperf_tx_task(void *pvParameters)
             iperf_command->header.size += NCP_IPERF_PER_PKG_SIZE;
 
             /* Send iperf TLV command */
-            mcu_bridge_send_tlv_command();
+            ncp_host_send_tlv_command();
 
             pkg_num++;
             if (!(pkg_num % 100))
@@ -1001,7 +1001,7 @@ static void ncp_iperf_rx_task(void *pvParameters)
             }
             mcu_get_command_lock();
             /* Prepare get-ping-result command */
-            MCU_NCPCmd_DS_COMMAND *ncp_iperf_command = ncp_mcu_bridge_get_command_buffer();
+            MCU_NCPCmd_DS_COMMAND *ncp_iperf_command = ncp_host_get_command_buffer();
             ncp_iperf_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_RECV;
             ncp_iperf_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
             ncp_iperf_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
@@ -1017,7 +1017,7 @@ static void ncp_iperf_rx_task(void *pvParameters)
             ncp_iperf_command->header.size += sizeof(NCP_CMD_SOCKET_RECEIVE_CFG);
 
             /* Send get-ping-result TLV command */
-            mcu_bridge_send_tlv_command();
+            ncp_host_send_tlv_command();
             pkg_num++;
             if (!(pkg_num % 100))
             {
@@ -1031,36 +1031,36 @@ static void ncp_iperf_rx_task(void *pvParameters)
     }
 }
 
-int mcu_bridge_cli_init(void)
+int ncp_host_cli_init(void)
 {
     int ret;
     static bool cli_init_done;
     if (cli_init_done)
         return WM_SUCCESS;
 
-    (void)memset((void *)&mcu_bridge_cli, 0, sizeof(mcu_bridge_cli));
+    (void)memset((void *)&ncp_host_cli, 0, sizeof(ncp_host_cli));
 
     /* add our built-in commands */
-    if (mcu_bridge_cli_register_commands(&built_ins[0], sizeof(built_ins) / sizeof(struct mcu_bridge_cli_command)) != 0)
+    if (ncp_host_cli_register_commands(&built_ins[0], sizeof(built_ins) / sizeof(struct ncp_host_cli_command)) != 0)
         return -WM_FAIL;
 
     /* Generate a table for a byte-wise 32-bit CRC calculation on the polynomial. */
     uart_init_crc32();
 
-    mcu_bridge_cli_command_init();
+    ncp_host_cli_command_init();
 
     int n = 0;
-    for (int i = 0; i < MAX_COMMANDS && n < mcu_bridge_cli.num_commands; i++)
+    for (int i = 0; i < MAX_COMMANDS && n < ncp_host_cli.num_commands; i++)
     {
-        if (mcu_bridge_cli.commands[i]->name != NULL)
+        if (ncp_host_cli.commands[i]->name != NULL)
         {
-            (void)PRINTF("%s %s\r\n", mcu_bridge_cli.commands[i]->name,
-                         mcu_bridge_cli.commands[i]->help ? mcu_bridge_cli.commands[i]->help : "");
+            (void)PRINTF("%s %s\r\n", ncp_host_cli.commands[i]->name,
+                         ncp_host_cli.commands[i]->help ? ncp_host_cli.commands[i]->help : "");
             n++;
         }
     }
 
-    ret = os_thread_create(&mcu_cli_cmd_thread, "mcu bridge cmd task", mcu_bridge_cmd_task, 0, &mcu_cli_cmd_stack,
+    ret = os_thread_create(&mcu_cli_cmd_thread, "mcu bridge cmd task", ncp_host_cmd_task, 0, &mcu_cli_cmd_stack,
                            OS_PRIO_2);
     if (ret != WM_SUCCESS)
     {

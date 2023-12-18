@@ -1,4 +1,4 @@
-/**@file mcu_bridge_os.h
+/**@file ncp_mcu_host_os.h
  *
  *  Copyright 2008-2023 NXP
  *
@@ -31,8 +31,8 @@
  *    os_mem_free().
  */
 
-#ifndef __MCU_BRIDGE_OS_H__
-#define __MCU_BRIDGE_OS_H__
+#ifndef __NCP_MCU_HOST_OS_H__
+#define __NCP_MCU_HOST_OS_H__
 #include "wifi_config.h"
 
 #include <string.h>
@@ -839,4 +839,4 @@ static inline int os_event_notify_put(os_thread_t task)
     return ret == pdTRUE ? WM_SUCCESS : -WM_FAIL;
 }
 
-#endif /*__MCU_BRIDGE_OS_H__ */
+#endif /*__NCP_MCU_HOST_OS_H__ */

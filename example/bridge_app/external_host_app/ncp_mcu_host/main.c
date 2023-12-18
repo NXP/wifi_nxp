@@ -83,11 +83,11 @@ void task_main(void *param)
     PRINTF("Initialize MCU BRIDGE APP\r\n");
     printSeparator();
 
-    result = mcu_bridge_app_init();
+    result = ncp_host_app_init();
 
     assert(WM_SUCCESS == result);
 
-    result = mcu_bridge_cli_init();
+    result = ncp_host_cli_init();
 
     assert(WM_SUCCESS == result);
 #ifdef CONFIG_USB_BRIDGE

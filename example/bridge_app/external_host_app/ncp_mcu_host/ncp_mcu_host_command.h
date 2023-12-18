@@ -1,4 +1,4 @@
-/**@file mcu_bridge_command.h
+/**@file ncp_mcu_host_command.h
  *
  *  Copyright 2008-2023 NXP
  *
@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef __MCU_BRIDGE_COMMAND_H_
-#define __MCU_BRIDGE_COMMAND_H_
+#ifndef __NCP_MCU_HOST_COMMAND_H_
+#define __NCP_MCU_HOST_COMMAND_H_
 
 #ifdef __GNUC__
 /** Structure packing begins */
@@ -28,13 +28,13 @@
 #endif /* PRAGMA_PACK */
 #endif /* __GNUC__ */
 
-#define NCP_BRIDGE_CMD_HEADER_LEN     sizeof(NCP_MCU_BRIDGE_COMMAND)
+#define NCP_BRIDGE_CMD_HEADER_LEN     sizeof(NCP_HOST_COMMAND)
 #define NCP_BRIDGE_TLV_HEADER_LEN     sizeof(TypeHeader_t)
 
 #define MAC2STR(a)                a[0], a[1], a[2], a[3], a[4], a[5]
-#define MCU_BRIDGE_IP_LENGTH      4
-#define MCU_BRIDGE_IP_VALID       255
-#define MCU_BRIDGE_MAX_AP_ENTRIES 30
+#define NCP_HOST_IP_LENGTH      4
+#define NCP_HOST_IP_VALID       255
+#define NCP_HOST_MAX_AP_ENTRIES 30
 
 /*NCP MCU Bridge command class*/
 #define NCP_BRIDGE_CMD_WLAN   0x00000000
@@ -317,13 +317,13 @@ typedef MLAN_PACK_START struct _BRIDGE_COMMAND
     uint16_t seqnum;
     uint16_t result;
     uint16_t msg_type;
-} MLAN_PACK_END NCP_MCU_BRIDGE_COMMAND, NCP_MCU_BRIDGE_RESPONSE;
+} MLAN_PACK_END NCP_HOST_COMMAND, NCP_HOST_RESPONSE;
 
 typedef MLAN_PACK_START struct TLVTypeHeader_t
 {
     uint16_t type;
     uint16_t size;
-} MLAN_PACK_END TypeHeader_t, NCP_MCU_BRIDGE_TLV_HEADER;
+} MLAN_PACK_END TypeHeader_t, NCP_HOST_TLV_HEADER;
 
 /** Scan Result */
 typedef MLAN_PACK_START struct _wlan_bridge_scan_result
@@ -385,7 +385,7 @@ typedef MLAN_PACK_START struct _wlan_bridge_scan_result
 typedef MLAN_PACK_START struct _NCP_CMD_SCAN_NETWORK_INFO
 {
     uint8_t res_cnt;
-    wlan_bridge_scan_result res[MCU_BRIDGE_MAX_AP_ENTRIES];
+    wlan_bridge_scan_result res[NCP_HOST_MAX_AP_ENTRIES];
 } MLAN_PACK_END NCP_CMD_SCAN_NETWORK_INFO;
 
 typedef MLAN_PACK_START struct _NCP_CMD_WPS_GEN_PIN
@@ -425,11 +425,11 @@ typedef MLAN_PACK_START struct
     int16_t bcn_rssi_avg;
     /** BCN nf average */
     int16_t bcn_nf_avg;
-} MLAN_PACK_END wlan_mcu_bridge_rssi_info_t;
+} MLAN_PACK_END wlan_ncp_host_rssi_info_t;
 
 typedef MLAN_PACK_START struct _MCU_NCP_CMD_RSSI
 {
-    wlan_mcu_bridge_rssi_info_t rssi_info;
+    wlan_ncp_host_rssi_info_t rssi_info;
 } MLAN_PACK_END MCU_NCP_CMD_RSSI;
 
 typedef MLAN_PACK_START struct _NCP_CMD_FW_VERSION
@@ -1722,7 +1722,7 @@ typedef MLAN_PACK_START struct _MCU_NCP_CMD_MBO_SET_OCE
 typedef MLAN_PACK_START struct _MCU_NCPCmd_DS_COMMAND
 {
     /** Command Header : Command */
-    NCP_MCU_BRIDGE_COMMAND header;
+    NCP_HOST_COMMAND header;
     /** Command Body */
     union
     {
@@ -2233,7 +2233,7 @@ int wlan_process_mdns_query_result_event(uint8_t *res);
 
 int wlan_process_mdns_resolve_domain_event(uint8_t *res);
 
-int mcu_bridge_cli_command_init();
+int ncp_host_cli_command_init();
 
 int wlan_process_monitor_response(uint8_t *res);
 
@@ -2247,7 +2247,7 @@ int wlan_process_network_list_response(uint8_t *res);
 
 int wlan_process_network_remove_response(uint8_t *res);
 
-MCU_NCPCmd_DS_COMMAND *ncp_mcu_bridge_get_command_buffer();
+MCU_NCPCmd_DS_COMMAND *ncp_host_get_command_buffer();
 
 int wlan_process_mbo_enable_response(uint8_t *res);
 
@@ -2257,4 +2257,4 @@ int wlan_process_mbo_set_cell_capa_response(uint8_t *res);
 
 int wlan_process_mbo_set_oce_response(uint8_t *res);
 
-#endif /*__MCU_BRIDGE_COMMAND_H_*/
+#endif /*__NCP_MCU_HOST_COMMAND_H_*/
