@@ -133,16 +133,16 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 #ifdef CONFIG_11K
     RRM_ENABLED_CAP = 70,
 #endif
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
     MULTI_BSSID = 71,
 #endif
     BSSCO_2040          = 72,
     OVERLAPBSSSCANPARAM = 74,
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
     NONTX_BSSID_CAP = 83,
 #endif
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
     MBSSID_INDEX = 85,
 #endif
     EXT_CAPABILITY = 127,
@@ -443,7 +443,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_CapInfo_t
 } MLAN_PACK_END IEEEtypes_CapInfo_t, *pIEEEtypes_CapInfo_t;
 #endif /* BIG_ENDIAN_SUPPORT */
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
 /** IEEEtypes_Ssid_t */
 typedef MLAN_PACK_START struct _IEEEtypes_Ssid_t
 {
@@ -1348,7 +1348,7 @@ typedef MLAN_PACK_START struct _IEEEtypes_HTInfo_t
     HTInfo_t ht_info;
 } MLAN_PACK_END IEEEtypes_HTInfo_t, *pIEEEtypes_HTInfo_t;
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
 /** the AP which send the multi_bssid IE */
 #define MULTI_BSSID_AP 1
 /** the AP which don't send beacon */
@@ -2303,7 +2303,7 @@ typedef struct _BSSDescriptor_t
     IEEEtypes_HTInfo_t *pht_info;
     /** HT Information Offset */
     /* t_u16 ht_info_offset; */
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
     /** Flag to indicate this is multi_bssid_ap */
     t_u8 multi_bssid_ap;
     /** the mac address of multi-bssid AP */

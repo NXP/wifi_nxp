@@ -1613,7 +1613,7 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         (void)__memcpy(pmadapter, (t_u8 *)pext_cap + sizeof(MrvlIEtypesHeader_t),
                        (t_u8 *)pbss_desc->pext_cap + sizeof(IEEEtypes_Header_t), pbss_desc->pext_cap->ieee_hdr.len);
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
         if (pbss_desc && pbss_desc->multi_bssid_ap)
             SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
 #endif

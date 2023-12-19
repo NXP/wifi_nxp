@@ -726,7 +726,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define IS_FW_SUPPORT_EMBEDDED_OWE(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EMBEDDED_OWE_SUPPORT)
 #endif
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
 /** FW cap info bit 9: Multi BSSID Support */
 #define FW_CAPINFO_EXT_MULTI_BSSID MBIT(9)
 /** Check if Multi BSSID supported by firmware */
@@ -897,7 +897,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define RESET_EXTCAP_BSS_TRANSITION(ext_cap) (ext_cap.BSS_Transition = 0)
 #endif
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
 /** ExtCap : Set support Multi BSSID */
 #define SET_EXTCAP_MULTI_BSSID(ext_cap) (ext_cap.MultipleBSSID = 1)
 #endif

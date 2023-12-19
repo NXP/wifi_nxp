@@ -83,7 +83,7 @@
 #define CONFIG_DPP
 #define CONFIG_WIFI_USB_FILE_ACCESS
 #define CONFIG_PEAP_MSCHAPV2
-#define MULTI_BSSID_SUPPORT
+#define CONFIG_MULTI_BSSID_SUPPORT
 #endif
 
 #define CONFIG_IPV6               1

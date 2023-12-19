@@ -1998,7 +1998,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
                         (*(pbss_entry->pwapi_ie)).ieee_hdr.len + sizeof(IEEEtypes_Header_t));
 #endif /* CONFIG_MLAN_WMSDK */
                 break;
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
             case MULTI_BSSID:
                 if (IS_FW_SUPPORT_MULTIBSSID(pmadapter))
                 {
@@ -4144,7 +4144,7 @@ mlan_status wlan_ret_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMM
     return MLAN_STATUS_SUCCESS;
 }
 
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
 /** 8 bytes timestamp, 2 bytest interval, 2 bytes capability */
 #define BEACON_FIX_SIZE 12
 
@@ -4856,7 +4856,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 bss_new_entry->freq = cfp->freq;
             else
                 bss_new_entry->freq = 0;
-#ifdef MULTI_BSSID_SUPPORT
+#ifdef CONFIG_MULTI_BSSID_SUPPORT
             if (IS_FW_SUPPORT_MULTIBSSID(pmadapter))
             {
                 if (bss_new_entry->multi_bssid_ap == MULTI_BSSID_AP)
