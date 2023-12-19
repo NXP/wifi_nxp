@@ -1607,7 +1607,6 @@ ncp_bridge:
               cc-define:
                 USE_RTOS: 1
                 PRINTF_ADVANCED_ENABLE: 1
-                MBEDTLS_CONFIG_FILE: '"wifi_mbedtls_config.h"'
                 LFS_CONFIG: "littlefs_config.h"
         iar:
           config:
@@ -1959,9 +1958,7 @@ ncp_bridge_supp:
               cc-define:
                 USE_RTOS: 1
                 PRINTF_ADVANCED_ENABLE: 1
-                MBEDTLS_CONFIG_FILE: '"wifi_mbedtls_config.h"'
                 LFS_CONFIG: "littlefs_config.h"
-                MBEDTLS_CONFIG_FILE: '"wpa_supp_els_pkc_mbedtls_config.h"'
         iar:
           config:
             __common__:
@@ -2014,6 +2011,9 @@ ncp_bridge_supp:
           project_path: board
         - source: boards/${board}/wifi_examples/common/pin_mux.h
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: board
+        - source: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}/hardware_init.c
+          merge-to-main: sub
           project_path: board
         - source: boards/${board}/wifi_examples/common/${multicore_foldername}/app.h
           merge-to-main: sub
@@ -2069,9 +2069,6 @@ ncp_bridge_supp:
         - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/FreeRTOSConfig.h
           merge-to-freertosconfig: main
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/wifi_mbedtls_config.h
-          package_path: project-root-path
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge_supp/wifi_config.h
           package_path: project-root-path
