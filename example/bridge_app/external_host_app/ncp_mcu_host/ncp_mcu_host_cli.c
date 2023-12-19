@@ -11,8 +11,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "fsl_debug_console.h"
-//#include "fsl_usart_freertos.h"
-//#include "fsl_usart.h"
 #include "board.h"
 #ifdef CONFIG_CRC32_HW_ACCELERATE
 #include "fsl_crc.h"
@@ -22,13 +20,19 @@
 #include "ncp_mcu_host_cli.h"
 #include "ncp_mcu_host_command.h"
 #include "ncp_mcu_host_app.h"
-#ifdef CONFIG_USB_BRIDGE
+#include "fsl_lpuart_freertos.h"
+#include "fsl_lpuart.h"
+#if defined(CONFIG_USB_BRIDGE)
 #include "usb_host_config.h"
 #include "usb_host.h"
 #include "usb_host_cdc.h"
 #include "host_cdc.h"
 #elif defined(CONFIG_SPI_BRIDGE)
 #include "spi_master_app.h"
+#endif
+
+#ifdef CONFIG_NCP_UART
+extern lpuart_rtos_handle_t ncp_host_tlv_uart_handle;
 #endif
 
 #define END_CHAR     '\r'
@@ -63,27 +67,30 @@ static struct
 static char mcu_string_command_buff[MCU_CLI_STRING_SIZE];
 static uint8_t mcu_tlv_command_buff[NCP_HOST_COMMAND_LEN] = {0};
 
-//extern usart_rtos_handle_t mcu_ncp_uart_handle;
+/* LPUART1: NCP Host input uart */
+#define NCP_HOST_INPUT_UART_CLK_FREQ  BOARD_DebugConsoleSrcFreq()
+#define NCP_HOST_INPUT_UART           LPUART1
+#define NCP_HOST_INPUT_UART_IRQ       LPUART1_IRQn
+#define NCP_HOST_INPUT_UART_NVIC_PRIO 5
 
-/*MCU bridge CLI*/
-static os_thread_t mcu_cli_cmd_thread;
-static os_thread_stack_define(mcu_cli_cmd_stack, 1024);
-#define USART_INPUT_SIZE 1
-#define USART_NVIC_PRIO  5
-uint8_t background_cli_buffer[NCP_HOST_CLI_BACKGROUND_SIZE];
-uint8_t recv_buffer[USART_INPUT_SIZE];
-#if 0
-static usart_rtos_handle_t mcu_cli_uart_handle;
-struct _usart_handle t_u_handle;
+lpuart_rtos_handle_t ncp_host_input_uart_handle;
+struct _lpuart_handle t_ncp_host_input_uart_handle;
 
-struct rtos_usart_config usart_config = {
+static uint8_t background_buffer[NCP_HOST_INPUT_UART_BUF_SIZE];
+
+lpuart_rtos_config_t ncp_host_input_uart_config = {
     .baudrate    = BOARD_DEBUG_UART_BAUDRATE,
-    .parity      = kUSART_ParityDisabled,
-    .stopbits    = kUSART_OneStopBit,
-    .buffer      = background_cli_buffer,
-    .buffer_size = sizeof(background_cli_buffer),
+    .parity      = kLPUART_ParityDisabled,
+    .stopbits    = kLPUART_OneStopBit,
+    .buffer      = background_buffer,
+    .buffer_size = sizeof(background_buffer),
 };
-#endif
+
+static os_thread_t ncp_host_input_thread;
+static os_thread_stack_define(ncp_host_input_stack, 1024);
+
+uint8_t recv_buffer[NCP_HOST_INPUT_UART_SIZE];
+
 extern power_cfg_t global_power_config;
 extern uint8_t mcu_device_status;
 os_semaphore_t gpio_wakelock;
@@ -151,9 +158,9 @@ static int handle_input(char *inbuf)
         unsigned done : 1;
     } stat;
     static char *argv[32];
-    int argc                                     = 0;
-    int i                                        = 0;
-    int j                                        = 0;
+    int argc                                   = 0;
+    int i                                      = 0;
+    int j                                      = 0;
     const struct ncp_host_cli_command *command = NULL;
     const char *p;
 
@@ -277,15 +284,15 @@ static int get_input(char *inbuf, unsigned int *bp)
     static char second_char;
     int ret;
     size_t n;
-//Change condition as false to avoid below printf
-    while (false)
+
+    while (true)
     {
-        /*Receive string command from cli uart.*/
-//        ret = USART_RTOS_Receive(&mcu_cli_uart_handle, recv_buffer, sizeof(recv_buffer), &n);
-//        if (ret == kStatus_USART_RxRingBufferOverrun)
+        /*Receive string command from input uart.*/
+        ret = LPUART_RTOS_Receive(&ncp_host_input_uart_handle, recv_buffer, sizeof(recv_buffer), &n);
+        if (ret == kStatus_LPUART_RxRingBufferOverrun)
         {
             /* Notify about hardware buffer overrun and un-received buffer content */
-            memset(background_cli_buffer, 0, NCP_HOST_CLI_BACKGROUND_SIZE);
+            memset(background_buffer, 0, NCP_HOST_INPUT_UART_BUF_SIZE);
             memset(inbuf, 0, MCU_CLI_STRING_SIZE);
             mcu_e("Ring buffer overrun, please enter string command again");
             continue;
@@ -541,19 +548,19 @@ MCU_NCPCmd_DS_COMMAND *ncp_host_get_command_buffer()
     return (MCU_NCPCmd_DS_COMMAND *)(mcu_tlv_command_buff);
 }
 
-static void ncp_host_cmd_task(void *pvParameters)
+static void ncp_host_input_task(void *pvParameters)
 {
-#if 0
-    usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
-    usart_config.base   = BOARD_DEBUG_UART;
+    ncp_host_input_uart_config.srcclk = NCP_HOST_INPUT_UART_CLK_FREQ;
+    ncp_host_input_uart_config.base   = NCP_HOST_INPUT_UART;
 
-    NVIC_SetPriority(BOARD_UART_IRQ, USART_NVIC_PRIO);
+    NVIC_SetPriority(NCP_HOST_INPUT_UART_IRQ, NCP_HOST_INPUT_UART_NVIC_PRIO);
 
-    if (USART_RTOS_Init(&mcu_cli_uart_handle, &t_u_handle, &usart_config) != WM_SUCCESS)
+    if (LPUART_RTOS_Init(&ncp_host_input_uart_handle, &t_ncp_host_input_uart_handle, &ncp_host_input_uart_config) !=
+        WM_SUCCESS)
     {
         vTaskSuspend(NULL);
     }
-#endif
+
     /* Receive user input and send it back to terminal. */
     while (1)
     {
@@ -595,7 +602,7 @@ static void ncp_host_cmd_task(void *pvParameters)
             else /*Send tlv command to ncp bridge app */
                 ncp_host_send_tlv_command();
 
-//            (void)PRINTF(PROMPT);
+            (void)PRINTF(PROMPT);
         }
     }
 }
@@ -783,7 +790,7 @@ int ncp_host_send_tlv_command()
     uint16_t cmd_len               = 0, index;
     MCU_NCPCmd_DS_COMMAND *mcu_cmd = ncp_host_get_command_buffer();
 #ifdef CONFIG_SPI_BRIDGE
-    uint16_t total_len             = 0;
+    uint16_t total_len = 0;
 #endif
     cmd_len = mcu_cmd->header.size;
     /* set cmd seqno */
@@ -818,25 +825,24 @@ int ncp_host_send_tlv_command()
         /* Wakeup MCU device through GPIO if host configured GPIO wake mode */
         if ((global_power_config.wake_mode == WAKE_MODE_GPIO) && (mcu_device_status == MCU_DEVICE_STATUS_SLEEP))
         {
-//            GPIO_PortInit(GPIO, 0);
-//            GPIO_PinInit(GPIO, 0, 22, &gpio_out_config);
+            //            GPIO_PortInit(GPIO, 0);
+            //            GPIO_PinInit(GPIO, 0, 22, &gpio_out_config);
             mcu_d("get gpio_wakelock after GPIO wakeup\r\n");
             /* Block here to wait for MCU device complete the PM3 exit process */
             os_semaphore_get(&gpio_wakelock, OS_WAIT_FOREVER);
             gpio_out_config.outputLogic = 1;
-//            GPIO_PortInit(GPIO, 0);
-//            GPIO_PinInit(GPIO, 0, 22, &gpio_out_config);
+            //            GPIO_PortInit(GPIO, 0);
+            //            GPIO_PinInit(GPIO, 0, 22, &gpio_out_config);
             os_semaphore_put(&gpio_wakelock);
         }
         /* write response */
-#ifdef CONFIG_UART_BRIDGE
-        ret = USART_RTOS_Send(&mcu_ncp_uart_handle, mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
+#ifdef CONFIG_NCP_UART
+        ret = LPUART_RTOS_Send(&ncp_host_tlv_uart_handle, mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
 #elif defined(CONFIG_USB_BRIDGE)
         ret = usb_host_send_cmd(cmd_len + MCU_CHECKSUM_LEN);
 #elif defined(CONFIG_SPI_BRIDGE)
         total_len = cmd_len + MCU_CHECKSUM_LEN;
-        ret = ncp_host_spi_master_transfer((uint8_t *)&mcu_tlv_command_buff[0], total_len,
-                                              NCP_HOST_MASTER_TX, true);
+        ret = ncp_host_spi_master_transfer((uint8_t *)&mcu_tlv_command_buff[0], total_len, NCP_HOST_MASTER_TX, true);
         if (ret != WM_SUCCESS)
         {
             mcu_e("failed to write response");
@@ -882,57 +888,77 @@ done:
 
 /*iperf command tx and rx */
 extern iperf_msg_t iperf_msg;
-#define NCP_IPERF_PKG_COUNT     1000
-#define NCP_IPERF_PER_PKG_SIZE  1448
-#define IPERF_RECV_TIMEOUT      3000
+#define NCP_IPERF_PKG_COUNT    1000
+#define NCP_IPERF_PER_PKG_SIZE 1448
+#define IPERF_RECV_TIMEOUT     3000
 /** A const buffer to send from: we want to measure sending, not copying! */
 static const char lwiperf_txbuf_const[NCP_IPERF_PER_PKG_SIZE] = {
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
+    '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5',
+    '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+    '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
+    '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3',
+    '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6',
+    '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
+    '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5',
+    '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+    '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
+    '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3',
+    '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6',
+    '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
+    '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5',
+    '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+    '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
+    '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3',
+    '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6',
+    '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
+    '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5',
+    '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+    '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
+    '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3',
+    '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6',
+    '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2',
+    '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5',
+    '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8',
+    '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1',
+    '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4',
+    '5', '6', '7', '8', '9',
 };
 static void ncp_iperf_tx_task(void *pvParameters)
 {
     unsigned long iperf_timer_start = 0, iperf_timer_end = 0;
     unsigned int pkg_num = 0;
-    unsigned long rate = 0;
+    unsigned long rate   = 0;
 
     while (1)
     {
         /* demo ping task wait for user input ping command from console */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
         (void)PRINTF("recv command run start\r\n");
-        pkg_num = 0;
+        pkg_num             = 0;
         iperf_msg.status[0] = 0;
-        iperf_timer_start = os_ticks_get();
+        iperf_timer_start   = os_ticks_get();
         while (pkg_num < NCP_IPERF_PKG_COUNT)
         {
             /*Wait for command response semaphore.*/
             mcu_get_command_resp_sem();
-            if (iperf_msg.status[0] == (char )-WM_FAIL)
+            if (iperf_msg.status[0] == (char)-WM_FAIL)
             {
                 iperf_msg.status[0] = 0;
                 mcu_put_command_resp_sem();
@@ -948,10 +974,9 @@ static void ncp_iperf_tx_task(void *pvParameters)
             iperf_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
             iperf_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
 
-            NCP_CMD_SOCKET_SEND_CFG *ncp_iperf_tlv =
-                (NCP_CMD_SOCKET_SEND_CFG *)&iperf_command->params.wlan_socket_send;
-            ncp_iperf_tlv->handle = iperf_msg.handle;
-            ncp_iperf_tlv->size   = NCP_IPERF_PER_PKG_SIZE;
+            NCP_CMD_SOCKET_SEND_CFG *ncp_iperf_tlv = (NCP_CMD_SOCKET_SEND_CFG *)&iperf_command->params.wlan_socket_send;
+            ncp_iperf_tlv->handle                  = iperf_msg.handle;
+            ncp_iperf_tlv->size                    = NCP_IPERF_PER_PKG_SIZE;
             memcpy(ncp_iperf_tlv->send_data, lwiperf_txbuf_const, NCP_IPERF_PER_PKG_SIZE);
 
             /*cmd size*/
@@ -965,8 +990,8 @@ static void ncp_iperf_tx_task(void *pvParameters)
             if (!(pkg_num % 100))
             {
                 iperf_timer_end = os_ticks_get();
-                rate = NCP_IPERF_PER_PKG_SIZE * pkg_num * 1000 / (iperf_timer_end - iperf_timer_start);
-                rate = rate * 8 / 1024;
+                rate            = NCP_IPERF_PER_PKG_SIZE * pkg_num * 1000 / (iperf_timer_end - iperf_timer_start);
+                rate            = rate * 8 / 1024;
                 (void)PRINTF("iperf rate = %lu kbit/s\r\n", rate);
             }
         }
@@ -978,21 +1003,21 @@ static void ncp_iperf_rx_task(void *pvParameters)
 {
     unsigned long iperf_timer_start = 0, iperf_timer_end = 0;
     unsigned int pkg_num = 0;
-    unsigned long rate = 0;
+    unsigned long rate   = 0;
 
     while (1)
     {
         /* demo ping task wait for user input ping command from console */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
         (void)PRINTF("ncp iperf rx start\r\n");
-        pkg_num = 0;
+        pkg_num             = 0;
         iperf_msg.status[1] = 0;
-        iperf_timer_start = os_ticks_get();
+        iperf_timer_start   = os_ticks_get();
         while (pkg_num < NCP_IPERF_PKG_COUNT)
         {
             /*Wait for command response semaphore.*/
             mcu_get_command_resp_sem();
-            if (iperf_msg.status[1] == (char )-WM_FAIL)
+            if (iperf_msg.status[1] == (char)-WM_FAIL)
             {
                 (void)PRINTF("recv command run fail\r\n");
                 iperf_msg.status[1] = 0;
@@ -1022,8 +1047,8 @@ static void ncp_iperf_rx_task(void *pvParameters)
             if (!(pkg_num % 100))
             {
                 iperf_timer_end = os_ticks_get();
-                rate = NCP_IPERF_PER_PKG_SIZE * pkg_num * 1000 / (iperf_timer_end - iperf_timer_start);
-                rate = rate * 8 / 1024;
+                rate            = NCP_IPERF_PER_PKG_SIZE * pkg_num * 1000 / (iperf_timer_end - iperf_timer_start);
+                rate            = rate * 8 / 1024;
                 (void)PRINTF("iperf rate = %lu kbit/s\r\n", rate);
             }
         }
@@ -1060,11 +1085,11 @@ int ncp_host_cli_init(void)
         }
     }
 
-    ret = os_thread_create(&mcu_cli_cmd_thread, "mcu bridge cmd task", ncp_host_cmd_task, 0, &mcu_cli_cmd_stack,
+    ret = os_thread_create(&ncp_host_input_thread, "ncp host input task", ncp_host_input_task, 0, &ncp_host_input_stack,
                            OS_PRIO_2);
     if (ret != WM_SUCCESS)
     {
-        (void)PRINTF("Error: Failed to create uart thread: %d\r\n", ret);
+        (void)PRINTF("Error: Failed to create ncp host input uart thread: %d\r\n", ret);
         return -WM_FAIL;
     }
 
@@ -1092,14 +1117,16 @@ int ncp_host_cli_init(void)
         return -WM_FAIL;
     }
 
-    ret = os_thread_create(&ncp_iperf_tx_thread, "ncp iperf tx task", ncp_iperf_tx_task, 0, &ncp_iperf_tx_stack, OS_PRIO_3);
+    ret = os_thread_create(&ncp_iperf_tx_thread, "ncp iperf tx task", ncp_iperf_tx_task, 0, &ncp_iperf_tx_stack,
+                           OS_PRIO_3);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create ncp iperf thread: %d\r\n", ret);
         return -WM_FAIL;
     }
 
-    ret = os_thread_create(&ncp_iperf_rx_thread, "ncp iperf rx task", ncp_iperf_rx_task, 0, &ncp_iperf_rx_stack, OS_PRIO_3);
+    ret = os_thread_create(&ncp_iperf_rx_thread, "ncp iperf rx task", ncp_iperf_rx_task, 0, &ncp_iperf_rx_stack,
+                           OS_PRIO_3);
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create ncp iperf thread: %d\r\n", ret);

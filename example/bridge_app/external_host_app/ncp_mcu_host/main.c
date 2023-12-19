@@ -78,9 +78,9 @@ void task_main(void *param)
     int32_t result = 0;
     (void)result;
 
-//    mcu_gpio_init();
+    //    mcu_gpio_init();
 
-    PRINTF("Initialize MCU BRIDGE APP\r\n");
+    PRINTF("Initialize NCP Host APP\r\n");
     printSeparator();
 
     result = ncp_host_app_init();
@@ -113,10 +113,10 @@ int main(void)
     (void)result;
 
     BOARD_InitHardware();
-//    POWER_PowerOffBle();
+    //    POWER_PowerOffBle();
 
     printSeparator();
-    PRINTF("MCU bridge APP demo\r\n");
+    PRINTF("NCP Host APP demo\r\n");
     printSeparator();
 
     result =

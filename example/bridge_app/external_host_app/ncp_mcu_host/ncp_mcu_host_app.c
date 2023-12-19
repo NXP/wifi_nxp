@@ -11,16 +11,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include "fsl_debug_console.h"
-//#include "fsl_usart.h"
 #include "board.h"
 #include "task.h"
-//#include "fsl_usart_freertos.h"
 #include "ncp_mcu_host_os.h"
 #include "ncp_mcu_host_utils.h"
 #include "ncp_mcu_host_cli.h"
 #include "ncp_mcu_host_command.h"
 #include "ncp_mcu_host_app.h"
-#ifdef CONFIG_USB_BRIDGE
+#ifdef CONFIG_NCP_UART
+#include "fsl_lpuart_freertos.h"
+#include "fsl_lpuart.h"
+#elif defined(CONFIG_USB_BRIDGE)
 #include "usb_host_config.h"
 #include "usb_host.h"
 #include "usb_host_cdc.h"
@@ -29,41 +30,34 @@
 #include "spi_master_app.h"
 #endif
 
-os_thread_t ncp_host_resp_thread;
-uint8_t background_resp_buffer[256];
-#define USART_SEND_SIZE 1
-uint8_t send_buffer[USART_SEND_SIZE];
-#if 0
-usart_rtos_handle_t mcu_ncp_uart_handle;
-struct _usart_handle t_u_mcu_uart_resp_handle;
-#endif
-#define USART_NVIC_PRIO_USBUART 5
+os_thread_t ncp_host_tlv_thread;
+#define CONFIG_TLV_STACK_SIZE 4096
+static os_thread_stack_define(ncp_host_tlv_stack, CONFIG_TLV_STACK_SIZE);
 
-#define BRIDGE_QUEUE_SIZE 4
+#ifdef CONFIG_NCP_UART
+/* LPUART3: NCP Host TLV command uart */
+#define NCP_HOST_TLV_UART_CLK_FREQ  BOARD_DebugConsoleSrcFreq()
+#define NCP_HOST_TLV_UART           LPUART3
+#define NCP_HOST_TLV_UART_IRQ       LPUART3_IRQn
+#define NCP_HOST_TLV_UART_NVIC_PRIO 5
+
+lpuart_rtos_handle_t ncp_host_tlv_uart_handle;
+struct _lpuart_handle t_ncp_host_tlv_uart_handle;
+
+static uint8_t background_buffer[256];
+
+lpuart_rtos_config_t ncp_host_tlv_uart_config = {
+    .baudrate    = 115200,
+    .parity      = kLPUART_ParityDisabled,
+    .stopbits    = kLPUART_OneStopBit,
+    .buffer      = background_buffer,
+    .buffer_size = sizeof(background_buffer),
+};
+#endif
 
 os_semaphore_t mcu_cmd_resp_sem;
 os_mutex_t mcu_command_lock;
 
-#define CONFIG_BRIDGE_STACK_SIZE 4096
-static os_thread_stack_define(bridge_app_stack, CONFIG_BRIDGE_STACK_SIZE);
-
-/*MCU bridge NCP uart*/
-#define BOARD_DEBUG_UART_USBUART_FRG_CLK \
-    (&(const clock_frg_clk_config_t){0, kCLOCK_FrgPllDiv, 255, 0}) /*!< Select FRG0 mux as frg_pll */
-#define BOARD_DEBUG_UART_USBUART_CLK_ATTACH kFRG_to_FLEXCOMM0
-#define BOARD_DEBUG_UART_USBUART_BASEADDR   (uint32_t) FLEXCOMM0
-#define BOARD_DEBUG_UART_USBUART            USART0
-#define BOARD_DEBUG_UART_USBUART_CLK_FREQ   CLOCK_GetFlexCommClkFreq(0)
-#define BOARD_UART_USBUART_IRQ              FLEXCOMM0_IRQn
-#if 0
-struct rtos_usart_config bridge_usart_config = {
-    .baudrate    = BOARD_DEBUG_UART_BAUDRATE,
-    .parity      = kUSART_ParityDisabled,
-    .stopbits    = kUSART_OneStopBit,
-    .buffer      = background_resp_buffer,
-    .buffer_size = sizeof(background_resp_buffer),
-};
-#endif
 extern uint32_t mcu_last_cmd_sent;
 /*ID number of command response received from ncp*/
 uint32_t mcu_last_resp_rcvd;
@@ -165,7 +159,7 @@ void usb_host_save_recv_data(uint8_t *recv_data, uint32_t packet_len)
 
         usb_rx_len       = 0;
         usb_transfer_len = 0;
-        os_event_notify_put(ncp_host_resp_thread);
+        os_event_notify_put(ncp_host_tlv_thread);
 
         PRINTF("data recv success \r\n");
     }
@@ -195,19 +189,19 @@ void USB_HostCdcDataInCb(void *param, uint8_t *data, uint32_t dataLength, usb_st
 /**
  * @brief       Receive tlv reponses from ncp_bridge and process tlv reponses.
  */
-static void ncp_host_resp_task(void *pvParameters)
+static void ncp_host_tlv_task(void *pvParameters)
 {
     int ret;
     uint16_t msg_type = 0;
 #ifndef CONFIG_USB_BRIDGE
-    int len = 0;
-    size_t rx_len     = 0;
-    int resp_len      = 0;
+    int len       = 0;
+    size_t rx_len = 0;
+    int resp_len  = 0;
 #ifdef CONFIG_SPI_BRIDGE
-    int total_len     = 0;
+    int total_len = 0;
 #endif
 #endif
-    
+
     while (1)
     {
 #ifdef CONFIG_USB_BRIDGE
@@ -215,17 +209,16 @@ static void ncp_host_resp_task(void *pvParameters)
 #else
         /*Inialize mcu_last_resp_rcvd to 0 and there is no 0x00000000 command.*/
         mcu_last_resp_rcvd = 0;
-#ifdef CONFIG_UART_BRIDGE
+#ifdef CONFIG_NCP_UART
         while (len < NCP_BRIDGE_CMD_HEADER_LEN)
         {
-            USART_RTOS_Receive(&mcu_ncp_uart_handle, mcu_response_buff + len, NCP_BRIDGE_CMD_HEADER_LEN, &rx_len);
+            LPUART_RTOS_Receive(&ncp_host_tlv_uart_handle, mcu_response_buff + len, NCP_BRIDGE_CMD_HEADER_LEN, &rx_len);
             len += rx_len;
         }
 #elif defined(CONFIG_SPI_BRIDGE)
         os_event_notify_get(OS_WAIT_FOREVER);
-        ret = ncp_host_spi_master_transfer(mcu_response_buff + len,
-                                             NCP_BRIDGE_CMD_HEADER_LEN,
-                                             NCP_HOST_MASTER_RX, true);
+        ret =
+            ncp_host_spi_master_transfer(mcu_response_buff + len, NCP_BRIDGE_CMD_HEADER_LEN, NCP_HOST_MASTER_RX, true);
         if (ret != WM_SUCCESS)
         {
             mcu_e("Failed to receive command header(%d)", ret);
@@ -239,29 +232,29 @@ static void ncp_host_resp_task(void *pvParameters)
         resp_len =
             (mcu_response_buff[NCP_HOST_CMD_SIZE_HIGH_BYTE] << 8) | mcu_response_buff[NCP_HOST_CMD_SIZE_LOW_BYTE];
         rx_len = 0;
-#ifdef CONFIG_UART_BRIDGE
+#ifdef CONFIG_NCP_UART
         while (len < resp_len + MCU_CHECKSUM_LEN)
         {
-            ret = USART_RTOS_Receive(&mcu_ncp_uart_handle, mcu_response_buff + len, resp_len + MCU_CHECKSUM_LEN - len,
-                                     &rx_len);
+            ret = LPUART_RTOS_Receive(&ncp_host_tlv_uart_handle, mcu_response_buff + len,
+                                      resp_len + MCU_CHECKSUM_LEN - len, &rx_len);
             len += rx_len;
-            if ((ret == kStatus_USART_RxRingBufferOverrun) || len >= NCP_HOST_RESPONSE_LEN)
+            if ((ret == kStatus_LPUART_RxRingBufferOverrun) || len >= NCP_HOST_RESPONSE_LEN)
             {
                 /* Notify about hardware buffer overrun, clear uart ring buffer and cmd buffer */
-                memset(background_resp_buffer, 0, sizeof(background_resp_buffer));
+                memset(background_buffer, 0, sizeof(background_buffer));
                 mcu_e("overflow, too much tlv reponse from ncp bridge");
                 goto done;
             }
         }
 #elif defined(CONFIG_SPI_BRIDGE)
         total_len = resp_len + MCU_CHECKSUM_LEN;
-        if(resp_len < NCP_BRIDGE_CMD_HEADER_LEN || total_len >= NCP_HOST_RESPONSE_LEN)
+        if (resp_len < NCP_BRIDGE_CMD_HEADER_LEN || total_len >= NCP_HOST_RESPONSE_LEN)
         {
             mcu_e("Invalid tlv reponse length from ncp bridge");
             goto done;
         }
         ret = ncp_host_spi_master_transfer(mcu_response_buff + len, total_len - NCP_BRIDGE_CMD_HEADER_LEN,
-                                             NCP_HOST_MASTER_RX, false);
+                                           NCP_HOST_MASTER_RX, false);
         if (ret != WM_SUCCESS)
         {
             mcu_e("Failed to receive command buffer(%d)", ret);
@@ -311,7 +304,7 @@ static void ncp_host_resp_task(void *pvParameters)
         len    = 0;
         rx_len = 0;
 #endif
-        
+
         if (msg_type == NCP_BRIDGE_MSG_TYPE_RESP)
         {
             /*If failed to receive response or successed to parse tlv reponse, release mcu command response semaphore to
@@ -395,18 +388,16 @@ void vApplicationIdleHook(void)
     }
 }
 
-#ifdef CONFIG_UART_BRIDGE
-static int ncp_host_init_ncp_uart()
+#ifdef CONFIG_NCP_UART
+static int ncp_host_init_uart()
 {
     int ret;
-    CLOCK_SetFRGClock(BOARD_DEBUG_UART_USBUART_FRG_CLK);
-    CLOCK_AttachClk(BOARD_DEBUG_UART_USBUART_CLK_ATTACH);
-    bridge_usart_config.srcclk = BOARD_DEBUG_UART_USBUART_CLK_FREQ;
-    bridge_usart_config.base   = BOARD_DEBUG_UART_USBUART;
+    ncp_host_tlv_uart_config.srcclk = NCP_HOST_TLV_UART_CLK_FREQ;
+    ncp_host_tlv_uart_config.base   = NCP_HOST_TLV_UART;
 
-    NVIC_SetPriority(BOARD_UART_USBUART_IRQ, USART_NVIC_PRIO_USBUART);
+    NVIC_SetPriority(NCP_HOST_TLV_UART_IRQ, NCP_HOST_TLV_UART_NVIC_PRIO);
 
-    ret = USART_RTOS_Init(&mcu_ncp_uart_handle, &t_u_mcu_uart_resp_handle, &bridge_usart_config);
+    ret = LPUART_RTOS_Init(&ncp_host_tlv_uart_handle, &t_ncp_host_tlv_uart_handle, &ncp_host_tlv_uart_config);
     if (ret != WM_SUCCESS)
         return ret;
 
@@ -415,7 +406,7 @@ static int ncp_host_init_ncp_uart()
 #endif
 
 /**
- * @brief       This function initializes mcu bridge app. Create locks/queues/tasks.
+ * @brief       This function initializes NCP host app. Create locks/queues/tasks.
  *
  * @return      Status returned
  */
@@ -437,26 +428,26 @@ int ncp_host_app_init()
         return -WM_FAIL;
     }
 
-#ifdef CONFIG_UART_BRIDGE
-    ret = ncp_host_init_ncp_uart();
+#ifdef CONFIG_NCP_UART
+    ret = ncp_host_init_uart();
 #elif defined(CONFIG_SPI_BRIDGE)
     ret = ncp_host_init_spi_master();
 #endif
     if (ret != WM_SUCCESS)
     {
-#ifdef CONFIG_UART_BRIDGE
-        (void)PRINTF("Error: Failed to initialize ncp UART port: %d\r\n", ret);
+#ifdef CONFIG_NCP_UART
+        (void)PRINTF("Error: Failed to initialize ncp uart port: %d\r\n", ret);
 #elif defined(CONFIG_SPI_BRIDGE)
         (void)PRINTF("Error: Failed to initialize ncp SPI: %d\r\n", ret);
 #endif
         return -WM_FAIL;
     }
 
-    ret = os_thread_create(&ncp_host_resp_thread, "mcu bridge resp task", ncp_host_resp_task, 0,
-                           &bridge_app_stack, OS_PRIO_2);
+    ret = os_thread_create(&ncp_host_tlv_thread, "ncp host tlv task", ncp_host_tlv_task, 0, &ncp_host_tlv_stack,
+                           OS_PRIO_2);
     if (ret != WM_SUCCESS)
     {
-        (void)PRINTF("Error: Failed to create bridge recveive thread: %d\r\n", ret);
+        (void)PRINTF("Error: Failed to create ncp host tlv thread: %d\r\n", ret);
         return -WM_FAIL;
     }
 #ifdef CONFIG_USB_BRIDGE
