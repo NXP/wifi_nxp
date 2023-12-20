@@ -28,12 +28,13 @@
 #ifndef RW610
 #include "wifi_bt_config.h"
 #else
-#include "pin_mux.h"
-#include "fsl_power.h"
-#include "fsl_pm_core.h"
-#include "fsl_pm_device.h"
 #include "fsl_rtc.h"
 #endif
+#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+#include "usb_host_config.h"
+#include "usb_host.h"
+#include "usb_api.h"
+#endif /* CONFIG_WIFI_USB_FILE_ACCESS */
 #include "cli_utils.h"
 #ifdef CONFIG_HOST_SLEEP
 #include "host_sleep.h"
@@ -51,8 +52,15 @@ int wlan_driver_init(void);
 int wlan_driver_deinit(void);
 int wlan_driver_reset(void);
 int wlan_reset_cli_init(void);
+#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+extern usb_host_handle g_HostHandle;
+#endif /* CONFIG_WIFI_USB_FILE_ACCESS */
+
 int wlan_reset_cli_deinit(void);
 
+static int wlan_prov_cli_init(void);
+
+extern int wpa_cli_init(void);
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -66,32 +74,6 @@ const int TASK_MAIN_STACK_SIZE = 800;
 
 portSTACK_TYPE *task_main_stack = NULL;
 TaskHandle_t task_main_task_handler;
-#ifdef RW610
-#ifdef CONFIG_POWER_MANAGER
-/* Global power manager handle */
-AT_ALWAYS_ON_DATA(pm_handle_t pm_handle);
-AT_ALWAYS_ON_DATA(pm_wakeup_source_t wlanWakeupSource);
-AT_ALWAYS_ON_DATA(pm_wakeup_source_t rtcWakeupSource);
-AT_ALWAYS_ON_DATA(pm_wakeup_source_t pin1WakeupSource);
-extern pm_notify_element_t wlan_notify;
-extern bool is_wakeup_cond_set;
-#define APP_PM2_CONSTRAINTS                                                                           \
-    6U, PM_RESC_SRAM_0K_384K_STANDBY, PM_RESC_SRAM_384K_448K_STANDBY, PM_RESC_SRAM_448K_512K_STANDBY, \
-        PM_RESC_SRAM_512K_640K_STANDBY, PM_RESC_SRAM_640K_896K_STANDBY, PM_RESC_SRAM_896K_1216K_STANDBY
-#define APP_PM3_CONSTRAINTS                                                                                 \
-    6U, PM_RESC_SRAM_0K_384K_RETENTION, PM_RESC_SRAM_384K_448K_RETENTION, PM_RESC_SRAM_448K_512K_RETENTION, \
-        PM_RESC_SRAM_512K_640K_RETENTION, PM_RESC_SRAM_640K_896K_RETENTION, PM_RESC_SRAM_896K_1216K_RETENTION
-#if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
-#ifndef POWER_MANAGER_RTC_PIN1_PRIORITY
-#define POWER_MANAGER_RTC_PIN1_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1)
-#endif
-#else
-#ifndef POWER_MANAGER_RTC_PIN1_PRIORITY
-#define POWER_MANAGER_RTC_PIN1_PRIORITY (3U)
-#endif
-#endif
-#endif
-#endif
 
 static void printSeparator(void)
 {
@@ -112,6 +94,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     char ip[16];
     static int auth_fail                      = 0;
     wlan_uap_client_disassoc_t *disassoc_resp = data;
+
+    printSeparator();
+    PRINTF("app_cb: WLAN: received event %d\r\n", reason);
+    printSeparator();
 
     switch (reason)
     {
@@ -143,7 +129,18 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
             PRINTF("ENHANCED WLAN CLIs are initialized\r\n");
             printSeparator();
-
+#ifdef RW610		
+#ifdef CONFIG_HOST_SLEEP
+            ret = host_sleep_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize WLAN CLIs\r\n");
+                return 0;
+            }
+            PRINTF("HOST SLEEP CLIs are initialized\r\n");
+            printSeparator();
+#endif
+#endif
             ret = ping_cli_init();
             if (ret != WM_SUCCESS)
             {
@@ -169,6 +166,12 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             if (ret != WM_SUCCESS)
             {
                 PRINTF("Failed to initialize WPA SUPP CLI\r\n");
+                return 0;
+            }
+			ret = wlan_prov_cli_init();
+            if (ret != WM_SUCCESS)
+            {
+                PRINTF("Failed to initialize PROV CLI\r\n");
                 return 0;
             }
 
@@ -310,8 +313,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_PS_ENTER:
+            PRINTF("app_cb: WLAN: PS_ENTER\r\n");
             break;
         case WLAN_REASON_PS_EXIT:
+		    PRINTF("app_cb: WLAN: PS EXIT\r\n");
             break;
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case WLAN_REASON_RSSI_HIGH:
@@ -437,149 +442,203 @@ int wlan_reset_cli_deinit(void)
     return 0;
 }
 #endif
-
-#ifdef RW610
-#ifdef CONFIG_POWER_MANAGER
-void powerManager_StartRtcTimer(uint64_t timeOutUs)
+#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+static void dump_read_usb_file_usage(void)
 {
-    uint32_t currSeconds;
-
-    PM_EnableWakeupSource(&rtcWakeupSource);
-    /* Read the RTC seconds register to get current time in seconds */
-    currSeconds = RTC_GetSecondsTimerCount(RTC);
-    /* Add alarm seconds to current time */
-    currSeconds += (timeOutUs + 999999U) / 1000000U;
-    /* Set alarm time in seconds */
-    RTC_SetSecondsTimerMatch(RTC, currSeconds);
+    (void)PRINTF("Usage: wlan-read-usb-file <type:ca-cert/client-cert/client-key> <file name>\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-read-usb-file ca-cert 1:/ca.der\r\n");
 }
 
-void powerManager_StopRtcTimer()
+static void test_wlan_read_usb_file(int argc, char **argv)
 {
-    RTC_ClearStatusFlags(RTC, kRTC_AlarmFlag);
-    PM_DisableWakeupSource(&rtcWakeupSource);
-}
+    int ret, data_len, usb_f_type = 0;
+    uint8_t *file_buf  = NULL;
+    char file_name[32] = {0};
 
-void RTC_IRQHandler()
-{
-    if (RTC_GetStatusFlags(RTC) & kRTC_AlarmFlag)
+    if (argc < 3)
     {
-        RTC_ClearStatusFlags(RTC, kRTC_AlarmFlag);
-        PM_DisableWakeupSource(&rtcWakeupSource);
-        wakeup_by = WAKEUP_BY_RTC;
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_read_usb_file_usage();
+        return;
     }
-}
+    if (string_equal("ca-cert", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CA_CERT;
+    else if (string_equal("client-cert", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT;
+    else if (string_equal("client-key", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY;
+    else if (string_equal("ca-cert2", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CA_CERT2;
+    else if (string_equal("client-cert2", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT2;
+    else if (string_equal("client-key2", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY2;
+#ifdef CONFIG_HOSTAPD
+    else if (string_equal("server-cert", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_SERVER_CERT;
+    else if (string_equal("server-key", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_SERVER_KEY;
+    else if (string_equal("dh-params", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_DH_PARAMS;
+#endif
 
-void PIN1_INT_IRQHandler()
-{
-    POWER_ConfigWakeupPin(kPOWER_WakeupPin1, kPOWER_WakeupEdgeHigh);
-    NVIC_ClearPendingIRQ(PIN1_INT_IRQn);
-    DisableIRQ(PIN1_INT_IRQn);
-    POWER_ClearWakeupStatus(PIN1_INT_IRQn);
-    POWER_DisableWakeup(PIN1_INT_IRQn);
-    wakeup_by = WAKEUP_BY_PIN1;
-}
+    memset(file_name, 0, sizeof(file_name));
+    (void)memcpy(file_name, argv[2], strlen(argv[2]) < 32 ? strlen(argv[2]) : 32);
 
-void powerManager_RTC_Init()
-{
-    DisableIRQ(RTC_IRQn);
-    POWER_ClearWakeupStatus(RTC_IRQn);
-    POWER_DisableWakeup(RTC_IRQn);
-    RTC_Init(RTC);
-    /* Enable wakeup in PD mode */
-    RTC_EnableAlarmTimerInterruptFromDPD(RTC, true);
-    /* Start RTC */
-    RTC_ClearStatusFlags(RTC, kRTC_AlarmFlag);
-    RTC_StartTimer(RTC);
-    /* Register RTC timer callbacks in power manager */
-    PM_RegisterTimerController(&pm_handle, powerManager_StartRtcTimer, powerManager_StopRtcTimer, NULL, NULL);
-}
-
-void powerManager_Wakeupsource_Init()
-{
-    memset(&wlanWakeupSource, 0x0, sizeof(pm_wakeup_source_t));
-    memset(&rtcWakeupSource, 0x0, sizeof(pm_wakeup_source_t));
-    memset(&pin1WakeupSource, 0x0, sizeof(pm_wakeup_source_t));
-    /* Init WLAN wakeup source. Power manager API PM_InitWakeupSource()
-     * can't be called to init WLAN wakeup source since RW610 use IMU
-     * interrupt to wakeup host and can't be disabled here.
-     */
-    wlanWakeupSource.wsId    = WL_MCI_WAKEUP0_IRQn;
-    wlanWakeupSource.service = NULL;
-    wlanWakeupSource.enabled = false;
-    wlanWakeupSource.active  = false;
-    POWER_ClearWakeupStatus(WL_MCI_WAKEUP0_IRQn);
-    POWER_DisableWakeup(WL_MCI_WAKEUP0_IRQn);
-    /* Init other wakeup sources. Corresponding IRQ numbers act as wsId here. */
-    PM_InitWakeupSource(&rtcWakeupSource, RTC_IRQn, NULL, false);
-    PM_InitWakeupSource(&pin1WakeupSource, PM_WSID_WAKEUP_PIN1_LOW_LEVEL, NULL, false);
-}
-
-void powerManager_WakeupSourceDump()
-{
-    if (wakeup_by == 0x1)
-        PRINTF("Woken up by WLAN\r\n");
-    if (wakeup_by == 0x2)
-        PRINTF("Woken up by RTC\r\n");
-    if (wakeup_by == 0x4)
-        PRINTF("Woken up by PIN1\r\n");
-}
-
-void powerManager_EnterLowPower()
-{
-    /* Check is_wakeup_cond_set first, as wakelcok will be deleted in wlan-reset 0 */
-    if (is_wakeup_cond_set && pm_handle.enable && !wakelock_isheld())
+    if (WM_SUCCESS != usb_mount())
     {
-#ifdef CONFIG_RW610_A1
-        PM_SetConstraints(PM_LP_STATE_PM3, APP_PM3_CONSTRAINTS);
-#else
-        PM_SetConstraints(PM_LP_STATE_PM2, APP_PM2_CONSTRAINTS);
-#endif
-        /* Enable PIN1 as wakeup sources */
-        PM_EnableWakeupSource(&pin1WakeupSource);
-        /* duration unit is us here */
-        PM_EnterLowPower(60000000);
-        powerManager_WakeupSourceDump();
-        wakeup_by = 0;
-        /* Exit low power and reset constraints */
-#ifdef CONFIG_RW610_A1
-        PM_ReleaseConstraints(PM_LP_STATE_PM3, APP_PM3_CONSTRAINTS);
-#else
-        PM_ReleaseConstraints(PM_LP_STATE_PM2, APP_PM2_CONSTRAINTS);
-#endif
+        PRINTF("Error: USB mounting failed\r\n");
+        return;
     }
+
+    ret = usb_file_open_by_mode(file_name, FA_READ);
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("File opening failed\r\n");
+        return;
+    }
+
+    data_len = usb_file_size();
+    if (data_len == 0)
+    {
+        PRINTF("File size failed\r\n");
+        goto file_err;
+    }
+    file_buf = os_mem_alloc(data_len);
+    if (!file_buf)
+    {
+        PRINTF("File size allocate memory failed\r\n");
+        goto file_err;
+    }
+    ret = usb_file_read((uint8_t *)file_buf, data_len);
+    if (ret != data_len)
+    {
+        PRINTF("read file %s size not match!(%d,%d)\r\n", file_name, ret, data_len);
+        goto file_err;
+    }
+    (void)wlan_set_entp_cert_files(usb_f_type, file_buf, data_len);
+
+file_err:
+    os_mem_free(file_buf);
+    usb_file_close();
 }
 
-void powerManager_Init()
+static void test_wlan_dump_usb_file(int argc, char **argv)
 {
-    uint32_t resetSrc;
-    power_init_config_t initCfg = {
-        /* VCORE AVDD18 supplied from iBuck on RD board. */
-        .iBuck = true,
-        /* CAU_SOC_SLP_REF_CLK not needed. */
-        .gateCauRefClk = true,
-    };
-    POWER_InitPowerConfig(&initCfg);
-    resetSrc = POWER_GetResetCause();
-    PRINTF("\r\nMCU wakeup source 0x%x...\r\n", resetSrc);
-    /* In case PM3/PM4 wakeup, the wakeup config and status need to be cleared */
-    POWER_ClearResetCause(resetSrc);
+    int data_len, usb_f_type = 0;
+    uint8_t *file_buf = NULL;
 
-    PM_CreateHandle(&pm_handle);
-    /* Init and start RTC time counter */
-    powerManager_RTC_Init();
-    /* Set priority of RTC and PIN1 interrupt */
-    NVIC_SetPriority(RTC_IRQn, POWER_MANAGER_RTC_PIN1_PRIORITY);
-    NVIC_SetPriority(PIN1_INT_IRQn, POWER_MANAGER_RTC_PIN1_PRIORITY);
-    /* Register WLAN notifier */
-    PM_RegisterNotify(kPM_NotifyGroup0, &wlan_notify);
-    /* Init WLAN wakeup source */
-    powerManager_Wakeupsource_Init();
-    PM_EnablePowerManager(true);
-    os_setup_idle_function(powerManager_EnterLowPower);
-    wakeup_by = 0;
+    if (string_equal("ca-cert", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CA_CERT;
+    else if (string_equal("client-cert", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT;
+    else if (string_equal("client-key", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY;
+    else if (string_equal("ca-cert2", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CA_CERT2;
+    else if (string_equal("client-cert2", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_CERT2;
+    else if (string_equal("client-key2", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_CLIENT_KEY2;
+#ifdef CONFIG_HOSTAPD
+    else if (string_equal("server-cert", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_SERVER_CERT;
+    else if (string_equal("server-key", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_SERVER_KEY;
+    else if (string_equal("dh-params", argv[1]))
+        usb_f_type = FILE_TYPE_ENTP_DH_PARAMS;
+#endif
+
+    data_len = wlan_get_entp_cert_files(usb_f_type, &file_buf);
+    (void)PRINTF("[USB File] %s\r\n", argv[1]);
+    dump_hex(file_buf, data_len);
+    (void)PRINTF("\r\n");
 }
+#endif /* CONFIG_WIFI_USB_FILE_ACCESS */
+
+static void dump_set_rtc_time_usage(void)
+{
+    (void)PRINTF("Usage: wlan-set-rtc-time <year> <month> <day> <hour> <minute> <second>\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-set-rtc-time 2022 12 31 19 00\r\n");
+}
+
+static void test_wlan_set_rtc_time(int argc, char **argv)
+{
+    rtc_datetime_t date;
+    int ret;
+
+    if (argc < 0)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_set_rtc_time_usage();
+        return;
+    }
+    date.year   = (uint16_t)atoi(argv[1]);
+    date.month  = (uint8_t)atoi(argv[2]);
+    date.day    = (uint8_t)atoi(argv[3]);
+    date.hour   = (uint8_t)atoi(argv[4]);
+    date.minute = (uint8_t)atoi(argv[5]);
+    date.second = (uint8_t)atoi(argv[6]);
+
+    /* RTC time counter has to be stopped before setting the date & time in the TSR register */
+    RTC_EnableTimer(RTC, false);
+
+    /* Set RTC time to default */
+    ret = RTC_SetDatetime(RTC, &date);
+    if (ret != kStatus_Success)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_set_rtc_time_usage();
+    }
+
+    /* Start the RTC time counter */
+    RTC_EnableTimer(RTC, true);
+
+    /* Get date time */
+    RTC_GetDatetime(RTC, &date);
+
+    /* print default time */
+    (void)PRINTF("Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\r\n", date.year, date.month, date.day,
+                 date.hour, date.minute, date.second);
+}
+
+static void test_wlan_get_rtc_time(int argc, char **argv)
+{
+    rtc_datetime_t date;
+
+    /* Get date time */
+    RTC_GetDatetime(RTC, &date);
+
+    /* print default time */
+    (void)PRINTF("Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\r\n", date.year, date.month, date.day,
+                 date.hour, date.minute, date.second);
+}
+
+static struct cli_command wlan_prov_commands[] = {
+    {"wlan-set-rtc-time", "<year> <month> <day> <hour> <minute> <second>", test_wlan_set_rtc_time},
+    {"wlan-get-rtc-time", NULL, test_wlan_get_rtc_time},
+#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+    {"wlan-read-usb-file", "<type:ca-cert/client-cert/client-key> <file name>", test_wlan_read_usb_file},
+    {"wlan-dump-usb-file", "<type:ca-cert/client-cert/client-key>", test_wlan_dump_usb_file},
 #endif
-#endif
+};
+
+static int wlan_prov_cli_init(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(wlan_prov_commands) / sizeof(struct cli_command); i++)
+    {
+        if (cli_register_command(&wlan_prov_commands[i]) != 0)
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
 
 void task_main(void *param)
 {
@@ -600,14 +659,10 @@ void task_main(void *param)
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
+#ifndef RW610
     hostsleep_init(wlan_hs_pre_cfg, wlan_hs_post_cfg);
-#endif
-
-#ifdef RW610
-#ifdef CONFIG_POWER_MANAGER
-    PRINTF("Initialize Power Manager\r\n");
-    powerManager_Init();
-    printSeparator();
+#else
+    hostsleep_init();
 #endif
 #endif
 
@@ -636,17 +691,26 @@ int main(void)
     (void)result;
 
     BOARD_InitHardware();
-#ifdef RW610
-    POWER_PowerOffBle();
-#endif
 
     printSeparator();
     PRINTF("wifi wpa supplicant demo\r\n");
     printSeparator();
 
+#ifdef RW610
+    RTC_Init(RTC);
+#endif
+
+#ifdef CONFIG_WIFI_USB_FILE_ACCESS
+    usb_init();
+#endif
+
+    sys_thread_new("main", task_main, NULL, TASK_MAIN_STACK_SIZE, TASK_MAIN_PRIO);
+
+#if 0
     result =
         xTaskCreate(task_main, "main", TASK_MAIN_STACK_SIZE, task_main_stack, TASK_MAIN_PRIO, &task_main_task_handler);
     assert(pdPASS == result);
+#endif
 
     vTaskStartScheduler();
     for (;;)
