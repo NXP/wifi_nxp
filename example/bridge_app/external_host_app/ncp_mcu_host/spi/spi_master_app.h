@@ -15,6 +15,7 @@
 #define NCP_HOST_SPI_MASTER_CLK_FREQ   CLOCK_GetFlexCommClkFreq(0U)
 #define NCP_HOST_SPI_MASTER_RX_CHANNEL 0
 #define NCP_HOST_SPI_MASTER_TX_CHANNEL 1
+#define DMA_MAX_TRANSFER_COUNT         1024
 
 #define NCP_HOST_SPI_SSEL        kSPI_Ssel0
 #define NCP_HOST_DMA             DMA0
@@ -23,9 +24,28 @@
 #define NCP_HOST_MASTER_TX    1
 #define NCP_HOST_MASTER_RX    2
 
-#define NCP_HOST_GPIO_PORT    0U
-#define NCP_HOST_GPIO_PIN_RX  27U
-#define NCP_HOST_GPIO_PIN_TX  11U
+#define EXAMPLE_LPSPI_MASTER_BASEADDR              (LPSPI1)
+#define EXAMPLE_LPSPI_MASTER_DMA_MUX_BASE          (DMAMUX)
+#define EXAMPLE_LPSPI_MASTER_DMA_RX_REQUEST_SOURCE kDmaRequestMuxLPSPI1Rx
+#define EXAMPLE_LPSPI_MASTER_DMA_TX_REQUEST_SOURCE kDmaRequestMuxLPSPI1Tx
+#define EXAMPLE_LPSPI_MASTER_DMA_BASE              (DMA0)
+#define EXAMPLE_LPSPI_MASTER_DMA_RX_CHANNEL        0U
+#define EXAMPLE_LPSPI_MASTER_DMA_TX_CHANNEL        1U
+
+#define EXAMPLE_LPSPI_MASTER_PCS_FOR_INIT     (kLPSPI_Pcs0)
+#define EXAMPLE_LPSPI_MASTER_PCS_FOR_TRANSFER (kLPSPI_MasterPcs0)
+
+/* Select USB1 PLL PFD0 (720 MHz) as lpspi clock source */
+#define EXAMPLE_LPSPI_CLOCK_SOURCE_SELECT (1U)
+/* Clock divider for master lpspi clock source */
+#define EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER (7U)
+
+#define LPSPI_MASTER_CLK_FREQ (CLOCK_GetFreq(kCLOCK_Usb1PllPfd0Clk) / (EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER + 1U))
+
+#define NCP_HOST_GPIO         GPIO2
+#define NCP_HOST_GPIO_PIN_RX  16U
+#define NCP_HOST_GPIO_PIN_TX  17U
+#define NCP_HOST_GPIO_IRQ     GPIO2_Combined_16_31_IRQn
 
 /*******************************************************************************
  * API
