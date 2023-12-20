@@ -18,6 +18,10 @@
 
 #define CONFIG_SDIO_MULTI_PORT_RX_AGGR 1
 
+#if defined(RW610)
+#define CONFIG_COMPRESS_TX_PWTBL
+#define CONFIG_UNII4_BAND_SUPPORT
+#endif
 #if defined(SD8987) || defined(SD9177)
 #define CONFIG_11AC
 #undef CONFIG_WMM

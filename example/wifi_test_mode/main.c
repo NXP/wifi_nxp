@@ -63,6 +63,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     char ip[16];
     static int auth_fail = 0;
 
+    printSeparator();
+    PRINTF("app_cb: WLAN: received event %d\r\n", reason);
+    printSeparator();
+
     switch (reason)
     {
         case WLAN_REASON_INITIALIZED:
@@ -214,8 +218,10 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_PS_ENTER:
+            PRINTF("app_cb: WLAN: PS_ENTER\r\n");
             break;
         case WLAN_REASON_PS_EXIT:
+            PRINTF("app_cb: WLAN: PS EXIT\r\n");
             break;
         default:
             PRINTF("app_cb: WLAN: Unknown Event: %d\r\n", reason);
