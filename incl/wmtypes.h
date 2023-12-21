@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2020 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -14,5 +14,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
 
 #endif /* ! _WMTYPES_H_ */

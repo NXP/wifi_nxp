@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -101,6 +101,52 @@ typedef MLAN_PACK_START struct
 /********************************************************
   Global functions
 ********************************************************/
+#ifndef CONFIG_MLAN_WMSDK
+/**
+ *  @brief This function check and discard IPv4 and IPv6 gratuitous broadcast packets
+ *
+ *  @param prx_pkt     A pointer to RxPacketHdr_t structure of received packet
+ *  @param pmadapter   A pointer to pmlan_adapter structure
+ *  @return            TRUE if found such type of packets, FALSE not found
+ */
+static t_u8 discard_gratuitous_ARP_msg(RxPacketHdr_t *prx_pkt, pmlan_adapter pmadapter)
+{
+    t_u8 proto_ARP_type[]    = {0x08, 0x06};
+    t_u8 proto_ARP_type_v6[] = {0x86, 0xDD};
+    IPv4_ARP_t *parp_hdr;
+    IPv6_Nadv_t *pNadv_hdr;
+    t_u8 ret = MFALSE;
+
+    /* IPV4 pkt check */
+    if (__memcmp(pmadapter, proto_ARP_type, &prx_pkt->eth803_hdr.h803_len, sizeof(proto_ARP_type)) == 0)
+    {
+        parp_hdr = (IPv4_ARP_t *)(&prx_pkt->rfc1042_hdr);
+        if ((parp_hdr->op_code == 0x0100) || (parp_hdr->op_code == 0x0200))
+        {
+            if (__memcmp(pmadapter, parp_hdr->src_ip, parp_hdr->dst_ip, 4) == 0)
+            {
+                ret = MTRUE;
+            }
+        }
+    }
+
+    /* IPV6 pkt check */
+    if (__memcmp(pmadapter, proto_ARP_type_v6, &prx_pkt->eth803_hdr.h803_len, sizeof(proto_ARP_type_v6)) == 0)
+    {
+        pNadv_hdr = (IPv6_Nadv_t *)(&prx_pkt->rfc1042_hdr);
+        /* Check Nadv type */
+        if (pNadv_hdr->icmp_type == 0x88)
+        {
+            if (__memcmp(pmadapter, pNadv_hdr->src_addr, pNadv_hdr->taget_addr, 16) == 0)
+            {
+                ret = MTRUE;
+            }
+        }
+    }
+
+    return ret;
+}
+#endif /* CONFIG_MLAN_WMSDK */
 /**
  *  @brief This function processes received packet and forwards it
  *  		to kernel/upper layer
@@ -116,6 +162,14 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
     pmlan_private priv = pmadapter->priv[pmbuf->bss_index];
     /* RxPacketHdr_t *prx_pkt; */
     RxPD *prx_pd;
+#ifndef CONFIG_MLAN_WMSDK
+    int hdr_chop;
+    EthII_Hdr_t *peth_hdr;
+    t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
+    t_u8 snap_oui_802_h[MLAN_MAC_ADDR_LENGTH]  = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0xf8};
+    t_u8 appletalk_aarp_type[2]                = {0x80, 0xf3};
+    t_u8 ipx_snap_type[2]                      = {0x81, 0x37};
+#endif /* CONFIG_MLAN_WMSDK */
     ENTER();
 
     prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
@@ -133,12 +187,88 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
        ethernet header processing.
     */
 
+#ifndef CONFIG_MLAN_WMSDK
+    if (prx_pd->rx_pkt_type == PKT_TYPE_DEBUG)
+    {
+        t_u8 dbgType;
+        dbgType = *(t_u8 *)&prx_pkt->eth803_hdr;
+        if (dbgType == DBG_TYPE_SMALL)
+        {
+            PRINTM(MFW_D, "\n");
+            DBG_HEXDUMP(MFW_D, "FWDBG", (t_s8 *)((t_u8 *)&prx_pkt->eth803_hdr + SIZE_OF_DBG_STRUCT),
+                        prx_pd->rx_pkt_length);
+            PRINTM(MFW_D, "FWDBG::\n");
+        }
+        goto done;
+    }
+
+    PRINTM(MINFO, "RX Data: data_len - prx_pd->rx_pkt_offset = %d - %d = %d\n", pmbuf->data_len, prx_pd->rx_pkt_offset,
+           pmbuf->data_len - prx_pd->rx_pkt_offset);
+
+    HEXDUMP("RX Data: Dest", prx_pkt->eth803_hdr.dest_addr, sizeof(prx_pkt->eth803_hdr.dest_addr));
+    HEXDUMP("RX Data: Src", prx_pkt->eth803_hdr.src_addr, sizeof(prx_pkt->eth803_hdr.src_addr));
+
+    if ((__memcmp(pmadapter, &prx_pkt->rfc1042_hdr, snap_oui_802_h, sizeof(snap_oui_802_h)) == 0) ||
+        ((__memcmp(pmadapter, &prx_pkt->rfc1042_hdr, rfc1042_eth_hdr, sizeof(rfc1042_eth_hdr)) == 0) &&
+         __memcmp(pmadapter, &prx_pkt->rfc1042_hdr.snap_type, appletalk_aarp_type, sizeof(appletalk_aarp_type)) &&
+         __memcmp(pmadapter, &prx_pkt->rfc1042_hdr.snap_type, ipx_snap_type, sizeof(ipx_snap_type))))
+    {
+        /*
+         *  Replace the 803 header and rfc1042 header (llc/snap) with an
+         *    EthernetII header, keep the src/dst and snap_type (ethertype).
+         *  The firmware only passes up SNAP frames converting
+         *    all RX Data from 802.11 to 802.2/LLC/SNAP frames.
+         *  To create the Ethernet II, just move the src, dst address right
+         *    before the snap_type.
+         */
+        peth_hdr = (EthII_Hdr_t *)((t_u8 *)&prx_pkt->eth803_hdr + sizeof(prx_pkt->eth803_hdr) +
+                                   sizeof(prx_pkt->rfc1042_hdr) - sizeof(prx_pkt->eth803_hdr.dest_addr) -
+                                   sizeof(prx_pkt->eth803_hdr.src_addr) - sizeof(prx_pkt->rfc1042_hdr.snap_type));
+
+        (void)__memcpy(pmadapter, peth_hdr->src_addr, prx_pkt->eth803_hdr.src_addr, sizeof(peth_hdr->src_addr));
+        (void)__memcpy(pmadapter, peth_hdr->dest_addr, prx_pkt->eth803_hdr.dest_addr, sizeof(peth_hdr->dest_addr));
+
+        /* Chop off the RxPD + the excess memory from the 802.2/llc/snap header
+           that was removed. */
+        hdr_chop = (t_u32)((t_ptr)peth_hdr - (t_ptr)prx_pd);
+    }
+    else
+    {
+        HEXDUMP("RX Data: LLC/SNAP", (t_u8 *)&prx_pkt->rfc1042_hdr, sizeof(prx_pkt->rfc1042_hdr));
+        if ((priv->hotspot_cfg & HOTSPOT_ENABLED) && discard_gratuitous_ARP_msg(prx_pkt, pmadapter))
+        {
+            ret = MLAN_STATUS_SUCCESS;
+            PRINTM(MDATA, "Bypass sending Gratuitous ARP frame to Kernel.\n");
+            goto done;
+        }
+
+        /* Chop off the RxPD */
+        hdr_chop = (t_u32)((t_ptr)&prx_pkt->eth803_hdr - (t_ptr)prx_pd);
+    }
+
+    /* Chop off the leading header bytes so the it points to the start of
+       either the reconstructed EthII frame or the 802.2/llc/snap frame */
+    pmbuf->data_len -= hdr_chop;
+    pmbuf->data_offset += hdr_chop;
+    pmbuf->pparent = MNULL;
+
+    DBG_HEXDUMP(MDAT_D, "RxPD", (t_u8 *)prx_pd, MIN(sizeof(RxPD), MAX_DATA_DUMP_LEN));
+    /* Note: We do not have data @ some offset of pbuf. pbuf only has RxPD */
+    /* DBG_HEXDUMP(MDAT_D, "Rx Payload", ((t_u8 *) prx_pd + prx_pd->rx_pkt_offset), */
+    /*             MIN(prx_pd->rx_pkt_length, MAX_DATA_DUMP_LEN)); */
+#endif /* CONFIG_MLAN_WMSDK */
     priv->rxpd_rate = prx_pd->rx_rate;
 #ifdef SD8801
     priv->rxpd_htinfo = prx_pd->ht_info;
 #else
     priv->rxpd_rate_info = prx_pd->rate_info;
 #endif
+#ifndef CONFIG_MLAN_WMSDK
+    /* wmsdk: looks like only a debugging thing. disabling for now */
+    pmadapter->callbacks.moal_get_system_time(pmadapter->pmoal_handle, &pmbuf->out_ts_sec, &pmbuf->out_ts_usec);
+    PRINTM(MDATA, "%lu.%06lu : Data => kernel seq_num=%d tid=%d\n", pmbuf->out_ts_sec, pmbuf->out_ts_usec,
+           prx_pd->seq_num, prx_pd->priority);
+#endif /* CONFIG_MLAN_WMSDK */
 
     ret = pmadapter->callbacks.moal_recv_packet(pmadapter->pmoal_handle, pmbuf);
     if (ret == MLAN_STATUS_FAILURE)
@@ -164,16 +294,20 @@ mlan_status wlan_process_rx_packet(pmlan_adapter pmadapter, pmlan_buffer pmbuf)
  *
  *   @return        MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
+mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf)
 {
     pmlan_adapter pmadapter = (pmlan_adapter)adapter;
     mlan_status ret         = MLAN_STATUS_SUCCESS;
     RxPD *prx_pd;
     RxPacketHdr_t *prx_pkt;
-    pmlan_private priv = pmadapter->priv[pmbuf->bss_index];
-    t_u8 ta[MLAN_MAC_ADDR_LENGTH];
-    t_u16 rx_pkt_type = 0;
+    pmlan_private priv            = pmadapter->priv[pmbuf->bss_index];
+    t_u8 ta[MLAN_MAC_ADDR_LENGTH] = {0};
+    t_u16 rx_pkt_type             = 0;
+#ifdef CONFIG_P2P
+    wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
+#endif /* CONFIG_P2P */
     ENTER();
+    TxBAStreamTbl *ptx_tbl = NULL;
 
     prx_pd = (RxPD *)(void *)(pmbuf->pbuf + pmbuf->data_offset);
     /* Endian conversion */
@@ -205,12 +339,33 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
     {
         /* Check if this is mgmt packet and needs to forwarded to app as an
            event */
+#ifdef CONFIG_P2P
+        /* Note: We do not have data @ some offset of pbuf. pbuf only has RxPD */
+        /* pmgmt_pkt_hdr = */
+        /*     (wlan_mgmt_pkt *) ((t_u8 *) prx_pd + prx_pd->rx_pkt_offset); */
+        pmgmt_pkt_hdr = (wlan_mgmt_pkt *)pmbuf->pdesc;
+
+        pmgmt_pkt_hdr->frm_len = wlan_le16_to_cpu(pmgmt_pkt_hdr->frm_len);
+
+        if ((pmgmt_pkt_hdr->wlan_header.frm_ctl & IEEE80211_FC_MGMT_FRAME_TYPE_MASK) == 0)
+        {
+            ret = wlan_process_802dot11_mgmt_pkt(
+                pmadapter->priv[pmbuf->bss_index], (t_u8 *)&pmgmt_pkt_hdr->wlan_header,
+                pmgmt_pkt_hdr->frm_len + sizeof(wlan_mgmt_pkt) - sizeof(pmgmt_pkt_hdr->frm_len), prx_pd);
+        }
+        wlan_free_mlan_buffer(pmadapter, pmbuf);
+        /* Free RxPD */
+        os_mem_free(pmbuf->pbuf);
+        os_mem_free(pmbuf);
+        goto done;
+#else
         /* fixme */
         PRINTM(MMSG, "Is a management packet expected here?\n\r");
         (void)os_enter_critical_section();
         while (true)
         {
         }
+#endif /* CONFIG_P2P */
     }
 
 #ifdef DUMP_PACKET_MAC
@@ -218,12 +373,19 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
     dump_mac_addr("Dest: ", prx_pkt->eth803_hdr.dest_addr);
 #endif /* DUMP_PACKET_MAC */
 
+    if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP)
+    {
+        /* txbastream table also is used as connected STAs data base */
+        ptx_tbl = wlan_11n_get_txbastream_tbl(priv, prx_pkt->eth803_hdr.src_addr);
+    }
+
     /*
-     * If the packet is not an unicast packet then send the packet
-     * directly to os. Don't pass thru rx reordering
+     * If 11n isn't enabled, or if the packet is not an unicast packet for STA case, 
+     * then send the packet directly to os. Don't pass thru rx reordering
      */
-    if (!IS_11N_ENABLED(priv) ||
-        __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))
+    if (((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) && ((!IS_11N_ENABLED(priv)) ||
+        __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))) ||
+        ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl && (!ptx_tbl->ampdu_supported[0])))
     {
         (void)wlan_process_rx_packet(pmadapter, pmbuf);
         goto done;
@@ -231,6 +393,11 @@ mlan_status wlan_ops_sta_process_rx_packet(IN t_void *adapter, IN pmlan_buffer p
 
     if (queuing_ra_based(priv) == MTRUE)
     {
+        if ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl
+            && (rx_pkt_type != PKT_TYPE_BAR) && (prx_pd->priority < MAX_NUM_TID))
+        {
+            ptx_tbl->rx_seq[prx_pd->priority] = prx_pd->seq_num;
+        }
         (void)__memcpy(pmadapter, ta, prx_pkt->eth803_hdr.src_addr, MLAN_MAC_ADDR_LENGTH);
     }
     else

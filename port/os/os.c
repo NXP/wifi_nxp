@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 #include <inttypes.h>
@@ -18,6 +18,19 @@
 void vApplicationIdleHook(void);
 void os_thread_stackmark(char *name);
 int os_event_flags_delete(event_group_handle_t *hnd);
+
+/** Check if cpu is in isr context
+ *
+ * \return bool value - true if cpu is in isr context
+ */
+bool is_isr_context(void)
+{
+#ifdef __CA7_REV
+    return (0U != if (SystemGetIRQNestingLevel()))
+#else /* __CA7_REV */
+    return (0U != __get_IPSR());
+#endif
+}
 
 /** Get current OS tick counter value
  *
@@ -155,7 +168,7 @@ int os_timer_activate(os_timer_t *timer_t)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerStartFromISR(*timer_t, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -203,7 +216,7 @@ int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_timer_tick bloc
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerChangePeriodFromISR(*timer_t, ntime, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -258,7 +271,7 @@ int os_timer_reset(os_timer_t *timer_t)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerResetFromISR(*timer_t, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -288,7 +301,7 @@ int os_timer_deactivate(os_timer_t *timer_t)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xTimerStopFromISR(*timer_t, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -352,7 +365,7 @@ int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned long wait)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xQueueSendToBackFromISR(*qhandle, msg, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1014,7 +1027,7 @@ int os_event_notify_put(os_thread_t task)
          * context, hence use FromISR FreeRTOS APIs.
          */
         vTaskNotifyGiveFromISR(task, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1074,7 +1087,7 @@ int os_semaphore_get(os_semaphore_t *mhandle, unsigned long wait)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xSemaphoreTakeFromISR(*mhandle, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1099,7 +1112,7 @@ int os_semaphore_put(os_semaphore_t *mhandle)
          * context, hence use FromISR FreeRTOS APIs.
          */
         ret = xSemaphoreGiveFromISR(*mhandle, &xHigherPriorityTaskWoken);
-        portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR((bool)(xHigherPriorityTaskWoken));
     }
     else
     {
@@ -1135,6 +1148,11 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
     {
         return -WM_FAIL;
     }
+    ret = os_mutex_create(&(plock->write_mutex), mutex_name, OS_MUTEX_INHERIT);
+    if (ret == -WM_FAIL)
+    {
+        return -WM_FAIL;
+    }
     ret = os_semaphore_create(&(plock->rw_lock), lock_name);
     if (ret == -WM_FAIL)
     {
@@ -1149,7 +1167,7 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
 {
     int ret = WM_SUCCESS;
     ret     = os_mutex_get(&(lock->reader_mutex), OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
+    if (ret != WM_SUCCESS)
     {
         return ret;
     }
@@ -1158,8 +1176,8 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
     {
         if (lock->reader_cb != NULL)
         {
-            ret = lock->reader_cb(lock, wait_time);
-            if (ret == -WM_FAIL)
+            ret = lock->reader_cb(lock, os_msec_to_ticks(wait_time));
+            if (ret != WM_SUCCESS)
             {
                 lock->reader_count--;
                 (void)os_mutex_put(&(lock->reader_mutex));
@@ -1172,8 +1190,8 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time)
              * if writer is not active, reader will get access
              * else reader will block.
              */
-            ret = os_semaphore_get(&(lock->rw_lock), wait_time);
-            if (ret == -WM_FAIL)
+            ret = os_semaphore_get(&(lock->rw_lock), os_msec_to_ticks(wait_time));
+            if (ret != WM_SUCCESS)
             {
                 lock->reader_count--;
                 (void)os_mutex_put(&(lock->reader_mutex));
@@ -1206,7 +1224,7 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock)
 
 int os_rwlock_write_lock(os_rw_lock_t *lock, unsigned int wait_time)
 {
-    int ret = os_semaphore_get(&(lock->rw_lock), wait_time);
+    int ret = os_semaphore_get(&(lock->rw_lock), os_msec_to_ticks(wait_time));
     return ret;
 }
 
@@ -1218,8 +1236,12 @@ void os_rwlock_write_unlock(os_rw_lock_t *lock)
 void os_rwlock_delete(os_rw_lock_t *lock)
 {
     lock->reader_cb = NULL;
-    (void)os_semaphore_delete(&(lock->rw_lock));
-    (void)os_mutex_delete(&(lock->reader_mutex));
+    if (lock->rw_lock)
+        (void)os_semaphore_delete(&(lock->rw_lock));
+    if (lock->reader_mutex)
+        (void)os_mutex_delete(&(lock->reader_mutex));
+    if (lock->write_mutex)
+        os_mutex_delete(&(lock->write_mutex));
     lock->reader_count = 0;
 }
 
@@ -1358,6 +1380,8 @@ void os_dump_mem_stats(void)
 
     vPortGetHeapStats(&HS);
 
+    os_exit_critical_section(sta);
+
     (void)PRINTF("\n\r");
     (void)PRINTF("Heap size ---------------------- : %d\n\r", HS.xAvailableHeapSpaceInBytes);
     (void)PRINTF("Largest Free Block size -------- : %d\n\r", HS.xSizeOfLargestFreeBlockInBytes);
@@ -1366,8 +1390,6 @@ void os_dump_mem_stats(void)
     (void)PRINTF("Total successful allocations --- : %d\n\r", HS.xNumberOfSuccessfulAllocations);
     (void)PRINTF("Total successful frees --------- : %d\n\r", HS.xNumberOfSuccessfulFrees);
     (void)PRINTF("Min Free since system boot ----- : %d\n\r", HS.xMinimumEverFreeBytesRemaining);
-
-    os_exit_critical_section(sta);
 }
 #endif
 
@@ -1381,4 +1403,47 @@ void os_disable_all_interrupts(void)
 void os_enable_all_interrupts(void)
 {
     taskENABLE_INTERRUPTS();
+}
+
+#ifdef CONFIG_SCHED_SWITCH_TRACE
+#ifndef NCP_DEBUG_TIME_SWITCH
+#define NCP_DEBUG_TIME_SWITCH 5 * 4096
+#endif
+unsigned long task_switch_num                                       = 0;
+unsigned long ncp_debug_task_switch_interval[NCP_DEBUG_TIME_SWITCH] = {0};
+const char *ncp_debug_task_switch[NCP_DEBUG_TIME_SWITCH]            = {0};
+int ncp_debug_task_switch_start                                     = 0;
+unsigned long ncp_debug_task_switch_time_in;
+void trace_task_switch(int in, const char *func_name)
+{
+    if (ncp_debug_task_switch_start && task_switch_num < NCP_DEBUG_TIME_SWITCH)
+    {
+        ncp_debug_task_switch[task_switch_num] = func_name;
+        if (in)
+        {
+            ncp_debug_task_switch_time_in = os_get_timestamp();
+        }
+        if (!in)
+        {
+            ncp_debug_task_switch_interval[task_switch_num] = os_get_timestamp() - ncp_debug_task_switch_time_in;
+        }
+        task_switch_num++;
+    }
+}
+
+void trace_task_switch_print()
+{
+    for (unsigned long i = 0; i < task_switch_num; i++)
+        (void)PRINTF("%d-%s-%lu\r\n", i, ncp_debug_task_switch[i], ncp_debug_task_switch_interval[i]);
+}
+#endif
+
+void os_get_num_of_tasks(uint8_t *num_tasks)
+{
+    UBaseType_t number;
+    number = uxTaskGetNumberOfTasks();
+
+    *num_tasks = number & 0xFF;
+
+    return;
 }

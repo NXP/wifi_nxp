@@ -1,7 +1,7 @@
 /*
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -18,7 +18,18 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/kernel.h>
+#include <strings.h>
+#else
 #include "fsl_debug_console.h"
+#endif
+
+#ifdef CONFIG_ZEPHYR
+#ifndef PRINTF
+#define PRINTF printk
+#endif
+#endif
 
 #define ffs __builtin_ffs
 
@@ -63,7 +74,7 @@
 
 /* alignment value should be a power of 2 */
 #define __WM_ALIGN__(num, num_type, align) WM_MASK(num, (num_type)align - 1)
-#define WM_MASK(num, mask)                    ((num + mask) & ~(mask))
+#define WM_MASK(num, mask)                 ((num + mask) & ~(mask))
 
 NORETURN void wmpanic(void);
 
@@ -85,8 +96,9 @@ NORETURN void wmpanic(void);
  *
  * @return length of the binary string
  */
-static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned max_olen)
+static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned max_olen)
 {
+#ifndef CONFIG_ZEPHYR
     unsigned int i;      /* loop iteration variable */
     unsigned int j  = 0; /* current character */
     unsigned int by = 0; /* byte value for conversion */
@@ -126,8 +138,12 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
         }
     }
     return j + 1U;
+#else
+    return hex2bin(ibuf, strlen(ibuf), obuf, max_olen);
+#endif
 }
 
+#ifndef CONFIG_ZEPHYR
 /**
  * Convert given binary array to equivalent hex representation.
  *
@@ -136,9 +152,9 @@ static inline unsigned int hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned 
  * @param[in] src_len Length of the input buffer
  * @param[in] dest_len Length of the output buffer
  *
- * @return void
  */
 void bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
+#endif /* ! CONFIG_ZEPHYR */
 
 /** Function prototype for a random entropy/seed generator
  *
@@ -364,7 +380,6 @@ float wm_strtof(const char *str, char **endptr);
  * @param[in] first_byte This is the value of first byte in the sequential
  * pattern.
  *
- * @return void
  */
 void fill_sequential_pattern(void *buffer, int size, uint8_t first_byte);
 

@@ -2,9 +2,9 @@
  *
  *  @brief  This file provides network porting code
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -65,6 +65,9 @@ typedef struct interface interface_t;
 
 static interface_t g_mlan;
 static interface_t g_uap;
+#ifdef CONFIG_P2P
+static interface_t g_wfd;
+#endif
 
 static int net_wlan_init_done;
 static os_timer_t dhcp_timer;
@@ -73,10 +76,18 @@ static void dhcp_timer_cb(os_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
+#ifdef CONFIG_P2P
+err_t lwip_netif_wfd_init(struct netif *netif);
+#endif
+#ifndef CONFIG_WIFI_RX_REORDER
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
+#endif
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
-void handle_deliver_packet_above(t_u8 interface, t_void *lwip_pbuf);
+void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf);
 bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer);
+#ifdef CONFIG_WIFI_RX_REORDER
+void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload);
+#endif
 
 NETIF_DECLARE_EXT_CALLBACK(netif_ext_callback)
 
@@ -140,7 +151,7 @@ char *ipv6_addr_state_to_desc(unsigned char addr_state)
     }
 }
 
-char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
+char *ipv6_addr_addr_to_desc(struct net_ipv6_config *ipv6_conf)
 {
     ip6_addr_t ip6_addr;
 
@@ -149,7 +160,7 @@ char *ipv6_addr_addr_to_desc(struct ipv6_config *ipv6_conf)
     return inet6_ntoa(ip6_addr);
 }
 
-char *ipv6_addr_type_to_desc(struct ipv6_config *ipv6_conf)
+char *ipv6_addr_type_to_desc(struct net_ipv6_config *ipv6_conf)
 {
     ip6_addr_t ip6_addr;
 
@@ -184,25 +195,50 @@ int net_dhcp_hostname_set(char *hostname)
     return WM_SUCCESS;
 }
 
+#ifndef CONFIG_NO_WIFI_TCPIP_INIT
+static void tcpip_init_done_cb(void *arg)
+{
+    sys_sem_t *init_sem;
+
+    LWIP_ASSERT("arg != NULL", arg != NULL);
+
+    init_sem = (sys_sem_t *)arg;
+
+    sys_sem_signal(init_sem);
+}
+
 void net_ipv4stack_init(void)
 {
     static bool tcpip_init_done;
+    err_t err;
+    sys_sem_t init_sem;
 
     if (tcpip_init_done)
     {
         return;
     }
 
-    tcpip_init(NULL, NULL);
+    err = sys_sem_new(&init_sem, 0);
+    LWIP_ASSERT("failed to create init_sem", err == ERR_OK);
+    LWIP_UNUSED_ARG(err);
+
+    tcpip_init(tcpip_init_done_cb, &init_sem);
+
+    sys_sem_wait(&init_sem);
+    sys_sem_free(&init_sem);
+
     tcpip_init_done = true;
 
     net_d("Initialized TCP/IP v4 stack");
 }
+#endif
 
 #ifdef CONFIG_IPV6
 void net_ipv6stack_init(struct netif *netif)
 {
+    LOCK_TCPIP_CORE();
     netif_create_ip6_linklocal_address(netif, 1);
+    UNLOCK_TCPIP_CORE();
 
     net_d("Initialized TCP/IP v6 stack for interface : %c%c%d", netif->name[0], netif->name[1], netif->num);
 }
@@ -211,22 +247,49 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 {
     /*	TODO: Implement appropriate functionality here*/
     net_d("Received callback on IPv6 address state change");
+
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 }
 #endif /* CONFIG_IPV6 */
 
+void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
+{
+    (void)memcpy(&g_mlan.netif.hwaddr[0], &stamac[0], MLAN_MAC_ADDR_LENGTH);
+    (void)memcpy(&g_uap.netif.hwaddr[0], &uapmac[0], MLAN_MAC_ADDR_LENGTH);
+}
+
 int net_wlan_init(void)
 {
     int ret;
+
+#ifdef RW610
+#ifndef CONFIG_WIFI_RX_REORDER
+    (void)wifi_register_data_input_callback(&handle_data_packet);
+#endif
+    (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
+    (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
+    (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
+#ifdef CONFIG_WIFI_RX_REORDER
+    (void)wifi_register_gen_pbuf_from_data2_callback(&gen_pbuf_from_data2);
+#endif
+#endif
     if (!net_wlan_init_done)
     {
+#ifndef CONFIG_NO_WIFI_TCPIP_INIT
         net_ipv4stack_init();
+#endif
 
+#ifndef RW610
+#ifndef CONFIG_WIFI_RX_REORDER
         (void)wifi_register_data_input_callback(&handle_data_packet);
+#endif
         (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
         (void)wifi_register_deliver_packet_above_callback(&handle_deliver_packet_above);
         (void)wifi_register_wrapper_net_is_ip_or_ipv6_callback(&wrapper_net_is_ip_or_ipv6);
-
+#ifdef CONFIG_WIFI_RX_REORDER
+        (void)wifi_register_gen_pbuf_from_data2_callback(&gen_pbuf_from_data2);
+#endif
+#endif
         ip_2_ip4(&g_mlan.ipaddr)->addr = INADDR_ANY;
         ret = netifapi_netif_add(&g_mlan.netif, ip_2_ip4(&g_mlan.ipaddr), ip_2_ip4(&g_mlan.ipaddr),
                                  ip_2_ip4(&g_mlan.ipaddr), NULL, lwip_netif_init, tcpip_input);
@@ -250,6 +313,16 @@ int net_wlan_init(void)
         net_ipv6stack_init(&g_uap.netif);
 #endif /* CONFIG_IPV6 */
 
+#ifdef CONFIG_P2P
+        g_wfd.ipaddr.addr = INADDR_ANY;
+        ret               = netifapi_netif_add(&g_wfd.netif, ip_2_ip4(&g_wfd.ipaddr), ip_2_ip4(&g_wfd.ipaddr),
+                                 ip_2_ip4(&g_wfd.ipaddr), NULL, lwip_netif_wfd_init, tcpip_input);
+        if (ret)
+        {
+            net_e("P2P interface add failed\r\n");
+            return -WM_FAIL;
+        }
+#endif
 
         ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT), &dhcp_timer_cb, NULL,
                               OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
@@ -259,7 +332,9 @@ int net_wlan_init(void)
             return ret;
         }
 
+        LOCK_TCPIP_CORE();
         netif_add_ext_callback(&netif_ext_callback, netif_ext_status_callback);
+        UNLOCK_TCPIP_CORE();
 
         net_wlan_init_done = 1;
 
@@ -267,6 +342,35 @@ int net_wlan_init(void)
     }
 
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_INTERFACE_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+
+    return WM_SUCCESS;
+}
+
+struct netif *net_get_sta_interface(void)
+{
+    return &g_mlan.netif;
+}
+
+struct netif *net_get_uap_interface(void)
+{
+    return &g_uap.netif;
+}
+
+int net_get_if_name_netif(char *pif_name, struct netif *iface)
+{
+    char if_name[NETIF_NAMESIZE];
+    int ret;
+
+    ret = netifapi_netif_index_to_name(iface->num + 1, if_name);
+
+    if (ret != WM_SUCCESS)
+    {
+        net_e("get interface name failed");
+        return -WM_FAIL;
+    }
+
+    (void)strncpy(pif_name, if_name, NETIF_NAMESIZE);
+
     return WM_SUCCESS;
 }
 
@@ -328,7 +432,10 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
+    LOCK_TCPIP_CORE();
     netif_remove_ext_callback(&netif_ext_callback);
+    UNLOCK_TCPIP_CORE();
+
     wm_netif_status_callback_ptr = NULL;
     net_wlan_init_done           = 0;
 
@@ -348,6 +455,19 @@ static void wm_netif_status_callback(struct netif *n)
     bool is_default_dhcp_address = (ip_2_ip4(&(n->ip_addr))->addr == INADDR_ANY);
     /* is_dhcp_off: true if dhcp is switched off*/
     bool is_dhcp_off = (netif_dhcp_data(n)->state == DHCP_STATE_OFF);
+#ifdef CONFIG_AUTOIP
+    /* Variable to hold whether autoip address has been supplied
+     * We store the status of autoip address in this variable
+     * once autoip reaches the bound state this variable is set
+     */
+    bool is_autoip_address = autoip_supplied_address(n);
+    /* not_dhcp_address: true when even though the flags are set
+     *                   the dhcp_supplied_address returns false
+     */
+    bool not_dhcp_address = ((n->flags & NETIF_FLAG_UP) && (!dhcp_supplied_address(n)));
+    /* Structure to hold autoip data corresponding to `n` */
+    struct autoip *autoip = netif_autoip_data(n);
+#endif
     /* State variables to be assigned to the event flag
      * a value of -1 represents failed state while the value of
      * 1 represents a successful connection event
@@ -381,6 +501,18 @@ static void wm_netif_status_callback(struct netif *n)
     {
         /* If the supplied dhcp address is the default address */
         event_flag_dhcp_connection = DHCP_FAILED;
+#ifdef CONFIG_AUTOIP
+    }
+    else if (not_dhcp_address && (is_autoip_address))
+    {
+        /* If an autoip address has been supplied */
+        event_flag_dhcp_connection = DHCP_SUCCESS;
+    }
+    else if (!(dhcp_supplied_address(n)) && (autoip->state == AUTOIP_STATE_OFF))
+    {
+        /* If no address is supplied and autoip is in off state */
+        event_flag_dhcp_connection = DHCP_FAILED;
+#endif /* CONFIG_AUTOIP */
     }
     else if (!dhcp_supplied_address(n))
     {
@@ -429,6 +561,7 @@ static void stop_cb(void *ctx)
 static void dhcp_timer_cb(os_timer_arg_t arg)
 {
     (void)tcpip_try_callback(stop_cb, NULL);
+    net_e("DHCP timeout, failed to get IPv4 address");
     (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_DHCP_CONFIG, WIFI_EVENT_REASON_FAILURE, NULL);
 }
 
@@ -500,6 +633,25 @@ void *net_get_uap_handle(void)
     return &g_uap;
 }
 
+#ifdef CONFIG_P2P
+void *net_get_wfd_handle(void)
+{
+    return &g_wfd;
+}
+#endif
+
+int net_alloc_client_data_id()
+{
+    int idx = -1;
+
+#if LWIP_NUM_NETIF_CLIENT_DATA > 0
+    LOCK_TCPIP_CORE();
+    idx = (int)netif_alloc_client_data_id();
+    UNLOCK_TCPIP_CORE();
+#endif
+
+    return idx;
+}
 
 void net_interface_up(void *intrfc_handle)
 {
@@ -520,7 +672,13 @@ void net_interface_dhcp_stop(void *intrfc_handle)
     wm_netif_status_callback_ptr = NULL;
 }
 
-int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
+void net_interface_dhcp_cleanup(void *intrfc_handle)
+{
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+    (void)dhcp_cleanup(&if_handle->netif);
+}
+
+int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 {
 #ifdef CONFIG_IPV6
     t_u8 i;
@@ -538,27 +696,43 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
 
     interface_t *if_handle = (interface_t *)intrfc_handle;
 
+#ifdef CONFIG_P2P
+    net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : (if_handle == &g_uap) ? "uap" : "wfd",
+          (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+#else
     net_d("configuring interface %s (with %s)", (if_handle == &g_mlan) ? "mlan" : "uap",
-          (addr->ipv4.addr_type == ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+          (addr->ipv4.addr_type == NET_ADDR_TYPE_DHCP) ? "DHCP client" : "Static IP");
+#endif
 
     (void)netifapi_netif_set_down(&if_handle->netif);
     wm_netif_status_callback_ptr = NULL;
 
 #ifdef CONFIG_IPV6
+#ifdef RW610
+    if (if_handle == &g_mlan || if_handle == &g_uap)
+#else
     if (if_handle == &g_mlan)
+#endif
     {
+        LOCK_TCPIP_CORE();
+
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
-            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
             netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
+            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
         }
 
         netif_create_ip6_linklocal_address(&if_handle->netif, 1);
 
+        UNLOCK_TCPIP_CORE();
+
         /* Explicitly call this function so that the linklocal address
          * gets updated even if the interface does not get any IPv6
          * address in its lifetime */
-        wm_netif_ipv6_status_callback(&if_handle->netif);
+        if (if_handle == &g_mlan)
+        {
+            wm_netif_ipv6_status_callback(&if_handle->netif);
+        }
     }
 #endif
     if (if_handle == &g_mlan)
@@ -567,7 +741,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     }
     switch (addr->ipv4.addr_type)
     {
-        case ADDR_TYPE_STATIC:
+        case NET_ADDR_TYPE_STATIC:
             ip_2_ip4(&(if_handle->ipaddr))->addr = addr->ipv4.address;
             ip_2_ip4(&(if_handle->nmask))->addr  = addr->ipv4.netmask;
             ip_2_ip4(&(if_handle->gw))->addr     = addr->ipv4.gw;
@@ -576,7 +750,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             (void)netifapi_netif_set_up(&if_handle->netif);
             break;
 
-        case ADDR_TYPE_DHCP:
+        case NET_ADDR_TYPE_DHCP:
             /* Reset the address since we might be
                transitioning from static to DHCP */
             (void)memset(&if_handle->ipaddr, 0, sizeof(ip_addr_t));
@@ -589,7 +763,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
             wm_netif_status_callback_ptr = wm_netif_status_callback;
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;
-        case ADDR_TYPE_LLA:
+        case NET_ADDR_TYPE_LLA:
             /* For dhcp, instead of netifapi_netif_set_up, a
                netifapi_dhcp_start() call will be used */
             net_e("Not supported as of now...");
@@ -600,6 +774,9 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     }
     /* Finally this should send the following event. */
     if ((if_handle == &g_mlan)
+#ifdef CONFIG_P2P
+        || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_STA))
+#endif
     )
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -611,6 +788,9 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
          */
     }
     else if ((if_handle == &g_uap)
+#ifdef CONFIG_P2P
+             || ((if_handle == &g_wfd) && (netif_get_bss_type() == BSS_TYPE_UAP))
+#endif
     )
     {
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_UAP_NET_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
@@ -622,7 +802,7 @@ int net_configure_address(struct wlan_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_get_if_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     const ip_addr_t *tmp;
     interface_t *if_handle = (interface_t *)intrfc_handle;
@@ -640,7 +820,7 @@ int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 }
 
 #ifdef CONFIG_IPV6
-int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_get_if_ipv6_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
     int i;
@@ -654,7 +834,7 @@ int net_get_if_ipv6_addr(struct wlan_ip_config *addr, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
+int net_get_if_ipv6_pref_addr(struct net_ip_config *addr, void *intrfc_handle)
 {
     int i, ret = 0;
     interface_t *if_handle = (interface_t *)intrfc_handle;
@@ -672,13 +852,20 @@ int net_get_if_ipv6_pref_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 
 int net_get_if_name(char *pif_name, void *intrfc_handle)
 {
-    interface_t *if_handle = (interface_t *)intrfc_handle;
-    char if_name[NETIF_NAMESIZE];
-    char *ptr_if_name = NULL;
+    interface_t *if_handle       = (interface_t *)intrfc_handle;
+    char if_name[NETIF_NAMESIZE] = {0};
+    int ret;
 
-    ptr_if_name = netif_index_to_name(if_handle->netif.num + 1, if_name);
+    ret = netifapi_netif_index_to_name(if_handle->netif.num + 1, if_name);
 
-    (void)strncpy(pif_name, ptr_if_name, NETIF_NAMESIZE);
+    if (ret != WM_SUCCESS)
+    {
+        net_e("get interface name failed");
+        return -WM_FAIL;
+    }
+
+    (void)strncpy(pif_name, if_name, NETIF_NAMESIZE);
+
     return WM_SUCCESS;
 }
 
@@ -698,11 +885,11 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle)
     return WM_SUCCESS;
 }
 
-void net_configure_dns(struct wlan_ip_config *ip, enum wlan_bss_role role)
+void net_configure_dns(struct net_ip_config *ip, unsigned int role)
 {
     ip4_addr_t tmp;
 
-    if (ip->ipv4.addr_type == ADDR_TYPE_STATIC)
+    if (ip->ipv4.addr_type == NET_ADDR_TYPE_STATIC)
     {
         if (role != WLAN_BSS_ROLE_UAP)
         {

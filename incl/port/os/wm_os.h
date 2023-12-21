@@ -1,7 +1,7 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2023 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -42,6 +42,11 @@
 #ifndef _WM_OS_H_
 #define _WM_OS_H_
 
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#include "wm_os_zephyr.h"
+#else
+
 #include <string.h>
 
 #include "FreeRTOS.h"
@@ -64,10 +69,8 @@
 #define os_dprintf(...)
 #endif
 
-#define is_isr_context() ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) > 0U) //(xPortIsInsideInterrupt())
+bool is_isr_context(void);
 
-/* System clock frequency. */
-extern uint32_t SystemCoreClock;
 /* the OS timer register is loaded with CNTMAX */
 #define CNTMAX                 ((SystemCoreClock / configTICK_RATE_HZ) - 1UL)
 #define CPU_CLOCK_TICKSPERUSEC (SystemCoreClock / 1000000U)
@@ -246,11 +249,6 @@ int os_thread_delete(os_thread_t *thandle);
  *
  * @param[in] ticks Number of ticks to sleep
  *
- * @return 0 If slept for given ticks or more
- * @return Positive value if woken up before given ticks.
- * @note The value returned is amount of ticks left before the task was
- * to be originally scheduled to be woken up. So if sleep was for 10 ticks
- * and the task is woken up after 8 ticks then 2 will be returned.
  */
 void os_thread_sleep(uint32_t ticks);
 
@@ -271,11 +269,11 @@ void os_thread_self_complete(os_thread_t *thandle);
 #elif CONFIG_WIFI_MAX_PRIO < 4
 #error CONFIG_WIFI_MAX_PRIO must be defined to be greater than or equal to 4
 #endif
-#define OS_PRIO_0 CONFIG_WIFI_MAX_PRIO /** High **/
-#define OS_PRIO_1 (CONFIG_WIFI_MAX_PRIO - 1)
-#define OS_PRIO_2 (CONFIG_WIFI_MAX_PRIO - 2)
-#define OS_PRIO_3 (CONFIG_WIFI_MAX_PRIO - 3)
-#define OS_PRIO_4 (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
+#define OS_PRIO_0                                CONFIG_WIFI_MAX_PRIO /** High **/
+#define OS_PRIO_1                                (CONFIG_WIFI_MAX_PRIO - 1)
+#define OS_PRIO_2                                (CONFIG_WIFI_MAX_PRIO - 2)
+#define OS_PRIO_3                                (CONFIG_WIFI_MAX_PRIO - 3)
+#define OS_PRIO_4                                (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
 
 /** Structure used for queue definition */
 typedef struct os_queue_pool
@@ -313,9 +311,9 @@ typedef QueueHandle_t os_queue_t;
 int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue_pool_t *poolname);
 
 /** Wait Forever */
-#define OS_WAIT_FOREVER portMAX_DELAY
+#define OS_WAIT_FOREVER                          portMAX_DELAY
 /** Do Not Wait */
-#define OS_NO_WAIT 0
+#define OS_NO_WAIT                               0
 
 /** Post an item to the back of the queue.
  *
@@ -399,7 +397,7 @@ static inline void os_exit_critical_section(unsigned long state)
 }
 
 /*** Tick function */
-#define MAX_CUSTOM_HOOKS 4U
+#define MAX_CUSTOM_HOOKS                         4U
 
 extern void (*g_os_tick_hooks[MAX_CUSTOM_HOOKS])(void);
 extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
@@ -455,9 +453,9 @@ int os_remove_tick_function(void (*func)(void));
 typedef SemaphoreHandle_t os_mutex_t;
 
 /** Priority Inheritance Enabled */
-#define OS_MUTEX_INHERIT 1
+#define OS_MUTEX_INHERIT                         1
 /** Priority Inheritance Disabled */
-#define OS_MUTEX_NO_INHERIT 0
+#define OS_MUTEX_NO_INHERIT                      0
 
 /** Create mutex
  *
@@ -727,6 +725,8 @@ struct _rw_lock
 {
     /** Mutex for reader mutual exclusion */
     os_mutex_t reader_mutex;
+    /** Mutex for write mutual exclusion */
+    os_mutex_t write_mutex;
     /** Lock which when held by reader,
      *  writer cannot enter critical section
      */
@@ -747,7 +747,7 @@ int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const 
  *
  * This function creates a reader-writer lock.
  *
- * @param[in] lock Pointer to a reader-writer lock handle
+ * @param[in] plock Pointer to a reader-writer lock handle
  * @param[in] mutex_name Name of the mutex
  * @param[in] lock_name Name of the lock
  *
@@ -1030,9 +1030,9 @@ typedef enum flag_rtrv_option_t_
     EF_OR_CLEAR
 } flag_rtrv_option_t;
 
-#define EF_NO_WAIT      0
-#define EF_WAIT_FOREVER 0xFFFFFFFFUL
-#define EF_NO_EVENTS    0x7
+#define EF_NO_WAIT                     0
+#define EF_WAIT_FOREVER                0xFFFFFFFFUL
+#define EF_NO_EVENTS                   0x7
 
 int os_event_flags_create(event_group_handle_t *hnd);
 int os_event_flags_get(event_group_handle_t hnd,
@@ -1057,10 +1057,87 @@ void _os_delay(int cnt);
  */
 #define os_get_runtime_stats(__buff__) vTaskGetRunTimeStats(__buff__)
 
+/**
+ * \def os_get_task_list(__buff__)
+ *
+ * Get ASCII formatted task list
+ *
+ * Please ensure that your buffer is big enough for the formatted data to
+ * fit. Failing to do this may cause memory data corruption.
+ */
+
+#define os_get_task_list(__buff__) vTaskList(__buff__)
+
 /** Disables all interrupts at NVIC level */
 void os_disable_all_interrupts(void);
 
 /** Enable all interrupts at NVIC lebel */
 void os_enable_all_interrupts(void);
 
+/** Disable all tasks schedule */
+static inline void os_lock_schedule(void)
+{
+    vTaskSuspendAll();
+}
+
+/** Enable all tasks schedule */
+static inline void os_unlock_schedule(void)
+{
+    xTaskResumeAll();
+}
+
+/* Init value for rand generator seed */
+extern uint32_t wm_rand_seed;
+
+/** This function initialize the seed for rand generator
+ *
+ * @param [in] seed Seed for random number generator
+ *
+ */
+static inline void os_srand(uint32_t seed)
+{
+    wm_rand_seed = seed;
+}
+
+/** This function generate a random number
+ *  @return a uint32_t random numer
+ */
+static inline uint32_t os_rand()
+{
+    if (wm_rand_seed == -1)
+        os_srand(os_ticks_get());
+    wm_rand_seed = (uint32_t)((((uint64_t)wm_rand_seed * 279470273UL) % 4294967291UL) & 0xFFFFFFFFUL);
+    return wm_rand_seed;
+}
+
+/** This function generate a random number in a range
+ *  @param [in] low  range low
+ *  @param [in] high range high
+ *  @return a uint32_t random numer
+ */
+static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
+{
+    uint32_t tmp;
+    if (low == high)
+        return low;
+    if (low > high)
+    {
+        tmp  = low;
+        low  = high;
+        high = tmp;
+    }
+    return (low + os_rand() % (high - low));
+}
+
+void os_dump_threadinfo(char *name);
+
+#ifdef CONFIG_SCHED_SWITCH_TRACE
+extern int ncp_debug_task_switch_start;
+void trace_task_switch(int in, const char *func_name);
+void trace_task_switch_print();
+#endif
+
+void os_get_num_of_tasks(uint8_t *num_tasks);
+
+#endif /* ! CONFIG_WIFI_ZEPHYR */
 #endif /* ! _WM_OS_H_ */

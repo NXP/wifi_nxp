@@ -18,6 +18,6 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 
-include(middleware_wifi_common_files)
-include(middleware_wifi_sdio-2)
 include(middleware_freertos-kernel_MIMXRT1064)
+include(middleware_wifi_sdio-2)
+include(middleware_wifi_common_files)

@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2021 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 #include <mlan_api.h>
@@ -55,6 +55,9 @@ mlan_status wrapper_moal_malloc(IN t_void *pmoal_handle, IN t_u32 size, IN t_u32
 {
     *ppbuf = os_mem_alloc(size);
 
+#ifdef DEBUG_11N_ALLOC
+
+#endif /* DEBUG_11N_ALLOC */
 
     if (*ppbuf != NULL)
     {

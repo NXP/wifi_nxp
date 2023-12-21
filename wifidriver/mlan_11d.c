@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -36,6 +36,7 @@ typedef struct _region_code_mapping
 
 /** Region code mapping table */
 static const region_code_mapping_t region_code_mapping[] = {
+    {"WW ", 0x00}, /* World Wide Safe */
     {"US ", 0x10}, /* US FCC */
     {"CA ", 0x20}, /* IC Canada */
     {"SG ", 0x10}, /* Singapore */
@@ -45,11 +46,14 @@ static const region_code_mapping_t region_code_mapping[] = {
     {"FR ", 0x32}, /* France */
     {"JP ", 0xFF}, /* Japan */
     {"CN ", 0x50}, /* China */
+#ifndef CONFIG_MLAN_WMSDK
     {"JP ", 0x40}, /* Japan */
     {"JP ", 0x41}, /* Japan */
-    {"JP ", 0xFE}, /* Japan special */
+    {"JP ", 0xFE}, /* Japan */
+#endif
 };
 
+#ifdef STA_SUPPORT
 /** Default Tx power */
 #define TX_PWR_DEFAULT 10
 
@@ -73,8 +77,13 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
     {56, 5280, TX_PWR_DEFAULT},  {60, 5300, TX_PWR_DEFAULT},  {64, 5320, TX_PWR_DEFAULT},  {100, 5500, TX_PWR_DEFAULT},
     {104, 5520, TX_PWR_DEFAULT}, {108, 5540, TX_PWR_DEFAULT}, {112, 5560, TX_PWR_DEFAULT}, {116, 5580, TX_PWR_DEFAULT},
     {120, 5600, TX_PWR_DEFAULT}, {124, 5620, TX_PWR_DEFAULT}, {128, 5640, TX_PWR_DEFAULT}, {132, 5660, TX_PWR_DEFAULT},
-    {136, 5680, TX_PWR_DEFAULT}, {140, 5700, TX_PWR_DEFAULT}, {149, 5745, TX_PWR_DEFAULT}, {153, 5765, TX_PWR_DEFAULT},
-    {157, 5785, TX_PWR_DEFAULT}, {161, 5805, TX_PWR_DEFAULT}, {165, 5825, TX_PWR_DEFAULT},
+    {136, 5680, TX_PWR_DEFAULT}, {140, 5700, TX_PWR_DEFAULT}, {144, 5720, TX_PWR_DEFAULT}, {149, 5745, TX_PWR_DEFAULT},
+    {153, 5765, TX_PWR_DEFAULT}, {157, 5785, TX_PWR_DEFAULT}, {161, 5805, TX_PWR_DEFAULT},
+#ifdef CONFIG_UNII4_BAND_SUPPORT
+    {165, 5825, TX_PWR_DEFAULT}, {169, 5845, TX_PWR_DEFAULT}, {173, 5865, TX_PWR_DEFAULT}, {177, 5885, TX_PWR_DEFAULT},
+#else
+    {165, 5825, TX_PWR_DEFAULT}
+#endif
     /*  {240, 4920, TX_PWR_DEFAULT},
         {244, 4940, TX_PWR_DEFAULT},
         {248, 4960, TX_PWR_DEFAULT},
@@ -82,6 +91,7 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
     channels for 11J JP 10M channel gap */
 };
 #endif /* CONFIG_5GHz_SUPPORT */
+#endif /* STA_SUPPORT */
 /********************************************************
                 Global Variables
 ********************************************************/
@@ -89,6 +99,44 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
 /********************************************************
                 Local Functions
 ********************************************************/
+
+/**
+ *  @brief This function converts region string to region code
+ *
+ *  @param region_string    Region string
+ *
+ *  @return                 Region code
+ */
+t_u8 region_string_2_region_code(t_u8 *region_string)
+{
+    t_u8 i;
+
+    ENTER();
+
+    for (i = 0; i < ARRAY_SIZE(region_code_mapping); i++)
+    {
+        if (memcmp(region_string, region_code_mapping[i].region, COUNTRY_CODE_LEN - 1) == 0)
+        {
+            LEAVE();
+            return region_code_mapping[i].code;
+        }
+    }
+#ifndef CONFIG_MLAN_WMSDK
+    /* If still not found, look for code in EU country code table */
+    for (i = 0; i < ARRAY_SIZE(eu_country_code_table); i++)
+    {
+        if (!memcmp(region_string, eu_country_code_table[i], COUNTRY_CODE_LEN - 1))
+        {
+            PRINTM(MIOCTL, "found region code=%d in EU table\n", EU_REGION_CODE);
+            LEAVE();
+            return EU_REGION_CODE;
+        }
+    }
+#endif
+    /* Default is WW */
+    LEAVE();
+    return region_code_mapping[0].code;
+}
 
 /**
  *  @brief This function converts region string to integer code
@@ -99,7 +147,7 @@ static chan_freq_power_t channel_freq_power_UN_AJ[] = {
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-static mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region, OUT t_u8 *code)
+mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region, OUT t_u8 *code)
 {
     t_u8 i;
     t_u8 size = sizeof(region_code_mapping) / sizeof(region_code_mapping_t);
@@ -145,7 +193,7 @@ const uint8_t *wlan_11d_country_index_2_string(int country)
  *
  *  @return             Region string
  */
-static const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
+const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
 {
     t_u8 i;
     t_u8 size = sizeof(region_code_mapping) / sizeof(region_code_mapping_t);
@@ -163,10 +211,11 @@ static const t_u8 *wlan_11d_code_2_region(pmlan_adapter pmadapter, t_u8 code)
     }
 
     LEAVE();
-    /* Default is US */
+    /* Default is WW */
     return ((const t_u8 *)region_code_mapping[0].region);
 }
 
+#ifdef STA_SUPPORT
 /**
  *  @brief This function Checks if channel txpwr is learned from AP/IBSS
  *
@@ -519,6 +568,10 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
 
             if (j == parsed_region_chan->no_of_chan && j < MAX_NO_OF_CHAN)
             {
+                if (parsed_region_chan->no_of_chan + num_chan_added >=  MAX_NO_OF_CHAN)
+                {
+                    break;
+                }
                 /*
                  * Channel does not exist in the channel power table,
                  * update this new chan and tx_power to the channel power table
@@ -534,6 +587,10 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
             }
         }
         parsed_region_chan->no_of_chan += (t_u8)num_chan_added;
+        if (parsed_region_chan->no_of_chan > MAX_NO_OF_CHAN)
+        {
+            parsed_region_chan->no_of_chan = MAX_NO_OF_CHAN;
+        }
     }
     else
     {
@@ -600,6 +657,7 @@ static t_void wlan_11d_sort_parsed_region_chan(parsed_region_chan_11d_t *parsed_
     LEAVE();
     return;
 }
+#endif /* STA_SUPPORT */
 
 /**
  *  @brief This function sends domain info to FW
@@ -638,11 +696,11 @@ static mlan_status wlan_11d_send_domain_info(mlan_private *pmpriv, t_void *pioct
  *
  *  @return                 MLAN_STATUS_SUCCESS
  */
-static mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
-                                            t_u16 band,
-                                            t_u8 country_code[COUNTRY_CODE_LEN],
-                                            t_u8 num_sub_band,
-                                            IEEEtypes_SubbandSet_t *sub_band_list)
+mlan_status wlan_11d_set_domain_info(mlan_private *pmpriv,
+                                     t_u16 band,
+                                     const t_u8 country_code[COUNTRY_CODE_LEN],
+                                     t_u8 num_sub_band,
+                                     IEEEtypes_SubbandSet_t *sub_band_list)
 {
     mlan_adapter *pmadapter            = pmpriv->adapter;
     wlan_802_11d_domain_reg_t *pdomain = &pmadapter->domain_reg;
@@ -708,9 +766,11 @@ t_bool wlan_11d_is_enabled(mlan_private *pmpriv)
 }
 
 static wlan_11d_fn_t wlan_11d_fn = {
+#ifdef STA_SUPPORT
     .wlan_11d_prepare_dnld_domain_info_cmd_p = wlan_11d_prepare_dnld_domain_info_cmd,
     .wlan_11d_create_dnld_countryinfo_p      = wlan_11d_create_dnld_countryinfo,
     .wlan_11d_parse_dnld_countryinfo_p       = wlan_11d_parse_dnld_countryinfo,
+#endif
 };
 
 static void *wlan_11d_enable_support = (wlan_11d_fn_t *)&wlan_11d_fn;
@@ -800,14 +860,57 @@ t_void wlan_11d_init(mlan_adapter *pmadapter)
 {
     ENTER();
 
+#ifdef STA_SUPPORT
     (void)__memset(pmadapter, &(pmadapter->parsed_region_chan), 0, sizeof(parsed_region_chan_11d_t));
     (void)__memset(pmadapter, &(pmadapter->universal_channel), 0, sizeof(region_chan_t));
+#endif
     (void)__memset(pmadapter, &(pmadapter->domain_reg), 0, sizeof(wlan_802_11d_domain_reg_t));
 
     LEAVE();
     return;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+/**
+ *  @brief This function enable/disable 11D
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param pioctl_buf   A pointer to MLAN IOCTL Request buffer
+ *  @param flag         11D status
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_11d_enable(mlan_private *pmpriv, t_void *pioctl_buf, state_11d_t flag)
+{
+#ifdef STA_SUPPORT
+    mlan_adapter *pmadapter = pmpriv->adapter;
+#endif
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+    // state_11d_t enable = flag;
+    t_u16 enable = flag;
+
+    ENTER();
+
+    /* Send cmd to FW to enable/disable 11D function */
+    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11_SNMP_MIB, HostCmd_ACT_GEN_SET, Dot11D_i, (t_void *)pioctl_buf,
+                           &enable);
+
+    if (ret)
+    {
+        PRINTM(MERROR, "11D: Failed to %s 11D\n", (flag) ? "enable" : "disable");
+    }
+#ifdef STA_SUPPORT
+    else
+    {
+        /* clear parsed table regardless of flag */
+        (void)__memset(pmadapter, &(pmadapter->parsed_region_chan), 0, sizeof(parsed_region_chan_11d_t));
+    }
+#endif
+
+    LEAVE();
+    return ret;
+}
+#endif
 
 /**
  *  @brief This function implements command CMD_802_11D_DOMAIN_INFO
@@ -867,6 +970,90 @@ mlan_status wlan_cmd_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAN
     return MLAN_STATUS_SUCCESS;
 }
 
+#ifndef CONFIG_MLAN_WMSDK
+/**
+ *  @brief This function handle response of CMD_802_11D_DOMAIN_INFO
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         Pointer to command response buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_ret_802_11d_domain_info(mlan_private *pmpriv, HostCmd_DS_COMMAND *resp)
+{
+    mlan_status ret                                 = MLAN_STATUS_SUCCESS;
+    HostCmd_DS_802_11D_DOMAIN_INFO_RSP *domain_info = &resp->params.domain_info_resp;
+    MrvlIEtypes_DomainParamSet_t *domain            = &domain_info->domain;
+    t_u16 action                                    = wlan_le16_to_cpu(domain_info->action);
+    t_u8 no_of_sub_band                             = 0;
+
+    ENTER();
+
+    /* Dump domain info response data */
+    HEXDUMP("11D: DOMAIN Info Rsp Data", (t_u8 *)resp, resp->size);
+
+    no_of_sub_band = (t_u8)((wlan_le16_to_cpu(domain->header.len) - COUNTRY_CODE_LEN) / sizeof(IEEEtypes_SubbandSet_t));
+
+    PRINTM(MINFO, "11D Domain Info Resp: number of sub-band=%d\n", no_of_sub_band);
+
+    if (no_of_sub_band > MRVDRV_MAX_SUBBAND_802_11D)
+    {
+        PRINTM(MWARN, "11D: Invalid number of subbands %d returned!!\n", no_of_sub_band);
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    switch (action)
+    {
+        case HostCmd_ACT_GEN_SET: /* Proc Set Action */
+            break;
+        case HostCmd_ACT_GEN_GET:
+            break;
+        default:
+            PRINTM(MERROR, "11D: Invalid Action:%d\n", domain_info->action);
+            ret = MLAN_STATUS_FAILURE;
+            break;
+    }
+
+    LEAVE();
+    return ret;
+}
+#endif /* CONFIG_MLAN_WMSDK */
+
+#ifdef STA_SUPPORT
+
+/** Region code mapping */
+typedef struct _region_code_t
+{
+    /** Region */
+    t_u8 region[COUNTRY_CODE_LEN];
+} region_code_t;
+
+/**
+ *  @brief This function check cfg80211 special region code.
+ *
+ *  @param region_string         Region string
+ *
+ *  @return     MTRUE/MFALSE
+ */
+t_u8 is_special_region_code(t_u8 *region_string)
+{
+    t_u8 i;
+    region_code_t special_region_code[] = {{"00 "}, {"99 "}, {"98 "}, {"97 "}};
+
+    for (i = 0; i < COUNTRY_CODE_LEN && region_string[i]; i++)
+        region_string[i] = toupper(region_string[i]);
+
+    for (i = 0; i < ARRAY_SIZE(special_region_code); i++)
+    {
+        if (!memcmp(region_string, special_region_code[i].region, COUNTRY_CODE_LEN))
+        {
+            PRINTM(MINFO, "special region code=%s\n", region_string);
+            return MTRUE;
+        }
+    }
+    return MFALSE;
+}
 
 /**
  *  @brief This function parses country information for region channel
@@ -1188,6 +1375,12 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_A:
                         case BAND_AN:
                         case BAND_A | BAND_AN:
+#ifdef CONFIG_11AC
+                        case BAND_A | BAND_AN | BAND_AAC:
+#endif
+#ifdef CONFIG_11AX
+                        case BAND_A | BAND_AN | BAND_AAC | BAND_AAX:
+#endif
                             break;
                         default:
                             continue_loop = MTRUE;
@@ -1205,6 +1398,12 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
                         case BAND_GN:
                         case BAND_G | BAND_GN:
                         case BAND_B | BAND_G | BAND_GN:
+#ifdef CONFIG_11AC
+                        case BAND_B | BAND_G | BAND_GN | BAND_GAC:
+#endif
+#ifdef CONFIG_11AX
+                        case BAND_B | BAND_G | BAND_GN | BAND_GAC | BAND_GAX:
+#endif
                             break;
                         default:
                             continue_loop = MTRUE;
@@ -1282,10 +1481,21 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
 
         if (pbss_desc != MNULL)
         {
+            /** Country code */
+            t_u8 country_code[COUNTRY_CODE_LEN];
+            country_code[0] = pbss_desc->country_info.country_code[0];
+            country_code[1] = pbss_desc->country_info.country_code[1];
+            country_code[2] = ' ';
+
+            if (is_special_region_code(country_code))
+            {
+                PRINTM(MINFO, "Skip special region code in CountryIE");
+                LEAVE();
+                return MLAN_STATUS_SUCCESS;
+            }
             /* Parse domain info if available */
             ret = wlan_11d_parse_domain_info(pmadapter, &pbss_desc->country_info, pbss_desc->bss_band,
                                              &bssdesc_region_chan);
-
             if (ret == MLAN_STATUS_SUCCESS)
             {
                 /* Update the channel-power table */
@@ -1430,7 +1640,9 @@ done:
     LEAVE();
     return ret;
 }
+#endif /* STA_SUPPORT */
 
+#if defined(UAP_SUPPORT)
 /**
  *  @brief This function handles domain info data from UAP interface.
  *         Checks conditions, sets up domain_reg, then downloads CMD.
@@ -1483,3 +1695,4 @@ mlan_status wlan_11d_handle_uap_domain_info(mlan_private *pmpriv, t_u16 band, t_
     LEAVE();
     return ret;
 }
+#endif

@@ -4,12 +4,14 @@
  *
  *  Copyright 2008-2020 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
-#ifndef __MTF_UTILS_H__
-#define __MTF_UTILS_H__
+#ifndef __CLI_UTILS_H__
+#define __CLI_UTILS_H__
+
+#include <stdbool.h>
 
 bool string_equal(const char *s1, const char *s2);
 bool get_uint(const char *arg, unsigned int *dest, unsigned int len);

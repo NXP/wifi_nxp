@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -13,9 +13,11 @@
  */
 #include <string.h>
 #include <stdlib.h>
-#include <fsl_debug_console.h>
 
+#ifndef CONFIG_ZEPHYR
+#include <fsl_debug_console.h>
 #include <cli.h>
+#endif
 #include <cli_utils.h>
 #include <ctype.h>
 #include <wm_net.h> /* for errno */

@@ -1,13 +1,12 @@
 /*
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
-/** @file cli.h
- *
- *  @brief CLI module
+/*! \file cli.h
+ * \brief CLI module
  *
  *  \section cli_usage Usage
  *  The CLI module lets you register commands with the CLI interface. Modules
@@ -21,6 +20,10 @@
 #define __CLI_H__
 #include <wmtypes.h>
 
+#ifdef RW610
+#define COEX_APP_SUPPORT
+#endif
+
 /** Structure for registering CLI commands */
 struct cli_command
 {
@@ -31,6 +34,11 @@ struct cli_command
     /** The function that should be invoked for this command. */
     void (*function)(int argc, char **argv);
 };
+
+/*lookup_command declaration for coexapp */
+#ifdef COEX_APP_SUPPORT
+const struct cli_command *lookup_command(char *name, int len);
+#endif
 
 /** Register a CLI command
  *
@@ -58,6 +66,13 @@ int cli_unregister_command(const struct cli_command *command);
  * \return error code otherwise.
  */
 int cli_init(void);
+
+/** DeInitialize the CLI module
+ *
+ * \return WM_SUCCESS on success
+ * \return error code otherwise.
+ */
+int cli_deinit(void);
 
 /** Stop the CLI thread and carry out the cleanup
  *
@@ -87,7 +102,7 @@ int cli_register_commands(const struct cli_command *commands, int num_commands);
  */
 int cli_unregister_commands(const struct cli_command *commands, int num_commands);
 
-/* Get a command buffer
+/** Get a command buffer
  *
  * If an external input task wants to use the CLI, it can use
  * cli_get_cmd_buffer() to get a command buffer that it can then
@@ -99,7 +114,7 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
  */
 int cli_get_cmd_buffer(char **buff);
 
-/* Submit a command buffer to the CLI
+/** Submit a command buffer to the CLI
  *
  * Sends the command buffer to the CLI for processing.
  *
@@ -109,19 +124,65 @@ int cli_get_cmd_buffer(char **buff);
  */
 int cli_submit_cmd_buffer(char **buff);
 
-/*
+/**
+ * @internal
+ *
  */
 typedef int (*cli_name_val_get)(const char *name, char *value, int max_len);
 
-/*
+/**
+ * @internal
+ *
  */
 typedef int (*cli_name_val_set)(const char *name, const char *value);
+#ifdef CONFIG_APP_FRM_CLI_HISTORY
+/**
+ * @internal
+ *
+ * Hook registration function for cli history functionality
+ */
+int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb);
+#endif /* CONFIG_APP_FRM_CLI_HISTORY */
 
+#ifdef CONFIG_CLI_ECHO_MODE
+/** Get the 'echo' mode for CLI
+ *
+ * \return true if echo is enabled
+ * \return false if echo is disabled
+ */
+bool cli_get_echo_mode(void);
 
-/*
+/** Set the 'echo' mode for CLI
+ *
+ * \param[in] enabled Set 'true' to enable echo and 'false' to disable.
+ */
+void cli_set_echo_mode(bool enabled);
+#endif /*CONFIG_CLI_ECHO_MODE*/
+
+/**
  * @internal
  *
  * CLI help command to print all registered CLIs
  */
 void help_command(int argc, char **argv);
+
+#ifdef CONFIG_UART_INTERRUPT
+#ifdef CONFIG_HOST_SLEEP
+/** Reinit USART
+ *
+ * \return kStatus_Success, others fail.
+ */
+int cli_uart_reinit();
+
+/** Deinit USART
+ *
+ * \return kStatus_Success, others fail.
+ */
+int cli_uart_deinit();
+
+/** Notify uart_task
+ */
+void cli_uart_notify();
+#endif
+#endif
 #endif /* __CLI_H__ */

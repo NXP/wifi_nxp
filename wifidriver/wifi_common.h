@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2021 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 #ifndef _WIFI_COMMON_H
@@ -17,7 +17,35 @@
 #define wfd_e(...) wmlog_e("p2p", ##__VA_ARGS__)
 #define wfd_w(...) wmlog_w("p2p", ##__VA_ARGS__)
 
+#ifdef CONFIG_P2P_DEBUG
+#define wfd_d(...) wmlog("p2p", ##__VA_ARGS__)
+/**
+ *  @brief Dump hex data
+ *
+ *  @param p        A pointer to data buffer
+ *  @param len      The len of data buffer
+ *  @param delim    Deliminator character
+ *  @return         Hex integer
+ */
+static void hexdump(void *p, t_s32 len, t_s8 delim)
+{
+    t_s32 i;
+    t_u8 *s = p;
+    wmprintf("HexDump: len=%d\r\n", (int)len);
+    for (i = 0; i < len; i++)
+    {
+        if (i != len - 1)
+            wmprintf("%02x%c", *s++, delim);
+        else
+            wmprintf("%02x\r\n", *s);
+        if ((i + 1) % 16 == 0)
+            wmprintf("\r\n");
+    }
+}
+
+#else
 #define wfd_d(...)
+#endif /* ! CONFIG_P2P_DEBUG */
 
 /** Success */
 #define SUCCESS 1

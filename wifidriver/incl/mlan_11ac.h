@@ -6,7 +6,7 @@
  *
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -25,15 +25,19 @@ void wlan_fill_vht_cap_tlv(mlan_private *priv, MrvlIETypes_VHTCap_t *pvht_cap, t
 #if 0
 void wlan_fill_vht_cap_ie(mlan_private *priv, IEEEtypes_VHTCap_t *pvht_cap, t_u16 bands);
 #endif
+#ifdef HOST_TDLS_SUPPORT
+void wlan_fill_tdls_vht_oprat_ie(mlan_private *priv, IEEEtypes_VHTOprat_t *vht_oprat, sta_node *sta_ptr);
+t_u8 wlan_is_ap_in_11ac_mode(mlan_private *priv);
+#endif
 int wlan_cmd_append_11ac_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t_u8 **ppbuffer);
 #if 0
 mlan_status wlan_11ac_cfg_ioctl(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req);
 void wlan_update_11ac_cap(mlan_private *pmpriv);
 #endif
 #ifdef CONFIG_11AC
-#if 0
+
 t_u8 wlan_get_center_freq_idx(mlan_private *pmpriv, t_u8 band, t_u32 pri_chan, t_u8 chan_bw);
-#endif
+
 #endif /*CONFIG_11AC*/
 t_u8 wlan_11ac_bandconfig_allowed(mlan_private *pmpriv, t_u16 bss_band);
 

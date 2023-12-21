@@ -1,7 +1,7 @@
 /*
  *  Copyright 2008-2022 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -76,6 +76,16 @@ enum wm_dhcpd_errno
  * @return WM_SUCCESS if cli init operation success.
  */
 int dhcpd_cli_init(void);
+
+/** Unrgister DHCP server commands
+ *
+ * This function unregisters the CLI dhcp-stat for the DHCP server.
+ * dhcp-stat command displays ip to associated client mac mapping.
+ *
+ * @return -WM_E_DHCPD_REGISTER_CMDS if cli init operation failed.
+ * @return WM_SUCCESS if cli init operation success.
+ */
+int dhcpd_cli_deinit(void);
 
 /** Start DHCP server
  *

@@ -4,24 +4,31 @@
  *
  *  Copyright 2008-2021 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
 #ifndef __WIFI_INTERNAL_H__
 #define __WIFI_INTERNAL_H__
 
+#include <limits.h>
+
+#ifdef CONFIG_WPA_SUPP
+#include "wifi_nxp_internal.h"
+#endif
+
 #include <mlan_api.h>
 
 #include <wm_os.h>
 #include <wifi_events.h>
 #include <wifi-decl.h>
+#ifdef CONFIG_WPA_SUPP
+#include <ieee802_11_defs.h>
+#endif
 
 typedef struct
 {
-    int (*wifi_uap_set_params_p)(int channel);
-    int (*wifi_uap_downld_domain_params_p)(MrvlIEtypes_DomainParamSet_t *dp);
-    int (*wifi_uap_enable_11d_p)(void);
+    int (*wifi_uap_downld_domain_params_p)(int channel, wifi_scan_chan_list_t scan_chan_list);
 } wifi_uap_11d_apis_t;
 
 typedef struct mcast_filter
@@ -41,37 +48,53 @@ typedef struct _hostcmd_cfg
 
 typedef struct
 {
+    const uint8_t *fw_start_addr;
+    size_t size;
     os_thread_t wm_wifi_main_thread;
+#ifndef RW610
     os_thread_t wm_wifi_core_thread;
+#endif
     os_thread_t wm_wifi_scan_thread;
 #ifdef CONFIG_WMM
     /** Thread handle for sending data */
     os_thread_t wm_wifi_driver_tx;
 #endif
+    os_thread_t wm_wifi_powersave_thread;
     os_queue_t *wlc_mgr_event_queue;
 
+#ifndef CONFIG_WIFI_RX_REORDER
     void (*data_intput_callback)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
+#endif
     void (*amsdu_data_intput_callback)(uint8_t interface, uint8_t *buffer, uint16_t len);
-    void (*deliver_packet_above_callback)(t_u8 interface, t_void *lwip_pbuf);
+    void (*deliver_packet_above_callback)(void *rxpd, t_u8 interface, t_void *lwip_pbuf);
     bool (*wrapper_net_is_ip_or_ipv6_callback)(const t_u8 *buffer);
+#ifdef CONFIG_WIFI_RX_REORDER
+    void *(*gen_pbuf_from_data2)(t_u8 *payload, t_u16 datalen, void **p_payload);
+#endif
 
+#ifdef CONFIG_P2P
+    os_queue_t *wfd_event_queue;
+#endif
     os_mutex_t command_lock;
     os_semaphore_t command_resp_sem;
     os_mutex_t mcastf_mutex;
 #ifdef CONFIG_WMM
     /** Semaphore to protect data parameters */
     os_semaphore_t tx_data_sem;
+#ifdef CONFIG_ZEPHYR
+    /** Queue for sending data packets to fw */
+    os_queue_t tx_data;
+    os_queue_pool_t tx_data_queue_data;
+#endif
 #endif
     unsigned last_sent_cmd_msec;
 
     /* Queue for events/data from low level interface driver */
     os_queue_t io_events;
-#ifdef CONFIG_WMM
-    /** Queue for sending data packets to fw */
-    os_queue_t tx_data;
-    os_queue_pool_t tx_data_queue_data;
-#endif
+
     os_queue_pool_t io_events_queue_data;
+    os_queue_t powersave_queue;
+    os_queue_pool_t powersave_queue_data;
 
     mcast_filter *start_list;
 
@@ -100,16 +123,12 @@ typedef struct
      * Store 11D support status in Wi-Fi driver.
      */
     bool enable_11d_support;
-    wifi_uap_11d_apis_t *uap_support_11d_apis;
     /*
-     * This is updated when user calls the wifi_uap_set_domain_params()
-     * functions. This is used later during uAP startup. Since the uAP
-     * configuration needs to be done befor uAP is started we keep this
-     * cache. This is needed to enable 11d support in uAP.
+     * 11D support callback function
      */
-    MrvlIEtypes_DomainParamSet_t *dp;
+    wifi_uap_11d_apis_t *uap_support_11d_apis;
     /** Broadcast ssid control */
-    bool bcast_ssid_ctl;
+    t_u8 hidden_ssid;
     /** beacon period */
     t_u16 beacon_period;
     /** Wi-Fi Bandwidth */
@@ -122,19 +141,6 @@ typedef struct
     t_u16 ht_cap_info;
     /** HTTX Cfg */
     t_u16 ht_tx_cfg;
-#ifdef CONFIG_WMM
-    /** Outbuf index */
-    t_u8 pkt_index[MAX_AC_QUEUES];
-    /** packet count */
-    t_u8 pkt_cnt[MAX_AC_QUEUES];
-    /** send packet index */
-    t_u8 send_index[MAX_AC_QUEUES];
-    /** WMM queues block lengths */
-    t_u32 bk_pkt_len[BK_MAX_BUF];
-    t_u32 be_pkt_len[BE_MAX_BUF];
-    t_u32 vi_pkt_len[VI_MAX_BUF];
-    t_u32 vo_pkt_len[VO_MAX_BUF];
-#endif
 #ifdef CONFIG_WIFI_FW_DEBUG
     /** This function mount USB device.
      *
@@ -175,6 +181,20 @@ typedef struct
     wlan_user_scan_cfg *g_user_scan_cfg;
 
     bool scan_stop;
+#ifdef CONFIG_WPA_SUPP
+    void *if_priv;
+    void *hapd_if_priv;
+    wifi_nxp_callbk_fns_t *supp_if_callbk_fns;
+    nxp_wifi_event_mlme_t mgmt_resp;
+    nxp_wifi_assoc_event_mlme_t assoc_resp;
+    nxp_wifi_event_mlme_t mgmt_rx;
+    nxp_wifi_event_eapol_mlme_t eapol_rx;
+    bool wpa_supp_scan;
+    bool external_scan;
+#ifdef CONFIG_HOSTAPD
+    bool hostapd_op;
+#endif
+#endif
 } wm_wifi_t;
 
 extern wm_wifi_t wm_wifi;
@@ -187,7 +207,42 @@ struct bus_message
     void *data;
 };
 
-PACK_START struct ieee80211_hdr
+/* fixme: This structure seems to have been removed from mlan. This was
+   copied from userif_ext.h file temporarily. Change the handling of events to
+   make it similar to what mlan does */
+
+/** Event structure */
+typedef MLAN_PACK_START struct _Event_Ext_t
+{
+    /** No of bytes in packet including this field */
+    uint16_t length;
+    /** Type: Event (3) */
+    uint16_t type;
+    /** Event ID */
+    uint16_t event_id;
+    /** BSS index number for multiple BSS support */
+    uint8_t bss_index;
+    /** BSS type */
+    uint8_t bss_type;
+    /** Reason code */
+    uint16_t reason_code;
+    /** Source MAC address */
+    uint8_t src_mac_addr[MLAN_MAC_ADDR_LENGTH];
+} MLAN_PACK_END Event_Ext_t;
+
+typedef MLAN_PACK_START struct _mac_address
+{
+    unsigned char addr[MLAN_MAC_ADDR_LENGTH];
+} MLAN_PACK_END mac_address_t;
+
+typedef MLAN_PACK_START struct _nxp_wifi_acl_info
+{
+    unsigned char acl_policy;
+    unsigned int num_mac_acl;
+    mac_address_t mac_acl[];
+} MLAN_PACK_END nxp_wifi_acl_info_t;
+
+/* PACK_START struct ieee80211_hdr
 {
     t_u16 frame_control;
     t_u16 duration_id;
@@ -196,7 +251,7 @@ PACK_START struct ieee80211_hdr
     t_u8 addr3[6];
     t_u16 seq_ctrl;
     t_u8 addr4[6];
-} PACK_END;
+} PACK_END; */
 
 /**
  * This function handles events received from the firmware.
@@ -218,7 +273,12 @@ bool is_split_scan_complete(void);
  * Waits for Command processing to complete and waits for command response
  */
 int wifi_wait_for_cmdresp(void *cmd_resp_priv);
-
+#ifdef CONFIG_FW_VDLL
+/**
+ * Waits for Command processing to complete and waits for command response for VDLL
+ */
+int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv);
+#endif
 /**
  * Register an event queue
  *
@@ -231,6 +291,17 @@ int bus_register_event_queue(os_queue_t *event_queue);
  * De-register the event queue.
  */
 void bus_deregister_event_queue(void);
+#ifdef CONFIG_P2P
+/**
+ * Register a special queue for WPS
+ */
+int bus_register_special_queue(os_queue_t *special_queue);
+
+/**
+ * Deregister special queue
+ */
+void bus_deregister_special_queue(void);
+#endif
 
 /**
  * Register DATA input function with SDIO driver.
@@ -254,12 +325,30 @@ void bus_deregister_data_input_funtion(void);
  */
 int wifi_get_command_lock(void);
 
+int wifi_put_command_resp_sem(void);
+
 /*
  * @internal
  *
  *
  */
 int wifi_put_command_lock(void);
+
+#if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
+/*
+ * @internal
+ *
+ *
+ */
+int wifi_get_wls_csi_sem(void);
+
+/*
+ * @internal
+ *
+ *
+ */
+int wifi_put_wls_csi_sem(void);
+#endif
 
 /*
  * Process the command reponse received from the firmware.
@@ -311,4 +400,48 @@ void wifi_user_scan_config_cleanup(void);
  *
  */
 void wifi_scan_stop(void);
+#ifdef CONFIG_WPA_SUPP
+void wpa_supp_handle_link_lost(mlan_private *priv);
+
+int wifi_set_scan_ies(void *ie, size_t ie_len);
+#ifdef CONFIG_WPA_SUPP_WPS
+bool wifi_nxp_wps_session_enable(void);
+#endif
+
+int wifi_setup_ht_cap(t_u16 *ht_capab, t_u8 *mcs_set, t_u8 *a_mpdu_params, t_u8 band);
+void wifi_setup_channel_info(void *channels, int num_channels, t_u8 band);
+
+#ifdef CONFIG_11AC
+int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band);
+#endif
+
+#ifdef CONFIG_11AX
+int wifi_setup_he_cap(nxp_wifi_he_capabilities *he_cap, t_u8 band);
+#endif
+int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info);
+int wifi_nxp_send_mlme(unsigned int bss_type, int channel, unsigned int wait_time, const t_u8 *data, size_t data_len);
+int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint32_t duration);
+int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params);
+int wifi_set_uap_rts(int rts_threshold);
+int wifi_set_uap_frag(int frag_threshold);
+int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params);
+int wifi_nxp_sta_remove(const uint8_t *addr);
+int wifi_nxp_stop_ap(void);
+int wifi_nxp_set_acl(nxp_wifi_acl_info_t *acl_params);
+int wifi_nxp_set_country(unsigned int bss_type, const char *alpha2);
+int wifi_nxp_get_country(unsigned int bss_type, char *alpha2);
+int wifi_nxp_get_signal(unsigned int bss_type, nxp_wifi_signal_info_t *signal_params);
+int wifi_nxp_scan_res_num(void);
+int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *scan_res);
+#endif /* CONFIG_WPA_SUPP */
+
+#ifdef CONFIG_WIFI_RX_REORDER
+int wrapper_wlan_handle_rx_packet(t_u16 datalen, RxPD *rxpd, void *p, void *payload);
+#endif
+
+#ifdef CONFIG_WMM
+int send_wifi_driver_tx_data_event(t_u8 interface);
+int send_wifi_driver_tx_null_data_event(t_u8 interface);
+#endif
+
 #endif /* __WIFI_INTERNAL_H__ */

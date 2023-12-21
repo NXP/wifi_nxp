@@ -4,7 +4,7 @@
  *
  *  Copyright 2008-2021 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -16,6 +16,7 @@
 
 #define wscan_e(...) wmlog_e("wscan", ##__VA_ARGS__)
 #define wscan_w(...) wmlog_w("wscan", ##__VA_ARGS__)
+
 #ifdef CONFIG_WIFI_SCAN_DEBUG
 #define wscan_d(...) wmlog("wscan", ##__VA_ARGS__)
 #else
@@ -25,11 +26,11 @@
 #define wifi_e(...) wmlog_e("wifi", ##__VA_ARGS__)
 #define wifi_w(...) wmlog_w("wifi", ##__VA_ARGS__)
 
-#ifdef CONFIG_WIFI_FW_DEBUG
+#ifdef CONFIG_WIFI_EXTRA_DEBUG
 #define wifi_d(...) wmlog("wifi", ##__VA_ARGS__)
 #else
 #define wifi_d(...)
-#endif /* ! CONFIG_WIFI_DEBUG */
+#endif /* ! CONFIG_WIFI_EXTRA_DEBUG */
 
 #define ampdu_e(...) wmlog_e("ampdu", ##__VA_ARGS__)
 #define ampdu_w(...) wmlog_w("ampdu", ##__VA_ARGS__)
@@ -100,6 +101,14 @@ void wifi_show_assoc_fail_reason(int status);
 void dump_mac_addr(const char *msg, unsigned char *addr);
 #endif /* DUMP_PACKET_MAC */
 
+#ifdef DEBUG_11N_AGGR
+void dump_packet_header(const HostCmd_DS_COMMAND *cmd);
+void dump_addba_req_rsp_packet(const HostCmd_DS_COMMAND *cmd);
+#endif
 
+#ifdef DEBUG_11N_ASSOC
+void dump_htcap_info(const MrvlIETypes_HTCap_t *htcap);
+void dump_ht_info(const MrvlIETypes_HTInfo_t *htinfo);
+#endif /* DEBUG_11N_ASSOC */
 
 #endif /* __WIFI_DEBUG_H__ */

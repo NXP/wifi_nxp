@@ -1,7 +1,7 @@
 /*
  *  Copyright 2008-2020 NXP
  *
- *  Licensed under the LA_OPT_NXP_Software_License.txt (the "Agreement")
+ *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
 
@@ -88,6 +88,14 @@ struct wm_stats
     unsigned long wm_cl_post_fail;
     unsigned long wm_cl_total;
     unsigned int wm_cl_cum_total;
+#ifdef CONFIG_ENABLE_HTTPD_STATS
+    /** HTTP Stats */
+    /* Note: wm_hd_file is always included in hd_wsgi_call count */
+    unsigned short wm_hd_wsgi_call;
+    unsigned short wm_hd_file;
+    httpd_useragent_t wm_hd_useragent;
+    unsigned int wm_hd_time;
+#endif /* CONFIG_ENABLE_HTTPD_STATS */
     /** Provisioning type */
     /* Tells whether the module was in NORMAL mode, PROVISIONING mode or
      * TIMED PROVISIONING mode immediately after rebooting*/
