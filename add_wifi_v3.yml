@@ -73,6 +73,7 @@ middleware.wifi.common_files:
     - source: port/os/os.c
     - source: wifidriver/incl/mlan_decl.h
     - source: wifidriver/incl/mlan_ioctl.h
+    - source: wifidriver/incl/type_decls.h
     - source: wifi_bt_firmware/wlan_bt_fw.h
   belong_to: set.middleware.wifi
   section_info:
@@ -367,7 +368,6 @@ middleware.wifi.mlan_sdio:
     - source: sdio_nxp_abs/mlan_sdio.c
     - source: sdio_nxp_abs/fwdnld_sdio.c
     - source: sdio_nxp_abs/incl/fwdnld_sdio.h
-    - source: wifidriver/incl/type_decls.h
     - source: sdio_nxp_abs/incl/mlan_sdio_defs.h
     - source: sdio_nxp_abs/incl/mlan_sdio.h
     - source: sdio_nxp_abs/incl/mlan_sdio_api.h
