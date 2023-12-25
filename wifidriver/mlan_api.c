@@ -1251,6 +1251,32 @@ int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action,
     return wm_wifi.cmd_resp_status;
 }
 
+int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action,
+                                wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr)
+{
+    wifi_get_command_lock();
+    mlan_ds_misc_cfg *misc = NULL;
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+
+    misc = (mlan_ds_misc_cfg *)os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+    (void)memset(misc, 0x00, sizeof(mlan_ds_misc_cfg));
+    cmd->seq_num   = 0x0;
+    cmd->result    = 0x0;
+    mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_MFG_COMMAND, cmd_action,
+                                              0, NULL, wifi_mfg_cmd_otp_cal_data_rd_wr, cmd);
+    if (rv != MLAN_STATUS_SUCCESS)
+    {
+        (void)os_mem_free(misc);
+        return -WM_FAIL;
+    }
+
+    wifi_wait_for_cmdresp(misc);
+    memcpy(wifi_mfg_cmd_otp_cal_data_rd_wr, (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)&(misc->param.mfg_otp_cal_data_rd_wr),
+           sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+    (void)os_mem_free(misc);
+    return wm_wifi.cmd_resp_status;
+}
+
 int wifi_get_set_rf_test_tx_cont(t_u16 cmd_action,
                                  wifi_mfg_cmd_tx_cont_t *wifi_mfg_cmd_tx_cont,
                                  wifi_mfg_cmd_generic_cfg_t *wifi_mfg_cmd_generic_cfg)
@@ -1992,6 +2018,64 @@ int wifi_get_rf_otp_mac_addr(uint8_t *mac)
 
     wifi_e("wifi get otp mac address fails, error code: 0x%x\r\n", wifi_mfg_cmd_otp_mac_addr_rd_wr.error);
     return -WM_FAIL;
+}
+
+int wifi_set_rf_otp_cal_data(uint8_t *cal_data, uint32_t cal_data_len)
+{
+    int ret;
+
+    wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
+
+    wifi_mfg_cmd_otp_cal_data_rd_wr = (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+    (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+
+    wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd = MFG_CMD_OTP_CAL_DATA;
+    wifi_mfg_cmd_otp_cal_data_rd_wr->action  = HostCmd_ACT_GEN_SET;
+    wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len = cal_data_len;
+    (void)memcpy((void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data, (const void *)cal_data, cal_data_len);
+
+    ret = wifi_get_set_rf_otp_cal_data(HostCmd_ACT_GEN_SET, wifi_mfg_cmd_otp_cal_data_rd_wr);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_otp_cal_data_rd_wr->error == 0)
+    {
+        ret = WM_SUCCESS;
+    }
+    else
+    {
+        wifi_e("wifi set cal data fails, error code: 0x%x\r\n", wifi_mfg_cmd_otp_cal_data_rd_wr->error);
+        ret = -WM_FAIL;
+    }
+
+    (void)os_mem_free(wifi_mfg_cmd_otp_cal_data_rd_wr);
+    return ret;
+}
+
+int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
+{
+    int ret;
+
+    wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
+
+    wifi_mfg_cmd_otp_cal_data_rd_wr = (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+    (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+
+    wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd = MFG_CMD_OTP_CAL_DATA;
+    wifi_mfg_cmd_otp_cal_data_rd_wr->action  = HostCmd_ACT_GEN_GET;
+
+    ret = wifi_get_set_rf_otp_cal_data(HostCmd_ACT_GEN_GET, wifi_mfg_cmd_otp_cal_data_rd_wr);
+    if (ret == WM_SUCCESS && wifi_mfg_cmd_otp_cal_data_rd_wr->error == 0)
+    {
+        (void)memcpy((void *)cal_data, (const void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data, wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len);
+        ret = WM_SUCCESS;
+    }
+    else
+    {
+        wifi_e("wifi get otp cal data fails, error code: 0x%x\r\n", wifi_mfg_cmd_otp_cal_data_rd_wr->error);
+        ret = -WM_FAIL;
+    }
+
+    (void)os_mem_free(wifi_mfg_cmd_otp_cal_data_rd_wr);
+
+    return ret;
 }
 #endif
 

@@ -28,7 +28,7 @@
 static uint8_t cmd_buf[WIFI_FW_CMDBUF_SIZE];
 // static t_u32 seqnum;
 // static int pm_handle;
-#define IMU_OUTBUF_LEN       2048
+#define IMU_OUTBUF_LEN       3072
 #define IMU_INIT_FW_CMD_SIZE 256
 
 #if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)

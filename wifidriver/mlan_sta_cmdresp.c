@@ -182,6 +182,39 @@ static mlan_status wlan_ret_mfg_otp_mac_add(pmlan_private pmpriv, HostCmd_DS_COM
 }
 
 /**
+ *  @brief This function prepares command resp of MFG OTP cal data
+ *
+ *  @param pmpriv       A pointer to mlan_private structure
+ *  @param resp         A pointer to HostCmd_DS_COMMAND
+ *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
+ *
+ *  @return             MLAN_STATUS_SUCCESS
+ */
+
+static mlan_status wlan_ret_mfg_otp_cal_data(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf)
+{
+    mlan_ds_misc_cfg *misc                    = MNULL;
+    HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T *mcmd    = (HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T *)&resp->params.mfg_otp_cal_data_rd_wr;
+    mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t *cfg = MNULL;
+
+    ENTER();
+    if (!pioctl_buf)
+    {
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+    misc = (mlan_ds_misc_cfg *)pioctl_buf;
+    cfg  = (mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t *)&misc->param.mfg_otp_cal_data_rd_wr;
+
+    cfg->cal_data_status = mcmd->cal_data_status;
+    cfg->cal_data_len = mcmd->cal_data_len;
+    memcpy(cfg->cal_data, mcmd->cal_data, mcmd->cal_data_len);
+
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+
+/**
  *  @brief This function prepares command resp of MFG config Trigger frame
  *
  *  @param pmpriv       A pointer to mlan_private structure
@@ -265,6 +298,9 @@ mlan_status wlan_ret_mfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, void *p
             goto cmd_mfg_done;
         case MFG_CMD_OTP_MAC_ADD:
             ret = wlan_ret_mfg_otp_mac_add(pmpriv, resp, pioctl_buf);
+            goto cmd_mfg_done;
+        case MFG_CMD_OTP_CAL_DATA:
+            ret = wlan_ret_mfg_otp_cal_data(pmpriv, resp, pioctl_buf);
             goto cmd_mfg_done;
         case MFG_CMD_SET_TEST_MODE:
         case MFG_CMD_UNSET_TEST_MODE:

@@ -5359,6 +5359,31 @@ int wlan_set_rf_otp_mac_addr(uint8_t *mac);
  *
  */
 int wlan_get_rf_otp_mac_addr(uint8_t *mac);
+
+/**
+ * Set the RF OTP cal data in Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[in] cal_data A Pointer to a variable where OTP cal data is to be stored.
+ * \param[in] cal_data_len The length of OTP cal data.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_set_rf_otp_cal_data(uint8_t *cal_data, uint32_t cal_data_len);
+
+/**
+ * Get the RF OTP cal data from Wi-Fi firmware.
+ *
+ * \note Please call \ref wlan_set_rf_test_mode API before using this API.
+ *
+ * \param[out] cal_data A Pointer to a variable where OTP cal data is to be stored.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ *
+ */
+int wlan_get_rf_otp_cal_data(uint8_t *cal_data);
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
 /** This function registers callbacks which are used to generate FW Dump on USB

@@ -3798,6 +3798,7 @@ typedef enum _mlan_rf_test_mode
 #define MFG_CMD_CONFIG_MAC_HE_TB_TX  0x110A
 #define MFG_CMD_CONFIG_TRIGGER_FRAME 0x110C
 #define MFG_CMD_OTP_MAC_ADD          0x108C
+#define MFG_CMD_OTP_CAL_DATA         0x121A
 
 /** Configuration for Manufacturing generic command */
 typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_generic_cfg
@@ -3923,6 +3924,25 @@ typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t
     /** Destination MAC Address */
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
 }MLAN_PACK_END mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t;
+
+#define CAL_DATA_LEN 2800
+typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t
+{
+   /** MFG command code */
+    t_u32  mfg_cmd;
+    /** Action */
+    t_u16  action;
+    /** Device ID */
+    t_u16  device_id;
+    /** MFG Error code */
+    t_u32  error;
+    /** CAL Data write status */
+    t_u32   cal_data_status;
+    /** CAL Data Length*/
+    t_u32   cal_data_len;
+    /** Destination MAC Address */
+    t_u8 cal_data[CAL_DATA_LEN];
+}MLAN_PACK_END mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t;
 
 #ifdef BIG_ENDIAN_SUPPORT
 typedef MLAN_PACK_START struct _mfg_cmd_IEEEtypes_HETrigComInfo_t
@@ -4250,6 +4270,7 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_mfg_Cmd_HE_TBTx_t mfg_he_power;
         mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t mfg_tx_trigger_config;
         mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t mfg_otp_mac_addr_rd_wr;
+        mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t mfg_otp_cal_data_rd_wr;
 #endif
 #ifdef CONFIG_MULTI_CHAN
         /** Multi-channel config for MLAN_OID_MISC_MULTI_CHAN_CFG */

@@ -12776,6 +12776,19 @@ int wlan_get_rf_otp_mac_addr(uint8_t *mac)
 
     return -WM_FAIL;
 }
+
+int wlan_set_rf_otp_cal_data(uint8_t *cal_data, uint32_t cal_data_len)
+{
+    return wifi_set_rf_otp_cal_data(cal_data, cal_data_len);
+}
+
+int wlan_get_rf_otp_cal_data(uint8_t *cal_data)
+{
+    if (cal_data != NULL)
+      return wifi_get_rf_otp_cal_data(cal_data);
+
+    return -WM_FAIL;
+}
 #endif
 #ifdef CONFIG_WIFI_FW_DEBUG
 void wlan_register_fw_dump_cb(void (*wlan_usb_init_cb)(void),

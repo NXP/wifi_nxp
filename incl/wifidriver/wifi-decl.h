@@ -1710,6 +1710,24 @@ typedef PACK_START struct wifi_mfg_cmd_otp_mac_addr_rd_wr
     /** Destination MAC Address */
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
 } PACK_END wifi_mfg_cmd_otp_mac_addr_rd_wr_t;
+
+typedef PACK_START struct wifi_mfg_cmd_otp_cal_data_rd_wr
+{
+    /** MFG command code */
+    t_u32  mfg_cmd;
+    /** Action */
+    t_u16  action;
+    /** Device ID */
+    t_u16  device_id;
+    /** MFG Error code */
+    t_u32  error;
+    /** CAL Data write status */
+    t_u32   cal_data_status;
+    /** CAL Data Length*/
+    t_u32   cal_data_len;
+    /** Destination MAC Address */
+    t_u8 cal_data[CAL_DATA_LEN];
+} PACK_END wifi_mfg_cmd_otp_cal_data_rd_wr_t;
 #endif
 
 #ifdef CONFIG_HEAP_DEBUG
