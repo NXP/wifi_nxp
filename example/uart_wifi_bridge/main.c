@@ -338,7 +338,7 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
         iface_len = INTF_HEADER_LEN - 1;
     else
         iface_len = INTF_HEADER_LEN;
-	payloadlen = imupkt->size - iface_len;
+    payloadlen = imupkt->size - iface_len;
 #else
     payloadlen = reqd_resp_len;
 #endif

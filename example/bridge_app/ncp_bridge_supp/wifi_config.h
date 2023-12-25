@@ -142,7 +142,6 @@
 /*
  * Config options for supplicant
  */
-#define WIFI_ADD_ON     1
 #define CONFIG_WPA_SUPP 1
 #ifdef CONFIG_WPA_SUPP
 #define CONFIG_WIFI_NXP        1

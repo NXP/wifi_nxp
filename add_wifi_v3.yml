@@ -567,7 +567,7 @@ middleware.wifi.wps:
     - repo_relative_path: wps
     - repo_relative_path: incl/wps
     files:
-    - source: incl/wps/wps.h
+    - source: incl/wps/wifi_nxp_wps.h
     - source: wps/wps_def.h
     - source: wps/wps_eapol.c
     - source: wps/wps_eapol.h
