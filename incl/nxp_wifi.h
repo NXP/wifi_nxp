@@ -15,10 +15,6 @@
 extern "C" {
 #endif
 
-#ifdef __ZEPHYR__
-#define CONFIG_ZEPHYR __ZEPHYR__
-#endif
-
 #if CONFIG_NXP_WIFI_MAX_AP_ENTRIES
 #define CONFIG_MAX_AP_ENTRIES CONFIG_NXP_WIFI_MAX_AP_ENTRIES
 #endif

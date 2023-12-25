@@ -98,6 +98,80 @@ uint8_t dev_mac_addr[MLAN_MAC_ADDR_LENGTH];
 uint8_t dev_mac_addr_uap[MLAN_MAC_ADDR_LENGTH];
 static uint8_t dev_fw_ver_ext[MLAN_MAX_VER_STR_LEN];
 
+static mlan_status wifi_send_fw_data(t_u8 *data, t_u32 txlen)
+{
+    t_u32 tx_blocks = 0, buflen = 0;
+    uint32_t resp;
+    bool ret;
+#ifdef CONFIG_WIFI_FW_DEBUG
+    int ret_cb;
+#endif
+
+    if (data == NULL || txlen == 0)
+        return MLAN_STATUS_FAILURE;
+
+    w_pkt_d("Data TX SIG: Driver=>FW, len %d", txlen);
+
+    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
+
+#ifdef CONFIG_WIFI_IO_DEBUG
+    (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
+#endif /* CONFIG_WIFI_IO_DEBUG */
+    /* Check if the port is available */
+    if (!((1U << txportno) & mlan_adap->mp_wr_bitmap))
+    {
+        /*
+         * fixme: This condition is triggered in legacy as well as
+         * this new code. Check this out later.
+         */
+#ifdef CONFIG_WIFI_IO_DEBUG
+        wifi_io_e(
+            "txportno out of sync txportno "
+            "= (%d) mp_wr_bitmap = (0x%x)",
+            txportno, mlan_adap->mp_wr_bitmap);
+#endif /* CONFIG_WIFI_IO_DEBUG */
+        return MLAN_STATUS_RESOURCE;
+    }
+    else
+    {
+        /* Mark the port number we will use */
+        mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
+    }
+
+    /* send CMD53 */
+    ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, data, &resp);
+
+    txportno++;
+    if (txportno == mlan_adap->mp_end_port)
+    {
+#if defined(SD8801)
+        txportno = 1;
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
+        txportno   = 0;
+#endif
+    }
+
+    if (ret == false)
+    {
+        wifi_io_e("sdio_drv_write failed (%d)", ret);
+#ifdef CONFIG_WIFI_FW_DEBUG
+        wifi_sdio_reg_dbg(NULL);
+        if (wm_wifi.wifi_usb_mount_cb != NULL)
+        {
+            ret_cb = wm_wifi.wifi_usb_mount_cb();
+            if (ret_cb == WM_SUCCESS)
+                wifi_dump_firmware_info(NULL);
+            else
+                wifi_e("USB mounting failed");
+        }
+        else
+            wifi_e("USB mount callback is not registered");
+#endif
+        return MLAN_STATUS_RESOURCE;
+    }
+    return MLAN_STATUS_SUCCESS;
+}
+
 int wifi_sdio_lock(void)
 {
     return os_mutex_get(&txrx_mutex, OS_WAIT_FOREVER);
@@ -1833,149 +1907,53 @@ mlan_status wlan_flush_wmm_pkt(t_u8 pkt_count)
 
 mlan_status wlan_xmit_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface, t_u32 tx_control)
 {
-    t_u32 tx_blocks = 0, buflen = 0;
-    uint32_t resp;
-    bool ret;
-#ifdef CONFIG_WIFI_FW_DEBUG
-    int ret_cb;
-#endif
+
+    (void)interface;
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
-
-#ifdef CONFIG_WIFI_IO_DEBUG
-    (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
-#endif /* CONFIG_WIFI_IO_DEBUG */
-    /* Check if the port is available */
-    if (!((1U << txportno) & mlan_adap->mp_wr_bitmap))
-    {
-        /*
-         * fixme: This condition is triggered in legacy as well as
-         * this new code. Check this out later.
-         */
-#ifdef CONFIG_WIFI_IO_DEBUG
-        wifi_io_e(
-            "txportno out of sync txportno "
-            "= (%d) mp_wr_bitmap = (0x%x)",
-            txportno, mlan_adap->mp_wr_bitmap);
-#endif /* CONFIG_WIFI_IO_DEBUG */
-        return MLAN_STATUS_RESOURCE;
-    }
-    else
-    {
-        /* Mark the port number we will use */
-        mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
-    }
-
     process_pkt_hdrs((t_u8 *)buffer, txlen, interface, 0, tx_control);
 
-    /* send CMD53 */
-    ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
-
-    txportno++;
-    if (txportno == mlan_adap->mp_end_port)
-    {
-#if defined(SD8801)
-        txportno = 1;
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
-        txportno   = 0;
-#endif
-    }
-
-    if (ret == false)
-    {
-        wifi_io_e("sdio_drv_write failed (%d)", ret);
-#ifdef CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret_cb = wm_wifi.wifi_usb_mount_cb();
-            if (ret_cb == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
-        return MLAN_STATUS_RESOURCE;
-    }
-    return MLAN_STATUS_SUCCESS;
+    return wifi_send_fw_data(buffer, txlen);
 }
 
 #ifdef CONFIG_WMM
 mlan_status wlan_xmit_bypass_pkt(t_u8 *buffer, t_u32 txlen, t_u8 interface)
 {
-    t_u32 tx_blocks = 0, buflen = 0;
-    uint32_t resp;
-    bool ret;
-#ifdef CONFIG_WIFI_FW_DEBUG
-    int ret_cb;
-#endif
+
+    (void)interface;
 
     wifi_io_info_d("OUT: i/f: %d len: %d", interface, txlen);
 
-    calculate_sdio_write_params(txlen, &tx_blocks, &buflen);
-
-#ifdef CONFIG_WIFI_IO_DEBUG
-    (void)PRINTF("%s: txportno = %d mlan_adap->mp_wr_bitmap: %x\n\r", __func__, txportno, mlan_adap->mp_wr_bitmap);
-#endif /* CONFIG_WIFI_IO_DEBUG */
-    /* Check if the port is available */
-    if (!((1U << txportno) & mlan_adap->mp_wr_bitmap))
-    {
-        /*
-         * fixme: This condition is triggered in legacy as well as
-         * this new code. Check this out later.
-         */
-#ifdef CONFIG_WIFI_IO_DEBUG
-        wifi_io_e(
-            "txportno out of sync txportno "
-            "= (%d) mp_wr_bitmap = (0x%x)",
-            txportno, mlan_adap->mp_wr_bitmap);
-#endif /* CONFIG_WIFI_IO_DEBUG */
-        return MLAN_STATUS_RESOURCE;
-    }
-    else
-    {
-        /* Mark the port number we will use */
-        mlan_adap->mp_wr_bitmap &= ~(1U << txportno);
-    }
-
-    /* send CMD53 */
-    ret = sdio_drv_write(mlan_adap->ioport + txportno, 1, tx_blocks, buflen, (t_u8 *)buffer, &resp);
-
-    txportno++;
-    if (txportno == mlan_adap->mp_end_port)
-    {
-#if defined(SD8801)
-        txportno = 1;
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
-        txportno   = 0;
-#endif
-    }
-
-    if (ret == false)
-    {
-        wifi_io_e("sdio_drv_write failed (%d)", ret);
-#ifdef CONFIG_WIFI_FW_DEBUG
-        wifi_sdio_reg_dbg(NULL);
-        if (wm_wifi.wifi_usb_mount_cb != NULL)
-        {
-            ret_cb = wm_wifi.wifi_usb_mount_cb();
-            if (ret_cb == WM_SUCCESS)
-                wifi_dump_firmware_info(NULL);
-            else
-                wifi_e("USB mounting failed");
-        }
-        else
-            wifi_e("USB mount callback is not registered");
-#endif
-        return MLAN_STATUS_RESOURCE;
-    }
-    return MLAN_STATUS_SUCCESS;
+    return wifi_send_fw_data(buffer, txlen);
 }
 #endif
+
+mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
+{
+    mlan_status ret;
+    t_u8 pbuf[128]  = {0};
+    TxPD *ptxpd    = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
+
+    ptxpd->bss_type      = priv->bss_type;
+    ptxpd->bss_num       = GET_BSS_NUM(priv);
+    ptxpd->tx_pkt_offset = 0x16; /* we'll just make this constant */
+    ptxpd->tx_pkt_length = 0;
+    ptxpd->tx_control    = 0;
+    ptxpd->priority      = 0;
+    ptxpd->flags         = flags;
+    ptxpd->pkt_delay_2ms = 0;
+
+    ret = wifi_send_fw_data(pbuf, sizeof(TxPD) + INTF_HEADER_LEN);
+
+    if (ret != MLAN_STATUS_SUCCESS)
+    {
+        wifi_io_d("sdio_drv_write failed (%d)", ret);
+        return MLAN_STATUS_FAILURE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
 
 /*
  * This function gets interrupt status.
