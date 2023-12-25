@@ -32,9 +32,7 @@ edma_handle_t masterRxHandle;
 
 edma_config_t userConfig = {0};
 
-extern os_thread_t ncp_host_resp_thread;
-#define BOARD_DEBUG_FLEXCOMM0_FRG_CLK \
-    (&(const clock_frg_clk_config_t){0, kCLOCK_FrgMainClk, 255, 0})
+extern os_thread_t ncp_host_tlv_thread;
 #define SPI_MASTER_INT_RX_MASK 0x10000
 #define SPI_MASTER_INT_TX_MASK 0x20000
 os_semaphore_t spi_master_sem;
@@ -43,7 +41,7 @@ os_semaphore_t spi_master_txrx_done;
 /*******************************************************************************
  * Code
  ******************************************************************************/
-void GPIO_INTA_IRQHandler(void)
+void NCP_HOST_GPIO_IRQ_HANDLER(void)
 {
     uint32_t status = 0;
     DisableIRQ(NCP_HOST_GPIO_IRQ);
@@ -53,7 +51,7 @@ void GPIO_INTA_IRQHandler(void)
     if(status & SPI_MASTER_INT_RX_MASK)
     {
         GPIO_PortClearInterruptFlags(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
-        os_event_notify_put(ncp_host_resp_thread);
+        os_event_notify_put(ncp_host_tlv_thread);
     }
     if(status & SPI_MASTER_INT_TX_MASK)
     {
@@ -111,7 +109,6 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
                 masterXfer.dataSize = len;
             else
                 masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
-//            masterXfer.configFlags = kSPI_FrameAssert;
             os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
             ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
             if(ret)
@@ -131,7 +128,6 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
             masterXfer.txData = NULL;
             masterXfer.rxData = buff;
             masterXfer.dataSize = data_size;
-//            masterXfer.configFlags = kSPI_FrameAssert;
             ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
             if(ret)
             {
@@ -152,7 +148,6 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
                     masterXfer.dataSize = len;
                 else
                     masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
-//                masterXfer.configFlags = kSPI_FrameAssert;
                 os_event_notify_get(OS_WAIT_FOREVER);
                 ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
                 if(ret)
@@ -194,11 +189,11 @@ static void ncp_host_master_dma_setup(void)
 
     /*Set up lpspi master*/
     memset(&(masterRxHandle), 0, sizeof(masterRxHandle));
-    memset(&(masterRxHandle), 0, sizeof(masterRxHandle));
+    memset(&(masterTxHandle), 0, sizeof(masterTxHandle));
 
     EDMA_CreateHandle(&(masterRxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE,
                       EXAMPLE_LPSPI_MASTER_DMA_RX_CHANNEL);
-    EDMA_CreateHandle(&(masterRxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE,
+    EDMA_CreateHandle(&(masterTxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE,
                       EXAMPLE_LPSPI_MASTER_DMA_TX_CHANNEL);
 #if defined(FSL_FEATURE_EDMA_HAS_CHANNEL_MUX) && FSL_FEATURE_EDMA_HAS_CHANNEL_MUX
     EDMA_SetChannelMux(EXAMPLE_LPSPI_MASTER_DMA_BASE, EXAMPLE_LPSPI_MASTER_DMA_TX_CHANNEL,
@@ -206,6 +201,8 @@ static void ncp_host_master_dma_setup(void)
     EDMA_SetChannelMux(EXAMPLE_LPSPI_MASTER_DMA_BASE, EXAMPLE_LPSPI_MASTER_DMA_RX_CHANNEL,
                        DEMO_LPSPI_RECEIVE_EDMA_CHANNEL);
 #endif
+    NVIC_SetPriority(DMA0_DMA16_IRQn, NCP_HOST_DMA_IRQ_PRIO);
+    NVIC_SetPriority(DMA1_DMA17_IRQn, NCP_HOST_DMA_IRQ_PRIO);
 }
 
 static int ncp_host_master_init(void)
@@ -217,7 +214,7 @@ static int ncp_host_master_init(void)
     srcClock_Hz = LPSPI_MASTER_CLK_FREQ;
 
     LPSPI_MasterGetDefaultConfig(&masterConfig);
-    masterConfig.baudRate = 500000U; // decrease this value for testing purpose.
+    masterConfig.baudRate = NCP_SPI_MASTER_CLOCK; // decrease this value for testing purpose.
     masterConfig.whichPcs = kLPSPI_Pcs0;
     masterConfig.pcsToSckDelayInNanoSec        = 1000000000U / (masterConfig.baudRate * 2U);
     masterConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / (masterConfig.baudRate * 2U);
@@ -238,10 +235,10 @@ void ncp_host_gpio_init(void)
         kGPIO_IntRisingEdge,
     };
 
-//  CLOCK_EnableClock(kCLOCK_Iomuxc);
-  EnableIRQ(NCP_HOST_GPIO_IRQ);
   GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_RX, &gpio_input_interrupt_config);
   GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
+  NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
+  EnableIRQ(NCP_HOST_GPIO_IRQ);
   /* Enable GPIO pin interrupt */
   GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
   GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);

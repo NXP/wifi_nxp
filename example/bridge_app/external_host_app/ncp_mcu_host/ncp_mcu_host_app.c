@@ -62,8 +62,12 @@ extern uint32_t mcu_last_cmd_sent;
 /*ID number of command response received from ncp*/
 uint32_t mcu_last_resp_rcvd;
 
+#ifdef CONFIG_SPI_BRIDGE
+AT_NONCACHEABLE_SECTION_INIT(uint8_t mcu_response_buff[NCP_HOST_RESPONSE_LEN]) = {0};
+#else
 static uint8_t mcu_response_buff[NCP_HOST_RESPONSE_LEN];
 
+#endif
 /**
  * @brief       This function judges if s1 and s2 are equal.
  *

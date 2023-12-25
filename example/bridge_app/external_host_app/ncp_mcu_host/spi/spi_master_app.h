@@ -38,14 +38,20 @@
 /* Select USB1 PLL PFD0 (720 MHz) as lpspi clock source */
 #define EXAMPLE_LPSPI_CLOCK_SOURCE_SELECT (1U)
 /* Clock divider for master lpspi clock source */
-#define EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER (7U)
+#define EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER (1U)
 
 #define LPSPI_MASTER_CLK_FREQ (CLOCK_GetFreq(kCLOCK_Usb1PllPfd0Clk) / (EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER + 1U))
+#define NCP_SPI_MASTER_CLOCK   20000000U
 
-#define NCP_HOST_GPIO         GPIO2
+#define NCP_HOST_GPIO         GPIO1
 #define NCP_HOST_GPIO_PIN_RX  16U
 #define NCP_HOST_GPIO_PIN_TX  17U
-#define NCP_HOST_GPIO_IRQ     GPIO2_Combined_16_31_IRQn
+#define NCP_HOST_GPIO_IRQ     GPIO1_Combined_16_31_IRQn
+
+#define NCP_HOST_GPIO_IRQ_HANDLER GPIO1_Combined_16_31_IRQHandler
+
+#define NCP_HOST_GPIO_IRQ_PRIO 3
+#define NCP_HOST_DMA_IRQ_PRIO  4
 
 /*******************************************************************************
  * API

@@ -65,7 +65,12 @@ static struct
 } ncp_host_cli;
 
 static char mcu_string_command_buff[MCU_CLI_STRING_SIZE];
+
+#ifdef CONFIG_SPI_BRIDGE
+AT_NONCACHEABLE_SECTION_INIT(uint8_t mcu_tlv_command_buff[NCP_HOST_COMMAND_LEN]) = {0};
+#else
 static uint8_t mcu_tlv_command_buff[NCP_HOST_COMMAND_LEN] = {0};
+#endif
 
 /* LPUART1: NCP Host input uart */
 #define NCP_HOST_INPUT_UART_CLK_FREQ  BOARD_DebugConsoleSrcFreq()
