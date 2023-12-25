@@ -6,6 +6,8 @@
  *
  */
 
+#ifndef CONFIG_UART_WIFI_BRIDGE
+
 #if defined(WIFI_IW612_BOARD_MURATA_2EL_M2) || defined(WIFI_IW612_BOARD_MURATA_2EL_USD) || defined(WIFI_IW611_BOARD_MURATA_2DL_M2) || defined(WIFI_IW611_BOARD_MURATA_2DL_USD)
 
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
@@ -21,6 +23,8 @@ const unsigned int wlan_fw_bin_len = sizeof(fw_cpu12);
 
 const unsigned char bt_fw_bin[] = {0x00};
 const unsigned int bt_fw_bin_len = 0;
+
+#endif
 
 #endif
 

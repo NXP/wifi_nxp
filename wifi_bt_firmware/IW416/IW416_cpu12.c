@@ -6,6 +6,8 @@
  *
  */
 
+#ifndef CONFIG_UART_WIFI_BRIDGE
+
 #if defined(SD8978)
 
 #if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
@@ -26,3 +28,4 @@ const unsigned int bt_fw_bin_len = 0;
 
 #endif
 
+#endif

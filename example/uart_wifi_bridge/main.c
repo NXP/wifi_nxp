@@ -89,10 +89,8 @@
 #define TYPE_15_4       0x0004
 #define RET_TYPE_ZIGBEE 3
 
-#define INTF_HEADER_LEN 4
 #define SDIOPKTTYPE_CMD 0x1
 #define BUF_LEN         2048
-#define SDIO_OUTBUF_LEN 2048
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
 #define CONFIG_WIFI_MAX_PRIO (configMAX_PRIORITIES - 1)
@@ -156,7 +154,7 @@ usart_rtos_handle_t handle;
 struct _usart_handle t_handle;
 TimerHandle_t g_wifi_cau_temperature_timer = NULL;
 
-static struct rtos_usart_config usart_config ={
+static struct rtos_usart_config usart_config = {
     .baudrate    = 115200,
     .parity      = kUSART_ParityDisabled,
     .stopbits    = kUSART_OneStopBit,
@@ -237,6 +235,10 @@ typedef struct _cmd_header
     int reserved;
 } cmd_header;
 
+#if defined(RW610_SERIES) || defined(RW612_SERIES)
+#define INTF_HEADER_LEN 4U
+#define SDIO_OUTBUF_LEN 2048U
+
 /** HostCmd_DS_COMMAND */
 typedef struct _HostCmd_DS_COMMAND
 {
@@ -251,18 +253,19 @@ typedef struct _HostCmd_DS_COMMAND
     /** Command Body */
 } HostCmd_DS_COMMAND;
 
-/** IMUPkt/SDIOPkt only name difference, same definition */
-typedef struct _SDIOPkt
+/** SDIOPkt/IMUPkt only name difference, same definition */
+typedef struct _IMUPkt
 {
     uint16_t size;
     uint16_t pkttype;
     HostCmd_DS_COMMAND hostcmd;
-} SDIOPkt;
+} IMUPkt;
 
-static uint8_t *rx_buf;
+#endif
+
+static uint8_t rx_buf[BUF_LEN];
 static cmd_header last_cmd_hdr;
-uint8_t *local_outbuf;
-static SDIOPkt *sdiopkt;
+uint8_t local_outbuf[SDIO_OUTBUF_LEN];
 
 #if defined(MIMXRT1176_cm7_SERIES)
 lpspi_master_config_t spiConfig;
@@ -323,20 +326,19 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
     int index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
-	
 	int iface_len = 0;
 	
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-    SDIOPkt *sdio = (SDIOPkt *)resp;
+    IMUPkt *imupkt = (IMUPkt *)resp;
 
     if (type == 2)
-        /* This is because, the last byte of the sdio header
+        /* This is because, the last byte of the imupkt header
          * (packet type) is also requried by the labtool, to
          * understand the type of packet and take appropriate action */
         iface_len = INTF_HEADER_LEN - 1;
     else
         iface_len = INTF_HEADER_LEN;
-	payloadlen = sdio->size - iface_len;
+	payloadlen = imupkt->size - iface_len;
 #else
     payloadlen = reqd_resp_len;
 #endif
@@ -532,11 +534,11 @@ int process_input_cmd(uint8_t *buf, int m_len)
 		
         uarthdr = (uart_header *)buf;
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-        sdiopkt = (SDIOPkt *)local_outbuf;
-		/* sdiopkt = local_outbuf */
-        sdiopkt->pkttype = SDIOPKTTYPE_CMD;
+        IMUPkt *imupkt = (IMUPkt *)local_outbuf;
+		/* imupkt = local_outbuf */
+        imupkt->pkttype = SDIOPKTTYPE_CMD;
 
-        sdiopkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
+        imupkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
         d             = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
         s             = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 #else
@@ -1043,15 +1045,6 @@ void task_main(void *param)
         vTaskSuspend(NULL);
     }
 #endif
-
-    local_outbuf = pvPortMalloc(SDIO_OUTBUF_LEN);
-
-    if (local_outbuf == NULL)
-    {
-        PRINTF("Failed to allocate buffer\r\n");
-        return;
-    }
-    rx_buf = pvPortMalloc(BUF_LEN);
 
 #if defined(MIMXRT1176_cm7_SERIES)
     LPSPI_MasterGetDefaultConfig(&spiConfig);
