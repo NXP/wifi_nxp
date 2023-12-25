@@ -12,6 +12,8 @@
 #include "usb_host_cdc.h"
 #include "fsl_debug_console.h"
 #include "host_cdc.h"
+#include "fsl_adapter_timer.h"
+#include "usb_phy.h"
 #include "fsl_common.h"
 #include "board.h"
 //#include "fsl_adapter_timer.h"
@@ -58,21 +60,18 @@ extern char usbRecvUart[USB_HOST_CDC_UART_RX_MAX_LEN];
 extern void usb_recv_task(void *param);
 #endif
 TaskHandle_t app_task_thread;
-//uint32_t g_halTimerHandle[(HAL_TIMER_HANDLE_SIZE + 3) / 4];
+uint32_t g_halTimerHandle[(HAL_TIMER_HANDLE_SIZE + 3) / 4];
 static uint32_t systemTickControl;
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
-#if 0
+
 void USB_ControllerSuspended(void)
 {
-    while (SYSCTL0->USBCLKSTAT & (SYSCTL0_USBCLKSTAT_HOST_NEED_CLKST_MASK))
-    {
-        __ASM("nop");
-    }
+
 }
-#endif
+
 /*!
  * @brief USB isr function.
  */
@@ -134,7 +133,7 @@ usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
         case kUSB_HostEventSuspended:
             if (kStatus_Idle != g_cdc.suspendResumeState)
             {
-//                USB_ControllerSuspended();
+                USB_ControllerSuspended();
                 g_cdc.suspendResumeState = kStatus_Suspended;
             }
             else
@@ -259,7 +258,7 @@ void HW_TimerCallback(void *param)
     g_cdc.hwTick++;
     USB_HostUpdateHwTick(g_hostHandle, g_cdc.hwTick);
 }
-#if 0
+
 void HW_TimerInit(void)
 {
     hal_timer_config_t halTimerConfig;
@@ -282,10 +281,10 @@ void HW_TimerControl(uint8_t enable)
         HAL_TimerDisable(g_halTimerHandle);
     }
 }
-#endif
+
 void USB_LowpowerModeInit(void)
 {
-//    HW_TimerInit();
+    HW_TimerInit();
 }
 
 void USB_PreLowpowerMode(void)
@@ -304,7 +303,7 @@ void USB_PostLowpowerMode(void)
 
 void USB_PowerPreSwitchHook(void)
 {
-//    HW_TimerControl(0U);
+    HW_TimerControl(0U);
 
     USB_PreLowpowerMode();
 }
@@ -312,7 +311,7 @@ void USB_PowerPreSwitchHook(void)
 void USB_PowerPostSwitchHook(void)
 {
     USB_PostLowpowerMode();
-//    HW_TimerControl(1U);
+    HW_TimerControl(1U);
 }
 
 extern uint8_t usb_enter_pm2;
@@ -417,31 +416,51 @@ void usb_host_pm_task(void)
     usb_enter_pm2 = 0;
 }
 
-void USBHS_IRQHandler(void)
+void USB_OTG1_IRQHandler(void)
 {
     USB_HostEhciIsrFunction(g_hostHandle);
 }
-#if 0
+
+void USB_OTG2_IRQHandler(void)
+{
+    USB_HostEhciIsrFunction(g_hostHandle);
+}
+
 void USB_HostClockInit(void)
 {
-    /* reset USB */
-    RESET_PeripheralReset(kUSB_RST_SHIFT_RSTn);
-    /* enable usb clock */
-    CLOCK_EnableClock(kCLOCK_Usb);
-    /* enable usb phy clock */
-    CLOCK_EnableUsbhsPhyClock();
+    usb_phy_config_struct_t phyConfig = {
+        BOARD_USB_PHY_D_CAL,
+        BOARD_USB_PHY_TXCAL45DP,
+        BOARD_USB_PHY_TXCAL45DM,
+    };
+
+    if (CONTROLLER_ID == kUSB_ControllerEhci0)
+    {
+        CLOCK_EnableUsbhs0PhyPllClock(kCLOCK_Usbphy480M, 480000000U);
+        CLOCK_EnableUsbhs0Clock(kCLOCK_Usb480M, 480000000U);
+    }
+    else
+    {
+        CLOCK_EnableUsbhs1PhyPllClock(kCLOCK_Usbphy480M, 480000000U);
+        CLOCK_EnableUsbhs1Clock(kCLOCK_Usb480M, 480000000U);
+    }
+    USB_EhciPhyInit(CONTROLLER_ID, BOARD_XTAL0_CLK_HZ, &phyConfig);
 }
-#endif
+
 void USB_HostIsrEnable(void)
 {
     uint8_t irqNumber;
 
     uint8_t usbHOSTEhciIrq[] = USBHS_IRQS;
     irqNumber                = usbHOSTEhciIrq[CONTROLLER_ID - kUSB_ControllerEhci0];
-    /* USB_HOST_CONFIG_EHCI */
+/* USB_HOST_CONFIG_EHCI */
 
-    /* Install isr, set priority, and enable IRQ. */
+/* Install isr, set priority, and enable IRQ. */
+#if defined(__GIC_PRIO_BITS)
+    GIC_SetPriority((IRQn_Type)irqNumber, USB_HOST_INTERRUPT_PRIORITY);
+#else
     NVIC_SetPriority((IRQn_Type)irqNumber, USB_HOST_INTERRUPT_PRIORITY);
+#endif
     EnableIRQ((IRQn_Type)irqNumber);
 }
 
@@ -482,7 +501,7 @@ void APP_init(void)
 
     USB_HostCdcInitBuffer();
 
-//    USB_HostClockInit();
+    USB_HostClockInit();
 
 #if ((defined FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT))
     SYSMPU_Enable(SYSMPU, 0);
@@ -524,7 +543,7 @@ void app_task(void *param)
     APP_init();
 
 #if ((defined(USB_HOST_CONFIG_LOW_POWER_MODE)) && (USB_HOST_CONFIG_LOW_POWER_MODE > 0U))
-//    HW_TimerControl(1);
+    HW_TimerControl(1);
 #endif
 
     if (xTaskCreate(usb_host_task, "usb host task", 2000L / sizeof(portSTACK_TYPE), g_hostHandle, OS_PRIO_2, NULL) !=
