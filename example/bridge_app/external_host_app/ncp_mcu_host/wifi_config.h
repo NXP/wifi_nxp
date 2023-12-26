@@ -109,7 +109,7 @@
 
 #define CONFIG_NCP_BRIDGE
 //#define CONFIG_SPI_BRIDGE
-#define CONFIG_USB_BRIDGE
+//#define CONFIG_USB_BRIDGE
 
 /*
  * MCU BRIDGE Bridge debug options
