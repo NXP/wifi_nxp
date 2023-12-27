@@ -556,7 +556,7 @@ static void test_wlan_dump_usb_file(int argc, char **argv)
     (void)PRINTF("\r\n");
 }
 #endif /* CONFIG_WIFI_USB_FILE_ACCESS */
-
+#ifdef RW610
 static void dump_set_rtc_time_usage(void)
 {
     (void)PRINTF("Usage: wlan-set-rtc-time <year> <month> <day> <hour> <minute> <second>\r\n");
@@ -615,10 +615,13 @@ static void test_wlan_get_rtc_time(int argc, char **argv)
     (void)PRINTF("Current datetime: %04hd-%02hd-%02hd %02hd:%02hd:%02hd\r\n", date.year, date.month, date.day,
                  date.hour, date.minute, date.second);
 }
+#endif
 
 static struct cli_command wlan_prov_commands[] = {
+#ifdef RW610
     {"wlan-set-rtc-time", "<year> <month> <day> <hour> <minute> <second>", test_wlan_set_rtc_time},
     {"wlan-get-rtc-time", NULL, test_wlan_get_rtc_time},
+#endif
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
     {"wlan-read-usb-file", "<type:ca-cert/client-cert/client-key> <file name>", test_wlan_read_usb_file},
     {"wlan-dump-usb-file", "<type:ca-cert/client-cert/client-key>", test_wlan_dump_usb_file},
