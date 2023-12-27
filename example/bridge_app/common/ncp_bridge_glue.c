@@ -1376,12 +1376,7 @@ static int wlan_bridge_wps_generate_pin(void *tlv)
 {
     uint32_t pin = 0;
 
-#ifdef CONFIG_WPA_SUPP_WPS
-    wlan_wps_generate_pin((unsigned int *)&pin);
-#else
     wlan_wps_generate_pin(&pin);
-#endif
-
     NCPCmd_DS_COMMAND *cmd_res = ncp_bridge_get_response_buffer();
     cmd_res->header.cmd        = NCP_BRIDGE_CMD_WLAN_STA_GEN_WPS_PIN;
     cmd_res->header.size       = NCP_BRIDGE_CMD_HEADER_LEN;
@@ -2184,7 +2179,7 @@ static int wlan_bridge_11k_neighbor_req(void *tlv)
         (void)memcpy(ssid, neighbor_req->ssid_tlv.ssid, neighbor_req->ssid_tlv.header.size);
     }
 
-    ret = wlan_host_11k_neighbor_req(ssid);
+    ret = wlan_host_11k_neighbor_req((const char *)ssid);
     if (!ret)
         wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_STA_NEIGHBOR_REQ, NCP_BRIDGE_CMD_RESULT_OK);
     else

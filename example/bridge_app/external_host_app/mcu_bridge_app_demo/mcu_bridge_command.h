@@ -963,80 +963,80 @@ enum
 #define SETH_NAME_LENGTH  64
 #define SETH_VALUE_LENGTH 128
 #define HTTP_URI_LEN 512
-typedef struct _NCP_CMD_SOCKET_OPEN_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_OPEN_CFG
 {
     char socket_type[HTTP_PARA_LEN];
     char domain_type[HTTP_PARA_LEN];
     char procotol[HTTP_PARA_LEN];
     uint32_t opened_handle;
-} NCP_CMD_SOCKET_OPEN_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_OPEN_CFG;
 
 /*Bridge Wlan Socket Connect*/
 #define IP_ADDR_LEN 16
-typedef struct _NCP_CMD_SOCKET_CON_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_CON_CFG
 {
     uint32_t handle;
     uint32_t port;
     char ip_addr[IP_ADDR_LEN];
-} NCP_CMD_SOCKET_CON_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_CON_CFG;
 
 /*Bridge Wlan Socket Bind*/
-typedef struct _NCP_CMD_SOCKET_BIND_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_BIND_CFG
 {
     uint32_t handle;
     uint32_t port;
     char ip_addr[IP_ADDR_LEN];
-} NCP_CMD_SOCKET_BIND_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_BIND_CFG;
 
 /*Bridge Wlan Socket Close*/
-typedef struct _NCP_CMD_SOCKET_CLOSE_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_CLOSE_CFG
 {
     uint32_t handle;
-} NCP_CMD_SOCKET_CLOSE_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_CLOSE_CFG;
 
 /*Bridge Wlan Socket Listen*/
-typedef struct _NCP_CMD_SOCKET_LISTEN_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_LISTEN_CFG
 {
     uint32_t handle;
     uint32_t number;
-} NCP_CMD_SOCKET_LISTEN_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_LISTEN_CFG;
 
 /*Bridge Wlan Socket Accept*/
-typedef struct _NCP_CMD_SOCKET_ACCEPT_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_ACCEPT_CFG
 {
     uint32_t handle;
     int accepted_handle;
-} NCP_CMD_SOCKET_ACCEPT_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_ACCEPT_CFG;
 
 /*Bridge Wlan Socket Send*/
-typedef struct _NCP_CMD_SOCKET_SEND_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_SEND_CFG
 {
     uint32_t handle;
     uint32_t size;
     char send_data[1];
-} NCP_CMD_SOCKET_SEND_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_SEND_CFG;
 
 /*Bridge Wlan Socket Sendto*/
-typedef struct _NCP_CMD_SOCKET_SENDTO_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_SENDTO_CFG
 {
     uint32_t handle;
     uint32_t size;
     char ip_addr[IP_ADDR_LEN];
     uint32_t port;
     char send_data[1];
-} NCP_CMD_SOCKET_SENDTO_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_SENDTO_CFG;
 
 /*Bridge Wlan Socket Receive*/
-typedef struct _NCP_CMD_SOCKET_RECEIVE_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_RECEIVE_CFG
 {
     uint32_t handle;
     uint32_t size;
     uint32_t timeout;
     char recv_data[1];
-} NCP_CMD_SOCKET_RECEIVE_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_RECEIVE_CFG;
 
 /*Bridge Wlan Socket Recvfrom*/
-typedef struct _NCP_CMD_SOCKET_RECVFROM_CFG
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_RECVFROM_CFG
 {
     uint32_t handle;
     uint32_t size;
@@ -1044,91 +1044,91 @@ typedef struct _NCP_CMD_SOCKET_RECVFROM_CFG
     char peer_ip[IP_ADDR_LEN];
     uint32_t peer_port;
     char recv_data[1];
-} NCP_CMD_SOCKET_RECVFROM_CFG;
+} MLAN_PACK_END NCP_CMD_SOCKET_RECVFROM_CFG;
 
 /*Bridge Wlan Http Connect*/
-typedef struct _MPU_NCP_CMD_HTTP_CONNECT_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_CONNECT_CFG
 {
     int opened_handle;
     char host[1];
-} NCP_CMD_HTTP_CON_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_CON_CFG;
 
 /*Bridge Wlan Http Disconnect*/
-typedef struct _MPU_NCP_CMD_HTTP_DISCONNECT_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_DISCONNECT_CFG
 {
     uint32_t handle;
-} NCP_CMD_HTTP_DISCON_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_DISCON_CFG;
 
 /*Bridge Wlan Http Seth*/
-typedef struct _MPU_NCP_CMD_HTTP_SETH_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_SETH_CFG
 {
     char name[SETH_NAME_LENGTH];
     char value[SETH_VALUE_LENGTH];
-} NCP_CMD_HTTP_SETH_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_SETH_CFG;
 
 /*Bridge Wlan Http Unseth*/
-typedef struct _MPU_NCP_CMD_HTTP_UNSETH_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_UNSETH_CFG
 {
     char name[SETH_NAME_LENGTH];
-} NCP_CMD_HTTP_UNSETH_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_UNSETH_CFG;
 
 /*Bridge Wlan Http Req*/
-typedef struct _MPU_NCP_CMD_HTTP_REQ_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_REQ_CFG
 {
     uint32_t handle;
     char method[HTTP_PARA_LEN];
     char uri[HTTP_URI_LEN];
     uint32_t req_size;
     char req_data[1];
-} NCP_CMD_HTTP_REQ_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_REQ_CFG;
 
 /*Bridge Wlan Http Recv Resp*/
-typedef struct _MPU_NCP_CMD_HTTP_REQ_RESP_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_REQ_RESP_CFG
 {
     uint32_t header_size;
     char recv_header[1];
-} NCP_CMD_HTTP_REQ_RESP_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_REQ_RESP_CFG;
 
 /*Bridge Wlan Http Recv*/
-typedef struct _MPU_NCP_CMD_HTTP_RECV_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_RECV_CFG
 {
     uint32_t handle;
     uint32_t size;
     uint32_t timeout;
     char recv_data[1];
-} NCP_CMD_HTTP_RECV_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_RECV_CFG;
 
 /*Bridge Wlan Http Upgrade*/
-typedef struct _MPU_NCP_CMD_HTTP_UPG_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_HTTP_UPG_CFG
 {
     uint32_t handle;
     char     uri[HTTP_URI_LEN];
     char     protocol[HTTP_PARA_LEN];
-} NCP_CMD_HTTP_UPG_CFG;
+} MLAN_PACK_END NCP_CMD_HTTP_UPG_CFG;
 
 /*Bridge Wlan Socket Send*/
-typedef struct _MPU_NCP_CMD_WEBSOCKET_SEND_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_WEBSOCKET_SEND_CFG
 {
     uint32_t handle;
     char type[HTTP_PARA_LEN];
     uint32_t size;
     char send_data[1];
-} NCP_CMD_WEBSOCKET_SEND_CFG;
+} MLAN_PACK_END NCP_CMD_WEBSOCKET_SEND_CFG;
 
 
 /*Bridge Wlan Websocket Receive*/
-typedef struct _MPU_NCP_CMD_WEBSOCKET_RECV_CFG
+typedef MLAN_PACK_START struct _MPU_NCP_CMD_WEBSOCKET_RECV_CFG
 {
     uint32_t handle;
     uint32_t size;
     uint32_t timeout;
     uint32_t fin;
     char recv_data[1];
-} NCP_CMD_WEBSOCKET_RECV_CFG;
+} MLAN_PACK_END NCP_CMD_WEBSOCKET_RECV_CFG;
 
 #ifdef CONFIG_IPV6
 /** This data structure represents an IPv6 address */
-typedef struct _wlan_bridge_ipv6_config
+typedef MLAN_PACK_START struct _wlan_bridge_ipv6_config
 {
     /** The system's IPv6 address in network order. */
     unsigned address[4];
@@ -1136,7 +1136,7 @@ typedef struct _wlan_bridge_ipv6_config
     unsigned char addr_type_str[16];
     /** The state of IPv6 address (Tentative, Preferred, etc). */
     unsigned char addr_state_str[32];
-} wlan_bridge_ipv6_config;
+} MLAN_PACK_END wlan_bridge_ipv6_config;
 #endif
 
 /** This data structure represents an IPv4 address */
@@ -1274,7 +1274,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_LIST
 
 typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_REMOVE
 {
-    uint8_t name[WLAN_NETWORK_NAME_MAX_LENGTH];
+    char name[WLAN_NETWORK_NAME_MAX_LENGTH + 1];
     int8_t remove_state;
 } MLAN_PACK_END NCP_CMD_NETWORK_REMOVE;
 
