@@ -190,10 +190,6 @@ inline static const char *sec_tag(struct wlan_network *network)
             {
                 return "\tsecurity: WPA3 SuiteB";
             }
-            else if (network->security.wpa3_ent)
-            {
-                return "\tsecurity: WPA3 Enterprise";
-            }
 
             return "\tsecurity: WPA2";
         }
@@ -671,7 +667,7 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent] ["
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
 #ifdef CONFIG_EAP_TLS
         "eap-tls/eap-tls-sha256"
 #ifdef CONFIG_11R
@@ -686,12 +682,12 @@ static void dump_wlan_add_usage(void)
         "\r\n");
 #ifdef CONFIG_EAP_TTLS
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent] [eap-ttls aid <anonymous identity> [key2_passwd "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls aid <anonymous identity> [key2_passwd "
         "<client_key2_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
 #ifdef CONFIG_EAP_MSCHAPV2
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent] [eap-ttls-mschapv2 aid <anonymous identity> id "
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] [eap-ttls-mschapv2 aid <anonymous identity> id "
         "<identity> pass "
         "<password> [key_passwd <client_key_passwd>]] [mfpc <1> mfpr <0/1>]"
         "\r\n");
@@ -699,7 +695,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #ifdef CONFIG_EAP_PEAP
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent] ["
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
 #ifdef CONFIG_EAP_MSCHAPV2
         "eap-peap-mschapv2"
 #endif
@@ -715,7 +711,7 @@ static void dump_wlan_add_usage(void)
 #endif
 #ifdef CONFIG_EAP_FAST
     (void)PRINTF(
-        "    wlan-add <profile_name> ssid <ssid> [wpa3-ent] ["
+        "    wlan-add <profile_name> ssid <ssid> [wpa3-sb/wpa3-sb-192] ["
 #ifdef CONFIG_EAP_MSCHAPV2
         "eap-fast-mschapv2"
 #endif
@@ -785,7 +781,7 @@ static void dump_wlan_add_usage(void)
 #endif
         "> <secret>]"
 #if defined(CONFIG_WPA2_ENTP) || defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE)
-        " [wpa3-ent] "
+        " [wpa3-sb/wpa3-sb-192] "
 #ifdef CONFIG_EAP_TLS
         "[eap-tls/eap-tls-sha256"
 #ifdef CONFIG_11R
@@ -1301,12 +1297,6 @@ static void test_wlan_add(int argc, char **argv)
             info.security3++;
         }
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-        if ((info.wpa3_sb == 0U) && string_equal("wpa3-ent", argv[arg]))
-        {
-            network.security.wpa3_ent = 1;
-            arg += 1;
-            info.wpa3_sb = 1;
-        }
         else if ((info.wpa3_sb == 0U) && string_equal("wpa3-sb", argv[arg]))
         {
             network.security.wpa3_sb = 1;

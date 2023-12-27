@@ -8286,13 +8286,7 @@ int wlan_add_network(struct wlan_network *network)
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-    if ((network->role == WLAN_BSS_ROLE_STA) && (is_ep_valid_security(network->security.type) && ((network->security.wpa3_sb == 1U) || (network->security.wpa3_sb_192 == 1U))))
-    {
-        wlcm_e("Specific suite b not allowed in STA mode");
-        return -WM_E_INVAL;
-    }
-
-    if (is_ep_valid_security(network->security.type) && ((network->security.wpa3_ent == 1U) || (network->security.wpa3_sb == 1U) || (network->security.wpa3_sb_192 == 1U)))
+    if ((is_ep_valid_security(network->security.type)) && ((network->security.wpa3_sb == 1U) || (network->security.wpa3_sb_192 == 1U)))
     {
         network->security.mfpr = 1;
     }
@@ -8540,11 +8534,7 @@ int wlan_add_network(struct wlan_network *network)
     if (network->security.group_cipher == 0)
     {
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-        if (network->security.wpa3_ent == 1U)
-        {
-            network->security.group_cipher = WLAN_CIPHER_CCMP_256 | WLAN_CIPHER_GCMP_256;
-        }
-        else if (network->security.wpa3_sb_192 == 1U)
+        if (network->security.wpa3_sb_192 == 1U)
         {
             network->security.group_cipher = WLAN_CIPHER_GCMP_256;
         }
@@ -8569,7 +8559,7 @@ int wlan_add_network(struct wlan_network *network)
                 return -WM_E_INVAL;
             }
         }
-        else if ((network->security.wpa3_sb == 1U) || (network->security.wpa3_ent == 1U))
+        else if (network->security.wpa3_sb == 1U)
         {
             if ((network->security.group_cipher != WLAN_CIPHER_GCMP_256) && (network->security.group_cipher != WLAN_CIPHER_CCMP_256) && (network->security.group_cipher != WLAN_CIPHER_GCMP) && (network->security.group_cipher != WLAN_CIPHER_CCMP))
             {
@@ -8597,11 +8587,7 @@ int wlan_add_network(struct wlan_network *network)
     if (network->security.pairwise_cipher == 0)
     {
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-        if (network->security.wpa3_ent == 1U)
-        {
-            network->security.pairwise_cipher = WLAN_CIPHER_CCMP_256 | WLAN_CIPHER_GCMP_256;
-        }
-        else if (network->security.wpa3_sb_192 == 1U)
+        if (network->security.wpa3_sb_192 == 1U)
         {
             network->security.pairwise_cipher = WLAN_CIPHER_GCMP_256;
         }
@@ -8626,7 +8612,7 @@ int wlan_add_network(struct wlan_network *network)
                 return -WM_E_INVAL;
             }
         }
-        else if ((network->security.wpa3_sb == 1U) || (network->security.wpa3_ent == 1U))
+        else if (network->security.wpa3_sb == 1U)
         {
             if ((network->security.pairwise_cipher != WLAN_CIPHER_GCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP_256) && (network->security.pairwise_cipher != WLAN_CIPHER_GCMP) && (network->security.pairwise_cipher != WLAN_CIPHER_CCMP))
             {
@@ -8654,11 +8640,7 @@ int wlan_add_network(struct wlan_network *network)
     if (network->security.group_mgmt_cipher == 0)
     {
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-        if (network->security.wpa3_ent == 1U)
-        {
-            network->security.group_mgmt_cipher = WLAN_CIPHER_BIP_CMAC_256 | WLAN_CIPHER_BIP_GMAC_256;
-        }
-        else if (network->security.wpa3_sb_192 == 1U)
+        if (network->security.wpa3_sb_192 == 1U)
         {
             network->security.group_mgmt_cipher = WLAN_CIPHER_BIP_GMAC_256;
         }
@@ -8683,7 +8665,7 @@ int wlan_add_network(struct wlan_network *network)
                 return -WM_E_INVAL;
             }
         }
-        else if ((network->security.wpa3_sb == 1U) || (network->security.wpa3_ent == 1U))
+        else if (network->security.wpa3_sb == 1U)
         {
             if ((network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_CMAC_256) && (network->security.group_mgmt_cipher != WLAN_CIPHER_BIP_GMAC_128) && (network->security.group_mgmt_cipher != WLAN_CIPHER_AES_128_CMAC))
             {
