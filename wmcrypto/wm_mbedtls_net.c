@@ -74,8 +74,17 @@ static int wm_mbedtls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len
      * Get previous timeout on socket before receive.
      * This value will be used to restore timeout on socket.
      */
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
     uint32_t previous_timeout = 0;
-    socklen_t timeout_len     = sizeof(int);
+    socklen_t timeout_len 	= sizeof(previous_timeout);
+    uint32_t timo = timeout;
+    socklen_t timo_len	= sizeof(timo);
+#else
+    struct timeval previous_timeout = {0, 0};
+    socklen_t timeout_len	= sizeof(previous_timeout);
+    struct timeval timo = {timeout / 1000, (timeout % 1000) * 1000};
+    socklen_t timo_len	= sizeof(timo);
+#endif
 
     if (WM_SUCCESS != getsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &previous_timeout, &timeout_len))
     {
@@ -86,7 +95,7 @@ static int wm_mbedtls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len
     /*------------------------------------------------------------
      * Set timeout on socket before receive
      */
-    if (WM_SUCCESS != setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(int)))
+    if (WM_SUCCESS != setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timo, timo_len))
     {
         wm_mbedtls_e(
             "Failed to set socket "
@@ -102,7 +111,7 @@ static int wm_mbedtls_net_recv_timeout(void *ctx, unsigned char *buf, size_t len
     /*------------------------------------------------------------
      * Restore previous timeout on socket
      */
-    if (WM_SUCCESS != setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &previous_timeout, sizeof(int)))
+    if (WM_SUCCESS != setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &previous_timeout, timeout_len))
     {
         wm_mbedtls_e(
             "Failed to restore previous socket "
