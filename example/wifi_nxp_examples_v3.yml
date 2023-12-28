@@ -1584,11 +1584,8 @@ ncp_bridge:
   - platform.drivers.lpc_rtc
   - middleware.wifi.wmcrypto
   - middleware.lwip.apps.httpsrv
-  - middleware.usb.device.stack.external
-  - middleware.usb.host.cdc_rndis
   - driver.lpc_crc
   - middleware.littlefs
-  - middleware.usb.device.controller.driver(middleware.usb.device.ehci)
   - component.mrt_adapter
   - middleware.lwip.apps.mdns
   contents:
@@ -1931,10 +1928,7 @@ ncp_bridge_supp:
   - platform.drivers.lpc_rtc
   - middleware.lwip.apps.httpsrv
   - driver.lpc_crc
-  - middleware.usb.device.stack.external
-  - middleware.usb.host.cdc_rndis
   - middleware.littlefs
-  - middleware.usb.device.controller.driver(middleware.usb.device.ehci)
   - component.mrt_adapter
   - middleware.lwip.apps.mdns
   __remove__:
