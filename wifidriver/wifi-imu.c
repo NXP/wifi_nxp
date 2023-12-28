@@ -382,6 +382,32 @@ void bus_deregister_data_input_funtion(void)
 void wifi_get_mac_address_from_cmdresp(void *resp, t_u8 *mac_addr);
 void wifi_get_firmware_ver_ext_from_cmdresp(void *resp, t_u8 *fw_ver_ext);
 void wifi_get_value1_from_cmdresp(void *resp, uint32_t *dev_value1);
+
+#ifdef CONFIG_FW_VDLLV2
+static mlan_status wlan_handle_vdllv2_event_packet(t_u8 *pmbuf)
+{
+    mlan_status status = MLAN_STATUS_SUCCESS;
+    pmlan_event_vdll_indication pevent_vdll_ind;
+
+    pevent_vdll_ind = (pmlan_event_vdll_indication)(pmbuf);
+    switch (wlan_le16_to_cpu(pevent_vdll_ind->vdllInd.type))
+    {
+        case VDLL_IND_TYPE_REQ:
+            wevt_d("VDLL_IND (VDLL REQ).");
+            (void)sb3_fw_download(LOAD_WIFI_VDLL_FIRMWARE, 1, pevent_vdll_ind->vdllInd.offset);
+            break;
+        case VDLL_IND_TYPE_INTF_RESET:
+            wevt_d("VDLLV2_IND (INTF RESET).");
+            HAL_ImuResetWlanTxq(kIMU_LinkCpu1Cpu3);
+            break;
+        default:
+            PRINTF("receive vdll event type=%d, Unhandled!\r\n", pevent_vdll_ind->vdllInd.type);
+            break;
+    }
+    return status;
+}
+#endif
+
 mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 {
     HostCmd_DS_GEN *cmdresp;
@@ -504,6 +530,9 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     t_u32 event_cause = 0;
     int ret;
     struct bus_message msg;
+#ifdef CONFIG_FW_VDLLV2
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
+#endif
 
     if (upld_type == MLAN_TYPE_DATA)
         return MLAN_STATUS_FAILURE;
@@ -532,6 +561,17 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     dump_hex(pmbuf, imupkt->size);
 #endif
 
+#ifdef CONFIG_FW_VDLLV2
+    if (upld_type == MLAN_TYPE_EVENT && (wlan_le16_to_cpu(imupkt->hostcmd.command) == EVENT_VDLL_IND))
+    {
+        if (mlan_adap->ps_state == PS_STATE_SLEEP)
+        {
+            os_rwlock_write_unlock(&sleep_rwlock);
+            pmpriv->adapter->ps_state = PS_STATE_AWAKE;
+        }
+        return wlan_handle_vdllv2_event_packet(pmbuf + INTF_HEADER_LEN);
+    }
+#endif
     if (bus.event_queue != NULL)
     {
         if (upld_type == MLAN_TYPE_CMD)
@@ -1330,8 +1370,8 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
 mlan_status wlan_send_null_packet(pmlan_private priv, t_u8 flags)
 {
     int ret;
-    t_u8 pbuf[32]  = {0};
-    TxPD *ptxpd    = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
+    t_u8 pbuf[32] = {0};
+    TxPD *ptxpd   = (TxPD *)((uint8_t *)pbuf + INTF_HEADER_LEN);
 
     ptxpd->bss_type      = priv->bss_type;
     ptxpd->bss_num       = GET_BSS_NUM(priv);

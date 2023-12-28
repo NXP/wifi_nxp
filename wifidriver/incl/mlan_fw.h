@@ -1747,7 +1747,7 @@ typedef enum _ENH_PS_MODES
 #define MRVL_NEIGHBOR_REPORT_TLV_ID 0x1de
 #endif
 
-#ifdef CONFIG_FW_VDLL
+#if defined(CONFIG_FW_VDLL) || defined(CONFIG_FW_VDLLV2)
 #define EVENT_VDLL_IND 0x00000081
 #endif
 
@@ -8024,7 +8024,7 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
     OPT_Confirm_Sleep ps_cfm_sleep;
 } MLAN_PACK_END opt_sleep_confirm_buffer;
 
-#ifdef CONFIG_FW_VDLL
+#if defined(CONFIG_FW_VDLL) || defined(CONFIG_FW_VDLLV2)
 /** req host side download vdll block */
 #define VDLL_IND_TYPE_REQ 0
 /** notify vdll start offset in firmware image */
@@ -8038,7 +8038,7 @@ typedef MLAN_PACK_START struct _opt_sleep_confirm_buffer
 #define VDLL_IND_TYPE_ERR_SECURE 4
 /** notify vdll download vdll complete */
 #define VDLL_IND_TYPE_COMPLETE 5
-#elif defined(SD8978) || defined(SD8987) || defined(SD8997)
+#elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(RW610)
 /** notify VDLL_V2 interface reset */
 #define VDLL_IND_TYPE_INTF_RESET 5
 #endif
@@ -8055,7 +8055,21 @@ typedef MLAN_PACK_START struct _vdll_ind
     /*VDLL block size*/
     t_u16 block_len;
 } MLAN_PACK_END vdll_ind, *pvdll_ind;
-#endif /* CONFIG_FW_VDLL */
+
+/** mlan_event_vdllv2_indication data structure */
+typedef MLAN_PACK_START struct _mlan_event_vdll_indication
+{
+    /** Event ID */
+    t_u16 event_id;
+    /** BSS index number for multiple BSS support */
+    t_u8 bss_index;
+    /** BSS type */
+    t_u8 bss_type;
+    /** vdll indicate event */
+    vdll_ind vdllInd;
+} MLAN_PACK_END mlan_event_vdll_indication, *pmlan_event_vdll_indication;
+
+#endif /* CONFIG_FW_VDLL || CONFIG_FW_VDLLV2*/
 
 #ifndef CONFIG_MLAN_WMSDK
 /* enum for event access mem by host action */
