@@ -38,7 +38,7 @@
 
 #define WLAN_MAGIC_NUM (('W' << 0) | ('L' << 8) | ('F' << 16) | ('W' << 24))
 
-#define WIFI_FW_CMDBUF_SIZE 2100U
+#define WIFI_FW_CMDBUF_SIZE 3072U
 
 #define WIFI_RESP_WAIT_TIME 10
 
