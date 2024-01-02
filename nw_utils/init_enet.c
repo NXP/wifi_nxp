@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#ifndef RW610
 /*******************************************************************************
  * Includes
  ******************************************************************************/
@@ -25,7 +26,7 @@
 
 #include "ethernetif.h"
 #include <string.h>
-#include <osa.h>
+#include <wm_os.h>
 #include <wm_net.h>
 
 #include "network_cfg.h"
@@ -196,3 +197,4 @@ int initNetwork(void)
     return WM_SUCCESS;
 }
 /*${function:end}*/
+#endif

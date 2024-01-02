@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include <osa.h>
+#include <wm_os.h>
 #include <wm_net.h>
 
 #include "telnet_server.h"
