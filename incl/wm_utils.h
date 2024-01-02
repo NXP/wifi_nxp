@@ -25,6 +25,13 @@
 #include "fsl_debug_console.h"
 #endif
 
+#ifdef CONFIG_WIFI_SMOKE_TESTS
+#undef PRINTF
+extern void sm_printf(const char *fmt, ...);
+
+#define PRINTF sm_printf
+#endif
+
 #ifdef CONFIG_ZEPHYR
 #ifndef PRINTF
 #define PRINTF printk

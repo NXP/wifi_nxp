@@ -171,4 +171,6 @@
 #undef CONFIG_HEAP_DEBUG
 #undef CONFIG_HEAP_STAT
 
+#undef CONFIG_WIFI_SMOKE_TESTS
+
 #endif /* _WIFI_CONFIG_H_ */

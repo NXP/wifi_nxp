@@ -106,7 +106,6 @@ static char *cli_strdup(const char *s, int len)
     {
         for (i = 0; i < len; i++)
         {
-
             result[i] = s[i] == '\0' ? ' ' : s[i];
         }
 
@@ -385,7 +384,7 @@ static const struct cli_command *lookup_command(char *name, int len)
  *          input line.
  *          2 on invalid syntax: the arguments list couldn't be parsed
  */
-static int handle_input(char *handle_inbuf)
+int handle_input(char *handle_inbuf)
 {
     struct
     {
@@ -394,10 +393,10 @@ static int handle_input(char *handle_inbuf)
         unsigned done : 1;
     } stat;
     static char *argv[64];
-    int argc                          = 0;
-    int i                             = 0;
+    int argc = 0;
+    int i    = 0;
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
-    int len                           = 0;
+    int len = 0;
 #endif
     unsigned int j                    = 0;
     const struct cli_command *command = NULL;
@@ -780,7 +779,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
  * representation of non-printable characters.
  * Non-printable characters show as "\0xXX".
  */
-static void print_bad_command(char *cmd_string)
+void print_bad_command(char *cmd_string)
 {
     if (cmd_string != NULL)
     {

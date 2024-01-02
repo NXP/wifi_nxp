@@ -6139,6 +6139,17 @@ static void wlcm_process_get_hw_spec_event(void)
 #ifdef CONFIG_WMM
     (void)wifi_wmm_init();
 #endif
+
+#ifdef CONFIG_WIFI_SMOKE_TESTS
+    extern int initNetwork(void);
+    /* network enet init */
+    int ret = initNetwork();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("FAILED to init network (ret=%d). Reboot the board and try again.\r\n", ret);
+    }
+#endif
+
     /* Set Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
 
