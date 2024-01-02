@@ -12,6 +12,7 @@
  *
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -83,18 +84,36 @@ extern bool usart_suspend_flag;
 #endif
 #endif
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
-#define MAX_CMDS_IN_HISTORY 10
+#define MAX_CMDS_IN_HISTORY 20
 static char *cmd_hist_arr[MAX_CMDS_IN_HISTORY];
 static int total_hist_cmds, last_cmd_num;
 static int console_loop_num;
 static bool hist_inited;
+#ifdef CONFIG_CLI_PSM_SUPPORT
 #define CMD_HIST_VAR_NAME       "cmd-%d"
 #define CMD_HIST_VAR_NAME_MAXSZ 8
 
-char *index(const char *s, int c);
-
 static cli_name_val_get g_get_cb;
 static cli_name_val_set g_set_cb;
+#endif
+
+static char *cli_strdup(const char *s, int len)
+{
+    char *result = os_mem_alloc(len + 1);
+    int i;
+
+    if (result)
+    {
+        for (i = 0; i < len; i++)
+        {
+
+            result[i] = s[i] == '\0' ? ' ' : s[i];
+        }
+
+        result[len] = '\0';
+    }
+    return result;
+}
 
 static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
 {
@@ -109,10 +128,19 @@ static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
         if (strlen(cmd_hist_arr[cmd_no]) >= max_len)
             return -WM_FAIL;
 
-        strncpy(buf, cmd_hist_arr[cmd_no], max_len);
+        if (cmd_hist_arr[cmd_no][0] == (char)(0x20))
+        {
+            (void)PRINTF("");
+            return -WM_FAIL;
+        }
+        else
+        {
+            strncpy(buf, cmd_hist_arr[cmd_no], max_len);
+        }
         return WM_SUCCESS;
     }
 
+#ifdef CONFIG_CLI_PSM_SUPPORT
     char var_name[CMD_HIST_VAR_NAME_MAXSZ];
     snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
 
@@ -120,11 +148,12 @@ static int get_cmd_from_hist(int cmd_no, char *buf, int max_len)
     if (rv <= 0)
         return -WM_FAIL;
 
-    cmd_hist_arr[cmd_no] = strdup(buf); /* ignore failure silently */
+    cmd_hist_arr[cmd_no] = cli_strdup(buf); /* ignore failure silently */
+#endif
     return WM_SUCCESS;
 }
 
-static int store_cmd_to_hist(int cmd_no, const char *buf)
+static int store_cmd_to_hist(int cmd_no, const char *buf, int len)
 {
     if (cmd_no >= MAX_CMDS_IN_HISTORY || cmd_no < 0)
         return -WM_FAIL;
@@ -133,6 +162,10 @@ static int store_cmd_to_hist(int cmd_no, const char *buf)
     {
         if (strcmp(cmd_hist_arr[cmd_no], buf) == 0U)
             return WM_SUCCESS; /* avoid rewrite. */
+        else if (cmd_hist_arr[cmd_no][0] == (char)(0x20))
+        {
+            return WM_SUCCESS;
+        }
         else
         {
             os_mem_free(cmd_hist_arr[cmd_no]);
@@ -140,17 +173,20 @@ static int store_cmd_to_hist(int cmd_no, const char *buf)
         }
     }
 
+#ifdef CONFIG_CLI_PSM_SUPPORT
     char var_name[CMD_HIST_VAR_NAME_MAXSZ];
     snprintf(var_name, CMD_HIST_VAR_NAME_MAXSZ, CMD_HIST_VAR_NAME, cmd_no);
 
     int rv = g_set_cb(var_name, buf);
     if (rv != WM_SUCCESS)
         return rv;
+#endif
 
-    cmd_hist_arr[cmd_no] = strdup(buf); /* ignore failure silently */
+    cmd_hist_arr[cmd_no] = cli_strdup(buf, len); /* ignore failure silently */
 
 #if 0 /* debug only */
 	int i;
+    PRINTF("\r\n");
 	for (i = 0; i < MAX_CMDS_IN_HISTORY; i++)
 		(void)PRINTF("ARR: %s\r\n", cmd_hist_arr[i]);
 #endif
@@ -165,7 +201,7 @@ static int store_cmd_to_hist(int cmd_no, const char *buf)
 static int get_total_cmds()
 {
     int cmd_no = 0;
-
+#ifdef CONFIG_CLI_PSM_SUPPORT
     void *tmpbuf = os_mem_alloc(INBUF_SIZE);
     if (!tmpbuf)
         return -WM_FAIL;
@@ -182,6 +218,7 @@ static int get_total_cmds()
     }
 
     os_mem_free(tmpbuf);
+#endif
     return cmd_no;
 }
 
@@ -212,7 +249,7 @@ static int get_prev_cmd_num_console()
 
 static int cmd_hist_is_duplicate(const char *cmd)
 {
-    if (last_cmd_num == -1)
+    if ((last_cmd_num == -1) || (last_cmd_num == 0))
         return false; /* No cmds */
 
     /* Allocate once */
@@ -239,7 +276,11 @@ static int cmd_hist_is_duplicate(const char *cmd)
     return false;
 }
 
+#ifdef CONFIG_CLI_PSM_SUPPORT
 static int cmd_hist_init()
+#else
+int cmd_hist_init()
+#endif
 {
     console_loop_num = -1;
     last_cmd_num     = -1;
@@ -255,6 +296,7 @@ static int cmd_hist_init()
     return WM_SUCCESS;
 }
 
+#ifdef CONFIG_CLI_PSM_SUPPORT
 int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb)
 {
     if (!get_cb || !set_cb)
@@ -265,8 +307,9 @@ int cli_add_history_hook(cli_name_val_get get_cb, cli_name_val_set set_cb)
 
     return cmd_hist_init();
 }
+#endif
 
-static void cmd_hist_add(const char *cmd)
+static void cmd_hist_add(const char *cmd, int len)
 {
     if (!hist_inited)
         return;
@@ -278,7 +321,7 @@ static void cmd_hist_add(const char *cmd)
         return;
 
     int new_cmd_num = (last_cmd_num + 1) % MAX_CMDS_IN_HISTORY;
-    int rv          = store_cmd_to_hist(new_cmd_num, cmd);
+    int rv          = store_cmd_to_hist(new_cmd_num, cmd, len);
     if (rv != WM_SUCCESS)
         return;
 
@@ -353,16 +396,15 @@ static int handle_input(char *handle_inbuf)
     static char *argv[64];
     int argc                          = 0;
     int i                             = 0;
+#ifdef CONFIG_APP_FRM_CLI_HISTORY
+    int len                           = 0;
+#endif
     unsigned int j                    = 0;
     const struct cli_command *command = NULL;
     const char *p;
 
     (void)memset((void *)&argv, 0, sizeof(argv));
     (void)memset(&stat, 0, sizeof(stat));
-
-#ifdef CONFIG_APP_FRM_CLI_HISTORY
-    cmd_hist_add(handle_inbuf);
-#endif
 
     /*
      * Some terminals add CRLF to the input buffer.
@@ -468,6 +510,10 @@ static int handle_input(char *handle_inbuf)
         (void)PRINTF("\r\n");
     }
 
+#ifdef CONFIG_APP_FRM_CLI_HISTORY
+    len = i - 1;
+#endif
+
     /*
      * Some comamands can allow extensions like foo.a, foo.b and hence
      * compare commands before first dot.
@@ -478,6 +524,10 @@ static int handle_input(char *handle_inbuf)
     {
         return 1;
     }
+
+#ifdef CONFIG_APP_FRM_CLI_HISTORY
+    cmd_hist_add(handle_inbuf, len);
+#endif
 
     command->function(argc, argv);
 
@@ -953,6 +1003,11 @@ static int cli_start(void)
         (void)PRINTF("Error: Failed to create cli thread: %d\r\n", ret);
         return -WM_FAIL;
     }
+
+#ifdef CONFIG_APP_FRM_CLI_HISTORY
+    cmd_hist_init();
+    cmd_hist_add(" ", 1);
+#endif
 
     ret = cli_mem_init();
 

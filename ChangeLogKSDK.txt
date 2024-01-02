@@ -3,6 +3,48 @@
 
 @section wifi NXP WiFi
 
+Version 1.3.r47.p16
+ - Updates:
+  - Updated FC's f/w version to 2.p66.155.
+  - Updated CA2 and RB3+ f/w version to 21.p124.
+  - Fine tuning of GTK rekey offload feature.
+
+Version 1.3.r47.p15
+ - Bug Fix:
+  - DUT fails to connect to Ex-AP configured with wpa2 Enterprise security (Auth method Fast-mschapv2).
+  - Incorrect AKM types PSK(2), PSK(SHA-256) are seen in beacon after configuring APUT in wpa2-psk security mode.
+  - Link lost seen after wlan-scan when DUT is connected in wpa2 ft-psk security in 2.4Ghz band.
+
+Version 1.3.r47.p12
+ - Bug Fix:
+  - Throughput numbers for TCP-Rx traffic on APUT are dropping to 0mbps in HE20/VHT20 mode.
+
+Version 1.3.r47.p11
+ - Bug Fix:
+  - Failed to connect STAUT configured in WPA2+PMF required security to Ex-AP configured in WPA2/WPA3 mixed mode+PMF capable security.
+  - STAUT is waking up with Broadcast traffic while running MEF AUTO PING ALLOW and WAKE HOST & MEF AUTO PING DISCARD and WAKE HOST.
+  - Cannot connec to AP with security wpa3_sb_192_eap_tls.
+  - Cannot out band independent reset successfully.
+
+Version 1.3.r47.p10
+ - Bug Fix:
+  - Auto reconnect - link lost reported when ap shut down.
+  - STAUT failed to roam from Ex-AP1 to Ex-AP2 with WPA3 security mode while running UDP-Tx traffic.
+  - STAUT is not waking up from suspend state while running Host-sleep test even after running Unicast/Broadcast traffic from Ex-AP to STAUT.
+  - STAUT is waking up with Unicast data and without unicast data as well before running Broadcast data traffic from AP backend to STAUT.
+  - While running WPS connection with Ex-AP, DUT gets deauthenticated after M4 packet, WPS_NACK is recvd. M1 packet does not have WPS PBC or keypad specific bit set
+  - "Network not found" is seen on the STAUT after disconnection and reconnection of the same profile in UNII4 channels (169,173,177).
+  - When Dut reported Link lost, After configured time interval, DUT reconnects to AP but fails to ping to AP_BACKEND after reconnection.
+  - Coverity Fixes.
+
+Version 1.3.r47.p9
+ - Bug Fix:
+  - APUT is advertising channel width information for 40Mhz in HE-phy capabilities instead of 20Mhz bandwidth in Assoc response frame.
+  - STAUT failed to roam from Ex-AP1 to Ex-AP2 with WPA3 security mode with same channel same band and different channel same band scenario.
+  - 15-20% Throughput degradation observed in TCP-TX and UDP-TX of HE[40Mhz/80MHz], VHT[40Mhz/80Mhz] compared to previous release[R45.p12].
+  - "WLAN: Network not found" is observed while connecting STAUT configured in wpa2 security PMF capable to Ex-AP in wpa2 security with PMF required.
+  - Coverity Fixes.
+
 Version 1.3.r47.p8
  - Bug Fix:
   - "WLAN: network not found & Warn: Scan temporary failure" is observed after disconnecting from one network and Re-connecting to same network after renaming SSID of Ex-AP.

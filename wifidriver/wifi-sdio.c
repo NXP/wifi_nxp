@@ -2006,8 +2006,8 @@ t_void wlan_interrupt(mlan_adapter *pmadapter)
         if (mlan_adap->wait_txbuf == true)
         {
             os_semaphore_put(&txbuf_sem);
+            send_wifi_driver_tx_data_event(0);
         }
-        send_wifi_driver_tx_data_event(0);
     }
 #endif
 

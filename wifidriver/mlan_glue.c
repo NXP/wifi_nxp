@@ -2054,7 +2054,11 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
             if (((pvendor_ie->element_id == WPA_IE) &&
                  (!__memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(pvendor_ie->oui))) &&
                  (pvendor_ie->oui_type == wpa_oui[3U])) ||
-                (pvendor_ie->element_id == RSN_IE))
+                ((pvendor_ie->element_id == RSN_IE)
+#ifdef CONFIG_11R
+                 && (priv->ft_roam == MFALSE)
+#endif
+                 ))
         {
             /* IE is a WPA/WPA2 IE so call set_wpa function */
             ret = wlan_set_wpa_ie_helper(priv, ie_data_ptr, ie_len);
@@ -2266,6 +2270,7 @@ static int wifi_set_ies_cfg(mlan_private *priv, t_u8 *ie, int ie_len)
             case MOBILITY_DOMAIN:
                 (void)memcpy((void *)priv->md_ie, (const void *)pcurrent_ptr, (size_t)total_ie_len);
                 priv->md_ie_len = (size_t)total_ie_len;
+                wifi_d("Set MD IE\r\n");
                 break;
             case FAST_BSS_TRANSITION:
                 if (MLAN_STATUS_SUCCESS != wlan_set_gen_ie_helper(priv, pcurrent_ptr, total_ie_len))
@@ -2404,6 +2409,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->sec_info.is_wpa_tkip = MFALSE;
 #ifdef CONFIG_11R
     priv->sec_info.is_ft = MFALSE;
+    priv->md_ie_len = 0;
 #endif
 
     /* Reset the generic IE buffer */
@@ -2427,6 +2433,9 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     if (priv->sec_info.is_ft)
     {
         priv->sec_info.authentication_mode = MLAN_AUTH_MODE_FT;
+#ifdef CONFIG_GTK_REKEY_OFFLOAD
+        (void)__memset(pmadapter, &priv->gtk_rekey, 0, sizeof(priv->gtk_rekey));
+#endif
     }
 #endif
 
@@ -3104,6 +3113,9 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 IEEEtypes_AssocRsp_t *passoc_rsp =
                     (IEEEtypes_AssocRsp_t *)((t_u8 *)(&resp->params) + sizeof(IEEEtypes_MgmtHdr_t));
 
+#ifdef CONFIG_11R
+                pmpriv->ft_roam = MFALSE;
+#endif
                 assoc_resp->frame.frame_len = resp->size - S_DS_GEN;
                 if (assoc_resp->frame.frame_len > (int)sizeof(assoc_resp->frame.frame))
                 {

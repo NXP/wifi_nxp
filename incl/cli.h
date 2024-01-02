@@ -24,6 +24,8 @@
 #define COEX_APP_SUPPORT
 #endif
 
+#define CONFIG_APP_FRM_CLI_HISTORY
+
 /** Structure for registering CLI commands */
 struct cli_command
 {

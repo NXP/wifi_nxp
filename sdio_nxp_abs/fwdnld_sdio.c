@@ -256,7 +256,8 @@ static fwdnld_intf_ret_t sdio_fwdnld_check_reload(fwdnld_intf_t *intf, uint8_t f
         }
         else
         {
-            sdio_io_d("WLAN FW already running! Skip FW download");
+            PRINTF("WLAN FW already running! Skip FW download\r\n");
+            PRINTF("FW download skipped because fly wire is not connected from MCU to Wi-Fi SoC\r\n");
             return FWDNLD_INTF_SKIP;
         }
     }

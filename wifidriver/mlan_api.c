@@ -2359,7 +2359,7 @@ int wifi_set_rekey_info(
 
     return WM_SUCCESS;
 #else
-    return -WM_FAIL;
+    return WM_SUCCESS;
 #endif
 }
 
@@ -5443,6 +5443,13 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
         return -WM_FAIL;
     }
 
+#ifdef CONFIG_11R
+    if (auth_alg == MLAN_AUTH_MODE_FT)
+    {
+        pmpriv->ft_roam = MTRUE;
+    }
+#endif
+
     if (pmpriv->auth_flag == 0)
     {
         wifi_set_rx_mgmt_indication(MLAN_BSS_TYPE_STA, WIFI_MGMT_AUTH | WIFI_MGMT_DEAUTH | WIFI_MGMT_DIASSOC);
@@ -5465,6 +5472,10 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
         pmpriv->curr_bss_params.host_mlme = 0;
         pmpriv->auth_flag                 = 0;
         pmpriv->auth_alg                  = 0xFFFF;
+#ifdef CONFIG_11R
+        pmpriv->ft_roam = MFALSE;
+#endif
+
     }
     return ret;
 }

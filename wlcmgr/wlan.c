@@ -625,6 +625,9 @@ static struct
     uint8_t rssi_low_threshold;
 #endif
     uint8_t ind_reset;
+#ifdef CONFIG_HOST_SLEEP
+    uint8_t hs_dummy_send;
+#endif
 } wlan;
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
@@ -909,7 +912,7 @@ static int wlan_get_uap_ipv4_addr(unsigned int *ipv4_addr)
 static int wlan_set_pmfcfg(uint8_t mfpc, uint8_t mfpr);
 
 #ifdef CONFIG_HOST_SLEEP
-static int wlan_send_host_sleep_int(uint32_t wake_up_conds)
+static int wlan_send_host_sleep_int(uint32_t wake_up_conds, bool is_config)
 {
     int ret = WM_SUCCESS;
     unsigned int ipv4_addr = 0;
@@ -951,7 +954,7 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds)
 #endif
     }
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
-    else
+    else if(is_config == MFALSE)
     {
         wlan_start_cloud_keep_alive();
     }
@@ -963,7 +966,7 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds)
     {
         wlan.hs_enabled = MTRUE;
         wlan.hs_wakeup_condition = wake_up_conds;
-        if (g_flt_cfg.nentries == 0)
+        if (g_flt_cfg.nentries == 0 && (is_config == MFALSE))
         {
             (void)PRINTF("No user configured MEF entries, use default ARP filters.\r\n");
             /* User doesn't configure MEF, use default MEF entry */
@@ -1007,15 +1010,18 @@ static int wlan_send_host_sleep_int(uint32_t wake_up_conds)
         ipv4_addr = 0;
     }
 
-    ret = wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
-    if (ret == WM_SUCCESS)
+    if (wlan.hs_dummy_send == MFALSE || is_config == MFALSE)
     {
-        if (wake_up_conds != HOST_SLEEP_CFG_CANCEL)
+        ret = wifi_send_hs_cfg_cmd((mlan_bss_type)type, ipv4_addr, HS_CONFIGURE, wlan.hs_wakeup_condition);
+        if (ret == WM_SUCCESS)
         {
-            wlan.hs_configured = MTRUE;
+            if (wake_up_conds != HOST_SLEEP_CFG_CANCEL)
+            {
+                wlan.hs_configured = MTRUE;
+            }
         }
+        wlan.hs_dummy_send = MTRUE;
     }
-
     return ret;
 }
 
@@ -1023,7 +1029,7 @@ void wlan_hs_pre_cfg(void)
 {
     if (wlan.hs_enabled == MTRUE)
     {
-        (void)wlan_send_host_sleep_int(wlan.hs_wakeup_condition);
+        (void)wlan_send_host_sleep_int(wlan.hs_wakeup_condition, MFALSE);
         /** Wait for HS Activate to complete */
         os_thread_sleep(os_msec_to_ticks(1000));
     }
@@ -1290,7 +1296,7 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
         {
 #ifdef CONFIG_HOST_SLEEP
             /* Start host sleep handshake here if manual mode is selected */
-            ret = wlan_send_host_sleep_int(wlan.wakeup_conditions);
+            ret = wlan_send_host_sleep_int(wlan.wakeup_conditions, MFALSE);
             if (ret != WM_SUCCESS)
             {
 #ifdef CONFIG_NCP_BRIDGE
@@ -3619,7 +3625,10 @@ static void wlcm_process_association_notify_event(struct wifi_message *msg, enum
     (void)msg;
     (void)next;
 
-    (void)wpa_supp_notify_assoc(netif);
+    if (wlan.roam_reassoc == false)
+    {
+        (void)wpa_supp_notify_assoc(netif);
+    }
 }
 
 #endif
@@ -6241,12 +6250,11 @@ static void wlcm_send_host_sleep(struct wifi_message *msg, enum cm_sta_state *ne
     (void)next;
     (void)network;
 
-    (void)wlan_send_host_sleep_int(wake_up_conds);
+    (void)wlan_send_host_sleep_int(wake_up_conds, MTRUE);
 }
 #endif
 
 #ifdef CONFIG_CPU_LOADING
-
 static void wlan_cpu_loading_info_display(void)
 {
     uint64_t total_runtime = 0;
@@ -8352,21 +8360,20 @@ int wlan_add_network(struct wlan_network *network)
 
     if ((network->role == WLAN_BSS_ROLE_UAP) || (network->role == WLAN_BSS_ROLE_STA))
     {
-        if ((network->security.type == WLAN_SECURITY_WPA2) && (network->security.mfpc))
+        if (network->role == WLAN_BSS_ROLE_STA)
         {
-            network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
-        }
-        if ((network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED) && (network->security.mfpr))
-        {
-            network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
-        }
+            if ((network->security.type == WLAN_SECURITY_WPA2) && (network->security.mfpc))
+            {
+                network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+            }
+            if ((network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED) && (network->security.mfpr))
+            {
+                network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
+            }
+	}
         if (network->role == WLAN_BSS_ROLE_UAP)
         {
             if ((network->security.type == WLAN_SECURITY_WPA2) && (network->security.mfpr))
-            {
-                network->security.key_mgmt = WLAN_KEY_MGMT_PSK_SHA256;
-            }
-            if ((network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED) && (network->security.mfpc))
             {
                 network->security.key_mgmt |= WLAN_KEY_MGMT_PSK_SHA256;
             }
@@ -8758,6 +8765,22 @@ int wlan_add_network(struct wlan_network *network)
                 wlcm_e("DH params are not configured");
                 return -WM_E_INVAL;
             }
+
+#ifdef CONFIG_EAP_FAST
+            if (wlan_is_eap_fast_security(network->security.type))
+            {
+                if (strlen(network->security.pac_opaque_encr_key) != (PAC_OPAQUE_ENCR_KEY_MAX_LENGTH - 1))
+                {
+                    wlcm_e("Invalid PAC Opaque Encryption key");
+                    return -WM_E_INVAL;
+                }
+                if (strlen(network->security.a_id) != (A_ID_MAX_LENGTH - 1))
+                {
+                    wlcm_e("Invalid authority identity(a_id)");
+                    return -WM_E_INVAL;
+                }
+            }
+#endif
         }
         else
 #endif
@@ -10010,7 +10033,7 @@ static void wlan_mon_thread(os_thread_arg_t data)
              wlcm_d("got mon thread event: %d", msg.id);
             if (msg.id == HOST_SLEEP_HANDSHAKE)
             {
-                ret = wlan_send_host_sleep_int(wlan.wakeup_conditions);
+                ret = wlan_send_host_sleep_int(wlan.wakeup_conditions, MFALSE);
                 if (ret != WM_SUCCESS)
                 {
                    is_hs_handshake_done = WLAN_HOSTSLEEP_FAIL;
@@ -14625,7 +14648,7 @@ int wlan_set_country_code(const char *alpha2)
     {
         if (strstr(wlan_region_code, "WW") == NULL)
         {
-            wlcm_e("%s: Specific region is configured, reconfig not allowed", wlan_region_code);
+            wlcm_d("%s: Specific region is configured, reconfig not allowed", wlan_region_code);
             return -WM_FAIL;
         }
     }

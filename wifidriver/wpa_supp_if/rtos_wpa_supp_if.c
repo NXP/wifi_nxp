@@ -459,7 +459,7 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
     memset(&event, 0, sizeof(event));
 
     event.deauth_info.addr        = &mgmt->sa[0];
-    event.deauth_info.reason_code = le_to_host16(mgmt->u.deauth.reason_code);
+    event.deauth_info.reason_code = le_to_host16(WLAN_REASON_DEAUTH_LEAVING);
     if (frame + frame_len > mgmt->u.deauth.variable)
     {
         event.deauth_info.ie     = mgmt->u.deauth.variable;
@@ -1656,6 +1656,12 @@ int wifi_nxp_wpa_send_mlme(void *if_priv,
     if (!if_priv)
     {
         supp_e("%s: Missing interface context", __func__);
+        goto out;
+    }
+
+    if (data_len > 1500)
+    {
+        supp_d("%s: Invalid data length", __func__);
         goto out;
     }
 

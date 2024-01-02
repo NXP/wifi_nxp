@@ -1446,6 +1446,10 @@ struct _mlan_private
     t_u8 auth_flag;
     /** flag for auth algorithm */
     t_u16 auth_alg;
+#ifdef CONFIG_11R
+    /** flag for ft roam */
+    t_u8 ft_roam;
+#endif
 #endif
 
     /** User selected bands */

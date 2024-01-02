@@ -676,10 +676,6 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                     break;
                 }
 #ifdef CONFIG_11R
-                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 9))
-                {
-                    break;
-                }
                 else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 9))
                 {
                     break;
@@ -696,18 +692,6 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 }
 #endif
 #ifdef CONFIG_11R
-                else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 13))
-                {
-                    break;
-                }
-                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 4))
-                {
-                    break;
-                }
-                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 4))
-                {
-                    break;
-                }
                 else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 4))
                 {
                     break;
@@ -1321,7 +1305,11 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     (void)wlan_wmm_process_association_req(pmpriv, &pos, &pbss_desc->wmm_ie, pbss_desc->pht_cap);
 
 #ifdef CONFIG_11R
+#ifdef CONFIG_WPA_SUPP
+    if (pmpriv->md_ie_len != 0U)
+#else
     if (ft_akm == 1U)
+#endif
     {
         wlan_cmd_append_pass_through_ie(pmpriv, (IEEEtypes_Generic_t *)(void *)pmpriv->md_ie, &pos);
     }
