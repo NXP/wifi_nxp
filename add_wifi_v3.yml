@@ -447,6 +447,7 @@ middleware.wifi.cli:
     - repo_relative_path: cli
     - repo_relative_path: incl
     - repo_relative_path: incl/wlcmgr
+    - repo_relative_path: nw_utils
     - repo_relative_path: nw_utils/telnet
     files:
     - source: cli/cli_mem.h
@@ -458,7 +459,7 @@ middleware.wifi.cli:
     - source: nw_utils/wifi_ping.c
     - source: nw_utils/iperf.c
     - source: nw_utils/init_enet.c
-    - source: nw_utils/nerwork_cfg.h
+    - source: nw_utils/network_cfg.h
     - source: nw_utils/telnet/telnet_server.h
     - source: nw_utils/telnet/telnet_server.c
     - source: wlcmgr/wlan_basic_cli.c

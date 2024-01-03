@@ -6,25 +6,18 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef RW610
+#ifdef CONFIG_WIFI_SMOKE_TESTS
 /*******************************************************************************
  * Includes
  ******************************************************************************/
 /*${header:start}*/
-#include "lwip/dhcp.h"
-#include "lwip/ip_addr.h"
+#include "board.h"
+#include "fsl_phyksz8081.h"
+
+#include "ethernetif.h"
 #include "lwip/netifapi.h"
 #include "lwip/prot/dhcp.h"
-#include "lwip/tcpip.h"
-#include "lwip/sys.h"
-#include "ethernetif.h"
 
-#include "fsl_adapter_gpio.h"
-
-#include "board.h"
-#include "app.h"
-
-#include "ethernetif.h"
 #include <string.h>
 #include <wm_os.h>
 #include <wm_net.h>
@@ -33,7 +26,6 @@
 #include "telnet_server.h"
 
 #include "fsl_silicon_id.h"
-#include "fsl_phy.h"
 #include <cli.h>
 
 /*${header:end}*/
@@ -126,27 +118,28 @@ static int enet_cli_init(void)
     return WM_SUCCESS;
 }
 
+extern phy_ksz8081_resource_t g_phy_resource;
+
 int initNetwork(void)
 {
     ip4_addr_t netif_ipaddr, netif_netmask, netif_gw;
     ethernetif_config_t enet_config = {
         .phyHandle   = &phyHandle,
-        .phyAddr     = EXAMPLE_PHY_ADDRESS,
-        .phyOps      = EXAMPLE_PHY_OPS,
-        .phyResource = EXAMPLE_PHY_RESOURCE,
-        .srcClockHz  = EXAMPLE_CLOCK_FREQ,
+        .phyAddr     = BOARD_ENET0_PHY_ADDRESS,
+        .phyOps      = &phyksz8081_ops,
+        .phyResource = &g_phy_resource,
+        .srcClockHz  = CLOCK_GetFreq(kCLOCK_IpgClk),
 #ifdef configMAC_ADDR
         .macAddress = configMAC_ADDR,
 #endif
     };
     int ret = 0, retry = 0;
 
-#ifdef IP_USE_DHCP
 #ifndef configMAC_ADDR
     /* Set special address for each chip. */
     (void)SILICONID_ConvertToMacAddr(&enet_config.macAddress);
 #endif
-
+#ifdef IP_USE_DHCP
     IP4_ADDR(&netif_ipaddr, 0, 0, 0, 0);
     IP4_ADDR(&netif_netmask, 0, 0, 0, 0);
     IP4_ADDR(&netif_gw, 0, 0, 0, 0);
