@@ -2319,6 +2319,7 @@ static int wlan_bridge_wakeup_condition(void *tlv)
     return WM_SUCCESS;
 }
 
+#define HOST_SLEEP_DEF_WAKE_TIME 5000
 static int wlan_bridge_mcu_sleep(void *tlv)
 {
     NCP_CMD_POWERMGMT_MCU_SLEEP *mcu_sleep_config = (NCP_CMD_POWERMGMT_MCU_SLEEP *)tlv;
