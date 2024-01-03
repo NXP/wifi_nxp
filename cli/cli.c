@@ -1296,6 +1296,10 @@ int cli_init(void)
         return WM_SUCCESS;
     }
 
+    (void)PRINTF("CLI build: %s" __DATE__);
+    (void)PRINTF("\t%s", __TIME__);
+    (void)PRINTF("\r\nCopyright  2024  NXP\r\n");
+
     (void)memset((void *)&cli, 0, sizeof(cli));
     cli.input_enabled = 1;
     cli.in_queue_data = queue_data;
