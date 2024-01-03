@@ -182,6 +182,7 @@ int USB_Init(void)
     if (dev_handle == NULL)
     {
         perror("Cannot open device\n");
+	    return FALSE;
     }
     else
     {
@@ -1461,6 +1462,9 @@ void send_tlv_command(send_data_t *S_D)
     uint32_t bridge_checksum = 0;
     uint8_t *temp_cmd        = cmd_buf;
     int Datalen, ret = TRUE;
+#ifndef CONFIG_USB_BRIDGE
+    int len = 0;
+#endif
     Datalen = (temp_cmd[NCP_BRIDGE_CMD_SIZE_HIGH_BYTES] << 8) | temp_cmd[NCP_BRIDGE_CMD_SIZE_LOW_BYTES];
     if (0 == Datalen)
     {
