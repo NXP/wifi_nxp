@@ -731,9 +731,9 @@ static void ping_sock_task(void *pvParameters)
 
             NCP_CMD_SOCKET_RECVFROM_CFG *ping_res_sock_tlv =
                 (NCP_CMD_SOCKET_RECVFROM_CFG *)&ping_res_command->params.wlan_socket_recvfrom;
-            ping_res_sock_tlv->handle  = ping_msg.handle;
-            ping_res_sock_tlv->size    = ping_msg.size + IP_HEADER_LEN;
-            ping_res_sock_tlv->timeout = PING_RECVFROM_TIMEOUT;
+            ping_res_sock_tlv->handle    = ping_msg.handle;
+            ping_res_sock_tlv->recv_size = ping_msg.size + IP_HEADER_LEN;
+            ping_res_sock_tlv->timeout   = PING_RECVFROM_TIMEOUT;
 
             /*cmd size*/
             ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
@@ -1039,9 +1039,9 @@ static void ncp_iperf_rx_task(void *pvParameters)
 
             NCP_CMD_SOCKET_RECEIVE_CFG *ncp_iperf_res_sock_tlv =
                 (NCP_CMD_SOCKET_RECEIVE_CFG *)&ncp_iperf_command->params.wlan_socket_receive;
-            ncp_iperf_res_sock_tlv->handle  = iperf_msg.handle;
-            ncp_iperf_res_sock_tlv->size    = NCP_IPERF_PER_PKG_SIZE;
-            ncp_iperf_res_sock_tlv->timeout = IPERF_RECV_TIMEOUT;
+            ncp_iperf_res_sock_tlv->handle    = iperf_msg.handle;
+            ncp_iperf_res_sock_tlv->recv_size = NCP_IPERF_PER_PKG_SIZE;
+            ncp_iperf_res_sock_tlv->timeout   = IPERF_RECV_TIMEOUT;
 
             /*cmd size*/
             ncp_iperf_command->header.size += sizeof(NCP_CMD_SOCKET_RECEIVE_CFG);

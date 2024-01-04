@@ -1295,6 +1295,9 @@ ncp_mcu_host:
         - path: middleware/wifi_nxp/example/bridge_app/external_host_app/ncp_mcu_host/spi
           package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/ncp_mcu_host/${multicore_foldername}/spi
           project_path: spi
+        - path: middleware/wifi_nxp/example/bridge_app/common
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}
+          project_path: source
         as-include:
         - path: middleware/wifi_nxp/example/bridge_app/external_host_app/ncp_mcu_host
           package_path: boards/${board}/wifi_examples/bridge_app/external_host_app/ncp_mcu_host/${multicore_foldername}
@@ -1343,6 +1346,9 @@ ncp_mcu_host:
         - source: middleware/wifi_nxp/example/bridge_app/external_host_app/ncp_mcu_host/wifi_mbedtls_config.h
           package_path: project-root-path
           project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/ncp_bridge_cmd.h
+          package_path: project-root-path
+          project_path: source
       pinset:
         required: true
         cc-include:
@@ -1356,7 +1362,7 @@ ncp_mcu_host:
           merge-to-main: sub
           project_path: board
       preinclude_file:
-        required: true 
+        required: true
 wifi_cli_prov:
   section-type: application
   dependency:

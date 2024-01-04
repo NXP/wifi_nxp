@@ -19,9 +19,9 @@
 #include "ncp_mcu_host_utils.h"
 #include "ncp_mcu_host_cli.h"
 #include "ncp_mcu_host_app.h"
-#include "ncp_mcu_host_command.h"
 #include "fsl_gpio.h"
 #include "ncp_mcu_host_os.h"
+#include "ncp_mcu_host_command.h"
 
 /*******************************************************************************
  * Variables
@@ -48,12 +48,12 @@ void NCP_HOST_GPIO_IRQ_HANDLER(void)
 
     status = GPIO_PortGetInterruptFlags(NCP_HOST_GPIO);
     /* Notify mcu bridge resp task */
-    if(status & SPI_MASTER_INT_RX_MASK)
+    if (status & SPI_MASTER_INT_RX_MASK)
     {
         GPIO_PortClearInterruptFlags(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
         os_event_notify_put(ncp_host_tlv_thread);
     }
-    if(status & SPI_MASTER_INT_TX_MASK)
+    if (status & SPI_MASTER_INT_TX_MASK)
     {
         GPIO_PortClearInterruptFlags(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);
         os_semaphore_put(&spi_master_sem);
@@ -62,9 +62,9 @@ void NCP_HOST_GPIO_IRQ_HANDLER(void)
 }
 
 static void ncp_host_spi_master_cb(LPSPI_Type *base,
-                                     lpspi_master_edma_handle_t *handle,
-                                     status_t status,
-                                     void *userData)
+                                   lpspi_master_edma_handle_t *handle,
+                                   status_t status,
+                                   void *userData)
 {
     if (status == kStatus_Success)
     {
@@ -77,22 +77,22 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
     int ret = 0;
     lpspi_transfer_t masterXfer;
     uint16_t len = 0;
-    uint8_t *p = NULL;
+    uint8_t *p   = NULL;
 
     /* Fill SPI transfer config */
-    if(transfer_type == NCP_HOST_MASTER_TX)
+    if (transfer_type == NCP_HOST_MASTER_TX)
     {
         /* Wait for slave Rx is ready */
         os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
         len = data_size;
-        p = buff;
+        p   = buff;
         /* Send command header first */
-        masterXfer.txData = buff;
-        masterXfer.rxData = NULL;
+        masterXfer.txData   = buff;
+        masterXfer.rxData   = NULL;
         masterXfer.dataSize = NCP_BRIDGE_CMD_HEADER_LEN;
 
         ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-        if(ret)
+        if (ret)
         {
             (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
             goto done;
@@ -101,17 +101,17 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
         os_semaphore_get(&spi_master_txrx_done, OS_WAIT_FOREVER);
         len -= NCP_BRIDGE_CMD_HEADER_LEN;
         p += NCP_BRIDGE_CMD_HEADER_LEN;
-        while(len)
+        while (len)
         {
             masterXfer.txData = p;
             masterXfer.rxData = NULL;
-            if(len <= DMA_MAX_TRANSFER_COUNT)
+            if (len <= DMA_MAX_TRANSFER_COUNT)
                 masterXfer.dataSize = len;
             else
                 masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
             os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
             ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-            if(ret)
+            if (ret)
             {
                 (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
                 goto done;
@@ -121,15 +121,15 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
             p += masterXfer.dataSize;
         }
     }
-    else if(transfer_type == NCP_HOST_MASTER_RX)
+    else if (transfer_type == NCP_HOST_MASTER_RX)
     {
-        if(is_header)
+        if (is_header)
         {
-            masterXfer.txData = NULL;
-            masterXfer.rxData = buff;
+            masterXfer.txData   = NULL;
+            masterXfer.rxData   = buff;
             masterXfer.dataSize = data_size;
             ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-            if(ret)
+            if (ret)
             {
                 (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
                 goto done;
@@ -139,18 +139,18 @@ int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer
         else
         {
             len = data_size;
-            p = buff;
-            while(len)
+            p   = buff;
+            while (len)
             {
                 masterXfer.txData = NULL;
                 masterXfer.rxData = p;
-                if(len <= DMA_MAX_TRANSFER_COUNT)
+                if (len <= DMA_MAX_TRANSFER_COUNT)
                     masterXfer.dataSize = len;
                 else
                     masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
                 os_event_notify_get(OS_WAIT_FOREVER);
                 ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-                if(ret)
+                if (ret)
                 {
                     (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
                     goto done;
@@ -191,10 +191,8 @@ static void ncp_host_master_dma_setup(void)
     memset(&(masterRxHandle), 0, sizeof(masterRxHandle));
     memset(&(masterTxHandle), 0, sizeof(masterTxHandle));
 
-    EDMA_CreateHandle(&(masterRxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE,
-                      EXAMPLE_LPSPI_MASTER_DMA_RX_CHANNEL);
-    EDMA_CreateHandle(&(masterTxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE,
-                      EXAMPLE_LPSPI_MASTER_DMA_TX_CHANNEL);
+    EDMA_CreateHandle(&(masterRxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE, EXAMPLE_LPSPI_MASTER_DMA_RX_CHANNEL);
+    EDMA_CreateHandle(&(masterTxHandle), EXAMPLE_LPSPI_MASTER_DMA_BASE, EXAMPLE_LPSPI_MASTER_DMA_TX_CHANNEL);
 #if defined(FSL_FEATURE_EDMA_HAS_CHANNEL_MUX) && FSL_FEATURE_EDMA_HAS_CHANNEL_MUX
     EDMA_SetChannelMux(EXAMPLE_LPSPI_MASTER_DMA_BASE, EXAMPLE_LPSPI_MASTER_DMA_TX_CHANNEL,
                        DEMO_LPSPI_TRANSMIT_EDMA_CHANNEL);
@@ -208,14 +206,14 @@ static void ncp_host_master_dma_setup(void)
 static int ncp_host_master_init(void)
 {
     /* SPI init */
-    int ret = 0;
+    int ret              = 0;
     uint32_t srcClock_Hz = 0U;
     lpspi_master_config_t masterConfig;
     srcClock_Hz = LPSPI_MASTER_CLK_FREQ;
 
     LPSPI_MasterGetDefaultConfig(&masterConfig);
-    masterConfig.baudRate = NCP_SPI_MASTER_CLOCK; // decrease this value for testing purpose.
-    masterConfig.whichPcs = kLPSPI_Pcs0;
+    masterConfig.baudRate                      = NCP_SPI_MASTER_CLOCK; // decrease this value for testing purpose.
+    masterConfig.whichPcs                      = kLPSPI_Pcs0;
     masterConfig.pcsToSckDelayInNanoSec        = 1000000000U / (masterConfig.baudRate * 2U);
     masterConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / (masterConfig.baudRate * 2U);
     masterConfig.betweenTransferDelayInNanoSec = 1000000000U / (masterConfig.baudRate * 2U);
@@ -235,22 +233,22 @@ void ncp_host_gpio_init(void)
         kGPIO_IntRisingEdge,
     };
 
-  GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_RX, &gpio_input_interrupt_config);
-  GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
-  NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
-  EnableIRQ(NCP_HOST_GPIO_IRQ);
-  /* Enable GPIO pin interrupt */
-  GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
-  GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);
+    GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_RX, &gpio_input_interrupt_config);
+    GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
+    NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
+    EnableIRQ(NCP_HOST_GPIO_IRQ);
+    /* Enable GPIO pin interrupt */
+    GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
+    GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);
 
-  IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_00_LPSPI1_SCK, 0U);
-  IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_01_LPSPI1_PCS0, 0U);
-  IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_02_LPSPI1_SDO, 0U);
-  IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_03_LPSPI1_SDI, 0U);
-  IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_00_LPSPI1_SCK, 0x10B0U);
-  IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_01_LPSPI1_PCS0, 0x10B0U);
-  IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_02_LPSPI1_SDO, 0x10B0U);
-  IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_03_LPSPI1_SDI, 0x10B0U);
+    IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_00_LPSPI1_SCK, 0U);
+    IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_01_LPSPI1_PCS0, 0U);
+    IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_02_LPSPI1_SDO, 0U);
+    IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_03_LPSPI1_SDI, 0U);
+    IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_00_LPSPI1_SCK, 0x10B0U);
+    IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_01_LPSPI1_PCS0, 0x10B0U);
+    IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_02_LPSPI1_SDO, 0x10B0U);
+    IOMUXC_SetPinConfig(IOMUXC_GPIO_SD_B0_03_LPSPI1_SDI, 0x10B0U);
 }
 
 int ncp_host_init_spi_master(void)
@@ -264,7 +262,7 @@ int ncp_host_init_spi_master(void)
         PRINTF("Create spi master sem failed");
         return ret;
     }
-     ret = os_semaphore_create(&spi_master_txrx_done, "spi master txrx done semaphore");
+    ret = os_semaphore_create(&spi_master_txrx_done, "spi master txrx done semaphore");
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create spi master txrx done sem failed");
@@ -276,16 +274,17 @@ int ncp_host_init_spi_master(void)
     CLOCK_SetMux(kCLOCK_LpspiMux, EXAMPLE_LPSPI_CLOCK_SOURCE_SELECT);
     CLOCK_SetDiv(kCLOCK_LpspiDiv, EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER);
     ret = ncp_host_master_init();
-    if(ret != WM_SUCCESS)
+    if (ret != WM_SUCCESS)
     {
         PRINTF("Failed to initialize SPI master(%d)\r\n", ret);
         return ret;
     }
     ncp_host_master_dma_setup();
     /* Set up handle for spi master */
-    LPSPI_MasterTransferCreateHandleEDMA(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle,
-                                                 ncp_host_spi_master_cb, NULL,
-                                                 &masterRxHandle, &masterTxHandle);
-    LPSPI_MasterTransferPrepareEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, EXAMPLE_LPSPI_MASTER_PCS_FOR_TRANSFER | kLPSPI_MasterByteSwap | kLPSPI_MasterPcsContinuous);
+    LPSPI_MasterTransferCreateHandleEDMA(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, ncp_host_spi_master_cb, NULL,
+                                         &masterRxHandle, &masterTxHandle);
+    LPSPI_MasterTransferPrepareEDMALite(
+        EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle,
+        EXAMPLE_LPSPI_MASTER_PCS_FOR_TRANSFER | kLPSPI_MasterByteSwap | kLPSPI_MasterPcsContinuous);
     return ret;
 }

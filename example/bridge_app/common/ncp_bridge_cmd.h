@@ -18,7 +18,7 @@
 #define NCP_BRIDGE_SEND_DATA_INBUF_SIZE 1600
 #define NCP_BRIDGE_INBUF_SIZE     4096
 #define NCP_BRIDGE_CMD_HEADER_LEN sizeof(NCP_BRIDGE_COMMAND)
-#define NCP_BRIDGE_TLV_HEADER_LEN sizeof(NCP_BRIDGE_TLV_HEADER)
+#define NCP_BRIDGE_TLV_HEADER_LEN sizeof(TypeHeader_t)
 
 /*NCP Bridge command class*/
 #define NCP_BRIDGE_CMD_WLAN   0x00000000
@@ -137,7 +137,7 @@
 
 /*WLAN Network command*/
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_INFO    (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000001) /* wlan-info */
-#define NCP_BRIDGE_WLAN_NETWORK_MONITOR     (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000002) /* wlan-monitor */
+#define NCP_BRIDGE_CMD_WLAN_NETWORK_MONITOR     (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000002) /* wlan-monitor */
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_ADD    (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000003) /* wlan-add */
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_START   (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000004) /* wlan-start-network */
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_STOP    (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000005) /* wlan-stop-network */
@@ -243,7 +243,7 @@
 #define GET_CMD_SUBCLASS(cmd) ((cmd)&0x00ff0000)
 #define GET_CMD_ID(cmd)       ((cmd)&0x0000ffff)
 #define GET_CMD_TLV(cmd) \
-    (((cmd)->size == NCP_BRIDGE_CMD_HEADER_LEN) ? NULL : (t_u8 *)((t_u8 *)(cmd) + NCP_BRIDGE_CMD_HEADER_LEN))
+    (((cmd)->size == NCP_BRIDGE_CMD_HEADER_LEN) ? NULL : (uint8_t *)((uint8_t *)(cmd) + NCP_BRIDGE_CMD_HEADER_LEN))
 
 /*Set UAP max client count status*/
 #define WLAN_SET_MAX_CLIENT_CNT_SUCCESS          0
@@ -316,24 +316,24 @@ typedef MLAN_PACK_START struct _wlan_bridge_scan_result
 typedef MLAN_PACK_START struct bridge_command_header
 {
     /*bit0 ~ bit15 cmd id  bit16 ~ bit23 cmd subclass bit24 ~ bit31 cmd class*/
-    t_u32 cmd;
-    t_u16 size;
-    t_u16 seqnum;
-    t_u16 result;
-    t_u16 msg_type;
+    uint32_t cmd;
+    uint16_t size;
+    uint16_t seqnum;
+    uint16_t result;
+    uint16_t msg_type;
 } MLAN_PACK_END NCP_BRIDGE_COMMAND, NCP_BRIDGE_RESPONSE;
 
 /*NCP Bridge tlv header*/
 typedef MLAN_PACK_START struct TLVTypeHeader_t
 {
-    t_u16 type;
-    t_u16 size;
-} MLAN_PACK_END TypeHeader_t, NCP_BRIDGE_TLV_HEADER;
+    uint16_t type;
+    uint16_t size;
+} MLAN_PACK_END TypeHeader_t, NCP_BRIDGE_TLV_HEADER, NCP_MCU_HOST_TLV_HEADER;
 
 /*Bridge response: scan result*/
 typedef MLAN_PACK_START struct _NCP_CMD_SCAN_NETWORK_INFO
 {
-    t_u8 res_cnt;
+    uint8_t res_cnt;
     wlan_bridge_scan_result res[CONFIG_MAX_AP_ENTRIES];
 } MLAN_PACK_END NCP_CMD_SCAN_NETWORK_INFO;
 
@@ -349,16 +349,16 @@ typedef MLAN_PACK_START struct _NCP_CMD_FW_VERSION
 /*Bridge response: mac address*/
 typedef MLAN_PACK_START struct _NCP_CMD_GET_MAC_ADDRESS
 {
-    t_u8 uap_mac[MLAN_MAC_ADDR_LENGTH];
-    t_u8 sta_mac[MLAN_MAC_ADDR_LENGTH];
+    uint8_t uap_mac[MLAN_MAC_ADDR_LENGTH];
+    uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END NCP_CMD_GET_MAC_ADDRESS;
 
 /*Bridge response: wlan connection state*/
 typedef MLAN_PACK_START struct _NCP_CMD_CONNECT_STAT
 {
-    t_u8 ps_mode;
-    t_u8 uap_conn_stat;
-    t_u8 sta_conn_stat;
+    uint8_t ps_mode;
+    uint8_t uap_conn_stat;
+    uint8_t sta_conn_stat;
 } MLAN_PACK_END NCP_CMD_CONNECT_STAT;
 
 #ifdef CONFIG_IPV6
@@ -431,10 +431,8 @@ typedef MLAN_PACK_START struct _wlan_bridge_network
     unsigned int channel;
     /** The ACS band if set channel to 0. **/
     uint16_t acs_band;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
     /** Rssi threshold */
     short rssi_threshold;
-#endif
     /** BSS type */
     uint8_t type;
     /** The network wireless mode enum wlan_bss_role. Set this
@@ -454,18 +452,14 @@ typedef MLAN_PACK_START struct _wlan_bridge_network
     uint8_t enable_11n : 1;
 
     /** The network IP address configuration. */
-#ifdef CONFIG_IPV6
     /** The network IPv6 address configuration */
     wlan_bridge_ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
-#endif
     /** The network IPv4 address configuration */
     wlan_bridge_ipv4_config ipv4;
 
     uint8_t is_sta_ipv4_connected;
 
-#ifdef CONFIG_WPA2_ENTP
     char identity[IDENTITY_MAX_LENGTH];
-#endif
 
     /* Private Fields */
     /** If set to 1, the ssid field contains the specific SSID for this
@@ -479,25 +473,21 @@ typedef MLAN_PACK_START struct _wlan_bridge_network
     unsigned channel_specific : 1;
     /** If set to 0, any security that matches is used. */
     unsigned security_specific : 1;
-#ifdef CONFIG_WPS2
     /** This indicates this network is used as an internal network for
      * WPS */
     unsigned wps_specific : 1;
-#endif
     /** Beacon period of associated BSS */
     uint16_t beacon_period;
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
-#ifdef CONFIG_WIFI_CAPA
     uint8_t wlan_capa;
-#endif
 } MLAN_PACK_END wlan_bridge_network;
 
 /*Bridge response: wlan network info*/
 typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_INFO
 {
-    t_u8 uap_conn_stat;
-    t_u8 sta_conn_stat;
+    uint8_t uap_conn_stat;
+    uint8_t sta_conn_stat;
     wlan_bridge_network uap_network;
     wlan_bridge_network sta_network;
 } MLAN_PACK_END NCP_CMD_NETWORK_INFO;
@@ -505,7 +495,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_INFO
 /*Bridge response: wlan network list info*/
 typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_LIST
 {
-    t_u8 count;
+    uint8_t count;
     wlan_bridge_network net_list[NCP_BRIDGE_WLAN_KNOWN_NETWORKS];
 } MLAN_PACK_END NCP_CMD_NETWORK_LIST;
 
@@ -519,7 +509,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_REMOVE
 /*NCP Bridge mac address*/
 typedef MLAN_PACK_START struct _NCP_CMD_MAC_ADDRESS
 {
-    t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
+    uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END NCP_CMD_MAC_ADDRESS;
 
 /*NCP Bridge SSID tlv*/
@@ -634,7 +624,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_START
 typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_UAP_STA_LIST
 {
     /** station count */
-    t_u16 sta_count;
+    uint16_t sta_count;
     /** station list */
     wifi_sta_info_t info[MAX_NUM_CLIENTS];
 } MLAN_PACK_END NCP_CMD_NETWORK_UAP_STA_LIST;
@@ -642,8 +632,8 @@ typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_UAP_STA_LIST
 /*NCP Bridge roaming tlv*/
 typedef MLAN_PACK_START struct _NCP_CMD_ROAMING
 {
-    t_u32 enable;
-    t_u8 rssi_threshold;
+    uint32_t enable;
+    uint8_t rssi_threshold;
 } MLAN_PACK_END NCP_CMD_ROAMING;
 
 /*Bridge Wlan Reset Data*/
@@ -655,80 +645,80 @@ typedef MLAN_PACK_START struct WLAN_RESET_ParaSet
 /*BRIDGE WLAN SOCKET*/
 /*Bridge Wlan Socket Open*/
 #define HTTP_PARA_LEN 16
-typedef MLAN_PACK_START struct WLAN_SOCKET_OPEN_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_OPEN_CFG
 {
     char socket_type[HTTP_PARA_LEN];
     char domain_type[HTTP_PARA_LEN];
     char protocol[HTTP_PARA_LEN];
     uint32_t  opened_handle;
-} MLAN_PACK_END WLAN_SOCKET_OPEN;
+} MLAN_PACK_END NCP_CMD_SOCKET_OPEN_CFG;
 
 /*Bridge Wlan Socket Connect*/
 #define IP_ADDR_LEN 16
-typedef MLAN_PACK_START struct WLAN_SOCKET_CONN_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_CON_CFGN
 {
     uint32_t handle;
     uint32_t port;
     char ip_addr[IP_ADDR_LEN];
-} MLAN_PACK_END WLAN_SOCKET_CON;
+} MLAN_PACK_END NCP_CMD_SOCKET_CON_CFG;
 
 /*Bridge Wlan Socket bind*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_BIND_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_BIND_CFG
 {
     uint32_t handle;
     uint32_t port;
     char ip_addr[IP_ADDR_LEN];
-} MLAN_PACK_END WLAN_SOCKET_BIND;
+} MLAN_PACK_END NCP_CMD_SOCKET_BIND_CFG;
 
 /*Bridge Wlan Socket Close*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_CLOSE_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_CLOSE_CFG
 {
     uint32_t handle;
-} MLAN_PACK_END WLAN_SOCKET_CLOSE;
+} MLAN_PACK_END NCP_CMD_SOCKET_CLOSE_CFG;
 
 /*Bridge Wlan Socket Listen*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_LISTEN_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_LISTEN_CFG
 {
     uint32_t handle;
     uint32_t number;
-} MLAN_PACK_END WLAN_SOCKET_LISTEN;
+} MLAN_PACK_END NCP_CMD_SOCKET_LISTEN_CFG;
 
 /*Bridge Wlan Socket Accept*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_ACCEPT_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_ACCEPT_CFG
 {
     uint32_t handle;
     int  accepted_handle;
-} MLAN_PACK_END WLAN_SOCKET_ACCEPT;
+} MLAN_PACK_END NCP_CMD_SOCKET_ACCEPT_CFG;
 
 /*Bridge Wlan Socket Send*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_SEND_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_SEND_CFG
 {
     uint32_t handle;
     uint32_t size;
     char send_data[1];
-} MLAN_PACK_END WLAN_SOCKET_SEND;
+} MLAN_PACK_END NCP_CMD_SOCKET_SEND_CFG;
 
 /*Bridge Wlan Socket Sendto*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_SENDTO_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_SENDTO_CFG
 {
     uint32_t handle;
     uint32_t size;
     char ip_addr[IP_ADDR_LEN];
     uint32_t port;
     char send_data[1];
-} MLAN_PACK_END WLAN_SOCKET_SENDTO;
+} MLAN_PACK_END NCP_CMD_SOCKET_SENDTO_CFG;
 
 /*Bridge Wlan Socket Receive*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_RECEIVE_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_RECEIVE_CFG
 {
     uint32_t handle;
     uint32_t recv_size;
     uint32_t timeout;
     char recv_data[1];
-} MLAN_PACK_END WLAN_SOCKET_RECEIVE;
+} MLAN_PACK_END NCP_CMD_SOCKET_RECEIVE_CFG;
 
 /*Bridge Wlan Socket Recvfrom*/
-typedef MLAN_PACK_START struct WLAN_SOCKET_RECVFROM_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_RECVFROM_CFG
 {
     uint32_t handle;
     uint32_t recv_size;
@@ -736,89 +726,89 @@ typedef MLAN_PACK_START struct WLAN_SOCKET_RECVFROM_ParaSet
     char peer_ip[IP_ADDR_LEN];
     uint32_t peer_port;
     char recv_data[1];
-} MLAN_PACK_END WLAN_SOCKET_RECVFROM;
+} MLAN_PACK_END NCP_CMD_SOCKET_RECVFROM_CFG;
 
 /*Bridge Wlan Http Connect*/
-typedef MLAN_PACK_START struct WLAN_HTTP_CONNECT_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_CONNECT_CFG
 {
     int opened_handle;
     char host[1];
-} MLAN_PACK_END  WLAN_HTTP_CON;
+} MLAN_PACK_END  NCP_CMD_HTTP_CON_CFG;
 
 /*Bridge Wlan Http Disconnect*/
-typedef MLAN_PACK_START struct WLAN_HTTP_DISCONNECT_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_DISCONNECT_CFG
 {
     uint32_t handle;
-} MLAN_PACK_END  WLAN_HTTP_DISCON;
+} MLAN_PACK_END  NCP_CMD_HTTP_DISCON_CFG;
 
 /*Bridge Wlan Http Seth*/
 #define SETH_NAME_LENGTH  64
 #define SETH_VALUE_LENGTH 128
-typedef MLAN_PACK_START struct WLAN_HTTP_SETH_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_SETH_CFG
 {
     char name[SETH_NAME_LENGTH];
     char value[SETH_VALUE_LENGTH];
-} MLAN_PACK_END WLAN_HTTP_SETH;
+} MLAN_PACK_END NCP_CMD_HTTP_SETH_CFG;
 
 /*Bridge Wlan Http Seth*/
-typedef MLAN_PACK_START struct WLAN_HTTP_UNSETH_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_UNSETH_CFG
 {
     char name[SETH_NAME_LENGTH];
-} MLAN_PACK_END WLAN_HTTP_UNSETH;
+} MLAN_PACK_END NCP_CMD_HTTP_UNSETH_CFG;
 
 /*Bridge Wlan Http Request*/
 #define HTTP_URI_LEN 512
-typedef MLAN_PACK_START struct WLAN_HTTP_REQUEST_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_REQ_CFG
 {
     uint32_t handle;
     char     method[HTTP_PARA_LEN];
     char uri[HTTP_URI_LEN];
     uint32_t req_size;
     char req_data[1];
-} MLAN_PACK_END WLAN_HTTP_REQUEST;
+} MLAN_PACK_END NCP_CMD_HTTP_REQ_CFG;
 
 /*Bridge Wlan Http Request Response*/
-typedef MLAN_PACK_START struct WLAN_HTTP_REQUEST_RESP_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_REQ_RESP_CFG
 {
     uint32_t header_size;
     char recv_header[1];
-} MLAN_PACK_END WLAN_HTTP_REQUEST_RESP;
+} MLAN_PACK_END NCP_CMD_HTTP_REQ_RESP_CFG;
 
 /*Bridge Wlan Http Receive*/
-typedef MLAN_PACK_START struct WLAN_HTTP_RECEIVE_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_RECV_CFG
 {
     uint32_t handle;
     uint32_t recv_size;
     uint32_t timeout;
     char recv_data[1];
-} MLAN_PACK_END WLAN_HTTP_RECEIVE;
+} MLAN_PACK_END NCP_CMD_HTTP_RECV_CFG;
 
 /*Bridge Wlan Http Upgrade*/
-typedef MLAN_PACK_START struct WLAN_HTTP_UPG_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_HTTP_UPG_CFG
 {
     uint32_t handle;
     char     uri[HTTP_URI_LEN];
     char     protocol[HTTP_PARA_LEN];
-} MLAN_PACK_END WLAN_HTTP_UPG;
+} MLAN_PACK_END NCP_CMD_HTTP_UPG_CFG;
 
 /*Bridge Wlan Websocket Send*/
-typedef MLAN_PACK_START struct WLAN_WEBSOCKET_SEND_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_WEBSOCKET_SEND_CFG
 {
     uint32_t handle;
     char     type[HTTP_PARA_LEN];
     uint32_t size;
     char send_data[1];
-} MLAN_PACK_END WLAN_WEBSOCKET_SEND;
+} MLAN_PACK_END NCP_CMD_WEBSOCKET_SEND_CFG;
 
 /*Bridge Wlan Websocket Receive*/
-typedef MLAN_PACK_START struct WLAN_WEBSOCKET_RECEIVE_ParaSet
+typedef MLAN_PACK_START struct _NCP_CMD_WEBSOCKET_RECV_CFG
 {
     uint32_t handle;
     uint32_t recv_size;
     uint32_t timeout;
     uint32_t fin;
     char recv_data[1];
-} MLAN_PACK_END WLAN_WEBSOCKET_RECEIVE;
+} MLAN_PACK_END NCP_CMD_WEBSOCKET_RECV_CFG;
 
 typedef MLAN_PACK_START struct _NCP_CMD_WPS_GEN_PIN
 {
@@ -834,19 +824,19 @@ typedef MLAN_PACK_START struct _NCP_CMD_WPS_PIN
 typedef MLAN_PACK_START struct
 {
     /** Action */
-    t_u16 action;
+    uint16_t action;
     /** Monitor activity */
-    t_u16 monitor_activity;
+    uint16_t monitor_activity;
     /** Filter flags */
-    t_u16 filter_flags;
+    uint16_t filter_flags;
     /** Channel scan parameter : Radio type */
-    t_u8 radio_type;
+    uint8_t radio_type;
     /** Channel number */
-    t_u8 chan_number;
+    uint8_t chan_number;
     /** mac num of filter*/
-    t_u8 filter_num;
+    uint8_t filter_num;
     /** Source address of the packet to receive */
-    t_u8 mac_addr[MAX_MONIT_MAC_FILTER_NUM][MLAN_MAC_ADDR_LENGTH];
+    uint8_t mac_addr[MAX_MONIT_MAC_FILTER_NUM][MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_START wlan_bridge_net_monitor_para;
 
 typedef MLAN_PACK_START struct _NCP_CMD_NET_MONITOR
@@ -957,7 +947,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_RSSI
 typedef MLAN_PACK_START struct _NCP_CMD_POWERMGMT_MEF
 {
     int type;
-    t_u8 action;
+    uint8_t action;
 } MLAN_PACK_END NCP_CMD_POWERMGMT_MEF;
 
 /*NCP Bridge UAPSD tlv*/
@@ -969,17 +959,17 @@ typedef MLAN_PACK_START struct _NCP_CMD_POWERMGMT_UAPSD
 /*NCP Bridge qosinfo tlv*/
 typedef MLAN_PACK_START struct _NCP_CMD_POWERMGMT_QOSINFO
 {
-    t_u8 qos_info;
+    uint8_t qos_info;
     /* 0 - get, 1 - set */
-    t_u8 action;
+    uint8_t action;
 } MLAN_PACK_END NCP_CMD_POWERMGMT_QOSINFO;
 
 /*NCP Bridge sleep period tlv*/
 typedef MLAN_PACK_START struct _NCP_CMD_POWERMGMT_SLEEP_PERIOD
 {
-    t_u32 period;
+    uint32_t period;
     /* 0 - get, 1 - set */
-    t_u8 action;
+    uint8_t action;
 } MLAN_PACK_END NCP_CMD_POWERMGMT_SLEEP_PERIOD;
 
 typedef MLAN_PACK_START struct _power_cfg_t
@@ -1036,105 +1026,129 @@ typedef MLAN_PACK_START struct _HE_CAP_ParamSet_t
     /** 0xff: Extension Capability IE */
     TypeHeader_t header;
     /** 35: HE capability */
-    t_u8 ext_id;
+    uint8_t ext_id;
     /** he mac capability info */
-    t_u8 he_mac_cap[6];
+    uint8_t he_mac_cap[6];
     /** he phy capability info */
-    t_u8 he_phy_cap[11];
+    uint8_t he_phy_cap[11];
     /** he txrx mcs support for 80MHz */
-    t_u8 he_txrx_mcs_support[4];
+    uint8_t he_txrx_mcs_support[4];
     /** val for txrx mcs 160Mhz or 80+80, and PPE thresholds */
-    t_u8 val[28];
+    uint8_t val[28];
 } MLAN_PACK_END HE_CAP_ParamSet_t;
 
 typedef MLAN_PACK_START struct _NCP_CMD_11AX_CFG
 {
     /** band, BIT0:2.4G, BIT1:5G, both set for 2.4G and 5G*/
-    t_u8 band;
+    uint8_t band;
     HE_CAP_ParamSet_t he_cap_tlv;
 } MLAN_PACK_END NCP_CMD_11AX_CFG;
 
 typedef MLAN_PACK_START struct _NCP_CMD_BTWT_CFG
 {
     /** only support 1: Set */
-    t_u16 action;
+    uint16_t action;
     /** 0x125: Broadcast TWT AP config */
-    t_u16 sub_id;
+    uint16_t sub_id;
     /** range 64-255 */
-    t_u8 nominal_wake;
+    uint8_t nominal_wake;
     /** Max STA Support */
-    t_u8 max_sta_support;
-    t_u16 twt_mantissa;
-    t_u16 twt_offset;
-    t_u8 twt_exponent;
-    t_u8 sp_gap;
+    uint8_t max_sta_support;
+    uint16_t twt_mantissa;
+    uint16_t twt_offset;
+    uint8_t twt_exponent;
+    uint8_t sp_gap;
 } MLAN_PACK_END NCP_CMD_BTWT_CFG;
 
 typedef MLAN_PACK_START struct _NCP_CMD_TWT_SETUP
 {
     /** Implicit, 0: TWT session is explicit, 1: Session is implicit */
-    t_u8 implicit;
+    uint8_t implicit;
     /** Announced, 0: Unannounced, 1: Announced TWT */
-    t_u8 announced;
+    uint8_t announced;
     /** Trigger Enabled, 0: Non-Trigger enabled, 1: Trigger enabled TWT */
-    t_u8 trigger_enabled;
+    uint8_t trigger_enabled;
     /** TWT Information Disabled, 0: TWT info enabled, 1: TWT info disabled */
-    t_u8 twt_info_disabled;
+    uint8_t twt_info_disabled;
     /** Negotiation Type, 0: Individual TWT, 3: Broadcast TWT */
-    t_u8 negotiation_type;
+    uint8_t negotiation_type;
     /** TWT Wakeup Duration, time after which the TWT requesting STA can
      * transition to doze state */
-    t_u8 twt_wakeup_duration;
+    uint8_t twt_wakeup_duration;
     /** Flow Identifier. Range: [0-7]*/
-    t_u8 flow_identifier;
+    uint8_t flow_identifier;
     /** Hard Constraint, 0: FW can tweak the TWT setup parameters if it is
      *rejected by AP.
      ** 1: Firmware should not tweak any parameters. */
-    t_u8 hard_constraint;
+    uint8_t hard_constraint;
     /** TWT Exponent, Range: [0-63] */
-    t_u8 twt_exponent;
+    uint8_t twt_exponent;
     /** TWT Mantissa Range: [0-sizeof(UINT16)] */
-    t_u16 twt_mantissa;
+    uint16_t twt_mantissa;
     /** TWT Request Type, 0: REQUEST_TWT, 1: SUGGEST_TWT*/
-    t_u8 twt_request;
+    uint8_t twt_request;
 } MLAN_PACK_END NCP_CMD_TWT_SETUP;
 
 typedef MLAN_PACK_START struct _NCP_CMD_TWT_TEARDOWN
 {
     /** TWT Flow Identifier. Range: [0-7] */
-    t_u8 flow_identifier;
+    uint8_t flow_identifier;
     /** Negotiation Type. 0: Future Individual TWT SP start time, 1: Next
      * Wake TBTT time */
-    t_u8 negotiation_type;
+    uint8_t negotiation_type;
     /** Tear down all TWT. 1: To teardown all TWT, 0 otherwise */
-    t_u8 teardown_all_twt;
+    uint8_t teardown_all_twt;
 } MLAN_PACK_END NCP_CMD_TWT_TEARDOWN;
+
+typedef MLAN_PACK_START struct _IEEE_BTWT_ParamSet_t
+{
+    /*
+     *  [Bit 0]     request
+     *  [Bit 1-3]   setup_cmd
+     *  [Bit 4]     trigger
+     *  [Bit 5]     last_broadcast_parameter_set
+     *  [Bit 6]     flow_type
+     *  [Bit 7-9]   btwt_recommendation
+     *  [Bit 10-14] wake_interval_exponent
+     *  [Bit 15]    reserved
+     */
+    uint16_t request_type;
+    uint16_t target_wake_time;
+    uint8_t nominal_min_wake_duration;
+    uint16_t wake_interval_mantissa;
+    /*
+     *  [Bit 0-2]   reserved
+     *  [Bit 3-7]   btwt_id
+     *  [Bit 8-15]  btwt_persistence
+     */
+    uint16_t twt_info;
+} MLAN_PACK_END IEEE_BTWT_ParamSet_t;
 
 typedef MLAN_PACK_START struct _NCP_CMD_TWT_REPORT
 {
     /** TWT report type, 0: BTWT id */
-    t_u8 type;
+    uint8_t type;
     /** TWT report length of value in data */
-    t_u8 length;
-    t_u8 reserve[2];
+    uint8_t length;
+    uint8_t reserve[2];
     /** TWT report payload for FW response to fill, 4 * 9bytes */
-    t_u8 data[36];
+    IEEE_BTWT_ParamSet_t info[4];
 } MLAN_PACK_END NCP_CMD_TWT_REPORT;
 
 typedef MLAN_PACK_START struct _NCP_CMD_11D_ENABLE
 {
     /** 0 - STA, 1 - UAP */
-    t_u32 role;
+    uint32_t role;
     /** 0 - disable, 1 - enable */
-    t_u32 state;
+    uint32_t state;
 } MLAN_PACK_END NCP_CMD_11D_ENABLE;
 
 typedef MLAN_PACK_START struct _NCP_CMD_REGION_CODE
 {
     /** 0 - get, 1 - set */
-    t_u32 action;
+    uint32_t action;
     /** region code, 0xaa for world wide safe, 0x10 for US FCC, etc */
-    t_u32 region_code;
+    uint32_t region_code;
 } MLAN_PACK_END NCP_CMD_REGION_CODE;
 
 /*NCP Bridge system configuration*/
@@ -1440,14 +1454,14 @@ typedef MLAN_PACK_START struct _NCPCmd_DS_COMMAND
         NCP_CMD_WPS_GEN_PIN wps_gen_pin_info;
         NCP_CMD_WPS_PIN wps_pin_cfg;
 
-        WLAN_SOCKET_OPEN socket_open;
-        WLAN_SOCKET_ACCEPT socket_accept;
-        WLAN_SOCKET_RECEIVE socket_receive;
-        WLAN_SOCKET_RECVFROM socket_recvfrom;
-        WLAN_HTTP_CON http_connect;
-        WLAN_HTTP_RECEIVE http_receive;
-        WLAN_HTTP_REQUEST_RESP http_req;
-        WLAN_WEBSOCKET_RECEIVE websocket_receive;
+        NCP_CMD_SOCKET_OPEN_CFG socket_open;
+        NCP_CMD_SOCKET_ACCEPT_CFG socket_accept;
+        NCP_CMD_SOCKET_RECEIVE_CFG socket_receive;
+        NCP_CMD_SOCKET_RECVFROM_CFG socket_recvfrom;
+        NCP_CMD_HTTP_CON_CFG http_connect;
+        NCP_CMD_HTTP_RECV_CFG http_receive;
+        NCP_CMD_HTTP_REQ_RESP_CFG http_req;
+        NCP_CMD_WEBSOCKET_RECV_CFG websocket_receive;
 
         /** MEF configurations */
         NCP_CMD_POWERMGMT_MEF mef_config;

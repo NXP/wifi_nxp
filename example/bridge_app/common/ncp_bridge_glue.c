@@ -1141,9 +1141,9 @@ static int wlan_bridge_monitor(void *tlv)
 
     ret = wlan_net_monitor_cfg((wlan_net_monitor_t *)&monitor_cfg->monitor_para);
     if (!ret)
-        wlan_bridge_prepare_status(NCP_BRIDGE_WLAN_NETWORK_MONITOR, NCP_BRIDGE_CMD_RESULT_OK);
+        wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_NETWORK_MONITOR, NCP_BRIDGE_CMD_RESULT_OK);
     else
-        wlan_bridge_prepare_status(NCP_BRIDGE_WLAN_NETWORK_MONITOR, NCP_BRIDGE_CMD_RESULT_ERROR);
+        wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_NETWORK_MONITOR, NCP_BRIDGE_CMD_RESULT_ERROR);
 
     return WM_SUCCESS;
 }
@@ -1457,15 +1457,15 @@ int wlan_bridge_http_connect(void *data)
         return -WM_FAIL;
     }
 
-    NCPCmd_DS_COMMAND *cmd_res = ncp_bridge_get_response_buffer();
-    WLAN_HTTP_CON *tlv_res     = (WLAN_HTTP_CON *)&cmd_res->params.http_connect;
-    tlv_res->opened_handle     = ret;
-    cmd_res->header.cmd        = NCP_BRIDGE_CMD_WLAN_HTTP_CON;
-    cmd_res->header.size       = NCP_BRIDGE_CMD_HEADER_LEN;
-    cmd_res->header.seqnum     = 0x00;
-    cmd_res->header.result     = NCP_BRIDGE_CMD_RESULT_OK;
-    cmd_res->header.msg_type   = NCP_BRIDGE_MSG_TYPE_RESP;
-    cmd_res->header.size += sizeof(WLAN_HTTP_CON);
+    NCPCmd_DS_COMMAND *cmd_res    = ncp_bridge_get_response_buffer();
+    NCP_CMD_HTTP_CON_CFG *tlv_res = (NCP_CMD_HTTP_CON_CFG *)&cmd_res->params.http_connect;
+    tlv_res->opened_handle        = ret;
+    cmd_res->header.cmd           = NCP_BRIDGE_CMD_WLAN_HTTP_CON;
+    cmd_res->header.size          = NCP_BRIDGE_CMD_HEADER_LEN;
+    cmd_res->header.seqnum        = 0x00;
+    cmd_res->header.result        = NCP_BRIDGE_CMD_RESULT_OK;
+    cmd_res->header.msg_type      = NCP_BRIDGE_MSG_TYPE_RESP;
+    cmd_res->header.size += sizeof(NCP_CMD_HTTP_CON_CFG);
     ncp_d("NCP: %s done!\r\n", __func__);
     return WM_SUCCESS;
 }
@@ -1475,8 +1475,8 @@ int wlan_bridge_http_disconnect(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_HTTP_DISCON *tlv = (WLAN_HTTP_DISCON *)data;
-    ret                   = ncp_http_disconnect(tlv->handle);
+    NCP_CMD_HTTP_DISCON_CFG *tlv = (NCP_CMD_HTTP_DISCON_CFG *)data;
+    ret                          = ncp_http_disconnect(tlv->handle);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1500,10 +1500,10 @@ int wlan_bridge_http_req(void *data)
     int ret_size = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
 
-    WLAN_HTTP_REQUEST *tlv          = (WLAN_HTTP_REQUEST *)data;
-    NCPCmd_DS_COMMAND *cmd_res      = ncp_bridge_get_response_buffer();
-    WLAN_HTTP_REQUEST_RESP *tlv_res = (WLAN_HTTP_REQUEST_RESP *)&cmd_res->params.http_req;
-    unsigned int header_len         = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_HTTP_REQUEST);
+    NCP_CMD_HTTP_REQ_CFG *tlv          = (NCP_CMD_HTTP_REQ_CFG *)data;
+    NCPCmd_DS_COMMAND *cmd_res         = ncp_bridge_get_response_buffer();
+    NCP_CMD_HTTP_REQ_RESP_CFG *tlv_res = (NCP_CMD_HTTP_REQ_RESP_CFG *)&cmd_res->params.http_req;
+    unsigned int header_len            = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_HTTP_REQ_CFG);
     if ((strlen(tlv->method) + 1) > HTTP_PARA_LEN || (strlen(tlv->uri) + 1) > HTTP_URI_LEN)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1540,7 +1540,7 @@ out:
         cmd_res->header.seqnum   = 0x00;
         cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
         cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
-        cmd_res->header.size += sizeof(WLAN_HTTP_REQUEST_RESP);
+        cmd_res->header.size += sizeof(NCP_CMD_HTTP_REQ_RESP_CFG);
         cmd_res->header.size += ret_size;
     }
     ncp_d("NCP: %s done!\r\n", __func__);
@@ -1557,8 +1557,8 @@ int wlan_bridge_http_recv(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_HTTP_RECEIVE *tlv  = (WLAN_HTTP_RECEIVE *)data;
-    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_HTTP_RECEIVE);
+    NCP_CMD_HTTP_RECV_CFG *tlv = (NCP_CMD_HTTP_RECV_CFG *)data;
+    unsigned int header_len    = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_HTTP_RECV_CFG);
 
     int recv_size = tlv->recv_size;
     if (recv_size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
@@ -1570,9 +1570,9 @@ int wlan_bridge_http_recv(void *data)
 
     ncp_d("size = %s, timeout = %s\n", tlv->recv_size, tlv->timeout);
 
-    NCPCmd_DS_COMMAND *cmd_res = ncp_bridge_get_response_buffer();
-    WLAN_HTTP_RECEIVE *tlv_res = (WLAN_HTTP_RECEIVE *)&cmd_res->params.http_receive;
-    recv_size                  = ncp_http_recv(tlv->handle, tlv->recv_size, tlv->timeout, tlv_res->recv_data);
+    NCPCmd_DS_COMMAND *cmd_res     = ncp_bridge_get_response_buffer();
+    NCP_CMD_HTTP_RECV_CFG *tlv_res = (NCP_CMD_HTTP_RECV_CFG *)&cmd_res->params.http_receive;
+    recv_size                      = ncp_http_recv(tlv->handle, tlv->recv_size, tlv->timeout, tlv_res->recv_data);
     ncp_d("NCP: recv_size = %d, recv_data = %s\r\n", recv_size, tlv_res->recv_data);
     if (recv_size < 0)
     {
@@ -1596,7 +1596,7 @@ out:
         cmd_res->header.seqnum   = 0x00;
         cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
         cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
-        cmd_res->header.size += sizeof(WLAN_SOCKET_RECEIVE);
+        cmd_res->header.size += sizeof(NCP_CMD_SOCKET_RECEIVE_CFG);
         cmd_res->header.size += recv_size;
     }
 
@@ -1610,7 +1610,7 @@ int wlan_bridge_http_seth(void *data)
     wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_HTTP_SETH, NCP_BRIDGE_CMD_RESULT_OK);
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_HTTP_SETH *tlv = (WLAN_HTTP_SETH *)data;
+    NCP_CMD_HTTP_SETH_CFG *tlv = (NCP_CMD_HTTP_SETH_CFG *)data;
     if (((strlen(tlv->name) + 1) > SETH_NAME_LENGTH) || ((strlen(tlv->value) + 1) > SETH_VALUE_LENGTH))
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1640,7 +1640,7 @@ int wlan_bridge_http_unseth(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_HTTP_UNSETH *tlv = (WLAN_HTTP_UNSETH *)data;
+    NCP_CMD_HTTP_UNSETH_CFG *tlv = (NCP_CMD_HTTP_UNSETH_CFG *)data;
     if ((strlen(tlv->name) + 1) > SETH_NAME_LENGTH)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1670,7 +1670,7 @@ int wlan_bridge_websocket_upgrade(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_HTTP_UPG *tlv = (WLAN_HTTP_UPG *)data;
+    NCP_CMD_HTTP_UPG_CFG *tlv = (NCP_CMD_HTTP_UPG_CFG *)data;
     if ((strlen(tlv->protocol) + 1) > HTTP_PARA_LEN || (strlen(tlv->uri) + 1) > HTTP_URI_LEN)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1700,14 +1700,14 @@ int wlan_bridge_websocket_send(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_WEBSOCKET_SEND *tlv = (WLAN_WEBSOCKET_SEND *)data;
+    NCP_CMD_WEBSOCKET_SEND_CFG *tlv = (NCP_CMD_WEBSOCKET_SEND_CFG *)data;
     if ((strlen(tlv->type) + 1) > HTTP_PARA_LEN)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
         ret = -WM_FAIL;
         goto out;
     }
-    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_WEBSOCKET_SEND);
+    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_WEBSOCKET_SEND_CFG);
     if (tlv->size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
     {
         ncp_e("NCP: %s fail, the remain buffer is %d\r\n", __func__, NCP_BRIDGE_INBUF_SIZE - header_len);
@@ -1742,9 +1742,9 @@ int wlan_bridge_websocket_recv(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_WEBSOCKET_RECEIVE *tlv = (WLAN_WEBSOCKET_RECEIVE *)data;
-    unsigned int header_len     = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_WEBSOCKET_RECEIVE);
-    int recv_size               = tlv->recv_size;
+    NCP_CMD_WEBSOCKET_RECV_CFG *tlv = (NCP_CMD_WEBSOCKET_RECV_CFG *)data;
+    unsigned int header_len         = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_WEBSOCKET_RECV_CFG);
+    int recv_size                   = tlv->recv_size;
     if (recv_size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
     {
         ncp_e("NCP: %s fail, the remain buffer is %d\r\n", __func__, NCP_BRIDGE_INBUF_SIZE - header_len);
@@ -1754,10 +1754,10 @@ int wlan_bridge_websocket_recv(void *data)
 
     ncp_d("size = %s, timeout = %s\n", tlv->recv_size, tlv->timeout);
 
-    NCPCmd_DS_COMMAND *cmd_res      = ncp_bridge_get_response_buffer();
-    WLAN_WEBSOCKET_RECEIVE *tlv_res = (WLAN_WEBSOCKET_RECEIVE *)&cmd_res->params.websocket_receive;
-    uint32_t fin                    = tlv_res->fin;
-    recv_size                       = ncp_ws_recv(tlv->handle, tlv->recv_size, tlv->timeout, &fin, tlv_res->recv_data);
+    NCPCmd_DS_COMMAND *cmd_res          = ncp_bridge_get_response_buffer();
+    NCP_CMD_WEBSOCKET_RECV_CFG *tlv_res = (NCP_CMD_WEBSOCKET_RECV_CFG *)&cmd_res->params.websocket_receive;
+    uint32_t fin                        = tlv_res->fin;
+    recv_size = ncp_ws_recv(tlv->handle, tlv->recv_size, tlv->timeout, &fin, tlv_res->recv_data);
     ncp_d("NCP: recv_size = %d, recv_data = %s\r\n", recv_size, tlv_res->recv_data);
     if (recv_size < 0)
     {
@@ -1781,7 +1781,7 @@ out:
         cmd_res->header.seqnum   = 0x00;
         cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
         cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
-        cmd_res->header.size += sizeof(WLAN_WEBSOCKET_RECEIVE);
+        cmd_res->header.size += sizeof(NCP_CMD_WEBSOCKET_RECV_CFG);
         cmd_res->header.size += tlv_res->recv_size;
     }
 
@@ -1794,7 +1794,7 @@ int wlan_bridge_socket_open(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_OPEN *tlv = (WLAN_SOCKET_OPEN *)data;
+    NCP_CMD_SOCKET_OPEN_CFG *tlv = (NCP_CMD_SOCKET_OPEN_CFG *)data;
     if ((strlen(tlv->socket_type) + 1) > HTTP_PARA_LEN || (strlen(tlv->domain_type) + 1) > HTTP_PARA_LEN ||
         (strlen(tlv->protocol) + 1) > HTTP_PARA_LEN)
     {
@@ -1810,15 +1810,15 @@ int wlan_bridge_socket_open(void *data)
         return -WM_FAIL;
     }
 
-    NCPCmd_DS_COMMAND *cmd_res = ncp_bridge_get_response_buffer();
-    WLAN_SOCKET_OPEN *tlv_res  = (WLAN_SOCKET_OPEN *)&cmd_res->params.socket_open;
-    tlv_res->opened_handle     = ret;
-    cmd_res->header.cmd        = NCP_BRIDGE_CMD_WLAN_SOCKET_OPEN;
-    cmd_res->header.size       = NCP_BRIDGE_CMD_HEADER_LEN;
-    cmd_res->header.seqnum     = 0x00;
-    cmd_res->header.result     = NCP_BRIDGE_CMD_RESULT_OK;
-    cmd_res->header.msg_type   = NCP_BRIDGE_MSG_TYPE_RESP;
-    cmd_res->header.size += sizeof(WLAN_SOCKET_OPEN);
+    NCPCmd_DS_COMMAND *cmd_res       = ncp_bridge_get_response_buffer();
+    NCP_CMD_SOCKET_OPEN_CFG *tlv_res = (NCP_CMD_SOCKET_OPEN_CFG *)&cmd_res->params.socket_open;
+    tlv_res->opened_handle           = ret;
+    cmd_res->header.cmd              = NCP_BRIDGE_CMD_WLAN_SOCKET_OPEN;
+    cmd_res->header.size             = NCP_BRIDGE_CMD_HEADER_LEN;
+    cmd_res->header.seqnum           = 0x00;
+    cmd_res->header.result           = NCP_BRIDGE_CMD_RESULT_OK;
+    cmd_res->header.msg_type         = NCP_BRIDGE_MSG_TYPE_RESP;
+    cmd_res->header.size += sizeof(NCP_CMD_SOCKET_OPEN_CFG);
     ncp_d("NCP: %s done!\r\n", __func__);
     return WM_SUCCESS;
 }
@@ -1828,8 +1828,8 @@ int wlan_bridge_socket_connect(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_CON *tlv = (WLAN_SOCKET_CON *)data;
-    ret                  = ncp_sock_connect(tlv->handle, tlv->port, tlv->ip_addr);
+    NCP_CMD_SOCKET_CON_CFG *tlv = (NCP_CMD_SOCKET_CON_CFG *)data;
+    ret                         = ncp_sock_connect(tlv->handle, tlv->port, tlv->ip_addr);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1852,8 +1852,8 @@ int wlan_bridge_socket_bind(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_BIND *tlv = (WLAN_SOCKET_BIND *)data;
-    ret                   = ncp_sock_bind(tlv->handle, tlv->port, tlv->ip_addr);
+    NCP_CMD_SOCKET_BIND_CFG *tlv = (NCP_CMD_SOCKET_BIND_CFG *)data;
+    ret                          = ncp_sock_bind(tlv->handle, tlv->port, tlv->ip_addr);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1876,8 +1876,8 @@ int wlan_bridge_socket_close(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_CLOSE *tlv = (WLAN_SOCKET_CLOSE *)data;
-    ret                    = ncp_sock_close(tlv->handle);
+    NCP_CMD_SOCKET_CLOSE_CFG *tlv = (NCP_CMD_SOCKET_CLOSE_CFG *)data;
+    ret                           = ncp_sock_close(tlv->handle);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1901,8 +1901,8 @@ int wlan_bridge_socket_listen(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_LISTEN *tlv = (WLAN_SOCKET_LISTEN *)data;
-    ret                     = ncp_sock_listen(tlv->handle, tlv->number);
+    NCP_CMD_SOCKET_LISTEN_CFG *tlv = (NCP_CMD_SOCKET_LISTEN_CFG *)data;
+    ret                            = ncp_sock_listen(tlv->handle, tlv->number);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1927,8 +1927,8 @@ int wlan_bridge_socket_accept(void *data)
     int ret           = 0;
     int accept_handle = -1;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_ACCEPT *tlv = (WLAN_SOCKET_ACCEPT *)data;
-    ret                     = ncp_sock_accept(tlv->handle);
+    NCP_CMD_SOCKET_ACCEPT_CFG *tlv = (NCP_CMD_SOCKET_ACCEPT_CFG *)data;
+    ret                            = ncp_sock_accept(tlv->handle);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail!\r\n", __func__);
@@ -1946,15 +1946,15 @@ out:
         wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_SOCKET_ACCEPT, NCP_BRIDGE_CMD_RESULT_ERROR);
     else
     {
-        NCPCmd_DS_COMMAND *cmd_res  = ncp_bridge_get_response_buffer();
-        WLAN_SOCKET_ACCEPT *tlv_res = (WLAN_SOCKET_ACCEPT *)&cmd_res->params.socket_accept;
-        tlv_res->accepted_handle    = accept_handle;
-        cmd_res->header.cmd         = NCP_BRIDGE_CMD_WLAN_SOCKET_ACCEPT;
-        cmd_res->header.size        = NCP_BRIDGE_CMD_HEADER_LEN;
-        cmd_res->header.seqnum      = 0x00;
-        cmd_res->header.result      = NCP_BRIDGE_CMD_RESULT_OK;
-        cmd_res->header.msg_type    = NCP_BRIDGE_MSG_TYPE_RESP;
-        cmd_res->header.size += sizeof(WLAN_SOCKET_ACCEPT);
+        NCPCmd_DS_COMMAND *cmd_res         = ncp_bridge_get_response_buffer();
+        NCP_CMD_SOCKET_ACCEPT_CFG *tlv_res = (NCP_CMD_SOCKET_ACCEPT_CFG *)&cmd_res->params.socket_accept;
+        tlv_res->accepted_handle           = accept_handle;
+        cmd_res->header.cmd                = NCP_BRIDGE_CMD_WLAN_SOCKET_ACCEPT;
+        cmd_res->header.size               = NCP_BRIDGE_CMD_HEADER_LEN;
+        cmd_res->header.seqnum             = 0x00;
+        cmd_res->header.result             = NCP_BRIDGE_CMD_RESULT_OK;
+        cmd_res->header.msg_type           = NCP_BRIDGE_MSG_TYPE_RESP;
+        cmd_res->header.size += sizeof(NCP_CMD_SOCKET_ACCEPT_CFG);
         ncp_d("NCP: %s done!\r\n", __func__);
     }
     app_d("NCP: %s done!\r\n", __func__);
@@ -1968,10 +1968,10 @@ value[2]: send data size.
 */
 int wlan_bridge_socket_send(void *data)
 {
-    int ret                 = 0;
-    WLAN_SOCKET_SEND *tlv   = (WLAN_SOCKET_SEND *)data;
-    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_SOCKET_SEND);
-    int send_size           = tlv->size;
+    int ret                      = 0;
+    NCP_CMD_SOCKET_SEND_CFG *tlv = (NCP_CMD_SOCKET_SEND_CFG *)data;
+    unsigned int header_len      = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_SOCKET_SEND_CFG);
+    int send_size                = tlv->size;
     ncp_d("NCP: hanele = %d, send_size = %d, send_data = %s\r\n", tlv->handle, tlv->size, tlv->send_data);
     if (send_size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
     {
@@ -2006,9 +2006,9 @@ int wlan_bridge_socket_sendto(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_SENDTO *tlv = (WLAN_SOCKET_SENDTO *)data;
-    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_SOCKET_SENDTO);
-    int send_size           = tlv->size;
+    NCP_CMD_SOCKET_SENDTO_CFG *tlv = (NCP_CMD_SOCKET_SENDTO_CFG *)data;
+    unsigned int header_len        = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_SOCKET_SENDTO_CFG);
+    int send_size                  = tlv->size;
     if (send_size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
     {
         ncp_e("NCP: %s fail, the remain buffer is %d\r\n", __func__, NCP_BRIDGE_INBUF_SIZE - header_len);
@@ -2044,9 +2044,9 @@ int wlan_bridge_socket_receive(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_RECEIVE *tlv = (WLAN_SOCKET_RECEIVE *)data;
+    NCP_CMD_SOCKET_RECEIVE_CFG *tlv = (NCP_CMD_SOCKET_RECEIVE_CFG *)data;
 
-    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_SOCKET_RECEIVE);
+    unsigned int header_len = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_SOCKET_RECEIVE_CFG);
     int recv_size           = tlv->recv_size;
     if (recv_size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
     {
@@ -2057,9 +2057,9 @@ int wlan_bridge_socket_receive(void *data)
 
     ncp_d("size = %u, timeout = %u\n", tlv->recv_size, tlv->timeout);
 
-    NCPCmd_DS_COMMAND *cmd_res   = ncp_bridge_get_response_buffer();
-    WLAN_SOCKET_RECEIVE *tlv_res = (WLAN_SOCKET_RECEIVE *)&cmd_res->params.socket_receive;
-    recv_size                    = ncp_sock_receive(tlv->handle, tlv->recv_size, tlv->timeout, tlv_res->recv_data);
+    NCPCmd_DS_COMMAND *cmd_res          = ncp_bridge_get_response_buffer();
+    NCP_CMD_SOCKET_RECEIVE_CFG *tlv_res = (NCP_CMD_SOCKET_RECEIVE_CFG *)&cmd_res->params.socket_receive;
+    recv_size = ncp_sock_receive(tlv->handle, tlv->recv_size, tlv->timeout, tlv_res->recv_data);
     ncp_d("NCP: recv_size = %d, recv_data = %s\r\n", recv_size, tlv_res->recv_data);
     if (recv_size < 0)
     {
@@ -2083,7 +2083,7 @@ out:
         cmd_res->header.seqnum   = 0x00;
         cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
         cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
-        cmd_res->header.size += sizeof(WLAN_SOCKET_RECEIVE);
+        cmd_res->header.size += sizeof(NCP_CMD_SOCKET_RECEIVE_CFG);
         cmd_res->header.size += recv_size;
     }
 
@@ -2103,9 +2103,9 @@ int wlan_bridge_socket_recvfrom(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_SOCKET_RECVFROM *tlv = (WLAN_SOCKET_RECVFROM *)data;
-    unsigned int header_len   = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(WLAN_SOCKET_RECVFROM);
-    int recv_size             = tlv->recv_size;
+    NCP_CMD_SOCKET_RECVFROM_CFG *tlv = (NCP_CMD_SOCKET_RECVFROM_CFG *)data;
+    unsigned int header_len          = NCP_BRIDGE_CMD_HEADER_LEN + sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
+    int recv_size                    = tlv->recv_size;
     if (recv_size >= (NCP_BRIDGE_INBUF_SIZE - header_len))
     {
         ncp_e("NCP: %s fail, the remain buffer is %d\r\n", __func__, NCP_BRIDGE_INBUF_SIZE - header_len);
@@ -2114,9 +2114,9 @@ int wlan_bridge_socket_recvfrom(void *data)
     }
 
     ncp_d("size = %u, timeout = %u\n", tlv->recv_size, tlv->timeout);
-    NCPCmd_DS_COMMAND *cmd_res    = ncp_bridge_get_response_buffer();
-    WLAN_SOCKET_RECVFROM *tlv_res = (WLAN_SOCKET_RECVFROM *)&cmd_res->params.socket_recvfrom;
-    uint32_t peer_port            = tlv_res->peer_port;
+    NCPCmd_DS_COMMAND *cmd_res           = ncp_bridge_get_response_buffer();
+    NCP_CMD_SOCKET_RECVFROM_CFG *tlv_res = (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.socket_recvfrom;
+    uint32_t peer_port                   = tlv_res->peer_port;
     recv_size = ncp_sock_receivefrom(tlv->handle, tlv->recv_size, tlv->timeout, tlv_res->peer_ip, &peer_port,
                                      tlv_res->recv_data);
     ncp_d("NCP: recv_size = %d, recv_data = %s\r\n", recv_size, tlv_res->recv_data);
@@ -2143,7 +2143,7 @@ out:
         cmd_res->header.seqnum   = 0x00;
         cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
         cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
-        cmd_res->header.size += sizeof(WLAN_SOCKET_RECVFROM);
+        cmd_res->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
         cmd_res->header.size += recv_size;
     }
 
@@ -3651,7 +3651,7 @@ struct cmd_t wlan_cmd_http[] = {
 
 struct cmd_t wlan_cmd_network[] = {
     {NCP_BRIDGE_CMD_WLAN_NETWORK_INFO, "wlan-info", wlan_bridge_info, CMD_SYNC},
-    {NCP_BRIDGE_WLAN_NETWORK_MONITOR, "wlan-monitor", wlan_bridge_monitor, CMD_SYNC},
+    {NCP_BRIDGE_CMD_WLAN_NETWORK_MONITOR, "wlan-monitor", wlan_bridge_monitor, CMD_SYNC},
     {NCP_BRIDGE_CMD_WLAN_NETWORK_ADD, "wlan-add", wlan_bridge_add, CMD_SYNC},
     {NCP_BRIDGE_CMD_WLAN_NETWORK_START, "wlan-start-network", wlan_bridge_start_network, CMD_ASYNC},
     {NCP_BRIDGE_CMD_WLAN_NETWORK_STOP, "wlan-stop-network", wlan_bridge_stop_network, CMD_ASYNC},
