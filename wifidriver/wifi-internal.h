@@ -386,6 +386,11 @@ int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
 #endif
 
+#ifdef CONFIG_WIFI_IND_RESET
+int wifi_ind_reset_lock(void);
+void wifi_ind_reset_unlock(void);
+#endif
+
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);
 
 /**

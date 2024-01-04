@@ -7110,19 +7110,13 @@ int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
 
 /** Test Independent Firmware reset
  *
- * This function will send cmd that will cause timeout in firmware
+ * This function will either send cmd that will cause timeout in firmware or
+ * send GPIO pulse that will cause out of band reset in firmware as per configuration
+ * int earlier \ref wlan_set_indrst_cfg API.
  *
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_test_independent_reset();
-
-/** Trigger Out of band Independent Firmware reset
- *
- * This function will send GPIO pulse that will cause out of band reset in firmware
- *
- * \return WM_SUCCESS if successful otherwise failure.
- */
-int wlan_trigger_oob_ind_reset();
+int wlan_independent_reset();
 
 #endif
 

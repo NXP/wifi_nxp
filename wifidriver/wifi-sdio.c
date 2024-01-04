@@ -60,6 +60,9 @@ static t_u8 txportno;
 static t_u32 last_cmd_sent, fw_init_cfg;
 
 static os_mutex_t txrx_mutex;
+#ifdef CONFIG_WIFI_IND_RESET
+static os_mutex_t ind_reset_mutex;
+#endif
 static os_semaphore_t sdio_command_resp_sem;
 os_thread_t wifi_core_thread;
 
@@ -182,6 +185,18 @@ void wifi_sdio_unlock(void)
     (void)os_mutex_put(&txrx_mutex);
 }
 
+#ifdef CONFIG_WIFI_IND_RESET
+int wifi_ind_reset_lock(void)
+{
+    return os_mutex_get(&ind_reset_mutex, OS_WAIT_FOREVER);
+}
+
+void wifi_ind_reset_unlock(void)
+{
+    (void)os_mutex_put(&ind_reset_mutex);
+}
+#endif
+
 static int wifi_sdio_get_command_resp_sem(unsigned long wait)
 {
     return os_semaphore_get(&sdio_command_resp_sem, os_msec_to_ticks(wait));
@@ -237,7 +252,16 @@ static int wlan_init_struct(void)
             return status;
         }
     }
-
+#ifdef CONFIG_WIFI_IND_RESET
+    if (ind_reset_mutex == MNULL)
+    {
+        int status = os_mutex_create(&ind_reset_mutex, "ind_reset", OS_MUTEX_INHERIT);
+        if (status != WM_SUCCESS)
+        {
+            return status;
+        }
+    }
+#endif
     if (sdio_command_resp_sem == MNULL)
     {
         int status = os_semaphore_create(&sdio_command_resp_sem, "sdio command resp sem");
@@ -274,6 +298,22 @@ static int wlan_deinit_struct(void)
         wifi_io_d("%s mutex does not exsit", __FUNCTION__);
     }
 
+#ifdef CONFIG_WIFI_IND_RESET
+    if (ind_reset_mutex != MNULL)
+    {
+        int status = os_mutex_delete(&ind_reset_mutex);
+        if (status != WM_SUCCESS)
+        {
+            wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
+            return status;
+        }
+        ind_reset_mutex = MNULL;
+    }
+    else
+    {
+        wifi_io_d("%s mutex does not exsit", __FUNCTION__);
+    }
+#endif
     if (sdio_command_resp_sem != MNULL)
     {
         int status = os_semaphore_delete(&sdio_command_resp_sem);
@@ -1090,7 +1130,6 @@ static void wlan_set_11n_cfg(void)
     wifi_sdio_unlock();
 
     wifi_sdio_wait_for_cmdresp();
-
 }
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
@@ -1454,6 +1493,8 @@ static void wlan_fw_init_cfg(void)
 #endif
 
 #ifdef CONFIG_11N
+    wifi_io_d("CMD : GET_FW_VER_EXT (0xcd)");
+
 #ifdef CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
@@ -1464,6 +1505,8 @@ static void wlan_fw_init_cfg(void)
     wlan_set_11n_cfg();
 
 #ifdef CONFIG_ENABLE_AMSDU_RX
+    wifi_io_d("CMD : GET_FW_VER_EXT (0xdf)");
+
 #ifdef CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {

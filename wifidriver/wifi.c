@@ -1041,6 +1041,13 @@ void wlan_process_hang(uint8_t fw_reload)
 
     wifi_d("Start to process hanging");
 
+#ifdef CONFIG_WIFI_IND_RESET
+    if (fw_reload == FW_RELOAD_NO_EMULATION)
+    {
+        (void)wifi_ind_reset_lock();
+    }
+#endif
+
     /* Block TX data */
     wifi_set_tx_status(WIFI_DATA_BLOCK);
     /* Block RX data */
@@ -1099,6 +1106,11 @@ void wlan_process_hang(uint8_t fw_reload)
     wifi_tx_block_cnt   = 0;
     wifi_rx_block_cnt   = 0;
     (void)wifi_event_completion(WIFI_EVENT_FW_RESET, WIFI_EVENT_REASON_SUCCESS, NULL);
+
+#ifdef CONFIG_WIFI_IND_RESET
+    wifi_ind_reset_unlock();
+#endif
+
 }
 #endif
 
@@ -1128,6 +1140,10 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #endif /* CONFIG_ENABLE_WARNING_LOGS || CONFIG_WIFI_CMD_RESP_DEBUG*/
 #endif
 
+#ifdef CONFIG_WIFI_IND_RESET
+    (void)wifi_ind_reset_lock();
+#endif
+
 #ifdef CONFIG_FW_VDLL
     while (pmadapter->vdll_in_progress == MTRUE)
     {
@@ -1147,6 +1163,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
          * this error will help to localize the problem.
          */
         wifi_e("cmd size greater than WIFI_FW_CMDBUF_SIZE\r\n");
+#ifdef CONFIG_WIFI_IND_RESET
+        wifi_ind_reset_unlock();
+#endif
         (void)wifi_put_command_lock();
         return -WM_FAIL;
     }
@@ -1155,6 +1174,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     if (wifi_recovery_enable)
     {
         wifi_w("Recovery in progress. command 0x%x skipped", cmd->command);
+#ifdef CONFIG_WIFI_IND_RESET
+        wifi_ind_reset_unlock();
+#endif
         wifi_put_command_lock();
         return -WM_FAIL;
     }
@@ -1162,6 +1184,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     if (wifi_shutdown_enable)
     {
         wifi_w("FW shutdown in progress. command 0x%x skipped", cmd->command);
+#ifdef CONFIG_WIFI_IND_RESET
+        wifi_ind_reset_unlock();
+#endif
         wifi_put_command_lock();
         return -WM_FAIL;
     }
@@ -1175,6 +1200,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     {
 #ifdef CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card");
+#endif
+#ifdef CONFIG_WIFI_IND_RESET
+        wifi_ind_reset_unlock();
 #endif
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
@@ -1268,6 +1296,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     os_semaphore_put(&uapsd_sem);
 #endif
     wifi_set_xfer_pending(false);
+#ifdef CONFIG_WIFI_IND_RESET
+    wifi_ind_reset_unlock();
+#endif
     (void)wifi_put_command_lock();
     return ret;
 }

@@ -628,6 +628,9 @@ static struct
 #ifdef CONFIG_HOST_SLEEP
     uint8_t hs_dummy_send;
 #endif
+#if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
+    uint8_t ir_mode;
+#endif
 } wlan;
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
@@ -14960,6 +14963,8 @@ int wlan_host_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 int wlan_set_indrst_cfg(const wlan_indrst_cfg_t *indrst_cfg)
 {
+    wlan.ir_mode = indrst_cfg->ir_mode;
+
     return wifi_set_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
 
@@ -14968,12 +14973,7 @@ int wlan_get_indrst_cfg(wlan_indrst_cfg_t *indrst_cfg)
        return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
 
-int wlan_test_independent_reset()
-{
-    return wifi_test_independent_reset();
-}
-
-int wlan_trigger_oob_ind_reset()
+static int wlan_trigger_oob_ind_reset()
 {
     (void)wlan_ieeeps_off();
 
@@ -14992,6 +14992,20 @@ int wlan_trigger_oob_ind_reset()
 #endif
 
     return wifi_trigger_oob_indrst();
+}
+
+int wlan_independent_reset()
+{
+    if (wlan.ir_mode == 1)
+    {
+        return wlan_trigger_oob_ind_reset();
+    }
+    else if (wlan.ir_mode == 2)
+    {
+        return wifi_test_independent_reset();
+    }
+
+    return -WM_FAIL;
 }
 #endif
 

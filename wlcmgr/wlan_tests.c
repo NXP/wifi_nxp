@@ -10589,47 +10589,21 @@ static void test_get_indrst_cfg(int argc, char **argv)
 
 static void dump_wlan_independent_reset_usage(void)
 {
-    (void)PRINTF("Usage :                                               \r\n");
-    (void)PRINTF("         wlan-independent-reset <ir_mode>             \r\n");
-    (void)PRINTF("         ir_mode   : 1 -- Trigger out band reset      \r\n");
-    (void)PRINTF("                     2 -- Trigger in band reset       \r\n");
+    (void)PRINTF("Usage :                                     \r\n");
+    (void)PRINTF("         wlan-independent-reset             \r\n");
 }
 
 static void test_wlan_independent_reset(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    uint8_t ir_mode;
 
-    if (argc != 2)
+    if (argc != 1)
     {
         dump_wlan_independent_reset_usage();
         return;
     }
 
-    errno   = 0;
-    ir_mode = (uint8_t)strtol(argv[1], NULL, 0);
-
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtoul errno:%d", errno);
-    }
-
-    /* ir_mode */
-    if (ir_mode != 1 && ir_mode != 2)
-    {
-        (void)PRINTF("Invalid ir mode parameter (1/2)!\n\r");
-        dump_wlan_independent_reset_usage();
-        return;
-    }
-
-    if (ir_mode == 1)
-    {
-        ret = wlan_trigger_oob_ind_reset();
-    }
-    else if (ir_mode == 2)
-    {
-        ret = wlan_test_independent_reset();
-    }
+    ret = wlan_independent_reset();
 
     if (ret == WM_SUCCESS)
     {
