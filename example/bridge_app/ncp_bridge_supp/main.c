@@ -138,6 +138,7 @@ os_mutex_t resp_buf_mutex;
 extern os_semaphore_t spi_slave_sem;
 #endif
 
+uint32_t current_cmd = 0;
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -272,6 +273,7 @@ static int handle_input(uint8_t *cmd)
         ncp_d("lookup_cmd failed\r\n");
         return -WM_FAIL;
     }
+    current_cmd = command->cmd;
     ncp_d("got bridge command: <%s>", command->help);
     ret = command->handler(cmd_tlv);
 

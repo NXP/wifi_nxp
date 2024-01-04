@@ -39,6 +39,8 @@ static os_queue_t app_notify_event_queue; /* app notify event queue */
 static os_thread_t app_notify_event_thread;                  /* app notify event processing task */
 static os_thread_stack_define(app_notify_event_stack, 2048); /* app notify event processing task stack*/
 
+extern uint32_t current_cmd;
+
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -112,8 +114,16 @@ static void app_notify_event_handler(void *argv)
                 }
                 break;
             case APP_EVT_USER_DISCONNECT:
-                app_d("disconnect from the current network");
-                wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_STA_DISCONNECT, msg.reason);
+                if(current_cmd == NCP_BRIDGE_CMD_WLAN_STA_CONNECT)
+                {
+                    app_d("current network connect fail");
+                    wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_STA_CONNECT, APP_EVT_REASON_FAILURE);
+                }
+                else
+                {
+                    app_d("disconnect from the current network");
+                    wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_STA_DISCONNECT, msg.reason);
+                }
                 break;
             case APP_EVT_UAP_PROV_START:
                 app_d("got uap_prov_start result");

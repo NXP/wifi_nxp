@@ -147,6 +147,7 @@ int socket_send_fifo_recv_seq = 0;
 #endif
 
 os_mutex_t resp_buf_mutex;
+uint32_t current_cmd = 0;
 
 /*******************************************************************************
  * Code
@@ -276,6 +277,12 @@ static int handle_input(uint8_t *cmd)
     void *cmd_tlv         = GET_CMD_TLV(input_cmd);
 
     command = lookup_class(cmd_class, cmd_subclass, cmd_id);
+    if (NULL == command)
+    {
+        ncp_d("lookup_cmd failed\r\n");
+        return -WM_FAIL;
+    }
+    current_cmd = command->cmd;
     ncp_d("got bridge command: <%s>", command->help);
 
     if (command->handler)
