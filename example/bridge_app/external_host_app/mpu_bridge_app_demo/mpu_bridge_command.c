@@ -3149,9 +3149,9 @@ int wlan_socket_open_command(int argc, char **argv)
     else
         memset(wlan_socket_tlv->domain_type, '\0', sizeof(wlan_socket_tlv->domain_type));
     if (argv[3])
-        memcpy(wlan_socket_tlv->procotol, argv[3], sizeof(wlan_socket_tlv->procotol));
+        memcpy(wlan_socket_tlv->protocol, argv[3], sizeof(wlan_socket_tlv->protocol));
     else
-        memset(wlan_socket_tlv->procotol, '\0', sizeof(wlan_socket_tlv->procotol));
+        memset(wlan_socket_tlv->protocol, '\0', sizeof(wlan_socket_tlv->protocol));
 
     /*cmd size*/
     wlan_socket_command->header.size += sizeof(NCP_CMD_SOCKET_OPEN_CFG);
@@ -5678,8 +5678,6 @@ int wlan_process_memory_state_response(uint8_t *res)
 
     if (cmd_res->header.result == NCP_BRIDGE_CMD_RESULT_OK)
     {
-        (void)printf("os_mem_alloc_cnt: %d \r\n", mem_state->mem_alloc_cnt);
-        (void)printf("os_mem_free_cnt : %d \r\n", mem_state->mem_free_cnt);
         (void)printf("FreeHeapSize    : %d \r\n", mem_state->free_heap_size);
         (void)printf("MinFreeHeapSize : %d \r\n\r\n", mem_state->minimun_ever_free_heap_size);
     }

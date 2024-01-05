@@ -16,6 +16,16 @@
 #define NCP_BRIDGE_IP_LENGTH      4
 #define NCP_BRIDGE_IP_VALID       255
 
+#define WLAN_NETWORK_NAME_MAX_LENGTH    32
+#define IEEEtypes_SSID_SIZE             32
+#define IEEEtypes_ADDRESS_SIZE          6
+#define NCP_BRIDGE_WLAN_KNOWN_NETWORKS  5
+#define MAX_NUM_CLIENTS                 16
+#define MODULE_NAME_MAX_LEN             16
+#define VAR_NAME_MAX_LEN                32
+#define CONFIG_VALUE_MAX_LEN            256
+
+
 #define NCP_BRIDGE_CMD_WLAN 0x00000000
 #define NCP_BRIDGE_CMD_BLE    0x01000000
 #define NCP_BRIDGE_CMD_15D4   0x02000000
@@ -497,7 +507,7 @@ enum wlan_bss_role
 /** Network security types*/
 enum wlan_security_type
 {
-    /** The network does not use security. */
+ /** The network does not use security. */
     WLAN_SECURITY_NONE,
     /** The network uses WEP security with open key. */
     WLAN_SECURITY_WEP_OPEN,
@@ -507,26 +517,34 @@ enum wlan_security_type
     WLAN_SECURITY_WPA,
     /** The network uses WPA2 security with PSK. */
     WLAN_SECURITY_WPA2,
-#ifdef CONFIG_WPA_SUPP
-    /** The network uses WPA2 security with PSK SHA256. */
-    WLAN_SECURITY_WPA2_SHA256,
+    /** The network uses WPA/WPA2 mixed security with PSK */
+    WLAN_SECURITY_WPA_WPA2_MIXED,
 #ifdef CONFIG_11R
     /** The network uses WPA2 security with PSK FT. */
     WLAN_SECURITY_WPA2_FT,
 #endif
-#else
-    /** The network uses WPA2 security with PSK(SHA-1 and SHA-256).This security mode
-     * is specific to uAP or SoftAP only */
-    WLAN_SECURITY_WPA2_SHA256,
+    /** The network uses WPA3 security with SAE. */
+    WLAN_SECURITY_WPA3_SAE,
+#ifdef CONFIG_WPA_SUPP
+#ifdef CONFIG_11R
+    /** The network uses WPA3 security with SAE FT. */
+    WLAN_SECURITY_WPA3_FT_SAE,
 #endif
-    /** The network uses WPA/WPA2 mixed security with PSK */
-    WLAN_SECURITY_WPA_WPA2_MIXED,
+#endif
+    /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
+     * is specific to uAP or SoftAP only */
+    WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
+#ifdef CONFIG_OWE
+    /** The network uses OWE only security without Transition mode support. */
+    WLAN_SECURITY_OWE_ONLY,
+#endif
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
     /** The network uses WPA2 Enterprise EAP-TLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS,
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_TLS
     /** The network uses WPA2 Enterprise EAP-TLS SHA256 security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_SHA256,
@@ -538,74 +556,81 @@ enum wlan_security_type
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_FT_SHA384,
 #endif
+#endif
+#ifdef CONFIG_EAP_TTLS
     /** The network uses WPA2 Enterprise EAP-TTLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TTLS,
-    /** The network uses WPA2 Enterprise TTLS-MSCHAPV2 security
+#ifdef CONFIG_EAP_MSCHAPV2
+    /** The network uses WPA2 Enterprise EAP-TTLS-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_TTLS_MSCHAPV2,
-/** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
- * The anonymous identity, identity and password fields in
- * \ref wlan_network structure are used */
+#endif
+#endif
 #endif
 #if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_PEAP_MSCHAPV2) || defined(CONFIG_WPA2_ENTP)
+    /** The network uses WPA2 Enterprise EAP-PEAP-MSCHAPV2 security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_MSCHAPV2,
-/** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
- * The anonymous identity, identity and password fields in
- * \ref wlan_network structure are used */
 #endif
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_PEAP
+#ifdef CONFIG_EAP_TLS
+    /** The network uses WPA2 Enterprise EAP-PEAP-TLS security
+     * The anonymous identity, identity and password fields in
+     * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_TLS,
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+#endif
+#ifdef CONFIG_EAP_GTC
+    /** The network uses WPA2 Enterprise EAP-PEAP-GTC security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_GTC,
-    /** The network uses WPA2 Enterprise TTLS-MSCHAPV2 security
+#endif
+#endif
+#ifdef CONFIG_EAP_FAST
+#ifdef CONFIG_EAP_MSCHAPV2
+    /** The network uses WPA2 Enterprise EAP-FAST-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_FAST_MSCHAPV2,
-    /** The network uses WPA2 Enterprise PEAP-MSCHAPV2 security
+#endif
+#ifdef CONFIG_EAP_GTC
+    /** The network uses WPA2 Enterprise EAP-FAST-GTC security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_FAST_GTC,
-    /** The network uses WPA2 Enterprise SIM security
+#endif
+#endif
+#ifdef CONFIG_EAP_SIM
+    /** The network uses WPA2 Enterprise EAP-SIM security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_SIM,
-    /** The network uses WPA2 Enterprise SIM security
+#endif
+#ifdef CONFIG_EAP_AKA
+    /** The network uses WPA2 Enterprise EAP-AKA security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA,
-    /** The network uses WPA2 Enterprise SIM security
+#endif
+#ifdef CONFIG_EAP_AKA_PRIME
+    /** The network uses WPA2 Enterprise EAP-AKA-PRIME security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA_PRIME,
-    /** The network can use any eap security method. This is often used when
-     * the user only knows the name, identity and password but not the security
-     * type.  */
-    WLAN_SECURITY_EAP_WILDCARD,
+#endif
+#endif
+#ifdef CONFIG_WPA_SUPP_DPP
+    /** The network uses DPP security with NAK(Net Access Key) */
+    WLAN_SECURITY_DPP,
 #endif
     /** The network can use any security method. This is often used when
      * the user only knows the name and passphrase but not the security
      * type.  */
     WLAN_SECURITY_WILDCARD,
-    /** The network uses WPA3 security with SAE. Also set the PMF settings using
-     * \ref wlan_set_pmfcfg API required for WPA3 SAE */
-    WLAN_SECURITY_WPA3_SAE,
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
-    /** The network uses WPA2 security with SAE FT. */
-    WLAN_SECURITY_WPA3_SAE_FT,
-#endif
-#endif
-    /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
-     * is specific to uAP or SoftAP only */
-    WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
-#ifdef CONFIG_OWE
-    /** The network uses OWE only security without Transition mode support. */
-    WLAN_SECURITY_OWE_ONLY,
-#endif
 };
 
 enum
@@ -660,7 +685,7 @@ typedef struct _wlan_bridge_ipv4_config
 typedef struct _wlan_bridge_network
 {
     /** The name of this network profile. */
-    char name[32];
+    char name[WLAN_NETWORK_NAME_MAX_LENGTH + 1];
     /** The network SSID, represented as a C string of up to 32 characters
      *  in length.
      *  If this profile is used in the micro-AP mode, this field is
@@ -669,7 +694,7 @@ typedef struct _wlan_bridge_network
      *  used to identify the network. Set the first byte of the SSID to NULL
      *  (a 0-length string) to use only the BSSID to find the network.
      */
-    char ssid[32 + 1];
+    char ssid[IEEEtypes_SSID_SIZE + 1];
     /** The network BSSID, represented as a 6-byte array.
      *  If this profile is used in the micro-AP mode, this field is
      *  ignored.
@@ -677,7 +702,7 @@ typedef struct _wlan_bridge_network
      *  used to identify the network. Set all 6 bytes to 0 to use any BSSID,
      *  in which case only the SSID will be used to find the network.
      */
-    char bssid[6];
+    char bssid[IEEEtypes_ADDRESS_SIZE];
     /** The channel for this network.
      *  If this profile is used in micro-AP mode, this field
      *  specifies the channel to start the micro-AP interface on. Set this
@@ -688,10 +713,8 @@ typedef struct _wlan_bridge_network
     unsigned int channel;
     /** The ACS band if set channel to 0. **/
     uint16_t acs_band;
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
     /** Rssi threshold */
     short rssi_threshold;
-#endif
     /** BSS type */
     uint8_t type;
     /** The network wireless mode enum wlan_bss_role. Set this
@@ -711,18 +734,14 @@ typedef struct _wlan_bridge_network
     uint8_t enable_11n : 1;
 
     /** The network IP address configuration. */
-#ifdef CONFIG_IPV6
     /** The network IPv6 address configuration */
     wlan_bridge_ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
-#endif
     /** The network IPv4 address configuration */
     wlan_bridge_ipv4_config ipv4;
 
     uint8_t is_sta_ipv4_connected;
 
-#ifdef CONFIG_WPA2_ENTP
     char identity[IDENTITY_MAX_LENGTH];
-#endif
 
     /* Private Fields */
     /** If set to 1, the ssid field contains the specific SSID for this
@@ -736,18 +755,14 @@ typedef struct _wlan_bridge_network
     unsigned channel_specific : 1;
     /** If set to 0, any security that matches is used. */
     unsigned security_specific : 1;
-#ifdef CONFIG_WPS2
     /** This indicates this network is used as an internal network for
      * WPS */
     unsigned wps_specific : 1;
-#endif
     /** Beacon period of associated BSS */
     uint16_t beacon_period;
     /** DTIM period of associated BSS */
     uint8_t dtim_period;
-#ifdef CONFIG_WIFI_CAPA
     uint8_t wlan_capa;
-#endif
 } wlan_bridge_network;
 
 typedef struct _NCP_CMD_NETWORK_INFO
@@ -761,7 +776,7 @@ typedef struct _NCP_CMD_NETWORK_INFO
 typedef struct _NCP_CMD_NETWORK_LIST
 {
     uint8_t count;
-    wlan_bridge_network net_list[1];
+    wlan_bridge_network net_list[NCP_BRIDGE_WLAN_KNOWN_NETWORKS];
 } NCP_CMD_NETWORK_LIST;
 
 typedef struct _NCP_CMD_NETWORK_REMOVE
@@ -774,14 +789,14 @@ typedef struct _NCP_CMD_NETWORK_REMOVE
 typedef struct _SSID_ParamSet_t
 {
     TypeHeader_t header;
-    char ssid[32 + 1];
+    char ssid[IEEEtypes_SSID_SIZE + 1];
 } SSID_ParamSet_t;
 
 /*NCP Bridge BSSID tlv*/
 typedef struct _BSSID_ParamSet_t
 {
     TypeHeader_t header;
-    char bssid[6];
+    char bssid[IEEEtypes_ADDRESS_SIZE];
 } BSSID_ParamSet_t;
 
 /*NCP Bridge bss role tlv*/
@@ -854,7 +869,7 @@ typedef struct _CAPA_ParamSet_t
 
 typedef struct _NCP_CMD_NETWORK_ADD
 {
-    char name[32];
+    char name[WLAN_NETWORK_NAME_MAX_LENGTH];
     /** Length of TLVs sent in command starting at tlvBuffer */
     uint32_t tlv_buf_len;
     /**
@@ -881,7 +896,7 @@ typedef struct _NCP_CMD_NETWORK_START
 typedef struct _wlan_bridge_sta_info
 {
     /** MAC address buffer */
-    uint8_t mac[6];
+    uint8_t mac[IEEEtypes_ADDRESS_SIZE];
     /**
      * Power management status
      * 0 = active (not in power save)
@@ -897,7 +912,7 @@ typedef struct _NCP_CMD_NETWORK_UAP_STA_LIST
     /** station count */
     uint16_t sta_count;
     /** station list */
-    wlan_bridge_sta_info info[16];
+    wlan_bridge_sta_info info[MAX_NUM_CLIENTS];
 } NCP_CMD_NETWORK_UAP_STA_LIST;
 
 /*Bridge Wlan Socket Open*/
@@ -909,7 +924,7 @@ typedef struct _NCP_CMD_SOCKET_OPEN_CFG
 {
     char socket_type[HTTP_PARA_LEN];
     char domain_type[HTTP_PARA_LEN];
-    char procotol[HTTP_PARA_LEN];
+    char protocol[HTTP_PARA_LEN];
     uint32_t opened_handle;
 } NCP_CMD_SOCKET_OPEN_CFG;
 
@@ -1102,8 +1117,6 @@ typedef struct _NCP_CMD_REGISTER_ACCESS
 
 typedef struct _NCP_CMD_MEM_STAT
 {
-    uint32_t mem_alloc_cnt;
-    uint32_t mem_free_cnt;
     uint32_t free_heap_size;
     uint32_t minimun_ever_free_heap_size;
 } NCP_CMD_MEM_STAT;
@@ -1398,11 +1411,11 @@ typedef struct _NCP_CMD_REGION_CODE
 typedef struct _NCP_CMD_SYSTEM_CFG
 {
     /* the name of system config file: sys, prov, wlan */
-    char module_name[16];
+    char module_name[MODULE_NAME_MAX_LEN];
     /* the name of entry */
-    char variable_name[32];
+    char variable_name[VAR_NAME_MAX_LEN];
     /* set value/returned result */
-    char value[256];
+    char value[CONFIG_VALUE_MAX_LEN];
 } NCP_CMD_SYSTEM_CFG;
 
 typedef struct _NCP_CMD_CLIENT_CNT
@@ -1417,6 +1430,8 @@ typedef struct _NCP_CMD_ANTENNA_CFG
     uint8_t action;
     uint32_t antenna_mode;
     uint16_t evaluate_time;
+    uint8_t evaluate_mode;
+    uint16_t current_antenna;
 } NCP_CMD_ANTENNA_CFG;
 
 typedef struct _NCP_CMD_WPS_GEN_PIN
@@ -1552,9 +1567,9 @@ typedef struct _NCP_CMD_TEMPERATURE
 
 typedef struct _NCP_CMD_WLAN_CONN
 {
-    char name[32];
+    char name[WLAN_NETWORK_NAME_MAX_LENGTH];
     uint32_t ip;
-    char ssid[32 + 1];
+    char ssid[IEEEtypes_SSID_SIZE + 1];
 } NCP_CMD_WLAN_CONN;
 
 typedef struct _QUERY_PTR_CFG
@@ -1853,6 +1868,7 @@ typedef struct _NCPCmd_DS_COMMAND
         /*regulatory commands*/
         NCP_CMD_EU_VALIDATION eu_validation;
         NCP_CMD_ED_MAC ed_mac_mode;
+#ifdef CONFIG_NCP_RF_TEST_MODE
         NCP_CMD_RF_TX_ANTENNA rf_tx_antenna;
         NCP_CMD_RF_RX_ANTENNA rf_rx_antenna;
         NCP_CMD_RF_BAND rf_band;
@@ -1863,6 +1879,7 @@ typedef struct _NCPCmd_DS_COMMAND
         NCP_CMD_RF_TX_CONT_MODE rf_tx_cont_mode;
         NCP_CMD_RF_TX_FRAME rf_tx_frame;
         NCP_CMD_RF_PER rf_per;
+#endif
 
         /*Debug commands*/
         NCP_CMD_REGISTER_ACCESS register_access;
