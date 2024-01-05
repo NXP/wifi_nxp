@@ -8937,7 +8937,7 @@ static void test_wlan_wps_generate_pin(int argc, char **argv)
     }
 
     wlan_wps_generate_pin(&pin);
-    PRINTF("WPS PIN is: %d\r\n", pin);
+    PRINTF("WPS PIN is: %08d\r\n", pin);
 }
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS

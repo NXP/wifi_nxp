@@ -7327,7 +7327,7 @@ int wlan_process_wps_generate_pin_response(uint8_t *res)
     NCP_CMD_WPS_GEN_PIN *pin_info  = (NCP_CMD_WPS_GEN_PIN *)&cmd_res->params.wps_gen_pin_info;
 
     if (cmd_res->header.result == NCP_BRIDGE_CMD_RESULT_OK)
-        (void)PRINTF("WPS PIN is %u\r\n", pin_info->pin);
+        (void)PRINTF("WPS PIN is %08u\r\n", pin_info->pin);
     else
         (void)PRINTF("WPS PIN generation is fail!\r\n");
 
