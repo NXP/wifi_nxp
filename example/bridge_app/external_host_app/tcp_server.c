@@ -318,14 +318,15 @@ void *send_data(void *arg)
     int rate = 0;
     struct timeval prev_time, cur_time;
     int send_interval = 1;
-    if (udp_rate <= 30)
+    if (udp_rate <= 120)
+        send_interval = 1000;
+    else if (udp_rate <= 30 * 1024)
         send_interval = 4;
-    else if (udp_rate <= 60)
+    else if (udp_rate <= 60 * 1024)
         send_interval = 2;
     else
         send_interval = 1;
-    pkt_num_per_xms =
-        ((udp_rate * 1024 * 1024 / 8) / per_pkt_size / (1000 / send_interval)); /*num pkt per send_interval(ms)*/
+    pkt_num_per_xms = ((udp_rate * 1024 / 8) / per_pkt_size / (1000 / send_interval)); /*num pkt per send_interval(ms)*/
 
     gettimeofday(&prev_time, NULL);
     prev_time_us  = prev_time.tv_sec * 1000 * 1000 + prev_time.tv_usec;
@@ -339,11 +340,11 @@ void *send_data(void *arg)
             ret = sendto(fd, send_buf, per_pkt_size, 0, (struct sockaddr *)clientaddr, *addrlen);
             gettimeofday(&cur_time, NULL);
             cur_time_us = cur_time.tv_sec * 1000 * 1000 + cur_time.tv_usec;
-            if (!(i % pkt_num_per_xms))
+            if ((i > 0) && (!(i % pkt_num_per_xms)))
             {
                 long long delta = prev_time_us + (1000 * send_interval) - cur_time_us;
-                printf("prev_time_us = %lld, cur_time_us = %lld, delta = %lld, pkt_num_per1ms = %d, i = %d\n",
-                       prev_time_us, cur_time_us, delta, pkt_num_per_xms, i);
+                // printf("prev_time_us = %lld, cur_time_us = %lld, delta = %lld, pkt_num_per1ms = %d, i = %d\n",
+                // prev_time_us, cur_time_us, delta, pkt_num_per_xms, i);
                 if (delta > 0)
                     usleep(delta);
                 prev_time_us += (1000 * send_interval);
@@ -368,6 +369,7 @@ void *send_data(void *arg)
         if (!(i % 1000))
             printf("ncp bridge iperf send data pkg = %d, send_sum = %lld\n", i, send_sum);
     }
+
     gettimeofday(&cur_time, NULL);
     cur_time_us = cur_time.tv_sec * 1000 * 1000 + cur_time.tv_usec;
     rate        = send_sum * 1000000 * 8 / (cur_time_us - start_time_us) / (1024);

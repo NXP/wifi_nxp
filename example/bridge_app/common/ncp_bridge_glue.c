@@ -2319,7 +2319,6 @@ static int wlan_bridge_wakeup_condition(void *tlv)
     return WM_SUCCESS;
 }
 
-#define HOST_SLEEP_DEF_WAKE_TIME 5000
 static int wlan_bridge_mcu_sleep(void *tlv)
 {
     NCP_CMD_POWERMGMT_MCU_SLEEP *mcu_sleep_config = (NCP_CMD_POWERMGMT_MCU_SLEEP *)tlv;
@@ -2347,16 +2346,17 @@ static int wlan_bridge_mcu_sleep(void *tlv)
     else
     {
         global_power_config.is_manual = mcu_sleep_config->is_manual;
+        /* No wake_mode configuration. Use default GPIO mode */
+        if (global_power_config.wake_mode == 0)
+        {
+            global_power_config.wake_mode     = WAKE_MODE_GPIO;
+            global_power_config.subscribe_evt = 1;
+            global_power_config.wake_duration = HOST_SLEEP_DEF_WAKE_TIME;
+        }
         if (global_power_config.is_manual)
             is_periodic = 0;
         else
         {
-            /* No wake_mode configuration. Use default GPIO mode */
-            if (global_power_config.wake_mode == 0)
-            {
-                global_power_config.wake_mode     = WAKE_MODE_GPIO;
-                global_power_config.wake_duration = HOST_SLEEP_DEF_WAKE_TIME;
-            }
             if (global_power_config.wake_mode == WAKE_MODE_UART)
             {
                 /* Release previous PM3 constraints */

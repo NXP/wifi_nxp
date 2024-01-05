@@ -187,14 +187,6 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
  *
  * @return Status returned
  */
-enum ncp_iperf_item
-{
-    NCP_IPERF_TCP_TX,
-    NCP_IPERF_TCP_RX,
-    NCP_IPERF_UDP_TX,
-    NCP_IPERF_UDP_RX,
-    FALSE_ITEM,
-};
 extern os_thread_t ncp_iperf_tx_thread, ncp_iperf_rx_thread;
 iperf_msg_t iperf_msg;
 int wlan_ncp_iperf_command(int argc, char **argv)
@@ -205,31 +197,89 @@ int wlan_ncp_iperf_command(int argc, char **argv)
     enum ncp_iperf_item item = FALSE_ITEM;
     if (argc < 4)
     {
-        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx|dual]\r\n", __func__);
+        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx]\r\n", __func__);
         return -WM_FAIL;
     }
     if (get_uint(argv[1], &handle, strlen(argv[1])))
     {
-        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx|dual]\r\n", __func__);
+        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx]\r\n", __func__);
         return -WM_FAIL;
     }
+    iperf_msg.handle = handle;
     if (!strncmp(argv[2], "tcp", 3))
+    {
         type = 0;
+        if (argc == 5)
+        {
+            if (get_uint(argv[4], (unsigned int *)&iperf_msg.iperf_set.iperf_count, strlen(argv[4])))
+            {
+                (void)PRINTF("tcp packet number format is error\r\n");
+                return -WM_FAIL;
+            }
+        }
+        else
+            iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
+    }
     else if (!strncmp(argv[2], "udp", 3))
+    {
         type = 1;
+        if (argc < 5)
+        {
+            (void)PRINTF("udp want ip and port, Usage: %s handle udp [tx|rx] ip port\r\n", __func__);
+            return -WM_FAIL;
+        }
+        memcpy(iperf_msg.ip_addr, argv[4], strlen(argv[4]) + 1);
+
+        if (argc == 6)
+        {
+            if (get_uint(argv[5], (unsigned int *)&iperf_msg.port, strlen(argv[5])))
+            {
+                (void)PRINTF("udp port format is error\r\n");
+                return -WM_FAIL;
+            }
+        }
+        else
+            iperf_msg.port = NCP_IPERF_UDP_SERVER_PORT_DEFAULT;
+
+        if (argc == 7)
+        {
+            if (get_uint(argv[6], (unsigned int *)&iperf_msg.iperf_set.iperf_count, strlen(argv[6])))
+            {
+                (void)PRINTF("udp packet number format is error\r\n");
+                return -WM_FAIL;
+            }
+        }
+        else
+        {
+            iperf_msg.iperf_set.iperf_count    = NCP_IPERF_PKG_COUNT;
+            iperf_msg.iperf_set.iperf_udp_rate = NCP_IPERF_UDP_RATE;
+            if (argc == 8)
+            {
+                if (get_uint(argv[6], (unsigned int *)&iperf_msg.iperf_set.iperf_count, strlen(argv[6])))
+                {
+                    (void)PRINTF("udp packet number format is error\r\n");
+                    return -WM_FAIL;
+                }
+                if (get_uint(argv[7], (unsigned int *)&iperf_msg.iperf_set.iperf_udp_rate, strlen(argv[7])))
+                {
+                    (void)PRINTF("udp rate format is error\r\n");
+                    return -WM_FAIL;
+                }
+            }
+        }
+    }
     else
     {
-        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx|dual]\r\n", __func__);
+        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx]\r\n", __func__);
         return -WM_FAIL;
     }
-
     if (!strncmp(argv[3], "tx", 3))
         direction = 0;
     else if (!strncmp(argv[3], "rx", 3))
         direction = 1;
     else
     {
-        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx|dual]\r\n", __func__);
+        (void)PRINTF("Usage: %s handle [tcp|udp] [tx|rx]\r\n", __func__);
         return -WM_FAIL;
     }
 
@@ -245,14 +295,24 @@ int wlan_ncp_iperf_command(int argc, char **argv)
     switch (item)
     {
         case NCP_IPERF_TCP_TX:
+            iperf_msg.iperf_set.iperf_type = NCP_IPERF_TCP_TX;
+            iperf_msg.per_size             = NCP_IPERF_PER_TCP_PKG_SIZE;
             (void)os_event_notify_put(ncp_iperf_tx_thread);
             break;
         case NCP_IPERF_TCP_RX:
+            iperf_msg.iperf_set.iperf_type = NCP_IPERF_TCP_RX;
+            iperf_msg.per_size             = NCP_IPERF_PER_TCP_PKG_SIZE;
             (void)os_event_notify_put(ncp_iperf_rx_thread);
             break;
         case NCP_IPERF_UDP_TX:
+            iperf_msg.iperf_set.iperf_type = NCP_IPERF_UDP_TX;
+            iperf_msg.per_size             = NCP_IPERF_PER_UDP_PKG_SIZE;
+            (void)os_event_notify_put(ncp_iperf_tx_thread);
             break;
         case NCP_IPERF_UDP_RX:
+            iperf_msg.iperf_set.iperf_type = NCP_IPERF_UDP_RX;
+            iperf_msg.per_size             = NCP_IPERF_PER_UDP_PKG_SIZE;
+            (void)os_event_notify_put(ncp_iperf_rx_thread);
             break;
         default:
             return -WM_FAIL;
@@ -2766,15 +2826,16 @@ int wlan_process_response(uint8_t *res)
             iperf_msg.status[0] = ret;
             break;
         case NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO:
-            ret = wlan_process_wlan_socket_sendto_response(res);
-            os_event_notify_put(ping_sock_thread);
+            ret                 = wlan_process_wlan_socket_sendto_response(res);
+            iperf_msg.status[0] = ret;
             break;
         case NCP_BRIDGE_CMD_WLAN_SOCKET_RECV:
             ret                 = wlan_process_wlan_socket_receive_response(res);
             iperf_msg.status[1] = ret;
             break;
         case NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM:
-            ret = wlan_process_wlan_socket_recvfrom_response(res);
+            ret                 = wlan_process_wlan_socket_recvfrom_response(res);
+            iperf_msg.status[1] = ret;
             break;
         case NCP_BRIDGE_CMD_11AX_CFG:
             ret = wlan_process_11axcfg_response(res);
@@ -4259,7 +4320,7 @@ int wlan_process_wlan_socket_send_response(uint8_t *res)
         (void)PRINTF("failed to send data!\r\n");
         return -WM_FAIL;
     }
-    (void)PRINTF("send data success!\r\n");
+
     return WM_SUCCESS;
 }
 
@@ -4331,10 +4392,24 @@ int wlan_process_wlan_socket_sendto_response(uint8_t *res)
     MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        (void)PRINTF("failed to sendto data!\r\n");
+        if (ping_seq_no < 0)
+        {
+            (void)PRINTF("failed to sendto data!\r\n");
+        }
+        else
+        {
+            /* Send ping cmd response to ping_sock_task */
+            os_event_notify_put(ping_sock_thread);
+        }
         return -WM_FAIL;
     }
-    (void)PRINTF("sendto data success!\r\n");
+
+    if (ping_seq_no >= 0)
+    {
+        /* Send ping cmd response to ping_sock_task */
+        os_event_notify_put(ping_sock_thread);
+    }
+
     return WM_SUCCESS;
 }
 
@@ -4426,9 +4501,11 @@ int wlan_process_wlan_socket_receive_response(uint8_t *res)
         (NCP_CMD_SOCKET_RECEIVE_CFG *)&cmd_res->params.wlan_socket_receive;
     recv_size = wlan_socket_receive->recv_size;
 
+#ifdef CONFIG_MCU_BRIDGE_IO_DUMP
     (void)PRINTF("receive data success\r\n");
     dump_hex(wlan_socket_receive->recv_data, recv_size);
-    return WM_SUCCESS;
+#endif
+    return recv_size;
 }
 
 /*WLAN SOCKET commamd*/
@@ -4513,10 +4590,12 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
     if (ping_seq_no < 0)
     {
         recv_size = wlan_socket_recvfrom->recv_size;
+#ifdef CONFIG_MCU_BRIDGE_IO_DUMP
         (void)PRINTF("recvfrom data success, %s, peer_ip = %s, peer_port = %d\r\n", wlan_socket_recvfrom->recv_data,
                      wlan_socket_recvfrom->peer_ip, wlan_socket_recvfrom->peer_port);
 
         dump_hex(wlan_socket_recvfrom->recv_data, recv_size);
+#endif
     }
     else
     {
@@ -4524,7 +4603,7 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
         (void)os_event_notify_put(ping_sock_thread);
     }
 
-    return WM_SUCCESS;
+    return recv_size;
 }
 
 /*WLAN SOCKET commamd*/

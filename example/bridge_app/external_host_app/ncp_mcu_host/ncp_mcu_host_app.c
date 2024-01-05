@@ -285,7 +285,7 @@ static void ncp_host_tlv_task(void *pvParameters)
             else
             {
                 ret = wlan_process_response(mcu_response_buff);
-                if (ret != WM_SUCCESS)
+                if (ret == -WM_FAIL)
                     PRINTF("Failed to parse ncp tlv reponse\r\n");
 
                 mcu_last_resp_rcvd = ((MCU_NCPCmd_DS_COMMAND *)mcu_response_buff)->header.cmd;

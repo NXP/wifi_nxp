@@ -387,15 +387,43 @@ typedef MLAN_PACK_START struct _ping_msg_t
     uint32_t port;
 } MLAN_PACK_END ping_msg_t;
 
+#define NCP_IPERF_TCP_SERVER_PORT_DEFAULT 5001
+#define NCP_IPERF_UDP_SERVER_PORT_DEFAULT NCP_IPERF_TCP_SERVER_PORT_DEFAULT + 2
+#define NCP_IPERF_UDP_RATE                30 * 1024
+#define NCP_IPERF_UDP_TIME                100
+#define NCP_IPERF_PKG_COUNT               1000
+#define NCP_IPERF_PER_TCP_PKG_SIZE        1448
+#define NCP_IPERF_PER_UDP_PKG_SIZE        1472
+
+#define IPERF_TCP_RECV_TIMEOUT 1000
+#define IPERF_UDP_RECV_TIMEOUT 1000
+
+enum ncp_iperf_item
+{
+    NCP_IPERF_TCP_TX,
+    NCP_IPERF_TCP_RX,
+    NCP_IPERF_UDP_TX,
+    NCP_IPERF_UDP_RX,
+    FALSE_ITEM,
+};
+
+typedef struct _iperf_set_t
+{
+    uint32_t iperf_type;
+    uint32_t iperf_count;
+    uint32_t iperf_udp_rate;
+} iperf_set_t;
+
 typedef MLAN_PACK_START struct _iperf_msg_t
 {
-    uint16_t size;
+    int16_t status[2];
     uint32_t count;
     uint32_t timeout;
     uint32_t handle;
-    char ip_addr[IP_ADDR_LEN];
     uint32_t port;
-    char status[2];
+    uint16_t per_size;
+    char ip_addr[IP_ADDR_LEN];
+    iperf_set_t iperf_set;
 } MLAN_PACK_END iperf_msg_t;
 
 #define BRIDGE_MUTEX_INHERIT 1

@@ -896,7 +896,7 @@ static void ncp_gpio_init()
 #endif
     GPIO_PinInit(GPIO, BOARD_SW4_GPIO_PORT, BOARD_SW4_GPIO_PIN, &gpio_in_config);
     /* Init output GPIO */
-    GPIO_PinInit(GPIO, 0, 22, &gpio_out_config);
+    GPIO_PinInit(GPIO, 0, 5, &gpio_out_config);
 }
 
 void task_main(void *param)

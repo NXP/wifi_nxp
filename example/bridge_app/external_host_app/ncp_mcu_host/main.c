@@ -70,7 +70,7 @@ static void mcu_gpio_init()
     GPIO_PortInit(GPIO, 0);
     GPIO_PinInit(GPIO, BOARD_SW4_GPIO_PORT, BOARD_SW4_GPIO_PIN, &gpio_in_config);
     /* Init output GPIO */
-    GPIO_PinInit(GPIO, 0, 22, &gpio_out_config);
+    GPIO_PinInit(GPIO, 0, 5, &gpio_out_config);
 }
 #endif
 void task_main(void *param)
