@@ -162,7 +162,11 @@
  * CONFIG option available in the SDK
  */
 #ifdef CONFIG_NETWORK_HIGH_PERF
+#ifdef RW610
+#define TCP_SND_BUF (12 * TCP_MSS)
+#else
 #define TCP_SND_BUF (24 * TCP_MSS)
+#endif
 #else
 #define TCP_SND_BUF (TCP_SND_BUF_COUNT * TCP_MSS)
 #endif
@@ -225,7 +229,11 @@
  * (requires the LWIP_TCP option)
  */
 #ifdef CONFIG_NETWORK_HIGH_PERF
+#ifdef RW610
+#define MEMP_NUM_TCP_SEG 48
+#else
 #define MEMP_NUM_TCP_SEG 96
+#endif
 #else
 #define MEMP_NUM_TCP_SEG 12
 #endif
@@ -245,7 +253,11 @@
    for sequential API communication and incoming packets. Used in
    src/api/tcpip.c. */
 #ifdef CONFIG_NETWORK_HIGH_PERF
+#ifdef RW610
+#define MEMP_NUM_TCPIP_MSG_API 16
+#else
 #define MEMP_NUM_TCPIP_MSG_API 32
+#endif
 #else
 #define MEMP_NUM_TCPIP_MSG_API 8
 #endif
@@ -534,10 +546,11 @@ u32_t lwip_rand(void);
 #define LWIP_RAND() lwip_rand()
 #endif
 
+#ifndef RW610
 #define LWIP_NETIF_TX_SINGLE_PBUF   1
-
 #if (LWIP_NETIF_TX_SINGLE_PBUF)
 #define PBUF_LINK_ENCAPSULATION_HLEN 26
+#endif
 #endif
 
 /* ---------- Core locking ---------- */
