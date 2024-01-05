@@ -3934,6 +3934,7 @@ static void wlcm_process_rssi_low_event(struct wifi_message *msg, enum cm_sta_st
         else
         {
             wlcm_d("Roaming already in progress");
+            (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
             return;
         }
     }

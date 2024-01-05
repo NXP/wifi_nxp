@@ -373,7 +373,7 @@ static int wlan_bridge_set_roaming(void *tlv)
     NCP_CMD_ROAMING *roaming_cmd = (NCP_CMD_ROAMING *)tlv;
     int ret                      = 0;
 
-    ret = wifi_config_roaming(roaming_cmd->enable, (uint8_t *)&roaming_cmd->rssi_threshold);
+    ret = wlan_set_roaming(roaming_cmd->enable, roaming_cmd->rssi_threshold);
     if (!ret)
         wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_STA_ROAMING, NCP_BRIDGE_CMD_RESULT_OK);
     else
