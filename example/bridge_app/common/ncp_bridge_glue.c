@@ -2528,7 +2528,7 @@ static int wlan_bridge_region_code(void *data)
 
     if (cfg->action == ACTION_SET)
     {
-        ret = wifi_set_region_code(cfg->region_code);
+        ret = wlan_set_region_code(cfg->region_code);
         if (ret != WM_SUCCESS)
         {
             ncp_e("set region code fail ret %d", ret);
@@ -2543,7 +2543,7 @@ static int wlan_bridge_region_code(void *data)
     }
     else if (cfg->action == ACTION_GET)
     {
-        ret = wifi_get_region_code(&region_code);
+        ret = wlan_get_region_code(&region_code);
         if (ret != WM_SUCCESS)
         {
             ncp_e("get region code fail ret %d", ret);
