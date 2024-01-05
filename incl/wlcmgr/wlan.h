@@ -1068,6 +1068,21 @@ enum wlan_security_type
      * type.  */
     WLAN_SECURITY_WILDCARD,
 };
+
+#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_EAP_TLS
+/** EAP TLS Cipher types*/
+enum eap_tls_cipher_type
+{
+    EAP_TLS_NONE,
+    /** EAP TLS with ECDH & ECDSA with p384 */
+    EAP_TLS_ECC_P384,
+    /** EAP TLS with ECDH & RSA with > 3K */
+    EAP_TLS_RSA_3K,
+};
+#endif
+#endif
+
 /** Wlan Cipher structure */
 struct wlan_cipher
 {
@@ -1328,6 +1343,10 @@ struct wlan_network_security
     /** eap_result_ind=1 can be used to enable \ref WLAN_SECURITY_EAP_SIM, \ref WLAN_SECURITY_EAP_AKA and \ref
      * WLAN_SECURITY_EAP_AKA_PRIME to use protected result indication.*/
     unsigned eap_result_ind : 1;
+#endif
+#ifdef CONFIG_EAP_TLS
+    /** Cipher for EAP TLS */
+    unsigned char tls_cipher;
 #endif
     /** Identity string for EAP */
     char identity[IDENTITY_MAX_LENGTH];

@@ -674,6 +674,9 @@ static void dump_wlan_add_usage(void)
         "/eap-tls-ft/eap-tls-ft-sha384"
 #endif
 #endif
+#ifdef CONFIG_EAP_TLS
+        " [tls_cipher <ECC_P384/RSA_3K>]"
+#endif
         " id <identity> "
         "[key_passwd "
         "<client_key_passwd>][hash <hash>][domain_match <domain_match_string>][domain_suffix_match "
@@ -1516,6 +1519,21 @@ static void test_wlan_add(int argc, char **argv)
                         "Error: invalid wireless"
                         " network result indication\r\n");
                     return;
+                }
+                arg += 2;
+            }
+#endif
+#ifdef CONFIG_EAP_TLS
+            if ((string_equal(argv[arg + 1], "tls_cipher") != false) && network.security.wpa3_sb_192
+                && (network.security.type == WLAN_SECURITY_EAP_TLS))
+            {
+                if (string_equal(argv[arg + 2], "ECC_P384") != false)
+                {
+                    network.security.tls_cipher = EAP_TLS_ECC_P384;
+                }
+                else if (string_equal(argv[arg + 2], "RSA_3K") != false)
+                {
+                    network.security.tls_cipher = EAP_TLS_RSA_3K;
                 }
                 arg += 2;
             }
