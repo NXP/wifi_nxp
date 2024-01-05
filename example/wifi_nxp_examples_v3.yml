@@ -670,10 +670,10 @@ uart_wifi_bridge:
           merge-to-freertosconfig: sub
           package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
           project_path: source
-        - source: boards/${board}/wifi_examples/common/pin_mux.c
+        - source: boards/${board}/wifi_examples/uart_wifi_bridge/pin_mux.c
           package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
           project_path: board
-        - source: boards/${board}/wifi_examples/common/pin_mux.h
+        - source: boards/${board}/wifi_examples/uart_wifi_bridge/pin_mux.h
           package_path: boards/${board}/wifi_examples/uart_wifi_bridge/${multicore_foldername}
           project_path: board
         - source: middleware/wifi_nxp/example/uart_wifi_bridge/wifi_config.h
