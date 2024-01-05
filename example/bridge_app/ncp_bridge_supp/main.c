@@ -103,7 +103,7 @@ TaskHandle_t task_main_task_handler;
 os_semaphore_t bridge_lock;
 
 os_thread_t ncp_bridge_thread;                         /* ncp bridge  task */
-static os_thread_stack_define(ncp_bridge_stack, 4096); /* ncp bridge task stack*/
+static os_thread_stack_define(ncp_bridge_stack, 8192); /* ncp bridge task stack*/
 
 #ifdef CONFIG_UART_BRIDGE
 uint8_t b_background_buffer[UART_BUF_SIZE];
