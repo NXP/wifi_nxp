@@ -5876,9 +5876,6 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #endif
         (wlan.sta_state < CM_STA_IDLE || is_state(CM_STA_IDLE)))
     {
-#ifdef CONFIG_NCP_BRIDGE
-        CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, (void *)(-WM_FAIL));
-#endif
 
 #ifdef CONFIG_WPA_SUPP
         if (wlan.status_timeout)
@@ -5888,7 +5885,13 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
             wlan.cur_network_idx = -1;
             CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, NULL);
         }
+        else
 #endif
+        {
+#ifdef CONFIG_NCP_BRIDGE
+            CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, (void *)(-WM_FAIL));
+#endif
+        }
         if (wlan.connect_wakelock_taken)
         {
 #ifdef CONFIG_HOST_SLEEP
