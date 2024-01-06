@@ -1,7 +1,23 @@
 /*
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
+ *  NXP CONFIDENTIAL
+ *  The source code contained or described herein and all documents related to
+ *  the source code ("Materials") are owned by NXP, its
+ *  suppliers and/or its licensors. Title to the Materials remains with NXP,
+ *  its suppliers and/or its licensors. The Materials contain
+ *  trade secrets and proprietary and confidential information of NXP, its
+ *  suppliers and/or its licensors. The Materials are protected by worldwide copyright
+ *  and trade secret laws and treaty provisions. No part of the Materials may be
+ *  used, copied, reproduced, modified, published, uploaded, posted,
+ *  transmitted, distributed, or disclosed in any way without NXP's prior
+ *  express written permission.
+ *
+ *  No license under any patent, copyright, trade secret or other intellectual
+ *  property right is granted to or conferred upon you by disclosure or delivery
+ *  of the Materials, either expressly, by implication, inducement, estoppel or
+ *  otherwise. Any license under such intellectual property rights must be
+ *  express and approved by NXP in writing.
  *
  */
 
@@ -34,7 +50,7 @@
  *    de-activate the timer using os_timer_activate() or
  *    os_timer_deactivate(). Reset a timer using os_timer_reset().
  * - Dynamic Memory Allocation: Dynamically allocate memory using
- *    os_mem_alloc(), os_mem_calloc() and free it using
+ *    os_mem_alloc(), os_mem_calloc() or os_mem_realloc() and free it using
  *    os_mem_free().
  *
  */
@@ -42,13 +58,9 @@
 #ifndef _WM_OS_H_
 #define _WM_OS_H_
 
-#ifdef CONFIG_ZEPHYR
-#include "nxp_wifi.h"
-#include "wm_os_zephyr.h"
-#else
-
 #include <string.h>
 
+#if defined(SDK_OS_FREE_RTOS)
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -60,15 +72,25 @@
 #include "clock_config.h"
 #endif
 
+#elif CONFIG_ZEPHYR
+
+#include "nxp_wifi.h"
+#include <zephyr/kernel.h>
+
+#define PRINTF printk
+
+#endif
+
 #include <wmerrno.h>
 #include <wm_utils.h>
 
 #ifdef CONFIG_OS_DEBUG
-#define os_dprintf(...) ll_log("[OS]" __VA_ARGS__)
+#define os_dprintf(...) PRINTF("[OS]" __VA_ARGS__)
 #else
 #define os_dprintf(...)
 #endif
 
+#if defined(SDK_OS_FREE_RTOS)
 bool is_isr_context(void);
 
 /* the OS timer register is loaded with CNTMAX */
@@ -76,31 +98,26 @@ bool is_isr_context(void);
 #define CPU_CLOCK_TICKSPERUSEC (SystemCoreClock / 1000000U)
 #define USECSPERTICK           (1000000U / configTICK_RATE_HZ)
 
-/**
- * Get the current value of free running microsecond counter
- *
- * \note This will wraparound after CNTMAX and the caller is expected to
- * take care of this.
- *
- * @return The current value of microsecond counter.
- */
-#if 0
-static inline uint32_t os_get_usec_counter()
-{
-	return (CNTMAX - SysTick->VAL) / CPU_CLOCK_TICKSPERUSEC;
-}
-#endif
-
 /** Force a context switch */
 #define os_thread_relinquish() taskYIELD()
+unsigned os_ticks_get(void);
+#elif CONFIG_ZEPHYR
+#define is_isr_context() k_is_in_isr()
+/** Force a context switch */
+#define os_thread_relinquish() k_yield()
 
 /** Get current OS tick counter value
  *
  * \return 32 bit value of ticks since boot-up
  */
-unsigned os_ticks_get(void);
+static inline unsigned os_ticks_get(void)
+{
+    return k_uptime_get_32();
+}
+#endif
 
 #if 0
+#if defined(SDK_OS_FREE_RTOS)
 /** Get (wraparound safe) current OS tick counter.
  *
  * Returns a 64 bit unsigned integer. To give a rough idea,
@@ -117,10 +134,27 @@ static inline unsigned long long os_total_ticks_get()
     else
         return xTaskGetTotalTickCount();
 }
+#elif CONFIG_ZEPHYR
+/** Get (wraparound safe) current OS tick counter.
+ *
+ * Returns a 64 bit unsigned integer. To give a rough idea,
+ * for an OS tick period of 1 mS it takes thousands of years
+ * before the counter value returned by this API to wrap around.
+ * Thus, users of this API can ignore the wrap around problem.
+ *
+ * \return 64 bit value of ticks since boot-up
+ */
+static inline unsigned long long os_total_ticks_get()
+{
+    return k_uptime_get();
+}
+#endif
 #endif
 
+#if defined(SDK_OS_FREE_RTOS)
 /** Get ticks to next thread wakeup */
 #define os_ticks_to_unblock() xTaskGetUnblockTime()
+#endif
 
 /**
  * Returns time in micro-secs since bootup
@@ -132,6 +166,7 @@ static inline unsigned long long os_total_ticks_get()
  */
 unsigned int os_get_timestamp(void);
 
+#if defined(SDK_OS_FREE_RTOS)
 /** Convert milliseconds to OS ticks
  *
  * This function converts the given millisecond value to the number of OS
@@ -157,10 +192,45 @@ uint32_t os_msec_to_ticks(uint32_t msecs);
  * @return Number of milliseconds corresponding to ticks
  */
 unsigned long os_ticks_to_msec(unsigned long ticks);
+#elif CONFIG_ZEPHYR
+/** Convert milliseconds to OS ticks
+ *
+ * This function converts the given millisecond value to the number of OS
+ * ticks.
+ *
+ * This is useful as functions like os_thread_sleep() accept only ticks
+ * as input.
+ *
+ * @param[in] msecs Milliseconds
+ *
+ * @return Number of OS ticks corresponding to msecs
+ */
+/*! @brief Convert the milliseconds to ticks in FreeRTOS. */
+
+static inline uint32_t os_msec_to_ticks(uint32_t msecs)
+{
+    return k_ms_to_ticks_near32(msecs);
+}
+
+/** Convert ticks to milliseconds
+ *
+ * This function converts the given ticks value to milliseconds. This is useful
+ * as some functions, like os_ticks_get(), return values in units of OS ticks.
+ *
+ * @param[in] ticks OS ticks
+ *
+ * @return Number of milliseconds corresponding to ticks
+ */
+static inline unsigned long os_ticks_to_msec(unsigned long ticks)
+{
+    return k_ticks_to_ms_near32(ticks);
+}
+#endif
 
 /*** Thread Management ***/
 typedef void *os_thread_arg_t;
 
+#if defined(SDK_OS_FREE_RTOS)
 /**
  * Structure to be used during call to the function
  * os_thread_create(). Please use the macro \ref os_thread_stack_define
@@ -179,9 +249,79 @@ typedef struct os_thread_stack
 #define os_thread_stack_define(stackname, stacksize) \
     os_thread_stack_t stackname = {(stacksize) / (sizeof(portSTACK_TYPE))}
 
+#elif CONFIG_ZEPHYR
+/**
+ * Structure to be used during call to the function
+ * os_thread_create(). Please use the macro \ref os_thread_stack_define
+ * instead of using this structure directly.
+ */
+typedef struct
+{
+    struct k_thread thread;
+    uint32_t size;
+    k_thread_stack_t *stack;
+} os_thread_stack_t;
+
+#ifdef CONFIG_NO_OPTIMIZATIONS
+/**
+ * Helper macro to define the stack size (in bytes) before a new thread is
+ * created using the function os_thread_create().
+ * Double stack size for -O0 optimization level as threads consume much more stack memory.
+ */
+#define os_thread_stack_define(stackname, stacksize)           \
+    K_THREAD_STACK_DEFINE(stackname##_stack, (stacksize * 2)); \
+    os_thread_stack_t stackname = {                            \
+        .size  = K_THREAD_STACK_SIZEOF(stackname##_stack),     \
+        .stack = stackname##_stack,                            \
+    };
+#else
+/**
+ * Helper macro to define the stack size (in bytes) before a new thread is
+ * created using the function os_thread_create().
+ */
+#define os_thread_stack_define(stackname, stacksize)       \
+    K_THREAD_STACK_DEFINE(stackname##_stack, stacksize);   \
+    os_thread_stack_t stackname = {                        \
+        .size  = K_THREAD_STACK_SIZEOF(stackname##_stack), \
+        .stack = stackname##_stack,                        \
+    };
+#endif
+#endif
+
+#if defined(SDK_OS_FREE_RTOS)
+
 typedef TaskHandle_t os_thread_t;
 
 const char *get_current_taskname(void);
+
+#elif CONFIG_ZEPHYR
+
+struct zep_thread
+{
+    k_tid_t id;
+    struct k_sem event;
+};
+
+typedef struct zep_thread *os_thread_t;
+
+static inline const char *get_current_taskname(void)
+{
+    k_tid_t tid      = k_current_get();
+    const char *name = k_thread_name_get(tid);
+    if (name == NULL)
+    {
+        return "Unknown";
+    }
+    return name;
+}
+
+/**
+ * Function wrapper used to account for Zephyr's 3 arguments
+ * to a task entry function (OS abstraction expects 1 argument)
+ */
+void thread_wrapper(void *entry, void *arg, void *unused);
+
+#endif
 
 /** Create new thread
  *
@@ -222,7 +362,14 @@ int os_thread_create(os_thread_t *thandle,
                      os_thread_stack_t *stack,
                      int prio);
 
+#if defined(SDK_OS_FREE_RTOS)
 os_thread_t os_get_current_task_handle(void);
+#elif CONFIG_ZEPHYR
+static inline os_thread_t os_get_current_task_handle(void)
+{
+    return k_thread_custom_data_get();
+}
+#endif
 
 /** Terminate a thread
  *
@@ -249,8 +396,22 @@ int os_thread_delete(os_thread_t *thandle);
  *
  * @param[in] ticks Number of ticks to sleep
  *
+ * @return 0 If slept for given ticks or more
+ * @return Positive value if woken up before given ticks.
+ * @note The value returned is amount of ticks left before the task was
+ * to be originally scheduled to be woken up. So if sleep was for 10 ticks
+ * and the task is woken up after 8 ticks then 2 will be returned.
  */
+#if defined(SDK_OS_FREE_RTOS)
 void os_thread_sleep(uint32_t ticks);
+#elif CONFIG_ZEPHYR
+static inline void os_thread_sleep(uint32_t ticks)
+{
+    os_dprintf("OS: Thread Sleep: %d\r\n", ticks);
+    k_sleep(K_TICKS(ticks));
+    return;
+}
+#endif
 
 /** Suspend the given thread
  *
@@ -262,7 +423,36 @@ void os_thread_sleep(uint32_t ticks);
  *
  * @param[in] thandle Pointer to thread handle
  */
+#if defined(SDK_OS_FREE_RTOS)
 void os_thread_self_complete(os_thread_t *thandle);
+#elif CONFIG_ZEPHYR
+static inline void os_thread_self_complete(os_thread_t *thandle)
+{
+    /* Suspend self until someone calls delete. This is required because in
+     * freeRTOS, main functions of a thread cannot return.
+     */
+    if (thandle != NULL)
+    {
+        os_dprintf("OS: Thread Complete: %p\r\n", thandle);
+        k_thread_suspend((*thandle)->id);
+    }
+    else
+    {
+        os_dprintf("OS: Thread Complete: SELF\r\n");
+        k_thread_suspend(k_current_get());
+    }
+
+    /*
+     * We do not want this function to return ever.
+     */
+    while (true)
+    {
+        os_thread_sleep(os_msec_to_ticks(60000));
+    }
+}
+#endif
+
+#if defined(SDK_OS_FREE_RTOS)
 
 #ifndef CONFIG_WIFI_MAX_PRIO
 #error Define CONFIG_WIFI_MAX_PRIO in wifi_config.h
@@ -274,6 +464,21 @@ void os_thread_self_complete(os_thread_t *thandle);
 #define OS_PRIO_2                                (CONFIG_WIFI_MAX_PRIO - 2)
 #define OS_PRIO_3                                (CONFIG_WIFI_MAX_PRIO - 3)
 #define OS_PRIO_4                                (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
+
+#elif CONFIG_ZEPHYR
+
+#ifndef CONFIG_WIFI_MAX_PRIO
+#define CONFIG_WIFI_MAX_PRIO 1
+#endif
+#define OS_PRIO_0 CONFIG_WIFI_MAX_PRIO /** High **/
+#define OS_PRIO_1 (CONFIG_WIFI_MAX_PRIO + 1)
+#define OS_PRIO_2 (CONFIG_WIFI_MAX_PRIO + 2)
+#define OS_PRIO_3 (CONFIG_WIFI_MAX_PRIO + 3)
+#define OS_PRIO_4 (CONFIG_WIFI_MAX_PRIO + 4) /** Low **/
+
+#endif
+
+#if defined(SDK_OS_FREE_RTOS)
 
 /** Structure used for queue definition */
 typedef struct os_queue_pool
@@ -290,6 +495,31 @@ typedef struct os_queue_pool
 #define os_queue_pool_define(poolname, poolsize) os_queue_pool_t poolname = {poolsize};
 
 typedef QueueHandle_t os_queue_t;
+
+#elif CONFIG_ZEPHYR
+
+/** Structure used for queue definition */
+typedef struct
+{
+    int size;
+    char *buffer;
+} os_queue_pool_t;
+
+/** Define OS Queue pool
+ *
+ * This macro helps define the name and size of the queue to be created
+ * using the function os_queue_create().
+ */
+#define os_queue_pool_define(poolname, poolsize) \
+    char __aligned(4) poolname##_pool[poolsize]; \
+    os_queue_pool_t poolname = {                 \
+        .size   = poolsize,                      \
+        .buffer = poolname##_pool,               \
+    };
+
+typedef struct k_msgq *os_queue_t;
+
+#endif
 
 /** Create an OS queue
  *
@@ -311,9 +541,14 @@ typedef QueueHandle_t os_queue_t;
 int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue_pool_t *poolname);
 
 /** Wait Forever */
+#if defined(SDK_OS_FREE_RTOS)
 #define OS_WAIT_FOREVER                          portMAX_DELAY
+#elif CONFIG_ZEPHYR
+#define OS_WAIT_FOREVER                           UINT32_MAX
+#endif
+
 /** Do Not Wait */
-#define OS_NO_WAIT                               0
+#define OS_NO_WAIT 0
 
 /** Post an item to the back of the queue.
  *
@@ -384,6 +619,8 @@ int os_queue_delete(os_queue_t *qhandle);
  */
 int os_queue_get_msgs_waiting(os_queue_t *qhandle);
 
+#if defined(SDK_OS_FREE_RTOS)
+
 /* Critical Sections */
 static inline unsigned long os_enter_critical_section(void)
 {
@@ -396,11 +633,30 @@ static inline void os_exit_critical_section(unsigned long state)
     taskEXIT_CRITICAL();
 }
 
+#elif CONFIG_ZEPHYR
+
+/* Critical Sections */
+static inline unsigned long os_enter_critical_section(void)
+{
+    return irq_lock();
+}
+
+static inline void os_exit_critical_section(unsigned long state)
+{
+    return irq_unlock(state);
+}
+
+#endif
+
+#if defined(SDK_OS_FREE_RTOS)
+
 /*** Tick function */
 #define MAX_CUSTOM_HOOKS                         4U
 
 extern void (*g_os_tick_hooks[MAX_CUSTOM_HOOKS])(void);
 extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
+
+/*** Tick function */
 
 /** Setup idle function
  *
@@ -413,6 +669,12 @@ extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
  *  @return -WM_FAIL on error
  */
 int os_setup_idle_function(void (*func)(void));
+#elif CONFIG_ZEPHYR
+static inline int os_setup_idle_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
+#endif
 
 /** Setup tick function
  *
@@ -424,7 +686,14 @@ int os_setup_idle_function(void (*func)(void));
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
+#if defined(SDK_OS_FREE_RTOS)
 int os_setup_tick_function(void (*func)(void));
+#elif CONFIG_ZEPHYR
+static inline int os_setup_tick_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
+#endif
 
 /** Remove idle function
  *
@@ -436,7 +705,14 @@ int os_setup_tick_function(void (*func)(void));
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
+#if defined(SDK_OS_FREE_RTOS)
 int os_remove_idle_function(void (*func)(void));
+#elif CONFIG_ZEPHYR
+static inline int os_remove_idle_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
+#endif
 
 /** Remove tick function
  *
@@ -447,15 +723,27 @@ int os_remove_idle_function(void (*func)(void));
  *  @return WM_SUCCESS on success
  *  @return -WM_FAIL on error
  */
+#if defined(SDK_OS_FREE_RTOS)
 int os_remove_tick_function(void (*func)(void));
+#elif CONFIG_ZEPHYR
+static inline int os_remove_tick_function(void (*func)(void))
+{
+    return -WM_FAIL;
+}
+#endif
 
+#if defined(SDK_OS_FREE_RTOS)
 /*** Mutex ***/
 typedef SemaphoreHandle_t os_mutex_t;
+#elif CONFIG_ZEPHYR
+/*** Mutex ***/
+typedef struct k_mutex *os_mutex_t;
+#endif
 
 /** Priority Inheritance Enabled */
-#define OS_MUTEX_INHERIT                         1
+#define OS_MUTEX_INHERIT 1
 /** Priority Inheritance Disabled */
-#define OS_MUTEX_NO_INHERIT                      0
+#define OS_MUTEX_NO_INHERIT 0
 
 /** Create mutex
  *
@@ -471,7 +759,7 @@ typedef SemaphoreHandle_t os_mutex_t;
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_mutex_create(os_mutex_t *mhandle, const char *name, int flags) WARN_UNUSED_RET;
+int os_mutex_create(os_mutex_t *mhandle, const char *name, int flags);
 
 /** Acquire mutex
  *
@@ -546,6 +834,7 @@ int os_recursive_mutex_create(os_mutex_t *mhandle, const char *name);
  *
  * @return WM_SUCCESS when recursive mutex is acquired
  * @return -WM_FAIL on failure
+
  */
 int os_recursive_mutex_get(os_mutex_t *mhandle, unsigned long wait);
 
@@ -576,6 +865,7 @@ int os_recursive_mutex_put(os_mutex_t *mhandle);
 int os_mutex_delete(os_mutex_t *mhandle);
 
 /*** Event Notification ***/
+
 /**
  * Wait for task notification
  *
@@ -588,7 +878,16 @@ int os_mutex_delete(os_mutex_t *mhandle);
  * @return WM_SUCCESS when notification is successful
  * @return -WM_FAIL on failure or timeout
  */
+#if defined(SDK_OS_FREE_RTOS)
 int os_event_notify_get(unsigned long wait_time);
+#elif CONFIG_ZEPHYR
+static inline int os_event_notify_get(unsigned long wait_time)
+{
+    os_thread_t task = os_get_current_task_handle();
+    int ret          = k_sem_take(&task->event, K_TICKS(wait_time));
+    return ret == 0 ? -WM_FAIL : WM_SUCCESS;
+}
+#endif
 
 /**
  * Give task notification
@@ -602,11 +901,23 @@ int os_event_notify_get(unsigned long wait_time);
  * @return WM_SUCCESS when notification is successful
  * @return -WM_FAIL on failure or timeout
  */
+#if defined(SDK_OS_FREE_RTOS)
 int os_event_notify_put(os_thread_t task);
+#elif CONFIG_ZEPHYR
+static inline int os_event_notify_put(os_thread_t task)
+{
+    k_sem_give(&task->event);
+    return WM_SUCCESS;
+}
+#endif
 
+#if defined(SDK_OS_FREE_RTOS)
 /*** Semaphore ***/
-
 typedef SemaphoreHandle_t os_semaphore_t;
+#elif CONFIG_ZEPHYR
+/*** Semaphore ***/
+typedef struct k_sem *os_semaphore_t;
+#endif
 
 /** Create binary semaphore
  *
@@ -619,7 +930,7 @@ typedef SemaphoreHandle_t os_semaphore_t;
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_semaphore_create(os_semaphore_t *mhandle, const char *name) WARN_UNUSED_RET;
+int os_semaphore_create(os_semaphore_t *mhandle, const char *name);
 
 /** Create counting semaphore
  *
@@ -741,20 +1052,20 @@ struct _rw_lock
     unsigned int reader_count;
 };
 
-int os_rwlock_create_with_cb(os_rw_lock_t *plock, const char *mutex_name, const char *lock_name, cb_fn r_fn);
+int os_rwlock_create_with_cb(os_rw_lock_t *lock, const char *mutex_name, const char *lock_name, cb_fn r_fn);
 
 /** Create reader-writer lock
  *
  * This function creates a reader-writer lock.
  *
- * @param[in] plock Pointer to a reader-writer lock handle
+ * @param[in] lock Pointer to a reader-writer lock handle
  * @param[in] mutex_name Name of the mutex
  * @param[in] lock_name Name of the lock
  *
  * @return WM_SUCCESS on success
  * @return -WM_FAIL on error
  */
-int os_rwlock_create(os_rw_lock_t *plock, const char *mutex_name, const char *lock_name);
+int os_rwlock_create(os_rw_lock_t *lock, const char *mutex_name, const char *lock_name);
 
 /** Delete a reader-write lock
  *
@@ -823,10 +1134,29 @@ int os_rwlock_read_lock(os_rw_lock_t *lock, unsigned int wait_time);
 int os_rwlock_read_unlock(os_rw_lock_t *lock);
 
 /*** Timer Management ***/
-
+#if defined(SDK_OS_FREE_RTOS)
 typedef TimerHandle_t os_timer_t;
 typedef os_timer_t os_timer_arg_t;
 typedef TickType_t os_timer_tick;
+#elif CONFIG_ZEPHYR
+struct timer_data;
+
+typedef struct timer_data *os_timer_t;
+typedef os_timer_t os_timer_arg_t;
+typedef int os_timer_tick;
+
+/** OS Timer data structure
+ */
+struct timer_data
+{
+    void (*callback)(os_timer_arg_t);
+    void *user_arg;
+    int period;
+    int reload_options;
+    struct k_timer timer;
+    struct k_work work;
+};
+#endif
 
 /** OS Timer reload Options
  *
@@ -847,7 +1177,7 @@ typedef enum os_timer_reload
 /**
  * OS Timer Activate Options
  */
-typedef enum os_timer_activation
+typedef enum os_timer_activate
 {
     /** Start the timer on creation. */
     OS_TIMER_AUTO_ACTIVATE,
@@ -978,8 +1308,6 @@ int os_timer_deactivate(os_timer_t *timer_t);
  */
 int os_timer_delete(os_timer_t *timer_t);
 
-/* OS Memory allocation API's */
-
 /** Allocate memory
  *
  * This function allocates memory dynamically.
@@ -1003,6 +1331,18 @@ void *os_mem_alloc(size_t size);
  */
 void *os_mem_calloc(size_t size);
 
+/** Reallocate memory
+ *
+ * This function attempts to resize a previously allocated memory block.
+ *
+ *  @param[in] old_ptr Pointer to earlier allocated memory
+ *  @param[in] new_size The new size
+ *
+ * @return Pointer to the newly resized memory block
+ * @return NULL if reallocation fails
+ */
+void *os_mem_realloc(void *old_ptr, size_t new_size);
+
 /** Free Memory
  *
  * This function frees dynamically allocated memory using any of the dynamic
@@ -1012,11 +1352,21 @@ void *os_mem_calloc(size_t size);
  */
 void os_mem_free(void *ptr);
 
+/** This function dumps complete statistics
+ *  of the heap memory.
+ */
 #ifdef CONFIG_HEAP_STAT
 /** This function dumps complete statistics
  *  of the heap memory.
  */
+#if defined(SDK_OS_FREE_RTOS)
 void os_dump_mem_stats(void);
+#elif CONFIG_ZEPHYR
+static inline void os_dump_mem_stats(void)
+{
+    return;
+}
+#endif
 
 #endif
 
@@ -1030,9 +1380,9 @@ typedef enum flag_rtrv_option_t_
     EF_OR_CLEAR
 } flag_rtrv_option_t;
 
-#define EF_NO_WAIT                     0
-#define EF_WAIT_FOREVER                0xFFFFFFFFUL
-#define EF_NO_EVENTS                   0x7
+#define EF_NO_WAIT      0
+#define EF_WAIT_FOREVER 0xFFFFFFFFUL
+#define EF_NO_EVENTS    0x7
 
 int os_event_flags_create(event_group_handle_t *hnd);
 int os_event_flags_get(event_group_handle_t hnd,
@@ -1046,6 +1396,8 @@ int os_event_flags_set(event_group_handle_t hnd, unsigned flags_to_set, flag_rtr
 WEAK int os_init(void);
 
 void _os_delay(int cnt);
+
+#if defined(SDK_OS_FREE_RTOS)
 
 /**
  * \def os_get_runtime_stats(__buff__)
@@ -1086,13 +1438,39 @@ static inline void os_unlock_schedule(void)
     xTaskResumeAll();
 }
 
+#elif CONFIG_ZEPHYR
+
+/** Disables all interrupts at NVIC level */
+static inline void os_disable_all_interrupts(void)
+{
+    __disable_irq();
+}
+
+/** Enable all interrupts at NVIC lebel */
+static inline void os_enable_all_interrupts(void)
+{
+    __enable_irq();
+}
+
+/** Disable all tasks schedule */
+static inline void os_lock_schedule(void)
+{
+    k_sched_lock();
+}
+
+/** Enable all tasks schedule */
+static inline void os_unlock_schedule(void)
+{
+    k_sched_unlock();
+}
+
+#endif
+
 /* Init value for rand generator seed */
 extern uint32_t wm_rand_seed;
 
 /** This function initialize the seed for rand generator
- *
- * @param [in] seed Seed for random number generator
- *
+ *  @return a uint32_t random numer
  */
 static inline void os_srand(uint32_t seed)
 {
@@ -1129,6 +1507,8 @@ static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
     return (low + os_rand() % (high - low));
 }
 
+#if defined(SDK_OS_FREE_RTOS)
+
 void os_dump_threadinfo(char *name);
 
 #ifdef CONFIG_SCHED_SWITCH_TRACE
@@ -1138,6 +1518,6 @@ void trace_task_switch_print();
 #endif
 
 void os_get_num_of_tasks(uint8_t *num_tasks);
+#endif
 
-#endif /* ! CONFIG_WIFI_ZEPHYR */
 #endif /* ! _WM_OS_H_ */

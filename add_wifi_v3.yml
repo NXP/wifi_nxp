@@ -187,6 +187,7 @@ middleware.wifi.wifidriver:
     files:
     - source: incl/dhcp-server.h
     - source: incl/wlcmgr/wlan.h
+    - source: incl/nxp_wifi.h
     - source: incl/wlcmgr/wlan_11d.h
     - source: incl/wifidriver/wifi_nxp.h
     - source: wifidriver/incl/mlan.h
@@ -293,9 +294,9 @@ middleware.wifi:
     cc-include:
     - repo_relative_path: dhcpd
     - repo_relative_path: incl
-    - repo_relative_path: incl/port/lwip
-    - repo_relative_path: port/lwip
-    - repo_relative_path: incl/port/lwip/hooks
+    - repo_relative_path: incl/port/net
+    - repo_relative_path: port/net
+    - repo_relative_path: incl/port/net/hooks
     files:
     - source: dhcpd/dhcp-bootp.h
     - source: dhcpd/dhcp-priv.h
@@ -303,15 +304,15 @@ middleware.wifi:
     - source: dhcpd/dhcp-server.c
     - source: dhcpd/dns-server.c
     - source: dhcpd/dns.h
-    - source: incl/port/lwip/wm_net.h
+    - source: incl/port/net/wm_net.h
     - source: incl/wmstats.h
-    - source: port/lwip/net.c
-    - source: port/lwip/netif_decl.h
-    - source: port/lwip/wifi_netif.c
+    - source: port/net/net.c
+    - source: port/net/netif_decl.h
+    - source: port/net/wifi_netif.c
     - source: wlcmgr/wlan.c
     - source: wlcmgr/wlan_txpwrlimit_cfg.c
-    - source: incl/port/lwip/hooks/lwip_default_hooks.h
-    - source: port/lwip/hooks/lwip_default_hooks.c
+    - source: incl/port/net/hooks/lwip_default_hooks.h
+    - source: port/net/hooks/lwip_default_hooks.c
   belong_to: set.middleware.wifi
   section_info:
     type: middleware

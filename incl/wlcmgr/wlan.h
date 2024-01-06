@@ -120,14 +120,15 @@
 #ifndef __WLAN_H__
 #define __WLAN_H__
 
+#ifdef CONFIG_ZEPHYR
+#include <nxp_wifi.h>
+#endif
+
 #include <wmtypes.h>
 #include <wmerrno.h>
 #include <stdint.h>
 #include <wifi_events.h>
 #include <wifi.h>
-#ifdef CONFIG_ZEPHYR
-#include <wm_net_decl.h>
-#endif
 
 #define WLAN_DRV_VERSION "v1.3.r48.p1"
 
@@ -1752,13 +1753,9 @@ struct wlan_ip_config
 #ifdef CONFIG_IPV6
     /** The network IPv6 address configuration that should be
      * associated with this interface. */
-#ifndef CONFIG_ZEPHYR
     struct ipv6_config ipv6[CONFIG_MAX_IPV6_ADDRESSES];
-#else
-    struct ipv6_config ipv6[NET_IF_MAX_IPV6_ADDR];
     /** The network IPv6 valid addresses count */
     size_t ipv6_count;
-#endif
 #endif
     /** The network IPv4 address configuration that should be
      * associated with this interface. */
@@ -5390,7 +5387,7 @@ int wlan_get_rf_otp_mac_addr(uint8_t *mac);
  * \return WM_SUCCESS if successful otherwise failure.
  *
  */
-int wlan_set_rf_otp_cal_data(uint8_t *cal_data, uint32_t cal_data_len);
+int wlan_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len);
 
 /**
  * Get the RF OTP cal data from Wi-Fi firmware.

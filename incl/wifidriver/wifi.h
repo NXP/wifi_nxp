@@ -1635,7 +1635,7 @@ int wifi_set_rf_otp_mac_addr(uint8_t *mac);
 
 int wifi_get_rf_otp_mac_addr(uint8_t *mac);
 
-int wifi_set_rf_otp_cal_data(uint8_t *cal_data, uint32_t cal_data_len);
+int wifi_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len);
 
 int wifi_get_rf_otp_cal_data(uint8_t *cal_data);
 #endif

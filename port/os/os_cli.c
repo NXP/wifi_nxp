@@ -8,6 +8,8 @@
  *
  */
 
+#if defined(SDK_OS_FREE_RTOS)
+
 #include <inttypes.h>
 #include "fsl_debug_console.h"
 #include <wm_os.h>
@@ -31,3 +33,5 @@ void os_dump_threadinfo(char *name)
 
     os_mem_free(task_info_buf);
 }
+
+#endif

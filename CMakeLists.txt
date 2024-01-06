@@ -157,7 +157,7 @@ zephyr_include_directories(
     incl/wifidriver
     incl/wlcmgr
     incl/port/os
-    incl/port/zephyr
+    incl/port/net
     sdio_nxp_abs/incl
     firmware_dnld
     fwdnld_intf_abs
@@ -174,9 +174,9 @@ zephyr_include_directories(
 )
 
 # OS abstraction layer source
-zephyr_library_sources(port/os/os_zephyr.c)
+zephyr_library_sources(port/os/os.c)
 # net stack abstraction layer source
-zephyr_library_sources(port/zephyr/net.c)
+zephyr_library_sources(port/net/net.c)
 
 file(GLOB WIFI_SRC ./wifidriver/*.c)
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
@@ -190,7 +190,7 @@ zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_RW610
 zephyr_library_sources_ifdef(CONFIG_SDIO_STACK
     wifidriver/sdio.c
     sdio_nxp_abs/fwdnld_sdio.c
-    sdio_nxp_abs/mlan_sdio_zephyr.c
+    sdio_nxp_abs/mlan_sdio.c
     wifidriver/wifi-sdio.c
     firmware_dnld/firmware_dnld.c
     fwdnld_intf_abs/fwdnld_intf_abs.c
@@ -230,9 +230,9 @@ endif()
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
-                     port/os/os_zephyr.c
-                     port/zephyr/net.c
-                     sdio_nxp_abs/mlan_sdio_zephyr.c
+                     port/os/os.c
+                     port/net/net.c
+                     sdio_nxp_abs/mlan_sdio.c
                      wifidriver/mlan_11n.c
                      wifidriver/mlan_11n_aggr.c
                      wifidriver/mlan_11n_rxreorder.c

@@ -42,6 +42,9 @@
 /*------------------------------------------------------*/
 #include <netif_decl.h>
 /*------------------------------------------------------*/
+
+#if defined(SDK_OS_FREE_RTOS)
+
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 static struct netif *netif_arr[MAX_INTERFACES_SUPPORTED];
@@ -173,13 +176,6 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
                 wps_rx_callback(p->payload, p->len);
 #endif /* CONFIG_WPS2 */
 
-#ifdef CONFIG_WPA_SUPP
-            if (l2_packet_rx_callback)
-            {
-                p->if_idx = recv_interface;
-                l2_packet_rx_callback(p);
-            }
-#endif /* CONFIG_WPA_SUPP */
             (void)pbuf_free(p);
             p = NULL;
             break;
@@ -1158,4 +1154,6 @@ err_t lwip_netif_wfd_init(struct netif *netif)
     register_interface(netif, MLAN_BSS_TYPE_WIFIDIRECT);
     return ERR_OK;
 }
+#endif
+
 #endif
