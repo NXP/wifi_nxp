@@ -169,14 +169,16 @@ static int sdio_card_init(void)
 
     BOARD_WIFI_BT_Enable(true);
 
-    if (!device_is_ready(sdhc_dev)) {
+    if (!device_is_ready(sdhc_dev))
+    {
         sdio_e("SD controller not ready");
-	return -EIO;
+        return -EIO;
     }
 
-    if (!sdhc_card_present(sdhc_dev)) {
+    if (!sdhc_card_present(sdhc_dev))
+    {
         sdio_e("SDIO card not present");
-	return -EIO;
+        return -EIO;
     }
 
     ret = sd_init(sdhc_dev, &wm_g_sd);

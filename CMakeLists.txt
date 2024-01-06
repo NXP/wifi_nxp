@@ -194,20 +194,23 @@ zephyr_library_sources_ifdef(CONFIG_SDIO_STACK
     wifidriver/wifi-sdio.c
     firmware_dnld/firmware_dnld.c
     fwdnld_intf_abs/fwdnld_intf_abs.c
-    wifi_bt_firmware/wlan_bt_fw_blob_zephyr.S
 )
 
 zephyr_library_sources(${WIFI_SRC})
 
 file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
-list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*tests*")
-list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*cli*")
+#list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*tests*")
+#list(FILTER WLCMGR_SRC EXCLUDE REGEX ".*cli*")
 
 zephyr_library_sources(${WLCMGR_SRC})
 
 file(GLOB DHCPD_SRC ./dhcpd/*.c)
 zephyr_library_sources(${DHCPD_SRC})
 zephyr_library_include_directories(dhcpd)
+
+# nxp wifi shell
+zephyr_library_sources(cli/wifi_shell.c)
+zephyr_library_sources(cli/cli_utils.c)
 
 # macros for wpa_supplicant
 if(CONFIG_WPA_SUPP)

@@ -23,7 +23,9 @@
 #endif
 
 #include <cli_utils.h>
-#ifndef CONFIG_ZEPHYR
+#ifdef CONFIG_ZEPHYR
+#include "wifi_shell.h"
+#else
 #include <cli.h>
 #endif
 
@@ -2965,7 +2967,7 @@ static void dump_wlan_tx_pert_usage(void)
     (void)PRINTF("    <STA/UAP>: User needs to indicate which interface this tracking for.\r\n");
     (void)PRINTF("    <p>: Tx Pert check period. Unit is second.\r\n");
     (void)PRINTF(
-        "    <r>: Tx Pert ratio threshold (unit 10%). (Fail TX packet)/(Total TX packets). The default value is "
+        "    <r>: Tx Pert ratio threshold (unit 10 percent). (Fail TX packet)/(Total TX packets). The default value is "
         "5.\r\n");
     (void)PRINTF(
         "    <n>: A watermark of check number (default 5). Fw will start tracking Tx Pert after sending n "

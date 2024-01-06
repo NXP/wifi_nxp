@@ -7609,6 +7609,45 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlan_wait_wlmgr_ready();
 
+#ifdef CONFIG_WIFI_SHELL
+#ifdef CONFIG_WIFI_RF_TEST_MODE
+    ret = wlan_test_mode_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize WLAN RF test mode CLIs\r\n");
+        return 0;
+    }
+#else
+    ret = wlan_basic_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize BASIC WLAN CLIs\r\n");
+        return 0;
+    }
+
+    ret = wlan_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize WLAN CLIs\r\n");
+        return 0;
+    }
+    ret = wlan_enhanced_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize WLAN Enhanced CLIs\r\n");
+        return 0;
+    }
+#ifdef CONFIG_HOST_SLEEP
+    ret = host_sleep_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize WLAN CLIs\r\n");
+        return 0;
+    }
+#endif
+#endif
+#endif
+
     return WM_SUCCESS;
 }
 
