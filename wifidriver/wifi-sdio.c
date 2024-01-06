@@ -1415,16 +1415,20 @@ static void wlan_fw_init_cfg(void)
 
     wlan_get_value_1();
 
-    wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
+    if (wm_wifi.wifi_init_done == 0U)
+    {
+
+        wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
 #ifdef CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        os_thread_sleep(os_msec_to_ticks(50));
-    }
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks(50));
+        }
 #endif
 
-    wlan_get_fw_ver_ext(0);
+        wlan_get_fw_ver_ext(0);
+    }
 
     wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
@@ -1448,16 +1452,21 @@ static void wlan_fw_init_cfg(void)
 
     wlan_get_mac_addr_uap();
 
-    wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
+    if (wm_wifi.wifi_init_done == 0U)
+    {
+
+        wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
 #ifdef CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        os_thread_sleep(os_msec_to_ticks(50));
-    }
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks(50));
+        }
 #endif
 
-    wlan_get_fw_ver_ext(3);
+        wlan_get_fw_ver_ext(3);
+
+    }
 
     wifi_io_d("CMD : MAC_CTRL (0x28)");
 
@@ -1470,16 +1479,19 @@ static void wlan_fw_init_cfg(void)
 
     wlan_set_mac_ctrl();
 
-    wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
+    if (wm_wifi.wifi_init_done == 0U)
+    {
+        wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
 #ifdef CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        os_thread_sleep(os_msec_to_ticks(50));
-    }
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks(50));
+        }
 #endif
 
-    wlan_get_fw_ver_ext(4);
+        wlan_get_fw_ver_ext(4);
+    }
 
 #ifdef CONFIG_EXTERNAL_BLE_COEX
 #ifdef CONFIG_FW_VDLL

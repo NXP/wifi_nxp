@@ -86,9 +86,6 @@ SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER
 /* Global variable wm_rand_seed */
 uint32_t wm_rand_seed = -1;
 
-static t_u8 wifi_init_done;
-static t_u8 wifi_core_init_done;
-
 #ifdef CONFIG_WMM
 os_semaphore_t txbuf_sem;
 #endif
@@ -1890,7 +1887,7 @@ static int wifi_core_init(void)
 {
     int ret;
 
-    if (wifi_core_init_done != 0U)
+    if (wm_wifi.wifi_core_init_done != 0U)
     {
         return WM_SUCCESS;
     }
@@ -1976,7 +1973,7 @@ static int wifi_core_init(void)
     wifi_core_thread = wm_wifi.wm_wifi_core_thread;
 #endif
 
-    wifi_core_init_done = 1;
+    wm_wifi.wifi_core_init_done = 1;
 
 #ifdef CONFIG_WMM
     ret = wifi_wmm_buf_pool_init(&outbuf_arr[0][0]);
@@ -2113,7 +2110,7 @@ static void wifi_core_deinit(void)
         }
     }
 
-    wifi_core_init_done = 0;
+    wm_wifi.wifi_core_init_done = 0;
 
     bus_deregister_event_queue();
     bus_deregister_data_input_funtion();
@@ -2241,7 +2238,7 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 {
     int ret = WM_SUCCESS;
 
-    if (wifi_init_done != 0U)
+    if (wm_wifi.wifi_init_done != 0U)
     {
         return WM_SUCCESS;
     }
@@ -2308,7 +2305,7 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 
     if (ret == WM_SUCCESS)
     {
-        wifi_init_done = 1;
+        wm_wifi.wifi_init_done = 1;
     }
 
     return ret;
@@ -2374,7 +2371,7 @@ static int wifi_reinit(uint8_t fw_reload)
 #ifndef RW610
 int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 {
-    if (wifi_init_done != 0U)
+    if (wm_wifi.wifi_init_done != 0U)
     {
         return WM_SUCCESS;
     }
@@ -2418,7 +2415,7 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 
     if (ret == WM_SUCCESS)
     {
-        wifi_init_done = 1;
+        wm_wifi.wifi_init_done = 1;
     }
 #ifndef RW610
     ret = (int)sd_wifi_post_init(WLAN_TYPE_FCC_CERTIFICATION);
@@ -2435,12 +2432,12 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 
 void wifi_deinit(void)
 {
-    if (wifi_init_done == 0U)
+    if (wm_wifi.wifi_init_done == 0U)
     {
         return;
     }
 
-    wifi_init_done = 0;
+    wm_wifi.wifi_init_done = 0;
 
     wifi_core_deinit();
 

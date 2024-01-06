@@ -50,6 +50,8 @@ typedef struct
 {
     const uint8_t *fw_start_addr;
     size_t size;
+    t_u8 wifi_init_done;
+    t_u8 wifi_core_init_done;
     os_thread_t wm_wifi_main_thread;
 #ifndef RW610
     os_thread_t wm_wifi_core_thread;
