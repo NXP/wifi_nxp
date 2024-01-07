@@ -313,10 +313,8 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             printSeparator();
             break;
         case WLAN_REASON_PS_ENTER:
-            PRINTF("app_cb: WLAN: PS_ENTER\r\n");
             break;
         case WLAN_REASON_PS_EXIT:
-		    PRINTF("app_cb: WLAN: PS EXIT\r\n");
             break;
 #ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
         case WLAN_REASON_RSSI_HIGH:
