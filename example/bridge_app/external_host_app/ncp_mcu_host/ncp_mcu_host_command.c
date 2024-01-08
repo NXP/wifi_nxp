@@ -1613,10 +1613,13 @@ int wlan_add_command(int argc, char **argv)
     Security_ParamSet_t *security_wpa_tlv = NULL, *security_wpa2_tlv = NULL, *security_wpa3_tlv = NULL;
     PMF_ParamSet_t *pmf_tlv      = NULL;
     BSSRole_ParamSet_t *role_tlv = NULL;
-    //    DTIM_ParamSet_t *dtim_tlv        = NULL;
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+    DTIM_ParamSet_t *dtim_tlv        = NULL;
+#endif    
     ACSBand_ParamSet_t *acs_band_tlv = NULL;
-    //    CAPA_ParamSet_t *capa_tlv        = NULL;
-
+#ifdef CONFIG_WIFI_CAPA
+    CAPA_ParamSet_t *capa_tlv        = NULL;
+#endif
     (void)memset(&info, 0, sizeof(info));
 
     if (argc < 4)

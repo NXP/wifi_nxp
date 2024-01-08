@@ -9,79 +9,19 @@
 #define _WIFI_CONFIG_H_
 
 #define CONFIG_WIFI_MAX_PRIO (configMAX_PRIORITIES - 1)
-
-#ifndef RW610
-#define CONFIG_MAX_AP_ENTRIES 10
-#else
-#define CONFIG_MAX_AP_ENTRIES 30
-#endif
-
-#if defined(SD8977) || defined(SD8978) || defined(SD8987) || defined(RW610)
-#define CONFIG_5GHz_SUPPORT 1
-#endif
-
-#ifndef RW610
-#define CONFIG_SDIO_MULTI_PORT_RX_AGGR 1
-#endif
-
-#if defined(SD8987) || defined(RW610)
-#define CONFIG_11AC
-#undef CONFIG_WMM
-#endif
-
-#if defined(RW610)
 #define PRINTF_FLOAT_ENABLE 1
-#define CONFIG_11AX
-#undef CONFIG_IMU_GDMA
-/* WMM options */
-#define CONFIG_WMM
-#define CONFIG_WMM_ENH
-#undef CONFIG_WMM_CERT
-#undef AMSDU_IN_AMPDU
+
+#define CONFIG_MAX_AP_ENTRIES 30
+#define CONFIG_5GHz_SUPPORT 1
+#define CONFIG_11AC
 /* OWE mode */
 #define CONFIG_OWE
 /* WLAN SCAN OPT */
 #define CONFIG_SCAN_WITH_RSSIFILTER
 #define CONFIG_WIFI_DTIM_PERIOD
-#define CONFIG_UART_INTERRUPT
 #define CONFIG_WIFI_CAPA
-#define CONFIG_WIFI_11D_ENABLE
-#define CONFIG_WIFI_HIDDEN_SSID
-#define CONFIG_WMM_UAPSD
-#define CONFIG_WIFI_GET_LOG
-#define CONFIG_WIFI_TX_PER_TRACK
-#define CONFIG_ROAMING
-#define CONFIG_HOST_SLEEP
-#define CONFIG_POWER_MANAGER
-#define CONFIG_CSI
-#define CONFIG_WIFI_RESET
-#define CONFIG_NET_MONITOR
-#define CONFIG_WIFI_MEM_ACCESS
-#define CONFIG_WIFI_REG_ACCESS
-#define CONFIG_ECSA
-#define CONFIG_WIFI_EU_CRYPTO
-#define CONFIG_EXT_SCAN_SUPPORT
-#define CONFIG_EVENT_MEM_ACCESS
 #define CONFIG_11R  1
-#define CONFIG_11K  1
-#define CONFIG_11V  1
-#define CONFIG_COMPRESS_TX_PWTBL
-#define CONFIG_RX_ABORT_CFG
-#define CONFIG_RX_ABORT_CFG_EXT
-#define CONFIG_CCK_DESENSE_CFG
-#define CONFIG_11AX_TWT
-#define CONFIG_IPS
-#define CONFIG_SUBSCRIBE_EVENT_SUPPORT
-#define CONFIG_TSP
-#define CONFIG_TX_RX_HISTOGRAM
-#define CONFIG_CLOUD_KEEP_ALIVE
-#define CONFIG_MULTI_BSSID_SUPPORT
-#define CONFIG_TURBO_MODE
-#define CONFIG_MMSF
-#define CONFIG_MEF_CFG
-#define CONFIG_CAU_TEMPERATURE
-#define CONFIG_UNII4_BAND_SUPPORT
-#endif
+
 
 #define CONFIG_IPV6               1
 #define CONFIG_MAX_IPV6_ADDRESSES 3
@@ -106,10 +46,9 @@
 #define APPCONFIG_WEB_SOCKET_SUPPORT
 #define CONFIG_HTTPC_DEBUG
 
+//#define CONFIG_NCP_UART
 //#define CONFIG_SPI_BRIDGE
-//#define CONFIG_USB_BRIDGE
-
-
+#define CONFIG_USB_BRIDGE
 
 /*
  * Heap debug options
@@ -141,20 +80,17 @@
 #endif
 #endif
 
-#define CONFIG_WIFI_USB_FILE_ACCESS 1
 #else
-#define CONFIG_MBO
+
 #endif
 
 #if defined(CONFIG_WIFI_USB_FILE_ACCESS) && defined(CONFIG_USB_BRIDGE)  
     #error " CONFIG_USB_BRIDGE and CONFIG_WIFI_USB_FILE_ACCESS are exclusive for ncp and ncp_supp"
 #endif
 #else
-#define CONFIG_MBO
+
 #define CONFIG_WPS2
 #define CONFIG_WPA2_ENTP
-#define CONFIG_WIFI_USB_FILE_ACCESS
-#undef CONFIG_DPP
 #undef CONFIG_WPA_SUPP
 #endif /*CONFIG_NCP_SUPP*/
 
