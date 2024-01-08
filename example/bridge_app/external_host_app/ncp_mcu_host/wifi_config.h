@@ -49,6 +49,8 @@
 //#define CONFIG_NCP_UART
 //#define CONFIG_SPI_BRIDGE
 #define CONFIG_USB_BRIDGE
+//#define CONFIG_NCP_SDIO
+//#define CONFIG_SDIO_IO_DEBUG
 
 /*
  * Heap debug options

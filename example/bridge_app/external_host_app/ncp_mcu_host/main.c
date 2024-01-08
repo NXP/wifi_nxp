@@ -25,6 +25,8 @@
 #include "host_cdc_app.h"
 #elif defined(CONFIG_SPI_BRIDGE)
 #include "spi_master_app.h"
+#elif defined(CONFIG_NCP_SDIO)
+#include "ncp_sdio_host.h"
 #endif
 
 /*******************************************************************************
@@ -95,6 +97,12 @@ void task_main(void *param)
 
     assert(WM_SUCCESS == result);
 #endif
+
+#ifdef CONFIG_NCP_SDIO
+    result = ncp_sdhost_init();
+    assert(STATUS_SUCCESS == result);
+#endif
+
     printSeparator();
 
     while (1)

@@ -190,6 +190,35 @@ void USB_HostCdcDataInCb(void *param, uint8_t *data, uint32_t dataLength, usb_st
 }
 #endif
 
+#ifdef CONFIG_NCP_SDIO
+void sdio_host_save_recv_data(uint8_t *recv_data, uint32_t packet_len)
+{
+    uint32_t sdio_transfer_len = 0;
+    uint32_t sdio_rx_len       = 0;
+
+    memcpy((uint8_t *)&mcu_response_buff[0], recv_data, packet_len);
+    sdio_rx_len += packet_len;
+
+    if (sdio_rx_len >= NCP_BRIDGE_CMD_HEADER_LEN)
+    {
+        sdio_transfer_len =
+            ((mcu_response_buff[NCP_HOST_CMD_SIZE_HIGH_BYTE] << 8) | mcu_response_buff[NCP_HOST_CMD_SIZE_LOW_BYTE]) +
+            MCU_CHECKSUM_LEN;
+    }
+    else
+    {
+        PRINTF("[%s] transfer warning. data_len : %d  \r\n", __func__, packet_len);
+    }
+
+    if ((sdio_rx_len >= sdio_transfer_len) && (sdio_transfer_len >= NCP_BRIDGE_CMD_HEADER_LEN))
+    {
+        //PRINTF("recv data len: %d ", sdio_transfer_len);
+        os_event_notify_put(ncp_host_tlv_thread);
+        //PRINTF("data recv success \r\n");
+    }
+}
+#endif
+
 /**
  * @brief       Receive tlv reponses from ncp_bridge and process tlv reponses.
  */
@@ -197,7 +226,7 @@ static void ncp_host_tlv_task(void *pvParameters)
 {
     int ret;
     uint16_t msg_type = 0;
-#ifndef CONFIG_USB_BRIDGE
+#if !defined(CONFIG_NCP_SDIO) && !defined(CONFIG_USB_BRIDGE)
     int len       = 0;
     size_t rx_len = 0;
     int resp_len  = 0;
@@ -209,6 +238,8 @@ static void ncp_host_tlv_task(void *pvParameters)
     while (1)
     {
 #ifdef CONFIG_USB_BRIDGE
+        os_event_notify_get(OS_WAIT_FOREVER);
+#elif defined(CONFIG_NCP_SDIO)
         os_event_notify_get(OS_WAIT_FOREVER);
 #else
         /*Inialize mcu_last_resp_rcvd to 0 and there is no 0x00000000 command.*/
@@ -304,7 +335,7 @@ static void ncp_host_tlv_task(void *pvParameters)
     done:
         /* Reset command response buffer */
         memset(mcu_response_buff, 0, NCP_HOST_RESPONSE_LEN);
-#ifndef CONFIG_USB_BRIDGE
+#if !defined(CONFIG_NCP_SDIO) && !defined(CONFIG_USB_BRIDGE)
         len    = 0;
         rx_len = 0;
 #endif

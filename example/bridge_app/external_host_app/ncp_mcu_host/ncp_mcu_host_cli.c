@@ -29,6 +29,8 @@
 #include "host_cdc.h"
 #elif defined(CONFIG_SPI_BRIDGE)
 #include "spi_master_app.h"
+#elif defined(CONFIG_NCP_SDIO)
+#include "ncp_sdio_host.h"
 #endif
 
 #ifdef CONFIG_NCP_UART
@@ -856,6 +858,11 @@ int ncp_host_send_tlv_command()
             ret = -WM_FAIL;
             goto done;
         }
+#elif defined(CONFIG_NCP_SDIO)
+        if (mcu_cmd->header.cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SEND)
+            ret = ncp_sdhost_send_data((uint8_t *)mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
+        else
+            ret = ncp_sdhost_send_cmd((uint8_t *)mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
 #endif
 
         if (ret != WM_SUCCESS)

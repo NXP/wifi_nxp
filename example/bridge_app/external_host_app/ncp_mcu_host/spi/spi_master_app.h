@@ -8,6 +8,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  */
 
+#ifdef CONFIG_SPI_BRIDGE
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -58,3 +59,4 @@
  ******************************************************************************/
 int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer_type, uint8_t is_first);
 int ncp_host_init_spi_master(void);
+#endif /* CONFIG_SPI_BRIDGE */
