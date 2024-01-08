@@ -647,7 +647,7 @@ static inline int os_semaphore_put(os_semaphore_t *mhandle)
 }
 
 /* OS Memory allocation API's */
-#ifndef CONFIG_HEAP_DEBUG
+#ifndef CONFIG_NCP_HEAP_DEBUG
 
 /** Allocate memory
  *
@@ -658,7 +658,7 @@ static inline int os_semaphore_put(os_semaphore_t *mhandle)
  * @return Pointer to the allocated memory
  * @return NULL if allocation fails
  */
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
 // extern int os_mem_alloc_cnt;
 // extern void record_os_mem_alloc(uint32_t size, char const *func, uint32_t line_num);
 
@@ -702,7 +702,7 @@ static inline void *os_mem_calloc(size_t size)
  *
  * @param[in] ptr Pointer to the memory to be freed
  */
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
 // extern int os_mem_free_cnt;
 // extern void record_os_mem_free(char const *func, uint32_t line_num);
 
@@ -720,7 +720,7 @@ static inline void os_mem_free_priv(void *ptr, char const *func, uint32_t line_n
 #define os_mem_free(ptr) vPortFree(ptr)
 #endif
 
-#else  /* ! CONFIG_HEAP_DEBUG */
+#else  /* ! CONFIG_NCP_HEAP_DEBUG */
 static inline void *os_mem_alloc(size_t size) WARN_UNUSED_RET;
 static inline void *os_mem_calloc(size_t size) WARN_UNUSED_RET;
 static inline void *os_mem_realloc(void *ptr, size_t size) WARN_UNUSED_RET;
@@ -782,7 +782,7 @@ static inline void os_mem_free(void *ptr)
     vPortFree(ptr);
     (void)PRINTF("MDC:F:%x\r\n", ptr);
 }
-#endif /* CONFIG_HEAP_DEBUG */
+#endif /* CONFIG_NCP_HEAP_DEBUG */
 
 /*** Event Notification ***/
 

@@ -275,7 +275,7 @@ typedef MLAN_PACK_START struct _wlan_bridge_scan_result
     /** The network supports WMM.  This is set to 0 if the network does not
      *  support WMM or if the system does not have WMM support enabled. */
     unsigned wmm : 1;
-#ifdef CONFIG_WPS2
+#ifdef CONFIG_NCP_WPS2
     /** The network supports WPS.  This is set to 0 if the network does not
      *  support WPS or if the system does not have WPS support enabled. */
     unsigned wps : 1;
@@ -361,7 +361,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_CONNECT_STAT
     uint8_t sta_conn_stat;
 } MLAN_PACK_END NCP_CMD_CONNECT_STAT;
 
-#ifdef CONFIG_IPV6
+#ifdef CONFIG_NCP_IPV6
 /** This data structure represents an IPv6 address */
 typedef MLAN_PACK_START struct _wlan_bridge_ipv6_config
 {
@@ -576,7 +576,7 @@ typedef MLAN_PACK_START struct _PMF_ParamSet_t
     uint8_t mfpr;
 } MLAN_PACK_END PMF_ParamSet_t;
 
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
 /*NCP Bridge DTIM tlv*/
 typedef MLAN_PACK_START struct _DTIM_ParamSet_t
 {
@@ -585,7 +585,7 @@ typedef MLAN_PACK_START struct _DTIM_ParamSet_t
 } MLAN_PACK_END DTIM_ParamSet_t;
 #endif
 
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
 /*NCP Bridge CAPA tlv*/
 typedef MLAN_PACK_START struct _CAPA_ParamSet_t
 {
@@ -1199,7 +1199,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_ED_MAC
     uint8_t action;
     uint16_t ed_ctrl_2g;
     uint16_t ed_offset_2g;
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     uint16_t ed_ctrl_5g;
     uint16_t ed_offset_5g;
 #endif

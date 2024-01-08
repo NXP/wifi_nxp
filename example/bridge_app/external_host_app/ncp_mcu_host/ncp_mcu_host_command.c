@@ -1480,13 +1480,13 @@ static void dump_wlan_add_usage()
     (void)PRINTF(
         "    [wpa2 <secret>]/[wpa <secret> wpa2 <secret>]/[wpa3 sae <secret>]/[wpa2 <secret> wpa3 sae "
         "<secret>]/[eap-tls]");
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
     (void)PRINTF("\r\n");
     (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]");
 #endif
     (void)PRINTF("\r\n");
     (void)PRINTF("    [mfpc <0/1>] [mfpr <0/1>]\r\n");
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
     (void)PRINTF("If seting dtim\r\n");
     (void)PRINTF(
         "    The value of dtim is an integer. The default value is 10.\r\n"
@@ -1593,11 +1593,11 @@ int wlan_add_command(int argc, char **argv)
         unsigned role : 1;
         unsigned mfpc : 1;
         unsigned mfpr : 1;
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
         unsigned dtim : 1;
 #endif
         unsigned acs_band : 1;
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
         unsigned wlan_capa : 1;
 #endif
     } info;
@@ -1613,11 +1613,11 @@ int wlan_add_command(int argc, char **argv)
     Security_ParamSet_t *security_wpa_tlv = NULL, *security_wpa2_tlv = NULL, *security_wpa3_tlv = NULL;
     PMF_ParamSet_t *pmf_tlv      = NULL;
     BSSRole_ParamSet_t *role_tlv = NULL;
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
     DTIM_ParamSet_t *dtim_tlv        = NULL;
 #endif    
     ACSBand_ParamSet_t *acs_band_tlv = NULL;
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
     CAPA_ParamSet_t *capa_tlv        = NULL;
 #endif
     (void)memset(&info, 0, sizeof(info));
@@ -1820,7 +1820,7 @@ int wlan_add_command(int argc, char **argv)
             }
             info.security3++;
         }
-#ifdef CONFIG_WPA2_ENTP
+#ifdef CONFIG_NCP_WPA2_ENTP
         else if (!info.security2 && string_equal("eap-tls", argv[arg]))
         {
             security_wpa2_tlv              = (Security_ParamSet_t *)ptlv_pos;
@@ -1909,7 +1909,7 @@ int wlan_add_command(int argc, char **argv)
             arg += 2;
             info.mfpr++;
         }
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
         else if (!info.dtim && string_equal("dtim", argv[arg]))
         {
             dtim_tlv = (DTIM_ParamSet_t *)ptlv_pos;
@@ -1956,7 +1956,7 @@ int wlan_add_command(int argc, char **argv)
             arg += 2;
             info.acs_band = 1;
         }
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
         else if (!info.wlan_capa && role_tlv->role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
         {
             capa_tlv = (CAPA_ParamSet_t *)ptlv_pos;
@@ -2947,7 +2947,7 @@ int wlan_process_response(uint8_t *res)
         case NCP_BRIDGE_CMD_WLAN_DEBUG_REGISTER_ACCESS:
             ret = wlan_process_register_access_response(res);
             break;
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
         case NCP_BRIDGE_CMD_WLAN_MEMORY_HEAP_SIZE:
             ret = wlan_process_memory_state_response(res);
             break;
@@ -5379,7 +5379,7 @@ int wlan_process_register_access_response(uint8_t *res)
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
 int wlan_memory_state_command(int argc, char **argv)
 {
     MCU_NCPCmd_DS_COMMAND *command = ncp_host_get_command_buffer();
@@ -5416,7 +5416,7 @@ int wlan_process_memory_state_response(uint8_t *res)
 static void dump_wlan_set_ed_mac_mode_usage()
 {
     (void)PRINTF("Usage:\r\n");
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     (void)PRINTF("wlan-set-ed-mac-mode <ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>\r\n");
 #else
     (void)PRINTF("wlan-set-ed-mac-mode <ed_ctrl_2g> <ed_offset_2g>\r\n");
@@ -5428,7 +5428,7 @@ static void dump_wlan_set_ed_mac_mode_usage()
     (void)PRINTF("\ted_offset_2g \r\n");
     (void)PRINTF("\t    # 0       - Default Energy Detect threshold\r\n");
     (void)PRINTF("\t    #offset value range: 0x80 to 0x7F\r\n");
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     (void)PRINTF("\ted_ctrl_5g \r\n");
     (void)PRINTF("\t    # 0       - disable EU adaptivity for 5GHz band\r\n");
     (void)PRINTF("\t    # 1       - enable EU adaptivity for 5GHz band\r\n");
@@ -5441,7 +5441,7 @@ static void dump_wlan_set_ed_mac_mode_usage()
 int wlan_ed_mac_mode_set_command(int argc, char **argv)
 {
     unsigned int value;
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     if (argc != 5)
 #else
     if (argc != 3)
@@ -5482,7 +5482,7 @@ int wlan_ed_mac_mode_set_command(int argc, char **argv)
 
     ed_mac_mode->ed_offset_2g = value & 0xFF;
 
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     if (get_uint(argv[3], &value, strlen(argv[3])) || (value != 0 && value != 1))
     {
         (void)PRINTF("Error: invalid ed_ctrl_5g value\r\n");
@@ -5564,7 +5564,7 @@ int wlan_process_ed_mac_response(uint8_t *res)
             {
                 (void)PRINTF("Energy Detect threshold offset : 0X%x\r\n", ed_mac_mode->ed_offset_2g);
             }
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
             (void)PRINTF("EU adaptivity for 5GHz band : %s\r\n", ed_mac_mode->ed_ctrl_5g == 1 ? "Enabled" : "Disabled");
             if (ed_mac_mode->ed_offset_5g != 0)
             {
@@ -5894,7 +5894,7 @@ static void dump_wlan_set_rf_band_usage()
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-band <band> \r\n");
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     (void)PRINTF("band: 0=2.4G, 1=5G \r\n");
 #else
     (void)PRINTF("band: 0=2.4G \r\n");
@@ -6024,10 +6024,10 @@ static void dump_wlan_set_rf_bandwidth_usage()
     (void)PRINTF("\r\n");
     (void)PRINTF("\t<bandwidth>: \r\n");
     (void)PRINTF("\t		0: 20MHz\r\n");
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     (void)PRINTF("\t		1: 40MHz\r\n");
 #endif
-#ifdef CONFIG_11AC
+#ifdef CONFIG_NCP_11AC
     (void)PRINTF("\t		4: 80MHz\r\n");
 #endif
     (void)PRINTF("\r\n");
@@ -6881,7 +6881,7 @@ static void print_address(wlan_bridge_network *network, uint8_t role)
     (void)PRINTF("\r\n\t\tdns2:\t\t%s", inet_ntoa(dns2));
     (void)PRINTF("\r\n");
 out:
-#ifdef CONFIG_IPV6
+#ifdef CONFIG_NCP_IPV6
     if (role == WLAN_BSS_ROLE_STA || role == WLAN_BSS_ROLE_UAP)
     {
         int i;
@@ -6942,7 +6942,7 @@ static void print_network(wlan_bridge_network *network)
         case WLAN_SECURITY_WPA_WPA2_MIXED:
             (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag);
             break;
-#ifdef CONFIG_WPA2_ENTP
+#ifdef CONFIG_NCP_WPA2_ENTP
         case WLAN_SECURITY_EAP_TLS:
             (void)PRINTF("%s: WPA2 Enterprise EAP-TLS\r\n", sec_tag);
             break;
@@ -6956,7 +6956,7 @@ static void print_network(wlan_bridge_network *network)
         default:
             break;
     }
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
         if (network->wlan_capa & WIFI_SUPPORT_11AX)
@@ -6996,7 +6996,7 @@ static void print_network(wlan_bridge_network *network)
     }
 #endif
     print_address(network, network->role);
-#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+#ifdef CONFIG_NCP_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
 #endif
 }
@@ -8062,10 +8062,10 @@ static struct ncp_host_cli_command ncp_host_app_cli_commands[] = {
     {"wlan-ieee-ps", "<0/1>", wlan_ieee_ps_command},
     {"wlan-eu-validation", "<value>", wlan_eu_validation_command},
     {"wlan-reg-access", "<type> <offset> <value>", wlan_register_access_command},
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
     {"wlan-mem-stat", NULL, wlan_memory_state_command},
 #endif
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
     {"wlan-set-ed-mac-mode", "<ed_ctrl_2g> <ed_offset_2g> <ed_ctrl_5g> <ed_offset_5g>", wlan_ed_mac_mode_set_command},
 #else
     {"wlan-set-ed-mac-mode", "<ed_ctrl_2g> <ed_offset_2g>", wlan_ed_mac_mode_set_command},

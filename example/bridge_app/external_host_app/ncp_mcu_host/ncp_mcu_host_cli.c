@@ -823,6 +823,7 @@ int ncp_host_send_tlv_command()
 
     if (cmd_len >= NCP_BRIDGE_CMD_HEADER_LEN)
     {
+#if 0
         gpio_pin_config_t gpio_out_config = {
             kGPIO_DigitalOutput,
             0,
@@ -840,6 +841,7 @@ int ncp_host_send_tlv_command()
             //            GPIO_PinInit(GPIO, 0, 5, &gpio_out_config);
             os_semaphore_put(&gpio_wakelock);
         }
+#endif
         /* write response */
 #ifdef CONFIG_NCP_UART
         ret = LPUART_RTOS_Send(&ncp_host_tlv_uart_handle, mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);

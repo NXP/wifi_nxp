@@ -170,7 +170,7 @@ enum wlan_mef_type
 #define MCU_DEVICE_STATUS_ACTIVE 1
 #define MCU_DEVICE_STATUS_SLEEP  2
 
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
 #define WIFI_SUPPORT_11AX   (1 << 3)
 #define WIFI_SUPPORT_11AC   (1 << 2)
 #define WIFI_SUPPORT_11N    (1 << 1)
@@ -204,14 +204,14 @@ enum wlan_security_type
     WLAN_SECURITY_WPA2,
     /** The network uses WPA/WPA2 mixed security with PSK */
     WLAN_SECURITY_WPA_WPA2_MIXED,
-#ifdef CONFIG_11R
+#ifdef CONFIG_NCP_11R
     /** The network uses WPA2 security with PSK FT. */
     WLAN_SECURITY_WPA2_FT,
 #endif
     /** The network uses WPA3 security with SAE. */
     WLAN_SECURITY_WPA3_SAE,
-#ifdef CONFIG_WPA_SUPP
-#ifdef CONFIG_11R
+#ifdef CONFIG_NCP_WPA_SUPP
+#ifdef CONFIG_NCP_11R
     /** The network uses WPA3 security with SAE FT. */
     WLAN_SECURITY_WPA3_FT_SAE,
 #endif
@@ -219,21 +219,21 @@ enum wlan_security_type
     /** The network uses WPA2/WPA3 SAE mixed security with PSK. This security mode
      * is specific to uAP or SoftAP only */
     WLAN_SECURITY_WPA2_WPA3_SAE_MIXED,
-#ifdef CONFIG_OWE
+#ifdef CONFIG_NCP_OWE
     /** The network uses OWE only security without Transition mode support. */
     WLAN_SECURITY_OWE_ONLY,
 #endif
-#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_WPA2_ENTP)
+#if defined(CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_NCP_WPA2_ENTP)
     /** The network uses WPA2 Enterprise EAP-TLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS,
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-#ifdef CONFIG_EAP_TLS
+#ifdef CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_NCP_EAP_TLS
     /** The network uses WPA2 Enterprise EAP-TLS SHA256 security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_SHA256,
-#ifdef CONFIG_11R
+#ifdef CONFIG_NCP_11R
     /** The network uses WPA2 Enterprise EAP-TLS FT security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS_FT,
@@ -242,11 +242,11 @@ enum wlan_security_type
     WLAN_SECURITY_EAP_TLS_FT_SHA384,
 #endif
 #endif
-#ifdef CONFIG_EAP_TTLS
+#ifdef CONFIG_NCP_EAP_TTLS
     /** The network uses WPA2 Enterprise EAP-TTLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TTLS,
-#ifdef CONFIG_EAP_MSCHAPV2
+#ifdef CONFIG_NCP_EAP_MSCHAPV2
     /** The network uses WPA2 Enterprise EAP-TTLS-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
@@ -254,61 +254,61 @@ enum wlan_security_type
 #endif
 #endif
 #endif
-#if defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_PEAP_MSCHAPV2) || defined(CONFIG_WPA2_ENTP)
+#if defined(CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_NCP_PEAP_MSCHAPV2) || defined(CONFIG_NCP_WPA2_ENTP)
     /** The network uses WPA2 Enterprise EAP-PEAP-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_MSCHAPV2,
 #endif
-#ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
-#ifdef CONFIG_EAP_PEAP
-#ifdef CONFIG_EAP_TLS
+#ifdef CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE
+#ifdef CONFIG_NCP_EAP_PEAP
+#ifdef CONFIG_NCP_EAP_TLS
     /** The network uses WPA2 Enterprise EAP-PEAP-TLS security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_TLS,
 #endif
-#ifdef CONFIG_EAP_GTC
+#ifdef CONFIG_NCP_EAP_GTC
     /** The network uses WPA2 Enterprise EAP-PEAP-GTC security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_PEAP_GTC,
 #endif
 #endif
-#ifdef CONFIG_EAP_FAST
-#ifdef CONFIG_EAP_MSCHAPV2
+#ifdef CONFIG_NCP_EAP_FAST
+#ifdef CONFIG_NCP_EAP_MSCHAPV2
     /** The network uses WPA2 Enterprise EAP-FAST-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_FAST_MSCHAPV2,
 #endif
-#ifdef CONFIG_EAP_GTC
+#ifdef CONFIG_NCP_EAP_GTC
     /** The network uses WPA2 Enterprise EAP-FAST-GTC security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_FAST_GTC,
 #endif
 #endif
-#ifdef CONFIG_EAP_SIM
+#ifdef CONFIG_NCP_EAP_SIM
     /** The network uses WPA2 Enterprise EAP-SIM security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_SIM,
 #endif
-#ifdef CONFIG_EAP_AKA
+#ifdef CONFIG_NCP_EAP_AKA
     /** The network uses WPA2 Enterprise EAP-AKA security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA,
 #endif
-#ifdef CONFIG_EAP_AKA_PRIME
+#ifdef CONFIG_NCP_EAP_AKA_PRIME
     /** The network uses WPA2 Enterprise EAP-AKA-PRIME security
      * The identity and password fields in
      * \ref wlan_network structure are used */
     WLAN_SECURITY_EAP_AKA_PRIME,
 #endif
 #endif
-#ifdef CONFIG_WPA_SUPP_DPP
+#ifdef CONFIG_NCP_WPA_SUPP_DPP
     /** The network uses DPP security with NAK(Net Access Key) */
     WLAN_SECURITY_DPP,
 #endif
@@ -731,7 +731,7 @@ int wlan_get_mac_address_command(int argc, char **argv);
 
 int wlan_register_access_command(int argc, char **argv);
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
 int wlan_memory_state_command(int argc, char **argv);
 #endif
 
@@ -919,7 +919,7 @@ int wlan_process_get_uap_sta_list(uint8_t *res);
 
 int wlan_process_register_access_response(uint8_t *res);
 
-#ifdef CONFIG_MEM_MONITOR_DEBUG
+#ifdef CONFIG_NCP_MEM_MONITOR_DEBUG
 int wlan_process_memory_state_response(uint8_t *res);
 #endif
 
