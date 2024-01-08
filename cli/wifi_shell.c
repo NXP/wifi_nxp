@@ -139,7 +139,6 @@ void help_command(int argc, char **argv)
 {
     unsigned int i = 0, n = 0;
 
-    (void)PRINTF("\r\n");
     while (i < MAX_COMMANDS && n < cli.num_commands)
     {
         if (cli.commands[i]->name != NULL)

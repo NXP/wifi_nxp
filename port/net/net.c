@@ -1630,9 +1630,6 @@ static void stop_cb(void *ctx)
 
     net_dhcpv4_stop(if_handle->netif);
     (void)net_if_down(if_handle->netif);
-#ifndef CONFIG_ZEPHYR
-    wm_netif_status_callback_ptr = NULL;
-#endif
 }
 
 static void dhcp_timer_cb(os_timer_arg_t arg)
@@ -1655,9 +1652,6 @@ void net_interface_down(void *intrfc_handle)
 void net_interface_dhcp_stop(void *intrfc_handle)
 {
     net_dhcpv4_stop(((interface_t *)intrfc_handle)->netif);
-#ifndef CONFIG_ZEPHYR
-    wm_netif_status_callback_ptr = NULL;
-#endif
 }
 
 static void ipv4_mcast_add(struct net_mgmt_event_callback *cb, struct net_if *iface)
@@ -1715,13 +1709,6 @@ static void wifi_net_event_handler(struct net_mgmt_event_callback *cb, uint32_t 
 
 int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 {
-#ifndef CONFIG_ZEPHYR
-#ifdef CONFIG_IPV6
-    t_u8 i;
-    ip_addr_t zero_addr = IPADDR6_INIT_HOST(0x0, 0x0, 0x0, 0x0);
-#endif
-#endif
-
     if (addr == NULL)
     {
         return -WM_E_INVAL;
@@ -1742,40 +1729,6 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 #endif
 
     (void)net_if_down(if_handle->netif);
-
-#ifndef CONFIG_ZEPHYR
-
-    wm_netif_status_callback_ptr = NULL;
-
-#ifdef CONFIG_IPV6
-#ifdef RW610
-    if (if_handle == &g_mlan || if_handle == &g_uap)
-#else
-    if (if_handle == &g_mlan)
-#endif
-    {
-        LOCK_TCPIP_CORE();
-
-        for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
-        {
-            netif_ip6_addr_set(&if_handle->netif, i, ip_2_ip6(&zero_addr));
-            netif_ip6_addr_set_state(&if_handle->netif, i, IP6_ADDR_INVALID);
-        }
-
-        netif_create_ip6_linklocal_address(&if_handle->netif, 1);
-
-        UNLOCK_TCPIP_CORE();
-
-        /* Explicitly call this function so that the linklocal address
-         * gets updated even if the interface does not get any IPv6
-         * address in its lifetime */
-        if (if_handle == &g_mlan)
-        {
-            wm_netif_ipv6_status_callback(&if_handle->netif);
-        }
-    }
-#endif
-#endif
 
     if (if_handle == &g_mlan)
     {
@@ -2238,13 +2191,6 @@ int net_wlan_deinit(void)
     }
 
     cleanup_mgmt_events();
-
-#ifndef CONFIG_ZEPHYR
-    LOCK_TCPIP_CORE();
-    netif_remove_ext_callback(&netif_ext_callback);
-    UNLOCK_TCPIP_CORE();
-    wm_netif_status_callback_ptr = NULL;
-#endif
 
     net_wlan_init_done = 0;
 

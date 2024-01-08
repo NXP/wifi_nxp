@@ -27,68 +27,32 @@ extern void handle_cdint(int error);
 
 static sdio_card_t wm_g_sd;
 
-static OSA_MUTEX_HANDLE_DEFINE(sdio_mutex);
-
-void sdio_enable_interrupt(void);
-
 int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
-    osa_status_t ret;
-
-    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != KOSA_StatusSuccess)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
     if (SDIO_IO_Read_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, (uint8_t *)resp) != KOSA_StatusSuccess)
     {
-        (void)OSA_MutexUnlock(&sdio_mutex);
         return 0;
     }
-
-    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
-    osa_status_t ret;
-
-    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != KOSA_StatusSuccess)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
     if (SDIO_IO_Write_Direct(&wm_g_sd, (sdio_func_num_t)fn, (uint32_t)addr, &data, true) != KOSA_StatusSuccess)
     {
-        (void)OSA_MutexUnlock(&sdio_mutex);
         return 0;
     }
 
     *resp = data;
-
-    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    osa_status_t ret;
     uint32_t flags = 0;
     uint32_t param;
-
-    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != KOSA_StatusSuccess)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
 
     if (bcnt > 1U)
     {
@@ -102,27 +66,16 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
 
     if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
-        (void)OSA_MutexUnlock(&sdio_mutex);
         return 0;
     }
-
-    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return 1;
 }
 
 int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    osa_status_t ret;
     uint32_t flags = 0;
     uint32_t param;
-
-    ret = OSA_MutexLock(&sdio_mutex, osaWaitForever_c);
-    if (ret != KOSA_StatusSuccess)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
 
     if (bcnt > 1U)
     {
@@ -136,11 +89,8 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
 
     if (SDIO_IO_Write_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
     {
-        (void)OSA_MutexUnlock(&sdio_mutex);
         return 0;
     }
-
-    (void)OSA_MutexUnlock(&sdio_mutex);
 
     return 1;
 }
@@ -293,15 +243,6 @@ static void print_card_info(sdio_card_t *card)
 
 int sdio_drv_init(void (*cd_int)(int))
 {
-    osa_status_t ret;
-
-    ret = OSA_MutexCreate(&sdio_mutex);
-    if (ret != KOSA_StatusSuccess)
-    {
-        sdio_e("Failed to create mutex");
-        return -WM_FAIL;
-    }
-
     sdio_controller_init();
 
     if (sdio_card_init() != WM_SUCCESS)
@@ -321,15 +262,7 @@ int sdio_drv_init(void (*cd_int)(int))
 
 void sdio_drv_deinit(void)
 {
-    osa_status_t ret;
-
     SDIO_Deinit(&wm_g_sd);
-
-    ret = OSA_MutexDestroy(&sdio_mutex);
-    if (ret != KOSA_StatusSuccess)
-    {
-        sdio_e("Failed to delete mutex");
-    }
 }
 
 #elif defined(CONFIG_ZEPHYR)
@@ -348,100 +281,50 @@ const struct device *sdhc_dev = DEVICE_DT_GET(
 static struct sd_card wm_g_sd;
 static struct sdio_func g_sdio_funcs[8];
 
-static os_mutex_t sdio_mutex;
-
 int sdio_drv_creg_read(int addr, int fn, uint32_t *resp)
 {
-    int ret;
-
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
     struct sdio_func *func = &g_sdio_funcs[fn];
 
     if (sdio_read_byte(func, addr, (uint8_t *)resp) != 0)
     {
-        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
-
-    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
 
 int sdio_drv_creg_write(int addr, int fn, uint8_t data, uint32_t *resp)
 {
-    int ret;
-
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
     struct sdio_func *func = &g_sdio_funcs[fn];
 
     if (sdio_rw_byte(func, addr, data, (uint8_t *)resp) != 0)
     {
-        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
-
-    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
 
 int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    int ret;
-
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
     struct sdio_func *func = &g_sdio_funcs[fn];
 
     if (sdio_read_addr(func, addr, buf, bcnt * bsize) != 0)
     {
-        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
-
-    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
 
 int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uint8_t *buf, uint32_t *resp)
 {
-    int ret;
-
-    ret = os_mutex_get(&sdio_mutex, OS_WAIT_FOREVER);
-    if (ret == -WM_FAIL)
-    {
-        sdio_e("failed to get mutex\r\n");
-        return 0;
-    }
-
     struct sdio_func *func = &g_sdio_funcs[fn];
 
     if (sdio_write_addr(func, addr, buf, bcnt * bsize) != 0)
     {
-        (void)os_mutex_put(&sdio_mutex);
         return 0;
     }
-
-    (void)os_mutex_put(&sdio_mutex);
 
     return 1;
 }
@@ -452,16 +335,14 @@ void BOARD_WIFI_BT_Enable(bool enable)
     {
         /* Enable module */
         /* Enable power supply for SD */
-        GPIO_PinWrite(GPIO1, 24U, 1);
-        GPIO_PinWrite(GPIO1, 19U, 1);
+        GPIO_PinWrite(GPIO1, 5U, 1);
 
     }
     else
     {
         /* Disable module */
         /* Disable power supply for SD */
-        GPIO_PinWrite(GPIO1, 19U, 0);
-        GPIO_PinWrite(GPIO1, 24U, 0);
+        GPIO_PinWrite(GPIO1, 5U, 0);
     }
     k_msleep(100);
 }
@@ -487,8 +368,6 @@ void sdio_enable_interrupt(void)
 static void sdio_controller_init(void)
 {
     (void)memset(&wm_g_sd, 0, sizeof(struct sd_card));
-
-    sdio_enable_interrupt();
 }
 
 static int sdio_card_init(void)
@@ -539,14 +418,6 @@ static int sdio_card_init(void)
 
 int sdio_drv_init(void (*cd_int)(int))
 {
-    int ret;
-
-    ret = os_mutex_create(&sdio_mutex, "sdio-mutex", OS_MUTEX_INHERIT);
-    if (ret == -WM_FAIL)
-    {
-        sdio_e("Failed to create mutex\r\n");
-        return -WM_FAIL;
-    }
     BOARD_WIFI_BT_Enable(false);
 
     sdio_controller_init();
@@ -566,15 +437,7 @@ int sdio_drv_init(void (*cd_int)(int))
 
 void sdio_drv_deinit(void)
 {
-    int ret;
-
     // SDIO_Deinit(&wm_g_sd);
-
-    ret = os_mutex_delete(&sdio_mutex);
-    if (ret != WM_SUCCESS)
-    {
-        sdio_e("Failed to delete mutex");
-    }
 }
 
 #endif
