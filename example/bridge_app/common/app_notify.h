@@ -59,6 +59,9 @@ typedef enum
     APP_EVT_REASON_FAILURE,
 } app_event_reason_t;
 
+#define APP_NOTIFY_SUSPEND_CMDRESP 0x1U
+#define APP_NOTIFY_SUSPEND_EVT 0x2U
+
 /* app notify event queue message */
 typedef struct
 {

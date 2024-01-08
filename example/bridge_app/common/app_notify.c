@@ -28,6 +28,7 @@
 
 extern os_semaphore_t bridge_lock;
 extern int bridge_send_response(uint8_t *pbuf);
+uint8_t suspend_notify_flag = 0;
 
 /*******************************************************************************
  * Variables
@@ -226,6 +227,10 @@ static void app_notify_event_handler(void *argv)
             else
                 bridge_send_response((uint8_t *)ncp_bridge_get_response_buffer());
         }
+        if(msg.event == APP_EVT_SUSPEND)
+            suspend_notify_flag &= (~APP_NOTIFY_SUSPEND_CMDRESP);
+        else if (msg.event == APP_EVT_MCU_SLEEP_ENTER)
+            suspend_notify_flag &= (~APP_NOTIFY_SUSPEND_EVT);
         if (event_buf)
         {
             os_mem_free(event_buf);
