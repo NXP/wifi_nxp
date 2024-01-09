@@ -183,7 +183,7 @@ list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*sdio.c$")
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*firmware_dnld.c$")
 
-zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_RW610
+zephyr_library_sources_ifdef(CONFIG_RW610
     wifidriver/wifi-imu.c
 )
 

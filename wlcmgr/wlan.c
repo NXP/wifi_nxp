@@ -151,7 +151,12 @@ extern const unsigned int wlan_fw_bin_len;
 const unsigned char *wlan_fw_bin   = (const unsigned char *)(void *)0;
 const unsigned int wlan_fw_bin_len = 0;
 #endif /* CONFIG_NXP_FW_LOADER_MONOLITHIC */
+#ifdef CONFIG_ZEPHYR
+extern int nxp_wifi_wlan_event_callback(enum wlan_event_reason reason, void *data);
+#define wlan_event_callback nxp_wifi_wlan_event_callback
+#else
 extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
+#endif
 #endif
 
 static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
