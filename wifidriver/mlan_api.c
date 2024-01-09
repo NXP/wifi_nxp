@@ -1107,6 +1107,32 @@ int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u
 
 #ifdef CONFIG_RF_TEST_MODE
 #ifdef RW610
+/* 802.11n/a/g/b data rate IDs */
+#define DATARATE_1M     0x0001
+#define DATARATE_2M     0x0002
+#define DATARATE5_5M    0x0003
+#define DATARATE_11M    0x0004
+#define RESERVED_1      0x0005
+
+#define DATARATE_6M  0x0006
+#define DATARATE_9M  0x0007
+#define DATARATE_12M 0x0008
+#define DATARATE_18M 0x0009
+#define DATARATE_24M 0x000A
+#define DATARATE_36M 0x000B
+#define DATARATE_48M 0x000C
+#define DATARATE_54M 0x000D
+#define RESERVED_2   0x000E
+
+#define HT_MCS0 0x000F
+#define HT_MCS1 0x0010
+#define HT_MCS2 0x0011
+#define HT_MCS3 0x0012
+#define HT_MCS4 0x0013
+#define HT_MCS5 0x0014
+#define HT_MCS6 0x0015
+#define HT_MCS7 0x0016
+
 /* 802.11ac VHT MCS rates ID */
 #define VHT_SS1_MCS0 0x1100
 #define VHT_SS1_MCS1 0x1101
@@ -1131,6 +1157,10 @@ int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u
 #define HE_SS1_MCS9 0x2109
 
 static uint32_t tx_data_rate_ids[] = {
+    /* 802.11n/a/g/b data rate IDs */
+    DATARATE_1M, DATARATE_2M, DATARATE5_5M, DATARATE_11M, RESERVED_1, DATARATE_6M, DATARATE_9M, DATARATE_12M, DATARATE_18M,
+    DATARATE_24M, DATARATE_36M, DATARATE_48M, DATARATE_54M, RESERVED_2,
+    HT_MCS0, HT_MCS1, HT_MCS2, HT_MCS3, HT_MCS4, HT_MCS5, HT_MCS6, HT_MCS7,
     /* 802.11ac VHT MCS rates id */
     VHT_SS1_MCS0, VHT_SS1_MCS1, VHT_SS1_MCS2, VHT_SS1_MCS3, VHT_SS1_MCS4, VHT_SS1_MCS5, VHT_SS1_MCS6, VHT_SS1_MCS7,
     VHT_SS1_MCS8,
@@ -1834,6 +1864,14 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
 
     wifi_mfg_cmd_tx_frame.enable        = enable;
     wifi_mfg_cmd_tx_frame.data_rate     = data_rate;
+#ifdef RW610
+    /* on fw side, data rate id of 802.11n/a/g/b start from 0, the data rate id need reduce 1 */
+    if (data_rate <= HT_MCS7)
+    {	
+        wifi_mfg_cmd_tx_frame.data_rate--;
+    }
+#endif
+
     wifi_mfg_cmd_tx_frame.frame_pattern = frame_pattern;
     wifi_mfg_cmd_tx_frame.frame_length  = frame_length;
     (void)memcpy((void *)wifi_mfg_cmd_tx_frame.bssid, (const void *)bssid, MLAN_MAC_ADDR_LENGTH);
