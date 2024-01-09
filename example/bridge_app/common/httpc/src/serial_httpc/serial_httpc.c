@@ -430,7 +430,7 @@ int ncp_http_request(uint32_t handle, char *s_method, char *uri, uint32_t req_si
     }
     /* Set socket to blocking mode */
     struct timeval timeout = {0, 0};
-    status                 = http_setsockopt(hs, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(int));
+    status                 = http_setsockopt(hs, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     if (status != WM_SUCCESS)
     {
         httpc_e("status:cannot set recv timeout");
@@ -630,7 +630,7 @@ int ncp_http_recv(uint32_t handle, uint32_t recv_size, uint32_t timeout, char *r
         return -E_FAIL;
     }
     struct timeval timeo = {timeout / 1000, (timeout % 1000) * 1000};
-    status               = http_setsockopt(hs, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(int));
+    status               = http_setsockopt(hs, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo));
     if (status != WM_SUCCESS)
     {
         outbuf = NULL;
@@ -688,7 +688,7 @@ int ncp_ws_upg(uint32_t handle, const char *uri, const char *proto)
     }
     /* Set socket to blocking mode */
     struct timeval timeo = {0, 0};
-    status               = http_setsockopt(*hs, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(int));
+    status               = http_setsockopt(*hs, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo));
     if (status != WM_SUCCESS)
     {
         httpc_e("status:cannot set recv timeout");
@@ -905,7 +905,7 @@ int ncp_ws_recv(uint32_t handle, uint32_t recv_size, uint32_t timeout, uint32_t 
     /* timeout in milliseconds (0 means the receive
        call will not time out) */
     struct timeval timeo = {timeout / 1000, (timeout % 1000) * 1000};
-    status               = http_setsockopt(*hs, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(int));
+    status               = http_setsockopt(*hs, SOL_SOCKET, SO_RCVTIMEO, &timeo, sizeof(timeo));
     if (status != WM_SUCCESS)
     {
         httpc_e("status:cannot set recv timeout");
