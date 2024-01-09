@@ -97,7 +97,7 @@ enum
  * At the same time buffer address/size should be aligned to the cache line size if cache is supported.
  */
 /*! @brief Data written to the card */
-SDK_ALIGN(uint8_t outbuf[DATA_BUFFER_SIZE], 32);
+SDK_ALIGN(uint8_t outbuf[IMU_OUTBUF_LEN], 32);
 
 #ifdef RW610
 SDK_ALIGN(uint8_t inbuf[2 * DATA_BUFFER_SIZE], 32);
