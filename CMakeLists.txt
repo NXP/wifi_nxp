@@ -221,12 +221,6 @@ file(GLOB WIFI_SUPP_SRC ./wifidriver/wpa_supp_if/*.c)
 zephyr_library_sources(${WIFI_SUPP_SRC})
 endif()
 
-# HTTP Server
-if(CONFIG_NXP_WIFI_ENABLE_HTTPSERVER)
-set(gen_dir ${ZEPHYR_BINARY_DIR}/include/generated/)
-generate_inc_file_for_target(app response_big.html.bin   ${gen_dir}/response_big.html.bin.inc)
-endif()
-
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
