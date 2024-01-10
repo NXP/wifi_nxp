@@ -315,7 +315,6 @@ middleware.wifi:
     - source: port/net/hooks/lwip_default_hooks.c
     - source: ChangeLogKSDK.txt
     - source: CMakeLists.txt
-    - source: response_big.html.bin
   belong_to: set.middleware.wifi
   section_info:
     type: middleware

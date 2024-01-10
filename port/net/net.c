@@ -954,7 +954,7 @@ static os_timer_t dhcp_timer;
 
 void deliver_packet_above(struct net_pkt *p, int recv_interface)
 {
-    int lwiperr = 0;
+    int err = 0;
     /* points to packet payload, which starts with an Ethernet header */
     struct net_eth_hdr *ethhdr = NET_ETH_HDR(p);
 
@@ -975,10 +975,10 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
 
             /* full packet send to tcpip_thread to process */
             if (recv_interface == WLAN_BSS_TYPE_UAP)
-                lwiperr = net_recv_data(g_uap.netif, p);
+                err = net_recv_data(g_uap.netif, p);
             else
-                lwiperr = net_recv_data(g_mlan.netif, p);
-            if (lwiperr != 0)
+                err = net_recv_data(g_mlan.netif, p);
+            if (err != 0)
             {
                 net_e("Net input error");
                 (void)net_pkt_unref(p);
@@ -1006,9 +1006,9 @@ static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 da
 retry:
     /* We allocate a network buffer */
     if (interface == WLAN_BSS_TYPE_UAP)
-        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
     else
-        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
 
     if (pkt == NULL)
     {
@@ -1021,7 +1021,7 @@ retry:
         return NULL;
     }
 
-    if (net_pkt_write(pkt, payload, datalen) != 0)
+    if (net_pkt_write(pkt, payload, datalen) < 0)
     {
         net_pkt_unref(pkt);
         pkt = NULL;
@@ -1039,9 +1039,9 @@ static struct net_pkt *gen_pkt_from_data_for_zerocopy(t_u8 interface, t_u8 *payl
 retry:
     /* We allocate a network buffer */
     if (interface == WLAN_BSS_TYPE_UAP)
-        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_uap.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
     else
-        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_INET, 0, K_NO_WAIT);
+        pkt = net_pkt_rx_alloc_with_buffer(g_mlan.netif, datalen, AF_UNSPEC, 0, K_NO_WAIT);
 
     if (pkt == NULL)
     {
@@ -1058,7 +1058,7 @@ retry:
     net_pkt_memset(pkt, 0, sizeof(mlan_buffer));
     net_buf_pull(pkt->frags, sizeof(mlan_buffer));
     net_pkt_cursor_init(pkt);
-    if (net_pkt_write(pkt, payload, datalen - sizeof(mlan_buffer)) != 0)
+    if (net_pkt_write(pkt, payload, datalen - sizeof(mlan_buffer)) < 0)
     {
         net_pkt_unref(pkt);
         pkt = NULL;
@@ -1210,9 +1210,9 @@ void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen)
     deliver_packet_above(p, interface);
 }
 
-void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *lwip_pbuf)
+void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *pkt)
 {
-    struct net_pkt *p = (struct net_pkt *)lwip_pbuf;
+    struct net_pkt *p = (struct net_pkt *)pkt;
 
 #ifndef CONFIG_WIFI_RX_REORDER
     (void)rxpd;

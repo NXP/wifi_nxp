@@ -71,6 +71,7 @@ mkdir -p $destinationDir
 cd $destinationDir
 cp -r $dir/* .
 rm -rf internal
+rm -rf wifi_bt_firmware/fw_bins
 echo "done."
 
 ########################################

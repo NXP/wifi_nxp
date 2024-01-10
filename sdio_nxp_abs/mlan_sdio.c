@@ -329,24 +329,6 @@ int sdio_drv_write(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, ui
     return 1;
 }
 
-void BOARD_WIFI_BT_Enable(bool enable)
-{
-    if (enable)
-    {
-        /* Enable module */
-        /* Enable power supply for SD */
-        GPIO_PinWrite(GPIO1, 5U, 1);
-
-    }
-    else
-    {
-        /* Disable module */
-        /* Disable power supply for SD */
-        GPIO_PinWrite(GPIO1, 5U, 0);
-    }
-    k_msleep(100);
-}
-
 extern void handle_cdint(int error);
 
 void sdio_irq_handler(const struct device *dev, int reason, const void *user_data)
@@ -374,8 +356,6 @@ static int sdio_card_init(void)
 {
     int ret = WM_SUCCESS;
     uint32_t resp;
-
-    BOARD_WIFI_BT_Enable(true);
 
     if (!device_is_ready(sdhc_dev))
     {
@@ -418,8 +398,6 @@ static int sdio_card_init(void)
 
 int sdio_drv_init(void (*cd_int)(int))
 {
-    BOARD_WIFI_BT_Enable(false);
-
     sdio_controller_init();
 
     if (sdio_card_init() != WM_SUCCESS)
