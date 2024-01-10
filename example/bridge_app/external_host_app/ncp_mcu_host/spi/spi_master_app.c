@@ -23,6 +23,7 @@
 #include "fsl_gpio.h"
 #include "ncp_mcu_host_os.h"
 #include "ncp_mcu_host_command.h"
+#include "fsl_adapter_gpio.h"
 
 /*******************************************************************************
  * Variables
@@ -39,27 +40,20 @@ extern os_thread_t ncp_host_tlv_thread;
 os_semaphore_t spi_master_sem;
 os_semaphore_t spi_master_txrx_done;
 
+GPIO_HANDLE_DEFINE(NcpTlvSpiRxDetectGpioHandle);
+GPIO_HANDLE_DEFINE(NcpTlvSpiTxDetectGpioHandle);
+
 /*******************************************************************************
  * Code
  ******************************************************************************/
-void NCP_HOST_GPIO_IRQ_HANDLER(void)
+static void rx_int_callback(void *param)
 {
-    uint32_t status = 0;
-    DisableIRQ(NCP_HOST_GPIO_IRQ);
+    os_event_notify_put(ncp_host_tlv_thread);
+}
 
-    status = GPIO_PortGetInterruptFlags(NCP_HOST_GPIO);
-    /* Notify mcu bridge resp task */
-    if (status & SPI_MASTER_INT_RX_MASK)
-    {
-        GPIO_PortClearInterruptFlags(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
-        os_event_notify_put(ncp_host_tlv_thread);
-    }
-    if (status & SPI_MASTER_INT_TX_MASK)
-    {
-        GPIO_PortClearInterruptFlags(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);
-        os_semaphore_put(&spi_master_sem);
-    }
-    EnableIRQ(NCP_HOST_GPIO_IRQ);
+static void tx_int_callback(void *param)
+{
+    os_semaphore_put(&spi_master_sem);
 }
 
 static void ncp_host_spi_master_cb(LPSPI_Type *base,
@@ -236,8 +230,31 @@ void ncp_host_gpio_init(void)
 
     GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_RX, &gpio_input_interrupt_config);
     GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
+
+
+    hal_gpio_pin_config_t rx_config = {
+        kHAL_GpioDirectionIn,
+        0,
+        NCP_HOST_GPIO_NUM,
+        NCP_HOST_GPIO_PIN_RX,
+    };
+    HAL_GpioInit(NcpTlvSpiRxDetectGpioHandle, &rx_config);
+    HAL_GpioSetTriggerMode(NcpTlvSpiRxDetectGpioHandle, kHAL_GpioInterruptRisingEdge);
+    HAL_GpioInstallCallback(NcpTlvSpiRxDetectGpioHandle, rx_int_callback, NULL);
+
+    hal_gpio_pin_config_t tx_config = {
+        kHAL_GpioDirectionIn,
+        0,
+        NCP_HOST_GPIO_NUM,
+        NCP_HOST_GPIO_PIN_TX,
+    };
+    HAL_GpioInit(NcpTlvSpiTxDetectGpioHandle, &tx_config);
+    HAL_GpioSetTriggerMode(NcpTlvSpiTxDetectGpioHandle, kHAL_GpioInterruptRisingEdge);
+    HAL_GpioInstallCallback(NcpTlvSpiTxDetectGpioHandle, tx_int_callback, NULL);
+
     NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
     EnableIRQ(NCP_HOST_GPIO_IRQ);
+
     /* Enable GPIO pin interrupt */
     GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
     GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);

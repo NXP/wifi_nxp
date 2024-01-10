@@ -45,6 +45,7 @@
 #define NCP_SPI_MASTER_CLOCK   20000000U
 
 #define NCP_HOST_GPIO         GPIO1
+#define NCP_HOST_GPIO_NUM     1
 #define NCP_HOST_GPIO_PIN_RX  16U
 #define NCP_HOST_GPIO_PIN_TX  17U
 #define NCP_HOST_GPIO_IRQ     GPIO1_Combined_16_31_IRQn
