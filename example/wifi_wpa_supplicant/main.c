@@ -40,7 +40,27 @@
 #include "host_sleep.h"
 #endif
 #include "wpa_cli.h"
-
+#if defined(MBEDTLS_NXP_SSSAPI)
+#include "sssapi_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_CSS_API)
+#include "platform_hw_ip.h"
+#include "css_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_CSS_PKC_API)
+#include "platform_hw_ip.h"
+#include "css_pkc_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_ELS_PKC_API)
+#include "platform_hw_ip.h"
+#include "els_pkc_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_ELS_API)
+#include "platform_hw_ip.h"
+#include "els_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_ELE_S400_API)
+#include "ele_mbedtls.h"
+#else
+#ifdef CONFIG_KSDK_MBEDTLS
+#include "ksdk_mbedtls.h"
+#endif
+#endif
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -696,7 +716,7 @@ int main(void)
     printSeparator();
     PRINTF("wifi wpa supplicant demo\r\n");
     printSeparator();
-
+    CRYPTO_InitHardware();
 #ifdef RW610
     RTC_Init(RTC);
 #endif
