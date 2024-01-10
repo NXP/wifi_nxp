@@ -1514,6 +1514,9 @@ typedef PACK_START struct _wifi_scan_channel_list_t
 } PACK_END wifi_scan_channel_list_t;
 
 /* Configuration for wireless scanning */
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#define ANT_DETECT_MAX_CHANNEL_LIST 50U
+#endif
 #define MAX_CHANNEL_LIST 6
 #ifdef CONFIG_COMBO_SCAN
 #define MAX_NUM_SSID 2
@@ -1540,7 +1543,11 @@ typedef PACK_START struct _wifi_scan_params_v2_t
     /** Number of channels */
     t_u8 num_channels;
     /** Channel list with channel information */
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+    wifi_scan_channel_list_t chan_list[ANT_DETECT_MAX_CHANNEL_LIST];
+#else
     wifi_scan_channel_list_t chan_list[MAX_CHANNEL_LIST];
+#endif
     /** Number of probes */
     t_u8 num_probes;
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
@@ -1974,4 +1981,48 @@ typedef struct
     t_u8 src_mac[MLAN_MAC_ADDR_LENGTH];
 } wifi_auto_null_tx_t;
 #endif
+
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+#define NORMAL_DETECT_MODE 0
+#define QUICK_DETECT_MODE 1
+#define PCB_DETECT_MODE 2
+#define PCB_DETECT_MODE_CHECK_DEVICE_COUNT 2
+#define ANT_DETECT_MAX_SCAN_ENTRY 5
+#define MAX_ANTENNA_PORT_NUM 4
+typedef PACK_START struct _scan_result_entry_t
+{
+    char ssid[33];
+    unsigned int ssid_len;
+    char bssid[6];
+    unsigned int channel;
+    unsigned char rssi;
+} PACK_END scan_result_entry_t;
+
+typedef PACK_START struct _wlan_ant_info_t
+{
+    uint8_t scan_done;
+    unsigned char avg_rssi;
+    uint8_t entry_idx;
+    scan_result_entry_t scan_entry[ANT_DETECT_MAX_SCAN_ENTRY];
+} PACK_END wlan_ant_scan_info_t;
+
+typedef PACK_START struct _cfg_scan_channel_list_t
+{
+    uint8_t num_channels;
+    uint8_t chan_number[ANT_DETECT_MAX_CHANNEL_LIST];
+} PACK_END cfg_scan_channel_list_t;
+
+typedef PACK_START struct _wlan_ant_detect_data_t
+{
+    uint8_t detect_mode;
+    int detect_done;
+    uint16_t current_ant;
+    uint8_t ant_port_count;
+    uint16_t best_ant;
+    uint16_t next_best_ant;
+    cfg_scan_channel_list_t *channel_list;
+    wlan_ant_scan_info_t scan_info[MAX_ANTENNA_PORT_NUM];
+} PACK_END wlan_ant_detect_data_t;
+#endif
+
 #endif /* __WIFI_DECL_H__ */

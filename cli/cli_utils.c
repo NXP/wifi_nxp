@@ -183,6 +183,50 @@ bool get_mac(const char *arg, char *dest, char sep)
     return false;
 }
 
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+bool get_channel_list(const char *arg, uint8_t *num_channels, uint8_t *chan_number, char sep)
+{
+    unsigned int len = 0;
+    unsigned int i;
+    uint8_t count = 0;
+    uint8_t val = 0;
+
+    len = strlen(arg);
+
+    if (len == 0U)
+    {
+        (void)PRINTF("Error: len == 0\r\n");
+        return true;
+    }
+
+    for (i = 0; i < len; i++)
+    {
+        if (arg[i] == sep)
+        {
+            chan_number[count] = val;
+            count++;
+            val = 0;
+            continue;
+        }
+
+        if (arg[i] < '0' || arg[i] > '9')
+        {
+            return true;
+        }
+        val *= 10U;
+        val += (uint8_t)arg[i] - (uint8_t)'0';
+
+        if (i == len - 1)
+        {
+            chan_number[count] = val;
+        }
+    }
+
+    *num_channels = count + 1;
+    return false;
+}
+#endif
+
 /* Non-reentrant getopt implementation */
 int cli_optind   = 0;
 char *cli_optarg = NULL;

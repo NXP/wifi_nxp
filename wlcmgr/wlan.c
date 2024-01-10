@@ -10556,7 +10556,8 @@ static int wlan_pscan(int (*cb)(unsigned int count))
 int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
 {
     int ret;
-
+    uint32_t chan_idx = 0;
+    uint32_t t_idx = 0;
     wlan_scan_params_v2_t *wlan_scan_param = NULL;
 
     if (t_wlan_scan_param.cb == NULL)
@@ -10577,6 +10578,30 @@ int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
     }
 
     (void)memcpy((void *)wlan_scan_param, (const void *)&t_wlan_scan_param, sizeof(wlan_scan_params_v2_t));
+
+    wlan_scan_param->num_channels = 0;
+    (void)memset((void *)&wlan_scan_param->chan_list[0], 0x0, MAX_CHANNEL_LIST * sizeof(wifi_scan_channel_list_t));
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+    for (t_idx = 0; t_idx < ANT_DETECT_MAX_CHANNEL_LIST && t_wlan_scan_param.chan_list[t_idx].chan_number; t_idx++)
+#else
+    for (t_idx = 0; t_idx < MAX_CHANNEL_LIST && t_wlan_scan_param.chan_list[t_idx].chan_number; t_idx++)
+#endif
+    {
+        if(!wlan_check_channel_by_region_table((mlan_private *)mlan_adap->priv[0], t_wlan_scan_param.chan_list[t_idx].chan_number))
+        {
+            continue;
+        }
+        (void)memcpy((void *)&wlan_scan_param->chan_list[chan_idx], (const void *)&t_wlan_scan_param.chan_list[t_idx], sizeof(wifi_scan_channel_list_t));
+        chan_idx++;
+    }
+    wlan_scan_param->num_channels = chan_idx;
+
+    if (chan_idx == 0 && t_wlan_scan_param.num_channels > 0)
+    {
+        wlcm_e("no valid channel to scan");
+        os_mem_free(wlan_scan_param);
+        return -WM_E_INVAL;
+    }
 
     wlcm_d("taking the scan lock (user scan)");
     dbg_lock_info();

@@ -10805,6 +10805,828 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
 }
 #endif
 
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+static void swap_scan_entry(scan_result_entry_t *pEntry1, scan_result_entry_t *pEntry2)
+{
+    scan_result_entry_t temp;
+
+    (void)memcpy((void *)&temp, (const void*)pEntry1, sizeof(scan_result_entry_t));
+    (void)memcpy((void *)pEntry1, (const void*)pEntry2, sizeof(scan_result_entry_t));
+    (void)memcpy((void *)pEntry2, (const void*)&temp, sizeof(scan_result_entry_t));
+}
+
+static void copy_scan_result(scan_result_entry_t *pDst, struct wifi_scan_result2 *pSrc)
+{
+    (void)memcpy((void *)&pDst->bssid[0], (const void *)&pSrc->bssid[0], sizeof(pSrc->bssid));
+    (void)memcpy((void *)&pDst->ssid[0], (const void *)((char *)&pSrc->ssid[0]), (size_t)pSrc->ssid_len);
+    pDst->ssid[pSrc->ssid_len] = (char)0;
+    pDst->ssid_len = (size_t)pSrc->ssid_len;
+    pDst->channel = pSrc->Channel;
+    pDst->rssi = pSrc->RSSI;
+}
+
+static void wlan_sort_scan_entry(scan_result_entry_t *pScan_entry)
+{
+    unsigned int i;
+    unsigned int j;
+    unsigned int minIdx;
+
+    /* selection sort */
+    for (i = 0; i < (ANT_DETECT_MAX_SCAN_ENTRY - 1); i++)
+    {
+        minIdx = i;
+        for (j = i + 1; j < ANT_DETECT_MAX_SCAN_ENTRY; j++)
+        {
+            if (pScan_entry[j].rssi < pScan_entry[minIdx].rssi)
+            {
+                minIdx = j;
+            }
+        }
+
+        if (minIdx != i)
+        {
+            swap_scan_entry(&pScan_entry[minIdx], &pScan_entry[i]);
+        }
+    }
+}
+
+static unsigned char wlan_calculate_avg_rssi(scan_result_entry_t *pScan_entry)
+{
+    unsigned int i;
+    unsigned char avg_rssi = 0;
+    uint16_t sum_rssi = 0;
+    uint8_t valid_entry = 0;
+
+    for (i = 0; i < ANT_DETECT_MAX_SCAN_ENTRY; i++)
+    {
+        if (pScan_entry[i].rssi == 0xff)
+        {
+            break;
+        }
+        else if (i > 0)
+        {
+            if (pScan_entry[i].rssi - pScan_entry[0].rssi >= 30)
+            {
+                break;
+            }
+            else
+            {
+                valid_entry++;
+            }
+        }
+        else
+        {
+            valid_entry++;
+        }
+    }
+
+    if (valid_entry > 0 && valid_entry <= ANT_DETECT_MAX_SCAN_ENTRY)
+    {
+        (void)PRINTF("%d valid scan entry found\r\n", valid_entry);
+        for (i = 0; i < valid_entry; i++)
+        {
+            sum_rssi += pScan_entry[i].rssi;
+        }
+        avg_rssi = sum_rssi / valid_entry;
+    }
+
+    return avg_rssi;
+}
+
+/** Find top 5 best scan info (with high RSSI) and save to scan entry
+ *
+ * If scan_networks_count is no more than 5, just copy scan info and sort;
+ * Otherwise, use below logic:
+ * 1.Get the first 5 scan results in scan table to scan entries;
+ * 2.sort scan info in scan entries from high rssi to low rssi;
+ * 3.then when get a new scan results in scan table, if it has
+ *   high rssi than the lowest one in scan entries, replace the
+ *   lowest entry with the new scan info and re-sort scan entries.
+ *
+ */
+static void wlan_get_best_scan_info(wlan_ant_detect_data_t *pData, unsigned int scan_networks_count)
+{
+    int ret;
+    unsigned int i;
+    unsigned int net_count = scan_networks_count;
+    unsigned int entry_count = ANT_DETECT_MAX_SCAN_ENTRY;
+    wlan_ant_scan_info_t *pInfo = &pData->scan_info[pData->current_ant - 1];
+    struct wifi_scan_result2 *res;
+
+    if (net_count <= entry_count)
+    {
+        for (i = 0; i < net_count; i++)
+        {
+            ret = wifi_get_scan_result(i, &res);
+            if (ret == WM_SUCCESS)
+            {
+                copy_scan_result(&pInfo->scan_entry[i], res);
+            }
+            else
+            {
+                PRINTF("Error: can't get scan res %d\r\n", i);
+            }
+        }
+        wlan_sort_scan_entry(&pInfo->scan_entry[0]);
+    }
+    else
+    {
+        unsigned int lowest_rssi_index = entry_count - 1;
+        for (i = 0; i < net_count; i++)
+        {
+            ret = wifi_get_scan_result(i, &res);
+            if (ret == WM_SUCCESS)
+            {
+                if (i < entry_count)
+                {
+                    copy_scan_result(&pInfo->scan_entry[i], res);
+
+                    if (i == entry_count - 1)
+                    {
+                        wlan_sort_scan_entry(&pInfo->scan_entry[0]);
+                    }
+                }
+                else
+                {
+                    if(res->RSSI < pInfo->scan_entry[lowest_rssi_index].rssi)
+                    {
+                        copy_scan_result(&pInfo->scan_entry[lowest_rssi_index], res);
+                        wlan_sort_scan_entry(&pInfo->scan_entry[0]);
+                    }
+                }
+            }
+            else
+            {
+                PRINTF("Error: can't get scan res %d\r\n", i);
+            }
+        }
+    }
+
+    PRINTF("List top %d best scanned AP's info:\r\n", entry_count);
+    for (i = 0; i < entry_count; i++)
+    {
+        print_mac(pInfo->scan_entry[i].bssid);
+        PRINTF(" \"%s\"\r\n", pInfo->scan_entry[i].ssid);
+        PRINTF("\tchannel: %d\r\n", pInfo->scan_entry[i].channel);
+        PRINTF("\trssi: -%d dBm\r\n", pInfo->scan_entry[i].rssi);
+    }
+
+    if (pData->detect_mode != PCB_DETECT_MODE)
+    {
+        pInfo->avg_rssi = wlan_calculate_avg_rssi(&pInfo->scan_entry[0]);
+        PRINTF("avg_rssi: -%d dBm\r\n", pInfo->avg_rssi);
+    }
+}
+
+static void wlan_get_specific_scan_info(wlan_ant_scan_info_t *pInfo, unsigned int scan_networks_count)
+{
+    int ret;
+    unsigned int i;
+    unsigned int count = scan_networks_count;
+    struct wifi_scan_result2 *res;
+
+    for (i = 0; i < count; i++)
+    {
+        ret = wifi_get_scan_result(i, &res);
+        if (ret == WM_SUCCESS)
+        {
+            copy_scan_result(&pInfo->scan_entry[pInfo->entry_idx], res);
+        }
+        else
+        {
+            PRINTF("Error: can't get scan res %d\r\n", i);
+        }
+    }
+
+    print_mac(pInfo->scan_entry[pInfo->entry_idx].bssid);
+    PRINTF(" \"%s\"\r\n", pInfo->scan_entry[pInfo->entry_idx].ssid);
+    PRINTF("\tchannel: %d\r\n", pInfo->scan_entry[pInfo->entry_idx].channel);
+    PRINTF("\trssi: -%d dBm\r\n", pInfo->scan_entry[pInfo->entry_idx].rssi);
+}
+
+static void wlan_get_best_two_ants(wlan_ant_detect_data_t *pData)
+{
+    uint16_t i;
+    uint16_t minIdx1;
+    uint16_t minIdx2;
+    wlan_ant_scan_info_t *pScan_info = &pData->scan_info[0];
+
+    if (pScan_info[0].avg_rssi < pScan_info[1].avg_rssi)
+    {
+        minIdx1 = 0;
+        minIdx2 = 1;
+    }
+    else
+    {
+        minIdx1 = 1;
+        minIdx2 = 0;
+    }
+
+    for (i = 2; i < pData->ant_port_count; i++)
+    {
+        if (pScan_info[i].avg_rssi < pScan_info[minIdx1].avg_rssi)
+        {
+            minIdx2 = minIdx1;
+            minIdx1 = i;
+        }
+        else if (pScan_info[i].avg_rssi < pScan_info[minIdx2].avg_rssi)
+        {
+            minIdx2 = i;
+        }
+    }
+
+    pData->best_ant = minIdx1 + 1;
+    pData->next_best_ant = minIdx2 + 1;
+    pData->detect_done = 1;
+}
+
+static void wlan_evaluate_ant_by_avg_rssi(wlan_ant_detect_data_t *pData)
+{
+    uint16_t i;
+    uint8_t valid_res = pData->ant_port_count;
+    wlan_ant_scan_info_t *pScan_info = &pData->scan_info[0];
+
+    (void)PRINTF("\nEvaluate result:\r\n");
+    (void)PRINTF("\t        avg_rssi\r\n");
+    for (i = 0; i < pData->ant_port_count; i++)
+    {
+        (void)PRINTF("Antenna %d", i);
+        (void)PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
+        if (pScan_info[i].avg_rssi == 0xff)
+        {
+            valid_res--;
+        }
+    }
+
+    (void)PRINTF("There are %d antenna with valid result%s.\r\n", valid_res, valid_res <= 1U ? "" : "s");
+    if (valid_res <= 1)
+    {
+        pData->detect_done = -1;
+        return;
+    }
+
+    wlan_get_best_two_ants(pData);
+}
+
+/** Evaluate all antennas by one common device
+ *
+ * This function is to find one common BSSID in all antennas' scan entries,
+ * and to find 2 best antennas based on the common BSSID's rssi value.
+ *
+ * The logic is:
+ * 1.Find the ant who has the best scan RSSI of all antennas' scan entries;
+ * 2.Take this ant and its best scan BSSID as a reference;
+ * 3.Loop the reference ant's scan entried (rssi from high to low) and check
+ *   whether the same BSSID is in other antennas;
+ * 4.If find the same BSSID in one antenna, record its entry idx to the
+ *   corresponding location in array com_idx_per_ant[];
+ * 5.As com_idx_per_ant[] is initialized as 0xff, check its value and we can
+ *   we can know whether find a common BSSID or not.
+ * 6.Rank and find 2 best antennas based on the common BSSID's rssi value.
+ *
+ * \return 1 if find one common BSSID.
+ * \return -1 if no common BSSID.
+ *
+ */
+static int wlan_evaluate_ant_by_common_device(wlan_ant_detect_data_t *pData)
+{
+    uint8_t i;
+    uint8_t j;
+    uint8_t com_idx_per_ant[pData->ant_port_count];
+    uint8_t current_best_ant;
+    int detect_done = 0;
+    t_u8 zero_bssid[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    wlan_ant_scan_info_t *pScan_info = &pData->scan_info[0];
+    wlan_ant_scan_info_t *pRef_info = NULL;
+
+    current_best_ant = 0;
+    for (i = 1; i < pData->ant_port_count; i++)
+    {
+        if (pData->scan_info[i].scan_entry[0].rssi < pData->scan_info[current_best_ant].scan_entry[0].rssi)
+        {
+            current_best_ant = i;
+        }
+    }
+
+    pRef_info = &pData->scan_info[current_best_ant];
+
+    memset((void *)&com_idx_per_ant[0], 0xff, pData->ant_port_count);
+    for (i = 0; i < ANT_DETECT_MAX_SCAN_ENTRY; i++)
+    {
+        uint8_t temp = 0;
+        if (memcmp(pRef_info->scan_entry[i].bssid, zero_bssid, 6) == 0)
+        {
+            break;
+        }
+
+        for (uint8_t ant_idx = 0; ant_idx < pData->ant_port_count; ant_idx++)
+        {
+            if (ant_idx == current_best_ant)
+            {
+                continue;
+            }
+
+            for (j = 0; j < ANT_DETECT_MAX_SCAN_ENTRY; j++)
+            {
+                if (memcmp(pScan_info[ant_idx].scan_entry[j].bssid, zero_bssid, 6) == 0)
+                {
+                    break;
+                }
+
+                if (memcmp(pRef_info->scan_entry[i].bssid, pScan_info[ant_idx].scan_entry[j].bssid, 6) == 0)
+                {
+                    com_idx_per_ant[ant_idx] = j;
+                    break;
+                }
+            }
+        }
+
+        for (uint8_t k = 0; k < pData->ant_port_count; k++)
+        {
+            if (com_idx_per_ant[k] == 0xff)
+            {
+                temp++;
+            }
+        }
+
+        /*
+         * if other antennas have the same BSSID as reference ant,
+         * then the corresponding value in com_idx_per_ant[] array
+         * is not 0xff and temp should be 1
+         */
+        if (temp == 1)
+        {
+            com_idx_per_ant[current_best_ant] = i;
+            detect_done = 1;
+            break;
+        }
+        else //if (temp > 1)
+        {
+            if (i == ANT_DETECT_MAX_SCAN_ENTRY - 1)
+            {
+                detect_done = -1;
+                break;
+            }
+            else
+            {
+                memset((void *)&com_idx_per_ant[0], 0xff, pData->ant_port_count);
+            }
+        }
+    }
+
+    if (detect_done == 1)
+    {
+        (void)PRINTF("\nFind one common device\r\n");
+        (void)PRINTF("List the info on every antenna for this common device\r\n");
+        for (i = 0; i < pData->ant_port_count; i++)
+        {
+            PRINTF("Antenna %d:\r\n", i);
+            print_mac(pScan_info[i].scan_entry[com_idx_per_ant[i]].bssid);
+            PRINTF(" \"%s\"\r\n", pScan_info[i].scan_entry[com_idx_per_ant[i]].ssid);
+            PRINTF("\trssi[%d]: -%d dBm\r\n", i, pScan_info[i].scan_entry[com_idx_per_ant[i]].rssi);
+            pScan_info[i].avg_rssi = pScan_info[i].scan_entry[com_idx_per_ant[i]].rssi;
+        }
+        wlan_get_best_two_ants(pData);
+    }
+    else
+    {
+        detect_done = -1;
+    }
+
+    return detect_done;
+}
+
+uint8_t device_count_to_check = PCB_DETECT_MODE_CHECK_DEVICE_COUNT;
+static void wlan_evaluate_ant_by_specific_device(wlan_ant_detect_data_t *pData)
+{
+    unsigned int i;
+    unsigned int j;
+    uint16_t sum_rssi = 0;
+    wlan_ant_scan_info_t *pScan_info = &pData->scan_info[0];
+
+    (void)PRINTF("\nEvaluate result:\r\n");
+    (void)PRINTF("\t       avg_rssi\r\n");
+    for (i = 0; i < pData->ant_port_count; i++)
+    {
+        sum_rssi = 0;
+        (void)PRINTF("Antenna %d", i);
+        for (j = 0; j < device_count_to_check; j++)
+        {
+            sum_rssi += pScan_info[i].scan_entry[j].rssi;
+        }
+        pScan_info[i].avg_rssi = sum_rssi / device_count_to_check;
+        PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
+    }
+
+    wlan_get_best_two_ants(pData);
+}
+
+wlan_ant_detect_data_t wlan_ant_detect_data;
+static int __ant_detect_scan_cb(unsigned int count)
+{
+    wlan_ant_detect_data_t *pData = (wlan_ant_detect_data_t *)&wlan_ant_detect_data;
+    wlan_ant_scan_info_t *pInfo = (wlan_ant_scan_info_t *)&pData->scan_info[pData->current_ant - 1];
+
+    if (count == 0U)
+    {
+        pInfo->avg_rssi = 0xff;
+        (void)PRINTF("no networks found\r\n");
+        goto end;
+    }
+
+    (void)PRINTF("%d network%s found\r\n", count, (count == 1U ? "" : "s"));
+    if (pData->detect_mode == PCB_DETECT_MODE)
+    {
+        if (pData->current_ant == 1)
+        {
+            if (count == 1)
+            {
+                device_count_to_check = 1;
+            }
+            wlan_get_best_scan_info(pData, count);
+        }
+        else
+        {
+            (void)PRINTF("wlan get specific scan info\r\n");
+            wlan_get_specific_scan_info(pInfo, count);
+
+        }
+    }
+    else
+    {
+        wlan_get_best_scan_info(pData, count);
+    }
+
+end:
+    pInfo->scan_done = MTRUE;
+    if (pData->detect_mode == PCB_DETECT_MODE)
+    {
+        if (count == 0 && pData->current_ant == 1)
+        {
+            pData->detect_done = -1;
+        }
+        else if (pData->current_ant == pData->ant_port_count &&
+                 pInfo->entry_idx == device_count_to_check - 1)
+        {
+            (void)PRINTF("evaluate ant by specific device\r\n");
+            wlan_evaluate_ant_by_specific_device(pData);
+        }
+    }
+    else if (pData->current_ant == pData->ant_port_count)
+    {
+        if (wlan_evaluate_ant_by_common_device(pData) == 1)
+        {
+            pData->detect_done = 1;
+        }
+        else
+        {
+            wlan_evaluate_ant_by_avg_rssi(pData);
+        }
+    }
+
+    return 0;
+}
+
+static int wlan_detect_ant_start_scan(wlan_scan_params_v2_t wlan_scan_param)
+{
+    char zero_bssid[6] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    int ret;
+    ret = wlan_scan_with_opt(wlan_scan_param);
+
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: scan request failed\r\n");
+    }
+    else
+    {
+        (void)PRINTF("Scan on ");
+        if (wlan_scan_param.num_channels > 1)
+        {
+            (void)PRINTF("%d channels ", wlan_scan_param.num_channels);
+        }
+        else if (wlan_scan_param.num_channels == 1)
+        {
+            (void)PRINTF("channel %d ", wlan_scan_param.chan_list[0].chan_number);
+        }
+        else
+        {
+            (void)PRINTF("full channel ");
+        }
+
+        if (memcmp(&wlan_scan_param.bssid[0], &zero_bssid[0], 6))
+        {
+            (void)PRINTF("and for bssid ");
+            print_mac((const char *)wlan_scan_param.bssid);
+        }
+        (void)PRINTF("scheduled...\r\n");
+    }
+
+    return ret;
+}
+
+static void wlan_detect_ant_set_mode(uint16_t best_ant, uint16_t next_best_ant)
+{
+    int ret;
+    uint32_t ant_mode;
+    uint16_t evaluate_time = 0x0;
+    uint8_t evaluate_mode = 0xff;
+    uint8_t evaluate_mode_lookup_table[3][3] =
+    {
+        /*   next best ant  */
+        /* Ant1  Ant2  Ant3 */
+        {  0xff,  0,    2   }, /* Ant1 */
+        {   0,   0xff,  1   }, /* Ant2 */  /* best ant */
+        {   2,    1,   0xff }, /* Ant3 */
+    };
+
+    evaluate_mode = evaluate_mode_lookup_table[best_ant - 1][next_best_ant - 1];
+    ant_mode = 0xffff;
+    ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("Enable Antenna diversity with evaluate mode %d successful\r\n", evaluate_mode);
+    }
+    else
+    {
+        (void)PRINTF("Enable Antenna diversity with evaluate mode %d failed\r\n", evaluate_mode);
+    }
+}
+
+static void wlan_start_detect_ant(void)
+{
+    int ret;
+    uint32_t ant_mode;
+    uint16_t evaluate_time = 0x0;
+    uint8_t evaluate_mode = 0xff;
+    uint16_t current_antenna;
+    unsigned int i = 0;
+    unsigned int chIdx = 0;
+    wlan_ant_detect_data_t *pDetect_data = (wlan_ant_detect_data_t *)&wlan_ant_detect_data;
+    wlan_scan_params_v2_t wlan_scan_param;
+
+    (void)memset(&wlan_scan_param, 0, sizeof(wlan_scan_params_v2_t));
+    if (pDetect_data->detect_mode == QUICK_DETECT_MODE)
+    {
+        wlan_scan_param.num_channels = 1;
+    }
+    else if (pDetect_data->detect_mode == NORMAL_DETECT_MODE)
+    {
+        wlan_scan_param.num_channels = pDetect_data->channel_list->num_channels;
+        for (i = 0; i < pDetect_data->channel_list->num_channels; i++)
+        {
+            wlan_scan_param.chan_list[i].chan_number = pDetect_data->channel_list->chan_number[i];
+        }
+    }
+    wlan_scan_param.cb = __ant_detect_scan_cb;
+
+    do
+    {
+        pDetect_data->detect_done = 0;
+
+        if (pDetect_data->detect_mode == QUICK_DETECT_MODE)
+        {
+            wlan_scan_param.chan_list[0].chan_number = pDetect_data->channel_list->chan_number[chIdx];
+        }
+
+        for (current_antenna = 1; current_antenna <= pDetect_data->ant_port_count; current_antenna++)
+        {
+            ant_mode = (1 << (current_antenna - 1));
+
+            ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
+            if (ret == WM_SUCCESS)
+            {
+                (void)PRINTF("\nStart to evaluate antenna %d\r\n", current_antenna);
+                pDetect_data->current_ant = current_antenna;
+
+                if (pDetect_data->detect_mode == PCB_DETECT_MODE && current_antenna > 1)
+                {
+                    for (i = 0; i < device_count_to_check; i++)
+                    {
+                        scan_result_entry_t *pSpecInfo = &pDetect_data->scan_info[0].scan_entry[i];
+                        (void)memcpy((void *)&wlan_scan_param.bssid[0], (const void *)&pSpecInfo->bssid[0], sizeof(wlan_scan_param.bssid));
+                        wlan_scan_param.num_channels = 1;
+                        wlan_scan_param.chan_list[0].chan_number = pSpecInfo->channel;
+
+                        pDetect_data->scan_info[current_antenna - 1].scan_done = MFALSE;
+                        pDetect_data->scan_info[current_antenna - 1].entry_idx = i;
+                        ret = wlan_detect_ant_start_scan(wlan_scan_param);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            while (pDetect_data->scan_info[current_antenna - 1].scan_done != MTRUE)
+                            {
+                                os_thread_sleep(os_msec_to_ticks(3));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    ret = wlan_detect_ant_start_scan(wlan_scan_param);
+                    if (ret != 0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        while (pDetect_data->scan_info[current_antenna - 1].scan_done != MTRUE)
+                        {
+                            os_thread_sleep(os_msec_to_ticks(3));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                (void)PRINTF("\nError: Failed to set Antenna %d\r\n", current_antenna);
+                break;
+            }
+        }
+
+        if (ret != 0)
+        {
+            break;
+        }
+
+        while (pDetect_data->detect_done == 0)
+        {
+            // wait untill evaluation complete
+            os_thread_sleep(os_msec_to_ticks(2));
+        }
+
+        if (pDetect_data->detect_mode == QUICK_DETECT_MODE)
+        {
+            if (pDetect_data->detect_done == 1)
+            {
+                break;
+            }
+            else if (pDetect_data->detect_done == -1)
+            {
+                chIdx++;
+                if (chIdx >= pDetect_data->channel_list->num_channels)
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            break;
+        }
+    } while (pDetect_data->detect_done != 1);
+
+    if (pDetect_data->detect_done == 1)
+    {
+        (void)PRINTF("\nCurrently, best antenna is %d, next best antenna is %d\r\n", pDetect_data->best_ant, pDetect_data->next_best_ant);
+        wlan_detect_ant_set_mode(pDetect_data->best_ant, pDetect_data->next_best_ant);
+    }
+    else
+    {
+        (void)PRINTF("\nError: Failed to detect antenna\r\n");
+    }
+}
+
+static void dump_wlan_detect_ant_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-detect-ant <detect_mode> <ant_port_count> channel <channel> ... \r\n");
+    (void)PRINTF("\r\n");
+    (void)PRINTF("\t<detect_mode>: \r\n");
+    (void)PRINTF("\t             0 -- normal detect mode: scan on all cfg channel list antenna by antenna.\r\n");
+    (void)PRINTF("\t             1 -- quick detect mode: scan channel by channel on all antennas,\r\n");
+    (void)PRINTF("\t                  and stop detect once detect done on one of channel in channel list.\r\n");
+    (void)PRINTF("\t             2 -- PCB detect mode: scan on full channel list with PCB antenna firstly,\r\n");
+    (void)PRINTF("\t                  and select best 2 ex-APs, for the other antennas, just scan the specific channel\r\n");
+    (void)PRINTF("\t                  and the specific BSSID of 2 ex-APs; then compare scan RSSI and find best 2 ANTs.\r\n");
+    (void)PRINTF("\t<ant_port_count>: \r\n");
+    (void)PRINTF("\t                total count of antenna port, max 4\r\n");
+    (void)PRINTF("\tchannel <channel> ...: \r\n");
+    (void)PRINTF("\t                     You can specify one or more channels to scan.\r\n");
+    (void)PRINTF("\t                     If configure more than one channel, please seperate with ','.\r\n");
+    (void)PRINTF("\t                     If not specified, will scan on full channel list.\r\n");
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("wlan-detect-ant 1 3 channel 1\r\n");
+    (void)PRINTF("wlan-detect-ant 1 3 channel 1,6,11,36,40,44\r\n");
+    (void)PRINTF("wlan-detect-ant 1 3\r\n");
+    (void)PRINTF("wlan-detect-ant 0 3\r\n");
+    (void)PRINTF("wlan-detect-ant 2 3\r\n");
+}
+
+static void test_wlan_detect_ant(int argc, char **argv)
+{
+    unsigned start_msec;
+    unsigned end_msec;
+    int arg = 1;
+    uint8_t i;
+    uint8_t j;
+    uint8_t detect_mode = 0;
+    uint8_t antenna_port_count = 0;
+    wlan_ant_detect_data_t *pDetect_data = NULL;
+    cfg_scan_channel_list_t *cfg_channel_list = NULL;
+
+    if (argc < 3 || argc == 4)
+    {
+        dump_wlan_detect_ant_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        return;
+    }
+
+    detect_mode = (uint8_t)atoi(argv[arg]);
+    if (detect_mode != NORMAL_DETECT_MODE && detect_mode != QUICK_DETECT_MODE && detect_mode != PCB_DETECT_MODE)
+    {
+        dump_wlan_detect_ant_usage();
+        (void)PRINTF("Error: invalid detect_mode\r\n");
+        return;
+    }
+
+    arg = 2;
+    antenna_port_count = (uint8_t)atoi(argv[arg]);
+    if (antenna_port_count > MAX_ANTENNA_PORT_NUM || antenna_port_count < 3)
+    {
+        dump_wlan_detect_ant_usage();
+        (void)PRINTF("Error: invalid antenna_port_count\r\n");
+        return;
+    }
+
+    arg = 3;
+    (void *)memset(&wlan_ant_detect_data, 0x00, sizeof(wlan_ant_detect_data_t));
+    pDetect_data = (wlan_ant_detect_data_t *)&wlan_ant_detect_data;
+    for (i = 0; i < antenna_port_count; i++)
+    {
+        wlan_ant_scan_info_t *pInfo = (wlan_ant_scan_info_t *)&pDetect_data->scan_info[i];
+        for (j = 0; j < ANT_DETECT_MAX_SCAN_ENTRY; j++)
+        {
+            pInfo->scan_entry[j].rssi = 0xff;
+        }
+    }
+
+    pDetect_data->detect_mode = detect_mode;
+    pDetect_data->ant_port_count = antenna_port_count;
+    if (pDetect_data->detect_mode == PCB_DETECT_MODE)
+    {
+        goto start_detect;
+    }
+
+    cfg_channel_list = (cfg_scan_channel_list_t *)os_mem_calloc(sizeof(cfg_scan_channel_list_t));
+    if (cfg_channel_list == NULL)
+    {
+        (void)PRINTF("Failed to alloc buffer for channel list\r\n");
+        return;
+    }
+    (void)memset(cfg_channel_list, 0, sizeof(cfg_scan_channel_list_t));
+
+    if (argc > 4 && string_equal("channel", argv[arg]))
+    {
+        if (get_channel_list(argv[arg + 1], (uint8_t *)&cfg_channel_list->num_channels,
+                             (uint8_t *)&cfg_channel_list->chan_number[0], ',') != false)
+        {
+            (void)PRINTF("Error: invalid channel"" argument\n");
+            os_mem_free(cfg_channel_list);
+            return;
+        }
+    }
+    else
+    {
+        //get full channel list
+        wlan_chanlist_t chanlist;
+        (void)memset(&chanlist, 0x00, sizeof(wlan_chanlist_t));
+        int rv = wlan_get_chanlist(&chanlist);
+        if (rv != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to get channel list configuration\r\n");
+            os_mem_free(cfg_channel_list);
+            return;
+        }
+        else
+        {
+            uint8_t i = 0;
+            cfg_channel_list->num_channels = chanlist.num_chans;
+            for (i = 0; i < chanlist.num_chans; i++)
+            {
+                cfg_channel_list->chan_number[i] = chanlist.chan_info[i].chan_num;
+            }
+        }
+    }
+
+    pDetect_data->channel_list = cfg_channel_list;
+
+start_detect:
+    start_msec = os_ticks_to_msec(os_ticks_get());
+    (void)PRINTF("%d: Start to detect ant\r\n", start_msec);
+    wlan_start_detect_ant();
+    if (cfg_channel_list)
+    {
+        os_mem_free(cfg_channel_list);
+    }
+    end_msec = os_ticks_to_msec(os_ticks_get());
+    (void)PRINTF("%d: End of detect ant\r\n", end_msec);
+    (void)PRINTF("It cost %dms to detect ant\r\n", end_msec - start_msec);
+}
+#endif
+
 static struct cli_command tests[] = {
     {"wlan-thread-info", NULL, test_wlan_thread_info},
 #if CONFIG_SCHED_SWITCH_TRACE
@@ -11148,6 +11970,9 @@ static struct cli_command tests[] = {
 #endif
 #ifdef CONFIG_AUTO_NULL_TX
     {"wlan-auto-null-tx", "<start/stop>", test_wlan_auto_null_tx},
+#endif
+#if defined(RW610) && defined(CONFIG_ANT_DETECT)
+    {"wlan-detect-ant", "<detect_mode> <ant_port_count> channel <channel> ...", test_wlan_detect_ant},
 #endif
 };
 
