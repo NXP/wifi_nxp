@@ -515,7 +515,7 @@ void put_usb_host_send_pipe_sem(void)
 
 void USB_HostCdcDataOutCb(void *param, uint8_t *data, uint32_t dataLength, usb_status_t status)
 {
-    usb_echo("send dataLength :%d \r\n", dataLength);
+    mcu_d("send dataLength :%d \r\n", dataLength);
     put_usb_host_send_pipe_sem();
 }
 
@@ -524,7 +524,7 @@ int usb_host_send_data(uint8_t *data, uint16_t data_len)
     uint16_t packet_size        = 0;
     uint16_t remaining_data_len = data_len;
 
-    PRINTF("transfer_size :%d!\r\n", data_len);
+    mcu_d("transfer_size :%d!\r\n", data_len);
 
     while (remaining_data_len > 0)
     {

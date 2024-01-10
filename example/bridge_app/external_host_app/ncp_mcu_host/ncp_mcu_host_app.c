@@ -159,13 +159,13 @@ void usb_host_save_recv_data(uint8_t *recv_data, uint32_t packet_len)
 
     if ((usb_rx_len >= usb_transfer_len) && (usb_transfer_len >= NCP_BRIDGE_CMD_HEADER_LEN))
     {
-        PRINTF("recv data len: %d ", usb_transfer_len);
+        mcu_d("recv data len: %d ", usb_transfer_len);
 
         usb_rx_len       = 0;
         usb_transfer_len = 0;
         os_event_notify_put(ncp_host_tlv_thread);
 
-        PRINTF("data recv success \r\n");
+        mcu_d("data recv success \r\n");
     }
 }
 
