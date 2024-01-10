@@ -273,8 +273,14 @@ int ncp_sock_receive(uint32_t handle, uint32_t recv_size, uint32_t timeo, char *
         size += 60;
     /* timeout in milliseconds (0 means the receive
        call will not time out) */
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    uint32_t timeout = timeo;
+    socklen_t timeo_len	= sizeof(uint32_t);
+#else
     struct timeval timeout = {timeo / 1000, (timeo % 1000) * 1000};
-    status                 = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+    socklen_t timeo_len	= sizeof(struct timeval);
+#endif
+    status                 = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, timeo_len);
     if (status == -1)
     {
         httpc_e("status:socket set-opt failed");

@@ -119,28 +119,12 @@ int IP_to_hex(char *IPstr, uint8_t *hex)
     return WM_SUCCESS;
 }
 
-extern int ping_seq_no;
-extern uint32_t ping_time;
-extern uint32_t recvd;
-
-/* Display the statistics of the current iteration of ping */
-static void display_ping_stats(int status, uint32_t size, const char *ip_str, uint16_t seqno, int ttl, uint32_t time)
-{
-    if (status == WM_SUCCESS)
-    {
-        (void)PRINTF("%u bytes from %s: icmp_req=%u ttl=%u time=%u ms\r\n", size, ip_str, seqno, ttl, time);
-    }
-    else
-    {
-        (void)PRINTF("icmp_seq=%u Destination Host Unreachable\r\n", seqno);
-    }
-}
+extern ping_res_t ping_res;
 
 /* Handle the ICMP echo response and extract required parameters */
 static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
 {
-    int ret = -WM_FAIL, ttl = 0;
-    char ip_addr[IP_ADDR_LEN + 1] = {0};
+    int ret = -WM_FAIL;
     struct ip_hdr *iphdr;
     struct icmp_echo_hdr *iecho;
 
@@ -153,21 +137,21 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
         iecho = (struct icmp_echo_hdr *)(recv->recv_data + ((iphdr->_v_hl & 0x0f) * 4));
 
         /* Calculate the round trip time */
-        ping_time = os_ticks_get() - ping_time;
+        ping_res.time = os_ticks_get() - ping_res.time;
 
         /* Verify that the echo response is for the echo request
          * we sent by checking PING_ID and sequence number */
-        if ((iecho->id == PING_ID) && (iecho->seqno == PP_HTONS(ping_seq_no)))
+        if ((iecho->id == PING_ID) && (iecho->seqno == PP_HTONS(ping_res.seq_no)))
         {
             /* Increment the receive counter */
-            recvd++;
+            ping_res.recvd++;
             /* To display successful ping stats, destination
              * IP address is required */
-            (void)memcpy(ip_addr, recv->peer_ip, sizeof(recv->peer_ip));
+            (void)memcpy(ping_res.ip_addr, recv->peer_ip, sizeof(recv->peer_ip));
 
             /* Extract TTL and send back so that it can be
              * displayed in ping statistics */
-            ttl = iphdr->_ttl;
+            ping_res.ttl = iphdr->_ttl;
             ret = WM_SUCCESS;
         }
         else
@@ -175,11 +159,9 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
             ret = -WM_FAIL;
         }
 
-        display_ping_stats(ret, ping_msg.size, ip_addr, ping_seq_no, ttl, ping_time);
+        ping_res.echo_resp = ret;
+        ping_res.size = ping_msg.size;
     }
-
-    if (ret != WM_SUCCESS)
-        (void)PRINTF("ICMP echo response verification unsuccessful!\r\n");
 }
 
 /**
@@ -4450,25 +4432,26 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
 {
     unsigned int recv_size         = 0;
     MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
+
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        if (ping_seq_no < 0)
+        if (ping_res.seq_no < 0)
         {
             (void)PRINTF("failed to receive data!\r\n");
+            return -WM_FAIL;
         }
         else
         {
-            (void)PRINTF("icmp_seq=%u Destination Host Unreachable\r\n", ping_seq_no);
+            ping_res.echo_resp = -WM_FAIL;
             (void)os_event_notify_put(ping_sock_thread);
+            return WM_SUCCESS;
         }
-
-        return -WM_FAIL;
     }
 
     NCP_CMD_SOCKET_RECVFROM_CFG *wlan_socket_recvfrom =
         (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.wlan_socket_recvfrom;
 
-    if (ping_seq_no < 0)
+    if (ping_res.seq_no < 0)
     {
         recv_size = wlan_socket_recvfrom->size;
         (void)PRINTF("recvfrom data success, %s, peer_ip = %s, peer_port = %d\r\n", wlan_socket_recvfrom->recv_data,

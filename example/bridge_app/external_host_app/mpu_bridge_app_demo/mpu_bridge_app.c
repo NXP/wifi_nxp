@@ -43,9 +43,7 @@ uint32_t last_resp_rcvd, last_cmd_sent;
 int ping_qid;
 sem_t ping_res_sem;
 ping_msg_t ping_msg;
-int ping_seq_no;
-ping_time_t ping_start;
-uint32_t recvd;
+ping_res_t ping_res;
 
 sem_t iperf_tx_sem;
 sem_t iperf_rx_sem;
@@ -771,6 +769,19 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, uint16_
     iecho->chksum = inet_chksum(iecho, len);
 }
 
+/* Display the statistics of the current iteration of ping */
+static void display_ping_stats(int status, uint32_t size, const char *ip_str, uint16_t seqno, int ttl, uint64_t time)
+{
+    if (status == WM_SUCCESS)
+    {
+        printf("%u bytes from %s: icmp_req=%u ttl=%u time=%lu ms\r\n", size, ip_str, seqno, ttl, time);
+    }
+    else
+    {
+        printf("icmp_seq=%u Destination Host Unreachable\r\n", seqno);
+    }
+}
+
 /* Send an ICMP echo request by NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command and get ICMP echo reply by
  * NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command. Print ping statistics in NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM
  * command response, and print ping result in ping_sock_task.
@@ -778,13 +789,14 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, uint16_
 int ping_sock_task(void *arg)
 {
     struct icmp_echo_hdr *iecho;
-
     send_data_t *S_D = (send_data_t *)arg;
+    uint64_t ping_time;
+    int retry;
 
     while (1)
     {
-        recvd       = 0;
-        ping_seq_no = -1;
+        ping_res.recvd  = 0;
+        ping_res.seq_no = -1;
 
         /* demo ping task wait for user input ping command from console */
         (void)memset(&ping_msg, 0, sizeof(ping_msg_t));
@@ -812,6 +824,9 @@ int ping_sock_task(void *arg)
 
         while (i <= ping_msg.count)
         {
+            ping_res.echo_resp = FALSE;
+            retry = 10;
+
             /* Wait for command response semaphore. */
             sem_wait(&cmd_sem);
 
@@ -839,43 +854,52 @@ int ping_sock_task(void *arg)
             /* Send ping TLV command */
             send_tlv_command(S_D);
             /* Get the current ticks as the start time */
-            ping_time_now(&ping_start);
+            ping_time_now(&ping_res.time);
 
             /* sequence number */
-            ping_seq_no = i;
+            ping_res.seq_no = i;
 
             /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command response */
             sem_wait(&ping_res_sem);
-            /* Wait for command response semaphore. */
-            sem_wait(&cmd_sem);
+            /* Function raw_input may put multiple pieces of data in conn->recvmbox,
+             * waiting to select the data we want */
+            while (ping_res.echo_resp != TRUE && retry)
+            {
+                /* Wait for command response semaphore. */
+                sem_wait(&cmd_sem);
 
-            /* Prepare get-ping-result command */
-            NCPCmd_DS_COMMAND *ping_res_command = ncp_mpu_bridge_get_command_buffer();
-            ping_res_command->header.cmd        = NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM;
-            ping_res_command->header.size       = NCP_BRIDGE_CMD_HEADER_LEN;
-            ping_res_command->header.result     = NCP_BRIDGE_CMD_RESULT_OK;
-            ping_res_command->header.msg_type   = NCP_BRIDGE_MSG_TYPE_CMD;
+                /* Prepare get-ping-result command */
+                NCPCmd_DS_COMMAND *ping_res_command = ncp_mpu_bridge_get_command_buffer();
+                ping_res_command->header.cmd        = NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM;
+                ping_res_command->header.size       = NCP_BRIDGE_CMD_HEADER_LEN;
+                ping_res_command->header.result     = NCP_BRIDGE_CMD_RESULT_OK;
+                ping_res_command->header.msg_type   = NCP_BRIDGE_MSG_TYPE_CMD;
 
-            NCP_CMD_SOCKET_RECVFROM_CFG *ping_res_sock_tlv =
-                (NCP_CMD_SOCKET_RECVFROM_CFG *)&ping_res_command->params.wlan_socket_recvfrom;
-            ping_res_sock_tlv->handle  = ping_msg.handle;
-            ping_res_sock_tlv->size    = ping_msg.size + IP_HEADER_LEN;
-            ping_res_sock_tlv->timeout = PING_RECVFROM_TIMEOUT;
+                NCP_CMD_SOCKET_RECVFROM_CFG *ping_res_sock_tlv =
+                    (NCP_CMD_SOCKET_RECVFROM_CFG *)&ping_res_command->params.wlan_socket_recvfrom;
+                ping_res_sock_tlv->handle  = ping_msg.handle;
+                ping_res_sock_tlv->size    = ping_msg.size + IP_HEADER_LEN;
+                ping_res_sock_tlv->timeout = PING_RECVFROM_TIMEOUT;
 
-            /* cmd size */
-            ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
+                /* cmd size */
+                ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
 
-            /* Send get-ping-result TLV command */
-            send_tlv_command(S_D);
-            /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command response */
-            sem_wait(&ping_res_sem);
+                /* Send get-ping-result TLV command */
+                send_tlv_command(S_D);
+                /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command response */
+                sem_wait(&ping_res_sem);
+
+                retry--;
+            }
+            ping_time = ping_time_in_msecs(&ping_res.time);
+            display_ping_stats(ping_res.echo_resp, ping_res.size, ping_res.ip_addr, ping_res.seq_no, ping_res.ttl, ping_time);
 
             usleep(1000000);
             i++;
         }
         free((void *)iecho);
         sem_post(&ping_res_sem);
-        display_ping_result((int)ping_msg.count, recvd);
+        display_ping_result((int)ping_msg.count, ping_res.recvd);
     }
 }
 

@@ -1498,6 +1498,17 @@ typedef MLAN_PACK_START struct _ping_msg_t
     uint32_t port;
 } MLAN_PACK_END ping_msg_t;
 
+typedef MLAN_PACK_START struct _ping_res
+{
+    int seq_no;
+    int echo_resp;
+    uint32_t time;
+    uint32_t recvd;
+    int ttl;
+    char ip_addr[IP_ADDR_LEN];
+    uint16_t size;
+} MLAN_PACK_END ping_res_t;
+
 typedef MLAN_PACK_START struct _iperf_msg_t
 {
     uint16_t size;

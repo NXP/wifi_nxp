@@ -20,9 +20,7 @@ char *cli_optarg = NULL;
 extern int ping_qid;
 extern ping_msg_t ping_msg;
 extern sem_t ping_res_sem;
-extern int ping_seq_no;
-extern ping_time_t ping_start;
-extern uint32_t recvd;
+extern ping_res_t ping_res;
 extern pthread_mutex_t uart_mutex;
 
 extern sem_t iperf_tx_sem;
@@ -3538,7 +3536,7 @@ int wlan_process_wlan_socket_sendto_response(uint8_t *res)
     NCPCmd_DS_COMMAND *cmd_res = (NCPCmd_DS_COMMAND *)res;
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        if (ping_seq_no < 0)
+        if (ping_res.seq_no < 0)
         {
             printf("failed to sendto data!\r\n");
         }
@@ -3550,7 +3548,7 @@ int wlan_process_wlan_socket_sendto_response(uint8_t *res)
         return FALSE;
     }
 
-    if (ping_seq_no >= 0)
+    if (ping_res.seq_no >= 0)
     {
         /* Send ping cmd response to ping_sock_task */
         sem_post(&ping_res_sem);
@@ -3687,28 +3685,13 @@ int wlan_socket_receive_command(int argc, char **argv)
     return TRUE;
 }
 
-/* Display the statistics of the current iteration of ping */
-static void display_ping_stats(int status, uint32_t size, const char *ip_str, uint16_t seqno, int ttl, uint64_t time)
-{
-    if (status == WM_SUCCESS)
-    {
-        printf("%u bytes from %s: icmp_req=%u ttl=%u time=%lu ms\r\n", size, ip_str, seqno, ttl, time);
-    }
-    else
-    {
-        printf("icmp_seq=%u Destination Host Unreachable\r\n", seqno);
-    }
-}
-
 /* Handle the ICMP echo response and extract required parameters */
 static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
 {
-    int ret = FALSE, ttl = 0;
-    char ip_addr[IP_ADDR_LEN + 1] = {0};
+    int ret = FALSE;
     struct ip_hdr *iphdr;
     struct icmp_echo_hdr *iecho;
     ping_time_t ping_stop, temp_time;
-    uint64_t ping_time;
 
     /* Received length should be greater than size of IP header and
      * size of ICMP header */
@@ -3720,22 +3703,22 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
 
         /* Calculate the round trip time */
         ping_time_now(&ping_stop);
-        ping_time_diff(&ping_stop, &ping_start, &temp_time);
-        ping_time = ping_time_in_msecs(&temp_time);
+        ping_time_diff(&ping_stop, &ping_res.time, &temp_time);
+        ping_res.time = temp_time;
 
         /* Verify that the echo response is for the echo request
          * we sent by checking PING_ID and sequence number */
-        if ((iecho->id == PING_ID) && (iecho->seqno == htons(ping_seq_no)))
+        if ((iecho->id == PING_ID) && (iecho->seqno == htons(ping_res.seq_no)))
         {
             /* Increment the receive counter */
-            recvd++;
+            ping_res.recvd++;
             /* To display successful ping stats, destination
              * IP address is required */
-            (void)memcpy(ip_addr, recv->peer_ip, sizeof(recv->peer_ip));
+            (void)memcpy(ping_res.ip_addr, recv->peer_ip, sizeof(recv->peer_ip));
 
             /* Extract TTL and send back so that it can be
              * displayed in ping statistics */
-            ttl = iphdr->_ttl;
+            ping_res.ttl = iphdr->_ttl;
             ret = TRUE;
         }
         else
@@ -3743,11 +3726,9 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
             ret = FALSE;
         }
 
-        display_ping_stats(ret, ping_msg.size, ip_addr, ping_seq_no, ttl, ping_time);
+        ping_res.echo_resp = ret;
+        ping_res.size      = ping_msg.size;
     }
-
-    if (ret != TRUE)
-        printf("ICMP echo response verification unsuccessful!\r\n");
 }
 
 /**
@@ -3760,15 +3741,16 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
 {
     unsigned int recv_size     = 0;
     NCPCmd_DS_COMMAND *cmd_res = (NCPCmd_DS_COMMAND *)res;
+
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        if (ping_seq_no < 0)
+        if (ping_res.seq_no < 0)
         {
             printf("failed to receive data!\r\n");
         }
         else
         {
-            printf("icmp_seq=%u Destination Host Unreachable\r\n", ping_seq_no);
+            ping_res.echo_resp = FALSE;
             /* Send ping cmd response to ping_sock_task */
             sem_post(&ping_res_sem);
         }
@@ -3779,7 +3761,7 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
         (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.wlan_socket_recvfrom;
     recv_size = wlan_socket_recvfrom->size;
 
-    if (ping_seq_no >= 0)
+    if (ping_res.seq_no >= 0)
     {
         ping_recv(wlan_socket_recvfrom);
         /* Send ping cmd response to ping_sock_task */

@@ -1727,6 +1727,16 @@ typedef struct _ping_time_t
     uint32_t usecs;
 } ping_time_t;
 
+typedef struct _ping_res
+{
+    int seq_no;
+    int echo_resp;
+    ping_time_t time;
+    uint32_t recvd;
+    int ttl;
+    char ip_addr[IP_ADDR_LEN];
+    uint16_t size;
+} ping_res_t;
 
 /**
  * @brief This function prepares ncp iperf command
