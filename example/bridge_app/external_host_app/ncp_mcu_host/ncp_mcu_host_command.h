@@ -387,6 +387,17 @@ typedef MLAN_PACK_START struct _ping_msg_t
     uint32_t port;
 } MLAN_PACK_END ping_msg_t;
 
+typedef MLAN_PACK_START struct _ping_res
+{
+    int seq_no;
+    int echo_resp;
+    uint32_t time;
+    uint32_t recvd;
+    int ttl;
+    char ip_addr[IP_ADDR_LEN];
+    uint16_t size;
+} MLAN_PACK_END ping_res_t;
+
 #define NCP_IPERF_TCP_SERVER_PORT_DEFAULT 5001
 #define NCP_IPERF_UDP_SERVER_PORT_DEFAULT NCP_IPERF_TCP_SERVER_PORT_DEFAULT + 2
 #define NCP_IPERF_UDP_RATE                30 * 1024

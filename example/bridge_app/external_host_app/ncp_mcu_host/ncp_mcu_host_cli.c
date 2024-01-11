@@ -616,9 +616,7 @@ static void ncp_host_input_task(void *pvParameters)
 
 /* ping variables */
 extern ping_msg_t ping_msg;
-int ping_seq_no;
-uint32_t ping_time;
-uint32_t recvd;
+ping_res_t ping_res;
 
 /* Display the final result of ping */
 static void display_ping_result(int total, int recvd)
@@ -652,6 +650,18 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, uint16_
     iecho->chksum = inet_chksum(iecho, len);
 }
 
+/* Display the statistics of the current iteration of ping */
+static void display_ping_stats(int status, uint32_t size, const char *ip_str, uint16_t seqno, int ttl, uint32_t time)
+{
+    if (status == WM_SUCCESS)
+    {
+        (void)PRINTF("%u bytes from %s: icmp_req=%u ttl=%u time=%u ms\r\n", size, ip_str, seqno, ttl, time);
+    }
+    else
+    {
+        (void)PRINTF("icmp_seq=%u Destination Host Unreachable\r\n", seqno);
+    }
+}
 /* Send an ICMP echo request by NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command and get ICMP echo reply by
  * NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command. Print ping statistics in NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM
  * command response, and print ping result in ping_sock_task.
@@ -659,11 +669,12 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, uint16_t len, uint16_
 static void ping_sock_task(void *pvParameters)
 {
     struct icmp_echo_hdr *iecho;
-
+    int retry;
+    
     while (1)
     {
-        recvd       = 0;
-        ping_seq_no = -1;
+        ping_res.recvd  = 0;
+        ping_res.seq_no = -1;
 
         /* demo ping task wait for user input ping command from console */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
@@ -684,6 +695,9 @@ static void ping_sock_task(void *pvParameters)
 
         while (i <= ping_msg.count)
         {
+            ping_res.echo_resp = -WM_FAIL;
+            retry = 10;
+            
             /*Wait for command response semaphore.*/
             mcu_get_command_resp_sem();
 
@@ -712,46 +726,51 @@ static void ping_sock_task(void *pvParameters)
             /* Send ping TLV command */
             ncp_host_send_tlv_command();
             /* Get the current ticks as the start time */
-            ping_time = os_ticks_get();
+            ping_res.time = os_ticks_get();
 
             /* sequence number */
-            ping_seq_no = i;
+            ping_res.seq_no = i;
 
-            /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command response */
-            (void)os_event_notify_get(OS_WAIT_FOREVER);
+            /* Function raw_input may put multiple pieces of data in conn->recvmbox,
+             * waiting to select the data we want */
+            while (ping_res.echo_resp != WM_SUCCESS && retry)
+            {
+                /*Wait for command response semaphore.*/
+                mcu_get_command_resp_sem();
 
-            /*Wait for command response semaphore.*/
-            mcu_get_command_resp_sem();
+                mcu_get_command_lock();
+                /* Prepare get-ping-result command */
+                MCU_NCPCmd_DS_COMMAND *ping_res_command = ncp_host_get_command_buffer();
+                ping_res_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM;
+                ping_res_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
+                ping_res_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
+                ping_res_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
 
-            mcu_get_command_lock();
-            /* Prepare get-ping-result command */
-            MCU_NCPCmd_DS_COMMAND *ping_res_command = ncp_host_get_command_buffer();
-            ping_res_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM;
-            ping_res_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
-            ping_res_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
-            ping_res_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
+                NCP_CMD_SOCKET_RECVFROM_CFG *ping_res_sock_tlv =
+                    (NCP_CMD_SOCKET_RECVFROM_CFG *)&ping_res_command->params.wlan_socket_recvfrom;
+                ping_res_sock_tlv->handle  = ping_msg.handle;
+                ping_res_sock_tlv->recv_size    = ping_msg.size + IP_HEADER_LEN;
+                ping_res_sock_tlv->timeout = PING_RECVFROM_TIMEOUT;
 
-            NCP_CMD_SOCKET_RECVFROM_CFG *ping_res_sock_tlv =
-                (NCP_CMD_SOCKET_RECVFROM_CFG *)&ping_res_command->params.wlan_socket_recvfrom;
-            ping_res_sock_tlv->handle    = ping_msg.handle;
-            ping_res_sock_tlv->recv_size = ping_msg.size + IP_HEADER_LEN;
-            ping_res_sock_tlv->timeout   = PING_RECVFROM_TIMEOUT;
+                /*cmd size*/
+                ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
 
-            /*cmd size*/
-            ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
+                /* Send get-ping-result TLV command */
+                ncp_host_get_command_buffer();
 
-            /* Send get-ping-result TLV command */
-            ncp_host_send_tlv_command();
+                /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command response */
+                (void)os_event_notify_get(OS_WAIT_FOREVER);
 
-            /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command response */
-            (void)os_event_notify_get(OS_WAIT_FOREVER);
+                retry--;
+            }
+            display_ping_stats(ping_res.echo_resp, ping_res.size, ping_res.ip_addr, ping_res.seq_no, ping_res.ttl, ping_res.time);
 
             os_thread_sleep(os_msec_to_ticks(1000));
 
             i++;
         }
         os_mem_free((void *)iecho);
-        display_ping_result((int)ping_msg.count, recvd);
+        display_ping_result((int)ping_msg.count, ping_res.recvd);
     }
 }
 
@@ -1118,6 +1137,7 @@ static void ncp_iperf_tx_task(void *pvParameters)
         mcu_get_command_lock();
         if (false == iperf_send_setting())
             continue;
+        os_thread_sleep(os_msec_to_ticks(1000));
         (void)PRINTF("ncp iperf tx start\r\n");
         pkg_num             = 0;
         iperf_msg.status[0] = 0;
@@ -1161,6 +1181,7 @@ static void ncp_iperf_rx_task(void *pvParameters)
         mcu_get_command_lock();
         if (false == iperf_send_setting())
             continue;
+        os_thread_sleep(os_msec_to_ticks(1000));
         pkg_num             = 0;
         iperf_msg.status[1] = 0;
         recv_size           = 0;

@@ -119,28 +119,12 @@ int IP_to_hex(char *IPstr, uint8_t *hex)
     return WM_SUCCESS;
 }
 
-extern int ping_seq_no;
-extern uint32_t ping_time;
-extern uint32_t recvd;
-
-/* Display the statistics of the current iteration of ping */
-static void display_ping_stats(int status, uint32_t size, const char *ip_str, uint16_t seqno, int ttl, uint32_t time)
-{
-    if (status == WM_SUCCESS)
-    {
-        (void)PRINTF("%u bytes from %s: icmp_req=%u ttl=%u time=%u ms\r\n", size, ip_str, seqno, ttl, time);
-    }
-    else
-    {
-        (void)PRINTF("icmp_seq=%u Destination Host Unreachable\r\n", seqno);
-    }
-}
+extern ping_res_t ping_res;
 
 /* Handle the ICMP echo response and extract required parameters */
 static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
 {
-    int ret = -WM_FAIL, ttl = 0;
-    char ip_addr[IP_ADDR_LEN + 1] = {0};
+    int ret = -WM_FAIL;
     struct ip_hdr *iphdr;
     struct icmp_echo_hdr *iecho;
 
@@ -153,21 +137,21 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
         iecho = (struct icmp_echo_hdr *)(recv->recv_data + ((iphdr->_v_hl & 0x0f) * 4));
 
         /* Calculate the round trip time */
-        ping_time = os_ticks_get() - ping_time;
+        ping_res.time = os_ticks_get() - ping_res.time;
 
         /* Verify that the echo response is for the echo request
          * we sent by checking PING_ID and sequence number */
-        if ((iecho->id == PING_ID) && (iecho->seqno == PP_HTONS(ping_seq_no)))
+        if ((iecho->id == PING_ID) && (iecho->seqno == PP_HTONS(ping_res.seq_no)))
         {
             /* Increment the receive counter */
-            recvd++;
+            ping_res.recvd++;
             /* To display successful ping stats, destination
              * IP address is required */
-            (void)memcpy(ip_addr, recv->peer_ip, sizeof(recv->peer_ip));
+            (void)memcpy(ping_res.ip_addr, recv->peer_ip, sizeof(recv->peer_ip));
 
             /* Extract TTL and send back so that it can be
              * displayed in ping statistics */
-            ttl = iphdr->_ttl;
+            ping_res.ttl = iphdr->_ttl;
             ret = WM_SUCCESS;
         }
         else
@@ -175,11 +159,9 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
             ret = -WM_FAIL;
         }
 
-        display_ping_stats(ret, ping_msg.size, ip_addr, ping_seq_no, ttl, ping_time);
+        ping_res.echo_resp = ret;
+        ping_res.size = ping_msg.size;
     }
-
-    if (ret != WM_SUCCESS)
-        (void)PRINTF("ICMP echo response verification unsuccessful!\r\n");
 }
 
 /**
@@ -4395,7 +4377,7 @@ int wlan_process_wlan_socket_sendto_response(uint8_t *res)
     MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        if (ping_seq_no < 0)
+        if (ping_res.seq_no < 0)
         {
             (void)PRINTF("failed to sendto data!\r\n");
         }
@@ -4407,7 +4389,7 @@ int wlan_process_wlan_socket_sendto_response(uint8_t *res)
         return -WM_FAIL;
     }
 
-    if (ping_seq_no >= 0)
+    if (ping_res.seq_no >= 0)
     {
         /* Send ping cmd response to ping_sock_task */
         os_event_notify_put(ping_sock_thread);
@@ -4574,14 +4556,15 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
     MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        if (ping_seq_no < 0)
+        if (ping_res.seq_no < 0)
         {
             (void)PRINTF("failed to receive data!\r\n");
         }
         else
         {
-            (void)PRINTF("icmp_seq=%u Destination Host Unreachable\r\n", ping_seq_no);
+            ping_res.echo_resp = -WM_FAIL;
             (void)os_event_notify_put(ping_sock_thread);
+            return WM_SUCCESS;
         }
 
         return -WM_FAIL;
@@ -4590,7 +4573,7 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
     NCP_CMD_SOCKET_RECVFROM_CFG *wlan_socket_recvfrom =
         (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.wlan_socket_recvfrom;
 
-    if (ping_seq_no < 0)
+    if (ping_res.seq_no < 0)
     {
         recv_size = wlan_socket_recvfrom->recv_size;
 #ifdef CONFIG_MCU_BRIDGE_IO_DUMP
@@ -4716,8 +4699,109 @@ NCP_CMD_TWT_SETUP g_twt_setup_params = {.implicit            = 0x01,
 
 NCP_CMD_TWT_TEARDOWN g_twt_teardown_params = {
     .flow_identifier = 0x00, .negotiation_type = 0x00, .teardown_all_twt = 0x00};
+/* index enum of cfgs */
+enum
+{
+    TEST_WLAN_11AX_CFG,
+    TEST_WLAN_BCAST_TWT,
+    TEST_WLAN_TWT_SETUP,
+    TEST_WLAN_TWT_TEARDOWN,
+};
 
-int wlan_set_11axcfg_command(int argc, char **argv)
+/*
+ *  Structs for mutiple config data in freeRTOS, split cfg to various param modules.
+ *  Modify cfg data by param index
+ *  test_cfg_param_t param module of cfg
+ *  test_cfg_table_t cfg table for all the param modules of a cfg
+ */
+typedef struct
+{
+    /* name of param */
+    const char *name;
+    /* offset in cfg data */
+    int offset;
+    int len;
+    const char *notes;
+} test_cfg_param_t;
+
+typedef struct
+{
+    /* name of cfg */
+    const char *name;
+    /* point of stored data for sending cmd, stored in Little-Endian */
+    uint8_t *data;
+    /* len of data */
+    int len;
+    /* point of list for all the params */
+    const test_cfg_param_t *param_list;
+    /* total number of params */
+    int param_num;
+} test_cfg_table_t;
+
+const static test_cfg_param_t g_11ax_cfg_param[] = {
+    /* name                 offset  len     notes */
+    {"band", 0, 1, NULL},
+    {"cap_id", 1, 2, NULL},
+    {"cap_len", 3, 2, NULL},
+    {"he_cap_id", 5, 1, NULL},
+    {"he_mac_cap_info", 6, 6, NULL},
+    {"he_phy_cap_info", 12, 11, NULL},
+    {"he_mcs_nss_support", 23, 4, NULL},
+    {"pe", 27, 2, NULL},
+};
+
+const static test_cfg_param_t g_btwt_cfg_param[] = {
+    /* name             offset  len   notes */
+    {"action", 0, 2, "only support 1: Set"},
+    {"sub_id", 2, 2, "Broadcast TWT AP config"},
+    {"nominal_wake", 4, 1, "range 64-255"},
+    {"max_sta_support", 5, 1, "Max STA Support"},
+    {"twt_mantissa", 6, 2, NULL},
+    {"twt_offset", 8, 2, NULL},
+    {"twt_exponent", 10, 1, NULL},
+    {"sp_gap", 11, 1, NULL},
+};
+
+static test_cfg_param_t g_twt_setup_cfg_param[] = {
+    /* name                 offset  len  notes */
+    {"implicit", 0, 1, "0: TWT session is explicit, 1: Session is implicit"},
+    {"announced", 1, 1, "0: Unannounced, 1: Announced TWT"},
+    {"trigger_enabled", 2, 1, "0: Non-Trigger enabled, 1: Trigger enabled TWT"},
+    {"twt_info_disabled", 3, 1, "0: TWT info enabled, 1: TWT info disabled"},
+    {"negotiation_type", 4, 1, "0: Individual TWT, 3: Broadcast TWT"},
+    {"twt_wakeup_duration", 5, 1, "time after which the TWT requesting STA can transition to doze state"},
+    {"flow_identifier", 6, 1, "Range: [0-7]"},
+    {"hard_constraint", 7, 1,
+     "0: FW can tweak the TWT setup parameters if it is rejected by AP, 1: FW should not tweak any parameters"},
+    {"twt_exponent", 8, 1, "Range: [0-63]"},
+    {"twt_mantissa", 9, 2, "Range: [0-sizeof(UINT16)]"},
+    {"twt_request", 11, 1, "Type, 0: REQUEST_TWT, 1: SUGGEST_TWT"},
+};
+
+static test_cfg_param_t g_twt_teardown_cfg_param[] = {
+    /* name             offset  len  notes */
+    {"FlowIdentifier", 0, 1, "Range: [0-7]"},
+    {"NegotiationType", 1, 1, "0: Future Individual TWT SP start time, 1: Next Wake TBTT tim"},
+    {"TearDownAllTWT", 2, 1, "1: To teardown all TWT, 0 otherwise"},
+};
+
+/*
+ *  Cfg table for mutiple params commands in freeRTOS.
+ *  name:          cfg name
+ *  data:          cfg data stored and prepared to send
+ *  total_len:     len of cfg data
+ *  param_list:    param list of cfg data
+ *  param_num:     number of cfg param list
+ */
+static test_cfg_table_t g_test_cfg_table_list[] = {
+    /*  name         data                          total_len param_list          param_num*/
+    {"11axcfg",      (uint8_t *)&g_11axcfg_params,      29,  g_11ax_cfg_param,         8},
+    {"twt_bcast",    (uint8_t *)&g_btwt_params,         12,  g_btwt_cfg_param,         8},
+    {"twt_setup",    (uint8_t *)&g_twt_setup_params,    12,  g_twt_setup_cfg_param,    11},
+    {"twt_teardown", (uint8_t *)&g_twt_teardown_params, 3,   g_twt_teardown_cfg_param, 3},
+    {NULL}};
+
+static int wlan_send_11axcfg_command(void)
 {
     MCU_NCPCmd_DS_COMMAND *command = ncp_host_get_command_buffer();
 
@@ -4740,7 +4824,7 @@ int wlan_process_11axcfg_response(uint8_t *res)
     return WM_SUCCESS;
 }
 
-int wlan_set_btwt_command(int argc, char **argv)
+static int wlan_send_btwt_command(void)
 {
     MCU_NCPCmd_DS_COMMAND *command = ncp_host_get_command_buffer();
 
@@ -4763,7 +4847,7 @@ int wlan_process_btwt_response(uint8_t *res)
     return WM_SUCCESS;
 }
 
-int wlan_twt_setup_command(int argc, char **argv)
+static int wlan_send_twt_setup_command(void)
 {
     MCU_NCPCmd_DS_COMMAND *command = ncp_host_get_command_buffer();
 
@@ -4786,7 +4870,7 @@ int wlan_process_twt_setup_response(uint8_t *res)
     return WM_SUCCESS;
 }
 
-int wlan_twt_teardown_command(int argc, char **argv)
+static int wlan_send_twt_teardown_command(void)
 {
     MCU_NCPCmd_DS_COMMAND *command = ncp_host_get_command_buffer();
 
@@ -4849,6 +4933,164 @@ int wlan_process_twt_report_response(uint8_t *res)
     {
         (void)PRINTF("get twt report fail\r\n");
     }
+    return WM_SUCCESS;
+}
+
+static void dump_cfg_data_param(int param_id, uint8_t *data, const test_cfg_param_t *param_cfg)
+{
+    int i;
+
+    (void)PRINTF("%s ", param_cfg->name);
+    if (param_cfg->notes != NULL)
+        (void)PRINTF("#### %s\r\n", param_cfg->notes);
+    else
+        (void)PRINTF("\r\n");
+
+    (void)PRINTF("[%d]: ", param_id);
+    for (i = 0; i < param_cfg->len; i++)
+    {
+        (void)PRINTF("0x%02x ", data[param_cfg->offset + i]);
+    }
+    (void)PRINTF("\r\n");
+}
+
+static void set_cfg_data_param(uint8_t *data, const test_cfg_param_t *param_cfg, char **argv)
+{
+    int i;
+
+    for (i = 0; i < param_cfg->len; i++)
+    {
+        data[param_cfg->offset + i] = a2hex(argv[3 + i]);
+    }
+}
+
+static void dump_cfg_data(test_cfg_table_t *cfg)
+{
+    int i;
+    uint8_t *data = cfg->data;
+
+    (void)PRINTF("cfg[%s] len[%d] param_num[%d]: \r\n", cfg->name, cfg->len, cfg->param_num);
+    for (i = 0; i < cfg->param_num; i++)
+    {
+        dump_cfg_data_param(i, data, &cfg->param_list[i]);
+    }
+}
+
+static void dump_cfg_help(test_cfg_table_t *cfg)
+{
+    dump_cfg_data(cfg);
+}
+
+/*
+ *  match param name and set data by input
+ *  argv[0] "wlan-xxxx"
+ *  argv[1] "set"
+ *  argv[2] param_id
+ *  argv[3] param_data_set
+ */
+static void set_cfg_data(test_cfg_table_t *cfg, int argc, char **argv)
+{
+    uint8_t *data                     = cfg->data;
+    const test_cfg_param_t *param_cfg = NULL;
+    int param_id                      = atoi(argv[2]);
+    /* input data starts from argv[3] */
+    int input_data_num = argc - 3;
+
+    if (param_id < 0 || param_id >= cfg->param_num)
+    {
+        (void)PRINTF("invalid param index %d\r\n", param_id);
+        return;
+    }
+
+    param_cfg = &cfg->param_list[param_id];
+    if (param_cfg->len != input_data_num)
+    {
+        (void)PRINTF("invalid input number %d, param has %d u8 arguments\r\n", input_data_num, param_cfg->len);
+        return;
+    }
+
+    set_cfg_data_param(data, param_cfg, argv);
+    dump_cfg_data_param(param_id, data, param_cfg);
+}
+
+static void send_cfg_msg(test_cfg_table_t *cfg, uint32_t index)
+{
+    int ret;
+
+    switch (index)
+    {
+        case TEST_WLAN_11AX_CFG:
+            ret = wlan_send_11axcfg_command();
+            break;
+        case TEST_WLAN_BCAST_TWT:
+            ret = wlan_send_btwt_command();
+            break;
+        case TEST_WLAN_TWT_SETUP:
+            ret = wlan_send_twt_setup_command();
+            break;
+        case TEST_WLAN_TWT_TEARDOWN:
+            ret = wlan_send_twt_teardown_command();
+            break;
+        default:
+            ret = -1;
+            break;
+    }
+
+    (void)PRINTF("send config [%s] ret %d\r\n", cfg->name, ret);
+}
+
+static void test_wlan_cfg_process(uint32_t index, int argc, char **argv)
+{
+    test_cfg_table_t *cfg = NULL;
+
+    /* last cfg table is invalid */
+    if (index >= (sizeof(g_test_cfg_table_list) / sizeof(test_cfg_table_t) - 1))
+    {
+        (void)PRINTF("cfg table too large index %u\r\n", index);
+        return;
+    }
+
+    cfg = &g_test_cfg_table_list[index];
+
+    if (argc < 2)
+    {
+        dump_cfg_help(cfg);
+        return;
+    }
+
+    if (string_equal("help", argv[1]))
+        dump_cfg_help(cfg);
+    else if (string_equal("dump", argv[1]))
+        dump_cfg_data(cfg);
+    else if (string_equal("set", argv[1]))
+        set_cfg_data(cfg, argc, argv);
+    else if (string_equal("done", argv[1]))
+        send_cfg_msg(cfg, index);
+    else
+        (void)PRINTF("unknown argument\r\n");
+}
+
+int wlan_set_11axcfg_command(int argc, char **argv)
+{
+    test_wlan_cfg_process(TEST_WLAN_11AX_CFG, argc, argv);
+    return WM_SUCCESS;
+}
+
+int wlan_set_btwt_command(int argc, char **argv)
+{
+    test_wlan_cfg_process(TEST_WLAN_BCAST_TWT, argc, argv);
+    return WM_SUCCESS;
+}
+
+int wlan_twt_setup_command(int argc, char **argv)
+{
+    test_wlan_cfg_process(TEST_WLAN_TWT_SETUP, argc, argv);
+    return WM_SUCCESS;
+}
+
+int wlan_twt_teardown_command(int argc, char **argv)
+{
+    test_wlan_cfg_process(TEST_WLAN_TWT_TEARDOWN, argc, argv);
     return WM_SUCCESS;
 }
 
