@@ -9780,14 +9780,6 @@ int wlan_start_network(const char *name)
             if (wifi_get_mc_policy() == 0)
 #endif
             {
-                if (wlan.networks[i].channel_specific && is_sta_connecting())
-                {
-                    wlcm_e(
-                        "uAP can not be started on specific "
-                        "channel when station is connected."
-                        "Please use channel 0 (auto) for uAP");
-                    return -WM_E_INVAL;
-                }
                 if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0))
                     wlcm_w(
                         "NOTE: uAP will automatically switch to"
