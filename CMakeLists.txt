@@ -279,3 +279,5 @@ zephyr_code_relocate(FILES
                      ${ZEPHYR_BASE}/kernel/work.c
                      LOCATION RAM_TEXT)
 endif()
+
+zephyr_library_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
