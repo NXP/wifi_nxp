@@ -756,7 +756,7 @@ static void ping_sock_task(void *pvParameters)
                 ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
 
                 /* Send get-ping-result TLV command */
-                ncp_host_get_command_buffer();
+                ncp_host_send_tlv_command();
 
                 /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_RECVFROM command response */
                 (void)os_event_notify_get(OS_WAIT_FOREVER);
