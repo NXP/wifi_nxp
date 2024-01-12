@@ -731,6 +731,9 @@ static void ping_sock_task(void *pvParameters)
             /* sequence number */
             ping_res.seq_no = i;
 
+            /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command response */
+            (void)os_event_notify_get(OS_WAIT_FOREVER);
+            
             /* Function raw_input may put multiple pieces of data in conn->recvmbox,
              * waiting to select the data we want */
             while (ping_res.echo_resp != WM_SUCCESS && retry)
