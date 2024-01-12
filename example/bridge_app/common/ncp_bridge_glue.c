@@ -1395,11 +1395,13 @@ static int wlan_bridge_wps_generate_pin(void *tlv)
 static int wlan_bridge_start_wps_pin(void *tlv)
 {
     int ret;
+    char pin_str[10] = {0};
     NCP_CMD_WPS_PIN *pin_cfg = (NCP_CMD_WPS_PIN *)tlv;
     uint32_t pin             = pin_cfg->pin;
+    (void)snprintf(pin_str, sizeof(pin_str), "%d", pin);
 
 #if defined(CONFIG_WPA_SUPP_WPS)
-    ret = wlan_start_wps_pin((char *)&pin);
+    ret = wlan_start_wps_pin(pin_str);
 #else
     ret = wlan_start_wps_pin(pin);
 #endif
