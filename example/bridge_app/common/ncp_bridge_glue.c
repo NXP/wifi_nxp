@@ -2529,6 +2529,12 @@ static int wlan_bridge_region_code(void *data)
 
     if (cfg->action == ACTION_SET)
     {
+        if (is_uap_started())
+        {
+            (void)PRINTF("Error: region code can not be set after uAP start!\r\n");
+            cmd_res->header.result = NCP_BRIDGE_CMD_RESULT_ERROR;
+            return -WM_FAIL;
+        }
         ret = wlan_set_region_code(cfg->region_code);
         if (ret != WM_SUCCESS)
         {
