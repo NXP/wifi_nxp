@@ -387,6 +387,7 @@ enum wm_httpc_errno
 #define HTTP_OK           200
 #define HTTP_CREATED      201
 #define HTTP_ACCEPTED     202
+#define HTTP_NO_CONTENT   204
 #define HTTP_FOUND        302
 #define HTTP_NOT_MODIFIED 304
 

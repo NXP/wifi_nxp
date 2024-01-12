@@ -1671,14 +1671,17 @@ int http_get_response_hdr(http_session_t handle, http_resp_t **resp)
 
         if (!s->resp.content_length_field_present && !s->resp.chunked)
         {
-            /* As per rfc2616, point 5, the content length is
-             * not specified and we will continue reading on
-             * the socket connection till server closes the
-             * connection */
-            httpc_d(
-                "No content length known. Read till server "
-                "keep connection close");
-            s->read_till_server_close = true;
+            if(s->resp.status_code != HTTP_NO_CONTENT)
+            {
+                /* As per rfc2616, point 5, the content length is
+                 * not specified and we will continue reading on
+                 * the socket connection till server closes the
+                 * connection */
+                httpc_d(
+                    "No content length known. Read till server "
+                    "keep connection close");
+                s->read_till_server_close = true;
+            }
         }
 
         if (resp)
@@ -2174,7 +2177,7 @@ int http_read_content(http_session_t handle, void *buf, uint32_t max_len)
             status = http_get_response_hdr(handle, &resp);
             if (status != WM_SUCCESS)
                 return status;
-            if (resp->status_code != 200)
+            if (resp->status_code != HTTP_OK)
             {
                 httpc_e("Not reading any content.");
                 httpc_e("HTTP status code: %d", resp->status_code);
