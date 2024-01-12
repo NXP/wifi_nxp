@@ -23,6 +23,7 @@ static uint8_t broadcast_mac[NCP_WLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff
 int cli_optind   = 0;
 char *cli_optarg = NULL;
 ping_msg_t ping_msg;
+extern int ping_sock_handle;
 
 static int mdns_result_num;
 
@@ -152,7 +153,7 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
             /* Extract TTL and send back so that it can be
              * displayed in ping statistics */
             ping_res.ttl = iphdr->_ttl;
-            ret = WM_SUCCESS;
+            ret          = WM_SUCCESS;
         }
         else
         {
@@ -160,7 +161,7 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
         }
 
         ping_res.echo_resp = ret;
-        ping_res.size = ping_msg.size;
+        ping_res.size      = ping_msg.size;
     }
 }
 
@@ -1596,11 +1597,11 @@ int wlan_add_command(int argc, char **argv)
     PMF_ParamSet_t *pmf_tlv      = NULL;
     BSSRole_ParamSet_t *role_tlv = NULL;
 #ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
-    DTIM_ParamSet_t *dtim_tlv        = NULL;
-#endif    
+    DTIM_ParamSet_t *dtim_tlv = NULL;
+#endif
     ACSBand_ParamSet_t *acs_band_tlv = NULL;
 #ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
-    CAPA_ParamSet_t *capa_tlv        = NULL;
+    CAPA_ParamSet_t *capa_tlv = NULL;
 #endif
     (void)memset(&info, 0, sizeof(info));
 
@@ -3920,6 +3921,8 @@ int wlan_process_wlan_socket_open_response(uint8_t *res)
     }
     NCP_CMD_SOCKET_OPEN_CFG *wlan_socket_open = (NCP_CMD_SOCKET_OPEN_CFG *)&cmd_res->params.wlan_socket_open;
     handle                                    = wlan_socket_open->opened_handle;
+    if (!strcmp(wlan_socket_open->protocol, "icmp"))
+        ping_sock_handle = handle;
     (void)PRINTF("Handle: %d\n", handle);
     return WM_SUCCESS;
 }
@@ -4795,10 +4798,10 @@ static test_cfg_param_t g_twt_teardown_cfg_param[] = {
  */
 static test_cfg_table_t g_test_cfg_table_list[] = {
     /*  name         data                          total_len param_list          param_num*/
-    {"11axcfg",      (uint8_t *)&g_11axcfg_params,      29,  g_11ax_cfg_param,         8},
-    {"twt_bcast",    (uint8_t *)&g_btwt_params,         12,  g_btwt_cfg_param,         8},
-    {"twt_setup",    (uint8_t *)&g_twt_setup_params,    12,  g_twt_setup_cfg_param,    11},
-    {"twt_teardown", (uint8_t *)&g_twt_teardown_params, 3,   g_twt_teardown_cfg_param, 3},
+    {"11axcfg", (uint8_t *)&g_11axcfg_params, 29, g_11ax_cfg_param, 8},
+    {"twt_bcast", (uint8_t *)&g_btwt_params, 12, g_btwt_cfg_param, 8},
+    {"twt_setup", (uint8_t *)&g_twt_setup_params, 12, g_twt_setup_cfg_param, 11},
+    {"twt_teardown", (uint8_t *)&g_twt_teardown_params, 3, g_twt_teardown_cfg_param, 3},
     {NULL}};
 
 static int wlan_send_11axcfg_command(void)
@@ -7574,7 +7577,7 @@ static void display_ping_usage()
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF(
         "\tping [-s <packet_size>] [-c <packet_count>] "
-        "[-W <timeout in sec>] <handle> <ipv4 address>\r\n");
+        "[-W <timeout in sec>] <ipv4 address>\r\n");
     (void)PRINTF("Default values:\r\n");
     (void)PRINTF(
         "\tpacket_size: %u\r\n\tpacket_count: %u"
@@ -7590,8 +7593,8 @@ int ncp_ping_command(int argc, char **argv)
     uint32_t count   = PING_DEFAULT_COUNT, temp;
     uint32_t timeout = PING_DEFAULT_TIMEOUT_SEC;
 
-    /* If number of arguments is not odd then print error */
-    if ((argc & 0x01) == 0)
+    /* If number of arguments is not even then print error */
+    if ((argc % 2) != 0)
     {
         ret = -WM_FAIL;
         goto end;
@@ -7636,7 +7639,6 @@ int ncp_ping_command(int argc, char **argv)
     ping_msg.count   = count;
     ping_msg.size    = size;
     ping_msg.timeout = timeout;
-    ping_msg.handle  = atoi(argv[cli_optind++]);
     ping_msg.port    = 0;
     strcpy(ping_msg.ip_addr, argv[cli_optind++]);
 
@@ -8346,7 +8348,7 @@ static struct ncp_host_cli_command ncp_host_app_cli_commands[] = {
     {"wlan-get-time", NULL, wlan_get_time_command},
     {"wlan-set-time", "<year> <month> <day> <hour> <minute> <second>", wlan_set_time_command},
     {"wlan-get-temp", NULL, wlan_get_temperature_command},
-    {"ping", "[-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <handle> <ipv4 address>", ncp_ping_command},
+    {"ping", "[-s <packet_size>] [-c <packet_count>] [-W <timeout in sec>] <ipv4 address>", ncp_ping_command},
     {"wlan-usb-pm-cfg", "<1/2>", usb_pm_cfg},
     {"wlan-net-monitor-cfg", NULL, wlan_net_monitor_cfg_command},
     {"wlan-set-monitor-filter", "<opt> <macaddr>", wlan_set_monitor_filter_command},

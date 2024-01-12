@@ -158,8 +158,6 @@
 /** MSB of read length for port 0 */
 #define RD_LEN_P0_U 0x19
 
-#define SD_TIMING_MAX kSD_TimingDDR50Mode
-
 /** Type command */
 #define SDIO_TYPE_CMD 1U
 /** Type data */
@@ -356,7 +354,7 @@ static void SDIO_CardInterruptCallBack(void *userData)
     if ((sdhost_core_thread != MNULL) && g_txrx_flag)
     {
         g_txrx_flag = false;
-		/* use xTaskNotifyGive(sdhost_core_thread)? */
+        /* use xTaskNotifyGive(sdhost_core_thread)? */
         (void)os_event_notify_put(sdhost_core_thread);
     }
 }

@@ -103,6 +103,8 @@ extern uint8_t mcu_device_status;
 os_semaphore_t gpio_wakelock;
 
 os_thread_t ping_sock_thread;
+int ping_sock_handle = -1;
+
 static os_thread_stack_define(ping_sock_stack, 1024);
 
 os_thread_t ncp_iperf_tx_thread, ncp_iperf_rx_thread;
@@ -670,7 +672,7 @@ static void ping_sock_task(void *pvParameters)
 {
     struct icmp_echo_hdr *iecho;
     int retry;
-    
+
     while (1)
     {
         ping_res.recvd  = 0;
@@ -693,11 +695,30 @@ static void ping_sock_task(void *pvParameters)
             continue;
         }
 
+        /*Wait for command response semaphore.*/
+        mcu_get_command_resp_sem();
+        mcu_get_command_lock();
+        /* Open socket before ping */
+        MCU_NCPCmd_DS_COMMAND *ping_sock_open_command = ncp_host_get_command_buffer();
+        ping_sock_open_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_OPEN;
+        ping_sock_open_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
+        ping_sock_open_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
+        ping_sock_open_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
+
+        NCP_CMD_SOCKET_OPEN_CFG *ping_sock_open_tlv =
+            (NCP_CMD_SOCKET_OPEN_CFG *)&ping_sock_open_command->params.wlan_socket_open;
+        strcpy(ping_sock_open_tlv->socket_type, "raw");
+        strcpy(ping_sock_open_tlv->domain_type, "ipv4");
+        strcpy(ping_sock_open_tlv->protocol, "icmp");
+        ping_sock_open_command->header.size += sizeof(NCP_CMD_SOCKET_OPEN_CFG);
+        /* Send ping TLV command */
+        ncp_host_send_tlv_command();
+
         while (i <= ping_msg.count)
         {
             ping_res.echo_resp = -WM_FAIL;
-            retry = 10;
-            
+            retry              = 10;
+
             /*Wait for command response semaphore.*/
             mcu_get_command_resp_sem();
 
@@ -713,7 +734,7 @@ static void ping_sock_task(void *pvParameters)
 
             NCP_CMD_SOCKET_SENDTO_CFG *ping_sock_tlv =
                 (NCP_CMD_SOCKET_SENDTO_CFG *)&ping_sock_command->params.wlan_socket_sendto;
-            ping_sock_tlv->handle = ping_msg.handle;
+            ping_sock_tlv->handle = ping_sock_handle;
             ping_sock_tlv->port   = ping_msg.port;
             memcpy(ping_sock_tlv->ip_addr, ping_msg.ip_addr, strlen(ping_msg.ip_addr) + 1);
             memcpy(ping_sock_tlv->send_data, iecho, ping_size);
@@ -733,7 +754,7 @@ static void ping_sock_task(void *pvParameters)
 
             /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command response */
             (void)os_event_notify_get(OS_WAIT_FOREVER);
-            
+
             /* Function raw_input may put multiple pieces of data in conn->recvmbox,
              * waiting to select the data we want */
             while (ping_res.echo_resp != WM_SUCCESS && retry)
@@ -751,9 +772,9 @@ static void ping_sock_task(void *pvParameters)
 
                 NCP_CMD_SOCKET_RECVFROM_CFG *ping_res_sock_tlv =
                     (NCP_CMD_SOCKET_RECVFROM_CFG *)&ping_res_command->params.wlan_socket_recvfrom;
-                ping_res_sock_tlv->handle  = ping_msg.handle;
-                ping_res_sock_tlv->recv_size    = ping_msg.size + IP_HEADER_LEN;
-                ping_res_sock_tlv->timeout = PING_RECVFROM_TIMEOUT;
+                ping_res_sock_tlv->handle    = ping_sock_handle;
+                ping_res_sock_tlv->recv_size = ping_msg.size + IP_HEADER_LEN;
+                ping_res_sock_tlv->timeout   = PING_RECVFROM_TIMEOUT;
 
                 /*cmd size*/
                 ping_res_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
@@ -766,7 +787,8 @@ static void ping_sock_task(void *pvParameters)
 
                 retry--;
             }
-            display_ping_stats(ping_res.echo_resp, ping_res.size, ping_res.ip_addr, ping_res.seq_no, ping_res.ttl, ping_res.time);
+            display_ping_stats(ping_res.echo_resp, ping_res.size, ping_res.ip_addr, ping_res.seq_no, ping_res.ttl,
+                               ping_res.time);
 
             os_thread_sleep(os_msec_to_ticks(1000));
 
@@ -774,6 +796,23 @@ static void ping_sock_task(void *pvParameters)
         }
         os_mem_free((void *)iecho);
         display_ping_result((int)ping_msg.count, ping_res.recvd);
+        /*Wait for command response semaphore.*/
+        mcu_get_command_resp_sem();
+        mcu_get_command_lock();
+        MCU_NCPCmd_DS_COMMAND *ping_socket_close_command = ncp_host_get_command_buffer();
+        ping_socket_close_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_CLOSE;
+        ping_socket_close_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
+        ping_socket_close_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
+        ping_socket_close_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
+
+        NCP_CMD_SOCKET_CLOSE_CFG *ping_socket_close_tlv =
+            (NCP_CMD_SOCKET_CLOSE_CFG *)&ping_socket_close_command->params.wlan_socket_close;
+        ping_socket_close_tlv->handle = ping_sock_handle;
+        /*cmd size*/
+        ping_socket_close_command->header.size += sizeof(NCP_CMD_SOCKET_CLOSE_CFG);
+        /* Send socket close command */
+        ncp_host_send_tlv_command();
+        ping_sock_handle = -1;
     }
 }
 

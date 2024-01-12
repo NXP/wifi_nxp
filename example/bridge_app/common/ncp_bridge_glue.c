@@ -1813,11 +1813,12 @@ int wlan_bridge_socket_open(void *data)
     NCPCmd_DS_COMMAND *cmd_res       = ncp_bridge_get_response_buffer();
     NCP_CMD_SOCKET_OPEN_CFG *tlv_res = (NCP_CMD_SOCKET_OPEN_CFG *)&cmd_res->params.socket_open;
     tlv_res->opened_handle           = ret;
-    cmd_res->header.cmd              = NCP_BRIDGE_CMD_WLAN_SOCKET_OPEN;
-    cmd_res->header.size             = NCP_BRIDGE_CMD_HEADER_LEN;
-    cmd_res->header.seqnum           = 0x00;
-    cmd_res->header.result           = NCP_BRIDGE_CMD_RESULT_OK;
-    cmd_res->header.msg_type         = NCP_BRIDGE_MSG_TYPE_RESP;
+    strcpy(tlv_res->protocol, tlv->protocol);
+    cmd_res->header.cmd      = NCP_BRIDGE_CMD_WLAN_SOCKET_OPEN;
+    cmd_res->header.size     = NCP_BRIDGE_CMD_HEADER_LEN;
+    cmd_res->header.seqnum   = 0x00;
+    cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
+    cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
     cmd_res->header.size += sizeof(NCP_CMD_SOCKET_OPEN_CFG);
     ncp_d("NCP: %s done!\r\n", __func__);
     return WM_SUCCESS;
