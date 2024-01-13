@@ -591,7 +591,7 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 
-    if ((ctx->server_mode == false) || ((ctx->server_mode == true) && ((ctx->client_type = LWIPERF_REVERSE) || (ctx->client_type = LWIPERF_DUAL))))
+    if ((ctx->server_mode == false) || ((ctx->server_mode == true) && ((ctx->client_type == LWIPERF_REVERSE) || (ctx->client_type == LWIPERF_DUAL))))
     {
         os_timer_activate(&ptimer);
     }
