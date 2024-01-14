@@ -2586,6 +2586,7 @@ int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, co
         sec.param.encrypt_key.key_index  = key_index;
     }
 
+    sec.param.encrypt_key.key_len = MLAN_MAX_KEY_LENGTH;
     sec.param.encrypt_key.key_flags = KEY_FLAG_REMOVE_KEY;
 
     if (mac_addr)
@@ -5558,7 +5559,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
 
         tx_frame.bandcfg.chanBand = channel > 14 ? BAND_5GHZ : BAND_2GHZ;
         tx_frame.channel          = channel;
-        tx_frame.data_len         = HEADER_SIZE + pkt_len + sizeof(pkt_len);
+        tx_frame.data_len         = HEADER_SIZE + pkt_len + 2 * sizeof(pkt_len);
         tx_frame.buf_type         = MLAN_BUF_TYPE_RAW_DATA;
         tx_frame.priority         = 7;
 

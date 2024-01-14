@@ -1350,6 +1350,38 @@ out:
     return ret;
 }
 
+int wifi_nxp_wpa_supp_del_key(void *if_priv,
+                              const unsigned char *addr,
+                              int key_idx)
+
+{
+    int status                                 = -WM_FAIL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -1;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, 0, key_idx, addr);
+
+    if (status != WM_SUCCESS)
+    {
+        supp_e("%s: wifi_nxp_del_key failed", __func__);
+    }
+    else
+    {
+        ret = 0;
+    }
+
+out:
+    return ret;
+}
+
 int wifi_nxp_wpa_supp_set_rekey_info(
     void *if_priv, const u8 *kek, size_t kek_len, const u8 *kck, size_t kck_len, const u8 *replay_ctr)
 {

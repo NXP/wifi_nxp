@@ -55,6 +55,7 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .authenticate             = wifi_nxp_wpa_supp_authenticate,
     .associate                = wifi_nxp_wpa_supp_associate,
     .set_key                  = wifi_nxp_wpa_supp_set_key,
+    .del_key                  = wifi_nxp_wpa_supp_del_key,
     .set_rekey_info           = wifi_nxp_wpa_supp_set_rekey_info,
     .set_supp_port            = wifi_nxp_wpa_set_supp_port,
     .set_country              = wifi_nxp_wpa_supp_set_country,

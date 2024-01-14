@@ -2054,11 +2054,7 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
             if (((pvendor_ie->element_id == WPA_IE) &&
                  (!__memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(pvendor_ie->oui))) &&
                  (pvendor_ie->oui_type == wpa_oui[3U])) ||
-                ((pvendor_ie->element_id == RSN_IE)
-#ifdef CONFIG_11R
-                 && (priv->ft_roam == MFALSE)
-#endif
-                 ))
+                (pvendor_ie->element_id == RSN_IE))
         {
             /* IE is a WPA/WPA2 IE so call set_wpa function */
             ret = wlan_set_wpa_ie_helper(priv, ie_data_ptr, ie_len);
