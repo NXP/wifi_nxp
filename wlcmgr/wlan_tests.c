@@ -6847,7 +6847,7 @@ static void test_wlan_uap_set_ecsa_cfg(int argc, char **argv)
         (void)PRINTF("Error        : invalid number of arguments \r\n");
         (void)PRINTF("Usage        : %s <block_tx> <oper_class> <new_channel> <switch_count> <bandwidth>\r\n", argv[0]);
         (void)PRINTF("block_tx     : 0 -- no need to block traffic, 1 -- need block traffic \r\n");
-        (void)PRINTF("oper_class   : Operating class according to IEEE std802.11 spec \r\n");
+        (void)PRINTF("oper_class   : Operating class according to IEEE std802.11 spec. when 0 is used, only CSA IE will be used\r\n");
         (void)PRINTF("new_channel  : The channel will switch to \r\n");
         (void)PRINTF("switch count : Channel switch time to send ECSA ie \r\n");
         (void)PRINTF("bandwidth    : Channel width switch to(optional),RW610 only support 20M channels \r\n");

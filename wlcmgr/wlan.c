@@ -13561,7 +13561,7 @@ void wlan_report_timing_measurement(wlan_dot1as_info_t *info)
 
 int wlan_uap_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width)
 {
-    t_u8 ecsa = MTRUE;
+    t_u8 ecsa = MFALSE;
     int ret   = 0;
 
     ret = wlan_set_uap_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
