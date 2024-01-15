@@ -1044,6 +1044,11 @@ typedef struct
     /** Host MLME flag*/
     t_u8 host_mlme;
 #endif
+    /** prev_bssid */
+    mlan_802_11_mac_addr prev_bssid;
+    /** attemp_bssid */
+    mlan_802_11_mac_addr attemp_bssid;
+    t_u8 use_mfp;
 } current_bss_params_t;
 
 /** Sleep_params */

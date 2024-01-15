@@ -221,6 +221,7 @@ typedef MLAN_PACK_START struct _nxp_wifi_assoc_info
     unsigned int center_frequency;
     nxp_wifi_ssid_t ssid;
     unsigned char bssid[WIFI_ETH_ADDR_LEN];
+    unsigned char prev_bssid[WIFI_ETH_ADDR_LEN];
     int channel;
     nxp_wifi_ie_t wpa_ie;
     unsigned char use_mfp;

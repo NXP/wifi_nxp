@@ -2091,10 +2091,16 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
             case RSN_AKM_8021X:
             case RSN_AKM_8021X_SUITEB:
             case RSN_AKM_8021X_SUITEB_192:
+#ifdef CONFIG_11R
+            case RSN_AKM_FT_8021X:
+            case RSN_AKM_FT_8021X_SHA384:
+#endif
                 sys_config->key_mgmt |= KEY_MGMT_EAP;
                 break;
             case RSN_AKM_PSK:
+#ifdef CONFIG_11R
             case RSN_AKM_FT_PSK:
+#endif
                 sys_config->key_mgmt |= KEY_MGMT_PSK;
                 break;
             case RSN_AKM_PSK_SHA256:
@@ -2102,6 +2108,9 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
                 break;
 #ifdef UAP_HOST_MLME
             case RSN_AKM_SAE:
+#ifdef CONFIG_11R
+            case RSN_AKM_FT_SAE:
+#endif
                 sys_config->key_mgmt |= KEY_MGMT_SAE;
                 break;
             case RSN_AKM_OWE:

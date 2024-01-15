@@ -1188,6 +1188,11 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         memcpy(assoc_params->bssid, params->bssid, sizeof(assoc_params->bssid));
     }
 
+    if (params->prev_bssid)
+    {
+        memcpy(assoc_params->prev_bssid, params->prev_bssid, sizeof(assoc_params->prev_bssid));
+    }
+
     if (params->freq.freq)
     {
         int channel           = freq_to_chan(params->freq.freq);

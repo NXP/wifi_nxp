@@ -452,6 +452,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type: management filter  */
 #define TLV_TYPE_MGMT_FRAME_WAKEUP (PROPRIETARY_TLV_BASE_ID + 0x116) /* 0x0216 */
 
+#define TLV_TYPE_PREV_BSSID (PROPRIETARY_TLV_BASE_ID + 330)
+
 /** ADDBA TID mask */
 #define ADDBA_TID_MASK (MBIT(2) | MBIT(3) | MBIT(4) | MBIT(5))
 /** DELBA TID mask */
@@ -1956,6 +1958,14 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Data_t
     /** Data */
     t_u8 data[1];
 } MLAN_PACK_END MrvlIEtypes_Data_t;
+
+/** MrvlIEtypes_PrevBssid_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_PrevBssid_t {
+	/** Header */
+	MrvlIEtypesHeader_t header;
+	/** prev_bssid **/
+	t_u8 prev_bssid[6];
+} MLAN_PACK_END MrvlIEtypes_PrevBssid_t;
 
 /** MrvlIETypes_ActionFrame_t */
 typedef MLAN_PACK_START struct

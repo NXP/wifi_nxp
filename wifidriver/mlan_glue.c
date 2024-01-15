@@ -2393,6 +2393,9 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->curr_bss_params.host_mlme = 1;
 #endif
 
+    __memcpy(priv->adapter, &priv->curr_bss_params.prev_bssid,
+                    assoc_info->prev_bssid, MLAN_MAC_ADDR_LENGTH);
+
     /* Reset all state variables */
     (void)memset(&priv->wpa_ie, 0, sizeof(priv->wpa_ie));
     priv->wpa_ie_len                   = 0;
