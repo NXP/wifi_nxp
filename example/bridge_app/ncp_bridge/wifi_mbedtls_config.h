@@ -1044,6 +1044,16 @@
 #define MBEDTLS_SSL_TRUNCATED_HMAC
 
 /**
+ * \def MBEDTLS_THREADING_ALT
+ *
+ * Provide your own alternate threading implementation.
+ *
+ * Requires: MBEDTLS_THREADING_C
+ *
+ * Uncomment this to allow your own alternate threading implementation.
+ */
+#define MBEDTLS_THREADING_ALT
+/**
  * \def MBEDTLS_VERSION_FEATURES
  *
  * Allow run-time checking of compile-time enabled features. Thus allowing users
@@ -1457,6 +1467,20 @@
 #define MBEDTLS_ERROR_C
 
 /**
+ * \def MBEDTLS_GCM_C
+ *
+ * Enable the Galois/Counter Mode (GCM).
+ *
+ * Module:  library/gcm.c
+ *
+ * Requires: MBEDTLS_AES_C or MBEDTLS_CAMELLIA_C or MBEDTLS_ARIA_C
+ *
+ * This module enables the AES-GCM and CAMELLIA-GCM ciphersuites, if other
+ * requisites are enabled as well.
+ */
+#define MBEDTLS_GCM_C
+
+/**
  * \def MBEDTLS_HKDF_C
  *
  * Enable the HKDF algorithm (RFC 5869).
@@ -1496,6 +1520,22 @@
  * Uncomment to enable generic message digest wrappers.
  */
 #define MBEDTLS_MD_C
+/**
+ * \def MBEDTLS_MD4_C
+ *
+ * Enable the MD4 hash algorithm.
+ *
+ * Module:  library/md4.c
+ * Caller:
+ *
+ * Uncomment to enable support for (rare) MD4-signed X.509 certs.
+ *
+ * \warning   MD4 is considered a weak message digest and its use constitutes a
+ *            security risk. If possible, we recommend avoiding dependencies on
+ *            it, and considering stronger message digests instead.
+ *
+ */
+#define MBEDTLS_MD4_C
 
 /**
  * \def MBEDTLS_MD5_C
@@ -1844,6 +1884,28 @@
  * This module is required for SSL/TLS.
  */
 #define MBEDTLS_SSL_TLS_C
+
+/**
+ * \def MBEDTLS_THREADING_C
+ *
+ * Enable the threading abstraction layer.
+ * By default mbed TLS assumes it is used in a non-threaded environment or that
+ * contexts are not shared between threads. If you do intend to use contexts
+ * between threads, you will need to enable this layer to prevent race
+ * conditions. See also our Knowledge Base article about threading:
+ * https://tls.mbed.org/kb/development/thread-safety-and-multi-threading
+ *
+ * Module:  library/threading.c
+ *
+ * This allows different threading implementations (self-implemented or
+ * provided).
+ *
+ * You will have to enable either MBEDTLS_THREADING_ALT or
+ * MBEDTLS_THREADING_PTHREAD.
+ *
+ * Enable this layer to allow use of mutexes within mbed TLS
+ */
+#define MBEDTLS_THREADING_C
 
 /**
  * \def MBEDTLS_VERSION_C

@@ -585,7 +585,7 @@ typedef MLAN_PACK_START struct _DTIM_ParamSet_t
 } MLAN_PACK_END DTIM_ParamSet_t;
 #endif
 
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
 /*NCP Bridge CAPA tlv*/
 typedef MLAN_PACK_START struct _CAPA_ParamSet_t
 {

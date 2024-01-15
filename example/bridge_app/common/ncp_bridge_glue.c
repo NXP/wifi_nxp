@@ -131,14 +131,14 @@ static int scan_cb(unsigned int count)
         memcpy(scan_result->res[i].bssid, res.bssid, sizeof(res.bssid));
         memcpy(scan_result->res[i].trans_ssid, res.trans_ssid, sizeof(res.trans_ssid));
         memcpy(scan_result->res[i].trans_bssid, res.trans_bssid, sizeof(res.trans_bssid));
-        scan_result->res[i].ssid_len = res.ssid_len;
-        scan_result->res[i].channel  = res.channel;
-        scan_result->res[i].rssi     = res.rssi;
-        scan_result->res[i].wmm      = res.wmm;
-#ifdef CONFIG_WPS2
+#ifdef CONFIG_NCP_WPS2
         scan_result->res[i].wps         = res.wps;
         scan_result->res[i].wps_session = res.wps_session;
 #endif
+        scan_result->res[i].ssid_len       = res.ssid_len;
+        scan_result->res[i].channel        = res.channel;
+        scan_result->res[i].rssi           = res.rssi;
+        scan_result->res[i].wmm            = res.wmm;
         scan_result->res[i].wpa2_entp      = res.wpa2_entp;
         scan_result->res[i].wep            = res.wep;
         scan_result->res[i].wpa            = res.wpa;
@@ -822,7 +822,7 @@ static int wlan_bridge_add(void *tlv)
                     info.role                    = 1;
                 }
                 break;
-#ifdef CONFIG_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
             case NCP_BRIDGE_CMD_NETWORK_DTIM_TLV:
                 if (!info.dtim)
                 {
@@ -839,7 +839,7 @@ static int wlan_bridge_add(void *tlv)
                     network->acs_band                = acs_band_tlv->acs_band;
                     info.acs_band                    = 1;
                 }
-#ifdef CONFIG_WIFI_CAPA
+#ifdef CONFIG_NCP_WIFI_CAPA
             case NCP_BRIDGE_CMD_NETWORK_CAPA_TLV:
                 if (!info.wlan_capa && network->role == WLAN_BSS_ROLE_UAP)
                 {
@@ -1395,7 +1395,7 @@ static int wlan_bridge_wps_generate_pin(void *tlv)
 static int wlan_bridge_start_wps_pin(void *tlv)
 {
     int ret;
-    char pin_str[10] = {0};
+    char pin_str[10]         = {0};
     NCP_CMD_WPS_PIN *pin_cfg = (NCP_CMD_WPS_PIN *)tlv;
     uint32_t pin             = pin_cfg->pin;
     (void)snprintf(pin_str, sizeof(pin_str), "%d", pin);
@@ -1450,8 +1450,8 @@ int wlan_bridge_http_connect(void *data)
 {
     int ret = 0;
     ncp_d("NCP: run %s!\r\n", __func__);
-    WLAN_HTTP_CON *tlv = (WLAN_HTTP_CON *)data;
-    ret                = ncp_http_connect(tlv->host);
+    NCP_CMD_HTTP_CON_CFG *tlv = (NCP_CMD_HTTP_CON_CFG *)data;
+    ret                       = ncp_http_connect(tlv->host);
     if (ret < 0)
     {
         ncp_e("NCP: %s fail\r\n", __func__);
@@ -2737,7 +2737,7 @@ static int wlan_bridge_set_get_eu_mac_mode(void *data)
     {
         wlan_ed_mac_ctrl.ed_ctrl_2g   = ed_mac_mode->ed_ctrl_2g;
         wlan_ed_mac_ctrl.ed_offset_2g = ed_mac_mode->ed_offset_2g;
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
         wlan_ed_mac_ctrl.ed_ctrl_5g   = ed_mac_mode->ed_ctrl_5g;
         wlan_ed_mac_ctrl.ed_offset_5g = ed_mac_mode->ed_offset_5g;
 #endif
@@ -2755,7 +2755,7 @@ static int wlan_bridge_set_get_eu_mac_mode(void *data)
         {
             ed_mac_res->ed_ctrl_2g   = wlan_ed_mac_ctrl.ed_ctrl_2g;
             ed_mac_res->ed_offset_2g = wlan_ed_mac_ctrl.ed_offset_2g;
-#ifdef CONFIG_5GHz_SUPPORT
+#ifdef CONFIG_NCP_5GHz_SUPPORT
             ed_mac_res->ed_ctrl_5g   = wlan_ed_mac_ctrl.ed_ctrl_5g;
             ed_mac_res->ed_offset_5g = wlan_ed_mac_ctrl.ed_offset_5g;
 #endif

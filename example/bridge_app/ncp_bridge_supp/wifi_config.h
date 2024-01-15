@@ -89,6 +89,12 @@
 #define CONFIG_IPV6               1
 #define CONFIG_MAX_IPV6_ADDRESSES 3
 
+#define CONFIG_NCP_IPV6 1
+#define CONFIG_NCP_5GHz_SUPPORT
+#define CONFIG_NCP_WIFI_CAPA
+#define CONFIG_NCP_WIFI_DTIM_PERIOD
+#define CONFIG_NCP_WPS2
+
 #define CONFIG_11K 1
 #define CONFIG_11V 1
 #define CONFIG_11R 1

@@ -130,7 +130,7 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
 
     /* Received length should be greater than size of IP header and
      * size of ICMP header */
-    if (recv->size >= (int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr)))
+    if (recv->recv_size >= (int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr)))
     {
         iphdr = (struct ip_hdr *)recv->recv_data;
         /* Calculate the offset of ICMP header */
@@ -152,7 +152,7 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
             /* Extract TTL and send back so that it can be
              * displayed in ping statistics */
             ping_res.ttl = iphdr->_ttl;
-            ret = WM_SUCCESS;
+            ret          = WM_SUCCESS;
         }
         else
         {
@@ -160,7 +160,7 @@ static void ping_recv(NCP_CMD_SOCKET_RECVFROM_CFG *recv)
         }
 
         ping_res.echo_resp = ret;
-        ping_res.size = ping_msg.size;
+        ping_res.size      = ping_msg.size;
     }
 }
 
@@ -3339,7 +3339,7 @@ int wlan_process_wlan_http_req_response(uint8_t *res)
 int wlan_http_req_command(int argc, char **argv)
 {
     unsigned int handle = 0;
-    unsigned req_size = 0;
+    unsigned req_size   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_http_command = ncp_mcu_bridge_get_command_buffer();
     wlan_http_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_HTTP_REQ;
@@ -3436,8 +3436,8 @@ int wlan_process_wlan_http_recv_response(uint8_t *res)
  */
 int wlan_http_recv_command(int argc, char **argv)
 {
-    unsigned int handle = 0;
-    unsigned int size = 0;
+    unsigned int handle  = 0;
+    unsigned int size    = 0;
     unsigned int timeout = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_http_command = ncp_mcu_bridge_get_command_buffer();
@@ -3665,8 +3665,8 @@ int wlan_process_wlan_websocket_send_response(uint8_t *res)
  */
 int wlan_websocket_send_command(int argc, char **argv)
 {
-    unsigned int handle= 0;
-    unsigned int size = 0;
+    unsigned int handle = 0;
+    unsigned int size   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_http_command = ncp_mcu_bridge_get_command_buffer();
     wlan_http_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_WEBSOCKET_SEND;
@@ -3706,7 +3706,7 @@ int wlan_websocket_send_command(int argc, char **argv)
             (void)PRINTF("Usage: %s handle type send_data [send_size]\r\n", __func__);
             return -WM_FAIL;
         }
-	wlan_http_tlv->size = size;
+        wlan_http_tlv->size = size;
     }
     /*cmd size*/
     wlan_http_command->header.size += sizeof(NCP_CMD_WEBSOCKET_SEND_CFG);
@@ -3753,8 +3753,8 @@ int wlan_process_wlan_websocket_recv_response(uint8_t *res)
  */
 int wlan_websocket_recv_command(int argc, char **argv)
 {
-    unsigned int handle = 0;
-    unsigned int size = 0;
+    unsigned int handle  = 0;
+    unsigned int size    = 0;
     unsigned int timeout = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_http_command = ncp_mcu_bridge_get_command_buffer();
@@ -3896,7 +3896,7 @@ int wlan_process_wlan_socket_con_response(uint8_t *res)
 int wlan_socket_con_command(int argc, char **argv)
 {
     unsigned int handle = 0;
-    unsigned int port = 0;
+    unsigned int port   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_socket_command = ncp_mcu_bridge_get_command_buffer();
     wlan_socket_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_CON;
@@ -3966,7 +3966,7 @@ int wlan_process_wlan_socket_bind_response(uint8_t *res)
 int wlan_socket_bind_command(int argc, char **argv)
 {
     unsigned int handle = 0;
-    unsigned int port = 0;
+    unsigned int port   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_socket_command = ncp_mcu_bridge_get_command_buffer();
     wlan_socket_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_BIND;
@@ -4212,7 +4212,7 @@ int wlan_process_wlan_socket_send_response(uint8_t *res)
 int wlan_socket_send_command(int argc, char **argv)
 {
     unsigned int handle = 0;
-    unsigned int size = 0;
+    unsigned int size   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_socket_command = ncp_mcu_bridge_get_command_buffer();
     wlan_socket_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_SEND;
@@ -4246,7 +4246,7 @@ int wlan_socket_send_command(int argc, char **argv)
             (void)PRINTF("Usage: %s handle send_data [send_size]\r\n", __func__);
             return -WM_FAIL;
         }
-	wlan_socket_tlv->size = size;
+        wlan_socket_tlv->size = size;
     }
     /*cmd size*/
     wlan_socket_command->header.size += sizeof(NCP_CMD_SOCKET_SEND_CFG);
@@ -4287,8 +4287,8 @@ int wlan_process_wlan_socket_sendto_response(uint8_t *res)
 int wlan_socket_sendto_command(int argc, char **argv)
 {
     unsigned int handle = 0;
-    unsigned int size = 0;
-    unsigned int port = 0;
+    unsigned int size   = 0;
+    unsigned int port   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_socket_command = ncp_mcu_bridge_get_command_buffer();
     wlan_socket_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO;
@@ -4327,7 +4327,7 @@ int wlan_socket_sendto_command(int argc, char **argv)
             (void)PRINTF("Usage: %s handle ip_addr port send_data [send_size]\r\n", __func__);
             return -WM_FAIL;
         }
-	wlan_socket_tlv->size = size;
+        wlan_socket_tlv->size = size;
     }
     if (strlen(argv[2]) + 1 > IP_ADDR_LEN)
     {
@@ -4379,8 +4379,8 @@ int wlan_process_wlan_socket_receive_response(uint8_t *res)
  */
 int wlan_socket_receive_command(int argc, char **argv)
 {
-    unsigned int handle = 0;
-    unsigned int size = 0;
+    unsigned int handle  = 0;
+    unsigned int size    = 0;
     unsigned int timeout = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_socket_command = ncp_mcu_bridge_get_command_buffer();
@@ -4453,7 +4453,7 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
 
     if (ping_res.seq_no < 0)
     {
-        recv_size = wlan_socket_recvfrom->size;
+        recv_size = wlan_socket_recvfrom->recv_size;
         (void)PRINTF("recvfrom data success, %s, peer_ip = %s, peer_port = %d\r\n", wlan_socket_recvfrom->recv_data,
                      wlan_socket_recvfrom->peer_ip, wlan_socket_recvfrom->peer_port);
 
@@ -4476,8 +4476,8 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
  */
 int wlan_socket_recvfrom_command(int argc, char **argv)
 {
-    unsigned int handle = 0;
-    unsigned int size = 0;
+    unsigned int handle  = 0;
+    unsigned int size    = 0;
     unsigned int timeout = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_socket_command = ncp_mcu_bridge_get_command_buffer();
@@ -4506,7 +4506,7 @@ int wlan_socket_recvfrom_command(int argc, char **argv)
         (void)PRINTF("Usage: %s handle recv_size timeout\r\n", __func__);
         return -WM_FAIL;
     }
-    wlan_socket_tlv->size = size;
+    wlan_socket_tlv->recv_size = size;
     if (get_uint(argv[3], &timeout, strlen(argv[3])))
     {
         (void)PRINTF("Usage: %s handle recv_size timeout\r\n", __func__);

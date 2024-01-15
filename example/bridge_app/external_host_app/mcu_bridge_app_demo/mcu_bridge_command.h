@@ -1039,7 +1039,7 @@ typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_RECEIVE_CFG
 typedef MLAN_PACK_START struct _NCP_CMD_SOCKET_RECVFROM_CFG
 {
     uint32_t handle;
-    uint32_t size;
+    uint32_t recv_size;
     uint32_t timeout;
     char peer_ip[IP_ADDR_LEN];
     uint32_t peer_port;
