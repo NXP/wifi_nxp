@@ -448,7 +448,7 @@ static int config_set_sta_network()
         goto done;
     }
 
-    sta_nw = mem_malloc(sizeof(struct wlan_network));
+    sta_nw = os_mem_alloc(sizeof(struct wlan_network));
     if (!sta_nw)
     {
         uap_prov_d("config_set_sta_network: sta_nw malloc fail.");
@@ -468,7 +468,7 @@ static int config_set_sta_network()
 done:
     if (sta_nw)
     {
-        mem_free(sta_nw);
+        os_mem_free(sta_nw);
         sta_nw = NULL;
     }
     return ret;
@@ -485,7 +485,7 @@ static int config_reset_sta_network()
         goto done;
     }
 
-    sta_nw = mem_malloc(sizeof(struct wlan_network));
+    sta_nw = os_mem_alloc(sizeof(struct wlan_network));
     if (!sta_nw)
     {
         uap_prov_d("config_reset_sta_network: sta_nw malloc fail.");
@@ -499,7 +499,7 @@ static int config_reset_sta_network()
 done:
     if (sta_nw)
     {
-        mem_free(sta_nw);
+        os_mem_free(sta_nw);
         sta_nw = NULL;
     }
     return ret;
@@ -1087,7 +1087,7 @@ static int do_get_ip(char *ip, int client)
 static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char *label)
 {
     int ret = WM_SUCCESS;
-    struct wlan_network sta_network;
+    struct wlan_network *sta_network = NULL;
     enum wlan_security_type security = WLAN_SECURITY_NONE;
 
     if (!label || (strlen(label) == 0) || (strlen(label) >= WLAN_NETWORK_NAME_MAX_LENGTH))
@@ -1096,22 +1096,29 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
         ret = -WM_E_INVAL;
         return ret;
     }
-
+    
+    sta_network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (sta_network == NULL)
+    {
+        wlcm_e("wlan_pscan: fail to malloc memory! \r\n");
+        return -WM_FAIL;
+    }
+    (void)memset(sta_network, 0, sizeof(struct wlan_network));
+    
     if (nw_from == NETWORK_FROM_CONFIG)
     {
         if (!is_nvm_enabled())
         {
             uap_prov_d("do_sta_add_network: nvm disabled.");
             ret = -WM_FAIL;
-            return ret;
+            goto done;
         }
-        memset(&sta_network, 0x00, sizeof(sta_network));
-        ret = wifi_get_network(&sta_network, WLAN_BSS_ROLE_STA);
-        if (ret || (strlen(sta_network.ssid) == 0))
+        ret = wifi_get_network(sta_network, WLAN_BSS_ROLE_STA);
+        if (ret || (strlen(sta_network->ssid) == 0))
         {
-            uap_prov_e("do_sta_add_network: read fail %d or invalid ssid %s.", ret, sta_network.ssid);
+            uap_prov_e("do_sta_add_network: read fail %d or invalid ssid %s.", ret, sta_network->ssid);
             ret = -WM_FAIL;
-            return ret;
+            goto done;
         }
     }
     else if (nw_from == NETWORK_FROM_HTTP)
@@ -1120,13 +1127,13 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
         {
             uap_prov_e("do_sta_add_network: Invalid null param.");
             ret = -WM_E_INVAL;
-            return ret;
+            goto done;
         }
         if ((strlen(ssid) == 0) || (strlen(ssid) > IEEEtypes_SSID_SIZE))
         {
             uap_prov_e("do_sta_add_network: Invalid ssid.");
             ret = -WM_E_INVAL;
-            return ret;
+            goto done;
         }
         if (strlen(pass) == 0)
         {
@@ -1140,15 +1147,14 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
         {
             uap_prov_e("do_sta_add_network: Invalid pass.");
             ret = -WM_E_INVAL;
-            return ret;
+            goto done;
         }
-        memset(&sta_network, 0, sizeof(struct wlan_network));
-        memset(sta_network.ssid, '\0', sizeof(sta_network.ssid));
-
-        memcpy(sta_network.ssid, (const char *)ssid, strlen(ssid));
-        sta_network.ip.ipv4.addr_type = ADDR_TYPE_DHCP;
-        sta_network.ssid_specific     = 1;
-        sta_network.security.type     = security;
+        memset(sta_network->ssid, '\0', sizeof(sta_network->ssid));
+ 
+        memcpy(sta_network->ssid, (const char *)ssid, strlen(ssid));
+        sta_network->ip.ipv4.addr_type = ADDR_TYPE_DHCP;
+        sta_network->ssid_specific     = 1;
+        sta_network->security.type     = security;
 
         if (strlen(pass))
         {
@@ -1161,11 +1167,12 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
             for (i = 0; i < count; i++)
             {
                 ret = wifi_get_scan_result(i, &res);
-                if (ret == WM_SUCCESS && (memcmp(sta_network.ssid, (char *)res->ssid, strlen(sta_network.ssid)) == 0) &&
-                    (res->ssid_len == strlen(sta_network.ssid)))
+                if (ret == WM_SUCCESS && (memcmp(sta_network->ssid, (char *)res->ssid, strlen(sta_network->ssid)) == 0) &&
+                    (res->ssid_len == strlen(sta_network->ssid)))
                 {
-                    if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2 ||
-                        res->WPA_WPA2_WEP.wpa2_sha256 || res->WPA_WPA2_WEP.wpa3_sae)
+                    if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa ||
+                        res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa2_sha256 ||
+                        res->WPA_WPA2_WEP.wpa3_sae)
                         break;
                 }
             }
@@ -1173,23 +1180,22 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
             {
                 uap_prov_e("do_sta_add_network: Could not find a proper AP with secure mode.");
                 ret = -WM_FAIL;
-                return ret;
+                goto done;
             }
-            if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2 ||
-                res->WPA_WPA2_WEP.wpa2_sha256)
+            if (res->WPA_WPA2_WEP.wepStatic || res->WPA_WPA2_WEP.wpa || res->WPA_WPA2_WEP.wpa2 || res->WPA_WPA2_WEP.wpa2_sha256)
             {
-                sta_network.security.psk_len = strlen(pass);
-                strncpy(sta_network.security.psk, pass, strlen(pass));
+                sta_network->security.psk_len = strlen(pass);
+                strncpy(sta_network->security.psk, pass, strlen(pass));
             }
             if (res->WPA_WPA2_WEP.wpa3_sae)
             {
-                sta_network.security.password_len = strlen(pass);
-                strncpy(sta_network.security.password, pass, strlen(pass));
-                sta_network.security.mfpc = 1;
-                sta_network.security.mfpr = 1;
+                sta_network->security.password_len = strlen(pass);
+                strncpy(sta_network->security.password, pass, strlen(pass));
+                sta_network->security.mfpc = 1;
+                sta_network->security.mfpr = 1;
             }
 #ifdef CONFIG_WPA_SUPP
-            if (sta_network.security.type == WLAN_SECURITY_WILDCARD)
+            if (sta_network->security.type == WLAN_SECURITY_WILDCARD)
             {
                 /* Wildcard: If wildcard security is specified, copy the highest
                  * security available in the scan result to the configuration
@@ -1216,16 +1222,16 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
 #endif
                 else
                     t = WLAN_SECURITY_NONE;
-                sta_network.security.type = t;
+                sta_network->security.type = t;
             }
             if (res->wpa_mcstCipher.tkip || res->rsn_mcstCipher.tkip)
-                sta_network.security.group_cipher |= BIT(3); /*WPA_CIPHER_TKIP*/
+                sta_network->security.group_cipher |= BIT(3); /*WPA_CIPHER_TKIP*/
             if (res->wpa_mcstCipher.ccmp || res->rsn_mcstCipher.ccmp)
-                sta_network.security.group_cipher |= BIT(4); /*WPA_CIPHER_CCMP*/
+                sta_network->security.group_cipher |= BIT(4); /*WPA_CIPHER_CCMP*/
             if (res->wpa_ucstCipher.tkip || res->rsn_ucstCipher.tkip)
-                sta_network.security.pairwise_cipher |= BIT(3); /*WPA_CIPHER_TKIP*/
+                sta_network->security.pairwise_cipher |= BIT(3); /*WPA_CIPHER_TKIP*/
             if (res->wpa_ucstCipher.ccmp || res->rsn_ucstCipher.ccmp)
-                sta_network.security.pairwise_cipher |= BIT(4); /*WPA_CIPHER_CCMP*/
+                sta_network->security.pairwise_cipher |= BIT(4); /*WPA_CIPHER_CCMP*/
 #endif
         }
     }
@@ -1233,18 +1239,24 @@ static int do_sta_add_network(network_from nw_from, char *ssid, char *pass, char
     {
         uap_prov_e("do_sta_add_network: Invalid nw_from.");
         ret = -WM_FAIL;
-        return ret;
+        goto done;
     }
 
-    strcpy(sta_network.name, label);
+    strcpy(sta_network->name, label);
     wlan_remove_network(label);
-    ret = wlan_add_network(&sta_network);
+    ret = wlan_add_network(sta_network);
     if (ret != WM_SUCCESS)
     {
         uap_prov_e("do_sta_add_network: add network fail %d.", ret);
         wlan_remove_network(label);
-        return ret;
+        goto done;
     }
+    
+done:
+    if (sta_network)
+	{   
+	    os_mem_free((void *)sta_network);
+	}
 
     return ret;
 }
@@ -1291,7 +1303,7 @@ static int do_fall_to_sta(network_from nw_from)
 static int do_uap_add_network(uap_prov_uap_config *uapcfg, char *label, uint32_t channel)
 {
     int ret = WM_SUCCESS;
-    struct wlan_network uap_network;
+    struct wlan_network *uap_network = NULL;
 
     if (!label || (strlen(label) == 0) || (strlen(label) >= WLAN_NETWORK_NAME_MAX_LENGTH))
     {
@@ -1313,45 +1325,55 @@ static int do_uap_add_network(uap_prov_uap_config *uapcfg, char *label, uint32_t
         ret = -WM_E_INVAL;
         return ret;
     }
-
-    wlan_initialize_uap_network(&uap_network);
-    memset(uap_network.name, 0x00, sizeof(uap_network.name));
-    strcpy(uap_network.name, label);
-    memcpy(uap_network.ssid, uapcfg->uapSsid, strlen(uapcfg->uapSsid));
-    uap_network.ip.ipv4.address = ipaddr_addr(DEF_UAP_IP_ADDR);
-    uap_network.ip.ipv4.gw      = ipaddr_addr(DEF_UAP_IP_ADDR);
-    uap_network.channel         = channel;
-    uap_network.security.type   = (enum wlan_security_type)(uapcfg->uapSec);
-    if ((uap_network.security.type != WLAN_SECURITY_NONE) && strlen(uapcfg->uapPass))
+    uap_network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (uap_network == NULL)
     {
-        if ((uap_network.security.type == WLAN_SECURITY_WPA) || (uap_network.security.type == WLAN_SECURITY_WPA2) ||
-            (uap_network.security.type == WLAN_SECURITY_WPA_WPA2_MIXED))
+        wlcm_e("do_uap_add_network: fail to malloc memory! \r\n");
+        return -WM_FAIL;
+    }
+    
+    wlan_initialize_uap_network(uap_network);
+    memset(uap_network->name, 0x00, sizeof(uap_network->name));
+    strcpy(uap_network->name, label);
+    memcpy(uap_network->ssid, uapcfg->uapSsid, strlen(uapcfg->uapSsid));
+    uap_network->ip.ipv4.address = ipaddr_addr(DEF_UAP_IP_ADDR);
+    uap_network->ip.ipv4.gw      = ipaddr_addr(DEF_UAP_IP_ADDR);
+    uap_network->channel         = channel;
+    uap_network->security.type   = (enum wlan_security_type)(uapcfg->uapSec);
+    if ((uap_network->security.type != WLAN_SECURITY_NONE) && strlen(uapcfg->uapPass))
+    {
+        if ((uap_network->security.type == WLAN_SECURITY_WPA) || (uap_network->security.type == WLAN_SECURITY_WPA2) ||
+            (uap_network->security.type == WLAN_SECURITY_WPA_WPA2_MIXED))
         {
-            uap_network.security.psk_len = strlen(uapcfg->uapPass);
-            memset(uap_network.security.psk, '\0', sizeof(uap_network.security.psk));
-            strncpy(uap_network.security.psk, uapcfg->uapPass,
-                    MIN(strlen(uapcfg->uapPass), sizeof(uap_network.security.psk)));
+            uap_network->security.psk_len = strlen(uapcfg->uapPass);
+            memset(uap_network->security.psk, '\0', sizeof(uap_network->security.psk));
+            strncpy(uap_network->security.psk, uapcfg->uapPass, MIN(strlen(uapcfg->uapPass), sizeof(uap_network->security.psk)));
         }
-        if ((uap_network.security.type == WLAN_SECURITY_WPA3_SAE) ||
-            (uap_network.security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
+        if ((uap_network->security.type == WLAN_SECURITY_WPA3_SAE) ||
+            (uap_network->security.type == WLAN_SECURITY_WPA2_WPA3_SAE_MIXED))
         {
-            uap_network.security.password_len = strlen(uapcfg->uapPass);
-            strncpy(uap_network.security.password, uapcfg->uapPass, strlen(uapcfg->uapPass));
-            uap_network.security.mfpc = 1;
-            uap_network.security.mfpr = 1;
+            uap_network->security.password_len = strlen(uapcfg->uapPass);
+            strncpy(uap_network->security.password, uapcfg->uapPass, strlen(uapcfg->uapPass));
+            uap_network->security.mfpc = 1;
+            uap_network->security.mfpr = 1;
         }
     }
 
     wlan_remove_network(label);
-    ret = wlan_add_network(&uap_network);
+    ret = wlan_add_network(uap_network);
     if (ret != WM_SUCCESS)
     {
         uap_prov_e("do_uap_add_network: add network fail %d.", ret);
-        wlan_remove_network(uap_network.name);
-        return ret;
+        wlan_remove_network(uap_network->name);
+        goto done;
     }
-
-    return ret;
+    
+done:
+    if (uap_network)
+    {
+        os_mem_free((void *)uap_network);
+    }
+     return ret;
 }
 
 static int do_uap_start(char *label)
