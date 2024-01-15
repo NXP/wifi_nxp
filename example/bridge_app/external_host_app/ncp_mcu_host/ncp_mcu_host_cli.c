@@ -744,13 +744,13 @@ static void ping_sock_task(void *pvParameters)
             ping_sock_command->header.size += sizeof(NCP_CMD_SOCKET_SENDTO_CFG) - sizeof(char);
             ping_sock_command->header.size += ping_size;
 
+            /* sequence number */
+            ping_res.seq_no = i;
+
             /* Send ping TLV command */
             ncp_host_send_tlv_command();
             /* Get the current ticks as the start time */
             ping_res.time = os_ticks_get();
-
-            /* sequence number */
-            ping_res.seq_no = i;
 
             /* wait for NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO command response */
             (void)os_event_notify_get(OS_WAIT_FOREVER);
@@ -884,6 +884,9 @@ int ncp_host_send_tlv_command()
     mcu_tlv_command_buff[index + 2] = (bridge_chksum & 0xff0000) >> 16;
     mcu_tlv_command_buff[index + 3] = (bridge_chksum & 0xff000000) >> 24;
 
+    /*Record command id*/
+    mcu_last_cmd_sent = mcu_cmd->header.cmd;
+
     if (cmd_len >= NCP_BRIDGE_CMD_HEADER_LEN)
     {
 #if 0
@@ -920,7 +923,8 @@ int ncp_host_send_tlv_command()
             goto done;
         }
 #elif defined(CONFIG_NCP_SDIO)
-        if (mcu_cmd->header.cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SEND)
+        if ((mcu_cmd->header.cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SEND)
+            || (mcu_cmd->header.cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO))
             ret = ncp_sdhost_send_data((uint8_t *)mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
         else
             ret = ncp_sdhost_send_cmd((uint8_t *)mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
@@ -934,8 +938,7 @@ int ncp_host_send_tlv_command()
         }
         /*Increase command sequence number*/
         g_cmd_seqno++;
-        /*Record command id*/
-        mcu_last_cmd_sent = mcu_cmd->header.cmd;
+
 #ifdef CONFIG_NCP_HOST_IO_DUMP
         PRINTF("TLV Command:\r\n");
         dump_hex(mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);

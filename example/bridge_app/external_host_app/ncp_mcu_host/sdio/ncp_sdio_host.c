@@ -511,7 +511,7 @@ static void handle_sdio_cmd_read(uint32_t rx_len, uint32_t rx_blocks)
 
     if (sdioheader->pkttype == SDIO_TYPE_CMD)
     {
-        (void)PRINTF("handle_sdio_packet_read: DUMP:");
+        (void)PRINTF("handle_sdio_cmd_read: DUMP:");
         dump_hex((uint8_t *)sdh_inbuf, 1 * rx_len);
     }
 #endif
@@ -599,7 +599,7 @@ static void handle_sdio_packet_read(void)
         if (sdioheader->pkttype == SDIO_TYPE_DATA)
         {
             (void)PRINTF("handle_sdio_packet_read: DUMP:");
-            dump_hex((uint8_t *)sdh_inbuf, 1 * datalen);
+            dump_hex((uint8_t *)sdh_inbuf, 1 * rx_len);
         }
 #endif
         sdio_host_save_recv_data((uint8_t *)sdh_inbuf + SDIO_HEADER_LEN, rx_len - SDIO_HEADER_LEN);
