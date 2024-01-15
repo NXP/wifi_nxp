@@ -9,16 +9,27 @@
 #define __WLAN_BT_FW_H__
 
 #if defined(SD8801)
-#include "sd8801_wlan.h"
+#include "8801/sd8801_wlan.h"
 #elif defined(SD8978)
-#include "sduartIW416_wlan_bt.h"
-#elif defined(SD8987)
-#include "sduart8987_wlan_bt.h"
-#elif defined(IW61x)
-#if defined(CONFIG_RF_TEST_MODE)
-#include "sduart_nw61x_fp255_se.h"
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
+#include "IW416/sduartIW416_wlan_bt.h"
 #else
-#include "sduart_nw61x_se.h"
+#include "IW416/sdIW416_wlan.h"
+#include "IW416/uartIW416_bt.h"
+#endif
+#elif defined(SD8987)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
+#include "8987/sduart8987_wlan_bt.h"
+#else
+#include "8987/sd8987_wlan.h"
+#include "8987/uart8987_bt.h"
+#endif
+#elif defined(SD9177)
+#if !defined(CONFIG_WIFI_IND_DNLD) && !defined(CONFIG_BT_IND_DNLD)
+#include "nw61x/sduart_nw61x_se.h"
+#else
+#include "nw61x/sd_nw61x_se.h"
+#include "nw61x/uart_nw61x_se.h"
 #endif
 #endif
 
