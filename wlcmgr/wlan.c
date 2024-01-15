@@ -9536,6 +9536,12 @@ static int wlan_set_uap_ecsa_cfg(
         return -WM_FAIL;
     }
 
+    if (wlan_check_channel_by_region_table(pmpriv, channel) == MFALSE)
+    {
+        (void)PRINTF("uAP target channel not allowed\n\r");
+        return -WM_FAIL;
+    }
+
     if (is_uap_started() && (!is_sta_connected()))
     {
         if (oper_class)
