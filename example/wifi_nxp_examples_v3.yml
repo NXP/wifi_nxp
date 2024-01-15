@@ -1697,6 +1697,9 @@ ncp_bridge:
         - path: middleware/wifi_nxp/example/bridge_app/common
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}
           project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: usb
         - path: middleware/wifi_nxp/example/bridge_app/common/uap_prov
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
           project_path: source
@@ -1706,12 +1709,9 @@ ncp_bridge:
         - path: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/httpc/inc/json_parser
           project_path: http
-        - path: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - path: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd
-          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb_device
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: usb
         - path: middleware/wifi_nxp/example/bridge_app/common/spi
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/spi
           project_path: spi
@@ -1726,59 +1726,59 @@ ncp_bridge:
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
           project_path: source
         files:
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/cdc_app.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/cdc_app.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_slave_app.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_slave_app.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_device_descriptor.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_device_descriptor.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_device_config.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_support.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_support.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_host_config.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_api.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/host_msd_fatfs.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/host_msd_fatfs.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/ffconf.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.c
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.h
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
           project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/lwipopts.h
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/lwippools.h
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/usb_host_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_api.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/ffconf.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/httpsrv_fs_data.c
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
@@ -2050,6 +2050,9 @@ ncp_bridge_supp:
         - path: middleware/wifi_nxp/example/bridge_app/common
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}
           project_path: source
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: usb
         - path: middleware/wifi_nxp/example/bridge_app/common/uap_prov
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
           project_path: source
@@ -2059,18 +2062,15 @@ ncp_bridge_supp:
         - path: middleware/wifi_nxp/example/bridge_app/common/httpc/inc/json_parser
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/httpc/inc/json_parser
           project_path: http
+        - path: middleware/wifi_nxp/example/bridge_app/common/usb_device
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: usb
         - path: middleware/wifi_nxp/example/bridge_app/common/spi
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/spi
           project_path: spi
         - path: middleware/wifi_nxp/example/bridge_app/common/crc
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
           project_path: source
-        - path: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - path: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd
-          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
         as-include:
         - path: boards/${board}
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
@@ -2099,6 +2099,11 @@ ncp_bridge_supp:
           merge-to-freertosconfig: sub
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
           project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/cdc_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.c
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
@@ -2106,48 +2111,42 @@ ncp_bridge_supp:
         - source: middleware/wifi_nxp/example/bridge_app/common/crc/crc.h
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/crc
           project_path: source
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/cdc_app.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/cdc_app.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_slave_app.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_slave_app.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_device_descriptor.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_device_descriptor.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_device_cdc/usb_device_config.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_device_cdc
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_device_cdc
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_support.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_support.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_host_config.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/usb_api.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/host_msd_fatfs.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/host_msd_fatfs.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
-        - source: boards/src/ncp_examples/common/ncp_adapter/ncp_intf/usb/usb_host_msd/ffconf.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb/usb_host_msd
-          project_path: ncp_common/ncp_adapter/ncp_intf/usb/usb_host_msd
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_slave_app.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_descriptor.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/usb_host_config.h
+          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_api.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.c
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
+        - source: middleware/wifi_nxp/example/bridge_app/common/usb/ffconf.h
+          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
+          project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/httpsrv_fs_data.c
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
           project_path: source
