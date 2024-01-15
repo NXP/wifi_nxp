@@ -31,6 +31,10 @@ Change log:
         Global Variables
 ********************************************************/
 
+#ifdef CONFIG_ZEPHYR
+#define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
+#endif
+
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
 static t_u8 mp_regs_buffer[MAX_MP_REGS + DMA_ALIGNMENT];
