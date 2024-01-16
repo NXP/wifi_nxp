@@ -271,16 +271,16 @@ int ncp_sock_receive(uint32_t handle, uint32_t recv_size, uint32_t timeo, char *
     /*raw socket input contains IP header length, max ip header size is 60Bytes.*/
     if (type == raw)
         size += 60;
-    /* timeout in milliseconds (0 means the receive
-       call will not time out) */
+        /* timeout in milliseconds (0 means the receive
+           call will not time out) */
 #if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
-    uint32_t timeout = timeo;
-    socklen_t timeo_len	= sizeof(uint32_t);
+    uint32_t timeout    = timeo;
+    socklen_t timeo_len = sizeof(uint32_t);
 #else
     struct timeval timeout = {timeo / 1000, (timeo % 1000) * 1000};
-    socklen_t timeo_len	= sizeof(struct timeval);
+    socklen_t timeo_len    = sizeof(struct timeval);
 #endif
-    status                 = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, timeo_len);
+    status = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, timeo_len);
     if (status == -1)
     {
         httpc_e("status:socket set-opt failed");
@@ -343,10 +343,16 @@ int ncp_sock_receivefrom(
     if (type == raw)
         size += 60;
 
-    /* timeout in milliseconds (0 means the receive call
-       will not time out) */
+        /* timeout in milliseconds (0 means the receive call
+           will not time out) */
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    uint32_t timeout    = timeo;
+    socklen_t timeo_len = sizeof(uint32_t);
+#else
     struct timeval timeout = {timeo / 1000, (timeo % 1000) * 1000};
-    status                 = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+    socklen_t timeo_len    = sizeof(struct timeval);
+#endif
+    status = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, timeo_len);
     if (status == -1)
     {
         httpc_e("status:socket set-opt failed");
@@ -644,8 +650,14 @@ static void serial_mwm_bridge_recv(void *arg)
     int timeo  = 0;
     int sockfd = *((int *)arg);
 
-    struct timeval timeout = {timeo / 1000, timeo % 1000};
-    status                 = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+    uint32_t timeout    = timeo;
+    socklen_t timeo_len = sizeof(uint32_t);
+#else
+    struct timeval timeout = {timeo / 1000, (timeo % 1000) * 1000};
+    socklen_t timeo_len    = sizeof(struct timeval);
+#endif
+    status = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, timeo_len);
     if (status == -1)
     {
         httpc_e("status:socket set-opt failed");

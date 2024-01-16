@@ -131,14 +131,14 @@ static int scan_cb(unsigned int count)
         memcpy(scan_result->res[i].bssid, res.bssid, sizeof(res.bssid));
         memcpy(scan_result->res[i].trans_ssid, res.trans_ssid, sizeof(res.trans_ssid));
         memcpy(scan_result->res[i].trans_bssid, res.trans_bssid, sizeof(res.trans_bssid));
+        scan_result->res[i].ssid_len = res.ssid_len;
+        scan_result->res[i].channel  = res.channel;
+        scan_result->res[i].rssi     = res.rssi;
+        scan_result->res[i].wmm      = res.wmm;
 #ifdef CONFIG_NCP_WPS2
         scan_result->res[i].wps         = res.wps;
         scan_result->res[i].wps_session = res.wps_session;
 #endif
-        scan_result->res[i].ssid_len       = res.ssid_len;
-        scan_result->res[i].channel        = res.channel;
-        scan_result->res[i].rssi           = res.rssi;
-        scan_result->res[i].wmm            = res.wmm;
         scan_result->res[i].wpa2_entp      = res.wpa2_entp;
         scan_result->res[i].wep            = res.wep;
         scan_result->res[i].wpa            = res.wpa;
@@ -1376,7 +1376,12 @@ static int wlan_bridge_wps_generate_pin(void *tlv)
 {
     uint32_t pin = 0;
 
+#ifdef CONFIG_WPA_SUPP_WPS
+    wlan_wps_generate_pin((unsigned int *)&pin);
+#else
     wlan_wps_generate_pin(&pin);
+#endif
+
     NCPCmd_DS_COMMAND *cmd_res = ncp_bridge_get_response_buffer();
     cmd_res->header.cmd        = NCP_BRIDGE_CMD_WLAN_STA_GEN_WPS_PIN;
     cmd_res->header.size       = NCP_BRIDGE_CMD_HEADER_LEN;
@@ -3797,61 +3802,110 @@ struct cmd_class_t cmd_class_list[] = {
     {NCP_BRIDGE_CMD_INVALID, NULL, 0},
 };
 
-static struct cmd_t *lookup_cmd(struct cmd_t *cmd_list, uint32_t cmd_id)
+int ncp_register_class(struct cmd_class_t *cmd_class)
 {
-    int i;
-    struct cmd_t *cmd = NULL;
-    for (i = 0; cmd_list[i].cmd && cmd_list[i].handler; i++)
+    int cmd_idx;
+    int subclass_idx;
+    struct cmd_subclass_t *cmd_subclass = NULL;
+    struct cmd_t *cmd                   = NULL;
+
+    if (!cmd_class || cmd_class->subclass_len > NCP_HASH_TABLE_SIZE)
     {
-        if (cmd_id == GET_CMD_ID(cmd_list[i].cmd))
+        return -1;
+    }
+
+    memset(cmd_class->hash, NCP_HASH_INVALID_KEY, NCP_HASH_TABLE_SIZE);
+
+    for (subclass_idx = 0; subclass_idx < cmd_class->subclass_len; subclass_idx++)
+    {
+        cmd_subclass = &cmd_class->cmd_subclass[subclass_idx];
+
+        if (cmd_subclass->cmd_subclass == NCP_BRIDGE_CMD_INVALID)
         {
-            cmd = &cmd_list[i];
             break;
         }
+
+        cmd_class->hash[GET_CMD_SUBCLASS(cmd_subclass->cmd_subclass)] = subclass_idx;
+
+        memset(cmd_subclass->hash, NCP_HASH_INVALID_KEY, NCP_HASH_TABLE_SIZE);
+
+        for (cmd_idx = 0; cmd_idx < NCP_HASH_TABLE_SIZE; cmd_idx++)
+        {
+            cmd = &cmd_subclass->cmd[cmd_idx];
+
+            if (cmd->cmd == NCP_BRIDGE_CMD_INVALID)
+            {
+                break;
+            }
+
+            cmd_subclass->hash[GET_CMD_ID(cmd->cmd)] = cmd_idx;
+        }
     }
-    return cmd;
+    return 0;
 }
 
-static struct cmd_t *lookup_subclass(struct cmd_subclass_t *cmd_subclass_list,
-                                     uint32_t cmd_subclass,
-                                     uint32_t cmd_id,
-                                     uint16_t subclass_len)
+int ncp_cmd_list_init()
 {
-    int i             = 0;
-    struct cmd_t *cmd = NULL;
-    for (i = 0; i < subclass_len; i++)
-    {
-        if ((cmd_subclass_list[i].cmd == NULL) && (cmd_subclass_list[i].cmd_subclass == NCP_BRIDGE_CMD_INVALID))
-        {
-            continue;
-        }
+    int i;
+    int ret;
+    struct cmd_class_t *cmd_class = NULL;
 
-        if (cmd_subclass == cmd_subclass_list[i].cmd_subclass)
+    for (i = 0; i < ARRAY_SIZE(cmd_class_list); i++)
+    {
+        cmd_class = &cmd_class_list[i];
+
+        if (cmd_class->cmd_class == NCP_BRIDGE_CMD_INVALID)
         {
-            cmd = lookup_cmd(cmd_subclass_list[i].cmd, cmd_id);
             break;
         }
+
+        ret = ncp_register_class(cmd_class);
+        if (ret != 0)
+        {
+            return -1;
+        }
     }
-    return cmd;
+
+    return 0;
 }
 
 struct cmd_t *lookup_class(uint32_t cmd_class, uint32_t cmd_subclass, uint32_t cmd_id)
 {
-    int i             = 0;
+    int i;
+    struct cmd_class_t *pclass;
+    struct cmd_subclass_t *psubclass;
     struct cmd_t *cmd = NULL;
+
+    if (cmd_subclass >= NCP_HASH_TABLE_SIZE || cmd_id >= NCP_HASH_TABLE_SIZE)
+    {
+        return NULL;
+    }
+
     for (i = 0; i < (sizeof(cmd_class_list) / sizeof(struct cmd_class_t)); i++)
     {
-        if ((cmd_class_list[i].cmd_class == NCP_BRIDGE_CMD_INVALID) && (cmd_class_list[i].cmd_subclass == NULL))
+        pclass = &cmd_class_list[i];
+
+        /* when class id valid, subclass ptr should never be NULL */
+        if (pclass->cmd_class == cmd_class)
         {
-            continue;
+            /* lookup hash table */
+            if (pclass->hash[cmd_subclass] != NCP_HASH_INVALID_KEY)
+            {
+                psubclass = &pclass->cmd_subclass[pclass->hash[cmd_subclass]];
+                if (psubclass->hash[cmd_id] != NCP_HASH_INVALID_KEY)
+                {
+                    cmd = &psubclass->cmd[psubclass->hash[cmd_id]];
+                }
+            }
+            break;
         }
 
-        if (cmd_class == cmd_class_list[i].cmd_class)
+        if ((pclass->cmd_class == NCP_BRIDGE_CMD_INVALID) && (pclass->cmd_subclass == NULL))
         {
-            cmd = lookup_subclass(cmd_class_list[i].cmd_subclass, cmd_subclass, cmd_id, cmd_class_list[i].subclass_len);
             break;
         }
     }
+
     if (cmd == NULL)
         return &error_ack_cmd;
     else

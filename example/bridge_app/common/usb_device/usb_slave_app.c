@@ -87,6 +87,13 @@ int usb_cmd_response(uint8_t *data, uint16_t transfer_size, void (*callback)(), 
     return os_queue_send(&usb_cmd_resp_queue, &msg, wait);
 }
 
+#ifdef CONFIG_NCP_SOCKET_SEND_FIFO
+extern os_queue_t socket_send_fifo_queue; /* app notify event queue */
+extern uint8_t socket_send_cmd_buf[SOCKET_SEND_COMMAND_NUM][NCP_BRIDGE_SEND_DATA_INBUF_SIZE];
+extern uint8_t res_buf[NCP_BRIDGE_INBUF_SIZE];
+extern int socket_send_fifo_recv_seq;
+#endif
+
 extern uint8_t cmd_buf[NCP_BRIDGE_INBUF_SIZE];
 extern os_thread_t ncp_bridge_thread;
 void usb_save_recv_data(uint8_t *recv_data, uint32_t packet_len)

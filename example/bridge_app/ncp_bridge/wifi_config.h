@@ -83,8 +83,12 @@
 /* NCP bridge project */
 #define CONFIG_NCP_BRIDGE
 #define CONFIG_UART_BRIDGE
-//#define CONFIG_SPI_BRIDGE
-//#define CONFIG_USB_BRIDGE
+#undef CONFIG_SPI_BRIDGE
+#undef CONFIG_USB_BRIDGE
+#undef CONFIG_SDIO_BRIDGE
+#undef CONFIG_SDIO_TEST_LOOPBACK
+
+#define CONFIG_NCP_SOCKET_SEND_FIFO
 
 /*https client and websocket*/
 #define CONFIG_ENABLE_HTTPC_SECURE

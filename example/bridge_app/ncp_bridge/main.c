@@ -47,9 +47,28 @@
 #include "cdc_app.h"
 #elif defined(CONFIG_SPI_BRIDGE)
 #include "spi_slave_app.h"
+#elif defined(CONFIG_SDIO_BRIDGE)
+#include "fsl_adapter_sdu.h"
 #endif
 #include "ncp_bridge_cmd.h"
 
+#if defined(MBEDTLS_NXP_SSSAPI)
+#include "sssapi_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_CSS_API)
+#include "platform_hw_ip.h"
+#include "css_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_CSS_PKC_API)
+#include "platform_hw_ip.h"
+#include "css_pkc_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_ELS_PKC_API)
+#include "platform_hw_ip.h"
+#include "els_pkc_mbedtls.h"
+#elif defined(MBEDTLS_MCUX_ELS_API)
+#include "platform_hw_ip.h"
+#include "els_mbedtls.h"
+#else
+#include "ksdk_mbedtls.h"
+#endif
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -65,7 +84,8 @@
 
 #define USART_NVIC_PRIO 5
 
-#define UART_BUF_SIZE 32
+#define UART_BUF_SIZE               32
+#define NCP_UART_SEND_FIFO_ATTEMPTS 1
 #endif
 
 /*******************************************************************************
@@ -76,11 +96,6 @@
  * Variables
  ******************************************************************************/
 extern int network_services;
-
-#ifdef RW610
-extern const unsigned char *wlan_fw_bin;
-extern const unsigned int wlan_fw_bin_len;
-#endif
 
 const int TASK_MAIN_PRIO       = OS_PRIO_3;
 const int TASK_MAIN_STACK_SIZE = 800;
@@ -125,30 +140,33 @@ extern power_cfg_t global_power_config;
 extern os_semaphore_t spi_slave_sem;
 #endif
 
+uint32_t cmd_recv_drop  = 0;
+uint32_t data_recv_drop = 0;
+#define NCP_SDU_SEND_FIFO_ATTEMPTS 1
+#ifdef CONFIG_SDIO_BRIDGE
+status_t sdu_cmd_handler(uint8_t *data_addr, uint16_t data_len);
+status_t sdu_data_handler(uint8_t *data_addr, uint16_t data_len);
+status_t sdu_send_response(uint8_t *data_addr, uint16_t data_len);
+#endif
+
 #ifdef CONFIG_NCP_SOCKET_SEND_FIFO
 static os_thread_t socket_send_cmd_thread;                  /* socket send task */
 static os_thread_stack_define(socket_send_cmd_stack, 4096); /* socket send stack*/
-#ifndef SOCKET_SEND_COMMAND_NUM
-#define SOCKET_SEND_COMMAND_NUM 64
-#endif
-static os_queue_t socket_send_fifo_queue; /* app notify event queue */
-/* app notify event queue message */
-typedef struct
-{
-    uint32_t send_type;
-    void *data;
-} socket_send_msg_t;
+
+os_queue_t socket_send_fifo_queue; /* app notify event queue */
+static os_mutex_t socket_send_fifo_mutex;
+
 static os_queue_pool_define(socket_send_queue_data, SOCKET_SEND_COMMAND_NUM * sizeof(socket_send_msg_t));
 
 extern int wlan_bridge_socket_send(void *data);
 extern int wlan_bridge_socket_sendto(void *data);
 uint8_t socket_send_cmd_buf[SOCKET_SEND_COMMAND_NUM][NCP_BRIDGE_SEND_DATA_INBUF_SIZE];
 int socket_send_fifo_recv_seq = 0;
+int socket_send_fifo_num      = 0;
 #endif
 
 os_mutex_t resp_buf_mutex;
 uint32_t current_cmd = 0;
-
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -239,6 +257,8 @@ int bridge_send_response(uint8_t *pbuf)
         ret = ncp_bridge_spi_slave_transfer(pbuf, transfer_len, NCP_BRIDGE_SLAVE_TX, true);
 #elif defined(CONFIG_USB_BRIDGE)
         ret = usb_no_copy_cmd_response(pbuf, transfer_len, NULL, OS_WAIT_FOREVER);
+#elif defined(CONFIG_SDIO_BRIDGE)
+        ret = sdu_send_response(pbuf, transfer_len);
 #endif
         if (ret != WM_SUCCESS)
         {
@@ -354,6 +374,13 @@ restart:
         return;
     }
     total += NCP_BRIDGE_CMD_HEADER_LEN;
+#elif defined(CONFIG_SDIO_BRIDGE)
+    ret = SDU_RecvCmd();
+    if (ret != WM_SUCCESS)
+    {
+        ncp_e("Failed to receive command header(%d)", ret);
+        return;
+    }
 #endif
     /* Length of the packet is indicated by byte[4] & byte[5] of
      * the packet excluding checksum [4 bytes]
@@ -398,12 +425,53 @@ restart:
             return;
         }
     }
+#ifdef CONFIG_NCP_SOCKET_SEND_FIFO
+    int retry             = NCP_UART_SEND_FIFO_ATTEMPTS;
+    uint16_t cmd_resp_len = 0;
+
+    NCP_BRIDGE_COMMAND *input_cmd = (NCP_BRIDGE_COMMAND *)&cmd_buf[0];
+    /*Dliver cmd data to socket_send_cmd_task directly, other cmds still deal with legacy data path*/
+    if (input_cmd->cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SEND || input_cmd->cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO)
+    {
+        socket_send_msg_t msg;
+        msg.send_type = input_cmd->cmd;
+        // PRINTF("[%s-%d]: socket_send_fifo_recv_seq = %d\r\n", __func__, __LINE__, socket_send_fifo_recv_seq);
+        memcpy(socket_send_cmd_buf[socket_send_fifo_recv_seq], (uint8_t *)input_cmd, cmd_len + CHECKSUM_LEN);
+
+        while (retry > 0)
+        {
+            msg.data = &socket_send_cmd_buf[socket_send_fifo_recv_seq];
+            ret      = os_queue_send(&socket_send_fifo_queue, &msg, OS_NO_WAIT);
+            if (WM_SUCCESS == ret)
+                break;
+            taskYIELD();
+            retry--;
+        }
+
+        if (WM_SUCCESS != ret)
+        {
+            data_recv_drop++;
+            wlan_bridge_prepare_status(input_cmd->cmd, NCP_BRIDGE_CMD_RESULT_ERROR);
+            bridge_send_response(res_buf);
+        }
+
+        os_mutex_get(&socket_send_fifo_mutex, OS_WAIT_FOREVER);
+        socket_send_fifo_recv_seq++;
+        socket_send_fifo_recv_seq = socket_send_fifo_recv_seq % SOCKET_SEND_COMMAND_NUM;
+        os_mutex_put(&socket_send_fifo_mutex);
+        return;
+    }
+#endif
 #elif defined(CONFIG_SPI_BRIDGE)
     total_len = cmd_len + CHECKSUM_LEN;
     ret = ncp_bridge_spi_slave_transfer(cmd_buf + total, total_len - NCP_BRIDGE_CMD_HEADER_LEN, NCP_BRIDGE_SLAVE_RX,
                                         false);
     if (ret != WM_SUCCESS)
         return;
+#elif defined(CONFIG_SDIO_BRIDGE)
+    (void)len;
+    (void)rx_len;
+    total = cmd_len + CHECKSUM_LEN;
 #endif
 #else
     os_event_notify_get(OS_WAIT_FOREVER);
@@ -446,6 +514,129 @@ void bridge_uart_notify()
 }
 #endif
 
+#ifdef CONFIG_SDIO_BRIDGE
+status_t sdu_cmd_handler(uint8_t *data_addr, uint16_t data_len)
+{
+    assert(NULL != data_addr);
+    assert(0 != data_len);
+
+    // ncp_d("%s: data_addr=%p data_len=%d\r\n", __func__, data_addr, data_len);
+    // dump_hex(data_addr, data_len);
+
+    memset(cmd_buf, 0, sizeof(cmd_buf));
+    memcpy(cmd_buf, data_addr, MIN(data_len, sizeof(cmd_buf)));
+
+    return kStatus_Success;
+}
+
+status_t sdu_data_handler(uint8_t *data_addr, uint16_t data_len)
+{
+    int retry                     = NCP_SDU_SEND_FIFO_ATTEMPTS;
+    uint16_t cmd_resp_len         = 0;
+    NCP_BRIDGE_COMMAND *input_cmd = (NCP_BRIDGE_COMMAND *)data_addr;
+    status_t stat                 = kStatus_Fail;
+    int ret                       = WM_SUCCESS;
+
+    assert(NULL != data_addr);
+    assert(0 != data_len);
+
+    // ncp_d("%s: data_addr=%p data_len=%d\r\n", __func__, data_addr, data_len);
+    // dump_hex(data_addr, data_len);
+
+    if ((input_cmd->cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SEND) || (input_cmd->cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO))
+    {
+        socket_send_msg_t msg;
+        msg.send_type = input_cmd->cmd;
+
+        // ncp_d("%s: DATA fifo_num=%d fifo_seq=%d\r\n", __func__,
+        //                socket_send_fifo_num, socket_send_fifo_recv_seq);
+        if (data_len > NCP_BRIDGE_SEND_DATA_INBUF_SIZE)
+        {
+            ncp_e("%s: data_len=%d exceed %d\r\n", __func__, data_len, NCP_BRIDGE_SEND_DATA_INBUF_SIZE);
+            goto done;
+        }
+
+        if (socket_send_fifo_num >= SOCKET_SEND_COMMAND_NUM)
+        {
+            // vTaskDelay(os_msec_to_ticks(20));
+            ncp_e("%s: drop data for socket_send_fifo_num=%d > %d\r\n", __func__, socket_send_fifo_num,
+                  SOCKET_SEND_COMMAND_NUM);
+            goto done;
+        }
+
+        memcpy(socket_send_cmd_buf[socket_send_fifo_recv_seq], (uint8_t *)input_cmd, data_len);
+        while (retry > 0)
+        {
+            msg.data = &socket_send_cmd_buf[socket_send_fifo_recv_seq];
+            ret      = os_queue_send(&socket_send_fifo_queue, &msg, OS_NO_WAIT);
+            if (WM_SUCCESS == ret)
+                break;
+            vTaskDelay(os_msec_to_ticks(20));
+            retry--;
+        }
+        if (WM_SUCCESS != ret)
+        {
+            goto done;
+        }
+
+        stat = kStatus_Success;
+        os_mutex_get(&socket_send_fifo_mutex, OS_WAIT_FOREVER);
+        socket_send_fifo_num++;
+        socket_send_fifo_recv_seq = (socket_send_fifo_recv_seq + 1) % SOCKET_SEND_COMMAND_NUM;
+        os_mutex_put(&socket_send_fifo_mutex);
+    }
+
+done:
+    if (kStatus_Success != stat)
+    {
+        data_recv_drop++;
+        wlan_bridge_prepare_status(input_cmd->cmd, NCP_BRIDGE_CMD_RESULT_ERROR);
+        bridge_send_response(res_buf);
+    }
+
+    return stat;
+}
+
+status_t sdu_send_response(uint8_t *data_addr, uint16_t data_len)
+{
+    NCP_BRIDGE_COMMAND *res = (NCP_BRIDGE_COMMAND *)data_addr;
+    status_t ret            = kStatus_Success;
+
+    assert(NULL != data_addr);
+    assert(0 != data_len);
+
+    // ncp_d("%s: Enter %p %u", __FUNCTION__, data_addr, data_len);
+    // dump_hex(data_addr, data_len);
+    switch (res->msg_type)
+    {
+        case NCP_BRIDGE_MSG_TYPE_RESP:
+            if ((res->cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SEND) || (res->cmd == NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO))
+            {
+                // ncp_d("%s: Send DATA %p %u", __FUNCTION__, data_addr, data_len);
+                ret = SDU_Send(SDU_TYPE_FOR_READ_DATA, data_addr, data_len);
+            }
+            else
+            {
+                // ncp_d("%s: Send CMDRSP %p %u", __FUNCTION__, data_addr, data_len);
+                ret = SDU_Send(SDU_TYPE_FOR_READ_CMD, data_addr, data_len);
+            }
+            break;
+        case NCP_BRIDGE_MSG_TYPE_EVENT:
+            // ncp_d("%s: Send EVENT %p %u", __FUNCTION__, data_addr, data_len);
+            ret = SDU_Send(SDU_TYPE_FOR_READ_EVENT, data_addr, data_len);
+            break;
+        default:
+            ncp_e("%s: invalid msg_type %d", __FUNCTION__, res->msg_type);
+            ret = kStatus_Fail;
+            break;
+    }
+
+    if (ret != kStatus_Success)
+        ncp_e("%s: fail 0x%x", __FUNCTION__, ret);
+    return ret;
+}
+#endif
+
 static void bridge_task(void *pvParameters)
 {
 #ifdef CONFIG_UART_BRIDGE
@@ -474,6 +665,16 @@ static void bridge_task(void *pvParameters)
         ncp_e("Failed to initialize SPI slave");
         vTaskSuspend(NULL);
     }
+#elif defined(CONFIG_SDIO_BRIDGE)
+    status_t ret = 0;
+    ret = SDU_Init();
+    if (ret != kStatus_Success)
+    {
+        ncp_e("Failed to initialize SDIO");
+        vTaskSuspend(NULL);
+    }
+    SDU_InstallCallback(SDU_TYPE_FOR_WRITE_CMD, sdu_cmd_handler);
+    SDU_InstallCallback(SDU_TYPE_FOR_WRITE_DATA, sdu_data_handler);
 #endif
 #ifndef CONFIG_CRC32_HW_ACCELERATE
     /* Generate a table for a byte-wise 32-bit CRC calculation on the polynomial. */
@@ -524,11 +725,16 @@ static void socket_send_cmd_task(void *pvParameters)
             dump_hex(input_cmd, input_cmd->size + 4);
             */
         }
+        os_mutex_get(&socket_send_fifo_mutex, OS_WAIT_FOREVER);
+        socket_send_fifo_num--;
+        os_mutex_put(&socket_send_fifo_mutex);
+
 #ifdef CONFIG_USB_BRIDGE
         cmd_resp_len = usb_prepare_socket_cmd_resp(cmd, result, seqnum);
         usb_cmd_response((uint8_t *)&res_buf[0], cmd_resp_len, NULL, OS_WAIT_FOREVER);
 #else
-        wlan_bridge_prepare_status(cmd, seqnum);
+        (void)seqnum;
+        wlan_bridge_prepare_status(cmd, result);
         bridge_send_response(res_buf);
 #endif
     }
@@ -559,6 +765,12 @@ static int bridge_init(void)
     if (ret != WM_SUCCESS)
     {
         ncp_e("failed to create socket_send_fifo_queue: %d", ret);
+        return -WM_FAIL;
+    }
+    ret = os_mutex_create(&socket_send_fifo_mutex, "socket_send_fifo_mutex", OS_MUTEX_INHERIT);
+    if (ret != WM_SUCCESS)
+    {
+        ncp_e("failed to create socket_send_fifo_mutex: %d", ret);
         return -WM_FAIL;
     }
     ret = os_thread_create(&socket_send_cmd_thread, "socket_send_cmd_task", socket_send_cmd_task, 0,
@@ -670,6 +882,12 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
             (void)PRINTF("mDNS are initialized\r\n");
             printSeparator();
+#ifndef CONFIG_NCP_BRIDGE_DEBUG
+            (void)PRINTF("NCP device started successfully\r\n");
+            (void)PRINTF("UART input disabled on NCP device side\r\n");
+            (void)PRINTF("Please input commands on NCP host\r\n");
+            printSeparator();
+#endif
             break;
         case WLAN_REASON_INITIALIZATION_FAILED:
             PRINTF("app_cb: WLAN: initialization failed\r\n");
@@ -920,7 +1138,9 @@ void task_main(void *param)
     assert(WM_SUCCESS == result);
 
     result = bridge_init();
+    assert(WM_SUCCESS == result);
 
+    result = ncp_cmd_list_init();
     assert(WM_SUCCESS == result);
 
 #ifdef CONFIG_USB_BRIDGE
@@ -965,6 +1185,7 @@ int main(void)
     (void)result;
 
     BOARD_InitHardware();
+    CRYPTO_InitHardware();
 #ifdef CONFIG_CRC32_HW_ACCELERATE
     hw_crc32_init();
 #endif

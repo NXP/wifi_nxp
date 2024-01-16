@@ -239,8 +239,8 @@
 #define NCP_BRIDGE_CMD_NETWORK_MDNS_RESULT_IP_ADDR 0x0014
 
 /* Get command class/subclass/cmd_id/tlv */
-#define GET_CMD_CLASS(cmd)    ((cmd)&0xff000000)
-#define GET_CMD_SUBCLASS(cmd) ((cmd)&0x00ff0000)
+#define GET_CMD_CLASS(cmd)    (((cmd)&0xff000000) >> 24)
+#define GET_CMD_SUBCLASS(cmd) (((cmd)&0x00ff0000) >> 16)
 #define GET_CMD_ID(cmd)       ((cmd)&0x0000ffff)
 #define GET_CMD_TLV(cmd) \
     (((cmd)->size == NCP_BRIDGE_CMD_HEADER_LEN) ? NULL : (uint8_t *)((uint8_t *)(cmd) + NCP_BRIDGE_CMD_HEADER_LEN))

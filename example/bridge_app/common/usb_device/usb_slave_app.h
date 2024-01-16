@@ -44,4 +44,5 @@ int usb_cmd_response(uint8_t *data, uint16_t transfer_size, void (*callback)(), 
 int usb_no_copy_cmd_response(uint8_t *data, uint16_t transfer_size, void (*callback)(), unsigned long wait);
 int usb_slave_app_init();
 void put_command_usb_pipe_sem(void);
+uint16_t usb_prepare_socket_cmd_resp(uint32_t cmd, uint16_t result, uint16_t seqnum);
 #endif

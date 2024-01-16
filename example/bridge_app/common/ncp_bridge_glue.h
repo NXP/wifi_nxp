@@ -34,6 +34,9 @@
 #define CMD_SYNC  0
 #define CMD_ASYNC 1
 
+#define NCP_HASH_TABLE_SIZE  64
+#define NCP_HASH_INVALID_KEY (uint8_t)(-1)
+
 struct cmd_t
 {
     uint32_t cmd;
@@ -50,13 +53,18 @@ struct cmd_subclass_t
 {
     uint32_t cmd_subclass;
     struct cmd_t *cmd;
+    /* Mapping of subclass list */
+    uint8_t hash[NCP_HASH_TABLE_SIZE];
 };
 
 struct cmd_class_t
 {
     uint32_t cmd_class;
     struct cmd_subclass_t *cmd_subclass;
-    uint16_t subclass_len; /* Length of subclass list */
+    /* Length of subclass list */
+    uint16_t subclass_len;
+    /* Mapping of cmd list */
+    uint8_t hash[NCP_HASH_TABLE_SIZE];
 };
 
 int wlan_bridge_prepare_status(uint32_t cmd, uint16_t result);
@@ -79,6 +87,8 @@ NCPCmd_DS_COMMAND *ncp_bridge_get_response_buffer();
 
 int ncp_bridge_mdns_init(void);
 
+int ncp_cmd_list_init(void);
+int ncp_register_class(struct cmd_class_t *cmd_class);
 struct cmd_t *lookup_class(uint32_t cmd_class, uint32_t cmd_subclass, uint32_t cmd_id);
 
 void bridge_PostPowerSwitch(uint32_t mode, void *param);
@@ -94,4 +104,13 @@ void trace_task_switch(int in, const char *func_name);
 void trace_task_switch_print();
 #endif
 
+#ifdef CONFIG_NCP_SOCKET_SEND_FIFO
+#define SOCKET_SEND_COMMAND_NUM 64
+/* app notify event queue message */
+typedef struct
+{
+    uint32_t send_type;
+    void *data;
+} socket_send_msg_t;
+#endif
 #endif /* __NCP_BRIDGE_GLUE_H__ */
