@@ -736,7 +736,7 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #endif
 
 /** FW cap info bit 16: Tx mgmt pkt with command*/
-#if defined(SD8978) || defined(SD8987)
+#if defined(SD8987)
 #define FW_CAPINFO_EXT_CMD_TX_DATA MBIT(29)
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EXT_CMD_TX_DATA)
 #elif defined(SD9177)
