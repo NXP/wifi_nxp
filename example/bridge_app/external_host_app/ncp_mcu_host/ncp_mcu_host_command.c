@@ -1463,7 +1463,7 @@ static void dump_wlan_add_usage()
     (void)PRINTF(
         "    [wpa2 <secret>]/[wpa <secret> wpa2 <secret>]/[wpa3 sae <secret>]/[wpa2 <secret> wpa3 sae "
         "<secret>]/[eap-tls]");
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
     (void)PRINTF("\r\n");
     (void)PRINTF("    [capa <11ax/11ac/11n/legacy>]");
 #endif
@@ -1580,7 +1580,7 @@ int wlan_add_command(int argc, char **argv)
         unsigned dtim : 1;
 #endif
         unsigned acs_band : 1;
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
         unsigned wlan_capa : 1;
 #endif
     } info;
@@ -1600,7 +1600,7 @@ int wlan_add_command(int argc, char **argv)
     DTIM_ParamSet_t *dtim_tlv = NULL;
 #endif
     ACSBand_ParamSet_t *acs_band_tlv = NULL;
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
     CAPA_ParamSet_t *capa_tlv = NULL;
 #endif
     (void)memset(&info, 0, sizeof(info));
@@ -1939,7 +1939,7 @@ int wlan_add_command(int argc, char **argv)
             arg += 2;
             info.acs_band = 1;
         }
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
         else if (!info.wlan_capa && role_tlv->role == WLAN_BSS_ROLE_UAP && string_equal("capa", argv[arg]))
         {
             capa_tlv = (CAPA_ParamSet_t *)ptlv_pos;
@@ -7201,7 +7201,7 @@ static void print_network(wlan_bridge_network *network)
         default:
             break;
     }
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
     if (network->role == WLAN_BSS_ROLE_UAP)
     {
         if (network->wlan_capa & WIFI_SUPPORT_11AX)

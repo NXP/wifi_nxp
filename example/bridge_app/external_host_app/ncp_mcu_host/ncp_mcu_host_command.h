@@ -170,7 +170,7 @@ enum wlan_mef_type
 #define MCU_DEVICE_STATUS_ACTIVE 1
 #define MCU_DEVICE_STATUS_SLEEP  2
 
-#ifdef CONFIG_NCP_WIFI_DTIM_PERIOD
+#ifdef CONFIG_NCP_WIFI_CAPA
 #define WIFI_SUPPORT_11AX   (1 << 3)
 #define WIFI_SUPPORT_11AC   (1 << 2)
 #define WIFI_SUPPORT_11N    (1 << 1)
