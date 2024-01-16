@@ -243,8 +243,14 @@ static void wm_netif_ipv6_status_callback(struct netif *n)
 
 void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
 {
-    (void)memcpy(&g_mlan.netif.hwaddr[0], &stamac[0], MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(&g_uap.netif.hwaddr[0], &uapmac[0], MLAN_MAC_ADDR_LENGTH);
+    if (stamac != NULL)
+    {
+        (void)memcpy(&g_mlan.netif.hwaddr[0], &stamac[0], MLAN_MAC_ADDR_LENGTH);
+    }
+    if (uapmac != NULL)
+    {
+        (void)memcpy(&g_uap.netif.hwaddr[0], &uapmac[0], MLAN_MAC_ADDR_LENGTH);
+    }
 }
 
 int net_wlan_init(void)
@@ -2117,16 +2123,23 @@ int net_wlan_init(void)
 
 void net_wlan_set_mac_address(unsigned char *sta_mac, unsigned char *uap_mac)
 {
+    if (sta_mac != NULL)
+    {
 #ifdef CONFIG_IPV6
-    net_clear_ipv6_ll_address(&g_mlan);
-    net_clear_ipv6_ll_address(&g_uap);
+        net_clear_ipv6_ll_address(&g_mlan);
 #endif
+        (void)memcpy(g_mlan.state.ethaddr.addr, &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
+        net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+    }
 
-    (void)memcpy(g_mlan.state.ethaddr.addr, &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(g_uap.state.ethaddr.addr, &uap_mac[0], MLAN_MAC_ADDR_LENGTH);
-
-    net_if_set_link_addr(g_mlan.netif, g_mlan.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
-    net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+    if (uap_mac != NULL)
+    {
+#ifdef CONFIG_IPV6
+        net_clear_ipv6_ll_address(&g_uap);
+#endif
+        (void)memcpy(g_uap.state.ethaddr.addr, &uap_mac[0], MLAN_MAC_ADDR_LENGTH);
+        net_if_set_link_addr(g_uap.netif, g_uap.state.ethaddr.addr, NET_MAC_ADDR_LEN, NET_LINK_ETHERNET);
+    }
 }
 
 static int net_netif_deinit(struct net_if *netif)

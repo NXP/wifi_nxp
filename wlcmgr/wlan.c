@@ -10368,43 +10368,70 @@ int wlan_set_mac_addr(uint8_t *mac)
 
 int wlan_set_uap_mac_addr(uint8_t *mac)
 {
-    uint8_t sta_mac[MLAN_MAC_ADDR_LENGTH];
-
     /* Only suppoprt unicast mac */
     if (mac[0] & 0x01)
     {
         return -WM_FAIL;
     }
 
-    if (!is_uap_state(CM_UAP_INITIALIZING) || is_sta_connecting())
+    if (!is_uap_state(CM_UAP_INITIALIZING))
+    {
+        return -WM_FAIL;
+    }
+
+    if (memcmp(mac, &wlan.sta_mac[0], MLAN_MAC_ADDR_LENGTH) == 0)
     {
         return -WM_FAIL;
     }
 
     if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
     {
-        (void)memcpy(sta_mac, mac, MLAN_MAC_ADDR_LENGTH);
-        sta_mac[4] -= 1;
-
-        net_wlan_set_mac_address((unsigned char *)sta_mac, (unsigned char *)mac);
-
-        _wifi_set_mac_addr(&sta_mac[0], MLAN_BSS_TYPE_STA);
+        net_wlan_set_mac_address(NULL, (unsigned char *)mac);
 
         _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_UAP);
 
-        /* save the sta mac */
-        (void)memcpy(&wlan.sta_mac[0], &sta_mac[0], MLAN_MAC_ADDR_LENGTH);
         /* save the uap mac */
         (void)memcpy(&wlan.uap_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
     }
     else
     {
-        wifi_set_mac_addr(sta_mac);
+        wifi_set_mac_addr(mac);
     }
-#ifdef CONFIG_WPS2
-    (void)memcpy(wps_global.my_mac_addr, sta_mac, MLAN_MAC_ADDR_LENGTH);
-    (void)memcpy(wps_global.l2->my_mac_addr, sta_mac, MLAN_MAC_ADDR_LENGTH);
-#endif
+
+    return WM_SUCCESS;
+}
+
+int wlan_set_sta_mac_addr(uint8_t *mac)
+{
+    /* Only suppoprt unicast mac */
+    if (mac[0] & 0x01)
+    {
+        return -WM_FAIL;
+    }
+
+    if (is_sta_connecting())
+    {
+        return -WM_FAIL;
+    }
+
+    if (memcmp(mac, &wlan.uap_mac[0], MLAN_MAC_ADDR_LENGTH) == 0)
+    {
+        return -WM_FAIL;
+    }
+
+    if (wlan.status == WLCMGR_INIT_DONE || wlan.status == WLCMGR_ACTIVATED)
+    {
+        net_wlan_set_mac_address((unsigned char *)mac, NULL);
+
+        _wifi_set_mac_addr(mac, MLAN_BSS_TYPE_STA);
+
+        /* save the sta mac */
+        (void)memcpy(&wlan.sta_mac[0], mac, MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        wifi_set_mac_addr(mac);
+    }
 
     return WM_SUCCESS;
 }

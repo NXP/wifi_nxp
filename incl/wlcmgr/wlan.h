@@ -3165,12 +3165,25 @@ void wlan_set_cal_data(const uint8_t *cal_data, const unsigned int cal_data_size
  */
 int wlan_set_mac_addr(uint8_t *mac);
 
-/** Set wireless MAC Address in WLAN firmware.
+/** Set wireless MAC Address for STA in WLAN firmware.
  *
  * This function may be called to set wireless MAC Address in firmware.
  * This should be call before \ref wlan_init() function.
- * When called after wlan init done, the incoming mac is treated as the sta mac address directly. And mac[4] plus 1 the
- * modifed mac as the UAP mac address.
+ * When called after wlan init done, it will set only STA MAC adderess.
+ *
+ * \param[in] mac The MAC Address in 6 byte array format like
+ *                uint8_t mac[] = { 0x00, 0x50, 0x43, 0x21, 0x19, 0x6E};
+ *
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_set_sta_mac_addr(uint8_t *mac);
+
+/** Set wireless MAC Address for uAP in WLAN firmware.
+ *
+ * This function may be called to set wireless MAC Address in firmware.
+ * This should be call before \ref wlan_init() function.
+ * When called after wlan init done, it will set only uAP MAC address.
  *
  * \param[in] mac The MAC Address in 6 byte array format like
  *                uint8_t mac[] = { 0x00, 0x50, 0x43, 0x21, 0x19, 0x6E};
