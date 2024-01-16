@@ -4887,6 +4887,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         {
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
             (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+            wlan.roam_reassoc = false;
 #endif
         }
         else
