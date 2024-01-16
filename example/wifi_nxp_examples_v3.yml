@@ -987,7 +987,7 @@ wifi_cli_fw_dump:
           package_path: project-root-path
           project_path: doc
           exclude: true
-      pinset:
+      pinset_config:
         required: true
         cc-include:
         - path: boards/${board}/wifi_examples/wifi_cli_fw_dump/${multicore_foldername}
@@ -1534,7 +1534,7 @@ wifi_cli_prov:
         - source: middleware/wifi_nxp/example/wifi_cli_prov/wifi_config.h
           package_path: project-root-path
           project_path: source
-      pinset:
+      pinset_config:
         required: true
         cc-include:
         - path: boards/${board}/wifi_examples/common/${multicore_foldername}

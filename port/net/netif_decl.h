@@ -123,10 +123,6 @@ extern int wlan_get_wfd_mac_address(t_u8 *);
 extern int wfd_bss_type;
 #endif
 
-#ifdef CONFIG_WPS2
-void (*wps_rx_callback)(const t_u8 *buf, size_t len);
-#endif
-
 #ifdef CONFIG_WPA_SUPP
 //void (*l2_packet_rx_callback)(const struct pbuf *p);
 #endif /* CONFIG_HOST_SUPP */
