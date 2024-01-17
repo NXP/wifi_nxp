@@ -1018,6 +1018,8 @@ static const char lwiperf_txbuf_const[NCP_IPERF_PER_PKG_SIZE] = {
     '5', '6', '7', '8', '9',
 };
 
+char lwiperf_end_token[NCP_IPERF_END_TOKEN_SIZE] = {'N', 'C', 'P', 'I', 'P', 'E', 'R', 'P', 'E', 'N', 'D'};
+
 int iperf_send_setting(void)
 {
     if (iperf_msg.iperf_set.iperf_type == NCP_IPERF_TCP_TX || iperf_msg.iperf_set.iperf_type == NCP_IPERF_TCP_RX)
@@ -1063,6 +1065,50 @@ int iperf_send_setting(void)
         (void)PRINTF("iperf type is error\r\n");
         return false;
     }
+    /* Send iperf TLV command */
+    ncp_host_send_tlv_command();
+    return true;
+}
+
+int iperf_send_end_token(void)
+{
+    if (iperf_msg.iperf_set.iperf_type == NCP_IPERF_TCP_TX)
+    {
+        MCU_NCPCmd_DS_COMMAND *iperf_command = ncp_host_get_command_buffer();
+        iperf_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_SEND;
+        iperf_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
+        iperf_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
+        iperf_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
+
+        NCP_CMD_SOCKET_SEND_CFG *ncp_iperf_tlv = (NCP_CMD_SOCKET_SEND_CFG *)&iperf_command->params.wlan_socket_send;
+        ncp_iperf_tlv->handle                  = iperf_msg.handle;
+        ncp_iperf_tlv->size                    = NCP_IPERF_END_TOKEN_SIZE;
+        memcpy(ncp_iperf_tlv->send_data, (char *)&lwiperf_end_token[0], NCP_IPERF_END_TOKEN_SIZE);
+
+        /*cmd size*/
+        iperf_command->header.size += sizeof(NCP_CMD_SOCKET_SEND_CFG);
+        iperf_command->header.size += NCP_IPERF_END_TOKEN_SIZE;
+    }
+    else if (iperf_msg.iperf_set.iperf_type == NCP_IPERF_UDP_TX)
+    {
+        MCU_NCPCmd_DS_COMMAND *iperf_command = ncp_host_get_command_buffer();
+        iperf_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_SOCKET_SENDTO;
+        iperf_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
+        iperf_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
+        iperf_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
+
+        NCP_CMD_SOCKET_SENDTO_CFG *ncp_iperf_tlv =
+            (NCP_CMD_SOCKET_SENDTO_CFG *)&iperf_command->params.wlan_socket_sendto;
+        ncp_iperf_tlv->handle = iperf_msg.handle;
+        ncp_iperf_tlv->size   = NCP_IPERF_END_TOKEN_SIZE;
+        ncp_iperf_tlv->port   = iperf_msg.port;
+        memcpy(ncp_iperf_tlv->ip_addr, iperf_msg.ip_addr, strlen(iperf_msg.ip_addr) + 1);
+        memcpy(ncp_iperf_tlv->send_data, (char *)&lwiperf_end_token[0], NCP_IPERF_END_TOKEN_SIZE);
+        /*cmd size*/
+        iperf_command->header.size += sizeof(NCP_CMD_SOCKET_SENDTO_CFG) - sizeof(char);
+        iperf_command->header.size += NCP_IPERF_END_TOKEN_SIZE;
+    }
+
     /* Send iperf TLV command */
     ncp_host_send_tlv_command();
     return true;
@@ -1207,6 +1253,11 @@ static void ncp_iperf_tx_task(void *pvParameters)
             pkg_num++;
         }
         iperf_timer_end = os_ticks_get();
+        
+        /*Try to make data can recved success by peer*/
+        os_thread_sleep(os_msec_to_ticks(1000));
+        iperf_send_end_token();
+        
         ncp_iperf_report(send_total_size);
         (void)PRINTF("ncp iperf tx run end\r\n");
     }
@@ -1236,9 +1287,8 @@ static void ncp_iperf_rx_task(void *pvParameters)
         {
             /*Wait for command response semaphore.*/
             mcu_get_command_resp_sem();
-            if (iperf_msg.status[1] == (char)-WM_FAIL)
+            if (iperf_msg.status[1] == -WM_FAIL)
             {
-                (void)PRINTF("recv command run fail\r\n");
                 iperf_msg.status[1] = 0;
                 mcu_put_command_resp_sem();
                 break;

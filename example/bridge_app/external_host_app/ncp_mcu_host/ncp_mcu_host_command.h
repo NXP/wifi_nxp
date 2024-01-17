@@ -39,6 +39,8 @@
 #define IEEEtypes_ADDRESS_SIZE       6
 #define CSI_FILTER_MAX               16
 
+#define NCP_IPERF_END_TOKEN_SIZE     11
+
 /*Structures which are used by ncp_bridge_cmd.h but not defined in mcu project.*/
 /** Station information structure */
 typedef struct

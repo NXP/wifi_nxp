@@ -373,6 +373,14 @@ void *send_data(void *arg)
     gettimeofday(&cur_time, NULL);
     cur_time_us = cur_time.tv_sec * 1000 * 1000 + cur_time.tv_usec;
     rate        = send_sum * 1000000 * 8 / (cur_time_us - start_time_us) / (1024);
+
+    /*Try to make data can recved success by peer*/
+    sleep(1);
+    if (iperf_set.iperf_type == NCP_IPERF_TCP_RX)
+        send(fd, lwiperf_end_token, NCP_IPERF_END_TOKEN_SIZE, 0);
+    else if (iperf_set.iperf_type == NCP_IPERF_UDP_RX)
+        sendto(fd, lwiperf_end_token, NCP_IPERF_END_TOKEN_SIZE, 0, (struct sockaddr *)clientaddr, *addrlen);
+    
     printf("ncp bridge iperf end tx\n");
     printf("tcp rx rate = %dkbit\n", rate);
 }

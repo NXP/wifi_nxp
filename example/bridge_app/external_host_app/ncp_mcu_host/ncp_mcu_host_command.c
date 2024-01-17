@@ -4469,7 +4469,7 @@ int wlan_socket_sendto_command(int argc, char **argv)
     memcpy(wlan_socket_tlv->send_data, argv[4], wlan_socket_tlv->size);
     return WM_SUCCESS;
 }
-
+extern char lwiperf_end_token[NCP_IPERF_END_TOKEN_SIZE]; 
 /**
  * @brief      This function processes wlan socket receive from bridge_app
  *
@@ -4493,6 +4493,12 @@ int wlan_process_wlan_socket_receive_response(uint8_t *res)
     (void)PRINTF("receive data success\r\n");
     dump_hex(wlan_socket_receive->recv_data, recv_size);
 #endif
+    if(memcmp(wlan_socket_receive->recv_data, &lwiperf_end_token[0], sizeof(lwiperf_end_token)) == 0)
+    {
+      (void)PRINTF("recved end token!\r\n");
+      return -WM_FAIL;
+    }
+    
     return recv_size;
 }
 
@@ -4574,8 +4580,8 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
     }
 
     NCP_CMD_SOCKET_RECVFROM_CFG *wlan_socket_recvfrom =
-        (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.wlan_socket_recvfrom;
-
+        (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.wlan_socket_recvfrom;   
+          
     if (ping_res.seq_no < 0)
     {
         recv_size = wlan_socket_recvfrom->recv_size;
@@ -4585,6 +4591,12 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
 
         dump_hex(wlan_socket_recvfrom->recv_data, recv_size);
 #endif
+        /*Recved end token*/
+        if(memcmp(wlan_socket_recvfrom->recv_data, &lwiperf_end_token[0], sizeof(lwiperf_end_token)) == 0)
+        {
+          (void)PRINTF("recved end token!\r\n");
+          return -WM_FAIL;
+        }
     }
     else
     {
