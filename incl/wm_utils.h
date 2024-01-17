@@ -267,7 +267,7 @@ uint32_t sample_initialise_random_seed(void);
  */
 void get_random_sequence(void *buf, unsigned int size);
 
-#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+#if (SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE) || defined (CONFIG_ZEPHYR)
 #define DUMP_WRAPAROUND 16U
 
 /** Dump buffer in hex format on console
