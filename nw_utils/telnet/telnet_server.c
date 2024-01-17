@@ -48,9 +48,9 @@ void sm_printf(const char *str, ...)
 void NewClient(void *pvParameters);
 void SocketTelnetServer(void *pvParameters)
 {
-    // int on = 1;
     int sockfd, newsockfd, clilen;
     struct sockaddr_in serv_addr, cli_addr;
+    err_t err;
 
     /* Parameters are not used - suppress compiler error. */
     LWIP_UNUSED_ARG(pvParameters);
@@ -100,10 +100,8 @@ void SocketTelnetServer(void *pvParameters)
     }
 
     clilen = sizeof(cli_addr);
-
     while (1)
     {
-        // Accept all requests
         newsockfd = lwip_accept(sockfd, (struct sockaddr *)&cli_addr, (socklen_t *)&clilen);
 
         if (newsockfd > 0)
@@ -130,19 +128,16 @@ void NewClient(void *pvParameters)
         pcInputString[MAX_INPUT_LENGTH]; // The input and output buffers are declared static to keep them off the stack.
     int ret;
 
-    // Empty initial trash
-    nbytes = lwip_read(clientfd, buffer, sizeof(buffer));
-
     // Welcome message
-    lwip_send(clientfd, "\r\n\tRTOS Telnet Server:\r\n\r\n~$ ", sizeof("\r\n\tRTOS Telnet Server:\r\n\r\n~$ "), 0);
+    lwip_send(clientfd, "RTOS Telnet Server:\r\n\r\n~$ ", sizeof("\r\n\tRTOS Telnet Server:\r\n\r\n~$ "), 0);
 
     do
     {
-        //(void)UARTGetChar(&buffer, portMAX_DELAY);
         nbytes = lwip_recv(clientfd, buffer, sizeof(buffer), 0);
 
         if (nbytes > 0)
         { // no error
+
             for (i = 0; i < nbytes; i++)
             {
                 if (buffer[i] == '\r') // Enter pressed
@@ -151,29 +146,40 @@ void NewClient(void *pvParameters)
                     {
                         memset(pcOutputString, 0, MAX_OUTPUT_LENGTH);
 
-                        // PRINTF("pcInputString %s %d\r\n", pcInputString, cInputIndex);
-
-                        ret = handle_input(pcInputString);
-                        if (ret == 1)
-                        {
-                            print_bad_command(pcInputString);
-                        }
-                        else if (ret == 2)
-                        {
-                            (void)PRINTF("syntax error\r\n");
-                        }
-                        else
-                        { /* Do Nothing */
-                        }
-
-                        // If the command "exit" was entered, its output is "^]"
-                        if (!strcmp(pcOutputString, "^]"))
+                        if (!strcmp(pcInputString, "exit"))
                         {
                             nbytes = 0; // forced stop
+                            lwip_close(clientfd);
+                            clientfd = 0;
+                            vTaskDelete(NULL);
                         }
+                        else
+                        {
+                            ret = handle_input(pcInputString);
 
-                        // Command output
-                        // lwip_send(clientfd, pcOutputString, sizeof(pcOutputString),0);
+                            if (ret == 0)
+                            {
+                                lwip_send(clientfd, pcOutputString, sizeof(pcOutputString), 0);
+                            }
+
+                            else if (ret == 1)
+                            {
+                                print_bad_command(pcInputString);
+                            }
+                            else if (ret == 2)
+                            {
+                                (void)PRINTF("syntax error\r\n");
+                            }
+                            else
+                            { /* Do Nothing */
+                            }
+
+                            // If the command "exit" was entered, its output is "^]"
+                            //							if (!strcmp(pcOutputString, "^]"))
+                            //							{
+                            //								nbytes = 0; // forced stop
+                            //							}
+                        }
 
                         if (xMoreDataToFollow == pdFALSE)
                         {
@@ -217,5 +223,7 @@ void NewClient(void *pvParameters)
     } while (nbytes > 0);
 
     lwip_close(clientfd);
+    clientfd = 0;
+    vTaskDelete(NULL);
 }
 #endif

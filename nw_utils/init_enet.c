@@ -52,7 +52,7 @@
 /*${variable:start}*/
 static phy_handle_t phyHandle;
 static struct netif netif;
-
+static int enet_init_done = 0;
 /*${variable:end}*/
 
 /*******************************************************************************
@@ -148,44 +148,47 @@ int initNetwork(void)
     ip4addr_aton(IP_MASK, &netif_netmask);
     ip4addr_aton(GW_ADDR, &netif_gw);
 #endif
-
-    netifapi_netif_add(&netif, &netif_ipaddr, &netif_netmask, &netif_gw, &enet_config, EXAMPLE_NETIF_INIT_FN,
-                       tcpip_input);
-    netifapi_netif_set_default(&netif);
-    netifapi_netif_set_up(&netif);
-
-    while ((ret = ethernetif_wait_linkup(&netif, 5000)) != ERR_OK)
+    if (enet_init_done == 0)
     {
-        PRINTF("PHY Auto-negotiation failed. Please check the cable connection and link partner setting.\r\n");
-        if (retry == 5)
+        netifapi_netif_add(&netif, &netif_ipaddr, &netif_netmask, &netif_gw, &enet_config, EXAMPLE_NETIF_INIT_FN,
+                           tcpip_input);
+        netifapi_netif_set_default(&netif);
+        netifapi_netif_set_up(&netif);
+
+        while ((ret = ethernetif_wait_linkup(&netif, 5000)) != ERR_OK)
         {
-            break;
+            PRINTF("PHY Auto-negotiation failed. Please check the cable connection and link partner setting.\r\n");
+            if (retry == 5)
+            {
+                break;
+            }
+            retry++;
         }
-        retry++;
-    }
 
-    if (ret == ERR_OK)
-    {
+        if (ret == ERR_OK)
+        {
 #ifdef IP_USE_DHCP
-        PRINTF("Obtaining IP address from DHCP...\r\n");
-        netifapi_dhcp_start(&netif);
+            PRINTF("Obtaining IP address from DHCP...\r\n");
+            netifapi_dhcp_start(&netif);
 
-        struct dhcp *dhcp;
-        dhcp = netif_dhcp_data(&netif);
+            struct dhcp *dhcp;
+            dhcp = netif_dhcp_data(&netif);
 
-        while (dhcp->state != DHCP_STATE_BOUND)
-        {
-            vTaskDelay(100);
-        }
+            while (dhcp->state != DHCP_STATE_BOUND)
+            {
+                vTaskDelay(100);
+            }
 #endif
-        (void)ethernetif_wait_ipv4_valid(&netif, ETHERNETIF_WAIT_FOREVER);
-        PRINTF("IPv4 Address: %s\r\n", ipaddr_ntoa(&netif.ip_addr));
-        PRINTF("DHCP OK\r\n");
+            (void)ethernetif_wait_ipv4_valid(&netif, ETHERNETIF_WAIT_FOREVER);
+            PRINTF("IPv4 Address: %s\r\n", ipaddr_ntoa(&netif.ip_addr));
+            PRINTF("DHCP OK\r\n");
 
-        enet_cli_init();
+            enet_cli_init();
 
-        // Initialize a socket Telnet server
-        sys_thread_new("LwIP Telnet Server", SocketTelnetServer, NULL, 2048, 1);
+            // Initialize a socket Telnet server
+            sys_thread_new("LwIP Telnet Server", SocketTelnetServer, NULL, 2048, 1);
+        }
+        enet_init_done = 1;
     }
     return WM_SUCCESS;
 }
