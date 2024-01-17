@@ -56,15 +56,18 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
         net_stack_buffer_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
 #ifndef CONFIG_TX_RX_ZERO_COPY
         os_mem_free(pmbuf->pbuf);
+        net_stack_buffer_free(pmbuf->lwip_pbuf);
 #endif
         pmbuf->pbuf = amsdu_inbuf;
 
         (void)wlan_11n_deaggregate_pkt(priv, pmbuf);
-#ifndef CONFIG_TX_RX_ZERO_COPY
-        os_mem_free(pmbuf);
-#endif
+
+#ifdef CONFIG_TX_RX_ZERO_COPY
         /* Free the net stack buffer after deaggregation and delivered to stack */
         net_stack_buffer_free(pmbuf->lwip_pbuf);
+#else
+        os_mem_free(pmbuf);
+#endif
         LEAVE();
         return MLAN_STATUS_SUCCESS;
     }
