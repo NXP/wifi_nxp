@@ -41,6 +41,12 @@
 #define DHCP_TIMEOUT (120 * 1000)
 #endif
 
+#ifdef RW610
+#define TX_DATA_PAYLOAD_SIZE 1500
+#else
+//To do for other chips
+#endif
+
 #if defined(SDK_OS_FREE_RTOS)
 
 struct interface
@@ -1256,7 +1262,18 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
     int retry                     = 0;
     t_u8 ra[MLAN_MAC_ADDR_LENGTH] = {0};
     bool is_tx_pause              = false;
+#endif
 
+    t_u16 mtu = net_if_get_mtu(net_pkt_iface(pkt));
+#ifdef RW610
+    mtu = MIN(TX_DATA_PAYLOAD_SIZE, mtu);
+#endif
+    if (net_pkt_len - ETH_HDR_LEN > mtu)
+    {
+        return -ENOMEM;
+    }
+
+#ifdef CONFIG_WMM
     t_u32 pkt_prio = wifi_wmm_get_pkt_prio(pkt, &tid);
     if (pkt_prio == -WM_FAIL)
     {
