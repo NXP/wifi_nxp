@@ -20,12 +20,12 @@
 #include <cli_utils.h>
 #include <wm_os.h>
 #include <fsl_debug_console.h>
+#include "board.h"
 
 #include "cli_mem.h"
 #ifdef CONFIG_UART_INTERRUPT
 #include "fsl_usart_freertos.h"
 #include "fsl_usart.h"
-#include "board.h"
 #endif
 #define END_CHAR      '\r'
 #define PROMPT        "\r\n# "
@@ -1090,6 +1090,14 @@ void help_command(int argc, char **argv)
     }
 }
 
+static void clear_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    PRINTF("\e[1;1H\e[2J");
+}
+
 #if 0
 static void echo_cmd_handler(int argc, char **argv)
 {
@@ -1160,6 +1168,7 @@ static void test_getopt(int argc, char **argv)
 
 static struct cli_command built_ins[] = {
     {"help", NULL, help_command},
+    {"clear", NULL, clear_command},
 #ifdef CONFIG_CLI_TESTS
     {"getopt_test", NULL, test_getopt},
 #endif
@@ -1339,6 +1348,12 @@ int cli_init(void)
         return -WM_FAIL;
     }
 #endif
+
+#ifdef BOARD_NAME
+    PRINTF("MCU Board: %s\r\n", BOARD_NAME);
+    PRINTF("========================================\r\n");
+#endif
+
     return ret;
 }
 
