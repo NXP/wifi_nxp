@@ -596,10 +596,6 @@ uart_wifi_bridge:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
-  - middleware.wifi
-  - middleware.lwip
-  - middleware.lwip.apps.lwiperf
-  - middleware.wifi.cli
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
@@ -1602,8 +1598,6 @@ ncp_bridge:
   - middleware.wifi
   - middleware.wifi.cli
   - middleware.wifi.wps
-  - middleware.fatf
-  - middleware.fatfs.usb
   - middleware.mbedtls
   - component.els_pkc
   - middleware.mbedtls.port.els_pkc
@@ -1758,27 +1752,6 @@ ncp_bridge:
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/lwippools.h
           package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/ncp_bridge/usb_host_config.h
-          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge/${multicore_foldername}
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_api.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/ffconf.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/httpsrv_fs_data.c
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov
@@ -1946,8 +1919,6 @@ ncp_bridge_supp:
   - middleware.lwip.apps.lwiperf(middleware.freertos-kernel)
   - middleware.wifi
   - middleware.wifi.cli
-  - middleware.fatf
-  - middleware.fatfs.usb
   - middleware.mbedtls
   - component.els_pkc
   - middleware.mbedtls.port.els_pkc
@@ -2125,27 +2096,6 @@ ncp_bridge_supp:
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/usb_device/usb_device_config.h
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb_device
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_support.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/usb_host_config.h
-          package_path: boards/${board}/wifi_examples/bridge_app/ncp_bridge_supp/${multicore_foldername}
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/usb_api.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/host_msd_fatfs.c
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
-          project_path: source
-        - source: middleware/wifi_nxp/example/bridge_app/common/usb/ffconf.h
-          package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/usb
           project_path: source
         - source: middleware/wifi_nxp/example/bridge_app/common/uap_prov/httpsrv_fs_data.c
           package_path: boards/${board}/wifi_examples/bridge_app/common/${multicore_foldername}/uap_prov

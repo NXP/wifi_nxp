@@ -25,6 +25,7 @@
 #include "fsl_adapter_rfimu.h"
 #include "fsl_usart_freertos.h"
 #include "fsl_loader.h"
+#include "fsl_ocotp.h"
 #else
 #include "mfg_wlan_bt_fw.h"
 #include "wlan.h"
