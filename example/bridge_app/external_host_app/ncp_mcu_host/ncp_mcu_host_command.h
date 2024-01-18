@@ -39,7 +39,7 @@
 #define IEEEtypes_ADDRESS_SIZE       6
 #define CSI_FILTER_MAX               16
 
-#define NCP_IPERF_END_TOKEN_SIZE     11
+#define NCP_IPERF_END_TOKEN_SIZE 11
 
 /*Structures which are used by ncp_bridge_cmd.h but not defined in mcu project.*/
 /** Station information structure */
@@ -467,6 +467,8 @@ enum wlan_connection_state
     WLAN_CONNECTING,
     /** The WLAN Connection Manager is not connected but associated. */
     WLAN_ASSOCIATED,
+    /** The WLAN Connection Manager is not connected but authenticated. */
+    WLAN_AUTHENTICATED,
     /** The WLAN Connection Manager is connected.  It is possible to scan and
      *  connect to another network at this time.  Information about the current
      *  network configuration is available. */
