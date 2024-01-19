@@ -7632,7 +7632,8 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         PRINTF("Failed to initialize WLAN RF test mode CLIs\r\n");
         return 0;
     }
-#else
+#endif
+#if !defined(CONFIG_WIFI_RF_TEST_MODE) || defined(CONFIG_RW610)
     ret = wlan_basic_cli_init();
     if (ret != WM_SUCCESS)
     {
@@ -7659,7 +7660,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         PRINTF("Failed to initialize WLAN Enhanced CLIs\r\n");
         return 0;
     }
-#ifdef CONFIG_HOST_SLEEP
+#if defined(CONFIG_HOST_SLEEP) && !defined(CONFIG_ZEPHYR)
     ret = host_sleep_cli_init();
     if (ret != WM_SUCCESS)
     {

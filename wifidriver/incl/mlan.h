@@ -53,6 +53,10 @@ Change log:
 #define CONFIG_WIFI_FRAG_THRESHOLD     1
 #define CONFIG_WIFI_FORCE_RTS          1
 #define CONFIG_TX_AMPDU_PROT_MODE      1
+#define CONFIG_MULTI_BSSID_SUPPORT     1
+#define CONFIG_SET_SU                  1
+#define CONFIG_RX_CHAN_INFO            1
+#define CONFIG_TXPD_RXPD_V3            1
 #endif
 
 #ifndef CONFIG_ZEPHYR
