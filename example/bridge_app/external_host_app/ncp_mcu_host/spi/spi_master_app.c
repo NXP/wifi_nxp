@@ -24,6 +24,7 @@
 #include "ncp_mcu_host_os.h"
 #include "ncp_mcu_host_command.h"
 #include "fsl_adapter_gpio.h"
+#include "fsl_os_abstraction.h"
 
 /*******************************************************************************
  * Variables
@@ -35,25 +36,53 @@ edma_handle_t masterRxHandle;
 edma_config_t userConfig = {0};
 
 extern os_thread_t ncp_host_tlv_thread;
-#define SPI_MASTER_INT_RX_MASK 0x10000
-#define SPI_MASTER_INT_TX_MASK 0x20000
-os_semaphore_t spi_master_sem;
-os_semaphore_t spi_master_txrx_done;
+/* for slave inform master prepare dma ready */
+os_semaphore_t spi_slave_rx_ready;
+/* for inform master transfer complete with slave */
+os_semaphore_t spi_slave_tx_complete;
+/* for spi tx and rx sync */
+OSA_EVENT_HANDLE_DEFINE(spi_master_event);
 
 GPIO_HANDLE_DEFINE(NcpTlvSpiRxDetectGpioHandle);
 GPIO_HANDLE_DEFINE(NcpTlvSpiTxDetectGpioHandle);
+
+
+uint32_t spi_master_buff[(OSA_EVENT_HANDLE_SIZE + 3) / 4];
+
+static int ncp_spi_state = NCP_MASTER_SPI_IDLE;
 
 /*******************************************************************************
  * Code
  ******************************************************************************/
 static void rx_int_callback(void *param)
 {
-    os_event_notify_put(ncp_host_tlv_thread);
-}
-
-static void tx_int_callback(void *param)
-{
-    os_semaphore_put(&spi_master_sem);
+    switch(ncp_spi_state)
+    {
+        case NCP_MASTER_SPI_IDLE:
+            /* the first salve interrupt is to tell master that slave wants to send data */
+            ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
+            mcu_d(" spi slave want to send data");
+            OSA_EventClear(spi_master_event, MASTER_TX_ENABLE_EVENT);
+            OSA_EventSet(spi_master_event, MASTER_RX_ENABLE_EVENT);
+            break;
+        case NCP_MASTER_SPI_TX_START:
+            mcu_e(" receive the slave interrupt when master starts to send data is a Low probability event, prioritize data transmission for slave");
+            mcu_d(" spi slave want to send data");
+            OSA_EventSet(spi_master_event, MASTER_RX_ENABLE_EVENT);
+            ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
+            break;
+        case NCP_MASTER_SPI_RX_START:
+            ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
+            break;
+        case NCP_MASTER_SPI_WAIT_SLAVE_READY:
+            mcu_d("spi slave ready");
+            os_semaphore_put(&spi_slave_rx_ready);
+            break;
+        default:
+            mcu_e("spi invalid state");
+            ncp_spi_state = NCP_MASTER_SPI_IDLE;
+            break;
+    }
 }
 
 static void ncp_host_spi_master_cb(LPSPI_Type *base,
@@ -61,103 +90,142 @@ static void ncp_host_spi_master_cb(LPSPI_Type *base,
                                    status_t status,
                                    void *userData)
 {
-    if (status == kStatus_Success)
-    {
-        os_semaphore_put(&spi_master_txrx_done);
-    }
+     os_semaphore_put(&spi_slave_tx_complete);
 }
 
-int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer_type, uint8_t is_header)
+static void ncp_host_master_send_signal(void)
+{
+    /* Toggle GPIO is used for master inform slave to rx data. */
+    GPIO_PortToggle(NCP_HOST_GPIO, NCP_HOST_GPIO_TX_MASK);
+    /* Change GPIO signal level with twice toggle operations */
+    GPIO_PortToggle(NCP_HOST_GPIO, NCP_HOST_GPIO_TX_MASK);
+}
+
+int ncp_host_spi_master_tx(uint8_t *buff, uint16_t data_size)
 {
     int ret = 0;
     lpspi_transfer_t masterXfer;
     uint16_t len = 0;
     uint8_t *p   = NULL;
 
-    /* Fill SPI transfer config */
-    if (transfer_type == NCP_HOST_MASTER_TX)
-    {
-        /* Wait for slave Rx is ready */
-        os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
-        len = data_size;
-        p   = buff;
-        /* Send command header first */
-        masterXfer.txData   = buff;
-        masterXfer.rxData   = NULL;
-        masterXfer.dataSize = NCP_BRIDGE_CMD_HEADER_LEN;
+    osa_event_flags_t events;
 
+resend:
+    /* wait tx enable event */
+    OSA_EventWait(spi_master_event, MASTER_TX_ENABLE_EVENT, 0, osaWaitForever_c, &events);
+    ncp_spi_state = NCP_MASTER_SPI_TX_START;
+    /* inform slave about master wants to send cmd */
+    ncp_host_master_send_signal();
+    if (ncp_spi_state == NCP_MASTER_SPI_RX_START)
+    {
+        mcu_e("receive the slave interrupt when master starts to send data, it is a Low probability event, prioritize data transmission for slave");
+        goto resend;
+    }
+    /* code run here, the spi slave must deal with our master interrupt completely */
+    mcu_d("ncp matser start to send data");
+    ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
+    os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
+
+    /* Fill SPI transfer config */
+    len = data_size;
+    p   = buff;
+    /* Send command header first */
+    masterXfer.txData   = p;
+    masterXfer.rxData   = NULL;
+    masterXfer.dataSize = NCP_BRIDGE_CMD_HEADER_LEN;
+    ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
+    if (ret)
+    {
+        mcu_e("line = %d, read spi slave rx ready fail", __LINE__);
+        goto done;
+    }
+    os_semaphore_get(&spi_slave_tx_complete, OS_WAIT_FOREVER);
+
+    len -= NCP_BRIDGE_CMD_HEADER_LEN;
+    p += NCP_BRIDGE_CMD_HEADER_LEN;
+    while (len)
+    {
+        os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
+        masterXfer.txData = p;
+        masterXfer.rxData = NULL;
+        if (len <= DMA_MAX_TRANSFER_COUNT)
+            masterXfer.dataSize = len;
+        else
+            masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
         ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
         if (ret)
         {
-            (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
+            mcu_e("line = %d, read spi slave rx ready fail", __LINE__);
             goto done;
         }
-        /* Wait for both tx and rx DMA are done */
-        os_semaphore_get(&spi_master_txrx_done, OS_WAIT_FOREVER);
-        len -= NCP_BRIDGE_CMD_HEADER_LEN;
-        p += NCP_BRIDGE_CMD_HEADER_LEN;
-        while (len)
-        {
-            masterXfer.txData = p;
-            masterXfer.rxData = NULL;
-            if (len <= DMA_MAX_TRANSFER_COUNT)
-                masterXfer.dataSize = len;
-            else
-                masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
-            os_semaphore_get(&spi_master_sem, OS_WAIT_FOREVER);
-            ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-            if (ret)
-            {
-                (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
-                goto done;
-            }
-            os_semaphore_get(&spi_master_txrx_done, OS_WAIT_FOREVER);
-            len -= masterXfer.dataSize;
-            p += masterXfer.dataSize;
-        }
-    }
-    else if (transfer_type == NCP_HOST_MASTER_RX)
-    {
-        if (is_header)
-        {
-            masterXfer.txData   = NULL;
-            masterXfer.rxData   = buff;
-            masterXfer.dataSize = data_size;
-            ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-            if (ret)
-            {
-                (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
-                goto done;
-            }
-            os_semaphore_get(&spi_master_txrx_done, OS_WAIT_FOREVER);
-        }
-        else
-        {
-            len = data_size;
-            p   = buff;
-            while (len)
-            {
-                masterXfer.txData = NULL;
-                masterXfer.rxData = p;
-                if (len <= DMA_MAX_TRANSFER_COUNT)
-                    masterXfer.dataSize = len;
-                else
-                    masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
-                os_event_notify_get(OS_WAIT_FOREVER);
-                ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
-                if (ret)
-                {
-                    (void)PRINTF("Error occurred in SPI_MasterTransferDMA\r\n");
-                    goto done;
-                }
-                os_semaphore_get(&spi_master_txrx_done, OS_WAIT_FOREVER);
-                len -= masterXfer.dataSize;
-                p += masterXfer.dataSize;
-            }
-        }
+        os_semaphore_get(&spi_slave_tx_complete, OS_WAIT_FOREVER);
+        len -= masterXfer.dataSize;
+        p += masterXfer.dataSize;
     }
 done:
+    ncp_spi_state = NCP_MASTER_SPI_IDLE;
+    OSA_EventSet(spi_master_event, MASTER_TX_ENABLE_EVENT);
+    mcu_d("ncp master spi send data finished");
     return ret;
+}
+
+int ncp_host_spi_master_rx(uint8_t *buff)
+{
+    int ret = 0;
+    lpspi_transfer_t masterXfer;
+    uint16_t total_len = 0, resp_len = 0, len = 0;
+    uint8_t *p   = NULL;
+    osa_event_flags_t events;
+
+    /* wait rx enable event */
+    OSA_EventWait(spi_master_event, MASTER_RX_ENABLE_EVENT, 0, osaWaitForever_c, &events);
+    os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
+    p  = buff;
+    masterXfer.txData   = NULL;
+    masterXfer.rxData   = p;
+    masterXfer.dataSize = NCP_BRIDGE_CMD_HEADER_LEN;
+    ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
+    if (ret)
+    {
+        mcu_e("line = %d, read spi slave rx ready fail", __LINE__);
+        goto done;
+    }
+    os_semaphore_get(&spi_slave_tx_complete, OS_WAIT_FOREVER);
+
+    /* Length of the packet is indicated by byte[4] & byte[5] of
+     * the packet excluding checksum [4 bytes]*/
+    resp_len = (p[NCP_HOST_CMD_SIZE_HIGH_BYTE] << 8) | p[NCP_HOST_CMD_SIZE_LOW_BYTE];
+    total_len = resp_len + MCU_CHECKSUM_LEN;
+    if (resp_len < NCP_BRIDGE_CMD_HEADER_LEN || total_len >= NCP_HOST_RESPONSE_LEN)
+    {
+        mcu_e("Invalid tlv reponse length from ncp bridge");
+        goto done;
+    }
+    len = total_len - NCP_BRIDGE_CMD_HEADER_LEN;
+    p += NCP_BRIDGE_CMD_HEADER_LEN;
+    while (len)
+    {
+        os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
+        masterXfer.txData = NULL;
+        masterXfer.rxData = p;
+        if (len <= DMA_MAX_TRANSFER_COUNT)
+            masterXfer.dataSize = len;
+        else
+            masterXfer.dataSize = DMA_MAX_TRANSFER_COUNT;
+        ret = (int)LPSPI_MasterTransferEDMALite(EXAMPLE_LPSPI_MASTER_BASEADDR, &masterHandle, &masterXfer);
+        if (ret)
+        {
+            mcu_e("line = %d, read spi slave rx ready fail", __LINE__);
+            goto done;
+        }
+        os_semaphore_get(&spi_slave_tx_complete, OS_WAIT_FOREVER);
+        len -= masterXfer.dataSize;
+        p += masterXfer.dataSize;
+    }
+done:
+    ncp_spi_state = NCP_MASTER_SPI_IDLE;
+    OSA_EventSet(spi_master_event, MASTER_TX_ENABLE_EVENT);
+    return total_len;
 }
 
 static void ncp_host_master_dma_setup(void)
@@ -221,17 +289,7 @@ static int ncp_host_master_init(void)
 
 void ncp_host_gpio_init(void)
 {
-    /* Define the init structure for the input switch pin */
-    gpio_pin_config_t gpio_input_interrupt_config = {
-        kGPIO_DigitalInput,
-        0,
-        kGPIO_IntRisingEdge,
-    };
-
-    GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_RX, &gpio_input_interrupt_config);
-    GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
-
-
+    /* rx input interrupt */
     hal_gpio_pin_config_t rx_config = {
         kHAL_GpioDirectionIn,
         0,
@@ -242,6 +300,14 @@ void ncp_host_gpio_init(void)
     HAL_GpioSetTriggerMode(NcpTlvSpiRxDetectGpioHandle, kHAL_GpioInterruptRisingEdge);
     HAL_GpioInstallCallback(NcpTlvSpiRxDetectGpioHandle, rx_int_callback, NULL);
 
+    NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
+    EnableIRQ(NCP_HOST_GPIO_IRQ);
+
+    /* Enable GPIO pin interrupt */
+    GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
+
+/*
+    GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
     hal_gpio_pin_config_t tx_config = {
         kHAL_GpioDirectionIn,
         0,
@@ -251,13 +317,15 @@ void ncp_host_gpio_init(void)
     HAL_GpioInit(NcpTlvSpiTxDetectGpioHandle, &tx_config);
     HAL_GpioSetTriggerMode(NcpTlvSpiTxDetectGpioHandle, kHAL_GpioInterruptRisingEdge);
     HAL_GpioInstallCallback(NcpTlvSpiTxDetectGpioHandle, tx_int_callback, NULL);
-
-    NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
-    EnableIRQ(NCP_HOST_GPIO_IRQ);
-
-    /* Enable GPIO pin interrupt */
-    GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
     GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_TX);
+*/
+    /* tx output notify spi slave */
+    const gpio_pin_config_t tx_config = {
+        kGPIO_DigitalOutput,
+        1,
+        kGPIO_NoIntmode,
+    };
+    GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &tx_config);
 
     IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_00_LPSPI1_SCK, 0U);
     IOMUXC_SetPinMux(IOMUXC_GPIO_SD_B0_01_LPSPI1_PCS0, 0U);
@@ -272,29 +340,35 @@ void ncp_host_gpio_init(void)
 int ncp_host_init_spi_master(void)
 {
     int ret = WM_SUCCESS;
-
     ncp_host_gpio_init();
-    ret = os_semaphore_create(&spi_master_sem, "spi master semaphore");
-    if (ret != WM_SUCCESS)
+    ret = OSA_EventCreate(spi_master_event, 1);
+    if (ret != kStatus_Success)
     {
-        PRINTF("Create spi master sem failed");
+        mcu_e("Create spi slave event fail");
         return ret;
     }
-    ret = os_semaphore_create(&spi_master_txrx_done, "spi master txrx done semaphore");
+    OSA_EventSet(spi_master_event, MASTER_TX_ENABLE_EVENT);
+    ret = os_semaphore_create(&spi_slave_tx_complete, "spi_slave_tx_complete");
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Create spi master txrx done sem failed");
-        return ret;
+        mcu_e("Error: Failed to create spi_slave_tx_complete semaphore: %d", ret);
+        return -WM_FAIL;
     }
-    os_semaphore_get(&spi_master_txrx_done, OS_NO_WAIT);
-
+    os_semaphore_get(&spi_slave_tx_complete, OS_WAIT_FOREVER);
+    ret = os_semaphore_create(&spi_slave_rx_ready, "spi_slave_rx_ready");
+    if (ret != WM_SUCCESS)
+    {
+        mcu_e("Error: Failed to create spi_slave_rx_ready semaphore: %d", ret);
+        return -WM_FAIL;
+    }
+    os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
     /*Set clock source for LPSPI*/
     CLOCK_SetMux(kCLOCK_LpspiMux, EXAMPLE_LPSPI_CLOCK_SOURCE_SELECT);
     CLOCK_SetDiv(kCLOCK_LpspiDiv, EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER);
     ret = ncp_host_master_init();
     if (ret != WM_SUCCESS)
     {
-        PRINTF("Failed to initialize SPI master(%d)\r\n", ret);
+        mcu_e("Failed to initialize SPI master(%d)", ret);
         return ret;
     }
     ncp_host_master_dma_setup();

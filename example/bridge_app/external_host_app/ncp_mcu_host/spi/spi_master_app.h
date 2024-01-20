@@ -42,12 +42,14 @@
 #define EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER (1U)
 
 #define LPSPI_MASTER_CLK_FREQ (CLOCK_GetFreq(kCLOCK_Usb1PllPfd0Clk) / (EXAMPLE_LPSPI_CLOCK_SOURCE_DIVIDER + 1U))
-#define NCP_SPI_MASTER_CLOCK   20000000U
+#define NCP_SPI_MASTER_CLOCK   1000000U
 
 #define NCP_HOST_GPIO         GPIO1
 #define NCP_HOST_GPIO_NUM     1
 #define NCP_HOST_GPIO_PIN_RX  16U
 #define NCP_HOST_GPIO_PIN_TX  17U
+#define NCP_HOST_GPIO_RX_MASK 0x10000
+#define NCP_HOST_GPIO_TX_MASK 0x20000
 #define NCP_HOST_GPIO_IRQ     GPIO1_Combined_16_31_IRQn
 
 #define NCP_HOST_GPIO_IRQ_HANDLER GPIO1_Combined_16_31_IRQHandler
@@ -55,9 +57,23 @@
 #define NCP_HOST_GPIO_IRQ_PRIO 3
 #define NCP_HOST_DMA_IRQ_PRIO  4
 
+#define MASTER_TX_ENABLE_EVENT       1 << 1
+#define MASTER_RX_ENABLE_EVENT       1 << 2
+
 /*******************************************************************************
  * API
  ******************************************************************************/
-int ncp_host_spi_master_transfer(uint8_t *buff, uint16_t data_size, int transfer_type, uint8_t is_first);
+int ncp_host_spi_master_tx(uint8_t *buff, uint16_t data_size);
+int ncp_host_spi_master_rx(uint8_t *buff);
 int ncp_host_init_spi_master(void);
+typedef enum
+{
+    NCP_MASTER_SPI_IDLE = 0,
+    NCP_MASTER_SPI_TX_START,
+    NCP_MASTER_SPI_RX_START,
+    NCP_MASTER_SPI_WAIT_SLAVE_READY,
+    NCP_MASTER_SPI_END,
+} ncp_state;
+
+
 #endif /* CONFIG_SPI_BRIDGE */

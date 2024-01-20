@@ -230,9 +230,6 @@ static void ncp_host_tlv_task(void *pvParameters)
     int len       = 0;
     size_t rx_len = 0;
     int resp_len  = 0;
-#ifdef CONFIG_SPI_BRIDGE
-    int total_len = 0;
-#endif
 #endif
 
     while (1)
@@ -251,23 +248,16 @@ static void ncp_host_tlv_task(void *pvParameters)
             len += rx_len;
         }
 #elif defined(CONFIG_SPI_BRIDGE)
-        os_event_notify_get(OS_WAIT_FOREVER);
-        ret =
-            ncp_host_spi_master_transfer(mcu_response_buff + len, NCP_BRIDGE_CMD_HEADER_LEN, NCP_HOST_MASTER_RX, true);
-        if (ret != WM_SUCCESS)
-        {
-            mcu_e("Failed to receive command header(%d)", ret);
-            ret = -WM_FAIL;
-            goto done;
-        }
-        len += NCP_BRIDGE_CMD_HEADER_LEN;
+        len = ncp_host_spi_master_rx(mcu_response_buff);
 #endif
+
+#ifdef CONFIG_NCP_UART
         /* Length of the packet is indicated by byte[4] & byte[5] of
          * the packet excluding checksum [4 bytes]*/
         resp_len =
             (mcu_response_buff[NCP_HOST_CMD_SIZE_HIGH_BYTE] << 8) | mcu_response_buff[NCP_HOST_CMD_SIZE_LOW_BYTE];
         rx_len = 0;
-#ifdef CONFIG_NCP_UART
+
         while (len < resp_len + MCU_CHECKSUM_LEN)
         {
             ret = LPUART_RTOS_Receive(&ncp_host_tlv_uart_handle, mcu_response_buff + len,
@@ -281,22 +271,6 @@ static void ncp_host_tlv_task(void *pvParameters)
                 goto done;
             }
         }
-#elif defined(CONFIG_SPI_BRIDGE)
-        total_len = resp_len + MCU_CHECKSUM_LEN;
-        if (resp_len < NCP_BRIDGE_CMD_HEADER_LEN || total_len >= NCP_HOST_RESPONSE_LEN)
-        {
-            mcu_e("Invalid tlv reponse length from ncp bridge");
-            goto done;
-        }
-        ret = ncp_host_spi_master_transfer(mcu_response_buff + len, total_len - NCP_BRIDGE_CMD_HEADER_LEN,
-                                           NCP_HOST_MASTER_RX, false);
-        if (ret != WM_SUCCESS)
-        {
-            mcu_e("Failed to receive command buffer(%d)", ret);
-            ret = -WM_FAIL;
-            goto done;
-        }
-        len = total_len;
 #endif
 #ifdef CONFIG_NCP_HOST_IO_DUMP
         PRINTF("Command response:\r\n");

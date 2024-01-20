@@ -915,7 +915,7 @@ int ncp_host_send_tlv_command()
         ret = usb_host_send_cmd(cmd_len + MCU_CHECKSUM_LEN);
 #elif defined(CONFIG_SPI_BRIDGE)
         total_len = cmd_len + MCU_CHECKSUM_LEN;
-        ret = ncp_host_spi_master_transfer((uint8_t *)&mcu_tlv_command_buff[0], total_len, NCP_HOST_MASTER_TX, true);
+        ret = ncp_host_spi_master_tx((uint8_t *)&mcu_tlv_command_buff[0], total_len);
         if (ret != WM_SUCCESS)
         {
             mcu_e("failed to write response");
