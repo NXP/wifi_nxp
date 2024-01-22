@@ -46,9 +46,9 @@
 #define APPCONFIG_WEB_SOCKET_SUPPORT
 #undef CONFIG_HTTPC_DEBUG
 
-//#define CONFIG_NCP_UART
+#define CONFIG_NCP_UART
 //#define CONFIG_SPI_BRIDGE
-#define CONFIG_USB_BRIDGE
+//#define CONFIG_USB_BRIDGE
 //#define CONFIG_NCP_SDIO
 //#define CONFIG_SDIO_IO_DEBUG
 
@@ -89,10 +89,9 @@
 #if defined(CONFIG_WIFI_USB_FILE_ACCESS) && defined(CONFIG_USB_BRIDGE)  
     #error " CONFIG_USB_BRIDGE and CONFIG_WIFI_USB_FILE_ACCESS are exclusive for ncp and ncp_supp"
 #endif
-#else
 
-#define CONFIG_NCP_WPS2
-#define CONFIG_NCP_WPA2_ENTP
+#define CONFIG_NCP_SUPP_WPS
+#else
 #undef CONFIG_NCP_WPA_SUPP
 #endif /*CONFIG_NCP_SUPP*/
 

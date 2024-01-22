@@ -275,7 +275,7 @@ typedef MLAN_PACK_START struct _wlan_bridge_scan_result
     /** The network supports WMM.  This is set to 0 if the network does not
      *  support WMM or if the system does not have WMM support enabled. */
     unsigned wmm : 1;
-#ifdef CONFIG_NCP_WPS2
+#ifdef CONFIG_NCP_SUPP_WPS
     /** The network supports WPS.  This is set to 0 if the network does not
      *  support WPS or if the system does not have WPS support enabled. */
     unsigned wps : 1;

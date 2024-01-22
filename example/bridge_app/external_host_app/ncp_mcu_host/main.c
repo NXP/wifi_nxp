@@ -43,11 +43,7 @@ int wlan_reset_cli_init(void);
  ******************************************************************************/
 
 const int TASK_MAIN_PRIO = OS_PRIO_3;
-#ifdef CONFIG_NCP_WPS2
-const int TASK_MAIN_STACK_SIZE = 1500;
-#else
 const int TASK_MAIN_STACK_SIZE = 800;
-#endif
 
 portSTACK_TYPE *task_main_stack = NULL;
 TaskHandle_t task_main_task_handler;

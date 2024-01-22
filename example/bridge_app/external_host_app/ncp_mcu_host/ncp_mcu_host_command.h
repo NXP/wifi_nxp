@@ -225,7 +225,7 @@ enum wlan_security_type
     /** The network uses OWE only security without Transition mode support. */
     WLAN_SECURITY_OWE_ONLY,
 #endif
-#if defined(CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_NCP_WPA2_ENTP)
+#if defined(CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE)
     /** The network uses WPA2 Enterprise EAP-TLS security
      * The identity field in \ref wlan_network structure is used */
     WLAN_SECURITY_EAP_TLS,
@@ -256,7 +256,7 @@ enum wlan_security_type
 #endif
 #endif
 #endif
-#if defined(CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_NCP_PEAP_MSCHAPV2) || defined(CONFIG_NCP_WPA2_ENTP)
+#if defined(CONFIG_NCP_WPA_SUPP_CRYPTO_ENTERPRISE) || defined(CONFIG_NCP_PEAP_MSCHAPV2)
     /** The network uses WPA2 Enterprise EAP-PEAP-MSCHAPV2 security
      * The anonymous identity, identity and password fields in
      * \ref wlan_network structure are used */

@@ -1803,20 +1803,6 @@ int wlan_add_command(int argc, char **argv)
             }
             info.security3++;
         }
-#ifdef CONFIG_NCP_WPA2_ENTP
-        else if (!info.security2 && string_equal("eap-tls", argv[arg]))
-        {
-            security_wpa2_tlv              = (Security_ParamSet_t *)ptlv_pos;
-            security_wpa2_tlv->type        = WLAN_SECURITY_EAP_TLS;
-            security_wpa2_tlv->header.type = NCP_BRIDGE_CMD_NETWORK_SECURITY_TLV;
-            security_wpa2_tlv->header.size = sizeof(security_wpa2_tlv->type) + sizeof(security_wpa2_tlv->password_len) +
-                                             security_wpa2_tlv->password_len;
-            ptlv_pos += NCP_BRIDGE_TLV_HEADER_LEN + security_wpa2_tlv->header.size;
-            tlv_buf_len += NCP_BRIDGE_TLV_HEADER_LEN + security_wpa2_tlv->header.size;
-            arg += 1;
-            info.security2++;
-        }
-#endif
         else if (!info.role && string_equal("role", argv[arg]))
         {
             role_tlv = (BSSRole_ParamSet_t *)ptlv_pos;
@@ -7199,11 +7185,6 @@ static void print_network(wlan_bridge_network *network)
         case WLAN_SECURITY_WPA_WPA2_MIXED:
             (void)PRINTF("%s: WPA/WPA2 Mixed\r\n", sec_tag);
             break;
-#ifdef CONFIG_NCP_WPA2_ENTP
-        case WLAN_SECURITY_EAP_TLS:
-            (void)PRINTF("%s: WPA2 Enterprise EAP-TLS\r\n", sec_tag);
-            break;
-#endif
         case WLAN_SECURITY_WPA3_SAE:
             (void)PRINTF("%s: WPA3 SAE\r\n", sec_tag);
             break;
