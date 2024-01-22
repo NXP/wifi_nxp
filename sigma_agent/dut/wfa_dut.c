@@ -61,7 +61,7 @@ extern void BUILD_APTS_MSG(int msg, unsigned long *txbuf);
 extern int wfaWmmPowerSaveProcess(int sockfd);
 extern void wfaSetDUTPwrMgmt(int);
 extern void wfaTGSetPrio(int, int);
-#endif /* WFA_WMM_PS_EXT */
+#endif                    /* WFA_WMM_PS_EXT */
 
 extern int adj_latency;   /* adjust sleep time due to latency */
 char gnetIf[WFA_BUFF_32]; /* specify the interface to use */
@@ -100,8 +100,6 @@ extern void wfa_wmmps_thread();
 extern double gtgPktRTDelay;
 
 int gxcSockfd = -1;
-
-#define DEBUG 0
 
 extern int wfa_estimate_timer_latency();
 extern void wfa_dut_init(BYTE **tBuf, BYTE **rBuf, BYTE **paBuf, BYTE **cBuf, struct timeval **timerp);
