@@ -1300,7 +1300,7 @@ static int wlan_bridge_set_max_client_count(void *tlv)
     else
     {
         unsigned int max_sta_num = client_cnt->max_sta_count;
-        ret                      = wifi_get_uap_max_clients(&max_sta_num);
+        ret                      = wifi_set_uap_max_clients(&max_sta_num);
     }
 
     if (ret == -WM_FAIL)
