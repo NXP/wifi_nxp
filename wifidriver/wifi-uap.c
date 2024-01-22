@@ -645,7 +645,7 @@ static int wifi_cmd_uap_config(char *ssid,
             char pmk_hex[PMK_HEX_LEN + 2]       = {0};
             bss.param.bss_config.wpa_cfg.length = PMK_HEX_LEN;
             mrvl_generate_psk(ssid, strlen(ssid), passphrase, pmk_bin);
-            bin2hex((uint8_t *)pmk_bin, pmk_hex, PMK_BIN_LEN, PMK_HEX_LEN + 2);
+            wm_bin2hex((uint8_t *)pmk_bin, pmk_hex, PMK_BIN_LEN, PMK_HEX_LEN + 2);
             wuap_d("psk %s, pmk_hex %s", passphrase, pmk_hex);
             (void)memcpy((void *)bss.param.bss_config.wpa_cfg.passphrase, (const void *)pmk_hex, PMK_HEX_LEN);
         }

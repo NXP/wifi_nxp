@@ -167,7 +167,7 @@ static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsign
  * @param[in] dest_len Length of the output buffer
  *
  */
-void bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
+void wm_bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
 #endif /* ! CONFIG_ZEPHYR */
 
 /** Function prototype for a random entropy/seed generator
