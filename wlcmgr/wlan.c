@@ -9519,7 +9519,7 @@ int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip)
     return -WM_E_INVAL;
 }
 
-int wlan_remove_all_networks(void)
+int wlan_remove_all_network_profiles(void)
 {
     unsigned int i;
     int ret;

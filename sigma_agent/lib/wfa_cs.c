@@ -2244,7 +2244,7 @@ int wfaStaPresetParams(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     if (presetParams->program == PROG_TYPE_MBO || presetParams->program == PROG_TYPE_HE ||
         presetParams->program == PROG_TYPE_VHT5G)
     {
-        wlan_remove_all_networks();
+        wlan_remove_all_network_profiles();
 #ifndef CONFIG_WPA_SUPP
 #ifdef CONFIG_DRIVER_MBO
 
@@ -2439,7 +2439,7 @@ int wfaStaResetDefault(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     ret = wlan_disconnect();
 
     if ((!strcasecmp(reset->prog, "HE")) || (!strcasecmp(reset->prog, "MBO")))
-        wlan_remove_all_networks();
+        wlan_remove_all_network_profiles();
 
     sleep(5);
 

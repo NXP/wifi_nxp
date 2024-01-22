@@ -2272,11 +2272,11 @@ void wlan_set_prov_session(int session);
 int wlan_get_prov_session(void);
 #endif
 
-/** Stop and Remove all wireless network (Access Point).
+/** Stop and Remove all wireless network profiles.
  *
  *  \return WM_SUCCESS if successful.
  */
-int wlan_remove_all_networks(void);
+int wlan_remove_all_network_profiles(void);
 
 #if defined(RW610)
 /** Reset driver.
@@ -2284,6 +2284,11 @@ int wlan_remove_all_networks(void);
  *  can be chosen.
  */
 void wlan_reset(cli_reset_option ResetOption);
+/** Stop and Remove all wireless network (Access Point).
+ *
+ *  \return WM_SUCCESS if successful.
+ */
+int wlan_remove_all_networks(void);
 /**
  * This API destroy all tasks.
  */

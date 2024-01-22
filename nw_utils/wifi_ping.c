@@ -27,7 +27,7 @@ static struct netif *get_netif_up(void)
     struct netif *netif = netif_list;
     for (; netif != NULL; netif = netif->next)
     {
-        if (netif_is_up(netif) != 0U)
+        if ((netif_is_up(netif) != 0U) && (!((netif->name[0] == 'e') && (netif->name[1] == 'n'))))
         {
             return netif;
         }
