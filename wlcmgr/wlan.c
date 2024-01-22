@@ -16,6 +16,7 @@
 #include <wm_net.h>
 #include <wifi-debug.h>
 #include <wlan_11d.h>
+#include "wifi_ping.h"
 #ifdef CONFIG_WMSTATS
 #include <wmstats.h>
 #endif /* CONFIG_WMSTATS */
@@ -39,6 +40,10 @@
 #include <dhcp-server.h>
 #ifdef RW610
 #include "fsl_loader.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
+#include <sigma_agent.h>
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
@@ -6163,6 +6168,10 @@ static void wlcm_process_get_hw_spec_event(void)
     }
 #endif
 
+#ifdef CONFIG_SIGMA_AGENT
+    (void)sigma_agent_init();
+#endif
+
     /* Set Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
 
@@ -7630,13 +7639,20 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         PRINTF("Failed to initialize BASIC WLAN CLIs\r\n");
         return 0;
     }
-
     ret = wlan_cli_init();
     if (ret != WM_SUCCESS)
     {
         PRINTF("Failed to initialize WLAN CLIs\r\n");
         return 0;
     }
+#ifdef CONFIG_SIGMA_AGENT
+    ret = ping_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize PING CLI\r\n");
+        return 0;
+    }
+#endif
     ret = wlan_enhanced_cli_init();
     if (ret != WM_SUCCESS)
     {
@@ -9479,6 +9495,47 @@ int wlan_get_network_byname(char *name, struct wlan_network *network)
     }
 
     return -WM_E_INVAL;
+}
+
+int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip)
+{
+    unsigned int i;
+
+    if (ip == NULL || name == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].name[0] != '\0' && !strcmp(wlan.networks[i].name, name))
+        {
+            memcpy(&(wlan.networks[i].ip), ip, sizeof(struct wlan_ip_config));
+            return WM_SUCCESS;
+        }
+    }
+
+    return -WM_E_INVAL;
+}
+
+int wlan_remove_all_networks(void)
+{
+    unsigned int i;
+    int ret;
+
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].name[0] != '\0')
+        {
+            ret = wlan_remove_network(wlan.networks[i].name);
+            if (ret != WM_SUCCESS)
+            {
+                return -WM_E_INVAL;
+            }
+        }
+    }
+
+    return WM_SUCCESS;
 }
 
 #ifdef CONFIG_ECSA
@@ -12156,6 +12213,23 @@ int wlan_uap_set_bandwidth(const uint8_t bandwidth)
 #endif
 
     return wifi_uap_set_bandwidth(bandwidth);
+}
+
+int wlan_uap_get_bandwidth(uint8_t *bandwidth)
+{
+    *bandwidth = wifi_uap_get_bandwidth();
+    if (*bandwidth == BANDWIDTH_20MHZ || *bandwidth == BANDWIDTH_40MHZ
+#ifdef CONFIG_11AC
+        || *bandwidth == BANDWIDTH_80MHZ
+#endif
+    )
+    {
+        return WM_SUCCESS;
+    }
+    else
+    {
+        return -WM_FAIL;
+    }
 }
 
 int wlan_uap_set_hidden_ssid(const t_u8 hidden_ssid)

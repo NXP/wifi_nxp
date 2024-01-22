@@ -18,6 +18,7 @@
 #include <fsl_debug_console.h>
 #include <cli.h>
 #endif
+#include <wm_utils.h>
 #include <cli_utils.h>
 #include <ctype.h>
 #include <wm_net.h> /* for errno */
@@ -69,7 +70,7 @@ unsigned int a2hex(const char *s)
 {
     uint32_t val = 0;
 
-    if (strncasecmp("0x", s, 2) == 0)
+    if (strcasecmp("0x", s) == 0)
     {
         s += 2;
     }

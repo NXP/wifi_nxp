@@ -79,8 +79,16 @@
 #include <zephyr/net/ethernet.h>
 #include <zephyr/net/net_pkt.h>
 #include <zephyr/net/net_if.h>
-#include <zephyr/net/socket.h>
 #include <zephyr/net/wifi_mgmt.h>
+
+#if defined(CONFIG_POSIX_API)
+#include <zephyr/posix/sys/socket.h>
+#include <zephyr/posix/sys/select.h>
+#include <zephyr/posix/arpa/inet.h>
+#include <zephyr/posix/unistd.h>
+#else
+#include <zephyr/net/socket.h>
+#endif
 
 #define NETIF_NAMESIZE 6
 #define NETIF_MAX_HWADDR_LEN 6
@@ -124,6 +132,7 @@ struct ethernetif
 typedef struct
 {
     struct net_if *netif;
+    uint8_t mac_address[6];
     struct net_addr ipaddr;
     struct net_addr nmask;
     struct net_addr gw;

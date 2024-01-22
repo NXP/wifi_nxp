@@ -699,7 +699,7 @@ enum wlan_monitor_opt
 /* Measurement freq in Hz to calculate measurement interval*/
 #define AZ_MEASUREMENT_FREQ       10 /* in 0.1 Hz increments */
 #define AZ_NUMBER_OF_MEASUREMENTS 6
-#define I2R_LMR_FEEDBACK          2  /* allow RSTA to request I2R reporting */
+#define I2R_LMR_FEEDBACK          2 /* allow RSTA to request I2R reporting */
 
 #define FOR_RANGING 0
 
@@ -2272,17 +2272,18 @@ void wlan_set_prov_session(int session);
 int wlan_get_prov_session(void);
 #endif
 
+/** Stop and Remove all wireless network (Access Point).
+ *
+ *  \return WM_SUCCESS if successful.
+ */
+int wlan_remove_all_networks(void);
+
 #if defined(RW610)
 /** Reset driver.
  *  \param ResetOption option including enable, disable or reset wifi driver
  *  can be chosen.
  */
 void wlan_reset(cli_reset_option ResetOption);
-/** Stop and Remove all wireless network (Access Point).
- *
- *  \return WM_SUCCESS if successful.
- */
-int wlan_remove_all_networks(void);
 /**
  * This API destroy all tasks.
  */
@@ -4724,7 +4725,7 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period);
 /** API to set the bandwidth of uAP
  *
  *\param[in] bandwidth Wi-Fi AP Bandwidth (20MHz/40MHz)
-    1: 20 MHz 2: 40 MHz
+    1: 20 MHz 2: 40 MHz 3: 80 MHz
  *
  *\return WM_SUCCESS if successful otherwise failure.
  *\return -WM_FAIL if command fails.
@@ -4734,6 +4735,19 @@ void wlan_uap_set_beacon_period(const uint16_t beacon_period);
  *
  */
 int wlan_uap_set_bandwidth(const uint8_t bandwidth);
+
+/** API to Get the bandwidth of uAP
+ *
+ *\param[out] bandwidth Wi-Fi AP Bandwidth (20MHz/40MHz)
+    1: 20 MHz 2: 40 MHz 3: 80 MHz
+ *
+ *\return WM_SUCCESS if successful otherwise failure.
+ *\return -WM_FAIL if command fails.
+ *
+ *\note Please call this API before calling uAP start API.
+ *
+ */
+int wlan_uap_get_bandwidth(uint8_t *bandwidth);
 
 /** API to control SSID broadcast capability of uAP
  *
@@ -7129,6 +7143,8 @@ int wlan_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg);
 int wlan_independent_reset();
 
 #endif
+
+int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);
 
 #ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
 /**

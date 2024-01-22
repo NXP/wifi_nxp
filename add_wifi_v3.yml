@@ -32,6 +32,7 @@ middleware.wifi.template:
         LWIP_NETIF_STATUS_CALLBACK: 1
         LWIP_IGMP: 1
         SDIO_ENABLED:
+        _XOPEN_SOURCE: 500
   belong_to: set.middleware.wifi
   section_info:
     type: project_template
@@ -356,6 +357,112 @@ middleware.wifi.sdio:
     allOf:
     - middleware.wifi.mlan_sdio
     - middleware.wifi.wifidriver
+middleware.wifi.posix:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: incl
+    - repo_relative_path: posix
+    - repo_relative_path: posix/include
+    - repo_relative_path: posix/include/FreeRTOS_POSIX
+    - repo_relative_path: posix/include/private
+    - repo_relative_path: posix/FreeRTOS-Plus-POSIX
+    - repo_relative_path: posix/FreeRTOS-Plus-POSIX/include
+    - repo_relative_path: posix/FreeRTOS-Plus-POSIX/include/portable
+    - repo_relative_path: posix/FreeRTOS-Plus-POSIX/include/portable/nxp
+    - repo_relative_path: posix/FreeRTOS-Plus-POSIX/include/portable/nxp/rt
+    files:
+    - source: posix/include/FreeRTOS_POSIX/*.h
+    - source: posix/include/FreeRTOS_POSIX/sys/*.h
+    - source: posix/include/private/*.h
+    - source: posix/FreeRTOS-Plus-POSIX/*.h
+    - source: posix/FreeRTOS-Plus-POSIX/include/*.h
+    - source: posix/FreeRTOS-Plus-POSIX/include/portable/*.h
+    - source: posix/FreeRTOS-Plus-POSIX/include/portable/nxp/*.h
+    - source: posix/FreeRTOS-Plus-POSIX/include/portable/nxp/rt/*.h
+    - source: posix/FreeRTOS-Plus-POSIX/source/*.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi POSIX Layer
+    user_visible: never
+    version: 1.3.38
+    description: Middlware Wi-Fi POSIX LAYER
+    taxonomy:
+      csub: posix
+      belong_to: wifi
+    display_name: wifi_nxp_posix
+  dependency:
+    allOf:
+    - middleware.freertos-kernel
+middleware.wifi.sigma_agent:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: cli
+    - repo_relative_path: incl
+    - repo_relative_path: incl/wlcmgr
+    - repo_relative_path: posix/include/FreeRTOS_POSIX
+    - repo_relative_path: sigma_agent
+    - repo_relative_path: sigma_agent/inc
+    - repo_relative_path: sigma_agent/lib
+    - repo_relative_path: sigma_agent/dut
+    files:
+    - source: incl/sigma_agent.h
+    - source: sigma_agent/sigma_agent.c
+    - source: sigma_agent/inc/wfa_wmmps.h
+    - source: sigma_agent/inc/wfa_ver.h
+    - source: sigma_agent/inc/wfa_utils.h
+    - source: sigma_agent/inc/wfa_types.h
+    - source: sigma_agent/inc/wfa_tlv.h
+    - source: sigma_agent/inc/wfa_tg.h
+    - source: sigma_agent/inc/wfa_stdincs.h
+    - source: sigma_agent/inc/wfa_sock.h
+    - source: sigma_agent/inc/wfa_rsp.h
+    - source: sigma_agent/inc/wfa_portall.h
+    - source: sigma_agent/inc/wfa_miscs.h
+    - source: sigma_agent/inc/wfa_main.h
+    - source: sigma_agent/inc/wfa_debug.h
+    - source: sigma_agent/inc/wfa_cmds.h
+    - source: sigma_agent/inc/wfa_ca_resp.h
+    - source: sigma_agent/inc/wfa_ca.h
+    - source: sigma_agent/inc/wfa_agtctrl.h
+    - source: sigma_agent/inc/wfa_agt.h
+    - source: sigma_agent/inc/nxp_miscs.h
+    - source: sigma_agent/inc/nxp_gvars.h
+    - source: sigma_agent/lib/wfa_wmmps.c
+    - source: sigma_agent/lib/wfa_typestr.c
+    - source: sigma_agent/lib/wfa_tlv.c
+    - source: sigma_agent/lib/wfa_thr.c
+    - source: sigma_agent/lib/wfa_tg.c
+    - source: sigma_agent/lib/wfa_sock.c
+    - source: sigma_agent/lib/wfa_miscs.c
+    - source: sigma_agent/lib/wfa_cs.c
+    - source: sigma_agent/lib/wfa_cmdtbl.c
+    - source: sigma_agent/lib/nxp_gvars.c
+    - source: sigma_agent/dut/wfa_dut_init.c
+    - source: sigma_agent/dut/wfa_dut.c
+    - source: sigma_agent/dut/wfa_dut.h
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi SIGMA AGENT
+    user_visible: never
+    version: 1.3.38
+    description: Middlware Wi-Fi SIGMA AGENT
+    taxonomy:
+      csub: sigma_agent
+      belong_to: wifi
+    display_name: wifi_nxp_sigma_agent
+  dependency:
+    allOf:
+    - middleware.wifi.posix
+    - middleware.wifi
+    - utility.debug_console
 middleware.wifi.mlan_sdio:
   section-type: component
   contents:

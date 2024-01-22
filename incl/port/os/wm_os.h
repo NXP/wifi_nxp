@@ -76,6 +76,10 @@
 
 #include "nxp_wifi.h"
 #include <zephyr/kernel.h>
+#if defined(CONFIG_POSIX_API)
+#include <sys/time.h>
+#include <time.h>
+#endif
 
 #define PRINTF printk
 

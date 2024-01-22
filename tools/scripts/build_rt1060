@@ -1,0 +1,174 @@
+#!/bin/bash
+#
+#  Copyright (c) 2020, The OpenThread Authors.
+#  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#  3. Neither the name of the copyright holder nor the
+#     names of its contributors may be used to endorse or promote products
+#     derived from this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+#  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+#  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#  POSSIBILITY OF SUCH DAMAGE.
+#
+
+set -exo pipefail
+
+OT_CMAKE_NINJA_TARGET=${OT_CMAKE_NINJA_TARGET:-}
+
+OT_SRCDIR="$(pwd)"
+readonly OT_SRCDIR
+
+readonly OT_OPTIONS_TRANSCEIVER_K32W0_UART_FLOW_CONTROL=(
+    "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-none-eabi.cmake"
+    "-DCMAKE_BUILD_TYPE=MinSizeRel"
+    "-DOT_NXP_PLATFORM=rt1060"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+    "-DOT_NXP_BOARD=rt1060"
+    "-DSPINEL_INTERFACE_TYPE=UART"
+    "-DOT_NXP_TRANSCEIVER=k32w0"
+    "-DOT_NXP_LWIP=OFF"
+    "-DOT_NXP_LWIP_IPERF=OFF"
+    "-DOT_APP_CLI_FREERTOS_IPERF=OFF"
+)
+
+readonly OT_OPTIONS_TRANSCEIVER_IWX12_SPI=(
+    "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-none-eabi.cmake"
+    "-DOT_NXP_PLATFORM=rt1060"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+    "-DCMAKE_BUILD_TYPE=MinSizeRel"
+    "-DSPINEL_INTERFACE_TYPE=SPI"
+    "-DOT_NXP_TRANSCEIVER=iwx12"
+    "-DEVK_RT1060_BOARD=evkcmimxrt1060"
+)
+
+readonly OT_OPTIONS_TRANSCEIVER_IWX12_SPI_BR_ETHERNET=(
+    "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-none-eabi.cmake"
+    "-DOT_NXP_PLATFORM=rt1060"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+    "-DCMAKE_BUILD_TYPE=Debug"
+    "-DSPINEL_INTERFACE_TYPE=SPI"
+    "-DOT_NXP_TRANSCEIVER=iwx12"
+    "-DOT_APP_BR_FREERTOS=ON"
+    # FREERTOS CLI is disabled in this target build as it will be available in the BR app
+    "-DOT_APP_CLI_FREERTOS=OFF"
+    "-DOT_NXP_LWIP_ETH=ON"
+    # Disabling iperf cli addons when BR is enabled as currently both cannot be enabled at the same time
+    "-DOT_APP_CLI_FREERTOS_IPERF=OFF"
+    "-DEVK_RT1060_BOARD=evkcmimxrt1060"
+)
+
+readonly OT_OPTIONS_TRANSCEIVER_IWX12_SPI_BR_WIFI=(
+    "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-none-eabi.cmake"
+    "-DOT_NXP_PLATFORM=rt1060"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+    "-DCMAKE_BUILD_TYPE=Debug"
+    "-DSPINEL_INTERFACE_TYPE=SPI"
+    "-DOT_NXP_TRANSCEIVER=iwx12"
+    "-DOT_APP_BR_FREERTOS=ON"
+    # FREERTOS CLI is disabled in this target build as it will be available in the BR app
+    "-DOT_APP_CLI_FREERTOS=OFF"
+    "-DOT_NXP_LWIP_WIFI=ON"
+    # Disabling iperf cli addons when BR is enabled as currently both cannot be enabled at the same time
+    "-DOT_APP_CLI_FREERTOS_IPERF=OFF"
+    "-DEVK_RT1060_BOARD=evkcmimxrt1060"
+)
+
+build()
+{
+    local builddir="${OT_CMAKE_BUILD_DIR:-build_rt1060}"
+    mkdir -p "${builddir}"
+    cd "${builddir}"
+    mkdir -p "$1"
+    cd "$1"
+
+    # shellcheck disable=SC2068
+    cmake -GNinja "${@:2}" "${OT_SRCDIR}"
+
+    if [[ -n ${OT_CMAKE_NINJA_TARGET[*]} ]]; then
+        ninja "${OT_CMAKE_NINJA_TARGET[@]}"
+    else
+        ninja
+    fi
+
+    cd "${OT_SRCDIR}"
+
+    if [ $? -eq 1 ]; then
+        exit 1
+    fi
+}
+
+create_directory_and_build()
+{
+    local options=("-DNXP_SDK_ROOT=$NXP_RT1060_SDK_ROOT")
+    options+=("${@:2}")
+
+    if [ "$1" == 'all' ]; then
+        options+=("${OT_OPTIONS_TRANSCEIVER_IWX12_SPI[@]}")
+        build iwx12_spi "${options[@]}"
+        options=("-DNXP_SDK_ROOT=$NXP_RT1060_SDK_ROOT")
+        options+=("${@:2}")
+        options+=("${OT_OPTIONS_TRANSCEIVER_K32W0_UART_FLOW_CONTROL[@]}")
+        build k32w0_uart_flow_control "${options[@]}"
+        options=("-DNXP_SDK_ROOT=$NXP_RT1060_SDK_ROOT")
+        options+=("${@:2}")
+        options+=("${OT_OPTIONS_TRANSCEIVER_IWX12_SPI_BR_ETHERNET[@]}")
+        build iwx12_spi_br_ethernet "${options[@]}"
+        #options=("-DNXP_SDK_ROOT=$NXP_RT1060_SDK_ROOT")
+        #options+=("${OT_OPTIONS_TRANSCEIVER_IWX12_SPI_BR_WIFI[@]}")
+        #build iwx12_spi_br_wifi "${options[@]}"
+    elif [ "$1" == 'k32w0_uart_flow_control' ]; then
+        echo "Warning: No longer maintain"
+        options+=("${OT_OPTIONS_TRANSCEIVER_K32W0_UART_FLOW_CONTROL[@]}")
+        build k32w0_uart_flow_control "${options[@]}"
+    elif [ "$1" == 'iwx12_spi' ]; then
+        options+=("${OT_OPTIONS_TRANSCEIVER_IWX12_SPI[@]}")
+        build iwx12_spi "${options[@]}"
+    elif [ "$1" == 'iwx12_spi_br_ethernet' ]; then
+        options+=("${OT_OPTIONS_TRANSCEIVER_IWX12_SPI_BR_ETHERNET[@]}")
+        build iwx12_spi_br_ethernet "${options[@]}"
+    elif [ "$1" == 'iwx12_spi_br_wifi' ]; then
+        options+=("${OT_OPTIONS_TRANSCEIVER_IWX12_SPI_BR_WIFI[@]}")
+        build iwx12_spi_br_wifi "${options[@]}"
+    else
+        echo >&2 "Unsupported action: $1. Supported: all, k32w0_uart_flow_control, iwx12_spi, iwx12_spi_br_ethernet, iwx12_spi_br_wifi"
+        # 128 for Invalid arguments
+        exit 128
+    fi
+}
+
+main()
+{
+
+    # check if environmental variable NXP_RT1060_SDK_ROOT is set
+    #     if not, then use the github repo mounted with west
+    if [ -z "$NXP_RT1060_SDK_ROOT" ]; then
+        export NXP_RT1060_SDK_ROOT="${OT_SRCDIR}/third_party/github_sdk/repo"
+    fi
+
+    echo "NXP_RT1060_SDK_ROOT set to " $NXP_RT1060_SDK_ROOT
+    echo "OT source is set to " "$OT_SRCDIR"
+
+    if [ $# == 0 ]; then
+        create_directory_and_build all
+    else
+        create_directory_and_build "$@"
+    fi
+}
+
+main "$@"

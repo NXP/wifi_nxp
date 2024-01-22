@@ -920,7 +920,7 @@ static int __cli_cleanup(void)
 {
     int ret, final = WM_SUCCESS;
     char *halt_msg = HALT_MSG;
-	
+
 #ifndef CONFIG_UART_INTERRUPT
     if (cli_remove_UART_Tick() != WM_SUCCESS)
     {
@@ -1089,6 +1089,10 @@ void help_command(int argc, char **argv)
         i++;
     }
 }
+
+#if defined(__ICCARM__)
+#pragma diag_suppress = Pe192
+#endif
 
 static void clear_command(int argc, char **argv)
 {
@@ -1334,7 +1338,7 @@ int cli_init(void)
     }
 #ifdef CONFIG_UART_INTERRUPT
 #ifdef CONFIG_UART_INTERACTIVE
-	ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_1);
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_1);
 #else
 #ifdef CONFIG_NCP_BRIDGE
     ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_3);

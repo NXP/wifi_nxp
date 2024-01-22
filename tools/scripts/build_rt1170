@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+
+set -exo pipefail
+
+readonly SG_SRCDIR="$(pwd)"/sigma_agent
+
+readonly SG_OPTIONS=(
+    "-DCMAKE_TOOLCHAIN_FILE=../tools/cmake/toolchain/arm-none-eabi.cmake"
+    "-DFREERTOS_CONFIG_FILE_DIRECTORY=../example/wifi_wpa_supplicant/"
+    "-DSG_NXP_PLATFORM=rt1170"
+    "-DCPU_MIMXRT1176DVMAA_cm7=1"
+    "-DFREERTOS_PORT=GCC_ARM_CM4F"
+    "-DFREERTOS_HEAP=4"
+    "-DCMAKE_BUILD_TYPE=MinSizeRel"
+)
+
+build()
+{
+    local builddir="${SG_CMAKE_BUILD_DIR:-build_rt1170}"
+    mkdir -p "${builddir}"
+    cd "${builddir}"
+
+    # shellcheck disable=SC2068
+    cmake -GNinja "${@:1}" "${SG_SRCDIR}"
+
+    if [[ -n ${SG_CMAKE_NINJA_TARGET[*]} ]]; then
+        ninja "${SG_CMAKE_NINJA_TARGET[@]}"
+    else
+        ninja
+    fi
+
+    cd "${SG_SRCDIR}"
+
+    if [ $? -eq 1 ]; then
+        exit 1
+    fi
+}
+
+create_directory_and_build()
+{
+#    local options=("-DNXP_SDK_ROOT=$NXP_RT1170_SDK_ROOT")
+#    options+=("${@:2}")
+
+    if [ "$1" == 'all' ]; then
+        options=("-DNXP_SDK_ROOT=$NXP_RT_SDK_ROOT")
+        options+=("${SG_OPTIONS[@]}")
+        build "${options[@]}"
+    fi
+}
+
+main()
+{
+    if [ -z "$NXP_RT_SDK_ROOT" ]; then
+        NXP_RT_SDK_ROOT="${SG_SRCDIR}/../../.."
+    fi
+
+    echo "NXP_RT_SDK_ROOT set to " $NXP_RT_SDK_ROOT
+
+    create_directory_and_build all
+}
+
+main "$@"

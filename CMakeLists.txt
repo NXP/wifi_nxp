@@ -204,6 +204,36 @@ file(GLOB WLCMGR_SRC ./wlcmgr/*.c)
 
 zephyr_library_sources(${WLCMGR_SRC})
 
+zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SMOKE_TESTS
+    nw_utils/init_enet.c
+)
+
+zephyr_include_directories_ifdef(CONFIG_NXP_WIFI_SMOKE_TESTS
+    nw_utils
+)
+
+zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
+    nw_utils/wifi_ping.c
+    sigma_agent/sigma_agent.c
+    sigma_agent/dut/wfa_dut.c
+    sigma_agent/dut/wfa_dut_init.c
+)
+
+file(GLOB SIGMA_SRC ./sigma_agent/lib/*.c)
+list(FILTER SIGMA_SRC EXCLUDE REGEX ".*cmdproc*")
+list(FILTER SIGMA_SRC EXCLUDE REGEX ".*ca_resp*")
+zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
+    ${SIGMA_SRC}
+)
+
+zephyr_library_include_directories_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
+    PRIVATE ${ZEPHYR_BASE}/subsys/net/ip)
+
+zephyr_library_include_directories_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
+    sigma_agent/inc
+    sigma_agent/dut
+)
+
 file(GLOB DHCPD_SRC ./dhcpd/*.c)
 zephyr_library_sources(${DHCPD_SRC})
 zephyr_library_include_directories(dhcpd)
