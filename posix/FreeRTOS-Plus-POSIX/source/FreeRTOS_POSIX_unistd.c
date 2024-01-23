@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /*
  * Amazon FreeRTOS POSIX V1.1.0
  * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -34,21 +36,22 @@
 
 /*-----------------------------------------------------------*/
 
-unsigned sleep( unsigned seconds )
+unsigned sleep(unsigned seconds)
 {
-    vTaskDelay( pdMS_TO_TICKS( seconds * 1000 ) );
+    vTaskDelay(pdMS_TO_TICKS(seconds * 1000));
 
     return 0;
 }
 
 /*-----------------------------------------------------------*/
 
-int usleep( useconds_t usec )
+int usleep(useconds_t usec)
 {
     /* To avoid delaying for less than usec, always round up. */
-    vTaskDelay( pdMS_TO_TICKS( usec / 1000 + ( usec % 1000 != 0 ) ) );
+    vTaskDelay(pdMS_TO_TICKS(usec / 1000 + (usec % 1000 != 0)));
 
     return 0;
 }
 
 /*-----------------------------------------------------------*/
+#endif

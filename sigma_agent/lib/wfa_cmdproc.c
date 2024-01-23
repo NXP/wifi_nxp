@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
 Copyright (c) 2015 Wi-Fi Alliance
 Permission to use, copy, modify, and/or distribute this software for any
@@ -73,7 +75,7 @@ typeNameStr_t keywordStr[] = {
     {KW_FRATE, "framerate", NULL},
     {KW_DURATION, "duration", NULL},
     {KW_PLOAD, "payloadsize", NULL},
-    {KW_TCLASS, "trafficClass", NULL}, /* It is to indicate WMM traffic pattern */
+    {KW_TCLASS, "trafficClass", NULL},   /* It is to indicate WMM traffic pattern */
     {KW_STREAMID, "streamid", NULL},
     {KW_STARTDELAY, "startdelay", NULL}, /* It is used to schedule multi-stream test such as WMM */
     {KW_NUMFRAME, "numframes", NULL},
@@ -9559,3 +9561,4 @@ int xcCmdProcDevConfigureIe(char *pcmdStr, BYTE *aBuf, int *aLen)
 
     return TRUE;
 }
+#endif

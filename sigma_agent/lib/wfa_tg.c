@@ -1,3 +1,4 @@
+#ifdef CONFIG_SIGMA_AGENT
 
 /****************************************************************************
  *
@@ -27,12 +28,12 @@
 #include <signal.h>
 #include <time.h>
 
-//#include <sys/time.h>
-//#include <signal.h>
-//#include <fcntl.h>
-//#include <netdb.h>
-//#include <pthread.h>
-//#include <math.h>
+// #include <sys/time.h>
+// #include <signal.h>
+// #include <fcntl.h>
+// #include <netdb.h>
+// #include <pthread.h>
+// #include <math.h>
 
 #include "wfa_portall.h"
 #include "wfa_stdincs.h"
@@ -576,7 +577,7 @@ int wfaTGRecvStart(int len, BYTE *parms, int *respLen, BYTE *respBuf)
                             theProfile->sipaddr, theProfile->dipaddr, wmmps_info.streamid);
                 gtimeOut = MINISECONDS / 10; /* in msec */
 
-#endif /* WFA_WMM_PS_EXT */
+#endif                                       /* WFA_WMM_PS_EXT */
                 break;
         }
     }
@@ -1076,7 +1077,7 @@ int wfaSendLongFile(int mySockfd, int streamid, BYTE *aRespBuf, int *aRespLen)
 
     /* initialize the destination address */
     wMEMSET(&toAddr, 0, sizeof(toAddr));
-    toAddr.sin_family      = AF_INET;
+    toAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
 #elif CONFIG_ZEPHYR
@@ -1086,7 +1087,7 @@ int wfaSendLongFile(int mySockfd, int streamid, BYTE *aRespBuf, int *aRespLen)
         return WFA_FAILURE;
     }
 #endif
-    toAddr.sin_port        = htons(theProf->dport);
+    toAddr.sin_port = htons(theProf->dport);
 
     /* if a frame rate and duration are defined, then we know
      * interval for each packet and how many packets it needs to
@@ -1305,7 +1306,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
         packLen = pksize;
 
     wMEMSET(&toAddr, 0, sizeof(toAddr));
-    toAddr.sin_family      = AF_INET;
+    toAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     toAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
 #elif CONFIG_ZEPHYR
@@ -1315,7 +1316,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
         return WFA_FAILURE;
     }
 #endif
-    toAddr.sin_port        = htons(theProf->sport);
+    toAddr.sin_port = htons(theProf->sport);
 
     if (gtgRecv && gtgTransac)
     {
@@ -1328,7 +1329,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
             return WFA_FAILURE;
         }
 #endif
-        toAddr.sin_port        = htons(theProf->sport);
+        toAddr.sin_port = htons(theProf->sport);
     }
     else if (gtgSend && gtgTransac)
     {
@@ -1341,7 +1342,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
             return WFA_FAILURE;
         }
 #endif
-        toAddr.sin_port        = htons(theProf->dport);
+        toAddr.sin_port = htons(theProf->dport);
     }
 
     int2BuffBigEndian(myStream->stats.txFrames, &((tgHeader_t *)packBuf)->hdr[8]);
@@ -1402,7 +1403,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
     wMEMSET(packBuf, 0, MAX_UDP_LEN);
 
     wMEMSET(&fromAddr, 0, sizeof(fromAddr));
-    fromAddr.sin_family      = AF_INET;
+    fromAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     fromAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
 #elif CONFIG_ZEPHYR
@@ -1413,7 +1414,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
     }
 #endif
 
-    fromAddr.sin_port        = htons(theProf->dport);
+    fromAddr.sin_port = htons(theProf->dport);
 
     if (gtgRecv && gtgTransac)
     {
@@ -1426,7 +1427,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
             return WFA_FAILURE;
         }
 #endif
-        fromAddr.sin_port        = htons(theProf->sport);
+        fromAddr.sin_port = htons(theProf->sport);
     }
     else if (gtgSend && gtgTransac)
     {
@@ -1439,7 +1440,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
             return WFA_FAILURE;
         }
 #endif
-        fromAddr.sin_port        = htons(theProf->dport);
+        fromAddr.sin_port = htons(theProf->dport);
     }
 
     /* it is always to receive at least one packet, in case more in the
@@ -1557,7 +1558,7 @@ int wfaSendBitrateData(int mySockfd, int streamId, BYTE *pRespBuf, int *pRespLen
 
     /*  initialize the destination address  */
     memset(&toAddr, 0, sizeof(toAddr));
-    toAddr.sin_family      = AF_INET;
+    toAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
 #elif CONFIG_ZEPHYR
@@ -1567,7 +1568,7 @@ int wfaSendBitrateData(int mySockfd, int streamId, BYTE *pRespBuf, int *pRespLen
         return WFA_FAILURE;
     }
 #endif
-    toAddr.sin_port        = htons(theProf->dport);
+    toAddr.sin_port = htons(theProf->dport);
 
     /*  set sleep time per sending */
     if (theProf->rate < 100)
@@ -1704,3 +1705,4 @@ errcleanup:
 
     return ret;
 } /*  wfaSendBitrateData  */
+#endif

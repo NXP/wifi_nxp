@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -455,3 +457,4 @@ int wfaSetProcPriority(int set)
 #endif
     return 0;
 }
+#endif

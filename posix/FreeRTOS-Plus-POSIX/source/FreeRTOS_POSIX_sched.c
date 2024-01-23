@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /*
  * Amazon FreeRTOS POSIX V1.1.0
  * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -34,27 +36,27 @@
 
 /*-----------------------------------------------------------*/
 
-int sched_get_priority_max( int policy )
+int sched_get_priority_max(int policy)
 {
     /* Silence warnings about unused parameters. */
-    ( void ) policy;
+    (void)policy;
 
     return configMAX_PRIORITIES - 1;
 }
 
 /*-----------------------------------------------------------*/
 
-int sched_get_priority_min( int policy )
+int sched_get_priority_min(int policy)
 {
     /* Silence warnings about unused parameters. */
-    ( void ) policy;
+    (void)policy;
 
     return tskIDLE_PRIORITY;
 }
 
 /*-----------------------------------------------------------*/
 
-int sched_yield( void )
+int sched_yield(void)
 {
     taskYIELD();
 
@@ -62,3 +64,4 @@ int sched_yield( void )
 }
 
 /*-----------------------------------------------------------*/
+#endif

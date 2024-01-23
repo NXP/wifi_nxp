@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
 Copyright (c) 2015 Wi-Fi Alliance
 Permission to use, copy, modify, and/or distribute this software for any
@@ -281,3 +283,4 @@ typeNameStr_t nameStr[] = {
     {WFA_DEV_EXEC_ACTION_TLV, "dev_exec_action", xcCmdProcDevExecAction},
     {-1, "", NULL},
 };
+#endif

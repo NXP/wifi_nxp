@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  Copyright (c) 2015 Wi-Fi Alliance
  Permission to use, copy, modify, and/or distribute this software for any
@@ -23,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <sys/socket.h>
+// #include <sys/socket.h>
 
 #include "wfa_debug.h"
 #include "wfa_types.h"
@@ -51,73 +53,73 @@ dutCommandRespFuncPtr wfaCmdRespProcFuncTbl[WFA_STA_RESPONSE_END + 1] = {
     wfaStaGenericResp,                     /* WFA_TRAFFIC_AGENT_RESET_RESP_TLV - WFA_STA_COMMANDS_END  (8) */
     caCmdNotDefinedYet,                    /* WFA_TRAFFIC_AGENT_STATUS_RESP_TLV - WFA_STA_COMMANDS_END  (9) */
 
-    wfaStaGetIpConfigResp,     /* WFA_STA_GET_IP_CONFIG_RESP_TLV - WFA_STA_COMMANDS_END   (10) */
-    wfaStaGenericResp,         /* WFA_STA_SET_IP_CONFIG_RESP_TLV - WFA_STA_COMMANDS_END    (11) */
-    wfaStaGetMacAddressResp,   /* WFA_STA_GET_MAC_ADDRESS_RESP_TLV - WFA_STA_COMMANDS_END    (12) */
-    wfaStaGenericResp,         /* WFA_STA_SET_MAC_ADDRESS_RESP_TLV - WFA_STA_COMMANDS_END  (13) */
-    wfaStaIsConnectedResp,     /* WFA_STA_IS_CONNECTED_RESP_TLV - WFA_STA_COMMANDS_END     (14) */
-    wfaStaVerifyIpConnectResp, /* WFA_STA_VERIFY_IP_CONNECTION_RESP_TLV - WFA_STA_COMMANDS_END    (15) */
-    wfaStaGetBSSIDResp,        /* WFA_STA_GET_BSSID_RESP_TLV - WFA_STA_COMMANDS_END     (16) */
-    wfaStaGetStatsResp,        /* WFA_STA_GET_STATS_RESP_TLV - WFA_STA_COMMANDS_END   (17) */
-    wfaStaSetEncryptionResp,   /* WFA_STA_SET_ENCRYPTION_RESP_TLV - WFA_STA_COMMANDS_END   (18) */
-    wfaStaGenericResp,         /* WFA_STA_SET_PSK_RESP_TLV - WFA_STA_COMMANDS_END     (19) */
-    wfaStaGenericResp,         /* WFA_STA_SET_EAPTLS_RESP_TLV - WFA_STA_COMMANDS_END   (20) */
-    wfaStaGenericResp,         /* WFA_STA_SET_UAPSD_RESP_TLV - WFA_STA_COMMANDS_END     (21) */
-    wfaStaGenericResp,         /* WFA_STA_ASSOCIATE_RESP_TLV - WFA_STA_COMMANDS_END   (22) */
-    wfaStaGenericResp,         /* WFA_STA_SET_EAPTTLS_RESP_TLV - WFA_STA_COMMANDS_END   (23) */
-    wfaStaGenericResp,         /* WFA_STA_SET_EAPSIM_RESP_TLV - WFA_STA_COMMANDS_END   (24) */
-    wfaStaGenericResp,         /* WFA_STA_SET_PEAP_RESP_TLV - WFA_STA_COMMANDS_END    (25) */
-    wfaStaGenericResp,         /* WFA_STA_SET_IBSS_RESP_TLV - WFA_STA_COMMANDS_END    (26) */
-    wfaStaGetInfoResp,         /* WFA_STA_GET_INFO_RESP_TLV - WFA_STA_COMMANDS_END         (27) */
-    wfaDeviceGetInfoResp,      /* WFA_DEVICE_GET_INFO_RESP_TLV - WFA_STA_COMMANDS_END     (28) */
-    wfaDeviceListIFResp,       /* WFA_DEVICE_LIST_IF_RESP_TLV - WFA_STA_COMMANDS_END   (29) */
-    wfaStaGenericResp,         /* WFA_STA_DEBUG_SET_RESP_TLV - WFA_STA_COMMANDS_END    (30) */
-    wfaStaGenericResp,         /* WFA_STA_SET_MODE_RESP_TLV - WFA_STA_COMMANDS_END    (31) */
-    wfaStaUploadResp,          /* WFA_STA_UPLOAD_RESP_TLV - WFA_STA_COMMANDS_END     (32) */
-    wfaStaGenericResp,         /* WFA_STA_SET_WMM_RESP_TLV - WFA_STA_COMMANDS_END     (33) */
-    wfaStaGenericResp,         /* WFA_STA_REASSOCIATE_RESP_TLV - WFA_STA_COMMANDS_END  (34) */
-    wfaStaGenericResp,         /* WFA_STA_SET_PWRSAVE_RESP_TLV - WFA_STA_CMMANDS_END    (35) */
-    wfaStaGenericResp,         /* WFA_STA_SET_POWER_SAVE_RESP_TLV - WFA_STA_CMMANDS_END    (36) */
-    wfaStaGenericResp,         /* WFA_STA_SEND_NEIGREQ_RESP_TLV - WFA_STA_COMMANDS_END  (37) */
-    wfaStaGenericResp,         /* WFA_STA_PRESET_PARAMETERS_RESP_TLV-WFA_STA_COMMANDS_END (38) */
-    wfaStaGenericResp,         /* WFA_STA_SET_EAPFAST_RESP_TLV -WFA_STA_COMMANDS_END  (39)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_EAPAKA_RESP_TLV-WFA_STA_COMMANDS_END  (40)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_SYSTIME_RESP_TLV-WFA_STA_COMMANDS_END  (41)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_11N_RESP_TLV-WFA_STA_COMMANDS_END  (42)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_WIRELESS_RESP_TLV-WFA_STA_COMMANDS_END  (43)*/
-    wfaStaGenericResp,         /* WFA_STA_SEND_AADBA_RESP_TLV-WFA_STA_COMMANDS_END  (44)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_COEXIST_MGMT_RESP_TLV-WFA_STA_COMMANDS_END  (45)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_RIFS_TEST_RESP_TLV-WFA_STA_COMMANDS_END  (46)*/
-    wfaStaGenericResp,         /* WFA_STA_RESET_DEFAULT_RESP_TLV-WFA_STA_COMMANDS_END  (47)*/
-    wfaStaGenericResp,         /* WFA_STA_DISCONNECT_RESP_TLV-WFA_STA_COMMANDS_END  (48)*/
-    wfaStaGenericResp,         /* WFA_STA_DEV_SEND_FRAME_RESP_TLV-WFA_STA_COMMANDS_END  (49)*/
-    wfaStaGenericResp,         /* WFA_STA_SET_SECURITY_RESP_TLV-WFA_STA_COMMANDS_END   (50)*/
+    wfaStaGetIpConfigResp,                 /* WFA_STA_GET_IP_CONFIG_RESP_TLV - WFA_STA_COMMANDS_END   (10) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_IP_CONFIG_RESP_TLV - WFA_STA_COMMANDS_END    (11) */
+    wfaStaGetMacAddressResp,               /* WFA_STA_GET_MAC_ADDRESS_RESP_TLV - WFA_STA_COMMANDS_END    (12) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_MAC_ADDRESS_RESP_TLV - WFA_STA_COMMANDS_END  (13) */
+    wfaStaIsConnectedResp,                 /* WFA_STA_IS_CONNECTED_RESP_TLV - WFA_STA_COMMANDS_END     (14) */
+    wfaStaVerifyIpConnectResp,             /* WFA_STA_VERIFY_IP_CONNECTION_RESP_TLV - WFA_STA_COMMANDS_END    (15) */
+    wfaStaGetBSSIDResp,                    /* WFA_STA_GET_BSSID_RESP_TLV - WFA_STA_COMMANDS_END     (16) */
+    wfaStaGetStatsResp,                    /* WFA_STA_GET_STATS_RESP_TLV - WFA_STA_COMMANDS_END   (17) */
+    wfaStaSetEncryptionResp,               /* WFA_STA_SET_ENCRYPTION_RESP_TLV - WFA_STA_COMMANDS_END   (18) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_PSK_RESP_TLV - WFA_STA_COMMANDS_END     (19) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_EAPTLS_RESP_TLV - WFA_STA_COMMANDS_END   (20) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_UAPSD_RESP_TLV - WFA_STA_COMMANDS_END     (21) */
+    wfaStaGenericResp,                     /* WFA_STA_ASSOCIATE_RESP_TLV - WFA_STA_COMMANDS_END   (22) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_EAPTTLS_RESP_TLV - WFA_STA_COMMANDS_END   (23) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_EAPSIM_RESP_TLV - WFA_STA_COMMANDS_END   (24) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_PEAP_RESP_TLV - WFA_STA_COMMANDS_END    (25) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_IBSS_RESP_TLV - WFA_STA_COMMANDS_END    (26) */
+    wfaStaGetInfoResp,                     /* WFA_STA_GET_INFO_RESP_TLV - WFA_STA_COMMANDS_END         (27) */
+    wfaDeviceGetInfoResp,                  /* WFA_DEVICE_GET_INFO_RESP_TLV - WFA_STA_COMMANDS_END     (28) */
+    wfaDeviceListIFResp,                   /* WFA_DEVICE_LIST_IF_RESP_TLV - WFA_STA_COMMANDS_END   (29) */
+    wfaStaGenericResp,                     /* WFA_STA_DEBUG_SET_RESP_TLV - WFA_STA_COMMANDS_END    (30) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_MODE_RESP_TLV - WFA_STA_COMMANDS_END    (31) */
+    wfaStaUploadResp,                      /* WFA_STA_UPLOAD_RESP_TLV - WFA_STA_COMMANDS_END     (32) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_WMM_RESP_TLV - WFA_STA_COMMANDS_END     (33) */
+    wfaStaGenericResp,                     /* WFA_STA_REASSOCIATE_RESP_TLV - WFA_STA_COMMANDS_END  (34) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_PWRSAVE_RESP_TLV - WFA_STA_CMMANDS_END    (35) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_POWER_SAVE_RESP_TLV - WFA_STA_CMMANDS_END    (36) */
+    wfaStaGenericResp,                     /* WFA_STA_SEND_NEIGREQ_RESP_TLV - WFA_STA_COMMANDS_END  (37) */
+    wfaStaGenericResp,                     /* WFA_STA_PRESET_PARAMETERS_RESP_TLV-WFA_STA_COMMANDS_END (38) */
+    wfaStaGenericResp,                     /* WFA_STA_SET_EAPFAST_RESP_TLV -WFA_STA_COMMANDS_END  (39)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_EAPAKA_RESP_TLV-WFA_STA_COMMANDS_END  (40)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_SYSTIME_RESP_TLV-WFA_STA_COMMANDS_END  (41)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_11N_RESP_TLV-WFA_STA_COMMANDS_END  (42)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_WIRELESS_RESP_TLV-WFA_STA_COMMANDS_END  (43)*/
+    wfaStaGenericResp,                     /* WFA_STA_SEND_AADBA_RESP_TLV-WFA_STA_COMMANDS_END  (44)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_COEXIST_MGMT_RESP_TLV-WFA_STA_COMMANDS_END  (45)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_RIFS_TEST_RESP_TLV-WFA_STA_COMMANDS_END  (46)*/
+    wfaStaGenericResp,                     /* WFA_STA_RESET_DEFAULT_RESP_TLV-WFA_STA_COMMANDS_END  (47)*/
+    wfaStaGenericResp,                     /* WFA_STA_DISCONNECT_RESP_TLV-WFA_STA_COMMANDS_END  (48)*/
+    wfaStaGenericResp,                     /* WFA_STA_DEV_SEND_FRAME_RESP_TLV-WFA_STA_COMMANDS_END  (49)*/
+    wfaStaGenericResp,                     /* WFA_STA_SET_SECURITY_RESP_TLV-WFA_STA_COMMANDS_END   (50)*/
 
     /* P2P */
-    wfaStaGetP2pDevAddressResp, /* ( (WFA_STA_GET_P2P_DEV_ADDRESS_RESP_TLV-WFA_STA_COMMANDS_END  - (51)*/
-    wfaStaGenericResp,          /* (WFA_STA_SET_P2P_RESP_TLV -WFA_STA_COMMANDS_END (52) */
-    wfaStaGenericResp,          /* (WFA_STA_SET_P2P_CONNECT_RESP_TLV -WFA_STA_COMMANDS_END (53)  */
-    wfaStaStartAutoGO,          /* (WFA_STA_START_AUTO_GO_RESP_TLV -WFA_STA_COMMANDS_END (54) */
-    wfaStaP2pStartGrpFormResp,  /* (WFA_STA_P2P_START_GRP_FORMATION_RESP_TLV-WFA_STA_COMMANDS_END - (55) */
+    wfaStaGetP2pDevAddressResp,   /* ( (WFA_STA_GET_P2P_DEV_ADDRESS_RESP_TLV-WFA_STA_COMMANDS_END  - (51)*/
+    wfaStaGenericResp,            /* (WFA_STA_SET_P2P_RESP_TLV -WFA_STA_COMMANDS_END (52) */
+    wfaStaGenericResp,            /* (WFA_STA_SET_P2P_CONNECT_RESP_TLV -WFA_STA_COMMANDS_END (53)  */
+    wfaStaStartAutoGO,            /* (WFA_STA_START_AUTO_GO_RESP_TLV -WFA_STA_COMMANDS_END (54) */
+    wfaStaP2pStartGrpFormResp,    /* (WFA_STA_P2P_START_GRP_FORMATION_RESP_TLV-WFA_STA_COMMANDS_END - (55) */
 
-    wfaStaGenericResp, /* (WFA_STA_P2P_DISSOLVE_RESP_TLV -  (56)*/
-    wfaStaGenericResp, /* (WFA_STA_SEND_P2P_INV_REQ_RESP_TLV - (57) */
-    wfaStaGenericResp, /* (WFA_STA_ACCEPT_P2P_INV_REQ_RESP_TLV -(58)  */
-    wfaStaGenericResp, /* (WFA_STA_SEND_P2P_PROV_DIS_REQ_RESP_TLV-  (59)*/
+    wfaStaGenericResp,            /* (WFA_STA_P2P_DISSOLVE_RESP_TLV -  (56)*/
+    wfaStaGenericResp,            /* (WFA_STA_SEND_P2P_INV_REQ_RESP_TLV - (57) */
+    wfaStaGenericResp,            /* (WFA_STA_ACCEPT_P2P_INV_REQ_RESP_TLV -(58)  */
+    wfaStaGenericResp,            /* (WFA_STA_SEND_P2P_PROV_DIS_REQ_RESP_TLV-  (59)*/
 
-    wfaStaGenericResp, /* (WFA_STA_SET_WPSPBC_RESP_TLV -  (60)*/
+    wfaStaGenericResp,            /* (WFA_STA_SET_WPSPBC_RESP_TLV -  (60)*/
 
-    wfaStaWpsReadPinResp, /* (WFA_STA_WPS_READ_PIN_RESP_TLV - (61) */
-    wfaStaGenericResp,    /* (WFA_STA_WPS_ENTER_PIN_RESP_TLV -  (62)*/
-    wfaStaGetPskResp,     /* (WFA_STA_GET_PSK_RESP_TLV -  (63)*/
-    wfaStaGenericResp,    /* (WFA_STA_P2P_RESET_RESP_TLV -  (64)*/
+    wfaStaWpsReadPinResp,         /* (WFA_STA_WPS_READ_PIN_RESP_TLV - (61) */
+    wfaStaGenericResp,            /* (WFA_STA_WPS_ENTER_PIN_RESP_TLV -  (62)*/
+    wfaStaGetPskResp,             /* (WFA_STA_GET_PSK_RESP_TLV -  (63)*/
+    wfaStaGenericResp,            /* (WFA_STA_P2P_RESET_RESP_TLV -  (64)*/
 
-    wfaStaWpsReadLabelResp,   /* (WFA_STA_WPS_READ_LABEL_RESP_TLV -(65)  */
-    wfaStaGetP2pIpConfigResp, /* WFA_STA_GET_P2P_IP_CONFIG_RESP_TLV  - (66) */
-    wfaStaGenericResp,        /* WFA_STA_SEND_SERVICE_DISCOVERY_REQ_RESP_TLV (67) */
-    wfaStaGenericResp,        /* (WFA_STA_SEND_P2P_PRESENCE_REQ_RESP_TLV -(68)  */
-    wfaStaGenericResp,        /* WFA_STA_SET_SLEEP_REQ_RESP_TLV (69)*/
-    wfaStaGenericResp,        /* WFA_STA_P2P_SET_OPPORTUNISTIC_PS_TLV (70) */
+    wfaStaWpsReadLabelResp,       /* (WFA_STA_WPS_READ_LABEL_RESP_TLV -(65)  */
+    wfaStaGetP2pIpConfigResp,     /* WFA_STA_GET_P2P_IP_CONFIG_RESP_TLV  - (66) */
+    wfaStaGenericResp,            /* WFA_STA_SEND_SERVICE_DISCOVERY_REQ_RESP_TLV (67) */
+    wfaStaGenericResp,            /* (WFA_STA_SEND_P2P_PRESENCE_REQ_RESP_TLV -(68)  */
+    wfaStaGenericResp,            /* WFA_STA_SET_SLEEP_REQ_RESP_TLV (69)*/
+    wfaStaGenericResp,            /* WFA_STA_P2P_SET_OPPORTUNISTIC_PS_TLV (70) */
 
     wfaStaGenericResp,            /* WFA_STA_ADD_ARP_TABLE_ENTRY_RESP_TLV (71)  */
     wfaStaGenericResp,            /* WFA_STA_P2P_BLOCK_ICMP_RESPONSE_RESP_TLV(72) */
@@ -131,36 +133,36 @@ dutCommandRespFuncPtr wfaCmdRespProcFuncTbl[WFA_STA_RESPONSE_END + 1] = {
     wfaStaGenericResp,            /* 79 */
     wfaStaGetParameterResp,       /* WFA_STA_GET_PARAMETER_RESP_TLV (80) */
 
-    wfaStaGenericResp,      /* WFA_AP_SET_WIRELESS_RESP_TLV (81) */
-    wfaStaGenericResp,      /* WFA_AP_SET_SECURITY_RESP_TLV (82) */
-    wfaStaGenericResp,      /* WFA_AP_SET_REBOOT_RESP_TLV (83) */
-    wfaAPConfigCommitResp,  /* WFA_AP_CONFIG_COMMIT_RESP_TLV (84) */
-    wfaStaGenericResp,      /* WFA_AP_SET_11n_RESP_TLV (85) */
-    wfaStaGenericResp,      /*WFA_AP_RESET_DEFAULT_RESP_TLV (86) */
-    wfaStaGenericResp,      /*WFA_AP_SET_STA_QOS _RESP_TLV (87) */
-    wfaStaGenericResp,      /* WFA_AP_SET_QOS _RESP_TLV (88) */
-    wfaStaGenericResp,      /*WFA_AP_SEND_ADDBA _RESP_TLV (89) */
-    wfaStaGenericResp,      /*WFA_AP_SET_RFEATURE_RESP_TLV (90) */
-    wfaStaGenericResp,      /*WFA_AP_SET_RADIUS _RESP_TLV (91) */
-    wfaStaGenericResp,      /*WFA_AP_SET_11D _RESP_TLV (92) */
-    wfaStaGenericResp,      /* WFA_AP_SET_11N_WIRELESS_RESP_TLV (93)*/
-    wfaStaGenericResp,      /* WFA_AP_SET_PMF_RESP_TLV (94) */
-    wfaApGetMacAddressResp, /*WFA_AP_GET_MACADDRESS_RESP_TLV (95) */
-    wfaStaGenericResp,      /* WFA_AP_DEAUTH_STA_RESP_TLV (96) */
+    wfaStaGenericResp,            /* WFA_AP_SET_WIRELESS_RESP_TLV (81) */
+    wfaStaGenericResp,            /* WFA_AP_SET_SECURITY_RESP_TLV (82) */
+    wfaStaGenericResp,            /* WFA_AP_SET_REBOOT_RESP_TLV (83) */
+    wfaAPConfigCommitResp,        /* WFA_AP_CONFIG_COMMIT_RESP_TLV (84) */
+    wfaStaGenericResp,            /* WFA_AP_SET_11n_RESP_TLV (85) */
+    wfaStaGenericResp,            /*WFA_AP_RESET_DEFAULT_RESP_TLV (86) */
+    wfaStaGenericResp,            /*WFA_AP_SET_STA_QOS _RESP_TLV (87) */
+    wfaStaGenericResp,            /* WFA_AP_SET_QOS _RESP_TLV (88) */
+    wfaStaGenericResp,            /*WFA_AP_SEND_ADDBA _RESP_TLV (89) */
+    wfaStaGenericResp,            /*WFA_AP_SET_RFEATURE_RESP_TLV (90) */
+    wfaStaGenericResp,            /*WFA_AP_SET_RADIUS _RESP_TLV (91) */
+    wfaStaGenericResp,            /*WFA_AP_SET_11D _RESP_TLV (92) */
+    wfaStaGenericResp,            /* WFA_AP_SET_11N_WIRELESS_RESP_TLV (93)*/
+    wfaStaGenericResp,            /* WFA_AP_SET_PMF_RESP_TLV (94) */
+    wfaApGetMacAddressResp,       /*WFA_AP_GET_MACADDRESS_RESP_TLV (95) */
+    wfaStaGenericResp,            /* WFA_AP_DEAUTH_STA_RESP_TLV (96) */
 
-    wfaStaGenericResp,      /*WFA_STA_BSSID_POOL_RESP_TLV  (97) */
-    wfaStaGenericResp,      /* WFA_STA_ADD_CREDENTIAL_RESP_TLV (98) */
-    wfaStaHS2AssocResp,     /*WFA_STA_HS2_ASSOCIATE_RESP_TLV  (99) */
-    wfaStaScanResp,         /* WFA_STA_SCAN_RESP_TLV  (100) */
-    wfaStaGenericResp,      /* WFA_STA_HS2_DEV_SET_PARAMETER_RESP_TLV (101) */
-    wfaStaGenericResp,      /*WFA_STA_OSU_RESP_TLV  (102) */
-    wfaStaGenericResp,      /* WFA_STA_RESET_PARAM_RESP_TLV (103) */
-    wfaStaPolicyUpdateResp, /* WFA_STA_POLICY_UPDATE_RESP_TLV (104) */
-    wfaStaGenericResp,      /* WFA_STA_EXEC_ACTION_RESP_TLV (105) */
-    wfaStaGenericResp,      /* WFA_STA_DEV_CONFIGURE_IE_RESP_TLV (106) */
-    wfaStaGenericResp,      /*WFA_AP_SET_11H _RESP_TLV (107) */
-    wfaStaGenericResp,      /* WFA_STA_RESPONSE_END-RESP_TLV (108) */
-    wfaStaGenericResp,      /* WFA_AP_DEV_EXEC_ACTION_RESP_TLV (109) */
+    wfaStaGenericResp,            /*WFA_STA_BSSID_POOL_RESP_TLV  (97) */
+    wfaStaGenericResp,            /* WFA_STA_ADD_CREDENTIAL_RESP_TLV (98) */
+    wfaStaHS2AssocResp,           /*WFA_STA_HS2_ASSOCIATE_RESP_TLV  (99) */
+    wfaStaScanResp,               /* WFA_STA_SCAN_RESP_TLV  (100) */
+    wfaStaGenericResp,            /* WFA_STA_HS2_DEV_SET_PARAMETER_RESP_TLV (101) */
+    wfaStaGenericResp,            /*WFA_STA_OSU_RESP_TLV  (102) */
+    wfaStaGenericResp,            /* WFA_STA_RESET_PARAM_RESP_TLV (103) */
+    wfaStaPolicyUpdateResp,       /* WFA_STA_POLICY_UPDATE_RESP_TLV (104) */
+    wfaStaGenericResp,            /* WFA_STA_EXEC_ACTION_RESP_TLV (105) */
+    wfaStaGenericResp,            /* WFA_STA_DEV_CONFIGURE_IE_RESP_TLV (106) */
+    wfaStaGenericResp,            /*WFA_AP_SET_11H _RESP_TLV (107) */
+    wfaStaGenericResp,            /* WFA_STA_RESPONSE_END-RESP_TLV (108) */
+    wfaStaGenericResp,            /* WFA_AP_DEV_EXEC_ACTION_RESP_TLV (109) */
 };
 
 extern int gSock, gCaSockfd;
@@ -1385,3 +1387,4 @@ int wfaStaPolicyUpdateResp(BYTE *cmdBuf)
 
     return done;
 }
+#endif

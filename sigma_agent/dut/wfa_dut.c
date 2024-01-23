@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -306,7 +308,7 @@ K_THREAD_STACK_ARRAY_DEFINE(stack, WFA_THREADS_NUM, STACK_SIZE);
 void cmd_wfa_dut(int argc, char **argv)
 {
     WORD locPortNo = 0; /* local control port number                  */
-    int ret = 0;
+    int ret        = 0;
 
     int i = 0;
     pthread_attr_t ptAttr;
@@ -475,3 +477,4 @@ int wfa_dut_cli_init(void)
     }
     return WM_SUCCESS;
 }
+#endif

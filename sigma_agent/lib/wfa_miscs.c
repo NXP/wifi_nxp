@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -202,3 +204,4 @@ int wfa_estimate_timer_latency()
     return latency = (t2.tv_sec - tp2.tv_sec) * 1000000 + (t2.tv_usec - tp2.tv_usec);
 #endif
 }
+#endif

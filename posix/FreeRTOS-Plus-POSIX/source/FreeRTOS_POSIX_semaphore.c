@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /*
  * Amazon FreeRTOS POSIX V1.1.0
  * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -39,25 +41,23 @@
 
 #include "atomic.h"
 
-
 /*-----------------------------------------------------------*/
 
-int sem_destroy( sem_t * sem )
+int sem_destroy(sem_t *sem)
 {
-    sem_internal_t * pxSem = ( sem_internal_t * ) ( sem );
+    sem_internal_t *pxSem = (sem_internal_t *)(sem);
 
     /* Free the resources in use by the semaphore. */
-    vSemaphoreDelete( ( SemaphoreHandle_t ) &pxSem->xSemaphore );
+    vSemaphoreDelete((SemaphoreHandle_t)&pxSem->xSemaphore);
 
     return 0;
 }
 
 /*-----------------------------------------------------------*/
 
-int sem_getvalue( sem_t * sem,
-                  int * sval )
+int sem_getvalue(sem_t *sem, int *sval)
 {
-    sem_internal_t * pxSem = ( sem_internal_t * ) ( sem );
+    sem_internal_t *pxSem = (sem_internal_t *)(sem);
 
     /* Get value does not need atomic operation, since -- Open Group
      * states "the updated value represents an actual semaphore value that
@@ -71,34 +71,32 @@ int sem_getvalue( sem_t * sem,
 
 /*-----------------------------------------------------------*/
 
-int sem_init( sem_t * sem,
-              int pshared,
-              unsigned value )
+int sem_init(sem_t *sem, int pshared, unsigned value)
 {
-    int iStatus = 0;
-    sem_internal_t * pxSem = ( sem_internal_t * ) ( sem );
+    int iStatus           = 0;
+    sem_internal_t *pxSem = (sem_internal_t *)(sem);
 
     /* Silence warnings about unused parameters. */
-    ( void ) pshared;
+    (void)pshared;
 
     /* Check value parameter. */
-    if( value > SEM_VALUE_MAX )
+    if (value > SEM_VALUE_MAX)
     {
-        errno = EINVAL;
+        errno   = EINVAL;
         iStatus = -1;
     }
 
     /* value is guaranteed to not exceed INT32_MAX, which is the default value of SEM_VALUE_MAX (0x7FFFU). */
-    pxSem->value = ( int ) value;
+    pxSem->value = (int)value;
 
     /* Create the FreeRTOS semaphore.
      * This is only used to queue threads when no semaphore is available.
      * Initializing with semaphore initial count zero.
      * This call will not fail because the memory for the semaphore has already been allocated.
      */
-    if( iStatus == 0 )
+    if (iStatus == 0)
     {
-        ( void ) xSemaphoreCreateCountingStatic( SEM_VALUE_MAX, 0, &pxSem->xSemaphore );
+        (void)xSemaphoreCreateCountingStatic(SEM_VALUE_MAX, 0, &pxSem->xSemaphore);
     }
 
     return iStatus;
@@ -106,19 +104,19 @@ int sem_init( sem_t * sem,
 
 /*-----------------------------------------------------------*/
 
-int sem_post( sem_t * sem )
+int sem_post(sem_t *sem)
 {
-    sem_internal_t * pxSem = ( sem_internal_t * ) ( sem );
+    sem_internal_t *pxSem = (sem_internal_t *)(sem);
 
-    int iPreviouValue = Atomic_Increment_u32( ( uint32_t * ) &pxSem->value );
+    int iPreviouValue = Atomic_Increment_u32((uint32_t *)&pxSem->value);
 
     /* If previous semaphore value is equal or larger than zero, there is no
      * thread waiting for this semaphore. Otherwise (<0), call FreeRTOS interface
      * to wake up a thread. */
-    if( iPreviouValue < 0 )
+    if (iPreviouValue < 0)
     {
         /* Give the semaphore using the FreeRTOS API. */
-        ( void ) xSemaphoreGive( ( SemaphoreHandle_t ) &pxSem->xSemaphore );
+        (void)xSemaphoreGive((SemaphoreHandle_t)&pxSem->xSemaphore);
     }
 
     return 0;
@@ -126,40 +124,39 @@ int sem_post( sem_t * sem )
 
 /*-----------------------------------------------------------*/
 
-int sem_timedwait( sem_t * sem,
-                   const struct timespec * abstime )
+int sem_timedwait(sem_t *sem, const struct timespec *abstime)
 {
-    int iStatus = 0;
-    sem_internal_t * pxSem = ( sem_internal_t * ) ( sem );
-    TickType_t xDelay = portMAX_DELAY;
-    int iPreviousValue = Atomic_Decrement_u32( ( uint32_t * ) &pxSem->value );
+    int iStatus           = 0;
+    sem_internal_t *pxSem = (sem_internal_t *)(sem);
+    TickType_t xDelay     = portMAX_DELAY;
+    int iPreviousValue    = Atomic_Decrement_u32((uint32_t *)&pxSem->value);
 
-    if( abstime != NULL )
+    if (abstime != NULL)
     {
         /* If the provided timespec is invalid, still attempt to take the
          * semaphore without blocking, per POSIX spec. */
-        if( UTILS_ValidateTimespec( abstime ) == false )
+        if (UTILS_ValidateTimespec(abstime) == false)
         {
-            xDelay = 0;
+            xDelay  = 0;
             iStatus = EINVAL;
         }
         else
         {
-            struct timespec xCurrentTime = { 0 };
+            struct timespec xCurrentTime = {0};
 
             /* Get current time */
-            if( clock_gettime_p( CLOCK_REALTIME, &xCurrentTime ) != 0 )
+            if (clock_gettime_p(CLOCK_REALTIME, &xCurrentTime) != 0)
             {
                 iStatus = EINVAL;
             }
             else
             {
-                iStatus = UTILS_AbsoluteTimespecToDeltaTicks( abstime, &xCurrentTime, &xDelay );
+                iStatus = UTILS_AbsoluteTimespecToDeltaTicks(abstime, &xCurrentTime, &xDelay);
             }
 
             /* If abstime was in the past, still attempt to take the semaphore without
              * blocking, per POSIX spec. */
-            if( iStatus == ETIMEDOUT )
+            if (iStatus == ETIMEDOUT)
             {
                 xDelay = 0;
             }
@@ -169,7 +166,7 @@ int sem_timedwait( sem_t * sem,
     /* If previous semaphore value is larger than zero, the thread entering this function call
      * can take the semaphore without yielding. Else (<=0), calling into FreeRTOS API to yield.
      */
-    if( iPreviousValue > 0 )
+    if (iPreviousValue > 0)
     {
         /* Under no circumstance shall the function fail with a timeout if the semaphore can be locked immediately. */
         iStatus = 0;
@@ -177,10 +174,9 @@ int sem_timedwait( sem_t * sem,
     else
     {
         /* Take the semaphore using the FreeRTOS API. */
-        if( xSemaphoreTake( ( SemaphoreHandle_t ) &pxSem->xSemaphore,
-                            xDelay ) != pdTRUE )
+        if (xSemaphoreTake((SemaphoreHandle_t)&pxSem->xSemaphore, xDelay) != pdTRUE)
         {
-            if( iStatus == 0 )
+            if (iStatus == 0)
             {
                 errno = ETIMEDOUT;
             }
@@ -202,19 +198,19 @@ int sem_timedwait( sem_t * sem,
 
 /*-----------------------------------------------------------*/
 
-int sem_trywait( sem_t * sem )
+int sem_trywait(sem_t *sem)
 {
     int iStatus = 0;
 
     /* Setting an absolute timeout of 0 (i.e. in the past) will cause sem_timedwait
      * to not block. */
-    struct timespec xTimeout = { 0 };
+    struct timespec xTimeout = {0};
 
-    iStatus = sem_timedwait( sem, &xTimeout );
+    iStatus = sem_timedwait(sem, &xTimeout);
 
     /* POSIX specifies that this function should set errno to EAGAIN and not
      * ETIMEDOUT. */
-    if( ( iStatus == -1 ) && ( errno == ETIMEDOUT ) )
+    if ((iStatus == -1) && (errno == ETIMEDOUT))
     {
         errno = EAGAIN;
     }
@@ -224,9 +220,10 @@ int sem_trywait( sem_t * sem )
 
 /*-----------------------------------------------------------*/
 
-int sem_wait( sem_t * sem )
+int sem_wait(sem_t *sem)
 {
-    return sem_timedwait( sem, NULL );
+    return sem_timedwait(sem, NULL);
 }
 
 /*-----------------------------------------------------------*/
+#endif

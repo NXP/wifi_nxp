@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -610,10 +612,10 @@ void *wfa_wmm_thread(void *thr_param)
     StationProcStatetbl_t curr_state;
 #endif
 
-    //#ifdef WFA_VOICE_EXT
+    // #ifdef WFA_VOICE_EXT
     struct timeval lstime, lrtime;
     // int asn = 1;  /* everytime it starts from 1, and to ++ */
-    //#endif
+    // #endif
 
     wPT_ATTR_INIT(&tattr);
     wPT_ATTR_SETSCH(&tattr, 0); // SCHED_RR);
@@ -641,7 +643,7 @@ void *wfa_wmm_thread(void *thr_param)
     while (1)
     {
         int sleepTotal = 0, sendFailCount = 0;
-        //DPRINT_INFO(WFA_OUT, "wfa_wmm_thread::begin while loop for each send/rcv before mutex lock");
+        // DPRINT_INFO(WFA_OUT, "wfa_wmm_thread::begin while loop for each send/rcv before mutex lock");
 
         pthread_mutex_lock(&my_wmm->thr_flag_mutex);
         /* it needs to reset the thr_flag to wait again */
@@ -1210,3 +1212,4 @@ void *wfa_wmm_thread(void *thr_param)
     /* Delete (destroy) the timer */
     timer_delete(my_wmm->timerid);
 }
+#endif

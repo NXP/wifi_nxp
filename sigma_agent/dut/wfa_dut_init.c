@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -85,3 +87,4 @@ void wfa_dut_init(BYTE **tBuf, BYTE **rBuf, BYTE **paBuf, BYTE **cBuf, struct ti
         exit(1);
     }
 }
+#endif

@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /** @file nxp_gvars.c
  *
  * @brief This file contains WLAN  specific defines etc.
@@ -140,3 +142,4 @@ int ap_use_hostapd            = 0;
 
 int flag        = 0;
 int return_flag = 0;
+#endif

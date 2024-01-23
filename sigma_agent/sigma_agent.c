@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /** @file sigma_agent.h
  *
  *  @brief  This file provides the support for Sigma Agent utility for Wi-F
@@ -43,3 +45,4 @@ int sigma_agent_init(void)
 
     return WM_SUCCESS;
 }
+#endif

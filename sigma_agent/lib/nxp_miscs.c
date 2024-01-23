@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /** @file nxp_miscs.c
  *
  * @brief This file contains WLAN  specific defines etc.
@@ -149,3 +151,4 @@ int configure_he_settings(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     *respLen = WFA_TLV_HDR_LEN + 4;
     return WFA_SUCCESS;
 }
+#endif

@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /*
  * Amazon FreeRTOS POSIX V1.1.0
  * Copyright (C) 2018 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
@@ -43,8 +45,8 @@
 #include "timers.h"
 
 /* Timespec zero check macros. */
-#define TIMESPEC_IS_ZERO( xTimespec )        ( xTimespec.tv_sec == 0 && xTimespec.tv_nsec == 0 ) /**< Check for 0. */
-#define TIMESPEC_IS_NOT_ZERO( xTimespec )    ( !( TIMESPEC_IS_ZERO( xTimespec ) ) )              /**< Check for not 0. */
+#define TIMESPEC_IS_ZERO(xTimespec)     (xTimespec.tv_sec == 0 && xTimespec.tv_nsec == 0) /**< Check for 0. */
+#define TIMESPEC_IS_NOT_ZERO(xTimespec) (!(TIMESPEC_IS_ZERO(xTimespec)))                  /**< Check for not 0. */
 
 /**
  * @brief Internal timer structure.
@@ -58,91 +60,88 @@ typedef struct timer_internal
 
 /*-----------------------------------------------------------*/
 
-void prvTimerCallback( TimerHandle_t xTimerHandle )
+void prvTimerCallback(TimerHandle_t xTimerHandle)
 {
-    timer_internal_t * pxTimer = ( timer_internal_t * ) pvTimerGetTimerID( xTimerHandle );
+    timer_internal_t *pxTimer = (timer_internal_t *)pvTimerGetTimerID(xTimerHandle);
     pthread_t xTimerNotificationThread;
 
     /* The value of the timer ID, set in timer_create, should not be NULL. */
-    configASSERT( pxTimer != NULL );
+    configASSERT(pxTimer != NULL);
 
     /* A value of SIGEV_SIGNAL isn't supported and should not have been successfully
      * set. */
-    configASSERT( pxTimer->xTimerEvent.sigev_notify != SIGEV_SIGNAL );
+    configASSERT(pxTimer->xTimerEvent.sigev_notify != SIGEV_SIGNAL);
 
     /* Update the timer period, which may need to be set to an it_interval
      * argument. This call should not block. */
-    if( pxTimer->xTimerPeriod > 0 )
+    if (pxTimer->xTimerPeriod > 0)
     {
-        xTimerChangePeriod( xTimerHandle, pxTimer->xTimerPeriod, 0 );
+        xTimerChangePeriod(xTimerHandle, pxTimer->xTimerPeriod, 0);
     }
 
     /* Create the timer notification thread if requested. */
-    if( pxTimer->xTimerEvent.sigev_notify == SIGEV_THREAD )
+    if (pxTimer->xTimerEvent.sigev_notify == SIGEV_THREAD)
     {
         /* if the user has provided thread attributes, create a thread
          * with the provided attributes. Otherwise dispatch callback directly */
-        if( pxTimer->xTimerEvent.sigev_notify_attributes == NULL )
+        if (pxTimer->xTimerEvent.sigev_notify_attributes == NULL)
         {
-            ( *pxTimer->xTimerEvent.sigev_notify_function )( pxTimer->xTimerEvent.sigev_value );
+            (*pxTimer->xTimerEvent.sigev_notify_function)(pxTimer->xTimerEvent.sigev_value);
         }
         else
         {
-            ( void ) pthread_create( &xTimerNotificationThread,
-                                     pxTimer->xTimerEvent.sigev_notify_attributes,
-                                     ( void * ( * )( void * ) )pxTimer->xTimerEvent.sigev_notify_function,
-                                     pxTimer->xTimerEvent.sigev_value.sival_ptr );
+            (void)pthread_create(&xTimerNotificationThread, pxTimer->xTimerEvent.sigev_notify_attributes,
+                                 (void *(*)(void *))pxTimer->xTimerEvent.sigev_notify_function,
+                                 pxTimer->xTimerEvent.sigev_value.sival_ptr);
         }
     }
 }
 
 /*-----------------------------------------------------------*/
 
-int timer_create( clockid_t clockid,
-                  struct sigevent * evp,
-                  timer_t * timerid )
+int timer_create(clockid_t clockid, struct sigevent *evp, timer_t *timerid)
 {
-    int iStatus = 0;
-    timer_internal_t * pxTimer = NULL;
+    int iStatus               = 0;
+    timer_internal_t *pxTimer = NULL;
 
     /* Silence warnings about unused parameters. */
-    ( void ) clockid;
+    (void)clockid;
 
     /* POSIX specifies that when evp is NULL, the behavior shall be as is
      * sigev_notify is SIGEV_SIGNAL. SIGEV_SIGNAL is currently not supported. */
-    if( ( evp == NULL ) || ( evp->sigev_notify == SIGEV_SIGNAL ) )
+    if ((evp == NULL) || (evp->sigev_notify == SIGEV_SIGNAL))
     {
-        errno = ENOTSUP;
+        errno   = ENOTSUP;
         iStatus = -1;
     }
 
     /* Allocate memory for a new timer object. */
-    if( iStatus == 0 )
+    if (iStatus == 0)
     {
-        pxTimer = pvPortMalloc( sizeof( timer_internal_t ) );
+        pxTimer = pvPortMalloc(sizeof(timer_internal_t));
 
-        if( pxTimer == NULL )
+        if (pxTimer == NULL)
         {
-            errno = EAGAIN;
+            errno   = EAGAIN;
             iStatus = -1;
         }
     }
 
-    if( iStatus == 0 )
+    if (iStatus == 0)
     {
         /* Copy the event notification structure and set the current timer period. */
-        pxTimer->xTimerEvent = *evp;
+        pxTimer->xTimerEvent  = *evp;
         pxTimer->xTimerPeriod = 0;
 
         /* Create a new FreeRTOS timer. This call will not fail because the
          * memory for it has already been allocated, so the output parameter is
          * also set. */
-        *timerid = ( timer_t ) xTimerCreateStatic( posixconfigTIMER_NAME,    /* Timer name. */
-                                                   portMAX_DELAY,            /* Initial timer period. Timers are created disarmed. */
-                                                   pdFALSE,                  /* Don't auto-reload timer. */
-                                                   ( void * ) pxTimer,       /* Timer id. */
-                                                   prvTimerCallback,         /* Timer expiration callback. */
-                                                   &pxTimer->xTimerBuffer ); /* Pre-allocated memory for timer. */
+        *timerid = (timer_t)xTimerCreateStatic(posixconfigTIMER_NAME, /* Timer name. */
+                                               portMAX_DELAY,   /* Initial timer period. Timers are created disarmed. */
+                                               pdFALSE,         /* Don't auto-reload timer. */
+                                               (void *)pxTimer, /* Timer id. */
+                                               prvTimerCallback,        /* Timer expiration callback. */
+                                               &pxTimer->xTimerBuffer); /* Pre-allocated memory for timer. */
     }
 
     return iStatus;
@@ -150,85 +149,82 @@ int timer_create( clockid_t clockid,
 
 /*-----------------------------------------------------------*/
 
-int timer_delete( timer_t timerid )
+int timer_delete(timer_t timerid)
 {
     TimerHandle_t xTimerHandle = timerid;
-    timer_internal_t * pxTimer = ( timer_internal_t * ) pvTimerGetTimerID( xTimerHandle );
+    timer_internal_t *pxTimer  = (timer_internal_t *)pvTimerGetTimerID(xTimerHandle);
 
     /* The value of the timer ID, set in timer_create, should not be NULL. */
-    configASSERT( pxTimer != NULL );
+    configASSERT(pxTimer != NULL);
 
     /* Stop the FreeRTOS timer. Because the timer is statically allocated, no call
      * to xTimerDelete is necessary. The timer is stopped so that it's not referenced
      * anywhere. xTimerStop will not fail when it has unlimited block time. */
-    ( void ) xTimerStop( xTimerHandle, portMAX_DELAY );
+    (void)xTimerStop(xTimerHandle, portMAX_DELAY);
 
     /* Wait until the timer stop command is processed. */
-    while( xTimerIsTimerActive( xTimerHandle ) == pdTRUE )
+    while (xTimerIsTimerActive(xTimerHandle) == pdTRUE)
     {
-        vTaskDelay( 1 );
+        vTaskDelay(1);
     }
 
     /* Free the memory in use by the timer. */
-    vPortFree( pxTimer );
+    vPortFree(pxTimer);
 
     return 0;
 }
 
 /*-----------------------------------------------------------*/
 
-int timer_getoverrun( timer_t timerid )
+int timer_getoverrun(timer_t timerid)
 {
     /* Silence warnings about unused parameters. */
-    ( void ) timerid;
+    (void)timerid;
 
     return 0;
 }
 
 /*-----------------------------------------------------------*/
 
-int timer_settime( timer_t timerid,
-                   int flags,
-                   const struct itimerspec * value,
-                   struct itimerspec * ovalue )
+int timer_settime(timer_t timerid, int flags, const struct itimerspec *value, struct itimerspec *ovalue)
 {
-    int iStatus = 0;
-    TimerHandle_t xTimerHandle = timerid;
-    timer_internal_t * pxTimer = ( timer_internal_t * ) pvTimerGetTimerID( xTimerHandle );
+    int iStatus                     = 0;
+    TimerHandle_t xTimerHandle      = timerid;
+    timer_internal_t *pxTimer       = (timer_internal_t *)pvTimerGetTimerID(xTimerHandle);
     TickType_t xNextTimerExpiration = 0, xTimerExpirationPeriod = 0;
     BaseType_t xTimerCommandSent = pdFAIL;
 
     /* Validate the value argument, but only if the timer isn't being disarmed. */
-    if( TIMESPEC_IS_NOT_ZERO( value->it_value ) )
+    if (TIMESPEC_IS_NOT_ZERO(value->it_value))
     {
-        if( ( UTILS_ValidateTimespec( &value->it_interval ) == false ) ||
-            ( UTILS_ValidateTimespec( &value->it_value ) == false ) )
+        if ((UTILS_ValidateTimespec(&value->it_interval) == false) ||
+            (UTILS_ValidateTimespec(&value->it_value) == false))
         {
-            errno = EINVAL;
+            errno   = EINVAL;
             iStatus = -1;
         }
     }
 
     /* Set ovalue, if given. */
-    if( ovalue != NULL )
+    if (ovalue != NULL)
     {
-        ( void ) timer_gettime( timerid, ovalue );
+        (void)timer_gettime(timerid, ovalue);
     }
 
     /* Stop the timer if it's currently active. */
-    if( ( iStatus == 0 ) && xTimerIsTimerActive( xTimerHandle ) )
+    if ((iStatus == 0) && xTimerIsTimerActive(xTimerHandle))
     {
-        ( void ) xTimerStop( xTimerHandle, portMAX_DELAY );
+        (void)xTimerStop(xTimerHandle, portMAX_DELAY);
     }
 
     /* Only restart the timer if it_value is not zero. */
-    if( ( iStatus == 0 ) && TIMESPEC_IS_NOT_ZERO( value->it_value ) )
+    if ((iStatus == 0) && TIMESPEC_IS_NOT_ZERO(value->it_value))
     {
         /* Convert it_interval to ticks, but only if it_interval is not 0. If
          * it_interval is 0, then the timer is not periodic. */
-        if( TIMESPEC_IS_NOT_ZERO( value->it_interval ) )
+        if (TIMESPEC_IS_NOT_ZERO(value->it_interval))
         {
-            ( void ) UTILS_TimespecToTicks( &value->it_interval, &xTimerExpirationPeriod );
+            (void)UTILS_TimespecToTicks(&value->it_interval, &xTimerExpirationPeriod);
         }
 
         /* Set the new timer period. A non-periodic timer will have its period set
@@ -237,29 +233,30 @@ int timer_settime( timer_t timerid,
 
         /* Convert it_value to ticks, but only if it_value is not 0. If it_value
          * is 0, then the timer will remain disarmed. */
-        if( TIMESPEC_IS_NOT_ZERO( value->it_value ) )
+        if (TIMESPEC_IS_NOT_ZERO(value->it_value))
         {
             /* Absolute timeout. */
-            if( ( flags & TIMER_ABSTIME ) == TIMER_ABSTIME )
+            if ((flags & TIMER_ABSTIME) == TIMER_ABSTIME)
             {
-                struct timespec xCurrentTime = { 0 };
+                struct timespec xCurrentTime = {0};
 
                 /* Get current time */
-                if( clock_gettime_p( CLOCK_REALTIME, &xCurrentTime ) != 0 )
+                if (clock_gettime_p(CLOCK_REALTIME, &xCurrentTime) != 0)
                 {
                     iStatus = EINVAL;
                 }
                 else
                 {
-                    iStatus = UTILS_AbsoluteTimespecToDeltaTicks( &value->it_value, &xCurrentTime, &xNextTimerExpiration );
+                    iStatus =
+                        UTILS_AbsoluteTimespecToDeltaTicks(&value->it_value, &xCurrentTime, &xNextTimerExpiration);
                 }
 
                 /* Make sure xNextTimerExpiration is zero in case we got negative time difference */
-                if( iStatus != 0 )
+                if (iStatus != 0)
                 {
                     xNextTimerExpiration = 0;
 
-                    if( iStatus == ETIMEDOUT )
+                    if (iStatus == ETIMEDOUT)
                     {
                         /* Set Status to 0 as absolute time is past is treated as expiry but not an error */
                         iStatus = 0;
@@ -269,27 +266,27 @@ int timer_settime( timer_t timerid,
             /* Relative timeout. */
             else
             {
-                ( void ) UTILS_TimespecToTicks( &value->it_value, &xNextTimerExpiration );
+                (void)UTILS_TimespecToTicks(&value->it_value, &xNextTimerExpiration);
             }
         }
 
         /* If xNextTimerExpiration is still 0, that means that it_value specified
          * an absolute timeout in the past. Per POSIX spec, a notification should be
          * triggered immediately. */
-        if( xNextTimerExpiration == 0 )
+        if (xNextTimerExpiration == 0)
         {
-            prvTimerCallback( xTimerHandle );
+            prvTimerCallback(xTimerHandle);
         }
         else
         {
             /* Set the timer to expire at the it_value, then start it. */
-            ( void ) xTimerChangePeriod( xTimerHandle, xNextTimerExpiration, portMAX_DELAY );
-            xTimerCommandSent = xTimerStart( xTimerHandle, xNextTimerExpiration );
+            (void)xTimerChangePeriod(xTimerHandle, xNextTimerExpiration, portMAX_DELAY);
+            xTimerCommandSent = xTimerStart(xTimerHandle, xNextTimerExpiration);
 
             /* Wait until the timer start command is processed. */
-            while( ( xTimerCommandSent != pdFAIL ) && ( xTimerIsTimerActive( xTimerHandle ) == pdFALSE ) )
+            while ((xTimerCommandSent != pdFAIL) && (xTimerIsTimerActive(xTimerHandle) == pdFALSE))
             {
-                vTaskDelay( 1 );
+                vTaskDelay(1);
             }
         }
     }
@@ -299,35 +296,34 @@ int timer_settime( timer_t timerid,
 
 /*-----------------------------------------------------------*/
 
-int timer_gettime( timer_t timerid,
-                   struct itimerspec * value )
+int timer_gettime(timer_t timerid, struct itimerspec *value)
 {
-    TimerHandle_t xTimerHandle = timerid;
-    timer_internal_t * pxTimer = ( timer_internal_t * ) pvTimerGetTimerID( xTimerHandle );
-    TickType_t xNextExpirationTime = xTimerGetExpiryTime( xTimerHandle ) - xTaskGetTickCount(),
+    TimerHandle_t xTimerHandle        = timerid;
+    timer_internal_t *pxTimer         = (timer_internal_t *)pvTimerGetTimerID(xTimerHandle);
+    TickType_t xNextExpirationTime    = xTimerGetExpiryTime(xTimerHandle) - xTaskGetTickCount(),
                xTimerExpirationPeriod = pxTimer->xTimerPeriod;
 
     /* Set it_value only if the timer is armed. Otherwise, set it to 0. */
-    if( xTimerIsTimerActive( xTimerHandle ) != pdFALSE )
+    if (xTimerIsTimerActive(xTimerHandle) != pdFALSE)
     {
-        value->it_value.tv_sec = ( time_t ) ( xNextExpirationTime / configTICK_RATE_HZ );
-        value->it_value.tv_nsec = ( long ) ( ( xNextExpirationTime % configTICK_RATE_HZ ) * NANOSECONDS_PER_TICK );
+        value->it_value.tv_sec  = (time_t)(xNextExpirationTime / configTICK_RATE_HZ);
+        value->it_value.tv_nsec = (long)((xNextExpirationTime % configTICK_RATE_HZ) * NANOSECONDS_PER_TICK);
     }
     else
     {
-        value->it_value.tv_sec = 0;
+        value->it_value.tv_sec  = 0;
         value->it_value.tv_nsec = 0;
     }
 
     /* Set it_interval only if the timer is periodic. Otherwise, set it to 0. */
-    if( xTimerExpirationPeriod != portMAX_DELAY )
+    if (xTimerExpirationPeriod != portMAX_DELAY)
     {
-        value->it_interval.tv_sec = ( time_t ) ( xTimerExpirationPeriod / configTICK_RATE_HZ );
-        value->it_interval.tv_nsec = ( long ) ( ( xTimerExpirationPeriod % configTICK_RATE_HZ ) * NANOSECONDS_PER_TICK );
+        value->it_interval.tv_sec  = (time_t)(xTimerExpirationPeriod / configTICK_RATE_HZ);
+        value->it_interval.tv_nsec = (long)((xTimerExpirationPeriod % configTICK_RATE_HZ) * NANOSECONDS_PER_TICK);
     }
     else
     {
-        value->it_interval.tv_sec = 0;
+        value->it_interval.tv_sec  = 0;
         value->it_interval.tv_nsec = 0;
     }
 
@@ -335,3 +331,4 @@ int timer_gettime( timer_t timerid,
 }
 
 /*-----------------------------------------------------------*/
+#endif

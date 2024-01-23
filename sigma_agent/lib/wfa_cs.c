@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
 Copyright (c) 2016 Wi-Fi Alliance.  All Rights Reserved
 
@@ -37,11 +39,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-//#include <sys/socket.h>
-//#include <arpa/inet.h>
-//#include <linux/types.h>
-//#include <linux/socket.h>
-//#include <poll.h>
+// #include <sys/socket.h>
+// #include <arpa/inet.h>
+// #include <linux/types.h>
+// #include <linux/socket.h>
+// #include <poll.h>
 #include <wlan.h>
 #include <wifi.h>
 #include <wifi-decl.h>
@@ -69,7 +71,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define STA_NET_NAME "dut_sta"
 
 /* Some device may only support UDP ECHO, activate this line */
-//#define WFA_PING_UDP_ECHO_ONLY 1
+// #define WFA_PING_UDP_ECHO_ONLY 1
 
 #define WFA_ENABLED 1
 
@@ -85,7 +87,7 @@ int sret = 0;
 
 extern char e2eResults[];
 
-//FILE *e2efp = NULL;
+// FILE *e2efp = NULL;
 int chk_ret_status()
 {
     char *ret = getenv(WFA_RET_ENV);
@@ -204,9 +206,9 @@ int wfaStaAssociate(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
  */
 int wfaStaReAssociate(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *reassoc            = (dutCommand_t *)caCmdBuf;
+    // dutCommand_t *reassoc            = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *staReAssocResp = &gGenericResp;
-    //char *ssid                       = (char *)reassoc->cmdsu.ssid;
+    // char *ssid                       = (char *)reassoc->cmdsu.ssid;
 
     DPRINT_INFO(WFA_OUT, "entering wfaStaReassociate ...");
 
@@ -406,7 +408,7 @@ int wfaStaGetIpConfig(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     sprintf(ifinfo->dns[0], "%s", inet_ntoa(dns1));
     sprintf(ifinfo->dns[1], "%s", inet_ntoa(dns2));
 #elif CONFIG_ZEPHYR
-    struct in_addr ip, nm;//, dns1, dns2;
+    struct in_addr ip, nm; //, dns1, dns2;
 
     ip.s_addr = addr->ipv4.address;
     nm.s_addr = addr->ipv4.netmask;
@@ -868,8 +870,8 @@ int wfaStaSetSecurity(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     char *ssid                = sec->ssid;
     char *passphrase          = sec->secu.passphrase;
     // char *encrptype = sec->encpType;
-    //char *keyMgmtType = sec->keyMgmtType;
-    int ret           = -WM_FAIL, length;
+    // char *keyMgmtType = sec->keyMgmtType;
+    int ret = -WM_FAIL, length;
     struct wlan_network net;
 
     DPRINT_INFO(WFA_OUT, "\nInfo: gname => %s\n", gname);
@@ -1527,7 +1529,7 @@ int wfaDeviceGetInfo(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     /*a vendor can fill in the proper info or anything non-disclosure */
     //    caDeviceGetInfoResp_t dinfo = {"WFA Lab", "DemoUnit", WFA_SYSTEM_VER};
     caDeviceGetInfoResp_t dinfo = {"NXP", "NXPSoC", "fw_version"};
-    char *version_str;//, *pos;
+    char *version_str; //, *pos;
     char version[WFA_VERNAM_LEN];
 
     DPRINT_INFO(WFA_OUT, "Entering wfaDeviceGetInfo ...");
@@ -1539,7 +1541,7 @@ int wfaDeviceGetInfo(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
     strcpy(version, version_str);
 
-    //pos = strtok(version, ",");
+    // pos = strtok(version, ",");
 
     memset(&dinfo, 0, sizeof(caDeviceGetInfoResp_t));
 
@@ -1870,7 +1872,7 @@ int wfaStaUpload(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
     caStaUpload_t *upload        = &((dutCommand_t *)caCmdBuf)->cmdsu.upload;
     dutCmdResponse_t *upLoadResp = &gGenericResp;
-//    caStaUploadResp_t *upld      = &upLoadResp->cmdru.uld;
+    //    caStaUploadResp_t *upld      = &upLoadResp->cmdru.uld;
 
     if (upload->type == WFA_UPLOAD_VHSO_RPT)
     {
@@ -2516,8 +2518,8 @@ int wfaStaDevSendFrame(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     dutCommand_t *cmd             = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *devSendResp = &gGenericResp;
     caStaDevSendFrame_t *sf       = &cmd->cmdsu.sf;
-    //int ret;
-    //FILE *fp;
+    // int ret;
+    // FILE *fp;
     char file_path[128];
 
     memset(file_path, 0, sizeof(file_path));
@@ -2720,15 +2722,15 @@ int wfaStaDevSendFrame(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
             }
             else if (hs2->neighSolicitReq)
             {
-                //char ipv6addr[WFA_IP_V6_ADDR_STR_LEN];
+                // char ipv6addr[WFA_IP_V6_ADDR_STR_LEN];
             }
             else if (hs2->arpProbe)
             {
-                //char ipv4addr[16] = {0};
+                // char ipv4addr[16] = {0};
             }
             else if (hs2->arpAnnounce)
             {
-                //char ipv4addr[16];
+                // char ipv4addr[16];
             }
             else
             {
@@ -2795,7 +2797,7 @@ int wfaExecuteCLI(char *CLI)
 
 void wfaSendPing(tgPingStart_t *staPing, float *interval, int streamid)
 {
-    //tgStream_t *myStream;
+    // tgStream_t *myStream;
     int tos = -1;
 //    char cmdStr[256];
 //    char *addr = staPing->dipaddr;
@@ -3806,12 +3808,12 @@ int wfaStaReinvokeWfdSession(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBu
 int wfaStaGetParameter(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
     dutCmdResponse_t infoResp;
-    //dutCmdResponse_t *getrssiResp      = &gGenericResp;
-    //dutCommand_t *getrssi              = (dutCommand_t *)caCmdBuf;
+    // dutCmdResponse_t *getrssiResp      = &gGenericResp;
+    // dutCommand_t *getrssi              = (dutCommand_t *)caCmdBuf;
     caStaGetParameter_t *staGetrssi    = (caStaGetParameter_t *)caCmdBuf; // uncomment and use it
     caStaGetParameterResp_t *paramList = &infoResp.cmdru.getParamValue;
 
-    //int ret = -WM_FAIL;
+    // int ret = -WM_FAIL;
     struct wlan_network net;
 
     PRINTF("\n Entry wfaStaGetParameter...\n");
@@ -3850,7 +3852,7 @@ int wfaStaExecAction(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
     caStaExecAction_t *execAction    = (caStaExecAction_t *)caCmdBuf;
     dutCmdResponse_t *execActionResp = &gGenericResp;
-    //int ret;
+    // int ret;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaExecAction ...\n");
 
@@ -3871,7 +3873,7 @@ int wfaStaExecAction(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaStaBssidPool(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *disc                 = (dutCommand_t *)caCmdBuf;
+    // dutCommand_t *disc                 = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *staBssidPoolResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaBssidPool ...\n");
@@ -3884,8 +3886,8 @@ int wfaStaBssidPool(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaStaAddCredential(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *setHS2 = (dutCommand_t *)caCmdBuf;
-    //caSetHS2_t *pHS2param;
+    // dutCommand_t *setHS2 = (dutCommand_t *)caCmdBuf;
+    // caSetHS2_t *pHS2param;
     dutCmdResponse_t *staSetHS2Resp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaAddCredential ...\n");
@@ -3898,7 +3900,7 @@ int wfaStaAddCredential(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaStaHS2Associate(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *assoc            = (dutCommand_t *)caCmdBuf;
+    // dutCommand_t *assoc            = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *staAssocResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaHS2Associate ...\n");
@@ -3911,8 +3913,8 @@ int wfaStaHS2Associate(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaStascan(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *stascan = (dutCommand_t *)caCmdBuf;
-    // caStaScan_t  *pStaScanparam;
+    // dutCommand_t *stascan = (dutCommand_t *)caCmdBuf;
+    //  caStaScan_t  *pStaScanparam;
     //	dutCmdResponse_t * staStascanResp= &gGenericResp;
 
     // DD--R23-MBSSID Working PARAMS added
@@ -3921,7 +3923,7 @@ int wfaStascan(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     //	caStaMBSSSCANResp_t *paramList = &infoResp.cmdru.getMBSS_SCAN_RES;
 
     int ret = -WM_FAIL;
-    //struct wlan_network network;
+    // struct wlan_network network;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaScan ...\n");
 
@@ -3971,8 +3973,8 @@ int wfaStascan(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfadevSetParameter(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *cmd = (dutCommand_t *)caCmdBuf;
-    //cadevSetParm_t *pdevsetparm;
+    // dutCommand_t *cmd = (dutCommand_t *)caCmdBuf;
+    // cadevSetParm_t *pdevsetparm;
     dutCmdResponse_t *devsetparmResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfadevSetParameter ...\n");
@@ -3985,7 +3987,7 @@ int wfadevSetParameter(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaStaResetParm(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *ResetParm            = (dutCommand_t *)caCmdBuf;
+    // dutCommand_t *ResetParm            = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *staResetParmResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaResetParm ...\n");
@@ -3998,7 +4000,7 @@ int wfaStaResetParm(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaStaPolicyUpdate(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *policy_update        = (dutCommand_t *)caCmdBuf;
+    // dutCommand_t *policy_update        = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *staResetParmResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaPolicyUpdate ...\n");
@@ -4010,7 +4012,7 @@ int wfaStaPolicyUpdate(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 }
 int wfaStaDevConfigureIe(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //dutCommand_t *config_ie                 = (dutCommand_t *)caCmdBuf;
+    // dutCommand_t *config_ie                 = (dutCommand_t *)caCmdBuf;
     dutCmdResponse_t *staDevConfigureIeResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaStaDevConfigureIe ...\n");
@@ -4037,7 +4039,7 @@ int wfaDevExecAction(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSet11h(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSet11h_t *apSet11h         = (caAPSet11h_t *)caCmdBuf;
+    // caAPSet11h_t *apSet11h         = (caAPSet11h_t *)caCmdBuf;
     dutCmdResponse_t *apSet11hResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaAPSet11h ...\n");
@@ -4050,8 +4052,8 @@ int wfaAPSet11h(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSetWireless(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetWireless_t *set_wireless_params = (caAPSetWireless_t *)caCmdBuf;
-    dutCmdResponse_t *apSetWirelessResp    = &gGenericResp;
+    // caAPSetWireless_t *set_wireless_params = (caAPSetWireless_t *)caCmdBuf;
+    dutCmdResponse_t *apSetWirelessResp = &gGenericResp;
 
     DPRINT_INFO(WFA_OUT, "Entering wfaAPSetWireless ...\n");
 
@@ -4063,7 +4065,7 @@ int wfaAPSetWireless(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSetSecurity(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetSecurity_t *apSecurity       = (caAPSetSecurity_t *)caCmdBuf;
+    // caAPSetSecurity_t *apSecurity       = (caAPSetSecurity_t *)caCmdBuf;
     dutCmdResponse_t *apSetSecurityResp = &gGenericResp;
 
     printf("\nEntering wfaAPSetSecurity\n");
@@ -4076,7 +4078,7 @@ int wfaAPSetSecurity(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPConfigCommit(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPConfigCommit_t *apConfigCommit   = (caAPConfigCommit_t *)caCmdBuf;
+    // caAPConfigCommit_t *apConfigCommit   = (caAPConfigCommit_t *)caCmdBuf;
     dutCmdResponse_t *apConfigCommitResp = &gGenericResp;
 
     printf("\nEntering wfaAPConfigCommit...\n");
@@ -4089,8 +4091,8 @@ int wfaAPConfigCommit(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPReboot(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetSecurity_t *apSecurity  = (caAPSetSecurity_t *)caCmdBuf;
-    //char *ifname                   = apSecurity->intf;
+    // caAPSetSecurity_t *apSecurity  = (caAPSetSecurity_t *)caCmdBuf;
+    // char *ifname                   = apSecurity->intf;
     dutCmdResponse_t *apRebootResp = &gGenericResp;
 
     printf("\nEntering wfaAPReboot\n");
@@ -4103,7 +4105,7 @@ int wfaAPReboot(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSet11n(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSet11n_t *apSet11n         = (caAPSet11n_t *)caCmdBuf;
+    // caAPSet11n_t *apSet11n         = (caAPSet11n_t *)caCmdBuf;
     dutCmdResponse_t *apSet11nResp = &gGenericResp;
 
     printf("\nEntering wfaAPSet11n\n");
@@ -4116,7 +4118,7 @@ int wfaAPSet11n(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPResetDefault(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPResetDefault_t *apResetDefault   = (caAPResetDefault_t *)caCmdBuf;
+    // caAPResetDefault_t *apResetDefault   = (caAPResetDefault_t *)caCmdBuf;
     dutCmdResponse_t *apResetDefaultResp = &gGenericResp;
     apResetDefaultResp->status           = STATUS_COMPLETE;
 
@@ -4129,7 +4131,7 @@ int wfaAPResetDefault(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSetStaQos(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetStaQos_t *apSetStaQos      = (caAPSetStaQos_t *)caCmdBuf;
+    // caAPSetStaQos_t *apSetStaQos      = (caAPSetStaQos_t *)caCmdBuf;
     dutCmdResponse_t *apSetStaQosResp = &gGenericResp;
 
     printf("\nEntering wfaAPSetStaQos\n");
@@ -4142,8 +4144,8 @@ int wfaAPSetStaQos(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSetAPQos(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetAPQos_t *apSetAPQos       = (caAPSetAPQos_t *)caCmdBuf;
-    //char *ifname                     = apSetAPQos->intf;
+    // caAPSetAPQos_t *apSetAPQos       = (caAPSetAPQos_t *)caCmdBuf;
+    // char *ifname                     = apSetAPQos->intf;
     dutCmdResponse_t *apSetAPQosResp = &gGenericResp;
 
     printf("\nEntering wfaAPSetAPQos\n");
@@ -4156,8 +4158,8 @@ int wfaAPSetAPQos(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSendADDBAReq(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSendADDBAReq_t *apSendADDBAReq   = (caAPSendADDBAReq_t *)caCmdBuf;
-    //char *ifname                         = apSendADDBAReq->intf;
+    // caAPSendADDBAReq_t *apSendADDBAReq   = (caAPSendADDBAReq_t *)caCmdBuf;
+    // char *ifname                         = apSendADDBAReq->intf;
     dutCmdResponse_t *apSendADDBAReqResp = &gGenericResp;
 
     printf("\nEntering wfaAPSendADDBAReq\n");
@@ -4170,7 +4172,7 @@ int wfaAPSendADDBAReq(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSetRfeature(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetRfeature_t *apSetRfeature    = (caAPSetRfeature_t *)caCmdBuf;
+    // caAPSetRfeature_t *apSetRfeature    = (caAPSetRfeature_t *)caCmdBuf;
     dutCmdResponse_t *apSetRfeatureResp = &gGenericResp;
 
     printf("\nEntering wfaiAPSetRfeature\n");
@@ -4183,7 +4185,7 @@ int wfaAPSetRfeature(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSetRadius(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSetRadius_t *apSetRadius      = (caAPSetRadius_t *)caCmdBuf;
+    // caAPSetRadius_t *apSetRadius      = (caAPSetRadius_t *)caCmdBuf;
     dutCmdResponse_t *apSetRadiusResp = &gGenericResp;
 
     printf("\nEntering wfaAPSetRadius\n");
@@ -4197,7 +4199,7 @@ int wfaAPSetRadius(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaAPSet11d(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caAPSet11d_t *apSet11d         = (caAPSet11d_t *)caCmdBuf;
+    // caAPSet11d_t *apSet11d         = (caAPSet11d_t *)caCmdBuf;
     dutCmdResponse_t *apSet11dResp = &gGenericResp;
 
     printf("\nEntering wfaAPSet11d\n");
@@ -4210,7 +4212,7 @@ int wfaAPSet11d(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaApSet11nWireless(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caApSet11nWireless_t *set11n = (caApSet11nWireless_t *)caCmdBuf;
+    // caApSet11nWireless_t *set11n = (caApSet11nWireless_t *)caCmdBuf;
     dutCmdResponse_t infoResp;
     printf("\nEntering wfaApSet11nWireless\n");
 
@@ -4222,7 +4224,7 @@ int wfaApSet11nWireless(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaApSetPmf(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caApSetPmf_t *setpmf = (caApSetPmf_t *)caCmdBuf;
+    // caApSetPmf_t *setpmf = (caApSetPmf_t *)caCmdBuf;
     dutCmdResponse_t infoResp;
     printf("\nEntering wfaApSetPmf\n");
 
@@ -4234,7 +4236,7 @@ int wfaApSetPmf(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaApGetMacAddress(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caApGetMacAddress_t *getMac = (caApGetMacAddress_t *)caCmdBuf;
+    // caApGetMacAddress_t *getMac = (caApGetMacAddress_t *)caCmdBuf;
     dutCmdResponse_t infoResp;
     printf("\nEntering wfaApGetMacAddress\n");
 
@@ -4246,7 +4248,7 @@ int wfaApGetMacAddress(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
 int wfaApDeauthSta(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 {
-    //caApDeauthSta_t *deauthsta = (caApDeauthSta_t *)caCmdBuf;
+    // caApDeauthSta_t *deauthsta = (caApDeauthSta_t *)caCmdBuf;
     dutCmdResponse_t infoResp;
     printf("\nEntering wfaApDeauthSta\n");
 
@@ -4255,3 +4257,4 @@ int wfaApDeauthSta(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
     *respLen = WFA_TLV_HDR_LEN + sizeof(infoResp);
     return WFA_SUCCESS;
 }
+#endif

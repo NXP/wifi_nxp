@@ -1,3 +1,5 @@
+#ifdef CONFIG_SIGMA_AGENT
+
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -158,3 +160,4 @@ BOOL wfaGetTLVvalue(int value_len, BYTE *tlv_data, BYTE *pvalue)
 
     return WFA_SUCCESS;
 }
+#endif
