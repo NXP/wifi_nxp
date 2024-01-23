@@ -7660,6 +7660,14 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
         PRINTF("Failed to initialize WLAN Enhanced CLIs\r\n");
         return 0;
     }
+#ifdef CONFIG_WPA_SUPP
+    ret = wpa_cli_init();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Failed to initialize WPA SUPP CLIs\r\n");
+        return 0;
+    }
+#endif
 #if defined(CONFIG_HOST_SLEEP) && !defined(CONFIG_ZEPHYR)
     ret = host_sleep_cli_init();
     if (ret != WM_SUCCESS)
