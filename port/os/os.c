@@ -14,6 +14,7 @@
 
 #if defined(SDK_OS_FREE_RTOS)
 
+#ifdef CONFIG_SIGMA_AGENT
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 /* configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
 implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
@@ -67,6 +68,7 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
     configTIMER_TASK_STACK_DEPTH is specified in words, not bytes. */
     *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
+#endif
 #endif
 
 /** Check if cpu is in isr context

@@ -259,7 +259,6 @@ middleware.wifi.wifidriver:
     - source: certs/ca-cert.h
     - source: certs/client-cert.h
     - source: certs/client-key.h
-    - source: certs/pac-data.h
     - source: certs/server-cert.h
     - source: certs/server-key.h
     - source: certs/dh-param.h
@@ -357,6 +356,58 @@ middleware.wifi.sdio:
     allOf:
     - middleware.wifi.mlan_sdio
     - middleware.wifi.wifidriver
+middleware.wifi.sigma_agent_lib:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi_nxp
+    files:
+    - source: libs/cm7f/armgcc/release/libposix.a
+      cores: cm7f
+      toolchains: armgcc mcux
+      attribute: extra-libraries
+    - source: libs/cm7f/armgcc/release/libsigma_agent.a
+      cores: cm7f
+      toolchains: armgcc mcux
+      attribute: extra-libraries
+    - source: libs/cm33f/armgcc/release/libposix.a
+      cores: cm33f cm33
+      toolchains: armgcc mcux
+      attribute: extra-libraries
+    - source: libs/cm33f/armgcc/release/libsigma_agent.a
+      cores: cm33f cm33
+      toolchains: armgcc mcux
+      attribute: extra-libraries
+    - source: libs/cm7f/iar/release/libposix.a
+      cores: cm7f
+      toolchains: iar
+      attribute: extra-libraries
+    - source: libs/cm7f/iar/release/libsigma_agent.a
+      cores: cm7f
+      toolchains: iar
+      attribute: extra-libraries
+    - source: libs/cm33f/iar/release/libposix.a
+      cores: cm33f cm33
+      toolchains: iar
+      attribute: extra-libraries
+    - source: libs/cm33f/iar/release/libsigma_agent.a
+      cores: cm33f cm33
+      toolchains: iar
+      attribute: extra-libraries
+  belong_to: set.middleware.wifi
+  section_info:
+    description: Middlware Wi-Fi SIGMA AGENT
+    version: 1.3.38
+    type: middleware
+    user_visible: always
+    full_name: NXP Wi-Fi SIGMA AGENT
+    taxonomy:
+      csub: sigma_agent
+      belong_to: wifi
+    display_name: wifi_nxp_sigma_agent
+  dependency:
+    allOf:
+    - middleware.wifi
 middleware.wifi.posix:
   section-type: component
   contents:

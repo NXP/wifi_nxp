@@ -350,6 +350,7 @@ wifi_cli:
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
   - middleware.wifi.cli
+  - middleware.wifi.sigma_agent_lib
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
@@ -475,6 +476,7 @@ wifi_wpa_supplicant:
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
   - middleware.wifi.cli
+  - middleware.wifi.sigma_agent_lib
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
