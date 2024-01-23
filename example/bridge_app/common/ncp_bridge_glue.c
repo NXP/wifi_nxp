@@ -533,6 +533,72 @@ done:
     return ret;
 }
 
+static int wlan_bridge_address(void *tlv)
+{
+    int ret = WM_SUCCESS;
+    enum wlan_connection_state state;
+    struct wlan_network *sta_network = NULL;
+    int sta_found                    = 0;
+
+    NCPCmd_DS_COMMAND *cmd_res         = ncp_bridge_get_response_buffer();
+    NCP_CMD_NETWORK_ADDRESS *network_address = (NCP_CMD_NETWORK_ADDRESS *)&cmd_res->params.network_address;
+
+    sta_network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+    if (sta_network == NULL)
+    {
+        ncp_e("failed to allocate memory for STA network");
+        ret = -WM_FAIL;
+        return ret;
+    }
+
+    if (wlan_get_connection_state(&state) != 0)
+    {
+        network_address->sta_conn_stat = WLAN_DISCONNECTED;
+        ncp_e("unable to get STA connection state");
+    }
+    else
+    {
+        switch (state)
+        {
+            case WLAN_CONNECTED:
+                if (!wlan_get_current_network(sta_network))
+                {
+                    ncp_d("Station connected");
+                    wlan_network_info_copy(&network_address->sta_network, sta_network);
+                    network_address->sta_conn_stat = state;
+                    sta_found                   = 1;
+                }
+                else
+                {
+                    network_address->sta_conn_stat = WLAN_DISCONNECTED;
+                    ncp_d("Station not connected");
+                }
+                break;
+            default:
+                network_address->sta_conn_stat = state;
+                ncp_d("Station not connected");
+                break;
+        }
+    }
+
+    /** prepare wlan info command response */
+    cmd_res->header.cmd      = NCP_BRIDGE_CMD_WLAN_NETWORK_ADDRESS;
+    cmd_res->header.size     = NCP_BRIDGE_CMD_HEADER_LEN;
+    cmd_res->header.seqnum   = 0x00;
+    cmd_res->header.result   = NCP_BRIDGE_CMD_RESULT_OK;
+    cmd_res->header.msg_type = NCP_BRIDGE_MSG_TYPE_RESP;
+
+    cmd_res->header.size += sizeof(NCP_CMD_NETWORK_ADDRESS);
+
+    if (sta_network != NULL)
+        os_mem_free(sta_network);
+
+    if (ret == -WM_FAIL)
+        wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_NETWORK_ADDRESS, NCP_BRIDGE_CMD_RESULT_ERROR);
+
+    return ret;
+}
+
 static int wlan_bridge_network_list(void *tlv)
 {
     struct wlan_network *network = NULL;
@@ -3673,6 +3739,7 @@ struct cmd_t wlan_cmd_network[] = {
     {NCP_BRIDGE_CMD_WLAN_NETWORK_MDNS_QUERY, "wlan-mdns-query", wlan_bridge_mdns_query, CMD_SYNC},
     {NCP_BRIDGE_CMD_WLAN_NETWORK_LIST, "wlan-list", wlan_bridge_network_list, CMD_SYNC},
     {NCP_BRIDGE_CMD_WLAN_NETWORK_REMOVE, "wlan-remove", wlan_bridge_network_remove, CMD_SYNC},
+    {NCP_BRIDGE_CMD_WLAN_NETWORK_ADDRESS, "wlan-address", wlan_bridge_address, CMD_SYNC},
     {NCP_BRIDGE_CMD_INVALID, NULL, NULL, NULL},
 };
 

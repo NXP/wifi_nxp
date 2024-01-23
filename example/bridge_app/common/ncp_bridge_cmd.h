@@ -145,6 +145,7 @@
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_MDNS_QUERY  (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000007) /* wlan-mdns-query */
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_LIST  (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000008) /* wlan-list */
 #define NCP_BRIDGE_CMD_WLAN_NETWORK_REMOVE  (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x00000009) /* wlan-remove */
+#define NCP_BRIDGE_CMD_WLAN_NETWORK_ADDRESS    (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_NETWORK | 0x0000000A) /* wlan-address */
 
 /*WLAN Power mgmt command*/
 #define NCP_BRIDGE_CMD_WLAN_POWERMGMT_MEF \
@@ -491,6 +492,13 @@ typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_INFO
     wlan_bridge_network uap_network;
     wlan_bridge_network sta_network;
 } MLAN_PACK_END NCP_CMD_NETWORK_INFO;
+    
+/*Bridge response: wlan network address*/
+typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_ADDRESS
+{
+    uint8_t sta_conn_stat;
+    wlan_bridge_network sta_network;
+} MLAN_PACK_END NCP_CMD_NETWORK_ADDRESS;
 
 /*Bridge response: wlan network list info*/
 typedef MLAN_PACK_START struct _NCP_CMD_NETWORK_LIST
@@ -1427,6 +1435,8 @@ typedef MLAN_PACK_START struct _NCPCmd_DS_COMMAND
         NCP_CMD_CONNECT_STAT conn_stat;
         /** wlan network info*/
         NCP_CMD_NETWORK_INFO network_info;
+        /** wlan network address*/
+        NCP_CMD_NETWORK_ADDRESS network_address;
         NCP_CMD_NET_MONITOR monitor_cfg;
         /** wlan add network */
         NCP_CMD_NETWORK_ADD network_add;

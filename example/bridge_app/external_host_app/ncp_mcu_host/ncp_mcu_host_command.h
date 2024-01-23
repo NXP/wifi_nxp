@@ -592,6 +592,8 @@ typedef MLAN_PACK_START struct _MCU_NCPCmd_DS_COMMAND
         NCP_CMD_GET_MAC_ADDRESS get_mac_addr;
         /** wlan network info*/
         NCP_CMD_NETWORK_INFO network_info;
+        /** wlan network address*/
+        NCP_CMD_NETWORK_ADDRESS network_address;
         /** wlan add network*/
         NCP_CMD_NETWORK_ADD network_add;
         /** wlan start network*/
@@ -923,6 +925,7 @@ int wlan_process_set_mac_address(uint8_t *res);
 int wlan_process_get_mac_address(uint8_t *res);
 
 int wlan_process_info(uint8_t *res);
+int wlan_process_address(uint8_t *res);
 
 int wlan_process_add_response(uint8_t *res);
 

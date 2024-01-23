@@ -1430,6 +1430,17 @@ int wlan_info_command(int argc, char **argv)
     return WM_SUCCESS;
 }
 
+int wlan_address_command(int argc, char **argv)
+{
+    MCU_NCPCmd_DS_COMMAND *network_address_command = ncp_host_get_command_buffer();
+    network_address_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_NETWORK_ADDRESS;
+    network_address_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
+    network_address_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
+    network_address_command->header.msg_type       = NCP_BRIDGE_MSG_TYPE_CMD;
+
+    return WM_SUCCESS;
+}
+
 static void dump_wlan_add_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -2929,6 +2940,9 @@ int wlan_process_response(uint8_t *res)
             break;
         case NCP_BRIDGE_CMD_WLAN_NETWORK_INFO:
             ret = wlan_process_info(res);
+            break;
+        case NCP_BRIDGE_CMD_WLAN_NETWORK_ADDRESS:
+            ret = wlan_process_address(res);
             break;
         case NCP_BRIDGE_CMD_WLAN_NETWORK_ADD:
             ret = wlan_process_add_response(res);
@@ -7272,6 +7286,28 @@ int wlan_process_info(uint8_t *res)
     return WM_SUCCESS;
 }
 
+int wlan_process_address(uint8_t *res)
+{
+    MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
+    if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
+    {
+        (void)PRINTF("failed to get wlan address\r\n");
+        return -WM_FAIL;
+    }
+
+    NCP_CMD_NETWORK_ADDRESS *network_address = (NCP_CMD_NETWORK_ADDRESS *)&cmd_res->params.network_address;
+    if (network_address->sta_conn_stat == WLAN_CONNECTED)
+    {
+        print_address(&network_address->sta_network, network_address->sta_network.role);
+    }
+    else
+    {
+        (void)PRINTF("Station not connected\r\n");
+    }
+
+    return WM_SUCCESS;
+}
+
 int wlan_process_add_response(uint8_t *res)
 {
     int ret;
@@ -8334,6 +8370,7 @@ static struct ncp_host_cli_command ncp_host_app_cli_commands[] = {
     {"wlan-set-mac", "<mac_address>", wlan_set_mac_address_command},
     {"wlan-get-mac", NULL, wlan_get_mac_address_command},
     {"wlan-info", NULL, wlan_info_command},
+    {"wlan-address", NULL, wlan_address_command},
     {"wlan-add", NULL, wlan_add_command},
     {"wlan-start-network", "<profile_name>", wlan_start_network_command},
     {"wlan-stop-network", NULL, wlan_stop_network_command},
