@@ -16,7 +16,6 @@
 #include <wm_net.h>
 #include <wifi-debug.h>
 #include <wlan_11d.h>
-#include "wifi_ping.h"
 #ifdef CONFIG_WMSTATS
 #include <wmstats.h>
 #endif /* CONFIG_WMSTATS */
@@ -43,6 +42,7 @@
 #endif
 
 #ifdef CONFIG_SIGMA_AGENT
+#include "wifi_ping.h"
 #include <sigma_agent.h>
 #endif
 
