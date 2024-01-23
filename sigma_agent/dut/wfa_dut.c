@@ -401,7 +401,13 @@ void cmd_wfa_dut(int argc, char **argv)
     }
 
     pthread_attr_init(&ptAttr);
+
+#if defined(SDK_OS_FREE_RTOS)
+    pthread_attr_setstacksize(&ptAttr, 2048);
+    ptSchedParam.sched_priority = 2;
+#elif CONFIG_ZEPHYR
     ptSchedParam.sched_priority = 12;
+#endif
     pthread_attr_setschedparam(&ptAttr, &ptSchedParam);
     pthread_attr_getschedpolicy(&ptAttr, &ptPolicy);
     pthread_attr_setschedpolicy(&ptAttr, 2); // SCHED_RR);

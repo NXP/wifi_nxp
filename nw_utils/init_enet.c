@@ -190,7 +190,7 @@ int initNetwork(void)
             enet_cli_init();
 
             // Initialize a socket Telnet server
-            sys_thread_new("LwIP Telnet Server", SocketTelnetServer, NULL, 2048, 1);
+            sys_thread_new("LwIP Telnet Server", SocketTelnetServer, NULL, 512, 1);
         }
         enet_init_done = 1;
     }

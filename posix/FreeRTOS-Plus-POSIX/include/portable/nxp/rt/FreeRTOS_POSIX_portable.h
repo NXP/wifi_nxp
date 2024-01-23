@@ -38,12 +38,14 @@
 #define posixconfigENABLE_CLOCK_T                0
 #define posixconfigENABLE_CLOCKID_T              0
 #define posixconfigENABLE_MODE_T                 0
-#define posixconfigENABLE_PTHREAD_ATTR_T         0
-#define posixconfigENABLE_PTHREAD_COND_T         0
-#define posixconfigENABLE_PTHREAD_CONDATTR_T     0
-#define posixconfigENABLE_PTHREAD_MUTEX_T        0
-#define posixconfigENABLE_PTHREAD_MUTEXATTR_T    0
-#define posixconfigENABLE_PTHREAD_T              0
+#endif
+#define posixconfigENABLE_PTHREAD_ATTR_T         1
+#define posixconfigENABLE_PTHREAD_COND_T         1
+#define posixconfigENABLE_PTHREAD_CONDATTR_T     1
+#define posixconfigENABLE_PTHREAD_MUTEX_T        1
+#define posixconfigENABLE_PTHREAD_MUTEXATTR_T    1
+#define posixconfigENABLE_PTHREAD_T              1
+#if 0
 #define posixconfigENABLE_TIME_T                 0
 #endif
 #define posixconfigENABLE_TIMESPEC               0

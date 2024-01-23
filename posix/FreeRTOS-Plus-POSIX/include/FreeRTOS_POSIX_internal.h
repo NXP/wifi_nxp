@@ -26,6 +26,10 @@
 #ifndef _FREERTOS_POSIX_INTERNAL_H_
 #define _FREERTOS_POSIX_INTERNAL_H_
 
+/* FreeRTOS+POSIX platform-specific configuration headers. */
+#include "FreeRTOS_POSIX_portable.h"
+#include "FreeRTOS_POSIX_portable_default.h"
+
 /**
  * @file FreeRTOS_POSIX_internal.h
  * @brief Internal structs and initializers for FreeRTOS+POSIX.
