@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /** @file nxp_miscs.c
  *
  * @brief This file contains WLAN  specific defines etc.
@@ -25,6 +23,13 @@
  * express and approved by NXP in writing.
  *
  */
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>

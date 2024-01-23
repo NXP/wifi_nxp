@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -33,6 +31,11 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_stdincs.h"
 #include "wfa_debug.h"

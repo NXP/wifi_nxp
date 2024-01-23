@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /****************************************************************************
 Copyright (c) 2015 Wi-Fi Alliance
 Permission to use, copy, modify, and/or distribute this software for any
@@ -40,6 +38,13 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 // #include <sys/socket.h>
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
+#include "wfa_portall.h"
 #include "wfa_debug.h"
 #include "wfa_types.h"
 #include "wfa_main.h"

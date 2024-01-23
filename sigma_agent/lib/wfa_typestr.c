@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /****************************************************************************
 Copyright (c) 2015 Wi-Fi Alliance
 Permission to use, copy, modify, and/or distribute this software for any
@@ -32,12 +30,19 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
  *       2007/11/07 --  02.30 Voice HSO -- qhu
  *       2007/12/10 --  02.32 Add a function to upload test results.
  */
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
 #include <stdio.h>
 #include <sys/types.h>
 #include <pthread.h>
 #include <signal.h>
 #include <time.h>
 
+#include "wfa_portall.h"
 #include "wfa_types.h"
 #include "wfa_tlv.h"
 #include "wfa_tg.h"

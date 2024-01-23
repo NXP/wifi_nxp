@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -23,6 +21,12 @@
  *    Library functions for traffic generator.
  *    They are shared with both TC and DUT agent.
  */
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
 #include <sys/types.h>
 #include <pthread.h>
 #include <signal.h>

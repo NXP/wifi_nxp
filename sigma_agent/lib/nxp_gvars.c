@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /** @file nxp_gvars.c
  *
  * @brief This file contains WLAN  specific defines etc.
@@ -26,6 +24,11 @@
  *
  */
 
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_debug.h"
 #include "wfa_ver.h"

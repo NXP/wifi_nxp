@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /****************************************************************************
 Copyright (c) 2016 Wi-Fi Alliance.  All Rights Reserved
 
@@ -48,6 +46,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <wifi.h>
 #include <wifi-decl.h>
 
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
 #include "wfa_portall.h"
 #include "wfa_debug.h"
 #include "wfa_ver.h"

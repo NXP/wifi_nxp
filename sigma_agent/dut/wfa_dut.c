@@ -1,4 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
 
 /****************************************************************************
  *
@@ -27,6 +26,12 @@
  *       reference the architecture documents.
  *
  */
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
 
 #include <sys/types.h>
 #include <pthread.h>
@@ -301,7 +306,7 @@ static tgThrData_t tdata[WFA_THREADS_NUM];
 extern tgWMM_t *wfa_get_wmm_thr();
 
 #ifdef CONFIG_ZEPHYR
-#define STACK_SIZE (1024)
+#define STACK_SIZE (2048)
 K_THREAD_STACK_ARRAY_DEFINE(stack, WFA_THREADS_NUM, STACK_SIZE);
 #endif
 

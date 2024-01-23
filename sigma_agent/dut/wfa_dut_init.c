@@ -1,5 +1,3 @@
-#ifdef CONFIG_SIGMA_AGENT
-
 /****************************************************************************
  *
  * Copyright (c) 2016 Wi-Fi Alliance
@@ -22,6 +20,7 @@
 #include <stdlib.h>
 #include <wm_os.h>
 
+#ifdef CONFIG_SIGMA_AGENT
 #include "wfa_debug.h"
 #include "wfa_main.h"
 #include "wfa_types.h"
