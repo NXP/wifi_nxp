@@ -44,7 +44,7 @@ os_semaphore_t spi_slave_tx_complete;
 OSA_EVENT_HANDLE_DEFINE(spi_master_event);
 
 GPIO_HANDLE_DEFINE(NcpTlvSpiRxDetectGpioHandle);
-GPIO_HANDLE_DEFINE(NcpTlvSpiTxDetectGpioHandle);
+GPIO_HANDLE_DEFINE(NcpTlvSpiRxReadyDetectGpioHandle);
 
 
 uint32_t spi_master_buff[(OSA_EVENT_HANDLE_SIZE + 3) / 4];
@@ -60,29 +60,34 @@ static void rx_int_callback(void *param)
     {
         case NCP_MASTER_SPI_IDLE:
             /* the first salve interrupt is to tell master that slave wants to send data */
-            ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
+            ncp_spi_state = NCP_MASTER_SPI_RX;
             mcu_d(" spi slave want to send data");
             OSA_EventClear(spi_master_event, MASTER_TX_ENABLE_EVENT);
             OSA_EventSet(spi_master_event, MASTER_RX_ENABLE_EVENT);
             break;
-        case NCP_MASTER_SPI_TX_START:
-            mcu_e(" receive the slave interrupt when master starts to send data is a Low probability event, prioritize data transmission for slave");
-            mcu_d(" spi slave want to send data");
-            OSA_EventSet(spi_master_event, MASTER_RX_ENABLE_EVENT);
-            ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
-            break;
-        case NCP_MASTER_SPI_RX_START:
-            ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
-            break;
-        case NCP_MASTER_SPI_WAIT_SLAVE_READY:
-            mcu_d("spi slave ready");
+        case NCP_MASTER_SPI_TX:
+            mcu_e(" receive the slave interrupt when master starts to send data is a Low probability event, prioritize data transmission for master");
+            mcu_d(" spi master want to send data");
+            /* slave tx have priority over master tx */
+            ncp_spi_state = NCP_MASTER_SPI_RX;
             os_semaphore_put(&spi_slave_rx_ready);
+            break;
+        case NCP_MASTER_SPI_RX:
+            mcu_e(" receive the slave interrupt when master is sending data is impossible ");
             break;
         default:
             mcu_e("spi invalid state");
             ncp_spi_state = NCP_MASTER_SPI_IDLE;
             break;
     }
+}
+
+/*******************************************************************************
+ * Code
+ ******************************************************************************/
+static void rx_ready_int_callback(void *param)
+{
+    os_semaphore_put(&spi_slave_rx_ready);
 }
 
 static void ncp_host_spi_master_cb(LPSPI_Type *base,
@@ -109,23 +114,29 @@ int ncp_host_spi_master_tx(uint8_t *buff, uint16_t data_size)
     uint8_t *p   = NULL;
 
     osa_event_flags_t events;
-
+    OSA_SR_ALLOC();
 resend:
     /* wait tx enable event */
     OSA_EventWait(spi_master_event, MASTER_TX_ENABLE_EVENT, 0, osaWaitForever_c, &events);
-    ncp_spi_state = NCP_MASTER_SPI_TX_START;
-    /* inform slave about master wants to send cmd */
-    ncp_host_master_send_signal();
-    if (ncp_spi_state == NCP_MASTER_SPI_RX_START)
+    OSA_ENTER_CRITICAL();
+    /* check whether receive the slave interrupt before OSA_ENTER_CRITICAL*/
+    if (ncp_spi_state == NCP_MASTER_SPI_RX)
     {
-        mcu_e("receive the slave interrupt when master starts to send data, it is a Low probability event, prioritize data transmission for slave");
+        OSA_EXIT_CRITICAL();
+        mcu_e("receive the slave interrupt when master starts to send data, try to resend");
         goto resend;
     }
-    /* code run here, the spi slave must deal with our master interrupt completely */
-    mcu_d("ncp matser start to send data");
-    ncp_spi_state = NCP_MASTER_SPI_WAIT_SLAVE_READY;
-    os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
+    /* inform slave about master wants to send cmd */
+    ncp_host_master_send_signal();
+    ncp_spi_state = NCP_MASTER_SPI_TX;
+    OSA_EXIT_CRITICAL();
 
+    os_semaphore_get(&spi_slave_rx_ready, OS_WAIT_FOREVER);
+    /* the master tx is dropped by slave */
+    if (ncp_spi_state == NCP_MASTER_SPI_RX)
+    {
+        goto resend;
+    }
     /* Fill SPI transfer config */
     len = data_size;
     p   = buff;
@@ -300,12 +311,24 @@ void ncp_host_gpio_init(void)
     HAL_GpioSetTriggerMode(NcpTlvSpiRxDetectGpioHandle, kHAL_GpioInterruptRisingEdge);
     HAL_GpioInstallCallback(NcpTlvSpiRxDetectGpioHandle, rx_int_callback, NULL);
 
+    /* rx_ready input interrupt */
+    hal_gpio_pin_config_t rx_ready_config = {
+        kHAL_GpioDirectionIn,
+        0,
+        NCP_HOST_GPIO_NUM,
+        NCP_HOST_GPIO_PIN_RX_READY,
+    };
+    HAL_GpioInit(NcpTlvSpiRxReadyDetectGpioHandle, &rx_ready_config);
+    HAL_GpioSetTriggerMode(NcpTlvSpiRxReadyDetectGpioHandle, kHAL_GpioInterruptRisingEdge);
+    HAL_GpioInstallCallback(NcpTlvSpiRxReadyDetectGpioHandle, rx_ready_int_callback, NULL);
+
     NVIC_SetPriority(NCP_HOST_GPIO_IRQ, NCP_HOST_GPIO_IRQ_PRIO);
     EnableIRQ(NCP_HOST_GPIO_IRQ);
 
     /* Enable GPIO pin interrupt */
     GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX);
-
+    /* Enable GPIO pin rx_ready interrupt */
+    GPIO_PortEnableInterrupts(NCP_HOST_GPIO, 1U << NCP_HOST_GPIO_PIN_RX_READY);
 /*
     GPIO_PinInit(NCP_HOST_GPIO, NCP_HOST_GPIO_PIN_TX, &gpio_input_interrupt_config);
     hal_gpio_pin_config_t tx_config = {
