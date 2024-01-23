@@ -8397,10 +8397,13 @@ static struct ncp_host_cli_command ncp_host_app_cli_commands[] = {
     {"wlan-mdns-query", "<service> <protocol>", wlan_mdns_query_command},
     {"wlan-list", NULL, wlan_list_command},
     {"wlan-remove", "<profile_name>", wlan_remove_command},
+#ifndef CONFIG_WPA_SUPP
     {"wlan-mbo-enable", "<0/1>", wlan_mbo_enable_command},
-    {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>", wlan_mbo_nonprefer_ch},
+#else
     {"wlan-mbo-set-cell-capa", "<cell capa: 1/2/3(default)>", wlan_mbo_set_cell_capa},
     {"wlan-mbo-set-oce", "<oce: 1(default)/2>", wlan_mbo_set_oce},
+#endif
+    {"wlan-mbo-nonprefer-ch", "<ch0> <Preference0: 0/1/255> <ch1> <Preference1: 0/1/255>", wlan_mbo_nonprefer_ch},
 };
 
 /**
