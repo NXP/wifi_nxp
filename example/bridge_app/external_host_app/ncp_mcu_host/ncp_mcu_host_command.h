@@ -425,9 +425,10 @@ typedef struct _iperf_set_t
     uint32_t iperf_type;
     uint32_t iperf_count;
     uint32_t iperf_udp_rate;
+    uint32_t iperf_udp_time;
 } iperf_set_t;
 
-typedef MLAN_PACK_START struct _iperf_msg_t
+typedef struct _iperf_msg_t
 {
     int16_t status[2];
     uint32_t count;
@@ -437,7 +438,7 @@ typedef MLAN_PACK_START struct _iperf_msg_t
     uint16_t per_size;
     char ip_addr[IP_ADDR_LEN];
     iperf_set_t iperf_set;
-} MLAN_PACK_END iperf_msg_t;
+} iperf_msg_t;
 
 #define BRIDGE_MUTEX_INHERIT 1
 

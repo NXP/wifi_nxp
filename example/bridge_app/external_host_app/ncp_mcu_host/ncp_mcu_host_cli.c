@@ -1215,13 +1215,42 @@ void iperf_tcp_rx(void)
 
 static void ncp_iperf_tx_task(void *pvParameters)
 {
+    long long i               = 0; 
     unsigned int pkg_num      = 0;
     long long send_total_size = 0;
-
+    long long udp_rate = 0;
+    int per_pkt_size      = 1470;
+    int pkt_num_per_xms            = 0;
+    unsigned int prev_time = 0;
+    unsigned int cur_time = 0;
+    int delta = 0;
+    unsigned int send_interval = 1;
+    
     while (1)
     {
         /* demo ping task wait for user input ping command from console */
         (void)os_event_notify_get(OS_WAIT_FOREVER);
+        
+        udp_rate = iperf_msg.iperf_set.iperf_udp_rate;
+
+        if (udp_rate <= 120)
+            send_interval = 1000;
+        if (udp_rate <= 2*1024)
+           send_interval = 60;
+        if (udp_rate <= 10*1024)
+           send_interval = 12; 
+        if (udp_rate <= 20*1024)
+           send_interval = 6; 
+        else if (udp_rate <= 30 * 1024)
+            send_interval = 4;
+        else if (udp_rate <= 60 * 1024)
+            send_interval = 2;
+        else
+            send_interval = 1;
+        pkt_num_per_xms = ((udp_rate * 1024 / 8) / per_pkt_size / (1000 / send_interval)); /*num pkt per send_interval(ms)*/
+        
+        //(void)PRINTF("udp_rate %lld send_interval %d pkt_num_per_xms %d \r\n", udp_rate, send_interval, pkt_num_per_xms);
+        
         send_total_size = iperf_msg.iperf_set.iperf_count * iperf_msg.per_size;
 
         mcu_get_command_resp_sem();
@@ -1233,6 +1262,7 @@ static void ncp_iperf_tx_task(void *pvParameters)
         pkg_num             = 0;
         iperf_msg.status[0] = 0;
         iperf_timer_start   = os_ticks_get();
+        prev_time = os_ticks_get();
         while (pkg_num < iperf_msg.iperf_set.iperf_count)
         {
             /*Wait for command response semaphore.*/
@@ -1249,7 +1279,23 @@ static void ncp_iperf_tx_task(void *pvParameters)
             mcu_get_command_lock();
 
             iperf_tcp_tx();
+            
+            if (iperf_msg.iperf_set.iperf_type == NCP_IPERF_UDP_TX)
+            {
+                cur_time = os_ticks_get();
 
+                if ((i > 0) && (!(i % pkt_num_per_xms)))
+                {
+                    delta = prev_time + send_interval - cur_time;
+                    //PRINTF("prev_time_us = %d, cur_time_us = %d, delta = %d, pkt_num_per1ms = %d, i = %d\r\n",
+                    // prev_time, cur_time, delta, pkt_num_per_xms, i);
+                    if (delta > 0)
+                        os_thread_sleep(os_msec_to_ticks(delta));
+                    prev_time += send_interval;
+                }
+            }
+
+            i++;
             pkg_num++;
         }
         iperf_timer_end = os_ticks_get();
