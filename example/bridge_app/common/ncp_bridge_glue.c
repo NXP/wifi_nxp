@@ -55,6 +55,7 @@
 
 extern int net_wlan_get_mac_address(unsigned char *mac);
 extern int bridge_send_response(uint8_t *pbuf);
+extern int csi_data_recv_user(void *buffer, size_t data_len);
 
 /*******************************************************************************
  * Variables
@@ -1218,6 +1219,15 @@ static int wlan_bridge_csi(void *tlv)
 {
     int ret;
     NCP_CMD_CSI *csi_cfg = (NCP_CMD_CSI *)tlv;
+        
+    if(csi_cfg->csi_para.csi_enable == 1)
+    {
+        ret = wlan_register_csi_user_callback(csi_data_recv_user);
+        if (ret != WM_SUCCESS)
+        {
+            PRINTF("Error during register csi user callback\r\n");
+        }
+    }
 
     ret = wlan_csi_cfg(&csi_cfg->csi_para);
     if (!ret)
