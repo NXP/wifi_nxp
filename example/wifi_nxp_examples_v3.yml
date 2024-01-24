@@ -598,6 +598,10 @@ uart_wifi_bridge:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi
+  - middleware.lwip
+  - middleware.lwip.apps.lwiperf
+  - middleware.wifi.cli
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
