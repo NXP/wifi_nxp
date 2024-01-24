@@ -1,8 +1,8 @@
 /*
- *  Copyright 2008-2023 NXP
+ * Copyright (c) 2016 Intel Corporation.
+ * Copyright 2008-2023 NXP
  *
- *  SPDX-License-Identifier: BSD-3-Clause
- *
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 /*! \file wm_net.h
