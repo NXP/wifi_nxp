@@ -11092,7 +11092,7 @@ static int wlan_evaluate_ant_by_common_device(wlan_ant_detect_data_t *pData)
 {
     uint8_t i;
     uint8_t j;
-    uint8_t com_idx_per_ant[pData->ant_port_count];
+    uint8_t com_idx_per_ant[MAX_ANTENNA_PORT_NUM];
     uint8_t current_best_ant;
     int detect_done = 0;
     t_u8 zero_bssid[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
