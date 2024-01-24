@@ -27,7 +27,7 @@
 #include "usb_host.h"
 #include "usb_host_cdc.h"
 #include "host_cdc.h"
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
 #include "spi_master_app.h"
 #elif defined(CONFIG_NCP_SDIO)
 #include "ncp_sdio_host.h"
@@ -68,7 +68,7 @@ static struct
 
 static char mcu_string_command_buff[MCU_CLI_STRING_SIZE];
 
-#ifdef CONFIG_SPI_BRIDGE
+#ifdef CONFIG_NCP_SPI
 AT_NONCACHEABLE_SECTION_INIT(uint8_t mcu_tlv_command_buff[NCP_HOST_COMMAND_LEN]) = {0};
 #else
 static uint8_t mcu_tlv_command_buff[NCP_HOST_COMMAND_LEN] = {0};
@@ -857,7 +857,7 @@ int ncp_host_send_tlv_command()
     uint32_t bridge_chksum         = 0;
     uint16_t cmd_len               = 0, index;
     MCU_NCPCmd_DS_COMMAND *mcu_cmd = ncp_host_get_command_buffer();
-#ifdef CONFIG_SPI_BRIDGE
+#ifdef CONFIG_NCP_SPI
     uint16_t total_len = 0;
 #endif
     cmd_len = mcu_cmd->header.size;
@@ -913,7 +913,7 @@ int ncp_host_send_tlv_command()
         ret = LPUART_RTOS_Send(&ncp_host_tlv_uart_handle, mcu_tlv_command_buff, cmd_len + MCU_CHECKSUM_LEN);
 #elif defined(CONFIG_USB_BRIDGE)
         ret = usb_host_send_cmd(cmd_len + MCU_CHECKSUM_LEN);
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
         total_len = cmd_len + MCU_CHECKSUM_LEN;
         ret = ncp_host_spi_master_tx((uint8_t *)&mcu_tlv_command_buff[0], total_len);
         if (ret != WM_SUCCESS)

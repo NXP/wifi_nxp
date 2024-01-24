@@ -23,7 +23,7 @@
 #include "ncp_mcu_host_app.h"
 #ifdef CONFIG_USB_BRIDGE
 #include "host_cdc_app.h"
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
 #include "spi_master_app.h"
 #elif defined(CONFIG_NCP_SDIO)
 #include "ncp_sdio_host.h"

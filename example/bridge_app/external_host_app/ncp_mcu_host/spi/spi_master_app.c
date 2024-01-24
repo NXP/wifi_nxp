@@ -8,7 +8,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifdef CONFIG_SPI_BRIDGE
+#ifdef CONFIG_NCP_SPI
 #include "stdint.h"
 #include "spi_master_app.h"
 #include "fsl_lpspi.h"
@@ -403,4 +403,4 @@ int ncp_host_init_spi_master(void)
         EXAMPLE_LPSPI_MASTER_PCS_FOR_TRANSFER | kLPSPI_MasterByteSwap | kLPSPI_MasterPcsContinuous);
     return ret;
 }
-#endif /* CONFIG_SPI_BRIDGE */
+#endif /* CONFIG_NCP_SPI */

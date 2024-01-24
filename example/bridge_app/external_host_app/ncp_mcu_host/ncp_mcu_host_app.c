@@ -26,7 +26,7 @@
 #include "usb_host.h"
 #include "usb_host_cdc.h"
 #include "host_cdc.h"
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
 #include "spi_master_app.h"
 #endif
 
@@ -62,7 +62,7 @@ extern uint32_t mcu_last_cmd_sent;
 /*ID number of command response received from ncp*/
 uint32_t mcu_last_resp_rcvd;
 
-#ifdef CONFIG_SPI_BRIDGE
+#ifdef CONFIG_NCP_SPI
 AT_NONCACHEABLE_SECTION_INIT(uint8_t mcu_response_buff[NCP_HOST_RESPONSE_LEN]) = {0};
 #else
 static uint8_t mcu_response_buff[NCP_HOST_RESPONSE_LEN];
@@ -247,7 +247,7 @@ static void ncp_host_tlv_task(void *pvParameters)
             LPUART_RTOS_Receive(&ncp_host_tlv_uart_handle, mcu_response_buff + len, NCP_BRIDGE_CMD_HEADER_LEN, &rx_len);
             len += rx_len;
         }
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
         len = ncp_host_spi_master_rx(mcu_response_buff);
 #endif
 
@@ -439,14 +439,14 @@ int ncp_host_app_init()
 
 #ifdef CONFIG_NCP_UART
     ret = ncp_host_init_uart();
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
     ret = ncp_host_init_spi_master();
 #endif
     if (ret != WM_SUCCESS)
     {
 #ifdef CONFIG_NCP_UART
         (void)PRINTF("Error: Failed to initialize ncp uart port: %d\r\n", ret);
-#elif defined(CONFIG_SPI_BRIDGE)
+#elif defined(CONFIG_NCP_SPI)
         (void)PRINTF("Error: Failed to initialize ncp SPI: %d\r\n", ret);
 #endif
         return -WM_FAIL;

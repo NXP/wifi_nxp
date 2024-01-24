@@ -8,7 +8,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifdef CONFIG_SPI_BRIDGE
+#ifdef CONFIG_NCP_SPI
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -49,6 +49,7 @@
 #define NCP_HOST_GPIO_PIN_RX        16U
 #define NCP_HOST_GPIO_PIN_TX        17U
 #define NCP_HOST_GPIO_PIN_RX_READY  21U
+#define NCP_HOST_GPIO_IRQ           GPIO1_Combined_16_31_IRQn
 #define NCP_HOST_GPIO_RX_MASK       0x10000
 #define NCP_HOST_GPIO_TX_MASK       0x20000
 #define NCP_HOST_GPIO_RX_READY_MASK (1 << NCP_HOST_GPIO_PIN_RX_READY)
@@ -78,4 +79,4 @@ typedef enum
 } ncp_state;
 
 
-#endif /* CONFIG_SPI_BRIDGE */
+#endif /* CONFIG_NCP_SPI */
