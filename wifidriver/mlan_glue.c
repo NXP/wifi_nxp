@@ -2083,7 +2083,7 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
         else
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
-            if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) && (priv->wps.session_enable == MTRUE) &&
+            if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) && (priv->wps.session_enable == MFALSE) &&
                 (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
                 (pvendor_ie->oui_type == wps_oui[3U]))
         {
