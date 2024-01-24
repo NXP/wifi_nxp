@@ -218,6 +218,7 @@
 #define NCP_BRIDGE_EVENT_MCU_SLEEP_EXIT  (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_ASYNC_EVENT | 0x00000002)
 #define NCP_BRIDGE_EVENT_MDNS_QUERY_RESULT (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_ASYNC_EVENT | 0x00000003) /* mdns-query-result */
 #define NCP_BRIDGE_EVENT_MDNS_RESOLVE_DOMAIN (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_ASYNC_EVENT | 0x00000004) /* mdns-resolve-domain-name */
+#define NCP_BRIDGE_EVENT_CSI_DATA        (NCP_BRIDGE_CMD_WLAN | NCP_BRIDGE_CMD_WLAN_ASYNC_EVENT | 0x00000005) /* csi data */
 
 /*NCP Bridge WLAN TLV*/
 #define NCP_BRIDGE_CMD_NETWORK_SSID_TLV         0x0001
@@ -1406,6 +1407,49 @@ typedef MLAN_PACK_START struct _NCP_EVT_MDNS_RESULT
      */
     uint8_t tlv_buf[1];
 } MLAN_PACK_END NCP_EVT_MDNS_RESULT;
+
+#ifdef CONFIG_CSI
+typedef MLAN_PACK_START struct _NCP_EVT_CSI_DATA
+{
+    /** Length in DWORDS, including header */
+    uint16_t Len;
+    /** CSI signature. 0xABCD fixed */
+    uint16_t CSI_Sign;
+    /** User defined HeaderID  */
+    uint32_t CSI_HeaderID;
+    /** Packet info field */
+    uint16_t PKT_info;
+    /** Frame control field for the received packet*/
+    uint16_t FCF;
+    /** Timestamp when packet received */
+    uint64_t TSF;
+    /** Received Packet Destination MAC Address */
+    uint8_t Dst_MAC[6];
+    /** Received Packet Source MAC Address */
+    uint8_t Src_MAC[6];
+    /** RSSI for antenna A */
+    uint8_t Rx_RSSI_A;
+    /** RSSI for antenna B */
+    uint8_t Rx_RSSI_B;
+    /** Noise floor for antenna A */
+    uint8_t Rx_NF_A;
+    /** Noise floor for antenna A */
+    uint8_t Rx_NF_B;
+    /** Rx signal strength above noise floor */
+    uint8_t Rx_SINR;
+    /** Channel */
+    uint8_t channel;
+    /** user defined Chip ID */
+    uint16_t chip_id;
+    /** Reserved */
+    uint32_t rsvd;
+    /** CSI data length in DWORDs */
+    uint32_t CSI_Data_Length;
+    /** Start of CSI data */
+    uint8_t CSI_Data[0];
+    /** At the end of CSI raw data, user defined TailID of 4 bytes*/
+} MLAN_PACK_END NCP_EVT_CSI_DATA;
+#endif
 
 typedef MLAN_PACK_START struct _NCP_EVT_MDNS_RESOLVE
 {

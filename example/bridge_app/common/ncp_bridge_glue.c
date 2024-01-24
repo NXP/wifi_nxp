@@ -1215,14 +1215,26 @@ static int wlan_bridge_monitor(void *tlv)
     return WM_SUCCESS;
 }
 
+#ifdef CONFIG_CSI
+static int bridge_csi_data_recv_user(void *buffer, size_t data_len)
+{
+    if (app_notify_event(APP_EVT_CSI_DATA, APP_EVT_REASON_SUCCESS, buffer, data_len) !=
+        WM_SUCCESS)
+    {
+        return WM_FAIL;
+    }
+    return WM_SUCCESS;
+}
+#endif
+
 static int wlan_bridge_csi(void *tlv)
 {
+#ifdef CONFIG_CSI
     int ret;
     NCP_CMD_CSI *csi_cfg = (NCP_CMD_CSI *)tlv;
-        
     if(csi_cfg->csi_para.csi_enable == 1)
     {
-        ret = wlan_register_csi_user_callback(csi_data_recv_user);
+        ret = wlan_register_csi_user_callback(bridge_csi_data_recv_user);
         if (ret != WM_SUCCESS)
         {
             PRINTF("Error during register csi user callback\r\n");
@@ -1236,6 +1248,10 @@ static int wlan_bridge_csi(void *tlv)
         wlan_bridge_prepare_status(NCP_BRIDGE_CMD_WLAN_STA_CSI, NCP_BRIDGE_CMD_RESULT_ERROR);
 
     return WM_SUCCESS;
+#else
+    PRINTF("Not support CSI\r\n");
+    return WM_SUCCESS;
+#endif
 }
 
 static int wlan_bridge_get_signal(void *tlv)

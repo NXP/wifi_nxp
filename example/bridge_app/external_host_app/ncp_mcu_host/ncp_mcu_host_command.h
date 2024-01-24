@@ -623,6 +623,8 @@ typedef MLAN_PACK_START struct _MCU_NCPCmd_DS_COMMAND
         NCP_EVT_MDNS_RESULT mdns_result;
         /** mdns resolve*/
         NCP_EVT_MDNS_RESOLVE mdns_resolve;
+        /** CSI data*/
+        NCP_EVT_CSI_DATA csi_data;
 
         /** added network list*/
         NCP_CMD_NETWORK_LIST network_list;
@@ -959,6 +961,8 @@ int wlan_process_mdns_query_response(uint8_t *res);
 int wlan_process_mdns_query_result_event(uint8_t *res);
 
 int wlan_process_mdns_resolve_domain_event(uint8_t *res);
+
+int wlan_process_csi_data_event(uint8_t *res);
 
 int ncp_host_cli_command_init();
 

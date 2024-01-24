@@ -51,6 +51,8 @@ typedef enum
     APP_EVT_MDNS_RESOLVE_DOMAIN_NAME,
     /** Event for invalid command */
     APP_EVT_INVALID_CMD,
+    /** Event for CSI data*/
+    APP_EVT_CSI_DATA,
 } app_notify_event_t;
 
 typedef enum
