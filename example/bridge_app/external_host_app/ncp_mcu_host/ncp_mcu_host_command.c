@@ -5294,12 +5294,12 @@ static void dump_wlan_set_antenna_cfg_usage()
     (void)PRINTF("wlan-set-antenna-cfg <ant mode> [evaluate_time] \r\n");
     (void)PRINTF("\r\n");
     (void)PRINTF("\t<ant mode>: \r\n");
-    (void)PRINTF("\t           0   -- Tx/Rx antenna 1\r\n");
-    (void)PRINTF("\t           1   -- Tx/Rx antenna 2\r\n");
+    (void)PRINTF("\t           Bit 0   -- Tx/Rx antenna 1\r\n");
+    (void)PRINTF("\t           Bit 1   -- Tx/Rx antenna 2\r\n");
     (void)PRINTF("\t           15  -- Tx/Rx antenna diversity\r\n");
     (void)PRINTF("\t[evaluate_time]: \r\n");
-    (void)PRINTF("\t           if ant mode = 0xF, SAD evaluate time interval,\r\n");
-    (void)PRINTF("\t           default value is 6s(0x1770)\r\n");
+    (void)PRINTF("\t           if ant mode = 15, SAD evaluate time interval,\r\n");
+    (void)PRINTF("\t           default value is 6s(6000)\r\n");
 }
 
 int wlan_set_antenna_cfg_command(int argc, char **argv)
@@ -5313,7 +5313,7 @@ int wlan_set_antenna_cfg_command(int argc, char **argv)
         return -WM_FAIL;
     }
 
-    if (get_uint(argv[1], &value, strlen(argv[1])) || (value != 0 && value != 1 && value != 0xF))
+    if (get_uint(argv[1], &value, strlen(argv[1])) || (value != 1 && value != 2 && value != 0xF))
     {
         dump_wlan_set_antenna_cfg_usage();
         return -WM_FAIL;
