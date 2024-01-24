@@ -70,6 +70,9 @@
 #include <supp_api.h>
 #include <wifi_nxp.h>
 #include "utils/common.h"
+#ifdef CONFIG_WIFI_SHELL
+#include "wpa_cli.h"
+#endif
 #endif
 
 #if defined(CONFIG_WPA2_ENTP) || (defined(CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE) && !defined(CONFIG_WIFI_USB_FILE_ACCESS))
