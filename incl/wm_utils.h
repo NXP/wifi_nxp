@@ -350,6 +350,7 @@ static inline int wm_frac_part_of(float x, short precision)
     return (x < 0 ? (int)(((int)x - x) * scale) : (int)((x - (int)x) * scale));
 }
 
+#ifdef CONFIG_SIGMA_AGENT
 #if defined(SDK_OS_FREE_RTOS)
 #if (defined(__MCUXPRESSO) || defined(__GNUC__)) && !defined(__ARMCC_VERSION)
 static inline int strcasecmp(const char *a, const char *b)
@@ -366,6 +367,7 @@ static inline int strcasecmp(const char *a, const char *b)
     } while (ca == cb && ca != '\0');
     return ca - cb;
 }
+#endif
 #endif
 #endif
 
