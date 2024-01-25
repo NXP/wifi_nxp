@@ -457,6 +457,8 @@ middleware.wifi.cli:
     - source: cli/cli.c
     - source: cli/cli_mem_simple.c
     - source: cli/cli_utils.c
+    - source: cli/wifi_shell.h
+    - source: cli/wifi_shell.c
     - source: incl/cli.h
     - source: incl/cli_utils.h
     - source: nw_utils/wifi_ping.c

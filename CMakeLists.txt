@@ -212,7 +212,8 @@ zephyr_include_directories_ifdef(CONFIG_NXP_WIFI_SMOKE_TESTS
     nw_utils
 )
 
-zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
+if(CONFIG_NXP_WIFI_SIGMA_AGENT)
+zephyr_library_sources(
     nw_utils/wifi_ping.c
     sigma_agent/sigma_agent.c
     sigma_agent/dut/wfa_dut.c
@@ -222,9 +223,8 @@ zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
 file(GLOB SIGMA_SRC ./sigma_agent/lib/*.c)
 list(FILTER SIGMA_SRC EXCLUDE REGEX ".*cmdproc*")
 list(FILTER SIGMA_SRC EXCLUDE REGEX ".*ca_resp*")
-zephyr_library_sources_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
-    ${SIGMA_SRC}
-)
+zephyr_library_sources(${SIGMA_SRC})
+endif()
 
 zephyr_library_include_directories_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
     PRIVATE ${ZEPHYR_BASE}/subsys/net/ip)
@@ -256,20 +256,25 @@ if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 zephyr_code_relocate(FILES
                      port/os/os.c
                      port/net/net.c
-                     sdio_nxp_abs/mlan_sdio.c
                      wifidriver/mlan_11n.c
                      wifidriver/mlan_11n_aggr.c
                      wifidriver/mlan_11n_rxreorder.c
                      wifidriver/mlan_wmm.c
                      wifidriver/wifi.c
-                     wifidriver/wifi-sdio.c
-                     wifidriver/wifi-imu.c
                      LOCATION RAM_TEXT)
+
+if(CONFIG_SDIO_STACK)
+zephyr_code_relocate(FILES
+                     sdio_nxp_abs/mlan_sdio.c
+                     wifidriver/wifi-sdio.c
+                     LOCATION RAM_TEXT)
+endif()
 
 if(CONFIG_RW610)
 zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
+                     wifidriver/wifi-imu.c
                      ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/drivers/imu/fsl_imu.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/components/rpmsg/fsl_adapter_rfimu.c

@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "nxp_wifi.h"
+
+#ifdef CONFIG_WIFI_SHELL
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 
@@ -355,3 +358,4 @@ int nxp_wifi_request(void *nxp_wifi, char *cmd,
 
     return 0;
 }
+#endif
