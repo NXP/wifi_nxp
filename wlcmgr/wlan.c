@@ -43,7 +43,6 @@
 
 #ifdef CONFIG_SIGMA_AGENT
 #include "wifi_ping.h"
-#include <sigma_agent.h>
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
@@ -6172,6 +6171,8 @@ static void wlcm_process_get_hw_spec_event(void)
 #endif
 
 #ifdef CONFIG_SIGMA_AGENT
+    extern int sigma_agent_init(void);
+
     (void)sigma_agent_init();
 #endif
 
