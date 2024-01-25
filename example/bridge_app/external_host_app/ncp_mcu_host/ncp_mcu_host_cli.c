@@ -1235,11 +1235,11 @@ static void ncp_iperf_tx_task(void *pvParameters)
 
         if (udp_rate <= 120)
             send_interval = 1000;
-        if (udp_rate <= 2*1024)
+        else if (udp_rate <= 2*1024)
            send_interval = 60;
-        if (udp_rate <= 10*1024)
+        else if (udp_rate <= 10*1024)
            send_interval = 12; 
-        if (udp_rate <= 20*1024)
+        else if (udp_rate <= 20*1024)
            send_interval = 6; 
         else if (udp_rate <= 30 * 1024)
             send_interval = 4;

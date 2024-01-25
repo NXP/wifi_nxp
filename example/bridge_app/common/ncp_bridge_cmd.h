@@ -1408,7 +1408,6 @@ typedef MLAN_PACK_START struct _NCP_EVT_MDNS_RESULT
     uint8_t tlv_buf[1];
 } MLAN_PACK_END NCP_EVT_MDNS_RESULT;
 
-#ifdef CONFIG_CSI
 typedef MLAN_PACK_START struct _NCP_EVT_CSI_DATA
 {
     /** Length in DWORDS, including header */
@@ -1449,7 +1448,6 @@ typedef MLAN_PACK_START struct _NCP_EVT_CSI_DATA
     uint8_t CSI_Data[0];
     /** At the end of CSI raw data, user defined TailID of 4 bytes*/
 } MLAN_PACK_END NCP_EVT_CSI_DATA;
-#endif
 
 typedef MLAN_PACK_START struct _NCP_EVT_MDNS_RESOLVE
 {

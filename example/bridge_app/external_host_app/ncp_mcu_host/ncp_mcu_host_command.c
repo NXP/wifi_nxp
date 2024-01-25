@@ -2677,11 +2677,9 @@ int wlan_process_ncp_event(uint8_t *res)
         case NCP_BRIDGE_EVENT_MDNS_RESOLVE_DOMAIN:
             ret = wlan_process_mdns_resolve_domain_event(res);
             break;
-#ifdef CONFIG_CSI
         case NCP_BRIDGE_EVENT_CSI_DATA:
             ret = wlan_process_csi_data_event(res);
             break;
-#endif
         default:
             PRINTF("Invaild event!\r\n");
             break;
@@ -7939,7 +7937,6 @@ int wlan_process_mdns_resolve_domain_event(uint8_t *res)
     return WM_SUCCESS;
 }
 
-#ifdef CONFIG_CSI
 int wlan_process_csi_data_event(uint8_t *res)
 {
     MCU_NCPCmd_DS_COMMAND *evt_res = (MCU_NCPCmd_DS_COMMAND *)res;
@@ -7951,7 +7948,6 @@ int wlan_process_csi_data_event(uint8_t *res)
     dump_hex((void *)p_csi_data, p_csi_data->Len);
     return WM_SUCCESS;
 }
-#endif
 
 int wlan_list_command(int argc, char **argv)
 {

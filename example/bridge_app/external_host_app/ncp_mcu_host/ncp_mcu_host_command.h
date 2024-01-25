@@ -625,7 +625,7 @@ typedef MLAN_PACK_START struct _MCU_NCPCmd_DS_COMMAND
         NCP_EVT_MDNS_RESOLVE mdns_resolve;
         /** CSI data*/
         NCP_EVT_CSI_DATA csi_data;
-
+        
         /** added network list*/
         NCP_CMD_NETWORK_LIST network_list;
         /** remove network*/

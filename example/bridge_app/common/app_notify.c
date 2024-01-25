@@ -214,14 +214,13 @@ static void app_notify_event_handler(void *argv)
                 app_d("got invalid command");
                 wlan_bridge_prepare_status(NCP_BRIDGE_CMD_INVALID_CMD, msg.reason);
                 break;
-#ifdef CONFIG_CSI
             case APP_EVT_CSI_DATA:
                 app_d("got csi data report");
                 event_buf = wlan_bridge_evt_status(NCP_BRIDGE_EVENT_CSI_DATA, &msg);
                 if (!event_buf)
                     ret = -WM_FAIL;
                 break;
-#endif
+
             default:
                 app_d("no matching case");
                 ret = -WM_FAIL;
