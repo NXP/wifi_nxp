@@ -654,20 +654,20 @@ char fw_dump_file_name[] = _T("1:/fw_dump.bin");
 
 typedef enum
 {
-    DUMP_TYPE_ITCM = 0,
-    DUMP_TYPE_DTCM = 1,
-    DUMP_TYPE_SQRAM = 2,
-    DUMP_TYPE_APU_REGS = 3,
-    DUMP_TYPE_CIU_REGS = 4,
-    DUMP_TYPE_ICU_REGS = 5,
-    DUMP_TYPE_MAC_REGS = 6,
-    DUMP_TYPE_EXTEND_7 = 7,
-    DUMP_TYPE_EXTEND_8 = 8,
-    DUMP_TYPE_EXTEND_9 = 9,
-    DUMP_TYPE_EXTEND_10 = 10,
-    DUMP_TYPE_EXTEND_11 = 11,
-    DUMP_TYPE_EXTEND_12 = 12,
-    DUMP_TYPE_EXTEND_13 = 13,
+    DUMP_TYPE_ITCM        = 0,
+    DUMP_TYPE_DTCM        = 1,
+    DUMP_TYPE_SQRAM       = 2,
+    DUMP_TYPE_APU_REGS    = 3,
+    DUMP_TYPE_CIU_REGS    = 4,
+    DUMP_TYPE_ICU_REGS    = 5,
+    DUMP_TYPE_MAC_REGS    = 6,
+    DUMP_TYPE_EXTEND_7    = 7,
+    DUMP_TYPE_EXTEND_8    = 8,
+    DUMP_TYPE_EXTEND_9    = 9,
+    DUMP_TYPE_EXTEND_10   = 10,
+    DUMP_TYPE_EXTEND_11   = 11,
+    DUMP_TYPE_EXTEND_12   = 12,
+    DUMP_TYPE_EXTEND_13   = 13,
     DUMP_TYPE_EXTEND_LAST = 14
 } dumped_mem_type;
 
@@ -689,7 +689,7 @@ typedef enum
 {
     RDWR_STATUS_SUCCESS = 0,
     RDWR_STATUS_FAILURE = 1,
-    RDWR_STATUS_DONE = 2
+    RDWR_STATUS_DONE    = 2
 } rdwr_status;
 
 /**
@@ -701,15 +701,15 @@ typedef enum
  */
 rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
 {
-    int ret = 0;
-    int tries = 0;
-    t_u8 ctrl_data = 0;
+    int ret                = 0;
+    int tries              = 0;
+    t_u8 ctrl_data         = 0;
     t_u8 dbg_dump_ctrl_reg = 0;
-    t_u8 debug_host_ready = 0;
+    t_u8 debug_host_ready  = 0;
     uint32_t resp;
 
     dbg_dump_ctrl_reg = DEBUG_DUMP_CTRL_REG;
-    debug_host_ready = DEBUG_HOST_READY;
+    debug_host_ready  = DEBUG_HOST_READY;
 
     ret = sdio_drv_creg_write(dbg_dump_ctrl_reg, 1, debug_host_ready, &resp);
     if (!ret)
@@ -757,20 +757,20 @@ rdwr_status wifi_cmd52_rdwr_firmware(t_u8 doneflag)
  */
 void wifi_dump_firmware_info()
 {
-    int ret = 0;
+    int ret   = 0;
     int tries = 0;
     unsigned int reg, reg_start, reg_end;
     t_u8 start_flag = 0;
-    t_u8 doneflag = 0;
+    t_u8 doneflag   = 0;
     rdwr_status stat;
-    t_u8 dbg_dump_start_reg = 0;
-    t_u8 dbg_dump_end_reg = 0;
+    t_u8 dbg_dump_start_reg                    = 0;
+    t_u8 dbg_dump_end_reg                      = 0;
     memory_type_mapping *pmem_type_mapping_tbl = &mem_type_mapping_tbl;
     t_u8 data[8], i;
     uint32_t resp;
 
     dbg_dump_start_reg = DEBUG_DUMP_START_REG;
-    dbg_dump_end_reg = DEBUG_DUMP_END_REG;
+    dbg_dump_end_reg   = DEBUG_DUMP_END_REG;
 
 #ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", os_get_timestamp());
@@ -828,8 +828,8 @@ void wifi_dump_firmware_info()
             goto done;
 
         reg_start = dbg_dump_start_reg;
-        reg_end = dbg_dump_end_reg;
-        i = 0;
+        reg_end   = dbg_dump_end_reg;
+        i         = 0;
         for (reg = reg_start; reg <= reg_end; reg++)
         {
             ret = sdio_drv_creg_read(reg, 1, &resp);
@@ -907,33 +907,33 @@ void wifi_sdio_reg_dbg()
         if (loop == 0)
         {
             /* Read the registers of SDIO function0 */
-            func = loop;
+            func      = loop;
             reg_start = 0;
-            reg_end = 9;
+            reg_end   = 9;
         }
         else if (loop == 1)
         {
             /* Read the registers of SDIO function1 */
-            func = loop;
+            func      = loop;
             reg_start = 0x10;
-            reg_end = 0x17;
+            reg_end   = 0x17;
         }
         else if (loop == 2)
         {
             /* Read specific registers of SDIO function1 */
-            index = 0;
-            func = 1;
+            index     = 0;
+            func      = 1;
             reg_start = reg_table[index++];
-            reg_end = reg_table[ARRAY_SIZE(reg_table) - 1];
+            reg_end   = reg_table[ARRAY_SIZE(reg_table) - 1];
         }
         else
         {
             /* Read the scratch registers of SDIO function1 */
             if (loop == 4)
                 os_thread_sleep(os_msec_to_ticks(1));
-            func = 1;
+            func      = 1;
             reg_start = scratch_reg;
-            reg_end = scratch_reg + 10;
+            reg_end   = scratch_reg + 10;
         }
         if (loop != 2)
             ptr += sprintf(ptr, "SDIO Func%d (%#x-%#x): ", func, reg_start, reg_end);
@@ -941,7 +941,7 @@ void wifi_sdio_reg_dbg()
             ptr += sprintf(ptr, "SDIO Func%d: ", func);
         for (reg = reg_start; reg <= reg_end;)
         {
-            ret = sdio_drv_creg_read(reg, func, &resp);
+            ret  = sdio_drv_creg_read(reg, func, &resp);
             data = resp & 0xff;
             if (loop == 2)
                 ptr += sprintf(ptr, "(%#x) ", reg);
@@ -1107,7 +1107,6 @@ void wlan_process_hang(uint8_t fw_reload)
 #ifdef CONFIG_WIFI_IND_RESET
     wifi_ind_reset_unlock();
 #endif
-
 }
 #endif
 
@@ -2032,7 +2031,7 @@ static int wifi_core_init(void)
 
     wm_wifi.powersave_queue_data = g_powersave_queue_data;
     ret                          = os_queue_create(&wm_wifi.powersave_queue, "powersave", sizeof(struct bus_message),
-                          &wm_wifi.powersave_queue_data);
+                                                   &wm_wifi.powersave_queue_data);
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create power save queue failed");
@@ -4277,7 +4276,7 @@ int wifi_low_level_output(const t_u8 interface,
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
 #ifndef CONFIG_ZEPHYR
-    if ((pmpriv->media_connected == MFALSE) && (interface == WLAN_BSS_TYPE_STA))
+    if (pmpriv->media_connected == MFALSE)
     {
 #ifdef CONFIG_WMM
         wifi_wmm_buf_put((outbuf_t *)sd_buffer);
@@ -4601,9 +4600,9 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     return WM_SUCCESS;
 #else
     mlan_status i;
-    t_u32 pkt_len = 0;
+    t_u32 pkt_len       = 0;
     uint32_t outbuf_len = 0;
-    uint8_t *poutbuf = wifi_get_outbuf(&outbuf_len);
+    uint8_t *poutbuf    = wifi_get_outbuf(&outbuf_len);
 
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
