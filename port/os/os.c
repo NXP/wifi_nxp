@@ -2026,7 +2026,7 @@ int os_timer_deactivate(os_timer_t *timer_t)
 {
     struct timer_data *ptimer;
 
-    if (timer_t == NULL)
+    if (timer_t == NULL || (*timer_t) == NULL)
         return -WM_E_INVAL;
 
     ptimer = (struct timer_data *)(*timer_t);
