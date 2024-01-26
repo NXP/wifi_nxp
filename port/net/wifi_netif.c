@@ -566,8 +566,6 @@ bool wrapper_net_is_ip_or_ipv6(const t_u8 *buffer)
  */
 static void low_level_init(struct netif *netif)
 {
-    struct ethernetif *ethernetif = (struct ethernetif *)netif->state;
-
     /* set MAC hardware address length */
     netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
@@ -578,11 +576,8 @@ static void low_level_init(struct netif *netif)
     /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
     netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
 
-    if (ethernetif->interface == MLAN_BSS_TYPE_STA)
-    {
-        netif_set_igmp_mac_filter(netif, igmp_mac_filter);
-        netif->flags |= NETIF_FLAG_IGMP;
-    }
+    netif_set_igmp_mac_filter(netif, igmp_mac_filter);
+    netif->flags |= NETIF_FLAG_IGMP;
 #ifdef CONFIG_IPV6
     netif_set_mld_mac_filter(netif, mld_mac_filter);
     netif->flags |= NETIF_FLAG_MLD6;
