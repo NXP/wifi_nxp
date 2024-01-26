@@ -1659,7 +1659,7 @@ int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned long wait)
 {
     int ret;
 
-    if (qhandle == NULL)
+    if (qhandle == NULL || (*qhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1674,7 +1674,7 @@ int os_queue_send(os_queue_t *qhandle, const void *msg, unsigned long wait)
 int os_queue_recv(os_queue_t *qhandle, void *msg, unsigned long wait)
 {
     int ret;
-    if (qhandle == NULL)
+    if (qhandle == NULL || (*qhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1701,7 +1701,7 @@ int os_queue_delete(os_queue_t *qhandle)
 int os_queue_get_msgs_waiting(os_queue_t *qhandle)
 {
     int nmsg = 0;
-    if (qhandle == NULL)
+    if (qhandle == NULL || (*qhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1743,7 +1743,7 @@ int os_mutex_create(os_mutex_t *mhandle, const char *name, int flags)
 int os_mutex_get(os_mutex_t *mhandle, unsigned long wait)
 {
     int ret;
-    if (mhandle == NULL)
+    if (mhandle == NULL || (*mhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1756,7 +1756,7 @@ int os_mutex_put(os_mutex_t *mhandle)
 {
     int ret;
 
-    if (mhandle == NULL)
+    if (mhandle == NULL || (*mhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1861,7 +1861,7 @@ int os_semaphore_create_counting(os_semaphore_t *mhandle,
 int os_semaphore_get(os_semaphore_t *mhandle, unsigned long wait)
 {
     int ret;
-    if (mhandle == NULL)
+    if (mhandle == NULL || (*mhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1872,7 +1872,7 @@ int os_semaphore_get(os_semaphore_t *mhandle, unsigned long wait)
 
 int os_semaphore_put(os_semaphore_t *mhandle)
 {
-    if (mhandle == NULL)
+    if (mhandle == NULL || (*mhandle) == NULL)
     {
         return -WM_E_INVAL;
     }
@@ -1966,7 +1966,7 @@ int os_timer_create(os_timer_t *timer_t,
 int os_timer_activate(os_timer_t *timer_t)
 {
     struct timer_data *ptimer;
-    if (timer_t == NULL)
+    if (timer_t == NULL || (*timer_t) == NULL)
         return -WM_E_INVAL;
 
     ptimer = (struct timer_data *)(*timer_t);
@@ -1985,7 +1985,7 @@ int os_timer_change(os_timer_t *timer_t, os_timer_tick ntime, os_timer_tick bloc
 {
     struct timer_data *ptimer;
 
-    if (timer_t == NULL)
+    if (timer_t == NULL || (*timer_t) == NULL)
         return -WM_E_INVAL;
 
     ptimer         = (struct timer_data *)(*timer_t);
@@ -1998,7 +1998,7 @@ bool os_timer_is_running(os_timer_t *timer_t)
     int ret;
     struct timer_data *ptimer;
 
-    if (timer_t == NULL)
+    if (timer_t == NULL || (*timer_t) == NULL)
         return false;
 
     ptimer = (struct timer_data *)(*timer_t);
@@ -2010,7 +2010,7 @@ void *os_timer_get_context(os_timer_t *timer_t)
 {
     struct timer_data *ptimer;
 
-    if (timer_t == NULL)
+    if (timer_t == NULL || (*timer_t) == NULL)
         return NULL;
 
     ptimer = (struct timer_data *)(*timer_t);
