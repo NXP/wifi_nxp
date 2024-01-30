@@ -213,7 +213,7 @@ int wlan_ncp_iperf_command(int argc, char **argv)
         }
         memcpy(iperf_msg.ip_addr, argv[4], strlen(argv[4]) + 1);
 
-        if (argc == 6)
+        if (argc >= 6)
         {
             if (get_uint(argv[5], (unsigned int *)&iperf_msg.port, strlen(argv[5])))
             {
@@ -224,9 +224,20 @@ int wlan_ncp_iperf_command(int argc, char **argv)
         else
             iperf_msg.port = NCP_IPERF_UDP_SERVER_PORT_DEFAULT;
 
-        if (argc == 7)
+        if (argc >= 7)
         {
-            if (get_uint(argv[6], &iperf_msg.iperf_set.iperf_udp_rate, strlen(argv[6])))
+            if (get_uint(argv[6], (unsigned int *)&iperf_msg.iperf_set.iperf_count, strlen(argv[6])))
+            {
+                (void)PRINTF("tcp packet number format is error\r\n");
+                return -WM_FAIL;
+            }
+        }
+        else
+            iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
+
+        if (argc >= 8)
+        {
+            if (get_uint(argv[7], &iperf_msg.iperf_set.iperf_udp_rate, strlen(argv[7])))
             {
                 printf("udp rate format is error\r\n");
                 return -WM_FAIL;
@@ -235,9 +246,9 @@ int wlan_ncp_iperf_command(int argc, char **argv)
         else
             iperf_msg.iperf_set.iperf_udp_rate = NCP_IPERF_UDP_RATE;
 
-        if (argc == 8)
+        if (argc >= 9)
         {
-            if (get_uint(argv[7], &iperf_msg.iperf_set.iperf_udp_time, strlen(argv[7])))
+            if (get_uint(argv[8], &iperf_msg.iperf_set.iperf_udp_time, strlen(argv[8])))
             {
                 printf("udp time format is error\r\n");
                 return -WM_FAIL;
@@ -275,25 +286,29 @@ int wlan_ncp_iperf_command(int argc, char **argv)
         case NCP_IPERF_TCP_TX:
             iperf_msg.iperf_set.iperf_type = NCP_IPERF_TCP_TX;
             iperf_msg.per_size             = NCP_IPERF_PER_TCP_PKG_SIZE;
-            iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
+            if (iperf_msg.iperf_set.iperf_count == 0)
+                iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
             (void)os_event_notify_put(ncp_iperf_tx_thread);
             break;
         case NCP_IPERF_TCP_RX:
             iperf_msg.iperf_set.iperf_type = NCP_IPERF_TCP_RX;
             iperf_msg.per_size             = NCP_IPERF_PER_TCP_PKG_SIZE;
-            iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
+            if (iperf_msg.iperf_set.iperf_count == 0)
+                iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
             (void)os_event_notify_put(ncp_iperf_rx_thread);
             break;
         case NCP_IPERF_UDP_TX:
             iperf_msg.iperf_set.iperf_type = NCP_IPERF_UDP_TX;
             iperf_msg.per_size             = NCP_IPERF_PER_UDP_PKG_SIZE;
-            iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
+            if (iperf_msg.iperf_set.iperf_count == 0)
+                iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
             (void)os_event_notify_put(ncp_iperf_tx_thread);
             break;
         case NCP_IPERF_UDP_RX:
             iperf_msg.iperf_set.iperf_type = NCP_IPERF_UDP_RX;
             iperf_msg.per_size             = NCP_IPERF_PER_UDP_PKG_SIZE;
-            iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
+            if (iperf_msg.iperf_set.iperf_count == 0)
+                iperf_msg.iperf_set.iperf_count = NCP_IPERF_PKG_COUNT;
             (void)os_event_notify_put(ncp_iperf_rx_thread);
             break;
         default:
