@@ -3217,7 +3217,7 @@ static wifi_sub_band_set_t subband_JP_2_4GHz[] = {
 
 /* Region: World Wide Safe Mode(WWSM) 2.4 GHz */
 static wifi_sub_band_set_t subband_WWSM_2_4GHz[] = {
-    {1, 14, 8},
+    {1, 14, 22},
 };
 
 /* Region: Constrained 2.4 Ghz */
@@ -3262,7 +3262,7 @@ static wifi_sub_band_set_t subband_CN_5_GHz[] = {
 };
 
 /* Region: World Wide Safe Mode(WWSM) 5 GHz */
-static wifi_sub_band_set_t subband_WWSM_5_GHz[] = {{36, 8, 8}, {100, 11, 8}, {149, 5, 8}};
+static wifi_sub_band_set_t subband_WWSM_5_GHz[] = {{36, 8, 22}, {100, 11, 22}, {149, 5, 22}};
 
 #endif /* CONFIG_5GHz_SUPPORT */
 
