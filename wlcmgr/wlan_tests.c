@@ -5275,7 +5275,6 @@ static void dump_wlan_eu_validation(void)
 
 static void test_wlan_eu_validation(int argc, char **argv)
 {
-    uint8_t cmd_eu_buf[] = {0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, 0x05, 0};
     int value;
     int ret           = -WM_FAIL;
     uint32_t reqd_len = 0;
@@ -5303,10 +5302,8 @@ static void test_wlan_eu_validation(int argc, char **argv)
         return;
     }
 
-    cmd_eu_buf[10] = value;
-
-    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(uint8_t), host_cmd_resp_buf, HOSTCMD_RESP_BUFF_SIZE,
-                            &reqd_len);
+    ret = wlan_eu_validation((eu_option)value, host_cmd_resp_buf,
+                                sizeof(host_cmd_resp_buf), &reqd_len);
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Hostcmd success, response is:\r\n");

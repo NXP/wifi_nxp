@@ -2760,12 +2760,11 @@ static int wlan_bridge_memory_state(void *data)
 }
 
 #define HOSTCMD_EU_RESP_BUFF_SIZE 50
-uint8_t eu_resp_buf[HOSTCMD_EU_RESP_BUFF_SIZE] = {0};
 
 static int wlan_bridge_eu_validation(void *data)
 {
-    uint8_t cmd_eu_buf[] = {0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, 0x05, 0};
-
+    /* Alloc memory for resp buf dynamically if it's too large */
+    uint8_t eu_resp_buf[HOSTCMD_EU_RESP_BUFF_SIZE] = {0};
     NCP_CMD_EU_VALIDATION *eu_validation = (NCP_CMD_EU_VALIDATION *)data;
     NCPCmd_DS_COMMAND *cmd_res           = ncp_bridge_get_response_buffer();
 
@@ -2777,21 +2776,17 @@ static int wlan_bridge_eu_validation(void *data)
     NCP_CMD_EU_VALIDATION *eu_validation_res = (NCP_CMD_EU_VALIDATION *)&cmd_res->params.eu_validation;
     eu_validation_res->option                = eu_validation->option;
 
-    cmd_eu_buf[10] = eu_validation->option;
-
     uint32_t reqd_len = 0;
-    int ret;
-
-    ret = wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf) / sizeof(uint8_t), eu_resp_buf, HOSTCMD_EU_RESP_BUFF_SIZE,
-                            &reqd_len);
-
+    int ret = wlan_eu_validation((eu_option)eu_validation->option, eu_resp_buf,
+                                            sizeof(eu_resp_buf), &reqd_len);
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Hostcmd success, response is:\r\n");
         for (ret = 0; ret < reqd_len; ret++)
         {
-            (void)PRINTF("%x\t", eu_resp_buf[ret]);
+            (void)PRINTF("%02x\t", eu_resp_buf[ret]);
         }
+        (void)PRINTF("\r\n");
     }
     else
     {
