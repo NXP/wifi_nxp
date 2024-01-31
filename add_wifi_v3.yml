@@ -29,7 +29,6 @@ middleware.wifi.template:
       cc-define:
         LWIP_DNS: 1
         LWIP_NETIF_HOSTNAME: 1
-        LWIP_NETIF_STATUS_CALLBACK: 1
         LWIP_IGMP: 1
         SDIO_ENABLED:
         _XOPEN_SOURCE: 500
