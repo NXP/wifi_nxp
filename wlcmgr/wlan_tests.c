@@ -11050,7 +11050,7 @@ static void wlan_evaluate_ant_by_avg_rssi(wlan_ant_detect_data_t *pData)
     (void)PRINTF("\t        avg_rssi\r\n");
     for (i = 0; i < pData->ant_port_count; i++)
     {
-        (void)PRINTF("Antenna %d", i);
+        (void)PRINTF("Antenna %d", i+1);
         (void)PRINTF("\t-%d dBm\r\n", pScan_info[i].avg_rssi);
         if (pScan_info[i].avg_rssi == 0xff)
         {
@@ -11180,7 +11180,7 @@ static int wlan_evaluate_ant_by_common_device(wlan_ant_detect_data_t *pData)
         (void)PRINTF("List the info on every antenna for this common device\r\n");
         for (i = 0; i < pData->ant_port_count; i++)
         {
-            PRINTF("Antenna %d:\r\n", i);
+            PRINTF("Antenna %d:\r\n", i+1);
             print_mac(pScan_info[i].scan_entry[com_idx_per_ant[i]].bssid);
             PRINTF(" \"%s\"\r\n", pScan_info[i].scan_entry[com_idx_per_ant[i]].ssid);
             PRINTF("\trssi[%d]: -%d dBm\r\n", i, pScan_info[i].scan_entry[com_idx_per_ant[i]].rssi);
@@ -11209,7 +11209,7 @@ static void wlan_evaluate_ant_by_specific_device(wlan_ant_detect_data_t *pData)
     for (i = 0; i < pData->ant_port_count; i++)
     {
         sum_rssi = 0;
-        (void)PRINTF("Antenna %d", i);
+        (void)PRINTF("Antenna %d", i+1);
         for (j = 0; j < device_count_to_check; j++)
         {
             sum_rssi += pScan_info[i].scan_entry[j].rssi;
@@ -11247,7 +11247,6 @@ static int __ant_detect_scan_cb(unsigned int count)
         }
         else
         {
-            (void)PRINTF("wlan get specific scan info\r\n");
             wlan_get_specific_scan_info(pInfo, count);
 
         }
