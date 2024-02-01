@@ -42,9 +42,13 @@ Change Log:
 #define WLAN_TX_PWR_200MW 23
 /** 2000mW */
 #define WLAN_TX_PWR_CN_2000MW 33
-/** 20dBm */
+#if defined(RW610)
+/** 22dBm */
+#define WLAN_TX_PWR_WW_DEFAULT 22
+#else
+/** 8dBm */
 #define WLAN_TX_PWR_WW_DEFAULT 8
-
+#endif
 /** Region code mapping */
 typedef struct _country_code_mapping
 {

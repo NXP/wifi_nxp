@@ -568,7 +568,7 @@ static mlan_status wlan_11d_process_country_info(mlan_private *pmpriv, BSSDescri
 
             if (j == parsed_region_chan->no_of_chan && j < MAX_NO_OF_CHAN)
             {
-                if (parsed_region_chan->no_of_chan + num_chan_added >=  MAX_NO_OF_CHAN)
+                if (parsed_region_chan->no_of_chan + num_chan_added >= MAX_NO_OF_CHAN)
                 {
                     break;
                 }
@@ -667,15 +667,23 @@ static t_void wlan_11d_sort_parsed_region_chan(parsed_region_chan_11d_t *parsed_
  *
  *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
  */
-static mlan_status wlan_11d_send_domain_info(mlan_private *pmpriv, t_void *pioctl_buf)
+static mlan_status wlan_11d_send_domain_info(mlan_private *pmpriv, t_void *pioctl_buf, t_bool is_op_special_set)
 {
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
     ENTER();
 
     /* Send cmd to FW to set domain info */
-    ret =
-        wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_buf, MNULL);
+    if (is_op_special_set)
+    {
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_SPC_SET, 0, (t_void *)pioctl_buf,
+                               MNULL);
+    }
+    else
+    {
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_802_11D_DOMAIN_INFO, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_buf,
+                               MNULL);
+    }
     if (ret != MLAN_STATUS_SUCCESS)
     {
         PRINTM(MERROR, "11D: Failed to download domain Info\n");
@@ -1441,7 +1449,7 @@ mlan_status wlan_11d_create_dnld_countryinfo(mlan_private *pmpriv, t_u16 band)
         (void)wlan_11d_generate_domain_info(pmadapter, &parsed_region_chan);
 
         /* Set domain info */
-        ret = wlan_11d_send_domain_info(pmpriv, MNULL);
+        ret = wlan_11d_send_domain_info(pmpriv, MNULL, MTRUE);
         if (ret != MLAN_STATUS_SUCCESS)
         {
             PRINTM(MERROR, "11D: Error sending domain info to FW\n");
@@ -1524,7 +1532,15 @@ mlan_status wlan_11d_parse_dnld_countryinfo(mlan_private *pmpriv, BSSDescriptor_
         (void)wlan_11d_generate_domain_info(pmadapter, &region_chan);
 
         /* Set domain info */
-        ret = wlan_11d_send_domain_info(pmpriv, MNULL);
+        if ((MNULL != pbss_desc) && (*pbss_desc->country_info.country_code) &&
+            (pbss_desc->country_info.len > COUNTRY_CODE_LEN))
+        {
+            ret = wlan_11d_send_domain_info(pmpriv, MNULL, MFALSE);
+        }
+        else
+        {
+            ret = wlan_11d_send_domain_info(pmpriv, MNULL, MTRUE);
+        }
         if (ret != MLAN_STATUS_SUCCESS)
         {
             PRINTM(MERROR, "11D: Error sending domain info to FW\n");
@@ -1629,7 +1645,7 @@ mlan_status wlan_11d_cfg_domain_info(IN pmlan_adapter pmadapter, IN mlan_ioctl_r
 
     (void)wlan_11d_set_domain_info(pmpriv, domain_info->band, domain_info->country_code, domain_info->no_of_sub_band,
                                    (IEEEtypes_SubbandSet_t *)(void *)domain_info->sub_band);
-    ret = wlan_11d_send_domain_info(pmpriv, pioctl_req);
+    ret = wlan_11d_send_domain_info(pmpriv, pioctl_req, MFALSE);
 
     if (ret == MLAN_STATUS_SUCCESS)
     {

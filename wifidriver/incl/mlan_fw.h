@@ -78,7 +78,7 @@ typedef MLAN_PACK_START struct
 #define A_SUPPORTED_RATES 9
 
 /** CapInfo Short Slot Time Disabled */
-//#define SHORT_SLOT_TIME_DISABLED(CapInfo) ((IEEEtypes_CapInfo_t)(CapInfo).short_slot_time = 0)
+// #define SHORT_SLOT_TIME_DISABLED(CapInfo) ((IEEEtypes_CapInfo_t)(CapInfo).short_slot_time = 0)
 #define SHORT_SLOT_TIME_DISABLED(CapInfo) ((CapInfo) &= ~MBIT(10))
 /** CapInfo Short Slot Time Enabled */
 #define SHORT_SLOT_TIME_ENABLED(CapInfo) ((CapInfo) |= MBIT(10))
@@ -737,10 +737,10 @@ typedef enum _WLAN_802_11_WEP_STATUS
 
 /** FW cap info bit 16: Tx mgmt pkt with command*/
 #if defined(SD8987)
-#define FW_CAPINFO_EXT_CMD_TX_DATA MBIT(29)
+#define FW_CAPINFO_EXT_CMD_TX_DATA          MBIT(29)
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EXT_CMD_TX_DATA)
 #elif defined(SD9177)
-#define FW_CAPINFO_EXT_CMD_TX_DATA MBIT(16)
+#define FW_CAPINFO_EXT_CMD_TX_DATA          MBIT(16)
 /** Check if transmit mgmt pkt through command supported by firmware */
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_CMD_TX_DATA)
 #endif
@@ -1388,6 +1388,8 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_ACT_GEN_GET 0x0000U
 /** General purpose action : Set */
 #define HostCmd_ACT_GEN_SET 0x0001U
+/** Special purpose action : Set */
+#define HostCmd_ACT_SPC_SET 0x8001
 /** General purpose action : Get_Current */
 #define HostCmd_ACT_GEN_GET_CURRENT 0x0003
 /** General purpose action : Remove */
@@ -1833,16 +1835,16 @@ typedef enum _ENH_PS_MODES
 /* mod_grp */
 typedef enum _mod_grp
 {
-    MOD_CCK,         // 0
-    MOD_OFDM_PSK,    // 1
-    MOD_OFDM_QAM16,  // 2
-    MOD_OFDM_QAM64,  // 3
-    MOD_HT_20_PSK,   // 4
-    MOD_HT_20_QAM16, // 5
-    MOD_HT_20_QAM64, // 6
-    MOD_HT_40_PSK,   // 7
-    MOD_HT_40_QAM16, // 8
-    MOD_HT_40_QAM64, // 9
+    MOD_CCK,          // 0
+    MOD_OFDM_PSK,     // 1
+    MOD_OFDM_QAM16,   // 2
+    MOD_OFDM_QAM64,   // 3
+    MOD_HT_20_PSK,    // 4
+    MOD_HT_20_QAM16,  // 5
+    MOD_HT_20_QAM64,  // 6
+    MOD_HT_40_PSK,    // 7
+    MOD_HT_40_QAM16,  // 8
+    MOD_HT_40_QAM64,  // 9
 #ifdef STREAM_2x2
     MOD_HT2_20_PSK,   // 10
     MOD_HT2_20_QAM16, // 11
@@ -1853,12 +1855,12 @@ typedef enum _mod_grp
 #endif
 
 #ifdef CONFIG_11AC
-    MOD_VHT_20_QAM256, // 16
-    MOD_VHT_40_QAM256, // 17
-    MOD_VHT_80_PSK,    // 18
-    MOD_VHT_80_QAM16,  // 19
-    MOD_VHT_80_QAM64,  // 20
-    MOD_VHT_80_QAM256, // 21
+    MOD_VHT_20_QAM256,  // 16
+    MOD_VHT_40_QAM256,  // 17
+    MOD_VHT_80_PSK,     // 18
+    MOD_VHT_80_QAM16,   // 19
+    MOD_VHT_80_QAM64,   // 20
+    MOD_VHT_80_QAM256,  // 21
 #ifdef STREAM_2x2
     MOD_VHT2_20_QAM256, // 22
     MOD_VHT2_40_QAM256, // 23
@@ -1960,11 +1962,12 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Data_t
 } MLAN_PACK_END MrvlIEtypes_Data_t;
 
 /** MrvlIEtypes_PrevBssid_t */
-typedef MLAN_PACK_START struct _MrvlIEtypes_PrevBssid_t {
-	/** Header */
-	MrvlIEtypesHeader_t header;
-	/** prev_bssid **/
-	t_u8 prev_bssid[6];
+typedef MLAN_PACK_START struct _MrvlIEtypes_PrevBssid_t
+{
+    /** Header */
+    MrvlIEtypesHeader_t header;
+    /** prev_bssid **/
+    t_u8 prev_bssid[6];
 } MLAN_PACK_END MrvlIEtypes_PrevBssid_t;
 
 /** MrvlIETypes_ActionFrame_t */
@@ -5108,8 +5111,8 @@ typedef MLAN_PACK_START struct
 {
     mlan_wmm_queue_stats_action_e action; /**< Start, Stop, or Get */
 #ifdef BIG_ENDIAN_SUPPORT
-    t_u8 select_bin : 7;        /**< WMM_AC_BK(0) to WMM_AC_VO(3), or TID */
-    t_u8 select_is_userpri : 1; /**< Set if select_bin is UP, Clear for AC */
+    t_u8 select_bin : 7;                  /**< WMM_AC_BK(0) to WMM_AC_VO(3), or TID */
+    t_u8 select_is_userpri : 1;           /**< Set if select_bin is UP, Clear for AC */
 #else
     t_u8 select_is_userpri : 1; /**< Set if select_bin is UP, Clear for AC */
     t_u8 select_bin : 7;        /**< WMM_AC_BK(0) to WMM_AC_VO(3), or TID */
@@ -6730,13 +6733,13 @@ typedef MLAN_PACK_START struct _HostCmd_MFG_CMD_IEEETYPES_CTLBASICTRIGHDR_T
 typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T
 {
     /** MFG command code */
-    t_u32  mfg_cmd;
+    t_u32 mfg_cmd;
     /** Action */
-    t_u16  action;
+    t_u16 action;
     /** Device ID */
-    t_u16  device_id;
+    t_u16 device_id;
     /** MFG Error code */
-    t_u32  error;
+    t_u32 error;
     /** Destination MAC Address */
     t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
 } MLAN_PACK_END HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T;
@@ -6745,17 +6748,17 @@ typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_OTP_MAC_ADD_T
 typedef MLAN_PACK_START struct _HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T
 {
     /** MFG command code */
-    t_u32  mfg_cmd;
+    t_u32 mfg_cmd;
     /** Action */
-    t_u16  action;
+    t_u16 action;
     /** Device ID */
-    t_u16  device_id;
+    t_u16 device_id;
     /** MFG Error code */
-    t_u32  error;
+    t_u32 error;
     /** CAL Data write status */
-    t_u32  cal_data_status;
+    t_u32 cal_data_status;
     /** CAL Data Length*/
-    t_u32  cal_data_len;
+    t_u32 cal_data_len;
     /** Destination MAC Address */
     t_u8 cal_data[CAL_DATA_LEN];
 } MLAN_PACK_END HostCmd_DS_MFG_CMD_OTP_CAL_DATA_T;
@@ -6866,7 +6869,7 @@ typedef MLAN_PACK_START struct
     t_u8 report : 1;             /**< 11h: en/disable report rcpt. of spec. type */
     t_u8 duration_mandatory : 1; /**< 11k: duration spec. for meas. is mandatory */
     t_u8 rsvd5_7 : 3;            /**< Reserved */
-#endif /* BIG_ENDIAN_SUPPORT */
+#endif                           /* BIG_ENDIAN_SUPPORT */
 
 } MLAN_PACK_END MeasReqMode_t;
 
@@ -6923,7 +6926,7 @@ typedef MLAN_PACK_START struct
     t_u8 incapable : 1;          /**< Incapable of performing measurement */
     t_u8 refused : 1;            /**< Measurement refused */
     t_u8 rsvd3_7 : 5;            /**< Reserved */
-#endif /* BIG_ENDIAN_SUPPORT */
+#endif                  /* BIG_ENDIAN_SUPPORT */
 
 } MLAN_PACK_END MeasRptMode_t;
 
@@ -7044,7 +7047,7 @@ typedef MLAN_PACK_START struct
 {
     MrvlIEtypesHeader_t Header; /**< Header */
 
-    MeasRptBasicMap_t map; /**< IEEE 802.11h basic meas report */
+    MeasRptBasicMap_t map;      /**< IEEE 802.11h basic meas report */
 } MLAN_PACK_END MrvlIEtypes_ChanRpt11hBasic_t;
 
 typedef MLAN_PACK_START struct
