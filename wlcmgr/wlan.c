@@ -4479,6 +4479,20 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
 #ifdef CONFIG_P2P
     wifi_wfd_event(false, false, NULL);
 #endif
+#ifdef CONFIG_WPA_SUPP
+    if (network->security.type == WLAN_SECURITY_WPA3_SAE &&
+        (msg->reason == WLAN_REASON_PREV_AUTH_NOT_VALID ||
+        msg->reason == WLAN_REASON_DISASSOC_DUE_TO_INACTIVITY ||
+        msg->reason == WLAN_REASON_INVALID_IE))
+    {
+        /*
+         *  Clear pmksa cache in case AP wants to redo sae auth.
+         *  But send successful assoc resp and send deauth right after.
+         *  Then we will always using pmksa cache if it exists.
+         */
+        wlan_pmksa_flush();
+    }
+#endif
 }
 
 static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
