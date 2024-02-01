@@ -27,6 +27,9 @@ extern int ping_sock_handle;
 
 static int mdns_result_num;
 
+static bool socket_receive_res  = false;
+static bool socket_recvfrom_res = false;
+
 /**
  * @brief         Convert IP string to hex IP
  *
@@ -4499,6 +4502,10 @@ int wlan_process_wlan_socket_receive_response(uint8_t *res)
     MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
+        if (socket_receive_res == true)
+        {
+            socket_receive_res = false;
+        }
         (void)PRINTF("failed to receive data!\r\n");
         return -WM_FAIL;
     }
@@ -4506,16 +4513,26 @@ int wlan_process_wlan_socket_receive_response(uint8_t *res)
         (NCP_CMD_SOCKET_RECEIVE_CFG *)&cmd_res->params.wlan_socket_receive;
     recv_size = wlan_socket_receive->recv_size;
 
-#ifdef CONFIG_MCU_BRIDGE_IO_DUMP
-    (void)PRINTF("receive data success\r\n");
-    dump_hex(wlan_socket_receive->recv_data, recv_size);
-#endif
-    if(memcmp(wlan_socket_receive->recv_data, &lwiperf_end_token[0], sizeof(lwiperf_end_token)) == 0)
+    if (socket_receive_res == true)
     {
-      (void)PRINTF("recved end token!\r\n");
-      return -WM_FAIL;
+        socket_receive_res = false;
+        recv_size = wlan_socket_receive->recv_size;
+        (void)PRINTF("receive data success\r\n");
+        dump_hex(wlan_socket_receive->recv_data, recv_size);
     }
-    
+    else
+    {
+#ifdef CONFIG_MCU_BRIDGE_IO_DUMP
+        (void)PRINTF("receive data success\r\n");
+        dump_hex(wlan_socket_receive->recv_data, recv_size);
+#endif
+        if(memcmp(wlan_socket_receive->recv_data, &lwiperf_end_token[0], sizeof(lwiperf_end_token)) == 0)
+        {
+            (void)PRINTF("recved end token!\r\n");
+            return -WM_FAIL;
+        }
+    }
+
     return recv_size;
 }
 
@@ -4567,6 +4584,8 @@ int wlan_socket_receive_command(int argc, char **argv)
     /*cmd size*/
     wlan_socket_command->header.size += sizeof(NCP_CMD_SOCKET_RECEIVE_CFG);
 
+    socket_receive_res = true;
+
     return WM_SUCCESS;
 }
 
@@ -4582,7 +4601,12 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
     MCU_NCPCmd_DS_COMMAND *cmd_res = (MCU_NCPCmd_DS_COMMAND *)res;
     if (cmd_res->header.result != NCP_BRIDGE_CMD_RESULT_OK)
     {
-        if (ping_res.seq_no < 0)
+        if (socket_recvfrom_res == true)
+        {
+            socket_recvfrom_res = false;
+            (void)PRINTF("failed to receive data!\r\n");
+        }
+        else if (ping_res.seq_no < 0)
         {
             (void)PRINTF("failed to receive data!\r\n");
         }
@@ -4598,8 +4622,15 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
 
     NCP_CMD_SOCKET_RECVFROM_CFG *wlan_socket_recvfrom =
         (NCP_CMD_SOCKET_RECVFROM_CFG *)&cmd_res->params.wlan_socket_recvfrom;   
-          
-    if (ping_res.seq_no < 0)
+
+    if (socket_recvfrom_res == true)
+    {
+        socket_recvfrom_res = false;
+        recv_size = wlan_socket_recvfrom->recv_size;
+        (void)PRINTF("recvfrom data success\r\n");
+        dump_hex(wlan_socket_recvfrom->recv_data, recv_size);
+    }
+    else if (ping_res.seq_no < 0)
     {
         recv_size = wlan_socket_recvfrom->recv_size;
 #ifdef CONFIG_MCU_BRIDGE_IO_DUMP
@@ -4672,6 +4703,8 @@ int wlan_socket_recvfrom_command(int argc, char **argv)
 
     /*cmd size*/
     wlan_socket_command->header.size += sizeof(NCP_CMD_SOCKET_RECVFROM_CFG);
+
+    socket_recvfrom_res = true;
 
     return WM_SUCCESS;
 }
