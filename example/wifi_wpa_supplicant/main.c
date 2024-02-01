@@ -115,10 +115,6 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
     static int auth_fail                      = 0;
     wlan_uap_client_disassoc_t *disassoc_resp = data;
 
-    printSeparator();
-    PRINTF("app_cb: WLAN: received event %d\r\n", reason);
-    printSeparator();
-
     switch (reason)
     {
         case WLAN_REASON_INITIALIZED:
