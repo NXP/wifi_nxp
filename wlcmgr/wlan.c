@@ -10141,25 +10141,6 @@ void wlan_reset(cli_reset_option ResetOption)
     PRINTF("--- Done ---\r\n");
 }
 
-int wlan_eu_validation(
-    eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len)
-{
-    uint8_t cmd_eu_buf[] = { 0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, option, 0 };
-
-    if (option < EU_GCMP_128_ENC || option > EU_OPTION_MAX)
-    {
-        return -WM_E_INVAL;
-    }
-    
-    if (!wlan_is_started())
-    {
-        (void)PRINTF("eu validation is not allowed when WIFI is disabled\r\n");
-        return -WM_FAIL;
-    }
-
-    return wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf), resp_buf, resp_buf_size, reqd_len);
-}
-
 static void wlan_mon_thread(os_thread_arg_t data)
 {
     unsigned long delay_ms = 5000;
@@ -10225,6 +10206,29 @@ static void wlan_mon_thread(os_thread_arg_t data)
         }
     }
 }
+#endif // RW610
+
+#ifdef CONFIG_EU_VALIDATION
+
+int wlan_eu_validation(
+    eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len)
+{
+    uint8_t cmd_eu_buf[] = { 0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, option, 0 };
+
+    if (option < EU_GCMP_128_ENC || option > EU_OPTION_MAX)
+    {
+        return -WM_E_INVAL;
+    }
+    
+    if (!wlan_is_started())
+    {
+        (void)PRINTF("eu validation is not allowed when WIFI is disabled\r\n");
+        return -WM_FAIL;
+    }
+
+    return wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf), resp_buf, resp_buf_size, reqd_len);
+}
+
 #endif
 
 #ifdef CONFIG_NCP_BRIDGE

@@ -2023,30 +2023,6 @@ typedef enum
     CLI_ENABLE_WIFI,
     CLI_RESET_WIFI,
 } cli_reset_option;
-
-typedef enum
-{
-    EU_GCMP_128_ENC = 0x05,
-    EU_GCMP_128_DEC,
-    EU_GCMP_256_ENC,
-    EU_GCMP_256_DEC,
-    EU_DUMMY_PAYLOAD,
-    EU_CRYPTO,
-    EU_CRYPTO_LARGE_PAYLOAD,
-    EU_CRYPTO_CCMP_128_ENC,
-    EU_CRYPTO_CCMP_128_DEC,
-    EU_CRYPTO_CCMP_256_ENC,
-    EU_CRYPTO_CCMP_256_DEC,
-    EU_CRYPTO_CCMP_128_MGMT_ENC,
-    EU_CRYPTO_CCMP_128_MGMT_DEC,
-    EU_GCMP_256_ENC_FIPS,
-    EU_GCMP_256_DEC_FIPS,
-    EU_GCMP_128_ENC_FIPS,
-    EU_GCMP_128_DEC_FIPS,
-    EU_TKIP_ENC_FIPS,
-    EU_TKIP_DEC_FIPS,
-    EU_OPTION_MAX = EU_TKIP_DEC_FIPS
-} eu_option;
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
@@ -2324,7 +2300,34 @@ void wlan_destroy_all_tasks(void);
  */
 int wlan_is_started();
 
+#endif // RW610
+
 #ifdef CONFIG_EU_VALIDATION
+
+typedef enum
+{
+    EU_GCMP_128_ENC = 0x05,
+    EU_GCMP_128_DEC,
+    EU_GCMP_256_ENC,
+    EU_GCMP_256_DEC,
+    EU_DUMMY_PAYLOAD,
+    EU_CRYPTO,
+    EU_CRYPTO_LARGE_PAYLOAD,
+    EU_CRYPTO_CCMP_128_ENC,
+    EU_CRYPTO_CCMP_128_DEC,
+    EU_CRYPTO_CCMP_256_ENC,
+    EU_CRYPTO_CCMP_256_DEC,
+    EU_CRYPTO_CCMP_128_MGMT_ENC,
+    EU_CRYPTO_CCMP_128_MGMT_DEC,
+    EU_GCMP_256_ENC_FIPS,
+    EU_GCMP_256_DEC_FIPS,
+    EU_GCMP_128_ENC_FIPS,
+    EU_GCMP_128_DEC_FIPS,
+    EU_TKIP_ENC_FIPS,
+    EU_TKIP_DEC_FIPS,
+    EU_OPTION_MAX = EU_TKIP_DEC_FIPS
+} eu_option;
+
 /** Execute EU validation.
  *
  *  This function is used to do EU validation.
@@ -2337,9 +2340,8 @@ int wlan_is_started();
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_eu_validation(eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len);
-#endif
 
-#endif
+#endif // CONFIG_EU_VALIDATION
 
 #ifdef CONFIG_NCP_BRIDGE
 /** uap provisioning deinit callback function */
