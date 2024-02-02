@@ -3469,6 +3469,7 @@ int wlan_http_req_command(int argc, char **argv)
     unsigned req_size   = 0;
 
     MCU_NCPCmd_DS_COMMAND *wlan_http_command = ncp_host_get_command_buffer();
+    (void)memset((uint8_t *)wlan_http_command, 0, NCP_HOST_COMMAND_LEN);
     wlan_http_command->header.cmd            = NCP_BRIDGE_CMD_WLAN_HTTP_REQ;
     wlan_http_command->header.size           = NCP_BRIDGE_CMD_HEADER_LEN;
     wlan_http_command->header.result         = NCP_BRIDGE_CMD_RESULT_OK;
