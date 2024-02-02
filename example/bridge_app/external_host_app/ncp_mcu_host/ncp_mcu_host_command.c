@@ -4628,7 +4628,8 @@ int wlan_process_wlan_socket_recvfrom_response(uint8_t *res)
     {
         socket_recvfrom_res = false;
         recv_size = wlan_socket_recvfrom->recv_size;
-        (void)PRINTF("recvfrom data success\r\n");
+        (void)PRINTF("recvfrom data success, peer_ip = %s, peer_port = %d\r\n", wlan_socket_recvfrom->peer_ip,
+                     wlan_socket_recvfrom->peer_port);
         dump_hex(wlan_socket_recvfrom->recv_data, recv_size);
     }
     else if (ping_res.seq_no < 0)
