@@ -249,12 +249,6 @@ extern WPS_DATA wps_global;
         (void)wlan.cb(r, data);   \
     }
 
-static bool ieee_ps_sleep_cb_sent = false;
-static bool deep_sleep_ps_sleep_cb_sent = false;
-#if defined(CONFIG_WNM_PS)
-static bool wnm_ps_sleep_cb_sent = false;
-#endif
-
 #ifdef RW610
 static os_mutex_t reset_lock;
 /* Mon thread */
@@ -2837,7 +2831,7 @@ static void wlan_disable_power_save(int action)
 #if defined(CONFIG_WNM_PS)
         case WLAN_WNM:
             wlcm_d("stopping WNM ps mode");
-            wifi_exit_wnm_power_save();
+            (void)wifi_exit_wnm_power_save();
             break;
 #endif
         default:
@@ -2852,12 +2846,10 @@ static void wlan_enable_power_save(int action)
     {
         case WLAN_DEEP_SLEEP:
             wlcm_d("starting deep sleep ps mode");
-            wlan.cm_deepsleepps_configured = true;
             (void)wifi_enter_deepsleep_power_save();
             break;
         case WLAN_IEEE:
             wlcm_d("starting IEEE ps mode");
-            wlan.cm_ieeeps_configured = true;
             (void)wifi_enter_ieee_power_save();
             break;
 #if defined(CONFIG_WNM_PS)
@@ -2887,16 +2879,15 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
     {
         if (action == EN_AUTO_PS)
         {
-            if (!ieee_ps_sleep_cb_sent)
+            if (!wlan.cm_ieeeps_configured)
             {
                 CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_IEEE);
-                ieee_ps_sleep_cb_sent = true;
+                wlan.cm_ieeeps_configured = true;
             }
         }
         else if (action == DIS_AUTO_PS)
         {
             wlan.cm_ieeeps_configured = false;
-            ieee_ps_sleep_cb_sent     = false;
             CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
         }
         else if (action == SLEEP_CONFIRM)
@@ -2920,16 +2911,15 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
     {
         if (action == EN_AUTO_PS)
         {
-            if(!deep_sleep_ps_sleep_cb_sent)
+            if(!wlan.cm_deepsleepps_configured)
             {
                 CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
-                deep_sleep_ps_sleep_cb_sent = true;
+                wlan.cm_deepsleepps_configured = true;
             }
         }
         else if (action == DIS_AUTO_PS)
         {
             wlan.cm_deepsleepps_configured = false;
-            deep_sleep_ps_sleep_cb_sent = false;
             // CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
             /* Skip ps-exit event for the first time
                after waking from PM4+DS. This will ensure
@@ -2949,15 +2939,19 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 #if defined(CONFIG_WNM_PS)
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action                      = (uint16_t)(*(uint32_t *)(msg->data));
+    uint16_t action                      = (uint16_t)((uint32_t *)(msg->data));
     wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
-    os_mem_free(msg->data);
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
         if ((wnm_sleep_result->action == 0) && (wnm_sleep_result->result == 0))
         {
             wlcm_d("WNM enable success event: action %x result %x", wnm_sleep_result->action, wnm_sleep_result->result);
+            if (!wlan.cm_wnmps_configured)
+            {
+                CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_WNM);
+                wlan.cm_wnmps_configured = true;
+            }
         }
         else if ((wnm_sleep_result->action == 0) && (wnm_sleep_result->result == 1))
         {
@@ -2968,16 +2962,7 @@ static void wlcm_process_wnmps_event(struct wifi_message *msg)
         {
             wlcm_d("WNM disable success event");
             wlan.cm_wnmps_configured = false;
-            wnm_ps_sleep_cb_sent     = false;
             CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_WNM);
-        }
-        else if (action == SLEEP_CONFIRM)
-        {
-            if (!wnm_ps_sleep_cb_sent)
-            {
-                CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_WNM);
-                wnm_ps_sleep_cb_sent = true;
-            }
         }
         else
         {
@@ -11007,6 +10992,8 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
         {
             wlcm_d("ieee ps already enabled");
         }
+
+        CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_IEEE);
         return WM_SUCCESS;
     }
 
@@ -11020,6 +11007,7 @@ int wlan_ieeeps_off(void)
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_IEEE);
     }
 
+    CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
     return WM_SUCCESS;
 }
 
@@ -11044,11 +11032,12 @@ int wlan_wnmps_on(unsigned int wakeup_conditions, t_u16 wnm_sleep_time)
         {
             wlcm_d("wnm ps already enabled");
         }
+
+        CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_WNM);
         return WM_SUCCESS;
     }
 
     wlan.wakeup_conditions   = wakeup_conditions;
-    wlan.cm_wnmps_configured = true;
     wlan.wnm_sleep_time      = wnm_sleep_time;
     return send_user_request(CM_STA_USER_REQUEST_PS_ENTER, WLAN_WNM);
 }
@@ -11060,6 +11049,7 @@ int wlan_wnmps_off()
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_WNM);
     }
 
+    CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_WNM);
     return WM_SUCCESS;
 }
 #endif
@@ -11075,6 +11065,7 @@ int wlan_deepsleepps_on(void)
 
     if (wlan.cm_deepsleepps_configured)
     {
+        CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
         return WM_SUCCESS;
     }
 
@@ -11088,6 +11079,7 @@ int wlan_deepsleepps_off(void)
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_DEEP_SLEEP);
     }
 
+    CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_DEEP_SLEEP);
     return WM_SUCCESS;
 }
 

@@ -2922,7 +2922,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         ret = wlan_deepsleepps_off();
         if (ret == WM_SUCCESS)
         {
-            (void)PRINTF("Turned off Deep Sleep Power Save mode");
+            (void)PRINTF("Turned off Deep Sleep Power Save mode\r\n");
         }
         else
         {
@@ -2934,7 +2934,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         ret = wlan_deepsleepps_on();
         if (ret == WM_SUCCESS)
         {
-            (void)PRINTF("Turned on Deep Sleep Power Save mode");
+            (void)PRINTF("Turned on Deep Sleep Power Save mode\r\n");
         }
         else
         {
