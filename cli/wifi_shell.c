@@ -14,8 +14,6 @@
 #include <wlan.h>
 #include <wifi.h>
 
-#define INBUF_SIZE 512
-
 static struct {
     const struct cli_command *commands[MAX_COMMANDS];
     unsigned int num_commands;
@@ -154,206 +152,48 @@ void help_command(int argc, char **argv)
     }
 }
 
-/* Parse input line and locate arguments (if any), keeping count of the number
- * of arguments and their locations.  Look up and call the corresponding cli
- * function if one is found and pass it the argv array.
- *
- * Returns: 0 on success: the input line contained at least a function name and
- *          that function exists and was called.
- *          1 on lookup failure: there is no corresponding function for the
- *          input line.
- *          2 on invalid syntax: the arguments list couldn't be parsed
- */
-int handle_input(char *handle_inbuf)
-{
-    struct
-    {
-        unsigned inArg : 1;
-        unsigned inQuote : 1;
-        unsigned done : 1;
-    } stat;
-    static char *argv[64];
-    int argc = 0;
-    int i    = 0;
-    unsigned int j                    = 0;
-    const struct cli_command *command = NULL;
-    const char *p;
-
-    (void)memset((void *)&argv, 0, sizeof(argv));
-    (void)memset(&stat, 0, sizeof(stat));
-
-    /*
-     * Some terminals add CRLF to the input buffer.
-     * Sometimes the CR and LF characters maybe misplaced (it maybe added at the
-     * start or at the end of the buffer). Therefore, strip all CRLF (0x0d, 0x0a).
-     */
-    for (j = 0; j < INBUF_SIZE; j++)
-    {
-        if (handle_inbuf[j] == (char)0x0D || handle_inbuf[j] == (char)0x0A)
-        {
-            if (j < (INBUF_SIZE - 1U))
-            {
-                (void)memmove((handle_inbuf + j), handle_inbuf + j + 1, (INBUF_SIZE - 1 - j));
-            }
-            handle_inbuf[INBUF_SIZE - 1] = (char)(0x00);
-        }
-    }
-
-    do
-    {
-        switch (handle_inbuf[i])
-        {
-            case '\0':
-                if (stat.inQuote != 0U)
-                {
-                    return 2;
-                }
-                stat.done = 1;
-                break;
-
-            case '"':
-                if (i > 0 && handle_inbuf[i - 1] == '\\' && (stat.inArg != 0U))
-                {
-                    (void)memcpy(&handle_inbuf[i - 1], &handle_inbuf[i], strlen(&handle_inbuf[i]) + 1U);
-                    --i;
-                    break;
-                }
-                if ((stat.inQuote == 0U) && (stat.inArg != 0U))
-                {
-                    break;
-                }
-                if ((stat.inQuote != 0U) && (stat.inArg == 0U))
-                {
-                    return 2;
-                }
-
-                if ((stat.inQuote == 0U) && (stat.inArg == 0U))
-                {
-                    stat.inArg   = 1;
-                    stat.inQuote = 1;
-                    argc++;
-                    argv[argc - 1] = &handle_inbuf[i + 1];
-                }
-                else if ((stat.inQuote != 0U) && (stat.inArg != 0U))
-                {
-                    stat.inArg      = 0;
-                    stat.inQuote    = 0;
-                    handle_inbuf[i] = '\0';
-                }
-                else
-                { /* Do Nothing */
-                }
-                break;
-
-            case ' ':
-                if (i > 0 && handle_inbuf[i - 1] == '\\' && (stat.inArg != 0U))
-                {
-                    (void)memcpy(&handle_inbuf[i - 1], &handle_inbuf[i], strlen(&handle_inbuf[i]) + 1U);
-                    --i;
-                    break;
-                }
-                if ((stat.inQuote == 0U) && (stat.inArg != 0U))
-                {
-                    stat.inArg      = 0;
-                    handle_inbuf[i] = '\0';
-                }
-                break;
-
-            default:
-                if (stat.inArg == 0U)
-                {
-                    stat.inArg = 1;
-                    argc++;
-                    argv[argc - 1] = &handle_inbuf[i];
-                }
-                break;
-        }
-        i++;
-    } while ((stat.done == 0U) && (unsigned int)i < INBUF_SIZE);
-
-    if (stat.inQuote != 0U)
-    {
-        return 2;
-    }
-
-    if (argc < 1)
-    {
-        return 0;
-    }
-
-    /*
-     * Some comamands can allow extensions like foo.a, foo.b and hence
-     * compare commands before first dot.
-     */
-    i       = ((p = strchr(argv[0], (int)('.'))) == NULL) ? 0 : (p - argv[0]);
-    command = lookup_command(argv[0], i);
-    if (command == NULL)
-    {
-        return 1;
-    }
-
-    command->function(argc, argv);
-
-    return 0;
-}
-
-/* Print out a bad command string, including a hex
- * representation of non-printable characters.
- * Non-printable characters show as "\0xXX".
- */
-void print_bad_command(char *cmd_string)
-{
-    if (cmd_string != NULL)
-    {
-        unsigned char *c = (unsigned char *)cmd_string;
-        (void)PRINTF("command '");
-        while (*c != (unsigned char)'\0')
-        {
-            if (isprint(*c) != 0)
-            {
-                (void)PRINTF("%c", *c);
-            }
-            else
-            {
-                (void)PRINTF("\\0x%x", *c);
-            }
-            ++c;
-        }
-        (void)PRINTF("' not found\r\n");
-    }
-}
-
-static char wlan[256];
+static char nxp_wifi_cmd_name[32];
 
 /**
  *  wlan shell entry
  *  syntax: wlansh wlan-add ...
  */
-int nxp_wifi_request(void *nxp_wifi, char *cmd,
-				 size_t clen, char *rsp, size_t rlen)
+int nxp_wifi_request(size_t argc, char **argv)
 {
     int ret;
+    const struct cli_command *command = NULL;
 
-    if (strcmp(cmd, "help") == 0)
+    if (argc < 2)
     {
-        help_command(0, NULL);
+        (void)PRINTF("nxp_wifi command too few arguments\r\n");
+        return -1;
+    }
+
+    /* cmd name should be less than buff size */
+    if (strlen(argv[1]) >= sizeof(nxp_wifi_cmd_name) - strlen("wlan-"))
+    {
+        (void)PRINTF("nxp_wifi command name too long\r\n");
+        return -1;
+    }
+
+    if (strcmp(argv[1], "help") == 0)
+    {
+        help_command(argc, argv);
         return 0;
     }
 
-    strcpy(wlan, "wlan-");
-    strcat(wlan, cmd);
+    strcpy(nxp_wifi_cmd_name, "wlan-");
+    strcat(nxp_wifi_cmd_name, argv[1]);
 
-    ret = handle_input(wlan);
-    if (ret == 1)
+    command = lookup_command(nxp_wifi_cmd_name, strlen(nxp_wifi_cmd_name));
+    if (command != NULL)
     {
-        print_bad_command(cmd);
-    }
-    else if (ret == 2)
-    {
-        (void)PRINTF("syntax error\r\n");
+        command->function(argc - 1, &argv[1]);
+        (void)PRINTF("Command %s\r\n", command->name);
     }
     else
-    { /* Do Nothing */
+    {
+        (void)PRINTF("Unknown comamnd %s\r\n", argv[1]);
     }
 
     return 0;

@@ -81,7 +81,6 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
  */
 void help_command(int argc, char **argv);
 
-int nxp_wifi_request(void *nxp_wifi, char *cmd,
-				 size_t clen, char *rsp, size_t rlen);
+int nxp_wifi_request(size_t argc, char **argv);
 
 #endif /* __WIFI_SHELL_H__ */
