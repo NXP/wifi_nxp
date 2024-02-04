@@ -6022,7 +6022,6 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         {
             os_timer_deactivate(&wlan.supp_status_timer);
             wlan.status_timeout = 0;
-            wlan.cur_network_idx = -1;
             CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, NULL);
         }
         else
@@ -6039,6 +6038,8 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #endif
             wlan.connect_wakelock_taken = false;
         }
+
+        wlan.cur_network_idx = -1;
         return;
     }
 
