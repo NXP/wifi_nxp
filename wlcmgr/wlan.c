@@ -4289,6 +4289,126 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 #endif
 #endif
 
+#ifdef CONFIG_ECSA
+static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
+{
+    int ret = 0;
+    mlan_ioctl_req req;
+    mlan_ds_misc_cfg *misc = NULL;
+    mlan_status status     = MLAN_STATUS_SUCCESS;
+
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+    if (misc == NULL)
+    {
+        return -WM_FAIL;
+    }
+
+    req.bss_index                       = MLAN_BSS_ROLE_UAP;
+    req.pbuf                            = (t_u8 *)misc;
+    misc->sub_command                   = MLAN_OID_MISC_OPER_CLASS_CHECK;
+    req.req_id                          = MLAN_IOCTL_MISC_CFG;
+    req.action                          = MLAN_ACT_GET;
+    misc->param.bw_chan_oper.oper_class = oper_class;
+    misc->param.bw_chan_oper.channel    = channel;
+
+    status = wlan_ops_uap_ioctl(mlan_adap, &req);
+    if (status != MLAN_STATUS_SUCCESS)
+    {
+        PRINTM(MERROR, "Failed to get operclass\n");
+        os_mem_free(misc);
+        return -WM_FAIL;
+    }
+
+    os_mem_free(misc);
+
+    return ret;
+}
+
+static int wlan_set_uap_ecsa_cfg(
+    t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width, t_u8 ecsa)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    bool block_tx_flag   = (1 == block_tx) ? true : false;
+
+    if (wlan_11h_radar_detect_required(pmpriv, channel))
+    {
+        wlcm_e("Please set non-dfs channel");
+        return -WM_FAIL;
+    }
+
+    if ((channel > MAX_CHANNELS_BG) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wlcm_e("Not support 5G, please set 2G channel");
+        return -WM_FAIL;
+    }
+
+    if (wlan_check_channel_by_region_table(pmpriv, channel) == MFALSE)
+    {
+        (void)PRINTF("uAP target channel not allowed\n\r");
+        return -WM_FAIL;
+    }
+
+    if (is_uap_started() && (!is_sta_connected()))
+    {
+        if (oper_class)
+        {
+            if (wlan_check_valid_channel_operclass(channel, oper_class))
+            {
+                wlcm_e("Wrong channel switch parameters!");
+                return -EINVAL;
+            }
+        }
+
+        set_ecsa_block_tx_flag(block_tx_flag);
+
+        if (0 != switch_count)
+        {
+            set_ecsa_block_tx_time(switch_count);
+            return wifi_set_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
+        }
+        else
+        {
+            return wifi_set_action_ecsa_cfg(block_tx, oper_class, channel, switch_count);
+        }
+    }
+    else
+    {
+        wlcm_e("uap isn't up");
+        return -WM_FAIL;
+    }
+}
+
+static void wlan_switch_to_nondfs_channel(void)
+{
+    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
+    t_u8 uap_channel     = 0;
+    t_u8 block_tx        = 1;
+    t_u8 oper_class      = 0;
+    t_u8 switch_count    = DEF_SWITCH_COUNT;
+    t_u8 band_width      = 0;
+    t_u8 ecsa            = MTRUE;
+
+    if (is_uap_started())
+    {
+        uap_channel = (t_u8)wlan.networks[wlan.cur_uap_network_idx].channel;
+
+        if (MTRUE == wlan_11h_radar_detect_required(pmpriv, uap_channel))
+        {
+            if (MLAN_STATUS_SUCCESS == wlan_get_non_dfs_chan(pmpriv, &uap_channel))
+            {
+                wlan_set_uap_ecsa_cfg(block_tx, oper_class, uap_channel, switch_count, band_width, ecsa);
+            }
+            else
+            {
+                return;
+            }
+        }
+    }
+}
+#endif
+
 static void wlcm_process_link_loss_event(struct wifi_message *msg,
                                          enum cm_sta_state *next,
                                          struct wlan_network *network)
@@ -4357,6 +4477,10 @@ static void wlcm_process_link_loss_event(struct wifi_message *msg,
         }
 
         CONNECTION_EVENT(WLAN_REASON_LINK_LOST, NULL);
+#ifdef CONFIG_ECSA
+        wrapper_clear_media_connected_event();
+        wlan_switch_to_nondfs_channel();
+#endif
     }
     else
     {
@@ -6526,6 +6650,13 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_AUTHENTICATION:
             wlcm_d("got event: authentication result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+            if(msg->reason == WIFI_EVENT_REASON_FAILURE)
+            {
+#ifdef CONFIG_ECSA
+                wrapper_clear_media_connected_event();
+                wlan_switch_to_nondfs_channel();
+#endif
+            }
             wlcm_process_authentication_event(msg, &next, network);
             break;
         case WIFI_EVENT_LINK_LOSS:
@@ -6622,6 +6753,10 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
 #endif
         case WIFI_EVENT_DISASSOCIATION:
             wlcm_d("got event: disassociation, code=%d", (int)(msg->data));
+#ifdef CONFIG_ECSA
+            wrapper_clear_media_connected_event();
+            wlan_switch_to_nondfs_channel();
+#endif
             wlcm_process_disassoc_event(msg, &next, network);
             break;
 
@@ -9564,126 +9699,6 @@ int wlan_remove_all_network_profiles(void)
 
     return WM_SUCCESS;
 }
-
-#ifdef CONFIG_ECSA
-static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
-{
-    int ret = 0;
-    mlan_ioctl_req req;
-    mlan_ds_misc_cfg *misc = NULL;
-    mlan_status status     = MLAN_STATUS_SUCCESS;
-
-    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-
-    misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
-    if (misc == NULL)
-    {
-        return -WM_FAIL;
-    }
-
-    req.bss_index                       = MLAN_BSS_ROLE_UAP;
-    req.pbuf                            = (t_u8 *)misc;
-    misc->sub_command                   = MLAN_OID_MISC_OPER_CLASS_CHECK;
-    req.req_id                          = MLAN_IOCTL_MISC_CFG;
-    req.action                          = MLAN_ACT_GET;
-    misc->param.bw_chan_oper.oper_class = oper_class;
-    misc->param.bw_chan_oper.channel    = channel;
-
-    status = wlan_ops_uap_ioctl(mlan_adap, &req);
-    if (status != MLAN_STATUS_SUCCESS)
-    {
-        PRINTM(MERROR, "Failed to get operclass\n");
-        os_mem_free(misc);
-        return -WM_FAIL;
-    }
-
-    os_mem_free(misc);
-
-    return ret;
-}
-
-static int wlan_set_uap_ecsa_cfg(
-    t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_count, t_u8 band_width, t_u8 ecsa)
-{
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-    bool block_tx_flag   = (1 == block_tx) ? true : false;
-
-    if (wlan_11h_radar_detect_required(pmpriv, channel))
-    {
-        wlcm_e("Please set non-dfs channel");
-        return -WM_FAIL;
-    }
-
-    if ((channel > MAX_CHANNELS_BG) && ISSUPP_NO5G(mlan_adap->fw_cap_ext))
-    {
-        wlcm_e("Not support 5G, please set 2G channel");
-        return -WM_FAIL;
-    }
-
-    if (wlan_check_channel_by_region_table(pmpriv, channel) == MFALSE)
-    {
-        (void)PRINTF("uAP target channel not allowed\n\r");
-        return -WM_FAIL;
-    }
-
-    if (is_uap_started() && (!is_sta_connected()))
-    {
-        if (oper_class)
-        {
-            if (wlan_check_valid_channel_operclass(channel, oper_class))
-            {
-                wlcm_e("Wrong channel switch parameters!");
-                return -EINVAL;
-            }
-        }
-
-        set_ecsa_block_tx_flag(block_tx_flag);
-
-        if (0 != switch_count)
-        {
-            set_ecsa_block_tx_time(switch_count);
-            return wifi_set_ecsa_cfg(block_tx, oper_class, channel, switch_count, band_width, ecsa);
-        }
-        else
-        {
-            return wifi_set_action_ecsa_cfg(block_tx, oper_class, channel, switch_count);
-        }
-    }
-    else
-    {
-        wlcm_e("uap isn't up");
-        return -WM_FAIL;
-    }
-}
-
-static void wlan_switch_to_nondfs_channel(void)
-{
-    mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
-    t_u8 uap_channel     = 0;
-    t_u8 block_tx        = 1;
-    t_u8 oper_class      = 0;
-    t_u8 switch_count    = DEF_SWITCH_COUNT;
-    t_u8 band_width      = 0;
-    t_u8 ecsa            = MTRUE;
-
-    if (is_uap_started())
-    {
-        uap_channel = (t_u8)wlan.networks[wlan.cur_uap_network_idx].channel;
-
-        if (MTRUE == wlan_11h_radar_detect_required(pmpriv, uap_channel))
-        {
-            if (MLAN_STATUS_SUCCESS == wlan_get_non_dfs_chan(pmpriv, &uap_channel))
-            {
-                wlan_set_uap_ecsa_cfg(block_tx, oper_class, uap_channel, switch_count, band_width, ecsa);
-            }
-            else
-            {
-                return;
-            }
-        }
-    }
-}
-#endif
 
 int wlan_disconnect(void)
 {
