@@ -136,6 +136,8 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
     .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
+    .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
+    .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
 };
 
 #ifndef CONFIG_ZEPHYR

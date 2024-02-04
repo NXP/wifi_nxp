@@ -3348,6 +3348,71 @@ done:
 }
 #endif /* CONFIG_11AX */
 
+#ifdef CONFIG_5GHz_SUPPORT
+static void wifi_set_uap_dfs_cac(mlan_private *priv, Band_Config_t *bandcfg, t_u8 ht_enabled)
+{
+    if (priv->uap_channel > MAX_CHANNELS_BG)
+    {
+        mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];
+        if ((priv_sta->media_connected == MTRUE) && wlan_11h_radar_detect_required(priv, priv->uap_channel))
+        {
+            nxp_wifi_dfs_cac_info cacinfo;
+            t_u8 center_chan = 0;
+
+            memset(&cacinfo, 0, sizeof(nxp_wifi_dfs_cac_info));
+            cacinfo.center_freq  = channel_to_frequency(priv->uap_channel, bandcfg->chanBand);
+            cacinfo.ht_enabled   = ht_enabled;
+            cacinfo.ch_offset    = bandcfg->chan2Offset;
+            cacinfo.center_freq2 = 0;
+
+            switch (bandcfg->chanWidth)
+            {
+                case CHAN_BW_20MHZ:
+                    if (ht_enabled)
+                        cacinfo.ch_width = CHAN_BAND_WIDTH_20;
+                    else
+                        cacinfo.ch_width = CHAN_BAND_WIDTH_20_NOHT;
+                    cacinfo.center_freq1 = cacinfo.center_freq;
+                    break;
+
+                case CHAN_BW_40MHZ:
+                    cacinfo.ch_width = CHAN_BAND_WIDTH_40;
+                    if (bandcfg->chan2Offset == SEC_CHAN_ABOVE)
+                        cacinfo.center_freq1 = cacinfo.center_freq + 10;
+                    else if (bandcfg->chan2Offset == SEC_CHAN_BELOW)
+                        cacinfo.center_freq1 = cacinfo.center_freq - 10;
+                    break;
+
+#if defined(CONFIG_11AC)
+                case CHAN_BW_80MHZ:
+                    cacinfo.ch_width = CHAN_BAND_WIDTH_80;
+                    center_chan      = wlan_get_center_freq_idx(priv, BAND_AAC, priv->uap_channel, CHANNEL_BW_80MHZ);
+                    cacinfo.center_freq1 = channel_to_frequency(center_chan, bandcfg->chanBand);
+                    break;
+#endif
+
+                default:
+                    break;
+            }
+
+            /* STA has connected to EXT-AP on DFS channel, then uAP should support start network
+             * on DFS channel. If DFS is offloaded to the driver, supplicant won't setup uAP until
+             * the CAC is done by driver. When DFS master mode is not supported, driver needs to
+             * send the EVENT_DFS_CAC_STARTED event to supplicant to set the cac_started flag, and
+             * send EVENT_DFS_CAC_FINISHED event to supplicant to continue AP setup for DFS channel */
+            if (wm_wifi.supp_if_callbk_fns->dfs_cac_started_callbk_fn)
+            {
+                wm_wifi.supp_if_callbk_fns->dfs_cac_started_callbk_fn(wm_wifi.hapd_if_priv, &cacinfo);
+            }
+            if (wm_wifi.supp_if_callbk_fns->dfs_cac_finished_callbk_fn)
+            {
+                wm_wifi.supp_if_callbk_fns->dfs_cac_finished_callbk_fn(wm_wifi.hapd_if_priv, &cacinfo);
+            }
+        }
+    }
+}
+#endif
+
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 {
     mlan_private *priv = (mlan_private *)mlan_adap->priv[1];
@@ -3429,12 +3494,14 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 #ifdef CONFIG_5GHz_SUPPORT
             if (priv->uap_channel > MAX_CHANNELS_BG)
             {
-                if (wlan_11h_radar_detect_required(priv, priv->uap_channel))
+                mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];
+                if ((priv_sta->media_connected == MFALSE) && wlan_11h_radar_detect_required(priv, priv->uap_channel))
                 {
                     wuap_e("Cannot start uAP on DFS channel %d", priv->uap_channel);
                     ret = -WM_FAIL;
                     goto done;
                 }
+
                 bandcfg.chanBand = BAND_5GHZ;
             }
             else
@@ -3675,6 +3742,9 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(sys_config->channel, scan_chan_list);
         }
 
+#ifdef CONFIG_5GHz_SUPPORT
+        wifi_set_uap_dfs_cac(priv, &bandcfg, enable_11n);
+#endif
         priv->uap_host_based = MTRUE;
 
         if (!params->beacon_set)
@@ -3696,6 +3766,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
                                                                      MGMT_MASK_REASSOC_REQ | WIFI_MGMT_DEAUTH |
                                                                      WIFI_MGMT_ACTION | WIFI_MGMT_DIASSOC);
         }
+
     done:
         if (sys_config != NULL)
         {
@@ -4204,7 +4275,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
     if (fw_info.fw_bands & BAND_GAX)
     {
         memset(&he_cfg, 0, sizeof(he_cfg));
-        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
         hw_hecap_len = fw_info.hw_2g_hecap_len;
         if (hw_hecap_len)
         {
@@ -4224,7 +4295,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
     if (fw_info.fw_bands & BAND_AAX)
     {
         memset(&he_cfg, 0, sizeof(he_cfg));
-        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
         hw_hecap_len = fw_info.hw_hecap_len;
         if (hw_hecap_len)
         {

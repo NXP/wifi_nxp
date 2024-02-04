@@ -89,9 +89,7 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
                               size_t key_len,
                               enum key_flag key_flag);
 
-int wifi_nxp_wpa_supp_del_key(void *if_priv,
-                              const unsigned char *addr,
-                              int key_idx);
+int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_idx);
 
 int wifi_nxp_wpa_supp_set_rekey_info(
     void *if_priv, const u8 *kek, size_t kek_len, const u8 *kck, size_t kck_len, const u8 *replay_ctr);
@@ -147,6 +145,8 @@ void wifi_nxp_wpa_supp_event_proc_eapol_rx(void *if_priv,
 void wifi_nxp_wpa_supp_event_mgmt_tx_status(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
 
 void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info);
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info);
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info);
 
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,

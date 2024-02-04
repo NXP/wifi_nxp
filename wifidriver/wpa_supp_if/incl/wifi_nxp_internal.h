@@ -390,6 +390,15 @@ typedef MLAN_PACK_START struct _nxp_wifi_ch_switch_info
     int center_freq2;
 } MLAN_PACK_END nxp_wifi_ch_switch_info;
 
+typedef MLAN_PACK_START struct _nxp_wifi_dfs_cac_info
+{
+    int center_freq;
+    int ht_enabled;
+    int ch_offset;
+    enum chanWidth ch_width;
+    int center_freq1;
+    int center_freq2;
+} MLAN_PACK_END nxp_wifi_dfs_cac_info;
 /**
  * struct wifi_nxp_callbk_fns - Callback functions to be invoked by Wi-Fi driver
  * when a paticular event occurs.
@@ -436,6 +445,8 @@ typedef MLAN_PACK_START struct _wifi_nxp_callbk_fns
     void (*mgmt_tx_status_callbk_fn)(void *if_priv, nxp_wifi_event_mlme_t *mlme_event, unsigned int event_len);
     void (*remain_on_channel_callbk_fn)(void *if_priv, int cancel_channel);
     void (*ecsa_complete_callbk_fn)(void *if_priv, nxp_wifi_ch_switch_info *ch_switch_info);
+    void (*dfs_cac_started_callbk_fn)(void *if_priv, nxp_wifi_dfs_cac_info *ch_switch_info);
+    void (*dfs_cac_finished_callbk_fn)(void *if_priv, nxp_wifi_dfs_cac_info *ch_switch_info);
 } MLAN_PACK_END wifi_nxp_callbk_fns_t;
 
 typedef struct _chan_to_freq_t

@@ -1355,9 +1355,7 @@ out:
     return ret;
 }
 
-int wifi_nxp_wpa_supp_del_key(void *if_priv,
-                              const unsigned char *addr,
-                              int key_idx)
+int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_idx)
 
 {
     int status                                 = -WM_FAIL;
@@ -1906,6 +1904,62 @@ void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switc
     }
 }
 
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.dfs_event.freq        = dfs_cac_info->center_freq;
+    event.dfs_event.ht_enabled  = dfs_cac_info->ht_enabled;
+    event.dfs_event.chan_offset = dfs_cac_info->ch_offset;
+    event.dfs_event.chan_width  = (enum chan_width)dfs_cac_info->ch_width;
+    event.dfs_event.cf1         = dfs_cac_info->center_freq1;
+    event.dfs_event.cf2         = dfs_cac_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.dfs_event.freq        = dfs_cac_info->center_freq;
+    event.dfs_event.ht_enabled  = dfs_cac_info->ht_enabled;
+    event.dfs_event.chan_offset = dfs_cac_info->ch_offset;
+    event.dfs_event.chan_width  = (enum chan_width)dfs_cac_info->ch_width;
+    event.dfs_event.cf1         = dfs_cac_info->center_freq1;
+    event.dfs_event.cf2         = dfs_cac_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
                                 rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns)
@@ -1972,7 +2026,7 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 
 int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 {
-    int status = -WM_FAIL;
+    int status     = -WM_FAIL;
     t_u8 bandwidth = wifi_uap_get_bandwidth();
 
     if ((!if_priv) || (!modes))
@@ -2072,8 +2126,8 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
             goto out;
         }
 
-        status =
-            wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
+        status = wifi_setup_he_cap(
+            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
         if (status != WM_SUCCESS)
         {
             supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
