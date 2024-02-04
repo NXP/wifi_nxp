@@ -8446,6 +8446,12 @@ int wlan_add_network(struct wlan_network *network)
     int i;
     unsigned int len;
     int ret;
+
+    if (!wlan.running)
+    {
+        return WLAN_ERROR_STATE;
+    }
+
 #ifdef CONFIG_WPA_SUPP
     struct netif *netif = net_get_sta_interface();
 #endif
