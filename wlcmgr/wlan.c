@@ -2940,7 +2940,7 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
 #if defined(CONFIG_WNM_PS)
 static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
-    uint16_t action                      = (uint16_t)((uint32_t *)(msg->data));
+    uint16_t action                      = (uint16_t)(uint32_t)msg->data;
     wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
