@@ -3999,6 +3999,11 @@ static void wifi_driver_tx(void *data)
         (void)os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
         event     = msg.event;
         interface = msg.reason;
+
+        if ((interface != MLAN_BSS_TYPE_STA) && (interface != MLAN_BSS_TYPE_UAP))
+        {
+            continue;
+        }
 #else
         xTaskNotifyWait(0U, ULONG_MAX, &taskNotification, OS_WAIT_FOREVER);
 
@@ -4051,10 +4056,13 @@ static void wifi_driver_tx(void *data)
                 os_thread_sleep(os_msec_to_ticks(1));
             }
 #endif
-            if (!wlan_bypass_txq_empty(interface))
+            for (i = 0; i < MLAN_MAX_BSS_NUM; i++)
             {
-                /*Give high priority to xmit bypass txqueue*/
-                wlan_process_bypass_txq(interface);
+                if (!wlan_bypass_txq_empty(i))
+                {
+                    /*Give high priority to xmit bypass txqueue*/
+                    wlan_process_bypass_txq(i);
+                }
             }
 
             /* Send packet when the outbuf pool is not empty and not in block tx status*/
@@ -4087,7 +4095,7 @@ static void wifi_driver_tx(void *data)
                     wifi_tx_card_awake_lock();
                     /* send null packet until the finish of CMD response processing */
                     os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
-                    pmpriv = pmadapter->priv[interface];
+                    pmpriv = pmadapter->priv[MLAN_BSS_TYPE_STA];
                     if (pmadapter->pps_uapsd_mode && pmpriv->media_connected && pmadapter->gen_null_pkt)
                     {
                         if (wlan_send_null_packet(
