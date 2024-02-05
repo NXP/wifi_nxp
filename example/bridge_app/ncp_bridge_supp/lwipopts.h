@@ -561,4 +561,11 @@ u32_t lwip_rand(void);
 #define LWIP_TCPIP_CORE_LOCKING     1
 #define LWIP_NETCONN_SEM_PER_THREAD 0
 #define LWIP_NETCONN_FULLDUPLEX     0
+
+/**
+ * Support ip fragment max size 10000 in arp queue
+ */
+#define ARP_QUEUEING 1
+#define ARP_QUEUE_LEN 8
+
 #endif /* __LWIPOPTS_H__ */

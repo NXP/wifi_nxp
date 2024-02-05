@@ -560,4 +560,11 @@ u32_t lwip_rand(void);
 #define LWIP_HOOK_TCP_OUT_ADD_TCPOPTS(p, hdr, pcb, opts) lwip_hook_tcp_out_add_tcpopts(p, hdr, pcb, opts)
 #endif
 #endif
+
+/**
+ * Support ip fragment max size 10000 in arp queue
+ */
+#define ARP_QUEUEING 1
+#define ARP_QUEUE_LEN 8
+
 #endif /* __LWIPOPTS_H__ */
