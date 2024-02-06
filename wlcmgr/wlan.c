@@ -1886,6 +1886,7 @@ static void do_scan(struct wlan_network *network)
     unsigned int channel = 0;
     IEEEtypes_Bss_t type;
     wlan_scan_channel_list_t chan_list[1];
+    (void)memset((uint8_t *)chan_list, 0x00, sizeof(wlan_scan_channel_list_t) * 1);
 
     wlcm_d("initiating scan for network \"%s\"", network->name);
 

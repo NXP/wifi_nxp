@@ -11548,7 +11548,7 @@ static void test_wlan_detect_ant(int argc, char **argv)
     }
 
     arg = 3;
-    (void *)memset(&wlan_ant_detect_data, 0x00, sizeof(wlan_ant_detect_data_t));
+    (void)memset(&wlan_ant_detect_data, 0x00, sizeof(wlan_ant_detect_data_t));
     pDetect_data = (wlan_ant_detect_data_t *)&wlan_ant_detect_data;
     for (i = 0; i < antenna_port_count; i++)
     {
