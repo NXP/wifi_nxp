@@ -1566,6 +1566,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
 #endif /* CONFIG_MLAN_WMSDK */
     (void)__memcpy(pmadapter, pbss_entry->time_stamp, pcurrent_ptr, 8);
 
+    pbss_entry->scan_result_tsf = os_get_timestamp();
+
     pcurrent_ptr += 8;
     bytes_left_for_current_beacon -= 8U;
 

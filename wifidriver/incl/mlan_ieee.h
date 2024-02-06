@@ -2275,6 +2275,9 @@ typedef struct _BSSDescriptor_t
      */
     t_u16 bss_band;
 
+    /** TSF record at driver receive the scan result from FW (in us) */
+    unsigned int scan_result_tsf;
+
     /** TSF timestamp from the current firmware TSF */
     t_u64 network_tsf;
 
