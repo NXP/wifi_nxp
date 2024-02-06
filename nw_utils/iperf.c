@@ -222,6 +222,19 @@ static void lwiperf_report(void *arg,
         os_timer_deactivate(&ptimer);
     }
     (void)PRINTF("\r\n");
+    /*When do UDP individual bidirectional test,  DUT server should active ptimer to send packages after RX done.*/
+    if (test_ctx->server_mode != 0 && test_ctx->client_type == LWIPERF_TRADEOFF)
+    {
+        if (report_type == LWIPERF_UDP_DONE_SERVER_RX)
+        {
+            os_timer_activate(&ptimer);
+        }
+        else
+        {
+            os_timer_deactivate(&ptimer);
+        }
+    }
+
     iperf_free_ctx_iperf_session(arg, report_type);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
@@ -591,7 +604,8 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 
-    if ((ctx->server_mode == false) || ((ctx->server_mode == true) && ((ctx->client_type == LWIPERF_REVERSE) || (ctx->client_type == LWIPERF_DUAL))))
+    if ((ctx->server_mode == false) ||
+        ((ctx->server_mode == true) && ((ctx->client_type == LWIPERF_REVERSE) || (ctx->client_type == LWIPERF_DUAL))))
     {
         os_timer_activate(&ptimer);
     }
@@ -823,6 +837,15 @@ static void UDPServerReverse(void)
 }
 #endif
 
+static void UDPServerTradeOff(void)
+{
+    ctx.server_mode = true;
+    ctx.tcp         = false;
+    ctx.client_type = LWIPERF_TRADEOFF;
+
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
+}
+
 static void UDPClient(void)
 {
     ctx.server_mode = false;
@@ -876,6 +899,7 @@ static void display_iperf_usage(void)
 #endif
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\t   -p             server port to listen on/connect to\r\n");
+    (void)PRINTF("\t   -r             Do a bidirectional UDP test individually\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode. Support 8 parallel traffic(-P) maximum from client side\r\n");
     (void)PRINTF(
@@ -883,7 +907,6 @@ static void display_iperf_usage(void)
     (void)PRINTF("\tClient specific:\r\n");
     (void)PRINTF("\t   -c    <host>   run in client mode, connecting to <host>\r\n");
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
-    (void)PRINTF("\t   -r             Do a bidirectional test individually\r\n");
 #ifdef LWIPERF_REVERSE_MODE
     (void)PRINTF("\t   -R             reverse the test (client receives, server sends)\r\n");
 #endif
@@ -1177,7 +1200,7 @@ static void cmd_iperf(int argc, char **argv)
          && (info.ipv6 == 0U)
 #endif
          && ((info.bind == 0U) || (info.bhost == 0U))) ||
-        (((info.dual != 0U) || (info.tradeoff != 0U)
+        (((info.dual != 0U)
 #ifdef LWIPERF_REVERSE_MODE
           || (info.reverse != 0U)
 #endif
@@ -1237,6 +1260,10 @@ static void cmd_iperf(int argc, char **argv)
                 UDPServerReverse();
             }
 #endif
+            else if (info.tradeoff != 0U)
+            {
+                UDPServerTradeOff();
+            }
             else
             {
                 UDPServer();
