@@ -186,14 +186,21 @@ void wifi_sdio_unlock(void)
 }
 
 #ifdef CONFIG_WIFI_IND_RESET
-int wifi_ind_reset_lock(void)
+static bool ind_reset_in_progress = false;
+
+bool wifi_ind_reset_in_progress(void)
 {
-    return os_mutex_get(&ind_reset_mutex, OS_WAIT_FOREVER);
+    return ind_reset_in_progress;
 }
 
-void wifi_ind_reset_unlock(void)
+void wifi_ind_reset_start(void)
 {
-    (void)os_mutex_put(&ind_reset_mutex);
+    ind_reset_in_progress = true;
+}
+
+void wifi_ind_reset_stop(void)
+{
+   ind_reset_in_progress = false;
 }
 #endif
 
