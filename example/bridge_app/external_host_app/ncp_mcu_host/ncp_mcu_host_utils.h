@@ -485,6 +485,7 @@ static inline char *ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen
 static inline char *ip4addr_ntoa(const ip4_addr_t *addr)
 {
     static char str[16];
+    (void)memset(str, 0, sizeof(str));
     return ip4addr_ntoa_r(addr, str, 16);
 }
 
