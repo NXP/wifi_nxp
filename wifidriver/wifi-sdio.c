@@ -829,7 +829,9 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
 
 static int wlan_get_next_seq_num(void)
 {
-    seqnum++;
+     /* No need to increase seqnum as all cmds in RT uses seqnum 0 for STA and
+      * 4096 for uAP */
+    /* seqnum++; */
     return seqnum;
 }
 
