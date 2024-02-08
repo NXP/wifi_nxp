@@ -1322,7 +1322,11 @@ static void ncp_iperf_rx_task(void *pvParameters)
         mcu_get_command_resp_sem();
         mcu_get_command_lock();
         if (false == iperf_send_setting())
+        {
+            mcu_put_command_resp_sem();
+            mcu_put_command_lock();
             continue;
+        }
         os_thread_sleep(os_msec_to_ticks(1000));
         pkg_num             = 0;
         iperf_msg.status[1] = 0;
