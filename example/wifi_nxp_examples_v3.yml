@@ -479,6 +479,7 @@ wifi_wpa_supplicant:
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
   - middleware.wifi.cli
+  - middleware.wifi.wls
   __remove__:
     merge_segment:
     - middleware.lwip.default_heap_stack
@@ -1215,4 +1216,3 @@ scr.board.${board}.wifi:
     Description: SDK Wi-Fi examples.
     Origin: NXP (BSD-3-Clause)
     Location: "./boards/${board}/wifi_examples"
-

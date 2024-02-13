@@ -772,6 +772,43 @@ middleware.wifi.ncp_supp_wmcrypto:
     allOf:
     - middleware.wifi
     - middleware.wifi.wifidriver
+middleware.wifi.wls:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: wls
+    files:
+    - source: wls/range_kalman.h
+    - source: wls/range_kalman.c
+    - source: wls/wls_api.c
+    - source: wls/wls_api.h
+    - source: wls/wls_param_defines.h
+    - source: wls/wls_processing.c
+    - source: wls/wls_processing.h
+    - source: wls/wls_QR_algorithm.c
+    - source: wls/wls_QR_algorithm.h
+    - source: wls/wls_radix4Fft.h
+    - source: wls/wls_radix4Fft.c
+    - source: wls/wls_structure_defs.h
+    - source: wls/wls_subspace_processing.h
+    - source: wls/wls_subspace_processing.c
+  belong_to: set.middleware.wifi
+  section_info:
+    type: middleware
+    full_name: NXP Wi-Fi WLS
+    user_visible: never
+    version: 1.3.46
+    description: Middlware Wi-Fi Location Service
+    taxonomy:
+      csub: wls
+      belong_to: wifi
+    display_name: wifi_nxp_wls
+  dependency:
+    allOf:
+    - middleware.wifi
+    - middleware.wifi.wifidriver
 middleware.wifi.unused:
   section-type: container
   contents:

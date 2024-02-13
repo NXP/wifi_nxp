@@ -2151,17 +2151,17 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
             else
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
-            if (pvendor_ie->element_id == VENDOR_SPECIFIC_221 &&
-                (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
-                (pvendor_ie->oui_type == wps_oui[3U]))
-        {
-            /*
-             * Discard first two byte (Element ID and Length)
-             * because they are not needed in the case of setting
-             * WPS_IE
-             */
-            if (pvendor_ie->len > 4)
+                if (pvendor_ie->element_id == VENDOR_SPECIFIC_221 &&
+                    (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
+                    (pvendor_ie->oui_type == wps_oui[3U]))
             {
+                /*
+                 * Discard first two byte (Element ID and Length)
+                 * because they are not needed in the case of setting
+                 * WPS_IE
+                 */
+                if (pvendor_ie->len > 4)
+                {
                     __memcpy(priv->adapter, (t_u8 *)&priv->wps.wps_ie, ie_data_ptr, ie_len);
 
                     HEXDUMP("wps_ie", (t_u8 *)&priv->wps.wps_ie, priv->wps.wps_ie.vend_hdr.len + 2);
@@ -2462,8 +2462,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->curr_bss_params.host_mlme = 1;
 #endif
 
-    __memcpy(priv->adapter, &priv->curr_bss_params.prev_bssid,
-                    assoc_info->prev_bssid, MLAN_MAC_ADDR_LENGTH);
+    __memcpy(priv->adapter, &priv->curr_bss_params.prev_bssid, assoc_info->prev_bssid, MLAN_MAC_ADDR_LENGTH);
 
     /* Reset all state variables */
     (void)memset(&priv->wpa_ie, 0, sizeof(priv->wpa_ie));
@@ -2477,7 +2476,7 @@ int wifi_nxp_send_assoc(nxp_wifi_assoc_info_t *assoc_info)
     priv->sec_info.is_wpa_tkip = MFALSE;
 #ifdef CONFIG_11R
     priv->sec_info.is_ft = MFALSE;
-    priv->md_ie_len = 0;
+    priv->md_ie_len      = 0;
 #endif
 
     /* Reset the generic IE buffer */
@@ -2956,14 +2955,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCmd_CMD_802_11D_DOMAIN_INFO:
             {
-                HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)&resp->params.domain_info;
+                HostCmd_DS_802_11D_DOMAIN_INFO *domain_info =
+                    (HostCmd_DS_802_11D_DOMAIN_INFO *)&resp->params.domain_info;
                 if (resp->result == HostCmd_RESULT_OK)
                 {
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
-                else if(domain_info->action == HostCmd_ACT_SPC_SET)
+                else if (domain_info->action == HostCmd_ACT_SPC_SET)
                 {
-                    /*FW not supported yet, always set command response status success for action code HostCmd_ACT_SPC_SET*/
+                    /*FW not supported yet, always set command response status success for action code
+                     * HostCmd_ACT_SPC_SET*/
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
                 else
@@ -4501,16 +4502,16 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
-        case HostCmd_CMD_ADD_NEW_STATION:
-            if (resp->result == HostCmd_RESULT_OK)
-            {
-                wm_wifi.cmd_resp_status = WM_SUCCESS;
-            }
-            else
-            {
-                wm_wifi.cmd_resp_status = -WM_FAIL;
-            }
-            break;
+            case HostCmd_CMD_ADD_NEW_STATION:
+                if (resp->result == HostCmd_RESULT_OK)
+                {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else
+                {
+                    wm_wifi.cmd_resp_status = -WM_FAIL;
+                }
+                break;
 
             default:
                 /* fixme: Currently handled by the legacy code. Change this
@@ -5172,13 +5173,13 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     /* Fill scan config field for bg scan */
     strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, MLAN_MAX_SSID_LENGTH);
     pmpriv->scan_cfg.ssid_list[0].ssid[MLAN_MAX_SSID_LENGTH] = '\0';
-    pmpriv->scan_cfg.ssid_list[0].max_len = 0x00;
-    pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
-    pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low;
-    pmpriv->scan_cfg.repeat_count         = DEF_REPEAT_COUNT;
-    pmpriv->scan_cfg.scan_interval        = MIN_BGSCAN_INTERVAL;
-    pmpriv->scan_cfg.chan_per_scan        = WLAN_USER_SCAN_CHAN_MAX;
-    pmpriv->scan_cfg.num_probes           = 2;
+    pmpriv->scan_cfg.ssid_list[0].max_len                    = 0x00;
+    pmpriv->scan_cfg.report_condition                        = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
+    pmpriv->scan_cfg.rssi_threshold                          = pmpriv->rssi_low;
+    pmpriv->scan_cfg.repeat_count                            = DEF_REPEAT_COUNT;
+    pmpriv->scan_cfg.scan_interval                           = MIN_BGSCAN_INTERVAL;
+    pmpriv->scan_cfg.chan_per_scan                           = WLAN_USER_SCAN_CHAN_MAX;
+    pmpriv->scan_cfg.num_probes                              = 2;
 #ifdef CONFIG_SCAN_CHANNEL_GAP
     pmpriv->scan_cfg.scan_chan_gap = SCAN_CHANNEL_GAP_VALUE;
 #endif
@@ -6662,9 +6663,9 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 #ifdef RW610
                          ver_str_len
 #else
-                        strlen((const char *)(&resp->params.verext.version_str))
+                         strlen((const char *)(&resp->params.verext.version_str))
 #endif
-                        );
+            );
         }
     }
     else if (resp->params.verext.version_str_sel == 3U && strlen((const char *)(&resp->params.verext.version_str)))
@@ -6678,7 +6679,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 #else
                      strlen((const char *)(&resp->params.verext.version_str))
 #endif
-                     );
+        );
     }
     else if (resp->params.verext.version_str_sel == 4U && strlen((const char *)(&resp->params.verext.version_str)))
     {
@@ -6691,7 +6692,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
 #else
                      strlen((const char *)(&resp->params.verext.version_str))
 #endif
-                     );
+        );
     }
     else
     { /* Do Nothing */
@@ -7485,7 +7486,7 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     mlan_ds_twtcfg twt_cfg  = {0};
-    int ret = 0;
+    int ret                 = 0;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
@@ -7502,8 +7503,8 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
         return -WM_FAIL;
     }
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, 
-                       HostCmd_ACT_GEN_SET, 0, NULL, &twt_cfg, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
+                             &twt_cfg, cmd);
     ret = wifi_wait_for_cmdresp(NULL);
     if (ret == WM_SUCCESS)
     {
@@ -7512,7 +7513,7 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
             wifi_e("TWT information error");
         }
     }
-    
+
     return WM_SUCCESS;
 }
 #endif /* CONFIG_11AX_TWT */
@@ -8152,6 +8153,7 @@ void wlan_dot11mc_ftm_cfg(void *p_buf)
         cfg_11mc->lci_tlv.val.lat_unc   = LCI_LATITUDE_UNCERTAINITY;
         cfg_11mc->lci_tlv.val.longitude = LCI_LONGITUDE;
         cfg_11mc->lci_tlv.val.long_unc  = LCI_LONGITUDE_UNCERTAINITY;
+        cfg_11mc->lci_tlv.val.z_info    = Z_INFO;
         cmd->size += sizeof(lci_tlv_t);
     }
 
@@ -8165,7 +8167,7 @@ void wlan_dot11mc_ftm_cfg(void *p_buf)
         cfg_11mc->civic_tlv.val.country_code         = wlan_cpu_to_le16(CIVIC_COUNTRY_CODE);
         cfg_11mc->civic_tlv.val.civic_address_length = strlen(ftm_address);
         (void)memcpy(cfg_11mc->civic_tlv.val.civic_address, ftm_address, strlen(ftm_address));
-        cmd->size += (cfg_11mc->civic_tlv.len + sizeof(t_u32));
+        cmd->size += (cfg_11mc->civic_tlv.len + sizeof(t_u32)) + sizeof(t_u16);
     }
 
     cmd->size = wlan_cpu_to_le16(cmd->size);
@@ -8339,8 +8341,8 @@ void wifi_cau_temperature_enable()
 
 int32_t wifi_get_temperature(void)
 {
-    int32_t val                = 0;
-    uint32_t reg_val           = 0;
+    int32_t val                   = 0;
+    uint32_t reg_val              = 0;
     uint32_t temp_Cau_Raw_Reading = 0;
     uint32_t board_type           = 0;
 

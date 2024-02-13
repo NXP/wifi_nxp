@@ -938,8 +938,8 @@ int wifi_nat_keep_alive(wifi_nat_keep_alive_t *keep_alive, t_u8 *src_mac, t_u32 
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
     t_u8 payload[40]        = {0x00, 0x26, 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00, 0x45, 0x00, 0x00, 0x1d,
-                        0xbe, 0xef, 0x00, 0x00, 0x80, 0x11, 0xf9, 0xc5, 0xc0, 0xa8, 0x01, 0x03, 0xff, 0xff,
-                        0xff, 0xff, 0x11, 0x94, 0x11, 0x94, 0x00, 0x09, 0x5b, 0x98, 0xff, 0x00};
+                               0xbe, 0xef, 0x00, 0x00, 0x80, 0x11, 0xf9, 0xc5, 0xc0, 0xa8, 0x01, 0x03, 0xff, 0xff,
+                               0xff, 0xff, 0x11, 0x94, 0x11, 0x94, 0x00, 0x09, 0x5b, 0x98, 0xff, 0x00};
     t_u8 payload_len        = 40;
 
     cmd->command = wlan_cpu_to_le16(HostCmd_CMD_AUTO_TX);
@@ -1108,11 +1108,11 @@ int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u
 #ifdef CONFIG_RF_TEST_MODE
 #ifdef RW610
 /* 802.11n/a/g/b data rate IDs */
-#define DATARATE_1M     0x0001
-#define DATARATE_2M     0x0002
-#define DATARATE5_5M    0x0003
-#define DATARATE_11M    0x0004
-#define RESERVED_1      0x0005
+#define DATARATE_1M  0x0001
+#define DATARATE_2M  0x0002
+#define DATARATE5_5M 0x0003
+#define DATARATE_11M 0x0004
+#define RESERVED_1   0x0005
 
 #define DATARATE_6M  0x0006
 #define DATARATE_9M  0x0007
@@ -1158,9 +1158,9 @@ int wifi_cloud_keep_alive(wifi_cloud_keep_alive_t *keep_alive, t_u16 action, t_u
 
 static uint32_t tx_data_rate_ids[] = {
     /* 802.11n/a/g/b data rate IDs */
-    DATARATE_1M, DATARATE_2M, DATARATE5_5M, DATARATE_11M, RESERVED_1, DATARATE_6M, DATARATE_9M, DATARATE_12M, DATARATE_18M,
-    DATARATE_24M, DATARATE_36M, DATARATE_48M, DATARATE_54M, RESERVED_2,
-    HT_MCS0, HT_MCS1, HT_MCS2, HT_MCS3, HT_MCS4, HT_MCS5, HT_MCS6, HT_MCS7,
+    DATARATE_1M, DATARATE_2M, DATARATE5_5M, DATARATE_11M, RESERVED_1, DATARATE_6M, DATARATE_9M, DATARATE_12M,
+    DATARATE_18M, DATARATE_24M, DATARATE_36M, DATARATE_48M, DATARATE_54M, RESERVED_2, HT_MCS0, HT_MCS1, HT_MCS2,
+    HT_MCS3, HT_MCS4, HT_MCS5, HT_MCS6, HT_MCS7,
     /* 802.11ac VHT MCS rates id */
     VHT_SS1_MCS0, VHT_SS1_MCS1, VHT_SS1_MCS2, VHT_SS1_MCS3, VHT_SS1_MCS4, VHT_SS1_MCS5, VHT_SS1_MCS6, VHT_SS1_MCS7,
     VHT_SS1_MCS8,
@@ -1260,8 +1260,7 @@ int wifi_get_set_rf_he_tb_tx(t_u16 cmd_action,
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action,
-                                wifi_mfg_cmd_otp_mac_addr_rd_wr_t *wifi_mfg_cmd_otp_mac_addr_rd_wr)
+int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action, wifi_mfg_cmd_otp_mac_addr_rd_wr_t *wifi_mfg_cmd_otp_mac_addr_rd_wr)
 {
     wifi_get_command_lock();
     mlan_ds_misc_cfg misc;
@@ -1281,11 +1280,10 @@ int wifi_get_set_rf_otp_mac_addr(t_u16 cmd_action,
     return wm_wifi.cmd_resp_status;
 }
 
-int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action,
-                                wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr)
+int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action, wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr)
 {
     wifi_get_command_lock();
-    mlan_ds_misc_cfg *misc = NULL;
+    mlan_ds_misc_cfg *misc  = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
     misc = (mlan_ds_misc_cfg *)os_mem_alloc(sizeof(mlan_ds_misc_cfg));
@@ -1862,8 +1860,8 @@ int wifi_set_rf_tx_frame(const uint32_t enable,
     wifi_mfg_cmd_tx_frame.mfg_cmd = MFG_CMD_TX_FRAME;
     wifi_mfg_cmd_tx_frame.action  = HostCmd_ACT_GEN_SET;
 
-    wifi_mfg_cmd_tx_frame.enable        = enable;
-    wifi_mfg_cmd_tx_frame.data_rate     = data_rate;
+    wifi_mfg_cmd_tx_frame.enable    = enable;
+    wifi_mfg_cmd_tx_frame.data_rate = data_rate;
 #ifdef RW610
     /* on fw side, data rate id of 802.11n/a/g/b start from 0, the data rate id need reduce 1 */
     if (data_rate <= HT_MCS7)
@@ -2064,11 +2062,12 @@ int wifi_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len)
 
     wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
 
-    wifi_mfg_cmd_otp_cal_data_rd_wr = (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+    wifi_mfg_cmd_otp_cal_data_rd_wr =
+        (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
     (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
 
-    wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd = MFG_CMD_OTP_CAL_DATA;
-    wifi_mfg_cmd_otp_cal_data_rd_wr->action  = HostCmd_ACT_GEN_SET;
+    wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd      = MFG_CMD_OTP_CAL_DATA;
+    wifi_mfg_cmd_otp_cal_data_rd_wr->action       = HostCmd_ACT_GEN_SET;
     wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len = cal_data_len;
     (void)memcpy((void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data, (const void *)cal_data, cal_data_len);
 
@@ -2094,7 +2093,8 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
 
     wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
 
-    wifi_mfg_cmd_otp_cal_data_rd_wr = (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+    wifi_mfg_cmd_otp_cal_data_rd_wr =
+        (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
     (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
 
     wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd = MFG_CMD_OTP_CAL_DATA;
@@ -2106,7 +2106,8 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
         cal_data_status = wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_status;
         if (cal_data_status == 1)
         {
-            (void)memcpy((void *)cal_data, (const void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data, wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len);
+            (void)memcpy((void *)cal_data, (const void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data,
+                     wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len);
             ret = WM_SUCCESS;
         }
         else
@@ -2608,7 +2609,7 @@ int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, co
         sec.param.encrypt_key.key_index  = key_index;
     }
 
-    sec.param.encrypt_key.key_len = MLAN_MAX_KEY_LENGTH;
+    sec.param.encrypt_key.key_len   = MLAN_MAX_KEY_LENGTH;
     sec.param.encrypt_key.key_flags = KEY_FLAG_REMOVE_KEY;
 
     if (mac_addr)
@@ -2712,7 +2713,7 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, wifi_antcfg_t *wifi_antcfg)
 
     (void)memset(&ant_cfg_1x1, 0x00, sizeof(mlan_ds_ant_cfg_1x1));
 
-    ant_cfg_1x1.antenna = (t_u32) * (wifi_antcfg->ant_mode);
+    ant_cfg_1x1.antenna       = (t_u32) * (wifi_antcfg->ant_mode);
     ant_cfg_1x1.evaluate_time = (t_u16) * (wifi_antcfg->evaluate_time);
 #ifdef RW610
     ant_cfg_1x1.evaluate_mode = (t_u8) * (wifi_antcfg->evaluate_mode);
@@ -2729,7 +2730,7 @@ static int wifi_send_rf_antenna_cmd(t_u16 action, wifi_antcfg_t *wifi_antcfg)
     (void)memset(cmd, 0x00, S_DS_GEN + sizeof(HostCmd_DS_802_11_RF_ANTENNA));
 
     cmd->seq_num = 0x0;
-    cmd->result = 0x0;
+    cmd->result  = 0x0;
 
     mlan_status rv =
         wlan_ops_sta_prepare_cmd(pmpriv, HostCmd_CMD_802_11_RF_ANTENNA, action, 0, NULL, &ant_cfg_1x1, cmd);
@@ -2756,10 +2757,10 @@ int wifi_get_antenna(t_u32 *ant_mode, t_u16 *evaluate_time, t_u8 *evaluate_mode,
     }
 
     wifi_antcfg_t antenna_cfg;
-    antenna_cfg.ant_mode = ant_mode;
-    antenna_cfg.evaluate_time = evaluate_time;
+    antenna_cfg.ant_mode        = ant_mode;
+    antenna_cfg.evaluate_time   = evaluate_time;
 #ifdef RW610
-    antenna_cfg.evaluate_mode = evaluate_mode;
+    antenna_cfg.evaluate_mode   = evaluate_mode;
 #endif
     antenna_cfg.current_antenna = current_antenna;
 
@@ -2796,7 +2797,7 @@ int wifi_set_antenna(t_u8 tx_antenna, t_u8 rx_antenna)
 int wifi_set_antenna(t_u32 ant_mode, t_u16 evaluate_time)
 {
     wifi_antcfg_t antenna_cfg;
-    antenna_cfg.ant_mode = &ant_mode;
+    antenna_cfg.ant_mode      = &ant_mode;
     antenna_cfg.evaluate_time = &evaluate_time;
 
     return wifi_send_rf_antenna_cmd(HostCmd_ACT_GEN_SET, &antenna_cfg);
@@ -3199,7 +3200,7 @@ int wifi_get_firmware_version_ext(wifi_fw_version_ext_t *version_ext)
 
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
     mlan_status rv       = wifi_prepare_and_send_cmd(pmpriv, HostCmd_CMD_VERSION_EXT, HostCmd_ACT_GEN_GET, 0, NULL,
-                                               &version_ext->version_str_sel, MLAN_BSS_TYPE_STA, version_ext);
+                                                     &version_ext->version_str_sel, MLAN_BSS_TYPE_STA, version_ext);
     return (rv == MLAN_STATUS_SUCCESS ? WM_SUCCESS : -WM_FAIL);
 }
 
@@ -5241,7 +5242,7 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
 #ifndef CONFIG_MEM_POOLS
     pBuf = OSA_MemoryAllocate(pkt_len);
 #else
-    pBuf = OSA_MemoryPoolAllocate(buf_1536_MemoryPool);
+    pBuf         = OSA_MemoryPoolAllocate(buf_1536_MemoryPool);
 #endif
 
     if (pBuf == MNULL)
@@ -5301,7 +5302,7 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
 #ifndef CONFIG_MEM_POOLS
     misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
 #else
-    misc = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+    misc                            = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
 #endif
 
     if (misc == NULL)
@@ -5850,7 +5851,6 @@ int wifi_send_mgmt_auth_request(const t_u8 channel,
 #ifdef CONFIG_11R
         pmpriv->ft_roam = MFALSE;
 #endif
-
     }
     return ret;
 }
@@ -6023,16 +6023,16 @@ int wifi_net_monitor_cfg(wifi_net_monitor_t *monitor)
 
 #ifdef CONFIG_TSP
 int wifi_tsp_cfg(const t_u16 action,
-                       t_u16 *enable,
-                       t_u32 *back_off,
-                       t_u32 *highThreshold,
-                       t_u32 *lowThreshold,
-                       t_u32 *dutycycstep,
-                       t_u32 *dutycycmin,
-                       int *highthrtemp,
-                       int *lowthrtemp,
-                       int *currCAUTemp,
-                       int *currRFUTemp)
+                 t_u16 *enable,
+                 t_u32 *back_off,
+                 t_u32 *highThreshold,
+                 t_u32 *lowThreshold,
+                 t_u32 *dutycycstep,
+                 t_u32 *dutycycmin,
+                 int *highthrtemp,
+                 int *lowthrtemp,
+                 int *currCAUTemp,
+                 int *currRFUTemp)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
@@ -6171,6 +6171,7 @@ int wifi_ftm_start(const t_u16 action, const t_u8 *mac, const t_u8 channel)
     (void)memcpy(cmd->params.ftm_session_ctrl.peer_mac, mac, MLAN_MAC_ADDR_LENGTH);
     cmd->params.ftm_session_ctrl.chan = wlan_cpu_to_le16(channel);
 
+    dump_hex(cmd, cmd->size);
     return wifi_wait_for_cmdresp(NULL);
 }
 
@@ -6250,6 +6251,7 @@ int wifi_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg)
         wlan_dto11az_ranging_cfg(cmd, protocol, &ftm_session_cfg);
     }
 #endif
+    dump_hex(cmd, cmd->size);
     return wifi_wait_for_cmdresp(NULL);
 }
 

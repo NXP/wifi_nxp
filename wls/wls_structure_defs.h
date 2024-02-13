@@ -32,7 +32,7 @@
 
 typedef struct csiHeaderInfoStruct
 {
-    unsigned char CSI;
+    unsigned char csi;
     unsigned char LTF;
     unsigned short dataLength;
     unsigned short FCF;
@@ -563,4 +563,4 @@ typedef struct reg_buf_ptr
 
 #endif
 
-#endif  /* CONFIG_WLS_CSI_PROC */
+#endif /* CONFIG_WLS_CSI_PROC */

@@ -651,9 +651,9 @@ enum wlan_monitor_opt
  10: 64 ms
  11: 128 ms
  12-14 reserved*/
-#define BURST_DURATION 10
+#define BURST_DURATION 4
 /* Burst Period in units of 100 milli seconds */
-#define BURST_PERIOD 5
+#define BURST_PERIOD 10
 /* FTM frames per burst */
 #define FTM_PER_BURST 10
 /* Indicates minimum time between consecutive Fine Timing Measurement frames. It is specified in in units of 100 micro
@@ -667,9 +667,9 @@ enum wlan_monitor_opt
  11 - HT40
  12 - VHT40
  13 - VHT80 */
-#define BW 10 /* RW610 only allows 20M bandwidth */
+#define BW 13 /* RW610 only allows 20M bandwidth */
 /*Indicates how many burst instances are requested for the FTM session */
-#define BURST_EXP 0
+#define BURST_EXP 3
 
 /* LCI */
 #define LCI_REQUEST                1
@@ -679,14 +679,15 @@ enum wlan_monitor_opt
 #define LCI_LONGITUDE_UNCERTAINITY 18
 #define LCI_ALTITUDE               11.2
 #define LCI_ALTITUDE_UNCERTAINITY  15
+#define Z_INFO                     0
 
 /* CIVIC */
-#define CIVIC_REQUEST       0
+#define CIVIC_REQUEST       1
 #define CIVIC_LOCATION      1
 #define CIVIC_LOCATION_TYPE 1
 #define CIVIC_COUNTRY_CODE  0 /* US */
 #define CIVIC_ADDRESS_TYPE  22
-#define CIVIC_ADDRESS       "123, NXP, Shanghai"
+#define CIVIC_ADDRESS       "#123"
 
 /* DOT11AZ CFG */
 #define FORMAT_BW 0 /* RW610 only allows 20M bandwidth */

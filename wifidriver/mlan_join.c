@@ -971,7 +971,7 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     t_u8 ft_akm = 0;
 #endif
     MrvlIEtypes_PrevBssid_t *prev_bssid_tlv = MNULL;
-    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = { 0 };
+    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH]     = {0};
 #ifdef CONFIG_DRIVER_MBO
     t_u8 oper_class = 1;
 #endif
@@ -1342,16 +1342,14 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         pos += sizeof(host_mlme_tlv->header) + host_mlme_tlv->header.len;
     }
 #endif
-    if (memcmp(&pmpriv->curr_bss_params.prev_bssid, zero_mac,
-		   MLAN_MAC_ADDR_LENGTH)) {
-        prev_bssid_tlv = (MrvlIEtypes_PrevBssid_t *)pos;
-		prev_bssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_PREV_BSSID);
-        prev_bssid_tlv->header.len = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
-		__memcpy(pmadapter, prev_bssid_tlv->prev_bssid, &pmpriv->curr_bss_params.prev_bssid,
-			   MLAN_MAC_ADDR_LENGTH);
-        PRINTM(MCMND, "ASSOCIATE: PREV_BSSID = " MACSTR "\n",
-                MAC2STR(pmpriv->curr_bss_params.prev_bssid));
-		pos += sizeof(prev_bssid_tlv->header) + MLAN_MAC_ADDR_LENGTH;
+    if (memcmp(&pmpriv->curr_bss_params.prev_bssid, zero_mac, MLAN_MAC_ADDR_LENGTH))
+    {
+        prev_bssid_tlv              = (MrvlIEtypes_PrevBssid_t *)pos;
+        prev_bssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_PREV_BSSID);
+        prev_bssid_tlv->header.len  = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
+        __memcpy(pmadapter, prev_bssid_tlv->prev_bssid, &pmpriv->curr_bss_params.prev_bssid, MLAN_MAC_ADDR_LENGTH);
+        PRINTM(MCMND, "ASSOCIATE: PREV_BSSID = " MACSTR "\n", MAC2STR(pmpriv->curr_bss_params.prev_bssid));
+        pos += sizeof(prev_bssid_tlv->header) + MLAN_MAC_ADDR_LENGTH;
     }
 
 #ifdef CONFIG_DRIVER_MBO
@@ -1433,6 +1431,8 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     (void)__memcpy(pmadapter, &passo->cap_info, &tmp_cap, sizeof(passo->cap_info));
 
 done:
+    dump_hex(cmd, cmd->size);
+
     LEAVE();
     return ret;
 }
