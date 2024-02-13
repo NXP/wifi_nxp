@@ -669,7 +669,7 @@ enum wlan_monitor_opt
  13 - VHT80 */
 #define BW 13 /* RW610 only allows 20M bandwidth */
 /*Indicates how many burst instances are requested for the FTM session */
-#define BURST_EXP 0
+#define BURST_EXP 3
 
 /* LCI */
 #define LCI_REQUEST                1
