@@ -5029,6 +5029,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
             if (wlan.scan_count > WLAN_RESCAN_LIMIT)
             {
+                wlan.cur_network_idx = -1;
                 (void)wpa_supp_disable(sta_netif, network);
             }
         }
