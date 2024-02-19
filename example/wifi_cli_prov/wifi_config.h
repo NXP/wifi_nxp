@@ -83,6 +83,7 @@
 #define CONFIG_CAU_TEMPERATURE
 #define CONFIG_UNII4_BAND_SUPPORT
 #define CONFIG_COMPRESS_TX_PWTBL
+#define CONFIG_FW_VDLLV2
 #endif
 
 #define CONFIG_IPV6               1

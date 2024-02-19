@@ -21,6 +21,7 @@
 #if defined(RW610)
 #define CONFIG_COMPRESS_TX_PWTBL
 #define CONFIG_UNII4_BAND_SUPPORT
+#define CONFIG_FW_VDLLV2
 #endif
 #if defined(SD8987) || defined(SD9177)
 #define CONFIG_11AC

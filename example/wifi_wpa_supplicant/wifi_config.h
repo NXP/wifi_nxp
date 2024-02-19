@@ -101,6 +101,8 @@
 #define CONFIG_11K              1
 #define CONFIG_11V              1
 #define CONFIG_11R              1
+#define CONFIG_EXTERNAL_COEX_PTA
+#define CONFIG_FW_VDLLV2
 #endif
 
 #define PRINTF_FLOAT_ENABLE 1

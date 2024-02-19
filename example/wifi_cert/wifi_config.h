@@ -66,6 +66,7 @@
 #define CONFIG_COMPRESS_TX_PWTBL
 #define CONFIG_SCAN_CHANNEL_GAP 1
 #define CONFIG_UNII4_BAND_SUPPORT
+#define CONFIG_FW_VDLLV2
 #endif
 
 //#define CONFIG_IPV6               1
