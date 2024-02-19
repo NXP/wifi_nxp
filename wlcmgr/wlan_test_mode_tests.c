@@ -1324,7 +1324,7 @@ static void dump_wlan_get_otp_cal_data_usage(void)
 static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
 {
     int ret;
-    int i = 0;
+    //int i = 0;
     uint8_t *cal_data = NULL;
 
     if (!rf_test_mode)
@@ -1349,6 +1349,8 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
     ret = wlan_get_rf_otp_cal_data(cal_data);
     if (ret == WM_SUCCESS)
     {
+        (void)PRINTF("OTP cal data read successfully: 1\r\n");
+#if 0
         while (i < CAL_DATA_LEN)
         {
             (void)PRINTF("%02x ", cal_data[i++]);
@@ -1357,10 +1359,11 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
                 (void)PRINTF("\r\n");
             }
         }
+#endif
     }
     else
     {
-        (void)PRINTF("OTP cal data read failed\r\n");
+        (void)PRINTF("OTP cal data read failed: 0\r\n");
         dump_wlan_get_otp_cal_data_usage();
     }
 

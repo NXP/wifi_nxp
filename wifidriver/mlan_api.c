@@ -2090,6 +2090,7 @@ int wifi_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len)
 int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
 {
     int ret;
+    uint32_t cal_data_status = 0;
 
     wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
 
@@ -2102,8 +2103,16 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
     ret = wifi_get_set_rf_otp_cal_data(HostCmd_ACT_GEN_GET, wifi_mfg_cmd_otp_cal_data_rd_wr);
     if (ret == WM_SUCCESS && wifi_mfg_cmd_otp_cal_data_rd_wr->error == 0)
     {
-        (void)memcpy((void *)cal_data, (const void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data, wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len);
-        ret = WM_SUCCESS;
+        cal_data_status = wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_status;
+        if (cal_data_status == 1)
+        {
+            (void)memcpy((void *)cal_data, (const void *)wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data, wifi_mfg_cmd_otp_cal_data_rd_wr->cal_data_len);
+            ret = WM_SUCCESS;
+        }
+        else
+        {
+            ret = -WM_FAIL;
+        }
     }
     else
     {
