@@ -60,6 +60,8 @@ static const region_code_mapping_t region_code_mapping[] = {
 /** Universal region code */
 #define UNIVERSAL_REGION_CODE 0xff
 
+#define EU_REGION_CODE 0x30
+
 /* Following two structures define the supported channels */
 /** Channels for 802.11b/g */
 static const chan_freq_power_t channel_freq_power_UN_BG[] = {
@@ -121,18 +123,13 @@ t_u8 region_string_2_region_code(t_u8 *region_string)
             return region_code_mapping[i].code;
         }
     }
-#ifndef CONFIG_MLAN_WMSDK
-    /* If still not found, look for code in EU country code table */
-    for (i = 0; i < ARRAY_SIZE(eu_country_code_table); i++)
+
+    if (wlan_is_etsi_country(NULL, region_string))
     {
-        if (!memcmp(region_string, eu_country_code_table[i], COUNTRY_CODE_LEN - 1))
-        {
-            PRINTM(MIOCTL, "found region code=%d in EU table\n", EU_REGION_CODE);
-            LEAVE();
-            return EU_REGION_CODE;
-        }
+        LEAVE();
+        return EU_REGION_CODE;
     }
-#endif
+
     /* Default is WW */
     LEAVE();
     return region_code_mapping[0].code;
@@ -153,6 +150,13 @@ mlan_status wlan_11d_region_2_code(pmlan_adapter pmadapter, t_u8 *region, OUT t_
     t_u8 size = sizeof(region_code_mapping) / sizeof(region_code_mapping_t);
 
     ENTER();
+
+    if (wlan_is_etsi_country(pmadapter, region))
+    {
+        *code = EU_REGION_CODE;
+        LEAVE();
+        return MLAN_STATUS_SUCCESS;
+    }
 
     /* Look for code in mapping table */
     for (i = 0; i < size; i++)

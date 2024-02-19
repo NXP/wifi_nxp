@@ -2725,7 +2725,7 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
 }
 #endif /* OTP_CHANINFO */
 
-static t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code)
+t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code)
 {
     t_u8 i;
     t_u32 meas_country_code_len = 0;

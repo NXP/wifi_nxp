@@ -3881,4 +3881,6 @@ mlan_status wlan_cmd_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t
 
 mlan_status wlan_ret_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
 
+t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code);
+
 #endif /* !_MLAN_MAIN_H_ */
