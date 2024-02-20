@@ -5549,6 +5549,8 @@ int wifi_handle_fw_event(struct bus_message *msg)
             }
 #endif /* CONFIG_UAP_AMPDU_TX || CONFIG_UAP_AMPDU_RX */
 
+            wlan_delete_station_entry(pmpriv_uap, sta_addr);
+
 #ifdef CONFIG_WPA_SUPP
             os_mem_free((void *)disassoc_resp);
 #else
