@@ -1669,6 +1669,8 @@ void net_interface_up(void *intrfc_handle)
 
 void net_interface_down(void *intrfc_handle)
 {
+    interface_t *if_handle = (interface_t *)intrfc_handle;
+    net_if_ipv4_addr_rm(if_handle->netif, &if_handle->ipaddr.in_addr);
     net_if_down(((interface_t *)intrfc_handle)->netif);
 }
 
