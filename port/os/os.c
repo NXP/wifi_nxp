@@ -2495,7 +2495,9 @@ void os_rwlock_delete(os_rw_lock_t *lock)
     lock->reader_count = 0;
 }
 
-#if defined(CONFIG_POSIX_API)
+#if defined(CONFIG_POSIX_CLOCK)
+#include <zephyr/posix/time.h>
+
 /* returns time in micro-secs since time began */
 unsigned int os_get_timestamp(void)
 {
@@ -2534,6 +2536,12 @@ unsigned int os_get_timestamp(void)
                 return 0;
         }
     }
+}
+#else
+/* returns time in micro-secs since time began */
+unsigned int os_get_timestamp(void)
+{
+    return (k_uptime_get_32() * 1000);
 }
 #endif
 
