@@ -4037,6 +4037,7 @@ Bit55: 0x1 (PPE Threshold Present.
             Note: PPE threshold may have some changes later)
 Bit58: 0x1 (HE SU PPDU and HE MU PPDU with 4xHE-LTF+0.8usGI)
 Bit59-61: 0x1 (Max Nc)
+Bit64: 0x1 (HE ER SU PPDU with 4xHE-LTF+0.8usGI)
 Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 */
 
@@ -4054,7 +4055,7 @@ Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 #define UAP_HE_PHY_CAP5_MASK  0x01
 #define UAP_HE_PHY_CAP6_MASK  0xA0
 #define UAP_HE_PHY_CAP7_MASK  0x0C
-#define UAP_HE_PHY_CAP8_MASK  0x00
+#define UAP_HE_PHY_CAP8_MASK  0x01
 #define UAP_HE_PHY_CAP9_MASK  0x08
 #define UAP_HE_PHY_CAP10_MASK 0x00
 
@@ -4087,6 +4088,7 @@ Bit55: 0x1 (PPE Threshold Present.
             Note: PPE threshold may have some changes later)
 Bit58: 0x1 (HE SU PPDU and HE MU PPDU with 4xHE-LTF+0.8usGI)
 Bit59-61: 0x1 (Max Nc)
+Bit64: 0x1 (HE ER SU PPDU with 4xHE-LTF+0.8usGI)
 Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 */
 #define UAP_HE_2G_MAC_CAP0_MASK  0x04
@@ -4103,7 +4105,7 @@ Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 #define UAP_HE_2G_PHY_CAP5_MASK  0x01
 #define UAP_HE_2G_PHY_CAP6_MASK  0xA0
 #define UAP_HE_2G_PHY_CAP7_MASK  0x0C
-#define UAP_HE_2G_PHY_CAP8_MASK  0x00
+#define UAP_HE_2G_PHY_CAP8_MASK  0x01
 #define UAP_HE_2G_PHY_CAP9_MASK  0x08
 #define UAP_HE_2G_PHY_CAP10_MASK 0x00
 
