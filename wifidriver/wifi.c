@@ -4331,26 +4331,10 @@ int wifi_low_level_output(const t_u8 interface,
             if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
             {
                 tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
-#ifdef CONFIG_WMM
-                /* Though TID is not used in case of TCP traffic,
-                 * but making tid as voice traffic is a way to tell firmware to not to use
-                 * MCS rates above 9 for TCP ack packets.
-                 * This introduction is harmless for TCP traffic as TID is dont care
-                 * */
-                tid = WMM_HIGHEST_PRIORITY - 1;
-#endif
             }
             else if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
             {
                 tx_control = (RATEID_VHT_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
-#ifdef CONFIG_WMM
-                /* Though TID is not used in case of TCP traffic,
-                 * but making tid as voice traffic is a way to tell firmware to not to use
-                 * MCS rates above 9 for TCP ack packets.
-                 * This introduction is harmless for TCP traffic as TID is dont care
-                 * */
-                tid = WMM_HIGHEST_PRIORITY - 1;
-#endif
             }
             else if (wm_wifi.bandwidth == BANDWIDTH_20MHZ)
                 tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
