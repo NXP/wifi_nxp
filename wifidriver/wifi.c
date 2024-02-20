@@ -4319,7 +4319,7 @@ int wifi_low_level_output(const t_u8 interface,
 #endif
             }
             else if (pmpriv->curr_bss_params.bss_descriptor.curr_bandwidth == BW_20MHZ)
-                tx_control = (RATEID_VHT_MCS9_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+                tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
         }
     }
     else if ((interface == MLAN_BSS_TYPE_UAP) &&
