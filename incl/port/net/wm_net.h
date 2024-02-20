@@ -112,6 +112,9 @@ struct netif {
 	 */
 	int tx_pending;
 #endif
+
+	struct k_mutex lock;
+	struct k_mutex tx_lock;
 };
 
 /**
