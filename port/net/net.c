@@ -944,6 +944,12 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
 static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enum netif_mac_filter_action action);
 #endif
 
+static int (*net_internal_rx_callback)(struct net_if *iface, struct net_pkt *pkt);
+void nxp_wifi_internal_register_rx_cb(int (*rx_cb_fn)(struct net_if *iface, struct net_pkt *pkt))
+{
+    net_internal_rx_callback = rx_cb_fn;
+}
+
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
 
@@ -985,11 +991,19 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
                 }
             }
 
+            if (net_internal_rx_callback == NULL)
+            {
+                net_e("Not registering rx callback");
+                (void)net_pkt_unref(p);
+                p = NULL;
+                break;
+            }
+
             /* full packet send to tcpip_thread to process */
             if (recv_interface == WLAN_BSS_TYPE_UAP)
-                err = net_recv_data(g_uap.netif, p);
+                err = net_internal_rx_callback(g_uap.netif, p);
             else
-                err = net_recv_data(g_mlan.netif, p);
+                err = net_internal_rx_callback(g_mlan.netif, p);
             if (err != 0)
             {
                 net_e("Net input error");
