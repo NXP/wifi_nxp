@@ -1792,6 +1792,9 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
 #endif
     )
     {
+#ifdef CONFIG_IPV6
+        (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_IPV6_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
+#endif
         (void)wlan_wlcmgr_send_msg(WIFI_EVENT_NET_STA_ADDR_CONFIG, WIFI_EVENT_REASON_SUCCESS, NULL);
 
         /* XXX For DHCP, the above event will only indicate that the
