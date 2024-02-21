@@ -4040,9 +4040,9 @@ Bit59-61: 0x1 (Max Nc)
 Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 */
 
-#define UAP_HE_MAC_CAP0_MASK  0x00
+#define UAP_HE_MAC_CAP0_MASK  0x04
 #define UAP_HE_MAC_CAP1_MASK  0x00
-#define UAP_HE_MAC_CAP2_MASK  0x00
+#define UAP_HE_MAC_CAP2_MASK  0x10
 #define UAP_HE_MAC_CAP3_MASK  0x02
 #define UAP_HE_MAC_CAP4_MASK  0x00
 #define UAP_HE_MAC_CAP5_MASK  0x00
