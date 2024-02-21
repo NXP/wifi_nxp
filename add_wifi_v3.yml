@@ -695,6 +695,7 @@ set.middleware.wifi:
       - evkmimxrt595
       - evkmimxrt685
       - mimxrt685audevk
+      - mimxrt700evk
       - evkmimxrt1020
       - evkmimxrt1040
       - evkbimxrt1050
