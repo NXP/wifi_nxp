@@ -77,7 +77,7 @@ Change log:
 #endif
 #endif
 
-#if !defined(SD8801)
+#if !(defined(SD8801) || defined(RW610))
 #define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
 
