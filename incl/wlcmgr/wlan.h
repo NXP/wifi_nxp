@@ -1283,7 +1283,7 @@ struct wlan_network_security
     /** WPA3 SAE password, for WPA3 SAE networks this is an ASCII
      * password of length password_len.  This field is ignored for networks with no
      * security. */
-    char password[WLAN_PASSWORD_MAX_LENGTH];
+    char password[WLAN_PASSWORD_MAX_LENGTH + 1];
     /** Length of the WPA3 SAE Password, \ref WLAN_PASSWORD_MIN_LENGTH to \ref
      * WLAN_PASSWORD_MAX_LENGTH.  Ignored for networks with no security. */
     size_t password_len;
