@@ -573,6 +573,10 @@ typedef PACK_START struct _wifi_ds_rate
 {
     /** Sub-command */
     enum wifi_ds_command_type sub_command;
+#ifdef CONFIG_AUTO_NULL_TX
+    /** Only set auto tx fix rate */
+    t_u16 auto_null_fixrate_enable;
+#endif
     /** Rate configuration parameter */
     union
     {

@@ -2299,6 +2299,10 @@ typedef struct _mlan_ds_rate
 {
     /** Sub-command */
     mlan_ioctl_req_id sub_command;
+#ifdef CONFIG_AUTO_NULL_TX
+    /** Only set auto tx fix rate */
+    t_u16 auto_null_fixrate_enable;
+#endif
     /** Rate configuration parameter */
     union
     {

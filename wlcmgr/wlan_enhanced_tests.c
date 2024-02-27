@@ -549,7 +549,10 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("wlan-set-txratecfg <sta/uap> <format> <index> ");
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
     (void)PRINTF("<nss> ");
-    (void)PRINTF("<rate_setting>\r\n");
+    (void)PRINTF("<rate_setting> ");
+#endif
+#ifdef CONFIG_AUTO_NULL_TX
+    (void)PRINTF("<autoTx_set>\r\n");
 #endif
     (void)PRINTF("\r\n");
 
@@ -647,6 +650,12 @@ static void dump_wlan_set_txratecfg_usage(void)
     (void)PRINTF("\t        0x0060  4xHELTF + GI0.8us if DCM = 1 and STBC = 1\r\n");
     (void)PRINTF("\t                4xHELTF + GI3.2us, otherwise\r\n");
 #endif
+#ifdef CONFIG_AUTO_NULL_TX
+    (void)PRINTF("\t<autoTx_set> - This parameter specifies whether only fix auto tx data rate, this parameter is optional \r\n");
+    (void)PRINTF("\t        0:    not fix auto tx data rate\r\n");
+    (void)PRINTF("\t        1:    only fix auto tx data rate\r\n");
+#endif
+
 }
 
 static void test_wlan_set_txratecfg(int argc, char **argv)
@@ -660,10 +669,10 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
 
     if (argc < 3 ||
 #if defined(CONFIG_11AC) || defined(CONFIG_11AX)
-        argc > 6)
+        argc > 7)
     {
 #else
-        argc > 4)
+        argc > 5)
     {
 #endif
         (void)PRINTF("Invalid arguments\r\n");
@@ -681,6 +690,9 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
     }
 
     (void)memset(&ds_rate, 0, sizeof(wlan_ds_rate));
+#ifdef CONFIG_AUTO_NULL_TX
+    ds_rate.auto_null_fixrate_enable = 0xff;
+#endif
 
     ds_rate.sub_command = WIFI_DS_RATE_CFG;
 
@@ -711,13 +723,30 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         }
     }
 #endif
-    if (argc == 6)
+    if (argc >= 6)
     {
         errno                               = 0;
         ds_rate.param.rate_cfg.rate_setting = strtol(argv[5], NULL, 0);
         if (errno != 0)
             (void)PRINTF("Error during strtoul errno:%d", errno);
     }
+#ifdef CONFIG_AUTO_NULL_TX
+#if defined(CONFIG_11AC) || defined(CONFIG_11AX)
+    if(argc == 7)
+#else
+    if(argc == 5)
+#endif
+    {
+        errno                               = 0;
+        ds_rate.auto_null_fixrate_enable = strtol(argv[argc - 1], NULL, 0);;
+        if (ds_rate.auto_null_fixrate_enable > 1)
+        {
+            ds_rate.auto_null_fixrate_enable = 0xff;
+            (void)PRINTF("Invalid autoTx_only selection\r\n");
+            goto done;
+        }
+    }
+#endif
     else
     {
         errno                               = 0;
@@ -789,7 +818,7 @@ static void test_wlan_set_txratecfg(int argc, char **argv)
         }
 #endif
 
-        if (argc == 6)
+        if (argc >= 6)
         {
 #ifdef CONFIG_11AX
 /* HE Preamble type */
@@ -2010,9 +2039,9 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-set-chanlist", NULL, test_wlan_set_chanlist},
     {"wlan-get-chanlist", NULL, test_wlan_get_chanlist},
 #ifdef CONFIG_11AC
-    {"wlan-set-txratecfg", "<sta/uap> <format> <index> <nss> <rate_setting>", test_wlan_set_txratecfg},
+    {"wlan-set-txratecfg", "<sta/uap> <format> <index> <nss> <rate_setting> <autoTx_set>", test_wlan_set_txratecfg},
 #else
-    {"wlan-set-txratecfg", "<sta/uap> <format> <index>", test_wlan_set_txratecfg},
+    {"wlan-set-txratecfg", "<sta/uap> <format> <index> <autoTx_set>", test_wlan_set_txratecfg},
 #endif
     {"wlan-get-txratecfg", "<sta/uap>", test_wlan_get_txratecfg},
     {"wlan-get-data-rate", "<sta/uap>", test_wlan_get_data_rate},

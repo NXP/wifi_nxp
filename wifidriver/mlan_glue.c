@@ -1713,6 +1713,9 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
     }
 
     (void)memset(&ds_rate_cfg, 0x00, sizeof(mlan_ds_rate));
+#ifdef CONFIG_AUTO_NULL_TX
+    ds_rate_cfg.auto_null_fixrate_enable = 0xff;
+#endif
 
     ds_rate_cfg.sub_command = MLAN_OID_RATE_CFG;
     if (ds_rate.param.rate_cfg.rate_format == MLAN_RATE_FORMAT_AUTO)
@@ -1721,6 +1724,9 @@ int wifi_set_txratecfg(wifi_ds_rate ds_rate, mlan_bss_type bss_type)
     }
     else
     {
+#ifdef CONFIG_AUTO_NULL_TX
+        ds_rate_cfg.auto_null_fixrate_enable = ds_rate.auto_null_fixrate_enable;
+#endif
         ds_rate_cfg.param.rate_cfg.is_rate_auto = MFALSE;
         ds_rate_cfg.param.rate_cfg.rate_type    = MLAN_RATE_INDEX;
         ds_rate_cfg.param.rate_cfg.rate         = ds_rate.param.rate_cfg.rate_index;

@@ -21,6 +21,7 @@ Change Log:
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
+
 #ifndef CONFIG_MLAN_WMSDK
 /********************************************************
                 Local Variables
@@ -2133,8 +2134,21 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
            pmpriv->is_data_rate_auto, pmpriv->data_rate);
 
     /* Send request to firmware */
-    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
-                           (t_void *)bitmap_rates);
+#ifdef CONFIG_AUTO_NULL_TX
+    if(ds_rate->auto_null_fixrate_enable == 1)
+    {
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_SET, 0, (t_void *)pioctl_req, bitmap_rates);
+        ds_rate->auto_null_fixrate_enable = 0xff;
+    }
+    else if(ds_rate->auto_null_fixrate_enable == 0)
+    {
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_NOSET, 0, (t_void *)pioctl_req, bitmap_rates);
+        ds_rate->auto_null_fixrate_enable = 0xff;
+    }
+    else
+#endif
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
+                               (t_void *)bitmap_rates);
 
     if (ret == MLAN_STATUS_SUCCESS)
     {
