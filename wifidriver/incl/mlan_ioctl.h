@@ -717,6 +717,7 @@ typedef struct _wmm_parameter_t
 #define MLAN_11AX_TWT_SETUP_SUBID       0x114
 #define MLAN_11AX_TWT_TEARDOWN_SUBID    0x115
 #define MLAN_11AX_TWT_REPORT_SUBID      0x116
+#define MLAN_11AX_TWT_INFORMATION_SUBID 0x119
 #endif /* CONFIG_11AX_TWT */
 
 #if CONFIG_MMSF
@@ -3062,6 +3063,17 @@ typedef MLAN_PACK_START struct _mlan_ds_twt_report
     t_u8 data[54]; //WLAN_BTWT_REPORT_LEN* WLAN_BTWT_REPORT_MAX_NUM
 } MLAN_PACK_END mlan_ds_twt_report, *pmlan_ds_twt_report;
 
+/** Type definition of mlan_ds_twt_report for MLAN_OID_11AX_TWT_CFG */
+typedef MLAN_PACK_START struct _mlan_ds_twt_information
+{
+    /** TWT Flow Identifier. Range: [0-7] */
+    t_u8 flow_identifier;
+    /** TWT operation suspend duration in milli seconds. */
+    t_u32 suspend_duration;
+    /** TWT information state from FW. */
+    t_u8 information_state;
+} MLAN_PACK_END mlan_ds_twt_information, *pmlan_ds_twt_information;
+
 /** Type definition of mlan_ds_twtcfg for MLAN_OID_11AX_TWT_CFG */
 typedef MLAN_PACK_START struct _mlan_ds_twtcfg
 {
@@ -3078,6 +3090,8 @@ typedef MLAN_PACK_START struct _mlan_ds_twtcfg
         mlan_ds_twt_teardown twt_teardown;
         /** TWT report for Sub ID: MLAN_11AX_TWT_REPORT_SUBID */
         mlan_ds_twt_report twt_report;
+        /** TWT report for Sub ID: MLAN_11AX_TWT_INFORMATION_SUBID */
+        mlan_ds_twt_information twt_information;
     } param;
 } MLAN_PACK_END mlan_ds_twtcfg, *pmlan_ds_twtcfg;
 #endif /* CONFIG_11AX_TWT */

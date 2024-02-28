@@ -1317,6 +1317,13 @@ int wifi_set_twt_teardown_cfg(const wifi_twt_teardown_config_t *teardown_config)
  */
 int wifi_get_twt_report(wifi_twt_report_t *twt_report);
 
+/** Twt information
+ *
+ * \param[out] twt_report TWT Information
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wifi_twt_information(wifi_twt_information_t *information);
 #endif /* CONFIG_11AX_TWT */
 #endif
 

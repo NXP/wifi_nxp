@@ -1695,6 +1695,33 @@ static void test_wlan_twt_report(int argc, char **argv)
     }
 }
 
+static void dump_wlan_twt_information_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-11ax-twt-information", "<flow_id> <suspend_duration>\r\n");
+    (void)PRINTF("TWT information setting. \r\n");
+    (void)PRINTF("<flow_identifier>  TWT flow identifier, range: [0-7], must be same ID as the one got in TWT setup cmd\r\n");
+    (void)PRINTF("<suspend_duration> TWT operation suspend duration in milli seconds.\r\n");
+    (void)PRINTF("    # 0     - Suspend forever\r\n");
+    (void)PRINTF("    # Non-0 - Suspend agreement for specific duration in milli seconds\r\n");
+}
+
+static void test_wlan_twt_information(int argc, char **argv)
+{
+    wlan_twt_information_t info;
+
+    if (argc < 3)
+    {
+        dump_wlan_twt_information_usage();
+        return;
+    }
+
+    memset(&info, 0x00, sizeof(info));
+    info.flow_identifier = a2hex_or_atoi(argv[1]);
+    info.suspend_duration = a2hex_or_atoi(argv[2]);
+
+    wlan_twt_information(&info);
+}
 #endif /* CONFIG_11AX_TWT */
 
 static void wlan_init_g_test_cfg_arrays()
@@ -2043,6 +2070,7 @@ static struct cli_command wlan_enhanced_commands[] = {
     {"wlan-11ax-twt-setup", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_setup},
     {"wlan-11ax-twt-teardown", "<dump/set/done> [<param_id> <param_data>]", test_wlan_twt_teardown},
     {"wlan-11ax-twt-report", "", test_wlan_twt_report},
+    {"wlan-11ax-twt-information", "<flow_identifier> <suspend_duration>", test_wlan_twt_information},
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
 #if CONFIG_WIFI_CLOCKSYNC
