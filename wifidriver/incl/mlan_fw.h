@@ -4890,6 +4890,10 @@ typedef MLAN_PACK_START struct _hostcmd_twt_report
     /** TWT report payload for FW response to fill */
     t_u8 data[54]; //WLAN_BTWT_REPORT_LEN* WLAN_BTWT_REPORT_MAX_NUM
 } MLAN_PACK_END hostcmd_twt_report, *phostcmd_twt_report;
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0c767c83... TWT Information Support
 /** Type definition of hostcmd_twt_information */
 typedef MLAN_PACK_START struct _hostcmd_twt_information
 {

@@ -8166,8 +8166,8 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
         return -WM_FAIL;
     }
 
-    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
-                             &twt_cfg, cmd);
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, 
+                       HostCmd_ACT_GEN_SET, 0, NULL, &twt_cfg, cmd);
     ret = wifi_wait_for_cmdresp(NULL);
     if (ret == WM_SUCCESS)
     {
@@ -8176,7 +8176,7 @@ int wifi_twt_information(wifi_twt_information_t *twt_information)
             wifi_e("TWT information error");
         }
     }
-
+    
     return WM_SUCCESS;
 }
 #endif /* CONFIG_11AX_TWT */

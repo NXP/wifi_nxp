@@ -1546,7 +1546,7 @@ typedef wifi_btwt_config_t wlan_btwt_config_t;
  * \ref wifi_twt_report_t
  */
 typedef wifi_twt_report_t wlan_twt_report_t;
-/** Configuration for TWT information
+/** Configuration for TWT Information
  * \ref wifi_twt_information_t
  */
 typedef wifi_twt_information_t wlan_twt_information_t;

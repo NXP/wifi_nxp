@@ -586,7 +586,7 @@ mlan_status wlan_cmd_twt_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u1
         case MLAN_11AX_TWT_INFORMATION_SUBID:
             twt_information_params = &hostcmd_twtcfg->param.twt_information;
             __memset(pmpriv->adapter, twt_information_params, 0x00, sizeof(hostcmd_twtcfg->param.twt_information));
-            twt_information_params->flow_identifier  = ds_twtcfg->param.twt_information.flow_identifier;
+            twt_information_params->flow_identifier = ds_twtcfg->param.twt_information.flow_identifier;
             twt_information_params->suspend_duration = ds_twtcfg->param.twt_information.suspend_duration;
             cmd->size += sizeof(hostcmd_twtcfg->param.twt_information);
             break;
