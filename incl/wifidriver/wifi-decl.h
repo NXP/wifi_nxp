@@ -1206,6 +1206,16 @@ typedef PACK_START struct
     /** TWT report buffer */
     t_u8 data[WLAN_BTWT_REPORT_LEN * WLAN_BTWT_REPORT_MAX_NUM];
 } PACK_END wifi_twt_report_t;
+
+typedef PACK_START struct
+{
+    /** TWT Flow Identifier. Range: [0-7] */
+    t_u8 flow_identifier;
+    /** TWT operation suspend duration in milli seconds. */
+    t_u32 suspend_duration;
+    /** TWT information state from FW. */
+    t_u8 information_state;
+} PACK_END wifi_twt_information_t;
 #endif /* CONFIG_11AX_TWT */
 #endif
 

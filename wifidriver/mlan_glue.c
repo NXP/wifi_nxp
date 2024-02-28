@@ -3925,10 +3925,18 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             {
                 if (resp->result == HostCmd_RESULT_OK)
                 {
-                    if (wm_wifi.cmd_resp_priv != NULL && resp->params.twtcfg.sub_id == MLAN_11AX_TWT_REPORT_SUBID)
+                    if (wm_wifi.cmd_resp_priv != NULL)
                     {
-                        mlan_ds_twt_report *cfg = (mlan_ds_twt_report *)wm_wifi.cmd_resp_priv;
-                        (void)memcpy(cfg, &resp->params.twtcfg.param.twt_report, sizeof(mlan_ds_twt_report));
+                        if (resp->params.twtcfg.sub_id == MLAN_11AX_TWT_SETUP_SUBID)
+                        {
+                            mlan_ds_twt_setup *cfg = (mlan_ds_twt_setup *)wm_wifi.cmd_resp_priv;
+                            (void)memcpy(cfg, &resp->params.twtcfg.param.twt_setup, sizeof(mlan_ds_twt_setup));
+                        }
+                        else if (resp->params.twtcfg.sub_id == MLAN_11AX_TWT_REPORT_SUBID)
+                        {
+                            mlan_ds_twt_report *cfg = (mlan_ds_twt_report *)wm_wifi.cmd_resp_priv;
+                            (void)memcpy(cfg, &resp->params.twtcfg.param.twt_report, sizeof(mlan_ds_twt_report));
+                        }
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
@@ -7189,6 +7197,7 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
     mlan_ds_twtcfg twt_cfg  = {0};
     MrvlIEtypes_He_cap_t *hw_he_cap;
     MrvlIEtypes_He_cap_t *hw_2g_he_cap;
+    int ret = 0;
 
     (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
@@ -7213,7 +7222,18 @@ int wifi_set_twt_setup_cfg(const wifi_twt_setup_config_t *twt_setup)
 
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_SET, 0, NULL,
                              &twt_cfg, cmd);
-    wifi_wait_for_cmdresp(NULL);
+    ret = wifi_wait_for_cmdresp(&twt_cfg.param.twt_setup);
+    if (ret == WM_SUCCESS)
+    {
+        if (wm_wifi.cmd_resp_status != WM_SUCCESS)
+        {
+            wifi_e("TWT setup cfg error");
+        }
+        else
+        {
+            (void)PRINTF("TWT flow id: %d\r\n", twt_cfg.param.twt_setup.flow_identifier);
+        }
+    }
     return WM_SUCCESS;
 }
 
@@ -7251,6 +7271,42 @@ int wifi_get_twt_report(wifi_twt_report_t *twt_report)
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, HostCmd_ACT_GEN_GET, 0, NULL,
                              &twt_cfg, cmd);
     wifi_wait_for_cmdresp(twt_report);
+    return WM_SUCCESS;
+}
+
+int wifi_twt_information(wifi_twt_information_t *twt_information)
+{
+    wifi_get_command_lock();
+    HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    mlan_ds_twtcfg twt_cfg  = {0};
+    int ret = 0;
+
+    (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
+    cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
+    cmd->result  = 0x0;
+
+    twt_cfg.sub_id = MLAN_11AX_TWT_INFORMATION_SUBID;
+    (void)memcpy(&twt_cfg.param.twt_information, twt_information, sizeof(twt_cfg.param.twt_information));
+
+    /* TWT Flow Identifier. Range: [0-7]. */
+    if (twt_cfg.param.twt_information.flow_identifier > 7)
+    {
+        wifi_put_command_lock();
+        wifi_e("Invalid TWT flow id");
+        return -WM_FAIL;
+    }
+
+    wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_TWT_CFG, 
+                       HostCmd_ACT_GEN_SET, 0, NULL, &twt_cfg, cmd);
+    ret = wifi_wait_for_cmdresp(NULL);
+    if (ret == WM_SUCCESS)
+    {
+        if (wm_wifi.cmd_resp_status != WM_SUCCESS)
+        {
+            wifi_e("TWT information error");
+        }
+    }
+    
     return WM_SUCCESS;
 }
 #endif /* CONFIG_11AX_TWT */

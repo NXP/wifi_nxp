@@ -13314,6 +13314,11 @@ int wlan_get_twt_report(wlan_twt_report_t *twt_report)
 {
     return wifi_get_twt_report(twt_report);
 }
+
+int wlan_twt_information(wlan_twt_information_t *twt_information)
+{
+    return wifi_twt_information(twt_information);
+}
 #endif /* CONFIG_11AX_TWT */
 #endif /* CONFIG_11AX */
 

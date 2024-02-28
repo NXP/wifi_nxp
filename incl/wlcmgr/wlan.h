@@ -1577,6 +1577,10 @@ typedef wifi_btwt_config_t wlan_btwt_config_t;
  * \ref wifi_twt_report_t
  */
 typedef wifi_twt_report_t wlan_twt_report_t;
+/** Configuration for TWT Information
+ * \ref wifi_twt_information_t
+ */
+typedef wifi_twt_information_t wlan_twt_information_t;
 #endif /* CONFIG_11AX_TWT */
 #ifdef CONFIG_MMSF
 #define WLAN_AMPDU_DENSITY 0x30
@@ -5955,6 +5959,14 @@ uint8_t *wlan_get_twt_teardown_cfg();
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_get_twt_report(wlan_twt_report_t *twt_report);
+
+/** Twt information
+ *
+ * \param[out] twt_information TWT information.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_twt_information(wlan_twt_information_t *twt_information);
 #endif /* CONFIG_11AX_TWT */
 
 #ifdef CONFIG_MMSF
