@@ -1116,7 +1116,7 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
     /* Start BSS */
-    return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_LIST, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+    return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_LIST, HostCmd_ACT_GEN_GET, 0, NULL, NULL,
                                          MLAN_BSS_TYPE_UAP, list);
 
     /* *list must have been filled now if everything went well */

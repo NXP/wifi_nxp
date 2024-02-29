@@ -2051,4 +2051,8 @@ int wifi_boot_sleep(uint16_t action, uint16_t *enable);
 int wifi_auto_null_tx(wifi_auto_null_tx_t *auto_null_tx);
 #endif
 
+#ifdef CONFIG_WPA_SUPP
+void hostapd_connected_sta_list(wifi_sta_info_t *si, wifi_sta_list_t *sl);
+#endif
+
 #endif /* __WIFI_H__ */

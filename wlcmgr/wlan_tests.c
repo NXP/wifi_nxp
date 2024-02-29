@@ -2761,6 +2761,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
 
     wifi_sta_info_t *si = (wifi_sta_info_t *)(void *)(&sl->count + 1);
 
+#ifndef CONFIG_WPA_SUPP
     (void)PRINTF("Number of STA = %d \r\n\r\n", sl->count);
     for (i = 0; i < sl->count; i++)
     {
@@ -2771,7 +2772,9 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
         (void)PRINTF("Power mfg status: %s\r\n", (si[i].power_mgmt_status == 0U) ? "active" : "power save");
         (void)PRINTF("Rssi : %d dBm\r\n\r\n", (signed char)si[i].rssi);
     }
-
+#else
+    hostapd_connected_sta_list(si, sl);
+#endif
     os_mem_free(sl);
     // #endif
 }
