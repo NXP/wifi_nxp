@@ -265,7 +265,7 @@ void sdio_drv_deinit(void)
     SDIO_Deinit(&wm_g_sd);
 }
 
-#elif defined(CONFIG_ZEPHYR)
+#elif defined(__ZEPHYR__)
 
 #include <mlan_sdio_api.h>
 #include <wm_os.h>

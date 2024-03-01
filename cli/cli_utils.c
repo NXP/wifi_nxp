@@ -14,7 +14,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include <fsl_debug_console.h>
 #include <cli.h>
 #endif

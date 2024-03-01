@@ -13,7 +13,7 @@
 #include <wmerrno.h>
 #include "type_decls.h"
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"
@@ -26,7 +26,7 @@
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #define DATA_BUFFER_SIZE (FSL_SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
 #else
 #define DATA_BUFFER_SIZE (SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)

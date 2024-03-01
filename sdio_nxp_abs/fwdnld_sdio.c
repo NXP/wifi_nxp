@@ -65,7 +65,7 @@ static bool wlan_sdio_check_fw_status(t_u32 card_poll)
             sdio_io_d("Firmware Ready");
             return true;
         }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
 #else
         os_thread_sleep(os_msec_to_ticks(5));
@@ -159,7 +159,7 @@ int32_t wlan_reset_fw()
                 break;
             }
         }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
 #else
         os_thread_sleep(os_msec_to_ticks(5));
@@ -194,7 +194,7 @@ int32_t wlan_reset_fw()
             sdio_io_d("FW is ready");
             break;
         }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
 #else
         os_thread_sleep(os_msec_to_ticks(5));

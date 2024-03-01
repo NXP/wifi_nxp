@@ -8,7 +8,7 @@
  *
  */
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 

@@ -1500,7 +1500,7 @@ void os_get_num_of_tasks(uint8_t *num_tasks)
     return;
 }
 
-#elif defined(CONFIG_ZEPHYR)
+#elif defined(__ZEPHYR__)
 
 /* Freertos handles this internally? */
 void os_thread_stackmark(char *name)

@@ -46,7 +46,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <wifi.h>
 #include <wifi-decl.h>
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
@@ -410,7 +410,7 @@ int wfaStaGetIpConfig(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBuf)
 
     sprintf(ifinfo->dns[0], "%s", inet_ntoa(dns1));
     sprintf(ifinfo->dns[1], "%s", inet_ntoa(dns2));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     struct in_addr ip, nm; //, dns1, dns2;
 
     ip.s_addr = addr->ipv4.address;
@@ -593,7 +593,7 @@ int wfaStaVerifyIpConnection(int len, BYTE *caCmdBuf, int *respLen, BYTE *respBu
 #endif
         ret = ping(count, intval, size, timeout, &addr);
     }
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     ret = ping(count, intval, size, timeout, &verip->cmdsu.verifyIp.dipaddr[0]);
 #endif
 
@@ -2894,7 +2894,7 @@ void wfaSendPing(tgPingStart_t *staPing, float *interval, int streamid)
             return_flag = ping(count, intval, size, timeout, &addr);
         }
     }
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     return_flag = ping(count, intval, size, timeout, &staPing->dipaddr[0]);
 #endif
 

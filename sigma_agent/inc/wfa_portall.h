@@ -19,7 +19,7 @@
 #ifndef __WFA_PORTALL_H__
 #define __WFA_PORTALL_H__
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include <fsl_debug_console.h>
 #endif
 #include <stdio.h>

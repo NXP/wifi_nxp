@@ -19,7 +19,7 @@
 #ifndef WFA_DEBUG_H
 #define WFA_DEBUG_H
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include "fsl_debug_console.h"
 #endif
 #include "wfa_stdincs.h"

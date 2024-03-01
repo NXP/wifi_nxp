@@ -22,7 +22,7 @@
  *    They are shared with both TC and DUT agent.
  */
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
@@ -1084,7 +1084,7 @@ int wfaSendLongFile(int mySockfd, int streamid, BYTE *aRespBuf, int *aRespLen)
     toAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->dipaddr, &toAddr.sin_addr);
     if (rv != 0)
     {
@@ -1313,7 +1313,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
     toAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     toAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->sipaddr, &toAddr.sin_addr);
     if (rv != 0)
     {
@@ -1326,7 +1326,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
     {
 #if defined(SDK_OS_FREE_RTOS)
         toAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->sipaddr, &toAddr.sin_addr);
         if (rv != 0)
         {
@@ -1339,7 +1339,7 @@ int wfaSendShortFile(int mySockfd, int streamid, BYTE *sendBuf, int pksize, BYTE
     {
 #if defined(SDK_OS_FREE_RTOS)
         toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->dipaddr, &toAddr.sin_addr);
         if (rv != 0)
         {
@@ -1410,7 +1410,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
     fromAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     fromAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->dipaddr, &fromAddr.sin_addr);
     if (rv != 0)
     {
@@ -1424,7 +1424,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
     {
 #if defined(SDK_OS_FREE_RTOS)
         fromAddr.sin_addr.s_addr = inet_addr(theProf->sipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->sipaddr, &fromAddr.sin_addr);
         if (rv != 0)
         {
@@ -1437,7 +1437,7 @@ int wfaRecvFile(int mySockfd, int streamid, char *recvBuf)
     {
 #if defined(SDK_OS_FREE_RTOS)
         fromAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
         int rv = inet_pton(AF_INET, theProf->dipaddr, &fromAddr.sin_addr);
         if (rv != 0)
         {
@@ -1565,7 +1565,7 @@ int wfaSendBitrateData(int mySockfd, int streamId, BYTE *pRespBuf, int *pRespLen
     toAddr.sin_family = AF_INET;
 #if defined(SDK_OS_FREE_RTOS)
     toAddr.sin_addr.s_addr = inet_addr(theProf->dipaddr);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     int rv = inet_pton(AF_INET, theProf->dipaddr, &toAddr.sin_addr);
     if (rv != 0)
     {

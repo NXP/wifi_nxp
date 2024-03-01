@@ -25,7 +25,7 @@
  *    all other/default     ----> WME_AC_BE;
  */
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 

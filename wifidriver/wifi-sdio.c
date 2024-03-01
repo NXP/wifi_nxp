@@ -24,7 +24,7 @@
 #include <mlan_fw.h>
 #include "wifi-sdio.h"
 #include "wifi-internal.h"
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "fsl_common.h"

@@ -8,7 +8,7 @@
  *
  */
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include <wmerrno.h>
 #include <wm_utils.h>
 
@@ -25,7 +25,7 @@
 #include "mlan_main_defs.h"
 #include "mlan_sdio_defs.h"
 #include "type_decls.h"
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #include "fsl_sdmmc_common.h"
 #include "fsl_sdmmc_host.h"
 #include "sdmmc_config.h"
@@ -49,7 +49,7 @@
  * At the same time buffer address/size should be aligned to the cache line size if cache is supported.
  */
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
 #endif
 /*! @brief Data written to the card */
@@ -113,7 +113,7 @@ bool wlan_card_status(t_u8 bits)
         {
             return true;
         }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
 #else
         os_thread_sleep(os_msec_to_ticks(5));

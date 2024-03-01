@@ -59,7 +59,7 @@
 /*! @brief Data block count accessed in card */
 #define DATA_BLOCK_COUNT (4U)
 /*! @brief Data buffer size. */
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #define DATA_BUFFER_SIZE (FSL_SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)
 #else
 #define DATA_BUFFER_SIZE (SDMMC_DEFAULT_BLOCK_SIZE * DATA_BLOCK_COUNT)

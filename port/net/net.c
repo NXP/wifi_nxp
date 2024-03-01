@@ -916,7 +916,7 @@ void net_stat(void)
     stats_display();
 }
 
-#elif defined(CONFIG_ZEPHYR)
+#elif defined(__ZEPHYR__)
 
 /*******************************************************************************
  * Definitions

@@ -18,7 +18,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <ctype.h>
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include <zephyr/kernel.h>
 #include <strings.h>
 #else
@@ -32,11 +32,11 @@
 extern void sm_printf(const char *fmt, ...);
 
 #define PRINTF sm_printf
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 #endif
 #endif
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #ifndef PRINTF
 #define PRINTF printk
 #endif
@@ -112,7 +112,7 @@ NORETURN void wmpanic(void);
  */
 static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsigned max_olen)
 {
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     unsigned int i;      /* loop iteration variable */
     unsigned int j  = 0; /* current character */
     unsigned int by = 0; /* byte value for conversion */
@@ -157,7 +157,7 @@ static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsign
 #endif
 }
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 /**
  * Convert given binary array to equivalent hex representation.
  *
@@ -168,7 +168,7 @@ static inline unsigned int wm_hex2bin(const uint8_t *ibuf, uint8_t *obuf, unsign
  *
  */
 void wm_bin2hex(uint8_t *src, char *dest, unsigned int src_len, unsigned int dest_len);
-#endif /* ! CONFIG_ZEPHYR */
+#endif /* ! __ZEPHYR__ */
 
 /** Function prototype for a random entropy/seed generator
  *
@@ -271,7 +271,7 @@ uint32_t sample_initialise_random_seed(void);
  */
 void get_random_sequence(void *buf, unsigned int size);
 
-#if (SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE) || defined (CONFIG_ZEPHYR)
+#if (SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE) || defined (__ZEPHYR__)
 #define DUMP_WRAPAROUND 16U
 
 /** Dump buffer in hex format on console

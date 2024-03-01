@@ -31,7 +31,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
  *       2007/12/10 --  02.32 Add a function to upload test results.
  */
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 

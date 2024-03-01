@@ -140,7 +140,7 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
 };
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 static int g_net_idx = -1;
 #endif
 
@@ -175,7 +175,7 @@ int wifi_supp_init(void)
         goto out;
     }
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     if (g_net_idx == -1)
     {
         g_net_idx = net_alloc_client_data_id();
@@ -210,7 +210,7 @@ int wifi_supp_init(void)
         goto out;
     }
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     netif_set_client_data(iface, LWIP_NETIF_CLIENT_DATA_INDEX_MAX, (void *)&wpa_supp_ops);
 #endif
 

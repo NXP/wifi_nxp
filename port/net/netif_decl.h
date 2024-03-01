@@ -56,7 +56,7 @@ struct eth_llc_hdr
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 /* This is an Token-Ring LLC structure */
 struct eth_llc_hdr
@@ -71,7 +71,7 @@ struct eth_llc_hdr
 #endif
 
 #define SIZEOF_ETH_LLC_HDR (8U)
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #define SIZEOF_ETH_HDR (14U)
 #endif
 

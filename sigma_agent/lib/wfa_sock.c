@@ -33,7 +33,7 @@
 #include <sched.h>
 #endif
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
@@ -357,7 +357,7 @@ int wfaGetifAddr(char *ifname, struct sockaddr_in *sa)
 #endif
 
     //    (void)PRINTF("\r\nIP:\t\t%s", ipaddr_ntoa(&device->ip_addr));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
     static struct net_if *iface;
 

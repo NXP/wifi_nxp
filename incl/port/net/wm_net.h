@@ -73,7 +73,7 @@
 #endif
 #endif
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 #include <zephyr/kernel.h>
 #include <zephyr/net/ethernet.h>
@@ -173,7 +173,7 @@ typedef struct
 #define net_read(sock, data, len)                     read(sock, data, len)
 #define net_write(sock, data, len)                    write(sock, data, len)
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 /* directly map this to the zephyr internal functions */
 #define inet_aton(cp, addr) inet_pton(AF_INET, cp, (char *)addr)
 #endif
@@ -268,7 +268,7 @@ static inline int net_socket_blocking(int sock, int state)
 {
 #if defined(SDK_OS_FREE_RTOS)
     return ioctlsocket(sock, FIONBIO, &state);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     /* TODO: implement */
     return 0;
 #endif
@@ -315,7 +315,7 @@ static inline uint32_t net_inet_aton(const char *cp)
 
 #if defined(SDK_OS_FREE_RTOS)
     (void)inet_aton(cp, ((void *)&addr));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     (void)net_addr_pton(AF_INET, cp, &addr);
 #endif
     return addr.s_addr;
@@ -342,7 +342,7 @@ static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
     uint16_t out_offset = 0;
     struct pbuf *p = pbuf_skip((struct pbuf *)buf, in_offset, &out_offset);
     return (uint8_t*)(p->payload) + out_offset;
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     uint16_t offset_left = in_offset;
     struct net_buf *frag = ((struct net_pkt *)buf)->frags;
     while (frag && (frag->len <= offset_left))
@@ -363,7 +363,7 @@ static inline void net_stack_buffer_free(void *buf)
 {
 #if defined(SDK_OS_FREE_RTOS)
     pbuf_free((struct pbuf *)buf);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     net_pkt_unref((struct net_pkt *)buf);
 #endif
 }
@@ -381,7 +381,7 @@ static inline int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, u
 {
     return pbuf_copy_partial((const struct pbuf *)stack_buffer, dst, len, offset);
 }
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 int net_stack_buffer_copy_partial(void *stack_buffer, void *dst, uint16_t len, uint16_t offset);
 #endif
 
@@ -395,7 +395,7 @@ static inline void *net_stack_buffer_get_payload(void *buf)
 {
 #if defined(SDK_OS_FREE_RTOS)
     return ((struct pbuf *)buf)->payload;
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     return net_pkt_data((struct net_pkt *)buf);
 #endif
 }
@@ -441,7 +441,7 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
     saddr.addr = addr;
     /* No length, sigh! */
     (void)strcpy(cp, inet_ntoa(saddr));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     struct in_addr saddr;
 
     saddr.s_addr = addr;
@@ -461,7 +461,7 @@ static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
 #if defined(SDK_OS_FREE_RTOS)
     if (((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IP) ||
         ((const struct eth_hdr *)(const void *)buffer)->type == PP_HTONS(ETHTYPE_IPV6))
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
     if (((const struct net_eth_hdr *)(const void *)buffer)->type == htons(ETH_P_IP) ||
         ((const struct net_eth_hdr *)(const void *)buffer)->type == htons(ETH_P_IPV6))
 #endif
@@ -760,7 +760,7 @@ void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss
 void rx_mgmt_deregister_callback(void);
 #endif
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt);
 const struct netif *net_if_get_binding(const char *ifname);
 const struct freertos_wpa_supp_dev_ops *net_if_get_dev_config(struct netif *iface);

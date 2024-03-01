@@ -26,7 +26,7 @@
 
 uint32_t dhcp_address_timeout = DEFAULT_DHCP_ADDRESS_TIMEOUT;
 static os_mutex_t dhcpd_mutex;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 static int ctrl = -1;
 #else
 static int ctrl_sockpair[2];
@@ -443,7 +443,7 @@ static void dhcp_clean_sockets(void)
 {
     int ret;
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 
     if (ctrl != -1)
     {
@@ -467,7 +467,7 @@ static void dhcp_clean_sockets(void)
     }
 }
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 
 static int register_ctrl_sock(void)
 {
@@ -488,7 +488,7 @@ void dhcp_server(os_thread_arg_t data)
 {
     int ret;
     struct sockaddr_in caddr;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     static int one = 1;
     struct sockaddr_in ctrl_listen;
     int addr_len = 0;
@@ -498,7 +498,7 @@ void dhcp_server(os_thread_arg_t data)
     socklen_t flen = sizeof(caddr);
     fd_set rfds;
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 
     (void)memset(&ctrl_listen, 0, sizeof(struct sockaddr_in));
 
@@ -547,14 +547,14 @@ void dhcp_server(os_thread_arg_t data)
     {
         FD_ZERO(&rfds);
         FD_SET(dhcps.sock, &rfds);
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         FD_SET(ctrl, &rfds);
 #else
         FD_SET(ctrl_sockpair[0], &rfds);
 #endif
         max_sock = dns_get_maxsock(&rfds);
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         max_sock = (max_sock > ctrl) ? max_sock : ctrl;
 #endif
 
@@ -568,7 +568,7 @@ void dhcp_server(os_thread_arg_t data)
         }
 
         /* check the control socket */
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         if (FD_ISSET(ctrl, &rfds) != 0)
         {
             ret = recvfrom(ctrl, ctrl_msg, sizeof(ctrl_msg), 0, (struct sockaddr *)0, (socklen_t *)0);
@@ -582,7 +582,7 @@ void dhcp_server(os_thread_arg_t data)
                 dhcp_e(
                     "Failed to get control"
                     " message: %d\r\n",
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
                     ctrl
 #else
                     ctrl_sockpair[0]
@@ -614,7 +614,7 @@ void dhcp_server(os_thread_arg_t data)
 done:
     dhcp_clean_sockets();
     dns_free_allocations();
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 #ifdef CONFIG_WPA_SUPP
     netconn_thread_cleanup();
 #endif
@@ -649,7 +649,7 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
         dhcp_e("failed to set SO_REUSEADDR");
     }
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&one, sizeof(one)) == -1)
     {
         dhcp_e("failed to set SO_BROADCAST");
@@ -736,7 +736,7 @@ out:
 static int send_ctrl_msg(const char *msg)
 {
     int ret;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     int ctrl_tmp;
     struct sockaddr_in to_addr;
 
@@ -897,7 +897,7 @@ static void get_broadcast_addr(struct sockaddr_in *addr)
     addr->sin_family = AF_INET;
     /* limited broadcast addr (255.255.255.255) */
     addr->sin_addr.s_addr = 0xffffffffU;
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     addr->sin_len         = (uint8_t)sizeof(struct sockaddr_in);
 #endif
 }
@@ -912,7 +912,7 @@ static int get_netmask_from_interface(uint32_t *nm, void *interface_handle)
     return net_get_if_ip_mask(nm, interface_handle);
 }
 
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
 void dhcp_stat(void)
 {
     int i = 0;

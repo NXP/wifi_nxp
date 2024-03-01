@@ -23,7 +23,7 @@
 #endif
 
 #include <cli_utils.h>
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "wifi_shell.h"
 #else
 #include <cli.h>
@@ -66,14 +66,14 @@ wlan_net_monitor_t g_net_monitor_param = {
 #ifdef CONFIG_HOST_SLEEP
 extern uint64_t rtc_timeout;
 #endif
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 extern char *net_sprint_addr(sa_family_t af, const void *addr);
 #endif
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
 // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     struct ip4_addr ip, gw, nm, dns1, dns2;
 #else
     struct in_addr ip, gw, nm;
@@ -86,7 +86,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     ip.addr   = addr->ipv4.address;
     gw.addr   = addr->ipv4.gw;
     nm.addr   = addr->ipv4.netmask;
@@ -112,7 +112,7 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
     (void)PRINTF("\taddress: %s", addr_type);
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     (void)PRINTF("\r\n\t\tIP:\t\t%s", inet_ntoa(ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", inet_ntoa(gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", inet_ntoa(nm));
@@ -130,7 +130,7 @@ out:
     {
         int i;
         (void)PRINTF("\r\n\tIPv6 Addresses\r\n");
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
         for (i = 0; i < CONFIG_MAX_IPV6_ADDRESSES; i++)
         {
             if (addr->ipv6[i].addr_state != (unsigned char)IP6_ADDR_INVALID)
@@ -1650,7 +1650,7 @@ static void test_wlan_add(int argc, char **argv)
 #ifdef CONFIG_WPA2_ENTP
         else if (!info.security2 && string_equal("eap-tls", argv[arg]))
         {
-            u8_t *data   = NULL;
+            t_u8 *data   = NULL;
             int data_len = 0;
 
             network.security.type = WLAN_SECURITY_EAP_TLS;
@@ -2170,7 +2170,7 @@ static int __scan_cb(unsigned int count)
 static void test_wlan_thread_info(int argc, char **argv)
 {
     /* TODO: implement for Zephyr */
-#ifndef CONFIG_ZEPHYR
+#ifndef __ZEPHYR__
     os_dump_threadinfo(NULL);
 #endif
 }
@@ -4651,7 +4651,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 
 #ifdef RW610
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 static void test_wlan_auto_host_sleep(int argc, char **argv)
 {
     bool is_manual    = MFALSE;
@@ -11717,7 +11717,7 @@ static struct cli_command tests[] = {
     {"wlan-wakeup-condition", "<wowlan wake_up_conds>", test_wlan_wakeup_condition},
 #endif /*CONFIG_MEF_CFG*/
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
     {"wlan-auto-host-sleep", "<enable> <periodic>", test_wlan_auto_host_sleep},
 #else
     {"wlan-auto-host-sleep", "<enable> <mode> <rtc_timer> <periodic>", test_wlan_auto_host_sleep},

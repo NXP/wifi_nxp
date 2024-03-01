@@ -56,7 +56,7 @@
 #include "clock_config.h"
 #endif
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 #include "nxp_wifi.h"
 #include <zephyr/kernel.h>
@@ -89,7 +89,7 @@ bool is_isr_context(void);
 /** Force a context switch */
 #define os_thread_relinquish() taskYIELD()
 unsigned os_ticks_get(void);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 #define is_isr_context() k_is_in_isr()
 /** Force a context switch */
 #define os_thread_relinquish() k_yield()
@@ -122,7 +122,7 @@ static inline unsigned long long os_total_ticks_get()
     else
         return xTaskGetTotalTickCount();
 }
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 /** Get (wraparound safe) current OS tick counter.
  *
  * Returns a 64 bit unsigned integer. To give a rough idea,
@@ -180,7 +180,7 @@ uint32_t os_msec_to_ticks(uint32_t msecs);
  * @return Number of milliseconds corresponding to ticks
  */
 unsigned long os_ticks_to_msec(unsigned long ticks);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 /** Convert milliseconds to OS ticks
  *
  * This function converts the given millisecond value to the number of OS
@@ -237,7 +237,7 @@ typedef struct os_thread_stack
 #define os_thread_stack_define(stackname, stacksize) \
     os_thread_stack_t stackname = {(stacksize) / (sizeof(portSTACK_TYPE))}
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 /**
  * Structure to be used during call to the function
  * os_thread_create(). Please use the macro \ref os_thread_stack_define
@@ -282,7 +282,7 @@ typedef TaskHandle_t os_thread_t;
 
 const char *get_current_taskname(void);
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 struct zep_thread
 {
@@ -352,7 +352,7 @@ int os_thread_create(os_thread_t *thandle,
 
 #if defined(SDK_OS_FREE_RTOS)
 os_thread_t os_get_current_task_handle(void);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline os_thread_t os_get_current_task_handle(void)
 {
     return k_thread_custom_data_get();
@@ -392,7 +392,7 @@ int os_thread_delete(os_thread_t *thandle);
  */
 #if defined(SDK_OS_FREE_RTOS)
 void os_thread_sleep(uint32_t ticks);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline void os_thread_sleep(uint32_t ticks)
 {
     os_dprintf("OS: Thread Sleep: %d\r\n", ticks);
@@ -413,7 +413,7 @@ static inline void os_thread_sleep(uint32_t ticks)
  */
 #if defined(SDK_OS_FREE_RTOS)
 void os_thread_self_complete(os_thread_t *thandle);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline void os_thread_self_complete(os_thread_t *thandle)
 {
     /* Suspend self until someone calls delete. This is required because in
@@ -453,7 +453,7 @@ static inline void os_thread_self_complete(os_thread_t *thandle)
 #define OS_PRIO_3                                (CONFIG_WIFI_MAX_PRIO - 3)
 #define OS_PRIO_4                                (CONFIG_WIFI_MAX_PRIO - 4) /** Low **/
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 #ifndef CONFIG_WIFI_MAX_PRIO
 #define CONFIG_WIFI_MAX_PRIO 1
@@ -484,7 +484,7 @@ typedef struct os_queue_pool
 
 typedef QueueHandle_t os_queue_t;
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 /** Structure used for queue definition */
 typedef struct
@@ -531,7 +531,7 @@ int os_queue_create(os_queue_t *qhandle, const char *name, int msgsize, os_queue
 /** Wait Forever */
 #if defined(SDK_OS_FREE_RTOS)
 #define OS_WAIT_FOREVER                          portMAX_DELAY
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 #define OS_WAIT_FOREVER                           UINT32_MAX
 #endif
 
@@ -621,7 +621,7 @@ static inline void os_exit_critical_section(unsigned long state)
     taskEXIT_CRITICAL();
 }
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 /* Critical Sections */
 static inline unsigned long os_enter_critical_section(void)
@@ -657,7 +657,7 @@ extern void (*g_os_idle_hooks[MAX_CUSTOM_HOOKS])(void);
  *  @return -WM_FAIL on error
  */
 int os_setup_idle_function(void (*func)(void));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline int os_setup_idle_function(void (*func)(void))
 {
     return -WM_FAIL;
@@ -676,7 +676,7 @@ static inline int os_setup_idle_function(void (*func)(void))
  */
 #if defined(SDK_OS_FREE_RTOS)
 int os_setup_tick_function(void (*func)(void));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline int os_setup_tick_function(void (*func)(void))
 {
     return -WM_FAIL;
@@ -695,7 +695,7 @@ static inline int os_setup_tick_function(void (*func)(void))
  */
 #if defined(SDK_OS_FREE_RTOS)
 int os_remove_idle_function(void (*func)(void));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline int os_remove_idle_function(void (*func)(void))
 {
     return -WM_FAIL;
@@ -713,7 +713,7 @@ static inline int os_remove_idle_function(void (*func)(void))
  */
 #if defined(SDK_OS_FREE_RTOS)
 int os_remove_tick_function(void (*func)(void));
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline int os_remove_tick_function(void (*func)(void))
 {
     return -WM_FAIL;
@@ -723,7 +723,7 @@ static inline int os_remove_tick_function(void (*func)(void))
 #if defined(SDK_OS_FREE_RTOS)
 /*** Mutex ***/
 typedef SemaphoreHandle_t os_mutex_t;
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 /*** Mutex ***/
 typedef struct k_mutex *os_mutex_t;
 #endif
@@ -868,7 +868,7 @@ int os_mutex_delete(os_mutex_t *mhandle);
  */
 #if defined(SDK_OS_FREE_RTOS)
 int os_event_notify_get(unsigned long wait_time);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline int os_event_notify_get(unsigned long wait_time)
 {
     os_thread_t task = os_get_current_task_handle();
@@ -891,7 +891,7 @@ static inline int os_event_notify_get(unsigned long wait_time)
  */
 #if defined(SDK_OS_FREE_RTOS)
 int os_event_notify_put(os_thread_t task);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline int os_event_notify_put(os_thread_t task)
 {
     k_sem_give(&task->event);
@@ -902,7 +902,7 @@ static inline int os_event_notify_put(os_thread_t task)
 #if defined(SDK_OS_FREE_RTOS)
 /*** Semaphore ***/
 typedef SemaphoreHandle_t os_semaphore_t;
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 /*** Semaphore ***/
 typedef struct k_sem *os_semaphore_t;
 #endif
@@ -1126,7 +1126,7 @@ int os_rwlock_read_unlock(os_rw_lock_t *lock);
 typedef TimerHandle_t os_timer_t;
 typedef os_timer_t os_timer_arg_t;
 typedef TickType_t os_timer_tick;
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 struct timer_data;
 
 typedef struct timer_data *os_timer_t;
@@ -1349,7 +1349,7 @@ void os_mem_free(void *ptr);
  */
 #if defined(SDK_OS_FREE_RTOS)
 void os_dump_mem_stats(void);
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 static inline void os_dump_mem_stats(void)
 {
     return;
@@ -1426,7 +1426,7 @@ static inline void os_unlock_schedule(void)
     xTaskResumeAll();
 }
 
-#elif CONFIG_ZEPHYR
+#elif __ZEPHYR__
 
 /** Disables all interrupts at NVIC level */
 static inline void os_disable_all_interrupts(void)

@@ -39,7 +39,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 // #include <sys/socket.h>
 
-#ifdef CONFIG_ZEPHYR
+#ifdef __ZEPHYR__
 #include "nxp_wifi.h"
 #endif
 
