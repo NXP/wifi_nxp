@@ -2180,7 +2180,9 @@ static int __scan_cb(unsigned int count)
         }
 #endif
     }
-
+#ifdef CONFIG_WIFI_SMOKE_TESTS
+    PRINTF("SCAN COMPLETED !\r\n");
+#endif
     return 0;
 }
 
@@ -6143,7 +6145,8 @@ static void dump_wlan_rx_abort_cfg_ext_usage()
 
 static void test_wlan_get_rx_abort_cfg_ext(int argc, char **argv)
 {
-    struct wlan_rx_abort_cfg_ext *cfg = (struct wlan_rx_abort_cfg_ext*)OSA_MemoryAllocate(sizeof(struct wlan_rx_abort_cfg_ext));
+    struct wlan_rx_abort_cfg_ext *cfg =
+        (struct wlan_rx_abort_cfg_ext *)OSA_MemoryAllocate(sizeof(struct wlan_rx_abort_cfg_ext));
     (void)memset(cfg, 0, sizeof(*cfg));
 
     wlan_get_rx_abort_cfg_ext(cfg);
@@ -6221,12 +6224,12 @@ static void test_wlan_set_rx_abort_cfg_ext(int argc, char **argv)
             }
             if (value == 0) /*Disable dynamic rx bort config*/
             {
-                cfg.enable              = 0;
+                cfg.enable = 0;
                 break;
             }
             else /* Enable dynamic rx abort config*/
             {
-                cfg.enable              = 1;
+                cfg.enable = 1;
             }
             arg += 2;
             info.enable = 1;
@@ -6750,8 +6753,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
             return;
         }
 
-        if ((evaluate_mode != 0) && (evaluate_mode != 1)
-            && (evaluate_mode != 2) && (evaluate_mode != 255))
+        if ((evaluate_mode != 0) && (evaluate_mode != 1) && (evaluate_mode != 2) && (evaluate_mode != 255))
         {
             dump_wlan_set_antcfg_usage();
             (void)PRINTF("Error: invalid evaluate_mode\r\n");
@@ -7837,7 +7839,8 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF(
-            "Usage: %s <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
+            "Usage: %s <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> "
+            "<csi_monitor_enable> "
             "<ra4us>\r\n\r\n",
             argv[0]);
 
@@ -7900,7 +7903,8 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
         }
     }
 
-    set_csi_param_header(bss_type, csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
+    set_csi_param_header(bss_type, csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable,
+                         ra4us);
 }
 
 static void test_wlan_set_csi_filter(int argc, char **argv)

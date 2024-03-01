@@ -135,7 +135,7 @@ void NewClient(void *pvParameters)
     nbytes = lwip_read(clientfd, buffer, sizeof(buffer));
 
     // Welcome message
-    lwip_send(clientfd, "\r\n\tRTOS Telnet Server:\r\n\r\n~$ ", sizeof("\r\n\tRTOS Telnet Server:\r\n\r\n~$ "), 0);
+    lwip_send(clientfd, "\r\n\r\nRTOS Telnet Server:\r\n\r\n~$ ", sizeof("\r\n\r\nRTOS Telnet Server:\r\n\r\n~$ "), 0);
 
     do
     {
