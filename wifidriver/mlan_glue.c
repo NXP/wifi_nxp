@@ -2890,8 +2890,14 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
             break;
             case HostCmd_CMD_802_11D_DOMAIN_INFO:
             {
+                HostCmd_DS_802_11D_DOMAIN_INFO *domain_info = (HostCmd_DS_802_11D_DOMAIN_INFO *)&resp->params.domain_info;
                 if (resp->result == HostCmd_RESULT_OK)
                 {
+                    wm_wifi.cmd_resp_status = WM_SUCCESS;
+                }
+                else if(domain_info->action == HostCmd_ACT_SPC_SET)
+                {
+                    /*FW not supported yet, always set command response status success for action code HostCmd_ACT_SPC_SET*/
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
                 else
@@ -4373,6 +4379,17 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 }
             }
             break;
+        case HostCmd_CMD_ADD_NEW_STATION:
+            if (resp->result == HostCmd_RESULT_OK)
+            {
+                wm_wifi.cmd_resp_status = WM_SUCCESS;
+            }
+            else
+            {
+                wm_wifi.cmd_resp_status = -WM_FAIL;
+            }
+            break;
+            
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
