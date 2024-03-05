@@ -22,6 +22,7 @@ Change Log:
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
+
 /**
  *  @brief This function allocates a mlan_buffer.
  *
@@ -347,6 +348,15 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
         pext_cap->ext_cap.TDLSSupport = 1;
     }
 
+    if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc != MNULL) &&
+        (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
+    {
+        pext_cap->ext_cap.WNM_Sleep = 1;
+    }
+    else
+    {
+        pext_cap->ext_cap.WNM_Sleep = 0;
+    }
 #ifdef CONFIG_11AX
     if (pbss_desc && pbss_desc->multi_bssid_ap)
         SET_EXTCAP_MULTI_BSSID(pext_cap->ext_cap);
@@ -438,11 +448,18 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
         bitmap_rates[9] = 0x3FFF;
 #ifdef CONFIG_11AC
         /* [10..17] VHT */
+#ifdef RW610
+        /* RW610 only supports VHT MCS0 ~ MCS8*/
+        bitmap_rates[10] = 0x01FF; /* 9 Bits valid */
+        /* RW610 only supports 1 NSS*/
+        bitmap_rates[11] = 0x0;
+#else
         /* Support all VHT-MCSs rate for NSS 1 and 2 */
         for (i = 10; i < 12; i++)
         {
             bitmap_rates[i] = 0x03FF; /* 10 Bits valid */
         }
+#endif
         /* Set to 0 as default value for all other NSSs */
         for (i = 12; i < NELEMENTS(bitmap_rates); i++)
         {
@@ -451,9 +468,16 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 #endif
 #ifdef CONFIG_11AX
         /* [18..25] HE */
+#ifdef RW610
+        /* RW610 only supports HE MCS0 ~ MCS9*/
+        bitmap_rates[18] = 0x03FF; /* 10 Bits valid */
+        /* RW610 only supports 1 NSS*/
+        bitmap_rates[19] = 0x0;
+#else
         /* Support all HE-MCSs rate for NSS1 and 2 */
         for (i = 18; i < 20; i++)
             bitmap_rates[i] = 0x0FFF;
+#endif
         for (i = 20; i < NELEMENTS(bitmap_rates); i++)
             bitmap_rates[i] = 0x0;
 #endif
@@ -547,8 +571,21 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
            pmpriv->is_data_rate_auto, pmpriv->data_rate);
 
     /* Send request to firmware */
-    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
-                           (t_void *)bitmap_rates);
+#ifdef CONFIG_AUTO_NULL_TX
+    if(ds_rate->auto_null_fixrate_enable == 1)
+    {
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_SET, 0, (t_void *)pioctl_req, bitmap_rates);
+        ds_rate->auto_null_fixrate_enable = 0xff;
+    }
+    else if(ds_rate->auto_null_fixrate_enable == 0)
+    {
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_NOSET, 0, (t_void *)pioctl_req, bitmap_rates);
+        ds_rate->auto_null_fixrate_enable = 0xff;
+    }
+    else
+#endif
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_GEN_SET, 0, (t_void *)pioctl_req,
+                               (t_void *)bitmap_rates);
 
     if (ret == MLAN_STATUS_SUCCESS)
     {
@@ -613,6 +650,9 @@ mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
         pantenna->action        = wlan_cpu_to_le16(HostCmd_ACT_SET_BOTH);
         pantenna->antenna_mode  = wlan_cpu_to_le16((t_u16)ant_cfg_1x1->antenna);
         pantenna->evaluate_time = wlan_cpu_to_le16((t_u16)ant_cfg_1x1->evaluate_time);
+#ifdef RW610
+        pantenna->evaluate_mode = wlan_cpu_to_le16((t_u8)ant_cfg_1x1->evaluate_mode);
+#endif
     }
     else
     {
@@ -623,6 +663,45 @@ mlan_status wlan_cmd_802_11_rf_antenna(IN pmlan_private pmpriv,
     return MLAN_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_NET_MONITOR
+mlan_status wlan_cmd_802_11_net_monitor(IN pmlan_private pmpriv,
+                                        IN HostCmd_DS_COMMAND *cmd,
+                                        IN t_u16 cmd_action,
+                                        IN t_void *pdata_buf)
+{
+    HostCmd_DS_802_11_NET_MONITOR *net_mon = &cmd->params.net_mon;
+    wifi_net_monitor_t *monitor            = (wifi_net_monitor_t *)pdata_buf;
+    ENTER();
+
+    (void)__memset(pmpriv->adapter, net_mon, 0x00, sizeof(HostCmd_DS_802_11_NET_MONITOR));
+
+    cmd->command = wlan_cpu_to_le16(HostCmd_CMD_802_11_NET_MONITOR);
+    cmd->size    = wlan_cpu_to_le16(sizeof(HostCmd_DS_802_11_NET_MONITOR) + S_DS_GEN);
+
+    if (cmd_action == HostCmd_ACT_GEN_SET)
+    {
+        net_mon->action                                         = wlan_cpu_to_le16(HostCmd_ACT_GEN_SET);
+        net_mon->monitor_activity                               = wlan_cpu_to_le16(monitor->monitor_activity);
+        net_mon->filter_flags                                   = wlan_cpu_to_le16(monitor->filter_flags);
+        net_mon->monitor_channel.header.type                    = TLV_TYPE_UAP_CHAN_BAND_CONFIG;
+        net_mon->monitor_channel.header.len                     = 2;
+        net_mon->monitor_channel.chan_band_param[0].radio_type  = (t_u8)monitor->radio_type;
+        net_mon->monitor_channel.chan_band_param[0].chan_number = (t_u8)monitor->chan_number;
+
+        net_mon->monitor_filter.header.type = TLV_TYPE_UAP_STA_MAC_ADDR_FILTER;
+        net_mon->monitor_filter.header.len  = MLAN_MAC_ADDR_LENGTH * monitor->filter_num + sizeof(t_u8);
+        net_mon->monitor_filter.filter_num  = (t_u8)monitor->filter_num;
+        __memcpy(priv->adapter, (t_u8 *)net_mon->monitor_filter.mac_list, (t_u8 *)monitor->mac_addr,
+                 MAX_MONIT_MAC_FILTER_NUM * MLAN_MAC_ADDR_LENGTH);
+    }
+    else
+    {
+        net_mon->action = wlan_cpu_to_le16(HostCmd_ACT_GEN_GET);
+    }
+    LEAVE();
+    return MLAN_STATUS_SUCCESS;
+}
+#endif
 
 
 #ifdef WLAN_LOW_POWER_ENABLE
@@ -717,6 +796,93 @@ mlan_status wlan_misc_get_tsf_info(pmlan_adapter pmadapter, pmlan_ioctl_req pioc
 }
 #endif /* CONFIG_WIFI_CLOCKSYNC */
 
+#ifdef CONFIG_ECSA
+/**
+ *  @brief Get non-global operating class
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param pioctl_req   Pointer to the IOCTL request buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_misc_ioctl_oper_class(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req)
+{
+    pmlan_private pmpriv   = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_misc_cfg *misc = MNULL;
+    t_u8 channel, bandwidth, oper_class = 0;
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    misc    = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    channel = misc->param.bw_chan_oper.channel;
+    switch (misc->param.bw_chan_oper.bandwidth)
+    {
+        case 20:
+            bandwidth = BW_20MHZ;
+            break;
+        case 40:
+            bandwidth = BW_40MHZ;
+            break;
+        case 80:
+            bandwidth = BW_80MHZ;
+            break;
+        default:
+            bandwidth = BW_20MHZ;
+            break;
+    }
+
+    if (pioctl_req->action == MLAN_ACT_GET)
+    {
+        ret                                 = wlan_get_curr_oper_class(pmpriv, channel, bandwidth, &oper_class);
+        misc->param.bw_chan_oper.oper_class = oper_class;
+    }
+    else
+    {
+        PRINTM(MERROR, "Unsupported cmd_action\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    LEAVE();
+    return ret;
+}
+
+/**
+ *  @brief Check operating class validation
+ *
+ *  @param pmadapter    A pointer to mlan_adapter structure
+ *  @param pioctl_req   Pointer to the IOCTL request buffer
+ *
+ *  @return             MLAN_STATUS_SUCCESS or MLAN_STATUS_FAILURE
+ */
+mlan_status wlan_misc_ioctl_operclass_validation(pmlan_adapter pmadapter, mlan_ioctl_req *pioctl_req)
+{
+    pmlan_private pmpriv   = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_misc_cfg *misc = MNULL;
+    t_u8 channel, oper_class;
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+
+    ENTER();
+
+    misc       = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+    channel    = misc->param.bw_chan_oper.channel;
+    oper_class = misc->param.bw_chan_oper.oper_class;
+    if (pioctl_req->action == MLAN_ACT_GET)
+    {
+        ret = wlan_check_operclass_validation(pmpriv, channel, oper_class);
+    }
+    else
+    {
+        PRINTM(MERROR, "Unsupported cmd_action\n");
+        LEAVE();
+        return MLAN_STATUS_FAILURE;
+    }
+
+    LEAVE();
+    return ret;
+}
+#endif
 
 #ifdef CONFIG_RF_TEST_MODE
 /**

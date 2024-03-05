@@ -15,7 +15,11 @@
 #include <wm_os.h>
 
 #include <wifi.h>
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 #ifdef CONFIG_WPA_SUPP_AP
 #include "rtos_wpa_supp_if.h"
 #endif
@@ -26,7 +30,11 @@
 /* fixme: Some of the following options could be added to kconfig. While
    adding the ranges in kconfig use the ones given as macros in
    mlan_uap_cmdevent.c */
+#ifdef RW610
+#define UAP_BEACON_PERIOD 100U
+#else
 #define UAP_BEACON_PERIOD 200U
+#endif
 #define UAP_DTIM_PERIOD 1
 #define MAX_RATES       14U
 
@@ -126,6 +134,9 @@ static int wifi_uap_set_11ac_status(mlan_private *pmpriv, t_u8 action, t_u8 band
         }
 
         vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+#ifdef RW610
+        vht_cfg.vht_cap_info &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
+#endif
         vht_cfg.vht_tx_mcs            = pmadapter->usr_dot_11ac_mcs_support >> 16;
         vht_cfg.vht_rx_mcs            = pmadapter->usr_dot_11ac_mcs_support & 0xffff;
         vht_cfg.skip_usr_11ac_mcs_cfg = MTRUE;
@@ -227,6 +238,9 @@ int wifi_uap_set_11ax_status(mlan_private *pmpriv, t_u8 action, t_u8 band, t_u8 
         goto done;
     }
 
+#ifdef RW610
+    he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
 
 #ifdef CONFIG_11AX_TWT
     /* uap mode clear TWT request bit */
@@ -686,6 +700,10 @@ static int wifi_cmd_uap_config(char *ssid,
     if (!ISSUPP_CHANWIDTH40(mlan_adap->hw_dot_11n_dev_cap))
         bss.param.bss_config.ht_cap_info &= (~MBIT(12));
 
+#ifdef RW610
+    /* Set Tx Beam Forming Cap */
+    bss.param.bss_config.tx_bf_cap = mlan_adap->priv[1]->tx_bf_cap;
+#endif
 
 #ifdef CONFIG_11AC
     if (enable_11ac)
@@ -983,7 +1001,12 @@ int wifi_uap_start(mlan_bss_type type,
                    uint8_t pwe_derivation,
                    uint8_t transition_disable,
                    bool mfpc,
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                   bool mfpr,
+                   uint8_t dtim
+#else
                    bool mfpr
+#endif
 )
 {
     wuap_d("Configuring");
@@ -1011,7 +1034,11 @@ int wifi_uap_start(mlan_bss_type type,
                                  (t_u8)channel, scan_chan_list, pwe_derivation, transition_disable,
                                  wm_wifi.beacon_period == 0U ? UAP_BEACON_PERIOD : wm_wifi.beacon_period,
                                  wm_wifi.bandwidth == 0U ? BANDWIDTH_40MHZ : wm_wifi.bandwidth,
+#ifdef CONFIG_WIFI_DTIM_PERIOD
+                                 dtim == 0 ? UAP_DTIM_PERIOD : dtim,
+#else
                                  UAP_DTIM_PERIOD,
+#endif
                                  wm_wifi.chan_sw_count, type, mfpc, mfpr);
 
     if (rv != WM_SUCCESS)
@@ -1060,7 +1087,7 @@ int wifi_uap_bss_sta_list(wifi_sta_list_t **list)
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[1];
 
     /* Start BSS */
-    return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_LIST, HostCmd_ACT_GEN_SET, 0, NULL, NULL,
+    return wifi_uap_prepare_and_send_cmd(pmpriv, HOST_CMD_APCMD_STA_LIST, HostCmd_ACT_GEN_GET, 0, NULL, NULL,
                                          MLAN_BSS_TYPE_UAP, list);
 
     /* *list must have been filled now if everything went well */
@@ -2005,16 +2032,25 @@ static t_u8 wifi_check_rsn_ie(IEEEtypes_Rsn_t *rsn_ie, mlan_uap_bss_param *sys_c
             case RSN_AKM_8021X:
             case RSN_AKM_8021X_SUITEB:
             case RSN_AKM_8021X_SUITEB_192:
+#ifdef CONFIG_11R
+            case RSN_AKM_FT_8021X:
+            case RSN_AKM_FT_8021X_SHA384:
+#endif
                 sys_config->key_mgmt |= KEY_MGMT_EAP;
                 break;
             case RSN_AKM_PSK:
+#ifdef CONFIG_11R
             case RSN_AKM_FT_PSK:
+#endif
                 sys_config->key_mgmt |= KEY_MGMT_PSK;
                 break;
             case RSN_AKM_PSK_SHA256:
                 sys_config->key_mgmt |= KEY_MGMT_PSK_SHA256;
                 break;
             case RSN_AKM_SAE:
+#ifdef CONFIG_11R
+            case RSN_AKM_FT_SAE:
+#endif
                 sys_config->key_mgmt |= KEY_MGMT_SAE;
                 break;
             case RSN_AKM_OWE:
@@ -3192,6 +3228,9 @@ int wifi_uap_set_11ax_status2(mlan_private *pmpriv, t_u8 action, t_u8 band, IEEE
         ret = -WM_E_INVAL;
         goto done;
     }
+#ifdef RW610
+    he_cfg.he_cap.he_phy_cap[0] &= ~DEFAULT_11AX_CAP_40MHZIH2_4GHZBAND_RESET_MASK;
+#endif
 #ifdef CONFIG_11AX_TWT
     /* uap mode clear TWT request bit */
     he_cfg.he_cap.he_mac_cap[0] &= ~HE_MAC_CAP_TWT_REQ_SUPPORT;
@@ -3233,6 +3272,71 @@ done:
     return ret;
 }
 #endif /* CONFIG_11AX */
+
+#ifdef CONFIG_5GHz_SUPPORT
+static void wifi_set_uap_dfs_cac(mlan_private *priv, Band_Config_t *bandcfg, t_u8 ht_enabled)
+{
+    if (priv->uap_channel > MAX_CHANNELS_BG)
+    {
+        mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];
+        if ((priv_sta->media_connected == MTRUE) && wlan_11h_radar_detect_required(priv, priv->uap_channel))
+        {
+            nxp_wifi_dfs_cac_info cacinfo;
+            t_u8 center_chan = 0;
+
+            memset(&cacinfo, 0, sizeof(nxp_wifi_dfs_cac_info));
+            cacinfo.center_freq  = channel_to_frequency(priv->uap_channel, bandcfg->chanBand);
+            cacinfo.ht_enabled   = ht_enabled;
+            cacinfo.ch_offset    = bandcfg->chan2Offset;
+            cacinfo.center_freq2 = 0;
+
+            switch (bandcfg->chanWidth)
+            {
+                case CHAN_BW_20MHZ:
+                    if (ht_enabled)
+                        cacinfo.ch_width = CHAN_BAND_WIDTH_20;
+                    else
+                        cacinfo.ch_width = CHAN_BAND_WIDTH_20_NOHT;
+                    cacinfo.center_freq1 = cacinfo.center_freq;
+                    break;
+
+                case CHAN_BW_40MHZ:
+                    cacinfo.ch_width = CHAN_BAND_WIDTH_40;
+                    if (bandcfg->chan2Offset == SEC_CHAN_ABOVE)
+                        cacinfo.center_freq1 = cacinfo.center_freq + 10;
+                    else if (bandcfg->chan2Offset == SEC_CHAN_BELOW)
+                        cacinfo.center_freq1 = cacinfo.center_freq - 10;
+                    break;
+
+#if defined(CONFIG_11AC)
+                case CHAN_BW_80MHZ:
+                    cacinfo.ch_width = CHAN_BAND_WIDTH_80;
+                    center_chan      = wlan_get_center_freq_idx(priv, BAND_AAC, priv->uap_channel, CHANNEL_BW_80MHZ);
+                    cacinfo.center_freq1 = channel_to_frequency(center_chan, bandcfg->chanBand);
+                    break;
+#endif
+
+                default:
+                    break;
+            }
+
+            /* STA has connected to EXT-AP on DFS channel, then uAP should support start network
+             * on DFS channel. If DFS is offloaded to the driver, supplicant won't setup uAP until
+             * the CAC is done by driver. When DFS master mode is not supported, driver needs to
+             * send the EVENT_DFS_CAC_STARTED event to supplicant to set the cac_started flag, and
+             * send EVENT_DFS_CAC_FINISHED event to supplicant to continue AP setup for DFS channel */
+            if (wm_wifi.supp_if_callbk_fns->dfs_cac_started_callbk_fn)
+            {
+                wm_wifi.supp_if_callbk_fns->dfs_cac_started_callbk_fn(wm_wifi.hapd_if_priv, &cacinfo);
+            }
+            if (wm_wifi.supp_if_callbk_fns->dfs_cac_finished_callbk_fn)
+            {
+                wm_wifi.supp_if_callbk_fns->dfs_cac_finished_callbk_fn(wm_wifi.hapd_if_priv, &cacinfo);
+            }
+        }
+    }
+}
+#endif
 
 int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 {
@@ -3315,12 +3419,14 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
 #ifdef CONFIG_5GHz_SUPPORT
             if (priv->uap_channel > MAX_CHANNELS_BG)
             {
-                if (wlan_11h_radar_detect_required(priv, priv->uap_channel))
+                mlan_private *priv_sta = (mlan_private *)mlan_adap->priv[0];
+                if ((priv_sta->media_connected == MFALSE) && wlan_11h_radar_detect_required(priv, priv->uap_channel))
                 {
                     wuap_e("Cannot start uAP on DFS channel %d", priv->uap_channel);
                     ret = -WM_FAIL;
                     goto done;
                 }
+
                 bandcfg.chanBand = BAND_5GHZ;
             }
             else
@@ -3561,6 +3667,9 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
             wm_wifi.uap_support_11d_apis->wifi_uap_downld_domain_params_p(sys_config->channel, scan_chan_list);
         }
 
+#ifdef CONFIG_5GHz_SUPPORT
+        wifi_set_uap_dfs_cac(priv, &bandcfg, enable_11n);
+#endif
         priv->uap_host_based = MTRUE;
 
         if (!params->beacon_set)
@@ -3582,6 +3691,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
                                                                      MGMT_MASK_REASSOC_REQ | WIFI_MGMT_DEAUTH |
                                                                      WIFI_MGMT_ACTION | WIFI_MGMT_DIASSOC);
         }
+
     done:
         if (sys_config != NULL)
         {
@@ -3779,6 +3889,9 @@ int wifi_setup_vht_cap(t_u32 *vht_capab, t_u8 *vht_mcs_set, t_u8 band)
     *vht_capab = pmadapter->usr_dot_11ac_dev_cap_a;
 
     *vht_capab &= ~DEFALUT_11AC_CAP_BEAMFORMING_RESET_MASK;
+#ifdef RW610
+    *vht_capab &= ~DEFALUT_11AC_CAP_SHORTGI_80MHZ_RESET_MASK;
+#endif
 
     if ((GET_VHTCAP_MAXMPDULEN(*vht_capab)) != 0U)
     {
@@ -3852,9 +3965,9 @@ Bit59-61: 0x1 (Max Nc)
 Bit75: 0x1 (Rx 1024-QAM Support < 242-tone RU)
 */
 
-#define UAP_HE_MAC_CAP0_MASK  0x00
+#define UAP_HE_MAC_CAP0_MASK  0x04
 #define UAP_HE_MAC_CAP1_MASK  0x00
-#define UAP_HE_MAC_CAP2_MASK  0x00
+#define UAP_HE_MAC_CAP2_MASK  0x10
 #define UAP_HE_MAC_CAP3_MASK  0x02
 #define UAP_HE_MAC_CAP4_MASK  0x00
 #define UAP_HE_MAC_CAP5_MASK  0x00
@@ -4085,7 +4198,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
     if (fw_info.fw_bands & BAND_GAX)
     {
         memset(&he_cfg, 0, sizeof(he_cfg));
-        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_2g_he_cap;
         hw_hecap_len = fw_info.hw_2g_hecap_len;
         if (hw_hecap_len)
         {
@@ -4103,7 +4216,7 @@ void woal_cfg80211_setup_uap_he_cap(moal_private *priv, t_u8 wait_option)
     if (fw_info.fw_bands & BAND_AAX)
     {
         memset(&he_cfg, 0, sizeof(he_cfg));
-        phe_cap = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
+        phe_cap      = (mlan_ds_11ax_he_capa *)fw_info.hw_he_cap;
         hw_hecap_len = fw_info.hw_hecap_len;
         if (hw_hecap_len)
         {

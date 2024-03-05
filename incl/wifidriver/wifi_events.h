@@ -63,6 +63,30 @@ enum wifi_event
     WIFI_EVENT_FW_HANG,
     /** Firmware Reset event */
     WIFI_EVENT_FW_RESET,
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+    /* WiFi RSSI High Event */
+    WIFI_EVENT_RSSI_HIGH,
+    /* WiFi SRN Low Event */
+    WIFI_EVENT_SNR_LOW,
+    /* WiFi SNR High Event */
+    WIFI_EVENT_SNR_HIGH,
+    /* WiFi Max Fail Event */
+    WIFI_EVENT_MAX_FAIL,
+    /* WiFi Beacon miised Event */
+    WIFI_EVENT_BEACON_MISSED,
+    /* WiFi Data RSSI Low Event */
+    WIFI_EVENT_DATA_RSSI_LOW,
+    /* WiFi Data RSSI High Event */
+    WIFI_EVENT_DATA_RSSI_HIGH,
+    /* WiFi Data SNR Low Event */
+    WIFI_EVENT_DATA_SNR_LOW,
+    /* WiFi Data SNR High Event */
+    WIFI_EVENT_DATA_SNR_HIGH,
+    /* WiFi Link Quality Event */
+    WIFI_EVENT_FW_LINK_QUALITY,
+    /* WiFi Pre Beacon Lost Event */
+    WIFI_EVENT_FW_PRE_BCN_LOST,
+#endif
 #ifdef CONFIG_HOST_SLEEP
     /* Host sleep activated */
     WIFI_EVENT_HS_ACTIVATED,
@@ -138,6 +162,8 @@ enum wifi_event
 #endif
     /** Event to sync region code with connected AP*/
     WIFI_EVENT_SYNC_REGION_CODE,
+    /** Event to set region power*/
+    WIFI_EVENT_REGION_POWER_CFG,
     /** Event to indicate end of Wi-Fi events */
     WIFI_EVENT_LAST,
     /* other events can be added after this, however this must

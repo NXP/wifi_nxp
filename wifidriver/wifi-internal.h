@@ -50,8 +50,12 @@ typedef struct
 {
     const uint8_t *fw_start_addr;
     size_t size;
+    t_u8 wifi_init_done;
+    t_u8 wifi_core_init_done;
     os_thread_t wm_wifi_main_thread;
+#ifndef RW610
     os_thread_t wm_wifi_core_thread;
+#endif
     os_thread_t wm_wifi_scan_thread;
 #ifdef CONFIG_WMM
     /** Thread handle for sending data */
@@ -71,6 +75,11 @@ typedef struct
 #ifdef CONFIG_WMM
     /** Semaphore to protect data parameters */
     os_semaphore_t tx_data_sem;
+#ifdef CONFIG_ZEPHYR
+    /** Queue for sending data packets to fw */
+    os_queue_t tx_data;
+    os_queue_pool_t tx_data_queue_data;
+#endif
 #endif
     unsigned last_sent_cmd_msec;
 
@@ -337,8 +346,13 @@ void wifi_uap_handle_cmd_resp(HostCmd_DS_COMMAND *resp);
 mlan_status wrapper_moal_malloc(t_void *pmoal_handle, t_u32 size, t_u32 flag, t_u8 **ppbuf);
 mlan_status wrapper_moal_mfree(t_void *pmoal_handle, t_u8 *pbuf);
 
+#if defined(RW610)
+int wifi_imu_lock(void);
+void wifi_imu_unlock(void);
+#else
 int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
+#endif
 
 #ifdef CONFIG_WIFI_IND_RESET
 int wifi_ind_reset_lock(void);

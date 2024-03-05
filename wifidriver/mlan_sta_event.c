@@ -71,6 +71,10 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
     priv->max_amsdu = 0;
 
     priv->tx_pause = 0;
+#ifdef CONFIG_WPS2
+    priv->wps.session_enable = MFALSE;
+    (void)__memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
+#endif /* CONFIG_WPS2 */
 
     /* Enable auto data rate */
     priv->is_data_rate_auto = MTRUE;
@@ -88,6 +92,15 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
         priv->intf_state_11h.adhoc_auto_sel_chan = MTRUE;
     }
 
+#ifdef CONFIG_WMM_UAPSD
+    /* Need to put uapsd_sem before getting ra_list.plock in wlan_ralist_del_all_enh */
+    if (priv->adapter->pps_uapsd_mode)
+    {
+        os_semaphore_put(&uapsd_sem);
+    }
+    priv->adapter->tx_lock_flag   = MFALSE;
+    priv->adapter->pps_uapsd_mode = MFALSE;
+#endif
 
 #ifdef CONFIG_GTK_REKEY_OFFLOAD
     (void)__memset(pmadapter, &priv->gtk_rekey, 0, sizeof(priv->gtk_rekey));

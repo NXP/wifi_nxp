@@ -667,7 +667,11 @@ static void dump_wlan_set_tx_power_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
     (void)PRINTF("wlan-set-rf-tx-power <tx_power> <modulation> <path_id> \r\n");
+#ifdef RW610
+    (void)PRINTF("Power       (0 to 20 dBm)\r\n");
+#else
     (void)PRINTF("Power       (0 to 24 dBm)\r\n");
+#endif
     (void)PRINTF("Modulation  (0: CCK, 1:OFDM, 2:MCS)\r\n");
     (void)PRINTF("Path ID     (0: PathA, 1:PathB, 2:PathA+B)\r\n");
     (void)PRINTF("\r\n");
@@ -725,7 +729,11 @@ static void wlan_rf_tx_power_set(int argc, char *argv[])
     mod     = strtol(argv[2], NULL, 10);
     path_id = strtol(argv[3], NULL, 10);
 
+#ifdef RW610
+    if (power > 20U)
+#else
     if (power > 24U)
+#endif
     {
         dump_wlan_set_tx_power_usage();
         return;
@@ -1188,6 +1196,180 @@ static void wlan_rf_radio_mode_set(int argc, char *argv[])
     }
 }
 
+static void dump_wlan_set_otp_mac_addr_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-rf-otp-mac-addr <mac_addr> \r\n");
+}
+
+static void wlan_rf_otp_mac_addr_set(int argc, char *argv[])
+{
+    int ret;
+    uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 2)
+    {
+        dump_wlan_set_otp_mac_addr_usage();
+        return;
+    }
+
+    ret = get_mac(argv[1], (char *)mac_addr, ':');
+    if (ret != 0)
+    {
+        (void)PRINTF("Error: invalid MAC argument\r\n");
+        return;
+    }
+
+    ret = wlan_set_rf_otp_mac_addr(mac_addr);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("OTP MAC address configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("OTP MAC address configuration failed\r\n");
+        dump_wlan_set_otp_mac_addr_usage();
+    }
+}
+
+static void dump_wlan_get_otp_mac_addr_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-rf-otp-mac-addr \r\n");
+}
+
+static void wlan_rf_otp_mac_addr_get(int argc, char *argv[])
+{
+    int ret;
+    uint8_t mac_addr[MLAN_MAC_ADDR_LENGTH];
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 1)
+    {
+        dump_wlan_get_otp_mac_addr_usage();
+        return;
+    }
+
+    ret = wlan_get_rf_otp_mac_addr(mac_addr);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("OTP MAC address: %02X:%02X:%02X:%02X:%02X:%02X\r\n", mac_addr[0], mac_addr[1], mac_addr[2],
+                      mac_addr[3], mac_addr[4], mac_addr[5]);
+    }
+    else
+    {
+        (void)PRINTF("OTP MAC address read failed\r\n");
+        dump_wlan_get_otp_mac_addr_usage();
+    }
+}
+
+const uint8_t otp_cal_data[] = {
+    0x01, 0x00, 0x0F, 0x00, 0x88, 0x00, 0x00, 0x20, 0x44, 0x0F, 0x00, 0x00, 0x00, 0x20, 0xFF, 0xFF,
+    0x40, 0x00, 0x77, 0x00, 0x29, 0x12, 0x00, 0x00, 0x00, 0x10, 0x00, 0x04, 0x6A, 0xB1, 0x02, 0x00,
+    0x00, 0x3F, 0x01, 0x00, 0x00, 0x0D, 0x00, 0x18, 0x97, 0x53, 0x00, 0x00, 0x00, 0x38, 0x39, 0x22,
+    0x3C, 0x55, 0xBC, 0x68, 0x6A, 0x37, 0xBE, 0x82, 0x22, 0xB4, 0x41, 0x64, 0x8D, 0xCE, 0x00, 0x1C,
+    0x9F, 0x37, 0x00, 0x00, 0x00, 0x54, 0x02, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x2D,
+    0xC6, 0xC0, 0x43, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x50, 0x00, 0x1C, 0x49, 0x5F, 0x00, 0x00,
+    0x00, 0x70, 0x02, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x2D, 0xC6, 0xC0, 0x43, 0x00,
+    0x00, 0x77, 0x00, 0x00, 0x00, 0x50, 0x00, 0x18, 0xB2, 0x68, 0xFF, 0xFF, 0xFF, 0xFF, 0xD3, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static void dump_wlan_set_otp_cal_data_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-set-rf-otp-cal-data\r\n");
+}
+
+static void wlan_rf_otp_cal_data_set(int argc, char *argv[])
+{
+    int ret;
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    ret = wlan_set_rf_otp_cal_data(otp_cal_data, sizeof(otp_cal_data));
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("OTP cal data configuration successful\r\n");
+    }
+    else
+    {
+        (void)PRINTF("OTP cal data configuration failed\r\n");
+        dump_wlan_set_otp_cal_data_usage();
+    }
+
+}
+
+static void dump_wlan_get_otp_cal_data_usage(void)
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("wlan-get-rf-otp-cal-data \r\n");
+}
+
+static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
+{
+    int ret;
+    //int i = 0;
+    uint8_t *cal_data = NULL;
+
+    if (!rf_test_mode)
+    {
+        dump_wlan_set_rf_test_mode();
+        return;
+    }
+
+    if (argc != 1)
+    {
+        dump_wlan_get_otp_cal_data_usage();
+        return;
+    }
+
+    cal_data = (uint8_t *)os_mem_calloc(CAL_DATA_LEN);
+    if (!cal_data)
+    {
+        (void)PRINTF("Error: failed to alloc memory!\r\n");
+        return;
+    }
+
+    ret = wlan_get_rf_otp_cal_data(cal_data);
+    if (ret == WM_SUCCESS)
+    {
+        (void)PRINTF("OTP cal data read successfully: 1\r\n");
+#if 0
+        while (i < CAL_DATA_LEN)
+        {
+            (void)PRINTF("%02x ", cal_data[i++]);
+            if (!(i % 16))
+            {
+                (void)PRINTF("\r\n");
+            }
+        }
+#endif
+    }
+    else
+    {
+        (void)PRINTF("OTP cal data read failed: 0\r\n");
+        dump_wlan_get_otp_cal_data_usage();
+    }
+
+    (void)os_mem_free(cal_data);
+}
+
 static struct cli_command wlan_test_mode_commands[] = {
     {"wlan-set-rf-test-mode", NULL, wlan_rf_test_mode_set},
     {"wlan-unset-rf-test-mode", NULL, wlan_rf_test_mode_unset},
@@ -1219,6 +1401,10 @@ static struct cli_command wlan_test_mode_commands[] = {
      wlan_set_rf_trigger_frame_cfg},
     {"wlan-set-rf-he-tb-tx", "<enable> <qnum> <aid> <axq_mu_timer> <tx_power>", wlan_set_rf_he_tb_tx},
     {"wlan-get-and-reset-rf-per", NULL, wlan_rf_per_get},
+    {"wlan-set-rf-otp-mac-addr", "<mac_addr>", wlan_rf_otp_mac_addr_set},
+    {"wlan-get-rf-otp-mac-addr", NULL, wlan_rf_otp_mac_addr_get},
+    {"wlan-set-rf-otp-cal-data", NULL, wlan_rf_otp_cal_data_set},
+    {"wlan-get-rf-otp-cal-data", NULL, wlan_rf_otp_cal_data_get},
 };
 
 int wlan_test_mode_cli_init(void)

@@ -15,7 +15,11 @@ Change log:
 
 #include <mlan_api.h>
 #include "wifi.h"
+#ifdef RW610
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 
 /********************************************************
                 Local Variables

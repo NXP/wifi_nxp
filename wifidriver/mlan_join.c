@@ -23,6 +23,9 @@ Change log:
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
+#ifdef CONFIG_WPS2
+#include "wifi_nxp_wps.h"
+#endif
 /********************************************************
                 Local Constants
 ********************************************************/
@@ -518,10 +521,6 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                     break;
                 }
 #ifdef CONFIG_11R
-                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 9))
-                {
-                    break;
-                }
                 else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 9))
                 {
                     break;
@@ -538,14 +537,6 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 }
 #endif
 #ifdef CONFIG_11R
-                else if ((*akm_type == AssocAgentAuth_FastBss) && (ptr[3] == 4))
-                {
-                    break;
-                }
-                else if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 4))
-                {
-                    break;
-                }
                 else if ((*akm_type == AssocAgentAuth_FastBss_Skip) && (ptr[3] == 4))
                 {
                     break;
@@ -813,6 +804,8 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #ifdef CONFIG_11R
     t_u8 ft_akm = 0;
 #endif
+    MrvlIEtypes_PrevBssid_t *prev_bssid_tlv = MNULL;
+    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = { 0 };
 #ifdef CONFIG_DRIVER_MBO
     t_u8 oper_class = 1;
 #endif
@@ -954,6 +947,9 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     if (pmpriv->wps.session_enable == MFALSE)
     {
 #endif /* CONFIG_WPA_SUPP_WPS */
+#elif defined(CONFIG_WPS2)
+    if (wlan_get_prov_session() != PROV_WPS_SESSION_ATTEMPT)
+    {
 #endif
         /* fixme: The above 'if' is used instead of below 'if' for now since
            WPS module is mlan integrated yet. Fix after it is done.
@@ -1039,6 +1035,8 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
 #ifdef CONFIG_WPA_SUPP_WPS
     }
 #endif /* CONFIG_WPA_SUPP_WPS */
+#elif defined(CONFIG_WPS2)
+    }
 #endif
 
     if ((pauth_tlv != MNULL) && (pauth_tlv->auth_type == wlan_cpu_to_le16(AssocAgentAuth_Wpa3Sae)))
@@ -1110,6 +1108,17 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
         host_mlme_tlv->header.len  = wlan_cpu_to_le16(sizeof(host_mlme_tlv->host_mlme));
         host_mlme_tlv->host_mlme   = MTRUE;
         pos += sizeof(host_mlme_tlv->header) + host_mlme_tlv->header.len;
+    }
+    if (memcmp(&pmpriv->curr_bss_params.prev_bssid, zero_mac,
+		   MLAN_MAC_ADDR_LENGTH)) {
+        prev_bssid_tlv = (MrvlIEtypes_PrevBssid_t *)pos;
+		prev_bssid_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_PREV_BSSID);
+        prev_bssid_tlv->header.len = wlan_cpu_to_le16(MLAN_MAC_ADDR_LENGTH);
+		__memcpy(pmadapter, prev_bssid_tlv->prev_bssid, &pmpriv->curr_bss_params.prev_bssid,
+			   MLAN_MAC_ADDR_LENGTH);
+        PRINTM(MCMND, "ASSOCIATE: PREV_BSSID = " MACSTR "\n",
+                MAC2STR(pmpriv->curr_bss_params.prev_bssid));
+		pos += sizeof(prev_bssid_tlv->header) + MLAN_MAC_ADDR_LENGTH;
     }
 
 #ifdef CONFIG_DRIVER_MBO
@@ -1299,6 +1308,10 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     /* Send a Media Connected event, according to the Spec */
     pmpriv->media_connected = MTRUE;
 
+#ifdef CONFIG_WMM_UAPSD
+    pmpriv->adapter->pps_uapsd_mode = MFALSE;
+    pmpriv->adapter->tx_lock_flag   = MFALSE;
+#endif
 
     /* Set the attempted BSSID Index to current */
     pbss_desc = pmpriv->pattempted_bss_desc;
@@ -1341,6 +1354,14 @@ mlan_status wlan_ret_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     }
 
     /* fixme: Enable if req */
+#ifdef CONFIG_WMM_UAPSD
+    pmpriv->curr_bss_params.wmm_uapsd_enabled = MFALSE;
+
+    if (pmpriv->wmm_enabled == MTRUE)
+    {
+        pmpriv->curr_bss_params.wmm_uapsd_enabled = pbss_desc->wmm_ie.qos_info.qos_uapsd;
+    }
+#endif
     if (pmpriv->sec_info.wpa_enabled || pmpriv->sec_info.wpa2_enabled)
     {
         pmpriv->wpa_is_gtk_set = MFALSE;

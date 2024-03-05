@@ -19,13 +19,21 @@ Change log:
 #include <wmerrno.h>
 #include <wm_os.h>
 #include "fsl_common.h"
+#ifndef CONFIG_ZEPHYR
+#ifndef RW610
 #include "sdmmc_config.h"
+#endif
+#endif
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 /********************************************************
         Global Variables
 ********************************************************/
+
+#ifdef CONFIG_ZEPHYR
+#define BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZE 32
+#endif
 
 //_IOBUFS_ALIGNED(SDIO_DMA_ALIGNMENT)
 #if defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
@@ -160,7 +168,11 @@ mlan_status wlan_init_priv(pmlan_private priv)
 
     priv->wpa_is_gtk_set = MFALSE;
 
+#ifdef RW610
+    priv->tx_bf_cap = DEFAULT_11N_TX_BF_CAP;
+#else
     priv->tx_bf_cap = 0;
+#endif
     priv->wmm_required = MTRUE;
     priv->wmm_enabled  = MFALSE;
     priv->wmm_qosinfo  = 0;
@@ -213,7 +225,9 @@ mlan_status wlan_init_priv(pmlan_private priv)
     priv->beacon_wps_index    = 3;
 #endif
 #endif
+#ifdef CONFIG_TCP_ACK_ENH
     priv->enable_tcp_ack_enh = MTRUE;
+#endif
 
 #ifdef CONFIG_WPA_SUPP_DPP
     priv->is_dpp_connect = MFALSE;
@@ -241,6 +255,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
      * priority.
      */
     pmadapter->mp_wr_bitmap = 0;
+#ifndef RW610
 #if defined(SD8801)
     pmadapter->curr_rd_port = 1;
     pmadapter->curr_wr_port = 1;
@@ -249,6 +264,7 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->curr_wr_port = 0;
 #endif
     pmadapter->mp_data_port_mask = DATA_PORT_MASK;
+#endif
 
     /* Scan type */
     pmadapter->scan_type = MLAN_SCAN_TYPE_ACTIVE;
@@ -271,6 +287,9 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 #endif
     pmadapter->scan_probes = DEFAULT_PROBES;
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    pmadapter->rssi_threshold = 0;
+#endif
 
     /* fixme: enable this later when required */
     pmadapter->multiple_dtim         = MRVDRV_DEFAULT_MULTIPLE_DTIM;
@@ -281,6 +300,10 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->enhanced_ps_mode  = PS_MODE_AUTO;
     pmadapter->bcn_miss_time_out = DEFAULT_BCN_MISS_TIMEOUT;
 
+#ifdef CONFIG_WMM_UAPSD
+    pmadapter->gen_null_pkt   = MFALSE; /* Disable NULL Pkt generation-default */
+    pmadapter->pps_uapsd_mode = MFALSE; /* Disable pps/uapsd mode -default */
+#endif
 #ifdef CONFIG_HOST_SLEEP
     pmadapter->is_hs_configured          = MFALSE;
     pmadapter->mgmt_filter[0].action     = 0;        /* discard and not wakeup host */
@@ -326,6 +349,12 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     wlan_wmm_init(pmadapter);
     wlan_init_wmm_param(pmadapter);
+#ifdef CONFIG_WMM_UAPSD
+    (void)__memset(pmadapter, &pmadapter->sleep_params, 0, sizeof(pmadapter->sleep_params));
+    (void)__memset(pmadapter, &pmadapter->sleep_period, 0, sizeof(pmadapter->sleep_period));
+
+    pmadapter->tx_lock_flag = MFALSE;
+#endif /* CONFIG_WMM_UAPSD */
     pmadapter->null_pkt_interval = 0;
     pmadapter->fw_bands          = 0U;
     pmadapter->config_bands      = 0U;

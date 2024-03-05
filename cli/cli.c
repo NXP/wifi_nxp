@@ -20,8 +20,13 @@
 #include <cli_utils.h>
 #include <wm_os.h>
 #include <fsl_debug_console.h>
+#include "board.h"
 
 #include "cli_mem.h"
+#ifdef CONFIG_UART_INTERRUPT
+#include "fsl_usart_freertos.h"
+#include "fsl_usart.h"
+#endif
 #define END_CHAR      '\r'
 #define PROMPT        "\r\n# "
 #define HALT_MSG      "CLI_HALT"
@@ -55,6 +60,29 @@ static struct
 
 static os_thread_t cli_main_thread;
 static os_thread_stack_define(cli_stack, CONFIG_CLI_STACK_SIZE);
+#ifdef CONFIG_UART_INTERRUPT
+static os_thread_t uart_thread;
+static os_thread_stack_define(uart_stack, 1024);
+#define USART_INPUT_SIZE 1
+#define USART_NVIC_PRIO  5
+uint8_t background_buffer[32];
+uint8_t recv_buffer[USART_INPUT_SIZE];
+static usart_rtos_handle_t ur_handle;
+struct _usart_handle t_u_handle;
+
+struct rtos_usart_config usart_config = {
+    .baudrate    = BOARD_DEBUG_UART_BAUDRATE,
+    .parity      = kUSART_ParityDisabled,
+    .stopbits    = kUSART_OneStopBit,
+    .buffer      = background_buffer,
+    .buffer_size = sizeof(background_buffer),
+};
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+extern bool usart_suspend_flag;
+#endif
+#endif
+#endif
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
 #define MAX_CMDS_IN_HISTORY 20
 static char *cmd_hist_arr[MAX_CMDS_IN_HISTORY];
@@ -71,7 +99,6 @@ static char *cli_strdup(const char *s, int len)
     {
         for (i = 0; i < len; i++)
         {
-
             result[i] = s[i] == '\0' ? ' ' : s[i];
         }
 
@@ -298,7 +325,7 @@ static const struct cli_command *lookup_command(char *name, int len)
  *          input line.
  *          2 on invalid syntax: the arguments list couldn't be parsed
  */
-static int handle_input(char *handle_inbuf)
+int handle_input(char *handle_inbuf)
 {
     struct
     {
@@ -307,10 +334,10 @@ static int handle_input(char *handle_inbuf)
         unsigned done : 1;
     } stat;
     static char *argv[64];
-    int argc                          = 0;
-    int i                             = 0;
+    int argc = 0;
+    int i    = 0;
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
-    int len                           = 0;
+    int len = 0;
 #endif
     unsigned int j                    = 0;
     const struct cli_command *command = NULL;
@@ -525,6 +552,10 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
     int rv = -WM_FAIL;
 #endif /* CONFIG_APP_FRM_CLI_HISTORY */
+#ifdef CONFIG_UART_INTERRUPT
+    int ret;
+    size_t n;
+#endif
     if (get_inbuf == NULL)
     {
         return 0;
@@ -534,7 +565,29 @@ static int get_input(char *get_inbuf, unsigned int *bp)
 
     while (true)
     {
+#ifdef CONFIG_UART_INTERRUPT
+#ifdef CONFIG_HOST_SLEEP
+#ifdef CONFIG_POWER_MANAGER
+        if (usart_suspend_flag)
+        {
+            os_thread_sleep(os_msec_to_ticks(1000));
+            continue;
+        }
+#endif
+#endif
+        ret = USART_RTOS_Receive(&ur_handle, recv_buffer, sizeof(recv_buffer), &n);
+        if (ret == kStatus_USART_RxRingBufferOverrun)
+        {
+            /* Notify about hardware buffer overrun and un-received buffer content */
+            background_buffer[31] = 0;
+            PRINTF("\r\nRing buffer overrun: %s\r\n", background_buffer);
+            PRINTF("\r\nPlease do not input during throughput tests\r\n");
+            vTaskSuspend(NULL);
+        }
+        get_inbuf[*bp] = recv_buffer[0];
+#else
         get_inbuf[*bp] = (char)GETCHAR();
+#endif
 
         if (state == EXT_KEY_SECOND_SYMBOL)
         {
@@ -667,7 +720,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
  * representation of non-printable characters.
  * Non-printable characters show as "\0xXX".
  */
-static void print_bad_command(char *cmd_string)
+void print_bad_command(char *cmd_string)
 {
     if (cmd_string != NULL)
     {
@@ -790,6 +843,7 @@ static void cli_main(os_thread_arg_t data)
     os_thread_self_complete(NULL);
 }
 
+#ifndef CONFIG_UART_INTERRUPT
 /* Automatically bind an input processor to the console */
 static int cli_install_UART_Tick(void)
 {
@@ -800,6 +854,7 @@ static int cli_remove_UART_Tick(void)
 {
     return os_remove_idle_function(console_tick);
 }
+#endif
 
 /* Internal cleanup function. */
 static int __cli_cleanup(void)
@@ -807,6 +862,7 @@ static int __cli_cleanup(void)
     int ret, final = WM_SUCCESS;
     char *halt_msg = HALT_MSG;
 
+#ifndef CONFIG_UART_INTERRUPT
     if (cli_remove_UART_Tick() != WM_SUCCESS)
     {
         (void)PRINTF(
@@ -814,6 +870,7 @@ static int __cli_cleanup(void)
             "\r\n");
         final = -WM_FAIL;
     }
+#endif
 
     ret = cli_submit_cmd_buffer(&halt_msg);
     if (ret != WM_SUCCESS)
@@ -876,7 +933,11 @@ static int cli_start(void)
         return -WM_FAIL;
     }
 
+#ifdef CONFIG_UART_INTERACTIVE
+    ret = os_thread_create(&cli_main_thread, "cli", cli_main, 0, &cli_stack, OS_PRIO_1);
+#else
     ret = os_thread_create(&cli_main_thread, "cli", cli_main, 0, &cli_stack, OS_PRIO_3);
+#endif
     if (ret != WM_SUCCESS)
     {
         (void)PRINTF("Error: Failed to create cli thread: %d\r\n", ret);
@@ -970,6 +1031,18 @@ void help_command(int argc, char **argv)
     }
 }
 
+#if defined(__ICCARM__)
+#pragma diag_suppress = Pe192
+#endif
+
+static void clear_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    PRINTF("\e[1;1H\e[2J");
+}
+
 #if 0
 static void echo_cmd_handler(int argc, char **argv)
 {
@@ -995,6 +1068,7 @@ static void echo_cmd_handler(int argc, char **argv)
 
 static struct cli_command built_ins[] = {
     {"help", NULL, help_command},
+    {"clear", NULL, clear_command},
 };
 
 /*
@@ -1082,6 +1156,43 @@ int cli_unregister_commands(const struct cli_command *commands, int num_commands
     return 0;
 }
 
+#ifdef CONFIG_UART_INTERRUPT
+static void uart_task(void *pvParameters)
+{
+    usart_config.srcclk = BOARD_DEBUG_UART_CLK_FREQ;
+    usart_config.base   = BOARD_DEBUG_UART;
+
+    NVIC_SetPriority(BOARD_UART_IRQ, USART_NVIC_PRIO);
+
+    if (USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config) != WM_SUCCESS)
+    {
+        vTaskSuspend(NULL);
+    }
+
+    /* Receive user input and send it back to terminal. */
+    while (1)
+    {
+        console_tick();
+    }
+}
+
+#ifdef CONFIG_HOST_SLEEP
+int cli_uart_reinit()
+{
+    return USART_RTOS_Init(&ur_handle, &t_u_handle, &usart_config);
+}
+
+int cli_uart_deinit()
+{
+    return USART_RTOS_Deinit(&ur_handle);
+}
+
+void cli_uart_notify()
+{
+    xEventGroupSetBits(ur_handle.rxEvent, RTOS_USART_COMPLETE);
+}
+#endif
+#endif
 
 int cli_init(void)
 {
@@ -1090,6 +1201,9 @@ int cli_init(void)
     {
         return WM_SUCCESS;
     }
+
+    (void)PRINTF("CLI Build: %s [%s]", __DATE__, __TIME__);
+    (void)PRINTF("\r\nCopyright  2024  NXP\r\n");
 
     (void)memset((void *)&cli, 0, sizeof(cli));
     cli.input_enabled = 1;
@@ -1100,6 +1214,7 @@ int cli_init(void)
     {
         return -WM_FAIL;
     }
+#ifndef CONFIG_UART_INTERRUPT
     if (cli_install_UART_Tick() != WM_SUCCESS)
     {
         (void)PRINTF(
@@ -1107,11 +1222,34 @@ int cli_init(void)
             "\r\n");
         return -WM_FAIL;
     }
+#endif
     int ret = cli_start();
     if (ret == WM_SUCCESS)
     {
         cli_init_done = true;
     }
+#ifdef CONFIG_UART_INTERRUPT
+#ifdef CONFIG_UART_INTERACTIVE
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_1);
+#else
+#ifdef CONFIG_NCP_BRIDGE
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_3);
+#else
+    ret = os_thread_create(&uart_thread, "Uart_task", uart_task, 0, &uart_stack, OS_PRIO_4);
+#endif
+#endif
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Error: Failed to create uart thread: %d\r\n", ret);
+        return -WM_FAIL;
+    }
+#endif
+
+#ifdef BOARD_NAME
+    PRINTF("MCU Board: %s\r\n", BOARD_NAME);
+    PRINTF("========================================\r\n");
+#endif
+
     return ret;
 }
 

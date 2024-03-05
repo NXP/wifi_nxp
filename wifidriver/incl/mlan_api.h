@@ -14,7 +14,9 @@
 #include <wmtypes.h>
 #include <wlan.h>
 
+#ifndef CONFIG_ZEPHYR
 #include "fsl_debug_console.h"
+#endif
 
 #define MLAN_WMSDK_MAX_WPA_IE_LEN 64U
 #define MLAN_MAX_MDIE_LEN         10U
@@ -25,7 +27,9 @@
 #include "mlan_util.h"
 #include "mlan_fw.h"
 #include "mlan_main.h"
+#ifndef RW610
 #include "mlan_main_defs.h"
+#endif
 #include "mlan_wmm.h"
 #include "mlan_11n.h"
 #include "mlan_11h.h"
@@ -34,12 +38,16 @@
 #include "mlan_11ax.h"
 #endif
 #include "mlan_11n_aggr.h"
+#ifndef RW610
 #include "mlan_sdio.h"
+#endif
 #include "mlan_11n_rxreorder.h"
 #include "mlan_meas.h"
 #include "mlan_uap.h"
 #include <wifi-debug.h>
+#ifndef RW610
 #include <wifi-sdio.h>
+#endif
 #include "wifi-internal.h"
 #include "mlan_action.h"
 #ifdef CONFIG_11V
@@ -164,9 +172,15 @@ static inline void panic(const char *msg)
 /* Following is allocated in mlan_register */
 extern mlan_adapter *mlan_adap;
 
+#ifdef CONFIG_WPS2
+extern int wps_session_attempt;
+#endif
 
 extern os_rw_lock_t sleep_rwlock;
 
+#ifdef CONFIG_WMM_UAPSD
+extern os_semaphore_t uapsd_sem;
+#endif
 
 #ifdef CONFIG_WMM
 extern os_semaphore_t txbuf_sem;
@@ -209,6 +223,40 @@ void wlan_scan_process_results(IN mlan_private *pmpriv);
 bool wlan_use_non_default_ht_vht_cap(IN BSSDescriptor_t *pbss_desc);
 bool check_for_wpa2_entp_ie(bool *wpa2_entp_IE_exist, const void *element_data, unsigned element_len);
 
+#ifdef CONFIG_WPA2_ENTP
+bool wifi_get_scan_enable_wpa2_enterprise_ap_only();
+
+static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry, t_u8 element_id)
+{
+    if (element_id == RSN_IE)
+    {
+        if ((wifi_get_scan_enable_wpa2_enterprise_ap_only()) &&
+            (!check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
+                                     pbss_entry->rsn_ie_buff_len - 10)))
+        {
+            return MLAN_STATUS_RESOURCE;
+        }
+        else
+        {
+            check_for_wpa2_entp_ie(&pbss_entry->wpa2_entp_IE_exist, pbss_entry->rsn_ie_buff + 8,
+                                   pbss_entry->rsn_ie_buff_len - 10);
+        }
+    }
+    else if (element_id == VENDOR_SPECIFIC_221)
+    {
+        if (wifi_get_scan_enable_wpa2_enterprise_ap_only())
+            return MLAN_STATUS_RESOURCE;
+    }
+    else if (!element_id)
+    {
+        if ((wifi_get_scan_enable_wpa2_enterprise_ap_only()) && (pbss_entry->privacy != Wlan802_11PrivFilter8021xWEP) &&
+            (!pbss_entry->pwpa_ie) && (!pbss_entry->prsn_ie))
+            return MLAN_STATUS_RESOURCE;
+    }
+
+    return MLAN_STATUS_SUCCESS;
+}
+#else
 static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *pbss_entry,
                                                               IEEEtypes_ElementId_e element_id)
 {
@@ -219,6 +267,7 @@ static inline mlan_status wifi_check_bss_entry_wpa2_entp_only(BSSDescriptor_t *p
     }
     return MLAN_STATUS_SUCCESS;
 }
+#endif
 int wifi_request_bgscan_query(mlan_private *pmpriv);
 int wifi_send_scan_query(void);
 void wifi_get_band(mlan_private *pmpriv, int *band);
@@ -260,6 +309,9 @@ bool wifi_11d_is_channel_allowed(int channel);
 #ifdef CONFIG_11AX
 void wifi_request_get_fw_info(mlan_private *priv, mlan_fw_info *fw_info);
 
+#ifdef CONFIG_MMSF
+int wifi_mmsf_cfg(const t_u16 action, t_u8 *enable, t_u8 *Density, t_u8 *MMSF);
+#endif
 #endif
 
 /**
@@ -327,6 +379,9 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
                        const t_u8 num_channels,
                        const wifi_scan_channel_list_t *chan_list,
                        const t_u8 num_probes,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                       const t_s16 rssi_threshold,
+#endif
                        const t_u16 scan_chan_gap,
                        const bool keep_previous_scan,
                        const bool active_scan_triggered);
@@ -346,6 +401,9 @@ int wifi_set_txpwrlimit(wifi_txpwrlimit_t *txpwrlimit);
 int wifi_send_rssi_info_cmd(wifi_rssi_info_t *rssi_info);
 void wifi_set_curr_bss_channel(uint8_t channel);
 int wifi_get_chanlist(wifi_chanlist_t *chanlist);
+#if defined(CONFIG_IPS)
+int wifi_set_ips_config(mlan_bss_type interface, int option);
+#endif
 #ifdef CONFIG_WIFI_EU_CRYPTO
 int wifi_set_eu_crypto(EU_Crypto *Crypto_Data, enum _crypto_algorithm Algorithm, t_u16 EncDec);
 #endif
@@ -448,7 +506,40 @@ int wifi_send_sched_scan_cmd(nxp_wifi_trigger_sched_scan_t *params);
 int wifi_send_stop_sched_scan_cmd(void);
 #endif
 
+#ifdef CONFIG_SUBSCRIBE_EVENT_SUPPORT
+/*submit subscribe event cmd to firmware*/
+int wifi_subscribe_event_submit(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt);
 
+/*get subscribe event*/
+int wifi_get_subscribe_event(mlan_private *pmpriv, mlan_ds_subscribe_evt *sub_evt);
+
+/*disable specific subscribe event*/
+int wifi_clear_subscribe_event(mlan_private *pmpriv, int evt_bitmap);
+
+/*set subscribe event thresh_value and freq*/
+int wifi_set_threshold_rssi_low(mlan_private *pmpriv, unsigned int rssi_low, unsigned int freq);
+int wifi_set_threshold_rssi_high(mlan_private *pmpriv, unsigned int rssi_high, unsigned int freq);
+int wifi_set_threshold_snr_low(mlan_private *pmpriv, unsigned int snr_low, unsigned int freq);
+int wifi_set_threshold_snr_high(mlan_private *pmpriv, unsigned int snr_high, unsigned int freq);
+int wifi_set_threshold_max_fail(mlan_private *pmpriv, unsigned int max_fail, unsigned int freq);
+int wifi_set_threshold_beacon_miss(mlan_private *pmpriv, unsigned int beacon_miss, unsigned int freq);
+int wifi_set_threshold_data_rssi_low(mlan_private *pmpriv, unsigned int data_rssi_low, unsigned int freq);
+int wifi_set_threshold_data_rssi_high(mlan_private *pmpriv, unsigned int data_rssi_high, unsigned int freq);
+int wifi_set_threshold_data_snr_low(mlan_private *pmpriv, unsigned int data_snr_low, unsigned int freq);
+int wifi_set_threshold_data_snr_high(mlan_private *pmpriv, unsigned int data_snr_high, unsigned int freq);
+int wifi_set_threshold_link_quality(mlan_private *pmpriv,
+                                    unsigned int link_snr,
+                                    unsigned int link_snr_freq,
+                                    unsigned int link_rate,
+                                    unsigned int link_rate_freq,
+                                    unsigned int link_tx_latency,
+                                    unsigned int link_tx_lantency_freq);
+int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_beacon_lost, unsigned int freq);
+#endif
+
+#ifdef CONFIG_TSP
+int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
+#endif
 
 int wifi_tx_ampdu_prot_mode(tx_ampdu_prot_mode_para *prot_mode, t_u16 action);
 
@@ -463,4 +554,7 @@ int wifi_auto_reconnect_disable(void);
 int wifi_get_auto_reconnect_config(wifi_auto_reconnect_config_t *auto_reconnect_config);
 #endif
 
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+int wifi_sta_inactivityto(wifi_inactivity_to_t *inac_to, t_u16 cmd_action);
+#endif
 #endif /* __MLAN_API_H__ */

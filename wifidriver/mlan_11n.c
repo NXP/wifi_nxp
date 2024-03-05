@@ -986,6 +986,10 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
         (pbss_desc->bss_band & (BAND_B | BAND_G | BAND_GN)))
     {
         orig_usr_dot_11n_dev_cap = usr_dot_11n_dev_cap;
+#ifdef RW610
+        RESETSUPP_CHANWIDTH40(usr_dot_11n_dev_cap);
+        RESETSUPP_SHORTGI40(usr_dot_11n_dev_cap);
+#endif
         RESET_40MHZ_INTOLARENT(usr_dot_11n_dev_cap);
         pmadapter->usr_dot_11n_dev_cap_bg = usr_dot_11n_dev_cap;
         pbss_desc->curr_bandwidth         = BW_20MHZ;
@@ -1129,6 +1133,14 @@ t_u32 wlan_cmd_append_11n_tlv(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss_
             {
                 pext_cap->ext_cap.TDLSSupport = 1;
             }
+        }
+        if ((((mlan_private *)mlan_adap->priv[0])->wnm_set == true) && (pbss_desc->pext_cap->ext_cap.WNM_Sleep == true))
+        {
+            pext_cap->ext_cap.WNM_Sleep = 1;
+        }
+        else
+        {
+            pext_cap->ext_cap.WNM_Sleep = 0;
         }
 
 #ifdef CONFIG_11V
@@ -1346,6 +1358,7 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
         newNode->ba_status   = ba_status;
         newNode->txba_thresh = os_rand_range(5, 5);
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
+        (void)__memset(priv->adapter, newNode->rx_seq, 0xff, sizeof(newNode->rx_seq));
 
         util_enqueue_list_tail(pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, (pmlan_linked_list)newNode,
                                pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);

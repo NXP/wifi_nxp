@@ -17,12 +17,19 @@
 
 #include "wifi-internal.h"
 #include <wm_net.h>
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include <mlan_sdio_api.h>
 #include "wifi-sdio.h"
 #include "mlan_sdio.h"
 #include "sdio.h"
 #include "firmware_dnld.h"
 
+#endif
+#ifdef RW610
+#include "fsl_adapter_rfimu.h"
+#endif
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -47,6 +54,9 @@ int csi_event_cnt        = 0;
 t_u64 csi_event_data_len = 0;
 #endif
 
+#ifdef CONFIG_ECSA
+extern wifi_ecsa_status_control ecsa_status_control;
+#endif
 
 #define WIFI_CORE_STACK_SIZE (2048)
 /* We don't see events coming in quick succession,
@@ -65,15 +75,10 @@ t_u64 csi_event_data_len = 0;
 SDK_ALIGN(uint8_t outbuf_arr[MAX_WMM_BUF_NUM][OUTBUF_WMM_LEN], BOARD_DATA_BUFFER_ALIGN_SIZE);
 #endif
 
-#ifdef CONFIG_TXPD_RXPD_V3
 #define RXPD_CHAN_MASK 0x3FE0
-#endif
 
 /* Global variable wm_rand_seed */
 uint32_t wm_rand_seed = -1;
-
-static t_u8 wifi_init_done;
-static t_u8 wifi_core_init_done;
 
 #ifdef CONFIG_WMM
 os_semaphore_t txbuf_sem;
@@ -110,6 +115,10 @@ os_semaphore_t wakelock;
 int wakeup_by = 0;
 #endif
 
+#ifdef CONFIG_WIFI_RECOVERY
+bool wifi_recovery_enable = false;
+t_u16 wifi_recovery_cnt   = 0;
+#endif
 bool wifi_shutdown_enable = false;
 
 typedef enum __mlan_status
@@ -121,7 +130,9 @@ typedef enum __mlan_status
     MLAN_STATUS_FW_NOT_READY,
     MLAN_CARD_CMD_TIMEOUT
 } __mlan_status;
+#ifndef RW610
 static os_thread_stack_define(wifi_core_stack, WIFI_CORE_STACK_SIZE);
+#endif
 
 #ifndef CONFIG_WIFI_SCAN_STACK_SIZE
 #define CONFIG_WIFI_SCAN_STACK_SIZE 2048
@@ -143,6 +154,9 @@ static os_thread_stack_define(wifi_powersave_stack, CONFIG_WIFI_POWERSAVE_STACK_
 #define CONFIG_WIFI_TX_STACK_SIZE 2048
 #endif
 static os_thread_stack_define(wifi_tx_stack, CONFIG_WIFI_TX_STACK_SIZE);
+#ifdef CONFIG_ZEPHYR
+static os_queue_pool_define(g_tx_data_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
+#endif
 #endif
 static os_queue_pool_define(g_io_events_queue_data, (int)(sizeof(struct bus_message) * MAX_EVENTS));
 static os_queue_pool_define(g_powersave_queue_data, sizeof(struct bus_message) * MAX_EVENTS);
@@ -156,18 +170,32 @@ static void wifi_driver_tx(void *data);
 int wakelock_get(void)
 {
     int ret = WM_SUCCESS;
+#ifdef CONFIG_POWER_MANAGER
+    ret = os_semaphore_put(&wakelock);
+    if (ret != WM_SUCCESS)
+        wifi_e("Failed to get wakelock");
+#endif
     return ret;
 }
 
 int wakelock_put(void)
 {
     int ret = WM_SUCCESS;
+#ifdef CONFIG_POWER_MANAGER
+    ret = os_semaphore_get(&wakelock, 0);
+    if (ret != WM_SUCCESS)
+        wifi_e("Failed to put wakelock");
+#endif
     return ret;
 }
 
 int wakelock_isheld(void)
 {
+#ifdef CONFIG_POWER_MANAGER
+    return os_semaphore_getcount(&wakelock);
+#else
     return 1;
+#endif
 }
 #endif
 extern void process_pkt_hdrs(void *pbuf, t_u32 payloadlen, t_u8 interface, t_u8 tid, t_u32 tx_control);
@@ -189,7 +217,11 @@ void wifi_wake_up_card(uint32_t *resp)
     wcmdr_d("Wakeup device...");
 #endif
 
+#ifndef RW610
     (void)sdio_drv_creg_write(0x0, 1, 0x02, resp);
+#else
+    imu_wakeup_card();
+#endif
 }
 
 /* When Wi-Fi card is in IEEE PS and sleeping
@@ -218,7 +250,7 @@ void wifi_update_last_cmd_sent_ms(void)
 
 static int wifi_get_command_resp_sem(unsigned long wait)
 {
-    return os_semaphore_get(&wm_wifi.command_resp_sem, wait);
+    return os_semaphore_get(&wm_wifi.command_resp_sem, os_msec_to_ticks(wait));
 }
 
 int wifi_put_command_resp_sem(void)
@@ -311,7 +343,9 @@ void wifi_dump_firmware_info()
     int tries;
     t_u8 data[8], i;
     uint32_t resp;
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT START: %d ====", os_get_timestamp());
+#endif
     if (wm_wifi.wifi_usb_file_open_cb != NULL)
     {
         ret = wm_wifi.wifi_usb_file_open_cb(itcm_dump_file_name);
@@ -326,7 +360,9 @@ void wifi_dump_firmware_info()
         wifi_e("File open callback is not registered");
         goto done;
     }
+#ifndef CONFIG_ZEPHYR
     wifi_d("Start ITCM output %d, please wait...", os_get_timestamp());
+#endif
     reg_start = DEBUG_DUMP_START_REG;
     reg_end   = DEBUG_DUMP_END_REG;
     do
@@ -428,7 +464,9 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
+#ifndef CONFIG_ZEPHYR
                     wifi_d("Start DTCM output %d, please wait...", os_get_timestamp());
+#endif
                 }
                 else
                 {
@@ -459,7 +497,9 @@ void wifi_dump_firmware_info()
                         wifi_e("File opening failed");
                         goto done;
                     }
+#ifndef CONFIG_ZEPHYR
                     wifi_d("Start SQRAM output %u.%06u, please wait...", os_get_timestamp());
+#endif
                 }
                 else
                 {
@@ -493,12 +533,15 @@ void wifi_dump_firmware_info()
     wifi_d("The output ITCM/DTCM/SQRAM have been saved to files successfully!");
     /* end dump fw memory */
 done:
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
+#endif
 
     while (1)
         ;
 }
 
+#ifndef RW610
 /**
  *  @brief This function reads and displays SDIO registers for debugging
  *
@@ -555,7 +598,9 @@ void wifi_sdio_reg_dbg()
             ptr += sprintf(ptr, "SDIO Func%d: ", func);
         for (reg = reg_start; reg <= reg_end;)
         {
+#ifndef RW610
             ret = sdio_drv_creg_read(reg, func, &resp);
+#endif
             data = resp & 0xff;
             if (loop == 2)
                 ptr += sprintf(ptr, "(%#x) ", reg);
@@ -574,6 +619,7 @@ void wifi_sdio_reg_dbg()
         wifi_d("%s", buf);
     }
 }
+#endif
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || \
     defined(SD9177) || defined(RW610_SERIES)
 
@@ -709,7 +755,9 @@ void wifi_dump_firmware_info()
     dbg_dump_start_reg = DEBUG_DUMP_START_REG;
     dbg_dump_end_reg = DEBUG_DUMP_END_REG;
 
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", os_get_timestamp());
+#endif
     /* read the number of the memories which will dump */
     if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag))
         goto done;
@@ -753,7 +801,9 @@ void wifi_dump_firmware_info()
     }
 
     doneflag = pmem_type_mapping_tbl->done_flag;
+#ifndef CONFIG_ZEPHYR
     wifi_d("Start %s output %d, please wait...", pmem_type_mapping_tbl->mem_name, os_get_timestamp());
+#endif
     do
     {
         stat = wifi_cmd52_rdwr_firmware(doneflag);
@@ -808,13 +858,16 @@ void wifi_dump_firmware_info()
         }
     } while (1);
 
+#ifndef CONFIG_ZEPHYR
     wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
+#endif
     /* end dump fw memory */
 done:
     while (1)
         ;
 }
 
+#ifndef RW610
 /**
  *  @brief This function reads and displays SDIO registers for debugging
  *
@@ -890,6 +943,18 @@ void wifi_sdio_reg_dbg()
         wifi_d("%s", buf);
     }
 }
+#endif
+
+#elif defined(RW610)
+/**
+ *  @brief This function dump firmware memory to file
+ *
+ *  @return         N/A
+ */
+void wifi_dump_firmware_info()
+{
+    /*Dummy for RW610 */
+}
 
 #endif
 #endif
@@ -899,13 +964,17 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
 {
     int ret                 = WM_SUCCESS;
     HostCmd_DS_COMMAND *cmd = wifi_get_vdllcommand_buffer();
+#ifndef RW610
     t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
+#endif
 
+#ifndef RW610
 #if defined(CONFIG_WIFI_CMD_RESP_DEBUG) && defined(CONFIG_FW_VDLL_DEBUG)
 
     wcmdr_d("VDLL CMD --- : 0x%x Size: %d Seq: %x", cmd->command, cmd->size, cmd->seq_num);
 #endif /* CONFIG_ENABLE_WARNING_LOGS || CONFIG_WIFI_CMD_RESP_DEBUG*/
+#endif
     if (cmd->size > WIFI_FW_CMDBUF_SIZE)
     {
         /*
@@ -921,9 +990,15 @@ int wifi_wait_for_vdllcmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 
+#ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+#endif
 
+#if defined(RW610)
+    (void)wifi_send_cmdbuffer();
+#else
     (void)wifi_send_vdllcmdbuffer(tx_blocks, buf_len);
+#endif
 
     return ret;
 }
@@ -1023,11 +1098,14 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 {
     int ret;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+#ifndef RW610
     t_u32 buf_len = MLAN_SDIO_BLOCK_SIZE;
     t_u32 tx_blocks;
+#endif
     mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
     mlan_adapter *pmadapter = pmpriv->adapter;
 
+#ifndef RW610
 #if defined(CONFIG_ENABLE_WARNING_LOGS) || defined(CONFIG_WIFI_CMD_RESP_DEBUG)
 
 #ifndef CONFIG_WIFI_PS_DEBUG
@@ -1040,6 +1118,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #endif
 
 #endif /* CONFIG_ENABLE_WARNING_LOGS || CONFIG_WIFI_CMD_RESP_DEBUG*/
+#endif
 
 #ifdef CONFIG_WIFI_IND_RESET
     (void)wifi_ind_reset_lock();
@@ -1071,6 +1150,17 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 
+#ifdef CONFIG_WIFI_RECOVERY
+    if (wifi_recovery_enable)
+    {
+        wifi_w("Recovery in progress. command 0x%x skipped", cmd->command);
+#ifdef CONFIG_WIFI_IND_RESET
+        wifi_ind_reset_unlock();
+#endif
+        wifi_put_command_lock();
+        return -WM_FAIL;
+    }
+#endif
     if (wifi_shutdown_enable)
     {
         wifi_w("FW shutdown in progress. command 0x%x skipped", cmd->command);
@@ -1081,7 +1171,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         return -WM_FAIL;
     }
 
+#ifndef RW610
     tx_blocks = ((t_u32)cmd->size + MLAN_SDIO_BLOCK_SIZE - 1U) / MLAN_SDIO_BLOCK_SIZE;
+#endif
 #ifndef CONFIG_UART_WIFI_BRIDGE
     ret = os_rwlock_read_lock(&sleep_rwlock, MAX_WAIT_TIME);
     if (ret != WM_SUCCESS)
@@ -1094,8 +1186,20 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 #endif
         // wakelock_put(WL_ID_LL_OUTPUT);
         (void)wifi_put_command_lock();
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
+        return -WM_FAIL;
+#else
         assert(0);
+#endif
     }
+#endif
+#ifdef CONFIG_WMM_UAPSD
+    /*
+     * No PS handshake between driver and FW for the uapsd case,
+     * CMD should not wakeup FW, needs to wait to send till receiving PS_AWAKE Event from FW.
+     */
+    os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
 #endif
     /*
      * This is the private pointer. Only the command response handler
@@ -1103,7 +1207,11 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
      * NULL.
      */
     wm_wifi.cmd_resp_priv = cmd_resp_priv;
+#if defined(RW610)
+    (void)wifi_send_cmdbuffer();
+#else
     (void)wifi_send_cmdbuffer(tx_blocks, buf_len);
+#endif
 #ifndef CONFIG_UART_WIFI_BRIDGE
     /* put the sleep_rwlock after send command but not wait for the command response,
      * for sleep confirm command, sleep confirm response(in wifi_process_ps_enh_response())
@@ -1115,7 +1223,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
 
     pmadapter->cmd_sent = MTRUE;
 
-    /* Wait max 40 sec for the command response */
+    /* Wait max 20 sec for the command response */
     ret = wifi_get_command_resp_sem(WIFI_COMMAND_RESPONSE_WAIT_MS);
     if (ret != WM_SUCCESS)
     {
@@ -1128,6 +1236,7 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
                tmo_cmd->seq_num);
 #endif /* CONFIG_ENABLE_WARNING_LOGS */
 #ifdef CONFIG_WIFI_FW_DEBUG
+#ifndef RW610
         wifi_sdio_reg_dbg();
         if (wm_wifi.wifi_usb_mount_cb != NULL)
         {
@@ -1141,12 +1250,19 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
         }
         else
             wifi_e("USB mount callback is not registered");
+#else
+        wifi_dump_firmware_info();
 #endif
+#endif
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
+#else
         /* assert as command flow cannot work anymore */
 #if defined(CONFIG_WIFI_IND_DNLD)
         wlan_process_hang(FW_RELOAD_SDIO_INBAND_RESET);
 #else
         ASSERT(0);
+#endif
 #endif
     }
 
@@ -1156,6 +1272,9 @@ int wifi_wait_for_cmdresp(void *cmd_resp_priv)
     }
 
     wm_wifi.cmd_resp_priv = NULL;
+#ifdef CONFIG_WMM_UAPSD
+    os_semaphore_put(&uapsd_sem);
+#endif
     wifi_set_xfer_pending(false);
 #ifdef CONFIG_WIFI_IND_RESET
     wifi_ind_reset_unlock();
@@ -1561,6 +1680,7 @@ static void wifi_driver_main_loop(void *argv)
     }
 }
 
+#ifndef RW610
 #define WL_ID_WIFI_CORE_INPUT "wifi_core_input"
 /**
  * This function should be called when a packet is ready to be read
@@ -1569,6 +1689,8 @@ static void wifi_driver_main_loop(void *argv)
 static void wifi_core_input(void *argv)
 {
     int sta;
+    mlan_private *pmpriv    = (mlan_private *)mlan_adap->priv[0];
+    mlan_adapter *pmadapter = pmpriv->adapter;
 
     for (;;)
     {
@@ -1578,7 +1700,9 @@ static void wifi_core_input(void *argv)
         g_txrx_flag = true;
         //		SDIOC_IntMask(SDIOC_INT_CDINT, UNMASK);
         //		SDIOC_IntSigMask(SDIOC_INT_CDINT, UNMASK);
+#ifndef RW610
         sdio_enable_interrupt();
+#endif
 
         os_exit_critical_section((unsigned long)sta);
 
@@ -1586,15 +1710,30 @@ static void wifi_core_input(void *argv)
         (void)os_event_notify_get(OS_WAIT_FOREVER);
         // wakelock_get(WL_ID_WIFI_CORE_INPUT);
 
+#if defined(RW610)
+        (void)wifi_imu_lock();
+#else
         /* Protect the SDIO from other parallel activities */
         (void)wifi_sdio_lock();
 
         (void)wlan_process_int_status(mlan_adap);
+#endif
 
+#if defined(RW610)
+        wifi_imu_unlock();
+#else
         wifi_sdio_unlock();
+#endif
+
+        if (pmadapter->flush_data)
+        {
+            pmadapter->flush_data = MFALSE;
+            wlan_flush_rxreorder_tbl(pmadapter);
+        }
         // wakelock_put(WL_ID_WIFI_CORE_INPUT);
     } /* for ;; */
 }
+#endif
 void wifi_user_scan_config_cleanup(void)
 {
     if (wm_wifi.g_user_scan_cfg != NULL)
@@ -1648,15 +1787,6 @@ static void wifi_scan_input(void *argv)
                 wifi_user_scan_config_cleanup();
                 (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_FAILURE, NULL);
             }
-#ifndef SD8801
-            else
-            {
-                (void)wlan_active_scan_req_for_passive_chan((mlan_private *)mlan_adap->priv[0],
-                                                            wm_wifi.g_user_scan_cfg);
-                wifi_user_scan_config_cleanup();
-                (void)wifi_event_completion(WIFI_EVENT_SCAN_RESULT, WIFI_EVENT_REASON_SUCCESS, NULL);
-            }
-#endif
         }
         scan_thread_in_process = false;
     } /* for ;; */
@@ -1707,7 +1837,7 @@ static int wifi_core_init(void)
 {
     int ret;
 
-    if (wifi_core_init_done != 0U)
+    if (wm_wifi.wifi_core_init_done != 0U)
     {
         return WM_SUCCESS;
     }
@@ -1780,6 +1910,7 @@ static int wifi_core_init(void)
         wifi_e("Create wifi scan thread failed");
         goto fail;
     }
+#ifndef RW610
     ret = os_thread_create(&wm_wifi.wm_wifi_core_thread, "stack_dispatcher", wifi_core_input, NULL, &wifi_core_stack,
                            OS_PRIO_1);
 
@@ -1790,8 +1921,9 @@ static int wifi_core_init(void)
     }
 
     wifi_core_thread = wm_wifi.wm_wifi_core_thread;
+#endif
 
-    wifi_core_init_done = 1;
+    wm_wifi.wifi_core_init_done = 1;
 
 #ifdef CONFIG_WMM
     ret = wifi_wmm_buf_pool_init(&outbuf_arr[0][0]);
@@ -1817,6 +1949,15 @@ static int wifi_core_init(void)
     /* Take the tx buf lock immediately so that we can later block on */
     os_semaphore_get(&txbuf_sem, OS_WAIT_FOREVER);
 
+#ifdef CONFIG_ZEPHYR
+    wm_wifi.tx_data_queue_data = g_tx_data_queue_data;
+    ret = os_queue_create(&wm_wifi.tx_data, "tx_data", sizeof(struct bus_message), &wm_wifi.tx_data_queue_data);
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create tx data queue failed");
+        goto fail;
+    }
+#endif
 
     /* Semaphore to protect wmm data parameters */
     ret = os_semaphore_create(&wm_wifi.tx_data_sem, "tx data sem");
@@ -1825,8 +1966,13 @@ static int wifi_core_init(void)
         PRINTF("Create tx data sem failed");
         goto fail;
     }
+#ifdef RW610
+    ret =
+        os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack, OS_PRIO_2);
+#else
     ret =
         os_thread_create(&wm_wifi.wm_wifi_driver_tx, "wifi_driver_tx", wifi_driver_tx, NULL, &wifi_tx_stack, OS_PRIO_1);
+#endif
     if (ret != WM_SUCCESS)
     {
         PRINTF("Create tx data thread failed");
@@ -1861,6 +2007,17 @@ static int wifi_core_init(void)
     }
 #endif
 
+#ifdef CONFIG_ECSA
+    /* Semaphore to wait ECSA complete */
+    ret = os_semaphore_create(&ecsa_status_control.ecsa_sem, "ecsa sem");
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("Create ecsa sem failed");
+        goto fail;
+    }
+
+    os_semaphore_get(&ecsa_status_control.ecsa_sem, OS_WAIT_FOREVER);
+#endif
 
 #ifdef CONFIG_FW_VDLL
     (void)mlan_adap->callbacks.moal_init_timer(mlan_adap->pmoal_handle, &mlan_adap->vdll_timer, wlan_vdll_complete,
@@ -1903,7 +2060,7 @@ static void wifi_core_deinit(void)
         }
     }
 
-    wifi_core_init_done = 0;
+    wm_wifi.wifi_core_init_done = 0;
 
     bus_deregister_event_queue();
     bus_deregister_data_input_funtion();
@@ -1921,6 +2078,13 @@ static void wifi_core_deinit(void)
     }
 
 #ifdef CONFIG_WMM
+#ifdef CONFIG_ZEPHYR
+    if (wm_wifi.tx_data != NULL)
+    {
+        (void)os_queue_delete(&wm_wifi.tx_data);
+        wm_wifi.tx_data = NULL;
+    }
+#endif
     wifi_wmm_buf_pool_deinit();
     wifi_bypass_txq_deinit();
 
@@ -1955,6 +2119,7 @@ static void wifi_core_deinit(void)
         (void)os_mutex_delete(&wm_wifi.command_lock);
         wm_wifi.command_lock = NULL;
     }
+#ifndef RW610
     if (wm_wifi.wm_wifi_main_thread != NULL)
     {
         (void)os_thread_delete(&wm_wifi.wm_wifi_main_thread);
@@ -1983,6 +2148,12 @@ static void wifi_core_deinit(void)
         wm_wifi.wm_wifi_driver_tx = NULL;
     }
 #endif
+#else
+    wm_wifi.cmd_resp_priv   = NULL;
+    wm_wifi.cmd_resp_ioctl  = NULL;
+    wm_wifi.cmd_resp_status = 0;
+    memset(&wm_wifi, 0x00, sizeof(wm_wifi));
+#endif
 #ifdef CONFIG_HEAP_DEBUG
     if (os_mem_stat_sem != NULL)
     {
@@ -1995,6 +2166,13 @@ static void wifi_core_deinit(void)
     {
         os_semaphore_delete(&csi_buff_stat.csi_data_sem);
         csi_buff_stat.csi_data_sem = NULL;
+    }
+#endif
+#ifdef CONFIG_ECSA
+    if (ecsa_status_control.ecsa_sem != NULL)
+    {
+        os_semaphore_delete(&ecsa_status_control.ecsa_sem);
+        ecsa_status_control.ecsa_sem = NULL;
     }
 #endif
 #ifdef CONFIG_FW_VDLL
@@ -2010,7 +2188,7 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
 {
     int ret = WM_SUCCESS;
 
-    if (wifi_init_done != 0U)
+    if (wm_wifi.wifi_init_done != 0U)
     {
         return WM_SUCCESS;
     }
@@ -2020,10 +2198,18 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
     wm_wifi.fw_start_addr = fw_start_addr;
     wm_wifi.size          = size;
 
+#if defined(RW610)
+    ret = (int)imu_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
+#else
     ret = (int)sd_wifi_init(WLAN_TYPE_NORMAL, fw_start_addr, size);
+#endif
     if (ret != WM_SUCCESS)
     {
+#if defined(RW610)
+        wifi_e("imu_wifi_init failed. status code %d", ret);
+#else
         wifi_e("sd_wifi_init failed. status code %d", ret);
+#endif
         switch (ret)
         {
             case MLAN_CARD_CMD_TIMEOUT:
@@ -2053,16 +2239,18 @@ int wifi_init(const uint8_t *fw_start_addr, const size_t size)
         return ret;
     }
 
+#ifndef RW610
     ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
     if (ret != WM_SUCCESS)
     {
         wifi_e("sd_wifi_post_init failed. status code %d", ret);
         return ret;
     }
+#endif
 
     if (ret == WM_SUCCESS)
     {
-        wifi_init_done = 1;
+        wm_wifi.wifi_init_done = 1;
     }
 
     return ret;
@@ -2104,6 +2292,7 @@ static int wifi_reinit(uint8_t fw_reload)
                 break;
         }
     }
+#ifndef RW610
     else
     {
         ret = (int)sd_wifi_post_init(WLAN_TYPE_NORMAL);
@@ -2113,14 +2302,16 @@ static int wifi_reinit(uint8_t fw_reload)
             return ret;
         }
     }
+#endif
 
     return ret;
 }
 #endif
 
+#ifndef RW610
 int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 {
-    if (wifi_init_done != 0U)
+    if (wm_wifi.wifi_init_done != 0U)
     {
         return WM_SUCCESS;
     }
@@ -2159,32 +2350,86 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 
     if (ret == WM_SUCCESS)
     {
-        wifi_init_done = 1;
+        wm_wifi.wifi_init_done = 1;
     }
+#ifndef RW610
     ret = (int)sd_wifi_post_init(WLAN_TYPE_FCC_CERTIFICATION);
     if (ret != WM_SUCCESS)
     {
         wifi_e("sd_wifi_post_init failed. status code %d", ret);
         return ret;
     }
+#endif
 
     return ret;
 }
+#endif
 
 void wifi_deinit(void)
 {
-    if (wifi_init_done == 0U)
+    if (wm_wifi.wifi_init_done == 0U)
     {
         return;
     }
 
-    wifi_init_done = 0;
+    wm_wifi.wifi_init_done = 0;
 
     wifi_core_deinit();
 
+#if defined(RW610)
+    imu_wifi_deinit();
+#else
     sd_wifi_deinit();
+#endif
 }
 
+#ifdef RW610
+bool wifi_fw_is_hang(void)
+{
+    if (mlan_adap && mlan_adap->bus_ops.fw_is_hang)
+        return mlan_adap->bus_ops.fw_is_hang();
+    return false;
+}
+
+void wifi_destroy_wifidriver_tasks(void)
+{
+#ifdef CONFIG_WMM
+    if (wm_wifi.wm_wifi_driver_tx)
+    {
+        os_thread_delete(&wm_wifi.wm_wifi_driver_tx);
+        wm_wifi.wm_wifi_driver_tx = NULL;
+    }
+#endif
+
+    if (wm_wifi.wm_wifi_main_thread != NULL)
+    {
+        os_thread_delete(&wm_wifi.wm_wifi_main_thread);
+        wm_wifi.wm_wifi_main_thread = NULL;
+    }
+
+#ifndef RW610
+    if (wm_wifi.wm_wifi_core_thread != NULL)
+    {
+        os_thread_delete(&wm_wifi.wm_wifi_core_thread);
+        wm_wifi.wm_wifi_core_thread = NULL;
+        wifi_core_thread            = NULL;
+    }
+#endif
+    if (wm_wifi.wm_wifi_scan_thread != NULL)
+    {
+        (void)os_thread_delete(&wm_wifi.wm_wifi_scan_thread);
+        wm_wifi.wm_wifi_scan_thread = NULL;
+    }
+
+    if (wm_wifi.wm_wifi_powersave_thread != NULL)
+    {
+        (void)os_thread_delete(&wm_wifi.wm_wifi_powersave_thread);
+        wm_wifi.wm_wifi_powersave_thread = NULL;
+    }
+
+    imu_uninstall_callback();
+}
+#endif
 void wifi_set_tx_status(t_u8 status)
 {
     wifi_tx_status = status;
@@ -2437,16 +2682,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #ifdef CONFIG_WIFI_EXTRA_DEBUG
     IEEE80211_MGMT *mgmt = MNULL;
 #endif
-#ifdef CONFIG_RX_CHAN_INFO
-#ifdef CONFIG_TXPD_RXPD_V3
     t_u8 band_config = (prx_pd->rx_info & 0x3); /* Bit[1:0] 0: HALCHANBAND_BG, 1:HALCHANBAND_A, 2: HALCHANBAND_6E */
     t_u8 chan_num    = (prx_pd->rx_info & RXPD_CHAN_MASK) >>
                     5; /* Bit[13: 5] Non zero channel number on which this packet is received */
-#else
-    t_u8 band_config = prx_pd->band_config;
-    t_u8 chan_num    = prx_pd->chan_num;
-#endif
-#endif
     t_u8 category    = 0;
     t_u8 action_code = 0;
 #ifdef DOT1AS_SUPPORT
@@ -2607,8 +2845,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
             {
                 if (priv->curr_bss_params.host_mlme)
                 {
-                    if (memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
-                               MLAN_MAC_ADDR_LENGTH))
+                    t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
+                    if (memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,MLAN_MAC_ADDR_LENGTH)
+                        && memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,MLAN_MAC_ADDR_LENGTH))
                     {
                         wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
                                MAC2STR(pieee_pkt_hdr->addr3));
@@ -2655,15 +2894,9 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #ifdef DOT1AS_SUPPORT
             if ((category == IEEE_MGMT_ACTION_CATEGORY_UNPROTECT_WNM) && (action_code == 0x1))
             {
-#ifdef CONFIG_TXPD_RXPD_V3
                 prx_pd->toa_tod_tstamps = wlan_le64_to_cpu(prx_pd->toa_tod_tstamps);
                 tstamps.t3              = prx_pd->toa_tod_tstamps >> 32;
                 tstamps.t2              = (t_u32)prx_pd->toa_tod_tstamps;
-#else
-                prx_pd->Tsf = wlan_le64_to_cpu(prx_pd->Tsf);
-                tstamps.t3  = prx_pd->Tsf >> 32;
-                tstamps.t2  = (t_u32)prx_pd->Tsf;
-#endif
                 tstamps.t2_err       = 0;
                 tstamps.t3_err       = 0;
                 tstamps.ingress_time = pcb->moal_do_div(pmadapter->host_bbu_clk_delta, 10);
@@ -2745,14 +2978,8 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 #endif
 		pevent->event_id = MLAN_EVENT_ID_DRV_MGMT_FRAME;
 		pevent->event_len = payload_len + sizeof(pevent->event_id);
-#ifdef CONFIG_RX_CHAN_INFO
 		pevent->event_buf[0] = band_config;
 		pevent->event_buf[1] = chan_num;
-#else
-	memcpy_ext(pmadapter, (t_u8 *)pevent->event_buf,
-		   (t_u8 *)&pevent->event_id, sizeof(pevent->event_id),
-		   pevent->event_len);
-#endif
 		memcpy_ext(
 			pmadapter,
 			(t_u8 *)(pevent->event_buf + sizeof(pevent->event_id)),
@@ -2872,9 +3099,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 memset(mgmt_rx, 0, sizeof(nxp_wifi_event_mlme_t));
                 mgmt_rx->frame.frame_len = payload_len;
                 memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
-#ifdef CONFIG_RX_CHAN_INFO
                 mgmt_rx->frame.freq = channel_to_frequency(chan_num, band_config);
-#endif
                 if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
                 {
                     wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
@@ -2895,9 +3120,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
         if (mgmt_rx->frame.frame_len <= (int)sizeof(mgmt_rx->frame.frame))
         {
             memcpy((void *)mgmt_rx->frame.frame, (const void *)pieee_pkt_hdr, mgmt_rx->frame.frame_len);
-#ifdef CONFIG_RX_CHAN_INFO
             mgmt_rx->frame.freq = channel_to_frequency(chan_num, band_config);
-#endif
             if (wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn)
             {
                 wm_wifi.supp_if_callbk_fns->mgmt_rx_callbk_fn(wm_wifi.hapd_if_priv, mgmt_rx, mgmt_rx->frame.frame_len);
@@ -3029,7 +3252,11 @@ void wifi_tx_card_awake_lock(void)
 #ifdef CONFIG_WIFI_PS_DEBUG
         wifi_e("Failed to wakeup card for Tx");
 #endif
+#ifdef CONFIG_WIFI_RECOVERY
+        wifi_recovery_enable = true;
+#else
         assert(0);
+#endif
     }
 }
 
@@ -3210,12 +3437,20 @@ static mlan_status wifi_xmit_amsdu_pkts(mlan_private *priv, t_u8 ac, raListTbl *
 
 t_u8 wifi_txbuf_available()
 {
+#ifdef RW610
+    return !(HAL_ImuIsTxBufQueueEmpty(kIMU_LinkCpu1Cpu3));
+#else
     return !!(mlan_adap->mp_wr_bitmap);
+#endif
 }
 
 static inline t_u8 wifi_is_max_tx_cnt(t_u8 pkt_cnt)
 {
+#ifdef RW610
+    return (pkt_cnt >= IMU_PAYLOAD_SIZE) ? MTRUE : MFALSE;
+#else
     return (pkt_cnt >= SDIO_PAYLOAD_SIZE) ? MTRUE : MFALSE;
+#endif
 }
 
 /* dequeue and xmit one packet */
@@ -3240,11 +3475,15 @@ static mlan_status wifi_xmit_pkts(mlan_private *priv, t_u8 ac, raListTbl *ralist
 #endif
     if (ret != MLAN_STATUS_SUCCESS)
     {
+#ifdef RW610
+        ASSERT(0);
+#else
         mlan_adap->callbacks.moal_semaphore_get(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
         util_enqueue_list_head(mlan_adap->pmoal_handle, &ralist->buf_head, &buf->entry, MNULL, MNULL);
         ralist->total_pkts++;
         mlan_adap->callbacks.moal_semaphore_put(mlan_adap->pmoal_handle, &ralist->buf_head.plock);
         return MLAN_STATUS_RESOURCE;
+#endif
     }
 
     wifi_wmm_buf_put(buf);
@@ -3353,7 +3592,9 @@ t_void wlan_process_bypass_txq(t_u8 interface)
     pmlan_private priv = mlan_adap->priv[interface];
 
     wifi_tx_card_awake_lock();
+#ifndef RW610
     wifi_sdio_lock();
+#endif
 
     while (!wlan_bypass_txq_empty(interface) && (wifi_txbuf_available() == MTRUE))
     {
@@ -3373,7 +3614,9 @@ t_void wlan_process_bypass_txq(t_u8 interface)
         }
     }
 
+#ifndef RW610
     wifi_sdio_unlock();
+#endif
     wifi_tx_card_awake_unlock();
 }
 
@@ -3391,6 +3634,36 @@ static void notify_wifi_driver_tx_event(uint16_t event)
         return;
     }
 
+#ifdef CONFIG_ZEPHYR
+    /* TODO: use zephyr event and regroup */
+    struct bus_message msg;
+
+    if (event & MBIT(TX_TYPE_DATA))
+    {
+        msg.event = MLAN_TYPE_DATA;
+    }
+    else if (event & MBIT(TX_TYPE_NULL_DATA))
+    {
+        msg.event = MLAN_TYPE_NULL_DATA;
+    }
+    else if (event & MBIT(TX_TYPE_BYPASS_DATA))
+    {
+        msg.event = MLAN_TYPE_BYPASS_DATA;
+    }
+    else
+    {
+        msg.event = MLAN_TYPE_DATA;
+        wifi_w("unknown tx event");
+    }
+
+    msg.reason = (event & 1) ? MLAN_BSS_TYPE_STA : MLAN_BSS_TYPE_UAP;
+
+    os_queue_send(&wm_wifi.tx_data, &msg, OS_NO_WAIT);
+    if (msg.event == MLAN_TYPE_BYPASS_DATA && !k_is_in_isr())
+    {
+        k_yield();
+    }
+#else
     if (__get_IPSR())
     {
         portBASE_TYPE taskToWake = pdFALSE;
@@ -3408,6 +3681,7 @@ static void notify_wifi_driver_tx_event(uint16_t event)
         xTaskNotify(wm_wifi.wm_wifi_driver_tx, event, eSetBits);
         portYIELD();
     }
+#endif
 }
 
 int send_wifi_driver_tx_data_event(t_u8 interface)
@@ -3457,14 +3731,37 @@ static void wifi_driver_tx(void *data)
     int i;
     mlan_private *pmpriv    = NULL;
     mlan_adapter *pmadapter = NULL;
+#ifdef CONFIG_ZEPHYR
+    struct bus_message msg;
+#endif
 
     while (1)
     {
         wm_wifi.wm_wifi_driver_tx = os_get_current_task_handle();
 
+#ifdef CONFIG_ECSA
+        /*
+         * Reduce block tx check interval, try to make it sync with ECSA status.
+         */
+        while (true == get_ecsa_block_tx_flag())
+        {
+            os_thread_sleep(wm_wifi.beacon_period);
+        }
+#endif
         taskNotification = 0U;
         event = interface = 0xFF;
 
+#ifdef CONFIG_ZEPHYR
+        /* TODO: use zephyr event and regroup */
+        (void)os_queue_recv(&wm_wifi.tx_data, &msg, OS_WAIT_FOREVER);
+        event     = msg.event;
+        interface = msg.reason;
+
+        if ((interface != MLAN_BSS_TYPE_STA) && (interface != MLAN_BSS_TYPE_UAP))
+        {
+            continue;
+        }
+#else
         xTaskNotifyWait(0U, ULONG_MAX, &taskNotification, OS_WAIT_FOREVER);
 
         if (taskNotification == 0U)
@@ -3501,6 +3798,7 @@ static void wifi_driver_tx(void *data)
         {
             event = MLAN_TYPE_BYPASS_DATA;
         }
+#endif
 
         pmadapter = mlan_adap;
 
@@ -3509,10 +3807,19 @@ static void wifi_driver_tx(void *data)
 #endif
         if (event == MLAN_TYPE_DATA || event == MLAN_TYPE_NULL_DATA || event == MLAN_TYPE_BYPASS_DATA)
         {
-            if (!wlan_bypass_txq_empty(interface))
+#ifdef CONFIG_WMM_UAPSD
+            while (pmadapter->pps_uapsd_mode && (pmadapter->tx_lock_flag == MTRUE))
             {
-                /*Give high priority to xmit bypass txqueue*/
-                wlan_process_bypass_txq(interface);
+                os_thread_sleep(os_msec_to_ticks(1));
+            }
+#endif
+            for (i = 0; i < MLAN_MAX_BSS_NUM; i++)
+            {
+                if (!wlan_bypass_txq_empty(i))
+                {
+                    /*Give high priority to xmit bypass txqueue*/
+                    wlan_process_bypass_txq(i);
+                }
             }
 
             /* Send packet when the outbuf pool is not empty and not in block tx status*/
@@ -3527,12 +3834,47 @@ static void wifi_driver_tx(void *data)
                     }
 
                     wifi_tx_card_awake_lock();
+#ifndef RW610
                     wifi_sdio_lock();
+#endif
                     wifi_xmit_wmm_ac_pkts_enh(pmpriv);
+#ifndef RW610
                     wifi_sdio_unlock();
+#endif
                     wifi_tx_card_awake_unlock();
                 }
             }
+#ifdef CONFIG_WMM_UAPSD
+            else
+            {
+                if (event == MLAN_TYPE_NULL_DATA)
+                {
+                    wifi_tx_card_awake_lock();
+                    /* send null packet until the finish of CMD response processing */
+                    os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+                    pmpriv = pmadapter->priv[MLAN_BSS_TYPE_STA];
+                    if (pmadapter->pps_uapsd_mode && pmpriv->media_connected && pmadapter->gen_null_pkt)
+                    {
+                        if (wlan_send_null_packet(
+                                pmpriv, MRVDRV_TxPD_POWER_MGMT_NULL_PACKET | MRVDRV_TxPD_POWER_MGMT_LAST_PACKET) ==
+                            MLAN_STATUS_SUCCESS)
+                        {
+                            pmadapter->tx_lock_flag = MTRUE;
+                        }
+                    }
+                    else
+                    {
+                        wifi_d(
+                            "No need to send null packet, pps_uapsd_mode: %d, media_connected: %d, gen_null_pkt: "
+                            "%d",
+                            pmadapter->pps_uapsd_mode, pmpriv->media_connected, pmadapter->gen_null_pkt);
+                        os_semaphore_put(&uapsd_sem);
+                        pmadapter->tx_lock_flag = MFALSE;
+                    }
+                    wifi_tx_card_awake_unlock();
+                }
+            }
+#endif
             wifi_set_xfer_pending(false);
         }
 #ifdef CONFIG_HOST_SLEEP
@@ -3542,7 +3884,9 @@ static void wifi_driver_tx(void *data)
 }
 #endif /* CONFIG_WMM */
 
+#ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_11AX
+#ifdef CONFIG_TCP_ACK_ENH
 #define ETH_PROTO_IP     0x0800U
 #define WIFI_IPPROTO_TCP 6
 
@@ -3609,11 +3953,13 @@ static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
     LEAVE();
     return 0;
 }
+#endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX*/
+#endif
 
 #ifdef CONFIG_WMM
 
-int wifi_add_to_bypassq(const t_u8 interface, const t_u8 *buf, t_u32 len)
+int wifi_add_to_bypassq(const t_u8 interface, void *pkt, t_u32 len)
 {
     t_u32 pkt_len            = 0;
     t_u32 link_point_len     = 0;
@@ -3621,11 +3967,11 @@ int wifi_add_to_bypassq(const t_u8 interface, const t_u8 *buf, t_u32 len)
     t_u16 eth_type           = 0;
     t_u32 magic_cookie       = 0;
 
-    eth_type = mlan_ntohs(*(t_u16 *)((t_u8 *)buf + MLAN_ETHER_PKT_TYPE_OFFSET));
+    eth_type = mlan_ntohs(*(t_u16 *)(net_stack_buffer_skip(pkt, MLAN_ETHER_PKT_TYPE_OFFSET)));
 
     if (len > MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE_OFFSET)
     {
-        magic_cookie = mlan_ntohl(*((t_u32 *)((t_u8 *)buf + MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE_OFFSET)));
+        magic_cookie = mlan_ntohl(*((t_u32 *)(net_stack_buffer_skip(pkt, MLAN_ETHER_PKT_DHCP_MAGIC_COOKIE_OFFSET))));
     }
 
     if ((eth_type == MLAN_ETHER_PKT_TYPE_EAPOL) || (eth_type == MLAN_ETHER_PKT_TYPE_ARP) ||
@@ -3642,9 +3988,10 @@ int wifi_add_to_bypassq(const t_u8 interface, const t_u8 *buf, t_u32 len)
             return -WM_FAIL;
         }
 
-        (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+        (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
 
-        (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
+        (void)net_stack_buffer_copy_partial(pkt, (void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (t_u16)len, 0);
+
         /* process packet headers with interface header and TxPD */
         process_pkt_hdrs((void *)((t_u8 *)poutbuf + link_point_len), pkt_len + len, interface, 0, 0);
 
@@ -3685,12 +4032,15 @@ int wifi_low_level_output(const t_u8 interface,
 
     /** Tx control */
     t_u32 tx_control = 0;
+#ifndef CONFIG_ZEPHYR
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[interface];
+#endif
 
     w_pkt_d("Data TX: Kernel=>Driver, if %d, len %d", interface, len);
 
     // wakelock_get(WL_ID_LL_OUTPUT);
     /* Following condition is added to check if device is not connected and data packet is being transmitted */
+#ifndef CONFIG_ZEPHYR
     if ((pmpriv->media_connected == MFALSE) && (interface == WLAN_BSS_TYPE_STA))
     {
 #ifdef CONFIG_WMM
@@ -3701,6 +4051,7 @@ int wifi_low_level_output(const t_u8 interface,
     }
 
 #ifdef CONFIG_11AX
+#ifdef CONFIG_TCP_ACK_ENH
     if ((interface == MLAN_BSS_TYPE_STA) && (pmpriv->enable_tcp_ack_enh == MTRUE) &&
         (pmpriv->curr_bss_params.bss_descriptor.phe_cap != NULL))
     {
@@ -3733,7 +4084,9 @@ int wifi_low_level_output(const t_u8 interface,
                 tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
         }
     }
+#endif /** CONFIG_TCP_ACK_ENH */
 #endif /** CONFIG_11AX */
+#endif
 
 #ifdef CONFIG_WMM
     /* process packet headers with interface header and TxPD */
@@ -3751,12 +4104,20 @@ int wifi_low_level_output(const t_u8 interface,
     send_wifi_driver_tx_data_event(interface);
 #else
     wifi_tx_card_awake_lock();
+#if defined(RW610)
+    wifi_imu_lock();
+#else
     (void)wifi_sdio_lock();
+#endif
 
     while (true)
     {
         i = wlan_xmit_pkt((t_u8 *)sd_buffer, len, interface, tx_control);
+#if defined(RW610)
+        wifi_imu_unlock();
+#else
         wifi_sdio_unlock();
+#endif
         if (i == MLAN_STATUS_SUCCESS)
         {
             break;
@@ -3782,7 +4143,11 @@ int wifi_low_level_output(const t_u8 interface,
                      * update the write bitmap so that pkt
                      * can be sent to FW */
                     os_thread_sleep(1);
+#if defined(RW610)
+                    wifi_imu_lock();
+#else
                     (void)wifi_sdio_lock();
+#endif
                     continue;
                 }
             }
@@ -3848,7 +4213,11 @@ exit_fn:
 
 uint8_t *wifi_get_outbuf(uint32_t *outbuf_len)
 {
+#if defined(RW610)
+    return wifi_get_imu_outbuf(outbuf_len);
+#else
     return wifi_get_sdio_outbuf(outbuf_len);
+#endif
 }
 
 #ifdef CONFIG_HEAP_DEBUG
@@ -3979,7 +4348,7 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
         return -WM_FAIL;
     }
 
-    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
 
     (void)raw_process_pkt_hdrs((t_u8 *)poutbuf + link_point_len, pkt_len + len, interface);
     (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
@@ -3999,7 +4368,11 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
 
     wifi_tx_card_awake_lock();
+#if defined(RW610)
+    wifi_imu_lock();
+#else
     (void)wifi_sdio_lock();
+#endif
 
     (void)memset(poutbuf, 0, pkt_len);
 
@@ -4007,7 +4380,11 @@ static int raw_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 len
     (void)memcpy((void *)((t_u8 *)poutbuf + pkt_len - 2), (const void *)buf, (size_t)len);
     i = wlan_xmit_pkt(poutbuf, pkt_len + len - 2U, interface, 0);
 
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
     wifi_sdio_unlock();
+#endif
     wifi_tx_card_awake_unlock();
 
     if (i == MLAN_STATUS_FAILURE)
@@ -4026,6 +4403,51 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
     return raw_low_level_output((t_u8)bss_type, buff, len);
 }
 
+#ifdef CONFIG_WPS2
+int wps_low_level_output(const uint8_t interface, const uint8_t *buf, const uint16_t len)
+{
+    mlan_status i;
+    t_u32 pkt_len;
+    uint32_t outbuf_len = 0;
+
+    uint8_t *outbuf = wifi_get_outbuf(&outbuf_len);
+    if (!outbuf)
+        return (int)-WM_FAIL;
+
+    pkt_len = sizeof(TxPD) + INTF_HEADER_LEN;
+    if ((pkt_len + len) > outbuf_len)
+    {
+        return (int)-WM_FAIL;
+    }
+
+    wifi_tx_card_awake_lock();
+#if defined(RW610)
+    wifi_imu_lock();
+#else
+    wifi_sdio_lock();
+#endif
+
+    (void)memset(outbuf, 0x00, pkt_len);
+
+    (void)memcpy((t_u8 *)outbuf + pkt_len, buf, len);
+
+    i = wlan_xmit_pkt(outbuf, pkt_len + len, interface, 0);
+
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
+    wifi_sdio_unlock();
+#endif
+    wifi_tx_card_awake_unlock();
+
+    if (i == MLAN_STATUS_FAILURE)
+    {
+        return (int)-WM_FAIL;
+    }
+
+    return WM_SUCCESS;
+}
+#endif /* CONFIG_WPS2 */
 
 int wifi_set_country_code(const char *alpha2)
 {
@@ -4103,7 +4525,7 @@ int wifi_nxp_scan_res_get2(t_u32 table_idx, nxp_wifi_event_new_scan_result_t *sc
     memcpy(&scan_res->capability, &bss_new_entry->cap_info, sizeof(unsigned short));
     memcpy(&scan_res->ies_tsf, bss_new_entry->time_stamp, sizeof(bss_new_entry->time_stamp));
     os_get_time(&t);
-    scan_res->seen_ms_ago = t.sec * 1000;
+    scan_res->seen_ms_ago = t.sec * 1000 - bss_new_entry->scan_result_tsf / 1000000 * 1000;
     if (bss_new_entry->ies_len > 0)
     {
         scan_res->ies.ie     = bss_new_entry->ies;
@@ -4233,7 +4655,7 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
         return -WM_FAIL;
     }
 
-    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len + len);
+    (void)memset((t_u8 *)poutbuf, 0, link_point_len + pkt_len);
 
     (void)memcpy((void *)((t_u8 *)poutbuf + link_point_len + pkt_len), (const void *)buf, (size_t)len);
     /* process packet headers with interface header and TxPD */
@@ -4262,7 +4684,11 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
     }
 
     wifi_tx_card_awake_lock();
+#if defined(RW610)
+    wifi_imu_lock();
+#else
     wifi_sdio_lock();
+#endif
 
     (void)memset(outbuf, 0x00, pkt_len);
 
@@ -4270,7 +4696,11 @@ static int supp_low_level_output(const t_u8 interface, const t_u8 *buf, t_u32 le
 
     i = wlan_xmit_pkt(outbuf, pkt_len + len, interface, 0);
 
+#if defined(RW610)
+    wifi_imu_unlock();
+#else
     wifi_sdio_unlock();
+#endif
     wifi_tx_card_awake_unlock();
 
     if (i == MLAN_STATUS_FAILURE)
@@ -4415,6 +4845,17 @@ int wifi_remain_on_channel(const bool status, const uint8_t channel, const uint3
     return wifi_send_remain_on_channel_cmd(MLAN_BSS_TYPE_STA, &roc);
 }
 
+#ifdef RW610
+int wifi_imu_get_task_lock(void)
+{
+    return imu_get_task_lock();
+}
+
+int wifi_imu_put_task_lock(void)
+{
+    return imu_put_task_lock();
+}
+#endif
 
 #ifdef CONFIG_CSI
 

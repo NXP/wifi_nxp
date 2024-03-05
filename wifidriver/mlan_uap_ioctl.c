@@ -63,6 +63,35 @@ static mlan_status wlan_uap_sec_ioctl_set_encrypt_key(IN pmlan_adapter pmadapter
 #endif
 
 
+#ifdef CONFIG_ECSA
+/**
+ *  @brief Handle channel switch
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_PENDING --success, otherwise fail
+ */
+mlan_status wlan_uap_bss_ioctl_action_chan_switch(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
+{
+    mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+    t_u16 cmd_action     = 0;
+
+    ENTER();
+
+    cmd_action = HostCmd_ACT_GEN_SET;
+
+    /* Send request to firmware */
+    ret = wlan_prepare_cmd(pmpriv, HOST_CMD_APCMD_SYS_CONFIGURE, cmd_action, 0, (t_void *)pioctl_req, MNULL);
+
+    if (ret == MLAN_STATUS_SUCCESS)
+        ret = MLAN_STATUS_PENDING;
+
+    LEAVE();
+    return ret;
+}
+#endif
 
 /**
  *  @brief MLAN uap ioctl handler
@@ -76,6 +105,10 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
 {
     pmlan_adapter pmadapter = (pmlan_adapter)adapter;
     mlan_status status      = MLAN_STATUS_SUCCESS;
+#ifdef CONFIG_ECSA
+    mlan_ds_misc_cfg *misc = MNULL;
+    mlan_ds_bss *bss       = MNULL;
+#endif
 #if defined(WAPI_AP) || defined(HOST_AUTHENTICATOR) || defined(CONFIG_WPA_SUPP_AP)
     mlan_ds_sec_cfg *sec = MNULL;
 #endif
@@ -99,6 +132,20 @@ mlan_status wlan_ops_uap_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
                 status = wlan_rate_ioctl_cfg(pmadapter, pioctl_req);
             }
             break;
+#ifdef CONFIG_ECSA
+        case MLAN_IOCTL_MISC_CFG:
+            misc = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
+            if (misc->sub_command == MLAN_OID_MISC_OPER_CLASS)
+                status = wlan_misc_ioctl_oper_class(pmadapter, pioctl_req);
+            if (misc->sub_command == MLAN_OID_MISC_OPER_CLASS_CHECK)
+                status = wlan_misc_ioctl_operclass_validation(pmadapter, pioctl_req);
+            break;
+        case MLAN_IOCTL_BSS:
+            bss = (mlan_ds_bss *)pioctl_req->pbuf;
+            if (bss->sub_command == MLAN_OID_ACTION_CHAN_SWITCH)
+                status = wlan_uap_bss_ioctl_action_chan_switch(pmadapter, pioctl_req);
+            break;
+#endif
 #ifdef CONFIG_11AX
         case MLAN_IOCTL_11AX_CFG:
             status = wlan_11ax_cfg_ioctl(pmadapter, pioctl_req);

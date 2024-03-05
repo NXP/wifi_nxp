@@ -938,6 +938,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     MrvlIEtypes_Bssid_List_t *pbssid_tlv;
 #endif
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    MrvlIEtypes_RssiThresholdParamSet_t *prssi_threshold_tlv;
+#endif
     const t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0, 0, 0, 0, 0, 0};
     t_u8 *ptlv_pos;
     t_u32 num_probes;
@@ -949,6 +952,10 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     t_u8 radio_type;
     t_u32 ssid_idx;
     t_u8 ssid_filter;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    t_u8 rssi_threshold_enable;
+    t_s16 rssi_threshold;
+#endif
     MrvlIETypes_HTCap_t *pht_cap;
 #ifdef CONFIG_11AC
     MrvlIETypes_VHTCap_t *pvht_cap;
@@ -988,6 +995,12 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
         /* Set the number of probes to send, use Adapter setting if unset */
         num_probes = (puser_scan_in->num_probes ? puser_scan_in->num_probes : pmadapter->scan_probes);
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        /* Set the threshold value of rssi to send */
+        rssi_threshold = puser_scan_in->rssi_threshold;
+        /* Enable/Disable rssi threshold function */
+        rssi_threshold_enable = (rssi_threshold < 0 ? MTRUE : MFALSE);
+#endif
         /*
          * Set the BSSID filter to the incoming configuration,
          *   if non-zero.  If not set, it will remain disabled (all zeros).
@@ -1056,6 +1069,10 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     {
         pscan_cfg_out->bss_mode = (t_u8)pmadapter->scan_mode;
         num_probes              = pmadapter->scan_probes;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+        rssi_threshold        = 0;
+        rssi_threshold_enable = 0;
+#endif
     }
 
     /*
@@ -1137,6 +1154,35 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     }
 #endif
 
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /*
+     * Append rssi threshold tlv
+     *
+     * Note: According to the value of rssi_threshold, it is divided into three situations:
+     *     rssi_threshold  |  rssi_threshold_enable  |  Whether to carry TLV
+     *           <0        |          MTRUE          |          Yes
+     *            0        |          MFALSE         |          No
+     *           >0        |          MFALSE         |          Yes
+     */
+    if (rssi_threshold)
+    {
+        prssi_threshold_tlv              = (MrvlIEtypes_RssiThresholdParamSet_t *)ptlv_pos;
+        prssi_threshold_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_RSSI_THRESHOLD);
+        prssi_threshold_tlv->header.len =
+            (t_u16)(sizeof(prssi_threshold_tlv->enable) + sizeof(prssi_threshold_tlv->rssi_threshold) +
+                    sizeof(prssi_threshold_tlv->reserved));
+        prssi_threshold_tlv->enable         = rssi_threshold_enable;
+        prssi_threshold_tlv->rssi_threshold = rssi_threshold;
+
+        ptlv_pos += sizeof(prssi_threshold_tlv->header) + prssi_threshold_tlv->header.len;
+
+        prssi_threshold_tlv->header.len = wlan_cpu_to_le16(prssi_threshold_tlv->header.len);
+
+        pmadapter->rssi_threshold = (rssi_threshold < 0 ? rssi_threshold : 0);
+
+        PRINTM(MINFO, "SCAN_CMD: Rssi threshold = %d\n", rssi_threshold);
+    }
+#endif
 
     /* fixme: enable this later when req. */
 
@@ -1311,144 +1357,6 @@ void check_for_wps_ie(const uint8_t *poui,
 #endif /* CONFIG_WPA_SUPP_WPS */
 
 /**
- *  @brief  Check if any hidden SSID found in passive scan channels
- *          and do specific SSID active scan for those channels
- *
- *  @param pmpriv       A pointer to mlan_private structure
- *  @param pioctl_buf   A pointer to mlan_ioctl_req structure
- *
- *  @return             MTRUE/MFALSE
- */
-bool wlan_active_scan_req_for_passive_chan(mlan_private *pmpriv, wlan_user_scan_cfg *puser_scan_in)
-{
-    bool ret                = MFALSE;
-    mlan_adapter *pmadapter = pmpriv->adapter;
-    bool scan_reqd          = MFALSE;
-    bool chan_listed        = MFALSE;
-    t_u8 id                 = 0;
-    t_u32 bss_idx, i;
-    t_u8 null_ssid[MLAN_MAX_SSID_LENGTH] = {0};
-    mlan_callbacks *pcb                  = (mlan_callbacks *)&pmpriv->adapter->callbacks;
-    wlan_user_scan_cfg *user_scan_cfg    = MNULL;
-    t_u16 band;
-
-    ENTER();
-
-    if (!pmpriv->ssid_filter)
-    {
-        goto done;
-    }
-
-    if (pmadapter->active_scan_triggered)
-    {
-        pmadapter->active_scan_triggered = MFALSE;
-        goto done;
-    }
-
-    if ((pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(wlan_user_scan_cfg), MLAN_MEM_DEF, (t_u8 **)&user_scan_cfg) !=
-         MLAN_STATUS_SUCCESS) ||
-        !user_scan_cfg)
-    {
-        wifi_d("Memory allocation for user_scan_cfg failed\r\n");
-        goto done;
-    }
-
-    memset(user_scan_cfg, 0x00, sizeof(wlan_user_scan_cfg));
-
-    for (bss_idx = 0; bss_idx < pmadapter->num_in_scan_table; bss_idx++)
-    {
-        scan_reqd = MFALSE;
-        if (!memcmp(pmadapter->pscan_table[bss_idx].ssid.ssid, null_ssid,
-                    pmadapter->pscan_table[bss_idx].ssid.ssid_len))
-        {
-            if (puser_scan_in && puser_scan_in->chan_list[0].chan_number)
-            {
-                for (i = 0; i < WLAN_USER_SCAN_CHAN_MAX && puser_scan_in->chan_list[i].chan_number; i++)
-                {
-                    if (puser_scan_in->chan_list[i].chan_number == pmadapter->pscan_table[bss_idx].channel)
-                    {
-                        if (puser_scan_in->chan_list[i].scan_type == MLAN_SCAN_TYPE_PASSIVE)
-                            scan_reqd = MTRUE;
-                        break;
-                    }
-                }
-            }
-            else if (pmadapter->scan_type == MLAN_SCAN_TYPE_PASSIVE)
-            {
-                scan_reqd = MTRUE;
-            }
-            else
-            {
-#ifdef CONFIG_5GHz_SUPPORT
-                if ((pmadapter->pscan_table[bss_idx].bss_band & BAND_A) &&
-                    wlan_11h_radar_detect_required(pmpriv, pmadapter->pscan_table[bss_idx].channel))
-                    scan_reqd = MTRUE;
-#endif
-                if (pmadapter->pscan_table[bss_idx].bss_band & (BAND_B | BAND_G) &&
-                    wlan_bg_scan_type_is_passive(pmpriv, pmadapter->pscan_table[bss_idx].channel))
-                    scan_reqd = MTRUE;
-            }
-
-            if (scan_reqd)
-            {
-                chan_listed = MFALSE;
-                for (i = 0; i < id; i++)
-                {
-                    band = radio_type_to_band(user_scan_cfg->chan_list[i].radio_type);
-
-                    if ((user_scan_cfg->chan_list[i].chan_number == pmadapter->pscan_table[bss_idx].channel) &&
-                        (band & pmadapter->pscan_table[bss_idx].bss_band))
-                    {
-                        chan_listed = MTRUE;
-                        break;
-                    }
-                }
-                if (chan_listed == MTRUE)
-                    continue;
-                user_scan_cfg->chan_list[id].chan_number = pmadapter->pscan_table[bss_idx].channel;
-                if (pmadapter->pscan_table[bss_idx].bss_band & (BAND_B | BAND_G))
-                    user_scan_cfg->chan_list[id].radio_type = BAND_2GHZ;
-#ifdef CONFIG_5GHz_SUPPORT
-                if (pmadapter->pscan_table[bss_idx].bss_band & BAND_A)
-                    user_scan_cfg->chan_list[id].radio_type = BAND_5GHZ;
-#endif
-                user_scan_cfg->chan_list[id].scan_type = MLAN_SCAN_TYPE_ACTIVE;
-
-                user_scan_cfg->chan_list[id].scan_time = MRVDRV_ACTIVE_SCAN_CHAN_TIME;
-
-                id++;
-
-                if (id >= WLAN_USER_SCAN_CHAN_MAX)
-                    break;
-            }
-        }
-    }
-    if (id)
-    {
-        pmadapter->active_scan_triggered = MTRUE;
-        (void)__memcpy(pmadapter, user_scan_cfg->ssid_list, puser_scan_in->ssid_list, sizeof(user_scan_cfg->ssid_list));
-        user_scan_cfg->keep_previous_scan = MTRUE;
-#ifdef EXT_SCAN_ENH
-        if (pmadapter->ext_scan_type == EXT_SCAN_ENHANCE)
-            user_scan_cfg->ext_scan_type = EXT_SCAN_ENHANCE;
-#endif
-        wifi_d("active scan request for passive channel %d\r\n", id);
-        if (MLAN_STATUS_SUCCESS != wlan_scan_networks(pmpriv, NULL, user_scan_cfg))
-        {
-            goto done;
-        }
-        ret = MTRUE;
-    }
-done:
-    split_scan_in_progress = false;
-    if (user_scan_cfg)
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)user_scan_cfg);
-
-    LEAVE();
-    return ret;
-}
-
-/**
  *  @brief Interpret a BSS scan response returned from the firmware
  *
  *  Parse the various fixed fields and IEs passed back for a BSS probe
@@ -1587,6 +1495,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     pbss_entry->beacon_buf_size = bytes_left_for_current_beacon;
 
     (void)__memcpy(pmadapter, pbss_entry->time_stamp, pcurrent_ptr, 8);
+
+    pbss_entry->scan_result_tsf = os_get_timestamp();
 
     pcurrent_ptr += 8;
     bytes_left_for_current_beacon -= 8U;
@@ -2873,7 +2783,11 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 
     while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))
     {
-        tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
+      /* Barriers are normally not required but do ensure the code is
+       * completely within the specified behaviour for the architecture. */
+        __asm volatile ( "dsb" ::: "memory" );
+        __asm volatile ( "isb" );
+		tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
         tlv_len  = wlan_le16_to_cpu(pcurrent_tlv->header.len);
 
         if (sizeof(ptlv->header) + tlv_len > tlv_buf_left)
@@ -3899,11 +3813,15 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             break;
 
         /* Process variable TLV */
-        // coverity[sensitive_memory_access:SUPPRESS]
+		// coverity[sensitive_memory_access:SUPPRESS]
         while (bytes_left_for_tlv >= sizeof(MrvlIEtypesHeader_t) &&
                wlan_le16_to_cpu(ptlv->header.type) != TLV_TYPE_BSS_SCAN_RSP)
         {
-            tlv_type = wlan_le16_to_cpu(ptlv->header.type);
+            /* Barriers are normally not required but do ensure the code is
+             * completely within the specified behaviour for the architecture. */
+            __asm volatile ( "dsb" ::: "memory" );
+            __asm volatile ( "isb" );
+			tlv_type = wlan_le16_to_cpu(ptlv->header.type);
             tlv_len  = wlan_le16_to_cpu(ptlv->header.len);
             if (bytes_left_for_tlv < sizeof(MrvlIEtypesHeader_t) + tlv_len)
             {
@@ -4451,6 +4369,9 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
     bg_scan->report_condition = wlan_cpu_to_le32(bg_scan_in->report_condition);
 
     if ((bg_scan_in->action == BG_SCAN_ACT_GET)
+#ifdef CONFIG_WMM_UAPSD
+        || (bg_scan_in->action == BG_SCAN_ACT_GET_PPS_UAPSD)
+#endif
         || (!bg_scan->enable))
         goto done;
 
@@ -4458,8 +4379,8 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
     num_probes = (bg_scan_in->num_probes ? bg_scan_in->num_probes : pmadapter->scan_probes);
     if (num_probes)
     {
-        pnum_probes_tlv = (MrvlIEtypes_NumProbes_t *)tlv;
-        // coverity[overrun-local:SUPPRESS]
+        pnum_probes_tlv              = (MrvlIEtypes_NumProbes_t *)tlv;
+		// coverity[overrun-local:SUPPRESS]
         pnum_probes_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_NUMPROBES);
         pnum_probes_tlv->header.len  = wlan_cpu_to_le16(sizeof(pnum_probes_tlv->num_probes));
         pnum_probes_tlv->num_probes  = wlan_cpu_to_le16((t_u16)num_probes);
@@ -4727,6 +4648,17 @@ mlan_status wlan_ret_bgscan_config(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAN
         pscan               = (mlan_ds_scan *)pioctl_buf->pbuf;
         bg_scan_out         = (wlan_bgscan_cfg *)pscan->param.user_scan.scan_cfg_buf;
         bg_scan_out->action = wlan_le16_to_cpu(bg_scan->action);
+#ifdef CONFIG_WMM_UAPSD
+        if ((bg_scan_out->action == BG_SCAN_ACT_GET) && (bg_scan_out->action == BG_SCAN_ACT_GET_PPS_UAPSD))
+        {
+            bg_scan_out->enable           = bg_scan->enable;
+            bg_scan_out->bss_type         = bg_scan->bss_type;
+            bg_scan_out->chan_per_scan    = bg_scan->chan_per_scan;
+            bg_scan_out->scan_interval    = wlan_le32_to_cpu(bg_scan->scan_interval);
+            bg_scan_out->report_condition = wlan_le32_to_cpu(bg_scan->report_condition);
+            pioctl_buf->data_read_written = sizeof(mlan_ds_scan) + MLAN_SUB_COMMAND_SIZE;
+        }
+#endif
     }
     LEAVE();
     return MLAN_STATUS_SUCCESS;

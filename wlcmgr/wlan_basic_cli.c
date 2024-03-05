@@ -10,7 +10,11 @@
 
 #include <wlan.h>
 
+#ifdef CONFIG_ZEPHYR
+#include "wifi_shell.h"
+#else
 #include <cli.h>
+#endif
 
 static void test_wfa_wlan_version(int argc, char **argv)
 {

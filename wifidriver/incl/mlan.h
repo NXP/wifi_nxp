@@ -18,22 +18,47 @@ Change log:
 #ifndef _MLAN_H_
 #define _MLAN_H_
 
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
 
 
 
-#if !defined(SD8801)
-#define CONFIG_GTK_REKEY_OFFLOAD       1
+
+#ifndef CONFIG_ZEPHYR
+#ifndef CONFIG_STA_AUTO_DHCPV4
+#define CONFIG_STA_AUTO_DHCPV4 1
+#endif
+#endif
+
+#ifndef CONFIG_ZEPHYR
+#ifndef CONFIG_WIFI_STA_RECONNECT
+#define CONFIG_WIFI_STA_RECONNECT 1
+#endif
+#endif
+
+#ifndef CONFIG_ZEPHYR
+#ifndef CONFIG_WIFI_AUTO_POWER_SAVE
+#define CONFIG_WIFI_AUTO_POWER_SAVE 1
+#endif
+#endif
+
+#if !(defined(SD8801) || defined(RW610))
+#define CONFIG_GTK_REKEY_OFFLOAD 1
 #endif
 
 #if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
-#define CONFIG_WIFI_CAPA   1
 #endif
 
 #ifdef CONFIG_11AX
+#ifndef CONFIG_11K
 #define CONFIG_11K 1
+#endif
+#ifndef CONFIG_11V
 #define CONFIG_11V 1
+#endif
 #ifndef CONFIG_WPA_SUPP
 #define CONFIG_DRIVER_MBO 1
 #endif

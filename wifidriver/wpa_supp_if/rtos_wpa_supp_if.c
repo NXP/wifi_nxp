@@ -14,7 +14,9 @@
 #include "wifi.h"
 #include <wm_net.h>
 
+#ifndef CONFIG_ZEPHYR
 #include "fsl_debug_console.h"
+#endif
 
 #ifdef CONFIG_WPA_SUPP
 
@@ -464,6 +466,8 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
         event.deauth_info.ie_len = (frame + frame_len - mgmt->u.deauth.variable);
     }
 
+    (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, le_to_host16(mgmt->u.deauth.reason_code), NULL);
+
     wifi_if_ctx_rtos->supp_callbk_fns.deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event, mgmt);
 }
 
@@ -519,9 +523,13 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
+#ifdef CONFIG_ZEPHYR
+    iface = net_if_get_binding(iface_name);
+#else
     LOCK_TCPIP_CORE();
     iface = netif_find(iface_name);
     UNLOCK_TCPIP_CORE();
+#endif
 
     if (!iface)
     {
@@ -701,6 +709,9 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 #endif
 
     status = wifi_send_scan_cmd(bss_mode, bssid, ssid, ssid2, num_chans, chan_list, 0,
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+                                params->filter_rssi,
+#endif
                                 50U,
                                 false, false);
     if (status != WM_SUCCESS)
@@ -1175,6 +1186,11 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         memcpy(assoc_params->bssid, params->bssid, sizeof(assoc_params->bssid));
     }
 
+    if (params->prev_bssid)
+    {
+        memcpy(assoc_params->prev_bssid, params->prev_bssid, sizeof(assoc_params->prev_bssid));
+    }
+
     if (params->freq.freq)
     {
         int channel           = freq_to_chan(params->freq.freq);
@@ -1337,6 +1353,36 @@ out:
     return ret;
 }
 
+int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_idx)
+
+{
+    int status                                 = -WM_FAIL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -1;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, 0, key_idx, addr);
+
+    if (status != WM_SUCCESS)
+    {
+        supp_e("%s: wifi_nxp_del_key failed", __func__);
+    }
+    else
+    {
+        ret = 0;
+    }
+
+out:
+    return ret;
+}
+
 int wifi_nxp_wpa_supp_set_rekey_info(
     void *if_priv, const u8 *kek, size_t kek_len, const u8 *kck, size_t kck_len, const u8 *replay_ctr)
 {
@@ -1406,6 +1452,11 @@ out:
 int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
 {
     struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -WM_FAIL;
+    char *country                              = NULL;
+
+    country = os_mem_calloc(COUNTRY_CODE_LEN);
+    (void)memcpy(country, alpha2, COUNTRY_CODE_LEN - 1);
 
     if ((!if_priv) || (!alpha2))
     {
@@ -1414,8 +1465,14 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     }
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+    ret              = wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
 
-    return wifi_nxp_set_country(wifi_if_ctx_rtos->bss_type, alpha2);
+    if (ret == WM_SUCCESS)
+    {
+        (void)wifi_event_completion(WIFI_EVENT_REGION_POWER_CFG, WIFI_EVENT_REASON_SUCCESS, (void *)country);
+    }
+
+    return ret;
 
 out:
     return -1;
@@ -1845,6 +1902,62 @@ void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switc
     }
 }
 
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.dfs_event.freq        = dfs_cac_info->center_freq;
+    event.dfs_event.ht_enabled  = dfs_cac_info->ht_enabled;
+    event.dfs_event.chan_offset = dfs_cac_info->ch_offset;
+    event.dfs_event.chan_width  = (enum chan_width)dfs_cac_info->ch_width;
+    event.dfs_event.cf1         = dfs_cac_info->center_freq1;
+    event.dfs_event.cf2         = dfs_cac_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.dfs_event.freq        = dfs_cac_info->center_freq;
+    event.dfs_event.ht_enabled  = dfs_cac_info->ht_enabled;
+    event.dfs_event.chan_offset = dfs_cac_info->ch_offset;
+    event.dfs_event.chan_width  = (enum chan_width)dfs_cac_info->ch_width;
+    event.dfs_event.cf1         = dfs_cac_info->center_freq1;
+    event.dfs_event.cf2         = dfs_cac_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
                                 rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns)
@@ -1853,9 +1966,13 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     const struct netif *iface = NULL;
 
+#ifdef CONFIG_ZEPHYR
+    iface = net_if_get_binding(iface_name);
+#else
     LOCK_TCPIP_CORE();
     iface = netif_find(iface_name);
     UNLOCK_TCPIP_CORE();
+#endif
 
     if (!iface)
     {
@@ -1907,7 +2024,7 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 
 int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 {
-    int status = -WM_FAIL;
+    int status     = -WM_FAIL;
     t_u8 bandwidth = wifi_uap_get_bandwidth();
 
     if ((!if_priv) || (!modes))
@@ -1925,18 +2042,24 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211A].ht_capab, &modes[HOSTAPD_MODE_IEEE80211A].mcs_set[0],
-                               &modes[HOSTAPD_MODE_IEEE80211A].a_mpdu_params, 1);
-    if (status != WM_SUCCESS)
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
-        supp_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
-        goto out;
+        status = wifi_setup_ht_cap(&modes[HOSTAPD_MODE_IEEE80211A].ht_capab, &modes[HOSTAPD_MODE_IEEE80211A].mcs_set[0],
+                                   &modes[HOSTAPD_MODE_IEEE80211A].a_mpdu_params, 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G infra ht cap failed", __func__);
+            goto out;
+        }
     }
 #endif
 
     modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
 #ifdef CONFIG_5GHz_SUPPORT
-    modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_HT_INFO_KNOWN;
+    }
 #endif
 
 #ifdef CONFIG_11AC
@@ -1949,18 +2072,24 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     }
 
 #ifdef CONFIG_5GHz_SUPPORT
-    status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211A].vht_capab,
-                                modes[HOSTAPD_MODE_IEEE80211A].vht_mcs_set, 1);
-    if (status != WM_SUCCESS)
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
-        supp_e("%s: wifi nxp set 5G infra vht cap failed", __func__);
-        goto out;
+        status = wifi_setup_vht_cap((t_u32 *)&modes[HOSTAPD_MODE_IEEE80211A].vht_capab,
+                                    modes[HOSTAPD_MODE_IEEE80211A].vht_mcs_set, 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G infra vht cap failed", __func__);
+            goto out;
+        }
     }
 #endif
 
     modes[HOSTAPD_MODE_IEEE80211G].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
 #ifdef CONFIG_5GHz_SUPPORT
-    modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        modes[HOSTAPD_MODE_IEEE80211A].flags |= HOSTAPD_MODE_FLAG_VHT_INFO_KNOWN;
+    }
 #endif
 #endif
 
@@ -1985,20 +2114,23 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
         modes[HOSTAPD_MODE_IEEE80211G].he_capab[IEEE80211_MODE_AP].phy_cap[HE_PHYCAP_CHANNEL_WIDTH_SET_IDX] = 0;
     }
 #ifdef CONFIG_5GHz_SUPPORT
-    status = wifi_setup_he_cap(
-        (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
-    if (status != WM_SUCCESS)
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
     {
-        supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
-        goto out;
-    }
+        status = wifi_setup_he_cap(
+            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_INFRA], 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G infra he cap failed", __func__);
+            goto out;
+        }
 
-    status =
-        wifi_setup_he_cap((nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
-    if (status != WM_SUCCESS)
-    {
-        supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
-        goto out;
+        status = wifi_setup_he_cap(
+            (nxp_wifi_he_capabilities *)&modes[HOSTAPD_MODE_IEEE80211A].he_capab[IEEE80211_MODE_AP], 1);
+        if (status != WM_SUCCESS)
+        {
+            supp_e("%s: wifi nxp set 5G ap he cap failed", __func__);
+            goto out;
+        }
     }
     if (bandwidth == BANDWIDTH_20MHZ)
     {
@@ -2012,8 +2144,11 @@ int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
     wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211G].channels, modes[HOSTAPD_MODE_IEEE80211G].num_channels,
                             BAND_2GHZ);
 #ifdef CONFIG_5GHz_SUPPORT
-    wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211A].channels, modes[HOSTAPD_MODE_IEEE80211A].num_channels,
-                            BAND_5GHZ);
+    if (!ISSUPP_NO5G(mlan_adap->fw_cap_ext))
+    {
+        wifi_setup_channel_info(modes[HOSTAPD_MODE_IEEE80211A].channels, modes[HOSTAPD_MODE_IEEE80211A].num_channels,
+                                BAND_5GHZ);
+    }
 #endif
 
     status = WM_SUCCESS;
@@ -2459,4 +2594,8 @@ out:
     return -1;
 }
 
+bool wifi_nxp_wpa_get_modes(void *if_priv)
+{
+    return (!ISSUPP_NO5G(mlan_adap->fw_cap_ext));
+}
 #endif

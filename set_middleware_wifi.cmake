@@ -58,9 +58,9 @@ if(CONFIG_USE_COMPONENT_CONFIGURATION)
   target_compile_definitions(${MCUX_SDK_PROJECT_NAME} PUBLIC
     -DLWIP_DNS=1
     -DLWIP_NETIF_HOSTNAME=1
-    -DLWIP_NETIF_STATUS_CALLBACK=1
     -DLWIP_IGMP=1
     -DSDIO_ENABLED
+    -D_XOPEN_SOURCE=500
   )
 
 endif()
@@ -74,48 +74,12 @@ endif()
 endif()
 
 
-if (CONFIG_USE_middleware_wifi_fwdnld)
-# Add set(CONFIG_USE_middleware_wifi_fwdnld true) in config.cmake to use this component
-
-message("middleware_wifi_fwdnld component is included from ${CMAKE_CURRENT_LIST_FILE}.")
-
-if(CONFIG_USE_middleware_freertos-kernel AND CONFIG_USE_middleware_wifi_template AND CONFIG_USE_middleware_wifi_mlan_sdio AND CONFIG_USE_middleware_wifi_common_files AND CONFIG_USE_middleware_wifi_fwdnld_intf_abs)
-
-target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/./wifidriver/sdio.c
-  ${CMAKE_CURRENT_LIST_DIR}/./firmware_dnld/firmware_dnld.c
-)
-
-target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
-  ${CMAKE_CURRENT_LIST_DIR}/./incl
-  ${CMAKE_CURRENT_LIST_DIR}/./wifi_bt_firmware
-  ${CMAKE_CURRENT_LIST_DIR}/./wifi_bt_firmware/8801
-  ${CMAKE_CURRENT_LIST_DIR}/./wifi_bt_firmware/IW416
-  ${CMAKE_CURRENT_LIST_DIR}/./wifi_bt_firmware/8987
-  ${CMAKE_CURRENT_LIST_DIR}/./wifi_bt_firmware/nw61x
-  ${CMAKE_CURRENT_LIST_DIR}/./wifidriver
-  ${CMAKE_CURRENT_LIST_DIR}/./wifidriver/incl
-  ${CMAKE_CURRENT_LIST_DIR}/./firmware_dnld
-  ${CMAKE_CURRENT_LIST_DIR}/./sdio_nxp_abs
-  ${CMAKE_CURRENT_LIST_DIR}/./sdio_nxp_abs/incl
-  ${CMAKE_CURRENT_LIST_DIR}/./fwdnld_intf_abs
-)
-
-else()
-
-message(SEND_ERROR "middleware_wifi_fwdnld dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
-
-endif()
-
-endif()
-
-
 if (CONFIG_USE_middleware_wifi_wifidriver)
 # Add set(CONFIG_USE_middleware_wifi_wifidriver true) in config.cmake to use this component
 
 message("middleware_wifi_wifidriver component is included from ${CMAKE_CURRENT_LIST_FILE}.")
 
-if(CONFIG_USE_middleware_freertos-kernel AND CONFIG_USE_utility_debug_console AND CONFIG_USE_middleware_wifi_template AND ((CONFIG_USE_middleware_wifi_sdio AND CONFIG_USE_middleware_wifi_fwdnld AND CONFIG_USE_middleware_wifi_fwdnld_intf_abs)))
+if(CONFIG_USE_middleware_freertos-kernel AND CONFIG_USE_utility_debug_console AND CONFIG_USE_middleware_wifi_template AND ((CONFIG_USE_middleware_wifi_imu AND CONFIG_USE_middleware_wifi_common_files)))
 
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/./wifidriver/mlan_11ac.c
@@ -191,19 +155,19 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd/dhcp-server-main.c
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd/dhcp-server.c
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd/dns-server.c
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip/net.c
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip/wifi_netif.c
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net/net.c
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net/wifi_netif.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_txpwrlimit_cfg.c
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip/hooks/lwip_default_hooks.c
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net/hooks/lwip_default_hooks.c
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd
   ${CMAKE_CURRENT_LIST_DIR}/./incl
-  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/lwip
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip
-  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/lwip/hooks
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/net
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/net/hooks
 )
 
 else()
@@ -215,49 +179,24 @@ endif()
 endif()
 
 
-if (CONFIG_USE_middleware_wifi_sdio)
-# Add set(CONFIG_USE_middleware_wifi_sdio true) in config.cmake to use this component
+if (CONFIG_USE_middleware_wifi_imu)
+# Add set(CONFIG_USE_middleware_wifi_imu true) in config.cmake to use this component
 
-message("middleware_wifi_sdio component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+message("middleware_wifi_imu component is included from ${CMAKE_CURRENT_LIST_FILE}.")
 
-if(CONFIG_USE_middleware_wifi_mlan_sdio AND CONFIG_USE_middleware_wifi_wifidriver)
-
-target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/./wifidriver/wifi-sdio.c
-)
-
-else()
-
-message(SEND_ERROR "middleware_wifi_sdio dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
-
-endif()
-
-endif()
-
-
-if (CONFIG_USE_middleware_wifi_mlan_sdio)
-# Add set(CONFIG_USE_middleware_wifi_mlan_sdio true) in config.cmake to use this component
-
-message("middleware_wifi_mlan_sdio component is included from ${CMAKE_CURRENT_LIST_FILE}.")
-
-if(CONFIG_USE_middleware_sdmmc_host_usdhc_freertos AND CONFIG_USE_middleware_sdmmc_sdio AND CONFIG_USE_middleware_sdmmc_host_usdhc AND CONFIG_USE_middleware_wifi_template AND CONFIG_USE_middleware_wifi_common_files)
+if(CONFIG_USE_middleware_wifi_common_files AND CONFIG_USE_component_wireless_imu_adapter AND CONFIG_USE_component_osa_free_rtos AND CONFIG_USE_driver_imu)
 
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}/./sdio_nxp_abs/mlan_sdio.c
-  ${CMAKE_CURRENT_LIST_DIR}/./sdio_nxp_abs/fwdnld_sdio.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wifidriver/wifi-imu.c
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
-  ${CMAKE_CURRENT_LIST_DIR}/./incl/wifidriver
   ${CMAKE_CURRENT_LIST_DIR}/./wifidriver
-  ${CMAKE_CURRENT_LIST_DIR}/./wifidriver/incl
-  ${CMAKE_CURRENT_LIST_DIR}/./sdio_nxp_abs
-  ${CMAKE_CURRENT_LIST_DIR}/./sdio_nxp_abs/incl
 )
 
 else()
 
-message(SEND_ERROR "middleware_wifi_mlan_sdio dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
+message(SEND_ERROR "middleware_wifi_imu dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
 
 endif()
 
@@ -275,8 +214,11 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/./cli/cli.c
   ${CMAKE_CURRENT_LIST_DIR}/./cli/cli_mem_simple.c
   ${CMAKE_CURRENT_LIST_DIR}/./cli/cli_utils.c
+  ${CMAKE_CURRENT_LIST_DIR}/./cli/wifi_shell.c
   ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/wifi_ping.c
   ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/iperf.c
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/init_enet.c
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/telnet/telnet_server.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_basic_cli.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_enhanced_tests.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_tests.c
@@ -289,11 +231,137 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}/./cli
   ${CMAKE_CURRENT_LIST_DIR}/./incl
   ${CMAKE_CURRENT_LIST_DIR}/./incl/wlcmgr
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/telnet
 )
 
 else()
 
 message(SEND_ERROR "middleware_wifi_cli dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
+
+endif()
+
+endif()
+
+
+if (CONFIG_USE_middleware_wifi_wmcrypto)
+# Add set(CONFIG_USE_middleware_wifi_wmcrypto true) in config.cmake to use this component
+
+message("middleware_wifi_wmcrypto component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+if(CONFIG_USE_middleware_wifi AND CONFIG_USE_middleware_wifi_wifidriver)
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wmcrypto.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wmcrypto_mem.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_entropy.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_mem.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_net.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_helper_api.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_utils.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/aescrypto/aes-siv.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/aescrypto/aes-ctr.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/aescrypto/aes-omac1.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/aescrypto/aes-wrap.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/wmcrypto
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/aescrypto
+)
+
+else()
+
+message(SEND_ERROR "middleware_wifi_wmcrypto dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
+
+endif()
+
+endif()
+
+
+if (CONFIG_USE_middleware_wifi_wmtime)
+# Add set(CONFIG_USE_middleware_wifi_wmtime true) in config.cmake to use this component
+
+message("middleware_wifi_wmtime component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+if(CONFIG_USE_middleware_wifi AND CONFIG_USE_middleware_wifi_wifidriver)
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/./wmtime/wmtime.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/./wmtime
+  ${CMAKE_CURRENT_LIST_DIR}/./incl
+)
+
+else()
+
+message(SEND_ERROR "middleware_wifi_wmtime dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
+
+endif()
+
+endif()
+
+
+if (CONFIG_USE_middleware_wifi_wps)
+# Add set(CONFIG_USE_middleware_wifi_wps true) in config.cmake to use this component
+
+message("middleware_wifi_wps component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+if(CONFIG_USE_middleware_wifi AND CONFIG_USE_middleware_wifi_wifidriver AND CONFIG_USE_middleware_wifi_wmtime AND CONFIG_USE_middleware_wifi_wmcrypto)
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_eapol.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_l2.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_main.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_mem.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_msg.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_os.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_start.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_state.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wps/wps_wlan.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/./wps
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/wps
+)
+
+else()
+
+message(SEND_ERROR "middleware_wifi_wps dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
+
+endif()
+
+endif()
+
+
+if (CONFIG_USE_middleware_wifi_ncp_supp_wmcrypto)
+# Add set(CONFIG_USE_middleware_wifi_ncp_supp_wmcrypto true) in config.cmake to use this component
+
+message("middleware_wifi_ncp_supp_wmcrypto component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+if(CONFIG_USE_middleware_wifi AND CONFIG_USE_middleware_wifi_wifidriver)
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wmcrypto_mem.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_entropy.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_mem.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_net.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_mbedtls_helper_api.c
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto/wm_utils.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/./wmcrypto
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/wmcrypto
+)
+
+else()
+
+message(SEND_ERROR "middleware_wifi_ncp_supp_wmcrypto dependency does not meet, please check ${CMAKE_CURRENT_LIST_FILE}.")
 
 endif()
 

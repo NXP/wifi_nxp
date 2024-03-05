@@ -385,6 +385,11 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
     t_u16 req_len = 0, travel_len = 0;
     custom_ie *cptr = MNULL;
 
+#ifdef CONFIG_ECSA
+    MrvlIEtypes_action_chan_switch_t *tlv_chan_switch = MNULL;
+    IEEEtypes_ChanSwitchAnn_t *csa_ie                 = MNULL;
+    IEEEtypes_ExtChanSwitchAnn_t *ecsa_ie             = MNULL;
+#endif
 
     mlan_status ret = MLAN_STATUS_SUCCESS;
 
@@ -482,6 +487,44 @@ static mlan_status wlan_uap_cmd_sys_configure(pmlan_private pmpriv,
             ret = wlan_uap_cmd_ap_config(pmpriv, cmd, cmd_action, pioctl_buf);
             goto done;
         }
+#ifdef CONFIG_ECSA
+        else if (bss->sub_command == MLAN_OID_ACTION_CHAN_SWITCH)
+        {
+            cmd->size       = sizeof(HostCmd_DS_SYS_CONFIG) - 1 + S_DS_GEN + sizeof(MrvlIEtypes_action_chan_switch_t);
+            tlv_chan_switch = (MrvlIEtypes_action_chan_switch_t *)sys_config->tlv_buffer;
+            tlv_chan_switch->header.type = wlan_cpu_to_le16(MRVL_ACTION_CHAN_SWITCH_ANNOUNCE);
+            // mode reserve for future use
+            tlv_chan_switch->mode = 0;
+            if (bss->param.chanswitch.new_oper_class)
+            {
+                tlv_chan_switch->header.len =
+                    wlan_cpu_to_le16(sizeof(MrvlIEtypes_action_chan_switch_t) - sizeof(MrvlIEtypesHeader_t) +
+                                     sizeof(IEEEtypes_ExtChanSwitchAnn_t));
+                ecsa_ie                    = (IEEEtypes_ExtChanSwitchAnn_t *)tlv_chan_switch->ie_buf;
+                ecsa_ie->element_id        = EXTEND_CHANNEL_SWITCH_ANN;
+                ecsa_ie->len               = sizeof(IEEEtypes_ExtChanSwitchAnn_t) - sizeof(IEEEtypes_Header_t);
+                ecsa_ie->chan_switch_mode  = bss->param.chanswitch.chan_switch_mode;
+                ecsa_ie->chan_switch_count = bss->param.chanswitch.chan_switch_count;
+                ecsa_ie->new_channel_num   = bss->param.chanswitch.new_channel_num;
+                ecsa_ie->new_oper_class    = bss->param.chanswitch.new_oper_class;
+                cmd->size += sizeof(IEEEtypes_ExtChanSwitchAnn_t);
+            }
+            else
+            {
+                tlv_chan_switch->header.len =
+                    wlan_cpu_to_le16(sizeof(MrvlIEtypes_action_chan_switch_t) - sizeof(MrvlIEtypesHeader_t) +
+                                     sizeof(IEEEtypes_ChanSwitchAnn_t));
+                csa_ie                    = (IEEEtypes_ChanSwitchAnn_t *)tlv_chan_switch->ie_buf;
+                csa_ie->element_id        = CHANNEL_SWITCH_ANN;
+                csa_ie->len               = sizeof(IEEEtypes_ChanSwitchAnn_t) - sizeof(IEEEtypes_Header_t);
+                csa_ie->chan_switch_mode  = bss->param.chanswitch.chan_switch_mode;
+                csa_ie->chan_switch_count = bss->param.chanswitch.chan_switch_count;
+                csa_ie->new_channel_num   = bss->param.chanswitch.new_channel_num;
+                cmd->size += sizeof(IEEEtypes_ChanSwitchAnn_t);
+            }
+            cmd->size = wlan_cpu_to_le16(cmd->size);
+        }
+#endif
         else
         { /* Do Nothing */
         }

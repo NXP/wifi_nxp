@@ -14,7 +14,9 @@ Change log:
 ********************************************************/
 
 #include <mlan_api.h>
+#ifndef RW610
 #include "wifi-sdio.h"
+#endif
 #ifdef CONFIG_11V
 #define BTM_RESP_BUF_SIZE      200
 #define WNM_BTM_QUERY_BUF_SIZE 10U

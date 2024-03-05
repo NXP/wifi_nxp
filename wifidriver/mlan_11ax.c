@@ -21,7 +21,11 @@
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
 
+#if defined(RW610)
+#include "wifi-imu.h"
+#else
 #include "wifi-sdio.h"
+#endif
 /********************************************************
  *    Local Variables
  *    ********************************************************/
@@ -217,9 +221,15 @@ int wlan_cmd_append_11ax_tlv(mlan_private *pmpriv, BSSDescriptor_t *pbss_desc, t
  */
 void wlan_update_11ax_cap(mlan_adapter *pmadapter,
                           MrvlIEtypes_Extension_t *hw_he_cap
+#ifdef RW610
+                          ,
+                          int tlv_idx
+#endif
 )
 {
+#ifndef RW610
     MrvlIEtypes_He_cap_t *phe_cap = MNULL;
+#endif
     t_u8 i                        = 0;
     t_u8 he_cap_2g                = 0;
 #ifdef CONFIG_11AX_TWT
@@ -233,8 +243,12 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter,
         LEAVE();
         return;
     }
+#ifndef RW610
     phe_cap = (MrvlIEtypes_He_cap_t *)hw_he_cap;
     if (phe_cap->he_phy_cap[0] & (AX_2G_20MHZ_SUPPORT | AX_2G_40MHZ_SUPPORT))
+#else
+    if (tlv_idx == AX_2G_TLV_INDEX)
+#endif
     {
         pmadapter->hw_2g_hecap_len = hw_he_cap->len + sizeof(MrvlIEtypesHeader_t);
         (void)__memcpy(pmadapter, pmadapter->hw_2g_he_cap, (t_u8 *)hw_he_cap,

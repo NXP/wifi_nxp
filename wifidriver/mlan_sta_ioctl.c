@@ -621,6 +621,80 @@ static mlan_status wlan_power_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_r
     return status;
 }
 
+#ifdef CONFIG_WMM_UAPSD
+/**
+ *  @brief Set/Get WMM QoS configuration
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success
+ */
+static mlan_status wlan_wmm_ioctl_qos(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
+{
+    mlan_status ret      = MLAN_STATUS_SUCCESS;
+    mlan_private *pmpriv = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_wmm_cfg *wmm = MNULL;
+
+    ENTER();
+
+    wmm = (mlan_ds_wmm_cfg *)pioctl_req->pbuf;
+
+    if (pioctl_req->action == MLAN_ACT_GET)
+        wmm->param.qos_cfg = pmpriv->wmm_qosinfo;
+    else
+    {
+        pmpriv->wmm_qosinfo = wmm->param.qos_cfg;
+    }
+
+    pioctl_req->data_read_written = sizeof(t_u8) + MLAN_SUB_COMMAND_SIZE;
+
+    LEAVE();
+    return ret;
+}
+#endif
+#ifdef CONFIG_WMM_UAPSD
+#endif
+#ifdef CONFIG_WMM_UAPSD
+/**
+ *  @brief WMM configuration handler
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+static mlan_status wlan_wmm_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
+{
+    mlan_status status   = MLAN_STATUS_SUCCESS;
+    mlan_ds_wmm_cfg *wmm = MNULL;
+
+    ENTER();
+
+    if (pioctl_req->buf_len < sizeof(mlan_ds_wmm_cfg))
+    {
+        PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
+        pioctl_req->data_read_written = 0;
+        pioctl_req->buf_len_needed    = sizeof(mlan_ds_wmm_cfg);
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
+        LEAVE();
+        return MLAN_STATUS_RESOURCE;
+    }
+    wmm = (mlan_ds_wmm_cfg *)pioctl_req->pbuf;
+    switch (wmm->sub_command)
+    {
+        case MLAN_OID_WMM_CFG_QOS:
+            status = wlan_wmm_ioctl_qos(pmadapter, pioctl_req);
+            break;
+        default:
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+            status                  = MLAN_STATUS_FAILURE;
+            break;
+    }
+    LEAVE();
+    return status;
+}
+#endif
 
 /**
  *  @brief Get Random charactor
@@ -944,6 +1018,61 @@ exit:
     return status;
 }
 
+#ifdef CONFIG_WPS2
+/**
+ *  @brief WPS configuration handler
+ *
+ *  @param pmadapter	A pointer to mlan_adapter structure
+ *  @param pioctl_req	A pointer to ioctl request buffer
+ *
+ *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
+ */
+static mlan_status wlan_wps_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioctl_req pioctl_req)
+{
+    mlan_status status    = MLAN_STATUS_SUCCESS;
+    mlan_private *pmpriv  = pmadapter->priv[pioctl_req->bss_index];
+    mlan_ds_wps_cfg *pwps = MNULL;
+
+    ENTER();
+
+    if (pioctl_req->buf_len < sizeof(mlan_ds_wps_cfg))
+    {
+        PRINTM(MWARN, "MLAN bss IOCTL length is too short.\n");
+        pioctl_req->data_read_written = 0;
+        pioctl_req->buf_len_needed    = sizeof(mlan_ds_wps_cfg);
+        pioctl_req->status_code       = MLAN_ERROR_INVALID_PARAMETER;
+        LEAVE();
+        return MLAN_STATUS_RESOURCE;
+    }
+
+    pwps = (mlan_ds_wps_cfg *)pioctl_req->pbuf;
+    switch (pwps->sub_command)
+    {
+        case MLAN_OID_WPS_CFG_SESSION:
+            if (pioctl_req->action == MLAN_ACT_SET)
+            {
+                if (pwps->param.wps_session == MLAN_WPS_CFG_SESSION_START)
+                    pmpriv->wps.session_enable = MTRUE;
+                else
+                    pmpriv->wps.session_enable = MFALSE;
+            }
+            else
+            {
+                pwps->param.wps_session       = (t_u32)pmpriv->wps.session_enable;
+                pioctl_req->data_read_written = sizeof(t_u32);
+                PRINTM(MINFO, "wpscfg GET=%d\n", pwps->param.wps_session);
+            }
+            break;
+        default:
+            pioctl_req->status_code = MLAN_ERROR_IOCTL_INVALID;
+            status                  = MLAN_STATUS_FAILURE;
+            break;
+    }
+
+    LEAVE();
+    return status;
+}
+#endif /* CONFIG_WPS2 */
 
 
 /**
@@ -1224,6 +1353,16 @@ mlan_status wlan_ops_sta_ioctl(t_void *adapter, pmlan_ioctl_req pioctl_req)
         case MLAN_IOCTL_POWER_CFG:
             status = wlan_power_ioctl(pmadapter, pioctl_req);
             break;
+#ifdef CONFIG_WMM_UAPSD
+        case MLAN_IOCTL_WMM_CFG:
+            status = wlan_wmm_cfg_ioctl(pmadapter, pioctl_req);
+            break;
+#endif
+#ifdef CONFIG_WPS2
+        case MLAN_IOCTL_WPS_CFG:
+            status = wlan_wps_cfg_ioctl(pmadapter, pioctl_req);
+            break;
+#endif /* CONFIG_WPS2 */
         case MLAN_IOCTL_11N_CFG:
             status = wlan_11n_cfg_ioctl(pmadapter, pioctl_req);
             break;

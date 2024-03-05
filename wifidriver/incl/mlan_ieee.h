@@ -117,6 +117,9 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
 #endif
 
     REGULATORY_CLASS = 59,
+#ifdef CONFIG_ECSA
+    EXTEND_CHANNEL_SWITCH_ANN = 60,
+#endif
     HT_OPERATION = 61,
 #ifdef CONFIG_11K
     RRM_ENABLED_CAP = 70,
@@ -136,7 +139,13 @@ typedef MLAN_PACK_START enum _IEEEtypes_ElementId_e {
     VHT_CAPABILITY = 191,
     VHT_OPERATION  = 192,
 /*EXT_BSS_LOAD        = 193,*/
+#ifdef CONFIG_ECSA
+    BW_CHANNEL_SWITCH = 194,
+#endif
     VHT_TX_POWER_ENV = 195,
+#ifdef CONFIG_ECSA
+    EXT_POWER_CONSTR = 196,
+#endif
     /*AID_INFO            = 197,
     QUIET_CHAN          = 198,*/
     OPER_MODE_NTF = 199,
@@ -562,10 +571,14 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 
 /** AKM: 8021x */
 #define RSN_AKM_8021X 1
+/** AKM: FT 8021x */
+#define RSN_AKM_FT_8021X 3
 /** AKM: 8021x SUITE B*/
 #define RSN_AKM_8021X_SUITEB 0xb
 /** AKM: 8021x SUITE B 192*/
 #define RSN_AKM_8021X_SUITEB_192 0xc
+/** AKM: FT 8021x SHA384 */
+#define RSN_AKM_FT_8021X_SHA384 0xd
 /** AKM: PSK */
 #define RSN_AKM_PSK 2
 /** AKM: FT PSK */
@@ -573,9 +586,11 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 /** AKM: PSK SHA256 */
 #define RSN_AKM_PSK_SHA256 6
 
-/** AKM: PSK SHA256 */
+/** AKM: SAE SHA256 */
 #define RSN_AKM_SAE 8
-/** AKM: PSK SHA256 */
+/** AKM: FT SAE SHA256 */
+#define RSN_AKM_FT_SAE 9
+/** AKM: OWE SHA256 */
 #define RSN_AKM_OWE 18
 
 #if defined(STA_SUPPORT) && defined(ENABLE_802_11W) && defined(EMBEDDED_SUPPLICANT)
@@ -1390,6 +1405,24 @@ typedef MLAN_PACK_START struct
 } MLAN_PACK_END IEEEtypes_VhtTpcEnvelope_t;
 #endif
 
+#ifdef CONFIG_ECSA
+/** data structure for extended channel switch */
+typedef MLAN_PACK_START struct
+{
+    /** IEEE element ID = 60 */
+    t_u8 element_id;
+    /** Element length after id and len, set to 4 */
+    t_u8 len;
+    /** STA should not transmit any frames if 1 */
+    t_u8 chan_switch_mode;
+    /** Operate class # that AP/IBSS is moving to */
+    t_u8 new_oper_class;
+    /** Channel # that AP/IBSS is moving to */
+    t_u8 new_channel_num;
+    /** of TBTTs before channel switch */
+    t_u8 chan_switch_count;
+} MLAN_PACK_END IEEEtypes_ExtChanSwitchAnn_t;
+#endif
 
 /** Extended BSS Load IE */
 typedef MLAN_PACK_START struct _IEEEtypes_ExtBSSload_t
@@ -1710,6 +1743,12 @@ typedef MLAN_PACK_START struct
      *  Configure the number of probe requests for active chan scans
      */
     t_u8 num_probes;
+#ifdef CONFIG_SCAN_WITH_RSSIFILTER
+    /**
+     *  Threshold of RSSI
+     */
+    t_s16 rssi_threshold;
+#endif
     /**
      *  @brief Reserved
      */
@@ -1736,6 +1775,12 @@ typedef MLAN_PACK_START struct
 #define BG_SCAN_ACT_GET 0x0000
 /** action set all, except pps/uapsd config */
 #define BG_SCAN_ACT_SET 0x0001
+#ifdef CONFIG_WMM_UAPSD
+/** action get pps/uapsd config */
+#define BG_SCAN_ACT_GET_PPS_UAPSD 0x0100
+/** action set pps/uapsd config */
+#define BG_SCAN_ACT_SET_PPS_UAPSD 0x0101
+#endif
 /** action set all */
 #define BG_SCAN_ACT_SET_ALL 0xff01
 /** ssid match */
@@ -1763,7 +1808,8 @@ typedef MLAN_PACK_START struct
 #define LOWEST_RSSI_THRESHOLD 82
 /** delta rssi */
 #define DELTA_RSSI 10
-
+/** Scan channel gap */
+#define SCAN_CHANNEL_GAP_VALUE 50U
 #ifdef CONFIG_11AX
 typedef MLAN_PACK_START struct _IEEEtypes_Extension_t
 {
@@ -2026,6 +2072,9 @@ typedef struct _BSSDescriptor_t
      * BAND_A(0X04): 'a' band
      */
     t_u16 bss_band;
+
+    /** TSF record at driver receive the scan result from FW (in us) */
+    unsigned int scan_result_tsf;
 
     /** TSF timestamp from the current firmware TSF */
     t_u64 network_tsf;

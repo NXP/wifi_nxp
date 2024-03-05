@@ -47,6 +47,9 @@ typedef enum _mlan_ioctl_req_id
     MLAN_OID_UAP_BSS_RESET,
     MLAN_OID_BSS_ROLE,
     MLAN_OID_UAP_ADD_STATION = 0x0002001C,
+#ifdef CONFIG_ECSA
+    MLAN_OID_ACTION_CHAN_SWITCH = 0x0002001E,
+#endif
 
     /* Radio Configuration Group */
     MLAN_IOCTL_RADIO_CFG = 0x00030000,
@@ -202,8 +205,14 @@ typedef enum _mlan_ioctl_req_id
 #ifdef CONFIG_GTK_REKEY_OFFLOAD
     MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD = 0x00200037,
 #endif
+#ifdef CONFIG_ECSA
+    MLAN_OID_MISC_OPER_CLASS = 0x00200038,
+#endif
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
     MLAN_OID_MISC_IND_RST_CFG = 0x00200040,
+#endif
+#ifdef CONFIG_ECSA
+    MLAN_OID_MISC_OPER_CLASS_CHECK = 0x00200049,
 #endif
     MLAN_OID_MISC_GET_REGIONPWR_CFG,
 #ifdef CONFIG_WIFI_CLOCKSYNC
@@ -621,6 +630,9 @@ typedef struct _mlan_ssid_bssid
 #define MLAN_11AX_TWT_REPORT_SUBID   0x116
 #endif /* CONFIG_11AX_TWT */
 
+#ifdef CONFIG_MMSF
+#define MLAN_11AX_DEBUG_MMSF_SUBID 0x12d
+#endif
 #endif /* CONFIG_11AX */
 
 /** Maximum packet forward control value */
@@ -746,6 +758,10 @@ typedef struct _mlan_ssid_bssid
 /** Valid cipher bitmap */
 #define VALID_CIPHER_BITMAP 0x0cU
 
+#ifdef CONFIG_NET_MONITOR
+/** Maximum monior mac filter num */
+#define MAX_MONIT_MAC_FILTER_NUM 3
+#endif
 
 /** Channel List Entry */
 typedef struct _channel_list
@@ -995,6 +1011,32 @@ typedef struct _mlan_deauth_param
 } mlan_deauth_param;
 
 
+#ifdef CONFIG_ECSA
+/** mlan_chan_switch_param */
+typedef struct _mlan_action_chan_switch
+{
+    /** mode*/
+    t_u8 mode;
+    /** switch mode*/
+    t_u8 chan_switch_mode;
+    /** oper class*/
+    t_u8 new_oper_class;
+    /** new channel */
+    t_u8 new_channel_num;
+    /** chan_switch_count */
+    t_u8 chan_switch_count;
+} mlan_action_chan_switch;
+
+typedef struct _mlan_ds_bw_chan_oper
+{
+    /* bandwidth 20:20M 40:40M 80:80M*/
+    t_u8 bandwidth;
+    /* channel number */
+    t_u8 channel;
+    /* Non-global operating class */
+    t_u8 oper_class;
+} mlan_ds_bw_chan_oper;
+#endif
 
 /** mlan_uap_acs_scan */
 typedef struct _mlan_uap_acs_scan
@@ -1087,6 +1129,10 @@ typedef struct _mlan_ds_bss
 #endif
         /** BSS param for AP mode */
         mlan_uap_bss_param bss_config;
+#ifdef CONFIG_ECSA
+        /** channel switch for MLAN_OID_UAP_CHAN_SWITCH */
+        mlan_action_chan_switch chanswitch;
+#endif
 #if 0
         /** deauth param for MLAN_OID_UAP_DEAUTH_STA */
         mlan_deauth_param deauth_param;
@@ -1223,6 +1269,10 @@ typedef struct _mlan_ds_ant_cfg_1x1
     t_u16 evaluate_time;
     /** Current antenna */
     t_u16 current_antenna;
+#ifdef RW610
+    /** Evaluate time */
+    t_u8 evaluate_mode;
+#endif
 } mlan_ds_ant_cfg_1x1, *pmlan_ds_ant_cfg_1x1;
 
 
@@ -2088,6 +2138,10 @@ typedef struct _mlan_ds_rate
 {
     /** Sub-command */
     mlan_ioctl_req_id sub_command;
+#ifdef CONFIG_AUTO_NULL_TX
+    /** Only set auto tx fix rate */
+    t_u16 auto_null_fixrate_enable;
+#endif
     /** Rate configuration parameter */
     union
     {
@@ -3542,6 +3596,8 @@ typedef enum _mlan_rf_test_mode
 #define MFG_CMD_RADIO_MODE_CFG       0x1211
 #define MFG_CMD_CONFIG_MAC_HE_TB_TX  0x110A
 #define MFG_CMD_CONFIG_TRIGGER_FRAME 0x110C
+#define MFG_CMD_OTP_MAC_ADD          0x108C
+#define MFG_CMD_OTP_CAL_DATA         0x121A
 
 /** Configuration for Manufacturing generic command */
 typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_generic_cfg
@@ -3654,6 +3710,39 @@ typedef PACK_START struct _mlan_ds_mfg_Cmd_HE_TBTx_t
     t_s16 tx_power;
 } PACK_END mlan_ds_mfg_Cmd_HE_TBTx_t;
 
+typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t
+{
+   /** MFG command code */
+    t_u32  mfg_cmd;
+    /** Action */
+    t_u16  action;
+    /** Device ID */
+    t_u16  device_id;
+    /** MFG Error code */
+    t_u32  error;
+    /** Destination MAC Address */
+    t_u8 mac_addr[MLAN_MAC_ADDR_LENGTH];
+}MLAN_PACK_END mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t;
+
+#define CAL_DATA_LEN 2800
+typedef MLAN_PACK_START struct _mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t
+{
+   /** MFG command code */
+    t_u32  mfg_cmd;
+    /** Action */
+    t_u16  action;
+    /** Device ID */
+    t_u16  device_id;
+    /** MFG Error code */
+    t_u32  error;
+    /** CAL Data write status */
+    t_u32   cal_data_status;
+    /** CAL Data Length*/
+    t_u32   cal_data_len;
+    /** Destination MAC Address */
+    t_u8 cal_data[CAL_DATA_LEN];
+}MLAN_PACK_END mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t;
+
 typedef MLAN_PACK_START struct _mfg_cmd_IEEEtypes_HETrigComInfo_t
 {
     t_u64 trigger_type : 4;
@@ -3756,6 +3845,34 @@ typedef MLAN_PACK_START struct _mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t
 } MLAN_PACK_END mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t;
 #endif
 
+#ifdef CONFIG_MULTI_CHAN
+typedef MLAN_PACK_START struct _mlan_ds_multi_chan_cfg
+{
+    /** Channel Time */
+    t_u32 channel_time;
+    /** Buffer Weight */
+    t_u8 buffer_weight;
+    /** tlv len */
+    t_u16 tlv_len;
+    /** TLV buffer */
+    t_u8 tlv_buf[];
+} MLAN_PACK_END mlan_ds_multi_chan_cfg;
+
+typedef MLAN_PACK_START struct _mlan_ds_drcs_cfg
+{
+    /** Channel Index*/
+    t_u16 chan_idx;
+    /** Channel time (in TU) for chan_idx */
+    t_u8 chantime;
+    /** Channel swith time (in TU) for chan_idx */
+    t_u8 switchtime;
+    /** Undoze time (in TU) for chan_idx */
+    t_u8 undozetime;
+    /** Rx traffic control scheme when channel switch*/
+    /** only valid for GC/STA interface*/
+    t_u8 mode;
+} MLAN_PACK_END mlan_ds_drcs_cfg;
+#endif
 
 
 #if defined(CONFIG_GTK_REKEY_OFFLOAD)
@@ -3855,6 +3972,20 @@ typedef struct _mlan_ds_misc_cfg
         mlan_ds_mfg_cmd_tx_cont mfg_tx_cont;
         mlan_ds_mfg_Cmd_HE_TBTx_t mfg_he_power;
         mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t mfg_tx_trigger_config;
+        mlan_ds_mfg_cmd_otp_mac_addr_rd_wr_t mfg_otp_mac_addr_rd_wr;
+        mlan_ds_mfg_cmd_otp_cal_data_rd_wr_t mfg_otp_cal_data_rd_wr;
+#endif
+#ifdef CONFIG_MULTI_CHAN
+        /** Multi-channel config for MLAN_OID_MISC_MULTI_CHAN_CFG */
+        mlan_ds_multi_chan_cfg multi_chan_cfg;
+        /** Multi-channel policy for MLAN_OID_MISC_MULTI_CHAN_POLICY */
+        t_u16 multi_chan_policy;
+        /** channel drcs time slicing config for MLAN_OID_MISC_DRCS_CFG
+         */
+        mlan_ds_drcs_cfg drcs_cfg[2];
+#endif
+#ifdef CONFIG_ECSA
+        mlan_ds_bw_chan_oper bw_chan_oper;
 #endif
         mlan_embedded_dhcp_config embedded_dhcp_config;
 #ifdef CONFIG_GTK_REKEY_OFFLOAD

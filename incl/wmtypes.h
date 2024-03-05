@@ -15,4 +15,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#endif
+
 #endif /* ! _WMTYPES_H_ */

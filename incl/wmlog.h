@@ -11,7 +11,18 @@
 #ifndef __WMLOG_H__
 #define __WMLOG_H__
 
+
+#ifdef CONFIG_ZEPHYR
+#include "nxp_wifi.h"
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#ifndef PRINTF
+#define PRINTF printk
+#endif
+#else
 #include "fsl_debug_console.h"
+#endif
 
 #ifdef CONFIG_ENABLE_ERROR_LOGS
 #define wmlog_e(_mod_name_, _fmt_, ...) (void)PRINTF("[%s]%s" _fmt_ "\n\r", _mod_name_, " Error: ", ##__VA_ARGS__)

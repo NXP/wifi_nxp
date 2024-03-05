@@ -31,6 +31,9 @@
 #include "nw61x/sd_nw61x_se.h"
 #include "nw61x/uart_nw61x_se.h"
 #endif
+#elif defined(RW610)
+extern const unsigned char *wlan_fw_bin;
+extern const unsigned int wlan_fw_bin_len;
 #endif
 
 #endif /* __WLAN_BT_FW_H__ */

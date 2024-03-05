@@ -40,7 +40,7 @@ static mlan_operations mlan_sta_ops = {
     /* cmd handler */
     wlan_ops_sta_prepare_cmd,
     /* rx handler */
-    wlan_ops_sta_process_rx_packet,
+    wlan_ops_process_rx_packet,
     /* BSS role: STA */
     MLAN_BSS_ROLE_STA,
 };
@@ -48,7 +48,7 @@ static mlan_operations mlan_uap_ops = {
     /* cmd handler */
     wlan_ops_uap_prepare_cmd,
        /* rx handler */
-    /* wlan_ops_uap_process_rx_packet, */ NULL,
+    wlan_ops_process_rx_packet,
     /* BSS role: uAP */
     MLAN_BSS_ROLE_UAP,
 };
@@ -59,6 +59,9 @@ static mlan_operations *mlan_ops[] = {
     &mlan_uap_ops,
     MNULL,
 };
+#if defined(RW610)
+extern bus_operations imu_ops;
+#endif
 /** Global moal_assert callback */
 t_void (*assert_callback)(IN t_void *pmoal_handle, IN t_u32 cond) = MNULL;
 #ifdef DEBUG_LEVEL1
@@ -205,6 +208,9 @@ mlan_status mlan_register(IN pmlan_device pmdevice, OUT t_void **ppmlan_adapter)
         }
     }
 
+#if defined(RW610)
+    (void)__memcpy(pmadapter, &pmadapter->bus_ops, &imu_ops, sizeof(bus_operations));
+#endif
 
     /* Initialize lock variables */
     if (wlan_init_lock_list(pmadapter) != MLAN_STATUS_SUCCESS)
