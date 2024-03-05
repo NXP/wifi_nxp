@@ -6310,7 +6310,7 @@ static int send_csi_ack(unsigned int *resArray)
     HostCmd_WLS_CSI_ACK *phostcmd = (HostCmd_WLS_CSI_ACK *)&cmd->params.wls_csi_ack;
 
     cmd->command     = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
-    cmd->size        = S_DS_GEN + sizeof(HostCmd_WLS_CSI_ACK);
+    cmd->size        = S_DS_GEN + sizeof(HostCmd_WLS_CSI_ACK) + 8;
     phostcmd->action = 0;
     phostcmd->sub_id = 0x333;
     phostcmd->ack    = 1;

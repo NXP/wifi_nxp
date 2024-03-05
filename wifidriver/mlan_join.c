@@ -1431,7 +1431,6 @@ mlan_status wlan_cmd_802_11_associate(IN mlan_private *pmpriv, IN HostCmd_DS_COM
     (void)__memcpy(pmadapter, &passo->cap_info, &tmp_cap, sizeof(passo->cap_info));
 
 done:
-    dump_hex(cmd, cmd->size);
 
     LEAVE();
     return ret;
