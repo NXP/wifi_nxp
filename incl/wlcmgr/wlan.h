@@ -655,10 +655,10 @@ enum wlan_monitor_opt
 /* Burst Period in units of 100 milli seconds */
 #define BURST_PERIOD 10
 /* FTM frames per burst */
-#define FTM_PER_BURST 10
+#define FTM_PER_BURST 5
 /* Indicates minimum time between consecutive Fine Timing Measurement frames. It is specified in in units of 100 micro
  * seconds. */
-#define MIN_DELTA 100
+#define MIN_DELTA 60
 /* ASAP */
 #define IS_ASAP 1
 /* Bandwidth
@@ -667,7 +667,7 @@ enum wlan_monitor_opt
  11 - HT40
  12 - VHT40
  13 - VHT80 */
-#define BW 11 /* RW610 only allows 20M bandwidth */
+#define BW 13 /* RW610 only allows 20M bandwidth */
 /*Indicates how many burst instances are requested for the FTM session */
 #define BURST_EXP 0
 
@@ -690,7 +690,7 @@ enum wlan_monitor_opt
 #define CIVIC_ADDRESS       "#123"
 
 /* DOT11AZ CFG */
-#define FORMAT_BW 0 /* RW610 only allows 20M bandwidth */
+#define FORMAT_BW 2 /* RW610 only allows 20M bandwidth */
 /*Maximum number of space-time streams to be used in DL/UL NDP frames in the session upto 80MHz*/
 #define MAX_I2R_STS_UPTO80 0 /* RW610 only allows to send 1 N_STS*/
 #define MAX_R2I_STS_UPTO80 1
