@@ -3403,13 +3403,11 @@ void wlan_clear_host_sleep_config();
  * \return -WM_FAIL if failed.
  */
 int wlan_set_multicast(t_u8 mef_action);
-#ifdef CONFIG_POWER_MANAGER
-/** This function sent power Manager events to mon_thread
+/** This function sent host sleep events to mon_thread
  * \param[in] id Event ID.
  * \param[in] data Pointer to event msg.
  */
-status_t powerManager_send_event(int id, void *data);
-#endif
+status_t wlan_hs_send_event(int id, void *data);
 #endif
 
 /** Set configuration parameters of IEEE power save mode.

@@ -1078,14 +1078,7 @@ int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason)
 #endif
 
 #ifdef CONFIG_HOST_SLEEP
-#ifdef CONFIG_POWER_MANAGER
-static void wake_timer_cb(os_timer_arg_t arg)
-{
-    if(wakelock_isheld())
-        wakelock_put();
-}
-
-status_t powerManager_send_event(int id, void *data)
+status_t wlan_hs_send_event(int id, void *data)
 {
     struct wlan_message msg;
     int ret;
@@ -1100,14 +1093,21 @@ status_t powerManager_send_event(int id, void *data)
 #ifdef __ZEPHYR__
         return -WM_FAIL;
 #else
-        return kStatus_PMNotifyEventError;
+        return kStatus_Fail;
 #endif
     }
 #ifdef __ZEPHYR__
     return WM_SUCCESS;
 #else
-    return kStatus_PMSuccess;
+    return kStatus_Success;
 #endif
+}
+
+#ifdef CONFIG_POWER_MANAGER
+static void wake_timer_cb(os_timer_arg_t arg)
+{
+    if(wakelock_isheld())
+        wakelock_put();
 }
 
 #ifndef __ZEPHYR__
@@ -1143,7 +1143,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
         if (!is_hs_handshake_done)
         {
             is_hs_handshake_done = WLAN_HOSTSLEEP_IN_PROCESS;
-            ret = powerManager_send_event(HOST_SLEEP_HANDSHAKE, NULL);
+            ret = wlan_hs_send_event(HOST_SLEEP_HANDSHAKE, NULL);
             if (ret != 0)
                 return kStatus_PMNotifyEventError;
             return kStatus_PMPowerStateNotAllowed;
@@ -1171,7 +1171,7 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
 #endif
         if (is_hs_handshake_done == WLAN_HOSTSLEEP_SUCCESS)
         {
-            ret = powerManager_send_event(HOST_SLEEP_EXIT, NULL);
+            ret = wlan_hs_send_event(HOST_SLEEP_EXIT, NULL);
             if (ret != 0)
                 return kStatus_PMNotifyEventError;
             /* reset hs hanshake flag after waking up */
