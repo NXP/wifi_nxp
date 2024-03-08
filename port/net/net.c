@@ -1685,6 +1685,15 @@ void net_interface_down(void *intrfc_handle)
 {
     interface_t *if_handle = (interface_t *)intrfc_handle;
     net_if_ipv4_addr_rm(if_handle->netif, &if_handle->ipaddr.in_addr);
+#ifdef CONFIG_IPV6
+    struct net_if_ipv6 *ipv6;
+    net_if_config_ipv6_get(if_handle->netif, &ipv6);
+
+    for (int i = 0; i < NET_IF_MAX_IPV6_ADDR; i++)
+    {
+        net_if_ipv6_addr_rm(if_handle->netif, &ipv6->unicast[i].address.in6_addr);
+    }
+#endif
     net_if_down(((interface_t *)intrfc_handle)->netif);
 }
 
