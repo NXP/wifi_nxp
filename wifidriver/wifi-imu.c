@@ -1641,6 +1641,11 @@ retry:
     {
         wifi_shutdown_enable = false;
     }
+	
+#ifdef CONFIG_CAU_TEMPERATURE
+    wifi_cau_temperature_enable();
+    wifi_cau_temperature_write_to_firmware();
+#endif
 
     wifi_init_imulink();
 

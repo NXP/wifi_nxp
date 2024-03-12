@@ -1068,6 +1068,10 @@ void task_main(void *param)
 #if defined(CONFIG_SUPPORT_WIFI) && (CONFIG_SUPPORT_WIFI == 1)
     sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, 0);
 #endif
+
+    wifi_cau_temperature_enable();
+    wifi_cau_temperature_write_to_firmware();
+
     /* 15d4 single and 15d4+ble combo */
 #if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1)
     sb3_fw_download(LOAD_15D4_FIRMWARE, 1, 0);
@@ -1085,7 +1089,6 @@ void task_main(void *param)
     rpmsg_init();
 
     /* Initialize CAU temperature timer */
-    wifi_cau_temperature_enable();
     g_wifi_cau_temperature_timer =
         xTimerCreate("CAU Timer", 5000 / portTICK_PERIOD_MS, pdTRUE, NULL, wifi_cau_temperature_timer_cb);
     if (g_wifi_cau_temperature_timer == NULL)
