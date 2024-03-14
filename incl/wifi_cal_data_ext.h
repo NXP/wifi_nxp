@@ -79,6 +79,9 @@ const uint8_t int_cal_data[] = {
 #endif
 
 #ifdef RW610
+#ifdef FRDMRW610
+#define CONFIG_WLAN_CALDATA_1ANT
+#endif
 #ifdef CONFIG_WLAN_CALDATA_1ANT
 /*one ANT*/
 const uint8_t cal_data_rw610[] = {

@@ -712,6 +712,7 @@ set.middleware.wifi:
       - mcxn5xxevk
       - rdrw612bga
       - rdrw612qfn
+      - frdmrw612
     - set.middleware.lwip
     - set.middleware.freertos-kernel
 
