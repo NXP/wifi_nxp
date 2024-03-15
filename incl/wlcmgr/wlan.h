@@ -170,7 +170,7 @@
 
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
-extern os_queue_t *mon_thread_event_queue;
+extern osa_msg_handle_t mon_thread_event_queue;
 #endif
 #endif
 
@@ -295,10 +295,7 @@ typedef enum
 #define HOST_WAKEUP_GPIO_PIN 12
 #define CARD_WAKEUP_GPIO_PIN 3
 #endif
-#elif defined(WIFI_88W8987_BOARD_MURATA_1ZM_M2)
-#define HOST_WAKEUP_GPIO_PIN 13
-#define CARD_WAKEUP_GPIO_PIN 16
-#elif defined(WIFI_IW416_BOARD_MURATA_1XK_M2)
+#elif defined(WIFI_88W8987_BOARD_MURATA_1ZM_M2) || defined(WIFI_IW416_BOARD_MURATA_1XK_M2)
 #define HOST_WAKEUP_GPIO_PIN 2
 #define CARD_WAKEUP_GPIO_PIN 16
 #else
@@ -3416,6 +3413,14 @@ int wlan_set_multicast(t_u8 mef_action);
  */
 status_t wlan_hs_send_event(int id, void *data);
 #endif
+
+/** Set configuration parameters of IEEE power save mode.
+ *
+ * \param [in] ps_cfg : powersave configuratiuon includes multiple parameters.
+ * \return WM_SUCCESS if the call was successful.
+ * \return -WM_FAIL if failed.
+ */
+int wlan_set_ieeeps_cfg(struct wlan_ieeeps_config *ps_cfg);
 
 /** Set configuration parameters of IEEE power save mode.
  *

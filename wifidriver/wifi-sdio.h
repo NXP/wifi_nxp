@@ -78,7 +78,6 @@ typedef struct __nvram_backup_struct
     t_u32 wifi_state;
 } nvram_backup_t;
 
-extern os_thread_t wifi_core_thread;
 extern bool g_txrx_flag;
 #ifdef WLAN_LOW_POWER_ENABLE
 extern bool low_power_mode;

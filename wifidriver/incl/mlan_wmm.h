@@ -79,7 +79,7 @@ static INLINE t_void wlan_request_ralist_lock(pmlan_private priv)
 
     ENTER();
 
-    os_mutex_get(&priv->tx_ba_stream_tbl_lock, OS_WAIT_FOREVER);
+    OSA_MutexLock((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock, osaWaitForever_c);
 #ifndef CONFIG_MLAN_WMSDK
     /* Call MOAL spin lock callback function */
     pcb->moal_spin_lock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);
@@ -105,7 +105,8 @@ static INLINE t_void wlan_release_ralist_lock(pmlan_private priv)
 
     ENTER();
 
-    os_mutex_put(&priv->tx_ba_stream_tbl_lock);
+    OSA_MutexUnlock((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock);
+
 #ifndef CONFIG_MLAN_WMSDK
     /* Call MOAL spin unlock callback function */
     pcb->moal_spin_unlock(pmadapter->pmoal_handle, priv->wmm.ra_list_spinlock);

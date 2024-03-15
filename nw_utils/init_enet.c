@@ -6,12 +6,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <string.h>
-#include <wm_os.h>
-#include <wm_net.h>
-
-#include <cli.h>
-
 #ifdef CONFIG_WIFI_SMOKE_TESTS
 
 #if defined(SDK_OS_FREE_RTOS)
@@ -29,8 +23,30 @@
 
 #include "fsl_silicon_id.h"
 
+#include "lwip/dhcp.h"
+#include "lwip/ip_addr.h"
+#include "lwip/netifapi.h"
+#include "lwip/prot/dhcp.h"
+#include "lwip/tcpip.h"
+#include "lwip/sys.h"
+#include "ethernetif.h"
+
+#include "fsl_adapter_gpio.h"
+
+#include "board.h"
+#include "app.h"
+
+#include "ethernetif.h"
+#include <string.h>
+#include <osa.h>
+#include <wm_net.h>
+
 #include "network_cfg.h"
 #include "telnet_server.h"
+
+#include "fsl_silicon_id.h"
+#include "fsl_phy.h"
+#include <cli.h>
 
 /*${header:end}*/
 

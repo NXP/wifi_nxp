@@ -8,7 +8,7 @@
  *
  */
 #include <string.h>
-#include <fsl_os_abstraction.h>
+#include <osa.h>
 #include "fwdnld_intf_abs.h"
 #include "fwdnld_sdio.h"
 #include "mlan_sdio_defs.h"
@@ -25,6 +25,7 @@ fwdnld_sdio_intf_specific sdio_intf_specific_g;
  */
 static fwdnld_intf_ret_t wlan_set_fw_dnld_size(void)
 {
+#if 0
     uint32_t resp;
 
     bool rv = sdio_drv_creg_write(FN1_BLOCK_SIZE_0, 0, 0, &resp);
@@ -38,7 +39,7 @@ static fwdnld_intf_ret_t wlan_set_fw_dnld_size(void)
     {
         return FWDNLD_INTF_FAIL;
     }
-
+#endif
     return FWDNLD_INTF_SUCCESS;
 }
 
@@ -65,11 +66,7 @@ static bool wlan_sdio_check_fw_status(t_u32 card_poll)
             sdio_io_d("Firmware Ready");
             return true;
         }
-#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
-#else
-        os_thread_sleep(os_msec_to_ticks(5));
-#endif
     }
     return false;
 }
@@ -159,11 +156,7 @@ int32_t wlan_reset_fw()
                 break;
             }
         }
-#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
-#else
-        os_thread_sleep(os_msec_to_ticks(5));
-#endif
     }
     /* Write register to notify FW */
     rv = sdio_drv_creg_write(CARD_FW_RESET_REG, 1, CARD_FW_RESET_VAL, &resp);
@@ -194,11 +187,7 @@ int32_t wlan_reset_fw()
             sdio_io_d("FW is ready");
             break;
         }
-#ifndef __ZEPHYR__
         OSA_TimeDelay(5U);
-#else
-        os_thread_sleep(os_msec_to_ticks(5));
-#endif
     }
 
     if (resp)

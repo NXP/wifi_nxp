@@ -8,6 +8,8 @@
 #ifndef __WLAN_BT_FW_H__
 #define __WLAN_BT_FW_H__
 
+#include <osa.h>
+
 #if defined(SD8801)
 #include "sd8801_wlan.h"
 #elif defined(SD8978)
@@ -34,6 +36,8 @@
 #elif defined(RW610)
 extern const unsigned char *wlan_fw_bin;
 extern const unsigned int wlan_fw_bin_len;
+#else
+#error "Please define Wi-Fi Module"
 #endif
 
 #endif /* __WLAN_BT_FW_H__ */

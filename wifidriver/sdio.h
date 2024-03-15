@@ -12,6 +12,7 @@
 
 #include <wmerrno.h>
 #include "type_decls.h"
+#include <osa.h>
 
 #ifndef __ZEPHYR__
 #include "fsl_sdmmc_common.h"

@@ -16,7 +16,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -360,10 +360,10 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
         goto done;
 #else
         /* fixme */
-        PRINTM(MMSG, "Is a management packet expected here?\n\r");
-        (void)os_enter_critical_section();
+        wifi_e("Is a management packet expected here?");
         while (true)
         {
+            OSA_TimeDelay(10);
         }
 #endif /* CONFIG_P2P */
     }
@@ -380,11 +380,12 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
     }
 
     /*
-     * If 11n isn't enabled, or if the packet is not an unicast packet for STA case, 
+     * If 11n isn't enabled, or if the packet is not an unicast packet for STA case,
      * then send the packet directly to os. Don't pass thru rx reordering
      */
-    if (((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) && ((!IS_11N_ENABLED(priv)) ||
-        __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))) ||
+    if (((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) &&
+         ((!IS_11N_ENABLED(priv)) ||
+          __memcmp(priv->adapter, priv->curr_addr, prx_pkt->eth803_hdr.dest_addr, MLAN_MAC_ADDR_LENGTH))) ||
         ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl && (!ptx_tbl->ampdu_supported[0])))
     {
         (void)wlan_process_rx_packet(pmadapter, pmbuf);
@@ -393,8 +394,8 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
 
     if (queuing_ra_based(priv) == MTRUE)
     {
-        if ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl
-            && (rx_pkt_type != PKT_TYPE_BAR) && (prx_pd->priority < MAX_NUM_TID))
+        if ((GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) && ptx_tbl && (rx_pkt_type != PKT_TYPE_BAR) &&
+            (prx_pd->priority < MAX_NUM_TID))
         {
             ptx_tbl->rx_seq[prx_pd->priority] = prx_pd->seq_num;
         }

@@ -74,7 +74,11 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
     int ret;
     struct xz_buf stream;
     uint32_t retlen, readlen = 0;
-    t_u8 *sbuf = (t_u8 *)os_mem_alloc(SBUF_SIZE);
+#ifndef CONFIG_MEM_POOLS
+    t_u8 *sbuf = (t_u8 *)OSA_MemoryAllocate(SBUF_SIZE);
+#else
+    t_u8 *sbuf = (t_u8 *)OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
+#endif
     if (sbuf == NULL)
     {
         fwdnld_io_e("Allocation failed");
@@ -111,7 +115,11 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
         {
             fwdnld_io_e("FW Download Failure. Invalid len");
             xz_uncompress_end();
-            os_mem_free(sbuf);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(sbuf);
+#else
+            OSA_MemoryPoolFree(buf_2048_MemoryPool, sbuf);
+#endif
             return FWDNLD_STATUS_FW_DNLD_FAILED;
         }
 
@@ -158,7 +166,11 @@ int32_t conn_download_decomp_fw(t_u8 *wlanfw_xz, t_u32 firmwarelen, t_u32 ioport
     } while (1);
 
     xz_uncompress_end();
-    os_mem_free(sbuf);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(sbuf);
+#else
+    OSA_MemoryPoolFree(buf_2048_MemoryPool, sbuf);
+#endif
 
     if (ret == XZ_OK || ret == XZ_STREAM_END)
         return FWDNLD_STATUS_SUCCESS;

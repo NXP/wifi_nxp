@@ -17,7 +17,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -1778,7 +1778,11 @@ void wlan_11n_delete_txbastream_tbl_entry(mlan_private *priv, t_u8 *ra)
 
     (void)pmadapter->callbacks.moal_spin_unlock(pmadapter->pmoal_handle, priv->tx_ba_stream_tbl_ptr.plock);
 
+#ifndef CONFIG_MEM_POOLS
     pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)ptx_tbl);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, ptx_tbl);
+#endif
 
     LEAVE();
 }
@@ -1874,14 +1878,22 @@ void wlan_11n_create_txbastream_tbl(mlan_private *priv, t_u8 *ra, baStatus_e ba_
     {
         DBG_HEXDUMP(MDAT_D, "RA", ra, MLAN_MAC_ADDR_LENGTH);
 
+#ifndef CONFIG_MEM_POOLS
         pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(TxBAStreamTbl), MLAN_MEM_DEF,
                                          (t_u8 **)&newNode);
+#else
+        newNode = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+#endif
+        if (newNode == MNULL)
+        {
+            return;
+        }
 
         (void)__memset(pmadapter, newNode, 0, sizeof(TxBAStreamTbl));
         util_init_list((pmlan_linked_list)newNode);
 
         newNode->ba_status   = ba_status;
-        newNode->txba_thresh = os_rand_range(5, 5);
+        newNode->txba_thresh = OSA_RandRange(5, 5);
         (void)__memcpy(pmadapter, newNode->ra, ra, MLAN_MAC_ADDR_LENGTH);
         (void)__memset(priv->adapter, newNode->rx_seq, 0xff, sizeof(newNode->rx_seq));
 

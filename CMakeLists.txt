@@ -150,14 +150,25 @@ zephyr_compile_definitions_ifdef(CONFIG_NXP_WIFI_BT_USE_M2_INTERFACE
     WIFI_BT_USE_M2_INTERFACE
 )
 
+zephyr_library_compile_definitions(
+    FSL_OSA_TASK_ENABLE=1
+)
+
 zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S)
+
+zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/lists/fsl_component_generic_list.c)
+
+zephyr_library_sources(${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c)
 
 zephyr_include_directories(
     incl
     incl/wifidriver
     incl/wlcmgr
-    incl/port/os
     incl/port/net
+    incl/port/osa
+    incl/port/net/zephyr
+    port/osa
+    port/net/zephyr
     sdio_nxp_abs/incl
     firmware_dnld
     fwdnld_intf_abs
@@ -169,14 +180,19 @@ zephyr_include_directories(
     wifi_bt_firmware/nw61x
     wifi_bt_firmware/8801
     cli
+    ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/
+    ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/lists/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/AzureWave/tx_pwr_limits/
     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/wifi_bt_module/Murata/tx_pwr_limits/
 )
 
 # OS abstraction layer source
-zephyr_library_sources(port/os/os.c)
+zephyr_library_sources(
+    port/osa/osa.c
+    port/osa/osa_zephyr.c
+)
 # net stack abstraction layer source
-zephyr_library_sources(port/net/net.c)
+zephyr_library_sources(port/net/zephyr/net.c)
 
 file(GLOB WIFI_SRC ./wifidriver/*.c)
 list(FILTER WIFI_SRC EXCLUDE REGEX ".*imu.c$")
@@ -235,6 +251,8 @@ zephyr_library_include_directories_ifdef(CONFIG_NXP_WIFI_SIGMA_AGENT
 )
 
 file(GLOB DHCPD_SRC ./dhcpd/*.c)
+list(FILTER DHCPD_SRC EXCLUDE REGEX ".*cli*")
+
 zephyr_library_sources(${DHCPD_SRC})
 zephyr_library_include_directories(dhcpd)
 
@@ -254,8 +272,11 @@ endif()
 if(CONFIG_SPEED_OPTIMIZATIONS OR CONFIG_SIZE_OPTIMIZATIONS)
 # critical path code relocated to SRAM
 zephyr_code_relocate(FILES
-                     port/os/os.c
                      port/net/net.c
+                     port/osa/osa.c
+                     port/osa/osa_zephyr.c
+                     port/net/zephyr/net.c
+                     sdio_nxp_abs/mlan_sdio_zephyr.c
                      wifidriver/mlan_11n.c
                      wifidriver/mlan_11n_aggr.c
                      wifidriver/mlan_11n_rxreorder.c
@@ -284,7 +305,7 @@ endif()
 zephyr_code_relocate(FILES
                      # fsl_cache.c
                      # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_memcpy.S
-                     # ${ZEPHYR_BASE}/modules/hal_nxp/fsl_os_abstraction_zephyr.c
+                     ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/components/osa/fsl_os_abstraction_zephyr.c
                      ${ZEPHYR_HAL_NXP_MODULE_DIR}/mcux/mcux-sdk/utilities/misc_utilities/fsl_memcpy.S
                      LOCATION RAM_TEXT)
 

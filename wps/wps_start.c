@@ -20,7 +20,7 @@
 #endif
 #include <lwip/sys.h>
 #include <lwip/inet.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wlan.h>
 
 #include "wps_mem.h"

@@ -19,7 +19,7 @@
 #include "wlan.h"
 #include "wifi.h"
 #include "wm_net.h"
-#include <wm_os.h>
+#include <osa.h>
 #include "dhcp-server.h"
 #include "cli.h"
 #include "wifi_ping.h"
@@ -85,23 +85,22 @@ extern int wpa_cli_init(void);
  * Code
  ******************************************************************************/
 
-const int TASK_MAIN_PRIO = OS_PRIO_3;
 #ifdef CONFIG_WPS2
-const int TASK_MAIN_STACK_SIZE = 1500;
+#define MAIN_TASK_STACK_SIZE 6000
 #else
-const int TASK_MAIN_STACK_SIZE = 800;
+#define MAIN_TASK_STACK_SIZE 4096
 #endif
 
-portSTACK_TYPE *task_main_stack = NULL;
-TaskHandle_t task_main_task_handler;
+static void main_task(osa_task_param_t arg);
+
+static OSA_TASK_DEFINE(main_task, OSA_PRIORITY_BELOW_NORMAL, 1, MAIN_TASK_STACK_SIZE, 0);
+
+OSA_TASK_HANDLE_DEFINE(main_task_Handle);
 
 static void printSeparator(void)
 {
     PRINTF("========================================\r\n");
 }
-
-static struct wlan_network sta_network;
-static struct wlan_network uap_network;
 
 /* Callback Function passed to WLAN Connection Manager. The callback function
  * gets called when there are WLAN Events that need to be handled by the
@@ -111,6 +110,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 {
     int ret;
     struct wlan_ip_config addr;
+    char ssid[IEEEtypes_SSID_SIZE + 1] = {0};
     char ip[16];
     static int auth_fail                      = 0;
     wlan_uap_client_disassoc_t *disassoc_resp = data;
@@ -213,7 +213,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
 
             net_inet_ntoa(addr.ipv4.address, ip);
 
-            ret = wlan_get_current_network(&sta_network);
+            ret = wlan_get_current_network_ssid(ssid);
             if (ret != WM_SUCCESS)
             {
                 PRINTF("Failed to get External AP network\r\n");
@@ -221,7 +221,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
 
             PRINTF("Connected to following BSS:\r\n");
-            PRINTF("SSID = [%s]\r\n", sta_network.ssid);
+            PRINTF("SSID = [%s]\r\n", ssid);
             if (addr.ipv4.address != 0U)
             {
                 PRINTF("IPv4 Address: [%s]\r\n", ip);
@@ -275,7 +275,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             break;
         case WLAN_REASON_UAP_SUCCESS:
             PRINTF("app_cb: WLAN: UAP Started\r\n");
-            ret = wlan_get_current_uap_network(&uap_network);
+            ret = wlan_get_current_uap_network_ssid(ssid);
 
             if (ret != WM_SUCCESS)
             {
@@ -284,7 +284,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
             }
 
             printSeparator();
-            PRINTF("Soft AP \"%s\" started successfully\r\n", uap_network.ssid);
+            PRINTF("Soft AP \"%s\" started successfully\r\n", ssid);
             printSeparator();
             if (dhcp_server_start(net_get_uap_handle()))
                 PRINTF("Error in starting dhcp server\r\n");
@@ -320,7 +320,7 @@ int wlan_event_callback(enum wlan_event_reason reason, void *data)
         case WLAN_REASON_UAP_STOPPED:
             PRINTF("app_cb: WLAN: UAP Stopped\r\n");
             printSeparator();
-            PRINTF("Soft AP \"%s\" stopped successfully\r\n", uap_network.ssid);
+            PRINTF("Soft AP stopped successfully\r\n");
             printSeparator();
 
             dhcp_server_stop();
@@ -388,7 +388,7 @@ int wlan_driver_deinit(void)
 static void wlan_hw_reset(void)
 {
     BOARD_WIFI_BT_Enable(false);
-    os_thread_sleep(1);
+    OSA_TimeDelay(10);
     BOARD_WIFI_BT_Enable(true);
 }
 
@@ -657,7 +657,7 @@ static int wlan_prov_cli_init(void)
     return 0;
 }
 
-void task_main(void *param)
+static void main_task(osa_task_param_t arg)
 {
     int32_t result = 0;
     (void)result;
@@ -691,10 +691,16 @@ void task_main(void *param)
 
     assert(WM_SUCCESS == result);
 
+#ifndef RW610
+    result = wlan_reset_cli_init();
+
+    assert(WM_SUCCESS == result);
+#endif
+
     while (1)
     {
         /* wait for interface up */
-        os_thread_sleep(os_msec_to_ticks(5000));
+        OSA_TimeDelay(5000);
     }
 }
 
@@ -704,8 +710,7 @@ void task_main(void *param)
 
 int main(void)
 {
-    BaseType_t result = 0;
-    (void)result;
+    OSA_Init();
 
     BOARD_InitHardware();
 
@@ -723,13 +728,9 @@ int main(void)
 
     sys_thread_new("main", task_main, NULL, TASK_MAIN_STACK_SIZE, TASK_MAIN_PRIO);
 
-#if 0
-    result =
-        xTaskCreate(task_main, "main", TASK_MAIN_STACK_SIZE, task_main_stack, TASK_MAIN_PRIO, &task_main_task_handler);
-    assert(pdPASS == result);
-#endif
+    (void)OSA_TaskCreate((osa_task_handle_t)main_task_Handle, OSA_TASK(main_task), NULL);
 
-    vTaskStartScheduler();
-    for (;;)
-        ;
+    OSA_Start();
+
+    return 0;
 }

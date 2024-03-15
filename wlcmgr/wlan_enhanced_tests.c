@@ -1055,7 +1055,7 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
         return;
     }
 
-    txpwrlimit = os_mem_alloc(sizeof(wlan_txpwrlimit_t));
+    txpwrlimit = OSA_MemoryAllocate(sizeof(wlan_txpwrlimit_t));
     if (txpwrlimit == NULL)
     {
         (void)PRINTF("Cannot allocate memory\r\n");
@@ -1071,7 +1071,7 @@ static void test_wlan_get_txpwrlimit(int argc, char **argv)
     {
         print_txpwrlimit(txpwrlimit);
     }
-    os_mem_free(txpwrlimit);
+    OSA_MemoryFree(txpwrlimit);
 }
 
 #ifndef CONFIG_COMPRESS_TX_PWTBL
@@ -1080,7 +1080,7 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
 {
     wlan_txpwrlimit_t *txpwrlimit = NULL;
 
-    txpwrlimit = os_mem_alloc(sizeof(wlan_txpwrlimit_t));
+    txpwrlimit = OSA_MemoryAllocate(sizeof(wlan_txpwrlimit_t));
     if (txpwrlimit == NULL)
     {
         (void)PRINTF("Cannot allocate memory\r\n");
@@ -1147,14 +1147,14 @@ static void test_wlan_set_txpwrlimit(int argc, char **argv)
         }
 #endif
     }
-    os_mem_free(txpwrlimit);
+    OSA_MemoryFree(txpwrlimit);
 }
 
 static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
 {
     wlan_txpwrlimit_t *txpwrlimit = NULL;
 
-    txpwrlimit = os_mem_alloc(sizeof(wlan_txpwrlimit_t));
+    txpwrlimit = OSA_MemoryAllocate(sizeof(wlan_txpwrlimit_t));
     if (txpwrlimit == NULL)
     {
         (void)PRINTF("Cannot allocate memory\r\n");
@@ -1233,7 +1233,7 @@ static void test_wlan_set_chanlist_and_txpwrlimit(int argc, char **argv)
             print_chanlist(chanlist);
         }
     }
-    os_mem_free(txpwrlimit);
+    OSA_MemoryFree(txpwrlimit);
 }
 #endif
 

@@ -7,7 +7,7 @@
  *  SPDX-License-Identifier: BSD-3-Clause
  *
  */
-#include <wm_os.h>
+#include <osa.h>
 
 #include <wifi-debug.h>
 

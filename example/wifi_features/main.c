@@ -41,7 +41,7 @@
 #include "wlan.h"
 #include "wifi.h"
 #include "wm_net.h"
-#include <wm_os.h>
+#include <osa.h>
 #include "dhcp-server.h"
 #include "cli.h"
 #include "wifi_ping.h"
@@ -63,7 +63,7 @@
  * Code
  ******************************************************************************/
 
-const int TASK_MAIN_PRIO       = OS_PRIO_3;
+const int TASK_MAIN_PRIO       = 1; // OS_PRIO_3;
 const int TASK_MAIN_STACK_SIZE = 800;
 
 portSTACK_TYPE *task_main_stack = NULL;
@@ -292,7 +292,7 @@ void task_main(void *param)
     while (1)
     {
         /* wait for interface up */
-        os_thread_sleep(os_msec_to_ticks(5000));
+        OSA_TimeDelay(5000);
     }
 }
 

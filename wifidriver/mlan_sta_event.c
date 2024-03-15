@@ -17,7 +17,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -121,7 +121,7 @@ t_void wlan_reset_connect_state(pmlan_private priv, t_u8 drv_disconnect)
     /* Need to put uapsd_sem before getting ra_list.plock in wlan_ralist_del_all_enh */
     if (priv->adapter->pps_uapsd_mode)
     {
-        os_semaphore_put(&uapsd_sem);
+        OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
     }
     priv->adapter->tx_lock_flag   = MFALSE;
     priv->adapter->pps_uapsd_mode = MFALSE;

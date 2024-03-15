@@ -11,7 +11,7 @@
 #include <mlan_api.h>
 
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wifi.h>
 #include <wifi_events.h>
 
@@ -375,11 +375,11 @@ void send_sleep_confirm_command(mlan_bss_type interface)
 
         /* Write mutex is used to avoid the case that, during waiting for sleep confirm cmd response,
          * wifi_driver_tx task or other tx task might be scheduled and send data to FW */
-        os_mutex_get(&(sleep_rwlock.write_mutex), OS_WAIT_FOREVER);
+        (void)OSA_MutexLock((osa_mutex_handle_t)sleep_rwlock.write_mutex, osaWaitForever_c);
 
         (void)wifi_wait_for_cmdresp(NULL);
 
-        os_mutex_put(&(sleep_rwlock.write_mutex));
+        OSA_MutexUnlock((osa_mutex_handle_t)sleep_rwlock.write_mutex);
     }
     else
     {
@@ -416,7 +416,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
     enum wifi_event_reason result = WIFI_EVENT_REASON_FAILURE;
     MrvlIEtypesHeader_t *mrvl_tlv = NULL;
 #ifdef CONFIG_HOST_SLEEP
-    pmlan_adapter pmadapter       = ((mlan_private *)mlan_adap->priv[0])->adapter;
+    pmlan_adapter pmadapter = ((mlan_private *)mlan_adap->priv[0])->adapter;
 #endif
 #ifdef CONFIG_PWR_DEBUG
     MrvlIEtypes_ps_param_t *ps_tlv = NULL;
@@ -600,7 +600,7 @@ enum wifi_event_reason wifi_process_ps_enh_response(t_u8 *cmd_res_buffer, t_u16 
             /* sleep confirm response needs to get the sleep_rwlock, for this lock
              * is an indication that host needs to wakeup FW when reader (cmd/tx)
              * could not get the sleep_rwlock */
-            int ret             = os_rwlock_write_lock(&sleep_rwlock, OS_WAIT_FOREVER);
+            int ret             = OSA_RWLockWriteLock(&sleep_rwlock, osaWaitForever_c);
             mlan_adap->ps_state = PS_STATE_SLEEP;
 #ifdef CONFIG_HOST_SLEEP
             wakelock_put();

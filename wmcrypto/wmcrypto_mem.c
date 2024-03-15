@@ -9,7 +9,7 @@
  */
 
 #include <string.h>
-#include <wm_os.h>
+#include <osa.h>
 
 #include "wmcrypto.h"
 #include "wmcrypto_mem.h"

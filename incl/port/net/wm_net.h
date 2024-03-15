@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include <wm_os.h>
+#include <osa.h>
 #include <wmtypes.h>
 #include <wmerrno.h>
 
@@ -147,6 +147,10 @@ typedef struct
     scan_result_cb_t scan_cb;
     uint16_t max_bss_cnt;
 } interface_t;
+#elif defined(FSL_RTOS_THREADX)
+
+#include "nx_api.h"
+//#include "nxd_bsd.h"
 
 #endif
 
@@ -284,6 +288,8 @@ static inline int net_socket_blocking(int sock, int state)
 static inline int net_get_sock_error(int sock)
 {
     int ret = 0;
+#if defined(SDK_OS_FREE_RTOS)
+
     switch (errno)
     {
         case EWOULDBLOCK:
@@ -299,6 +305,8 @@ static inline int net_get_sock_error(int sock)
             ret = errno;
             break;
     }
+#endif
+
     return ret;
 }
 
@@ -311,6 +319,8 @@ static inline int net_get_sock_error(int sock)
  */
 static inline uint32_t net_inet_aton(const char *cp)
 {
+#if defined(SDK_OS_FREE_RTOS)
+
     struct in_addr addr;
     addr.s_addr = 0;
 
@@ -320,6 +330,18 @@ static inline uint32_t net_inet_aton(const char *cp)
     (void)net_addr_pton(AF_INET, cp, &addr);
 #endif
     return addr.s_addr;
+#else
+    char *token;
+    char *rest = (char *)cp;
+    uint32_t addr[4], i = 0;
+
+    while ((token = strtok_r(rest, ".", &rest)))
+    {
+        addr[i++] = atoi(token);
+    }
+
+    return IP_ADDRESS(addr[0], addr[1], addr[2], addr[3]);
+#endif
 }
 
 /** set MAC hardware address to lwip network interface
@@ -329,6 +351,8 @@ static inline uint32_t net_inet_aton(const char *cp)
  *
  */
 void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac);
+
+#if defined(SDK_OS_FREE_RTOS)
 
 /** Skip a number of bytes at the start of a stack buffer
  *
@@ -401,7 +425,6 @@ static inline void *net_stack_buffer_get_payload(void *buf)
 #endif
 }
 
-#if defined(SDK_OS_FREE_RTOS)
 /**
  * Get network host entry
  *
@@ -426,6 +449,19 @@ static inline int net_gethostbyname(const char *cp, struct hostent **hentry)
 
     return WM_SUCCESS;
 }
+#else
+/** Skip a number of bytes at the start of a stack buffer
+ *
+ * \param[in] buf input stack buffer.
+ * \param[in] in_offset offset to skip.
+ *
+ * \return the payload pointer after skip a number of bytes
+ */
+static inline uint8_t *net_stack_buffer_skip(void *buf, uint16_t in_offset)
+{
+    uint16_t out_offset = in_offset;
+    return (uint8_t *)(buf) + out_offset;
+}
 #endif
 
 /** Converts Internet host address in network byte order to a string in IPv4
@@ -449,6 +485,7 @@ static inline void net_inet_ntoa(unsigned long addr, char *cp)
     net_addr_ntop(AF_INET, &saddr, cp, NET_IPV4_ADDR_LEN);
 #endif
 }
+#if defined(SDK_OS_FREE_RTOS)
 
 /** Check whether buffer is IPv4 or IPV6 packet type
  *
@@ -469,8 +506,10 @@ static inline bool net_is_ip_or_ipv6(const uint8_t *buffer)
     {
         return true;
     }
+
     return false;
 }
+#endif
 
 /** Get interface handle from socket descriptor
  *
@@ -510,6 +549,8 @@ struct netif *net_get_sta_interface(void);
  */
 struct netif *net_get_uap_interface(void);
 
+#if defined(SDK_OS_FREE_RTOS)
+
 /** Get interface name for given netif
  *
  * \param[out] pif_name Buffer to store interface name
@@ -520,6 +561,7 @@ struct netif *net_get_uap_interface(void);
  *
  */
 int net_get_if_name_netif(char *pif_name, struct netif *iface);
+#endif
 
 /** Get client data index for storing private data in * netif.
  *
@@ -735,6 +777,8 @@ int net_get_if_ip_mask(uint32_t *nm, void *intrfc_handle);
  */
 void net_ipv4stack_init(void);
 
+#if defined(SDK_OS_FREE_RTOS)
+
 #ifdef CONFIG_IPV6
 
 /** Initialize the IPv6 network stack
@@ -743,6 +787,12 @@ void net_ipv4stack_init(void);
  *
  */
 void net_ipv6stack_init(struct netif *netif);
+#endif
+
+#endif
+
+#if defined(FSL_RTOS_THREADX)
+void dhcp_stat(void);
 #endif
 
 /** Display network statistics

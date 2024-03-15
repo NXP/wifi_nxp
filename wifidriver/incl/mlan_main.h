@@ -1561,7 +1561,7 @@ struct _mlan_private
     /** Pointer to the Transmit BA stream table*/
     mlan_list_head tx_ba_stream_tbl_ptr;
     /** Semaphore to the Transmit BA stream table */
-    os_mutex_t tx_ba_stream_tbl_lock;
+    OSA_MUTEX_HANDLE_DEFINE(tx_ba_stream_tbl_lock);
     /** Pointer to the priorities for AMSDU/AMPDU table*/
     tx_aggr_t aggr_prio_tbl[MAX_NUM_TID];
     /** Pointer to the priorities for AMSDU/AMPDU table*/
@@ -1750,7 +1750,7 @@ typedef struct _RxReorderTbl RxReorderTbl;
 typedef struct
 {
     /** Timer for flushing */
-    t_void *timer;
+    OSA_TIMER_HANDLE_DEFINE(timer);
     /** Timer set flag */
     bool timer_is_set;
     /** RxReorderTbl ptr */
@@ -2278,7 +2278,7 @@ struct _mlan_adapter
     /** VDLL operation in progress */
     volatile t_bool vdll_in_progress;
     /** Timer for vdll */
-    t_void *vdll_timer;
+    OSA_TIMER_HANDLE_DEFINE(vdll_timer);
 #endif
     /** pint_lock for interrupt handling */
     t_void *pint_lock;

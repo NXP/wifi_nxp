@@ -12,7 +12,7 @@
 #include <wm_utils.h>
 #include <wlan.h>
 #include <wifi.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <wifi-debug.h>
 #include <wlan_11d.h>
@@ -166,7 +166,7 @@ extern int wlan_event_callback(enum wlan_event_reason reason, void *data);
 #endif
 #endif
 
-static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time);
+static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time);
 
 #ifdef CONFIG_WPA2_ENTP
 extern int wpa2_ent_connect(struct wlan_network *wpa2_network);
@@ -182,10 +182,11 @@ void (*uap_prov_cleanup_cb)(void) = NULL;
 #ifdef CONFIG_WMSTATS
 struct wm_stats g_wm_stats;
 #endif /* CONFIG_WMSTATS */
-os_rw_lock_t sleep_rwlock;
+
+osa_rw_lock_t sleep_rwlock;
 
 #ifdef CONFIG_WMM_UAPSD
-os_semaphore_t uapsd_sem;
+OSA_SEMAPHORE_HANDLE_DEFINE(uapsd_sem);
 #endif
 
 #ifdef CONFIG_CPU_LOADING
@@ -197,7 +198,13 @@ os_semaphore_t uapsd_sem;
 #define CPU_LOADING_PERIOD             2000
 #define CPU_LOADING_TASK_NUM           20
 #define CPU_LOADING_KEEPING            -1
-static os_thread_stack_define(cpu_loading_stack, 2048);
+
+#define CONFIG_CPU_LOADING_STACK_SIZE (2048)
+
+static void cpu_loading_task(osa_task_param_t arg);
+
+/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+static OSA_TASK_DEFINE(cpu_loading_task, OSA_PRIORITY_HIGH, 1, CONFIG_CPU_LOADING_STACK_SIZE, 0);
 
 static struct
 {
@@ -216,9 +223,9 @@ static struct
     /*The value of timer time out*/
     uint32_t sampling_period;
     /*CPU loading timer.*/
-    os_timer_t cpu_loading_timer;
+    OSA_TIMER_HANDLE_DEFINE(cpu_loading_timer);
     /*CPU loading thread.*/
-    os_thread_t cpu_loading_thread;
+    OSA_TASK_HANDLE_DEFINE(cpu_loading_task_Handle);
 
     /*Array of recording names of tasks.*/
     char task_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
@@ -234,7 +241,7 @@ char task_string_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
 #endif
 
 #if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
-os_semaphore_t wls_csi_sem;
+OSA_SEMAPHORE_HANDLE_DEFINE(wls_csi_sem);
 #endif
 
 #ifdef CONFIG_WPS2
@@ -250,10 +257,8 @@ extern WPS_DATA wps_global;
     }
 
 #ifdef RW610
-static os_mutex_t reset_lock;
+OSA_MUTEX_HANDLE_DEFINE(reset_lock);
 /* Mon thread */
-static os_thread_t mon_thread;
-static os_thread_stack_t mon_stack;
 static bool mon_thread_init = 0;
 #endif
 
@@ -283,26 +288,19 @@ int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
  */
 bool usart_suspend_flag = false;
 #endif
-os_timer_t wake_timer;
+osa_timer_handle_t wake_timer;
 #endif
 int is_hs_handshake_done = 0;
-extern os_semaphore_t wakelock;
+extern osa_semaphore_handle_t wakelock;
 extern int wakeup_by;
 bool wlan_is_manual = false;
 #endif
-
-/* The monitor thread event queue receives events from the power manager
- * wlan notifier when idle hook is invoked and host is ready to enter
- * specific low power mode
- */
-os_queue_t mon_thread_events;
-os_queue_pool_t mon_thread_events_queue_data;
 
 #ifdef CONFIG_SCAN_CHANNEL_GAP
 static t_u16 scan_channel_gap = (t_u16)SCAN_CHANNEL_GAP_VALUE;
 #endif
 
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
 #ifdef SD9177
 #define POLL_TIMEOUT (20 * 1000)
 static struct udp_pcb *udp_raw_pcb;
@@ -317,6 +315,10 @@ static struct udp_pcb *udp_raw_pcb;
 #ifdef CONFIG_WPA_SUPP
 #define FT_ROAM_TIMEOUT (20 * 1000)
 #endif
+#endif
+
+#ifndef CONFIG_POWER_MANAGER
+#define WAKE_TIMEOUT (5 * 1000)
 #endif
 
 enum user_request_type
@@ -382,17 +384,21 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
                                                        60,
                                                        250};
 
-static os_queue_pool_define(g_wlan_event_queue_data, (int)(sizeof(struct wifi_message) * MAX_EVENTS));
+#define CONFIG_WLCMGR_STACK_SIZE (5120)
 
-#ifndef CONFIG_WLCMGR_STACK_SIZE
-#define CONFIG_WLCMGR_STACK_SIZE 5120
-#endif
-static os_thread_stack_define(g_cm_stack, CONFIG_WLCMGR_STACK_SIZE);
+static void wlcmgr_task(osa_task_param_t arg);
+
+/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+static OSA_TASK_DEFINE(wlcmgr_task, OSA_PRIORITY_HIGH, 1, CONFIG_WLCMGR_STACK_SIZE, 0);
+
 #ifdef CONFIG_WPS2
-#ifndef CONFIG_WPS_STACK_SIZE
-#define CONFIG_WPS_STACK_SIZE 5120
-#endif
-static os_thread_stack_define(g_wps_stack, CONFIG_WPS_STACK_SIZE);
+#define CONFIG_WPS_STACK_SIZE (5120)
+
+static void wps_task(osa_task_param_t arg);
+
+/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+static OSA_TASK_DEFINE(wps_task, OSA_PRIORITY_NORMAL, 1, CONFIG_WPS_STACK_SIZE, 0);
+
 static int wlcm_wps_callback(enum wps_event event, void *data, uint16_t len);
 
 typedef enum
@@ -411,10 +417,9 @@ static struct
     uint32_t wps_pin;
 
     /* WPS thread */
-    os_thread_t wps_main_thread;
-    os_thread_stack_t wps_stack;
+    OSA_TASK_HANDLE_DEFINE(wps_task_Handle);
 
-    os_semaphore_t wps_scan_done;
+    OSA_SEMAPHORE_HANDLE_DEFINE(wps_scan_done);
     struct wlan_scan_result wps_res;
 } wlan_wps;
 
@@ -441,12 +446,20 @@ static struct wps_config wps_conf = {
 };
 #endif /* CONFIG_WPS2 */
 #ifdef RW610
-#ifndef CONFIG_MON_THREAD_STACK_SIZE
-#define CONFIG_MON_THREAD_STACK_SIZE 1152
-#endif
-static void wlan_mon_thread(os_thread_arg_t data);
-static os_thread_stack_define(g_mon_stack, CONFIG_MON_THREAD_STACK_SIZE);
-static os_queue_pool_define(g_mon_event_queue_data, sizeof(struct wlan_message) * MAX_EVENTS);
+
+#define CONFIG_WLCMGR_MON_STACK_SIZE (1152)
+
+static void wlcmgr_mon_task(osa_task_param_t arg);
+
+/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+static OSA_TASK_DEFINE(wlcmgr_mon_task, OSA_PRIORITY_NORMAL, 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
+
+/* The monitor thread event queue receives events from the power manager
+ * wlan notifier when idle hook is invoked and host is ready to enter
+ * specific low power mode
+ */
+OSA_MSGQ_HANDLE_DEFINE(mon_thread_events, MAX_EVENTS, sizeof(struct wlan_message));
+
 #endif
 typedef enum
 {
@@ -467,15 +480,14 @@ static struct
      * is therefore free for another user.  This lock must never be taken
      * in the WLAN Connection Manager main thread and it must only be
      * released by that thread. The lock count must be 0 or 1. */
-    os_semaphore_t scan_lock;
+    OSA_SEMAPHORE_HANDLE_DEFINE(scan_lock);
     bool is_scan_lock;
 
     /* The WLAN Connection Manager event queue receives events (command
      * responses, WiFi events, TCP stack events) from the wifi interface as
      * well as user requests (connect, disconnect, scan).  This is the main
      * blocking point for the main thread and acts as the state machine tick.*/
-    os_queue_t events;
-    os_queue_pool_t events_queue_data;
+    OSA_MSGQ_HANDLE_DEFINE(events, MAX_EVENTS, sizeof(struct wifi_message));
 
     /* internal state */
     enum cm_sta_state sta_state, sta_ipv4_state;
@@ -508,8 +520,9 @@ static struct
     unsigned int uap_supported_max_sta_num;
 
     /* CM thread */
-    os_thread_t cm_main_thread;
-    os_thread_stack_t cm_stack;
+    OSA_TASK_HANDLE_DEFINE(wlcmgr_task_Handle);
+    OSA_TASK_HANDLE_DEFINE(wlcmgr_mon_task_Handle);
+
     unsigned running : 1;
     unsigned stop_request : 1;
     wlcmgr_status_t status;
@@ -545,7 +558,7 @@ static struct
     int uap_rsn_ie_index;
     bool smart_mode_active : 1;
 #ifdef CONFIG_WPA_SUPP
-    os_timer_t supp_status_timer;
+    OSA_TIMER_HANDLE_DEFINE(supp_status_timer);
     bool pending_disconnect_request : 1;
     int status_timeout;
     bool connect : 1;
@@ -577,7 +590,7 @@ static struct
 #endif
 #endif
 #endif
-    os_timer_t assoc_timer;
+    OSA_TIMER_HANDLE_DEFINE(assoc_timer);
     bool assoc_paused : 1;
     bool pending_assoc_request : 1;
     bool reassoc_control : 1;
@@ -605,14 +618,14 @@ static struct
 #ifdef CONFIG_WIFI_FW_DEBUG
     void (*wlan_usb_init_cb)(void);
 #endif
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
 #ifdef SD9177
-    os_timer_t poll_timer;
+    OSA_TIMER_HANDLE_DEFINE(poll_timer);
 #endif
 #endif
 #ifdef CONFIG_11R
 #ifdef CONFIG_WPA_SUPP
-    os_timer_t ft_roam_timer;
+    OSA_TIMER_HANDLE_DEFINE(ft_roam_timer);
 #endif
 #endif
 #ifdef CONFIG_11K
@@ -620,7 +633,7 @@ static struct
     wlan_rrm_scan_cb_param rrm_scan_cb_param;
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
-    os_timer_t neighbor_req_timer;
+    OSA_TIMER_HANDLE_DEFINE(neighbor_req_timer);
     bool neighbor_req : 1;
 #endif
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
@@ -805,7 +818,9 @@ int get_scan_params(struct wifi_scan_params_t *wifi_scan_params)
 
 void wlan_dhcp_cleanup()
 {
+#if defined(SDK_OS_FREE_RTOS)
     net_stop_dhcp_timer();
+#endif
     net_interface_dhcp_stop(net_get_mlan_handle());
 #ifndef __ZEPHYR__
     net_interface_dhcp_cleanup(net_get_mlan_handle());
@@ -1041,7 +1056,7 @@ void wlan_hs_pre_cfg(void)
     {
         (void)wlan_send_host_sleep_int(wlan.hs_wakeup_condition, MFALSE);
         /** Wait for HS Activate to complete */
-        os_thread_sleep(os_msec_to_ticks(1000));
+        OSA_TimeDelay(1000);
     }
 }
 
@@ -1087,8 +1102,7 @@ status_t wlan_hs_send_event(int id, void *data)
     (void)memset(&msg, 0U, sizeof(struct wlan_message));
     msg.data = data;
     msg.id  = id;
-    ret = os_queue_send(&mon_thread_events, &msg, OS_NO_WAIT);
-    if (ret != 0)
+    if (OSA_MsgQPut((osa_msgq_handle_t)mon_thread_events, &msg) != KOSA_StatusSuccess)
     {
         (void)PRINTF("PM: Failed to send msg to queue\r\n");
 #ifdef __ZEPHYR__
@@ -1296,9 +1310,9 @@ void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic)
 #ifdef CONFIG_POWER_MANAGER
         /* Reset flag and stop timer if manual mode is selected without cancel periodic sleep */
         wlan_host_sleep_state = HOST_SLEEP_DISABLE;
-        if (os_timer_is_running(&wake_timer))
+        if (OSA_TimerIsRunning((osa_timer_handle_t)wake_timer))
         {
-            os_timer_deactivate(&wake_timer);
+            OSA_TimerDeactivate((osa_timer_handle_t)wake_timer);
             wakelock_put();
         }
 #endif
@@ -1349,9 +1363,9 @@ void wlan_clear_host_sleep_config()
 #ifdef CONFIG_UART_INTERRUPT
     usart_suspend_flag = MFALSE;
 #endif
-    if (os_timer_is_running(&wake_timer))
+    if (OSA_TimerIsRunning((osa_timer_handle_t)wake_timer))
     {
-        os_timer_deactivate(&wake_timer);
+        OSA_TimerDeactivate((osa_timer_handle_t)wake_timer);
         wakelock_put();
     }
     is_hs_handshake_done = 0;
@@ -2265,7 +2279,7 @@ static int do_start(struct wlan_network *network)
         {
             wlan.connect        = false;
             wlan.status_timeout = 0;
-            (void)os_timer_activate(&wlan.supp_status_timer);
+            (void)OSA_TimerActivate((osa_timer_handle_t)wlan.supp_status_timer);
         }
 #endif
 
@@ -2655,7 +2669,12 @@ static void handle_scan_results(void)
      * copy. fixme: Can be removed after this issue is fixed in the
      * lower layer.
      */
-    struct wifi_scan_result2 *best_ap = os_mem_alloc(sizeof(struct wifi_scan_result2));
+#ifndef CONFIG_MEM_POOLS
+    struct wifi_scan_result2 *best_ap = OSA_MemoryAllocate(sizeof(struct wifi_scan_result2));
+#else
+    struct wifi_scan_result2 *best_ap = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+#endif
+
     if (best_ap == NULL)
     {
         wlcm_d("%s: Failed to alloc scan result object", __func__);
@@ -2728,7 +2747,11 @@ static void handle_scan_results(void)
 #ifdef CONFIG_11R
                 wlan.ft_bss = false;
 #endif
-                os_mem_free((void *)best_ap);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)best_ap);
+#else
+                OSA_MemoryPoolFree(buf_512_MemoryPool, best_ap);
+#endif
                 return;
             }
 #ifdef CONFIG_11V
@@ -2754,7 +2777,11 @@ static void handle_scan_results(void)
         if (network->owe_trans_mode == OWE_TRANS_MODE_OPEN)
         {
             wlcm_d("do scan for OWE Transition SSID: %s", network->trans_ssid);
-            os_mem_free((void *)best_ap);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree((void *)best_ap);
+#else
+            OSA_MemoryPoolFree(buf_512_MemoryPool, best_ap);
+#endif
             do_scan(network);
             return;
         }
@@ -2764,7 +2791,11 @@ static void handle_scan_results(void)
             ret = start_association(network, best_ap);
             if (ret == WM_SUCCESS)
             {
-                os_mem_free((void *)best_ap);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree((void *)best_ap);
+#else
+                OSA_MemoryPoolFree(buf_512_MemoryPool, best_ap);
+#endif
                 return;
             }
 #ifdef CONFIG_OWE
@@ -2773,7 +2804,11 @@ static void handle_scan_results(void)
     }
     else if (num_channels != 0U)
     {
-        os_mem_free((void *)best_ap);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)best_ap);
+#else
+        OSA_MemoryPoolFree(buf_512_MemoryPool, best_ap);
+#endif
         wlan.hidden_scan_on = true;
         do_hidden_scan(network, num_channels, chan_list);
         return;
@@ -2783,7 +2818,11 @@ static void handle_scan_results(void)
         /* Do Nothing */
     }
 
-    os_mem_free((void *)best_ap);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree((void *)best_ap);
+#else
+    OSA_MemoryPoolFree(buf_512_MemoryPool, best_ap);
+#endif
 
     if (wlan.roam_reassoc == true)
     {
@@ -2797,12 +2836,12 @@ static void handle_scan_results(void)
 
 #ifdef RW610
     /* If reset is in process, skip re-scan */
-    if (os_mutex_get(&reset_lock, 0) != WM_SUCCESS)
+    if (OSA_MutexLock((osa_mutex_handle_t)reset_lock, 0) != WM_SUCCESS)
     {
         (void)PRINTF("skip re-scan when reset is in process\r\n");
         return;
     }
-    os_mutex_put(&reset_lock);
+    OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
 #endif
 
     /* We didn't find our network in the scan results set: rescan if we
@@ -2883,7 +2922,11 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
 {
     ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
     wlcm_d("got msg data :: %x", action);
-    os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(msg->data);
+#else
+    OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
@@ -2914,8 +2957,12 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
     ENH_PS_MODES action = (ENH_PS_MODES)(*((uint32_t *)msg->data));
 #ifdef CONFIG_WIFI_PS_DEBUG
     wlcm_d("got msg data :: %x", action);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(msg->data);
+#else
+    OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
 #endif
-    os_mem_free(msg->data);
+#endif
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
@@ -2951,6 +2998,12 @@ static void wlcm_process_wnmps_event(struct wifi_message *msg)
 {
     uint16_t action                      = (uint16_t)(uint32_t)msg->data;
     wnm_sleep_result_t *wnm_sleep_result = (wnm_sleep_result_t *)&action;
+
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(msg->data);
+#else
+    OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
 
     if (msg->reason == WIFI_EVENT_REASON_SUCCESS)
     {
@@ -3030,7 +3083,7 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
         if (wlan.is_scan_lock)
         {
             wlcm_d("releasing scan lock (connect scan)");
-            (void)os_semaphore_put(&wlan.scan_lock);
+            (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
             wlan.is_scan_lock = 0;
         }
 
@@ -3050,7 +3103,7 @@ static void wlcm_process_scan_result_event(struct wifi_message *msg, enum cm_sta
 #endif
     }
 
-    (void)os_semaphore_put(&wlan.scan_lock);
+    (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
     wlan.is_scan_lock = 0;
 }
 
@@ -3382,8 +3435,11 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
                 wm_wifi.supp_if_callbk_fns->ecsa_complete_callbk_fn(wm_wifi.if_priv, &chandef);
                 (void)PRINTF("sta switch to channel %d success!\r\n", channel);
             }
-
-            os_mem_free((void *)msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree((void *)msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
         }
 
 #ifdef CONFIG_ECSA
@@ -3395,7 +3451,13 @@ static void wlcm_process_channel_switch_supp(struct wifi_message *msg)
     {
         wlcm_d("ECSA not support");
         if (msg->data != NULL)
-            os_mem_free((void *)msg->data);
+        {
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree((void *)msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+        }
     }
 }
 #else
@@ -3423,7 +3485,11 @@ static void wlcm_process_channel_switch(struct wifi_message *msg)
                 wlan.networks[wlan.cur_network_idx].channel = channel;
                 wifi_set_curr_bss_channel(wlan.networks[wlan.cur_network_idx].channel);
             }
-            os_mem_free((void *)msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree((void *)msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
         }
 
 #ifdef CONFIG_ECSA
@@ -3435,7 +3501,13 @@ static void wlcm_process_channel_switch(struct wifi_message *msg)
     {
         wlcm_d("ECSA not support");
         if (msg->data != NULL)
-            os_mem_free((void *)msg->data);
+        {
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree((void *)msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
+        }
     }
 }
 #endif /*End of CONFIG_WPA_SUPP*/
@@ -3490,7 +3562,11 @@ static void wlcm_process_addba_request(struct wifi_message *msg)
     else
     {
         wlcm_d("Ignore ADDBA Request event in disconnected state");
-        os_mem_free((void *)msg->data);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)msg->data);
+#else
+        OSA_MemoryPoolFree(buf_256_MemoryPool, msg->data);
+#endif
     }
 }
 
@@ -3504,7 +3580,11 @@ static void wlcm_process_delba_request(struct wifi_message *msg)
     else
     {
         wlcm_d("Ignore DELBA Request event in disconnected state");
-        os_mem_free((void *)msg->data);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)msg->data);
+#else
+        OSA_MemoryPoolFree(buf_256_MemoryPool, msg->data);
+#endif
     }
 }
 
@@ -3520,7 +3600,11 @@ static void wlcm_process_ba_stream_timeout_request(struct wifi_message *msg)
         wlcm_d(
             "Ignore BA STREAM TIMEOUT Request"
             " event in disconnected state");
-        os_mem_free((void *)msg->data);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)msg->data);
+#else
+        OSA_MemoryPoolFree(buf_256_MemoryPool, msg->data);
+#endif
     }
 }
 #endif
@@ -3536,7 +3620,7 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     if (wlan.is_scan_lock)
     {
         wlcm_d("releasing scan lock for fast path");
-        os_semaphore_put(&wlan.scan_lock);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
         wlan.is_scan_lock = 0;
     }
 #endif
@@ -3544,7 +3628,7 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
     if (wlan.is_scan_lock)
     {
       	wlcm_d("releasing scan lock (connect scan)");
-       	(void)os_semaphore_put(&wlan.scan_lock);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
        	wlan.is_scan_lock = 0;
     }
 #endif
@@ -3609,7 +3693,7 @@ static void wlcm_process_association_event(struct wifi_message *msg, enum cm_sta
         }
 #endif
 #ifdef CONFIG_WPA_SUPP
-        os_timer_deactivate(&wlan.supp_status_timer);
+        OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
         wlan.status_timeout = 0;
 #endif
 
@@ -3749,9 +3833,9 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #endif /* CONFIG_P2P */
             CONNECTION_EVENT(WLAN_REASON_AUTH_SUCCESS, NULL);
 
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
 #ifdef SD9177
-            os_timer_activate(&wlan.poll_timer);
+            (void)OSA_TimerActivate((osa_timer_handle_t)wlan.poll_timer);
 #endif
 #endif
 
@@ -3760,7 +3844,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
 #endif
 
 #ifdef CONFIG_WPA_SUPP
-            os_timer_deactivate(&wlan.supp_status_timer);
+            OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
             wlan.status_timeout = 0;
 
             wpa_supp_network_status(netif, network);
@@ -3857,7 +3941,7 @@ static void wlcm_process_authentication_event(struct wifi_message *msg,
         if (*((uint16_t *)msg->data) == IEEEtypes_REASON_MIC_FAILURE)
         {
             wlan.assoc_paused = true;
-            (void)os_timer_activate(&wlan.assoc_timer);
+            (void)OSA_TimerActivate((osa_timer_handle_t)wlan.assoc_timer);
         }
 
         if (is_state(CM_STA_REQUESTING_ADDRESS) || is_state(CM_STA_OBTAINING_ADDRESS))
@@ -4066,7 +4150,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     if (pnlist_rep_param->nlist_mode == WLAN_NLIST_11K)
     {
         wlan.neighbor_req = false;
-        (void)os_timer_deactivate(&wlan.neighbor_req_timer);
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
     }
 #endif
 
@@ -4103,7 +4187,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     if (pnlist_rep_param->nlist_mode == WLAN_NLIST_11K)
     {
         wlan.neighbor_req = false;
-        (void)os_timer_deactivate(&wlan.neighbor_req_timer);
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
     }
 #endif
 
@@ -4111,7 +4195,7 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
     if ((pnlist_rep_param->nlist_mode == WLAN_NLIST_11V) || (pnlist_rep_param->nlist_mode == WLAN_NLIST_11V_PREFERRED))
     {
         wlan.neighbor_req = false;
-        (void)os_timer_deactivate(&wlan.neighbor_req_timer);
+        (void)OSA_TimerDeactivate((osa_timer_handle_t)wlan.neighbor_req_timer);
     }
 #endif
 
@@ -4160,7 +4244,11 @@ static void wlcm_process_neighbor_list_report_event(struct wifi_message *msg,
 
     if (pnlist_rep_param != NULL)
     {
-        os_mem_free((void *)pnlist_rep_param);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)pnlist_rep_param);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, pnlist_rep_param);
+#endif
     }
 }
 #endif
@@ -4228,7 +4316,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 
     wlan.roam_reassoc = true;
 
-    (void)os_timer_activate(&wlan.ft_roam_timer);
+    (void)OSA_TimerActivate((osa_timer_handle_t)wlan.ft_roam_timer);
 
     (void)PRINTF("Started FT Roaming...\r\n");
 
@@ -4522,7 +4610,7 @@ static void wlcm_process_network_switch_event(struct wifi_message *msg,
 {
     Event_AutoLink_SW_Node_t *pnewNode = (Event_AutoLink_SW_Node_t *)msg->data;
 
-    char *p = os_mem_calloc(pnewNode->len_ssid + 1);
+    char *p = OSA_MemoryAllocate(pnewNode->len_ssid + 1);
 
     /*print new network info*/
     (void)PRINTF("\r\nBssid=");
@@ -4532,7 +4620,7 @@ static void wlcm_process_network_switch_event(struct wifi_message *msg,
     {
         (void)memcpy((void *)p, (const void *)pnewNode->ssid, pnewNode->len_ssid);
         (void)PRINTF("\r\nSsid=%s\r\n", p);
-        os_mem_free(p);
+        OSA_MemoryFree(p);
     }
     (void)PRINTF("channel=%d,chanBand=%d,chanWidth=%d,chan2Offset=%d,scanMode=%d", pnewNode->chanBand.chanNum,
                  pnewNode->chanBand.bandConfig.chanBand, pnewNode->chanBand.bandConfig.chanWidth,
@@ -4541,7 +4629,7 @@ static void wlcm_process_network_switch_event(struct wifi_message *msg,
     (void)PRINTF("\r\nmcstCipher=%d", pnewNode->mcstcipher);
     (void)PRINTF("\r\nucstCipher=%d\r\n", pnewNode->ucstcipher);
 
-    os_mem_free(msg->data);
+    OSA_MemoryFree(msg->data);
 }
 #endif
 
@@ -4962,7 +5050,7 @@ static int wlcm_process_add_unspecified_network(const char *name)
     size_t len       = 0;
     const char *ssid = "w";
 
-    network = os_mem_alloc(sizeof(struct wlan_network));
+    network = OSA_MemoryAllocate(sizeof(struct wlan_network));
 
     if (network == NULL)
     {
@@ -4980,7 +5068,7 @@ static int wlcm_process_add_unspecified_network(const char *name)
 
     ret = wlan_add_network(network);
 
-    os_mem_free(network);
+    OSA_MemoryFree(network);
 
     if (ret != WM_SUCCESS)
     {
@@ -5350,9 +5438,9 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
             if (security->dpp_connector)
             {
-                os_mem_free(security->dpp_connector);
+                OSA_MemoryFree(security->dpp_connector);
             }
-            security->dpp_connector = os_mem_calloc(strlen(pos) + 1);
+            security->dpp_connector = OSA_MemoryAllocate(strlen(pos) + 1);
             if (security->dpp_connector == NULL)
             {
                 wlcm_e("Allocate %s memory failed!", DPP_EVENT_CONNECTOR);
@@ -5380,9 +5468,9 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
             if (security->dpp_c_sign_key)
             {
-                os_mem_free(security->dpp_c_sign_key);
+                OSA_MemoryFree(security->dpp_c_sign_key);
             }
-            security->dpp_c_sign_key = os_mem_calloc(strlen(pos) + 1);
+            security->dpp_c_sign_key = OSA_MemoryAllocate(strlen(pos) + 1);
             if (security->dpp_c_sign_key == NULL)
             {
                 wlcm_e("Allocate %s memory failed!", DPP_EVENT_C_SIGN_KEY);
@@ -5410,9 +5498,9 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
 
             if (security->dpp_net_access_key)
             {
-                os_mem_free(security->dpp_net_access_key);
+                OSA_MemoryFree(security->dpp_net_access_key);
             }
-            security->dpp_net_access_key = os_mem_calloc(strlen(pos) + 1);
+            security->dpp_net_access_key = OSA_MemoryAllocate(strlen(pos) + 1);
             if (security->dpp_net_access_key == NULL)
             {
                 wlcm_e("Allocate %s memory failed!", DPP_EVENT_NET_ACCESS_KEY);
@@ -5748,7 +5836,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #ifdef CONFIG_WPA_SUPP
             if (wlan.status_timeout)
             {
-                os_timer_deactivate(&wlan.supp_status_timer);
+                OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
                 wlan.status_timeout = 0;
                 CONNECTION_EVENT(WLAN_REASON_UAP_START_FAILED, NULL);
             }
@@ -5778,7 +5866,7 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
                 }
 #endif /* CONFIG_P2P */
 #ifdef CONFIG_WPA_SUPP
-                os_timer_deactivate(&wlan.supp_status_timer);
+                OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
                 wlan.status_timeout = 0;
 
                 wpa_supp_network_status(netif, network);
@@ -5813,17 +5901,29 @@ static enum cm_uap_state uap_state_machine(struct wifi_message *msg)
 #endif /* CONFIG_WIFI_UAP_WORKAROUND_STICKY_TIM */
             CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_ASSOC, msg->data);
             /* This was allocated by the sender */
-            os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             break;
         case WIFI_EVENT_UAP_CLIENT_CONN:
             CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_CONN, msg->data);
             /* This was allocated by the sender */
-            os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             break;
         case WIFI_EVENT_UAP_CLIENT_DEAUTH:
             CONNECTION_EVENT(WLAN_REASON_UAP_CLIENT_DISSOC, msg->data);
             /* This was allocated by the sender */
-            os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             break;
         case WIFI_EVENT_UAP_STOPPED:
             CONNECTION_EVENT(WLAN_REASON_UAP_STOPPED, NULL);
@@ -5886,7 +5986,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
     {
         wlcm_w("ignoring scan request with NULL scan params");
         wlcm_d("releasing scan lock");
-        (void)os_semaphore_put(&wlan.scan_lock);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
         wlan.is_scan_lock = 0;
         return;
     }
@@ -5902,8 +6002,12 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         wlcm_w("ignoring scan result in invalid state");
         wlcm_d("releasing scan lock");
         /* Free allocated wifi scan parameters */
-        os_mem_free(wlan_scan_param);
-        (void)os_semaphore_put(&wlan.scan_lock);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(wlan_scan_param);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, wlan_scan_param);
+#endif
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
         wlan.is_scan_lock = 0;
         return;
     }
@@ -5953,7 +6057,7 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         wm_wifi.external_scan = false;
 #endif
         wlcm_d("releasing scan lock");
-        (void)os_semaphore_put(&wlan.scan_lock);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
         wlan.is_scan_lock = 0;
     }
     else
@@ -5963,7 +6067,11 @@ static void wlcm_request_scan(struct wifi_message *msg, enum cm_sta_state *next)
         *next              = CM_STA_SCANNING_USER;
     }
     /* Free allocated wifi scan parameters */
-    os_mem_free(wlan_scan_param);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(wlan_scan_param);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, wlan_scan_param);
+#endif
 }
 
 static void wlcm_deinit(int action)
@@ -6031,7 +6139,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifdef CONFIG_WPA_SUPP
         if (wlan.status_timeout)
         {
-            os_timer_deactivate(&wlan.supp_status_timer);
+            OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
             wlan.status_timeout = 0;
             CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, NULL);
         }
@@ -6082,7 +6190,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         if (wlan.is_scan_lock)
         {
             wlcm_d("releasing scan lock");
-            (void)os_semaphore_put(&wlan.scan_lock);
+            (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
             wlan.is_scan_lock = 0;
         }
         wlan.sta_return_to  = CM_STA_IDLE;
@@ -6121,7 +6229,7 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
 #ifdef CONFIG_WPA_SUPP_WPS
         wlan.wps_session_attempt = 0;
 #endif
-        os_timer_deactivate(&wlan.supp_status_timer);
+        OSA_TimerDeactivate((osa_timer_handle_t)wlan.supp_status_timer);
         wlan.status_timeout = 0;
     }
 #endif
@@ -6208,7 +6316,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
         if (wlan.is_scan_lock)
         {
             wlcm_d("releasing scan lock (connect scan)");
-            (void)os_semaphore_put(&wlan.scan_lock);
+            (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
             wlan.is_scan_lock = 0;
         }
         wlan.cur_network_idx = -1;
@@ -6221,7 +6329,7 @@ static void wlcm_request_connect(struct wifi_message *msg, enum cm_sta_state *ne
         wlan.sta_state      = CM_STA_ASSOCIATING;
         wlan.connect        = true;
         wlan.status_timeout = 0;
-        (void)os_timer_activate(&wlan.supp_status_timer);
+        (void)OSA_TimerActivate((osa_timer_handle_t)wlan.supp_status_timer);
     }
 #endif
 
@@ -6320,6 +6428,8 @@ static void wlcm_process_get_hw_spec_event(void)
     }
 }
 
+#if defined(SDK_OS_FREE_RTOS)
+
 static void wlcm_process_mgmt_frame(void *data)
 {
     RxPD *rxpd                   = (RxPD *)(net_stack_buffer_get_payload(data));
@@ -6336,6 +6446,8 @@ static void wlcm_process_mgmt_frame(void *data)
     }
 }
 
+#endif
+
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
 static int wlcm_process_ftm_complete_event()
 {
@@ -6350,20 +6462,30 @@ static int wlcm_process_wls_csi_event(void *p_data)
 
 int wifi_get_wls_csi_sem(void)
 {
-    int rv = WM_SUCCESS;
+    osa_status_t status = KOSA_StatusSuccess;
 
-    rv = os_semaphore_get(&wls_csi_sem, OS_WAIT_FOREVER);
+    status = OSA_SemaphoreWait((osa_semaphore_handle_t)wls_csi_sem, osaWaitForever_c);
 
-    return rv;
+    if (status != KOSA_StatusSuccess)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
 }
 
 int wifi_put_wls_csi_sem(void)
 {
-    int rv = WM_SUCCESS;
+    osa_status_t status = KOSA_StatusSuccess;
 
-    rv = os_semaphore_put(&wls_csi_sem);
+    status = OSA_SemaphorePost((osa_semaphore_handle_t)wls_csi_sem);
 
-    return rv;
+    if (status != KOSA_StatusSuccess)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
 }
 #endif
 
@@ -6401,7 +6523,7 @@ static void wlcm_process_region_power_cfg(struct wifi_message *msg)
     wlan_set_rg_power_cfg(region_code);
 #endif
 
-    os_mem_free(country_code);
+    OSA_MemoryFree(country_code);
 }
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
@@ -6480,18 +6602,18 @@ static int wlan_cpu_loading_stop()
 
 static void wlan_cpu_loading_request()
 {
-    int ret;
+    osa_status_t status;
 
-    ret = os_timer_delete(&cpu_loading.cpu_loading_timer);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerDestroy((osa_timer_handle_t)cpu_loading.cpu_loading_timer);
+    if (status != KOSA_StatusSuccess)
     {
         (void)PRINTF("Failed to delete cpu loading timer: %d.\r\n", ret);
     }
 
-    os_mem_free(cpu_loading.cpu_loading_info);
+    OSA_MemoryFree(cpu_loading.cpu_loading_info);
 
-    ret = os_thread_delete(&cpu_loading.cpu_loading_thread);
-    if (ret != WM_SUCCESS)
+    status = OSA_TaskDestroy((osa_task_handle_t)cpu_loading.cpu_loading_task_Handle);
+    if (status != KOSA_StatusSuccess)
     {
         (void)PRINTF("Failed to delete cpu_loading_task: %d.\r\n", ret);
     }
@@ -6837,14 +6959,22 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             wlcm_d("got event: IEEE deep sleep result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
 #endif
-            os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             break;
         case WIFI_EVENT_WNM_DEEP_SLEEP:
 #ifdef CONFIG_WIFI_PS_DEBUG
             wlcm_d("got event: WNM deep sleep result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
 #endif
-            os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(msg->data);
+#else
+            OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             break;
 #ifdef CONFIG_HOST_SLEEP
         case WIFI_EVENT_HS_CONFIG:
@@ -6872,14 +7002,22 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             if (msg->data != NULL)
             {
                 (void)memcpy((void *)&wlan.sta_mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
-                os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(msg->data);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             }
             break;
         case WIFI_EVENT_UAP_MAC_ADDR_CONFIG:
             if (msg->data != NULL)
             {
                 (void)memcpy((void *)&wlan.uap_mac[0], (const void *)msg->data, MLAN_MAC_ADDR_LENGTH);
-                os_mem_free(msg->data);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(msg->data);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, msg->data);
+#endif
             }
             break;
 #ifdef CONFIG_BG_SCAN
@@ -6893,10 +7031,12 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             break;
 #endif
         case WIFI_EVENT_MGMT_FRAME:
+#if defined(SDK_OS_FREE_RTOS)
             wlcm_d("got event: management frame");
             wlcm_process_mgmt_frame(msg->data);
             next = wlan.sta_state;
             net_stack_buffer_free(msg->data);
+#endif
             break;
 #ifdef CONFIG_WPA_SUPP
         case WIFI_EVENT_REMAIN_ON_CHANNEL:
@@ -6942,10 +7082,9 @@ static bool is_uap_msg(struct wifi_message *msg)
  * Main Thread: the WLAN Connection Manager event queue handler and state
  * machine.
  */
-
-static void cm_main(os_thread_arg_t data)
+static void wlcmgr_task(void *data)
 {
-    int ret;
+    osa_status_t status;
     struct wifi_message msg;
     enum cm_sta_state next_sta_state;
     enum cm_uap_state next_uap_state;
@@ -6955,23 +7094,25 @@ static void cm_main(os_thread_arg_t data)
     /* Wait for all the data structures to be created */
     while (!wlan.running)
     {
-        os_thread_sleep(os_msec_to_ticks(500));
+        OSA_TimeDelay(500);
     }
 
     (void)net_wlan_init();
 
     while (true)
     {
-        ret = os_queue_recv(&wlan.events, &msg, OS_WAIT_FOREVER);
-
+        status = OSA_MsgQGet((osa_msgq_handle_t)wlan.events, &msg, osaWaitForever_c);
         if ((wlan.stop_request != 0U) && (msg.event == (uint16_t)CM_WLAN_USER_REQUEST_SHUTDOWN))
         {
             wlcm_d("Received shutdown request");
             wlan.status = WLCMGR_THREAD_STOPPED;
-            os_thread_self_complete(NULL);
+            while (true)
+            {
+                OSA_TimeDelay(60000);
+            }
         }
 
-        if (ret == WM_SUCCESS)
+        if (status == KOSA_StatusSuccess)
         {
 #ifndef CONFIG_WIFI_PS_DEBUG
             if (msg.event != WIFI_EVENT_SLEEP && msg.event != WIFI_EVENT_IEEE_PS &&
@@ -7028,7 +7169,7 @@ static int prov_wps_scan_results(unsigned int count)
 
     if (count == 0)
     {
-        os_semaphore_put(&wlan_wps.wps_scan_done);
+        OSA_SemaphorePost((osa_semaphore_handle_t)wlan_wps.wps_scan_done);
         return 0;
     }
 
@@ -7045,23 +7186,26 @@ static int prov_wps_scan_results(unsigned int count)
             break;
     }
 
-    os_semaphore_put(&wlan_wps.wps_scan_done);
+    OSA_SemaphorePost((osa_semaphore_handle_t)wlan_wps.wps_scan_done);
 
     return 0;
 }
 
-static void wps_main(os_thread_arg_t data)
+static void wps_task(void *data)
 {
-    int rv = os_semaphore_create(&wlan_wps.wps_scan_done, "wlanwpssem");
-    if (rv != WM_SUCCESS)
+    osa_status_t status;
+
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wlan_wps.wps_scan_done, 1);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Failed to create WPS scan semaphore");
     }
 
-    os_semaphore_get(&wlan_wps.wps_scan_done, OS_WAIT_FOREVER);
+    OSA_SemaphoreWait((osa_semaphore_handle_t)wlan_wps.wps_scan_done, osaWaitForever_c);
+
     while (1)
     {
-        os_thread_sleep(os_msec_to_ticks(500));
+        OSA_TimeDelay(500);
         if ((wlan_wps.wps_state == PROV_WPS_PBC_ENABLED) || (wlan_wps.wps_state == PROV_WPS_PIN_ENABLED))
         {
             int i = 5;
@@ -7090,7 +7234,7 @@ static void wps_main(os_thread_arg_t data)
                         (void)PRINTF("Wait or disconnect network\r\n");
                         break;
                     }
-                    os_semaphore_get(&wlan_wps.wps_scan_done, OS_WAIT_FOREVER);
+                    OSA_SemaphoreWait((osa_semaphore_handle_t)wlan_wps.wps_scan_done, osaWaitForever_c);
                     if ((wlan_wps.wps_res.wps_session == WPS_SESSION_PIN) ||
                         (wlan_wps.wps_res.wps_session == WPS_SESSION_PBC))
                     {
@@ -7122,7 +7266,7 @@ static int send_user_request(enum user_request_type request, unsigned int data)
     msg.reason = WIFI_EVENT_REASON_SUCCESS;
     msg.data   = (void *)data;
 
-    if (os_queue_send(&wlan.events, &msg, OS_NO_WAIT) == WM_SUCCESS)
+    if (OSA_MsgQPut((osa_msgq_handle_t)wlan.events, &msg) == KOSA_StatusSuccess)
     {
         return WM_SUCCESS;
     }
@@ -7160,25 +7304,43 @@ static void copy_network(struct wlan_network *dst, struct wlan_network *src)
     }
 }
 
-static int wifi_wakeup_card_cb(os_rw_lock_t *plock, unsigned int wait_time)
+static int wifi_wakeup_card_cb(osa_rw_lock_t *plock, unsigned int wait_time)
 {
-    int ret = os_semaphore_get(&(plock->rw_lock), 0);
-    if (ret == -WM_FAIL)
+    osa_status_t status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, 0);
+    if (status != KOSA_StatusSuccess)
     {
         wlan_wake_up_card();
-        ret = os_semaphore_get(&(plock->rw_lock), wait_time);
+        status = OSA_SemaphoreWait((osa_semaphore_handle_t)plock->rw_lock, wait_time);
     }
-    return ret;
+
+    if (status != KOSA_StatusSuccess)
+    {
+        return -WM_FAIL;
+    }
+
+    return WM_SUCCESS;
 }
 
 int wlan_init(const uint8_t *fw_start_addr, const size_t size)
 {
     int ret;
+#if defined(CONFIG_WMM_UAPSD) || defined(CONFIG_HOST_SLEEP)
+    osa_status_t status;
+#endif
 
     if (wlan.status != WLCMGR_INACTIVE)
     {
         return WM_SUCCESS;
     }
+
+#ifdef CONFIG_MEM_POOLS
+    ret = mem_pool_init();
+    if (ret != WM_SUCCESS)
+    {
+        wlcm_e("Failed to init Memory Pools");
+        return ret;
+    }
+#endif
 
 #ifdef OVERRIDE_CALIBRATION_DATA
     wlan_set_cal_data(ext_cal_data, sizeof(ext_cal_data));
@@ -7194,7 +7356,7 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     wm_mbedtls_lib_init();
 #endif /* defined(CONFIG_HOST_PMK) || defined(CONFIG_WPS2) */
 
-    ret = os_rwlock_create_with_cb(&sleep_rwlock, "sleep_mutex", "sleep_rwlock", wifi_wakeup_card_cb);
+    ret = OSA_RWLockCreateWithCB(&sleep_rwlock, "sleep_mutex", "sleep_rwlock", wifi_wakeup_card_cb);
     if (ret != WM_SUCCESS)
     {
         wifi_e("Create sleep cmd lock failed");
@@ -7202,16 +7364,16 @@ int wlan_init(const uint8_t *fw_start_addr, const size_t size)
     }
 
 #ifdef CONFIG_WMM_UAPSD
-    ret = os_semaphore_create(&uapsd_sem, "uapsd sem");
-    if (ret != WM_SUCCESS)
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)uapsd_sem, 1);
+    if (status != KOSA_StatusSuccess)
     {
         wifi_e("Create uapsd sem failed");
         return ret;
     }
 #endif
 #ifdef CONFIG_HOST_SLEEP
-    ret = os_semaphore_create_counting(&wakelock, "wake-lock", 10, 0);
-    if (ret == -WM_FAIL)
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wakelock, 1);
+    if (status != KOSA_StatusSuccess)
     {
         wifi_e("Failed to create wake-lock semaphore");
         return ret;
@@ -7282,7 +7444,7 @@ void wlan_deinit(int action)
         wlcm_deinit(action);
     }
 #ifndef RW610
-    os_rwlock_delete(&sleep_rwlock);
+    OSA_RWLockDestroy(&sleep_rwlock);
 #endif
 }
 
@@ -7347,7 +7509,7 @@ static int wlcm_wps_callback(enum wps_event event, void *data, uint16_t len)
 }
 #endif
 
-static void assoc_timer_cb(os_timer_arg_t arg)
+static void assoc_timer_cb(osa_timer_arg_t arg)
 {
     wlan.assoc_paused = false;
     if (wlan.pending_assoc_request)
@@ -7357,7 +7519,7 @@ static void assoc_timer_cb(os_timer_arg_t arg)
 }
 
 #ifdef CONFIG_WPA_SUPP
-static void supp_status_timer_cb(os_timer_arg_t arg)
+static void supp_status_timer_cb(osa_timer_arg_t arg)
 {
     int ret;
 
@@ -7380,7 +7542,7 @@ static void supp_status_timer_cb(os_timer_arg_t arg)
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
-static void neighbor_req_timer_cb(os_timer_arg_t arg)
+static void neighbor_req_timer_cb(osa_timer_arg_t arg)
 {
     if (wlan.neighbor_req == true)
     {
@@ -7392,14 +7554,14 @@ static void neighbor_req_timer_cb(os_timer_arg_t arg)
 
 #ifdef CONFIG_11R
 #ifdef CONFIG_WPA_SUPP
-static void ft_roam_timer_cb(os_timer_arg_t arg)
+static void ft_roam_timer_cb(osa_timer_arg_t arg)
 {
     wlan.roam_reassoc = false;
 }
 #endif
 #endif
 
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
 #ifdef SD9177
 
 #include "lwip/udp.h"
@@ -7445,7 +7607,7 @@ static void udp_remove_cb(void *arg)
     udp_remove((struct udp_pcb *)arg);
 }
 
-static void poll_timer_cb(os_timer_arg_t arg)
+static void poll_timer_cb(osa_timer_arg_t arg)
 {
     void *if_handle = NULL;
 
@@ -7489,13 +7651,14 @@ static void wlan_wait_wlmgr_ready()
     while (wlan.sta_state == CM_STA_INITIALIZING)
     {
         /* wait for wlmgr ready */
-        os_thread_sleep(os_msec_to_ticks(50));
+        OSA_TimeDelay(50);
     }
 }
 
 int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 {
     int ret;
+    osa_status_t status;
 
     if (!((wlan.status == WLCMGR_INIT_DONE) || (wlan.status == WLCMGR_INACTIVE)))
     {
@@ -7571,77 +7734,70 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 #endif
 
-    wlan.events_queue_data = g_wlan_event_queue_data;
-    ret = os_queue_create(&wlan.events, "wlan-events", (int)sizeof(struct wifi_message), &wlan.events_queue_data);
+    status = OSA_MsgQCreate((osa_msgq_handle_t)wlan.events, MAX_EVENTS, sizeof(struct wifi_message));
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_e("unable to create event queue: %d", status);
+        return -WM_FAIL;
+    }
+
+    ret = wifi_register_event_queue((osa_msgq_handle_t)wlan.events);
+
     if (ret != WM_SUCCESS)
     {
-        wlcm_e("unable to create event queue: %d", ret);
-        return -WM_FAIL;
-    }
-
-    ret = wifi_register_event_queue(&wlan.events);
-
-    if (ret != 0)
-    {
         wlcm_e("unable to register event queue");
-        (void)os_queue_delete(&wlan.events);
+        OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
         return -WM_FAIL;
     }
 
-    wlan.cm_stack = g_cm_stack;
-    ret           = os_thread_create(&wlan.cm_main_thread, "wlcmgr", cm_main, NULL, &wlan.cm_stack, OS_PRIO_1);
-
-    if (ret != 0)
+    status = OSA_TaskCreate((osa_task_handle_t)wlan.wlcmgr_task_Handle, OSA_TASK(wlcmgr_task), NULL);
+    if (status != KOSA_StatusSuccess)
     {
         wlan.cb = NULL;
         (void)wifi_unregister_event_queue(&wlan.events);
-        (void)os_queue_delete(&wlan.events);
+        OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
         return -WM_FAIL;
     }
 
 #if (defined(CONFIG_11MC) || defined(CONFIG_11AZ)) && defined(CONFIG_WLS_CSI_PROC)
-    ret = os_semaphore_create(&wls_csi_sem, "wls-csi-sem");
-    if (ret != WM_SUCCESS)
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wls_csi_sem, 1) ;
+    if (status != KOSA_StatusSuccess)
     {
-        wlcm_e("unable to create wls csi lock: %d", ret);
+        wlcm_e("unable to create wls csi lock: %d", status);
         return -WM_FAIL;
     }
 #endif
 
-    if (os_semaphore_create(&wlan.scan_lock, "wlan-scan") != 0)
+    if (OSA_SemaphoreCreate((osa_semaphore_handle_t)wlan.scan_lock, 1) != KOSA_StatusSuccess)
     {
         (void)wifi_unregister_event_queue(&wlan.events);
-        (void)os_queue_delete(&wlan.events);
-        (void)os_thread_delete(&wlan.cm_main_thread);
+        OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
+        OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
         return -WM_FAIL;
     }
 
 #ifdef RW610
-    if (reset_lock == NULL)
-    {
-        ret = os_mutex_create(&reset_lock, "reset_lock", OS_MUTEX_INHERIT);
-        if (ret != 0)
+        status = OSA_MutexCreate((osa_mutex_handle_t)reset_lock);
+        if (status != KOSA_StatusSuccess)
         {
             wlan.cb = NULL;
             wifi_unregister_event_queue(&wlan.events);
-            os_queue_delete(&wlan.events);
-            os_thread_delete(&wlan.cm_main_thread);
-            os_semaphore_delete(&wlan.scan_lock);
+            OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
+            OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
+            OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
             return -WM_FAIL;
         }
-    }
 
     if (!mon_thread_init)
     {
 #ifdef RW610
         wifi_cau_temperature_enable();
 #endif
-        mon_thread_events_queue_data = g_mon_event_queue_data;
-        ret = os_queue_create(&mon_thread_events, "mon-thread-events", sizeof(struct wlan_message),
-                              &mon_thread_events_queue_data);
-        if (ret != WM_SUCCESS)
+
+        status = OSA_MsgQCreate((osa_msgq_handle_t)mon_thread_events, MAX_EVENTS, sizeof(struct wlan_message));
+        if (status != KOSA_StatusSuccess)
         {
-            wlcm_e("unable to create event queue: %d", ret);
+            wlcm_e("unable to create event queue: %d", status);
             return -WM_FAIL;
         }
 #if ((defined(APP_LOWPOWER_ENABLED) && (APP_LOWPOWER_ENABLED == 1)) && \
@@ -7653,7 +7809,6 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 #endif
 #endif
-        mon_stack = g_mon_stack;
         /* Host sleep hanshake will be done in IDLE task and infinite
          * while loop is added to wait for hankshake complete to
          * prevent IDLE task from entering suspend state.
@@ -7661,15 +7816,15 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
          * mon_thread task could not be scheduled as we did not
          * enabled time slice.
          */
-        ret = os_thread_create(&mon_thread, "mon_thread", wlan_mon_thread, 0, &mon_stack, OS_PRIO_3);
-        if (ret != 0)
+        status = OSA_TaskCreate((osa_task_handle_t)wlan.wlcmgr_mon_task_Handle, OSA_TASK(wlcmgr_mon_task), NULL);
+        if (status != KOSA_StatusSuccess)
         {
             wlan.cb = NULL;
             wifi_unregister_event_queue(&wlan.events);
-            os_queue_delete(&wlan.events);
-            os_thread_delete(&wlan.cm_main_thread);
-            os_semaphore_delete(&wlan.scan_lock);
-            os_mutex_delete(&reset_lock);
+            OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
+            OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
+            OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
+            OSA_MutexDestroy((osa_mutex_handle_t)reset_lock);
             return -WM_FAIL;
         }
         mon_thread_init = 1;
@@ -7684,16 +7839,15 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlcm_d("WPS started");
     wps_start(&wps_conf);
 
-    wlan_wps.wps_stack = g_wps_stack;
-    ret = os_thread_create(&wlan_wps.wps_main_thread, "wps", wps_main, 0, &wlan_wps.wps_stack, OS_PRIO_3);
-    if (ret != WM_SUCCESS)
+    status = OSA_TaskCreate((osa_task_handle_t)wlan_wps.wps_task_Handle, OSA_TASK(wps_task), NULL);
+    if (status != KOSA_StatusSuccess)
     {
         wlan.cb = NULL;
         wifi_unregister_event_queue(&wlan.events);
-        os_queue_delete(&wlan.events);
-        os_thread_delete(&wlan.cm_main_thread);
-        os_semaphore_delete(&wlan.scan_lock);
-        os_mutex_delete(&reset_lock);
+        OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
+        OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
+        OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
+        OSA_MutexDestroy((osa_mutex_handle_t)reset_lock);
         return -WM_FAIL;
     }
 #endif
@@ -7703,23 +7857,24 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     cpu_loading.sampling_period = CPU_LOADING_PERIOD;
 #endif
 
-    ret = os_timer_create(&wlan.assoc_timer, "assoc-timer", os_msec_to_ticks(BAD_MIC_TIMEOUT), &assoc_timer_cb, NULL,
-                          OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.assoc_timer, BAD_MIC_TIMEOUT, &assoc_timer_cb, NULL,
+                          KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Unable to create unicast bad mic timer");
-        return ret;
+        return -WM_FAIL;
     }
 
 #ifdef CONFIG_WPA_SUPP
-    ret = os_timer_create(&wlan.supp_status_timer, "supp-status-timer", os_msec_to_ticks(SUPP_STATUS_TIMEOUT),
-                          &supp_status_timer_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.supp_status_timer, SUPP_STATUS_TIMEOUT,
+                          &supp_status_timer_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Unable to create supp status timer");
-        return ret;
+        return -WM_FAIL;
     }
 #endif
+
 
 #ifdef CONFIG_11K
 
@@ -7727,35 +7882,35 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
-    ret = os_timer_create(&wlan.neighbor_req_timer, "neighbor-req-timer", os_msec_to_ticks(NEIGHBOR_REQ_TIMEOUT),
-                          &neighbor_req_timer_cb, NULL, OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.neighbor_req_timer, NEIGHBOR_REQ_TIMEOUT,
+                          &neighbor_req_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Unable to create neighbor request timer");
         return ret;
     }
 #endif
 
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
 #ifdef SD9177
-    ret = os_timer_create(&wlan.poll_timer, "poll-timer", os_msec_to_ticks(POLL_TIMEOUT),
-                          &poll_timer_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.poll_timer, POLL_TIMEOUT,
+                          &poll_timer_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
     {
-        wlcm_e("Unable to start poll timer");
-        return ret;
+        wlcm_e("Unable to create poll timer");
+        return -WM_FAIL;
     }
 #endif
 #endif
 
 #ifdef CONFIG_11R
 #ifdef CONFIG_WPA_SUPP
-    ret = os_timer_create(&wlan.ft_roam_timer, "ft-roam-timer", os_msec_to_ticks(FT_ROAM_TIMEOUT),
-                          &ft_roam_timer_cb, NULL, OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerCreate((osa_timer_handle_t)wlan.ft_roam_timer, FT_ROAM_TIMEOUT,
+                          &ft_roam_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_e("Unable to create ft roam timer");
-        return ret;
+        return -WM_FAIL;
     }
 #endif
 #endif
@@ -7835,6 +7990,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
 int wlan_stop(void)
 {
+    osa_status_t status;
     int ret = WM_SUCCESS;
 #ifndef RW610
     int total_wait_time = 1000; /* millisecs */
@@ -7877,8 +8033,8 @@ int wlan_stop(void)
      * here. Otherwise deadlock situation might arrive as both of them
      * share command_lock semaphore.
      */
-    ret = os_semaphore_get(&wlan.scan_lock, OS_WAIT_FOREVER);
-    if (ret != WM_SUCCESS)
+    status = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_w("failed to get scan lock: %d.", ret);
         return WLAN_ERROR_STATE;
@@ -7890,33 +8046,29 @@ int wlan_stop(void)
 #ifndef CONFIG_WIFI_RECOVERY
     if (wlan.uap_state == CM_UAP_IP_UP)
 #endif
-        dhcp_server_stop();
+        //dhcp_server_stop();
 #endif
-    if (wlan.scan_lock)
+    status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan.scan_lock);
+    if (status != KOSA_StatusSuccess)
     {
-        ret = os_semaphore_delete(&wlan.scan_lock);
-        if (ret != WM_SUCCESS)
-        {
-            wlcm_w("failed to delete scan lock: %d.", ret);
-            return WLAN_ERROR_STATE;
-        }
-        wlan.is_scan_lock = 0;
+        wlcm_w("failed to delete scan lock: %d.", ret);
+        return WLAN_ERROR_STATE;
+    }
+    wlan.is_scan_lock = 0;
+
+    wlan.scan_cb = NULL;
+
+    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.assoc_timer);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_w("failed to delete assoc timer: %d.", ret);
+        return WLAN_ERROR_STATE;
     }
     wlan.scan_cb = NULL;
 
-    if (wlan.assoc_timer)
-    {
-        ret = os_timer_delete(&wlan.assoc_timer);
-        if (ret != WM_SUCCESS)
-        {
-            wlcm_w("failed to delete assoc timer: %d.", ret);
-            return WLAN_ERROR_STATE;
-        }
-    }
-
 #ifdef CONFIG_WPA_SUPP
-    ret = os_timer_delete(&wlan.supp_status_timer);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.supp_status_timer);
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_w("failed to delete supp status timer: %d.", ret);
         return WLAN_ERROR_STATE;
@@ -7924,27 +8076,32 @@ int wlan_stop(void)
 #endif
 
 #if defined(CONFIG_11K) || defined(CONFIG_11V)
-    if (wlan.neighbor_req_timer)
+    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.neighbor_req_timer);
+    if (status != KOSA_StatusSuccess)
     {
-        ret = os_timer_delete(&wlan.neighbor_req_timer);
-        if (ret != WM_SUCCESS)
-        {
-            wlcm_w("failed to delete neighbor req timer: %d.", ret);
-            return WLAN_ERROR_STATE;
-        }
+        wlcm_w("failed to delete neighbor req timer: %d.", ret);
+        return WLAN_ERROR_STATE;
     }
 #endif
 
 #ifdef CONFIG_11R
 #ifdef CONFIG_WPA_SUPP
-    if (wlan.ft_roam_timer)
+    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.ft_roam_timer);
+    if (status != KOSA_StatusSuccess)
     {
-        ret = os_timer_delete(&wlan.ft_roam_timer);
-        if (ret != WM_SUCCESS)
-        {
-            wlcm_w("failed to delete ft roam timer: %d.", ret);
-            return WLAN_ERROR_STATE;
-        }
+        wlcm_w("failed to delete ft roam timer: %d.", ret);
+        return WLAN_ERROR_STATE;
+    }
+#endif
+#endif
+
+#if defined(SDK_OS_FREE_RTOS)
+#ifdef SD9177
+    status = OSA_TimerDestroy((osa_timer_handle_t)wlan.poll_timer);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_w("failed to delete poll timer: %d.", ret);
+        return WLAN_ERROR_STATE;
     }
 #endif
 #endif
@@ -7966,7 +8123,7 @@ int wlan_stop(void)
     while (wlan.status != WLCMGR_THREAD_STOPPED && num_iterations)
     {
         --num_iterations;
-        os_thread_sleep(os_msec_to_ticks((uint32_t)check_interval));
+        OSA_TimeDelay((uint32_t)check_interval);
     }
 
     if (wlan.status != WLCMGR_THREAD_STOPPED && !num_iterations)
@@ -7990,21 +8147,18 @@ int wlan_stop(void)
         }
     }
 
-    if (wlan.events)
-    {
-        ret = os_queue_delete(&wlan.events);
+    status = OSA_MsgQDestroy((osa_msgq_handle_t)wlan.events);
 
-        if (ret != WM_SUCCESS)
-        {
-            wlcm_w("failed to delete event queue: %d", ret);
-            return WLAN_ERROR_STATE;
-        }
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_w("failed to delete event queue: %d", ret);
+        return WLAN_ERROR_STATE;
     }
 
 #ifdef CONFIG_HOST_SLEEP
     if (wakelock != NULL)
     {
-        os_semaphore_delete(&wakelock);
+        OSA_SemaphoreDestroy(&wakelock);
         wakelock = NULL;
     }
 #endif
@@ -8018,12 +8172,12 @@ int wlan_stop(void)
     if (wlan.uap_state > CM_UAP_CONFIGURED)
     {
         (void)wifi_uap_stop();
-        (void)dhcp_server_stop();
+//        (void)dhcp_server_stop();
     }
 
-    ret = os_thread_delete(&wlan.cm_main_thread);
+    status = OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
 
-    if (ret != WM_SUCCESS)
+    if (status != KOSA_StatusSuccess)
     {
         wlcm_w("failed to terminate thread: %d", ret);
         return WLAN_ERROR_STATE;
@@ -8040,20 +8194,19 @@ int wlan_stop(void)
 
     wifi_deinit();
 
-    os_rwlock_delete(&sleep_rwlock);
+    OSA_RWLockDestroy(&sleep_rwlock);
 #endif
+
 #ifdef CONFIG_WMM_UAPSD
-    if (uapsd_sem != NULL)
-    {
-        os_semaphore_delete(&uapsd_sem);
-        uapsd_sem = NULL;
-    }
+    OSA_SemaphoreDestroy((osa_semaphore_handle_t)uapsd_sem);
 #endif
     return ret;
 }
 
+#if defined(SDK_OS_FREE_RTOS)
 #define DEF_UAP_IP 0xc0a80a01UL /* 192.168.10.1 */
 static unsigned int uap_ip = DEF_UAP_IP;
+#endif
 
 void wlan_initialize_uap_network(struct wlan_network *net)
 {
@@ -8066,12 +8219,14 @@ void wlan_initialize_uap_network(struct wlan_network *net)
     net->type = WLAN_BSS_TYPE_UAP;
     /* Set network role to uAP */
     net->role = WLAN_BSS_ROLE_UAP;
+#if defined(SDK_OS_FREE_RTOS)
     /* Set IP address to 192.168.10.1 */
     net->ip.ipv4.address = htonl(uap_ip);
     /* Set default gateway to 192.168.10.1 */
     net->ip.ipv4.gw = htonl(uap_ip);
     /* Set netmask to 255.255.255.0 */
     net->ip.ipv4.netmask = htonl(0xffffff00UL);
+#endif
     /* Specify address type as static assignment */
     net->ip.ipv4.addr_type = ADDR_TYPE_STATIC;
 }
@@ -8979,7 +9134,7 @@ int wlan_add_network(struct wlan_network *network)
             {
                 wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                os_mem_free(network->security.ca_cert_data);
+                OSA_MemoryFree(network->security.ca_cert_data);
 #endif
                 wlcm_e("Server cert is not configured");
                 return -WM_E_INVAL;
@@ -8991,8 +9146,8 @@ int wlan_add_network(struct wlan_network *network)
             {
                 wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                os_mem_free(network->security.ca_cert_data);
-                os_mem_free(network->security.server_cert_data);
+                OSA_MemoryFree(network->security.ca_cert_data);
+                OSA_MemoryFree(network->security.server_cert_data);
 #endif
                 wlcm_e("Server key is not configured");
                 return -WM_E_INVAL;
@@ -9003,9 +9158,9 @@ int wlan_add_network(struct wlan_network *network)
             {
                 wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                os_mem_free(network->security.ca_cert_data);
-                os_mem_free(network->security.server_cert_data);
-                os_mem_free(network->security.server_key_data);
+                OSA_MemoryFree(network->security.ca_cert_data);
+                OSA_MemoryFree(network->security.server_cert_data);
+                OSA_MemoryFree(network->security.server_key_data);
 #endif
                 wlcm_e("DH params are not configured");
                 return -WM_E_INVAL;
@@ -9050,7 +9205,7 @@ int wlan_add_network(struct wlan_network *network)
                 {
                     wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                    os_mem_free(network->security.ca_cert_data);
+                    OSA_MemoryFree(network->security.ca_cert_data);
 #endif
                     wlcm_e("Client cert is not configured");
                     return -WM_E_INVAL;
@@ -9062,8 +9217,8 @@ int wlan_add_network(struct wlan_network *network)
                 {
                     wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                    os_mem_free(network->security.ca_cert_data);
-                    os_mem_free(network->security.client_cert_data);
+                    OSA_MemoryFree(network->security.ca_cert_data);
+                    OSA_MemoryFree(network->security.client_cert_data);
 #endif
                     wlcm_e("Client key is not configured");
                     return -WM_E_INVAL;
@@ -9083,9 +9238,9 @@ int wlan_add_network(struct wlan_network *network)
                 {
                     wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                    os_mem_free(network->security.ca_cert_data);
-                    os_mem_free(network->security.client_cert_data);
-                    os_mem_free(network->security.client_key_data);
+                    OSA_MemoryFree(network->security.ca_cert_data);
+                    OSA_MemoryFree(network->security.client_cert_data);
+                    OSA_MemoryFree(network->security.client_key_data);
 #endif
                     wlcm_e("CA cert2 is not configured");
                     return -WM_E_INVAL;
@@ -9097,10 +9252,10 @@ int wlan_add_network(struct wlan_network *network)
                 {
                     wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                    os_mem_free(network->security.ca_cert_data);
-                    os_mem_free(network->security.client_cert_data);
-                    os_mem_free(network->security.client_key_data);
-                    os_mem_free(network->security.ca_cert2_data);
+                    OSA_MemoryFree(network->security.ca_cert_data);
+                    OSA_MemoryFree(network->security.client_cert_data);
+                    OSA_MemoryFree(network->security.client_key_data);
+                    OSA_MemoryFree(network->security.ca_cert2_data);
 #endif
                     wlcm_e("Client cert2 is not configured");
                     return -WM_E_INVAL;
@@ -9112,11 +9267,11 @@ int wlan_add_network(struct wlan_network *network)
                 {
                     wlan_free_entp_cert_files();
 #ifdef CONFIG_WIFI_USB_FILE_ACCESS
-                    os_mem_free(network->security.ca_cert_data);
-                    os_mem_free(network->security.client_cert_data);
-                    os_mem_free(network->security.client_key_data);
-                    os_mem_free(network->security.ca_cert2_data);
-                    os_mem_free(network->security.client_cert2_data);
+                    OSA_MemoryFree(network->security.ca_cert_data);
+                    OSA_MemoryFree(network->security.client_cert_data);
+                    OSA_MemoryFree(network->security.client_key_data);
+                    OSA_MemoryFree(network->security.ca_cert2_data);
+                    OSA_MemoryFree(network->security.client_cert2_data);
 #endif
                     wlcm_e("Client key2 is not configured");
                     return -WM_E_INVAL;
@@ -9386,27 +9541,27 @@ int wlan_remove_network(const char *name)
             {
                 if (wlan.networks[i].security.ca_cert_data)
                 {
-                    os_mem_free(wlan.networks[i].security.ca_cert_data);
+                    OSA_MemoryFree(wlan.networks[i].security.ca_cert_data);
                 }
                 if (wlan.networks[i].security.client_cert_data)
                 {
-                    os_mem_free(wlan.networks[i].security.client_cert_data);
+                    OSA_MemoryFree(wlan.networks[i].security.client_cert_data);
                 }
                 if (wlan.networks[i].security.client_key_data)
                 {
-                    os_mem_free(wlan.networks[i].security.client_key_data);
+                    OSA_MemoryFree(wlan.networks[i].security.client_key_data);
                 }
                 if (wlan.networks[i].security.ca_cert2_data)
                 {
-                    os_mem_free(wlan.networks[i].security.ca_cert2_data);
+                    OSA_MemoryFree(wlan.networks[i].security.ca_cert2_data);
                 }
                 if (wlan.networks[i].security.client_cert2_data)
                 {
-                    os_mem_free(wlan.networks[i].security.client_cert2_data);
+                    OSA_MemoryFree(wlan.networks[i].security.client_cert2_data);
                 }
                 if (wlan.networks[i].security.client_key2_data)
                 {
-                    os_mem_free(wlan.networks[i].security.client_key2_data);
+                    OSA_MemoryFree(wlan.networks[i].security.client_key2_data);
                 }
             }
 #ifdef CONFIG_HOSTAPD
@@ -9415,15 +9570,15 @@ int wlan_remove_network(const char *name)
             {
                 if (wlan.networks[i].security.ca_cert_data)
                 {
-                    os_mem_free(wlan.networks[i].security.ca_cert_data);
+                    OSA_MemoryFree(wlan.networks[i].security.ca_cert_data);
                 }
                 if (wlan.networks[i].security.server_cert_data)
                 {
-                    os_mem_free(wlan.networks[i].security.server_cert_data);
+                    OSA_MemoryFree(wlan.networks[i].security.server_cert_data);
                 }
                 if (wlan.networks[i].security.server_key_data)
                 {
-                    os_mem_free(wlan.networks[i].security.server_key_data);
+                    OSA_MemoryFree(wlan.networks[i].security.server_key_data);
                 }
             }
 #endif
@@ -9433,15 +9588,15 @@ int wlan_remove_network(const char *name)
 #ifdef CONFIG_WPA_SUPP_DPP
             if (wlan.networks[i].security.dpp_connector)
             {
-                os_mem_free(wlan.networks[i].security.dpp_connector);
+                OSA_MemoryFree(wlan.networks[i].security.dpp_connector);
             }
             if (wlan.networks[i].security.dpp_c_sign_key)
             {
-                os_mem_free(wlan.networks[i].security.dpp_c_sign_key);
+                OSA_MemoryFree(wlan.networks[i].security.dpp_c_sign_key);
             }
             if (wlan.networks[i].security.dpp_net_access_key)
             {
-                os_mem_free(wlan.networks[i].security.dpp_net_access_key);
+                OSA_MemoryFree(wlan.networks[i].security.dpp_net_access_key);
             }
 #endif
 #endif
@@ -9719,7 +9874,7 @@ int wlan_disconnect(void)
 
 #ifdef CONFIG_ECSA
     /*Wait for sta to enter the disconnect state, and then send ECSA cmd*/
-    os_thread_sleep(1000);
+    OSA_TimeDelay(1000);
     wrapper_clear_media_connected_event();
     wlan_switch_to_nondfs_channel();
 #endif
@@ -9762,7 +9917,7 @@ int wlan_connect(char *name)
         {
             wlcm_d("taking the scan lock (connect scan)");
             dbg_lock_info();
-            ret = os_semaphore_get(&wlan.scan_lock, OS_WAIT_FOREVER);
+            ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
             if (ret != WM_SUCCESS)
             {
                 wlcm_e("failed to get scan lock: 0x%X", ret);
@@ -9831,7 +9986,7 @@ int wlan_reassociate()
 
     wlcm_d("taking the scan lock (reassociate scan)");
     dbg_lock_info();
-    ret = os_semaphore_get(&wlan.scan_lock, OS_WAIT_FOREVER);
+    ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("failed to get scan lock: 0x%X", ret);
@@ -9847,7 +10002,7 @@ int wlan_reassociate()
     {
         wlcm_d("Error: Reassociate failed");
         wlan.roam_reassoc = false;
-        (void)os_semaphore_put(&wlan.scan_lock);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan.scan_lock);
         wlan.is_scan_lock = 0;
     }
 
@@ -9991,25 +10146,12 @@ void wlan_destroy_all_tasks(void)
     os_lock_schedule();
 
     /* Destroy cm_main thread */
-    if (wlan.cm_main_thread)
-    {
-        os_thread_delete(&wlan.cm_main_thread);
-        wlan.cm_main_thread = NULL;
-    }
+    OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
 
 #ifdef CONFIG_WPS2
     /* Destroy wps_main thread */
-    if (wlan_wps.wps_main_thread)
-    {
-        os_thread_delete(&wlan_wps.wps_main_thread);
-        wlan_wps.wps_main_thread = NULL;
-
-        if (wlan_wps.wps_scan_done != NULL)
-        {
-            os_semaphore_delete(&wlan_wps.wps_scan_done);
-            wlan_wps.wps_scan_done = NULL;
-        }
-    }
+    OSA_TaskDestroy((osa_task_handle_t)wlan_wps.wps_task_Handle);
+    OSA_SemaphoreDestroy((osa_semaphore_handle_t)wlan_wps.wps_scan_done);
 #endif
 
     /* Destroy wifidriver thread */
@@ -10030,7 +10172,7 @@ int wlan_imu_put_task_lock(void)
 
 void wlan_reset(cli_reset_option ResetOption)
 {
-    if (os_mutex_get(&reset_lock, 0) != WM_SUCCESS)
+    if (OSA_MutexLock((osa_mutex_handle_t)reset_lock, 0) != WM_SUCCESS)
     {
         PRINTF("already in process...\r\n");
         return;
@@ -10056,7 +10198,7 @@ void wlan_reset(cli_reset_option ResetOption)
                 wlan_disconnect();
                 while (wlan.sta_state != CM_STA_IDLE)
                 {
-                    os_thread_sleep(os_msec_to_ticks(1000));
+                    OSA_TimeDelay(1000);
                 }
             }
 
@@ -10066,7 +10208,7 @@ void wlan_reset(cli_reset_option ResetOption)
                 wlan_stop_network(wlan.networks[wlan.cur_uap_network_idx].name);
                 while (wlan.uap_state != CM_UAP_INITIALIZING)
                 {
-                    os_thread_sleep(os_msec_to_ticks(1000));
+                    OSA_TimeDelay(1000);
                 }
             }
 #ifdef CONFIG_CPU_LOADING
@@ -10139,7 +10281,7 @@ void wlan_reset(cli_reset_option ResetOption)
             if (WM_SUCCESS != (wlan_init(wlan_fw_bin, wlan_fw_bin_len)))
             {
                 wlcm_e("wlan init failed\r\n");
-                os_mutex_put(&reset_lock);
+                OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
                 assert(0);
                 return;
             }
@@ -10147,7 +10289,7 @@ void wlan_reset(cli_reset_option ResetOption)
             if (WM_SUCCESS != (wlan_start(wlan_event_callback)))
             {
                 wlcm_e("wlan start failed\r\n");
-                os_mutex_put(&reset_lock);
+                OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
                 return;
             }
 
@@ -10170,14 +10312,15 @@ void wlan_reset(cli_reset_option ResetOption)
         }
     }
 
-    os_mutex_put(&reset_lock);
+    OSA_MutexUnlock((osa_mutex_handle_t)reset_lock);
     PRINTF("--- Done ---\r\n");
 }
 
-static void wlan_mon_thread(os_thread_arg_t data)
+static void wlcmgr_mon_task(void * data)
 {
     unsigned long delay_ms = 5000;
     int ret = 0;
+    osa_status_t status;
     struct wlan_message msg;
 
 #ifdef CONFIG_PALLADIUM_SUPPORT
@@ -10185,13 +10328,17 @@ static void wlan_mon_thread(os_thread_arg_t data)
 #endif
 
 #ifdef CONFIG_POWER_MANAGER
-    os_timer_create(&wake_timer, "wake_timer", os_msec_to_ticks(5000), &wake_timer_cb, NULL,
-                    OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
+    status = OSA_TimerCreate((osa_timer_handle_t)wake_timer, WAKE_TIMEOUT,
+                          &wake_timer_cb, NULL, KOSA_TimerOnce, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
+    {
+        wlcm_e("Unable to create wake timer");
+    }
 #endif
     while (1)
     {
-        ret = os_queue_recv(&mon_thread_events, &msg, os_msec_to_ticks(delay_ms));
-        if (ret == WM_SUCCESS)
+        status = OSA_MsgQGet((osa_msgq_handle_t)mon_thread_events, &msg, delay_ms);
+        if (status == KOSA_StatusSuccess)
         {
 #ifdef CONFIG_HOST_SLEEP
              wlcm_d("got mon thread event: %d", msg.id);
@@ -10209,7 +10356,7 @@ static void wlan_mon_thread(os_thread_arg_t data)
                 if(!wlan_is_manual && wlan_host_sleep_state == HOST_SLEEP_PERIODIC)
                 {
                     wakelock_get();
-                    os_timer_activate(&wake_timer);
+                    (void)OSA_TimerActivate((osa_timer_handle_t)wake_timer);
                 }
 #endif
                 wlan_cancel_host_sleep();
@@ -10654,7 +10801,11 @@ int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
         return WLAN_ERROR_STATE;
     }
 
-    wlan_scan_param = (wlan_scan_params_v2_t *)os_mem_calloc(sizeof(wlan_scan_params_v2_t));
+#ifndef CONFIG_MEM_POOLS
+    wlan_scan_param = (wlan_scan_params_v2_t *)OSA_MemoryAllocate(sizeof(wlan_scan_params_v2_t));
+#else
+     wlan_scan_param = (wlan_scan_params_v2_t *)OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+#endif
 
     if (wlan_scan_param == NULL)
     {
@@ -10685,18 +10836,27 @@ int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
         if (chan_idx == 0 && t_wlan_scan_param.num_channels > 0)
         {
             wlcm_e("no valid channel to scan");
-            os_mem_free(wlan_scan_param);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(wlan_scan_param);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, wlan_scan_param);
+#endif
+
             return -WM_E_INVAL;
         }
     }
 
     wlcm_d("taking the scan lock (user scan)");
     dbg_lock_info();
-    ret = os_semaphore_get(&wlan.scan_lock, OS_WAIT_FOREVER);
+    ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
     if (ret != WM_SUCCESS)
     {
         wlcm_e("failed to get scan lock: 0x%X", ret);
-        os_mem_free(wlan_scan_param);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(wlan_scan_param);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, wlan_scan_param);
+#endif
         return -WM_FAIL;
     }
     wlcm_d("got the scan lock (user scan)");
@@ -10706,7 +10866,11 @@ int wlan_scan_with_opt(wlan_scan_params_v2_t t_wlan_scan_param)
 
     if (ret != WM_SUCCESS)
     {
-        os_mem_free(wlan_scan_param);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(wlan_scan_param);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, wlan_scan_param);
+#endif
     }
 
     return ret;
@@ -11233,7 +11397,7 @@ int wlan_wlcmgr_send_msg(enum wifi_event event, enum wifi_event_reason reason, v
     msg.reason = reason;
     msg.data   = (void *)data;
 
-    if (os_queue_send(&wlan.events, &msg, OS_NO_WAIT) == WM_SUCCESS)
+    if (OSA_MsgQPut((osa_msgq_handle_t)wlan.events, &msg) == KOSA_StatusSuccess)
     {
         return WM_SUCCESS;
     }
@@ -11843,7 +12007,8 @@ uint16_t wlan_get_beacon_period(void)
     return network->beacon_period;
 }
 
-static os_semaphore_t wlan_dtim_sem;
+OSA_SEMAPHORE_HANDLE_DEFINE(wlan_dtim_sem);
+
 static uint8_t dtim_period;
 
 static int pscan_cb(unsigned int count)
@@ -11857,7 +12022,7 @@ static int pscan_cb(unsigned int count)
     if (count == 0U)
     {
         (void)PRINTF("networks not found\r\n");
-        (void)os_semaphore_put(&wlan_dtim_sem);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan_dtim_sem);
         return 0;
     }
 
@@ -11873,40 +12038,40 @@ static int pscan_cb(unsigned int count)
         dtim_period = res.dtim_period;
     }
 
-    (void)os_semaphore_put(&wlan_dtim_sem);
+    (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan_dtim_sem);
 
     return 0;
 }
 
 uint8_t wlan_get_dtim_period(void)
 {
-    int rv;
+    osa_status_t status;
 
-    rv = os_semaphore_create(&wlan_dtim_sem, "wlandtimsem");
-    if (rv != WM_SUCCESS)
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wlan_dtim_sem, 1);
+    if (status != KOSA_StatusSuccess)
     {
         return 0;
     }
 
     /* Consume so that 'get' blocks when used later */
-    (void)os_semaphore_get(&wlan_dtim_sem, OS_WAIT_FOREVER);
+    (void)OSA_SemaphoreWait((osa_semaphore_handle_t)wlan_dtim_sem, osaWaitForever_c);
 
     if (wlan_pscan(pscan_cb) != 0)
     {
         (void)PRINTF("Error: scan request failed\r\n");
-        (void)os_semaphore_put(&wlan_dtim_sem);
-        (void)os_semaphore_delete(&wlan_dtim_sem);
+        (void)OSA_SemaphorePost((osa_semaphore_handle_t)wlan_dtim_sem);
+        (void)OSA_SemaphoreDestroy(wlan_dtim_sem);
         return 0;
     }
 
     /* Wait till scan for DTIM is complete */
     /*TODO:This need to be handled in better way. */
-    if (os_semaphore_get(&wlan_dtim_sem, os_msec_to_ticks(500)) != WM_SUCCESS)
+    if (OSA_SemaphoreWait((osa_semaphore_handle_t)wlan_dtim_sem, 500) != KOSA_StatusSuccess)
     {
         wlcm_e("Do not call this API from wlan event handler\r\n");
         dtim_period = 0;
     }
-    (void)os_semaphore_delete(&wlan_dtim_sem);
+    (void)OSA_SemaphoreDestroy(wlan_dtim_sem);
 
     return dtim_period;
 }
@@ -12457,7 +12622,12 @@ int _wlan_rrm_scan_cb(unsigned int count)
     int meas_report_len       = 0;
 
     /* process scan result */
-    rep_buf = (t_u8 *)os_mem_alloc(BEACON_REPORT_BUF_SIZE);
+#ifndef CONFIG_MEM_POOLS
+    rep_buf = (t_u8 *)OSA_MemoryAllocate(BEACON_REPORT_BUF_SIZE);
+#else
+    rep_buf = (t_u8 *)OSA_MemoryPoolAllocate(buf_1536_MemoryPool);
+#endif
+
     if (rep_buf == NULL)
     {
         PRINTM(MERROR, "Cannot allocate memory for report buffer");
@@ -12521,8 +12691,12 @@ int _wlan_rrm_scan_cb(unsigned int count)
                                         wlan.rrm_scan_cb_param.dst_addr, rep_buf, (t_u32)meas_report_len,
                                         (bool)wlan.rrm_scan_cb_param.protect);
     }
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(rep_buf);
+#else
+    OSA_MemoryPoolFree(buf_1536_MemoryPool, rep_buf);
+#endif
 
-    os_mem_free(rep_buf);
     return 0;
 }
 
@@ -12638,7 +12812,7 @@ int wlan_host_11k_neighbor_req(const char *ssid)
     if (ret == WM_SUCCESS)
     {
         wlan.neighbor_req = true;
-        (void)os_timer_activate(&wlan.neighbor_req_timer);
+        (void)OSA_TimerActivate((osa_timer_handle_t)wlan.neighbor_req_timer);
     }
     return ret;
 }
@@ -12666,7 +12840,7 @@ int wlan_host_11v_bss_trans_query(t_u8 query_reason)
     if (ret == WM_SUCCESS)
     {
         wlan.neighbor_req = true;
-        (void)os_timer_activate(&wlan.neighbor_req_timer);
+        (void)OSA_TimerActivate((osa_timer_handle_t)wlan.neighbor_req_timer);
     }
     return ret;
 #endif
@@ -14505,42 +14679,42 @@ static void wlan_entp_cert_cleanup()
 {
     if (wlan.ca_cert_data != NULL)
     {
-        os_mem_free(wlan.ca_cert_data);
+        OSA_MemoryFree(wlan.ca_cert_data);
     }
     if (wlan.client_cert_data != NULL)
     {
-        os_mem_free(wlan.client_cert_data);
+        OSA_MemoryFree(wlan.client_cert_data);
     }
     if (wlan.client_key_data != NULL)
     {
-        os_mem_free(wlan.client_key_data);
+        OSA_MemoryFree(wlan.client_key_data);
     }
     if (wlan.ca_cert2_data != NULL)
     {
-        os_mem_free(wlan.ca_cert2_data);
+        OSA_MemoryFree(wlan.ca_cert2_data);
     }
     if (wlan.client_cert2_data != NULL)
     {
-        os_mem_free(wlan.client_cert2_data);
+        OSA_MemoryFree(wlan.client_cert2_data);
     }
     if (wlan.client_key2_data != NULL)
     {
-        os_mem_free(wlan.client_key2_data);
+        OSA_MemoryFree(wlan.client_key2_data);
     }
 
 #ifdef CONFIG_HOSTAPD
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     if (wlan.dh_data != NULL)
     {
-        os_mem_free(wlan.dh_data);
+        OSA_MemoryFree(wlan.dh_data);
     }
     if (wlan.server_cert_data != NULL)
     {
-        os_mem_free(wlan.server_cert_data);
+        OSA_MemoryFree(wlan.server_cert_data);
     }
     if (wlan.server_key_data != NULL)
     {
-        os_mem_free(wlan.server_key_data);
+        OSA_MemoryFree(wlan.server_key_data);
     }
 #endif
 #endif
@@ -14550,7 +14724,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 {
     if (cert_type == FILE_TYPE_ENTP_CA_CERT)
     {
-        wlan.ca_cert_data = os_mem_alloc(data_len);
+        wlan.ca_cert_data = OSA_MemoryAllocate(data_len);
         if (!wlan.ca_cert_data)
         {
             wlan_entp_cert_cleanup();
@@ -14562,7 +14736,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_CERT)
     {
-        wlan.client_cert_data = os_mem_alloc(data_len);
+        wlan.client_cert_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_cert_data)
         {
             wlan_entp_cert_cleanup();
@@ -14574,7 +14748,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_KEY)
     {
-        wlan.client_key_data = os_mem_alloc(data_len);
+        wlan.client_key_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_key_data)
         {
             wlan_entp_cert_cleanup();
@@ -14586,7 +14760,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
     else if (cert_type == FILE_TYPE_ENTP_CA_CERT2)
     {
-        wlan.ca_cert2_data = os_mem_alloc(data_len);
+        wlan.ca_cert2_data = OSA_MemoryAllocate(data_len);
         if (!wlan.ca_cert2_data)
         {
             wlan_entp_cert_cleanup();
@@ -14598,7 +14772,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_CERT2)
     {
-        wlan.client_cert2_data = os_mem_alloc(data_len);
+        wlan.client_cert2_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_cert2_data)
         {
             wlan_entp_cert_cleanup();
@@ -14610,7 +14784,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
     else if (cert_type == FILE_TYPE_ENTP_CLIENT_KEY2)
     {
-        wlan.client_key2_data = os_mem_alloc(data_len);
+        wlan.client_key2_data = OSA_MemoryAllocate(data_len);
         if (!wlan.client_key2_data)
         {
             wlan_entp_cert_cleanup();
@@ -14624,7 +14798,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
     {
-        wlan.dh_data = os_mem_alloc(data_len);
+        wlan.dh_data = OSA_MemoryAllocate(data_len);
         if (!wlan.dh_data)
         {
             wlan_entp_cert_cleanup();
@@ -14640,7 +14814,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
 #ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
     else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
     {
-        wlan.server_cert_data = os_mem_alloc(data_len);
+        wlan.server_cert_data = OSA_MemoryAllocate(data_len);
         if (!wlan.server_cert_data)
         {
             wlan_entp_cert_cleanup();
@@ -14652,7 +14826,7 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
     }
     else if (cert_type == FILE_TYPE_ENTP_SERVER_KEY)
     {
-        wlan.server_key_data = os_mem_alloc(data_len);
+        wlan.server_key_data = OSA_MemoryAllocate(data_len);
         if (!wlan.server_key_data)
         {
             wlan_entp_cert_cleanup();
@@ -14661,6 +14835,46 @@ int wlan_set_entp_cert_files(int cert_type, t_u8 *data, t_u32 data_len)
         }
         memcpy(wlan.server_key_data, data, data_len);
         wlan.server_key_len = data_len;
+    }
+#endif
+#endif
+#ifdef CONFIG_HOSTAPD
+#ifdef CONFIG_WPA_SUPP_CRYPTO_AP_ENTERPRISE
+    else if (cert_type == FILE_TYPE_ENTP_SERVER_CERT)
+    {
+        wlan.server_cert_data = OSA_MemoryAllocate(data_len);
+        if (!wlan.server_cert_data)
+        {
+            wlan_entp_cert_cleanup();
+            wlcm_e("Server Cert malloc failed");
+            return -WM_FAIL;
+        }
+        memcpy(wlan.server_cert_data, data, data_len);
+        wlan.server_cert_len = data_len;
+    }
+    else if (cert_type == FILE_TYPE_ENTP_SERVER_KEY)
+    {
+        wlan.server_key_data = OSA_MemoryAllocate(data_len);
+        if (!wlan.server_key_data)
+        {
+            wlan_entp_cert_cleanup();
+            wlcm_e("Server Key malloc failed");
+            return -WM_FAIL;
+        }
+        memcpy(wlan.server_key_data, data, data_len);
+        wlan.server_key_len = data_len;
+    }
+    else if (cert_type == FILE_TYPE_ENTP_DH_PARAMS)
+    {
+        wlan.dh_data = OSA_MemoryAllocate(data_len);
+        if (!wlan.dh_data)
+        {
+            wlan_entp_cert_cleanup();
+            wlcm_e("DH params malloc failed");
+            return -WM_FAIL;
+        }
+        memcpy(wlan.dh_data, data, data_len);
+        wlan.dh_len = data_len;
     }
 #endif
 #endif
@@ -15277,16 +15491,16 @@ static int wlan_trigger_oob_ind_reset()
 {
     (void)wlan_ieeeps_off();
 
-    os_thread_sleep(os_msec_to_ticks(1000));
+    OSA_TimeDelay(1000);
 
     (void)wlan_deepsleepps_off();
 
-    os_thread_sleep(os_msec_to_ticks(1000));
+    OSA_TimeDelay(1000);
 
 #ifdef IR_OUTBAND_TRIGGER_GPIO
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 0);
 
-    os_thread_sleep(os_msec_to_ticks(10));
+    OSA_TimeDelay(10);
 
     GPIO_PinWrite(IR_OUTBAND_TRIGGER_GPIO, IR_OUTBAND_TRIGGER_GPIO_PIN, 1);
 #endif
@@ -15414,7 +15628,7 @@ static void wlan_cpu_loading_record_data(void)
     cpu_loading.sampling_loops --;
 }
 
-static void wlan_cpu_loading_handler(os_thread_arg_t data)
+static void cpu_loading_task(osa_task_param_t arg)
 {
     for(;;)
     {
@@ -15444,6 +15658,7 @@ static void cpu_loading_cb(os_timer_arg_t arg)
 static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
 {
     int ret;
+    osa_status_t status;
 
     if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
     {
@@ -15453,25 +15668,24 @@ static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
         else
             cpu_loading.sampling_period = period * (CPU_LOADING_PERIOD / 2);
 
-        ret = os_timer_create(&cpu_loading.cpu_loading_timer, "cpu-loading-timer", os_msec_to_ticks(cpu_loading.sampling_period),
-                                &cpu_loading_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
-        if (ret != WM_SUCCESS)
+        status = OSA_TimerCreate((osa_timer_handle_t)cpu_loading.cpu_loading_timer, cpu_loading.sampling_period,
+                          &cpu_loading_cb, NULL, KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
+        if (status != KOSA_StatusSuccess)
         {
             (void)PRINTF("Unable to create cpu loading timer.\r\n");
-            return ret;
+            return -WM_FAIL;
         }
 
-        ret = os_thread_create(&cpu_loading.cpu_loading_thread, "cpu_loading_task", wlan_cpu_loading_handler, 0,
-                                &cpu_loading_stack, OS_PRIO_1);
-        if (ret != WM_SUCCESS)
+        status = OSA_TaskCreate((osa_task_handle_t)cpu_loading.cpu_loading_task_Handle, OSA_TASK(cpu_loading_task), NULL);
+        if (status != KOSA_StatusSuccess)
         {
             (void)PRINTF("Unable to create cpu loading thread.\r\n");
-            return ret;
+            return -WM_FAIL;
         }
 
         os_get_num_of_tasks(&cpu_loading.task_nums);
         cpu_loading.task_status_len = cpu_loading.task_nums * sizeof(TaskStatus_t);
-        cpu_loading.cpu_loading_info = (char *)os_mem_alloc(cpu_loading.task_status_len);
+        cpu_loading.cpu_loading_info = (char *)OSA_MemoryAllocate(cpu_loading.task_status_len);
         if (cpu_loading.cpu_loading_info == NULL)
         {
             (void)PRINTF("%s: Failed to alloc cpu loading info\r\n", __func__);
@@ -15488,7 +15702,7 @@ static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
 
         memset(cpu_loading.data_cur, 0, sizeof(cpu_loading.data_cur));
         memset(cpu_loading.data_pre, 0, sizeof(cpu_loading.data_pre));
-        (void)os_timer_activate(&cpu_loading.cpu_loading_timer);
+        (void)OSA_TimerActivate((osa_timer_handle_t)cpu_loading.cpu_loading_timer);
         return WM_SUCCESS;
     }
     else
@@ -15511,10 +15725,10 @@ int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period)
         else
         {
             cpu_loading.sampling_loops = 0;
-            os_timer_change(&cpu_loading.cpu_loading_timer, os_msec_to_ticks(100), 0); // Chages value of cpu loading timer to stop cpu loading test quickly.
+            OSA_TimerChange((osa_timer_handle_t)cpu_loading.cpu_loading_timer, 100, 0); // Chages value of cpu loading timer to stop cpu loading test quickly.
             if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
             {
-                os_thread_sleep(os_msec_to_ticks(50));
+                OSA_TimeDelay(50);
             }
             return WM_SUCCESS;
         }
@@ -15536,5 +15750,19 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx)
     }
 
     return wifi_auto_null_tx(auto_null_tx);
+}
+#endif
+
+#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
+int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
+{
+    return wifi_sta_inactivityto(inac_to, action);
+}
+#endif
+
+#ifdef CONFIG_CAU_TEMPERATURE
+uint32_t wlan_get_temperature()
+{
+    return wifi_get_temperature();
 }
 #endif

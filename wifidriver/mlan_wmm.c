@@ -17,7 +17,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 #ifdef CONFIG_TX_RX_ZERO_COPY
 #include <wm_net.h>
 #endif
@@ -2877,7 +2877,12 @@ static void wlan_ralist_free_enh(mlan_private *priv, raListTbl *ra_list, t_u8 ac
     wlan_ralist_restore_history(priv, ra_list, ac);
 #else
     priv->adapter->callbacks.moal_free_semaphore(priv->adapter->pmoal_handle, &ra_list->buf_head.plock);
+#ifndef CONFIG_MEM_POOLS
+
     priv->adapter->callbacks.moal_mfree(priv->adapter->pmoal_handle, (t_u8 *)ra_list);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, ra_list);
+#endif
 #endif
 }
 
@@ -2886,9 +2891,18 @@ static raListTbl *wlan_ralist_alloc_enh(pmlan_adapter pmadapter, t_u8 *ra)
     mlan_status ret;
     raListTbl *ra_list = MNULL;
 
+#ifndef CONFIG_MEM_POOLS
     ret = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(raListTbl), MLAN_MEM_DEF, (t_u8 **)&ra_list);
     if (ret != MLAN_STATUS_SUCCESS || ra_list == MNULL)
         return MNULL;
+#else
+    ra_list = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+    if (ra_list == MNULL)
+    {
+    	return MNULL;
+    }
+
+#endif
 
     util_init_list((pmlan_linked_list)ra_list);
     util_init_list_head((t_void *)pmadapter->pmoal_handle, &ra_list->buf_head, MFALSE, MNULL);
@@ -3175,7 +3189,11 @@ void wlan_cleanup_bypass_txq(uint8_t interface)
 
         buf = (bypass_outbuf_t *)util_dequeue_list(mlan_adap->pmoal_handle, &priv->bypass_txq, MNULL, MNULL);
         priv->bypass_txq_cnt--;
-        os_mem_free((t_u8 *)buf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_1536_MemoryPool, buf);
+#endif
 
         wlan_put_bypass_lock(interface);
     }

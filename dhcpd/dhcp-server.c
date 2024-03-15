@@ -12,7 +12,7 @@
  */
 #include <string.h>
 
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <dhcp-server.h>
 #include <wlan.h>
@@ -25,7 +25,8 @@
 #define CLIENT_IP_NOT_FOUND          0x00000000U
 
 uint32_t dhcp_address_timeout = DEFAULT_DHCP_ADDRESS_TIMEOUT;
-static os_mutex_t dhcpd_mutex;
+OSA_MUTEX_HANDLE_DEFINE(dhcpd_mutex_Handle);
+
 #ifndef __ZEPHYR__
 static int ctrl = -1;
 #else
@@ -484,7 +485,7 @@ static int register_ctrl_sock(void)
 }
 #endif
 
-void dhcp_server(os_thread_arg_t data)
+void dhcpd_task(void *arg)
 {
     int ret;
     struct sockaddr_in caddr;
@@ -528,9 +529,7 @@ void dhcp_server(os_thread_arg_t data)
     if (ret < 0)
     {
         dhcp_e("Failed to bind control socket: %d ret %d", ctrl, ret);
-        dhcp_clean_sockets();
-        dns_free_allocations();
-        os_thread_self_complete(NULL);
+        goto done;
     }
 #else
     ret = register_ctrl_sock();
@@ -541,7 +540,7 @@ void dhcp_server(os_thread_arg_t data)
     }
 #endif
 
-    (void)os_mutex_get(&dhcpd_mutex, OS_WAIT_FOREVER);
+    OSA_MutexLock((osa_mutex_handle_t)dhcpd_mutex_Handle, osaWaitForever_c);
 
     while (true)
     {
@@ -587,7 +586,7 @@ void dhcp_server(os_thread_arg_t data)
 #else
                     ctrl_sockpair[0]
 #endif
-                    );
+                );
             }
             else
             {
@@ -622,8 +621,11 @@ done:
     close(ctrl_sockpair[0]);
     close(ctrl_sockpair[1]);
 #endif
-    (void)os_mutex_put(&dhcpd_mutex);
-    os_thread_self_complete(NULL);
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    while (true)
+    {
+        OSA_TimeDelay(60000);
+    }
 }
 
 int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_handle)
@@ -682,11 +684,12 @@ int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_ha
 int dhcp_server_init(void *intrfc_handle)
 {
     int ret = WM_SUCCESS;
+    osa_status_t status;
 
     (void)memset(&dhcps, 0, sizeof(dhcps));
 
-    ret = os_mutex_create(&dhcpd_mutex, "dhcp", OS_MUTEX_INHERIT);
-    if (ret != WM_SUCCESS)
+    status = OSA_MutexCreate((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    if (status != KOSA_StatusSuccess)
     {
         return -WM_E_DHCPD_MUTEX_CREATE;
     }
@@ -729,7 +732,7 @@ int dhcp_server_init(void *intrfc_handle)
     return WM_SUCCESS;
 
 out:
-    (void)os_mutex_delete(&dhcpd_mutex);
+    (void)OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle);
     return ret;
 }
 
@@ -831,25 +834,25 @@ int dhcp_send_halt(void)
 
 int dhcp_free_allocations(void)
 {
-    int ret;
+    osa_status_t status;
 
     /* Wait for 10 seconds */
-    ret = os_mutex_get(&dhcpd_mutex, os_msec_to_ticks(10000));
-    if (ret != WM_SUCCESS)
+    status = OSA_MutexLock((osa_mutex_handle_t)dhcpd_mutex_Handle, 10000);
+    if (status != KOSA_StatusSuccess)
     {
-        return ret;
+        return -WM_FAIL;
     }
 
     dhcp_clean_sockets();
     dns_free_allocations();
 
-    ret = os_mutex_put(&dhcpd_mutex);
-    if (ret != WM_SUCCESS)
+    status = OSA_MutexUnlock((osa_mutex_handle_t)dhcpd_mutex_Handle);
+    if (status != KOSA_StatusSuccess)
     {
-        return ret;
+        return -WM_FAIL;
     }
 
-    return os_mutex_delete(&dhcpd_mutex);
+    return OSA_MutexDestroy((osa_mutex_handle_t)dhcpd_mutex_Handle);
 }
 
 static int send_gratuitous_arp(uint32_t ip)

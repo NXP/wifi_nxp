@@ -176,14 +176,14 @@ extern mlan_adapter *mlan_adap;
 extern int wps_session_attempt;
 #endif
 
-extern os_rw_lock_t sleep_rwlock;
+extern osa_rw_lock_t sleep_rwlock;
 
 #ifdef CONFIG_WMM_UAPSD
-extern os_semaphore_t uapsd_sem;
+extern OSA_SEMAPHORE_HANDLE_DEFINE(uapsd_sem);
 #endif
 
 #ifdef CONFIG_WMM
-extern os_semaphore_t txbuf_sem;
+extern OSA_SEMAPHORE_HANDLE_DEFINE(txbuf_sem);
 #endif
 
 #ifdef CONFIG_STA_AMPDU_RX

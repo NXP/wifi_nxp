@@ -19,7 +19,7 @@
 #include "wm_mbedtls_helper_api.h"
 //#include "wm_timing_alt.h"
 #include <mbedtls/debug.h>
-#include <wm_os.h>
+#include <osa.h>
 
 #ifdef MBEDTLS_DEBUG_C
 #include <string.h>

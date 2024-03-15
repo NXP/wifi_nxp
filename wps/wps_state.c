@@ -14,7 +14,7 @@
 #include <lwip/sys.h>
 #include <wmtypes.h>
 #include <lwip/inet.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wlan.h>
 #ifdef CONFIG_PEAP_MSCHAPV2
 #include <mbedtls/sha1.h>
@@ -1860,7 +1860,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                     if ((msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                     {
                         (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                            msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                     msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                         goto ret;
                     }
                     (void)memcpy(rbuf, (u8 *)peap + sizeof(EAP_TLS_FRAME_HEADER), msg_length);
@@ -1930,7 +1930,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                             if ((msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                             {
                                 (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                                    msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                             msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                                 goto ret;
                             }
                             (void)memcpy(rbuf, (u8 *)peap + sizeof(EAP_TLS_FRAME_HEADER) + sizeof(u32), msg_length);
@@ -1940,7 +1940,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                             if ((msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                             {
                                 (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                                    msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                             msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                                 goto ret;
                             }
                             (void)memcpy(rbuf, (u8 *)peap + sizeof(EAP_TLS_FRAME_HEADER), msg_length);
@@ -1962,7 +1962,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                         if ((used_len + rlen + msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                         {
                             (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                                used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                         used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                             goto ret;
                         }
                         (void)memcpy(rbuf + used_len + rlen, (u8 *)peap + sizeof(EAP_TLS_FRAME_HEADER) + sizeof(u32),
@@ -1987,7 +1987,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                         if ((used_len + rlen + msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                         {
                             (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                                used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                         used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                             goto ret;
                         }
                         (void)memcpy(rbuf + used_len + rlen, (u8 *)peap + sizeof(EAP_TLS_FRAME_HEADER), msg_length);
@@ -2016,7 +2016,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                             if ((used_len + rlen + msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                             {
                                 (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                                    used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                             used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                                 goto ret;
                             }
                             (void)memcpy(rbuf + used_len + rlen,
@@ -2027,7 +2027,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
                             if ((used_len + rlen + msg_length) > (TLS_RECV_BUFFER_SIZE * sizeof(u8)))
                             {
                                 (void)PRINTF("(%s)(%d), rbuf overflow, want=%u, actual=%u\r\n", __FUNCTION__, __LINE__,
-                                    used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
+                                             used_len + rlen + msg_length, TLS_RECV_BUFFER_SIZE * sizeof(u8));
                                 goto ret;
                             }
                             (void)memcpy(rbuf + used_len + rlen, (u8 *)peap + sizeof(EAP_TLS_FRAME_HEADER), msg_length);
@@ -2047,7 +2047,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
 
 ret:
     wps_mem_free(rbuf);
-    rbuf = NULL;
+    rbuf     = NULL;
     rlen     = 0;
     used_len = 0;
     fragment = 0;

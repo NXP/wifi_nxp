@@ -16,7 +16,7 @@ Change Log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -4662,10 +4662,10 @@ mlan_status wlan_cmd_tx_frame(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u
     HostCmd_DS_80211_TX_FRAME *tx_frame_cmd = &cmd->params.tx_frame;
     mlan_ds_misc_tx_frame *tx_frame         = (mlan_ds_misc_tx_frame *)pdata_buf;
     TxPD *plocal_tx_pd                      = (TxPD *)tx_frame_cmd->buffer;
-    t_u32 pkt_type = 0;
-    t_u32 tx_control = 0;
-    t_u8 *pdata    = tx_frame->tx_buf;
-    t_u16 data_len = tx_frame->data_len;
+    t_u32 pkt_type                          = 0;
+    t_u32 tx_control                        = 0;
+    t_u8 *pdata                             = tx_frame->tx_buf;
+    t_u16 data_len                          = tx_frame->data_len;
 
     ENTER();
     cmd->command         = wlan_cpu_to_le16(HostCmd_CMD_802_11_TX_FRAME);

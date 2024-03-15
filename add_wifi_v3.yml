@@ -27,6 +27,8 @@ middleware.wifi.template:
       attribute: config
     configuration:
       cc-define:
+        OSA_USED:
+        FSL_OSA_TASK_ENABLE: 1
         LWIP_DNS: 1
         LWIP_NETIF_HOSTNAME: 1
         LWIP_IGMP: 1
@@ -48,6 +50,131 @@ middleware.wifi.template:
     allOf:
     - component.wifi_bt_module.tx_pwr_limits
     - component.wifi_bt_module.config
+middleware.wifi.osa_free_rtos:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: "./"
+    - repo_relative_path: incl
+    - repo_relative_path: incl/port/osa
+    - repo_relative_path: port/osa
+    - repo_relative_path: incl/port/net
+    - repo_relative_path: port/net/lwip
+    - repo_relative_path: incl/port/net/lwip/hooks
+    - repo_relative_path: dhcpd
+    - repo_relative_path: nw_utils/telnet
+    files:
+    - source: port/osa/osa_freertos.h
+    - source: port/osa/osa_freertos.c
+    - source: incl/port/net/wm_net.h
+    - source: port/net/lwip/net.c
+    - source: port/net/lwip/netif_decl.h
+    - source: port/net/lwip/wifi_netif.c
+    - source: incl/port/net/lwip/hooks/lwip_default_hooks.h
+    - source: port/net/lwip/hooks/lwip_default_hooks.c
+    - source: dhcpd/dhcp-bootp.h
+    - source: dhcpd/dhcp-priv.h
+    - source: dhcpd/dhcp-server-main.c
+    - source: dhcpd/dhcp-server.c
+    - source: dhcpd/dns-server.c
+    - source: dhcpd/dns.h
+    - source: dhcpd/dhcp-server-cli.c
+    - source: nw_utils/wifi_ping.c
+    - source: nw_utils/iperf.c
+    - source: nw_utils/init_enet.c
+    - source: nw_utils/nerwork_cfg.h
+    - source: nw_utils/telnet/telnet_server.h
+    - source: nw_utils/telnet/telnet_server.c
+    - source: incl/iperf.h
+    - source: incl/wifi_ping.h
+  belong_to: set.middleware.wifi
+  section_info:
+    version: 1.0.0
+    user_visible: never
+    type: middleware
+    full_name: NXP WLAN OSA
+    description: NXP WLAN OSA
+    taxonomy:
+      csub: nxp_wifi_osa_free_rtos
+      belong_to: wifi
+    display_name: nxp wifi osa free_rtos
+  dependency:
+    allOf:
+    - component.osa_free_rtos
+    - middleware.lwip
+    - middleware.lwip.apps.lwiperf
+middleware.wifi.osa_thread:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: "./"
+    - repo_relative_path: incl/port/osa
+    - repo_relative_path: port/osa
+    - repo_relative_path: incl/port/net
+    - repo_relative_path: port/net/netxduo
+    files:
+    - source: port/osa/osa_threadx.h
+    - source: port/osa/osa_threadx.c
+    - source: incl/port/net/wm_net.h
+    - source: port/net/netxduo/netif_decl.h
+    - source: port/net/netxduo/nx_driver_wifi.h
+    - source: port/net/netxduo/nx_driver_wifi.c
+    - source: port/net/netxduo/net.c
+  belong_to: set.middleware.wifi
+  section_info:
+    version: 1.0.0
+    need_require: true
+    user_visible: never
+    type: middleware
+    full_name: NXP WLAN OSA
+    description: NXP WLAN OSA
+    taxonomy:
+      csub: nxp_wifi_osa_thread
+      belong_to: wifi
+    display_name: nxp wifi osa thread
+  dependency:
+    allOf:
+    - component.osa_thread
+middleware.wifi.osa:
+  section-type: component
+  contents:
+    repo_base_path: middleware/wifi_nxp
+    project_base_path: wifi
+    cc-include:
+    - repo_relative_path: "./"
+    - repo_relative_path: incl/port/osa
+    files:
+    - source: incl/port/osa/osa.h
+    - source: incl/port/osa/mem_pool.h
+    - source: incl/port/osa/mem_pool_config.h
+    - source: incl/port/osa/slist.h
+    - source: incl/port/osa/stack_simple.h
+    - source: port/osa/osa.c
+    - source: port/osa/osa_cli.c
+    - source: port/osa/mem_pool.c
+    - source: port/osa/mem_pool_config.c
+    - source: port/osa/slist.c
+    - source: port/osa/stack_simple.c
+  belong_to: set.middleware.wifi
+  section_info:
+    version: 1.0.0
+    type: middleware
+    user_visible: always
+    full_name: NXP WLAN OSA
+    description: NXP WLAN OSA
+    taxonomy:
+      csub: nxp_wifi_osa
+      belong_to: wifi
+    display_name: nxp wifi osa
+  dependency:
+    allOf:
+    - anyOf:
+      - middleware.wifi.osa_free_rtos
+      - middleware.wifi.osa_thread
 middleware.wifi.common_files:
   section-type: component
   contents:
@@ -55,13 +182,12 @@ middleware.wifi.common_files:
     project_base_path: wifi
     cc-include:
     - repo_relative_path: incl
-    - repo_relative_path: incl/port/os
+    - repo_relative_path: incl/port/osa
     - repo_relative_path: incl/wifidriver
     - repo_relative_path: wifi_bt_firmware
     - repo_relative_path: wifidriver
     - repo_relative_path: wifidriver/incl
     files:
-    - source: incl/port/os/wm_os.h
     - source: incl/wifidriver/wifi-decl.h
     - source: incl/wifidriver/wifi.h
     - source: incl/wifidriver/wifi_events.h
@@ -70,7 +196,6 @@ middleware.wifi.common_files:
     - source: incl/wmerrno.h
     - source: incl/wmlog.h
     - source: incl/wmtypes.h
-    - source: port/os/os.c
     - source: wifidriver/incl/mlan_decl.h
     - source: wifidriver/incl/mlan_ioctl.h
     - source: wifidriver/incl/type_decls.h
@@ -86,6 +211,9 @@ middleware.wifi.common_files:
       csub: common_files
       belong_to: wifi
     display_name: nxp_wireless_common_files
+  dependency:
+    allOf:
+    - middleware.wifi.osa
 middleware.wifi.fwdnld:
   section-type: component
   contents:
@@ -163,7 +291,6 @@ middleware.wifi.fwdnld:
     display_name: nxp_wireless_fwdnld
   dependency:
     allOf:
-    - middleware.freertos-kernel
     - middleware.wifi.template
     - middleware.wifi.mlan_sdio
     - middleware.wifi.common_files
@@ -274,9 +401,9 @@ middleware.wifi.wifidriver:
     display_name: nxp_wifi_driver
   dependency:
     allOf:
-    - middleware.freertos-kernel
     - utility.debug_console
     - middleware.wifi.template
+    - middleware.wifi.osa
     - anyOf:
       - allOf:
         - middleware.wifi.sdio
@@ -291,8 +418,8 @@ middleware.wifi:
     repo_base_path: middleware/wifi_nxp
     project_base_path: wifi
     cc-include:
-    - repo_relative_path: dhcpd
     - repo_relative_path: incl
+    - repo_relative_path: incl/wifidriver
     - repo_relative_path: incl/port/net
     - repo_relative_path: port/net
     - repo_relative_path: incl/port/net/hooks
@@ -328,11 +455,9 @@ middleware.wifi:
     display_name: wifi_nxp
   dependency:
     allOf:
-    - middleware.freertos-kernel
     - utility.debug_console
-    - middleware.wifi.wifidriver
     - middleware.wifi.template
-    - middleware.lwip
+    - middleware.wifi.wifidriver
 middleware.wifi.sdio:
   section-type: component
   contents:
@@ -387,11 +512,15 @@ middleware.wifi.mlan_sdio:
     display_name: wifi_nxp_mlan_sdio
   dependency:
     allOf:
-    - middleware.sdmmc.host.usdhc.freertos
+    - middleware.wifi.template
     - middleware.sdmmc.sdio
     - middleware.sdmmc.host.usdhc
-    - middleware.wifi.template
     - middleware.wifi.common_files
+    - anyOf:
+      - allOf:
+        - middleware.sdmmc.host.usdhc.freertos
+      - allOf:
+        - middleware.sdmmc.host.usdhc.azurertos
 middleware.wifi.fwdnld_intf_abs:
   section-type: component
   contents:
@@ -471,10 +600,6 @@ middleware.wifi.cli:
     - source: wlcmgr/wlan_tests.c
     - source: wlcmgr/wlan_test_mode_tests.c
     - source: incl/wlcmgr/wlan_tests.h
-    - source: incl/iperf.h
-    - source: incl/wifi_ping.h
-    - source: dhcpd/dhcp-server-cli.c
-    - source: port/os/os_cli.c
   belong_to: set.middleware.wifi
   section_info:
     type: middleware
@@ -490,7 +615,6 @@ middleware.wifi.cli:
     allOf:
     - middleware.wifi
     - middleware.wifi.wifidriver
-    - middleware.lwip.apps.lwiperf
     - utility.debug_console
 middleware.wifi.wmcrypto:
   section-type: component

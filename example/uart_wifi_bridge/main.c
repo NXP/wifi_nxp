@@ -31,7 +31,7 @@
 #include "wlan.h"
 #include "wifi.h"
 #include "wm_net.h"
-#include <wm_os.h>
+#include <osa.h>
 #include "dhcp-server.h"
 #include "cli.h"
 #include "wifi_ping.h"
@@ -278,15 +278,13 @@ uint32_t resp_buf_len, reqd_resp_len;
 /*******************************************************************************
  * Code
  ******************************************************************************/
-#if defined(RW610_SERIES) || defined(RW612_SERIES)
-const int TASK_MAIN_PRIO = CONFIG_WIFI_MAX_PRIO - 3;
-#else
-const int TASK_MAIN_PRIO = OS_PRIO_3;
-#endif
-const int TASK_MAIN_STACK_SIZE = 5 * 2048;
+#define MAIN_TASK_STACK_SIZE 4096
 
-portSTACK_TYPE *task_main_stack = NULL;
-TaskHandle_t task_main_task_handler;
+static void main_task(osa_task_param_t arg);
+
+static OSA_TASK_DEFINE(main_task, OSA_PRIORITY_NORMAL, 1, MAIN_TASK_STACK_SIZE, 0);
+
+OSA_TASK_HANDLE_DEFINE(main_task_Handle);
 
 #define SDK_VERSION "NXPSDK_2.15.0_r48.p1"
 
@@ -327,8 +325,8 @@ static int send_response_to_uart(uart_cb *uart, uint8_t *resp, int type, uint32_
     int index;
     uint32_t payloadlen;
     uart_header *uart_hdr;
-	int iface_len = 0;
-	
+    int iface_len = 0;
+
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
     IMUPkt *imupkt = (IMUPkt *)resp;
 
@@ -532,19 +530,19 @@ int process_input_cmd(uint8_t *buf, int m_len)
     if (cmd_hd->type == TYPE_WLAN)
     {
         memset(local_outbuf, 0, BUF_LEN);
-		
+
         uarthdr = (uart_header *)buf;
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
         IMUPkt *imupkt = (IMUPkt *)local_outbuf;
-		/* imupkt = local_outbuf */
+        /* imupkt = local_outbuf */
         imupkt->pkttype = SDIOPKTTYPE_CMD;
 
         imupkt->size = m_len - sizeof(cmd_header) + INTF_HEADER_LEN;
         d             = (uint8_t *)local_outbuf + INTF_HEADER_LEN;
         s             = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 #else
-        d = (uint8_t *)local_outbuf;
-        s = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
+        d   = (uint8_t *)local_outbuf;
+        s   = (uint8_t *)buf + sizeof(uart_header) + sizeof(cmd_header);
 #endif
 
         for (i = 0; i < uarthdr->length - sizeof(cmd_header); i++)
@@ -969,7 +967,7 @@ static void wifi_cau_temperature_timer_cb(TimerHandle_t timer)
  checks it for a complete command and sends the command to the
  wlan card
 */
-void task_main(void *param)
+static void main_task(osa_task_param_t arg)
 {
     int32_t result = 0;
     (void)result;
@@ -979,7 +977,6 @@ void task_main(void *param)
 
 #if !defined(RW610_SERIES) && !defined(RW612_SERIES)
     result = wifi_init_fcc(wlan_fw_bin, wlan_fw_bin_len);
-
     if (result != 0)
     {
         switch (result)
@@ -1191,8 +1188,10 @@ void task_main(void *param)
  ******************************************************************************/
 int main(void)
 {
-    BaseType_t result = 0;
-    (void)result;
+    osa_status_t status = 0;
+    (void)status;
+
+    OSA_Init();
 
 #if defined(MIMXRT1176_cm7_SERIES)
     BOARD_ConfigMPU();
@@ -1206,11 +1205,9 @@ int main(void)
     BOARD_InitHardware();
 #endif
 
-    result =
-        xTaskCreate(task_main, "main", TASK_MAIN_STACK_SIZE, task_main_stack, TASK_MAIN_PRIO, &task_main_task_handler);
-    assert(pdPASS == result);
+    status = OSA_TaskCreate((osa_task_handle_t)main_task_Handle, OSA_TASK(main_task), NULL);
 
-    vTaskStartScheduler();
-    for (;;)
-        ;
+    OSA_Start();
+
+    return 0;
 }

@@ -11,7 +11,7 @@
 /* iperf.c: This file contains the support for network utility iperf */
 
 #include <string.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <cli.h>
 #include <cli_utils.h>
@@ -40,9 +40,10 @@ struct iperf_test_context
 };
 
 static struct iperf_test_context ctx;
-static os_timer_t ptimer = NULL;
+OSA_TIMER_HANDLE_DEFINE(ptimer);
 static ip_addr_t server_address;
 static ip_addr_t bind_address;
+static bool multicast;
 #ifdef CONFIG_IPV6
 static bool ipv6;
 #endif
@@ -56,7 +57,7 @@ uint8_t qos = 0;
 static uint8_t mcast_mac[6];
 static bool mcast_mac_valid;
 
-static void timer_poll_udp_client(TimerHandle_t timer);
+static void timer_poll_udp_client(osa_timer_arg_t arg);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) && (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
 #ifdef CONFIG_POWER_MANAGER
@@ -219,7 +220,7 @@ static void lwiperf_report(void *arg,
     struct iperf_test_context *test_ctx = (struct iperf_test_context *)arg;
     if (test_ctx->server_mode == 0 && test_ctx->client_type != LWIPERF_DUAL)
     {
-        os_timer_deactivate(&ptimer);
+        OSA_TimerDeactivate((osa_timer_handle_t)ptimer);
     }
     (void)PRINTF("\r\n");
     /*When do UDP individual bidirectional test,  DUT server should active ptimer to send packages after RX done.*/
@@ -227,11 +228,11 @@ static void lwiperf_report(void *arg,
     {
         if (report_type == LWIPERF_UDP_DONE_SERVER_RX)
         {
-            os_timer_activate(&ptimer);
+            OSA_TimerActivate(&ptimer);
         }
         else
         {
-            os_timer_deactivate(&ptimer);
+            OSA_TimerActivate(&ptimer);
         }
     }
 
@@ -291,14 +292,14 @@ static void wmm_iperf_test_start(void *arg)
             PRINTF("Starting UDP server");
             wmm_test_ctx.iperf_session =
                 lwiperf_start_udp_server(netif_ip_addr4(netif_default), port, lwiperf_report, 0);
-            vTaskDelay(os_msec_to_ticks(50));
+            OSA_TimeDelay(50);
         }
         else
         {
             PRINTF("Starting TCP server");
             wmm_test_ctx.iperf_session =
                 lwiperf_start_tcp_server(netif_ip_addr4(netif_default), port, lwiperf_report, 0);
-            vTaskDelay(os_msec_to_ticks(50));
+            OSA_TimeDelay(50);
         }
     }
     if (wmm_test_ctx.client1)
@@ -540,7 +541,7 @@ void test_wmm(int argc, char **argv)
             PRINTF("Error: argument %d is invalid\r\n", arg);
             return;
         }
-        vTaskDelay(os_msec_to_ticks(20));
+        OSA_TimeDelay(20);
     } while (arg < argc);
 
     if (((wmm_test_ctx.client1 || wmm_test_ctx.client2) && !wmm_test_ctx.chost))
@@ -604,11 +605,7 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 
-    if ((ctx->server_mode == false) ||
-        ((ctx->server_mode == true) && ((ctx->client_type == LWIPERF_REVERSE) || (ctx->client_type == LWIPERF_DUAL))))
-    {
-        os_timer_activate(&ptimer);
-    }
+    (void)OSA_TimerActivate((osa_timer_handle_t)ptimer);
 
     if (ctx->server_mode)
     {
@@ -627,6 +624,22 @@ static void iperf_test_start(void *arg)
         }
         else
         {
+            if (multicast)
+            {
+#ifdef CONFIG_IPV6
+                wifi_get_ipv4_multicast_mac(ntohl(bind_address.u_addr.ip4.addr), mcast_mac);
+#else
+                wifi_get_ipv4_multicast_mac(ntohl(bind_address.addr), mcast_mac);
+#endif
+                if (wifi_add_mcast_filter(mcast_mac) != WM_SUCCESS)
+                {
+                    (void)PRINTF("IPERF session init failed\r\n");
+                    lwiperf_abort(ctx->iperf_session);
+                    ctx->iperf_session = NULL;
+                    return;
+                }
+                mcast_mac_valid = true;
+            }
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
@@ -674,6 +687,16 @@ static void iperf_test_start(void *arg)
         }
         else
         {
+            if (IP_IS_V4(&server_address) && ip_addr_ismulticast(&server_address))
+            {
+#ifdef CONFIG_IPV6
+                wifi_get_ipv4_multicast_mac(ntohl(server_address.u_addr.ip4.addr), mcast_mac);
+#else
+                wifi_get_ipv4_multicast_mac(ntohl(server_address.addr), mcast_mac);
+#endif
+                (void)wifi_add_mcast_filter(mcast_mac);
+                mcast_mac_valid = true;
+            }
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
@@ -732,7 +755,7 @@ static void iperf_test_abort(void *arg)
     (void)PRINTF("IPERF ABORT DONE\r\n");
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    os_timer_deactivate(&ptimer);
+    (void)OSA_TimerDeactivate((osa_timer_handle_t)ptimer);
 }
 
 /*!
@@ -748,9 +771,9 @@ static void poll_udp_client(void *arg)
 /*!
  * @brief Invokes UDP polling on tcpip_thread.
  */
-static void timer_poll_udp_client(TimerHandle_t timer)
+static void timer_poll_udp_client(osa_timer_arg_t arg)
 {
-    LWIP_UNUSED_ARG(timer);
+    LWIP_UNUSED_ARG(arg);
 
     (void)tcpip_try_callback(poll_udp_client, NULL);
 }
@@ -959,6 +982,7 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_WMM
     qos = 0;
 #endif
+    multicast = false;
 #ifdef CONFIG_IPV6
     ipv6 = false;
 #endif
@@ -1191,6 +1215,8 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
         }
 #endif
+        if (ip_addr_ismulticast(&bind_address))
+            multicast = true;
     }
 
     if (((info.abort == 0U) && (info.server == 0U) && (info.client == 0U)) ||
@@ -1335,6 +1361,7 @@ int iperf_cli_init(void)
 {
     u8_t i;
     int rv = WM_SUCCESS;
+    osa_status_t status;
 
     for (i = 0; i < sizeof(iperf) / sizeof(struct cli_command); i++)
     {
@@ -1351,11 +1378,9 @@ int iperf_cli_init(void)
 
     (void)memset(&ctx, 0, sizeof(struct iperf_test_context));
 
-    if (ptimer == NULL)
-        rv = os_timer_create(&ptimer, "UDP Poll Timer", 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
-                             OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
-
-    if (rv != WM_SUCCESS)
+    status = OSA_TimerCreate((osa_timer_handle_t)ptimer, 1U / portTICK_PERIOD_MS, timer_poll_udp_client, (void *)0,
+                             KOSA_TimerPeriodic, OSA_TIMER_NO_ACTIVATE);
+    if (status != KOSA_StatusSuccess)
     {
         (void)PRINTF("Unable to create iperf timer rv(%d)\r\n", rv);
         while (true)

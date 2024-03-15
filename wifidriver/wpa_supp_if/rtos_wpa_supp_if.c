@@ -257,7 +257,7 @@ void wifi_nxp_wpa_supp_event_proc_survey_res(void *if_priv,
         return;
     }
 
-    survey = (struct freq_survey *)os_mem_calloc(sizeof(*survey));
+    survey = (struct freq_survey *)OSA_MemoryAllocate(sizeof(*survey));
 
     if (!survey)
     {
@@ -561,7 +561,7 @@ void *wifi_nxp_wpa_supp_dev_init(void *supp_drv_if_ctx,
     {
         wifi_if_ctx_rtos->bss_type = BSS_TYPE_UAP;
     }
-    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(MAX_MGMT_TX_FRAME_SIZE);
+    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)OSA_MemoryAllocate(MAX_MGMT_TX_FRAME_SIZE);
 
     if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
     {
@@ -581,7 +581,7 @@ void wifi_nxp_wpa_supp_dev_deinit(void *if_priv)
     {
         if (wifi_if_ctx_rtos->last_mgmt_tx_data != NULL)
         {
-            os_mem_free(wifi_if_ctx_rtos->last_mgmt_tx_data);
+            OSA_MemoryFree(wifi_if_ctx_rtos->last_mgmt_tx_data);
         }
         memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
     }
@@ -673,7 +673,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 
     if (num_chans != 0)
     {
-        chan_list = os_mem_calloc(sizeof(wifi_scan_channel_list_t) * num_chans);
+        chan_list = OSA_MemoryAllocate(sizeof(wifi_scan_channel_list_t) * num_chans);
 
         if (chan_list != NULL)
         {
@@ -729,7 +729,7 @@ int wifi_nxp_wpa_supp_scan2(void *if_priv, struct wpa_driver_scan_params *params
 out:
     if (chan_list != NULL)
     {
-        os_mem_free((void *)chan_list);
+        OSA_MemoryFree((void *)chan_list);
     }
 
     return ret;
@@ -775,7 +775,7 @@ int wifi_nxp_wpa_supp_sched_scan(void *if_priv, struct wpa_driver_scan_params *p
 
     // wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    wifi_sched_scan_params = (nxp_wifi_trigger_sched_scan_t *)os_mem_calloc(sizeof(nxp_wifi_trigger_sched_scan_t));
+    wifi_sched_scan_params = (nxp_wifi_trigger_sched_scan_t *)OSA_MemoryAllocate(sizeof(nxp_wifi_trigger_sched_scan_t));
 
     if (!wifi_sched_scan_params)
     {
@@ -885,7 +885,7 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
         ie_len = scan_res->ies.ie_len;
     }
 
-    r = (struct wpa_scan_res *)os_mem_calloc(sizeof(*r) + ie_len);
+    r = (struct wpa_scan_res *)OSA_MemoryAllocate(sizeof(*r) + ie_len);
 
     if (!r)
     {
@@ -940,7 +940,7 @@ struct wpa_scan_res *wifi_nxp_wpa_supp_proc_scan_res(nxp_wifi_event_new_scan_res
 
         pos += ie_len;
 
-        os_mem_free((void *)ie);
+        OSA_MemoryFree((void *)ie);
     }
 
     if (scan_res->status)
@@ -972,7 +972,7 @@ int wifi_nxp_wpa_supp_scan_results_get(void *if_priv, struct wpa_scan_results *s
         goto done;
     }
 
-    scan_res2->res = (struct wpa_scan_res **)os_mem_calloc(num * sizeof(struct wpa_scan_res *));
+    scan_res2->res = (struct wpa_scan_res **)OSA_MemoryAllocate(num * sizeof(struct wpa_scan_res *));
     if (!scan_res2->res)
     {
         supp_e("%s: Failed to calloc scan result array", __func__);
@@ -1013,7 +1013,7 @@ int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    wifi_survey_params = (nxp_wifi_trigger_op_t *)os_mem_calloc(sizeof(nxp_wifi_trigger_op_t));
+    wifi_survey_params = (nxp_wifi_trigger_op_t *)OSA_MemoryAllocate(sizeof(nxp_wifi_trigger_op_t));
 
     if (!wifi_survey_params)
     {
@@ -1027,7 +1027,7 @@ int wifi_nxp_wpa_supp_survey_results_get(void *if_priv)
     if (status != WM_SUCCESS)
     {
         supp_e("%s: wifi_supp_survey_res_get failed", __func__);
-        os_mem_free(wifi_survey_params);
+        OSA_MemoryFree(wifi_survey_params);
         goto out;
     }
     ret = 0;
@@ -1168,7 +1168,7 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
 
     wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
 
-    assoc_params = (nxp_wifi_assoc_info_t *)os_mem_calloc(sizeof(nxp_wifi_assoc_info_t));
+    assoc_params = (nxp_wifi_assoc_info_t *)OSA_MemoryAllocate(sizeof(nxp_wifi_assoc_info_t));
 
     if (!assoc_params)
     {
@@ -1235,7 +1235,7 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         supp_d("%s: Association request sent successfully", __func__);
         ret = 0;
     }
-    os_mem_free((void *)assoc_params);
+    OSA_MemoryFree((void *)assoc_params);
 
 out:
     return ret;
@@ -1459,7 +1459,7 @@ int wifi_nxp_wpa_supp_set_country(void *if_priv, const char *alpha2)
     int ret                                    = -WM_FAIL;
     char *country                              = NULL;
 
-    country = os_mem_calloc(COUNTRY_CODE_LEN);
+    country = OSA_MemoryAllocate(COUNTRY_CODE_LEN);
     (void)memcpy(country, alpha2, COUNTRY_CODE_LEN - 1);
 
     if ((!if_priv) || (!alpha2))
@@ -2002,7 +2002,7 @@ void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
 
     wifi_if_ctx_rtos->hapd_drv_if_ctx = hapd_drv_if_ctx;
 
-    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)os_mem_calloc(MAX_MGMT_TX_FRAME_SIZE);
+    wifi_if_ctx_rtos->last_mgmt_tx_data = (uint8_t *)OSA_MemoryAllocate(MAX_MGMT_TX_FRAME_SIZE);
 
     if (!wifi_if_ctx_rtos->last_mgmt_tx_data)
     {
@@ -2021,7 +2021,7 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 
     if (wifi_if_ctx_rtos != NULL)
     {
-        os_mem_free((void *)wifi_if_ctx_rtos->last_mgmt_tx_data);
+        OSA_MemoryFree((void *)wifi_if_ctx_rtos->last_mgmt_tx_data);
         memset(wifi_if_ctx_rtos, 0x00, sizeof(struct wifi_nxp_ctx_rtos));
     }
 }
@@ -2199,7 +2199,7 @@ int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_
         goto out;
     }
 
-    ap_params = (nxp_wifi_ap_info_t *)os_mem_calloc(sizeof(nxp_wifi_ap_info_t));
+    ap_params = (nxp_wifi_ap_info_t *)OSA_MemoryAllocate(sizeof(nxp_wifi_ap_info_t));
 
     if (!ap_params)
     {
@@ -2303,7 +2303,7 @@ int wifi_nxp_hostapd_set_ap(void *if_priv, int beacon_set, struct wpa_driver_ap_
 out:
     if (ap_params != NULL)
     {
-        os_mem_free((void *)ap_params);
+        OSA_MemoryFree((void *)ap_params);
     }
     return ret;
 }
@@ -2319,7 +2319,7 @@ int wifi_nxp_hostapd_sta_add(void *if_priv, struct hostapd_sta_add_params *param
         goto out;
     }
 
-    sta_params = (nxp_wifi_sta_info_t *)os_mem_calloc(sizeof(nxp_wifi_sta_info_t));
+    sta_params = (nxp_wifi_sta_info_t *)OSA_MemoryAllocate(sizeof(nxp_wifi_sta_info_t));
 
     if (!sta_params)
     {
@@ -2395,7 +2395,7 @@ int wifi_nxp_hostapd_sta_add(void *if_priv, struct hostapd_sta_add_params *param
 out:
     if (sta_params != NULL)
     {
-        os_mem_free((void *)sta_params);
+        OSA_MemoryFree((void *)sta_params);
     }
     return status;
 }
@@ -2547,7 +2547,7 @@ int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params)
 
     acl_sz = WIFI_ETH_ADDR_LEN * params->num_mac_acl;
 
-    acl_params = (nxp_wifi_acl_info_t *)os_mem_calloc(sizeof(nxp_wifi_acl_info_t) + acl_sz);
+    acl_params = (nxp_wifi_acl_info_t *)OSA_MemoryAllocate(sizeof(nxp_wifi_acl_info_t) + acl_sz);
     if (!acl_params)
     {
         supp_e("%s: acl params calloc failed", __func__);
@@ -2570,7 +2570,7 @@ int wifi_nxp_hostapd_set_acl(void *if_priv, struct hostapd_acl_params *params)
 
 out:
     if (acl_params)
-        os_mem_free((void *)acl_params);
+        OSA_MemoryFree((void *)acl_params);
     return ret;
 }
 

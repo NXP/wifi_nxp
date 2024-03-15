@@ -10,6 +10,8 @@
 #ifndef _FIMRWARE_DNLD_H_
 #define _FIMRWARE_DNLD_H_
 
+#include <osa.h>
+
 #define fwdnld_io_e(...) wmlog_e("wifi_io", ##__VA_ARGS__)
 #define fwdnld_io_w(...) wmlog_w("wifi_io", ##__VA_ARGS__)
 

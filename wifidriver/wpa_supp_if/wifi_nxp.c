@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <wifi.h>
 #include <wifi-debug.h>
@@ -157,7 +157,7 @@ int wifi_supp_init(void)
 
     wm_wifi.supp_if_callbk_fns = (wifi_nxp_callbk_fns_t *)&supp_callbk_fns;
 
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
     if (!g_wifi_if_ctx_rtos)
     {
@@ -192,7 +192,7 @@ int wifi_supp_init(void)
 
     (void)net_get_if_name_netif(sta_iface_name, iface);
 
-    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)os_mem_alloc(sizeof(struct wifi_nxp_ctx_rtos));
+    g_wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)OSA_MemoryAllocate(sizeof(struct wifi_nxp_ctx_rtos));
 
     if (!g_wifi_if_ctx_rtos)
     {
@@ -253,13 +253,13 @@ void wifi_supp_deinit(void)
 
     if (wm_wifi.if_priv)
     {
-        os_mem_free(wm_wifi.if_priv);
+        OSA_MemoryFree(wm_wifi.if_priv);
         wm_wifi.if_priv = NULL;
     }
 
     if (wm_wifi.hapd_if_priv)
     {
-        os_mem_free(wm_wifi.hapd_if_priv);
+        OSA_MemoryFree(wm_wifi.hapd_if_priv);
         wm_wifi.hapd_if_priv = NULL;
     }
     wifi_supp_init_done = 0U;

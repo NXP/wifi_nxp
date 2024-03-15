@@ -9,11 +9,25 @@
  */
 
 #include <inttypes.h>
-#include <wifi.h>
-#include <wm_os.h>
+#include "wifi.h"
+#include <osa.h>
 #include "netif_decl.h"
 #include <wm_net.h>
+#include <wlan.h>
 
+#if defined(SDK_OS_FREE_RTOS)
+
+#include <lwip/opt.h>
+#include <lwip/netifapi.h>
+#include <lwip/tcpip.h>
+#include <lwip/dns.h>
+#include <lwip/dhcp.h>
+#include <lwip/prot/dhcp.h>
+#include <lwip/ip_addr.h>
+#include <lwip/prot/autoip.h>
+#include <lwip/stats.h>
+
+#include <wmlog.h>
 #define net_e(...) wmlog_e("net", ##__VA_ARGS__)
 
 #ifdef CONFIG_NET_DEBUG
@@ -35,6 +49,9 @@
 #define IPV6_ADDR_UNKNOWN          "Unknown"
 #endif
 
+#define DNS_PORT   0x35
+#define DHCPD_PORT 0x43
+#define DHCPC_PORT 0x44
 #ifdef CONFIG_IPV6
 #define DHCP_TIMEOUT (60 * 1000)
 #else
@@ -47,7 +64,6 @@
 //To do for other chips
 #endif
 
-#if defined(SDK_OS_FREE_RTOS)
 
 struct interface
 {
@@ -65,9 +81,8 @@ static interface_t g_wfd;
 #endif
 
 static int net_wlan_init_done;
-static os_timer_t dhcp_timer;
-
-static void dhcp_timer_cb(os_timer_arg_t arg);
+OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
+static void dhcp_timer_cb(osa_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
@@ -75,6 +90,7 @@ err_t lwip_netif_uap_init(struct netif *netif);
 err_t lwip_netif_wfd_init(struct netif *netif);
 #endif
 #ifndef CONFIG_WIFI_RX_REORDER
+void *wifi_get_rxbuf_desc(t_u16 rx_len);
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 #endif
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);
@@ -262,6 +278,7 @@ void net_wlan_set_mac_address(unsigned char *stamac, unsigned char *uapmac)
 int net_wlan_init(void)
 {
     int ret;
+    osa_status_t status;
 
 #ifdef RW610
 #ifndef CONFIG_WIFI_RX_REORDER
@@ -282,6 +299,9 @@ int net_wlan_init(void)
 
 #ifndef RW610
 #ifndef CONFIG_WIFI_RX_REORDER
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+        (void)wifi_register_get_rxbuf_desc_callback(&wifi_get_rxbuf_desc);
+#endif
         (void)wifi_register_data_input_callback(&handle_data_packet);
 #endif
         (void)wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
@@ -325,12 +345,12 @@ int net_wlan_init(void)
         }
 #endif
 
-        ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT), &dhcp_timer_cb, NULL,
-                              OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
-        if (ret != WM_SUCCESS)
+        status = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, DHCP_TIMEOUT, &dhcp_timer_cb, NULL, KOSA_TimerOnce,
+                                 OSA_TIMER_NO_ACTIVATE);
+        if (status != KOSA_StatusSuccess)
         {
             net_e("Unable to start dhcp timer");
-            return ret;
+            return -WM_FAIL;
         }
 
         LOCK_TCPIP_CORE();
@@ -406,6 +426,7 @@ static int net_netif_deinit(struct netif *netif)
 int net_wlan_deinit(void)
 {
     int ret;
+    osa_status_t status;
 
     if (net_wlan_init_done != 1)
     {
@@ -426,8 +447,8 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
-    ret = os_timer_delete(&dhcp_timer);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerDestroy((osa_timer_handle_t)dhcp_timer);
+    if (status != KOSA_StatusSuccess)
     {
         net_e("DHCP timer deletion failed");
         return -WM_FAIL;
@@ -547,7 +568,7 @@ static void wm_netif_status_callback(struct netif *n)
 
 void net_stop_dhcp_timer(void)
 {
-    (void)os_timer_deactivate((os_timer_t *)&dhcp_timer);
+    (void)OSA_TimerDeactivate((osa_timer_handle_t)dhcp_timer);
 }
 
 static void stop_cb(void *ctx)
@@ -559,7 +580,7 @@ static void stop_cb(void *ctx)
     wm_netif_status_callback_ptr = NULL;
 }
 
-static void dhcp_timer_cb(os_timer_arg_t arg)
+static void dhcp_timer_cb(osa_timer_arg_t arg)
 {
     (void)tcpip_try_callback(stop_cb, NULL);
     net_e("DHCP timeout, failed to get IPv4 address");
@@ -758,7 +779,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
                                           ip_2_ip4(&if_handle->gw));
             (void)netifapi_netif_set_up(&if_handle->netif);
-            (void)os_timer_activate(&dhcp_timer);
+            (void)OSA_TimerActivate((osa_timer_handle_t)dhcp_timer);
             wm_netif_status_callback_ptr = wm_netif_status_callback;
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;
@@ -968,7 +989,8 @@ interface_t g_mlan;
 interface_t g_uap;
 
 static int net_wlan_init_done = 0;
-static os_timer_t dhcp_timer;
+OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
+static void dhcp_timer_cb(osa_timer_arg_t arg);
 
 void deliver_packet_above(struct net_pkt *p, int recv_interface)
 {
@@ -1027,7 +1049,7 @@ void deliver_packet_above(struct net_pkt *p, int recv_interface)
 static struct net_pkt *gen_pkt_from_data(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
-    t_u8 retry_cnt = 3;
+    t_u8 retry_cnt      = 3;
 
 retry:
     /* We allocate a network buffer */
@@ -1060,7 +1082,7 @@ retry:
 static struct net_pkt *gen_pkt_from_data_for_zerocopy(t_u8 interface, t_u8 *payload, t_u16 datalen)
 {
     struct net_pkt *pkt = NULL;
-    t_u8 retry_cnt = 3;
+    t_u8 retry_cnt      = 3;
 
 retry:
     /* We allocate a network buffer */
@@ -1119,9 +1141,9 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
 
     t_u8 *payload = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
 #ifdef CONFIG_TX_RX_ZERO_COPY
-    t_u16 header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
-    struct net_pkt *p =
-        gen_pkt_from_data_for_zerocopy(recv_interface, (t_u8 *)rcvdata, rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer));
+    t_u16 header_len  = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+    struct net_pkt *p = gen_pkt_from_data_for_zerocopy(recv_interface, (t_u8 *)rcvdata,
+                                                       rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer));
 #else
     struct net_pkt *p = gen_pkt_from_data(recv_interface, payload, rxpd->rx_pkt_length);
 #endif
@@ -1244,7 +1266,7 @@ void handle_deliver_packet_above(t_void *rxpd, t_u8 interface, t_void *pkt)
     (void)rxpd;
     deliver_packet_above(p, interface);
 #else
-    RxPD *prxpd = (RxPD *)rxpd;
+    RxPD *prxpd       = (RxPD *)rxpd;
     deliver_packet_above(prxpd, p, interface);
 #endif
 }
@@ -1308,7 +1330,6 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 
     if (interface == WLAN_BSS_TYPE_STA)
     {
-
         if (wifi_add_to_bypassq(interface, pkt, net_pkt_len) == WM_SUCCESS)
         {
             return 0;
@@ -1334,7 +1355,7 @@ int nxp_wifi_internal_tx(const struct device *dev, struct net_pkt *pkt)
 
         if (ret == true && is_tx_pause == true)
         {
-            os_thread_sleep(os_msec_to_ticks(1));
+            OSA_TimeDelay(1);
         }
 
         retry--;
@@ -1434,7 +1455,11 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
         case NET_IF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-            curr = (group_ip4_addr_t *)os_mem_alloc(sizeof(group_ip4_addr_t));
+#ifndef CONFIG_MEM_POOLS
+            curr = (group_ip4_addr_t *)OSA_MemoryAllocate(sizeof(group_ip4_addr_t));
+#else
+            curr = (group_ip4_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
             if (curr == NULL)
             {
                 result = -WM_FAIL;
@@ -1458,7 +1483,11 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
                 /* In case of failure remove IP from list */
                 curr          = igmp_ip4_list;
                 igmp_ip4_list = curr->next;
-                os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(curr);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                 curr   = NULL;
                 result = -WM_FAIL;
             }
@@ -1474,12 +1503,20 @@ static int igmp_mac_filter(struct netif *netif, const struct in_addr *group, enu
                     if (prev == curr)
                     {
                         igmp_ip4_list = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     else
                     {
                         prev->next = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     curr = NULL;
                     break;
@@ -1545,7 +1582,11 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
         case NET_IF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-            curr = (group_ip6_addr_t *)os_mem_alloc(sizeof(group_ip6_addr_t));
+#ifndef CONFIG_MEM_POOLS
+            curr = (group_ip6_addr_t *)OSA_MemoryAllocate(sizeof(group_ip6_addr_t));
+#else
+            curr = (group_ip6_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
             if (curr == NULL)
             {
                 result = -WM_FAIL;
@@ -1569,7 +1610,11 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
                 /* In case of failure remove IP from list */
                 curr         = mld_ip6_list;
                 mld_ip6_list = mld_ip6_list->next;
-                os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(curr);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                 curr   = NULL;
                 result = -WM_FAIL;
             }
@@ -1585,12 +1630,20 @@ static int mld_mac_filter(struct netif *netif, const struct in6_addr *group, enu
                     if (prev == curr)
                     {
                         mld_ip6_list = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     else
                     {
                         prev->next = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     curr = NULL;
                     break;
@@ -1658,7 +1711,7 @@ int net_get_if_name_netif(char *pif_name, struct netif *iface)
 
 void net_stop_dhcp_timer(void)
 {
-    (void)os_timer_deactivate((os_timer_t *)&dhcp_timer);
+    (void)OSA_TimerDeactivate((osa_timer_handle_t)dhcp_timer);
 }
 
 static void stop_cb(void *ctx)
@@ -1669,7 +1722,7 @@ static void stop_cb(void *ctx)
     (void)net_if_down(if_handle->netif);
 }
 
-static void dhcp_timer_cb(os_timer_arg_t arg)
+static void dhcp_timer_cb(osa_timer_arg_t arg)
 {
     stop_cb(NULL);
 
@@ -1796,7 +1849,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             break;
         case NET_ADDR_TYPE_DHCP:
             net_if_up(if_handle->netif);
-            os_timer_activate(&dhcp_timer);
+            (void)OSA_TimerActivate((osa_timer_handle_t)dhcp_timer);
             net_dhcpv4_restart(if_handle->netif);
             break;
         case NET_ADDR_TYPE_LLA:
@@ -2117,6 +2170,7 @@ static void cleanup_mgmt_events(void)
 int net_wlan_init(void)
 {
     int ret;
+    osa_status_t status;
 
     wifi_register_data_input_callback(&handle_data_packet);
     wifi_register_amsdu_data_input_callback(&handle_amsdu_data_packet);
@@ -2148,14 +2202,13 @@ int net_wlan_init(void)
         ethernet_init(g_uap.netif);
 
         net_wlan_init_done = 1;
-        net_d("Initialized TCP/IP networking stack");
 
-        ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT), &dhcp_timer_cb, NULL,
-                              OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
-        if (ret != WM_SUCCESS)
+        status = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, DHCP_TIMEOUT, &dhcp_timer_cb, NULL, KOSA_TimerOnce,
+                                 OSA_TIMER_NO_ACTIVATE);
+        if (status != KOSA_StatusSuccess)
         {
             net_e("Unable to start dhcp timer");
-            return ret;
+            return -WM_FAIL;
         }
     }
 
@@ -2221,6 +2274,7 @@ static int net_netif_deinit(struct net_if *netif)
 int net_wlan_deinit(void)
 {
     int ret;
+    osa_status_t status;
 
     if (net_wlan_init_done != 1)
     {
@@ -2241,8 +2295,8 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
-    ret = os_timer_delete(&dhcp_timer);
-    if (ret != WM_SUCCESS)
+    status = OSA_TimerDestroy((osa_timer_handle_t)dhcp_timer);
+    if (status != KOSA_StatusSuccess)
     {
         net_e("DHCP timer deletion failed");
         return -WM_FAIL;

@@ -19,7 +19,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -188,16 +188,23 @@ static int wlan_cmd_append_tsf_tlv(mlan_private *pmriv, t_u8 **ppbuffer, BSSDesc
 static mlan_status wlan_get_common_rates(
     IN mlan_private *pmpriv, IN t_u8 *rate1, IN t_u32 rate1_size, IN t_u8 *rate2, IN t_u32 rate2_size)
 {
-    mlan_status ret     = MLAN_STATUS_SUCCESS;
+    mlan_status ret = MLAN_STATUS_SUCCESS;
+#ifndef CONFIG_MEM_POOLS
     mlan_callbacks *pcb = (mlan_callbacks *)&pmpriv->adapter->callbacks;
-    t_u8 *ptr           = rate1;
-    t_u8 *tmp           = MNULL;
+#endif
+    t_u8 *ptr = rate1;
+    t_u8 *tmp = MNULL;
     t_u32 i, j;
 
     ENTER();
 
+#ifndef CONFIG_MEM_POOLS
     ret = pcb->moal_malloc(pmpriv->adapter->pmoal_handle, rate1_size, MLAN_MEM_DEF, &tmp);
     if (ret != MLAN_STATUS_SUCCESS || (tmp == MNULL))
+#else
+    tmp = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+    if (tmp == MNULL)
+#endif
     {
         PRINTM(MERROR, "Failed to allocate buffer\n");
         ret = MLAN_STATUS_FAILURE;
@@ -249,7 +256,11 @@ static mlan_status wlan_get_common_rates(
 done:
     if (tmp != MNULL)
     {
+#ifndef CONFIG_MEM_POOLS
         (void)pcb->moal_mfree(pmpriv->adapter->pmoal_handle, tmp);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, tmp);
+#endif
     }
 
     LEAVE();
@@ -653,7 +664,7 @@ static int wlan_update_rsn_ie(mlan_private *pmpriv,
                 }
                 else
 #endif
-                if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 12))
+                    if ((*akm_type == AssocAgentAuth_Open) && (ptr[3] == 12))
                 {
                     break;
                 }

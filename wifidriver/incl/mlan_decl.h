@@ -17,7 +17,7 @@ Change log:
 #define _MLAN_DECL_H_
 
 #include "type_decls.h"
-#include <wm_os.h>
+#include <osa.h>
 #ifdef CONFIG_WPA_SUPP
 #include <ieee802_11_defs.h>
 #endif
@@ -123,7 +123,7 @@ Change log:
 #if defined(SD9177) && !defined(COEX_APP_SUPPORT)
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
 #else
-#define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
+#define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
 #endif
 #endif
 #endif /* STA_SUPPORT */
@@ -986,11 +986,11 @@ typedef struct _mlan_callbacks
 
     /** moal_init_timer*/
     mlan_status (*moal_init_timer)(IN t_void *pmoal_handle,
-                                   OUT t_void **pptimer,
-                                   IN t_void (*callback)(os_timer_arg_t arg),
+                                   OUT t_void *ptimer,
+                                   IN t_void (*callback)(osa_timer_arg_t arg),
                                    IN t_void *pcontext);
     /** moal_free_timer */
-    mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void **pptimer);
+    mlan_status (*moal_free_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_start_timer*/
     mlan_status (*moal_start_timer)(IN t_void *pmoal_handle, IN t_void *ptimer, IN bool periodic, IN t_u32 msec);
     /** moal_reset_timer*/
@@ -998,7 +998,7 @@ typedef struct _mlan_callbacks
     /** moal_stop_timer*/
     mlan_status (*moal_stop_timer)(IN t_void *pmoal_handle, IN t_void *ptimer);
     /** moal_init_lock */
-    mlan_status (*moal_init_lock)(IN t_void *pmoal_handle, OUT t_void **pplock);
+    mlan_status (*moal_init_lock)(IN t_void *pmoal_handle, OUT t_void *plock);
     /** moal_free_lock */
     mlan_status (*moal_free_lock)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_spin_lock */
@@ -1007,13 +1007,13 @@ typedef struct _mlan_callbacks
     mlan_status (*moal_spin_unlock)(IN t_void *pmoal_handle, IN t_void *plock);
 #ifdef CONFIG_WMM
     /** moal_init_semaphore */
-    mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void **pplock);
+    mlan_status (*moal_init_semaphore)(IN t_void *pmoal_handle, IN const char *name, OUT t_void *plock);
     /** moal_free_semaphore */
-    mlan_status (*moal_free_semaphore)(IN t_void *pmoal_handle, IN t_void **pplock);
+    mlan_status (*moal_free_semaphore)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_semaphore_get */
-    mlan_status (*moal_semaphore_get)(IN t_void *pmoal_handle, IN t_void **pplock);
+    mlan_status (*moal_semaphore_get)(IN t_void *pmoal_handle, IN t_void *plock);
     /** moal_semaphore_put */
-    mlan_status (*moal_semaphore_put)(IN t_void *pmoal_handle, IN t_void **pplock);
+    mlan_status (*moal_semaphore_put)(IN t_void *pmoal_handle, IN t_void *plock);
 #endif
 #if 0
     /** moal_print */

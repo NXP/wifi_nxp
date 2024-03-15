@@ -15,7 +15,7 @@
 #include "wps_l2.h"
 
 #include "wifi_nxp_wps.h"
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 
 /* Data structure definition for main loop */

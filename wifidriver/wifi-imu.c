@@ -14,7 +14,7 @@
 #endif
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_utils.h>
 #include <mlan_fw.h>
 #include "wifi-imu.h"
@@ -64,16 +64,17 @@ const uint8_t *wlanfw;
 
 t_u32 last_resp_rcvd, last_cmd_sent;
 
-static os_mutex_t txrx_mutex;
+OSA_MUTEX_HANDLE_DEFINE(txrx_mutex);
+
 #ifndef RW610
-os_thread_t wifi_core_thread;
+osa_task_handle_t wifi_core_thread;
 #endif
 static struct
 {
     /* Where the cmdresp/event should be dispached depends on its value */
     /* int special; */
     /* Default queue where the cmdresp/events will be sent */
-    os_queue_t *event_queue;
+    osa_msgq_handle_t event_queue;
     int (*wifi_low_level_input)(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
 } bus;
 
@@ -170,7 +171,7 @@ static hal_rpmsg_status_t wifi_send_fw_cmd(t_u16 cmd_type, t_u8 *cmd_payload, t_
 
     while (kStatus_HAL_RpmsgSuccess != HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, cmd_payload, length))
     {
-        os_thread_sleep(os_msec_to_ticks(1));
+        OSA_TimeDelay(1);
     }
     return kStatus_HAL_RpmsgSuccess;
 }
@@ -185,12 +186,12 @@ static hal_rpmsg_status_t wifi_send_fw_data(t_u8 *data, t_u32 length)
 
 int wifi_imu_lock()
 {
-    return os_mutex_get(&txrx_mutex, OS_WAIT_FOREVER);
+    return OSA_MutexLock((osa_mutex_handle_t)txrx_mutex, osaWaitForever_c);
 }
 
 void wifi_imu_unlock()
 {
-    os_mutex_put(&txrx_mutex);
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)txrx_mutex);
 }
 
 uint32_t wifi_get_device_value1()
@@ -219,32 +220,26 @@ int wifi_get_device_firmware_version_ext(wifi_fw_version_ext_t *fw_ver_ext)
 /* Initializes the driver struct */
 static int wlan_init_struct()
 {
-    int status = WM_SUCCESS;
-    if (txrx_mutex == NULL)
+    osa_status_t status;
+
+    status = OSA_MutexCreate((osa_mutex_handle_t)txrx_mutex);
+    if (status != KOSA_StatusSuccess)
     {
-        status = os_mutex_create(&txrx_mutex, "txrx", OS_MUTEX_INHERIT);
-        if (status != WM_SUCCESS)
-            return status;
+        return -WM_FAIL;
     }
 
-    status = imu_create_task_lock();
-    return status;
+    return imu_create_task_lock();
 }
 
 static int wlan_deinit_struct()
 {
-    if (txrx_mutex)
+    osa_status_t status;
+
+    status = OSA_MutexDestroy((osa_mutex_handle_t)txrx_mutex);
+    if (status != KOSA_StatusSuccess)
     {
-        int status = os_mutex_delete(&txrx_mutex);
-        if (status != WM_SUCCESS)
-        {
-            wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
-            return status;
-        }
-    }
-    else
-    {
-        wifi_io_d("%s mutex does not exsit", __FUNCTION__);
+        wifi_io_e("%s mutex deletion error %d", __FUNCTION__, status);
+        return -WM_FAIL;
     }
 
     imu_delete_task_lock();
@@ -346,7 +341,7 @@ void process_pkt_hdrs_flags(void *pbuf, t_u8 flags)
     ptxpd->flags = flags;
 }
 
-int bus_register_event_queue(os_queue_t *event_queue)
+int bus_register_event_queue(xQueueHandle *event_queue)
 {
     if (bus.event_queue != NULL)
         return -WM_FAIL;
@@ -592,9 +587,9 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
         memcpy(msg.data, pmbuf, imupkt->size);
 #endif
 
-        ret = os_queue_send(bus.event_queue, &msg, os_msec_to_ticks(WIFI_RESP_WAIT_TIME));
+        status = OSA_MsgQPut(bus.event_queue, &msg);
 
-        if (ret != WM_SUCCESS)
+        if (status != KOSA_StatusSuccess)
         {
             wifi_io_e("Failed to send response on Queue: upld_type=%d id=0x%x", upld_type,
                       (upld_type == MLAN_TYPE_CMD) ? imupkt->hostcmd.command : event_cause);
@@ -911,7 +906,7 @@ static int wlan_wait_for_last_resp_rcvd(t_u16 command)
 
     while ((last_resp_rcvd != command) && (retry_cnt > 0))
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        OSA_TimeDelay(WIFI_POLL_CMD_RESP_TIME);
         retry_cnt--;
     }
 
@@ -935,7 +930,7 @@ static int wlan_fw_init_cfg()
     /* Add while loop here to wait until command buffer has been attached */
     while (HAL_ImuLinkIsUp(kIMU_LinkCpu1Cpu3) != 0)
     {
-        os_thread_sleep(os_msec_to_ticks(WIFI_POLL_CMD_RESP_TIME));
+        OSA_TimeDelay(WIFI_POLL_CMD_RESP_TIME);
     }
 
     wlan_cmd_init();
@@ -1259,7 +1254,7 @@ mlan_status wlan_xmit_wmm_pkt(t_u8 interface, t_u32 txlen, t_u8 *tx_buf)
     if (last_packet)
     {
         mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
-        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+        OSA_SemaphoreWait((osa_semaphore_handle_t)uapsd_sem, osaWaitForever_c);
     }
 #endif
 
@@ -1357,7 +1352,7 @@ mlan_status wlan_xmit_wmm_amsdu_pkt(mlan_wmm_ac_e ac, t_u8 interface, t_u32 txle
     if (last_packet)
     {
         mlan_adap->priv[interface]->adapter->tx_lock_flag = MTRUE;
-        os_semaphore_get(&uapsd_sem, OS_WAIT_FOREVER);
+        OSA_SemaphoreWait((osa_semaphore_handle_t)uapsd_sem, osaWaitForever_c);
     }
 #endif
 
@@ -1540,7 +1535,7 @@ hal_rpmsg_status_t rpmsg_ctrl_handler(IMU_Msg_t *pImuMsg, uint32_t length)
 
             if (mlan_adap->wait_txbuf == true)
             {
-                os_semaphore_put(&txbuf_sem);
+                OSA_SemaphorePost((osa_semaphore_handle_t)txbuf_sem);
             }
 
             send_wifi_driver_tx_data_event(0);
@@ -1824,7 +1819,7 @@ static void wifi_handle_event_access_by_host(t_u8 *evt_buff)
         return;
     }
 
-    local = (event_access_t *)os_mem_alloc(payload_size);
+    local = (event_access_t *)OSA_MemoryAllocate(payload_size);
     if (local == MNULL)
     {
         wifi_e("event access by host malloc fail size %hu", payload_size);
@@ -1836,7 +1831,7 @@ static void wifi_handle_event_access_by_host(t_u8 *evt_buff)
     if (local->size > max_data_size)
     {
         wifi_e("event access by host invalid size %hu, max_size %hu", local->size, max_data_size);
-        os_mem_free(local);
+        OSA_MemoryFree(local);
         return;
     }
 
@@ -1853,7 +1848,7 @@ static void wifi_handle_event_access_by_host(t_u8 *evt_buff)
             break;
     }
 
-    os_mem_free(local);
+    OSA_MemoryFree(local);
 }
 #endif
 int imu_create_task_lock(void)

@@ -17,7 +17,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 #include "fsl_common.h"
 #ifndef __ZEPHYR__
 #ifndef RW610
@@ -44,6 +44,16 @@ SDK_ALIGN(uint8_t mp_regs_buffer[MAX_MP_REGS], BOARD_SDMMC_DATA_BUFFER_ALIGN_SIZ
 
 /* We are allocating BSS list globally as we need heap for other purposes */
 SDK_ALIGN(BSSDescriptor_t BSS_List[MRVDRV_MAX_BSSID_LIST], 32);
+
+#ifdef CONFIG_SCAN_CHANNEL_GAP
+
+#ifndef CONFIG_5GHz_SUPPORT
+static ChanStatistics_t Chan_Stats[14];
+#else
+static ChanStatistics_t Chan_Stats[48];
+#endif
+
+#endif
 
 /********************************************************
         Local Functions
@@ -148,23 +158,6 @@ static t_void wlan_delete_bsspriotbl(pmlan_private priv)
  */
 mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 {
-#ifdef CONFIG_SCAN_CHANNEL_GAP
-    int ret = -WM_FAIL;
-    // fixme: this function will need during migration of legacy code.
-    t_u8 chan_2g_size = 14;
-#ifdef CONFIG_5GHz_SUPPORT
-#ifdef CONFIG_UNII4_BAND_SUPPORT
-    t_u8 chan_5g_size = 34;
-#else
-    t_u8 chan_5g_size    = 31;
-#endif
-#endif
-#endif
-
-#ifdef CONFIG_SCAN_CHANNEL_GAP
-    t_u32 buf_size;
-#endif
-
 #ifndef CONFIG_MLAN_WMSDK
     mlan_status ret = MLAN_STATUS_SUCCESS;
 #ifdef STA_SUPPORT
@@ -201,20 +194,14 @@ mlan_status wlan_allocate_adapter(pmlan_adapter pmadapter)
 
     pmadapter->pscan_table = BSS_List;
 #ifdef CONFIG_SCAN_CHANNEL_GAP
-    pmadapter->num_in_chan_stats = chan_2g_size;
-#ifdef CONFIG_5GHz_SUPPORT
-    pmadapter->num_in_chan_stats += chan_5g_size;
+
+#ifndef CONFIG_5GHz_SUPPORT
+    pmadapter->num_in_chan_stats = 14;
+#else
+    pmadapter->num_in_chan_stats = 48;
 #endif
-    buf_size = sizeof(ChanStatistics_t) * pmadapter->num_in_chan_stats;
-    ret      = pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF,
-                                           (t_u8 **)&pmadapter->pchan_stats);
-    if (ret != MLAN_STATUS_SUCCESS || !pmadapter->pchan_stats)
-    {
-        PRINTM(MERROR, "Failed to allocate channel statistics\n");
-        LEAVE();
-        return MLAN_STATUS_FAILURE;
-    }
-#endif /* CONFIG_SCAN_CHANNEL_GAP */
+    pmadapter->pchan_stats = Chan_Stats;
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
     /* Allocate command buffer */
@@ -518,8 +505,8 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
     pmadapter->curr_rd_port = 1;
     pmadapter->curr_wr_port = 1;
 #elif defined(SD8978) || defined(SD8987) || defined(SD8997) || defined(SD9097) || defined(SD9098) || defined(SD9177)
-    pmadapter->curr_rd_port = 0;
-    pmadapter->curr_wr_port = 0;
+    pmadapter->curr_rd_port      = 0;
+    pmadapter->curr_wr_port      = 0;
 #endif
     pmadapter->mp_data_port_mask = DATA_PORT_MASK;
 #endif
@@ -607,10 +594,6 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 
     pmadapter->ecsa_enable = MFALSE;
 
-#ifdef CONFIG_SCAN_CHANNEL_GAP
-    pmadapter->scan_chan_gap = 0;
-#endif
-
     /* fixme: enable this later when required */
 #ifndef CONFIG_MLAN_WMSDK
     (void)__memset(pmadapter, pmadapter->pscan_table, 0, (sizeof(BSSDescriptor_t) * MRVDRV_MAX_BSSID_LIST));
@@ -664,21 +647,21 @@ t_void wlan_init_adapter(pmlan_adapter pmadapter)
 #endif
 #ifdef CONFIG_HOST_SLEEP
     pmadapter->is_hs_configured          = MFALSE;
-    pmadapter->mgmt_filter[0].action     = 0;        /* discard and not wakeup host */
-    pmadapter->mgmt_filter[0].type       = 0xff;     /* management frames */
-    pmadapter->mgmt_filter[0].frame_mask = 0x1400;   /* Frame-Mask bits :
-                                                        : Bit 0 - Association Request
-                                                        : Bit 1 - Association Response
-                                                        : Bit 2 - Re-Association Request
-                                                        : Bit 3 - Re-Association Response
-                                                        : Bit 4 - Probe Request
-                                                        : Bit 5 - Probe Response
-                                                        : Bit 8 - Beacon Frames
-                                                        : Bit 10 - Disassociation
-                                                        : Bit 11 - Authentication
-                                                        : Bit 12 - Deauthentication
-                                                        : Bit 13 - Action Frames
-                                                     */
+    pmadapter->mgmt_filter[0].action     = 0;      /* discard and not wakeup host */
+    pmadapter->mgmt_filter[0].type       = 0xff;   /* management frames */
+    pmadapter->mgmt_filter[0].frame_mask = 0x1400; /* Frame-Mask bits :
+                                                      : Bit 0 - Association Request
+                                                      : Bit 1 - Association Response
+                                                      : Bit 2 - Re-Association Request
+                                                      : Bit 3 - Re-Association Response
+                                                      : Bit 4 - Probe Request
+                                                      : Bit 5 - Probe Response
+                                                      : Bit 8 - Beacon Frames
+                                                      : Bit 10 - Disassociation
+                                                      : Bit 11 - Authentication
+                                                      : Bit 12 - Deauthentication
+                                                      : Bit 13 - Action Frames
+                                                   */
 #endif
 
 #ifndef CONFIG_MLAN_WMSDK
@@ -895,14 +878,15 @@ mlan_status wlan_init_lock_list(IN pmlan_adapter pmadapter)
             }
 #endif
 
-            util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MTRUE,
-                                pmadapter->callbacks.moal_init_lock);
-            ret = (mlan_status)os_mutex_create(&priv->tx_ba_stream_tbl_lock, "Tx BA tbl lock", OS_MUTEX_INHERIT);
+            ret = (mlan_status)OSA_MutexCreate((osa_mutex_handle_t)priv->tx_ba_stream_tbl_lock);
             if (ret != MLAN_STATUS_SUCCESS)
             {
                 wifi_e("Create Tx BA tbl sem failed");
                 return ret;
             }
+
+            util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->tx_ba_stream_tbl_ptr, MTRUE,
+                                pmadapter->callbacks.moal_init_lock);
             util_init_list_head((t_void *)pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, MTRUE,
                                 pmadapter->callbacks.moal_init_lock);
             util_scalar_init((t_void *)pmadapter->pmoal_handle, &priv->wmm.tx_pkts_queued, 0,
@@ -1126,10 +1110,6 @@ done:
  */
 t_void wlan_free_adapter(pmlan_adapter pmadapter)
 {
-#ifdef CONFIG_SCAN_CHANNEL_GAP
-    mlan_callbacks *pcb = (mlan_callbacks *)&pmadapter->callbacks;
-#endif
-
     ENTER();
 
     if (!pmadapter)
@@ -1138,14 +1118,6 @@ t_void wlan_free_adapter(pmlan_adapter pmadapter)
         LEAVE();
         return;
     }
-
-#ifdef CONFIG_SCAN_CHANNEL_GAP
-    if (pmadapter->pchan_stats)
-    {
-        pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pmadapter->pchan_stats);
-        pmadapter->pchan_stats = MNULL;
-    }
-#endif
 
 #ifndef CONFIG_MLAN_WMSDK
     wlan_cancel_all_pending_cmd(pmadapter);

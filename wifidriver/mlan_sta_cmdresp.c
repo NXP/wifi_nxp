@@ -17,7 +17,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -736,7 +736,7 @@ static mlan_status wlan_ret_tx_power_cfg(IN pmlan_private pmpriv,
             ppg_tlv->length = wlan_le16_to_cpu(ppg_tlv->length);
             if (pmpriv->adapter->hw_status == WlanHardwareStatusInitializing)
             {
-                // coverity[overrun-buffer-val:SUPPRESS]            
+                // coverity[overrun-buffer-val:SUPPRESS]
                 (void)wlan_get_power_level(pmpriv, ptxp_cfg);
             }
             pmpriv->tx_power_level = (t_u16)pg->power_min;

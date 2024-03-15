@@ -11,6 +11,10 @@
 #ifndef WM_ERRNO_H
 #define WM_ERRNO_H
 
+#if defined(FSL_RTOS_THREADX)
+#include <errno.h>
+#endif
+
 /* Get the module index number from error code (4th byte from LSB)*/
 #define get_module_base(code) ((code & 0xF000) >> 12)
 

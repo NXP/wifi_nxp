@@ -12,7 +12,7 @@
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 #include <wifi.h>
 #if defined(RW610)
@@ -1915,7 +1915,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     }
 
     /* Initialize the command buffer */
-    buffer = (t_u8 *)os_mem_alloc(buf_len);
+    buffer = (t_u8 *)OSA_MemoryAllocate(buf_len);
     if (!buffer)
     {
         wuap_e("ERR:Cannot allocate buffer for command!\r\n");
@@ -1954,7 +1954,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
     if (is_uap_started())
     {
         wuap_e("down the uap before setting sta filter\n\r");
-        os_mem_free(buffer);
+        OSA_MemoryFree(buffer);
         return -WM_FAIL;
     }
 
@@ -1966,7 +1966,7 @@ int wifi_set_sta_mac_filter(int filter_mode, int mac_count, unsigned char *mac_a
 
     wifi_wait_for_cmdresp(NULL);
 
-    os_mem_free(buffer);
+    OSA_MemoryFree(buffer);
 
     return WM_SUCCESS;
 }
@@ -2785,29 +2785,29 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
     custom_ie *proberesp_ies_data  = NULL;
     custom_ie *assocresp_ies_data  = NULL;
 
-    beacon_ies_data     = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
-    beacon_wps_ies_data = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
-    proberesp_ies_data  = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
+    beacon_ies_data     = (custom_ie *)OSA_MemoryAllocate(sizeof(custom_ie));
+    beacon_wps_ies_data = (custom_ie *)OSA_MemoryAllocate(sizeof(custom_ie));
+    proberesp_ies_data  = (custom_ie *)OSA_MemoryAllocate(sizeof(custom_ie));
 
-    assocresp_ies_data = (custom_ie *)os_mem_calloc(sizeof(custom_ie));
+    assocresp_ies_data = (custom_ie *)OSA_MemoryAllocate(sizeof(custom_ie));
 
     if ((!beacon_ies_data) || (!beacon_wps_ies_data) || (!proberesp_ies_data) || (!assocresp_ies_data))
     {
         if (beacon_ies_data)
         {
-            os_mem_free(beacon_ies_data);
+            OSA_MemoryFree(beacon_ies_data);
         }
         if (beacon_wps_ies_data)
         {
-            os_mem_free(beacon_wps_ies_data);
+            OSA_MemoryFree(beacon_wps_ies_data);
         }
         if (proberesp_ies_data)
         {
-            os_mem_free(proberesp_ies_data);
+            OSA_MemoryFree(proberesp_ies_data);
         }
         if (assocresp_ies_data)
         {
-            os_mem_free(assocresp_ies_data);
+            OSA_MemoryFree(assocresp_ies_data);
         }
         return -WM_FAIL;
     }
@@ -2957,19 +2957,19 @@ static int wifi_nxp_set_mgmt_ies(mlan_private *priv,
 done:
     if (beacon_ies_data)
     {
-        os_mem_free(beacon_ies_data);
+        OSA_MemoryFree(beacon_ies_data);
     }
     if (beacon_wps_ies_data)
     {
-        os_mem_free(beacon_wps_ies_data);
+        OSA_MemoryFree(beacon_wps_ies_data);
     }
     if (proberesp_ies_data)
     {
-        os_mem_free(proberesp_ies_data);
+        OSA_MemoryFree(proberesp_ies_data);
     }
     if (assocresp_ies_data)
     {
-        os_mem_free(assocresp_ies_data);
+        OSA_MemoryFree(assocresp_ies_data);
     }
 
     return ret;
@@ -3473,7 +3473,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     }
     else
     {
-        sys_config = os_mem_calloc(sizeof(mlan_uap_bss_param));
+        sys_config = OSA_MemoryAllocate(sizeof(mlan_uap_bss_param));
         if (!sys_config)
         {
             wuap_e("Fail to alloc memory for mlan_uap_bss_param");
@@ -3770,7 +3770,7 @@ int wifi_nxp_beacon_config(nxp_wifi_ap_info_t *params)
     done:
         if (sys_config != NULL)
         {
-            os_mem_free(sys_config);
+            OSA_MemoryFree(sys_config);
         }
     }
 
@@ -4399,7 +4399,7 @@ int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
         req_len += sizeof(MrvlExtIEtypesHeader_t) + params->he_capab_len;
 #endif
 
-    sta_info = os_mem_alloc(req_len);
+    sta_info = OSA_MemoryAllocate(req_len);
     if (!sta_info)
     {
         wuap_e("Fail to alloc memory for mlan_ds_sta_info");
@@ -4499,7 +4499,7 @@ int wifi_nxp_sta_add(nxp_wifi_sta_info_t *params)
 
 done:
     if (sta_info)
-        os_mem_free(sta_info);
+        OSA_MemoryFree(sta_info);
 
     LEAVE();
     return ret;
@@ -4519,7 +4519,7 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
         goto done;
     }
 
-    sta_info = os_mem_alloc(sizeof(mlan_ds_sta_info));
+    sta_info = OSA_MemoryAllocate(sizeof(mlan_ds_sta_info));
     if (!sta_info)
     {
         wuap_e("Fail to alloc memory for mlan_ds_sta_info");
@@ -4542,7 +4542,7 @@ int wifi_nxp_sta_remove(const uint8_t *addr)
 
 done:
     if (sta_info)
-        os_mem_free(sta_info);
+        OSA_MemoryFree(sta_info);
 
     LEAVE();
     return ret;
@@ -4660,7 +4660,7 @@ int wifi_nxp_set_acl(nxp_wifi_acl_info_t *params)
         goto done;
     }
 
-    sys_config = os_mem_alloc(sizeof(mlan_uap_bss_param));
+    sys_config = OSA_MemoryAllocate(sizeof(mlan_uap_bss_param));
 
     if (!sys_config)
     {
@@ -4708,7 +4708,7 @@ int wifi_nxp_set_acl(nxp_wifi_acl_info_t *params)
 
 done:
     if (sys_config)
-        os_mem_free(sys_config);
+        OSA_MemoryFree(sys_config);
 
     LEAVE();
     return ret;

@@ -10,16 +10,16 @@
 #ifdef CONFIG_MCU_MEM_ACCESS
 #include <cli.h>
 #include <cli_utils.h>
-#include <wm_os.h>
+#include <osa.h>
 
 static void test_mcu_mem_read(int argc, char **argv)
 {
     int *addr;
-    int value = 0;
+    int value  = 0;
     int length = 0;
-    int i = 0;
+    int i      = 0;
 
-    if(argc < 2)
+    if (argc < 2)
     {
         (void)PRINTF("Input error!\r\n");
         (void)PRINTF("Usage:\r\n");
@@ -28,12 +28,12 @@ static void test_mcu_mem_read(int argc, char **argv)
         return;
     }
     addr = (int *)a2hex_or_atoi(argv[1]);
-    if(argc == 3)
+    if (argc == 3)
         length = a2hex_or_atoi(argv[2]);
     else
         length = 1;
     (void)PRINTF("Read memory 0x%x ", addr);
-    for(i = 0; i < length; i++)
+    for (i = 0; i < length; i++)
     {
         value = *(addr + i);
         (void)PRINTF("0x%x ", value);
@@ -46,14 +46,14 @@ static void test_mcu_mem_write(int argc, char **argv)
     int *addr;
     int value = 0;
 
-    if(argc != 3)
+    if (argc != 3)
     {
         (void)PRINTF("Invalid number of arguments!\r\n");
         (void)PRINTF("Usage:\r\n");
         (void)PRINTF("  mcu_mem_write <memory addr> <value>\r\n");
         return;
     }
-    addr = (int *)a2hex_or_atoi(argv[1]);
+    addr  = (int *)a2hex_or_atoi(argv[1]);
     value = a2hex_or_atoi(argv[2]);
     *addr = value;
     value = *addr;

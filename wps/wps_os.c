@@ -19,7 +19,7 @@
 #include "wifi_nxp_wps.h"
 #include <lwip/sys.h>
 #include <lwip/inet.h>
-#include <wm_os.h>
+#include <osa.h>
 #include "wps_msg.h"
 
 #include "wps_mem.h"

@@ -17,7 +17,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -1731,7 +1731,7 @@ static mlan_status wlan_uap_cmd_snmp_mib(pmlan_private pmpriv,
             for (i = 0; i < sizeof(snmp_oids); i++)
             {
                 /* SNMP OID header type */
-			    // coverity[overrun-local:SUPPRESS]
+                // coverity[overrun-local:SUPPRESS]
                 *(t_u16 *)(void *)psnmp_oid = wlan_cpu_to_le16(snmp_oids[i]);
                 psnmp_oid += sizeof(t_u16);
                 /* SNMP OID header length */

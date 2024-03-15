@@ -16,7 +16,7 @@
 #include <stdlib.h>
 //#include <crc32.h>
 #include <wmtypes.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_utils.h>
 #include <string.h>
 

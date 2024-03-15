@@ -10,7 +10,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include <wm_os.h>
+#include <osa.h>
 #include "wifi_nxp_wps.h"
 
 void *wps_mem_malloc(size_t size)

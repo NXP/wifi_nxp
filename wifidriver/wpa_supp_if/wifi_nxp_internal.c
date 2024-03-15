@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <wifi.h>
 #include <wifi_nxp.h>
@@ -37,7 +37,7 @@ void wifi_survey_result_get(struct wifi_message *msg)
 #endif
 
     wifi_nxp_survey_res_get();
-    os_mem_free(wifi_survey_params);
+    OSA_MemoryFree(wifi_survey_params);
 }
 
 /* Event handlers*/
@@ -125,7 +125,7 @@ void wifi_process_remain_on_channel(struct wifi_message *msg)
     }
     if (msg->data)
     {
-        os_mem_free(msg->data);
+        OSA_MemoryFree(msg->data);
         msg->data = NULL;
     }
 }

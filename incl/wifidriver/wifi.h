@@ -83,7 +83,6 @@
 #ifndef CONFIG_WIFI_CAPA
 #define CONFIG_WIFI_CAPA 1
 #endif
-#endif
 
 #ifdef CONFIG_11AX
 #ifndef CONFIG_11K
@@ -96,10 +95,11 @@
 #define CONFIG_DRIVER_MBO 1
 #endif
 #endif
+#endif
 
 #include <wifi-decl.h>
 #include <wifi_events.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wmerrno.h>
 
 #define WIFI_REG8(x)  (*(volatile unsigned char *)(x))
@@ -297,13 +297,13 @@ void reset_ie_index();
  * This callback function is used to send data received from Wi-Fi
  * firmware to the networking stack.
  *
- * @param[in] data_intput_callback Function that needs to be called
+ * @param[in] data_input_callback Function that needs to be called
  *
  * @return WM_SUCCESS
  */
-int wifi_register_data_input_callback(void (*data_intput_callback)(const uint8_t interface,
-                                                                   const uint8_t *buffer,
-                                                                   const uint16_t len));
+int wifi_register_data_input_callback(void (*data_input_callback)(const uint8_t interface,
+                                                                  const uint8_t *buffer,
+                                                                  const uint16_t len));
 
 /** Deregister Data callback function from Wi-Fi Driver */
 void wifi_deregister_data_input_callback(void);
@@ -315,6 +315,14 @@ int wifi_register_gen_pbuf_from_data2_callback(void *(*gen_pbuf_from_data2)(t_u8
 void wifi_deregister_gen_pbuf_from_data2_callback(void);
 #endif
 
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+
+int wifi_register_get_rxbuf_desc_callback(void *(*wifi_get_rxbuf_desc)(t_u16 rx_len));
+
+void wifi_deregister_get_rxbuf_desc_callback(void);
+
+#endif
+
 /**
  * Register Data callback function with Wi-Fi Driver to receive
  * processed AMSDU DATA from Wi-Fi driver.
@@ -322,14 +330,14 @@ void wifi_deregister_gen_pbuf_from_data2_callback(void);
  * This callback function is used to send data received from Wi-Fi
  * firmware to the networking stack.
  *
- * @param[in] amsdu_data_intput_callback Function that needs to be called
+ * @param[in] amsdu_data_input_callback Function that needs to be called
  *
  * @return WM_SUCESS
  *
  */
-int wifi_register_amsdu_data_input_callback(void (*amsdu_data_intput_callback)(uint8_t interface,
-                                                                               uint8_t *buffer,
-                                                                               uint16_t len));
+int wifi_register_amsdu_data_input_callback(void (*amsdu_data_input_callback)(uint8_t interface,
+                                                                              uint8_t *buffer,
+                                                                              uint16_t len));
 
 /** Deregister Data callback function from Wi-Fi Driver */
 void wifi_deregister_amsdu_data_input_callback(void);
@@ -571,7 +579,7 @@ void wifi_update_last_cmd_sent_ms(void);
  *
  * @return Standard SDK return codes
  */
-int wifi_register_event_queue(os_queue_t *event_queue);
+int wifi_register_event_queue(osa_msgq_handle_t event_queue);
 
 /**
  * Unregister an event queue from the wifi driver.
@@ -581,7 +589,7 @@ int wifi_register_event_queue(os_queue_t *event_queue);
  *
  * @return Standard SDK return codes
  */
-int wifi_unregister_event_queue(os_queue_t *event_queue);
+int wifi_unregister_event_queue(osa_msgq_handle_t event_queue);
 
 /** Get scan list
  *
@@ -1777,6 +1785,12 @@ int wifi_inject_frame(const enum wlan_bss_type bss_type, const uint8_t *buff, co
 
 int wifi_supp_inject_frame(const unsigned int bss_type, const uint8_t *buff, const size_t len);
 #ifdef CONFIG_WPA_SUPP
+void wifi_is_wpa_supplicant_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len);
+void wifi_wpa_supplicant_eapol_input(const uint8_t interface,
+                                     const uint8_t *src_addr,
+                                     const uint8_t *buffer,
+                                     const uint16_t len);
+
 t_u8 wifi_get_sec_channel_offset(unsigned int chan);
 int wifi_nxp_scan_res_get(void);
 int wifi_nxp_survey_res_get(void);
@@ -1893,7 +1907,7 @@ typedef struct _wifi_ecsa_status_control
     /** block time of one detect period*/
     t_u8 block_time;
     /** Semaphore to wait ECSA complete */
-    os_semaphore_t ecsa_sem;
+    OSA_SEMAPHORE_HANDLE_DEFINE(ecsa_sem);
 } wifi_ecsa_status_control;
 #endif
 
@@ -1934,7 +1948,7 @@ typedef struct _csi_local_buff_statu
     t_u8 read_index;
     t_u8 valid_data_cnt;
     /** Semaphore to protect data parameters */
-    os_semaphore_t csi_data_sem;
+    OSA_SEMAPHORE_HANDLE_DEFINE(csi_data_sem);
 } csi_local_buff_statu;
 
 extern int csi_event_cnt;

@@ -14,7 +14,7 @@
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 #ifdef CONFIG_11AX
 
@@ -230,8 +230,8 @@ void wlan_update_11ax_cap(mlan_adapter *pmadapter,
 #ifndef RW610
     MrvlIEtypes_He_cap_t *phe_cap = MNULL;
 #endif
-    t_u8 i                        = 0;
-    t_u8 he_cap_2g                = 0;
+    t_u8 i         = 0;
+    t_u8 he_cap_2g = 0;
 #ifdef CONFIG_11AX_TWT
     MrvlIEtypes_He_cap_t *user_he_cap_tlv = MNULL;
 #endif

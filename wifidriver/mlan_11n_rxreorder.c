@@ -16,7 +16,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 
 /* Always keep this include at the end of all include files */
@@ -53,10 +53,16 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
         pmbuf->data_offset += prx_pd->rx_pkt_offset;
 
         (void)__memcpy(priv->adapter, amsdu_inbuf, pmbuf->pbuf, sizeof(RxPD));
+#if defined(SDK_OS_FREE_RTOS)
         net_stack_buffer_copy_partial(pmbuf->lwip_pbuf, amsdu_inbuf + pmbuf->data_offset, prx_pd->rx_pkt_length, 0);
+#endif
 #ifndef CONFIG_TX_RX_ZERO_COPY
-        os_mem_free(pmbuf->pbuf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(pmbuf->pbuf);
         net_stack_buffer_free(pmbuf->lwip_pbuf);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, pmbuf->pbuf);
+#endif
 #endif
         pmbuf->pbuf = amsdu_inbuf;
 
@@ -64,9 +70,15 @@ static mlan_status wlan_11n_dispatch_amsdu_pkt(mlan_private *priv, pmlan_buffer 
 
 #ifdef CONFIG_TX_RX_ZERO_COPY
         /* Free the net stack buffer after deaggregation and delivered to stack */
+#if defined(SDK_OS_FREE_RTOS)
         net_stack_buffer_free(pmbuf->lwip_pbuf);
+#endif
 #else
-        os_mem_free(pmbuf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(pmbuf);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, pmbuf);
+#endif
 #endif
         LEAVE();
         return MLAN_STATUS_SUCCESS;
@@ -245,10 +257,17 @@ static mlan_status wlan_11n_free_rxreorder_pkt(t_void *priv, RxReorderTbl *rx_re
         pmpriv->adapter->callbacks.moal_spin_unlock(pmpriv->adapter->pmoal_handle, pmpriv->rx_pkt_lock);
         if (rx_tmp_ptr != NULL)
         {
+#if defined(SDK_OS_FREE_RTOS)
             net_stack_buffer_free(((pmlan_buffer)rx_tmp_ptr)->lwip_pbuf);
+#endif
 #ifndef CONFIG_TX_RX_ZERO_COPY
-            os_mem_free(((pmlan_buffer)rx_tmp_ptr)->pbuf);
-            os_mem_free(rx_tmp_ptr);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(((pmlan_buffer)rx_tmp_ptr)->pbuf);
+            OSA_MemoryFree(rx_tmp_ptr);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, ((pmlan_buffer)rx_tmp_ptr)->pbuf);
+            OSA_MemoryPoolFree(buf_128_MemoryPool, rx_tmp_ptr);
+#endif
 #endif
         }
     }
@@ -358,13 +377,10 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
         (void)wlan_11n_dispatch_pkt_until_start_win(
             priv, rx_reor_tbl_ptr, (rx_reor_tbl_ptr->start_win + rx_reor_tbl_ptr->win_size) & (MAX_TID_VALUE - 1));
 
-    if (rx_reor_tbl_ptr->timer_context.timer != NULL)
+    if (rx_reor_tbl_ptr->timer_context.timer_is_set != MFALSE)
     {
-        if (rx_reor_tbl_ptr->timer_context.timer_is_set != MFALSE)
-        {
-            (void)priv->adapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle,
-                                                           rx_reor_tbl_ptr->timer_context.timer);
-        }
+        (void)priv->adapter->callbacks.moal_stop_timer(pmadapter->pmoal_handle, rx_reor_tbl_ptr->timer_context.timer);
+
         (void)priv->adapter->callbacks.moal_free_timer(pmadapter->pmoal_handle, &rx_reor_tbl_ptr->timer_context.timer);
     }
 
@@ -372,8 +388,17 @@ static t_void wlan_11n_delete_rxreorder_tbl_entry(mlan_private *priv, RxReorderT
     util_unlink_list(pmadapter->pmoal_handle, &priv->rx_reorder_tbl_ptr, (pmlan_linked_list)(void *)rx_reor_tbl_ptr,
                      pmadapter->callbacks.moal_spin_lock, pmadapter->callbacks.moal_spin_unlock);
 
+#ifndef CONFIG_MEM_POOLS
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr->rx_reorder_ptr);
+#else
+    OSA_MemoryPoolFree(buf_256_MemoryPool, rx_reor_tbl_ptr->rx_reorder_ptr);
+#endif
+
+#ifndef CONFIG_MEM_POOLS
     (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)rx_reor_tbl_ptr);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, rx_reor_tbl_ptr);
+#endif
 
     LEAVE();
 }
@@ -435,12 +460,12 @@ static t_void wlan_start_flush_data(mlan_private *priv, RxReorderTbl *rx_reor_tb
  *
  *  @return 	   	    N/A
  */
-static t_void wlan_flush_data(os_timer_arg_t tmr_handle)
+static t_void wlan_flush_data(osa_timer_arg_t tmr_handle)
 {
     /* Note: Giving tmr_handle as a parameter in callback is a feature
        of FreeRTOS. Hence, we have to change the default mlan code here
        to get the actual context expected by it */
-    reorder_tmr_cnxt_t *reorder_cnxt = (reorder_tmr_cnxt_t *)os_timer_get_context(&tmr_handle);
+    reorder_tmr_cnxt_t *reorder_cnxt = (reorder_tmr_cnxt_t *)OSA_TimerGetContext(&tmr_handle);
     t_u16 startWin_u                 = 0U;
     t_s16 startWin                   = 0;
 
@@ -515,8 +540,13 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
                "%s: seq_num %d, tid %d, ta %02x:%02x:%02x:%02x:"
                "%02x:%02x, win_size %d\n",
                __FUNCTION__, seq_num, tid, ta[0], ta[1], ta[2], ta[3], ta[4], ta[5], win_size);
+#ifndef CONFIG_MEM_POOLS
         if ((pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, sizeof(RxReorderTbl), MLAN_MEM_DEF,
                                               (t_u8 **)(void **)&new_node)) != MLAN_STATUS_SUCCESS)
+#else
+        new_node = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+        if (new_node == MNULL)
+#endif
         {
             PRINTM(MERROR, "Rx reorder memory allocation failed\n");
             LEAVE();
@@ -550,13 +580,22 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
         new_node->check_start_win = MTRUE;
         new_node->bitmap          = 0;
 
+#ifndef CONFIG_MEM_POOLS
         if ((pmadapter->callbacks.moal_malloc(pmadapter->pmoal_handle, 4U * win_size, MLAN_MEM_DEF,
                                               (t_u8 **)&new_node->rx_reorder_ptr)) != MLAN_STATUS_SUCCESS)
+#else
+        new_node->rx_reorder_ptr = OSA_MemoryPoolAllocate(buf_256_MemoryPool);
+        if (new_node->rx_reorder_ptr == MNULL)
+#endif
         {
             PRINTM(MERROR,
                    "Rx reorder table memory allocation"
                    "failed\n");
+#ifndef CONFIG_MEM_POOLS
             (void)pmadapter->callbacks.moal_mfree(pmadapter->pmoal_handle, (t_u8 *)new_node);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, new_node);
+#endif
             LEAVE();
             return;
         }
@@ -569,7 +608,6 @@ static t_void wlan_11n_create_rxreorder_tbl(mlan_private *priv, t_u8 *ta, int ti
 
         (void)pmadapter->callbacks.moal_init_timer(pmadapter->pmoal_handle, &new_node->timer_context.timer,
                                                    wlan_flush_data, &new_node->timer_context);
-
         for (i = 0; i < win_size; ++i)
         {
             new_node->rx_reorder_ptr[i] = MNULL;
@@ -942,8 +980,13 @@ t_u8 wlan_is_rsn_replay_attack(mlan_private *pmpriv, t_void *payload, RxReorderT
                prx_pd->hi_rx_count32, prx_pd->lo_rx_count16);
         net_stack_buffer_free(((pmlan_buffer)payload)->lwip_pbuf);
 #ifndef CONFIG_TX_RX_ZERO_COPY
-        os_mem_free(((pmlan_buffer)payload)->pbuf);
-        os_mem_free(payload);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(((pmlan_buffer)payload)->pbuf);
+        OSA_MemoryFree(payload);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, ((pmlan_buffer)payload)->pbuf);
+        OSA_MemoryPoolFree(buf_128_MemoryPool, payload);
+#endif
 #endif
         rx_reor_tbl_ptr->pn_drop_count++;
 

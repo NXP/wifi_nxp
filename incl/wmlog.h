@@ -11,6 +11,7 @@
 #ifndef __WMLOG_H__
 #define __WMLOG_H__
 
+#include <osa.h>
 
 #ifdef __ZEPHYR__
 #include "nxp_wifi.h"

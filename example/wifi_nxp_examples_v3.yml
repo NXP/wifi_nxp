@@ -116,6 +116,7 @@ wifi_palladium_iperf:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -225,6 +226,7 @@ wifi_cert:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -346,6 +348,7 @@ wifi_cli:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -471,6 +474,7 @@ wifi_wpa_supplicant:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -596,6 +600,7 @@ uart_wifi_bridge:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -733,6 +738,7 @@ wifi_test_mode:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -847,6 +853,7 @@ wifi_cli_fw_dump:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf
@@ -1005,6 +1012,7 @@ wifi_cli_prov:
   dependency:
   - middleware.freertos-kernel
   - middleware.freertos-kernel.heap_4
+  - middleware.wifi.osa_free_rtos
   - middleware.wifi
   - middleware.lwip
   - middleware.lwip.apps.lwiperf

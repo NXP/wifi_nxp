@@ -16,6 +16,7 @@
 #include <wifi-internal.h>
 
 #if defined(SDK_OS_FREE_RTOS)
+
 #include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -30,6 +31,9 @@
 #include "netif/etharp.h"
 #include "netif/ethernet.h"
 #include "netif/ppp/pppoe.h"
+
+#ifdef CONFIG_HOST_SUPP
+#include <wm_supplicant.h>
 #endif
 
 #define NET_MAC_ADDR_LEN 6
@@ -42,7 +46,6 @@
  */
 #define ETHTYPE_EAPOL 0x888EU /* EAPOL */
 
-#if defined(SDK_OS_FREE_RTOS)
 
 PACK_STRUCT_BEGIN
 /* This is an Token-Ring LLC structure */
@@ -95,6 +98,36 @@ struct eth_llc_hdr
 
 /* The time to block waiting for input. */
 #define emacBLOCK_TIME_WAITING_FOR_INPUT ((portTickType)100)
+
+#define NETIF_TX_BUFFERS 32
+#define NETIF_RX_BUFFERS 32
+
+/**
+ * npx wifi driver structure.
+ */
+struct nxp_wifi_device
+{
+    /** Set to 1 when owner is software (ready to read), 0 for Wi-Fi. */
+    uint32_t rx_desc[NETIF_RX_BUFFERS];
+    /** Set to 1 when owner is Wi-Fi, 0 for software. */
+    uint32_t tx_desc[NETIF_TX_BUFFERS];
+    /** RX pbuf pointer list */
+    struct pbuf *rx_pbuf[NETIF_RX_BUFFERS];
+    /** TX pbuf pointer list */
+    struct pbuf *tx_pbuf[NETIF_TX_BUFFERS];
+
+    /** Circular buffer head pointer for packet received. */
+    uint32_t us_rx_head;
+    /** Circular buffer tail pointer for packet to be read. */
+    uint32_t us_rx_tail;
+    /** Circular buffer head pointer by upper layer (buffer to be sent). */
+    uint32_t us_tx_head;
+    /** Circular buffer tail pointer incremented by handlers (buffer sent). */
+    uint32_t us_tx_tail;
+    /** RX task notification semaphore. */
+    sys_sem_t sync_sem;
+};
+
 /*------------------------------------------------------*/
 extern int wlan_get_mac_address(uint8_t *dest);
 extern void wlan_wake_up_card(void);
@@ -122,6 +155,7 @@ void user_recv_monitor_data(const t_u8 *rcvdata);
 #endif
 
 #if defined(SDK_OS_FREE_RTOS)
+
 /**
  * Helper struct to hold private data used to operate your ethernet interface.
  * Keeping the ethernet address of the MAC in this struct is not necessary
@@ -136,4 +170,5 @@ struct ethernetif
     t_u8 interface;
     /* Add whatever per-interface state that is needed here. */
 };
+
 #endif

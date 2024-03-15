@@ -15,7 +15,7 @@
 #endif
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 #include <wifi.h>
 
@@ -114,7 +114,7 @@ int wifi_deauthenticate(uint8_t *bssid)
 #ifdef CONFIG_P2P
     cmd->seq_num = (0x01) << 13;
 #else
-    cmd->seq_num = 0x0;
+    cmd->seq_num                      = 0x0;
 #endif
     cmd->result = 0x0;
 
@@ -2188,7 +2188,11 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
         }
     }
 
-    wlan_user_scan_cfg *user_scan_cfg = os_mem_alloc(sizeof(wlan_user_scan_cfg));
+#ifndef CONFIG_MEM_POOLS
+    wlan_user_scan_cfg *user_scan_cfg = (wlan_user_scan_cfg *)OSA_MemoryAllocate(sizeof(wlan_user_scan_cfg));
+#else
+    wlan_user_scan_cfg *user_scan_cfg = (wlan_user_scan_cfg *)OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+#endif
     if (user_scan_cfg == MNULL)
     {
 #ifdef CONFIG_WPA_SUPP
@@ -2274,7 +2278,12 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 #endif
     if (wm_wifi.g_user_scan_cfg != NULL)
     {
-        os_mem_free((void *)user_scan_cfg);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree((void *)user_scan_cfg);
+#else
+        OSA_MemoryPoolFree(buf_512_MemoryPool, user_scan_cfg);
+#endif
+
 #ifdef CONFIG_WPA_SUPP
         mlan_adap->wpa_supp_scan_triggered = MFALSE;
         return -WM_E_BUSY;
@@ -2285,7 +2294,11 @@ int wifi_send_scan_cmd(t_u8 bss_mode,
 
     wm_wifi.g_user_scan_cfg = user_scan_cfg;
 
-    (void)os_event_notify_put(wm_wifi.wm_wifi_scan_thread);
+#ifdef CONFIG_ZEPHYR
+    (void)OSA_EventNotifyPost(wm_wifi.wifi_scan_task_Handle);
+#else
+    (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, WIFI_EVENT_SCAN);
+#endif
 
     return WM_SUCCESS;
 }
@@ -3607,7 +3620,11 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
         sizeof(tlvbuf_custom_ie) + 2U * (sizeof(custom_ie) - MAX_IE_SIZE) + sizeof(IEEEtypes_Header_t) + *ie_len;
     int ret = WM_SUCCESS;
 
-    buf = (uint8_t *)os_mem_alloc(total_len);
+#ifndef CONFIG_MEM_POOLS
+    buf = (uint8_t *)OSA_MemoryAllocate(total_len);
+#else
+    buf = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+#endif
     if (buf == MNULL)
     {
         wifi_e("Cannot allocate memory");
@@ -3635,7 +3652,11 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
 
             if (!ie_index_is_set(mgmt_bitmap_index))
             {
-                os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(buf);
+#else
+                OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
                 return -WM_FAIL;
             }
 
@@ -3653,7 +3674,11 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
 
             if (WM_SUCCESS != ret)
             {
-                os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(buf);
+#else
+                OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
                 return -WM_FAIL;
             }
 
@@ -3698,7 +3723,11 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
 
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
     {
-        os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
         return -WM_FAIL;
     }
 
@@ -3707,15 +3736,22 @@ static int wifi_config_mgmt_ie(mlan_bss_type bss_type,
         if (wm_wifi.cmd_resp_status != 0)
         {
             wifi_w("Unable to get mgmt ie buffer");
-            os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(buf);
+#else
+            OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
             return wm_wifi.cmd_resp_status;
         }
         ie_ptr = (custom_ie *)(void *)(buf);
         (void)memcpy((void *)buffer, (const void *)ie_ptr->ie_buffer, ie_ptr->ie_length);
         *ie_len = ie_ptr->ie_length;
     }
-
-    os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(buf);
+#else
+    OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
 
     if ((action == HostCmd_ACT_GEN_SET) && *ie_len)
     {
@@ -3757,7 +3793,11 @@ static int wifi_config_mgmt_ie2(
     int total_len              = sizeof(tlvbuf_custom_ie) + (sizeof(custom_ie) - MAX_IE_SIZE) + *ie_len;
     int ret                    = WM_SUCCESS;
 
-    buf = (uint8_t *)os_mem_alloc(total_len);
+#ifndef CONFIG_MEM_POOLS
+    buf = (uint8_t *)OSA_MemoryAllocate(total_len);
+#else
+    buf = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+#endif
     if (buf == MNULL)
     {
         wifi_e("Cannot allocate memory");
@@ -3785,7 +3825,11 @@ static int wifi_config_mgmt_ie2(
 
             if (!ie_index_is_set(mgmt_bitmap_index))
             {
-                os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(buf);
+#else
+                OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
                 return -WM_FAIL;
             }
 
@@ -3803,7 +3847,11 @@ static int wifi_config_mgmt_ie2(
 
             if (WM_SUCCESS != ret)
             {
-                os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(buf);
+#else
+                OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
                 return -WM_FAIL;
             }
 
@@ -3832,7 +3880,11 @@ static int wifi_config_mgmt_ie2(
 
     if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
     {
-        os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
         return -WM_FAIL;
     }
 
@@ -3841,7 +3893,11 @@ static int wifi_config_mgmt_ie2(
         if (wm_wifi.cmd_resp_status != 0)
         {
             wifi_w("Unable to get mgmt ie buffer");
-            os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(buf);
+#else
+            OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
             return wm_wifi.cmd_resp_status;
         }
         ie_ptr = (custom_ie *)(void *)(buf);
@@ -3849,7 +3905,11 @@ static int wifi_config_mgmt_ie2(
         *ie_len = ie_ptr->ie_length;
     }
 
-    os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(buf);
+#else
+    OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
 
     if ((action == HostCmd_ACT_GEN_SET) && *ie_len)
     {
@@ -3920,7 +3980,7 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
 
     ENTER();
 
-    pcustom_ie = os_mem_calloc(sizeof(mlan_ds_misc_custom_ie));
+    pcustom_ie = OSA_MemoryAllocate(sizeof(mlan_ds_misc_custom_ie));
     if (!pcustom_ie)
     {
         PRINTM(MERROR, "Fail to allocate custome_ie\n");
@@ -3983,7 +4043,7 @@ int wifi_set_custom_ie(custom_ie *beacon_ies_data,
 
     (void)wifi_wait_for_cmdresp(NULL);
 
-    os_mem_free(pcustom_ie);
+    OSA_MemoryFree(pcustom_ie);
 
 done:
     LEAVE();
@@ -4186,7 +4246,12 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
     /* Allocate an IOCTL request buffer */
-    mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
+#ifndef CONFIG_MEM_POOLS
+    mib = OSA_MemoryAllocate(sizeof(mlan_ds_snmp_mib));
+#else
+    mib = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+#endif
+
     if (mib == NULL)
         return -WM_FAIL;
 
@@ -4202,7 +4267,11 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
     {
         if (rts < MLAN_RTS_MIN_VALUE || rts > MLAN_RTS_MAX_VALUE)
         {
-            os_mem_free(mib);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(mib);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
             return -WM_FAIL;
         }
         mib->param.rts_threshold = rts;
@@ -4236,11 +4305,19 @@ int wifi_set_rts(int rts, mlan_bss_type bss_type)
 
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
-        os_mem_free(mib);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(mib);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
         return -WM_FAIL;
     }
 
-    os_mem_free(mib);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(mib);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
 
     return WM_SUCCESS;
 }
@@ -4257,7 +4334,12 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
     /* Allocate an IOCTL request buffer */
-    mib = os_mem_alloc(sizeof(mlan_ds_snmp_mib));
+#ifndef CONFIG_MEM_POOLS
+    mib = OSA_MemoryAllocate(sizeof(mlan_ds_snmp_mib));
+#else
+    mib = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+#endif
+
     if (mib == NULL)
         return -WM_FAIL;
 
@@ -4273,7 +4355,11 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
     {
         if (frag < MLAN_FRAG_MIN_VALUE || frag > MLAN_FRAG_MAX_VALUE)
         {
-            os_mem_free(mib);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(mib);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
             return -WM_FAIL;
         }
         mib->param.frag_threshold = frag;
@@ -4308,12 +4394,18 @@ int wifi_set_frag(int frag, mlan_bss_type bss_type)
 
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
-        os_mem_free(mib);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(mib);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
         return -WM_FAIL;
     }
-
-    os_mem_free(mib);
-
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(mib);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, mib);
+#endif
     return WM_SUCCESS;
 }
 #endif
@@ -4335,7 +4427,12 @@ int wifi_11k_cfg(int enable_11k)
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
     /* Allocate an IOCTL request buffer */
-    pcfg_11k = os_mem_alloc(sizeof(mlan_ds_11k_cfg));
+#ifndef CONFIG_MEM_POOLS
+    pcfg_11k = OSA_MemoryAllocate(sizeof(mlan_ds_11k_cfg));
+#else
+    pcfg_11k = OSA_MemoryPoolAllocate(buf_128_MemoryPool);
+#endif
+
     if (pcfg_11k == NULL)
     {
         ret = MLAN_STATUS_FAILURE;
@@ -4352,7 +4449,11 @@ int wifi_11k_cfg(int enable_11k)
     if (enable_11k != 0 && enable_11k != 1)
     {
         ret = MLAN_STATUS_FAILURE;
-        os_mem_free(pcfg_11k);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(pcfg_11k);
+#else
+        OSA_MemoryPoolFree(buf_128_MemoryPool, pcfg_11k);
+#endif
         return ret;
     }
 
@@ -4363,14 +4464,22 @@ int wifi_11k_cfg(int enable_11k)
         ret = wlan_ops_sta_ioctl(mlan_adap, &req);
         if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
         {
-            os_mem_free(pcfg_11k);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(pcfg_11k);
+#else
+            OSA_MemoryPoolFree(buf_128_MemoryPool, pcfg_11k);
+#endif
             return -WM_FAIL;
         }
     }
     else
         wifi_e("sta disconnection is required before enable/disable 11k\r\n");
 
-    os_mem_free(pcfg_11k);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(pcfg_11k);
+#else
+    OSA_MemoryPoolFree(buf_128_MemoryPool, pcfg_11k);
+#endif
 
     return WM_SUCCESS;
 }
@@ -4555,7 +4664,11 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
 
     if (pmpriv->enable_mbo)
     {
-        buf = os_mem_alloc(sizeof(IEEEtypes_VendorSpecific_t));
+#ifndef CONFIG_MEM_POOLS
+        buf = OSA_MemoryAllocate(sizeof(IEEEtypes_VendorSpecific_t));
+#else
+        buf = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+#endif
         pos = buf;
 
         /* No non-preferred channels */
@@ -4625,8 +4738,12 @@ int wifi_mbo_send_preferch_wnm(t_u8 *src_addr, t_u8 *target_bssid, t_u8 ch0, t_u
         }
         wlan_send_mgmt_wnm_notification(src_addr, target_bssid, target_bssid, buf, pos - buf, false);
     }
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(buf);
+#else
+    OSA_MemoryPoolFree(buf_512_MemoryPool, buf);
+#endif
 
-    os_mem_free(buf);
     return ret;
 }
 #endif
@@ -5121,7 +5238,12 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
     IEEEtypes_FrameCtl_t *mgmt_fc_p = MNULL;
     t_u8 *pBuf                      = MNULL;
 
-    pBuf = os_mem_calloc(pkt_len);
+#ifndef CONFIG_MEM_POOLS
+    pBuf = OSA_MemoryAllocate(pkt_len);
+#else
+    pBuf = OSA_MemoryPoolAllocate(buf_1536_MemoryPool);
+#endif
+
     if (pBuf == MNULL)
     {
         return MNULL;
@@ -5164,7 +5286,7 @@ bool get_ecsa_block_tx_flag()
 
 void wifi_put_ecsa_sem()
 {
-    os_semaphore_put(&ecsa_status_control.ecsa_sem);
+    OSA_SemaphorePost((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem);
 }
 
 int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u8 *oper_class)
@@ -5176,7 +5298,12 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
-    misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+#ifndef CONFIG_MEM_POOLS
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
+#else
+    misc = OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+#endif
+
     if (misc == NULL)
     {
         return -WM_FAIL;
@@ -5193,13 +5320,21 @@ int wlan_get_nonglobal_operclass_by_bw_channel(t_u8 bandwidth, t_u8 channel, t_u
     status = wlan_ops_uap_ioctl(mlan_adap, &req);
     if (status != MLAN_STATUS_SUCCESS)
     {
-        wifi_e("Failed to get operclass\n");
-        os_mem_free(misc);
+        wifi_e("Failed to get operclass");
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(misc);
+#else
+        OSA_MemoryPoolFree(buf_512_MemoryPool, misc);
+#endif
         return -WM_FAIL;
     }
     *oper_class = misc->param.bw_chan_oper.oper_class;
 
-    os_mem_free(misc);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(misc);
+#else
+    OSA_MemoryPoolFree(buf_512_MemoryPool, misc);
+#endif
 
     return ret;
 }
@@ -5232,7 +5367,11 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
 #endif
     uint16_t buf_len = 0;
 
-    buf = (uint8_t *)os_mem_alloc(total_len);
+#ifndef CONFIG_MEM_POOLS
+    buf = (uint8_t *)OSA_MemoryAllocate(total_len);
+#else
+    buf = OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
     if (!buf)
     {
         wifi_e("ECSA allocate memory failed \r\n");
@@ -5246,7 +5385,11 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     ret = get_free_mgmt_ie_index(&mgmt_ie_index);
     if (WM_SUCCESS != ret)
     {
-        os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, buf);
+#endif
         return -WM_FAIL;
     }
 
@@ -5371,18 +5514,26 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     ret = wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
-        wifi_e("Failed to set ECSA IE\n");
-        os_mem_free(buf);
+        wifi_e("Failed to set ECSA IE");
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, buf);
+#endif
         return -WM_FAIL;
     }
     set_ie_index(mgmt_ie_index);
 
-    os_semaphore_get(&ecsa_status_control.ecsa_sem, os_msec_to_ticks((switch_count + 2) * wm_wifi.beacon_period));
+    OSA_SemaphoreWait((osa_semaphore_handle_t)ecsa_status_control.ecsa_sem, (switch_count + 2) * wm_wifi.beacon_period);
     set_ecsa_block_tx_flag(false);
 
     if (!ie_index_is_set(mgmt_ie_index))
     {
-        os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, buf);
+#endif
         return -WM_FAIL;
     }
 
@@ -5400,13 +5551,21 @@ int wifi_set_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 switch_
     ret = wrapper_wlan_cmd_mgmt_ie(MLAN_BSS_TYPE_UAP, buf, buf_len, HostCmd_ACT_GEN_SET);
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
-        wifi_e("Failed to clear ECSA IE\n");
-        os_mem_free(buf);
+        wifi_e("Failed to clear ECSA IE");
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(buf);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, buf);
+#endif
         return -WM_FAIL;
     }
     clear_ie_index(mgmt_ie_index);
 
-    os_mem_free(buf);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(buf);
+#else
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, buf);
+#endif
 
     return WM_SUCCESS;
 }
@@ -5419,7 +5578,12 @@ int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
-    bss = os_mem_alloc(sizeof(mlan_ds_bss));
+#ifndef CONFIG_MEM_POOLS
+    bss = OSA_MemoryAllocate(sizeof(mlan_ds_bss));
+#else
+    bss = OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
+
     if (bss == NULL)
     {
         return -WM_FAIL;
@@ -5439,11 +5603,19 @@ int wifi_set_action_ecsa_cfg(t_u8 block_tx, t_u8 oper_class, t_u8 channel, t_u8 
 
     if (ret != MLAN_STATUS_SUCCESS && ret != MLAN_STATUS_PENDING)
     {
-        wifi_e("Failed to set ECSA IE\n");
-        os_mem_free(bss);
+        wifi_e("Failed to set ECSA IE");
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(bss);
+#else
+        OSA_MemoryPoolFree(buf_1024_MemoryPool, bss);
+#endif
         return -WM_FAIL;
     }
-    os_mem_free(bss);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(bss);
+#else
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, bss);
+#endif
 
     return WM_SUCCESS;
 }
@@ -5618,9 +5790,15 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
         pmgmt_pkt_hdr->frm_len = pkt_len - (t_u16)sizeof(pmgmt_pkt_hdr->frm_len);
 
         (void)wifi_inject_frame(WLAN_BSS_TYPE_STA, (t_u8 *)pmgmt_pkt_hdr, pkt_len);
-        os_mem_free(pmgmt_pkt_hdr);
-        return (int)MLAN_STATUS_SUCCESS;
+
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(pmgmt_pkt_hdr);
+#else
+        OSA_MemoryPoolFree(buf_1536_MemoryPool, pmgmt_pkt_hdr);
+#endif
     }
+
+    return (int)MLAN_STATUS_SUCCESS;
 }
 
 int wifi_send_mgmt_auth_request(const t_u8 channel,

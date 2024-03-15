@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include "wifi_nxp_wps.h"
 #include <lwip/inet.h>
-#include <wm_os.h>
+#include <osa.h>
 #include "wmcrypto.h"
 
 #include "wps_mem.h"
@@ -1315,7 +1315,8 @@ int wps_eap_tls_response_send(const uint8_t *buf, const size_t len)
             ptr = gpwps_info->more_frag_buffer + gpwps_info->include_length;
             if (gpwps_info->include_length + len > 4096)
             {
-                (void)PRINTF("eap-tls more_frag_buffer overflow, want=%d, actual=%d\r\n", gpwps_info->include_length + len, 4096);
+                (void)PRINTF("eap-tls more_frag_buffer overflow, want=%d, actual=%d\r\n",
+                             gpwps_info->include_length + len, 4096);
                 wps_mem_free(gpwps_info->more_frag_buffer);
                 gpwps_info->more_frag_buffer = NULL;
                 return WPS_STATUS_FAIL;
@@ -5103,7 +5104,7 @@ int wps_process_ap_settings_from_registrar(PWPS_INFO pwps_info, u8 *ptr, u32 len
             case SC_Encryption_Type:
                 wps_d("SC_Encryption_Type");
                 (void)memcpy((u8 *)&tmp_type, esdata, sizeof(u16));
-                pCred->auth_type = ntohs(tmp_type);
+                pCred->auth_type  = ntohs(tmp_type);
                 pCred->encry_type = ntohs(pCred->encry_type);
                 wps_d("Encryption_Type(M8) = 0x%04x", pCred->encry_type);
                 break;

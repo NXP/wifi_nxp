@@ -42,11 +42,36 @@
 /*------------------------------------------------------*/
 #include <netif_decl.h>
 /*------------------------------------------------------*/
+static struct nxp_wifi_device gs_nxp_wifi_dev;
 
-#if defined(SDK_OS_FREE_RTOS)
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+
+#ifndef CONFIG_NETMGR_STACK_SIZE
+#define CONFIG_NETMGR_STACK_SIZE 1024
+#endif
+
+static void netmgr_task(osa_task_param_t arg);
+
+/* OSA_TASKS: name, priority, instances, stackSz, useFloat */
+static OSA_TASK_DEFINE(netmgr_task, OSA_PRIORITY_NORMAL, 1, CONFIG_NETMGR_STACK_SIZE, 0);
+
+OSA_TASK_HANDLE_DEFINE(netmgr_task_Handle);
+
+OSA_SEMAPHORE_HANDLE_DEFINE(net_notify);
+
+#if LWIP_STATS
+/** Used to compute lwIP bandwidth. */
+uint32_t lwip_tx_count = 0;
+uint32_t lwip_rx_count = 0;
+#endif
+#endif
+
 
 uint16_t g_data_nf_last;
 uint16_t g_data_snr_last;
+
+#if defined(SDK_OS_FREE_RTOS)
+
 static struct netif *netif_arr[MAX_INTERFACES_SUPPORTED];
 #ifndef CONFIG_WIFI_RX_REORDER
 static t_u8 rfc1042_eth_hdr[MLAN_MAC_ADDR_LENGTH] = {0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00};
@@ -85,6 +110,72 @@ void rx_mgmt_register_callback(int (*rx_mgmt_cb_fn)(const enum wlan_bss_type bss
 void rx_mgmt_deregister_callback()
 {
     rx_mgmt_callback = NULL;
+}
+#endif
+
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+
+/**
+ * \brief Populate the RX descriptor ring buffers with pbufs.
+ *
+ * \param p_nxp_wifi_dev Pointer to driver data structure.
+ */
+static void nxp_wifi_rx_populate_queue(struct nxp_wifi_device *p_nxp_wifi_dev)
+{
+    uint32_t ul_index = 0;
+    struct pbuf *p    = 0;
+
+    /* Set up the RX descriptors */
+    for (ul_index = 0; ul_index < NETIF_RX_BUFFERS; ul_index++)
+    {
+        if (p_nxp_wifi_dev->rx_pbuf[ul_index] == 0)
+        {
+            /* Allocate a new pbuf with the maximum size. */
+            p = pbuf_alloc(PBUF_RAW, PBUF_POOL_BUFSIZE, PBUF_POOL);
+            if (0 == p)
+            {
+                LWIP_DEBUGF(NETIF_DEBUG, ("nxp_wifi_rx_populate_queue: pbuf allocation failure\n"));
+            }
+
+            /* Make sure lwIP is well configured so one pbuf can contain the maximum packet size. */
+            LWIP_ASSERT("nxp_wifi_rx_populate_queue: pbuf size too small!", pbuf_clen(p) <= 1);
+
+            /* Set owner as Wi-Fi. */
+            p_nxp_wifi_dev->rx_desc[ul_index] = 0;
+
+            /* Save pbuf pointer to be sent to lwIP upper layer. */
+            p_nxp_wifi_dev->rx_pbuf[ul_index] = p;
+
+            LWIP_DEBUGF(NETIF_DEBUG, ("nxp_wifi_rx_populate_queue: new pbuf allocated with size %d: 0x%p [pos=%u]\n",
+                                      PBUF_POOL_BUFSIZE, p, ul_index));
+        }
+    }
+}
+
+/**
+ * \brief Set up the RX descriptor ring buffers.
+ *
+ * This function sets up the descriptor list used for RX packets.
+ *
+ * \param ps_nxp_wifi_dev Pointer to driver data structure.
+ */
+static void nxp_wifi_rx_init(struct nxp_wifi_device *ps_nxp_wifi_dev)
+{
+    uint32_t ul_index = 0;
+
+    /* Init pointer index. */
+    ps_nxp_wifi_dev->us_rx_head = 0;
+    ps_nxp_wifi_dev->us_rx_tail = 0;
+
+    /* Set up the RX descriptors. */
+    for (ul_index = 0; ul_index < NETIF_RX_BUFFERS; ul_index++)
+    {
+        ps_nxp_wifi_dev->rx_pbuf[ul_index] = 0;
+        ps_nxp_wifi_dev->rx_desc[ul_index] = 0;
+    }
+
+    /* Build RX buffer and descriptors. */
+    nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
 }
 #endif
 
@@ -176,6 +267,13 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
                 wps_rx_callback(p->payload, p->len);
 #endif /* CONFIG_WPS2 */
 
+#ifdef CONFIG_WPA_SUPP
+            if (l2_packet_rx_callback)
+            {
+                p->if_idx = recv_interface;
+                l2_packet_rx_callback(p);
+            }
+#endif /* CONFIG_WPA_SUPP */
             (void)pbuf_free(p);
             p = NULL;
             break;
@@ -220,6 +318,36 @@ retry:
 }
 #endif
 
+void *wifi_get_rxbuf_desc(t_u16 rx_len)
+{
+    struct pbuf *p;
+    struct nxp_wifi_device *ps_nxp_wifi_dev = (struct nxp_wifi_device *)&gs_nxp_wifi_dev;
+
+    LWIP_ASSERT("wifi_get_rxbuf_desc: Wi-Fi rx_len greater than PBUF_POOL_BUFSIZE!", rx_len <= PBUF_POOL_BUFSIZE);
+
+    if (ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_head])
+    {
+        LWIP_DEBUGF(NETIF_DEBUG, ("nxp_wifi_update: out of free descriptor! [tail=%u head=%u]\n",
+                                  ps_nxp_wifi_dev->us_rx_tail, ps_nxp_wifi_dev->us_rx_head));
+        return NULL;
+    }
+    if (0 == ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_head])
+    {
+        nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
+        LWIP_DEBUGF(NETIF_DEBUG,
+                    ("nxp_wifi_update: descriptor with NULL pbuf! [head=%u]\n", ps_nxp_wifi_dev->us_rx_head));
+        return NULL;
+    }
+
+    p          = ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_head];
+    p->tot_len = rx_len + sizeof(mlan_buffer);
+
+    ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_head] = 1;
+    ps_nxp_wifi_dev->us_rx_head                           = (ps_nxp_wifi_dev->us_rx_head + 1) % NETIF_RX_BUFFERS;
+
+    return (void *)((t_u8 *)p->payload + sizeof(mlan_buffer));
+}
+
 static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 {
     t_u8 retry_cnt = 3;
@@ -249,24 +377,30 @@ retry:
 }
 
 #ifndef CONFIG_WIFI_RX_REORDER
-static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
+static void process_data_packet(const t_u8 *rcvdata,
+                                const t_u16 datalen
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+                                ,
+                                struct pbuf *p
+#endif
+)
 {
     RxPD *rxpd                   = (RxPD *)(void *)((t_u8 *)rcvdata + INTF_HEADER_LEN);
     mlan_bss_type recv_interface = (mlan_bss_type)(rxpd->bss_type);
     u16_t header_type;
 
-#ifndef CONFIG_WPA_SUPP
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
     wlan_mgmt_pkt *pmgmt_pkt_hdr      = MNULL;
     wlan_802_11_header *pieee_pkt_hdr = MNULL;
     t_u16 sub_type                    = 0;
     t_u8 category                     = 0;
 #endif
-#endif
 
-    t_u8 *payload     = NULL;
+    t_u8 *payload = NULL;
+#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     t_u16 payload_len = (t_u16)0U;
     struct pbuf *p    = NULL;
+#endif
 
     if (rxpd->rx_pkt_type == PKT_TYPE_AMSDU)
     {
@@ -285,9 +419,8 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         g_data_snr_last = rxpd->snr;
     }
 
-#ifndef CONFIG_WPA_SUPP
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
-    if ((rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME) && (recv_interface == MLAN_BSS_TYPE_STA))
+#if defined(CONFIG_WPA_SUPP) || defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+    if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
         pmgmt_pkt_hdr = (wlan_mgmt_pkt *)(void *)((t_u8 *)rxpd + rxpd->rx_pkt_offset);
         pieee_pkt_hdr = (wlan_802_11_header *)(void *)&pmgmt_pkt_hdr->wlan_header;
@@ -295,7 +428,7 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         sub_type = IEEE80211_GET_FC_MGMT_FRAME_SUBTYPE(pieee_pkt_hdr->frm_ctl);
         // coverity[overrun-local:SUPPRESS]
         category = *((t_u8 *)pieee_pkt_hdr + sizeof(wlan_802_11_header));
-        if (sub_type == (t_u16)SUBTYPE_ACTION)
+        if ((sub_type == (t_u16)SUBTYPE_ACTION) && (recv_interface == MLAN_BSS_TYPE_STA))
         {
             if (category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_RADIO_RSRC &&
                 category != (t_u8)IEEE_MGMT_ACTION_CATEGORY_WNM &&
@@ -304,22 +437,39 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
                 return;
             }
         }
-
+#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
         payload     = (t_u8 *)rxpd;
         payload_len = datalen - INTF_HEADER_LEN;
+#endif
     }
     else
 #endif
-#endif
     {
+#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
         payload     = (t_u8 *)rxpd + rxpd->rx_pkt_offset;
         payload_len = rxpd->rx_pkt_length;
+#endif
     }
 
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+    if (p->tot_len == 0)
+    {
+        (void)pbuf_free(p);
+        LINK_STATS_INC(link.drop);
+        return;
+    }
+#endif
+
+#if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
+    u16_t header_len = sizeof(mlan_buffer) + INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+#if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #ifdef CONFIG_TX_RX_ZERO_COPY
-    u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
     payload_len      = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
     p                = gen_pbuf_from_data_for_zerocopy((t_u8 *)rcvdata, payload_len);
+#else
+    p = gen_pbuf_from_data(payload, payload_len);
+#endif
+#endif
 #else
     p = gen_pbuf_from_data(payload, payload_len);
 #endif
@@ -333,20 +483,30 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
         return;
     }
 
-#ifndef CONFIG_WPA_SUPP
     if (rxpd->rx_pkt_type == PKT_TYPE_MGMT_FRAME)
     {
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
         /* Skip interface header */
-        pbuf_header(p, -(s16_t)(INTF_HEADER_LEN));
+        pbuf_header(p, -(s16_t)(sizeof(mlan_buffer) + INTF_HEADER_LEN));
 #endif
-        /* Bypass the management frame about Add Block Ack Request or Add Block Ack Response*/
-        if (wlan_bypass_802dot11_mgmt_pkt(p->payload) == WM_SUCCESS)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
+        if ((sub_type == (t_u16)SUBTYPE_ACTION) && (recv_interface == MLAN_BSS_TYPE_STA))
         {
-            pbuf_free(p);
-            p = NULL;
+            if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
+            {
+                pbuf_free(p);
+                p = NULL;
+            }
             return;
         }
+#endif
+
+#ifdef CONFIG_WPA_SUPP
+        wifi_is_wpa_supplicant_input(recv_interface, p->payload, p->tot_len);
+#endif
+        pbuf_free(p);
+        p = NULL;
+        return;
 
 #ifdef CONFIG_P2P
         if (recv_interface == MLAN_BSS_TYPE_WIFIDIRECT)
@@ -363,16 +523,6 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             return;
         }
 #endif
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_1AS)
-        if (sub_type == (t_u16)SUBTYPE_ACTION && recv_interface == MLAN_BSS_TYPE_STA)
-        {
-            if (wifi_event_completion(WIFI_EVENT_MGMT_FRAME, WIFI_EVENT_REASON_SUCCESS, p) != WM_SUCCESS)
-            {
-                pbuf_free(p);
-                p = NULL;
-            }
-        }
-#endif
 #ifdef MGMT_RX
         if (rx_mgmt_callback)
         {
@@ -386,13 +536,11 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             }
         }
 #endif
-        return;
     }
-#endif
 
-#ifdef CONFIG_TX_RX_ZERO_COPY
+#if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
     /* Directly use rxpd from pbuf */
-    rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
+    rxpd = (RxPD *)(void *)((t_u8 *)p->payload + sizeof(mlan_buffer) + INTF_HEADER_LEN);
     /* Skip interface header and RxPD */
     pbuf_header(p, -(s16_t)header_len);
 #endif
@@ -430,6 +578,20 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
             header_type = htons(ethhdr->type);
         }
     }
+
+#ifdef CONFIG_WPA_SUPP
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+
+    if (header_type == ETHTYPE_EAPOL)
+    {
+        wifi_wpa_supplicant_eapol_input(recv_interface, ethhdr->src.addr, (uint8_t *)(ethhdr + 1),
+                                        rxpd->rx_pkt_length - sizeof(eth_hdr));
+        pbuf_free(p);
+        p = NULL;
+        return;
+    }
+#endif
+#endif
 
     switch (header_type)
     {
@@ -487,13 +649,101 @@ static void process_data_packet(const t_u8 *rcvdata, const t_u16 datalen)
     }
 }
 
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+/**
+ * \brief Use pre-allocated pbuf as DMA source and return the incoming packet.
+ *
+ * \return a pbuf filled with the received packet (including MAC header).
+ * 0 on memory error.
+ */
+static struct pbuf *wifi_low_level_input(struct nxp_wifi_device *ps_nxp_wifi_dev)
+{
+    struct pbuf *p = 0;
+
+    /* Check that descriptor is owned by software (ie packet received). */
+    if (ps_nxp_wifi_dev->rx_desc[ps_nxp_wifi_dev->us_rx_tail])
+    {
+        /* Fetch pre-allocated pbuf. */
+        p = ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_tail];
+
+        /* Remove this pbuf from its descriptor. */
+        ps_nxp_wifi_dev->rx_pbuf[ps_nxp_wifi_dev->us_rx_tail] = 0;
+
+        LWIP_DEBUGF(NETIF_DEBUG, ("nxp_wifi_low_level_input: DMA buffer 0x%p received, size=%u [tail=%u head=%u]\n",
+                                  p->payload, p->tot_len, ps_nxp_wifi_dev->us_rx_tail, ps_nxp_wifi_dev->us_rx_head));
+
+        /* Set pbuf total packet size. */
+        LINK_STATS_INC(link.recv);
+
+        /* Fill empty descriptors with new pbufs. */
+        //nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
+
+        ps_nxp_wifi_dev->us_rx_tail = (ps_nxp_wifi_dev->us_rx_tail + 1) % NETIF_RX_BUFFERS;
+
+#if LWIP_STATS
+        lwip_rx_count += p->tot_len;
+#endif
+    }
+
+    return p;
+}
+#endif
+
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+
+void net_rx_notify()
+{
+    (void)OSA_SemaphorePost((osa_semaphore_handle_t)net_notify);
+}
+
+static void netmgr_task(osa_task_param_t arg)
+{
+    struct nxp_wifi_device *ps_nxp_wifi_dev = (struct nxp_wifi_device *)&gs_nxp_wifi_dev;
+    struct pbuf *p;
+    t_u8 interface2;
+
+    for (;;)
+    {
+        (void)OSA_SemaphoreWait((osa_semaphore_handle_t)net_notify, osaWaitForever_c);
+
+        while ((p = wifi_low_level_input(ps_nxp_wifi_dev)) != NULL)
+        {
+            interface2 = *((t_u8 *)p->payload + INTF_HEADER_LEN);
+            if (interface2 < MAX_INTERFACES_SUPPORTED && netif_arr[interface2] != NULL)
+            {
+                process_data_packet(p->payload, p->tot_len, p);
+            }
+        }
+    }
+}
+#endif
+
 /* Callback function called from the wifi module */
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen)
 {
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+    struct nxp_wifi_device *ps_nxp_wifi_dev = (struct nxp_wifi_device *)&gs_nxp_wifi_dev;
+    struct pbuf *p;
+    t_u8 interface2;
+
+    while ((p = wifi_low_level_input(ps_nxp_wifi_dev)) != NULL)
+    {
+        interface2 = *((t_u8 *)p->payload + sizeof(mlan_buffer) + INTF_HEADER_LEN);
+        if (interface2 < MAX_INTERFACES_SUPPORTED && netif_arr[interface2] != NULL)
+        {
+            process_data_packet((t_u8 *)p->payload + sizeof(mlan_buffer), p->tot_len, p);
+        }
+    }
+
+    /* Fill empty descriptors with new pbufs. */
+    nxp_wifi_rx_populate_queue(ps_nxp_wifi_dev);
+
+#else
     if (interface < MAX_INTERFACES_SUPPORTED && netif_arr[interface] != NULL)
     {
         process_data_packet(rcvdata, datalen);
     }
+#endif
 }
 #else
 void *gen_pbuf_from_data2(t_u8 *payload, t_u16 datalen, void **p_payload)
@@ -676,7 +926,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 
         if (ret == true && is_tx_pause == true)
         {
-            os_thread_sleep(os_msec_to_ticks(1));
+            OSA_TimeDelay(1);
         }
 
         retry--;
@@ -820,7 +1070,11 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
         case NETIF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-            curr = (group_ip4_addr_t *)os_mem_alloc(sizeof(group_ip4_addr_t));
+#ifndef CONFIG_MEM_POOLS
+            curr = (group_ip4_addr_t *)OSA_MemoryAllocate(sizeof(group_ip4_addr_t));
+#else
+            curr = (group_ip4_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
             if (curr == NULL)
             {
                 result = ERR_IF;
@@ -844,7 +1098,11 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
                 /* In case of failure remove IP from list */
                 curr          = igmp_ip4_list;
                 igmp_ip4_list = curr->next;
-                os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(curr);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                 curr   = NULL;
                 result = ERR_IF;
             }
@@ -860,12 +1118,20 @@ static err_t igmp_mac_filter(struct netif *netif, const ip4_addr_t *group, enum 
                     if (prev == curr)
                     {
                         igmp_ip4_list = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     else
                     {
                         prev->next = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     curr = NULL;
                     break;
@@ -931,7 +1197,11 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
         case NETIF_ADD_MAC_FILTER:
             /* LwIP takes care of duplicate IP addresses and it always send
              * unique IP address. Simply add IP to top of list*/
-            curr = (group_ip6_addr_t *)os_mem_alloc(sizeof(group_ip6_addr_t));
+#ifndef CONFIG_MEM_POOLS
+            curr = (group_ip6_addr_t *)OSA_MemoryAllocate(sizeof(group_ip6_addr_t));
+#else
+            curr = (group_ip6_addr_t *)OSA_MemoryPoolAllocate(buf_32_MemoryPool);
+#endif
             if (curr == NULL)
             {
                 result = ERR_IF;
@@ -955,7 +1225,11 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
                 /* In case of failure remove IP from list */
                 curr         = mld_ip6_list;
                 mld_ip6_list = mld_ip6_list->next;
-                os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                OSA_MemoryFree(curr);
+#else
+                OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                 curr   = NULL;
                 result = ERR_IF;
             }
@@ -971,12 +1245,20 @@ static err_t mld_mac_filter(struct netif *netif, const ip6_addr_t *group, enum n
                     if (prev == curr)
                     {
                         mld_ip6_list = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     else
                     {
                         prev->next = curr->next;
-                        os_mem_free(curr);
+#ifndef CONFIG_MEM_POOLS
+                        OSA_MemoryFree(curr);
+#else
+                        OSA_MemoryPoolFree(buf_32_MemoryPool, curr);
+#endif
                     }
                     curr = NULL;
                     break;
@@ -1066,6 +1348,14 @@ err_t lwip_netif_init(struct netif *netif)
 
     /* initialize the hardware */
     low_level_init(netif);
+
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+    nxp_wifi_rx_init(&gs_nxp_wifi_dev);
+
+    (void)OSA_SemaphoreCreate((osa_semaphore_handle_t)net_notify, 0);
+
+    (void)OSA_TaskCreate((osa_task_handle_t)netmgr_task_Handle, OSA_TASK(netmgr_task), NULL);
+#endif
 
     /* set sta MAC hardware address */
     (void)wlan_get_mac_address(netif->hwaddr);

@@ -87,7 +87,6 @@ Change log:
 #ifndef CONFIG_WIFI_CAPA
 #define CONFIG_WIFI_CAPA 1
 #endif
-#endif
 
 #ifdef CONFIG_11AX
 #ifndef CONFIG_11K
@@ -100,6 +99,9 @@ Change log:
 #define CONFIG_DRIVER_MBO 1
 #endif
 #endif
+#endif
+
+#include <osa.h>
 
 #include "mlan_decl.h"
 #include "mlan_ioctl.h"

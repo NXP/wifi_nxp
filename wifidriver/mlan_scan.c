@@ -16,7 +16,7 @@ Change log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 
 /* Always keep this include at the end of all include files */
 #include <mlan_remap_mem_operations.h>
@@ -27,8 +27,6 @@ Change log:
 /** minimum scan time for passive to active scan */
 #define MIN_PASSIVE_TO_ACTIVE_SCAN_TIME 150
 #endif
-
-int get_split_scan_delay_ms(void);
 
 /** The maximum number of channels the firmware can scan per command */
 #define MRVDRV_MAX_CHANNELS_PER_SPECIFIC_SCAN 3
@@ -65,6 +63,15 @@ int get_split_scan_delay_ms(void);
 
 /* Global data required for split scan requests */
 static bool abort_split_scan;
+
+#ifdef CONFIG_MEM_POOLS
+static BSSDescriptor_t s_bss_new_entry;
+#ifdef MULTI_BSSID_SUPPORT
+static BSSDescriptor_t s2_bss_new_entry;
+#endif
+#endif
+
+int get_split_scan_delay_ms(void);
 
 /**
  * Interally used to send a configured scan cmd between driver routines
@@ -919,7 +926,7 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
 
         if (pmpriv->media_connected == MTRUE)
         {
-            os_thread_sleep(os_msec_to_ticks((uint32_t)get_split_scan_delay_ms()));
+            OSA_TimeDelay((uint32_t)get_split_scan_delay_ms()); 
         }
 
         if (abort_split_scan)
@@ -1574,7 +1581,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
 #endif /* CONFIG_MLAN_WMSDK */
     (void)__memcpy(pmadapter, pbss_entry->time_stamp, pcurrent_ptr, 8);
 
-    pbss_entry->scan_result_tsf = os_get_timestamp();
+   // pbss_entry->scan_result_tsf = os_get_timestamp();
 
     pcurrent_ptr += 8;
     bytes_left_for_current_beacon -= 8U;
@@ -1604,7 +1611,7 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     if (pmadapter->wpa_supp_scan_triggered == MTRUE)
     {
         wifi_d("Alloc ies for BSS");
-        pbss_entry->ies = (u8 *)os_mem_alloc(bytes_left_for_current_beacon);
+        pbss_entry->ies = (u8 *)OSA_MemoryAllocate(bytes_left_for_current_beacon);
         if (pbss_entry->ies == MNULL)
         {
             wifi_d("Failed to alloc memory for BSS ies");
@@ -3294,9 +3301,14 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
 
     ENTER();
 
+#ifndef CONFIG_MEM_POOLS
     ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(wlan_scan_cmd_config_tlv), MLAN_MEM_DEF,
                            (t_u8 **)(void **)&pscan_cfg_out);
     if (ret != MLAN_STATUS_SUCCESS || (pscan_cfg_out == MNULL))
+#else
+    pscan_cfg_out = (wlan_scan_cmd_config_tlv *)OSA_MemoryPoolAllocate(buf_768_MemoryPool);
+    if (pscan_cfg_out == MNULL)
+#endif
     {
         PRINTM(MERROR, "Memory allocation for pscan_cfg_out failed!\n");
         if (pioctl_req != MNULL)
@@ -3308,8 +3320,13 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     }
 
     buf_size = sizeof(ChanScanParamSet_t) * WLAN_USER_SCAN_CHAN_MAX;
-    ret      = pcb->moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF, (t_u8 **)(void **)&pscan_chan_list);
+#ifndef CONFIG_MEM_POOLS
+    ret = pcb->moal_malloc(pmadapter->pmoal_handle, buf_size, MLAN_MEM_DEF, (t_u8 **)(void **)&pscan_chan_list);
     if (ret != MLAN_STATUS_SUCCESS || (pscan_chan_list == MNULL))
+#else
+    pscan_chan_list = (ChanScanParamSet_t *)OSA_MemoryPoolAllocate(buf_512_MemoryPool);
+    if (pscan_chan_list == MNULL)
+#endif
     {
         PRINTM(MERROR, "Failed to allocate scan_chan_list\n");
         (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
@@ -3331,8 +3348,13 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
     if (ret != MLAN_STATUS_SUCCESS)
     {
         PRINTM(MERROR, "Failed to setup scan config\n");
+#ifndef CONFIG_MEM_POOLS
         (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
         (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
+#else
+        OSA_MemoryPoolFree(buf_768_MemoryPool, pscan_cfg_out);
+        OSA_MemoryPoolFree(buf_512_MemoryPool, pscan_chan_list);
+#endif
         if (pioctl_req != MNULL)
         {
             pioctl_req->status_code = MLAN_ERROR_INVALID_PARAMETER;
@@ -3380,8 +3402,13 @@ mlan_status wlan_scan_networks(IN mlan_private *pmpriv,
         }
 #endif /* CONFIG_MLAN_WMSDK */
     }
+#ifndef CONFIG_MEM_POOLS
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_cfg_out);
     (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pscan_chan_list);
+#else
+    OSA_MemoryPoolFree(buf_768_MemoryPool, pscan_cfg_out);
+    OSA_MemoryPoolFree(buf_512_MemoryPool, pscan_chan_list);
+#endif
 
     LEAVE();
     return ret;
@@ -3529,10 +3556,12 @@ static void adjust_pointers_to_internal_buffers(BSSDescriptor_t *pbss_entry, BSS
  */
 mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND *resp, IN t_void *pioctl_buf)
 {
-    mlan_status ret            = MLAN_STATUS_SUCCESS;
-    mlan_adapter *pmadapter    = pmpriv->adapter;
+    mlan_status ret         = MLAN_STATUS_SUCCESS;
+    mlan_adapter *pmadapter = pmpriv->adapter;
+#ifndef CONFIG_MEM_POOLS
     mlan_callbacks *pcb        = MNULL;
     mlan_ioctl_req *pioctl_req = (mlan_ioctl_req *)pioctl_buf;
+#endif
     /* cmd_ctrl_node *pcmd_node = MNULL; */
     HostCmd_DS_802_11_SCAN_RSP *pscan_rsp = MNULL;
     BSSDescriptor_t *bss_new_entry        = MNULL;
@@ -3565,7 +3594,10 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
     t_u16 tlv_len;
 
     ENTER();
+#ifndef CONFIG_MEM_POOLS
     pcb = (pmlan_callbacks)&pmadapter->callbacks;
+#endif
+
 #ifdef CONFIG_BG_SCAN
     is_bgscan_resp = ((resp->command & HostCmd_CMD_ID_MASK) == HostCmd_CMD_802_11_BG_SCAN_QUERY);
     if (is_bgscan_resp)
@@ -3632,11 +3664,11 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 
     while (tlv_buf_left >= sizeof(MrvlIEtypesHeader_t))
     {
-      /* Barriers are normally not required but do ensure the code is
-       * completely within the specified behaviour for the architecture. */
-        __asm volatile ( "dsb" ::: "memory" );
-        __asm volatile ( "isb" );
-		tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
+        /* Barriers are normally not required but do ensure the code is
+         * completely within the specified behaviour for the architecture. */
+        __asm volatile("dsb" ::: "memory");
+        __asm volatile("isb");
+        tlv_type = wlan_le16_to_cpu(pcurrent_tlv->header.type);
         tlv_len  = wlan_le16_to_cpu(pcurrent_tlv->header.len);
 
         if (sizeof(ptlv->header) + tlv_len > tlv_buf_left)
@@ -3684,6 +3716,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
      *    driver scan table either as an update to an existing entry
      *    or as an addition at the end of the table
      */
+#ifndef CONFIG_MEM_POOLS
     ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(BSSDescriptor_t), MLAN_MEM_DEF,
                            (t_u8 **)(void **)&bss_new_entry);
 
@@ -3697,6 +3730,9 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
         ret = MLAN_STATUS_FAILURE;
         goto done;
     }
+#else
+    bss_new_entry = &s_bss_new_entry;
+#endif
 
     idx = 0;
     while (idx < pscan_rsp->number_of_sets && bytes_left)
@@ -3720,7 +3756,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     if (bss_new_entry->ies != NULL)
                     {
-                        os_mem_free(bss_new_entry->ies);
+                        OSA_MemoryFree(bss_new_entry->ies);
                         bss_new_entry->ies = NULL;
                     }
                     continue;
@@ -3789,7 +3825,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 #ifdef CONFIG_WPA_SUPP
                     if (bss_new_entry->ies != NULL)
                     {
-                        os_mem_free(bss_new_entry->ies);
+                        OSA_MemoryFree(bss_new_entry->ies);
                         bss_new_entry->ies = NULL;
                     }
 #endif
@@ -3862,7 +3898,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                         /* If the scan table is full, free ies of the lowest rssi entry before this entry is replaced */
                         if (pmadapter->pscan_table[0].ies != NULL)
                         {
-                            os_mem_free(pmadapter->pscan_table[0].ies);
+                            OSA_MemoryFree(pmadapter->pscan_table[0].ies);
                             pmadapter->pscan_table[0].ies = NULL;
                         }
 #endif
@@ -3877,7 +3913,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                     {
                         if (bss_new_entry->ies != NULL)
                         {
-                            os_mem_free(bss_new_entry->ies);
+                            OSA_MemoryFree(bss_new_entry->ies);
                             bss_new_entry->ies = NULL;
                         }
                     }
@@ -3896,7 +3932,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                     /* If the scan table is full, free ies of the lowest rssi entry before this entry is replaced */
                     if (pmadapter->pscan_table[lowest_rssi_index].ies != NULL)
                     {
-                        os_mem_free(pmadapter->pscan_table[lowest_rssi_index].ies);
+                        OSA_MemoryFree(pmadapter->pscan_table[lowest_rssi_index].ies);
                         pmadapter->pscan_table[lowest_rssi_index].ies = NULL;
                     }
 #endif
@@ -3911,7 +3947,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 {
                     if (bss_new_entry->ies != NULL)
                     {
-                        os_mem_free(bss_new_entry->ies);
+                        OSA_MemoryFree(bss_new_entry->ies);
                         bss_new_entry->ies = NULL;
                     }
                 }
@@ -3923,7 +3959,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
                 /* Free ies of the old entry if it's duplicate entry */
                 if (pmadapter->pscan_table[bss_idx].ies != NULL)
                 {
-                    os_mem_free(pmadapter->pscan_table[bss_idx].ies);
+                    OSA_MemoryFree(pmadapter->pscan_table[bss_idx].ies);
                     pmadapter->pscan_table[bss_idx].ies = NULL;
                 }
 #endif
@@ -3941,7 +3977,7 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 #ifdef CONFIG_WPA_SUPP
             if (bss_new_entry->ies != NULL)
             {
-                os_mem_free(bss_new_entry->ies);
+                OSA_MemoryFree(bss_new_entry->ies);
                 bss_new_entry->ies = NULL;
             }
 #endif
@@ -4012,10 +4048,12 @@ mlan_status wlan_ret_802_11_scan(IN mlan_private *pmpriv, IN HostCmd_DS_COMMAND 
 #endif /* CONFIG_MLAN_WMSDK */
 
 done:
+#ifndef CONFIG_MEM_POOLS
     if (bss_new_entry != MNULL)
     {
         (void)pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
     }
+#endif
 
     LEAVE();
     return ret;
@@ -4432,12 +4470,18 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     }
     if (ret == MTRUE)
     {
+#ifndef CONFIG_MEM_POOLS
         ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(BSSDescriptor_t), MLAN_MEM_DEF, (t_u8 **)&bss_new_entry);
         if (ret != MLAN_STATUS_SUCCESS || !bss_new_entry)
         {
             PRINTM(MERROR, "Memory allocation for bss_new_entry failed!\n");
             goto done;
         }
+#else
+#ifdef MULTI_BSSID_SUPPORT
+        bss_new_entry = &s2_bss_new_entry;
+#endif
+#endif
         (void)__memcpy(pmadapter, bss_new_entry, pbss_entry, sizeof(BSSDescriptor_t));
         wlan_gen_multi_bssid_by_bssid_index(pmadapter, pbss_entry, bss_new_entry, pbssid_index->bssid_index,
                                             max_bssid_indicator);
@@ -4464,7 +4508,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
         if (pmadapter->wpa_supp_scan_triggered == MTRUE)
         {
             wifi_d("Alloc ies for Multi BSS. ies_len=%d", bss_new_entry->beacon_buf_size);
-            bss_new_entry->ies = (u8 *)os_mem_alloc(bss_new_entry->beacon_buf_size - BEACON_FIX_SIZE);
+            bss_new_entry->ies = (u8 *)OSA_MemoryAllocate(bss_new_entry->beacon_buf_size - BEACON_FIX_SIZE);
             if (bss_new_entry->ies == MNULL)
             {
                 wifi_d("Failed to alloc memory for Multi BSS ies");
@@ -4518,7 +4562,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP
                 if (pmadapter->pscan_table[lowest_rssi_index].ies != NULL)
                 {
-                    os_mem_free(pmadapter->pscan_table[lowest_rssi_index].ies);
+                    OSA_MemoryFree(pmadapter->pscan_table[lowest_rssi_index].ies);
                     pmadapter->pscan_table[lowest_rssi_index].ies = NULL;
                 }
 #endif
@@ -4532,7 +4576,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             {
                 if (bss_new_entry->ies != NULL)
                 {
-                    os_mem_free(bss_new_entry->ies);
+                    OSA_MemoryFree(bss_new_entry->ies);
                     bss_new_entry->ies = NULL;
                 }
             }
@@ -4544,7 +4588,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP
             if (pmadapter->pscan_table[bss_idx].ies != NULL)
             {
-                os_mem_free(pmadapter->pscan_table[bss_idx].ies);
+                OSA_MemoryFree(pmadapter->pscan_table[bss_idx].ies);
                 pmadapter->pscan_table[bss_idx].ies = NULL;
             }
 #endif
@@ -4556,7 +4600,9 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
         if (pssid && pbeacon_buf)
             pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)pbeacon_buf);
 #endif
+#ifndef CONFIG_MEM_POOLS
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
+#endif
     }
 done:
     *num_in_table = num_in_tbl;
@@ -4673,9 +4719,11 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                                               IN t_u8 *pscan_resp,
                                               IN t_u16 scan_resp_size)
 {
-    mlan_status ret                = MLAN_STATUS_SUCCESS;
-    mlan_adapter *pmadapter        = pmpriv->adapter;
-    mlan_callbacks *pcb            = MNULL;
+    mlan_status ret         = MLAN_STATUS_SUCCESS;
+    mlan_adapter *pmadapter = pmpriv->adapter;
+#ifndef CONFIG_MEM_POOLS
+    mlan_callbacks *pcb = MNULL;
+#endif
     BSSDescriptor_t *bss_new_entry = MNULL;
     t_u8 *pbss_info;
     t_u32 bytes_left;
@@ -4695,7 +4743,10 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     t_u8 null_ssid[MLAN_MAX_SSID_LENGTH] = {0};
 
     ENTER();
+
+#ifndef CONFIG_MEM_POOLS
     pcb = (pmlan_callbacks)&pmadapter->callbacks;
+#endif
 
 #ifndef CONFIG_MLAN_WMSDK
     if (number_of_sets > MRVDRV_MAX_BSSID_LIST)
@@ -4725,6 +4776,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
      *    driver scan table either as an update to an existing entry
      *    or as an addition at the end of the table
      */
+#ifndef CONFIG_MEM_POOLS
     ret = pcb->moal_malloc(pmadapter->pmoal_handle, sizeof(BSSDescriptor_t), MLAN_MEM_DEF, (t_u8 **)&bss_new_entry);
 
     if (ret != MLAN_STATUS_SUCCESS || !bss_new_entry)
@@ -4733,6 +4785,9 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
         ret = MLAN_STATUS_FAILURE;
         goto done;
     }
+#else
+    bss_new_entry = &s_bss_new_entry;
+#endif
 
     for (idx = 0; idx < number_of_sets && bytes_left > sizeof(MrvlIEtypesHeader_t); idx++)
     {
@@ -4759,15 +4814,15 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             break;
 
         /* Process variable TLV */
-		// coverity[sensitive_memory_access:SUPPRESS]
+        // coverity[sensitive_memory_access:SUPPRESS]
         while (bytes_left_for_tlv >= sizeof(MrvlIEtypesHeader_t) &&
                wlan_le16_to_cpu(ptlv->header.type) != TLV_TYPE_BSS_SCAN_RSP)
         {
             /* Barriers are normally not required but do ensure the code is
              * completely within the specified behaviour for the architecture. */
-            __asm volatile ( "dsb" ::: "memory" );
-            __asm volatile ( "isb" );
-			tlv_type = wlan_le16_to_cpu(ptlv->header.type);
+            __asm volatile("dsb" ::: "memory");
+            __asm volatile("isb");
+            tlv_type = wlan_le16_to_cpu(ptlv->header.type);
             tlv_len  = wlan_le16_to_cpu(ptlv->header.len);
             if (bytes_left_for_tlv < sizeof(MrvlIEtypesHeader_t) + tlv_len)
             {
@@ -4825,7 +4880,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 {
                     if (bss_new_entry->ies != NULL)
                     {
-                        os_mem_free(bss_new_entry->ies);
+                        OSA_MemoryFree(bss_new_entry->ies);
                         bss_new_entry->ies = NULL;
                     }
                     continue;
@@ -4934,7 +4989,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP
                     if (bss_new_entry->ies != NULL)
                     {
-                        os_mem_free(bss_new_entry->ies);
+                        OSA_MemoryFree(bss_new_entry->ies);
                         bss_new_entry->ies = NULL;
                     }
 #endif
@@ -4963,7 +5018,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP
                     if (pmadapter->pscan_table[lowest_rssi_index].ies != NULL)
                     {
-                        os_mem_free(pmadapter->pscan_table[lowest_rssi_index].ies);
+                        OSA_MemoryFree(pmadapter->pscan_table[lowest_rssi_index].ies);
                         pmadapter->pscan_table[lowest_rssi_index].ies = NULL;
                     }
 #endif
@@ -4978,7 +5033,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                 {
                     if (bss_new_entry->ies != NULL)
                     {
-                        os_mem_free(bss_new_entry->ies);
+                        OSA_MemoryFree(bss_new_entry->ies);
                         bss_new_entry->ies = NULL;
                     }
                 }
@@ -4990,7 +5045,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP
                 if (pmadapter->pscan_table[bss_idx].ies != NULL)
                 {
-                    os_mem_free(pmadapter->pscan_table[bss_idx].ies);
+                    OSA_MemoryFree(pmadapter->pscan_table[bss_idx].ies);
                     pmadapter->pscan_table[bss_idx].ies = NULL;
                 }
 #endif
@@ -5006,7 +5061,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
 #ifdef CONFIG_WPA_SUPP
             if (bss_new_entry->ies != NULL)
             {
-                os_mem_free(bss_new_entry->ies);
+                OSA_MemoryFree(bss_new_entry->ies);
                 bss_new_entry->ies = NULL;
             }
 #endif
@@ -5024,10 +5079,12 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     pmadapter->callbacks.moal_get_system_time(pmadapter->pmoal_handle, &pmadapter->age_in_secs, &age_ts_usec);
 #endif /* CONFIG_MLAN_WMSDK */
 done:
+#ifndef CONFIG_MEM_POOLS
     if (bss_new_entry)
     {
         pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
     }
+#endif
 
     LEAVE();
     return ret;

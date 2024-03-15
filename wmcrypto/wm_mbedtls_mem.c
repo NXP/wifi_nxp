@@ -12,7 +12,7 @@
 
 #include <mbedtls/platform.h>
 
-#include <wm_os.h>
+#include <osa.h>
 
 static void *wmos_wrap_calloc(size_t block_count, size_t block_size)
 {

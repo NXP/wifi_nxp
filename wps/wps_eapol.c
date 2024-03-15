@@ -13,7 +13,7 @@
 #include <string.h>
 #include "wifi_nxp_wps.h"
 #include <lwip/inet.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_utils.h>
 #include <wifi.h>
 

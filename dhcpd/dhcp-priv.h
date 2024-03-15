@@ -48,7 +48,7 @@ struct dhcp_server_data
 };
 
 int dhcp_server_init(void *intrfc_handle);
-void dhcp_server(os_thread_arg_t data);
+void dhcpd_task(osa_task_param_t arg);
 int dhcp_send_halt(void);
 int dhcp_free_allocations(void);
 int dhcp_create_and_bind_udp_socket(struct sockaddr_in *address, void *intrfc_handle);

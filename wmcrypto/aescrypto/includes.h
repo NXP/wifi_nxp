@@ -20,7 +20,7 @@
 #include <fcntl.h>
 #endif /* __linux__ */
 
-#include <wm_os.h>
+#include <osa.h>
 
 #include "../wmcrypto_mem.h"
 #include "type_def.h"

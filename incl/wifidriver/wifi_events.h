@@ -12,6 +12,8 @@
 #ifndef __WIFI_EVENTS_H__
 #define __WIFI_EVENTS_H__
 
+#include <osa.h>
+
 /** Wifi events */
 enum wifi_event
 {

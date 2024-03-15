@@ -9,7 +9,7 @@
  */
 
 #include <string.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h> /* for net_inet_aton */
 #include <wlan.h>
 #include <wifi.h>
@@ -20,6 +20,10 @@
 #endif
 #ifdef CONFIG_WPA_SUPP_DPP
 #include "dpp.h"
+#endif
+
+#ifdef CONFIG_MEM_POOLS
+#include <mem_pool_config.h>
 #endif
 
 #include <cli_utils.h>
@@ -72,10 +76,10 @@ extern char *net_sprint_addr(sa_family_t af, const void *addr);
 
 static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 {
-// #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
-#ifndef __ZEPHYR__
+//#if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+#if defined(SDK_OS_FREE_RTOS)
     struct ip4_addr ip, gw, nm, dns1, dns2;
-#else
+#elif __ZEPHYR__
     struct in_addr ip, gw, nm;
 #endif
     char addr_type[10] = {0};
@@ -86,13 +90,13 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
     {
         goto out;
     }
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
     ip.addr   = addr->ipv4.address;
     gw.addr   = addr->ipv4.gw;
     nm.addr   = addr->ipv4.netmask;
     dns1.addr = addr->ipv4.dns1;
     dns2.addr = addr->ipv4.dns2;
-#else
+#elif __ZEPHYR__
     ip.s_addr = addr->ipv4.address;
     gw.s_addr = addr->ipv4.gw;
     nm.s_addr = addr->ipv4.netmask;
@@ -112,19 +116,29 @@ static void print_address(struct wlan_ip_config *addr, enum wlan_bss_role role)
 
     (void)PRINTF("\r\n\tIPv4 Address\r\n");
     (void)PRINTF("\taddress: %s", addr_type);
-#ifndef __ZEPHYR__
+#if defined(SDK_OS_FREE_RTOS)
     (void)PRINTF("\r\n\t\tIP:\t\t%s", inet_ntoa(ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", inet_ntoa(gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", inet_ntoa(nm));
     (void)PRINTF("\r\n\t\tdns1:\t\t%s", inet_ntoa(dns1));
     (void)PRINTF("\r\n\t\tdns2:\t\t%s", inet_ntoa(dns2));
-#else
+#elif defined(FSL_RTOS_THREADX)
+    (void)PRINTF("\r\n\t\tIP:\t\t%d.%d.%d.%d", (addr->ipv4.address >> 24), (addr->ipv4.address >> 16 & 0xFF),
+                 (addr->ipv4.address >> 8 & 0xFF), (addr->ipv4.address & 0xFF));
+    (void)PRINTF("\r\n\t\tgateway:\t%d.%d.%d.%d", (addr->ipv4.gw >> 24), (addr->ipv4.gw >> 16 & 0xFF),
+                 (addr->ipv4.gw >> 8 & 0xFF), (addr->ipv4.gw & 0xFF));
+    (void)PRINTF("\r\n\t\tnetmask:\t%d.%d.%d.%d", (addr->ipv4.netmask >> 24), (addr->ipv4.netmask >> 16 & 0xFF),
+                 (addr->ipv4.netmask >> 8 & 0xFF), (addr->ipv4.netmask & 0xFF));
+//    (void)PRINTF("\r\n\t\tdns1:\t\t%s", inet_ntoa(dns1));
+//    (void)PRINTF("\r\n\t\tdns2:\t\t%s", inet_ntoa(dns2));
+#elif __ZEPHYR__
     (void)PRINTF("\r\n\t\tIP:\t\t%s", net_sprint_addr(AF_INET, &ip));
     (void)PRINTF("\r\n\t\tgateway:\t%s", net_sprint_addr(AF_INET, &gw));
     (void)PRINTF("\r\n\t\tnetmask:\t%s", net_sprint_addr(AF_INET, &nm));
 #endif
     (void)PRINTF("\r\n");
 out:
+
 #ifdef CONFIG_IPV6
     if (role == WLAN_BSS_ROLE_STA || role == WLAN_BSS_ROLE_UAP)
     {
@@ -150,7 +164,6 @@ out:
     }
 #endif
     return;
-    // #endif
 }
 
 static const char *print_role(enum wlan_bss_role role)
@@ -528,7 +541,6 @@ static void print_network(struct wlan_network *network)
 #ifdef CONFIG_SCAN_WITH_RSSIFILTER
     (void)PRINTF("\r\n\trssi threshold: %d \r\n", network->rssi_threshold);
 #endif
-    // #endif
 }
 
 /* Parse the 'arg' string as "ip:ipaddr,gwaddr,netmask,[dns1,dns2]" into
@@ -2175,7 +2187,7 @@ static void test_wlan_thread_info(int argc, char **argv)
 {
     /* TODO: implement for Zephyr */
 #ifndef __ZEPHYR__
-    os_dump_threadinfo(NULL);
+    OSA_DumpThreadInfo(NULL);
 #endif
 }
 
@@ -2679,7 +2691,11 @@ static void test_wlan_list(int argc, char **argv)
 static void test_wlan_info(int argc, char **argv)
 {
     enum wlan_connection_state state;
-    struct wlan_network *network = (struct wlan_network *)os_mem_alloc(sizeof(struct wlan_network));
+#ifndef CONFIG_MEM_POOLS
+    struct wlan_network *network = (struct wlan_network *)OSA_MemoryAllocate(sizeof(struct wlan_network));
+#else
+    struct wlan_network *network = OSA_MemoryPoolAllocate(buf_2048_MemoryPool);
+#endif
     if (!network)
     {
         (void)PRINTF("Error: unable to malloc memory\r\n");
@@ -2720,7 +2736,13 @@ static void test_wlan_info(int argc, char **argv)
         print_network(network);
     }
     if (network)
-        os_mem_free(network);
+    {
+#ifndef CONFIG_MEM_POOLS
+        OSA_MemoryFree(network);
+#else
+        OSA_MemoryPoolFree(buf_2048_MemoryPool, network);
+#endif
+    }
 }
 
 static void test_wlan_address(int argc, char **argv)
@@ -2765,7 +2787,6 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
 
     wifi_sta_info_t *si = (wifi_sta_info_t *)(void *)(&sl->count + 1);
 
-#ifndef CONFIG_WPA_SUPP
     (void)PRINTF("Number of STA = %d \r\n\r\n", sl->count);
     for (i = 0; i < sl->count; i++)
     {
@@ -2776,11 +2797,11 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
         (void)PRINTF("Power mfg status: %s\r\n", (si[i].power_mgmt_status == 0U) ? "active" : "power save");
         (void)PRINTF("Rssi : %d dBm\r\n\r\n", (signed char)si[i].rssi);
     }
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(sl);
 #else
-    hostapd_connected_sta_list(si, sl);
+    OSA_MemoryPoolFree(buf_256_MemoryPool, sl);
 #endif
-    os_mem_free(sl);
-    // #endif
 }
 
 static void test_wlan_ieee_ps(int argc, char **argv)
@@ -3109,7 +3130,7 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
     }
     if (buf_size > 0)
     {
-        buf = os_mem_alloc(buf_size);
+        buf = OSA_MemoryAllocate(buf_size);
         if (!buf)
         {
             PRINTF("test_wlan_txrx_histogram buf allocate memory failed\r\n");
@@ -3243,7 +3264,7 @@ static void test_wlan_txrx_histogram(int argc, char **argv)
     }
     if (buf)
     {
-        os_mem_free(buf);
+        OSA_MemoryFree(buf);
     }
 }
 #endif
@@ -4054,7 +4075,7 @@ static void test_wlan_pmksa_list(int argc, char **argv)
         return;
     }
 
-    buf = (char *)os_mem_calloc(buflen);
+    buf = (char *)OSA_MemoryAllocate(buflen);
 
     if (buf == NULL)
     {
@@ -4661,9 +4682,9 @@ static void test_wlan_host_sleep(int argc, char **argv)
 #ifdef __ZEPHYR__
 static void test_wlan_auto_host_sleep(int argc, char **argv)
 {
-    bool is_manual    = MFALSE;
-    t_u8 is_periodic  = 0;
-    t_u8 enable       = 0;
+    bool is_manual   = MFALSE;
+    t_u8 is_periodic = 0;
+    t_u8 enable      = 0;
 
     if (argc > 3 || argc < 2)
     {
@@ -4675,7 +4696,8 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
         (void)PRINTF("                   1 - enable host sleep\r\n");
         (void)PRINTF("    periodic    -- Host enter low power periodically or oneshot\r\n");
         (void)PRINTF(
-            "                            0 - Oneshot. Host will enter low power only once and keep full power after waking "
+            "                            0 - Oneshot. Host will enter low power only once and keep full power after "
+            "waking "
             "up.\r\n");
         (void)PRINTF("                   1 - Periodic. Host will enter low power periodically.\r\n");
         (void)PRINTF("Examples:\r\n");
@@ -4689,8 +4711,8 @@ static void test_wlan_auto_host_sleep(int argc, char **argv)
         (void)PRINTF("Error! Invalid input of parameter <enable>\r\n");
         return;
     }
-	/* Disable auto host sleep */
-	if (enable == 0)
+    /* Disable auto host sleep */
+    if (enable == 0)
     {
         wlan_cancel_host_sleep();
         wlan_clear_host_sleep_config();
@@ -5335,7 +5357,7 @@ static void test_wlan_ft_roam(int argc, char **argv)
 #ifdef CONFIG_HEAP_STAT
 static void test_heap_stat(int argc, char **argv)
 {
-    os_dump_mem_stats();
+    OSA_DumpMemStats();
 }
 #endif
 
@@ -8139,22 +8161,21 @@ static void test_wlan_net_monitor_cfg(int argc, char **argv)
 #ifdef CONFIG_CPU_TASK_STATUS
 void test_wlan_cpu_task_info(int argc, char **argv)
 {
-    /* Take a snapshot of the number of tasks while this
-     * function is executing. */
-    uint32_t task_nums       = uxTaskGetNumberOfTasks();
-    uint32_t task_status_len = task_nums * sizeof(TaskStatus_t);
+#ifndef CONFIG_MEM_POOLS
+    char *CPU_RunInfo = (char *)OSA_MemoryAllocate(MAX_TASK_INFO_BUF);
+#else
+    char *CPU_RunInfo = (char *)OSA_MemoryPoolAllocate(buf_1024_MemoryPool);
+#endif
 
-    char *CPU_RunInfo = (char *)os_mem_alloc(task_status_len);
-
-    if (!CPU_RunInfo)
+    if (CPU_RunInfo == NULL)
     {
         (void)PRINTF("os mem alloc failed for CPU run info \r\n");
         return;
     }
 
-    memset(CPU_RunInfo, 0, task_status_len);
+    memset(CPU_RunInfo, 0, sizeof(CPU_RunInfo));
     // Get tasks status
-    os_get_task_list(CPU_RunInfo);
+    OSA_GetTaskList(CPU_RunInfo);
 
     /*Relationship between task status and show info
      *
@@ -8172,12 +8193,17 @@ void test_wlan_cpu_task_info(int argc, char **argv)
 
     memset(CPU_RunInfo, 0, task_status_len);
     // Get tasks percentage
-    os_get_runtime_stats(CPU_RunInfo);
+    OSA_GetRuntimeStats(CPU_RunInfo);
     (void)PRINTF("taskName                runTime         Percentage\r\n");
     (void)PRINTF("%s", CPU_RunInfo);
     (void)PRINTF("---------------------------------------------\r\n\n");
 
-    os_mem_free(CPU_RunInfo);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(CPU_RunInfo);
+#else
+    OSA_MemoryPoolFree(buf_1024_MemoryPool, CPU_RunInfo);
+    ;
+#endif
 }
 #endif
 
@@ -8571,7 +8597,7 @@ static err_t wlan_tcp_client_connected(void *arg, struct tcp_pcb *pcb, err_t err
     t_u8 count          = 5;
     char *clientData    = NULL;
 
-    clientData = os_mem_alloc(DATA_LEN);
+    clientData = OSA_MemoryAllocate(DATA_LEN);
     (void)memset((t_u8 *)clientData, 0, DATA_LEN);
     (void)memcpy(clientData, clientString, sizeof(clientString));
 
@@ -10176,7 +10202,7 @@ static void test_wlan_dpp_bootstrap_get_uri(int argc, char **argv)
     uri = wlan_dpp_bootstrap_get_uri(is_ap, id);
     if (uri)
     {
-        os_thread_sleep(os_msec_to_ticks(1000));
+        OSA_TimeDelay(1000);
         (void)PRINTF("\r\nBootstrapping QR Code URI:\r\n");
         (void)PRINTF("\r\n%s\r\n\r\n", uri);
     }

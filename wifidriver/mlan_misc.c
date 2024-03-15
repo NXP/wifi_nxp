@@ -16,7 +16,7 @@ Change Log:
 
 /* Additional WMSDK header files */
 #include <wmerrno.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <mlan_fw.h>
 
 /* Always keep this include at the end of all include files */

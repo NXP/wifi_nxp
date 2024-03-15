@@ -11,7 +11,7 @@
 /* wifi_ping.c: This file contains the support for network utility ping */
 
 #include <string.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <cli.h>
 #include <cli_utils.h>
@@ -21,6 +21,11 @@
 static int ptotal = 0, precvd = 0;
 
 #if defined(SDK_OS_FREE_RTOS)
+#ifdef CONFIG_MEM_POOLS
+#define PING_SIZE (sizeof(struct icmp_echo_hdr) + 1024)
+
+static uint8_t IEcho[PING_SIZE];
+#endif
 
 static struct netif *get_netif_up(void)
 {
@@ -321,13 +326,26 @@ int ping(u16_t count, int interval, unsigned short size, unsigned int r_timeout,
     /* Ping size is: size of ICMP header + size of payload */
     ping_size = sizeof(struct icmp_echo_hdr) + size;
 
-    iecho = (struct icmp_echo_hdr *)os_mem_alloc(ping_size);
+#ifndef CONFIG_MEM_POOLS
+
+    iecho = (struct icmp_echo_hdr *)OSA_MemoryAllocate(ping_size);
     if (iecho == NULL)
     {
         ping_e("Failed to allocate memory for ping packet");
         ret = -WM_FAIL;
         goto end;
     }
+#else
+    if (ping_size > PING_SIZE)
+    {
+        ping_e("Ping size is greater than memory for ping packet buffer: %d", PING_SIZE);
+        ret = -WM_FAIL;
+        goto end;
+    }
+
+    iecho = (struct icmp_echo_hdr *)IEcho;
+
+#endif
 
     while (i <= count)
     {
@@ -362,7 +380,7 @@ int ping(u16_t count, int interval, unsigned short size, unsigned int r_timeout,
 #endif
 
         /* Get the current ticks as the start time */
-        ping_time = os_ticks_get();
+        ping_time = OSA_TimeGetMsec();
 
         if (ret > 0)
         {
@@ -382,7 +400,7 @@ int ping(u16_t count, int interval, unsigned short size, unsigned int r_timeout,
 #endif
 
             /* Calculate the round trip time */
-            ping_time = os_ticks_get() - ping_time;
+            ping_time = OSA_TimeGetMsec() - ping_time;
 
             if (ret == WM_SUCCESS)
             {
@@ -404,14 +422,18 @@ int ping(u16_t count, int interval, unsigned short size, unsigned int r_timeout,
         else
         {
             ping_e("Failed to send ping echo request");
-            os_mem_free(iecho);
+#ifndef CONFIG_MEM_POOLS
+            OSA_MemoryFree(iecho);
+#endif
             ret = -WM_FAIL;
             goto end;
         }
         i++;
-        os_thread_sleep(os_msec_to_ticks(interval));
+        OSA_TimeDelay(PING_INTERVAL);
     }
-    os_mem_free(iecho);
+#ifndef CONFIG_MEM_POOLS
+    OSA_MemoryFree(iecho);
+#endif
     display_ping_result(src_ip_addr, (int)count, recvd);
 end:
     (void)close(s);
