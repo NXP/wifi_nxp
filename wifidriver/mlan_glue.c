@@ -8058,22 +8058,19 @@ uint32_t wifi_get_board_type()
 }
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 void wifi_cau_temperature_enable()
 {
-#ifdef RW610
     t_u32 val;
 
     val = WIFI_REG32(WLAN_CAU_ENABLE_ADDR);
     val &= ~(0xC);
     val |= (2 << 2);
     WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
-#endif
 }
 
 int32_t wifi_get_temperature(void)
 {
-#ifdef RW610
     int32_t val                = 0;
     uint32_t reg_val           = 0;
     uint32_t temp_Cau_Raw_Reading = 0;
@@ -8104,17 +8101,14 @@ int32_t wifi_get_temperature(void)
     }
 
     return val;
-#endif
 }
 
 void wifi_cau_temperature_write_to_firmware()
 {
-#ifdef RW610
     int32_t val = 0;
 
     val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
-#endif
 }
 #endif
 

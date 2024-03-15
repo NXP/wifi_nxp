@@ -10692,7 +10692,7 @@ static void test_wlan_sta_inactivityto(int argc, char **argv)
 }
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 static void test_wlan_get_temperature(int argc, char **argv)
 {
     int32_t board_temperature = 0;
@@ -11964,7 +11964,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
     {"wlan-sta-inactivityto", "<n> <m> <l> [k] [j]", test_wlan_sta_inactivityto},
 #endif
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
     {"wlan-get-temperature", NULL, test_wlan_get_temperature},
 #endif
 #ifdef CONFIG_AUTO_NULL_TX

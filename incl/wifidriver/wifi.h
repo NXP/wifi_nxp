@@ -2029,7 +2029,7 @@ int wifi_single_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime);
 int wifi_dual_ant_duty_cycle(t_u16 enable, t_u16 nbTime, t_u16 wlanTime, t_u16 wlanBlockTime);
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 /* get CAU module temperature and write to firmware */
 void wifi_cau_temperature_enable(void);
 void wifi_cau_temperature_write_to_firmware(void);

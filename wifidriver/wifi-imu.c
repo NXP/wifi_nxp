@@ -1642,7 +1642,7 @@ retry:
         wifi_shutdown_enable = false;
     }
 	
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
     wifi_cau_temperature_enable();
     wifi_cau_temperature_write_to_firmware();
 #endif

@@ -7201,7 +7201,7 @@ int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);
 int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action);
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 /**
  * Get board temperature.
  * \return board temperature.
