@@ -6614,7 +6614,7 @@ static void dump_wlan_set_antcfg_usage(void)
 #ifndef RW610
     (void)PRINTF("wlan-set-antcfg <ant mode> [evaluate_time] \r\n");
 #else
-    (void)PRINTF("wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_time>\r\n");
+    (void)PRINTF("wlan-set-antcfg <ant_mode> <evaluate_time> <evaluate_mode>\r\n");
 #endif
     (void)PRINTF("\r\n");
     (void)PRINTF("\t<ant_mode>: \r\n");
@@ -6622,13 +6622,21 @@ static void dump_wlan_set_antcfg_usage(void)
     (void)PRINTF("\t           2   -- Tx/Rx antenna 2\r\n");
     (void)PRINTF("\t           0xFFFF  -- Tx/Rx antenna diversity\r\n");
     (void)PRINTF("\t[evaluate_time]: \r\n");
-    (void)PRINTF("\t           if ant mode = 0xFFFF, SAD evaluate time interval,\r\n");
-    (void)PRINTF("\t           default value is 6000 milli seconds\r\n");
+    (void)PRINTF("\t           If ant mode = 0xFFFF, use this to configure\r\n");
+    (void)PRINTF("\t           SAD evaluate time interval in milli seconds unit.\r\n");
+    (void)PRINTF("\t           If not specified, default value is 6000 milli seconds\r\n");
 #ifdef RW610
     (void)PRINTF("\t<evaluate_mode>: \r\n");
     (void)PRINTF("\t           0: PCB Ant. + Ext Ant0\r\n");
     (void)PRINTF("\t           1: Ext Ant0 + Ext Ant1\r\n");
     (void)PRINTF("\t           2: PCB Ant. + Ext Ant1\r\n");
+#endif
+    (void)PRINTF("Examples:\r\n");
+    (void)PRINTF("wlan-set-antcfg 1\r\n");
+    (void)PRINTF("wlan-set-antcfg 0xffff\r\n");
+    (void)PRINTF("wlan-set-antcfg 0xffff 5000\r\n");
+#ifdef RW610
+    (void)PRINTF("wlan-set-antcfg 0xffff 6000 0\r\n");
 #endif
 }
 
