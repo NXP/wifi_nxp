@@ -58,7 +58,10 @@ t_u64 csi_event_data_len = 0;
 extern wifi_ecsa_status_control ecsa_status_control;
 #endif
 
+#ifndef CONFIG_WIFI_CORE_STACK_SIZE
 #define CONFIG_WIFI_CORE_STACK_SIZE (2048)
+#endif
+
 #define MAX_MCAST_LEN               (MLAN_MAX_MULTICAST_LIST_SIZE * MLAN_MAC_ADDR_LENGTH)
 #ifdef CONFIG_WiFi_878x
 #define MAX_WAIT_TIME 20
@@ -153,14 +156,18 @@ static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_WIFI
 
 #endif
 
+#ifndef CONFIG_WIFI_SCAN_STACK_SIZE
 #define CONFIG_WIFI_SCAN_STACK_SIZE (1024)
+#endif
 
 static void wifi_scan_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 static OSA_TASK_DEFINE(wifi_scan_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_WIFI_SCAN_STACK_SIZE, 0);
 
+#ifndef CONFIG_WIFI_DRIVER_STACK_SIZE
 #define CONFIG_WIFI_DRIVER_STACK_SIZE (1024)
+#endif
 
 static void wifi_drv_task(osa_task_param_t arg);
 
@@ -169,7 +176,9 @@ static OSA_TASK_DEFINE(wifi_drv_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRIVER_S
 
 #ifdef CONFIG_WMM
 
+#ifndef CONFIG_WIFI_DRV_TX_STACK_SIZE
 #define CONFIG_WIFI_DRV_TX_STACK_SIZE (1024)
+#endif
 
 static void wifi_drv_tx_task(osa_task_param_t arg);
 
@@ -179,7 +188,6 @@ static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_ABOVE_NORMAL, 1, CONFIG_WI
 #else
 static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
 #endif
-
 #endif
 
 #ifndef CONFIG_WIFI_POWERSAVE_STACK_SIZE
@@ -3927,7 +3935,7 @@ int send_wifi_driver_tx_data_event(t_u8 interface)
     notify_wifi_driver_tx_event(events);
 #else
     (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, events);
-    if (__get_IPSR())
+    if (!__get_IPSR())
     {
         OSA_TaskYield();
     }
@@ -3946,7 +3954,7 @@ int send_wifi_driver_tx_null_data_event(t_u8 interface)
     notify_wifi_driver_tx_event(events);
 #else
     (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, events);
-    if (__get_IPSR())
+    if (!__get_IPSR())
     {
         OSA_TaskYield();
     }
@@ -3965,7 +3973,7 @@ int send_wifi_driver_bypass_data_event(t_u8 interface)
     notify_wifi_driver_tx_event(events);
 #else
     (void)OSA_EventSet((osa_event_handle_t)wm_wifi.wifi_event_Handle, events);
-    if (__get_IPSR())
+    if (!__get_IPSR())
     {
         OSA_TaskYield();
     }
