@@ -8224,22 +8224,36 @@ static void test_wlan_cpu_loading(int argc, char **argv)
 static void dump_wlan_tsp_cfg_usage()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-set-tsp-cfg enable <enable> backoff <backoff> high <highThreshold> low <lowThreshold>\r\n");
-    (void)PRINTF("    <enable>: 0 -- disable   1 -- enable\r\n");
-    (void)PRINTF("	  <backoff>: power backoff [0...20]\r\n");
-    (void)PRINTF("	  <highThreshold>: High power Threshold [0...300]\r\n");
-    (void)PRINTF("	  <lowThreshold>: Low power Threshold [0...300]\r\n");
-    (void)PRINTF("	   High Threshold must be greater than Low Threshold\r\n");
-    (void)PRINTF("	   If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
+    (void)PRINTF("    wlan-set-tsp-cfg en <0/1> bo <0-20> high <0-300> low <0-300> "
+                 "dcstep <1-100> dcmin <0-100> hightemp <-100-150> lowtemp <-100-150>\r\n");
+    (void)PRINTF("	  <en>: 0 -- disable   1 -- enable\r\n");
+    (void)PRINTF("	  <bo>: power backoff [0...20]\r\n");
+    (void)PRINTF("	  <high>: High power Threshold [0...300]\r\n");
+    (void)PRINTF("	  <low>: Low power Threshold [0...300]\r\n");
+    (void)PRINTF("	  <dcstep>: Duty Cycle setp [1...100]\r\n");
+    (void)PRINTF("	  <dcmin>: Duty Cycle min [0...100]\r\n");
+    (void)PRINTF("	  <hightemp>: High Throttle Threshold temperature [-100...150]\r\n");
+    (void)PRINTF("	  <lowtemp>: Low Throttle Threshold temperature [-100...150]\r\n");
+    (void)PRINTF("	  High Threshold must be greater than Low Threshold\r\n");
+    (void)PRINTF("	  High Throttle Threshold temperature must be greater than Low Throttle Threshold temperature.\r\n");
+    (void)PRINTF("	  If you want to get tsp cfg, you can just use wlan-get-tsp-cfg.\r\n");
+    (void)PRINTF("\r\nUsage example : \r\n");
+    (void)PRINTF("wlan-set-tsp-cfg wlan-set-tsp-cfg en 1 bo 0 high 93 low 83 dcstep 5 dcmin 10 hightemp 120 lowtemp 110 \r\n");
+    (void)PRINTF("wlan-set-tsp-cfg en 0 \r\n");
 }
 static void test_wlan_set_tsp_cfg(int argc, char **argv)
 {
     int arg = 0;
     unsigned int value;
+    int   tempvalue;
     t_u16 enable        = 0;
     t_u32 back_off      = 0;
     t_u32 highThreshold = 0;
     t_u32 lowThreshold  = 0;
+    t_u32 dutycycstep   = 0;
+    t_u32 dutycycmin    = 0;
+    int highthrtemp   = 0;
+    int lowthrtemp    = 0;
     int ret             = WM_SUCCESS;
 
     struct
@@ -8248,11 +8262,15 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
         unsigned backoff : 1;
         unsigned high : 1;
         unsigned low : 1;
+        unsigned dutycycstep : 1;
+        unsigned dutycycmin : 1;
+        unsigned highthrtemp : 1;
+        unsigned lowthrtemp : 1;
     } info;
 
     (void)memset(&info, 0, sizeof(info));
 
-    if (argc < 3 || argc > 9)
+    if (argc < 3 || argc > 17)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         dump_wlan_tsp_cfg_usage();
@@ -8262,7 +8280,7 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
     arg++;
     do
     {
-        if (!info.enable && string_equal("enable", argv[arg]))
+        if (!info.enable && string_equal("en", argv[arg]))
         {
             if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || (value != 0 && value != 1))
             {
@@ -8274,7 +8292,7 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
             info.enable = 1;
             enable      = value & 0xFF;
         }
-        else if (!info.backoff && string_equal("backoff", argv[arg]))
+        else if (!info.backoff && string_equal("bo", argv[arg]))
         {
             if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 20)
             {
@@ -8310,22 +8328,72 @@ static void test_wlan_set_tsp_cfg(int argc, char **argv)
             info.low     = 1;
             lowThreshold = value;
         }
+        else if (!info.dutycycstep && string_equal("dcstep", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 100)
+            {
+                (void)PRINTF("Error: invalid dutycycstep argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.dutycycstep = 1;
+            dutycycstep = value;
+        }
+        else if (!info.dutycycmin && string_equal("dcmin", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])) || value > 100)
+            {
+                (void)PRINTF("Error: invalid dutycycmin argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.dutycycmin = 1;
+            dutycycmin = value;
+        }
+        else if (!info.highthrtemp && string_equal("hightemp", argv[arg]))
+        {
+            tempvalue = (int)atoi(argv[arg + 1]);
+            if (tempvalue < -100 || tempvalue > 150)
+            {
+                (void)PRINTF("Error: invalid high throttle temperature threshold argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.highthrtemp = 1;
+            highthrtemp = tempvalue;
+        }
+        else if (!info.lowthrtemp && string_equal("lowtemp", argv[arg]))
+        {
+            tempvalue = (int)atoi(argv[arg + 1]);
+            if (tempvalue < -100 || tempvalue > 150)
+            {
+                (void)PRINTF("Error: invalid low throttle temperature threshold argument\r\n");
+                dump_wlan_tsp_cfg_usage();
+                return;
+            }
+            arg += 2;
+            info.lowthrtemp = 1;
+            lowthrtemp = tempvalue;
+        }
         else
         {
             (void)PRINTF("Error: invalid [%d] argument\r\n", arg + 1);
             dump_wlan_tsp_cfg_usage();
             return;
         }
-
     } while (arg < argc);
 
-    if (highThreshold <= lowThreshold)
+    if (enable && ((highThreshold <= lowThreshold) || (highthrtemp <= lowthrtemp)))
     {
         (void)PRINTF("Error: High Threshold must be greater than Low Threshold\r\n");
         dump_wlan_tsp_cfg_usage();
         return;
     }
-    ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold);
+
+    ret = wlan_set_tsp_cfg(enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp, lowthrtemp);
 
     if (ret != WM_SUCCESS)
     {
@@ -8340,6 +8408,13 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     t_u32 back_off      = 0;
     t_u32 highThreshold = 0;
     t_u32 lowThreshold  = 0;
+    t_u32 dutycycstep   = 0;
+    t_u32 dutycycmin    = 0;
+    int highthrtemp   = 0;
+    int lowthrtemp    = 0;
+    int currCAUTemp   = 0;
+    int currRFUTemp   = 0;
+
     int ret             = WM_SUCCESS;
 
     if (argc != 1)
@@ -8348,7 +8423,16 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
         return;
     }
 
-    ret = wlan_get_tsp_cfg(&enable, &back_off, &highThreshold, &lowThreshold);
+    ret = wlan_get_tsp_cfg(&enable,
+                           &back_off,
+                           &highThreshold,
+                           &lowThreshold,
+                           &dutycycstep,
+                           &dutycycmin,
+                           &highthrtemp,
+                           &lowthrtemp,
+                           &currCAUTemp,
+                           &currRFUTemp);
 
     if (ret != WM_SUCCESS)
     {
@@ -8360,8 +8444,14 @@ static void test_wlan_get_tsp_cfg(int argc, char **argv)
     (void)PRINTF("	Enable TSP Algorithm: %d\r\n", enable);
     (void)PRINTF("		0: disable 1: enable\r\n");
     (void)PRINTF("	Power Management Backoff: %d dB\r\n", back_off);
-    (void)PRINTF("	Low Power BOT Threshold: %d °C\r\n", lowThreshold);
-    (void)PRINTF("	High Power BOT Threshold: %d °C\r\n", highThreshold);
+    (void)PRINTF("	Low Power BOT  Threshold(celcius): %d\r\n", lowThreshold);
+    (void)PRINTF("	High Power BOT Threshold(celcius): %d\r\n", highThreshold);
+    (void)PRINTF("	Duty Cycle setp(percentage): %d\r\n", dutycycstep);
+    (void)PRINTF("	Duty Cycle min (percentage): %d\r\n", dutycycmin);
+    (void)PRINTF("	High Throttle Threshold temperature(celcius): %d\r\n", highthrtemp);
+    (void)PRINTF("	Low Throttle  Threshold temperature(celcius): %d\r\n", lowthrtemp);
+    (void)PRINTF("	CAU TSEN Temperature(celcius): %d\r\n", currCAUTemp);
+    (void)PRINTF("	RFU      Temperature(celcius): %d\r\n", currRFUTemp);
 }
 #endif
 
@@ -11892,7 +11982,9 @@ static struct cli_command tests[] = {
      test_wlan_set_monitor_param},
 #endif
 #ifdef CONFIG_TSP
-    {"wlan-set-tsp-cfg", "<enable> <backoff> <highThreshold> <lowThreshold>", test_wlan_set_tsp_cfg},
+    {"wlan-set-tsp-cfg",
+     "<enable> <backoff> <highThreshold> <lowThreshold> <dutycycstep> <dutycycmin> <highthrtemp> <lowthrtemp>",
+     test_wlan_set_tsp_cfg},
     {"wlan-get-tsp-cfg", NULL, test_wlan_get_tsp_cfg},
 #endif
 #ifdef CONFIG_CPU_TASK_STATUS

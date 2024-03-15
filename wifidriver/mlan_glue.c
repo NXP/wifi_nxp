@@ -4289,6 +4289,12 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                         *(tsp_get_cfg->powerMgmtBackoff)       = data->powerMgmtBackoff;
                         *(tsp_get_cfg->lowPwrBOThrshld)        = data->lowPwrBOThrshld;
                         *(tsp_get_cfg->highPwrBOThrshld)       = data->highPwrBOThrshld;
+                        *(tsp_get_cfg->dutycycstep)            = data->dutycycstep;
+                        *(tsp_get_cfg->dutycycmin)             = data->dutycycmin;
+                        *(tsp_get_cfg->highthrtemp)            = data->highthrtemp;
+                        *(tsp_get_cfg->lowthrtemp)             = data->lowthrtemp;
+                        *(tsp_get_cfg->currCAUTemp)            = data->currCAUTemp;
+                        *(tsp_get_cfg->currRFUTemp)            = data->currRFUTemp;
                     }
                     wm_wifi.cmd_resp_status = WM_SUCCESS;
                 }
@@ -4389,7 +4395,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                 wm_wifi.cmd_resp_status = -WM_FAIL;
             }
             break;
-            
+
             default:
                 /* fixme: Currently handled by the legacy code. Change this
                    handling later. Also check the default return value then*/
@@ -6453,7 +6459,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
                         ver_str_len
 #else
                         strlen((const char *)(&resp->params.verext.version_str))
-#endif                         
+#endif
                         );
         }
     }
@@ -6467,7 +6473,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
                      ver_str_len
 #else
                      strlen((const char *)(&resp->params.verext.version_str))
-#endif 
+#endif
                      );
     }
     else if (resp->params.verext.version_str_sel == 4U && strlen((const char *)(&resp->params.verext.version_str)))
@@ -6480,7 +6486,7 @@ void wifi_get_firmware_ver_ext_from_cmdresp(const HostCmd_DS_COMMAND *resp, uint
                      ver_str_len
 #else
                      strlen((const char *)(&resp->params.verext.version_str))
-#endif                    
+#endif
                      );
     }
     else

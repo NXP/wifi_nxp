@@ -579,7 +579,17 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
 #endif
 
 #ifdef CONFIG_TSP
-int wifi_tsp_cfg(const t_u16 action, t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
+int wifi_tsp_cfg(const t_u16 action,
+                       t_u16 *enable,
+                       t_u32 *back_off,
+                       t_u32 *highThreshold,
+                       t_u32 *lowThreshold,
+                       t_u32 *dutycycstep,
+                       t_u32 *dutycycmin,
+                       int *highthrtemp,
+                       int *lowthrtemp,
+                       int *currCAUTemp,
+                       int *currRFUTemp);
 #endif
 
 #ifdef CONFIG_TX_AMPDU_PROT_MODE

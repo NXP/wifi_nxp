@@ -10242,7 +10242,7 @@ int wlan_eu_validation(
     {
         return -WM_E_INVAL;
     }
-    
+
     if (!wlan_is_started())
     {
         (void)PRINTF("eu validation is not allowed when WIFI is disabled\r\n");
@@ -14851,17 +14851,33 @@ int wlan_net_monitor_cfg(wlan_net_monitor_t *monitor)
 #endif
 
 #ifdef CONFIG_TSP
-int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold)
+int wlan_get_tsp_cfg(t_u16 *enable,
+                     t_u32 *back_off,
+                     t_u32 *highThreshold,
+                     t_u32 *lowThreshold,
+                     t_u32 *dutycycstep,
+                     t_u32 *dutycycmin,
+                     int *highthrtemp,
+                     int *lowthrtemp,
+                     int *currCAUTemp,
+                     int *currRFUTemp)
 {
     t_u16 action = 0;
 
-    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold);
+    return wifi_tsp_cfg(action, enable, back_off, highThreshold, lowThreshold, dutycycstep, dutycycmin, highthrtemp, lowthrtemp, currCAUTemp, currRFUTemp);
 }
-int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lowThreshold)
+int wlan_set_tsp_cfg(t_u16 enable,
+                     t_u32 back_off,
+                     t_u32 highThreshold,
+                     t_u32 lowThreshold,
+                     t_u32 dutycycstep,
+                     t_u32 dutycycmin,
+                     int highthrtemp,
+                     int lowthrtemp)
 {
     t_u16 action = 1;
 
-    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold);
+    return wifi_tsp_cfg(action, &enable, &back_off, &highThreshold, &lowThreshold, &dutycycstep, &dutycycmin, &highthrtemp, &lowthrtemp, NULL, NULL);
 }
 #endif
 

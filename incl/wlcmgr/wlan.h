@@ -6422,7 +6422,16 @@ int wlan_set_threshold_link_quality(unsigned int evend_id,
  *          High Threshold must be greater than Low Threshold.
  * \return WM_SUCCESS if successful otherwise failure.
  */
-int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32 *lowThreshold);
+int wlan_get_tsp_cfg(t_u16 *enable,
+                     t_u32 *back_off,
+                     t_u32 *highThreshold,
+                     t_u32 *lowThreshold,
+                     t_u32 *dutycycstep,
+                     t_u32 *dutycycmin,
+                     int *highthrtemp,
+                     int *lowthrtemp,
+                     int *currCAUTemp,
+                     int *currRFUTemp);
 /**
  * set TSP(Thermal Safeguard Protection) configuration.
  * TSP algorithm moniters PA Tj and primarily backs off data throughput.
@@ -6434,7 +6443,14 @@ int wlan_get_tsp_cfg(t_u16 *enable, t_u32 *back_off, t_u32 *highThreshold, t_u32
  * \return WM_SUCCESS if successful otherwise failure.
  */
 
-int wlan_set_tsp_cfg(t_u16 enable, t_u32 back_off, t_u32 highThreshold, t_u32 lowThreshold);
+int wlan_set_tsp_cfg(t_u16 enable,
+                     t_u32 back_off,
+                     t_u32 highThreshold,
+                     t_u32 lowThreshold,
+                     t_u32 dutycycstep,
+                     t_u32 dutycycmin,
+                     int highthrtemp,
+                     int lowthrtemp);
 #endif
 
 #ifdef CONFIG_WIFI_REG_ACCESS
