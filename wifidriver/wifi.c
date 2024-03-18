@@ -1072,14 +1072,6 @@ void wlan_process_hang(uint8_t fw_reload)
         if (mlan_adap->priv[i])
         {
             wlan_clean_txrx(mlan_adap->priv[i]);
-            if (mlan_adap->priv[i]->tx_ba_stream_tbl_lock != NULL)
-            {
-                os_mutex_delete(&mlan_adap->priv[i]->tx_ba_stream_tbl_lock);
-                mlan_adap->priv[i]->tx_ba_stream_tbl_lock = NULL;
-            }
-#ifdef CONFIG_WMM
-            wlan_ralist_deinit_enh(mlan_adap->priv[i]);
-#endif
         }
     }
 
