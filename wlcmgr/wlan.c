@@ -10046,9 +10046,13 @@ int wlan_start_network(const char *name)
 #endif
             {
                 if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0))
+                {
                     wlcm_w(
                         "NOTE: uAP will automatically switch to"
                         " the channel that station is on.");
+                    if(is_sta_connected())
+                        wlan.networks[i].channel = wlan.networks[wlan.cur_network_idx].channel;
+                }
             }
             if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
