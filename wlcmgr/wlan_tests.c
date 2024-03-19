@@ -11544,7 +11544,7 @@ static void wlan_detect_ant_set_mode(uint16_t best_ant, uint16_t next_best_ant)
 
 static void wlan_start_detect_ant(void)
 {
-    int ret;
+    int ret = -1;
     uint32_t ant_mode;
     uint16_t evaluate_time = 0x0;
     uint8_t evaluate_mode = 0xff;
