@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2022, 2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -159,7 +159,10 @@ typedef struct
 /** BSS type : UAP */
 #define BSS_TYPE_UAP 1U
 
-#define UAP_DEFAULT_CHANNEL 0
+#define UAP_DEFAULT_CHANNEL       0
+#define UAP_DEFAULT_BANDWIDTH     2
+#define UAP_DEFAULT_BEACON_PERIOD 100
+#define UAP_DEFAULT_HIDDEN_SSID   0
 
 enum wifi_bss_security
 {
@@ -284,20 +287,21 @@ struct wifi_scan_result2
     uint8_t bssid[MLAN_MAC_ADDR_LENGTH]; /*!< BSSID array */
     bool is_ibss_bit_set;                /*!< Is bssid set? */
 
-    uint8_t ssid[MLAN_MAX_SSID_LENGTH]; /*!< ssid array */
-    int ssid_len;                       /*!< SSID length */
-    uint8_t Channel;                    /*!< Channel associated to the BSSID */
-    uint8_t RSSI;                       /*!< Received signal strength */
-    uint16_t beacon_period;             /*!< Beacon period */
-    uint16_t dtim_period;               /*!< DTIM period */
-    _SecurityMode_t WPA_WPA2_WEP;       /*!< Security mode info */
-    _Cipher_t wpa_mcstCipher;           /*!< WPA multicast cipher */
-    _Cipher_t wpa_ucstCipher;           /*!< WPA unicast cipher */
-    _Cipher_t rsn_mcstCipher;           /*!< No security multicast cipher */
-    _Cipher_t rsn_ucstCipher;           /*!< No security unicast cipher */
-    bool is_pmf_required;               /*!< Is pmf required flag */
-    t_u8 ap_mfpc;                       /*!< MFPC bit of AP */
-    t_u8 ap_mfpr;                       /*!< MFPR bit of AP */
+    uint8_t ssid[MLAN_MAX_SSID_LENGTH];  /*!< ssid array */
+    int ssid_len;                        /*!< SSID length */
+    uint8_t Channel;                     /*!< Channel associated to the BSSID */
+    uint8_t RSSI;                        /*!< Received signal strength */
+    uint16_t beacon_period;              /*!< Beacon period */
+    uint16_t dtim_period;                /*!< DTIM period */
+    _SecurityMode_t WPA_WPA2_WEP;        /*!< Security mode info */
+    _Cipher_t wpa_mcstCipher;            /*!< WPA multicast cipher */
+    _Cipher_t wpa_ucstCipher;            /*!< WPA unicast cipher */
+    _Cipher_t rsn_mcstCipher;            /*!< No security multicast cipher */
+    _Cipher_t rsn_ucstCipher;            /*!< No security unicast cipher */
+    bool is_pmf_required;                /*!< Is pmf required flag */
+    t_u8 ap_mfpc;                        /*!< MFPC bit of AP */
+    t_u8 ap_mfpr;                        /*!< MFPR bit of AP */
+    t_u8 ap_pwe;                         /*!< PWE bit of AP */
 
     /*!<
      **  WPA_WPA2 = 0 => Security not enabled
@@ -316,8 +320,8 @@ struct wifi_scan_result2
     bool phecap_ie_present;
 #endif
 
-    bool wmm_ie_present; /*!< WMM IE present info */
-    uint16_t band;       /*!< Band info */
+    bool wmm_ie_present;                       /*!< WMM IE present info */
+    uint16_t band;                             /*!< Band info */
 
     bool wps_IE_exist;                         /*!< WPS IE exist info */
     uint16_t wps_session;                      /*!< WPS session */
@@ -327,7 +331,7 @@ struct wifi_scan_result2
     uint8_t trans_ssid[MLAN_MAX_SSID_LENGTH];  /*!< Trans ssid array */
     int trans_ssid_len;                        /*!< Trans bssid length */
 #ifdef CONFIG_DRIVER_MBO
-    bool mbo_assoc_disallowed; /*!< MBO disallowed */
+    bool mbo_assoc_disallowed;                 /*!< MBO disallowed */
 #endif
 #ifdef CONFIG_11R
     /** Mobility domain identifier */

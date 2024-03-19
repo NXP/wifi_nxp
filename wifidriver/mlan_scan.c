@@ -536,9 +536,9 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 
 #if defined(RW610) || defined(SD9177)
             wscan_d("Channel: %d Type: %s %d", cfp->channel,
-                    scan_type == MLAN_SCAN_TYPE_PASSIVE ?
-                        "Passive" :
-                        scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" : "Active",
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE           ? "Passive" :
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" :
+                                                                    "Active",
                     cfp->max_tx_power);
 #else
             wscan_d("Channel: %d Type: %s %d", cfp->channel, scan_type == MLAN_SCAN_TYPE_PASSIVE ? "Passive" : "Active",
@@ -917,6 +917,11 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
             break;
         }
 
+        if (pmpriv->media_connected == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks((uint32_t)get_split_scan_delay_ms()));
+        }
+
         if (abort_split_scan)
         {
             abort_split_scan       = false;
@@ -1104,6 +1109,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             if (ssid_len != 0U)
             {
                 ssid_filter = MTRUE;
+                (void)__memcpy(pmadapter, pmpriv->filter_ssid.ssid, puser_scan_in->ssid_list[ssid_idx].ssid,
+                               MIN(MLAN_MAX_SSID_LENGTH, ssid_len));
+                pmpriv->filter_ssid.ssid_len = ssid_len;
             }
         }
 
@@ -1387,9 +1395,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 
 #if defined(RW610) || defined(SD9177)
             wscan_d("Channel: %d Type: %s ", channel,
-                    scan_type == MLAN_SCAN_TYPE_PASSIVE ?
-                        "Passive" :
-                        scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" : "Active");
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE           ? "Passive" :
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" :
+                                                                    "Active");
 #else
             wscan_d("Channel: %d Type: %s ", channel, scan_type == MLAN_SCAN_TYPE_PASSIVE ? "Passive" : "Active");
 #endif
@@ -5342,7 +5350,8 @@ mlan_status wlan_cmd_bgscan_config(IN mlan_private *pmpriv,
     num_probes = (bg_scan_in->num_probes ? bg_scan_in->num_probes : pmadapter->scan_probes);
     if (num_probes)
     {
-        pnum_probes_tlv              = (MrvlIEtypes_NumProbes_t *)tlv;
+        pnum_probes_tlv = (MrvlIEtypes_NumProbes_t *)tlv;
+        // coverity[overrun-local:SUPPRESS]
 		// coverity[overrun-local:SUPPRESS]
         pnum_probes_tlv->header.type = wlan_cpu_to_le16(TLV_TYPE_NUMPROBES);
         pnum_probes_tlv->header.len  = wlan_cpu_to_le16(sizeof(pnum_probes_tlv->num_probes));

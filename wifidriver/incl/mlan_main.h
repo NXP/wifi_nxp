@@ -1383,6 +1383,8 @@ struct _mlan_private
 
     t_u8 ssid_filter;
 
+    /** Filter SSID */
+    mlan_802_11_ssid filter_ssid;
     /** max amsdu size */
     t_u16 max_amsdu;
 #ifdef AMSDU_IN_AMPDU

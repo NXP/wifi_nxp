@@ -3,7 +3,7 @@
  *  @brief This file acts as a glue between legacy wlan code and mlan based wlan
  *  code
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -2062,31 +2062,31 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
                  (!__memcmp(priv->adapter, pvendor_ie->oui, wpa_oui, sizeof(pvendor_ie->oui))) &&
                  (pvendor_ie->oui_type == wpa_oui[3U])) ||
                 (pvendor_ie->element_id == RSN_IE))
-        {
-            /* IE is a WPA/WPA2 IE so call set_wpa function */
-            ret = wlan_set_wpa_ie_helper(priv, ie_data_ptr, ie_len);
+            {
+                /* IE is a WPA/WPA2 IE so call set_wpa function */
+                ret = wlan_set_wpa_ie_helper(priv, ie_data_ptr, ie_len);
 #ifdef CONFIG_WPA_SUPP_WPS
-            priv->wps.session_enable = MFALSE;
+                priv->wps.session_enable = MFALSE;
 #endif /* CONFIG_WPA_SUPP_WPS */
-        }
-        else
+            }
+            else
 #ifdef WAPI
-            if (pvendor_ie->element_id == WAPI_IE)
-        {
-            /* IE is a WAPI IE so call set_wapi function */
-            ret = wlan_set_wapi_ie(priv, ie_data_ptr, ie_len);
-        }
-        else
+                if (pvendor_ie->element_id == WAPI_IE)
+            {
+                /* IE is a WAPI IE so call set_wapi function */
+                ret = wlan_set_wapi_ie(priv, ie_data_ptr, ie_len);
+            }
+            else
 #endif /* WAPI */
 #ifdef ENABLE_HOTSPOT
-            if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) &&
-                (!__memcmp(priv->adapter, pvendor_ie->oui, osen_oui, sizeof(pvendor_ie->oui))) &&
-                (pvendor_ie->oui_type == osen_oui[3U]))
-        {
-            /* IE is a OSEN IE so call set_osen function */
-            ret = wlan_set_osen_ie(priv, ie_data_ptr, ie_len);
-        }
-        else
+                if ((pvendor_ie->element_id == VENDOR_SPECIFIC_221) &&
+                    (!__memcmp(priv->adapter, pvendor_ie->oui, osen_oui, sizeof(pvendor_ie->oui))) &&
+                    (pvendor_ie->oui_type == osen_oui[3U]))
+            {
+                /* IE is a OSEN IE so call set_osen function */
+                ret = wlan_set_osen_ie(priv, ie_data_ptr, ie_len);
+            }
+            else
 #endif
 #ifdef CONFIG_WPA_SUPP_WPS
             if (pvendor_ie->element_id == VENDOR_SPECIFIC_221 &&
@@ -2100,67 +2100,67 @@ static mlan_status wlan_set_gen_ie_helper(mlan_private *priv, t_u8 *ie_data_ptr,
              */
             if (pvendor_ie->len > 4)
             {
-                __memcpy(priv->adapter, (t_u8 *)&priv->wps.wps_ie, ie_data_ptr, ie_len);
+                    __memcpy(priv->adapter, (t_u8 *)&priv->wps.wps_ie, ie_data_ptr, ie_len);
 
-                HEXDUMP("wps_ie", (t_u8 *)&priv->wps.wps_ie, priv->wps.wps_ie.vend_hdr.len + 2);
+                    HEXDUMP("wps_ie", (t_u8 *)&priv->wps.wps_ie, priv->wps.wps_ie.vend_hdr.len + 2);
+                }
+                else
+                {
+                    /* Only wps oui exist, reset driver wps buffer
+                     */
+                    __memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
+                    PRINTM(MINFO, "wps_ie cleared\n");
+                }
             }
             else
+#endif
             {
-                /* Only wps oui exist, reset driver wps buffer
+                /*
+                 * Verify that the passed length is not larger than
+                 * the available space remaining in the buffer
                  */
-                __memset(priv->adapter, (t_u8 *)&priv->wps.wps_ie, 0x00, sizeof(priv->wps.wps_ie));
-                PRINTM(MINFO, "wps_ie cleared\n");
-            }
-        }
-        else
-#endif
-        {
-            /*
-             * Verify that the passed length is not larger than
-             * the available space remaining in the buffer
-             */
-            if (ie_len < (sizeof(priv->gen_ie_buf) - priv->gen_ie_buf_len))
-            {
-#ifdef CONFIG_WPA_SUPP_WPS
-                /* Test to see if it is a WPS IE, if so, enable
-                 * wps session flag */
-                pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
-                if ((pvendor_ie->element_id == WPS_IE) &&
-                    (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
-                    (pvendor_ie->oui_type == wps_oui[3U]))
+                if (ie_len < (sizeof(priv->gen_ie_buf) - priv->gen_ie_buf_len))
                 {
-                    priv->wps.session_enable = MTRUE;
-                    PRINTM(MINFO, "WPS Session Enabled.\n");
-                }
+#ifdef CONFIG_WPA_SUPP_WPS
+                    /* Test to see if it is a WPS IE, if so, enable
+                     * wps session flag */
+                    pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
+                    if ((pvendor_ie->element_id == WPS_IE) &&
+                        (!__memcmp(priv->adapter, pvendor_ie->oui, wps_oui, sizeof(pvendor_ie->oui))) &&
+                        (pvendor_ie->oui_type == wps_oui[3U]))
+                    {
+                        priv->wps.session_enable = MTRUE;
+                        PRINTM(MINFO, "WPS Session Enabled.\n");
+                    }
 #endif
 
 #ifdef CONFIG_WPA_SUPP_WPS
-                /* Test to see if it is a WPSE IE, if so,
-                 * enable wps session flag */
-                pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
-                if ((pvendor_ie->element_id == WPS_IE) &&
-                    (!__memcmp(priv->adapter, pvendor_ie->oui, wpse_oui, sizeof(pvendor_ie->oui))) &&
-                    (pvendor_ie->oui_type == wpse_oui[3U]))
-                {
-                    priv->wps.session_enable = MTRUE;
-                    PRINTM(MINFO, "WPSE Session Enabled.\n");
-                }
+                    /* Test to see if it is a WPSE IE, if so,
+                     * enable wps session flag */
+                    pvendor_ie = (IEEEtypes_VendorHeader_t *)ie_data_ptr;
+                    if ((pvendor_ie->element_id == WPS_IE) &&
+                        (!__memcmp(priv->adapter, pvendor_ie->oui, wpse_oui, sizeof(pvendor_ie->oui))) &&
+                        (pvendor_ie->oui_type == wpse_oui[3U]))
+                    {
+                        priv->wps.session_enable = MTRUE;
+                        PRINTM(MINFO, "WPSE Session Enabled.\n");
+                    }
 #endif
-                /* Append the passed data to the end of
-                 * the genIeBuffer */
-                __memcpy(priv->adapter, priv->gen_ie_buf + priv->gen_ie_buf_len, ie_data_ptr, ie_len);
+                    /* Append the passed data to the end of
+                     * the genIeBuffer */
+                    __memcpy(priv->adapter, priv->gen_ie_buf + priv->gen_ie_buf_len, ie_data_ptr, ie_len);
 
-                /* Increment the stored buffer length by
-                 * the size passed */
-                priv->gen_ie_buf_len += ie_len;
+                    /* Increment the stored buffer length by
+                     * the size passed */
+                    priv->gen_ie_buf_len += ie_len;
+                }
+                else
+                {
+                    /* Passed data does not fit in the
+                     * remaining buffer space */
+                    ret = MLAN_STATUS_FAILURE;
+                }
             }
-            else
-            {
-                /* Passed data does not fit in the
-                 * remaining buffer space */
-                ret = MLAN_STATUS_FAILURE;
-            }
-        }
     }
 
     /* Return MLAN_STATUS_SUCCESS, or MLAN_STATUS_FAILURE for error case */
@@ -5064,7 +5064,7 @@ int wifi_config_bgscan_and_rssi(const char *ssid)
     /* Fill scan config field for bg scan */
     strncpy((char *)pmpriv->scan_cfg.ssid_list[0].ssid, (char *)ssid, MLAN_MAX_SSID_LENGTH);
     pmpriv->scan_cfg.ssid_list[0].ssid[MLAN_MAX_SSID_LENGTH] = '\0';
-    pmpriv->scan_cfg.ssid_list[0].max_len = 0;
+    pmpriv->scan_cfg.ssid_list[0].max_len = 0x00;
     pmpriv->scan_cfg.report_condition     = BG_SCAN_SSID_RSSI_MATCH | BG_SCAN_WAIT_ALL_CHAN_DONE;
     pmpriv->scan_cfg.rssi_threshold       = pmpriv->rssi_low;
     pmpriv->scan_cfg.repeat_count         = DEF_REPEAT_COUNT;
@@ -5749,9 +5749,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
                    wlan_le32_to_cpu(((Event_Radar_Detected_Info *)msg->data)->detect_count),
                    ((Event_Radar_Detected_Info *)msg->data)->reg_domain,
                    ((Event_Radar_Detected_Info *)msg->data)->main_det_type,
-                   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 2) ?
-                       "PRI" :
-                       (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 1) ? "PW" : "");
+                   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 2) ? "PRI" :
+                   (((Event_Radar_Detected_Info *)msg->data)->main_det_type == 1) ? "PW" :
+                                                                                    "");
 
             break;
 #endif
@@ -6124,8 +6124,10 @@ int wrapper_bssdesc_first_set(int bss_index,
                               _Cipher_t *rsn_mcstCipher,
                               _Cipher_t *rsn_ucstCipher,
                               t_u8 *ap_mfpc,
-                              t_u8 *ap_mfpr)
+                              t_u8 *ap_mfpr,
+                              t_u8 *ap_pwe)
 {
+    uint8_t i = WLAN_SUPPORTED_RATES;
     if (bss_index >= (int)mlan_adap->num_in_scan_table)
     {
         wifi_w("Unable to find given entry %d in BSS table", bss_index);
@@ -6181,6 +6183,23 @@ int wrapper_bssdesc_first_set(int bss_index,
         {
             WPA_WPA2_WEP->wepStatic = 1;
         }
+    }
+
+    if ((d->prsnx_ie != MNULL) && (d->prsnx_ie->data[0] & (0x1 << SAE_H2E_BIT)))
+    {
+        *ap_pwe = 2;
+        for (i = WLAN_SUPPORTED_RATES; i > 0; i--)
+        {
+            if (d->data_rates[i] == 0xFB)
+            {
+                *ap_pwe = 1;
+                break;
+            }
+        }
+    }
+    else
+    {
+        *ap_pwe = 0;
     }
 
     return WM_SUCCESS;
@@ -7953,7 +7972,7 @@ void wlan_dot11mc_ftm_cfg(void *p_buf)
     {
         cfg_11mc->civic_tlv.type                     = wlan_cpu_to_le16(FTM_SESSION_CFG_LOCATION_CIVIC_TLV_ID);
         cfg_11mc->civic_tlv.len                      = wlan_cpu_to_le16(sizeof(civic_loc_cfg_t) -
-                                                   sizeof(cfg_11mc->civic_tlv.val.civic_address) + strlen(ftm_address));
+                                                                        sizeof(cfg_11mc->civic_tlv.val.civic_address) + strlen(ftm_address));
         cfg_11mc->civic_tlv.val.civic_address_type   = CIVIC_ADDRESS_TYPE;
         cfg_11mc->civic_tlv.val.civic_location_type  = CIVIC_LOCATION_TYPE;
         cfg_11mc->civic_tlv.val.country_code         = wlan_cpu_to_le16(CIVIC_COUNTRY_CODE);

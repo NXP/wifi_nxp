@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Core WLAN definition
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -380,7 +380,7 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
                                                        },
                                                        BSS_ANY,
                                                        60,
-                                                       153};
+                                                       250};
 
 static os_queue_pool_define(g_wlan_event_queue_data, (int)(sizeof(struct wifi_message) * MAX_EVENTS));
 
@@ -637,6 +637,7 @@ static struct
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
     uint8_t ir_mode;
 #endif
+    bool internal : 1;
 } wlan;
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
@@ -1597,6 +1598,11 @@ static int network_matches_scan_result(const struct wlan_network *network,
         return -WM_FAIL;
     }
 
+    if ((res->ap_pwe != network->security.pwe_derivation) && ((res->ap_pwe | network->security.pwe_derivation) == 1))
+    {
+        wlcm_d("%d: H2E configuration mismatch", res->ap_pwe);
+        return -WM_FAIL;
+    }
 #ifdef CONFIG_DRIVER_MBO
     if (res->mbo_assoc_disallowed)
     {
@@ -2290,7 +2296,10 @@ static int do_stop(struct wlan_network *network)
             CONNECTION_EVENT(WLAN_REASON_UAP_STOP_FAILED, NULL);
             return -WM_FAIL;
         }
-        wlan.uap_state = CM_UAP_INITIALIZING;
+        wlan_uap_set_bandwidth(UAP_DEFAULT_BANDWIDTH);
+        wlan_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
+        wlan_uap_set_hidden_ssid(UAP_DEFAULT_HIDDEN_SSID);
+        wlan.uap_state           = CM_UAP_INITIALIZING;
         wlan.cur_uap_network_idx = -1;
     }
 
@@ -7539,6 +7548,7 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
     wlan.scan_count = 0;
     wlan.cb         = cb;
     wlan.scan_cb    = NULL;
+    wlan.internal = 0;
 
 #ifdef CONFIG_WPA_SUPP
 #ifdef CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE
@@ -10254,6 +10264,29 @@ int wlan_eu_validation(
 
 #endif
 
+#ifdef CONFIG_EU_VALIDATION
+
+int wlan_eu_validation(
+    eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len)
+{
+    uint8_t cmd_eu_buf[] = { 0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, option, 0 };
+
+    if (option < EU_GCMP_128_ENC || option > EU_OPTION_MAX)
+    {
+        return -WM_E_INVAL;
+    }
+
+    if (!wlan_is_started())
+    {
+        (void)PRINTF("eu validation is not allowed when WIFI is disabled\r\n");
+        return -WM_FAIL;
+    }
+
+    return wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf), resp_buf, resp_buf_size, reqd_len);
+}
+
+#endif // CONFIG_EU_VALIDATION
+
 #ifdef CONFIG_NCP_BRIDGE
 int wlan_stop_all_networks(void)
 {
@@ -10427,6 +10460,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 
     res->ap_mfpc = desc->ap_mfpc;
     res->ap_mfpr = desc->ap_mfpr;
+    res->ap_pwe = desc->ap_pwe;
 
     return WM_SUCCESS;
 }
@@ -14940,9 +14974,15 @@ int wlan_set_country_code(const char *alpha2)
     char country_code[COUNTRY_CODE_LEN] = {0};
 #ifndef RW610
     char region_code[COUNTRY_CODE_LEN] = {0};
-    const char *wlan_region_code = NULL;
+    const char *wlan_region_code       = NULL;
 
     wlan_region_code = wlan_get_wlan_region_code();
+
+    if ((wlan.internal == 0) && (strncmp(alpha2, "WW", 2) != 0))
+    {
+        wlcm_d("%s: Not supported country code.", alpha2);
+        return -WM_FAIL;
+    }
 
     region_code[0] = alpha2[0];
     region_code[1] = alpha2[1];

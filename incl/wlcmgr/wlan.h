@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -699,7 +699,7 @@ enum wlan_monitor_opt
 /* Measurement freq in Hz to calculate measurement interval*/
 #define AZ_MEASUREMENT_FREQ       10 /* in 0.1 Hz increments */
 #define AZ_NUMBER_OF_MEASUREMENTS 6
-#define I2R_LMR_FEEDBACK          2 /* allow RSTA to request I2R reporting */
+#define I2R_LMR_FEEDBACK          2  /* allow RSTA to request I2R reporting */
 
 #define FOR_RANGING 0
 
@@ -827,6 +827,8 @@ struct wlan_scan_result
     t_u8 ap_mfpc;
     /** MFPR bit of AP*/
     t_u8 ap_mfpr;
+    /** PWE bit of AP*/
+    t_u8 ap_pwe;
 
 #ifdef CONFIG_11K
     /** Neigbort report support (For internal use only)*/
@@ -2293,6 +2295,7 @@ void wlan_reset(cli_reset_option ResetOption);
  *  \return WM_SUCCESS if successful.
  */
 int wlan_remove_all_networks(void);
+
 /**
  * This API destroy all tasks.
  */

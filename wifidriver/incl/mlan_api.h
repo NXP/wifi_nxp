@@ -2,7 +2,7 @@
  *
  *  @brief MLAN Interface
  *
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2022, 2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -499,7 +499,8 @@ int wrapper_bssdesc_first_set(int bss_index,
                               _Cipher_t *rsn_mcstCipher,
                               _Cipher_t *rsn_ucstCipher,
                               t_u8 *ap_mfpc,
-                              t_u8 *ap_mfpr);
+                              t_u8 *ap_mfpr,
+                              t_u8 *ap_pwe);
 
 int wrapper_bssdesc_second_set(int bss_index,
                                bool *phtcap_ie_present,

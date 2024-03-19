@@ -266,7 +266,7 @@ typedef struct _IMUPkt
 
 static uint8_t rx_buf[BUF_LEN];
 static cmd_header last_cmd_hdr;
-uint8_t local_outbuf[SDIO_OUTBUF_LEN];
+static uint8_t local_outbuf[BUF_LEN];
 
 #if defined(MIMXRT1176_cm7_SERIES)
 lpspi_master_config_t spiConfig;
