@@ -10917,12 +10917,9 @@ static void test_wlan_get_temperature(int argc, char **argv)
 static void dump_wlan_auto_null_tx_usage(void)
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("    wlan-auto-null-tx start interval <interval> dst_mac <dst_mac>\r\n");
+    (void)PRINTF("    wlan-auto-null-tx start interval <interval>\r\n");
     (void)PRINTF("        <interval> bit15:14 unit: 00-s 01-us 10-ms 11-one_shot  bit13-0: interval\r\n");
     (void)PRINTF("                   Please set interval Hexadecimal value. For example: 0x8064\r\n");
-    (void)PRINTF("        <dst_mac> Destination MAC address\r\n");
-    (void)PRINTF("                  Please specify dst_mac if not connected to AP\r\n");
-    (void)PRINTF("                  If connected to AP, no need to input dst_mac\r\n");
     (void)PRINTF("    wlan-auto-null-tx stop\r\n");
 }
 
@@ -10978,23 +10975,7 @@ static void test_wlan_auto_null_tx(int argc, char **argv)
         }
         else
         {
-            if (string_equal("dst_mac", argv[arg]))
-            {
-                ret = get_mac(argv[arg + 1], (char *)&auto_null_tx.dst_mac, ':');
-                if (ret != 0)
-                {
-                    dump_wlan_auto_null_tx_usage();
-                    (void)PRINTF("Error: invalid dst_mac argument\r\n");
-                    return;
-                }
-                arg += 2;
-            }
-            else
-            {
-                (void)PRINTF("Error: argument %d is invalid\r\n", arg);
-                dump_wlan_auto_null_tx_usage();
-                return;
-            }
+            (void)PRINTF("Error: not conneted AP\r\n");
         }
     }
     else if (string_equal("stop", argv[1]))
