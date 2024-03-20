@@ -726,8 +726,6 @@ int main(void)
     usb_init();
 #endif
 
-    sys_thread_new("main", task_main, NULL, TASK_MAIN_STACK_SIZE, TASK_MAIN_PRIO);
-
     (void)OSA_TaskCreate((osa_task_handle_t)main_task_Handle, OSA_TASK(main_task), NULL);
 
     OSA_Start();
