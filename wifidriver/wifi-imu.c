@@ -1578,9 +1578,6 @@ void mlan_deinit_wakeup_irq()
 #ifndef __ZEPHYR__
     NVIC_DisableIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
     NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
-#else
-    irq_disable(WL_MCI_WAKEUP_DONE0_IRQn);
-    NVIC_ClearPendingIRQ(WL_MCI_WAKEUP_DONE0_IRQn);
 #endif
 }
 
