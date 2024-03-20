@@ -267,13 +267,6 @@ static void deliver_packet_above(RxPD *rxpd, struct pbuf *p, int recv_interface)
                 wps_rx_callback(p->payload, p->len);
 #endif /* CONFIG_WPS2 */
 
-#if 0
-            if (l2_packet_rx_callback)
-            {
-                p->if_idx = recv_interface;
-                l2_packet_rx_callback(p);
-            }
-#endif /* CONFIG_WPA_SUPP */
             (void)pbuf_free(p);
             p = NULL;
             break;
