@@ -15317,11 +15317,8 @@ int wlan_set_country_code(const char *alpha2)
 
     if (strstr(wlan_region_code, region_code) == NULL)
     {
-        if (strstr(wlan_region_code, "WW") == NULL)
-        {
-            wlcm_d("%s: Specific region is configured, reconfig not allowed", wlan_region_code);
-            return -WM_FAIL;
-        }
+        wlcm_d("Region %s is configured, re-config not allowed", wlan_region_code);
+        return -WM_FAIL;
     }
 #endif
 
@@ -15874,4 +15871,3 @@ char *wlan_string_dup(const char *s)
         (void)strcpy(snew, s);
     return snew;
 }
-
