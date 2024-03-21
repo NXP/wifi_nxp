@@ -49,7 +49,6 @@ void sm_printf(const char *str, ...)
 void NewClient(void *pvParameters);
 void SocketTelnetServer(void *pvParameters)
 {
-
     int sockfd, newsockfd, clilen;
     struct sockaddr_in serv_addr, cli_addr;
     err_t err;
@@ -110,7 +109,7 @@ void SocketTelnetServer(void *pvParameters)
 
         if (newsockfd > 0)
         {
-            if (sys_thread_new("NewClient", NewClient, (void *)&newsockfd, 2048, 1) == NULL)
+            if (sys_thread_new("NewClient", NewClient, (void *)&newsockfd, 512, 1) == NULL)
             {
                 lwip_close(newsockfd);
             }
@@ -131,7 +130,6 @@ void NewClient(void *pvParameters)
     static char pcOutputString[MAX_OUTPUT_LENGTH],
         pcInputString[MAX_INPUT_LENGTH]; // The input and output buffers are declared static to keep them off the stack.
     int ret;
-
 
     // Empty initial trash
     nbytes = lwip_read(clientfd, buffer, sizeof(buffer));
@@ -221,6 +219,5 @@ void NewClient(void *pvParameters)
     } while (nbytes > 0);
 
     lwip_close(clientfd);
-
 }
 #endif
