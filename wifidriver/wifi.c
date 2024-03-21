@@ -62,7 +62,7 @@ extern wifi_ecsa_status_control ecsa_status_control;
 #define CONFIG_WIFI_CORE_STACK_SIZE (2048)
 #endif
 
-#define MAX_MCAST_LEN               (MLAN_MAX_MULTICAST_LIST_SIZE * MLAN_MAC_ADDR_LENGTH)
+#define MAX_MCAST_LEN (MLAN_MAX_MULTICAST_LIST_SIZE * MLAN_MAC_ADDR_LENGTH)
 #ifdef CONFIG_WiFi_878x
 #define MAX_WAIT_TIME 20
 #else
@@ -1152,7 +1152,6 @@ void wlan_process_hang(uint8_t fw_reload)
 #ifdef CONFIG_WIFI_IND_RESET
     wifi_ind_reset_unlock();
 #endif
-
 }
 #endif
 
@@ -2071,7 +2070,7 @@ static int wifi_core_init(void)
         goto fail;
     }
 #endif
-	
+
     wm_wifi.wifi_core_init_done = 1;
 
 #ifdef CONFIG_WMM
@@ -2385,7 +2384,6 @@ static int wifi_reinit(uint8_t fw_reload)
 #ifndef RW610
 int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 {
-
     if (wm_wifi.wifi_init_done != 0U)
     {
         return WM_SUCCESS;
@@ -2431,7 +2429,6 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
     if (ret == WM_SUCCESS)
     {
         wm_wifi.wifi_init_done = 1;
-
     }
 #ifndef RW610
     ret = (int)sd_wifi_post_init(WLAN_TYPE_FCC_CERTIFICATION);
@@ -2448,7 +2445,6 @@ int wifi_init_fcc(const uint8_t *fw_start_addr, const size_t size)
 
 void wifi_deinit(void)
 {
-
     if (wm_wifi.wifi_init_done == 0U)
     {
         return;
@@ -3053,8 +3049,10 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                 if (priv->curr_bss_params.host_mlme)
                 {
                     t_u8 zero_mac[MLAN_MAC_ADDR_LENGTH] = {0};
-                    if (memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,MLAN_MAC_ADDR_LENGTH)
-                        && memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,MLAN_MAC_ADDR_LENGTH))
+                    if (memcmp(pieee_pkt_hdr->addr3, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                               MLAN_MAC_ADDR_LENGTH) &&
+                        memcmp(zero_mac, (t_u8 *)priv->curr_bss_params.bss_descriptor.mac_address,
+                               MLAN_MAC_ADDR_LENGTH))
                     {
                         wifi_d("Dropping Deauth frame from other bssid: type=%d " MACSTR "\r\n", sub_type,
                                MAC2STR(pieee_pkt_hdr->addr3));
@@ -4164,6 +4162,10 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
 #define RATEID_VHT_MCS9_1SS_BW40 50
 #define RATEID_VHT_MCS9_1SS_BW20 40
 
+#define RATEID_HE_MCS9_1SS_BW80 94
+#define RATEID_HE_MCS8_1SS_BW40 81
+#define RATEID_HE_MCS7_1SS_BW20 68
+
 static int wlan_is_tcp_ack(mlan_private *priv, const t_u8 *pmbuf)
 {
     eth_hdr *ethh = NULL;
@@ -4356,22 +4358,44 @@ int wifi_low_level_output(const t_u8 interface,
                 tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
         }
     }
-    else if ((interface == MLAN_BSS_TYPE_UAP) &&
-             ((mlan_adap->usr_dot_11ax_enable == MTRUE) || (mlan_adap->usr_dot_11ac_enable == MTRUE)))
+    else if (interface == MLAN_BSS_TYPE_UAP)
     {
         ret = wlan_is_tcp_ack(pmpriv, buffer);
         if (ret)
         {
             if (wm_wifi.bandwidth == BANDWIDTH_80MHZ)
             {
-                tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                if (mlan_adap->usr_dot_11ax_enable == MTRUE)
+                {
+                    tx_control = (RATEID_HE_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                }
+                else if (mlan_adap->usr_dot_11ac_enable == MTRUE)
+                {
+                    tx_control = (RATEID_VHT_MCS9_1SS_BW80 << 16) | TXPD_TXRATE_ENABLE;
+                }
             }
             else if (wm_wifi.bandwidth == BANDWIDTH_40MHZ)
             {
-                tx_control = (RATEID_VHT_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                if (mlan_adap->usr_dot_11ax_enable == MTRUE)
+                {
+                    tx_control = (RATEID_HE_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                }
+                else if (mlan_adap->usr_dot_11ac_enable == MTRUE)
+                {
+                    tx_control = (RATEID_VHT_MCS8_1SS_BW40 << 16) | TXPD_TXRATE_ENABLE;
+                }
             }
             else if (wm_wifi.bandwidth == BANDWIDTH_20MHZ)
-                tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+            {
+                if (mlan_adap->usr_dot_11ax_enable == MTRUE)
+                {
+                    tx_control = (RATEID_HE_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+                }
+                else if (mlan_adap->usr_dot_11ac_enable == MTRUE)
+                {
+                    tx_control = (RATEID_VHT_MCS7_1SS_BW20 << 16) | TXPD_TXRATE_ENABLE;
+                }
+            }
         }
     }
 #endif /** CONFIG_TCP_ACK_ENH */
