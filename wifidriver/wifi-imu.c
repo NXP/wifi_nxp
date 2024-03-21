@@ -478,7 +478,11 @@ mlan_status wlan_handle_cmd_resp_packet(t_u8 *pmbuf)
 #ifdef RW610
             t_u32 fw_cap_ext_rw610;
             fw_cap_ext_rw610     = mlan_adap->priv[0]->adapter->fw_cap_ext;
+#ifndef CONFIG_CUSTOM_CALDATA
             cal_data_valid_rw610 = (((fw_cap_ext_rw610 & 0x0800) == 0) ? 0 : 1);
+#else
+            cal_data_valid_rw610 = 0;
+#endif
 #endif
             break;
         case HostCmd_CMD_VERSION_EXT:
