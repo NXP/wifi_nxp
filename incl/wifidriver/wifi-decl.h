@@ -1930,6 +1930,7 @@ typedef PACK_START struct _wifi_csi_filter_t
 /** Structure of CSI parameters */
 typedef PACK_START struct _wifi_csi_config_params_t
 {
+    t_u8 bss_type;
     /** CSI enable flag. 1: enable, 2: disable */
     t_u16 csi_enable;
     /** Header ID*/

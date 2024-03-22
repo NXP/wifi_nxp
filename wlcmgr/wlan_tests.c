@@ -43,6 +43,7 @@ static uint8_t broadcast_mac[MLAN_MAC_ADDR_LENGTH] = {0xff, 0xff, 0xff, 0xff, 0x
 
 #ifdef CONFIG_CSI
 wlan_csi_config_params_t g_csi_params = {
+    .bss_type           = 0,
     .csi_enable         = 1,
     .head_id            = 0x00010203,
     .tail_id            = 0x00010203,
@@ -7669,6 +7670,10 @@ static void dump_wlan_csi_filter_usage()
 void dump_csi_param_header()
 {
     (void)PRINTF("\r\nThe current csi_param is: \r\n");
+    if (g_csi_params.bss_type == 0)
+        (void)PRINTF("bss_type      : sta\r\n");
+    else
+        (void)PRINTF("bss_type      : uap\r\n");
     (void)PRINTF("csi_enable    : %d \r\n", g_csi_params.csi_enable);
     (void)PRINTF("head_id       : %d \r\n", g_csi_params.head_id);
     (void)PRINTF("tail_id       : %d \r\n", g_csi_params.tail_id);
@@ -7682,7 +7687,8 @@ void dump_csi_param_header()
     (void)PRINTF("\r\n");
 }
 
-void set_csi_param_header(t_u16 csi_enable,
+void set_csi_param_header(t_u8 bss_type,
+                          t_u16 csi_enable,
                           t_u32 head_id,
                           t_u32 tail_id,
                           t_u8 chip_id,
@@ -7691,6 +7697,7 @@ void set_csi_param_header(t_u16 csi_enable,
                           t_u8 csi_monitor_enable,
                           t_u8 ra4us)
 {
+    g_csi_params.bss_type           = bss_type;
     g_csi_params.csi_enable         = csi_enable;
     g_csi_params.head_id            = head_id;
     g_csi_params.tail_id            = tail_id;
@@ -7779,6 +7786,7 @@ int csi_data_recv_user(void *buffer, size_t data_len)
 
 static void test_wlan_set_csi_param_header(int argc, char **argv)
 {
+    t_u8 bss_type           = 0;
     t_u16 csi_enable        = 0;
     t_u32 head_id           = 0;
     t_u32 tail_id           = 0;
@@ -7789,11 +7797,11 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
     t_u8 ra4us              = 0;
     int ret                 = -1;
 
-    if (argc != 9)
+    if (argc != 10)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
         (void)PRINTF(
-            "Usage: %s <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
+            "Usage: %s <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> "
             "<ra4us>\r\n\r\n",
             argv[0]);
 
@@ -7816,7 +7824,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
             "us or other\r\n");
 
         (void)PRINTF("\r\nUsage example : \r\n");
-        (void)PRINTF("wlan-set-csi-param-header 1 66051 66051 170 0 11 1 1\r\n");
+        (void)PRINTF("wlan-set-csi-param-header sta 1 66051 66051 170 0 11 1 1\r\n");
 
         dump_csi_param_header();
 
@@ -7829,14 +7837,23 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
      * User could configure these fields and used these fields to parse CSI event buffer and do verification.
      * All the CSI filters share the same CSI param header.
      */
-    csi_enable         = (t_u16)atoi(argv[1]);
-    head_id            = (t_u32)atoi(argv[2]);
-    tail_id            = (t_u32)atoi(argv[3]);
-    chip_id            = (t_u8)atoi(argv[4]);
-    band_config        = (t_u8)atoi(argv[5]);
-    channel            = (t_u8)atoi(argv[6]);
-    csi_monitor_enable = (t_u8)atoi(argv[7]);
-    ra4us              = (t_u8)atoi(argv[8]);
+    if (string_equal("sta", argv[1]))
+        bss_type = 0;
+    else if (string_equal("uap", argv[1]))
+        bss_type = 1;
+    else
+    {
+        PRINTF("Please put sta or uap\r\n");
+        return;
+    }
+    csi_enable         = (t_u16)atoi(argv[2]);
+    head_id            = (t_u32)atoi(argv[3]);
+    tail_id            = (t_u32)atoi(argv[4]);
+    chip_id            = (t_u8)atoi(argv[5]);
+    band_config        = (t_u8)atoi(argv[6]);
+    channel            = (t_u8)atoi(argv[7]);
+    csi_monitor_enable = (t_u8)atoi(argv[8]);
+    ra4us              = (t_u8)atoi(argv[9]);
 
     if (csi_enable == 1)
     {
@@ -7847,7 +7864,7 @@ static void test_wlan_set_csi_param_header(int argc, char **argv)
         }
     }
 
-    set_csi_param_header(csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
+    set_csi_param_header(bss_type, csi_enable, head_id, tail_id, chip_id, band_config, channel, csi_monitor_enable, ra4us);
 }
 
 static void test_wlan_set_csi_filter(int argc, char **argv)
@@ -12007,7 +12024,7 @@ static struct cli_command tests[] = {
 #ifdef CONFIG_CSI
     {"wlan-csi-cfg", NULL, test_wlan_csi_cfg},
     {"wlan-set-csi-param-header",
-     " <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
+     " <sta/uap> <csi_enable> <head_id> <tail_id> <chip_id> <band_config> <channel> <csi_monitor_enable> <ra4us>",
      test_wlan_set_csi_param_header},
     {"wlan-set-csi-filter", "<opt> <macaddr> <pkt_type> <type> <flag>", test_wlan_set_csi_filter},
 #endif

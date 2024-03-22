@@ -5955,7 +5955,10 @@ int wifi_csi_cfg(wifi_csi_config_params_t *csi_params)
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    cmd->seq_num = 0x0;
+    if (csi_params->bss_type == BSS_TYPE_UAP)
+        cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_UAP);
+    else
+        cmd->seq_num = 0x0;
     cmd->result  = 0x0;
 
     mlan_status rv = wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_CSI,
