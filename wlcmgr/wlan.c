@@ -9915,6 +9915,24 @@ int wlan_connect(char *name)
         if (wlan.networks[i].name[0] != '\0' && strlen(wlan.networks[i].name) == len &&
             !strncmp(wlan.networks[i].name, name, len))
         {
+            switch (wlan.networks[i].role)
+            {
+                case MLAN_BSS_ROLE_UAP:
+                    wlcm_e("Invalid bss role. Bss role is uap.");
+                    ret = WLAN_ERROR_PARAM;
+                    break;
+                case MLAN_BSS_ROLE_ANY:
+                    wlcm_e("Invalid bss role. Bss role is any.");
+                    ret = WLAN_ERROR_PARAM;
+                    break;
+                default:
+                    ret = WLAN_ERROR_NONE;
+                    break;
+            }
+
+            if(ret != WLAN_ERROR_NONE)
+                return ret;
+
             wlcm_d("taking the scan lock (connect scan)");
             dbg_lock_info();
             ret = OSA_SemaphoreWait((osa_semaphore_handle_t)wlan.scan_lock, osaWaitForever_c);
