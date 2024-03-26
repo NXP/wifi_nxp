@@ -5232,7 +5232,9 @@ int wifi_handle_fw_event(struct bus_message *msg)
 {
     mlan_private *pmpriv     = (mlan_private *)mlan_adap->priv[0];
     mlan_private *pmpriv_uap = (mlan_private *)mlan_adap->priv[1];
-
+#ifdef CONFIG_WMM_UAPSD
+    t_u8 tx_lock_flag_org = 0;
+#endif
 #ifdef CONFIG_EXT_SCAN_SUPPORT
     mlan_status rv = MLAN_STATUS_SUCCESS;
 #endif
@@ -5377,19 +5379,21 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 PRINTM(MEVENT, "PPS/UAPSD mode activated\n");
             }
 
-            t_u8 tx_lock_flag_org = pmpriv->adapter->tx_lock_flag;
+            tx_lock_flag_org = pmpriv->adapter->tx_lock_flag;
 
             if (pmpriv->adapter->pps_uapsd_mode)
             {
                 OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
+                /* For the continous 0xA event handling case, wifi_driver_tx task
+                 * is not allowed to send packets until the last 0xA is processed */
+                pmpriv->adapter->tx_lock_flag = MTRUE;
                 /* As the wifi_driver task has priority of 3, so sleep 1ms to yield to the CMD sending task */
                 OSA_TimeDelay(1);
             }
 
-            /* If original tx_lock_flag is false, and last packet is sent during
-             * 1 ms sleep, we don't change the tx_lock_flag to false again,
-             * to avoid sending two last packets to FW in one sleep period */
-            if (!(tx_lock_flag_org == MFALSE && pmpriv->adapter->tx_lock_flag == MTRUE))
+            /* If original tx_lock_flag is false, we don't change the tx_lock_flag to
+             * false again, to avoid sending two last packets to FW in one sleep period */
+            if (tx_lock_flag_org == MTRUE)
             {
                 pmpriv->adapter->tx_lock_flag = MFALSE;
             }
