@@ -6627,9 +6627,9 @@ static void dump_wlan_set_antcfg_usage(void)
     (void)PRINTF("\t           If not specified, default value is 6000 milli seconds\r\n");
 #ifdef RW610
     (void)PRINTF("\t<evaluate_mode>: \r\n");
-    (void)PRINTF("\t           0: PCB Ant. + Ext Ant0\r\n");
-    (void)PRINTF("\t           1: Ext Ant0 + Ext Ant1\r\n");
-    (void)PRINTF("\t           2: PCB Ant. + Ext Ant1\r\n");
+    (void)PRINTF("\t           0: Ant1 + Ant2\r\n");
+    (void)PRINTF("\t           1: Ant2 + Ant3\r\n");
+    (void)PRINTF("\t           2: Ant1 + Ant3\r\n");
 #endif
     (void)PRINTF("Examples:\r\n");
     (void)PRINTF("wlan-set-antcfg 1\r\n");
@@ -6781,18 +6781,18 @@ static void wlan_antcfg_get(int argc, char *argv[])
             (void)PRINTF("Evaluate time : %d\r\n", evaluate_time);
 #ifdef RW610
             if (evaluate_mode == 0)
-                (void)PRINTF("Evaluate mode : PCB Ant + Ext Ant0\r\n");
+                (void)PRINTF("Evaluate mode : Ant1 + Ant2\r\n");
             if (evaluate_mode == 1)
-                (void)PRINTF("Evaluate mode : Ext Ant0 + Ext Ant1\r\n");
+                (void)PRINTF("Evaluate mode : Ant2 + Ant3\r\n");
             if (evaluate_mode == 2)
-                (void)PRINTF("Evaluate mode : PCB Ant. + Ext Ant1\r\n");
+                (void)PRINTF("Evaluate mode : Ant1 + Ant3\r\n");
             if (evaluate_mode == 0xFF)
                 (void)PRINTF("Default diversity mode.\r\n");
 #endif
         }
         if (current_antenna > 0)
         {
-            (void)PRINTF("Current antenna is %d\n", current_antenna);
+            (void)PRINTF("Current antenna is Ant%d\n", current_antenna);
         }
     }
     else
