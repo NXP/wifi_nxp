@@ -5106,6 +5106,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
     else if (strstr(buf, WPA_EVENT_DISCONNECTED))
     {
         wlcm_process_disconnected();
+        wlan_handle_disconnect_event(mlan_adap->priv[0]);
     }
     else if (strstr(buf, WPA_EVENT_NETWORK_NOT_FOUND))
     {
