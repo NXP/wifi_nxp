@@ -3373,7 +3373,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
 void wifi_is_wpa_supplicant_input(const uint8_t interface, const uint8_t *buffer, const uint16_t len)
 {
     mlan_private *priv           = (mlan_private *)mlan_adap->priv[interface];
-    RxPD *prx_pd                 = (RxPD *)(void *)((t_u8 *)buffer);
+    RxPD *prx_pd                 = (RxPD *)(void *)((t_u8 *)buffer + INTF_HEADER_LEN);
     wlan_mgmt_pkt *pmgmt_pkt_hdr = MNULL;
 
     /* Check if this is mgmt packet and needs to
