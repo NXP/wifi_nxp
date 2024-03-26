@@ -4122,6 +4122,11 @@ static void wifi_drv_tx_task(osa_task_param_t arg)
                         {
                             pmadapter->tx_lock_flag = MTRUE;
                         }
+                        else
+                        {
+                            OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
+                            pmadapter->tx_lock_flag = MFALSE;
+                        }
                     }
                     else
                     {

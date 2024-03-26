@@ -5377,13 +5377,23 @@ int wifi_handle_fw_event(struct bus_message *msg)
                 PRINTM(MEVENT, "PPS/UAPSD mode activated\n");
             }
 
+            t_u8 tx_lock_flag_org = pmpriv->adapter->tx_lock_flag;
+
             if (pmpriv->adapter->pps_uapsd_mode)
             {
                 OSA_SemaphorePost((osa_semaphore_handle_t)uapsd_sem);
                 /* As the wifi_driver task has priority of 3, so sleep 1ms to yield to the CMD sending task */
                 OSA_TimeDelay(1);
             }
-            pmpriv->adapter->tx_lock_flag = MFALSE;
+
+            /* If original tx_lock_flag is false, and last packet is sent during
+             * 1 ms sleep, we don't change the tx_lock_flag to false again,
+             * to avoid sending two last packets to FW in one sleep period */
+            if (!(tx_lock_flag_org == MFALSE && pmpriv->adapter->tx_lock_flag == MTRUE))
+            {
+                pmpriv->adapter->tx_lock_flag = MFALSE;
+            }
+
             if (pmpriv->adapter->pps_uapsd_mode && pmpriv->media_connected && pmpriv->adapter->gen_null_pkt &&
                 wifi_check_no_packet_indication(pmpriv))
             {
