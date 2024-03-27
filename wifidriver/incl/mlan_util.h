@@ -90,7 +90,10 @@ static INLINE t_void util_free_list_head(t_void *pmoal_handle,
 {
     phead->pprev = phead->pnext = MNULL;
 
-    (void)moal_free_lock(pmoal_handle, phead->plock);
+    if (phead->plock != MNULL && moal_free_lock != MNULL)
+    {
+        (void)moal_free_lock(pmoal_handle, phead->plock);
+    }
 }
 
 /**
