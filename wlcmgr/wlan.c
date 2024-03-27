@@ -15507,7 +15507,7 @@ int wlan_set_indrst_cfg(const wlan_indrst_cfg_t *indrst_cfg)
 
 int wlan_get_indrst_cfg(wlan_indrst_cfg_t *indrst_cfg)
 {
-       return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
+    return wifi_get_indrst_cfg(indrst_cfg, (mlan_bss_type)WLAN_BSS_TYPE_STA);
 }
 
 static int wlan_trigger_oob_ind_reset()

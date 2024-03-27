@@ -8445,57 +8445,35 @@ int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_t
             req.bss_index = (t_u32)MLAN_BSS_TYPE_STA;
             ret           = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
         }
-
-        wm_wifi.cmd_resp_ioctl = NULL;
-        return ret;
     }
 
-    int wifi_get_indrst_cfg(wifi_indrst_cfg_t * indrst_cfg, mlan_bss_type bss_type)
+    wm_wifi.cmd_resp_ioctl = NULL;
+    return ret;
+}
+
+int wifi_get_indrst_cfg(wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
+{
+    int ret;
+    mlan_ds_misc_cfg misc;
+    mlan_ioctl_req req;
+    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
+    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
+
+    misc.sub_command = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
+
+    wm_wifi.cmd_resp_ioctl = &req;
+    req.pbuf               = (t_u8 *)&misc;
+    req.buf_len            = sizeof(mlan_ds_misc_cfg);
+    req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
+    req.action             = MLAN_ACT_GET;
+
+    ret                    = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
+    wm_wifi.cmd_resp_ioctl = NULL;
+
+    if (ret == WM_SUCCESS)
     {
-        int ret;
-        mlan_ds_misc_cfg misc;
-        mlan_ioctl_req req;
-        (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
-        (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-
-        misc.sub_command = (t_u32)MLAN_OID_MISC_IND_RST_CFG;
-
-        wm_wifi.cmd_resp_ioctl = &req;
-        req.pbuf               = (t_u8 *)&misc;
-        req.buf_len            = sizeof(mlan_ds_misc_cfg);
-        req.req_id             = (t_u32)MLAN_IOCTL_MISC_CFG;
-        req.action             = MLAN_ACT_GET;
-
-        ret                    = (int)wlan_ops_sta_ioctl(mlan_adap, &req);
-        wm_wifi.cmd_resp_ioctl = NULL;
-
-        if (ret == WM_SUCCESS)
-        {
-            indrst_cfg->ir_mode  = misc.param.ind_rst_cfg.ir_mode;
-            indrst_cfg->gpio_pin = misc.param.ind_rst_cfg.gpio_pin;
-        }
-        return ret;
-    }
-
-    int wifi_test_independent_reset()
-    {
-        wifi_get_command_lock();
-        HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
-
-        HostCmd_DS_IND_RST ind;
-        /** Action */
-        ind.action = 0;
-        /** CMD_SUBID */
-        ind.sub_id = 0x117;
-        (void)memset(cmd, 0x00, sizeof(HostCmd_DS_COMMAND));
-        cmd->seq_num = HostCmd_SET_SEQ_NO_BSS_INFO(0 /* seq_num */, 0 /* bss_num */, BSS_TYPE_STA);
-        cmd->result  = 0x0;
-        cmd->command = wlan_cpu_to_le16(HostCmd_CMD_DBGS_CFG);
-        cmd->size    = sizeof(HostCmd_DS_IND_RST) + S_DS_GEN;
-        (void)memcpy(&cmd->params.ind_rst, &ind, sizeof(HostCmd_DS_IND_RST));
-
-        wifi_wait_for_cmdresp(NULL);
-        return WM_SUCCESS;
+        indrst_cfg->ir_mode  = misc.param.ind_rst_cfg.ir_mode;
+        indrst_cfg->gpio_pin = misc.param.ind_rst_cfg.gpio_pin;
     }
     return ret;
 }

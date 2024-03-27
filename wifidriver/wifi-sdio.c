@@ -193,12 +193,12 @@ void wifi_sdio_unlock(void)
 #ifdef CONFIG_WIFI_IND_RESET
 int wifi_ind_reset_lock(void)
 {
-    return os_mutex_get(&ind_reset_mutex, OS_WAIT_FOREVER);
+    return OSA_MutexLock((osa_mutex_handle_t)ind_reset_mutex, osaWaitForever_c);
 }
 
 void wifi_ind_reset_unlock(void)
 {
-    (void)os_mutex_put(&ind_reset_mutex);
+    (void)OSA_MutexUnlock((osa_mutex_handle_t)txrx_mutex);
 }
 #endif
 
@@ -3007,13 +3007,15 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
 
     if (fw_reload == FW_RELOAD_NO_EMULATION)
     {
-        int sta = (int)os_enter_critical_section();
+        OSA_SR_ALLOC();
+        OSA_ENTER_CRITICAL();
+
         /* Allow interrupt handler to deliver us a packet */
         g_txrx_flag = false;
 
         sdio_disable_interrupt();
 
-        os_exit_critical_section((unsigned long)sta);
+        OSA_EXIT_CRITICAL();
 
         sdio_ioport_init();
     }
@@ -3024,13 +3026,14 @@ mlan_status sd_wifi_reinit(enum wlan_type type, const uint8_t *fw_start_addr, co
     {
         if (fw_reload == FW_RELOAD_NO_EMULATION)
         {
-            int sta = (int)os_enter_critical_section();
+            OSA_SR_ALLOC();
+            OSA_ENTER_CRITICAL();
             /* Allow interrupt handler to deliver us a packet */
             g_txrx_flag = true;
 
             sdio_enable_interrupt();
 
-            os_exit_critical_section((unsigned long)sta);
+            OSA_ENTER_CRITICAL();
         }
     }
 
