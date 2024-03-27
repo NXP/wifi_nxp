@@ -8351,6 +8351,7 @@ void wifi_cau_temperature_enable()
     val &= ~(0xC);
     val |= (2 << 2);
     WIFI_WRITE_REG32(WLAN_CAU_ENABLE_ADDR, val);
+    OSA_TimeDelay(1);
 }
 
 int32_t wifi_get_temperature(void)
@@ -8387,12 +8388,13 @@ int32_t wifi_get_temperature(void)
     return val;
 }
 
-void wifi_cau_temperature_write_to_firmware()
+int wifi_cau_temperature_write_to_firmware()
 {
     int32_t val = 0;
 
     val = wifi_get_temperature();
     WIFI_WRITE_REG32(WLAN_CAU_TEMPERATURE_FW_ADDR, val);
+    return val;
 }
 #endif
 
