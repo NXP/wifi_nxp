@@ -90,7 +90,9 @@ err_t lwip_netif_uap_init(struct netif *netif);
 err_t lwip_netif_wfd_init(struct netif *netif);
 #endif
 #ifndef CONFIG_WIFI_RX_REORDER
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 void *wifi_get_rxbuf_desc(t_u16 rx_len);
+#endif
 void handle_data_packet(const t_u8 interface, const t_u8 *rcvdata, const t_u16 datalen);
 #endif
 void handle_amsdu_data_packet(t_u8 interface, t_u8 *rcvdata, t_u16 datalen);

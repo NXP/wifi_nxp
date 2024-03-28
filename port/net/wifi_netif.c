@@ -310,7 +310,7 @@ retry:
     return p;
 }
 #endif
-
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 void *wifi_get_rxbuf_desc(t_u16 rx_len)
 {
     struct pbuf *p;
@@ -340,7 +340,7 @@ void *wifi_get_rxbuf_desc(t_u16 rx_len)
 
     return (void *)((t_u8 *)p->payload + sizeof(mlan_buffer));
 }
-
+#endif
 static struct pbuf *gen_pbuf_from_data(t_u8 *payload, t_u16 datalen)
 {
     t_u8 retry_cnt = 3;
