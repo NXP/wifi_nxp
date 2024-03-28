@@ -22,7 +22,7 @@
 #include "fsl_component_serial_manager.h"
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-#include "fsl_adapter_rfimu.h"
+#include "fsl_adapter_imu.h"
 #include "fsl_usart_freertos.h"
 #include "fsl_loader.h"
 #include "fsl_ocotp.h"
@@ -163,10 +163,10 @@ static struct rtos_usart_config usart_config = {
     .buffer_size = sizeof(background_buffer),
 };
 
-static RPMSG_HANDLE_DEFINE(bt_rpmsg_handle);
-static RPMSG_HANDLE_DEFINE(zigbee_rpmsg_handle);
-static hal_rpmsg_handle_t rpmsgHandleList[] = {(hal_rpmsg_handle_t)bt_rpmsg_handle,
-                                               (hal_rpmsg_handle_t)zigbee_rpmsg_handle};
+static IMUMC_HANDLE_DEFINE(bt_imumc_handle);
+static IMUMC_HANDLE_DEFINE(zigbee_imumc_handle);
+static hal_imumc_handle_t imumcHandleList[] = {(hal_imumc_handle_t)bt_imumc_handle,
+                                               (hal_imumc_handle_t)zigbee_imumc_handle};
 
 uint32_t remote_ept_list[] = {REMOTE_EPT_ADDR_BT, REMOTE_EPT_ADDR_ZIGBEE};
 uint32_t local_ept_list[]  = {LOCAL_EPT_ADDR_BT, LOCAL_EPT_ADDR_ZIGBEE};
@@ -430,20 +430,20 @@ int check_command_complete(uint8_t *buf)
 }
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-hal_rpmsg_status_t wifi_send_imu_raw_data(uint8_t *data, uint32_t length)
+hal_imumc_status_t wifi_send_imu_raw_data(uint8_t *data, uint32_t length)
 {
     if (data == NULL || length == 0)
-        return kStatus_HAL_RpmsgError;
+        return kStatus_HAL_ImumcError;
 
-    if (kStatus_HAL_RpmsgSuccess != (HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, data, length)))
+    if (kStatus_HAL_ImumcSuccess != (HAL_ImuSendCommand(kIMU_LinkCpu1Cpu3, data, length)))
     {
-        return kStatus_HAL_RpmsgError;
+        return kStatus_HAL_ImumcError;
     }
 
-    return kStatus_HAL_RpmsgSuccess;
+    return kStatus_HAL_ImumcSuccess;
 }
 
-int rpmsg_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
+int imumc_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
 {
     uint32_t payloadlen;
 
@@ -456,10 +456,10 @@ int rpmsg_raw_packet_send(uint8_t *buf, int m_len, uint8_t t_type)
 
     memcpy(&last_cmd_hdr, cmd_hd, sizeof(cmd_header));
 
-    if (kStatus_HAL_RpmsgSuccess !=
-        (HAL_RpmsgSend((hal_rpmsg_handle_t)rpmsgHandleList[t_type - 2], local_outbuf, payloadlen)))
+    if (kStatus_HAL_ImumcSuccess !=
+        (HAL_ImumcSend((hal_imumc_handle_t)imumcHandleList[t_type - 2], local_outbuf, payloadlen)))
     {
-        return kStatus_HAL_RpmsgError;
+        return kStatus_HAL_ImumcError;
     }
 
     memset(local_outbuf, 0, BUF_LEN);
@@ -576,7 +576,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
     else if (cmd_hd->type == TYPE_BT)
     {
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-        ret = rpmsg_raw_packet_send(buf, m_len, RET_TYPE_BT);
+        ret = imumc_raw_packet_send(buf, m_len, RET_TYPE_BT);
 #else
         ret = bt_raw_packet_send(buf, m_len);
 #endif
@@ -584,7 +584,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
     else if (cmd_hd->type == TYPE_15_4)
     {
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-        ret = rpmsg_raw_packet_send(buf, m_len, RET_TYPE_ZIGBEE);
+        ret = imumc_raw_packet_send(buf, m_len, RET_TYPE_ZIGBEE);
 #elif defined(MIMXRT1176_cm7_SERIES)
         ret = zigbee_raw_packet_send(buf, m_len);
 #endif
@@ -594,7 +594,7 @@ int process_input_cmd(uint8_t *buf, int m_len)
 }
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-void send_rpmsg_response_to_uart(uint8_t *resp, int msg_len)
+void send_imumc_response_to_uart(uint8_t *resp, int msg_len)
 {
     uint32_t bridge_chksum = 0;
     uint32_t msglen;
@@ -720,7 +720,7 @@ void send_zigbee_response_to_uart(uint8_t *rxData, uint32_t payloadlen)
  read and then sent through the uart to the Mfg application
 */
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-hal_rpmsg_status_t read_wlan_resp(IMU_Msg_t *pImuMsg, uint32_t len)
+hal_imumc_status_t read_wlan_resp(IMU_Msg_t *pImuMsg, uint32_t len)
 {
     assert(NULL != pImuMsg);
     assert(0 != len);
@@ -730,15 +730,15 @@ hal_rpmsg_status_t read_wlan_resp(IMU_Msg_t *pImuMsg, uint32_t len)
 
     send_response_to_uart(uart, (uint8_t *)(pImuMsg->PayloadPtr[0]), 1, len);
 
-    return kStatus_HAL_RpmsgSuccess;
+    return kStatus_HAL_ImumcSuccess;
 }
 
-hal_rpmsg_return_status_t read_rpmsg_resp(void *param, uint8_t *packet, uint32_t len)
+hal_imumc_return_status_t read_imumc_resp(void *param, uint8_t *packet, uint32_t len)
 {
     assert(NULL != packet);
     assert(0 != len);
 
-    send_rpmsg_response_to_uart(packet, len);
+    send_imumc_response_to_uart(packet, len);
 
     return kStatus_HAL_RL_RELEASE;
 }
@@ -820,13 +820,13 @@ void read_zigbee_resp()
 #endif
 
 #if defined(RW610_SERIES) || defined(RW612_SERIES)
-static hal_rpmsg_status_t imu_wifi_config()
+static hal_imumc_status_t imu_wifi_config()
 {
-    hal_rpmsg_status_t state = kStatus_HAL_RpmsgSuccess;
+    hal_imumc_status_t state = kStatus_HAL_ImumcSuccess;
 
     /* Assign IMU channel for CPU1-CPU3 communication */
     state = HAL_ImuInit(kIMU_LinkCpu1Cpu3);
-    assert(kStatus_HAL_RpmsgSuccess == state);
+    assert(kStatus_HAL_ImumcSuccess == state);
 
     HAL_ImuInstallCallback(kIMU_LinkCpu1Cpu3, read_wlan_resp, IMU_MSG_COMMAND_RESPONSE);
 
@@ -835,42 +835,42 @@ static hal_rpmsg_status_t imu_wifi_config()
 
 #if (defined(CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)) || \
     (defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1))
-static hal_rpmsg_status_t rpmsg_config(uint32_t linkId)
+static hal_imumc_status_t imumc_config(uint32_t linkId)
 {
-    hal_rpmsg_status_t state = kStatus_HAL_RpmsgSuccess;
+    hal_imumc_status_t state = kStatus_HAL_ImumcSuccess;
 
-    hal_rpmsg_config_t config = {0};
-    /* Init RPMSG/IMU Channel */
+    hal_imumc_config_t config = {0};
+    /* Init IMUMC/IMU Channel */
     config.local_addr  = local_ept_list[linkId];
     config.remote_addr = remote_ept_list[linkId];
     config.imuLink     = kIMU_LinkCpu2Cpu3;
-    state              = HAL_RpmsgInit((hal_rpmsg_handle_t)rpmsgHandleList[linkId], &config);
-    assert(kStatus_HAL_RpmsgSuccess == state);
+    state              = HAL_ImumcInit((hal_imumc_handle_t)imumcHandleList[linkId], &config);
+    assert(kStatus_HAL_ImumcSuccess == state);
 
-    /* RPMSG install rx callback */
-    state = HAL_RpmsgInstallRxCallback((hal_rpmsg_handle_t)rpmsgHandleList[linkId], read_rpmsg_resp, NULL);
-    assert(kStatus_HAL_RpmsgSuccess == state);
+    /* IMUMC install rx callback */
+    state = HAL_ImumcInstallRxCallback((hal_imumc_handle_t)imumcHandleList[linkId], read_imumc_resp, NULL);
+    assert(kStatus_HAL_ImumcSuccess == state);
 
     return state;
 }
 #endif
 
-static hal_rpmsg_status_t rpmsg_init()
+static hal_imumc_status_t imumc_init()
 {
 #if (defined(CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)) || \
     (defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1))
     uint32_t linkId;
 #endif
-    hal_rpmsg_status_t state = kStatus_HAL_RpmsgSuccess;
+    hal_imumc_status_t state = kStatus_HAL_ImumcSuccess;
 
-    /* Init RPMSG/IMU Channel */
+    /* Init IMUMC/IMU Channel */
 #if defined(CONFIG_SUPPORT_BLE) && (CONFIG_SUPPORT_BLE == 1)
     linkId = 0;
-    state  = rpmsg_config(linkId);
+    state  = imumc_config(linkId);
 #endif
 #if defined(CONFIG_SUPPORT_15D4) && (CONFIG_SUPPORT_15D4 == 1)
     linkId = 1;
-    state  = rpmsg_config(linkId);
+    state  = imumc_config(linkId);
 #endif
 
     return state;
@@ -1082,8 +1082,8 @@ static void main_task(osa_task_param_t arg)
     /* Initialize WIFI Driver */
     imu_wifi_config();
 
-    /* Initialize rpmsg */
-    rpmsg_init();
+    /* Initialize imumc */
+    imumc_init();
 
     /* Initialize CAU temperature timer */
     g_wifi_cau_temperature_timer =
