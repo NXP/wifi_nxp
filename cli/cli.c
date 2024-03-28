@@ -46,12 +46,12 @@
 static void uart_task(osa_task_param_t arg);
 
 #ifdef CONFIG_UART_INTERACTIVE
-static OSA_TASK_DEFINE(uart_task, OSA_PRIORITY_HIGH, 1, CONFIG_UART_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_UART_STACK_SIZE, 0);
 #else
 #ifdef CONFIG_NCP_BRIDGE
-static OSA_TASK_DEFINE(uart_task, OSA_PRIORITY_NORMAL, 1, CONFIG_UART_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_UART_STACK_SIZE, 0);
 #else
-static OSA_TASK_DEFINE(uart_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_UART_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(uart_task, PRIORITY_RTOS_TO_OSA(0), 1, CONFIG_UART_STACK_SIZE, 0);
 #endif
 #endif
 #endif
@@ -77,9 +77,9 @@ static void cli_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 #ifdef CONFIG_UART_INTERACTIVE
-static OSA_TASK_DEFINE(cli_task, OSA_PRIORITY_HIGH, 1, CONFIG_CLI_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(cli_task, PRIORITY_RTOS_TO_OSA(3) , 1, CONFIG_CLI_STACK_SIZE, 0);
 #else
-static OSA_TASK_DEFINE(cli_task, OSA_PRIORITY_IDLE, 1, CONFIG_CLI_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(cli_task, PRIORITY_RTOS_TO_OSA(1) , 1, CONFIG_CLI_STACK_SIZE, 0);
 #endif
 
 OSA_TASK_HANDLE_DEFINE(cli_task_Handle);

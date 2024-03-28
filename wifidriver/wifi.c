@@ -163,7 +163,7 @@ static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_WIFI
 static void wifi_scan_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_scan_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_WIFI_SCAN_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_scan_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_WIFI_SCAN_STACK_SIZE, 0);
 
 #ifndef CONFIG_WIFI_DRIVER_STACK_SIZE
 #define CONFIG_WIFI_DRIVER_STACK_SIZE (1024)
@@ -172,7 +172,7 @@ static OSA_TASK_DEFINE(wifi_scan_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_WIFI
 static void wifi_drv_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_drv_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRIVER_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_drv_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_WIFI_DRIVER_STACK_SIZE, 0);
 
 #ifdef CONFIG_WMM
 
@@ -184,9 +184,9 @@ static void wifi_drv_tx_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
 #ifdef RW610
-static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_ABOVE_NORMAL, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_drv_tx_task, PRIORITY_RTOS_TO_OSA(2), 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
 #else
-static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_drv_tx_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_WIFI_DRV_TX_STACK_SIZE, 0);
 #endif
 #endif
 
@@ -197,7 +197,7 @@ static OSA_TASK_DEFINE(wifi_drv_tx_task, OSA_PRIORITY_HIGH, 1, CONFIG_WIFI_DRV_T
 static void wifi_powersave_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wifi_powersave_task, OSA_PRIORITY_NORMAL, 1, CONFIG_WIFI_POWERSAVE_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wifi_powersave_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_WIFI_POWERSAVE_STACK_SIZE, 0);
 
 int wifi_set_mac_multicast_addr(const char *mlist, t_u32 num_of_addr);
 int wrapper_get_wpa_ie_in_assoc(uint8_t *wpa_ie);

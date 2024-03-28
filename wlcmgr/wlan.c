@@ -389,7 +389,7 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
 static void wlcmgr_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wlcmgr_task, OSA_PRIORITY_HIGH, 1, CONFIG_WLCMGR_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wlcmgr_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_WLCMGR_STACK_SIZE, 0);
 
 #ifdef CONFIG_WPS2
 #define CONFIG_WPS_STACK_SIZE (5120)
@@ -452,7 +452,7 @@ static struct wps_config wps_conf = {
 static void wlcmgr_mon_task(osa_task_param_t arg);
 
 /* OSA_TASKS: name, priority, instances, stackSz, useFloat */
-static OSA_TASK_DEFINE(wlcmgr_mon_task, OSA_PRIORITY_NORMAL, 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
+static OSA_TASK_DEFINE(wlcmgr_mon_task, PRIORITY_RTOS_TO_OSA(1) , 1, CONFIG_WLCMGR_MON_STACK_SIZE, 0);
 
 /* The monitor thread event queue receives events from the power manager
  * wlan notifier when idle hook is invoked and host is ready to enter
