@@ -128,7 +128,6 @@ static bool scan_thread_in_process = false;
 OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 int wakeup_by = 0;
 #endif
-
 #ifdef CONFIG_WIFI_RECOVERY
 bool wifi_recovery_enable = false;
 t_u16 wifi_recovery_cnt   = 0;
@@ -157,7 +156,7 @@ static OSA_TASK_DEFINE(wifi_core_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_WIFI
 #endif
 
 #ifndef CONFIG_WIFI_SCAN_STACK_SIZE
-#define CONFIG_WIFI_SCAN_STACK_SIZE (1024)
+#define CONFIG_WIFI_SCAN_STACK_SIZE (2048)
 #endif
 
 static void wifi_scan_task(osa_task_param_t arg);
@@ -166,7 +165,7 @@ static void wifi_scan_task(osa_task_param_t arg);
 static OSA_TASK_DEFINE(wifi_scan_task, PRIORITY_RTOS_TO_OSA(1), 1, CONFIG_WIFI_SCAN_STACK_SIZE, 0);
 
 #ifndef CONFIG_WIFI_DRIVER_STACK_SIZE
-#define CONFIG_WIFI_DRIVER_STACK_SIZE (1024)
+#define CONFIG_WIFI_DRIVER_STACK_SIZE (2048)
 #endif
 
 static void wifi_drv_task(osa_task_param_t arg);
@@ -177,7 +176,7 @@ static OSA_TASK_DEFINE(wifi_drv_task, PRIORITY_RTOS_TO_OSA(3), 1, CONFIG_WIFI_DR
 #ifdef CONFIG_WMM
 
 #ifndef CONFIG_WIFI_DRV_TX_STACK_SIZE
-#define CONFIG_WIFI_DRV_TX_STACK_SIZE (1024)
+#define CONFIG_WIFI_DRV_TX_STACK_SIZE (2048)
 #endif
 
 static void wifi_drv_tx_task(osa_task_param_t arg);
@@ -409,7 +408,7 @@ void wifi_dump_firmware_info()
     t_u8 data[8], i;
     uint32_t resp;
 #ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT START: %d ====", os_get_timestamp());
+    wifi_d("==== DEBUG MODE OUTPUT START: %d ====", OSA_GetTimestamp());
 #endif
     if (wm_wifi.wifi_usb_file_open_cb != NULL)
     {
@@ -426,7 +425,7 @@ void wifi_dump_firmware_info()
         goto done;
     }
 #ifndef __ZEPHYR__
-    wifi_d("Start ITCM output %d, please wait...", os_get_timestamp());
+    wifi_d("Start ITCM output %d, please wait...", OSA_GetTimestamp());
 #endif
     reg_start = DEBUG_DUMP_START_REG;
     reg_end   = DEBUG_DUMP_END_REG;
@@ -530,7 +529,7 @@ void wifi_dump_firmware_info()
                         goto done;
                     }
 #ifndef __ZEPHYR__
-                    wifi_d("Start DTCM output %d, please wait...", os_get_timestamp());
+                    wifi_d("Start DTCM output %d, please wait...", OSA_GetTimestamp());
 #endif
                 }
                 else
@@ -563,7 +562,7 @@ void wifi_dump_firmware_info()
                         goto done;
                     }
 #ifndef __ZEPHYR__
-                    wifi_d("Start SQRAM output %u.%06u, please wait...", os_get_timestamp());
+                    wifi_d("Start SQRAM output %u.%06u, please wait...", OSA_GetTimestamp());
 #endif
                 }
                 else
@@ -599,7 +598,7 @@ void wifi_dump_firmware_info()
     /* end dump fw memory */
 done:
 #ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
+    wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", OSA_GetTimestamp());
 #endif
 
     while (1)
@@ -821,7 +820,7 @@ void wifi_dump_firmware_info()
     dbg_dump_end_reg   = DEBUG_DUMP_END_REG;
 
 #ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", os_get_timestamp());
+    wifi_d("==== DEBUG MODE OUTPUT START: %d.%06u ====", OSA_GetTimestamp());
 #endif
     /* read the number of the memories which will dump */
     if (RDWR_STATUS_FAILURE == wifi_cmd52_rdwr_firmware(doneflag))
@@ -867,7 +866,7 @@ void wifi_dump_firmware_info()
 
     doneflag = pmem_type_mapping_tbl->done_flag;
 #ifndef __ZEPHYR__
-    wifi_d("Start %s output %d, please wait...", pmem_type_mapping_tbl->mem_name, os_get_timestamp());
+    wifi_d("Start %s output %d, please wait...", pmem_type_mapping_tbl->mem_name, OSA_GetTimestamp());
 #endif
     do
     {
@@ -924,7 +923,7 @@ void wifi_dump_firmware_info()
     } while (1);
 
 #ifndef __ZEPHYR__
-    wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", os_get_timestamp());
+    wifi_d("==== DEBUG MODE OUTPUT END: %d ====\n", OSA_GetTimestamp());
 #endif
     /* end dump fw memory */
 done:
@@ -2920,7 +2919,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                     wifi_d("wlan: HostMlme MICRO_AP_STA_ASSOC " MACSTR "", MAC2STR(pieee_pkt_hdr->addr2));
 
 #if 0
-                    sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
+                    sta_addr = OSA_MemoryAllocate(MLAN_MAC_ADDR_LENGTH);
                     if (sta_addr == MNULL)
                     {
                         wifi_w("No mem. Cannot process MAC address from assoc");
@@ -2933,7 +2932,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                         WM_SUCCESS)
                     {
                         /* If fail to send message on queue, free allocated memory ! */
-                        os_mem_free((void *)sta_addr);
+                        OSA_MemoryFree((void *)sta_addr);
                     }
 
                     mgmt    = (IEEE80211_MGMT *)payload;
@@ -2961,7 +2960,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                             wlan_check_sta_capability(priv, pmbuf, sta_ptr);
                             wlan_free_mlan_buffer(pmadapter, pmbuf);
 
-                            os_mem_free(pmbuf);
+                            OSA_MemoryFree(pmbuf);
                         }
                     }
 #endif
@@ -3018,7 +3017,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                            MAC2STR(pieee_pkt_hdr->addr2), mgmt->u.deauth_req.reason_code);
 
 #if 0
-                    sta_addr = os_mem_alloc(MLAN_MAC_ADDR_LENGTH);
+                    sta_addr = OSA_MemoryAllocate(MLAN_MAC_ADDR_LENGTH);
                     if (sta_addr == MNULL)
                     {
                         wifi_w("No mem. Cannot process MAC address from deauth");
@@ -3031,7 +3030,7 @@ static mlan_status wlan_process_802dot11_mgmt_pkt2(mlan_private *priv, t_u8 *pay
                         WM_SUCCESS)
                     {
                         /* If fail to send message on queue, free allocated memory ! */
-                        os_mem_free((void *)sta_addr);
+                        OSA_MemoryFree((void *)sta_addr);
                     }
 #endif
                 }
@@ -3804,7 +3803,7 @@ static int wifi_xmit_wmm_ac_pkts_enh(mlan_private *priv)
     tid_tbl_t *tid_ptr = MNULL;
 
 #ifdef CONFIG_WIFI_TP_STAT
-    g_wifi_xmit_schedule_end = os_get_timestamp();
+    g_wifi_xmit_schedule_end = OSA_GetTimestamp();
 #endif
 
     for (ac = WMM_AC_VO; ac >= 0; ac--)

@@ -464,5 +464,59 @@ void OSA_DumpMemStats(void)
     OSA_EXIT_CRITICAL()
 }
 #endif
+void OSA_ThreadSelfComplete(osa_task_handle_t taskHandle)
+{
+    /* Suspend self until someone calls delete. This is required because in
+     * freeRTOS, main functions of a thread cannot return.
+     */
+    if (taskHandle != NULL)
+    {
+        PRINTF("OSA: Thread Complete: %p\r\n", taskHandle);
+        vTaskSuspend(taskHandle);
+    }
+    else
+    {
+        PRINTF("OSA: Thread Complete: SELF\r\n");
+        vTaskSuspend(NULL);
+    }
 
+    /*
+     * We do not want this function to return ever.
+     */
+    while (true)
+    {
+        OSA_TimeDelay(60000);
+    }
+}
+
+/* the OS timer register is loaded with CNTMAX */
+#define CNTMAX                 ((SystemCoreClock / configTICK_RATE_HZ) - 1UL)
+#define CPU_CLOCK_TICKSPERUSEC (SystemCoreClock / 1000000U)
+#define USECSPERTICK           (1000000U / configTICK_RATE_HZ)
+
+/* returns time in micro-secs since time began */
+unsigned int OSA_GetTimestamp(void)
+{
+    uint32_t nticks;
+    uint32_t counter;
+
+    vPortEnterCritical();
+    nticks  = xTaskGetTickCount();
+    counter = SysTick->VAL;
+
+    /*
+     * If this is called after SysTick counter
+     * expired but before SysTick Handler got a
+     * chance to run, then set the return value
+     * to the start of next tick.
+     */
+    if ((SCB->ICSR & SCB_ICSR_PENDSTSET_Msk) != 0U)
+    {
+        nticks++;
+        counter = CNTMAX;
+    }
+
+    vPortExitCritical();
+    return ((CNTMAX - counter) / CPU_CLOCK_TICKSPERUSEC) + (nticks * USECSPERTICK);
+}
 #endif

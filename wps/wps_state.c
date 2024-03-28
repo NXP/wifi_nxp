@@ -49,7 +49,7 @@ extern WPA_SM wpa_sm;
 extern int err_count, req_len, wpa2_failure;
 extern void wpa2_shutdown();
 
-os_thread_t wps_tls_thread;
+osa_task_handle_t wps_tls_thread;
 static os_thread_stack_define(wps_tls_stack, 8192);
 
 u8 *rbuf;
@@ -312,14 +312,14 @@ static void signal_receive()
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    os_semaphore_put(&wps_s->ssl_sync_sem);
+    OSA_SemaphorePost((osa_semaphore_handle_t)wps_s->ssl_sync_sem);
 }
 
 int wait_for_receive()
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    return os_semaphore_get(&wps_s->ssl_sync_sem, os_msec_to_ticks(SSL_WAIT));
+    return OSA_SemaphoreWait((osa_semaphore_handle_t)wps_s->ssl_sync_sem, MSEC_TO_TICK(SSL_WAIT));
 }
 #endif
 
@@ -688,8 +688,8 @@ void wpa2_session_clean()
             rbuf = NULL;
         }
 
-        status = os_semaphore_delete(&wps_s->ssl_sync_sem);
-        if (status != WM_SUCCESS)
+        status = OSA_SemaphoreDestroy((osa_semaphore_handle_t)wps_s->ssl_sync_sem);
+        if (status != KOSA_StatusSuccess)
             wps_d("Warning: failed to delete mutex.\r\n");
 
         status = os_thread_delete(&wps_tls_thread);
@@ -799,14 +799,14 @@ void wps_tls_init(void *argv)
     int status      = WPS_STATUS_SUCCESS, rv;
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    status = os_semaphore_create(&wps_s->ssl_sync_sem, "ssl-synch-sem");
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wps_s->ssl_sync_sem, "ssl-synch-sem");
 
-    if (status != WM_SUCCESS)
+    if (status != KOSA_StatusSuccess)
     {
         goto fail;
     }
     /*Take semaphore immediatly so that we can later block on it */
-    os_semaphore_get(&wps_s->ssl_sync_sem, OS_WAIT_FOREVER);
+    OSA_SemaphoreWait((osa_semaphore_handle_t)wps_s->ssl_sync_sem, osaWaitForever_c);
 
     wps_d("EAP: Init Session");
     wps_s->tls_session_init      = true;
@@ -883,7 +883,7 @@ void wps_tls_init(void *argv)
     else if (wps_s->wpa2_network.security.type == WLAN_SECURITY_EAP_PEAP_MSCHAPV2)
     {
         while (1)
-            os_thread_sleep(5000);
+            OSA_TimeDelay(5000);
     }
 #endif
 fail:
@@ -3189,7 +3189,7 @@ static int wps_sta_check_link_active(WPS_DATA *wps_s, PWPS_INFO pwps_info, int *
             do
             {
                 /* wait for interface up */
-                os_thread_sleep(os_msec_to_ticks(50));
+                OSA_TimeDelay(50);
 
                 if (wlan_get_connection_state(&state))
                 {

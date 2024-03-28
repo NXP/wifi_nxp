@@ -91,7 +91,7 @@ static int aes_s2v(const u8 *key, size_t key_len, size_t num_elem, const u8 *add
     if (len[i] >= AES_BLOCK_SIZE)
     {
         // buf = os_memdup(addr[i], len[i]);
-        buf = os_mem_alloc(len[i]);
+        buf = OSA_MemoryAllocate(len[i]);
         if (!buf)
             // return -ENOMEM;
             return -WM_FAIL;
@@ -103,7 +103,7 @@ static int aes_s2v(const u8 *key, size_t key_len, size_t num_elem, const u8 *add
         if (buf)
         {
             (void)memset(buf, 0, len[i]);
-            os_mem_free(buf);
+            OSA_MemoryFree(buf);
         }
         return ret;
     }

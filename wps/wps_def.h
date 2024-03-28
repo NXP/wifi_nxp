@@ -269,7 +269,7 @@ typedef struct wps_data
     /* TLS socket */
     int sockfd;
     /** Sync semaphore */
-    os_semaphore_t ssl_sync_sem;
+    osa_semaphore_handle_t ssl_sync_sem;
     /* WPS connect network profile */
     struct wlan_network wps_conn_network;
 } WPS_DATA, *PWPS_DATA;

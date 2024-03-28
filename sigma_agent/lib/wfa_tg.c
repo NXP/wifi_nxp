@@ -1073,7 +1073,7 @@ int wfaSendLongFile(int mySockfd, int streamid, BYTE *aRespBuf, int *aRespLen)
         packLen = theProf->pksize;
 
     /* allocate a buf */
-    packBuf = (char *)os_mem_alloc(packLen + 1);
+    packBuf = (char *)OSA_MemoryAllocate(packLen + 1);
     wMEMSET(packBuf, 0, packLen);
 
     /* fill in the header */
@@ -1549,7 +1549,7 @@ int wfaSendBitrateData(int mySockfd, int streamId, BYTE *pRespBuf, int *pRespLen
     /* alloc sending buff  */
     // packLen = (theProf->pksize * theProf->rate)/ WFA_SEND_FIX_BITRATE_FRAMERATE ;
     packLen = theProf->pksize;
-    packBuf = (char *)os_mem_alloc(packLen + 4);
+    packBuf = (char *)OSA_MemoryAllocate(packLen + 4);
     if (packBuf == NULL)
     {
         DPRINT_INFO(WFA_OUT, "wfaSendBitrateData malloc err \n");

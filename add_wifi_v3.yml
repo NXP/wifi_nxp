@@ -65,6 +65,9 @@ middleware.wifi.osa_free_rtos:
     - repo_relative_path: incl/port/net/lwip/hooks
     - repo_relative_path: dhcpd
     - repo_relative_path: nw_utils/telnet
+    - repo_relative_path: incl/wlcmgr
+    - repo_relative_path: incl/wifidriver
+    - repo_relative_path: wifidriver/incl
     files:
     - source: port/osa/osa_freertos.h
     - source: port/osa/osa_freertos.c

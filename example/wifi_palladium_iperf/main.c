@@ -1017,7 +1017,7 @@ void task_main(void *param)
     wait_input:
         if (pdm_wlan.inputC == 0)
         {
-            os_thread_sleep(os_msec_to_ticks(10));
+            OSA_TimeDelay(10);
             if (pdm_wlan.test_set_rate)
             {
                 pdm_wlan_set_txratecfg(pdm_wlan.test_rate_format, pdm_wlan.test_rate_index, pdm_wlan.test_nss);
@@ -1101,7 +1101,7 @@ void task_main(void *param)
         }
 
         /* wait for interface up */
-        os_thread_sleep(os_msec_to_ticks(500));
+        OSA_TimeDelay(500);
     }
 #endif
 }
@@ -1175,7 +1175,7 @@ static void iperf_test_start(void *arg)
     if (!(ctx->tcp) && ctx->client_type == LWIPERF_DUAL)
     {
         /* Reducing timer interval of UDP Tx for Rx to run */
-        xTimerChangePeriod(timer, os_msec_to_ticks(4), 100);
+        xTimerChangePeriod(timer, MSEC_TO_TICK(4), 100);
     }
     else
     {

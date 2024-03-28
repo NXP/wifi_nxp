@@ -19,7 +19,7 @@ void *crypto_mem_malloc(size_t size)
     if (size == 0)
         return NULL;
 
-    void *buffer_ptr = os_mem_alloc(size);
+    void *buffer_ptr = OSA_MemoryAllocate(size);
     if (!buffer_ptr)
     {
         crypto_e("Failed to allocate mem: Size: %d", size);
@@ -31,7 +31,7 @@ void *crypto_mem_malloc(size_t size)
 
 void crypto_mem_free(void *buffer)
 {
-    os_mem_free(buffer);
+    OSA_MemoryFree(buffer);
 }
 
 void *crypto_mem_calloc(size_t nmemb, size_t size)

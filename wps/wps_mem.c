@@ -20,7 +20,7 @@ void *wps_mem_malloc(size_t size)
     if (size == 0)
         return NULL;
 
-    buffer_ptr = os_mem_alloc(size);
+    buffer_ptr = OSA_MemoryAllocate(size);
 
     if (!buffer_ptr)
     {
@@ -50,5 +50,5 @@ void *wps_mem_calloc(size_t nmemb, size_t size)
 void wps_mem_free(void *buffer_ptr)
 {
     if (buffer_ptr)
-        os_mem_free(buffer_ptr);
+        OSA_MemoryFree(buffer_ptr);
 }

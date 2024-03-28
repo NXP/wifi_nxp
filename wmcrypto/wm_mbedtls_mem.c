@@ -21,7 +21,7 @@ static void *wmos_wrap_calloc(size_t block_count, size_t block_size)
 
 static void wmos_wrap_free(void *ptr)
 {
-    os_mem_free(ptr);
+    OSA_MemoryFree(ptr);
 }
 
 int wm_mbedtls_set_mem_alloc()

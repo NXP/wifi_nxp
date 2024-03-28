@@ -1379,7 +1379,7 @@ int wps_eap_tls_response_send(const uint8_t *buf, const size_t len)
                             wps_d("Sent certificate packet and wait EAPOL_REQUEST (identifier=%d not change)",
                                   peap_tls_frame->identifier);
                             retry_cnt--;
-                            os_thread_sleep(200);
+                            OSA_TimeDelay(200);
                         }
                         else
                             retry_cnt = 0;

@@ -125,7 +125,7 @@ void wps_peer_event_receive()
 
                 wfd_process_action_frame_request(evt_buffer, action_event_len);
 
-                os_mem_free(event.buffer);
+                OSA_MemoryFree(event.buffer);
             }
             if (event.peer_event)
             {

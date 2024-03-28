@@ -519,7 +519,7 @@ static void test_wlan_read_usb_file(int argc, char **argv)
         PRINTF("File size failed\r\n");
         goto file_err;
     }
-    file_buf = os_mem_alloc(data_len);
+    file_buf = OSA_MemoryAllocate(data_len);
     if (!file_buf)
     {
         PRINTF("File size allocate memory failed\r\n");
@@ -534,7 +534,7 @@ static void test_wlan_read_usb_file(int argc, char **argv)
     (void)wlan_set_entp_cert_files(usb_f_type, file_buf, data_len);
 
 file_err:
-    os_mem_free(file_buf);
+    OSA_MemoryFree(file_buf);
     usb_file_close();
 }
 
@@ -707,7 +707,6 @@ static void main_task(osa_task_param_t arg)
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-
 int main(void)
 {
     OSA_Init();

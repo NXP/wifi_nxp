@@ -66,10 +66,10 @@ static tx_uart_context_t uart_context;
 static void uart_task(osa_task_param_t arg);
 
 static OSA_TASK_DEFINE(uart_task, OSA_PRIORITY_BELOW_NORMAL, 1, CONFIG_UART_STACK_SIZE, 0);
-
+#endif
 OSA_TASK_HANDLE_DEFINE(uart_task_Handle);
 
-#endif
+
 
 #define CONFIG_CLI_STACK_SIZE (5376)
 
@@ -1437,7 +1437,6 @@ int cli_init(void)
     }
 #if defined(SDK_OS_FREE_RTOS)
 #ifdef CONFIG_UART_INTERRUPT
-#ifdef CONFIG_UART_INTERACTIVE
     osa_status_t status = OSA_TaskCreate((osa_task_handle_t)uart_task_Handle, OSA_TASK(uart_task), NULL);
     if (status != KOSA_StatusSuccess)
     {
@@ -1452,7 +1451,6 @@ int cli_init(void)
         (void)PRINTF("Error: Failed to create uart thread: %d\r\n", status);
         return -WM_FAIL;
     }
-#endif
 #endif
 #ifdef BOARD_NAME
     PRINTF("MCU Board: %s\r\n", BOARD_NAME);

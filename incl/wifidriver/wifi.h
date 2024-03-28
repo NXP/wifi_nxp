@@ -724,8 +724,8 @@ void wifi_recfg_tx_buf_size(uint16_t buf_size);
 void _wifi_recfg_tx_buf_size(uint16_t buf_size, mlan_bss_type bss_type);
 #endif
 #ifdef CONFIG_P2P
-int wifi_register_wfd_event_queue(os_queue_t *event_queue);
-int wifi_unregister_wfd_event_queue(os_queue_t *event_queue);
+int wifi_register_wfd_event_queue(osa_msgq_handle_t event_queue);
+int wifi_unregister_wfd_event_queue(osa_msgq_handle_t event_queue);
 void wifi_wfd_event(bool peer_event, bool action_frame, void *data);
 int wifi_wfd_start(char *ssid, int security, char *passphrase, int channel);
 int wifi_wfd_stop(void);

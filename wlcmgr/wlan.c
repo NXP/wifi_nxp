@@ -288,11 +288,13 @@ int wlan_host_sleep_state = HOST_SLEEP_PERIODIC;
  */
 bool usart_suspend_flag = false;
 #endif
-osa_timer_handle_t wake_timer;
+OSA_TIMER_HANDLE_DEFINE(wake_timer);
 #endif
 int is_hs_handshake_done = 0;
-extern osa_semaphore_handle_t wakelock;
+
+extern OSA_SEMAPHORE_HANDLE_DEFINE(wakelock);
 extern int wakeup_by;
+
 bool wlan_is_manual = false;
 #endif
 
@@ -317,7 +319,7 @@ static struct udp_pcb *udp_raw_pcb;
 #endif
 #endif
 
-#ifndef CONFIG_POWER_MANAGER
+#ifdef CONFIG_POWER_MANAGER
 #define WAKE_TIMEOUT (5 * 1000)
 #endif
 
@@ -1119,7 +1121,7 @@ status_t wlan_hs_send_event(int id, void *data)
 }
 
 #ifdef CONFIG_POWER_MANAGER
-static void wake_timer_cb(os_timer_arg_t arg)
+static void wake_timer_cb(osa_timer_arg_t arg)
 {
     if(wakelock_isheld())
         wakelock_put();
@@ -4382,7 +4384,7 @@ static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
 
     (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
 
-    misc = os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+    misc = OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
     if (misc == NULL)
     {
         return -WM_FAIL;
@@ -4400,11 +4402,11 @@ static int wlan_check_valid_channel_operclass(t_u8 channel, t_u8 oper_class)
     if (status != MLAN_STATUS_SUCCESS)
     {
         PRINTM(MERROR, "Failed to get operclass\n");
-        os_mem_free(misc);
+        OSA_MemoryFree(misc);
         return -WM_FAIL;
     }
 
-    os_mem_free(misc);
+    OSA_MemoryFree(misc);
 
     return ret;
 }
@@ -8160,7 +8162,7 @@ int wlan_stop(void)
     if (wakelock != NULL)
     {
         OSA_SemaphoreDestroy(&wakelock);
-        wakelock = NULL;
+        //wakelock = NULL;
     }
 #endif
 
@@ -10166,7 +10168,7 @@ int wlan_remove_all_networks(void)
 
 void wlan_destroy_all_tasks(void)
 {
-    os_lock_schedule();
+    OSA_LockSchedule();
 
     /* Destroy cm_main thread */
     OSA_TaskDestroy((osa_task_handle_t)wlan.wlcmgr_task_Handle);
@@ -10180,7 +10182,7 @@ void wlan_destroy_all_tasks(void)
     /* Destroy wifidriver thread */
     wifi_destroy_wifidriver_tasks();
 
-    os_unlock_schedule();
+    OSA_UnlockSchedule();
 }
 
 int wlan_imu_get_task_lock(void)
@@ -10239,7 +10241,7 @@ void wlan_reset(cli_reset_option ResetOption)
                 wlan_cpu_loading_stop();
             while(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
             {
-                os_thread_sleep(os_msec_to_ticks(50));
+                OSA_TimeDelay(50);
             }
 #endif
             /* Block TX data */
@@ -10410,29 +10412,6 @@ static void wlcmgr_mon_task(void * data)
     }
 }
 #endif // RW610
-
-#ifdef CONFIG_EU_VALIDATION
-
-int wlan_eu_validation(
-    eu_option option, uint8_t *resp_buf, uint32_t resp_buf_size, uint32_t *reqd_len)
-{
-    uint8_t cmd_eu_buf[] = { 0x34, 0x02, 0x0c, 0, 0, 0, 0, 0, 0x04, 0, option, 0 };
-
-    if (option < EU_GCMP_128_ENC || option > EU_OPTION_MAX)
-    {
-        return -WM_E_INVAL;
-    }
-
-    if (!wlan_is_started())
-    {
-        (void)PRINTF("eu validation is not allowed when WIFI is disabled\r\n");
-        return -WM_FAIL;
-    }
-
-    return wlan_send_hostcmd(cmd_eu_buf, sizeof(cmd_eu_buf), resp_buf, resp_buf_size, reqd_len);
-}
-
-#endif
 
 #ifdef CONFIG_EU_VALIDATION
 
@@ -15553,13 +15532,6 @@ int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
 }
 #endif
 
-#ifdef RW610
-int32_t wlan_get_temperature()
-{
-    return wifi_get_temperature();
-}
-#endif
-
 #ifdef CONFIG_CPU_LOADING
 
 static void wlan_cpu_loading_record_data(void)
@@ -15571,7 +15543,7 @@ static void wlan_cpu_loading_record_data(void)
     unsigned int value;
     int task_name_index = 0, task_time_index = 0, index = 0, task_index = 0;
 
-    os_get_runtime_stats(cpu_loading.cpu_loading_info);
+    OSA_GetRuntimeStats(cpu_loading.cpu_loading_info);
 
     uint32_t len_data = strlen(cpu_loading.cpu_loading_info);
     do
@@ -15670,10 +15642,10 @@ static void cpu_loading_task(osa_task_param_t arg)
         }
     }
 
-    os_thread_self_complete(NULL);
+    OSA_ThreadSelfComplete(NULL);
 }
 
-static void cpu_loading_cb(os_timer_arg_t arg)
+static void cpu_loading_cb(osa_timer_arg_t arg)
 {
     (void)os_event_notify_put(cpu_loading.cpu_loading_thread);
 }
@@ -15776,15 +15748,8 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx)
 }
 #endif
 
-#ifdef CONFIG_INACTIVITY_TIMEOUT_EXT
-int wlan_sta_inactivityto(wlan_inactivity_to_t *inac_to, t_u16 action)
-{
-    return wifi_sta_inactivityto(inac_to, action);
-}
-#endif
-
 #ifdef CONFIG_CAU_TEMPERATURE
-uint32_t wlan_get_temperature()
+int32_t wlan_get_temperature()
 {
     return wifi_get_temperature();
 }

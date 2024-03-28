@@ -355,8 +355,8 @@ mlan_status wlan_ops_process_rx_packet(IN t_void *adapter, IN pmlan_buffer pmbuf
         }
         wlan_free_mlan_buffer(pmadapter, pmbuf);
         /* Free RxPD */
-        os_mem_free(pmbuf->pbuf);
-        os_mem_free(pmbuf);
+        OSA_MemoryFree(pmbuf->pbuf);
+        OSA_MemoryFree(pmbuf);
         goto done;
 #else
         /* fixme */

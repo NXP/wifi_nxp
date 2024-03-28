@@ -1368,7 +1368,7 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
         dump_wlan_get_otp_cal_data_usage();
     }
 
-    (void)os_mem_free(cal_data);
+    (void)OSA_MemoryFree(cal_data);
 }
 
 static struct cli_command wlan_test_mode_commands[] = {

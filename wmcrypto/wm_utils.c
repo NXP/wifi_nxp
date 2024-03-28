@@ -46,7 +46,7 @@ bool verify_sequential_pattern(const void *buffer, int size, uint8_t first_byte)
 
 char *strdup(const char *s)
 {
-    char *result = os_mem_alloc(strlen(s) + 1);
+    char *result = OSA_MemoryAllocate(strlen(s) + 1);
     if (result)
         strcpy(result, s);
     return result;

@@ -144,7 +144,7 @@ static void USB_HostTask(void *param)
     while (1)
     {
         USB_HostTaskFn(param);
-        os_thread_sleep(os_msec_to_ticks(1));
+        OSA_TimeDelay(1);
     }
 }
 
@@ -153,7 +153,7 @@ static void USB_HostApplicationTask(void *param)
     while (1)
     {
         USB_HostMsdTask(param);
-        os_thread_sleep(os_msec_to_ticks(1));
+        OSA_TimeDelay(1);
     }
 }
 

@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <wm_os.h>
+#include <osa.h>
 
 #ifdef CONFIG_SIGMA_AGENT
 #include "wfa_debug.h"
@@ -39,50 +39,50 @@ extern void *wfa_wmm_thread(void *thr_param);
 void wfa_dut_init(BYTE **tBuf, BYTE **rBuf, BYTE **paBuf, BYTE **cBuf, struct timeval **timerp)
 {
     /* allocate the traffic stream table */
-    gStreams = (tgStream_t *)os_mem_alloc(WFA_MAX_TRAFFIC_STREAMS * sizeof(tgStream_t));
+    gStreams = (tgStream_t *)OSA_MemoryAllocate(WFA_MAX_TRAFFIC_STREAMS * sizeof(tgStream_t));
     if (gStreams == NULL)
     {
-        DPRINT_ERR(WFA_ERR, "Failed to os_mem_alloc theStreams\n");
+        DPRINT_ERR(WFA_ERR, "Failed to OSA_MemoryAllocate theStreams\n");
         exit(1);
     }
 
     /* a buffer used to carry receive and send test traffic */
-    *tBuf = (BYTE *)os_mem_alloc(MAX_UDP_LEN + 1); /* alloc a traffic buffer */
+    *tBuf = (BYTE *)OSA_MemoryAllocate(MAX_UDP_LEN + 1); /* alloc a traffic buffer */
     if (*tBuf == NULL)
     {
-        DPRINT_ERR(WFA_ERR, "Failed to os_mem_alloc traffic buffer\n");
+        DPRINT_ERR(WFA_ERR, "Failed to OSA_MemoryAllocate traffic buffer\n");
         exit(1);
     }
 
     /* a buffer used for response of control command */
-    *rBuf = (BYTE *)os_mem_alloc(WFA_RESP_BUF_SZ);
+    *rBuf = (BYTE *)OSA_MemoryAllocate(WFA_RESP_BUF_SZ);
     if (*rBuf == NULL)
     {
-        DPRINT_ERR(WFA_ERR, "Failed to os_mem_alloc response buffer\n");
+        DPRINT_ERR(WFA_ERR, "Failed to OSA_MemoryAllocate response buffer\n");
         exit(1);
     }
 
     /* timer used in select call */
-    *timerp = os_mem_alloc(sizeof(struct timeval));
+    *timerp = OSA_MemoryAllocate(sizeof(struct timeval));
     if (*timerp == NULL)
     {
-        DPRINT_ERR(WFA_ERR, "Failed to os_mem_alloc timer val\n");
+        DPRINT_ERR(WFA_ERR, "Failed to OSA_MemoryAllocate timer val\n");
         exit(1);
     }
 
     /* control command buf */
-    *cBuf = os_mem_alloc(WFA_BUFF_2K);
+    *cBuf = OSA_MemoryAllocate(WFA_BUFF_2K);
     if (*cBuf == NULL)
     {
-        DPRINT_ERR(WFA_ERR, "Failed to os_mem_alloc control command buf\n");
+        DPRINT_ERR(WFA_ERR, "Failed to OSA_MemoryAllocate control command buf\n");
         exit(1);
     }
 
     /* parameters buff */
-    *paBuf = os_mem_alloc(MAX_PARMS_BUFF);
+    *paBuf = OSA_MemoryAllocate(MAX_PARMS_BUFF);
     if (*paBuf == NULL)
     {
-        DPRINT_ERR(WFA_ERR, "Failed to os_mem_alloc parms value buff\n");
+        DPRINT_ERR(WFA_ERR, "Failed to OSA_MemoryAllocate parms value buff\n");
         exit(1);
     }
 }

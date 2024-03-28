@@ -12,6 +12,19 @@
 #include <osa.h>
 #include <wmlog.h>
 
+/** Check if cpu is in isr context
+ *
+ * \return bool value - true if cpu is in isr context
+ */
+bool is_isr_context(void)
+{
+#ifdef __CA7_REV
+    return (0U != if (SystemGetIRQNestingLevel()))
+#else /* __CA7_REV */
+    return (0U != __get_IPSR());
+#endif
+}
+
 /*** OS Reader Writer Locks ***/
 int OSA_RWLockCreate(osa_rw_lock_t *plock, const char *mutex_name, const char *lock_name)
 {

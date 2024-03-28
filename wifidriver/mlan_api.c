@@ -1286,7 +1286,7 @@ int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action, wifi_mfg_cmd_otp_cal_data_rd_
     mlan_ds_misc_cfg *misc  = NULL;
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
 
-    misc = (mlan_ds_misc_cfg *)os_mem_alloc(sizeof(mlan_ds_misc_cfg));
+    misc = (mlan_ds_misc_cfg *)OSA_MemoryAllocate(sizeof(mlan_ds_misc_cfg));
     (void)memset(misc, 0x00, sizeof(mlan_ds_misc_cfg));
     cmd->seq_num   = 0x0;
     cmd->result    = 0x0;
@@ -1294,14 +1294,14 @@ int wifi_get_set_rf_otp_cal_data(t_u16 cmd_action, wifi_mfg_cmd_otp_cal_data_rd_
                                               0, NULL, wifi_mfg_cmd_otp_cal_data_rd_wr, cmd);
     if (rv != MLAN_STATUS_SUCCESS)
     {
-        (void)os_mem_free(misc);
+        (void)OSA_MemoryFree(misc);
         return -WM_FAIL;
     }
 
     wifi_wait_for_cmdresp(misc);
     memcpy(wifi_mfg_cmd_otp_cal_data_rd_wr, (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)&(misc->param.mfg_otp_cal_data_rd_wr),
            sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
-    (void)os_mem_free(misc);
+    (void)OSA_MemoryFree(misc);
     return wm_wifi.cmd_resp_status;
 }
 
@@ -2063,7 +2063,7 @@ int wifi_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len)
     wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
 
     wifi_mfg_cmd_otp_cal_data_rd_wr =
-        (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+        (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)OSA_MemoryAllocate(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
     (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
 
     wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd      = MFG_CMD_OTP_CAL_DATA;
@@ -2082,7 +2082,7 @@ int wifi_set_rf_otp_cal_data(const uint8_t *cal_data, uint32_t cal_data_len)
         ret = -WM_FAIL;
     }
 
-    (void)os_mem_free(wifi_mfg_cmd_otp_cal_data_rd_wr);
+    (void)OSA_MemoryFree(wifi_mfg_cmd_otp_cal_data_rd_wr);
     return ret;
 }
 
@@ -2094,7 +2094,7 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
     wifi_mfg_cmd_otp_cal_data_rd_wr_t *wifi_mfg_cmd_otp_cal_data_rd_wr = NULL;
 
     wifi_mfg_cmd_otp_cal_data_rd_wr =
-        (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)os_mem_alloc(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
+        (wifi_mfg_cmd_otp_cal_data_rd_wr_t *)OSA_MemoryAllocate(sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
     (void)memset(wifi_mfg_cmd_otp_cal_data_rd_wr, 0x00, sizeof(wifi_mfg_cmd_otp_cal_data_rd_wr_t));
 
     wifi_mfg_cmd_otp_cal_data_rd_wr->mfg_cmd = MFG_CMD_OTP_CAL_DATA;
@@ -2121,7 +2121,7 @@ int wifi_get_rf_otp_cal_data(uint8_t *cal_data)
         ret = -WM_FAIL;
     }
 
-    (void)os_mem_free(wifi_mfg_cmd_otp_cal_data_rd_wr);
+    (void)OSA_MemoryFree(wifi_mfg_cmd_otp_cal_data_rd_wr);
 
     return ret;
 }

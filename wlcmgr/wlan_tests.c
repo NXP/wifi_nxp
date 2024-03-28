@@ -11621,7 +11621,7 @@ static void wlan_start_detect_ant(void)
                         {
                             while (pDetect_data->scan_info[current_antenna - 1].scan_done != MTRUE)
                             {
-                                os_thread_sleep(os_msec_to_ticks(3));
+                                OSA_TimeDelay(3);
                             }
                         }
                     }
@@ -11637,7 +11637,7 @@ static void wlan_start_detect_ant(void)
                     {
                         while (pDetect_data->scan_info[current_antenna - 1].scan_done != MTRUE)
                         {
-                            os_thread_sleep(os_msec_to_ticks(3));
+                            OSA_TimeDelay(3);
                         }
                     }
                 }
@@ -11657,7 +11657,7 @@ static void wlan_start_detect_ant(void)
         while (pDetect_data->detect_done == 0)
         {
             // wait untill evaluation complete
-            os_thread_sleep(os_msec_to_ticks(2));
+            OSA_TimeDelay(2);
         }
 
         if (pDetect_data->detect_mode == QUICK_DETECT_MODE)
@@ -11776,7 +11776,7 @@ static void test_wlan_detect_ant(int argc, char **argv)
         goto start_detect;
     }
 
-    cfg_channel_list = (cfg_scan_channel_list_t *)os_mem_calloc(sizeof(cfg_scan_channel_list_t));
+    cfg_channel_list = (cfg_scan_channel_list_t *)OSA_MemoryAllocate(sizeof(cfg_scan_channel_list_t));
     if (cfg_channel_list == NULL)
     {
         (void)PRINTF("Failed to alloc buffer for channel list\r\n");
@@ -11792,7 +11792,7 @@ static void test_wlan_detect_ant(int argc, char **argv)
             (void)PRINTF(
                 "Error: invalid channel"
                 " argument\n");
-            os_mem_free(cfg_channel_list);
+            OSA_MemoryFree(cfg_channel_list);
             return;
         }
     }
@@ -11805,7 +11805,7 @@ static void test_wlan_detect_ant(int argc, char **argv)
         if (rv != WM_SUCCESS)
         {
             (void)PRINTF("Unable to get channel list configuration\r\n");
-            os_mem_free(cfg_channel_list);
+            OSA_MemoryFree(cfg_channel_list);
             return;
         }
         else
@@ -11822,14 +11822,14 @@ static void test_wlan_detect_ant(int argc, char **argv)
     pDetect_data->channel_list = cfg_channel_list;
 
 start_detect:
-    start_msec = os_ticks_to_msec(os_ticks_get());
+    start_msec = OSA_TicksToMsec(OSA_TicksGet());
     (void)PRINTF("%d: Start to detect ant\r\n", start_msec);
     wlan_start_detect_ant();
     if (cfg_channel_list)
     {
-        os_mem_free(cfg_channel_list);
+        OSA_MemoryFree(cfg_channel_list);
     }
-    end_msec = os_ticks_to_msec(os_ticks_get());
+    end_msec = OSA_TicksToMsec(OSA_TicksGet());
     (void)PRINTF("%d: End of detect ant\r\n", end_msec);
     (void)PRINTF("It cost %dms to detect ant\r\n", end_msec - start_msec);
 }

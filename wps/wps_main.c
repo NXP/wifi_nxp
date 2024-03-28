@@ -75,29 +75,29 @@ short assoc_ie_index  = 0x0002;
 short ap_assocresp_ie_index;
 
 #ifdef CONFIG_P2P
-os_mutex_t p2p_session;
+OSA_MUTEX_HANDLE_DEFINE(p2p_session);
 
 struct wlan_network p2p_uap_network;
 struct wlan_network p2p_network;
 
-static os_queue_pool_define(wps_peer_event_queue_data, sizeof(struct wfd_wlan_event) * MAX_MSGS);
-static os_queue_pool_define(wps_event_queue_data, sizeof(struct wfd_wlan_event) * MAX_MSGS);
+static OSA_QueuePoolDefine(wps_peer_event_queue_data, sizeof(struct wfd_wlan_event) * MAX_MSGS);
+static OSA_QueuePoolDefine(wps_event_queue_data, sizeof(struct wfd_wlan_event) * MAX_MSGS);
 #endif
 
-static os_queue_pool_define(wps_cmd_queue_data, sizeof(struct prov_command **) * MAX_COMMANDS);
+static OSA_QueuePoolDefine(wps_cmd_queue_data, sizeof(struct prov_command **) * MAX_COMMANDS);
 
-static os_queue_pool_define(wps_data_queue_data, sizeof(struct wps_msg) * MAX_MSGS);
+static OSA_QueuePoolDefine(wps_data_queue_data, sizeof(struct wps_msg) * MAX_MSGS);
 
 struct wps_thread_t wps;
 struct wps_config *local_wcc = NULL;
 
 extern int wpa2_failure;
 
-os_thread_t wps_main_thread;
+osa_task_handle_t wps_main_thread;
 static os_thread_stack_define(wps_stack, 10240);
 
 #ifdef CONFIG_P2P
-os_thread_t p2p_scan_thread;
+osa_task_handle_t p2p_scan_thread;
 static os_thread_stack_define(p2p_scan_stack, 4096);
 #endif
 
@@ -691,7 +691,7 @@ int wps_connect(enum wps_session_command pbc, uint32_t pin, struct wlan_scan_res
     wps_cmd->wps_pin = pin;
     (void)memcpy(&wps_cmd->res, res, sizeof(struct wlan_scan_result));
 
-    if (os_queue_send(&wps.cmd_queue, &prov_cmd, OS_NO_WAIT) != WM_SUCCESS)
+    if (OSA_MsgQPut(wps.cmd_queue, &prov_cmd) != KOSA_StatusSuccess)
     {
         wps_mem_free(prov_cmd);
         return -WM_FAIL;
@@ -717,7 +717,7 @@ int wpa2_ent_connect(struct wlan_network *wpa2_network)
     prov_cmd->prov_session = local_wcc->prov_session;
     (void)memcpy(&prov_cmd->cmd.entp_cmd.wpa2_network, wpa2_network, sizeof(struct wlan_network));
 
-    if (os_queue_send(&wps.cmd_queue, &prov_cmd, OS_NO_WAIT) != WM_SUCCESS)
+    if (OSA_MsgQPut(wps.cmd_queue, &prov_cmd) != KOSA_StatusSuccess)
     {
         wps_mem_free(prov_cmd);
         return -WM_FAIL;
@@ -1016,8 +1016,8 @@ static int wps_cleanup(void)
     int ret;
 
 #ifdef CONFIG_P2P
-    ret = os_mutex_delete(&wps.p2p_session);
-    if (ret != WM_SUCCESS)
+    ret = OSA_MutexDestroy((osa_mutex_handle_t)wps.p2p_session);
+    if (ret != KOSA_StatusSuccess)
     {
         wps_d("Warning: failed to delete mutex.\r\n");
         return -WM_FAIL;
@@ -1103,8 +1103,8 @@ int wps_start(struct wps_config *wps_conf)
     wps_s->wfd_data.dev_index = -1;
     wps_s->wfd_data.dev_found = -1;
 
-    ret = os_mutex_create(&wps.p2p_session, "p2p_session", OS_MUTEX_INHERIT);
-    if (ret != WM_SUCCESS)
+    ret = OSA_MutexCreate(&wps.p2p_session, "p2p_session", OS_MUTEX_INHERIT);
+    if (status != KOSA_StatusSuccess)
         goto fail;
 
     ret = os_queue_create(&wps.event_queue, "wps_event_queue", sizeof(struct wfd_wlan_event), &wps.event_queue_data);
@@ -1254,7 +1254,7 @@ fail:
         os_queue_delete(&wps.data_queue);
 #ifdef CONFIG_P2P
     if (wps.p2p_session)
-        os_mutex_delete(&wps.p2p_session);
+        OSA_MutexDestroy((osa_mutex_handle_t)wps.p2p_session);
     if (wps.peer_event_queue)
         os_queue_delete(&wps.peer_event_queue);
     if (wps.event_queue)

@@ -350,7 +350,7 @@ int wlan_driver_deinit(void)
 static void wlan_hw_reset(void)
 {
     BOARD_WIFI_BT_Enable(false);
-    os_thread_sleep(1);
+    OSA_TimeDelay(1);
     BOARD_WIFI_BT_Enable(true);
 }
 
@@ -503,7 +503,7 @@ static void test_wlan_read_usb_file(int argc, char **argv)
         PRINTF("File size failed\r\n");
         goto file_err;
     }
-    file_buf = os_mem_alloc(data_len);
+    file_buf = OSA_MemoryAllocate(data_len);
     if (!file_buf)
     {
         PRINTF("File size allocate memory failed\r\n");
@@ -518,7 +518,7 @@ static void test_wlan_read_usb_file(int argc, char **argv)
     (void)wlan_set_entp_cert_files(usb_f_type, file_buf, data_len);
 
 file_err:
-    os_mem_free(file_buf);
+    OSA_MemoryFree(file_buf);
     usb_file_close();
 }
 
@@ -596,7 +596,7 @@ void task_main(void *param)
     while (1)
     {
         /* wait for interface up */
-        os_thread_sleep(os_msec_to_ticks(5000));
+        OSA_TimeDelay(5000);
     }
 }
 

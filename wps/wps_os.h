@@ -59,12 +59,12 @@ struct wps_thread_t
 {
     int initialized;
 #ifdef CONFIG_P2P
-    os_mutex_t p2p_session;
-    os_queue_t peer_event_queue;
-    os_queue_t event_queue;
+    OSA_MUTEX_HANDLE_DEFINE(p2p_session);
+    osa_msgq_handle_t peer_event_queue;
+    osa_msgq_handle_t event_queue;
 #endif
-    os_queue_t cmd_queue;
-    os_queue_t data_queue;
+    osa_msgq_handle_t cmd_queue;
+    osa_msgq_handle_t data_queue;
 #ifdef CONFIG_P2P
     os_queue_pool_t peer_event_queue_data;
     os_queue_pool_t event_queue_data;

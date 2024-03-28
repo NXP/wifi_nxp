@@ -236,7 +236,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
         do
         {
             /* wait for interface up */
-            os_thread_sleep(os_msec_to_ticks(50));
+            OSA_TimeDelay(50);
 
             if (wlan_get_connection_state(&state))
             {
@@ -317,7 +317,7 @@ static int prov_wps_enrollee_start(PWPS_INFO pwps_info, WPS_DATA *wps_s)
     if (retry_cnt == 0)
     {
     fail:
-        os_thread_sleep(os_msec_to_ticks(500));
+        OSA_TimeDelay(500);
 
 #ifdef CONFIG_P2P
         wps_d("Registration Protocol Failed !");

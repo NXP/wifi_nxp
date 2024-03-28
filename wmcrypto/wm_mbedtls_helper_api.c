@@ -62,7 +62,7 @@ mbedtls_x509_crt *wm_mbedtls_parse_cert(const unsigned char *cert_buf, size_t ce
     int ret                = 0;
     mbedtls_x509_crt *cert = NULL;
 
-    cert = (mbedtls_x509_crt *)os_mem_alloc(sizeof(mbedtls_x509_crt));
+    cert = (mbedtls_x509_crt *)OSA_MemoryAllocate(sizeof(mbedtls_x509_crt));
     if (!cert)
         return NULL;
 
@@ -76,7 +76,7 @@ mbedtls_x509_crt *wm_mbedtls_parse_cert(const unsigned char *cert_buf, size_t ce
             "mbedtls_x509_crt_parse failed, "
             "ret = -0x%02X",
             -ret);
-        os_mem_free(cert);
+        OSA_MemoryFree(cert);
         return NULL;
     }
     return cert;
@@ -88,7 +88,7 @@ void wm_mbedtls_free_cert(mbedtls_x509_crt *cert)
         return;
 
     mbedtls_x509_crt_free(cert);
-    os_mem_free(cert);
+    OSA_MemoryFree(cert);
     return;
 }
 
@@ -109,7 +109,7 @@ mbedtls_pk_context *wm_mbedtls_parse_key(const unsigned char *key_buf,
     int ret                 = 0;
     mbedtls_pk_context *key = NULL;
 
-    key = (mbedtls_pk_context *)os_mem_alloc(sizeof(mbedtls_pk_context));
+    key = (mbedtls_pk_context *)OSA_MemoryAllocate(sizeof(mbedtls_pk_context));
     if (!key)
         return NULL;
 
@@ -123,7 +123,7 @@ mbedtls_pk_context *wm_mbedtls_parse_key(const unsigned char *key_buf,
             "mbedtls_pk_parse_key failed, "
             "ret = -0x%02X",
             -ret);
-        os_mem_free(key);
+        OSA_MemoryFree(key);
         return NULL;
     }
     return key;
@@ -135,7 +135,7 @@ void wm_mbedtls_free_key(mbedtls_pk_context *key)
         return;
 
     mbedtls_pk_free(key);
-    os_mem_free(key);
+    OSA_MemoryFree(key);
     return;
 }
 
@@ -224,7 +224,7 @@ mbedtls_ssl_config *wm_mbedtls_ssl_config_new(wm_mbedtls_cert_t *cert, int endpo
     mbedtls_ssl_config *conf           = NULL;
     mbedtls_ctr_drbg_context *ctr_drbg = NULL;
 
-    conf = (mbedtls_ssl_config *)os_mem_alloc(sizeof(mbedtls_ssl_config));
+    conf = (mbedtls_ssl_config *)OSA_MemoryAllocate(sizeof(mbedtls_ssl_config));
     if (!conf)
         return NULL;
 
@@ -339,7 +339,7 @@ void wm_mbedtls_ssl_config_free(mbedtls_ssl_config *conf)
         return;
 
     mbedtls_ssl_config_free(conf);
-    os_mem_free(conf);
+    OSA_MemoryFree(conf);
     return;
 }
 
@@ -405,7 +405,7 @@ mbedtls_ssl_context *wm_mbedtls_ssl_new(mbedtls_ssl_config *conf, int fd, const 
     int ret                  = 0;
     mbedtls_ssl_context *ssl = NULL;
 
-    ssl = (mbedtls_ssl_context *)os_mem_alloc(sizeof(mbedtls_ssl_context));
+    ssl = (mbedtls_ssl_context *)OSA_MemoryAllocate(sizeof(mbedtls_ssl_context));
     if (!ssl)
         return NULL;
 
@@ -432,7 +432,7 @@ mbedtls_ssl_context *wm_mbedtls_ssl_new(mbedtls_ssl_config *conf, int fd, const 
 #if defined(MBEDTLS_TIMING_C)
     mbedtls_timing_delay_context *timer = NULL;
 
-    timer = (mbedtls_timing_delay_context *)os_mem_alloc(sizeof(mbedtls_timing_delay_context));
+    timer = (mbedtls_timing_delay_context *)OSA_MemoryAllocate(sizeof(mbedtls_timing_delay_context));
     if (!timer)
         return NULL;
 
@@ -450,13 +450,13 @@ void wm_mbedtls_ssl_free(mbedtls_ssl_context *ssl)
 #if defined(MBEDTLS_TIMING_C)
     if (ssl->p_timer)
     {
-        os_mem_free(ssl->p_timer);
+        OSA_MemoryFree(ssl->p_timer);
         ssl->p_timer = NULL;
     }
 #endif /* MBEDTLS_TIMING_C */
 
     mbedtls_ssl_free(ssl);
-    os_mem_free(ssl);
+    OSA_MemoryFree(ssl);
     return;
 }
 

@@ -341,7 +341,7 @@ void process_pkt_hdrs_flags(void *pbuf, t_u8 flags)
     ptxpd->flags = flags;
 }
 
-int bus_register_event_queue(xQueueHandle *event_queue)
+int bus_register_event_queue(osa_msgq_handle_t event_queue)
 {
     if (bus.event_queue != NULL)
         return -WM_FAIL;
@@ -527,7 +527,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
 {
     IMUPkt *imupkt    = (IMUPkt *)pmbuf;
     t_u32 event_cause = 0;
-    int ret;
+    int status;
     struct bus_message msg;
 #ifdef CONFIG_FW_VDLLV2
     mlan_private *pmpriv = (mlan_private *)mlan_adap->priv[0];
@@ -565,7 +565,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     {
         if (mlan_adap->ps_state == PS_STATE_SLEEP)
         {
-            os_rwlock_write_unlock(&sleep_rwlock);
+            OSA_RWLockWriteUnlock(&sleep_rwlock);
             pmpriv->adapter->ps_state = PS_STATE_AWAKE;
         }
         return wlan_handle_vdllv2_event_packet(pmbuf + INTF_HEADER_LEN);
@@ -1610,7 +1610,7 @@ retry:
      * This is for load service case only.
      */
     power_off_device(LOAD_WIFI_FIRMWARE);
-    wifi_io_d("%u IMU download WLAN FW.\n", os_ticks_get());
+    wifi_io_d("%u IMU download WLAN FW.\n", OSA_TicksGet());
     /* Download firmware */
     ret = sb3_fw_download(LOAD_WIFI_FIRMWARE, 1, (uint32_t)fw_ram_start_addr);
     /* If fw download is failed, retry downloading for 3 times. */
@@ -1628,7 +1628,7 @@ retry:
             return mlanstatus;
         }
     }
-    wifi_io_d("%u WLAN FW is active.\n", os_ticks_get());
+    wifi_io_d("%u WLAN FW is active.\n", OSA_TicksGet());
 #ifdef CONFIG_WIFI_RECOVERY
     if (wifi_recovery_enable)
     {

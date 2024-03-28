@@ -340,7 +340,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
                                  * that wpa2_ent thread can get
                                  * chance to finish cleanup.
                                  */
-                                os_thread_sleep(1000);
+                                OSA_TimeDelay(1000);
                             }
                             ret = wlan_wpa2_ent_reinit();
                             if (ret != WM_SUCCESS)
@@ -492,7 +492,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
     msg.buffer       = (void *)buffer;
     msg.new_msg_type = new_msg_type;
 
-    if (os_queue_send(&wps.data_queue, &msg, OS_NO_WAIT) != WM_SUCCESS)
+    if (OSA_MsgQPut(wps.data_queue, &msg, OS_NO_WAIT) != WM_SUCCESS)
     {
         wps_mem_free(buffer);
 #ifdef WPS_RX_EOPAL_DEBUG

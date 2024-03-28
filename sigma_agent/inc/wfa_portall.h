@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <wlan.h>
 #include <wifi.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <wm_utils.h>
 
@@ -43,7 +43,7 @@ static inline void panic(const char *msg)
     PRINTF("%s\r\n", msg);
     while (1)
     {
-        os_thread_sleep(100);
+        OSA_TimeDelay(100);
     }
 }
 
@@ -115,13 +115,13 @@ static inline int gettimeofday2(struct timeval *tv, void *tz)
 
 #define wIOCTL(fd, cmd, intf) ioctl(fd, cmd, intf)
 
-#define wMALLOC(size) os_mem_alloc(size)
+#define wMALLOC(size) OSA_MemoryAllocate(size)
 
 #define wMEMCPY(dp, sp, size) memcpy(dp, sp, size)
 
 #define wMEMSET(memp, val, size) memset(memp, val, size)
 
-#define wFREE(memp) os_mem_free(memp);
+#define wFREE(memp) OSA_MemoryFree(memp);
 
 #define wGETTIMEOFDAY(tmval, zone) gettimeofday2(tmval, zone)
 

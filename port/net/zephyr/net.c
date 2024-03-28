@@ -64,9 +64,8 @@ static interface_t g_wfd;
 #endif
 
 static int net_wlan_init_done;
-static os_timer_t dhcp_timer;
-
-static void dhcp_timer_cb(os_timer_arg_t arg);
+OSA_TIMER_HANDLE_DEFINE(dhcp_timer);
+static void dhcp_timer_cb(osa_timer_arg_t arg);
 
 err_t lwip_netif_init(struct netif *netif);
 err_t lwip_netif_uap_init(struct netif *netif);
@@ -324,8 +323,8 @@ int net_wlan_init(void)
         }
 #endif
 
-        ret = os_timer_create(&dhcp_timer, "dhcp-timer", os_msec_to_ticks(DHCP_TIMEOUT), &dhcp_timer_cb, NULL,
-                              OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
+        ret = OSA_TimerCreate((osa_timer_handle_t)dhcp_timer, "dhcp-timer", DHCP_TIMEOUT, &dhcp_timer_cb, NULL,
+                              KOSA_TimerOnce, OS_TIMER_NO_ACTIVATE);
         if (ret != WM_SUCCESS)
         {
             net_e("Unable to start dhcp timer");
@@ -425,7 +424,7 @@ int net_wlan_deinit(void)
         return -WM_FAIL;
     }
 
-    ret = os_timer_delete(&dhcp_timer);
+    ret = OSA_TimerDestroy((osa_timer_handle_t)dhcp_timer);
     if (ret != WM_SUCCESS)
     {
         net_e("DHCP timer deletion failed");
@@ -546,7 +545,7 @@ static void wm_netif_status_callback(struct netif *n)
 
 void net_stop_dhcp_timer(void)
 {
-    (void)os_timer_deactivate((os_timer_t *)&dhcp_timer);
+    (void)OSA_TimerDeactivate((osa_timer_handle_t)dhcp_timer);
 }
 
 static void stop_cb(void *ctx)
@@ -558,7 +557,7 @@ static void stop_cb(void *ctx)
     wm_netif_status_callback_ptr = NULL;
 }
 
-static void dhcp_timer_cb(os_timer_arg_t arg)
+static void dhcp_timer_cb(osa_timer_arg_t arg)
 {
     (void)tcpip_try_callback(stop_cb, NULL);
     net_e("DHCP timeout, failed to get IPv4 address");
@@ -757,7 +756,7 @@ int net_configure_address(struct net_ip_config *addr, void *intrfc_handle)
             (void)netifapi_netif_set_addr(&if_handle->netif, ip_2_ip4(&if_handle->ipaddr), ip_2_ip4(&if_handle->nmask),
                                           ip_2_ip4(&if_handle->gw));
             (void)netifapi_netif_set_up(&if_handle->netif);
-            (void)os_timer_activate(&dhcp_timer);
+            (void)OSA_TimerActivate((osa_timer_handle_t)dhcp_timer);
             wm_netif_status_callback_ptr = wm_netif_status_callback;
             (void)netifapi_dhcp_start(&if_handle->netif);
             break;

@@ -121,7 +121,7 @@ static WORD xcCmdTag;
 
 #define CONFIG_WFA_DUT_STACK_SIZE (2048)
 
-static os_thread_t wfa_dut_thread;
+static osa_task_handle_t wfa_dut_thread;
 static os_thread_stack_define(wfa_dut_stack, CONFIG_WFA_DUT_STACK_SIZE);
 
 static void wfa_dut_task(void *arg)

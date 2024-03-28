@@ -125,7 +125,7 @@ int wps_l2_send(WPS_L2_INFO *l2, const u8 *dst_addr, u16 proto, const u8 *buf, s
         else
             retry_cnt = 0;
 
-        os_thread_sleep(200);
+        OSA_TimeDelay(200);
 
     } while (retry_cnt != 0);
 

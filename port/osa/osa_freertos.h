@@ -67,4 +67,67 @@ void OSA_DumpMemStats(void);
 
 #define OSA_GetTaskList(__buff__) vTaskList(__buff__)
 
+bool is_isr_context(void);
+/** Get current OS tick counter value
+ *
+ * \return 32 bit value of ticks since boot-up
+ */
+static inline unsigned OSA_TicksGet(void)
+{
+    if (is_isr_context())
+    {
+        return xTaskGetTickCountFromISR();
+    }
+    else
+    {
+        return xTaskGetTickCount();
+    }
+}
+
+static inline uint32_t OSA_MsecToTicks(uint32_t msecs)
+{
+    return (msecs) / (portTICK_PERIOD_MS);
+}
+
+static inline unsigned long OSA_TicksToMsec(unsigned long ticks)
+{
+    return (ticks) * (portTICK_PERIOD_MS);
+}
+
+/** Disable all tasks schedule */
+static inline void OSA_LockSchedule(void)
+{
+    vTaskSuspendAll();
+}
+
+/** Enable all tasks schedule */
+static inline void OSA_UnlockSchedule(void)
+{
+    xTaskResumeAll();
+}
+
+/**
+ * Returns time in micro-secs since bootup
+ *
+ * @note The value returned will wrap around after sometime and caller is
+ * expected to guard itself against this.
+ *
+ * @return Time in micro-secs since bootup
+ */
+unsigned int OSA_GetTimestamp(void);
+
+/** Structure used for queue definition */
+typedef struct osa_queue_pool
+{
+    /** Size of the queue */
+    int size;
+} osa_queue_pool_t;
+
+/** Define OS Queue pool
+ *
+ * This macro helps define the name and size of the queue to be created
+ * using the function os_queue_create().
+ */
+#define OSA_QueuePoolDefine(poolname, poolsize) osa_queue_pool_t poolname = {poolsize};
+
 #endif /* ! _OSA_FREERTOS_H_ */
