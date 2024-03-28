@@ -42,9 +42,9 @@
 /*------------------------------------------------------*/
 #include <netif_decl.h>
 /*------------------------------------------------------*/
-static struct nxp_wifi_device gs_nxp_wifi_dev;
 
 #if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
+static struct nxp_wifi_device gs_nxp_wifi_dev;
 
 #ifndef CONFIG_NETMGR_STACK_SIZE
 #define CONFIG_NETMGR_STACK_SIZE 1024
