@@ -6624,12 +6624,15 @@ static void dump_wlan_set_antcfg_usage(void)
     (void)PRINTF("\t[evaluate_time]: \r\n");
     (void)PRINTF("\t           If ant mode = 0xFFFF, use this to configure\r\n");
     (void)PRINTF("\t           SAD evaluate time interval in milli seconds unit.\r\n");
-    (void)PRINTF("\t           If not specified, default value is 6000 milli seconds\r\n");
+    (void)PRINTF("\t           MAX evaluate time is 65535ms.\r\n");
+    (void)PRINTF("\t           If not specified, default value is 6000 milli seconds.\r\n");
 #ifdef RW610
     (void)PRINTF("\t<evaluate_mode>: \r\n");
     (void)PRINTF("\t           0: Ant1 + Ant2\r\n");
     (void)PRINTF("\t           1: Ant2 + Ant3\r\n");
     (void)PRINTF("\t           2: Ant1 + Ant3\r\n");
+    (void)PRINTF("\t           255: invalid evaluate mode\r\n");
+    (void)PRINTF("\t           If not used, just keep this field empty.\r\n");
 #endif
     (void)PRINTF("Examples:\r\n");
     (void)PRINTF("wlan-set-antcfg 1\r\n");
@@ -6700,6 +6703,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     if (argc < 2 || argc > 4)
     {
         dump_wlan_set_antcfg_usage();
+        (void)PRINTF("Error: invalid number of arguments\r\n");
         return;
     }
 
@@ -6714,6 +6718,7 @@ static void wlan_antcfg_set(int argc, char *argv[])
     if ((argc == 3 || argc == 4) && (ant_mode != 0xFFFFU))
     {
         dump_wlan_set_antcfg_usage();
+        (void)PRINTF("Error: invalid ant_mode\r\n");
         return;
     }
 
@@ -6721,16 +6726,39 @@ static void wlan_antcfg_set(int argc, char *argv[])
     if (argc == 3 || argc == 4)
     {
         evaluate_time = (uint16_t)strtol(argv[2], NULL, 10);
-    }
-    if (errno != 0)
-    {
-        (void)PRINTF("Error during strtol errno:%d", errno);
-        return;
+
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtol errno:%d", errno);
+            return;
+        }
+
+        if ((evaluate_time < 0) || (evaluate_time > 0xffffU))
+        {
+            dump_wlan_set_antcfg_usage();
+            (void)PRINTF("Error: invalid evaluate_time\r\n");
+            return;
+        }
     }
 
+    errno = 0;
     if (argc == 4)
     {
         evaluate_mode = (uint8_t)strtol(argv[3], NULL, 10);
+
+        if (errno != 0)
+        {
+            (void)PRINTF("Error during strtol errno:%d", errno);
+            return;
+        }
+
+        if ((evaluate_mode != 0) && (evaluate_mode != 1)
+            && (evaluate_mode != 2) && (evaluate_mode != 255))
+        {
+            dump_wlan_set_antcfg_usage();
+            (void)PRINTF("Error: invalid evaluate_mode\r\n");
+            return;
+        }
     }
 
     ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
