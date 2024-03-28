@@ -7139,6 +7139,7 @@ int wifi_set_get_rx_abort_cfg_ext(void *cfg, t_u16 action)
 {
     wifi_get_command_lock();
     HostCmd_DS_COMMAND *cmd = wifi_get_command_buffer();
+    (void)memset(cmd, 0, sizeof(HostCmd_DS_COMMAND));
     cmd->seq_num            = 0x0;
     cmd->result             = 0x0;
     wlan_ops_sta_prepare_cmd((mlan_private *)mlan_adap->priv[0], HostCmd_CMD_RX_ABORT_CFG_EXT, action, 0, NULL, cfg,

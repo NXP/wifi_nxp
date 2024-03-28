@@ -6099,7 +6099,6 @@ static void test_wlan_rx_abort_cfg(int argc, char **argv)
 #endif
 
 #ifdef CONFIG_RX_ABORT_CFG_EXT
-int rx_abort_cfg_ext_enable = 0;
 static void dump_wlan_rx_abort_cfg_ext_usage()
 {
     (void)PRINTF("Usage:\r\n");
@@ -6144,37 +6143,38 @@ static void dump_wlan_rx_abort_cfg_ext_usage()
 
 static void test_wlan_get_rx_abort_cfg_ext(int argc, char **argv)
 {
-    struct wlan_rx_abort_cfg_ext cfg;
-    (void)memset(&cfg, 0, sizeof(cfg));
+    struct wlan_rx_abort_cfg_ext *cfg = (struct wlan_rx_abort_cfg_ext*)OSA_MemoryAllocate(sizeof(struct wlan_rx_abort_cfg_ext));
+    (void)memset(cfg, 0, sizeof(*cfg));
 
-    wlan_get_rx_abort_cfg_ext(&cfg);
+    wlan_get_rx_abort_cfg_ext(cfg);
 
-    (void)PRINTF("Dynamic Rx Abort %s\r\n", rx_abort_cfg_ext_enable == 1 ? "enabled" : "disabled");
-    if (rx_abort_cfg_ext_enable == 1)
+    (void)PRINTF("Dynamic Rx Abort %s\r\n", cfg->enable == 1 ? "enabled" : "disabled");
+    if (cfg->enable == 1)
     {
         int rssi;
-        rssi = cfg.rssi_margin;
+        rssi = cfg->rssi_margin;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Margin RSSI: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
 
-        rssi = cfg.ceil_rssi_threshold;
+        rssi = cfg->ceil_rssi_threshold;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Ceil RSSI threshold: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
 
-        rssi = cfg.floor_rssi_threshold;
+        rssi = cfg->floor_rssi_threshold;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Floor rssi threshold: %s%d dbm\r\n", ((rssi > 0) ? "-" : ""), rssi);
 
-        rssi = cfg.current_dynamic_rssi_threshold;
+        rssi = cfg->current_dynamic_rssi_threshold;
         if (rssi > 0x7f)
             rssi = -(256 - rssi);
         (void)PRINTF("Dynamic RSSI Threshold : %d dbm (%s)\r\n", rssi,
-                     cfg.rssi_default_config ? (cfg.edmac_enable ? "EDMAC based" : "Default") : "Config based");
+                     cfg->rssi_default_config ? (cfg->edmac_enable ? "EDMAC based" : "Default") : "Config based");
     }
     (void)PRINTF("\r\n");
+    OSA_MemoryFree(cfg);
     return;
 }
 
@@ -6222,13 +6222,11 @@ static void test_wlan_set_rx_abort_cfg_ext(int argc, char **argv)
             if (value == 0) /*Disable dynamic rx bort config*/
             {
                 cfg.enable              = 0;
-                rx_abort_cfg_ext_enable = 0;
                 break;
             }
             else /* Enable dynamic rx abort config*/
             {
                 cfg.enable              = 1;
-                rx_abort_cfg_ext_enable = 1;
             }
             arg += 2;
             info.enable = 1;
