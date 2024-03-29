@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <wm_net.h>
 #include <wifi_ping.h>
 #include <wmerrno.h>

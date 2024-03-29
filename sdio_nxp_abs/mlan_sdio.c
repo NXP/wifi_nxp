@@ -658,7 +658,7 @@ void sdio_drv_deinit(void)
 #elif defined(__ZEPHYR__)
 
 #include <mlan_sdio_api.h>
-#include <wm_os.h>
+#include <osa.h>
 #include <fsl_common.h>
 #include <fsl_gpio.h>
 #include <zephyr/sd/sdio.h>

@@ -1340,7 +1340,7 @@ static void wlan_rf_otp_cal_data_get(int argc, char *argv[])
         return;
     }
 
-    cal_data = (uint8_t *)os_mem_calloc(CAL_DATA_LEN);
+    cal_data = (uint8_t *)OSA_MemoryAllocate(CAL_DATA_LEN);
     if (!cal_data)
     {
         (void)PRINTF("Error: failed to alloc memory!\r\n");

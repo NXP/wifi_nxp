@@ -14,7 +14,7 @@
 #include <ctype.h>
 
 #include <string.h>
-#include <wm_os.h>
+#include <osa.h>
 
 
 #ifdef CONFIG_SIGMA_AGENT
