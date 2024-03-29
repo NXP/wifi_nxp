@@ -492,7 +492,7 @@ void WPSEAPoLRxDataHandler(const u8 *buf, const size_t len)
     msg.buffer       = (void *)buffer;
     msg.new_msg_type = new_msg_type;
 
-    if (OSA_MsgQPut(wps.data_queue, &msg, OS_NO_WAIT) != WM_SUCCESS)
+    if (OSA_MsgQPut(wps.data_queue, &msg) != WM_SUCCESS)
     {
         wps_mem_free(buffer);
 #ifdef WPS_RX_EOPAL_DEBUG

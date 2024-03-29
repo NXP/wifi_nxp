@@ -49,8 +49,9 @@ extern WPA_SM wpa_sm;
 extern int err_count, req_len, wpa2_failure;
 extern void wpa2_shutdown();
 
-osa_task_handle_t wps_tls_thread;
-static os_thread_stack_define(wps_tls_stack, 8192);
+static void wps_tls(osa_task_param_t arg);
+OSA_TASK_HANDLE_DEFINE(wps_tls_Handle);
+static OSA_TASK_DEFINE(wps_tls,  PRIORITY_RTOS_TO_OSA(2), 1, 8192, 0);
 
 u8 *rbuf;
 #ifdef CONFIG_PEAP_MSCHAPV2
@@ -319,7 +320,7 @@ int wait_for_receive()
 {
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    return OSA_SemaphoreWait((osa_semaphore_handle_t)wps_s->ssl_sync_sem, MSEC_TO_TICK(SSL_WAIT));
+    return OSA_SemaphoreWait((osa_semaphore_handle_t)wps_s->ssl_sync_sem, SSL_WAIT);
 }
 #endif
 
@@ -692,7 +693,7 @@ void wpa2_session_clean()
         if (status != KOSA_StatusSuccess)
             wps_d("Warning: failed to delete mutex.\r\n");
 
-        status = os_thread_delete(&wps_tls_thread);
+        status = OSA_TaskDestroy((osa_task_handle_t)wps_tls_Handle);
         if (status != WM_SUCCESS)
             wps_d("Warning: failed to delete thread.\r\n");
     }
@@ -794,12 +795,12 @@ int eap_tls_key_derivation(void *p_expkey,
     return (0);
 }
 
-void wps_tls_init(void *argv)
+void wps_tls(void *argv)
 {
     int status      = WPS_STATUS_SUCCESS, rv;
     WPS_DATA *wps_s = (WPS_DATA *)&wps_global;
 
-    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wps_s->ssl_sync_sem, "ssl-synch-sem");
+    status = OSA_SemaphoreCreate((osa_semaphore_handle_t)wps_s->ssl_sync_sem, 1);
 
     if (status != KOSA_StatusSuccess)
     {
@@ -1811,8 +1812,7 @@ static int wps_eap_request_message_handler(PWPS_INFO pwps_info, PEAP_FRAME_HEADE
 
                 pwps_info->eap_type = peap->type;
 
-                status = os_thread_create(&wps_tls_thread, "wps_tls", wps_tls_init, 0, &wps_tls_stack, OS_PRIO_2);
-
+                status = OSA_TaskCreate((osa_task_handle_t)wps_tls_Handle, OSA_TASK(wps_tls), NULL);
                 if (status != WM_SUCCESS)
                 {
                     wps_d(

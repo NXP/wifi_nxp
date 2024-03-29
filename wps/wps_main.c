@@ -38,7 +38,7 @@
 #define MAX_COMMANDS 4
 #define MAX_MSGS     4
 
-#define RX_WAIT OS_WAIT_FOREVER
+#define RX_WAIT osaWaitForever_c
 #define APP_AES AES
 
 /********************************************************
@@ -93,12 +93,17 @@ struct wps_config *local_wcc = NULL;
 
 extern int wpa2_failure;
 
-osa_task_handle_t wps_main_thread;
-static os_thread_stack_define(wps_stack, 10240);
+static void wps_main(osa_task_param_t arg);
+OSA_TASK_HANDLE_DEFINE(wps_main_Handle);
 
 #ifdef CONFIG_P2P
-osa_task_handle_t p2p_scan_thread;
-static os_thread_stack_define(p2p_scan_stack, 4096);
+static void wps_peer_event_receive(osa_task_param_t arg);
+OSA_TASK_HANDLE_DEFINE(p2p_scan_Handle);
+static OSA_TASK_DEFINE(p2p_scan,  PRIORITY_RTOS_TO_OSA(3), 1, 4096, 0);
+
+static OSA_TASK_DEFINE(wps_main,  PRIORITY_RTOS_TO_OSA(3), 1, 10240, 0);
+#else
+static OSA_TASK_DEFINE(wps_main,  PRIORITY_RTOS_TO_OSA(2), 1, 10240, 0);
 #endif
 
 extern void wps_register_rx_callback(void (*WPSEAPoLRxDataHandler)(const u8 *buf, const size_t len));
@@ -257,7 +262,7 @@ void wps_generate_nonce_16B(u8 *buf)
 
     ENTER();
 
-    seed = os_ticks_get();
+    seed = OSA_TicksGet();
 
     for (i = 0; i < 4; i++)
     {
@@ -741,7 +746,7 @@ void wpa2_shutdown()
 /* WPS main processing thread
  *
  */
-static void wps_main(os_thread_arg_t data)
+static void wps_main(osa_task_param_t data)
 {
 #ifdef CONFIG_P2P
     struct timeval tv, now;
@@ -879,7 +884,7 @@ static void wps_main(os_thread_arg_t data)
     while (1)
     {
 #ifdef CONFIG_WPS2
-        ret = os_queue_recv(&wps.cmd_queue, &prov_cmd, RX_WAIT);
+        ret = OSA_MsgQGet(&wps.cmd_queue, &prov_cmd, RX_WAIT);
         if (ret != WM_SUCCESS || prov_cmd == NULL)
             continue;
 #else
@@ -888,8 +893,8 @@ static void wps_main(os_thread_arg_t data)
         {
             if (wps_loop.timeout)
             {
-                now.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-                now.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+                now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+                now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
 
                 if (timer_cmp(&now, &wps_loop.timeout->time))
                     timersub(&wps_loop.timeout->time, &now, &tv);
@@ -902,8 +907,8 @@ static void wps_main(os_thread_arg_t data)
             {
                 struct wps_timeout_s *tmp;
 
-                now.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-                now.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+                now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+                now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
 
                 if (!timer_cmp(&now, &wps_loop.timeout->time))
                 {
@@ -924,7 +929,7 @@ static void wps_main(os_thread_arg_t data)
             pd_request = 0;
         }
 #endif
-        ret     = os_queue_recv(&wps.cmd_queue, &prov_cmd, os_msec_to_ticks(1000));
+        ret     = OSA_MsgQGet((osa_msgq_handle_t)wps.cmd_queue, &prov_cmd, 1000);
         wps_cmd = &(prov_cmd->cmd.wps_cmd);
 
         if (ret != WM_SUCCESS || wps_cmd == NULL)
@@ -1022,13 +1027,13 @@ static int wps_cleanup(void)
         wps_d("Warning: failed to delete mutex.\r\n");
         return -WM_FAIL;
     }
-    ret = os_queue_delete(&wps.peer_event_queue);
+    ret = OSA_MsgQDestroy((osa_msgq_handle_t)wps.peer_event_queue);
     if (ret != WM_SUCCESS)
     {
         wps_d("Warning: failed to delete queue.\r\n");
         return -WM_FAIL;
     }
-    ret = os_queue_delete(&wps.event_queue);
+    ret = OSA_MsgQDestroy((osa_msgq_handle_t)wps.event_queue);
     if (ret != WM_SUCCESS)
     {
         wps_d("Warning: failed to delete queue.\r\n");
@@ -1036,7 +1041,7 @@ static int wps_cleanup(void)
     }
     if (!auto_go)
     {
-        ret = os_thread_delete(&p2p_scan_thread);
+        ret = OSA_TaskDestroy((osa_task_handle_t)p2p_scan_thread);
         if (ret != WM_SUCCESS)
         {
             wps_d("Warning: failed to delete thread.\r\n");
@@ -1045,20 +1050,20 @@ static int wps_cleanup(void)
     }
 #endif
 
-    ret = os_queue_delete(&wps.cmd_queue);
+    ret = OSA_MsgQDestroy((osa_msgq_handle_t)wps.cmd_queue);
     if (ret != WM_SUCCESS)
     {
         wps_d("Warning: failed to delete queue.\r\n");
         return -WM_FAIL;
     }
 
-    ret = os_queue_delete(&wps.data_queue);
+    ret = OSA_MsgQDestroy((osa_msgq_handle_t)wps.data_queue);
     if (ret != WM_SUCCESS)
     {
         wps_d("Warning: failed to delete queue.\r\n");
         return -WM_FAIL;
     }
-    ret = os_thread_delete(&wps_main_thread);
+    ret = OSA_TaskDestroy((osa_task_handle_t)wps_main_Handle);
     if (ret != WM_SUCCESS)
     {
         wps_d("Warning: failed to delete thread.\r\n");
@@ -1093,8 +1098,6 @@ int wps_start(struct wps_config *wps_conf)
     wps.peer_event_queue_data = wps_peer_event_queue_data;
     wps.event_queue_data      = wps_event_queue_data;
 #endif
-    wps.cmd_queue_data  = wps_cmd_queue_data;
-    wps.data_queue_data = wps_data_queue_data;
     wps.cb              = local_wcc->wps_callback;
 
 #ifdef CONFIG_P2P
@@ -1107,16 +1110,15 @@ int wps_start(struct wps_config *wps_conf)
     if (status != KOSA_StatusSuccess)
         goto fail;
 
-    ret = os_queue_create(&wps.event_queue, "wps_event_queue", sizeof(struct wfd_wlan_event), &wps.event_queue_data);
-    if (ret != WM_SUCCESS)
+    ret = OSA_MsgQCreate((osa_msgq_handle_t)wps.event_queue, MAX_MSGS, sizeof(struct wfd_wlan_event));
+    if (ret != KOSA_StatusSuccess)
     {
         wps_d("Error: Failed to create wps event queue: %d\r\n", ret);
         goto fail;
     }
 
-    ret = os_queue_create(&wps.peer_event_queue, "wps_peer_event_queue", sizeof(struct wfd_wlan_event),
-                          &wps.peer_event_queue_data);
-    if (ret != WM_SUCCESS)
+    ret = OSA_MsgQCreate((osa_msgq_handle_t)wps.peer_event_queue, MAX_MSGS, sizeof(struct wfd_wlan_event));
+    if (ret != KOSA_StatusSuccess)
     {
         wps_d(
             "Error: Failed to create wps peer "
@@ -1131,20 +1133,20 @@ int wps_start(struct wps_config *wps_conf)
             "Error: unable to register peer "
             "event queue %d\r\n",
             ret);
-        os_queue_delete(&wps.peer_event_queue);
+        OSA_MsgQDestroy((osa_msgq_handle_t)wps.peer_event_queue);
         goto fail;
     }
 #endif
 
-    ret = os_queue_create(&wps.cmd_queue, "wps_cmd_queue", sizeof(struct prov_command **), &wps.cmd_queue_data);
-    if (ret != WM_SUCCESS)
+    ret = OSA_MsgQCreate((osa_msgq_handle_t)wps.cmd_queue, MAX_COMMANDS, sizeof(struct prov_command **));
+    if (ret != KOSA_StatusSuccess)
     {
         wps_d("Error: Failed to create wps cmd queue: %d\r\n", ret);
         goto fail;
     }
 
-    ret = os_queue_create(&wps.data_queue, "wps_message_queue", sizeof(struct wps_msg), &wps.data_queue_data);
-    if (ret != WM_SUCCESS)
+    ret = OSA_MsgQCreate((osa_msgq_handle_t)wps.data_queue, MAX_MSGS, sizeof(struct wps_msg));
+    if (ret != KOSA_StatusSuccess)
     {
         wps_d("Error: Failed to create wps message queue: %d\r\n", ret);
         goto fail;
@@ -1216,16 +1218,15 @@ int wps_start(struct wps_config *wps_conf)
     (void)memcpy(wpa_sm_s->own_addr, wps_s->l2->my_mac_addr, ETH_ALEN);
 #endif
 
-#ifdef CONFIG_P2P
-    ret = os_thread_create(&wps_main_thread, "p2p", wps_main, 0, &wps_stack, OS_PRIO_3);
+    ret = OSA_TaskCreate((osa_task_handle_t)wps_main_Handle, OSA_TASK(wps_main), NULL);
     if (ret != WM_SUCCESS)
     {
         wps_d("Error: Failed to create p2p thread: %d\r\n", ret);
         goto fail;
     }
-
-    ret = os_thread_create(&p2p_scan_thread, "p2p_scan", wps_peer_event_receive, 0, &p2p_scan_stack, OS_PRIO_3);
-
+    
+#ifdef CONFIG_P2P
+    ret = OSA_TaskCreate((osa_task_handle_t)p2p_scan_Handle, OSA_TASK(wps_peer_event_receive), NULL);
     if (ret != WM_SUCCESS)
     {
         wps_d(
@@ -1234,31 +1235,24 @@ int wps_start(struct wps_config *wps_conf)
             ret);
         goto fail;
     }
-#else
-    ret = os_thread_create(&wps_main_thread, "prov", wps_main, 0, &wps_stack, OS_PRIO_2);
-    if (ret != WM_SUCCESS)
-    {
-        wps_d("Error: Failed to create wps thread: %d\r\n", ret);
-        goto fail;
-    }
 #endif
-
+    
     return WM_SUCCESS;
 
 fail:
-    if (wps_main_thread)
-        os_thread_delete(&wps_main_thread);
+    if (wps_main_Handle)
+        (void)OSA_TaskDestroy((osa_task_handle_t)wps_main_Handle);
     if (wps.cmd_queue)
-        os_queue_delete(&wps.cmd_queue);
+        (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.cmd_queue);
     if (wps.data_queue)
-        os_queue_delete(&wps.data_queue);
+        (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.data_queue);
 #ifdef CONFIG_P2P
     if (wps.p2p_session)
         OSA_MutexDestroy((osa_mutex_handle_t)wps.p2p_session);
     if (wps.peer_event_queue)
-        os_queue_delete(&wps.peer_event_queue);
+        (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.peer_event_queue);
     if (wps.event_queue)
-        os_queue_delete(&wps.event_queue);
+        (void)OSA_MsgQDestroy((osa_msgq_handle_t)wps.event_queue);
 #endif
 
     return -WM_FAIL;

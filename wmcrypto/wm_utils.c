@@ -157,7 +157,7 @@ void get_random_sequence(void *buf, unsigned int size)
     int32_t i;
     uint32_t feed_data = 0, curr_time;
 
-    curr_time = os_ticks_get();
+    curr_time = OSA_TicksGet();
 
     for (i = 0; i < MAX_ENTROPY_HDLRS; i++)
     {

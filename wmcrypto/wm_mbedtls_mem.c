@@ -16,7 +16,7 @@
 
 static void *wmos_wrap_calloc(size_t block_count, size_t block_size)
 {
-    return os_mem_calloc(block_count * block_size);
+    return OSA_MemoryAllocate(block_count * block_size);
 }
 
 static void wmos_wrap_free(void *ptr)

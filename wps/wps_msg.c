@@ -1125,7 +1125,7 @@ int wps_generate_pin(uint32_t *pin)
 
     ENTER();
 
-    ut = os_ticks_get();
+    ut = OSA_TicksGet();
     srand(ut);
 
     wps_pin = rand() % 10000000;

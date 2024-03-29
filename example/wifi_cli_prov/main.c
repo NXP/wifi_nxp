@@ -81,15 +81,17 @@ static int wlan_prov_cli_init(void);
  * Variables
  ******************************************************************************/
 
-const int TASK_MAIN_PRIO = OS_PRIO_3;
 #ifdef CONFIG_WPS2
-const int TASK_MAIN_STACK_SIZE = 1500;
+#define MAIN_TASK_STACK_SIZE 1500
 #else
-const int TASK_MAIN_STACK_SIZE = 800;
+#define MAIN_TASK_STACK_SIZE 800
 #endif
 
-portSTACK_TYPE *task_main_stack = NULL;
-TaskHandle_t task_main_task_handler;
+static void main_task(osa_task_param_t arg);
+
+static OSA_TASK_DEFINE(main_task, PRIORITY_RTOS_TO_OSA(1), 1, MAIN_TASK_STACK_SIZE, 0);
+
+OSA_TASK_HANDLE_DEFINE(main_task_Handle);
 
 /*******************************************************************************
  * Code
@@ -567,7 +569,7 @@ static int wlan_prov_cli_init(void)
 
 #endif
 
-void task_main(void *param)
+void main_task(void *param)
 {
     int32_t result = 0;
     (void)result;
@@ -639,10 +641,8 @@ int main(void)
     usb_init();
 #endif
 
-    result =
-        xTaskCreate(task_main, "main", TASK_MAIN_STACK_SIZE, task_main_stack, TASK_MAIN_PRIO, &task_main_task_handler);
-    assert(pdPASS == result);
-
+    (void)OSA_TaskCreate((osa_task_handle_t)main_task_Handle, OSA_TASK(main_task), NULL);
+    
     vTaskStartScheduler();
     for (;;)
         ;

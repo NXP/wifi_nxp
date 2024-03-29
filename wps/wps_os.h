@@ -65,12 +65,6 @@ struct wps_thread_t
 #endif
     osa_msgq_handle_t cmd_queue;
     osa_msgq_handle_t data_queue;
-#ifdef CONFIG_P2P
-    os_queue_pool_t peer_event_queue_data;
-    os_queue_pool_t event_queue_data;
-#endif
-    os_queue_pool_t cmd_queue_data;
-    os_queue_pool_t data_queue_data;
     int (*cb)(enum wps_event event, void *data, uint16_t len);
 };
 

@@ -113,7 +113,7 @@ void wps_peer_event_receive()
 
     while (1)
     {
-        ret = os_queue_recv(&wps.peer_event_queue, &event, OS_WAIT_FOREVER);
+        ret = OSA_MsgQGet((osa_msgq_handle_t)wps.peer_event_queue, &event, OS_WAIT_FOREVER);
 
         if (ret == WM_SUCCESS)
         {
@@ -176,8 +176,8 @@ void wps_event_receive(WPS_DATA *wps_s, WFD_DATA *pwfd_data)
     {
         if (wps_loop.timeout)
         {
-            now.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-            now.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+            now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+            now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
 
             if (timer_cmp(&now, &wps_loop.timeout->time))
                 timersub(&wps_loop.timeout->time, &now, &tv);
@@ -190,8 +190,8 @@ void wps_event_receive(WPS_DATA *wps_s, WFD_DATA *pwfd_data)
         {
             struct wps_timeout_s *tmp;
 
-            now.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-            now.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+            now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+            now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
 
             if (!timer_cmp(&now, &wps_loop.timeout->time))
             {
@@ -202,7 +202,7 @@ void wps_event_receive(WPS_DATA *wps_s, WFD_DATA *pwfd_data)
             }
         }
 
-        ret = os_queue_recv(&wps.event_queue, &event, os_msec_to_ticks(50));
+        ret = OSA_MsgQGet((osa_msgq_handle_t)wps.event_queue, &event, 50);
 
         if (ret == WM_SUCCESS)
         {
@@ -362,8 +362,8 @@ int wps_start_timer(unsigned int secs, unsigned int usecs, void (*handler)(void 
     if (timeout == NULL)
         return WPS_STATUS_FAIL;
 
-    timeout->time.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-    timeout->time.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+    timeout->time.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+    timeout->time.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
     timeout->time.tv_sec += secs;
     timeout->time.tv_usec += usecs;
     while (timeout->time.tv_usec >= 1000000)
@@ -471,8 +471,8 @@ void wps_main_loop_proc(void)
         {
             if (wps_loop.timeout)
             {
-                now.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-                now.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+                now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+                now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
 
                 if (timer_cmp(&now, &wps_loop.timeout->time))
                     timersub(&wps_loop.timeout->time, &now, &tv);
@@ -485,8 +485,8 @@ void wps_main_loop_proc(void)
             {
                 struct wps_timeout_s *tmp;
 
-                now.tv_sec  = os_ticks_to_msec(os_ticks_get()) / 1000;
-                now.tv_usec = (os_ticks_to_msec(os_ticks_get()) % 1000) * 1000;
+                now.tv_sec  = OSA_TicksToMsec(OSA_TicksGet()) / 1000;
+                now.tv_usec = (OSA_TicksToMsec(OSA_TicksGet()) % 1000) * 1000;
 
                 if (!timer_cmp(&now, &wps_loop.timeout->time))
                 {
@@ -498,9 +498,8 @@ void wps_main_loop_proc(void)
             }
         }
 
-        ret = os_queue_recv(
-            &wps.data_queue, &msg,
-            (gpwps_info->prov_session == PROV_WPS_SESSION_ATTEMPT) ? os_msec_to_ticks(50) : os_msec_to_ticks(500));
+        ret =OSA_MsgQGet((osa_msgq_handle_t)wps.data_queue, &msg,
+            (gpwps_info->prov_session == PROV_WPS_SESSION_ATTEMPT) ? 50 : 500);
         if (ret == WM_SUCCESS)
         {
             if ((gpwps_info->wps_session) || (gpwps_info->prov_session == PROV_ENTP_SESSION_ATTEMPT))
@@ -531,10 +530,10 @@ void wps_main_loop_proc(void)
     }
 #endif
     /*Drain queue.*/
-    while (os_queue_get_msgs_waiting(&wps.data_queue))
+    while (OSA_MsgQAvailableMsgs(wps.data_queue))
     {
         (void)memset(&msg, 0, sizeof(struct wps_msg));
-        ret = os_queue_recv(&wps.data_queue, &msg, os_msec_to_ticks(0));
+        ret = OSA_MsgQGet((osa_msgq_handle_t)wps.data_queue, &msg, 0);
         if (ret == WM_SUCCESS)
         {
             if (msg.buffer)
