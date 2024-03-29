@@ -2727,6 +2727,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp)
                     )
                     {
                         wm_wifi.cmd_resp_status = WM_SUCCESS;
+                        wlan_clean_txrx(pmpriv);
                         (void)wifi_event_completion(WIFI_EVENT_UAP_STOPPED, WIFI_EVENT_REASON_SUCCESS, NULL);
                     }
                 }
@@ -5812,6 +5813,7 @@ int wifi_handle_fw_event(struct bus_message *msg)
         case EVENT_MICRO_AP_BSS_IDLE:
             PRINTM(MEVENT, "EVENT: MICRO_AP_BSS_IDLE\n");
             pmpriv_uap->media_connected = MFALSE;
+            wlan_clean_txrx(pmpriv_uap);
             break;
 #ifdef CONFIG_WMM
         case EVENT_TX_DATA_PAUSE:

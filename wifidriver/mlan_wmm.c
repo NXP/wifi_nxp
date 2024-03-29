@@ -1040,7 +1040,7 @@ t_void wlan_clean_txrx(pmlan_private priv)
     ENTER();
 
 #ifdef CONFIG_WMM
-    wlan_cleanup_bypass_txq(MLAN_BSS_TYPE_STA);
+    wlan_cleanup_bypass_txq(GET_BSS_ROLE(priv));
 #endif
 
     wlan_11n_cleanup_reorder_tbl(priv);
