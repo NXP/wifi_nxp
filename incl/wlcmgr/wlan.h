@@ -693,11 +693,11 @@ enum wlan_monitor_opt
 #define FORMAT_BW 2 /* RW610 only allows 20M bandwidth */
 /*Maximum number of space-time streams to be used in DL/UL NDP frames in the session upto 80MHz*/
 #define MAX_I2R_STS_UPTO80 0 /* RW610 only allows to send 1 N_STS*/
-#define MAX_R2I_STS_UPTO80 1
+#define MAX_R2I_STS_UPTO80 0
 /* Measurement freq in Hz to calculate measurement interval*/
-#define AZ_MEASUREMENT_FREQ       10 /* in 0.1 Hz increments */
+#define AZ_MEASUREMENT_FREQ       4 /* in 0.1 Hz increments */
 #define AZ_NUMBER_OF_MEASUREMENTS 6
-#define I2R_LMR_FEEDBACK          2  /* allow RSTA to request I2R reporting */
+#define I2R_LMR_FEEDBACK          0 /* allow RSTA to request I2R reporting */
 
 #define FOR_RANGING 0
 
@@ -725,6 +725,56 @@ typedef struct _ranging_11az_cfg
     t_u8 lci_req;
 } ranging_11az_cfg_t;
 
+typedef struct _location_cfg_info
+{
+    /** known Latitude uncertainty*/
+    t_u8 lat_unc;
+    /** known Longitude uncertainty*/
+    t_u8 long_unc;
+    /** Known Altitude uncertainty*/
+    t_u8 alt_unc;
+    /**Include LCI request (Expect LCI info from responder)*/
+    t_u8 lci_req;
+    /** known longitude*/
+    double longitude;
+    /** known Latitude*/
+    double latitude;
+    /** known altitude*/
+    double altitude;
+} location_cfg_info_t;
+
+typedef struct _location_civic_rep
+{
+    /**Civic location type*/
+    t_u8 civic_location_type;
+    /**Civic address type*/
+    t_u8 civic_address_type;
+    /**Civic address length*/
+    t_u8 civic_address_length;
+    /**Include LCI request (Expect LCI info from responder)*/
+    t_u8 civic_req;
+    /**Country code*/
+    t_u16 country_code;
+} location_civic_rep_t;
+
+/** Structure of FTM_SESSION_CFG TLV data*/
+typedef struct _ftm_11mc_nego_cfg
+{
+    /** Indicates how many burst instances are requested for the FTM session*/
+    t_u8 burst_exponent;
+    /** Indicates the duration of a burst instance*/
+    t_u8 burst_duration;
+    /**Minimum time between consecutive FTM frames*/
+    t_u8 min_delta_FTM;
+    /**ASAP/non-ASAP casel*/
+    t_u8 is_ASAP;
+    /**Number of FTMs per burst*/
+    t_u8 per_burst_FTM;
+    /**FTM channel spacing: HT20/HT40/VHT80/... */
+    t_u8 channel_spacing;
+    /**Indicates the interval between two consecutive burst instances*/
+    t_u16 burst_period;
+} ftm_11mc_nego_cfg_t;
 #endif
 
 /** Scan Result */
@@ -6208,6 +6258,12 @@ int wlan_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac
  * \return WM_SUCCESS if successful otherwise failure.
  */
 int wlan_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg);
+
+int wlan_ftm_11mc_cfg(ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg);
+
+int wlan_ftm_location_cfg(location_cfg_info_t *ftm_location_cfg);
+
+int wlan_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg);
 #endif
 
 #ifdef CONFIG_WPA_SUPP

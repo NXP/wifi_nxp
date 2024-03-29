@@ -429,7 +429,9 @@ wlan_mgmt_pkt *wifi_PrepDefaultMgtMsg(t_u8 sub_type,
                                       t_u16 pkt_len);
 
 #ifdef CONFIG_11MC
-void wlan_dot11mc_ftm_cfg(void *cmd);
+void wlan_location_ftm_cfg(location_cfg_info_t *ftm_location_cfg);
+void wlan_civic_ftm_cfg(location_civic_rep_t *ftm_civic_cfg);
+void wlan_dot11mc_ftm_cfg(void *cmd, ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg);
 #endif
 #ifdef CONFIG_11AZ
 void wlan_dto11az_ranging_cfg(void *cmd, const t_u8 protocl, HostCmd_FTM_SESSION_CFG *ftm_session_cfg);
@@ -449,6 +451,9 @@ int wifi_ftm_start_stop(const t_u16 action, const t_u8 loop_cnt, const t_u8 *mac
 int wifi_ftm_start(const t_u16 action, const t_u8 *mac, const t_u8 channel);
 int wifi_ftm_stop(const t_u16 action, const t_u8 *mac, const t_u8 channel);
 int wifi_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg);
+int wifi_ftm_11mc_cfg(ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg);
+int wifi_ftm_location_cfg(location_cfg_info_t *ftm_location_cfg);
+int wifi_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg);
 int wifi_process_wlc_ftm_event();
 void wifi_ftm_process_cfg_resp(void *resp_buff);
 void wifi_ftm_process_ctrl_resp(void *resp_buff);
@@ -581,16 +586,16 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
 
 #ifdef CONFIG_TSP
 int wifi_tsp_cfg(const t_u16 action,
-                       t_u16 *enable,
-                       t_u32 *back_off,
-                       t_u32 *highThreshold,
-                       t_u32 *lowThreshold,
-                       t_u32 *dutycycstep,
-                       t_u32 *dutycycmin,
-                       int *highthrtemp,
-                       int *lowthrtemp,
-                       int *currCAUTemp,
-                       int *currRFUTemp);
+                 t_u16 *enable,
+                 t_u32 *back_off,
+                 t_u32 *highThreshold,
+                 t_u32 *lowThreshold,
+                 t_u32 *dutycycstep,
+                 t_u32 *dutycycmin,
+                 int *highthrtemp,
+                 int *lowthrtemp,
+                 int *currCAUTemp,
+                 int *currRFUTemp);
 #endif
 
 #ifdef CONFIG_TX_AMPDU_PROT_MODE

@@ -12885,6 +12885,21 @@ int wlan_ftm_cfg(const t_u8 protocol, ranging_11az_cfg_t *ftm_ranging_cfg)
 {
 	return wifi_ftm_cfg(protocol, ftm_ranging_cfg);
 }
+
+int wlan_ftm_11mc_cfg(ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg)
+{
+	return wifi_ftm_11mc_cfg(ftm_11mc_nego_cfg);
+}
+
+int wlan_ftm_location_cfg(location_cfg_info_t *ftm_location_cfg)
+{
+	return wifi_ftm_location_cfg(ftm_location_cfg);
+}
+
+int wlan_ftm_civic_cfg(location_civic_rep_t *ftm_civic_cfg)
+{
+	return wifi_ftm_civic_cfg(ftm_civic_cfg);
+}
 #endif
 
 #ifdef CONFIG_WPA_SUPP

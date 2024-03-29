@@ -8124,34 +8124,56 @@ int wifi_set_threshold_pre_beacon_lost(mlan_private *pmpriv, unsigned int pre_be
 #endif
 
 #ifdef CONFIG_11MC
-void wlan_dot11mc_ftm_cfg(void *p_buf)
+static location_cfg_info_t g_ftm_location_cfg;
+static location_civic_rep_t g_ftm_civic_cfg;
+
+void wlan_civic_ftm_cfg(location_civic_rep_t *ftm_civic_cfg)
+{
+    g_ftm_civic_cfg.civic_location_type = ftm_civic_cfg->civic_location_type;
+    g_ftm_civic_cfg.civic_address_type  = ftm_civic_cfg->civic_address_type;
+    g_ftm_civic_cfg.civic_req           = ftm_civic_cfg->civic_req;
+    g_ftm_civic_cfg.country_code        = ftm_civic_cfg->country_code;
+}
+
+void wlan_location_ftm_cfg(location_cfg_info_t *ftm_location_cfg)
+{
+    g_ftm_location_cfg.lat_unc   = ftm_location_cfg->lat_unc;
+    g_ftm_location_cfg.long_unc  = ftm_location_cfg->long_unc;
+    g_ftm_location_cfg.alt_unc   = ftm_location_cfg->alt_unc;
+    g_ftm_location_cfg.lci_req   = ftm_location_cfg->lci_req;
+    g_ftm_location_cfg.longitude = ftm_location_cfg->longitude;
+    g_ftm_location_cfg.latitude  = ftm_location_cfg->latitude;
+    g_ftm_location_cfg.altitude  = ftm_location_cfg->altitude;
+}
+
+void wlan_dot11mc_ftm_cfg(void *p_buf, ftm_11mc_nego_cfg_t *ftm_11mc_nego_cfg)
 {
     HostCmd_DS_COMMAND *cmd     = (HostCmd_DS_COMMAND *)p_buf;
     dot11mc_ftm_cfg_t *cfg_11mc = (dot11mc_ftm_cfg_t *)&cmd->params.ftm_session_cfg.tlv.cfg_11mc;
 
     cfg_11mc->sess_tlv.type                = wlan_cpu_to_le16(FTM_SESSION_CFG_INITATOR_TLV_ID);
     cfg_11mc->sess_tlv.len                 = wlan_cpu_to_le16(sizeof(ftm_session_cfg_t) + sizeof(t_u16));
-    cfg_11mc->sess_tlv.val.burst_exponent  = BURST_EXP;
-    cfg_11mc->sess_tlv.val.burst_duration  = BURST_DURATION;
-    cfg_11mc->sess_tlv.val.min_delta_FTM   = MIN_DELTA;
-    cfg_11mc->sess_tlv.val.is_ASAP         = IS_ASAP;
-    cfg_11mc->sess_tlv.val.per_burst_FTM   = FTM_PER_BURST;
-    cfg_11mc->sess_tlv.val.channel_spacing = BW;
-    cfg_11mc->sess_tlv.val.burst_period    = wlan_cpu_to_le16(BURST_PERIOD);
-    cfg_11mc->sess_tlv.civic_req           = LCI_REQUEST;
-    cfg_11mc->sess_tlv.lci_req             = CIVIC_REQUEST;
+    cfg_11mc->sess_tlv.val.burst_exponent  = ftm_11mc_nego_cfg->burst_exponent;
+    cfg_11mc->sess_tlv.val.burst_duration  = ftm_11mc_nego_cfg->burst_duration;
+    cfg_11mc->sess_tlv.val.min_delta_FTM   = ftm_11mc_nego_cfg->min_delta_FTM;
+    cfg_11mc->sess_tlv.val.is_ASAP         = ftm_11mc_nego_cfg->is_ASAP;
+    cfg_11mc->sess_tlv.val.per_burst_FTM   = ftm_11mc_nego_cfg->per_burst_FTM;
+    cfg_11mc->sess_tlv.val.channel_spacing = ftm_11mc_nego_cfg->channel_spacing;
+    cfg_11mc->sess_tlv.val.burst_period    = wlan_cpu_to_le16(ftm_11mc_nego_cfg->burst_period);
+    cfg_11mc->sess_tlv.civic_req           = g_ftm_civic_cfg.civic_req;
+    cfg_11mc->sess_tlv.lci_req             = g_ftm_location_cfg.lci_req;
     cmd->size += sizeof(ftm_session_cfg_tlv_t);
 
     if (cfg_11mc->sess_tlv.lci_req)
     {
         cfg_11mc->lci_tlv.type          = wlan_cpu_to_le16(FTM_SESSION_CFG_LCI_TLV_ID);
         cfg_11mc->lci_tlv.len           = wlan_cpu_to_le16(sizeof(lci_cfg_t));
-        cfg_11mc->lci_tlv.val.altitude  = LCI_ALTITUDE;
-        cfg_11mc->lci_tlv.val.alt_unc   = LCI_ALTITUDE_UNCERTAINITY;
-        cfg_11mc->lci_tlv.val.latitude  = LCI_LATITIUDE;
-        cfg_11mc->lci_tlv.val.lat_unc   = LCI_LATITUDE_UNCERTAINITY;
-        cfg_11mc->lci_tlv.val.longitude = LCI_LONGITUDE;
-        cfg_11mc->lci_tlv.val.long_unc  = LCI_LONGITUDE_UNCERTAINITY;
+        cfg_11mc->lci_tlv.val.altitude  = g_ftm_location_cfg.altitude;
+        cfg_11mc->lci_tlv.val.alt_unc   = g_ftm_location_cfg.alt_unc;
+        cfg_11mc->lci_tlv.val.latitude  = g_ftm_location_cfg.latitude;
+        cfg_11mc->lci_tlv.val.lat_unc   = g_ftm_location_cfg.lat_unc;
+        cfg_11mc->lci_tlv.val.longitude = g_ftm_location_cfg.longitude;
+        cfg_11mc->lci_tlv.val.long_unc  = g_ftm_location_cfg.long_unc;
         cfg_11mc->lci_tlv.val.z_info    = Z_INFO;
         cmd->size += sizeof(lci_tlv_t);
     }
@@ -8161,9 +8183,9 @@ void wlan_dot11mc_ftm_cfg(void *p_buf)
         cfg_11mc->civic_tlv.type                     = wlan_cpu_to_le16(FTM_SESSION_CFG_LOCATION_CIVIC_TLV_ID);
         cfg_11mc->civic_tlv.len                      = wlan_cpu_to_le16(sizeof(civic_loc_cfg_t) -
                                                                         sizeof(cfg_11mc->civic_tlv.val.civic_address) + strlen(ftm_address));
-        cfg_11mc->civic_tlv.val.civic_address_type   = CIVIC_ADDRESS_TYPE;
-        cfg_11mc->civic_tlv.val.civic_location_type  = CIVIC_LOCATION_TYPE;
-        cfg_11mc->civic_tlv.val.country_code         = wlan_cpu_to_le16(CIVIC_COUNTRY_CODE);
+        cfg_11mc->civic_tlv.val.civic_address_type   = g_ftm_civic_cfg.civic_address_type;
+        cfg_11mc->civic_tlv.val.civic_location_type  = g_ftm_civic_cfg.civic_location_type;
+        cfg_11mc->civic_tlv.val.country_code         = wlan_cpu_to_le16(g_ftm_civic_cfg.country_code);
         cfg_11mc->civic_tlv.val.civic_address_length = strlen(ftm_address);
         (void)memcpy(cfg_11mc->civic_tlv.val.civic_address, ftm_address, strlen(ftm_address));
         cmd->size += (cfg_11mc->civic_tlv.len + sizeof(t_u32)) + sizeof(t_u16);

@@ -3758,155 +3758,476 @@ done:
     wlan_ftm_start_stop(action, loop_cnt, peer_mac, channel);
 }
 
-static void dump_wlan_ftm_cfg_usage()
+static void dump_wlan_11mc_nego_cfg()
 {
     (void)PRINTF("Usage:\r\n");
-    (void)PRINTF("wlan-ftm-cfg <protocol>\r\n");
     (void)PRINTF(
-        "wlan-ftm-cfg <protocol> num_meas <num_meas> meas_freq <meas_freq> r2i_sts <r2i_sts> i2r_lmr <i2r_lmr>\r\n");
-    (void)PRINTF("protocol:\r\n");
-    /*(void)PRINTF("0: Dot11mc\r\n");*/
-    (void)PRINTF("1: Dot11az_ntb\r\n");
-    /*(void)PRINTF("2: Dot11az_tb\r\n");*/
-    (void)PRINTF("num_meas: 0-255\r\n");
-    (void)PRINTF("meas_freq: 1-255 in 0.1 Hz\r\n");
-    (void)PRINTF("r2i_sts: 0-3\r\n");
-    (void)PRINTF("i2r_lmr: 0 never, 1 always, 2 up to RSTA\r\n");
+        "wlan-11mc-nego-cfg burst_dur <burst_dur> min_delta <min_delta> asap <asap>"
+        " ftm_per_burst <ftm_per_burst> BW <bw> burst_period <burst_period>\r\n");
+
+    (void)PRINTF("burst_dur: 2 or 11\r\n");
+    (void)PRINTF("min_delta: 1 to 63\r\n");
+    (void)PRINTF("asap: 0 or 1\r\n");
+    (void)PRINTF("ftm_per_burst: 2 to 10\r\n");
+    (void)PRINTF("BW: 9 to 13\r\n");
+    (void)PRINTF("burst_period: 1 to 10\r\n");
+    (void)PRINTF(
+        "Example:\r\n"
+        "wlan-11mc-nego-cfg burst_dur 11 min_delta 60 asap 1 ftm_per_burst 5 BW 13 burst_period 10");
 }
 
-static void test_wlan_ftm_cfg(int argc, char **argv)
+static void dump_wlan_civ_cfg()
 {
-    unsigned protocol;
-    if ((argc < 2) || (argc > 10))
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "wlan-civ-cfg civ_req <civ_req> loc_type <loc_type> country_code <country_code>"
+        " addr_type <addr_type>\r\n");
+
+    (void)PRINTF("civ_req: 0 or 1\r\n");
+    (void)PRINTF("loc_type: 1\r\n");
+    (void)PRINTF("country_code: 0 for USA\r\n");
+    (void)PRINTF("addr_type: 22\r\n");
+    (void)PRINTF(
+        "Example:\r\n"
+        "wlan-civ-cfg civ_req 1 loc_type 1 country_code 0 addr_type 22");
+}
+
+static void dump_wlan_loc_cfg()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "wlan-loc-cfg lci_req <lci request> latit <latitude> longi <longitude> altit <altitude>"
+        " lat_uncert <latitude uncertainity> lon_uncert <longitude uncertainity> alt_uncert <altitude "
+        "uncertainity>\r\n");
+
+    (void)PRINTF("lci_req: 0 or 1\r\n");
+    (void)PRINTF("latitude: -180.0 to 180.0\r\n");
+    (void)PRINTF("longitude: -180.0 to 180.0\r\n");
+    (void)PRINTF("altitude: -180.0 to 180.0\r\n");
+    (void)PRINTF("latitude uncertainity: 0 to 255\r\n");
+    (void)PRINTF("longitude uncertainity: 0 to 255\r\n");
+    (void)PRINTF("altitude uncertainity: 0 to 255\r\n");
+    (void)PRINTF(
+        "Example:\r\n"
+        "wlan-loc-cfg lci_req 1 latit -111.111 longi 222.222 altit 33.333 lat_uncert 1 lon_uncert 2 alt_uncert 3");
+}
+
+static void dump_wlan_11az_rang_cfg()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF(
+        "wlan-11az-rang-cfg <protocol> format_bw <format_bw> num_measurements <num_measurements>"
+        " measurement_freq <measurement_freq> i2r_sts <i2r_sts> r2i_sts <r2i_sts> i2r_lmr <i2r_lmr>\r\n");
+
+    (void)PRINTF("protocol: 0 or 1\r\n");
+    (void)PRINTF("format_bw: 0 to 2\r\n");
+    (void)PRINTF("num_measurements: 1 to 10\r\n");
+    (void)PRINTF("measurement_freq: 1 to 10\r\n");
+    (void)PRINTF("i2r_sts: 0/1 - Num of antennas: 0=>1 antenna and 1=>2 antennas\r\n");
+    (void)PRINTF("r2i_sts: 0/1 - Num of antennas: 0=>1 antenna and 1=>2 antennas\r\n");
+    (void)PRINTF("i2r_lmr: 0 never, 1 always, 2 up to RSTA\r\n");
+    (void)PRINTF(
+        "Example:\r\n"
+        "wlan-11az-rang-cfg 1 format_bw 2 num_measurements 5 measurement_freq 4 i2r_sts 0 r2i_sts 0 i2r_lmr 0\r\n");
+}
+
+static void test_wlan_loc_cfg(int argc, char **argv)
+{
+    unsigned lci_req, lati_uncertanity, longi_uncertanity, alti_uncertanity;
+    double latitude, longitude, altitude;
+    location_cfg_info_t lci;
+    int arg = 1;
+    if (argc != 15)
     {
         (void)PRINTF("Error: invalid number of arguments\r\n");
-        dump_wlan_ftm_cfg_usage();
+        dump_wlan_loc_cfg();
+        return;
+    }
+
+    if (argc >= 2)
+    {
+        lci_req           = 0;
+        latitude          = LCI_LATITIUDE;
+        longitude         = LCI_LONGITUDE;
+        altitude          = LCI_ALTITUDE;
+        lati_uncertanity  = LCI_LATITUDE_UNCERTAINITY;
+        longi_uncertanity = LCI_LONGITUDE_UNCERTAINITY;
+        alti_uncertanity  = LCI_ALTITUDE_UNCERTAINITY;
+    }
+
+    while (arg < argc)
+    {
+        if (string_equal("lci_req", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &lci_req, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid number of LCI require argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else if (string_equal("latit", argv[arg]))
+        {
+            latitude = strtod(argv[arg + 1], NULL);
+            if (!latitude)
+            {
+                (void)PRINTF("Error: invalid latitude argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else if (string_equal("longi", argv[arg]))
+        {
+            longitude = strtod(argv[arg + 1], NULL);
+            if (!longitude)
+            {
+                (void)PRINTF("Error: invalid longitude argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else if (string_equal("altit", argv[arg]))
+        {
+            altitude = strtod(argv[arg + 1], NULL);
+            if (!latitude)
+            {
+                (void)PRINTF("Error: invalid latitude argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else if (string_equal("lat_uncert", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &lati_uncertanity, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid latitude uncertanity argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else if (string_equal("lon_uncert", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &longi_uncertanity, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid longitude uncertanity argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else if (string_equal("alt_uncert", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &alti_uncertanity, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid altitude uncertanity argument\r\n");
+                dump_wlan_loc_cfg();
+                return;
+            }
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
+            dump_wlan_loc_cfg();
+            return;
+        }
+        arg += 2;
+    }
+
+    lci.lci_req   = lci_req;
+    lci.longitude = longitude;
+    lci.latitude  = latitude;
+    lci.altitude  = altitude;
+    lci.lat_unc   = lati_uncertanity;
+    lci.long_unc  = longi_uncertanity;
+    lci.alt_unc   = alti_uncertanity;
+
+    wlan_ftm_location_cfg(&lci);
+    return;
+}
+
+static void test_wlan_civ_cfg(int argc, char **argv)
+{
+    unsigned civ_req, loc_type, addr_type, addr_len, country_code;
+    location_civic_rep_t lcr;
+    int arg        = 1;
+    char *civ_addr = CIVIC_ADDRESS;
+    if (argc != 9)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_civ_cfg();
+        return;
+    }
+
+    civ_req      = 0;
+    loc_type     = CIVIC_LOCATION_TYPE;
+    addr_type    = CIVIC_ADDRESS_TYPE;
+    country_code = CIVIC_COUNTRY_CODE;
+
+    while (arg < argc)
+    {
+        if (string_equal("civ_req", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &civ_req, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid number of civic require argument\r\n");
+                dump_wlan_civ_cfg();
+                return;
+            }
+        }
+        else if (string_equal("loc_type", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &loc_type, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid location type argument\r\n");
+                dump_wlan_civ_cfg();
+                return;
+            }
+        }
+        else if (string_equal("addr_type", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &addr_type, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid address type argument\r\n");
+                dump_wlan_civ_cfg();
+                return;
+            }
+        }
+        else if (string_equal("country_code", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &country_code, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid address length argument\r\n");
+                dump_wlan_civ_cfg();
+                return;
+            }
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
+            dump_wlan_civ_cfg();
+            return;
+        }
+        arg += 2;
+    }
+
+    lcr.civic_req           = civ_req;
+    lcr.civic_location_type = loc_type;
+    lcr.civic_address_type  = addr_type;
+    lcr.country_code        = country_code;
+
+    wlan_ftm_civic_cfg(&lcr);
+    return;
+}
+
+static void test_wlan_11mc_nego_cfg(int argc, char **argv)
+{
+    unsigned burst_exp, burst_dur, min_delta, asap, ftm_per_burst, bw, burst_period;
+    ftm_11mc_nego_cfg_t dot11mc_cfg;
+    int arg        = 1;
+    char *civ_addr = CIVIC_ADDRESS;
+    if (argc != 13)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_11mc_nego_cfg();
+        return;
+    }
+
+    burst_exp     = 0;
+    burst_dur     = BURST_DURATION;
+    min_delta     = MIN_DELTA;
+    asap          = IS_ASAP;
+    ftm_per_burst = FTM_PER_BURST;
+    bw            = BW;
+    burst_period  = BURST_PERIOD;
+
+    while (arg < argc)
+    {
+        if (string_equal("burst_dur", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &burst_dur, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid value of burst duration argument\r\n");
+                dump_wlan_11mc_nego_cfg();
+                return;
+            }
+        }
+        else if (string_equal("min_delta", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &min_delta, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid minimum delta argument\r\n");
+                dump_wlan_11mc_nego_cfg();
+                return;
+            }
+        }
+        else if (string_equal("asap", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &asap, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid ASAP argument\r\n");
+                dump_wlan_11mc_nego_cfg();
+                return;
+            }
+        }
+        else if (string_equal("ftm_per_burst", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &ftm_per_burst, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid frames per burst argument\r\n");
+                dump_wlan_11mc_nego_cfg();
+                return;
+            }
+        }
+        else if (string_equal("BW", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &bw, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid bandwidth argument\r\n");
+                dump_wlan_11mc_nego_cfg();
+                return;
+            }
+        }
+        else if (string_equal("burst_period", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &burst_period, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid burst period argument\r\n");
+                dump_wlan_11mc_nego_cfg();
+                return;
+            }
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
+            dump_wlan_11mc_nego_cfg();
+            return;
+        }
+        arg += 2;
+    }
+
+    dot11mc_cfg.burst_exponent  = burst_exp;
+    dot11mc_cfg.burst_duration  = burst_dur;
+    dot11mc_cfg.min_delta_FTM   = min_delta;
+    dot11mc_cfg.is_ASAP         = asap;
+    dot11mc_cfg.per_burst_FTM   = ftm_per_burst;
+    dot11mc_cfg.channel_spacing = bw;
+    dot11mc_cfg.burst_period    = burst_period;
+
+    wlan_ftm_11mc_cfg(&dot11mc_cfg);
+    return;
+}
+
+static void test_wlan_11az_rang_cfg(int argc, char **argv)
+{
+    unsigned protocol, format_bw, num_measurements, measurement_freq, i2r_sts, r2i_sts, i2r_lmr, civic_req, lci_req;
+    ranging_11az_cfg_t cfg_11az;
+    int arg = 2;
+
+    if (argc != 14)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_11az_rang_cfg();
         return;
     }
 
     if (get_uint(argv[1], &protocol, strlen(argv[1])))
     {
         (void)PRINTF("Error: invalid protocol argument\r\n");
-        dump_wlan_ftm_ctrl_usage();
+        dump_wlan_11az_rang_cfg();
         return;
     }
 
-    if (protocol != 0 && protocol != 1 && protocol != 2)
+    if (protocol != 0 && protocol != 1)
     {
         (void)PRINTF("Error: invalid protocol argument\r\n");
-        dump_wlan_ftm_cfg_usage();
+        dump_wlan_11az_rang_cfg();
         return;
     }
 
-    if (protocol == 0)
-    {
-        wlan_ftm_cfg(protocol, NULL);
-        //    	(void)PRINTF("Not support 802_11mc\r\n");
-        //        dump_wlan_ftm_cfg_usage();
-        //        return;
-    }
-    else // (protocol == 1) || (protocol == 2)
-    {
-        unsigned num_measurements, measurement_freq, r2i_sts, i2r_lmr, civic_req, lci_req;
-        ranging_11az_cfg_t cfg_11az;
-        int arg = 2;
-        if (protocol == 2) // not yet supported
-        {
-            // cfg_11az->type = FTM_TB_RANGING_CFG_TLV_ID;
-            (void)PRINTF("Not support 802_11az tb\r\n");
-        }
-        else // (protocol == 1)
-        {
-            // cfg_11az->type = FTM_NTB_RANGING_CFG_TLV_ID;
-        }
+    format_bw        = FORMAT_BW;
+    num_measurements = AZ_NUMBER_OF_MEASUREMENTS;
+    measurement_freq = AZ_MEASUREMENT_FREQ;
+    i2r_sts          = MAX_I2R_STS_UPTO80;
+    r2i_sts          = MAX_R2I_STS_UPTO80;
+    i2r_lmr          = I2R_LMR_FEEDBACK;
+    civic_req        = CIVIC_REQUEST;
+    lci_req          = LCI_REQUEST;
 
-        if (argc >= 2)
+    while (arg < argc)
+    {
+        if (string_equal("num_measurements", argv[arg]))
         {
-            num_measurements = AZ_NUMBER_OF_MEASUREMENTS;
-            measurement_freq = AZ_MEASUREMENT_FREQ;
-            r2i_sts          = MAX_R2I_STS_UPTO80;
-            i2r_lmr          = I2R_LMR_FEEDBACK;
-            civic_req        = CIVIC_REQUEST;
-            lci_req          = LCI_REQUEST;
-        }
-
-        while (arg < argc)
-        {
-            if (string_equal("num_meas", argv[arg]))
+            if (get_uint(argv[arg + 1], &num_measurements, strlen(argv[arg + 1])))
             {
-                if (get_uint(argv[arg + 1], &num_measurements, strlen(argv[arg + 1])))
-                {
-                    (void)PRINTF("Error: invalid number of measurements argument\r\n");
-                    dump_wlan_ftm_cfg_usage();
-                    return;
-                }
-            }
-            else if (string_equal("meas_freq", argv[arg]))
-            {
-                if (get_uint(argv[arg + 1], &measurement_freq, strlen(argv[arg + 1])))
-                {
-                    (void)PRINTF("Error: invalid measurement frequency argument\r\n");
-                    dump_wlan_ftm_cfg_usage();
-                    return;
-                }
-            }
-            else if (string_equal("r2i_sts", argv[arg]))
-            {
-                if (get_uint(argv[arg + 1], &r2i_sts, strlen(argv[arg + 1])))
-                {
-                    (void)PRINTF("Error: invalid R2I STS argument\r\n");
-                    dump_wlan_ftm_cfg_usage();
-                    return;
-                }
-            }
-            else if (string_equal("i2r_lmr", argv[arg]))
-            {
-                if (get_uint(argv[arg + 1], &i2r_lmr, strlen(argv[arg + 1])))
-                {
-                    (void)PRINTF("Error: invalid R2I STS argument\r\n");
-                    dump_wlan_ftm_cfg_usage();
-                    return;
-                }
-            }
-            else if (string_equal("civic_req", argv[arg]))
-            {
-                if (get_uint(argv[arg + 1], &civic_req, strlen(argv[arg + 1])))
-                {
-                    (void)PRINTF("Error: invalid civic request argument\r\n");
-                    dump_wlan_ftm_cfg_usage();
-                    return;
-                }
-            }
-            else if (string_equal("lci_req", argv[arg]))
-            {
-                if (get_uint(argv[arg + 1], &lci_req, strlen(argv[arg + 1])))
-                {
-                    (void)PRINTF("Error: invalid LCI request argument\r\n");
-                    dump_wlan_ftm_cfg_usage();
-                    return;
-                }
-            }
-            else
-            {
-                (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
-                dump_wlan_ftm_cfg_usage();
+                (void)PRINTF("Error: invalid number of measurements argument\r\n");
+                dump_wlan_11az_rang_cfg();
                 return;
             }
-            arg += 2;
         }
-
-        cfg_11az.format_bw                 = FORMAT_BW;
-        cfg_11az.max_i2r_sts_upto80        = MAX_I2R_STS_UPTO80;
-        cfg_11az.max_r2i_sts_upto80        = r2i_sts;
-        cfg_11az.az_measurement_freq       = measurement_freq;
-        cfg_11az.az_number_of_measurements = num_measurements;
-        cfg_11az.i2r_lmr_feedback          = i2r_lmr;
-
-        cfg_11az.civic_req = civic_req;
-        cfg_11az.lci_req   = lci_req;
-
-        wlan_ftm_cfg(protocol, &cfg_11az);
+        else if (string_equal("measurement_freq", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &measurement_freq, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid measurement frequency argument\r\n");
+                dump_wlan_11az_rang_cfg();
+                return;
+            }
+        }
+        else if (string_equal("i2r_sts", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &i2r_sts, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid I2R STS argument\r\n");
+                dump_wlan_11az_rang_cfg();
+                return;
+            }
+        }
+        else if (string_equal("r2i_sts", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &r2i_sts, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid R2I STS argument\r\n");
+                dump_wlan_11az_rang_cfg();
+                return;
+            }
+        }
+        else if (string_equal("i2r_lmr", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &i2r_lmr, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid R2I STS argument\r\n");
+                dump_wlan_11az_rang_cfg();
+                return;
+            }
+        }
+        else if (string_equal("format_bw", argv[arg]))
+        {
+            if (get_uint(argv[arg + 1], &format_bw, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid format bandwidth argument\r\n");
+                dump_wlan_11az_rang_cfg();
+                return;
+            }
+        }
+        else
+        {
+            (void)PRINTF("Error: invalid [%s] argument\r\n", argv[arg]);
+            dump_wlan_11az_rang_cfg();
+            return;
+        }
+        arg += 2;
     }
+
+    cfg_11az.format_bw                 = format_bw;
+    cfg_11az.max_i2r_sts_upto80        = i2r_sts;
+    cfg_11az.max_r2i_sts_upto80        = r2i_sts;
+    cfg_11az.az_measurement_freq       = measurement_freq;
+    cfg_11az.az_number_of_measurements = num_measurements;
+    cfg_11az.i2r_lmr_feedback          = i2r_lmr;
+
+    cfg_11az.civic_req = civic_req;
+    cfg_11az.lci_req   = lci_req;
+
+    wlan_ftm_cfg(protocol, &cfg_11az);
     return;
 }
 #endif
@@ -11942,7 +12263,12 @@ static struct cli_command tests[] = {
 #endif
 #if defined(CONFIG_11MC) || defined(CONFIG_11AZ)
     {"wlan-ftm-ctrl", "<action> <loop_cnt> <peer_mac> <channel>", test_wlan_ftm_ctrl},
-    {"wlan-ftm-cfg", "<protocol> <num_measurements> <measurement_freq> <r2i_sts> <i2r_lmr>", test_wlan_ftm_cfg},
+    {"wlan-11mc-nego-cfg", "<burst_inst> <burst_dur> <min_delta> <asap> <ftm_per_burst> <bw> <burst_period>",
+     test_wlan_11mc_nego_cfg},
+    {"wlan-loc-cfg", "<lci_req> <latit> <longi> <altit> <lat_uncert> <lon_uncert> <alt_uncert>", test_wlan_loc_cfg},
+    {"wlan-civ-cfg", "<civ_loc> <civ_loc_type> <country_code> <civ_add_type>", test_wlan_civ_cfg},
+    {"wlan-11az-rang-cfg", "<protocol> <format_bw> <num_measurements> <measurement_freq> <i2r_sts> <r2i_sts> <i2r_lmr>",
+     test_wlan_11az_rang_cfg},
 #endif
 #ifdef CONFIG_UAP_STA_MAC_ADDR_FILTER
     {"wlan-sta-filter", " <filter mode> [<mac address list>]", test_wlan_set_sta_filter},
