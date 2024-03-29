@@ -454,7 +454,7 @@ static void process_data_packet(const t_u8 *rcvdata,
 #endif
 
 #if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
-    u16_t header_len = sizeof(mlan_buffer) + INTF_HEADER_LEN + rxpd->rx_pkt_offset;
+    u16_t header_len = INTF_HEADER_LEN + rxpd->rx_pkt_offset;
 #if !FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
 #ifdef CONFIG_TX_RX_ZERO_COPY
     payload_len      = rxpd->rx_pkt_length + header_len + sizeof(mlan_buffer);
@@ -533,7 +533,7 @@ static void process_data_packet(const t_u8 *rcvdata,
 
 #if defined(CONFIG_TX_RX_ZERO_COPY) || defined(FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER)
     /* Directly use rxpd from pbuf */
-    rxpd = (RxPD *)(void *)((t_u8 *)p->payload + sizeof(mlan_buffer) + INTF_HEADER_LEN);
+    rxpd = (RxPD *)(void *)((t_u8 *)p->payload + INTF_HEADER_LEN);
     /* Skip interface header and RxPD */
     pbuf_header(p, -(s16_t)header_len);
 #endif
