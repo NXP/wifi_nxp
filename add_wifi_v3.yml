@@ -119,7 +119,6 @@ middleware.wifi.osa:
     - source: incl/port/osa/slist.h
     - source: incl/port/osa/stack_simple.h
     - source: port/osa/osa.c
-    - source: port/osa/osa_cli.c
     - source: port/osa/mem_pool.c
     - source: port/osa/mem_pool_config.c
     - source: port/osa/slist.c
@@ -291,15 +290,10 @@ middleware.wifi.net_free_rtos:
     - source: dhcpd/dhcp-server.c
     - source: dhcpd/dns-server.c
     - source: dhcpd/dns.h
-    - source: dhcpd/dhcp-server-cli.c
-    - source: nw_utils/wifi_ping.c
-    - source: nw_utils/iperf.c
     - source: nw_utils/init_enet.c
     - source: nw_utils/nerwork_cfg.h
     - source: nw_utils/telnet/telnet_server.h
     - source: nw_utils/telnet/telnet_server.c
-    - source: incl/iperf.h
-    - source: incl/wifi_ping.h
   belong_to: set.middleware.wifi
   section_info:
     version: 1.0.0
@@ -669,12 +663,10 @@ middleware.wifi.cli:
     - source: cli/wifi_shell.c
     - source: incl/cli.h
     - source: incl/cli_utils.h
+    - source: port/osa/osa_cli.c
+    - source: dhcpd/dhcp-server-cli.c
     - source: nw_utils/wifi_ping.c
     - source: nw_utils/iperf.c
-    - source: nw_utils/init_enet.c
-    - source: nw_utils/network_cfg.h
-    - source: nw_utils/telnet/telnet_server.h
-    - source: nw_utils/telnet/telnet_server.c
     - source: wlcmgr/wlan_basic_cli.c
     - source: wlcmgr/wlan_enhanced_tests.c
     - source: wlcmgr/wlan_tests.c
