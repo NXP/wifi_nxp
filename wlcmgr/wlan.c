@@ -15748,7 +15748,7 @@ int wlan_auto_null_tx(wlan_auto_null_tx_t *auto_null_tx)
 }
 #endif
 
-#ifdef CONFIG_CAU_TEMPERATURE
+#ifdef RW610
 int32_t wlan_get_temperature()
 {
     return wifi_get_temperature();
