@@ -667,6 +667,8 @@ middleware.wifi.cli:
     - source: dhcpd/dhcp-server-cli.c
     - source: nw_utils/wifi_ping.c
     - source: nw_utils/iperf.c
+    - source: incl/iperf.h
+    - source: incl/wifi_ping.h
     - source: wlcmgr/wlan_basic_cli.c
     - source: wlcmgr/wlan_enhanced_tests.c
     - source: wlcmgr/wlan_tests.c
