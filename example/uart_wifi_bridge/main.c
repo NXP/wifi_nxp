@@ -1188,7 +1188,7 @@ static void main_task(osa_task_param_t arg)
  ******************************************************************************/
 int main(void)
 {
-    osa_status_t status = 0;
+    osa_status_t status = KOSA_StatusSuccess;
     (void)status;
 
     OSA_Init();

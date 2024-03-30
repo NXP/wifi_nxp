@@ -273,7 +273,6 @@ middleware.wifi.net_free_rtos:
     - repo_relative_path: port/net/lwip
     - repo_relative_path: incl/port/net/lwip/hooks
     - repo_relative_path: dhcpd
-    - repo_relative_path: nw_utils/telnet
     - repo_relative_path: incl/wlcmgr
     - repo_relative_path: incl/wifidriver
     - repo_relative_path: wifidriver/incl
@@ -290,10 +289,6 @@ middleware.wifi.net_free_rtos:
     - source: dhcpd/dhcp-server.c
     - source: dhcpd/dns-server.c
     - source: dhcpd/dns.h
-    - source: nw_utils/init_enet.c
-    - source: nw_utils/nerwork_cfg.h
-    - source: nw_utils/telnet/telnet_server.h
-    - source: nw_utils/telnet/telnet_server.c
   belong_to: set.middleware.wifi
   section_info:
     version: 1.0.0
@@ -669,6 +664,10 @@ middleware.wifi.cli:
     - source: nw_utils/iperf.c
     - source: incl/iperf.h
     - source: incl/wifi_ping.h
+    - source: nw_utils/init_enet.c
+    - source: nw_utils/nerwork_cfg.h
+    - source: nw_utils/telnet/telnet_server.h
+    - source: nw_utils/telnet/telnet_server.c
     - source: wlcmgr/wlan_basic_cli.c
     - source: wlcmgr/wlan_enhanced_tests.c
     - source: wlcmgr/wlan_tests.c

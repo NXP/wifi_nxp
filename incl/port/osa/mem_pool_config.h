@@ -25,8 +25,6 @@
  *
  *  These are fixed allocation size memory areas.
  */
-typedef void *MemoryPool_t;
-
 extern MemoryPool_t pmAdapterMemoryPool;
 extern MemoryPool_t pmPrivateMemoryPool;
 extern MemoryPool_t buf_32_MemoryPool;

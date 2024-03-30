@@ -8401,7 +8401,7 @@ int wifi_cau_temperature_write_to_firmware()
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 int wifi_set_indrst_cfg(const wifi_indrst_cfg_t *indrst_cfg, mlan_bss_type bss_type)
 {
-    int ret;
+    int ret = -WM_FAIL;
     mlan_ds_misc_cfg misc;
     mlan_ioctl_req req;
 
