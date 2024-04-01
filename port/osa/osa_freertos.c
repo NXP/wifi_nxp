@@ -519,4 +519,15 @@ unsigned int OSA_GetTimestamp(void)
     vPortExitCritical();
     return ((CNTMAX - counter) / CPU_CLOCK_TICKSPERUSEC) + (nticks * USECSPERTICK);
 }
+
+uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle)
+{
+    uint32_t nmsg = 0;
+    assert(NULL != msgqHandle);
+    QueueHandle_t handler = (QueueHandle_t)(void *)(uint32_t *)(*(uint32_t *)msgqHandle);
+
+    nmsg = (uint32_t)uxQueueMessagesWaiting(handler);
+
+    return nmsg;
+}
 #endif

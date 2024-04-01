@@ -352,4 +352,12 @@ static inline uint32_t OSA_RandRange(uint32_t low, uint32_t high)
 
 void OSA_DumpThreadInfo(char *name);
 
+/** Return the number of messages stored in queue.
+ *
+ * @param[in] msgqHandle Pointer to handle of the queue to be queried.
+ *
+ * @returns Number of items in the queue
+ */
+uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle);
+
 #endif /* ! _OSA_H_ */

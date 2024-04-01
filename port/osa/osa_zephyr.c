@@ -200,4 +200,9 @@ int OSA_RemoveIdleFunction(void (*func)(void))
     return 0;
 }
 
+uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle)
+{
+    return 0;
+}
+
 #endif
