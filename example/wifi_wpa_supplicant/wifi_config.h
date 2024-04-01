@@ -222,8 +222,7 @@
 #if defined(RW610)
 #define CONFIG_WPA_SUPP 1
 #ifdef CONFIG_WPA_SUPP
-#define CONFIG_WPA_SUPP_WPS 1
-// #define CONFIG_WPA_SUPP_P2P 1
+#define CONFIG_WPA_SUPP_WPS                  1
 #define CONFIG_WPA_SUPP_DPP                  1
 #define CONFIG_WPA_SUPP_WPA3                 1
 #define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE    1

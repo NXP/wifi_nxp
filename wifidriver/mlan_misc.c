@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Miscellaneous functions for MLAN module
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -906,8 +906,8 @@ mlan_status wlan_misc_ioctl_custom_ie_list(IN pmlan_adapter pmadapter,
             index = ie_data->ie_index;
             mask  = ie_data->mgmt_subtype_mask;
             if (MLAN_CUSTOM_IE_AUTO_IDX_MASK == index)
-            { /* Need to be
-                 Autohandled */
+            {     /* Need to be
+                     Autohandled */
                 if (mask == MLAN_CUSTOM_IE_DELETE_MASK)
                 { /* Automatic
                      Deletion */
@@ -1504,6 +1504,10 @@ void wlan_add_ext_capa_info_ie(IN mlan_private *pmpriv, IN BSSDescriptor_t *pbss
 #endif
 #ifdef CONFIG_11V
     pext_cap->ext_cap.BSS_Transition = 1;
+#endif
+#ifdef CONFIG_11MC
+    pext_cap->ext_cap.FTMI          = 1;
+    pext_cap->ext_cap.CivicLocation = 1;
 #endif
 
     *pptlv_out += sizeof(MrvlIETypes_ExtCap_t);
@@ -2135,14 +2139,16 @@ static mlan_status wlan_rate_ioctl_set_rate_index(IN pmlan_adapter pmadapter, IN
 
     /* Send request to firmware */
 #ifdef CONFIG_AUTO_NULL_TX
-    if(ds_rate->auto_null_fixrate_enable == 1)
+    if (ds_rate->auto_null_fixrate_enable == 1)
     {
-        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_SET, 0, (t_void *)pioctl_req, bitmap_rates);
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_SET, 0, (t_void *)pioctl_req,
+                               bitmap_rates);
         ds_rate->auto_null_fixrate_enable = 0xff;
     }
-    else if(ds_rate->auto_null_fixrate_enable == 0)
+    else if (ds_rate->auto_null_fixrate_enable == 0)
     {
-        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_NOSET, 0, (t_void *)pioctl_req, bitmap_rates);
+        ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_TX_RATE_CFG, HostCmd_ACT_SPC_AUTO_NOSET, 0, (t_void *)pioctl_req,
+                               bitmap_rates);
         ds_rate->auto_null_fixrate_enable = 0xff;
     }
     else
