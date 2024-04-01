@@ -39,6 +39,10 @@
 #ifdef CONFIG_11AC
 #define CONFIG_11AX
 #endif
+#undef CONFIG_11MC
+#undef CONFIG_11AZ
+#undef CONFIG_CSI
+#undef CONFIG_WLS_CSI_PROC
 #endif
 
 #if defined(RW610)
@@ -219,7 +223,7 @@
 #define CONFIG_WPA_SUPP 1
 #ifdef CONFIG_WPA_SUPP
 #define CONFIG_WPA_SUPP_WPS 1
-//#define CONFIG_WPA_SUPP_P2P 1
+// #define CONFIG_WPA_SUPP_P2P 1
 #define CONFIG_WPA_SUPP_DPP                  1
 #define CONFIG_WPA_SUPP_WPA3                 1
 #define CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE    1
