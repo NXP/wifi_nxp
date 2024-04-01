@@ -4932,7 +4932,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             if ((pmpriv->ssid_filter) && ((bss_new_entry->ssid.ssid_len != pmpriv->filter_ssid.ssid_len) ||
                 __memcmp(pmadapter, bss_new_entry->ssid.ssid, pmpriv->filter_ssid.ssid, bss_new_entry->ssid.ssid_len)))
             {
-                break;
+                continue;
             }
             /*
              * Search the scan table for the same bssid
