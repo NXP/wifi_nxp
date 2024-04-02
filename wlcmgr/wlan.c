@@ -1175,7 +1175,11 @@ status_t powerManager_WlanNotify(pm_event_type_t eventType, uint8_t powerState, 
         }
 #ifdef RW610
 #if !defined(CONFIG_WIFI_BLE_COEX_APP)
-        host_sleep_pre_cfg((int)powerState);
+        ret = host_sleep_pre_cfg((int)powerState);
+        if(ret != 0)
+        {
+            return kStatus_PMPowerStateNotAllowed;
+        }
 #endif
 #endif
     }
