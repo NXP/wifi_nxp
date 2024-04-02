@@ -8159,11 +8159,7 @@ int wlan_stop(void)
     }
 
 #ifdef CONFIG_HOST_SLEEP
-    if (wakelock != NULL)
-    {
-        OSA_SemaphoreDestroy(&wakelock);
-        //wakelock = NULL;
-    }
+    OSA_SemaphoreDestroy(wakelock);
 #endif
 
 #ifndef RW610

@@ -352,6 +352,18 @@ static inline uint32_t OSA_RandRange(uint32_t low, uint32_t high)
 
 void OSA_DumpThreadInfo(char *name);
 
+/** Suspend the given thread
+ *
+ * - The function OSA_ThreadSelfComplete() will \b permanently suspend the
+ * given thread. Passing NULL will suspend the current thread. This
+ * function never returns.
+ * - The thread continues to consume system resources. To delete the thread
+ * the function OSA_TaskDestroy() needs to be called separately.
+ *
+ * @param[in] taskHandle Pointer to thread handle
+ */
+void OSA_ThreadSelfComplete(osa_task_handle_t taskHandle);
+
 /** Return the number of messages stored in queue.
  *
  * @param[in] msgqHandle Pointer to handle of the queue to be queried.

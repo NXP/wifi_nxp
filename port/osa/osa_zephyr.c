@@ -200,6 +200,11 @@ int OSA_RemoveIdleFunction(void (*func)(void))
     return 0;
 }
 
+void OSA_ThreadSelfComplete(osa_task_handle_t taskHandle)
+{
+    return 0;
+}
+
 uint32_t OSA_MsgQWaiting(osa_msgq_handle_t msgqHandle)
 {
     return 0;
