@@ -4203,6 +4203,9 @@ mlan_status wlan_ret_802_11_scan_ext(IN mlan_private *pmpriv, IN HostCmd_DS_COMM
  *  @param pbss_entry       A pointer to the bss_entry which has multi-bssid IE
  *  @param pnew_entry       A pinter to new entry
  *  @param pssid            A pointer to ssid IE
+ *  @param pnew_extcap      A pointer to EXT CAP IE
+ *  @param pnew_rsnx        A pointer to RSNX IE
+ *  @param pnew_rsn         A pointer to RSN IE
  *
  *  @return                MLAN_STATUS_FAILURE/MLAN_STATUS_SUCCESS
  */
@@ -4211,7 +4214,8 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
                                                   BSSDescriptor_t *pnew_entry,
                                                   IEEEtypes_Ssid_t *pssid,
                                                   IEEEtypes_ExtCap_t *pnew_extcap,
-                                                  IEEEtypes_Generic_t *pnew_rsnx)
+                                                  IEEEtypes_Generic_t *pnew_rsnx,
+                                                  IEEEtypes_Generic_t *pnew_rsn)
 {
 #ifdef CONFIG_WPA_SUPP
     mlan_callbacks *pcb = (pmlan_callbacks)&pmadapter->callbacks;
@@ -4262,6 +4266,14 @@ static mlan_status wlan_update_ssid_in_beacon_buf(mlan_adapter *pmadapter,
         (void)__memcpy(pmadapter, &pnew_entry->rsnx_ie_saved, pnew_rsnx,
                        pnew_rsnx->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
         pnew_entry->prsnx_ie = &pnew_entry->rsnx_ie_saved;
+    }
+	
+    if(pnew_rsn)
+    {
+        (void)__memcpy(pmadapter, pnew_entry->rsn_ie_buff, pnew_rsn,
+                       pnew_rsn->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+        pnew_entry->rsn_ie_buff_len = pnew_rsn->ieee_hdr.len + sizeof(IEEEtypes_Header_t);
+        pnew_entry->prsn_ie = (IEEEtypes_Generic_t *)pnew_entry->rsn_ie_buff;
     }
 
 #ifdef CONFIG_WPA_SUPP
@@ -4400,6 +4412,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
     IEEEtypes_Header_t *pheader               = (IEEEtypes_Header_t *)pbss_profile->profile_data;
     IEEEtypes_MultiBSSIDIndex_t *pbssid_index = MNULL;
     IEEEtypes_Ssid_t *pssid                   = MNULL;
+    IEEEtypes_Generic_t *prsn                 = MNULL;
     IEEEtypes_NotxBssCap_t *pcap              = (IEEEtypes_NotxBssCap_t *)pbss_profile->profile_data;
     t_u8 *pos                                 = pbss_profile->profile_data;
     t_s8 left_len                             = pbss_profile->ieee_hdr.len;
@@ -4462,6 +4475,10 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
                 pssid = (IEEEtypes_Ssid_t *)pos;
                 PRINTM(MCMND, "MBSSID: Find mbssid ssid=%s\n", pssid->ssid);
                 break;
+            case RSN_IE:
+                prsn = (IEEEtypes_Generic_t *)pos;
+                DBG_HEXDUMP(MCMD_D, "MBSSID RSN", pos, prsn->ieee_hdr.len + sizeof(IEEEtypes_Header_t));
+                break;
             default:
                 break;
         }
@@ -4491,7 +4508,7 @@ static t_void wlan_parse_non_trans_bssid_profile(mlan_private *pmpriv,
             bss_new_entry->ssid.ssid_len = pssid->len;
             (void)__memcpy(pmadapter, bss_new_entry->ssid.ssid, pssid->ssid, MIN(pssid->len, MLAN_MAX_SSID_LENGTH));
             if (MLAN_STATUS_SUCCESS !=
-                wlan_update_ssid_in_beacon_buf(pmadapter, pbss_entry, bss_new_entry, pssid, pextcap, prsnx))
+                wlan_update_ssid_in_beacon_buf(pmadapter, pbss_entry, bss_new_entry, pssid, pextcap, prsnx, prsn))
             {
                 PRINTM(MERROR, "Fail to update MBSSID beacon buf\n");
                 pcb->moal_mfree(pmadapter->pmoal_handle, (t_u8 *)bss_new_entry);
