@@ -198,10 +198,10 @@ int initNetwork(void)
             {
                 vTaskDelay(100);
             }
+            PRINTF("DHCP OK\r\n");
 #endif
             (void)ethernetif_wait_ipv4_valid(&netif, ETHERNETIF_WAIT_FOREVER);
             PRINTF("IPv4 Address: %s\r\n", ipaddr_ntoa(&netif.ip_addr));
-            PRINTF("DHCP OK\r\n");
 
             enet_cli_init();
 
