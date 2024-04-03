@@ -12048,7 +12048,9 @@ static void wlan_start_detect_ant(void)
     }
     else
     {
-        (void)PRINTF("\nError: Failed to detect antenna\r\n");
+        ant_mode = 1;
+        ret = wlan_set_antcfg(ant_mode, evaluate_time, evaluate_mode);
+        (void)PRINTF("\nFailed to detect antenna\r\n");
     }
 }
 
