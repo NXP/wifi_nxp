@@ -7054,13 +7054,6 @@ static void wlan_antcfg_set(int argc, char *argv[])
             (void)PRINTF("Error during strtol errno:%d", errno);
             return;
         }
-
-        if ((evaluate_time < 0) || (evaluate_time > 0xffffU))
-        {
-            dump_wlan_set_antcfg_usage();
-            (void)PRINTF("Error: invalid evaluate_time\r\n");
-            return;
-        }
     }
 
     errno = 0;
