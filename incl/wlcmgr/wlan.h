@@ -3389,6 +3389,12 @@ int wlan_wowlan_config(t_u32 wake_up_conds);
  * \param[in] is_periodic Flag to indicate host enter low power periodically or once with power manager.
  */
 void wlan_config_host_sleep(bool is_manual, t_u8 is_periodic);
+
+/** This function sent host sleep events to mon_thread
+ * \param[in] id Event ID.
+ * \param[in] data Pointer to event msg.
+ */
+status_t wlan_hs_send_event(int id, void *data);
 #endif /*RW610*/
 
 /** Cancel host sleep.
@@ -3408,11 +3414,6 @@ void wlan_clear_host_sleep_config();
  * \return -WM_FAIL if failed.
  */
 int wlan_set_multicast(t_u8 mef_action);
-/** This function sent host sleep events to mon_thread
- * \param[in] id Event ID.
- * \param[in] data Pointer to event msg.
- */
-status_t wlan_hs_send_event(int id, void *data);
 #endif
 
 /** Set configuration parameters of IEEE power save mode.

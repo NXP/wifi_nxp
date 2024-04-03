@@ -1095,6 +1095,7 @@ int wlan_get_wakeup_reason(uint16_t *hs_wakeup_reason)
 
 #endif
 
+#ifdef RW610
 #ifdef CONFIG_HOST_SLEEP
 status_t wlan_hs_send_event(int id, void *data)
 {
@@ -1119,6 +1120,7 @@ status_t wlan_hs_send_event(int id, void *data)
     return kStatus_Success;
 #endif
 }
+#endif
 
 #ifdef CONFIG_POWER_MANAGER
 static void wake_timer_cb(osa_timer_arg_t arg)
