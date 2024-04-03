@@ -1034,6 +1034,8 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
     ENTER();
 
     pmpriv->ssid_filter = MFALSE;
+    (void)memset(&pmpriv->filter_ssid[0], 0x00, sizeof(pmpriv->filter_ssid));
+
     /* The tlv_buf_len is calculated for each scan command.  The TLVs added in
        this routine will be preserved since the routine that sends the command
        will append channelTLVs at *ppchan_list_out.  The difference between the
@@ -1116,9 +1118,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             if (ssid_len != 0U)
             {
                 ssid_filter = MTRUE;
-                (void)__memcpy(pmadapter, pmpriv->filter_ssid.ssid, puser_scan_in->ssid_list[ssid_idx].ssid,
+                (void)__memcpy(pmadapter, pmpriv->filter_ssid[ssid_idx].ssid, puser_scan_in->ssid_list[ssid_idx].ssid,
                                MIN(MLAN_MAX_SSID_LENGTH, ssid_len));
-                pmpriv->filter_ssid.ssid_len = ssid_len;
+                pmpriv->filter_ssid[ssid_idx].ssid_len = ssid_len;
             }
         }
 
@@ -4748,6 +4750,7 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
     t_u32 num_in_table;
     t_u32 bss_idx;
     t_u32 idx;
+    t_u32 idx2;
     t_u64 tsf_val;
     const chan_freq_power_t *cfp;
     t_u16 tlv_type, tlv_len;
@@ -4946,11 +4949,23 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
             }
 #endif
 
-            if ((pmpriv->ssid_filter) && ((bss_new_entry->ssid.ssid_len != pmpriv->filter_ssid.ssid_len) ||
-                __memcmp(pmadapter, bss_new_entry->ssid.ssid, pmpriv->filter_ssid.ssid, bss_new_entry->ssid.ssid_len)))
+            if (pmpriv->ssid_filter)
             {
-                continue;
+                for (idx2 = 0; idx2 < NELEMENTS(pmpriv->filter_ssid); idx2 ++)
+                {
+                    if (pmpriv->filter_ssid[idx2].ssid_len && (bss_new_entry->ssid.ssid_len == pmpriv->filter_ssid[idx2].ssid_len)
+                       && (!__memcmp(pmadapter, bss_new_entry->ssid.ssid, pmpriv->filter_ssid[idx2].ssid, bss_new_entry->ssid.ssid_len)))
+                    {
+                        break;
+                    }
+                }
+
+                if (idx2 == NELEMENTS(pmpriv->filter_ssid))
+                {
+                    continue;
+                }
             }
+
             /*
              * Search the scan table for the same bssid
              */
