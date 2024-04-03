@@ -10,21 +10,21 @@ SD8987 WIRELESS FIRMWARE
 
 Here are the details about the SD8987 firmware:
 
-1. Firmware Name:          SD-WLAN-UART-BT-8987-U16-MMC-W16.91.21.p124-16.91.21.p124-C4X16673-GPL
+1. Firmware Name:          SD-WLAN-UART-BT-8987-U16-MMC-W16.91.21.p129-16.91.21.p129-C4X16673-GPL
 
 IW416 WIRELESS FIRMWARE
 ========================
 
 Here are the details about the SD8978 firmware:
 
-1. Firmware Name:          SD-WLAN-UART-BT-IW416-U16-MMC-W16.91.21.p124-16.91.21.p124-C4X16679_V0-GPL
+1. Firmware Name:          SD-WLAN-UART-BT-IW416-U16-MMC-W16.91.21.p129-16.91.21.p129-C4X16679_V0-GPL
 
 NW61x WIRELESS FIRMWARE
 ========================
 
 Here are the details about the NW61x firmware(signed):
 
-1. Firmware Name Signed:   SD-WLAN-UART-BT-NW61x-U16-MMC-W18.99.2.p66.28-18.99.2.p66.28-C4X16679_V2-GPL
+1. Firmware Name Signed:   SD-WLAN-UART-BT-NW61x-U16-MMC-W18.99.3.p3-18.99.3.p3-C4X16679_V2-GPL
 
 NW61x MANUFACTURING FIRMWARE
 ==============================
