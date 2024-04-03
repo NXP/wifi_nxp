@@ -97,14 +97,21 @@ void wifi_sdio_unlock(void)
 }
 
 #ifdef CONFIG_WIFI_IND_RESET
-int wifi_ind_reset_lock(void)
+static bool ind_reset_in_progress = false;
+
+bool wifi_ind_reset_in_progress(void)
 {
-    return os_mutex_get(&ind_reset_mutex, OS_WAIT_FOREVER);
+    return ind_reset_in_progress;
 }
 
-void wifi_ind_reset_unlock(void)
+void wifi_ind_reset_start(void)
 {
-    (void)os_mutex_put(&ind_reset_mutex);
+    ind_reset_in_progress = true;
+}
+
+void wifi_ind_reset_stop(void)
+{
+   ind_reset_in_progress = false;
 }
 #endif
 
@@ -536,7 +543,7 @@ static mlan_status wlan_decode_rx_packet(t_u8 *pmbuf, t_u32 upld_type)
     {
         if (upld_type == MLAN_TYPE_CMD)
         {
-            msg.data = wifi_mem_malloc_cmdrespbuf();
+            msg.data = wifi_mem_malloc_cmdrespbuf(sdiopkt->size);
         }
         else
         {
@@ -682,7 +689,9 @@ static t_u8 *wlan_read_rcv_packet(t_u32 port, t_u32 rxlen, t_u32 rx_blocks, t_u3
 
 static int wlan_get_next_seq_num(void)
 {
-    seqnum++;
+     /* No need to increase seqnum as all cmds in RT uses seqnum 0 for STA and
+      * 4096 for uAP */
+    /* seqnum++; */
     return seqnum;
 }
 
@@ -1234,16 +1243,20 @@ static void wlan_fw_init_cfg(void)
 
     wlan_get_value_1();
 
-    wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
+    if (wm_wifi.wifi_init_done == 0U)
+    {
+
+        wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
 #ifdef CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        os_thread_sleep(os_msec_to_ticks(50));
-    }
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks(50));
+        }
 #endif
 
-    wlan_get_fw_ver_ext(0);
+        wlan_get_fw_ver_ext(0);
+    }
 
     wifi_io_d("CMD : GET_MAC_ADDR (0x4d)");
 
@@ -1267,16 +1280,21 @@ static void wlan_fw_init_cfg(void)
 
     wlan_get_mac_addr_uap();
 
-    wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
+    if (wm_wifi.wifi_init_done == 0U)
+    {
+
+        wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
 #ifdef CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        os_thread_sleep(os_msec_to_ticks(50));
-    }
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks(50));
+        }
 #endif
 
-    wlan_get_fw_ver_ext(3);
+        wlan_get_fw_ver_ext(3);
+
+    }
 
     wifi_io_d("CMD : MAC_CTRL (0x28)");
 
@@ -1289,16 +1307,19 @@ static void wlan_fw_init_cfg(void)
 
     wlan_set_mac_ctrl();
 
-    wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
+    if (wm_wifi.wifi_init_done == 0U)
+    {
+        wifi_io_d("CMD : GET_FW_VER_EXT (0x97)");
 
 #ifdef CONFIG_FW_VDLL
-    while (pmadapter->vdll_in_progress == MTRUE)
-    {
-        os_thread_sleep(os_msec_to_ticks(50));
-    }
+        while (pmadapter->vdll_in_progress == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks(50));
+        }
 #endif
 
-    wlan_get_fw_ver_ext(4);
+        wlan_get_fw_ver_ext(4);
+    }
 
 
     wifi_io_d("CMD : GET_FW_VER_EXT (0xcd)");

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -126,7 +126,7 @@
 #include <wifi_events.h>
 #include <wifi.h>
 
-#define WLAN_DRV_VERSION "v1.3.r47.p16"
+#define WLAN_DRV_VERSION "v1.3.r47.p22"
 
 
 #define ARG_UNUSED(x) (void)(x)
@@ -642,6 +642,8 @@ struct wlan_scan_result
     t_u8 ap_mfpc;
     /** MFPR bit of AP*/
     t_u8 ap_mfpr;
+    /** PWE bit of AP*/
+    t_u8 ap_pwe;
 
 #ifdef CONFIG_11K
     /** Neigbort report support (For internal use only)*/
@@ -1720,6 +1722,13 @@ int wlan_stop(void);
  *			WLAN_ACTIVE: no action to be taken
  */
 void wlan_deinit(int action);
+
+
+/** Stop and Remove all wireless network (Access Point).
+ *
+ *  \return WM_SUCCESS if successful.
+ */
+int wlan_remove_all_networks(void);
 
 
 
@@ -5128,7 +5137,7 @@ int wlan_register_csi_user_callback(int (*csi_data_recv_callback)(void *buffer, 
 int wlan_unregister_csi_user_callback(void);
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
 /**
  * Use this API to set the RSSI threshold value for low RSSI event subscription.
  * When RSSI falls below this threshold firmware will generate the low RSSI event to driver.
@@ -5679,6 +5688,21 @@ int wlan_independent_reset();
 
 #endif
 
+int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip);
 
+
+
+#ifdef CONFIG_CPU_LOADING
+/**
+ * Set parameters for cpu loading test.
+ *
+ * \param[in]  start    0 stop test, 1 start test.
+ * \param[in]  number   The number of cpu loading test.
+ * \param[in]  period   The period of cpu loading test.
+ *
+ * \return WM_SUCCESS if successful otherwise failure.
+ */
+int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period);
+#endif
 
 #endif /* __WLAN_H__ */

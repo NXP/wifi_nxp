@@ -199,9 +199,6 @@ typedef enum _mlan_ioctl_req_id
 #ifdef WLAN_LOW_POWER_ENABLE
     MLAN_OID_MISC_LOW_PWR_MODE,
 #endif // WLAN_LOW_POWER_ENABLE
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-    MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD = 0x00200037,
-#endif
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
     MLAN_OID_MISC_IND_RST_CFG = 0x00200040,
 #endif
@@ -3758,21 +3755,6 @@ typedef MLAN_PACK_START struct _mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t
 
 
 
-#if defined(CONFIG_GTK_REKEY_OFFLOAD)
-#define MLAN_KCK_LEN        16
-#define MLAN_KEK_LEN        16
-#define MLAN_REPLAY_CTR_LEN 8
-/** mlan_ds_misc_gtk_rekey_data */
-typedef struct _mlan_ds_misc_gtk_rekey_data
-{
-    /** key encryption key */
-    t_u8 kek[MLAN_KEK_LEN];
-    /** key confirmation key */
-    t_u8 kck[MLAN_KCK_LEN];
-    /** replay counter */
-    t_u8 replay_ctr[MLAN_REPLAY_CTR_LEN];
-} mlan_ds_misc_gtk_rekey_data;
-#endif
 
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
 typedef struct _mlan_ds_ind_rst_cfg
@@ -3857,10 +3839,6 @@ typedef struct _mlan_ds_misc_cfg
         mfg_Cmd_IEEEtypes_CtlBasicTrigHdr_t mfg_tx_trigger_config;
 #endif
         mlan_embedded_dhcp_config embedded_dhcp_config;
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-        /** GTK rekey data */
-        mlan_ds_misc_gtk_rekey_data gtk_rekey;
-#endif
 #if defined(CONFIG_WIFI_IND_RESET) && defined(CONFIG_WIFI_IND_DNLD)
         mlan_ds_ind_rst_cfg ind_rst_cfg;
 #endif

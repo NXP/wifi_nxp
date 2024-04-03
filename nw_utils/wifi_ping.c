@@ -18,12 +18,14 @@
 #include <wlan.h>
 #include <wifi_ping.h>
 
+static int ptotal = 0, precvd = 0;
+
 static struct netif *get_netif_up(void)
 {
     struct netif *netif = netif_list;
     for (; netif != NULL; netif = netif->next)
     {
-        if (netif_is_up(netif) != 0U)
+        if ((netif_is_up(netif) != 0U) && (!((netif->name[0] == 'e') && (netif->name[1] == 'n'))))
         {
             return netif;
         }
@@ -101,6 +103,10 @@ static const char *ip_to_str(const ip_addr_t *ipaddr)
 static void display_ping_result(const ip_addr_t *addr, int total, int recvd)
 {
     int dropped = total - recvd;
+
+    ptotal = total;
+    precvd = recvd;
+
     (void)PRINTF("\r\n--- %s ping statistics ---\r\n", ip_to_str(addr));
     (void)PRINTF("%d packets transmitted, %d received,", total, recvd);
     if (dropped != 0)
@@ -178,7 +184,7 @@ static int ping_recv(int s, uint16_t seq_no, int *ttl)
                 /* Function raw_input may put multiple pieces of data in conn->recvmbox,
                  * waiting to select the data we want */
                 i++;
-                if(i > 10)
+                if (i > 10)
                 {
                     return -WM_FAIL;
                 }
@@ -252,9 +258,15 @@ static void ping_prepare_echo(struct icmp_echo_hdr *iecho, const ip_addr_t *dest
     }
 }
 
+void ping_stats(int *total, int *recvd)
+{
+    *total = ptotal;
+    *recvd = precvd;
+}
+
 /* Send an ICMP echo request, receive its response and print its statistics and
  * result */
-static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_addr_t *addr)
+int ping(u16_t count, int interval, unsigned short size, unsigned int r_timeout, ip_addr_t *addr)
 {
     int ret = WM_SUCCESS, s, recvd = 0;
     u16_t i = 1;
@@ -395,7 +407,7 @@ static int ping(u16_t count, unsigned short size, unsigned int r_timeout, ip_add
             goto end;
         }
         i++;
-        os_thread_sleep(os_msec_to_ticks(PING_INTERVAL));
+        os_thread_sleep(os_msec_to_ticks(interval));
     }
     os_mem_free(iecho);
     display_ping_result(src_ip_addr, (int)count, recvd);
@@ -488,14 +500,14 @@ static void cmd_ping(int argc, char **argv)
 #ifdef CONFIG_IPV6
         addr.type = IPADDR_TYPE_V4;
 #endif
-        (void)ping(count, size, timeout, &addr);
+        (void)ping(count, PING_INTERVAL, size, timeout, &addr);
         return;
     }
 #ifdef CONFIG_IPV6
     else if (inet_pton(AF_INET6, argv[cli_optind], &addr) != 0)
     {
         addr.type = IPADDR_TYPE_V6;
-        (void)ping(count, size, timeout, &addr);
+        (void)ping(count, PING_INTERVAL, size, timeout, &addr);
         return;
     }
 #endif

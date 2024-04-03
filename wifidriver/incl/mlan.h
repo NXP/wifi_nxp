@@ -21,10 +21,6 @@ Change log:
 
 
 
-#if !defined(SD8801)
-#define CONFIG_GTK_REKEY_OFFLOAD       1
-#endif
-
 #if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1

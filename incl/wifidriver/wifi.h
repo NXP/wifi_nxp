@@ -16,10 +16,6 @@
 
 
 
-#if !defined(SD8801)
-#define CONFIG_GTK_REKEY_OFFLOAD 1
-#endif
-
 #if defined(SD9177)
 #define CONFIG_TCP_ACK_ENH 1
 #define CONFIG_FW_VDLL     1
@@ -1338,6 +1334,10 @@ int wifi_trigger_oob_indrst();
 
 #ifdef CONFIG_WIFI_BOOT_SLEEP
 int wifi_boot_sleep(uint16_t action, uint16_t *enable);
+#endif
+
+#ifdef CONFIG_WPA_SUPP
+void hostapd_connected_sta_list(wifi_sta_info_t *si, wifi_sta_list_t *sl);
 #endif
 
 #endif /* __WIFI_H__ */

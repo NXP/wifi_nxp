@@ -22,8 +22,12 @@
 #define HUGE_BUF_SIZE 2000
 static char buffhuge[HUGE_BUF_SIZE];
 
-void *wifi_mem_malloc_cmdrespbuf(void)
+void *wifi_mem_malloc_cmdrespbuf(size_t len)
 {
+    if (len > HUGE_BUF_SIZE)
+    {
+        assert(0);
+    }
     /* NOTE: There is no corresponding free call for cmdrespbuf */
     /* CMD are all serialised and they dont need any locking */
     return buffhuge;

@@ -464,6 +464,8 @@ void wifi_nxp_wpa_supp_event_proc_deauth(void *if_priv, nxp_wifi_event_mlme_t *d
         event.deauth_info.ie_len = (frame + frame_len - mgmt->u.deauth.variable);
     }
 
+    (void)wifi_event_completion(WIFI_EVENT_DEAUTHENTICATION, le_to_host16(mgmt->u.deauth.reason_code), NULL);
+
     wifi_if_ctx_rtos->supp_callbk_fns.deauth(wifi_if_ctx_rtos->supp_drv_if_ctx, &event, mgmt);
 }
 
@@ -1175,6 +1177,11 @@ int wifi_nxp_wpa_supp_associate(void *if_priv, struct wpa_driver_associate_param
         memcpy(assoc_params->bssid, params->bssid, sizeof(assoc_params->bssid));
     }
 
+    if (params->prev_bssid)
+    {
+        memcpy(assoc_params->prev_bssid, params->prev_bssid, sizeof(assoc_params->prev_bssid));
+    }
+
     if (params->freq.freq)
     {
         int channel           = freq_to_chan(params->freq.freq);
@@ -1333,6 +1340,36 @@ int wifi_nxp_wpa_supp_set_key(void *if_priv,
         if (ret || skip_set_key)
             return ret;
     }
+out:
+    return ret;
+}
+
+int wifi_nxp_wpa_supp_del_key(void *if_priv, const unsigned char *addr, int key_idx)
+
+{
+    int status                                 = -WM_FAIL;
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    int ret                                    = -1;
+
+    if (!if_priv)
+    {
+        supp_e("%s: Invalid params", __func__);
+        goto out;
+    }
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    status = wifi_remove_key(wifi_if_ctx_rtos->bss_type, 0, key_idx, addr);
+
+    if (status != WM_SUCCESS)
+    {
+        supp_e("%s: wifi_nxp_del_key failed", __func__);
+    }
+    else
+    {
+        ret = 0;
+    }
+
 out:
     return ret;
 }
@@ -1845,6 +1882,62 @@ void wifi_nxp_wpa_supp_event_proc_ecsa_complete(void *if_priv, nxp_wifi_ch_switc
     }
 }
 
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_started(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.dfs_event.freq        = dfs_cac_info->center_freq;
+    event.dfs_event.ht_enabled  = dfs_cac_info->ht_enabled;
+    event.dfs_event.chan_offset = dfs_cac_info->ch_offset;
+    event.dfs_event.chan_width  = (enum chan_width)dfs_cac_info->ch_width;
+    event.dfs_event.cf1         = dfs_cac_info->center_freq1;
+    event.dfs_event.cf2         = dfs_cac_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_started(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
+void wifi_nxp_wpa_supp_event_proc_dfs_cac_finished(void *if_priv, nxp_wifi_dfs_cac_info *dfs_cac_info)
+{
+    struct wifi_nxp_ctx_rtos *wifi_if_ctx_rtos = NULL;
+    union wpa_event_data event;
+
+    wifi_if_ctx_rtos = (struct wifi_nxp_ctx_rtos *)if_priv;
+
+    memset(&event, 0, sizeof(event));
+
+    event.dfs_event.freq        = dfs_cac_info->center_freq;
+    event.dfs_event.ht_enabled  = dfs_cac_info->ht_enabled;
+    event.dfs_event.chan_offset = dfs_cac_info->ch_offset;
+    event.dfs_event.chan_width  = (enum chan_width)dfs_cac_info->ch_width;
+    event.dfs_event.cf1         = dfs_cac_info->center_freq1;
+    event.dfs_event.cf2         = dfs_cac_info->center_freq2;
+
+#ifdef CONFIG_HOSTAPD
+    if (wifi_if_ctx_rtos->hostapd)
+    {
+        wifi_if_ctx_rtos->hostapd_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->hapd_drv_if_ctx, &event);
+    }
+    else
+#endif
+    {
+        wifi_if_ctx_rtos->supp_callbk_fns.dfs_cac_finished(wifi_if_ctx_rtos->supp_drv_if_ctx, &event);
+    }
+}
+
 void *wifi_nxp_hostapd_dev_init(void *hapd_drv_if_ctx,
                                 const char *iface_name,
                                 rtos_hostapd_dev_callbk_fns *hostapd_callbk_fns)
@@ -1907,7 +2000,7 @@ void wifi_nxp_hostapd_dev_deinit(void *if_priv)
 
 int wifi_nxp_hostapd_set_modes(void *if_priv, struct hostapd_hw_modes *modes)
 {
-    int status = -WM_FAIL;
+    int status     = -WM_FAIL;
     t_u8 bandwidth = wifi_uap_get_bandwidth();
 
     if ((!if_priv) || (!modes))

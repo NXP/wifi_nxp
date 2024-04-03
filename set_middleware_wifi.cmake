@@ -58,9 +58,9 @@ if(CONFIG_USE_COMPONENT_CONFIGURATION)
   target_compile_definitions(${MCUX_SDK_PROJECT_NAME} PUBLIC
     -DLWIP_DNS=1
     -DLWIP_NETIF_HOSTNAME=1
-    -DLWIP_NETIF_STATUS_CALLBACK=1
     -DLWIP_IGMP=1
     -DSDIO_ENABLED
+    -D_XOPEN_SOURCE=500
   )
 
 endif()
@@ -191,19 +191,19 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd/dhcp-server-main.c
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd/dhcp-server.c
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd/dns-server.c
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip/net.c
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip/wifi_netif.c
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net/net.c
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net/wifi_netif.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_txpwrlimit_cfg.c
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip/hooks/lwip_default_hooks.c
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net/hooks/lwip_default_hooks.c
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}/./dhcpd
   ${CMAKE_CURRENT_LIST_DIR}/./incl
-  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/lwip
-  ${CMAKE_CURRENT_LIST_DIR}/./port/lwip
-  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/lwip/hooks
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/net
+  ${CMAKE_CURRENT_LIST_DIR}/./port/net
+  ${CMAKE_CURRENT_LIST_DIR}/./incl/port/net/hooks
 )
 
 else()
@@ -277,6 +277,8 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/./cli/cli_utils.c
   ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/wifi_ping.c
   ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/iperf.c
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/init_enet.c
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/telnet/telnet_server.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_basic_cli.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_enhanced_tests.c
   ${CMAKE_CURRENT_LIST_DIR}/./wlcmgr/wlan_tests.c
@@ -289,6 +291,8 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_LIST_DIR}/./cli
   ${CMAKE_CURRENT_LIST_DIR}/./incl
   ${CMAKE_CURRENT_LIST_DIR}/./incl/wlcmgr
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils
+  ${CMAKE_CURRENT_LIST_DIR}/./nw_utils/telnet
 )
 
 else()

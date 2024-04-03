@@ -482,9 +482,9 @@ static t_void wlan_scan_create_channel_list(IN mlan_private *pmpriv,
 
 #if defined(RW610) || defined(SD9177)
             wscan_d("Channel: %d Type: %s %d", cfp->channel,
-                    scan_type == MLAN_SCAN_TYPE_PASSIVE ?
-                        "Passive" :
-                        scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" : "Active",
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE           ? "Passive" :
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" :
+                                                                    "Active",
                     cfp->max_tx_power);
 #else
             wscan_d("Channel: %d Type: %s %d", cfp->channel, scan_type == MLAN_SCAN_TYPE_PASSIVE ? "Passive" : "Active",
@@ -861,6 +861,11 @@ static mlan_status wlan_scan_channel_list(IN mlan_private *pmpriv,
             break;
         }
 
+        if (pmpriv->media_connected == MTRUE)
+        {
+            os_thread_sleep(os_msec_to_ticks((uint32_t)get_split_scan_delay_ms()));
+        }
+
         if (abort_split_scan)
         {
             abort_split_scan       = false;
@@ -1033,6 +1038,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
             if (ssid_len != 0U)
             {
                 ssid_filter = MTRUE;
+                (void)__memcpy(pmadapter, pmpriv->filter_ssid.ssid, puser_scan_in->ssid_list[ssid_idx].ssid,
+                               MIN(MLAN_MAX_SSID_LENGTH, ssid_len));
+                pmpriv->filter_ssid.ssid_len = ssid_len;
             }
         }
 
@@ -1275,9 +1283,9 @@ static mlan_status wlan_scan_setup_scan_config(IN mlan_private *pmpriv,
 
 #if defined(RW610) || defined(SD9177)
             wscan_d("Channel: %d Type: %s ", channel,
-                    scan_type == MLAN_SCAN_TYPE_PASSIVE ?
-                        "Passive" :
-                        scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" : "Active");
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE           ? "Passive" :
+                    scan_type == MLAN_SCAN_TYPE_PASSIVE_TO_ACTIVE ? "PassiveToActive" :
+                                                                    "Active");
 #else
             wscan_d("Channel: %d Type: %s ", channel, scan_type == MLAN_SCAN_TYPE_PASSIVE ? "Passive" : "Active");
 #endif
@@ -1587,6 +1595,8 @@ static mlan_status wlan_interpret_bss_desc_with_ie(IN pmlan_adapter pmadapter,
     pbss_entry->beacon_buf_size = bytes_left_for_current_beacon;
 
     (void)__memcpy(pmadapter, pbss_entry->time_stamp, pcurrent_ptr, 8);
+
+    pbss_entry->scan_result_tsf = os_get_timestamp();
 
     pcurrent_ptr += 8;
     bytes_left_for_current_beacon -= 8U;
@@ -4008,6 +4018,14 @@ static mlan_status wlan_parse_ext_scan_result(IN mlan_private *pmpriv,
                     wlan_parse_multi_bssid_ap(pmpriv, bss_new_entry, &num_in_table);
             }
 
+            /*
+             * TODO: Needs to be removed once firmware fix becomes available
+             */
+            if ((pmpriv->ssid_filter) && (bss_new_entry->ssid.ssid_len != pmpriv->filter_ssid.ssid_len) &&
+                __memcmp(pmadapter, bss_new_entry->ssid.ssid, pmpriv->filter_ssid.ssid, bss_new_entry->ssid.ssid_len))
+            {
+                break;
+            }
             /*
              * Search the scan table for the same bssid
              */

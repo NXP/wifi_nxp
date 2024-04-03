@@ -20,6 +20,13 @@
 #include <ctype.h>
 #include "fsl_debug_console.h"
 
+#ifdef CONFIG_WIFI_SMOKE_TESTS
+#undef PRINTF
+extern void sm_printf(const char *fmt, ...);
+
+#define PRINTF sm_printf
+#endif
+
 
 #define ffs __builtin_ffs
 
@@ -319,6 +326,27 @@ static inline int wm_frac_part_of(float x, short precision)
 
     return (x < 0 ? (int)(((int)x - x) * scale) : (int)((x - (int)x) * scale));
 }
+
+#ifdef CONFIG_SIGMA_AGENT
+#if defined(SDK_OS_FREE_RTOS)
+#if (defined(__MCUXPRESSO) || defined(__GNUC__)) && !defined(__ARMCC_VERSION)
+static inline int strcasecmp(const char *a, const char *b)
+{
+    int ca, cb;
+    do
+    {
+        ca = *(unsigned char *)a;
+        cb = *(unsigned char *)b;
+        ca = tolower(toupper(ca));
+        cb = tolower(toupper(cb));
+        a++;
+        b++;
+    } while (ca == cb && ca != '\0');
+    return ca - cb;
+}
+#endif
+#endif
+#endif
 
 #ifndef __linux__
 /** Returns a pointer to a new string which is a duplicate of the

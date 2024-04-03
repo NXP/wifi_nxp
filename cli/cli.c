@@ -20,6 +20,7 @@
 #include <cli_utils.h>
 #include <wm_os.h>
 #include <fsl_debug_console.h>
+#include "board.h"
 
 #include "cli_mem.h"
 #define END_CHAR      '\r'
@@ -71,7 +72,6 @@ static char *cli_strdup(const char *s, int len)
     {
         for (i = 0; i < len; i++)
         {
-
             result[i] = s[i] == '\0' ? ' ' : s[i];
         }
 
@@ -298,7 +298,7 @@ static const struct cli_command *lookup_command(char *name, int len)
  *          input line.
  *          2 on invalid syntax: the arguments list couldn't be parsed
  */
-static int handle_input(char *handle_inbuf)
+int handle_input(char *handle_inbuf)
 {
     struct
     {
@@ -307,10 +307,10 @@ static int handle_input(char *handle_inbuf)
         unsigned done : 1;
     } stat;
     static char *argv[64];
-    int argc                          = 0;
-    int i                             = 0;
+    int argc = 0;
+    int i    = 0;
 #ifdef CONFIG_APP_FRM_CLI_HISTORY
-    int len                           = 0;
+    int len = 0;
 #endif
     unsigned int j                    = 0;
     const struct cli_command *command = NULL;
@@ -667,7 +667,7 @@ static int get_input(char *get_inbuf, unsigned int *bp)
  * representation of non-printable characters.
  * Non-printable characters show as "\0xXX".
  */
-static void print_bad_command(char *cmd_string)
+void print_bad_command(char *cmd_string)
 {
     if (cmd_string != NULL)
     {
@@ -970,6 +970,18 @@ void help_command(int argc, char **argv)
     }
 }
 
+#if defined(__ICCARM__)
+#pragma diag_suppress = Pe192
+#endif
+
+static void clear_command(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    PRINTF("\e[1;1H\e[2J");
+}
+
 #if 0
 static void echo_cmd_handler(int argc, char **argv)
 {
@@ -995,6 +1007,7 @@ static void echo_cmd_handler(int argc, char **argv)
 
 static struct cli_command built_ins[] = {
     {"help", NULL, help_command},
+    {"clear", NULL, clear_command},
 };
 
 /*
@@ -1091,6 +1104,9 @@ int cli_init(void)
         return WM_SUCCESS;
     }
 
+    (void)PRINTF("CLI Build: %s [%s]", __DATE__, __TIME__);
+    (void)PRINTF("\r\nCopyright  2024  NXP\r\n");
+
     (void)memset((void *)&cli, 0, sizeof(cli));
     cli.input_enabled = 1;
     cli.in_queue_data = queue_data;
@@ -1112,6 +1128,12 @@ int cli_init(void)
     {
         cli_init_done = true;
     }
+
+#ifdef BOARD_NAME
+    PRINTF("MCU Board: %s\r\n", BOARD_NAME);
+    PRINTF("========================================\r\n");
+#endif
+
     return ret;
 }
 

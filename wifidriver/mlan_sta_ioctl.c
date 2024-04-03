@@ -1013,49 +1013,6 @@ exit:
 }
 
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-/**
- *  @brief Gtk Rekey Offload
- *
- *  @param pmadapter	A pointer to mlan_adapter structure
- *  @param pioctl_req	A pointer to ioctl request buffer
- *
- *  @return		MLAN_STATUS_SUCCESS --success, otherwise fail
- */
-static mlan_status wlan_misc_ioctl_gtk_rekey_offload(pmlan_adapter pmadapter, pmlan_ioctl_req pioctl_req)
-{
-    mlan_status ret            = MLAN_STATUS_SUCCESS;
-    mlan_ds_misc_cfg *misc_cfg = MNULL;
-    t_u16 cmd_action           = 0;
-    mlan_private *pmpriv       = pmadapter->priv[pioctl_req->bss_index];
-
-    ENTER();
-    misc_cfg = (mlan_ds_misc_cfg *)pioctl_req->pbuf;
-    if (pioctl_req->action == MLAN_ACT_SET)
-        cmd_action = HostCmd_ACT_GEN_SET;
-    else if (pioctl_req->action == MLAN_ACT_CLEAR)
-        cmd_action = HostCmd_ACT_GEN_REMOVE;
-    else
-        cmd_action = HostCmd_ACT_GEN_GET;
-
-    if (!pmpriv->wpa_is_gtk_set)
-    {
-        /* Store the gtk rekey data if it has already set gtk */
-        (void)__memcpy(pmadapter, &pmpriv->gtk_rekey, &misc_cfg->param.gtk_rekey, sizeof(mlan_ds_misc_gtk_rekey_data));
-        LEAVE();
-        return ret;
-    }
-    /* Send request to firmware if it hasn't set gtk yet */
-    ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG, cmd_action, 0, (t_void *)pioctl_req,
-                           &misc_cfg->param.gtk_rekey);
-
-    if (ret == MLAN_STATUS_SUCCESS)
-        ret = MLAN_STATUS_PENDING;
-
-    LEAVE();
-    return ret;
-}
-#endif
 
 /**
  *  @brief Get/Set subscribe event
@@ -1132,11 +1089,6 @@ static mlan_status wlan_misc_cfg_ioctl(IN pmlan_adapter pmadapter, IN pmlan_ioct
         case MLAN_OID_MISC_REGION:
             status = wlan_misc_ioctl_region(pmadapter, pioctl_req);
             break;
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-        case MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD:
-            status = wlan_misc_ioctl_gtk_rekey_offload(pmadapter, pioctl_req);
-            break;
-#endif
 #ifdef CONFIG_ROAMING
         case MLAN_OID_MISC_SUBSCRIBE_EVENT:
             status = wlan_misc_ioctl_subscribe_evt(pmadapter, pioctl_req);

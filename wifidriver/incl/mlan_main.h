@@ -906,6 +906,11 @@ typedef struct
     t_u8 data_rates[WLAN_SUPPORTED_RATES];
     /** Host MLME flag*/
     t_u8 host_mlme;
+    /** prev_bssid */
+    mlan_802_11_mac_addr prev_bssid;
+    /** attemp_bssid */
+    mlan_802_11_mac_addr attemp_bssid;
+    t_u8 use_mfp;
 } current_bss_params_t;
 
 /** Sleep_params */
@@ -1204,6 +1209,8 @@ struct _mlan_private
 
     t_u8 ssid_filter;
 
+    /** Filter SSID */
+    mlan_802_11_ssid filter_ssid;
     /** max amsdu size */
     t_u16 max_amsdu;
 #ifdef AMSDU_IN_AMPDU
@@ -1255,10 +1262,6 @@ struct _mlan_private
 
     /** Attempted BSS descriptor */
     BSSDescriptor_t *pattempted_bss_desc;
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-    /** GTK rekey data*/
-    mlan_ds_misc_gtk_rekey_data gtk_rekey;
-#endif
 
     /** Current SSID/BSSID related parameters*/
     current_bss_params_t curr_bss_params;
@@ -2932,5 +2935,7 @@ mlan_status wlan_ret_ind_rst_cfg(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp,
 mlan_status wlan_cmd_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *cmd, t_u16 cmd_action, t_void *pdata_buf);
 
 mlan_status wlan_ret_boot_sleep(pmlan_private pmpriv, HostCmd_DS_COMMAND *resp, mlan_ioctl_req *pioctl_buf);
+
+t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code);
 
 #endif /* !_MLAN_MAIN_H_ */

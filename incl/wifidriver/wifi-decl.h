@@ -1,5 +1,5 @@
 /*
- *  Copyright 2008-2022 NXP
+ *  Copyright 2008-2022, 2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -157,7 +157,10 @@ typedef struct
 /** BSS type : UAP */
 #define BSS_TYPE_UAP 1U
 
-#define UAP_DEFAULT_CHANNEL 0
+#define UAP_DEFAULT_CHANNEL       0
+#define UAP_DEFAULT_BANDWIDTH     2
+#define UAP_DEFAULT_BEACON_PERIOD 100
+#define UAP_DEFAULT_HIDDEN_SSID   0
 
 enum wifi_bss_security
 {
@@ -274,20 +277,21 @@ struct wifi_scan_result2
     uint8_t bssid[MLAN_MAC_ADDR_LENGTH]; /*!< BSSID array */
     bool is_ibss_bit_set;                /*!< Is bssid set? */
 
-    uint8_t ssid[MLAN_MAX_SSID_LENGTH]; /*!< ssid array */
-    int ssid_len;                       /*!< SSID length */
-    uint8_t Channel;                    /*!< Channel associated to the BSSID */
-    uint8_t RSSI;                       /*!< Received signal strength */
-    uint16_t beacon_period;             /*!< Beacon period */
-    uint16_t dtim_period;               /*!< DTIM period */
-    _SecurityMode_t WPA_WPA2_WEP;       /*!< Security mode info */
-    _Cipher_t wpa_mcstCipher;           /*!< WPA multicast cipher */
-    _Cipher_t wpa_ucstCipher;           /*!< WPA unicast cipher */
-    _Cipher_t rsn_mcstCipher;           /*!< No security multicast cipher */
-    _Cipher_t rsn_ucstCipher;           /*!< No security unicast cipher */
-    bool is_pmf_required;               /*!< Is pmf required flag */
-    t_u8 ap_mfpc;                       /*!< MFPC bit of AP */
-    t_u8 ap_mfpr;                       /*!< MFPR bit of AP */
+    uint8_t ssid[MLAN_MAX_SSID_LENGTH];  /*!< ssid array */
+    int ssid_len;                        /*!< SSID length */
+    uint8_t Channel;                     /*!< Channel associated to the BSSID */
+    uint8_t RSSI;                        /*!< Received signal strength */
+    uint16_t beacon_period;              /*!< Beacon period */
+    uint16_t dtim_period;                /*!< DTIM period */
+    _SecurityMode_t WPA_WPA2_WEP;        /*!< Security mode info */
+    _Cipher_t wpa_mcstCipher;            /*!< WPA multicast cipher */
+    _Cipher_t wpa_ucstCipher;            /*!< WPA unicast cipher */
+    _Cipher_t rsn_mcstCipher;            /*!< No security multicast cipher */
+    _Cipher_t rsn_ucstCipher;            /*!< No security unicast cipher */
+    bool is_pmf_required;                /*!< Is pmf required flag */
+    t_u8 ap_mfpc;                        /*!< MFPC bit of AP */
+    t_u8 ap_mfpr;                        /*!< MFPR bit of AP */
+    t_u8 ap_pwe;                         /*!< PWE bit of AP */
 
     /*!<
      **  WPA_WPA2 = 0 => Security not enabled
@@ -306,8 +310,8 @@ struct wifi_scan_result2
     bool phecap_ie_present;
 #endif
 
-    bool wmm_ie_present; /*!< WMM IE present info */
-    uint16_t band;       /*!< Band info */
+    bool wmm_ie_present;                       /*!< WMM IE present info */
+    uint16_t band;                             /*!< Band info */
 
     bool wps_IE_exist;                         /*!< WPS IE exist info */
     uint16_t wps_session;                      /*!< WPS session */
@@ -317,7 +321,7 @@ struct wifi_scan_result2
     uint8_t trans_ssid[MLAN_MAX_SSID_LENGTH];  /*!< Trans ssid array */
     int trans_ssid_len;                        /*!< Trans bssid length */
 #ifdef CONFIG_DRIVER_MBO
-    bool mbo_assoc_disallowed; /*!< MBO disallowed */
+    bool mbo_assoc_disallowed;                 /*!< MBO disallowed */
 #endif
 #ifdef CONFIG_11R
     /** Mobility domain identifier */
@@ -404,81 +408,81 @@ typedef struct
 typedef PACK_START struct _txrate_setting
 {
     /** Preamble */
-    t_u16 preamble : 2;   /*BIT1-BIT0:
-                           *  For legacy 11b: preamble type
-                           *    00    = long
-                           *    01    = short
-                           *    10/11  = reserved
-                           *  For legacy 11g: reserved
-                           *  For 11n: Green field PPDU indicator
-                           *    00 = HT-mix
-                           *    01 = HT-GF
-                           *    10/11 = reserved.
-                           *  For 11ac: reserved.
-                           *  For 11ax:
-                           *    00 = HE-SU
-                           *    01 = HE-EXT-SU
-                           *    10 = HE-MU
-                           *    11 = HE trigger based
-                           */
+    t_u16 preamble : 2; /*BIT1-BIT0:
+                         *  For legacy 11b: preamble type
+                         *    00    = long
+                         *    01    = short
+                         *    10/11  = reserved
+                         *  For legacy 11g: reserved
+                         *  For 11n: Green field PPDU indicator
+                         *    00 = HT-mix
+                         *    01 = HT-GF
+                         *    10/11 = reserved.
+                         *  For 11ac: reserved.
+                         *  For 11ax:
+                         *    00 = HE-SU
+                         *    01 = HE-EXT-SU
+                         *    10 = HE-MU
+                         *    11 = HE trigger based
+                         */
     /** Bandwidth */
-    t_u16 bandwidth : 3;  /* BIT2- BIT4
-                           * For 11n and 11ac traffic: Bandwidth
-                           *    0 = 20Mhz
-                           *    1 = 40Mhz
-                           *    2 = 80 Mhz
-                           *    3 = 160 Mhz
-                           *    4-7 = reserved
-                           *  For legacy rate : BW>0 implies non-HT duplicates.
-                           *  For HE SU PPDU:
-                           *    0 = 20Mhz
-                           *    1 = 40Mhz
-                           *    2 = 80 Mhz
-                           *    3 = 160 Mhz
-                           *    4-7 = reserved
-                           *  For HE ER SU PPDU:
-                           *    0 = 242-tone RU
-                           *    1 = upper frequency 106 tone RU within the primary 20 Mhz.
-                           *  For HE MU PPDU:
-                           *    0 = 20Mhz.
-                           *    1 = 40Mhz.
-                           *    2 = 80Mhz non-preamble puncturing mode
-                           *    3 = 160Mhz and 80+80 Mhz non-preamble.
-                           *    4 = for preemble puncturing in 80 Mhz ,
-                           *        where in the preamble only the secondary 20Mhz is punctured.
-                           *    5 = for preemble puncturing in 80 Mhz ,
-                           *        where in the preamble only one of the two 20Mhz subchannels in the secondary 40Mhz is
-                           * punctured.  6 = for preemble puncturing in 160 Mhz or 80 Mhz + 80 Mhz,  where in the primary
-                           * 80 Mhz of the preamble only the secondary 20 Mhz is punctured.  7 = for preemble puncturing
-                           * in 160 Mhz or 80 Mhz + 80 Mhz,  where in the primary 80 Mhz of the preamble the primary 40
-                           * Mhz is present.
-                           */
+    t_u16 bandwidth : 3; /* BIT2- BIT4
+                          * For 11n and 11ac traffic: Bandwidth
+                          *    0 = 20Mhz
+                          *    1 = 40Mhz
+                          *    2 = 80 Mhz
+                          *    3 = 160 Mhz
+                          *    4-7 = reserved
+                          *  For legacy rate : BW>0 implies non-HT duplicates.
+                          *  For HE SU PPDU:
+                          *    0 = 20Mhz
+                          *    1 = 40Mhz
+                          *    2 = 80 Mhz
+                          *    3 = 160 Mhz
+                          *    4-7 = reserved
+                          *  For HE ER SU PPDU:
+                          *    0 = 242-tone RU
+                          *    1 = upper frequency 106 tone RU within the primary 20 Mhz.
+                          *  For HE MU PPDU:
+                          *    0 = 20Mhz.
+                          *    1 = 40Mhz.
+                          *    2 = 80Mhz non-preamble puncturing mode
+                          *    3 = 160Mhz and 80+80 Mhz non-preamble.
+                          *    4 = for preemble puncturing in 80 Mhz ,
+                          *        where in the preamble only the secondary 20Mhz is punctured.
+                          *    5 = for preemble puncturing in 80 Mhz ,
+                          *        where in the preamble only one of the two 20Mhz subchannels in the secondary 40Mhz is
+                          * punctured.  6 = for preemble puncturing in 160 Mhz or 80 Mhz + 80 Mhz,  where in the primary
+                          * 80 Mhz of the preamble only the secondary 20 Mhz is punctured.  7 = for preemble puncturing
+                          * in 160 Mhz or 80 Mhz + 80 Mhz,  where in the primary 80 Mhz of the preamble the primary 40
+                          * Mhz is present.
+                          */
     /** Short GI */
-    t_u16 shortGI : 2;    /*BIT5- BIT6
-                           *  For legacy: not used
-                           *  For 11n: 00 = normal, 01 =shortGI, 10/11 = reserved
-                           *  For 11ac: SGI map to VHT-SIG-A2[0]
-                           *           VHT-SIG-A2[1] is set to 1 if short guard interval is used
-                           *           and NSYM mod 10 = 9, otherwise set to 0.
-                           *  For 11ax:
-                           *           00 = 1xHELTF+GI0.8usec
-                           *           01 = 2xHELTF+GI0.8usec
-                           *           10 = 2xHELTF+GI1.6usec
-                           *           11 = 4xHELTF+GI0.8 usec if both DCM and STBC are 1
-                           *                4xHELTF+GI3.2 usec otherwise
-                           */
+    t_u16 shortGI : 2; /*BIT5- BIT6
+                        *  For legacy: not used
+                        *  For 11n: 00 = normal, 01 =shortGI, 10/11 = reserved
+                        *  For 11ac: SGI map to VHT-SIG-A2[0]
+                        *           VHT-SIG-A2[1] is set to 1 if short guard interval is used
+                        *           and NSYM mod 10 = 9, otherwise set to 0.
+                        *  For 11ax:
+                        *           00 = 1xHELTF+GI0.8usec
+                        *           01 = 2xHELTF+GI0.8usec
+                        *           10 = 2xHELTF+GI1.6usec
+                        *           11 = 4xHELTF+GI0.8 usec if both DCM and STBC are 1
+                        *                4xHELTF+GI3.2 usec otherwise
+                        */
     /** STBC */
-    t_u16 stbc : 1;       // BIT7, 0: no STBC; 1: STBC
+    t_u16 stbc : 1; // BIT7, 0: no STBC; 1: STBC
     /** DCM */
-    t_u16 dcm : 1;        // BIT8, 0: no DCM; 1: DCM used.
+    t_u16 dcm : 1; // BIT8, 0: no DCM; 1: DCM used.
     /** Adv coding */
     t_u16 adv_coding : 1; // BIT9, 0: BCC; 1: LDPC.
     /** Doppler */
-    t_u16 doppler : 2;    /* BIT11-BIT10,
-                             00: Doppler0
-                             01: Doppler 1 with Mma =10
-                             10: Doppler 1 with Mma =20
-                          */
+    t_u16 doppler : 2; /* BIT11-BIT10,
+                          00: Doppler0
+                          01: Doppler 1 with Mma =10
+                          10: Doppler 1 with Mma =20
+                       */
     /** Max PK text */
     t_u16 max_pktext : 2; /*BIT12-BIT13:
                            * Max packet extension
@@ -487,7 +491,7 @@ typedef PACK_START struct _txrate_setting
                            *  2 - 16 usec.
                            */
     /** Reserved */
-    t_u16 reserverd : 2;  // BIT14-BIT15
+    t_u16 reserverd : 2; // BIT14-BIT15
 } PACK_END txrate_setting;
 
 #endif

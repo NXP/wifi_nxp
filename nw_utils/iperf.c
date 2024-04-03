@@ -43,7 +43,6 @@ static struct iperf_test_context ctx;
 static os_timer_t ptimer = NULL;
 static ip_addr_t server_address;
 static ip_addr_t bind_address;
-static bool multicast;
 #ifdef CONFIG_IPV6
 static bool ipv6;
 #endif
@@ -164,6 +163,19 @@ static void lwiperf_report(void *arg,
         os_timer_deactivate(&ptimer);
     }
     (void)PRINTF("\r\n");
+    /*When test UDP individual bidirectional test,  DUT server should active ptimer to send packages after RX done.*/
+    if (test_ctx->server_mode != 0 && test_ctx->client_type == LWIPERF_TRADEOFF)
+    {
+        if (report_type == LWIPERF_UDP_DONE_SERVER_RX)
+        {
+            os_timer_activate(&ptimer);
+        }
+        else
+        {
+            os_timer_deactivate(&ptimer);
+        }
+    }
+
     iperf_free_ctx_iperf_session(arg, report_type);
 #if defined(CONFIG_WIFI_BLE_COEX_APP) || (CONFIG_WIFI_BLE_COEX_APP == 1)
 #ifdef CONFIG_HOST_SLEEP
@@ -194,7 +206,11 @@ static void iperf_test_start(void *arg)
 #endif
 #endif
 
-    os_timer_activate(&ptimer);
+    if ((ctx->server_mode == false) ||
+        ((ctx->server_mode == true) && ((ctx->client_type == LWIPERF_REVERSE) || (ctx->client_type == LWIPERF_DUAL))))
+    {
+        os_timer_activate(&ptimer);
+    }
 
     if (ctx->server_mode)
     {
@@ -213,22 +229,6 @@ static void iperf_test_start(void *arg)
         }
         else
         {
-            if (multicast)
-            {
-#ifdef CONFIG_IPV6
-                wifi_get_ipv4_multicast_mac(ntohl(bind_address.u_addr.ip4.addr), mcast_mac);
-#else
-                wifi_get_ipv4_multicast_mac(ntohl(bind_address.addr), mcast_mac);
-#endif
-                if (wifi_add_mcast_filter(mcast_mac) != WM_SUCCESS)
-                {
-                    (void)PRINTF("IPERF session init failed\r\n");
-                    lwiperf_abort(ctx->iperf_session);
-                    ctx->iperf_session = NULL;
-                    return;
-                }
-                mcast_mac_valid = true;
-            }
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
@@ -276,16 +276,6 @@ static void iperf_test_start(void *arg)
         }
         else
         {
-            if (IP_IS_V4(&server_address) && ip_addr_ismulticast(&server_address))
-            {
-#ifdef CONFIG_IPV6
-                wifi_get_ipv4_multicast_mac(ntohl(server_address.u_addr.ip4.addr), mcast_mac);
-#else
-                wifi_get_ipv4_multicast_mac(ntohl(server_address.addr), mcast_mac);
-#endif
-                (void)wifi_add_mcast_filter(mcast_mac);
-                mcast_mac_valid = true;
-            }
 #ifdef CONFIG_IPV6
             if (ipv6)
             {
@@ -414,7 +404,7 @@ static void TCPClientReverse(void)
     ctx.tcp         = true;
     ctx.client_type = LWIPERF_REVERSE;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 static void UDPServer(void)
@@ -433,6 +423,24 @@ static void UDPServerDual(void)
     ctx.client_type = LWIPERF_DUAL;
 
     (void)PRINTF("Bidirectional UDP test simultaneously as server, please add -d with external iperf client\r\n");
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
+}
+
+static void UDPServerReverse(void)
+{
+    ctx.server_mode = true;
+    ctx.tcp         = false;
+    ctx.client_type = LWIPERF_REVERSE;
+
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
+}
+
+static void UDPServerTradeOff(void)
+{
+    ctx.server_mode = true;
+    ctx.tcp         = false;
+    ctx.client_type = LWIPERF_TRADEOFF;
+
     (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
@@ -469,7 +477,7 @@ static void UDPClientReverse(void)
     ctx.tcp         = false;
     ctx.client_type = LWIPERF_REVERSE;
 
-    tcpip_callback(iperf_test_start, (void *)&ctx);
+    (void)tcpip_callback(iperf_test_start, (void *)&ctx);
 }
 
 /* Display the usage of iperf */
@@ -487,6 +495,7 @@ static void display_iperf_usage(void)
 #endif
     (void)PRINTF("\t   -a             abort ongoing iperf session\r\n");
     (void)PRINTF("\t   -p             server port to listen on/connect to\r\n");
+    (void)PRINTF("\t   -r             Do a bidirectional UDP test individually\r\n");
     (void)PRINTF("\tServer specific:\r\n");
     (void)PRINTF("\t   -s             run in server mode. Support 8 parallel traffic(-P) maximum from client side\r\n");
     (void)PRINTF(
@@ -494,7 +503,6 @@ static void display_iperf_usage(void)
     (void)PRINTF("\tClient specific:\r\n");
     (void)PRINTF("\t   -c    <host>   run in client mode, connecting to <host>\r\n");
     (void)PRINTF("\t   -d             Do a bidirectional test simultaneously\r\n");
-    (void)PRINTF("\t   -r             Do a bidirectional test individually\r\n");
     (void)PRINTF("\t   -R             reverse the test (client receives, server sends)\r\n");
     (void)PRINTF("\t   -t    #        time in seconds to transmit for (default 10 secs)\r\n");
     (void)PRINTF(
@@ -543,7 +551,6 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_WMM
     qos = 0;
 #endif
-    multicast = false;
 #ifdef CONFIG_IPV6
     ipv6 = false;
 #endif
@@ -774,8 +781,6 @@ static void cmd_iperf(int argc, char **argv)
 #ifdef CONFIG_IPV6
         }
 #endif
-        if (ip_addr_ismulticast(&bind_address))
-            multicast = true;
     }
 
     if (((info.abort == 0U) && (info.server == 0U) && (info.client == 0U)) ||
@@ -785,7 +790,7 @@ static void cmd_iperf(int argc, char **argv)
          && (info.ipv6 == 0U)
 #endif
          && ((info.bind == 0U) || (info.bhost == 0U))) ||
-        (((info.dual != 0U) || (info.tradeoff != 0U)
+        (((info.dual != 0U)
           || (info.reverse != 0U)
               ) &&
          (info.client == 0U)) ||
@@ -834,6 +839,14 @@ static void cmd_iperf(int argc, char **argv)
             if (info.dserver != 0U)
             {
                 UDPServerDual();
+            }
+            else if (info.reverse != 0U)
+            {
+                UDPServerReverse();
+            }
+            else if (info.tradeoff != 0U)
+            {
+                UDPServerTradeOff();
             }
             else
             {

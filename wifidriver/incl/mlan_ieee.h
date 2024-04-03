@@ -562,10 +562,14 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 
 /** AKM: 8021x */
 #define RSN_AKM_8021X 1
+/** AKM: FT 8021x */
+#define RSN_AKM_FT_8021X 3
 /** AKM: 8021x SUITE B*/
 #define RSN_AKM_8021X_SUITEB 0xb
 /** AKM: 8021x SUITE B 192*/
 #define RSN_AKM_8021X_SUITEB_192 0xc
+/** AKM: FT 8021x SHA384 */
+#define RSN_AKM_FT_8021X_SHA384 0xd
 /** AKM: PSK */
 #define RSN_AKM_PSK 2
 /** AKM: FT PSK */
@@ -573,9 +577,11 @@ typedef t_u8 WLAN_802_11_RATES[WLAN_SUPPORTED_RATES];
 /** AKM: PSK SHA256 */
 #define RSN_AKM_PSK_SHA256 6
 
-/** AKM: PSK SHA256 */
+/** AKM: SAE SHA256 */
 #define RSN_AKM_SAE 8
-/** AKM: PSK SHA256 */
+/** AKM: FT SAE SHA256 */
+#define RSN_AKM_FT_SAE 9
+/** AKM: OWE SHA256 */
 #define RSN_AKM_OWE 18
 
 #if defined(STA_SUPPORT) && defined(ENABLE_802_11W) && defined(EMBEDDED_SUPPLICANT)
@@ -2026,6 +2032,9 @@ typedef struct _BSSDescriptor_t
      * BAND_A(0X04): 'a' band
      */
     t_u16 bss_band;
+
+    /** TSF record at driver receive the scan result from FW (in us) */
+    unsigned int scan_result_tsf;
 
     /** TSF timestamp from the current firmware TSF */
     t_u64 network_tsf;

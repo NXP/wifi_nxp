@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides WLAN Test API
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -1223,6 +1223,10 @@ static void test_wlan_add(int argc, char **argv)
                         arg += 2;
                     }
                 }
+                else
+                {
+                    network.security.pwe_derivation = 2;
+                }
             }
             else
             {
@@ -1563,7 +1567,7 @@ static void test_wlan_add(int argc, char **argv)
             info.security2++;
             arg += 1;
         }
-#else /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
+#else  /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
 #endif /* CONFIG_WPA_SUPP_CRYPTO_ENTERPRISE */
         else if ((info.role == 0U) && string_equal("role", argv[arg]))
         {
@@ -1985,7 +1989,9 @@ static int __scan_cb(unsigned int count)
         }
 #endif
     }
-
+#ifdef CONFIG_WIFI_SMOKE_TESTS
+    PRINTF("SCAN COMPLETED !\r\n");
+#endif
     return 0;
 }
 
@@ -2500,6 +2506,7 @@ static void test_wlan_get_uap_channel(int argc, char **argv)
 static void test_wlan_get_uap_sta_list(int argc, char **argv)
 {
     // #if SDK_DEBUGCONSOLE != DEBUGCONSOLE_DISABLE
+
     int i;
     wifi_sta_list_t *sl = NULL;
 
@@ -2513,6 +2520,7 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
 
     wifi_sta_info_t *si = (wifi_sta_info_t *)(void *)(&sl->count + 1);
 
+#ifndef CONFIG_WPA_SUPP
     (void)PRINTF("Number of STA = %d \r\n\r\n", sl->count);
     for (i = 0; i < sl->count; i++)
     {
@@ -2523,7 +2531,9 @@ static void test_wlan_get_uap_sta_list(int argc, char **argv)
         (void)PRINTF("Power mfg status: %s\r\n", (si[i].power_mgmt_status == 0U) ? "active" : "power save");
         (void)PRINTF("Rssi : %d dBm\r\n\r\n", (signed char)si[i].rssi);
     }
-
+#else
+    hostapd_connected_sta_list(si, sl);
+#endif
     os_mem_free(sl);
     // #endif
 }
@@ -2623,7 +2633,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         ret = wlan_deepsleepps_off();
         if (ret == WM_SUCCESS)
         {
-            (void)PRINTF("Turned off Deep Sleep Power Save mode");
+            (void)PRINTF("Turned off Deep Sleep Power Save mode\r\n");
         }
         else
         {
@@ -2635,7 +2645,7 @@ static void test_wlan_deep_sleep_ps(int argc, char **argv)
         ret = wlan_deepsleepps_on();
         if (ret == WM_SUCCESS)
         {
-            (void)PRINTF("Turned on Deep Sleep Power Save mode");
+            (void)PRINTF("Turned on Deep Sleep Power Save mode\r\n");
         }
         else
         {
@@ -3495,7 +3505,7 @@ static void test_wlan_host_sleep(int argc, char **argv)
 static void test_wlan_ns_offload(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    ret = wlan_set_ipv6_ns_offload();
+    ret     = wlan_set_ipv6_ns_offload();
     if (ret == WM_SUCCESS)
     {
         (void)PRINTF("Enabled  wlan IPv6 NS offload feature");
@@ -3509,7 +3519,7 @@ static void test_wlan_ns_offload(int argc, char **argv)
 static void test_wlan_auto_arp(int argc, char **argv)
 {
     int ret = -WM_FAIL;
-    ret = wlan_set_auto_arp();
+    ret     = wlan_set_auto_arp();
     if (ret == WM_SUCCESS)
         (void)PRINTF("Enabled  wlan auto arp offload feature\r\n");
     else
@@ -3622,7 +3632,7 @@ static void test_wlan_ext_coex_uwb(int argc, char **argv)
     uint32_t reqd_len = 0;
 
     u8_t cmd_buf[]    = {0xe0, 0x00, 0x11, 0x00, 0x4a, 0x00, 0x00, 0x00, 0x01 /* Get/Set */,
-                      0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
+                         0x00, 0x00, 0x00, 0x38, 0x02, 0x01, 0x00, 0x03};
     u8_t resp_buf[64] = {0};
 
     /**
@@ -4162,7 +4172,7 @@ static void test_wlan_eu_crypto_ccmp_128(int argc, char **argv)
     t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
     NonceLength      = 13;
     t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
-                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+                        0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
     AADLength        = 22;
 
     if (EncDec == 0U)
@@ -4232,7 +4242,7 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
     }
     /*Algorithm: AES_WRAP*/
     t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
-                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     KeyLength        = 32;
     t_u8 EncData[20] = {0xf8, 0xba, 0x1a, 0x55, 0xd0, 0x2f, 0x85, 0xae, 0x96, 0x7b,
                         0xb6, 0x2f, 0xb6, 0xcd, 0xa8, 0xeb, 0x7e, 0x78, 0xa0, 0x50};
@@ -4244,7 +4254,7 @@ static void test_wlan_eu_crypto_ccmp_256(int argc, char **argv)
     t_u8 Nonce[13]   = {0x00, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0xb5, 0x03, 0x97, 0x76, 0xe7, 0x0c};
     NonceLength      = 13;
     t_u8 AAD[22]     = {0x08, 0x40, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1,
-                    0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
+                        0x84, 0x44, 0x08, 0xab, 0xae, 0xa5, 0xb8, 0xfc, 0xba, 0x00, 0x00};
     AADLength        = 22;
 
     if (EncDec == 0U)
@@ -4340,7 +4350,7 @@ static void test_wlan_eu_crypto_gcmp_128(int argc, char **argv)
     t_u8 Nonce[12] = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
-                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+                      0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
     AADLength      = 24;
 
     if (EncDec == 0U)
@@ -4412,7 +4422,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     }
     /*Algorithm: AES_WRAP*/
     t_u8 Key[32]     = {0xc9, 0x7c, 0x1f, 0x67, 0xce, 0x37, 0x11, 0x85, 0x51, 0x4a, 0x8a, 0x19, 0xf2, 0xbd, 0xd5, 0x2f,
-                    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+                        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
     KeyLength        = 32;
     t_u8 EncData[40] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
                         0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b,
@@ -4439,7 +4449,7 @@ static void test_wlan_eu_crypto_gcmp_256(int argc, char **argv)
     t_u8 Nonce[12] = {0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x00, 0x89, 0x5f, 0x5f, 0x2b, 0x08};
     NonceLength    = 12;
     t_u8 AAD[24]   = {0x88, 0x48, 0x0f, 0xd2, 0xe1, 0x28, 0xa5, 0x7c, 0x50, 0x30, 0xf1, 0x84,
-                    0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
+                      0x44, 0x08, 0x50, 0x30, 0xf1, 0x84, 0x44, 0x08, 0x80, 0x33, 0x03, 0x00};
     AADLength      = 24;
 
     if (EncDec == 0U)
@@ -4500,8 +4510,8 @@ static void dump_wlan_set_antcfg_usage(void)
     (void)PRINTF("wlan-set-antcfg <ant mode> [evaluate_time] \r\n");
     (void)PRINTF("\r\n");
     (void)PRINTF("\t<ant mode>: \r\n");
-    (void)PRINTF("\t           Bit 0   -- Tx/Rx antenna 1\r\n");
-    (void)PRINTF("\t           Bit 1   -- Tx/Rx antenna 2\r\n");
+    (void)PRINTF("\t           1   -- Tx/Rx antenna 1\r\n");
+    (void)PRINTF("\t           2   -- Tx/Rx antenna 2\r\n");
     (void)PRINTF("\t           0xFFFF  -- Tx/Rx antenna diversity\r\n");
     (void)PRINTF("\t[evaluate_time]: \r\n");
     (void)PRINTF("\t           if ant mode = 0xFFFF, SAD evaluate time interval,\r\n");
@@ -5089,6 +5099,135 @@ static void test_wlan_rssi_low_threshold(int argc, char **argv)
 
 
 
+#ifdef CONFIG_CPU_LOADING
+static void dump_wlan_cpu_loading_usage()
+{
+    (void)PRINTF("Usage:\r\n");
+    (void)PRINTF("    wlan-cpu-loading start <start> sample_loops <number> sample_period <period>\r\n");
+    (void)PRINTF("    <start>: \r\n");
+    (void)PRINTF("	        0: stop ongoing collecting cpu loading info.\r\n");
+    (void)PRINTF("	        1: start collecting cpu loading info.\r\n");
+    (void)PRINTF("    <number>: \r\n");
+    (void)PRINTF("	        The cycle numbers to collect cpu loading info.\r\n");
+    (void)PRINTF(
+        "	        If no value is set, will keep collect cpu loading info until a stop command is received.\r\n");
+    (void)PRINTF("    <period>: \r\n");
+    (void)PRINTF("	        The period to collect cpu loading info.\r\n");
+    (void)PRINTF("	        If no value is set, period is asigned as 2s.\r\n");
+    (void)PRINTF("	        Note: The smaller the period, the greater the impact on performance.\r\n");
+    (void)PRINTF("	   For example:\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 0\r\n");
+    (void)PRINTF("	            stop ongoing collecting cpu loading info.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1 sample_loops 10\r\n");
+    (void)PRINTF(
+        "	            The cycle numbers of collecting cpu loading is 10 and collect period is default value 2s.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1 sample_loops 10 sample_period 5\r\n");
+    (void)PRINTF("	            The cycle numbers of collecting cpu loading is 10 and collect period is 5s.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1\r\n");
+    (void)PRINTF("	            Ongoing collecting cpu loading info until execute 'wlan-cpu-loading 0'.\r\n");
+    (void)PRINTF("	        wlan-cpu-loading start 1 sample_period 4\r\n");
+    (void)PRINTF(
+        "	            Ongoing collecting cpu loading info until execute 'wlan-cpu-loading 0'. And the collect period "
+        "is 4s.\r\n");
+}
+
+static void test_wlan_cpu_loading(int argc, char **argv)
+{
+    int arg = 0;
+    unsigned int value;
+    uint8_t start = 0, period = 0;
+    uint32_t number = 0;
+
+    struct
+    {
+        uint8_t start : 1;
+        uint8_t number : 1;
+        uint8_t period : 1;
+    } info;
+
+    (void)memset(&info, 0, sizeof(info));
+
+    if (argc < 2 && argc > 4)
+    {
+        (void)PRINTF("Error: invalid number of arguments\r\n");
+        dump_wlan_cpu_loading_usage();
+        return;
+    }
+
+    arg++;
+    do
+    {
+        if (!info.start && string_equal("start", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid <start> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+            if (value != 0 && value != 1)
+            {
+                (void)PRINTF("Error: invalid <start> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+
+            start = value & 0xFF;
+            arg += 2;
+            info.start = 1;
+        }
+        else if (!info.number && string_equal("sample_loops", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid <number> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+
+            number = value;
+            arg += 2;
+            info.number = 1;
+        }
+        else if (!info.period && string_equal("sample_period", argv[arg]))
+        {
+            if (arg + 1 >= argc || get_uint(argv[arg + 1], &value, strlen(argv[arg + 1])))
+            {
+                (void)PRINTF("Error: invalid <period> argument\r\n");
+                dump_wlan_cpu_loading_usage();
+                return;
+            }
+
+            period = value & 0xFF;
+            arg += 2;
+            info.period = 1;
+        }
+        else
+        {
+            (void)PRINTF("Error: argument %d is invalid\r\n", arg);
+            dump_wlan_cpu_loading_usage();
+            return;
+        }
+    } while (arg < argc);
+
+    if (start == 1)
+    {
+        (void)PRINTF("Start cpu loading test:\r\n");
+        if (number == 0)
+            (void)PRINTF("%s\r\n", "Keeping CPU loading test");
+        else
+            (void)PRINTF("Cycle numbers of CPU loading test: %d\r\n", number);
+
+        if (period == 0)
+            (void)PRINTF("Period of CPU loading test: 2s\r\n");
+        else
+            (void)PRINTF("Period of CPU loading test: %d s\r\n", period);
+    }
+
+    wlan_cpu_loading(start, number, period);
+}
+#endif
+
 
 #ifdef CONFIG_CLOUD_KEEP_ALIVE
 
@@ -5597,7 +5736,7 @@ static void test_wlan_start_wps_pin(int argc, char **argv)
 #if defined(CONFIG_WPA_SUPP_WPS)
     ret = wlan_start_wps_pin(argv[1]);
 #else
-    ret = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
+    ret             = wlan_start_wps_pin((uint32_t)atoi(argv[1]));
 #endif
 
     if (ret != WM_SUCCESS)
@@ -7044,7 +7183,7 @@ static struct cli_command tests[] = {
     {"enable-ns-offload", NULL, test_wlan_ns_offload},
     {"wlan-auto-arp", NULL, test_wlan_auto_arp},
     {"wlan-add-packet-filter", "0/1 <patterns number> <ptn_len> <pkt_offset> <ptn> ...........",
-     test_wlan_add_packet_filter},
+                 test_wlan_add_packet_filter},
     {"wlan-host-sleep", "<0/1> mef/wowlan <wake_up_conds>", test_wlan_host_sleep},
 #endif /*CONFIG_HOST_SLEEP*/
     {"wlan-send-hostcmd", NULL, test_wlan_send_hostcmd},
@@ -7133,6 +7272,9 @@ static struct cli_command tests[] = {
     {"wlan-dpp-reconfig", "<network id> ...", test_wlan_dpp_reconfig},
     {"wlan-dpp-configurator-sign", " conf=<sta-dpp/ap-dpp> ssid=<ascii> configurator=<id>",
      test_wlan_dpp_configurator_sign},
+#endif
+#ifdef CONFIG_CPU_LOADING
+    {"wlan-cpu-loading", "start <start> sample_loops <number> sample_period <period>", test_wlan_cpu_loading},
 #endif
     {"wlan-get-signal", NULL, test_wlan_get_signal},
 #ifdef CONFIG_11AX

@@ -146,9 +146,6 @@ mlan_status wlan_init_priv(pmlan_private priv)
         HostCmd_ACT_MAC_RTS_CTS_ENABLE | HostCmd_ACT_MAC_RX_ON | HostCmd_ACT_MAC_TX_ON |
         HostCmd_ACT_MAC_ETHERNETII_ENABLE;
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-    (void)__memset(pmadapter, &priv->gtk_rekey, 0, sizeof(priv->gtk_rekey));
-#endif
     (void)__memset(pmadapter, &priv->curr_bss_params, 0, sizeof(priv->curr_bss_params));
     priv->listen_interval = MLAN_DEFAULT_LISTEN_INTERVAL;
     wlan_11d_priv_init(priv);

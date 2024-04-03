@@ -40,6 +40,10 @@
 
 int ping_cli_init(void);
 
+int ping(u16_t count, int interval, unsigned short size, unsigned int r_timeout, ip_addr_t *addr);
+
+void ping_stats(int *total, int *recvd);
+
 /** Unregister Network Utility CLI commands.
  *
  *  Unregister the Network Utility CLI commands.

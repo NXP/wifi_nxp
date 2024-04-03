@@ -110,12 +110,16 @@ Change log:
 
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_STA_AMPDU_DEF_TXWINSIZE
+#if defined(SD9177) && defined(COEX_APP_SUPPORT)
+#define MLAN_STA_AMPDU_DEF_TXWINSIZE 32
+#else
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE 64
+#endif
 #endif
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_STA_AMPDU_DEF_RXWINSIZE
-#if defined(SD9177)
+#if defined(SD9177) && !defined(COEX_APP_SUPPORT)
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 64
 #else
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE 32
@@ -124,12 +128,16 @@ Change log:
 
 /** Default Win size attached during ADDBA request */
 #ifndef MLAN_UAP_AMPDU_DEF_TXWINSIZE
+#if defined(SD9177) && defined(COEX_APP_SUPPORT)
+#define MLAN_UAP_AMPDU_DEF_TXWINSIZE 32
+#else
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE 64
+#endif
 #endif
 
 /** Default Win size attached during ADDBA response */
 #ifndef MLAN_UAP_AMPDU_DEF_RXWINSIZE
-#if defined(SD9177)
+#if defined(SD9177) && !defined(COEX_APP_SUPPORT)
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 64
 #else
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE 32

@@ -412,6 +412,8 @@ typedef enum _WLAN_802_11_WEP_STATUS
 /** TLV type: management filter  */
 #define TLV_TYPE_MGMT_FRAME_WAKEUP (PROPRIETARY_TLV_BASE_ID + 0x116) /* 0x0216 */
 
+#define TLV_TYPE_PREV_BSSID (PROPRIETARY_TLV_BASE_ID + 330)
+
 /** ADDBA TID mask */
 #define ADDBA_TID_MASK (MBIT(2) | MBIT(3) | MBIT(4) | MBIT(5))
 /** DELBA TID mask */
@@ -692,9 +694,14 @@ typedef enum _WLAN_802_11_WEP_STATUS
 #define IS_FW_SUPPORT_MULTIBSSID(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_MULTI_BSSID)
 
 /** FW cap info bit 16: Tx mgmt pkt with command*/
+#if defined(SD8987)
+#define FW_CAPINFO_EXT_CMD_TX_DATA MBIT(29)
+#define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_info & FW_CAPINFO_EXT_CMD_TX_DATA)
+#elif defined(SD9177)
 #define FW_CAPINFO_EXT_CMD_TX_DATA MBIT(16)
 /** Check if transmit mgmt pkt through command supported by firmware */
 #define IS_FW_SUPPORT_CMD_TX_DATA(_adapter) (_adapter->fw_cap_ext & FW_CAPINFO_EXT_CMD_TX_DATA)
+#endif
 
 /** LLC/SNAP header len   */
 #define LLC_SNAP_LEN 8
@@ -1198,10 +1205,6 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_fw_cap_info_t
 /** Host Command ID: Tx data pause */
 #define HostCmd_CMD_CFG_TX_DATA_PAUSE 0x0103
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-/** Host Command ID: GTK REKEY OFFLOAD CFG */
-#define HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG 0x010f
-#endif
 
 /** Host Command ID: Remain On Channel */
 #define HostCmd_CMD_802_11_REMAIN_ON_CHANNEL 0x010d
@@ -1282,6 +1285,8 @@ typedef enum _ENH_PS_MODES
 #define HostCmd_ACT_GEN_GET 0x0000U
 /** General purpose action : Set */
 #define HostCmd_ACT_GEN_SET 0x0001U
+/** Special purpose action : Set */
+#define HostCmd_ACT_SPC_SET 0x8001
 /** General purpose action : Get_Current */
 #define HostCmd_ACT_GEN_GET_CURRENT 0x0003
 /** General purpose action : Remove */
@@ -1780,6 +1785,14 @@ typedef MLAN_PACK_START struct _MrvlIEtypes_Data_t
     /** Data */
     t_u8 data[1];
 } MLAN_PACK_END MrvlIEtypes_Data_t;
+
+/** MrvlIEtypes_PrevBssid_t */
+typedef MLAN_PACK_START struct _MrvlIEtypes_PrevBssid_t {
+	/** Header */
+	MrvlIEtypesHeader_t header;
+	/** prev_bssid **/
+	t_u8 prev_bssid[6];
+} MLAN_PACK_END MrvlIEtypes_PrevBssid_t;
 
 /** MrvlIETypes_ActionFrame_t */
 typedef MLAN_PACK_START struct
@@ -2627,22 +2640,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_802_11_KEY_MATERIAL
     MrvlIEtype_KeyParamSetV2_t key_param_set;
 } MLAN_PACK_END HostCmd_DS_802_11_KEY_MATERIAL;
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-/** HostCmd_DS_GTK_REKEY_PARAMS */
-typedef MLAN_PACK_START struct _HostCmd_DS_GTK_REKEY_PARAMS
-{
-    /** Action */
-    t_u16 action;
-    /** Key confirmation key */
-    t_u8 kck[MLAN_KCK_LEN];
-    /** Key encryption key */
-    t_u8 kek[MLAN_KEK_LEN];
-    /** Replay counter low 32 bit */
-    t_u32 replay_ctr_low;
-    /** Replay counter high 32 bit */
-    t_u32 replay_ctr_high;
-} MLAN_PACK_END HostCmd_DS_GTK_REKEY_PARAMS;
-#endif
 
 /** Data structure of WMM QoS information */
 typedef MLAN_PACK_START struct _WmmQosInfo_t
@@ -6739,10 +6736,6 @@ typedef MLAN_PACK_START struct _HostCmd_DS_COMMAND
         HostCmd_DS_WMM_PARAM_CONFIG param_config;
         /** Key material */
         HostCmd_DS_802_11_KEY_MATERIAL key_material;
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-        /** GTK Rekey parameters */
-        HostCmd_DS_GTK_REKEY_PARAMS gtk_rekey;
-#endif
         /** E-Supplicant PSK */
         HostCmd_DS_802_11_SUPPLICANT_PMK esupplicant_psk;
         /** E-Supplicant profile */

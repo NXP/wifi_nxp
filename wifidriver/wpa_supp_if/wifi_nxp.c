@@ -55,6 +55,7 @@ const rtos_wpa_supp_dev_ops wpa_supp_ops = {
     .authenticate             = wifi_nxp_wpa_supp_authenticate,
     .associate                = wifi_nxp_wpa_supp_associate,
     .set_key                  = wifi_nxp_wpa_supp_set_key,
+    .del_key                  = wifi_nxp_wpa_supp_del_key,
     .set_rekey_info           = wifi_nxp_wpa_supp_set_rekey_info,
     .set_supp_port            = wifi_nxp_wpa_set_supp_port,
     .set_country              = wifi_nxp_wpa_supp_set_country,
@@ -134,6 +135,8 @@ static const wifi_nxp_callbk_fns_t supp_callbk_fns = {
     .mgmt_rx_callbk_fn             = wifi_nxp_wpa_supp_event_proc_mgmt_rx,
     .eapol_rx_callbk_fn            = wifi_nxp_wpa_supp_event_proc_eapol_rx,
     .ecsa_complete_callbk_fn       = wifi_nxp_wpa_supp_event_proc_ecsa_complete,
+    .dfs_cac_started_callbk_fn     = wifi_nxp_wpa_supp_event_proc_dfs_cac_started,
+    .dfs_cac_finished_callbk_fn    = wifi_nxp_wpa_supp_event_proc_dfs_cac_finished,
 };
 
 static int g_net_idx = -1;

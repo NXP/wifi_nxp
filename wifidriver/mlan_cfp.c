@@ -42,7 +42,7 @@ Change Log:
 #define WLAN_TX_PWR_200MW 23
 /** 2000mW */
 #define WLAN_TX_PWR_CN_2000MW 33
-/** 20dBm */
+/** 8dBm */
 #define WLAN_TX_PWR_WW_DEFAULT 8
 
 /** Region code mapping */
@@ -2521,7 +2521,7 @@ void wlan_free_fw_cfp_tables(mlan_adapter *pmadapter)
 }
 #endif /* OTP_CHANINFO */
 
-static t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code)
+t_bool wlan_is_etsi_country(pmlan_adapter pmadapter, t_u8 *country_code)
 {
     t_u8 i;
     t_u32 meas_country_code_len = 0;

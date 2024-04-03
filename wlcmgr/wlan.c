@@ -2,7 +2,7 @@
  *
  *  @brief  This file provides Core WLAN definition
  *
- *  Copyright 2008-2023 NXP
+ *  Copyright 2008-2024 NXP
  *
  *  SPDX-License-Identifier: BSD-3-Clause
  *
@@ -117,6 +117,51 @@ void (*uap_prov_cleanup_cb)(void) = NULL;
 os_rw_lock_t sleep_rwlock;
 
 
+#ifdef CONFIG_CPU_LOADING
+#define CPU_LOADING_ACTION_STOP        0
+#define CPU_LOADING_ACTION_START       1
+#define CPU_LOADING_STATUS_ONGOING     2
+#define CPU_LOADING_STATUS_ENDING      3
+#define CPU_LOADING_STATUS_DEAD        4
+#define CPU_LOADING_PERIOD             2000
+#define CPU_LOADING_TASK_NUM           20
+#define CPU_LOADING_KEEPING            -1
+static os_thread_stack_define(cpu_loading_stack, 2048);
+
+static struct
+{
+    /*The number of tasks.*/
+    uint8_t task_nums;
+    /*The total length of cpu info struct*/
+    uint32_t task_status_len;
+    /*Pointer to buffer of storing cpu Loading info.*/
+    char *cpu_loading_info;
+    /*CPU loading status: CPU_LOADING_STATUS_ENDING / CPU_LOADING_STATUS_ONGOING / CPU_LOADING_STATUS_DEAD*/
+    uint8_t status;
+    /*Index of collecting CPU loading info.*/
+    uint32_t index;
+    /*Remaining time of collecting CPU loading info.*/
+    int sampling_loops;
+    /*The value of timer time out*/
+    uint32_t sampling_period;
+    /*CPU loading timer.*/
+    os_timer_t cpu_loading_timer;
+    /*CPU loading thread.*/
+    os_thread_t cpu_loading_thread;
+
+    /*Array of recording names of tasks.*/
+    char task_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
+    /*Array of recording runing time of tasks.*/
+    uint64_t data_cur[CPU_LOADING_TASK_NUM];
+    uint64_t data_pre[CPU_LOADING_TASK_NUM];
+    /*Array of recording the first runing time of tasks.*/
+    uint64_t first_data[CPU_LOADING_TASK_NUM];
+}cpu_loading;
+
+char task_string_name[CPU_LOADING_TASK_NUM][configMAX_TASK_NAME_LEN];
+
+#endif
+
 
 
 #define MAX_EVENTS 20
@@ -125,9 +170,6 @@ os_rw_lock_t sleep_rwlock;
     {                             \
         (void)wlan.cb(r, data);   \
     }
-
-static bool ieee_ps_sleep_cb_sent = false;
-static bool deep_sleep_ps_sleep_cb_sent = false;
 
 
 #ifdef CONFIG_HOST_SLEEP
@@ -177,6 +219,9 @@ enum user_request_type
 #endif
     CM_STA_USER_REQUEST_PS_ENTER,
     CM_STA_USER_REQUEST_PS_EXIT,
+#ifdef CONFIG_CPU_LOADING
+    CM_STA_USER_REQUEST_CPU_LOADING,
+#endif
     CM_STA_USER_REQUEST_LAST,
     /* All the STA related request are above and uAP related requests are
        below */
@@ -219,7 +264,7 @@ static struct wifi_scan_params_t g_wifi_scan_params = {NULL,
                                                        },
                                                        BSS_ANY,
                                                        60,
-                                                       153};
+                                                       250};
 
 static os_queue_pool_define(g_wlan_event_queue_data, (int)(sizeof(struct wifi_message) * MAX_EVENTS));
 
@@ -385,7 +430,7 @@ static struct
     wlan_nlist_report_param nlist_rep_param;
     wlan_rrm_neighbor_report_t nbr_rpt;
 #endif
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
     uint8_t rssi_low_threshold;
 #endif
     uint8_t ind_reset;
@@ -1141,6 +1186,11 @@ static int network_matches_scan_result(const struct wlan_network *network,
         return -WM_FAIL;
     }
 
+    if ((res->ap_pwe != network->security.pwe_derivation) && ((res->ap_pwe | network->security.pwe_derivation) == 1))
+    {
+        wlcm_d("%d: H2E configuration mismatch", res->ap_pwe);
+        return -WM_FAIL;
+    }
 #ifdef CONFIG_DRIVER_MBO
     if (res->mbo_assoc_disallowed)
     {
@@ -1335,7 +1385,7 @@ static void do_scan(struct wlan_network *network)
     unsigned int channel = 0;
     IEEEtypes_Bss_t type;
     wlan_scan_channel_list_t chan_list[1];
-
+    (void)memset((uint8_t *)chan_list, 0x00, sizeof(wlan_scan_channel_list_t) * 1);
     wlcm_d("initiating scan for network \"%s\"", network->name);
 
     if (network->bssid_specific != 0U)
@@ -1660,7 +1710,10 @@ static int do_stop(struct wlan_network *network)
             CONNECTION_EVENT(WLAN_REASON_UAP_STOP_FAILED, NULL);
             return -WM_FAIL;
         }
-        wlan.uap_state = CM_UAP_INITIALIZING;
+        wlan_uap_set_bandwidth(UAP_DEFAULT_BANDWIDTH);
+        wlan_uap_set_beacon_period(UAP_DEFAULT_BEACON_PERIOD);
+        wlan_uap_set_hidden_ssid(UAP_DEFAULT_HIDDEN_SSID);
+        wlan.uap_state           = CM_UAP_INITIALIZING;
         wlan.cur_uap_network_idx = -1;
     }
 
@@ -2161,12 +2214,10 @@ static void wlan_enable_power_save(int action)
     {
         case WLAN_DEEP_SLEEP:
             wlcm_d("starting deep sleep ps mode");
-            wlan.cm_deepsleepps_configured = true;
             (void)wifi_enter_deepsleep_power_save();
             break;
         case WLAN_IEEE:
             wlcm_d("starting IEEE ps mode");
-            wlan.cm_ieeeps_configured = true;
             (void)wifi_enter_ieee_power_save();
             break;
         default:
@@ -2190,16 +2241,15 @@ static void wlcm_process_ieeeps_event(struct wifi_message *msg)
     {
         if (action == EN_AUTO_PS)
         {
-            if (!ieee_ps_sleep_cb_sent)
+            if (!wlan.cm_ieeeps_configured)
             {
                 CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_IEEE);
-                ieee_ps_sleep_cb_sent = true;
+                wlan.cm_ieeeps_configured = true;
             }
         }
         else if (action == DIS_AUTO_PS)
         {
             wlan.cm_ieeeps_configured = false;
-            ieee_ps_sleep_cb_sent     = false;
             CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
         }
         else if (action == SLEEP_CONFIRM)
@@ -2223,16 +2273,15 @@ static void wlcm_process_deepsleep_event(struct wifi_message *msg, enum cm_sta_s
     {
         if (action == EN_AUTO_PS)
         {
-            if(!deep_sleep_ps_sleep_cb_sent)
+            if(!wlan.cm_deepsleepps_configured)
             {
                 CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
-                deep_sleep_ps_sleep_cb_sent = true;
+                wlan.cm_deepsleepps_configured = true;
             }
         }
         else if (action == DIS_AUTO_PS)
         {
             wlan.cm_deepsleepps_configured = false;
-            deep_sleep_ps_sleep_cb_sent = false;
             // CONNECTION_EVENT(WLAN_REASON_INITIALIZED, NULL);
             /* Skip ps-exit event for the first time
                after waking from PM4+DS. This will ensure
@@ -3363,6 +3412,7 @@ int wlan_ft_roam(const t_u8 *bssid, const t_u8 channel)
 #endif
 #endif
 
+
 static void wlcm_process_link_loss_event(struct wifi_message *msg,
                                          enum cm_sta_state *next,
                                          struct wlan_network *network)
@@ -3485,6 +3535,20 @@ static void wlcm_process_deauthentication_event(struct wifi_message *msg,
                                                 enum cm_sta_state *next,
                                                 struct wlan_network *network)
 {
+#ifdef CONFIG_WPA_SUPP
+    if (network->security.type == WLAN_SECURITY_WPA3_SAE &&
+        (msg->reason == WLAN_REASON_PREV_AUTH_NOT_VALID ||
+        msg->reason == WLAN_REASON_DISASSOC_DUE_TO_INACTIVITY ||
+        msg->reason == WLAN_REASON_INVALID_IE))
+    {
+        /*
+         *  Clear pmksa cache in case AP wants to redo sae auth.
+         *  But send successful assoc resp and send deauth right after.
+         *  Then we will always using pmksa cache if it exists.
+         */
+        wlan_pmksa_flush();
+    }
+#endif
 }
 
 static void wlcm_process_net_dhcp_config(struct wifi_message *msg,
@@ -3851,6 +3915,7 @@ static void wpa_supplicant_msg_cb(const char *buf, size_t len)
         {
 #if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
             (void)wifi_set_rssi_low_threshold(&wlan.rssi_low_threshold);
+            wlan.roam_reassoc = false;
 #endif
         }
         else
@@ -4744,13 +4809,18 @@ static void wlcm_request_disconnect(enum cm_sta_state *next, struct wlan_network
         {
             os_timer_deactivate(&wlan.supp_status_timer);
             wlan.status_timeout = 0;
-            wlan.cur_network_idx = -1;
             CONNECTION_EVENT(WLAN_REASON_USER_DISCONNECT, NULL);
         }
 #endif
+        if (wlan.connect_wakelock_taken)
+        {
 #ifdef CONFIG_HOST_SLEEP
-        wakelock_put();
+            wakelock_put();
 #endif
+            wlan.connect_wakelock_taken = false;
+        }
+
+        wlan.cur_network_idx = -1;
         return;
     }
 
@@ -4976,6 +5046,23 @@ static void wlcm_process_get_hw_spec_event(void)
 #ifdef CONFIG_WMM
     (void)wifi_wmm_init();
 #endif
+
+#ifdef CONFIG_WIFI_SMOKE_TESTS
+    extern int initNetwork(void);
+    /* network enet init */
+    int ret = initNetwork();
+    if (ret != WM_SUCCESS)
+    {
+        PRINTF("FAILED to init network (ret=%d). Reboot the board and try again.\r\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_SIGMA_AGENT
+    extern int sigma_agent_init(void);
+
+    (void)sigma_agent_init();
+#endif
+
     /* Set Tx Power Limits in Wi-Fi firmware */
     (void)wlan_set_wwsm_txpwrlimit();
 
@@ -5042,6 +5129,83 @@ static void wlcm_send_host_sleep(struct wifi_message *msg, enum cm_sta_state *ne
     (void)network;
 
     (void)wlan_send_host_sleep_int(wake_up_conds, MTRUE);
+}
+#endif
+
+#ifdef CONFIG_CPU_LOADING
+
+static void wlan_cpu_loading_info_display(void)
+{
+    uint64_t total_runtime = 0;
+    uint64_t task_runtime[CPU_LOADING_TASK_NUM] = {0};
+    float task_runtime_percentage[CPU_LOADING_TASK_NUM] = {0};
+    uint8_t task_index = 0, i = 0;
+    uint32_t collect_time = 0;
+    char cpu_loading_task_name[] = "cpu_loading_task";
+
+    for(i = 0; i < cpu_loading.task_nums; i++) //Don't calculate cpu info of cpu_loading_thread task.
+    {
+        if(!memcmp(cpu_loading_task_name, cpu_loading.task_name[i], strlen(cpu_loading_task_name)))
+            continue;
+
+        if(cpu_loading.status == CPU_LOADING_STATUS_ONGOING)
+            task_runtime[i] = cpu_loading.data_cur[i] - cpu_loading.data_pre[i];
+        else
+            task_runtime[i] = cpu_loading.data_cur[i] - cpu_loading.first_data[i];
+
+        total_runtime += task_runtime[i];
+    }
+
+    collect_time = ((cpu_loading.index - 1) * cpu_loading.sampling_period) /1000;
+    (void)PRINTF("\r\n");
+    if(cpu_loading.status != CPU_LOADING_STATUS_ENDING)
+        (void)PRINTF("CPU loading: %ds ~ %ds \r\n", (collect_time - cpu_loading.sampling_period /1000) + 1, collect_time);
+    else
+        (void)PRINTF("Total CPU loading info in previous %d seconds\r\n", cpu_loading.index * cpu_loading.sampling_period / 1000);
+
+    (void)PRINTF("taskName             \t\tPercentage\r\n");
+    for(int i = 0; i < cpu_loading.task_nums; i++)
+    {
+        if(!memcmp(cpu_loading_task_name, cpu_loading.task_name[i], strlen(cpu_loading_task_name)))
+            continue;
+        task_runtime_percentage[i] = (float)(((float)(task_runtime[i]) / total_runtime) * 100);
+        (void)PRINTF("%s \t\t%6.2f%%\r\n", task_string_name[i], task_runtime_percentage[i]);
+    }
+}
+
+static int wlan_cpu_loading_stop()
+{
+    cpu_loading.status = CPU_LOADING_STATUS_ENDING;
+    wlan_cpu_loading_info_display();
+
+    cpu_loading.index = 0;
+
+    (void)send_user_request(CM_STA_USER_REQUEST_CPU_LOADING, 0); // Notify wlcmgr task to destory cpu_loading_thread task.
+
+    return WM_SUCCESS;
+}
+
+static void wlan_cpu_loading_request()
+{
+    int ret;
+
+    ret = os_timer_delete(&cpu_loading.cpu_loading_timer);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to delete cpu loading timer: %d.\r\n", ret);
+    }
+
+    os_mem_free(cpu_loading.cpu_loading_info);
+
+    ret = os_thread_delete(&cpu_loading.cpu_loading_thread);
+    if (ret != WM_SUCCESS)
+    {
+        (void)PRINTF("Failed to delete cpu_loading_task: %d.\r\n", ret);
+    }
+
+    cpu_loading.status = CPU_LOADING_STATUS_DEAD;
+
+    (void)PRINTF("Success to stop CPU loading test.\r\n");
 }
 #endif
 
@@ -5124,7 +5288,11 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
             }
             wlan_disable_power_save((int)msg->data);
             break;
-
+#ifdef CONFIG_CPU_LOADING
+        case CM_STA_USER_REQUEST_CPU_LOADING:
+            wlan_cpu_loading_request();
+            break;
+#endif
         case WIFI_EVENT_SCAN_START:
 #ifdef CONFIG_WPA_SUPP
             wifi_scan_start(msg);
@@ -5186,6 +5354,9 @@ static enum cm_sta_state handle_message(struct wifi_message *msg)
         case WIFI_EVENT_AUTHENTICATION:
             wlcm_d("got event: authentication result: %s",
                     msg->reason == WIFI_EVENT_REASON_SUCCESS ? "success" : "failure");
+            if(msg->reason == WIFI_EVENT_REASON_FAILURE)
+            {
+            }
             wlcm_process_authentication_event(msg, &next, network);
             break;
         case WIFI_EVENT_LINK_LOSS:
@@ -5863,6 +6034,11 @@ int wlan_start(int (*cb)(enum wlan_event_reason reason, void *data))
 
     wlan.status = WLCMGR_ACTIVATED;
 
+
+#ifdef CONFIG_CPU_LOADING
+    cpu_loading.status = CPU_LOADING_STATUS_DEAD;
+    cpu_loading.sampling_period = CPU_LOADING_PERIOD;
+#endif
 
     ret = os_timer_create(&wlan.assoc_timer, "assoc-timer", os_msec_to_ticks(BAD_MIC_TIMEOUT), &assoc_timer_cb, NULL,
                           OS_TIMER_ONE_SHOT, OS_TIMER_NO_ACTIVATE);
@@ -7603,6 +7779,47 @@ int wlan_get_network_byname(char *name, struct wlan_network *network)
     return -WM_E_INVAL;
 }
 
+int wlan_set_network_ip_byname(char *name, struct wlan_ip_config *ip)
+{
+    unsigned int i;
+
+    if (ip == NULL || name == NULL)
+    {
+        return -WM_E_INVAL;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].name[0] != '\0' && !strcmp(wlan.networks[i].name, name))
+        {
+            memcpy(&(wlan.networks[i].ip), ip, sizeof(struct wlan_ip_config));
+            return WM_SUCCESS;
+        }
+    }
+
+    return -WM_E_INVAL;
+}
+
+int wlan_remove_all_networks(void)
+{
+    unsigned int i;
+    int ret;
+
+    for (i = 0; i < ARRAY_SIZE(wlan.networks); i++)
+    {
+        if (wlan.networks[i].name[0] != '\0')
+        {
+            ret = wlan_remove_network(wlan.networks[i].name);
+            if (ret != WM_SUCCESS)
+            {
+                return -WM_E_INVAL;
+            }
+        }
+    }
+
+    return WM_SUCCESS;
+}
+
 
 int wlan_disconnect(void)
 {
@@ -7780,18 +7997,14 @@ int wlan_start_network(const char *name)
             wlan.networks[i].ssid_specific)
         {
             {
-                if (wlan.networks[i].channel_specific && is_sta_connecting())
-                {
-                    wlcm_e(
-                        "uAP can not be started on specific "
-                        "channel when station is connected."
-                        "Please use channel 0 (auto) for uAP");
-                    return -WM_E_INVAL;
-                }
                 if ((wlan.networks[i].channel_specific) && (wlan.networks[i].channel != 0))
+                {
                     wlcm_w(
                         "NOTE: uAP will automatically switch to"
                         " the channel that station is on.");
+                    if(is_sta_connected())
+                        wlan.networks[i].channel = wlan.networks[wlan.cur_network_idx].channel;
+                }
             }
             if (wlan.networks[i].role == WLAN_BSS_ROLE_UAP)
             {
@@ -7841,6 +8054,7 @@ int wlan_stop_network(const char *name)
     /* specified network was not found */
     return -WM_E_INVAL;
 }
+
 
 
 #ifdef CONFIG_NCP_BRIDGE
@@ -8012,6 +8226,7 @@ int wlan_get_scan_result(unsigned int index, struct wlan_scan_result *res)
 
     res->ap_mfpc = desc->ap_mfpc;
     res->ap_mfpr = desc->ap_mfpr;
+    res->ap_pwe = desc->ap_pwe;
 
     return WM_SUCCESS;
 }
@@ -8400,6 +8615,8 @@ int wlan_ieeeps_on(unsigned int wakeup_conditions)
         {
             wlcm_d("ieee ps already enabled");
         }
+
+        CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_IEEE);
         return WM_SUCCESS;
     }
 
@@ -8413,6 +8630,7 @@ int wlan_ieeeps_off(void)
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_IEEE);
     }
 
+    CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_IEEE);
     return WM_SUCCESS;
 }
 
@@ -8428,6 +8646,7 @@ int wlan_deepsleepps_on(void)
 
     if (wlan.cm_deepsleepps_configured)
     {
+        CONNECTION_EVENT(WLAN_REASON_PS_ENTER, (void *)WLAN_DEEP_SLEEP);
         return WM_SUCCESS;
     }
 
@@ -8441,6 +8660,7 @@ int wlan_deepsleepps_off(void)
         return send_user_request(CM_STA_USER_REQUEST_PS_EXIT, WLAN_DEEP_SLEEP);
     }
 
+    CONNECTION_EVENT(WLAN_REASON_PS_EXIT, (void *)WLAN_DEEP_SLEEP);
     return WM_SUCCESS;
 }
 
@@ -11042,7 +11262,7 @@ int wlan_csi_cfg(wlan_csi_config_params_t *csi_params)
 }
 #endif
 
-#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_ROAMING)
+#if defined(CONFIG_11K) || defined(CONFIG_11V) || defined(CONFIG_11R) || defined(CONFIG_ROAMING)
 void wlan_set_rssi_low_threshold(uint8_t threshold)
 {
     wlan.rssi_low_threshold = threshold;
@@ -11599,11 +11819,8 @@ int wlan_set_country_code(const char *alpha2)
 
     if (strstr(wlan_region_code, region_code) == NULL)
     {
-        if (strstr(wlan_region_code, "WW") == NULL)
-        {
-            wlcm_d("%s: Specific region is configured, reconfig not allowed");
-            return -WM_FAIL;
-        }
+        wlcm_d("Region %s is configured, re-config not allowed", wlan_region_code);
+        return -WM_FAIL;
     }
 
     if ((alpha2[2] == 0x4f) || (alpha2[2] == 0x49) || (alpha2[2] == 0x58) || (alpha2[2] == 0x04))
@@ -11896,3 +12113,208 @@ int wlan_independent_reset()
 #endif
 
 
+
+#ifdef CONFIG_CPU_LOADING
+
+static void wlan_cpu_loading_record_data(void)
+{
+    memset(cpu_loading.cpu_loading_info, 0, cpu_loading.task_status_len);
+
+    char run_task_name[configMAX_TASK_NAME_LEN];
+    char cpu_run_data[20];
+    unsigned int value;
+    int task_name_index = 0, task_time_index = 0, index = 0, task_index = 0;
+
+    os_get_runtime_stats(cpu_loading.cpu_loading_info);
+
+    uint32_t len_data = strlen(cpu_loading.cpu_loading_info);
+    do
+    {
+        memset(run_task_name, 0, strlen(run_task_name));
+        /*Record task name*/
+        do
+        {
+            if(cpu_loading.cpu_loading_info[index] == ' ' && cpu_loading.cpu_loading_info[index + 1] == ' ') // Complete name parsing
+                break;
+            else
+                run_task_name[task_name_index++] = cpu_loading.cpu_loading_info[index++];
+        }while(index < len_data);
+
+        do      //Filter out padding spaces between task names and run time values.
+        {
+            if(cpu_loading.cpu_loading_info[index++] == '\t')
+                break;
+        } while (index < len_data);
+
+        /*Record task run time*/
+        do
+        {
+            if(cpu_loading.cpu_loading_info[index] < '0' || cpu_loading.cpu_loading_info[index] > '9')
+                break;
+            cpu_run_data[task_time_index++] = cpu_loading.cpu_loading_info[index++];
+        }while(index < len_data);
+
+        cpu_run_data[task_time_index] = '\0';
+        extern bool get_uint(const char *arg, unsigned int *dest, unsigned int len);
+        get_uint(cpu_run_data, &value, strlen(cpu_run_data));
+
+        if(cpu_loading.index > 0)
+        {
+            for(int i = 0; i < cpu_loading.task_nums; i++)  // To collect CPU loading info according to fixed task name sequence.
+            {
+                if(!strcmp(cpu_loading.task_name[i], run_task_name))
+                {
+                    cpu_loading.data_pre[i] = cpu_loading.data_cur[i];
+                    cpu_loading.data_cur[i] = value;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            memset(task_string_name[task_index],' ', configMAX_TASK_NAME_LEN);
+            task_string_name[task_index][configMAX_TASK_NAME_LEN -1] = '\0';
+
+            memcpy(cpu_loading.task_name[task_index], run_task_name, strlen(run_task_name));
+            memcpy(task_string_name[task_index], run_task_name, strlen(run_task_name));
+            cpu_loading.data_pre[task_index] = value;
+            cpu_loading.data_cur[task_index] = value;
+            cpu_loading.first_data[task_index] = value;
+
+            cpu_loading.task_name[task_index][strlen(run_task_name)] = '\0';
+        }
+
+        /*Filter percentage value*/
+        do
+        {
+            if(cpu_loading.cpu_loading_info[index] == '\r' && cpu_loading.cpu_loading_info[index + 1] == '\n')
+            {
+                index += 2;
+                break;
+            }
+
+            index++;
+        }while((index < len_data));
+
+        task_time_index = 0;
+        task_name_index = 0;
+        task_index ++;
+
+    }while (index < len_data);
+
+    cpu_loading.index ++;
+    cpu_loading.sampling_loops --;
+}
+
+static void wlan_cpu_loading_handler(os_thread_arg_t data)
+{
+    for(;;)
+    {
+        /* Wait till cpu loading timer time out. */
+        (void)os_event_notify_get(OS_WAIT_FOREVER);
+
+        if(cpu_loading.sampling_loops == 0)
+        {
+            wlan_cpu_loading_stop();
+        }
+        else
+        {
+            wlan_cpu_loading_record_data();
+            if(cpu_loading.index > 1)
+                wlan_cpu_loading_info_display();
+        }
+    }
+
+    os_thread_self_complete(NULL);
+}
+
+static void cpu_loading_cb(os_timer_arg_t arg)
+{
+    (void)os_event_notify_put(cpu_loading.cpu_loading_thread);
+}
+
+static int wlan_cpu_loading_start(uint32_t number, uint8_t period)
+{
+    int ret;
+
+    if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
+    {
+        memset(&cpu_loading, 0, sizeof(cpu_loading));
+        if(period == 0)
+            cpu_loading.sampling_period = CPU_LOADING_PERIOD;
+        else
+            cpu_loading.sampling_period = period * (CPU_LOADING_PERIOD / 2);
+
+        ret = os_timer_create(&cpu_loading.cpu_loading_timer, "cpu-loading-timer", os_msec_to_ticks(cpu_loading.sampling_period),
+                                &cpu_loading_cb, NULL, OS_TIMER_PERIODIC, OS_TIMER_NO_ACTIVATE);
+        if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to create cpu loading timer.\r\n");
+            return ret;
+        }
+
+        ret = os_thread_create(&cpu_loading.cpu_loading_thread, "cpu_loading_task", wlan_cpu_loading_handler, 0,
+                                &cpu_loading_stack, OS_PRIO_1);
+        if (ret != WM_SUCCESS)
+        {
+            (void)PRINTF("Unable to create cpu loading thread.\r\n");
+            return ret;
+        }
+
+        os_get_num_of_tasks(&cpu_loading.task_nums);
+        cpu_loading.task_status_len = cpu_loading.task_nums * sizeof(TaskStatus_t);
+        cpu_loading.cpu_loading_info = (char *)os_mem_alloc(cpu_loading.task_status_len);
+        if (cpu_loading.cpu_loading_info == NULL)
+        {
+            (void)PRINTF("%s: Failed to alloc cpu loading info\r\n", __func__);
+            return -WM_FAIL;
+        }
+
+        cpu_loading.index = 0;
+        if(number != 0)
+            cpu_loading.sampling_loops = number;
+        else
+            cpu_loading.sampling_loops = CPU_LOADING_KEEPING;
+
+        cpu_loading.status = CPU_LOADING_STATUS_ONGOING;
+
+        memset(cpu_loading.data_cur, 0, sizeof(cpu_loading.data_cur));
+        memset(cpu_loading.data_pre, 0, sizeof(cpu_loading.data_pre));
+        (void)os_timer_activate(&cpu_loading.cpu_loading_timer);
+        return WM_SUCCESS;
+    }
+    else
+    {
+        wlcm_e("Unable to start cpu loading timer, pls stop the previous cpu loading test firstly.");
+        return -WM_FAIL;
+    }
+}
+
+int wlan_cpu_loading(uint8_t start, uint32_t number, uint8_t period)
+{
+    int ret;
+    if(start == CPU_LOADING_ACTION_STOP)
+    {
+        if(cpu_loading.status == CPU_LOADING_STATUS_DEAD)
+        {
+            (void)PRINTF("Collecting CPU loading info has already ended.\r\n");
+            return WM_SUCCESS;
+        }
+        else
+        {
+            cpu_loading.sampling_loops = 0;
+            os_timer_change(&cpu_loading.cpu_loading_timer, os_msec_to_ticks(100), 0); // Chages value of cpu loading timer to stop cpu loading test quickly.
+            if(cpu_loading.status != CPU_LOADING_STATUS_DEAD)
+            {
+                os_thread_sleep(os_msec_to_ticks(50));
+            }
+            return WM_SUCCESS;
+        }
+    }
+    else
+    {
+        return wlan_cpu_loading_start(number, period);
+    }
+}
+
+#endif

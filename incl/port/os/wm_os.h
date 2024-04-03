@@ -1128,4 +1128,6 @@ static inline uint32_t os_rand_range(uint32_t low, uint32_t high)
 void os_dump_threadinfo(char *name);
 
 
+void os_get_num_of_tasks(uint8_t *num_tasks);
+
 #endif /* ! _WM_OS_H_ */

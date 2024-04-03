@@ -50,6 +50,8 @@ typedef struct
 {
     const uint8_t *fw_start_addr;
     size_t size;
+    t_u8 wifi_init_done;
+    t_u8 wifi_core_init_done;
     os_thread_t wm_wifi_main_thread;
     os_thread_t wm_wifi_core_thread;
     os_thread_t wm_wifi_scan_thread;
@@ -322,7 +324,7 @@ int wifi_process_cmd_response(HostCmd_DS_COMMAND *resp);
  *
  *
  */
-void *wifi_mem_malloc_cmdrespbuf(void);
+void *wifi_mem_malloc_cmdrespbuf(size_t len);
 
 /*
  * @internal
@@ -341,8 +343,9 @@ int wifi_sdio_lock(void);
 void wifi_sdio_unlock(void);
 
 #ifdef CONFIG_WIFI_IND_RESET
-int wifi_ind_reset_lock(void);
-void wifi_ind_reset_unlock(void);
+bool wifi_ind_reset_in_progress(void);
+void wifi_ind_reset_start(void);
+void wifi_ind_reset_stop(void);
 #endif
 
 mlan_status wrapper_wlan_cmd_mgmt_ie(int bss_type, void *buffer, unsigned int len, t_u16 action);

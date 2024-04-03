@@ -975,7 +975,7 @@ void wlan_ralist_del_all_enh(mlan_private *priv)
     raListTbl *ra_list      = MNULL;
     pmlan_adapter pmadapter = priv->adapter;
 
-    for (i = 0; i < MAX_AC_QUEUES; i++)
+    for (i = 0; i < MAX_AC_QUEUES && priv->wmm.tid_tbl_ptr[i].ra_list.plock != NULL; i++)
     {
         priv->adapter->callbacks.moal_semaphore_get(priv->adapter->pmoal_handle,
                                                     &priv->wmm.tid_tbl_ptr[i].ra_list.plock);

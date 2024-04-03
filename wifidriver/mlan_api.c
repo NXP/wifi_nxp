@@ -1905,10 +1905,6 @@ int wifi_set_key(int bss_index,
     mlan_ds_sec_cfg sec;
     int ret           = WM_SUCCESS;
     t_u8 bcast_addr[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-    mlan_private *pmpriv        = (mlan_private *)mlan_adap->priv[bss_index];
-    t_u8 zero_kek[MLAN_KEK_LEN] = {0};
-#endif
 
     (void)memset(&sec, 0x00, sizeof(mlan_ds_sec_cfg));
     sec.sub_command = MLAN_OID_SEC_CFG_ENCRYPT_KEY;
@@ -1956,24 +1952,6 @@ int wifi_set_key(int bss_index,
 
     ret = wifi_send_key_material_cmd(bss_index, &sec);
 
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-
-    if ((ret == WM_SUCCESS) && (is_pairwise == false))
-    {
-        if (memcmp(pmpriv->gtk_rekey.kek, zero_kek, sizeof(zero_kek)) != 0)
-        {
-            mlan_status status = MLAN_STATUS_SUCCESS;
-            ret = wlan_prepare_cmd(pmpriv, HostCmd_CMD_CONFIG_GTK_REKEY_OFFLOAD_CFG, HostCmd_ACT_GEN_SET, 0, MNULL,
-                                   &pmpriv->gtk_rekey);
-            if (status)
-            {
-                PRINTM(MINFO, "Error sending message to FW\n");
-                ret = -WM_FAIL;
-            }
-            (void)__memset(pmpriv->adapter, &pmpriv->gtk_rekey, 0, sizeof(mlan_ds_misc_gtk_rekey_data));
-        }
-    }
-#endif
 
     return ret;
 }
@@ -1981,44 +1959,7 @@ int wifi_set_key(int bss_index,
 int wifi_set_rekey_info(
     int bss_index, const t_u8 *kek, size_t kek_len, const t_u8 *kck, size_t kck_len, const t_u8 *replay_ctr)
 {
-#ifdef CONFIG_GTK_REKEY_OFFLOAD
-    mlan_ds_misc_cfg misc;
-    mlan_ioctl_req req;
-    mlan_status rv = MLAN_STATUS_SUCCESS;
-
-    (void)memset(&misc, 0x00, sizeof(mlan_ds_misc_cfg));
-
-    misc.sub_command = MLAN_OID_MISC_CONFIG_GTK_REKEY_OFFLOAD;
-
-    (void)memcpy(misc.param.gtk_rekey.kek, kek, MLAN_KEK_LEN);
-    (void)memcpy(misc.param.gtk_rekey.kck, kck, MLAN_KCK_LEN);
-    (void)memcpy(misc.param.gtk_rekey.replay_ctr, replay_ctr, MLAN_REPLAY_CTR_LEN);
-
-    (void)memset(&req, 0x00, sizeof(mlan_ioctl_req));
-    req.pbuf      = (t_u8 *)&misc;
-    req.buf_len   = sizeof(mlan_ds_misc_cfg);
-    req.bss_index = bss_index;
-    req.req_id    = MLAN_IOCTL_MISC_CFG;
-    req.action    = MLAN_ACT_SET;
-
-    if (bss_index != 0)
-    {
-        rv = wlan_ops_uap_ioctl(mlan_adap, &req);
-    }
-    else
-    {
-        rv = wlan_ops_sta_ioctl(mlan_adap, &req);
-    }
-
-    if (rv != MLAN_STATUS_SUCCESS && rv != MLAN_STATUS_PENDING)
-    {
-        return -WM_FAIL;
-    }
-
     return WM_SUCCESS;
-#else
-    return WM_SUCCESS;
-#endif
 }
 
 int wifi_set_igtk_key(int bss_index, const uint8_t *pn, const uint16_t key_index, const uint8_t *key, unsigned key_len)
@@ -2057,6 +1998,7 @@ int wifi_remove_key(int bss_index, bool is_pairwise, const uint8_t key_index, co
         sec.param.encrypt_key.key_index  = key_index;
     }
 
+    sec.param.encrypt_key.key_len = MLAN_MAX_KEY_LENGTH;
     sec.param.encrypt_key.key_flags = KEY_FLAG_REMOVE_KEY;
 
     if (mac_addr)
@@ -4442,7 +4384,7 @@ static int wlan_send_mgmt_auth_request(mlan_private *pmpriv,
 
         tx_frame.bandcfg.chanBand = channel > 14 ? BAND_5GHZ : BAND_2GHZ;
         tx_frame.channel          = channel;
-        tx_frame.data_len         = HEADER_SIZE + pkt_len + sizeof(pkt_len);
+        tx_frame.data_len         = HEADER_SIZE + pkt_len + 2 * sizeof(pkt_len);
         tx_frame.buf_type         = MLAN_BUF_TYPE_RAW_DATA;
         tx_frame.priority         = 7;
 
