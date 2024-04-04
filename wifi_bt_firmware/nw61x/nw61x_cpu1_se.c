@@ -9,8 +9,7 @@
 #include <stdint.h>
 #include <osa.h>
 
-#if defined(WIFI_IW612_BOARD_MURATA_2EL_M2) || defined(WIFI_IW612_BOARD_MURATA_2EL_USD) || \
-    defined(WIFI_IW611_BOARD_MURATA_2DL_M2) || defined(WIFI_IW611_BOARD_MURATA_2DL_USD)
+#if defined(SD9177)
 
 #if defined(CONFIG_WIFI_IND_DNLD)
 
