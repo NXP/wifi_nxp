@@ -1588,20 +1588,6 @@ int wifi_set_txbfcap(unsigned int tx_bf_cap)
     return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
 }
 
-int wifi_set_delba(t_u8 tid, t_u8 *peer_mac_addr, t_u8 direction)
-{
-    mlan_ds_11n_cfg ds_11n_cfg;
-
-    (void)memset(&ds_11n_cfg, 0x00, sizeof(mlan_ds_11n_cfg));
-
-    ds_11n_cfg.sub_command      = MLAN_OID_11N_CFG_DELBA;
-    ds_11n_cfg.param.del_ba.tid = tid;
-    memcpy(ds_11n_cfg.param.del_ba.peer_mac_addr, peer_mac_addr, MLAN_MAC_ADDR_LENGTH);
-    ds_11n_cfg.param.del_ba.direction = direction;
-
-    return wifi_send_11n_cfg_ioctl(MLAN_ACT_SET, &ds_11n_cfg);
-}
-
 int wifi_set_htcapinfo(unsigned int htcapinfo)
 {
     mlan_ds_11n_cfg ds_11n_cfg;
@@ -5526,10 +5512,6 @@ int wifi_handle_fw_event(struct bus_message *msg)
             break;
 #endif
 #ifdef CONFIG_11N
-        case EVENT_RXBA_SYNC:
-            wifi_d("EVENT:  RXBA_SYNC");
-            wlan_11n_rxba_sync_event(pmpriv, (t_u8 *)evt + 8, evt->length - 8);
-            break;
         case EVENT_ADDBA:
         {
             void *saved_event_buff = wifi_11n_save_request(evt);

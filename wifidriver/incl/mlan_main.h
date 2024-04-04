@@ -1789,8 +1789,6 @@ struct _RxReorderTbl
     bool check_start_win;
     /** pkt receive after BA setup */
     t_u8 pkt_count;
-    /** flush data flag */
-    t_u8 flush_data;
     /** BA window bitmap */
     t_u64 bitmap;
 #ifdef CONFIG_RSN_REPLAY_DETECTION
@@ -2235,8 +2233,6 @@ struct _mlan_adapter
     t_u8 country_ie_ignore;
     /** In reset status now */
     t_u8 in_reset;
-    /** flush data flag */
-    t_u8 flush_data;
 #ifndef CONFIG_MLAN_WMSDK
     /** mlan_lock for init/shutdown */
     t_void *pmlan_lock;
