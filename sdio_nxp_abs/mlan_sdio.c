@@ -145,7 +145,7 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
     {
         param = bsize;
     }
-
+#if FSL_USDHC_ENABLE_SCATTER_GATHER_TRANSFER
     if (addr & (CMD_PORT_SLCT | MLAN_SDIO_BYTE_MODE_MASK))
     {
         if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
@@ -167,6 +167,13 @@ int sdio_drv_read(uint32_t addr, uint32_t fn, uint32_t bcnt, uint32_t bsize, uin
             return 0;
         }
     }
+#else
+    if (SDIO_IO_Read_Extended(&wm_g_sd, (sdio_func_num_t)fn, addr, buf, param, flags) != KOSA_StatusSuccess)
+    {
+        (void)OSA_MutexUnlock(&sdio_mutex);
+        return 0;
+    }
+#endif
 
     (void)OSA_MutexUnlock((osa_mutex_handle_t)sdio_mutex);
 
@@ -556,7 +563,7 @@ static int sdio_card_init(void)
     /* Mask interrupts in card */
     (void)sdio_drv_creg_write(0x4, 0, 0x3, &resp);
     /* Enable IO in card */
-    //    (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
+    (void)sdio_drv_creg_write(0x2, 0, 0x2, &resp);
 
     (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)0, 256);
     (void)SDIO_SetBlockSize(&wm_g_sd, (sdio_func_num_t)1, 256);
